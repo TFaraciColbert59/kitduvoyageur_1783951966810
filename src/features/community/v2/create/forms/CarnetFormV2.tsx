@@ -15,7 +15,7 @@ import { useCreateSheet } from '../CreateSheetContext';
 import { carnetCover, carnetPhotos, createCarnetV2 } from '../createRpc';
 import { DateFieldV2 } from '../fields/DateFieldV2';
 import { TextAreaFieldV2, TextFieldV2 } from '../fields/FieldV2';
-import { NumberFieldV2, NumberStepperV2 } from '../fields/NumberStepperV2';
+import { NumberStepperV2 } from '../fields/NumberStepperV2';
 import { PlaceFieldV2 } from '../fields/PlaceFieldV2';
 import { PrefillApplierV2 } from '../fields/PrefillApplierV2';
 import { TagsFieldV2 } from '../fields/TagsFieldV2';
@@ -132,10 +132,11 @@ function TraceStep({ user, active }: { user: { id: string } | null; active: bool
       ) : (
         <p className="lkdv-cv2-field-hint">Le tracé s’affiche quand tu reviens sur cette étape.</p>
       )}
-      <div className="lkdv-cv2c-metric-row">
-        <NumberFieldV2 name="distanceKm" label="Distance" unit="km" max={10_000} step={0.1} />
-        <NumberFieldV2 name="deniveleM" label="Dénivelé" unit="m" max={30_000} step={10} />
-      </div>
+      {/*
+        Un seul libellé/valeur par métrique (N5) : la rangée métrique de
+        `TracePaneV2` (Distance / Dénivelé, maquette `#mstats` L3038) est la
+        seule source — les `NumberFieldV2` doublons qui suivaient sont retirés.
+      */}
       <p className="lkdv-cv2-field-hint">
         {trace.length > 1
           ? `Tracé enregistré : ${trace.length} points, ${km.toFixed(1).replace('.', ',')} km, +${gain} m.`

@@ -43,7 +43,8 @@
 
 .lkdv-cv2x-carnet.lkdv-cv2-tile--wide .lkdv-cv2x-carnet-cover,
 .lkdv-cv2x-club.lkdv-cv2-tile--wide .lkdv-cv2x-carnet-cover {
-  aspect-ratio: 16 / 9;
+  /* Maquette (`.ct.week .ct-cover`, L1003) : 16 / 10. */
+  aspect-ratio: 16 / 10;
 }
 
 .lkdv-cv2x-cover-img {
@@ -166,39 +167,66 @@
   object-fit: cover;
 }
 
+/* Visa de la maquette (`maquette-communaute.html` L1007-1008) : tampon forêt
+   translucide, filet pointillé blanc, encre blanche, une seule ligne
+   « 4 J · 62,4 KM ». Le code pays de la maquette n'est pas exposé par les
+   données (Carnets#2, déjà documenté) : on n'invente rien. */
 .lkdv-cv2x-visa {
-  transform: rotate(-3deg);
+  left: 8px;
+  bottom: 8px;
+  padding: 4px 9px;
+  border: 1.5px dashed var(--lkv-text-inverted);
+  border-radius: 7px;
+  outline: 1px solid var(--lkv-text-inverted);
+  outline-offset: 2px;
+  background: var(--lkv-forest-900);
+  color: var(--lkv-text-inverted);
+  transform: rotate(-4deg);
+}
+
+.lkdv-cv2x-visa b {
+  font: 700 10.5px/1.15 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 /* ── Signatures de tuile ───────────────────────────────────────────────── */
 
+/* Maquette (L1013) : « Carnet de la semaine » = verre clair + encre forêt. */
 .lkdv-cv2x-carnet-week {
   position: absolute;
-  left: 6px;
-  top: 6px;
-  padding: 3px 8px;
+  left: 8px;
+  top: 8px;
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 10px;
   border-radius: var(--lkv-radius-full);
-  background: var(--lkv-forest-900);
-  color: var(--lkv-text-inverted);
-  font: 600 9.5px/1.2 var(--font-sans);
-  letter-spacing: 0.05em;
+  background: var(--cv2-light-glass-light);
+  color: var(--lkv-forest-900);
+  font: 700 10.5px/1 var(--font-sans);
+  letter-spacing: 0.04em;
   text-transform: uppercase;
+  -webkit-backdrop-filter: blur(8px) saturate(1.9);
+  backdrop-filter: blur(8px) saturate(1.9);
 }
 
 /* Quand la vedette porte « Carnet de la semaine », la pastille « En route »
-   descend sous le badge au lieu de le chevaucher. */
+   descend sous le badge au lieu de le chevaucher (maquette L1014 : 36 px). */
 .lkdv-cv2x-carnet.is-week .lkdv-cv2x-live {
-  top: 30px;
+  top: 36px;
 }
 
+/* Maquette (L1010-1011) : « En route » = pilule forêt + texte blanc. */
 .lkdv-cv2x-live,
 .lkdv-cv2x-gps {
   position: absolute;
-  top: 6px;
+  top: 8px;
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 7px;
+  height: 22px;
+  padding: 0 7px;
   border-radius: var(--lkv-radius-full);
   background: var(--glass-bg-medium);
   color: var(--lkv-forest-900);
@@ -208,18 +236,22 @@
 }
 
 .lkdv-cv2x-live {
-  left: 6px;
+  left: 8px;
+  padding: 0 9px;
+  background: var(--lkv-forest-900);
+  color: var(--lkv-text-inverted);
 }
 
 .lkdv-cv2x-gps {
-  right: 6px;
+  right: 8px;
+  font-weight: 700;
 }
 
 .lkdv-cv2x-live > i {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
-  background: var(--lkv-action);
+  background: var(--sage-300);
   box-shadow: 0 0 0 2px var(--lkv-secondary-subtle);
 }
 
@@ -229,8 +261,10 @@
    grille à deux colonnes, `aria-label` complet sur le bouton. */
 .lkdv-cv2x-club > .lkdv-cv2x-join {
   width: 100%;
-  font-size: 12px;
-  padding: 0 8px;
+  /* « Demander à rejoindre » (maquette) doit tenir dans la tuile à deux
+     colonnes : 11,5 px et 6 px de marge interne, sans ellipse. */
+  font-size: 11.5px;
+  padding: 0 6px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -239,12 +273,17 @@
 .lkdv-cv2x-club-head {
   position: relative;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
   min-height: 52px;
 }
 
+/* Maquette (L1034) : cadenas dans le coin supérieur droit de la carte, pas à
+   côté du blason. */
 .lkdv-cv2x-club-lock {
+  position: absolute;
+  top: 0;
+  right: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -255,13 +294,17 @@
   color: var(--lkv-forest-900);
 }
 
+/* Maquette (L1035) : pilule « CLUB DU MOIS » 22 px, 10,5 px, crème. */
 .lkdv-cv2x-club-month {
   margin-left: auto;
-  padding: 2px 8px;
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 10px;
   border-radius: var(--lkv-radius-full);
   background: var(--lkv-secondary-subtle);
   color: var(--lkv-forest-900);
-  font: 600 10px/1.2 var(--font-sans);
+  font: 700 10.5px/1 var(--font-sans);
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -298,7 +341,7 @@
 }
 
 .lkdv-cv2x-club-signal--big {
-  font-size: 11.5px;
+  font-size: 12px;
   white-space: normal;
 }
 
@@ -402,6 +445,18 @@
   scrollbar-width: none;
 }
 
+/* Maquette (L938-940 / `clubs-chips.png`) : chips d'activité de 28 px, pas
+   32 px. La cible tactile reste ≥ 44 px grâce au `::after` étendu. */
+.lkdv-cv2x-club-chips .lkdv-cv2-chip {
+  min-height: 28px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+.lkdv-cv2x-club-chips .lkdv-cv2-chip::after {
+  inset: -8px;
+}
+
 .lkdv-cv2x-club-chips::-webkit-scrollbar {
   display: none;
 }
@@ -409,15 +464,73 @@
 /* ── Sorties ───────────────────────────────────────────────────────────── */
 
 .lkdv-cv2x-event {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 8px;
   min-width: 0;
 }
 
+/* Maquette (L1074-1077, `explorer-sorties.png`) : la pilule d'inscription est
+   DANS le pied du billet, à droite de la jauge. Le composant partagé
+   `EventTicket` porte déjà le pied ; on y superpose l'action et la note de
+   places, sans bouton pleine largeur hors du billet. */
 .lkdv-cv2x-event-action {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  z-index: 1;
   display: flex;
   justify-content: flex-end;
+}
+
+.lkdv-cv2x-event-foot-note {
+  position: absolute;
+  left: 12px;
+  bottom: 10px;
+  z-index: 1;
+  max-width: calc(100% - 148px);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font: 600 10.5px/1 var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  color: var(--lkv-text-secondary);
+  pointer-events: none;
+}
+
+/* Le pied du billet réserve la place de la pilule et aligne la jauge en haut
+   (maquette : jauge, puis « n places restantes », puis la pilule à droite). */
+.lkdv-cv2x-event .lkdv-cv2-ticket-foot {
+  min-height: 60px;
+  padding: 10px 12px;
+  padding-right: 140px;
+  align-items: flex-start;
+}
+
+.lkdv-cv2x-event .lkdv-cv2-ticket-foot .lkdv-cv2-capacity {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+}
+
+/* La fraction « 9/12 » et le badge d'état doublonnent la note et la pilule :
+   on les retire du pied (maquette : une seule jauge + un seul libellé). */
+.lkdv-cv2x-event .lkdv-cv2-ticket-foot .lkdv-cv2-capacity-label,
+.lkdv-cv2x-event .lkdv-cv2-ticket-foot .lkdv-cv2-badge {
+  display: none;
+}
+
+.lkdv-cv2x-event .lkdv-cv2-capacity-track {
+  height: 7px;
+}
+
+/* Maquette (L2479) : niveau capitalisé (« Moyen »), sans toucher aux autres
+   chips. `data-level` n'est posé que si un niveau existe, et il est toujours
+   la première chip du billet. */
+.lkdv-cv2x-event[data-level] .lkdv-cv2-ticket-chips i:first-child,
+.lkdv-cv2x-event-head[data-level] .lkdv-cv2-ticket-chips i:first-child {
+  text-transform: capitalize;
 }
 
 .lkdv-cv2x-event-billets {
@@ -542,7 +655,7 @@
 .lkdv-cv2x-detail-title {
   margin: 2px 0 0;
   overflow-wrap: anywhere;
-  font: 650 20px/1.2 var(--font-display);
+  font: 700 20px/1.2 var(--font-display);
   letter-spacing: -0.02em;
   color: var(--lkv-primary);
 }
@@ -572,6 +685,12 @@
   padding-bottom: 8px;
 }
 
+/* Maquette (`.h5`, L388) : titres de section 700 11 px dans les détails. */
+.lkdv-cv2x-club-detail > .lkdv-cv2-eyebrow,
+.lkdv-cv2x-event-detail > .lkdv-cv2-eyebrow {
+  font-weight: 700;
+}
+
 .lkdv-cv2x-club-detail-head {
   display: flex;
   align-items: flex-start;
@@ -585,7 +704,7 @@
 .lkdv-cv2x-club-detail-head h2 {
   margin: 2px 0 0;
   overflow-wrap: anywhere;
-  font: 650 19px/1.2 var(--font-display);
+  font: 700 20px/1.2 var(--font-display);
   letter-spacing: -0.02em;
   color: var(--lkv-primary);
 }
@@ -593,6 +712,7 @@
 .lkdv-cv2x-friends-card,
 .lkdv-cv2x-members-card {
   display: flex;
+  flex-direction: row;
   align-items: center;
   gap: 10px;
 }
@@ -664,23 +784,67 @@
   min-height: 44px;
 }
 
+/* « Prochaines sorties » du détail club : billet compact de la maquette
+   (L2564, `.tkc`) — tampon 44×48, titre/méta, pilule « S'inscrire » à droite,
+   séparateur fin entre les lignes (pas de carte par ligne). */
+.lkdv-cv2x-mini-event-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-top: 0.5px solid var(--lkv-border-subtle);
+}
+
+.lkdv-cv2x-mini-event-row:first-child {
+  border-top: 0;
+}
+
+.lkdv-cv2x-mini-event-row .lkdv-cv2x-join {
+  flex: none;
+  min-height: 44px;
+  padding: 0 14px;
+  font-size: 12.5px;
+}
+
 .lkdv-cv2x-mini-event {
   display: flex;
   align-items: center;
   gap: 10px;
-  min-height: 54px;
-  padding: 6px 10px;
-  border-radius: var(--cv2-radius-tile);
-  background: var(--cv2-tile-bg);
-  box-shadow: var(--cv2-tile-shadow), inset 0 0 0 0.5px var(--cv2-tile-border);
+  min-height: 56px;
+  min-width: 0;
+  flex: 1 1 auto;
+  padding: 0;
+  background: none;
+  box-shadow: none;
   color: inherit;
   text-decoration: none;
 }
 
 .lkdv-cv2x-mini-event-stamp {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  width: 44px;
+  height: 48px;
   flex: none;
-  font: 600 10.5px/1.2 var(--font-sans);
-  color: var(--lkv-forest-900);
+  border-radius: 12px;
+  background: var(--lkv-forest-900);
+  color: var(--lkv-text-inverted);
+}
+
+.lkdv-cv2x-mini-event-stamp b {
+  font: 700 17px/1 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.lkdv-cv2x-mini-event-stamp i {
+  font: 600 10.5px/1 var(--font-sans);
+  font-style: normal;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--lkv-primary-subtle);
 }
 
 .lkdv-cv2x-mini-event-body {
@@ -722,22 +886,37 @@
 }
 
 /* Sortie : en-tête billet + cartes de détail. */
-.lkdv-cv2x-event-head {
-  display: flex;
+/* Entête du détail : stub 68 px à gauche, corps en ligne à droite
+   (`explorer-sorties-detail.png`). Spécificité doublée pour ne pas dépendre de
+   l'ordre de chargement des feuilles (`.lkdv-cv2-ticket` est en colonne). */
+.lkdv-cv2-ticket.lkdv-cv2x-event-head {
+  display: grid;
+  grid-template-columns: 68px minmax(0, 1fr);
   align-items: stretch;
   gap: 0;
-  padding: 10px;
+  padding: 0;
+}
+
+.lkdv-cv2x-event-head .lkdv-cv2-ticket-stub {
+  padding: 10px 4px;
 }
 
 .lkdv-cv2x-event-head .lkdv-cv2-ticket-body {
   min-width: 0;
+  padding: 10px 12px;
 }
 
+/* Maquette : « lundi 9 novembre » en bas de casse (pas « Vendredi 13
+   Novembre »). */
 .lkdv-cv2x-event-date {
   font: 650 15px/1.25 var(--font-display);
   overflow-wrap: anywhere;
   color: var(--lkv-primary);
-  text-transform: capitalize;
+  text-transform: none;
+}
+
+.lkdv-cv2x-event-detail .lkdv-cv2-capacity-track {
+  height: 7px;
 }
 
 .lkdv-cv2x-capacity-card,
@@ -837,6 +1016,12 @@
   gap: 8px;
 }
 
+/* Maquette (`eyebrow-row .h5`, L938) : eyebrows de la recherche à 10,5 px. */
+.lkdv-cv2x-search-pane .lkdv-cv2-eyebrow {
+  font-size: 10.5px;
+  letter-spacing: 0.05em;
+}
+
 .lkdv-cv2x-search-field {
   margin-bottom: 2px;
 }
@@ -890,22 +1075,48 @@
   cursor: pointer;
 }
 
-.lkdv-cv2x-trend-row {
-  border-top: 0;
-  padding: 4px 10px;
-  border-radius: var(--cv2-radius-tile-sm);
+/* Maquette (L2255 + L963-964) : une seule carte `menu2`, lignes séparées par
+   un filet, icône de tendance 34 px, libellé 14 px, méta 12 px, rang mono
+   accentué. */
+.lkdv-cv2x-trends {
+  display: flex;
+  flex-direction: column;
+  padding: 0 12px;
+  border-radius: 18px;
   background: var(--cv2-light-glass-light);
-  box-shadow: inset 0 0 0 0.5px var(--cv2-light-border-subtle);
+  box-shadow: inset 0 1px 0 var(--lkv-text-inverted), 0 0 0 0.5px var(--cv2-light-border-subtle);
+  overflow: hidden;
+}
+
+.lkdv-cv2x-trend-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 46px;
+  padding: 6px 2px;
+  border: 0;
+  border-top: 0.5px solid var(--lkv-border-subtle);
+  border-radius: 0;
+  background: none;
   text-align: left;
-  min-height: 48px;
+  cursor: pointer;
+}
+
+.lkdv-cv2x-trend-row:first-child {
+  border-top: 0;
+}
+
+.lkdv-cv2x-trend-row:active {
+  background: var(--lkv-secondary-subtle);
 }
 
 .lkdv-cv2x-trend-ico {
   display: grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
   background: var(--lkv-secondary-subtle);
   color: var(--lkv-forest-900);
 }
@@ -919,61 +1130,165 @@
 }
 
 .lkdv-cv2x-trend-label {
-  font: 600 13px/1.25 var(--font-sans);
+  font: 600 14px/1.25 var(--font-sans);
   color: var(--lkv-text-primary);
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
 
+.lkdv-cv2x-trend-meta {
+  font: 400 12px/1.3 var(--font-sans);
+  color: var(--lkv-text-secondary);
+}
+
 .lkdv-cv2x-trend-rank {
-  color: var(--lkv-text-primary);
-  font: 700 11px/1 var(--font-mono);
+  color: var(--lkv-secondary);
+  font: 400 12px/1 var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
 
+/* Maquette (L2256 + L965-968) : tuiles illustrées 74 px, libellé en verre au
+   bas. `community_search_trending` ne renvoie pas de couverture : le paysage
+   est un repli décoratif déterministe (jetons verts uniquement). */
+.lkdv-cv2x-places {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
 .lkdv-cv2x-place {
-  background: var(--cv2-light-glass-light);
-  align-items: flex-start;
-  gap: 4px;
-  text-align: left;
+  position: relative;
+  height: 74px;
+  padding: 0;
   border: 0;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--sage-50);
+  text-align: left;
   cursor: pointer;
 }
 
-.lkdv-cv2x-place-ico {
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 10px;
-  background: var(--lkv-secondary-subtle);
+.lkdv-cv2x-place-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.lkdv-cv2x-place-sky {
+  fill: var(--lkv-action-soft);
+}
+
+.lkdv-cv2x-place-sun {
+  fill: var(--lkv-text-inverted);
+  opacity: 0.72;
+}
+
+.lkdv-cv2x-place-back {
+  fill: var(--sage-300);
+  opacity: 0.9;
+}
+
+.lkdv-cv2x-place-front {
+  fill: var(--sage-600);
+}
+
+.lkdv-cv2x-place-label {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 6px;
+  display: flex;
+  flex-direction: column;
+  padding: 4px 8px;
+  border-radius: 12px;
+  background: var(--cv2-light-glass-light);
+  -webkit-backdrop-filter: blur(8px) saturate(1.9);
+  backdrop-filter: blur(8px) saturate(1.9);
+}
+
+.lkdv-cv2x-place-label b {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font: 600 12.5px/1.2 var(--font-sans);
   color: var(--lkv-forest-900);
 }
 
+.lkdv-cv2x-place-label small {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font: 400 10.5px/1.3 var(--font-sans);
+  color: var(--lkv-text-secondary);
+}
+
+/* Maquette (`recherche-resultats.png` + L942-961) : les lignes d'un groupe sont
+   réunies dans une seule carte `menu2`, séparées par un filet, avec un liseré
+   de type à gauche. */
 .lkdv-cv2x-search-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  padding: 0 8px;
+  border-radius: 18px;
+  background: var(--cv2-light-glass-light);
+  box-shadow: inset 0 1px 0 var(--lkv-text-inverted), 0 0 0 0.5px var(--cv2-light-border-subtle);
+  overflow: hidden;
 }
 
 .lkdv-cv2x-search-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto 14px;
   align-items: center;
   gap: 10px;
-  min-height: 62px;
-  padding: 7px 8px;
-  border-radius: var(--cv2-radius-tile);
-  background: var(--cv2-tile-bg);
-  box-shadow: var(--cv2-tile-shadow), inset 0 0 0 0.5px var(--cv2-tile-border);
+  min-height: 72px;
+  margin-left: -8px;
+  padding: 10px 4px 10px 10px;
+  border-top: 0.5px solid var(--lkv-border-subtle);
+  border-left: 3px solid var(--type-color, transparent);
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
   color: inherit;
   text-decoration: none;
   scroll-margin-block: 12px;
 }
 
+.lkdv-cv2x-search-row:first-child {
+  border-top: 0;
+}
+
+.lkdv-cv2x-search-row[data-type='post'] {
+  --type-color: var(--type-post);
+}
+
+.lkdv-cv2x-search-row[data-type='carnet'] {
+  --type-color: var(--type-carnet);
+}
+
+.lkdv-cv2x-search-row[data-type='club'] {
+  --type-color: var(--type-club);
+}
+
+.lkdv-cv2x-search-row[data-type='sortie'] {
+  --type-color: var(--type-sortie);
+}
+
+.lkdv-cv2x-search-row[data-type='membre'] {
+  --type-color: var(--type-membre);
+}
+
 .lkdv-cv2x-search-row.is-kb {
-  outline: 2px solid var(--lkv-secondary);
-  outline-offset: 1px;
+  background: var(--lkv-secondary-subtle);
+  box-shadow: inset 0 0 0 1.2px var(--lkv-secondary);
+  border-radius: 12px;
+  outline: 0;
+}
+
+.lkdv-cv2x-search-row > svg {
+  color: var(--lkv-text-muted);
 }
 
 .lkdv-cv2x-search-media {
@@ -981,10 +1296,10 @@
   display: grid;
   place-items: center;
   width: 52px;
-  height: 48px;
+  height: 52px;
   overflow: hidden;
-  border-radius: 10px;
-  background: var(--lkv-surface-muted);
+  border-radius: 13px;
+  background: var(--lkv-secondary-subtle);
 }
 
 .lkdv-cv2x-search-cover {
@@ -994,9 +1309,9 @@
      de recherche et interceptant la bascule « Sur la carte ». */
   position: relative;
   width: 52px;
-  height: 48px;
+  height: 52px;
   overflow: hidden;
-  border-radius: 10px;
+  border-radius: 13px;
 }
 
 .lkdv-cv2x-search-stamp,
@@ -1007,21 +1322,25 @@
   justify-content: center;
 }
 
+/* Maquette (L954-955 `.rr-day`) : le cartouche de sortie est posé à même la
+   vignette teintée, encre forêt, jour 20 px mono + mois 10,5 px. */
 .lkdv-cv2x-search-stamp {
-  width: 44px;
-  height: 46px;
-  border-radius: 10px;
-  background: var(--lkv-primary);
-  color: var(--lkv-text-inverted);
+  width: 52px;
+  height: 52px;
+  gap: 2px;
+  border-radius: 13px;
+  background: none;
+  color: var(--lkv-forest-900);
 }
 
 .lkdv-cv2x-search-stamp b {
-  font: 700 16px/1 var(--font-display);
+  font: 700 20px/1 var(--font-mono);
+  font-variant-numeric: tabular-nums;
 }
 
 .lkdv-cv2x-search-stamp i {
-  font: 600 8.5px/1.2 var(--font-sans);
-  letter-spacing: 0.06em;
+  font: 600 10.5px/1 var(--font-sans);
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   font-style: normal;
 }
@@ -1029,13 +1348,13 @@
 .lkdv-cv2x-search-avatar {
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
   overflow: hidden;
   background: var(--lkv-secondary-subtle);
   color: var(--lkv-forest-900);
-  font: 700 13px/1 var(--font-sans);
+  font: 700 18px/1 var(--font-display);
 }
 
 .lkdv-cv2x-search-post {
@@ -1057,12 +1376,11 @@
 }
 
 .lkdv-cv2x-search-title {
-  font: 600 13.5px/1.3 var(--font-display);
+  font: 600 14px/1.25 var(--font-sans);
   color: var(--lkv-text-primary);
   overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .lkdv-cv2x-search-excerpt {
@@ -1080,6 +1398,42 @@
   align-items: flex-end;
   gap: 3px;
   flex: none;
+}
+
+/* Pastille de type de la maquette (L953-956) : 20 px, point de type, encre
+   forêt ; la distance est en mono 10,5 px. */
+.lkdv-cv2x-search-row .lkdv-cv2-type {
+  min-height: 20px;
+  color: var(--lkv-forest-900);
+}
+
+.lkdv-cv2x-type-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--type-color, var(--lkv-text-secondary));
+}
+
+.lkdv-cv2x-search-distance {
+  font: 600 10.5px/1 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--lkv-text-secondary);
+}
+
+/* Compteur de groupe de la maquette (L939) : pastille mono sur `--fill`. */
+.lkdv-cv2-eyebrow .lkdv-cv2x-count {
+  padding: 1px 6px;
+  border-radius: var(--lkv-radius-full);
+  background: var(--lkv-secondary-subtle);
+  font: 600 10.5px/1.4 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--lkv-text-secondary);
+}
+
+/* « Voir tout » de la maquette (L941) : 12 px, accent sauge, cible 44 px. */
+.lkdv-cv2-group-head > .lkdv-cv2x-see-all {
+  color: var(--lkv-action);
+  font: 600 12px/1 var(--font-sans);
 }
 
 .lkdv-cv2x-hl {
@@ -1191,38 +1545,84 @@
   cursor: default;
 }
 
-.lkdv-cv2x-peek-box {
+/* Maquette (`clubs-peek.png` + L233-239/L1771) : boîte de 310 px, carte
+   d'aperçu avec bandeau 104 px, puis carte d'actions séparée (libellé à
+   gauche, icône à droite, 44 px par ligne). */
+.lkdv-cv2-peek-box.lkdv-cv2x-peek-box {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
+  width: min(310px, 100%);
+  padding: 0;
+  background: none;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 .lkdv-cv2x-peek-preview {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
   min-width: 0;
+  padding: 13px 15px;
+  border-radius: 22px;
+  background: var(--cv2-tile-bg);
+  -webkit-backdrop-filter: var(--cv2-tile-blur);
+  backdrop-filter: var(--cv2-tile-blur);
+  box-shadow: var(--cv2-tile-shadow), inset 0 0 0 0.5px var(--cv2-tile-border);
 }
 
 .lkdv-cv2x-peek-media {
+  position: relative;
   flex: none;
-  width: 86px;
-  height: 68px;
+  width: 100%;
+  height: 104px;
+  margin-bottom: 8px;
   display: grid;
   place-items: center;
   overflow: hidden;
-  border-radius: 14px;
-  background: var(--lkv-surface-muted);
+  border-radius: 15px;
+  background: var(--lkv-forest-900);
 }
 
-.lkdv-cv2x-peek-crest {
+.lkdv-cv2x-peek-media[data-kind='membre'],
+.lkdv-cv2x-peek-media[data-kind='post'] {
+  background: var(--lkv-secondary-subtle);
+}
+
+.lkdv-cv2x-peek-avatar {
   display: grid;
   place-items: center;
-  width: 56px;
-  height: 56px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
-  background: var(--lkv-secondary-subtle);
+  background: var(--cv2-light-glass-light);
   color: var(--lkv-forest-900);
+  font: 700 18px/1 var(--font-display);
+}
+
+.lkdv-cv2x-peek-stamp {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+  gap: 2px;
+  color: var(--lkv-text-inverted);
+}
+
+.lkdv-cv2x-peek-stamp b {
+  font: 700 20px/1 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.lkdv-cv2x-peek-stamp i {
+  font: 600 10.5px/1 var(--font-sans);
+  font-style: normal;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--lkv-primary-subtle);
 }
 
 .lkdv-cv2x-peek-text {
@@ -1233,13 +1633,64 @@
 }
 
 .lkdv-cv2x-peek-text b {
-  font: 650 14px/1.3 var(--font-display);
+  font: 600 15px/1.2 var(--font-sans);
   color: var(--lkv-text-primary);
 }
 
 .lkdv-cv2x-peek-text small {
-  font: 400 11px/1.35 var(--font-sans);
+  font: 400 12.5px/1.35 var(--font-sans);
   color: var(--lkv-text-secondary);
+}
+
+.lkdv-cv2-peek-actions.lkdv-cv2x-peek-actions {
+  margin-top: 0;
+  gap: 0;
+  border-radius: 18px;
+  overflow: hidden;
+  background: var(--cv2-tile-bg);
+  -webkit-backdrop-filter: var(--cv2-tile-blur);
+  backdrop-filter: var(--cv2-tile-blur);
+  box-shadow: var(--cv2-tile-shadow), inset 0 0 0 0.5px var(--cv2-tile-border);
+}
+
+.lkdv-cv2-peek-actions > .lkdv-cv2x-peek-action {
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 15px;
+  border-radius: 0;
+  font: 400 15px/1 var(--font-sans);
+  color: var(--lkv-text-primary);
+}
+
+.lkdv-cv2-peek-actions > .lkdv-cv2x-peek-action + .lkdv-cv2x-peek-action {
+  box-shadow: 0 -0.5px 0 var(--lkv-border-subtle);
+}
+
+.lkdv-cv2-peek-actions > .lkdv-cv2x-peek-action > span {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.lkdv-cv2-peek-actions > .lkdv-cv2x-peek-action svg {
+  order: 2;
+  width: 18px;
+  height: 18px;
+  flex: none;
+  stroke: var(--lkv-secondary);
+}
+
+.lkdv-cv2-peek-actions > .lkdv-cv2x-peek-action[data-primary] {
+  font-weight: 600;
+  color: var(--lkv-forest-900);
+}
+
+.lkdv-cv2-peek-actions > .lkdv-cv2x-peek-action[data-tone='danger'],
+.lkdv-cv2-peek-actions > .lkdv-cv2x-peek-action[data-tone='danger'] svg {
+  color: var(--lkv-danger-dark);
+  stroke: var(--lkv-danger-dark);
 }
 
 /* ── États annexes ─────────────────────────────────────────────────────── */
@@ -1263,6 +1714,58 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+/* Maquette `etat-st-load.png` : 6 tuiles uniformes en 2 colonnes (ratio
+   4 / 5,6), shimmer vert. */
+.lkdv-cv2x-skeleton--tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.lkdv-cv2x-pane .lkdv-cv2x-skeleton-tile {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 5.6;
+  border-radius: 18px;
+  background: linear-gradient(
+    90deg,
+    var(--lkv-secondary-subtle),
+    var(--sage-50),
+    var(--lkv-secondary-subtle)
+  );
+  background-size: 220% 100%;
+  animation: lkdv-cv2-shimmer 1.3s ease-in-out infinite;
+}
+
+/* Maquette (`recherche-erreur.png`) : « Réessayer » est une pastille fantôme
+   (verre transparent, filet), pas une pastille blanche pleine. La cible reste
+   à 44 px (accessibilité). */
+.lkdv-cv2x-error-retry {
+  background: none;
+  color: var(--lkv-forest-900);
+  box-shadow: inset 0 0 0 0.5px var(--lkv-border);
+}
+
+/* Maquette `etat-st-empty.png` : le bloc se place sous la capsule, pas au
+   centre vertical du volet. */
+.lkdv-cv2x-pane > .lkdv-cv2-empty,
+.lkdv-cv2x-pane > .lkdv-cv2-error-state {
+  flex: 0 0 auto;
+  justify-content: flex-start;
+  min-height: 0;
+  padding: 14px 18px 24px;
+}
+
+.lkdv-cv2x-empty-ill {
+  color: var(--lkv-secondary);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .lkdv-cv2x-list-foot {

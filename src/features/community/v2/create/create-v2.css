@@ -10,7 +10,19 @@
 
 /* ── Racine du tiroir ───────────────────────────────────────────────────── */
 
+/*
+ * Place réservée **sous le contenu** pour la mini-capsule d'étapes (30 px, à
+ * 72 px du bas de la feuille quand le pied est présent : elle mord donc les
+ * 38 derniers pixels du pane). La maquette réserve 120 px
+ * (`.cr-vp .lp-pane { padding: 2px 14px 120px }`, HTML L1130) ; la coque réduit
+ * son propre padding à 16 px quand un pied est présent
+ * (`communaute-v2-shell.css`, `.has-footer .lkdv-cv2-pane`), d'où ces 76 px sur
+ * le pane Création : 16 + 76 = 92 px > 38 px, avec marge de confort (T2a).
+ * Vérifié sur Story Média, Kit Inventaire, Club Univers, Sortie RDV,
+ * Publication Légende.
+ */
 .lkdv-cv2c-form {
+  --cv2c-mini-clearance: 76px;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -23,10 +35,7 @@
   gap: 14px;
   min-width: 0;
   margin: 0;
-  /* La mini-capsule 30 px (30 px, à 72 px du bas) passe au-dessus du dernier
-     champ : on réserve la même marge que `.lkdv-cv2-pane` (76 px), la coque
-     réduisant son propre padding quand un pied est présent. */
-  padding: 0 0 76px;
+  padding: 0 0 var(--cv2c-mini-clearance, 76px);
   border: 0;
 }
 
@@ -87,6 +96,11 @@
 /* ── Compteur d'erreurs, brouillon, envoi ───────────────────────────────── */
 
 .lkdv-cv2c-error-summary {
+  /* Collé en haut du pane : le compteur reste lisible quand le moteur amène le
+     focus au premier champ fautif (T4a/T10b). */
+  position: sticky;
+  top: 0;
+  z-index: 6;
   width: 100%;
   justify-content: flex-start;
   border: 0;
@@ -136,15 +150,6 @@
   pointer-events: none;
 }
 
-.lkdv-cv2c-preview-caption {
-  margin: 0;
-  text-align: center;
-  font: 500 10px/1.2 var(--font-sans);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--lkv-text-muted);
-}
-
 .lkdv-cv2c-recap {
   display: flex;
   flex-direction: column;
@@ -181,6 +186,12 @@
 .lkdv-cv2c-foot-actions > .lkdv-cv2c-back {
   flex: 0 0 auto;
   min-width: 92px;
+}
+
+/* Maquette : `Opacité 0,4` sur un « Retour » désactivé (HTML L1144). */
+.lkdv-cv2c-foot-actions > .lkdv-cv2c-back[disabled] {
+  opacity: var(--opacity-disabled);
+  cursor: default;
 }
 
 .lkdv-cv2c-foot-actions > .lkdv-cv2c-next {
@@ -500,6 +511,47 @@
   color: var(--lkv-text-secondary);
 }
 
+/* « Créer dans Sortie », sous la note de l'option Événement (maquette L2814). */
+.lkdv-cv2c-format-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  min-height: var(--lkv-touch-min);
+}
+
+/* Réglages inertes de l'étape Diffusion (présentation maquette, L2832-2836). */
+.lkdv-cv2c-inert-switches {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.lkdv-cv2c-inert-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.lkdv-cv2c-inert-row b {
+  display: block;
+  font: 600 13px/1.25 var(--font-sans);
+  color: var(--lkv-text-primary);
+}
+
+.lkdv-cv2c-inert-row small {
+  display: block;
+  font: 400 11px/1.3 var(--font-sans);
+  color: var(--lkv-text-secondary);
+}
+
+.lkdv-cv2c-inert-row .lkdv-cv2c-switch {
+  opacity: var(--opacity-disabled);
+  cursor: default;
+}
+
 .lkdv-cv2c-audience-list {
   display: flex;
   flex-direction: column;
@@ -551,7 +603,7 @@
   background: radial-gradient(circle at center, var(--lkv-forest-900) 0 6px, var(--lkv-surface-paper) 6.5px);
 }
 
-/* ── Médias (grille, réglages) ──────────────────────────────────────────── */
+/* ── Médias en lignes (maquette `.mrow`, HTML L1205-1211 et L2787) ──────── */
 
 .lkdv-cv2c-media {
   display: flex;
@@ -560,15 +612,149 @@
   min-width: 0;
 }
 
-.lkdv-cv2c-media-head {
+.lkdv-cv2c-medialist {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
   gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.lkdv-cv2c-media-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+/* Grille de la maquette : poignée 44 · vignette 56 · texte 1fr · supprimer 44. */
+.lkdv-cv2c-medialist-row {
+  display: grid;
+  grid-template-columns: 44px 56px minmax(0, 1fr) 44px;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 4px 6px 0;
+  border-radius: var(--cv2-radius-tile);
+  background: var(--cv2-field-bg);
+  box-shadow: inset 0 0 0 0.5px var(--lkv-border);
+}
+
+.lkdv-cv2c-medialist-grip,
+.lkdv-cv2c-medialist-del {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: var(--lkv-radius-full);
+  background: none;
+  color: var(--lkv-text-secondary);
+  cursor: pointer;
+}
+
+.lkdv-cv2c-medialist-grip[data-dragging='true'] {
+  color: var(--lkv-forest-900);
+  background: var(--lkv-secondary-subtle);
+}
+
+.lkdv-cv2c-medialist-thumb {
+  position: relative;
+  display: block;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--lkv-radius-md);
+  overflow: hidden;
+  background: var(--lkv-surface-muted);
+}
+
+.lkdv-cv2c-medialist-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lkdv-cv2c-medialist-cover {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 2px 3px;
+  background: var(--lkv-overlay-scrim);
+  color: var(--lkv-text-inverted);
+  font: 600 8px/1.15 var(--font-sans);
+  font-style: normal;
+  text-align: center;
+}
+
+.lkdv-cv2c-medialist-progress {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  background: var(--lkv-forest-900);
+}
+
+.lkdv-cv2c-medialist-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.lkdv-cv2c-medialist-info b {
+  font: 600 13px/1.2 var(--font-sans);
+  color: var(--lkv-text-primary);
+}
+
+.lkdv-cv2c-medialist-info small {
+  font: 500 11px/1.2 var(--font-sans);
+  color: var(--lkv-text-secondary);
+}
+
+.lkdv-cv2c-medialist-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 10px;
+}
+
+/* « Décrire l'image », « Réessayer », « Couverture » : cible 28 px + marge. */
+.lkdv-cv2c-linkbtn {
+  min-height: 28px;
+  padding: 4px 0;
+  border: 0;
+  background: none;
+  color: var(--lkv-forest-900);
+  font: 600 11px/1.2 var(--font-sans);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.lkdv-cv2c-medialist-crop {
+  display: inline-flex;
+  gap: 4px;
+  margin-top: 3px;
+}
+
+.lkdv-cv2c-medialist-crop button {
+  min-width: 44px;
+  min-height: 28px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--lkv-radius-full);
+  background: var(--lkv-surface-muted);
+  color: var(--lkv-text-secondary);
+  font: 600 10.5px/1 var(--font-sans);
+  box-shadow: inset 0 0 0 0.5px var(--lkv-border);
+  cursor: pointer;
+}
+
+.lkdv-cv2c-medialist-crop button[aria-pressed='true'] {
+  background: var(--lkv-secondary-subtle);
+  color: var(--lkv-forest-900);
+  box-shadow: inset 0 0 0 1px var(--lkv-secondary);
+}
+
+.lkdv-cv2c-medialist-alt {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 4px 6px 52px;
 }
 
 .lkdv-cv2c-media-empty {
@@ -704,11 +890,80 @@
 
 /* ── Story : scène 9:16, calques, stickers, dock ────────────────────────── */
 
+/* Aperçu compact de l'étape Média (maquette `.sprev` 112 px, HTML L1249). */
+.lkdv-cv2c-story-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px;
+  border-radius: var(--cv2-radius-tile);
+  background: var(--cv2-field-bg);
+  box-shadow: inset 0 0 0 0.5px var(--cv2-field-border);
+}
+
+.lkdv-cv2c-story-thumb {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 100px;
+  border-radius: var(--lkv-radius-sm);
+  overflow: hidden;
+  background: var(--lkv-surface-muted);
+  color: var(--lkv-text-secondary);
+}
+
+.lkdv-cv2c-story-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lkdv-cv2c-story-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.lkdv-cv2c-story-meta b {
+  font: 600 14px/1.2 var(--font-display);
+  color: var(--lkv-text-primary);
+}
+
+.lkdv-cv2c-story-meta small {
+  font: 400 11px/1.3 var(--font-sans);
+  color: var(--lkv-text-secondary);
+}
+
+/* Deux pilules Galerie / Caméra (maquette `.src-btns`, HTML L1227/L2890). */
+.lkdv-cv2c-src-btns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.lkdv-cv2c-src-btns .lkdv-cv2-pill {
+  width: 100%;
+  gap: 6px;
+}
+
+/* Aperçu figé de l'étape Diffusion (« Aperçu final exact », HTML L2907). */
+.lkdv-cv2c-final-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
 .lkdv-cv2c-story-stage {
   position: relative;
-  width: 100%;
+  /* Cadre 9:16 de la maquette : 300 px de haut, largeur déduite
+     (`.crop916 { height: 300px; aspect-ratio: 9/16 }`, HTML L1233). */
+  height: 300px;
+  width: auto;
+  max-width: 100%;
   aspect-ratio: 9 / 16;
-  max-height: 62vh;
   margin: 0 auto;
   border-radius: var(--cv2-radius-tile-lg);
   overflow: hidden;
@@ -823,14 +1078,17 @@
   gap: 10px;
 }
 
+/* Cadrage : − / zoom / + / Remplacer, en ligne (maquette `.zoomc`, L1239). */
 .lkdv-cv2c-zoom-row {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .lkdv-cv2c-zoom-row button {
-  min-height: 36px;
+  min-width: 44px;
+  min-height: var(--lkv-touch-min);
   border: 0;
   border-radius: var(--cv2-field-radius);
   background: var(--cv2-field-bg);
@@ -840,10 +1098,16 @@
   cursor: pointer;
 }
 
-.lkdv-cv2c-zoom-row button[aria-pressed='true'] {
-  background: var(--lkv-secondary-subtle);
+.lkdv-cv2c-zoom-row .lkdv-cv2c-zoom-value {
+  min-width: 58px;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   color: var(--lkv-forest-900);
-  box-shadow: inset 0 0 0 1px var(--lkv-secondary);
+}
+
+.lkdv-cv2c-zoom-row button:disabled {
+  opacity: var(--opacity-disabled);
+  cursor: default;
 }
 
 .lkdv-cv2c-trim {
@@ -1203,6 +1467,17 @@
   border-top: 0;
 }
 
+/* Catégorie vide : « Glisse un objet ici » (maquette `kg-e`, HTML L3191). */
+.lkdv-cv2c-kit-item-empty {
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  padding: 2px 4px;
+  font: 400 11px/1.2 var(--font-sans);
+  font-style: italic;
+  color: var(--lkv-text-muted);
+}
+
 .lkdv-cv2c-kit-item-name {
   flex: 1 1 auto;
   min-width: 0;
@@ -1316,6 +1591,44 @@
   box-shadow: inset 0 0 0 0.5px var(--lkv-border);
 }
 
+/* Aperçu du club : bannière 3:1 puis ligne blason + avatar carré. */
+.lkdv-cv2c-club-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lkdv-cv2c-club-banner {
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 1;
+  overflow: hidden;
+  border-radius: var(--cv2-radius-tile);
+  background: var(--lkv-surface-muted);
+}
+
+.lkdv-cv2c-club-banner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lkdv-cv2c-club-avatar {
+  flex: none;
+  display: block;
+  width: 44px;
+  height: 44px;
+  overflow: hidden;
+  border-radius: var(--lkv-radius-md);
+  background: var(--lkv-surface-muted);
+}
+
+.lkdv-cv2c-club-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .lkdv-cv2c-crest-row b {
   font: 600 14px/1.25 var(--font-display);
   color: var(--lkv-text-primary);
@@ -1411,9 +1724,10 @@
 
 /* ── Sortie : difficulté, capacité, rendez-vous, aperçu ─────────────────── */
 
+/* Échelle à 5 niveaux de la maquette (`.ladder`/`.rung`, HTML L1331-1335). */
 .lkdv-cv2c-difficulty {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 6px;
 }
 
@@ -1421,9 +1735,10 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
-  min-height: 62px;
-  padding: 8px 6px;
+  justify-content: center;
+  gap: 2px;
+  min-height: 60px;
+  padding: 6px 4px;
   border: 0;
   border-radius: var(--cv2-field-radius);
   background: var(--cv2-field-bg);
@@ -1439,12 +1754,24 @@
 }
 
 .lkdv-cv2c-difficulty b {
-  font: 600 12px/1.1 var(--font-sans);
+  font: 700 15px/1 var(--font-mono);
+  font-variant-numeric: tabular-nums;
 }
 
 .lkdv-cv2c-difficulty small {
-  font: 400 9.5px/1.25 var(--font-sans);
+  font: 600 10px/1.15 var(--font-sans);
   text-align: center;
+}
+
+/* Définition du niveau choisi, sous l'échelle (maquette `ladder-def`). */
+.lkdv-cv2c-difficulty-def {
+  margin: 2px 0 0;
+  font: 400 11px/1.35 var(--font-sans);
+  color: var(--lkv-text-secondary);
+}
+
+.lkdv-cv2c-difficulty-def b {
+  color: var(--lkv-text-primary);
 }
 
 .lkdv-cv2c-capacity-row {

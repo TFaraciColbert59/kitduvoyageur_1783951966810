@@ -1153,65 +1153,359 @@ export async function dragSheetDown(page: Page, pixels = 260): Promise<void> {
   await page.mouse.up();
 }
 
-/** Vérifie l'absence de débordement horizontal (360/390/430). */
+/**
+ * Différence `scrollWidth - innerWidth` du document (négative ou nulle si aucun
+ * débordement). Valeur **non rognée** : un `Math.max(0, …)` masquerait le
+ * débordement et rendrait l'assertion `<= 0` toujours vraie.
+ */
 export async function horizontalOverflow(page: Page): Promise<number> {
   return page.evaluate(() => {
     const doc = document.documentElement;
-    return Math.max(0, doc.scrollWidth - window.innerWidth);
+    return doc.scrollWidth - window.innerWidth;
   });
 }
 
+// ── Garde anti-recouvrement (FID-074, ferme la classe du P1 FID-001) ───────
+
+export type CoverageReason =
+  | 'ok'
+  | 'missing'
+  | 'not-visible'
+  | 'pointer-events-none'
+  | 'outside-viewport'
+  | 'covered';
+
+export interface CoverageTarget {
+  tag: string;
+  testid: string | null;
+  text: string;
+  rect: { x: number; y: number; width: number; height: number } | null;
+}
+
+export interface CoverageHit {
+  tag: string;
+  testid: string | null;
+  text: string;
+}
+
+export interface CoverageReport {
+  reason: CoverageReason;
+  target: CoverageTarget;
+  hit: CoverageHit | null;
+  pointerEvents: string;
+}
+
+export interface CoverageOptions {
+  /** Libellé lisible dans le message d'échec (défaut : testid ou texte). */
+  label?: string;
+  /** Amène l'élément dans la zone visible avant la mesure (défaut : `true`). */
+  scroll?: boolean;
+}
+
+/**
+ * Mesure la **cliquabilité réelle** d'un élément : `elementFromPoint` au centre.
+ *
+ * Pourquoi (FID-074 / FID-001) : `toBeVisible()` ne voit pas un élément recouvert.
+ * Le 2026-11-08, `.lkdv-cv2x-cover-fallback` (`position:absolute; inset:0`) sortait
+ * de sa vignette 52×48 faute de conteneur positionné, s'étirait sur tout le corps
+ * du tiroir et interceptait le clic de la bascule « Sur la carte » — le test
+ * restait vert. La garde ci-dessous rend cette classe de régression rouge.
+ *
+ * Le hit-test natif de `elementFromPoint` ignore déjà les descendants décoratifs
+ * en `pointer-events:none` : si le centre tombe sur eux, c'est l'élément
+ * réellement cliquable dessous qui est renvoyé. On vérifie donc :
+ * 1. l'élément cible n'est pas lui-même en `pointer-events:none` (clic à travers) ;
+ * 2. son centre est dans le viewport ;
+ * 3. le plus haut élément au centre est la cible ou l'un de ses descendants.
+ */
+export async function coverageOf(
+  page: Page,
+  target: Locator,
+  options: CoverageOptions = {},
+): Promise<CoverageReport> {
+  const locator = target.first();
+  if (options.scroll !== false) {
+    await locator.scrollIntoViewIfNeeded().catch(() => undefined);
+  }
+  const handle = await locator.elementHandle().catch(() => null);
+  if (!handle) {
+    return {
+      reason: 'missing',
+      target: { tag: '', testid: null, text: options.label ?? '', rect: null },
+      hit: null,
+      pointerEvents: '',
+    };
+  }
+  const report = await page.evaluate((node): CoverageReport => {
+    const element = node as HTMLElement;
+    const rect = element.getBoundingClientRect();
+    const style = getComputedStyle(element);
+    const describe = (entry: Element | null): CoverageHit | null =>
+      entry
+        ? {
+            tag: entry.tagName,
+            testid: entry.closest('[data-testid]')?.getAttribute('data-testid') ?? null,
+            text: (entry.textContent ?? '').trim().slice(0, 40),
+          }
+        : null;
+    const base: CoverageReport = {
+      reason: 'ok',
+      target: {
+        tag: element.tagName,
+        testid: element.closest('[data-testid]')?.getAttribute('data-testid') ?? null,
+        text: (element.textContent ?? '').trim().slice(0, 40),
+        rect: { x: rect.x, y: rect.y, width: rect.width, height: rect.height },
+      },
+      hit: null,
+      pointerEvents: style.pointerEvents,
+    };
+    if (rect.width < 1 || rect.height < 1 || style.visibility === 'hidden' || style.display === 'none') {
+      return { ...base, reason: 'not-visible' };
+    }
+    if (style.pointerEvents === 'none') {
+      return { ...base, reason: 'pointer-events-none' };
+    }
+    const x = rect.left + rect.width / 2;
+    const y = rect.top + rect.height / 2;
+    if (x < 0 || y < 0 || x > window.innerWidth || y > window.innerHeight) {
+      return { ...base, reason: 'outside-viewport' };
+    }
+    const hit = document.elementFromPoint(x, y);
+    const inside = Boolean(hit && (hit === element || element.contains(hit)));
+    return { ...base, hit: describe(hit), reason: inside ? 'ok' : 'covered' };
+  }, handle);
+  await handle.dispose().catch(() => undefined);
+  return report;
+}
+
+function coverageFailureMessage(report: CoverageReport, label: string): string {
+  const hit = report.hit ? `<${report.hit.tag}${report.hit.testid ? ` data-testid="${report.hit.testid}"` : ''}>` : 'rien (elementFromPoint null)';
+  switch (report.reason) {
+    case 'covered':
+      return (
+        `${label} RECOUVERT au centre par ${hit} — l'élément n'est pas cliquable. ` +
+        'Classe de régression FID-001 : un descendant positionné en absolu s’échappe de son conteneur ' +
+        '(ex. `.lkdv-cv2x-cover-fallback` hors de `.lkdv-cv2x-search-cover`) et intercepte le geste.'
+      );
+    case 'pointer-events-none':
+      return `${label} est en pointer-events:none : le clic traverse l'élément sans l'atteindre.`;
+    case 'outside-viewport':
+      return `${label} est hors du viewport au centre (${report.target.rect?.x}, ${report.target.rect?.y}) : non cliquable en l'état.`;
+    case 'not-visible':
+      return `${label} n'a pas de boîte visible (largeur/hauteur nulle ou display/visibility masqué).`;
+    default:
+      return `${label} introuvable dans le DOM.`;
+  }
+}
+
+/**
+ * Garde anti-recouvrement générique (FID-074) : échoue si le CTA est recouvert.
+ * À appeler **avant** un clic natif, sur les CTA critiques (bascules, Retour,
+ * rejoindre, s’inscrire, CTA d’état vide, dernier champ + pied de formulaire).
+ */
+export async function expectNotCovered(
+  page: Page,
+  target: Locator,
+  options: CoverageOptions = {},
+): Promise<void> {
+  const report = await coverageOf(page, target, options);
+  const label = options.label ?? report.target.testid ?? report.target.text ?? 'élément ciblé';
+  expect(report.reason, coverageFailureMessage(report, label)).toBe('ok');
+}
+
+/**
+ * Vérifie que l'élément qui reçoit le focus clavier est bien dans le tiroir v2
+ * (piège de focus) et renvoie ses propriétés (anneau, testid, libellé).
+ */
+export interface ActiveElementInfo {
+  tag: string | null;
+  testid: string | null;
+  text: string;
+  ariaLabel: string | null;
+  inSheet: boolean;
+  outlineStyle: string;
+  outlineWidth: string;
+}
+
+export async function activeElement(page: Page): Promise<ActiveElementInfo> {
+  return page.evaluate(() => {
+    const element = document.activeElement as HTMLElement | null;
+    if (!element || element === document.body) {
+      return {
+        tag: element?.tagName ?? null,
+        testid: null,
+        text: '',
+        ariaLabel: null,
+        inSheet: false,
+        outlineStyle: 'none',
+        outlineWidth: '0px',
+      };
+    }
+    const style = getComputedStyle(element);
+    return {
+      tag: element.tagName,
+      testid: element.closest('[data-testid]')?.getAttribute('data-testid') ?? null,
+      text: (element.textContent ?? '').trim().slice(0, 40),
+      ariaLabel: element.getAttribute('aria-label'),
+      inSheet: Boolean(
+        element.closest(
+          '[data-testid="communaute-v2-explore"], [data-testid="communaute-v2-create"], [data-testid="cv2-sheet"]',
+        ),
+      ),
+      outlineStyle: style.outlineStyle,
+      outlineWidth: style.outlineWidth,
+    };
+  });
+}
+
+/**
+ * Presse Échap et prouve que la couche active l'a **consommée**
+ * (`event.defaultPrevented`), c.-à-d. que le tiroir n'a pas reçu l'ordre de
+ * fermer. Le listener est posé en phase de capture sur `window` ; la lecture
+ * se fait dans une microtâche, après tout `preventDefault` de la couche.
+ */
+export async function pressEscapeAndExpectConsumed(page: Page): Promise<void> {
+  const captured = page.evaluate(
+    () =>
+      new Promise<boolean>((resolve) => {
+        let settled = false;
+        const finish = (value: boolean) => {
+          if (settled) return;
+          settled = true;
+          resolve(value);
+        };
+        window.addEventListener(
+          'keydown',
+          (event) => {
+            if (event.key !== 'Escape') return;
+            // Lecture en macrotâche : les checkpoints de microtâches du
+            // navigateur peuvent s'intercaler ENTRE deux listeners d'un même
+            // événement ; `setTimeout(0)` garantit que toute la propagation
+            // (et donc tous les `preventDefault`) est terminée.
+            window.setTimeout(() => finish(event.defaultPrevented), 0);
+          },
+          true,
+        );
+        window.setTimeout(() => finish(false), 5_000);
+      }),
+  );
+  await page.keyboard.press('Escape');
+  expect(await captured, 'Échap doit être consommée par la couche active (defaultPrevented)').toBe(true);
+}
+
+// ── Écritures réseau (FID-077 : invité, aucune mutation) ───────────────────
+
+/** RPC de mutation (aucune ne doit partir en session invité). */
+const MUTATION_RPC = /^(join_|leave_|create_|update_|delete_|review_|cancel_|register_|unregister_|signup_|like_|unlike_|publish_|accept_|decline_|request_|invite_|block_|report_|send_)/;
+
+/** Tables de présence : heartbeat, pas une écriture de contenu utilisateur. */
+const PRESENCE_TABLES = new Set(['user_presence', 'user_presence_heartbeats']);
+
+/** Journalise les écritures de contenu interceptées (hors présence). */
+export function contentWrites(mock: CommunityV2Mock): FixtureCall[] {
+  return mock.calls.filter((call) => {
+    const method = call.method.toUpperCase();
+    if (call.kind === 'rpc') return MUTATION_RPC.test(call.name);
+    if (call.kind === 'table') return !PRESENCE_TABLES.has(call.name) && !['GET', 'HEAD', 'OPTIONS'].includes(method);
+    if (call.kind === 'storage') return !['GET', 'HEAD', 'OPTIONS'].includes(method);
+    return false;
+  });
+}
+
+/** Échoue si une écriture de contenu est partie (preuve « rien n'est parti »). */
+export function expectNoWrites(mock: CommunityV2Mock, label = 'aucune écriture attendue'): void {
+  const writes = contentWrites(mock);
+  expect(
+    writes,
+    `${label} — écritures interceptées : ${writes.map((call) => `${call.kind}:${call.name}:${call.method}`).join(', ')}`,
+  ).toEqual([]);
+}
+
+// ── Gestes du LensPager (FID-079 : seuil 48 px + verrou d'axe 8 px) ──────
+
+export interface LensPagerDragOptions {
+  /** Déplacement horizontal final en px (négatif = volet suivant). */
+  dx: number;
+  /** Déplacement vertical final en px (verrouille l'axe si |dy| > |dx|). */
+  dy?: number;
+  /** Nombre d'événements `pointermove` du geste (défaut : 6). */
+  moves?: number;
+  /** Exécuté entre le dernier `pointermove` et le `pointerup` (capture en glisser). */
+  beforeRelease?: () => Promise<void>;
+}
+
+/**
+ * Rejoue le contrat du LensPager des filtres/étapes (`pointerdown` → `moves` →
+ * `pointerup`) avec un vecteur paramétrable.
+ *
+ * Le geste natif Playwright est peu fiable sur les tuiles `Link` (émulation
+ * mobile) : on dispatche les événements pointer directement sur le pager, ce qui
+ * exerce sa logique réelle de seuil (48 px), de verrou d'axe (8 px) et
+ * d'`onIndexChange`. Le dernier `[data-lens-index]` du DOM est le pager des
+ * filtres (le seul monté dans le corps du tiroir).
+ */
+export async function dragLensPager(page: Page, options: LensPagerDragOptions): Promise<void> {
+  const { dx, dy = 0, moves = 6, beforeRelease } = options;
+  const gesture = async (phase: 'start' | 'end') => {
+    await page.evaluate(
+      ({ currentPhase, deltaX, deltaY, moveCount }) => {
+        const pagers = Array.from(document.querySelectorAll<HTMLElement>('[data-lens-index]'));
+        const pager = pagers[pagers.length - 1];
+        if (!pager) throw new Error('LensPager de filtres introuvable');
+        const rect = pager.getBoundingClientRect();
+        const startX = rect.left + rect.width * 0.5;
+        const startY = rect.top + Math.min(rect.height * 0.5, 240);
+        const base: PointerEventInit = {
+          bubbles: true,
+          cancelable: true,
+          composed: true,
+          pointerId: 77,
+          pointerType: 'touch',
+          isPrimary: true,
+          button: 0,
+          clientX: startX,
+          clientY: startY,
+        };
+        if (currentPhase === 'start') {
+          pager.dispatchEvent(new PointerEvent('pointerdown', { ...base, buttons: 1 }));
+          for (let step = 1; step <= moveCount; step += 1) {
+            const ratio = step / moveCount;
+            pager.dispatchEvent(
+              new PointerEvent('pointermove', {
+                ...base,
+                buttons: 1,
+                clientX: startX + deltaX * ratio,
+                clientY: startY + deltaY * ratio,
+              }),
+            );
+          }
+        } else {
+          pager.dispatchEvent(
+            new PointerEvent('pointerup', {
+              ...base,
+              buttons: 0,
+              clientX: startX + deltaX,
+              clientY: startY + deltaY,
+            }),
+          );
+        }
+      },
+      { currentPhase: phase, deltaX: dx, deltaY: dy, moveCount: moves },
+    );
+  };
+  await gesture('start');
+  if (beforeRelease) await beforeRelease();
+  await gesture('end');
+  await page.waitForTimeout(450);
+}
 
 /**
  * Balaye le LensPager de filtres (mini-capsule) dans le sens demandé.
- *
- * Le geste natif (souris/tactile Playwright) est peu fiable sur les tuiles
- * `Link` de la page (le navigateur mobile émule les événements différemment) :
- * on rejoue le contrat du pager — `pointerdown` puis `pointermove` au-delà du
- * seuil 48 px (`DEFAULT_SWIPE_THRESHOLD_PX`) puis `pointerup` — directement sur
- * son élément, ce qui exerce bien sa logique de seuil/axe/`onIndexChange`.
+ * Conservé comme sucre au-dessus de `dragLensPager` (mêmes événements).
  */
 export async function swipeFilterPager(
   page: Page,
   direction: 'next' | 'previous',
 ): Promise<void> {
-  await page.evaluate((dir) => {
-    const pagers = Array.from(document.querySelectorAll<HTMLElement>('[data-lens-index]'));
-    // Le pager des filtres est le plus profond (le dernier du DOM).
-    const pager = pagers[pagers.length - 1];
-    if (!pager) throw new Error('LensPager de filtres introuvable');
-    const rect = pager.getBoundingClientRect();
-    const startX = rect.left + rect.width * (dir === 'next' ? 0.75 : 0.25);
-    const y = rect.top + Math.min(rect.height * 0.5, 240);
-    const delta = dir === 'next' ? -180 : 180;
-    const base: PointerEventInit = {
-      bubbles: true,
-      cancelable: true,
-      composed: true,
-      pointerId: 77,
-      pointerType: 'touch',
-      isPrimary: true,
-      button: 0,
-      buttons: 1,
-      clientX: startX,
-      clientY: y,
-    };
-    pager.dispatchEvent(new PointerEvent('pointerdown', base));
-    for (let step = 10; step <= Math.abs(delta); step += 10) {
-      pager.dispatchEvent(
-        new PointerEvent('pointermove', {
-          ...base,
-          clientX: startX + Math.sign(delta) * step,
-        }),
-      );
-    }
-    pager.dispatchEvent(
-      new PointerEvent('pointerup', {
-        ...base,
-        buttons: 0,
-        clientX: startX + delta,
-      }),
-    );
-  }, direction);
-  await page.waitForTimeout(450);
+  await dragLensPager(page, { dx: direction === 'next' ? -180 : 180, moves: 18 });
 }

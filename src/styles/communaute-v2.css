@@ -998,8 +998,12 @@ select.lkdv-cv2-input {
   color: var(--lkv-text-secondary);
 }
 
+/* « Proche limite » n'est pas une erreur : déclinaison verte du dossier
+   (`--lkv-action`, AA 7:1) — aucune teinte non verte hors danger
+   (`00-MISSION` § 3). Le dépassement reste en danger. */
 .lkdv-cv2-counter[data-near='true'] {
-  color: var(--lkv-warning-dark);
+  color: var(--lkv-action);
+  font-weight: 600;
 }
 
 .lkdv-cv2-counter[data-over='true'] {
@@ -1362,28 +1366,56 @@ select.lkdv-cv2-input {
   color: var(--lkv-forest-900);
 }
 
+/* Bandeau « Brouillon restauré » — maquette L1119 `.banner-draft` : pilule 999,
+   fond `--soft`, anneau `--soft-line`, 600 12, 36 px de haut, bouton 44 px
+   (cible tactile du dossier) qui déborde de 4 px au-dessus/en dessous. */
 .lkdv-cv2-draft {
   display: flex;
   align-items: center;
   gap: 8px;
   min-height: 36px;
-  padding: 6px 12px;
-  border-radius: var(--cv2-field-radius);
-  background: var(--sage-50);
-  color: var(--lkv-text-primary);
-  font: 600 11.5px/1.3 var(--font-sans);
-  box-shadow: inset 0 0 0 0.5px var(--lkv-border);
+  padding: 0 6px 0 12px;
+  border-radius: var(--lkv-radius-full);
+  background: var(--cv2-soft);
+  color: var(--lkv-forest-900);
+  font: 600 12px/1.3 var(--font-sans);
+  box-shadow: inset 0 0 0 1px var(--cv2-soft-line);
+}
+
+/* Horloge de la maquette (L2710 : `ic('clock','s')`). Le markup partagé
+   (`CreateFormEngineV2`, hors périmètre) n'expose pas d'emplacement d'icône :
+   masque CSS en attendant le hook `<ExploreIcon name="clock" />`. */
+.lkdv-cv2-draft::before {
+  content: '';
+  flex: none;
+  width: 14px;
+  height: 14px;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7v5l3 2'/%3E%3C/svg%3E")
+    center / 14px 14px no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7v5l3 2'/%3E%3C/svg%3E")
+    center / 14px 14px no-repeat;
+}
+
+/* Séparateur « · » de la maquette (L2710) : le markup partagé n'a qu'un
+   `<span>` + un `<button>` ; le point est porté par le texte, pas par le
+   bouton (le nom accessible reste « Effacer »). */
+.lkdv-cv2-draft > span::after {
+  content: '·';
+  margin-left: 8px;
+  font-weight: 400;
+  color: var(--cv2-light-ink-3);
 }
 
 .lkdv-cv2-draft button {
-  margin-left: auto;
+  margin: -4px 0 -4px auto;
   min-height: var(--lkv-touch-min);
-  padding: 0 8px;
+  padding: 0 12px;
   border: 0;
   border-radius: var(--lkv-radius-full);
   background: none;
-  color: var(--lkv-forest-900);
-  font: 600 11.5px/1 var(--font-sans);
+  color: var(--lkv-action);
+  font: 700 12px/1 var(--font-sans);
   text-decoration: underline;
   cursor: pointer;
 }
@@ -1461,7 +1493,7 @@ select.lkdv-cv2-input {
 .lkdv-cv2-skeleton {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
   padding: 4px 0;
 }
 
@@ -1484,6 +1516,16 @@ select.lkdv-cv2-input {
   border-radius: var(--cv2-radius-tile-lg);
 }
 
+/* Hook de la grille 2 colonnes : tuile squelette au ratio de la maquette
+   (L1028 `.ct-skel{aspect-ratio:4/5.6;border-radius:18px}`, `skelTiles`
+   = 6 tuiles). Ne s'applique que si le rendu place la tuile dans
+   `.lkdv-cv2-grid` ; la tuile large seule garde sa hauteur fixe. */
+.lkdv-cv2-grid > .lkdv-cv2-skeleton-bar--tile {
+  height: auto;
+  aspect-ratio: 4 / 5.6;
+  border-radius: 18px;
+}
+
 .lkdv-cv2-skeleton-bar--lg {
   height: 72px;
   border-radius: var(--cv2-radius-tile);
@@ -1498,10 +1540,11 @@ select.lkdv-cv2-input {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  /* Ancré sous la barre, jamais centré verticalement : maquette L373
+     (`.empty{padding:28px 18px}`, sans `flex:1` ni `min-height`). */
+  justify-content: flex-start;
   gap: 8px;
-  flex: 1 1 auto;
-  min-height: 220px;
+  flex: 0 0 auto;
   padding: 28px 18px;
   text-align: center;
 }
@@ -1527,24 +1570,40 @@ select.lkdv-cv2-input {
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  background: var(--lkv-secondary-subtle);
-  color: var(--lkv-forest-900);
-  font: 700 17px/1 var(--font-sans);
+  font: 600 16px/1 var(--font-sans);
+}
+
+/* Vide : pastille sauge translucide + glyphe accent (maquette L374
+   `.empty .gl{background:var(--soft);color:var(--accent);font:600 16px}`). */
+.lkdv-cv2-empty-ico {
+  background: var(--cv2-soft);
+  color: var(--lkv-secondary);
+}
+
+/* Erreur : teinte danger distincte du vide (maquette L379
+   `.empty.err .gl{background:var(--bad-bg);color:var(--bad)}` → jetons
+   `--lkv-danger-bg` / `--lkv-danger`, AA 5,2:1 pour le glyphe). */
+.lkdv-cv2-error-state-ico {
+  background: var(--lkv-danger-bg);
+  color: var(--lkv-danger);
 }
 
 .lkdv-cv2-error-state {
   color: var(--lkv-text-secondary);
 }
 
+/* Hors ligne : bandeau neutre, aucune teinte non verte hors danger
+   (maquette L969 `.offline{background:var(--fill);color:var(--label2);
+   border-radius:14px;padding:8px 12px;gap:8px}`). */
 .lkdv-cv2-offline {
   display: flex;
   align-items: center;
-  gap: 6px;
-  min-height: 36px;
-  padding: 6px 12px;
-  border-radius: var(--cv2-field-radius);
-  background: var(--lkv-warning-bg);
-  color: var(--lkv-warning-dark);
+  gap: 8px;
+  flex: none;
+  padding: 8px 12px;
+  border-radius: 14px;
+  background: var(--cv2-fill);
+  color: var(--lkv-text-secondary);
   font: 600 11.5px/1.3 var(--font-sans);
 }
 
@@ -1748,9 +1807,11 @@ select.lkdv-cv2-input {
   color: var(--lkv-success);
 }
 
+/* « warn » = attention douce, pas une erreur : neutre encré (aucune teinte
+   non verte hors danger, `00-MISSION` § 3). Le rouge reste `data-tone="danger"`. */
 .lkdv-cv2-badge[data-tone='warn'] {
-  background: var(--lkv-warning-bg);
-  color: var(--lkv-warning-dark);
+  background: var(--cv2-fill);
+  color: var(--lkv-forest-900);
 }
 
 .lkdv-cv2-badge[data-tone='danger'] {

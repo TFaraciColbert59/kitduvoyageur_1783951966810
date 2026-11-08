@@ -44,11 +44,13 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('CreateSheetV2 — moteur et coque', () => {
-  it('affiche Suivant, jamais Retour à l’étape 1, et les 3 étapes en mini-capsule', async () => {
+  it('affiche Suivant, un Retour désactivé à l’étape 1 et les 3 étapes en mini-capsule', async () => {
     renderSheet();
     const next = await screen.findByRole('button', { name: 'Suivant' });
     expect(next).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Retour' })).toBeNull();
+    // Maquette : « Retour » visible mais désactivé à l'étape 1 (T3a, item 2).
+    const back = screen.getByRole('button', { name: 'Retour' });
+    expect((back as HTMLButtonElement).disabled).toBe(true);
     const steps = screen.getByRole('tablist', { name: /Étapes de la création/ });
     expect(steps.querySelectorAll('[role="tab"]')).toHaveLength(3);
     expect(screen.getByRole('tab', { name: 'Étape 1 : Format' })).toBeTruthy();
@@ -56,10 +58,12 @@ describe('CreateSheetV2 — moteur et coque', () => {
     expect(screen.getByRole('tab', { name: 'Étape 3 : Diffusion' })).toBeTruthy();
   });
 
-  it('Retour apparaît à l’étape 2 ; la capsule change d’étape sans perdre la saisie', async () => {
+  it('Retour s’active à l’étape 2 ; la capsule change d’étape sans perdre la saisie', async () => {
     renderSheet();
     fireEvent.click(await screen.findByRole('button', { name: 'Suivant' }));
-    expect(await screen.findByRole('button', { name: 'Retour' })).toBeTruthy();
+    await waitFor(() => {
+      expect((screen.getByRole('button', { name: 'Retour' }) as HTMLButtonElement).disabled).toBe(false);
+    });
     // Le contenu de l'étape 2 est rendu (champ Légende).
     expect(await screen.findByLabelText(/Légende/)).toBeTruthy();
   });
@@ -79,8 +83,24 @@ describe('CreateSheetV2 — moteur et coque', () => {
     await waitFor(() => {
       expect(document.activeElement?.id).toBe('cv2c-clubId');
     });
-    // Toujours à l'étape 1 (le pied ne propose pas Retour).
-    expect(screen.queryByRole('button', { name: 'Retour' })).toBeNull();
+    // Toujours à l'étape 1 : le Retour reste désactivé.
+    expect((screen.getByRole('button', { name: 'Retour' }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('restaure le brouillon sur l’étape quittée (N1)', async () => {
+    const draft = { ...createDefaultsV2('post'), content: 'Mon brouillon' };
+    window.localStorage.setItem(
+      draftStorageKey('post'),
+      JSON.stringify({ version: 1, kind: 'post', updatedAt: Date.now(), values: draft, step: 1 }),
+    );
+    renderSheet();
+    // Le tiroir rouvre à l'étape 2 (Contenu) : le champ Légende est rendu.
+    expect(await screen.findByLabelText(/Légende/)).toBeTruthy();
+    await waitFor(() => {
+      expect(screen.getByTestId('cv2-form-post').getAttribute('data-step')).toBe('1');
+    });
+    // Le Retour est actif puisque l'étape restaurée est la 2.
+    expect((screen.getByRole('button', { name: 'Retour' }) as HTMLButtonElement).disabled).toBe(false);
   });
 
   it('restaure un brouillon avec le bandeau « Brouillon restauré · Effacer »', async () => {

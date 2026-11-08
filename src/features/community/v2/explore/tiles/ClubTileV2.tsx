@@ -31,6 +31,16 @@ export function clubJoinLabel(club: ClubCardVM, status: MemberStatus): string {
   return 'Rejoindre';
 }
 
+/**
+ * Libellé affiché par la pilule (maquette `joinBtn`, L2386 : « Demander à
+ * rejoindre »). `clubJoinLabel` reste le libellé court (rétro-compatibilité et
+ * espaces contraints) ; ici on rend la formulation complète de la maquette.
+ */
+export function clubJoinDisplayLabel(club: ClubCardVM, status: MemberStatus): string {
+  if (status === 'none' && club.privacy === 'closed') return 'Demander à rejoindre';
+  return clubJoinLabel(club, status);
+}
+
 function activityLine(club: ClubCardVM): string {
   const events = formatCountFr(club.eventsThisMonth, 'sortie');
   const post = club.lastPostAt ? `post ${formatRelativeTime(club.lastPostAt)}` : 'aucune publication récente';
@@ -55,7 +65,7 @@ export function ClubTileV2({
 }: ClubTileV2Props) {
   const longPress = useLongPress({ onLongPress: (element) => onPeek(club, element) });
   const isMember = status === 'member' || status === 'admin';
-  const label = clubJoinLabel(club, status);
+  const label = clubJoinDisplayLabel(club, status);
   const joinAria =
     status === 'member' || status === 'admin'
       ? `Membre du club ${club.name}. Ouvrir les actions pour quitter`
@@ -92,7 +102,14 @@ export function ClubTileV2({
         }}
       >
         <span className="lkdv-cv2x-club-head">
-          <ClubCrest name={club.name} activity={club.category} seed={club.crestSeed} size={44} />
+          {/* Blason de la maquette (L2404) : 64 px pour le club du mois, 52 px
+              pour la grille — plus grand que les 44 px de la V2. */}
+          <ClubCrest
+            name={club.name}
+            activity={club.category}
+            seed={club.crestSeed}
+            size={month ? 64 : 52}
+          />
           {club.privacy === 'closed' && !isMember ? (
             <span className="lkdv-cv2x-club-lock" title="Adhésion sur validation">
               <ExploreIcon name="lock" size={12} />
@@ -118,16 +135,13 @@ export function ClubTileV2({
                   {friend.avatarUrl ? (
                     <AppImage src={friend.avatarUrl} alt="" width={28} height={28} className="lkdv-cv2x-avatar-img" />
                   ) : (
-                    friend.initials
+                    friend.initials.slice(0, 1)
                   )}
                 </span>
               ))}
             </span>
-            <small>
-              {club.friendsTotal === 1
-                ? '1 ami membre'
-                : `${club.friendsTotal} amis membres`}
-            </small>
+            {/* Maquette (L2404) : « 3 amis » (et non « 3 amis membres »). */}
+            <small>{club.friendsTotal === 1 ? '1 ami' : `${club.friendsTotal} amis`}</small>
           </span>
         ) : null}
       </Link>

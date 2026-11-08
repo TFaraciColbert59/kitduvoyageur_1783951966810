@@ -2,6 +2,7 @@
 
 import React, { useCallback } from 'react';
 import Link from 'next/link';
+import { levelLabel } from '@/features/community/v2/shared/format';
 import AppImage from '@/components/ui/AppImage';
 import type { EventCardVM, EventRegistration } from '../../shared/types';
 import {
@@ -43,6 +44,9 @@ export function EventDetailView({ event, status, spotsLeft, busy, onSignup }: Ev
   const weather = detailState.weather;
   const stamp = formatDateStamp(event.startsAt ?? `${event.eventDate}T09:00:00+01:00`);
   const time = formatTime(event.startsAt);
+  // Maquette (`explorer-sorties-detail.png`) : « 18 h 30 » dans le détail,
+  // « 18:30 » reste le format des listes.
+  const timeLabel = time ? time.replace(':', ' h ') : '';
   const fullDate = formatDateFull(event.startsAt ?? `${event.eventDate}T12:00:00+01:00`);
   const weekdays = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
   const weekday = weekdays[new Date(`${event.eventDate}T12:00:00+01:00`).getDay()] ?? '';
@@ -78,7 +82,11 @@ export function EventDetailView({ event, status, spotsLeft, busy, onSignup }: Ev
 
   return (
     <div className="lkdv-cv2x-event-detail">
-      <div className="lkdv-cv2-ticket lkdv-cv2x-event-head" data-state={event.past ? 'past' : 'open'}>
+      <div
+        className="lkdv-cv2-ticket lkdv-cv2x-event-head"
+        data-state={event.past ? 'past' : 'open'}
+        data-level={event.level ?? undefined}
+      >
         <span className="lkdv-cv2-ticket-stub" aria-hidden="true">
           <i className="lkdv-cv2-ticket-wd">{weekday.slice(0, 3)}.</i>
           <b className="lkdv-cv2-ticket-day">{stamp.day}</b>
@@ -89,10 +97,10 @@ export function EventDetailView({ event, status, spotsLeft, busy, onSignup }: Ev
         <span className="lkdv-cv2-ticket-body">
           <span className="lkdv-cv2x-event-date">{fullDate}</span>
           <span className="lkdv-cv2-meta">
-            {[time, event.location].filter(Boolean).join(' · ')}
+            {[timeLabel, event.location].filter(Boolean).join(' · ')}
           </span>
           <span className="lkdv-cv2-ticket-chips">
-            {event.level ? <i>{event.level}</i> : null}
+            {levelLabel(event.level) ? <i>{levelLabel(event.level)}</i> : null}
             {event.distanceKm != null ? <i>{formatKm(event.distanceKm)}</i> : null}
             {event.elevationGainM != null ? <i>+{event.elevationGainM} m</i> : null}
             {event.duration ? <i>{event.duration}</i> : null}
@@ -199,7 +207,7 @@ export function EventDetailView({ event, status, spotsLeft, busy, onSignup }: Ev
               <div className="lkdv-cv2x-rdv-line">
                 <span>
                   <b>{mapLabel}</b>
-                  <small>{[time, event.location].filter(Boolean).join(' · ')}</small>
+                  <small>{[timeLabel, event.location].filter(Boolean).join(' · ')}</small>
                 </span>
                 <a
                   className="lkdv-cv2-pill lkdv-cv2-pill--secondary lkdv-cv2-pill--sm"
@@ -225,7 +233,7 @@ export function EventDetailView({ event, status, spotsLeft, busy, onSignup }: Ev
                   className="lkdv-cv2x-avatar-img"
                 />
               ) : (
-                event.organizer.initials
+                event.organizer.initials.slice(0, 1)
               )}
             </span>
             <span>
@@ -249,7 +257,7 @@ export function EventDetailView({ event, status, spotsLeft, busy, onSignup }: Ev
                         className="lkdv-cv2x-avatar-img"
                       />
                     ) : (
-                      participant.initials
+                      participant.initials.slice(0, 1)
                     )}
                   </span>
                 ))}
@@ -292,7 +300,7 @@ export function EventDetailView({ event, status, spotsLeft, busy, onSignup }: Ev
                 data-testid="cv2-event-ics"
               >
                 <ExploreIcon name="calendar" size={15} />
-                Ajouter au calendrier
+                Ajouter au calendrier (.ics)
               </button>
             ) : null}
             <Link className="lkdv-cv2-pill lkdv-cv2-pill--secondary" href={`/sorties/${event.id}`}>

@@ -1,7 +1,18 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Plus, Trash2, Camera, Play, Pause, CloudSun, MapPin, Loader2 } from 'lucide-react';
+import {
+  Plus,
+  Minus,
+  Trash2,
+  Camera,
+  Image as ImageIcon,
+  Play,
+  Pause,
+  CloudSun,
+  MapPin,
+  Loader2,
+} from 'lucide-react';
 import { useFormContext, useFormState, type UseFormReturn } from 'react-hook-form';
 import type { User } from '@supabase/supabase-js';
 import { CreateFormEngineV2, type CreateFormEngineApiV2 } from '../engine/CreateFormEngineV2';
@@ -18,7 +29,7 @@ import { TextAreaFieldV2, TextFieldV2, readError } from '../fields/FieldV2';
 import { MediaFieldV2 } from '../fields/MediaFieldV2';
 import { PlaceFieldV2 } from '../fields/PlaceFieldV2';
 import { STORY_LIMITS } from '../fields/media';
-import { StoryStageV2 } from '../story/StoryStageV2';
+import { StoryStageV2, type StoryTransformV2 } from '../story/StoryStageV2';
 import { cameraAvailable, captureStoryPhoto } from '../story/camera';
 import { createClient } from '@/lib/supabase/client';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
@@ -73,20 +84,69 @@ function setMediaList(form: UseFormReturn<StoryFormValuesV2>, media: MediaItemV2
   form.setValue('media', media, { shouldDirty: true, shouldValidate: true });
 }
 
+function StoryAudienceLine({ values }: { values: StoryFormValuesV2 }) {
+  const audience =
+    AUDIENCE_OPTIONS.find((option) => option.value === values.audience)?.label ?? 'Tout le monde';
+  const replies =
+    values.replyPolicy === 'everyone'
+      ? 'réponses ouvertes'
+      : values.replyPolicy === 'followers'
+        ? 'réponses des abonnés'
+        : 'réponses fermées';
+  return (
+    <small>
+      {audience} · {replies}
+    </small>
+  );
+}
+
 function StoryMediaStep({
   user,
   spawnFiles,
+  onGallery,
+  onCamera,
+  cameraNote,
 }: {
   user: User | null;
   spawnFiles: { files: File[]; nonce: number } | null;
+  onGallery: () => void;
+  onCamera: () => void;
+  cameraNote: string | null;
 }) {
   const form = useFormContext<StoryFormValuesV2>();
-  const media = form.watch('media') ?? [];
+  const values = form.watch();
+  const media = values.media?.[0] ?? null;
+  const video = media?.type.startsWith('video/') ?? false;
+  const status = !media
+    ? 'Ajoute un média pour commencer'
+    : media.status === 'uploaded'
+      ? `${video ? 'Vidéo' : 'Photo'} · envoyé`
+      : media.status === 'uploading'
+        ? `${video ? 'Vidéo' : 'Photo'} · envoi ${Math.max(0, Math.min(100, media.progress))} %`
+        : 'Échec de l’envoi · réessaie';
   return (
     <>
+      {/* Aperçu compact de la maquette (`.sprev` 112 px, HTML L1249/L2906) :
+          la hiérarchie de l'étape Média redevient lisible (T7). */}
+      <div className="lkdv-cv2c-story-preview" data-testid="cv2-story-preview">
+        <span className="lkdv-cv2c-story-thumb" aria-hidden="true">
+          {media?.previewUrl || media?.url ? (
+            // eslint-disable-next-line @next/next/no-img-element -- aperçu local ou URL Storage
+            <img src={media.previewUrl || media.url} alt="" />
+          ) : (
+            <ImageIcon size={18} />
+          )}
+        </span>
+        <span className="lkdv-cv2c-story-meta">
+          <b>Story · 24 h</b>
+          <small>{status}</small>
+          <StoryAudienceLine values={values} />
+        </span>
+      </div>
       <MediaFieldV2
         name="media"
         label="Photo ou vidéo"
+        required
         userId={user?.id ?? ''}
         limits={STORY_LIMITS}
         max={1}
@@ -96,8 +156,8 @@ function StoryMediaStep({
           { value: '9:16', label: '9:16' },
         ]}
         showAlt={false}
-        hint="Un seul média, format vertical 9:16 (recadrage à l’étape suivante). Vidéo : 60 s maximum."
-        addLabel="Choisir dans la galerie"
+        hideAdd
+        hint="Format vertical 9:16. Tu pourras recadrer et poser tes calques à l’étape suivante. Vidéo : 60 s maximum."
         spawnFiles={spawnFiles}
         onVideoDuration={(durationMs) => {
           const current = form.getValues('media') ?? [];
@@ -111,15 +171,28 @@ function StoryMediaStep({
           }
         }}
       />
-      {media[0]?.status === 'uploaded' ? (
-        <p className="lkdv-cv2-field-hint">
-          Média prêt : passe à l’édition pour recadrer et poser tes calques.
+      {/* Deux pilules de la maquette (`.src-btns`, HTML L2890). */}
+      <div className="lkdv-cv2c-src-btns">
+        <button type="button" className="lkdv-cv2-pill lkdv-cv2-pill--secondary" onClick={onGallery}>
+          <ImageIcon size={15} aria-hidden="true" />
+          Galerie
+        </button>
+        <button type="button" className="lkdv-cv2-pill lkdv-cv2-pill--secondary" onClick={onCamera}>
+          <Camera size={15} aria-hidden="true" />
+          Caméra
+        </button>
+      </div>
+      <p className="lkdv-cv2-field-hint">
+        La caméra directe n’est proposée que dans l’application ; au navigateur, la galerie suffit.
+      </p>
+      {cameraNote ? (
+        <p className="lkdv-cv2-field-hint lkdv-cv2c-notice" role="status">
+          {cameraNote}
         </p>
       ) : null}
     </>
   );
 }
-
 function LayerTools({
   selectedId,
   onSelect,
@@ -593,6 +666,7 @@ function StoryBody({
   const [playing, setPlaying] = useState(false);
   const [spawnFiles, setSpawnFiles] = useState<{ files: File[]; nonce: number } | null>(null);
   const [cameraNote, setCameraNote] = useState<string | null>(null);
+  const [transform, setTransform] = useState<StoryTransformV2>({ scale: 1, x: 0, y: 0 });
   const { haptic } = useHapticFeedback();
 
   const onChangeLayer = useCallback(
@@ -627,56 +701,87 @@ function StoryBody({
     }
   }, [haptic, openGallery]);
 
-  const uploadState = !media
-    ? null
-    : media.status === 'uploaded'
-      ? 'Prêt'
-      : media.status === 'uploading'
-        ? `Envoi ${media.progress} %`
-        : 'Échec de l’envoi';
+  // Zoom de la maquette (`.zoomc`, HTML L1240/L2892) : bornes 1 → 3.
+  const zoom = useCallback(
+    (delta: number) => {
+      setTransform((current) => ({
+        ...current,
+        scale: Math.max(1, Math.min(3, Number((current.scale + delta).toFixed(2)))),
+      }));
+      haptic('selection');
+    },
+    [haptic],
+  );
 
   return (
     <>
-      {api.active ? (
-      <StoryStageV2
-        media={media}
-        textLayers={values.textLayers ?? []}
-        stickers={values.stickers}
-        selectedLayerId={selectedLayerId}
-        onSelectLayer={setSelectedLayerId}
-        onChangeLayer={onChangeLayer}
-        trimStartMs={values.trimStartMs}
-        trimEndMs={values.trimEndMs}
-        playing={playing}
-        onTogglePlaying={() => setPlaying((current) => !current)}
-        onGallery={openGallery}
-        onCamera={api.step === 0 ? () => void openCamera() : undefined}
-      />
-      ) : null}
-      {api.active ? (
-        <p className="lkdv-cv2c-preview-caption">
-          {media ? `Aperçu vivant · ${uploadState ?? ''}` : 'Aucun média sélectionné'}
-        </p>
-      ) : null}
-      {cameraNote ? (
-        <p className="lkdv-cv2-field-hint lkdv-cv2c-notice" role="status">
-          {cameraNote}
-        </p>
+      {api.step === 0 ? (
+        <StoryMediaStep
+          user={user}
+          spawnFiles={spawnFiles}
+          onGallery={openGallery}
+          onCamera={() => void openCamera()}
+          cameraNote={cameraNote}
+        />
       ) : null}
 
-      {api.step === 0 ? (
-        <>
-          <StoryMediaStep user={user} spawnFiles={spawnFiles} />
-          <p className="lkdv-cv2-field-hint">
-            <Camera size={12} aria-hidden="true" /> La caméra directe n’est proposée que dans
-            l’application ; au navigateur, la galerie suffit.
-          </p>
-        </>
-      ) : null}
       {api.step === 1 ? (
         <>
-          <LayerTools selectedId={selectedLayerId} onSelect={setSelectedLayerId} />
-          <StickerTools user={user} />
+          {media ? (
+            <>
+              {api.active ? (
+                <StoryStageV2
+                  media={media}
+                  textLayers={values.textLayers ?? []}
+                  stickers={values.stickers}
+                  selectedLayerId={selectedLayerId}
+                  onSelectLayer={setSelectedLayerId}
+                  onChangeLayer={onChangeLayer}
+                  trimStartMs={values.trimStartMs}
+                  trimEndMs={values.trimEndMs}
+                  playing={playing}
+                  onTogglePlaying={() => setPlaying((current) => !current)}
+                  transform={transform}
+                  onTransformChange={setTransform}
+                />
+              ) : null}
+              <div className="lkdv-cv2c-zoom-row" role="group" aria-label="Cadrage de la story">
+                <button
+                  type="button"
+                  aria-label="Dézoomer"
+                  onClick={() => zoom(-0.25)}
+                  disabled={transform.scale <= 1}
+                >
+                  <Minus size={14} aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  className="lkdv-cv2c-zoom-value"
+                  aria-label={`Recentrer le média (zoom ${transform.scale.toFixed(1)} fois)`}
+                  onClick={() => setTransform({ scale: 1, x: 0, y: 0 })}
+                >
+                  {transform.scale.toFixed(1).replace('.', ',')}×
+                </button>
+                <button
+                  type="button"
+                  aria-label="Zoomer"
+                  onClick={() => zoom(0.25)}
+                  disabled={transform.scale >= 3}
+                >
+                  <Plus size={14} aria-hidden="true" />
+                </button>
+                <button type="button" onClick={openGallery}>
+                  Remplacer
+                </button>
+              </div>
+            </>
+          ) : (
+            <p className="lkdv-cv2c-warning">
+              Reviens à l’étape Média pour choisir une photo ou une vidéo.
+            </p>
+          )}
+
+          {/* Légende et texte alternatif remontés dans le flux visible (T7). */}
           <TextAreaFieldV2
             name="caption"
             label="Légende"
@@ -689,13 +794,42 @@ function StoryBody({
             label="Texte alternatif"
             placeholder="Décris la story pour les personnes malvoyantes"
             maxLength={200}
-            hint="Recommandé : le texte de la story ne remplace pas une description."
+            hint="Lu par les lecteurs d’écran. Facultatif."
           />
+          <LayerTools selectedId={selectedLayerId} onSelect={setSelectedLayerId} />
+          <StickerTools user={user} />
         </>
       ) : null}
-      {api.step === 2 ? <StoryDiffusionStep /> : null}
 
-      {media?.type.startsWith('video/') ? (
+      {api.step === 2 ? (
+        <>
+          {/* L'aperçu figé n'est monté que sur l'étape affichée : un seul
+              visualiseur vivant à la fois (WebGLArbiter, ADR-002). */}
+          {media && api.active ? (
+            <div className="lkdv-cv2c-final-preview">
+              <span className="lkdv-cv2-field-label">Aperçu final exact</span>
+              <StoryStageV2
+                media={media}
+                textLayers={values.textLayers ?? []}
+                stickers={values.stickers}
+                selectedLayerId={null}
+                onSelectLayer={() => undefined}
+                onChangeLayer={() => undefined}
+                trimStartMs={values.trimStartMs}
+                trimEndMs={values.trimEndMs}
+                playing={false}
+                onTogglePlaying={() => undefined}
+                transform={transform}
+                onTransformChange={() => undefined}
+                previewOnly
+              />
+            </div>
+          ) : null}
+          <StoryDiffusionStep />
+        </>
+      ) : null}
+
+      {media?.type.startsWith('video/') && api.step === 1 ? (
         <button
           type="button"
           className="lkdv-cv2-chip lkdv-cv2-chip--lg"

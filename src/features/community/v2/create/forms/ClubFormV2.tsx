@@ -53,27 +53,53 @@ function ClubPreview({ user }: { user: User | null }) {
   const form = useFormContext<ClubFormValuesV2>();
   const values = form.watch();
   const slug = values.slug || slugifyClubName(values.name);
+  const avatarUrl = values.avatar[0]?.previewUrl || values.avatar[0]?.url || '';
+  const bannerUrl = values.banner[0]?.previewUrl || values.banner[0]?.url || '';
   return (
-    <div className="lkdv-cv2-card lkdv-cv2c-crest-row" inert aria-hidden="true">
-      <ClubCrest name={values.name || 'Ton club'} activity={values.activities[0] ?? null} seed={values.name} size={44} />
-      <div>
-        <b>{values.name || 'Nom du club'}</b>
-        <small>
-          {values.activities.length > 0 ? values.activities.join(' · ') : 'Activités à choisir'}
-          {' · '}
-          {values.privacy === 'open' ? 'Ouvert' : 'Sur validation'}
-          {' · 1 membre (toi)'}
-        </small>
-        <small>
-          <ShieldCheck size={10} aria-hidden="true" /> /clubs/{slug || 'ton-club'}
-        </small>
+    <div className="lkdv-cv2c-club-preview" inert aria-hidden="true">
+      {bannerUrl ? (
+        <span className="lkdv-cv2c-club-banner">
+          {/* eslint-disable-next-line @next/next/no-img-element -- aperçu local ou URL Storage */}
+          <img src={bannerUrl} alt="" />
+        </span>
+      ) : null}
+      <div className="lkdv-cv2-card lkdv-cv2c-crest-row">
+        {avatarUrl ? (
+          <span className="lkdv-cv2c-club-avatar">
+            {/* eslint-disable-next-line @next/next/no-img-element -- aperçu local ou URL Storage */}
+            <img src={avatarUrl} alt="" />
+          </span>
+        ) : (
+          <ClubCrest
+            name={values.name || 'Ton club'}
+            activity={values.activities[0] ?? null}
+            seed={values.name}
+            size={44}
+          />
+        )}
+        <div>
+          <b>{values.name || 'Nom du club'}</b>
+          <small>
+            {values.activities.length > 0 ? values.activities.join(' · ') : 'Activités à choisir'}
+            {' · '}
+            {values.privacy === 'open' ? 'Ouvert' : 'Sur validation'}
+            {' · 1 membre (toi)'}
+          </small>
+          <small>
+            <ShieldCheck size={10} aria-hidden="true" /> /clubs/{slug || 'ton-club'}
+          </small>
+        </div>
+        {user ? (
+          <span className="lkdv-cv2-field-hint">
+            {user.user_metadata?.full_name ?? 'Toi'} · admin
+          </span>
+        ) : null}
       </div>
-      {user ? <span className="lkdv-cv2-field-hint">{user.user_metadata?.full_name ?? 'Toi'} · admin</span> : null}
     </div>
   );
 }
 
-function IdentiteStep({ user }: { user: User | null }) {
+function IdentiteStep() {
   const form = useFormContext<ClubFormValuesV2>();
   const values = form.watch();
   const [slugState, setSlugState] = useState<SlugState>('idle');
@@ -159,26 +185,11 @@ function IdentiteStep({ user }: { user: User | null }) {
           }}
         />
       </div>
-      <MediaFieldV2
-        name="cover"
-        label="Image du club (optionnel)"
-        userId={user?.id ?? ''}
-        limits={IMAGE_LIMITS}
-        max={1}
-        cropOptions={[
-          { value: 'original', label: 'Original' },
-          { value: '1:1', label: 'Carré' },
-          { value: '3:1', label: 'Bannière' },
-        ]}
-        showAlt={false}
-        addLabel="Ajouter une image"
-        hint="Sans image, un blason est généré à partir du nom et de l’activité."
-      />
     </>
   );
 }
 
-function UniversStep() {
+function UniversStep({ user }: { user: User | null }) {
   const form = useFormContext<ClubFormValuesV2>();
   const values = form.watch();
   const [custom, setCustom] = useState('');
@@ -197,6 +208,30 @@ function UniversStep() {
 
   return (
     <>
+      {/* Les deux médias de la maquette (HTML L3283-3289) : avatar carré et
+          bannière 3:1, deux champs distincts — plus d'image unique recadrée. */}
+      <MediaFieldV2
+        name="avatar"
+        label="Image du club (carré)"
+        userId={user?.id ?? ''}
+        limits={IMAGE_LIMITS}
+        max={1}
+        cropOptions={[{ value: '1:1', label: 'Carré' }]}
+        showAlt={false}
+        addLabel="Choisir une image"
+        hint="Recadrage carré. Sans image, un blason est généré à partir du nom et de l’activité."
+      />
+      <MediaFieldV2
+        name="banner"
+        label="Bannière (3:1)"
+        userId={user?.id ?? ''}
+        limits={IMAGE_LIMITS}
+        max={1}
+        cropOptions={[{ value: '3:1', label: 'Bannière' }]}
+        showAlt={false}
+        addLabel="Ajouter une bannière"
+        hint="Recadrage 3:1, affiché en tête de la page du club."
+      />
       <ChipsFieldV2
         name="activities"
         label="Activités"
@@ -461,8 +496,8 @@ function ClubBody({
   return (
     <>
       {api.active ? <ClubPreview user={user} /> : null}
-      {api.step === 0 ? <IdentiteStep user={user} /> : null}
-      {api.step === 1 ? <UniversStep /> : null}
+      {api.step === 0 ? <IdentiteStep /> : null}
+      {api.step === 1 ? <UniversStep user={user} /> : null}
       {api.step === 2 ? <AdhesionStep /> : null}
       {api.step === 3 ? <PublicationStep /> : null}
     </>
@@ -502,7 +537,9 @@ export function ClubFormV2({ active, onNavChange, stepHosts }: CreateFormV2Props
             name: values.name.trim(),
           });
         } catch (error) {
-          await deleteMediaObjectsV2(uploadedObjectsOf(values.cover));
+          await deleteMediaObjectsV2(
+            uploadedObjectsOf([...values.avatar, ...values.banner]),
+          );
           throw error;
         }
       }}

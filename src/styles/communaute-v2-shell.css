@@ -336,11 +336,13 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
   }
 }
 
-/* Focus visible : même contrat que /compte (anneau sage 2 px). */
+/* Focus visible : même contrat que /compte (anneau sage 2 px, offset 2 — A §4).
+   L'anneau suit le rayon de la cible (l'`outline` épouse `border-radius`) :
+   ne jamais forcer `border-radius` ici, sinon les pilules, chips et capsules
+   se déforment au clavier (ECARTS-TRANSVERSES N12). */
 .lkdv-cv2-sheet :focus-visible {
   outline: 2px solid var(--lkv-secondary);
   outline-offset: 2px;
-  border-radius: 8px;
 }
 .lkdv-cv2-sheet:focus {
   outline: none;

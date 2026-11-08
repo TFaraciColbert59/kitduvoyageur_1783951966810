@@ -411,6 +411,8 @@ export function CommunityExploreSheetV2({
           .filter(Boolean)
           .join(' · '),
         initials: club.name.charAt(0).toUpperCase(),
+        crestSeed: club.crestSeed,
+        activity: club.category,
         opener: opener ?? null,
         actions,
       });
@@ -497,6 +499,8 @@ export function CommunityExploreSheetV2({
         subtitle: hit.subtitle,
         cover: hit.cover,
         initials: hit.kind === 'membre' ? hit.title.charAt(0).toUpperCase() : undefined,
+        crestSeed: hit.kind === 'club' ? hit.id : undefined,
+        activity: hit.kind === 'club' ? hit.subtitle.split(' · ')[0] : undefined,
         dateIso: hit.startsAt,
         opener: opener ?? null,
         actions: [
@@ -1018,6 +1022,9 @@ export function CommunityExploreSheetV2({
             onReviewRequest={(clubId, request, approve) => void handleReviewRequest(clubId, request, approve)}
             reviewingRequestId={reviewingRequestId}
             reviewedRequestId={reviewedRequestId}
+            onOpenPeek={(target) => openClubPeek(target, null)}
+            onOpenEvent={(target) => openEventDetail(target, null)}
+            onSignupEvent={(target) => void handleEventSignup(target)}
           />
         );
       });

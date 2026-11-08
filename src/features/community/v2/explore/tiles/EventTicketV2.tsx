@@ -3,7 +3,7 @@
 import React from 'react';
 import { EventTicket } from '../../shared/EventTicket';
 import type { EventCardVM, EventRegistration } from '../../shared/types';
-import { formatDateShort, formatDateStamp, formatKm, formatTime } from '../../shared/format';
+import { formatCountFr, formatDateShort, formatDateStamp, formatKm, formatTime } from '../../shared/format';
 import { ExploreIcon } from '../ExploreIcons';
 import { useLongPress } from '../useLongPress';
 
@@ -133,7 +133,25 @@ export function EventTicketV2({
     ...event,
     myStatus: status,
     spotsLeft: event.maxParticipants > 0 ? Math.max(0, spotsLeft) : event.spotsLeft,
+    // Maquette (L2480) : la distance n'apparaît que dans « Près de moi »
+    // (`o.dist`). Le composant partagé l'affiche dès qu'elle existe : on la
+    // neutralise ici quand le filtre ne la demande pas.
+    distanceKmFromMe: showDistance ? event.distanceKmFromMe : null,
   };
+
+  // Maquette (`gauge`, L2442-2445) : le pied du billet porte la jauge puis
+  // « n places restantes » (sans fraction). L'état d'inscription est porté par
+  // la pilule, pas par un second badge.
+  const footNote = (() => {
+    if (event.past) return formatCountFr(event.currentParticipants, 'participant');
+    if (event.maxParticipants <= 0) {
+      return `${formatCountFr(event.currentParticipants, 'inscrit')} · places illimitées`;
+    }
+    if (Math.max(0, spotsLeft) <= 0) {
+      return event.waitlistEnabled ? 'Complet · liste d’attente' : 'Complet';
+    }
+    return formatCountFr(Math.max(0, spotsLeft), 'place restante', 'places restantes');
+  })();
 
   if (variant === 'compact') {
     const stamp = formatDateStamp(event.startsAt ?? `${event.eventDate}T09:00:00+01:00`);
@@ -182,6 +200,7 @@ export function EventTicketV2({
       className="lkdv-cv2x-event"
       data-testid="cv2-tile-sortie"
       data-id={event.id}
+      data-level={event.level ?? undefined}
       {...longPress}
       onClickCapture={(domEvent) => {
         const anchor = (domEvent.target as Element).closest('a.lkdv-cv2-ticket');
@@ -192,6 +211,9 @@ export function EventTicketV2({
       }}
     >
       <EventTicket event={effectiveEvent} />
+      <span className="lkdv-cv2x-event-foot-note">
+        {footNote}
+      </span>
       <div className="lkdv-cv2x-event-action">
         <EventActionButton event={event} status={status} spotsLeft={spotsLeft} busy={busy} onSignup={onSignup} />
       </div>

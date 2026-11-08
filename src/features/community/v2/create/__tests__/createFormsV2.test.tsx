@@ -6,7 +6,7 @@ import type { User } from '@supabase/supabase-js';
 import { ToastProvider } from '@/contexts/ToastContext';
 import { CreateSheetV2 } from '../CreateSheetV2';
 import { CREATE_KINDS_V2, createDefaultsV2, type CreateKindV2 } from '../engine/createSchemasV2';
-import { clearAllDraftsV2 } from '../engine/useDraftV2';
+import { clearAllDraftsV2, draftStorageKey } from '../engine/useDraftV2';
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.fn(), back: vi.fn() }),
@@ -68,9 +68,9 @@ describe('les six formulaires V2 passent par le même moteur', () => {
         tab.getAttribute('aria-label'),
       );
       expect(labels).toEqual(EXPECTED_STEPS[kind]);
-      // Le pied propose toujours Suivant, et Retour seulement après l'étape 1.
+      // Le pied propose toujours Suivant, et un Retour désactivé à l'étape 1.
       expect(screen.getByRole('button', { name: 'Suivant' })).toBeTruthy();
-      expect(screen.queryByRole('button', { name: 'Retour' })).toBeNull();
+      expect((screen.getByRole('button', { name: 'Retour' }) as HTMLButtonElement).disabled).toBe(true);
       // data-testid de champ sur le premier champ du formulaire (sauf étapes
       // faites de cartes/jauges : Publication Format, Kit Inventaire).
       if (kind !== 'post' && kind !== 'kit') {
@@ -79,10 +79,54 @@ describe('les six formulaires V2 passent par le même moteur', () => {
     });
   }
 
-  it('Story : la scène 9:16 est rendue par le visualiseur en mode composition', async () => {
+  it('Story : aperçu compact et deux pilules Galerie / Caméra à l’étape Média', async () => {
     renderKind('story');
+    await waitFor(() => expect(screen.getByTestId('cv2-story-preview')).toBeTruthy());
+    const preview = screen.getByTestId('cv2-story-preview');
+    expect(preview.textContent).toContain('Story · 24 h');
+    expect(preview.textContent).toContain('Ajoute un média pour commencer');
+    // Maquette : deux boutons, plus de segment (HTML L2890).
+    expect(screen.getByRole('button', { name: /Galerie/ })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Caméra/ })).toBeTruthy();
+    // La scène 9:16 n'est plus le contenu de l'étape Média.
+    expect(screen.queryByTestId('cv2-story-stage')).toBeNull();
+  });
+
+  it('Story : un brouillon rouvert à l’étape Édition monte l’éditeur et son cadrage', async () => {
+    const media = {
+      id: 's1',
+      name: 'story.jpg',
+      type: 'image/jpeg',
+      size: 120,
+      previewUrl: '',
+      url: 'https://example.test/story.jpg',
+      alt: '',
+      cover: true,
+      status: 'uploaded' as const,
+      progress: 100,
+      storageBucket: 'stories-private',
+      storagePath: 'u/story.jpg',
+      crop: '9:16' as const,
+    };
+    window.localStorage.setItem(
+      draftStorageKey('story'),
+      JSON.stringify({
+        version: 1,
+        kind: 'story',
+        updatedAt: Date.now(),
+        values: { ...createDefaultsV2('story'), media: [media] },
+        step: 1,
+      }),
+    );
+    renderKind('story');
+    // Étape 2 restaurée (N1) : la scène et le cadrage sont rendus.
     await waitFor(() => expect(screen.getByTestId('cv2-story-stage')).toBeTruthy());
-    expect(screen.getByRole('group', { name: 'Aperçu de la story en composition' })).toBeTruthy();
+    expect(screen.getByRole('group', { name: 'Cadrage de la story' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Zoomer' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Remplacer' })).toBeTruthy();
+    // Légende et texte alternatif sont dans le flux, avant les outils.
+    expect(screen.getByLabelText(/Légende/)).toBeTruthy();
+    expect(screen.getByLabelText(/Texte alternatif/)).toBeTruthy();
   });
 
   it('Sortie : l’aperçu billet vivant est présent dès l’étape 1', async () => {

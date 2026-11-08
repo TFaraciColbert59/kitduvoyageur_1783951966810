@@ -38,10 +38,29 @@ const ACTIVITY_OPTIONS = [
   { value: 'autre', label: 'Autre' },
 ] as const;
 
+/** Échelle à 5 niveaux et définitions de la maquette (HTML L3095). */
 const LEVELS = [
-  { value: 'facile', label: 'Facile', hint: 'Moins de 4 h, faible dénivelé' },
-  { value: 'moyen', label: 'Moyen', hint: '4 à 6 h, dénivelé modéré' },
-  { value: 'difficile', label: 'Difficile', hint: 'Journée longue, fort dénivelé' },
+  {
+    value: 'tres_facile',
+    label: 'Très facile',
+    hint: 'Sentier large, peu de dénivelé, accessible à tous.',
+  },
+  { value: 'facile', label: 'Facile', hint: 'Sentier balisé, jusqu’à 500 m de dénivelé.' },
+  {
+    value: 'moyen',
+    label: 'Moyen',
+    hint: 'Dénivelé soutenu, terrain varié, bonne condition requise.',
+  },
+  {
+    value: 'difficile',
+    label: 'Difficile',
+    hint: 'Longue journée, passages exposés ou techniques.',
+  },
+  {
+    value: 'expert',
+    label: 'Expert',
+    hint: 'Terrain alpin, matériel spécifique, grande expérience.',
+  },
 ] as const;
 
 const RECURRENCES = [
@@ -50,7 +69,8 @@ const RECURRENCES = [
   { value: 'monthly', label: 'Chaque mois' },
 ] as const;
 
-const SAFETY_CHIPS = ['DVA', 'Pelle', 'Sonde', 'Frontale', 'Eau', 'Carte', 'Trousse', 'Couverture de survie'];
+/** Check-list de sécurité de la maquette (HTML L3097) : 6 objets. */
+const SAFETY_CHIPS = ['DVA', 'Pelle', 'Sonde', 'Frontale', 'Eau', 'Couverture de survie'];
 
 interface ClubOption {
   id: string;
@@ -280,24 +300,35 @@ function ItineraireStep() {
         </p>
       ) : null}
       <div className="lkdv-cv2-field">
-        <span className="lkdv-cv2-field-label">Niveau</span>
-        <div className="lkdv-cv2c-difficulty" role="radiogroup" aria-label="Niveau de difficulté">
-          {LEVELS.map((level) => (
+        <span className="lkdv-cv2-field-label" id="cv2c-level-label">
+          Niveau de difficulté
+        </span>
+        <div
+          className="lkdv-cv2c-difficulty"
+          role="radiogroup"
+          aria-labelledby="cv2c-level-label"
+        >
+          {LEVELS.map((level, index) => (
             <button
               key={level.value}
               type="button"
               role="radio"
               aria-checked={values.level === level.value}
+              aria-label={`${index + 1}. ${level.label}`}
               onClick={() => {
                 form.setValue('level', level.value, { shouldDirty: true, shouldValidate: true });
                 haptic('selection');
               }}
             >
-              <b>{level.label}</b>
-              <small>{level.hint}</small>
+              <b aria-hidden="true">{index + 1}</b>
+              <small aria-hidden="true">{level.label}</small>
             </button>
           ))}
         </div>
+        <p className="lkdv-cv2c-difficulty-def">
+          <b>{LEVELS.find((level) => level.value === values.level)?.label}.</b>{' '}
+          {LEVELS.find((level) => level.value === values.level)?.hint}
+        </p>
       </div>
       <div className="lkdv-cv2c-metric-row">
         <NumberFieldV2 name="distanceKm" label="Distance" unit="km" max={500} step={0.1} />
@@ -486,14 +517,19 @@ function ParticipantsStep() {
 function SecuriteStep() {
   const form = useFormContext<SortieFormValuesV2>();
   const values = form.watch();
+  const ski = values.activity === 'ski';
   return (
     <>
       <ChipsFieldV2
         name="safetyChecklist"
-        label="Check-list sécurité"
+        label={ski ? 'Check-list de sécurité *' : 'Check-list de sécurité'}
         multiple
         options={SAFETY_CHIPS.map((entry) => ({ value: entry, label: entry }))}
-        hint="Choisis ce que chacun doit emporter."
+        hint={
+          ski
+            ? 'Ski de rando : le DVA est obligatoire dans la check-list.'
+            : 'Choisis ce que chacun doit emporter.'
+        }
       />
       <TextAreaFieldV2
         name="safetyNotes"
@@ -545,6 +581,8 @@ function SortieBody({
     if (typeof prefill.clubId === 'string' && prefill.clubId) mapped.clubId = prefill.clubId;
     if (typeof prefill.kitId === 'string' && prefill.kitId) mapped.kitId = prefill.kitId;
     if (typeof prefill.place === 'string' && prefill.place) mapped.location = prefill.place;
+    // Pont Publication → Sortie : le titre (ou la légende) est repris (maquette L2864).
+    if (typeof prefill.title === 'string' && prefill.title) mapped.title = prefill.title;
     return Object.keys(mapped).length > 0 ? mapped : null;
   }, [prefill]);
 

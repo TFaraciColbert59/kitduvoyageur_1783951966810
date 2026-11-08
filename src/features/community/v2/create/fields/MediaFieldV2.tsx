@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { GripVertical, ImagePlus, Loader2, Star, Trash2, X } from 'lucide-react';
+import { GripVertical, ImagePlus, Loader2, Trash2 } from 'lucide-react';
 import { useFormContext } from 'react-hook-form';
 import {
   type MediaCropV2,
@@ -34,6 +34,8 @@ export interface MediaFieldV2Props {
   limits: MediaFileLimitsV2;
   max: number;
   hint?: string;
+  /** Champ obligatoire : affiche « * » et `aria-required` (maquette `.fl i *`). */
+  required?: boolean;
   bucket?: MediaBucketV2;
   cropOptions?: { value: MediaCropV2; label: string }[];
   /** Texte alternatif par média (Publication#8, Story#20). */
@@ -45,6 +47,11 @@ export interface MediaFieldV2Props {
   className?: string;
   /** Libellé du bouton d'ajout (défaut : « Ajouter une photo »). */
   addLabel?: string;
+  /**
+   * Masque le bouton d'ajout : le choix du fichier passe par un autre contrôle
+   * (les deux pilules Galerie / Caméra de la story, maquette L2890).
+   */
+  hideAdd?: boolean;
   /**
    * Fichiers fournis par un autre chemin que le sélecteur (caméra directe de la
    * story, capture Capacitor) : traités dès que `nonce` change.
@@ -66,6 +73,7 @@ export function MediaFieldV2({
   limits,
   max,
   hint,
+  required = false,
   bucket = 'carnet-media',
   cropOptions = CROP_OPTIONS,
   showAlt = true,
@@ -73,6 +81,7 @@ export function MediaFieldV2({
   onVideoDuration,
   className,
   addLabel,
+  hideAdd = false,
   spawnFiles = null,
 }: MediaFieldV2Props) {
   const form = useFormContext();
@@ -80,7 +89,7 @@ export function MediaFieldV2({
   const raw = form.watch(name) as MediaItemV2[] | undefined;
   const items = Array.isArray(raw) ? raw : [];
   const [notice, setNotice] = useState<string | null>(null);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [altOpenId, setAltOpenId] = useState<string | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(0);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -270,10 +279,10 @@ export function MediaFieldV2({
       if (item.storagePath) {
         void deleteMediaObjectsV2([{ bucket: item.storageBucket as MediaBucketV2, path: item.storagePath }]);
       }
-      if (selectedId === item.id) setSelectedId(null);
+      if (altOpenId === item.id) setAltOpenId(null);
       haptic('selection');
     },
-    [form, haptic, name, selectedId, setItems],
+    [altOpenId, form, haptic, name, setItems],
   );
 
   // Réordonnancement au doigt : la tuile suit le doigt, l'ordre est réécrit au vol.
@@ -306,7 +315,6 @@ export function MediaFieldV2({
     };
   }, [dragId, form, haptic, name, setItems]);
 
-  const selected = items.find((item) => item.id === selectedId) ?? null;
   const progress = items.length
     ? Math.round(
         items.reduce((total, item) => total + (item.status === 'uploaded' ? 100 : item.progress), 0) /
@@ -315,202 +323,187 @@ export function MediaFieldV2({
     : 100;
 
   return (
-    <FieldV2 name={name} label={label} hint={hint} className={className}>
+    <FieldV2
+      name={name}
+      label={label}
+      hint={hint}
+      className={className}
+      required={required}
+      /* Compteur de la maquette pour les listes (« 1 / 10 », HTML L2821) ;
+         inutile pour un média unique (avatar, bannière, couverture). */
+      counter={max > 1 ? { value: items.length, max } : null}
+    >
       {({ id, describedBy, invalid }) => (
         <div className="lkdv-cv2c-media">
-          <div className="lkdv-cv2c-media-head">
-            <span className="lkdv-cv2-field-hint">
-              {items.length} / {max}
-            </span>
-            {uploading > 0 ? (
-              <span className="lkdv-cv2-field-hint" aria-live="polite">
-                Envoi… {progress} %
-              </span>
-            ) : null}
-          </div>
           {items.length > 0 ? (
-            <div className="lkdv-cv2-media-grid lkdv-cv2c-media-grid" data-hscroll aria-describedby={describedBy}>
-              {items.map((item) => (
-                <figure
-                  key={item.id}
-                  className={`lkdv-cv2-media-item${item.cover && showCoverChoice ? ' is-cover' : ''}`}
-                  data-media-id={item.id}
-                >
-                  {item.previewUrl || item.url ? (
-                    // eslint-disable-next-line @next/next/no-img-element -- aperçu local ou URL Storage
-                    <img src={item.previewUrl || item.url} alt={item.alt || ''} draggable={false} />
-                  ) : (
-                    <span className="lkdv-cv2c-media-empty" aria-hidden="true">
-                      {item.type.startsWith('video/') ? 'Vidéo' : 'Photo'}
-                    </span>
-                  )}
-                  <button
-                    type="button"
-                    className="lkdv-cv2-media-handle"
-                    aria-label={`Déplacer ${item.name || 'le média'}`}
-                    onPointerDown={(event) => {
-                      event.preventDefault();
-                      setDragId(item.id);
-                      haptic('medium');
-                    }}
-                    data-dragging={dragId === item.id ? 'true' : undefined}
+            <ul className="lkdv-cv2c-medialist" data-hscroll aria-describedby={describedBy}>
+              {items.map((item, index) => {
+                const video = item.type.startsWith('video/');
+                const altOpen = altOpenId === item.id;
+                return (
+                  <li
+                    key={item.id}
+                    className="lkdv-cv2c-medialist-row"
+                    data-media-id={item.id}
+                    data-status={item.status}
                   >
-                    <GripVertical aria-hidden="true" />
-                  </button>
-                  <button
-                    type="button"
-                    className="lkdv-cv2-media-remove"
-                    aria-label={`Supprimer ${item.name || 'le média'}`}
-                    onClick={() => remove(item)}
-                  >
-                    <Trash2 aria-hidden="true" />
-                  </button>
-                  {item.status === 'uploading' ? (
-                    <span className="lkdv-cv2-media-progress" aria-hidden="true">
-                      <i style={{ width: `${Math.max(3, item.progress)}%` }} />
-                    </span>
-                  ) : null}
-                  {item.status === 'error' ? (
                     <button
                       type="button"
-                      className="lkdv-cv2c-media-error"
-                      onClick={() => retry(item)}
-                      aria-label={`Réessayer l’envoi de ${item.name || 'ce média'}`}
+                      className="lkdv-cv2c-medialist-grip"
+                      aria-label={`Déplacer le média ${index + 1}. Flèches haut et bas pour réordonner.`}
+                      onPointerDown={(event) => {
+                        event.preventDefault();
+                        setDragId(item.id);
+                        haptic('medium');
+                      }}
+                      data-dragging={dragId === item.id ? 'true' : undefined}
                     >
-                      Réessayer
+                      <GripVertical size={15} aria-hidden="true" />
                     </button>
-                  ) : null}
-                  <button
-                    type="button"
-                    className="lkdv-cv2c-media-open"
-                    aria-label={`Modifier ${item.name || 'ce média'}`}
-                    aria-pressed={selectedId === item.id}
-                    onClick={() => setSelectedId(selectedId === item.id ? null : item.id)}
-                  />
-                  {item.cover && showCoverChoice ? (
-                    <span className="lkdv-cv2c-media-cover" aria-hidden="true">
-                      <Star size={11} /> Couverture
+                    <span className="lkdv-cv2c-medialist-thumb">
+                      {item.previewUrl || item.url ? (
+                        // eslint-disable-next-line @next/next/no-img-element -- aperçu local ou URL Storage
+                        <img src={item.previewUrl || item.url} alt="" draggable={false} />
+                      ) : (
+                        <span className="lkdv-cv2c-media-empty" aria-hidden="true">
+                          {video ? 'Vidéo' : 'Photo'}
+                        </span>
+                      )}
+                      {index === 0 && showCoverChoice ? (
+                        <em className="lkdv-cv2c-medialist-cover">Couverture</em>
+                      ) : null}
+                      {item.status === 'uploading' ? (
+                        <i
+                          className="lkdv-cv2c-medialist-progress"
+                          style={{ width: `${Math.max(4, item.progress)}%` }}
+                          aria-hidden="true"
+                        />
+                      ) : null}
                     </span>
-                  ) : null}
-                </figure>
-              ))}
-            </div>
+                    <span className="lkdv-cv2c-medialist-info">
+                      <b>Média {index + 1}</b>
+                      <small>
+                        {item.status === 'uploaded'
+                          ? 'Envoyé'
+                          : item.status === 'error'
+                            ? 'Échec de l’envoi'
+                            : `Envoi ${Math.max(0, Math.min(100, item.progress))} %`}
+                      </small>
+                      <span className="lkdv-cv2c-medialist-actions">
+                        {item.status === 'error' ? (
+                          <button type="button" className="lkdv-cv2c-linkbtn" onClick={() => retry(item)}>
+                            Réessayer
+                          </button>
+                        ) : null}
+                        {showAlt ? (
+                          <button
+                            type="button"
+                            className="lkdv-cv2c-linkbtn"
+                            aria-expanded={altOpen}
+                            aria-controls={`cv2c-alt-${item.id}`}
+                            onClick={() => setAltOpenId(altOpen ? null : item.id)}
+                          >
+                            {item.alt ? 'Texte alternatif ✓' : 'Décrire l’image'}
+                          </button>
+                        ) : null}
+                        {showCoverChoice ? (
+                          <button
+                            type="button"
+                            className="lkdv-cv2c-linkbtn"
+                            aria-pressed={item.cover}
+                            onClick={() => {
+                              const current = (form.getValues(name) as MediaItemV2[] | undefined) ?? [];
+                              setItems(
+                                current.map((entry) => ({ ...entry, cover: entry.id === item.id })),
+                              );
+                              haptic('selection');
+                            }}
+                          >
+                            {item.cover ? 'Couverture ✓' : 'Choisir comme couverture'}
+                          </button>
+                        ) : null}
+                      </span>
+                      {!video && cropOptions.length > 1 ? (
+                        <span
+                          className="lkdv-cv2c-medialist-crop"
+                          role="group"
+                          aria-label={`Recadrage du média ${index + 1}`}
+                        >
+                          {cropOptions.map((option) => (
+                            <button
+                              key={option.value}
+                              type="button"
+                              aria-pressed={item.crop === option.value}
+                              onClick={() => changeCrop(item, option.value)}
+                            >
+                              {option.label}
+                            </button>
+                          ))}
+                        </span>
+                      ) : null}
+                    </span>
+                    <button
+                      type="button"
+                      className="lkdv-cv2c-medialist-del"
+                      aria-label={`Supprimer le média ${index + 1}`}
+                      onClick={() => remove(item)}
+                    >
+                      <Trash2 size={15} aria-hidden="true" />
+                    </button>
+                    {altOpen ? (
+                      <span className="lkdv-cv2c-medialist-alt">
+                        <label className="lkdv-cv2-field-label" htmlFor={`cv2c-alt-${item.id}`}>
+                          Texte alternatif
+                        </label>
+                        <input
+                          id={`cv2c-alt-${item.id}`}
+                          type="text"
+                          maxLength={200}
+                          className="lkdv-cv2-input"
+                          value={item.alt}
+                          placeholder="Décris cette image…"
+                          onChange={(event) => patchItem(item.id, { alt: event.target.value })}
+                        />
+                      </span>
+                    ) : null}
+                  </li>
+                );
+              })}
+            </ul>
           ) : null}
 
-          {selected ? (
-            <div className="lkdv-cv2c-media-edit">
-              <div className="lkdv-cv2c-media-edit-head">
-                <b>Réglages du média</b>
-                <button
-                  type="button"
-                  className="lkdv-cv2c-icon-btn"
-                  aria-label="Fermer les réglages du média"
-                  onClick={() => setSelectedId(null)}
-                >
-                  <X size={14} aria-hidden="true" />
-                </button>
-              </div>
-              {!selected.type.startsWith('video/') && cropOptions.length > 0 ? (
-                <div className="lkdv-cv2c-crop-row">
-                  <span className="lkdv-cv2-field-label">Recadrage</span>
-                  <div className="lkdv-cv2-seg lkdv-cv2c-seg" role="group" aria-label="Recadrage du média">
-                    {cropOptions.map((option) => (
-                      <button
-                        key={option.value}
-                        type="button"
-                        aria-pressed={selected.crop === option.value}
-                        onClick={() => changeCrop(selected, option.value)}
-                      >
-                        {option.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-              <div className={`lkdv-cv2-crop lkdv-cv2c-crop-preview lkdv-cv2-crop--${selected.crop === '1:1' ? 'square' : selected.crop === '9:16' ? 'story' : 'wide'}`}>
-                {selected.previewUrl || selected.url ? (
-                  // eslint-disable-next-line @next/next/no-img-element -- aperçu local ou URL Storage
-                  <img src={selected.previewUrl || selected.url} alt="" />
-                ) : null}
-                <svg className="lkdv-cv2-crop-grid" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-                  <line x1="33.33" y1="0" x2="33.33" y2="100" />
-                  <line x1="66.66" y1="0" x2="66.66" y2="100" />
-                  <line x1="0" y1="33.33" x2="100" y2="33.33" />
-                  <line x1="0" y1="66.66" x2="100" y2="66.66" />
-                </svg>
-              </div>
-              {showAlt ? (
-                <div className="lkdv-cv2-field">
-                  <label className="lkdv-cv2-field-label" htmlFor={`cv2c-alt-${selected.id}`}>
-                    Texte de l’image
-                  </label>
-                  <input
-                    id={`cv2c-alt-${selected.id}`}
-                    type="text"
-                    maxLength={200}
-                    className="lkdv-cv2-input"
-                    value={selected.alt}
-                    placeholder="Décris cette image…"
-                    onChange={(event) => {
-                      const current = (form.getValues(name) as MediaItemV2[] | undefined) ?? [];
-                      setItems(current.map((entry) => (entry.id === selected.id ? { ...entry, alt: event.target.value } : entry)));
-                    }}
-                  />
-                  {!selected.alt.trim() ? (
-                    <p className="lkdv-cv2-field-hint">Un texte alternatif aide les personnes malvoyantes.</p>
-                  ) : null}
-                </div>
-              ) : null}
-              {showCoverChoice ? (
-                <button
-                  type="button"
-                  className="lkdv-cv2-chip lkdv-cv2-chip--lg"
-                  aria-pressed={selected.cover}
-                  onClick={() => {
-                    const current = (form.getValues(name) as MediaItemV2[] | undefined) ?? [];
-                    setItems(current.map((entry) => ({ ...entry, cover: entry.id === selected.id })));
-                    haptic('selection');
-                  }}
-                >
-                  <Star size={14} aria-hidden="true" />
-                  {selected.cover ? 'Couverture du carnet' : 'Choisir comme couverture'}
-                </button>
-              ) : null}
-            </div>
+          <input
+            ref={inputRef}
+            id={id}
+            type="file"
+            accept={limits.allowVideo ? 'image/*,video/mp4,video/quicktime,video/webm' : 'image/*'}
+            multiple={max > 1}
+            className="lkdv-cv2c-sr-only"
+            aria-invalid={invalid || undefined}
+            aria-describedby={describedBy}
+            onChange={(event) => {
+              onFiles(event.target.files);
+              event.target.value = '';
+            }}
+          />
+          {!hideAdd && items.length < max ? (
+            <button
+              type="button"
+              className="lkdv-cv2c-add-media"
+              onClick={() => inputRef.current?.click()}
+            >
+              {uploading > 0 ? (
+                <Loader2 size={16} className="lkdv-cv2c-spin" aria-hidden="true" />
+              ) : (
+                <ImagePlus size={16} aria-hidden="true" />
+              )}
+              {addLabel ?? (limits.allowVideo ? 'Ajouter une photo ou une vidéo' : 'Ajouter une photo')}
+            </button>
           ) : null}
-
-          {
-            items.length < max || max === 1 ? (
-            <>
-              <input
-                ref={inputRef}
-                id={id}
-                type="file"
-                accept={limits.allowVideo ? 'image/*,video/mp4,video/quicktime,video/webm' : 'image/*'}
-                multiple={max > 1}
-                className="lkdv-cv2c-sr-only"
-                aria-invalid={invalid || undefined}
-                aria-describedby={describedBy}
-                onChange={(event) => {
-                  onFiles(event.target.files);
-                  event.target.value = '';
-                }}
-              />
-              {items.length < max ? (
-              <button
-                type="button"
-                className="lkdv-cv2c-add-media"
-                onClick={() => inputRef.current?.click()}
-              >
-                {uploading > 0 ? (
-                  <Loader2 size={16} className="lkdv-cv2c-spin" aria-hidden="true" />
-                ) : (
-                  <ImagePlus size={16} aria-hidden="true" />
-                )}
-                {addLabel ?? (limits.allowVideo ? 'Ajouter une photo ou une vidéo' : 'Ajouter une photo')}
-              </button>
-              ) : null}
-            </>
+          {uploading > 0 ? (
+            <p className="lkdv-cv2-field-hint" aria-live="polite">
+              Envoi des médias… {progress} %
+            </p>
           ) : null}
           {notice ? (
             <p className="lkdv-cv2-field-error" role="alert">

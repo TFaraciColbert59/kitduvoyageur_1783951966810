@@ -47,6 +47,24 @@ describe('brouillons V2', () => {
     expect(window.localStorage.getItem(draftStorageKey('post'))).toBeNull();
   });
 
+  it('persiste l’étape courante et la relit (N1)', () => {
+    writeDraftV2('post', { ...createDefaultsV2('post'), content: 'Brouillon' }, 2);
+    const record = readDraftV2('post');
+    expect(record?.step).toBe(2);
+    // Un brouillon v1 sans étape retombe sur l'étape 1.
+    window.localStorage.setItem(
+      draftStorageKey('post'),
+      JSON.stringify({ version: 1, kind: 'post', updatedAt: 1, values: { content: 'v1' } }),
+    );
+    expect(readDraftV2('post')?.step).toBe(0);
+  });
+
+  it('flushDraftV2 écrit aussi l’étape mémorisée', () => {
+    rememberLiveDraftV2('post', { ...createDefaultsV2('post'), content: 'Brouillon' }, 1);
+    flushDraftV2('post');
+    expect(readDraftV2('post')?.step).toBe(1);
+  });
+
   it('utilise une clé versionnée préfixée', () => {
     expect(draftStorageKey('carnet')).toBe(`${CREATE_DRAFT_V2_PREFIX}:carnet:v1`);
   });

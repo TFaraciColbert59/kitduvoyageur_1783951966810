@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import AppImage from '@/components/ui/AppImage';
+import { ClubCrest } from '../../shared/ClubCrest';
 import { formatDateStamp } from '../../shared/format';
 import { ExploreIcon, type ExploreIconName } from '../ExploreIcons';
 
@@ -24,6 +25,9 @@ export interface PeekItem {
   initials?: string;
   /** Date ISO (billet de sortie). */
   dateIso?: string | null;
+  /** Graine et activité du blason (club) — bandeau de la maquette. */
+  crestSeed?: string | null;
+  activity?: string | null;
   actions: PeekAction[];
 }
 
@@ -37,6 +41,10 @@ export interface PeekOverlayProps {
  * `Sorties` peek) : aperçu + 3 actions dans le tiroir (ni bouton « Fermer » ni
  * action supplémentaire — la recette E2E en attend exactement trois). Échap et
  * le toucher du fond ferment l'aperçu ; le focus va à la première action.
+ *
+ * Composition fidèle à `maquette-communaute.html` L1771 : une carte d'aperçu
+ * avec bandeau (couverture, blason ou billet) puis une carte d'actions séparée,
+ * largeur 310 px, libellé à gauche et icône à droite (44 px par ligne).
  */
 export function PeekOverlay({ peek, onClose }: PeekOverlayProps) {
   const firstActionRef = useRef<HTMLButtonElement | null>(null);
@@ -58,20 +66,23 @@ export function PeekOverlay({ peek, onClose }: PeekOverlayProps) {
       <div className="lkdv-cv2x-peek-scrim" aria-hidden="true" onPointerDown={onClose} />
       <div className="lkdv-cv2-peek-box lkdv-cv2x-peek-box">
         <div className="lkdv-cv2x-peek-preview">
-          <span className="lkdv-cv2x-peek-media" aria-hidden="true">
-            {stamp ? (
-              <span className="lkdv-cv2x-search-stamp">
+          <span className="lkdv-cv2x-peek-media" data-kind={peek.kind} aria-hidden="true">
+            {peek.kind === 'club' ? (
+              <ClubCrest
+                name={peek.title}
+                activity={peek.activity}
+                seed={peek.crestSeed ?? peek.title}
+                size={64}
+              />
+            ) : stamp ? (
+              <span className="lkdv-cv2x-peek-stamp">
                 <b>{stamp.day}</b>
                 <i>{stamp.month}</i>
               </span>
-            ) : peek.kind === 'club' ? (
-              <span className="lkdv-cv2x-peek-crest">
-                <ExploreIcon name="users" size={26} />
-              </span>
             ) : peek.cover ? (
-              <AppImage src={peek.cover} alt="" width={86} height={68} className="lkdv-cv2x-cover-img" />
+              <AppImage src={peek.cover} alt="" width={280} height={104} className="lkdv-cv2x-cover-img" />
             ) : (
-              <span className="lkdv-cv2x-search-avatar">{peek.initials ?? '?'}</span>
+              <span className="lkdv-cv2x-peek-avatar">{(peek.initials ?? '?').slice(0, 1)}</span>
             )}
           </span>
           <span className="lkdv-cv2x-peek-text">
@@ -79,21 +90,22 @@ export function PeekOverlay({ peek, onClose }: PeekOverlayProps) {
             <small>{peek.subtitle}</small>
           </span>
         </div>
-        <div className="lkdv-cv2-peek-actions">
+        <div className="lkdv-cv2-peek-actions lkdv-cv2x-peek-actions">
           {peek.actions.map((action, index) => (
             <button
               key={action.label}
               ref={index === 0 ? firstActionRef : undefined}
               type="button"
-              className="lkdv-cv2-peek-action"
+              className="lkdv-cv2-peek-action lkdv-cv2x-peek-action"
+              data-primary={action.primary || undefined}
               data-tone={action.tone}
               onClick={() => {
                 action.onSelect();
                 onClose();
               }}
             >
-              <ExploreIcon name={action.icon} size={18} />
               <span>{action.label}</span>
+              <ExploreIcon name={action.icon} size={18} />
             </button>
           ))}
         </div>

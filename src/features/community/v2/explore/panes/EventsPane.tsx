@@ -4,7 +4,7 @@ import React from 'react';
 import type { AgendaCounts, EventCardVM, EventFilter, EventRegistration, GeoPermissionState } from '../../shared/types';
 import type { CursorFeedResult } from '../../data/useCursorFeed';
 import { AgendaStrip } from '../../shared/AgendaStrip';
-import { groupEventsByAgenda } from '../../shared/format';
+import { formatCountFr, groupEventsByAgenda } from '../../shared/format';
 import { EventTicketV2 } from '../tiles/EventTicketV2';
 import { ExploreEmpty, ExploreError, ExploreGeoPrompt, ExploreListFoot, ExploreOfflineBanner, ExploreSkeleton } from '../ExploreStates';
 import { usePaneNearBottom, usePaneScrollMemory } from '../usePaneScrollMemory';
@@ -262,7 +262,7 @@ export function EventsPane({
           loadingMore={feed.loadingMore}
           onLoadMore={feed.loadMore}
           total={feed.items.length}
-          label={`${feed.items.length} sorties`}
+          label={formatCountFr(feed.items.length, 'sortie')}
         />
       </div>
     </div>

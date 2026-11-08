@@ -95,6 +95,9 @@ export function CreateFormEngineV2<T extends FieldValues>({
   const [, setHostTick] = useState(0);
   const busyRef = useRef(false);
   const pendingFocus = useRef<string | null>(null);
+  /** Étape lue dans le brouillon : appliquée une fois, au montage (N1). */
+  const restoredStepRef = useRef<number | null>(null);
+  const wasActiveRef = useRef(active);
 
   const form = useForm<T>({
     resolver: zodResolver(schema as never),
@@ -102,7 +105,10 @@ export function CreateFormEngineV2<T extends FieldValues>({
     mode: 'onSubmit',
     reValidateMode: 'onChange',
   });
-  const draft = useDraftV2<T>({ kind, form });
+  const draftStep = useCallback((index: number) => {
+    restoredStepRef.current = index;
+  }, []);
+  const draft = useDraftV2<T>({ kind, form, step, onRestoreStep: draftStep });
 
   // Les hôtes de portail sont posés par la coque au commit parent : on force un
   // rendu après le montage pour que les portails trouvent leur cible.
@@ -126,13 +132,22 @@ export function CreateFormEngineV2<T extends FieldValues>({
     setServerError(null);
   }, [steps.length]);
 
-  // Revenir sur un type remet ses étapes à zéro (les brouillons restent).
+  // Revenir sur un type remet ses étapes à zéro (les brouillons restent). Au
+  // montage, c'est l'étape restaurée du brouillon qui s'applique (N1).
   useEffect(() => {
+    const wasActive = wasActiveRef.current;
+    wasActiveRef.current = active;
     if (!active) return;
-    setStepState(0);
+    const restored = restoredStepRef.current;
+    restoredStepRef.current = null;
     setServerError(null);
     setAttempted(false);
-  }, [active]);
+    if (restored != null && wasActive) {
+      setStepState(Math.max(0, Math.min(steps.length - 1, restored)));
+      return;
+    }
+    setStepState(0);
+  }, [active, steps.length]);
 
   const focusField = useCallback(
     (field: string) => {

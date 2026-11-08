@@ -3,7 +3,16 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { User } from '@supabase/supabase-js';
-import { BookOpen, Backpack, Camera, Map as MapIcon, PenLine, Users } from 'lucide-react';
+import {
+  BookOpen,
+  Backpack,
+  Camera,
+  ChevronLeft,
+  ChevronRight,
+  Map as MapIcon,
+  PenLine,
+  Users,
+} from 'lucide-react';
 import { CommunitySheetShell } from '../shared/CommunitySheetShell';
 import { DynamicIsland } from '@/components/ui/drawer/DynamicIsland';
 import { useKeyboardInsets } from '@/hooks/useKeyboardInsets';
@@ -466,16 +475,18 @@ export function CreateSheetV2({
         </p>
       ) : null}
       <div className="lkdv-cv2c-foot-actions">
-        {activeNav.canBack ? (
-          <button
-            type="button"
-            className="lkdv-cv2-pill lkdv-cv2-pill--secondary lkdv-cv2c-back"
-            onClick={activeNav.goBack}
-            disabled={activeNav.busy}
-          >
-            Retour
-          </button>
-        ) : null}
+        {/* Maquette (`cr-foot .back`, HTML L1138-1144) : « Retour » reste
+            **visible et désactivé** à l'étape 1 — la spec § 4.1 le voulait masqué,
+            la maquette fait foi (item 2). */}
+        <button
+          type="button"
+          className="lkdv-cv2-pill lkdv-cv2-pill--secondary lkdv-cv2c-back"
+          onClick={activeNav.goBack}
+          disabled={activeNav.busy || !activeNav.canBack}
+        >
+          <ChevronLeft size={15} aria-hidden="true" />
+          Retour
+        </button>
         <button
           type="button"
           className="lkdv-cv2-pill lkdv-cv2-pill--primary lkdv-cv2c-next"
@@ -487,6 +498,8 @@ export function CreateSheetV2({
             ? 'Envoi…'
             : activeNav.busyLabel ??
               (activeNav.stepIndex >= activeNav.stepCount - 1 ? activeNav.finalLabel : 'Suivant')}
+          {/* Chevron de la maquette (`.cr-foot .next`, HTML L1138-1142). */}
+          <ChevronRight size={15} aria-hidden="true" />
         </button>
       </div>
     </div>

@@ -88,11 +88,13 @@ const KIT_STEPS: readonly CreateStepV2[] = [
 ];
 
 const CLUB_STEPS: readonly CreateStepV2[] = [
-  { id: 'identite', label: 'Identité', fields: ['name', 'slug', 'cover'] },
+  { id: 'identite', label: 'Identité', fields: ['name', 'slug'] },
   {
     id: 'univers',
     label: 'Univers',
-    fields: ['activities', 'description', 'locationLabel', 'zoneRadiusKm'],
+    // Images du club (avatar carré + bannière 3:1) sur l'étape Univers, comme
+    // la maquette (HTML L3283-3289), avec les activités et la description.
+    fields: ['activities', 'description', 'locationLabel', 'zoneRadiusKm', 'avatar', 'banner'],
   },
   { id: 'adhesion', label: 'Adhésion', fields: ['privacy', 'membershipRules', 'joinQuestions'] },
   { id: 'publication', label: 'Publication', fields: ['welcomePost', 'welcomeContent', 'clientRequestId'] },

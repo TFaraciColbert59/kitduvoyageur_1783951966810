@@ -36,6 +36,7 @@ const CATEGORY_ORDER = [
   'Eau',
   'Nutrition',
   'Vêtements',
+  'Électronique',
   'Sécurité',
   'Navigation',
   'Hygiène',
@@ -51,11 +52,19 @@ const SEASON_OPTIONS = [
   { value: 'hiver', label: 'Hiver' },
 ] as const;
 
+/** Objectifs de la maquette (`GOALS`, HTML L3172) : 4,5 kg / 7,5 kg / standard. */
 const WEIGHT_TARGETS = [
   { id: 'ultra', label: 'Ultraléger', maxG: 4500 },
-  { id: 'leger', label: 'Léger', maxG: 9000 },
+  { id: 'leger', label: 'Léger', maxG: 7500 },
   { id: 'standard', label: 'Standard', maxG: 20_000 },
 ] as const;
+
+/**
+ * Catégories toujours visibles, même vides, avec « Glisse un objet ici »
+ * (maquette `CATS`, HTML L3166 et groupe vide L3191). Les autres catégories
+ * n'apparaissent que si elles portent un objet.
+ */
+const BASE_CATEGORIES = ['Portage', 'Abri', 'Cuisine', 'Vêtements', 'Électronique', 'Sécurité'];
 
 function totalWeightG(items: readonly KitItemV2[]): number {
   return items.reduce((total, item) => total + (item.weightG || 0) * (item.quantity || 1), 0);
@@ -202,7 +211,8 @@ function InventoryStep({
   const openPicker = () => {
     openDetail({
       title: 'Choisir un produit',
-      meta: 'Inventaire et boutique',
+      // Sous-titre de la maquette (`.sheet-nav .sub`, HTML L3239).
+      meta: `${items.length} dans le sac`,
       node: (
         <ProductPickerSheetV2
           inventory={products}
@@ -230,10 +240,16 @@ function InventoryStep({
       list.push(item);
       byCategory.set(category, list);
     }
+    // Les 6 catégories de la maquette restent affichées même vides (T10).
+    for (const category of BASE_CATEGORIES) {
+      if (!byCategory.has(category)) byCategory.set(category, []);
+    }
     return [...byCategory.entries()].sort(
       (left, right) => CATEGORY_ORDER.indexOf(left[0]) - CATEGORY_ORDER.indexOf(right[0]),
     );
   }, [items]);
+
+  const total = totalWeightG(items);
 
   // Glisser un objet vers une catégorie (ou sur un autre objet).
   useEffect(() => {
@@ -283,11 +299,97 @@ function InventoryStep({
   return (
     <div className="lkdv-cv2c-kit" data-testid="cv2-field-items">
       <WeightBar items={items} />
+      {/* Libellé + compteur de la maquette (HTML L3191) : « 0 objet · 0,0 kg ». */}
+      <div className="lkdv-cv2c-field-head">
+        <span className="lkdv-cv2-field-label">
+          Inventaire <span aria-hidden="true">*</span>
+        </span>
+        <span className="lkdv-cv2-counter">
+          {items.length} objet{items.length > 1 ? 's' : ''} · {displayKg(total)}
+        </span>
+      </div>
       {itemsError ? (
         <p className="lkdv-cv2-field-error" role="alert">
           {itemsError}
         </p>
       ) : null}
+      {/* Les catégories restent visibles même vides (maquette) : plus d'écran
+          « inventaire vide » à la place de la liste. */}
+      <div className="lkdv-cv2c-kit-groups" data-hscroll>
+          {groups.map(([category, groupItems]) => {
+            const weight = groupItems.reduce((total, item) => total + item.weightG * item.quantity, 0);
+            return (
+              <section key={category} className="lkdv-cv2c-kit-group" data-kit-category={category}>
+                <div className="lkdv-cv2c-kit-group-head">
+                  <Backpack size={13} aria-hidden="true" />
+                  {category}
+                  <small>{displayKg(weight)}</small>
+                </div>
+                <ul className="lkdv-cv2c-kit-items">
+                  {groupItems.length === 0 ? (
+                    <li className="lkdv-cv2c-kit-item-empty">Glisse un objet ici</li>
+                  ) : null}
+                  {groupItems.map((item) => (
+                    <li key={item.id} className="lkdv-cv2c-kit-item" data-kit-item={item.id}>
+                      <button
+                        type="button"
+                        className="lkdv-cv2c-icon-btn"
+                        aria-label={`Déplacer ${item.name}`}
+                        onPointerDown={(event) => {
+                          event.preventDefault();
+                          dragRef.current = item.id;
+                          haptic('medium');
+                        }}
+                      >
+                        <GripVertical size={12} aria-hidden="true" />
+                      </button>
+                      <span className="lkdv-cv2c-kit-item-name">{item.name}</span>
+                      <div className="lkdv-cv2-stepper">
+                        <button
+                          type="button"
+                          aria-label={`Diminuer la quantité de ${item.name}`}
+                          onClick={() => {
+                            if (item.quantity <= 1) return;
+                            patchItem(item.id, { quantity: item.quantity - 1 });
+                          }}
+                        >
+                          −
+                        </button>
+                        <output>{item.quantity}</output>
+                        <button
+                          type="button"
+                          aria-label={`Augmenter la quantité de ${item.name}`}
+                          onClick={() => patchItem(item.id, { quantity: Math.min(20, item.quantity + 1) })}
+                        >
+                          +
+                        </button>
+                      </div>
+                      <small>{item.weightG ? `${formatWeightG(item.weightG)}` : '—'}</small>
+                      <button
+                        type="button"
+                        className="lkdv-cv2c-icon-btn"
+                        aria-label={`Marquer ${item.name} comme emporté`}
+                        aria-pressed={item.isChecked}
+                        onClick={() => patchItem(item.id, { isChecked: !item.isChecked })}
+                      >
+                        {item.isChecked ? '✓' : '□'}
+                      </button>
+                      <button
+                        type="button"
+                        className="lkdv-cv2c-icon-btn"
+                        aria-label={`Retirer ${item.name}`}
+                        onClick={() => setItems(items.filter((entry) => entry.id !== item.id))}
+                      >
+                        <Trash2 size={13} aria-hidden="true" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            );
+          })}
+      </div>
+      {/* CTA sous la liste, comme la maquette (`row3`, HTML L3192-L3193). */}
       <div className="lkdv-cv2c-inline-add">
         <button type="button" className="lkdv-cv2-add-media" onClick={openPicker}>
           <Backpack size={15} aria-hidden="true" /> Ajouter un produit
@@ -369,83 +471,6 @@ function InventoryStep({
         </div>
       ) : null}
 
-      {items.length === 0 ? (
-        <p className="lkdv-cv2c-empty">
-          Inventaire vide : ajoute un produit de ton inventaire ou crée un objet personnalisé.
-        </p>
-      ) : (
-        <div className="lkdv-cv2c-kit-groups" data-hscroll>
-          {groups.map(([category, groupItems]) => {
-            const weight = groupItems.reduce((total, item) => total + item.weightG * item.quantity, 0);
-            return (
-              <section key={category} className="lkdv-cv2c-kit-group" data-kit-category={category}>
-                <div className="lkdv-cv2c-kit-group-head">
-                  <Backpack size={13} aria-hidden="true" />
-                  {category}
-                  <small>{displayKg(weight)}</small>
-                </div>
-                <ul className="lkdv-cv2c-kit-items">
-                  {groupItems.map((item) => (
-                    <li key={item.id} className="lkdv-cv2c-kit-item" data-kit-item={item.id}>
-                      <button
-                        type="button"
-                        className="lkdv-cv2c-icon-btn"
-                        aria-label={`Déplacer ${item.name}`}
-                        onPointerDown={(event) => {
-                          event.preventDefault();
-                          dragRef.current = item.id;
-                          haptic('medium');
-                        }}
-                      >
-                        <GripVertical size={12} aria-hidden="true" />
-                      </button>
-                      <span className="lkdv-cv2c-kit-item-name">{item.name}</span>
-                      <div className="lkdv-cv2-stepper">
-                        <button
-                          type="button"
-                          aria-label={`Diminuer la quantité de ${item.name}`}
-                          onClick={() => {
-                            if (item.quantity <= 1) return;
-                            patchItem(item.id, { quantity: item.quantity - 1 });
-                          }}
-                        >
-                          −
-                        </button>
-                        <output>{item.quantity}</output>
-                        <button
-                          type="button"
-                          aria-label={`Augmenter la quantité de ${item.name}`}
-                          onClick={() => patchItem(item.id, { quantity: Math.min(20, item.quantity + 1) })}
-                        >
-                          +
-                        </button>
-                      </div>
-                      <small>{item.weightG ? `${formatWeightG(item.weightG)}` : '—'}</small>
-                      <button
-                        type="button"
-                        className="lkdv-cv2c-icon-btn"
-                        aria-label={`Marquer ${item.name} comme emporté`}
-                        aria-pressed={item.isChecked}
-                        onClick={() => patchItem(item.id, { isChecked: !item.isChecked })}
-                      >
-                        {item.isChecked ? '✓' : '□'}
-                      </button>
-                      <button
-                        type="button"
-                        className="lkdv-cv2c-icon-btn"
-                        aria-label={`Retirer ${item.name}`}
-                        onClick={() => setItems(items.filter((entry) => entry.id !== item.id))}
-                      >
-                        <Trash2 size={13} aria-hidden="true" />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            );
-          })}
-        </div>
-      )}
       {user ? null : <p className="lkdv-cv2c-warning">Connecte-toi pour créer un kit.</p>}
     </div>
   );

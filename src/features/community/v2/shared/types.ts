@@ -112,6 +112,14 @@ export interface ClubJoinRequestVM {
   createdAt: string;
 }
 
+export type EventLevelVM =
+  | 'tres_facile'
+  | 'facile'
+  | 'moyen'
+  | 'difficile'
+  | 'expert'
+  | null;
+
 export interface EventCardVM {
   id: string;
   title: string;
@@ -121,7 +129,8 @@ export interface EventCardVM {
   eventDate: string;
   location: string;
   meetingPoint: string | null;
-  level: 'facile' | 'moyen' | 'difficile' | null;
+  /** Échelle fidèle à la maquette (5 niveaux) ; les lignes DB restent bornées à 3 valeurs. */
+  level: EventLevelVM;
   distanceKm: number | null;
   elevationGainM: number | null;
   duration: string | null;

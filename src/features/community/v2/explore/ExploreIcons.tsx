@@ -29,6 +29,7 @@ export type ExploreIconName =
   | 'close'
   | 'cloud'
   | 'sparkles'
+  | 'trend'
   | 'users'
   | 'mountain'
   | 'compass'
@@ -108,6 +109,14 @@ const PATHS: Record<ExploreIconName, React.ReactNode> = {
     <>
       <path d="M12 4l1.4 3.6L17 9l-3.6 1.4L12 14l-1.4-3.6L7 9l3.6-1.4z" />
       <path d="M18.5 14.5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z" />
+    </>
+  ),
+  // Tendance de la maquette (`maquette-communaute.html` L1574, `ic('trend')`) :
+  // une seule flèche montante, commune aux lieux et aux termes.
+  trend: (
+    <>
+      <path d="M3 17l6-6 4 4 8-8" />
+      <path d="M15 7h6v6" />
     </>
   ),
   users: (
