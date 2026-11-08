@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState, useCallback, useEffect } from 'react';
+import React, { useMemo, useState, useCallback, useEffect, useRef } from 'react';
 import {
   Compass,
   MapPin,
@@ -27,6 +27,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Download,
+  Bookmark,
   Copy,
   Check,
   Send,
@@ -41,14 +42,40 @@ import type {
   CarnetNightItem,
   CarnetMomentItem,
   CarnetParticipant,
+  KitVerdictType,
 } from '@/features/carnet/detail/types';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useCarnetDayReactions } from '@/features/carnet/detail/useCarnetDayReactions';
 import { useKitFork } from '@/features/carnet/detail/useKitFork';
 import { useCarnetDialog } from './useCarnetDialog';
 import { CarnetAltitude } from './CarnetAltitude';
+import { elevationProfileGain } from '@/features/carnet/detail/elevationProfile';
 
 export type CarnetSlotId = 'fil' | 'route' | 'sac' | 'chiffres' | 'equipage';
+
+/** Seuil (px) au-delà duquel la descente dans une lentille est mémorisée. */
+const RESUME_MEMO_MIN = 20;
+/** Seuil (px) sous lequel la lentille est considérée « en haut ». */
+const RESUME_TOP_MAX = 10;
+
+/**
+ * Cascade des lignes du tiroir — maquette `.ds-row` (`sheetRowIn`) :
+ * 450 ms `--ease-glass`, pas de 30 ms plafonné au 11e élément.
+ */
+function rowStyle(index: number): React.CSSProperties {
+  return {
+    animation: 'lkdv-row-in 450ms var(--ease-glass) both',
+    animationDelay: `${Math.min(index, 10) * 30}ms`,
+  };
+}
+
+/** Le mouvement réduit est déclaratif : la feuille ci-dessous neutralise
+ *  l'animation, y compris quand le popover Affichage la force à la main. */
+const DRAWER_MOTION_CSS = `
+@keyframes lkdv-row-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){.lkdv-carnet-drawer [data-carnet-row]{animation:none!important}}
+.lkdv-carnet-v2-root[data-reduce-motion='true'] .lkdv-carnet-drawer [data-carnet-row]{animation:none!important}
+`;
 
 export interface CarnetDrawerV2Props {
   isOpen: boolean;
@@ -103,7 +130,7 @@ export function CarnetDrawerV2({
   });
   const [accountTab, setAccountTab] = useState<number>(0);
   const [stack, setStack] = useState<StackView[]>([]);
-  const [verdictFilter, setVerdictFilter] = useState<'all' | 'top' | 'flop' | 'neutre'>('all');
+  const [verdictFilter, setVerdictFilter] = useState<'all' | KitVerdictType>('all');
   const [newCommentText, setNewCommentText] = useState('');
 
   // Reactions for the current active day
@@ -217,6 +244,77 @@ export function CarnetDrawerV2({
       ...(isOwner ? [{ id: 'gerer', label: 'Gérer' }] : []),
     ];
   }, [detail.isOwner]);
+
+  // ---- Lecture : position mémorisée par lentille (`${slot}:${lens.id}`) ----
+  const activeLensId = (slotLenses[activeSlot] ?? [])[activeLensIndex]?.id;
+  const activeLensKey = activeLensId ? `${activeSlot}:${activeLensId}` : null;
+  const scrollMemoRef = useRef<Record<string, number>>({});
+  const paneRootRef = useRef<HTMLDivElement | null>(null);
+  const [resumePill, setResumePill] = useState<{ key: string; top: number } | null>(null);
+
+  // Le conteneur du tiroir porte aussi le piège de focus de `useCarnetDialog` :
+  // un seul nœud, deux références.
+  const attachPaneRoot = useCallback(
+    (node: HTMLDivElement | null) => {
+      paneRootRef.current = node;
+      dialogRef.current = node;
+    },
+    [dialogRef]
+  );
+
+  useEffect(() => {
+    if (!isOpen || !activeLensKey) {
+      setResumePill(null);
+      return;
+    }
+    const root = paneRootRef.current;
+    if (!root) return;
+
+    const readPane = () =>
+      root.querySelector<HTMLElement>('.lkdv-lens-pane[data-testid="slot-content"]');
+
+    const syncPill = (key: string, top: number) => {
+      const saved = scrollMemoRef.current[key] ?? 0;
+      // Nulle, ou déjà à la position mémorisée : pas de pilule.
+      const visible = saved > 0 && top < RESUME_TOP_MAX && Math.abs(saved - top) > RESUME_TOP_MAX;
+      setResumePill((prev) => {
+        if (!visible) return prev === null ? prev : null;
+        if (prev && prev.key === key && prev.top === saved) return prev;
+        return { key, top: saved };
+      });
+    };
+
+    syncPill(activeLensKey, readPane()?.scrollTop ?? 0);
+
+    const onScroll = (event: Event) => {
+      const pane = event.target as HTMLElement | null;
+      if (!pane || typeof pane.classList === 'undefined') return;
+      if (!pane.classList.contains('lkdv-lens-pane')) return;
+      const lensId = pane.getAttribute('data-lens');
+      if (!lensId) return;
+      const key = `${activeSlot}:${lensId}`;
+      if (pane.scrollTop > RESUME_MEMO_MIN) scrollMemoRef.current[key] = pane.scrollTop;
+      syncPill(key, pane.scrollTop);
+    };
+
+    root.addEventListener('scroll', onScroll, true);
+    return () => root.removeEventListener('scroll', onScroll, true);
+  }, [isOpen, activeLensKey, activeSlot]);
+
+  const resumeReading = useCallback(() => {
+    if (!resumePill) return;
+    const root = paneRootRef.current;
+    const pane = root?.querySelector<HTMLElement>('.lkdv-lens-pane[data-testid="slot-content"]');
+    const manualReduce = Boolean(root?.closest('[data-reduce-motion="true"]'));
+    const systemReduce =
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const reduce = manualReduce || systemReduce;
+    pane?.scrollTo({ top: resumePill.top, behavior: reduce ? 'auto' : 'smooth' });
+    haptic('selection');
+    setResumePill(null);
+  }, [haptic, resumePill]);
 
   if (!isOpen) return null;
 
@@ -647,7 +745,9 @@ export function CarnetDrawerV2({
                 <button
                   key={m.id}
                   type="button"
+                  data-carnet-row=""
                   style={{
+                    ...rowStyle(idx),
                     display: 'flex',
                     gap: '10px',
                     width: '100%',
@@ -752,10 +852,12 @@ export function CarnetDrawerV2({
                   Aucune rencontre répertoriée.
                 </p>
               ) : (
-                encounters.map((m) => (
+                encounters.map((m, idx) => (
                   <div
                     key={m.id}
+                    data-carnet-row=""
                     style={{
+                      ...rowStyle(idx),
                       padding: '12px',
                       borderRadius: '16px',
                       background: 'var(--drawer-card-bg)',
@@ -784,10 +886,12 @@ export function CarnetDrawerV2({
                   Aucune observation nature consignée.
                 </p>
               ) : (
-                natureMoments.map((m) => (
+                natureMoments.map((m, idx) => (
                   <div
                     key={m.id}
+                    data-carnet-row=""
                     style={{
+                      ...rowStyle(idx),
                       padding: '12px',
                       borderRadius: '16px',
                       background: 'var(--drawer-card-bg)',
@@ -807,11 +911,13 @@ export function CarnetDrawerV2({
         if (lens.id === 'etapes') {
           return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '6px' }}>
-              {detail.etapes.map((e) => (
+              {detail.etapes.map((e, idx) => (
                 <button
                   key={e.id}
                   type="button"
+                  data-carnet-row=""
                   style={{
+                    ...rowStyle(idx),
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
@@ -844,11 +950,13 @@ export function CarnetDrawerV2({
         if (lens.id === 'nuits') {
           return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '6px' }}>
-              {(detail.nights ?? []).map((n) => (
+              {(detail.nights ?? []).map((n, idx) => (
                 <button
                   key={n.id}
                   type="button"
+                  data-carnet-row=""
                   style={{
+                    ...rowStyle(idx),
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
@@ -883,13 +991,16 @@ export function CarnetDrawerV2({
         }
         if (lens.id === 'altitude') {
           const profile = detail.elevationProfile ?? [];
+          const profileGain = elevationProfileGain(profile);
           return (
             <div className="lkdv-altitude-card">
               <b>Profil d’altitude du tracé</b>
               <p>
-                {detail.elevationM
-                  ? `Dénivelé total positif : +${Math.round(detail.elevationM)} m`
-                  : 'Dénivelé total non renseigné'}
+                {profileGain !== null
+                  ? `Dénivelé du tracé : +${profileGain} m`
+                  : detail.elevationM
+                    ? `Dénivelé total positif : +${Math.round(detail.elevationM)} m`
+                    : 'Dénivelé total non renseigné'}
               </p>
               {profile.length >= 2 ? (
                 <CarnetAltitude
@@ -952,11 +1063,13 @@ export function CarnetDrawerV2({
                   </span>
                 </div>
 
-                {detail.kit.items.map((item) => (
+                {detail.kit.items.map((item, idx) => (
                   <button
                     key={item.id}
                     type="button"
+                    data-carnet-row=""
                     style={{
+                      ...rowStyle(idx),
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
@@ -1015,10 +1128,39 @@ export function CarnetDrawerV2({
             return v.verdict === verdictFilter;
           });
 
+          const VERDICT_LABELS: Record<KitVerdictType, string> = {
+            essentiel: 'Essentiel',
+            utile: 'Utile',
+            jamais_servi: 'Jamais servi',
+            defaillant: 'Défaillant',
+            manquait: 'Manquait',
+            top: 'Top',
+            flop: 'Flop',
+            neutre: 'Neutre',
+          };
+          const VERDICT_STYLES: Record<KitVerdictType, { bg: string; color: string }> = {
+            essentiel: { bg: 'var(--mint, #E1EBDE)', color: 'var(--good, #3D7A52)' },
+            utile: { bg: 'var(--fill2, rgba(23,43,36,.06))', color: 'var(--info, #4B6B7C)' },
+            jamais_servi: {
+              bg: 'var(--fill2, rgba(23,43,36,.06))',
+              color: 'var(--label2, #56665D)',
+            },
+            defaillant: { bg: 'var(--bad-bg, #F5DDD9)', color: 'var(--bad, #A8443A)' },
+            manquait: { bg: 'var(--warn-bg, #FBF1DC)', color: 'var(--warn, #B98A2E)' },
+            top: { bg: 'var(--mint, #E1EBDE)', color: 'var(--good, #3D7A52)' },
+            flop: { bg: 'var(--bad-bg, #F5DDD9)', color: 'var(--bad, #A8443A)' },
+            neutre: {
+              bg: 'var(--fill2, rgba(23,43,36,.06))',
+              color: 'var(--label2, #56665D)',
+            },
+          };
+
           return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '6px' }}>
-              <div style={{ display: 'flex', gap: '6px' }}>
-                {(['all', 'top', 'flop', 'neutre'] as const).map((f) => (
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                {(
+                  ['all', 'essentiel', 'utile', 'jamais_servi', 'defaillant', 'manquait'] as const
+                ).map((f) => (
                   <button
                     key={f}
                     type="button"
@@ -1029,18 +1171,33 @@ export function CarnetDrawerV2({
                       border: '0',
                       background:
                         verdictFilter === f ? 'var(--tint, #17402C)' : 'rgba(23, 64, 44, 0.08)',
-                      color: verdictFilter === f ? '#fff' : 'var(--tint)',
+                      color: verdictFilter === f ? 'var(--tint-ink, #fff)' : 'var(--tint)',
                       fontSize: '11px',
                       fontWeight: 600,
                       cursor: 'pointer',
-                      textTransform: 'capitalize',
                     }}
                     onClick={() => setVerdictFilter(f)}
                   >
-                    {f === 'all' ? 'Tous' : `${f}s`}
+                    {f === 'all' ? 'Tous' : VERDICT_LABELS[f]}
                   </button>
                 ))}
               </div>
+
+              {filtered.length === 0 ? (
+                <div
+                  style={{
+                    padding: '24px 16px',
+                    borderRadius: '16px',
+                    background: 'var(--drawer-card-bg)',
+                    textAlign: 'center',
+                  }}
+                >
+                  <b style={{ fontSize: '13px' }}>Aucun verdict pour ce carnet.</b>
+                  <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--label2)' }}>
+                    Les verdicts se remplissent depuis le terrain, après les sorties.
+                  </p>
+                </div>
+              ) : null}
 
               {filtered.map((item) => (
                 <div
@@ -1066,21 +1223,11 @@ export function CarnetDrawerV2({
                         fontSize: '10px',
                         fontWeight: 700,
                         textTransform: 'uppercase',
-                        background:
-                          item.verdict === 'top'
-                            ? 'var(--mint, #E1EBDE)'
-                            : item.verdict === 'flop'
-                              ? 'var(--bad-bg, #FDE8E6)'
-                              : 'rgba(23, 64, 44, 0.08)',
-                        color:
-                          item.verdict === 'top'
-                            ? 'var(--good, #3D7A52)'
-                            : item.verdict === 'flop'
-                              ? 'var(--bad, #A8443A)'
-                              : 'inherit',
+                        background: item.verdict ? VERDICT_STYLES[item.verdict].bg : undefined,
+                        color: item.verdict ? VERDICT_STYLES[item.verdict].color : undefined,
                       }}
                     >
-                      {item.verdict}
+                      {item.verdict ? VERDICT_LABELS[item.verdict] : '—'}
                     </span>
                   </div>
                   {item.verdictNote ? (
@@ -1233,11 +1380,13 @@ export function CarnetDrawerV2({
         if (lens.id === 'participants') {
           return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '6px' }}>
-              {detail.participants.map((p) => (
+              {detail.participants.map((p, idx) => (
                 <button
                   key={p.id}
                   type="button"
+                  data-carnet-row=""
                   style={{
+                    ...rowStyle(idx),
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
@@ -1331,6 +1480,8 @@ export function CarnetDrawerV2({
                     cursor: 'pointer',
                   }}
                   onClick={reactions.toggleLike}
+                  aria-pressed={reactions.liked}
+                  aria-label={reactions.liked ? 'Retirer mon j’aime du jour' : 'J’aime ce jour'}
                 >
                   <LikeIcon size={15} active={reactions.liked} />
                   <span>{reactions.liked ? 'Aimé' : 'J’aime'}</span>
@@ -1472,13 +1623,15 @@ export function CarnetDrawerV2({
 
   return (
     <div
-      ref={dialogRef}
+      ref={attachPaneRoot}
       className="lkdv-carnet-drawer"
       role="dialog"
       aria-modal="true"
       aria-label="Tiroir de détails du carnet"
       tabIndex={-1}
     >
+      <style dangerouslySetInnerHTML={{ __html: DRAWER_MOTION_CSS }} />
+
       <button type="button" className="lkdv-mgrab" onClick={onClose} aria-label="Fermer le tiroir">
         <span />
       </button>
@@ -1504,6 +1657,20 @@ export function CarnetDrawerV2({
         }
         renderLens={(lens) => renderCurrentSlotContent(lens)}
       />
+
+      {/* Reprise de lecture — au-dessus de la pilule « Reprendre le kit » (30). */}
+      {resumePill && resumePill.key === activeLensKey ? (
+        <button
+          type="button"
+          className="lkdv-pill-reprendre lkdv-pill-resume"
+          style={{ left: '10px', bottom: '48px', zIndex: 16 }}
+          onClick={resumeReading}
+          aria-label="Reprendre la lecture"
+        >
+          <Bookmark size={14} />
+          <span>Reprendre</span>
+        </button>
+      ) : null}
     </div>
   );
 }

@@ -73,14 +73,6 @@ export function CarnetCardV2({
     return { state: 'live' as const, label: `En route · J${dayNumber} sur ${daysCount}` };
   }, [daysCount, daysLabel, detail.endDate, detail.liveSharing, detail.startDate]);
 
-  const summaryLine = [
-    detail.distanceKm ? `${distanceFormatted} km` : null,
-    detail.elevationM ? `+${Math.round(detail.elevationM)} m` : null,
-    detail.moments.length ? `${detail.moments.length} moments` : null,
-  ]
-    .filter(Boolean)
-    .join(' · ');
-
   // Highlight stories pills (up to 5 items)
   const highlights = useMemo(() => {
     const list = [];
@@ -231,29 +223,6 @@ export function CarnetCardV2({
           </div>
         ) : null}
 
-        <div className="lkdv-ig-summary">
-          <div className="lkdv-ig-summary-row">
-            <button
-              type="button"
-              className="lkdv-ig-summary-chip"
-              aria-pressed={activeDay === 0}
-              onClick={() => {
-                if (activeDay !== 0) {
-                  haptic('selection');
-                  onDayChange(0);
-                }
-              }}
-            >
-              Tout
-            </button>
-            <b>
-              {daysLabel} · {detail.participants.length || 1} voyageur
-              {(detail.participants.length || 1) > 1 ? 's' : ''}
-            </b>
-          </div>
-          {summaryLine ? <span className="lkdv-ig-summary-stats">{summaryLine}</span> : null}
-        </div>
-
         <CarnetDaySwipeView
           days={detail.days}
           etapes={detail.etapes}
@@ -264,6 +233,11 @@ export function CarnetCardV2({
           onPeekMoment={onPeekMoment}
           isEditing={isEditing}
           onAddMoment={onAddMoment}
+          nights={detail.nights}
+          coverImage={detail.coverImage}
+          travellers={detail.participants.length || 1}
+          distanceKm={detail.distanceKm}
+          elevationM={detail.elevationM}
         />
       </div>
     </div>

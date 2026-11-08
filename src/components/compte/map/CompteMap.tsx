@@ -74,7 +74,7 @@ export interface CompteMapProps {
   /** Zone approximative floue (visiteur). */
   publicZone?: { centerLat: number; centerLng: number; radiusMeters?: number } | null;
   /** Marqueurs d'étapes, nuits ou moments du carnet. */
-  markers?: Array<{ id: string; lat: number; lng: number; title: string; type?: string }>;
+  markers?: Array<{ id: string; lat: number; lng: number; title: string; type?: string; badge?: string }>;
 }
 
 type Selected =
@@ -286,7 +286,9 @@ export function CompteMap({
   const [selected, setSelected] = useState<Selected | null>(null);
   const [anchor, setAnchor] = useState<{ x: number; y: number } | null>(null);
   const [scale, setScale] = useState<MapScale>('globe');
-  const [tileMode, setTileMode] = useState<'satellite' | 'topo'>('satellite');
+  const [tileMode, setTileMode] = useState<'satellite' | 'topo'>(
+    variant === 'carnet' ? 'topo' : 'satellite'
+  );
   const [online, setOnline] = useState(true);
   const [year, setYear] = useState<number | null>(null);
   const [zoomBand, setZoomBand] = useState<MapZoomBand>('world');
@@ -304,6 +306,16 @@ export function CompteMap({
       map.off('zoom', onZoom);
     };
   }, [map]);
+
+  /* Le carnet s'ouvre sur la carte topo (maquette) ; le toggle reste possible. */
+  useEffect(() => {
+    if (!map || !ready) return;
+    for (const layer of ['atlas-tile-satellite', 'atlas-tile-topo']) {
+      if (!map.getLayer(layer)) continue;
+      const wanted = layer === 'atlas-tile-topo' ? 'topo' : 'satellite';
+      map.setLayoutProperty(layer, 'visibility', tileMode === wanted ? 'visible' : 'none');
+    }
+  }, [map, ready, tileMode]);
 
   /* Fiche carnet : la carte ne montre que le tracé du carnet. */
   const isCarnet = variant === 'carnet';
@@ -889,12 +901,27 @@ export function CompteMap({
       const el = document.createElement('div');
       el.className = 'lkdv-carnet-map-marker';
       el.title = marker.title;
-      el.style.width = '18px';
-      el.style.height = '18px';
-      el.style.borderRadius = '9999px';
-      el.style.background = marker.type === 'bivouac' || marker.type === 'refuge' ? '#5B7F55' : '#17402C';
-      el.style.border = '2px solid #FFFFFF';
-      el.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
+      if (marker.badge) {
+        el.classList.add('has-badge');
+        const badge = document.createElement('span');
+        badge.className = 'lkdv-map-night-badge';
+        badge.textContent = marker.badge;
+        el.appendChild(badge);
+        el.setAttribute('aria-label', `${marker.badge} · ${marker.title}`);
+      } else {
+        const scrub = marker.type === 'scrub';
+        el.style.width = scrub ? '14px' : '18px';
+        el.style.height = scrub ? '14px' : '18px';
+        el.style.borderRadius = '9999px';
+        el.style.background =
+          marker.type === 'bivouac' || marker.type === 'refuge'
+            ? '#5B7F55'
+            : '#17402C';
+        el.style.border = '2px solid #FFFFFF';
+        el.style.boxShadow = scrub
+          ? '0 0 0 5px rgba(23,64,44,0.18), 0 2px 6px rgba(0,0,0,0.3)'
+          : '0 2px 6px rgba(0,0,0,0.3)';
+      }
 
       const m = new Marker({ element: el, anchor: 'center' })
         .setLngLat([marker.lng, marker.lat])

@@ -121,3 +121,21 @@ like post/peek fonctionnels ; 390/360 sans débordement ; `tsc` ciblé 0 ; 118/1
   débordement.
 - Erreurs console maplibre `appendChild` : 3, **identiques sur le build précédent**
   (`c268b3c`), hors périmètre carnet.
+
+### Refonte 100 % (8 novembre 2026, 22 h)
+
+- **Vue du jour** : Résumé en voyage-cards 144 px + dayhead `Tout` ; jour en dayhead
+  `J{n}` + grille. Bannière de verre et doublon de résumé supprimés.
+- **Carte** : topo par défaut, badge `Tout`/`J{n}`, badges `N{n}` prêts, curseur de
+  scrub, drag de la poignée.
+- **Altitude** : profil réel Open-Meteo, accessoire visible, curseur carte, lentille
+  Route › Altitude ; D+ du profil affiché (129 m) à côté du D+ déclaré de la carte
+  (1420 m), les deux sources étant explicitement distinctes.
+- **Moment** : 5 actions Peek, j'aime/enregistrer/commentaires par moment, signalement
+  moment/carnet persisté dans `comment_reports`.
+- **Tiroir** : cascade, reprise de lecture, verdicts corrigés (Essentiel/Utile…),
+  états vides honnêtes.
+- **Portes** : 331/331 tests carnet, `tsc` 0, build 0, perf 9/9, axe 0 critical/serious,
+  430/768/1440 sans débordement.
+- **Migrations prod** : Lots A–E + `post_reports.target_type` appliqués (additifs, RLS).
+- **Bloqué données** : nuits/verdicts vides, J211/J212, km/D+ par jour absents.

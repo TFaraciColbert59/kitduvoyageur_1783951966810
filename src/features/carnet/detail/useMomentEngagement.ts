@@ -18,7 +18,6 @@ export interface UseMomentEngagementArgs {
 }
 
 export function useMomentEngagement({
-  carnetId,
   momentId,
   initialLikes = 0,
   initialLiked = false,
@@ -45,13 +44,12 @@ export function useMomentEngagement({
   }, [initialLiked, initialLikes, initialSaved, initialSaves]);
 
   const loadComments = useCallback(async () => {
-    if (!carnetId || !momentId) return;
+    if (!momentId) return;
     setLoadingComments(true);
     try {
       const { data, error } = await supabase
         .from('carnet_moment_comments')
-        .select('id, carnet_id, moment_id, author_id, content, created_at, deleted_at')
-        .eq('carnet_id', carnetId)
+        .select('id, moment_id, author_id, content, created_at, deleted_at')
         .eq('moment_id', momentId)
         .is('deleted_at', null)
         .order('created_at', { ascending: true });
@@ -83,7 +81,7 @@ export function useMomentEngagement({
     } finally {
       setLoadingComments(false);
     }
-  }, [carnetId, momentId, supabase]);
+  }, [momentId, supabase]);
 
   const toggleLike = useCallback(async () => {
     if (!userId) {
@@ -97,7 +95,6 @@ export function useMomentEngagement({
     try {
       if (next) {
         const { error } = await supabase.from('carnet_moment_likes').insert({
-          carnet_id: carnetId,
           moment_id: momentId,
           user_id: userId,
         });
@@ -106,8 +103,7 @@ export function useMomentEngagement({
         const { error } = await supabase
           .from('carnet_moment_likes')
           .delete()
-          .eq('carnet_id', carnetId)
-          .eq('moment_id', momentId)
+            .eq('moment_id', momentId)
           .eq('user_id', userId);
         if (error) throw error;
       }
@@ -115,7 +111,7 @@ export function useMomentEngagement({
       setLiked(!next);
       setLikesCount((prev) => Math.max(0, prev + (next ? -1 : 1)));
     }
-  }, [carnetId, liked, momentId, onRequireAuth, supabase, userId]);
+  }, [liked, momentId, onRequireAuth, supabase, userId]);
 
   const toggleSave = useCallback(async () => {
     if (!userId) {
@@ -129,7 +125,6 @@ export function useMomentEngagement({
     try {
       if (next) {
         const { error } = await supabase.from('carnet_moment_saves').insert({
-          carnet_id: carnetId,
           moment_id: momentId,
           user_id: userId,
         });
@@ -139,8 +134,7 @@ export function useMomentEngagement({
         const { error } = await supabase
           .from('carnet_moment_saves')
           .delete()
-          .eq('carnet_id', carnetId)
-          .eq('moment_id', momentId)
+            .eq('moment_id', momentId)
           .eq('user_id', userId);
         if (error) throw error;
       }
@@ -148,7 +142,7 @@ export function useMomentEngagement({
       setSaved(!next);
       setSavesCount((prev) => Math.max(0, prev + (next ? -1 : 1)));
     }
-  }, [carnetId, momentId, onIsland, onRequireAuth, saved, supabase, userId]);
+  }, [momentId, onIsland, onRequireAuth, saved, supabase, userId]);
 
   const addComment = useCallback(
     async (content: string) => {
@@ -174,8 +168,7 @@ export function useMomentEngagement({
         const { data, error } = await supabase
           .from('carnet_moment_comments')
           .insert({
-            carnet_id: carnetId,
-            moment_id: momentId,
+              moment_id: momentId,
             author_id: userId,
             content: trimmed,
           })
@@ -198,7 +191,7 @@ export function useMomentEngagement({
         return false;
       }
     },
-    [carnetId, momentId, onIsland, onRequireAuth, supabase, userId]
+    [momentId, onIsland, onRequireAuth, supabase, userId]
   );
 
   const deleteComment = useCallback(

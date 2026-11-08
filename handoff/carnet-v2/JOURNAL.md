@@ -105,3 +105,19 @@ Format : Date | Décision | Contexte & Raison | Alternative écartée
     (page/tiroir/peek), 25 Tab piégés, prod `411939a` READY et aliasée.
   - **Reste hors périmètre :** erreurs maplibre `appendChild` pré-existantes, jours
     de démo J211/J212, migrations likes/commentaires par moment et verdicts.
+
+- **2026-11-08 22:00 — Refonte 100 % : données et UI**
+  - **Migrations prod appliquées** (additives, RLS, vérifiées par advisors) : Lots A à E
+    + `post_reports.target_type`. Débloquent likes/saves/commentaires par moment,
+    réactions par jour, nuits, verdicts, position live, forks.
+  - **UI** : vue Résumé en voyage-cards 144 px + dayhead, vue jour dayhead, carte topo
+    + badge + curseur de scrub + drag, profil altimétrique réel Open-Meteo, Peek 5
+    actions, post et commentaires par moment, signalement polymorphe, verdicts
+    Essentiel/Utile/etc., reprise de lecture, cascade, morphing du titre, grab drag,
+    barre masquée sous toutes les feuilles.
+  - **Preuves** : 331/331 tests carnet, `tsc` 0, build production 0, perf 9/9,
+    axe 0 critical/serious, captures 430/768/1440.
+  - **Bloqué par la donnée** : nuits et verdicts vides en démo, J211/J212, km/D+
+    par jour manquants. Aucune valeur inventée.
+  - **Décision** : signalement carnet/moment dans `comment_reports` (pas de table
+    dédiée, `post_reports.post_id` a une FK vers `community_posts`).

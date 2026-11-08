@@ -66,33 +66,33 @@ test.describe('Carnet v2 — Scénarios E2E', () => {
     await expect(page.locator('.lkdv-title-pill')).toBeVisible();
 
     // Vérifier les 3 statistiques
-    const stats = page.locator('.lkdv-cstat');
-    if ((await stats.count()) >= 3) {
-      await expect(stats.first()).toBeVisible();
-    }
+    await expect(page.locator('.lkdv-ig-stat')).toHaveCount(3);
 
-    // Mini-capsule des jours
-    const dayPills = page.locator('.lkdv-day-mini-pill');
-    if ((await dayPills.count()) > 1) {
-      await dayPills.nth(1).click();
-      await expect(dayPills.nth(1)).toHaveClass(/active/);
-    }
+    // Résumé : une carte-jour par jour, cliquable
+    const voyageCards = page.getByRole('button', { name: /Ouvrir le jour/ });
+    await expect(voyageCards.first()).toBeVisible();
+    const dayCount = await voyageCards.count();
+    expect(dayCount).toBeGreaterThanOrEqual(1);
+    await voyageCards.first().click();
+    await expect(page.locator('.lkdv-day-capsule-btn[aria-selected="true"]')).not.toHaveText('R');
+
+    // Retour au résumé
+    await page.locator('.lkdv-day-capsule-btn').first().click();
   });
 
   test('2. Navigation dans les 5 slots du tiroir et fermeture', async ({ page }) => {
     await navigateToCarnet(page, TEST_CARNET_ID);
     if (page.url().includes('/connexion') || (await page.locator('text=404').count()) > 0) return;
 
-    const drawer = page.locator('[data-testid="carnet-drawer-v2"]');
+    await page.getByRole('button', { name: /Ouvrir le carnet/ }).click();
+    const drawer = page.locator('.lkdv-carnet-drawer');
     await expect(drawer).toBeVisible({ timeout: 15_000 });
+    await expect(drawer).toHaveAttribute('aria-modal', 'true');
 
-    const slots = ['fil', 'route', 'sac', 'chiffres', 'equipage'];
-    for (const slotId of slots) {
-      const slotButton = page.locator(`[data-testid="carnet-slot-${slotId}"]`);
-      if (await slotButton.isVisible()) {
-        await slotButton.click();
-        await expect(slotButton).toHaveAttribute('aria-selected', 'true');
-      }
+    for (const slot of ['Fil de bord', 'Route', 'Sac', 'Chiffres', 'Équipage']) {
+      const tab = page.getByRole('tab', { name: slot });
+      await tab.click();
+      await expect(tab).toHaveAttribute('aria-selected', 'true');
     }
 
     // Fermeture par Échap
@@ -103,7 +103,9 @@ test.describe('Carnet v2 — Scénarios E2E', () => {
     await page.goto(`/carnets/${TEST_CARNET_ID}`);
     if (await page.locator('text=404').count() > 0) return;
 
-    const firstPost = page.locator('.lkdv-post-cell').first();
+    const dayCard = page.getByRole('button', { name: /Ouvrir le jour/ }).first();
+    if (await dayCard.count()) await dayCard.click();
+    const firstPost = page.locator('.lkdv-ig-tile').first();
     if (await firstPost.isVisible()) {
       await firstPost.click();
       const postSheet = page.locator('[data-testid="post-sheet-mock"], .lkdv-post-sheet-root, [role="dialog"]');
@@ -175,13 +177,9 @@ test.describe('Carnet v2 — Scénarios E2E', () => {
     const res = await page.goto(`/carnets/${PRIVATE_CARNET_ID}`);
     expect([200, 404]).toContain(res?.status() ?? 404);
 
-    // 2. Sur un carnet public en visiteur non connecté
+    // 2. Sur un carnet public en invité : le middleware renvoie vers /connexion
     await page.goto(`/carnets/${TEST_CARNET_ID}`);
-    if (await page.locator('text=404').count() > 0) return;
-
-    // Le bouton budget ne doit pas être accessible aux visiteurs
-    const budgetSlot = page.locator('[data-testid="carnet-lens-budget"]');
-    await expect(budgetSlot).toHaveCount(0);
+    await expect(page).toHaveURL(/\/connexion/);
   });
 
   test('9. Dynamic Island : bannière éphémère et retour', async ({ page }) => {
@@ -197,7 +195,7 @@ test.describe('Carnet v2 — Scénarios E2E', () => {
     }
   });
 
-  test('11. Peek & Pop : appui long, 4 actions réelles, Échap et retour du focus', async ({ page }) => {
+  test('11. Peek & Pop : appui long, 5 actions réelles, Échap et retour du focus', async ({ page }) => {
     await navigateToCarnet(page, TEST_CARNET_ID);
     if (page.url().includes('/connexion') || (await page.locator('text=404').count()) > 0) return;
 
@@ -213,9 +211,11 @@ test.describe('Carnet v2 — Scénarios E2E', () => {
     const peek = page.locator('.lkdv-peek [role="dialog"]');
     await expect(peek).toBeVisible();
     await expect(peek).toHaveAttribute('aria-modal', 'true');
-    await expect(peek.getByRole('button', { name: /J’aime/ })).toBeVisible();
+    await expect(peek.getByRole('button', { name: /J’aime|Retirer/ })).toBeVisible();
     await expect(peek.getByRole('button', { name: 'Commenter' })).toBeVisible();
+    await expect(peek.getByRole('button', { name: /Enregistrer|Enregistré/ })).toBeVisible();
     await expect(peek.getByRole('button', { name: 'Partager' })).toBeVisible();
+    await expect(peek.getByRole('button', { name: 'Signaler' })).toBeVisible();
 
     await page.keyboard.press('Escape');
     await expect(page.locator('.lkdv-peek')).toHaveCount(0);
@@ -253,6 +253,7 @@ test.describe('Carnet v2 — Scénarios E2E', () => {
     const empty = card.getByText(/Aucune mesure d’altitude enregistrée/);
     const slider = card.locator('svg.lkdv-altitude');
     expect((await empty.count()) + (await slider.count())).toBeGreaterThan(0);
+    await expect(card.getByText(/Dénivelé du tracé|Aucune mesure/)).toBeVisible();
     await expect(card.getByText(/Trace altimétrique interactive synchronisée/)).toHaveCount(0);
   });
 

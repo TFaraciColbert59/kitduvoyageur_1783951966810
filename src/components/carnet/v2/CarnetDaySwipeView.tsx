@@ -1,10 +1,17 @@
 'use client';
 
-import React, { useRef, useState, useCallback, useEffect } from 'react';
+import React, { useRef, useState, useCallback, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import type { CarnetDay, CarnetMomentItem, CarnetEtapeDay } from '@/features/carnet/detail/types';
+import type {
+  CarnetDay,
+  CarnetEtapeDay,
+  CarnetMomentItem,
+  CarnetNightItem,
+} from '@/features/carnet/detail/types';
 import { CarnetPostGrid } from './CarnetPostGrid';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { formatDayLabel, formatDuration, formatElevation, formatKm } from '@/features/carnet/detail/format';
+import styles from './CarnetDaySwipeView.module.css';
 
 export interface CarnetDaySwipeViewProps {
   days: CarnetDay[];
@@ -16,9 +23,105 @@ export interface CarnetDaySwipeViewProps {
   onPeekMoment?: (moment: CarnetMomentItem) => void;
   isEditing?: boolean;
   onAddMoment?: () => void;
+  /** Nuits réelles du carnet (`detail.nights`) : seule source de l'altitude d'une nuit. */
+  nights?: CarnetNightItem[];
+  /** Couverture du carnet, repli quand le jour ne porte aucun moment photo. */
+  coverImage?: string | null;
+  /** Voyageurs réels (`detail.participants`). */
+  travellers?: number;
+  /** Totaux réels du carnet, ceux de la rangée de statistiques de la carte. */
+  distanceKm?: number | null;
+  elevationM?: number | null;
 }
 
 const SWIPE_THRESHOLD = 60;
+
+const DAY_LONG_LABEL = new Intl.DateTimeFormat('fr-FR', {
+  weekday: 'short',
+  day: 'numeric',
+  month: 'short',
+});
+
+/** « lun. 13 juil. » — la date d'un jour ; `null` quand elle n'existe pas. */
+function formatFullDayLabel(date: string | null): string | null {
+  if (!date) return null;
+  // `2026-07-13` : midi UTC, pour qu'aucun fuseau ne décale la date.
+  const iso = /^\d{4}-\d{2}-\d{2}$/.test(date) ? `${date}T12:00:00Z` : date;
+  const parsed = new Date(iso);
+  return Number.isNaN(parsed.getTime()) ? null : DAY_LONG_LABEL.format(parsed);
+}
+
+/** `3 moments`, `1 voyageur`, `2 jours`. Un compte réel, jamais un zéro décoratif. */
+function counted(count: number, one: string, many: string): string {
+  return `${count} ${count > 1 ? many : one}`;
+}
+
+/** `+2 410 m` quand l'altitude existe, `null` sinon. */
+function signedElevation(meters: number | null): string | null {
+  const label = meters === null ? null : formatElevation(meters);
+  return label ? `+${label}` : null;
+}
+
+const cx = (...names: Array<string | false | null | undefined>): string =>
+  names.filter(Boolean).join(' ');
+
+/**
+ * Ce qu'un jour montre : l'étape déclarée commande la ligne (from → to, km, D+,
+ * durée) et chaque champ absent retombe sur la valeur mesurée du jour (`buildDays`).
+ * Aucune valeur n'est inventée : un champ vide reste `null` et s'affiche `—`.
+ */
+interface DayView {
+  dayNumber: number;
+  date: string | null;
+  from: string | null;
+  to: string | null;
+  distanceKm: number | null;
+  elevationM: number | null;
+  durationS: number | null;
+  durationText: string | null;
+  weather: string | null;
+  moments: CarnetMomentItem[];
+}
+
+function buildDayViews({
+  days,
+  etapes,
+  moments,
+}: {
+  days: CarnetDay[];
+  etapes: CarnetEtapeDay[];
+  moments: CarnetMomentItem[];
+}): DayView[] {
+  const source: Array<{ dayNumber: number; day: CarnetDay | null }> =
+    days.length > 0
+      ? days.map((day) => ({ dayNumber: day.dayNumber ?? day.index, day }))
+      : etapes.map((etape) => ({ dayNumber: etape.dayNumber, day: null }));
+
+  return [...source]
+    .sort((a, b) => a.dayNumber - b.dayNumber)
+    .map(({ dayNumber, day }) => {
+      const etape = etapes.find((e) => e.dayNumber === dayNumber) ?? null;
+      // Le jour dérivé porte ses propres moments ; une étape sans jour dérivé
+      // se rabat sur la liste réelle des moments du carnet.
+      const dayMoments = day ? day.moments : moments.filter((m) => m.dayNumber === dayNumber);
+      const places = [
+        ...new Set(dayMoments.map((m) => m.place?.trim()).filter((p): p is string => Boolean(p))),
+      ];
+
+      return {
+        dayNumber,
+        date: day?.date ?? null,
+        from: etape?.from ?? places[0] ?? null,
+        to: etape?.to ?? (places.length > 1 ? places[places.length - 1] : null),
+        distanceKm: etape?.distanceKm ?? day?.distanceKm ?? null,
+        elevationM: etape?.elevationM ?? day?.elevationM ?? null,
+        durationS: day?.durationS ?? null,
+        durationText: etape?.durationText ?? null,
+        weather: etape?.weather ?? null,
+        moments: dayMoments,
+      };
+    });
+}
 
 export function CarnetDaySwipeView({
   days,
@@ -30,6 +133,11 @@ export function CarnetDaySwipeView({
   onPeekMoment,
   isEditing = false,
   onAddMoment,
+  nights,
+  coverImage = null,
+  travellers = 1,
+  distanceKm = null,
+  elevationM = null,
 }: CarnetDaySwipeViewProps) {
   const { haptic } = useHapticFeedback();
   const [dragX, setDragX] = useState(0);
@@ -45,8 +153,12 @@ export function CarnetDaySwipeView({
   const startYRef = useRef<number | null>(null);
   const isSwipingRef = useRef(false);
 
-  const maxDay = days.length > 0 ? Math.max(...days.map((d) => d.dayNumber ?? d.index)) : 0;
-  const currentEtape = etapes.find((e) => e.dayNumber === activeDay);
+  const dayViews = useMemo(
+    () => buildDayViews({ days, etapes, moments }),
+    [days, etapes, moments]
+  );
+  const maxDay = dayViews.reduce((max, day) => Math.max(max, day.dayNumber), 0);
+  const currentDay = dayViews.find((day) => day.dayNumber === activeDay) ?? null;
 
   const handlePointerDown = (e: React.PointerEvent) => {
     if (e.button !== 0 && e.pointerType === 'mouse') return;
@@ -121,15 +233,35 @@ export function CarnetDaySwipeView({
   // Day options for the floating selector: 0 (Résumé), 1..maxDay
   const dayOptions = [
     { label: 'R', value: 0, fullLabel: 'Résumé' },
-    ...days.map((d) => {
-      const num = d.dayNumber ?? d.index;
-      return {
-        label: `J${num}`,
-        value: num,
-        fullLabel: `Jour ${num}`,
-      };
-    }),
+    ...dayViews.map((day) => ({
+      label: `J${day.dayNumber}`,
+      value: day.dayNumber,
+      fullLabel: `Jour ${day.dayNumber}`,
+    })),
   ];
+
+  /* ---- Résumé : en-tête « Tout » + totaux réels du carnet ---------------- */
+  const daysCount = days.length || etapes.length;
+  const distanceLabel = formatKm(distanceKm);
+  const elevationLabel = signedElevation(elevationM);
+  const resumeMeta = [
+    distanceLabel ?? '—',
+    elevationLabel ?? '—',
+    counted(moments.length, 'moment', 'moments'),
+  ].join(' · ');
+
+  /* ---- Jour n : en-tête de l'étape + grille 3 colonnes ------------------- */
+  const dayNumber = activeDay;
+  const dayTitle =
+    [currentDay?.from, currentDay?.to].filter(Boolean).join(' → ') || `Jour ${dayNumber}`;
+  const dayMeta = [
+    formatFullDayLabel(currentDay?.date ?? null),
+    currentDay?.durationText ?? formatDuration(currentDay?.durationS ?? null),
+    formatKm(currentDay?.distanceKm ?? null),
+    signedElevation(currentDay?.elevationM ?? null),
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
   return (
     <div style={{ position: 'relative' }}>
@@ -141,42 +273,107 @@ export function CarnetDaySwipeView({
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
       >
-        {activeDay === 0 ? null : (
-          <div className="lkdv-day-banner">
-            <div className="lkdv-day-banner-header">
-              <b>{currentEtape?.label || `Jour ${activeDay}`}</b>
-              <span>
-                {[
-                  currentEtape?.distanceKm ? `${currentEtape.distanceKm} km` : null,
-                  currentEtape?.elevationM ? `+${currentEtape.elevationM} m` : null,
-                ]
-                  .filter(Boolean)
-                  .join(' · ')}
-              </span>
+        {activeDay === 0 ? (
+          <>
+            <div className={cx(styles.dayhead)} aria-live="polite">
+              <span className={cx(styles.dayheadBadge)}>Tout</span>
+              <div className={cx(styles.dayheadText)}>
+                <b className={cx(styles.dayheadTitle)}>
+                  {daysCount > 0 ? counted(daysCount, 'jour', 'jours') : '—'} ·{' '}
+                  {counted(travellers, 'voyageur', 'voyageurs')}
+                </b>
+                <span className={cx(styles.dayheadMeta)}>{resumeMeta}</span>
+              </div>
             </div>
-            {currentEtape?.from && currentEtape?.to ? (
-              <div className="lkdv-day-banner-text">
-                De {currentEtape.from} à {currentEtape.to}
-              </div>
-            ) : null}
-            {currentEtape?.note ? (
-              <div
-                className="lkdv-day-banner-text"
-                style={{ marginTop: '2px', fontStyle: 'italic' }}
-              >
-                « {currentEtape.note} »
-              </div>
-            ) : null}
-          </div>
-        )}
 
-        <CarnetPostGrid
-          moments={moments}
-          onSelect={onSelectMoment}
-          onPeek={onPeekMoment}
-          isEditing={isEditing}
-          onAddMoment={onAddMoment}
-        />
+            {dayViews.length > 0 ? (
+              <div className={cx(styles.vlist)} role="group" aria-label="Jours du carnet">
+                {dayViews.map((day) => {
+                  const number = day.dayNumber;
+                  const image =
+                    day.moments.find((moment) => moment.imageUrl)?.imageUrl ?? coverImage;
+                  const dateLabel = formatDayLabel(day.date);
+                  const nightAltitude =
+                    nights?.find(
+                      (night) => night.dayNumber === number && night.altitudeM !== null
+                    )?.altitudeM ?? null;
+                  const altLabel =
+                    nightAltitude === null
+                      ? null
+                      : (formatElevation(nightAltitude) ?? `${Math.round(nightAltitude)} m`);
+                  const title =
+                    [day.from, day.to].filter(Boolean).join(' → ') || `Jour ${number}`;
+                  const cardMeta = [
+                    formatKm(day.distanceKm) ?? '—',
+                    signedElevation(day.elevationM) ?? '—',
+                    counted(day.moments.length, 'moment', 'moments'),
+                  ].join(' · ');
+
+                  return (
+                    <button
+                      key={number}
+                      type="button"
+                      className={cx(styles.voyageCard)}
+                      aria-label={
+                        day.from && day.to
+                          ? `Ouvrir le jour ${number} : ${day.from} vers ${day.to}`
+                          : `Ouvrir le jour ${number}`
+                      }
+                      onClick={() => {
+                        haptic('selection');
+                        onDayChange(number);
+                      }}
+                    >
+                      {image ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          className={cx(styles.voyageImage)}
+                          src={image}
+                          alt=""
+                          loading="lazy"
+                          decoding="async"
+                        />
+                      ) : null}
+                      <span className={cx(styles.voyagePillDay)}>
+                        {dateLabel ? `J${number} · ${dateLabel}` : `J${number}`}
+                      </span>
+                      {altLabel ? (
+                        <span className={cx(styles.voyagePillAlt)}>{altLabel}</span>
+                      ) : null}
+                      <span className={cx(styles.voyageInfo)}>
+                        <b className={cx(styles.voyageTitle)}>{title}</b>
+                        <span className={cx(styles.voyageMeta)}>{cardMeta}</span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className={cx(styles.empty)}>Aucun jour à afficher pour l’instant.</p>
+            )}
+          </>
+        ) : (
+          <>
+            <div className={cx(styles.dayhead)} aria-live="polite">
+              <span className={cx(styles.dayheadBadge)}>J{dayNumber}</span>
+              <div className={cx(styles.dayheadText)}>
+                <b className={cx(styles.dayheadTitle)}>{dayTitle}</b>
+                {dayMeta ? <span className={cx(styles.dayheadMeta)}>{dayMeta}</span> : null}
+              </div>
+              {currentDay?.weather ? (
+                <span className={cx(styles.dayheadWeather)}>{currentDay.weather}</span>
+              ) : null}
+            </div>
+
+            <CarnetPostGrid
+              moments={moments}
+              onSelect={onSelectMoment}
+              onPeek={onPeekMoment}
+              isEditing={isEditing}
+              onAddMoment={onAddMoment}
+            />
+          </>
+        )}
       </div>
 
       {/* Floating Day Selector (Mini Capsule 30px), ancré à la carte */}

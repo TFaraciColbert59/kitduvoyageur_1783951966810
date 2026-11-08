@@ -17,6 +17,20 @@ import { Switch } from '@/components/ui/Switch';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import type { CarnetViewerRole } from '@/features/carnet/detail/types';
 
+/**
+ * Morphing de la pilule titre — maquette `.rp` + `@keyframes morph` (0,5 s,
+ * `--ease-spring`) et point vert `.edot` pulsant en édition.
+ * Le mouvement réduit neutralise les deux, y compris via le popover Affichage.
+ */
+const TOPBAR_MOTION_CSS = `
+@keyframes lkdv-title-morph{0%{transform:scaleX(1.18) scaleY(.86);filter:blur(2px)}50%{transform:scaleX(.95) scaleY(1.06);filter:none}100%{transform:none}}
+@keyframes lkdv-edot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(1.35)}}
+.lkdv-carnet-topbar .lkdv-title-pill .edot{animation:lkdv-edot 1.6s ease-in-out infinite}
+@media (prefers-reduced-motion: reduce){.lkdv-carnet-topbar .lkdv-title-pill,.lkdv-carnet-topbar .lkdv-title-pill .edot{animation:none!important}}
+.lkdv-carnet-v2-root[data-reduce-motion='true'] .lkdv-carnet-topbar .lkdv-title-pill,
+.lkdv-carnet-v2-root[data-reduce-motion='true'] .lkdv-carnet-topbar .lkdv-title-pill .edot{animation:none!important}
+`;
+
 export interface CarnetTopBarV2Props {
   title: string;
   viewerRole: CarnetViewerRole;
@@ -61,6 +75,7 @@ export function CarnetTopBarV2({
   const { haptic } = useHapticFeedback();
   const [menuOpen, setMenuOpen] = useState(false);
   const [displayOpen, setDisplayOpen] = useState(false);
+  const [titleMorph, setTitleMorph] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const pillRef = useRef<HTMLButtonElement>(null);
   const displayRef = useRef<HTMLDivElement>(null);
@@ -114,8 +129,23 @@ export function CarnetTopBarV2({
     pillRef.current?.focus();
   }, []);
 
+  // Morphing joué à l'ouverture du menu (0,5 s), puis rendu à l'état repos.
+  useEffect(() => {
+    if (!titleMorph) return;
+    const timer = window.setTimeout(() => setTitleMorph(false), 600);
+    return () => window.clearTimeout(timer);
+  }, [titleMorph]);
+
+  const toggleTitleMenu = useCallback(() => {
+    const next = !menuOpen;
+    setMenuOpen(next);
+    if (next) setTitleMorph(true);
+  }, [menuOpen]);
+
   return (
     <div className="lkdv-carnet-topbar">
+      <style dangerouslySetInnerHTML={{ __html: TOPBAR_MOTION_CSS }} />
+
       <div className="lkdv-carnet-topbar-l">
         <button
           type="button"
@@ -130,10 +160,12 @@ export function CarnetTopBarV2({
           ref={pillRef}
           type="button"
           className="lkdv-title-pill"
-          onClick={() => setMenuOpen((prev) => !prev)}
+          onClick={toggleTitleMenu}
           aria-expanded={menuOpen}
           aria-haspopup="menu"
           aria-label={`Menu du carnet ${title}`}
+          style={titleMorph ? { animation: 'lkdv-title-morph 500ms var(--ease-spring)' } : undefined}
+          onAnimationEnd={() => setTitleMorph(false)}
         >
           {isEditing ? <span className="edot" aria-hidden="true" /> : null}
           <b>{title}</b>

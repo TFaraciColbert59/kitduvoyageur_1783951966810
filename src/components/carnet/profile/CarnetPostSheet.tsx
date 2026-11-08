@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { PostSheet } from '@/components/compte/overlay/PostSheet';
 import CommunityFeedPost from '@/features/community/feed/CommunityFeedPost';
 import type { FeedPost } from '@/features/community/feed/useCommunityFeed';
 import type { PostSource } from '@/features/community/feed/postSource';
-import type { CarnetDetail } from '@/features/carnet/detail/types';
+import type { CarnetDetail, CarnetMomentEngagementItem } from '@/features/carnet/detail/types';
 import type { CarnetComment } from '@/features/carnet/detail/useCarnetComments';
+import { useMomentEngagement } from '@/features/carnet/detail/useMomentEngagement';
 import { CarnetCommentsPane } from './panes/CarnetCommentsPane';
 import { CarnetSharePane } from './panes/CarnetSharePane';
 
@@ -39,25 +40,43 @@ export interface CarnetPostSheetProps {
   onRequireAuth: () => void;
   /** Conservé pour compatibilité : le tap sur le média aime, comme dans le fil. */
   onOpenViewer?: (index: number) => void;
-  onLike: () => void;
-  /** État réel du j'aime carnet, mis à jour par `useCarnetEngagement`. */
+  /** Repli carnet : utilisé seulement si le moment n'a pas d'état serveur. */
   liked?: boolean;
   likes?: number;
+  /** Repli carnet (fiche historique) : j'aime du carnet quand le moment n'a
+      aucun état par moment. La fiche v2 ne les passe plus. */
+  onLike?: () => void;
+  onSave?: () => void;
+  /**
+   * État du moment, déjà fusionné par la fiche (serveur + actions de session) :
+   * prioritaire sur `detail.momentEngagement` et sur le repli carnet.
+   */
+  initialEngagement?: CarnetMomentEngagementItem | null;
+  onEngagementChange?: (state: {
+    momentId: string;
+    liked: boolean;
+    likesCount: number;
+    saved: boolean;
+    savesCount: number;
+  }) => void;
+  onIsland?: (message: string, undo?: () => void) => void;
   /** Lien réel du carnet, partagé depuis le panneau de partage. */
   shareUrl: string;
   onCopied: () => void;
-  /** Enregistrer / Signaler : les actions réelles du carnet, dans le menu ···. */
+  /** Enregistrer (repli carnet) et Signaler : le menu ··· du post. */
   saved: boolean;
-  onSave: () => void;
   onReport: () => void;
   /** Panneau ouvert d'emblée : `comments` depuis le menu Peek (Commenter). */
   initialPanel?: 'comments' | 'share' | null;
+  /** `moment` : commentaires du moment (v2) ; `carnet` : historique. */
+  commentsMode?: 'carnet' | 'moment';
 }
 
 /**
  * Post d'un moment du carnet : le bloc `CommunityFeedPost` de la Communauté,
  * alimenté par les données réelles du carnet (`PostSource`) — image du moment,
- * jour/heure/lieu/légende, j'aime, favoris et commentaires du carnet.
+ * jour/heure/lieu/légende, j'aime et enregistrer **par moment**
+ * (`carnet_moment_likes`, `carnet_moment_saves`), commentaires du carnet.
  * Aucune forme, aucun geste ni animation propres : tout vient du bloc du fil.
  */
 export function CarnetPostSheet({
@@ -69,21 +88,64 @@ export function CarnetPostSheet({
   canWrite,
   currentUserId,
   onRequireAuth,
-  onLike,
   liked,
   likes,
+  onLike,
+  onSave,
+  initialEngagement,
+  onEngagementChange,
+  onIsland,
   shareUrl,
   onCopied,
   saved,
-  onSave,
   onReport,
   initialPanel = null,
+  commentsMode = 'carnet',
 }: CarnetPostSheetProps) {
   const items = detail.photoMoments;
   const safeIndex = items.length === 0 ? 0 : Math.max(0, Math.min(index, items.length - 1));
   const moment = items[safeIndex] ?? null;
+  const momentId = moment?.id ?? '';
   const author = detail.author;
   const createdAt = moment ? momentDate(detail.startDate, moment.dayNumber) : null;
+
+  /* État réel du moment : la fusion passée par la fiche (serveur + actions de
+     session), sinon `detail.momentEngagement`. Le j'aime et l'enregistrer du
+     carnet ne servent que de repli quand le moment n'a aucun état serveur. */
+  const momentEng = momentId ? detail.momentEngagement?.[momentId] : null;
+  const momentInitial = initialEngagement ?? momentEng;
+  /* Sans état serveur par moment (fiche historique), on garde les actions du
+     carnet passées par la fiche ; sinon tout est par moment. */
+  const hasMomentState = Boolean(momentInitial);
+  const engagement = useMomentEngagement({
+    carnetId: detail.id,
+    momentId,
+    initialLiked: momentInitial ? momentInitial.userLiked : (liked ?? detail.engagement.liked),
+    initialLikes: momentInitial ? momentInitial.likesCount : (likes ?? detail.engagement.likes),
+    initialSaved: momentInitial ? momentInitial.userSaved : saved,
+    initialSaves: momentInitial?.savesCount ?? 0,
+    userId: currentUserId,
+    onRequireAuth,
+    onIsland,
+  });
+  const {
+    liked: momentLiked,
+    likesCount: momentLikes,
+    saved: momentSaved,
+    savesCount: momentSavesCount,
+    loadComments: loadMomentComments,
+  } = engagement;
+
+  useEffect(() => {
+    if (!momentId) return;
+    onEngagementChange?.({
+      momentId,
+      liked: momentLiked,
+      likesCount: momentLikes,
+      saved: momentSaved,
+      savesCount: momentSavesCount,
+    });
+  }, [momentId, momentLiked, momentLikes, momentSavesCount, momentSaved, onEngagementChange]);
 
   const feedPost = useMemo<FeedPost>(
     () => ({
@@ -134,20 +196,43 @@ export function CarnetPostSheet({
     return parts.length > 0 ? parts.join(' · ') : null;
   }, [createdAt, moment]);
 
-  const momentEng =
-    moment?.id && detail.momentEngagement ? detail.momentEngagement[moment.id] : null;
-  const isMomentLiked = liked ?? (momentEng ? momentEng.userLiked : detail.engagement.liked);
-  const isMomentSaved = momentEng ? momentEng.userSaved : saved;
-  const momentLikes = likes ?? (momentEng ? momentEng.likesCount : detail.engagement.likes);
-  const momentCommentsCount = momentEng ? momentEng.commentsCount : detail.engagement.comments;
+  const momentCommentsEnabled = commentsMode === 'moment' && Boolean(momentId);
+
+  useEffect(() => {
+    if (!momentCommentsEnabled) return;
+    void loadMomentComments();
+  }, [loadMomentComments, momentCommentsEnabled]);
+
+  const paneComments = momentCommentsEnabled ? engagement.comments : comments.comments;
+  const paneLoading = momentCommentsEnabled ? engagement.loadingComments : comments.loading;
+  const paneSend = momentCommentsEnabled ? engagement.addComment : comments.send;
+  const paneRemove = momentCommentsEnabled
+    ? async (commentId: string) => {
+        await engagement.deleteComment(commentId);
+        return true;
+      }
+    : comments.remove;
+  const momentCommentsCount = momentCommentsEnabled
+    ? Math.max(momentEng?.commentsCount ?? 0, engagement.comments.length)
+    : momentEng
+      ? momentEng.commentsCount
+      : detail.engagement.comments;
 
   const source: PostSource = {
-    liked: isMomentLiked,
-    saved: isMomentSaved,
+    liked: momentLiked,
+    saved: momentSaved,
     likes: momentLikes,
     comments: momentCommentsCount,
-    onToggleLike: onLike,
-    onToggleSave: onSave,
+    onToggleLike: () => {
+      if (!hasMomentState && onLike) return onLike();
+      if (!momentId) return;
+      return engagement.toggleLike();
+    },
+    onToggleSave: () => {
+      if (!hasMomentState && onSave) return onSave();
+      if (!momentId) return;
+      return engagement.toggleSave();
+    },
     onCopyLink: async () => {
       try {
         await navigator.clipboard.writeText(shareUrl);
@@ -164,12 +249,12 @@ export function CarnetPostSheet({
         : undefined,
     renderComments: () => (
       <CarnetCommentsPane
-        comments={comments.comments}
-        loading={comments.loading}
+        comments={paneComments}
+        loading={paneLoading}
         canWrite={canWrite}
         currentUserId={currentUserId}
-        onSend={comments.send}
-        onRemove={comments.remove}
+        onSend={paneSend}
+        onRemove={paneRemove}
         onRequireAuth={onRequireAuth}
       />
     ),

@@ -1,6 +1,7 @@
 import 'server-only';
 import { createClient } from '@/lib/supabase/server';
 import { buildCarnetDetail } from './buildCarnetDetail';
+import { enrichCarnetElevation } from './enrichElevation';
 import { pickCarnetTrace } from './trace';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import type {
@@ -513,7 +514,7 @@ export async function getCarnetDetail(id: string) {
       }
     : null;
 
-  return buildCarnetDetail({
+  const detail = buildCarnetDetail({
     carnet,
     author: (authorResult.data as unknown as AuthorRow) ?? null,
     hikeSession: sessions[0] ?? null,
@@ -544,4 +545,11 @@ export async function getCarnetDetail(id: string) {
     publicZone,
     budget,
   });
+
+  /* Le profil altimétrique manque partout en production : `elevationM` n'est
+     renseigné par aucune sortie. `enrichCarnetElevation` demande l'altitude des
+     points du tracé au MNT d'Open-Meteo (cache 1 h, 3 s de délai maximum) et
+     rend la fiche inchangée si l'API ne répond pas : jamais une altitude
+     inventée, jamais une exception. */
+  return enrichCarnetElevation(detail);
 }

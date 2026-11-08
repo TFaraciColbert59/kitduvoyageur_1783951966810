@@ -76,3 +76,40 @@ Cinq défauts trouvés en vérifiant la production, corrigés et testés :
 
 Contre-recette : axe 0 critical/serious (page, tiroir, peek), focus piégé sur 25 Tab,
 like post/peek qui change d'état, 390/360 sans débordement, `tsc` ciblé 0, 118/118 tests.
+
+## 6. Refonte 100 % (8 novembre 2026, 22 h)
+
+### Fermé côté code
+
+| Surface | État |
+|---|---|
+| Résumé | `dayhead` `Tout` + une **voyage-card** 144 px par jour (photo, `J{n} · date`, altitude de nuit si réelle, `from → to`, km · D+ · moments), clic → jour |
+| Vue jour | `dayhead` `J{n}` (route, date · durée · km · D+, météo) + grille 3 colonnes ; bannière de verre supprimée |
+| Carte | fond **topo** par défaut, badge `Tout`/`J{n}`, badges `N{n}` verre (si nuits), curseur de scrub, drag de la poignée > 20 px |
+| Altitude | profil **réel** Open-Meteo (cache 1 h, timeout 3 s, échec → état vide), accessoire visible, curseur carte, lentille Route › Altitude |
+| Peek | 5 actions par moment : J'aime, Commenter, Enregistrer, Partager, Signaler |
+| Post | j'aime/enregistrer/commentaires **par moment** (`carnet_moment_*`) |
+| Signalement | moment et carnet persistés dans `comment_reports` (`table_name` = `carnet_moments` / `carnets`) |
+| Verdicts | filtres Essentiel/Utile/Jamais servi/Défaillant/Manquait + état vide honnête |
+| Tiroir | cascade 0/30/60/90 ms, pilule « Reprendre » de lecture, « Reprendre le kit » intacte |
+| Titre | morphing 500 ms + point d'édition pulsant |
+| A11y | axe 0 critical/serious sur résumé, jour, tiroir, peek ; focus piégé ; `inert` ; barre masquée sous toutes les feuilles |
+
+### Migrations appliquées en production (additives, RLS)
+
+`carnet_v2_lot_a_access_functions`, `lot_b_day_reactions`, `lot_c_moment_engagement`,
+`lot_d_nights_verdicts_live`, `lot_e_kit_forks`, `post_reports_target_type`.
+Tables : `carnet_moment_likes/saves/comments`, `carnet_day_likes/comments`,
+`carnet_nights`, `carnet_live_positions`, `kit_forks`. Colonnes verdict sur
+`carnet_kit_items`, `live_sharing` sur `carnets`.
+
+### Encore bloqué par la donnée ou le produit
+
+- **Nuits** : `carnet_nights` est vide en démo → aucun badge `N1/N2/N3`, aucune fiche nuit. Dès qu'une nuit réelle existe, le code l'affiche.
+- **Verdicts** : colonnes créées, aucune valeur en démo → filtres + état vide, jamais de verdict inventé.
+- **Jours J211/J212** : données de démo hors bornes, non filtrées.
+- **Distance/D+ par jour** : `days[].distanceKm/elevationM` nuls en démo pour J1/J2 → `—`, pas d'invention.
+- **Accès anonyme** : middleware inchangé (décision produit/sécurité du 00-MISSION §5).
+- **Lentille chromatique** : barre flottante globale, hors fiche.
+- **Échelle de carte, départ/arrivée, couches par tiroir** : partiels.
+- **Squelettes/chargement/hors-ligne** : partiels.

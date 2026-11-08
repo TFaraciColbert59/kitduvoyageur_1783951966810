@@ -932,7 +932,7 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
 
 .lkdv-acc-ro {
   flex: none;
-  width: 92px;
+  width: 104px;
   display: flex;
   flex-direction: column;
   line-height: 1.1;
@@ -1547,4 +1547,63 @@ html:has(.lkdv-carnet-v2-root) {
 /* Le contenu du tiroir laisse la place à la mini-capsule des lentilles (30). */
 .lkdv-carnet-drawer .lkdv-lens-pane {
   padding-bottom: 44px !important;
+}
+
+/* Badges de nuit N1/N2/N3 sur la carte (maquette `.mk.nbadge`). */
+.lkdv-carnet-map-marker.has-badge {
+  width: auto;
+  height: auto;
+  background: none;
+  border: 0;
+  box-shadow: none;
+}
+
+.lkdv-map-night-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 5px;
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--tint, #17402c) 88%, transparent);
+  color: var(--tint-ink, #fff);
+  font: 700 9.5px var(--font-mono, ui-monospace, SFMono-Regular, monospace);
+  letter-spacing: 0.02em;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    0 0 0 0.5px rgba(255, 255, 255, 0.35),
+    0 2px 8px rgba(23, 43, 36, 0.25);
+  -webkit-backdrop-filter: blur(8px) saturate(1.4);
+  backdrop-filter: blur(8px) saturate(1.4);
+}
+
+/* Badge d'état de la carte : Tout / J{n} (maquette `.mbadge`). */
+.lkdv-map-badge {
+  position: absolute;
+  left: 14px;
+  top: 30px;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 9999px;
+  background: var(--lg-bar-bg, linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.42) 55%, rgba(255, 255, 255, 0.52)));
+  -webkit-backdrop-filter: var(--lg-bar-blur, blur(7px) saturate(1.9) brightness(1.07));
+  backdrop-filter: var(--lg-bar-blur, blur(7px) saturate(1.9) brightness(1.07));
+  box-shadow: var(--lg-bar-shadow, 0 0 0 0.5px rgba(23, 43, 36, 0.14), 0 8px 22px rgba(23, 43, 36, 0.12));
+  color: var(--tint, #17402c);
+  font: 600 11px var(--font-sans, sans-serif);
+  pointer-events: none;
+}
+
+/* Toute feuille de la fiche (drawer, peek, post, stories, signalement) retire
+   la barre flottante : elle passait au-dessus du pied des feuilles Radix et
+   interceptait leurs boutons. */
+body.lkdv-overlay-open .lkdv-floating-tabbar {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(120%);
+  transition: opacity 0.25s ease, transform 0.35s var(--motion-ease-standard);
 }

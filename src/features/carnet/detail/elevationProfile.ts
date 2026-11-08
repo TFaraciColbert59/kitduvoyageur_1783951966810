@@ -82,3 +82,18 @@ export function pickElevationProfile(
   }
   return [];
 }
+
+/**
+ * Dénivelé positif du profil réel (somme des montées entre points voisins).
+ * `null` sous deux points. Ne remplace pas le D+ enregistré du carnet : c'est
+ * la mesure du tracé, utile quand les deux sources diffèrent.
+ */
+export function elevationProfileGain(points: ElevationPoint[]): number | null {
+  if (!Array.isArray(points) || points.length < 2) return null;
+  let gain = 0;
+  for (let index = 1; index < points.length; index += 1) {
+    const delta = points[index].elevationM - points[index - 1].elevationM;
+    if (delta > 0) gain += delta;
+  }
+  return Math.round(gain);
+}
