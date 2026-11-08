@@ -1,13 +1,15 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { DEFAULT_MOVE_TOLERANCE_PX, DEFAULT_SWIPE_THRESHOLD_PX } from '@/hooks/gestures';
+import { DURATION } from '@/design/motion';
 
-/** Seuil de déclenchement d'un changement de lentille par swipe (plan §3.2). */
-export const LENS_SWIPE_THRESHOLD = 30;
-/** Durée du snap de fin de swipe (plan §3.2). */
-export const LENS_SNAP_MS = 420;
-/** Courbe du snap de fin de swipe (plan §3.2). */
-export const LENS_SNAP_EASING = 'cubic-bezier(0.22, 1, 0.36, 1)';
+/** Seuil de déclenchement d'un changement de lentille par swipe : le seuil unique des gestes. */
+export const LENS_SWIPE_THRESHOLD = DEFAULT_SWIPE_THRESHOLD_PX;
+/** Durée du snap de fin de swipe : `--dur-slow`. */
+export const LENS_SNAP_MS = DURATION.slow;
+/** Courbe du snap de fin de swipe : `--ease-glass`. */
+export const LENS_SNAP_EASING = 'var(--ease-glass)';
 
 type DragAxis = 'pending' | 'x' | 'y';
 
@@ -35,7 +37,7 @@ export interface LensPagerProps {
 /**
  * Piste horizontale de lentilles.
  *
- * - `pointerdown/move/up` : seuil de 24 px, verrouillage d'axe pour laisser le
+ * - `pointerdown/move/up` : seuil unique des gestes (48 px), verrouillage d'axe pour laisser le
  *   scroll vertical au conteneur ; un `pointerup` hors zone ou un
  *   `pointercancel` termine toujours le geste et remet `dragging` à false.
  * - `transform: translateX(...)` sur la piste, snap de 250 ms.
@@ -218,7 +220,7 @@ export function LensPager({
     const dy = event.clientY - drag.startY;
 
     if (drag.axis === 'pending') {
-      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+      if (Math.abs(dx) < DEFAULT_MOVE_TOLERANCE_PX && Math.abs(dy) < DEFAULT_MOVE_TOLERANCE_PX) return;
       drag.axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
       if (drag.axis === 'x') {
         try {
