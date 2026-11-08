@@ -661,7 +661,10 @@ export const PROCEDURAL_CODE_MODULE_MANIFESTS: readonly ModuleManifest[] = [
       loadRotationDeg: [0, 0, 0],
       loadScale: 1,
     },
-    platine: { position: [0, 0.85, -0.045], normal: [0, 0, -1] },
+    // La platine se pose sur la boucle basse réellement modélisée (`m14-boucle-basse-noire`,
+    // à h × 0,14), et non à mi-hauteur : centrée, une paire de skis de 1,70 m plongeait de
+    // 64 cm sous le fond du sac, donc à travers le plan de travail du Studio.
+    platine: { position: [0, 0.238, -0.045], normal: [0, 0, -1] },
     reserve: null,
     rigidPanelConvention: RIGID_PANEL_CONVENTION,
   },

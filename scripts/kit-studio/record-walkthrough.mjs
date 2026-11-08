@@ -578,7 +578,7 @@ async function main() {
 
   console.log('Attaching module M14 Porte-skis (smooth swap and adaptive reframing to 1.70m)...');
   await page.evaluate(async () => {
-    document.getElementById('action-badge').textContent = '5/8 · MODULE PORTEUR : M14 PORTE-SKIS (+56 CM DÉBORDEMENT)';
+    document.getElementById('action-badge').textContent = '5/8 · MODULE PORTEUR : M14 PORTE-SKIS';
     const scene = window['__scene'];
     await scene.attachModule('lkdv-m14');
   });

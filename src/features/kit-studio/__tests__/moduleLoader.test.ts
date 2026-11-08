@@ -530,10 +530,14 @@ describe('5. Règle porteurs vs face et mention explicite de débordement (Avena
     }
 
     // Mention calculée exacte sur le 15 L :
-    // Ancre à y=0.171 m, platine à y=0.85 m, haut du module à 0.171 + (1.70 - 0.85) = 1.021 m.
-    // Haut du sac 15 L à 0.460 m. Débordement au-dessus = 1.021 - 0.460 = 0.561 m -> 56 cm.
+    // Ancre à y=0.171 m, platine à y=0.238 m (boucle basse réellement modélisée, h x 0,14),
+    // haut du module à 0.171 + (1.70 - 0.238) = 1.633 m. Haut du sac 15 L à 0.460 m.
+    // Débordement au-dessus = 1.633 - 0.460 = 1.173 m -> 117 cm.
+    // Une paire de skis de 1,70 m posée tails en bas déborde bien d'un mètre au-dessus d'un 15 L ;
+    // l'ancienne mention de 56 cm venait d'une platine à mi-hauteur, qui enfonçait les skis de
+    // 64 cm sous le fond du sac.
     const notice15 = calculateModuleOverflowNotice(m14, bag15);
-    expect(notice15).toBe('+56 cm au-dessus');
+    expect(notice15).toBe('+117 cm au-dessus');
 
     // 2. M05 est toujours refusé sur le 15 L et le 25 L (poche trop large pour la face à 85 %)
     const m05 = AVAILABLE_3D_MODULE_MANIFESTS.find((m) => m.code === 'M05');
@@ -587,5 +591,36 @@ describe('5. Règle porteurs vs face et mention explicite de débordement (Avena
         platine: { position: [0, 0.05, -0.05], normal: [0, 0, -1] },
       }),
     ).toThrow(/fitRule invalide/);
+  });
+});
+
+describe('aucun module ne passe sous le fond du sac', () => {
+  /**
+   * Monté sur une ancre, un module repose sur sa platine : son pied se place à
+   * `ancre.y - platine.y` dans le repère du sac, dont le fond est à y = 0. Un long module peut
+   * légitimement descendre un peu plus bas que le fond — des talons de skis touchent le sol à
+   * côté d'un petit sac — mais pas le traverser. Le seuil sépare « poser » de « transpercer » :
+   * le porte-skis M14, platine à mi-hauteur de 1,70 m, plongeait de 64 cm sous le plan de travail,
+   * soit six fois cette marge.
+   */
+  const TOLERANCE_M = 0.1;
+
+  it('le pied de chaque module reste au niveau du fond du sac, à 10 cm près', () => {
+    const ecarts: string[] = [];
+    const sacs = ['lkdv-one-15', 'lkdv-one-25', 'lkdv-one-45', 'lkdv-one-60', 'lkdv-one-80'].map(
+      (id) => lireBagManifest(id),
+    );
+    for (const bag of sacs) {
+      for (const anchor of resolveBagAttachmentAnchors(bag)) {
+        for (const mod of AVAILABLE_3D_MODULE_MANIFESTS) {
+          if (!doesModuleFitBag(mod, bag)) continue;
+          const pied = anchor.position[1] - mod.platine.position[1];
+          if (pied < -TOLERANCE_M) {
+            ecarts.push(`${mod.code} sur ${bag.modelId}/${anchor.id} : pied à ${pied.toFixed(3)} m`);
+          }
+        }
+      }
+    }
+    expect(ecarts).toEqual([]);
   });
 });
