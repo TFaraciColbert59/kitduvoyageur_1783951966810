@@ -83,7 +83,9 @@ function PieceRow({ line }: { line: OrderLine }) {
     line.state === 'new'
       ? line.priceCents == null
         ? 'non renseigné'
-        : `${TXT.toOrder} · ${formatEuro(line.priceCents)}`
+        : line.figuresProvisional
+          ? `${TXT.toOrder} · ${formatEuro(line.priceCents)} (indicatif)`
+          : `${TXT.toOrder} · ${formatEuro(line.priceCents)}`
       : STATE_TXT[line.state];
   return (
     <li className="ks-sh-row" data-state={line.state}>
@@ -126,6 +128,8 @@ export function OrderSheet({ state, onConfirmOrder, offline = false, page, onPag
   const total = totalCents != null ? formatEuro(totalCents) : 'non renseigné';
   const count = pending.length;
   const hasUnpricedPiece = lines.some((l) => l.state === 'new' && l.priceCents == null);
+  const hasProvisionalPiece = lines.some((l) => l.state === 'new' && l.figuresProvisional);
+  const unpurchasable = hasUnpricedPiece || hasProvisionalPiece;
   const bw = bagWeight(state);
   const weightText = bw != null ? formatWeight(bw) : 'non renseigné';
 
@@ -154,16 +158,31 @@ export function OrderSheet({ state, onConfirmOrder, offline = false, page, onPag
           className="ks-gbtn"
           data-pro="true"
           data-wide="true"
-          disabled={offline || hasUnpricedPiece}
-          title={hasUnpricedPiece ? 'Ce corps de sac n’est pas encore achetable (prix non renseigné).' : undefined}
+          disabled={offline || unpurchasable}
+          title={
+            hasProvisionalPiece
+              ? 'Ce corps de sac n’est pas encore achetable (prix indicatif, non commandable pour l’instant).'
+              : hasUnpricedPiece
+                ? 'Ce corps de sac n’est pas encore achetable (prix non renseigné).'
+                : undefined
+          }
           onClick={() => setStep('pre')}
         >
-          {hasUnpricedPiece ? 'Prix non renseigné' : `${TXT.preorder} · ${total}`}
+          {hasProvisionalPiece
+            ? 'Prix indicatif (non commandable)'
+            : hasUnpricedPiece
+              ? 'Prix non renseigné'
+              : `${TXT.preorder} · ${total}`}
         </button>
       ) : (
         <p className="ks-sh-note">{TXT.allOwned}</p>
       )}
-      {hasUnpricedPiece && count > 0 && (
+      {hasProvisionalPiece && count > 0 && (
+        <p className="ks-sh-note" role="status">
+          Ce corps de sac n’est pas encore achetable (prix indicatif, non commandable pour l’instant).
+        </p>
+      )}
+      {!hasProvisionalPiece && hasUnpricedPiece && count > 0 && (
         <p className="ks-sh-note" role="status">
           Ce corps de sac n’est pas encore achetable (prix non renseigné).
         </p>
@@ -206,7 +225,7 @@ export function OrderSheet({ state, onConfirmOrder, offline = false, page, onPag
         className="ks-gbtn"
         data-pro="true"
         data-wide="true"
-        disabled={offline || count === 0 || hasUnpricedPiece}
+        disabled={offline || count === 0 || unpurchasable}
         onClick={() => {
           onConfirmOrder(confirmOrder(state));
           setStep('list');

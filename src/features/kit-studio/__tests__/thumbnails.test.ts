@@ -103,10 +103,13 @@ describe('clés et descriptions', () => {
     expect(swatchThumb(SWATCHES[0]).key).toBe(`c:${SWATCHES[0][1]}`);
   });
 
-  it('dessine un sac à s = min(0,8 ; 0,8 × L/42)', () => {
-    expect(bagThumbScale(42)).toBeCloseTo(0.8);
-    expect(bagThumbScale(60)).toBeCloseTo(0.8);
-    expect(bagThumbScale(BAGS.b28.L)).toBeCloseTo((0.8 * BAGS.b28.L) / 42);
+  it('dessine un sac à son échelle relative (15 L visiblement plus petit que 80 L)', () => {
+    expect(bagThumbScale(15)).toBeCloseTo(0.52);
+    expect(bagThumbScale(80)).toBeCloseTo(0.90);
+    expect(bagThumbScale(15)).toBeLessThan(bagThumbScale(28));
+    expect(bagThumbScale(28)).toBeLessThan(bagThumbScale(45));
+    expect(bagThumbScale(45)).toBeLessThan(bagThumbScale(60));
+    expect(bagThumbScale(60)).toBeLessThan(bagThumbScale(80));
     const t = bagThumb('b28', COLORWAYS.nuit);
     expect(t.spec.scale).toBeCloseTo(bagThumbScale(BAGS.b28.L));
   });

@@ -4,7 +4,7 @@
 //  - Zones : la caméra parcourt les ZONES (Sur toi, Sac, Couvercle, Principal…) sur une position continue `s`
 //    (ressort amorti) ; chaque zone fixe l'azimut, la hauteur, la distance et l'ancre regardée.
 //  - Inclinaison (tilt) et pièces séparées (ex) : cibles amorties. Mouvement réduit = aucun amortissement.
-import { PerspectiveCamera, Vector3 } from 'three';
+import { Box3, PerspectiveCamera, Vector3 } from 'three';
 import { ZONES } from '../domain/catalog';
 import type { ZoneId } from '../domain/catalog';
 import { GROUND_Y } from './layout';
@@ -31,10 +31,11 @@ const ZONE_COUNT = ZONES.length;
 const ZONE_INDEX: Readonly<Record<string, number>> = Object.fromEntries(ZONES.map((z, i) => [z.id, i]));
 const BAG_INDEX = ZONE_INDEX.bag ?? 1;
 
-/** Ce que la caméra doit connaître du monde : ancre d'une zone et centre du sac, en coordonnées monde. */
+/** Ce que la caméra doit connaître du monde : ancre d'une zone, centre du sac et boîte englobante de l'ensemble (sac + modules). */
 export interface CameraWorld {
   anchor(zone: ZoneId, out: Vector3): Vector3;
   center(out: Vector3): Vector3;
+  bounds?(out: Box3): Box3;
 }
 
 export interface CameraRig {
@@ -102,6 +103,10 @@ export function createCameraRig(options: { readonly reducedMotion: boolean }): C
   let fz = 0;
   let appliedYoff = Number.NaN;
   let world: CameraWorld | null = null;
+  const tempBox = new Box3();
+  let adaptiveDistTarget = 2.2;
+  let adaptiveDistCurrent = 2.2;
+  let adaptiveCenterY = GROUND_Y + 0.725;
 
   // Zones
   let s = BAG_INDEX;
@@ -140,6 +145,32 @@ export function createCameraRig(options: { readonly reducedMotion: boolean }): C
   };
 
   function place(): void {
+    if (world?.bounds) {
+      world.bounds(tempBox);
+      if (!tempBox.isEmpty()) {
+        const spanY = Math.max(0.2, tempBox.max.y - tempBox.min.y);
+        const spanX = Math.max(0.1, tempBox.max.x - tempBox.min.x);
+        const spanZ = Math.max(0.1, tempBox.max.z - tempBox.min.z);
+        const spanHoriz = Math.max(spanX, spanZ);
+        adaptiveCenterY = (tempBox.min.y + tempBox.max.y) * 0.5;
+
+        // Cadrage adaptatif : 75% à 80% (cible 78%) de la hauteur utile au-dessus du tiroir
+        // Le tiroir mange près de 40% de l'écran en position déployée (dk = 1.7)
+        const drawerCoverage = clamp((dk / DRAWER_OPEN) * 0.38, 0, 0.42);
+        const visibleHeightFraction = Math.max(0.5, 1 - drawerCoverage);
+
+        const TARGET_OCCUPANCY = 0.78;
+        const reqH = spanY / (TARGET_OCCUPANCY * visibleHeightFraction);
+        const reqW = spanHoriz / TARGET_OCCUPANCY;
+        const reqHFromW = reqW / Math.max(0.2, camera.aspect);
+        const effectiveH = Math.max(reqH, reqHFromW);
+
+        const fovRad = (camera.fov * Math.PI) / 180;
+        const halfTan = Math.tan(fovRad * 0.5);
+        adaptiveDistTarget = clamp(effectiveH / (2 * halfTan), 0.9, 8.0);
+      }
+    }
+
     const n = ZONE_COUNT;
     const i = clamp(Math.floor(s), 0, n - 2);
     const f = s - i;
@@ -147,13 +178,16 @@ export function createCameraRig(options: { readonly reducedMotion: boolean }): C
     const B = ZONES[i + 1];
     theta = lerp(A.th, B.th, f);
     phi = lerp(A.ph, B.ph, f);
-    let di = lerp(A.d, B.d, f);
+    const dA = A.id === 'bag' ? adaptiveDistCurrent : A.d * (adaptiveDistCurrent / 5.0);
+    const dB = B.id === 'bag' ? adaptiveDistCurrent : B.d * (adaptiveDistCurrent / 5.0);
+    let di = lerp(dA, dB, f);
     let ph = phi + tiltV;
     if (world) {
       world.anchor(A.id, va);
       world.anchor(B.id, vb);
       tgt.copy(va).lerp(vb, clamp(f, 0, 1));
       world.center(bagC);
+      bagC.y = adaptiveCenterY;
       wornW = A.id === 'worn' ? clamp(1 - f, 0, 1) : 0;
       tgt.lerp(bagC, Math.max(ex * 0.75, 0.38 * (1 - wornW)));
     } else {
@@ -182,6 +216,15 @@ export function createCameraRig(options: { readonly reducedMotion: boolean }): C
     // Drawer
     dk += (dkT - dk) * damp(rm ? DK_RATE_REDUCED : DK_RATE, dt);
     if (Math.abs(dkT - dk) > 0.001) moving = true; else dk = dkT;
+
+    // Transition continue de cadrage adaptatif : 400 à 500 ms (taux 7.0), courbe sortante.
+    const kDist = rm ? 60 : 7.0;
+    if (Math.abs(adaptiveDistTarget - adaptiveDistCurrent) > 0.001) {
+      adaptiveDistCurrent += (adaptiveDistTarget - adaptiveDistCurrent) * (rm ? 1 : damp(kDist, dt));
+      moving = true;
+    } else {
+      adaptiveDistCurrent = adaptiveDistTarget;
+    }
 
     // Zone : ressort amorti vers la cible (la main qui orbite impose `s` directement).
     if (scrubbing) {

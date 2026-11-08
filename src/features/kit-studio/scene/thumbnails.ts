@@ -40,7 +40,13 @@ export interface BallThumbSpec {
   readonly kind: 'c';
   readonly color: string;
 }
-export type ThumbSpec = ItemThumbSpec | BagThumbSpec | BallThumbSpec;
+/** Module 3D d'attache (clé `m:<id>`). */
+export interface ModuleThumbSpec {
+  readonly kind: 'm';
+  readonly moduleId: string;
+  readonly code?: string;
+}
+export type ThumbSpec = ItemThumbSpec | BagThumbSpec | BallThumbSpec | ModuleThumbSpec;
 export type ThumbKind = ThumbSpec['kind'];
 
 /** null = vignette indisponible (repli SVG) ; undefined = pas encore rendue. */
@@ -66,6 +72,7 @@ interface Builders {
   i?: ThumbBuilder<ItemThumbSpec>;
   b?: ThumbBuilder<BagThumbSpec>;
   c?: ThumbBuilder<BallThumbSpec>;
+  m?: ThumbBuilder<ModuleThumbSpec>;
 }
 
 function ballBuilder(spec: BallThumbSpec, res: ThumbResources): Object3D {
@@ -107,10 +114,12 @@ const BUILDERS: Builders = { b: bagBuilder, c: ballBuilder };
 export function registerBuilder(kind: 'i', builder: ThumbBuilder<ItemThumbSpec>): void;
 export function registerBuilder(kind: 'b', builder: ThumbBuilder<BagThumbSpec>): void;
 export function registerBuilder(kind: 'c', builder: ThumbBuilder<BallThumbSpec>): void;
+export function registerBuilder(kind: 'm', builder: ThumbBuilder<ModuleThumbSpec>): void;
 export function registerBuilder(kind: ThumbKind, builder: ThumbBuilder<never>): void {
   if (kind === 'i') BUILDERS.i = builder as ThumbBuilder<ItemThumbSpec>;
   else if (kind === 'b') BUILDERS.b = builder as ThumbBuilder<BagThumbSpec>;
-  else BUILDERS.c = builder as ThumbBuilder<BallThumbSpec>;
+  else if (kind === 'c') BUILDERS.c = builder as ThumbBuilder<BallThumbSpec>;
+  else BUILDERS.m = builder as ThumbBuilder<ModuleThumbSpec>;
 }
 
 function runBuilder(builders: Builders, spec: ThumbSpec, res: ThumbResources): Object3D | null {
@@ -118,6 +127,7 @@ function runBuilder(builders: Builders, spec: ThumbSpec, res: ThumbResources): O
     case 'i': return builders.i ? builders.i(spec, res) : null;
     case 'b': return builders.b ? builders.b(spec, res) : null;
     case 'c': return builders.c ? builders.c(spec, res) : null;
+    case 'm': return builders.m ? builders.m(spec, res) : null;
   }
 }
 
@@ -174,7 +184,7 @@ interface Stage {
   readonly renderer: ThumbRendererLike;
   readonly tracker: ResourceTracker;
   readonly textures: TextureBank;
-  renderObject(object: Object3D): void;
+  renderObject(object: Object3D, spec?: ThumbSpec): void;
   dispose(): void;
 }
 
@@ -216,20 +226,30 @@ function createStage(renderer: ThumbRendererLike): Stage {
 
   return {
     renderer, tracker, textures,
-    renderObject(object) {
+    renderObject(object, spec) {
       pivot.clear();
       object.traverse((o) => { if (o instanceof Mesh) o.castShadow = true; });
       box.setFromObject(object);
       box.getCenter(center);
       box.getSize(size);
-      const m = Math.max(size.x, size.y, size.z) || 1;
-      object.position.sub(center);
-      pivot.add(object);
-      // 3/4 avant, légèrement vu de dessous le plan de visée : même pose que la maquette.
-      pivot.scale.setScalar(FIT / m);
-      pivot.rotation.set(0.34, -0.62, 0, 'YXZ');
-      pivot.updateMatrixWorld(true);
-      floor.position.y = box.setFromObject(pivot).min.y - 0.015;
+      if (spec?.kind === 'b') {
+        const refHeight = 1.78;
+        const scaleFactor = FIT / refHeight;
+        object.position.set(-center.x, -box.min.y - 0.89, -center.z);
+        pivot.add(object);
+        pivot.scale.setScalar(scaleFactor);
+        pivot.rotation.set(0.34, -0.62, 0, 'YXZ');
+        pivot.updateMatrixWorld(true);
+        floor.position.y = -0.89 * scaleFactor - 0.015;
+      } else {
+        const m = Math.max(size.x, size.y, size.z) || 1;
+        object.position.sub(center);
+        pivot.add(object);
+        pivot.scale.setScalar(FIT / m);
+        pivot.rotation.set(0.34, -0.62, 0, 'YXZ');
+        pivot.updateMatrixWorld(true);
+        floor.position.y = box.setFromObject(pivot).min.y - 0.015;
+      }
       renderer.render(scene, camera);
       pivot.remove(object);
     },
@@ -425,7 +445,7 @@ export function createThumbnailEngine(options: ThumbnailEngineOptions = {}): Thu
         cleanup(null);
         return;
       }
-      s.renderObject(object);
+      s.renderObject(object, job.spec);
       renders += 1;
     } catch {
       cleanup(object);

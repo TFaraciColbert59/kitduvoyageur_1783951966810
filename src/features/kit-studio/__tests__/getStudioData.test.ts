@@ -77,6 +77,7 @@ const kitItemRows: (KitItemRow & { user_id: string })[] = [
 
 const configRows: (BagConfigRow & { id: string; user_id: string })[] = [
   { id: 'cfg-1', user_id: USER, kit_id: KIT_A, corps_id: 'corps:b28', modules: ['lid', 'front', 'sides', 'hipp'], colors: { body: '#789972', trim: '#3D6038' } },
+  { id: 'cfg-2', user_id: USER, kit_id: KIT_B, corps_id: 'corps:b42', modules: [], colors: { body: '#2D482A', trim: '#1E301C' } },
 ];
 
 const ownedRows = [
@@ -177,6 +178,17 @@ describe('mapping Supabase → formes du studio', () => {
     expect(b.bag).toBe('b42');
     expect(b.cw).toBe('foret');
     expect(b.lineage).toEqual({ from: 'ancêtre', gen: 2, proven: 7 });
+
+    // Nouveau kit sans corps_id atterrit sur lkdv-one-45
+    const fallbackKits = kitsFromRows(
+      [{ id: 'kit-new', name: 'Nouveau kit', description: null, forked_from: null, generation: 1, field_proven_count: 0 }],
+      [],
+      config,
+      colorways,
+      [],
+      72,
+    );
+    expect(fallbackKits[0].bag).toBe('lkdv-one-45');
   });
 
   it('pièces possédées / précommandées et familles affichables', () => {

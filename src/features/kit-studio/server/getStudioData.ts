@@ -24,7 +24,7 @@ import 'server-only';
 import { createClient } from '@/lib/supabase/server';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { RAW_MATERIALS } from '../domain/palette';
-import { MODULE_IDS } from '../domain/catalog';
+import { MODULE_IDS, ONE } from '../domain/catalog';
 import type {
   AccessoryId, BagId, Colorway, ColorwayId, ConfigSet, Family, Item, Kit, MaterialKey, ModuleId, OneSpec,
   PackZoneId, PartId, ZoneId,
@@ -344,6 +344,17 @@ export function oneFromPieces(pieces: PieceRow[]): OneSpec {
     active.find((p) => p.kind === 'corps' && bagFromCorps(p.id) === bag);
   const neutralCorps = { eur: 0, pts: 0, d: '' };
   const unknownCorps = { eur: null, pts: null, d: '' };
+  const corpsEntry = (b: BagId, row?: PieceRow) => {
+    if (row) {
+      return {
+        eur: row.price_cents / 100,
+        pts: row.attach_points,
+        d: row.description_fr ?? '',
+        ...(ONE.corps[b]?.figuresProvisional ? { figuresProvisional: true } : {}),
+      };
+    }
+    return ONE.corps[b] ?? unknownCorps;
+  };
   const b42 = corpsRow('b42');
   const b28 = corpsRow('b28');
   const l15 = corpsRow('lkdv-one-15');
@@ -382,11 +393,11 @@ export function oneFromPieces(pieces: PieceRow[]): OneSpec {
         }
       : { n: 'Châssis ONE', eur: 0, pts: 0, gl: 'v_harness_mesh', d: '', mat: '' },
     corps: {
-      'lkdv-one-15': l15 ? { eur: l15.price_cents / 100, pts: l15.attach_points, d: l15.description_fr ?? '' } : unknownCorps,
-      'lkdv-one-25': l25 ? { eur: l25.price_cents / 100, pts: l25.attach_points, d: l25.description_fr ?? '' } : unknownCorps,
-      'lkdv-one-45': l45 ? { eur: l45.price_cents / 100, pts: l45.attach_points, d: l45.description_fr ?? '' } : unknownCorps,
-      'lkdv-one-60': l60 ? { eur: l60.price_cents / 100, pts: l60.attach_points, d: l60.description_fr ?? '' } : unknownCorps,
-      'lkdv-one-80': l80 ? { eur: l80.price_cents / 100, pts: l80.attach_points, d: l80.description_fr ?? '' } : unknownCorps,
+      'lkdv-one-15': corpsEntry('lkdv-one-15', l15),
+      'lkdv-one-25': corpsEntry('lkdv-one-25', l25),
+      'lkdv-one-45': corpsEntry('lkdv-one-45', l45),
+      'lkdv-one-60': corpsEntry('lkdv-one-60', l60),
+      'lkdv-one-80': corpsEntry('lkdv-one-80', l80),
       b42: b42 ? { eur: b42.price_cents / 100, pts: b42.attach_points, d: b42.description_fr ?? '' } : neutralCorps,
       b28: b28 ? { eur: b28.price_cents / 100, pts: b28.attach_points, d: b28.description_fr ?? '' } : neutralCorps,
     },
@@ -404,10 +415,10 @@ export function kitsFromRows(
   configRows: BagConfigRow[],
   bodyKg: number,
 ): readonly Kit[] {
-  const preset = (bag: BagId): ConfigSet => configs[bag];
+  const preset = (bag: BagId): ConfigSet => configs[bag] ?? configs['lkdv-one-45'] ?? configs.b42;
   return kits.map((row): Kit => {
     const cfgRow = configRows.find((c) => c.kit_id === row.id) ?? configRows.find((c) => c.kit_id === null);
-    const bag = bagFromCorps(cfgRow?.corps_id) ?? 'b42';
+    const bag = bagFromCorps(cfgRow?.corps_id) ?? 'lkdv-one-45';
     const cfg = preset(bag);
     const cw = colorwayOf(colorways, cfg.body.col);
     const items = kitItems.filter((i) => i.kit_id === row.id);

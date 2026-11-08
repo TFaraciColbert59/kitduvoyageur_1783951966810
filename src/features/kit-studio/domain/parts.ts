@@ -81,6 +81,7 @@ export interface PieceInfo {
   readonly gl: string;
   readonly d: string;
   readonly vs: boolean;
+  readonly figuresProvisional?: boolean;
 }
 
 /** Fiche d'une pièce (maquette pieceInfo, l.710). Prix du catalogue réel (centimes ÷ 100), `null` si non renseigné. */
@@ -89,7 +90,16 @@ export function pieceInfo(key: PieceKey): PieceInfo {
   if (key === 'chassis') return { n: one.chassis.n, eur: one.chassis.eur, pts: one.chassis.pts, gl: one.chassis.gl, d: one.chassis.d, vs: true };
   if (key.startsWith('corps')) {
     const b = key.slice(6) as BagId;
-    return { n: BAGS[b].n, eur: one.corps[b]?.eur ?? null, pts: one.corps[b]?.pts ?? null, gl: 'v_bag', d: one.corps[b]?.d ?? '', vs: true };
+    const corps = one.corps[b];
+    return {
+      n: BAGS[b].n,
+      eur: corps?.eur ?? null,
+      pts: corps?.pts ?? null,
+      gl: 'v_bag',
+      d: corps?.d ?? '',
+      vs: true,
+      figuresProvisional: BAGS[b]?.figuresProvisional ?? corps?.figuresProvisional ?? false,
+    };
   }
   const M = one.mods[key.slice(4) as ModuleId];
   return { n: M.n, eur: M.eur, pts: M.pts, gl: M.gl, d: M.d, vs: M.gl.startsWith('v_') };

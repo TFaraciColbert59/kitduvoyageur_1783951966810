@@ -14,7 +14,7 @@ import type { BagAssetProvider } from '../scene/bag/loader';
 import { bagFromCorps, kitsFromRows } from '../server/getStudioData';
 import { createInitialState } from '../domain/state';
 import { setBag } from '../domain/packing';
-import { orderLines, orderTotalCents } from '../domain/order';
+import { orderLines } from '../domain/order';
 import { optionCards, contentCards } from '../ui/cards/cardsData';
 import { OrderSheet } from '../ui/sheets/OrderSheet';
 import { createKitScene, type RendererFactory, type RendererLike } from '../scene/createScene';
@@ -66,31 +66,49 @@ beforeEach(() => {
   vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
 });
 
-describe('Gamme des cinq LKDV ONE (SUITE-AGENT-KIT-STUDIO-les-cinq-corps)', () => {
-  it('1. Échoue si un corps LKDV ONE porte un poids ou un prix inventé', () => {
+describe('Gamme des cinq LKDV ONE (SUITE-AGENT-KIT-STUDIO-chiffres-indicatifs)', () => {
+  it('1. Porte les chiffres indicatifs avec le drapeau figuresProvisional obligatoire', () => {
+    const EXPECTED_INDICATIVE = {
+      'lkdv-one-15': { g: 640, eur: 89, pts: 5 },
+      'lkdv-one-25': { g: 840, eur: 109, pts: 6 },
+      'lkdv-one-45': { g: 1240, eur: 159, pts: 8 },
+      'lkdv-one-60': { g: 1580, eur: 189, pts: 10 },
+      'lkdv-one-80': { g: 2050, eur: 229, pts: 12 },
+    } as const;
+
     for (const bagId of LKDV_ONE_BAG_IDS) {
       const bag = BAGS[bagId];
       expect(bag, `Sac ${bagId} doit exister dans BAGS`).toBeDefined();
-      // Le poids doit être explicitement null tant que Tony n'a pas fourni ses mesures
-      expect(bag.g, `Sac ${bagId} ne doit pas avoir de poids inventé (doit être null)`).toBeNull();
+      const exp = EXPECTED_INDICATIVE[bagId];
+      expect(bag.g, `Sac ${bagId} doit porter son poids indicatif dérivé`).toBe(exp.g);
+      expect(bag.figuresProvisional, `Sac ${bagId} doit porter figuresProvisional: true`).toBe(true);
 
       const corpsSpec = ONE.corps[bagId];
       expect(corpsSpec, `Sac ${bagId} doit exister dans ONE.corps`).toBeDefined();
-      // Le prix et les points d'attache doivent être explicitement null
-      expect(corpsSpec.eur, `Sac ${bagId} ne doit pas avoir de prix eur inventé (doit être null)`).toBeNull();
-      expect(corpsSpec.pts, `Sac ${bagId} ne doit pas avoir de points d'attache inventés (doit être null)`).toBeNull();
+      expect(corpsSpec.eur, `Sac ${bagId} doit porter son prix indicatif dérivé`).toBe(exp.eur);
+      expect(corpsSpec.pts, `Sac ${bagId} doit porter ses points indicatifs dérivés`).toBe(exp.pts);
+      expect(corpsSpec.figuresProvisional, `ONE.corps[${bagId}] doit porter figuresProvisional: true`).toBe(true);
+
+      // Verrou inversé : un prix sur un corps LKDV ONE sans drapeau provisoire est une faute
+      if (corpsSpec.eur != null) {
+        expect(corpsSpec.figuresProvisional, `Prix ferme non autorisé sur ${bagId} sans drapeau provisoire`).toBe(true);
+      }
     }
 
-    // En revanche, les corps d'origine b42 et b28 conservent leurs valeurs historiques
+    // Les corps historiques b42 et b28 gardent leurs valeurs réelles et SANS drapeau provisoire
     expect(BAGS.b42.g).toBe(1180);
     expect(BAGS.b42.L).toBe(42);
+    expect(BAGS.b42.figuresProvisional).toBeUndefined();
     expect(ONE.corps.b42.eur).toBe(149);
     expect(ONE.corps.b42.pts).toBe(8);
+    expect(ONE.corps.b42.figuresProvisional).toBeUndefined();
 
     expect(BAGS.b28.g).toBe(900);
     expect(BAGS.b28.L).toBe(28);
+    expect(BAGS.b28.figuresProvisional).toBeUndefined();
     expect(ONE.corps.b28.eur).toBe(119);
     expect(ONE.corps.b28.pts).toBe(6);
+    expect(ONE.corps.b28.figuresProvisional).toBeUndefined();
   });
 
   it('2. Les cinq corps LKDV ONE rendent bien leur GLB respectif sans retombée sur procedural', async () => {
@@ -158,6 +176,17 @@ describe('Gamme des cinq LKDV ONE (SUITE-AGENT-KIT-STUDIO-les-cinq-corps)', () =
     expect(BAGS[restored[0].bag].L).toBe(42);
     expect(BAGS[restored[0].bag].g).toBe(1180);
 
+    // En revanche, un nouveau kit sans configuration préalable atterrit par défaut sur lkdv-one-45
+    const nouveauKit = kitsFromRows(
+      [{ id: 'nouveau-kit', user_id: 'user-2', name: 'Nouveau', days: 2, sort: 1, created_at: '', updated_at: '' }] as any,
+      [],
+      mockConfigs,
+      {} as any,
+      [], // aucune ligne one_bag_configs
+      70,
+    );
+    expect(nouveauKit[0].bag).toBe('lkdv-one-45');
+
     // En 3D, le sac b42 s'affiche bien via lkdv-one-45
     expect(glbModelForBag('b42')).toBe('lkdv-one-45');
     expect(selectBagRenderSource(null, 'b42')).toEqual({ kind: 'glb', modelId: 'lkdv-one-45' });
@@ -186,32 +215,32 @@ describe('Gamme des cinq LKDV ONE (SUITE-AGENT-KIT-STUDIO-les-cinq-corps)', () =
     expect(bagContentIds).not.toContain('b28');
   });
 
-  it('5. Un corps sans prix n’est pas achetable : désactive l’ajout / commande avec raison affichée', () => {
+  it('5. Un corps à figuresProvisional n’est pas achetable : verrou de commande actif et mention indicatif affichée', () => {
     let state = createInitialState('tmb');
-    // On passe sur le 15L sans prix renseigné
+    // On passe sur le 15L à chiffres indicatifs
     state = setBag(state, 'lkdv-one-15').state;
-
-    // Calcul du total
-    const total = orderTotalCents(state);
-    expect(total).toBeNull();
 
     // Lignes de commande
     const lines = orderLines(state);
     const corpsLine = lines.find((l) => l.key.startsWith('corps:'));
     expect(corpsLine).toBeDefined();
-    expect(corpsLine?.priceCents).toBeNull();
+    expect(corpsLine?.priceCents).toBe(8900); // 89 €
+    expect(corpsLine?.figuresProvisional).toBe(true);
 
     // Rendu de OrderSheet
     const onConfirm = () => {};
     render(<OrderSheet state={state} onConfirmOrder={onConfirm} />);
 
-    // Le bouton de précommande doit être désactivé
-    const preorderBtn = screen.getByRole('button', { name: /Prix non renseigné/i });
+    // Le bouton de précommande doit être désactivé avec la mention indicative
+    const preorderBtn = screen.getByRole('button', { name: /Prix indicatif \(non commandable\)/i });
     expect((preorderBtn as HTMLButtonElement).disabled).toBe(true);
 
-    // La raison explicite doit être affichée dans le DOM
+    // La mention explicite et la ligne indicative doivent être affichées dans le DOM
     expect(
-      screen.getByText(/Ce corps de sac n’est pas encore achetable \(prix non renseigné\)\./i)
+      screen.getByText(/Ce corps de sac n’est pas encore achetable \(prix indicatif, non commandable pour l’instant\)\./i)
+    ).not.toBeNull();
+    expect(
+      screen.getByText(/89\s*€\s*\(indicatif\)/i)
     ).not.toBeNull();
   });
 });

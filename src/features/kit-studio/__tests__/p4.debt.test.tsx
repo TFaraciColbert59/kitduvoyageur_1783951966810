@@ -125,7 +125,7 @@ describe('P4.1 — totaux en centimes (REVIEW totals.ts:151)', () => {
 
   it('cardsData affiche le supplément d’un module en euros, pas ×100 (site cardsData.ts:121)', () => {
     const cards = optionCards(createInitialState(), 'all', 'mod');
-    const paid = cards.filter((c) => c.sub.startsWith('+'));
+    const paid = cards.filter((c) => (MODULE_IDS as readonly string[]).includes(c.id) && c.sub.startsWith('+'));
     expect(paid.length).toBeGreaterThan(0);
     for (const c of paid) {
       const mod = studioData().one.mods[c.id as (typeof MODULE_IDS)[number]];
@@ -316,8 +316,8 @@ describe('P4.5 — registerThumbBuilders() idempotent (REVIEW Thumb.tsx:23-24)',
     mod.registerThumbBuilders();
     mod.registerThumbBuilders();
     mod.registerThumbBuilders();
-    expect(registerBuilder).toHaveBeenCalledTimes(2);
-    expect(registerBuilder.mock.calls.map((c) => c[0])).toEqual(['i', 'b']);
+    expect(registerBuilder).toHaveBeenCalledTimes(3);
+    expect(registerBuilder.mock.calls.map((c) => c[0])).toEqual(['i', 'b', 'm']);
     vi.doUnmock('../scene/thumbnails');
     vi.resetModules();
   });

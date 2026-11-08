@@ -298,15 +298,15 @@ export function calculateModuleOverflowNotice(
   }
 
   if (topCm > 0 && widthCm > 0) {
-    return `dépasse de ${topCm} cm au-dessus du sac et de ${widthCm} cm en largeur`;
+    return `+${topCm} cm en haut, +${widthCm} cm en largeur`;
   }
   if (topCm > 0) {
-    return `dépasse de ${topCm} cm au-dessus du sac`;
+    return `+${topCm} cm au-dessus`;
   }
   if (widthCm > 0) {
-    return `dépasse de ${widthCm} cm en largeur`;
+    return `+${widthCm} cm en largeur`;
   }
-  return `dépasse de ${bottomCm} cm sous le sac`;
+  return `+${bottomCm} cm sous le sac`;
 }
 
 /**

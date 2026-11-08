@@ -526,14 +526,14 @@ describe('5. Règle porteurs vs face et mention explicite de débordement (Avena
       expect(doesModuleFitBag(m14, bag), `M14 doit être proposé sur ${bag.modelId}`).toBe(true);
       const notice = calculateModuleOverflowNotice(m14, bag);
       expect(notice).toBeTruthy();
-      expect(notice).toMatch(/dépasse de \d+ cm au-dessus du sac/);
+      expect(notice).toMatch(/\+\d+ cm au-dessus/);
     }
 
     // Mention calculée exacte sur le 15 L :
     // Ancre à y=0.171 m, platine à y=0.85 m, haut du module à 0.171 + (1.70 - 0.85) = 1.021 m.
     // Haut du sac 15 L à 0.460 m. Débordement au-dessus = 1.021 - 0.460 = 0.561 m -> 56 cm.
     const notice15 = calculateModuleOverflowNotice(m14, bag15);
-    expect(notice15).toBe('dépasse de 56 cm au-dessus du sac');
+    expect(notice15).toBe('+56 cm au-dessus');
 
     // 2. M05 est toujours refusé sur le 15 L et le 25 L (poche trop large pour la face à 85 %)
     const m05 = AVAILABLE_3D_MODULE_MANIFESTS.find((m) => m.code === 'M05');
@@ -552,7 +552,7 @@ describe('5. Règle porteurs vs face et mention explicite de débordement (Avena
     }
     // Sur le 15 L (largeur 284 mm) : M10 fait 560 mm -> déborde de 276 mm (~28 cm)
     const noticeM10_15 = calculateModuleOverflowNotice(m10, bag15);
-    expect(noticeM10_15).toBe('dépasse de 28 cm en largeur');
+    expect(noticeM10_15).toBe('+28 cm en largeur');
 
     // 4. Comptes totaux exacts sur les 20 modules
     expect(filterCompatibleModulesForBag(AVAILABLE_3D_MODULE_MANIFESTS, bag15)).toHaveLength(15);

@@ -33,7 +33,15 @@ export type OptionCategoryId = 'shape' | 'mod' | 'col' | 'mat' | 'fin' | 'acc';
 export type CapacityZoneId = 'lid' | 'main' | 'front' | 'sides' | 'hip' | 'back';
 export type Vec3 = readonly [number, number, number];
 
-export interface Bag { readonly id: BagId; readonly n: string; readonly g: number | null; readonly L: number; readonly cap: Readonly<Record<CapacityZoneId, number>>; readonly sc: Vec3; }
+export interface Bag {
+  readonly id: BagId;
+  readonly n: string;
+  readonly g: number | null;
+  readonly L: number;
+  readonly cap: Readonly<Record<CapacityZoneId, number>>;
+  readonly sc: Vec3;
+  readonly figuresProvisional?: boolean;
+}
 export interface Colorway { readonly id: ColorwayId; readonly n: string; readonly body: MaterialKey; readonly pocket: MaterialKey; readonly trim: MaterialKey; readonly accent: MaterialKey; }
 export interface Item {
   readonly id: ItemId; readonly n: string; readonly fam: FamilyId; readonly fn: string; readonly sh: string; readonly gl: string;
@@ -58,7 +66,17 @@ export interface ZoneDef { readonly id: string; readonly n: string; }
 export interface ModuleSpec { readonly n: string; readonly eur: number; readonly host: 'corps' | 'chassis'; readonly pts: number; readonly part: PartId; readonly gl: string; readonly d: string; readonly acc?: AccessoryId; }
 export interface OneSpec {
   readonly chassis: { readonly n: string; readonly eur: number; readonly pts: number; readonly gl: string; readonly d: string; readonly mat: string };
-  readonly corps: Readonly<Record<BagId, { readonly eur: number | null; readonly pts: number | null; readonly d: string }>>;
+  readonly corps: Readonly<
+    Record<
+      BagId,
+      {
+        readonly eur: number | null;
+        readonly pts: number | null;
+        readonly d: string;
+        readonly figuresProvisional?: boolean;
+      }
+    >
+  >;
   readonly corpsMat: string;
   readonly mods: Readonly<Record<ModuleId, ModuleSpec>>;
 }
@@ -86,7 +104,8 @@ export const BAGS: Readonly<Record<BagId, Bag>> = {
   'lkdv-one-15': {
     id: 'lkdv-one-15',
     n: 'LKDV ONE 15 L',
-    g: null,
+    g: 640,
+    figuresProvisional: true,
     L: 15,
     // Répartition dérivée au prorata de b42 (lid 4, main 30, front 5, sides 2, hip 1, back 2.5), non relevée.
     cap: {
@@ -102,7 +121,8 @@ export const BAGS: Readonly<Record<BagId, Bag>> = {
   'lkdv-one-25': {
     id: 'lkdv-one-25',
     n: 'LKDV ONE 25 L',
-    g: null,
+    g: 840,
+    figuresProvisional: true,
     L: 25,
     // Répartition dérivée au prorata de b42 (lid 4, main 30, front 5, sides 2, hip 1, back 2.5), non relevée.
     cap: {
@@ -118,7 +138,8 @@ export const BAGS: Readonly<Record<BagId, Bag>> = {
   'lkdv-one-45': {
     id: 'lkdv-one-45',
     n: 'LKDV ONE 45 L',
-    g: null,
+    g: 1240,
+    figuresProvisional: true,
     L: 45,
     // Répartition dérivée au prorata de b42 (lid 4, main 30, front 5, sides 2, hip 1, back 2.5), non relevée.
     cap: {
@@ -134,7 +155,8 @@ export const BAGS: Readonly<Record<BagId, Bag>> = {
   'lkdv-one-60': {
     id: 'lkdv-one-60',
     n: 'LKDV ONE 60 L',
-    g: null,
+    g: 1580,
+    figuresProvisional: true,
     L: 60,
     // Répartition dérivée au prorata de b42 (lid 4, main 30, front 5, sides 2, hip 1, back 2.5), non relevée.
     cap: {
@@ -150,7 +172,8 @@ export const BAGS: Readonly<Record<BagId, Bag>> = {
   'lkdv-one-80': {
     id: 'lkdv-one-80',
     n: 'LKDV ONE 80 L',
-    g: null,
+    g: 2050,
+    figuresProvisional: true,
     L: 80,
     // Répartition dérivée au prorata de b42 (lid 4, main 30, front 5, sides 2, hip 1, back 2.5), non relevée.
     cap: {
@@ -564,28 +587,33 @@ export const ONE: OneSpec = {
   },
   corps: {
     'lkdv-one-15': {
-      eur: null,
-      pts: null,
+      eur: 89,
+      pts: 5,
+      figuresProvisional: true,
       d: 'Corps LKDV ONE 15 L ultra-compact.',
     },
     'lkdv-one-25': {
-      eur: null,
-      pts: null,
+      eur: 109,
+      pts: 6,
+      figuresProvisional: true,
       d: 'Corps LKDV ONE 25 L pour la journée et la cabine.',
     },
     'lkdv-one-45': {
-      eur: null,
-      pts: null,
+      eur: 159,
+      pts: 8,
+      figuresProvisional: true,
       d: 'Corps LKDV ONE 45 L polyvalent pour les treks de plusieurs jours.',
     },
     'lkdv-one-60': {
-      eur: null,
-      pts: null,
+      eur: 189,
+      pts: 10,
+      figuresProvisional: true,
       d: 'Corps LKDV ONE 60 L pour les expéditions en autonomie.',
     },
     'lkdv-one-80': {
-      eur: null,
-      pts: null,
+      eur: 229,
+      pts: 12,
+      figuresProvisional: true,
       d: 'Corps LKDV ONE 80 L grand volume pour les longues traversées.',
     },
     b28: {

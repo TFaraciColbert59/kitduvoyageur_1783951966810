@@ -4,7 +4,7 @@
 import { BAGS } from '../domain/catalog';
 import type { BagId, Colorway, MaterialKey, Swatch } from '../domain/catalog';
 import { resolveMaterial } from '../domain/palette';
-import type { BagThumbSpec, BallThumbSpec, ItemThumbSpec, ThumbSpec } from './thumbnails';
+import type { BagThumbSpec, BallThumbSpec, ItemThumbSpec, ModuleThumbSpec, ThumbSpec } from './thumbnails';
 
 export type ReadVar = (name: string) => string | undefined;
 
@@ -22,8 +22,14 @@ export interface ThumbItemLike {
   readonly L?: number;
 }
 
-/** Échelle d'un sac miniature : reste dans la zone objet (SPEC-3D). */
-export const bagThumbScale = (liters: number): number => Math.min(0.8, (0.8 * liters) / 42);
+/** Échelle d'un sac miniature : proportionnelle au volume (15 L à 80 L) avec base commune. */
+export const bagThumbScale = (liters: number): number => {
+  const minL = 15;
+  const maxL = 80;
+  const clamped = Math.max(minL, Math.min(maxL, liters));
+  const t = (clamped - minL) / (maxL - minL);
+  return 0.52 + 0.38 * t;
+};
 /** Échelle des préréglages sans volume propre. */
 export const PRESET_THUMB_SCALE = 0.8;
 
@@ -63,3 +69,11 @@ export function ballThumb(color: MaterialKey, readVar?: ReadVar): ThumbRef<BallT
 
 /** Pastille de la palette (SWATCHES : [nom, matériau]). */
 export const swatchThumb = (sw: Swatch, readVar?: ReadVar): ThumbRef<BallThumbSpec> => ballThumb(sw[1], readVar);
+
+/** `m:<id>` : vignette 3D d'un module LKDV ONE rendered depuis son maillage propre. */
+export function moduleThumb(moduleId: string, code?: string): ThumbRef<ModuleThumbSpec> {
+  return {
+    key: `m:${moduleId}`,
+    spec: { kind: 'm', moduleId, code },
+  };
+}

@@ -63,8 +63,11 @@ function stateText(state: KitState, key: PieceKey): string {
   const s = pieceState(state, key);
   if (s === 'own') return TXT.own;
   if (s === 'order') return TXT.preordered;
-  const eur = pieceInfo(key).eur;
-  return eur != null ? `${TXT.toOrder} · ${formatEuro(toCents(eur))}` : `${TXT.toOrder} · non renseigné`;
+  const info = pieceInfo(key);
+  const eur = info.eur;
+  if (eur == null) return `${TXT.toOrder} · non renseigné`;
+  const base = `${TXT.toOrder} · ${formatEuro(toCents(eur))}`;
+  return info.figuresProvisional ? `${base} (indicatif)` : base;
 }
 
 function Pts({ state, host }: { state: KitState; host: AttachHost }) {
@@ -146,6 +149,11 @@ export function BagSheet({ state, onChange, onOpenOrder, onCustomise, page, onPa
       <div className="ks-sh-hero">
         <span className="ks-sh-big">{formatLitres(totalCap(state))}</span>
         <span className="ks-sh-t13">{`${bag.n} · ${weightText}`}</span>
+        {bag.figuresProvisional && (
+          <span className="ks-sh-note" role="status" style={{ display: 'block', marginTop: 4 }}>
+            Poids et prix indicatifs, non définitifs.
+          </span>
+        )}
       </div>
       <div className="ks-sh-cap">
         {ZONES.map((z) => {
@@ -186,6 +194,11 @@ export function BagSheet({ state, onChange, onOpenOrder, onCustomise, page, onPa
           </span>
         </div>
       </div>
+      {bag.figuresProvisional && (
+        <p className="ks-sh-note" role="status" style={{ margin: '8px 0 0' }}>
+          Poids et prix indicatifs, non définitifs.
+        </p>
+      )}
       <ul className="ks-sh-rows" aria-label={TXT.configTitle} style={{ listStyle: 'none', margin: 0, padding: 0 }}>
         {MODULE_IDS.map(modRow)}
       </ul>

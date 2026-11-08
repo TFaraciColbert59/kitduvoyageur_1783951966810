@@ -273,6 +273,7 @@ function buildWorld({ rig, maxAnisotropy, reducedMotion, shadows, safeTop, bagMo
     targetHeightM: () => proceduralBagHeightM(state),
     onChange: onBagModel,
     provider: bagAssetProvider,
+    reducedMotion,
   });
   void bagModel.load(selected.kind === 'glb' ? selected.modelId : null);
   bagModel.setAppearance(currentConfig(state));
@@ -357,6 +358,7 @@ export function createKitScene(canvas: HTMLCanvasElement, options: KitSceneOptio
   rig.setWorld({
     anchor: (zone, out) => world.objects.anchor(zone, out),
     center: (out) => world.bag.group.localToWorld(out.set(0, 0, 0)),
+    bounds: (out) => world.bagModel.getBounds(out),
   });
   rig.onZoneChange(options.onZoneChange ?? null);
   const objectFrame: ObjectFrame = { focus: 'bag', arcAmt: 0, ex: 0, pos: 1, ghostsOn: true };
@@ -404,11 +406,12 @@ export function createKitScene(canvas: HTMLCanvasElement, options: KitSceneOptio
     objectFrame.pos = rig.position();
     objectFrame.ghostsOn = gestion;
     const objMoving = world.objects.step(dt, objectFrame);
+    const attachMoving = world.bagModel.attachments()?.advance?.(dt) ?? false;
     world.syncBackdrop();
     renderer.render(world.scene, rig.camera);
     const avg = meter.push(time);
     if (avg !== null && avg > SHADOW_BUDGET_MS) disableShadows();
-    return bagMoving || camMoving || objMoving;
+    return bagMoving || camMoving || objMoving || attachMoving;
   };
 
   /** Pose initiale ou après changement d'état : matrices du sac et caméra à jour avant tout rendu (projections, picks). */

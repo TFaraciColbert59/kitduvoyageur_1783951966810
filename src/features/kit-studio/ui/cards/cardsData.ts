@@ -9,7 +9,7 @@ import { candidates } from '../../domain/packing';
 import { currentConfig, currentKit } from '../../domain/state';
 import { effG, toCents } from '../../domain/totals';
 import type { ExtraItem, KitState } from '../../domain/types';
-import { bagThumb, colorwayThumb, itemThumb, swatchThumb } from '../../scene/thumbSpecs';
+import { bagThumb, colorwayThumb, itemThumb, moduleThumb, swatchThumb } from '../../scene/thumbSpecs';
 import type { ReadVar, ThumbRef } from '../../scene/thumbSpecs';
 import { S, tileLabel } from '../strings';
 import { glbModelForBag } from '../../scene/bag/modelLayer';
@@ -149,7 +149,7 @@ export function optionCards(s: KitState, part: PartNameId, cat: OptionCat, readV
           name: m.label,
           sub,
           label: `${m.code ? `${m.code} · ` : ''}${m.label}${overflow ? ` (${overflow})` : ''}${on ? ', monté' : ''}`,
-          thumb: null,
+          thumb: moduleThumb(m.moduleId, m.code),
           glyph: 'cube',
           selected: on,
           disabled: false,
@@ -168,7 +168,7 @@ export function optionCards(s: KitState, part: PartNameId, cat: OptionCat, readV
       const sub = on ? 'Monté' : off ? 'Plus de place' : owned ? 'À toi' : `+${formatEuro(toCents(M.eur))}`;
       return {
         id: m, kind: 'opt', name: M.n, sub, label: `${M.n}${on ? ', monté' : ''}${off ? ', indisponible' : ''}`,
-        thumb: null, glyph: M.gl, selected: on, disabled: off,
+        thumb: moduleThumb(m), glyph: M.gl, selected: on, disabled: off,
         why: off ? 'Plus de points d’attache libres. Retire un module.' : undefined,
       };
     });

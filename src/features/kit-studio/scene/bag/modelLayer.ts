@@ -127,6 +127,7 @@ export interface BagModelLayerDeps {
   readonly onChange?: (info: BagModelRuntimeInfo) => void;
   /** Source des fichiers (tests, assets hors réseau) ; défaut : `fetch('/assets/bags/…')`. */
   readonly provider?: BagAssetProvider;
+  readonly reducedMotion?: boolean;
 }
 
 export interface BagModelLayer {
@@ -136,6 +137,8 @@ export interface BagModelLayer {
   setAppearance(config: ConfigSet): void;
   /** Contrôleur d'accroche des modules 3D sur les points d'ancrage du sac chargé. */
   attachments(): ModuleAttachmentController | null;
+  /** Boîte englobante de l'ensemble actif (sac + modules attachés). */
+  getBounds(out: THREE.Box3): THREE.Box3;
   info(): BagModelRuntimeInfo;
   dispose(): void;
 }
@@ -295,6 +298,7 @@ export function createBagModelLayer(deps: BagModelLayerDeps): BagModelLayer {
       };
 
       attachmentCtrl = createModuleAttachmentController(result.root, allAnchorSpecs, {
+        reducedMotion: deps.reducedMotion,
         onNoticeChange(notice) {
           emit({ ...info, attachmentNotice: notice, mountedModules: getMountedModuleIds() });
         },
@@ -330,6 +334,16 @@ export function createBagModelLayer(deps: BagModelLayerDeps): BagModelLayer {
     },
     attachments() {
       return attachmentCtrl;
+    },
+    getBounds(out: THREE.Box3) {
+      if (loaded && holder.visible) {
+        loaded.root.updateMatrixWorld(true);
+        out.setFromObject(loaded.root);
+        return out;
+      }
+      proceduralBag.updateMatrixWorld(true);
+      out.setFromObject(proceduralBag);
+      return out;
     },
     info() {
       return info;

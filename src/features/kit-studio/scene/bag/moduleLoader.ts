@@ -1365,6 +1365,7 @@ export interface ModuleAttachmentControllerOptions {
   readonly onNoticeChange?: (notice: string | null) => void;
   /** Appelé à chaque modification du montage d'un module (attachement, détachement). */
   readonly onAttachmentChange?: () => void;
+  readonly reducedMotion?: boolean;
 }
 
 export interface ModuleAttachmentController {
@@ -1380,6 +1381,8 @@ export interface ModuleAttachmentController {
   getLastRejectionNotice: () => string | null;
   /** Liste les identifiants de points d'ancrage connus du contrôleur. */
   listAnchors: () => readonly (BagAnchorSpec | ProvisionalBagAnchor)[];
+  /** Avance les micro-animations de translation des modules (250-350 ms). */
+  advance?: (dt: number) => boolean;
   /** Dépose tous les modules montés et libère toutes leurs ressources GPU (`dispose()`). */
   dispose: () => void;
 }
@@ -1397,6 +1400,14 @@ export function createModuleAttachmentController(
     anchorMap.set(a.id, a);
   }
   const occupied = new Map<BagAnchorId, LoadedModuleAsset>();
+  const animating = new Map<
+    string,
+    {
+      targetPos: THREE.Vector3;
+      module: LoadedModuleAsset;
+      remaining: number;
+    }
+  >();
   let lastRejectionNotice: string | null = null;
 
   const setNotice = (notice: string | null): void => {
@@ -1462,11 +1473,27 @@ export function createModuleAttachmentController(
       module.manifest.platine.position[2],
     ).applyQuaternion(module.root.quaternion);
 
-    module.root.position.set(
+    const targetPos = new THREE.Vector3(
       anchor.position[0] - platineOffset.x,
       anchor.position[1] - platineOffset.y,
       anchor.position[2] - platineOffset.z,
     );
+
+    if (options?.reducedMotion) {
+      module.root.position.copy(targetPos);
+    } else {
+      const normalOffset = new THREE.Vector3(
+        anchor.normal[0],
+        anchor.normal[1],
+        anchor.normal[2],
+      ).multiplyScalar(0.08);
+      module.root.position.copy(targetPos).add(normalOffset);
+      animating.set(module.moduleId, {
+        targetPos,
+        module,
+        remaining: 0.32,
+      });
+    }
     module.root.updateMatrixWorld(true);
 
     bagRoot.add(module.root);
@@ -1487,9 +1514,9 @@ export function createModuleAttachmentController(
       anchorId,
       moduleId: module.moduleId,
       worldPosition: [
-        module.root.position.x + platineOffset.x,
-        module.root.position.y + platineOffset.y,
-        module.root.position.z + platineOffset.z,
+        targetPos.x + platineOffset.x,
+        targetPos.y + platineOffset.y,
+        targetPos.z + platineOffset.z,
       ],
       worldForward: [forwardVec.x, forwardVec.y, forwardVec.z],
     };
@@ -1499,6 +1526,7 @@ export function createModuleAttachmentController(
     const mounted = occupied.get(anchorId);
     if (!mounted) return null;
     occupied.delete(anchorId);
+    animating.delete(mounted.moduleId);
     if (mounted.root.parent) {
       mounted.root.parent.remove(mounted.root);
     }
@@ -1516,7 +1544,26 @@ export function createModuleAttachmentController(
 
   const listAnchors = (): readonly (BagAnchorSpec | ProvisionalBagAnchor)[] => anchors;
 
+  const advance = (dt: number): boolean => {
+    let moving = false;
+    for (const [id, anim] of animating.entries()) {
+      anim.remaining -= dt;
+      if (anim.remaining <= 0) {
+        anim.module.root.position.copy(anim.targetPos);
+        anim.module.root.updateMatrixWorld(true);
+        animating.delete(id);
+      } else {
+        const factor = 1 - Math.exp(-12 * dt);
+        anim.module.root.position.lerp(anim.targetPos, factor);
+        anim.module.root.updateMatrixWorld(true);
+        moving = true;
+      }
+    }
+    return moving;
+  };
+
   const dispose = (): void => {
+    animating.clear();
     for (const [anchorId, mounted] of occupied.entries()) {
       occupied.delete(anchorId);
       if (mounted.root.parent) {
@@ -1535,6 +1582,7 @@ export function createModuleAttachmentController(
     getMountedModule,
     getLastRejectionNotice,
     listAnchors,
+    advance,
     dispose,
   };
 }

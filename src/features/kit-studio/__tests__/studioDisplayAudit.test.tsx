@@ -157,12 +157,12 @@ describe('Validation des 3 portes d’affichage du Kit Studio (URGENT)', () => {
     const cards = optionCards(useKitStore.getState().kit, 'all', 'mod');
     const m14Card = cards.find((c) => c.id === 'lkdv-m14');
     expect(m14Card).toBeDefined();
-    expect(m14Card?.sub).toMatch(/dépasse de \d+ cm au-dessus du sac/);
-    expect(m14Card?.overflowNotice).toMatch(/dépasse de \d+ cm au-dessus du sac/);
-    expect(m14Card?.label).toMatch(/dépasse de \d+ cm au-dessus du sac/);
+    expect(m14Card?.sub).toMatch(/\+\d+ cm au-dessus/);
+    expect(m14Card?.overflowNotice).toMatch(/\+\d+ cm au-dessus/);
+    expect(m14Card?.label).toMatch(/\+\d+ cm au-dessus/);
 
     const m10Card = cards.find((c) => c.id === 'lkdv-m10');
     expect(m10Card).toBeDefined();
-    expect(m10Card?.sub).toMatch(/dépasse de \d+ cm en largeur/);
+    expect(m10Card?.sub).toMatch(/\+\d+ cm en largeur/);
   });
 });
