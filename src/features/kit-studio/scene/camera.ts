@@ -37,6 +37,7 @@ export interface CameraWorld {
   anchor(zone: ZoneId, out: Vector3): Vector3;
   center(out: Vector3): Vector3;
   bounds?(out: Box3): Box3;
+  bodyBounds?(out: Box3): Box3;
 }
 
 export interface CameraRig {
@@ -104,7 +105,14 @@ export function createCameraRig(options: { readonly reducedMotion: boolean }): C
   let h = 1;
   let aspectK = 1;
   const framingBox = new Box3();
+  const bodyBox = new Box3();
   let framingBoxValid = false;
+  /**
+   * Part minimale de la bande visible que le corps garde, quoi qu'il porte. Un porte-skis de
+   * 1,70 m sur un sac de 66 cm est cadré en entier par la règle générale, et le sac tombe alors au
+   * cinquième de l'écran : illisible. Passé ce seuil, le module déborde et le sac reste lisible.
+   */
+  const MIN_BODY_FRACTION = 0.5;
   const vProj = new Vector3();
   /** Part de la bande visible qu'occupe le sac après correction par projection. */
   const FIT_OCCUPANCY = 0.78;
@@ -245,6 +253,8 @@ export function createCameraRig(options: { readonly reducedMotion: boolean }): C
         camera.clearViewOffset();
         appliedYoff = 0;
       }
+      const corpsSeul = world?.bodyBounds ? world.bodyBounds(bodyBox) : null;
+      const aCorps = corpsSeul != null && !corpsSeul.isEmpty();
       const drawerCov = clamp((dk / DRAWER_OPEN) * 0.38, 0, 0.42);
       const bandBottom = -1 + 2 * drawerCov;
       const bandCenter = (bandBottom + 1) / 2;
@@ -252,22 +262,26 @@ export function createCameraRig(options: { readonly reducedMotion: boolean }): C
       for (let pass = 0; pass < 2; pass++) {
         camera.updateMatrixWorld();
         camera.updateProjectionMatrix();
-        let lo = Infinity;
-        let hi = -Infinity;
-        let gauche = Infinity;
-        let droite = -Infinity;
-        for (let c = 0; c < 8; c++) {
-          vProj.set(
-            c & 1 ? framingBox.max.x : framingBox.min.x,
-            c & 2 ? framingBox.max.y : framingBox.min.y,
-            c & 4 ? framingBox.max.z : framingBox.min.z,
-          );
-          vProj.project(camera);
-          if (vProj.y < lo) lo = vProj.y;
-          if (vProj.y > hi) hi = vProj.y;
-          if (vProj.x < gauche) gauche = vProj.x;
-          if (vProj.x > droite) droite = vProj.x;
-        }
+        const etendue = (b: Box3) => {
+          let bas = Infinity;
+          let haut = -Infinity;
+          let g = Infinity;
+          let d = -Infinity;
+          for (let c = 0; c < 8; c++) {
+            vProj.set(c & 1 ? b.max.x : b.min.x, c & 2 ? b.max.y : b.min.y, c & 4 ? b.max.z : b.min.z);
+            vProj.project(camera);
+            if (vProj.y < bas) bas = vProj.y;
+            if (vProj.y > haut) haut = vProj.y;
+            if (vProj.x < g) g = vProj.x;
+            if (vProj.x > d) d = vProj.x;
+          }
+          return { bas, haut, g, d };
+        };
+        const tout = etendue(framingBox);
+        let lo = tout.bas;
+        let hi = tout.haut;
+        let gauche = tout.g;
+        let droite = tout.d;
         if (!Number.isFinite(lo) || !Number.isFinite(hi) || hi <= lo) break;
         const span = hi - lo;
         const wanted = FIT_OCCUPANCY * bandHeight;
@@ -275,7 +289,30 @@ export function createCameraRig(options: { readonly reducedMotion: boolean }): C
         // horizontale, un cadrage juste en hauteur déborde latéralement sur un écran de téléphone.
         const spanH = droite - gauche;
         const wantedH = FIT_OCCUPANCY * 2;
-        const ratio = Math.max(span / wanted, spanH / wantedH);
+        let ratio = Math.max(span / wanted, spanH / wantedH);
+
+        // Plancher de lisibilité : on recule pour tout montrer, mais jamais au point de réduire le
+        // corps sous sa part minimale. Au-delà, on cadre sur le corps et le module déborde.
+        // Plancher de lisibilité, appliqué quoi qu'il arrive : sans module, la boîte du corps est
+        // celle de l'ensemble et le plancher (50 %) reste sous l'occupation voulue (78 %), donc il
+        // ne change rien. Avec un module très long, il empêche le sac de rétrécir indéfiniment —
+        // et c'est alors le corps qu'on centre, sinon le sac descend au bas du cadre pendant que
+        // le module occupe tout le haut.
+        // En vue décomposée, tout le kit doit tenir dans le cadre : le plancher de lisibilité
+        // y ferait sortir des objets, ce qui est précisément le défaut qu'on a corrigé.
+        if (aCorps && ex < 0.05) {
+          const corps = etendue(bodyBox);
+          const spanCorps = corps.haut - corps.bas;
+          const plafond = spanCorps / (MIN_BODY_FRACTION * bandHeight);
+          if (plafond > 0 && ratio > plafond) {
+            ratio = plafond;
+            lo = corps.bas;
+            hi = corps.haut;
+            gauche = corps.g;
+            droite = corps.d;
+          }
+        }
+
         if (pass === 0 && Math.abs(ratio - 1) > 0.02) {
           di = clamp(di * ratio, 0.6, 9.5);
           camera.position.set(
@@ -305,15 +342,19 @@ export function createCameraRig(options: { readonly reducedMotion: boolean }): C
     camera.updateMatrixWorld();
 
     if (framingBoxValid) {
+      // Le rectangle rendu est celui du corps : c'est lui qui doit rester dans le cadre. Un
+      // module très long déborde volontairement (voir MIN_BODY_FRACTION), mesurer l'ensemble
+      // rendrait le contrôle vert alors même que le sac serait devenu minuscule.
+      const mesure = !bodyBox.isEmpty() ? bodyBox : framingBox;
       let nx0 = Infinity;
       let ny0 = Infinity;
       let nx1 = -Infinity;
       let ny1 = -Infinity;
       for (let c = 0; c < 8; c++) {
         vProj.set(
-          c & 1 ? framingBox.max.x : framingBox.min.x,
-          c & 2 ? framingBox.max.y : framingBox.min.y,
-          c & 4 ? framingBox.max.z : framingBox.min.z,
+          c & 1 ? mesure.max.x : mesure.min.x,
+          c & 2 ? mesure.max.y : mesure.min.y,
+          c & 4 ? mesure.max.z : mesure.min.z,
         );
         vProj.project(camera);
         if (vProj.x < nx0) nx0 = vProj.x;

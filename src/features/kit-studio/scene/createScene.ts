@@ -332,6 +332,7 @@ export function createKitScene(canvas: HTMLCanvasElement, options: KitSceneOptio
       return world.bag.group.localToWorld(out.set(0, 0.35, 0));
     },
     bounds: (out) => world.bagModel.getBounds(out),
+    bodyBounds: (out) => world.bagModel.getBodyBounds(out),
   });
   rig.onZoneChange(options.onZoneChange ?? null);
   const objectFrame: ObjectFrame = { focus: 'bag', arcAmt: 0, ex: 0, pos: 1, ghostsOn: true };

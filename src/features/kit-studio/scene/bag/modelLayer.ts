@@ -139,6 +139,8 @@ export interface BagModelLayer {
   attachments(): ModuleAttachmentController | null;
   /** Boîte englobante de l'ensemble actif (sac + modules attachés). */
   getBounds(out: THREE.Box3): THREE.Box3;
+  /** Boîte du seul corps, modules montés exclus : sert à garder le sac lisible au cadrage. */
+  getBodyBounds(out: THREE.Box3): THREE.Box3;
   info(): BagModelRuntimeInfo;
   dispose(): void;
 }
@@ -407,6 +409,20 @@ export function createBagModelLayer(deps: BagModelLayerDeps): BagModelLayer {
     },
     attachments() {
       return attachmentCtrl;
+    },
+    getBodyBounds(out: THREE.Box3) {
+      if (loaded && holder.visible) {
+        loaded.root.updateMatrixWorld(true);
+        out.makeEmpty();
+        for (const enfant of loaded.root.children) {
+          if (enfant.name.startsWith('module:')) continue;
+          out.expandByObject(enfant);
+        }
+        if (!out.isEmpty()) return out;
+      }
+      proceduralBag.updateMatrixWorld(true);
+      out.setFromObject(proceduralBag);
+      return out;
     },
     getBounds(out: THREE.Box3) {
       if (loaded && holder.visible) {

@@ -668,7 +668,9 @@ async function main() {
     scene.setExploded(1.0);
   });
   await page.waitForTimeout(700);
-  await shoot('walkthrough-13-exploded.png', 15);
+  // En décomposition, le sac partage volontairement le cadre avec tout le kit : il y est plus
+  // petit qu'ailleurs, et le plancher de lisibilité ne s'y applique pas.
+  await shoot('walkthrough-13-exploded.png', 20);
 
   await browser.close();
   console.log('Walkthrough capture complete! All 13 frames saved to ' + capturesDir);
