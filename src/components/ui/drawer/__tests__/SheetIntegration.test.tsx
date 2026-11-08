@@ -143,7 +143,7 @@ describe('DynamicIsland intégrée à la coque (prop island)', () => {
       />,
     );
 
-    const island = screen.getByTestId('dynamic-island');
+    const island = screen.getByTestId('cv2-island');
     expect(island.getAttribute('role')).toBe('status');
     expect(island.closest('.lkdv-cv2-layer')).toBeNull();
     expect(document.querySelector('.lkdv-island-host')).toBeTruthy();

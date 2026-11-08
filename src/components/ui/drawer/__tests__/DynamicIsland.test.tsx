@@ -13,7 +13,7 @@ afterEach(() => {
 describe('DynamicIsland', () => {
   it('ne rend rien quand elle est fermée', () => {
     render(<DynamicIsland open={false} title="Publié" onClose={() => {}} />);
-    expect(screen.queryByTestId('dynamic-island')).toBeNull();
+    expect(screen.queryByTestId('cv2-island')).toBeNull();
   });
 
   it('annonce le titre et le sous-titre en role=status aria-live=polite', () => {
@@ -25,7 +25,7 @@ describe('DynamicIsland', () => {
         onClose={() => {}}
       />,
     );
-    const island = screen.getByTestId('dynamic-island');
+    const island = screen.getByTestId('cv2-island');
     expect(island.getAttribute('role')).toBe('status');
     expect(island.getAttribute('aria-live')).toBe('polite');
     expect(island.getAttribute('aria-atomic')).toBe('true');

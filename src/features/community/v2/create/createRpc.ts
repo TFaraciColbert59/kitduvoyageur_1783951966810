@@ -283,7 +283,18 @@ export async function publishStoryV2(
     linked_carnet_day: null,
   };
   const { error } = await supabase.from('post_stories').insert(insert);
-  if (error) throw toRpcError(error);
+  if (error) {
+    // L'insert a échoué : le média envoyé ne doit pas rester orphelin.
+    try {
+      const { deleteMediaObjectsV2 } = await import('./fields/media');
+      await deleteMediaObjectsV2([
+        { bucket: (media.storageBucket || 'stories-private') as MediaBucketV2, path: media.storagePath },
+      ]);
+    } catch {
+      /* le cron purge-stories nettoiera */
+    }
+    throw toRpcError(error);
+  }
   return { id: storyId };
 }
 

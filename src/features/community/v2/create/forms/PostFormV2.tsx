@@ -21,6 +21,7 @@ import { MentionFieldV2 } from '../fields/MentionFieldV2';
 import { PlaceFieldV2 } from '../fields/PlaceFieldV2';
 import { TagsFieldV2 } from '../fields/TagsFieldV2';
 import { IMAGE_LIMITS, mediaProgress } from '../fields/media';
+import { deleteMediaObjectsV2, uploadedObjectsOf } from '../fields/media';
 import type { CreateFormV2Props } from './types';
 
 const FORMAT_OPTIONS = [
@@ -316,8 +317,14 @@ export function PostFormV2({ active, onNavChange }: CreateFormV2Props) {
       disabled={!user}
       onNavChange={onNavChange}
       onSubmit={async (values) => {
-        const result = await createCommunityPostV2(values);
-        reportCreated('post', { id: result.id });
+        try {
+          const result = await createCommunityPostV2(values);
+          reportCreated('post', { id: result.id });
+        } catch (error) {
+          // Aucun média orphelin dans le bucket si l'écriture échoue.
+          await deleteMediaObjectsV2(uploadedObjectsOf(values.media));
+          throw error;
+        }
       }}
     >
       {(api) => <PostBody api={api} user={user} />}

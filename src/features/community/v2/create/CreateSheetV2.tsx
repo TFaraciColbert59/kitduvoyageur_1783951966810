@@ -135,6 +135,26 @@ export function CreateSheetV2({
     }
   }, [initialKind, initialPrefill, open]);
 
+  // Clavier mobile : le champ actif reste visible au-dessus du clavier.
+  useEffect(() => {
+    if (!open || keyboard <= 0 || typeof document === 'undefined') return;
+    const onFocusIn = (event: FocusEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (!target) return;
+      const editable =
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.tagName === 'SELECT' ||
+        target.isContentEditable;
+      if (!editable || !target.closest('.lkdv-cv2-sheet')) return;
+      window.setTimeout(() => {
+        target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      }, 120);
+    };
+    document.addEventListener('focusin', onFocusIn);
+    return () => document.removeEventListener('focusin', onFocusIn);
+  }, [keyboard, open]);
+
   // Toute écriture exige un compte en règle (`01 § 1`).
   useEffect(() => {
     if (!open) return;
@@ -326,6 +346,17 @@ export function CreateSheetV2({
           });
         };
       }
+      if (kind === 'kit') {
+        base.undoLabel = 'Utiliser pour une sortie';
+        base.undo = () => {
+          keepOpenRef.current = true;
+          setIsland(null);
+          requestCreate('sortie', {
+            kitId: result.id,
+            kitName: result.name ?? '',
+          });
+        };
+      }
       setIsland(base);
     },
     [config.successTitle, finishCreated, haptic, requestCreate, router],
@@ -448,6 +479,7 @@ export function CreateSheetV2({
       <CommunitySheetShell
         open={open}
         onClose={requestClose}
+        kind="create"
         label="Créer dans la communauté"
         capsule={{ items: capsureItems, active: kindIndex, onChange: changeKind, ariaLabel: 'Type de création' }}
         mini={detail ? null : mini}

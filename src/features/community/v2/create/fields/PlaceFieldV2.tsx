@@ -31,6 +31,7 @@ export interface PlaceFieldV2Props {
   /** Affiche « Ma position » (géolocalisation device). */
   allowCurrentPosition?: boolean;
   onPick?: (place: { label: string; lat: number; lng: number }) => void;
+  required?: boolean;
   className?: string;
 }
 
@@ -48,6 +49,7 @@ export function PlaceFieldV2({
   lngName,
   allowCurrentPosition = true,
   onPick,
+  required = false,
   className,
 }: PlaceFieldV2Props) {
   const autoId = useId();
@@ -143,6 +145,7 @@ export function PlaceFieldV2({
     <div className={['lkdv-cv2-field', className].filter(Boolean).join(' ')}>
       <label id={labelId} htmlFor={fieldId} className="lkdv-cv2-field-label">
         {label}
+        {required ? <span aria-hidden="true"> *</span> : null}
       </label>
       <div className="lkdv-cv2c-place-row">
         <div className="lkdv-cv2c-place">

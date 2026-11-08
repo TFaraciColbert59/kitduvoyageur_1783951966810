@@ -1535,3 +1535,161 @@
     transition: none;
   }
 }
+
+/* ── Story : cadre de composition du visualiseur existant ───────────────── */
+
+.lkdv-story-compose-frame {
+  position: absolute;
+  inset: 0;
+  display: block;
+  overflow: hidden;
+  background: var(--lkv-surface-muted);
+}
+
+.lkdv-story-compose-media {
+  position: absolute;
+  inset: 0;
+  transition: transform 0.12s var(--ease-out);
+  will-change: transform;
+}
+
+.lkdv-story-compose-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.lkdv-story-compose-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 18px;
+  text-align: center;
+  color: var(--lkv-text-secondary);
+  font: 500 12px/1.35 var(--font-sans);
+}
+
+.lkdv-story-compose-empty p {
+  margin: 0;
+}
+
+.lkdv-story-compose-empty p + p {
+  font-size: 10.5px;
+  opacity: 0.8;
+}
+
+.lkdv-story-compose-scrim {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.lkdv-story-compose-scrim--top {
+  top: 0;
+  height: 64px;
+  background: linear-gradient(180deg, var(--lkv-overlay-scrim), transparent);
+}
+
+.lkdv-story-compose-scrim--bottom {
+  bottom: 0;
+  height: 96px;
+  background: linear-gradient(0deg, var(--lkv-overlay-scrim), transparent);
+}
+
+.lkdv-cv2c-story-stickers {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 58px;
+  z-index: 4;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.lkdv-cv2c-story-layer.is-selected {
+  outline: 1.5px dashed var(--lkv-text-inverted);
+  outline-offset: 4px;
+  border-radius: var(--lkv-radius-md);
+}
+
+.lkdv-cv2c-trim-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lkdv-cv2c-trim-row input[type='range'] {
+  width: 100%;
+  height: 32px;
+  accent-color: var(--lkv-forest-900);
+}
+
+.lkdv-cv2c-layer-row[data-selected='true'] {
+  box-shadow: inset 0 0 0 1.5px var(--lkv-secondary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lkdv-story-compose-media {
+    transition: none;
+  }
+}
+
+/* ── Carnet : couverture, photo du kit, carte plein cadre ───────────────── */
+
+.lkdv-cv2c-map-canvas {
+  position: absolute;
+  inset: 0;
+}
+
+.lkdv-cv2c-carnet-cover {
+  width: 100%;
+  max-height: 150px;
+  object-fit: cover;
+  border-radius: var(--cv2-field-radius);
+  display: block;
+}
+
+.lkdv-cv2c-kit-cover {
+  width: 46px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: var(--lkv-radius-sm);
+  display: block;
+}
+
+.lkdv-cv2c-product-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  background: none;
+  padding: 0;
+  text-align: left;
+  color: var(--lkv-text-primary);
+  cursor: pointer;
+}
+
+.lkdv-cv2c-product-main b {
+  display: block;
+  font: 600 12.5px/1.25 var(--font-sans);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lkdv-cv2c-product-main small {
+  display: block;
+  font: 400 10.5px/1.3 var(--font-sans);
+  color: var(--lkv-text-secondary);
+}

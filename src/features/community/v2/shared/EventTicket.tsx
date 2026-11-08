@@ -20,6 +20,11 @@ export interface EventTicketProps {
   href?: string;
   /** Masque la jauge de places (aperçu compact, fiche). */
   showCapacity?: boolean;
+  /**
+   * Ouvre la fiche en détail empilé (le `href` reste la destination de repli :
+   * navigation clavier, nouvel onglet et clic sans JS conservent `/sorties/<id>`).
+   */
+  onOpen?: () => void;
   className?: string;
 }
 
@@ -58,6 +63,7 @@ export function EventTicket({
   variant = 'tile',
   href,
   showCapacity = true,
+  onOpen,
   className,
 }: EventTicketProps) {
   const start = startIso(event);
@@ -179,7 +185,20 @@ export function EventTicket({
   }
 
   return (
-    <a className={rootClassName} data-state={state} href={href ?? `/sorties/${event.id}`} aria-label={ariaLabel}>
+    <a
+      className={rootClassName}
+      data-state={state}
+      href={href ?? `/sorties/${event.id}`}
+      aria-label={ariaLabel}
+      onClick={
+        onOpen
+          ? (clickEvent) => {
+              clickEvent.preventDefault();
+              onOpen();
+            }
+          : undefined
+      }
+    >
       {body}
     </a>
   );

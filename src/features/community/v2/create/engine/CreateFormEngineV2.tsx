@@ -21,7 +21,7 @@ import {
 import type { CreateNavV2 } from './nav';
 import { createKindConfig, createStepsFor, stepIndexOfField } from './steps';
 import { useDraftV2 } from './useDraftV2';
-import type { CreateKindV2 } from './createSchemasV2';
+import { mediaUploadState, type CreateKindV2 } from './createSchemasV2';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 /**
@@ -61,10 +61,6 @@ export interface CreateFormEngineV2Props<T extends FieldValues> {
   onSubmit: (values: T) => Promise<void>;
   /** Remonte le nav à la coque (pied, mini-capsule, erreur serveur). */
   onNavChange: (nav: CreateNavV2) => void;
-  /** Libellé de progression des médias, si l'onglet en a. */
-  busyLabel?: string | null;
-  /** Nombre de médias non prêts (désactive l'envoi). */
-  uploadingCount?: number;
   children: (api: CreateFormEngineApiV2<T>) => React.ReactNode;
 }
 
@@ -76,8 +72,6 @@ export function CreateFormEngineV2<T extends FieldValues>({
   disabled = false,
   onSubmit,
   onNavChange,
-  busyLabel = null,
-  uploadingCount = 0,
   children,
 }: CreateFormEngineV2Props<T>) {
   const config = createKindConfig(kind);
@@ -97,6 +91,8 @@ export function CreateFormEngineV2<T extends FieldValues>({
     reValidateMode: 'onChange',
   });
   const draft = useDraftV2<T>({ kind, form });
+  // Progression des médias : le pied est occupé tant qu'un média n'est pas prêt.
+  const uploadState = mediaUploadState(form.watch());
 
   const clearDraft = useCallback(() => {
     draft.clear();
@@ -184,8 +180,7 @@ export function CreateFormEngineV2<T extends FieldValues>({
     void form.handleSubmit(
       async (values) => {
         if (busyRef.current) return;
-        const pending = uploadingCount > 0;
-        if (pending) {
+        if (uploadState.pending > 0) {
           // Les médias ne sont pas prêts : rien ne part, le message est unique.
           setServerError('Attends la fin de l’envoi des médias.');
           return;
@@ -223,7 +218,7 @@ export function CreateFormEngineV2<T extends FieldValues>({
         }
       },
     )();
-  }, [defaultValues, draft, focusField, form, haptic, onSubmit, uploadingCount]);
+  }, [defaultValues, draft, focusField, form, haptic, onSubmit, uploadState.pending]);
 
   const goNext = useCallback(() => {
     if (busyRef.current) return;
@@ -277,7 +272,11 @@ export function CreateFormEngineV2<T extends FieldValues>({
       stepLabels: steps.map((entry) => entry.label),
       canBack: step > 0,
       busy,
-      busyLabel: busy ? 'Envoi…' : busyLabel,
+      busyLabel: busy
+        ? 'Envoi…'
+        : uploadState.pending > 0
+          ? `Envoi des médias… ${uploadState.percent} %`
+          : null,
       finalLabel: config.finalLabel,
       serverError,
       hasContent: draft.hasContent,
@@ -288,7 +287,6 @@ export function CreateFormEngineV2<T extends FieldValues>({
     }),
     [
       busy,
-      busyLabel,
       config.finalLabel,
       draft.flush,
       draft.hasContent,
@@ -299,6 +297,8 @@ export function CreateFormEngineV2<T extends FieldValues>({
       serverError,
       step,
       steps,
+      uploadState.pending,
+      uploadState.percent,
     ],
   );
 
@@ -312,7 +312,7 @@ export function CreateFormEngineV2<T extends FieldValues>({
     setStep,
     errorCount,
     clearDraft,
-    uploadingCount,
+    uploadingCount: uploadState.pending,
   };
 
   const summary = errorCount > 0 ? (
@@ -324,7 +324,7 @@ export function CreateFormEngineV2<T extends FieldValues>({
         if (first) focusField(first.path);
       }}
       aria-label={`${errorCounterLabel(errorCount)}. Aller au premier champ à corriger.`}
-      data-testid="cv2c-error-summary"
+      data-testid="cv2-error-summary"
     >
       <svg viewBox="0 0 24 24" aria-hidden="true" width="14" height="14">
         <path
@@ -344,6 +344,7 @@ export function CreateFormEngineV2<T extends FieldValues>({
     <form
       noValidate
       className="lkdv-cv2c-form"
+      data-testid={`cv2-form-${kind}`}
       data-kind={kind}
       data-step={step}
       onSubmit={(event) => event.preventDefault()}
@@ -368,7 +369,7 @@ export function CreateFormEngineV2<T extends FieldValues>({
       }}
     >
       {draft.restored ? (
-        <div className="lkdv-cv2-draft lkdv-cv2c-draft" data-testid="cv2c-draft-banner">
+        <div className="lkdv-cv2-draft lkdv-cv2c-draft" data-testid="cv2-draft-banner">
           <span>Brouillon restauré</span>
           <button type="button" onClick={clearDraft}>
             Effacer

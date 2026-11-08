@@ -70,7 +70,7 @@ describe('CreateSheetV2 — moteur et coque', () => {
     fireEvent.click(await screen.findByRole('radio', { name: /Un club/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Suivant' }));
 
-    const summary = await screen.findByTestId('cv2c-error-summary');
+    const summary = await screen.findByTestId('cv2-error-summary');
     expect(summary.textContent).toContain('1 champ à corriger');
     // L'erreur est affichée une seule fois, sous son champ.
     const messages = await screen.findAllByText('Choisis un club.');
@@ -90,11 +90,11 @@ describe('CreateSheetV2 — moteur et coque', () => {
       JSON.stringify({ version: 1, kind: 'post', updatedAt: Date.now(), values: draft }),
     );
     renderSheet();
-    const banner = await screen.findByTestId('cv2c-draft-banner');
+    const banner = await screen.findByTestId('cv2-draft-banner');
     expect(banner.textContent).toContain('Brouillon restauré');
     fireEvent.click(screen.getByRole('button', { name: 'Effacer' }));
     await waitFor(() => {
-      expect(screen.queryByTestId('cv2c-draft-banner')).toBeNull();
+      expect(screen.queryByTestId('cv2-draft-banner')).toBeNull();
     });
   });
 
@@ -106,7 +106,7 @@ describe('CreateSheetV2 — moteur et coque', () => {
       JSON.stringify({ version: 1, kind: 'post', updatedAt: Date.now(), values: draft }),
     );
     renderSheet({ onClose });
-    await screen.findByTestId('cv2c-draft-banner');
+    await screen.findByTestId('cv2-draft-banner');
     fireEvent.keyDown(document, { key: 'Escape' });
     const dialog = await screen.findByRole('alertdialog');
     expect(dialog.textContent).toContain('Fermer sans publier ?');

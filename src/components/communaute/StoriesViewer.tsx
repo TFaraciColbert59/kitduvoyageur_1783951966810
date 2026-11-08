@@ -30,6 +30,33 @@ export interface StorySlide {
   overlays?: StoryOverlay[];
   /** Stories V2 (phase 04) : politique de réponse (`everyone` par défaut). */
   replyPolicy?: 'everyone' | 'followers' | 'off';
+  /** Stories V2 : portion vidéo conservée (ms), lue à la lecture. */
+  trimStartMs?: number | null;
+  trimEndMs?: number | null;
+  /** Stories V2 : carnet lié (lien affiché aux lecteurs autorisés). */
+  linkedCarnetId?: string | null;
+}
+
+/**
+ * Mode composition de l'éditeur de story (Création V2).
+ *
+ * Le même composant rend le cadre 9:16 sans gestes de lecture : l'éditeur
+ * pose ses calques (textes, stickers, cadrage) **au-dessus** du média, avec le
+ * dock d'outils à la place du dock de réponse. Aucun second visualiseur.
+ */
+export interface StoryComposeConfig {
+  media: { url: string; mediaType: 'image' | 'video'; durationMs?: number } | null;
+  /** Rognage vidéo en millisecondes (aperçu de l'extrait). */
+  trimStartMs?: number | null;
+  trimEndMs?: number | null;
+  /** Calques interactifs posés sur le média (textes, stickers). */
+  layers?: React.ReactNode;
+  /** Dock d'outils (bas du cadre), même grammaire que le dock de lecture. */
+  dock?: React.ReactNode;
+  /** Lecture de l'aperçu vidéo (bouton de l'éditeur). */
+  playing?: boolean;
+  /** Cadrage du média (pincement/glisser) : échelle et translations en px. */
+  mediaTransform?: { scale: number; x: number; y: number };
 }
 
 export interface StoryUser {
@@ -77,6 +104,7 @@ export default function StoriesViewer({
   likedStoryIds,
   followedAuthorIds,
   myUserId,
+  compose,
 }: {
   users: StoryUser[];
   startUser: number;
@@ -91,6 +119,11 @@ export default function StoriesViewer({
   likedStoryIds?: ReadonlySet<string>;
   followedAuthorIds?: ReadonlySet<string>;
   myUserId?: string;
+  /**
+   * Mode composition de l'éditeur de story : rend le cadre 9:16 dans le flux
+   * (aucun portail, aucune gestuelle de lecture), avec les calques de l'éditeur.
+   */
+  compose?: StoryComposeConfig;
 }) {
   const [userIndex, setUserIndex] = useState(startUser);
   const [slideIndex, setSlideIndex] = useState(0);
@@ -113,6 +146,7 @@ export default function StoriesViewer({
   const viewerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   useEffect(() => {
+    if (compose) return;
     document.body.dataset.storyOpen = 'true';
     const nodes = Array.from(document.querySelectorAll<HTMLElement>(
       '.tb, nav[aria-label="Navigation principale"], .account-bottom-bar, [data-account-bottom-bar]'
@@ -129,10 +163,12 @@ export default function StoriesViewer({
         node.removeAttribute('aria-hidden');
       });
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mode figé au montage
   }, []);
 
   const progressRef = useRef(0);
   const advancingRef = useRef(false);
+  const composeVideoRef = useRef<HTMLVideoElement | null>(null);
 
   const user = users[userIndex];
   const slide = user?.slides[slideIndex];
@@ -183,6 +219,7 @@ export default function StoriesViewer({
       }
     };
     const onVis = () => setHiddenTab(document.hidden);
+    if (compose) return;
     window.addEventListener('keydown', onKey);
     document.addEventListener('visibilitychange', onVis);
     const prevOverflow = document.body.style.overflow;
@@ -192,14 +229,15 @@ export default function StoriesViewer({
       document.removeEventListener('visibilitychange', onVis);
       document.body.style.overflow = prevOverflow;
     };
-  }, [next, prev, onClose, optionsOpen]);
+  }, [compose, next, prev, onClose, optionsOpen]);
 
   /* Focus : entrée dans le dialogue, restitution au déclencheur */
   useEffect(() => {
+    if (compose) return;
     const previous = document.activeElement as HTMLElement | null;
     viewerRef.current?.focus();
     return () => previous?.focus?.();
-  }, []);
+  }, [compose]);
 
   /* Réinitialisation progression + verrou + saisie à chaque slide */
   useEffect(() => {
@@ -244,6 +282,23 @@ export default function StoriesViewer({
       video.play().catch(() => setNeedsTap(true));
     }
   }, [paused, isVideo, userIndex, slideIndex]);
+
+  /* Vidéo : bornes de rognage (`trim_start_ms`/`trim_end_ms`) lues à la lecture */
+  const trimStartMs = slide?.trimStartMs ?? 0;
+  const trimEndMs = slide?.trimEndMs ?? null;
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !isVideo) return;
+    const start = Math.max(0, trimStartMs) / 1000;
+    const seekToStart = () => {
+      if (Number.isFinite(video.duration) && start > 0 && start < video.duration) {
+        video.currentTime = start;
+      }
+    };
+    seekToStart();
+    video.addEventListener('loadedmetadata', seekToStart);
+    return () => video.removeEventListener('loadedmetadata', seekToStart);
+  }, [isVideo, trimStartMs, userIndex, slideIndex]);
 
   /* Vue enregistrée après 1 s d'affichage réel (jamais ma propre story). */
   useEffect(() => {
@@ -298,6 +353,74 @@ export default function StoriesViewer({
       first.focus();
     }
   };
+
+  /* Composition : lecture contrôlée de l'extrait (aucun geste de lecture). */
+  const composePlaying = Boolean(compose?.playing);
+  useEffect(() => {
+    const video = composeVideoRef.current;
+    if (!compose || !video) return;
+    if (composePlaying) {
+      void video.play().catch(() => undefined);
+    } else {
+      video.pause();
+    }
+  }, [compose, composePlaying]);
+
+  const composeTrimStart = Math.max(0, compose?.trimStartMs ?? 0) / 1000;
+  const composeTrimEnd =
+    compose?.trimEndMs != null && compose.trimEndMs > 0 ? compose.trimEndMs / 1000 : null;
+  const composeTransform = compose?.mediaTransform;
+
+  if (compose) {
+    return (
+      <div
+        className="lkdv-story-viewer lkdv-story-compose-frame"
+        role="group"
+        aria-label="Aperçu de la story en composition"
+        data-compose="true"
+      >
+        <div className="lkdv-story-compose-media" style={composeTransform ? { transform: `translate(${composeTransform.x}px, ${composeTransform.y}px) scale(${composeTransform.scale})` } : undefined}>
+          {compose.media ? (
+            compose.media.mediaType === 'video' ? (
+              <video
+                ref={composeVideoRef}
+                src={compose.media.url}
+                playsInline
+                muted
+                loop
+                preload="metadata"
+                className="lkdv-story-compose-img"
+                onLoadedMetadata={(event) => {
+                  const video = event.currentTarget;
+                  if (Number.isFinite(video.duration) && composeTrimStart > 0 && composeTrimStart < video.duration) {
+                    video.currentTime = composeTrimStart;
+                  }
+                }}
+                onTimeUpdate={(event) => {
+                  const video = event.currentTarget;
+                  if (composeTrimEnd !== null && video.currentTime >= composeTrimEnd) {
+                    video.currentTime = composeTrimStart;
+                  }
+                }}
+              />
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element -- aperçu local ou URL signée
+              <img src={compose.media.url} alt="" draggable={false} className="lkdv-story-compose-img" />
+            )
+          ) : (
+            <div className="lkdv-story-compose-empty">
+              <p>Choisis une photo ou une vidéo</p>
+              <p>Format vertical 9:16 · cadrage à l’étape suivante</p>
+            </div>
+          )}
+        </div>
+        <div className="lkdv-story-compose-scrim lkdv-story-compose-scrim--top" aria-hidden="true" />
+        <div className="lkdv-story-compose-scrim lkdv-story-compose-scrim--bottom" aria-hidden="true" />
+        {compose.layers}
+        {compose.dock ? <div className="lkdv-cv2c-story-dock">{compose.dock}</div> : null}
+      </div>
+    );
+  }
 
   if (!user || !slide) return null;
 
@@ -411,6 +534,11 @@ export default function StoriesViewer({
             className="h-full w-full object-cover"
             onTimeUpdate={(e) => {
               const v = e.currentTarget;
+              if (trimEndMs !== null && v.currentTime * 1000 >= trimEndMs) {
+                v.pause();
+                next();
+                return;
+              }
               if (v.duration > 0) {
                 const value = Math.min(1, v.currentTime / v.duration);
                 progressRef.current = value;

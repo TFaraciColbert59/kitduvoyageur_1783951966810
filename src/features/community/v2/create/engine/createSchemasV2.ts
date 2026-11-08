@@ -252,6 +252,48 @@ export function newClientRequestId(): string {
 
 const clientRequestIdSchema = z.string().min(1).default(() => newClientRequestId());
 
+/** Tous les médias présents dans un formulaire (récursif, testé). */
+export function collectMediaItems(values: unknown): MediaItemV2[] {
+  const items: MediaItemV2[] = [];
+  const visit = (value: unknown) => {
+    if (Array.isArray(value)) {
+      value.forEach(visit);
+      return;
+    }
+    if (!value || typeof value !== 'object') return;
+    const record = value as Record<string, unknown>;
+    if (
+      typeof record.id === 'string' &&
+      typeof record.status === 'string' &&
+      typeof record.size === 'number' &&
+      typeof record.name === 'string'
+    ) {
+      items.push(record as unknown as MediaItemV2);
+      return;
+    }
+    Object.values(record).forEach(visit);
+  };
+  visit(values);
+  return items;
+}
+
+/** Progression agrégée des médias (pied : « Envoi des médias… 45 % »). */
+export function mediaUploadState(values: unknown): { total: number; pending: number; percent: number } {
+  const medias = collectMediaItems(values);
+  if (medias.length === 0) return { total: 0, pending: 0, percent: 100 };
+  let pending = 0;
+  let sum = 0;
+  for (const media of medias) {
+    if (media.status === 'uploaded') {
+      sum += 100;
+    } else {
+      pending += 1;
+      sum += Math.min(99, Math.max(0, media.progress || 0));
+    }
+  }
+  return { total: medias.length, pending, percent: Math.round(sum / medias.length) };
+}
+
 /** Une soumission impossible tant qu'un média n'est pas téléversé. */
 export function findPendingMedia(values: unknown): MediaItemV2 | null {
   if (!values || typeof values !== 'object') return null;

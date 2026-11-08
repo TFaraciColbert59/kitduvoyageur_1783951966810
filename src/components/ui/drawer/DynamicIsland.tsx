@@ -71,7 +71,7 @@ export function DynamicIsland({
         role="status"
         aria-live="polite"
         aria-atomic="true"
-        data-testid="dynamic-island"
+        data-testid="cv2-island"
       >
         <span className="lkdv-island-text">
           <b className="lkdv-island-title">{title}</b>

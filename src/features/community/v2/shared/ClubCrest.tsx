@@ -1,5 +1,6 @@
 import React from 'react';
 
+/** Tailles canoniques de la tuile (28), de la ligne (44) et du détail (72). */
 export type ClubCrestSize = 28 | 44 | 72;
 
 export interface ClubCrestProps {
@@ -9,8 +10,8 @@ export interface ClubCrestProps {
   activity?: string | null;
   /** Graine déterministe (id ou `crestSeed` du VM) ; à défaut, le nom. */
   seed?: string | number | null;
-  /** Tailles canoniques de la tuile (28), de la ligne (44) et du détail (72). */
-  size?: ClubCrestSize;
+  /** Taille en px (canoniques 28 / 44 / 72 ; 52 et 64 pour les tuiles larges). */
+  size?: number;
   className?: string;
 }
 

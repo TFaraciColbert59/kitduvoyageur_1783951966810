@@ -73,7 +73,10 @@ export function FieldV2({
   const over = counter ? counter.value > counter.max : false;
 
   return (
-    <div className={['lkdv-cv2-field', 'lkdv-cv2c-field', className].filter(Boolean).join(' ')}>
+    <div
+      className={['lkdv-cv2-field', 'lkdv-cv2c-field', className].filter(Boolean).join(' ')}
+      data-testid={`cv2-field-${rootName(name)}`}
+    >
       <div className="lkdv-cv2c-field-head">
         <label id={labelId} htmlFor={fieldId} className={`lkdv-cv2-field-label${labelHidden ? ' lkdv-cv2c-sr-only' : ''}`}>
           {label}

@@ -165,6 +165,7 @@ export function SortMenuButton({
         aria-controls={open ? menuId : undefined}
         aria-label={label}
         title={label}
+        data-testid="cv2-sort-button"
         disabled={disabled}
         onClick={() => {
           if (disabled) return;
@@ -186,6 +187,7 @@ export function SortMenuButton({
           className="lkdv-sort-menu"
           role="menu"
           aria-label={label}
+          data-testid="cv2-sort-menu"
           tabIndex={-1}
           onKeyDown={handleMenuKeyDown}
         >

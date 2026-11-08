@@ -3,8 +3,8 @@
 import React from 'react';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { cleanup, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { EventCardVM } from '../types';
 import { formatDateFull } from '../format';
 import { EventTicket } from '../EventTicket';
@@ -133,6 +133,15 @@ describe('EventTicket', () => {
     expect(container.querySelector('.lkdv-cv2-ticket.is-preview')).toBeTruthy();
     expect(container.querySelector('.lkdv-cv2-ticket-foot')).toBeNull();
     expect(screen.getByLabelText('Aperçu : Traversée du Vercors')).toBeTruthy();
+  });
+
+  it('ouvre le détail empilé quand onOpen est fourni sans perdre le href de repli', () => {
+    const onOpen = vi.fn();
+    render(<EventTicket event={makeEvent()} onOpen={onOpen} />);
+    const link = screen.getByRole('link');
+    expect(link.getAttribute('href')).toBe('/sorties/e1');
+    fireEvent.click(link);
+    expect(onOpen).toHaveBeenCalledTimes(1);
   });
 
   it('accepte une destination de lien personnalisée', () => {

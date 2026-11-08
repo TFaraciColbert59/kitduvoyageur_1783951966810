@@ -45,6 +45,11 @@ export interface MediaFieldV2Props {
   className?: string;
   /** Libellé du bouton d'ajout (défaut : « Ajouter une photo »). */
   addLabel?: string;
+  /**
+   * Fichiers fournis par un autre chemin que le sélecteur (caméra directe de la
+   * story, capture Capacitor) : traités dès que `nonce` change.
+   */
+  spawnFiles?: { files: File[]; nonce: number } | null;
 }
 
 /**
@@ -68,6 +73,7 @@ export function MediaFieldV2({
   onVideoDuration,
   className,
   addLabel,
+  spawnFiles = null,
 }: MediaFieldV2Props) {
   const form = useFormContext();
   const { haptic } = useHapticFeedback();
@@ -148,7 +154,7 @@ export function MediaFieldV2({
   );
 
   const onFiles = useCallback(
-    (files: FileList | null) => {
+    (files: FileList | File[] | null) => {
       if (!files || files.length === 0) return;
       const current = (form.getValues(name) as MediaItemV2[] | undefined) ?? [];
       const room = max - current.length;
@@ -202,6 +208,15 @@ export function MediaFieldV2({
     },
     [cropOptions, form, haptic, limits, max, name, onVideoDuration, setItems, showCoverChoice, uploadOne],
   );
+
+  // Fichiers venus de la caméra directe (ou d'une capture native).
+  const handledSpawnNonce = useRef(-1);
+  useEffect(() => {
+    if (!spawnFiles || spawnFiles.nonce === handledSpawnNonce.current) return;
+    handledSpawnNonce.current = spawnFiles.nonce;
+    if (spawnFiles.files.length === 0) return;
+    onFiles(spawnFiles.files);
+  }, [onFiles, spawnFiles]);
 
   const retry = useCallback(
     (item: MediaItemV2) => {
@@ -301,7 +316,7 @@ export function MediaFieldV2({
             ) : null}
           </div>
           {items.length > 0 ? (
-            <div className="lkdv-cv2-media-grid lkdv-cv2c-media-grid" aria-describedby={describedBy}>
+            <div className="lkdv-cv2-media-grid lkdv-cv2c-media-grid" data-hscroll aria-describedby={describedBy}>
               {items.map((item) => (
                 <figure
                   key={item.id}
