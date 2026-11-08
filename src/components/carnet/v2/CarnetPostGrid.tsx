@@ -23,7 +23,12 @@ export function CarnetPostGrid({
   const pressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const didLongPressRef = useRef(false);
 
-  const handlePointerDown = (moment: CarnetMomentItem) => {
+  const handlePointerDown = (
+    event: React.PointerEvent<HTMLButtonElement>,
+    moment: CarnetMomentItem
+  ) => {
+    // Le déclencheur garde le focus : Peek & Pop le restitue à la fermeture.
+    event.currentTarget.focus({ preventScroll: true });
     didLongPressRef.current = false;
     if (pressTimerRef.current) clearTimeout(pressTimerRef.current);
 
@@ -91,7 +96,7 @@ export function CarnetPostGrid({
             className="lkdv-ig-tile"
             role="gridcell"
             aria-label={`${moment.title || 'Moment'} ${moment.time || ''}`}
-            onPointerDown={() => handlePointerDown(moment)}
+            onPointerDown={(event) => handlePointerDown(event, moment)}
             onPointerUp={() => handlePointerUp(moment, idx)}
             onPointerCancel={handlePointerCancel}
           >
