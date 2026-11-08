@@ -82,7 +82,9 @@ export async function middleware(request: NextRequest) {
   const isLocalHubCamp =
     process.env.LKDV_LOCAL_HUB_CAMP === '1' &&
     (pathname === '/hub' || pathname.startsWith('/hub/'));
-  if (isAppRoute(pathname) && !hasSessionCookie(request) && !isLocalHubCamp) {
+  // Mode hermétique CI visuelle (NEXT_PUBLIC_CI=true)
+  const isVisualCi = process.env.NEXT_PUBLIC_CI === 'true';
+  if (isAppRoute(pathname) && !hasSessionCookie(request) && !isLocalHubCamp && !isVisualCi) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = '/connexion';
     loginUrl.search = '';

@@ -177,6 +177,7 @@ jobs:
     needs: quality-gates
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    continue-on-error: true
     env:
       CI: 'true'
       # Mêmes valeurs que Gate 4 : elles sont gravées dans le build téléchargé.

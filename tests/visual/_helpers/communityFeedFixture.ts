@@ -32,6 +32,33 @@ export async function installCommunityFeedFixture(page: Page) {
       necessary: true, analytics: false, marketing: false, version: '1',
     }));
   });
+  // Cookie de session synthétique pour franchir le middleware en test visuel
+  await page.context().addCookies([
+    {
+      name: 'sb-visual-auth-token',
+      value: 'session',
+      domain: 'localhost',
+      path: '/',
+    },
+    {
+      name: 'sb-visual-auth-token',
+      value: 'session',
+      domain: '127.0.0.1',
+      path: '/',
+    },
+  ]);
+  try {
+    const baseURL = (page.context() as any)._options?.baseURL;
+    if (baseURL) {
+      const u = new URL(baseURL);
+      await page.context().addCookies([{
+        name: 'sb-visual-auth-token',
+        value: 'session',
+        domain: u.hostname,
+        path: '/',
+      }]);
+    }
+  } catch {}
   // Les requêtes authentifiées portent `authorization`/`apikey` : le navigateur envoie
   // d'abord une pré-vérification CORS (OPTIONS) qu'il faut accepter, sinon la requête
   // réelle échoue avec `net::ERR_FAILED` et le fil affiche « n'a pas pu être chargé ».
