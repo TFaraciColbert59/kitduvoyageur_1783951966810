@@ -56,8 +56,11 @@ test.describe('Invité — lecture seule et requireAuth @ui-mock @mobile', () =>
     test.skip(!opened, SKIP_V2_BUILD);
 
     await page.getByTestId('cv2-carnet-like').first().click();
-    await page.waitForURL(/\/connexion\?next=/, { timeout: 10_000 });
-    expect(page.url()).toContain('/connexion');
+    // L'invité anonyme est envoyé vers /inscription?next=…, que le middleware
+    // redirige vers /connexion?mode=inscription&next=… : on vérifie la destination
+    // finale, pas la forme exacte de la query.
+    await expect(page).toHaveURL(/\/connexion/, { timeout: 15_000 });
+    expect(decodeURIComponent(page.url())).toContain('/communaute');
   });
 
   test('8c. ouvrir Création en invité → requireAuth (le tiroir ne s’ouvre pas)', async ({ page }) => {
@@ -66,7 +69,7 @@ test.describe('Invité — lecture seule et requireAuth @ui-mock @mobile', () =>
     await gotoCommunity(page);
 
     await page.getByRole('button', { name: 'Créer dans l’application' }).click();
-    await page.waitForURL(/\/connexion\?next=/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/\/connexion/, { timeout: 15_000 });
     await expect(page.getByTestId('communaute-v2-create')).toHaveCount(0);
   });
 
@@ -78,8 +81,15 @@ test.describe('Invité — lecture seule et requireAuth @ui-mock @mobile', () =>
     test.skip(!opened, SKIP_V2_BUILD);
 
     await page.getByRole('tablist', { name: 'Volets de l’explorateur' }).getByRole('tab', { name: 'Clubs' }).click();
-    await page.getByTestId('cv2-club-join').first().click();
-    await page.waitForURL(/\/connexion\?next=/, { timeout: 10_000 });
+    // Club ouvert dont le viewer n'est pas membre dans les fixtures : « Cordée
+    // des Écrins ». (Les autres ouvrent un aperçu d'action, pas l'adhésion.)
+    await page
+      .getByTestId('cv2-tile-club')
+      .filter({ hasText: 'Cordée des Écrins' })
+      .first()
+      .getByTestId('cv2-club-join')
+      .click();
+    await expect(page).toHaveURL(/\/connexion/, { timeout: 15_000 });
   });
 
   test('8e. session absente : le middleware renvoie vers /connexion (contrôle de garde)', async ({

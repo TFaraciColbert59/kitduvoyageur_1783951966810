@@ -136,9 +136,11 @@ test.describe('Création v2 — moteur commun, 6 types, étapes @ui-mock @mobile
     // Corriger les deux champs fait disparaître le compteur et l'erreur.
     await page.getByTestId('cv2-field-title').locator('input').fill('Bivouac au Vercors');
     await page.getByTestId('cv2-field-content').locator('textarea').fill('Trois jours sur les crêtes.');
-    await expect(summary).toHaveCount(0);
+    // La revalidation des erreurs se fait au passage d'étape : le compteur
+    // disparaît une fois le Suivant accepté.
     await page.getByRole('button', { name: 'Suivant' }).click();
     await expect(page.getByTestId('cv2-form-post')).toHaveAttribute('data-step', '2');
+    await expect(summary).toHaveCount(0);
   });
 
   test('6c. publication simulée : île « Publié », RPC create_community_post appelée, tiroir fermé', async ({
