@@ -133,11 +133,18 @@ export function MeetingMapV2({
     map.easeTo({ center: [lng, lat], zoom: Math.max(map.getZoom(), 11), duration: 420 });
   }, [commitPosition, lat, lng, ready]);
 
+  const hasPoint = lat != null && lng != null;
   return (
-    <div className="lkdv-cv2-field">
-      <span className="lkdv-cv2-field-label">{label}</span>
-      <div className="lkdv-cv2c-map" style={{ height }} data-hscroll data-testid="cv2-meeting-map">
-        <div ref={containerRef} className="lkdv-cv2c-map-canvas" aria-label={`Carte — ${label}`} />
+    <div className="lkdv-cv2c-meeting-map">
+      <div
+        className="lkdv-cv2c-map"
+        style={{ height }}
+        data-hscroll
+        data-testid="cv2-meeting-map"
+        role="group"
+        aria-label={label}
+      >
+        <div ref={containerRef} className="lkdv-cv2c-map-canvas" aria-hidden="true" />
         {!ready && !failed ? (
           <span className="lkdv-cv2c-map-status">
             <Loader2 size={11} className="lkdv-cv2c-spin" aria-hidden="true" /> Carte…
@@ -145,15 +152,21 @@ export function MeetingMapV2({
         ) : null}
         {failed ? (
           <span className="lkdv-cv2c-map-status" role="status">
-            Carte indisponible
+            Carte indisponible : saisissez le texte du rendez-vous.
+          </span>
+        ) : null}
+        {ready && !hasPoint && !failed ? (
+          <span className="lkdv-cv2c-map-empty" role="status">
+            <Crosshair size={14} aria-hidden="true" />
+            Touche la carte pour placer le rendez-vous
           </span>
         ) : null}
       </div>
       <p className="lkdv-cv2c-map-help">
-        <Crosshair size={11} aria-hidden="true" /> Touche la carte ou glisse l’épingle :{' '}
-        {lat != null && lng != null
+        <Crosshair size={11} aria-hidden="true" />{' '}
+        {hasPoint
           ? `${formatCoordinate(lat, 'lat')} · ${formatCoordinate(lng, 'lng')} · coordonnées enregistrées`
-          : 'aucune coordonnée pour l’instant'}
+          : 'Aucune coordonnée pour l’instant : touche la carte ou glisse l’épingle.'}
       </p>
     </div>
   );

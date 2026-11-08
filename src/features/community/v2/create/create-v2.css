@@ -23,8 +23,17 @@
   gap: 14px;
   min-width: 0;
   margin: 0;
-  padding: 0;
+  /* La mini-capsule 30 px (30 px, à 72 px du bas) passe au-dessus du dernier
+     champ : on réserve la même marge que `.lkdv-cv2-pane` (76 px), la coque
+     réduisant son propre padding quand un pied est présent. */
+  padding: 0 0 76px;
   border: 0;
+}
+
+/* Le champ actif reste entièrement visible quand le clavier le ramène à l'écran. */
+.lkdv-cv2c-pane :is(input, textarea, select, button, [tabindex]) {
+  scroll-margin-top: 16px;
+  scroll-margin-bottom: 96px;
 }
 
 .lkdv-cv2c-form-host {
@@ -1763,4 +1772,34 @@
 .lkdv-cv2c-story-sticker,
 .lkdv-cv2c-day-tab {
   position: relative;
+}
+
+/* Mini-carte du rendez-vous : état vide lisible (pas un 2ᵉ champ). */
+.lkdv-cv2c-meeting-map {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.lkdv-cv2c-map-empty {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: calc(100% - 24px);
+  padding: 8px 12px;
+  border-radius: var(--lkv-radius-full);
+  background: var(--cv2-menu-bg);
+  color: var(--lkv-forest-900);
+  font: 600 11.5px/1.2 var(--font-sans);
+  text-align: center;
+  box-shadow: var(--elevation-1), inset 0 0 0 0.5px var(--cv2-menu-border);
+  -webkit-backdrop-filter: blur(var(--cv2-menu-blur)) saturate(1.8);
+  backdrop-filter: blur(var(--cv2-menu-blur)) saturate(1.8);
+  pointer-events: none;
 }
