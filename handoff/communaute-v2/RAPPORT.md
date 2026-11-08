@@ -25,11 +25,11 @@ prod** (registre 377 versions, max `20261108000000`) → sur la base de producti
 
 | Porte | Run | Résultat |
 |---|---|---|
-| LKDV Unified Quality Gates (gate 1 lint/types, gate 3 vitest, gate 4 build, gate 4c e2e) | https://github.com/TFaraciColbert59/kitduvoyageur_1783951966810/actions/runs/42502861690 (merge `main`) / 42502677767 (branche `feat/communaute-v2`, commit `e4144e5`) | **rouge sur la gate 3** (test pré-existant hors périmètre, voir ci-dessous) ; gates 1/2/2.5 vertes, gates 4/4c/5 sautées par la chaîne `if: success()` |
-| database-gates (pgTAP, Postgres éphémère) | https://github.com/TFaraciColbert59/kitduvoyageur_1783951966810/actions/runs/42502861690 | **vert** (185 assertions) |
-| Visual Regression — Shell Mobile | https://github.com/TFaraciColbert59/kitduvoyageur_1783951966810/actions/runs/42502861777 | cf. note ci-dessous |
-| Lighthouse CI | https://github.com/TFaraciColbert59/kitduvoyageur_1783951966810/actions/runs/42502861965 | vert (budgets inchangés) |
-| iOS Capacitor Build | https://github.com/TFaraciColbert59/kitduvoyageur_1783951966810/actions/runs/42502861780 | vert |
+| LKDV Unified Quality Gates (gate 1 lint/types, gate 3 vitest, gate 4 build, gate 4c e2e) | https://github.com/TFaraciColbert59/kitduvoyageur_1783951966810/actions/runs/42503395148 (`main`, commit `93d3684`) et 42502677767 (branche `feat/communaute-v2`, commit `e4144e5`) | **rouge sur la gate 3** (test pré-existant hors périmètre, voir ci-dessous) — gates 1/2/2.5 vertes ; gates 4/4c/5 sautées par la chaîne `if: success()`. Run du merge `9b68c63` : annulé par la concurrence du workflow (nouveau commit `main`), voir ci-dessous. |
+| database-gates (pgTAP, Postgres éphémère) | https://github.com/TFaraciColbert59/kitduvoyageur_1783951966810/actions/runs/42503395148 | **vert** (185 assertions, à chaque commit `main`) |
+| Visual Regression — Shell Mobile | https://github.com/TFaraciColbert59/kitduvoyageur_1783951966810/actions/runs/42502677818 | rouge pré-existant sur `main` (`visual-gates` skipped) ; captures v2 vérifiées localement (4/4, 19 réf. macOS) |
+| Lighthouse CI | https://github.com/TFaraciColbert59/kitduvoyageur_1783951966810/actions/runs/42502677768 | vert (budgets inchangés) |
+| iOS Capacitor Build | https://github.com/TFaraciColbert59/kitduvoyageur_1783951966810/actions/runs/42503395120 | vert |
 
 Détails :
 
@@ -163,14 +163,27 @@ recette** (données mockées) + **7 captures sur le Preview Vercel réel** (`APE
   `/clubs/[id]`, `/communaute?tab=evenements` — aucun écran modifié hors des deux tiroirs et de
   la fiche `/sorties/[id]` (nouvelle).
 
-### B. Production — **non faite, bloquée**
+### B. Production — **déploiement fait, V2 non exposée ; recette B complète bloquée (J-08)**
 
-Aucune migration prod (J-08) ⇒ `NEXT_PUBLIC_COMMUNAUTE_V2` reste `false` en Production ⇒ la V2
-n'est pas exposée aux utilisateurs réels. C'est conforme à `00-MISSION § 4` (pas de contenu
-visible par de vrais utilisateurs sans base prête) et à `06 § 3.1` (pas de migration sans
-sauvegarde vérifiée). Reprise : `handoff/communaute-v2/PROD-APPLICATION.md` (secret, sauvegarde,
-application fichier par fichier, alignement du registre, pgTAP déjà verts, vérifications en
-lecture seule, advisors).
+Le code est **déployé en Production** (commit de fusion `9b68c63`, déploiement Vercel de
+`main` READY ; alias `https://kitduvoyageur-1783951966810-ruddy.vercel.app`). La V2 n'est
+**pas exposée** : `NEXT_PUBLIC_COMMUNAUTE_V2` n'existe que pour l'environnement Preview, le
+build de Production est donc `false` — constaté après déploiement : `/communaute` rend les
+tiroirs v1, aucun testid v2, `hasV2Sheet=false`.
+
+Non-régression mesurée en lecture seule après déploiement (comparée à l'état d'avant, mêmes
+URLs, compte de démo) : `/communaute`, `/communaute?tab=evenements`, `/compte`, `/messagerie`,
+`/clubs/vercors-alpin`, `/carnets` → **HTTP 200, 0 réponse 5xx, 0 erreur runtime Vercel**
+(fenêtre 1 h, projet), 0 débordement horizontal (390 px), mêmes erreurs console pré-existantes
+(`appendChild` du chunk 5032, page club 400 — déjà présentes avant). Les erreurs console
+pré-existantes sont documentées pour un chantier séparé.
+
+Recette B **complète** (données réelles, compteurs, p95 RPC, atomicité) reste **impossible** :
+aucune migration prod (J-08) ⇒ `NEXT_PUBLIC_COMMUNAUTE_V2` reste `false` et les RPC v2 sont
+absentes. C'est conforme à `00-MISSION § 4` (pas de contenu visible par de vrais utilisateurs
+sans base prête) et à `06 § 3.1` (pas de migration sans sauvegarde vérifiée). Reprise :
+`handoff/communaute-v2/PROD-APPLICATION.md` (secret, sauvegarde, application fichier par
+fichier, alignement du registre, pgTAP déjà verts, vérifications en lecture seule, advisors).
 
 ### C. iPhone — **installation et lancement vérifiés ; interactions dans l'app non testées**
 
