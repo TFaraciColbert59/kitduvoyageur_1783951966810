@@ -112,10 +112,14 @@ interface WebGlRenderStats {
   readonly shaderErrors: string[];
   readonly appliedForest: boolean;
   readonly appliedOchre: boolean;
+  readonly appliedRealForet?: boolean;
+  readonly appliedRealSauge?: boolean;
   readonly weaveLoaded: boolean;
   readonly fabricPixelCount: number;
   readonly fabricChangedCount: number;
   readonly fabricMeanDelta: number;
+  readonly fabricRealChangedCount?: number;
+  readonly fabricRealMeanDelta?: number;
   readonly bucklePixelCount: number;
   readonly buckleMaxDelta: number;
   readonly strapPixelCount: number;
@@ -266,9 +270,21 @@ describe('Atlas — rendu WebGL pixel à pixel sur lkdv-one-45', () => {
           renderer.render(scene, camera);
           const pixelsNoSheen = readPixels();
 
+          // 6. Preuve chemin réel application (Front C) : teinte avec tokens de matière RAW_MATERIALS
+          // 'm-2d482a' (Forêt) vs 'm-789972' (Sauge)
+          const appliedRealForet = applyAtlasAppearance(loaded, { body: { col: 'm-2d482a' } }, mapsWithWeave);
+          renderer.render(scene, camera);
+          const pixelsRealForet = readPixels();
+
+          const appliedRealSauge = applyAtlasAppearance(loaded, { body: { col: 'm-789972' } }, mapsWithWeave);
+          renderer.render(scene, camera);
+          const pixelsRealSauge = readPixels();
+
           let fabricPixelCount = 0;
           let fabricChangedCount = 0;
           let fabricDeltaSum = 0;
+          let fabricRealChangedCount = 0;
+          let fabricRealDeltaSum = 0;
           let bucklePixelCount = 0;
           let buckleMaxDelta = 0;
           let strapPixelCount = 0;
@@ -341,6 +357,11 @@ describe('Atlas — rendu WebGL pixel à pixel sur lkdv-one-45', () => {
               const sB = Math.abs(pixelsNoWeave[i + 2] - pixelsNoSheen[i + 2]);
               const sheenDelta = Math.max(sR, sG, sB);
 
+              const realDr = Math.abs(pixelsRealForet[i] - pixelsRealSauge[i]);
+              const realDg = Math.abs(pixelsRealForet[i + 1] - pixelsRealSauge[i + 1]);
+              const realDb = Math.abs(pixelsRealForet[i + 2] - pixelsRealSauge[i + 2]);
+              const realSumDelta = realDr + realDg + realDb;
+
               if (isPureBadge(x, y)) {
                 badgePixelCount++;
                 if (maxChannelDelta > badgeMaxDelta) badgeMaxDelta = maxChannelDelta;
@@ -348,6 +369,8 @@ describe('Atlas — rendu WebGL pixel à pixel sur lkdv-one-45', () => {
                 fabricPixelCount++;
                 if (sumDelta > 15) fabricChangedCount++;
                 fabricDeltaSum += sumDelta;
+                if (realSumDelta > 15) fabricRealChangedCount++;
+                fabricRealDeltaSum += realSumDelta;
                 if (weaveDelta > 0) weaveDiffOnFabricCount++;
                 if (sheenDelta > 0) sheenFabricDiffCount++;
               } else if (cb > 220 && cg < 20 && isPureNonRed(x, y)) {
@@ -421,10 +444,14 @@ describe('Atlas — rendu WebGL pixel à pixel sur lkdv-one-45', () => {
             shaderErrors,
             appliedForest,
             appliedOchre,
+            appliedRealForet,
+            appliedRealSauge,
             weaveLoaded: Boolean(weave),
             fabricPixelCount,
             fabricChangedCount,
             fabricMeanDelta: fabricPixelCount > 0 ? fabricDeltaSum / fabricPixelCount : 0,
+            fabricRealChangedCount,
+            fabricRealMeanDelta: fabricPixelCount > 0 ? fabricRealDeltaSum / fabricPixelCount : 0,
             bucklePixelCount,
             buckleMaxDelta,
             strapPixelCount,
@@ -513,12 +540,18 @@ describe('Atlas — rendu WebGL pixel à pixel sur lkdv-one-45', () => {
         expect(stats.shaderErrors).toEqual([]);
         expect(stats.appliedForest).toBe(true);
         expect(stats.appliedOchre).toBe(true);
+        expect(stats.appliedRealForet).toBe(true);
+        expect(stats.appliedRealSauge).toBe(true);
         expect(stats.weaveLoaded).toBe(true);
 
         // 1. Les texels du tissu diffèrent franchement entre 'forest' et 'ochre'
         expect(stats.fabricPixelCount).toBeGreaterThan(20_000);
         expect(stats.fabricChangedCount).toBeGreaterThan(stats.fabricPixelCount * 0.95);
         expect(stats.fabricMeanDelta).toBeGreaterThan(25);
+
+        // 1b. Preuve Front C : les tokens réels d'application ('m-2d482a' vs 'm-789972') changent réellement les pixels du tissu
+        expect(stats.fabricRealChangedCount).toBeGreaterThan(stats.fabricPixelCount * 0.95);
+        expect(stats.fabricRealMeanDelta).toBeGreaterThan(20);
 
         // 2. Les texels hors tissu (boucles, sangles, écusson) restent strictement identiques
         expect(stats.bucklePixelCount).toBeGreaterThan(1_000);

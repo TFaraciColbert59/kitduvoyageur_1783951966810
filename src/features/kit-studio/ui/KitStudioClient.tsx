@@ -312,6 +312,18 @@ export function KitStudioClient(props: KitStudioClientProps) {
             Non enregistré · réessaie
           </button>
         ) : null}
+        {!dockOpen ? (
+          <button
+            type="button"
+            className="ks-dock-reopen"
+            onClick={() => useUiStore.getState().setDockOpen(true)}
+            aria-label="Rouvrir le tiroir"
+          >
+            <span className="ks-dock-reopen__dot" />
+            <span className="ks-dock-reopen__dot" />
+            <span className="ks-dock-reopen__dot" />
+          </button>
+        ) : null}
         <Dock open={dockOpen} label={label} onClose={closeDock} dockRef={dockRef}>
           {view === 'cards' ? (
             <CardsSlot

@@ -1,0 +1,48 @@
+{
+  "date": "2026-11-08",
+  "base": "08993b8",
+  "branch": "chantier/scene-atelier",
+  "unit": {
+    "files": 41,
+    "passed": 473,
+    "command": "npx vitest run src/features/kit-studio/__tests__ --maxWorkers=2"
+  },
+  "atlasNegativeControl": {
+    "exit": 1,
+    "changedFabricPixels": 0,
+    "expectedMinimum": 53441.3
+  },
+  "atlasRestored": {
+    "passed": 9
+  },
+  "typescript": {
+    "command": "NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit",
+    "exit": 0
+  },
+  "eslint": {
+    "scope": "modified TypeScript files",
+    "exit": 0
+  },
+  "visualInspection": [
+    "scene-atelier-avant-apres.png",
+    "scene-atelier-matrice-lumiere.png",
+    "apres-objets.png"
+  ],
+  "protectedSourceFilesUnchanged": [
+    "scene/camera.ts",
+    "scene/bag/atlas.ts",
+    "scene/bag/moduleLoader.ts",
+    "domain/bagAnchorsTable.ts",
+    "scene/thumbnails.ts"
+  ],
+  "merged": false,
+  "rebasedIncludes": "c9104bf",
+  "initialLot": "4bd0872",
+  "proofFraming": "comparative camera at 78%; production camera snapshots supplied separately",
+  "pendingCameraIssue": "Production c9104bf camera aims too high and clips the bag bottom; production camera source unchanged",
+  "materialContrast": {
+    "withWeave": 1.792753312294387,
+    "withoutWeave": 0.16289491601118988,
+    "ratio": 11.005581734492168
+  }
+}

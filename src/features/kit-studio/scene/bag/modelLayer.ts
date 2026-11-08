@@ -256,12 +256,10 @@ export function createBagModelLayer(deps: BagModelLayerDeps): BagModelLayer {
       // s'éteint, et elle est alors annoncée indisponible plutôt que fausse.
       if (result.manifest.texturedSource) {
         const adresse = result.manifest.zonesMapUrl;
-        const fetchZones = deps.provider
-          ? deps.provider.fetchZonesMap
-          : (_id: string, url?: string) => (url ? chargerTextureDonnee(url) : Promise.resolve(null));
-        const zones = fetchZones
-          ? await fetchZones(wanted, adresse).catch(() => null)
-          : null;
+        const fetchZones =
+          deps.provider?.fetchZonesMap ??
+          ((_id: string, url?: string) => (url ? chargerTextureDonnee(url) : Promise.resolve(null)));
+        const zones = await fetchZones(wanted, adresse).catch(() => null);
         atlasMaps = { zones, weaveNormal: zones ? await tramePartagee() : null };
       } else {
         atlasMaps = { zones: null, weaveNormal: null };

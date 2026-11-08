@@ -30,6 +30,7 @@ export interface ItemThumbSpec {
 /** Sac miniature (clé `b:<sac>:<corps>:<poche>:<liseré>`). `scale` = min(0,8 ; 0,8 × L/42). */
 export interface BagThumbSpec {
   readonly kind: 'b';
+  readonly bagId?: string;
   readonly body: string;
   readonly pocket: string;
   readonly trim: string;

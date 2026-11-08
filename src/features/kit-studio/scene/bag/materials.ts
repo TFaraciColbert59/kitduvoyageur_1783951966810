@@ -11,6 +11,8 @@
 
 import * as THREE from 'three';
 import type { BagPartAppearance, BagPartId } from '../../domain/bagModel';
+import { COLORWAYS, type ColorwayId } from '../../domain/catalog';
+import { RAW_MATERIALS, type MaterialKey } from '../../domain/palette';
 import type { FabricDetailProvider } from '../textures';
 
 export interface BagMaterialPreset {
@@ -133,6 +135,17 @@ const FINISH_OVERRIDES: Record<
  */
 export function resolveTokenToThreeColor(colorSpec: string | undefined): THREE.Color | null {
   if (!colorSpec) return null;
+
+  // Clé de matière de catalogue ('m-2d482a', 'm-789972', etc.)
+  if (colorSpec in RAW_MATERIALS) {
+    return new THREE.Color(RAW_MATERIALS[colorSpec as MaterialKey]);
+  }
+
+  // Identifiant de coloris global ('foret', 'sauge', 'pierre', etc.)
+  if (colorSpec in COLORWAYS) {
+    const bodyMat = COLORWAYS[colorSpec as ColorwayId].body;
+    return new THREE.Color(RAW_MATERIALS[bodyMat]);
+  }
 
   const swatch =
     BAG_COLOR_SWATCHES.find((s) => s.id === colorSpec || s.token === colorSpec) ?? null;

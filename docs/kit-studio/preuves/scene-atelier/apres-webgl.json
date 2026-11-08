@@ -1,0 +1,460 @@
+{
+  "45-seul": {
+    "contrast": null,
+    "framing": {
+      "kind": "comparative-78-percent",
+      "originalCamera": {
+        "position": [
+          -0.8024235769091872,
+          0.309355560084441,
+          1.1728992902080728
+        ],
+        "fov": 31,
+        "zoom": 1.05,
+        "view": {
+          "enabled": true,
+          "fullWidth": 640,
+          "fullHeight": 760,
+          "offsetX": 0,
+          "offsetY": -72.2,
+          "width": 640,
+          "height": 760
+        }
+      },
+      "camera": [
+        -1.019542272297227,
+        0.23179858785595253,
+        1.490237476508154
+      ],
+      "fov": 31,
+      "zoom": 1.05,
+      "projectedBoundsHeight": 0.7800000012262919
+    },
+    "info": {
+      "running": true,
+      "frozen": false,
+      "paused": false,
+      "shadows": true,
+      "avgFrameMs": 16.666999999999916,
+      "resources": {
+        "geometries": 60,
+        "materials": 73,
+        "textures": 12,
+        "renderTargets": 0
+      },
+      "gpu": {
+        "geometries": 42,
+        "textures": 23
+      },
+      "view": {
+        "zone": "bag",
+        "position": 1,
+        "angle": -0.6,
+        "tilt": 0,
+        "exploded": 0,
+        "explodedTarget": 0
+      },
+      "objects": {
+        "items": 24,
+        "ghosts": 2,
+        "dying": 0
+      },
+      "bagModel": {
+        "status": "glb",
+        "modelId": "lkdv-one-45",
+        "label": "LKDV ONE 45 L",
+        "parts": [
+          "part-0",
+          "LKDV_ECUSSON_SUPPORT",
+          "LKDV_LOGO"
+        ],
+        "anchors": [
+          "facade"
+        ],
+        "capabilities": {
+          "rotatable": true,
+          "openable": false,
+          "hasInterior": false,
+          "customizableParts": [
+            "body"
+          ],
+          "badgeAnchors": [],
+          "attachmentPoints": []
+        },
+        "declaredCapacityL": 45,
+        "colorCustomization": "available",
+        "modules3dAvailable": true,
+        "reason": null
+      }
+    },
+    "webgl": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)"
+  },
+  "45-modules": {
+    "contrast": null,
+    "framing": {
+      "kind": "comparative-78-percent",
+      "originalCamera": {
+        "position": [
+          -0.8024235769091872,
+          0.309355560084441,
+          1.1728992902080728
+        ],
+        "fov": 31,
+        "zoom": 1.05,
+        "view": {
+          "enabled": true,
+          "fullWidth": 640,
+          "fullHeight": 760,
+          "offsetX": 0,
+          "offsetY": -72.2,
+          "width": 640,
+          "height": 760
+        }
+      },
+      "camera": [
+        -1.0381669500303874,
+        0.24462244459698423,
+        1.5404200259978063
+      ],
+      "fov": 31,
+      "zoom": 1.05,
+      "projectedBoundsHeight": 0.7583302439017032
+    },
+    "info": {
+      "running": true,
+      "frozen": false,
+      "paused": false,
+      "shadows": true,
+      "avgFrameMs": 16.666999999999916,
+      "resources": {
+        "geometries": 60,
+        "materials": 73,
+        "textures": 12,
+        "renderTargets": 0
+      },
+      "gpu": {
+        "geometries": 50,
+        "textures": 29
+      },
+      "view": {
+        "zone": "bag",
+        "position": 1,
+        "angle": -0.6,
+        "tilt": 0,
+        "exploded": 0,
+        "explodedTarget": 0
+      },
+      "objects": {
+        "items": 24,
+        "ghosts": 2,
+        "dying": 0
+      },
+      "bagModel": {
+        "status": "glb",
+        "modelId": "lkdv-one-45",
+        "label": "LKDV ONE 45 L",
+        "parts": [
+          "part-0",
+          "LKDV_ECUSSON_SUPPORT",
+          "LKDV_LOGO"
+        ],
+        "anchors": [
+          "facade"
+        ],
+        "capabilities": {
+          "rotatable": true,
+          "openable": false,
+          "hasInterior": false,
+          "customizableParts": [
+            "body"
+          ],
+          "badgeAnchors": [],
+          "attachmentPoints": []
+        },
+        "declaredCapacityL": 45,
+        "colorCustomization": "available",
+        "modules3dAvailable": true,
+        "reason": null,
+        "attachmentNotice": null,
+        "mountedModules": [
+          "lkdv-m04"
+        ]
+      }
+    },
+    "webgl": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)"
+  },
+  "15-seul": {
+    "contrast": null,
+    "framing": {
+      "kind": "comparative-78-percent",
+      "originalCamera": {
+        "position": [
+          -0.5594946181844973,
+          -0.026657438218845142,
+          0.81781101581229
+        ],
+        "fov": 31,
+        "zoom": 1.05,
+        "view": {
+          "enabled": true,
+          "fullWidth": 640,
+          "fullHeight": 760,
+          "offsetX": 0,
+          "offsetY": -72.2,
+          "width": 640,
+          "height": 760
+        }
+      },
+      "camera": [
+        -0.7134924322732099,
+        -0.07872610478752673,
+        1.0430206538811013
+      ],
+      "fov": 31,
+      "zoom": 1.05,
+      "projectedBoundsHeight": 0.7800000005693772
+    },
+    "info": {
+      "running": true,
+      "frozen": false,
+      "paused": false,
+      "shadows": true,
+      "avgFrameMs": 16.666999999999916,
+      "resources": {
+        "geometries": 60,
+        "materials": 73,
+        "textures": 12,
+        "renderTargets": 0
+      },
+      "gpu": {
+        "geometries": 42,
+        "textures": 23
+      },
+      "view": {
+        "zone": "bag",
+        "position": 1,
+        "angle": -0.6,
+        "tilt": 0,
+        "exploded": 0,
+        "explodedTarget": 0
+      },
+      "objects": {
+        "items": 24,
+        "ghosts": 2,
+        "dying": 0
+      },
+      "bagModel": {
+        "status": "glb",
+        "modelId": "lkdv-one-15",
+        "label": "LKDV ONE 15 L",
+        "parts": [
+          "part-0",
+          "LKDV_ECUSSON_SUPPORT",
+          "LKDV_LOGO"
+        ],
+        "anchors": [
+          "facade"
+        ],
+        "capabilities": {
+          "rotatable": true,
+          "openable": false,
+          "hasInterior": false,
+          "customizableParts": [
+            "body"
+          ],
+          "badgeAnchors": [],
+          "attachmentPoints": []
+        },
+        "declaredCapacityL": 15,
+        "colorCustomization": "available",
+        "modules3dAvailable": true,
+        "reason": null
+      }
+    },
+    "webgl": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)"
+  },
+  "objets": {
+    "contrast": null,
+    "framing": {
+      "kind": "production",
+      "originalCamera": {
+        "position": [
+          -2.184441948886516,
+          0.2914208342528628,
+          0.43439080611947645
+        ],
+        "fov": 31,
+        "zoom": 1.05,
+        "view": {
+          "enabled": true,
+          "fullWidth": 640,
+          "fullHeight": 760,
+          "offsetX": 0,
+          "offsetY": -72.2,
+          "width": 640,
+          "height": 760
+        }
+      },
+      "camera": [
+        -2.184441948886516,
+        0.2914208342528628,
+        0.43439080611947645
+      ],
+      "fov": 31,
+      "zoom": 1.05,
+      "projectedBoundsHeight": 0.6317751101250078
+    },
+    "info": {
+      "running": true,
+      "frozen": false,
+      "paused": false,
+      "shadows": true,
+      "avgFrameMs": 16.666999999999916,
+      "resources": {
+        "geometries": 60,
+        "materials": 73,
+        "textures": 12,
+        "renderTargets": 0
+      },
+      "gpu": {
+        "geometries": 49,
+        "textures": 23
+      },
+      "view": {
+        "zone": "worn",
+        "position": 0,
+        "angle": -1.42,
+        "tilt": 0,
+        "exploded": 0,
+        "explodedTarget": 0
+      },
+      "objects": {
+        "items": 24,
+        "ghosts": 2,
+        "dying": 0
+      },
+      "bagModel": {
+        "status": "glb",
+        "modelId": "lkdv-one-45",
+        "label": "LKDV ONE 45 L",
+        "parts": [
+          "part-0",
+          "LKDV_ECUSSON_SUPPORT",
+          "LKDV_LOGO"
+        ],
+        "anchors": [
+          "facade"
+        ],
+        "capabilities": {
+          "rotatable": true,
+          "openable": false,
+          "hasInterior": false,
+          "customizableParts": [
+            "body"
+          ],
+          "badgeAnchors": [],
+          "attachmentPoints": []
+        },
+        "declaredCapacityL": 45,
+        "colorCustomization": "available",
+        "modules3dAvailable": true,
+        "reason": null
+      }
+    },
+    "webgl": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)"
+  },
+  "tissu": {
+    "contrast": {
+      "withWeave": 1.792753312294387,
+      "withoutWeave": 0.16289491601118988,
+      "ratio": 11.005581734492168
+    },
+    "framing": {
+      "kind": "macro",
+      "originalCamera": {
+        "position": [
+          -0.8024235769091872,
+          0.309355560084441,
+          1.1728992902080728
+        ],
+        "fov": 31,
+        "zoom": 1.05,
+        "view": {
+          "enabled": true,
+          "fullWidth": 640,
+          "fullHeight": 760,
+          "offsetX": 0,
+          "offsetY": -72.2,
+          "width": 640,
+          "height": 760
+        }
+      },
+      "camera": [
+        -0.07,
+        -0.36,
+        0.52
+      ],
+      "fov": 12,
+      "zoom": 1,
+      "projectedBoundsHeight": 8.576777385889148
+    },
+    "info": {
+      "running": true,
+      "frozen": false,
+      "paused": false,
+      "shadows": true,
+      "avgFrameMs": 16.666999999999916,
+      "resources": {
+        "geometries": 60,
+        "materials": 73,
+        "textures": 12,
+        "renderTargets": 0
+      },
+      "gpu": {
+        "geometries": 42,
+        "textures": 23
+      },
+      "view": {
+        "zone": "bag",
+        "position": 1,
+        "angle": -0.6,
+        "tilt": 0,
+        "exploded": 0,
+        "explodedTarget": 0
+      },
+      "objects": {
+        "items": 24,
+        "ghosts": 2,
+        "dying": 0
+      },
+      "bagModel": {
+        "status": "glb",
+        "modelId": "lkdv-one-45",
+        "label": "LKDV ONE 45 L",
+        "parts": [
+          "part-0",
+          "LKDV_ECUSSON_SUPPORT",
+          "LKDV_LOGO"
+        ],
+        "anchors": [
+          "facade"
+        ],
+        "capabilities": {
+          "rotatable": true,
+          "openable": false,
+          "hasInterior": false,
+          "customizableParts": [
+            "body"
+          ],
+          "badgeAnchors": [],
+          "attachmentPoints": []
+        },
+        "declaredCapacityL": 45,
+        "colorCustomization": "available",
+        "modules3dAvailable": true,
+        "reason": null
+      }
+    },
+    "webgl": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)"
+  }
+}
