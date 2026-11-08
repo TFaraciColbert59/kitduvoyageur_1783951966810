@@ -93,10 +93,16 @@ function mutate(s: KitState, part: PartNameId, cat: OptionCat, id: string): KitS
 export function simulateOption(s: KitState, part: PartNameId, cat: OptionCat, id: string): Simulation {
   const k = currentKit(s);
   if (cat === 'shape' && (part === 'all' || part === 'body')) {
-    return { dw: BAGS[id as BagId].g - BAGS[k.bag].g, dc: BAGS[id as BagId].L - BAGS[k.bag].L };
+    const curG = BAGS[k.bag].g;
+    const nextG = BAGS[id as BagId].g;
+    const dw = curG != null && nextG != null ? nextG - curG : 0;
+    return { dw, dc: BAGS[id as BagId].L - BAGS[k.bag].L };
   }
   const next = mutate(s, part, cat, id);
-  return { dw: bagWeight(next) - bagWeight(s), dc: totalCap(next) - totalCap(s) };
+  const wCur = bagWeight(s);
+  const wNext = bagWeight(next);
+  const dw = wCur != null && wNext != null ? wNext - wCur : 0;
+  return { dw, dc: totalCap(next) - totalCap(s) };
 }
 
 /** Options proposées (maquette optList, l.1664-1671). */
@@ -105,22 +111,24 @@ export function optionList(s: KitState, part: PartNameId, cat: OptionCat): reado
   const c = currentConfig(s);
   if (cat === 'shape') {
     const need = ptsUsed(s, 'corps');
-    return Object.values(BAGS).map((b) => {
-      const cur = k.bag === b.id;
-      const cap = studioData().one.corps[b.id].pts;
-      const off = !cur && need > cap;
-      return {
-        id: b.id, n: b.n, cur, off, bag: b.id,
-        why: off ? `${b.n} : ${cap} points d’attache, tes modules en utilisent ${need}. Retire d’abord un module.` : '',
-      };
-    });
+    return Object.values(BAGS)
+      .filter((b) => !['b42', 'b28'].includes(b.id) || b.id === k.bag)
+      .map((b) => {
+        const cur = k.bag === b.id;
+        const cap = studioData().one.corps[b.id]?.pts;
+        const off = !cur && cap != null && need > cap;
+        return {
+          id: b.id, n: b.n, cur, off, bag: b.id,
+          why: off ? `${b.n} : ${cap} points d’attache, tes modules en utilisent ${need}. Retire d’abord un module.` : '',
+        };
+      });
   }
   if (cat === 'mod') {
     const one = studioData().one;
     return MODULE_IDS.filter((m) => part === 'all' || one.mods[m].part === part).map((m) => {
       const M = one.mods[m];
       const on = modOn(s, m);
-      const free = (M.host === 'chassis' ? one.chassis.pts : one.corps[k.bag].pts) - ptsUsed(s, M.host);
+      const free = (M.host === 'chassis' ? one.chassis.pts : (one.corps[k.bag]?.pts ?? 0)) - ptsUsed(s, M.host);
       const off = !on && free < M.pts;
       const place = M.host === 'chassis' ? 'châssis' : BAGS[k.bag].n.toLowerCase();
       const alt = M.host === 'corps' && k.bag === 'b28' ? ' ou passe au corps 42 L' : '';

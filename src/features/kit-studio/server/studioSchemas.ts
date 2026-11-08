@@ -12,13 +12,13 @@ export const SLOT_IDS = ['bottom', 'bottomF', 'midBack', 'midFront', 'top'] as c
 
 export const HEX_COLOR = z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'couleur hexadécimale attendue');
 
-/** Clé de pièce du domaine : 'chassis' | 'corps:b28|b42' | 'mod:<module>'. */
+/** Clé de pièce du domaine : 'chassis' | 'corps:b28|b42|lkdv-one-*' | 'mod:<module>'. */
 export const PIECE_ID = z
   .string()
-  .regex(/^(chassis|corps:b(28|42)|mod:(lid|front|sides|tool|hipp|flask))$/, 'pièce inconnue');
+  .regex(/^(chassis|corps:(b(28|42)|lkdv-one-(15|25|45|60|80))|mod:(lid|front|sides|tool|hipp|flask))$/, 'pièce inconnue');
 
 /** Corps de sac uniquement (`one_bag_configs.corps_id`). */
-export const CORPS_ID = z.string().regex(/^corps:b(28|42)$/, 'corps de sac attendu');
+export const CORPS_ID = z.string().regex(/^corps:(b(28|42)|lkdv-one-(15|25|45|60|80))$/, 'corps de sac attendu');
 
 /** Coloris : id du référentiel `one_colorways` (jamais un hexadécimal du client). */
 export const COLORWAY_ID = z.string().regex(/^[a-z][a-z0-9_-]{1,31}$/, 'coloris attendu');

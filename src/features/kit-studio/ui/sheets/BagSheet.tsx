@@ -61,7 +61,10 @@ interface BagSheetProps {
 
 function stateText(state: KitState, key: PieceKey): string {
   const s = pieceState(state, key);
-  return s === 'own' ? TXT.own : s === 'order' ? TXT.preordered : `${TXT.toOrder} · ${formatEuro(toCents(pieceInfo(key).eur))}`;
+  if (s === 'own') return TXT.own;
+  if (s === 'order') return TXT.preordered;
+  const eur = pieceInfo(key).eur;
+  return eur != null ? `${TXT.toOrder} · ${formatEuro(toCents(eur))}` : `${TXT.toOrder} · non renseigné`;
 }
 
 function Pts({ state, host }: { state: KitState; host: AttachHost }) {
@@ -133,11 +136,16 @@ export function BagSheet({ state, onChange, onOpenOrder, onCustomise, page, onPa
     );
   };
 
+  const bw = bagWeight(state);
+  const weightText = bw != null ? `${formatWeight(bw)} ${TXT.emptyBag}` : 'poids non renseigné';
+  const capPts = studioData().one.corps[kit.bag]?.pts;
+  const capPtsText = capPts != null ? `${ptsUsed(state, 'corps')}/${ptsCap(state, 'corps')}` : 'non renseigné';
+
   const capacity = (
     <>
       <div className="ks-sh-hero">
         <span className="ks-sh-big">{formatLitres(totalCap(state))}</span>
-        <span className="ks-sh-t13">{`${bag.n} · ${formatWeight(bagWeight(state))} ${TXT.emptyBag}`}</span>
+        <span className="ks-sh-t13">{`${bag.n} · ${weightText}`}</span>
       </div>
       <div className="ks-sh-cap">
         {ZONES.map((z) => {
@@ -160,7 +168,7 @@ export function BagSheet({ state, onChange, onOpenOrder, onCustomise, page, onPa
     <>
       <div className="ks-sh-ph">
         <span className="ks-sh-t17">{TXT.configTitle}</span>
-        <span className="ks-sh-t13">{`${ptsUsed(state, 'corps')}/${ptsCap(state, 'corps')} ${TXT.onBody}`}</span>
+        <span className="ks-sh-t13">{`${capPtsText} ${TXT.onBody}`}</span>
       </div>
       <div className="ks-sh-plist">
         <div>
@@ -206,7 +214,7 @@ export function BagSheet({ state, onChange, onOpenOrder, onCustomise, page, onPa
       </div>
       <div className="ks-sh-row">
         <span className="ks-sh-txt">
-          <b>{`${ptsUsed(state, 'corps')}/${ptsCap(state, 'corps')} · ${TXT.host.corps}`}</b>
+          <b>{`${capPts != null ? `${ptsUsed(state, 'corps')}/${ptsCap(state, 'corps')}` : `${ptsUsed(state, 'corps')} (capacité non renseignée)`} · ${TXT.host.corps}`}</b>
         </span>
         <Pts state={state} host="corps" />
       </div>

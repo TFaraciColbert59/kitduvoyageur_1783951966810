@@ -13,7 +13,7 @@ export type AttachHost = 'chassis' | 'corps';
 /** Points disponibles sur un hôte (maquette ptsCap). */
 export function ptsCap(s: KitState, host: AttachHost): number {
   const one = studioData().one;
-  return host === 'chassis' ? one.chassis.pts : one.corps[currentKit(s).bag].pts;
+  return host === 'chassis' ? one.chassis.pts : (one.corps[currentKit(s).bag]?.pts ?? 0);
 }
 
 /** Points occupés par les modules actifs d'un hôte (maquette ptsUsed). */

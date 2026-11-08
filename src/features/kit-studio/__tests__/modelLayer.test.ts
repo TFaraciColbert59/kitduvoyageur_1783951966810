@@ -55,9 +55,16 @@ function makeLayer() {
 }
 
 describe('Choix de la source de rendu du sac', () => {
-  it('rapprochement par capacité pour b42 et b28, repli procédural si inconnu ou non défini', () => {
+  it('correspondance 1:1 pour les cinq LKDV ONE, rapprochement par capacité pour b42 et b28', () => {
+    expect(glbModelForBag('lkdv-one-15')).toBe('lkdv-one-15');
+    expect(glbModelForBag('lkdv-one-25')).toBe('lkdv-one-25');
+    expect(glbModelForBag('lkdv-one-45')).toBe('lkdv-one-45');
+    expect(glbModelForBag('lkdv-one-60')).toBe('lkdv-one-60');
+    expect(glbModelForBag('lkdv-one-80')).toBe('lkdv-one-80');
     expect(glbModelForBag('b42')).toBe('lkdv-one-45');
     expect(glbModelForBag('b28')).toBe('lkdv-one-25');
+    expect(selectBagRenderSource(null, 'lkdv-one-15')).toEqual({ kind: 'glb', modelId: 'lkdv-one-15' });
+    expect(selectBagRenderSource(null, 'lkdv-one-45')).toEqual({ kind: 'glb', modelId: 'lkdv-one-45' });
     expect(selectBagRenderSource(null, 'b42')).toEqual({ kind: 'glb', modelId: 'lkdv-one-45' });
     expect(selectBagRenderSource(null, 'b28')).toEqual({ kind: 'glb', modelId: 'lkdv-one-25' });
     expect(glbModelForBag('inconnu')).toBeNull();

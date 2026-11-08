@@ -137,10 +137,15 @@ export function materialKey(hex: string | null | undefined, fallback: MaterialKe
   return HEX_TO_MATERIAL[hex.toUpperCase()] ?? fallback;
 }
 
-/** Corps de sac d'une pièce : `corps:b28` → 'b28'. */
+/** Corps de sac d'une pièce : `corps:b28` → 'b28', `corps:lkdv-one-45` → 'lkdv-one-45'. */
 export function bagFromCorps(corpsId: string | null | undefined): BagId | null {
   if (corpsId === 'corps:b28') return 'b28';
   if (corpsId === 'corps:b42') return 'b42';
+  if (corpsId === 'corps:lkdv-one-15') return 'lkdv-one-15';
+  if (corpsId === 'corps:lkdv-one-25') return 'lkdv-one-25';
+  if (corpsId === 'corps:lkdv-one-45') return 'lkdv-one-45';
+  if (corpsId === 'corps:lkdv-one-60') return 'lkdv-one-60';
+  if (corpsId === 'corps:lkdv-one-80') return 'lkdv-one-80';
   return null;
 }
 
@@ -240,6 +245,11 @@ export function configFromRows(
           acc: [],
         }) as unknown as DraftConfig;
   const out: Record<BagId, ConfigSet> = {
+    'lkdv-one-15': draft() as unknown as ConfigSet,
+    'lkdv-one-25': draft() as unknown as ConfigSet,
+    'lkdv-one-45': draft() as unknown as ConfigSet,
+    'lkdv-one-60': draft() as unknown as ConfigSet,
+    'lkdv-one-80': draft() as unknown as ConfigSet,
     b42: draft() as unknown as ConfigSet,
     b28: draft() as unknown as ConfigSet,
   };
@@ -333,8 +343,14 @@ export function oneFromPieces(pieces: PieceRow[]): OneSpec {
   const corpsRow = (bag: BagId): PieceRow | undefined =>
     active.find((p) => p.kind === 'corps' && bagFromCorps(p.id) === bag);
   const neutralCorps = { eur: 0, pts: 0, d: '' };
+  const unknownCorps = { eur: null, pts: null, d: '' };
   const b42 = corpsRow('b42');
   const b28 = corpsRow('b28');
+  const l15 = corpsRow('lkdv-one-15');
+  const l25 = corpsRow('lkdv-one-25');
+  const l45 = corpsRow('lkdv-one-45');
+  const l60 = corpsRow('lkdv-one-60');
+  const l80 = corpsRow('lkdv-one-80');
   const modules = active.filter((p) => p.kind === 'module');
   const mods = {} as Record<ModuleId, OneSpec['mods'][ModuleId]>;
   for (const m of MODULE_IDS) {
@@ -366,6 +382,11 @@ export function oneFromPieces(pieces: PieceRow[]): OneSpec {
         }
       : { n: 'Châssis ONE', eur: 0, pts: 0, gl: 'v_harness_mesh', d: '', mat: '' },
     corps: {
+      'lkdv-one-15': l15 ? { eur: l15.price_cents / 100, pts: l15.attach_points, d: l15.description_fr ?? '' } : unknownCorps,
+      'lkdv-one-25': l25 ? { eur: l25.price_cents / 100, pts: l25.attach_points, d: l25.description_fr ?? '' } : unknownCorps,
+      'lkdv-one-45': l45 ? { eur: l45.price_cents / 100, pts: l45.attach_points, d: l45.description_fr ?? '' } : unknownCorps,
+      'lkdv-one-60': l60 ? { eur: l60.price_cents / 100, pts: l60.attach_points, d: l60.description_fr ?? '' } : unknownCorps,
+      'lkdv-one-80': l80 ? { eur: l80.price_cents / 100, pts: l80.attach_points, d: l80.description_fr ?? '' } : unknownCorps,
       b42: b42 ? { eur: b42.price_cents / 100, pts: b42.attach_points, d: b42.description_fr ?? '' } : neutralCorps,
       b28: b28 ? { eur: b28.price_cents / 100, pts: b28.attach_points, d: b28.description_fr ?? '' } : neutralCorps,
     },

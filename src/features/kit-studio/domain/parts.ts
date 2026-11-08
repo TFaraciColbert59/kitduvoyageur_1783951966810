@@ -76,22 +76,23 @@ export function pieces(s: KitState): PieceKey[] {
 
 export interface PieceInfo {
   readonly n: string;
-  readonly eur: number;
+  readonly eur: number | null;
+  readonly pts?: number | null;
   readonly gl: string;
   readonly d: string;
   readonly vs: boolean;
 }
 
-/** Fiche d'une pièce (maquette pieceInfo, l.710). Prix du catalogue réel (centimes ÷ 100). */
+/** Fiche d'une pièce (maquette pieceInfo, l.710). Prix du catalogue réel (centimes ÷ 100), `null` si non renseigné. */
 export function pieceInfo(key: PieceKey): PieceInfo {
   const one = studioData().one;
-  if (key === 'chassis') return { n: one.chassis.n, eur: one.chassis.eur, gl: one.chassis.gl, d: one.chassis.d, vs: true };
+  if (key === 'chassis') return { n: one.chassis.n, eur: one.chassis.eur, pts: one.chassis.pts, gl: one.chassis.gl, d: one.chassis.d, vs: true };
   if (key.startsWith('corps')) {
     const b = key.slice(6) as BagId;
-    return { n: BAGS[b].n, eur: one.corps[b].eur, gl: 'v_bag', d: one.corps[b].d, vs: true };
+    return { n: BAGS[b].n, eur: one.corps[b]?.eur ?? null, pts: one.corps[b]?.pts ?? null, gl: 'v_bag', d: one.corps[b]?.d ?? '', vs: true };
   }
   const M = one.mods[key.slice(4) as ModuleId];
-  return { n: M.n, eur: M.eur, gl: M.gl, d: M.d, vs: M.gl.startsWith('v_') };
+  return { n: M.n, eur: M.eur, pts: M.pts, gl: M.gl, d: M.d, vs: M.gl.startsWith('v_') };
 }
 
 export type PieceState = 'own' | 'order' | 'new';

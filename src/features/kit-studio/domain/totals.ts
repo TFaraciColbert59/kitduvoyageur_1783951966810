@@ -92,6 +92,7 @@ export function totalCap(s: KitState): number {
 export function partW(s: KitState, part: ShapeSlot): number {
   const b = BAGS[currentKit(s).bag];
   const c = currentConfig(s);
+  if (b.g == null) return 0;
   const r = b.g / 1240;
   const sh = shapeOf(s, part);
   if (sh && sh.g === '-') return 0;
@@ -101,8 +102,10 @@ export function partW(s: KitState, part: ShapeSlot): number {
   return Math.max(0, w);
 }
 
-/** maquette v2 l.765 : poids du sac vide en g (pièces + accessoires), arrondi. */
-export function bagWeight(s: KitState): number {
+/** maquette v2 l.765 : poids du sac vide en g (pièces + accessoires), arrondi (`null` si non renseigné). */
+export function bagWeight(s: KitState): number | null {
+  const b = BAGS[currentKit(s).bag];
+  if (b.g == null) return null;
   let g = SHAPE_PARTS.reduce((a, p) => a + partW(s, p), 0);
   for (const a of currentConfig(s).acc) g += ACCESSORIES[a].g;
   return Math.round(g);
@@ -149,13 +152,13 @@ export function autoSlot(s: KitState, item: AnyItem): string {
 /** maquette v2 l.884-886 (totals) : bilan du kit courant au jour s.day. */
 export function totals(s: KitState): Totals {
   const k = currentKit(s);
-  let base = bagWeight(s);
+  let base = bagWeight(s) ?? 0;
   let cons = 0;
   let worn = 0;
   let used = 0;
   let buy = 0;
   let rent = 0;
-  let unknown = 0;
+  let unknown = BAGS[k.bag].g == null ? 1 : 0;
   const vol: Partial<Record<PackZoneId, number>> = {};
   const zg: Partial<Record<PackZoneId, number>> = {};
   for (const z of PACK_ZONE_IDS) {

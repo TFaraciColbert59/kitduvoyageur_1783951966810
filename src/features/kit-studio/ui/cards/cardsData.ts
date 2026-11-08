@@ -85,7 +85,8 @@ export function contentCards(s: KitState, zone: ZoneId, family: string | null, r
     const colors = { body: c.body.col ?? cw.body, pocket: c.front.col ?? cw.pocket, trim: c.harness.col ?? cw.trim };
     for (const b of Object.values(BAGS)) {
       if (b.id === k.bag) continue;
-      const w = formatWeight(b.g);
+      if (b.id === 'b42' || b.id === 'b28') continue;
+      const w = b.g != null ? formatWeight(b.g) : 'non renseigné';
       out.push({
         id: b.id, kind: 'bag', name: b.n, sub: `${formatLitres(b.L)} · ${w}`, label: tileLabel(b.n, w),
         thumb: bagThumb(b.id, colors, readVar), glyph: 'bag', selected: false, disabled: false,
@@ -110,18 +111,20 @@ export function optionCards(s: KitState, part: PartNameId, cat: OptionCat, readV
   const cw = studioData().colorways[k.cw];
   if (cat === 'shape') {
     const colors = { body: c.body.col ?? cw.body, pocket: c.front.col ?? cw.pocket, trim: c.harness.col ?? cw.trim };
-    return Object.values(BAGS).map((b) => {
-      const cur = k.bag === b.id;
-      const cap = studioData().one.corps[b.id].pts;
-      const need = ptsUsed(s, 'corps');
-      const off = !cur && need > cap;
-      const sub = cur ? 'Actuel' : off ? 'Plus de place' : formatLitres(b.L);
-      return {
-        id: b.id, kind: 'opt', name: b.n, sub, label: `${b.n}${cur ? ', actuel' : ''}${off ? ', indisponible' : ''}`,
-        thumb: bagThumb(b.id, colors, readVar), glyph: 'bag', selected: cur, disabled: off,
-        why: off ? `${b.n} : ${cap} points d’attache, tes modules en utilisent ${need}.` : undefined,
-      };
-    });
+    return Object.values(BAGS)
+      .filter((b) => !['b42', 'b28'].includes(b.id) || b.id === k.bag)
+      .map((b) => {
+        const cur = k.bag === b.id;
+        const cap = studioData().one.corps[b.id]?.pts;
+        const need = ptsUsed(s, 'corps');
+        const off = !cur && cap != null && need > cap;
+        const sub = cur ? 'Actuel' : off ? 'Plus de place' : formatLitres(b.L);
+        return {
+          id: b.id, kind: 'opt', name: b.n, sub, label: `${b.n}${cur ? ', actuel' : ''}${off ? ', indisponible' : ''}`,
+          thumb: bagThumb(b.id, colors, readVar), glyph: 'bag', selected: cur, disabled: off,
+          why: off ? `${b.n} : ${cap} points d’attache, tes modules en utilisent ${need}.` : undefined,
+        };
+      });
   }
   if (cat === 'mod') {
     const out: CardModel[] = [];

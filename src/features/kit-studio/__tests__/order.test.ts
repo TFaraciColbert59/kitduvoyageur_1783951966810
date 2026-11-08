@@ -90,7 +90,7 @@ describe('order (l.713-717, l.1470-1502)', () => {
     const s = withBodyColor(createInitialState('tmb'), COLORWAYS.sauge.body);
     expect(pieceCw(s, 'corps:b42')).toBe('sauge');
     expect(toOrder(s)).toEqual(['corps:b42']);
-    expect(orderTotalCents(s)).toBe(ONE.corps.b42.eur * 100);
+    expect(orderTotalCents(s)).toBe(ONE.corps.b42.eur! * 100);
   });
 
   it('l.717 total exact en centimes (entier)', () => {

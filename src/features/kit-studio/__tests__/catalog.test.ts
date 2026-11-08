@@ -41,8 +41,8 @@ describe('catalogue kit-studio (généré depuis la maquette)', () => {
     expect(ITEMS).toHaveLength(HTML_ITEM_COUNT);
   });
 
-  it('2 sacs, 4 coloris, 6 modules, 3 kits, 8 zones, 6 familles', () => {
-    expect(Object.keys(BAGS)).toHaveLength(2);
+  it('7 sacs (5 LKDV ONE + 2 héritage), 4 coloris, 6 modules, 3 kits, 8 zones, 6 familles', () => {
+    expect(Object.keys(BAGS)).toHaveLength(7);
     expect(Object.keys(COLORWAYS)).toHaveLength(4);
     expect(MODULE_IDS).toHaveLength(6);
     expect(Object.keys(ONE.mods)).toHaveLength(6);

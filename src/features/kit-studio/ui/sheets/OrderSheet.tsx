@@ -79,6 +79,12 @@ export function useControlledPage(
 function PieceRow({ line }: { line: OrderLine }) {
   const sw = colorwaySwatch(studioData().colorways[line.colorway]);
   const tint = line.key === 'chassis' ? sw.trim : line.key.startsWith('corps') ? sw.body : sw.pocket;
+  const priceDisplay =
+    line.state === 'new'
+      ? line.priceCents == null
+        ? 'non renseigné'
+        : `${TXT.toOrder} · ${formatEuro(line.priceCents)}`
+      : STATE_TXT[line.state];
   return (
     <li className="ks-sh-row" data-state={line.state}>
       <span className="ks-sh-rg" style={{ background: tint }}>
@@ -89,7 +95,7 @@ function PieceRow({ line }: { line: OrderLine }) {
         <small>{line.colorwayName + (line.state === 'order' ? TXT.preordered : '')}</small>
       </span>
       <span className="ks-sh-price" data-own={line.state !== 'new'}>
-        {line.state === 'new' ? `${TXT.toOrder} · ${formatEuro(line.priceCents)}` : STATE_TXT[line.state]}
+        {priceDisplay}
       </span>
     </li>
   );
@@ -116,13 +122,17 @@ export function OrderSheet({ state, onConfirmOrder, offline = false, page, onPag
 
   const lines = orderLines(state);
   const pending = toOrder(state);
-  const total = formatEuro(orderTotalCents(state));
+  const totalCents = orderTotalCents(state);
+  const total = totalCents != null ? formatEuro(totalCents) : 'non renseigné';
   const count = pending.length;
+  const hasUnpricedPiece = lines.some((l) => l.state === 'new' && l.priceCents == null);
+  const bw = bagWeight(state);
+  const weightText = bw != null ? formatWeight(bw) : 'non renseigné';
 
   const summary = (
     <div className="ks-sh-ph">
       <span className="ks-sh-t17">{TXT.title}</span>
-      <span className="ks-sh-t13">{`${formatWeight(bagWeight(state))} à vide · ${formatLitres(totalCap(state))}`}</span>
+      <span className="ks-sh-t13">{`${weightText} à vide · ${formatLitres(totalCap(state))}`}</span>
     </div>
   );
 
@@ -144,13 +154,19 @@ export function OrderSheet({ state, onConfirmOrder, offline = false, page, onPag
           className="ks-gbtn"
           data-pro="true"
           data-wide="true"
-          disabled={offline}
+          disabled={offline || hasUnpricedPiece}
+          title={hasUnpricedPiece ? 'Ce corps de sac n’est pas encore achetable (prix non renseigné).' : undefined}
           onClick={() => setStep('pre')}
         >
-          {`${TXT.preorder} · ${total}`}
+          {hasUnpricedPiece ? 'Prix non renseigné' : `${TXT.preorder} · ${total}`}
         </button>
       ) : (
         <p className="ks-sh-note">{TXT.allOwned}</p>
+      )}
+      {hasUnpricedPiece && count > 0 && (
+        <p className="ks-sh-note" role="status">
+          Ce corps de sac n’est pas encore achetable (prix non renseigné).
+        </p>
       )}
       {offline && count > 0 && (
         <p className="ks-sh-note" role="status">
@@ -190,7 +206,7 @@ export function OrderSheet({ state, onConfirmOrder, offline = false, page, onPag
         className="ks-gbtn"
         data-pro="true"
         data-wide="true"
-        disabled={offline || count === 0}
+        disabled={offline || count === 0 || hasUnpricedPiece}
         onClick={() => {
           onConfirmOrder(confirmOrder(state));
           setStep('list');

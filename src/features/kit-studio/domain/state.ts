@@ -1,8 +1,8 @@
 // Accès de base à l'état (coordinateur). Pur, sans dépendance extérieure au domaine.
 // Les données viennent du registre runtime (`studioData`) : jeu de démonstration par défaut,
 // données Supabase en production (cf. server/getStudioData.ts).
-import { BAGS, PACK_ZONE_IDS } from './catalog';
-import type { Bag, ConfigSet, Item, KitId, PackZoneId } from './catalog';
+import { BAGS, DEFAULT_CONFIG, PACK_ZONE_IDS } from './catalog';
+import type { Bag, BagId, ConfigSet, Item, KitId, PackZoneId } from './catalog';
 import { studioData } from './studioData';
 import type { AnyItemId, ExtraItem, KitState, LiveKit } from './types';
 
@@ -44,7 +44,12 @@ export function createInitialState(kitId?: KitId): KitState {
     version: 1,
     kitId: id,
     kits,
-    config: { b42: cloneConfig(data.config.b42), b28: cloneConfig(data.config.b28) },
+    config: Object.fromEntries(
+      (Object.keys(BAGS) as BagId[]).map((bagId) => [
+        bagId,
+        cloneConfig(data.config[bagId] ?? DEFAULT_CONFIG[bagId] ?? data.config.b42),
+      ]),
+    ) as Record<BagId, ConfigSet>,
     day: 1,
     own: { ...data.own },
     order: { ...data.order },

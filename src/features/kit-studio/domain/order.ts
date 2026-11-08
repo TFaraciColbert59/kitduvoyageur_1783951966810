@@ -12,7 +12,7 @@ export interface OrderLine {
   readonly name: string;
   readonly colorway: ColorwayId;
   readonly colorwayName: string;
-  readonly priceCents: number;
+  readonly priceCents: number | null;
   readonly state: PieceState;
 }
 
@@ -21,15 +21,22 @@ export function toOrder(s: KitState): PieceKey[] {
   return pieces(s).filter((k) => pieceState(s, k) === 'new');
 }
 
-const cents = (eur: number): number => Math.round(eur * 100);
+const cents = (eur: number | null): number | null => (eur == null ? null : Math.round(eur * 100));
 
 /**
  * Total à commander, ENTIER en centimes, calculé à partir des prix du registre
- * (catalogue `one_pieces` en production). Affichage seulement : la précommande est
- * recalculée côté serveur par la RPC `one_place_preorder`.
+ * (catalogue `one_pieces` en production). `null` si au moins une pièce à commander n'a pas de prix.
+ * Affichage seulement : la précommande est recalculée côté serveur par la RPC `one_place_preorder`.
  */
-export function orderTotalCents(s: KitState): number {
-  return toOrder(s).reduce((a, k) => a + cents(pieceInfo(k).eur), 0);
+export function orderTotalCents(s: KitState): number | null {
+  const pending = toOrder(s);
+  let total = 0;
+  for (const k of pending) {
+    const c = cents(pieceInfo(k).eur);
+    if (c == null) return null;
+    total += c;
+  }
+  return total;
 }
 
 /** Lignes de la configuration complète (toutes les pièces, avec leur état). */
