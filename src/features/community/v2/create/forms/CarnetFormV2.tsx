@@ -120,14 +120,18 @@ function InfosStep({ user }: { user: User | null }) {
   );
 }
 
-function TraceStep({ user }: { user: { id: string } | null }) {
+function TraceStep({ user, active }: { user: { id: string } | null; active: boolean }) {
   const form = useFormContext<CarnetFormValuesV2>();
   const trace = form.watch('trace') ?? [];
   const km = form.watch('distanceKm');
   const gain = form.watch('deniveleM');
   return (
     <>
-      <TracePaneV2 user={user} />
+      {active ? (
+        <TracePaneV2 user={user} />
+      ) : (
+        <p className="lkdv-cv2-field-hint">Le tracé s’affiche quand tu reviens sur cette étape.</p>
+      )}
       <div className="lkdv-cv2c-metric-row">
         <NumberFieldV2 name="distanceKm" label="Distance" unit="km" max={10_000} step={0.1} />
         <NumberFieldV2 name="deniveleM" label="Dénivelé" unit="m" max={30_000} step={10} />
@@ -381,7 +385,7 @@ function CarnetBody({
     <>
       <PrefillApplierV2 values={prefillValues} nonce={prefillNonce} />
       {api.step === 0 ? <InfosStep user={user} /> : null}
-      {api.step === 1 ? <TraceStep user={user} /> : null}
+      {api.step === 1 ? <TraceStep user={user} active={api.active} /> : null}
       {api.step === 2 ? <DaysPaneV2 user={user} /> : null}
       {api.step === 3 ? <PartageStep user={user} /> : null}
     </>
@@ -401,7 +405,7 @@ function CarnetBody({
  * - aide à l'écriture du récit reprise de `CarnetCreateForm` (bouton IA) ;
  * - envoi `create_carnet_v2` (atomique, couverture = une photo envoyée).
  */
-export function CarnetFormV2({ active, prefill, prefillNonce, onNavChange }: CreateFormV2Props) {
+export function CarnetFormV2({ active, prefill, prefillNonce, onNavChange, stepHosts }: CreateFormV2Props) {
   const { user, reportCreated } = useCreateSheet();
   const defaults = useRef(createDefaultsV2('carnet')).current;
 
@@ -413,6 +417,7 @@ export function CarnetFormV2({ active, prefill, prefillNonce, onNavChange }: Cre
       active={active}
       disabled={!user}
       onNavChange={onNavChange}
+      stepHosts={stepHosts}
       onSubmit={async (values) => {
         try {
           const result = await createCarnetV2(values, { hasCarnetNights: HAS_CARNET_NIGHTS });

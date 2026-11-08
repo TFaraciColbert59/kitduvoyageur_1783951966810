@@ -37,6 +37,14 @@ export interface SheetMiniCapsule {
   active: number;
   onChange: (index: number) => void;
   label: string;
+  /**
+   * Contenu par mini-onglet, indexé par volet/type de la capsule :
+   * `mini.pages[capsule.active][mini.active]`. Quand cette prop est fournie,
+   * le glisser horizontal change de **filtre/étape** (mini-capsule), jamais de
+   * volet/type — conforme à `00-MISSION § 3` (`LensPager` entre filtres).
+   * Sans elle, l'ancien comportement (glisser entre volets) est conservé.
+   */
+  pages?: ReactNode[][];
   /** Bouton de tri (Carnets, Clubs) : masqué en Recherche/Sorties. */
   sort?: {
     value: string;
@@ -352,6 +360,12 @@ export function CommunitySheetShell({
   const detailPages = detail?.pages ?? [];
   const detailCount = detailPages.length;
   const showCapsule = !detail;
+  // Le LensPager suit les filtres/étapes (mini-capsule) quand `mini.pages` est
+  // fourni ; sinon il conserve le glisser entre volets (compatibilité).
+  const filterPages = mini?.pages?.[capsule.active] ?? null;
+  const activePaneIndex = filterPages ? mini?.active ?? 0 : capsule.active;
+  const onActivePaneChange = filterPages ? mini?.onChange ?? (() => {}) : capsule.onChange;
+  const activeVoletItem = capsule.items[capsule.active];
 
   const shell = (
     <div
@@ -452,30 +466,54 @@ export function CommunitySheetShell({
             </div>
           ) : (
             <div className={cx('lkdv-cv2-body', Boolean(footer) && 'has-footer', Boolean(mini) && 'has-mini')}>
-              <LensPager
-                index={capsule.active}
-                count={panes.length}
-                onIndexChange={capsule.onChange}
-                label={`${label} — volets`}
-              >
-                {panes.map((pane, index) => {
-                  const item = capsule.items[index];
-                  return (
-                    <div
-                      key={item?.id ?? index}
-                      id={item ? paneId(item.id) : undefined}
-                      className="lkdv-cv2-pane"
-                      data-testid={item ? `cv2-pane-${item.id}` : `cv2-pane-${index}`}
-                      role="tabpanel"
-                      aria-label={item?.label}
-                      aria-hidden={index !== capsule.active}
-                      inert={index !== capsule.active}
-                    >
-                      {pane}
-                    </div>
-                  );
-                })}
-              </LensPager>
+              {capsule.items.map((voletItem, voletIndex) => {
+                const isActive = voletIndex === capsule.active;
+                const filterMode = Boolean(mini?.pages);
+                const resolvedPages = filterMode
+                  ? mini?.pages?.[voletIndex] ?? []
+                  : [panes[voletIndex] ?? null];
+                const paneIndex = filterMode ? activePaneIndex : 0;
+                const paneChange = filterMode ? onActivePaneChange : () => {};
+                return (
+                  <div
+                    key={voletItem.id}
+                    id={paneId(voletItem.id)}
+                    className={cx('lkdv-cv2-pane', 'lkdv-cv2-pane--volet', isActive && 'active')}
+                    data-testid={`cv2-pane-${voletItem.id}`}
+                    role="tabpanel"
+                    aria-label={voletItem.label}
+                    aria-hidden={!isActive}
+                    inert={!isActive}
+                  >
+                    {isActive ? (
+                      <LensPager
+                        index={Math.min(paneIndex, Math.max(0, resolvedPages.length - 1))}
+                        count={resolvedPages.length}
+                        onIndexChange={paneChange}
+                        label={`${label} — ${mini?.label ?? 'filtres'}`}
+                      >
+                        {resolvedPages.map((pane, index) => {
+                          const miniItem = mini?.items[index];
+                          return (
+                            <div
+                              key={miniItem?.id ?? index}
+                              id={`cv2-mini-pane-${voletItem.id}-${miniItem?.id ?? index}`}
+                              className="lkdv-cv2-pane"
+                              data-testid={`cv2-filter-pane-${miniItem?.id ?? index}`}
+                              role="tabpanel"
+                              aria-label={miniItem?.label}
+                              aria-hidden={index !== paneIndex}
+                              inert={index !== paneIndex}
+                            >
+                              {pane}
+                            </div>
+                          );
+                        })}
+                      </LensPager>
+                    ) : null}
+                  </div>
+                );
+              })}
             </div>
           )}
 
@@ -498,6 +536,11 @@ export function CommunitySheetShell({
                 size="sm"
                 className="lkdv-cv2-mini"
                 idFor={(id) => `cv2-mini-${id}`}
+                panelIdFor={
+                  filterPages && activeVoletItem
+                    ? (id) => `cv2-mini-pane-${activeVoletItem.id}-${id}`
+                    : undefined
+                }
               />
               {mini.sort ? (
                 <SortMenuButton

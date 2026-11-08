@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { parseMutationError } from '../communityMutations';
+import { joinEvent, leaveEvent, parseMutationError } from '../communityMutations';
 import { normalizeRpcError, callRpc } from '../communityFeedRpc';
 
 describe('parseMutationError', () => {
@@ -33,6 +33,42 @@ describe('parseMutationError', () => {
       'Action impossible pour le moment. Réessaie.',
     );
     expect(parseMutationError(new Error('réseau indisponible')).message).toBe('réseau indisponible');
+  });
+});
+
+describe('joinEvent / leaveEvent (contrat réel et harnais de recette)', () => {
+  const client = (payload: unknown) => ({
+    rpc: vi.fn().mockResolvedValue({ data: payload, error: null }),
+  });
+
+  it('lit le contrat objet {registered, waitlisted, current_participants}', async () => {
+    const result = await joinEvent(
+      'e1',
+      client({ registered: false, waitlisted: true, current_participants: 20 }) as never,
+    );
+    expect(result).toEqual({
+      ok: true,
+      data: { registered: false, waitlisted: true, currentParticipants: 20 },
+    });
+  });
+
+  it('décode aussi les charges héritées « in » / « waitlist » du harnais E2E', async () => {
+    const joined = await joinEvent('e1', client('in') as never);
+    expect(joined.ok && joined.data.registered).toBe(true);
+    const waitlisted = await joinEvent('e2', client('waitlist') as never);
+    expect(waitlisted.ok && waitlisted.data.waitlisted).toBe(true);
+  });
+
+  it('normalise une erreur applicative JSON sur une mutation', async () => {
+    const failing = {
+      rpc: vi.fn().mockResolvedValue({
+        data: null,
+        error: { message: '{"code":"banned","message":"Tu ne peux pas rejoindre ce club."}' },
+      }),
+    };
+    const result = await leaveEvent('e1', failing as never);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.code).toBe('banned');
   });
 });
 

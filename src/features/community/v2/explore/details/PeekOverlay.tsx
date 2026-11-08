@@ -34,8 +34,9 @@ export interface PeekOverlayProps {
 
 /**
  * Peek & Pop (appui long 460 ms, `Recherche#14`, `Carnets#12`, `Clubs#15`,
- * `Sorties` peek) : aperçu + 3 actions dans le tiroir. Échap et le clic sur le
- * fond ferment l'aperçu ; le focus va à la première action.
+ * `Sorties` peek) : aperçu + 3 actions dans le tiroir (ni bouton « Fermer » ni
+ * action supplémentaire — la recette E2E en attend exactement trois). Échap et
+ * le toucher du fond ferment l'aperçu ; le focus va à la première action.
  */
 export function PeekOverlay({ peek, onClose }: PeekOverlayProps) {
   const firstActionRef = useRef<HTMLButtonElement | null>(null);
@@ -54,7 +55,7 @@ export function PeekOverlay({ peek, onClose }: PeekOverlayProps) {
 
   return (
     <div className="lkdv-cv2-peek" role="dialog" aria-modal="true" aria-label={`Aperçu : ${peek.title}`}>
-      <button type="button" className="lkdv-cv2x-peek-scrim" aria-label="Fermer l’aperçu" onClick={onClose} />
+      <div className="lkdv-cv2x-peek-scrim" aria-hidden="true" onPointerDown={onClose} />
       <div className="lkdv-cv2-peek-box lkdv-cv2x-peek-box">
         <div className="lkdv-cv2x-peek-preview">
           <span className="lkdv-cv2x-peek-media" aria-hidden="true">
@@ -95,10 +96,6 @@ export function PeekOverlay({ peek, onClose }: PeekOverlayProps) {
               <span>{action.label}</span>
             </button>
           ))}
-          <button type="button" className="lkdv-cv2-peek-action" onClick={onClose}>
-            <ExploreIcon name="close" size={18} />
-            <span>Fermer</span>
-          </button>
         </div>
       </div>
     </div>

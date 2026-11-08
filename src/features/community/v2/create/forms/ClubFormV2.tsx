@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { ArrowDown, ArrowUp, Plus, ShieldCheck, Trash2 } from 'lucide-react';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, useFormState } from 'react-hook-form';
 import type { User } from '@supabase/supabase-js';
 import { ClubCrest } from '../../shared/ClubCrest';
 import { CreateFormEngineV2, type CreateFormEngineApiV2 } from '../engine/CreateFormEngineV2';
@@ -10,10 +10,11 @@ import { clubSchemaV2, createDefaultsV2, type ClubFormValuesV2 } from '../engine
 import { useCreateSheet } from '../CreateSheetContext';
 import { checkClubSlugV2, createClubWithAdminV2 } from '../createRpc';
 import { ChipsFieldV2 } from '../fields/ChipsV2';
-import { TextAreaFieldV2, TextFieldV2 } from '../fields/FieldV2';
+import { TextAreaFieldV2, TextFieldV2, readError } from '../fields/FieldV2';
 import { MediaFieldV2 } from '../fields/MediaFieldV2';
 import { IMAGE_LIMITS, deleteMediaObjectsV2, uploadedObjectsOf } from '../fields/media';
 import { isValidClubSlug, slugifyClubName } from '../club/slug';
+import { moderateText } from '@/features/community/create/moderation';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import type { CreateFormV2Props } from './types';
 
@@ -120,6 +121,11 @@ function IdentiteStep({ user }: { user: User | null }) {
         required
         maxLength={80}
       />
+      {values.name.trim() && moderateText(values.name) ? (
+        <p className="lkdv-cv2-field-hint lkdv-cv2c-notice" role="status">
+          {moderateText(values.name)}
+        </p>
+      ) : null}
       <div className="lkdv-cv2-field">
         <span className="lkdv-cv2-field-label">Adresse du club</span>
         <div className="lkdv-cv2c-url-preview" data-state={slugState === 'taken' || slugState === 'invalid' ? 'invalid' : 'ok'}>
@@ -259,6 +265,8 @@ function UniversStep() {
 
 function AdhesionStep() {
   const form = useFormContext<ClubFormValuesV2>();
+  const { errors: adhesionErrors } = useFormState<ClubFormValuesV2>({ control: form.control });
+  const questionsError = readError(adhesionErrors, 'joinQuestions');
   const values = form.watch();
   const { haptic } = useHapticFeedback();
 
@@ -327,6 +335,11 @@ function AdhesionStep() {
       </div>
       <div className="lkdv-cv2-field">
         <span className="lkdv-cv2-field-label">Questions d’adhésion (3 maximum)</span>
+        {questionsError ? (
+          <p className="lkdv-cv2-field-error" role="alert">
+            {questionsError}
+          </p>
+        ) : null}
         {values.joinQuestions.length === 0 ? (
           <p className="lkdv-cv2-field-hint">
             Aucune question : la demande est acceptée sans formulaire.
@@ -447,7 +460,7 @@ function ClubBody({
 }) {
   return (
     <>
-      <ClubPreview user={user} />
+      {api.active ? <ClubPreview user={user} /> : null}
       {api.step === 0 ? <IdentiteStep user={user} /> : null}
       {api.step === 1 ? <UniversStep /> : null}
       {api.step === 2 ? <AdhesionStep /> : null}
@@ -466,7 +479,7 @@ function ClubBody({
  * tuile vivant, et **une seule RPC atomique** (`create_club_with_admin`).
  * À la fin, « Organiser la première sortie » bascule sur Sortie avec le club.
  */
-export function ClubFormV2({ active, onNavChange }: CreateFormV2Props) {
+export function ClubFormV2({ active, onNavChange, stepHosts }: CreateFormV2Props) {
   const { user, reportCreated } = useCreateSheet();
   const defaults = useRef(createDefaultsV2('club')).current;
 
@@ -478,6 +491,7 @@ export function ClubFormV2({ active, onNavChange }: CreateFormV2Props) {
       active={active}
       disabled={!user}
       onNavChange={onNavChange}
+      stepHosts={stepHosts}
       onSubmit={async (values) => {
         const slug = values.slug.trim() || slugifyClubName(values.name);
         try {

@@ -157,7 +157,20 @@ export function MediaFieldV2({
     (files: FileList | File[] | null) => {
       if (!files || files.length === 0) return;
       const current = (form.getValues(name) as MediaItemV2[] | undefined) ?? [];
-      const room = max - current.length;
+      let base = current;
+      if (max === 1 && current.length === 1) {
+        // Un seul média : choisir à nouveau remplace l'ancien (pas de blocage).
+        const previous = current[0];
+        if (previous.storagePath) {
+          void deleteMediaObjectsV2([
+            { bucket: previous.storageBucket as MediaBucketV2, path: previous.storagePath },
+          ]);
+        }
+        filesRef.current.delete(previous.id);
+        base = [];
+        setItems(base);
+      }
+      const room = max - base.length;
       if (room <= 0) {
         setNotice(`Tu peux ajouter ${max} média${max > 1 ? 's' : ''} maximum.`);
         return;
@@ -180,7 +193,7 @@ export function MediaFieldV2({
           status: 'uploading',
           progress: 2,
           crop: cropOptions[0]?.value ?? 'original',
-          cover: showCoverChoice && current.length === 0 && accepted.length === 0,
+          cover: showCoverChoice && base.length === 0 && accepted.length === 0,
         });
         accepted.push(item);
         nextFiles.push(file);
@@ -198,7 +211,7 @@ export function MediaFieldV2({
       if (accepted.length === 0) return;
       setNotice(null);
       haptic('light');
-      const next = [...current, ...accepted];
+      const next = [...base, ...accepted];
       setItems(next);
       setUploading((value) => value + accepted.length);
       accepted.forEach((item, index) => {
@@ -466,7 +479,8 @@ export function MediaFieldV2({
             </div>
           ) : null}
 
-          {items.length < max ? (
+          {
+            items.length < max || max === 1 ? (
             <>
               <input
                 ref={inputRef}
@@ -482,6 +496,7 @@ export function MediaFieldV2({
                   event.target.value = '';
                 }}
               />
+              {items.length < max ? (
               <button
                 type="button"
                 className="lkdv-cv2c-add-media"
@@ -494,6 +509,7 @@ export function MediaFieldV2({
                 )}
                 {addLabel ?? (limits.allowVideo ? 'Ajouter une photo ou une vidéo' : 'Ajouter une photo')}
               </button>
+              ) : null}
             </>
           ) : null}
           {notice ? (

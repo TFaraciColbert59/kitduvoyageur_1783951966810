@@ -91,7 +91,11 @@ export function ClubDetailView({
         <ExploreIcon name="plus" size={15} />
       )}
       <span>
-        {busy ? 'Envoi…' : clubJoinLabel(club, status)}
+        {busy
+          ? 'Envoi…'
+          : club.privacy === 'closed' && status === 'none'
+            ? 'Demander à rejoindre'
+            : clubJoinLabel(club, status)}
       </span>
     </button>
   );

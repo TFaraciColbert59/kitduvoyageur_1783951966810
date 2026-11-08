@@ -26,8 +26,9 @@ describe('PeekOverlay', () => {
     render(<PeekOverlay peek={peek()} onClose={() => {}} />);
     const dialog = screen.getByRole('dialog', { name: 'Aperçu : Tour des Écrins' });
     expect(dialog.textContent).toContain('Hauts-Alpes · 4 j · 62,4 km');
+    // Exactement 3 actions (recette E2E `cv2-island`/Peek), sans bouton Fermer.
+    expect(screen.getAllByRole('button')).toHaveLength(3);
     expect(screen.getByRole('button', { name: 'Lire' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Fermer' })).toBeTruthy();
   });
 
   it('exécute l’action puis ferme l’aperçu', () => {
@@ -39,11 +40,15 @@ describe('PeekOverlay', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('le fond et le bouton Fermer ferment sans action', () => {
+  it('le fond ferme sans déclencher d’action', () => {
     const onClose = vi.fn();
-    render(<PeekOverlay peek={peek()} onClose={onClose} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Fermer l’aperçu' }));
+    const item = peek();
+    const { container } = render(<PeekOverlay peek={item} onClose={onClose} />);
+    const scrim = container.querySelector('.lkdv-cv2x-peek-scrim');
+    expect(scrim).toBeTruthy();
+    fireEvent.pointerDown(scrim as Element);
     expect(onClose).toHaveBeenCalledTimes(1);
+    expect(item.actions[0]?.onSelect).not.toHaveBeenCalled();
   });
 
   it('rend un billet daté pour une sortie et un blason pour un club', () => {

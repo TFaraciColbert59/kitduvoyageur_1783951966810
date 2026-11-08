@@ -97,10 +97,12 @@ export function useCursorFeed<T>({ resetKey, enabled, loadPage }: CursorFeedOpti
 
   useEffect(() => {
     if (!enabled) return;
-    // Nouveau filtre/tri : on repart de la page 1, sans vider les tuiles tout
-    // de suite (le skeleton de premier chargement prend le relais).
+    // Nouveau filtre/tri : on repart de la page 1. Les tuiles de l'ancien
+    // filtre sont vidées pour afficher le skeleton, jamais un contenu périmé.
     cursorRef.current = null;
     setHasMore(false);
+    setItems([]);
+    setError(null);
     void run('refresh');
   }, [enabled, resetKey, run]);
 

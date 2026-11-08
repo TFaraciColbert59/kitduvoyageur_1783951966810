@@ -27,7 +27,7 @@ export interface ClubTileV2Props {
 export function clubJoinLabel(club: ClubCardVM, status: MemberStatus): string {
   if (status === 'member' || status === 'admin') return 'Membre ✓';
   if (status === 'pending') return 'Demande envoyée';
-  if (club.privacy === 'closed') return 'Demander à rejoindre';
+  if (club.privacy === 'closed') return 'Demander';
   return 'Rejoindre';
 }
 

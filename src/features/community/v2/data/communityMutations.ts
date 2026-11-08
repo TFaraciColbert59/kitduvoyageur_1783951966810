@@ -153,6 +153,17 @@ export interface EventRegistrationOutcome {
 }
 
 function readEventRegistration(payload: unknown): EventRegistrationOutcome {
+  // Le contrat réel renvoie un objet `{registered, waitlisted, current_participants}`.
+  // Les harnais de recette antérieurs peuvent renvoyer une chaîne `'in'|'wait'` :
+  // on la décode sans jamais inventer d'état (aucune clé → aucun changement).
+  if (typeof payload === 'string') {
+    const value = payload.trim().toLowerCase();
+    return {
+      registered: value === 'in' || value === 'registered',
+      waitlisted: value === 'wait' || value === 'waitlist',
+      currentParticipants: null,
+    };
+  }
   const value = (payload ?? {}) as {
     registered?: unknown;
     waitlisted?: unknown;

@@ -285,7 +285,12 @@ export function EventDetailView({ event, status, spotsLeft, busy, onSignup }: Ev
 
           <div className="lkdv-cv2x-detail-actions lkdv-cv2x-event-actions">
             {!event.past ? (
-              <button type="button" className="lkdv-cv2-pill lkdv-cv2-pill--secondary" onClick={downloadIcs}>
+              <button
+                type="button"
+                className="lkdv-cv2-pill lkdv-cv2-pill--secondary"
+                onClick={downloadIcs}
+                data-testid="cv2-event-ics"
+              >
                 <ExploreIcon name="calendar" size={15} />
                 Ajouter au calendrier
               </button>

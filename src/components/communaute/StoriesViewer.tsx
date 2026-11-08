@@ -146,7 +146,7 @@ export default function StoriesViewer({
   const viewerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   useEffect(() => {
-    if (compose) return;
+    if (composeRef.current) return;
     document.body.dataset.storyOpen = 'true';
     const nodes = Array.from(document.querySelectorAll<HTMLElement>(
       '.tb, nav[aria-label="Navigation principale"], .account-bottom-bar, [data-account-bottom-bar]'
@@ -163,12 +163,13 @@ export default function StoriesViewer({
         node.removeAttribute('aria-hidden');
       });
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- mode figé au montage
   }, []);
 
   const progressRef = useRef(0);
   const advancingRef = useRef(false);
   const composeVideoRef = useRef<HTMLVideoElement | null>(null);
+  const composeRef = useRef(compose);
+  composeRef.current = compose;
 
   const user = users[userIndex];
   const slide = user?.slides[slideIndex];

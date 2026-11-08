@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { CalendarDays, Camera, HelpCircle, PenLine } from 'lucide-react';
 import { useFormContext } from 'react-hook-form';
 import { CommunityFeedPost } from '@/features/community/feed/CommunityFeedPost';
@@ -21,6 +21,7 @@ import { MentionFieldV2 } from '../fields/MentionFieldV2';
 import { PlaceFieldV2 } from '../fields/PlaceFieldV2';
 import { TagsFieldV2 } from '../fields/TagsFieldV2';
 import { IMAGE_LIMITS, mediaProgress } from '../fields/media';
+import { useMyClubsV2 } from '../club/useMyClubsV2';
 import { deleteMediaObjectsV2, uploadedObjectsOf } from '../fields/media';
 import type { CreateFormV2Props } from './types';
 
@@ -58,7 +59,10 @@ function previewPost(values: PostFormValuesV2, user: User | null): FeedPost {
   return {
     id: 'cv2c-preview',
     author_id: user?.id ?? null,
-    content: values.content.trim() || 'Ton aperçu apparaîtra ici.',
+    content:
+      values.content.trim() && values.format === 'billet' && values.title.trim()
+        ? `${values.title.trim()}\n\n${values.content.trim()}`
+        : values.content.trim() || 'Ton aperçu apparaîtra ici.',
     title: values.title || null,
     location: values.location || null,
     image_url: urls[0] ?? null,
@@ -87,6 +91,12 @@ function FormatStep() {
   const form = useFormContext<PostFormValuesV2>();
   const values = form.watch();
   const { requestCreate, user } = useCreateSheet();
+  const myClubs = useMyClubsV2(user?.id ?? null);
+
+  useEffect(() => {
+    if (values.audience === 'club') void myClubs.load();
+  }, [myClubs, values.audience]);
+
   return (
     <>
       <div className="lkdv-cv2c-section-head">
@@ -154,13 +164,39 @@ function FormatStep() {
         })}
       </div>
       {values.audience === 'club' ? (
-        <TextFieldV2
-          name="clubId"
-          label="Club"
-          placeholder="Identifiant du club"
-          hint="Colle l’identifiant du club (l’Explorer fournit la liste)."
-          required
-        />
+        <div className="lkdv-cv2-field">
+          <span className="lkdv-cv2-field-label">Club</span>
+          {myClubs.loading ? (
+            <p className="lkdv-cv2-field-hint">Chargement de tes clubs…</p>
+          ) : myClubs.clubs && myClubs.clubs.length > 0 ? (
+            <div className="lkdv-cv2-chips" role="radiogroup" aria-label="Club de la publication">
+              {myClubs.clubs.map((club) => (
+                <button
+                  key={club.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={values.clubId === club.id}
+                  className="lkdv-cv2-chip lkdv-cv2-chip--lg"
+                  onClick={() =>
+                    form.setValue('clubId', club.id, { shouldDirty: true, shouldValidate: true })
+                  }
+                >
+                  {club.name}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className="lkdv-cv2-field-hint">
+              {myClubs.error ?? 'Aucun club actif : rejoins un club d’abord.'}
+            </p>
+          )}
+          <TextFieldV2
+            name="clubId"
+            label="Identifiant du club (repli)"
+            placeholder="UUID du club"
+            hint="Utilisé si la liste de tes clubs n’est pas chargée."
+          />
+        </div>
       ) : null}
       {!user ? (
         <p className="lkdv-cv2c-warning">Connecte-toi pour publier dans la communauté.</p>
@@ -286,12 +322,16 @@ function PostBody({
   const preview = previewPost(values, user);
   return (
     <>
-      <div className="lkdv-cv2c-live-preview" inert aria-hidden="true">
-        <CommunityFeedPost post={preview} user={user} embedded />
-      </div>
-      <p className="lkdv-cv2c-preview-caption" aria-hidden="true">
-        Aperçu vivant · {stepAriaLabel(api.step, createKindConfig('post').steps[api.step]?.label ?? '')}
-      </p>
+      {api.active ? (
+        <>
+          <div className="lkdv-cv2c-live-preview" inert aria-hidden="true">
+            <CommunityFeedPost post={preview} user={user} embedded />
+          </div>
+          <p className="lkdv-cv2c-preview-caption" aria-hidden="true">
+            Aperçu vivant · {stepAriaLabel(api.step, createKindConfig('post').steps[api.step]?.label ?? '')}
+          </p>
+        </>
+      ) : null}
       {api.step === 0 ? <FormatStep /> : null}
       {api.step === 1 ? <ContentStep user={user} /> : null}
       {api.step === 2 ? <DiffusionStep /> : null}
@@ -304,7 +344,7 @@ function PostBody({
  * L'audience est choisie **avant** les médias (`Publication#5`) ; l'aperçu
  * vivant est le vrai composant `CommunityFeedPost` (`Publication#4`).
  */
-export function PostFormV2({ active, onNavChange }: CreateFormV2Props) {
+export function PostFormV2({ active, onNavChange, stepHosts }: CreateFormV2Props) {
   const { user, reportCreated } = useCreateSheet();
   const defaults = useRef(createDefaultsV2('post')).current;
 
@@ -316,6 +356,7 @@ export function PostFormV2({ active, onNavChange }: CreateFormV2Props) {
       active={active}
       disabled={!user}
       onNavChange={onNavChange}
+      stepHosts={stepHosts}
       onSubmit={async (values) => {
         try {
           const result = await createCommunityPostV2(values);

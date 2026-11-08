@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { User } from '@supabase/supabase-js';
 import { CommunitySheetShell, type SheetDetail } from '../shared/CommunitySheetShell';
@@ -17,6 +17,7 @@ import type {
   ExploreTab,
   MemberStatus,
   SearchHitVM,
+  SearchScope,
 } from '../shared/types';
 import {
   CARNET_FILTER_ITEMS,
@@ -87,6 +88,19 @@ interface IslandMessage {
 }
 
 const DETAIL_OPEN_DELAY_MS = 40;
+
+/**
+ * Pane de filtre montée à la première activation puis conservée. La coque rend
+ * toutes les pages du LensPager : sans ce garde, les 6 pans Recherche
+ * monteraient 6 hooks de recherche au premier rendu.
+ */
+function FilterSlot({ active, children }: { active: boolean; children: React.ReactNode }) {
+  const [everActive, setEverActive] = useState(active);
+  useEffect(() => {
+    if (active) setEverActive(true);
+  }, [active]);
+  return <>{everActive ? children : null}</>;
+}
 
 function initialTabToExplore(tab: CommunityExploreSheetV2Props['initialTab']): ExploreTab {
   return tab === 'recherche' ? 'search' : tab;
@@ -797,22 +811,156 @@ export function CommunityExploreSheetV2({
     [explore],
   );
 
-  const mini = useMemo(() => {
+  const busyIdFor = (prefix: string): string | null => {
+    const key = Object.keys(busyKeys).find((entry) => entry.startsWith(prefix) && busyKeys[entry]);
+    return key ? key.slice(prefix.length) : null;
+  };
+
+  const activeFilterIndex =
+    explore.tab === 'search'
+      ? filterIndex(SEARCH_SCOPE_ITEMS, explore.searchScope)
+      : explore.tab === 'carnets'
+        ? filterIndex(CARNET_FILTER_ITEMS, explore.carnetFilter)
+        : explore.tab === 'clubs'
+          ? filterIndex(CLUB_FILTER_ITEMS, explore.clubFilter)
+          : filterIndex(EVENT_FILTER_ITEMS, explore.eventFilter);
+
+  const voletActive = (tab: ExploreTab): boolean => open && explore.tab === tab;
+  const activeScope = explore.searchScope;
+  const activeCarnetFilter = explore.carnetFilter;
+  const activeClubFilter = explore.clubFilter;
+  const activeEventFilter = explore.eventFilter;
+
+  // ── Une pane par filtre (LensPager de la mini-capsule, `00-MISSION § 3`) ──
+  const filterPages: React.ReactNode[][] = [
+    SEARCH_SCOPE_ITEMS.map((item, index) => {
+      const scope = item.value as SearchScope;
+      const paneActive = voletActive('search') && index === activeFilterIndex;
+      return (
+        <FilterSlot key={item.value} active={paneActive}>
+          <SearchPane
+            active={paneActive}
+            open={open}
+            initialSearch={initialSearch && paneActive}
+            query={explore.searchQuery}
+            scope={scope}
+            context={explore.searchContext}
+            showMap={explore.searchMap}
+            near={nearMe.point}
+            nearState={nearMe.state}
+            online={isOnline}
+            recents={searchRecents}
+            onQueryChange={explore.setSearchQuery}
+            onScopeChange={explore.setSearchScope}
+            onToggleContext={explore.toggleSearchContext}
+            onClearContext={explore.clearSearchContext}
+            onShowMapChange={explore.setSearchMap}
+            onRequestGeo={() => void nearMe.request()}
+            onPushRecent={pushRecentSearch}
+            onDeleteRecent={deleteRecentSearch}
+            onPeek={openSearchPeek}
+            onCreateRequested={
+              onCreateRequested ? (kind, prefill) => onCreateRequested(kind, prefill) : undefined
+            }
+          />
+        </FilterSlot>
+      );
+    }),
+    CARNET_FILTERS.map((filterValue, index) => {
+      const paneActive = voletActive('carnets') && index === activeFilterIndex;
+      return (
+        <FilterSlot key={filterValue} active={paneActive}>
+          <CarnetsPane
+            feed={carnetsFeed}
+            filter={filterValue}
+            sort={explore.carnetSort}
+            nearState={nearMe.state}
+            nearPointKnown={filterValue !== 'near' || carnetsNear != null}
+            online={isOnline}
+            likeBusyId={busyIdFor('like:')}
+            onLike={(carnet) => void handleCarnetLike(carnet)}
+            onPeek={(carnet, opener) => openCarnetPeek(carnet, opener)}
+            onCreateCarnet={() => onCreateRequested?.('carnet')}
+            onDiscover={() => explore.setCarnetFilter('discover')}
+            onRequestGeo={() => void nearMe.request()}
+          />
+        </FilterSlot>
+      );
+    }),
+    CLUB_FILTERS.map((filterValue, index) => {
+      const paneActive = voletActive('clubs') && index === activeFilterIndex;
+      return (
+        <FilterSlot key={filterValue} active={paneActive}>
+          <ClubsPane
+            feed={clubsFeed}
+            filter={filterValue}
+            sort={explore.clubSort}
+            activity={explore.clubActivity}
+            nearState={nearMe.state}
+            nearPointKnown={filterValue !== 'near' || clubsNear != null}
+            online={isOnline}
+            overrides={clubOverrides}
+            busyClubId={busyIdFor('club:')}
+            onActivityChange={explore.setClubActivity}
+            onFilterChange={explore.setClubFilter}
+            onRequestGeo={() => void nearMe.request()}
+            onOpen={(club, opener) => openClubDetail(club, opener)}
+            onJoin={(club) => void handleClubJoin(club)}
+            onPeek={(club, opener) => openClubPeek(club, opener)}
+            onCreateClub={() => onCreateRequested?.('club')}
+          />
+        </FilterSlot>
+      );
+    }),
+    EVENT_FILTERS.map((filterValue, index) => {
+      const paneActive = voletActive('sorties') && index === activeFilterIndex;
+      return (
+        <FilterSlot key={filterValue} active={paneActive}>
+          <EventsPane
+            feed={eventsFeed}
+            filter={filterValue}
+            day={explore.eventDay}
+            view={explore.eventView}
+            agendaCounts={agenda.counts}
+            agendaLoading={agenda.loading}
+            agendaError={agenda.error}
+            nearState={nearMe.state}
+            nearPointKnown={filterValue !== 'near' || eventsNear != null}
+            online={isOnline}
+            overrides={eventOverrides}
+            busyEventId={busyIdFor('event:')}
+            onDayChange={explore.setEventDay}
+            onViewChange={explore.setEventView}
+            onFilterChange={explore.setEventFilter}
+            onRequestGeo={() => void nearMe.request()}
+            onOpen={(event, opener) => openEventDetail(event, opener)}
+            onSignup={(event) => void handleEventSignup(event)}
+            onPeek={(event, opener) => openEventPeek(event, opener)}
+            onCreateEvent={() => onCreateRequested?.('sortie')}
+            onRetryAgenda={agenda.retry}
+          />
+        </FilterSlot>
+      );
+    }),
+  ];
+
+  const mini = (() => {
     if (explore.tab === 'search') {
       return {
         items: SEARCH_SCOPE_ITEMS.map((item) => ({ id: item.value, label: item.label, icon: item.icon })),
-        active: filterIndex(SEARCH_SCOPE_ITEMS, explore.searchScope),
+        active: filterIndex(SEARCH_SCOPE_ITEMS, activeScope),
         onChange: (index: number) => explore.setSearchScope(SEARCH_SCOPES[index] ?? 'all'),
         label: 'Filtres des résultats',
+        pages: filterPages,
       };
     }
     if (explore.tab === 'carnets') {
       return {
         items: CARNET_FILTER_ITEMS.map((item) => ({ id: item.value, label: item.label, icon: item.icon })),
-        active: filterIndex(CARNET_FILTER_ITEMS, explore.carnetFilter),
-        onChange: (index: number) =>
-          explore.setCarnetFilter(CARNET_FILTERS[index] ?? 'discover'),
+        active: filterIndex(CARNET_FILTER_ITEMS, activeCarnetFilter),
+        onChange: (index: number) => explore.setCarnetFilter(CARNET_FILTERS[index] ?? 'discover'),
         label: 'Filtres des carnets',
+        pages: filterPages,
         sort: {
           value: explore.carnetSort,
           defaultValue: 'recent',
@@ -824,9 +972,10 @@ export function CommunityExploreSheetV2({
     if (explore.tab === 'clubs') {
       return {
         items: CLUB_FILTER_ITEMS.map((item) => ({ id: item.value, label: item.label, icon: item.icon })),
-        active: filterIndex(CLUB_FILTER_ITEMS, explore.clubFilter),
+        active: filterIndex(CLUB_FILTER_ITEMS, activeClubFilter),
         onChange: (index: number) => explore.setClubFilter(CLUB_FILTERS[index] ?? 'discover'),
         label: 'Filtres des clubs',
+        pages: filterPages,
         sort: {
           value: explore.clubSort,
           defaultValue: 'activity',
@@ -837,102 +986,17 @@ export function CommunityExploreSheetV2({
     }
     return {
       items: EVENT_FILTER_ITEMS.map((item) => ({ id: item.value, label: item.label, icon: item.icon })),
-      active: filterIndex(EVENT_FILTER_ITEMS, explore.eventFilter),
+      active: filterIndex(EVENT_FILTER_ITEMS, activeEventFilter),
       onChange: (index: number) => explore.setEventFilter(EVENT_FILTERS[index] ?? 'discover'),
       label: 'Filtres des sorties',
+      pages: filterPages,
     };
-  }, [explore]);
+  })();
 
-  const busyIdFor = (prefix: string): string | null => {
-    const key = Object.keys(busyKeys).find((entry) => entry.startsWith(prefix) && busyKeys[entry]);
-    return key ? key.slice(prefix.length) : null;
-  };
-
-  // ── Panes (une par volet, montées dans le LensPager de la coque) ───────
-  const panes = [
-    <SearchPane
-      key="search"
-      active={open && explore.tab === 'search'}
-      open={open}
-      initialSearch={initialSearch}
-      query={explore.searchQuery}
-      scope={explore.searchScope}
-      context={explore.searchContext}
-      showMap={explore.searchMap}
-      near={nearMe.point}
-      nearState={nearMe.state}
-      online={isOnline}
-      recents={searchRecents}
-      onQueryChange={explore.setSearchQuery}
-      onScopeChange={explore.setSearchScope}
-      onToggleContext={explore.toggleSearchContext}
-      onClearContext={explore.clearSearchContext}
-      onShowMapChange={explore.setSearchMap}
-      onRequestGeo={() => void nearMe.request()}
-      onPushRecent={pushRecentSearch}
-      onDeleteRecent={deleteRecentSearch}
-      onPeek={openSearchPeek}
-      onCreateRequested={onCreateRequested ? (kind, prefill) => onCreateRequested(kind, prefill) : undefined}
-    />,
-    <CarnetsPane
-      key="carnets"
-      feed={carnetsFeed}
-      filter={explore.carnetFilter}
-      sort={explore.carnetSort}
-      nearState={nearMe.state}
-      nearPointKnown={carnetsNear != null}
-      online={isOnline}
-      likeBusyId={busyIdFor('like:')}
-      onLike={(carnet) => void handleCarnetLike(carnet)}
-      onPeek={(carnet, opener) => openCarnetPeek(carnet, opener)}
-      onCreateCarnet={() => onCreateRequested?.('carnet')}
-      onDiscover={() => explore.setCarnetFilter('discover')}
-      onRequestGeo={() => void nearMe.request()}
-    />,
-    <ClubsPane
-      key="clubs"
-      feed={clubsFeed}
-      filter={explore.clubFilter}
-      sort={explore.clubSort}
-      activity={explore.clubActivity}
-      nearState={nearMe.state}
-      nearPointKnown={clubsNear != null}
-      online={isOnline}
-      overrides={clubOverrides}
-      busyClubId={busyIdFor('club:')}
-      onActivityChange={explore.setClubActivity}
-      onFilterChange={explore.setClubFilter}
-      onRequestGeo={() => void nearMe.request()}
-      onOpen={(club, opener) => openClubDetail(club, opener)}
-      onJoin={(club) => void handleClubJoin(club)}
-      onPeek={(club, opener) => openClubPeek(club, opener)}
-      onCreateClub={() => onCreateRequested?.('club')}
-    />,
-    <EventsPane
-      key="sorties"
-      feed={eventsFeed}
-      filter={explore.eventFilter}
-      day={explore.eventDay}
-      view={explore.eventView}
-      agendaCounts={agenda.counts}
-      agendaLoading={agenda.loading}
-      agendaError={agenda.error}
-      nearState={nearMe.state}
-      nearPointKnown={eventsNear != null}
-      online={isOnline}
-      overrides={eventOverrides}
-      busyEventId={busyIdFor('event:')}
-      onDayChange={explore.setEventDay}
-      onViewChange={explore.setEventView}
-      onFilterChange={explore.setEventFilter}
-      onRequestGeo={() => void nearMe.request()}
-      onOpen={(event, opener) => openEventDetail(event, opener)}
-      onSignup={(event) => void handleEventSignup(event)}
-      onPeek={(event, opener) => openEventPeek(event, opener)}
-      onCreateEvent={() => onCreateRequested?.('sortie')}
-      onRetryAgenda={agenda.retry}
-    />,
-  ];
+  // Compatibilité coque : quand `mini.pages` est fourni, la coque n'utilise pas
+  // `panes` (le LensPager suit la mini-capsule). On garde un tableau de la
+  // bonne longueur pour les chemins de repli.
+  const panes: React.ReactNode[] = EXPLORE_TAB_ORDER.map(() => null);
 
   const detailProp: SheetDetail | null = (() => {
     if (!detail) return null;
@@ -1008,14 +1072,18 @@ export function CommunityExploreSheetV2({
       detail={detailProp}
       onEscape={handleEscape}
       island={
-        <DynamicIsland
-          open={Boolean(island)}
-          title={island?.title ?? ''}
-          subtitle={island?.subtitle}
-          undo={island?.undo}
-          action={island?.action}
-          onClose={() => setIsland(null)}
-        />
+        island ? (
+          <div className="lkdv-cv2-island-layer" data-testid="cv2-island">
+            <DynamicIsland
+              open
+              title={island.title}
+              subtitle={island.subtitle}
+              undo={island.undo}
+              action={island.action}
+              onClose={() => setIsland(null)}
+            />
+          </div>
+        ) : null
       }
     >
       <PeekOverlay peek={peek} onClose={() => setPeek(null)} />

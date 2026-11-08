@@ -42,6 +42,11 @@ export function MeetingMapV2({
   const markerRef = useRef<Marker | null>(null);
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
+  const initialCenterRef = useRef<{ lat: number | null; lng: number | null; fallback: [number, number] | null }>({
+    lat,
+    lng,
+    fallback: defaultCenter,
+  });
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
 
@@ -51,14 +56,18 @@ export function MeetingMapV2({
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
+    const initial = initialCenterRef.current;
     let map: MapLibreMap;
     try {
       setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
       map = new MapLibreMap({
         container: containerRef.current,
         style: createMapStyle('topo'),
-        center: lat != null && lng != null ? [lng, lat] : defaultCenter ?? DEFAULT_CENTER,
-        zoom: lat != null && lng != null ? 12 : 6,
+        center:
+          initial.lat != null && initial.lng != null
+            ? [initial.lng, initial.lat]
+            : initial.fallback ?? DEFAULT_CENTER,
+        zoom: initial.lat != null && initial.lng != null ? 12 : 6,
         minZoom: 2,
         maxZoom: 17,
         attributionControl: false,
@@ -70,8 +79,8 @@ export function MeetingMapV2({
     }
     mapRef.current = map;
     map.on('load', () => {
-      if (lat != null && lng != null) {
-        const marker = new Marker({ draggable: true }).setLngLat([lng, lat]).addTo(map);
+      if (initial.lat != null && initial.lng != null) {
+        const marker = new Marker({ draggable: true }).setLngLat([initial.lng, initial.lat]).addTo(map);
         marker.on('dragend', () => {
           const position = marker.getLngLat();
           commitPosition(position.lat, position.lng);
@@ -105,8 +114,7 @@ export function MeetingMapV2({
       setReady(false);
     };
     // La carte est initialisée une seule fois ; les coordonnées sont synchronisées ensuite.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [commitPosition]);
 
   // Position mise à jour depuis le formulaire (recherche de lieu, ma position).
   useEffect(() => {

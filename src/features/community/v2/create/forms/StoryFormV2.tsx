@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Plus, Trash2, Camera, Play, Pause, CloudSun, MapPin, Loader2 } from 'lucide-react';
-import { useFormContext, type UseFormReturn } from 'react-hook-form';
+import { useFormContext, useFormState, type UseFormReturn } from 'react-hook-form';
 import type { User } from '@supabase/supabase-js';
 import { CreateFormEngineV2, type CreateFormEngineApiV2 } from '../engine/CreateFormEngineV2';
 import {
@@ -14,7 +14,7 @@ import {
 } from '../engine/createSchemasV2';
 import { useCreateSheet } from '../CreateSheetContext';
 import { publishStoryV2 } from '../createRpc';
-import { TextAreaFieldV2, TextFieldV2 } from '../fields/FieldV2';
+import { TextAreaFieldV2, TextFieldV2, readError } from '../fields/FieldV2';
 import { MediaFieldV2 } from '../fields/MediaFieldV2';
 import { PlaceFieldV2 } from '../fields/PlaceFieldV2';
 import { STORY_LIMITS } from '../fields/media';
@@ -128,6 +128,8 @@ function LayerTools({
   onSelect: (id: string | null) => void;
 }) {
   const form = useFormContext<StoryFormValuesV2>();
+  const { errors: layerErrors } = useFormState<StoryFormValuesV2>({ control: form.control });
+  const layersError = readError(layerErrors, 'textLayers');
   const layers = form.watch('textLayers') ?? [];
   const { haptic } = useHapticFeedback();
 
@@ -166,6 +168,11 @@ function LayerTools({
           Ajouter un texte
         </button>
       </div>
+      {layersError ? (
+        <p className="lkdv-cv2-field-error" role="alert">
+          {layersError}
+        </p>
+      ) : null}
       {layers.length === 0 ? (
         <p className="lkdv-cv2-field-hint">
           Ajoute un texte : il se déplace au doigt, se redimensionne et pivote au pincement.
@@ -630,6 +637,7 @@ function StoryBody({
 
   return (
     <>
+      {api.active ? (
       <StoryStageV2
         media={media}
         textLayers={values.textLayers ?? []}
@@ -644,9 +652,12 @@ function StoryBody({
         onGallery={openGallery}
         onCamera={api.step === 0 ? () => void openCamera() : undefined}
       />
-      <p className="lkdv-cv2c-preview-caption">
-        {media ? `Aperçu vivant · ${uploadState ?? ''}` : 'Aucun média sélectionné'}
-      </p>
+      ) : null}
+      {api.active ? (
+        <p className="lkdv-cv2c-preview-caption">
+          {media ? `Aperçu vivant · ${uploadState ?? ''}` : 'Aucun média sélectionné'}
+        </p>
+      ) : null}
       {cameraNote ? (
         <p className="lkdv-cv2-field-hint lkdv-cv2c-notice" role="status">
           {cameraNote}
@@ -709,7 +720,7 @@ function StoryBody({
  * rognage vidéo réel (`trim_start_ms`/`trim_end_ms`), caméra Capacitor et
  * audience à 4 valeurs (dont `close_friends`).
  */
-export function StoryFormV2({ active, onNavChange }: CreateFormV2Props) {
+export function StoryFormV2({ active, onNavChange, stepHosts }: CreateFormV2Props) {
   const { user, reportCreated } = useCreateSheet();
   const defaults = useRef(createDefaultsV2('story')).current;
 
@@ -721,6 +732,7 @@ export function StoryFormV2({ active, onNavChange }: CreateFormV2Props) {
       active={active}
       disabled={!user}
       onNavChange={onNavChange}
+      stepHosts={stepHosts}
       onSubmit={async (values) => {
         if (!user) throw new Error('Connecte-toi pour publier une story.');
         const result = await publishStoryV2(values, user.id);

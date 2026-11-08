@@ -121,8 +121,8 @@ describe('payloads RPC — conformes à RPC-CONTRACTS.md', () => {
       name: 'Kit bivouac été',
       isPublic: true,
       items: [
-        { id: 'i1', name: 'Sac', category: 'Transport', weightG: 800, quantity: 1, productId: 'p1', ownershipId: 'o1' },
-        { id: 'i2', name: 'Chaussettes', category: 'Vêtements', weightG: 60, quantity: 2, productId: null, ownershipId: null },
+        { id: 'i1', name: 'Sac', category: 'Transport', weightG: 800, quantity: 1, productId: 'p1', ownershipId: 'o1', isChecked: true },
+        { id: 'i2', name: 'Chaussettes', category: 'Vêtements', weightG: 60, quantity: 2, productId: null, ownershipId: null, isChecked: false },
       ],
     };
     const payload = buildKitPayload(values);

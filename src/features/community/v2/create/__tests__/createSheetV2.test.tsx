@@ -79,8 +79,8 @@ describe('CreateSheetV2 — moteur et coque', () => {
     await waitFor(() => {
       expect(document.activeElement?.id).toBe('cv2c-clubId');
     });
-    // Toujours à l'étape 1.
-    expect(screen.queryByLabelText(/Légende/)).toBeNull();
+    // Toujours à l'étape 1 (le pied ne propose pas Retour).
+    expect(screen.queryByRole('button', { name: 'Retour' })).toBeNull();
   });
 
   it('restaure un brouillon avec le bandeau « Brouillon restauré · Effacer »', async () => {
@@ -96,6 +96,33 @@ describe('CreateSheetV2 — moteur et coque', () => {
     await waitFor(() => {
       expect(screen.queryByTestId('cv2-draft-banner')).toBeNull();
     });
+  });
+
+  it('le dialogue de fermeture prend le focus, rend le tiroir inerte et le restitue', async () => {
+    const draft = { ...createDefaultsV2('post'), content: 'Mon brouillon' };
+    window.localStorage.setItem(
+      draftStorageKey('post'),
+      JSON.stringify({ version: 1, kind: 'post', updatedAt: Date.now(), values: draft }),
+    );
+    renderSheet();
+    const audience = await screen.findByRole('radio', { name: /Fil public/ });
+    audience.focus();
+    fireEvent.keyDown(document, { key: 'Escape' });
+    const dialog = await screen.findByRole('alertdialog');
+    const keepEditing = await screen.findByRole('button', { name: 'Continuer l’édition' });
+    await waitFor(() => expect(document.activeElement).toBe(keepEditing));
+    // Le reste du tiroir ne reçoit plus le focus pendant le dialogue.
+    await waitFor(() => {
+      const footer = document.querySelector('.lkdv-cv2-footer');
+      expect(footer?.hasAttribute('inert')).toBe(true);
+    });
+    fireEvent.click(keepEditing);
+    await waitFor(() => {
+      expect(document.querySelector('.lkdv-cv2-footer')?.hasAttribute('inert')).toBe(false);
+    });
+    // Le focus revient au déclencheur (la carte d'audience focalisée).
+    await waitFor(() => expect(document.activeElement).toBe(audience));
+    expect(dialog).toBeTruthy();
   });
 
   it('demande confirmation avant de fermer une saisie (alertdialog)', async () => {

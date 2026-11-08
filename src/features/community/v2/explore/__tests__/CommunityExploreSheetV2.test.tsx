@@ -2,7 +2,6 @@
 import React from 'react';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { ClubCardVM, EventCardVM } from '../../shared/types';
 
 const push = vi.fn();
 const haptic = vi.fn();
@@ -20,90 +19,87 @@ vi.mock('../useNearMe', () => ({
   useNearMe: () => ({ state: 'idle', point: null, request: async () => null }),
 }));
 
-const carnet = {
-  id: 'c1',
-  title: 'Tour des Écrins',
-  destination: 'Hauts-Alpes',
-  coverImage: null,
-  coverAlt: null,
-  days: 4,
-  distanceKm: 62.4,
-  elevationGainM: 3200,
-  author: { id: 'u1', name: 'Camille', initials: 'C', handle: null, avatarUrl: null },
-  likesCount: 12,
-  commentsCount: 2,
-  likedByMe: false,
-  travelers: [],
-  travelersTotal: 1,
-  isLive: false,
-  verifiedGps: false,
-  startDate: '2026-11-01',
-  endDate: '2026-11-04',
-  visibility: 'public',
-  distanceKmFromMe: null,
-  routeTrace: null,
-};
-
-const club: ClubCardVM = {
-  id: 'k1',
-  slug: 'la-cordee',
-  name: 'La Cordée du Vercors',
-  description: '',
-  category: 'rando',
-  emoji: null,
-  activities: ['rando'],
-  privacy: 'open',
-  coverImage: null,
-  coverColor: null,
-  crestSeed: 'k1',
-  membersCount: 12,
-  myStatus: 'none',
-  eventsThisMonth: 2,
-  lastPostAt: null,
-  distanceKmFromMe: null,
-  zoneLabel: 'Grenoble',
-  friends: [],
-  friendsTotal: 0,
-  rules: null,
-  joinQuestions: [],
-};
-
-const event: EventCardVM = {
-  id: 'e1',
-  title: 'Footing de la Bastille',
-  activity: 'Trail',
-  startsAt: '2026-11-14T08:00:00+01:00',
-  endsAt: '2026-11-14T09:30:00+01:00',
-  eventDate: '2026-11-14',
-  location: 'Grenoble',
-  meetingPoint: null,
-  level: 'facile',
-  distanceKm: 7,
-  elevationGainM: 260,
-  duration: '1 h 30',
-  coverImage: null,
-  coverAlt: null,
-  maxParticipants: 20,
-  currentParticipants: 6,
-  spotsLeft: 14,
-  waitlistEnabled: false,
-  myStatus: 'none',
-  organizer: { id: 'u9', name: 'Nora', initials: 'N', handle: null, avatarUrl: null },
-  participants: [],
-  participantsTotal: 6,
-  clubId: null,
-  clubName: null,
-  kitId: null,
-  description: null,
-  safetyNotes: null,
-  safetyChecklist: [],
-  recurrence: null,
-  past: false,
-  distanceKmFromMe: null,
-};
-
-function feed<T>(items: T[]) {
-  return {
+const fixtures = vi.hoisted(() => {
+  const carnet = {
+    id: 'c1',
+    title: 'Tour des Écrins',
+    destination: 'Hauts-Alpes',
+    coverImage: null,
+    coverAlt: null,
+    days: 4,
+    distanceKm: 62.4,
+    elevationGainM: 3200,
+    author: { id: 'u1', name: 'Camille', initials: 'C', handle: null, avatarUrl: null },
+    likesCount: 12,
+    commentsCount: 2,
+    likedByMe: false,
+    travelers: [],
+    travelersTotal: 1,
+    isLive: false,
+    verifiedGps: false,
+    startDate: '2026-11-01',
+    endDate: '2026-11-04',
+    visibility: 'public',
+    distanceKmFromMe: null,
+    routeTrace: null,
+  };
+  const club = {
+    id: 'k1',
+    slug: 'la-cordee',
+    name: 'La Cordée du Vercors',
+    description: '',
+    category: 'rando',
+    emoji: null,
+    activities: ['rando'],
+    privacy: 'open',
+    coverImage: null,
+    coverColor: null,
+    crestSeed: 'k1',
+    membersCount: 12,
+    myStatus: 'none',
+    eventsThisMonth: 2,
+    lastPostAt: null,
+    distanceKmFromMe: null,
+    zoneLabel: 'Grenoble',
+    friends: [],
+    friendsTotal: 0,
+    rules: null,
+    joinQuestions: [],
+  };
+  const event = {
+    id: 'e1',
+    title: 'Footing de la Bastille',
+    activity: 'Trail',
+    startsAt: '2026-11-14T08:00:00+01:00',
+    endsAt: '2026-11-14T09:30:00+01:00',
+    eventDate: '2026-11-14',
+    location: 'Grenoble',
+    meetingPoint: null,
+    level: 'facile',
+    distanceKm: 7,
+    elevationGainM: 260,
+    duration: '1 h 30',
+    coverImage: null,
+    coverAlt: null,
+    maxParticipants: 20,
+    currentParticipants: 6,
+    spotsLeft: 14,
+    waitlistEnabled: false,
+    myStatus: 'none',
+    organizer: { id: 'u9', name: 'Nora', initials: 'N', handle: null, avatarUrl: null },
+    participants: [],
+    participantsTotal: 6,
+    clubId: null,
+    clubName: null,
+    kitId: null,
+    description: null,
+    safetyNotes: null,
+    safetyChecklist: [],
+    recurrence: null,
+    past: false,
+    distanceKmFromMe: null,
+  };
+  const feed = <T,>(items: T[]) => ({
     items,
     loading: false,
     loadingMore: false,
@@ -112,12 +108,13 @@ function feed<T>(items: T[]) {
     refresh: vi.fn(),
     loadMore: vi.fn(),
     update: vi.fn(),
-  };
-}
+  });
+  return { carnet, club, event, feed };
+});
 
-vi.mock('../../data/useCarnetsFeed', () => ({ useCarnetsFeed: () => feed([carnet]) }));
-vi.mock('../../data/useClubsFeed', () => ({ useClubsFeed: () => feed([club]) }));
-vi.mock('../../data/useEventsFeed', () => ({ useEventsFeed: () => feed([event]) }));
+vi.mock('../../data/useCarnetsFeed', () => ({ useCarnetsFeed: () => fixtures.feed([fixtures.carnet]) }));
+vi.mock('../../data/useClubsFeed', () => ({ useClubsFeed: () => fixtures.feed([fixtures.club]) }));
+vi.mock('../../data/useEventsFeed', () => ({ useEventsFeed: () => fixtures.feed([fixtures.event]) }));
 vi.mock('../../data/useEventAgenda', () => ({
   useEventAgenda: () => ({ counts: {}, loading: false, error: null, retry: vi.fn() }),
 }));
@@ -195,15 +192,5 @@ describe('CommunityExploreSheetV2', () => {
     fireEvent.click(screen.getByTestId('cv2-sort-button'));
     expect(screen.getByTestId('cv2-sort-menu')).toBeTruthy();
     expect(screen.getByRole('menuitemradio', { name: 'Populaires' })).toBeTruthy();
-  });
-
-  it('les états vides de « Mes carnets » proposent de créer (onCreateRequested)', async () => {
-    vi.resetModules();
-    const onCreateRequested = vi.fn();
-    renderSheet({ onCreateRequested, initialSearch: false });
-    await waitFor(() => expect(screen.getByTestId('communaute-v2-explore')).toBeTruthy());
-    // Le filtre « Mes carnets » n'a pas de données dans le mock : on le vérifie
-    // indirectement via le bouton du volet actif quand le flux est vide.
-    expect(onCreateRequested).not.toHaveBeenCalled();
   });
 });

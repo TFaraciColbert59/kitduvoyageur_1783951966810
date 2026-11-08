@@ -384,7 +384,7 @@ export function buildKitPayload(values: KitFormValuesV2): Record<string, unknown
       category: item.category || 'Divers',
       weight_g: item.weightG,
       quantity: item.quantity,
-      is_checked: false,
+      is_checked: item.isChecked,
       product_ownership_id: item.ownershipId,
       product_id: item.productId,
     })),

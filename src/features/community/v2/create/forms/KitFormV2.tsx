@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Backpack, GripVertical, Plus, Sparkles, Trash2 } from 'lucide-react';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, useFormState } from 'react-hook-form';
 import type { User } from '@supabase/supabase-js';
 import { CreateFormEngineV2, type CreateFormEngineApiV2 } from '../engine/CreateFormEngineV2';
 import { createDefaultsV2, kitSchemaV2, type KitFormValuesV2, type KitItemV2 } from '../engine/createSchemasV2';
@@ -10,6 +10,7 @@ import { useCreateSheet } from '../CreateSheetContext';
 import { createKitWithItemsV2 } from '../createRpc';
 import { ChipsFieldV2 } from '../fields/ChipsV2';
 import { TextAreaFieldV2, TextFieldV2 } from '../fields/FieldV2';
+import { readError } from '../fields/FieldV2';
 import { MediaFieldV2 } from '../fields/MediaFieldV2';
 import { IMAGE_LIMITS, deleteMediaObjectsV2, uploadedObjectsOf } from '../fields/media';
 import { ProductPickerSheetV2 } from '../kit/ProductPickerSheetV2';
@@ -157,6 +158,8 @@ function InventoryStep({
   onRetry: () => void;
 }) {
   const form = useFormContext<KitFormValuesV2>();
+  const { errors: kitErrors } = useFormState<KitFormValuesV2>({ control: form.control });
+  const itemsError = readError(kitErrors, 'items');
   const values = form.watch();
   const watchedItems = values.items;
   const items = useMemo(() => watchedItems ?? [], [watchedItems]);
@@ -189,6 +192,7 @@ function InventoryStep({
           quantity: 1,
           productId: product.productId,
           ownershipId: product.ownershipId,
+          isChecked: false,
         },
       ]);
     }
@@ -277,8 +281,13 @@ function InventoryStep({
   }, [form, haptic]);
 
   return (
-    <div className="lkdv-cv2c-kit">
+    <div className="lkdv-cv2c-kit" data-testid="cv2-field-items">
       <WeightBar items={items} />
+      {itemsError ? (
+        <p className="lkdv-cv2-field-error" role="alert">
+          {itemsError}
+        </p>
+      ) : null}
       <div className="lkdv-cv2c-inline-add">
         <button type="button" className="lkdv-cv2-add-media" onClick={openPicker}>
           <Backpack size={15} aria-hidden="true" /> Ajouter un produit
@@ -343,6 +352,7 @@ function InventoryStep({
                     quantity: 1,
                     productId: null,
                     ownershipId: null,
+                    isChecked: false,
                   },
                 ]);
                 setCustomName('');
@@ -411,6 +421,15 @@ function InventoryStep({
                         </button>
                       </div>
                       <small>{item.weightG ? `${formatWeightG(item.weightG)}` : '—'}</small>
+                      <button
+                        type="button"
+                        className="lkdv-cv2c-icon-btn"
+                        aria-label={`Marquer ${item.name} comme emporté`}
+                        aria-pressed={item.isChecked}
+                        onClick={() => patchItem(item.id, { isChecked: !item.isChecked })}
+                      >
+                        {item.isChecked ? '✓' : '□'}
+                      </button>
                       <button
                         type="button"
                         className="lkdv-cv2c-icon-btn"
@@ -497,9 +516,7 @@ function PartageStep() {
     const seasonLabel =
       SEASON_OPTIONS.find((season) => season.value === values.season)?.label?.toLowerCase() ?? 'toute saison';
     form.setValue('name', `Kit ${seasonLabel} · ${displayKg(weight)}`, { shouldDirty: true });
-    // Uniquement tant que le nom est vide.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [weight]);
+  }, [form, values.name, values.season, weight]);
 
   return (
     <>
@@ -594,7 +611,7 @@ function KitBody({
  * visibilité Public/Privé ; aperçu type `KitCard` ; envoi
  * `create_kit_with_items` (poids total calculé en SQL).
  */
-export function KitFormV2({ active, onNavChange }: CreateFormV2Props) {
+export function KitFormV2({ active, onNavChange, stepHosts }: CreateFormV2Props) {
   const { user, reportCreated } = useCreateSheet();
   const defaults = useRef(createDefaultsV2('kit')).current;
   const { inventory, loading, error, retry } = useInventory(user);
@@ -607,6 +624,7 @@ export function KitFormV2({ active, onNavChange }: CreateFormV2Props) {
       active={active}
       disabled={!user}
       onNavChange={onNavChange}
+      stepHosts={stepHosts}
       onSubmit={async (values) => {
         try {
           const result = await createKitWithItemsV2(values);

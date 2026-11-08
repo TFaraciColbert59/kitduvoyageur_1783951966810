@@ -24,8 +24,7 @@ export function PrefillApplierV2({
       if (value === undefined) continue;
       form.setValue(key as never, value as never, { shouldDirty: false, shouldValidate: false });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- volontairement piloté par le nonce
-  }, [nonce, form]);
+  }, [form, nonce, values]);
 
   return null;
 }

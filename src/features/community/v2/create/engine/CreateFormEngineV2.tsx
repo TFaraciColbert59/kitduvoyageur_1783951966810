@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   FormProvider,
@@ -48,6 +49,8 @@ export interface CreateFormEngineApiV2<T extends FieldValues> {
   clearDraft: () => void;
   /** Nombre de médias en cours d'envoi (progression du pied). */
   uploadingCount: number;
+  /** Cette étape est-elle la page affichée ? (allège les aperçus lourds) */
+  active: boolean;
 }
 
 export interface CreateFormEngineV2Props<T extends FieldValues> {
@@ -61,6 +64,12 @@ export interface CreateFormEngineV2Props<T extends FieldValues> {
   onSubmit: (values: T) => Promise<void>;
   /** Remonte le nav à la coque (pied, mini-capsule, erreur serveur). */
   onNavChange: (nav: CreateNavV2) => void;
+  /**
+   * Hôtes des pages d'étapes fournies par la coque (`mini.pages`) : le moteur
+   * **porte** le contenu de chaque étape dans sa page, une seule instance de
+   * formulaire. Sans cette prop, le formulaire rend ses étapes en ligne.
+   */
+  stepHosts?: (HTMLElement | null)[] | null;
   children: (api: CreateFormEngineApiV2<T>) => React.ReactNode;
 }
 
@@ -72,8 +81,10 @@ export function CreateFormEngineV2<T extends FieldValues>({
   disabled = false,
   onSubmit,
   onNavChange,
+  stepHosts = null,
   children,
 }: CreateFormEngineV2Props<T>) {
+  const portalMode = Boolean(stepHosts);
   const config = createKindConfig(kind);
   const steps = createStepsFor(kind);
   const { haptic } = useHapticFeedback();
@@ -81,6 +92,7 @@ export function CreateFormEngineV2<T extends FieldValues>({
   const [busy, setBusy] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [attempted, setAttempted] = useState(false);
+  const [, setHostTick] = useState(0);
   const busyRef = useRef(false);
   const pendingFocus = useRef<string | null>(null);
 
@@ -91,6 +103,13 @@ export function CreateFormEngineV2<T extends FieldValues>({
     reValidateMode: 'onChange',
   });
   const draft = useDraftV2<T>({ kind, form });
+
+  // Les hôtes de portail sont posés par la coque au commit parent : on force un
+  // rendu après le montage pour que les portails trouvent leur cible.
+  useEffect(() => {
+    if (!portalMode) return;
+    setHostTick((tick) => tick + 1);
+  }, [portalMode]);
   // Progression des médias : le pied est occupé tant qu'un média n'est pas prêt.
   const uploadState = mediaUploadState(form.watch());
 
@@ -125,7 +144,7 @@ export function CreateFormEngineV2<T extends FieldValues>({
         return;
       }
       // Léger différé : la coque pose son focus initial dans la même frame.
-      window.setTimeout(() => focusFieldByName(root), 40);
+      window.setTimeout(() => focusFieldByName(root), 60);
     },
     [kind, step],
   );
@@ -135,7 +154,7 @@ export function CreateFormEngineV2<T extends FieldValues>({
     const name = pendingFocus.current;
     if (!name) return;
     pendingFocus.current = null;
-    const timer = window.setTimeout(() => focusFieldByName(name), 30);
+    const timer = window.setTimeout(() => focusFieldByName(name), 60);
     return () => window.clearTimeout(timer);
   }, [step]);
 
@@ -196,7 +215,15 @@ export function CreateFormEngineV2<T extends FieldValues>({
           setStepState(0);
           setAttempted(false);
         } catch (error) {
-          const info = parseServerError(error);
+          const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
+          const info = offline
+            ? {
+                message:
+                  'Hors ligne : ta saisie est conservée. Réessaie à la reconnexion.',
+                field: null,
+                code: 'offline',
+              }
+            : parseServerError(error);
           setAttempted(true);
           setServerError(info.message);
           if (info.field) {
@@ -306,6 +333,32 @@ export function CreateFormEngineV2<T extends FieldValues>({
     onNavChange(nav);
   }, [nav, onNavChange]);
 
+  // En mode portail, les champs vivent hors de l'élément `<form>` : les flèches
+  // et Entrée sont neutralisées en phase de capture, avant le LensPager.
+  useEffect(() => {
+    if (!portalMode || typeof document === 'undefined') return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (!target) return;
+      const editable =
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.tagName === 'SELECT' ||
+        target.isContentEditable;
+      if (!editable) return;
+      if (event.key.startsWith('Arrow') || event.key === 'Home' || event.key === 'End') {
+        event.stopPropagation();
+        return;
+      }
+      if (event.key === 'Enter' && target.tagName !== 'TEXTAREA') {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    };
+    document.addEventListener('keydown', onKeyDown, true);
+    return () => document.removeEventListener('keydown', onKeyDown, true);
+  }, [portalMode]);
+
   const api: CreateFormEngineApiV2<T> = {
     form,
     step,
@@ -313,6 +366,7 @@ export function CreateFormEngineV2<T extends FieldValues>({
     errorCount,
     clearDraft,
     uploadingCount: uploadState.pending,
+    active: true,
   };
 
   const summary = errorCount > 0 ? (
@@ -340,34 +394,28 @@ export function CreateFormEngineV2<T extends FieldValues>({
     </button>
   ) : null;
 
-  return (
-    <form
-      noValidate
-      className="lkdv-cv2c-form"
-      data-testid={`cv2-form-${kind}`}
-      data-kind={kind}
-      data-step={step}
-      onSubmit={(event) => event.preventDefault()}
-      onKeyDown={(event) => {
-        const target = event.target as HTMLElement | null;
-        const editable =
-          !!target &&
-          (target.tagName === 'INPUT' ||
-            target.tagName === 'TEXTAREA' ||
-            target.tagName === 'SELECT' ||
-            target.isContentEditable);
-        // Les flèches restent dans le champ : ni changement d'étape/type, ni LensPager.
-        if (editable && (event.key.startsWith('Arrow') || event.key === 'Home' || event.key === 'End')) {
-          event.stopPropagation();
-          return;
-        }
-        // Entrée dans un champ ne publie pas : seule l'action finale le fait.
-        if (editable && event.key === 'Enter' && target?.tagName !== 'TEXTAREA') {
-          event.preventDefault();
-          event.stopPropagation();
-        }
-      }}
-    >
+  const keyboardGuard = (event: React.KeyboardEvent) => {
+    const target = event.target as HTMLElement | null;
+    const editable =
+      !!target &&
+      (target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.tagName === 'SELECT' ||
+        target.isContentEditable);
+    // Les flèches restent dans le champ : ni changement d'étape, ni LensPager.
+    if (editable && (event.key.startsWith('Arrow') || event.key === 'Home' || event.key === 'End')) {
+      event.stopPropagation();
+      return;
+    }
+    // Entrée dans un champ ne publie pas : seule l'action finale le fait.
+    if (editable && event.key === 'Enter' && target?.tagName !== 'TEXTAREA') {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  };
+
+  const header = (
+    <>
       {draft.restored ? (
         <div className="lkdv-cv2-draft lkdv-cv2c-draft" data-testid="cv2-draft-banner">
           <span>Brouillon restauré</span>
@@ -377,6 +425,52 @@ export function CreateFormEngineV2<T extends FieldValues>({
         </div>
       ) : null}
       {summary}
+    </>
+  );
+
+  // Mode portail : un seul formulaire, une page par étape (glisser = étapes).
+  if (portalMode) {
+    return (
+      <div className="lkdv-cv2c-form" data-testid={`cv2-form-${kind}`} data-kind={kind} data-step={step}>
+        <span className="lkdv-cv2c-sr-only" aria-live="polite">
+          {draft.restored ? 'Brouillon restauré. ' : ''}
+          {errorCount > 0 ? errorCounterLabel(errorCount) : ''}
+        </span>
+        {steps.map((stepDefinition, index) => {
+          const host = stepHosts?.[index];
+          if (!host) return null;
+          return createPortal(
+            <FormProvider {...form} key={`${kind}-${stepDefinition.id}`}>
+              <div onKeyDown={keyboardGuard}>
+                <fieldset
+                  className="lkdv-cv2c-pane"
+                  data-step={stepDefinition.id}
+                  disabled={disabled || busy}
+                >
+                  {index === step ? header : null}
+                  {children({ ...api, step: index, active: index === step })}
+                </fieldset>
+              </div>
+            </FormProvider>,
+            host,
+            `cv2c-step-${kind}-${index}`,
+          );
+        })}
+      </div>
+    );
+  }
+
+  return (
+    <form
+      noValidate
+      className="lkdv-cv2c-form"
+      data-testid={`cv2-form-${kind}`}
+      data-kind={kind}
+      data-step={step}
+      onSubmit={(event) => event.preventDefault()}
+      onKeyDown={keyboardGuard}
+    >
+      {header}
       <FormProvider {...form}>
         <fieldset className="lkdv-cv2c-pane" disabled={disabled || busy}>
           {children(api)}

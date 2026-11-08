@@ -1,10 +1,12 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
-import { CloudSun, Loader2, MapPin, Mountain, Users } from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { CloudSun, Loader2, MapPin, Mountain, Upload, Users } from 'lucide-react';
 import { useFormContext } from 'react-hook-form';
 import type { User } from '@supabase/supabase-js';
 import { EventTicket } from '../../shared/EventTicket';
+import { elevationGain, lengthKm, sampleAlong } from '@/features/community/create/carnet/traceEngine';
+import { parseGpxTrace } from '../carnet/gpx';
 import type { EventCardVM } from '../../shared/types';
 import { CreateFormEngineV2, type CreateFormEngineApiV2 } from '../engine/CreateFormEngineV2';
 import {
@@ -14,7 +16,7 @@ import {
 } from '../engine/createSchemasV2';
 import { useCreateSheet } from '../CreateSheetContext';
 import { createEventWithPostV2, SORTIE_ACTIVITY_EMOJI, toStartsAt } from '../createRpc';
-import { ChipsFieldV2 } from '../fields/ChipsV2';
+import { ChipsFieldV2, SegmentedFieldV2 } from '../fields/ChipsV2';
 import { DateFieldV2, TimeFieldV2 } from '../fields/DateFieldV2';
 import { NumberFieldV2, NumberStepperV2 } from '../fields/NumberStepperV2';
 import { TextAreaFieldV2, TextFieldV2 } from '../fields/FieldV2';
@@ -181,7 +183,35 @@ function ItineraireStep() {
   const values = form.watch();
   const [weather, setWeather] = useState<string | null>(null);
   const [weatherState, setWeatherState] = useState<'idle' | 'loading' | 'off'>('idle');
+  const [traceState, setTraceState] = useState<'idle' | 'loading' | 'error'>('idle');
+  const traceInputRef = useRef<HTMLInputElement | null>(null);
   const { haptic } = useHapticFeedback();
+
+  const importTrace = async (file: File | undefined) => {
+    if (!file) return;
+    setTraceState('loading');
+    try {
+      const points = parseGpxTrace(await file.text());
+      if (points.length < 2) throw new Error('trace');
+      const km = Math.min(500, Math.round(lengthKm(points) * 10) / 10);
+      form.setValue('distanceKm', km, { shouldDirty: true, shouldValidate: true });
+      const samples = sampleAlong(points, Math.max(2, Math.min(100, Math.round(km * 8) + 2)));
+      const query = samples.map(([lng, lat]) => `${lng.toFixed(5)},${lat.toFixed(5)}`).join(';');
+      const response = await fetch(`/api/elevation?points=${query}`);
+      if (response.ok) {
+        const payload = (await response.json()) as { elevations?: Array<number | null> };
+        const gain = elevationGain(Array.isArray(payload.elevations) ? payload.elevations : []).gain;
+        form.setValue('elevationGainM', Math.min(20_000, gain), {
+          shouldDirty: true,
+          shouldValidate: true,
+        });
+      }
+      setTraceState('idle');
+      haptic('success');
+    } catch {
+      setTraceState('error');
+    }
+  };
 
   useEffect(() => {
     const hasPoint = values.meetingLat != null && values.meetingLng != null;
@@ -273,8 +303,49 @@ function ItineraireStep() {
         <NumberFieldV2 name="distanceKm" label="Distance" unit="km" max={500} step={0.1} />
         <NumberFieldV2 name="elevationGainM" label="Dénivelé" unit="m" max={20_000} step={50} />
       </div>
+      <div className="lkdv-cv2c-inline-add">
+        <input
+          ref={traceInputRef}
+          type="file"
+          accept=".gpx,application/gpx+xml"
+          className="lkdv-cv2c-sr-only"
+          aria-label="Importer une trace GPX"
+          onChange={(event) => {
+            void importTrace(event.target.files?.[0]);
+            event.target.value = '';
+          }}
+        />
+        <button
+          type="button"
+          className="lkdv-cv2-chip lkdv-cv2-chip--lg"
+          onClick={() => traceInputRef.current?.click()}
+          disabled={traceState === 'loading'}
+        >
+          {traceState === 'loading' ? (
+            <Loader2 size={13} className="lkdv-cv2c-spin" aria-hidden="true" />
+          ) : (
+            <Upload size={13} aria-hidden="true" />
+          )}
+          Importer une trace (distance et D+)
+        </button>
+      </div>
+      {traceState === 'error' ? (
+        <p className="lkdv-cv2-field-hint lkdv-cv2c-notice" role="status">
+          Trace illisible ou vide : distance et dénivelé peuvent être saisis à la main.
+        </p>
+      ) : null}
       <TextFieldV2 name="duration" label="Durée estimée" placeholder="5 h" maxLength={60} />
-      <ChipsFieldV2 name="recurrence" label="Récurrence" options={RECURRENCES.map((entry) => ({ ...entry }))} />
+      <SegmentedFieldV2
+        label="Récurrence"
+        options={RECURRENCES.map((entry) => ({ ...entry }))}
+        value={values.recurrence}
+        onChange={(value) =>
+          form.setValue('recurrence', value as SortieFormValuesV2['recurrence'], {
+            shouldDirty: true,
+            shouldValidate: true,
+          })
+        }
+      />
       <p className="lkdv-cv2-field-hint">
         La règle de récurrence est enregistrée, les occurrences ne sont pas générées.
       </p>
@@ -480,9 +551,11 @@ function SortieBody({
   return (
     <>
       <PrefillApplierV2 values={prefillValues} nonce={prefillNonce} />
-      <div className="lkdv-cv2c-ticket-preview" inert aria-hidden="true">
-        <EventTicket event={ticket} variant="preview" />
-      </div>
+      {api.active ? (
+        <div className="lkdv-cv2c-ticket-preview" inert aria-hidden="true">
+          <EventTicket event={ticket} variant="preview" />
+        </div>
+      ) : null}
       {api.step === 0 ? <ActivityPlaceStep user={user} prefill={prefill} /> : null}
       {api.step === 1 ? <ItineraireStep /> : null}
       {api.step === 2 ? <ParticipantsStep /> : null}
@@ -498,7 +571,7 @@ function SortieBody({
  * check-list sécurité, kit requis, récurrence stockée, aperçu billet vivant,
  * et **une seule RPC atomique** (`create_event_with_post`).
  */
-export function SortieFormV2({ active, prefill, prefillNonce, onNavChange }: CreateFormV2Props) {
+export function SortieFormV2({ active, prefill, prefillNonce, onNavChange, stepHosts }: CreateFormV2Props) {
   const { user, reportCreated } = useCreateSheet();
   const defaults = React.useRef(createDefaultsV2('sortie')).current;
 
@@ -510,6 +583,7 @@ export function SortieFormV2({ active, prefill, prefillNonce, onNavChange }: Cre
       active={active}
       disabled={!user}
       onNavChange={onNavChange}
+      stepHosts={stepHosts}
       onSubmit={async (values) => {
         try {
           const result = await createEventWithPostV2(values);

@@ -464,6 +464,20 @@ export function TracePaneV2({ user }: { user: { id: string } | null }) {
         {trace.length > 1 ? ` Départ et arrivée déplaçables.` : ''}
       </p>
 
+      {trace.length > 1 ? (
+        <details className="lkdv-cv2c-point-list">
+          <summary className="lkdv-cv2-field-hint">Liste des points ({trace.length})</summary>
+          <ol>
+            {trace
+              .filter((_, index) => index % Math.max(1, Math.round(trace.length / 20)) === 0)
+              .map(([lng, lat], index) => (
+                <li key={`${index}-${lng}-${lat}`}>
+                  {lat.toFixed(4)}° N · {lng.toFixed(4)}° E
+                </li>
+              ))}
+          </ol>
+        </details>
+      ) : null}
       <div className="lkdv-cv2c-inline-add">
         <button type="button" className="lkdv-cv2-chip lkdv-cv2-chip--sm" onClick={() => fileInputRef.current?.click()}>
           <Upload size={12} aria-hidden="true" /> Importer un GPX

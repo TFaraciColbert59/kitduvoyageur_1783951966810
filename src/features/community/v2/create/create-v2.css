@@ -17,7 +17,7 @@
   min-height: 100%;
 }
 
-.lkdv-cv2c-form .lkdv-cv2c-pane {
+.lkdv-cv2c-pane {
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -1692,4 +1692,75 @@
   display: block;
   font: 400 10.5px/1.3 var(--font-sans);
   color: var(--lkv-text-secondary);
+}
+
+/* ── Carnet : liste accessible des points du tracé ──────────────────────── */
+
+.lkdv-cv2c-point-list {
+  border-radius: var(--cv2-field-radius);
+  background: var(--lkv-surface-card);
+  box-shadow: inset 0 0 0 0.5px var(--lkv-border);
+  padding: 8px 12px;
+}
+
+.lkdv-cv2c-point-list summary {
+  cursor: pointer;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+}
+
+.lkdv-cv2c-point-list ol {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px 10px;
+  font: 500 10.5px/1.4 var(--font-mono);
+  color: var(--lkv-text-secondary);
+}
+
+/* ── Pages d'étapes de la coque (glisser = étapes, pas de type) ─────────── */
+
+.lkdv-cv2c-step-host {
+  display: contents;
+}
+
+.lkdv-cv2c-form-mount {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  overflow: visible;
+}
+
+.lkdv-cv2c-form-mount > * {
+  display: block;
+}
+
+/* ── Cibles tactiles ≥ 44 px : extension invisible autour des petits boutons ─ */
+
+.lkdv-cv2-sheet .lkdv-cv2-chip--sm::after,
+.lkdv-cv2-sheet .lkdv-cv2c-chip-x::after,
+.lkdv-cv2-sheet .lkdv-cv2c-day-tab::after,
+.lkdv-cv2-sheet .lkdv-cv2c-map-btn::after,
+.lkdv-cv2-sheet .lkdv-cv2c-story-dock button::after,
+.lkdv-cv2-sheet .lkdv-cv2c-story-sticker::after {
+  content: '';
+  position: absolute;
+  left: -6px;
+  right: -6px;
+  top: -8px;
+  bottom: -8px;
+}
+
+.lkdv-cv2c-map-btn {
+  position: relative;
+}
+
+.lkdv-cv2c-story-dock button,
+.lkdv-cv2c-story-sticker,
+.lkdv-cv2c-day-tab {
+  position: relative;
 }

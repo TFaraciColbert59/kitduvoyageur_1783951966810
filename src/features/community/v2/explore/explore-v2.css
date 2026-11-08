@@ -77,13 +77,23 @@
 .lkdv-cv2x-tile-foot {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   min-width: 0;
   margin-top: 2px;
+  overflow: hidden;
 }
 
 .lkdv-cv2x-tile-foot .lkdv-cv2-avatars {
   flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.lkdv-cv2x-tile-foot .lkdv-cv2x-like,
+.lkdv-cv2x-tile-foot .lkdv-cv2x-comments {
+  flex: none;
+  min-width: 40px;
+  padding: 0 4px;
 }
 
 .lkdv-cv2x-like,
@@ -179,6 +189,17 @@
 
 /* ── Clubs ─────────────────────────────────────────────────────────────── */
 
+/* La pilule d'adhésion occupe la largeur de la tuile : libellés courts dans la
+   grille à deux colonnes, `aria-label` complet sur le bouton. */
+.lkdv-cv2x-club > .lkdv-cv2x-join {
+  width: 100%;
+  font-size: 12px;
+  padding: 0 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .lkdv-cv2x-club-head {
   position: relative;
   display: flex;
@@ -225,6 +246,13 @@
   text-overflow: ellipsis;
 }
 
+.lkdv-cv2-offline > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .lkdv-cv2x-club-signal > i {
   width: 6px;
   height: 6px;
@@ -259,7 +287,8 @@
   justify-content: center;
   gap: 6px;
   min-height: 44px;
-  padding: 0 14px;
+  max-width: 100%;
+  padding: 0 12px;
   border: 0;
   border-radius: var(--lkv-radius-full);
   background: var(--lkv-primary);
@@ -405,7 +434,7 @@
 
 .lkdv-cv2x-event-row .lkdv-cv2x-join,
 .lkdv-cv2x-event-row .lkdv-cv2x-register {
-  min-height: 40px;
+  min-height: 44px;
   padding: 0 12px;
   font-size: 12px;
   flex: none;
@@ -433,7 +462,7 @@
 
 .lkdv-cv2x-agenda-retry {
   align-self: flex-start;
-  min-height: 32px;
+  min-height: 44px;
   padding: 0 4px;
   border: 0;
   background: none;
@@ -785,9 +814,9 @@
 .lkdv-cv2x-chip-x {
   display: grid;
   place-items: center;
-  width: 28px;
-  height: 28px;
-  margin-left: -10px;
+  width: 44px;
+  height: 44px;
+  margin-left: -18px;
   border: 0;
   border-radius: 50%;
   background: none;
@@ -1183,4 +1212,125 @@
   .lkdv-cv2x-event-row {
     scroll-behavior: auto;
   }
+}
+
+/* ── Mini-carte topo (PlaceMiniMap) : un point ou plusieurs repères ─────── */
+
+.lkdv-cv2-map {
+  position: relative;
+  width: 100%;
+  border-radius: var(--cv2-radius-tile-sm);
+  overflow: hidden;
+  background: var(--lkv-surface-muted);
+  isolation: isolate;
+}
+
+.lkdv-cv2-map-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.lkdv-cv2-map--empty {
+  display: grid;
+  place-items: center;
+  padding: 10px;
+  font: 500 11.5px/1.4 var(--font-sans);
+  color: var(--lkv-text-secondary);
+  text-align: center;
+}
+
+.lkdv-cv2-map-label {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  max-width: calc(100% - 96px);
+  padding: 3px 8px;
+  border-radius: var(--lkv-radius-full);
+  background: var(--glass-bg-medium);
+  color: var(--lkv-forest-900);
+  font: 600 10.5px/1.3 var(--font-sans);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
+.lkdv-cv2-map-itinerary {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: var(--lkv-radius-full);
+  background: var(--cv2-field-bg);
+  color: var(--lkv-forest-900);
+  font: 600 11.5px/1 var(--font-sans);
+  text-decoration: none;
+  box-shadow: var(--cv2-field-shadow), inset 0 0 0 0.5px var(--cv2-field-border);
+}
+
+.lkdv-cv2-map-loading {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, var(--cv2-skeleton-lo), var(--cv2-skeleton-hi), var(--cv2-skeleton-lo));
+  background-size: 220% 100%;
+  animation: lkdv-cv2-shimmer 1.3s ease-in-out infinite;
+}
+
+.lkdv-cv2-map-pin,
+.lkdv-cv2-map-dot {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--lkv-primary);
+  color: var(--lkv-text-inverted);
+  box-shadow: 0 2px 8px var(--cv2-tile-border);
+}
+
+.lkdv-cv2-map-pin svg,
+.lkdv-cv2-map-dot svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.lkdv-cv2-map-dot {
+  cursor: pointer;
+}
+
+.lkdv-cv2-map-dot::after {
+  content: '';
+  position: absolute;
+  inset: -7px;
+  border-radius: 50%;
+}
+
+.lkdv-cv2-map-dot[data-kind='sortie'] {
+  background: var(--lkv-action);
+}
+
+.lkdv-cv2-map-dot[data-kind='carnet'] {
+  background: var(--lkv-primary);
+}
+
+/* La croix native de `input[type=search]` doublerait le bouton Effacer 44 px. */
+.lkdv-cv2-search input::-webkit-search-cancel-button,
+.lkdv-cv2-search input::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+  display: none;
 }

@@ -22,8 +22,8 @@
  *
  * CLASSES DISPONIBLES (réutilisables Explorer / Création)
  * - Coque : fournie par le Lead (`src/styles/communaute-v2-shell.css`) :
- *   `lkdv-cv2-layer/wrap/sheet/grab/topnav/capsule/body/pane/mini-slot/mini/
- *   footer/detail*/back`. Le contenu d'un volet se pose dans `.lkdv-cv2-pane`.
+ *   `lkdv-cv2-layer/wrap/sheet/grab/topnav/capsule/body/pane/mini-slot/mini/`,
+ *   puis `footer`, `detail`, `back`. Le contenu d'un volet se pose dans `.lkdv-cv2-pane`.
  * - Tuiles / listes : `lkdv-cv2-card`, `lkdv-cv2-tile`, `lkdv-cv2-tile-head`,
  *   `lkdv-cv2-list`, `lkdv-cv2-row`, `lkdv-cv2-sep`, `lkdv-cv2-cover`,
  *   `lkdv-cv2-search`, `lkdv-cv2-group`, `lkdv-cv2-group-head`, `lkdv-cv2-rail`,

@@ -130,6 +130,8 @@ export interface KitItemV2 {
   quantity: number;
   productId: string | null;
   ownershipId: string | null;
+  /** Mode préparation (`Kit#10`) : objet coché « emporté ». */
+  isChecked: boolean;
 }
 
 export interface CarnetMomentV2 {
@@ -584,6 +586,7 @@ const kitItemSchema = z.object({
   quantity: z.number().int().min(1).max(20).default(1),
   productId: z.string().nullable().default(null),
   ownershipId: z.string().nullable().default(null),
+  isChecked: z.boolean().default(false),
 });
 
 export const kitSchemaV2 = z

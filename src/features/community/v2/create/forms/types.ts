@@ -13,6 +13,11 @@ export interface CreateFormV2Props {
   prefillNonce: number;
   /** Remonte le pied / la mini-capsule / l'erreur serveur à la coque. */
   onNavChange: (nav: CreateNavV2) => void;
+  /**
+   * Pages d'étapes fournies par la coque (`mini.pages`) : le moteur porte le
+   * contenu de chaque étape dans sa page (glisser = étapes, pas de type).
+   */
+  stepHosts?: (HTMLElement | null)[] | null;
 }
 
 /** Valeurs de préremplissage connues (lecture sûre, aucune coercition). */

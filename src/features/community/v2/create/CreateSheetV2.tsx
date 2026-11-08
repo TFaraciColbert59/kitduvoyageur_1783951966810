@@ -100,7 +100,6 @@ export function CreateSheetV2({
   const { haptic } = useHapticFeedback();
   const keyboard = useKeyboardInsets();
   const [kindIndex, setKindIndex] = useState(() => kindIndexOf(initialKind));
-  const [visited, setVisited] = useState<CreateKindV2[]>(() => [initialKind]);
   const [navs, setNavs] = useState<Map<CreateKindV2, CreateNavV2>>(() => new Map());
   const [detail, setDetail] = useState<CreateDetailRequest | null>(null);
   const [confirmClose, setConfirmClose] = useState(false);
@@ -111,6 +110,8 @@ export function CreateSheetV2({
   const [prefillNonce, setPrefillNonce] = useState(0);
   const keepOpenRef = useRef(false);
   const authAskedRef = useRef(false);
+  const confirmDialogRef = useRef<HTMLDivElement | null>(null);
+  const confirmTriggerRef = useRef<HTMLElement | null>(null);
   const activeKind = CREATE_KINDS_V2[kindIndex] ?? 'post';
   const activeNav = navs.get(activeKind) ?? null;
   const config = createKindConfig(activeKind);
@@ -122,7 +123,6 @@ export function CreateSheetV2({
       return;
     }
     setKindIndex(kindIndexOf(initialKind));
-    setVisited((current) => (current.includes(initialKind) ? current : [...current, initialKind]));
     setConfirmClose(false);
     setIsland(null);
     setDetail(null);
@@ -164,6 +164,43 @@ export function CreateSheetV2({
     onRequireAuth();
   }, [onRequireAuth, open, user]);
 
+  // Confirmation de fermeture : piège de focus réel (l'alertdialog prend le
+  // focus, le reste du tiroir devient inerte, le focus revient au champ).
+  useEffect(() => {
+    if (!confirmClose || typeof document === 'undefined') return;
+    const dialog = confirmDialogRef.current;
+    confirmTriggerRef.current = document.activeElement as HTMLElement | null;
+    const sheet = dialog?.closest('.lkdv-cv2-sheet');
+    const touched: Array<{ element: Element; inert: boolean; ariaHidden: string | null }> = [];
+    if (sheet) {
+      sheet.querySelectorAll('.lkdv-cv2-body, .lkdv-cv2-topnav, .lkdv-cv2-mini-slot, .lkdv-cv2-footer').forEach((element) => {
+        if (dialog && element.contains(dialog)) return;
+        const html = element as HTMLElement;
+        touched.push({
+          element,
+          inert: html.inert || element.hasAttribute('inert'),
+          ariaHidden: element.getAttribute('aria-hidden'),
+        });
+        html.inert = true;
+        element.setAttribute('inert', '');
+        element.setAttribute('aria-hidden', 'true');
+      });
+    }
+    const focusTimer = window.setTimeout(() => {
+      dialog?.querySelector<HTMLElement>('[data-cv2-confirm-autofocus]')?.focus();
+    }, 80);
+    return () => {
+      window.clearTimeout(focusTimer);
+      touched.forEach(({ element, inert, ariaHidden }) => {
+        (element as HTMLElement).inert = inert;
+        if (!inert) element.removeAttribute('inert');
+        if (ariaHidden == null) element.removeAttribute('aria-hidden');
+        else element.setAttribute('aria-hidden', ariaHidden);
+      });
+      confirmTriggerRef.current?.focus?.();
+    };
+  }, [confirmClose]);
+
   const reportNav = useMemo(() => {
     const map = new Map<CreateKindV2, (nav: CreateNavV2) => void>();
     for (const kind of CREATE_KINDS_V2) {
@@ -190,10 +227,6 @@ export function CreateSheetV2({
     // Les setters sont stables : une seule carte pour toute la vie du tiroir.
   }, []);
 
-  const markVisited = useCallback((kind: CreateKindV2) => {
-    setVisited((current) => (current.includes(kind) ? current : [...current, kind]));
-  }, []);
-
   const changeKind = useCallback(
     (index: number) => {
       const nextKind = CREATE_KINDS_V2[index];
@@ -202,10 +235,9 @@ export function CreateSheetV2({
       currentNav?.flushDraft();
       haptic('selection');
       setKindIndex(index);
-      markVisited(nextKind);
       setDetail(null);
     },
-    [activeKind, haptic, markVisited, navs],
+    [activeKind, haptic, navs],
   );
 
   const requestCreate = useCallback(
@@ -217,17 +249,15 @@ export function CreateSheetV2({
         setPrefillNonce((nonce) => nonce + 1);
       }
       setKindIndex(kindIndexOf(kind));
-      markVisited(kind);
       setDetail(null);
       onCreateRequested?.(kind, prefill);
     },
-    [kindIndex, markVisited, navs, onCreateRequested],
+    [kindIndex, navs, onCreateRequested],
   );
 
   const flushAllDrafts = useCallback(() => {
-    for (const kind of visited) flushDraftV2(kind);
     navs.forEach((nav) => nav.flushDraft());
-  }, [navs, visited]);
+  }, [navs]);
 
   const closeNow = useCallback(() => {
     flushAllDrafts();
@@ -374,6 +404,31 @@ export function CreateSheetV2({
     [closeDetail, onRequireAuth, openDetail, reportCreated, requestCreate, user],
   );
 
+  const stepHostsRef = useRef<(HTMLDivElement | null)[]>([]);
+  const [, bumpHostsVersion] = useState(0);
+  const miniPages = useMemo(
+    () =>
+      CREATE_KINDS_V2.map((kind, index) =>
+        index === kindIndex
+          ? config.steps.map((step, stepIndex) => (
+              <div
+                key={`${kind}-${step.id}`}
+                ref={(element) => {
+                  if (stepHostsRef.current[stepIndex] === element) return;
+                  stepHostsRef.current[stepIndex] = element;
+                  // Les hôtes arrivent après le premier rendu du formulaire :
+                  // ce rendu les fait connaître au moteur (portails d'étapes).
+                  if (element) bumpHostsVersion((version) => version + 1);
+                }}
+                className="lkdv-cv2c-step-host"
+                data-step-host={stepIndex}
+              />
+            ))
+          : [],
+      ),
+    [config.steps, kindIndex],
+  );
+
   const capsureItems = useMemo(
     () =>
       CREATE_KINDS_V2.map((kind) => ({
@@ -395,8 +450,9 @@ export function CreateSheetV2({
       active: activeNav.stepIndex,
       onChange: (index: number) => activeNav.goToStep(index),
       label: `Étapes de la création : ${KIND_META[activeKind].label}`,
+      pages: miniPages,
     };
-  }, [activeKind, activeNav, config.steps]);
+  }, [activeKind, activeNav, config.steps, miniPages]);
 
   const footer = activeNav ? (
     <div className="lkdv-cv2c-footbar">
@@ -424,29 +480,73 @@ export function CreateSheetV2({
           aria-busy={activeNav.busy || undefined}
         >
           {activeNav.busy
-            ? activeNav.busyLabel ?? 'Envoi…'
-            : activeNav.stepIndex >= activeNav.stepCount - 1
-              ? activeNav.finalLabel
-              : 'Suivant'}
+            ? 'Envoi…'
+            : activeNav.busyLabel ??
+              (activeNav.stepIndex >= activeNav.stepCount - 1 ? activeNav.finalLabel : 'Suivant')}
         </button>
       </div>
     </div>
   ) : null;
 
-  const formsByKind: Record<CreateKindV2, React.ReactNode> = {
-    post: <PostFormV2 active={activeKind === 'post'} prefill={prefillByKind.post} prefillNonce={prefillNonce} onNavChange={reportNav.get('post')!} />,
-    story: <StoryFormV2 active={activeKind === 'story'} prefill={prefillByKind.story} prefillNonce={prefillNonce} onNavChange={reportNav.get('story')!} />,
-    sortie: <SortieFormV2 active={activeKind === 'sortie'} prefill={prefillByKind.sortie} prefillNonce={prefillNonce} onNavChange={reportNav.get('sortie')!} />,
-    club: <ClubFormV2 active={activeKind === 'club'} prefill={prefillByKind.club} prefillNonce={prefillNonce} onNavChange={reportNav.get('club')!} />,
-    kit: <KitFormV2 active={activeKind === 'kit'} prefill={prefillByKind.kit} prefillNonce={prefillNonce} onNavChange={reportNav.get('kit')!} />,
-    carnet: <CarnetFormV2 active={activeKind === 'carnet'} prefill={prefillByKind.carnet} prefillNonce={prefillNonce} onNavChange={reportNav.get('carnet')!} />,
+  const activeFormByKind: Record<CreateKindV2, React.ReactNode> = {
+    post: (
+      <PostFormV2
+        active={activeKind === 'post'}
+        prefill={prefillByKind.post}
+        prefillNonce={prefillNonce}
+        onNavChange={reportNav.get('post')!}
+        stepHosts={stepHostsRef.current}
+      />
+    ),
+    story: (
+      <StoryFormV2
+        active={activeKind === 'story'}
+        prefill={prefillByKind.story}
+        prefillNonce={prefillNonce}
+        onNavChange={reportNav.get('story')!}
+        stepHosts={stepHostsRef.current}
+      />
+    ),
+    sortie: (
+      <SortieFormV2
+        active={activeKind === 'sortie'}
+        prefill={prefillByKind.sortie}
+        prefillNonce={prefillNonce}
+        onNavChange={reportNav.get('sortie')!}
+        stepHosts={stepHostsRef.current}
+      />
+    ),
+    club: (
+      <ClubFormV2
+        active={activeKind === 'club'}
+        prefill={prefillByKind.club}
+        prefillNonce={prefillNonce}
+        onNavChange={reportNav.get('club')!}
+        stepHosts={stepHostsRef.current}
+      />
+    ),
+    kit: (
+      <KitFormV2
+        active={activeKind === 'kit'}
+        prefill={prefillByKind.kit}
+        prefillNonce={prefillNonce}
+        onNavChange={reportNav.get('kit')!}
+        stepHosts={stepHostsRef.current}
+      />
+    ),
+    carnet: (
+      <CarnetFormV2
+        active={activeKind === 'carnet'}
+        prefill={prefillByKind.carnet}
+        prefillNonce={prefillNonce}
+        onNavChange={reportNav.get('carnet')!}
+        stepHosts={stepHostsRef.current}
+      />
+    ),
   };
 
-  const panes = CREATE_KINDS_V2.map((kind, index) => (
-    <div key={kind} className="lkdv-cv2c-form-host" data-kind={kind} data-current={index === kindIndex ? 'true' : undefined}>
-      {visited.includes(kind) ? formsByKind[kind] : null}
-    </div>
-  ));
+  // La coque ignorera `panes` (mini.pages fourni) ; on conserve un repli neutre.
+  const panes = CREATE_KINDS_V2.map((kind) => <div key={kind} data-kind={kind} />);
 
   const sheetDetail = detail
     ? {
@@ -491,9 +591,13 @@ export function CreateSheetV2({
         island={islandNode}
         className={keyboard > 0 ? 'lkdv-cv2c-keyboard' : undefined}
       >
+        <div className="lkdv-cv2c-form-mount" data-kind={activeKind}>
+          {activeFormByKind[activeKind]}
+        </div>
         {confirmClose ? (
           <div className="lkdv-cv2c-confirm-layer">
             <div
+              ref={confirmDialogRef}
               className="lkdv-cv2-confirm lkdv-cv2c-confirm"
               role="alertdialog"
               aria-modal="true"
@@ -501,17 +605,14 @@ export function CreateSheetV2({
               aria-describedby="cv2c-confirm-text"
               onKeyDown={(event) => {
                 if (event.key !== 'Tab') return;
-                const nodes = event.currentTarget.querySelectorAll<HTMLElement>('button');
+                const nodes = [...event.currentTarget.querySelectorAll<HTMLElement>('button')];
                 if (nodes.length === 0) return;
-                const first = nodes[0];
-                const last = nodes[nodes.length - 1];
-                if (event.shiftKey && document.activeElement === first) {
-                  event.preventDefault();
-                  last.focus();
-                } else if (!event.shiftKey && document.activeElement === last) {
-                  event.preventDefault();
-                  first.focus();
-                }
+                event.preventDefault();
+                const index = nodes.indexOf(document.activeElement as HTMLElement);
+                const next = event.shiftKey
+                  ? nodes[(index - 1 + nodes.length) % nodes.length]
+                  : nodes[(index + 1) % nodes.length];
+                next?.focus();
               }}
             >
               <b id="cv2c-confirm-title">Fermer sans publier ?</b>
@@ -531,6 +632,7 @@ export function CreateSheetV2({
                   type="button"
                   className="lkdv-cv2-pill lkdv-cv2-pill--primary"
                   data-cv2-autofocus
+                  data-cv2-confirm-autofocus
                   onClick={() => setConfirmClose(false)}
                 >
                   Continuer l’édition
