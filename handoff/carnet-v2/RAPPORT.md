@@ -139,3 +139,20 @@ like post/peek fonctionnels ; 390/360 sans débordement ; `tsc` ciblé 0 ; 118/1
   430/768/1440 sans débordement.
 - **Migrations prod** : Lots A–E + `post_reports.target_type` appliqués (additifs, RLS).
 - **Bloqué données** : nuits/verdicts vides, J211/J212, km/D+ par jour absents.
+
+### Déploiement final de la refonte 100 % (8 novembre 2026, 22 h 30)
+
+- Commit **`0ff2df8`** (code + topo désaturée) sur `origin/main` ; déploiement
+  **`dpl_9GHBQhY1KMaeCytPPasJyJ1bkndL`** — **READY**, aliasé `koosmoweb.fr`,
+  `www.koosmoweb.fr`, `kitduvoyageur-1783951966810-ruddy.vercel.app`.
+- Prod mesurée à 430/768/1440 : racine 430, carte 406, colonne 430 centrée ≥768,
+  `scrollHeight = innerHeight`, zéro débordement, aucun `error.tsx`.
+- Prod : voyage-cards 7, dayhead, badge carte, altitude `+129 m · Profil · 5.7 km`,
+  Peek 5 actions, tiroir 406 × 521.9, verdicts en état vide, altitude du tiroir.
+  Axe **0 critical/serious** (résumé, peek, tiroir). Like/save/commentaires par
+  moment testés puis données de test supprimées.
+- Portes locales : **331/331 tests carnet**, `tsc` 0, `npm run build` 0,
+  `perf:budget` 9/9, `verify:invariants` vert.
+- **Migrations prod appliquées** (additives, RLS) : Lots A–E + `post_reports.target_type`.
+- Reste bloqué par la donnée : nuits et verdicts vides, J211/J212, km/D+ par jour
+  absents ; accès anonyme hors périmètre sécurité.
