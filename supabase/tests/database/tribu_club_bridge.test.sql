@@ -36,10 +36,12 @@ VALUES
   ('bd000000-0000-4000-8000-0000000000c5', 'TRIBU Club Parti', 'tribu_cd@test.local', 'user', 50)
 ON CONFLICT (id) DO UPDATE SET full_name = EXCLUDED.full_name;
 
+-- v2 : 'public' n'est pas une valeur du domaine clubs.privacy,
+-- cf. 20261108130008_communaute_v2_phase2_clubs_privacy.
 INSERT INTO public.clubs (id, name, slug, privacy, created_by)
 VALUES
-  ('bd000000-0000-4000-8000-0000000000d1', 'TRIBU Club Test', 'tribu-club-test', 'public', 'bd000000-0000-4000-8000-0000000000c1'),
-  ('bd000000-0000-4000-8000-0000000000d2', 'TRIBU Club Autre', 'tribu-club-autre', 'public', 'bd000000-0000-4000-8000-0000000000c4')
+  ('bd000000-0000-4000-8000-0000000000d1', 'TRIBU Club Test', 'tribu-club-test', 'open', 'bd000000-0000-4000-8000-0000000000c1'),
+  ('bd000000-0000-4000-8000-0000000000d2', 'TRIBU Club Autre', 'tribu-club-autre', 'open', 'bd000000-0000-4000-8000-0000000000c4')
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO public.club_members (club_id, user_id, role, status)

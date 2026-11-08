@@ -42,9 +42,10 @@ alter table public.events
 create index if not exists idx_events_starts_at on public.events (starts_at);
 create index if not exists idx_events_club_id on public.events (club_id);
 create index if not exists idx_events_kit_id on public.events (kit_id);
--- Tri chronologique des feeds : starts_at prime, event_date sert de repli.
-create index if not exists idx_events_effective_start
-  on public.events ((coalesce(starts_at, event_date::timestamptz)));
+-- Tri chronologique des feeds : starts_at prime, event_date sert de repli en
+-- SQL. Pas d'index d'expression sur coalesce(starts_at, event_date::timestamptz) :
+-- le cast date → timestamptz dépend du fuseau (STABLE), donc interdit en index.
+-- Les volumes (< 100 sorties) rendent le tri sans index indolore.
 
 -- ── 2. Statut d'inscription (liste d'attente) ──────────────────────────────
 -- Toutes les lignes existantes deviennent 'confirmed' (défaut) : la phase 1

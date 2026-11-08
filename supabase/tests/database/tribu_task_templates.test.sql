@@ -25,8 +25,10 @@ VALUES
   ('bd000000-0000-4000-8000-0000000000a3', 'TPL Externe', 'tribu_tpl_x@test.local', 'user', 50)
 ON CONFLICT (id) DO UPDATE SET full_name = EXCLUDED.full_name;
 
+-- v2 : 'public' n'est pas une valeur du domaine clubs.privacy,
+-- cf. 20261108130008_communaute_v2_phase2_clubs_privacy.
 INSERT INTO public.clubs (id, name, slug, privacy, created_by)
-VALUES ('bd000000-0000-4000-8000-0000000000b1', 'TPL Club', 'tribu-tpl-club', 'public',
+VALUES ('bd000000-0000-4000-8000-0000000000b1', 'TPL Club', 'tribu-tpl-club', 'open',
         'bd000000-0000-4000-8000-0000000000a1')
 ON CONFLICT (id) DO NOTHING;
 

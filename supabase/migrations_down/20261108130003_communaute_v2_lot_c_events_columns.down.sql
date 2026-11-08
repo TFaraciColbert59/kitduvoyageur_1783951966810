@@ -42,7 +42,6 @@ $$;
 
 -- ── Index puis colonnes ────────────────────────────────────────────────────
 drop index if exists public.idx_event_participants_event_status;
-drop index if exists public.idx_events_effective_start;
 drop index if exists public.idx_events_kit_id;
 drop index if exists public.idx_events_club_id;
 drop index if exists public.idx_events_starts_at;
