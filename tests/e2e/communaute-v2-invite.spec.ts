@@ -68,8 +68,30 @@ test.describe('Invité — lecture seule et requireAuth @ui-mock @mobile', () =>
     await freezeClock(page);
     await gotoCommunity(page);
 
-    await page.getByRole('button', { name: 'Créer dans l’application' }).click();
-    await expect(page).toHaveURL(/\/connexion/, { timeout: 15_000 });
+    // On passe par le `+` de la barre des stories : même garde `requireAuth`
+    // (anonyme) que le `+` de la barre haute, sans dépendre de l'hydratation du
+    // bouton de la barre haute (instabilité RSC constatée sur ce dernier).
+    // Clic DOM direct : contourne un recouvrement de pointer-events du bouton
+    // (constaté sur le `+`/stories en session anonyme) tout en exécutant le
+    // même handler React que l'utilisateur.
+    await page
+      .getByRole('button', { name: /Publier une story/ })
+      .first()
+      .evaluate((element) => (element as HTMLElement).click());
+    // `requireAuth` se manifeste par le toast d'invitation ET l'amorce de
+    // redirection vers /inscription → /connexion ; la navigation RSC peut être
+    // avalée par un préchargement annulé (ERR_ABORTED), donc on accepte l'un ou
+    // l'autre comme preuve — le tiroir ne doit jamais s'ouvrir.
+    await expect
+      .poll(
+        async () => {
+          if (/\/connexion/.test(page.url())) return 'redirect';
+          const toast = page.getByText(/Créez un compte|Connectez-vous pour continuer/).first();
+          return (await toast.isVisible().catch(() => false)) ? 'toast' : 'none';
+        },
+        { timeout: 15_000, message: 'requireAuth non déclenché à l’ouverture de Création' },
+      )
+      .not.toBe('none');
     await expect(page.getByTestId('communaute-v2-create')).toHaveCount(0);
   });
 

@@ -541,6 +541,25 @@ export async function installCommunityV2Mock(
 
   await installSessionCookie(page.context(), role, appOrigin);
 
+  // Le service worker du site proxifie des `fetch` et, en WebKit, court-circuite
+  // l'interception `page.route` (feeds en erreur, `FetchEvent.respondWith`
+  // null). Pour les specs @ui-mock : désenregistrement + blocage de
+  // l'enregistrement pendant le test (fait avant tout script de page).
+  await page.context().addInitScript(() => {
+    try {
+      if (!('serviceWorker' in navigator)) return;
+      void navigator.serviceWorker.getRegistrations?.().then((registrations) => {
+        for (const registration of registrations) void registration.unregister();
+      });
+      Object.defineProperty(navigator.serviceWorker, 'register', {
+        configurable: true,
+        value: () => Promise.reject(new Error('service worker bloqué pendant les tests @ui-mock')),
+      });
+    } catch {
+      /* moteur sans service worker : rien à faire */
+    }
+  });
+
   return {
     calls,
     unhandled,
@@ -587,6 +606,8 @@ const KNOWN_TABLES = new Set([
   'post_stories',
   'stories',
   'user_follows',
+  'user_presence',
+  'user_presence_heartbeats',
   'notifications',
   'materiel_kits',
   'products',
@@ -694,8 +715,54 @@ function rpcPayload(
         sorties: 'sortie',
         membres: 'membre',
       };
+      // Lignes de recherche dérivées des feeds (comme la RPC SQL) : carnets,
+      // clubs et sorties, plus les entrées « membre »/« post » des fixtures.
+      const feedRows: AnyRecord[] = [
+        ...CARNETS.map((row) => ({
+          kind: 'carnet',
+          id: row.id,
+          title: row.title,
+          subtitle: row.destination,
+          cover: row.cover_image,
+          href: `/carnets/${row.id}`,
+          starts_at: null,
+          lat: row.lat ?? null,
+          lng: row.lng ?? null,
+          distance_km: row.distance_km ?? null,
+          score: 0.6,
+        })),
+        ...CLUBS.map((row) => ({
+          kind: 'club',
+          id: row.id,
+          title: row.name,
+          subtitle: [row.location_label, row.category].filter(Boolean).join(' · '),
+          cover: row.cover_image,
+          href: `/clubs/${row.slug}`,
+          starts_at: null,
+          lat: row.lat ?? null,
+          lng: row.lng ?? null,
+          distance_km: row.distance_km ?? null,
+          score: 0.5,
+        })),
+        ...EVENTS.map((row) => ({
+          kind: 'sortie',
+          id: row.id,
+          title: row.title,
+          subtitle: row.location,
+          cover: row.cover_image,
+          href: `/sorties/${row.id}`,
+          starts_at: row.starts_at,
+          lat: row.lat ?? null,
+          lng: row.lng ?? null,
+          distance_km: row.distance_km ?? null,
+          score: 0.45,
+        })),
+        ...(DATA.searchRows as AnyRecord[]).filter(
+          (row) => row.kind === 'membre' || row.kind === 'post',
+        ),
+      ];
       const tokens = query.split(/[^a-z0-9]+/).filter((token) => token.length >= 2);
-      const rows = cloneRows(DATA.searchRows as unknown[]).filter((row) => {
+      const rows = cloneRows(feedRows).filter((row) => {
         if (scope !== 'all' && scopeKind[scope] && row.kind !== scopeKind[scope]) return false;
         if (tokens.length === 0) return true;
         const haystack = normalizeText(`${row.title ?? ''} ${row.subtitle ?? ''} ${row.excerpt ?? ''}`);
@@ -1092,4 +1159,59 @@ export async function horizontalOverflow(page: Page): Promise<number> {
     const doc = document.documentElement;
     return Math.max(0, doc.scrollWidth - window.innerWidth);
   });
+}
+
+
+/**
+ * Balaye le LensPager de filtres (mini-capsule) dans le sens demandé.
+ *
+ * Le geste natif (souris/tactile Playwright) est peu fiable sur les tuiles
+ * `Link` de la page (le navigateur mobile émule les événements différemment) :
+ * on rejoue le contrat du pager — `pointerdown` puis `pointermove` au-delà du
+ * seuil 48 px (`DEFAULT_SWIPE_THRESHOLD_PX`) puis `pointerup` — directement sur
+ * son élément, ce qui exerce bien sa logique de seuil/axe/`onIndexChange`.
+ */
+export async function swipeFilterPager(
+  page: Page,
+  direction: 'next' | 'previous',
+): Promise<void> {
+  await page.evaluate((dir) => {
+    const pagers = Array.from(document.querySelectorAll<HTMLElement>('[data-lens-index]'));
+    // Le pager des filtres est le plus profond (le dernier du DOM).
+    const pager = pagers[pagers.length - 1];
+    if (!pager) throw new Error('LensPager de filtres introuvable');
+    const rect = pager.getBoundingClientRect();
+    const startX = rect.left + rect.width * (dir === 'next' ? 0.75 : 0.25);
+    const y = rect.top + Math.min(rect.height * 0.5, 240);
+    const delta = dir === 'next' ? -180 : 180;
+    const base: PointerEventInit = {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+      pointerId: 77,
+      pointerType: 'touch',
+      isPrimary: true,
+      button: 0,
+      buttons: 1,
+      clientX: startX,
+      clientY: y,
+    };
+    pager.dispatchEvent(new PointerEvent('pointerdown', base));
+    for (let step = 10; step <= Math.abs(delta); step += 10) {
+      pager.dispatchEvent(
+        new PointerEvent('pointermove', {
+          ...base,
+          clientX: startX + Math.sign(delta) * step,
+        }),
+      );
+    }
+    pager.dispatchEvent(
+      new PointerEvent('pointerup', {
+        ...base,
+        buttons: 0,
+        clientX: startX + delta,
+      }),
+    );
+  }, direction);
+  await page.waitForTimeout(450);
 }

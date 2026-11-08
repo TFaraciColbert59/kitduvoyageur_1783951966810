@@ -29,6 +29,9 @@ export default defineConfig({
     baseURL: process.env.PW_BASE_URL || 'http://localhost:4028',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
+    // Le service worker de l'app court-circuite `page.route` (surtout WebKit) :
+    // les mocks @ui-mock exigent un contexte sans SW.
+    serviceWorkers: 'block',
   },
   projects: [
     {
