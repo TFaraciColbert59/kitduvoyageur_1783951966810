@@ -88,6 +88,23 @@ async function main() {
         };
         window.__THREE = THREE;
 
+        // Le rail du tiroir : cinq corps puis six modules, pour que les captures montrent les
+        // vignettes réellement produites et non un tiroir vide.
+        const rail = document.getElementById('dock-rail');
+        const cellules = [
+
+          ...['lkdv-one-15', 'lkdv-one-25', 'lkdv-one-45', 'lkdv-one-60', 'lkdv-one-80'].map((id) => ({ kind: 'b', id })),
+          ...['lkdv-m01', 'lkdv-m03', 'lkdv-m05', 'lkdv-m09', 'lkdv-m13', 'lkdv-m14'].map((id) => ({ kind: 'm', id })),
+        ];
+        for (const c of cellules) {
+          const el = document.createElement('span');
+          el.className = 'dock-cell';
+          el.setAttribute('data-thumb-kind', c.kind);
+          el.setAttribute('data-thumb-id', c.id);
+          el.setAttribute('data-thumb-key', c.kind + ':' + c.id);
+          rail.appendChild(el);
+        }
+
         // Populate thumbnails in UI rail
         const engine = getThumbnailEngine();
         const thumbEls = document.querySelectorAll('[data-thumb-key]');
@@ -256,6 +273,14 @@ async function main() {
       scrollbar-width: none;
     }
     .dock-rail::-webkit-scrollbar { display: none; }
+    .dock-cell {
+      flex: 0 0 86px;
+      height: 96px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 14px;
+      display: block;
+      overflow: hidden;
+    }
     .card-item {
       flex: 0 0 86px;
       height: 96px;
@@ -379,9 +404,7 @@ async function main() {
       <span class="dock-tab" id="tab-colors">Couleurs</span>
       <span class="dock-tab" id="tab-modules">Modules</span>
     </div>
-    <div class="dock-rail" id="dock-rail">
-      <!-- Rempli dynamiquement -->
-    </div>
+    <div class="dock-rail" id="dock-rail"></div>
   </section>
 
   <script src="/bundle.js"></script>
@@ -420,10 +443,11 @@ async function main() {
       await page.waitForFunction(
         () => window['__scene']?.info?.().bagModel?.status === 'glb',
         undefined,
-        { timeout: 20000 },
+        { timeout: 45000 },
       );
     } catch {
-      throw new Error("Le sac n'est jamais apparu a l'ecran : capture impossible.");
+      const etat = await page.evaluate(() => JSON.stringify(window['__scene']?.info?.().bagModel ?? null));
+      throw new Error("Le sac n'est jamais apparu a l'ecran : capture impossible. Etat : " + etat);
     }
     await page.waitForTimeout(500);
   }
@@ -449,6 +473,28 @@ async function main() {
     await page.screenshot({ path: path.join(capturesDir, nom) });
     console.log('  ' + nom.padEnd(34) + describeRect(rect).padEnd(52) + (raison ? 'ECHEC : ' + raison : 'ok'));
     if (raison) cadrageEchecs.push({ nom, raison });
+  }
+
+  /**
+   * Les vignettes se rendent une par tick d'inactivité, et les corps et modules attendent leur
+   * maillage réel avant d'être redessinés. Photographier avant produit un tiroir vide ou des
+   * silhouettes de repli, qui ne prouvent rien.
+   */
+  async function attendreVignettes() {
+    try {
+      await page.waitForFunction(
+        () => [...document.querySelectorAll('[data-thumb-key]')].every((e) => e.querySelector('img')),
+        undefined,
+        { timeout: 30000 },
+      );
+    } catch {
+      const manquantes = await page.evaluate(() =>
+        [...document.querySelectorAll('[data-thumb-key]')]
+          .filter((e) => !e.querySelector('img'))
+          .map((e) => e.getAttribute('data-thumb-key')),
+      );
+      throw new Error('Vignettes jamais rendues : ' + manquantes.join(', '));
+    }
   }
 
   console.log('Navigating to local studio on simulated iPhone 16 Pro (393x852)...');
@@ -610,7 +656,8 @@ async function main() {
     const scene = window['__scene'];
     scene.setDrawerOpen(true);
   });
-  await page.waitForTimeout(600);
+  await page.waitForTimeout(1400);
+  await attendreVignettes();
   await shoot('walkthrough-12-drawer-reopened.png');
 
   // 8. Exploded animation (Front A: envelope includes all items without clipping)

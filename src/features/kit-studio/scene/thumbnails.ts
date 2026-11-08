@@ -292,6 +292,11 @@ export interface ThumbnailEngine {
   subscribe(key: string, listener: (value: ThumbValue) => void): () => void;
   /** Retire la demande de la file si plus personne n'écoute cette clé. */
   cancel(key: string): void;
+  /**
+   * Oublie l'image d'une clé et la redemande si elle est encore affichée. Sert quand le maillage
+   * réel arrive après coup : la vignette de repli déjà dessinée doit céder la place.
+   */
+  invalidate(key: string): void;
   /** Révoque toutes les Blob URL et vide le cache et la file. */
   revokeAll(): void;
   /** revokeAll + libère le renderer et toutes les ressources. Le moteur est inutilisable ensuite. */
@@ -340,6 +345,23 @@ export function createThumbnailEngine(options: ThumbnailEngineOptions = {}): Thu
   let seq = 0;
   let renders = 0;
   let detachCanvas: (() => void) | null = null;
+
+  // Les maillages réels des corps et des modules arrivent après la première vignette, qui montre
+  // alors une silhouette de repli. À leur arrivée, les images concernées sont refaites — ici et non
+  // dans le composant React, pour que tout consommateur du moteur en profite, banc de test compris.
+  let desabonnerActifs: (() => void) | null = null;
+  let actifs: typeof import('./thumbAssets') | null = null;
+  /** Clé de vignette -> maillages dont elle dépend, relevés pendant sa construction. */
+  const dependances = new Map<string, Set<string>>();
+  void import('./thumbAssets').then((mod) => {
+    if (disposed) return;
+    actifs = mod;
+    desabonnerActifs = mod.surActifPret((id) => {
+      for (const [key, ids] of dependances) {
+        if (ids.has(id)) api.invalidate(key);
+      }
+    });
+  });
 
   const notify = (key: string, value: ThumbValue): void => {
     const set = listeners.get(key);
@@ -440,7 +462,13 @@ export function createThumbnailEngine(options: ThumbnailEngineOptions = {}): Thu
     const { res, cleanup } = resources(s);
     let object: Object3D | null = null;
     try {
+      actifs?.commencerReleve();
       object = runBuilder({ ...BUILDERS, ...options.builders }, job.spec, res);
+      if (actifs) {
+        const demandes = actifs.terminerReleve();
+        if (demandes.length) dependances.set(job.key, new Set(demandes));
+        else dependances.delete(job.key);
+      }
       if (!object) {
         // Constructeur pas encore enregistré : rien n'est mémorisé, une demande ultérieure réessaiera.
         cleanup(null);
@@ -496,7 +524,7 @@ export function createThumbnailEngine(options: ThumbnailEngineOptions = {}): Thu
     for (const k of new Set(keys)) notify(k, undefined);
   }
 
-  return {
+  const api: ThumbnailEngine = {
     register(key, spec) { specs.set(key, spec); },
 
     request(key, opts = {}) {
@@ -512,6 +540,24 @@ export function createThumbnailEngine(options: ThumbnailEngineOptions = {}): Thu
       const spec = specs.get(key);
       if (!spec) return;
       queue.set(key, { key, spec, priority, seq: seq++ });
+      pump();
+    },
+
+    invalidate(key) {
+      if (disposed) return;
+      // Une vignette dessinée avant l'arrivée du maillage réel montre la silhouette de repli :
+      // elle doit être refaite, pas conservée. On révoque l'image, on oublie la clé, et on
+      // redemande aussitôt si quelqu'un l'affiche encore.
+      const url = cache.get(key);
+      if (url) revokeUrl(url);
+      const connue = cache.delete(key);
+      const enFile = queue.delete(key);
+      if (!connue && !enFile) return;
+      notify(key, undefined);
+      if (!listeners.get(key)?.size) return;
+      const spec = specs.get(key);
+      if (!spec) return;
+      queue.set(key, { key, spec, priority: THUMB_PRIORITY.low, seq: seq++ });
       pump();
     },
 
@@ -539,6 +585,8 @@ export function createThumbnailEngine(options: ThumbnailEngineOptions = {}): Thu
       if (disposed) return;
       revokeAll();
       disposed = true;
+      desabonnerActifs?.();
+      desabonnerActifs = null;
       listeners.clear();
       specs.clear();
       detachCanvas?.();
@@ -564,6 +612,8 @@ export function createThumbnailEngine(options: ThumbnailEngineOptions = {}): Thu
       };
     },
   };
+
+  return api;
 }
 
 /* ───────────── Moteur partagé par toutes les cartes ───────────── */

@@ -1,8 +1,9 @@
 // Constructeurs des vignettes 3D (T12/T14) : la scène et la fiche ne les enregistraient pas, les cartes
 // affichaient donc toujours le repli SVG. Enregistrés à la première vignette demandée (voir ui/Thumb.tsx).
-import { Group, Mesh } from 'three';
+import { Box3, Group, Mesh, Vector3 } from 'three';
 import type { Object3D } from 'three';
 import { itemMesh } from './itemMesh';
+import { maillageCorps, maillageModule } from './thumbAssets';
 import { registerBuilder } from './thumbnails';
 import type { BagThumbSpec, ItemThumbSpec, ModuleThumbSpec, ThumbResources } from './thumbnails';
 import {
@@ -12,6 +13,54 @@ import {
   MODULE_THUMB_TRIM,
 } from '../domain/palette.scene';
 import { AVAILABLE_3D_MODULE_MANIFESTS, buildPlatineMesh, buildProceduralModuleMesh } from './bag/moduleLoader';
+import { GLB_MODEL_BY_BAG } from './bag/modelLayer';
+
+/**
+ * Copie un maillage réel pour une vignette, remis à l'échelle et posé comme l'était la silhouette
+ * de repli qu'il remplace. Les matériaux restent partagés avec l'actif en cache : le moteur ne
+ * libère que ceux qu'il a lui-même créés, rien n'est donc disposé sous les pieds de la scène.
+ *
+ * `hauteurVoulue` à `null` garde l'échelle réelle du maillage (modules, déjà modélisés aux cotes
+ * du manifeste) ; `baseY` à `null` centre l'objet sur l'origine au lieu de le poser.
+ */
+function copiePourVignette(
+  racine: Object3D,
+  hauteurVoulue: number | null,
+  baseY: number | null,
+): Object3D {
+  const copie = racine.clone(true);
+  copie.position.set(0, 0, 0);
+  copie.rotation.set(0, 0, 0);
+  copie.scale.set(1, 1, 1);
+  copie.updateMatrixWorld(true);
+
+  const boite = new Box3().setFromObject(copie);
+  if (boite.isEmpty()) return copie;
+
+  if (hauteurVoulue !== null) {
+    const hauteur = boite.max.y - boite.min.y;
+    if (hauteur > 1e-6) {
+      const k = hauteurVoulue / hauteur;
+      copie.scale.setScalar(k);
+      boite.min.multiplyScalar(k);
+      boite.max.multiplyScalar(k);
+    }
+  }
+
+  const centre = boite.getCenter(new Vector3());
+  copie.position.set(
+    -centre.x,
+    baseY === null ? -centre.y : baseY - boite.min.y,
+    -centre.z,
+  );
+
+  const enveloppe = new Group();
+  enveloppe.add(copie);
+  enveloppe.traverse((o) => {
+    if ((o as Mesh).isMesh) o.castShadow = true;
+  });
+  return enveloppe;
+}
 
 /** Objet du catalogue : même maillage que la scène, couleur déjà résolue par la palette. */
 function itemBuilder(spec: ItemThumbSpec, res: ThumbResources): Object3D {
@@ -55,6 +104,11 @@ function bagBuilder(spec: BagThumbSpec, res: ThumbResources): Object3D {
     bw = 1.12; bh = 1.74; bd = 0.68;
     isExpedition = true;
   }
+
+  // Le maillage publié est le produit ; la silhouette ci-dessous n'en est qu'une approximation
+  // dessinée à la main depuis le litrage. Dès que le master est chargé, c'est lui qu'on montre.
+  const master = maillageCorps(GLB_MODEL_BY_BAG[bagId] ?? null);
+  if (master) return copiePourVignette(master, bh, -0.7);
 
   const bodyMat = res.material(spec.body, 0.80, fabric);
   const pocketMat = res.material(spec.pocket, 0.82, fabric);
@@ -139,6 +193,11 @@ function moduleBuilder(spec: ModuleThumbSpec, res: ThumbResources): Object3D {
       m.moduleId === `lkdv-${normId}` ||
       m.code?.toLowerCase() === normId,
   );
+
+  if (manifest && manifest.origin !== 'procedural') {
+    const master = maillageModule(manifest.moduleId);
+    if (master) return copiePourVignette(master, null, null);
+  }
 
   if (manifest?.origin === 'procedural') {
     return buildProceduralModuleMesh(manifest);

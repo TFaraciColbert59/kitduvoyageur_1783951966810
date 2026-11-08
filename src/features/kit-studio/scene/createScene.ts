@@ -356,6 +356,9 @@ export function createKitScene(canvas: HTMLCanvasElement, options: KitSceneOptio
       // premier geste de l'utilisateur.
       rig.place();
       lifecycle.invalidate();
+      // Le sac est posé : les vignettes peuvent aller chercher leurs propres maillages. Avant,
+      // leurs téléchargements retardaient celui-ci de plus de vingt secondes.
+      void import('./thumbAssets').then((m) => m.ouvrirChargementsVignettes());
     });
   };
 
