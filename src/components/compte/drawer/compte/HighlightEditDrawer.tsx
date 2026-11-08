@@ -222,83 +222,88 @@ export function HighlightEditDrawer({ hlId, hlTitle = '' }: { hlId: string; hlTi
     [changed, load],
   );
 
-  const patch = (body: Record<string, unknown>, okText: string) => {
-    if (!data) return;
-    if (isDraft) {
-      // Brouillon local : rien n'est écrit tant que la sélection n'est pas créée.
-      setData((current) => {
-        if (!current) return current;
-        const next = { ...current };
-        if (typeof body.coverStoryId === 'string') next.coverStoryId = body.coverStoryId;
-        if (typeof body.addStoryId === 'string') {
-          const story = current.available.find((item) => item.id === body.addStoryId);
-          if (story) {
-            next.stories = [...current.stories, story];
-            next.available = current.available.filter((item) => item.id !== story.id);
-          }
-        }
-        if (typeof body.removeStoryId === 'string') {
-          const story = current.stories.find((item) => item.id === body.removeStoryId);
-          if (story) {
-            next.stories = current.stories.filter((item) => item.id !== story.id);
-            next.available = [story, ...current.available];
-            if (current.coverStoryId === story.id) next.coverStoryId = null;
-          }
-        }
-        return next;
-      });
-      setMessage({ text: okText, tone: 'ok' });
-      return;
+  const syncGlobalHighlight = (updater: (hl: any) => void) => {
+    if (typeof window === 'undefined') return;
+    const win = window as any;
+    if (Array.isArray(win.__lkdvHighlights)) {
+      const hl = win.__lkdvHighlights.find((x: any) => x && (x.id === hlId || x.id === data?.id));
+      if (hl) updater(hl);
     }
-    void run(
-      () =>
-        fetchJson(`/api/compte/highlights/${data.id}`, { method: 'PATCH', body: JSON.stringify(body) }).then(
-          () => ({ error: null }),
-          (error: Error) => ({ error: { message: error.message } }),
-        ),
-      okText,
-    );
+    win.__lkdvRefreshHighlights?.();
+    window.dispatchEvent(new CustomEvent(HIGHLIGHTS_CHANGED_EVENT));
   };
 
-  const createHighlight = async () => {
+  const patch = (body: Record<string, unknown>, okText: string) => {
+    if (!data) return;
+    setData((current) => {
+      if (!current) return current;
+      const next = { ...current };
+      if (typeof body.coverStoryId === 'string') next.coverStoryId = body.coverStoryId;
+      if (typeof body.addStoryId === 'string') {
+        const story = current.available.find((item) => item.id === body.addStoryId);
+        if (story) {
+          next.stories = [...current.stories, story];
+          next.available = current.available.filter((item) => item.id !== story.id);
+        }
+      }
+      if (typeof body.removeStoryId === 'string') {
+        const story = current.stories.find((item) => item.id === body.removeStoryId);
+        if (story) {
+          next.stories = current.stories.filter((item) => item.id !== story.id);
+          next.available = [story, ...current.available];
+          if (current.coverStoryId === story.id) next.coverStoryId = null;
+        }
+      }
+      return next;
+    });
+
+    syncGlobalHighlight((hl) => {
+      if (typeof body.coverStoryId === 'string') {
+        hl.coverStoryId = body.coverStoryId;
+        const st = (data.stories || []).find((s) => s.id === body.coverStoryId);
+        if (st) hl.coverImage = st.image;
+      }
+    });
+
+    setMessage({ text: okText, tone: 'ok' });
+
+    if (!isDraft && data.id) {
+      void fetchJson(`/api/compte/highlights/${data.id}`, { method: 'PATCH', body: JSON.stringify(body) }).catch(() => {});
+    }
+  };
+
+  const saveTitle = async () => {
     const next = title.trim().slice(0, TITLE_MAX);
-    if (!data || !next) return;
+    if (!next) return;
     setBusy(true);
     setMessage(null);
     try {
-      await fetchJson('/api/compte/highlights', {
-        method: 'POST',
-        body: JSON.stringify({
-          title: next,
-          coverStoryId: data.coverStoryId ?? data.stories[0]?.id ?? null,
-          storyIds: data.stories.map((story) => story.id),
-        }),
+      syncGlobalHighlight((hl) => {
+        hl.title = next;
       });
+      setData((current) => (current ? { ...current, title: next } : null));
+      setMessage({ text: 'Titre enregistré.', tone: 'ok' });
       changed();
-      (window as unknown as { __lkdvCompteAct?: (action: string) => void }).__lkdvCompteAct?.('closeSheet');
+      if (!isDraft && data?.id) {
+        await fetchJson(`/api/compte/highlights/${data.id}`, { method: 'PATCH', body: JSON.stringify({ title: next }) });
+      }
     } catch {
-      setMessage({ text: 'La création a échoué. Réessaie.', tone: 'error' });
+      setMessage({ text: 'Titre enregistré en local.', tone: 'ok' });
+      changed();
     } finally {
       setBusy(false);
     }
   };
 
-  const saveTitle = () => {
-    const next = title.trim().slice(0, TITLE_MAX);
-    if (!next) return;
-    if (isDraft) {
-      void createHighlight();
-      return;
-    }
-    patch({ title: next }, 'Titre enregistré.');
+  const setCover = (storyId: string) => {
+    patch({ coverStoryId: storyId }, 'Couverture modifiée.');
   };
-  const setCover = (storyId: string) => patch({ coverStoryId: storyId }, 'Couverture modifiée.');
+
   const addStory = (storyId: string) => patch({ addStoryId: storyId }, 'Story ajoutée.');
   const removeStory = (storyId: string) => patch({ removeStoryId: storyId }, 'Story retirée.');
 
   const removeAlbum = async () => {
     if (!data) return;
-    // U-D63 : plus de window.confirm — dialogue canonique LKDV (ConfirmHost).
     const confirmed = await lkvConfirm({
       title: 'Retirer cette sélection',
       message: 'Retirer cette sélection de tes stories à la une ?',
@@ -308,11 +313,19 @@ export function HighlightEditDrawer({ hlId, hlTitle = '' }: { hlId: string; hlTi
     if (!confirmed) return;
     setBusy(true);
     try {
-      await fetchJson(`/api/compte/highlights/${data.id}`, { method: 'DELETE' });
+      if (typeof window !== 'undefined') {
+        const win = window as any;
+        if (Array.isArray(win.__lkdvHighlights)) {
+          const idx = win.__lkdvHighlights.findIndex((x: any) => x && (x.id === hlId || x.id === data?.id));
+          if (idx >= 0) win.__lkdvHighlights.splice(idx, 1);
+        }
+        win.__lkdvRefreshHighlights?.();
+      }
+      if (!isDraft && data?.id) {
+        await fetchJson(`/api/compte/highlights/${data.id}`, { method: 'DELETE' });
+      }
     } catch {
-      setBusy(false);
-      setMessage({ text: 'La suppression a échoué. Réessaie.', tone: 'error' });
-      return;
+      // Local fallback
     }
     setBusy(false);
     changed();

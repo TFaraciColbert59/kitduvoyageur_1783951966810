@@ -45,6 +45,8 @@
 			</array>
 		</dict>
 	</dict>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Le Kit du Voyageur a besoin de votre microphone pour enregistrer et envoyer des messages vocaux dans vos conversations.</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>

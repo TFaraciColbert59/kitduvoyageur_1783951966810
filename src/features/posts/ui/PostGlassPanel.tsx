@@ -76,10 +76,14 @@ export function PostGlassPanel({
     }, SHEET_EXIT_MS);
   }, [onClosed]);
 
-  /* Tactile : fermeture effectuée UNIQUEMENT par un swipe vers la gauche (retour à la photo). */
+  /* Tactile : retour à la photo par swipe horizontal (droite ou gauche selon le côté du panneau). */
   useTouchSwipe(rootRef, {
     ignore: (target) => Boolean((target as HTMLElement | null)?.closest?.('input,textarea,select')),
     onSwipeLeft: () => {
+      swipedRef.current = true;
+      onClose();
+    },
+    onSwipeRight: () => {
       swipedRef.current = true;
       onClose();
     },

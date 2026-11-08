@@ -363,10 +363,10 @@ export function EditProfilePane() {
       ) : null}
 
       <div className="lkdv-compte-savebar">
-        <ActionPill label="Annuler" icon={<RotateCcw />} onClick={reset} disabled={busy || !dirty} />
+        {dirty ? <ActionPill label="Annuler" icon={<RotateCcw />} onClick={reset} disabled={busy} /> : null}
         <ActionPill
           tone="primary"
-          label={busy ? 'Enregistrement en cours' : 'Enregistrer le profil'}
+          label={busy ? 'Enregistrement…' : 'Enregistrer'}
           icon={<Check />}
           busy={busy}
           onClick={() => void save()}

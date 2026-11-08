@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 export interface DrawerTab {
   id: string;
@@ -100,6 +100,27 @@ export function DrawerShell({
     ? ({ '--n': secondary.items.length } as React.CSSProperties)
     : undefined;
 
+  const pointerStart = useRef<{ x: number; y: number } | null>(null);
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    pointerStart.current = { x: e.clientX, y: e.clientY };
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (!pointerStart.current) return;
+    const dx = e.clientX - pointerStart.current.x;
+    const dy = e.clientY - pointerStart.current.y;
+    pointerStart.current = null;
+    if (Math.abs(dx) > 36 && Math.abs(dx) > Math.abs(dy) * 1.3) {
+      if (dx < 0 && safeIndex < tabs.length - 1) {
+        onIndexChange(safeIndex + 1);
+      } else if (dx > 0 && safeIndex > 0) {
+        onIndexChange(safeIndex - 1);
+      }
+    }
+  };
+
   return (
     <div className="lkdv-drawer-shell" data-state={state} data-secondary={secondary ? 'true' : 'false'}>
       <style dangerouslySetInnerHTML={{ __html: DRAWER_SHELL_CSS }} />
@@ -137,7 +158,12 @@ export function DrawerShell({
         </div>
       </div>
 
-      <div className="lkdv-drawer-viewport">
+      <div
+        className="lkdv-drawer-viewport"
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={() => { pointerStart.current = null; }}
+      >
         {state === 'loading' ? <DrawerSkeleton /> : null}
         {state === 'error' ? <DrawerError onRetry={onRetry} /> : null}
         {state === 'ready' ? (

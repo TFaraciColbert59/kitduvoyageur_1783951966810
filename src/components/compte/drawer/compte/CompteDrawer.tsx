@@ -252,7 +252,8 @@ export const COMPTE_CSS = `
 .lkdv-compte-link-row{display:grid!important;grid-template-columns:88px minmax(0,1fr) 26px!important;gap:5px!important;align-items:center!important;}
 .lkdv-compte-link-remove{width:26px!important;height:26px!important;border:0!important;border-radius:50%!important;background:none!important;color:var(--label3)!important;display:grid!important;place-items:center!important;cursor:pointer!important;}
 .lkdv-compte-empty-line{display:flex!important;align-items:center!important;gap:5px!important;margin:0!important;font:500 11px var(--sf)!important;color:var(--label3)!important;}
-.lkdv-compte-savebar{position:sticky!important;bottom:0!important;z-index:4!important;display:flex!important;justify-content:flex-end!important;gap:6px!important;padding:8px 0 2px!important;background:linear-gradient(180deg,rgba(248,250,245,0),rgba(248,250,245,.92) 40%)!important;}
+.lkdv-compte-savebar{position:absolute!important;right:14px!important;bottom:14px!important;z-index:30!important;display:flex!important;align-items:center!important;gap:8px!important;padding:0!important;background:none!important;}
+.lkdv-compte-pane{position:relative!important;display:flex!important;flex-direction:column!important;gap:10px!important;padding:4px 2px 68px!important;}
 .lkdv-compte-note{display:flex!important;align-items:flex-start!important;gap:5px!important;margin:0!important;font:400 10.5px/1.4 var(--sf)!important;color:var(--label3)!important;}
 .lkdv-compte-share{position:relative!important;overflow:hidden!important;max-height:100%!important;display:flex!important;flex-direction:column!important;gap:6px!important;margin:0 8px 8px!important;padding:0!important;box-sizing:border-box!important;}
 .lkdv-compte-share-card{position:relative!important;overflow:hidden!important;display:flex!important;flex-direction:column!important;align-items:center!important;gap:8px!important;padding:10px 12px 10px!important;border-radius:20px!important;background:linear-gradient(160deg,rgba(255,255,255,.82),rgba(244,248,240,.6))!important;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.1),0 10px 24px rgba(23,43,36,.08)!important;flex:1 1 auto!important;min-height:0!important;}
@@ -289,8 +290,8 @@ export const COMPTE_CSS = `
 .lkdv-compte-edit-hero.has-cover .lkdv-compte-edit-preview{position:relative!important;margin:8px!important;background:linear-gradient(180deg,rgba(255,255,255,.74),rgba(255,255,255,.52))!important;-webkit-backdrop-filter:blur(16px) saturate(1.6)!important;backdrop-filter:blur(16px) saturate(1.6)!important;}
 .lkdv-compte-edit-hero-tools{position:absolute!important;top:8px!important;right:8px!important;z-index:2!important;display:flex!important;gap:6px!important;}
 .lkdv-compte-edit-hero:not(.has-cover) .lkdv-compte-edit-hero-tools{position:static!important;order:2!important;justify-content:flex-end!important;margin-top:6px!important;}
-.lkdv-compte-edit-avatar{position:relative!important;overflow:visible!important;}
-.lkdv-compte-edit-avatar img{border-radius:50%!important;}
+.lkdv-compte-edit-avatar{position:relative!important;width:100%!important;height:100%!important;border-radius:50%!important;overflow:hidden!important;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.12)!important;}
+.lkdv-compte-edit-avatar img{width:100%!important;height:100%!important;object-fit:cover!important;border-radius:50%!important;display:block!important;}
 .lkdv-compte-photo-pill{cursor:pointer!important;}
 .lkdv-compte-photo-pill input{position:absolute!important;inset:0!important;opacity:0!important;cursor:pointer!important;}
 .lkdv-compte-photo-pill[data-disabled]{opacity:.45!important;pointer-events:none!important;}

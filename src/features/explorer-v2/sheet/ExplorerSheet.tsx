@@ -38,13 +38,15 @@ const LOW = 300;
 
 const DETENTS: Detent[] = ['peek', 'low', 'mid', 'full'];
 
-function heightsFor(viewport: number, bottomInset: number) {
-  const available = Math.max(240, viewport - bottomInset);
+function heightsFor(viewport: number, _bottomInset: number) {
+  // Strictement deux points d'arrêt : Minimum 30 % et Maximum 90 %
+  const minH = Math.round(viewport * 0.30);
+  const maxH = Math.round(viewport * 0.90);
   return {
-    peek: PEEK,
-    low: Math.min(LOW, available * 0.5),
-    mid: Math.round(available * 0.52),
-    full: Math.round(available * 0.88),
+    peek: minH,
+    low: minH,
+    mid: maxH,
+    full: maxH,
   } as Record<Detent, number>;
 }
 
@@ -92,33 +94,26 @@ export function ExplorerSheet({
 
   const setDetentFromHeight = useCallback(
     (next: number, velocity: number) => {
-      // Relâchement : cran le plus proche, arbitré par la vitesse.
-      if (velocity < -0.6) {
-        const index = DETENTS.indexOf(detent);
-        return onDetent(DETENTS[Math.min(DETENTS.length - 1, index + 1)]);
+      // Relâchement : strictement deux crans (30 % min et 90 % max)
+      const minH = heights.low;
+      const maxH = heights.full;
+      const midpoint = (minH + maxH) / 2;
+
+      if (velocity < -0.3) {
+        return onDetent('full');
       }
-      if (velocity > 0.6) {
-        const index = DETENTS.indexOf(detent);
-        if (index === 0 && onClose) {
+      if (velocity > 0.3) {
+        if (next < minH * 0.65 && onClose) {
           return onClose();
         }
-        return onDetent(DETENTS[Math.max(0, index - 1)]);
+        return onDetent('low');
       }
-      if (next < heights.peek * 0.65 && onClose) {
+      if (next < minH * 0.65 && onClose) {
         return onClose();
       }
-      let best: Detent = 'peek';
-      let bestDelta = Number.POSITIVE_INFINITY;
-      for (const candidate of DETENTS) {
-        const delta = Math.abs(heights[candidate] - next);
-        if (delta < bestDelta) {
-          bestDelta = delta;
-          best = candidate;
-        }
-      }
-      onDetent(best);
+      onDetent(next >= midpoint ? 'full' : 'low');
     },
-    [detent, heights, onDetent],
+    [heights, onClose, onDetent],
   );
 
   const onPointerDown = useCallback(

@@ -93,7 +93,7 @@ export interface ExplorerState {
   sheet: SheetKind;
   detent: Detent;
   tab: number;
-  mini: 0 | 1;
+  mini: number;
   selection?: Selection;
   activity?: ActivityState;
   /** Dernière sortie terminée, affichée dans l'écran Bilan. */

@@ -8,7 +8,7 @@ import type { MapPin } from './map/MapStage';
 import { ExplorerSheet } from './sheet/ExplorerSheet';
 import { buildSheetModel } from './sheet/SheetContent';
 import { TopChrome } from './chrome/TopChrome';
-import { ActivityPill, BottomBar } from './chrome/BottomBar';
+import { ActivityPill } from './chrome/BottomBar';
 import { SosButton } from './chrome/SosButton';
 import { Countdown, useLongPress } from './activity/Countdown';
 import { useGpsTracker } from './activity/useGpsTracker';
@@ -888,8 +888,6 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
           onFlag={() => state.showToast({ title: 'Repère posé', sub: 'Ajouté à ta sortie' })}
           onStop={() => state.stopActivity()}
         />
-      ) : !sheetOpen ? (
-        <BottomBar />
       ) : null}
 
       {/* Attributions (P10-09) : obligatoires pour OSM, OpenFreeMap, AWS Terrain,

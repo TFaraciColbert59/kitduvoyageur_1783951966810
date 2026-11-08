@@ -331,16 +331,20 @@ const hlArt = id => {
   return `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17402C" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>`;
 };
 var hlCover = h => {
-  const img = h && (h.coverImage || (Array.isArray(h.stories) && (h.stories[0]?.image || h.stories[0]?.media_url)) || h.image || h.carnet?.coverImage || h.carnet?.cover_image);
+  const firstStoryImg = Array.isArray(h?.stories) && h.stories.length > 0
+    ? (h.coverStoryId ? h.stories.find(s => s && s.id === h.coverStoryId)?.image : null) || (h.stories[0]?.image || h.stories[0]?.media_url)
+    : null;
+  const img = firstStoryImg || (h && (h.coverImage || h.image || h.carnet?.coverImage || h.carnet?.cover_image));
   if (img) return `<img src="${esc(img)}" alt="" loading="lazy" decoding="async" />`;
   if (h && h.id === 'hl4') return hlArt('hl4');
   if (h && h.id === 'hl5') return hlArt('hl5');
-  const fallback = ["https://images.unsplash.com/photo-1505765050516-f72dcac9c60e?auto=format&fit=crop&w=600&q=80",
+  const fallback = ["https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=600&q=80",
                     "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=600&q=80",
-                    "https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?auto=format&fit=crop&w=600&q=80",
-                    "https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?auto=format&fit=crop&w=600&q=80"];
-  const num = h ? (parseInt(String(h.id).replace(/\D/g, ''), 10) || 0) : 0;
-  return `<img src="${fallback[num % fallback.length]}" alt="" loading="lazy" decoding="async" />`;
+                    "https://images.unsplash.com/photo-1505765050516-f72dcac9c60e?auto=format&fit=crop&w=600&q=80",
+                    "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=600&q=80",
+                    "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=600&q=80"];
+  const hash = h && h.id ? String(h.id).split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) : 0;
+  return `<img src="${fallback[hash % fallback.length]}" alt="" loading="lazy" decoding="async" />`;
 };
 const seg = (a, labels, sel, extra = "") => `<div class="segc" role="group" ${extra}>${labels.map((l, i) => `<button data-a="${a}" data-v="${i}" aria-pressed="${sel === i}">${l}</button>`).join("")}<span class="th" style="width:calc((100% - 4px)/${labels.length});transform:translateX(${Math.max(0, sel) * 100}%);${sel < 0 ? "opacity:0" : ""}"></span></div>`;
 
@@ -2844,6 +2848,14 @@ let fit = function() {
   w.style.height = 844 * sc + "px";
 }
 window.addEventListener("resize", () => { fit(); syncCardBounds(); }); fit();
+const syncRuntimeHighlights = () => {
+  if (typeof window !== "undefined" && Array.isArray(window.__lkdvHighlights)) {
+    HIGHLIGHTS = window.__lkdvHighlights;
+  }
+  refresh(true);
+};
+window.addEventListener("lkdv:highlights-changed", syncRuntimeHighlights);
+window.__lkdvRefreshHighlights = syncRuntimeHighlights;
 let fitVB = function() {
   const tm = $("tm");
   if (!tm) return;
@@ -2981,16 +2993,20 @@ hlList = function () {
 };
 
 hlCover = h => {
-  const img = h && (h.coverImage || (Array.isArray(h.stories) && (h.stories[0]?.image || h.stories[0]?.media_url)) || h.image || h.carnet?.coverImage || h.carnet?.cover_image);
+  const firstStoryImg = Array.isArray(h?.stories) && h.stories.length > 0
+    ? (h.coverStoryId ? h.stories.find(s => s && s.id === h.coverStoryId)?.image : null) || (h.stories[0]?.image || h.stories[0]?.media_url)
+    : null;
+  const img = firstStoryImg || (h && (h.coverImage || h.image || h.carnet?.coverImage || h.carnet?.cover_image));
   if (img) return `<img src="${esc(img)}" alt="" loading="lazy" decoding="async" />`;
   if (h && h.id === 'hl4') return hlArt('hl4');
   if (h && h.id === 'hl5') return hlArt('hl5');
-  const fallback = ["https://images.unsplash.com/photo-1505765050516-f72dcac9c60e?auto=format&fit=crop&w=600&q=80",
+  const fallback = ["https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=600&q=80",
                     "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=600&q=80",
-                    "https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?auto=format&fit=crop&w=600&q=80",
-                    "https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?auto=format&fit=crop&w=600&q=80"];
-  const num = h ? (parseInt(String(h.id).replace(/\D/g, ''), 10) || 0) : 0;
-  return `<img src="${fallback[num % fallback.length]}" alt="" loading="lazy" decoding="async" />`;
+                    "https://images.unsplash.com/photo-1505765050516-f72dcac9c60e?auto=format&fit=crop&w=600&q=80",
+                    "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=600&q=80",
+                    "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=600&q=80"];
+  const hash = h && h.id ? String(h.id).split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) : 0;
+  return `<img src="${fallback[hash % fallback.length]}" alt="" loading="lazy" decoding="async" />`;
 };
 
 const unseen = () => 0;
@@ -3431,7 +3447,7 @@ renderTop = function () {
 };
 
 /* ---------- Glissement grille ↔ sorties (v20) ---------- */
-const SWIPE_MIN = 60, SWIPE_STRONG = 120, SWIPE_EDGE = 24, SWIPE_MAX_Y = 44;
+const SWIPE_MIN = 36, SWIPE_STRONG = 50, SWIPE_EDGE = 32, SWIPE_MAX_Y = 60;
 let igSwipe = null;
 let bindIgSwipe = function () {
   const top = $('top');
@@ -3500,18 +3516,16 @@ let bindIgSwipe = function () {
     igSwipe.dy = dy;
     if (!igSwipe.active) {
       // Détection de l'axe : le mouvement horizontal doit dominer le scroll vertical
-      if (Math.abs(dx) <= 12 || Math.abs(dx) <= Math.abs(dy) * 1.5) return;
-      // Sur l'onglet 0 (Grille), seul le swipe vers la gauche va vers les sorties
-      if (igSwipe.tab === 0 && dx > 0) return;
-      // Sur l'onglet 1 (Sorties), seul le swipe vers la droite revient vers la grille
-      if (igSwipe.tab === 1 && dx < 0) return;
+      if (Math.abs(dx) <= 10 || Math.abs(dx) <= Math.abs(dy) * 1.2) return;
+      if (igSwipe.tab <= 0 && dx > 0) return;
+      if (igSwipe.tab >= 3 && dx < 0) return;
       igSwipe.active = true;
       igSwipe.view.classList.remove('settle');
       igSwipe.view.classList.add('swiping');
       G.sup = Date.now() + 350;
       G.supEl = igSwipe.view;
     }
-    if (igSwipe.tab === 0 || igSwipe.tab === 1) {
+    if (igSwipe.tab >= 0 && igSwipe.tab <= 3) {
       if (!igSwipe.cap) {
         igSwipe.cap = true;
         try { igSwipe.view.setPointerCapture(igSwipe.id); } catch (_) {}
@@ -3532,18 +3546,15 @@ let bindIgSwipe = function () {
     const dy = (!canceled && hasX) ? e.clientY - st.y : st.dy;
     G.sup = Date.now() + 350;
     G.supEl = st.view;
-    if (st.tab === 0) {
-      if (!canceled && dx < -SWIPE_MIN) swipeTo(st.view, 1, 'out-left', 'in-right');
-      else settle(st.view);
-      return;
-    }
-    if (st.tab === 1) {
-      if (!canceled && ((st.edge && dx > SWIPE_MIN) || (dx > SWIPE_STRONG && Math.abs(dy) < SWIPE_MAX_Y))) {
-        swipeTo(st.view, 0, 'out-right', 'in-left');
-      } else {
-        settle(st.view);
+    if (!canceled && Math.abs(dy) < SWIPE_MAX_Y) {
+      if (dx < -SWIPE_MIN && st.tab < 3) {
+        swipeTo(st.view, st.tab + 1, 'out-left', 'in-right');
+        return;
       }
-      return;
+      if (dx > SWIPE_MIN && st.tab > 0) {
+        swipeTo(st.view, st.tab - 1, 'out-right', 'in-left');
+        return;
+      }
     }
     settle(st.view);
   };

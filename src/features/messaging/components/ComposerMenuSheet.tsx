@@ -68,6 +68,13 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
 }) => {
   const { haptic } = useHapticFeedback();
   const [view, setView] = useState<'menu' | 'gpx' | 'equip' | 'trail' | 'kit'>('menu');
+  const [preview, setPreview] = useState<
+    | { type: 'kit'; item: KitItem }
+    | { type: 'product'; item: InventoryItem }
+    | { type: 'trail'; item: TrailItem }
+    | { type: 'gpx'; file: File }
+    | null
+  >(null);
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [trails, setTrails] = useState<TrailItem[]>([]);
   const [kits, setKits] = useState<KitItem[]>([]);
@@ -77,7 +84,10 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
   const gpxInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (isOpen) setView('menu');
+    if (isOpen) {
+      setView('menu');
+      setPreview(null);
+    }
   }, [isOpen]);
 
   const openEquip = () => {
@@ -135,14 +145,50 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
   const handleGpxPick = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      haptic('medium');
-      onSendGpx(file);
-      onClose();
+      haptic('light');
+      setPreview({ type: 'gpx', file });
     }
     if (gpxInputRef.current) gpxInputRef.current.value = '';
   };
 
-  const backToMenu = () => setView('menu');
+  const backToMenu = () => {
+    if (preview) {
+      setPreview(null);
+      return;
+    }
+    setView('menu');
+  };
+
+  const confirmSend = () => {
+    if (!preview) return;
+    haptic('medium');
+    if (preview.type === 'kit') {
+      onSendKit({ kind: 'kit', kit_id: preview.item.id, kit_name: preview.item.name });
+    } else if (preview.type === 'product') {
+      onSendProduct({
+        kind: 'product',
+        id: preview.item.id,
+        name: preview.item.name,
+        photo_url: preview.item.photo_url,
+        category: preview.item.category,
+        price_cents: preview.item.price_cents,
+        product_slug: preview.item.product_slug,
+      });
+    } else if (preview.type === 'trail') {
+      onSendTrail({
+        kind: 'trail',
+        id: preview.item.id,
+        name: preview.item.name,
+        distance_km: preview.item.distance_km,
+        elevation_gain_m: preview.item.elevation_gain_m,
+        region: preview.item.region,
+      });
+    } else if (preview.type === 'gpx') {
+      onSendGpx(preview.file);
+    }
+    setPreview(null);
+    onClose();
+  };
 
   return (
     <AccountDrawerHost
@@ -150,7 +196,7 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
       open={isOpen}
       hideHeader
       headerAction={
-        view === 'gpx' ? (
+        !preview && view === 'gpx' ? (
           <button
             type="button"
             className="lg gbtn"
@@ -164,25 +210,29 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
         ) : null
       }
       title={
-        view === 'menu'
-          ? 'Partager dans le chat'
-          : view === 'equip'
-            ? 'Équipement'
-            : view === 'kit'
-              ? 'Mes kits'
-              : 'Randonnée'
+        preview
+          ? 'Vérifier la pièce jointe'
+          : view === 'menu'
+            ? 'Partager dans le chat'
+            : view === 'equip'
+              ? 'Équipement'
+              : view === 'kit'
+                ? 'Mes kits'
+                : 'Randonnée'
       }
       subtitle={
-        view === 'menu'
-          ? 'GPX, équipement, randonnée, kit'
-          : view === 'equip'
-            ? 'Depuis votre inventaire'
-            : view === 'kit'
-              ? 'Vos kits de matériel'
-              : 'Vos randonnées enregistrées'
+        preview
+          ? 'Confirmez avant l’envoi'
+          : view === 'menu'
+            ? 'GPX, équipement, randonnée, kit'
+            : view === 'equip'
+              ? 'Depuis votre inventaire'
+              : view === 'kit'
+                ? 'Vos kits de matériel'
+                : 'Vos randonnées enregistrées'
       }
       onClose={onClose}
-      onBack={view === 'menu' ? undefined : backToMenu}
+      onBack={preview ? () => setPreview(null) : view === 'menu' ? undefined : backToMenu}
     >
       <input
         ref={gpxInputRef}
@@ -192,8 +242,185 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
         onChange={handleGpxPick}
       />
 
-      <div className="msheet-body">
-      {view === 'menu' ? (
+      <div className="msheet-body" style={{ position: 'relative', height: '100%' }}>
+      {preview ? (
+        <div
+          style={{
+            padding: '24px 16px 60px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '100%',
+            boxSizing: 'border-box',
+            textAlign: 'center',
+          }}
+        >
+          {preview.type === 'product' && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+              <div
+                style={{
+                  position: 'relative',
+                  width: 120,
+                  height: 120,
+                  borderRadius: 20,
+                  overflow: 'hidden',
+                  boxShadow: '0 8px 24px rgba(23, 43, 36, 0.15)',
+                  border: '1px solid rgba(255, 255, 255, 0.9)',
+                }}
+              >
+                <Image
+                  src={preview.item.photo_url || '/assets/images/no_image.png'}
+                  alt=""
+                  fill
+                  style={{ objectFit: 'cover' }}
+                />
+              </div>
+              <div>
+                <b style={{ display: 'block', fontSize: 17, color: '#17402C', lineHeight: 1.3 }}>
+                  {preview.item.name}
+                </b>
+                <span style={{ fontSize: 12, color: '#56665D', marginTop: 4, display: 'inline-block' }}>
+                  {preview.item.category || 'Équipement d’aventure'}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {preview.type === 'trail' && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+              <div
+                style={{
+                  width: 80,
+                  height: 80,
+                  borderRadius: 24,
+                  background: 'linear-gradient(135deg, #275d3f, #17402c)',
+                  display: 'grid',
+                  placeItems: 'center',
+                  color: '#fff',
+                  boxShadow: '0 8px 24px rgba(23, 43, 36, 0.2)',
+                }}
+              >
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m3 18 6-10 4 6 2-3 4 7H3Z" />
+                </svg>
+              </div>
+              <div>
+                <b style={{ display: 'block', fontSize: 17, color: '#17402C', lineHeight: 1.3 }}>
+                  {preview.item.name}
+                </b>
+                <span
+                  style={{
+                    display: 'inline-block',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    color: '#275d3f',
+                    background: 'rgba(39, 93, 63, 0.1)',
+                    padding: '3px 12px',
+                    borderRadius: 999,
+                    marginTop: 6,
+                  }}
+                >
+                  {[preview.item.distance_km != null ? `${preview.item.distance_km} km` : null, preview.item.elevation_gain_m != null ? `+${preview.item.elevation_gain_m} m D+` : null, preview.item.region]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {preview.type === 'kit' && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+              <div
+                style={{
+                  width: 80,
+                  height: 80,
+                  borderRadius: 24,
+                  background: 'linear-gradient(135deg, #275d3f, #17402c)',
+                  display: 'grid',
+                  placeItems: 'center',
+                  color: '#fff',
+                  boxShadow: '0 8px 24px rgba(23, 43, 36, 0.2)',
+                }}
+              >
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M7 8V6a5 5 0 0 1 10 0v2" />
+                  <rect x="5" y="8" width="14" height="12" rx="3" />
+                  <path d="M9 13h6" />
+                </svg>
+              </div>
+              <div>
+                <b style={{ display: 'block', fontSize: 17, color: '#17402C', lineHeight: 1.3 }}>
+                  {preview.item.name}
+                </b>
+                <span style={{ fontSize: 12, color: '#56665D', marginTop: 4, display: 'inline-block' }}>
+                  Kit de matériel complet vérifié
+                </span>
+              </div>
+            </div>
+          )}
+
+          {preview.type === 'gpx' && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+              <div
+                style={{
+                  width: 80,
+                  height: 80,
+                  borderRadius: 24,
+                  background: 'linear-gradient(135deg, #1e3a5f, #0f2440)',
+                  display: 'grid',
+                  placeItems: 'center',
+                  color: '#fff',
+                  boxShadow: '0 8px 24px rgba(15, 36, 64, 0.2)',
+                }}
+              >
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z" />
+                  <circle cx="12" cy="10" r="3" />
+                </svg>
+              </div>
+              <div>
+                <b style={{ display: 'block', fontSize: 16, color: '#17402C', lineHeight: 1.3 }}>
+                  {preview.file.name}
+                </b>
+                <span style={{ fontSize: 12, color: '#56665D', marginTop: 4, display: 'inline-block' }}>
+                  Tracé GPX · {(preview.file.size / 1024).toFixed(1)} Ko
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* 4. Pillule Envoyer flottante en bas à droite */}
+          <button
+            type="button"
+            className="mbtn p"
+            style={{
+              position: 'absolute',
+              right: 14,
+              bottom: 14,
+              zIndex: 40,
+              height: 38,
+              padding: '0 20px',
+              borderRadius: 999,
+              background: 'linear-gradient(180deg, #275d3f, #17402c)',
+              color: '#ffffff',
+              font: '600 13px var(--sf)',
+              boxShadow: '0 4px 14px rgba(23, 64, 44, 0.35)',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+            }}
+            onClick={confirmSend}
+          >
+            <span>Envoyer</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
+            </svg>
+          </button>
+        </div>
+      ) : view === 'menu' ? (
         <div>
           {onPickPhoto ? (
             <div className="li nt">
@@ -347,11 +574,10 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
                 <button
                   type="button"
                   className="mbtn-arrow"
-                  aria-label={`Envoyer le kit ${kit.name}`}
+                  aria-label={`Prévisualiser le kit ${kit.name}`}
                   onClick={() => {
                     haptic('light');
-                    onSendKit({ kind: 'kit', kit_id: kit.id, kit_name: kit.name });
-                    onClose();
+                    setPreview({ type: 'kit', item: kit });
                   }}
                 >
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -412,25 +638,15 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
                 <button
                   type="button"
                   className="mbtn-arrow"
-                  aria-label={`Envoyer l’équipement ${item.name}`}
+                  aria-label={`Prévisualiser l’équipement ${item.name}`}
                   onClick={() => {
                     haptic('light');
-                    onSendProduct({
-                      kind: 'product',
-                      id: item.id,
-                      name: item.name,
-                      photo_url: item.photo_url,
-                      category: item.category,
-                      price_cents: item.price_cents,
-                      product_slug: item.product_slug,
-                    });
-                    onClose();
+                    setPreview({ type: 'product', item });
                   }}
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M20.5 3.5 3.8 10.2l6.1 2.6 2.6 6.1 8-15.4Z" />
-                  <path d="m9.9 12.8 4.4-4.4" />
-                </svg>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M9 6l6 6-6 6" />
+                  </svg>
                 </button>
               </div>
             ))}
@@ -492,23 +708,14 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
                 <button
                   type="button"
                   className="mbtn-arrow"
-                  aria-label={`Envoyer la randonnée ${t.name}`}
+                  aria-label={`Prévisualiser la randonnée ${t.name}`}
                   onClick={() => {
                     haptic('light');
-                    onSendTrail({
-                      kind: 'trail',
-                      id: t.id,
-                      name: t.name,
-                      distance_km: t.distance_km,
-                      elevation_gain_m: t.elevation_gain_m,
-                      region: t.region,
-                    });
-                    onClose();
+                    setPreview({ type: 'trail', item: t });
                   }}
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="M20.5 3.5 3.8 10.2l6.1 2.6 2.6 6.1 8-15.4Z" />
-                    <path d="m9.9 12.8 4.4-4.4" />
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M9 6l6 6-6 6" />
                   </svg>
                 </button>
               </div>

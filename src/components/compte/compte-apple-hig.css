@@ -1727,16 +1727,17 @@
   .ig-avi-in { width: 66px !important; height: 66px !important; }
 }
 
-/* 3 — Grille Instagram : 3 colonnes carrées, remplissage intégral, 2 mm d'espacement régulier */
+/* 3 — Grille Instagram : 3 colonnes carrées, séparation de 1px max et 1px des bords */
 .ig-grid-wrap {
-  margin: 4px 8px 8px !important;
-  border-radius: 14px !important;
+  margin: 1px !important;
+  padding: 1px !important;
+  border-radius: 4px !important;
   overflow: hidden !important;
 }
 .ig-grid {
   display: grid !important;
   grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-  gap: 8px !important;
+  gap: 1px !important;
   width: 100% !important;
   margin: 0 !important;
   padding: 0 !important;
@@ -1746,7 +1747,7 @@
   width: 100% !important;
   height: auto !important;
   aspect-ratio: 1 / 1 !important;
-  border-radius: 10px !important;
+  border-radius: 2px !important;
   overflow: hidden !important;
   background: #0d1e15 !important;
   box-shadow: none !important;
@@ -1969,22 +1970,23 @@
   flex: none !important;
 }
 
-/* 3 — Grille carrée, espacement régulier 2 mm ; carrousel Sorties non rogné */
+/* 3 — Grille carrée, espacement 1px max et bords 1px */
 .ig-grid-wrap {
-  margin: 4px 8px 8px !important;
-  border-radius: 14px !important;
+  margin: 1px !important;
+  padding: 1px !important;
+  border-radius: 4px !important;
   overflow: hidden !important;
 }
 .ig-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-  gap: 8px !important;
+  gap: 1px !important;
   width: 100% !important;
 }
 .ig-tile {
   width: 100% !important;
   height: auto !important;
   aspect-ratio: 1 / 1 !important;
-  border-radius: 10px !important;
+  border-radius: 2px !important;
   overflow: hidden !important;
 }
 .ig-tile img.art,

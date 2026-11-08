@@ -95,7 +95,7 @@ export function KitSlot({
     const root = rootRef.current;
     const host = root?.closest('.lkdv-drawer-viewport, .lkdv-slot-shell') as HTMLElement | null;
     if (!host) return;
-    const measure = () => setAvailableHeight(Math.max(260, Math.floor(host.getBoundingClientRect().height) - 16));
+    const measure = () => setAvailableHeight(Math.max(240, Math.floor(host.getBoundingClientRect().height) - 68));
     measure();
     const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(measure) : null;
     observer?.observe(host);

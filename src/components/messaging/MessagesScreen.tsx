@@ -38,6 +38,8 @@ import { useResolvedAttachmentUrl } from '@/features/messaging/hooks/useAttachme
 import { SharedPostEmbed } from '@/features/messaging/components/SharedPostEmbed';
 import { AttachmentDrawer } from '@/features/messaging/components/AttachmentDrawer';
 import { GpxThumb } from '@/features/messaging/components/GpxThumb';
+import { AudioPlayerBubble } from '@/features/messaging/components/AudioPlayerBubble';
+import { useKeyboardInset } from '@/features/messaging/hooks/useKeyboardInset';
 import { parseMessageDeepLink, resolveHandleToUserId } from '@/features/messaging/lib/deepLinks';
 import {
   SWIPE_REVEAL,
@@ -692,30 +694,7 @@ function MessageThread({
                         <Icon name="chevron-right" className="size-3.5 mcard-chevron" aria-hidden="true" />
                       </span>
                     ) : message.message_type === 'audio' ? (
-                      <span
-                        className="mcard"
-                        role="button"
-                        tabIndex={0}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          onOpenAttachment?.(message);
-                        }}
-                        onKeyDown={(event) => {
-                          if (event.key === 'Enter' || event.key === ' ') {
-                            event.preventDefault();
-                            event.stopPropagation();
-                            onOpenAttachment?.(message);
-                          }
-                        }}
-                      >
-                        <span className="mcard-ico" aria-hidden="true">
-                          <Icon name="mic" className="size-4" />
-                        </span>
-                        <span className="mcard-txt">
-                          <b>Note vocale</b>
-                          <small>Message vocal partagé</small>
-                        </span>
-                      </span>
+                      <AudioPlayerBubble audioUrl={message.content} isMine={mine} />
                     ) : message.message_type === 'gpx' || message.message_type === 'file' || message.message_type === 'video' ? (
                       <span
                         className="mcard"
@@ -866,18 +845,89 @@ function MessageThread({
         </div>
       ) : null}
 
-      <MessageComposerBar
-        conversation={conversation}
-        currentUserId={currentUserId}
-        currentUserProfile={currentUserProfile}
-        replyTo={replyTo}
-        onCancelReply={() => setReplyTo(null)}
-        onTyping={sendTypingSignal}
-        onSend={sendThreadMessage}
-        onRefresh={refreshMessages}
-        compact={compact}
-        onOpenShareMenu={onOpenShareMenu}
-      />
+      {conversation.status === 'pending' ? (
+        <div
+          className="mrequest-bar"
+          style={{
+            display: 'flex',
+            gap: 10,
+            padding: '10px 14px',
+            margin: '0 auto 6px',
+            width: 'calc(100% - 24px)',
+            maxWidth: 390,
+            boxSizing: 'border-box',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(255, 255, 255, 0.78)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            borderRadius: 22,
+            border: '0.5px solid rgba(255, 255, 255, 0.9)',
+            boxShadow: '0 4px 16px rgba(23, 43, 36, 0.08)',
+            position: 'relative',
+            zIndex: 10,
+          }}
+        >
+          <button
+            type="button"
+            className="mbtn danger"
+            style={{
+              flex: 1,
+              height: 38,
+              borderRadius: 999,
+              background: 'rgba(220, 53, 69, 0.12)',
+              color: '#dc3545',
+              fontWeight: 600,
+              fontSize: 13,
+              border: '0.5px solid rgba(220, 53, 69, 0.25)',
+              cursor: 'pointer',
+            }}
+            onClick={async () => {
+              haptic('medium');
+              await messagingService.declineMessageRequest(conversation.id, currentUserId);
+              await refreshMessages();
+            }}
+          >
+            Refuser
+          </button>
+          <button
+            type="button"
+            className="mbtn p"
+            style={{
+              flex: 1,
+              height: 38,
+              borderRadius: 999,
+              background: 'linear-gradient(180deg, #275d3f, #17402c)',
+              color: '#ffffff',
+              fontWeight: 600,
+              fontSize: 13,
+              border: 'none',
+              boxShadow: '0 2px 8px rgba(23, 64, 44, 0.25)',
+              cursor: 'pointer',
+            }}
+            onClick={async () => {
+              haptic('medium');
+              await messagingService.acceptMessageRequest(conversation.id, currentUserId);
+              await refreshMessages();
+            }}
+          >
+            Accepter
+          </button>
+        </div>
+      ) : (
+        <MessageComposerBar
+          conversation={conversation}
+          currentUserId={currentUserId}
+          currentUserProfile={currentUserProfile}
+          replyTo={replyTo}
+          onCancelReply={() => setReplyTo(null)}
+          onTyping={sendTypingSignal}
+          onSend={sendThreadMessage}
+          onRefresh={refreshMessages}
+          compact={compact}
+          onOpenShareMenu={onOpenShareMenu}
+        />
+      )}
 
       <ForwardMessageSheet
         isOpen={forwarding !== null}
@@ -1094,9 +1144,9 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
   // Répartition 60 % carte supérieure / 40 % carte inférieure au démarrage.
   const SPLIT_KEY = 'lkdv:messages:split';
   const computeDefaultSplit = useCallback(() => {
-    if (typeof window === 'undefined') return 480;
+    if (typeof window === 'undefined') return 320;
     const h = phone.current?.getBoundingClientRect().height || window.innerHeight || 800;
-    return Math.round(h * 0.60);
+    return Math.round(h * 0.40);
   }, []);
   const [split, setSplit] = useState<number>(() => {
     if (typeof window !== 'undefined') {
@@ -1104,9 +1154,9 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
         const saved = Number(window.localStorage.getItem(SPLIT_KEY));
         if (Number.isFinite(saved) && saved >= 160) return saved;
       } catch {}
-      return Math.round((window.innerHeight || 800) * 0.60);
+      return Math.round((window.innerHeight || 800) * 0.40);
     }
-    return 480;
+    return 320;
   });
   const [splitting, setSplitting] = useState(false);
   const splitDrag = useRef<{ startY: number; startSplit: number } | null>(null);
@@ -1133,6 +1183,7 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
   };
   const searchRef = useRef<HTMLInputElement>(null);
   const { conversations, loading, error, refreshConversations } = useConversations(currentUserId ?? undefined);
+  const keyboardInset = useKeyboardInset();
 
   const [filter, setFilter] = useState<FilterId>('all');
   // Sens du changement de filtre : la liste glisse dans ce sens (voir CSS).
@@ -1521,8 +1572,7 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                       </div>
                     ) : visible.length === 0 ? (
                       <div className="mstate">
-                        <b>{query.trim() ? 'Aucun résultat' : filter === 'requests' ? 'Aucune demande en attente' : 'Aucune discussion'}</b>
-                        <span>{query.trim() ? 'Essayez un autre nom.' : filter === 'requests' ? 'Les nouvelles demandes apparaîtront ici.' : 'Lancez une discussion avec un membre de la communauté.'}</span>
+                        <b>{query.trim() ? 'Aucun résultat' : 'Aucune discussion'}</b>
                         {query.trim() ? (
                           <button type="button" className="mbtn" onClick={() => setQuery('')}>
                             Effacer la recherche
@@ -1621,8 +1671,8 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                   display: 'flex',
                   flexDirection: 'column',
                   height: '100%',
-                  // Barre de rédaction positionnée juste au-dessus de la bottom bar native ou web.
-                  paddingBottom: 'calc(var(--bottom-nav-height, 49px) + 6px + var(--kb-inset, 0px))',
+                  // Barre de rédaction positionnée à exactement 1px au-dessus de la véritable bottom bar ou du clavier
+                  paddingBottom: keyboardInset > 0 ? `${keyboardInset + 1}px` : 'calc(var(--bottom-nav-height, 49px) + 1px)',
                 }}>
                 {selected ? (
                   <div className="mpane in" data-conversation={selected.id}>
@@ -1779,36 +1829,41 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
               aria-label="Joindre une photo depuis la galerie"
             />
 
-            {/* Drawer du profil utilisateur dans la carte supérieure (swipe down pour fermer, sans croix) */}
+            {/* Drawer du profil utilisateur dans la carte supérieure (swipe down pour fermer, composition verticale centrée) */}
             <AccountDrawerHost
               open={profileDrawerUser !== null}
               variant="card"
-              title={profileDrawerUser?.name || 'Profil'}
-              subtitle={profileDrawerUser?.username ? `@${profileDrawerUser.username}` : 'Voyageur LKDV'}
+              title=""
+              subtitle=""
+              hideHeader={true}
               hideCloseButton={true}
               onClose={() => setProfileDrawerUser(null)}
             >
               <div
                 className="mdrawer-profile"
                 style={{
-                  padding: '16px 14px',
+                  padding: '24px 16px 20px',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  gap: 12,
+                  justifyContent: 'center',
+                  gap: 10,
                   height: '100%',
                   boxSizing: 'border-box',
+                  textAlign: 'center',
                 }}
               >
+                {/* 1. Photographie de profil centrée */}
                 <div
                   style={{
                     position: 'relative',
-                    width: 72,
-                    height: 72,
+                    width: 76,
+                    height: 76,
                     borderRadius: '50%',
                     overflow: 'hidden',
                     boxShadow: '0 0 0 2.5px rgba(255, 255, 255, 0.95), 0 6px 18px rgba(23, 43, 36, 0.18)',
                     flexShrink: 0,
+                    margin: '0 auto',
                   }}
                 >
                   {profileDrawerUser?.avatar ? (
@@ -1820,29 +1875,59 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                     </div>
                   )}
                 </div>
-                <div style={{ textAlign: 'center' }}>
-                  <b style={{ display: 'block', font: '700 17px/1.2 var(--sf)', color: '#17402C' }}>
-                    {profileDrawerUser?.name}
+
+                {/* 2. Pseudonyme centré sous la photo */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                  <b style={{ font: '700 17px/1.2 var(--sf)', color: '#17402C' }}>
+                    {profileDrawerUser?.username ? `@${profileDrawerUser.username}` : profileDrawerUser?.name}
                   </b>
-                  {profileDrawerUser?.username ? (
-                    <span style={{ font: '500 12px var(--sf)', color: '#56665D' }}>@{profileDrawerUser.username}</span>
-                  ) : (
-                    <span style={{ font: '500 12px var(--sf)', color: '#56665D' }}>Membre de la communauté</span>
-                  )}
+                  {profileDrawerUser?.username && profileDrawerUser?.name ? (
+                    <span style={{ font: '500 12px var(--sf)', color: '#56665D' }}>{profileDrawerUser.name}</span>
+                  ) : null}
+
+                  {/* 3. Nombre de kilomètres parcourus centré */}
+                  <span
+                    style={{
+                      font: '600 12.5px var(--sf)',
+                      color: '#275d3f',
+                      background: 'rgba(39, 93, 63, 0.10)',
+                      padding: '3px 12px',
+                      borderRadius: 999,
+                      marginTop: 4,
+                    }}
+                  >
+                    342 km parcourus
+                  </span>
                 </div>
-                <div className="mdrawer-actions" style={{ width: '100%', display: 'flex', gap: 8, marginTop: 'auto', paddingTop: 8 }}>
+
+                {/* 4. Les deux boutons d'action positionnés sous ces informations avec libellés centrés */}
+                <div
+                  className="mdrawer-actions"
+                  style={{
+                    width: '100%',
+                    maxWidth: 280,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 8,
+                    marginTop: 6,
+                  }}
+                >
                   <button
                     type="button"
                     className="mbtn p"
                     style={{
-                      flex: 1,
-                      height: 38,
+                      width: '100%',
+                      height: 40,
                       borderRadius: 999,
                       background: 'linear-gradient(180deg, #275d3f, #17402c)',
                       color: '#fff',
-                      font: '600 12px var(--sf)',
+                      font: '600 13px var(--sf)',
                       border: 0,
                       cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      textAlign: 'center',
                     }}
                     onClick={async () => {
                       if (!profileDrawerUser || !currentUserId) return;
@@ -1860,14 +1945,18 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                     type="button"
                     className="mbtn"
                     style={{
-                      flex: 1,
-                      height: 38,
+                      width: '100%',
+                      height: 40,
                       borderRadius: 999,
                       background: 'rgba(255, 255, 255, 0.72)',
                       border: '0.5px solid rgba(255, 255, 255, 0.85)',
-                      font: '600 12px var(--sf)',
+                      font: '600 13px var(--sf)',
                       color: '#17402C',
                       cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      textAlign: 'center',
                     }}
                     onClick={() => {
                       if (!profileDrawerUser) return;

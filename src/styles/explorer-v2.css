@@ -72,7 +72,7 @@
   position: fixed;
   inset: 0;
   overflow: hidden;
-  background: var(--xp-map-bg);
+  background: #060c18 url('/explorer-space-bg.jpg') center center / cover no-repeat;
   font-family: var(--xp-font);
   font-size: 14px;
   letter-spacing: -0.01em;
@@ -306,7 +306,7 @@ body:has(.xp-root[data-theme]) .lkv-app-background {
   left: 0;
   right: 0;
   bottom: 0 !important;
-  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + var(--cookie-banner-h, 0px)) !important;
+  padding-bottom: 0 !important;
   display: flex;
   flex-direction: column;
   border-radius: 30px 30px 0 0;
@@ -417,7 +417,7 @@ body:has(.xp-root[data-theme]) .lkv-app-background {
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
-  padding: 2px 0 14px;
+  padding: 2px 0 28px;
   animation: xpIn 0.35s ease 0.12s both;
 }
 .xp-sheet-scroll[hidden] {
