@@ -1,11 +1,231 @@
 [
   {
+    "scenario": "explorer-carnets",
+    "status": 401,
+    "url": "http://127.0.0.1:4028/api/compte/compte/notifications"
+  },
+  {
+    "scenario": "explorer-carnets",
+    "status": 401,
+    "url": "http://127.0.0.1:4028/api/telemetry/hub"
+  },
+  {
+    "scenario": "explorer-carnets-tri",
+    "status": 401,
+    "url": "http://127.0.0.1:4028/api/compte/compte/notifications"
+  },
+  {
+    "scenario": "explorer-carnets-tri",
+    "status": 401,
+    "url": "http://127.0.0.1:4028/api/telemetry/hub"
+  },
+  {
+    "scenario": "explorer-clubs",
+    "status": 401,
+    "url": "http://127.0.0.1:4028/api/compte/compte/notifications"
+  },
+  {
+    "scenario": "explorer-clubs",
+    "status": 401,
+    "url": "http://127.0.0.1:4028/api/telemetry/hub"
+  },
+  {
+    "scenario": "explorer-sorties",
+    "status": 401,
+    "url": "http://127.0.0.1:4028/api/compte/compte/notifications"
+  },
+  {
+    "scenario": "explorer-sorties",
+    "status": 401,
+    "url": "http://127.0.0.1:4028/api/telemetry/hub"
+  },
+  {
+    "scenario": "explorer-recherche",
+    "status": 401,
+    "url": "http://127.0.0.1:4028/api/compte/compte/notifications"
+  },
+  {
+    "scenario": "explorer-recherche",
+    "status": 401,
+    "url": "http://127.0.0.1:4028/api/telemetry/hub"
+  },
+  {
+    "scenario": "explorer-detail",
+    "status": 401,
+    "url": "http://127.0.0.1:4028/api/compte/compte/notifications"
+  },
+  {
+    "scenario": "explorer-detail",
+    "status": 401,
+    "url": "http://127.0.0.1:4028/api/telemetry/hub"
+  },
+  {
+    "scenario": "explorer-peek",
+    "status": 401,
+    "url": "http://127.0.0.1:4028/api/compte/compte/notifications"
+  },
+  {
+    "scenario": "explorer-peek",
+    "status": 401,
+    "url": "http://127.0.0.1:4028/api/telemetry/hub"
+  },
+  {
+    "scenario": "explorer-etat-vide",
+    "status": 401,
+    "url": "http://127.0.0.1:4028/api/compte/compte/notifications"
+  },
+  {
+    "scenario": "explorer-etat-vide",
+    "status": 401,
+    "url": "http://127.0.0.1:4028/api/telemetry/hub"
+  },
+  {
+    "scenario": "explorer-etat-erreur",
+    "status": 500,
+    "url": "https://fixture.supabase.co/rest/v1/user_profiles?select=id%2Cemail%2Cfull_name%2Cavatar_url%2Ctrust_score%2Cloyalty_points%2Cloyalty_level%2Cbio%2Clocation%2Cxp%2Clevel&id=eq.11111111-1111-4111-8111-"
+  },
+  {
+    "scenario": "explorer-etat-erreur",
+    "status": 500,
+    "url": "https://fixture.supabase.co/rest/v1/community_posts?select=id%2Cauthor_id%2Ccontent%2Ctitle%2Cimage_url%2Cimage_alt%2Cmedia_urls%2Cpost_type%2Ccreated_at%2Clikes_count%2Ccomments_count%2Cshares_count%"
+  },
+  {
+    "scenario": "explorer-etat-erreur",
+    "status": 500,
+    "url": "https://fixture.supabase.co/rest/v1/post_stories?select=id%2Cimage_url%2Cstorage_bucket%2Cstorage_path&author_id=eq.11111111-1111-4111-8111-111111111111&expires_at=lt.2026-11-08T14%3A56%3A18.269Z&arch"
+  },
+  {
+    "scenario": "explorer-etat-erreur",
+    "status": 500,
+    "url": "https://fixture.supabase.co/rest/v1/post_stories?select=id%2Cauthor_id%2Cimage_url%2Cstorage_path%2Ccaption%2Ccreated_at%2Cmedia_type%2Cduration_ms%2Ccomposition%2Creply_policy&expires_at=gt.2026-11-0"
+  },
+  {
+    "scenario": "explorer-etat-erreur",
+    "status": 401,
+    "url": "http://127.0.0.1:4028/api/compte/compte/notifications"
+  },
+  {
+    "scenario": "explorer-etat-erreur",
+    "status": 401,
+    "url": "http://127.0.0.1:4028/api/telemetry/hub"
+  },
+  {
+    "scenario": "explorer-etat-erreur",
+    "status": 500,
+    "url": "https://fixture.supabase.co/rest/v1/post_stories?select=id%2Cauthor_id%2Cimage_url%2Cstorage_path%2Ccaption%2Ccreated_at%2Cmedia_type%2Cduration_ms%2Ccomposition&media_type=eq.video&expires_at=gt.2026"
+  },
+  {
+    "scenario": "explorer-etat-erreur",
+    "status": 500,
+    "url": "https://fixture.supabase.co/rest/v1/community_posts?select=id%2Cauthor_id%2Ccontent%2Cimage_url%2Cmedia_urls%2Clinked_kit_id%2Clikes_count%2Ccomments_count%2Ccreated_at&order=created_at.desc&limit=40"
+  },
+  {
+    "scenario": "explorer-etat-erreur",
+    "status": 500,
+    "url": "https://fixture.supabase.co/rest/v1/rpc/community_carnets_feed"
+  },
+  {
+    "scenario": "explorer-etat-erreur",
+    "status": 500,
+    "url": "https://fixture.supabase.co/rest/v1/user_presence?on_conflict=user_id"
+  },
+  {
+    "scenario": "explorer-etat-chargement",
+    "status": 401,
+    "url": "http://127.0.0.1:4028/api/compte/compte/notifications"
+  },
+  {
+    "scenario": "explorer-etat-chargement",
+    "status": 401,
+    "url": "http://127.0.0.1:4028/api/telemetry/hub"
+  },
+  {
     "scenario": "explorer-ile",
     "status": 401,
     "url": "http://127.0.0.1:4028/api/compte/compte/notifications"
   },
   {
     "scenario": "explorer-ile",
+    "status": 401,
+    "url": "http://127.0.0.1:4028/api/telemetry/hub"
+  },
+  {
+    "scenario": "creation-publication",
+    "status": 401,
+    "url": "http://127.0.0.1:4028/api/compte/compte/notifications"
+  },
+  {
+    "scenario": "creation-publication",
+    "status": 401,
+    "url": "http://127.0.0.1:4028/api/telemetry/hub"
+  },
+  {
+    "scenario": "creation-story",
+    "status": 401,
+    "url": "http://127.0.0.1:4028/api/compte/compte/notifications"
+  },
+  {
+    "scenario": "creation-story",
+    "status": 401,
+    "url": "http://127.0.0.1:4028/api/telemetry/hub"
+  },
+  {
+    "scenario": "creation-carnet",
+    "status": 401,
+    "url": "http://127.0.0.1:4028/api/compte/compte/notifications"
+  },
+  {
+    "scenario": "creation-carnet",
+    "status": 401,
+    "url": "http://127.0.0.1:4028/api/telemetry/hub"
+  },
+  {
+    "scenario": "creation-sortie",
+    "status": 401,
+    "url": "http://127.0.0.1:4028/api/compte/compte/notifications"
+  },
+  {
+    "scenario": "creation-sortie",
+    "status": 401,
+    "url": "http://127.0.0.1:4028/api/telemetry/hub"
+  },
+  {
+    "scenario": "creation-kit",
+    "status": 401,
+    "url": "http://127.0.0.1:4028/api/compte/compte/notifications"
+  },
+  {
+    "scenario": "creation-kit",
+    "status": 401,
+    "url": "http://127.0.0.1:4028/api/telemetry/hub"
+  },
+  {
+    "scenario": "creation-club",
+    "status": 401,
+    "url": "http://127.0.0.1:4028/api/compte/compte/notifications"
+  },
+  {
+    "scenario": "creation-club",
+    "status": 401,
+    "url": "http://127.0.0.1:4028/api/telemetry/hub"
+  },
+  {
+    "scenario": "creation-erreur",
+    "status": 401,
+    "url": "http://127.0.0.1:4028/api/compte/compte/notifications"
+  },
+  {
+    "scenario": "creation-erreur",
+    "status": 401,
+    "url": "http://127.0.0.1:4028/api/telemetry/hub"
+  },
+  {
+    "scenario": "creation-brouillon",
+    "status": 401,
+    "url": "http://127.0.0.1:4028/api/compte/compte/notifications"
+  },
+  {
+    "scenario": "creation-brouillon",
     "status": 401,
     "url": "http://127.0.0.1:4028/api/telemetry/hub"
   }

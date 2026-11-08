@@ -272,6 +272,9 @@ test.describe('Explorer v2 — Carnets : tri, j’aime, Peek, état vide @ui-moc
     await setupExplorer(page);
     await page.getByTestId('cv2-sort-button').click();
     await expect(page.getByTestId('cv2-sort-menu')).toBeVisible();
+    // Le menu déplace le focus sur l'option cochée (rAF) : Échap n'est
+    // consommé par le menu que lorsque le focus est dedans.
+    await expect(page.getByTestId('cv2-sort-menu').getByRole('menuitemradio').first()).toBeFocused();
 
     await page.keyboard.press('Escape');
     await expect(page.getByTestId('cv2-sort-menu')).toHaveCount(0);
@@ -410,12 +413,16 @@ test.describe('Explorer v2 — Sorties : agenda, détail, inscription, .ics @ui-
     await setupExplorer(page);
     await tab(page, 'Volets de l’explorateur', 'Sorties').click();
 
-    const agenda = page.getByRole('group', { name: /Agenda/ });
+    const agenda = page.getByRole('group', { name: 'Agenda des prochains jours' });
     await expect(agenda).toBeVisible();
-    const dayButton = agenda.getByRole('button', { name: /1 sortie|sorties/ }).first();
+    // Bande alimentée par `community_events_agenda` : attendre les compteurs.
+    const dayButton = agenda.getByRole('button', { name: /[1-9] sortie/ }).first();
+    await expect(dayButton).toBeVisible({ timeout: 15_000 });
+    const dayLabel = (await dayButton.getAttribute('aria-label')) ?? '';
     await dayButton.click();
     await expect(dayButton).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.getByTestId('cv2-tile-sortie').first()).toBeVisible();
+    await expect(page.getByTestId('cv2-tile-sortie').first()).toBeVisible({ timeout: 15_000 });
+    expect(dayLabel).toMatch(/[1-9] sortie/);
   });
 
   test('4b. détail sortie + S’inscrire puis île « Inscription confirmée »', async ({ page }) => {

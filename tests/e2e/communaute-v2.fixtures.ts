@@ -423,6 +423,7 @@ export async function installCommunityV2Mock(
     const name = lastSegment(url.pathname);
     const args = postBody(route);
     record({ kind: 'rpc', name, method: request.method(), body: args });
+    if (process.env.CV2_DEBUG_MOCK === '1') console.log('[mock] rpc', name, JSON.stringify(args).slice(0, 120));
     await delay();
     if (failRpcs.has(name) || (state === 'error' && READ_RPCS.has(name))) {
       await route.fulfill({
@@ -690,6 +691,9 @@ function rpcPayload(
         return tokens.some((token) => haystack.includes(token));
       });
       const limit = Math.max(1, Math.min(30, Number(args.p_limit ?? 5) || 5));
+      if (process.env.CV2_DEBUG_MOCK === '1') {
+        console.log('[mock] search', JSON.stringify({ q: args.p_q, scope, tokens, rows: rows.length, base: Array.isArray(DATA.searchRows) ? DATA.searchRows.length : 'non-array' }));
+      }
       return rows.slice(0, limit);
     }
     case 'community_search_trending':
