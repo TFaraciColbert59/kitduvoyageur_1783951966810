@@ -9,6 +9,8 @@ import { CarnetTopBarV2 } from './CarnetTopBarV2';
 import { CarnetCardV2 } from './CarnetCardV2';
 import { CarnetDrawerV2, type CarnetSlotId } from './CarnetDrawerV2';
 import { CarnetIsland, type CarnetIslandToast } from './CarnetIsland';
+import { CarnetPeek } from './CarnetPeek';
+import { CarnetAltitude } from './CarnetAltitude';
 import { CompteMap } from '@/components/compte/map/CompteMap';
 import { CarnetPostSheet } from '@/components/carnet/profile/CarnetPostSheet';
 import StoriesViewer, { type StoryUser, type StorySlide } from '@/components/communaute/StoriesViewer';
@@ -42,12 +44,15 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
   const [mapBig, setMapBig] = useState(false);
   const [outdoor, setOutdoor] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [reduceMotion, setReduceMotion] = useState(false);
 
   // Drawer & Overlay States
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerSlot, setDrawerSlot] = useState<CarnetSlotId>('fil');
   const [isAccountDrawer, setIsAccountDrawer] = useState(false);
   const [postSheetIndex, setPostSheetIndex] = useState<number | null>(null);
+  const [postSheetPanel, setPostSheetPanel] = useState<'comments' | null>(null);
+  const [peekMoment, setPeekMoment] = useState<CarnetMomentItem | null>(null);
   const [storiesOpen, setStoriesOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
 
@@ -126,6 +131,23 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
   useEffect(() => {
     void engagement.registerView();
   }, [engagement.registerView]);
+
+  // Réduction des animations : préférence OS par défaut, choix explicite
+  // conservé dans `localStorage` (popover Affichage).
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const stored = window.localStorage.getItem('lkdv:carnet:reduce-motion');
+    if (stored === 'true' || stored === 'false') {
+      setReduceMotion(stored === 'true');
+      return;
+    }
+    setReduceMotion(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem('lkdv:carnet:reduce-motion', String(reduceMotion));
+  }, [reduceMotion]);
 
   // Open Drawer to a specific slot
   const handleOpenDrawerSlot = useCallback(
@@ -245,8 +267,14 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
     <div
       className={`lkdv-carnet-v2-root lkdv-compte-v8 ${mapBig ? 'mapbig' : ''} ${outdoor ? 'outdoor' : ''}`}
       data-testid="carnet-v2-root"
+      data-reduce-motion={reduceMotion ? 'true' : 'false'}
     >
-      <div className="lkdv-carnet-bg" aria-hidden="true" />
+      <div className="lkdv-carnet-bg" aria-hidden="true">
+        {detail.coverImage ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={detail.coverImage} alt="" loading="eager" decoding="async" />
+        ) : null}
+      </div>
 
       {/* Dynamic Island notification */}
       <CarnetIsland toast={islandToast} onDismiss={dismissIsland} />
@@ -269,6 +297,8 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
           }}
           onToggleOutdoor={() => setOutdoor((prev) => !prev)}
           isOutdoor={outdoor}
+          reduceMotion={reduceMotion}
+          onToggleReduceMotion={() => setReduceMotion((prev) => !prev)}
           onShare={() => {
             if (navigator.share) {
               void navigator.share({ title: detail.title, url: shareUrl });
@@ -296,7 +326,7 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
             setPostSheetIndex(photoIdx >= 0 ? photoIdx : idx);
           }}
           onPeekMoment={(moment) => {
-            showIsland(moment.title || `Moment du jour ${moment.dayNumber}`);
+            setPeekMoment(moment);
           }}
           isEditing={isEditing}
           onAddMoment={() => {
@@ -408,13 +438,44 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
         isAccountDrawer={isAccountDrawer}
       />
 
+      {/* Peek & Pop d'un moment (appui long 460 ms) */}
+      {peekMoment ? (
+        <CarnetPeek
+          detail={detail}
+          moment={peekMoment}
+          currentUserId={currentUserId}
+          onRequireAuth={requireAuth}
+          onClose={() => setPeekMoment(null)}
+          onOpenPost={(mode) => {
+            const photoIdx = detail.photoMoments.findIndex((m) => m.id === peekMoment.id);
+            setPostSheetPanel(mode === 'comments' ? 'comments' : null);
+            setPostSheetIndex(photoIdx >= 0 ? photoIdx : 0);
+            setPeekMoment(null);
+          }}
+          onShare={() => {
+            const text = peekMoment.caption || peekMoment.title || detail.title;
+            if (navigator.share) {
+              void navigator.share({ title: detail.title, text, url: shareUrl }).catch(() => {});
+            } else {
+              void navigator.clipboard.writeText(shareUrl);
+              showIsland('Lien du carnet copié');
+            }
+          }}
+          onIsland={showIsland}
+        />
+      ) : null}
+
       {/* Post Sheet Overlay (Photo Moments) */}
       {postSheetIndex !== null ? (
         <CarnetPostSheet
           detail={detail}
           index={postSheetIndex}
           onIndexChange={(idx) => setPostSheetIndex(idx)}
-          onClose={() => setPostSheetIndex(null)}
+          onClose={() => {
+            setPostSheetIndex(null);
+            setPostSheetPanel(null);
+          }}
+          initialPanel={postSheetPanel}
           comments={comments}
           canWrite={canWrite}
           currentUserId={currentUserId}

@@ -38,6 +38,7 @@ import { useResolvedAttachmentUrl } from '@/features/messaging/hooks/useAttachme
 import { SharedPostEmbed } from '@/features/messaging/components/SharedPostEmbed';
 import { AttachmentDrawer } from '@/features/messaging/components/AttachmentDrawer';
 import { GpxThumb } from '@/features/messaging/components/GpxThumb';
+import { TraceMap } from '@/features/messaging/components/TraceMap';
 import { AudioPlayerBubble } from '@/features/messaging/components/AudioPlayerBubble';
 import { useKeyboardInset } from '@/features/messaging/hooks/useKeyboardInset';
 import { parseMessageDeepLink, resolveHandleToUserId } from '@/features/messaging/lib/deepLinks';
@@ -480,15 +481,6 @@ function MessageThread({
     );
   }
 
-  if (messages.length === 0) {
-    return (
-      <div className="mstate">
-        <b>Le début de votre discussion</b>
-        <span>Écrivez le premier message.</span>
-      </div>
-    );
-  }
-
   return (
     <>
       <div
@@ -499,13 +491,20 @@ function MessageThread({
         aria-relevant="additions"
         aria-label={`Fil de discussion avec ${conversationTitle(conversation)}`}
       >
-        {hasMore ? (
-          <button type="button" className="mbtn" style={{ alignSelf: 'center', margin: '2px 0 4px' }} onClick={loadEarlier} disabled={loadingEarlier}>
-            {loadingEarlier ? 'Chargement…' : 'Messages précédents'}
-          </button>
-        ) : null}
+        {messages.length === 0 ? (
+          <div className="mstate" style={{ margin: 'auto', textAlign: 'center' }}>
+            <b>Le début de votre discussion</b>
+            <span>Écrivez le premier message.</span>
+          </div>
+        ) : (
+          <>
+            {hasMore ? (
+              <button type="button" className="mbtn" style={{ alignSelf: 'center', margin: '2px 0 4px' }} onClick={loadEarlier} disabled={loadingEarlier}>
+                {loadingEarlier ? 'Chargement…' : 'Messages précédents'}
+              </button>
+            ) : null}
 
-        {messages.map((message, index) => {
+            {messages.map((message, index) => {
           const previous = messages[index - 1];
           const next = messages[index + 1];
           const stamp = new Date(message.created_at).getTime();
@@ -626,43 +625,58 @@ function MessageThread({
                           </small>
                         </span>
                       </span>
-                    ) : message.message_type === 'trail' ? (
-                      <span
-                        className="mcard"
-                        role="button"
-                        tabIndex={0}
+                    ) : message.message_type === 'trail' || message.message_type === 'gpx' ? (
+                      <div
+                        className="mbub-map"
+                        style={{
+                          width: '100%',
+                          maxWidth: 260,
+                          height: 180,
+                          borderRadius: 18,
+                          overflow: 'hidden',
+                          position: 'relative',
+                          cursor: 'pointer',
+                          boxShadow: '0 4px 14px rgba(23, 43, 36, 0.12)',
+                        }}
                         onClick={(event) => {
                           event.stopPropagation();
                           onOpenAttachment?.(message);
                         }}
-                        onKeyDown={(event) => {
-                          if (event.key === 'Enter' || event.key === ' ') {
-                            event.preventDefault();
-                            event.stopPropagation();
-                            onOpenAttachment?.(message);
-                          }
-                        }}
                       >
-                        <span className="mcard-ico" aria-hidden="true">
-                          <Icon name="route" className="size-4" />
-                        </span>
-                        <span className="mcard-txt">
-                          <b>{String(message.metadata?.name || 'Randonnée')}</b>
-                          <small>
-                            {[
-                              typeof message.metadata?.distance_km === 'number'
-                                ? `${message.metadata.distance_km.toFixed(1)} km`
-                                : null,
-                              typeof message.metadata?.elevation_gain_m === 'number'
-                                ? `+${Math.round(message.metadata.elevation_gain_m)} m`
-                                : null,
-                              typeof message.metadata?.region === 'string' ? message.metadata.region : null,
-                            ]
-                              .filter(Boolean)
-                              .join(' · ') || 'Trace partagée'}
-                          </small>
-                        </span>
-                      </span>
+                        <TraceMap
+                          geojson={{
+                            type: 'LineString',
+                            coordinates: [
+                              [5.852, 45.301],
+                              [5.859, 45.312],
+                              [5.871, 45.325],
+                              [5.885, 45.318],
+                              [5.878, 45.305],
+                              [5.852, 45.301],
+                            ],
+                          }}
+                          height={180}
+                        />
+                        <div
+                          style={{
+                            position: 'absolute',
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            padding: '8px 10px',
+                            background: 'linear-gradient(180deg, transparent, rgba(23, 43, 36, 0.85))',
+                            color: '#fff',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                          }}
+                        >
+                          <b style={{ fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {message.message_type === 'trail' ? message.content : 'Tracé GPX'}
+                          </b>
+                          <span style={{ fontSize: 10, opacity: 0.85 }}>Voir</span>
+                        </div>
+                      </div>
                     ) : message.message_type === 'kit' ? (
                       <span
                         className="mcard mcard-kit"
@@ -695,7 +709,7 @@ function MessageThread({
                       </span>
                     ) : message.message_type === 'audio' ? (
                       <AudioPlayerBubble audioUrl={message.content} isMine={mine} />
-                    ) : message.message_type === 'gpx' || message.message_type === 'file' || message.message_type === 'video' ? (
+                    ) : message.message_type === 'file' || message.message_type === 'video' ? (
                       <span
                         className="mcard"
                         role="button"
@@ -712,25 +726,17 @@ function MessageThread({
                           }
                         }}
                       >
-                        {message.message_type === 'gpx' ? (
-                          <GpxThumb content={message.content} />
-                        ) : (
-                          <span className="mcard-ico" aria-hidden="true">
-                            <Icon name={message.message_type === 'video' ? 'play' : 'paperclip'} className="size-4" />
-                          </span>
-                        )}
+                        <span className="mcard-ico" aria-hidden="true">
+                          <Icon name={message.message_type === 'video' ? 'play' : 'paperclip'} className="size-4" />
+                        </span>
                         <span className="mcard-txt">
                           <b>
-                            {message.message_type === 'gpx'
-                              ? 'Trace GPX'
-                              : message.message_type === 'video'
-                                ? 'Vidéo'
-                                : 'Fichier'}
+                            {message.message_type === 'video'
+                              ? 'Vidéo'
+                              : 'Fichier'}
                           </b>
                           <small>
-                            {message.message_type === 'gpx'
-                              ? 'Toucher pour voir la carte'
-                              : message.content.split('/').pop()?.slice(0, 42) || 'Pièce jointe'}
+                            {message.content.split('/').pop()?.slice(0, 42) || 'Pièce jointe'}
                           </small>
                         </span>
                         <Icon name="chevron-right" className="size-3.5 mcard-chevron" aria-hidden="true" />
@@ -828,6 +834,8 @@ function MessageThread({
             </React.Fragment>
           );
         })}
+        </>
+        )}
 
         {typingUserNames.length > 0 ? (
           <div className="mday mtyping">
@@ -845,7 +853,7 @@ function MessageThread({
         </div>
       ) : null}
 
-      {conversation.status === 'pending' ? (
+      {conversation.status === 'pending' && conversation.created_by !== currentUserId ? (
         <div
           className="mrequest-bar"
           style={{
@@ -1114,8 +1122,9 @@ function MessageComposerBar({
           className={`lg gbtn msend${content.trim() ? ' on' : ''}`}
           disabled={!content.trim() || sending}
           aria-label="Envoyer le message"
+          style={{ marginRight: -4 }}
         >
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M4.4 12h14.2" />
             <path d="M12.8 6.2 18.6 12l-5.8 5.8" />
           </svg>
@@ -1144,9 +1153,9 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
   // Répartition 60 % carte supérieure / 40 % carte inférieure au démarrage.
   const SPLIT_KEY = 'lkdv:messages:split';
   const computeDefaultSplit = useCallback(() => {
-    if (typeof window === 'undefined') return 320;
+    if (typeof window === 'undefined') return 480;
     const h = phone.current?.getBoundingClientRect().height || window.innerHeight || 800;
-    return Math.round(h * 0.40);
+    return Math.round(h * 0.60);
   }, []);
   const [split, setSplit] = useState<number>(() => {
     if (typeof window !== 'undefined') {
@@ -1154,9 +1163,9 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
         const saved = Number(window.localStorage.getItem(SPLIT_KEY));
         if (Number.isFinite(saved) && saved >= 160) return saved;
       } catch {}
-      return Math.round((window.innerHeight || 800) * 0.40);
+      return Math.round((window.innerHeight || 800) * 0.60);
     }
-    return 320;
+    return 480;
   });
   const [splitting, setSplitting] = useState(false);
   const splitDrag = useRef<{ startY: number; startSplit: number } | null>(null);
@@ -1359,8 +1368,9 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
   };
 
   const open = useCallback((conversation: Conversation) => {
+    if (selectedId === conversation.id) return;
     setSelectedId(conversation.id);
-  }, []);
+  }, [selectedId]);
 
   const swipe = useCallback(async (conversation: Conversation, action: SwipeAction) => {
     if (!currentUserId) return;
@@ -1571,14 +1581,48 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                         </button>
                       </div>
                     ) : visible.length === 0 ? (
-                      <div className="mstate">
-                        <b>{query.trim() ? 'Aucun résultat' : 'Aucune discussion'}</b>
+                      <div
+                        className="mstate"
+                        style={{
+                          margin: 'auto',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          textAlign: 'center',
+                          padding: '38px 24px',
+                          gap: 14,
+                        }}
+                      >
+                        <b style={{ font: '700 17px/1.2 var(--sf)', color: '#17402C' }}>
+                          {query.trim() ? 'Aucun résultat' : 'Aucune discussion'}
+                        </b>
                         {query.trim() ? (
-                          <button type="button" className="mbtn" onClick={() => setQuery('')}>
+                          <button
+                            type="button"
+                            className="mbtn"
+                            onClick={() => setQuery('')}
+                            style={{ height: 38, padding: '0 18px', fontSize: 13, borderRadius: 999 }}
+                          >
                             Effacer la recherche
                           </button>
                         ) : (
-                          <button type="button" className="mbtn p" onClick={focusSearch}>
+                          <button
+                            type="button"
+                            className="mbtn p"
+                            onClick={focusSearch}
+                            style={{
+                              height: 40,
+                              padding: '0 22px',
+                              fontSize: 13.5,
+                              fontWeight: 600,
+                              borderRadius: 999,
+                              background: 'linear-gradient(180deg, #275d3f, #17402c)',
+                              color: '#fff',
+                              boxShadow: '0 4px 14px rgba(23, 64, 44, 0.28)',
+                              border: 'none',
+                            }}
+                          >
                             Nouvelle discussion
                           </button>
                         )}
@@ -1672,7 +1716,7 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                   flexDirection: 'column',
                   height: '100%',
                   // Barre de rédaction positionnée à exactement 1px au-dessus de la véritable bottom bar ou du clavier
-                  paddingBottom: keyboardInset > 0 ? `${keyboardInset + 1}px` : 'calc(var(--bottom-nav-height, 49px) + 1px)',
+                  paddingBottom: keyboardInset > 0 ? `${keyboardInset + 1}px` : 'calc(env(safe-area-inset-bottom, 0px) + 67px)',
                 }}>
                 {selected ? (
                   <div className="mpane in" data-conversation={selected.id}>
@@ -1785,6 +1829,14 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                 onClose={() => setShareMenuOpen(false)}
                 currentUserId={currentUserId ?? ''}
                 onPickPhoto={() => photoInputRef.current?.click()}
+                onSendPhoto={async (file) => {
+                  const url = await messagingService.uploadAttachment(selected.id, file);
+                  if (url) {
+                    await messagingService.sendMessage(selected.id, currentUserId as string, url, 'image');
+                    await refreshConversations();
+                  }
+                  setShareMenuOpen(false);
+                }}
                 onSendGpx={async (file) => {
                   const url = await messagingService.uploadAttachment(selected.id, file);
                   if (!url) return;
@@ -1881,9 +1933,6 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                   <b style={{ font: '700 17px/1.2 var(--sf)', color: '#17402C' }}>
                     {profileDrawerUser?.username ? `@${profileDrawerUser.username}` : profileDrawerUser?.name}
                   </b>
-                  {profileDrawerUser?.username && profileDrawerUser?.name ? (
-                    <span style={{ font: '500 12px var(--sf)', color: '#56665D' }}>{profileDrawerUser.name}</span>
-                  ) : null}
 
                   {/* 3. Nombre de kilomètres parcourus centré */}
                   <span

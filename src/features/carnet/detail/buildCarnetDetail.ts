@@ -1,6 +1,7 @@
 import { buildDays, buildSummary, toMomentItems } from './days';
 import { formatDateRange, formatElevation, formatKm, toNumber } from './format';
 import { buildCarnetPlace } from './place';
+import { pickElevationProfile } from './elevationProfile';
 import type {
   BuildCarnetDetailInput,
   CarnetEtapeDay,
@@ -140,6 +141,7 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
   /* Jours dérivés : les moments nomment leur jour, les points GPS des sorties
      datent le leur. Aucune valeur n'est inventée quand une source manque. */
   const sessions = input.sessions ?? (hikeSession ? [hikeSession] : []);
+  const elevationProfile = pickElevationProfile(sessions);
   const days = buildDays({ moments: input.moments, sessions, startDate: carnet.start_date ?? null });
   const summary = buildSummary(days);
 
@@ -246,6 +248,7 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
       })),
     },
     trace,
+    elevationProfile,
     place: buildCarnetPlace(carnet, trace),
     distanceKm,
     elevationM,

@@ -45,6 +45,7 @@ import type {
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useCarnetDayReactions } from '@/features/carnet/detail/useCarnetDayReactions';
 import { useKitFork } from '@/features/carnet/detail/useKitFork';
+import { useCarnetDialog } from './useCarnetDialog';
 
 export type CarnetSlotId = 'fil' | 'route' | 'sac' | 'chiffres' | 'equipage';
 
@@ -117,6 +118,9 @@ export function CarnetDrawerV2({
     onRequireAuth,
     onIsland,
   });
+
+  // Focus piégé, Échap, retour de focus, verrou de scroll (socle §7.2).
+  const dialogRef = useCarnetDialog(isOpen, onClose);
 
   const activeLensIndex = lensIndexBySlot[activeSlot] ?? 0;
 
@@ -212,13 +216,20 @@ export function CarnetDrawerV2({
 
   if (currentStackItem) {
     return (
-      <div className="lkdv-stack-sheet" role="dialog" aria-modal="true">
+      <div
+        ref={dialogRef}
+        className="lkdv-stack-sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Détail du carnet"
+        tabIndex={-1}
+      >
         <div className="lkdv-stack-header">
           <button type="button" className="lkdv-stack-back" onClick={popStack}>
             <ChevronLeft size={16} />
             <span>Retour</span>
           </button>
-          <b style={{ fontSize: '13.5px', color: 'var(--lkv-primary, #17402C)' }}>
+          <b style={{ fontSize: '13.5px', color: 'var(--tint, #17402C)' }}>
             {currentStackItem.type === 'etape' && (currentStackItem.etape.label || 'Étape')}
             {currentStackItem.type === 'night' && currentStackItem.night.name}
             {currentStackItem.type === 'item' && currentStackItem.name}
@@ -239,19 +250,19 @@ export function CarnetDrawerV2({
                 }}
               >
                 <div>
-                  <small style={{ color: 'var(--lkv-text-secondary)' }}>Distance</small>
+                  <small style={{ color: 'var(--label2)' }}>Distance</small>
                   <p style={{ margin: 0, fontWeight: 700, fontSize: '16px' }}>
                     {currentStackItem.etape.distanceKm ? `${currentStackItem.etape.distanceKm} km` : '—'}
                   </p>
                 </div>
                 <div>
-                  <small style={{ color: 'var(--lkv-text-secondary)' }}>Dénivelé +</small>
+                  <small style={{ color: 'var(--label2)' }}>Dénivelé +</small>
                   <p style={{ margin: 0, fontWeight: 700, fontSize: '16px' }}>
                     {currentStackItem.etape.elevationM ? `+${currentStackItem.etape.elevationM} m` : '—'}
                   </p>
                 </div>
                 <div>
-                  <small style={{ color: 'var(--lkv-text-secondary)' }}>Durée</small>
+                  <small style={{ color: 'var(--label2)' }}>Durée</small>
                   <p style={{ margin: 0, fontWeight: 700, fontSize: '16px' }}>
                     {currentStackItem.etape.durationText || '—'}
                   </p>
@@ -277,7 +288,7 @@ export function CarnetDrawerV2({
                   {currentStackItem.night.type}
                 </p>
                 {currentStackItem.night.altitudeM ? (
-                  <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'var(--lkv-text-secondary)' }}>
+                  <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'var(--label2)' }}>
                     Altitude : {currentStackItem.night.altitudeM} m
                   </p>
                 ) : null}
@@ -290,7 +301,7 @@ export function CarnetDrawerV2({
                     height: '38px',
                     borderRadius: '9999px',
                     border: '0',
-                    background: 'var(--lkv-primary, #17402C)',
+                    background: 'var(--tint, #17402C)',
                     color: '#fff',
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -321,7 +332,7 @@ export function CarnetDrawerV2({
                   {currentStackItem.weightG ? `${currentStackItem.weightG} g` : 'Non renseigné'}
                 </p>
                 {currentStackItem.detailText ? (
-                  <p style={{ margin: '6px 0 0', fontSize: '12.5px', color: 'var(--lkv-text-secondary)' }}>
+                  <p style={{ margin: '6px 0 0', fontSize: '12.5px', color: 'var(--label2)' }}>
                     {currentStackItem.detailText}
                   </p>
                 ) : null}
@@ -366,7 +377,7 @@ export function CarnetDrawerV2({
                       width: '48px',
                       height: '48px',
                       borderRadius: '50%',
-                      background: 'var(--lkv-primary-subtle)',
+                      background: 'var(--fill)',
                       display: 'grid',
                       placeItems: 'center',
                     }}
@@ -377,7 +388,7 @@ export function CarnetDrawerV2({
                 <div>
                   <b style={{ fontSize: '15px' }}>{currentStackItem.participant.name}</b>
                   {currentStackItem.participant.role ? (
-                    <p style={{ margin: 0, fontSize: '12px', color: 'var(--lkv-text-secondary)' }}>
+                    <p style={{ margin: 0, fontSize: '12px', color: 'var(--label2)' }}>
                       {currentStackItem.participant.role}
                     </p>
                   ) : null}
@@ -416,13 +427,20 @@ export function CarnetDrawerV2({
   // Render Secondary Account Drawer
   if (isAccountDrawer) {
     return (
-      <div className="lkdv-stack-sheet" role="dialog" aria-modal="true" aria-label="Paramètres du carnet">
+      <div
+        ref={dialogRef}
+        className="lkdv-stack-sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Paramètres du carnet"
+        tabIndex={-1}
+      >
         <div className="lkdv-stack-header">
           <button type="button" className="lkdv-stack-back" onClick={onClose}>
             <ChevronLeft size={16} />
             <span>Fermer</span>
           </button>
-          <b style={{ fontSize: '13.5px', color: 'var(--lkv-primary, #17402C)' }}>Carnet</b>
+          <b style={{ fontSize: '13.5px', color: 'var(--tint, #17402C)' }}>Carnet</b>
         </div>
 
         <div style={{ padding: '8px 12px 0' }}>
@@ -451,7 +469,7 @@ export function CarnetDrawerV2({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <div style={{ padding: '12px', borderRadius: '16px', background: 'var(--drawer-card-bg)' }}>
                 <b>Alertes de progression</b>
-                <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--lkv-text-secondary)' }}>
+                <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--label2)' }}>
                   Recevoir une notification lors de chaque publication d’étape.
                 </p>
               </div>
@@ -462,7 +480,7 @@ export function CarnetDrawerV2({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <div style={{ padding: '12px', borderRadius: '16px', background: 'var(--drawer-card-bg)' }}>
                 <b>Lien public</b>
-                <p style={{ margin: '4px 0 8px', fontSize: '12px', color: 'var(--lkv-text-secondary)' }}>
+                <p style={{ margin: '4px 0 8px', fontSize: '12px', color: 'var(--label2)' }}>
                   Partagez ce carnet d’expédition avec vos proches.
                 </p>
                 <button
@@ -472,7 +490,7 @@ export function CarnetDrawerV2({
                     padding: '0 12px',
                     borderRadius: '9999px',
                     border: '0',
-                    background: 'var(--lkv-primary, #17402C)',
+                    background: 'var(--tint, #17402C)',
                     color: '#fff',
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -498,7 +516,7 @@ export function CarnetDrawerV2({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <div style={{ padding: '12px', borderRadius: '16px', background: 'var(--drawer-card-bg)' }}>
                 <b>Unités</b>
-                <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--lkv-text-secondary)' }}>
+                <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--label2)' }}>
                   Système métrique (km, mètres de dénivelé).
                 </p>
               </div>
@@ -509,7 +527,7 @@ export function CarnetDrawerV2({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <div style={{ padding: '12px', borderRadius: '16px', background: 'var(--drawer-card-bg)' }}>
                 <b>Exportation</b>
-                <p style={{ margin: '4px 0 8px', fontSize: '12px', color: 'var(--lkv-text-secondary)' }}>
+                <p style={{ margin: '4px 0 8px', fontSize: '12px', color: 'var(--label2)' }}>
                   Téléchargez l’intégralité des données du carnet au format standard JSON.
                 </p>
                 <button
@@ -519,7 +537,7 @@ export function CarnetDrawerV2({
                     padding: '0 12px',
                     borderRadius: '9999px',
                     border: '0',
-                    background: 'var(--lkv-primary, #17402C)',
+                    background: 'var(--tint, #17402C)',
                     color: '#fff',
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -587,20 +605,20 @@ export function CarnetDrawerV2({
                         placeItems: 'center',
                       }}
                     >
-                      <Clock size={20} color="var(--lkv-primary)" />
+                      <Clock size={20} color="var(--tint)" />
                     </div>
                   )}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <b style={{ fontSize: '13px' }}>{m.place || m.title || `Jour ${m.dayNumber}`}</b>
-                      <span style={{ fontSize: '11px', color: 'var(--lkv-text-secondary)' }}>{m.time}</span>
+                      <span style={{ fontSize: '11px', color: 'var(--label2)' }}>{m.time}</span>
                     </div>
                     {m.caption ? (
                       <p
                         style={{
                           margin: '2px 0 0',
                           fontSize: '12px',
-                          color: 'var(--lkv-text-secondary)',
+                          color: 'var(--label2)',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
                           whiteSpace: 'nowrap',
@@ -639,7 +657,7 @@ export function CarnetDrawerV2({
           return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '6px' }}>
               {encounters.length === 0 ? (
-                <p style={{ textAlign: 'center', color: 'var(--lkv-text-secondary)', fontSize: '13px' }}>
+                <p style={{ textAlign: 'center', color: 'var(--label2)', fontSize: '13px' }}>
                   Aucune rencontre répertoriée.
                 </p>
               ) : (
@@ -665,7 +683,7 @@ export function CarnetDrawerV2({
           return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '6px' }}>
               {natureMoments.length === 0 ? (
-                <p style={{ textAlign: 'center', color: 'var(--lkv-text-secondary)', fontSize: '13px' }}>
+                <p style={{ textAlign: 'center', color: 'var(--label2)', fontSize: '13px' }}>
                   Aucune observation nature consignée.
                 </p>
               ) : (
@@ -709,12 +727,12 @@ export function CarnetDrawerV2({
                   <div>
                     <b style={{ fontSize: '13.5px' }}>{e.label}</b>
                     {e.from && e.to ? (
-                      <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'var(--lkv-text-secondary)' }}>
+                      <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'var(--label2)' }}>
                         {e.from} → {e.to}
                       </p>
                     ) : null}
                   </div>
-                  <ChevronRight size={16} color="var(--lkv-secondary)" />
+                  <ChevronRight size={16} color="var(--accent)" />
                 </div>
               ))}
             </div>
@@ -744,11 +762,11 @@ export function CarnetDrawerV2({
                 >
                   <div>
                     <b style={{ fontSize: '13.5px' }}>{n.name}</b>
-                    <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'var(--lkv-text-secondary)' }}>
+                    <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'var(--label2)' }}>
                       Jour {n.dayNumber} · {n.type} {n.altitudeM ? `(${n.altitudeM} m)` : ''}
                     </p>
                   </div>
-                  <ChevronRight size={16} color="var(--lkv-secondary)" />
+                  <ChevronRight size={16} color="var(--accent)" />
                 </div>
               ))}
             </div>
@@ -758,7 +776,7 @@ export function CarnetDrawerV2({
           return (
             <div style={{ padding: '12px', borderRadius: '16px', background: 'var(--drawer-card-bg)' }}>
               <b>Profil d’altitude du tracé</b>
-              <p style={{ margin: '4px 0 12px', fontSize: '12px', color: 'var(--lkv-text-secondary)' }}>
+              <p style={{ margin: '4px 0 12px', fontSize: '12px', color: 'var(--label2)' }}>
                 Dénivelé total positif : +{Math.round(detail.elevationM || 0)} m
               </p>
               <div
@@ -768,7 +786,7 @@ export function CarnetDrawerV2({
                   background: 'rgba(23, 64, 44, 0.08)',
                   display: 'grid',
                   placeItems: 'center',
-                  color: 'var(--lkv-primary)',
+                  color: 'var(--tint)',
                   fontSize: '12px',
                 }}
               >
@@ -790,7 +808,7 @@ export function CarnetDrawerV2({
                   }}
                 >
                   <b>{e.label}</b>
-                  <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--lkv-text-secondary)' }}>
+                  <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--label2)' }}>
                     {e.weather || 'Météo stable, ensoleillée avec brume d’altitude.'}
                   </p>
                 </div>
@@ -846,12 +864,12 @@ export function CarnetDrawerV2({
                     <div>
                       <b style={{ fontSize: '13px' }}>{item.name}</b>
                       {item.weightG ? (
-                        <p style={{ margin: 0, fontSize: '11px', color: 'var(--lkv-text-secondary)' }}>
+                        <p style={{ margin: 0, fontSize: '11px', color: 'var(--label2)' }}>
                           {item.weightG} g
                         </p>
                       ) : null}
                     </div>
-                    <ChevronRight size={15} color="var(--lkv-secondary)" />
+                    <ChevronRight size={15} color="var(--accent)" />
                   </div>
                 ))}
               </div>
@@ -891,8 +909,8 @@ export function CarnetDrawerV2({
                       borderRadius: '9999px',
                       border: '0',
                       background:
-                        verdictFilter === f ? 'var(--lkv-primary, #17402C)' : 'rgba(23, 64, 44, 0.08)',
-                      color: verdictFilter === f ? '#fff' : 'var(--lkv-primary)',
+                        verdictFilter === f ? 'var(--tint, #17402C)' : 'rgba(23, 64, 44, 0.08)',
+                      color: verdictFilter === f ? '#fff' : 'var(--tint)',
                       fontSize: '11px',
                       fontWeight: 600,
                       cursor: 'pointer',
@@ -925,15 +943,15 @@ export function CarnetDrawerV2({
                         textTransform: 'uppercase',
                         background:
                           item.verdict === 'top'
-                            ? 'var(--lkv-success-bg, #E1EBDE)'
+                            ? 'var(--mint, #E1EBDE)'
                             : item.verdict === 'flop'
-                              ? 'var(--lkv-danger-bg, #FDE8E6)'
+                              ? 'var(--bad-bg, #FDE8E6)'
                               : 'rgba(23, 64, 44, 0.08)',
                         color:
                           item.verdict === 'top'
-                            ? 'var(--lkv-success, #3D6038)'
+                            ? 'var(--good, #3D7A52)'
                             : item.verdict === 'flop'
-                              ? 'var(--lkv-danger, #A8443A)'
+                              ? 'var(--bad, #A8443A)'
                               : 'inherit',
                       }}
                     >
@@ -954,7 +972,7 @@ export function CarnetDrawerV2({
           return (
             <div style={{ padding: '12px', borderRadius: '16px', background: 'var(--drawer-card-bg)' }}>
               <b>Répartition du poids du sac</b>
-              <p style={{ margin: '4px 0 12px', fontSize: '12px', color: 'var(--lkv-text-secondary)' }}>
+              <p style={{ margin: '4px 0 12px', fontSize: '12px', color: 'var(--label2)' }}>
                 {detail.kit.totalWeightG
                   ? `${(detail.kit.totalWeightG / 1000).toFixed(2)} kg au total`
                   : 'Poids non renseigné'}
@@ -967,7 +985,7 @@ export function CarnetDrawerV2({
                   display: 'grid',
                   placeItems: 'center',
                   fontSize: '12px',
-                  color: 'var(--lkv-primary)',
+                  color: 'var(--tint)',
                 }}
               >
                 Anneau de répartition catégorielle
@@ -982,10 +1000,10 @@ export function CarnetDrawerV2({
           return (
             <div style={{ padding: '12px', borderRadius: '16px', background: 'var(--drawer-card-bg)' }}>
               <b>Distance totale</b>
-              <p style={{ margin: '4px 0 0', fontSize: '20px', fontWeight: 700, color: 'var(--lkv-primary)' }}>
+              <p style={{ margin: '4px 0 0', fontSize: '20px', fontWeight: 700, color: 'var(--tint)' }}>
                 {detail.distanceKm ? `${Math.round(detail.distanceKm)} km` : '—'}
               </p>
-              <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--lkv-text-secondary)' }}>
+              <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--label2)' }}>
                 Moyenne journalière :{' '}
                 {detail.distanceKm && detail.days.length
                   ? `${(detail.distanceKm / detail.days.length).toFixed(1)} km/j`
@@ -998,10 +1016,10 @@ export function CarnetDrawerV2({
           return (
             <div style={{ padding: '12px', borderRadius: '16px', background: 'var(--drawer-card-bg)' }}>
               <b>Dénivelé positif</b>
-              <p style={{ margin: '4px 0 0', fontSize: '20px', fontWeight: 700, color: 'var(--lkv-primary)' }}>
+              <p style={{ margin: '4px 0 0', fontSize: '20px', fontWeight: 700, color: 'var(--tint)' }}>
                 {detail.elevationM ? `+${Math.round(detail.elevationM)} m` : '—'}
               </p>
-              <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--lkv-text-secondary)' }}>
+              <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--label2)' }}>
                 Moyenne journalière :{' '}
                 {detail.elevationM && detail.days.length
                   ? `+${Math.round(detail.elevationM / detail.days.length)} m/j`
@@ -1025,7 +1043,7 @@ export function CarnetDrawerV2({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '6px' }}>
               <div style={{ padding: '12px', borderRadius: '16px', background: 'var(--drawer-card-bg)' }}>
                 <b>Budget total</b>
-                <p style={{ margin: '4px 0 0', fontSize: '20px', fontWeight: 700, color: 'var(--lkv-primary)' }}>
+                <p style={{ margin: '4px 0 0', fontSize: '20px', fontWeight: 700, color: 'var(--tint)' }}>
                   {detail.budget.total} {detail.budget.currency}
                 </p>
               </div>
@@ -1083,7 +1101,7 @@ export function CarnetDrawerV2({
                           width: '36px',
                           height: '36px',
                           borderRadius: '50%',
-                          background: 'var(--lkv-primary-subtle)',
+                          background: 'var(--fill)',
                           display: 'grid',
                           placeItems: 'center',
                         }}
@@ -1094,13 +1112,13 @@ export function CarnetDrawerV2({
                     <div>
                       <b style={{ fontSize: '13px' }}>{p.name}</b>
                       {p.role ? (
-                        <p style={{ margin: 0, fontSize: '11px', color: 'var(--lkv-text-secondary)' }}>
+                        <p style={{ margin: 0, fontSize: '11px', color: 'var(--label2)' }}>
                           {p.role}
                         </p>
                       ) : null}
                     </div>
                   </div>
-                  <ChevronRight size={15} color="var(--lkv-secondary)" />
+                  <ChevronRight size={15} color="var(--accent)" />
                 </div>
               ))}
             </div>
@@ -1121,7 +1139,7 @@ export function CarnetDrawerV2({
               >
                 <div>
                   <b style={{ fontSize: '14px' }}>Jour {effectiveDay}</b>
-                  <p style={{ margin: 0, fontSize: '12px', color: 'var(--lkv-text-secondary)' }}>
+                  <p style={{ margin: 0, fontSize: '12px', color: 'var(--label2)' }}>
                     {reactions.likesCount} mention{reactions.likesCount > 1 ? 's' : ''} J’aime
                   </p>
                 </div>
@@ -1133,7 +1151,7 @@ export function CarnetDrawerV2({
                     borderRadius: '9999px',
                     border: '0',
                     background: reactions.liked ? '#E0245E' : 'rgba(23, 64, 44, 0.08)',
-                    color: reactions.liked ? '#fff' : 'var(--lkv-primary)',
+                    color: reactions.liked ? '#fff' : 'var(--tint)',
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '6px',
@@ -1165,7 +1183,7 @@ export function CarnetDrawerV2({
                       {userId && c.authorId === userId ? (
                         <button
                           type="button"
-                          style={{ border: 0, background: 'none', cursor: 'pointer', color: 'var(--lkv-danger)' }}
+                          style={{ border: 0, background: 'none', cursor: 'pointer', color: 'var(--bad)' }}
                           onClick={() => reactions.deleteComment(c.id)}
                           aria-label="Supprimer mon commentaire"
                         >
@@ -1207,7 +1225,7 @@ export function CarnetDrawerV2({
                     height: '36px',
                     borderRadius: '50%',
                     border: 0,
-                    background: 'var(--lkv-primary, #17402C)',
+                    background: 'var(--tint, #17402C)',
                     color: '#fff',
                     display: 'grid',
                     placeItems: 'center',
@@ -1232,7 +1250,7 @@ export function CarnetDrawerV2({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '6px' }}>
               <div style={{ padding: '12px', borderRadius: '16px', background: 'var(--drawer-card-bg)' }}>
                 <b>Suivi du carnet</b>
-                <p style={{ margin: '4px 0 10px', fontSize: '12px', color: 'var(--lkv-text-secondary)' }}>
+                <p style={{ margin: '4px 0 10px', fontSize: '12px', color: 'var(--label2)' }}>
                   Abonnez-vous aux notifications pour suivre l’aventure pas à pas.
                 </p>
                 <button
@@ -1242,7 +1260,7 @@ export function CarnetDrawerV2({
                     padding: '0 16px',
                     borderRadius: '9999px',
                     border: '0',
-                    background: 'var(--lkv-primary, #17402C)',
+                    background: 'var(--tint, #17402C)',
                     color: '#fff',
                     fontWeight: 600,
                     fontSize: '12px',
@@ -1270,29 +1288,16 @@ export function CarnetDrawerV2({
 
   return (
     <div
+      ref={dialogRef}
       className="lkdv-carnet-drawer"
-      role="region"
+      role="dialog"
+      aria-modal="true"
       aria-label="Tiroir de détails du carnet"
-      style={{
-        position: 'absolute',
-        inset: 0,
-        zIndex: 25,
-        display: 'flex',
-        flexDirection: 'column',
-        background: 'var(--sheet-bg, #F5F2EC)',
-        WebkitBackdropFilter: 'var(--sheet-blur, blur(28px))',
-        backdropFilter: 'var(--sheet-blur, blur(28px))',
-        boxShadow: 'var(--sheet-shadow)',
-        borderRadius: '32px 32px 0 0',
-      }}
+      tabIndex={-1}
     >
-      <div
-        className="lkdv-mgrab"
-        onClick={onClose}
-        style={{ position: 'relative', left: 'auto', top: 'auto', margin: '6px auto 0' }}
-      >
+      <button type="button" className="lkdv-mgrab" onClick={onClose} aria-label="Fermer le tiroir">
         <span />
-      </div>
+      </button>
 
       <SlotShell
         slot={activeSlot}

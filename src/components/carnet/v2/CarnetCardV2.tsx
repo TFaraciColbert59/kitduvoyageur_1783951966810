@@ -3,7 +3,7 @@
 import React, { useMemo } from 'react';
 import type { CarnetDetail, CarnetMomentItem } from '@/features/carnet/detail/types';
 import { CarnetDaySwipeView } from './CarnetDaySwipeView';
-import { Check } from 'lucide-react';
+import { Check, ChevronRight, Radio } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 export interface CarnetCardV2Props {
@@ -42,6 +42,34 @@ export function CarnetCardV2({
   const daysCount = detail.days.length || detail.etapes.length || 1;
   const distanceFormatted = detail.distanceKm ? `${Math.round(detail.distanceKm)}` : '—';
   const elevationFormatted = detail.elevationM ? `+${Math.round(detail.elevationM)}` : '—';
+
+  /**
+   * Statut réel du carnet : la date décide, pas une étiquette décorative.
+   * Aucune date inventée ; sans dates, pas de pilule de statut.
+   */
+  const liveStatus = useMemo(() => {
+    if (!detail.liveSharing) return null;
+    const start = detail.startDate ? new Date(`${detail.startDate}T12:00:00`) : null;
+    const end = detail.endDate ? new Date(`${detail.endDate}T12:00:00`) : null;
+    if (!start || Number.isNaN(start.getTime())) return null;
+    const now = new Date();
+    const dayMs = 86_400_000;
+    if (now < start) {
+      return { state: 'upcoming' as const, label: `Départ le ${start.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}` };
+    }
+    const finished = end && !Number.isNaN(end.getTime()) ? now > end : false;
+    if (finished) return { state: 'done' as const, label: `Terminé · ${daysCount} jours` };
+    const dayNumber = Math.max(1, Math.min(daysCount, Math.floor((now.getTime() - start.getTime()) / dayMs) + 1));
+    return { state: 'live' as const, label: `En route · J${dayNumber} sur ${daysCount}` };
+  }, [daysCount, detail.endDate, detail.liveSharing, detail.startDate]);
+
+  const summaryLine = [
+    detail.distanceKm ? `${distanceFormatted} km` : null,
+    detail.elevationM ? `+${Math.round(detail.elevationM)} m` : null,
+    detail.moments.length ? `${detail.moments.length} moments` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
   // Highlight stories pills (up to 5 items)
   const highlights = useMemo(() => {
@@ -140,6 +168,28 @@ export function CarnetCardV2({
           </span>
         </div>
 
+        <div className="lkdv-ig-actions">
+          {liveStatus ? (
+            <span className="lkdv-ig-live" data-state={liveStatus.state}>
+              <Radio size={13} aria-hidden="true" />
+              <span>{liveStatus.label}</span>
+            </span>
+          ) : (
+            <span />
+          )}
+          <button
+            type="button"
+            className="lkdv-ig-open"
+            onClick={() => {
+              haptic('light');
+              onOpenDrawerSlot('fil');
+            }}
+          >
+            <span>Ouvrir le carnet</span>
+            <ChevronRight size={15} aria-hidden="true" />
+          </button>
+        </div>
+
         {highlights.length > 0 ? (
           <div className="lkdv-ig-hl-row" role="group" aria-label="Sélection à la une">
             {highlights.map((hl) => (
@@ -166,6 +216,29 @@ export function CarnetCardV2({
             ))}
           </div>
         ) : null}
+
+        <div className="lkdv-ig-summary">
+          <div className="lkdv-ig-summary-row">
+            <button
+              type="button"
+              className="lkdv-ig-summary-chip"
+              aria-pressed={activeDay === 0}
+              onClick={() => {
+                if (activeDay !== 0) {
+                  haptic('selection');
+                  onDayChange(0);
+                }
+              }}
+            >
+              Tout
+            </button>
+            <b>
+              {daysCount} jours · {detail.participants.length || 1} voyageur
+              {(detail.participants.length || 1) > 1 ? 's' : ''}
+            </b>
+          </div>
+          {summaryLine ? <span className="lkdv-ig-summary-stats">{summaryLine}</span> : null}
+        </div>
 
         <CarnetDaySwipeView
           days={detail.days}

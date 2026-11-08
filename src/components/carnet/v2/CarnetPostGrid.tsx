@@ -58,7 +58,7 @@ export function CarnetPostGrid({
         style={{
           padding: '24px 16px',
           textAlign: 'center',
-          color: 'var(--lkv-text-secondary, #56665D)',
+          color: 'var(--label2, #56665D)',
           font: '400 13px var(--font-sans, sans-serif)',
         }}
       >
@@ -109,7 +109,7 @@ export function CarnetPostGrid({
                   alignItems: 'center',
                   padding: '8px',
                   background: 'linear-gradient(145deg, #EBF2EC, #D8E5D5)',
-                  color: 'var(--lkv-primary, #17402C)',
+                  color: 'var(--tint, #17402C)',
                   textAlign: 'center',
                 }}
               >
@@ -134,7 +134,7 @@ export function CarnetPostGrid({
           aria-label="Ajouter un moment"
           style={{
             background: 'rgba(150, 186, 142, 0.35)',
-            color: 'var(--lkv-primary, #17402C)',
+            color: 'var(--tint, #17402C)',
             display: 'grid',
             placeItems: 'center',
             fontSize: '24px',

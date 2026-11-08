@@ -1174,6 +1174,21 @@
   transform: translateY(120%) !important;
   transition: opacity 0.25s ease, transform 0.35s var(--motion-ease-standard) !important;
 }
+/* Interdiction stricte de la bottom bar lors de l'ouverture d'une story */
+.phone.story-open .tabbar,
+.phone:has(#story.on) .tabbar,
+.phone:has(#story.on) [data-bottom-nav],
+.phone.story-open [data-bottom-nav],
+body.story-open .tabbar,
+body:has(#story.on) .tabbar,
+body:has(#story.on) [data-bottom-nav],
+body:has(#story.on) .bottom-nav,
+body.story-open [data-bottom-nav] {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
 .tb, .acc, .tabbar {
   transition: opacity 0.25s ease, transform 0.35s var(--motion-ease-standard), left 0.5s var(--motion-ease-standard), right 0.5s var(--motion-ease-standard), height 0.5s var(--motion-ease-standard) !important;
 }
@@ -1718,8 +1733,31 @@
   margin: 2px 2px 0 !important;
 }
 .ig-hl-row {
-  gap: 10px !important;
-  padding: 3px 2px 0 !important;
+  display: flex !important;
+  gap: 12px !important;
+  padding: 4px 2px 2px !important;
+  overflow-x: auto !important;
+  scrollbar-width: none !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+.ig-hl-row::-webkit-scrollbar { display: none !important; }
+.ig-hl {
+  flex: 0 0 auto !important;
+  width: 62px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 3px !important;
+}
+.ig-hl-ring {
+  width: 58px !important;
+  height: 58px !important;
+  border-radius: 50% !important;
+}
+.ig-hl-in {
+  width: 50px !important;
+  height: 50px !important;
+  border-radius: 50% !important;
 }
 @media (min-width: 601px) {
   .ig-left { width: 80px !important; }
@@ -1728,10 +1766,17 @@
 }
 
 /* 3 — Grille Instagram : 3 colonnes carrées, séparation de 1px max et 1px des bords */
+.ig-swipe-view {
+  margin-left: -11px !important;
+  margin-right: -11px !important;
+  width: calc(100% + 22px) !important;
+  padding: 0 !important;
+}
 .ig-grid-wrap {
-  margin: 1px !important;
-  padding: 1px !important;
-  border-radius: 4px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  border-radius: 0 !important;
   overflow: hidden !important;
 }
 .ig-grid {
@@ -1747,7 +1792,7 @@
   width: 100% !important;
   height: auto !important;
   aspect-ratio: 1 / 1 !important;
-  border-radius: 2px !important;
+  border-radius: 10px !important;
   overflow: hidden !important;
   background: #0d1e15 !important;
   box-shadow: none !important;
@@ -1759,6 +1804,7 @@
   height: 100% !important;
   object-fit: cover !important;
   display: block !important;
+  border-radius: 10px !important;
 }
 .ig-tile .ig-tile-bg {
   display: none !important;
@@ -1972,9 +2018,9 @@
 
 /* 3 — Grille carrée, espacement 1px max et bords 1px */
 .ig-grid-wrap {
-  margin: 1px !important;
-  padding: 1px !important;
-  border-radius: 4px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
   overflow: hidden !important;
 }
 .ig-grid {
@@ -1986,11 +2032,12 @@
   width: 100% !important;
   height: auto !important;
   aspect-ratio: 1 / 1 !important;
-  border-radius: 2px !important;
+  border-radius: 10px !important;
   overflow: hidden !important;
 }
 .ig-tile img.art,
 .ig-tile img {
+  border-radius: 10px !important;
   width: 100% !important;
   height: 100% !important;
   object-fit: cover !important;

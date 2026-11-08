@@ -47,6 +47,8 @@ export interface CarnetPostSheetProps {
   saved: boolean;
   onSave: () => void;
   onReport: () => void;
+  /** Panneau ouvert d'emblée : `comments` depuis le menu Peek (Commenter). */
+  initialPanel?: 'comments' | 'share' | null;
 }
 
 /**
@@ -70,6 +72,7 @@ export function CarnetPostSheet({
   saved,
   onSave,
   onReport,
+  initialPanel = null,
 }: CarnetPostSheetProps) {
   const items = detail.photoMoments;
   const safeIndex = items.length === 0 ? 0 : Math.max(0, Math.min(index, items.length - 1));
@@ -169,6 +172,7 @@ export function CarnetPostSheet({
         post={feedPost}
         user={currentUserId ? { id: currentUserId, is_anonymous: !canWrite } : null}
         source={source}
+        initialPanel={initialPanel}
         onRequireAuth={onRequireAuth}
         onDismissGesture={onClose}
       />

@@ -5,13 +5,20 @@ import { messagingService } from '../services/messagingService';
 import type { Message, UserProfileSummary, MessageReaction } from '../types/messaging.types';
 import { createClient } from '@/lib/supabase/client';
 
+const MESSAGES_CACHE = new Map<string, Message[]>();
+
 export function useMessages(
   conversationId: string | null,
   currentUserId: string | undefined,
   currentUserProfile?: UserProfileSummary | null
 ) {
   const MESSAGES_PAGE_SIZE = 50;
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>(() => {
+    if (conversationId && MESSAGES_CACHE.has(conversationId)) {
+      return MESSAGES_CACHE.get(conversationId)!;
+    }
+    return [];
+  });
   const [loading, setLoading] = useState(false);
   const [loadingEarlier, setLoadingEarlier] = useState(false);
   const [hasMore, setHasMore] = useState(false);
@@ -24,9 +31,13 @@ export function useMessages(
       return;
     }
 
-    setLoading(true);
+    const hasCached = MESSAGES_CACHE.has(conversationId);
+    if (!hasCached) {
+      setLoading(true);
+    }
     try {
       const data = await messagingService.getMessages(conversationId, MESSAGES_PAGE_SIZE);
+      MESSAGES_CACHE.set(conversationId, data);
       setMessages(data);
       setHasMore(data.length >= MESSAGES_PAGE_SIZE);
 

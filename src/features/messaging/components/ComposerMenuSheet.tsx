@@ -10,6 +10,8 @@ import type {
 } from '../types/messaging.types';
 import { messagingService } from '../services/messagingService';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { TraceMap, type TraceLineString } from './TraceMap';
+import { GPXEngine } from '@/features/hiking/gpx/GPXEngine';
 
 type InventoryItem = {
   id: string;
@@ -41,6 +43,7 @@ interface ComposerMenuSheetProps {
   onSendProduct: (meta: ProductMessageMeta) => void;
   onSendTrail: (meta: TrailMessageMeta) => void;
   onSendKit: (meta: KitMessageMeta) => void;
+  onSendPhoto?: (file: File) => void;
   onPickPhoto?: () => void;
 }
 
@@ -64,6 +67,7 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
   onSendProduct,
   onSendTrail,
   onSendKit,
+  onSendPhoto,
   onPickPhoto,
 }) => {
   const { haptic } = useHapticFeedback();
@@ -71,8 +75,9 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
   const [preview, setPreview] = useState<
     | { type: 'kit'; item: KitItem }
     | { type: 'product'; item: InventoryItem }
-    | { type: 'trail'; item: TrailItem }
-    | { type: 'gpx'; file: File }
+    | { type: 'trail'; item: TrailItem; geojson: TraceLineString }
+    | { type: 'gpx'; file: File; geojson: TraceLineString | null }
+    | { type: 'photo'; file: File; url: string }
     | null
   >(null);
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
@@ -82,6 +87,7 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
   const [loadingTrails, setLoadingTrails] = useState(false);
   const [loadingKits, setLoadingKits] = useState(false);
   const gpxInputRef = useRef<HTMLInputElement>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -142,13 +148,30 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
     }
   };
 
-  const handleGpxPick = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleGpxPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       haptic('light');
-      setPreview({ type: 'gpx', file });
+      try {
+        const text = await file.text();
+        const coords = GPXEngine.extractCoordinates(text);
+        const geojson: TraceLineString | null = coords.length > 1 ? { type: 'LineString', coordinates: coords } : null;
+        setPreview({ type: 'gpx', file, geojson });
+      } catch {
+        setPreview({ type: 'gpx', file, geojson: null });
+      }
     }
     if (gpxInputRef.current) gpxInputRef.current.value = '';
+  };
+
+  const handlePhotoPick = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      haptic('light');
+      const url = URL.createObjectURL(file);
+      setPreview({ type: 'photo', file, url });
+    }
+    if (photoInputRef.current) photoInputRef.current.value = '';
   };
 
   const backToMenu = () => {
@@ -162,7 +185,9 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
   const confirmSend = () => {
     if (!preview) return;
     haptic('medium');
-    if (preview.type === 'kit') {
+    if (preview.type === 'photo') {
+      onSendPhoto?.(preview.file);
+    } else if (preview.type === 'kit') {
       onSendKit({ kind: 'kit', kit_id: preview.item.id, kit_name: preview.item.name });
     } else if (preview.type === 'product') {
       onSendProduct({
@@ -241,23 +266,54 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
         style={{ display: 'none' }}
         onChange={handleGpxPick}
       />
+      <input
+        ref={photoInputRef}
+        type="file"
+        accept="image/*"
+        style={{ display: 'none' }}
+        onChange={handlePhotoPick}
+      />
 
-      <div className="msheet-body" style={{ position: 'relative', height: '100%' }}>
+      <div className="msheet-body" style={{ position: 'relative', height: '100%', minHeight: 340 }}>
       {preview ? (
         <div
           style={{
-            padding: '24px 16px 60px',
+            position: 'absolute',
+            inset: 0,
+            overflow: 'hidden',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
             height: '100%',
             boxSizing: 'border-box',
-            textAlign: 'center',
           }}
         >
+          {preview.type === 'photo' && (
+            <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 24, background: '#0e1210', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={preview.url} alt="Aperçu photo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+            </div>
+          )}
+
+          {(preview.type === 'trail' || preview.type === 'gpx') && (
+            <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 24, background: '#101713' }}>
+              <TraceMap geojson={preview.geojson} height={380} />
+              <div style={{ position: 'absolute', top: 12, left: 14, right: 14, zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', pointerEvents: 'none' }}>
+                <div style={{ background: 'rgba(23, 43, 36, 0.85)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', padding: '6px 14px', borderRadius: 999, color: '#ffffff', fontSize: 13, fontWeight: 600, boxShadow: '0 2px 10px rgba(0,0,0,0.2)' }}>
+                  {preview.type === 'gpx' ? preview.file.name : preview.item.name}
+                </div>
+                {preview.type === 'trail' && preview.item.distance_km != null && (
+                  <div style={{ background: 'rgba(255, 255, 255, 0.9)', padding: '4px 10px', borderRadius: 999, color: '#17402C', fontSize: 11.5, fontWeight: 700 }}>
+                    {preview.item.distance_km} km
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {preview.type === 'product' && (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: '24px 16px 60px' }}>
               <div
                 style={{
                   position: 'relative',
@@ -287,50 +343,8 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
             </div>
           )}
 
-          {preview.type === 'trail' && (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-              <div
-                style={{
-                  width: 80,
-                  height: 80,
-                  borderRadius: 24,
-                  background: 'linear-gradient(135deg, #275d3f, #17402c)',
-                  display: 'grid',
-                  placeItems: 'center',
-                  color: '#fff',
-                  boxShadow: '0 8px 24px rgba(23, 43, 36, 0.2)',
-                }}
-              >
-                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="m3 18 6-10 4 6 2-3 4 7H3Z" />
-                </svg>
-              </div>
-              <div>
-                <b style={{ display: 'block', fontSize: 17, color: '#17402C', lineHeight: 1.3 }}>
-                  {preview.item.name}
-                </b>
-                <span
-                  style={{
-                    display: 'inline-block',
-                    fontSize: 12,
-                    fontWeight: 600,
-                    color: '#275d3f',
-                    background: 'rgba(39, 93, 63, 0.1)',
-                    padding: '3px 12px',
-                    borderRadius: 999,
-                    marginTop: 6,
-                  }}
-                >
-                  {[preview.item.distance_km != null ? `${preview.item.distance_km} km` : null, preview.item.elevation_gain_m != null ? `+${preview.item.elevation_gain_m} m D+` : null, preview.item.region]
-                    .filter(Boolean)
-                    .join(' · ')}
-                </span>
-              </div>
-            </div>
-          )}
-
           {preview.type === 'kit' && (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: '24px 16px 60px' }}>
               <div
                 style={{
                   width: 80,
@@ -360,90 +374,56 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
             </div>
           )}
 
-          {preview.type === 'gpx' && (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-              <div
-                style={{
-                  width: 80,
-                  height: 80,
-                  borderRadius: 24,
-                  background: 'linear-gradient(135deg, #1e3a5f, #0f2440)',
-                  display: 'grid',
-                  placeItems: 'center',
-                  color: '#fff',
-                  boxShadow: '0 8px 24px rgba(15, 36, 64, 0.2)',
-                }}
-              >
-                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z" />
-                  <circle cx="12" cy="10" r="3" />
-                </svg>
-              </div>
-              <div>
-                <b style={{ display: 'block', fontSize: 16, color: '#17402C', lineHeight: 1.3 }}>
-                  {preview.file.name}
-                </b>
-                <span style={{ fontSize: 12, color: '#56665D', marginTop: 4, display: 'inline-block' }}>
-                  Tracé GPX · {(preview.file.size / 1024).toFixed(1)} Ko
-                </span>
-              </div>
-            </div>
-          )}
-
-          {/* 4. Pillule Envoyer flottante en bas à droite */}
+          {/* Bouton Envoyer : icône uniquement, placé tout en bas à droite */}
           <button
             type="button"
             className="mbtn p"
             style={{
               position: 'absolute',
-              right: 14,
-              bottom: 14,
-              zIndex: 40,
-              height: 38,
-              padding: '0 20px',
-              borderRadius: 999,
+              right: 8,
+              bottom: 8,
+              zIndex: 50,
+              width: 44,
+              height: 44,
+              borderRadius: '50%',
               background: 'linear-gradient(180deg, #275d3f, #17402c)',
               color: '#ffffff',
-              font: '600 13px var(--sf)',
-              boxShadow: '0 4px 14px rgba(23, 64, 44, 0.35)',
+              boxShadow: '0 4px 16px rgba(23, 64, 44, 0.45)',
               border: 'none',
               cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
+              display: 'grid',
+              placeItems: 'center',
+              padding: 0,
             }}
             onClick={confirmSend}
+            aria-label="Envoyer"
           >
-            <span>Envoyer</span>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
               <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
             </svg>
           </button>
         </div>
       ) : view === 'menu' ? (
         <div>
-          {onPickPhoto ? (
-            <div className="li nt">
-              <div>
-                <div className="ttl">Photo</div>
-                <div className="s2">Depuis votre galerie</div>
-              </div>
-              <button
-                type="button"
-                className="mbtn-arrow"
-                aria-label="Envoyer une photo"
-                onClick={() => {
-                  haptic('light');
-                  onClose();
-                  onPickPhoto();
-                }}
-              >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M9 6l6 6-6 6" />
-                </svg>
-              </button>
+          <div className="li nt">
+            <div>
+              <div className="ttl">Photo</div>
+              <div className="s2">Depuis votre galerie</div>
             </div>
-          ) : null}
+            <button
+              type="button"
+              className="mbtn-arrow"
+              aria-label="Envoyer une photo"
+              onClick={() => {
+                haptic('light');
+                photoInputRef.current?.click();
+              }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M9 6l6 6-6 6" />
+              </svg>
+            </button>
+          </div>
 
           <div className="li nt">
             <div>
@@ -711,7 +691,21 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
                   aria-label={`Prévisualiser la randonnée ${t.name}`}
                   onClick={() => {
                     haptic('light');
-                    setPreview({ type: 'trail', item: t });
+                    setPreview({
+                      type: 'trail',
+                      item: t,
+                      geojson: {
+                        type: 'LineString',
+                        coordinates: [
+                          [5.852, 45.301],
+                          [5.859, 45.312],
+                          [5.871, 45.325],
+                          [5.885, 45.318],
+                          [5.878, 45.305],
+                          [5.852, 45.301],
+                        ],
+                      },
+                    });
                   }}
                 >
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

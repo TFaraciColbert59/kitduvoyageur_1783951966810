@@ -378,6 +378,14 @@ export interface CarnetBudget {
   items: CarnetBudgetItem[];
 }
 
+/** Point d'un profil altimétrique réel (distance cumulée + altitude mesurée). */
+export interface ElevationPoint {
+  distanceKm: number;
+  elevationM: number;
+  lat: number;
+  lng: number;
+}
+
 export interface CarnetDetail {
   id: string;
   title: string;
@@ -416,6 +424,11 @@ export interface CarnetDetail {
   summary: CarnetSummary;
   kit: CarnetKit;
   trace: unknown | null;
+  /**
+   * Profil altimétrique réel (`positions_timed[].elevationM`), vide quand
+   * aucune mesure d'altitude n'existe. Jamais interpolé, jamais simulé.
+   */
+  elevationProfile?: ElevationPoint[];
   /** Lieu réel de la fiche : pays · région · lieu, plus la coordonnée de départ. */
   place: CarnetPlace;
   distanceKm: number | null;

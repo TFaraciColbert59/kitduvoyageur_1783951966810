@@ -8,7 +8,7 @@ UDID="${1:-00008140-000E7D081A0B001C}"
 # URL chargée par la coque. `koosmoweb.fr` n'a pas encore de zone DNS (aucun A/CNAME au 05/11) :
 # en attendant, on câble le déploiement de production vérifié. Remplacer par https://koosmoweb.fr
 # quand la zone pointera sur Vercel.
-SERVER_URL="${CAPACITOR_SERVER_URL:-https://kitduvoyageur-1783951966810-git-main-tonyfaracip-3325s-projects.vercel.app}"
+SERVER_URL="${CAPACITOR_SERVER_URL:-https://kitduvoyageur-1783951966810-tonyfaracip-3325s-projects.vercel.app}"
 DERIVED="${DERIVED_DATA:-/tmp/lkdv-dd}"
 
 echo "▸ Appareil : $UDID"

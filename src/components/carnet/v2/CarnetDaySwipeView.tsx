@@ -133,17 +133,7 @@ export function CarnetDaySwipeView({
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
       >
-        {activeDay === 0 ? (
-          <div className="lkdv-day-banner">
-            <div className="lkdv-day-banner-header">
-              <b>Vue d’ensemble</b>
-              <span>{days.length} étapes</span>
-            </div>
-            <div className="lkdv-day-banner-text">
-              Découvrez l’intégralité des moments, paysages et rencontres de l’expédition.
-            </div>
-          </div>
-        ) : (
+        {activeDay === 0 ? null : (
           <div className="lkdv-day-banner">
             <div className="lkdv-day-banner-header">
               <b>{currentEtape?.label || `Jour ${activeDay}`}</b>

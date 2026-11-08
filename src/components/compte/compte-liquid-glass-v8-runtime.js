@@ -2993,15 +2993,19 @@ hlList = function () {
 };
 
 hlCover = h => {
-  const firstStoryImg = Array.isArray(h?.stories) && h.stories.length > 0
-    ? (h.coverStoryId ? h.stories.find(s => s && s.id === h.coverStoryId)?.image : null) || (h.stories[0]?.image || h.stories[0]?.media_url)
-    : null;
-  const img = firstStoryImg || (h && (h.coverImage || h.image || h.carnet?.coverImage || h.carnet?.cover_image));
-  if (img) return `<img src="${esc(img)}" alt="" loading="lazy" decoding="async" />`;
+  const hIdx = Array.isArray(HIGHLIGHTS) ? HIGHLIGHTS.findIndex(x => x && x.id === h?.id) : -1;
+  const m = _MOCK_HIGHLIGHTS.find(x => x.id === h?.id) ||
+            (h?.title ? _MOCK_HIGHLIGHTS.find(x => x.title && x.title.toLowerCase() === h.title.toLowerCase()) : null) ||
+            (hIdx >= 0 && hIdx < _MOCK_HIGHLIGHTS.length ? _MOCK_HIGHLIGHTS[hIdx] : null);
+
+  const firstStoryImg = (Array.isArray(h?.stories) && h.stories.length > 0 && (h.stories[0]?.image || h.stories[0]?.media_url)) ||
+                        (m && Array.isArray(m.stories) && m.stories.length > 0 && (m.stories[0]?.image || m.stories[0]?.media_url)) ||
+                        h?.coverImage || m?.coverImage;
+  if (firstStoryImg) return `<img src="${esc(firstStoryImg)}" alt="" loading="lazy" decoding="async" />`;
   if (h && h.id === 'hl4') return hlArt('hl4');
   if (h && h.id === 'hl5') return hlArt('hl5');
   const fallback = ["https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=600&q=80",
-                    "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=600&q=80",
+                    "https://images.unsplash.com/photo-1506197603052-3cc9c3a201bd?auto=format&fit=crop&w=600&q=80",
                     "https://images.unsplash.com/photo-1505765050516-f72dcac9c60e?auto=format&fit=crop&w=600&q=80",
                     "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=600&q=80",
                     "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=600&q=80"];
@@ -3017,21 +3021,37 @@ const STORIES = {
 };
 
 const storyFor = id => {
-  const real = Array.isArray(HIGHLIGHTS) ? HIGHLIGHTS.find((h) => h.id === id) : null;
-  if (real) {
-    const slides = Array.isArray(real.stories) && real.stories.length
-      ? real.stories.map((story) => ({
-          k: 'image',
-          src: story.image,
-          storyId: story.id,
-          t: story.caption || real.title || 'Story',
-          s: 'Story à la une',
-        }))
-      : [real.coverImage
-          ? { k: 'image', src: real.coverImage, t: real.title || 'Story', s: 'Story à la une' }
-          : { k: 'photo', art: real.id, t: real.title || 'Story', s: 'Story à la une' }];
-    return { title: real.title || 'Story', slides };
+  let real = Array.isArray(HIGHLIGHTS) ? HIGHLIGHTS.find((h) => h && h.id === id) : null;
+  const realIdx = Array.isArray(HIGHLIGHTS) ? HIGHLIGHTS.findIndex(h => h && h.id === id) : -1;
+  const mock = _MOCK_HIGHLIGHTS.find((m) => m.id === id) || 
+               (real && real.title ? _MOCK_HIGHLIGHTS.find(m => m.title && m.title.toLowerCase() === real.title.toLowerCase()) : null) ||
+               (realIdx >= 0 && realIdx < _MOCK_HIGHLIGHTS.length ? _MOCK_HIGHLIGHTS[realIdx] : null);
+
+  const stories = (real && Array.isArray(real.stories) && real.stories.length > 0)
+    ? real.stories
+    : (mock && Array.isArray(mock.stories) && mock.stories.length > 0 ? mock.stories : []);
+
+  const title = (real && real.title) || (mock && mock.title) || 'Story';
+  const cover = (real && real.coverImage) || (mock && mock.coverImage) || (stories[0] && (stories[0].image || stories[0].image_url)) || '';
+
+  if (stories.length > 0) {
+    const slides = stories.map((story, idx) => ({
+      k: 'image',
+      src: story.image || story.image_url || cover,
+      storyId: story.id || `s_${id}_${idx}`,
+      t: story.caption || title,
+      s: 'Story à la une',
+    }));
+    return { title, slides };
   }
+
+  if (cover) {
+    return {
+      title,
+      slides: [{ k: 'image', src: cover, t: title, s: 'Story à la une' }]
+    };
+  }
+
   if (STORIES[id]) return STORIES[id];
   if (id.startsWith('hl_ca_')) {
     const cId = id.slice(6);
@@ -3120,6 +3140,8 @@ function openStory(id) {
   X.story = { id, i: 0 }; X.seen[id] = 1; closeVisMenu(true); S.popv = false;
   const el = $('story');
   if (el) { el.classList.remove('closing', 'dragging'); el.style.transform = ''; el.style.opacity = ''; }
+  $('phone')?.classList.add('story-open');
+  document.body.classList.add('story-open');
   renderPopv(); renderStory(); renderTop(); lensSoon(); haptic(8); void loadStoryEngagement();
   requestAnimationFrame(() => { if (X.story) $('story')?.classList.add('on'); });
 }
@@ -3134,6 +3156,8 @@ function dismissStory(distance = 0) {
   setTimeout(() => {
     if (X.story !== storyRef) return;
     X.story = null; X.storyClosing = false;
+    $('phone')?.classList.remove('story-open');
+    document.body.classList.remove('story-open');
     el.classList.remove('on', 'closing', 'dragging');
     el.style.transform = ''; el.style.opacity = '';
     renderStory();
@@ -3691,7 +3715,7 @@ const editProfileBody = (P) => `
   <div class="apple-grouped-card">
     <div class="apple-avatar-header">
       <div class="apple-av-wrap" data-a="changeAvatar" title="Changer la photo de profil">
-        ${P.avatarUrl ? `<img id="ep_av_preview" src="${P.avatarUrl}" alt="Avatar" class="apple-av-img" />` : `<span id="ep_av_preview" class="apple-av-img" style="display:grid;place-items:center;background:#DDEBD8;color:#17402C;font:700 24px var(--sf)">${(P.name || 'V').charAt(0).toUpperCase()}</span>`}
+        ${(P.avatarUrl || TONY_AVATAR) ? `<img id="ep_av_preview" src="${P.avatarUrl || TONY_AVATAR}" alt="Avatar" class="apple-av-img" />` : `<span id="ep_av_preview" class="apple-av-img" style="display:grid;place-items:center;background:#DDEBD8;color:#17402C;font:700 24px var(--sf)">${(P.name || 'V').charAt(0).toUpperCase()}</span>`}
         <span class="apple-av-cam">${ic(IC.plus, 'xs')}</span>
       </div>
       <button class="mbtn soft" style="height:28px;padding:0 14px" data-a="changeAvatar">Changer la photo</button>
@@ -3722,7 +3746,7 @@ const editProfileBody = (P) => `
     <div class="chips">${["Lyon", "Chamonix", "Grenoble", "Annecy", "Turin", "Paris"].map(h => `<button class="chip" data-a="home" data-v="${h}" data-sim="1" aria-pressed="${S.traveller.home === h}">${h}</button>`).join("")}</div>
     <small style="color:var(--label2);font-size:10.5px;margin-top:4px">Zone floutée à 1 km près sur la carte (RLS stricte).</small>
   </div>
-  <button class="mbtn p" style="width:100%;height:42px;justify-content:center;border-radius:999px;font-size:14px;font-weight:700" data-a="save_full_profile">Enregistrer les modifications</button>
+  <button class="lkdv-apill is-primary has-text ep-floating-save" data-a="save_full_profile" style="position:fixed;bottom:calc(16px + env(safe-area-inset-bottom, 0px));right:18px;z-index:90;box-shadow:0 8px 24px rgba(23,64,44,0.35);">${ic(IC.check || '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\"><polyline points=\"20 6 9 17 4 12\"/></svg>', 'xs')}<span>Enregistrer</span></button>
 `;
 const EXK = {
   edit_profile_full: () => {

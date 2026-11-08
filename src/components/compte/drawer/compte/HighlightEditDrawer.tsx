@@ -130,8 +130,8 @@ export function HighlightEditDrawer({ hlId, hlTitle = '' }: { hlId: string; hlTi
 
   const load = useCallback(async () => {
     const windowHls = typeof window !== 'undefined' ? (window as unknown as { __lkdvHighlights?: typeof MOCK_HIGHLIGHTS_FALLBACK }).__lkdvHighlights : null;
-    const existingHl = (Array.isArray(windowHls) ? windowHls.find((x) => x.id === hlId) : null) ||
-      MOCK_HIGHLIGHTS_FALLBACK.find((x) => x.id === hlId);
+    const existingHl = (Array.isArray(windowHls) ? windowHls.find((x) => x.id === hlId || (hlTitle && x.title?.toLowerCase() === hlTitle.toLowerCase())) : null) ||
+      MOCK_HIGHLIGHTS_FALLBACK.find((x) => x.id === hlId || (hlTitle && x.title?.toLowerCase() === hlTitle.toLowerCase()));
 
     try {
       if (isDraft) {
@@ -169,8 +169,19 @@ export function HighlightEditDrawer({ hlId, hlTitle = '' }: { hlId: string; hlTi
       if (!next.coverStoryId && next.stories?.length) {
         next.coverStoryId = next.stories[0].id;
       }
+      if ((!next.stories || next.stories.length === 0) && existingHl) {
+        next.stories = (existingHl.stories || []).map((s) => ({
+          id: s.id,
+          image: s.image,
+          caption: s.caption || '',
+          isVideo: false,
+        }));
+        if (!next.coverStoryId && next.stories[0]) {
+          next.coverStoryId = next.stories[0].id;
+        }
+      }
       setData(next);
-      setTitle(next.title);
+      setTitle(next.title || (existingHl && existingHl.title) || hlTitle);
       setState('ready');
     } catch {
       if (existingHl) {
@@ -479,6 +490,28 @@ export function HighlightEditDrawer({ hlId, hlTitle = '' }: { hlId: string; hlTi
   }
   return (
     <div className="lkdv-compte-root">
+      <style>{`
+        .lkdv-compte-root {
+          display: flex !important;
+          flex-direction: column !important;
+          flex: 1 1 auto !important;
+          min-height: 0 !important;
+          height: 100% !important;
+          width: 100% !important;
+        }
+        .lkdv-compte-root .lkdv-drawer-shell {
+          display: flex !important;
+          flex-direction: column !important;
+          flex: 1 1 auto !important;
+          min-height: 0 !important;
+          height: 100% !important;
+          width: 100% !important;
+        }
+        .lkdv-compte-root .lkdv-drawer-viewport {
+          flex: 1 1 auto !important;
+          min-height: 240px !important;
+        }
+      `}</style>
       <DrawerShell tabs={tabs} activeIndex={tab} onIndexChange={setTab} />
     </div>
   );

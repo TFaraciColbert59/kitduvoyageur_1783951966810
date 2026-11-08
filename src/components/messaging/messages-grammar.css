@@ -246,8 +246,8 @@
   color: var(--label3);
 }
 .lkdv-messages .msearch-x {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   flex: none;
   border: 0 !important;
   border-radius: 999px;
@@ -255,9 +255,10 @@
   place-items: center;
   background: transparent !important;
   box-shadow: none !important;
-  color: rgba(23, 43, 36, 0.45) !important;
+  color: rgba(23, 43, 36, 0.35) !important;
   cursor: pointer;
-  opacity: 0.75;
+  opacity: 0.65;
+  padding: 0;
   transition: opacity 0.15s ease, color 0.15s ease;
 }
 .lkdv-messages .msearch-x:hover,
@@ -266,9 +267,9 @@
   color: var(--tint) !important;
 }
 .lkdv-messages .msearch-x svg {
-  stroke-width: 1.5px !important;
-  width: 14px !important;
-  height: 14px !important;
+  stroke-width: 1.2px !important;
+  width: 13px !important;
+  height: 13px !important;
 }
 
 .lkdv-messages .mresults {
@@ -277,34 +278,37 @@
   flex: none;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 6px;
-  padding: 2px 2px 8px;
-  min-width: 0;
+  gap: 8px;
+  padding: 4px 0 10px;
 }
 .lkdv-messages .mresults section {
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 .lkdv-messages .mresults h3 {
-  margin: 2px 2px 0;
+  margin: 4px 6px 2px;
   font: 600 9.5px/1 var(--sf);
   letter-spacing: 0.02em;
   text-transform: uppercase;
   color: var(--label3);
 }
 .lkdv-messages .mresult {
-  display: flex;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  gap: 8px;
   align-items: center;
-  gap: 11px;
   width: 100%;
   box-sizing: border-box;
   min-width: 0;
-  min-height: 54px;
+  min-height: 56px;
   padding: 8px 12px 8px 10px;
   margin-bottom: 4px;
   border: 0;
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.5);
-  box-shadow: inset 0 0 0 0.5px rgba(23, 43, 36, 0.08);
+  background: rgba(255, 255, 255, 0.46);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 0 0.5px rgba(23, 43, 36, 0.07);
   color: var(--label);
   text-align: left;
   cursor: pointer;
@@ -589,7 +593,8 @@
   display: flex;
   align-items: flex-end;
   gap: 8px;
-  padding: 6px 10px calc(4px + env(safe-area-inset-bottom, 0px));
+  padding: 4px 6px 1px 10px !important;
+  margin: 0 !important;
 }
 .lkdv-messages .mfield {
   flex: 1;
@@ -859,9 +864,8 @@
    La carte (liste) tient le haut, la zone de conversation occupe le reste.
    La barre basse reste visible : la zone réserve sa hauteur (padding 64). */
 .lkdv-messages .phone {
-  /* Répartition 60 % carte supérieure (discussions) / 40 % carte inférieure (fil),
-     réglable avec la poignée `.msplit`. */
-  grid-template-rows: var(--msg-split, calc(40% - 24px)) minmax(0, 1fr) !important;
+  /* Inversion des proportions initiales : 60 % carte supérieure / 40 % carte inférieure */
+  grid-template-rows: var(--msg-split, calc(60% - 24px)) minmax(0, 1fr) !important;
 }
 .lkdv-messages .phone[data-splitting='true'] {
   transition: none !important;
@@ -989,15 +993,15 @@
   z-index: 6;
 }
 .lkdv-messages .mfilters {
-  /* Capsule flottante en bas à droite de la card des discussions — format compact raccourci (116px) style Compte. */
+  /* Capsule flottante en bas à droite de la card des discussions — longueur allongée de 30 % (196px). */
   position: absolute !important;
   top: auto !important;
   right: 12px !important;
   bottom: 10px !important;
   left: auto !important;
   z-index: 6 !important;
-  width: 151px !important;
-  max-width: 151px !important;
+  width: 196px !important;
+  max-width: 196px !important;
   grid-template-columns: repeat(4, 1fr) !important;
   height: 30px !important;
   padding: 2.5px !important;
