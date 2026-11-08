@@ -51,6 +51,7 @@ export function bagThumb(bag: BagId | null, colors: BagColors, readVar?: ReadVar
     key: `b:${bag ?? 'preset'}:${colors.body}:${colors.pocket}:${colors.trim}`,
     spec: {
       kind: 'b',
+      bagId: bag ?? undefined,
       body: resolveMaterial(colors.body, readVar),
       pocket: resolveMaterial(colors.pocket, readVar),
       trim: resolveMaterial(colors.trim, readVar),

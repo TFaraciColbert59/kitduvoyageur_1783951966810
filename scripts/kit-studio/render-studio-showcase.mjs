@@ -279,7 +279,7 @@ async function main() {
 
           await Promise.race([
             Promise.all(thumbPromises),
-            new Promise((r) => setTimeout(r, 2000)),
+            new Promise((r) => setTimeout(r, 15000)),
           ]);
 
           return { success: true };

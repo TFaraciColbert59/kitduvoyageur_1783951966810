@@ -2,7 +2,7 @@
 // (`dynamic(() => import(...), { ssr: false })`), jamais depuis le rendu serveur. Aucun import React, aucun accès au
 // store : l'état courant est passé à createKitScene() puis à update().
 import {
-  ACESFilmicToneMapping, DirectionalLight, MathUtils, Mesh, MeshBasicMaterial,
+  ACESFilmicToneMapping, Box3, DirectionalLight, MathUtils, Mesh, MeshBasicMaterial,
   PCFShadowMap, PlaneGeometry, PMREMGenerator, Scene, SRGBColorSpace, WebGLRenderer,
 } from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
@@ -325,7 +325,12 @@ export function createKitScene(canvas: HTMLCanvasElement, options: KitSceneOptio
   let world = buildWorld(worldOptions());
   rig.setWorld({
     anchor: (zone, out) => world.objects.anchor(zone, out),
-    center: (out) => world.bag.group.localToWorld(out.set(0, 0, 0)),
+    center: (out) => {
+      const box = new Box3();
+      world.bagModel.getBounds(box);
+      if (!box.isEmpty()) return box.getCenter(out);
+      return world.bag.group.localToWorld(out.set(0, 0.35, 0));
+    },
     bounds: (out) => world.bagModel.getBounds(out),
   });
   rig.onZoneChange(options.onZoneChange ?? null);
@@ -573,11 +578,17 @@ export function createKitScene(canvas: HTMLCanvasElement, options: KitSceneOptio
           userMessage: 'Aucun point d’accroche disponible sur ce sac.',
         };
       }
+      const freeAnchor = ctrl.listAnchors().find((a) => !ctrl.isOccupied(a.id));
       const targetAnchor =
         anchorId ??
-        ctrl.listAnchors().find((a) => !ctrl.isOccupied(a.id))?.id ??
+        freeAnchor?.id ??
         ctrl.listAnchors()[0]?.id ??
         'facade';
+
+      // Si l'ancre ciblée est déjà occupée, détacher l'ancien module pour accueillir le nouveau
+      if (ctrl.isOccupied(targetAnchor)) {
+        ctrl.detach(targetAnchor);
+      }
 
       const provider = options.bagAssetProvider
         ? {

@@ -962,6 +962,8 @@ export function buildProceduralModuleMesh(manifest: ModuleManifest): THREE.Group
     color: new THREE.Color(0x3e4d3c),
     roughness: 0.88,
     metalness: 0.02,
+    sheen: 0.25,
+    sheenRoughness: 0.45,
   });
 
   const oliveSoftMat = new THREE.MeshPhysicalMaterial({
@@ -969,6 +971,8 @@ export function buildProceduralModuleMesh(manifest: ModuleManifest): THREE.Group
     color: new THREE.Color(0x465643),
     roughness: 0.9,
     metalness: 0.01,
+    sheen: 0.35,
+    sheenRoughness: 0.4,
   });
 
   const blackStrapMat = new THREE.MeshPhysicalMaterial({

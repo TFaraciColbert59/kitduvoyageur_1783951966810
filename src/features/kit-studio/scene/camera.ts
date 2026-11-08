@@ -106,7 +106,8 @@ export function createCameraRig(options: { readonly reducedMotion: boolean }): C
   const tempBox = new Box3();
   let adaptiveDistTarget = 2.2;
   let adaptiveDistCurrent = 2.2;
-  let adaptiveCenterY = GROUND_Y + 0.725;
+  const adaptiveCenterTarget = new Vector3(0, GROUND_Y + 0.725, 0);
+  const adaptiveCenterCurrent = new Vector3(0, GROUND_Y + 0.725, 0);
 
   // Zones
   let s = BAG_INDEX;
@@ -152,7 +153,12 @@ export function createCameraRig(options: { readonly reducedMotion: boolean }): C
         const spanX = Math.max(0.1, tempBox.max.x - tempBox.min.x);
         const spanZ = Math.max(0.1, tempBox.max.z - tempBox.min.z);
         const spanHoriz = Math.max(spanX, spanZ);
-        adaptiveCenterY = (tempBox.min.y + tempBox.max.y) * 0.5;
+        tempBox.getCenter(adaptiveCenterTarget);
+
+        // L'animation de décomposition (ex > 0) écarte les objets jusqu'à 1,95 m de rayon
+        // Le cadrage doit inclure l'enveloppe maximale de décomposition pour ne jamais sortir du cadre
+        const effectiveSpanY = spanY + ex * 1.5;
+        const effectiveSpanHoriz = spanHoriz + ex * 2.8;
 
         // Cadrage adaptatif : 75% à 80% (cible 78%) de la hauteur utile au-dessus du tiroir
         // Le tiroir mange près de 40% de l'écran en position déployée (dk = 1.7)
@@ -160,14 +166,14 @@ export function createCameraRig(options: { readonly reducedMotion: boolean }): C
         const visibleHeightFraction = Math.max(0.5, 1 - drawerCoverage);
 
         const TARGET_OCCUPANCY = 0.78;
-        const reqH = spanY / (TARGET_OCCUPANCY * visibleHeightFraction);
-        const reqW = spanHoriz / TARGET_OCCUPANCY;
+        const reqH = effectiveSpanY / (TARGET_OCCUPANCY * visibleHeightFraction);
+        const reqW = effectiveSpanHoriz / TARGET_OCCUPANCY;
         const reqHFromW = reqW / Math.max(0.2, camera.aspect);
         const effectiveH = Math.max(reqH, reqHFromW);
 
         const fovRad = (camera.fov * Math.PI) / 180;
         const halfTan = Math.tan(fovRad * 0.5);
-        adaptiveDistTarget = clamp(effectiveH / (2 * halfTan), 0.9, 8.0);
+        adaptiveDistTarget = clamp(effectiveH / (2 * halfTan), 0.9, 8.5);
       }
     }
 
@@ -186,19 +192,31 @@ export function createCameraRig(options: { readonly reducedMotion: boolean }): C
       world.anchor(A.id, va);
       world.anchor(B.id, vb);
       tgt.copy(va).lerp(vb, clamp(f, 0, 1));
-      world.center(bagC);
-      bagC.y = adaptiveCenterY;
+      bagC.copy(adaptiveCenterCurrent);
       wornW = A.id === 'worn' ? clamp(1 - f, 0, 1) : 0;
-      tgt.lerp(bagC, Math.max(ex * 0.75, 0.38 * (1 - wornW)));
+      // Centre d'orbite : centre composite dynamique sac + modules montés
+      const bagWeight =
+        A.id === 'bag' && B.id === 'bag'
+          ? 1
+          : A.id === 'bag'
+            ? 1 - f
+            : B.id === 'bag'
+              ? f
+              : 0;
+      const effectiveBagWeight = Math.max(bagWeight * (1 - wornW), ex * 0.9);
+      tgt.lerp(bagC, effectiveBagWeight);
     } else {
       tgt.set(fx, fy, fz);
     }
-    di *= 1 + ex * (camera.aspect < 0.75 ? 0.55 : 0.32);
     di *= aspectK;
     ph = clamp(ph, 0.35, 1.62);
-    camera.position.set(tgt.x + di * Math.sin(ph) * Math.sin(theta), tgt.y + di * Math.cos(ph), tgt.z + di * Math.sin(ph) * Math.cos(theta));
+    camera.position.set(
+      tgt.x + di * Math.sin(ph) * Math.sin(theta),
+      tgt.y + di * Math.cos(ph),
+      tgt.z + di * Math.sin(ph) * Math.cos(theta),
+    );
     camera.position.y = Math.max(camera.position.y, GROUND_Y + 0.15);
-    camera.lookAt(tgt.x, tgt.y - (0.17 * di) / 3.6, tgt.z);
+    camera.lookAt(tgt.x, tgt.y, tgt.z);
     // Le sac se recentre au-dessus du tiroir : glissement et léger recul, amortis (dk de 0, fermé, à 1,7, ouvert).
     const yoff = viewOffsetFraction(dk) * h - arc * (1 - ex) * h * 0.16;
     if (yoff !== appliedYoff) {
@@ -217,8 +235,14 @@ export function createCameraRig(options: { readonly reducedMotion: boolean }): C
     dk += (dkT - dk) * damp(rm ? DK_RATE_REDUCED : DK_RATE, dt);
     if (Math.abs(dkT - dk) > 0.001) moving = true; else dk = dkT;
 
-    // Transition continue de cadrage adaptatif : 400 à 500 ms (taux 7.0), courbe sortante.
+    // Transition continue de centre et de cadrage adaptatif : 400 à 500 ms (taux 7.0), courbe sortante
     const kDist = rm ? 60 : 7.0;
+    if (adaptiveCenterCurrent.distanceToSquared(adaptiveCenterTarget) > 1e-6) {
+      adaptiveCenterCurrent.lerp(adaptiveCenterTarget, rm ? 1 : damp(kDist, dt));
+      moving = true;
+    } else {
+      adaptiveCenterCurrent.copy(adaptiveCenterTarget);
+    }
     if (Math.abs(adaptiveDistTarget - adaptiveDistCurrent) > 0.001) {
       adaptiveDistCurrent += (adaptiveDistTarget - adaptiveDistCurrent) * (rm ? 1 : damp(kDist, dt));
       moving = true;
