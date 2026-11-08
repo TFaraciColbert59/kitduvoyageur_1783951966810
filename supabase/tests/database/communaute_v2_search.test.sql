@@ -17,11 +17,17 @@ ON CONFLICT (id) DO NOTHING;
 
 -- handle/visibilité/is_demo explicites : la branche « membres » lit la vue
 -- public_profiles (filtrée sur profile_visibility='public' et is_demo=false).
+-- Le trigger d'inscription sur auth.users crée déjà un user_profiles (nom dérivé
+-- de l'email) : on écrase explicitement pour que la recherche trouve nos noms.
 INSERT INTO public.user_profiles (id, full_name, email, handle, profile_visibility, is_demo) VALUES
   ('5ea10000-0000-4000-8000-000000000001', 'Alice Chamonix', 'search_a@test.local', 'search_fixture_a', 'public', false),
   ('5ea10000-0000-4000-8000-000000000002', 'Bruno Chamonix', 'search_b@test.local', 'search_fixture_b', 'public', false),
   ('5ea10000-0000-4000-8000-000000000003', 'Chloé Chamonix', 'search_c@test.local', 'search_fixture_c', 'public', false)
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE
+  SET full_name = excluded.full_name,
+      handle = excluded.handle,
+      profile_visibility = excluded.profile_visibility,
+      is_demo = excluded.is_demo;
 
 INSERT INTO public.carnets (id, author_id, title, destination, visibility, start_geom) VALUES
   ('5ea20000-0000-4000-8000-000000000001', '5ea10000-0000-4000-8000-000000000001',
