@@ -1,0 +1,123 @@
+url: http://localhost:4028/communaute
+---
+# ==============================================================================
+# Flux E2E Maestro — Communauté v2 (tiroirs Explorer + Création)
+# Chantier `handoff/communaute-v2` — recette 07 § C, scénario 05 § 2.11 mobile.
+#
+# Lancement (app Capacitor sur iPhone : remplacer l'URL par CAPACITOR_SERVER_URL) :
+#   maestro test .maestro/communaute.yaml -e LKDV_URL=https://<apercu>/communaute
+# En local web (build `NEXT_PUBLIC_COMMUNAUTE_V2=true` + `npm run start`) :
+#   maestro test .maestro/communaute.yaml
+#
+# Prérequis :
+# - compte de démo connecté (`DEMO_LOGIN_EMAIL`) ; aucune donnée réelle ;
+# - la story est publiée en audience « Moi uniquement » (`only_me`) puis
+#   supprimée : rien n'est visible par de vrais utilisateurs (`00` § 4.8) ;
+# - la création de club/sortie n'est PAS faite ici (lecture publique en prod) :
+#   recette sur base locale/épreuve, cf. 07 § B.
+# ==============================================================================
+
+- launchApp
+
+# 1. Consentement cookies si présent.
+- tapOn:
+    text: "Tout accepter"
+    optional: true
+
+# 2. La page Communauté est chargée (barre haute : Explorer, recherche, +).
+- assertVisible: "Explorer"
+- assertVisible:
+    text: ".*(Communauté|Stories|Publications).*"
+
+# 3. Ouverture du tiroir Explorer par le bouton « Explorer ».
+- tapOn: "Explorer"
+- assertVisible: "Explorer la communauté"
+
+# 4. Capsule : les 4 volets sont présents et le volet Carnets est actif par défaut.
+- assertVisible: "Volets de l’explorateur"
+- assertVisible: "Recherche"
+- assertVisible: "Carnets"
+- assertVisible: "Clubs"
+- assertVisible: "Sorties"
+
+# 5. Volet Clubs : chips d'activité et menu de tri.
+- tapOn: "Clubs"
+- assertVisible: "Activité du club"
+- assertVisible: "Rando"
+- tapOn:
+    id: "cv2-sort-button"
+- assertVisible: "Trier par"
+- tapOn: "Taille"
+- assertVisible: "Activité du club"
+
+# 6. Détail club empilé + retour.
+- tapOn:
+    id: "cv2-tile-club"
+    index: 0
+- assertVisible:
+    id: "cv2-detail"
+- assertVisible: "‹ Retour"
+- tapOn:
+    id: "cv2-back"
+
+# 7. Fermeture du tiroir par Échap (bouton poignée non exposé à Maestro).
+- pressKey: Escape
+- assertNotVisible: "Explorer la communauté"
+
+# 8. Ouverture de Création › Story par le + de la barre des stories.
+- tapOn:
+    text: ".*(Publier une story).*"
+- assertVisible: "Créer dans la communauté"
+- tapOn: "Story"
+- assertVisible: "Étape 1 : Média"
+
+# 9. Média : choisir la première photo de la photothèque (autorisation en français).
+- tapOn:
+    text: ".*(Ajouter|Choisir|Photo).*"
+    optional: true
+- tapOn:
+    text: ".*(Autoriser|OK|Allow).*"
+    optional: true
+- tapOn:
+    text: ".*(Photos|Récents|All Photos).*"
+    optional: true
+- tapOn:
+    index: 0
+    optional: true
+- tapOn:
+    text: ".*(Suivant|Ajouter).*"
+    optional: true
+
+# 10. Étape 2 (Édition) : légende courte + alt text.
+- assertVisible: "Étape 2 : Édition"
+- tapOn:
+    id: "cv2-field-caption"
+- inputText: "Recette Maestro — story de démo"
+- tapOn:
+    id: "cv2-field-altText"
+- inputText: "Vue de montagne (recette)"
+- tapOn: "Suivant"
+
+# 11. Étape 3 (Diffusion) : audience « Moi uniquement ».
+- assertVisible: "Étape 3 : Diffusion"
+- tapOn: "Moi uniquement"
+- tapOn: "Publier la story"
+- assertVisible:
+    text: ".*(Story publiée|Visible 24 h).*"
+
+# 12. Suppression de la story créée (nettoyage : rien ne reste visible).
+- tapOn:
+    text: ".*(Voir|Fermer).*"
+    optional: true
+- longPressOn:
+    text: ".*(Votre story|Voir la story).*"
+    optional: true
+- tapOn:
+    text: ".*(Supprimer).*"
+    optional: true
+- tapOn:
+    text: ".*(Confirmer|Supprimer).*"
+    optional: true
+
+# 13. Retour à l'état initial de la Communauté.
+- assertVisible: "Explorer"

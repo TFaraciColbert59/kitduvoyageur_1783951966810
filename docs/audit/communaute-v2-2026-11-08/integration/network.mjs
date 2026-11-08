@@ -24,7 +24,7 @@ export function storageKeyFor(url = FIXTURE_SUPABASE_URL) {
 /** Cookie de session conforme à `@supabase/ssr` `cookieEncoding: 'base64url'`. */
 export function sessionCookieFor(origin, session = SESSION) {
   const value = `base64-${Buffer.from(JSON.stringify(session), 'utf8').toString('base64url')}`;
-  return { name: storageKeyFor(), value, url: origin, path: '/', sameSite: 'Lax' };
+  return { name: storageKeyFor(), value, url: origin, sameSite: 'Lax' };
 }
 
 function parseAccept(request) {

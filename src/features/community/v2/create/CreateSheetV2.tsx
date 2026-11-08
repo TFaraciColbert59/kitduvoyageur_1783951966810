@@ -109,6 +109,7 @@ export function CreateSheetV2({
   );
   const [prefillNonce, setPrefillNonce] = useState(0);
   const keepOpenRef = useRef(false);
+  const finishedRef = useRef(false);
   const authAskedRef = useRef(false);
   const confirmDialogRef = useRef<HTMLDivElement | null>(null);
   const confirmTriggerRef = useRef<HTMLElement | null>(null);
@@ -126,6 +127,7 @@ export function CreateSheetV2({
     setConfirmClose(false);
     setIsland(null);
     setDetail(null);
+    finishedRef.current = false;
     if (initialPrefill) {
       setPrefillByKind((current) => ({
         ...current,
@@ -303,6 +305,8 @@ export function CreateSheetV2({
 
   const finishCreated = useCallback(
     (kind: CreateKindV2) => {
+      if (finishedRef.current) return;
+      finishedRef.current = true;
       flushDraftV2(kind);
       onCreated(kind);
     },
