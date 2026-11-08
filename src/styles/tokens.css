@@ -1135,3 +1135,78 @@ button.g2,
   --post-glass-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.4), 0 0 0 0.5px rgba(23, 43, 36, 0.08), 0 8px 22px rgba(23, 43, 36, 0.1);
   --post-radius: 28px;
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   COMMUNAUTÉ V2 — FONDATIONS UI (2026-11-08)
+
+   Ajouts additifs EN FIN DE FICHIER : types de contenu par volet
+   (`--type-*`) et matériaux `--cv2-*` consommés par
+   `src/styles/communaute-v2.css`, les primitives `SortMenuButton` /
+   `DynamicIsland` (src/components/ui/drawer/), le blason `ClubCrest`,
+   le billet `EventTicket` et la bande `AgendaStrip`.
+   Aucune valeur existante n'est modifiée.
+   ══════════════════════════════════════════════════════════════════ */
+:root {
+  /* ── Types de contenu — pastille de type (10,5 px min) ─────────────
+     Uniquement des verts de la palette forêt/sauge/mousse/menthe.
+     Contraste AA (texte normal 4,5:1) vérifié sur le verre clair des
+     tuiles : `--drawer-card-bg` ≈ blanc 94 % sur photo forêt, pire cas
+     calculé sur un fond photo moyen (#6B7A6E → verre #F6F7F6) :
+       --type-post   #17402C → 11,6:1 (blanc) · 10,8:1 (verre)
+       --type-carnet #3D6038 →  7,2:1 · 6,7:1
+       --type-club   #4C7746 →  5,2:1 · 4,9:1
+       --type-sortie #3D7A52 →  5,1:1 · 4,8:1
+       --type-membre #365233 →  8,7:1 · 8,1:1
+     /compte et ces deux tiroirs sont clairs uniquement : pas de
+     variante sombre (le verre reste clair en thème sombre). */
+  --type-post: var(--lkv-forest-900);
+  --type-carnet: var(--sage-700);
+  --type-club: var(--sage-600);
+  --type-sortie: var(--lkv-forest-500);
+  --type-membre: var(--lkv-forest-600);
+
+  /* ── Matériaux v2 (tuiles, listes, menus, champs) ─────────────────
+     Sources exactes : HIG L2796-2810 (feuille), HIG L2832-2838 (carte
+     interne de tiroir), V8 L273 (ligne de liste), LC L101-127
+     (mini-capsule 30 px), HIG L877 (champ). */
+  --cv2-tile-bg: var(--drawer-card-bg);
+  --cv2-tile-blur: var(--drawer-card-blur);
+  --cv2-tile-shadow: var(--drawer-card-shadow);
+  --cv2-tile-border: var(--glass-border);
+  --cv2-radius-tile-sm: 14px;
+  --cv2-radius-tile: 16px;
+  --cv2-radius-tile-lg: 20px;
+  --cv2-list-sep: var(--lkv-border-subtle);
+  --cv2-list-sep-strong: var(--lkv-border);
+
+  /* Verre des menus flottants (tri, peek) et des cartes de détail. */
+  --cv2-menu-bg: var(--glass-bg-medium);
+  --cv2-menu-border: var(--glass-border);
+  --cv2-menu-shadow: var(--elevation-3);
+  --cv2-menu-blur: 28px;
+
+  /* Verre des champs (HIG L877 : blanc .88, bordure .5 px). */
+  --cv2-field-bg: rgba(255, 255, 255, 0.88);
+  --cv2-field-border: var(--lkv-field-border);
+  --cv2-field-radius: 12px;
+  --cv2-field-height: 48px;
+  --cv2-field-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  --cv2-field-blur: blur(18px) saturate(1.7);
+
+  /* Squelettes (barres shimmer sur le verre). */
+  --cv2-skeleton-hi: rgba(255, 255, 255, 0.72);
+  --cv2-skeleton-lo: rgba(23, 43, 36, 0.06);
+
+  /* Île dynamique (DynamicIsland) — source V8 L53-60, carnet-v2.css L681-736. */
+  --cv2-island-bg: #000000;
+  --cv2-island-ink: #FFFFFF;
+  --cv2-island-muted: rgba(255, 255, 255, 0.72);
+  --cv2-island-btn-bg: rgba(255, 255, 255, 0.16);
+  --cv2-island-btn-ink: #D8F3DE;
+  --cv2-island-action-bg: #D8F3DE;
+  --cv2-island-action-ink: #17402C;
+  --cv2-island-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  /* La coque du tiroir v2 est à z 60 (zIndex.modal) : l'île se pose
+     au-dessus, sur la couche toast (70), sous les overlays du Compte. */
+  --cv2-z-island: 70;
+}

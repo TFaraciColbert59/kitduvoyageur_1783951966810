@@ -1,0 +1,1844 @@
+/**
+ * COMMUNAUTÉ V2 — FEUILLE DE BASE DES DEUX TIROIRS
+ * =============================================================================
+ * Portée : `.lkdv-communaute-v2` (racine montée par `src/app/communaute/page.tsx`).
+ * Les composants React qui consomment ces classes : `shared/{ClubCrest,EventTicket,
+ * AgendaStrip}.tsx`, puis `explore/**` (Explorer) et `create/**` (Création).
+ *
+ * RÈGLES DURES
+ * - Uniquement des `var(--…)` pour les couleurs, ombres, flous et courbes :
+ *   aucun hex, aucun `rgb()`, aucune famille de police littérale, aucune
+ *   courbe écrite à la main (gardes `tests/design/unification.spec.ts` et
+ *   `tests/design/motion-unique.spec.ts`). Les valeurs brutes vivent dans
+ *   `src/styles/tokens.css` (ajouts `--type-*` et `--cv2-*`).
+ * - La v2 ne charge aucune classe de l'ancienne version (`lkdv-half-drawer`,
+ *   `lkdv-drawer-*`, `lkdv-form-*`, `lkdv-create-engine`).
+ * - Les primitives `SortMenuButton` et `DynamicIsland` injectent leur propre CSS
+ *   (classes `.lkdv-sort-anchor`, `.lkdv-sort-btn`, `.lkdv-sort-menu`,
+ *   `.lkdv-island-*`) : on ne les redéfinit pas ici.
+ *
+ * CONVENTION DE PRÉFIXE : `lkdv-cv2-<bloc>[-<élément>][--<variante>]`, plus les
+ * classes de signatures `lkdv-cv2-visa`, `lkdv-cv2-trace`, `lkdv-crest`.
+ *
+ * CLASSES DISPONIBLES (réutilisables Explorer / Création)
+ * - Coque : fournie par le Lead (`src/styles/communaute-v2-shell.css`) :
+ *   `lkdv-cv2-layer/wrap/sheet/grab/topnav/capsule/body/pane/mini-slot/mini/
+ *   footer/detail*/back`. Le contenu d'un volet se pose dans `.lkdv-cv2-pane`.
+ * - Tuiles / listes : `lkdv-cv2-card`, `lkdv-cv2-tile`, `lkdv-cv2-tile-head`,
+ *   `lkdv-cv2-list`, `lkdv-cv2-row`, `lkdv-cv2-sep`, `lkdv-cv2-cover`,
+ *   `lkdv-cv2-search`, `lkdv-cv2-group`, `lkdv-cv2-group-head`, `lkdv-cv2-rail`,
+ *   `lkdv-cv2-grid`, `lkdv-cv2-sr`.
+ * - Typographie : `lkdv-cv2-title`, `lkdv-cv2-meta`, `lkdv-cv2-eyebrow`,
+ *   `lkdv-cv2-num`, `lkdv-cv2-mono`, `lkdv-cv2-type` (data-type).
+ * - Signatures : `lkdv-cv2-visa`, `lkdv-cv2-trace`, `lkdv-cv2-ticket*`,
+ *   `lkdv-cv2-agenda*`, `lkdv-crest` (ClubCrest).
+ * - Formulaires : `lkdv-cv2-field`, `lkdv-cv2-field-label`, `lkdv-cv2-input`,
+ *   `lkdv-cv2-field-hint`, `lkdv-cv2-field-error`, `lkdv-cv2-error-summary`,
+ *   `lkdv-cv2-counter`, `lkdv-cv2-chips`, `lkdv-cv2-chip`, `lkdv-cv2-seg`,
+ *   `lkdv-cv2-stepper`, `lkdv-cv2-gauge`, `lkdv-cv2-media-grid`,
+ *   `lkdv-cv2-media-item`, `lkdv-cv2-media-handle`, `lkdv-cv2-media-remove`,
+ *   `lkdv-cv2-media-progress`, `lkdv-cv2-crop`, `lkdv-cv2-steps`,
+ *   `lkdv-cv2-draft`, `lkdv-cv2-confirm`, `lkdv-cv2-confirm-actions`,
+ *   `lkdv-cv2-form-footer`, `lkdv-cv2-send-fail` ; variantes
+ *   `lkdv-cv2-chip--sm` / `--lg`.
+ * - États : `lkdv-cv2-skeleton`, `lkdv-cv2-skeleton-bar`, `lkdv-cv2-empty`,
+ *   `lkdv-cv2-error-state`, `lkdv-cv2-offline` ; attribut `aria-busy`.
+ * - Divers : `lkdv-cv2-peek`, `lkdv-cv2-peek-box`, `lkdv-cv2-peek-actions`,
+ *   `lkdv-cv2-pill` (--primary/--secondary/--danger/--sm), `lkdv-cv2-badge`,
+ *   `lkdv-cv2-avatars`, `lkdv-cv2-avatar`, `lkdv-cv2-capacity`,
+ *   `lkdv-cv2-hit`, `lkdv-cv2-round`, `lkdv-cv2-lock`.
+ * =============================================================================
+ */
+
+/* ── Racine ─────────────────────────────────────────────────────────────── */
+
+.lkdv-communaute-v2 {
+  color-scheme: light;
+  color: var(--lkv-text-primary);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.lkdv-communaute-v2 *,
+.lkdv-communaute-v2 *::before,
+.lkdv-communaute-v2 *::after {
+  box-sizing: border-box;
+}
+
+.lkdv-communaute-v2 :focus-visible {
+  outline: 2px solid var(--lkv-secondary);
+  outline-offset: 2px;
+}
+
+.lkdv-communaute-v2 [aria-busy='true'] {
+  cursor: progress;
+}
+
+/* ── Coque ────────────────────────────────────────────────────────────────
+   Les classes de la coque (`lkdv-cv2-layer`, `-wrap`, `-sheet`, `-grab`,
+   `-topnav`, `-capsule`, `-body`, `-pane`, `-mini-slot`, `-mini`, `-footer`,
+   `-detail*`, `-back`) sont définies par le Lead dans
+   `src/styles/communaute-v2-shell.css` (importé par la page) : ne pas les
+   redéfinir ici. Cette feuille ne porte que le CONTENU des volets. */
+
+/* ── Tuiles, cartes, lignes de liste, séparateurs ───────────────────────── */
+
+.lkdv-cv2-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  padding: 12px 12px;
+  border-radius: var(--cv2-radius-tile-lg);
+  background: var(--cv2-tile-bg);
+  -webkit-backdrop-filter: var(--cv2-tile-blur);
+  backdrop-filter: var(--cv2-tile-blur);
+  box-shadow: var(--cv2-tile-shadow), inset 0 0 0 0.5px var(--cv2-tile-border);
+}
+
+.lkdv-cv2-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: var(--cv2-radius-tile);
+  background: var(--cv2-tile-bg);
+  -webkit-backdrop-filter: var(--cv2-tile-blur);
+  backdrop-filter: var(--cv2-tile-blur);
+  box-shadow: var(--cv2-tile-shadow), inset 0 0 0 0.5px var(--cv2-tile-border);
+  color: inherit;
+  text-decoration: none;
+  transition: transform 0.12s var(--ease-spring);
+}
+
+a.lkdv-cv2-tile:active,
+button.lkdv-cv2-tile:active {
+  transform: scale(0.985);
+}
+
+.lkdv-cv2-tile--wide {
+  grid-column: 1 / -1;
+  border-radius: var(--cv2-radius-tile-lg);
+}
+
+.lkdv-cv2-tile-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.lkdv-cv2-cover {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--cv2-radius-tile-sm);
+  overflow: hidden;
+  background: var(--lkv-surface-muted);
+}
+
+.lkdv-cv2-cover > img,
+.lkdv-cv2-cover > svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.lkdv-cv2-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lkdv-cv2-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  min-height: 46px;
+  padding: 6px 2px;
+  border-top: 0.5px solid var(--cv2-list-sep);
+  color: inherit;
+  text-decoration: none;
+}
+
+.lkdv-cv2-row:first-child {
+  border-top: 0;
+}
+
+.lkdv-cv2-row:active {
+  background: var(--lkv-border-subtle);
+}
+
+.lkdv-cv2-sep {
+  height: 0;
+  margin: 8px 0;
+  border: 0;
+  border-top: 0.5px solid var(--cv2-list-sep);
+}
+
+/* ── Recherche, en-têtes de groupe, rails, grille, sr-only ─────────────── */
+
+.lkdv-cv2-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 6px 0 14px;
+  border-radius: var(--lkv-radius-full);
+  background: var(--cv2-field-bg);
+  -webkit-backdrop-filter: var(--cv2-field-blur);
+  backdrop-filter: var(--cv2-field-blur);
+  box-shadow: var(--cv2-field-shadow), inset 0 0 0 0.5px var(--cv2-field-border);
+}
+
+.lkdv-cv2-search > svg {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  fill: none;
+  stroke: var(--lkv-text-secondary);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.lkdv-cv2-search input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 46px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--lkv-text-primary);
+  font: 400 16px/1.2 var(--font-sans);
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.lkdv-cv2-search input::placeholder {
+  color: var(--lkv-text-muted);
+  opacity: 1;
+}
+
+.lkdv-cv2-search input:focus {
+  outline: none;
+}
+
+.lkdv-cv2-search .lkdv-cv2-round {
+  width: 36px;
+  height: 36px;
+  box-shadow: none;
+  background: none;
+}
+
+.lkdv-cv2-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.lkdv-cv2-group-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 24px;
+}
+
+.lkdv-cv2-group-head .lkdv-cv2-eyebrow {
+  flex: 1 1 auto;
+}
+
+.lkdv-cv2-group-head > a,
+.lkdv-cv2-group-head > button {
+  margin-left: auto;
+  min-height: var(--lkv-touch-min);
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--lkv-forest-900);
+  font: 600 11.5px/1 var(--font-sans);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.lkdv-cv2-rail {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 2px 0 6px;
+}
+
+.lkdv-cv2-rail::-webkit-scrollbar {
+  display: none;
+}
+
+.lkdv-cv2-rail > * {
+  flex: none;
+  scroll-snap-align: start;
+}
+
+.lkdv-cv2-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  min-width: 0;
+}
+
+.lkdv-cv2-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ── Typographie de contenu ─────────────────────────────────────────────── */
+
+.lkdv-cv2-title {
+  margin: 0;
+  padding: 0;
+  font: 600 14px/1.25 var(--font-display);
+  letter-spacing: -0.01em;
+  color: var(--lkv-text-primary);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.lkdv-cv2-title--clamp1 {
+  -webkit-line-clamp: 1;
+}
+
+.lkdv-cv2-meta {
+  margin: 0;
+  padding: 0;
+  font: 400 10.5px/1.3 var(--font-sans);
+  color: var(--lkv-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.lkdv-cv2-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font: 600 11px/1.2 var(--font-sans);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--lkv-text-secondary);
+}
+
+.lkdv-cv2-eyebrow--sage {
+  color: var(--lkv-secondary);
+}
+
+.lkdv-cv2-eyebrow b {
+  font-variant-numeric: tabular-nums;
+  color: var(--lkv-text-primary);
+}
+
+.lkdv-cv2-num {
+  font-variant-numeric: tabular-nums;
+}
+
+.lkdv-cv2-mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Pastille de type : 10,5 px minimum, teinte exclusivement par `--type-*`. */
+.lkdv-cv2-type {
+  --type-color: var(--lkv-text-primary);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 18px;
+  padding: 0 7px;
+  border-radius: var(--lkv-radius-full);
+  background: var(--sage-50);
+  color: var(--type-color);
+  font: 600 10.5px/1 var(--font-sans);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.lkdv-cv2-type[data-type='post'] {
+  --type-color: var(--type-post);
+}
+
+.lkdv-cv2-type[data-type='carnet'] {
+  --type-color: var(--type-carnet);
+}
+
+.lkdv-cv2-type[data-type='club'] {
+  --type-color: var(--type-club);
+}
+
+.lkdv-cv2-type[data-type='sortie'] {
+  --type-color: var(--type-sortie);
+}
+
+.lkdv-cv2-type[data-type='membre'] {
+  --type-color: var(--type-membre);
+}
+
+/* ── Signatures : visa de carnet, trace en filigrane ────────────────────── */
+
+.lkdv-cv2-visa {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 2px 7px;
+  border: 1.5px dashed var(--lkv-border-strong);
+  border-radius: 8px;
+  background: var(--cv2-menu-bg);
+  color: var(--lkv-forest-900);
+  font-family: var(--font-mono);
+  transform: rotate(-4deg);
+  transform-origin: left bottom;
+  pointer-events: none;
+}
+
+.lkdv-cv2-visa b {
+  font: 700 10.5px/1.15 var(--font-mono);
+  letter-spacing: 0.02em;
+}
+
+.lkdv-cv2-visa i {
+  font: 600 8.5px/1.15 var(--font-mono);
+  font-style: normal;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--lkv-text-secondary);
+}
+
+.lkdv-cv2-trace {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0.62;
+}
+
+.lkdv-cv2-trace path {
+  fill: none;
+  stroke: var(--lkv-text-inverted);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.lkdv-cv2-trace circle {
+  fill: var(--lkv-text-inverted);
+}
+
+.lkdv-cv2-trace circle:last-child {
+  fill: none;
+  stroke: var(--lkv-text-inverted);
+  stroke-width: 1.4;
+}
+
+/* ── Blason (ClubCrest) ─────────────────────────────────────────────────── */
+
+.lkdv-crest {
+  display: block;
+  flex: none;
+  overflow: visible;
+}
+
+.lkdv-crest-shield {
+  fill: var(--crest-bg, var(--lkv-forest-900));
+}
+
+.lkdv-crest[data-tone='0'] {
+  --crest-bg: var(--lkv-forest-600);
+}
+
+.lkdv-crest[data-tone='1'] {
+  --crest-bg: var(--sage-700);
+}
+
+.lkdv-crest[data-tone='2'] {
+  --crest-bg: var(--lkv-forest-500);
+}
+
+.lkdv-crest[data-tone='3'] {
+  --crest-bg: var(--sage-600);
+}
+
+.lkdv-crest[data-tone='4'] {
+  --crest-bg: var(--lkv-forest-900);
+}
+
+.lkdv-crest-pattern {
+  fill: var(--lkv-text-inverted);
+  fill-opacity: 0.16;
+}
+
+.lkdv-crest-inner {
+  fill: none;
+  stroke: var(--lkv-text-inverted);
+  stroke-opacity: 0.5;
+  stroke-width: 0.8;
+}
+
+.lkdv-crest-icon {
+  fill: none;
+  stroke: var(--lkv-text-inverted);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.lkdv-crest-initial {
+  fill: var(--lkv-text-inverted);
+  font: 700 15px var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+/* ── Billet daté de sortie (EventTicket) ────────────────────────────────── */
+
+.lkdv-cv2-ticket {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border-radius: var(--cv2-radius-tile-lg);
+  background: var(--cv2-tile-bg);
+  -webkit-backdrop-filter: var(--cv2-tile-blur);
+  backdrop-filter: var(--cv2-tile-blur);
+  box-shadow: var(--cv2-tile-shadow), inset 0 0 0 0.5px var(--cv2-tile-border);
+  overflow: hidden;
+  color: inherit;
+  text-decoration: none;
+}
+
+.lkdv-cv2-ticket-main {
+  display: grid;
+  grid-template-columns: 68px minmax(0, 1fr);
+  min-height: 104px;
+}
+
+.lkdv-cv2-ticket-stub {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  padding: 10px 4px;
+  background: var(--lkv-forest-900);
+  color: var(--lkv-text-inverted);
+  border-right: 2px dashed var(--lkv-forest-500);
+  text-align: center;
+}
+
+.lkdv-cv2-ticket-wd,
+.lkdv-cv2-ticket-mo {
+  font: 600 10.5px/1.1 var(--font-sans);
+  font-style: normal;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--lkv-primary-subtle);
+}
+
+.lkdv-cv2-ticket-day {
+  font: 700 28px/1 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.lkdv-cv2-ticket-notch {
+  position: absolute;
+  right: -7px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--lkv-surface);
+  pointer-events: none;
+}
+
+.lkdv-cv2-ticket-notch--top {
+  top: -6px;
+}
+
+.lkdv-cv2-ticket-notch--bottom {
+  bottom: -6px;
+}
+
+.lkdv-cv2-ticket-body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px 12px;
+}
+
+.lkdv-cv2-ticket-title {
+  margin: 0;
+  font: 600 14px/1.25 var(--font-display);
+  letter-spacing: -0.01em;
+  color: var(--lkv-text-primary);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.lkdv-cv2-ticket-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-width: 0;
+}
+
+.lkdv-cv2-ticket-chips i {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 7px;
+  border-radius: var(--lkv-radius-full);
+  background: var(--cv2-field-bg);
+  color: var(--lkv-forest-900);
+  font: 600 10.5px/1 var(--font-sans);
+  font-style: normal;
+  white-space: nowrap;
+}
+
+.lkdv-cv2-ticket-chips i:first-child {
+  background: var(--lkv-secondary-subtle);
+}
+
+.lkdv-cv2-ticket-meta {
+  margin: 0;
+  font: 400 10.5px/1.3 var(--font-sans);
+  color: var(--lkv-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.lkdv-cv2-ticket-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-top: 0.5px dashed var(--cv2-list-sep-strong);
+}
+
+.lkdv-cv2-ticket[data-state='past'] .lkdv-cv2-ticket-stub {
+  background: var(--lkv-text-muted);
+}
+
+.lkdv-cv2-ticket[data-state='past'] .lkdv-cv2-ticket-title {
+  color: var(--lkv-text-secondary);
+}
+
+.lkdv-cv2-ticket.is-preview {
+  pointer-events: none;
+}
+
+.lkdv-cv2-ticket.is-preview .lkdv-cv2-ticket-main {
+  min-height: 92px;
+}
+
+/* ── Bande agenda 14 jours (AgendaStrip) ────────────────────────────────── */
+
+.lkdv-cv2-agenda {
+  display: flex;
+  gap: 4px;
+  padding: 2px 0 4px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+}
+
+.lkdv-cv2-agenda::-webkit-scrollbar {
+  display: none;
+}
+
+.lkdv-cv2-agenda-day {
+  position: relative;
+  flex: none;
+  width: 44px;
+  min-height: 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  padding: 4px 0;
+  border: 0;
+  border-radius: var(--cv2-radius-tile-sm);
+  background: var(--cv2-tile-bg);
+  box-shadow: var(--cv2-tile-shadow), inset 0 0 0 0.5px var(--cv2-tile-border);
+  color: var(--lkv-text-primary);
+  cursor: pointer;
+  scroll-snap-align: start;
+  transition: transform 0.12s var(--ease-spring);
+}
+
+.lkdv-cv2-agenda-day:active {
+  transform: scale(0.94);
+}
+
+.lkdv-cv2-agenda-day i {
+  font: 600 10.5px/1.1 var(--font-sans);
+  font-style: normal;
+  letter-spacing: 0.02em;
+  color: var(--lkv-text-secondary);
+  text-transform: capitalize;
+}
+
+.lkdv-cv2-agenda-day b {
+  font: 700 15px/1 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.lkdv-cv2-agenda-day.is-weekend i {
+  color: var(--lkv-secondary);
+}
+
+.lkdv-cv2-agenda-day.is-today {
+  box-shadow: var(--cv2-tile-shadow), inset 0 0 0 1.5px var(--lkv-secondary);
+}
+
+.lkdv-cv2-agenda-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  height: 6px;
+}
+
+.lkdv-cv2-agenda-dots u {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--lkv-forest-500);
+}
+
+.lkdv-cv2-agenda-day.is-active {
+  background: var(--lkv-forest-900);
+  color: var(--lkv-text-inverted);
+  box-shadow: var(--elevation-2);
+}
+
+.lkdv-cv2-agenda-day.is-active i {
+  color: var(--lkv-primary-subtle);
+}
+
+.lkdv-cv2-agenda-day.is-active .lkdv-cv2-agenda-dots u {
+  background: var(--lkv-text-inverted);
+}
+
+/* ── Formulaires : champs, chips, segmented, steppers, jauges ───────────── */
+
+.lkdv-cv2-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.lkdv-cv2-field-label {
+  display: block;
+  margin: 0;
+  font: 600 10px/1.2 var(--font-sans);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--lkv-text-secondary);
+}
+
+.lkdv-cv2-input {
+  width: 100%;
+  min-height: var(--cv2-field-height);
+  margin: 0;
+  padding: 0 14px;
+  border: 0;
+  border-radius: var(--cv2-field-radius);
+  background: var(--cv2-field-bg);
+  color: var(--lkv-text-primary);
+  font: 400 16px/1.35 var(--font-sans);
+  -webkit-appearance: none;
+  appearance: none;
+  box-shadow: var(--cv2-field-shadow), inset 0 0 0 0.5px var(--cv2-field-border);
+}
+
+.lkdv-cv2-input::placeholder {
+  color: var(--lkv-text-muted);
+  opacity: 1;
+}
+
+.lkdv-cv2-input:focus,
+.lkdv-cv2-input:focus-visible {
+  outline: none;
+  box-shadow: var(--cv2-field-shadow), inset 0 0 0 2px var(--lkv-secondary);
+}
+
+.lkdv-cv2-input[aria-invalid='true'] {
+  box-shadow: var(--cv2-field-shadow), inset 0 0 0 1.5px var(--lkv-danger);
+}
+
+textarea.lkdv-cv2-input {
+  min-height: 112px;
+  padding: 12px 14px;
+  resize: vertical;
+}
+
+select.lkdv-cv2-input {
+  padding-right: 34px;
+  background-image: linear-gradient(45deg, transparent 50%, var(--lkv-forest-900) 50%),
+    linear-gradient(135deg, var(--lkv-forest-900) 50%, transparent 50%);
+  background-position: calc(100% - 18px) 50%, calc(100% - 13px) 50%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+
+/* Le même verre s'applique quand `.lkdv-cv2-field` est posé directement sur le
+   contrôle (input/textarea/select) ou quand le contrôle est enfant du champ. */
+:is(input, textarea, select).lkdv-cv2-field,
+.lkdv-cv2-field :is(input, textarea, select) {
+  width: 100%;
+  min-height: var(--cv2-field-height);
+  margin: 0;
+  padding: 0 14px;
+  border: 0;
+  border-radius: var(--cv2-field-radius);
+  background: var(--cv2-field-bg);
+  color: var(--lkv-text-primary);
+  font: 400 16px/1.35 var(--font-sans);
+  -webkit-appearance: none;
+  appearance: none;
+  box-shadow: var(--cv2-field-shadow), inset 0 0 0 0.5px var(--cv2-field-border);
+}
+
+:is(input, textarea, select).lkdv-cv2-field:focus,
+.lkdv-cv2-field :is(input, textarea, select):focus {
+  outline: none;
+  box-shadow: var(--cv2-field-shadow), inset 0 0 0 2px var(--lkv-secondary);
+}
+
+.lkdv-cv2-field-hint {
+  display: block;
+  margin: 0;
+  font: 400 10.5px/1.35 var(--font-sans);
+  color: var(--lkv-text-secondary);
+}
+
+.lkdv-cv2-field-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  margin: 0;
+  font: 600 11px/1.35 var(--font-sans);
+  color: var(--lkv-danger-dark);
+}
+
+.lkdv-cv2-field-error svg {
+  width: 13px;
+  height: 13px;
+  flex: none;
+  margin-top: 1px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.lkdv-cv2-error-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border-radius: var(--cv2-field-radius);
+  background: var(--lkv-danger-bg);
+  color: var(--lkv-danger-dark);
+  font: 600 12px/1.3 var(--font-sans);
+}
+
+.lkdv-cv2-counter {
+  margin: 0;
+  align-self: flex-end;
+  font: 500 10.5px/1.2 var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  color: var(--lkv-text-secondary);
+}
+
+.lkdv-cv2-counter[data-near='true'] {
+  color: var(--lkv-warning-dark);
+}
+
+.lkdv-cv2-counter[data-over='true'] {
+  color: var(--lkv-danger-dark);
+}
+
+.lkdv-cv2-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.lkdv-cv2-chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--lkv-radius-full);
+  background: var(--cv2-field-bg);
+  color: var(--lkv-text-primary);
+  font: 500 12.5px/1 var(--font-sans);
+  box-shadow: inset 0 0 0 0.5px var(--lkv-border);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform 0.12s var(--ease-spring);
+}
+
+.lkdv-cv2-chip svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.lkdv-cv2-chip:active {
+  transform: scale(0.96);
+}
+
+.lkdv-cv2-chip[aria-pressed='true'],
+.lkdv-cv2-chip[aria-checked='true'],
+.lkdv-cv2-chip.is-selected {
+  background: var(--lkv-secondary-subtle);
+  color: var(--lkv-forest-900);
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px var(--lkv-secondary);
+}
+
+.lkdv-cv2-chip--sm {
+  min-height: 28px;
+  padding: 0 10px;
+  font-size: 11.5px;
+}
+
+.lkdv-cv2-chip--lg {
+  min-height: var(--lkv-touch-min);
+  padding: 0 16px;
+  font-size: 13px;
+}
+
+.lkdv-cv2-seg {
+  display: inline-grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  align-items: stretch;
+  gap: 2px;
+  min-height: 36px;
+  padding: 3px;
+  border-radius: var(--lkv-radius-full);
+  background: var(--cv2-field-bg);
+  box-shadow: inset 0 0 0 0.5px var(--lkv-border);
+}
+
+.lkdv-cv2-seg button {
+  position: relative;
+  min-height: 30px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--lkv-radius-full);
+  background: none;
+  color: var(--lkv-text-secondary);
+  font: 500 12px/1 var(--font-sans);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.lkdv-cv2-seg button[aria-pressed='true'],
+.lkdv-cv2-seg button[aria-checked='true'],
+.lkdv-cv2-seg button.is-active {
+  background: var(--lkv-surface-card);
+  color: var(--lkv-forest-900);
+  font-weight: 600;
+  box-shadow: var(--elevation-1);
+}
+
+.lkdv-cv2-stepper {
+  display: inline-flex;
+  align-items: stretch;
+  height: var(--lkv-touch-min);
+  border-radius: var(--lkv-radius-full);
+  background: var(--cv2-field-bg);
+  box-shadow: inset 0 0 0 0.5px var(--lkv-border);
+  overflow: hidden;
+}
+
+.lkdv-cv2-stepper button {
+  display: grid;
+  place-items: center;
+  width: var(--lkv-touch-min);
+  min-width: var(--lkv-touch-min);
+  min-height: var(--lkv-touch-min);
+  border: 0;
+  background: none;
+  color: var(--lkv-forest-900);
+  font: 600 18px/1 var(--font-sans);
+  cursor: pointer;
+}
+
+.lkdv-cv2-stepper button:disabled {
+  opacity: var(--opacity-disabled);
+  cursor: default;
+}
+
+.lkdv-cv2-stepper output {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 52px;
+  padding: 0 4px;
+  font: 600 15px/1 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--lkv-text-primary);
+}
+
+.lkdv-cv2-gauge {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.lkdv-cv2-gauge-track {
+  position: relative;
+  display: block;
+  height: 6px;
+  border-radius: var(--lkv-radius-full);
+  background: var(--lkv-border);
+  overflow: hidden;
+}
+
+.lkdv-cv2-gauge-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--lkv-forest-500);
+}
+
+.lkdv-cv2-gauge[data-state='full'] .lkdv-cv2-gauge-fill {
+  background: var(--lkv-forest-900);
+}
+
+.lkdv-cv2-gauge[data-state='waitlist'] .lkdv-cv2-gauge-fill {
+  background: var(--lkv-secondary);
+}
+
+/* ── Médias du formulaire ───────────────────────────────────────────────── */
+
+.lkdv-cv2-media-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.lkdv-cv2-media-item {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  border-radius: var(--lkv-radius-sm);
+  overflow: hidden;
+  background: var(--lkv-surface-muted);
+}
+
+.lkdv-cv2-media-item > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.lkdv-cv2-media-item.is-cover {
+  box-shadow: inset 0 0 0 2px var(--lkv-secondary);
+}
+
+.lkdv-cv2-media-handle {
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--cv2-menu-bg);
+  color: var(--lkv-forest-900);
+  box-shadow: var(--elevation-1);
+  cursor: grab;
+  touch-action: none;
+}
+
+.lkdv-cv2-media-handle::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  min-width: var(--lkv-touch-min);
+  min-height: var(--lkv-touch-min);
+  transform: translate(-50%, -50%);
+}
+
+.lkdv-cv2-media-handle svg,
+.lkdv-cv2-media-remove svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.lkdv-cv2-media-remove {
+  position: absolute;
+  right: 4px;
+  top: 4px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--lkv-danger);
+  color: var(--lkv-text-inverted);
+  box-shadow: var(--elevation-1);
+  cursor: pointer;
+}
+
+.lkdv-cv2-media-remove::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  min-width: var(--lkv-touch-min);
+  min-height: var(--lkv-touch-min);
+  transform: translate(-50%, -50%);
+}
+
+.lkdv-cv2-media-progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  background: var(--lkv-border);
+}
+
+.lkdv-cv2-media-progress > i {
+  display: block;
+  height: 100%;
+  background: var(--lkv-forest-500);
+}
+
+.lkdv-cv2-crop {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  border-radius: var(--cv2-radius-tile);
+  overflow: hidden;
+  background: var(--lkv-surface-muted);
+}
+
+.lkdv-cv2-crop--square {
+  aspect-ratio: 1 / 1;
+}
+
+.lkdv-cv2-crop--story {
+  aspect-ratio: 9 / 16;
+}
+
+.lkdv-cv2-crop > svg.lkdv-cv2-crop-grid {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.lkdv-cv2-crop-grid line {
+  stroke: var(--lkv-text-inverted);
+  stroke-opacity: 0.55;
+  stroke-width: 1;
+  stroke-dasharray: 4 5;
+}
+
+/* ── Capsule d'étapes Création (30 px), bandeau de brouillon, confirmations ─ */
+
+.lkdv-cv2-steps {
+  position: relative;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  align-items: stretch;
+  width: max-content;
+  max-width: 100%;
+  height: 30px;
+  padding: 2.5px;
+  border-radius: var(--lkv-radius-full);
+  background: var(--cv2-menu-bg);
+  box-shadow: var(--elevation-2), inset 0 0 0 0.5px var(--cv2-menu-border);
+  -webkit-backdrop-filter: blur(var(--cv2-menu-blur)) saturate(1.8);
+  backdrop-filter: blur(var(--cv2-menu-blur)) saturate(1.8);
+}
+
+.lkdv-cv2-steps button {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-width: 44px;
+  height: 25px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--lkv-radius-full);
+  background: none;
+  color: var(--lkv-text-secondary);
+  font: 600 11.5px/1 var(--font-sans);
+  cursor: pointer;
+}
+
+.lkdv-cv2-steps button[aria-selected='true'],
+.lkdv-cv2-steps button.is-active {
+  background: var(--lkv-secondary-subtle);
+  color: var(--lkv-forest-900);
+}
+
+.lkdv-cv2-draft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 6px 12px;
+  border-radius: var(--cv2-field-radius);
+  background: var(--sage-50);
+  color: var(--lkv-text-primary);
+  font: 600 11.5px/1.3 var(--font-sans);
+  box-shadow: inset 0 0 0 0.5px var(--lkv-border);
+}
+
+.lkdv-cv2-draft button {
+  margin-left: auto;
+  min-height: var(--lkv-touch-min);
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--lkv-radius-full);
+  background: none;
+  color: var(--lkv-forest-900);
+  font: 600 11.5px/1 var(--font-sans);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.lkdv-cv2-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border-radius: var(--cv2-radius-tile);
+  background: var(--lkv-surface-card);
+  box-shadow: var(--elevation-2), inset 0 0 0 0.5px var(--lkv-border);
+}
+
+.lkdv-cv2-confirm b {
+  font: 600 14px/1.3 var(--font-display);
+  color: var(--lkv-text-primary);
+}
+
+.lkdv-cv2-confirm-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* Pied de formulaire interne à une pane (le pied de coque est fourni par
+   `communaute-v2-shell.css`) : reste collé bas au-dessus du clavier. */
+.lkdv-cv2-form-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 12;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: auto;
+  padding: 8px 0 calc(7px + var(--keyboard-inset, 0px));
+  border-top: 0.5px solid var(--cv2-list-sep-strong);
+  background: var(--drawer-card-bg);
+  -webkit-backdrop-filter: var(--drawer-card-blur);
+  backdrop-filter: var(--drawer-card-blur);
+}
+
+.lkdv-cv2-form-footer > .lkdv-cv2-pill:last-child {
+  margin-left: auto;
+}
+
+/* Écran d'échec d'envoi : une seule erreur, Réessayer à côté, brouillon conservé. */
+.lkdv-cv2-send-fail {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 14px;
+  border-radius: var(--cv2-radius-tile);
+  background: var(--lkv-danger-bg);
+  color: var(--lkv-danger-dark);
+  font: 400 12.5px/1.4 var(--font-sans);
+}
+
+.lkdv-cv2-send-fail b {
+  font: 600 14px/1.3 var(--font-display);
+}
+
+.lkdv-cv2-send-fail-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+/* ── États : squelette, vide, erreur, hors ligne ────────────────────────── */
+
+.lkdv-cv2-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px 0;
+}
+
+.lkdv-cv2-skeleton-bar {
+  display: block;
+  height: 14px;
+  border-radius: 9px;
+  background: linear-gradient(
+    90deg,
+    var(--cv2-skeleton-lo),
+    var(--cv2-skeleton-hi),
+    var(--cv2-skeleton-lo)
+  );
+  background-size: 220% 100%;
+  animation: lkdv-cv2-shimmer 1.3s ease-in-out infinite;
+}
+
+.lkdv-cv2-skeleton-bar--tile {
+  height: 140px;
+  border-radius: var(--cv2-radius-tile-lg);
+}
+
+.lkdv-cv2-skeleton-bar--lg {
+  height: 72px;
+  border-radius: var(--cv2-radius-tile);
+}
+
+.lkdv-cv2-skeleton-bar--sm {
+  width: 62%;
+}
+
+.lkdv-cv2-empty,
+.lkdv-cv2-error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex: 1 1 auto;
+  min-height: 220px;
+  padding: 28px 18px;
+  text-align: center;
+}
+
+.lkdv-cv2-empty b,
+.lkdv-cv2-error-state b {
+  font: 650 15px/1.25 var(--font-display);
+  color: var(--lkv-text-primary);
+}
+
+.lkdv-cv2-empty p,
+.lkdv-cv2-error-state p {
+  margin: 0;
+  max-width: 270px;
+  font: 400 12.5px/1.45 var(--font-sans);
+  color: var(--lkv-text-secondary);
+}
+
+.lkdv-cv2-empty-ico,
+.lkdv-cv2-error-state-ico {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--lkv-secondary-subtle);
+  color: var(--lkv-forest-900);
+  font: 700 17px/1 var(--font-sans);
+}
+
+.lkdv-cv2-error-state {
+  color: var(--lkv-text-secondary);
+}
+
+.lkdv-cv2-offline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 6px 12px;
+  border-radius: var(--cv2-field-radius);
+  background: var(--lkv-warning-bg);
+  color: var(--lkv-warning-dark);
+  font: 600 11.5px/1.3 var(--font-sans);
+}
+
+.lkdv-cv2-offline svg {
+  width: 15px;
+  height: 15px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@keyframes lkdv-cv2-shimmer {
+  0% {
+    background-position: 120% 0;
+  }
+  100% {
+    background-position: -120% 0;
+  }
+}
+
+/* ── Peek & Pop : boîte d'aperçu + menu d'actions (dans le tiroir) ──────── */
+
+.lkdv-cv2-peek {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 18px;
+  background: var(--lkv-overlay-scrim);
+  -webkit-backdrop-filter: blur(var(--blur-md));
+  backdrop-filter: blur(var(--blur-md));
+  animation: lkdv-cv2-fade 0.25s var(--ease-out) both;
+}
+
+.lkdv-cv2-peek-box {
+  position: relative;
+  width: min(300px, 100%);
+  padding: 14px;
+  border-radius: 22px;
+  background: var(--glass-bg-strong);
+  -webkit-backdrop-filter: var(--cv2-tile-blur);
+  backdrop-filter: var(--cv2-tile-blur);
+  box-shadow: var(--elevation-3), inset 0 0 0 0.5px var(--cv2-tile-border);
+  transform-origin: center;
+  animation: lkdv-cv2-peek-in 0.35s var(--ease-spring) both;
+}
+
+.lkdv-cv2-peek-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 10px;
+}
+
+.lkdv-cv2-peek-action {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--lkv-touch-min);
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--lkv-radius-sm);
+  background: none;
+  color: var(--lkv-text-primary);
+  font: 500 14px/1.2 var(--font-sans);
+  text-align: left;
+  cursor: pointer;
+}
+
+.lkdv-cv2-peek-action svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  fill: none;
+  stroke: var(--lkv-forest-900);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.lkdv-cv2-peek-action[data-tone='danger'] {
+  color: var(--lkv-danger-dark);
+}
+
+.lkdv-cv2-peek-action[data-tone='danger'] svg {
+  stroke: var(--lkv-danger-dark);
+}
+
+@keyframes lkdv-cv2-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes lkdv-cv2-peek-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ── Pilules, badges, boutons ronds, avatars, jauges de capacité ────────── */
+
+.lkdv-cv2-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: var(--lkv-touch-min);
+  padding: 0 18px;
+  border: 0;
+  border-radius: var(--lkv-radius-full);
+  font: 600 13px/1 var(--font-sans);
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: transform 0.12s var(--ease-spring);
+}
+
+.lkdv-cv2-pill:active {
+  transform: scale(0.96);
+}
+
+.lkdv-cv2-pill svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.lkdv-cv2-pill--primary {
+  background: var(--lkv-forest-900);
+  color: var(--lkv-text-inverted);
+  box-shadow: var(--elevation-1);
+}
+
+.lkdv-cv2-pill--secondary {
+  background: var(--cv2-field-bg);
+  color: var(--lkv-forest-900);
+  box-shadow: inset 0 0 0 0.5px var(--lkv-border), var(--elevation-1);
+}
+
+.lkdv-cv2-pill--danger {
+  background: var(--lkv-danger-bg);
+  color: var(--lkv-danger-dark);
+  box-shadow: inset 0 0 0 0.5px var(--lkv-danger);
+}
+
+.lkdv-cv2-pill--sm {
+  min-height: 34px;
+  padding: 0 14px;
+  font-size: 12.5px;
+}
+
+.lkdv-cv2-pill[disabled],
+.lkdv-cv2-pill[aria-disabled='true'] {
+  opacity: var(--opacity-disabled);
+  pointer-events: none;
+}
+
+.lkdv-cv2-pill[aria-busy='true'] {
+  opacity: 1;
+  cursor: progress;
+}
+
+.lkdv-cv2-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 20px;
+  padding: 0 8px;
+  border-radius: var(--lkv-radius-full);
+  background: var(--cv2-field-bg);
+  color: var(--lkv-text-secondary);
+  font: 600 10.5px/1 var(--font-sans);
+  box-shadow: inset 0 0 0 0.5px var(--lkv-border);
+  white-space: nowrap;
+}
+
+.lkdv-cv2-badge[data-tone='success'] {
+  background: var(--lkv-success-bg);
+  color: var(--lkv-success);
+}
+
+.lkdv-cv2-badge[data-tone='warn'] {
+  background: var(--lkv-warning-bg);
+  color: var(--lkv-warning-dark);
+}
+
+.lkdv-cv2-badge[data-tone='danger'] {
+  background: var(--lkv-danger-bg);
+  color: var(--lkv-danger-dark);
+}
+
+.lkdv-cv2-badge[data-tone='accent'] {
+  background: var(--lkv-secondary-subtle);
+  color: var(--lkv-forest-900);
+}
+
+.lkdv-cv2-round {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--cv2-field-bg);
+  color: var(--lkv-forest-900);
+  box-shadow: inset 0 0 0 0.5px var(--lkv-border), var(--elevation-1);
+  cursor: pointer;
+  flex: none;
+}
+
+.lkdv-cv2-round::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  min-width: var(--lkv-touch-min);
+  min-height: var(--lkv-touch-min);
+  transform: translate(-50%, -50%);
+}
+
+.lkdv-cv2-round svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.lkdv-cv2-avatars {
+  display: flex;
+  align-items: center;
+  padding-left: 8px;
+}
+
+.lkdv-cv2-avatar {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin-left: -8px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--lkv-secondary-subtle);
+  color: var(--lkv-forest-900);
+  font: 600 10.5px/1 var(--font-sans);
+  box-shadow: 0 0 0 1.5px var(--lkv-surface-card);
+  flex: none;
+}
+
+.lkdv-cv2-avatar > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.lkdv-cv2-avatar--more {
+  background: var(--lkv-forest-900);
+  color: var(--lkv-text-inverted);
+}
+
+.lkdv-cv2-capacity {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.lkdv-cv2-capacity-track {
+  position: relative;
+  display: block;
+  height: 5px;
+  min-width: 44px;
+  flex: 1 1 auto;
+  border-radius: var(--lkv-radius-full);
+  background: var(--lkv-border);
+  overflow: hidden;
+}
+
+.lkdv-cv2-capacity-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--lkv-forest-500);
+}
+
+.lkdv-cv2-capacity[data-state='full'] .lkdv-cv2-capacity-fill {
+  background: var(--lkv-forest-900);
+}
+
+.lkdv-cv2-capacity-label {
+  flex: none;
+  font: 600 10.5px/1 var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  color: var(--lkv-text-secondary);
+}
+
+/* ── Cibles tactiles étendues + verrou d'adhésion ──────────────────────── */
+
+.lkdv-cv2-hit {
+  position: relative;
+}
+
+.lkdv-cv2-hit::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  min-width: var(--lkv-touch-min);
+  min-height: var(--lkv-touch-min);
+  transform: translate(-50%, -50%);
+}
+
+.lkdv-cv2-lock {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--cv2-field-bg);
+  color: var(--lkv-text-secondary);
+  box-shadow: inset 0 0 0 0.5px var(--lkv-border);
+}
+
+.lkdv-cv2-lock svg {
+  width: 11px;
+  height: 11px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ── Préférences système ───────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .lkdv-cv2-tile,
+  .lkdv-cv2-pill,
+  .lkdv-cv2-chip,
+  .lkdv-cv2-agenda-day,
+  .lkdv-cv2-round {
+    transition: none;
+  }
+
+  .lkdv-cv2-skeleton-bar {
+    animation: none;
+  }
+
+  .lkdv-cv2-peek,
+  .lkdv-cv2-peek-box {
+    animation: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .lkdv-cv2-card,
+  .lkdv-cv2-tile,
+  .lkdv-cv2-ticket,
+  .lkdv-cv2-agenda-day,
+  .lkdv-cv2-peek-box {
+    background: var(--lkv-surface-card);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  .lkdv-cv2-ticket-stub,
+  .lkdv-cv2-agenda-day.is-active {
+    background: var(--lkv-forest-900);
+  }
+}

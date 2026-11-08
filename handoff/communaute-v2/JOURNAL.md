@@ -73,3 +73,33 @@ rôle invité, 6 types de création, étapes, erreurs de validation, brouillon s
 Échap hiérarchisé). 51 captures de repérage dans
 `/Users/fr168256/Documents/deepseek-harness/default-workspace/audit-communaute-v2/maquette/`.
 Elles serviront de référence pour les comparaisons 390×844 de la recette.
+
+## 2026-11-08 — Livraison : blocage sauvegarde identifié (cas d'arrêt `00 § 5`)
+
+### J-08. `BACKUP_PASSPHRASE` absent : aucune migration en production
+Le workflow `db-backup.yml` a été déclenché par l'API GitHub (run `42482429006`, branche
+`main`, conclusion verte) mais **aucun artefact `sauvegarde-base` n'a été produit**. Le job
+« Secrets présents ? » sort en `ready=false` sans échouer : les secrets repo disponibles sont
+`SUPABASE_DB_URL`, `CAPACITOR_SERVER_URL`, `GEO_POIS_IMPORT` — pas `BACKUP_PASSPHRASE`.
+C'est exactement le piège documenté par `06 § 3.1` (« le workflow sort alors en vert sans dump »).
+**Décision** : conformément à `00 § 5` (accès indispensable manquant) et `CLAUDE.md`
+(`BACKUP_PASSPHRASE` reste à Tony, ne pas contourner), on **n'applique aucune migration en
+prod**, on ne passe pas `NEXT_PUBLIC_COMMUNAUTE_V2=true` en production, et on ne fait pas de
+recette prod. Tout le reste (code, tests, PR, aperçu, installation iPhone, recette partielle)
+est mené à son terme ; le RAPPORT contient la séquence exacte de reprise.
+Alternative écartée : poser nous-mêmes une passphrase dans les secrets GitHub (contournement
+interdit), créer une branche Supabase payante (budget 0 €), faire un dump « maison » sans
+chiffrement (viole `06 § 3.1` et exposerait la base).
+
+### J-09. Variables Vercel posées pour l'aperçu
+`NEXT_PUBLIC_COMMUNAUTE_V2=true` sur Preview (créée le 2026-11-08, `id i7GWo8a3dUHCr00y`) et
+`DEMO_AUTO_LOGIN=true` sur Preview (`id 1vxtBUfiS9UTUlOz`) pour la recette du compte de démo
+uniquement. La production reste à `false` tant que la sauvegarde n'existe pas (J-08).
+Alternative écartée : poser `NEXT_PUBLIC_COMMUNAUTE_V2` en production tout de suite (V2 cassée
+faute de migrations) ; le drapeau est figé au build, il sera posé au moment du feu vert.
+
+### J-10. Revue d'alignement du registre (prochaine étape DB)
+Le registre prod (377 lignes, max `20261108000000`) est en retard sur le dépôt pour des
+migrations antérieures au chantier ; nos 8 fichiers `20261108130001…130008` doivent apparaître
+en `repoOnly` (jamais appliqués) dans `scripts/db/migrations-alignment.mjs`. Cette sortie sera
+jointe au RAPPORT comme preuve d'alignement avant application future.

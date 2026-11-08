@@ -11,6 +11,7 @@ import {
   eventIcsFilename,
   formatDateFull,
   formatDateStamp,
+  formatCountFr,
   formatDistanceKm,
   formatElevationM,
   formatKm,
@@ -247,7 +248,7 @@ export default function EventDetailClient({
           <div className="lkdv-event-capacity-head">
             <b>
               {event.maxParticipants > 0
-                ? formatCount(event.currentParticipants, event.maxParticipants)
+                ? `${event.currentParticipants} / ${event.maxParticipants} inscrit${event.currentParticipants > 1 ? 's' : ''}`
                 : `${event.currentParticipants} inscrit${event.currentParticipants > 1 ? 's' : ''}`}
             </b>
             {event.maxParticipants > 0 ? (
@@ -376,7 +377,7 @@ export default function EventDetailClient({
         <h2 className="lkdv-event-h2">
           Participants
           <span className="lkdv-event-count">
-            {formatCount(event.participants.length, 'inscrit')}
+            {formatCountFr(event.participants.length, 'inscrit')}
           </span>
         </h2>
         {participants.length > 0 ? (
@@ -444,8 +445,4 @@ export default function EventDetailClient({
       </p>
     </main>
   );
-}
-
-function formatCount(current: number, max: number): string {
-  return `${current} / ${max} inscrit${current > 1 ? 's' : ''}`;
 }
