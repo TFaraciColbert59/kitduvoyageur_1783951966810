@@ -27,7 +27,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import * as THREE from 'three';
 import { describe, expect, it, vi } from 'vitest';
-import type { BagManifest } from '../domain/bagModel';
+import type { BagManifest, Vec3Tuple } from '../domain/bagModel';
 import {
   LKDV_ONE_AUDITED_ANCHORS,
   LKDV_ONE_PROVISIONAL_ANCHORS,
@@ -37,6 +37,7 @@ import {
   filterCompatibleModulesForBag,
   resolveBagAttachmentAnchors,
 } from '../domain/bagAnchorsTable';
+import { plaquerAncresSurMaillage } from '../scene/bag/modelLayer';
 import {
   AVAILABLE_3D_MODULE_MANIFESTS,
   IMPORTED_GLB_MODULE_MANIFESTS,
@@ -622,5 +623,56 @@ describe('aucun module ne passe sous le fond du sac', () => {
       }
     }
     expect(ecarts).toEqual([]);
+  });
+});
+
+describe('placage des ancres sur la surface du maillage', () => {
+  /** Un corps simple de 0,4 x 0,6 x 0,3 m, fond à y = 0, pour mesurer sans dépendre d'un .glb. */
+  function corpsTest(): THREE.Object3D {
+    const racine = new THREE.Object3D();
+    const maille = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.6, 0.3));
+    maille.position.set(0, 0.3, 0);
+    racine.add(maille);
+    racine.updateMatrixWorld(true);
+    return racine;
+  }
+
+  it("ramène sur la surface une ancre posée trop à l'intérieur", () => {
+    const [ancre] = plaquerAncresSurMaillage(
+      [{ id: 'facade', position: [0, 0.3, 0.1] as const, normal: [0, 0, 1] as const }],
+      corpsTest(),
+    );
+    // La face avant est à z = 0.15 : l'ancre déclarée à 0.10 remonte de 5 cm.
+    expect(ancre.position[2]).toBeCloseTo(0.15, 3);
+    expect(ancre.position[0]).toBe(0);
+    expect(ancre.position[1]).toBe(0.3);
+  });
+
+  it('ramène sur la surface une ancre posée trop en dehors', () => {
+    const [ancre] = plaquerAncresSurMaillage(
+      [{ id: 'flanc-droit', position: [0.24, 0.3, 0] as const, normal: [1, 0, 0] as const }],
+      corpsTest(),
+    );
+    expect(ancre.position[0]).toBeCloseTo(0.2, 3);
+  });
+
+  it('laisse intacte une ancre dont la correction serait aberrante', () => {
+    // 0,5 m du flanc : au-delà de la tolérance, on garde la valeur déclarée plutôt que de
+    // déplacer une ancre sur la foi d'un rayon qui a traversé autre chose.
+    const depart: Vec3Tuple = [0.7, 0.3, 0];
+    const [ancre] = plaquerAncresSurMaillage(
+      [{ id: 'flanc-droit', position: depart, normal: [1, 0, 0] as const }],
+      corpsTest(),
+    );
+    expect(ancre.position).toEqual(depart);
+  });
+
+  it("laisse intacte une ancre qui ne rencontre aucune surface", () => {
+    const depart: Vec3Tuple = [0, 2.5, 0.1];
+    const [ancre] = plaquerAncresSurMaillage(
+      [{ id: 'facade', position: depart, normal: [0, 0, 1] as const }],
+      corpsTest(),
+    );
+    expect(ancre.position).toEqual(depart);
   });
 });

@@ -156,6 +156,70 @@ const DEGRADED_INFO: BagModelRuntimeInfo = {
   reason: null,
 };
 
+/**
+ * Correction maximale tolérée pour plaquer une ancre : au-delà, la mesure est jugée aberrante
+ * (rayon passé à côté, maillage inattendu) et l'ancre déclarée est conservée telle quelle.
+ */
+const ANCRE_CORRECTION_MAX_M = 0.12;
+
+/**
+ * Déplace chaque ancre, le long de sa normale, jusqu'à la surface réellement modélisée.
+ *
+ * Les ancres de la table sont dérivées de la boîte englobante du sac. Or les corps LKDV ONE
+ * s'affinent : mesuré sur le 45 L, l'ancre de façade tombait 13 mm à l'intérieur du maillage et
+ * les deux ancres de flanc 54 mm à l'extérieur — un module latéral flottait donc à cinq
+ * centimètres du sac. Seule la composante le long de la normale est corrigée : une arête prise de
+ * biais ne doit pas faire glisser l'ancre sur les deux autres axes.
+ *
+ * Les ancres déclarées par le maillage lui-même ne passent pas par ici : elles sont déjà posées
+ * sur la surface par le modeleur.
+ */
+export function plaquerAncresSurMaillage<T extends { readonly position: Vec3Tuple; readonly normal: Vec3Tuple }>(
+  ancres: readonly T[],
+  racine: THREE.Object3D,
+): T[] {
+  const cibles: THREE.Mesh[] = [];
+  racine.traverse((o) => {
+    if ((o as THREE.Mesh).isMesh) cibles.push(o as THREE.Mesh);
+  });
+  if (cibles.length === 0) return [...ancres];
+
+  racine.updateMatrixWorld(true);
+  const boite = new THREE.Box3().setFromObject(racine);
+  if (boite.isEmpty()) return [...ancres];
+
+  const rayon = new THREE.Raycaster();
+  const depart = new THREE.Vector3();
+  const normale = new THREE.Vector3();
+  const point = new THREE.Vector3();
+  const PORTEE = 0.6;
+
+  return ancres.map((ancre) => {
+    normale.set(ancre.normal[0], ancre.normal[1], ancre.normal[2]);
+    if (normale.lengthSq() === 0) return ancre;
+    normale.normalize();
+
+    // Les ancres se comptent depuis le fond du sac ; le maillage a son propre zéro vertical.
+    point.set(ancre.position[0], boite.min.y + ancre.position[1], ancre.position[2]);
+    depart.copy(point).addScaledVector(normale, PORTEE);
+    rayon.set(depart, normale.clone().negate());
+    const touches = rayon.intersectObjects(cibles, true);
+    if (touches.length === 0) return ancre;
+
+    const ecart = PORTEE - touches[0].distance;
+    if (!Number.isFinite(ecart) || Math.abs(ecart) > ANCRE_CORRECTION_MAX_M) return ancre;
+
+    return {
+      ...ancre,
+      position: [
+        ancre.position[0] + normale.x * ecart,
+        ancre.position[1] + normale.y * ecart,
+        ancre.position[2] + normale.z * ecart,
+      ] as Vec3Tuple,
+    };
+  });
+}
+
 /** Hauteur que le maillage doit occuper dans la composition (sac procédural courant). */
 function compositionScale(manifestHeightM: number, targetHeightM: number): number {
   if (!(manifestHeightM > 0) || !(targetHeightM > 0)) return 1;
@@ -286,7 +350,10 @@ export function createBagModelLayer(deps: BagModelLayerDeps): BagModelLayer {
         colorCustomization = atlasMaps.zones ? 'available' : 'unavailable-no-mask';
       }
 
-      const provisionalAnchors = resolveBagAttachmentAnchors(result.manifest);
+      const provisionalAnchors = plaquerAncresSurMaillage(
+        resolveBagAttachmentAnchors(result.manifest),
+        result.root,
+      );
       const allAnchorSpecs =
         result.anchors.size > 0
           ? [...result.anchors.values()].map((a) => ({
