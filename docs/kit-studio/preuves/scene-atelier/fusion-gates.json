@@ -1,0 +1,44 @@
+{
+  "date": "2026-11-08",
+  "testedCodeCommit": "b302c8a",
+  "tsc": {
+    "exit": 0,
+    "via": "verify-kit-studio.sh",
+    "maxOldSpaceSize": 8192
+  },
+  "lint": {
+    "exit": 0,
+    "via": "verify-kit-studio.sh",
+    "maxWarnings": 0
+  },
+  "verifyKitStudio": {
+    "exit": 0,
+    "testFiles": 41,
+    "tests": 473
+  },
+  "build": {
+    "command": "npm run build",
+    "exit": 0,
+    "FAST_BUILD": false,
+    "note": "Avertissements existants hors du lot atelier ; aucun contrôle désactivé."
+  },
+  "perfBudget": {
+    "exit": 0,
+    "allSurfacesWithinBudget": true,
+    "kitStudioGzipKb": 481,
+    "kitStudioMaxGzipKb": 520
+  },
+  "atlasCounterproof": {
+    "neutralizedExit": 1,
+    "changedFabricPixels": 0,
+    "restoredExit": 0,
+    "restoredTests": 9
+  },
+  "colorBug": "Default MaterialKey m-2d482a resolves to null, tintAmount=0; observed and documented, not fixed.",
+  "protectedFilesUnchangedFromOriginMain": [
+    "scene/camera.ts",
+    "scene/bag/atlas.ts",
+    "scene/bag/materials.ts",
+    "domain/catalog.ts"
+  ]
+}

@@ -1,6 +1,6 @@
 # Scène atelier — reprise après contrôle, 8 novembre 2026
 
-Branche `chantier/scene-atelier`. Lot initial `4bd0872`, rebasé sur `08993b8` (`origin/main`, incluant le lot caméra `c9104bf`). Le rebase s'est appliqué sans conflit manuel. Aucun changement du checkout `main`, aucune fusion.
+Branche `chantier/scene-atelier`. Lot initial `4bd0872`, rebasé sur `08993b8` (`origin/main`, incluant le lot caméra `c9104bf`). Le rebase s'est appliqué sans conflit manuel. La fusion a ensuite été autorisée par Tony le 8 novembre, après contrôle ; ses portes de validation sont consignées dans `VALIDATION-FUSION-scene-atelier.md`. Le diagnostic de coloris est dans `CONSTAT-coloris-defaut.md`.
 
 ## Établi
 
