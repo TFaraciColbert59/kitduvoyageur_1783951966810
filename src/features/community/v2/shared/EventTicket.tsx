@@ -30,6 +30,47 @@ export interface EventTicketProps {
 
 type TicketState = 'open' | 'full' | 'waitlist' | 'registered' | 'past';
 
+/** Hash stable (aucun état, aucune dépendance) : décore le topo du billet. */
+function ticketHash(value: string): number {
+  let out = 11;
+  for (let index = 0; index < value.length; index += 1) {
+    out = (out * 31 + value.charCodeAt(index)) >>> 0;
+  }
+  return out;
+}
+
+/**
+ * Topo décoratif du billet (Sorties#1 : « cartouche jour et mois à gauche…
+ * et topo de la sortie à droite »). Purement décoratif et déterministe :
+ * aucune donnée réelle n'est inventée, `aria-hidden`.
+ */
+function TicketTopo({ seed }: { seed: string }) {
+  const hashValue = ticketHash(seed || 'sortie');
+  const shift = hashValue % 7;
+  const wobble = hashValue % 5;
+  const route = `M6 ${46 - shift} L24 ${30 - shift} L40 ${36 - shift} L58 ${18 + wobble} L76 ${
+    26 - shift
+  } L94 ${12 + wobble}`;
+  return (
+    <span className="lkdv-cv2-ticket-side lkdv-cv2-ticket-topo" aria-hidden="true">
+      <svg viewBox="0 0 100 60" preserveAspectRatio="xMidYMid slice" focusable="false">
+        <path className="lkdv-cv2-ticket-topo-line" d={`M-8 ${14 + shift} C 18 ${4 + shift}, 58 ${
+          30 + shift
+        }, 108 ${10 + shift}`} />
+        <path className="lkdv-cv2-ticket-topo-line" d={`M-8 ${34 + shift} C 22 ${22 + shift}, 62 ${
+          48 + shift
+        }, 108 ${26 + shift}`} />
+        <path className="lkdv-cv2-ticket-topo-line" d={`M-8 ${52 + shift} C 26 ${40 + shift}, 66 ${
+          60 + shift
+        }, 108 ${44 + shift}`} />
+        <path className="lkdv-cv2-ticket-route" d={route} />
+        <circle className="lkdv-cv2-ticket-dot" cx="6" cy={46 - shift} r="2.4" />
+        <circle className="lkdv-cv2-ticket-dot lkdv-cv2-ticket-dot--end" cx="94" cy={12 + wobble} r="2.4" />
+      </svg>
+    </span>
+  );
+}
+
 function resolveState(event: EventCardVM): TicketState {
   if (event.past) return 'past';
   if (event.myStatus === 'waitlist') return 'waitlist';
@@ -131,7 +172,13 @@ export function EventTicket({
 
   const body = (
     <>
-      <span className="lkdv-cv2-ticket-main">
+      <span
+        className={
+          variant === 'tile'
+            ? 'lkdv-cv2-ticket-main lkdv-cv2-ticket-main--topo'
+            : 'lkdv-cv2-ticket-main'
+        }
+      >
         <span className="lkdv-cv2-ticket-stub" aria-hidden="true">
           {weekday ? <i className="lkdv-cv2-ticket-wd">{weekday}</i> : null}
           <b className="lkdv-cv2-ticket-day">{stamp.day}</b>
@@ -144,6 +191,7 @@ export function EventTicket({
           {chips.length > 0 ? <span className="lkdv-cv2-ticket-chips">{chips}</span> : null}
           {meta ? <span className="lkdv-cv2-ticket-meta">{meta}</span> : null}
         </span>
+        {variant === 'tile' ? <TicketTopo seed={event.id} /> : null}
       </span>
       {variant === 'tile' ? (
         <span className="lkdv-cv2-ticket-foot">

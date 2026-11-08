@@ -606,6 +606,51 @@ button.lkdv-cv2-tile:active {
   min-height: 104px;
 }
 
+/* Colonne topo décorative à droite (Sorties#1 : tampon à gauche, topo à droite). */
+.lkdv-cv2-ticket-main--topo {
+  grid-template-columns: 68px minmax(0, 1fr) 76px;
+}
+
+.lkdv-cv2-ticket-side {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-left: 0.5px dashed var(--cv2-list-sep-strong);
+  background: var(--sage-50);
+}
+
+.lkdv-cv2-ticket-topo > svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.lkdv-cv2-ticket-topo-line {
+  fill: none;
+  stroke: var(--sage-200);
+  stroke-width: 1;
+}
+
+.lkdv-cv2-ticket-route {
+  fill: none;
+  stroke: var(--lkv-forest-900);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.lkdv-cv2-ticket-dot {
+  fill: var(--lkv-forest-900);
+}
+
+.lkdv-cv2-ticket-dot--end {
+  fill: var(--lkv-text-inverted);
+  stroke: var(--lkv-forest-900);
+  stroke-width: 1;
+}
+
 .lkdv-cv2-ticket-stub {
   position: relative;
   display: flex;

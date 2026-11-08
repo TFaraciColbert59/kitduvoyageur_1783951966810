@@ -103,3 +103,14 @@ Le registre prod (377 lignes, max `20261108000000`) est en retard sur le dépôt
 migrations antérieures au chantier ; nos 8 fichiers `20261108130001…130008` doivent apparaître
 en `repoOnly` (jamais appliqués) dans `scripts/db/migrations-alignment.mjs`. Cette sortie sera
 jointe au RAPPORT comme preuve d'alignement avant application future.
+
+### J-11. `main` était rouge à la fusion (jeton kit-studio) — correctif minimal
+Au moment de la fusion de `origin/main` dans `feat/communaute-v2` (workshop/kit-studio
+fusionnés après notre base), la garde `src/features/adventure-prep/__tests__/design-tokens-p017.test.ts`
+échoue sur `main` : `src/features/kit-studio/ui/kit-studio.css:267` référence
+`var(--ks-ink-22)` sans repli, jeton jamais déclaré (les voisins `--ks-ink-20`/`--ks-ink-25`
+existent). `LKDV Unified Quality Gates` est rouge sur `main` (`263e90c`) pour cette raison,
+indépendamment de notre chantier. **Décision** : corriger dans notre PR le minimum
+(`var(--ks-ink-22)` → `var(--ks-ink-25)`, même intention d'ombre encrée 25 %), pour que la
+PR puisse être verte et que `main` le redevienne à la fusion. Alternative écartée : attendre
+le chantier kit-studio (bloque notre livraison) ; désactiver la garde (interdit).

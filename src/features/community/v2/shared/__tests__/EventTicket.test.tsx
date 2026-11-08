@@ -149,6 +149,24 @@ describe('EventTicket', () => {
     expect(screen.getByRole('link').getAttribute('href')).toBe('/communaute?sortie=e1');
   });
 
+  it('ajoute un topo décoratif déterministe à droite en variante tuile', () => {
+    const { container, unmount } = render(<EventTicket event={makeEvent()} />);
+    const topo = container.querySelector('.lkdv-cv2-ticket-topo');
+    expect(topo).toBeTruthy();
+    expect(topo?.getAttribute('aria-hidden')).toBe('true');
+    const first = topo?.innerHTML;
+    expect(container.querySelector('.lkdv-cv2-ticket-main--topo')).toBeTruthy();
+    unmount();
+    const second = render(<EventTicket event={makeEvent()} />);
+    expect(second.container.querySelector('.lkdv-cv2-ticket-topo')?.innerHTML).toBe(first);
+  });
+
+  it('n’ajoute pas de topo à la variante aperçu', () => {
+    const { container } = render(<EventTicket event={makeEvent()} variant="preview" />);
+    expect(container.querySelector('.lkdv-cv2-ticket-topo')).toBeNull();
+    expect(container.querySelector('.lkdv-cv2-ticket-main--topo')).toBeNull();
+  });
+
   it('ne contient aucune couleur littérale ni courbe littérale', () => {
     const source = readFileSync(
       join(process.cwd(), 'src/features/community/v2/shared/EventTicket.tsx'),

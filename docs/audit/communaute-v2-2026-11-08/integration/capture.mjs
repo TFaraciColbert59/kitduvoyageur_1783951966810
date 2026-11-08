@@ -324,18 +324,25 @@ const SCENARIOS = [
     open: 'explorer',
     prepare: async (page) => {
       await selectCapsuleTab(page, 'Clubs');
+      // Le premier bouton « Membre ✓ » ouvre les actions (peek) : on cible une
+      // adhésion possible (`data-state="none"`) pour déclencher la mutation + l'île.
       const join = await firstVisible(
         page,
         [
-          '[data-testid="cv2-club-join"]',
+          '[data-testid="cv2-club-join"][data-state="none"]',
+          '[data-testid="cv2-club-join"]:not([data-state="member"]):not([data-state="pending"])',
           'button:has-text("Rejoindre")',
-          'button[aria-label*="Rejoindre"]',
         ],
         4000,
       );
-      if (!join) throw new Error('aucun bouton Rejoindre');
+      if (!join) throw new Error('aucun bouton Rejoindre (non-membre)');
       await join.click();
-      await firstVisible(page, ['[data-testid="cv2-island"]', '.lkdv-island-pill'], 4000);
+      const island = await firstVisible(
+        page,
+        ['[data-testid="cv2-island"]', '.lkdv-island-pill'],
+        5000,
+      );
+      if (!island) throw new Error('île non montée après adhésion');
     },
   },
 
@@ -370,8 +377,12 @@ const SCENARIOS = [
     id: 'creation-erreur',
     open: 'create',
     prepare: async (page) => {
+      // Étape 1 (Format) : Suivant avance à Contenu ; le second Suivant soumet
+      // un champ requis vide → compteur d'erreurs en tête + erreur inline.
       await tryStep(page, 'Suivant');
-      await settle(page, 700);
+      await settle(page, 600);
+      await tryStep(page, 'Suivant');
+      await settle(page, 800);
     },
   },
   {
