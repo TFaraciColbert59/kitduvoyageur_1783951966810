@@ -265,6 +265,14 @@ export function createBagModelLayer(deps: BagModelLayerDeps): BagModelLayer {
         atlasMaps = { zones: null, weaveNormal: null };
       }
 
+      // Les cartes s'attendent : changer de corps pendant cette attente déclenche un second
+      // chargement qui a déjà libéré `loaded` et `model`. Sans ce second contrôle, la reprise
+      // posait le maillage périmé en scène puis déréférençait `model`, devenu nul.
+      if (disposed || token !== loadToken) {
+        result.dispose();
+        return info;
+      }
+
       place(result);
       holder.add(result.root);
       holder.visible = true;
@@ -320,7 +328,7 @@ export function createBagModelLayer(deps: BagModelLayerDeps): BagModelLayer {
         parts: [...result.parts.keys()],
         anchors: anchorIds,
         capabilities: result.capabilities,
-        declaredCapacityL: model.declaredCapacityL,
+        declaredCapacityL: model?.declaredCapacityL ?? null,
         colorCustomization,
         modules3dAvailable: AVAILABLE_3D_MODULE_MANIFESTS.length > 0,
         reason: null,

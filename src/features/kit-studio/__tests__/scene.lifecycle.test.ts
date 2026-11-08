@@ -7,7 +7,7 @@ import type { KitState } from '../domain/types';
 import { createKitScene } from '../scene/createScene';
 import type { RendererFactory, RendererLike } from '../scene/createScene';
 import { createFrameMeter } from '../scene/lifecycle';
-import { createCameraRig, viewOffsetFraction, zoomFor } from '../scene/camera';
+import { createCameraRig, DRAWER_OPEN, viewOffsetFraction, zoomFor } from '../scene/camera';
 
 interface FakeRenderer extends RendererLike {
   loop: ((t: number) => void) | null;
@@ -266,9 +266,78 @@ describe('caméra liée au tiroir', () => {
   });
 
   it('formules du décalage et du zoom', () => {
+    // `viewOffsetFraction` reçoit `dk`, qui va de 0 (tiroir fermé) à DRAWER_OPEN (1,7), et non une
+    // fraction 0–1 : les deux bornes du décalage se lisent donc à 0 et à DRAWER_OPEN. Sans cette
+    // normalisation, dk = 1,7 extrapolait à 0,126 au lieu de 0,035 et poussait la vue vers le bas.
     expect(viewOffsetFraction(0)).toBeCloseTo(-0.095);
-    expect(viewOffsetFraction(1)).toBeCloseTo(0.035);
+    expect(viewOffsetFraction(DRAWER_OPEN)).toBeCloseTo(0.035);
+    expect(viewOffsetFraction(2 * DRAWER_OPEN)).toBeCloseTo(0.035);
     expect(zoomFor(0)).toBeCloseTo(1.05);
     expect(zoomFor(1)).toBe(1);
+  });
+});
+
+describe('rechargement du maillage', () => {
+  /** Compte les chargements réellement demandés : un manifeste par tentative. */
+  function sceneComptee(etat: KitState) {
+    const demandes: string[] = [];
+    const scene = createKitScene(canvas, {
+      state: etat,
+      reducedMotion: false,
+      rendererFactory: fakeFactory(renderers),
+      bagAssetProvider: {
+        // Un manifeste vide fait échouer le chargement proprement : le test ne mesure que le
+        // déclenchement, et rien ne reste en suspens après la fin du fichier.
+        fetchManifest: async (id: string) => {
+          demandes.push(id);
+          return {} as never;
+        },
+        fetchGlb: async () => new ArrayBuffer(0),
+      },
+    });
+    return { scene, demandes };
+  }
+
+  it("un changement de teinte ne relance pas le chargement du maillage", () => {
+    const depart = createInitialState('tmb');
+    const corps = depart.kits[depart.kitId].bag;
+    const { scene, demandes } = sceneComptee(depart);
+    const auDepart = demandes.length;
+
+    // Le sac procédural est reconstruit à chaque changement d'apparence ; s'en servir comme signal
+    // de rechargement relançait un chargement complet par couleur. Trois d'affilée s'annulaient
+    // l'une l'autre et le Studio restait bloqué sur « chargement », sans couleur ni point d'accroche.
+    const teinte: KitState = {
+      ...depart,
+      config: {
+        ...depart.config,
+        [corps]: { ...depart.config[corps], body: { ...depart.config[corps].body, col: 'm-b5aba0' } },
+      },
+    };
+    scene.update(teinte);
+    expect(demandes.length).toBe(auDepart);
+    scene.dispose();
+  });
+
+  it('un changement de corps relance le chargement, une seule fois', () => {
+    const depart = createInitialState('tmb');
+    const { scene, demandes } = sceneComptee(depart);
+    const auDepart = demandes.length;
+
+    const autreCorps: KitState = {
+      ...depart,
+      kits: {
+        ...depart.kits,
+        [depart.kitId]: { ...depart.kits[depart.kitId], bag: 'lkdv-one-80' },
+      },
+    };
+    scene.update(autreCorps);
+    expect(demandes.length).toBe(auDepart + 1);
+    expect(demandes[demandes.length - 1]).toBe('lkdv-one-80');
+
+    // Rejouer le même corps ne redemande rien : la source n'a pas changé.
+    scene.update({ ...autreCorps });
+    expect(demandes.length).toBe(auDepart + 1);
+    scene.dispose();
   });
 });

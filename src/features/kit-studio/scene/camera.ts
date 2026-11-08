@@ -16,7 +16,8 @@ export const DK_RATE = 3.6;
 export const DK_RATE_REDUCED = 60;
 
 /** Décalage vertical de la vue, en fraction de la hauteur d'écran. */
-export const viewOffsetFraction = (dk: number): number => lerp(-0.095, 0.035, dk);
+export const viewOffsetFraction = (dk: number): number =>
+  lerp(-0.095, 0.035, clamp(dk / DRAWER_OPEN, 0, 1));
 /** Zoom caméra selon l'ouverture du tiroir. */
 export const zoomFor = (dk: number): number => 1 + (1 - dk) * 0.05;
 
@@ -86,6 +87,12 @@ export interface CameraRig {
   advance(dt: number): boolean;
   /** Replace la caméra d'après l'état courant (le monde doit être à jour). */
   place(): void;
+  /**
+   * Rectangle écran occupé par le sujet (sac + modules), en fractions de l'écran :
+   * 0 = bord gauche/haut, 1 = bord droit/bas. `null` tant qu'aucune boîte n'est connue.
+   * Sert à vérifier, sans heuristique de couleur, que le sujet est cadré et non coupé.
+   */
+  subjectRect(): { x0: number; y0: number; x1: number; y1: number } | null;
   /** advance() puis place(). */
   step(dt: number): boolean;
 }
@@ -96,6 +103,12 @@ export function createCameraRig(options: { readonly reducedMotion: boolean }): C
   let w = 1;
   let h = 1;
   let aspectK = 1;
+  const framingBox = new Box3();
+  let framingBoxValid = false;
+  const vProj = new Vector3();
+  /** Part de la bande visible qu'occupe le sac après correction par projection. */
+  const FIT_OCCUPANCY = 0.78;
+  let subject: { x0: number; y0: number; x1: number; y1: number } | null = null;
   let dk = DRAWER_CLOSED;
   let dkT = DRAWER_CLOSED;
   let fx = 0;
@@ -174,6 +187,8 @@ export function createCameraRig(options: { readonly reducedMotion: boolean }): C
         const fovRad = (camera.fov * Math.PI) / 180;
         const halfTan = Math.tan(fovRad * 0.5);
         adaptiveDistTarget = clamp(effectiveH / (2 * halfTan), 0.9, 8.5);
+        framingBox.copy(tempBox);
+        framingBoxValid = true;
       }
     }
 
@@ -217,16 +232,100 @@ export function createCameraRig(options: { readonly reducedMotion: boolean }): C
     );
     camera.position.y = Math.max(camera.position.y, GROUND_Y + 0.15);
     camera.lookAt(tgt.x, tgt.y, tgt.z);
+
+    // Correction finale d'après la projection réelle du sac (SPEC : le sac ne sort jamais du cadre).
+    // Les ancres de zone, l'arc et les facteurs d'aspect déplacent le sujet de façon difficile à
+    // prévoir ; on mesure donc où le sac tombe réellement à l'écran et on corrige distance et
+    // décalage de vue pour le poser au centre de la bande visible, à l'occupation voulue.
+    let fitYoff = 0;
+    let fitXoff = 0;
+    if (framingBoxValid) {
+      // La projection doit être mesurée sans décalage de vue, sinon la correction se mord la queue.
+      if (camera.view?.enabled) {
+        camera.clearViewOffset();
+        appliedYoff = 0;
+      }
+      const drawerCov = clamp((dk / DRAWER_OPEN) * 0.38, 0, 0.42);
+      const bandBottom = -1 + 2 * drawerCov;
+      const bandCenter = (bandBottom + 1) / 2;
+      const bandHeight = 1 - bandBottom;
+      for (let pass = 0; pass < 2; pass++) {
+        camera.updateMatrixWorld();
+        camera.updateProjectionMatrix();
+        let lo = Infinity;
+        let hi = -Infinity;
+        let gauche = Infinity;
+        let droite = -Infinity;
+        for (let c = 0; c < 8; c++) {
+          vProj.set(
+            c & 1 ? framingBox.max.x : framingBox.min.x,
+            c & 2 ? framingBox.max.y : framingBox.min.y,
+            c & 4 ? framingBox.max.z : framingBox.min.z,
+          );
+          vProj.project(camera);
+          if (vProj.y < lo) lo = vProj.y;
+          if (vProj.y > hi) hi = vProj.y;
+          if (vProj.x < gauche) gauche = vProj.x;
+          if (vProj.x > droite) droite = vProj.x;
+        }
+        if (!Number.isFinite(lo) || !Number.isFinite(hi) || hi <= lo) break;
+        const span = hi - lo;
+        const wanted = FIT_OCCUPANCY * bandHeight;
+        // Vue de biais, la boîte englobante projette plus large que le sac : sans contrainte
+        // horizontale, un cadrage juste en hauteur déborde latéralement sur un écran de téléphone.
+        const spanH = droite - gauche;
+        const wantedH = FIT_OCCUPANCY * 2;
+        const ratio = Math.max(span / wanted, spanH / wantedH);
+        if (pass === 0 && Math.abs(ratio - 1) > 0.02) {
+          di = clamp(di * ratio, 0.6, 9.5);
+          camera.position.set(
+            tgt.x + di * Math.sin(ph) * Math.sin(theta),
+            tgt.y + di * Math.cos(ph),
+            tgt.z + di * Math.sin(ph) * Math.cos(theta),
+          );
+          camera.position.y = Math.max(camera.position.y, GROUND_Y + 0.15);
+          camera.lookAt(tgt.x, tgt.y, tgt.z);
+          continue;
+        }
+        fitYoff = ((bandCenter - (lo + hi) / 2) / 2) * h;
+        fitXoff = ((0 - (gauche + droite) / 2) / 2) * w;
+        break;
+      }
+    }
+
     // Le sac se recentre au-dessus du tiroir : glissement et léger recul, amortis (dk de 0, fermé, à 1,7, ouvert).
-    const yoff = viewOffsetFraction(dk) * h - arc * (1 - ex) * h * 0.16;
+    const yoff = framingBoxValid ? fitYoff : viewOffsetFraction(dk) * h - arc * (1 - ex) * h * 0.16;
     if (yoff !== appliedYoff) {
-      if (Math.abs(yoff) > 0.5) camera.setViewOffset(w, h, 0, yoff, w, h);
+      if (Math.abs(yoff) > 0.5 || Math.abs(fitXoff) > 0.5) camera.setViewOffset(w, h, -fitXoff, yoff, w, h);
       else if (camera.view && camera.view.enabled) camera.clearViewOffset();
       appliedYoff = yoff;
     }
     const zt = zoomFor(dk);
     if (Math.abs(camera.zoom - zt) > 0.0004) { camera.zoom = zt; camera.updateProjectionMatrix(); }
     camera.updateMatrixWorld();
+
+    if (framingBoxValid) {
+      let nx0 = Infinity;
+      let ny0 = Infinity;
+      let nx1 = -Infinity;
+      let ny1 = -Infinity;
+      for (let c = 0; c < 8; c++) {
+        vProj.set(
+          c & 1 ? framingBox.max.x : framingBox.min.x,
+          c & 2 ? framingBox.max.y : framingBox.min.y,
+          c & 4 ? framingBox.max.z : framingBox.min.z,
+        );
+        vProj.project(camera);
+        if (vProj.x < nx0) nx0 = vProj.x;
+        if (vProj.x > nx1) nx1 = vProj.x;
+        if (vProj.y < ny0) ny0 = vProj.y;
+        if (vProj.y > ny1) ny1 = vProj.y;
+      }
+      // NDC (-1..1, y vers le haut) → fractions d'écran (0..1, y vers le bas).
+      subject = { x0: (nx0 + 1) / 2, y0: (1 - ny1) / 2, x1: (nx1 + 1) / 2, y1: (1 - ny0) / 2 };
+    } else {
+      subject = null;
+    }
   }
 
   function advance(dt: number): boolean {
@@ -336,6 +435,7 @@ export function createCameraRig(options: { readonly reducedMotion: boolean }): C
 
     advance,
     place,
+    subjectRect: () => (subject ? { ...subject } : null),
     step(dt) {
       const moving = advance(dt);
       place();

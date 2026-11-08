@@ -339,12 +339,23 @@ export function createKitScene(canvas: HTMLCanvasElement, options: KitSceneOptio
   /** Source de rendu pour l'état courant (GLB déclaré, sinon procédural). */
   const renderSource = (current: KitState) => selectBagRenderSource(options.bagModelId, currentKit(current).bag);
 
+  /** Identité d'une source, pour ne recharger que lorsqu'elle change réellement. */
+  const sourceKey = (source: ReturnType<typeof renderSource>): string =>
+    source.kind === 'glb' ? source.modelId : 'procedural';
+
+  let lastSourceKey = sourceKey(renderSource(state));
+
   /** Recharge le maillage quand la source a changé (changement de corps, retour de contexte). */
   const reloadBagModel = (): void => {
     if (disposed) return;
     const source = renderSource(state);
     void world.bagModel.load(source.kind === 'glb' ? source.modelId : null).then(() => {
-      if (!disposed) lifecycle.invalidate();
+      if (disposed) return;
+      // Le maillage réel n'a pas la taille du procédural affiché pendant le chargement : sans ce
+      // replacement, la caméra garde le cadrage de l'ancien et le sac arrive hors champ, jusqu'au
+      // premier geste de l'utilisateur.
+      rig.place();
+      lifecycle.invalidate();
     });
   };
 
@@ -482,8 +493,20 @@ export function createKitScene(canvas: HTMLCanvasElement, options: KitSceneOptio
       const objChanged = world.objects.sync(next);
       // La configuration d'apparence s'applique au maillage chargé (couleurs, matière, finition).
       world.bagModel.setAppearance(currentConfig(next));
-      if (bagChanged && renderSource(state).kind === 'glb') reloadBagModel();
-      if (bagChanged || objChanged) { refreshPose(); lifecycle.invalidate(); }
+      // `bag.sync` dit que le sac procédural a été reconstruit, ce qu'un simple changement de
+      // teinte provoque aussi. S'en servir pour recharger le maillage relançait un chargement
+      // complet à chaque couleur ; trois d'affilée s'annulaient l'un l'autre et le Studio restait
+      // bloqué sur « chargement ». Seule l'identité de la source décide d'un rechargement.
+      const cleSource = sourceKey(renderSource(state));
+      if (cleSource !== lastSourceKey) {
+        lastSourceKey = cleSource;
+        reloadBagModel();
+      }
+      if (bagChanged || objChanged) refreshPose();
+      // Un changement de teinte ne modifie ni le corps ni les objets : sans ce rendu, la couleur
+      // était bien posée sur la matière mais aucune image n'était redessinée, et l'écran ne
+      // bougeait pas tant que l'utilisateur ne touchait à rien d'autre.
+      lifecycle.invalidate();
     },
     setDrawerOpen(open) {
       if (disposed) return;
@@ -563,6 +586,7 @@ export function createKitScene(canvas: HTMLCanvasElement, options: KitSceneOptio
           tilt: rig.tilt(),
           exploded: rig.exploded(),
           explodedTarget: rig.explodedTarget(),
+          subjectRect: rig.subjectRect(),
         },
         objects: world.objects.counts(),
         bagModel: world.bagModel.info(),

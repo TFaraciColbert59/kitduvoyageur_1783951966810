@@ -8,6 +8,21 @@ const rootDir = process.cwd();
 const capturesDir = path.join(rootDir, 'docs', 'kit-studio', 'captures');
 if (!fs.existsSync(capturesDir)) fs.mkdirSync(capturesDir, { recursive: true });
 
+// Le controle de cadrage vit a cote du moteur (source unique des seuils) ; il est en TypeScript
+// pur, sans dependance, donc on le transpile a la volee plutot que de dupliquer ses seuils ici.
+const controleSrc = esbuild.buildSync({
+  entryPoints: [path.join(rootDir, 'src', 'features', 'kit-studio', 'scene', 'framingCheck.ts')],
+  bundle: true,
+  format: 'esm',
+  write: false,
+}).outputFiles[0].text;
+const { framingFailure, describeRect } = await import(
+  'data:text/javascript;base64,' + Buffer.from(controleSrc).toString('base64')
+);
+
+/** Captures dont le cadrage est non conforme ; le script sort en erreur s'il y en a. */
+const cadrageEchecs = [];
+
 async function main() {
   console.log('Compiling walkthrough client bundle with esbuild...');
 
@@ -63,6 +78,14 @@ async function main() {
 
         window.__scene = scene;
         window.__state = state;
+        // update() ignore un etat identique par reference (garde d'immuabilite de l'app) : muter
+        // l'objet en place ne changeait donc rien, et cinq etapes du parcours ne prouvaient rien.
+        window.__maj = (f) => {
+          const suivant = structuredClone(window.__state);
+          f(suivant);
+          window.__state = suivant;
+          window.__scene.update(suivant);
+        };
         window.__THREE = THREE;
 
         // Populate thumbnails in UI rail
@@ -387,9 +410,51 @@ async function main() {
     await route.fulfill({ status: 404, body: 'Not found: ' + url.pathname });
   });
 
+  /**
+   * Le sac procedural s'affiche pendant le chargement ; il n'a ni la taille ni la forme du
+   * maillage reel. Capturer avant la bascule produit une image qui ne represente pas le produit.
+   * On attend donc l'etat 'glb' lui-meme : 'loading' porte deja le modelId, il ne suffit pas.
+   */
+  async function attendreSac() {
+    try {
+      await page.waitForFunction(
+        () => window['__scene']?.info?.().bagModel?.status === 'glb',
+        undefined,
+        { timeout: 20000 },
+      );
+    } catch {
+      throw new Error("Le sac n'est jamais apparu a l'ecran : capture impossible.");
+    }
+    await page.waitForTimeout(500);
+  }
+
+  /**
+   * Capture une image et verifie que le sac tient dans le cadre. `minHaut` abaisse le seuil de
+   * hauteur pour les vues ou le sujet est legitimement plus petit (decomposition, porteur).
+   */
+  async function shoot(nom, minHaut = undefined) {
+    const vu = await page.evaluate(() => ({
+      rect: window['__scene']?.info?.().view?.subjectRect ?? null,
+      etat: window['__scene']?.info?.().bagModel?.status ?? 'inconnu',
+      modele: window['__scene']?.info?.().bagModel?.modelId ?? null,
+      motif: window['__scene']?.info?.().bagModel?.reason ?? null,
+    }));
+    const rect = vu.rect;
+    // Un cliche pris sur le sac procedural ne montre pas le produit : il ne prouve rien.
+    let raison = vu.etat === 'glb' ? null : 'maillage absent (etat : ' + vu.etat + ', modele : ' + vu.modele + ', motif : ' + vu.motif + ')';
+    if (!raison) raison = framingFailure(rect);
+    if (raison && minHaut !== undefined && rect && (rect.y1 - rect.y0) * 100 >= minHaut && /trop petit/.test(raison)) {
+      raison = null;
+    }
+    await page.screenshot({ path: path.join(capturesDir, nom) });
+    console.log('  ' + nom.padEnd(34) + describeRect(rect).padEnd(52) + (raison ? 'ECHEC : ' + raison : 'ok'));
+    if (raison) cadrageEchecs.push({ nom, raison });
+  }
+
   console.log('Navigating to local studio on simulated iPhone 16 Pro (393x852)...');
   await page.goto('http://lkdv.local/');
   await page.waitForFunction(() => window['__ready'] === true);
+  await attendreSac();
   await page.waitForTimeout(1200);
 
   // 1. Initial State Screenshot
@@ -397,7 +462,7 @@ async function main() {
   await page.evaluate(() => {
     document.getElementById('action-badge').textContent = '1/8 · CADRAGE INITIAL 45 L (78% HAUTEUR)';
   });
-  await page.screenshot({ path: path.join(capturesDir, 'walkthrough-01-initial.png') });
+  await shoot('walkthrough-01-initial.png');
 
   // 2. Camera Orbit (Around bag composite center, not floor)
   console.log('Performing smooth camera orbit around bag center...');
@@ -407,7 +472,7 @@ async function main() {
     scene.setZone('front');
   });
   await page.waitForTimeout(600);
-  await page.screenshot({ path: path.join(capturesDir, 'walkthrough-02-orbit-45deg.png') });
+  await shoot('walkthrough-02-orbit-45deg.png');
 
   await page.evaluate(async () => {
     document.getElementById('action-badge').textContent = '2/8 · ORBITE CAMÉRA PROFIL FLANC (90°)';
@@ -415,7 +480,7 @@ async function main() {
     scene.setZone('sides');
   });
   await page.waitForTimeout(600);
-  await page.screenshot({ path: path.join(capturesDir, 'walkthrough-03-orbit-90deg.png') });
+  await shoot('walkthrough-03-orbit-90deg.png');
 
   await page.evaluate(async () => {
     document.getElementById('action-badge').textContent = '2/8 · ORBITE CAMÉRA DOS (180° HARNAIS S-CURVE)';
@@ -423,7 +488,7 @@ async function main() {
     scene.setZone('back');
   });
   await page.waitForTimeout(600);
-  await page.screenshot({ path: path.join(capturesDir, 'walkthrough-04-orbit-180deg.png') });
+  await shoot('walkthrough-04-orbit-180deg.png');
 
   // Reset to front bag view
   await page.evaluate(async () => {
@@ -439,12 +504,13 @@ async function main() {
     document.getElementById('hud-model').textContent = 'LKDV ONE 15 L';
     document.getElementById('hud-sub').textContent = '640 g · 89 € (indicatif) · Forêt';
     const scene = window['__scene'];
-    const state = window['__state'];
-    state.kits[state.kitId].bag = 'lkdv-one-15';
-    scene.update(state);
+    window['__maj']((e) => {
+      e.kits[e.kitId].bag = 'lkdv-one-15';
+    });
   });
   await page.waitForTimeout(600);
-  await page.screenshot({ path: path.join(capturesDir, 'walkthrough-05-body-15L.png') });
+  await attendreSac();
+  await shoot('walkthrough-05-body-15L.png');
 
   // Switch to 80 L (large expedition pack)
   console.log('Switching bag body: 15L -> 80L (expedition framing)...');
@@ -453,23 +519,25 @@ async function main() {
     document.getElementById('hud-model').textContent = 'LKDV ONE 80 L';
     document.getElementById('hud-sub').textContent = '2 050 g · 229 € (indicatif) · Forêt';
     const scene = window['__scene'];
-    const state = window['__state'];
-    state.kits[state.kitId].bag = 'lkdv-one-80';
-    scene.update(state);
+    window['__maj']((e) => {
+      e.kits[e.kitId].bag = 'lkdv-one-80';
+    });
   });
   await page.waitForTimeout(600);
-  await page.screenshot({ path: path.join(capturesDir, 'walkthrough-06-body-80L.png') });
+  await attendreSac();
+  await shoot('walkthrough-06-body-80L.png');
 
   // Back to 45 L
   await page.evaluate(async () => {
     document.getElementById('hud-model').textContent = 'LKDV ONE 45 L';
     document.getElementById('hud-sub').textContent = '1 240 g · 159 € (indicatif) · Forêt';
     const scene = window['__scene'];
-    const state = window['__state'];
-    state.kits[state.kitId].bag = 'lkdv-one-45';
-    scene.update(state);
+    window['__maj']((e) => {
+      e.kits[e.kitId].bag = 'lkdv-one-45';
+    });
   });
   await page.waitForTimeout(500);
+  await attendreSac();
 
   // 4. Changing Color & Material (Front C proof: pixel tint applied!)
   console.log('Changing color: Forêt -> Sauge (m-789972)...');
@@ -477,26 +545,26 @@ async function main() {
     document.getElementById('action-badge').textContent = '4/8 · CALIBRATION TEINTE APPLIQUÉE : SAUGE (m-789972)';
     document.getElementById('hud-sub').textContent = '1 240 g · 159 € (indicatif) · Sauge';
     const scene = window['__scene'];
-    const state = window['__state'];
-    state.kits[state.kitId].cw = 'sauge';
-    state.config[state.kits[state.kitId].bag].body.col = 'm-789972';
-    scene.update(state);
+    window['__maj']((e) => {
+      e.kits[e.kitId].cw = 'sauge';
+      e.config[e.kits[e.kitId].bag].body.col = 'm-789972';
+    });
   });
   await page.waitForTimeout(500);
-  await page.screenshot({ path: path.join(capturesDir, 'walkthrough-07-color-sauge.png') });
+  await shoot('walkthrough-07-color-sauge.png');
 
   console.log('Changing color: Sauge -> Pierre (m-b5aba0)...');
   await page.evaluate(async () => {
     document.getElementById('action-badge').textContent = '4/8 · CALIBRATION TEINTE APPLIQUÉE : PIERRE (m-b5aba0)';
     document.getElementById('hud-sub').textContent = '1 240 g · 159 € (indicatif) · Pierre';
     const scene = window['__scene'];
-    const state = window['__state'];
-    state.kits[state.kitId].cw = 'pierre';
-    state.config[state.kits[state.kitId].bag].body.col = 'm-b5aba0';
-    scene.update(state);
+    window['__maj']((e) => {
+      e.kits[e.kitId].cw = 'pierre';
+      e.config[e.kits[e.kitId].bag].body.col = 'm-b5aba0';
+    });
   });
   await page.waitForTimeout(500);
-  await page.screenshot({ path: path.join(capturesDir, 'walkthrough-08-color-pierre.png') });
+  await shoot('walkthrough-08-color-pierre.png');
 
   // 5. Attaching modules (Front B)
   console.log('Attaching module M04 Poche multi on facade...');
@@ -506,7 +574,7 @@ async function main() {
     await scene.attachModule('lkdv-m04');
   });
   await page.waitForTimeout(600);
-  await page.screenshot({ path: path.join(capturesDir, 'walkthrough-09-attach-m04.png') });
+  await shoot('walkthrough-09-attach-m04.png');
 
   console.log('Attaching module M14 Porte-skis (smooth swap and adaptive reframing to 1.70m)...');
   await page.evaluate(async () => {
@@ -515,7 +583,7 @@ async function main() {
     await scene.attachModule('lkdv-m14');
   });
   await page.waitForTimeout(600);
-  await page.screenshot({ path: path.join(capturesDir, 'walkthrough-10-attach-m14.png') });
+  await shoot('walkthrough-10-attach-m14.png');
 
   // 6. Closing Drawer (Front E)
   console.log('Closing drawer: verifying smooth transform/opacity transition and 3-dot reopen pill...');
@@ -529,7 +597,7 @@ async function main() {
     scene.setDrawerOpen(false);
   });
   await page.waitForTimeout(600);
-  await page.screenshot({ path: path.join(capturesDir, 'walkthrough-11-drawer-closed.png') });
+  await shoot('walkthrough-11-drawer-closed.png');
 
   // 7. Clicking 3-dot Reopen Pill (Front E)
   console.log('Clicking 3-dot reopen pill to reopen drawer...');
@@ -543,7 +611,7 @@ async function main() {
     scene.setDrawerOpen(true);
   });
   await page.waitForTimeout(600);
-  await page.screenshot({ path: path.join(capturesDir, 'walkthrough-12-drawer-reopened.png') });
+  await shoot('walkthrough-12-drawer-reopened.png');
 
   // 8. Exploded animation (Front A: envelope includes all items without clipping)
   console.log('Triggering exploded animation (ex = 1.0): envelope framing covers cloud...');
@@ -553,10 +621,16 @@ async function main() {
     scene.setExploded(1.0);
   });
   await page.waitForTimeout(700);
-  await page.screenshot({ path: path.join(capturesDir, 'walkthrough-13-exploded.png') });
+  await shoot('walkthrough-13-exploded.png', 15);
 
   await browser.close();
   console.log('Walkthrough capture complete! All 13 frames saved to ' + capturesDir);
+
+  if (cadrageEchecs.length) {
+    console.error('\nCadrage non conforme sur ' + cadrageEchecs.length + ' capture(s) :');
+    for (const e of cadrageEchecs) console.error('  - ' + e.nom + ' : ' + e.raison);
+    throw new Error("Un parcours dont une etape ne montre pas le sac n'est pas livrable.");
+  }
 }
 
 main().catch((err) => {
