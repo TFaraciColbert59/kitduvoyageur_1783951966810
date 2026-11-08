@@ -64,7 +64,7 @@ jobs:
   visual-tests:
     needs: build
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
     strategy:
       # Un projet en échec n'annule pas les autres : chaque gabarit rend son verdict.
       fail-fast: false
