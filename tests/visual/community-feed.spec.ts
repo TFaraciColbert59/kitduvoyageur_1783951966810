@@ -23,8 +23,8 @@ test.describe('Communauté — fil Instagram LKDV', () => {
     await expect(page.locator('.lkdv-feed-stories').first()).toBeVisible();
     const tabs = page.locator('nav.lkdv-floating-tabbar a, .tb a');
     await expect(tabs).toHaveCount(5);
-    await expect(page.getByRole('link', { name: /Explorer/ })).toBeVisible();
-    await expect(page.getByRole('link', { name: /Compte/ })).toBeVisible();
+    await expect(page.getByRole('link', { name: /explorer/i })).toBeVisible();
+    await expect(page.getByRole('link', { name: /compte/i })).toBeVisible();
 
     const first = page.locator('.lkdv-feed-post').first();
     await expect(first.locator('.lkdv-post-author').first()).toBeVisible();
