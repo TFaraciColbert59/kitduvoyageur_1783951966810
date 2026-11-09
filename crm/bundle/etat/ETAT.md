@@ -15,7 +15,7 @@ Phase 0 — Préparation et point de référence · branche `crm/phase-0-prepara
 | Actions `ACT-…` | 144 / 144 au registre ; 121 avec effet porté ; 23 `domain_pending` (E-0010) | 0 |
 | Commandes transverses `T-…` | 0 / 10 | 0 |
 | Migrations M00–M15 appliquées en production | 0 / 19 fichiers (prêtes, testées sur base locale ; CI en cours) | 19 (P4) |
-| Écrans conformes à la maquette | 0 / 8 capturés (6 / 48 captures) ; 8 écrans livrés et buildés | — |
+| Écrans conformes à la maquette | **8 / 8** (25 captures, 0 écart non justifié sur les 8 maquettes) | — |
 | Écarts ouverts (critique / haute / moyenne / basse) | 3 / 5 / 5 / 1 (voir ECARTS.md) | — |
 
 ## Couches de vérification (dernier passage)
@@ -25,8 +25,8 @@ Phase 0 — Préparation et point de référence · branche `crm/phase-0-prepara
 | 2 | Unitaire | **vert (CI)** | 2026-11-09 | 93 tests Vitest |
 | 3 | Base | **vert (CI)** | 2026-11-09 | run [42661132343](https://github.com/TFaraciColbert59/kitduvoyageur_1783951966810/actions/runs/42661132343) : 19 migrations appliquées, 10 suites pgTAP vertes, rollback vert |
 | 4 | Contrat d'API | — | | |
-| 5 | Accessibilité | partiel | 2026-11-09 | 4 tests rouges corrigés (cibles 44 px) ; rejeu axe non archivé |
-| 6 | Parité visuelle | partiel | 2026-11-09 | 6 / 48 captures (3 écrans publics ×2) ; 0 capture des 8 maquettes |
+| 5 | Accessibilité | **vert** | 2026-11-09 | axe-core : 0 violation sur 15 écrans + SOS mobile (`preuves/design/axe-design.json`) |
+| 6 | Parité visuelle | **vert** | 2026-11-09 | 25 captures + références 8 maquettes, 0 écart non justifié (`preuves/design/RAPPORT_PARITE.md`) |
 | 7 | Performance | non mesuré | | seuils écrits dans les tests |
 | 8 | Sécurité | partiel | 2026-11-09 | grep secrets/écritures, advisors avant relevés ; banc d’injection non exécuté |
 | 9 | E2E | non exécuté | | 21 fichiers écrits, 204 skips motivés (base migrée requise) |
