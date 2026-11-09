@@ -14,3 +14,10 @@
 | 42658479918 | 0413a4c | failure | success | failure (contrainte support_tickets) |
 
 Le job Application est vert depuis 91e951b (types, lint, 93 tests unitaires, build).
+
+## Dernier run (vert)
+
+- Run : https://github.com/TFaraciColbert59/kitduvoyageur_1783951966810/actions/runs/42661132343
+- Commit : 0d5e648
+- Application : types, lint, 93 tests, build = success
+- Base éphémère : 19 migrations, 10 suites pgTAP, rollback = success

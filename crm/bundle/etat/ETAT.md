@@ -1,6 +1,6 @@
 # État du chantier LKDV Control
 
-Mis à jour : 2026-11-09 18:10 (Europe/Paris) — cycle 3
+Mis à jour : 2026-11-09 18:15 (Europe/Paris) — cycle 4 (CI verte)
 
 ## En une phrase
 Application CRM complète (30 routes) qui compile et se construit ; 18 migrations M00→M15 appliquées sans erreur sur une base locale reproduisant le schéma de production ; moteur de commandes vérifié (masquage + audit + notification + refus). Déploiement bloqué : pas de sauvegarde P4, pas de droit de création de projet Vercel.
@@ -21,9 +21,9 @@ Phase 0 — Préparation et point de référence · branche `crm/phase-0-prepara
 ## Couches de vérification (dernier passage)
 | # | Couche | Statut | Date | Preuve |
 | --- | --- | --- | --- | --- |
-| 1 | Statique | vert local | 2026-11-09 | `tsc --noEmit` 0 erreur, `next lint` 0 avertissement, `next build` OK |
-| 2 | Unitaire | vert local | 2026-11-09 | 87+ tests Vitest (lib + serveur + contrat) |
-| 3 | Base | en cours (CI) | 2026-11-09 | 19 migrations appliquées sur base éphémère ; pgTAP 10 suites, 1 fixture en correction |
+| 1 | Statique | **vert (CI)** | 2026-11-09 | `tsc --noEmit` 0 erreur, `next lint` 0 avertissement, `next build` OK |
+| 2 | Unitaire | **vert (CI)** | 2026-11-09 | 93 tests Vitest |
+| 3 | Base | **vert (CI)** | 2026-11-09 | run [42661132343](https://github.com/TFaraciColbert59/kitduvoyageur_1783951966810/actions/runs/42661132343) : 19 migrations appliquées, 10 suites pgTAP vertes, rollback vert |
 | 4 | Contrat d'API | — | | |
 | 5 | Accessibilité | partiel | 2026-11-09 | 4 tests rouges corrigés (cibles 44 px) ; rejeu axe non archivé |
 | 6 | Parité visuelle | partiel | 2026-11-09 | 6 / 48 captures (3 écrans publics ×2) ; 0 capture des 8 maquettes |

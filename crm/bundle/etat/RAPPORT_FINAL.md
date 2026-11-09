@@ -1,6 +1,6 @@
 # LKDV Control — rapport final
 
-Date : 2026-11-09 · Durée du chantier : 1 jour (2 sessions) · Commit : `ee6f63e` (branche `crm/phase-0-preparation`) · Worktree : `lkdv-control-work`
+Date : 2026-11-09 · Durée du chantier : 1 jour (2 sessions) · Commit : `0d5e648` (branche `crm/phase-0-preparation`) · Worktree : `lkdv-control-work`
 
 ## Verdict
 
@@ -37,7 +37,7 @@ Sans ces deux éléments, aucune preuve de production (couche 10) ni de non-rég
 | --- | --- | --- |
 | Exigences `EX-…` | **14 prouvées / 88**, 53 partielles, 7 non prouvées, 14 bloquées par Tony | `preuves/exigences/COUVERTURE_EX.md` |
 | Actions `ACT-…` | 144 / 144 au registre et dans l'UI ; **121 avec effet porté**, 23 `domain_pending` (E-0010) | `supabase/migrations/..._crm_commands_*.sql`, `catalog-diff` |
-| 11 couches | 1 et 2 vertes ; 3 en cours en CI (10 suites pgTAP, 1 fixture en correction) ; 4–9 partielles ou non exécutées ; 10 bloquée | `ETAT.md` |
+| 11 couches | 1, 2 et 3 **vertes en CI** (run [42661132343](https://github.com/TFaraciColbert59/kitduvoyageur_1783951966810/actions/runs/42661132343) : types, lint, 93 tests, build, 19 migrations, 10 suites pgTAP, rollback) ; 4–9 partielles ou non exécutées ; 10 bloquée | `ETAT.md`, `preuves/ci/` |
 | Audits indépendants | 1 audit complet : **verdict NON**, notes 30–74 | `preuves/audits/audit-1.md` |
 | Advisors Supabase | relevé « avant » : 3 erreurs (2 `security_definer_view`, 1 `rls_disabled_in_public`), 41 tables sans policy ; « après » impossible sans migration | `preuves/base/ETAT_BASE_2026-11-09.md` |
 | Non-régression LKDV | **non mesurée** : aucun test LKDV lancé (dépôt non modifié hors `crm/`, `supabase/`, `.github/`) | — |
@@ -64,7 +64,7 @@ La procédure détaillée, commande par commande, est dans `crm/docs/MISE_EN_PRO
 2. **Effets externes** (remboursement Stripe, bannissement Auth, e-mail) : la base prépare et valide ; l'appel externe est branché mais renvoie `delegated_not_executed` sans clé (E-0003).
 3. **M00 partiel** : `public_profiles` non passée en `security_invoker` (casserait les profils publics) ; `hub_dashboard_kpis` traitée ; décision D-0004.
 4. **E2E, axe, 48 captures** : écrits, non exécutés faute de base migrée et de comptes de test (E-0014/E-0015).
-5. **CI base éphémère** : les migrations s'appliquent, les 10 suites pgTAP tournent ; la dernière exécution corrige une fixture (`crm_inbox`) — voir `preuves/ci/HISTORIQUE_CI.md` pour la conclusion exacte au moment de la remise.
+5. **CI base éphémère** : verte au commit `0d5e648` (run 42661132343) — 19 migrations, 10 suites pgTAP, rollback. Ce qui reste hors CI : les couches 4 à 10 sur la production.
 6. Le schéma de la base éphémère diffère de la production sur quelques colonnes postérieures à la baseline (`post_reports.target_type`, `sos_alerts.country_iso_a2`) : les migrations et tests utilisent `to_jsonb` pour ne dépendre ni de l'un ni de l'autre.
 
 ## 7. Comment revenir en arrière
