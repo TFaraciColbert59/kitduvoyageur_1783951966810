@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
-import { Camera, ChevronDown, ChevronUp, ImagePlus, Loader2, Plus, Trash2 } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Camera, ChevronDown, ChevronUp, GripVertical, ImagePlus, Loader2, Plus, Trash2 } from 'lucide-react';
 import { useFormContext, useFormState } from 'react-hook-form';
 import {
   CARNET_MOMENT_KINDS_V2,
@@ -21,7 +21,9 @@ import {
   validateMediaFile,
 } from '../fields/media';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { moveItemBetweenDays } from '../../shared/traceEditing';
 import { HAS_CARNET_NIGHTS } from './capabilities';
+import { carnetDayCountV2, clampCarnetDaysV2, syncCarnetDaysV2 } from './daySync';
 
 const MOMENT_LABELS: Record<CarnetMomentKindV2, string> = {
   photo: 'Photo',
@@ -33,6 +35,11 @@ const MOMENT_LABELS: Record<CarnetMomentKindV2, string> = {
 };
 
 const NIGHT_TYPES = ['refuge', 'gite', 'bivouac', 'hotel', 'camping', 'autre'] as const;
+
+/** Élément en cours de glisser entre jours (FID-068). */
+type DayDragV2 =
+  | { kind: 'moment'; day: number; moment: number }
+  | { kind: 'night'; day: number };
 
 function newDay(dayNumber: number, date: string): CarnetDayV2 {
   return {
@@ -169,6 +176,109 @@ export function DaysPaneV2({ user }: { user: { id: string } | null }) {
     form.setValue('days', next, { shouldDirty: true, shouldValidate: true });
   };
 
+  // FID-068 — glisser un moment (ou la nuitée) d'un jour à un autre : la cible
+  // est la pastille de jour sous le doigt (`data-cv2-day-drop`). La
+  // transformation de liste est celle, pure et testée, de `shared/traceEditing`.
+  const dragRef = useRef<DayDragV2 | null>(null);
+  const [drag, setDrag] = useState<DayDragV2 | null>(null);
+  const [dropDay, setDropDay] = useState<number | null>(null);
+  const [announcement, setAnnouncement] = useState('');
+
+  const dayIndexAt = (clientX: number, clientY: number): number | null => {
+    if (typeof document === 'undefined') return null;
+    const element = document.elementFromPoint(clientX, clientY);
+    const target = element?.closest<HTMLElement>('[data-cv2-day-drop]');
+    if (!target) return null;
+    const index = Number(target.dataset.cv2DayDrop);
+    return Number.isInteger(index) ? index : null;
+  };
+
+  const applyMove = (payload: DayDragV2, targetDay: number) => {
+    if (targetDay === payload.day || targetDay < 0 || targetDay >= days.length) return;
+    if (payload.kind === 'moment') {
+      const arrays = days.map((entry) => entry.moments);
+      const moved = moveItemBetweenDays(
+        arrays,
+        payload.day,
+        payload.moment,
+        targetDay,
+        arrays[targetDay].length,
+      );
+      setDays(days.map((entry, index) => ({ ...entry, moments: moved[index] })));
+      setAnnouncement(`Moment déplacé au jour ${days[targetDay].dayNumber}.`);
+    } else {
+      if (days[targetDay].night) {
+        setAnnouncement(`Le jour ${days[targetDay].dayNumber} a déjà une nuitée.`);
+        return;
+      }
+      const nights = days.map((entry) => (entry.night ? [entry.night] : []));
+      const moved = moveItemBetweenDays(nights, payload.day, 0, targetDay, 0);
+      setDays(
+        days.map((entry, index) => ({ ...entry, night: moved[index][0] ?? null })),
+      );
+      setAnnouncement(`Nuitée déplacée au jour ${days[targetDay].dayNumber}.`);
+    }
+    setActive(targetDay);
+    haptic('selection');
+  };
+
+  const beginDrag = (payload: DayDragV2, event: React.PointerEvent<HTMLButtonElement>) => {
+    if (event.button > 0) return;
+    dragRef.current = payload;
+    setDrag(payload);
+    setDropDay(payload.day);
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    } catch {
+      /* capture optionnelle (Safari ancien, tests) */
+    }
+  };
+
+  const moveDrag = (event: React.PointerEvent<HTMLButtonElement>) => {
+    if (!dragRef.current) return;
+    setDropDay(dayIndexAt(event.clientX, event.clientY));
+  };
+
+  const endDrag = (event: React.PointerEvent<HTMLButtonElement>) => {
+    const payload = dragRef.current;
+    if (!payload) return;
+    dragRef.current = null;
+    const targetDay = dayIndexAt(event.clientX, event.clientY);
+    setDrag(null);
+    setDropDay(null);
+    if (targetDay != null) applyMove(payload, targetDay);
+  };
+
+  const cancelDrag = () => {
+    dragRef.current = null;
+    setDrag(null);
+    setDropDay(null);
+  };
+
+  /**
+   * FID-030 — à l'entrée de l'étape, les jours sont **initialisés depuis les
+   * dates** (min 1) : nombre de jours du stepper d'Infos, ou nombre de jours
+   * des dates s'il est connu. L'état vide ne subsiste que **sans aucune date**
+   * (maquette `syncDays`, HTML L2969 et `onStep` Jours).
+   */
+  useEffect(() => {
+    const current = form.getValues('days') ?? [];
+    if (current.length > 0) return;
+    const startDate = form.getValues('startDate') ?? '';
+    if (!startDate) return;
+    const fromDates = carnetDayCountV2(startDate, form.getValues('endDate') ?? '');
+    const count = clampCarnetDaysV2(fromDates || form.getValues('nbJours') || 1);
+    form.setValue('days', syncCarnetDaysV2([], count, startDate), {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    form.setValue('nbJours', count, { shouldDirty: true });
+  }, [form, values.startDate]);
+
+  const setDayCount = (count: number) => {
+    form.setValue('nbJours', clampCarnetDaysV2(count), { shouldDirty: true });
+  };
+
   const updateDay = (index: number, patch: Partial<CarnetDayV2>) => {
     setDays(days.map((entry, position) => (position === index ? { ...entry, ...patch } : entry)));
   };
@@ -196,32 +306,16 @@ export function DaysPaneV2({ user }: { user: { id: string } | null }) {
       : values.startDate || '';
     const next = [...days, newDay(nextNumber, nextDate)];
     setDays(next);
+    setDayCount(next.length);
     setActive(next.length - 1);
     haptic('selection');
   };
 
-  const proposeDays = () => {
-    if (!values.startDate || !values.endDate) return;
-    const start = new Date(`${values.startDate}T12:00:00`).getTime();
-    const end = new Date(`${values.endDate}T12:00:00`).getTime();
-    if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) return;
-    const count = Math.min(60, Math.round((end - start) / 86_400_000) + 1);
-    const next: CarnetDayV2[] = days.slice(0, count);
-    for (let index = next.length; index < count; index += 1) {
-      const date = new Date(start + index * 86_400_000).toISOString().slice(0, 10);
-      next.push(newDay(index + 1, date));
-    }
-    for (let index = 0; index < next.length; index += 1) {
-      const date = new Date(start + index * 86_400_000).toISOString().slice(0, 10);
-      if (!next[index].date) next[index] = { ...next[index], date };
-    }
-    setDays(next);
-    setActive(0);
-    haptic('selection');
-  };
-
   return (
-    <div className="lkdv-cv2c-days">
+    <div className="lkdv-cv2c-days" data-dragging={drag ? 'true' : undefined}>
+      <p className="lkdv-cv2c-sr-only" role="status">
+        {announcement}
+      </p>
       {daysMessage ? (
         <p className="lkdv-cv2-field-error" role="alert">
           {daysMessage}
@@ -235,6 +329,8 @@ export function DaysPaneV2({ user }: { user: { id: string } | null }) {
             role="tab"
             aria-selected={index === clampedActive}
             className="lkdv-cv2c-day-tab"
+            data-cv2-day-drop={index}
+            data-drop={dropDay === index && drag !== null ? 'true' : undefined}
             onClick={() => setActive(index)}
           >
             J{entry.dayNumber}
@@ -246,15 +342,10 @@ export function DaysPaneV2({ user }: { user: { id: string } | null }) {
           </button>
         ) : null}
       </div>
-      {values.startDate && values.endDate ? (
-        <button type="button" className="lkdv-cv2-chip lkdv-cv2-chip--sm" onClick={proposeDays}>
-          Proposer les jours selon les dates
-        </button>
-      ) : null}
-
       {!day ? (
         <p className="lkdv-cv2c-empty">
-          Aucun jour pour l’instant. Ajoute un jour, puis raconte chaque moment.
+          Aucune date de départ : ajoute un jour, puis raconte chaque moment. Dès que le
+          carnet a des dates, les jours se remplissent tout seuls.
         </p>
       ) : (
         <>
@@ -291,22 +382,51 @@ export function DaysPaneV2({ user }: { user: { id: string } | null }) {
             </div>
             {HAS_CARNET_NIGHTS ? (
               <div className="lkdv-cv2-field">
-                <button
-                  type="button"
-                  className="lkdv-cv2c-switch"
-                  role="switch"
-                  aria-checked={Boolean(day.night)}
-                  onClick={() =>
-                    updateDay(clampedActive, {
-                      night: day.night ? null : { name: '', type: 'bivouac', infos: '' },
-                    })
-                  }
-                >
-                  <span className="lkdv-cv2c-switch-track" aria-hidden="true">
-                    <span className="lkdv-cv2c-switch-dot" />
-                  </span>
-                  Nuitée
-                </button>
+                <div className="lkdv-cv2c-night-head">
+                  <button
+                    type="button"
+                    className="lkdv-cv2c-switch"
+                    role="switch"
+                    aria-checked={Boolean(day.night)}
+                    onClick={() =>
+                      updateDay(clampedActive, {
+                        night: day.night ? null : { name: '', type: 'bivouac', infos: '' },
+                      })
+                    }
+                  >
+                    <span className="lkdv-cv2c-switch-track" aria-hidden="true">
+                      <span className="lkdv-cv2c-switch-dot" />
+                    </span>
+                    Nuitée
+                  </button>
+                  {/* FID-068 : glisser la nuitée vers un autre jour (ou flèches). */}
+                  {day.night ? (
+                    <button
+                      type="button"
+                      className="lkdv-cv2c-icon-btn lkdv-cv2c-drag"
+                      aria-label={`Déplacer la nuitée du jour ${day.dayNumber}. Glisse sur un jour, ou flèches gauche et droite`}
+                      onPointerDown={(event) =>
+                        beginDrag({ kind: 'night', day: clampedActive }, event)
+                      }
+                      onPointerMove={moveDrag}
+                      onPointerUp={endDrag}
+                      onPointerCancel={cancelDrag}
+                      onKeyDown={(event) => {
+                        if (event.key === 'ArrowLeft') {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          applyMove({ kind: 'night', day: clampedActive }, clampedActive - 1);
+                        } else if (event.key === 'ArrowRight') {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          applyMove({ kind: 'night', day: clampedActive }, clampedActive + 1);
+                        }
+                      }}
+                    >
+                      <GripVertical size={13} aria-hidden="true" />
+                    </button>
+                  ) : null}
+                </div>
                 {day.night ? (
                   <div className="lkdv-cv2c-media-edit">
                     <input
@@ -353,7 +473,9 @@ export function DaysPaneV2({ user }: { user: { id: string } | null }) {
               type="button"
               className="lkdv-cv2-chip lkdv-cv2-chip--sm"
               onClick={() => {
-                setDays(days.filter((_, position) => position !== clampedActive));
+                const next = days.filter((_, position) => position !== clampedActive);
+                setDays(next);
+                setDayCount(next.length);
                 setActive(Math.max(0, clampedActive - 1));
               }}
             >
@@ -363,8 +485,51 @@ export function DaysPaneV2({ user }: { user: { id: string } | null }) {
 
           <ul className="lkdv-cv2c-moments">
             {day.moments.map((moment, momentIndex) => (
-              <li key={moment.id} className="lkdv-cv2c-moment">
+              <li
+                key={moment.id}
+                className="lkdv-cv2c-moment"
+                data-dragging={
+                  drag?.kind === 'moment' && drag.day === clampedActive && drag.moment === momentIndex
+                    ? 'true'
+                    : undefined
+                }
+              >
                 <div className="lkdv-cv2c-moment-head">
+                  {/* FID-068 : glisser le moment vers la pastille d'un autre jour
+                      (ou flèches gauche/droite au clavier). */}
+                  <button
+                    type="button"
+                    className="lkdv-cv2c-icon-btn lkdv-cv2c-drag"
+                    aria-label={`Déplacer le moment ${momentIndex + 1}. Glisse sur un jour, ou flèches gauche et droite`}
+                    onPointerDown={(event) =>
+                      beginDrag(
+                        { kind: 'moment', day: clampedActive, moment: momentIndex },
+                        event,
+                      )
+                    }
+                    onPointerMove={moveDrag}
+                    onPointerUp={endDrag}
+                    onPointerCancel={cancelDrag}
+                    onKeyDown={(event) => {
+                      if (event.key === 'ArrowLeft') {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        applyMove(
+                          { kind: 'moment', day: clampedActive, moment: momentIndex },
+                          clampedActive - 1,
+                        );
+                      } else if (event.key === 'ArrowRight') {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        applyMove(
+                          { kind: 'moment', day: clampedActive, moment: momentIndex },
+                          clampedActive + 1,
+                        );
+                      }
+                    }}
+                  >
+                    <GripVertical size={13} aria-hidden="true" />
+                  </button>
                   <span className="lkdv-cv2c-moment-kind">
                     <Camera size={11} aria-hidden="true" /> {MOMENT_LABELS[moment.kind]}
                   </span>

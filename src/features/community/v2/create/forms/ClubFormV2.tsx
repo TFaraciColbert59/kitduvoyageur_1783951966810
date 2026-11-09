@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { ArrowDown, ArrowUp, Plus, ShieldCheck, Trash2 } from 'lucide-react';
+import { GripVertical, Minus, Plus, ShieldCheck, Trash2 } from 'lucide-react';
 import { useFormContext, useFormState } from 'react-hook-form';
 import type { User } from '@supabase/supabase-js';
 import { ClubCrest } from '../../shared/ClubCrest';
@@ -16,18 +16,14 @@ import { IMAGE_LIMITS, deleteMediaObjectsV2, uploadedObjectsOf } from '../fields
 import { isValidClubSlug, slugifyClubName } from '../club/slug';
 import { moderateText } from '@/features/community/create/moderation';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { SheetPreview } from '../../shared/SheetPreview';
 import type { CreateFormV2Props } from './types';
 
-const ACTIVITY_CHOICES = [
-  'Randonnée',
-  'Trail',
-  'Ski de rando',
-  'Vélo',
-  'Escalade',
-  'Alpinisme',
-  'Bivouac',
-  'Raquettes',
-] as const;
+/**
+ * Activités de la maquette (`ACTI`, HTML L3077) : **5** valeurs, plus le champ
+ * libre « Autre activité… » (FID-054). Les libellés restent ceux du produit.
+ */
+const ACTIVITY_CHOICES = ['Randonnée', 'Trail', 'Ski de rando', 'Vélo', 'Escalade'] as const;
 
 const CHARTER_TEMPLATES: { id: string; label: string; text: string }[] = [
   {
@@ -49,31 +45,155 @@ const CHARTER_TEMPLATES: { id: string; label: string; text: string }[] = [
 
 type SlugState = 'idle' | 'checking' | 'free' | 'taken' | 'invalid';
 
-function ClubPreview({ user }: { user: User | null }) {
+function ClubPreview() {
   const form = useFormContext<ClubFormValuesV2>();
   const values = form.watch();
   const slug = values.slug || slugifyClubName(values.name);
+  const avatarUrl = values.avatar[0]?.previewUrl || values.avatar[0]?.url || '';
+  // FID-056 : l'aperçu vit dans 150 px ; la maquette `.kprev` (L3304) montre le
+  // blason et la ligne d'identité, pas la bannière 3:1 (réservée à l'étape).
   return (
-    <div className="lkdv-cv2-card lkdv-cv2c-crest-row" inert aria-hidden="true">
-      <ClubCrest name={values.name || 'Ton club'} activity={values.activities[0] ?? null} seed={values.name} size={44} />
-      <div>
-        <b>{values.name || 'Nom du club'}</b>
-        <small>
-          {values.activities.length > 0 ? values.activities.join(' · ') : 'Activités à choisir'}
-          {' · '}
-          {values.privacy === 'open' ? 'Ouvert' : 'Sur validation'}
-          {' · 1 membre (toi)'}
-        </small>
-        <small>
-          <ShieldCheck size={10} aria-hidden="true" /> /clubs/{slug || 'ton-club'}
-        </small>
+    <div className="lkdv-cv2c-club-preview" inert aria-hidden="true">
+      <div className="lkdv-cv2-card lkdv-cv2c-crest-row">
+        {avatarUrl ? (
+          <span className="lkdv-cv2c-club-avatar">
+            {/* eslint-disable-next-line @next/next/no-img-element -- aperçu local ou URL Storage */}
+            <img src={avatarUrl} alt="" />
+          </span>
+        ) : (
+          <ClubCrest
+            name={values.name || 'Ton club'}
+            activity={values.activities[0] ?? null}
+            seed={values.name}
+            size={44}
+          />
+        )}
+        <div>
+          <b>{values.name || 'Nom du club'}</b>
+          <small>
+            {values.activities.length > 0 ? values.activities.join(' · ') : 'Activités à choisir'}
+            {' · '}
+            {values.privacy === 'open' ? 'Ouvert' : 'Sur validation'}
+            {' · 1 membre (toi)'}
+          </small>
+          <small>
+            <ShieldCheck size={10} aria-hidden="true" /> /clubs/{slug || 'ton-club'}
+          </small>
+        </div>
       </div>
-      {user ? <span className="lkdv-cv2-field-hint">{user.user_metadata?.full_name ?? 'Toi'} · admin</span> : null}
     </div>
   );
 }
 
-function IdentiteStep({ user }: { user: User | null }) {
+function ClubActivitiesV2() {
+  const form = useFormContext<ClubFormValuesV2>();
+  const values = form.watch();
+  const [custom, setCustom] = useState('');
+  const { haptic } = useHapticFeedback();
+
+  const addCustom = () => {
+    const activity = custom.trim().slice(0, 40);
+    if (!activity || values.activities.includes(activity) || values.activities.length >= 5) return;
+    form.setValue('activities', [...values.activities, activity], {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    setCustom('');
+    haptic('selection');
+  };
+
+  return (
+    <>
+      <ChipsFieldV2
+        name="activities"
+        label="Activités"
+        multiple
+        options={ACTIVITY_CHOICES.map((activity) => ({ value: activity, label: activity }))}
+        hint="Plusieurs choix possibles (5 maximum)."
+      />
+      <div className="lkdv-cv2c-inline-add">
+        <input
+          type="text"
+          className="lkdv-cv2-input"
+          value={custom}
+          maxLength={40}
+          placeholder="Autre activité…"
+          aria-label="Ajouter une activité"
+          onChange={(event) => setCustom(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              event.preventDefault();
+              addCustom();
+            }
+          }}
+        />
+        <button type="button" className="lkdv-cv2-chip lkdv-cv2-chip--lg" onClick={addCustom}>
+          <Plus size={13} aria-hidden="true" />
+          Ajouter
+        </button>
+      </div>
+    </>
+  );
+}
+
+/**
+ * Zone d'activité (maquette L3281) : lieu + **stepper** de rayon 5-60 km.
+ * Le schéma garde `zoneRadiusKm` nullable : le stepper part de 20 km (valeur de
+ * la maquette) et n'écrit qu'au premier geste.
+ */
+function ClubZoneV2() {
+  const form = useFormContext<ClubFormValuesV2>();
+  const values = form.watch();
+  const radius = values.zoneRadiusKm ?? 20;
+  const setRadius = (next: number) => {
+    form.setValue('zoneRadiusKm', Math.max(5, Math.min(60, next)), {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+  };
+  return (
+    <>
+      <TextFieldV2
+        name="locationLabel"
+        label="Zone d’activité"
+        placeholder="Vercors, Isère…"
+        maxLength={120}
+      />
+      <div className="lkdv-cv2-field">
+        <span className="lkdv-cv2-field-label" id="cv2c-club-radius-label">
+          Rayon d’activité
+        </span>
+        <div className="lkdv-cv2c-stepper-row">
+          <div className="lkdv-cv2-stepper" role="group" aria-labelledby="cv2c-club-radius-label">
+            <button
+              type="button"
+              aria-label="Diminuer le rayon d’activité"
+              onClick={() => setRadius(radius - 5)}
+              disabled={radius <= 5}
+            >
+              <Minus size={16} aria-hidden="true" />
+            </button>
+            <output aria-live="polite">
+              {radius}
+              <span className="lkdv-cv2c-unit">km</span>
+            </output>
+            <button
+              type="button"
+              aria-label="Augmenter le rayon d’activité"
+              onClick={() => setRadius(radius + 5)}
+              disabled={radius >= 60}
+            >
+              <Plus size={16} aria-hidden="true" />
+            </button>
+          </div>
+          <span className="lkdv-cv2-field-hint">5 – 60 km</span>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function IdentiteStep() {
   const form = useFormContext<ClubFormValuesV2>();
   const values = form.watch();
   const [slugState, setSlugState] = useState<SlugState>('idle');
@@ -159,72 +279,45 @@ function IdentiteStep({ user }: { user: User | null }) {
           }}
         />
       </div>
-      <MediaFieldV2
-        name="cover"
-        label="Image du club (optionnel)"
-        userId={user?.id ?? ''}
-        limits={IMAGE_LIMITS}
-        max={1}
-        cropOptions={[
-          { value: 'original', label: 'Original' },
-          { value: '1:1', label: 'Carré' },
-          { value: '3:1', label: 'Bannière' },
-        ]}
-        showAlt={false}
-        addLabel="Ajouter une image"
-        hint="Sans image, un blason est généré à partir du nom et de l’activité."
-      />
+      {/* FID-054/FID-064 : activités sur l'étape Identité (maquette L3280),
+          hint « Plusieurs choix possibles. », champ libre « Autre activité… ». */}
+      <ClubActivitiesV2 />
+      <ClubZoneV2 />
     </>
   );
 }
 
-function UniversStep() {
-  const form = useFormContext<ClubFormValuesV2>();
-  const values = form.watch();
-  const [custom, setCustom] = useState('');
-  const { haptic } = useHapticFeedback();
-
-  const addCustom = () => {
-    const activity = custom.trim().slice(0, 40);
-    if (!activity || values.activities.includes(activity) || values.activities.length >= 5) return;
-    form.setValue('activities', [...values.activities, activity], {
-      shouldDirty: true,
-      shouldValidate: true,
-    });
-    setCustom('');
-    haptic('selection');
-  };
-
+function UniversStep({ user }: { user: User | null }) {
   return (
     <>
-      <ChipsFieldV2
-        name="activities"
-        label="Activités"
-        multiple
-        options={ACTIVITY_CHOICES.map((activity) => ({ value: activity, label: activity }))}
-        hint="Plusieurs activités possibles (5 maximum)."
+      {/* Les deux médias de la maquette (HTML L3283-3289) : avatar carré et
+          bannière 3:1, deux champs distincts — plus d'image unique recadrée. */}
+      <MediaFieldV2
+        name="avatar"
+        label="Image du club (carré)"
+        userId={user?.id ?? ''}
+        limits={IMAGE_LIMITS}
+        max={1}
+        cropOptions={[{ value: '1:1', label: 'Carré' }]}
+        showAlt={false}
+        addLabel="Choisir une image"
+        hint="Recadrage carré. Sans image, un blason est généré à partir du nom et de l’activité."
       />
-      <div className="lkdv-cv2c-inline-add">
-        <input
-          type="text"
-          className="lkdv-cv2-input"
-          value={custom}
-          maxLength={40}
-          placeholder="Autre activité…"
-          aria-label="Ajouter une activité"
-          onChange={(event) => setCustom(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter') {
-              event.preventDefault();
-              addCustom();
-            }
-          }}
-        />
-        <button type="button" className="lkdv-cv2-chip lkdv-cv2-chip--lg" onClick={addCustom}>
-          <Plus size={13} aria-hidden="true" />
-          Ajouter
-        </button>
-      </div>
+      <MediaFieldV2
+        name="banner"
+        label="Bannière (3:1)"
+        userId={user?.id ?? ''}
+        limits={IMAGE_LIMITS}
+        max={1}
+        cropOptions={[{ value: '3:1', label: 'Bannière' }]}
+        showAlt={false}
+        addLabel="Ajouter une bannière"
+        hint="Recadrage 3:1, affiché en tête de la page du club."
+      />
+      <p className="lkdv-cv2-field-hint">
+        L’image n’est pas obligatoire : le blason du club est généré à partir de son nom et de
+        son activité.
+      </p>
       <TextAreaFieldV2
         name="description"
         label="Description"
@@ -232,33 +325,6 @@ function UniversStep() {
         maxLength={1500}
         rows={5}
       />
-      <TextFieldV2
-        name="locationLabel"
-        label="Zone d’activité"
-        placeholder="Vercors, Isère…"
-        maxLength={120}
-      />
-      <div className="lkdv-cv2-field">
-        <span className="lkdv-cv2-field-label">Rayon de la zone</span>
-        <div className="lkdv-cv2-chips">
-          {[25, 50, 100, 200].map((radius) => (
-            <button
-              key={radius}
-              type="button"
-              className="lkdv-cv2-chip lkdv-cv2-chip--lg"
-              aria-pressed={values.zoneRadiusKm === radius}
-              onClick={() =>
-                form.setValue('zoneRadiusKm', values.zoneRadiusKm === radius ? null : radius, {
-                  shouldDirty: true,
-                  shouldValidate: true,
-                })
-              }
-            >
-              {radius} km
-            </button>
-          ))}
-        </div>
-      </div>
     </>
   );
 }
@@ -269,6 +335,14 @@ function AdhesionStep() {
   const questionsError = readError(adhesionErrors, 'joinQuestions');
   const values = form.watch();
   const { haptic } = useHapticFeedback();
+  // FID-054 — réordonnancement au **pointeur** (maquette `.grip` 44 px) en plus
+  // des flèches haut/bas : la poignée capture le pointeur, la ligne la plus
+  // proche du doigt devient la cible, puis l'ordre est écrit d'un seul geste.
+  const rowRefs = useRef<Array<HTMLLIElement | null>>([]);
+  const dragRef = useRef<{ index: number; pointerId: number } | null>(null);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOver, setDragOver] = useState<number | null>(null);
+  const [announcement, setAnnouncement] = useState('');
 
   const updateQuestion = (index: number, text: string) => {
     const next = [...values.joinQuestions];
@@ -276,13 +350,68 @@ function AdhesionStep() {
     form.setValue('joinQuestions', next, { shouldDirty: true, shouldValidate: true });
   };
 
-  const moveQuestion = (index: number, delta: number) => {
-    const target = index + delta;
-    if (target < 0 || target >= values.joinQuestions.length) return;
+  const reorderQuestion = (from: number, to: number) => {
+    if (from === to || from < 0 || from >= values.joinQuestions.length) return;
+    if (to < 0 || to >= values.joinQuestions.length) return;
     const next = [...values.joinQuestions];
-    [next[index], next[target]] = [next[target], next[index]];
+    const [question] = next.splice(from, 1);
+    next.splice(to, 0, question as string);
     form.setValue('joinQuestions', next, { shouldDirty: true, shouldValidate: true });
+    setAnnouncement(`Question déplacée en position ${to + 1}.`);
     haptic('selection');
+  };
+
+  const moveQuestion = (index: number, delta: number) => {
+    reorderQuestion(index, index + delta);
+  };
+
+  const rowIndexAt = (clientY: number) => {
+    let target = dragRef.current?.index ?? 0;
+    let best = Number.POSITIVE_INFINITY;
+    rowRefs.current.forEach((row, index) => {
+      if (!row) return;
+      const rect = row.getBoundingClientRect();
+      const distance = Math.abs(clientY - (rect.top + rect.height / 2));
+      if (distance < best) {
+        best = distance;
+        target = index;
+      }
+    });
+    return target;
+  };
+
+  const beginDrag = (index: number, event: React.PointerEvent<HTMLButtonElement>) => {
+    if (event.button > 0) return;
+    dragRef.current = { index, pointerId: event.pointerId };
+    setDragIndex(index);
+    setDragOver(index);
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    } catch {
+      /* capture optionnelle (Safari ancien, tests) */
+    }
+  };
+
+  const moveDrag = (event: React.PointerEvent<HTMLButtonElement>) => {
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    setDragOver(rowIndexAt(event.clientY));
+  };
+
+  const endDrag = (event: React.PointerEvent<HTMLButtonElement>) => {
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    dragRef.current = null;
+    const target = rowIndexAt(event.clientY);
+    setDragIndex(null);
+    setDragOver(null);
+    reorderQuestion(drag.index, target);
+  };
+
+  const cancelDrag = () => {
+    dragRef.current = null;
+    setDragIndex(null);
+    setDragOver(null);
   };
 
   return (
@@ -333,7 +462,10 @@ function AdhesionStep() {
           </button>
         ))}
       </div>
-      <div className="lkdv-cv2-field">
+      {/* FID-054 : les questions d'adhésion n'apparaissent que pour
+          « Sur validation » (maquette L3291 : `${d.join==='valid'?…}`). */}
+      {values.privacy === 'closed' ? (
+        <div className="lkdv-cv2-field">
         <span className="lkdv-cv2-field-label">Questions d’adhésion (3 maximum)</span>
         {questionsError ? (
           <p className="lkdv-cv2-field-error" role="alert">
@@ -345,9 +477,17 @@ function AdhesionStep() {
             Aucune question : la demande est acceptée sans formulaire.
           </p>
         ) : (
-          <ul className="lkdv-cv2c-questions">
+          <ul className="lkdv-cv2c-questions" aria-describedby="cv2c-questions-hint">
             {values.joinQuestions.map((question, index) => (
-              <li key={index} className="lkdv-cv2c-question-row">
+              <li
+                key={index}
+                ref={(element) => {
+                  rowRefs.current[index] = element;
+                }}
+                className="lkdv-cv2c-question-row"
+                data-dragging={dragIndex === index || undefined}
+                data-over={dragOver === index && dragIndex !== null && dragIndex !== index ? 'true' : undefined}
+              >
                 <input
                   type="text"
                   className="lkdv-cv2-input"
@@ -356,21 +496,30 @@ function AdhesionStep() {
                   aria-label={`Question d’adhésion ${index + 1}`}
                   onChange={(event) => updateQuestion(index, event.target.value)}
                 />
+                {/* FID-054 : **poignée de glisser** de la maquette (`.grip`
+                    44 px, L3291) : glisser au pointeur ; les flèches haut/bas
+                    restent le geste clavier, avec annonce du nouvel ordre. */}
                 <button
                   type="button"
-                  className="lkdv-cv2c-icon-btn"
-                  aria-label="Monter la question"
-                  onClick={() => moveQuestion(index, -1)}
+                  className="lkdv-cv2c-icon-btn lkdv-cv2c-drag"
+                  aria-label={`Déplacer la question ${index + 1}. Glisse la poignée, ou flèches haut et bas`}
+                  onPointerDown={(event) => beginDrag(index, event)}
+                  onPointerMove={moveDrag}
+                  onPointerUp={endDrag}
+                  onPointerCancel={cancelDrag}
+                  onKeyDown={(event) => {
+                    if (event.key === 'ArrowUp') {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      moveQuestion(index, -1);
+                    } else if (event.key === 'ArrowDown') {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      moveQuestion(index, 1);
+                    }
+                  }}
                 >
-                  <ArrowUp size={13} aria-hidden="true" />
-                </button>
-                <button
-                  type="button"
-                  className="lkdv-cv2c-icon-btn"
-                  aria-label="Descendre la question"
-                  onClick={() => moveQuestion(index, 1)}
-                >
-                  <ArrowDown size={13} aria-hidden="true" />
+                  <GripVertical size={13} aria-hidden="true" />
                 </button>
                 <button
                   type="button"
@@ -390,6 +539,12 @@ function AdhesionStep() {
             ))}
           </ul>
         )}
+        <p className="lkdv-cv2-field-hint" id="cv2c-questions-hint">
+          Glisse la poignée pour changer l’ordre, ou utilise les flèches haut et bas.
+        </p>
+        <p className="lkdv-cv2c-sr-only" role="status">
+          {announcement}
+        </p>
         {values.joinQuestions.length < 3 ? (
           <button
             type="button"
@@ -405,7 +560,8 @@ function AdhesionStep() {
             Ajouter une question
           </button>
         ) : null}
-      </div>
+        </div>
+      ) : null}
     </>
   );
 }
@@ -442,11 +598,16 @@ function PublicationStep() {
           ? 'Club ouvert : le post d’accueil part dès la création.'
           : 'Club sur validation : le post d’accueil partira à la création du club, quand l’adhésion est ouverte.'}
       </p>
-      <div className="lkdv-cv2-card lkdv-cv2c-recap">
-        <span className="lkdv-cv2-eyebrow">Ensuite</span>
-        <b>Organise la première sortie</b>
-        <small>L’île de confirmation propose « Organiser une sortie » juste après la création.</small>
-      </div>
+      {/* FID-054 : aperçu du post d'accueil (maquette L3296, `.wpost`).
+          FID-063 : la carte « ENSUITE » (ajout V2 sans équivalent maquette) est
+          retirée. */}
+      {values.welcomePost ? (
+        <div className="lkdv-cv2-card lkdv-cv2c-recap" aria-label="Aperçu du post d’accueil">
+          <span className="lkdv-cv2-eyebrow">Aperçu du post</span>
+          <b>{values.name || 'Ton club'}</b>
+          <small>{values.welcomeContent || 'Bienvenue dans le club ! Présente-toi en quelques mots…'}</small>
+        </div>
+      ) : null}
     </>
   );
 }
@@ -460,9 +621,14 @@ function ClubBody({
 }) {
   return (
     <>
-      {api.active ? <ClubPreview user={user} /> : null}
-      {api.step === 0 ? <IdentiteStep user={user} /> : null}
-      {api.step === 1 ? <UniversStep /> : null}
+      {/* FID-056 : aperçu du club dans l'emplacement fixe 150 px de la coque. */}
+      {api.active ? (
+        <SheetPreview>
+          <ClubPreview />
+        </SheetPreview>
+      ) : null}
+      {api.step === 0 ? <IdentiteStep /> : null}
+      {api.step === 1 ? <UniversStep user={user} /> : null}
       {api.step === 2 ? <AdhesionStep /> : null}
       {api.step === 3 ? <PublicationStep /> : null}
     </>
@@ -502,7 +668,9 @@ export function ClubFormV2({ active, onNavChange, stepHosts }: CreateFormV2Props
             name: values.name.trim(),
           });
         } catch (error) {
-          await deleteMediaObjectsV2(uploadedObjectsOf(values.cover));
+          await deleteMediaObjectsV2(
+            uploadedObjectsOf([...values.avatar, ...values.banner]),
+          );
           throw error;
         }
       }}

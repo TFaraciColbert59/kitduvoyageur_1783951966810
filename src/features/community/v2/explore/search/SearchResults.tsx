@@ -48,7 +48,7 @@ function coverFor(hit: SearchHitVM): React.ReactNode {
         {hit.cover ? (
           <AppImage src={hit.cover} alt="" width={40} height={40} className="lkdv-cv2x-avatar-img" />
         ) : (
-          initialsFromName(hit.title)
+          initialsFromName(hit.title).slice(0, 1)
         )}
       </span>
     );
@@ -63,7 +63,7 @@ function coverFor(hit: SearchHitVM): React.ReactNode {
   return (
     <span className="lkdv-cv2x-search-cover" aria-hidden="true">
       {hit.cover ? (
-        <AppImage src={hit.cover} alt="" width={64} height={52} className="lkdv-cv2x-cover-img" />
+        <AppImage src={hit.cover} alt="" width={52} height={52} className="lkdv-cv2x-cover-img" />
       ) : (
         <span className="lkdv-cv2x-cover-fallback" />
       )}
@@ -98,6 +98,7 @@ export function SearchResultRow({ hit, terms, index, active, rowId, onPeek }: Se
       href={hit.href}
       aria-label={ariaLabel}
       data-testid={`cv2-tile-${hit.kind}`}
+      data-type={hit.kind}
       data-id={hit.id}
       data-index={index}
       {...longPress}
@@ -120,13 +121,14 @@ export function SearchResultRow({ hit, terms, index, active, rowId, onPeek }: Se
       </span>
       <span className="lkdv-cv2x-search-end">
         <span className="lkdv-cv2-type" data-type={hit.kind}>
+          <i className="lkdv-cv2x-type-dot" aria-hidden="true" />
           {label.singular}
         </span>
         {hit.distanceKm != null ? (
-          <span className="lkdv-cv2-meta">à {formatKm(hit.distanceKm)}</span>
+          <span className="lkdv-cv2x-search-distance">{formatKm(hit.distanceKm)}</span>
         ) : null}
       </span>
-      <ExploreIcon name="chevron-right" size={15} />
+      <ExploreIcon name="chevron-right" size={14} />
     </a>
   );
 }
@@ -164,7 +166,7 @@ export function SearchResults({
         <div className="lkdv-cv2-group-head">
           <span className="lkdv-cv2-eyebrow">
             {SEARCH_KIND_LABELS[kind].group}
-            <b>{items.length}</b>
+            <b className="lkdv-cv2x-count">{items.length}</b>
           </span>
         </div>
         <div className="lkdv-cv2x-search-list">
@@ -198,11 +200,12 @@ export function SearchResults({
               <span className="lkdv-cv2-eyebrow">
                 <i className="lkdv-cv2x-kind-dot" data-type={group.kind} aria-hidden="true" />
                 {SEARCH_KIND_LABELS[group.kind].group}
-                <b>{group.items.length}</b>
+                <b className="lkdv-cv2x-count">{group.items.length}</b>
               </span>
               {group.items.length > SEARCH_GROUP_PREVIEW ? (
                 <button
                   type="button"
+                  className="lkdv-cv2x-see-all"
                   onClick={() => onSeeAll(group.kind)}
                   aria-label={`Voir tout : ${SEARCH_KIND_LABELS[group.kind].group}, ${group.items.length} résultats`}
                 >

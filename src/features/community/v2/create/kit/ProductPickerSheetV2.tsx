@@ -139,11 +139,8 @@ export function ProductPickerSheetV2({
         </div>
       ) : null}
       {!loading && !error && filtered.length === 0 ? (
-        <p className="lkdv-cv2c-empty">
-          {scope === 'inventory'
-            ? 'Aucun objet dans ton inventaire pour cette recherche.'
-            : 'Aucun produit trouvé dans la boutique.'}
-        </p>
+        // Message unique de la maquette (HTML L3242).
+        <p className="lkdv-cv2c-empty">Aucun produit trouvé.</p>
       ) : null}
       {filtered.length > 0 ? (
         <ul className="lkdv-cv2c-product-list">
@@ -170,9 +167,9 @@ export function ProductPickerSheetV2({
                     type="button"
                     className="lkdv-cv2-chip lkdv-cv2-chip--sm"
                     onClick={() => addToBasket(product)}
-                    aria-label={`Ajouter ${product.name} au panier`}
+                    aria-label={`Acheter ${product.name}`}
                   >
-                    Panier
+                    Acheter
                   </button>
                 ) : (
                   <button

@@ -50,16 +50,18 @@ export function TimeFieldV2({
   name,
   label,
   hint,
+  required,
   className,
 }: {
   name: string;
   label: string;
   hint?: string;
+  required?: boolean;
   className?: string;
 }) {
   const form = useFormContext();
   return (
-    <FieldV2 name={name} label={label} hint={hint} className={className}>
+    <FieldV2 name={name} label={label} hint={hint} required={required} className={className}>
       {({ id, describedBy, invalid }) => (
         <div className="lkdv-cv2c-date">
           <Clock size={16} aria-hidden="true" />

@@ -4,14 +4,15 @@ import React from 'react';
 import Link from 'next/link';
 import AppImage from '@/components/ui/AppImage';
 import type { ClubCardVM, ClubJoinRequestVM, EventCardVM, MemberStatus } from '../../shared/types';
-import { formatCountFr, formatDateShort, formatRelativeTime } from '../../shared/format';
+import { formatCountFr, formatDateShort, formatDateStamp, formatRelativeTime, formatTime } from '../../shared/format';
 import { activityLabel } from '../../data/communityFeedMappers';
 import { useClubDetail } from '../../data/useClubDetail';
 import { useClubJoinRequests } from '../../data/useClubJoinRequests';
 import { ClubCrest } from '../../shared/ClubCrest';
 import { ExploreIcon } from '../ExploreIcons';
 import { ExploreError, ExploreSkeleton } from '../ExploreStates';
-import { clubJoinLabel } from '../tiles/ClubTileV2';
+import { clubJoinDisplayLabel } from '../tiles/ClubTileV2';
+import { EventActionButton } from '../tiles/EventTicketV2';
 
 export interface ClubDetailViewProps {
   club: ClubCardVM;
@@ -26,6 +27,13 @@ export interface ClubDetailViewProps {
   reviewingRequestId: string | null;
   /** Dernière demande traitée : la retire de la pile locale (évite un re-fetch). */
   reviewedRequestId?: string | null;
+  /** Ouvre le Peek du club : « Membre ✓ » / « Demande envoyée » y mènent aux
+      actions destructives (quitter / annuler), comme la maquette. */
+  onOpenPeek?: (club: ClubCardVM) => void;
+  /** Ouvre une sortie de « Prochaines sorties » dans le détail empilé. */
+  onOpenEvent?: (event: EventCardVM) => void;
+  /** Inscrit à une sortie de « Prochaines sorties ». */
+  onSignupEvent?: (event: EventCardVM) => void;
 }
 
 /**
@@ -45,6 +53,9 @@ export function ClubDetailView({
   onReviewRequest,
   reviewingRequestId,
   reviewedRequestId,
+  onOpenPeek,
+  onOpenEvent,
+  onSignupEvent,
 }: ClubDetailViewProps) {
   const detailState = useClubDetail(club, viewerId);
   const detail = detailState.detail;
@@ -59,7 +70,11 @@ export function ClubDetailView({
 
   const isMember = status === 'member' || status === 'admin';
   const isPending = status === 'pending';
+  const statusLabel = clubJoinDisplayLabel(club, status);
 
+  // Maquette (`clubPane`, L2563) : la pilule d'état affiche « Membre ✓ » /
+  // « Demande envoyée » ; « Quitter le club » et « Annuler la demande » vivent
+  // dans le Peek, pas dans le détail.
   const actionArea = isMember || isPending ? (
     <button
       type="button"
@@ -68,10 +83,22 @@ export function ClubDetailView({
       aria-pressed
       aria-busy={busy || undefined}
       disabled={busy}
-      onClick={() => (isMember ? onLeave(club) : onCancelRequest(club))}
+      aria-label={
+        isMember
+          ? `Membre du club ${club.name}. Ouvrir les actions pour quitter`
+          : `Demande envoyée au club ${club.name}. Ouvrir les actions pour annuler`
+      }
+      onClick={() => {
+        if (onOpenPeek) {
+          onOpenPeek(club);
+          return;
+        }
+        if (isMember) onLeave(club);
+        else onCancelRequest(club);
+      }}
     >
       {busy ? <i className="lkdv-cv2x-spinner" aria-hidden="true" /> : null}
-      <span>{busy ? 'Envoi…' : isMember ? 'Quitter le club' : 'Annuler la demande'}</span>
+      <span>{busy ? 'Envoi…' : statusLabel}</span>
     </button>
   ) : (
     <button
@@ -90,13 +117,7 @@ export function ClubDetailView({
       ) : (
         <ExploreIcon name="plus" size={15} />
       )}
-      <span>
-        {busy
-          ? 'Envoi…'
-          : club.privacy === 'closed' && status === 'none'
-            ? 'Demander à rejoindre'
-            : clubJoinLabel(club, status)}
-      </span>
+      <span>{busy ? 'Envoi…' : statusLabel}</span>
     </button>
   );
 
@@ -144,7 +165,7 @@ export function ClubDetailView({
                     {friend.avatarUrl ? (
                   <AppImage src={friend.avatarUrl} alt="" width={28} height={28} className="lkdv-cv2x-avatar-img" />
                 ) : (
-                  friend.initials
+                  friend.initials.slice(0, 1)
                 )}
                   </span>
                 ))}
@@ -187,7 +208,7 @@ export function ClubDetailView({
                 {requests.requests.map((request) => (
                   <li key={request.id} className="lkdv-cv2x-request">
                     <span className="lkdv-cv2-avatar lkdv-cv2x-request-avatar" aria-hidden="true">
-                      {request.user.initials}
+                      {request.user.initials.slice(0, 1)}
                     </span>
                     <span className="lkdv-cv2x-request-body">
                       <b>{request.user.name}</b>
@@ -225,20 +246,45 @@ export function ClubDetailView({
           <span className="lkdv-cv2-eyebrow">Prochaines sorties</span>
           {detail.nextEvents.length > 0 ? (
             <div className="lkdv-cv2x-event-rows">
-              {detail.nextEvents.map((event: EventCardVM) => (
-                <Link key={event.id} href={`/sorties/${event.id}`} className="lkdv-cv2x-mini-event">
-                  <span className="lkdv-cv2x-mini-event-stamp" aria-hidden="true">
-                    {formatDateShort(`${event.eventDate}T12:00:00+01:00`)}
-                  </span>
-                  <span className="lkdv-cv2x-mini-event-body">
-                    <span className="lkdv-cv2-title lkdv-cv2-title--clamp1">{event.title}</span>
-                    <span className="lkdv-cv2-meta">
-                      {[event.location, event.level].filter(Boolean).join(' · ')}
-                    </span>
-                  </span>
-                  <ExploreIcon name="chevron-right" size={15} />
-                </Link>
-              ))}
+              {detail.nextEvents.map((event: EventCardVM) => {
+                const stamp = formatDateStamp(`${event.eventDate}T12:00:00+01:00`);
+                const time = formatTime(event.startsAt);
+                return (
+                  <article key={event.id} className="lkdv-cv2x-mini-event-row">
+                    <Link
+                      href={`/sorties/${event.id}`}
+                      className="lkdv-cv2x-mini-event"
+                      onClick={(clickEvent) => {
+                        if (!onOpenEvent) return;
+                        clickEvent.preventDefault();
+                        onOpenEvent(event);
+                      }}
+                    >
+                      <span className="lkdv-cv2x-mini-event-stamp" aria-hidden="true">
+                        <b>{stamp.day}</b>
+                        <i>{stamp.month}</i>
+                      </span>
+                      <span className="lkdv-cv2x-mini-event-body">
+                        <span className="lkdv-cv2-title lkdv-cv2-title--clamp1">{event.title}</span>
+                        <span className="lkdv-cv2-meta">
+                          {[formatDateShort(event.eventDate ? `${event.eventDate}T12:00:00+01:00` : event.startsAt), time, event.location]
+                            .filter(Boolean)
+                            .join(' · ')}
+                        </span>
+                      </span>
+                    </Link>
+                    {/* Maquette (L2564) : billet compact + « S'inscrire » 44 px. */}
+                    {onSignupEvent ? (
+                      <EventActionButton
+                        event={event}
+                        status={event.myStatus}
+                        spotsLeft={event.spotsLeft}
+                        onSignup={onSignupEvent}
+                      />
+                    ) : null}
+                  </article>
+                );
+              })}
             </div>
           ) : (
             <p className="lkdv-cv2-meta">Aucune sortie prévue pour le moment.</p>
@@ -252,7 +298,7 @@ export function ClubDetailView({
                   {member.avatarUrl ? (
                     <AppImage src={member.avatarUrl} alt="" width={28} height={28} className="lkdv-cv2x-avatar-img" />
                   ) : (
-                    member.initials
+                    member.initials.slice(0, 1)
                   )}
                 </span>
               ))}

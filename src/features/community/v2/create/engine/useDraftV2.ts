@@ -31,6 +31,17 @@ export interface CreateDraftV2Record<T = unknown> {
   kind: CreateKindV2;
   updatedAt: number;
   values: T;
+  /**
+   * Étape quittée (`{d, step}` de la maquette L2628-2636) : le tiroir rouvre sur
+   * l'étape où la saisie s'est arrêtée (N1). Absent d'un brouillon v1 antérieur.
+   */
+  step: number;
+}
+
+/** Étape d'un brouillon : entier ≥ 0 (0 pour un enregistrement v1 sans étape). */
+export function sanitizeDraftStepV2(step: unknown): number {
+  const value = typeof step === 'number' && Number.isFinite(step) ? Math.trunc(step) : 0;
+  return value > 0 ? value : 0;
 }
 
 type DraftStorage = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
@@ -177,13 +188,19 @@ export function readDraftV2<T = unknown>(kind: CreateKindV2): CreateDraftV2Recor
       kind,
       updatedAt: typeof parsed.updatedAt === 'number' ? parsed.updatedAt : 0,
       values: parsed.values as T,
+      step: sanitizeDraftStepV2((parsed as { step?: unknown }).step),
     };
   } catch {
     return null;
   }
 }
 
-export function writeDraftV2<T>(kind: CreateKindV2, values: T, now = Date.now()): boolean {
+export function writeDraftV2<T>(
+  kind: CreateKindV2,
+  values: T,
+  step = 0,
+  now = Date.now(),
+): boolean {
   const sanitized = sanitizeDraftValuesV2(values);
   const store = getStorage();
   if (!store) return false;
@@ -197,6 +214,7 @@ export function writeDraftV2<T>(kind: CreateKindV2, values: T, now = Date.now())
       kind,
       updatedAt: now,
       values: sanitized,
+      step: sanitizeDraftStepV2(step),
     };
     store.setItem(draftStorageKey(kind), JSON.stringify(record));
     return true;
@@ -208,6 +226,7 @@ export function writeDraftV2<T>(kind: CreateKindV2, values: T, now = Date.now())
 
 export function clearDraftV2(kind: CreateKindV2): void {
   liveDrafts.delete(kind);
+  liveSteps.delete(kind);
   const store = getStorage();
   try {
     store?.removeItem(draftStorageKey(kind));
@@ -218,9 +237,12 @@ export function clearDraftV2(kind: CreateKindV2): void {
 
 /** Brouillons en mémoire : lus avant la fin du debounce par la confirmation. */
 const liveDrafts = new Map<CreateKindV2, unknown>();
+/** Étape courante en mémoire, pour l'écriture de fermeture (sans attendre le debounce). */
+const liveSteps = new Map<CreateKindV2, number>();
 
-export function rememberLiveDraftV2(kind: CreateKindV2, values: unknown): void {
+export function rememberLiveDraftV2(kind: CreateKindV2, values: unknown, step = 0): void {
   liveDrafts.set(kind, values);
+  liveSteps.set(kind, sanitizeDraftStepV2(step));
 }
 
 export function getLiveDraftV2<T = unknown>(kind: CreateKindV2): T | undefined {
@@ -237,7 +259,7 @@ export function hasDraftContentV2(kind: CreateKindV2): boolean {
 
 export function flushDraftV2(kind: CreateKindV2): void {
   const live = liveDrafts.get(kind);
-  if (live !== undefined) writeDraftV2(kind, live);
+  if (live !== undefined) writeDraftV2(kind, live, liveSteps.get(kind) ?? 0);
 }
 
 function mergeDraftValues<K extends CreateKindV2>(kind: K, draft: unknown): CreateFormValuesMapV2[K] {
@@ -270,6 +292,10 @@ export interface UseDraftV2Options<T extends FieldValues> {
   form: UseFormReturn<T>;
   enabled?: boolean;
   debounceMs?: number;
+  /** Étape courante du moteur : écrite avec le brouillon (N1). */
+  step: number;
+  /** Étape lue dans le brouillon restauré (appelée une seule fois, au montage). */
+  onRestoreStep?: (step: number) => void;
 }
 
 export interface DraftV2Api {
@@ -288,12 +314,22 @@ export function useDraftV2<T extends FieldValues>({
   form,
   enabled = true,
   debounceMs = CREATE_DRAFT_V2_DEBOUNCE_MS,
+  step,
+  onRestoreStep,
 }: UseDraftV2Options<T>): DraftV2Api {
   const [restored, setRestored] = useState(false);
   const [hasContent, setHasContent] = useState(false);
   const hydrated = useRef(false);
   const latest = useRef<T | null>(null);
+  const latestStep = useRef(sanitizeDraftStepV2(step));
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // L'étape courante peut changer sans toucher aux valeurs : on la garde à jour
+  // pour que toute écriture (debounce, fermeture, pagehide) la porte.
+  useEffect(() => {
+    latestStep.current = sanitizeDraftStepV2(step);
+    if (liveDrafts.has(kind)) liveSteps.set(kind, latestStep.current);
+  }, [kind, step]);
 
   const cancelTimer = useCallback(() => {
     if (timer.current === null) return;
@@ -304,14 +340,15 @@ export function useDraftV2<T extends FieldValues>({
   const flush = useCallback(() => {
     cancelTimer();
     if (latest.current !== null) {
-      writeDraftV2(kind, latest.current);
-      rememberLiveDraftV2(kind, latest.current);
+      writeDraftV2(kind, latest.current, latestStep.current);
+      rememberLiveDraftV2(kind, latest.current, latestStep.current);
     }
   }, [cancelTimer, kind]);
 
   const clear = useCallback(() => {
     cancelTimer();
     latest.current = null;
+    latestStep.current = 0;
     clearDraftV2(kind);
     setHasContent(false);
     setRestored(false);
@@ -338,14 +375,17 @@ export function useDraftV2<T extends FieldValues>({
     if (record) {
       const values = mergeDraftValues(kind, record.values) as unknown as T;
       latest.current = values;
-      rememberLiveDraftV2(kind, values);
+      latestStep.current = sanitizeDraftStepV2(record.step);
+      rememberLiveDraftV2(kind, values, latestStep.current);
       form.reset(values as never, { keepDefaultValues: true });
       setRestored(true);
       setHasContent(true);
+      // Le tiroir rouvre sur l'étape quittée (N1).
+      if (latestStep.current > 0) onRestoreStep?.(latestStep.current);
     } else {
       const values = form.getValues();
       latest.current = values;
-      rememberLiveDraftV2(kind, values);
+      rememberLiveDraftV2(kind, values, latestStep.current);
       setHasContent(false);
     }
     hydrated.current = true;
@@ -354,12 +394,12 @@ export function useDraftV2<T extends FieldValues>({
       if (!hydrated.current) return;
       const snapshot = values as T;
       latest.current = snapshot;
-      rememberLiveDraftV2(kind, snapshot);
+      rememberLiveDraftV2(kind, snapshot, latestStep.current);
       setHasContent(draftHasContentV2(kind, snapshot));
       cancelTimer();
       timer.current = setTimeout(() => {
         timer.current = null;
-        writeDraftV2(kind, snapshot);
+        writeDraftV2(kind, snapshot, latestStep.current);
       }, debounceMs);
     });
 
@@ -367,8 +407,11 @@ export function useDraftV2<T extends FieldValues>({
       subscription.unsubscribe();
       hydrated.current = false;
       cancelTimer();
-      if (latest.current !== null) writeDraftV2(kind, latest.current);
+      if (latest.current !== null) writeDraftV2(kind, latest.current, latestStep.current);
     };
+    // `onRestoreStep` est lu une seule fois au montage : le stabiliser côté
+    // appelant (useCallback) suffit, il ne doit pas relancer l'hydratation.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cancelTimer, debounceMs, enabled, form, kind]);
 
   return { restored, hasContent, clear, flush };

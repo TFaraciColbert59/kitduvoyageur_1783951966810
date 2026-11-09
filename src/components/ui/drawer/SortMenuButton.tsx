@@ -241,7 +241,7 @@ export const SORT_MENU_CSS = `
 .lkdv-sort-menu-title{padding:6px 10px 4px;font:600 10.5px/1.2 var(--font-sans);letter-spacing:.06em;text-transform:uppercase;color:var(--lkv-text-secondary);}
 .lkdv-sort-item{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:44px;padding:0 12px;border:0;border-radius:14px;background:none;font:500 14px/1.2 var(--font-sans);color:var(--lkv-text-primary);text-align:left;cursor:pointer;width:100%;box-sizing:border-box;}
 .lkdv-sort-item svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;color:var(--lkv-forest-900);}
-.lkdv-sort-item[aria-checked="true"]{background:var(--lkv-secondary-subtle);color:var(--lkv-forest-900);font-weight:600;}
+.lkdv-sort-item[aria-checked="true"]{background:var(--lkv-secondary-subtle);color:var(--lkv-forest-900);font-weight:600;box-shadow:inset 0 0 0 1px var(--cv2-soft-line);}
 .lkdv-sort-item:focus-visible{outline:2px solid var(--lkv-secondary);outline-offset:-2px;border-radius:14px;}
 @media(hover:hover){.lkdv-sort-item:hover{background:var(--sage-50);}}
 @keyframes lkdv-sort-in{from{opacity:0;transform:scale(.88) translateY(6px);}to{opacity:1;transform:none;}}

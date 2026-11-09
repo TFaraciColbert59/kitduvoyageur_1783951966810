@@ -19,7 +19,13 @@ import { moderateText } from '@/features/community/create/moderation';
 export const CREATE_KINDS_V2 = ['post', 'story', 'carnet', 'sortie', 'kit', 'club'] as const;
 export type CreateKindV2 = (typeof CREATE_KINDS_V2)[number];
 
-export const POST_FORMATS_V2 = ['photo', 'billet', 'question'] as const;
+/**
+ * Formats de publication. `event` est une **vraie option de la grille** (radio
+ * de la maquette, HTML L2771/L2811) : elle ne se publie pas ici, elle renvoie
+ * vers le formulaire Sortie par le bouton « Créer dans Sortie » — le schéma
+ * bloque l'étape Format avec le message de la maquette (L2803).
+ */
+export const POST_FORMATS_V2 = ['photo', 'billet', 'question', 'event'] as const;
 export type PostFormatV2 = (typeof POST_FORMATS_V2)[number];
 
 export const POST_AUDIENCES_V2 = ['public', 'abonnies', 'club'] as const;
@@ -34,8 +40,25 @@ export type StoryReplyPolicyV2 = (typeof STORY_REPLY_POLICIES_V2)[number];
 export const SORTIE_ACTIVITIES_V2 = ['rando', 'trail', 'ski', 'velo', 'escalade', 'autre'] as const;
 export type SortieActivityV2 = (typeof SORTIE_ACTIVITIES_V2)[number];
 
-export const SORTIE_LEVELS_V2 = ['facile', 'moyen', 'difficile'] as const;
+export const SORTIE_LEVELS_V2 = [
+  'tres_facile',
+  'facile',
+  'moyen',
+  'difficile',
+  'expert',
+] as const;
 export type SortieLevelV2 = (typeof SORTIE_LEVELS_V2)[number];
+
+export const SORTIE_LEVEL_TO_DB_V2: Record<SortieLevelV2, 'facile' | 'moyen' | 'difficile'> = {
+  tres_facile: 'facile',
+  facile: 'facile',
+  moyen: 'moyen',
+  difficile: 'difficile',
+  expert: 'difficile',
+};
+
+/** Objet de sécurité obligatoire pour le ski de rando (maquette L3110). */
+export const SORTIE_DVA_V2 = 'DVA';
 
 export const SORTIE_RECURRENCES_V2 = ['', 'weekly', 'monthly'] as const;
 export type SortieRecurrenceV2 = (typeof SORTIE_RECURRENCES_V2)[number];
@@ -120,6 +143,8 @@ export interface StoryStickersV2 {
   /** Carnet lié (chaîne vide = aucun). */
   carnetId: string;
   carnetTitle: string;
+  /** Jour du carnet lié, 1..60 (`linked_carnet_day`, migration lot F L22). */
+  carnetDay: number | null;
 }
 
 export interface KitItemV2 {
@@ -361,7 +386,8 @@ export const postSchemaV2 = z
     clubId: z.string().default(''),
     media: mediaArray(POST_MEDIA_MAX_COUNT).default([]),
     title: z.string().max(120, '120 caractères maximum.').default(''),
-    content: z.string().max(2000, '2 000 caractères maximum.').default(''),
+    /** 600 caractères pour **tous** les formats (maquette `max:600, count:600`, L2824). */
+    content: z.string().max(600, '600 caractères maximum.').default(''),
     location: z.string().max(120, '120 caractères maximum.').default(''),
     locationLat: z.number().nullable().default(null),
     locationLng: z.number().nullable().default(null),
@@ -370,12 +396,12 @@ export const postSchemaV2 = z
     clientRequestId: clientRequestIdSchema,
   })
   .superRefine((value, ctx) => {
-    const maxContent = value.format === 'photo' ? 600 : 2000;
-    if (value.content.length > maxContent) {
+    if (value.format === 'event') {
+      // La maquette bloque l'étape Format et renvoie vers Sortie (L2803, L2814).
       ctx.addIssue({
         code: 'custom',
-        path: ['content'],
-        message: `${maxContent} caractères maximum.`,
+        path: ['format'],
+        message: 'Un événement se crée dans le formulaire Sortie.',
       });
     }
     if (value.format === 'photo') {
@@ -383,12 +409,13 @@ export const postSchemaV2 = z
         ctx.addIssue({
           code: 'custom',
           path: ['media'],
+          // La maquette dit « une photo ou une vidéo » (T4b) ; la vidéo des
+          // publications est reportée (`01-SPEC-PRODUIT.md` § 6), le libellé
+          // reste donc celui du champ réel.
           message: 'Ajoute au moins une photo.',
         });
       }
-      if (!value.content.trim()) {
-        ctx.addIssue({ code: 'custom', path: ['content'], message: 'Écris une légende.' });
-      }
+      // La légende n'est **pas** obligatoire pour une photo (maquette L2802-2806).
     } else if (value.format === 'billet') {
       if (!value.title.trim()) {
         ctx.addIssue({ code: 'custom', path: ['title'], message: 'Le titre est requis.' });
@@ -396,7 +423,7 @@ export const postSchemaV2 = z
       if (!value.content.trim()) {
         ctx.addIssue({ code: 'custom', path: ['content'], message: 'Le texte est requis.' });
       }
-    } else if (!value.content.trim()) {
+    } else if (value.format === 'question' && !value.content.trim()) {
       ctx.addIssue({ code: 'custom', path: ['content'], message: 'Pose ta question.' });
     }
     if (value.audience !== 'public' && value.media.length > 0) {
@@ -435,6 +462,7 @@ export const storyStickersDefaults = (): StoryStickersV2 => ({
   link: null,
   carnetId: '',
   carnetTitle: '',
+  carnetDay: null,
 });
 
 const storyPlaceSchema = z.object({
@@ -466,6 +494,11 @@ const storyStickersSchema = z.object({
   link: storyLinkSchema.nullable().default(null),
   carnetId: z.string().default(''),
   carnetTitle: z.string().max(140).default(''),
+  /**
+   * Jour du carnet lié (`linked_carnet_day`, colonne de la migration
+   * 20261108130006 L22) : sélecteur de la Diffusion (FID-028, maquette L2905).
+   */
+  carnetDay: z.number().int().min(1).max(60).nullable().default(null),
 });
 
 export const storySchemaV2 = z
@@ -570,6 +603,17 @@ export const sortieSchemaV2 = z
         message: 'L’heure de fin doit suivre l’heure de début.',
       });
     }
+    // Ski de rando : DVA obligatoire dans la check-list (maquette L3110).
+    if (
+      value.activity === 'ski' &&
+      !value.safetyChecklist.some((item) => item.trim().toUpperCase() === SORTIE_DVA_V2)
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['safetyChecklist'],
+        message: 'Pour le ski de rando, le DVA est obligatoire dans la check-list.',
+      });
+    }
   });
 
 export type SortieFormValuesV2 = z.infer<typeof sortieSchemaV2>;
@@ -591,6 +635,14 @@ const kitItemSchema = z.object({
 
 export const kitSchemaV2 = z
   .object({
+    /**
+     * Modèle du kit (`GOALS`/`MODELS` maquette L3171-3172) : pilote les
+     * suggestions de l'étape Compléter et le point de départ « Modèle ».
+     * Champ d'interface : non envoyé à la RPC `create_kit_with_items`.
+     */
+    model: z.enum(['jour', 'bivouac', 'alpi']).default('bivouac'),
+    /** Objectif de poids sélectionnable (`GOALS`, L3172) — interface seule. */
+    goal: z.enum(['ultra', 'light', 'std']).default('light'),
     name: z
       .string()
       .default('')
@@ -647,10 +699,13 @@ export const clubSchemaV2 = z.object({
     }),
   slug: slugSchema,
   privacy: z.enum(CLUB_PRIVACIES_V2, { error: 'Choisis un mode d’adhésion.' }).default('open'),
-  cover: mediaArray(1).default([]),
-  coverRatio: z.enum(['square', 'wide']).default('square'),
+  /** Image du club **carrée** (maquette L3283-3285, recadrage 1:1). */
+  avatar: mediaArray(1).default([]),
+  /** Bannière **3:1** (maquette L3286-3289). */
+  banner: mediaArray(1).default([]),
   activities: z
     .array(z.string().trim().min(1, 'Une activité ne peut pas être vide.').max(40, '40 caractères maximum.'))
+    .min(1, 'Choisis au moins une activité.')
     .max(5, '5 activités maximum.')
     .default([]),
   description: z.string().max(1500, '1 500 caractères maximum.').default(''),
@@ -712,7 +767,8 @@ export const carnetSchemaV2 = z
       .string()
       .default('')
       .refine((value) => value.trim().length > 0, 'Le titre est requis.')
-      .refine((value) => value.trim().length <= 140, '140 caractères maximum.'),
+      // Maquette L2967 : titre du carnet borné à **100** (FID-051).
+      .refine((value) => value.trim().length <= 100, '100 caractères maximum.'),
     destination: z
       .string()
       .default('')
@@ -728,6 +784,12 @@ export const carnetSchemaV2 = z
       .min(1, '1 voyageur minimum.')
       .max(50, '50 voyageurs maximum.')
       .default(1),
+    /**
+     * Nombre de jours du stepper d'Infos (maquette `range.days:[1,7,1]` L2967,
+     * borné à 60 par le schéma des jours). Les jours sont matérialisés dans
+     * `days` à l'entrée de l'étape Jours (FID-029/FID-030).
+     */
+    nbJours: z.number().int().min(1, '1 jour minimum.').max(60, '60 jours maximum.').default(3),
     isCollaborative: z.boolean().default(false),
     collaborators: z.array(z.string()).max(20, '20 collaborateurs maximum.').default([]),
     tags: tagArray,
@@ -829,6 +891,8 @@ const defaultsFactories = {
     clientRequestId: newClientRequestId(),
   }),
   kit: (): KitFormValuesV2 => ({
+    model: 'bivouac',
+    goal: 'light',
     name: '',
     description: '',
     season: 'toute_saison',
@@ -841,8 +905,8 @@ const defaultsFactories = {
     name: '',
     slug: '',
     privacy: 'open',
-    cover: [],
-    coverRatio: 'square',
+    avatar: [],
+    banner: [],
     activities: [],
     description: '',
     locationLabel: '',
@@ -861,6 +925,7 @@ const defaultsFactories = {
     description: '',
     visibility: 'private',
     nbVoyageurs: 1,
+    nbJours: 3,
     isCollaborative: false,
     collaborators: [],
     tags: [],
@@ -920,6 +985,8 @@ export const CREATE_FIELD_LABELS_V2: Record<string, string> = {
   description: 'Description',
   recurrence: 'Récurrence',
   cover: 'Couverture',
+  avatar: 'Image du club',
+  banner: 'Bannière',
   announce: 'Annonce',
   privacy: 'Adhésion',
   activities: 'Activités',
@@ -935,6 +1002,7 @@ export const CREATE_FIELD_LABELS_V2: Record<string, string> = {
   endDate: 'Date de fin',
   visibility: 'Visibilité',
   nbVoyageurs: 'Voyageurs',
+  nbJours: 'Nombre de jours',
   collaborators: 'Collaborateurs',
   trace: 'Tracé',
   deniveleM: 'Dénivelé',

@@ -3,6 +3,7 @@
 import React from 'react';
 import type { CarnetCardVM, CarnetFilter, CarnetSort, GeoPermissionState } from '../../shared/types';
 import type { CursorFeedResult } from '../../data/useCursorFeed';
+import { formatCountFr } from '../../shared/format';
 import { CarnetTileV2 } from '../tiles/CarnetTileV2';
 import { ExploreEmpty, ExploreError, ExploreGeoPrompt, ExploreListFoot, ExploreOfflineBanner, ExploreSkeleton } from '../ExploreStates';
 import { usePaneNearBottom, usePaneScrollMemory } from '../usePaneScrollMemory';
@@ -106,11 +107,12 @@ export function CarnetsPane({
       <div ref={scrollRef} className="lkdv-cv2x-pane">
         <ExploreEmpty
           icon="book"
+          illustration={filter === 'discover' ? 'mountain' : undefined}
           title={filter === 'near' ? 'Aucun carnet près de toi' : 'Aucun carnet à découvrir'}
           description={
             filter === 'near'
               ? 'Aucun carnet n’a de point de départ dans les 100 km. Élargis ta recherche ou explore les carnets de la communauté.'
-              : 'Le premier carnet ouvrira la voie : trace, jours, moments et photos au même endroit.'
+              : 'Raconte ton premier voyage : trace, jours, moments et photos au même endroit.'
           }
         >
           <button type="button" className="lkdv-cv2-pill lkdv-cv2-pill--primary" onClick={onCreateCarnet}>
@@ -158,7 +160,7 @@ export function CarnetsPane({
           loadingMore={feed.loadingMore}
           onLoadMore={feed.loadMore}
           total={feed.items.length}
-          label={`${feed.items.length} carnets`}
+          label={formatCountFr(feed.items.length, 'carnet')}
         />
       </div>
     </div>

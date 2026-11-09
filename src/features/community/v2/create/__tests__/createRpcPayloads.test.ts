@@ -96,6 +96,34 @@ describe('payloads RPC — conformes à RPC-CONTRACTS.md', () => {
     expect(payload.announce).toBe(true);
   });
 
+  it('create_event_with_post : les 5 niveaux sont ramenés aux 3 valeurs admises en base', () => {
+    const base = {
+      ...createDefaultsV2('sortie'),
+      title: 'Lac Blanc',
+      location: 'Chamonix',
+      date: '2026-12-12',
+      startTime: '08:00',
+    };
+    expect(buildEventPayload({ ...base, level: 'tres_facile' }).level).toBe('facile');
+    expect(buildEventPayload({ ...base, level: 'moyen' }).level).toBe('moyen');
+    expect(buildEventPayload({ ...base, level: 'expert' }).level).toBe('difficile');
+  });
+
+  it('create_club_with_admin : l’avatar carré sert de cover_image (repli bannière)', () => {
+    const base = { ...createDefaultsV2('club'), name: 'La Cordée', activities: ['Randonnée'] };
+    const withAvatar = buildClubPayload(
+      { ...base, avatar: [uploaded({ url: 'https://example.test/avatar.jpg' })], banner: [uploaded({ url: 'https://example.test/banner.jpg' })] },
+      'la-cordee',
+    );
+    expect(withAvatar.cover_image).toBe('https://example.test/avatar.jpg');
+    const bannerOnly = buildClubPayload(
+      { ...base, avatar: [], banner: [uploaded({ url: 'https://example.test/banner.jpg' })] },
+      'la-cordee',
+    );
+    expect(bannerOnly.cover_image).toBe('https://example.test/banner.jpg');
+    expect(buildClubPayload(base, 'la-cordee').cover_image).toBeUndefined();
+  });
+
   it('create_club_with_admin : slug, activités, adhésion et questions', () => {
     const values = {
       ...createDefaultsV2('club'),
@@ -189,6 +217,7 @@ describe('stories V2', () => {
         link: { url: 'https://example.test', label: 'Le carnet' },
         carnetId: 'carnet-1',
         carnetTitle: 'Tour',
+        carnetDay: null,
       },
     };
     const composition = buildStoryCompositionV2(values);

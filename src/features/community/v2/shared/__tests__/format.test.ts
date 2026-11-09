@@ -30,6 +30,7 @@ import {
   searchTerms,
   todayIso,
   tripDays,
+  levelLabel,
 } from '../format';
 
 const NOW = new Date('2026-11-08T10:00:00+01:00');
@@ -146,6 +147,15 @@ describe('format — divers', () => {
     expect(initialsFromName('')).toBe('?');
     expect(crestSeed('id-1', 'La Cordée')).toBe(crestSeed('id-1', 'La Cordée'));
     expect(crestSeed('id-1')).not.toBe(crestSeed('id-2'));
+  });
+
+  it('traduit les 5 niveaux de sortie de la maquette', () => {
+    expect(levelLabel('tres_facile')).toBe('Très facile');
+    expect(levelLabel('facile')).toBe('Facile');
+    expect(levelLabel('moyen')).toBe('Moyen');
+    expect(levelLabel('difficile')).toBe('Difficile');
+    expect(levelLabel('expert')).toBe('Expert');
+    expect(levelLabel(null)).toBeNull();
   });
 
   it('produit un .ics valide', () => {

@@ -59,6 +59,14 @@ export function toNumber(value: NumericLike | boolean | undefined | null): numbe
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+const ISO_COUNTRY = /^[A-Z]{2}$/;
+
+/** Code pays alpha-2 du visa carnet (FID-067) : `null` si absent ou invalide. */
+export function isoCountry(value: string | null | undefined): string | null {
+  const code = (value ?? '').trim().toUpperCase();
+  return ISO_COUNTRY.test(code) ? code : null;
+}
+
 function cleanText(value: string | null | undefined): string {
   return (value ?? '').trim();
 }
@@ -315,6 +323,7 @@ export function mapCarnetRow(row: CarnetFeedRow, extras?: CarnetExtras | null): 
     visibility: normalizeVisibility(row.visibility),
     distanceKmFromMe: toNumber(row.distance_km),
     routeTrace: extra.routeTrace,
+    countryIso: isoCountry(row.country_iso),
   };
 }
 
@@ -393,6 +402,8 @@ export function mapEventRow(row: EventFeedRow, now: Date = new Date()): EventCar
     recurrence: null,
     past: isPastEvent(eventDate, row.starts_at, now),
     distanceKmFromMe: toNumber(row.distance_km),
+    lat: toNumber(row.lat),
+    lng: toNumber(row.lng),
   };
 }
 

@@ -8,6 +8,7 @@ import { DynamicIsland } from '@/components/ui/drawer/DynamicIsland';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { useSessionMemory } from '../shared/useSessionMemory';
+import { resolveFocusTarget, restoreFocus } from '../shared/focus';
 import type {
   CarnetCardVM,
   ClubCardVM,
@@ -220,6 +221,18 @@ export function CommunityExploreSheetV2({
   const agenda = useEventAgenda(14, open && explore.tab === 'sorties');
 
   // ── Focus : ‹ Retour à l'ouverture d'un détail, retour à la tuile sinon ──
+  // FID-081 : la tuile est un `<article>` (appui long) souvent non focusable ;
+  // `resolveFocusTarget` retombe sur son lien interne, puis sur l'onglet actif
+  // de la capsule. Les reprises rAF + timers sont celles de la coque (J-13).
+  const explorerFocusFallback = useCallback(
+    () =>
+      document.querySelector<HTMLElement>(
+        '.lkdv-communaute-v2 [role="tab"][aria-selected="true"]',
+      ) ??
+      document.querySelector<HTMLElement>('.lkdv-communaute-v2 [data-testid="cv2-sheet"]'),
+    [],
+  );
+
   useEffect(() => {
     const hadDetail = detailWasOpenRef.current;
     detailWasOpenRef.current = Boolean(detail);
@@ -232,26 +245,32 @@ export function CommunityExploreSheetV2({
       return () => window.clearTimeout(timer);
     }
     if (hadDetail) {
-      const opener = openerRef.current;
-      window.requestAnimationFrame(() => opener?.focus?.({ preventScroll: true }));
+      return restoreFocus(
+        () => resolveFocusTarget(openerRef.current) ?? explorerFocusFallback(),
+      );
     }
     return undefined;
-  }, [detail]);
-
-  useEffect(() => {
-    if (!peek) return;
-    const onClosePeek = () => {
-      const opener = peek.opener;
-      window.requestAnimationFrame(() => opener?.focus?.({ preventScroll: true }));
-    };
-    return onClosePeek;
-  }, [peek]);
+  }, [detail, explorerFocusFallback]);
 
   const closeDetail = useCallback(() => setDetail(null), []);
 
+  /**
+   * Ferme l'aperçu et rend le focus : d'abord au `‹ Retour` du détail que
+   * l'action vient d'ouvrir (maquette : `openDetail` remplace `SROOT`), sinon
+   * à la tuile/au déclencheur, sinon à l'onglet actif de la capsule.
+   */
+  const closePeek = useCallback(() => {
+    const opener = peek?.opener ?? null;
+    setPeek(null);
+    restoreFocus(() => {
+      const back = document.querySelector<HTMLElement>('.lkdv-cv2-detail [data-testid="cv2-back"]');
+      return back ?? resolveFocusTarget(opener) ?? explorerFocusFallback();
+    });
+  }, [explorerFocusFallback, peek]);
+
   const handleEscape = useCallback(() => {
     if (peek) {
-      setPeek(null);
+      closePeek();
       return true;
     }
     if (detail) {
@@ -259,7 +278,7 @@ export function CommunityExploreSheetV2({
       return true;
     }
     return false;
-  }, [closeDetail, detail, peek]);
+  }, [closeDetail, closePeek, detail, peek]);
 
   // ── Détail empilé ────────────────────────────────────────────────────────
   const openClubDetail = useCallback(
@@ -411,6 +430,8 @@ export function CommunityExploreSheetV2({
           .filter(Boolean)
           .join(' · '),
         initials: club.name.charAt(0).toUpperCase(),
+        crestSeed: club.crestSeed,
+        activity: club.category,
         opener: opener ?? null,
         actions,
       });
@@ -497,6 +518,8 @@ export function CommunityExploreSheetV2({
         subtitle: hit.subtitle,
         cover: hit.cover,
         initials: hit.kind === 'membre' ? hit.title.charAt(0).toUpperCase() : undefined,
+        crestSeed: hit.kind === 'club' ? hit.id : undefined,
+        activity: hit.kind === 'club' ? hit.subtitle.split(' · ')[0] : undefined,
         dateIso: hit.startsAt,
         opener: opener ?? null,
         actions: [
@@ -1018,6 +1041,9 @@ export function CommunityExploreSheetV2({
             onReviewRequest={(clubId, request, approve) => void handleReviewRequest(clubId, request, approve)}
             reviewingRequestId={reviewingRequestId}
             reviewedRequestId={reviewedRequestId}
+            onOpenPeek={(target) => openClubPeek(target, null)}
+            onOpenEvent={(target) => openEventDetail(target, null)}
+            onSignupEvent={(target) => void handleEventSignup(target)}
           />
         );
       });
@@ -1061,6 +1087,7 @@ export function CommunityExploreSheetV2({
       onClose={onClose}
       kind="explore"
       label="Explorer la communauté"
+      guestNotice={isGuest}
       capsule={{
         items: EXPLORE_CAPSULE_ITEMS,
         active: tabIndex,
@@ -1086,7 +1113,7 @@ export function CommunityExploreSheetV2({
         ) : null
       }
     >
-      <PeekOverlay peek={peek} onClose={() => setPeek(null)} />
+      <PeekOverlay peek={peek} onClose={closePeek} />
     </CommunitySheetShell>
   );
 }

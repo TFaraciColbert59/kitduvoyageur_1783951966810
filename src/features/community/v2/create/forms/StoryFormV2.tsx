@@ -1,7 +1,17 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Plus, Trash2, Camera, Play, Pause, CloudSun, MapPin, Loader2 } from 'lucide-react';
+import {
+  Plus,
+  Minus,
+  Trash2,
+  Camera,
+  Image as ImageIcon,
+  Play,
+  Pause,
+  CloudSun,
+  Loader2,
+} from 'lucide-react';
 import { useFormContext, useFormState, type UseFormReturn } from 'react-hook-form';
 import type { User } from '@supabase/supabase-js';
 import { CreateFormEngineV2, type CreateFormEngineApiV2 } from '../engine/CreateFormEngineV2';
@@ -18,8 +28,12 @@ import { TextAreaFieldV2, TextFieldV2, readError } from '../fields/FieldV2';
 import { MediaFieldV2 } from '../fields/MediaFieldV2';
 import { PlaceFieldV2 } from '../fields/PlaceFieldV2';
 import { STORY_LIMITS } from '../fields/media';
-import { StoryStageV2 } from '../story/StoryStageV2';
+import { StoryStageV2, type StoryTransformV2 } from '../story/StoryStageV2';
 import { cameraAvailable, captureStoryPhoto } from '../story/camera';
+import { carnetDayCountV2 } from '../carnet/daySync';
+import { SheetPreview } from '../../shared/SheetPreview';
+import { todayIso } from '../../shared/format';
+import { fetchEventDayWeather, storyWeatherSticker } from '../../data/communityDetails';
 import { createClient } from '@/lib/supabase/client';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import type { CreateFormV2Props } from './types';
@@ -43,50 +57,106 @@ const LAYER_STYLES = [
   { value: 'sauge', label: 'Sauge' },
 ] as const;
 
-const WEATHER_LABELS: Record<string, string> = {
-  clearsky: 'ciel clair',
-  fair: 'ciel dégagé',
-  partlycloudy: 'éclaircies',
-  cloudy: 'nuageux',
-  fog: 'brouillard',
-  lightrain: 'pluie faible',
-  rain: 'pluie',
-  heavyrain: 'forte pluie',
-  lightsnow: 'neige faible',
-  snow: 'neige',
-  rainandthunder: 'orage',
-};
+const WEATHER_UNAVAILABLE = 'Météo indisponible pour le moment.';
 
 interface CarnetOption {
   id: string;
   title: string;
   visibility: string | null;
+  /** Nombre de jours du carnet (dates, sinon nb_nuits + 1). */
+  days: number;
 }
 
-function weatherLabelFor(symbol: string | null, temperature: number | null): string {
-  const key = (symbol ?? '').replace(/_(day|night|polartwilight)$/, '');
-  const label = WEATHER_LABELS[key] ?? 'météo';
-  return temperature != null ? `${Math.round(temperature)}° · ${label}` : label;
+function linkLiveLabel(url: string): string {
+  if (!url.trim()) return 'Adresse attendue : http ou https.';
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') return 'Lien valide.';
+  } catch {
+    /* adresse incomplète : la frappe continue */
+  }
+  return 'Lien invalide (adresse http ou https attendue).';
 }
 
 function setMediaList(form: UseFormReturn<StoryFormValuesV2>, media: MediaItemV2[]) {
   form.setValue('media', media, { shouldDirty: true, shouldValidate: true });
 }
 
+function StoryAudienceLine({ values }: { values: StoryFormValuesV2 }) {
+  const audience =
+    AUDIENCE_OPTIONS.find((option) => option.value === values.audience)?.label ?? 'Tout le monde';
+  const replies =
+    values.replyPolicy === 'everyone'
+      ? 'réponses ouvertes'
+      : values.replyPolicy === 'followers'
+        ? 'réponses des abonnés'
+        : 'réponses fermées';
+  return (
+    <small>
+      {audience} · {replies}
+    </small>
+  );
+}
+
+/**
+ * Aperçu compact de la Story (maquette `.sprev`, HTML L2908) : vignette 9:16,
+ * « Story · 24 h », état d'envoi et audience. Il vit dans l'emplacement fixe
+ * de la coque (FID-056) et suit donc toutes les étapes.
+ */
+function StoryLivePreview({ values }: { values: StoryFormValuesV2 }) {
+  const media = values.media?.[0] ?? null;
+  const video = media?.type.startsWith('video/') ?? false;
+  const status = !media
+    ? 'Ajoute un média pour commencer'
+    : media.status === 'uploaded'
+      ? `${video ? 'Vidéo' : 'Photo'} · envoyé`
+      : media.status === 'uploading'
+        ? `${video ? 'Vidéo' : 'Photo'} · envoi ${Math.max(0, Math.min(100, media.progress))} %`
+        : 'Échec de l’envoi · réessaie';
+  return (
+    <div className="lkdv-cv2c-story-preview" data-testid="cv2-story-preview">
+      <span className="lkdv-cv2c-story-thumb" aria-hidden="true">
+        {media?.previewUrl || media?.url ? (
+          // eslint-disable-next-line @next/next/no-img-element -- aperçu local ou URL Storage
+          <img src={media.previewUrl || media.url} alt="" />
+        ) : (
+          <ImageIcon size={18} />
+        )}
+      </span>
+      <span className="lkdv-cv2c-story-meta">
+        <b>Story · 24 h</b>
+        <small>{status}</small>
+        <StoryAudienceLine values={values} />
+      </span>
+    </div>
+  );
+}
+
 function StoryMediaStep({
   user,
   spawnFiles,
+  onGallery,
+  onCamera,
+  cameraNote,
 }: {
   user: User | null;
   spawnFiles: { files: File[]; nonce: number } | null;
+  onGallery: () => void;
+  onCamera: () => void;
+  cameraNote: string | null;
 }) {
   const form = useFormContext<StoryFormValuesV2>();
-  const media = form.watch('media') ?? [];
+  const values = form.watch();
+  const media = values.media?.[0] ?? null;
+  const durationMs = media?.durationMs ?? 0;
+  const trimStart = values.trimStartMs ?? 0;
+  const trimEnd = values.trimEndMs ?? Math.min(durationMs, 60_000);
   return (
     <>
       <MediaFieldV2
         name="media"
         label="Photo ou vidéo"
+        required
         userId={user?.id ?? ''}
         limits={STORY_LIMITS}
         max={1}
@@ -96,8 +166,8 @@ function StoryMediaStep({
           { value: '9:16', label: '9:16' },
         ]}
         showAlt={false}
-        hint="Un seul média, format vertical 9:16 (recadrage à l’étape suivante). Vidéo : 60 s maximum."
-        addLabel="Choisir dans la galerie"
+        hideAdd
+        hint="Format vertical 9:16. Tu pourras recadrer et poser tes calques à l’étape suivante. Vidéo : 60 s maximum."
         spawnFiles={spawnFiles}
         onVideoDuration={(durationMs) => {
           const current = form.getValues('media') ?? [];
@@ -111,15 +181,73 @@ function StoryMediaStep({
           }
         }}
       />
-      {media[0]?.status === 'uploaded' ? (
-        <p className="lkdv-cv2-field-hint">
-          Média prêt : passe à l’édition pour recadrer et poser tes calques.
+      {/* Deux pilules de la maquette (`.src-btns`, HTML L2890). */}
+      <div className="lkdv-cv2c-src-btns">
+        <button type="button" className="lkdv-cv2-pill lkdv-cv2-pill--secondary" onClick={onGallery}>
+          <ImageIcon size={15} aria-hidden="true" />
+          Galerie
+        </button>
+        <button type="button" className="lkdv-cv2-pill lkdv-cv2-pill--secondary" onClick={onCamera}>
+          <Camera size={15} aria-hidden="true" />
+          Caméra
+        </button>
+      </div>
+      <p className="lkdv-cv2-field-hint">
+        La caméra directe n’est proposée que dans l’application ; au navigateur, la galerie suffit.
+      </p>
+      {cameraNote ? (
+        <p className="lkdv-cv2-field-hint lkdv-cv2c-notice" role="status">
+          {cameraNote}
         </p>
+      ) : null}
+      {/* FID-050 : les curseurs de rognage sont sur l'étape 1 (maquette `.trim`,
+          HTML L2894), pas dans l'Édition. Bornes : 1 s mini, 60 s maxi. */}
+      {media?.type.startsWith('video/') && (media.durationMs ?? 0) > 0 ? (
+        <div className="lkdv-cv2c-trim">
+          <span className="lkdv-cv2-field-label">
+            Extraire la vidéo · {Math.round((trimEnd - trimStart) / 1000)} s
+          </span>
+          <label className="lkdv-cv2c-trim-row">
+            <span className="lkdv-cv2-field-hint">Début</span>
+            <input
+              type="range"
+              min={0}
+              max={Math.max(0, durationMs - 1000)}
+              step={100}
+              value={trimStart}
+              aria-label="Début de l’extrait"
+              onChange={(event) => {
+                const next = Math.min(Number(event.target.value), trimEnd - 1000);
+                form.setValue('trimStartMs', Math.max(0, next), {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                });
+              }}
+            />
+          </label>
+          <label className="lkdv-cv2c-trim-row">
+            <span className="lkdv-cv2-field-hint">Fin</span>
+            <input
+              type="range"
+              min={Math.min(durationMs, 1000)}
+              max={durationMs}
+              step={100}
+              value={trimEnd}
+              aria-label="Fin de l’extrait"
+              onChange={(event) => {
+                const next = Math.max(Number(event.target.value), trimStart + 1000);
+                form.setValue('trimEndMs', Math.min(next, Math.min(durationMs, trimStart + 60_000)), {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                });
+              }}
+            />
+          </label>
+        </div>
       ) : null}
     </>
   );
 }
-
 function LayerTools({
   selectedId,
   onSelect,
@@ -146,7 +274,7 @@ function LayerTools({
   return (
     <div className="lkdv-cv2c-story-tools">
       <div className="lkdv-cv2c-section-head">
-        <span className="lkdv-cv2c-section-label">Texte posé</span>
+        <span className="lkdv-cv2c-section-label">Éléments</span>
         <button
           type="button"
           className="lkdv-cv2-chip lkdv-cv2-chip--sm"
@@ -234,13 +362,10 @@ function LayerTools({
   );
 }
 
-function StickerTools({ user }: { user: User | null }) {
+function StickerTools() {
   const form = useFormContext<StoryFormValuesV2>();
   const stickers = form.watch('stickers');
-  const media = form.watch('media') ?? [];
-  const [weatherState, setWeatherState] = useState<'idle' | 'loading' | 'error'>('idle');
-  const [carnets, setCarnets] = useState<CarnetOption[] | null>(null);
-  const [carnetOpen, setCarnetOpen] = useState(false);
+  const [weatherState, setWeatherState] = useState<'idle' | 'loading' | 'unavailable'>('idle');
   const [linkOpen, setLinkOpen] = useState(Boolean(stickers.link));
   const { haptic } = useHapticFeedback();
   const place = stickers.place;
@@ -251,56 +376,29 @@ function StickerTools({ user }: { user: User | null }) {
 
   const loadWeather = async () => {
     if (place?.lat == null || place?.lng == null) {
-      setWeatherState('error');
+      setWeatherState('unavailable');
       return;
     }
     setWeatherState('loading');
     try {
-      const response = await fetch(`/api/explorer/v2/weather?lat=${place.lat}&lng=${place.lng}`);
-      if (!response.ok) throw new Error('weather');
-      const payload = (await response.json()) as {
-        hours?: Array<{ temperature_c?: number | null; symbol?: string | null }>;
-      };
-      const first = payload.hours?.[0];
-      if (!first) throw new Error('weather');
-      setStickers({ weatherLabel: weatherLabelFor(first.symbol ?? null, first.temperature_c ?? null) });
+      // FID-069 — la Story dure 24 h : la météo est celle du **jour de
+      // publication** (date connue), à partir du lieu choisi. Même format que
+      // la maquette (`storyWeatherSticker`, HTML L3328 : « 4° · Éclaircies »).
+      // Unités impériales **hors périmètre** : aucune préférence d'unités dans
+      // le profil ni dans les données (CO `Kit#15`), donc degrés Celsius seuls.
+      const weather = await fetchEventDayWeather({ lat: place.lat, lng: place.lng }, todayIso());
+      const label = storyWeatherSticker(weather);
+      if (!label) {
+        setWeatherState('unavailable');
+        return;
+      }
+      setStickers({ weatherLabel: label });
       setWeatherState('idle');
       haptic('selection');
     } catch {
-      setWeatherState('error');
+      setWeatherState('unavailable');
     }
   };
-
-  const loadCarnets = async () => {
-    if (!user) return;
-    setCarnetOpen(true);
-    if (carnets) return;
-    try {
-      const supabase = createClient();
-      const { data } = await supabase
-        .from('carnets')
-        .select('id, title, visibility')
-        .eq('author_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(10);
-      setCarnets(Array.isArray(data) ? (data as CarnetOption[]) : []);
-    } catch {
-      setCarnets([]);
-    }
-  };
-
-  const video = media[0];
-  const durationMs = video?.durationMs ?? 0;
-  const trimStart = form.watch('trimStartMs') ?? 0;
-  const trimEnd = form.watch('trimEndMs') ?? Math.min(durationMs, 60_000);
-
-  useEffect(() => {
-    if (!video?.type.startsWith('video/') || durationMs <= 0) return;
-    if (form.getValues('trimStartMs') == null) form.setValue('trimStartMs', 0);
-    if (form.getValues('trimEndMs') == null) {
-      form.setValue('trimEndMs', Math.min(durationMs, 60_000));
-    }
-  }, [durationMs, form, video?.type]);
 
   return (
     <div className="lkdv-cv2c-story-tools">
@@ -365,14 +463,14 @@ function StickerTools({ user }: { user: User | null }) {
           type="button"
           className="lkdv-cv2-chip lkdv-cv2-chip--lg"
           onClick={() => void loadWeather()}
-          disabled={weatherState === 'loading'}
+          disabled={weatherState === 'loading' || place?.lat == null || place?.lng == null}
         >
           {weatherState === 'loading' ? (
             <Loader2 size={13} className="lkdv-cv2c-spin" aria-hidden="true" />
           ) : (
             <CloudSun size={13} aria-hidden="true" />
           )}
-          {stickers.weatherLabel ? 'Actualiser la météo' : 'Météo du lieu'}
+          {stickers.weatherLabel ? 'Actualiser la météo' : 'Météo du jour'}
         </button>
         {stickers.weatherLabel ? (
           <button
@@ -385,11 +483,13 @@ function StickerTools({ user }: { user: User | null }) {
           </button>
         ) : null}
       </div>
-      {weatherState === 'error' ? (
+      {place?.lat == null || place?.lng == null ? (
         <p className="lkdv-cv2-field-hint lkdv-cv2c-notice" role="status">
-          {place?.lat == null
-            ? 'Choisis d’abord un lieu avec des coordonnées.'
-            : 'Météo indisponible pour le moment.'}
+          Météo indisponible : choisis d’abord un lieu avec des coordonnées.
+        </p>
+      ) : weatherState === 'unavailable' ? (
+        <p className="lkdv-cv2-field-hint lkdv-cv2c-notice" role="status">
+          {WEATHER_UNAVAILABLE}
         </p>
       ) : null}
 
@@ -405,10 +505,6 @@ function StickerTools({ user }: { user: User | null }) {
         >
           Ajouter un lien
         </button>
-        <button type="button" className="lkdv-cv2-chip lkdv-cv2-chip--lg" onClick={() => void loadCarnets()}>
-          <MapPin size={13} aria-hidden="true" />
-          Lier à un carnet
-        </button>
       </div>
       {linkOpen ? (
         <>
@@ -419,6 +515,11 @@ function StickerTools({ user }: { user: User | null }) {
             inputMode="url"
             hint="Le lien est vérifié en direct (http ou https)."
           />
+          {/* FID-050 : validation **à la frappe** (le schéma revalide à
+              l'envoi ; ici on informe sans bloquer l'étape). */}
+          <p className="lkdv-cv2-field-hint" role="status">
+            {linkLiveLabel(stickers.link?.url ?? '')}
+          </p>
           <TextFieldV2 name="stickers.link.label" label="Titre du lien" placeholder="Mon carnet" />
           <button
             type="button"
@@ -432,84 +533,133 @@ function StickerTools({ user }: { user: User | null }) {
           </button>
         </>
       ) : null}
-      {carnetOpen ? (
-        <div className="lkdv-cv2c-story-tools">
-          {carnets === null ? (
-            <p className="lkdv-cv2-field-hint">Chargement de tes carnets…</p>
-          ) : carnets.length === 0 ? (
-            <p className="lkdv-cv2-field-hint">Aucun carnet à lier pour l’instant.</p>
-          ) : (
-            <ul className="lkdv-cv2c-product-list">
-              {carnets.map((carnet) => (
-                <li key={carnet.id}>
-                  <button
-                    type="button"
-                    className="lkdv-cv2c-product-row"
-                    onClick={() => {
-                      setStickers({ carnetId: carnet.id, carnetTitle: carnet.title });
-                      setCarnetOpen(false);
-                      haptic('selection');
-                    }}
-                  >
-                    <b>{carnet.title}</b>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-          {stickers.carnetId ? (
-            <button
-              type="button"
-              className="lkdv-cv2-chip lkdv-cv2-chip--sm"
-              onClick={() => setStickers({ carnetId: '', carnetTitle: '' })}
-            >
-              Retirer le carnet lié ({stickers.carnetTitle || 'carnet'})
-            </button>
-          ) : null}
-        </div>
-      ) : null}
+    </div>
+  );
+}
 
-      {video?.type.startsWith('video/') && durationMs > 0 ? (
-        <div className="lkdv-cv2c-trim">
-          <span className="lkdv-cv2-field-label">
-            Extraire la vidéo · {Math.round((trimEnd - trimStart) / 1000)} s
-          </span>
-          <label className="lkdv-cv2c-trim-row">
-            <span className="lkdv-cv2-field-hint">Début</span>
-            <input
-              type="range"
-              min={0}
-              max={Math.max(0, durationMs - 1000)}
-              step={100}
-              value={trimStart}
-              aria-label="Début de l’extrait"
-              onChange={(event) => {
-                const next = Math.min(Number(event.target.value), trimEnd - 1000);
-                form.setValue('trimStartMs', Math.max(0, next), {
-                  shouldDirty: true,
-                  shouldValidate: true,
-                });
+/**
+ * « Lier à un carnet » de la Diffusion (maquette L2905, FID-028). Les carnets
+ * de l'utilisateur sont lus dans `carnets` ; le nombre de jours vient des
+ * dates (`start_date`/`end_date`), à défaut de `nb_nuits + 1`. Le jour choisi
+ * est borné 1..60 comme la colonne `linked_carnet_day` (migration lot F L22).
+ */
+function StoryCarnetLink() {
+  const form = useFormContext<StoryFormValuesV2>();
+  const stickers = form.watch('stickers');
+  const { user } = useCreateSheet();
+  const [carnets, setCarnets] = useState<CarnetOption[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const { haptic } = useHapticFeedback();
+
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const supabase = createClient();
+        const { data, error: queryError } = await supabase
+          .from('carnets')
+          .select('id, title, visibility, start_date, end_date, nb_nuits')
+          .eq('author_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(20);
+        if (queryError) throw queryError;
+        if (cancelled) return;
+        setCarnets(
+          (Array.isArray(data) ? data : []).map((row) => {
+            const record = row as Record<string, unknown>;
+            const start = typeof record.start_date === 'string' ? record.start_date : '';
+            const end = typeof record.end_date === 'string' ? record.end_date : '';
+            const nights = typeof record.nb_nuits === 'number' ? record.nb_nuits : 0;
+            const fromDates = carnetDayCountV2(start, end);
+            return {
+              id: String(record.id ?? ''),
+              title: String(record.title ?? 'Carnet'),
+              visibility: typeof record.visibility === 'string' ? record.visibility : null,
+              days: Math.max(1, Math.min(60, fromDates || nights + 1 || 1)),
+            };
+          }),
+        );
+      } catch {
+        if (!cancelled) {
+          setCarnets([]);
+          setError('Tes carnets sont indisponibles pour le moment.');
+        }
+      }
+    };
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
+
+  const setStickers = (patch: Partial<StoryFormValuesV2['stickers']>) => {
+    form.setValue('stickers', { ...stickers, ...patch }, { shouldDirty: true, shouldValidate: true });
+  };
+
+  const selected = carnets?.find((carnet) => carnet.id === stickers.carnetId) ?? null;
+
+  return (
+    <div className="lkdv-cv2-field">
+      <span className="lkdv-cv2-field-label" id="cv2c-story-carnet-label">
+        Lier à un carnet
+      </span>
+      <div className="lkdv-cv2-chips" role="radiogroup" aria-labelledby="cv2c-story-carnet-label">
+        <button
+          type="button"
+          role="radio"
+          aria-checked={!stickers.carnetId}
+          className="lkdv-cv2-chip lkdv-cv2-chip--lg"
+          onClick={() => {
+            setStickers({ carnetId: '', carnetTitle: '', carnetDay: null });
+            haptic('selection');
+          }}
+        >
+          Aucun
+        </button>
+        {carnets?.map((carnet) => (
+          <button
+            key={carnet.id}
+            type="button"
+            role="radio"
+            aria-checked={stickers.carnetId === carnet.id}
+            className="lkdv-cv2-chip lkdv-cv2-chip--lg"
+            onClick={() => {
+              setStickers({ carnetId: carnet.id, carnetTitle: carnet.title, carnetDay: 1 });
+              haptic('selection');
+            }}
+          >
+            {carnet.title}
+          </button>
+        ))}
+      </div>
+      {carnets === null ? (
+        <p className="lkdv-cv2-field-hint" role="status">
+          Chargement de tes carnets…
+        </p>
+      ) : null}
+      {error ? (
+        <p className="lkdv-cv2-field-hint" role="status">
+          {error}
+        </p>
+      ) : null}
+      {selected ? (
+        <div className="lkdv-cv2-chips" role="radiogroup" aria-label="Jour du carnet">
+          {Array.from({ length: selected.days }, (_, index) => index + 1).map((day) => (
+            <button
+              key={day}
+              type="button"
+              role="radio"
+              aria-checked={(stickers.carnetDay ?? 1) === day}
+              className="lkdv-cv2-chip lkdv-cv2-chip--sm"
+              onClick={() => {
+                setStickers({ carnetDay: day });
+                haptic('selection');
               }}
-            />
-          </label>
-          <label className="lkdv-cv2c-trim-row">
-            <span className="lkdv-cv2-field-hint">Fin</span>
-            <input
-              type="range"
-              min={Math.min(durationMs, 1000)}
-              max={durationMs}
-              step={100}
-              value={trimEnd}
-              aria-label="Fin de l’extrait"
-              onChange={(event) => {
-                const next = Math.max(Number(event.target.value), trimStart + 1000);
-                form.setValue('trimEndMs', Math.min(next, Math.min(durationMs, trimStart + 60_000)), {
-                  shouldDirty: true,
-                  shouldValidate: true,
-                });
-              }}
-            />
-          </label>
+            >
+              Jour {day}
+            </button>
+          ))}
         </div>
       ) : null}
     </div>
@@ -562,6 +712,10 @@ function StoryDiffusionStep() {
           ))}
         </div>
       </div>
+      {/* FID-028 — lien carnet **et choix du jour** dans la Diffusion
+          (maquette L2905 : « Lier à un carnet » puis chips « Jour n »). Le
+          jour est écrit dans `stickers.carnetDay` → `linked_carnet_day`. */}
+      <StoryCarnetLink />
       <button
         type="button"
         className="lkdv-cv2c-switch"
@@ -593,6 +747,7 @@ function StoryBody({
   const [playing, setPlaying] = useState(false);
   const [spawnFiles, setSpawnFiles] = useState<{ files: File[]; nonce: number } | null>(null);
   const [cameraNote, setCameraNote] = useState<string | null>(null);
+  const [transform, setTransform] = useState<StoryTransformV2>({ scale: 1, x: 0, y: 0 });
   const { haptic } = useHapticFeedback();
 
   const onChangeLayer = useCallback(
@@ -627,56 +782,94 @@ function StoryBody({
     }
   }, [haptic, openGallery]);
 
-  const uploadState = !media
-    ? null
-    : media.status === 'uploaded'
-      ? 'Prêt'
-      : media.status === 'uploading'
-        ? `Envoi ${media.progress} %`
-        : 'Échec de l’envoi';
+  // Zoom de la maquette (`.zoomc`, HTML L1240/L2892) : bornes 1 → 3.
+  const zoom = useCallback(
+    (delta: number) => {
+      setTransform((current) => ({
+        ...current,
+        scale: Math.max(1, Math.min(3, Number((current.scale + delta).toFixed(2)))),
+      }));
+      haptic('selection');
+    },
+    [haptic],
+  );
 
   return (
     <>
+      {/* FID-056 : l'aperçu compact vit dans l'emplacement fixe de la coque,
+          au-dessus du pager, et reste visible à toutes les étapes. */}
       {api.active ? (
-      <StoryStageV2
-        media={media}
-        textLayers={values.textLayers ?? []}
-        stickers={values.stickers}
-        selectedLayerId={selectedLayerId}
-        onSelectLayer={setSelectedLayerId}
-        onChangeLayer={onChangeLayer}
-        trimStartMs={values.trimStartMs}
-        trimEndMs={values.trimEndMs}
-        playing={playing}
-        onTogglePlaying={() => setPlaying((current) => !current)}
-        onGallery={openGallery}
-        onCamera={api.step === 0 ? () => void openCamera() : undefined}
-      />
+        <SheetPreview>
+          <StoryLivePreview values={values} />
+        </SheetPreview>
       ) : null}
-      {api.active ? (
-        <p className="lkdv-cv2c-preview-caption">
-          {media ? `Aperçu vivant · ${uploadState ?? ''}` : 'Aucun média sélectionné'}
-        </p>
-      ) : null}
-      {cameraNote ? (
-        <p className="lkdv-cv2-field-hint lkdv-cv2c-notice" role="status">
-          {cameraNote}
-        </p>
+      {api.step === 0 ? (
+        <StoryMediaStep
+          user={user}
+          spawnFiles={spawnFiles}
+          onGallery={openGallery}
+          onCamera={() => void openCamera()}
+          cameraNote={cameraNote}
+        />
       ) : null}
 
-      {api.step === 0 ? (
-        <>
-          <StoryMediaStep user={user} spawnFiles={spawnFiles} />
-          <p className="lkdv-cv2-field-hint">
-            <Camera size={12} aria-hidden="true" /> La caméra directe n’est proposée que dans
-            l’application ; au navigateur, la galerie suffit.
-          </p>
-        </>
-      ) : null}
       {api.step === 1 ? (
         <>
-          <LayerTools selectedId={selectedLayerId} onSelect={setSelectedLayerId} />
-          <StickerTools user={user} />
+          {media ? (
+            <>
+              {api.active ? (
+                <StoryStageV2
+                  media={media}
+                  textLayers={values.textLayers ?? []}
+                  stickers={values.stickers}
+                  selectedLayerId={selectedLayerId}
+                  onSelectLayer={setSelectedLayerId}
+                  onChangeLayer={onChangeLayer}
+                  trimStartMs={values.trimStartMs}
+                  trimEndMs={values.trimEndMs}
+                  playing={playing}
+                  onTogglePlaying={() => setPlaying((current) => !current)}
+                  transform={transform}
+                  onTransformChange={setTransform}
+                />
+              ) : null}
+              <div className="lkdv-cv2c-zoom-row" role="group" aria-label="Cadrage de la story">
+                <button
+                  type="button"
+                  aria-label="Dézoomer"
+                  onClick={() => zoom(-0.25)}
+                  disabled={transform.scale <= 1}
+                >
+                  <Minus size={14} aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  className="lkdv-cv2c-zoom-value"
+                  aria-label={`Recentrer le média (zoom ${transform.scale.toFixed(1)} fois)`}
+                  onClick={() => setTransform({ scale: 1, x: 0, y: 0 })}
+                >
+                  {transform.scale.toFixed(1).replace('.', ',')}×
+                </button>
+                <button
+                  type="button"
+                  aria-label="Zoomer"
+                  onClick={() => zoom(0.25)}
+                  disabled={transform.scale >= 3}
+                >
+                  <Plus size={14} aria-hidden="true" />
+                </button>
+                <button type="button" onClick={openGallery}>
+                  Remplacer
+                </button>
+              </div>
+            </>
+          ) : (
+            <p className="lkdv-cv2c-warning">
+              Reviens à l’étape Média pour choisir une photo ou une vidéo.
+            </p>
+          )}
+
+          {/* Légende et texte alternatif remontés dans le flux visible (T7). */}
           <TextAreaFieldV2
             name="caption"
             label="Légende"
@@ -689,13 +882,42 @@ function StoryBody({
             label="Texte alternatif"
             placeholder="Décris la story pour les personnes malvoyantes"
             maxLength={200}
-            hint="Recommandé : le texte de la story ne remplace pas une description."
+            hint="Lu par les lecteurs d’écran. Facultatif."
           />
+          <LayerTools selectedId={selectedLayerId} onSelect={setSelectedLayerId} />
+          <StickerTools />
         </>
       ) : null}
-      {api.step === 2 ? <StoryDiffusionStep /> : null}
 
-      {media?.type.startsWith('video/') ? (
+      {api.step === 2 ? (
+        <>
+          {/* L'aperçu figé n'est monté que sur l'étape affichée : un seul
+              visualiseur vivant à la fois (WebGLArbiter, ADR-002). */}
+          {media && api.active ? (
+            <div className="lkdv-cv2c-final-preview">
+              <span className="lkdv-cv2-field-label">Aperçu final exact</span>
+              <StoryStageV2
+                media={media}
+                textLayers={values.textLayers ?? []}
+                stickers={values.stickers}
+                selectedLayerId={null}
+                onSelectLayer={() => undefined}
+                onChangeLayer={() => undefined}
+                trimStartMs={values.trimStartMs}
+                trimEndMs={values.trimEndMs}
+                playing={false}
+                onTogglePlaying={() => undefined}
+                transform={transform}
+                onTransformChange={() => undefined}
+                previewOnly
+              />
+            </div>
+          ) : null}
+          <StoryDiffusionStep />
+        </>
+      ) : null}
+
+      {media?.type.startsWith('video/') && api.step === 1 ? (
         <button
           type="button"
           className="lkdv-cv2-chip lkdv-cv2-chip--lg"

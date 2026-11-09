@@ -1175,7 +1175,7 @@ button.g2,
   --cv2-tile-border: var(--glass-border);
   --cv2-radius-tile-sm: 14px;
   --cv2-radius-tile: 16px;
-  --cv2-radius-tile-lg: 20px;
+  --cv2-radius-tile-lg: 18px; /* FID-046 : rayon maquette des tuiles */
   --cv2-list-sep: var(--lkv-border-subtle);
   --cv2-list-sep-strong: var(--lkv-border);
 
@@ -1205,7 +1205,9 @@ button.g2,
   --cv2-island-btn-ink: #D8F3DE;
   --cv2-island-action-bg: #D8F3DE;
   --cv2-island-action-ink: #17402C;
-  --cv2-island-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  /* Ombre encrée, jamais `rgba(0,0,0)` (CLAUDE.md § 4) : seule
+     correction de valeur d'un jeton existant de ce bloc. */
+  --cv2-island-shadow: 0 10px 30px rgba(11, 31, 23, 0.35);
   /* La coque du tiroir v2 est à z 60 (zIndex.modal) : l'île se pose
      au-dessus, sur la couche toast (70), sous les overlays du Compte. */
   --cv2-z-island: 70;
@@ -1247,4 +1249,25 @@ button.g2,
   --cv2-light-info: #4B6B7C;
   --cv2-light-info-bg: #DDE7EE;
   --cv2-light-overlay-scrim: rgba(16, 28, 23, 0.45);
+
+  /* ── États partagés — matières reprises de la maquette ─────────────
+     Valeurs exactes de `handoff/communaute-v2/annexes/maquette-communaute.html` :
+     L16 `--soft` / `--soft-line` (pastille d'état vide, bandeau brouillon,
+     anneau de l'option active du menu de tri) et L9 `--fill` (bandeau hors
+     ligne, badge neutre). Toutes vertes ou neutres : aucune teinte non verte
+     hors danger (`00-MISSION` § 3). */
+  --cv2-soft: rgba(150, 186, 142, 0.28);
+  --cv2-soft-line: rgba(91, 127, 85, 0.38);
+  --cv2-fill: rgba(23, 43, 36, 0.09);
+
+  /* ── Surtitres sur verre (FID-080) ──────────────────────────────────
+     Le surtitre (11 px, capitales) vit sur des cartes de verre translucide
+     (`--cv2-tile-bg` ≈ blanc 58 → 44 %) posées sur une feuille elle-même
+     translucide : au pire cas (photo sombre sous les deux verres, composite
+     ≈ 158/255) `--lkv-text-secondary` tombe à ≈ 2,3:1, sous AA.
+     L'encre primaire neutralise le risque (≈ 5,6:1 au même pire cas) ; les
+     tailles et le tracking du surtitre gardent la hiérarchie. Jeton
+     append-only, consommé par `.lkdv-cv2-eyebrow` (et le libellé de section
+     du tiroir Création). */
+  --cv2-eyebrow-ink: var(--cv2-light-ink);
 }

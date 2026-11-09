@@ -18,6 +18,19 @@ décision.
 > une **décision du JOURNAL**, ou une **limite de la recette locale** (base de production non
 > migrée, J-08). Chaque ligne le dit dans la colonne « Statut ».
 
+## État final du chantier de fidélité (2026-11-09)
+
+> **83 / 85 items comblés et vérifiés ; 0 partiel ; 2 bloqués externes (J-08).**
+> Voir [`BILAN-FIDELITE.md`](./BILAN-FIDELITE.md) (preuves, commits, reprise) et
+> [`CHECKLIST-100.md`](./CHECKLIST-100.md) (suivi item par item). Galerie appairée :
+> [`GALERIE.html`](./GALERIE.html) (82 captures). Les sections de ce document décrivent
+> l'**audit initial** (état avant corrections) ; leurs écarts ont été comblés ou explicitement
+> documentés comme exceptions `01 § 6`.
+
+Preuves finales : build vert, TypeScript 0 erreur, vitest **279/279**, e2e **46/46 Chromium ET
+WebKit**, axe **4/4** (0 critical/serious), captures **82/82** (390×844 + 360/430), visuel 4/4,
+contraste 42/42. Reproduire : `VERIFIER.sh`.
+
 ## Synthèse
 
 Compteurs **par document** (occurrences taguées ; une même cause transverse peut apparaître dans
@@ -61,7 +74,7 @@ Les tests e2e ne l'ont pas vu : `toBeVisible()` de Playwright ne détecte pas un
 | 4 | P2 | Badges de tuile carnet **inversés** (`Carnet de la semaine` sombre / `En route` clair) + visa « n VOYAGEURS » non prévu | remettre verre clair + encre forêt pour la semaine, pilule forêt pour « En route » ; retirer la 2e ligne du visa | Transverses / Explorer |
 | 5 | P2 | Sortie : bouton **S'inscrire hors billet** (double bandeau, doublon « Inscrit ») ; 3 niveaux au lieu de 5 ; règle **DVA** ski absente | pill dans le pied du billet ; ajouter `tres_facile`/`expert` ; validation `ski → DVA` | Explorer / Création |
 | 6 | P2 | Club : **image unique** au lieu d'avatar carré + bannière 3:1 ; détail « Quitter le club » au lieu de « Membre ✓ », prochaines sorties sans action | deux médias distincts (schéma + RPC + affichage) ; corriger les libellés/actions du détail | Création / Explorer |
-| 7 | P2 | Capsule des 4 volets **masquée dans les détails empilés** alors que la maquette la conserve | garder la capsule visible (ou variante compacte) sur les détails | Explorer |
+| 7 | — | ~~Capsule masquée dans les détails empilés~~ → **NON-ÉCART vérifié** : la maquette ne la conserve pas non plus (`renderStack()` remplace `SROOT`, HTML L2084 ; capture `explorer-clubs-detail.png` sans capsule). La V2 est conforme. | aucune | Explorer |
 | 8 | P2 | États : l'**erreur n'a pas de teinte danger** (pastille identique au vide) | appliquer `--bad-bg`/`--bad` sur l'icône d'erreur | Transverses |
 | 9 | P2 | Story : hiérarchie Média (scène plein cadre vs aperçu compact + libellé/hint sous la ligne de flottaison) | rapprocher la scène de l'aperçu maquette et remonter libellé/hint | Création |
 | 10 | P2 | « Retour » absent à l'étape 1 (décidé `01 §4.1`) mais **présent** en maquette désactivé ; doublons Distance/Dénivelé du Carnet/Tracé | à trancher (documenter ou rétablir un Retour désactivé) ; supprimer la rangée métrique dupliquée | Création / Transverses |

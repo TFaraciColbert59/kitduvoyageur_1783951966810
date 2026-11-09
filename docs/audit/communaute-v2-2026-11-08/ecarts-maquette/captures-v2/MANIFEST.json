@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-11-08T18:52:47.098Z",
-  "viewport": "390x844",
+  "generatedAt": "2026-11-09T17:34:46.176Z",
+  "viewport": "390x844 (captures suffixées -360 / -430 pour FID-082)",
   "base": "http://127.0.0.1:4028",
-  "total": 48,
-  "ok": 48,
+  "total": 82,
+  "ok": 82,
   "failed": [],
   "shots": [
     {
@@ -115,6 +115,10 @@
       "ok": true
     },
     {
+      "shot": "creation-echap-confirmation",
+      "ok": true
+    },
+    {
       "shot": "creation-brouillon",
       "ok": true
     },
@@ -196,6 +200,138 @@
     },
     {
       "shot": "creation-club-etape4",
+      "ok": true
+    },
+    {
+      "shot": "explorer-erreur-carnets",
+      "ok": true
+    },
+    {
+      "shot": "explorer-erreur-clubs",
+      "ok": true
+    },
+    {
+      "shot": "explorer-erreur-sorties",
+      "ok": true
+    },
+    {
+      "shot": "explorer-hors-ligne",
+      "ok": true
+    },
+    {
+      "shot": "explorer-echap-tri",
+      "ok": true
+    },
+    {
+      "shot": "explorer-echap-peek",
+      "ok": true
+    },
+    {
+      "shot": "explorer-echap-detail",
+      "ok": true
+    },
+    {
+      "shot": "explorer-echap-tiroir",
+      "ok": true
+    },
+    {
+      "shot": "explorer-lenspager-glisser",
+      "ok": true
+    },
+    {
+      "shot": "explorer-invite-like",
+      "ok": true
+    },
+    {
+      "shot": "explorer-invite-rejoindre",
+      "ok": true
+    },
+    {
+      "shot": "explorer-invite-inscription",
+      "ok": true
+    },
+    {
+      "shot": "explorer-invite-creation",
+      "ok": true
+    },
+    {
+      "shot": "explorer-carnets-360",
+      "ok": true
+    },
+    {
+      "shot": "explorer-clubs-360",
+      "ok": true
+    },
+    {
+      "shot": "explorer-sorties-360",
+      "ok": true
+    },
+    {
+      "shot": "explorer-recherche-360",
+      "ok": true
+    },
+    {
+      "shot": "explorer-carnets-430",
+      "ok": true
+    },
+    {
+      "shot": "explorer-clubs-430",
+      "ok": true
+    },
+    {
+      "shot": "explorer-sorties-430",
+      "ok": true
+    },
+    {
+      "shot": "explorer-recherche-430",
+      "ok": true
+    },
+    {
+      "shot": "creation-publication-etape1-360",
+      "ok": true
+    },
+    {
+      "shot": "creation-story-etape1-360",
+      "ok": true
+    },
+    {
+      "shot": "creation-carnet-etape1-360",
+      "ok": true
+    },
+    {
+      "shot": "creation-sortie-etape1-360",
+      "ok": true
+    },
+    {
+      "shot": "creation-kit-etape1-360",
+      "ok": true
+    },
+    {
+      "shot": "creation-club-etape1-360",
+      "ok": true
+    },
+    {
+      "shot": "creation-publication-etape1-430",
+      "ok": true
+    },
+    {
+      "shot": "creation-story-etape1-430",
+      "ok": true
+    },
+    {
+      "shot": "creation-carnet-etape1-430",
+      "ok": true
+    },
+    {
+      "shot": "creation-sortie-etape1-430",
+      "ok": true
+    },
+    {
+      "shot": "creation-kit-etape1-430",
+      "ok": true
+    },
+    {
+      "shot": "creation-club-etape1-430",
       "ok": true
     }
   ]

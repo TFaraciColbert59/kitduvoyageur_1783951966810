@@ -614,6 +614,93 @@ export async function fetchEventWeather(
   }
 }
 
+// ── Météo du jour J via `/api/weather` (FID-071) ──────────────────────────
+
+interface WeatherDayPayload {
+  date?: string;
+  label?: string;
+  code?: number | null;
+  tMaxC?: number | null;
+  tMinC?: number | null;
+}
+
+const WEATHER_DAY_TTL_MS = 30 * 60 * 1000;
+const WEATHER_DAY_CACHE_MAX = 200;
+const weatherDayCache = new Map<string, { at: number; value: EventWeatherVM | null }>();
+
+/** Réserve aux tests : vide le cache mémoire des prévisions journalières. */
+export function __resetEventWeatherCache(): void {
+  weatherDayCache.clear();
+}
+
+/**
+ * Prévision **du jour de la sortie** via la route existante `/api/weather`
+ * (même origine, MET Norway côté serveur : aucune nouvelle origine CSP).
+ * Contrairement à `/api/explorer/v2/weather` (12 prochaines heures, utilisée
+ * par erreur pour une date future), cette route rend la journée demandée :
+ * `from = to = eventDate`. Repli **silencieux** (`null`) hors fenêtre J-7, si
+ * la réponse est incomplète ou si le réseau échoue. Cache mémoire 30 min par
+ * couple (point arrondi, date) : les tuiles d'un même fil ne martèlent pas la
+ * route, et un échec n'est pas rejoué à chaque rendu.
+ */
+export async function fetchEventDayWeather(
+  point: GeoPoint | null,
+  eventDate: string,
+  now: Date = new Date(),
+  fetchImpl: typeof fetch | null = null,
+): Promise<EventWeatherVM | null> {
+  if (!point || !shouldFetchWeather(eventDate, now)) return null;
+  const key = `${point.lat.toFixed(2)},${point.lng.toFixed(2)},${eventDate}`;
+  const cached = weatherDayCache.get(key);
+  if (cached && Date.now() - cached.at < WEATHER_DAY_TTL_MS) return cached.value;
+  const remember = (value: EventWeatherVM | null) => {
+    if (weatherDayCache.size >= WEATHER_DAY_CACHE_MAX) {
+      const oldest = weatherDayCache.keys().next();
+      if (!oldest.done) weatherDayCache.delete(oldest.value);
+    }
+    weatherDayCache.set(key, { at: Date.now(), value });
+    return value;
+  };
+  const doFetch = fetchImpl ?? (typeof fetch === 'function' ? fetch : null);
+  if (!doFetch) return null;
+  try {
+    const query = `?lat=${point.lat.toFixed(4)}&lon=${point.lng.toFixed(4)}&from=${eventDate}&to=${eventDate}`;
+    const response = await doFetch(`/api/weather${query}`, { headers: { Accept: 'application/json' } });
+    if (!response.ok) return remember(null);
+    const payload = (await response.json()) as { status?: string; days?: WeatherDayPayload[] };
+    if (payload.status !== 'ok') return remember(null);
+    const days = Array.isArray(payload.days) ? payload.days : [];
+    const day = days.find((entry) => entry.date === eventDate) ?? null;
+    if (
+      !day ||
+      typeof day.tMaxC !== 'number' ||
+      !Number.isFinite(day.tMaxC) ||
+      typeof day.tMinC !== 'number' ||
+      !Number.isFinite(day.tMinC)
+    ) {
+      return remember(null);
+    }
+    return remember({
+      label: day.label || 'Météo',
+      symbol: day.code != null ? String(day.code) : '',
+      tempMax: Math.round(day.tMaxC),
+      tempMin: Math.round(day.tMinC),
+    });
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Valeur du sticker « Météo » de la Story (maquette L3328 : « 4° · Éclaircies »).
+ * Exposée côté données pour que `create/story` la consomme sans dupliquer le
+ * format (FID-071 : le formulaire Story n'est pas modifié dans cette vague).
+ */
+export function storyWeatherSticker(weather: EventWeatherVM | null): string | null {
+  if (!weather) return null;
+  return `${weather.tempMax}° · ${weather.label}`;
+}
+
 // ── Utilitaires de lecture tolérante ─────────────────────────────────────
 
 /** Aplatit un résultat de lecture tableau (ligne unique ou `null`). */
