@@ -64,9 +64,9 @@ jobs:
         run: |
           set -euo pipefail
           shopt -s nullglob
-          files=(supabase/tests/database/crm_*.sql)
-          if [ ${#files[@]} -eq 0 ]; then echo "Aucun test pgTAP crm_*.sql"; exit 1; fi
-          pg_prove --dbname "$DATABASE_URL" -r supabase/tests/database/ 2>&1 | tee /tmp/pgtap.log
+          files=(supabase/tests/database/crm_*.test.sql)
+          if [ ${#files[@]} -eq 0 ]; then echo "Aucun test pgTAP crm_*.test.sql"; exit 1; fi
+          bash scripts/db/ci/run_pgtap.sh "${files[@]}" 2>&1 | tee /tmp/pgtap.log
       - name: Rollback de chaque migration (ordre inverse)
         env:
           DATABASE_URL: ${{ steps.db.outputs.database-url }}
