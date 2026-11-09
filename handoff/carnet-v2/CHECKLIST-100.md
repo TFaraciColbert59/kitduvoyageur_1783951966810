@@ -72,7 +72,7 @@ fermée par une mesure ou une capture, pas par une impression.
 
 ## Phase 7 — États, rôles, accès
 
-- [ ] Squelettes de slot/onglet : non faits
+- [x] Squelette de chargement de la fiche aligné sur la coque v2
 - [~] Erreur de slot : SlotShell fournit l'état, pas de scénario erreur dédié
 - [ ] Hors ligne / carte indisponible : non testés
 - [ ] Visiteur : zone floue différée, pas de budget, pas de `+`
