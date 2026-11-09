@@ -1,6 +1,6 @@
 # LKDV Control — rapport final
 
-Date : 2026-11-09 · Durée du chantier : 1 jour (2 sessions) · Commit : `0d5e648` (branche `crm/phase-0-preparation`) · Worktree : `lkdv-control-work`
+Date : 2026-11-09 · Durée du chantier : 1 jour (2 sessions) · Commit : `87dd8f8` (merge de `main` `8b8aaa2`) (branche `crm/phase-0-preparation`) · Worktree : `lkdv-control-work`
 
 ## Verdict
 
@@ -40,7 +40,7 @@ Sans ces deux éléments, aucune preuve de production (couche 10) ni de non-rég
 | 11 couches | 1, 2 et 3 **vertes en CI** (run [42661132343](https://github.com/TFaraciColbert59/kitduvoyageur_1783951966810/actions/runs/42661132343) : types, lint, 93 tests, build, 19 migrations, 10 suites pgTAP, rollback) ; 4–9 partielles ou non exécutées ; 10 bloquée | `ETAT.md`, `preuves/ci/` |
 | Audits indépendants | 1 audit complet : **verdict NON**, notes 30–74 | `preuves/audits/audit-1.md` |
 | Advisors Supabase | relevé « avant » : 3 erreurs (2 `security_definer_view`, 1 `rls_disabled_in_public`), 41 tables sans policy ; « après » impossible sans migration | `preuves/base/ETAT_BASE_2026-11-09.md` |
-| Non-régression LKDV | **non mesurée** : aucun test LKDV lancé (dépôt non modifié hors `crm/`, `supabase/`, `.github/`) | — |
+| Non-régression LKDV | **aucun rouge nouveau** : `database-gates` et `iOS` verts ; `quality-gates` = 3 rouges pré-existants de `main` (4 avant le chantier) ; `Lighthouse` vert | `preuves/lkdv/NON_REGRESSION.md` |
 
 ## 4. Ce qui attend Tony (5 actions, dans cet ordre)
 

@@ -31,6 +31,7 @@ Phase 0 — Préparation et point de référence · branche `crm/phase-0-prepara
 | 8 | Sécurité | partiel | 2026-11-09 | grep secrets/écritures, advisors avant relevés ; banc d’injection non exécuté |
 | 9 | E2E | non exécuté | | 21 fichiers écrits, 204 skips motivés (base migrée requise) |
 | 10 | Production | bloqué | | P3/P4 |
+| — | Non-régression LKDV | **aucun rouge nouveau** | 2026-11-09 | `preuves/lkdv/NON_REGRESSION.md` : database-gates et iOS verts ; quality-gates = 3 rouges pré-existants de main |
 | 11 | Audit indépendant | fait (audit-1) | 2026-11-09 | `preuves/audits/audit-1.md` — verdict NON |
 
 ## Dernière tâche terminée

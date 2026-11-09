@@ -21,6 +21,9 @@ Un écart = différence entre l'attendu (bundle) et l'existant. Ne jamais suppri
 | E-0015 | 2026-11-09 | auditeur | couche 6 | 6 / 48 captures, aucune des 8 maquettes. | haute | parite-design | T-7.x | blocked-by-tony | | session aal2 + base migrée |
 | E-0016 | 2026-11-09 | auditeur | couche 1/10 | Logs de build et de CI non archivés. | moyenne | orchestrateur | T-0.06 | fermé | 2026-11-09 | `preuves/build/build-2026-11-09.log`, `preuves/ci/HISTORIQUE_CI.md` |
 | E-0017 | 2026-11-09 | auditeur | 08 § 1.13 | `service_role` apparaît dans 5 fichiers hors `src/server` (commentaires, libellés, regex) ; aucune instanciation cliente. | basse | orchestrateur | T-0.06 | fermé | 2026-11-09 | grep vérifié : aucune clé ni client |
+| E-0018 | 2026-11-09 | orchestrateur | EX-LKDV-06 | Deux régressions de CI LKDV causées par `crm/` (secrets littéraux, 6 fonctions sans REVOKE) puis cinq régressions de schéma (policies geo_*, search_path, EXECUTE anon). | haute | orchestrateur | T-8.x | fermé | 2026-11-09 | `preuves/lkdv/NON_REGRESSION.md` : database-gates, iOS, Lighthouse verts ; quality-gates = 3 rouges pré-existants de main |
+| E-0019 | 2026-11-09 | orchestrateur | 02_ARCHITECTURE § 2 | Le build LKDV type-checkait `crm/` avec l'alias racine `@/` (module introuvable). | haute | frontend | T-8.x | fermé | 2026-11-09 | imports relatifs (89 fichiers), `tsc` racine = 0 erreur |
+| E-0020 | 2026-11-09 | orchestrateur | 06_PLAN_PHASES porte 0 | `main` est rouge avant le chantier (quality-gates 4 fichiers, iOS, visual) : la CI LKDV n'est pas verte à la baseline. | moyenne | Tony | — | blocked-by-tony | | Décision : corriger les 4 tests de main ou accepter la comparaison « aucun rouge nouveau » (adoptée) |
 
 ## Historique des audits
 | Audit | Date | Écarts nouveaux | Écarts ouverts à la fin | Note mini (axe) | Rapport |
