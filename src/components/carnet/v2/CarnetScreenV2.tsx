@@ -232,7 +232,8 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
     viewerRole,
     liveSharing: liveSharingMode,
     userId: currentUserId,
-    initialLivePosition: detail.livePosition,
+    /* Défense en profondeur : un visiteur ne reçoit jamais la position exacte. */
+    initialLivePosition: isParticipant ? detail.livePosition : null,
     initialPublicZone: detail.publicZone,
     onIsland: showIsland,
   });

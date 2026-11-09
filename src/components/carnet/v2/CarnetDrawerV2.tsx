@@ -50,7 +50,7 @@ import { useKitFork } from '@/features/carnet/detail/useKitFork';
 import { useCarnetDialog } from './useCarnetDialog';
 import { CarnetPostGrid } from './CarnetPostGrid';
 import { MOMENT_TYPE_LABELS, isMomentType, type MomentType } from '@/features/carnet/detail/momentTypes';
-import { dayMetric, selectDayData } from '@/features/carnet/detail/dayView';
+import { dayMetric, resolveDayStats, selectDayData } from '@/features/carnet/detail/dayView';
 import { isParticipantRole } from '@/features/carnet/detail/viewerRole';
 import { CarnetAltitude } from './CarnetAltitude';
 import { elevationProfileGain } from '@/features/carnet/detail/elevationProfile';
@@ -805,6 +805,60 @@ export function CarnetDrawerV2({
   const renderCurrentSlotContent = (lens: SlotLens) => {
     switch (activeSlot) {
       case 'fil':
+        if (lens.id === 'moments' && activeDay === 0 && detail.days.length > 0) {
+          const stats = resolveDayStats(detail);
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '6px' }}>
+              <h3 className="lkdv-h5">Une carte postale par jour</h3>
+              {[...detail.days]
+                .sort((a, b) => (a.dayNumber ?? a.index) - (b.dayNumber ?? b.index))
+                .map((day) => {
+                  const n = day.dayNumber ?? day.index;
+                  const etape = detail.etapes.find((e) => e.dayNumber === n);
+                  const stat = stats.find((x) => x.dayNumber === n);
+                  const image =
+                    day.moments.find((m) => m.imageUrl)?.imageUrl ?? detail.coverImage ?? null;
+                  const date = day.date
+                    ? new Date(`${day.date}T12:00:00Z`).toLocaleDateString('fr-FR', {
+                        day: 'numeric',
+                        month: 'short',
+                        timeZone: 'UTC',
+                      })
+                    : null;
+                  return (
+                    <button
+                      key={n}
+                      type="button"
+                      className="lkdv-postcard"
+                      aria-label={`Ouvrir le jour ${n}`}
+                      onClick={() => onDayPick?.(n)}
+                    >
+                      {image ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={image} alt="" loading="lazy" decoding="async" />
+                      ) : null}
+                      <span className="lkdv-postcard-stamp">
+                        <b>J{n}</b>
+                        {date ? <span>{date}</span> : null}
+                      </span>
+                      <span className="lkdv-postcard-ov">
+                        <span className="lkdv-postcard-route">
+                          {[etape?.from, etape?.to].filter(Boolean).join(' → ') || `Jour ${n}`}
+                        </span>
+                        {etape?.note ? <q>{etape.note}</q> : null}
+                        <span className="lkdv-postcard-row">
+                          <span>{stat?.distanceKm != null ? `${stat.distanceKm.toLocaleString('fr-FR')} km` : '—'}</span>
+                          <span>{stat?.elevationM != null ? `+${Math.round(stat.elevationM).toLocaleString('fr-FR')} m` : '—'}</span>
+                          <span>{day.moments.length} moment{day.moments.length > 1 ? 's' : ''}</span>
+                        </span>
+                      </span>
+                    </button>
+                  );
+                })}
+              {canEdit ? <AddCaption label="Ajouter un moment" onClick={() => onCreate?.()} /> : null}
+            </div>
+          );
+        }
         if (lens.id === 'moments') {
           return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '6px' }}>
