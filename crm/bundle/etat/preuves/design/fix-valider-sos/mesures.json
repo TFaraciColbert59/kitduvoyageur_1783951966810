@@ -1,36 +1,395 @@
 {
   "base": "http://127.0.0.1:4200",
-  "at": "2026-11-09T20:20:24.895Z",
+  "at": "2026-11-09T20:22:18.860Z",
   "metrics": {
     "valider-1440": {
-      "error": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:4200/valider/d1300000-0000-4000-8000-000000000001\nCall log:\n  - navigating to \"http://127.0.0.1:4200/valider/d1300000-0000-4000-8000-000000000001\", waiting until \"domcontentloaded\"\n"
+      "scrollWidth": 1440,
+      "innerWidth": 1440,
+      "scrollHeight": 1061,
+      "title": "Valider un remboursement de 89,90 €",
+      "main": {
+        "x": 260,
+        "y": 73,
+        "w": 820,
+        "h": 988
+      },
+      "rail": {
+        "x": 1080,
+        "y": 73,
+        "w": 360,
+        "h": 988
+      },
+      "firstCard": {
+        "x": 288,
+        "y": 319,
+        "w": 764,
+        "h": 489
+      },
+      "input": {
+        "x": 309,
+        "y": 863,
+        "w": 320,
+        "h": 52
+      },
+      "call112": null,
+      "take": null,
+      "sosRoot": null,
+      "smallTargets": [
+        "a 231×40",
+        "a 231×40",
+        "a 231×40",
+        "a 231×40",
+        "a 231×40",
+        "a 231×40",
+        "a 231×40",
+        "a 231×40",
+        "a 231×40",
+        "a 231×40",
+        "a 231×40",
+        "a 49×16"
+      ],
+      "apiWrites": []
     },
     "valider-saisie-1440": {
-      "error": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:4200/valider/d1300000-0000-4000-8000-000000000001\nCall log:\n  - navigating to \"http://127.0.0.1:4200/valider/d1300000-0000-4000-8000-000000000001\", waiting until \"domcontentloaded\"\n"
+      "scrollWidth": 1440,
+      "innerWidth": 1440,
+      "scrollHeight": 1061,
+      "title": "Valider un remboursement de 89,90 €",
+      "main": {
+        "x": 260,
+        "y": 73,
+        "w": 820,
+        "h": 988
+      },
+      "rail": {
+        "x": 1080,
+        "y": 73,
+        "w": 360,
+        "h": 988
+      },
+      "firstCard": {
+        "x": 288,
+        "y": 319,
+        "w": 764,
+        "h": 489
+      },
+      "input": {
+        "x": 309,
+        "y": 863,
+        "w": 320,
+        "h": 52
+      },
+      "call112": null,
+      "take": null,
+      "sosRoot": null,
+      "smallTargets": [
+        "a 231×40",
+        "a 231×40",
+        "a 231×40",
+        "a 231×40",
+        "a 231×40",
+        "a 231×40",
+        "a 231×40",
+        "a 231×40",
+        "a 231×40",
+        "a 231×40",
+        "a 231×40",
+        "a 49×16"
+      ],
+      "apiWrites": []
     },
     "valider-erreur-1440": {
-      "error": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:4200/valider/d1300000-0000-4000-8000-000000000001\nCall log:\n  - navigating to \"http://127.0.0.1:4200/valider/d1300000-0000-4000-8000-000000000001\", waiting until \"domcontentloaded\"\n"
+      "scrollWidth": 1440,
+      "innerWidth": 1440,
+      "scrollHeight": 1043,
+      "title": "Valider un remboursement de 89,90 €",
+      "main": {
+        "x": 260,
+        "y": 73,
+        "w": 820,
+        "h": 970
+      },
+      "rail": {
+        "x": 1080,
+        "y": 73,
+        "w": 360,
+        "h": 970
+      },
+      "firstCard": {
+        "x": 288,
+        "y": 319,
+        "w": 764,
+        "h": 489
+      },
+      "input": {
+        "x": 309,
+        "y": 863,
+        "w": 320,
+        "h": 52
+      },
+      "call112": null,
+      "take": null,
+      "sosRoot": null,
+      "smallTargets": [
+        "a 231×40",
+        "a 231×40",
+        "a 231×40",
+        "a 231×40",
+        "a 231×40",
+        "a 231×40",
+        "a 231×40",
+        "a 231×40",
+        "a 231×40",
+        "a 231×40",
+        "a 231×40",
+        "a 49×16"
+      ],
+      "apiWrites": []
     },
     "valider-validee-1440": {
-      "error": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:4200/valider/d1300000-0000-4000-8000-000000000001\nCall log:\n  - navigating to \"http://127.0.0.1:4200/valider/d1300000-0000-4000-8000-000000000001\", waiting until \"domcontentloaded\"\n"
+      "scrollWidth": 1440,
+      "innerWidth": 1440,
+      "scrollHeight": 1126,
+      "title": "Valider un remboursement de 89,90 €",
+      "main": {
+        "x": 260,
+        "y": 73,
+        "w": 820,
+        "h": 1053
+      },
+      "rail": {
+        "x": 1080,
+        "y": 73,
+        "w": 360,
+        "h": 1053
+      },
+      "firstCard": {
+        "x": 288,
+        "y": 384,
+        "w": 764,
+        "h": 489
+      },
+      "input": {
+        "x": 309,
+        "y": 929,
+        "w": 320,
+        "h": 52
+      },
+      "call112": null,
+      "take": null,
+      "sosRoot": null,
+      "smallTargets": [
+        "a 231×40",
+        "a 231×40",
+        "a 231×40",
+        "a 231×40",
+        "a 231×40",
+        "a 231×40",
+        "a 231×40",
+        "a 231×40",
+        "a 231×40",
+        "a 231×40",
+        "a 231×40",
+        "a 49×16"
+      ],
+      "apiWrites": []
     },
     "valider-390": {
-      "error": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:4200/valider/d1300000-0000-4000-8000-000000000001\nCall log:\n  - navigating to \"http://127.0.0.1:4200/valider/d1300000-0000-4000-8000-000000000001\", waiting until \"domcontentloaded\"\n"
+      "scrollWidth": 390,
+      "innerWidth": 390,
+      "scrollHeight": 2197,
+      "title": "Valider un remboursement de 89,90 €",
+      "main": {
+        "x": 0,
+        "y": 153,
+        "w": 390,
+        "h": 1345
+      },
+      "rail": {
+        "x": 0,
+        "y": 1498,
+        "w": 360,
+        "h": 699
+      },
+      "firstCard": {
+        "x": 16,
+        "y": 525,
+        "w": 358,
+        "h": 581
+      },
+      "input": {
+        "x": 37,
+        "y": 1162,
+        "w": 316,
+        "h": 52
+      },
+      "call112": null,
+      "take": null,
+      "sosRoot": null,
+      "smallTargets": [
+        "a 49×16"
+      ],
+      "apiWrites": []
     },
     "sos-390": {
-      "error": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:4200/sos/d1000000-0000-4000-8000-000000000001\nCall log:\n  - navigating to \"http://127.0.0.1:4200/sos/d1000000-0000-4000-8000-000000000001\", waiting until \"domcontentloaded\"\n"
+      "scrollWidth": 390,
+      "innerWidth": 390,
+      "scrollHeight": 844,
+      "title": "SOS en cours",
+      "main": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "rail": null,
+      "firstCard": null,
+      "input": null,
+      "call112": {
+        "x": 16,
+        "y": 427,
+        "w": 358,
+        "h": 52
+      },
+      "take": {
+        "x": 16,
+        "y": 489,
+        "w": 174,
+        "h": 52
+      },
+      "sosRoot": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "smallTargets": [],
+      "apiWrites": []
     },
     "sos-pris-390": {
-      "error": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:4200/sos/d1000000-0000-4000-8000-000000000001\nCall log:\n  - navigating to \"http://127.0.0.1:4200/sos/d1000000-0000-4000-8000-000000000001\", waiting until \"domcontentloaded\"\n"
+      "scrollWidth": 390,
+      "innerWidth": 390,
+      "scrollHeight": 844,
+      "title": "SOS en cours",
+      "main": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "rail": null,
+      "firstCard": null,
+      "input": null,
+      "call112": {
+        "x": 16,
+        "y": 427,
+        "w": 358,
+        "h": 52
+      },
+      "take": {
+        "x": 16,
+        "y": 489,
+        "w": 174,
+        "h": 52
+      },
+      "sosRoot": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "smallTargets": [],
+      "apiWrites": []
     },
     "sos-cloture-390": {
-      "error": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:4200/sos/d1000000-0000-4000-8000-000000000001\nCall log:\n  - navigating to \"http://127.0.0.1:4200/sos/d1000000-0000-4000-8000-000000000001\", waiting until \"domcontentloaded\"\n"
+      "scrollWidth": 390,
+      "innerWidth": 390,
+      "scrollHeight": 844,
+      "title": "SOS en cours",
+      "main": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "rail": null,
+      "firstCard": null,
+      "input": null,
+      "call112": {
+        "x": 16,
+        "y": 226,
+        "w": 358,
+        "h": 52
+      },
+      "take": {
+        "x": 16,
+        "y": 288,
+        "w": 174,
+        "h": 52
+      },
+      "sosRoot": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "smallTargets": [],
+      "apiWrites": []
     },
     "sos-1440": {
-      "error": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:4200/sos/d1000000-0000-4000-8000-000000000001\nCall log:\n  - navigating to \"http://127.0.0.1:4200/sos/d1000000-0000-4000-8000-000000000001\", waiting until \"domcontentloaded\"\n"
+      "scrollWidth": 1440,
+      "innerWidth": 1440,
+      "scrollHeight": 1040,
+      "title": "SOS en cours",
+      "main": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 1040
+      },
+      "rail": null,
+      "firstCard": null,
+      "input": null,
+      "call112": {
+        "x": 230,
+        "y": 385,
+        "w": 484,
+        "h": 52
+      },
+      "take": {
+        "x": 230,
+        "y": 447,
+        "w": 237,
+        "h": 52
+      },
+      "sosRoot": {
+        "x": 230,
+        "y": 0,
+        "w": 980,
+        "h": 544
+      },
+      "smallTargets": [],
+      "apiWrites": []
     },
     "sos-liste-390": {
-      "error": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:4200/sos\nCall log:\n  - navigating to \"http://127.0.0.1:4200/sos\", waiting until \"domcontentloaded\"\n"
+      "scrollWidth": 390,
+      "innerWidth": 390,
+      "scrollHeight": 844,
+      "title": "SOS",
+      "main": {
+        "x": 0,
+        "y": 153,
+        "w": 390,
+        "h": 691
+      },
+      "rail": null,
+      "firstCard": null,
+      "input": null,
+      "call112": null,
+      "take": null,
+      "sosRoot": null,
+      "smallTargets": [],
+      "apiWrites": []
     }
   }
 }

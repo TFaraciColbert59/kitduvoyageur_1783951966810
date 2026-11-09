@@ -49,7 +49,7 @@ export function ApprovalPanel({ request }: { request: RequestDetail }) {
   const [busy, setBusy] = useState<'approve' | 'reject' | null>(null);
   const [done, setDone] = useState<string | null>(null);
 
-  const params = request.params ?? {};
+  const params = useMemo(() => request.params ?? {}, [request.params]);
   const amount = requestedCents(request);
   const code = fingerprintCode(request.fingerprint);
   const display = amount !== null ? euros(amount) : null;

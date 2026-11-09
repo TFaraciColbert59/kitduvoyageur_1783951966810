@@ -50,7 +50,7 @@ Corrections :
   d'empreinte à 8 caractères ; en cas d'écart, `aria-invalid` + message **sous le champ** (« Le montant ne
   correspond pas. Tapez exactement 89,90 €. ») et aucun envoi ;
 - en prévisualisation (`NEXT_PUBLIC_CRM_DESIGN_PREVIEW=1`), valider/refuser n'appellent ni `/api/approve` ni
-  `/api/cmd` : bandeau et toast « Aperçu : … », zéro requête d'écriture (vérifié sur les 9 captures) ;
+  `/api/cmd` : bandeau et toast « Aperçu : … », zéro requête d'écriture (vérifié sur les 10 captures) ;
 - `data-testid` du contrat de test ajoutés : `approval-panel`, `approval-steps`, `approval-fingerprint`,
   `solo-notice`, `confirmation-input`, `approve-button`, `reject-button` ;
 - sous 900 px, la zone de travail passe à la ligne (le rail descend sous le récap) : plus de colonne de 197 px.

@@ -169,7 +169,7 @@ const demoRequestItem: RequestItem = {
   author: 'Agent Remboursements',
   created_at: minutesAgo(25),
   expires_at: inMinutes(4310),
-  amount_cents: 8900,
+  amount_cents: 8990,
   solo: true
 };
 

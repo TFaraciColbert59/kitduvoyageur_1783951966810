@@ -5,11 +5,6 @@ import s from '../../ui/crm.module.css';
 import { Label } from '../../ui/card';
 import type { StaffContext } from '../../lib/rpc';
 
-const ROLE_LABEL: Record<string, string> = {
-  super_admin: 'Super admin',
-  responsable: 'Responsable de pôle',
-  membre: 'Membre d’équipe'
-};
 
 /** Carte « Votre session » : ce que la session autorise, sans chiffre inventé. */
 export function SessionCard({ ctx }: { ctx: StaffContext | null }) {
@@ -17,7 +12,6 @@ export function SessionCard({ ctx }: { ctx: StaffContext | null }) {
   // La maquette place la carte de session dans le rail sur la carte de décision.
   // La maquette ne montre la carte de session que sur l'accueil.
   if (pathname !== '/') return null;
-  const role = ctx?.role ? (ROLE_LABEL[ctx.role] ?? 'non renseigné') : 'non renseigné';
   return (
     <div className={s.sessionCard}>
       <Label>Votre session</Label>
