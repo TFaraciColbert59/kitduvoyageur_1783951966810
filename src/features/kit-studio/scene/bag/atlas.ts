@@ -94,6 +94,12 @@ export interface AtlasUniforms {
  * sans carte de zones rien ne s'allume, et sans tuile de trame la force de trame est nulle.
  */
 export function atlasUniformsFor(config: ConfigSet, maps: AtlasMaps): AtlasUniforms {
+  const spec = config.body?.col;
+  return reglagesAtlas(spec ? resolveTokenToThreeColor(spec) : null, maps);
+}
+
+/** Les mêmes réglages à partir d'une couleur déjà résolue (la scène passe par un token, la vignette non). */
+export function reglagesAtlas(color: THREE.Color | null, maps: AtlasMaps): AtlasUniforms {
   if (!maps.zones) {
     return {
       tint: null,
@@ -103,8 +109,6 @@ export function atlasUniformsFor(config: ConfigSet, maps: AtlasMaps): AtlasUnifo
       enabled: false,
     };
   }
-  const spec = config.body?.col;
-  const color = spec ? resolveTokenToThreeColor(spec) : null;
   return {
     tint: color ? { r: color.r, g: color.g, b: color.b } : null,
     fabricRoughness: FABRIC_ROUGHNESS,
@@ -284,6 +288,95 @@ function versPhysique(mat: THREE.MeshStandardMaterial): THREE.MeshPhysicalMateri
 }
 
 /**
+ * Option de teinte « sur copie » : pour un maillage dont les matériaux appartiennent à un cache
+ * partagé (vignettes), jamais retouchés en place. Chaque matériau d'atlas est cloné avant la
+ * greffe ; `adopter` reçoit le matériau final (celui qui est réellement rendu) pour que l'appelant
+ * le prenne en charge et le libère.
+ */
+export interface TeinteSurCopie {
+  readonly adopter: (materiau: THREE.Material) => void;
+}
+
+/**
+ * Cœur commun à la scène et aux vignettes : parcourt la racine, repère le matériau d'atlas et y
+ * greffe les réglages. Un seul code, donc un seul rendu de teinte.
+ */
+function appliquerReglages(
+  racine: THREE.Object3D,
+  reglages: AtlasUniforms,
+  maps: AtlasMaps,
+  surCopie?: TeinteSurCopie,
+): boolean {
+  let applique = false;
+  // Mode copie : un matériau partagé entre plusieurs maillages n'est cloné et greffé qu'une fois.
+  const finaux = new Map<THREE.Material, THREE.Material>();
+  racine.traverse((noeud) => {
+    const mesh = noeud as THREE.Mesh;
+    if (!mesh.isMesh || !mesh.material) return;
+    const materiaux = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+
+    materiaux.forEach((brut, index) => {
+      let std = brut as THREE.MeshStandardMaterial;
+      // Seul le matériau qui porte l'atlas est concerné. L'écusson et son support ont leurs
+      // propres UV, hors de la carte de zones : les toucher les colorerait au hasard.
+      if (
+        !std.map ||
+        mesh.name === 'LKDV_LOGO' ||
+        mesh.name === 'LKDV_ECUSSON_SUPPORT' ||
+        std.name === 'LKDV_MARQUAGE_PIERRE' ||
+        std.name === 'LKDV_Ecusson_Tisse'
+      ) {
+        return;
+      }
+
+      const poser = (m: THREE.Material): void => {
+        if (Array.isArray(mesh.material)) mesh.material[index] = m;
+        else mesh.material = m;
+      };
+
+      if (surCopie) {
+        const deja = finaux.get(brut);
+        if (deja) {
+          poser(deja);
+          applique = true;
+          return;
+        }
+        // Le cache garde son matériau intact : on greffe un clone (les textures restent partagées).
+        std = std.clone();
+        poser(std);
+      }
+
+      const phys = versPhysique(std);
+      if (phys !== std) poser(phys);
+
+      // La trame se projette par UV en mètres écrites dans la géométrie. Sur une copie, la géométrie
+      // est celle du cache : on n'y touche pas (et la trame passe sous le pixel à cette taille).
+      if (maps.weaveNormal && !surCopie) applyMeterUvs(mesh.geometry);
+
+      const { uniforms } = greffer(phys as MateriauGreffe);
+      uniforms.zonesMap.value = maps.zones;
+      uniforms.weaveMap.value = maps.weaveNormal ?? null;
+      uniforms.weaveStrength.value = reglages.weaveStrength;
+      uniforms.fabricRough.value = reglages.fabricRoughness;
+      uniforms.rigidRough.value = reglages.rigidRoughness;
+      if (reglages.tint) {
+        uniforms.tintColor.value.setRGB(reglages.tint.r, reglages.tint.g, reglages.tint.b);
+        uniforms.tintAmount.value = 1;
+      } else {
+        uniforms.tintAmount.value = 0;
+      }
+      if (surCopie) {
+        finaux.set(brut, phys);
+        surCopie.adopter(phys);
+      }
+      applique = true;
+    });
+  });
+
+  return applique;
+}
+
+/**
  * Applique l'apparence du studio à un sac importé texturé.
  *
  * Rend `true` quand la personnalisation a réellement pu s'appliquer. Un `false` n'est pas une
@@ -300,49 +393,25 @@ export function applyAtlasAppearance(
   const reglages = atlasUniformsFor(config, maps);
   if (!reglages.enabled) return false;
 
-  let applique = false;
-  loaded.root.traverse((noeud) => {
-    const mesh = noeud as THREE.Mesh;
-    if (!mesh.isMesh || !mesh.material) return;
-    const materiaux = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+  return appliquerReglages(loaded.root, reglages, maps);
+}
 
-    materiaux.forEach((brut, index) => {
-      const std = brut as THREE.MeshStandardMaterial;
-      // Seul le matériau qui porte l'atlas est concerné. L'écusson et son support ont leurs
-      // propres UV, hors de la carte de zones : les toucher les colorerait au hasard.
-      if (
-        !std.map ||
-        mesh.name === 'LKDV_LOGO' ||
-        mesh.name === 'LKDV_ECUSSON_SUPPORT' ||
-        std.name === 'LKDV_MARQUAGE_PIERRE' ||
-        std.name === 'LKDV_Ecusson_Tisse'
-      ) {
-        return;
-      }
-
-      const phys = versPhysique(std);
-      if (phys !== std) {
-        if (Array.isArray(mesh.material)) mesh.material[index] = phys;
-        else mesh.material = phys;
-      }
-
-      if (maps.weaveNormal) applyMeterUvs(mesh.geometry);
-
-      const { uniforms } = greffer(phys as MateriauGreffe);
-      uniforms.zonesMap.value = maps.zones;
-      uniforms.weaveMap.value = maps.weaveNormal ?? null;
-      uniforms.weaveStrength.value = reglages.weaveStrength;
-      uniforms.fabricRough.value = reglages.fabricRoughness;
-      uniforms.rigidRough.value = reglages.rigidRoughness;
-      if (reglages.tint) {
-        uniforms.tintColor.value.setRGB(reglages.tint.r, reglages.tint.g, reglages.tint.b);
-        uniforms.tintAmount.value = 1;
-      } else {
-        uniforms.tintAmount.value = 0;
-      }
-      applique = true;
-    });
-  });
-
-  return applique;
+/**
+ * Même teinte que la scène, pour la copie d'un maillage appartenant à un cache (vignette d'un
+ * coloris). Les réglages passent par `atlasUniformsFor` et le greffage par le code de la scène :
+ * seule la source de la couleur change (déjà résolue, au lieu d'un token de configuration).
+ *
+ * Les matériaux du cache ne sont jamais modifiés. Rend `false`, copie intacte, sans carte de zones.
+ */
+export function applyAtlasTintToCopy(
+  racine: THREE.Object3D,
+  teinte: THREE.Color,
+  maps: AtlasMaps,
+  surCopie: TeinteSurCopie,
+): boolean {
+  // Sans UV de mètres (voir `appliquerReglages`), la trame n'a pas de coordonnées : elle reste éteinte.
+  const cartes: AtlasMaps = { zones: maps.zones, weaveNormal: null };
+  const reglages = reglagesAtlas(teinte, cartes);
+  if (!reglages.enabled) return false;
+  return appliquerReglages(racine, reglages, cartes, surCopie);
 }

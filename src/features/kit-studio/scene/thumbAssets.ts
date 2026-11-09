@@ -7,7 +7,7 @@
 //
 // Rien n'est chargé d'avance : seules les clés réellement demandées déclenchent une requête, pour
 // qu'ouvrir le tiroir ne tire pas la vingtaine de corps et de modules d'un coup sur un téléphone.
-import type { Object3D } from 'three';
+import type { Object3D, Texture } from 'three';
 
 type Etat = 'absent' | 'en-cours' | 'echec';
 
@@ -19,6 +19,8 @@ interface Entree {
 
 const corps = new Map<string, Entree>();
 const modules = new Map<string, Entree>();
+/** Cartes de zones des corps texturés, par modèle (voir `zonesDuCorps`). */
+const zonesCorps = new Map<string, Texture>();
 const abonnes = new Set<(id: string) => void>();
 
 /**
@@ -150,10 +152,29 @@ function demander(
 export function maillageCorps(modelId: string | null | undefined): Object3D | null {
   if (!modelId) return null;
   return demander(corps, modelId, async () => {
-    const { loadBagAsset } = await import('./bag/loader');
+    const { loadBagAsset, chargerTextureDonnee } = await import('./bag/loader');
     const r = await loadBagAsset(modelId);
-    return r.status === 'ready' ? r.root : null;
+    if (r.status !== 'ready') return null;
+    // La carte de zones dit où est le tissu : sans elle, la teinte d'un coloris repeindrait aussi
+    // les boucles et l'écusson, comme à la scène (qui, sans carte, ne teinte rien). Elle est
+    // rangée avec le maillage, avant qu'il soit annoncé prêt, pour que la première vignette teintée
+    // la trouve. Un seul téléchargement par corps : changer de coloris n'en relance aucun.
+    const adresse = r.manifest.texturedSource ? r.manifest.zonesMapUrl : undefined;
+    if (adresse) {
+      const zones = await chargerTextureDonnee(adresse).catch(() => null);
+      if (zones) zonesCorps.set(modelId, zones);
+    }
+    return r.root;
   });
+}
+
+/**
+ * Carte de zones du corps (rouge = tissu), ou `null` si le sac n'en a pas ou qu'elle n'est pas
+ * arrivée. Lue après `maillageCorps` : elle est rangée avant que le maillage soit annoncé prêt.
+ * Appartient au cache : le constructeur de vignette ne la libère pas.
+ */
+export function zonesDuCorps(modelId: string | null | undefined): Texture | null {
+  return modelId ? (zonesCorps.get(modelId) ?? null) : null;
 }
 
 /** Maillage réel d'un module, prêt à cloner, ou `null` tant qu'il n'est pas là. */
@@ -175,6 +196,8 @@ export function maillageModule(moduleId: string | null | undefined): Object3D | 
 export function viderActifsVignettes(): void {
   corps.clear();
   modules.clear();
+  for (const t of zonesCorps.values()) t.dispose();
+  zonesCorps.clear();
   attente.length = 0;
   enVol = 0;
   ouvert = false;

@@ -1,18 +1,20 @@
 // Constructeurs des vignettes 3D (T12/T14) : la scène et la fiche ne les enregistraient pas, les cartes
 // affichaient donc toujours le repli SVG. Enregistrés à la première vignette demandée (voir ui/Thumb.tsx).
-import { Box3, Group, Mesh, Vector3 } from 'three';
+import { Box3, Color, Group, Mesh, Vector3 } from 'three';
 import type { Object3D } from 'three';
 import { itemMesh } from './itemMesh';
-import { maillageCorps, maillageModule } from './thumbAssets';
+import { maillageCorps, maillageModule, zonesDuCorps } from './thumbAssets';
 import { registerBuilder } from './thumbnails';
 import type { BagThumbSpec, ItemThumbSpec, ModuleThumbSpec, ThumbResources } from './thumbnails';
 import { AVAILABLE_3D_MODULE_MANIFESTS } from './bag/moduleLoader';
 import { GLB_MODEL_BY_BAG } from './bag/modelLayer';
+import { applyAtlasTintToCopy } from './bag/atlas';
 
 /**
  * Copie un maillage réel pour une vignette, remis à l'échelle et posé comme l'était la silhouette
- * de repli qu'il remplace. Les matériaux restent partagés avec l'actif en cache : le moteur ne
- * libère que ceux qu'il a lui-même créés, rien n'est donc disposé sous les pieds de la scène.
+ * de repli qu'il remplace. Les matériaux restent partagés avec l'actif en cache : on n'y touche
+ * jamais en place. Pour teinter, l'appelant clone ceux qu'il change et les confie au tracker
+ * (voir `bagBuilder`) ; ceux qu'il ne change pas gardent l'apparence d'origine.
  *
  * `hauteurVoulue` à `null` garde l'échelle réelle du maillage (modules, déjà modélisés aux cotes
  * du manifeste) ; `baseY` à `null` centre l'objet sur l'origine au lieu de le poser.
@@ -82,8 +84,14 @@ function itemBuilder(spec: ItemThumbSpec, res: ThumbResources): Object3D {
  *
  * La hauteur de cadrage reste dérivée du litrage : elle ne décrit pas le sac, elle place
  * simplement tous les corps à la même échelle d'une carte à l'autre.
+ *
+ * Le coloris de la carte teinte le tissu comme la scène (`applyAtlasTintToCopy` : même shader,
+ * même luminance conservée, plis et coutures intacts). La teinte se pose sur des CLONES des
+ * matériaux : ceux du master restent ceux du cache, et chaque clone est confié au tracker pour
+ * être libéré avec la vignette. Seul le corps colore l'atlas, comme à la scène : la poche et le
+ * liseré n'y ont pas de zone propre. Sans carte de zones, le master garde sa texture d'origine.
  */
-function bagBuilder(spec: BagThumbSpec): Object3D {
+function bagBuilder(spec: BagThumbSpec, res: ThumbResources): Object3D {
   const bagId = spec.bagId ?? '';
   let hauteurCadre = 1.4;
   if (bagId.includes('15')) hauteurCadre = 1.15;
@@ -92,8 +100,20 @@ function bagBuilder(spec: BagThumbSpec): Object3D {
   else if (bagId.includes('60')) hauteurCadre = 1.58;
   else if (bagId.includes('80')) hauteurCadre = 1.74;
 
-  const master = maillageCorps(GLB_MODEL_BY_BAG[bagId] ?? null);
-  return master ? copiePourVignette(master, hauteurCadre, -0.7) : new Group();
+  const modeleId = GLB_MODEL_BY_BAG[bagId] ?? null;
+  const master = maillageCorps(modeleId);
+  if (!master) return new Group();
+
+  const vignette = copiePourVignette(master, hauteurCadre, -0.7);
+  const zones = zonesDuCorps(modeleId);
+  if (zones) {
+    applyAtlasTintToCopy(vignette, new Color(spec.body), { zones, weaveNormal: null }, {
+      adopter: (materiau) => {
+        res.tracker.material(materiau);
+      },
+    });
+  }
+  return vignette;
 }
 
 /** Vignette d'un module : le maillage publié, et rien d'autre (même règle que les corps). */
