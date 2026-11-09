@@ -5,7 +5,7 @@
 -- ═══════════════════════════════════════════════════════════════════════════
 BEGIN;
 SET LOCAL search_path = public;
-SELECT plan(6);
+SELECT plan(7);
 
 -- L'identifiant de la décision est capturé ici : un membre ordinaire ne peut
 -- pas lire admin.audit_log (policy équipe), et c'est voulu.

@@ -32,8 +32,8 @@ SELECT throws_ok(
   '42501', NULL, 'un compte suspendu ne publie plus');
 
 SELECT lives_ok(
-  $$INSERT INTO public.post_reports (post_id, reporter_id, reason, target_type)
-    VALUES ('d3100000-0000-4000-8000-000000000099','d4000000-0000-4000-8000-000000000001','spam','post')$$,
+  $$INSERT INTO public.post_reports (post_id, reporter_id, reason)
+    VALUES ('d3100000-0000-4000-8000-000000000099','d4000000-0000-4000-8000-000000000001','spam')$$,
   'un compte suspendu peut toujours signaler');
 
 -- Suspension échue : le droit d''écrire revient (fixture par le propriétaire).

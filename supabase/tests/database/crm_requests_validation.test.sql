@@ -7,7 +7,7 @@
 -- ═══════════════════════════════════════════════════════════════════════════
 BEGIN;
 SET LOCAL search_path = public;
-SELECT plan(9);
+SELECT plan(12);
 
 -- Un agent ne peut pas lire admin.requests (policy équipe) : l'identifiant de
 -- la demande est donc capturé ici, en propriétaire, et réutilisé en littéral.

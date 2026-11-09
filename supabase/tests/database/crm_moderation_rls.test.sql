@@ -4,7 +4,7 @@
 -- ═══════════════════════════════════════════════════════════════════════════
 BEGIN;
 SET LOCAL search_path = public;
-SELECT plan(8);
+SELECT plan(9);
 
 INSERT INTO auth.users (id, aud, role, email, encrypted_password, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
 VALUES

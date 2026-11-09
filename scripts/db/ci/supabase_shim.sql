@@ -172,3 +172,8 @@ begin
 exception when others then
   null;
 end $$;
+
+-- Droits Realtime comme sur Supabase : la RLS (policy M12) filtre les lignes.
+grant usage on schema realtime to anon, authenticated, service_role;
+grant select, insert on realtime.messages to authenticated, service_role;
+grant select on realtime.messages to anon;
