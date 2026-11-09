@@ -85,7 +85,7 @@ Objectif : 0 écart non justifié entre les 8 écrans de `bundle/references/maqu
 ## Phase 11 — Vérification finale
 
 - [x] 25 captures rejouées après corrections, 0 écart non justifié
-- [ ] Checklist des 40 contrôles écran par écran (`05_UI_UX_DESIGN.md` § 8)
+- [x] Checklist des 40 contrôles écran par écran (`05_UI_UX_DESIGN.md` § 8) — `preuves/design/CHECKLIST_40.md`
 - [x] `axe` 0 violation sur les états capturés ; cibles ≥ 44 px vérifiées
 - [x] Jetons/typo mesurés au navigateur (couleurs, rayons, ombres, graisses)
 - [x] `tsc`, `lint`, `vitest`, `next build` verts ; CI verte
