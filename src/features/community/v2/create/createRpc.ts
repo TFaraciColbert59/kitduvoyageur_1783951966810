@@ -359,6 +359,13 @@ export function buildClubPayload(values: ClubFormValuesV2, slug: string): Record
     activities,
     description: values.description.trim() || null,
     location_label: values.locationLabel.trim() || null,
+    // Club#4 : centre et rayon de la zone. `create_club_with_admin` (lot E)
+    // n'écrit pas encore `zone_geom` / `zone_radius_km` : ces clés sont ignorées
+    // tant que la RPC n'est pas étendue (voir COUVERTURE-200, « dépend de la
+    // base »). Elles sont envoyées pour que l'extension soit sans changement UI.
+    zone_lat: values.zoneLat,
+    zone_lng: values.zoneLng,
+    zone_radius_km: values.zoneLat != null && values.zoneLng != null ? values.zoneRadiusKm : null,
     rules: values.membershipRules.trim() || null,
     join_questions: values.joinQuestions.map((question) => question.trim()).filter(Boolean),
     welcome_post: values.welcomePost,

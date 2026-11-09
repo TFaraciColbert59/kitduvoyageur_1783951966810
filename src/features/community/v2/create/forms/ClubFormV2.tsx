@@ -16,6 +16,8 @@ import { IMAGE_LIMITS, deleteMediaObjectsV2, uploadedObjectsOf } from '../fields
 import { isValidClubSlug, slugifyClubName } from '../club/slug';
 import { moderateText } from '@/features/community/create/moderation';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { PlaceFieldV2 } from '../fields/PlaceFieldV2';
+import { MeetingMapV2 } from '../sortie/MeetingMapV2';
 import { SheetPreview } from '../../shared/SheetPreview';
 import type { CreateFormV2Props } from './types';
 
@@ -153,11 +155,25 @@ function ClubZoneV2() {
   };
   return (
     <>
-      <TextFieldV2
+      {/* Club#4 : le lieu se cherche (adresse réelle) puis se précise sur la
+          mini-carte, épingle déplaçable ; le rayon se règle juste dessous. */}
+      <PlaceFieldV2
         name="locationLabel"
         label="Zone d’activité"
         placeholder="Vercors, Isère…"
-        maxLength={120}
+        latName="zoneLat"
+        lngName="zoneLng"
+        allowCurrentPosition={false}
+      />
+      <MeetingMapV2
+        lat={values.zoneLat}
+        lng={values.zoneLng}
+        label="Centre de la zone d’activité"
+        height={150}
+        onChange={(lat, lng) => {
+          form.setValue('zoneLat', lat, { shouldDirty: true, shouldValidate: true });
+          form.setValue('zoneLng', lng, { shouldDirty: true, shouldValidate: true });
+        }}
       />
       <div className="lkdv-cv2-field">
         <span className="lkdv-cv2-field-label" id="cv2c-club-radius-label">
