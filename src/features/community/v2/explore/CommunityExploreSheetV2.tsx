@@ -338,6 +338,18 @@ export function CommunityExploreSheetV2({
     [haptic, saved, setSaved, showIsland],
   );
 
+  // ── « Tout voir » (Carnets#19) ───────────────────────────────────────────
+  // Hors « Découvrir » : retour au flux complet (le tri est conservé). Dans
+  // « Découvrir » : chargement de la suite jusqu'à la fin du flux.
+  const handleCarnetsSeeAll = useCallback(() => {
+    haptic('light');
+    if (explore.carnetFilter !== 'discover') {
+      explore.setCarnetFilter('discover');
+      return;
+    }
+    carnetsFeed.loadMore();
+  }, [carnetsFeed, explore, haptic]);
+
   // ── J'aime de carnet (optimiste + retour arrière) ───────────────────────
   const handleCarnetLike = useCallback(
     async (carnet: CarnetCardVM) => {
@@ -906,6 +918,7 @@ export function CommunityExploreSheetV2({
             onCreateCarnet={() => onCreateRequested?.('carnet')}
             onDiscover={() => explore.setCarnetFilter('discover')}
             onRequestGeo={() => void nearMe.request()}
+            onSeeAll={handleCarnetsSeeAll}
           />
         </FilterSlot>
       );
@@ -1071,6 +1084,7 @@ export function CommunityExploreSheetV2({
           spotsLeft={state.spotsLeft}
           busy={Boolean(busyKeys[`event:${detail.event.id}`])}
           onSignup={(event) => void handleEventSignup(event)}
+          viewerId={isGuest ? null : viewerId}
         />,
       ],
       index: 0,

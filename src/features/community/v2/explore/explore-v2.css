@@ -1881,6 +1881,16 @@
   text-align: center;
 }
 
+/* Pied de volet « Créer … / Tout voir » (maquette `.pane-foot`, L974) : deux
+   pilules de 44 px centrées, dans la réserve sous la mini-capsule. */
+.lkdv-cv2x-pane-foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 0 4px;
+}
+
 .lkdv-cv2x-empty-actions {
   display: flex;
   flex-wrap: wrap;
