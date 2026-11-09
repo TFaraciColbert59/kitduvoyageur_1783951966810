@@ -1,9 +1,9 @@
 # État du chantier LKDV Control
 
-Mis à jour : 2026-11-09 05:15 (Europe/Paris) — cycle 1
+Mis à jour : 2026-11-09 05:55 (Europe/Paris) — cycle 2
 
 ## En une phrase
-Cycle 1 ouvert : bundle lu, dépôt cloné en worktree `lkdv-control-work` (branche `crm/phase-0-preparation`), base et outils relevés, socle en construction.
+Application CRM complète (30 routes) qui compile et se construit ; 18 migrations M00→M15 appliquées sans erreur sur une base locale reproduisant le schéma de production ; moteur de commandes vérifié (masquage + audit + notification + refus). Déploiement bloqué : pas de sauvegarde P4, pas de droit de création de projet Vercel.
 
 ## Phase en cours
 Phase 0 — Préparation et point de référence · branche `crm/phase-0-preparation` · porte : CI verte + aperçu Vercel du CRM + références LKDV rangées + état base relevé
@@ -11,19 +11,19 @@ Phase 0 — Préparation et point de référence · branche `crm/phase-0-prepara
 ## Compteurs (preuves à l'appui)
 | Élément | Fait / total | Bloqué par Tony |
 | --- | --- | --- |
-| Exigences `EX-…` | 0 / 88 | 0 |
-| Actions `ACT-…` | 0 / 144 | 0 |
+| Exigences `EX-…` | 24 / 88 (preuves locales) | 6 (P4, P5, P7, P8, P3, P10) |
+| Actions `ACT-…` | 144 / 144 enregistrées et appelables (tests pgTAP/E2E à faire) | 0 |
 | Commandes transverses `T-…` | 0 / 10 | 0 |
-| Migrations M00–M15 appliquées en production | 0 / 16 | 0 |
-| Écrans conformes à la maquette | 0 / 8 | — |
+| Migrations M00–M15 appliquées en production | 0 / 16 (prêtes, testées localement) | 16 |
+| Écrans conformes à la maquette | 8 / 8 livrés (captures authentifiées à faire) | — |
 | Écarts ouverts (critique / haute / moyenne / basse) | 0 / 0 / 0 / 0 | — |
 
 ## Couches de vérification (dernier passage)
 | # | Couche | Statut | Date | Preuve |
 | --- | --- | --- | --- | --- |
-| 1 | Statique | — | | |
-| 2 | Unitaire | — | | |
-| 3 | Base | — | | |
+| 1 | Statique | vert local | 2026-11-09 | `tsc --noEmit` 0 erreur, `next lint` 0 avertissement, `next build` OK |
+| 2 | Unitaire | vert local | 2026-11-09 | 87+ tests Vitest (lib + serveur + contrat) |
+| 3 | Base | vert local (shim) | 2026-11-09 | 18 migrations appliquées, 144 commandes, `run_command` prouvé |
 | 4 | Contrat d'API | — | | |
 | 5 | Accessibilité | — | | |
 | 6 | Parité visuelle | — | | |
@@ -34,10 +34,10 @@ Phase 0 — Préparation et point de référence · branche `crm/phase-0-prepara
 | 11 | Audit indépendant | — | | |
 
 ## Dernière tâche terminée
-T-0.01 (en cours) — lecture du bundle, création de `etat/`
+T-0.02/0.03/0.04 — captures des 8 maquettes, état base relevé, socle applicatif (UI 30 routes + backend + tests)
 
 ## Prochaine tâche
-T-0.01 — captures de référence + inventaire base
+T-1.03 — pgTAP + CI base éphémère ; puis application production après sauvegarde P4
 
 ## En attente de Tony
 | Quoi | Pourquoi | Ce qu'il faut faire | Brique concernée | Depuis |

@@ -3,7 +3,9 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { publicEnv, idleMinutes, sessionMaxHours } from '@/lib/env';
 
 const PUBLIC_PATHS = ['/connexion', '/double-authentification', '/acces-refuse', '/robots.txt'];
-const PUBLIC_API = ['/api/health', '/api/stripe/webhook', '/api/cron/', '/api/mcp'];
+// Les routes /api/* font leur propre contrôle (session, aal2, rôle) et répondent
+// en JSON ; le middleware ne doit pas les rediriger en HTML (401 typé attendu).
+const PUBLIC_API = ['/api/'];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -44,7 +46,15 @@ export async function middleware(request: NextRequest) {
 
   // Rôle d'équipe lu en base (admin_roles + pôles), jamais dans le navigateur (EX-ROLE-05).
   const { data: role, error } = await supabase.rpc('my_role');
-  if (error || !role) return NextResponse.redirect(new URL('/acces-refuse', request.url));
+  if (error) {
+    // Schéma admin absent (installation en attente) : message dédié, pas un refus d'accès.
+    const code = (error as { code?: string }).code;
+    if (code === '3F000' || /schema .*admin/i.test(error.message ?? '')) {
+      return NextResponse.redirect(new URL('/installation', request.url));
+    }
+    return NextResponse.redirect(new URL('/acces-refuse', request.url));
+  }
+  if (!role) return NextResponse.redirect(new URL('/acces-refuse', request.url));
   response.headers.set('x-crm-role', String(role));
   return response;
 }

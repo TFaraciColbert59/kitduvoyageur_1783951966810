@@ -1,0 +1,213 @@
+{
+  "note": "Registre des écrans du CRM Control (CONTRACT.md). Source unique pour les captures, la parité visuelle et les tests d'accessibilité. Aucune donnée réelle n'est attendue à l'écran.",
+  "viewports": [
+    { "id": "desktop", "width": 1440, "height": 1040 },
+    { "id": "mobile", "width": 390, "height": 844 }
+  ],
+  "screens": [
+    {
+      "slug": "a-traiter",
+      "route": "/",
+      "name": "À traiter",
+      "maquette": "Main-1440.png",
+      "auth": true,
+      "states": ["rempli", "vide", "erreur", "chargement"]
+    },
+    {
+      "slug": "pole-confiance",
+      "route": "/pole/CONF",
+      "name": "Pôle Confiance",
+      "maquette": "Main-1440.png",
+      "auth": true,
+      "states": ["rempli", "vide"]
+    },
+    {
+      "slug": "pole-membres",
+      "route": "/pole/MEMB",
+      "name": "Pôle Membres",
+      "maquette": "Main-1440.png",
+      "auth": true,
+      "states": ["rempli"]
+    },
+    {
+      "slug": "pole-commerce",
+      "route": "/pole/COMM",
+      "name": "Pôle Commerce",
+      "maquette": "Main-1440.png",
+      "auth": true,
+      "states": ["rempli"]
+    },
+    {
+      "slug": "pole-contenus",
+      "route": "/pole/CONT",
+      "name": "Pôle Contenus",
+      "maquette": "Main-1440.png",
+      "auth": true,
+      "states": ["rempli"]
+    },
+    {
+      "slug": "pole-produit-ia",
+      "route": "/pole/PRIA",
+      "name": "Pôle Produit et IA",
+      "maquette": "Main-1440.png",
+      "auth": true,
+      "states": ["rempli"]
+    },
+    {
+      "slug": "pole-croissance",
+      "route": "/pole/CROI",
+      "name": "Pôle Croissance",
+      "maquette": "Main-1440.png",
+      "auth": true,
+      "states": ["rempli"]
+    },
+    {
+      "slug": "pole-technique",
+      "route": "/pole/TECH",
+      "name": "Pôle Technique",
+      "maquette": "Main-1440.png",
+      "auth": true,
+      "states": ["rempli"]
+    },
+    {
+      "slug": "cas-moderation",
+      "route": "/cas/post_report/{{case_id}}",
+      "name": "Cas — modération",
+      "maquette": "Moderation-1440.png",
+      "auth": true,
+      "states": ["rempli", "decision-deja-prise", "erreur"]
+    },
+    {
+      "slug": "membre-360",
+      "route": "/membres/{{member_id}}",
+      "name": "Fiche membre 360°",
+      "maquette": "Membre-1440.png",
+      "auth": true,
+      "states": ["rempli", "donnees-masquees"]
+    },
+    {
+      "slug": "commande",
+      "route": "/commandes/{{order_id}}",
+      "name": "Commande",
+      "maquette": "Commande-1440.png",
+      "auth": true,
+      "states": ["rempli", "remboursee"]
+    },
+    {
+      "slug": "valider-demande",
+      "route": "/valider/{{request_id}}",
+      "name": "Demande à valider",
+      "maquette": "Remboursement-1440.png",
+      "auth": true,
+      "states": ["solo", "deux-personnes", "expiree"]
+    },
+    {
+      "slug": "equipe-agents",
+      "route": "/equipe",
+      "name": "Équipe et agents",
+      "maquette": "Agents-1440.png",
+      "auth": true,
+      "states": ["rempli", "agent-arrete"]
+    },
+    {
+      "slug": "journal",
+      "route": "/journal",
+      "name": "Journal",
+      "maquette": "Journal-1440.png",
+      "auth": true,
+      "states": ["rempli", "filtre", "vide"]
+    },
+    {
+      "slug": "sos",
+      "route": "/sos/{{sos_id}}",
+      "name": "SOS",
+      "maquette": "SOS-390.png",
+      "auth": true,
+      "states": ["ouvert", "pris-en-charge", "clos"]
+    },
+    {
+      "slug": "catalogue",
+      "route": "/catalogue",
+      "name": "Catalogue des 144 actions",
+      "maquette": null,
+      "auth": true,
+      "states": ["rempli", "recherche"]
+    },
+    {
+      "slug": "contenus",
+      "route": "/contenus",
+      "name": "Contenus",
+      "maquette": null,
+      "auth": true,
+      "states": ["rempli", "vide"]
+    },
+    {
+      "slug": "reglages",
+      "route": "/reglages",
+      "name": "Réglages",
+      "maquette": null,
+      "auth": true,
+      "states": ["rempli"]
+    },
+    {
+      "slug": "ia",
+      "route": "/ia",
+      "name": "IA et coûts",
+      "maquette": null,
+      "auth": true,
+      "states": ["rempli", "brique-inactive"]
+    },
+    {
+      "slug": "technique",
+      "route": "/technique",
+      "name": "Technique",
+      "maquette": null,
+      "auth": true,
+      "states": ["rempli", "erreur"]
+    },
+    {
+      "slug": "entrainement",
+      "route": "/entrainement",
+      "name": "Bac à sable",
+      "maquette": null,
+      "auth": true,
+      "states": ["rempli", "vide"]
+    },
+    {
+      "slug": "connexion",
+      "route": "/connexion",
+      "name": "Connexion",
+      "maquette": null,
+      "auth": false,
+      "states": ["formulaire", "erreur"]
+    },
+    {
+      "slug": "double-authentification",
+      "route": "/double-authentification",
+      "name": "Double authentification",
+      "maquette": null,
+      "auth": false,
+      "states": ["saisie-code", "code-invalide"]
+    },
+    {
+      "slug": "acces-refuse",
+      "route": "/acces-refuse",
+      "name": "Accès refusé",
+      "maquette": null,
+      "auth": false,
+      "states": ["defaut"]
+    }
+  ],
+  "accessibilite": {
+    "contrastes": [
+      { "fond": "--lkv-surface", "texte": "--lkv-text-primary", "min": 4.5 },
+      { "fond": "--lkv-surface-card", "texte": "--lkv-text-secondary", "min": 4.5 },
+      { "fond": "--lkv-warning-bg", "texte": "--lkv-warning-dark", "min": 4.5 },
+      { "fond": "--lkv-danger-bg", "texte": "--lkv-danger-dark", "min": 4.5 },
+      { "fond": "--lkv-info-bg", "texte": "--lkv-text-primary", "min": 4.5 },
+      { "fond": "--lkv-success-bg", "texte": "--lkv-text-primary", "min": 4.5 }
+    ],
+    "cibleMinPx": 44,
+    "echecsAxeAutorises": 0
+  }
+}

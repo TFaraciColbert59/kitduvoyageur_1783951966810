@@ -1,0 +1,443 @@
+{
+  "base_url": "http://localhost:4100",
+  "manifest": [
+    {
+      "screen": "a-traiter",
+      "route": "/",
+      "viewport": "1440x1040",
+      "file": "a-traiter-1440x1040.png",
+      "captured_at": "2026-11-09T04:25:33.428Z",
+      "status": "skipped",
+      "motif": "identifiants de test absents (CRM_TEST_EMAIL/CRM_TEST_PASSWORD/CRM_TEST_TOTP_SECRET)"
+    },
+    {
+      "screen": "pole-confiance",
+      "route": "/pole/CONF",
+      "viewport": "1440x1040",
+      "file": "pole-confiance-1440x1040.png",
+      "captured_at": "2026-11-09T04:25:33.428Z",
+      "status": "skipped",
+      "motif": "identifiants de test absents (CRM_TEST_EMAIL/CRM_TEST_PASSWORD/CRM_TEST_TOTP_SECRET)"
+    },
+    {
+      "screen": "pole-membres",
+      "route": "/pole/MEMB",
+      "viewport": "1440x1040",
+      "file": "pole-membres-1440x1040.png",
+      "captured_at": "2026-11-09T04:25:33.428Z",
+      "status": "skipped",
+      "motif": "identifiants de test absents (CRM_TEST_EMAIL/CRM_TEST_PASSWORD/CRM_TEST_TOTP_SECRET)"
+    },
+    {
+      "screen": "pole-commerce",
+      "route": "/pole/COMM",
+      "viewport": "1440x1040",
+      "file": "pole-commerce-1440x1040.png",
+      "captured_at": "2026-11-09T04:25:33.428Z",
+      "status": "skipped",
+      "motif": "identifiants de test absents (CRM_TEST_EMAIL/CRM_TEST_PASSWORD/CRM_TEST_TOTP_SECRET)"
+    },
+    {
+      "screen": "pole-contenus",
+      "route": "/pole/CONT",
+      "viewport": "1440x1040",
+      "file": "pole-contenus-1440x1040.png",
+      "captured_at": "2026-11-09T04:25:33.428Z",
+      "status": "skipped",
+      "motif": "identifiants de test absents (CRM_TEST_EMAIL/CRM_TEST_PASSWORD/CRM_TEST_TOTP_SECRET)"
+    },
+    {
+      "screen": "pole-produit-ia",
+      "route": "/pole/PRIA",
+      "viewport": "1440x1040",
+      "file": "pole-produit-ia-1440x1040.png",
+      "captured_at": "2026-11-09T04:25:33.428Z",
+      "status": "skipped",
+      "motif": "identifiants de test absents (CRM_TEST_EMAIL/CRM_TEST_PASSWORD/CRM_TEST_TOTP_SECRET)"
+    },
+    {
+      "screen": "pole-croissance",
+      "route": "/pole/CROI",
+      "viewport": "1440x1040",
+      "file": "pole-croissance-1440x1040.png",
+      "captured_at": "2026-11-09T04:25:33.428Z",
+      "status": "skipped",
+      "motif": "identifiants de test absents (CRM_TEST_EMAIL/CRM_TEST_PASSWORD/CRM_TEST_TOTP_SECRET)"
+    },
+    {
+      "screen": "pole-technique",
+      "route": "/pole/TECH",
+      "viewport": "1440x1040",
+      "file": "pole-technique-1440x1040.png",
+      "captured_at": "2026-11-09T04:25:33.428Z",
+      "status": "skipped",
+      "motif": "identifiants de test absents (CRM_TEST_EMAIL/CRM_TEST_PASSWORD/CRM_TEST_TOTP_SECRET)"
+    },
+    {
+      "screen": "cas-moderation",
+      "route": "/cas/post_report/{{case_id}}",
+      "viewport": "1440x1040",
+      "file": "cas-moderation-1440x1040.png",
+      "captured_at": "2026-11-09T04:25:33.428Z",
+      "status": "skipped",
+      "motif": "identifiants de test absents (CRM_TEST_EMAIL/CRM_TEST_PASSWORD/CRM_TEST_TOTP_SECRET)"
+    },
+    {
+      "screen": "membre-360",
+      "route": "/membres/{{member_id}}",
+      "viewport": "1440x1040",
+      "file": "membre-360-1440x1040.png",
+      "captured_at": "2026-11-09T04:25:33.428Z",
+      "status": "skipped",
+      "motif": "identifiants de test absents (CRM_TEST_EMAIL/CRM_TEST_PASSWORD/CRM_TEST_TOTP_SECRET)"
+    },
+    {
+      "screen": "commande",
+      "route": "/commandes/{{order_id}}",
+      "viewport": "1440x1040",
+      "file": "commande-1440x1040.png",
+      "captured_at": "2026-11-09T04:25:33.428Z",
+      "status": "skipped",
+      "motif": "identifiants de test absents (CRM_TEST_EMAIL/CRM_TEST_PASSWORD/CRM_TEST_TOTP_SECRET)"
+    },
+    {
+      "screen": "valider-demande",
+      "route": "/valider/{{request_id}}",
+      "viewport": "1440x1040",
+      "file": "valider-demande-1440x1040.png",
+      "captured_at": "2026-11-09T04:25:33.428Z",
+      "status": "skipped",
+      "motif": "identifiants de test absents (CRM_TEST_EMAIL/CRM_TEST_PASSWORD/CRM_TEST_TOTP_SECRET)"
+    },
+    {
+      "screen": "equipe-agents",
+      "route": "/equipe",
+      "viewport": "1440x1040",
+      "file": "equipe-agents-1440x1040.png",
+      "captured_at": "2026-11-09T04:25:33.428Z",
+      "status": "skipped",
+      "motif": "identifiants de test absents (CRM_TEST_EMAIL/CRM_TEST_PASSWORD/CRM_TEST_TOTP_SECRET)"
+    },
+    {
+      "screen": "journal",
+      "route": "/journal",
+      "viewport": "1440x1040",
+      "file": "journal-1440x1040.png",
+      "captured_at": "2026-11-09T04:25:33.428Z",
+      "status": "skipped",
+      "motif": "identifiants de test absents (CRM_TEST_EMAIL/CRM_TEST_PASSWORD/CRM_TEST_TOTP_SECRET)"
+    },
+    {
+      "screen": "sos",
+      "route": "/sos/{{sos_id}}",
+      "viewport": "1440x1040",
+      "file": "sos-1440x1040.png",
+      "captured_at": "2026-11-09T04:25:33.428Z",
+      "status": "skipped",
+      "motif": "identifiants de test absents (CRM_TEST_EMAIL/CRM_TEST_PASSWORD/CRM_TEST_TOTP_SECRET)"
+    },
+    {
+      "screen": "catalogue",
+      "route": "/catalogue",
+      "viewport": "1440x1040",
+      "file": "catalogue-1440x1040.png",
+      "captured_at": "2026-11-09T04:25:33.428Z",
+      "status": "skipped",
+      "motif": "identifiants de test absents (CRM_TEST_EMAIL/CRM_TEST_PASSWORD/CRM_TEST_TOTP_SECRET)"
+    },
+    {
+      "screen": "contenus",
+      "route": "/contenus",
+      "viewport": "1440x1040",
+      "file": "contenus-1440x1040.png",
+      "captured_at": "2026-11-09T04:25:33.428Z",
+      "status": "skipped",
+      "motif": "identifiants de test absents (CRM_TEST_EMAIL/CRM_TEST_PASSWORD/CRM_TEST_TOTP_SECRET)"
+    },
+    {
+      "screen": "reglages",
+      "route": "/reglages",
+      "viewport": "1440x1040",
+      "file": "reglages-1440x1040.png",
+      "captured_at": "2026-11-09T04:25:33.428Z",
+      "status": "skipped",
+      "motif": "identifiants de test absents (CRM_TEST_EMAIL/CRM_TEST_PASSWORD/CRM_TEST_TOTP_SECRET)"
+    },
+    {
+      "screen": "ia",
+      "route": "/ia",
+      "viewport": "1440x1040",
+      "file": "ia-1440x1040.png",
+      "captured_at": "2026-11-09T04:25:33.428Z",
+      "status": "skipped",
+      "motif": "identifiants de test absents (CRM_TEST_EMAIL/CRM_TEST_PASSWORD/CRM_TEST_TOTP_SECRET)"
+    },
+    {
+      "screen": "technique",
+      "route": "/technique",
+      "viewport": "1440x1040",
+      "file": "technique-1440x1040.png",
+      "captured_at": "2026-11-09T04:25:33.428Z",
+      "status": "skipped",
+      "motif": "identifiants de test absents (CRM_TEST_EMAIL/CRM_TEST_PASSWORD/CRM_TEST_TOTP_SECRET)"
+    },
+    {
+      "screen": "entrainement",
+      "route": "/entrainement",
+      "viewport": "1440x1040",
+      "file": "entrainement-1440x1040.png",
+      "captured_at": "2026-11-09T04:25:33.428Z",
+      "status": "skipped",
+      "motif": "identifiants de test absents (CRM_TEST_EMAIL/CRM_TEST_PASSWORD/CRM_TEST_TOTP_SECRET)"
+    },
+    {
+      "screen": "connexion",
+      "route": "/connexion",
+      "viewport": "1440x1040",
+      "file": "connexion-1440x1040.png",
+      "captured_at": "2026-11-09T04:25:33.428Z",
+      "status": "http-error",
+      "http_status": 500,
+      "motif": "HTTP 500"
+    },
+    {
+      "screen": "double-authentification",
+      "route": "/double-authentification",
+      "viewport": "1440x1040",
+      "file": "double-authentification-1440x1040.png",
+      "captured_at": "2026-11-09T04:25:40.274Z",
+      "status": "http-error",
+      "http_status": 500,
+      "motif": "HTTP 500"
+    },
+    {
+      "screen": "acces-refuse",
+      "route": "/acces-refuse",
+      "viewport": "1440x1040",
+      "file": "acces-refuse-1440x1040.png",
+      "captured_at": "2026-11-09T04:25:41.924Z",
+      "status": "http-error",
+      "http_status": 500,
+      "motif": "HTTP 500"
+    },
+    {
+      "screen": "a-traiter",
+      "route": "/",
+      "viewport": "390x844",
+      "file": "a-traiter-390x844.png",
+      "captured_at": "2026-11-09T04:25:43.985Z",
+      "status": "skipped",
+      "motif": "identifiants de test absents (CRM_TEST_EMAIL/CRM_TEST_PASSWORD/CRM_TEST_TOTP_SECRET)"
+    },
+    {
+      "screen": "pole-confiance",
+      "route": "/pole/CONF",
+      "viewport": "390x844",
+      "file": "pole-confiance-390x844.png",
+      "captured_at": "2026-11-09T04:25:43.985Z",
+      "status": "skipped",
+      "motif": "identifiants de test absents (CRM_TEST_EMAIL/CRM_TEST_PASSWORD/CRM_TEST_TOTP_SECRET)"
+    },
+    {
+      "screen": "pole-membres",
+      "route": "/pole/MEMB",
+      "viewport": "390x844",
+      "file": "pole-membres-390x844.png",
+      "captured_at": "2026-11-09T04:25:43.985Z",
+      "status": "skipped",
+      "motif": "identifiants de test absents (CRM_TEST_EMAIL/CRM_TEST_PASSWORD/CRM_TEST_TOTP_SECRET)"
+    },
+    {
+      "screen": "pole-commerce",
+      "route": "/pole/COMM",
+      "viewport": "390x844",
+      "file": "pole-commerce-390x844.png",
+      "captured_at": "2026-11-09T04:25:43.985Z",
+      "status": "skipped",
+      "motif": "identifiants de test absents (CRM_TEST_EMAIL/CRM_TEST_PASSWORD/CRM_TEST_TOTP_SECRET)"
+    },
+    {
+      "screen": "pole-contenus",
+      "route": "/pole/CONT",
+      "viewport": "390x844",
+      "file": "pole-contenus-390x844.png",
+      "captured_at": "2026-11-09T04:25:43.985Z",
+      "status": "skipped",
+      "motif": "identifiants de test absents (CRM_TEST_EMAIL/CRM_TEST_PASSWORD/CRM_TEST_TOTP_SECRET)"
+    },
+    {
+      "screen": "pole-produit-ia",
+      "route": "/pole/PRIA",
+      "viewport": "390x844",
+      "file": "pole-produit-ia-390x844.png",
+      "captured_at": "2026-11-09T04:25:43.985Z",
+      "status": "skipped",
+      "motif": "identifiants de test absents (CRM_TEST_EMAIL/CRM_TEST_PASSWORD/CRM_TEST_TOTP_SECRET)"
+    },
+    {
+      "screen": "pole-croissance",
+      "route": "/pole/CROI",
+      "viewport": "390x844",
+      "file": "pole-croissance-390x844.png",
+      "captured_at": "2026-11-09T04:25:43.985Z",
+      "status": "skipped",
+      "motif": "identifiants de test absents (CRM_TEST_EMAIL/CRM_TEST_PASSWORD/CRM_TEST_TOTP_SECRET)"
+    },
+    {
+      "screen": "pole-technique",
+      "route": "/pole/TECH",
+      "viewport": "390x844",
+      "file": "pole-technique-390x844.png",
+      "captured_at": "2026-11-09T04:25:43.985Z",
+      "status": "skipped",
+      "motif": "identifiants de test absents (CRM_TEST_EMAIL/CRM_TEST_PASSWORD/CRM_TEST_TOTP_SECRET)"
+    },
+    {
+      "screen": "cas-moderation",
+      "route": "/cas/post_report/{{case_id}}",
+      "viewport": "390x844",
+      "file": "cas-moderation-390x844.png",
+      "captured_at": "2026-11-09T04:25:43.985Z",
+      "status": "skipped",
+      "motif": "identifiants de test absents (CRM_TEST_EMAIL/CRM_TEST_PASSWORD/CRM_TEST_TOTP_SECRET)"
+    },
+    {
+      "screen": "membre-360",
+      "route": "/membres/{{member_id}}",
+      "viewport": "390x844",
+      "file": "membre-360-390x844.png",
+      "captured_at": "2026-11-09T04:25:43.985Z",
+      "status": "skipped",
+      "motif": "identifiants de test absents (CRM_TEST_EMAIL/CRM_TEST_PASSWORD/CRM_TEST_TOTP_SECRET)"
+    },
+    {
+      "screen": "commande",
+      "route": "/commandes/{{order_id}}",
+      "viewport": "390x844",
+      "file": "commande-390x844.png",
+      "captured_at": "2026-11-09T04:25:43.985Z",
+      "status": "skipped",
+      "motif": "identifiants de test absents (CRM_TEST_EMAIL/CRM_TEST_PASSWORD/CRM_TEST_TOTP_SECRET)"
+    },
+    {
+      "screen": "valider-demande",
+      "route": "/valider/{{request_id}}",
+      "viewport": "390x844",
+      "file": "valider-demande-390x844.png",
+      "captured_at": "2026-11-09T04:25:43.985Z",
+      "status": "skipped",
+      "motif": "identifiants de test absents (CRM_TEST_EMAIL/CRM_TEST_PASSWORD/CRM_TEST_TOTP_SECRET)"
+    },
+    {
+      "screen": "equipe-agents",
+      "route": "/equipe",
+      "viewport": "390x844",
+      "file": "equipe-agents-390x844.png",
+      "captured_at": "2026-11-09T04:25:43.985Z",
+      "status": "skipped",
+      "motif": "identifiants de test absents (CRM_TEST_EMAIL/CRM_TEST_PASSWORD/CRM_TEST_TOTP_SECRET)"
+    },
+    {
+      "screen": "journal",
+      "route": "/journal",
+      "viewport": "390x844",
+      "file": "journal-390x844.png",
+      "captured_at": "2026-11-09T04:25:43.985Z",
+      "status": "skipped",
+      "motif": "identifiants de test absents (CRM_TEST_EMAIL/CRM_TEST_PASSWORD/CRM_TEST_TOTP_SECRET)"
+    },
+    {
+      "screen": "sos",
+      "route": "/sos/{{sos_id}}",
+      "viewport": "390x844",
+      "file": "sos-390x844.png",
+      "captured_at": "2026-11-09T04:25:43.985Z",
+      "status": "skipped",
+      "motif": "identifiants de test absents (CRM_TEST_EMAIL/CRM_TEST_PASSWORD/CRM_TEST_TOTP_SECRET)"
+    },
+    {
+      "screen": "catalogue",
+      "route": "/catalogue",
+      "viewport": "390x844",
+      "file": "catalogue-390x844.png",
+      "captured_at": "2026-11-09T04:25:43.985Z",
+      "status": "skipped",
+      "motif": "identifiants de test absents (CRM_TEST_EMAIL/CRM_TEST_PASSWORD/CRM_TEST_TOTP_SECRET)"
+    },
+    {
+      "screen": "contenus",
+      "route": "/contenus",
+      "viewport": "390x844",
+      "file": "contenus-390x844.png",
+      "captured_at": "2026-11-09T04:25:43.985Z",
+      "status": "skipped",
+      "motif": "identifiants de test absents (CRM_TEST_EMAIL/CRM_TEST_PASSWORD/CRM_TEST_TOTP_SECRET)"
+    },
+    {
+      "screen": "reglages",
+      "route": "/reglages",
+      "viewport": "390x844",
+      "file": "reglages-390x844.png",
+      "captured_at": "2026-11-09T04:25:43.985Z",
+      "status": "skipped",
+      "motif": "identifiants de test absents (CRM_TEST_EMAIL/CRM_TEST_PASSWORD/CRM_TEST_TOTP_SECRET)"
+    },
+    {
+      "screen": "ia",
+      "route": "/ia",
+      "viewport": "390x844",
+      "file": "ia-390x844.png",
+      "captured_at": "2026-11-09T04:25:43.985Z",
+      "status": "skipped",
+      "motif": "identifiants de test absents (CRM_TEST_EMAIL/CRM_TEST_PASSWORD/CRM_TEST_TOTP_SECRET)"
+    },
+    {
+      "screen": "technique",
+      "route": "/technique",
+      "viewport": "390x844",
+      "file": "technique-390x844.png",
+      "captured_at": "2026-11-09T04:25:43.985Z",
+      "status": "skipped",
+      "motif": "identifiants de test absents (CRM_TEST_EMAIL/CRM_TEST_PASSWORD/CRM_TEST_TOTP_SECRET)"
+    },
+    {
+      "screen": "entrainement",
+      "route": "/entrainement",
+      "viewport": "390x844",
+      "file": "entrainement-390x844.png",
+      "captured_at": "2026-11-09T04:25:43.985Z",
+      "status": "skipped",
+      "motif": "identifiants de test absents (CRM_TEST_EMAIL/CRM_TEST_PASSWORD/CRM_TEST_TOTP_SECRET)"
+    },
+    {
+      "screen": "connexion",
+      "route": "/connexion",
+      "viewport": "390x844",
+      "file": "connexion-390x844.png",
+      "captured_at": "2026-11-09T04:25:43.985Z",
+      "status": "http-error",
+      "http_status": 500,
+      "motif": "HTTP 500"
+    },
+    {
+      "screen": "double-authentification",
+      "route": "/double-authentification",
+      "viewport": "390x844",
+      "file": "double-authentification-390x844.png",
+      "captured_at": "2026-11-09T04:25:45.346Z",
+      "status": "http-error",
+      "http_status": 500,
+      "motif": "HTTP 500"
+    },
+    {
+      "screen": "acces-refuse",
+      "route": "/acces-refuse",
+      "viewport": "390x844",
+      "file": "acces-refuse-390x844.png",
+      "captured_at": "2026-11-09T04:25:46.628Z",
+      "status": "http-error",
+      "http_status": 500,
+      "motif": "HTTP 500"
+    }
+  ]
+}

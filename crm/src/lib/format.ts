@@ -1,6 +1,6 @@
 export function firstName(name: string | null | undefined): string {
-  if (!name) return 'non renseigné';
-  return name.trim().split(/\s+/)[0] ?? 'non renseigné';
+  const first = name?.trim().split(/\s+/)[0];
+  return first || 'non renseigné';
 }
 
 export function euros(cents: number | null | undefined): string {
