@@ -8,7 +8,7 @@
 
 BEGIN;
 SET LOCAL search_path = public;
-SELECT plan(10);
+SELECT plan(12);
 
 INSERT INTO auth.users (id, aud, role, email, encrypted_password, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
 VALUES
@@ -51,6 +51,24 @@ SELECT throws_ok(
 );
 SELECT is(public.is_carnet_participant('c3100000-0000-4000-8000-000000000001'), false, 'L''intrus n''est pas participant');
 
+-- 1 bis. Chemin de la relecture : rattacher sa propre sortie au carnet d'autrui
+SELECT throws_ok(
+  'INSERT INTO public.hike_sessions (user_id, carnet_id, started_at, ended_at, distance_km, duration_seconds) VALUES (''c3000000-0000-4000-8000-000000000003'', ''c3100000-0000-4000-8000-000000000001'', now(), now(), 1, 60)',
+  '42501', NULL,
+  'Un intrus ne peut pas rattacher sa sortie au carnet d''autrui'
+);
+
+-- 1 ter. Même si une telle sortie existait (créée avant la migration), elle
+--        ne rend pas participant : la sortie n'est pas tenue par l'auteur.
+RESET ROLE;
+INSERT INTO public.hike_sessions (id, user_id, carnet_id, started_at, ended_at, distance_km, duration_seconds)
+VALUES ('c3300000-0000-4000-8000-000000000001', 'c3000000-0000-4000-8000-000000000003', 'c3100000-0000-4000-8000-000000000001', now(), now(), 1, 60);
+INSERT INTO public.hike_session_participants (session_id, user_id, role)
+VALUES ('c3300000-0000-4000-8000-000000000001', 'c3000000-0000-4000-8000-000000000003', 'owner');
+SET LOCAL ROLE authenticated;
+SET LOCAL "request.jwt.claims" = '{"sub": "c3000000-0000-4000-8000-000000000003", "role": "authenticated"}';
+SELECT is(public.is_carnet_participant('c3100000-0000-4000-8000-000000000001'), false, 'Une sortie d''intrus rattachée ne rend pas participant');
+
 -- 2. L'intrus ne peut pas écrire de moment, même en s'en déclarant l'auteur
 SELECT throws_ok(
   'INSERT INTO public.carnet_moments (carnet_id, jour_numero, citation, auteur_id) VALUES (''c3100000-0000-4000-8000-000000000002'', 1, ''Intrusion'', ''c3000000-0000-4000-8000-000000000003'')',
@@ -88,8 +106,10 @@ SELECT is_empty(
     RETURNING 1$$,
   'Un collaborateur ne peut pas se promouvoir owner'
 );
-SELECT lives_ok(
-  'DELETE FROM public.carnet_collaborators WHERE carnet_id = ''c3100000-0000-4000-8000-000000000001'' AND user_id = ''c3000000-0000-4000-8000-000000000002''',
+SELECT isnt_empty(
+  $$DELETE FROM public.carnet_collaborators
+    WHERE carnet_id = 'c3100000-0000-4000-8000-000000000001' AND user_id = 'c3000000-0000-4000-8000-000000000002'
+    RETURNING 1$$,
   'Un collaborateur peut se retirer lui-même'
 );
 

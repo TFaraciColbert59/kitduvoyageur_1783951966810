@@ -74,3 +74,68 @@ drop policy if exists carnet_moments_select_viewable on public.carnet_moments;
 create policy carnet_moments_select_viewable on public.carnet_moments
   for select
   using (public.can_view_carnet(carnet_id));
+
+-- 3. is_carnet_participant : la branche « participant d'une sortie liée »
+--    ne compte que les sorties tenues par l'auteur du carnet ou par un
+--    collaborateur owner/contributor. Sans cela, n'importe qui créait une
+--    sortie à lui pointant vers le carnet visé, s'y inscrivait participant
+--    (hike_participants_owner_write) et devenait participant du carnet
+--    (relecture indépendante du 2026-11-09, exploit reproduit en base).
+create or replace function public.is_carnet_participant(p_carnet uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select (select auth.uid()) is not null and (
+    exists (
+      select 1 from public.carnets c
+      where c.id = p_carnet and c.author_id = (select auth.uid())
+    )
+    or exists (
+      select 1 from public.carnet_collaborators cc
+      where cc.carnet_id = p_carnet
+        and cc.user_id = (select auth.uid())
+        and cc.role in ('owner', 'contributor')
+    )
+    or exists (
+      select 1 from public.hike_sessions hs
+      join public.carnets c on c.id = hs.carnet_id
+      join public.hike_session_participants hp on hp.session_id = hs.id
+      where hs.carnet_id = p_carnet
+        and hp.user_id = (select auth.uid())
+        and (
+          hs.user_id = c.author_id
+          or exists (
+            select 1 from public.carnet_collaborators cc2
+            where cc2.carnet_id = p_carnet
+              and cc2.user_id = hs.user_id
+              and cc2.role in ('owner', 'contributor')
+          )
+        )
+    )
+  );
+$$;
+
+revoke all on function public.is_carnet_participant(uuid) from public;
+grant execute on function public.is_carnet_participant(uuid) to authenticated, anon;
+
+-- 4. hike_sessions : on ne rattache une sortie (et ses positions) qu'à un
+--    carnet dont on est participant.
+drop policy if exists hike_sessions_insert_owner on public.hike_sessions;
+create policy hike_sessions_insert_owner on public.hike_sessions
+  for insert to authenticated
+  with check (
+    user_id = (select auth.uid())
+    and (carnet_id is null or public.is_carnet_participant(carnet_id))
+  );
+
+drop policy if exists hike_sessions_update_owner on public.hike_sessions;
+create policy hike_sessions_update_owner on public.hike_sessions
+  for update to authenticated
+  using (user_id = (select auth.uid()))
+  with check (
+    user_id = (select auth.uid())
+    and (carnet_id is null or public.is_carnet_participant(carnet_id))
+  );
