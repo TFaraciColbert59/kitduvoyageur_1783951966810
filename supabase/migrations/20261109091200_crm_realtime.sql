@@ -7,6 +7,44 @@
 -- ═══════════════════════════════════════════════════════════════════════════
 
 -- ───────────────────────────────────────────────────────────────────────────
+-- Doublure CI : Supabase fournit le schéma `realtime` et `realtime.send`.
+-- Sur une base de test sans Realtime (CI), on crée le minimum nécessaire.
+-- En production, tout est déjà là : chaque instruction est sans effet.
+-- ───────────────────────────────────────────────────────────────────────────
+create schema if not exists realtime;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+     where n.nspname = 'realtime' and p.proname = 'topic'
+  ) then
+    execute $f$create function realtime.topic() returns text language sql stable
+      as $b$ select current_setting('realtime.topic', true) $b$$f$;
+  end if;
+  if not exists (
+    select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+     where n.nspname = 'realtime' and p.proname = 'send'
+  ) then
+    execute $f$create function realtime.send(payload jsonb, event text, topic text, private boolean default true)
+      returns void language plpgsql as $b$ begin
+        insert into realtime.messages(topic, event, payload, private) values (topic, event, payload, private);
+      exception when others then null; end $b$$f$;
+  end if;
+end $$;
+
+create table if not exists realtime.messages (
+  id bigserial primary key,
+  topic text,
+  extension text,
+  payload jsonb,
+  event text,
+  private boolean default true,
+  inserted_at timestamptz default now()
+);
+alter table realtime.messages enable row level security;
+
+-- ───────────────────────────────────────────────────────────────────────────
 -- Policy des canaux admin:*
 -- ───────────────────────────────────────────────────────────────────────────
 drop policy if exists crm_staff_receive_admin_topics on realtime.messages;
