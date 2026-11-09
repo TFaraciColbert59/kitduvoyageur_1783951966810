@@ -21,6 +21,11 @@ UPDATE public.user_profiles
    SET account_status = 'suspended', suspended_until = now() + interval '3 days', status_reason = 'test'
  WHERE id = 'd4000000-0000-4000-8000-000000000001';
 
+-- Cible de signalement (fixture par le propriétaire, avant de changer de rôle).
+INSERT INTO public.community_posts (id, author_id, content, audience)
+VALUES ('d3100000-0000-4000-8000-000000000099','d4000000-0000-4000-8000-000000000002','[TEST CRM] cible signalement','public')
+ON CONFLICT (id) DO NOTHING;
+
 SET LOCAL ROLE authenticated;
 SET LOCAL "request.jwt.claims" = '{"sub":"d4000000-0000-4000-8000-000000000001","role":"authenticated","aal":"aal2"}';
 
@@ -41,6 +46,11 @@ RESET ROLE;
 SET LOCAL "request.jwt.claims" = '{}';
 UPDATE public.user_profiles SET suspended_until = now() - interval '1 minute'
  WHERE id = 'd4000000-0000-4000-8000-000000000001';
+-- Cible de signalement (fixture par le propriétaire, avant de changer de rôle).
+INSERT INTO public.community_posts (id, author_id, content, audience)
+VALUES ('d3100000-0000-4000-8000-000000000099','d4000000-0000-4000-8000-000000000002','[TEST CRM] cible signalement','public')
+ON CONFLICT (id) DO NOTHING;
+
 SET LOCAL ROLE authenticated;
 SET LOCAL "request.jwt.claims" = '{"sub":"d4000000-0000-4000-8000-000000000001","role":"authenticated","aal":"aal2"}';
 SELECT is(public.account_can_write(), true, 'suspension échue : écriture de nouveau possible');
@@ -56,6 +66,11 @@ RESET ROLE;
 SET LOCAL "request.jwt.claims" = '{}';
 UPDATE public.user_profiles SET account_status = 'banned', suspended_until = null
  WHERE id = 'd4000000-0000-4000-8000-000000000001';
+-- Cible de signalement (fixture par le propriétaire, avant de changer de rôle).
+INSERT INTO public.community_posts (id, author_id, content, audience)
+VALUES ('d3100000-0000-4000-8000-000000000099','d4000000-0000-4000-8000-000000000002','[TEST CRM] cible signalement','public')
+ON CONFLICT (id) DO NOTHING;
+
 SET LOCAL ROLE authenticated;
 SET LOCAL "request.jwt.claims" = '{"sub":"d4000000-0000-4000-8000-000000000001","role":"authenticated","aal":"aal2"}';
 SELECT is(public.account_can_write(), false, 'compte banni : écriture refusée');

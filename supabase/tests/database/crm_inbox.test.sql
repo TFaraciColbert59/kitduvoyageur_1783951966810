@@ -19,6 +19,9 @@ INSERT INTO public.admin_roles (user_id, role) VALUES ('d6000000-0000-4000-8000-
 ON CONFLICT (user_id) DO UPDATE SET role = 'super_admin';
 
 -- Une source de chaque famille.
+INSERT INTO public.community_posts (id, author_id, content, audience)
+VALUES ('d3100000-0000-4000-8000-000000000001','d6000000-0000-4000-8000-000000000002','[TEST CRM] cible signalement','public')
+ON CONFLICT (id) DO NOTHING;
 INSERT INTO public.post_reports (id, post_id, reporter_id, reason)
 VALUES ('d6100000-0000-4000-8000-000000000001','d3100000-0000-4000-8000-000000000001',
         'd6000000-0000-4000-8000-000000000002','spam');
