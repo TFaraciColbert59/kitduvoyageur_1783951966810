@@ -154,6 +154,8 @@ export interface CarnetFeedRow {
   lng: NumericLike;
   distance_km: NumericLike;
   visibility: string | null;
+  /** Code pays du départ (FID-067) : absent des pages servies avant la migration. */
+  country_iso?: string | null;
   sort_key: NumericLike;
 }
 

@@ -447,14 +447,19 @@ test.describe('Explorer v2 — Carnets : tri, j’aime, Peek, état vide @ui-moc
     await expect(page).toHaveURL(/\/communaute/);
   });
 
-  test('2d. Peek : appui long 460 ms, 3 actions, Échap ferme l’aperçu seul', async ({ page }) => {
+  test('2d. Peek : appui long 460 ms, 4 actions dont Fermer, Échap ferme l’aperçu seul', async ({ page }) => {
     await setupExplorer(page);
     const tile = page.getByTestId('cv2-tile-carnet').first();
     await longPress(page, tile);
 
     const peek = page.getByRole('dialog', { name: /Aperçu :/ });
     await expect(peek).toBeVisible();
-    await expect(peek.getByRole('button')).toHaveCount(3);
+    // Maquette L1772 : `role=menu` et 4 `menuitem` (3 actions + « Fermer »).
+    const actions = peek.getByRole('menu', { name: 'Actions' });
+    await expect(actions).toBeVisible();
+    await expect(actions.getByRole('menuitem')).toHaveCount(4);
+    await expect(peek.getByRole('menuitem', { name: 'Fermer' })).toBeVisible();
+    await expect(peek.locator('[data-cv2-peek-close]')).toHaveCSS('min-height', /44px|2\.75rem|44/);
 
     await page.keyboard.press('Escape');
     await expect(peek).toHaveCount(0);

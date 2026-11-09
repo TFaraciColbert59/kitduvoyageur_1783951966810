@@ -5,7 +5,9 @@ import { EventTicket } from '../../shared/EventTicket';
 import type { EventCardVM, EventRegistration } from '../../shared/types';
 import { formatCountFr, formatDateShort, formatDateStamp, formatKm, formatTime } from '../../shared/format';
 import { ExploreIcon } from '../ExploreIcons';
+import { useEventTileWeather } from '../../data/useEventTileWeather';
 import { useLongPress } from '../useLongPress';
+import { weatherIconName } from '../weatherIcon';
 
 export type EventRegistrationState = EventRegistration;
 
@@ -129,6 +131,9 @@ export function EventTicketV2({
   onPeek,
 }: EventTicketV2Props) {
   const longPress = useLongPress({ onLongPress: (element) => onPeek(event, element) });
+  // FID-071 — pastille météo du billet : uniquement la variante « ticket »
+  // (maquette `.wxc`, L1071/L2466), dans la fenêtre J-7 et avec coordonnées.
+  const { weather } = useEventTileWeather(event, variant === 'ticket');
   const effectiveEvent: EventCardVM = {
     ...event,
     myStatus: status,
@@ -211,6 +216,17 @@ export function EventTicketV2({
       }}
     >
       <EventTicket event={effectiveEvent} />
+      {weather ? (
+        <span
+          className="lkdv-cv2x-wxc"
+          title={`${weather.label}, prévu le jour J`}
+          data-testid="cv2-event-weather"
+        >
+          <ExploreIcon name={weatherIconName(weather.label)} size={14} />
+          <b>{weather.tempMax}°</b>
+          <i>{weather.tempMin}°</i>
+        </span>
+      ) : null}
       <span className="lkdv-cv2x-event-foot-note">
         {footNote}
       </span>

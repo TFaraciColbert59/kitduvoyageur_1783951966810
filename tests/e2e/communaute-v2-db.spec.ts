@@ -134,10 +134,11 @@ test.describe('Créations réelles (base de test migrée) @mobile', () => {
     await page.getByRole('tablist', { name: 'Type de création' }).getByRole('tab', { name: 'Sortie' }).click();
     await page.getByTestId('cv2-field-title').locator('input').fill('Recette e2e — sortie');
     await page.getByTestId('cv2-field-location').locator('input').fill('Vercors');
-    await nextStep(page, 1);
-    // Date + heure minimales, puis participants/sécurité par défaut.
+    // FID-064 : date/heure de rendez-vous en étape 1 (maquette).
     const tomorrow = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
     await page.getByTestId('cv2-field-date').locator('input').fill(tomorrow);
+    await page.getByTestId('cv2-field-startTime').locator('input').fill('08:30');
+    await nextStep(page, 1);
     await nextStep(page, 2);
     await nextStep(page, 3);
     await page.getByRole('button', { name: 'Créer la sortie' }).click();
@@ -152,6 +153,8 @@ test.describe('Créations réelles (base de test migrée) @mobile', () => {
     await openCreation(page);
     await page.getByRole('tablist', { name: 'Type de création' }).getByRole('tab', { name: 'Club' }).click();
     await page.getByTestId('cv2-field-name').locator('input').fill('Recette e2e — club');
+    // FID-022/FID-064 : au moins une activité, en étape Identité.
+    await page.getByRole('button', { name: 'Randonnée' }).first().click();
     await nextStep(page, 1);
     await page.getByTestId('cv2-field-description').locator('textarea').fill('Club de recette e2e.');
     await nextStep(page, 2);

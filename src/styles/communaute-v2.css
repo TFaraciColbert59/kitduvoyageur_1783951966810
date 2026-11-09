@@ -408,7 +408,16 @@ button.lkdv-cv2-tile:active {
   font: 600 11px/1.2 var(--font-sans);
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--lkv-text-secondary);
+  /* FID-080 : encre AA sur le verre translucide (mesure au pire cas dans
+     `tokens.css`, jeton `--cv2-eyebrow-ink`). */
+  color: var(--cv2-eyebrow-ink);
+}
+
+/* FID-080 — le libellé de section du tiroir Création (`.lkdv-cv2c-section-label`,
+   `create-v2.css`) suit le même jeton : même verre, même taille de surtitre.
+   Règle posée ici (fichier du système v2) pour ne pas modifier `create/**`. */
+.lkdv-communaute-v2 .lkdv-cv2c-section-label {
+  color: var(--cv2-eyebrow-ink);
 }
 
 .lkdv-cv2-eyebrow--sage {

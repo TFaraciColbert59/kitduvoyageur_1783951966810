@@ -174,6 +174,8 @@
 .lkdv-cv2x-visa {
   left: 8px;
   bottom: 8px;
+  align-items: center;
+  gap: 1px;
   padding: 4px 9px;
   border: 1.5px dashed var(--lkv-text-inverted);
   border-radius: 7px;
@@ -184,8 +186,16 @@
   transform: rotate(-4deg);
 }
 
+/* Maquette (`.visa`, L1007-1008) : code pays 700 12 px, puis la ligne
+   durée · distance en mono 10,5 px capitales. FID-067. */
 .lkdv-cv2x-visa b {
-  font: 700 10.5px/1.15 var(--font-mono);
+  font: 700 12px/1 var(--font-mono);
+  letter-spacing: 0.14em;
+}
+
+.lkdv-cv2x-visa i {
+  font: 600 10.5px/1.1 var(--font-mono);
+  font-style: normal;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -248,11 +258,47 @@
 }
 
 .lkdv-cv2x-live > i {
+  position: relative;
   width: 7px;
   height: 7px;
   border-radius: 50%;
   background: var(--sage-300);
   box-shadow: 0 0 0 2px var(--lkv-secondary-subtle);
+}
+
+/* FID-067 — anneau conique animé autour du point « En route ».
+   Maquette (`.tvs.live .tv:first-child::before`, L1022) : conic-gradient
+   tint → accent → sage-300 → good → tint, rotation linéaire 3,4 s. Le masque
+   ne garde qu'un liseré de 1,5 px, donc la pastille et son texte restent
+   intacts. Aucune couleur littérale : jetons du système uniquement. */
+.lkdv-cv2x-live > i::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  padding: 1.5px;
+  background: conic-gradient(
+    from 0deg,
+    var(--lkv-forest-900),
+    var(--lkv-action),
+    var(--sage-300),
+    var(--lkv-success),
+    var(--lkv-forest-900)
+  );
+  -webkit-mask:
+    linear-gradient(var(--lkv-text-inverted) 0 0) content-box,
+    linear-gradient(var(--lkv-text-inverted) 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(var(--lkv-text-inverted) 0 0) content-box exclude,
+    linear-gradient(var(--lkv-text-inverted) 0 0);
+  animation: lkdv-cv2x-ring 3.4s linear infinite;
+}
+
+@keyframes lkdv-cv2x-ring {
+  to {
+    transform: rotate(1turn);
+  }
 }
 
 /* ── Clubs ─────────────────────────────────────────────────────────────── */
@@ -484,6 +530,42 @@
   justify-content: flex-end;
 }
 
+.lkdv-cv2x-wxc {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: var(--lkv-radius-full);
+  background: var(--glass-bg-medium);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  color: var(--lkv-forest-900);
+  font: 700 10.5px/1 var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+.lkdv-cv2x-wxc svg {
+  width: 14px;
+  height: 14px;
+  flex: none;
+}
+
+.lkdv-cv2x-wxc b {
+  font: 700 10.5px/1 var(--font-sans);
+}
+
+.lkdv-cv2x-wxc i {
+  font: 500 10.5px/1 var(--font-sans);
+  font-style: normal;
+  color: var(--lkv-text-secondary);
+}
+
 .lkdv-cv2x-event-foot-note {
   position: absolute;
   left: 12px;
@@ -653,7 +735,7 @@
 /* ── Détails empilés ───────────────────────────────────────────────────── */
 
 .lkdv-cv2x-detail-title {
-  margin: 2px 0 0;
+  margin: 0;
   overflow-wrap: anywhere;
   font: 700 20px/1.2 var(--font-display);
   letter-spacing: -0.02em;
@@ -689,6 +771,28 @@
 .lkdv-cv2x-club-detail > .lkdv-cv2-eyebrow,
 .lkdv-cv2x-event-detail > .lkdv-cv2-eyebrow {
   font-weight: 700;
+}
+
+/* FID-084 — densité du détail (club, sortie) alignée sur les valeurs mesurées
+   de la maquette : `.lp-pane` / `.ds-pane` = gap 8 px (L347/L566), `.card2` =
+   padding 11 px 12 px et gap 6 px (L383), titres sans marge verticale
+   (`.sd-title`, `.cd-head h2`, L1089). Les tailles de texte ne changent pas.
+   Portée volontairement limitée aux détails : les cartes des formulaires
+   Création gardent leur densité. */
+.lkdv-cv2x-club-detail,
+.lkdv-cv2x-event-detail {
+  gap: 8px;
+}
+
+.lkdv-cv2x-club-detail .lkdv-cv2-card,
+.lkdv-cv2x-event-detail .lkdv-cv2-card {
+  padding: 11px 12px;
+  gap: 6px;
+}
+
+.lkdv-cv2x-event-detail > .lkdv-cv2x-detail-title,
+.lkdv-cv2x-club-detail-head h2 {
+  margin-top: 0;
 }
 
 .lkdv-cv2x-club-detail-head {
@@ -949,11 +1053,6 @@
   display: block;
   font: 400 10.5px/1.3 var(--font-sans);
   color: var(--lkv-text-secondary);
-}
-
-.lkdv-cv2x-weather-hint {
-  margin: 0;
-  padding: 0 2px;
 }
 
 .lkdv-cv2x-organizer-avatar {
@@ -1793,7 +1892,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .lkdv-cv2x-heart.is-pop svg,
-  .lkdv-cv2x-spinner {
+  .lkdv-cv2x-spinner,
+  .lkdv-cv2x-live > i::before {
     animation: none;
   }
   .lkdv-cv2x-join {

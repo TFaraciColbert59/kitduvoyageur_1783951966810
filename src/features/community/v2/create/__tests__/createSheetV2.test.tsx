@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { within, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { User } from '@supabase/supabase-js';
 import { ToastProvider } from '@/contexts/ToastContext';
 import { CreateSheetV2 } from '../CreateSheetV2';
@@ -112,7 +112,10 @@ describe('CreateSheetV2 — moteur et coque', () => {
     renderSheet();
     const banner = await screen.findByTestId('cv2-draft-banner');
     expect(banner.textContent).toContain('Brouillon restauré');
+    // FID-034 : « Effacer » ouvre la confirmation « Effacer le brouillon ? ».
     fireEvent.click(screen.getByRole('button', { name: 'Effacer' }));
+    const confirm = await screen.findByRole('alertdialog', { name: 'Effacer le brouillon ?' });
+    fireEvent.click(within(confirm).getByRole('button', { name: 'Effacer' }));
     await waitFor(() => {
       expect(screen.queryByTestId('cv2-draft-banner')).toBeNull();
     });

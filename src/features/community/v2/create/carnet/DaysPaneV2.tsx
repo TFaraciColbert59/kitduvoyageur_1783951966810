@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Camera, ChevronDown, ChevronUp, ImagePlus, Loader2, Plus, Trash2 } from 'lucide-react';
 import { useFormContext, useFormState } from 'react-hook-form';
 import {
@@ -22,6 +22,7 @@ import {
 } from '../fields/media';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { HAS_CARNET_NIGHTS } from './capabilities';
+import { carnetDayCountV2, clampCarnetDaysV2, syncCarnetDaysV2 } from './daySync';
 
 const MOMENT_LABELS: Record<CarnetMomentKindV2, string> = {
   photo: 'Photo',
@@ -169,6 +170,30 @@ export function DaysPaneV2({ user }: { user: { id: string } | null }) {
     form.setValue('days', next, { shouldDirty: true, shouldValidate: true });
   };
 
+  /**
+   * FID-030 — à l'entrée de l'étape, les jours sont **initialisés depuis les
+   * dates** (min 1) : nombre de jours du stepper d'Infos, ou nombre de jours
+   * des dates s'il est connu. L'état vide ne subsiste que **sans aucune date**
+   * (maquette `syncDays`, HTML L2969 et `onStep` Jours).
+   */
+  useEffect(() => {
+    const current = form.getValues('days') ?? [];
+    if (current.length > 0) return;
+    const startDate = form.getValues('startDate') ?? '';
+    if (!startDate) return;
+    const fromDates = carnetDayCountV2(startDate, form.getValues('endDate') ?? '');
+    const count = clampCarnetDaysV2(fromDates || form.getValues('nbJours') || 1);
+    form.setValue('days', syncCarnetDaysV2([], count, startDate), {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    form.setValue('nbJours', count, { shouldDirty: true });
+  }, [form, values.startDate]);
+
+  const setDayCount = (count: number) => {
+    form.setValue('nbJours', clampCarnetDaysV2(count), { shouldDirty: true });
+  };
+
   const updateDay = (index: number, patch: Partial<CarnetDayV2>) => {
     setDays(days.map((entry, position) => (position === index ? { ...entry, ...patch } : entry)));
   };
@@ -196,27 +221,8 @@ export function DaysPaneV2({ user }: { user: { id: string } | null }) {
       : values.startDate || '';
     const next = [...days, newDay(nextNumber, nextDate)];
     setDays(next);
+    setDayCount(next.length);
     setActive(next.length - 1);
-    haptic('selection');
-  };
-
-  const proposeDays = () => {
-    if (!values.startDate || !values.endDate) return;
-    const start = new Date(`${values.startDate}T12:00:00`).getTime();
-    const end = new Date(`${values.endDate}T12:00:00`).getTime();
-    if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) return;
-    const count = Math.min(60, Math.round((end - start) / 86_400_000) + 1);
-    const next: CarnetDayV2[] = days.slice(0, count);
-    for (let index = next.length; index < count; index += 1) {
-      const date = new Date(start + index * 86_400_000).toISOString().slice(0, 10);
-      next.push(newDay(index + 1, date));
-    }
-    for (let index = 0; index < next.length; index += 1) {
-      const date = new Date(start + index * 86_400_000).toISOString().slice(0, 10);
-      if (!next[index].date) next[index] = { ...next[index], date };
-    }
-    setDays(next);
-    setActive(0);
     haptic('selection');
   };
 
@@ -246,15 +252,10 @@ export function DaysPaneV2({ user }: { user: { id: string } | null }) {
           </button>
         ) : null}
       </div>
-      {values.startDate && values.endDate ? (
-        <button type="button" className="lkdv-cv2-chip lkdv-cv2-chip--sm" onClick={proposeDays}>
-          Proposer les jours selon les dates
-        </button>
-      ) : null}
-
       {!day ? (
         <p className="lkdv-cv2c-empty">
-          Aucun jour pour l’instant. Ajoute un jour, puis raconte chaque moment.
+          Aucune date de départ : ajoute un jour, puis raconte chaque moment. Dès que le
+          carnet a des dates, les jours se remplissent tout seuls.
         </p>
       ) : (
         <>
@@ -353,7 +354,9 @@ export function DaysPaneV2({ user }: { user: { id: string } | null }) {
               type="button"
               className="lkdv-cv2-chip lkdv-cv2-chip--sm"
               onClick={() => {
-                setDays(days.filter((_, position) => position !== clampedActive));
+                const next = days.filter((_, position) => position !== clampedActive);
+                setDays(next);
+                setDayCount(next.length);
                 setActive(Math.max(0, clampedActive - 1));
               }}
             >

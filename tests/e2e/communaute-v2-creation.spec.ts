@@ -200,7 +200,11 @@ test.describe('Création v2 — moteur commun, 6 types, étapes @ui-mock @mobile
     const banner = page.getByTestId('cv2-draft-banner');
     await expect(banner).toBeVisible();
     await expect(banner).toContainText('Brouillon restauré');
+    // FID-034 : « Effacer » ouvre la confirmation « Effacer le brouillon ? ».
     await banner.getByRole('button', { name: 'Effacer' }).click();
+    const clearConfirm = page.getByRole('alertdialog', { name: 'Effacer le brouillon ?' });
+    await expect(clearConfirm).toBeVisible();
+    await clearConfirm.getByRole('button', { name: 'Effacer' }).click();
     await expect(banner).toHaveCount(0);
   });
 
@@ -287,19 +291,24 @@ test.describe('Création v2 — moteur commun, 6 types, étapes @ui-mock @mobile
     });
     await expectNotCovered(page, footNext, { label: 'Kit Inventaire — bouton final' });
 
-    // Club — étape 2 « Univers » : dernier champ texte = zone d’activité.
+    // Club — maquette : activités + zone d'activité en étape 1 « Identité »
+    // (FID-064), le dernier champ de l'étape 2 « Univers » est la description.
     await capsule.getByRole('tab', { name: 'Club' }).click();
     const clubName = page.getByTestId('cv2-field-name').locator('input');
     await expect(clubName).toBeVisible();
     await clubName.fill('Club des Crêtes');
+    await page.getByRole('button', { name: 'Randonnée' }).first().click();
+    const universZone = page.getByTestId('cv2-field-locationLabel').locator('input');
+    await expect(universZone).toBeVisible();
+    await expectNotCovered(page, universZone, { label: 'Club Identité — zone d’activité' });
     await page
       .getByRole('tablist', { name: 'Étapes de la création : Club' })
       .getByRole('tab', { name: /Étape 2/ })
       .click();
     await expect(page.getByTestId('cv2-form-club')).toHaveAttribute('data-step', '1');
-    const universZone = page.getByTestId('cv2-field-locationLabel').locator('input');
-    await expect(universZone).toBeVisible();
-    await expectNotCovered(page, universZone, { label: 'Club Univers — zone d’activité' });
+    const clubDescription = page.getByTestId('cv2-field-description').locator('textarea');
+    await expect(clubDescription).toBeVisible();
+    await expectNotCovered(page, clubDescription, { label: 'Club Univers — description' });
     await expectNotCovered(page, footNext, { label: 'Club Univers — bouton final' });
 
     // Sortie — étape 1 : dernier champ = point de rendez-vous.

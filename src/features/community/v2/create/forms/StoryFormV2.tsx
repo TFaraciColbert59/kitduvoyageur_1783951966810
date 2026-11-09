@@ -10,7 +10,6 @@ import {
   Play,
   Pause,
   CloudSun,
-  MapPin,
   Loader2,
 } from 'lucide-react';
 import { useFormContext, useFormState, type UseFormReturn } from 'react-hook-form';
@@ -31,6 +30,7 @@ import { PlaceFieldV2 } from '../fields/PlaceFieldV2';
 import { STORY_LIMITS } from '../fields/media';
 import { StoryStageV2, type StoryTransformV2 } from '../story/StoryStageV2';
 import { cameraAvailable, captureStoryPhoto } from '../story/camera';
+import { carnetDayCountV2 } from '../carnet/daySync';
 import { createClient } from '@/lib/supabase/client';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import type { CreateFormV2Props } from './types';
@@ -72,6 +72,19 @@ interface CarnetOption {
   id: string;
   title: string;
   visibility: string | null;
+  /** Nombre de jours du carnet (dates, sinon nb_nuits + 1). */
+  days: number;
+}
+
+function linkLiveLabel(url: string): string {
+  if (!url.trim()) return 'Adresse attendue : http ou https.';
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') return 'Lien valide.';
+  } catch {
+    /* adresse incomplète : la frappe continue */
+  }
+  return 'Lien invalide (adresse http ou https attendue).';
 }
 
 function weatherLabelFor(symbol: string | null, temperature: number | null): string {
@@ -117,6 +130,9 @@ function StoryMediaStep({
   const values = form.watch();
   const media = values.media?.[0] ?? null;
   const video = media?.type.startsWith('video/') ?? false;
+  const durationMs = media?.durationMs ?? 0;
+  const trimStart = values.trimStartMs ?? 0;
+  const trimEnd = values.trimEndMs ?? Math.min(durationMs, 60_000);
   const status = !media
     ? 'Ajoute un média pour commencer'
     : media.status === 'uploaded'
@@ -190,6 +206,51 @@ function StoryMediaStep({
           {cameraNote}
         </p>
       ) : null}
+      {/* FID-050 : les curseurs de rognage sont sur l'étape 1 (maquette `.trim`,
+          HTML L2894), pas dans l'Édition. Bornes : 1 s mini, 60 s maxi. */}
+      {media?.type.startsWith('video/') && (media.durationMs ?? 0) > 0 ? (
+        <div className="lkdv-cv2c-trim">
+          <span className="lkdv-cv2-field-label">
+            Extraire la vidéo · {Math.round((trimEnd - trimStart) / 1000)} s
+          </span>
+          <label className="lkdv-cv2c-trim-row">
+            <span className="lkdv-cv2-field-hint">Début</span>
+            <input
+              type="range"
+              min={0}
+              max={Math.max(0, durationMs - 1000)}
+              step={100}
+              value={trimStart}
+              aria-label="Début de l’extrait"
+              onChange={(event) => {
+                const next = Math.min(Number(event.target.value), trimEnd - 1000);
+                form.setValue('trimStartMs', Math.max(0, next), {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                });
+              }}
+            />
+          </label>
+          <label className="lkdv-cv2c-trim-row">
+            <span className="lkdv-cv2-field-hint">Fin</span>
+            <input
+              type="range"
+              min={Math.min(durationMs, 1000)}
+              max={durationMs}
+              step={100}
+              value={trimEnd}
+              aria-label="Fin de l’extrait"
+              onChange={(event) => {
+                const next = Math.max(Number(event.target.value), trimStart + 1000);
+                form.setValue('trimEndMs', Math.min(next, Math.min(durationMs, trimStart + 60_000)), {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                });
+              }}
+            />
+          </label>
+        </div>
+      ) : null}
     </>
   );
 }
@@ -219,7 +280,7 @@ function LayerTools({
   return (
     <div className="lkdv-cv2c-story-tools">
       <div className="lkdv-cv2c-section-head">
-        <span className="lkdv-cv2c-section-label">Texte posé</span>
+        <span className="lkdv-cv2c-section-label">Éléments</span>
         <button
           type="button"
           className="lkdv-cv2-chip lkdv-cv2-chip--sm"
@@ -307,13 +368,10 @@ function LayerTools({
   );
 }
 
-function StickerTools({ user }: { user: User | null }) {
+function StickerTools() {
   const form = useFormContext<StoryFormValuesV2>();
   const stickers = form.watch('stickers');
-  const media = form.watch('media') ?? [];
   const [weatherState, setWeatherState] = useState<'idle' | 'loading' | 'error'>('idle');
-  const [carnets, setCarnets] = useState<CarnetOption[] | null>(null);
-  const [carnetOpen, setCarnetOpen] = useState(false);
   const [linkOpen, setLinkOpen] = useState(Boolean(stickers.link));
   const { haptic } = useHapticFeedback();
   const place = stickers.place;
@@ -343,37 +401,6 @@ function StickerTools({ user }: { user: User | null }) {
       setWeatherState('error');
     }
   };
-
-  const loadCarnets = async () => {
-    if (!user) return;
-    setCarnetOpen(true);
-    if (carnets) return;
-    try {
-      const supabase = createClient();
-      const { data } = await supabase
-        .from('carnets')
-        .select('id, title, visibility')
-        .eq('author_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(10);
-      setCarnets(Array.isArray(data) ? (data as CarnetOption[]) : []);
-    } catch {
-      setCarnets([]);
-    }
-  };
-
-  const video = media[0];
-  const durationMs = video?.durationMs ?? 0;
-  const trimStart = form.watch('trimStartMs') ?? 0;
-  const trimEnd = form.watch('trimEndMs') ?? Math.min(durationMs, 60_000);
-
-  useEffect(() => {
-    if (!video?.type.startsWith('video/') || durationMs <= 0) return;
-    if (form.getValues('trimStartMs') == null) form.setValue('trimStartMs', 0);
-    if (form.getValues('trimEndMs') == null) {
-      form.setValue('trimEndMs', Math.min(durationMs, 60_000));
-    }
-  }, [durationMs, form, video?.type]);
 
   return (
     <div className="lkdv-cv2c-story-tools">
@@ -478,10 +505,6 @@ function StickerTools({ user }: { user: User | null }) {
         >
           Ajouter un lien
         </button>
-        <button type="button" className="lkdv-cv2-chip lkdv-cv2-chip--lg" onClick={() => void loadCarnets()}>
-          <MapPin size={13} aria-hidden="true" />
-          Lier à un carnet
-        </button>
       </div>
       {linkOpen ? (
         <>
@@ -492,6 +515,11 @@ function StickerTools({ user }: { user: User | null }) {
             inputMode="url"
             hint="Le lien est vérifié en direct (http ou https)."
           />
+          {/* FID-050 : validation **à la frappe** (le schéma revalide à
+              l'envoi ; ici on informe sans bloquer l'étape). */}
+          <p className="lkdv-cv2-field-hint" role="status">
+            {linkLiveLabel(stickers.link?.url ?? '')}
+          </p>
           <TextFieldV2 name="stickers.link.label" label="Titre du lien" placeholder="Mon carnet" />
           <button
             type="button"
@@ -505,84 +533,133 @@ function StickerTools({ user }: { user: User | null }) {
           </button>
         </>
       ) : null}
-      {carnetOpen ? (
-        <div className="lkdv-cv2c-story-tools">
-          {carnets === null ? (
-            <p className="lkdv-cv2-field-hint">Chargement de tes carnets…</p>
-          ) : carnets.length === 0 ? (
-            <p className="lkdv-cv2-field-hint">Aucun carnet à lier pour l’instant.</p>
-          ) : (
-            <ul className="lkdv-cv2c-product-list">
-              {carnets.map((carnet) => (
-                <li key={carnet.id}>
-                  <button
-                    type="button"
-                    className="lkdv-cv2c-product-row"
-                    onClick={() => {
-                      setStickers({ carnetId: carnet.id, carnetTitle: carnet.title });
-                      setCarnetOpen(false);
-                      haptic('selection');
-                    }}
-                  >
-                    <b>{carnet.title}</b>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-          {stickers.carnetId ? (
-            <button
-              type="button"
-              className="lkdv-cv2-chip lkdv-cv2-chip--sm"
-              onClick={() => setStickers({ carnetId: '', carnetTitle: '' })}
-            >
-              Retirer le carnet lié ({stickers.carnetTitle || 'carnet'})
-            </button>
-          ) : null}
-        </div>
-      ) : null}
+    </div>
+  );
+}
 
-      {video?.type.startsWith('video/') && durationMs > 0 ? (
-        <div className="lkdv-cv2c-trim">
-          <span className="lkdv-cv2-field-label">
-            Extraire la vidéo · {Math.round((trimEnd - trimStart) / 1000)} s
-          </span>
-          <label className="lkdv-cv2c-trim-row">
-            <span className="lkdv-cv2-field-hint">Début</span>
-            <input
-              type="range"
-              min={0}
-              max={Math.max(0, durationMs - 1000)}
-              step={100}
-              value={trimStart}
-              aria-label="Début de l’extrait"
-              onChange={(event) => {
-                const next = Math.min(Number(event.target.value), trimEnd - 1000);
-                form.setValue('trimStartMs', Math.max(0, next), {
-                  shouldDirty: true,
-                  shouldValidate: true,
-                });
+/**
+ * « Lier à un carnet » de la Diffusion (maquette L2905, FID-028). Les carnets
+ * de l'utilisateur sont lus dans `carnets` ; le nombre de jours vient des
+ * dates (`start_date`/`end_date`), à défaut de `nb_nuits + 1`. Le jour choisi
+ * est borné 1..60 comme la colonne `linked_carnet_day` (migration lot F L22).
+ */
+function StoryCarnetLink() {
+  const form = useFormContext<StoryFormValuesV2>();
+  const stickers = form.watch('stickers');
+  const { user } = useCreateSheet();
+  const [carnets, setCarnets] = useState<CarnetOption[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const { haptic } = useHapticFeedback();
+
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const supabase = createClient();
+        const { data, error: queryError } = await supabase
+          .from('carnets')
+          .select('id, title, visibility, start_date, end_date, nb_nuits')
+          .eq('author_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(20);
+        if (queryError) throw queryError;
+        if (cancelled) return;
+        setCarnets(
+          (Array.isArray(data) ? data : []).map((row) => {
+            const record = row as Record<string, unknown>;
+            const start = typeof record.start_date === 'string' ? record.start_date : '';
+            const end = typeof record.end_date === 'string' ? record.end_date : '';
+            const nights = typeof record.nb_nuits === 'number' ? record.nb_nuits : 0;
+            const fromDates = carnetDayCountV2(start, end);
+            return {
+              id: String(record.id ?? ''),
+              title: String(record.title ?? 'Carnet'),
+              visibility: typeof record.visibility === 'string' ? record.visibility : null,
+              days: Math.max(1, Math.min(60, fromDates || nights + 1 || 1)),
+            };
+          }),
+        );
+      } catch {
+        if (!cancelled) {
+          setCarnets([]);
+          setError('Tes carnets sont indisponibles pour le moment.');
+        }
+      }
+    };
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
+
+  const setStickers = (patch: Partial<StoryFormValuesV2['stickers']>) => {
+    form.setValue('stickers', { ...stickers, ...patch }, { shouldDirty: true, shouldValidate: true });
+  };
+
+  const selected = carnets?.find((carnet) => carnet.id === stickers.carnetId) ?? null;
+
+  return (
+    <div className="lkdv-cv2-field">
+      <span className="lkdv-cv2-field-label" id="cv2c-story-carnet-label">
+        Lier à un carnet
+      </span>
+      <div className="lkdv-cv2-chips" role="radiogroup" aria-labelledby="cv2c-story-carnet-label">
+        <button
+          type="button"
+          role="radio"
+          aria-checked={!stickers.carnetId}
+          className="lkdv-cv2-chip lkdv-cv2-chip--lg"
+          onClick={() => {
+            setStickers({ carnetId: '', carnetTitle: '', carnetDay: null });
+            haptic('selection');
+          }}
+        >
+          Aucun
+        </button>
+        {carnets?.map((carnet) => (
+          <button
+            key={carnet.id}
+            type="button"
+            role="radio"
+            aria-checked={stickers.carnetId === carnet.id}
+            className="lkdv-cv2-chip lkdv-cv2-chip--lg"
+            onClick={() => {
+              setStickers({ carnetId: carnet.id, carnetTitle: carnet.title, carnetDay: 1 });
+              haptic('selection');
+            }}
+          >
+            {carnet.title}
+          </button>
+        ))}
+      </div>
+      {carnets === null ? (
+        <p className="lkdv-cv2-field-hint" role="status">
+          Chargement de tes carnets…
+        </p>
+      ) : null}
+      {error ? (
+        <p className="lkdv-cv2-field-hint" role="status">
+          {error}
+        </p>
+      ) : null}
+      {selected ? (
+        <div className="lkdv-cv2-chips" role="radiogroup" aria-label="Jour du carnet">
+          {Array.from({ length: selected.days }, (_, index) => index + 1).map((day) => (
+            <button
+              key={day}
+              type="button"
+              role="radio"
+              aria-checked={(stickers.carnetDay ?? 1) === day}
+              className="lkdv-cv2-chip lkdv-cv2-chip--sm"
+              onClick={() => {
+                setStickers({ carnetDay: day });
+                haptic('selection');
               }}
-            />
-          </label>
-          <label className="lkdv-cv2c-trim-row">
-            <span className="lkdv-cv2-field-hint">Fin</span>
-            <input
-              type="range"
-              min={Math.min(durationMs, 1000)}
-              max={durationMs}
-              step={100}
-              value={trimEnd}
-              aria-label="Fin de l’extrait"
-              onChange={(event) => {
-                const next = Math.max(Number(event.target.value), trimStart + 1000);
-                form.setValue('trimEndMs', Math.min(next, Math.min(durationMs, trimStart + 60_000)), {
-                  shouldDirty: true,
-                  shouldValidate: true,
-                });
-              }}
-            />
-          </label>
+            >
+              Jour {day}
+            </button>
+          ))}
         </div>
       ) : null}
     </div>
@@ -635,6 +712,10 @@ function StoryDiffusionStep() {
           ))}
         </div>
       </div>
+      {/* FID-028 — lien carnet **et choix du jour** dans la Diffusion
+          (maquette L2905 : « Lier à un carnet » puis chips « Jour n »). Le
+          jour est écrit dans `stickers.carnetDay` → `linked_carnet_day`. */}
+      <StoryCarnetLink />
       <button
         type="button"
         className="lkdv-cv2c-switch"
@@ -797,7 +878,7 @@ function StoryBody({
             hint="Lu par les lecteurs d’écran. Facultatif."
           />
           <LayerTools selectedId={selectedLayerId} onSelect={setSelectedLayerId} />
-          <StickerTools user={user} />
+          <StickerTools />
         </>
       ) : null}
 

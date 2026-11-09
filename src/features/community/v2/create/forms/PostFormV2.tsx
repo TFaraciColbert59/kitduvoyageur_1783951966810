@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
-import { ArrowRight, CalendarDays, Camera, HelpCircle, PenLine } from 'lucide-react';
+import { ArrowRight, CalendarDays, Camera, HelpCircle, Mountain, PenLine } from 'lucide-react';
 import { useFormContext, useFormState } from 'react-hook-form';
 import { CommunityFeedPost } from '@/features/community/feed/CommunityFeedPost';
 import type { FeedPost } from '@/features/community/feed/useCommunityFeed';
@@ -15,9 +15,7 @@ import { useCreateSheet } from '../CreateSheetContext';
 import { createCommunityPostV2 } from '../createRpc';
 import { TextAreaFieldV2, TextFieldV2, readError } from '../fields/FieldV2';
 import { MediaFieldV2 } from '../fields/MediaFieldV2';
-import { MentionFieldV2 } from '../fields/MentionFieldV2';
 import { PlaceFieldV2 } from '../fields/PlaceFieldV2';
-import { TagsFieldV2 } from '../fields/TagsFieldV2';
 import { IMAGE_LIMITS, mediaProgress } from '../fields/media';
 import { useMyClubsV2 } from '../club/useMyClubsV2';
 import { deleteMediaObjectsV2, uploadedObjectsOf } from '../fields/media';
@@ -118,6 +116,10 @@ function FormatStep() {
       <div className="lkdv-cv2c-section-head">
         <span className="lkdv-cv2-field-label" id="cv2c-format-label">
           Format
+        </span>
+        {/* FID-047 : pastille d'audience à droite, reflet du choix d'audience. */}
+        <span className="lkdv-cv2c-audience-pill" aria-hidden="true">
+          {AUDIENCE_OPTIONS.find((option) => option.value === values.audience)?.label ?? 'Fil public'}
         </span>
       </div>
       <div className="lkdv-cv2c-format-grid" role="radiogroup" aria-labelledby="cv2c-format-label">
@@ -370,13 +372,12 @@ function DiffusionStep() {
           j’aime visibles
         </small>
       </div>
-      <TagsFieldV2 />
-      <MentionFieldV2 />
-      {/*
-        Présentation de la maquette (deux interrupteurs, L2832-2836) sans
-        activer la fonction absente du produit : les interrupteurs sont inertes
-        et une seule mention « prochaine version » l'explique.
-      */}
+      {/* J-14 / FID-062 : les réglages de la maquette (commentaires, j'aime,
+          programmation) restent **présentés** ; ils n'ont pas d'effet produit
+          (pas de cron d'envoi, pas de commentaires par publication). Une seule
+          mention « prochaine version » l'explique, au lieu des champs
+          Hashtags/Mentions séparés (retirés : le hint maquette vit dans la
+          légende, `Tape @ pour mentionner, # pour un hashtag`). */}
       <div className="lkdv-cv2-card lkdv-cv2c-inert-switches">
         <span className="lkdv-cv2c-inert-row">
           <span>
@@ -400,6 +401,29 @@ function DiffusionStep() {
             </span>
           </button>
         </span>
+        <span className="lkdv-cv2c-inert-row">
+          <span>
+            <b>Programmer la publication</b>
+            <small>Choisis la date et l’heure d’envoi</small>
+          </span>
+          <button type="button" className="lkdv-cv2c-switch" role="switch" aria-checked={false} aria-disabled="true" disabled>
+            <span className="lkdv-cv2c-switch-track" aria-hidden="true">
+              <span className="lkdv-cv2c-switch-dot" />
+            </span>
+          </button>
+        </span>
+        {/* Champs présentés comme la maquette (L2834), désactivés : aucune
+            programmation n'est enregistrée tant que le champ n'est pas branché. */}
+        <div className="lkdv-cv2c-date-range" aria-hidden="true">
+          <label className="lkdv-cv2-field-hint">
+            Date
+            <input type="date" className="lkdv-cv2-input" disabled />
+          </label>
+          <label className="lkdv-cv2-field-hint">
+            Heure
+            <input type="time" className="lkdv-cv2-input" disabled />
+          </label>
+        </div>
         <p className="lkdv-cv2-field-hint">
           Ces réglages, comme la programmation de la publication, arrivent dans une prochaine
           version.
@@ -424,6 +448,14 @@ function PostBody({
           (T8a / T12) : l'aperçu est `aria-label="Aperçu en direct"`. */}
       {api.active ? (
         <div className="lkdv-cv2c-live-preview" inert aria-hidden="true">
+          {/* FID-047 : visuel de repli de l'aperçu quand le format Photo n'a
+              pas encore de média (maquette : `art(m.art) || 'meadow'`). */}
+          {values.format === 'photo' && values.media.length === 0 ? (
+            <span className="lkdv-cv2c-post-placeholder">
+              <Mountain size={22} aria-hidden="true" />
+              <small>Ton aperçu apparaîtra ici.</small>
+            </span>
+          ) : null}
           <CommunityFeedPost post={preview} user={user} embedded />
         </div>
       ) : null}

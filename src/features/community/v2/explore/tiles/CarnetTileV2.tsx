@@ -140,11 +140,13 @@ export function CarnetTileV2({
             </span>
           ) : null}
           <span className="lkdv-cv2-visa lkdv-cv2x-visa" aria-hidden="true">
-            {/* Maquette (`maquette-communaute.html` L2321) : le visa porte
-                « 4 J · 62,4 KM ». Le code pays n'est pas exposé par les données
-                (Carnets#2, documenté) : on n'affiche donc que la ligne durée ·
-                distance, sans la 2e ligne « n VOYAGEURS » ajoutée par la V2. */}
-            <b>{visaLabel(carnet)}</b>
+            {/* Maquette (`maquette-communaute.html` L2321) : le visa porte le
+                pays puis « 4 J · 62,4 KM ». `country_iso` vient du feed depuis
+                FID-067 ; absent, on n'affiche que la ligne durée · distance
+                (aucun code inventé) — sans la 2e ligne « n VOYAGEURS » que la
+                V2 avait ajoutée. */}
+            {carnet.countryIso ? <b>{carnet.countryIso}</b> : null}
+            <i>{visaLabel(carnet)}</i>
           </span>
         </span>
 

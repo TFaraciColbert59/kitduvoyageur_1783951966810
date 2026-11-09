@@ -3,6 +3,7 @@
 import React, {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -94,6 +95,13 @@ export interface CommunitySheetShellProps {
   island?: ReactNode;
   /** Nature du tiroir : pose `data-testid="communaute-v2-<kind>"` sur la couche. */
   kind?: 'explore' | 'create';
+  /**
+   * FID-077 — vrai quand l'utilisateur n'est pas connecté (ou anonyme) : pose
+   * une pilule « Mode invité · lecture seule » sous la capsule, hors du corps
+   * défilant et hors du détail empilé. Testable : `data-testid="cv2-guest-mode"`,
+   * `role="status"`.
+   */
+  guestNotice?: boolean;
 }
 
 function cx(...classes: Array<string | false | null | undefined>): string {
@@ -133,6 +141,7 @@ export function CommunitySheetShell({
   className,
   island = null,
   kind,
+  guestNotice = false,
 }: CommunitySheetShellProps) {
   const { haptic } = useHapticFeedback();
   const [mounted, setMounted] = useState(open);
@@ -263,7 +272,11 @@ export function CommunitySheetShell({
     onClose();
   }, [haptic, onClose, state]);
 
-  useEffect(() => {
+  // `useLayoutEffect` : le niveau actif (menu → peek → confirmation → détail →
+  // tiroir) peut changer dans la même frame qu'un appui Échap ; poser l'écouteur
+  // avant la peinture évite une frame sans gestionnaire où Échap ne serait pas
+  // consommé (constat e2e 11a).
+  useLayoutEffect(() => {
     if (!mounted || !open || typeof document === 'undefined') return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -436,6 +449,16 @@ export function CommunitySheetShell({
                 panelIdFor={paneId}
               />
             </div>
+          ) : null}
+
+          {guestNotice && !detail ? (
+            <p className="lkdv-cv2-guest" role="status" data-testid="cv2-guest-mode">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="5.5" y="10.5" width="13" height="9" rx="2.4" />
+                <path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5" />
+              </svg>
+              <span>Mode invité · lecture seule</span>
+            </p>
           ) : null}
 
           {detail ? (

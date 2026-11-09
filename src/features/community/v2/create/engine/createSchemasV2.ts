@@ -143,6 +143,8 @@ export interface StoryStickersV2 {
   /** Carnet lié (chaîne vide = aucun). */
   carnetId: string;
   carnetTitle: string;
+  /** Jour du carnet lié, 1..60 (`linked_carnet_day`, migration lot F L22). */
+  carnetDay: number | null;
 }
 
 export interface KitItemV2 {
@@ -460,6 +462,7 @@ export const storyStickersDefaults = (): StoryStickersV2 => ({
   link: null,
   carnetId: '',
   carnetTitle: '',
+  carnetDay: null,
 });
 
 const storyPlaceSchema = z.object({
@@ -491,6 +494,11 @@ const storyStickersSchema = z.object({
   link: storyLinkSchema.nullable().default(null),
   carnetId: z.string().default(''),
   carnetTitle: z.string().max(140).default(''),
+  /**
+   * Jour du carnet lié (`linked_carnet_day`, colonne de la migration
+   * 20261108130006 L22) : sélecteur de la Diffusion (FID-028, maquette L2905).
+   */
+  carnetDay: z.number().int().min(1).max(60).nullable().default(null),
 });
 
 export const storySchemaV2 = z
@@ -627,6 +635,14 @@ const kitItemSchema = z.object({
 
 export const kitSchemaV2 = z
   .object({
+    /**
+     * Modèle du kit (`GOALS`/`MODELS` maquette L3171-3172) : pilote les
+     * suggestions de l'étape Compléter et le point de départ « Modèle ».
+     * Champ d'interface : non envoyé à la RPC `create_kit_with_items`.
+     */
+    model: z.enum(['jour', 'bivouac', 'alpi']).default('bivouac'),
+    /** Objectif de poids sélectionnable (`GOALS`, L3172) — interface seule. */
+    goal: z.enum(['ultra', 'light', 'std']).default('light'),
     name: z
       .string()
       .default('')
@@ -751,7 +767,8 @@ export const carnetSchemaV2 = z
       .string()
       .default('')
       .refine((value) => value.trim().length > 0, 'Le titre est requis.')
-      .refine((value) => value.trim().length <= 140, '140 caractères maximum.'),
+      // Maquette L2967 : titre du carnet borné à **100** (FID-051).
+      .refine((value) => value.trim().length <= 100, '100 caractères maximum.'),
     destination: z
       .string()
       .default('')
@@ -767,6 +784,12 @@ export const carnetSchemaV2 = z
       .min(1, '1 voyageur minimum.')
       .max(50, '50 voyageurs maximum.')
       .default(1),
+    /**
+     * Nombre de jours du stepper d'Infos (maquette `range.days:[1,7,1]` L2967,
+     * borné à 60 par le schéma des jours). Les jours sont matérialisés dans
+     * `days` à l'entrée de l'étape Jours (FID-029/FID-030).
+     */
+    nbJours: z.number().int().min(1, '1 jour minimum.').max(60, '60 jours maximum.').default(3),
     isCollaborative: z.boolean().default(false),
     collaborators: z.array(z.string()).max(20, '20 collaborateurs maximum.').default([]),
     tags: tagArray,
@@ -868,6 +891,8 @@ const defaultsFactories = {
     clientRequestId: newClientRequestId(),
   }),
   kit: (): KitFormValuesV2 => ({
+    model: 'bivouac',
+    goal: 'light',
     name: '',
     description: '',
     season: 'toute_saison',
@@ -900,6 +925,7 @@ const defaultsFactories = {
     description: '',
     visibility: 'private',
     nbVoyageurs: 1,
+    nbJours: 3,
     isCollaborative: false,
     collaborators: [],
     tags: [],
@@ -976,6 +1002,7 @@ export const CREATE_FIELD_LABELS_V2: Record<string, string> = {
   endDate: 'Date de fin',
   visibility: 'Visibilité',
   nbVoyageurs: 'Voyageurs',
+  nbJours: 'Nombre de jours',
   collaborators: 'Collaborateurs',
   trace: 'Tracé',
   deniveleM: 'Dénivelé',

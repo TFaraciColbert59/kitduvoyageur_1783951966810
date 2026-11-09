@@ -77,6 +77,13 @@ export interface CarnetCardVM {
   distanceKmFromMe: number | null;
   /** Trace simplifiée (points [x,y] normalisés 0-100) pour le filigrane de couverture. */
   routeTrace: Array<[number, number]> | null;
+  /**
+   * Code pays ISO 3166-1 alpha-2 du départ (`carnets.country_iso`, FID-067),
+   * normalisé en majuscules par le feed. `null` : pays inconnu — la tuile
+   * n'affiche alors que la ligne durée · distance du visa, sans inventer de
+   * code (repli silencieux, maquette `maquette-communaute.html` L2321).
+   */
+  countryIso?: string | null;
 }
 
 export interface ClubCardVM {
@@ -154,6 +161,13 @@ export interface EventCardVM {
   /** Sortie déjà passée (récap, non inscriptible). */
   past: boolean;
   distanceKmFromMe: number | null;
+  /**
+   * Coordonnées du lieu (feed `community_events_feed.lat/lng`) : la tuile s'en
+   * sert pour la météo du jour J (FID-071). Nullables : une sortie sans point
+   * géocodé n'affiche pas de pastille météo.
+   */
+  lat?: number | null;
+  lng?: number | null;
 }
 
 export interface MemberHitVM {

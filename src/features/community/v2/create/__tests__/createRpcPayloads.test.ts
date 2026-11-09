@@ -217,6 +217,7 @@ describe('stories V2', () => {
         link: { url: 'https://example.test', label: 'Le carnet' },
         carnetId: 'carnet-1',
         carnetTitle: 'Tour',
+        carnetDay: null,
       },
     };
     const composition = buildStoryCompositionV2(values);

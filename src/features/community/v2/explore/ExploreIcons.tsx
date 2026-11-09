@@ -36,7 +36,11 @@ export type ExploreIconName =
   | 'book'
   | 'doc'
   | 'filter'
-  | 'leaf';
+  | 'leaf'
+  | 'sun'
+  | 'partly'
+  | 'rain'
+  | 'snow';
 
 const PATHS: Record<ExploreIconName, React.ReactNode> = {
   search: (
@@ -146,6 +150,32 @@ const PATHS: Record<ExploreIconName, React.ReactNode> = {
   ),
   filter: <path d="M4 6h16M7 12h10M10 18h4" />,
   leaf: <path d="M5 19C5 9 13 4 20 4c0 9-5 15-15 15zM5 19l7-7" />,
+  // Météo (FID-071) : mêmes familles que la maquette (`WXS`, L1071/L2466).
+  sun: (
+    <>
+      <circle cx="12" cy="12" r="3.6" />
+      <path d="M12 3v2.2M12 18.8V21M3 12h2.2M18.8 12H21M5.6 5.6l1.6 1.6M16.8 16.8l1.6 1.6M18.4 5.6l-1.6 1.6M7.2 16.8l-1.6 1.6" />
+    </>
+  ),
+  partly: (
+    <>
+      <circle cx="8.5" cy="8.5" r="3" />
+      <path d="M8.5 3.5v1.4M3.5 8.5h1.4M4.7 4.7l1 1" />
+      <path d="M10 19.5a3.8 3.8 0 0 1-.5-7.55A4.9 4.9 0 0 1 19.1 13a3.4 3.4 0 0 1-.35 6.85z" />
+    </>
+  ),
+  rain: (
+    <>
+      <path d="M7.5 15.5a4.2 4.2 0 0 1-.55-8.35A5.4 5.4 0 0 1 17.3 8.3a3.8 3.8 0 0 1-.35 7.6z" />
+      <path d="M8.5 18.4l-.9 2M12.4 18.4l-.9 2M16.3 18.4l-.9 2" />
+    </>
+  ),
+  snow: (
+    <>
+      <path d="M7.5 14.5a4.2 4.2 0 0 1-.55-8.35A5.4 5.4 0 0 1 17.3 7.3a3.8 3.8 0 0 1-.35 7.6z" />
+      <path d="M9 18v3M7.7 18.75h2.6M7.7 20.25h2.6M15 18v3M13.7 18.75h2.6M13.7 20.25h2.6" />
+    </>
+  ),
 };
 
 export interface ExploreIconProps {

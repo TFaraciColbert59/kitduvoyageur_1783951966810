@@ -570,17 +570,22 @@ export function TracePaneV2({ user }: { user: { id: string } | null }) {
         </span>
       </div>
       {elevationPath ? (
-        <span className="lkdv-cv2c-elevation" aria-label="Profil d’altitude du tracé">
-          <svg viewBox="0 0 100 100" preserveAspectRatio="none" role="img">
-            <polyline
-              points={elevationPath}
-              fill="none"
-              stroke="var(--lkv-forest-900)"
-              strokeWidth="1.6"
-              vectorEffect="non-scaling-stroke"
-            />
-          </svg>
-        </span>
+        /* FID-051 : « Profil d'altitude » **encadré** (maquette `.card2 prof`,
+           HTML L3029) au lieu d'une simple surface. */
+        <div className="lkdv-cv2-card lkdv-cv2c-elevation-card">
+          <span className="lkdv-cv2-field-label">Profil d’altitude</span>
+          <span className="lkdv-cv2c-elevation" aria-label="Profil d’altitude du tracé">
+            <svg viewBox="0 0 100 100" preserveAspectRatio="none" role="img">
+              <polyline
+                points={elevationPath}
+                fill="none"
+                stroke="var(--lkv-forest-900)"
+                strokeWidth="1.6"
+                vectorEffect="non-scaling-stroke"
+              />
+            </svg>
+          </span>
+        </div>
       ) : null}
       {gainState === 'error' ? (
         <p className="lkdv-cv2-field-hint lkdv-cv2c-notice" role="status">

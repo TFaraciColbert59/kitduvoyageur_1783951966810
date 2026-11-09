@@ -42,6 +42,9 @@ test.describe('Invité — lecture seule et requireAuth @ui-mock @mobile', () =>
 
     await expect(page.getByTestId('cv2-tile-carnet').first()).toBeVisible();
     await expect(page.getByTestId('cv2-sort-button')).toBeVisible();
+    // FID-077 : marqueur visible « Mode invité · lecture seule ».
+    await expect(page.getByTestId('cv2-guest-mode')).toBeVisible();
+    await expect(page.getByTestId('cv2-guest-mode')).toContainText(/invité/i);
 
     // Lecture des 3 volets accessible à l'invité.
     const tabs = page.getByRole('tablist', { name: 'Volets de l’explorateur' });

@@ -26,16 +26,19 @@ describe('PeekOverlay', () => {
     render(<PeekOverlay peek={peek()} onClose={() => {}} />);
     const dialog = screen.getByRole('dialog', { name: 'Aperçu : Tour des Écrins' });
     expect(dialog.textContent).toContain('Hauts-Alpes · 4 j · 62,4 km');
-    // Exactement 3 actions (recette E2E `cv2-island`/Peek), sans bouton Fermer.
-    expect(screen.getAllByRole('button')).toHaveLength(3);
-    expect(screen.getByRole('button', { name: 'Lire' })).toBeTruthy();
+    // Maquette L1772 : `role=menu`, 3 actions + « Fermer » en `menuitem`.
+    const menu = screen.getByRole('menu', { name: 'Actions' });
+    expect(menu).toBeTruthy();
+    expect(screen.getAllByRole('menuitem')).toHaveLength(4);
+    expect(screen.getByRole('menuitem', { name: 'Fermer' })).toBeTruthy();
+    expect(screen.getByRole('menuitem', { name: 'Lire' })).toBeTruthy();
   });
 
   it('exécute l’action puis ferme l’aperçu', () => {
     const onClose = vi.fn();
     const item = peek();
     render(<PeekOverlay peek={item} onClose={onClose} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Enregistrer' }));
     expect(item.actions[1]?.onSelect).toHaveBeenCalledTimes(1);
     expect(onClose).toHaveBeenCalledTimes(1);
   });

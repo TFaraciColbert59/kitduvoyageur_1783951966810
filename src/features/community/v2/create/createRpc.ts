@@ -281,7 +281,8 @@ export async function publishStoryV2(
     trim_start_ms: isVideo ? values.trimStartMs ?? 0 : null,
     trim_end_ms: isVideo ? values.trimEndMs ?? media.durationMs ?? null : null,
     linked_carnet_id: values.stickers.carnetId || null,
-    linked_carnet_day: null,
+    // FID-028 : jour du carnet lié (`linked_carnet_day`, migration lot F L22).
+    linked_carnet_day: values.stickers.carnetId ? values.stickers.carnetDay ?? null : null,
   };
   const { error } = await supabase.from('post_stories').insert(insert);
   if (error) {

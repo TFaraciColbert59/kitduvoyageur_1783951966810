@@ -539,6 +539,35 @@ export async function installCommunityV2Mock(
     await route.fulfill({ status: 200, headers: corsHeaders(route), json: {} });
   });
 
+  // 5b) Météo simulée (`/api/weather`, FID-071) — priorité LIFO sur la route
+  // générique `**/api/**` : réponse conforme à `fetchEventDayWeather`.
+  await page.context().route('**/api/weather**', async (route) => {
+    if (isOptions(route)) {
+      await route.fulfill({ status: 204, headers: corsHeaders(route) });
+      return;
+    }
+    const request = route.request();
+    record({ kind: 'api', name: 'weather', method: request.method() });
+    const url = new URL(request.url());
+    const from = url.searchParams.get('from') ?? '2026-11-00';
+    await route.fulfill({
+      status: 200,
+      headers: corsHeaders(route),
+      json: {
+        status: 'ok',
+        days: [
+          {
+            date: from,
+            label: 'Éclaircies',
+            code: 2,
+            tMaxC: 7,
+            tMinC: -2,
+          },
+        ],
+      },
+    });
+  });
+
   await installSessionCookie(page.context(), role, appOrigin);
 
   // Le service worker du site proxifie des `fetch` et, en WebKit, court-circuite
@@ -644,6 +673,10 @@ function rpcPayload(
           id: String(row.id ?? ''),
           liked_by_me: mutable.likedCarnets.has(String(row.id)) || Boolean(row.liked_by_me),
           likes_count: toNum(row.likes_count) + (mutable.likedCarnets.has(String(row.id)) ? 1 : 0),
+          // FID-067 : la migration ajoute `carnets.country_iso` ; les fixtures
+          // simulent des carnets français (aucun pays inventé côté produit :
+          // le repli produit reste « pas de pays » si la valeur est nulle).
+          country_iso: typeof (row as AnyRecord).country_iso === 'string' ? String((row as AnyRecord).country_iso) : 'FR',
         }),
       );
       if (filter === 'mine') rows = rows.filter((row) => row.author_id === MEMBER_ID);

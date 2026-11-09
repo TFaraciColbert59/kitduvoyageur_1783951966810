@@ -23,6 +23,7 @@ import type { CreateNavV2 } from './nav';
 import { createKindConfig, createStepsFor, stepIndexOfField } from './steps';
 import { useDraftV2 } from './useDraftV2';
 import { mediaUploadState, type CreateKindV2 } from './createSchemasV2';
+import { ConfirmDialogV2 } from '../ConfirmDialogV2';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 /**
@@ -92,6 +93,8 @@ export function CreateFormEngineV2<T extends FieldValues>({
   const [busy, setBusy] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [attempted, setAttempted] = useState(false);
+  /** FID-034 : « Effacer » passe par la confirmation de la maquette. */
+  const [confirmClear, setConfirmClear] = useState(false);
   const [, setHostTick] = useState(0);
   const busyRef = useRef(false);
   const pendingFocus = useRef<string | null>(null);
@@ -131,6 +134,24 @@ export function CreateFormEngineV2<T extends FieldValues>({
     setStepState(Math.max(0, Math.min(steps.length - 1, next)));
     setServerError(null);
   }, [steps.length]);
+
+  /**
+   * FID-060 — rebond de la capsule d'étape en erreur (maquette `bounce()`,
+   * HTML L2000-2001 : `pane().dataset.bounce` pendant 440 ms). La capsule est
+   * portée par la coque : on marque la feuille le temps de l'animation, et le
+   * CSS de `create-v2.css` cible l'onglet actif de la mini-capsule. Neutralisé
+   * en `prefers-reduced-motion` (bloc CSS dédié).
+   */
+  const bounceStep = useCallback(() => {
+    if (typeof document === 'undefined') return;
+    const sheet = document.querySelector('.lkdv-cv2-sheet');
+    if (!sheet) return;
+    sheet.classList.remove('lkdv-cv2c-step-error');
+    // Force le redémarrage de l'animation si deux échecs s'enchaînent.
+    void (sheet as HTMLElement).offsetWidth;
+    sheet.classList.add('lkdv-cv2c-step-error');
+    window.setTimeout(() => sheet.classList.remove('lkdv-cv2c-step-error'), 440);
+  }, []);
 
   // Revenir sur un type remet ses étapes à zéro (les brouillons restent). Au
   // montage, c'est l'étape restaurée du brouillon qui s'applique (N1).
@@ -201,11 +222,12 @@ export function CreateFormEngineV2<T extends FieldValues>({
       const first = issues[0]?.path[0] ? String(issues[0].path[0]) : null;
       if (first) {
         haptic('light');
+        bounceStep();
         focusField(first);
       }
       return false;
     },
-    [focusField, form, haptic, schema, steps],
+    [bounceStep, focusField, form, haptic, schema, steps],
   );
 
   const validateCurrentStep = useCallback(() => validateStepAt(step), [step, validateStepAt]);
@@ -241,6 +263,7 @@ export function CreateFormEngineV2<T extends FieldValues>({
             : parseServerError(error);
           setAttempted(true);
           setServerError(info.message);
+          bounceStep();
           if (info.field) {
             const root = info.field.split('.')[0] ?? info.field;
             focusField(root);
@@ -260,7 +283,7 @@ export function CreateFormEngineV2<T extends FieldValues>({
         }
       },
     )();
-  }, [defaultValues, draft, focusField, form, haptic, onSubmit, uploadState.pending]);
+  }, [bounceStep, defaultValues, draft, focusField, form, haptic, onSubmit, uploadState.pending]);
 
   const goNext = useCallback(() => {
     if (busyRef.current) return;
@@ -429,12 +452,31 @@ export function CreateFormEngineV2<T extends FieldValues>({
     }
   };
 
+  const clearDialog = (
+    <ConfirmDialogV2
+      open={confirmClear}
+      title="Effacer le brouillon ?"
+      text="Les champs saisis seront perdus."
+      cancelLabel="Annuler"
+      confirmLabel="Effacer"
+      danger
+      testId="cv2c-clear-confirm"
+      onCancel={() => setConfirmClear(false)}
+      onConfirm={() => {
+        setConfirmClear(false);
+        clearDraft();
+      }}
+    />
+  );
+
   const header = (
     <>
       {draft.restored ? (
         <div className="lkdv-cv2-draft lkdv-cv2c-draft" data-testid="cv2-draft-banner">
           <span>Brouillon restauré</span>
-          <button type="button" onClick={clearDraft}>
+          {/* Maquette L2711 : « Effacer » passe par `lkvConfirm('Effacer le
+              brouillon ?')`, Annuler conserve, Échap ferme sans effacer. */}
+          <button type="button" onClick={() => setConfirmClear(true)}>
             Effacer
           </button>
         </div>
@@ -451,6 +493,7 @@ export function CreateFormEngineV2<T extends FieldValues>({
           {draft.restored ? 'Brouillon restauré. ' : ''}
           {errorCount > 0 ? errorCounterLabel(errorCount) : ''}
         </span>
+        {clearDialog}
         {steps.map((stepDefinition, index) => {
           const host = stepHosts?.[index];
           if (!host) return null;
@@ -486,6 +529,7 @@ export function CreateFormEngineV2<T extends FieldValues>({
       onKeyDown={keyboardGuard}
     >
       {header}
+      {clearDialog}
       <FormProvider {...form}>
         <fieldset className="lkdv-cv2c-pane" disabled={disabled || busy}>
           {children(api)}

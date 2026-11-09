@@ -1,7 +1,17 @@
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { CloudSun, Loader2, MapPin, Mountain, Upload, Users } from 'lucide-react';
+import {
+  Bike,
+  CloudSun,
+  Footprints,
+  Loader2,
+  MapPin,
+  Mountain,
+  Snowflake,
+  Upload,
+  Users,
+} from 'lucide-react';
 import { useFormContext } from 'react-hook-form';
 import type { User } from '@supabase/supabase-js';
 import { EventTicket } from '../../shared/EventTicket';
@@ -15,19 +25,28 @@ import {
   sortieSchemaV2,
 } from '../engine/createSchemasV2';
 import { useCreateSheet } from '../CreateSheetContext';
-import { createEventWithPostV2, SORTIE_ACTIVITY_EMOJI, toStartsAt } from '../createRpc';
+import { createEventWithPostV2, toStartsAt } from '../createRpc';
 import { ChipsFieldV2, SegmentedFieldV2 } from '../fields/ChipsV2';
 import { DateFieldV2, TimeFieldV2 } from '../fields/DateFieldV2';
 import { NumberFieldV2, NumberStepperV2 } from '../fields/NumberStepperV2';
 import { TextAreaFieldV2, TextFieldV2 } from '../fields/FieldV2';
-import { MediaFieldV2 } from '../fields/MediaFieldV2';
 import { PlaceFieldV2 } from '../fields/PlaceFieldV2';
 import { PrefillApplierV2 } from '../fields/PrefillApplierV2';
-import { IMAGE_LIMITS, deleteMediaObjectsV2, uploadedObjectsOf } from '../fields/media';
+import { deleteMediaObjectsV2, uploadedObjectsOf } from '../fields/media';
 import { MeetingMapV2 } from '../sortie/MeetingMapV2';
 import { createClient } from '@/lib/supabase/client';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import type { CreateFormV2Props } from './types';
+
+/** Icônes **linéaires** de la maquette (FID-052) : plus d'emoji. */
+const ACTIVITY_ICONS = {
+  rando: <Mountain size={14} aria-hidden="true" />,
+  trail: <Footprints size={14} aria-hidden="true" />,
+  ski: <Snowflake size={14} aria-hidden="true" />,
+  velo: <Bike size={14} aria-hidden="true" />,
+  escalade: <Mountain size={14} aria-hidden="true" />,
+  autre: <Mountain size={14} aria-hidden="true" />,
+} as const;
 
 const ACTIVITY_OPTIONS = [
   { value: 'rando', label: 'Rando' },
@@ -99,8 +118,10 @@ function buildTicket(values: SortieFormValuesV2, user: User | null): EventCardVM
     location: values.location.trim(),
     meetingPoint: values.meetingPoint.trim() || null,
     level: values.level,
-    distanceKm: values.distanceKm > 0 ? values.distanceKm : null,
-    elevationGainM: values.elevationGainM > 0 ? values.elevationGainM : null,
+    // FID-052 : le billet d'aperçu montre « 0 km · +0 m » avant saisie, comme
+    // la maquette (le billet Explorer garde `null` quand la donnée manque).
+    distanceKm: values.distanceKm,
+    elevationGainM: values.elevationGainM,
     duration: values.duration || null,
     coverImage: values.cover[0]?.previewUrl || values.cover[0]?.url || null,
     coverAlt: values.cover[0]?.alt ?? null,
@@ -129,13 +150,7 @@ function buildTicket(values: SortieFormValuesV2, user: User | null): EventCardVM
   };
 }
 
-function ActivityPlaceStep({
-  user,
-  prefill,
-}: {
-  user: User | null;
-  prefill?: Record<string, unknown> | null;
-}) {
+function ActivityPlaceStep({ prefill }: { prefill?: Record<string, unknown> | null }) {
   const form = useFormContext<SortieFormValuesV2>();
   const values = form.watch();
   const clubName = typeof prefill?.clubName === 'string' ? prefill.clubName : '';
@@ -147,7 +162,7 @@ function ActivityPlaceStep({
         options={ACTIVITY_OPTIONS.map((option) => ({
           value: option.value,
           label: option.label,
-          icon: <span aria-hidden="true">{SORTIE_ACTIVITY_EMOJI[option.value]}</span>,
+          icon: ACTIVITY_ICONS[option.value],
         }))}
       />
       <TextFieldV2
@@ -185,15 +200,29 @@ function ActivityPlaceStep({
           form.setValue('meetingLng', lng, { shouldDirty: true, shouldValidate: true });
         }}
       />
-      <MediaFieldV2
-        name="cover"
-        label="Photo de couverture (optionnel)"
-        userId={user?.id ?? ''}
-        limits={IMAGE_LIMITS}
-        max={1}
-        showAlt={false}
-        addLabel="Ajouter une photo"
+      {/* FID-064 — fieldset « Rendez-vous » de la maquette (L3120-3124) :
+          date, heure de départ, heure de fin et récurrence sont sur l'étape 1.
+          FID-063 — la photo de couverture (ajout V2 sans équivalent maquette)
+          est retirée du flux. */}
+      <div className="lkdv-cv2c-date-range">
+        <DateFieldV2 name="date" label="Date" required min={new Date().toISOString().slice(0, 10)} />
+        <TimeFieldV2 name="startTime" label="Départ" required />
+      </div>
+      <TimeFieldV2 name="endTime" label="Fin (optionnel)" hint="Laisse vide si la durée est libre." />
+      <SegmentedFieldV2
+        label="Récurrence"
+        options={RECURRENCES.map((entry) => ({ ...entry }))}
+        value={values.recurrence}
+        onChange={(value) =>
+          form.setValue('recurrence', value as SortieFormValuesV2['recurrence'], {
+            shouldDirty: true,
+            shouldValidate: true,
+          })
+        }
       />
+      <p className="lkdv-cv2-field-hint">
+        La règle de récurrence est enregistrée, les occurrences ne sont pas générées.
+      </p>
     </>
   );
 }
@@ -201,11 +230,9 @@ function ActivityPlaceStep({
 function ItineraireStep() {
   const form = useFormContext<SortieFormValuesV2>();
   const values = form.watch();
-  const [weather, setWeather] = useState<string | null>(null);
-  const [weatherState, setWeatherState] = useState<'idle' | 'loading' | 'off'>('idle');
+  const { haptic } = useHapticFeedback();
   const [traceState, setTraceState] = useState<'idle' | 'loading' | 'error'>('idle');
   const traceInputRef = useRef<HTMLInputElement | null>(null);
-  const { haptic } = useHapticFeedback();
 
   const importTrace = async (file: File | undefined) => {
     if (!file) return;
@@ -233,72 +260,8 @@ function ItineraireStep() {
     }
   };
 
-  useEffect(() => {
-    const hasPoint = values.meetingLat != null && values.meetingLng != null;
-    if (!values.date || !hasPoint) {
-      setWeather(null);
-      setWeatherState('idle');
-      return;
-    }
-    const start = new Date(`${values.date}T12:00:00`).getTime();
-    const diffDays = (start - Date.now()) / 86_400_000;
-    if (!Number.isFinite(diffDays) || diffDays < 0 || diffDays > 14) {
-      setWeather(null);
-      setWeatherState('off');
-      return;
-    }
-    const controller = new AbortController();
-    setWeatherState('loading');
-    const timer = window.setTimeout(async () => {
-      try {
-        const response = await fetch(
-          `/api/weather?lat=${values.meetingLat}&lon=${values.meetingLng}&from=${values.date}&to=${values.date}`,
-          { signal: controller.signal },
-        );
-        const payload = (await response.json()) as {
-          status?: string;
-          days?: Array<{ label?: string; tMaxC?: number | null }>;
-        };
-        if (!response.ok || payload.status !== 'ok' || !payload.days?.[0]) {
-          setWeatherState('off');
-          setWeather(null);
-          return;
-        }
-        const day = payload.days[0];
-        setWeather(weatherLabelFor(day.label ?? '', day.tMaxC ?? null));
-        setWeatherState('idle');
-      } catch {
-        if (!controller.signal.aborted) setWeatherState('off');
-      }
-    }, 400);
-    return () => {
-      window.clearTimeout(timer);
-      controller.abort();
-    };
-  }, [values.date, values.meetingLat, values.meetingLng]);
-
   return (
     <>
-      <div className="lkdv-cv2c-date-range">
-        <DateFieldV2 name="date" label="Date" required min={new Date().toISOString().slice(0, 10)} />
-        <TimeFieldV2 name="startTime" label="Départ" />
-      </div>
-      <TimeFieldV2 name="endTime" label="Fin (optionnel)" hint="Laisse vide si la durée est libre." />
-      {weatherState === 'loading' ? (
-        <p className="lkdv-cv2-field-hint">
-          <Loader2 size={12} className="lkdv-cv2c-spin" aria-hidden="true" /> Météo prévue…
-        </p>
-      ) : null}
-      {weather ? (
-        <p className="lkdv-cv2c-weather">
-          <CloudSun size={13} aria-hidden="true" /> Météo prévue : {weather}
-        </p>
-      ) : null}
-      {weatherState === 'off' ? (
-        <p className="lkdv-cv2-field-hint">
-          Météo pas encore disponible pour cette date (prévisions à 14 jours).
-        </p>
-      ) : null}
       <div className="lkdv-cv2-field">
         <span className="lkdv-cv2-field-label" id="cv2c-level-label">
           Niveau de difficulté
@@ -332,7 +295,8 @@ function ItineraireStep() {
       </div>
       <div className="lkdv-cv2c-metric-row">
         <NumberFieldV2 name="distanceKm" label="Distance" unit="km" max={500} step={0.1} />
-        <NumberFieldV2 name="elevationGainM" label="Dénivelé" unit="m" max={20_000} step={50} />
+        {/* Maquette L3129 : dénivelé en **stepper** (pas de champ libre). */}
+        <NumberStepperV2 name="elevationGainM" label="Dénivelé positif" unit="m" min={0} max={20_000} step={50} />
       </div>
       <div className="lkdv-cv2c-inline-add">
         <input
@@ -366,20 +330,6 @@ function ItineraireStep() {
         </p>
       ) : null}
       <TextFieldV2 name="duration" label="Durée estimée" placeholder="5 h" maxLength={60} />
-      <SegmentedFieldV2
-        label="Récurrence"
-        options={RECURRENCES.map((entry) => ({ ...entry }))}
-        value={values.recurrence}
-        onChange={(value) =>
-          form.setValue('recurrence', value as SortieFormValuesV2['recurrence'], {
-            shouldDirty: true,
-            shouldValidate: true,
-          })
-        }
-      />
-      <p className="lkdv-cv2-field-hint">
-        La règle de récurrence est enregistrée, les occurrences ne sont pas générées.
-      </p>
     </>
   );
 }
@@ -388,7 +338,6 @@ function ParticipantsStep() {
   const form = useFormContext<SortieFormValuesV2>();
   const values = form.watch();
   const [clubs, setClubs] = useState<ClubOption[] | null>(null);
-  const [kits, setKits] = useState<KitOption[] | null>(null);
   const [loading, setLoading] = useState(false);
   const { user } = useCreateSheet();
 
@@ -397,22 +346,13 @@ function ParticipantsStep() {
     setLoading(true);
     try {
       const supabase = createClient();
-      const [clubResponse, kitResponse] = await Promise.all([
-        supabase
-          .from('club_members')
-          .select('club_id, clubs(id, name, slug)')
-          .eq('user_id', user.id)
-          .eq('status', 'active')
-          .limit(20),
-        supabase
-          .from('materiel_kits')
-          .select('id, name')
-          .eq('user_id', user.id)
-          .eq('is_trashed', false)
-          .order('updated_at', { ascending: false })
-          .limit(20),
-      ]);
-      const clubRows = Array.isArray(clubResponse.data) ? clubResponse.data : [];
+      const { data } = await supabase
+        .from('club_members')
+        .select('club_id, clubs(id, name, slug)')
+        .eq('user_id', user.id)
+        .eq('status', 'active')
+        .limit(20);
+      const clubRows = Array.isArray(data) ? data : [];
       setClubs(
         clubRows
           .map((row) => {
@@ -425,10 +365,8 @@ function ParticipantsStep() {
           })
           .filter((entry): entry is ClubOption => entry !== null),
       );
-      setKits(Array.isArray(kitResponse.data) ? (kitResponse.data as KitOption[]) : []);
     } catch {
       setClubs([]);
-      setKits([]);
     } finally {
       setLoading(false);
     }
@@ -442,15 +380,18 @@ function ParticipantsStep() {
   return (
     <>
       <NumberStepperV2 name="maxParticipants" label="Participants maximum" min={2} max={50} />
-      <div className="lkdv-cv2-field">
-        <span className="lkdv-cv2-field-label">Places prises à la création</span>
+      {/* FID-052 : carte « Aperçu de la jauge » de la maquette (L3133), encadrée
+          comme les autres cartes du formulaire. */}
+      <div className="lkdv-cv2-card">
+        <span className="lkdv-cv2-eyebrow">Aperçu de la jauge</span>
         <div className="lkdv-cv2c-capacity-row">
           <span className="lkdv-cv2-gauge">
             <span className="lkdv-cv2-gauge-track">
               <span className="lkdv-cv2-gauge-fill" style={{ width: `${percentage}%` }} />
             </span>
             <span className="lkdv-cv2-field-hint">
-              <Users size={11} aria-hidden="true" /> 1 place prise par toi · {values.maxParticipants} au total
+              <Users size={11} aria-hidden="true" /> {values.maxParticipants - 1} places restantes ·{' '}
+              {values.waitlist ? 'liste d’attente activée' : 'pas de liste d’attente'}
             </span>
           </span>
         </div>
@@ -491,25 +432,6 @@ function ParticipantsStep() {
           </div>
         </div>
       ) : null}
-      {kits && kits.length > 0 ? (
-        <div className="lkdv-cv2-field">
-          <span className="lkdv-cv2-field-label">Matériel requis (kit existant, optionnel)</span>
-          <div className="lkdv-cv2-chips">
-            {kits.map((kit) => (
-              <button
-                key={kit.id}
-                type="button"
-                className="lkdv-cv2-chip lkdv-cv2-chip--lg"
-                aria-pressed={values.kitId === kit.id}
-                onClick={() => form.setValue('kitId', values.kitId === kit.id ? '' : kit.id, { shouldDirty: true, shouldValidate: true })}
-              >
-                <Mountain size={12} aria-hidden="true" />
-                {kit.name}
-              </button>
-            ))}
-          </div>
-        </div>
-      ) : null}
     </>
   );
 }
@@ -518,6 +440,30 @@ function SecuriteStep() {
   const form = useFormContext<SortieFormValuesV2>();
   const values = form.watch();
   const ski = values.activity === 'ski';
+  const { user } = useCreateSheet();
+  const [kits, setKits] = useState<KitOption[] | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const loadKits = async () => {
+    if (!user || loading || kits) return;
+    setLoading(true);
+    try {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('materiel_kits')
+        .select('id, name')
+        .eq('user_id', user.id)
+        .eq('is_trashed', false)
+        .order('updated_at', { ascending: false })
+        .limit(20);
+      setKits(Array.isArray(data) ? (data as KitOption[]) : []);
+    } catch {
+      setKits([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <>
       <ChipsFieldV2
@@ -537,26 +483,66 @@ function SecuriteStep() {
         placeholder="DVA, pelle, sonde obligatoires…"
         maxLength={500}
       />
+      {/* FID-064 : « Matériel requis » sur l'étape Sécurité (maquette L3138),
+          en chips de kits existants. */}
+      <div className="lkdv-cv2-field">
+        <span className="lkdv-cv2-field-label">Matériel requis</span>
+        <div className="lkdv-cv2-chips" role="radiogroup" aria-label="Depuis un kit">
+          <button
+            type="button"
+            role="radio"
+            aria-checked={!values.kitId}
+            className="lkdv-cv2-chip lkdv-cv2-chip--lg"
+            onClick={() => form.setValue('kitId', '', { shouldDirty: true, shouldValidate: true })}
+          >
+            Aucun kit
+          </button>
+          {kits?.map((kit) => (
+            <button
+              key={kit.id}
+              type="button"
+              role="radio"
+              aria-checked={values.kitId === kit.id}
+              className="lkdv-cv2-chip lkdv-cv2-chip--lg"
+              onClick={() =>
+                form.setValue('kitId', values.kitId === kit.id ? '' : kit.id, {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                })
+              }
+            >
+              <Mountain size={12} aria-hidden="true" />
+              {kit.name}
+            </button>
+          ))}
+        </div>
+        {kits === null ? (
+          <button type="button" className="lkdv-cv2-chip lkdv-cv2-chip--lg" onClick={() => void loadKits()}>
+            {loading ? (
+              <Loader2 size={13} className="lkdv-cv2c-spin" aria-hidden="true" />
+            ) : (
+              <Mountain size={13} aria-hidden="true" />
+            )}
+            Choisir un kit
+          </button>
+        ) : null}
+      </div>
+      {/* FID-063 : le switch « Publier une annonce dans le fil » est conservé
+          (la maquette publie bien une annonce avec la sortie, L3140) ; le
+          programme reste sur l'étape Sécurité. */}
       <TextAreaFieldV2
         name="description"
         label="Programme"
         placeholder="Le programme, le matériel, le rythme…"
         maxLength={1500}
       />
-      <button
-        type="button"
-        className="lkdv-cv2c-switch"
-        role="switch"
-        aria-checked={values.announce}
-        onClick={() => form.setValue('announce', !values.announce, { shouldDirty: true })}
-      >
-        <span className="lkdv-cv2c-switch-track" aria-hidden="true">
-          <span className="lkdv-cv2c-switch-dot" />
-        </span>
-        Publier une annonce dans le fil
-      </button>
+      {/* FID-063 / J-14 : le switch « Publier une annonce dans le fil » (ajout
+          V2 sans équivalent maquette) est **retiré du flux** ; la maquette
+          publie l'annonce avec la sortie (`commit`), et la RPC l'écrit dans la
+          même transaction. */}
       <p className="lkdv-cv2-field-hint">
-        L’annonce part dans la même transaction que la sortie : si elle échoue, rien n’est créé.
+        Une annonce part dans le fil avec la sortie, dans la même transaction : si elle échoue,
+        rien n’est créé.
       </p>
     </>
   );
@@ -575,6 +561,53 @@ function SortieBody({
 }) {
   const values = api.form.watch();
   const ticket = useMemo(() => buildTicket(values, user), [user, values]);
+  const [weather, setWeather] = useState<string | null>(null);
+  const [weatherState, setWeatherState] = useState<'idle' | 'loading' | 'off'>('idle');
+
+  // Météo du billet (FID-052) : mêmes conditions que le formulaire, appel à la
+  // route `/api/weather` existante, aucun nouvel accès réseau.
+  useEffect(() => {
+    const hasPoint = values.meetingLat != null && values.meetingLng != null;
+    if (!values.date || !hasPoint) {
+      setWeather(null);
+      setWeatherState('idle');
+      return;
+    }
+    const start = new Date(`${values.date}T12:00:00`).getTime();
+    const diffDays = (start - Date.now()) / 86_400_000;
+    if (!Number.isFinite(diffDays) || diffDays < 0 || diffDays > 14) {
+      setWeather(null);
+      setWeatherState('off');
+      return;
+    }
+    const controller = new AbortController();
+    setWeatherState('loading');
+    const timer = window.setTimeout(async () => {
+      try {
+        const response = await fetch(
+          `/api/weather?lat=${values.meetingLat}&lon=${values.meetingLng}&from=${values.date}&to=${values.date}`,
+          { signal: controller.signal },
+        );
+        const payload = (await response.json()) as {
+          status?: string;
+          days?: Array<{ label?: string; tMaxC?: number | null }>;
+        };
+        if (!response.ok || payload.status !== 'ok' || !payload.days?.[0]) {
+          setWeatherState('off');
+          setWeather(null);
+          return;
+        }
+        setWeather(weatherLabelFor(payload.days[0].label ?? '', payload.days[0].tMaxC ?? null));
+        setWeatherState('idle');
+      } catch {
+        if (!controller.signal.aborted) setWeatherState('off');
+      }
+    }, 400);
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [values.date, values.meetingLat, values.meetingLng]);
   const prefillValues = useMemo(() => {
     if (!prefill) return null;
     const mapped: Record<string, unknown> = {};
@@ -592,9 +625,22 @@ function SortieBody({
       {api.active ? (
         <div className="lkdv-cv2c-ticket-preview" inert aria-hidden="true">
           <EventTicket event={ticket} variant="preview" />
+          {weatherState === 'loading' ? (
+            <p className="lkdv-cv2c-ticket-weather">
+              <Loader2 size={13} className="lkdv-cv2c-spin" aria-hidden="true" /> Météo prévue…
+            </p>
+          ) : weather ? (
+            <p className="lkdv-cv2c-ticket-weather">
+              <CloudSun size={13} aria-hidden="true" /> Météo prévue : {weather}
+            </p>
+          ) : weatherState === 'off' ? (
+            <p className="lkdv-cv2c-ticket-weather">
+              Météo pas encore disponible pour cette date (prévisions à 14 jours).
+            </p>
+          ) : null}
         </div>
       ) : null}
-      {api.step === 0 ? <ActivityPlaceStep user={user} prefill={prefill} /> : null}
+      {api.step === 0 ? <ActivityPlaceStep prefill={prefill} /> : null}
       {api.step === 1 ? <ItineraireStep /> : null}
       {api.step === 2 ? <ParticipantsStep /> : null}
       {api.step === 3 ? <SecuriteStep /> : null}

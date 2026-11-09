@@ -22,6 +22,7 @@ import { PlaceMiniMap } from '../../shared/PlaceMiniMap';
 import { ExploreIcon } from '../ExploreIcons';
 import { ExploreError, ExploreSkeleton } from '../ExploreStates';
 import { EventActionButton } from '../tiles/EventTicketV2';
+import { weatherIconName } from '../weatherIcon';
 
 export interface EventDetailViewProps {
   event: EventCardVM;
@@ -42,6 +43,7 @@ export function EventDetailView({ event, status, spotsLeft, busy, onSignup }: Ev
   const detailState = useEventDetail(event);
   const detail = detailState.detail;
   const weather = detailState.weather;
+  const weatherLoading = detailState.weatherLoading;
   const stamp = formatDateStamp(event.startsAt ?? `${event.eventDate}T09:00:00+01:00`);
   const time = formatTime(event.startsAt);
   // Maquette (`explorer-sorties-detail.png`) : « 18 h 30 » dans le détail,
@@ -176,21 +178,46 @@ export function EventDetailView({ event, status, spotsLeft, busy, onSignup }: Ev
             </div>
           )}
 
-          {weather ? (
-            <div className="lkdv-cv2-card lkdv-cv2x-weather-card">
-              <ExploreIcon name="cloud" size={22} />
-              <span>
-                <b>
-                  {weather.label} · {weather.tempMax}° / {weather.tempMin}°
-                </b>
-                <small>Prévu pour le {fullDate}</small>
-              </span>
-            </div>
-          ) : !event.past && daysToEvent != null && daysToEvent > 7 ? (
-            <p className="lkdv-cv2-meta lkdv-cv2x-weather-hint">
-              Prévisions disponibles à partir de J-7 ({daysToEvent - 7} {daysToEvent - 7 > 1 ? 'jours' : 'jour'}{' '}
-              restants).
-            </p>
+          {/* FID-071 — météo du jour J, carte de la maquette (L2581) : icône +
+              « Libellé · max° / min° » et « Prévu pour le <date> » ; hors fenêtre,
+              la même carte annonce « Prévisions disponibles à partir de J-7 ».
+              La carte de chargement garde exactement la même hauteur (aucun
+              décalage quand la prévision arrive). */}
+          {!event.past ? (
+            weather ? (
+              <div className="lkdv-cv2-card lkdv-cv2x-weather-card">
+                <ExploreIcon name={weatherIconName(weather.label)} size={22} />
+                <span>
+                  <b>
+                    {weather.label} · {weather.tempMax}° / {weather.tempMin}°
+                  </b>
+                  <small>Prévu pour le {fullDate}</small>
+                </span>
+              </div>
+            ) : daysToEvent != null && daysToEvent > 7 ? (
+              <div className="lkdv-cv2-card lkdv-cv2x-weather-card" data-state="pending">
+                <ExploreIcon name="cloud" size={22} />
+                <span>
+                  <b>Météo du jour J</b>
+                  <small>
+                    Prévisions disponibles à partir de J-7 (dans {daysToEvent - 7}{' '}
+                    {daysToEvent - 7 > 1 ? 'jours' : 'jour'}).
+                  </small>
+                </span>
+              </div>
+            ) : weatherLoading ? (
+              <div
+                className="lkdv-cv2-card lkdv-cv2x-weather-card"
+                data-state="pending"
+                aria-busy="true"
+              >
+                <ExploreIcon name="cloud" size={22} />
+                <span>
+                  <b>Météo du jour J</b>
+                  <small>Prévision en cours…</small>
+                </span>
+              </div>
+            ) : null
           ) : null}
 
           {point ? (
@@ -300,7 +327,7 @@ export function EventDetailView({ event, status, spotsLeft, busy, onSignup }: Ev
                 data-testid="cv2-event-ics"
               >
                 <ExploreIcon name="calendar" size={15} />
-                Ajouter au calendrier (.ics)
+                Ajouter au calendrier
               </button>
             ) : null}
             <Link className="lkdv-cv2-pill lkdv-cv2-pill--secondary" href={`/sorties/${event.id}`}>
@@ -309,6 +336,7 @@ export function EventDetailView({ event, status, spotsLeft, busy, onSignup }: Ev
           </div>
         </>
       ) : null}
+
     </div>
   );
 }
