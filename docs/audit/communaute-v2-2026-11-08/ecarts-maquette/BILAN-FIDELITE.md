@@ -99,7 +99,8 @@ registre → advisors → drapeau), puis rejouer `VERIFIER.sh`, les captures sur
 | `89364fc` + `22a7b65` | **vague 1** (coque/transverses, Explorer, Création, tests ; captures 82) |
 | `80ebf55` | **vague 2** (kit/carnet/story/moteur ; météo, Peek 4 actions, focus, pays/anneau, densité) |
 | `bca6fb9` | **vague 3** (aperçu fixe 150 px, tracé/jours, drag Club, météo Story, 3 cartes tracé) |
-| à venir | captures 82 finales, BILAN/CHECKLIST/rapports, PR `feat/fidelite-maquette` → `main` |
+| `a28dae6` | captures 82 finales, BILAN/CHECKLIST/rapports, galerie |
+| **PR #158** | fusion squash `c2d8077` → `main` (2026-11-09) · aperçu V2 vérifié (`preuves-preview/`) |
 
 ## Reproductibilité
 

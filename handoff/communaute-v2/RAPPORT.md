@@ -292,8 +292,14 @@ Après la livraison de la v2, un audit image par image (48 puis 82 captures) a r
 avec la maquette (`docs/audit/communaute-v2-2026-11-08/ecarts-maquette/`). Un chantier de fidélité
 en 3 vagues parallélisées (sous-agents, périmètres de fichiers disjoints) les a comblés :
 
-- **83 / 85 items corrigés et vérifiés**, 0 partiel, **2 bloqués par J-08** (fidélité sur données
-  réelles + drapeau prod ; migration `carnets.country_iso` préparée mais non appliquée).
+- **PR #158 fusionnée** (squash `c2d8077`), **83 / 85 items corrigés et vérifiés**, 0 partiel,
+  **2 bloqués par J-08** (fidélité sur données réelles + drapeau prod ; migration
+  `carnets.country_iso` préparée mais non appliquée). Aperçu V2 vérifié : capsule 4 volets,
+  tiroir Création 6 types, slot d'aperçu 150 px, Retour désactivé à l'étape 1, prévu par
+  `preuves-preview/` (déploiement `kitduvoyageur-1783951966810-d9uwhebh5.vercel.app`).
+  CI : `database-gates` vert ; `quality-gates` rouge sur **4 tests pré-existants de `main`**
+  (PostGlassPanel flake + 3 régressions d'autres chantiers constatées à l'identique sur `main`
+  `8b8aaa2`), hors périmètre — fusion admin comme documenté J-12.
 - Preuves : build vert, TypeScript 0 erreur, vitest **279/279**, e2e **46/46 Chromium ET WebKit**,
   axe **4/4** (0 critical/serious), captures **82/82** (390×844 + 360/430), visuel 4/4.
 - Bilan complet, commits et reprise : `docs/audit/communaute-v2-2026-11-08/ecarts-maquette/
