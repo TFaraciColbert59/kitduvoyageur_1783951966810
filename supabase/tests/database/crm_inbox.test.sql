@@ -26,7 +26,7 @@ INSERT INTO public.post_reports (id, post_id, reporter_id, reason)
 VALUES ('d6100000-0000-4000-8000-000000000001','d3100000-0000-4000-8000-000000000001',
         'd6000000-0000-4000-8000-000000000002','spam');
 INSERT INTO public.support_tickets (id, user_id, subject, message)
-VALUES ('d6100000-0000-4000-8000-000000000002','d6000000-0000-4000-8000-000000000002','[TEST CRM] ticket','message');
+VALUES ('d6100000-0000-4000-8000-000000000002','d6000000-0000-4000-8000-000000000002','autre','[TEST CRM] ticket de test suffisamment long');
 INSERT INTO public.sos_alerts (id, user_id, latitude, longitude, status)
 VALUES ('d6100000-0000-4000-8000-000000000003','d6000000-0000-4000-8000-000000000002',45.9,6.9,'active');
 INSERT INTO public.pending_contributions (id, user_id, action_type, status)
