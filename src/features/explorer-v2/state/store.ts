@@ -35,7 +35,7 @@ interface ExplorerActions {
   setSheet: (sheet: SheetKind, detent?: Detent) => void;
   setDetent: (detent: Detent) => void;
   setTab: (tab: number) => void;
-  setMini: (mini: 0 | 1) => void;
+  setMini: (mini: number) => void;
   setCenter: (center: [number, number], zoom: number) => void;
   setCamera: (camera: CameraIntent) => void;
   showToast: (toast: Omit<ToastMessage, 'id'>) => void;

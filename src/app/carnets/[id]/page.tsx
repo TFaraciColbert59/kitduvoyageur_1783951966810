@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import { cache } from 'react';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import CarnetScreen from '@/components/carnet/profile/CarnetScreen';
+import { CarnetScreenV2 } from '@/components/carnet/v2/CarnetScreenV2';
 import { getCarnetDetail } from '@/features/carnet/detail/getCarnetDetail';
 import { buildCarnetJsonLd, serializeJsonLd } from '@/features/carnet/detail/jsonld';
 
@@ -16,6 +17,9 @@ const loadCarnet = cache(getCarnetDetail);
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
+  if (id === 'nouveau') {
+    return { title: 'Nouveau carnet — Le Kit du Voyageur' };
+  }
   const detail = await loadCarnet(id);
 
   // `notFound()` ici, avant le streaming du corps : c'est le seul endroit où
@@ -56,10 +60,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function CarnetDetailPage({ params }: Props) {
   const { id } = await params;
+  if (id === 'nouveau') {
+    redirect('/communaute?creer=carnet');
+  }
   const detail = await loadCarnet(id);
 
   // Vrai 404 : l'ancienne fiche rendait un brouillon local et répondait 200.
   if (!detail) notFound();
+
+  const isV2 = process.env.NEXT_PUBLIC_CARNET_V2 !== 'false';
 
   return (
     <>
@@ -69,7 +78,7 @@ export default async function CarnetDetailPage({ params }: Props) {
           dangerouslySetInnerHTML={{ __html: serializeJsonLd(buildCarnetJsonLd(detail, siteUrl)) }}
         />
       ) : null}
-      <CarnetScreen detail={detail} />
+      {isV2 ? <CarnetScreenV2 detail={detail} /> : <CarnetScreen detail={detail} />}
     </>
   );
 }

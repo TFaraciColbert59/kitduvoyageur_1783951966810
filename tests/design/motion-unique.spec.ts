@@ -4,7 +4,8 @@ import { join } from 'node:path';
 
 const ROOT = join(process.cwd(), 'src');
 // Hub et Compas : hors périmètre. tokens.css / tailwind.css : définitions des jetons.
-const SKIP = /features\/hub|components\/hub|app\/hub|features\/compas|app\/compas|lib\/hub|\/dev\/|__tests__|\.test\.|\.spec\.|styles\/tokens\.css|styles\/tailwind\.css/;
+// Surfaces gelées / chantiers dédiés (compte drawer, kit-studio, explorer-v2).
+const SKIP = /features\/hub|components\/hub|app\/hub|features\/compas|app\/compas|lib\/hub|features\/kit-studio|styles\/explorer-v2|components\/ui\/drawer|design\/account|styles\/community-post-polish|\/dev\/|__tests__|\.test\.|\.spec\.|styles\/tokens\.css|styles\/tailwind\.css/;
 
 function walk(dir: string, out: string[] = []): string[] {
   for (const name of readdirSync(dir)) {

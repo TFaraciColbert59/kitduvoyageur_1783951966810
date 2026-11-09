@@ -1,9 +1,10 @@
 // Commande : pièces à commander, total en centimes, confirmation. Pur.
 // Maquette Kit_Studio_v2.html l.716-717 (toOrder, orderTotal), l.1470-1502 (logique seule).
-import { COLORWAYS } from './catalog';
+// Coloris lus dans le registre runtime (catalogue réel).
 import type { ColorwayId } from './catalog';
 import { pieceCw, pieceInfo, pieceState, pieces } from './parts';
 import type { PieceState } from './parts';
+import { studioData } from './studioData';
 import type { KitState, PieceKey } from './types';
 
 export interface OrderLine {
@@ -11,8 +12,9 @@ export interface OrderLine {
   readonly name: string;
   readonly colorway: ColorwayId;
   readonly colorwayName: string;
-  readonly priceCents: number;
+  readonly priceCents: number | null;
   readonly state: PieceState;
+  readonly figuresProvisional?: boolean;
 }
 
 /** Pièces à commander (état « new »). */
@@ -20,11 +22,27 @@ export function toOrder(s: KitState): PieceKey[] {
   return pieces(s).filter((k) => pieceState(s, k) === 'new');
 }
 
-const cents = (eur: number): number => Math.round(eur * 100);
+/** Indique si au moins une pièce à commander porte un chiffre provisoire / indicatif. */
+export function hasProvisionalOrderPieces(s: KitState): boolean {
+  return toOrder(s).some((k) => pieceInfo(k).figuresProvisional === true);
+}
 
-/** Total à commander, ENTIER en centimes. */
-export function orderTotalCents(s: KitState): number {
-  return toOrder(s).reduce((a, k) => a + cents(pieceInfo(k).eur), 0);
+const cents = (eur: number | null): number | null => (eur == null ? null : Math.round(eur * 100));
+
+/**
+ * Total à commander, ENTIER en centimes, calculé à partir des prix du registre
+ * (catalogue `one_pieces` en production). `null` si au moins une pièce à commander n'a pas de prix.
+ * Affichage seulement : la précommande est recalculée côté serveur par la RPC `one_place_preorder`.
+ */
+export function orderTotalCents(s: KitState): number | null {
+  const pending = toOrder(s);
+  let total = 0;
+  for (const k of pending) {
+    const c = cents(pieceInfo(k).eur);
+    if (c == null) return null;
+    total += c;
+  }
+  return total;
 }
 
 /** Lignes de la configuration complète (toutes les pièces, avec leur état). */
@@ -35,15 +53,17 @@ export function orderLines(s: KitState): OrderLine[] {
       key,
       name: pieceInfo(key).n,
       colorway: cw,
-      colorwayName: COLORWAYS[cw].n,
+      colorwayName: studioData().colorways[cw]?.n ?? cw,
       priceCents: cents(pieceInfo(key).eur),
       state: pieceState(s, key),
+      figuresProvisional: pieceInfo(key).figuresProvisional ?? false,
     };
   });
 }
 
-/** Précommande : les pièces à commander passent dans `order` avec leur coloris courant. */
+/** Précommande : les pièces à commander passent dans `order` avec leur coloris courant (refusé si provisoire). */
 export function confirmOrder(s: KitState): KitState {
+  if (hasProvisionalOrderPieces(s)) return s;
   const add: Partial<Record<PieceKey, ColorwayId>> = {};
   for (const k of toOrder(s)) add[k] = pieceCw(s, k);
   return { ...s, order: { ...s.order, ...add } };

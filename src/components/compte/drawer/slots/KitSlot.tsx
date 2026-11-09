@@ -95,7 +95,7 @@ export function KitSlot({
     const root = rootRef.current;
     const host = root?.closest('.lkdv-drawer-viewport, .lkdv-slot-shell') as HTMLElement | null;
     if (!host) return;
-    const measure = () => setAvailableHeight(Math.max(260, Math.floor(host.getBoundingClientRect().height) - 16));
+    const measure = () => setAvailableHeight(Math.max(240, Math.floor(host.getBoundingClientRect().height) - 68));
     measure();
     const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(measure) : null;
     observer?.observe(host);
@@ -175,7 +175,7 @@ export function KitSlot({
 
 export const KIT_SLOT_CSS = `
 .lkdv-kit-slot{display:flex!important;flex-direction:column!important;gap:8px!important;width:100%!important;min-width:0!important;box-sizing:border-box!important;}
-.lkdv-kit-list{list-style:none!important;margin:0!important;padding:0!important;display:flex!important;flex-direction:column!important;gap:8px!important;width:100%!important;min-width:0!important;}
+.lkdv-kit-list{list-style:none!important;margin:0!important;padding:0 0 52px 0!important;display:flex!important;flex-direction:column!important;gap:8px!important;width:100%!important;min-width:0!important;}
 .lkdv-kit-list-item{min-width:0!important;margin:0!important;padding:0!important;}
 `;
 

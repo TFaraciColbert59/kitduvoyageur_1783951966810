@@ -79,15 +79,15 @@ describe('M02 — registre des destinations (navigation mobile)', () => {
   it('expose exactement 5 destinations dans l’ordre définitif', () => {
     expect(DESTINATIONS.map((d) => d.id)).toEqual([
       'adventures',
-      'community',
       'explorer',
+      'community',
       'messages',
       'me',
     ]);
     expect(DESTINATIONS.map((d) => d.href)).toEqual([
       '/hub',
-      '/communaute',
       '/explorer',
+      '/communaute',
       '/messagerie',
       '/compte',
     ]);

@@ -1,0 +1,69 @@
+{
+  "schema": 1,
+  "moduleId": "lkdv-m15",
+  "code": "M15",
+  "label": "Poche pharmacie",
+  "units": "meters",
+  "origin": "glb",
+  "fitRule": "face",
+  "glbUrl": "/assets/modules/lkdv-m15.glb",
+  "texturedSource": true,
+  "boundingBoxM": {
+    "w": 0.1552,
+    "h": 0.11,
+    "d": 0.0598
+  },
+  "cotesReferenceMm": {
+    "w": 150,
+    "h": 110,
+    "d": 65
+  },
+  "orientation": {
+    "up": "Y",
+    "front": "+Z",
+    "back": "-Z",
+    "bakedInGlbRoot": true,
+    "rootYawDegInGlb": 0,
+    "bakedScaleFactor": 0.0816,
+    "loadRotationDeg": [
+      0,
+      0,
+      0
+    ],
+    "loadScale": 1
+  },
+  "platine": {
+    "position": [
+      0,
+      0.055,
+      -0.0299
+    ],
+    "normal": [
+      0,
+      0,
+      -1
+    ]
+  },
+  "textureSize": 512,
+  "reserve": "Superposition sombre autour de la croix.",
+  "rigidPanelConvention": {
+    "thicknessMm": 3.5,
+    "status": "convention_projet",
+    "measuredOnPrototype": false,
+    "source": "Reprise du socle de la platine standard (80 × 54 × 3,5 mm)"
+  },
+  "assets": {
+    "web": {
+      "url": "/assets/modules/lkdv-m15.glb",
+      "bytes": 349468,
+      "triangles": 11348,
+      "textureSize": 512
+    },
+    "hd": {
+      "url": "https://icxyvwzfjbflcbqukpfz.supabase.co/storage/v1/object/public/module-models/lkdv-m15.hd.glb",
+      "bytes": 1194724,
+      "triangles": 11348,
+      "textureSize": 512
+    }
+  }
+}

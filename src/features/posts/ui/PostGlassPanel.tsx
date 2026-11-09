@@ -76,23 +76,14 @@ export function PostGlassPanel({
     }, SHEET_EXIT_MS);
   }, [onClosed]);
 
-  /* Tactile (iPhone) : événements touch, jamais annulés par le défilement. Retour à la photo par le
-     geste inverse de celui qui a ouvert le panneau ; vers le bas ferme aussi (liste en haut). */
-  const scrollAtStart = useRef(0);
+  /* Tactile : retour à la photo par swipe horizontal (droite ou gauche selon le côté du panneau). */
   useTouchSwipe(rootRef, {
     ignore: (target) => Boolean((target as HTMLElement | null)?.closest?.('input,textarea,select')),
-    onSwipeRight: () => {
-      if (side !== 'comments') return;
-      swipedRef.current = true;
-      onClose();
-    },
     onSwipeLeft: () => {
-      if (side !== 'share') return;
       swipedRef.current = true;
       onClose();
     },
-    onSwipeDown: () => {
-      if (scrollAtStart.current > 0) return;
+    onSwipeRight: () => {
       swipedRef.current = true;
       onClose();
     },
@@ -187,10 +178,6 @@ export function PostGlassPanel({
       data-armed={armed ? 'true' : 'false'}
       tabIndex={-1}
       style={{ top: 'var(--post-panel-top, 64px)' }}
-      onTouchStartCapture={(event) => {
-        const body = (event.target as HTMLElement).closest('.lkdv-post-panel-body') as HTMLElement | null;
-        scrollAtStart.current = body ? body.scrollTop : 0;
-      }}
       onClickCapture={(event) => {
         // Un balayage qui démarre sur un bouton ne doit pas le déclencher au relâchement.
         if (swipedRef.current) {
@@ -220,28 +207,18 @@ export function PostGlassPanel({
         if (!start) return;
         const dx = event.clientX - start.x;
         const dy = event.clientY - start.y;
-        if (isHorizontalSwipe(dx, dy)) {
+        const towardPhoto = side === 'comments' ? dx > 0 : dx < 0;
+        if (isHorizontalSwipe(dx, dy) && (dx < -40 || towardPhoto)) {
           pointerStart.current = null;
           swipedRef.current = true;
           setGesture(false);
-          // Retour à la photo par le geste inverse ; l'autre sens ne fait rien.
-          const towardPhoto = side === 'comments' ? dx > 0 : dx < 0;
-          if (towardPhoto) onClose();
+          onClose();
         }
       }}
       onPointerUp={(event) => {
         event.stopPropagation();
-        if (event.pointerType === 'touch') return;
-        const start = pointerStart.current;
         pointerStart.current = null;
         setGesture(false);
-        if (!start) return;
-        const dx = event.clientX - start.x;
-        const dy = event.clientY - start.y;
-        const body = (event.target as HTMLElement).closest('.lkdv-post-panel-body') as HTMLElement | null;
-        // Même décision de fermeture que toutes les feuilles : seuil ou flick (hooks/gestures).
-        const elapsed = Math.max(1, performance.now() - start.t);
-        if (dy > 0 && dy > Math.abs(dx) && shouldDismiss(dy, (dy / elapsed) * 1000) && (!body || body.scrollTop <= 0)) onClose();
       }}
       onPointerCancel={(event) => {
         event.stopPropagation();

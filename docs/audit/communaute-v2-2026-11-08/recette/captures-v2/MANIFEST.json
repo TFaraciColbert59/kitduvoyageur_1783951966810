@@ -1,0 +1,10 @@
+{
+  "generatedAt": "2026-11-08T16:13:41.635Z",
+  "base": "http://127.0.0.1:4028",
+  "only": null,
+  "tag": null,
+  "capturesCopied": 19,
+  "integrationFailures": [],
+  "visual": "non demandé",
+  "note": "Captures produites sur données mockées (integration/fixtures.mjs) : aucun compte réel, aucune requête réseau. Les cases 07 § A qui exigent la base réelle/aperçu migré restent « non testable ici » (J-08 : migrations non appliquées en prod)."
+}

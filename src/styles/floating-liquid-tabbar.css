@@ -28,8 +28,10 @@
     align-items: stretch;
     padding: 4px;
     border-radius: 999px;
-    background: var(--lg-bar-bg);
+    background: var(--lg-bar-bg, rgba(23, 29, 26, 0.76));
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
     -webkit-backdrop-filter: var(--lg-bar-blur);
+    backdrop-filter: blur(28px) saturate(180%);
     backdrop-filter: var(--lg-bar-blur);
     box-shadow: var(--lg-bar-shadow);
     pointer-events: auto;
@@ -179,6 +181,12 @@ html[data-hub-drawer-open='true'] .lkdv-floating-tabbar,
 body[data-hub-drawer-open='true'] .lkdv-floating-tabbar,
 body:has(.lkdv-cd) .lkdv-floating-tabbar,
 body:has([data-testid="kit-studio-view"]) .lkdv-floating-tabbar,
+body:has([data-testid="hub-studio-host"]) .lkdv-floating-tabbar,
+body:has([data-studio-scene]) .lkdv-floating-tabbar,
+body:has(.ks-root) .lkdv-floating-tabbar,
+body:has(.ks-root) .lkv-native-community-plateau,
+body:has(.ks-root) nav[aria-label="Navigation principale"],
+html[data-kit-studio-open='true'] nav[aria-label="Navigation principale"],
 body:has(.hub-camp-drawer-overlay) .lkdv-floating-tabbar {
   display: none !important;
   visibility: hidden !important;

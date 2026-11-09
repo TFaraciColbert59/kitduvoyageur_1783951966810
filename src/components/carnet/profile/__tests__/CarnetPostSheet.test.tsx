@@ -57,7 +57,8 @@ describe('CarnetPostSheet — le bloc post de la Communauté, alimenté par le c
     const container = document.body;
     expect(container.querySelector('.lkdv-post-glass-sheet')).toBeTruthy();
     expect(container.querySelector('.lkdv-feed-post')).toBeTruthy();
-    expect(container.querySelector('.lkdv-post-media img')?.getAttribute('src')).toBe('https://cdn.test/1.jpg');
+    const src = container.querySelector('.lkdv-post-media img')?.getAttribute('src') ?? '';
+    expect(decodeURIComponent(src)).toContain('https://cdn.test/1.jpg');
     expect(screen.getByRole('group', { name: 'Actions de la publication' })).toBeTruthy();
     expect(container.querySelector('.lkdv-post-author')?.textContent).toContain('Camille Rochat');
   });

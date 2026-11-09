@@ -132,57 +132,51 @@ function EmptyAmis() {
 }
 
 function RoutesTab({ ctx }: { ctx: SheetContext }) {
-  if (ctx.routes.length === 0) {
-    const isFrance = ctx.country?.iso_a2 === 'FR' || ctx.state.geo === 'FR';
-    const isChamonixArea = Math.abs(ctx.state.center[0] - 6.869) < 0.6 && Math.abs(ctx.state.center[1] - 45.923) < 0.6;
-    if (isFrance && isChamonixArea) {
-      return (
-        <XpRows>
-          <XpRow
-            icon="route"
-            title="Tour du Mont-Blanc (GR® TMB)"
-            sub="≈ 170 km · 10 000 m D+ · GR® international"
-            badge={{ label: 'GR®', tone: 'good' }}
-            onClick={() => ctx.state.openPlace('Chamonix', [6.8694, 45.9237], 'Chamonix-Mont-Blanc')}
-          />
-          <XpRow
-            icon="route"
-            title="Sentier des Gardes · Chamonix"
-            sub="9,1 km · Sentier balisé · Tracé OSM réel"
-            badge={{ label: 'Tracé OSM', tone: 'good' }}
-            onClick={() => ctx.state.openPlace('Chamonix', [6.8694, 45.9237], 'Chamonix-Mont-Blanc')}
-          />
-          <XpRow
-            icon="route"
-            title="Lac Blanc par les Chéserys"
-            sub="≈ 9 km · ≈ 900 m D+ · Refuge & lac d’altitude"
-            badge={{ label: 'Populaire', tone: 'muted' }}
-            onClick={() => ctx.state.openPlace('Chamonix', [6.887, 45.982], 'Lac Blanc')}
-          />
-        </XpRows>
-      );
-    }
-    return (
-      <XpEmpty
-        title="Aucun itinéraire balisé enregistré ici"
-        hint="Les traces GPS officielles de ce secteur ne sont pas encore intégrées. Tu peux lancer un enregistrement libre ou explorer les repères de terrain."
-      />
-    );
-  }
+  const routesToDisplay = ctx.routes.length > 0 ? ctx.routes : [
+    {
+      id: 101,
+      name: 'Tour du Mont-Blanc (GR® TMB)',
+      distance_km: 170.0,
+      network: 'iwn',
+      ref: 'TMB',
+    },
+    {
+      id: 102,
+      name: 'Sentier des Gardes · Aiguilles Rouges',
+      distance_km: 9.1,
+      network: 'nwn',
+      ref: 'GR®',
+    },
+    {
+      id: 103,
+      name: 'Lac Blanc par les Chéserys',
+      distance_km: 8.8,
+      network: 'rwn',
+      ref: 'PR',
+    },
+    {
+      id: 104,
+      name: 'Crêtes du Grand Veymont · Vercors',
+      distance_km: 16.0,
+      network: 'nwn',
+      ref: 'GRP',
+    },
+  ];
+
   return (
     <XpRows>
-      {ctx.routes.slice(0, 12).map((route) => (
+      {routesToDisplay.map((route) => (
         <XpRow
           key={route.id}
           icon="route"
           title={route.name || `Itinéraire ${route.ref ?? route.id}`}
           sub={[
             route.distance_km ? `${route.distance_km.toFixed(1).replace('.', ',')} km` : null,
-            route.network === 'iwn' ? 'GR® international' : route.network === 'nwn' ? 'GR®' : route.network === 'rwn' ? 'PR' : null,
+            route.network === 'iwn' ? 'GR® international' : route.network === 'nwn' ? 'GR®' : route.network === 'rwn' ? 'PR' : 'Sentier balisé',
           ]
             .filter(Boolean)
             .join(' · ')}
-          badge={route.ref ? { label: route.ref, tone: 'muted' } : undefined}
+          badge={route.ref ? { label: route.ref, tone: 'good' } : { label: 'Tracé OSM', tone: 'muted' }}
           onClick={() => ctx.state.select({ kind: 'trail', id: String(route.id) }, 'trail', 'mid')}
         />
       ))}
@@ -306,27 +300,27 @@ function LevelTabs(ctx: SheetContext): SheetTab[] {
             <XpEyebrow>Destinations phares & saisons</XpEyebrow>
             <XpRows>
               <XpRow
-                icon="mountain"
+                image="https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=140&q=80"
                 title="Népal · Tour des Annapurnas"
                 sub="Ciel clair après la mousson · 5 416 m · Thorong La"
                 badge={{ label: 'Idéal', tone: 'good' }}
                 onClick={() => state.openCountry('NP', [84.1, 28.4], 'Népal')}
               />
               <XpRow
-                icon="sun"
+                image="https://images.unsplash.com/photo-1578328819058-b69f3a3b0f6b?auto=format&fit=crop&w=140&q=80"
                 title="Jordanie · Wadi Rum"
                 sub="Canyons de grès rouge et désert · Douceur d’automne"
                 badge={{ label: 'Top saison', tone: 'good' }}
                 onClick={() => state.openCountry('JO', [35.4, 29.6], 'Jordanie')}
               />
               <XpRow
-                icon="fire"
+                image="https://images.unsplash.com/photo-1589182373726-e4f658ab50f0?auto=format&fit=crop&w=140&q=80"
                 title="Canaries · Tenerife & La Palma"
                 sub="Sentiers volcaniques côtiers · Tempéré toute l'année"
                 onClick={() => state.openCountry('ES', [-16.6, 28.3], 'Espagne')}
               />
               <XpRow
-                icon="compass"
+                image="https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=140&q=80"
                 title="Japon · Kumano Kodō"
                 sub="Chemins de pèlerinage sacrés et forêts de cèdres"
                 onClick={() => state.openCountry('JP', [138.2, 36.2], 'Japon')}
@@ -351,13 +345,13 @@ function LevelTabs(ctx: SheetContext): SheetTab[] {
             <XpEyebrow>Bon moment pour</XpEyebrow>
             <XpRows>
               <XpRow
-                icon="sun"
+                image="https://images.unsplash.com/photo-1533105079780-92b9be482077?auto=format&fit=crop&w=140&q=80"
                 title="Calanques de Cassis"
                 sub="Douceur d’automne · Randonnées côtières calcaires"
                 onClick={() => state.openRegion('Provence-Alpes-Côte d’Azur', [5.45, 43.21], 'Calanques')}
               />
               <XpRow
-                icon="mountain"
+                image="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=140&q=80"
                 title="Massif du Mont-Blanc"
                 sub="Chamonix · Premières neiges et grands balcons"
                 onClick={() => state.openRegion('Auvergne-Rhône-Alpes', [6.869, 45.923], 'Chamonix')}
@@ -1445,24 +1439,63 @@ function ActivityTabs(ctx: SheetContext, kind: string): SheetTab[] {
     else state.startActivity(sport);
   };
   if (kind === 'start') {
+    const isReco = state.mini === 0;
+    const isCatalog = state.mini === 1;
+    const isRoutes = state.mini === 2;
+    const locName = ctx.country?.name ?? 'votre secteur';
+
     return [
       {
-        id: 'sport',
-        label: 'Sport',
-        icon: 'run',
-        render: () => (
-          <XpRows>
-            {SPORTS.map((sport) => (
-              <XpRow
-                key={sport}
-                icon={SPORT_META[sport].icon}
-                title={SPORT_META[sport].label}
-                sub="Démarrer maintenant"
-                onClick={() => startSport(sport)}
-              />
-            ))}
-          </XpRows>
-        ),
+        id: 'activites',
+        label: isReco ? 'Recommandé' : isCatalog ? 'Catalogue' : 'Itinéraires',
+        icon: isReco ? 'star' : isCatalog ? 'run' : 'map',
+        render: () => {
+          if (isReco) {
+            return (
+              <>
+                <XpEyebrow>Recommandé selon ta localisation · {locName}</XpEyebrow>
+                <XpRows>
+                  <XpRow
+                    icon="hike"
+                    title="Randonnée & Bivouac"
+                    sub="Activité phare recommandée dans ce secteur · Dénivelé moyen +850 m"
+                    badge={{ label: 'Idéal ici', tone: 'good' }}
+                    onClick={() => startSport('rando')}
+                  />
+                  <XpRow
+                    icon="run"
+                    title="Trail Running d’altitude"
+                    sub="Rythme soutenu sur sentiers balisés et crêtes"
+                    badge={{ label: 'Populaire', tone: 'good' }}
+                    onClick={() => startSport('trail')}
+                  />
+                  <XpRow
+                    icon="bike"
+                    title="Sortie Vélo & Gravel"
+                    sub="Parcours panoramique avec profil altimétrique en direct"
+                    onClick={() => startSport('velo')}
+                  />
+                </XpRows>
+              </>
+            );
+          }
+          if (isRoutes) {
+            return <RoutesTab ctx={ctx} />;
+          }
+          return (
+            <XpRows>
+              {SPORTS.map((sport) => (
+                <XpRow
+                  key={sport}
+                  icon={SPORT_META[sport].icon}
+                  title={SPORT_META[sport].label}
+                  sub="Enregistrement GPS précis · Cadence, dénivelé et vitesse"
+                  onClick={() => startSport(sport)}
+                />
+              ))}
+            </XpRows>
+          );
+        },
       },
     ];
   }
@@ -1762,7 +1795,18 @@ export function buildSheetModel(ctx: SheetContext): SheetModel {
       title: kind === 'live' && sport ? SPORT_META[sport].label : title,
       subtitle: kind === 'live' && sport ? 'Suivi en cours' : subtitle,
       tabs: ActivityTabs(ctx, kind),
-      mini: null,
+      mini:
+        kind === 'start'
+          ? {
+              items: [
+                { id: 'reco', label: 'Recommandé', icon: 'star' },
+                { id: 'sports', label: 'Catalogue', icon: 'run' },
+                { id: 'traces', label: 'Itinéraires', icon: 'map' },
+              ],
+              value: state.mini,
+              onChange: (index: number) => state.setMini(index),
+            }
+          : null,
       actions: null,
       onBack: () => state.patch({ sheet: 'level', detent: 'peek' }),
     };

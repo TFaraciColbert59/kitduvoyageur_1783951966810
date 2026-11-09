@@ -36,6 +36,7 @@ describe('Native iOS Liquid Glass — all navigable app routes except Compas', (
   it.each([
     '/connexion', '/connexion/mot-de-passe', '/inscription',
     '/checkout', '/checkout/resultat',
+    '/kit-studio', '/kit-studio/debug',
     null,
   ])('keeps existing full-screen no-nav policy at %s', (route) => {
     expect(shouldShowNativeGlass(route)).toBe(false);

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import {
   Map as MapLibreMap,
@@ -19,7 +20,12 @@ import {
   type MapScale,
 } from '@/features/compte/map/camera';
 import { filterTracksForMode, mapModeConfig } from '@/features/compte/map/modes';
-import { boundsOf as boundsOfPoints, parsePositions, simplifyTrack } from '@/features/compte/map/geometry';
+import { resolveMapZoomConfig, type MapZoomBand } from '@/features/compte/map/zoomHierarchy';
+import {
+  boundsOf as boundsOfPoints,
+  parsePositions,
+  simplifyTrack,
+} from '@/features/compte/map/geometry';
 import type {
   CompteMapMode,
   CompteMapPayload,
@@ -27,26 +33,13 @@ import type {
   MapTrack,
   TrackPoint,
 } from '@/features/compte/map/types';
-import { dayMapFocus, isDayHighlight } from '@/components/carnet/profile/dayMapFocus';
-import type { CarnetDayPoint } from '@/features/carnet/detail/types';
 import { CompteMapAttribution, CompteMapHud } from './CompteMapHud';
 import { CompteMapCallout } from './CompteMapCallout';
 import { CompteMapFallback } from './CompteMapFallback';
 import { CompteMapState } from './CompteMapState';
 import './compte-map.css';
 
-const DEFAULT_CENTER: [number, number] = [2.5, 46.5];
-
-/* Peintures du tracé de carnet : les valeurs historiques (liseré blanc, halo
-   sauge, ligne forêt), partagées par le tracé global et le tracé du jour. */
-const TRACE_WHITE = '#FFFFFF';
-const TRACE_SAGE = '#5B7F55';
-const TRACE_FOREST = '#17402C';
-const TRACE_OPACITY = { casing: 0.68, glow: 0.35, line: 0.9 } as const;
-/** Part de l'opacité gardée par le tracé global quand un jour est affiché. */
-const TRACE_DIM_FACTOR = 0.3;
-const DAY_FIT_MS = 600;
-const SUMMARY_FIT_MS = 1100;
+const DEFAULT_CENTER: [number, number] = [2.35, 46.6];
 
 export type CompteMapAuthState = 'loading' | 'guest' | 'owner' | 'error';
 
@@ -78,13 +71,21 @@ export interface CompteMapProps {
   /** État vide honnête, affiché seulement si le carnet n'a réellement aucune trace. */
   emptyTitle?: string;
   emptyHint?: string;
-  /**
-   * Variant `carnet` seulement. `null`/absent = page Résumé (tracé global tel
-   * quel). Tableau = page d'un jour : tracé global atténué, tracé du jour par
-   * dessus, départ/arrivée, caméra sur les bornes du jour. Tableau vide = jour
-   * sans point : tracé global atténué, caméra globale, rien d'inventé.
-   */
-  highlight?: CarnetDayPoint[] | null;
+  /** Jour actif sur la fiche carnet (filtrage visuel optionnel de la trace). */
+  activeDay?: number | null;
+  /** Position GPS live (participant en partage direct). */
+  livePosition?: { lat: number; lng: number } | null;
+  /** Zone approximative floue (visiteur). */
+  publicZone?: { centerLat: number; centerLng: number; radiusMeters?: number } | null;
+  /** Marqueurs d'étapes, nuits ou moments du carnet. */
+  markers?: Array<{
+    id: string;
+    lat: number;
+    lng: number;
+    title: string;
+    type?: string;
+    badge?: string;
+  }>;
 }
 
 type Selected =
@@ -123,13 +124,15 @@ function tracksCollection(tracks: MapTrack[]) {
   };
 }
 
-function pointsCollection(
-  rows: Array<{ id: string; position: TrackPoint }>
-) {  return {
+function pointsCollection(rows: Array<{ id: string; position: TrackPoint; importance?: number }>) {
+  return {
     type: 'FeatureCollection' as const,
     features: rows.map((row) => ({
       type: 'Feature' as const,
-      properties: { id: row.id },
+      properties: {
+        id: row.id,
+        importance: row.importance ?? 1,
+      },
       geometry: {
         type: 'Point' as const,
         coordinates: [row.position.lng, row.position.lat],
@@ -154,27 +157,6 @@ function carnetTraceCollection(points: TrackPoint[]) {
               },
             },
           ]
-        : [],
-  };
-}
-
-/** Départ et arrivée réels du jour affiché ; vide si le jour n'a pas de tracé. */
-function dayEndsCollection(start: TrackPoint | null, end: TrackPoint | null) {
-  return {
-    type: 'FeatureCollection' as const,
-    features:
-      start && end
-        ? [
-            { role: 'start', point: start },
-            { role: 'end', point: end },
-          ].map((entry) => ({
-            type: 'Feature' as const,
-            properties: { id: `carnet-day-${entry.role}`, role: entry.role },
-            geometry: {
-              type: 'Point' as const,
-              coordinates: [entry.point.lng, entry.point.lat],
-            },
-          }))
         : [],
   };
 }
@@ -208,7 +190,7 @@ function hasWebGL(): boolean {
     const canvas = document.createElement('canvas');
     return Boolean(
       window.WebGLRenderingContext &&
-        (canvas.getContext('webgl') || canvas.getContext('experimental-webgl'))
+      (canvas.getContext('webgl') || canvas.getContext('experimental-webgl'))
     );
   } catch {
     return false;
@@ -244,18 +226,52 @@ function bottomBarOverlap(container: HTMLElement): number {
   let barTop = Number.POSITIVE_INFINITY;
   if (webBar && webBar.offsetParent !== null) barTop = webBar.getBoundingClientRect().top;
   const nativeHeight = parseFloat(
-    getComputedStyle(document.documentElement).getPropertyValue('--lkv-native-bar-height') || '',
+    getComputedStyle(document.documentElement).getPropertyValue('--lkv-native-bar-height') || ''
   );
-  if (document.documentElement.hasAttribute('data-native-glass-nav') && Number.isFinite(nativeHeight)) {
+  if (
+    document.documentElement.hasAttribute('data-native-glass-nav') &&
+    Number.isFinite(nativeHeight)
+  ) {
     barTop = Math.min(barTop, window.innerHeight - nativeHeight);
   }
   if (!Number.isFinite(barTop)) return 0;
+  /* À ≥ 768 la barre flottante n'est pas stylée (dette D-01) : elle est rendue
+     en flux en haut de page et ne recouvre pas la carte. Sans ce garde, son
+     `top` proche de 0 ajoutait toute la hauteur de l'écran au padding de
+     cadrage, et `fitBounds` levait une erreur maplibre sur la fiche carnet. */
+  if (barTop < 80) return 0;
   return Math.max(0, Math.round(mapBottom - barTop) + 8);
 }
 
 /** Ajoute la hauteur recouverte par la barre du bas au bas du cadrage. */
 function withBarInset<T extends { bottom: number }>(padding: T, container: HTMLElement): T {
   return { ...padding, bottom: padding.bottom + bottomBarOverlap(container) };
+}
+
+/**
+ * `fitBounds` tolérant : maplibre lève dans `cameraForBoxAndBearing` quand le
+ * conteneur n'est pas encore mesuré ou quand le padding mange sa taille.
+ * On saute alors le cadrage au lieu de faire tomber l'écran.
+ */
+function fitBoundsSafely(
+  map: MapLibreMap,
+  bounds: [[number, number], [number, number]],
+  options: Parameters<MapLibreMap['fitBounds']>[1]
+) {
+  const rect = map.getContainer().getBoundingClientRect();
+  if (rect.width < 8 || rect.height < 8) return;
+  if (!bounds.every(([lng, lat]) => Number.isFinite(lng) && Number.isFinite(lat))) return;
+  const padding = options?.padding;
+  if (padding && typeof padding === 'object') {
+    const horizontal = (padding.left ?? 0) + (padding.right ?? 0);
+    const vertical = (padding.top ?? 0) + (padding.bottom ?? 0);
+    if (rect.width - horizontal < 8 || rect.height - vertical < 8) return;
+  }
+  try {
+    map.fitBounds(bounds, options);
+  } catch {
+    /* Carte non mesurable à cet instant : le prochain rendu recadrera. */
+  }
 }
 
 export function CompteMap({
@@ -266,8 +282,12 @@ export function CompteMap({
   trace = null,
   emptyTitle,
   emptyHint,
-  highlight = null,
+  activeDay = null,
+  livePosition = null,
+  publicZone = null,
+  markers = [],
 }: CompteMapProps) {
+  const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const markerRefs = useRef<Marker[]>([]);
@@ -278,9 +298,36 @@ export function CompteMap({
   const [selected, setSelected] = useState<Selected | null>(null);
   const [anchor, setAnchor] = useState<{ x: number; y: number } | null>(null);
   const [scale, setScale] = useState<MapScale>('globe');
-  const [tileMode, setTileMode] = useState<'satellite' | 'topo'>('satellite');
+  const [tileMode, setTileMode] = useState<'satellite' | 'topo'>(
+    variant === 'carnet' ? 'topo' : 'satellite'
+  );
   const [online, setOnline] = useState(true);
   const [year, setYear] = useState<number | null>(null);
+  const [zoomBand, setZoomBand] = useState<MapZoomBand>('world');
+
+  useEffect(() => {
+    if (!map) return;
+    const onZoom = () => {
+      const currentZoom = map.getZoom();
+      const nextBand = resolveMapZoomConfig(currentZoom).band;
+      setZoomBand(nextBand);
+    };
+    onZoom();
+    map.on('zoom', onZoom);
+    return () => {
+      map.off('zoom', onZoom);
+    };
+  }, [map]);
+
+  /* Le carnet s'ouvre sur la carte topo (maquette) ; le toggle reste possible. */
+  useEffect(() => {
+    if (!map || !ready) return;
+    for (const layer of ['atlas-tile-satellite', 'atlas-tile-topo']) {
+      if (!map.getLayer(layer)) continue;
+      const wanted = layer === 'atlas-tile-topo' ? 'topo' : 'satellite';
+      map.setLayoutProperty(layer, 'visibility', tileMode === wanted ? 'visible' : 'none');
+    }
+  }, [map, ready, tileMode]);
 
   /* Fiche carnet : la carte ne montre que le tracé du carnet. */
   const isCarnet = variant === 'carnet';
@@ -292,10 +339,6 @@ export function CompteMap({
     () => (tracePoints.length >= 2 ? boundsOfPoints(tracePoints) : null),
     [tracePoints]
   );
-  /* Page de jour : lue seulement en variant carnet (le Compte ne la passe pas). */
-  const dayPoints = isCarnet ? highlight : null;
-  const dayFocus = useMemo(() => dayMapFocus(dayPoints), [dayPoints]);
-  const dayDimmed = isCarnet && isDayHighlight(dayPoints);
 
   const config = mapModeConfig(context.mode);
   const query = useQuery<CompteMapPayload, Error>({
@@ -353,7 +396,7 @@ export function CompteMap({
       container: containerRef.current,
       style: createMapStyle('satellite'),
       center: DEFAULT_CENTER,
-      zoom: 4.2,
+      zoom: 6.1,
       minZoom: 1.2,
       maxZoom: 18,
       maxPitch: 70,
@@ -365,11 +408,10 @@ export function CompteMap({
     setMap(instance);
     (window as unknown as { __lkdvCompteMapInstance?: MapLibreMap }).__lkdvCompteMapInstance =
       instance;
+    (window as unknown as { __lkdvCompteMap3D?: MapLibreMap }).__lkdvCompteMap3D = instance;
 
     const observer =
-      typeof ResizeObserver !== 'undefined'
-        ? new ResizeObserver(() => instance.resize())
-        : null;
+      typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => instance.resize()) : null;
     observer?.observe(containerRef.current);
 
     const timeout = window.setTimeout(() => setStyleFailed(true), 4000);
@@ -440,7 +482,11 @@ export function CompteMap({
       map,
       'compte-track-starts',
       pointsCollection(
-        visibleTracks.map((track) => ({ id: track.id, position: track.start }))
+        visibleTracks.map((track) => ({
+          id: track.id,
+          position: track.start,
+          importance: track.km >= 25 ? 3 : track.km >= 12 ? 2 : 1,
+        }))
       )
     );
     ensureLayer(map, 'compte-track-starts-dot', () => {
@@ -449,10 +495,33 @@ export function CompteMap({
         type: 'circle',
         source: 'compte-track-starts',
         paint: {
-          'circle-radius': 5,
+          'circle-radius': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            3,
+            ['match', ['get', 'importance'], 3, 2.4, 2, 1.9, 1.5],
+            7,
+            ['match', ['get', 'importance'], 3, 3.6, 2, 2.9, 2.3],
+            11,
+            ['match', ['get', 'importance'], 3, 5.2, 2, 4.2, 3.4],
+            15,
+            ['match', ['get', 'importance'], 3, 7.2, 2, 5.8, 4.6],
+          ] as any,
           'circle-color': '#17402C',
-          'circle-stroke-color': '#fff',
-          'circle-stroke-width': 2,
+          'circle-stroke-color': 'rgba(255, 255, 255, 0.95)',
+          'circle-stroke-width': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            3,
+            0.8,
+            9,
+            1.2,
+            15,
+            1.8,
+          ] as any,
+          'circle-opacity': 0.95,
         },
       });
       map.on('click', 'compte-track-starts-dot', (event: MapLayerMouseEvent) => {
@@ -464,7 +533,13 @@ export function CompteMap({
     ensureSource(
       map,
       'compte-track-ends',
-      pointsCollection(visibleTracks.map((track) => ({ id: track.id, position: track.end })))
+      pointsCollection(
+        visibleTracks.map((track) => ({
+          id: track.id,
+          position: track.end,
+          importance: 1,
+        }))
+      )
     );
     ensureLayer(map, 'compte-track-ends-dot', () => {
       map.addLayer({
@@ -472,10 +547,23 @@ export function CompteMap({
         type: 'circle',
         source: 'compte-track-ends',
         paint: {
-          'circle-radius': 4,
-          'circle-color': '#fff',
+          'circle-radius': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            3,
+            1.2,
+            7,
+            1.8,
+            11,
+            2.6,
+            15,
+            3.5,
+          ] as any,
+          'circle-color': '#FFFFFF',
           'circle-stroke-color': '#17402C',
-          'circle-stroke-width': 2,
+          'circle-stroke-width': 1,
+          'circle-opacity': 0.85,
         },
       });
     });
@@ -484,7 +572,11 @@ export function CompteMap({
       map,
       'compte-carnets',
       pointsCollection(
-        data.carnets.map((carnet) => ({ id: carnet.id, position: carnet.position }))
+        data.carnets.map((carnet) => ({
+          id: carnet.id,
+          position: carnet.position,
+          importance: 2,
+        }))
       )
     );
     ensureLayer(map, 'compte-carnets-dot', () => {
@@ -493,10 +585,33 @@ export function CompteMap({
         type: 'circle',
         source: 'compte-carnets',
         paint: {
-          'circle-radius': 5,
+          'circle-radius': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            3,
+            1.8,
+            7,
+            2.7,
+            11,
+            4.0,
+            15,
+            5.5,
+          ] as any,
           'circle-color': '#C89A3B',
-          'circle-stroke-color': '#fff',
-          'circle-stroke-width': 2,
+          'circle-stroke-color': '#FFFFFF',
+          'circle-stroke-width': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            3,
+            0.8,
+            9,
+            1.2,
+            15,
+            1.6,
+          ] as any,
+          'circle-opacity': 0.95,
         },
       });
       map.on('click', 'compte-carnets-dot', (event: MapLayerMouseEvent) => {
@@ -508,7 +623,13 @@ export function CompteMap({
     ensureSource(
       map,
       'compte-pois',
-      pointsCollection(data.pois.map((poi) => ({ id: poi.id, position: poi.position })))
+      pointsCollection(
+        data.pois.map((poi) => ({
+          id: poi.id,
+          position: poi.position,
+          importance: poi.day ? 2 : 1,
+        }))
+      )
     );
     ensureLayer(map, 'compte-pois-dot', () => {
       map.addLayer({
@@ -516,10 +637,23 @@ export function CompteMap({
         type: 'circle',
         source: 'compte-pois',
         paint: {
-          'circle-radius': 3.5,
+          'circle-radius': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            3,
+            1.2,
+            7,
+            1.8,
+            11,
+            2.6,
+            15,
+            3.8,
+          ] as any,
           'circle-color': '#4B6B7C',
-          'circle-stroke-color': '#fff',
-          'circle-stroke-width': 1.5,
+          'circle-stroke-color': 'rgba(255, 255, 255, 0.85)',
+          'circle-stroke-width': 0.8,
+          'circle-opacity': 0.85,
         },
       });
       map.on('click', 'compte-pois-dot', (event: MapLayerMouseEvent) => {
@@ -560,11 +694,7 @@ export function CompteMap({
         type: 'line',
         source: 'compte-carnet-trace',
         layout: { 'line-cap': 'round', 'line-join': 'round' },
-        paint: {
-          'line-color': TRACE_WHITE,
-          'line-width': 6,
-          'line-opacity': TRACE_OPACITY.casing,
-        },
+        paint: { 'line-color': '#FFFFFF', 'line-width': 6, 'line-opacity': 0.68 },
       });
     });
     ensureLayer(map, 'compte-carnet-trace-glow', () => {
@@ -574,9 +704,9 @@ export function CompteMap({
         source: 'compte-carnet-trace',
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: {
-          'line-color': TRACE_SAGE,
+          'line-color': '#5B7F55',
           'line-width': 7,
-          'line-opacity': TRACE_OPACITY.glow,
+          'line-opacity': 0.35,
           'line-blur': 4,
         },
       });
@@ -587,7 +717,7 @@ export function CompteMap({
         type: 'line',
         source: 'compte-carnet-trace',
         layout: { 'line-cap': 'round', 'line-join': 'round' },
-        paint: { 'line-color': TRACE_FOREST, 'line-width': 3, 'line-opacity': TRACE_OPACITY.line },
+        paint: { 'line-color': '#17402C', 'line-width': 3, 'line-opacity': 0.9 },
       });
     });
     const visible = tracePoints.length >= 2 ? 'visible' : 'none';
@@ -600,136 +730,41 @@ export function CompteMap({
     }
   }, [map, ready, isCarnet, tracePoints]);
 
-  /* Page de jour : le tracé global reste lisible mais passe au second plan
-     (opacité des calques existants, jamais d'animation de filtre). */
+  /* Cadrage du tracé du carnet : le parcours remplit la bande carte, en 3D
+     (même inclinaison que la carte d'une sortie du Compte). */
   useEffect(() => {
-    if (!map || !ready || !isCarnet) return;
-    const factor = dayDimmed ? TRACE_DIM_FACTOR : 1;
-    const opacities: Array<[string, number]> = [
-      ['compte-carnet-trace-casing', TRACE_OPACITY.casing],
-      ['compte-carnet-trace-glow', TRACE_OPACITY.glow],
-      ['compte-carnet-trace-line', TRACE_OPACITY.line],
-    ];
-    for (const [layer, base] of opacities) {
-      if (map.getLayer(layer)) map.setPaintProperty(layer, 'line-opacity', base * factor);
-    }
-  }, [map, ready, isCarnet, tracePoints, dayDimmed]);
-
-  /* Tracé du jour par-dessus : même peinture que la ligne du carnet, plus le
-     départ et l'arrivée réels. Sans tracé de jour, les calques sont masqués. */
-  useEffect(() => {
-    if (!map || !ready || !isCarnet) return;
-    ensureSource(
-      map,
-      'compte-carnet-day',
-      carnetTraceCollection(dayFocus?.line ?? []) as ReturnType<typeof tracksCollection>
-    );
-    ensureSource(
-      map,
-      'compte-carnet-day-ends',
-      dayEndsCollection(dayFocus?.start ?? null, dayFocus?.end ?? null) as ReturnType<
-        typeof pointsCollection
-      >
-    );
-    ensureLayer(map, 'compte-carnet-day-casing', () => {
-      map.addLayer({
-        id: 'compte-carnet-day-casing',
-        type: 'line',
-        source: 'compte-carnet-day',
-        layout: { 'line-cap': 'round', 'line-join': 'round' },
-        paint: {
-          'line-color': TRACE_WHITE,
-          'line-width': 6,
-          'line-opacity': TRACE_OPACITY.casing,
-        },
-      });
-    });
-    ensureLayer(map, 'compte-carnet-day-glow', () => {
-      map.addLayer({
-        id: 'compte-carnet-day-glow',
-        type: 'line',
-        source: 'compte-carnet-day',
-        layout: { 'line-cap': 'round', 'line-join': 'round' },
-        paint: {
-          'line-color': TRACE_SAGE,
-          'line-width': 7,
-          'line-opacity': TRACE_OPACITY.glow,
-          'line-blur': 4,
-        },
-      });
-    });
-    ensureLayer(map, 'compte-carnet-day-line', () => {
-      map.addLayer({
-        id: 'compte-carnet-day-line',
-        type: 'line',
-        source: 'compte-carnet-day',
-        layout: { 'line-cap': 'round', 'line-join': 'round' },
-        paint: { 'line-color': TRACE_FOREST, 'line-width': 3, 'line-opacity': TRACE_OPACITY.line },
-      });
-    });
-    ensureLayer(map, 'compte-carnet-day-ends-dot', () => {
-      map.addLayer({
-        id: 'compte-carnet-day-ends-dot',
-        type: 'circle',
-        source: 'compte-carnet-day-ends',
-        paint: {
-          'circle-radius': 5.5,
-          'circle-color': ['match', ['get', 'role'], 'end', TRACE_FOREST, TRACE_SAGE],
-          'circle-stroke-color': TRACE_WHITE,
-          'circle-stroke-width': 2,
-        },
-      });
-    });
-    const visible = dayFocus ? 'visible' : 'none';
-    for (const layer of [
-      'compte-carnet-day-casing',
-      'compte-carnet-day-glow',
-      'compte-carnet-day-line',
-      'compte-carnet-day-ends-dot',
-    ]) {
-      if (map.getLayer(layer)) map.setLayoutProperty(layer, 'visibility', visible);
-    }
-  }, [map, ready, isCarnet, dayFocus]);
-
-  /* Cadrage du carnet : le parcours remplit la bande carte, en 3D (même
-     inclinaison que la carte d'une sortie du Compte). Page de jour : bornes du
-     jour en ≈ 600 ms ; Résumé ou jour sans tracé : bornes globales. Le premier
-     cadrage garde sa durée d'origine ; prefers-reduced-motion = saut immédiat. */
-  const fitCount = useRef(0);
-  const cameraBounds = dayFocus?.bounds ?? traceBounds;
-  useEffect(() => {
-    if (!map || !ready || !cameraBounds) return;
+    if (!map || !ready || !traceBounds) return;
     const reduced = prefersReducedMotion();
-    const first = fitCount.current === 0;
-    fitCount.current += 1;
-    map.fitBounds(
+    fitBoundsSafely(
+      map,
       [
-        [cameraBounds[0], cameraBounds[1]],
-        [cameraBounds[2], cameraBounds[3]],
+        [traceBounds[0], traceBounds[1]],
+        [traceBounds[2], traceBounds[3]],
       ],
       {
-        padding: withBarInset(paddingForViewport(map.getContainer().getBoundingClientRect(), {
-          sheetOpen: false,
-          mapbig: map.getContainer().clientHeight > 500,
-        }), map.getContainer()),
+        padding: withBarInset(
+          paddingForViewport(map.getContainer().getBoundingClientRect(), {
+            sheetOpen: false,
+            mapbig: map.getContainer().clientHeight > 500,
+          }),
+          map.getContainer()
+        ),
         maxZoom: 14,
         pitch: 45,
         bearing: -18,
-        duration: reduced ? 0 : first ? SUMMARY_FIT_MS : DAY_FIT_MS,
+        duration: reduced ? 0 : 1100,
         essential: true,
       }
     );
-  }, [map, ready, cameraBounds]);
+  }, [map, ready, traceBounds]);
 
   useEffect(() => {
     if (!map) return;
     const close = (event: { point: { x: number; y: number } }) => {
       const hits = map.queryRenderedFeatures(event.point as never, {
-        layers: [
-          'compte-track-starts-dot',
-          'compte-carnets-dot',
-          'compte-pois-dot',
-        ].filter((layer) => Boolean(map.getLayer(layer))),
+        layers: ['compte-track-starts-dot', 'compte-carnets-dot', 'compte-pois-dot'].filter(
+          (layer) => Boolean(map.getLayer(layer))
+        ),
       });
       if (hits.length === 0) setSelected(null);
     };
@@ -749,17 +784,25 @@ export function CompteMap({
       const element = document.createElement('button');
       element.type = 'button';
       element.className = 'lkdv-map-massif';
+      element.dataset.massifId = massif.id;
+      const importance = massif.outings >= 5 ? 'high' : massif.outings >= 2 ? 'medium' : 'low';
+      element.dataset.importance = importance;
+      element.dataset.outings = String(massif.outings);
       element.setAttribute('aria-label', `${massif.name}, ${massif.outings} sorties`);
       const count = document.createElement('b');
       count.textContent = String(massif.outings);
       element.append(count);
+      const name = document.createElement('span');
+      name.className = 'lkdv-map-massif-name';
+      name.textContent = massif.name;
+      element.append(name);
       element.title = `${massif.name} · ${massif.outings} sorties`;
       element.addEventListener('click', (event) => {
         event.stopPropagation();
         setSelected({ kind: 'massif', id: massif.id });
       });
       markerRefs.current.push(
-        new Marker({ element, anchor: 'bottom' })
+        new Marker({ element, anchor: 'center' })
           .setLngLat([massif.center.lng, massif.center.lat])
           .addTo(map)
       );
@@ -771,16 +814,20 @@ export function CompteMap({
     const intent = fitIntentForMode(context.mode, data, context.outingId);
     if (!intent) return;
     const reduced = prefersReducedMotion();
-    map.fitBounds(
+    fitBoundsSafely(
+      map,
       [
         [intent.bounds[0], intent.bounds[1]],
         [intent.bounds[2], intent.bounds[3]],
       ],
       {
-        padding: withBarInset(paddingForViewport(map.getContainer().getBoundingClientRect(), {
-          sheetOpen: context.mode !== 'overview',
-          mapbig: map.getContainer().clientHeight > 500,
-        }), map.getContainer()),
+        padding: withBarInset(
+          paddingForViewport(map.getContainer().getBoundingClientRect(), {
+            sheetOpen: context.mode !== 'overview',
+            mapbig: map.getContainer().clientHeight > 500,
+          }),
+          map.getContainer()
+        ),
         maxZoom: intent.maxZoom,
         pitch: context.mode === 'sortie' ? 45 : 0,
         duration: reduced ? 0 : context.mode === 'sortie' ? 1200 : 800,
@@ -824,7 +871,14 @@ export function CompteMap({
     (next: MapScale) => {
       if (!map) return;
       setScale(next);
-      const focus =
+      const carnetFocus =
+        isCarnet && traceBounds
+          ? {
+              lng: (traceBounds[0] + traceBounds[2]) / 2,
+              lat: (traceBounds[1] + traceBounds[3]) / 2,
+            }
+          : null;
+      const focus = carnetFocus ??
         resolved?.position ??
         data?.tracks[0]?.start ??
         data?.massifs[0]?.center ?? { lng: DEFAULT_CENTER[0], lat: DEFAULT_CENTER[1] };
@@ -838,28 +892,52 @@ export function CompteMap({
         essential: true,
       });
     },
-    [map, resolved, data]
+    [map, resolved, data, isCarnet, traceBounds]
   );
 
   const handleRecenter = useCallback(() => {
-    if (!map || !data?.bounds) return;
+    if (!map) return;
+    if (isCarnet && traceBounds) {
+      fitBoundsSafely(
+        map,
+        [
+          [traceBounds[0], traceBounds[1]],
+          [traceBounds[2], traceBounds[3]],
+        ],
+        {
+          padding: paddingForViewport(map.getContainer().getBoundingClientRect(), {
+            sheetOpen: false,
+            mapbig: map.getContainer().clientHeight > 500,
+          }),
+          maxZoom: 14,
+          duration: prefersReducedMotion() ? 0 : 900,
+          essential: true,
+        }
+      );
+      return;
+    }
+    if (!data?.bounds) return;
     const bounds = data.bounds;
-    map.fitBounds(
+    fitBoundsSafely(
+      map,
       [
         [bounds[0], bounds[1]],
         [bounds[2], bounds[3]],
       ],
       {
-        padding: withBarInset(paddingForViewport(map.getContainer().getBoundingClientRect(), {
-          sheetOpen: context.mode !== 'overview',
-          mapbig: map.getContainer().clientHeight > 500,
-        }), map.getContainer()),
+        padding: withBarInset(
+          paddingForViewport(map.getContainer().getBoundingClientRect(), {
+            sheetOpen: context.mode !== 'overview',
+            mapbig: map.getContainer().clientHeight > 500,
+          }),
+          map.getContainer()
+        ),
         maxZoom: 11,
         duration: prefersReducedMotion() ? 0 : 900,
         essential: true,
       }
     );
-  }, [map, data, context.mode]);
+  }, [map, data, context.mode, isCarnet, traceBounds]);
 
   const handleLayers = useCallback(() => {
     if (!map) return;
@@ -872,14 +950,88 @@ export function CompteMap({
       );
     }
     if (map.getLayer('atlas-tile-topo')) {
-      map.setLayoutProperty(
-        'atlas-tile-topo',
-        'visibility',
-        next === 'topo' ? 'visible' : 'none'
-      );
+      map.setLayoutProperty('atlas-tile-topo', 'visibility', next === 'topo' ? 'visible' : 'none');
     }
     setTileMode(next);
   }, [map, tileMode]);
+
+  const carnetMarkerRefs = useRef<Marker[]>([]);
+
+  useEffect(() => {
+    if (!map || !ready || !isCarnet) return;
+    for (const m of carnetMarkerRefs.current) m.remove();
+    carnetMarkerRefs.current = [];
+
+    for (const marker of markers) {
+      const el = document.createElement('div');
+      el.className = 'lkdv-carnet-map-marker';
+      el.title = marker.title;
+      if (marker.badge) {
+        el.classList.add('has-badge');
+        const badge = document.createElement('span');
+        badge.className = 'lkdv-map-night-badge';
+        badge.textContent = marker.badge;
+        el.appendChild(badge);
+        el.setAttribute('aria-label', `${marker.badge} · ${marker.title}`);
+      } else {
+        const scrub = marker.type === 'scrub';
+        el.style.width = scrub ? '14px' : '18px';
+        el.style.height = scrub ? '14px' : '18px';
+        el.style.borderRadius = '9999px';
+        el.style.background =
+          marker.type === 'start'
+            ? '#FFFFFF'
+            : marker.type === 'bivouac' || marker.type === 'refuge' || marker.type === 'end'
+              ? '#5B7F55'
+              : '#17402C';
+        el.style.border = marker.type === 'start' ? '2px solid #17402C' : '2px solid #FFFFFF';
+        el.style.boxShadow = scrub
+          ? '0 0 0 5px rgba(23,64,44,0.18), 0 2px 6px rgba(0,0,0,0.3)'
+          : '0 2px 6px rgba(0,0,0,0.3)';
+      }
+
+      const m = new Marker({ element: el, anchor: 'center' })
+        .setLngLat([marker.lng, marker.lat])
+        .addTo(map);
+      carnetMarkerRefs.current.push(m);
+    }
+
+    if (livePosition) {
+      const el = document.createElement('div');
+      el.className = 'lkdv-carnet-live-marker';
+      el.style.width = '16px';
+      el.style.height = '16px';
+      el.style.borderRadius = '9999px';
+      el.style.background = '#226148';
+      el.style.border = '2.5px solid #FFFFFF';
+      el.style.boxShadow = '0 0 0 4px rgba(34,97,72,0.35)';
+
+      const m = new Marker({ element: el, anchor: 'center' })
+        .setLngLat([livePosition.lng, livePosition.lat])
+        .addTo(map);
+      carnetMarkerRefs.current.push(m);
+    }
+
+    if (publicZone) {
+      const el = document.createElement('div');
+      el.className = 'lkdv-carnet-public-zone';
+      el.style.width = '48px';
+      el.style.height = '48px';
+      el.style.borderRadius = '9999px';
+      el.style.background = 'rgba(91,127,85,0.2)';
+      el.style.border = '1.5px dashed rgba(23,64,44,0.4)';
+
+      const m = new Marker({ element: el, anchor: 'center' })
+        .setLngLat([publicZone.centerLng, publicZone.centerLat])
+        .addTo(map);
+      carnetMarkerRefs.current.push(m);
+    }
+
+    return () => {
+      for (const m of carnetMarkerRefs.current) m.remove();
+      carnetMarkerRefs.current = [];
+    };
+  }, [map, ready, isCarnet, markers, livePosition, publicZone]);
 
   const handleZoomIn = useCallback(() => {
     if (!map) return;
@@ -891,21 +1043,27 @@ export function CompteMap({
     map.zoomOut({ duration: prefersReducedMotion() ? 0 : 300 });
   }, [map]);
 
-  const handleOpen = useCallback((kind: Resolved['kind'], id: string) => {
-    if (kind === 'carnet') {
-      window.location.assign(`/carnets/${encodeURIComponent(id)}`);
-      return;
-    }
-    if (kind === 'massif') {
-      window.__lkdvOpenSlot?.('souvenirs');
-      return;
-    }
-    window.__lkdvCompteMapOpenOuting?.(id);
-  }, []);
+  const handleOpen = useCallback(
+    (kind: Resolved['kind'], id: string) => {
+      if (kind === 'carnet') {
+        router.push(`/carnets/${encodeURIComponent(id)}`);
+        return;
+      }
+      if (kind === 'massif') {
+        window.__lkdvOpenSlot?.('souvenirs');
+        return;
+      }
+      window.__lkdvCompteMapOpenOuting?.(id);
+    },
+    [router]
+  );
 
   const showGuest = !isCarnet && (authState === 'guest' || unauthorized);
   const showError =
-    !isCarnet && !fallback && !styleFailed && (authState === 'error' || (query.isError && !unauthorized));
+    !isCarnet &&
+    !fallback &&
+    !styleFailed &&
+    (authState === 'error' || (query.isError && !unauthorized));
   const showEmpty =
     !isCarnet &&
     !fallback &&
@@ -924,14 +1082,14 @@ export function CompteMap({
     Boolean(config.emptyTitle);
   /* Fiche carnet : état vide seulement quand la base ne porte réellement
      aucune trace — jamais un « connecte-toi » qui n'a pas de sens ici. */
-  const showCarnetEmpty =
-    isCarnet && !fallback && !styleFailed && ready && tracePoints.length < 2;
+  const showCarnetEmpty = isCarnet && !fallback && !styleFailed && ready && tracePoints.length < 2;
 
   return (
     <div
       className="lkdv-map-root"
       role="region"
       aria-label="Carte de tes sorties"
+      data-zoom-band={zoomBand}
       data-map-mode={context.mode}
       data-map-outing={context.outingId ?? ''}
       data-map-ready={ready ? 'true' : 'false'}
@@ -963,9 +1121,7 @@ export function CompteMap({
       ) : null}
 
       {showGuest ? <CompteMapState kind="guest" /> : null}
-      {showError ? (
-        <CompteMapState kind="error" onRetry={() => query.refetch()} />
-      ) : null}
+      {showError ? <CompteMapState kind="error" onRetry={() => query.refetch()} /> : null}
 
       {showEmpty && data ? (
         data.stats.outings > 0 ? (
@@ -991,7 +1147,14 @@ export function CompteMap({
         />
       ) : null}
 
-      {ready && !isCarnet && authState === 'owner' && data && data.tracks.length > 0 && !query.isError && !fallback ? (
+      {ready &&
+      ((isCarnet && tracePoints.length >= 2) ||
+        (!isCarnet &&
+          authState === 'owner' &&
+          data &&
+          data.tracks.length > 0 &&
+          !query.isError &&
+          !fallback)) ? (
         <CompteMapHud
           config={config}
           scale={scale}
@@ -1000,14 +1163,12 @@ export function CompteMap({
           onLayers={handleLayers}
           onZoomIn={handleZoomIn}
           onZoomOut={handleZoomOut}
+          showLayers={!isCarnet}
         />
       ) : null}
 
       {anchor && resolved && !fallback ? (
-        <div
-          className="lkdv-map-callout-anchor"
-          style={{ left: anchor.x, top: anchor.y }}
-        >
+        <div className="lkdv-map-callout-anchor" style={{ left: anchor.x, top: anchor.y }}>
           {resolved.kind === 'outing' ? (
             <CompteMapCallout
               kind="outing"

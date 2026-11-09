@@ -4,15 +4,14 @@
  *
  * Parses glTF 2.0 binary directly into Three.js scene objects with:
  * - Isolated `THREE.MeshStandardMaterial` per mesh (guarantees D-04 part isolation)
- * - Named `parts: Map<PartId, THREE.Mesh>`
+ * - Named `parts: Map<BagPartId, THREE.Mesh>`
  * - Named `anchors: Map<string, BagAnchorSpec>`
- * - Hinge extraction (`hinges: Map<PartId, BagHingeSpec>`), strictly gated by `manifest.capabilities.openable`
+ * - Hinge extraction (`hinges: Map<BagPartId, BagHingeSpec>`), strictly gated by `manifest.capabilities.openable`
  * - Graceful degradation (`status: 'degraded'`) on missing/corrupt GLB or manifest without throwing
  */
 
 import * as THREE from 'three';
-import type { BagCapabilities, PartId } from '../../state/types';
-import type { Vec3Tuple } from '../camera/intents';
+import type { BagCapabilities, BagPartId, Vec3Tuple } from '../../domain/bagModel';
 import {
   DEGRADED_BAG_CAPABILITIES,
   type BagAnchorSpec,
@@ -37,32 +36,33 @@ const TYPE_COMPONENTS: Record<string, number> = {
   VEC4: 4,
 };
 
-export interface LoadedBagScene {
+
+export interface LoadedBagAsset {
   status: 'ready';
   modelId: string;
   manifest: BagManifest;
   capabilities: BagCapabilities;
   root: THREE.Group;
-  parts: Map<PartId, THREE.Mesh>;
+  parts: Map<BagPartId, THREE.Mesh>;
   anchors: Map<string, BagAnchorSpec>;
-  hinges: Map<PartId, BagHingeSpec>;
+  hinges: Map<BagPartId, BagHingeSpec>;
   dispose: () => void;
 }
 
-export interface DegradedBagScene {
+export interface DegradedBagAsset {
   status: 'degraded';
   modelId: string;
   reason: string;
   manifest: BagManifest | null;
   capabilities: BagCapabilities;
   root: null;
-  parts: Map<PartId, THREE.Mesh>;
+  parts: Map<BagPartId, THREE.Mesh>;
   anchors: Map<string, BagAnchorSpec>;
-  hinges: Map<PartId, BagHingeSpec>;
+  hinges: Map<BagPartId, BagHingeSpec>;
   dispose: () => void;
 }
 
-export type BagLoadResult = LoadedBagScene | DegradedBagScene;
+export type BagLoadResult = LoadedBagAsset | DegradedBagAsset;
 
 export interface BagAssetProvider {
   fetchManifest: (modelId: string) => Promise<BagManifest>;
@@ -72,6 +72,11 @@ export interface BagAssetProvider {
    * retombe alors sur le chemin historique. Un fournisseur de test peut l'ignorer.
    */
   fetchGlb: (modelId: string, url?: string) => Promise<ArrayBuffer>;
+  /**
+   * Carte de zones d'un modèle texturé : rouge le tissu, vert les sangles, bleu le rigide.
+   * Rend `null` quand le sac n'en a pas — la personnalisation est alors annoncée indisponible.
+   */
+  fetchZonesMap?: (modelId: string, url?: string) => Promise<THREE.Texture | null>;
 }
 
 const defaultBrowserProvider: BagAssetProvider = {
@@ -90,6 +95,11 @@ const defaultBrowserProvider: BagAssetProvider = {
     }
     return res.arrayBuffer();
   },
+  async fetchZonesMap(modelId: string, url?: string): Promise<THREE.Texture | null> {
+    // Pas d'adresse au manifeste : ce sac n'a pas de carte de zones, et c'est un état normal.
+    if (!url) return null;
+    return chargerTextureDonnee(url);
+  }
 };
 
 /**
@@ -544,13 +554,13 @@ function createIsolatedMaterial(
   json: GltfJson,
   matIdx: number | undefined,
   textures: Map<number, THREE.Texture> = new Map()
-): THREE.MeshStandardMaterial {
+): THREE.MeshPhysicalMaterial {
   const def = matIdx !== undefined ? json.materials?.[matIdx] : undefined;
   const pbr = def?.pbrMetallicRoughness;
   const base = pbr?.baseColorFactor ?? [0.24, 0.35, 0.29, 1];
   const color = new THREE.Color().setRGB(base[0], base[1], base[2]);
 
-  const material = new THREE.MeshStandardMaterial({
+  const material = new THREE.MeshPhysicalMaterial({
     color,
     roughness: pbr?.roughnessFactor ?? 0.85,
     metalness: pbr?.metallicFactor ?? 0.0,
@@ -596,6 +606,146 @@ function createIsolatedMaterial(
   return material;
 }
 
+export interface DecodedGlbScene {
+  readonly root: THREE.Group;
+  readonly parts: Map<BagPartId, THREE.Mesh>;
+  readonly anchors: Map<string, BagAnchorSpec>;
+  readonly hinges: Map<BagPartId, BagHingeSpec>;
+  readonly dispose: () => void;
+}
+
+/**
+ * Décode un binaire glTF 2.0 (.glb) en graphe Three.js prêt à poser :
+ * - décompression meshopt, quantification et pas d'entrelacement ;
+ * - lecture des textures embarquées (PNG/JPEG/WebP) ;
+ * - matériaux isolés par primitive (D-04) ;
+ * - nœuds à matrice 4×4 ou triplet TRS ;
+ * - libération complète (géométries, matériaux, textures).
+ *
+ * Factorisé pour servir à la fois au chargeur de sacs (`loadBagAsset`) et au chargeur de modules
+ * (`loadModuleAsset`) sans dupliquer une ligne de décodage.
+ */
+export async function decodeGlbBufferToScene(
+  glbBuffer: ArrayBuffer,
+  rootName: string,
+  options: { allowHinges?: boolean } = {},
+): Promise<DecodedGlbScene> {
+  const brut = parseGlbBuffer(glbBuffer);
+  const { json, bin } = await decodeMeshopt(brut.json, brut.bin);
+  const textures = await chargerTextures(json, bin);
+  const root = new THREE.Group();
+  root.name = rootName;
+
+  const parts = new Map<BagPartId, THREE.Mesh>();
+  const anchors = new Map<string, BagAnchorSpec>();
+  const hinges = new Map<BagPartId, BagHingeSpec>();
+  const geometriesToDispose: THREE.BufferGeometry[] = [];
+  const materialsToDispose: THREE.Material[] = [];
+
+  const buildNode = (nodeIdx: number): THREE.Object3D => {
+    const n = json.nodes?.[nodeIdx];
+    if (!n) return new THREE.Object3D();
+
+    let obj: THREE.Object3D;
+
+    if (n.mesh !== undefined && json.meshes?.[n.mesh]) {
+      const meshDef = json.meshes[n.mesh];
+      const geometry = buildPrimitiveGeometry(json, bin, meshDef.primitives);
+
+      // Chaque pièce reçoit SON propre matériau cloné pour garantir l'isolation D-04
+      const material = createIsolatedMaterial(json, meshDef.primitives[0]?.material, textures);
+      geometriesToDispose.push(geometry);
+      materialsToDispose.push(material);
+
+      const partName = meshDef.name || n.name || `part-${nodeIdx}`;
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.name = partName;
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+
+      parts.set(partName, mesh);
+      obj = mesh;
+    } else {
+      obj = new THREE.Object3D();
+      obj.name = n.name ?? '';
+    }
+
+    // Un nœud glTF porte soit un triplet TRS, soit une matrice — jamais les deux. Le générateur
+    // maison n'écrit que du TRS, mais un fichier venu d'ailleurs (Meshy, et l'importateur qui pose
+    // sa mise à l'échelle sur un nœud racine) utilise la matrice. L'ignorer laissait le modèle à
+    // son échelle d'origine, sans la moindre erreur.
+    if (Array.isArray(n.matrix) && n.matrix.length === 16) {
+      obj.matrixAutoUpdate = false;
+      obj.matrix.fromArray(n.matrix);
+      obj.matrix.decompose(obj.position, obj.quaternion, obj.scale);
+      obj.matrixAutoUpdate = true;
+    } else {
+      if (n.translation) obj.position.set(n.translation[0], n.translation[1], n.translation[2]);
+      if (n.rotation) obj.quaternion.set(n.rotation[0], n.rotation[1], n.rotation[2], n.rotation[3]);
+      if (n.scale) obj.scale.set(n.scale[0], n.scale[1], n.scale[2]);
+    }
+
+    if (n.extras) {
+      obj.userData = { ...n.extras };
+      if (n.extras.hidden === true) {
+        obj.visible = false;
+      }
+      // C-13: On n'expose une charnière QUE si le manifeste déclare `openable: true`
+      if (n.extras.hinge && options.allowHinges) {
+        const h = n.extras.hinge;
+        const partName = obj.name;
+        hinges.set(partName, {
+          axis: (h.axis ?? [1, 0, 0]) as Vec3Tuple,
+          pivot: (h.pivot ?? [0, 0, 0]) as Vec3Tuple,
+          maxAngleRad: typeof h.maxAngleRad === 'number' ? h.maxAngleRad : 1.5,
+        });
+      }
+    }
+
+    if (obj.name.startsWith('anchor:')) {
+      const anchorId = obj.name.slice('anchor:'.length);
+      const normal = (n.extras?.normal ?? [0, 0, 1]) as Vec3Tuple;
+      anchors.set(anchorId, {
+        id: anchorId,
+        position: [obj.position.x, obj.position.y, obj.position.z],
+        normal,
+      });
+    }
+
+    if (n.children) {
+      for (const childIdx of n.children) {
+        obj.add(buildNode(childIdx));
+      }
+    }
+
+    return obj;
+  };
+
+  const sceneIndex = json.scene ?? 0;
+  const rootNodes = json.scenes?.[sceneIndex]?.nodes ?? [];
+  for (const rootIdx of rootNodes) {
+    root.add(buildNode(rootIdx));
+  }
+
+  const dispose = () => {
+    for (const g of geometriesToDispose) {
+      g.dispose();
+    }
+    for (const m of materialsToDispose) {
+      m.dispose();
+    }
+    // Les textures de l'atlas sont partagées entre plusieurs matériaux : les libérer ici, une
+    // fois chacune, plutôt qu'avec le premier matériau qui tombe. Un atlas 1024² oublié, c'est
+    // quatre mégaoctets de mémoire vidéo retenus à chaque changement de sac.
+    for (const t of textures.values()) {
+      t.dispose();
+    }
+    root.clear();
+  };
+
+  return { root, parts, anchors, hinges, dispose };
+}
+
 export interface LoadBagOptions {
   /** Signaux de l'appareil. Lus dans le navigateur si rien n'est fourni. */
   device?: DeviceProfile;
@@ -637,104 +787,21 @@ export async function loadBagAsset(
       override: options.preferredTier ?? profile.override ?? null,
     });
     const assetUrl = resolveBagAssetUrl(loadedManifest, decision.tier) ?? undefined;
-    const glbBuffer = await provider.fetchGlb(safeId, assetUrl);
-
-    const brut = parseGlbBuffer(glbBuffer);
-    const { json, bin } = await decodeMeshopt(brut.json, brut.bin);
-    const textures = await chargerTextures(json, bin);
-    const root = new THREE.Group();
-    root.name = `bag-scene:${safeId}`;
-
-    const parts = new Map<PartId, THREE.Mesh>();
-    const anchors = new Map<string, BagAnchorSpec>();
-    const hinges = new Map<PartId, BagHingeSpec>();
-    const geometriesToDispose: THREE.BufferGeometry[] = [];
-    const materialsToDispose: THREE.Material[] = [];
-
-    const buildNode = (nodeIdx: number): THREE.Object3D => {
-      const n = json.nodes?.[nodeIdx];
-      if (!n) return new THREE.Object3D();
-
-      let obj: THREE.Object3D;
-
-      if (n.mesh !== undefined && json.meshes?.[n.mesh]) {
-        const meshDef = json.meshes[n.mesh];
-        const geometry = buildPrimitiveGeometry(json, bin, meshDef.primitives);
-
-        // Chaque pièce reçoit SON propre matériau cloné pour garantir l'isolation D-04
-        const material = createIsolatedMaterial(json, meshDef.primitives[0]?.material, textures);
-        geometriesToDispose.push(geometry);
-        materialsToDispose.push(material);
-
-        const partName = meshDef.name || n.name || `part-${nodeIdx}`;
-        const mesh = new THREE.Mesh(geometry, material);
-        mesh.name = partName;
-        mesh.castShadow = true;
-        mesh.receiveShadow = true;
-
-        parts.set(partName, mesh);
-        obj = mesh;
-      } else {
-        obj = new THREE.Object3D();
-        obj.name = n.name ?? '';
-      }
-
-      // Un nœud glTF porte soit un triplet TRS, soit une matrice — jamais les deux. Le générateur
-      // maison n'écrit que du TRS, mais un fichier venu d'ailleurs (Meshy, et l'importateur qui pose
-      // sa mise à l'échelle sur un nœud racine) utilise la matrice. L'ignorer laissait le modèle à
-      // son échelle d'origine, sans la moindre erreur.
-      if (Array.isArray(n.matrix) && n.matrix.length === 16) {
-        obj.matrixAutoUpdate = false;
-        obj.matrix.fromArray(n.matrix);
-        obj.matrix.decompose(obj.position, obj.quaternion, obj.scale);
-        obj.matrixAutoUpdate = true;
-      } else {
-        if (n.translation) obj.position.set(n.translation[0], n.translation[1], n.translation[2]);
-        if (n.rotation) obj.quaternion.set(n.rotation[0], n.rotation[1], n.rotation[2], n.rotation[3]);
-        if (n.scale) obj.scale.set(n.scale[0], n.scale[1], n.scale[2]);
-      }
-
-      if (n.extras) {
-        obj.userData = { ...n.extras };
-        if (n.extras.hidden === true) {
-          obj.visible = false;
-        }
-        // C-13: On n'expose une charnière QUE si le manifeste déclare `openable: true`
-        if (n.extras.hinge && loadedManifest.capabilities.openable) {
-          const h = n.extras.hinge;
-          const partName = obj.name;
-          hinges.set(partName, {
-            axis: (h.axis ?? [1, 0, 0]) as Vec3Tuple,
-            pivot: (h.pivot ?? [0, 0, 0]) as Vec3Tuple,
-            maxAngleRad: typeof h.maxAngleRad === 'number' ? h.maxAngleRad : 1.5,
-          });
-        }
-      }
-
-      if (obj.name.startsWith('anchor:')) {
-        const anchorId = obj.name.slice('anchor:'.length);
-        const normal = (n.extras?.normal ?? [0, 0, 1]) as Vec3Tuple;
-        anchors.set(anchorId, {
-          id: anchorId,
-          position: [obj.position.x, obj.position.y, obj.position.z],
-          normal,
-        });
-      }
-
-      if (n.children) {
-        for (const childIdx of n.children) {
-          obj.add(buildNode(childIdx));
-        }
-      }
-
-      return obj;
-    };
-
-    const sceneIndex = json.scene ?? 0;
-    const rootNodes = json.scenes?.[sceneIndex]?.nodes ?? [];
-    for (const rootIdx of rootNodes) {
-      root.add(buildNode(rootIdx));
+    let glbBuffer: ArrayBuffer;
+    try {
+      glbBuffer = await provider.fetchGlb(safeId, assetUrl);
+    } catch (err) {
+      // Repli sur le palier web lorsque le master haute définition n'est pas encore téléversé.
+      const webUrl = decision.tier === 'hd' ? resolveBagAssetUrl(loadedManifest, 'web') : null;
+      if (!webUrl || webUrl === assetUrl) throw err;
+      glbBuffer = await provider.fetchGlb(safeId, webUrl);
     }
+
+    const { root, parts, anchors, hinges, dispose } = await decodeGlbBufferToScene(
+      glbBuffer,
+      `bag-scene:${safeId}`,
+      { allowHinges: Boolean(loadedManifest.capabilities.openable) },
+    );
 
     // Double verrou d'honnêteté C-13 : si openable === true mais aucune charnière réelle dans le GLB,
     // on force openable = false dans les capacités exposées.
@@ -743,22 +810,6 @@ export async function loadBagAsset(
       ...loadedManifest.capabilities,
       openable: honestOpenable,
       hasInterior: honestOpenable && Boolean(loadedManifest.capabilities.hasInterior && parts.has('interior')),
-    };
-
-    const dispose = () => {
-      for (const g of geometriesToDispose) {
-        g.dispose();
-      }
-      for (const m of materialsToDispose) {
-        m.dispose();
-      }
-      // Les textures de l'atlas sont partagées entre plusieurs matériaux : les libérer ici, une
-      // fois chacune, plutôt qu'avec le premier matériau qui tombe. Un atlas 1024² oublié, c'est
-      // quatre mégaoctets de mémoire vidéo retenus à chaque changement de sac.
-      for (const t of textures.values()) {
-        t.dispose();
-      }
-      root.clear();
     };
 
     return {
@@ -785,5 +836,30 @@ export async function loadBagAsset(
       hinges: new Map(),
       dispose: () => {},
     };
+  }
+}
+
+/**
+ * Charge une texture de DONNÉES — carte de zones, trame — et non une couleur.
+ *
+ * Deux réglages comptent et ne se voient pas : `NoColorSpace`, parce qu'une carte lue en sRGB
+ * verrait ses seuils déplacés, et `flipY = false`, la convention glTF. Rend `null` plutôt que de
+ * lever : un sac sans carte s'affiche, simplement sans personnalisation.
+ */
+export async function chargerTextureDonnee(url: string): Promise<THREE.Texture | null> {
+  if (typeof createImageBitmap !== 'function' || typeof fetch !== 'function') return null;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const bitmap = await createImageBitmap(await res.blob());
+    const tex = new THREE.Texture(bitmap as unknown as HTMLImageElement);
+    tex.colorSpace = THREE.NoColorSpace;
+    tex.flipY = false;
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.RepeatWrapping;
+    tex.needsUpdate = true;
+    return tex;
+  } catch {
+    return null;
   }
 }

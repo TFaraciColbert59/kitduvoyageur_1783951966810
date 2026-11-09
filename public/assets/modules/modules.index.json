@@ -1,0 +1,846 @@
+{
+  "schema": 1,
+  "rigidPanelConvention": {
+    "thicknessMm": 3.5,
+    "status": "convention_projet",
+    "measuredOnPrototype": false,
+    "source": "Reprise du socle de la platine standard (80 × 54 × 3,5 mm)"
+  },
+  "modules": [
+    {
+      "moduleId": "lkdv-m01",
+      "code": "M01",
+      "label": "Porte-gourde",
+      "origin": "glb",
+      "fitRule": "face",
+      "glbUrl": "/assets/modules/lkdv-m01.glb",
+      "triangles": 11346,
+      "bytes": 286084,
+      "textureSize": 512,
+      "rootYawDegInGlb": 0,
+      "loadRotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "loadScale": 1,
+      "boundingBoxM": {
+        "w": 0.1098,
+        "h": 0.21,
+        "d": 0.1187
+      },
+      "platine": {
+        "position": [
+          0,
+          0.105,
+          -0.0593
+        ],
+        "normal": [
+          0,
+          0,
+          -1
+        ]
+      },
+      "reserve": null,
+      "tiers": [
+        "web",
+        "hd"
+      ],
+      "valid": true
+    },
+    {
+      "moduleId": "lkdv-m02",
+      "code": "M02",
+      "label": "Poche téléphone",
+      "origin": "glb",
+      "fitRule": "face",
+      "glbUrl": "/assets/modules/lkdv-m02.glb",
+      "triangles": 11581,
+      "bytes": 301448,
+      "textureSize": 512,
+      "rootYawDegInGlb": 0,
+      "loadRotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "loadScale": 1,
+      "boundingBoxM": {
+        "w": 0.0864,
+        "h": 0.17,
+        "d": 0.043
+      },
+      "platine": {
+        "position": [
+          0,
+          0.085,
+          -0.0215
+        ],
+        "normal": [
+          0,
+          0,
+          -1
+        ]
+      },
+      "reserve": null,
+      "tiers": [
+        "web",
+        "hd"
+      ],
+      "valid": true
+    },
+    {
+      "moduleId": "lkdv-m03",
+      "code": "M03",
+      "label": "Poche GPS",
+      "origin": "glb",
+      "fitRule": "face",
+      "glbUrl": "/assets/modules/lkdv-m03.glb",
+      "triangles": 11733,
+      "bytes": 297232,
+      "textureSize": 512,
+      "rootYawDegInGlb": 0,
+      "loadRotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "loadScale": 1,
+      "boundingBoxM": {
+        "w": 0.0773,
+        "h": 0.15,
+        "d": 0.0516
+      },
+      "platine": {
+        "position": [
+          0,
+          0.075,
+          -0.0258
+        ],
+        "normal": [
+          0,
+          0,
+          -1
+        ]
+      },
+      "reserve": null,
+      "tiers": [
+        "web",
+        "hd"
+      ],
+      "valid": true
+    },
+    {
+      "moduleId": "lkdv-m04",
+      "code": "M04",
+      "label": "Poche multifonction",
+      "origin": "glb",
+      "fitRule": "face",
+      "glbUrl": "/assets/modules/lkdv-m04.glb",
+      "triangles": 10938,
+      "bytes": 360476,
+      "textureSize": 512,
+      "rootYawDegInGlb": 180,
+      "loadRotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "loadScale": 1,
+      "boundingBoxM": {
+        "w": 0.1386,
+        "h": 0.2,
+        "d": 0.0761
+      },
+      "platine": {
+        "position": [
+          0,
+          0.1,
+          -0.038
+        ],
+        "normal": [
+          0,
+          0,
+          -1
+        ]
+      },
+      "reserve": "Mélange recto/verso dans la texture : pictogramme projeté au dos et marquage sombre sur la façade.",
+      "tiers": [
+        "web",
+        "hd"
+      ],
+      "valid": true
+    },
+    {
+      "moduleId": "lkdv-m05",
+      "code": "M05",
+      "label": "Grande poche cargo",
+      "origin": "glb",
+      "fitRule": "face",
+      "glbUrl": "/assets/modules/lkdv-m05.glb",
+      "triangles": 11299,
+      "bytes": 389368,
+      "textureSize": 1024,
+      "rootYawDegInGlb": 180,
+      "loadRotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "loadScale": 1,
+      "boundingBoxM": {
+        "w": 0.2618,
+        "h": 0.38,
+        "d": 0.1587
+      },
+      "platine": {
+        "position": [
+          0,
+          0.19,
+          -0.0793
+        ],
+        "normal": [
+          0,
+          0,
+          -1
+        ]
+      },
+      "reserve": "Détails de dos (filet et sangles) projetés sur la façade et le dos.",
+      "tiers": [
+        "web",
+        "hd"
+      ],
+      "valid": true
+    },
+    {
+      "moduleId": "lkdv-m06",
+      "code": "M06",
+      "label": "Poche étanche",
+      "origin": "glb",
+      "fitRule": "face",
+      "glbUrl": "/assets/modules/lkdv-m06.glb",
+      "triangles": 11687,
+      "bytes": 225676,
+      "textureSize": 512,
+      "rootYawDegInGlb": 0,
+      "loadRotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "loadScale": 1,
+      "boundingBoxM": {
+        "w": 0.1641,
+        "h": 0.25,
+        "d": 0.0772
+      },
+      "platine": {
+        "position": [
+          0,
+          0.125,
+          -0.0386
+        ],
+        "normal": [
+          0,
+          0,
+          -1
+        ]
+      },
+      "reserve": null,
+      "tiers": [
+        "web",
+        "hd"
+      ],
+      "valid": true
+    },
+    {
+      "moduleId": "lkdv-m07",
+      "code": "M07",
+      "label": "Poche filet",
+      "origin": "glb",
+      "fitRule": "face",
+      "glbUrl": "/assets/modules/lkdv-m07.glb",
+      "triangles": 8568,
+      "bytes": 227116,
+      "textureSize": 512,
+      "rootYawDegInGlb": 0,
+      "loadRotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "loadScale": 1,
+      "boundingBoxM": {
+        "w": 0.2237,
+        "h": 0.32,
+        "d": 0.097
+      },
+      "platine": {
+        "position": [
+          0,
+          0.16,
+          -0.0485
+        ],
+        "normal": [
+          0,
+          0,
+          -1
+        ]
+      },
+      "reserve": "Filet aux faces et trous géométriques irréguliers.",
+      "tiers": [
+        "web",
+        "hd"
+      ],
+      "valid": true
+    },
+    {
+      "moduleId": "lkdv-m08",
+      "code": "M08",
+      "label": "Porte-bâtons",
+      "origin": "glb",
+      "fitRule": "face",
+      "glbUrl": "/assets/modules/lkdv-m08.glb",
+      "triangles": 11632,
+      "bytes": 228700,
+      "textureSize": 512,
+      "rootYawDegInGlb": 0,
+      "loadRotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "loadScale": 1,
+      "boundingBoxM": {
+        "w": 0.0449,
+        "h": 0.32,
+        "d": 0.0448
+      },
+      "platine": {
+        "position": [
+          0,
+          0.16,
+          -0.0224
+        ],
+        "normal": [
+          0,
+          0,
+          -1
+        ]
+      },
+      "reserve": null,
+      "tiers": [
+        "web",
+        "hd"
+      ],
+      "valid": true
+    },
+    {
+      "moduleId": "lkdv-m13",
+      "code": "M13",
+      "label": "Porte-piolets",
+      "origin": "glb",
+      "fitRule": "face",
+      "glbUrl": "/assets/modules/lkdv-m13.glb",
+      "triangles": 10231,
+      "bytes": 321544,
+      "textureSize": 512,
+      "rootYawDegInGlb": 0,
+      "loadRotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "loadScale": 1,
+      "boundingBoxM": {
+        "w": 0.0831,
+        "h": 0.45,
+        "d": 0.0831
+      },
+      "platine": {
+        "position": [
+          0,
+          0.225,
+          -0.0415
+        ],
+        "normal": [
+          0,
+          0,
+          -1
+        ]
+      },
+      "reserve": null,
+      "tiers": [
+        "web",
+        "hd"
+      ],
+      "valid": true
+    },
+    {
+      "moduleId": "lkdv-m15",
+      "code": "M15",
+      "label": "Poche pharmacie",
+      "origin": "glb",
+      "fitRule": "face",
+      "glbUrl": "/assets/modules/lkdv-m15.glb",
+      "triangles": 11348,
+      "bytes": 349468,
+      "textureSize": 512,
+      "rootYawDegInGlb": 0,
+      "loadRotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "loadScale": 1,
+      "boundingBoxM": {
+        "w": 0.1552,
+        "h": 0.11,
+        "d": 0.0598
+      },
+      "platine": {
+        "position": [
+          0,
+          0.055,
+          -0.0299
+        ],
+        "normal": [
+          0,
+          0,
+          -1
+        ]
+      },
+      "reserve": "Superposition sombre autour de la croix.",
+      "tiers": [
+        "web",
+        "hd"
+      ],
+      "valid": true
+    },
+    {
+      "moduleId": "lkdv-m16",
+      "code": "M16",
+      "label": "Poche batterie",
+      "origin": "glb",
+      "fitRule": "face",
+      "glbUrl": "/assets/modules/lkdv-m16.glb",
+      "triangles": 10515,
+      "bytes": 253440,
+      "textureSize": 512,
+      "rootYawDegInGlb": 180,
+      "loadRotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "loadScale": 1,
+      "boundingBoxM": {
+        "w": 0.088,
+        "h": 0.165,
+        "d": 0.0443
+      },
+      "platine": {
+        "position": [
+          0,
+          0.0825,
+          -0.0221
+        ],
+        "normal": [
+          0,
+          0,
+          -1
+        ]
+      },
+      "reserve": "Écusson peu lisible de face.",
+      "tiers": [
+        "web",
+        "hd"
+      ],
+      "valid": true
+    },
+    {
+      "moduleId": "lkdv-m17",
+      "code": "M17",
+      "label": "Support panneau solaire",
+      "origin": "glb",
+      "fitRule": "face",
+      "glbUrl": "/assets/modules/lkdv-m17.glb",
+      "triangles": 9739,
+      "bytes": 354016,
+      "textureSize": 1024,
+      "rootYawDegInGlb": 0,
+      "loadRotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "loadScale": 1,
+      "boundingBoxM": {
+        "w": 0.2855,
+        "h": 0.38,
+        "d": 0.0478
+      },
+      "platine": {
+        "position": [
+          0,
+          0.19,
+          -0.0239
+        ],
+        "normal": [
+          0,
+          0,
+          -1
+        ]
+      },
+      "reserve": null,
+      "tiers": [
+        "web",
+        "hd"
+      ],
+      "valid": true
+    },
+    {
+      "moduleId": "lkdv-m18",
+      "code": "M18",
+      "label": "Poche photo",
+      "origin": "glb",
+      "fitRule": "face",
+      "glbUrl": "/assets/modules/lkdv-m18.glb",
+      "triangles": 11686,
+      "bytes": 307532,
+      "textureSize": 512,
+      "rootYawDegInGlb": 0,
+      "loadRotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "loadScale": 1,
+      "boundingBoxM": {
+        "w": 0.1571,
+        "h": 0.21,
+        "d": 0.1079
+      },
+      "platine": {
+        "position": [
+          0,
+          0.105,
+          -0.0539
+        ],
+        "normal": [
+          0,
+          0,
+          -1
+        ]
+      },
+      "reserve": null,
+      "tiers": [
+        "web",
+        "hd"
+      ],
+      "valid": true
+    },
+    {
+      "moduleId": "lkdv-m19",
+      "code": "M19",
+      "label": "Sacoche détachable",
+      "origin": "glb",
+      "fitRule": "face",
+      "glbUrl": "/assets/modules/lkdv-m19.glb",
+      "triangles": 11292,
+      "bytes": 341756,
+      "textureSize": 512,
+      "rootYawDegInGlb": 0,
+      "loadRotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "loadScale": 1,
+      "boundingBoxM": {
+        "w": 0.2426,
+        "h": 0.38,
+        "d": 0.1374
+      },
+      "platine": {
+        "position": [
+          0,
+          0.19,
+          -0.0687
+        ],
+        "normal": [
+          0,
+          0,
+          -1
+        ]
+      },
+      "reserve": null,
+      "tiers": [
+        "web",
+        "hd"
+      ],
+      "valid": true
+    },
+    {
+      "moduleId": "lkdv-m20",
+      "code": "M20",
+      "label": "Panneau frontal interchangeable",
+      "origin": "glb",
+      "fitRule": "face",
+      "glbUrl": "/assets/modules/lkdv-m20.glb",
+      "triangles": 10529,
+      "bytes": 366132,
+      "textureSize": 1024,
+      "rootYawDegInGlb": 0,
+      "loadRotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "loadScale": 1,
+      "boundingBoxM": {
+        "w": 0.2663,
+        "h": 0.38,
+        "d": 0.0404
+      },
+      "platine": {
+        "position": [
+          0,
+          0.19,
+          -0.0202
+        ],
+        "normal": [
+          0,
+          0,
+          -1
+        ]
+      },
+      "reserve": null,
+      "tiers": [
+        "web",
+        "hd"
+      ],
+      "valid": true
+    },
+    {
+      "moduleId": "lkdv-m09",
+      "code": "M09",
+      "label": "Porte-tente",
+      "origin": "procedural",
+      "fitRule": "porteur",
+      "glbUrl": null,
+      "triangles": null,
+      "bytes": 0,
+      "textureSize": null,
+      "rootYawDegInGlb": 0,
+      "loadRotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "loadScale": 1,
+      "boundingBoxM": {
+        "w": 0.46,
+        "h": 0.16,
+        "d": 0.16
+      },
+      "platine": {
+        "position": [
+          0,
+          0.08,
+          -0.08
+        ],
+        "normal": [
+          0,
+          0,
+          -1
+        ]
+      },
+      "reserve": null,
+      "rigidPanelConvention": {
+        "thicknessMm": 3.5,
+        "status": "convention_projet",
+        "measuredOnPrototype": false,
+        "source": "Reprise du socle de la platine standard (80 × 54 × 3,5 mm)"
+      },
+      "tiers": [],
+      "valid": true
+    },
+    {
+      "moduleId": "lkdv-m10",
+      "code": "M10",
+      "label": "Porte-matelas",
+      "origin": "procedural",
+      "fitRule": "porteur",
+      "glbUrl": null,
+      "triangles": null,
+      "bytes": 0,
+      "textureSize": null,
+      "rootYawDegInGlb": 0,
+      "loadRotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "loadScale": 1,
+      "boundingBoxM": {
+        "w": 0.56,
+        "h": 0.15,
+        "d": 0.15
+      },
+      "platine": {
+        "position": [
+          0,
+          0.075,
+          -0.075
+        ],
+        "normal": [
+          0,
+          0,
+          -1
+        ]
+      },
+      "reserve": null,
+      "rigidPanelConvention": {
+        "thicknessMm": 3.5,
+        "status": "convention_projet",
+        "measuredOnPrototype": false,
+        "source": "Reprise du socle de la platine standard (80 × 54 × 3,5 mm)"
+      },
+      "tiers": [],
+      "valid": true
+    },
+    {
+      "moduleId": "lkdv-m11",
+      "code": "M11",
+      "label": "Porte-sac de couchage",
+      "origin": "procedural",
+      "fitRule": "porteur",
+      "glbUrl": null,
+      "triangles": null,
+      "bytes": 0,
+      "textureSize": null,
+      "rootYawDegInGlb": 0,
+      "loadRotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "loadScale": 1,
+      "boundingBoxM": {
+        "w": 0.42,
+        "h": 0.23,
+        "d": 0.23
+      },
+      "platine": {
+        "position": [
+          0,
+          0.115,
+          -0.115
+        ],
+        "normal": [
+          0,
+          0,
+          -1
+        ]
+      },
+      "reserve": null,
+      "rigidPanelConvention": {
+        "thicknessMm": 3.5,
+        "status": "convention_projet",
+        "measuredOnPrototype": false,
+        "source": "Reprise du socle de la platine standard (80 × 54 × 3,5 mm)"
+      },
+      "tiers": [],
+      "valid": true
+    },
+    {
+      "moduleId": "lkdv-m12",
+      "code": "M12",
+      "label": "Porte-casque",
+      "origin": "procedural",
+      "fitRule": "porteur",
+      "glbUrl": null,
+      "triangles": null,
+      "bytes": 0,
+      "textureSize": null,
+      "rootYawDegInGlb": 0,
+      "loadRotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "loadScale": 1,
+      "boundingBoxM": {
+        "w": 0.28,
+        "h": 0.3,
+        "d": 0.2
+      },
+      "platine": {
+        "position": [
+          0,
+          0.15,
+          -0.1
+        ],
+        "normal": [
+          0,
+          0,
+          -1
+        ]
+      },
+      "reserve": null,
+      "rigidPanelConvention": {
+        "thicknessMm": 3.5,
+        "status": "convention_projet",
+        "measuredOnPrototype": false,
+        "source": "Reprise du socle de la platine standard (80 × 54 × 3,5 mm)"
+      },
+      "tiers": [],
+      "valid": true
+    },
+    {
+      "moduleId": "lkdv-m14",
+      "code": "M14",
+      "label": "Porte-skis (paire, A-frame)",
+      "origin": "procedural",
+      "fitRule": "porteur",
+      "glbUrl": null,
+      "triangles": null,
+      "bytes": 0,
+      "textureSize": null,
+      "rootYawDegInGlb": 0,
+      "loadRotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "loadScale": 1,
+      "boundingBoxM": {
+        "w": 0.09,
+        "h": 1.7,
+        "d": 0.09
+      },
+      "platine": {
+        "position": [
+          0,
+          0.85,
+          -0.045
+        ],
+        "normal": [
+          0,
+          0,
+          -1
+        ]
+      },
+      "reserve": null,
+      "rigidPanelConvention": {
+        "thicknessMm": 3.5,
+        "status": "convention_projet",
+        "measuredOnPrototype": false,
+        "source": "Reprise du socle de la platine standard (80 × 54 × 3,5 mm)"
+      },
+      "tiers": [],
+      "valid": true
+    }
+  ]
+}

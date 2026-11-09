@@ -25,6 +25,7 @@ const APP_ROUTES = [
   '/compas',
   '/carnets',
   '/clubs',
+  '/sorties',
   '/profil',
   '/panier',
   '/pays',
@@ -82,7 +83,9 @@ export async function middleware(request: NextRequest) {
   const isLocalHubCamp =
     process.env.LKDV_LOCAL_HUB_CAMP === '1' &&
     (pathname === '/hub' || pathname.startsWith('/hub/'));
-  if (isAppRoute(pathname) && !hasSessionCookie(request) && !isLocalHubCamp) {
+  // Mode hermétique CI visuelle (NEXT_PUBLIC_CI=true)
+  const isVisualCi = process.env.NEXT_PUBLIC_CI === 'true';
+  if (isAppRoute(pathname) && !hasSessionCookie(request) && !isLocalHubCamp && !isVisualCi) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = '/connexion';
     loginUrl.search = '';
@@ -197,7 +200,7 @@ export const config = {
     '/compte/:path*',
     '/pays',
     '/pays/:path*',
-    // Connexion obligatoire : pages de l'app (APP_ROUTES).
+    // Connexion obligatoire : pages de l’app (APP_ROUTES).
     '/hub',
     '/hub/:path*',
     '/communaute',
@@ -211,6 +214,7 @@ export const config = {
     '/compas/:path*',
     '/carnets/:path*',
     '/clubs/:path*',
+    '/sorties/:path*',
     '/profil',
     '/profil/:path*',
     '/panier',

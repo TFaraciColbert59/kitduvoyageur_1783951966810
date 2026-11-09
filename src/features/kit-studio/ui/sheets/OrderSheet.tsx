@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { COLORWAYS } from '../../domain/catalog';
+import { studioData } from '../../domain/studioData';
 import { formatEuro, formatLitres, formatWeight } from '../../domain/format';
 import { confirmOrder, orderLines, orderTotalCents, toOrder } from '../../domain/order';
 import type { OrderLine } from '../../domain/order';
@@ -59,9 +59,34 @@ interface OrderSheetProps {
 
 export const ORDER_PAGE_LABELS: readonly string[] = TXT.pages;
 
+/**
+ * Page courante d'une feuille : la prop `page` pilote si elle est fournie, sinon un état local.
+ * Jamais les deux à la fois — l'ancien doublon `own`/`page` laissait l'état local diverger de la prop.
+ */
+export function useControlledPage(
+  page: number | undefined,
+  onPageChange?: (page: number) => void,
+): readonly [number, (page: number) => void] {
+  const [own, setOwn] = useState(page ?? 0);
+  const current = page ?? own;
+  const setPage = (n: number) => {
+    if (page === undefined) setOwn(n);
+    onPageChange?.(n);
+  };
+  return [current, setPage];
+}
+
 function PieceRow({ line }: { line: OrderLine }) {
-  const sw = colorwaySwatch(COLORWAYS[line.colorway]);
+  const sw = colorwaySwatch(studioData().colorways[line.colorway]);
   const tint = line.key === 'chassis' ? sw.trim : line.key.startsWith('corps') ? sw.body : sw.pocket;
+  const priceDisplay =
+    line.state === 'new'
+      ? line.priceCents == null
+        ? 'non renseigné'
+        : line.figuresProvisional
+          ? `${TXT.toOrder} · ${formatEuro(line.priceCents)} (indicatif)`
+          : `${TXT.toOrder} · ${formatEuro(line.priceCents)}`
+      : STATE_TXT[line.state];
   return (
     <li className="ks-sh-row" data-state={line.state}>
       <span className="ks-sh-rg" style={{ background: tint }}>
@@ -72,7 +97,7 @@ function PieceRow({ line }: { line: OrderLine }) {
         <small>{line.colorwayName + (line.state === 'order' ? TXT.preordered : '')}</small>
       </span>
       <span className="ks-sh-price" data-own={line.state !== 'new'}>
-        {line.state === 'new' ? `${TXT.toOrder} · ${formatEuro(line.priceCents)}` : STATE_TXT[line.state]}
+        {priceDisplay}
       </span>
     </li>
   );
@@ -94,23 +119,24 @@ function InfoRow({ icon, title, text }: { icon: 'info' | 'cal' | 'clock' | 'swap
 
 /** Feuille Commande : lignes de pièces, total, validation (sans paiement). Composant contrôlé. */
 export function OrderSheet({ state, onConfirmOrder, offline = false, page, onPageChange }: OrderSheetProps) {
-  const [own, setOwn] = useState(0);
+  const [p, setPage] = useControlledPage(page, onPageChange);
   const [step, setStep] = useState<'list' | 'pre'>('list');
-  const p = page ?? own;
-  const setPage = (n: number) => {
-    setOwn(n);
-    onPageChange?.(n);
-  };
 
   const lines = orderLines(state);
   const pending = toOrder(state);
-  const total = formatEuro(orderTotalCents(state));
+  const totalCents = orderTotalCents(state);
+  const total = totalCents != null ? formatEuro(totalCents) : 'non renseigné';
   const count = pending.length;
+  const hasUnpricedPiece = lines.some((l) => l.state === 'new' && l.priceCents == null);
+  const hasProvisionalPiece = lines.some((l) => l.state === 'new' && l.figuresProvisional);
+  const unpurchasable = hasUnpricedPiece || hasProvisionalPiece;
+  const bw = bagWeight(state);
+  const weightText = bw != null ? formatWeight(bw) : 'non renseigné';
 
   const summary = (
     <div className="ks-sh-ph">
       <span className="ks-sh-t17">{TXT.title}</span>
-      <span className="ks-sh-t13">{`${formatWeight(bagWeight(state))} à vide · ${formatLitres(totalCap(state))}`}</span>
+      <span className="ks-sh-t13">{`${weightText} à vide · ${formatLitres(totalCap(state))}`}</span>
     </div>
   );
 
@@ -132,13 +158,34 @@ export function OrderSheet({ state, onConfirmOrder, offline = false, page, onPag
           className="ks-gbtn"
           data-pro="true"
           data-wide="true"
-          disabled={offline}
+          disabled={offline || unpurchasable}
+          title={
+            hasProvisionalPiece
+              ? 'Ce corps de sac n’est pas encore achetable (prix indicatif, non commandable pour l’instant).'
+              : hasUnpricedPiece
+                ? 'Ce corps de sac n’est pas encore achetable (prix non renseigné).'
+                : undefined
+          }
           onClick={() => setStep('pre')}
         >
-          {`${TXT.preorder} · ${total}`}
+          {hasProvisionalPiece
+            ? 'Prix indicatif (non commandable)'
+            : hasUnpricedPiece
+              ? 'Prix non renseigné'
+              : `${TXT.preorder} · ${total}`}
         </button>
       ) : (
         <p className="ks-sh-note">{TXT.allOwned}</p>
+      )}
+      {hasProvisionalPiece && count > 0 && (
+        <p className="ks-sh-note" role="status">
+          Ce corps de sac n’est pas encore achetable (prix indicatif, non commandable pour l’instant).
+        </p>
+      )}
+      {!hasProvisionalPiece && hasUnpricedPiece && count > 0 && (
+        <p className="ks-sh-note" role="status">
+          Ce corps de sac n’est pas encore achetable (prix non renseigné).
+        </p>
       )}
       {offline && count > 0 && (
         <p className="ks-sh-note" role="status">
@@ -178,7 +225,7 @@ export function OrderSheet({ state, onConfirmOrder, offline = false, page, onPag
         className="ks-gbtn"
         data-pro="true"
         data-wide="true"
-        disabled={offline || count === 0}
+        disabled={offline || count === 0 || unpurchasable}
         onClick={() => {
           onConfirmOrder(confirmOrder(state));
           setStep('list');

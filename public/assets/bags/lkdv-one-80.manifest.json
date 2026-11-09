@@ -11,7 +11,9 @@
     "rotatable": true,
     "openable": false,
     "hasInterior": false,
-    "customizableParts": [],
+    "customizableParts": [
+      "body"
+    ],
     "badgeAnchors": [],
     "attachmentPoints": []
   },
@@ -26,17 +28,18 @@
   "texturedSource": true,
   "budget": {
     "triangles": 32457,
-    "fileBytes": 44114288
+    "fileBytes": 40826472
   },
+  "zonesMapUrl": "/assets/bags/lkdv-one-80.zones.webp",
   "assets": {
     "web": {
       "url": "/assets/bags/lkdv-one-80.glb",
-      "bytes": 578524,
+      "bytes": 578780,
       "triangles": 32457
     },
     "hd": {
       "url": "https://icxyvwzfjbflcbqukpfz.supabase.co/storage/v1/object/public/bag-models/lkdv-one-80.hd.glb",
-      "bytes": 44114288,
+      "bytes": 44114272,
       "triangles": 960207
     }
   }

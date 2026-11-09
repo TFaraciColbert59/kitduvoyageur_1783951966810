@@ -1,4 +1,5 @@
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { defineConfig, devices } from '@playwright/test';
 import { E2E_JWT_SECRET } from './tests/e2e/compas/support/jwt.mjs';
 
@@ -24,7 +25,7 @@ import { E2E_JWT_SECRET } from './tests/e2e/compas/support/jwt.mjs';
  *   NEXT_PUBLIC_SUPABASE_URL / _ANON_KEY  les valeurs du build (défaut : celles de la CI)
  *   E2E_NEXT_PORT, E2E_DOUBLES_PORT, E2E_POSTGREST_PORT
  */
-const root = __dirname;
+const root = path.dirname(fileURLToPath(import.meta.url));
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl) throw new Error('[e2e compas] DATABASE_URL (base locale installée) est requis.');
 

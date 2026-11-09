@@ -1,9 +1,10 @@
 // Rangement dans le sac (moteur pur) : pack, unpack, setBag, relocate, autopack, candidates.
 // Chaque fonction cite la ligne de la maquette kit-studio-bundle/reference/Kit_Studio_v2.html.
 // Les effets visuels (hud, haptic, objets 3D) restent hors du domaine : le résultat décrit l'événement.
-import { ITEMS, PACK_ZONE_IDS } from './catalog';
+import { PACK_ZONE_IDS } from './catalog';
 import type { BagId, CapacityZoneId, Item, PackZoneId, ZoneId } from './catalog';
 import { currentKit, getItem, isPacked, withKit, zoneOf } from './state';
+import { studioData } from './studioData';
 import { capOf, room } from './totals';
 import type { AnyItemId, ExtraItem, KitState, LiveKit } from './types';
 
@@ -24,9 +25,9 @@ export interface PackResult {
 type AnyItem = Item | ExtraItem;
 const TOL = 0.05;
 
-/** INV de la maquette : catalogue puis objets ajoutés. */
+/** INV de la maquette : inventaire du registre (réel en production) puis objets ajoutés. */
 export function inventory(s: KitState): readonly AnyItem[] {
-  return [...ITEMS, ...s.extraItems];
+  return [...studioData().items, ...s.extraItems];
 }
 
 const asCap = (z: ZoneId): z is CapacityZoneId => z !== 'worn' && z !== 'bag';

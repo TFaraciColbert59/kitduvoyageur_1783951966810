@@ -1389,12 +1389,15 @@ body:has(.lkdv-drawer-layer) .lkdv-feed-shell .tb { z-index: 95; }
 .lkdv-feed-options-rail { top: 58px; }
 .lkdv-share-mini button { flex: 1 1 0; }
 
-/* Le drawer Compte passe aussi en carré 406×406, comme la carte du fil. */
+/* Le drawer Compte remplit 100% de la surface disponible dans son drawer avec 2px de marge */
 .lkdv-compte-overlay:has(.lkdv-post-drawer) .lkdv-overlay-sheet {
-  top: 48px !important;
-  bottom: auto !important;
-  height: 406px !important;
-  max-height: 406px !important;
+  top: 2px !important;
+  bottom: 2px !important;
+  left: 2px !important;
+  right: 2px !important;
+  width: calc(100% - 4px) !important;
+  height: calc(100% - 4px) !important;
+  max-height: calc(100% - 4px) !important;
 }
 
 /* Verre de panneau : image visible mais texte du dessous neutralisé. */

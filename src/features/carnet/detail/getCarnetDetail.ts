@@ -1,15 +1,23 @@
 import 'server-only';
 import { createClient } from '@/lib/supabase/server';
 import { buildCarnetDetail } from './buildCarnetDetail';
+import { enrichCarnetElevation } from './enrichElevation';
 import { pickCarnetTrace } from './trace';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import type {
   AuthorRow,
+  CarnetBudget,
+  CarnetDayReactionItem,
+  CarnetLivePosition,
+  CarnetMomentEngagementItem,
+  CarnetNightItem,
+  CarnetPublicZone,
   CarnetRow,
   EtapeRow,
   HebergementRow,
   HikeSessionRow,
   KitItemRow,
+  KitVerdictType,
   MomentRow,
 } from './types';
 
@@ -27,7 +35,7 @@ interface SessionParticipantRow {
   created_at: string;
 }
 
-const CARNET_COLUMNS = [
+const CARNET_COLUMNS_WITH_LIVE = [
   'id',
   'author_id',
   'title',
@@ -48,6 +56,32 @@ const CARNET_COLUMNS = [
   'lieu_depart',
   'lieu_arrivee',
   'country_iso',
+  'trip_id',
+  'live_sharing',
+].join(', ');
+
+const CARNET_COLUMNS_BASE = [
+  'id',
+  'author_id',
+  'title',
+  'destination',
+  'description',
+  'cover_image',
+  'cover_image_alt',
+  'start_date',
+  'end_date',
+  'visibility',
+  'verified',
+  'likes_count',
+  'comments_count',
+  'views_count',
+  'distance_km',
+  'denivele_m',
+  'groupe_id',
+  'lieu_depart',
+  'lieu_arrivee',
+  'country_iso',
+  'trip_id',
 ].join(', ');
 
 /**
@@ -69,13 +103,27 @@ export async function getCarnetDetail(id: string) {
   const { data: authData } = await supabase.auth.getUser();
   const viewerId = authData?.user?.id ?? null;
 
-  const { data: carnetData, error: carnetError } = await supabase
+  let carnetData: unknown = null;
+  const initialResult = await supabase
     .from('carnets')
-    .select(CARNET_COLUMNS)
+    .select(CARNET_COLUMNS_WITH_LIVE)
     .eq('id', id)
     .maybeSingle();
 
-  if (carnetError || !carnetData) return null;
+  if (initialResult.error?.code === '42703') {
+    // Si la colonne live_sharing n'est pas encore appliquée sur la base distante
+    const fallbackResult = await supabase
+      .from('carnets')
+      .select(CARNET_COLUMNS_BASE)
+      .eq('id', id)
+      .maybeSingle();
+    if (fallbackResult.error || !fallbackResult.data) return null;
+    carnetData = fallbackResult.data;
+  } else if (initialResult.error || !initialResult.data) {
+    return null;
+  } else {
+    carnetData = initialResult.data;
+  }
   const carnet = carnetData as unknown as CarnetRow;
 
   /* Tout ce qui ne dépend que du carnet part dans le même `Promise.all` :
@@ -112,6 +160,9 @@ export async function getCarnetDetail(id: string) {
       commentsTotal,
       collabResult,
       sessionIdResult,
+      nightsResult,
+      dayLikesResult,
+      dayCommentsResult,
     ],
     [likeResult, favoriteResult],
   ] = await Promise.all([
@@ -155,9 +206,19 @@ export async function getCarnetDetail(id: string) {
         .order('created_at', { ascending: true }),
       supabase
         .from('carnet_kit_items')
-        .select('id, nom, detail, poids_g, couleur_tag, sort_order')
+        .select('id, nom, detail, poids_g, couleur_tag, sort_order, verdict, verdict_note, jours_utilises')
         .eq('carnet_id', carnet.id)
-        .order('sort_order', { ascending: true }),
+        .order('sort_order', { ascending: true })
+        .then((res) => {
+          if (res.error?.code === '42703') {
+            return supabase
+              .from('carnet_kit_items')
+              .select('id, nom, detail, poids_g, couleur_tag, sort_order')
+              .eq('carnet_id', carnet.id)
+              .order('sort_order', { ascending: true });
+          }
+          return res;
+        }),
       /* Réactions réelles : les 50 dernières lignes, plus le total exact. */
       supabase
         .from('carnet_likes')
@@ -189,6 +250,20 @@ export async function getCarnetDetail(id: string) {
         .select('id, started_at')
         .eq('carnet_id', carnet.id)
         .order('started_at', { ascending: false }),
+      supabase
+        .from('carnet_nights')
+        .select('id, jour_numero, nom, type, altitude_m, infos, lat, lng, map_refuge_id')
+        .eq('carnet_id', carnet.id)
+        .order('jour_numero', { ascending: true }),
+      supabase
+        .from('carnet_day_likes')
+        .select('jour_numero, user_id')
+        .eq('carnet_id', carnet.id),
+      supabase
+        .from('carnet_day_comments')
+        .select('id, jour_numero, author_id, created_at, deleted_at')
+        .eq('carnet_id', carnet.id)
+        .is('deleted_at', null),
     ]),
     viewerFlags,
   ]);
@@ -215,13 +290,64 @@ export async function getCarnetDetail(id: string) {
     (row) => row.user_id,
   );
 
-  /* Les deux jointures de profils sont indépendantes : une seule vague. */
-  const [likeProfiles, participantProfiles] = await Promise.all([
+  const isOwner = Boolean(viewerId && carnet.author_id && viewerId === carnet.author_id);
+  const isCollab = collabRows.some(
+    (row) => row.user_id === viewerId && (row.role === 'owner' || row.role === 'contributor'),
+  );
+  const isSessionParticipant = sessionParticipantRows.some((row) => row.user_id === viewerId);
+  const isParticipant = isOwner || isCollab || isSessionParticipant;
+  const viewerRole = isParticipant ? ('participant' as const) : ('visitor' as const);
+
+  const momentRows = ((momentsResult.data ?? []) as MomentRow[]) ?? [];
+  const momentIds = momentRows.map((m) => m.id);
+
+  /* Les jointures de profils et requêtes de niveau 2 : moments, live et budget. */
+  const [
+    likeProfiles,
+    participantProfiles,
+    momentLikesRes,
+    momentCommentsRes,
+    momentSavesRes,
+    livePosRes,
+    publicZoneRes,
+    budgetRes,
+  ] = await Promise.all([
     fetchPublicProfilesWith(supabase as never, likeRows.map((row) => row.user_id)),
     fetchPublicProfilesWith(supabase as never, [
       ...collabRows.map((row) => row.user_id),
       ...sessionParticipantRows.map((row) => row.user_id),
     ]),
+    momentIds.length > 0
+      ? supabase.from('carnet_moment_likes').select('moment_id, user_id').in('moment_id', momentIds)
+      : Promise.resolve({ data: [] }),
+    momentIds.length > 0
+      ? supabase
+          .from('carnet_moment_comments')
+          .select('id, moment_id, author_id, created_at, deleted_at')
+          .in('moment_id', momentIds)
+          .is('deleted_at', null)
+      : Promise.resolve({ data: [] }),
+    momentIds.length > 0 && viewerId
+      ? supabase.from('carnet_moment_saves').select('moment_id').eq('user_id', viewerId).in('moment_id', momentIds)
+      : Promise.resolve({ data: [] }),
+    isParticipant
+      ? supabase
+          .from('carnet_live_positions')
+          .select('lat, lng, accuracy_m, recorded_at, user_id')
+          .eq('carnet_id', carnet.id)
+          .order('recorded_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+    !isParticipant && carnet.live_sharing
+      ? supabase.rpc('carnet_public_position', { p_carnet: carnet.id }).maybeSingle()
+      : Promise.resolve({ data: null }),
+    isParticipant && carnet.trip_id
+      ? supabase
+          .from('trip_expenses')
+          .select('id, label, amount_cents, currency, category, paid_by_user_id, date')
+          .eq('trip_id', carnet.trip_id)
+      : Promise.resolve({ data: [] }),
   ]);
 
   const likers = likeRows.map((row) => ({
@@ -248,7 +374,147 @@ export async function getCarnetDetail(id: string) {
   const liked = Boolean(likeResult.data);
   const favorited = Boolean(favoriteResult.data);
 
-  return buildCarnetDetail({
+  // Construction des réactions par jour (Lot B)
+  const dayLikesData = (dayLikesResult.data ?? []) as Array<{ jour_numero: number; user_id: string }>;
+  const dayCommentsData = (dayCommentsResult.data ?? []) as Array<{ jour_numero: number; id: string }>;
+  const dayReactions: Record<number, CarnetDayReactionItem> = {};
+
+  for (const row of dayLikesData) {
+    const day = row.jour_numero;
+    if (!dayReactions[day]) {
+      dayReactions[day] = { dayNumber: day, likesCount: 0, commentsCount: 0, userLiked: false };
+    }
+    dayReactions[day].likesCount++;
+    if (viewerId && row.user_id === viewerId) dayReactions[day].userLiked = true;
+  }
+  for (const row of dayCommentsData) {
+    const day = row.jour_numero;
+    if (!dayReactions[day]) {
+      dayReactions[day] = { dayNumber: day, likesCount: 0, commentsCount: 0, userLiked: false };
+    }
+    dayReactions[day].commentsCount++;
+  }
+
+  // Engagement par moment (Lot C)
+  const momentLikes = (momentLikesRes?.data ?? []) as Array<{ moment_id: string; user_id: string }>;
+  const momentComments = (momentCommentsRes?.data ?? []) as Array<{ moment_id: string; id: string }>;
+  const momentSaves = (momentSavesRes?.data ?? []) as Array<{ moment_id: string }>;
+  const savedSet = new Set(momentSaves.map((s) => s.moment_id));
+  const momentEngagement: Record<string, CarnetMomentEngagementItem> = {};
+
+  for (const mId of momentIds) {
+    momentEngagement[mId] = {
+      momentId: mId,
+      likesCount: 0,
+      commentsCount: 0,
+      userLiked: false,
+      userSaved: savedSet.has(mId),
+    };
+  }
+  for (const row of momentLikes) {
+    if (momentEngagement[row.moment_id]) {
+      momentEngagement[row.moment_id].likesCount++;
+      if (viewerId && row.user_id === viewerId) {
+        momentEngagement[row.moment_id].userLiked = true;
+      }
+    }
+  }
+  for (const row of momentComments) {
+    if (momentEngagement[row.moment_id]) {
+      momentEngagement[row.moment_id].commentsCount++;
+    }
+  }
+
+  // Nuits (Lot D)
+  const nightsData = (nightsResult?.data ?? []) as Array<{
+    id: string;
+    jour_numero: number;
+    nom: string;
+    type: string;
+    altitude_m: number | null;
+    infos: string | null;
+    lat: number | null;
+    lng: number | null;
+    map_refuge_id: string | null;
+  }>;
+  const nights: CarnetNightItem[] = nightsData.map((n) => ({
+    id: n.id,
+    dayNumber: n.jour_numero,
+    name: n.nom,
+    type: (['refuge', 'gite', 'bivouac', 'hotel', 'camping', 'autre'].includes(n.type)
+      ? n.type
+      : 'refuge') as CarnetNightItem['type'],
+    altitudeM: n.altitude_m,
+    infos: n.infos,
+    lat: n.lat,
+    lng: n.lng,
+    mapRefugeId: n.map_refuge_id,
+  }));
+
+  // Budget (Lot D, participant uniquement)
+  let budget: CarnetBudget | null = null;
+  const budgetRows = (budgetRes?.data ?? []) as Array<{
+    id: string;
+    label: string;
+    amount_cents: number;
+    currency: string;
+    category: string | null;
+    paid_by_user_id: string | null;
+    date: string | null;
+  }>;
+  if (isParticipant && budgetRows.length > 0) {
+    const totalCents = budgetRows.reduce((sum, item) => sum + (item.amount_cents ?? 0), 0);
+    const participantCount = Math.max(1, participants.length);
+    budget = {
+      totalCents,
+      currency: budgetRows[0]?.currency ?? 'EUR',
+      perPersonCents: Math.round(totalCents / participantCount),
+      items: budgetRows.map((b) => ({
+        id: b.id,
+        label: b.label,
+        amountCents: b.amount_cents,
+        currency: b.currency,
+        category: b.category,
+        paidByUserId: b.paid_by_user_id,
+        date: b.date,
+      })),
+    };
+  }
+
+  // Position live ou zone publique (Lot D)
+  const livePosData = livePosRes?.data as {
+    lat: number;
+    lng: number;
+    accuracy_m: number | null;
+    recorded_at: string;
+    user_id: string;
+  } | null;
+  const livePosition: CarnetLivePosition | null = livePosData
+    ? {
+        lat: livePosData.lat,
+        lng: livePosData.lng,
+        accuracyM: livePosData.accuracy_m,
+        recordedAt: livePosData.recorded_at,
+        userId: livePosData.user_id,
+      }
+    : null;
+
+  const publicZoneData = publicZoneRes?.data as {
+    zone_label: string;
+    lat_approx: number | null;
+    lng_approx: number | null;
+    recorded_at: string;
+  } | null;
+  const publicZone: CarnetPublicZone | null = publicZoneData
+    ? {
+        zoneLabel: publicZoneData.zone_label,
+        latApprox: publicZoneData.lat_approx,
+        lngApprox: publicZoneData.lng_approx,
+        recordedAt: publicZoneData.recorded_at,
+      }
+    : null;
+
+  const detail = buildCarnetDetail({
     carnet,
     author: (authorResult.data as unknown as AuthorRow) ?? null,
     hikeSession: sessions[0] ?? null,
@@ -258,7 +524,7 @@ export async function getCarnetDetail(id: string) {
     trace: pickCarnetTrace(sessions),
     etapes: (etapesResult.data as unknown as EtapeRow[]) ?? [],
     hebergements: (hebergementsResult.data as unknown as HebergementRow[]) ?? [],
-    moments: (momentsResult.data as unknown as MomentRow[]) ?? [],
+    moments: momentRows,
     kitItems: (kitResult.data as unknown as KitItemRow[]) ?? [],
     viewerId,
     liked,
@@ -271,5 +537,19 @@ export async function getCarnetDetail(id: string) {
          erreur : la requête `carnet_comments` était jetée). */
       comments: commentsTotal.count ?? 0,
     },
+    viewerRole,
+    nights,
+    dayReactions,
+    momentEngagement,
+    livePosition,
+    publicZone,
+    budget,
   });
+
+  /* Le profil altimétrique manque partout en production : `elevationM` n'est
+     renseigné par aucune sortie. `enrichCarnetElevation` demande l'altitude des
+     points du tracé au MNT d'Open-Meteo (cache 1 h, 3 s de délai maximum) et
+     rend la fiche inchangée si l'API ne répond pas : jamais une altitude
+     inventée, jamais une exception. */
+  return enrichCarnetElevation(detail);
 }

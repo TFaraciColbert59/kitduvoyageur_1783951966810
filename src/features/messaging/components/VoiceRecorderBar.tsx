@@ -42,13 +42,22 @@ export const VoiceRecorderBar: React.FC<VoiceRecorderBarProps> = ({
         setPermissionError(null);
         stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-        const mimeType = MediaRecorder.isTypeSupported('audio/webm')
-          ? 'audio/webm'
-          : MediaRecorder.isTypeSupported('audio/ogg')
-            ? 'audio/ogg'
-            : 'audio/mp4';
-
-        const recorder = new MediaRecorder(stream, { mimeType });
+        let options: MediaRecorderOptions = {};
+        if (typeof MediaRecorder !== 'undefined' && typeof MediaRecorder.isTypeSupported === 'function') {
+          if (MediaRecorder.isTypeSupported('audio/mp4')) {
+            options = { mimeType: 'audio/mp4' };
+          } else if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+            options = { mimeType: 'audio/webm;codecs=opus' };
+          } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+            options = { mimeType: 'audio/webm' };
+          }
+        }
+        let recorder: MediaRecorder;
+        try {
+          recorder = new MediaRecorder(stream, options);
+        } catch {
+          recorder = new MediaRecorder(stream);
+        }
         mediaRecorderRef.current = recorder;
         chunksRef.current = [];
 

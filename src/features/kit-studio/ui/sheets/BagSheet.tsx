@@ -1,13 +1,14 @@
 'use client';
 import { useState, type CSSProperties } from 'react';
-import { COLORWAYS, MODULE_IDS, ONE, ZONE_NAMES } from '../../domain/catalog';
-import type { CapacityZoneId, ModuleId } from '../../domain/catalog';
+import { MODULE_IDS, ZONE_NAMES } from '../../domain/catalog';
+import type { CapacityZoneId, ColorwayId, ModuleId } from '../../domain/catalog';
+import { studioData } from '../../domain/studioData';
 import { canAddModule, ptsCap, ptsUsed, toggleModule } from '../../domain/attach';
 import type { AttachHost } from '../../domain/attach';
 import { formatEuro, formatLitres, formatWeight } from '../../domain/format';
 import { colorwaySwatch } from '../../domain/palette';
 import { modOn, pieceCw, pieceInfo, pieceState } from '../../domain/parts';
-import { bagWeight, capOf, totalCap, totals } from '../../domain/totals';
+import { bagWeight, capOf, toCents, totalCap, totals } from '../../domain/totals';
 import { currentBag, currentKit } from '../../domain/state';
 import type { KitState, PieceKey } from '../../domain/types';
 import { Pager } from '../Drawer/Pager';
@@ -60,7 +61,13 @@ interface BagSheetProps {
 
 function stateText(state: KitState, key: PieceKey): string {
   const s = pieceState(state, key);
-  return s === 'own' ? TXT.own : s === 'order' ? TXT.preordered : `${TXT.toOrder} · ${formatEuro(pieceInfo(key).eur * 100)}`;
+  if (s === 'own') return TXT.own;
+  if (s === 'order') return TXT.preordered;
+  const info = pieceInfo(key);
+  const eur = info.eur;
+  if (eur == null) return `${TXT.toOrder} · non renseigné`;
+  const base = `${TXT.toOrder} · ${formatEuro(toCents(eur))}`;
+  return info.figuresProvisional ? `${base} (indicatif)` : base;
 }
 
 function Pts({ state, host }: { state: KitState; host: AttachHost }) {
@@ -88,11 +95,12 @@ export function BagSheet({ state, onChange, onOpenOrder, onCustomise, page, onPa
   const kit = currentKit(state);
   const bag = currentBag(state);
   const t = totals(state);
-  const sw = (cw: keyof typeof COLORWAYS) => colorwaySwatch(COLORWAYS[cw]);
+  const sw = (cw: ColorwayId) => colorwaySwatch(studioData().colorways[cw]);
 
   const onToggle = (m: ModuleId, on: boolean) => {
     if (on && !modOn(state, m) && !canAddModule(state, m)) {
-      setRefusal(`${ONE.mods[m].n} : ${TXT.refusal} ${TXT.host[ONE.mods[m].host]}. ${TXT.refusalHint}`);
+      const oneMods = studioData().one.mods;
+      setRefusal(`${oneMods[m].n} : ${TXT.refusal} ${TXT.host[oneMods[m].host]}. ${TXT.refusalHint}`);
       return;
     }
     setRefusal(null);
@@ -100,12 +108,12 @@ export function BagSheet({ state, onChange, onOpenOrder, onCustomise, page, onPa
   };
 
   const modRow = (m: ModuleId) => {
-    const M = ONE.mods[m];
+    const M = studioData().one.mods[m];
     const on = modOn(state, m);
     const blocked = !on && !canAddModule(state, m);
     const key: PieceKey = `mod:${m}`;
     const ps = pieceState(state, key);
-    const price = ps === 'own' ? TXT.own.toLowerCase() : ps === 'order' ? TXT.preordered.toLowerCase() : formatEuro(M.eur * 100);
+    const price = ps === 'own' ? TXT.own.toLowerCase() : ps === 'order' ? TXT.preordered.toLowerCase() : formatEuro(toCents(M.eur));
     return (
       <li className="ks-sh-row" key={m}>
         <span className="ks-sh-rg" data-on={on}>
@@ -131,11 +139,21 @@ export function BagSheet({ state, onChange, onOpenOrder, onCustomise, page, onPa
     );
   };
 
+  const bw = bagWeight(state);
+  const weightText = bw != null ? `${formatWeight(bw)} ${TXT.emptyBag}` : 'poids non renseigné';
+  const capPts = studioData().one.corps[kit.bag]?.pts;
+  const capPtsText = capPts != null ? `${ptsUsed(state, 'corps')}/${ptsCap(state, 'corps')}` : 'non renseigné';
+
   const capacity = (
     <>
       <div className="ks-sh-hero">
         <span className="ks-sh-big">{formatLitres(totalCap(state))}</span>
-        <span className="ks-sh-t13">{`${bag.n} · ${formatWeight(bagWeight(state))} ${TXT.emptyBag}`}</span>
+        <span className="ks-sh-t13">{`${bag.n} · ${weightText}`}</span>
+        {bag.figuresProvisional && (
+          <span className="ks-sh-note" role="status" style={{ display: 'block', marginTop: 4 }}>
+            Poids et prix indicatifs, non définitifs.
+          </span>
+        )}
       </div>
       <div className="ks-sh-cap">
         {ZONES.map((z) => {
@@ -158,7 +176,7 @@ export function BagSheet({ state, onChange, onOpenOrder, onCustomise, page, onPa
     <>
       <div className="ks-sh-ph">
         <span className="ks-sh-t17">{TXT.configTitle}</span>
-        <span className="ks-sh-t13">{`${ptsUsed(state, 'corps')}/${ptsCap(state, 'corps')} ${TXT.onBody}`}</span>
+        <span className="ks-sh-t13">{`${capPtsText} ${TXT.onBody}`}</span>
       </div>
       <div className="ks-sh-plist">
         <div>
@@ -176,6 +194,11 @@ export function BagSheet({ state, onChange, onOpenOrder, onCustomise, page, onPa
           </span>
         </div>
       </div>
+      {bag.figuresProvisional && (
+        <p className="ks-sh-note" role="status" style={{ margin: '8px 0 0' }}>
+          Poids et prix indicatifs, non définitifs.
+        </p>
+      )}
       <ul className="ks-sh-rows" aria-label={TXT.configTitle} style={{ listStyle: 'none', margin: 0, padding: 0 }}>
         {MODULE_IDS.map(modRow)}
       </ul>
@@ -204,7 +227,7 @@ export function BagSheet({ state, onChange, onOpenOrder, onCustomise, page, onPa
       </div>
       <div className="ks-sh-row">
         <span className="ks-sh-txt">
-          <b>{`${ptsUsed(state, 'corps')}/${ptsCap(state, 'corps')} · ${TXT.host.corps}`}</b>
+          <b>{`${capPts != null ? `${ptsUsed(state, 'corps')}/${ptsCap(state, 'corps')}` : `${ptsUsed(state, 'corps')} (capacité non renseignée)`} · ${TXT.host.corps}`}</b>
         </span>
         <Pts state={state} host="corps" />
       </div>

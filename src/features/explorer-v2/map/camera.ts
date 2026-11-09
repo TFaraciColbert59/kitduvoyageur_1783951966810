@@ -57,7 +57,7 @@ export function followZoomForSpeed(speedMs: number, level: Level): number {
   return 14.2;
 }
 
-/** Plongée entre niveaux : centre = point touché, zoom du niveau. */
+/** Plongée entre niveaux : centre = point touché, zoom du niveau avec easing doux et naturel. */
 export function flyToLevel(
   map: MapLibreMap,
   center: [number, number],
@@ -67,17 +67,42 @@ export function flyToLevel(
   const options = {
     center,
     zoom: LEVEL_ZOOM[level],
-    pitch: level >= 3 ? 45 : 0,
-    duration: reducedMotion ? 0 : FLY_DURATION_MS,
-    curve: 0.65,
+    pitch: level >= 3 ? 35 : 0,
+    duration: reducedMotion ? 0 : 1400,
+    curve: 1.25,
+    speed: 1.1,
     essential: true,
   };
   map.flyTo(options);
 }
 
 /**
- * Révélation (refuge, eau, danger, ami, bivouac, belvédère, accès) :
- * saut serré (zoom +1,7, pitch 0) puis inclinaison douce à 45°.
+ * Zoom cinématique au démarrage : depuis la vue Terre entière (globe) vers la
+ * position réelle de l'utilisateur à l'échelle de la ville en <= 2 secondes.
+ */
+export function cinematicStartupZoom(
+  map: MapLibreMap,
+  targetCenter: [number, number],
+  reducedMotion: boolean,
+): void {
+  if (reducedMotion) {
+    map.jumpTo({ center: targetCenter, zoom: 11.8 });
+    return;
+  }
+  map.flyTo({
+    center: targetCenter,
+    zoom: 11.8,
+    pitch: 30,
+    duration: 1600,
+    curve: 1.25,
+    speed: 1.1,
+    essential: true,
+  });
+}
+
+/**
+ * Révélation d'un repère (refuge, eau, danger, ami, bivouac, belvédère, accès) :
+ * transition fluide flyTo sans à-coup ni saut brutal.
  */
 export function revealAt(
   map: MapLibreMap,
@@ -85,9 +110,19 @@ export function revealAt(
   reducedMotion: boolean,
 ): void {
   const current = map.getZoom();
-  map.jumpTo({ center, zoom: Math.min(17.5, current + 1.7), pitch: 0 });
-  if (reducedMotion) return;
-  map.easeTo({ pitch: 45, duration: REVEAL_EASE_MS, essential: true });
+  if (reducedMotion) {
+    map.jumpTo({ center, zoom: Math.min(17.5, current + 1.5) });
+    return;
+  }
+  map.flyTo({
+    center,
+    zoom: Math.min(17.5, current + 1.5),
+    pitch: 35,
+    duration: 1300,
+    curve: 1.25,
+    speed: 1.1,
+    essential: true,
+  });
 }
 
 /** Suivi : cap en haut, pitch 60, zoom selon la vitesse, utilisateur au tiers bas. */

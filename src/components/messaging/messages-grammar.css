@@ -249,13 +249,27 @@
   width: 22px;
   height: 22px;
   flex: none;
-  border: 0;
+  border: 0 !important;
   border-radius: 999px;
   display: grid;
   place-items: center;
-  background: var(--fill2);
-  color: var(--label2);
+  background: transparent !important;
+  box-shadow: none !important;
+  color: rgba(23, 43, 36, 0.35) !important;
   cursor: pointer;
+  opacity: 0.65;
+  padding: 0;
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+.lkdv-messages .msearch-x:hover,
+.lkdv-messages .msearch-x:active {
+  opacity: 1;
+  color: var(--tint) !important;
+}
+.lkdv-messages .msearch-x svg {
+  stroke-width: 1.2px !important;
+  width: 13px !important;
+  height: 13px !important;
 }
 
 .lkdv-messages .mresults {
@@ -264,42 +278,44 @@
   flex: none;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 6px;
-  padding: 2px 2px 8px;
-  min-width: 0;
+  gap: 8px;
+  padding: 4px 0 10px;
 }
 .lkdv-messages .mresults section {
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 .lkdv-messages .mresults h3 {
-  margin: 2px 2px 0;
+  margin: 4px 6px 2px;
   font: 600 9.5px/1 var(--sf);
   letter-spacing: 0.02em;
   text-transform: uppercase;
   color: var(--label3);
 }
 .lkdv-messages .mresult {
-  display: flex;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  gap: 8px;
   align-items: center;
-  gap: 9px;
-  /* Un <button> se dimensionne sur son contenu : sans ça, un message long
-     élargit la rangée au-delà de la carte. */
   width: 100%;
   box-sizing: border-box;
   min-width: 0;
-  min-height: 40px;
-  padding: 4px 10px;
+  min-height: 56px;
+  padding: 8px 12px 8px 10px;
+  margin-bottom: 4px;
   border: 0;
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.5);
-  box-shadow: inset 0 0 0 0.5px rgba(23, 43, 36, 0.08);
+  background: rgba(255, 255, 255, 0.46);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 0 0.5px rgba(23, 43, 36, 0.07);
   color: var(--label);
   text-align: left;
   cursor: pointer;
 }
 .lkdv-messages .mresult .fa {
-  width: 30px;
-  height: 30px;
+  width: 40px;
+  height: 40px;
   flex: none;
   border-radius: 50%;
   display: grid;
@@ -307,7 +323,7 @@
   overflow: hidden;
   background: var(--mint);
   color: var(--tint);
-  font: 700 11px var(--sf);
+  font: 700 13px var(--sf);
 }
 .lkdv-messages .mresult .fa img {
   width: 100%;
@@ -569,8 +585,6 @@
 .lkdv-messages .mcomposer {
   position: relative;
   z-index: 2;
-  /* Aucun fond sous la barre ni sous les boutons : seuls le champ et les
-     ronds gardent une surface. */
   background: none;
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
@@ -579,7 +593,8 @@
   display: flex;
   align-items: flex-end;
   gap: 8px;
-  padding: 8px 14px calc(10px + env(safe-area-inset-bottom, 0px));
+  padding: 4px 6px 0 10px !important;
+  margin: 0 !important;
 }
 .lkdv-messages .mfield {
   flex: 1;
@@ -588,24 +603,30 @@
   max-height: 110px;
   padding: 9px 15px;
   border-radius: 999px;
-  border: 0;
-  background: rgba(255, 255, 255, 0.52);
+  border: 0.5px solid rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.65);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  backdrop-filter: blur(28px) saturate(180%);
   box-shadow:
-    inset 0 0 0 0.5px rgba(23, 43, 36, 0.14),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.35),
+    0 2px 10px rgba(23, 43, 36, 0.06);
   color: var(--label);
   font: 400 13px/1.35 var(--sf);
   letter-spacing: -0.13px;
   resize: none;
   outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, height 0.15s ease;
 }
 .lkdv-messages .mfield::placeholder {
   color: var(--label3);
 }
 .lkdv-messages .mfield:focus {
+  border-color: rgba(23, 64, 44, 0.35);
   box-shadow:
-    inset 0 0 0 1px var(--soft-line, var(--accent)),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 0 0 2px rgba(23, 64, 44, 0.12),
+    0 4px 14px rgba(23, 43, 36, 0.08);
 }
 .lkdv-messages .msend {
   flex: none;
@@ -749,19 +770,37 @@
 }
 
 /* ---------- États ---------- */
+.lkdv-messages .card-scroll:has(.mstate),
+.lkdv-messages .ig-grid-wrap:has(.mstate) {
+  min-height: 180px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
 .lkdv-messages .mstate {
-  display: grid;
-  place-items: center;
-  gap: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
   text-align: center;
-  padding: 18px 14px;
+  padding: 24px 16px;
   color: var(--label2);
-  font: 500 11.5px/1.4 var(--sf);
+  margin: auto;
 }
 .lkdv-messages .mstate b {
   display: block;
-  font: 600 13px/1.25 var(--sf);
+  font: 650 16px/1.25 var(--sf);
   color: var(--label);
+  letter-spacing: -0.01em;
+}
+.lkdv-messages .mstate .mbtn {
+  height: 38px;
+  min-height: 38px;
+  padding: 0 20px;
+  font-size: 13.5px;
+  border-radius: 999px;
 }
 
 .lkdv-messages .mskel {
@@ -825,9 +864,8 @@
    La carte (liste) tient le haut, la zone de conversation occupe le reste.
    La barre basse reste visible : la zone réserve sa hauteur (padding 64). */
 .lkdv-messages .phone {
-  /* Hauteur de la card des discussions : 302 px par défaut (335 px − 10 %),
-     réglable avec la poignée `.msplit` ; la conversation prend tout le reste. */
-  grid-template-rows: var(--msg-split, 302px) minmax(0, 1fr) !important;
+  /* Inversion des proportions initiales : 60 % carte supérieure / 40 % carte inférieure */
+  grid-template-rows: var(--msg-split, calc(60% - 24px)) minmax(0, 1fr) !important;
 }
 .lkdv-messages .phone[data-splitting='true'] {
   transition: none !important;
@@ -955,39 +993,80 @@
   z-index: 6;
 }
 .lkdv-messages .mfilters {
-  /* Capsule flottante en bas à droite de la card des discussions. */
+  /* Capsule flottante en bas à droite de la card des discussions — longueur allongée de 30 % (196px). */
   position: absolute !important;
   top: auto !important;
   right: 12px !important;
   bottom: 10px !important;
   left: auto !important;
   z-index: 6 !important;
-  width: auto !important;
-  max-width: none !important;
-  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-  height: 32px !important;
+  width: 196px !important;
+  max-width: 196px !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+  height: 30px !important;
   padding: 2.5px !important;
+  border-radius: 9999px !important;
+  background: rgba(255, 255, 255, 0.65) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.8) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.35), 0 4px 14px rgba(23, 43, 36, 0.08) !important;
+  box-sizing: border-box !important;
 }
 .lkdv-messages .mfilters .ig-th {
+  position: absolute !important;
+  top: 2.5px !important;
+  bottom: 2.5px !important;
+  left: 2.5px !important;
   width: calc((100% - 5px) / 4) !important;
+  height: calc(100% - 5px) !important;
+  border-radius: 9999px !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.42)) !important;
+  box-shadow: inset 0 1px 0 #fff, inset 0 -1px 1px rgba(255, 255, 255, 0.5), 0 0 0 0.5px rgba(23, 43, 36, 0.07), 0 2px 8px rgba(23, 43, 36, 0.08) !important;
+  transition: transform 0.28s var(--ease-spring) !important;
+  z-index: 1 !important;
 }
-.lkdv-messages .mfilters-btn {
+.lkdv-messages .mfilters button {
+  position: relative !important;
+  z-index: 2 !important;
+  border: 0 !important;
+  background: none !important;
   height: 100% !important;
-  padding: 0 9px !important;
-  white-space: nowrap;
-  font: 600 10.8px/1 var(--sf) !important;
-  letter-spacing: -0.1px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #56665D !important;
+  cursor: pointer !important;
+  border-radius: 9999px !important;
+  transition: color 0.18s ease, transform 0.12s ease !important;
+  padding: 0 !important;
 }
-.lkdv-messages .mfilters-btn .mrow-badge {
-  min-width: 14px;
-  height: 14px;
-  font: 700 9px/14px var(--sf);
-  background: var(--warn);
-  color: var(--tint-ink);
+.lkdv-messages .mfilters button .lbl {
+  display: none !important;
+}
+.lkdv-messages .mfilters button .ic {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+.lkdv-messages .mfilters button:active {
+  transform: scale(0.92) !important;
+}
+.lkdv-messages .mfilters button[aria-selected="true"] {
+  color: #17402C !important;
+}
+.lkdv-messages .mfilters .badge-count,
+.lkdv-messages .mfilters .mrow-badge {
+  position: absolute !important;
+  top: 1px !important;
+  right: 1px !important;
+  min-width: 11px !important;
+  height: 11px !important;
+  font: 700 7.5px/11px var(--sf) !important;
+  background: var(--warn) !important;
+  color: var(--tint-ink) !important;
+  border-radius: 999px !important;
+  padding: 0 2.5px !important;
 }
 
 /* Indicateur de saisie : trois points qui respirent (pas de texte décoratif). */
@@ -1172,18 +1251,31 @@
   animation: mshimmer 1.4s ease-in-out infinite;
 }
 
-/* Boutons du composer : mêmes classes que les ronds du haut (.lg gbtn). */
+/* Boutons du composer : design system Liquid Glass natif Apple. */
 .lkdv-messages .mcomposer .gbtn {
   width: 38px;
   height: 38px;
+  border-radius: 50% !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.42)) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.85) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  box-shadow: inset 0 1px 0 #fff, inset 0 -1px 1px rgba(255, 255, 255, 0.5), 0 2px 8px rgba(23, 43, 36, 0.08) !important;
+  color: #17402C !important;
+  display: grid;
+  place-items: center;
+  flex: none;
+  transition: transform 0.2s var(--ease-spring), background 0.2s, box-shadow 0.2s;
 }
 .lkdv-messages .mcomposer .msend {
   color: var(--label2);
-  transition: transform 0.15s, background 0.2s, color 0.2s;
+  transition: transform 0.2s var(--ease-spring), background 0.25s, color 0.2s, box-shadow 0.25s;
 }
 .lkdv-messages .mcomposer .msend.on {
-  background: var(--tint);
-  color: var(--tint-ink);
+  background: linear-gradient(180deg, #275d3f, #17402c) !important;
+  border-color: rgba(23, 64, 44, 0.8) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(23, 64, 44, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
 }
 /* ---------- Micro-interactions ---------- */
 /* Le bouton d'envoi « pop » quand il devient actif. */
@@ -1261,8 +1353,62 @@
 .lkdv-messages .sw-wrap[data-det='card'] .sheet:has(.sh-close-only) {
   padding: 6px 8px 8px;
 }
-.lkdv-messages .sw-wrap[data-det='card'] .sheet:has(.sh-close-only) .grab {
-  display: none;
+.lkdv-messages .sw-wrap[data-det='card'] .sheet .grab {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 18px;
+  cursor: grab;
+  touch-action: none;
+  z-index: 40;
+}
+.lkdv-messages .sw-wrap[data-det='card'] .sheet .grab span {
+  display: block;
+  width: 38px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(23, 43, 36, 0.24);
+}
+
+/* Bulles contenant des pièces jointes : suppression du fond double bulle */
+.lkdv-messages .bub.bub-attachment,
+.lkdv-messages .bub.bub-attachment.mine,
+.lkdv-messages .bub.bub-attachment.other {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  padding: 0 !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  overflow: visible !important;
+}
+
+.lkdv-messages .bub.bub-attachment .mbub-map {
+  width: 250px;
+  max-width: 100%;
+  height: 160px;
+  border-radius: 18px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+.lkdv-messages .bub.bub-attachment .mcard {
+  width: 250px;
+  max-width: 100%;
+  box-shadow: 0 4px 18px rgba(23, 43, 36, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.lkdv-messages .bub.bub-attachment .bub-img {
+  max-width: 250px;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  margin: 0;
 }
 .lkdv-messages .sw-wrap[data-det='card'] .sheet:has(.sh-close-only) .sh-b {
   /* Marges strictement symétriques : la grille est centrée haut/bas.
@@ -1793,10 +1939,4 @@
   outline: 2px solid #5b7f55;
   outline-offset: 2px;
   border-radius: 999px;
-}
-
-/* Filtre compact : il ne recouvre que le coin bas-droit de la card. */
-.lkdv-messages .mfilters button {
-  padding: 0 8px !important;
-  font-size: 10.5px !important;
 }

@@ -1,0 +1,67 @@
+{
+  "base": "https://kitduvoyageur-1783951966810-8etk51fp4.vercel.app",
+  "steps": [
+    {
+      "step": "communaute",
+      "url": "https://kitduvoyageur-1783951966810-8etk51fp4.vercel.app/communaute",
+      "v1ExplorerTrigger": true
+    },
+    {
+      "step": "explorer-ouvert",
+      "explore": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "capsule": {
+        "x": 8,
+        "y": 62,
+        "w": 374,
+        "h": 69
+      },
+      "sheet": {
+        "x": 8,
+        "y": 44,
+        "w": 374,
+        "h": 786
+      }
+    },
+    {
+      "step": "volet-carnets",
+      "ok": true
+    },
+    {
+      "step": "volet-clubs",
+      "ok": true
+    },
+    {
+      "step": "volet-sorties",
+      "ok": true
+    },
+    {
+      "step": "echap",
+      "sheetApres": null
+    },
+    {
+      "step": "creation",
+      "create": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      }
+    }
+  ],
+  "consoleErrors": [
+    "pageerror: TypeError: Cannot read properties of null (reading 'appendChild')",
+    "pageerror: TypeError: Cannot read properties of null (reading 'appendChild')",
+    "pageerror: TypeError: Cannot read properties of null (reading 'appendChild')",
+    "pageerror: TypeError: Cannot read properties of null (reading 'appendChild')",
+    "Failed to load resource: the server responded with a status of 404 ()",
+    "Failed to load resource: the server responded with a status of 404 ()",
+    "Failed to load resource: the server responded with a status of 404 ()",
+    "Failed to load resource: the server responded with a status of 404 ()"
+  ],
+  "failed": []
+}

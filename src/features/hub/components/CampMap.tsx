@@ -177,10 +177,7 @@ export function CampMap({
           layer: startLayer,
         });
 
-        const tileUrl =
-          startLayer === 'topo'
-            ? 'https://a.tile.opentopomap.org/{z}/{x}/{y}.png'
-            : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+        const tileUrl = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 
         const map = new maplibre.Map({
           container: containerRef.current,

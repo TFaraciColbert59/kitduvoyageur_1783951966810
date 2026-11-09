@@ -8,7 +8,6 @@ import { CarnetMediaTabs } from './CarnetMediaTabs';
 import { CARNET_PAGE_TABS, CarnetPages, carnetPageIndex, type CarnetPageId } from './CarnetPages';
 import { CarnetDayHeader } from './CarnetDayHeader';
 import { useDayMotion, useDaySwipe } from './CarnetDaySwipe';
-import { clampDayPage, dayForPage } from './dayMapFocus';
 import { extractCoords, projectToViewBox } from './traceGeometry';
 import { PLACE_LINE_MISSING, placeLineParts } from '@/features/carnet/detail/place';
 import type { CarnetDetail, CarnetMomentItem, CarnetParticipant } from '@/features/carnet/detail/types';
@@ -25,9 +24,6 @@ export interface CarnetCardProps {
   /** Page active du carrousel média, mémorisée par l'écran. */
   page: CarnetPageId;
   onPageChange: (page: CarnetPageId) => void;
-  /** Page du balayage : 0 = Résumé, n = jour n. Possédée par l'écran, qui la garde entre deux drawers. */
-  dayIndex: number;
-  onDayChange: (index: number) => void;
   canWrite: boolean;
   onRequireAuth: () => void;
   onOpenCarnet: () => void;
@@ -89,8 +85,6 @@ export function CarnetCard({
   detail,
   page,
   onPageChange,
-  dayIndex: dayIndexProp,
-  onDayChange,
   canWrite,
   onRequireAuth,
   onOpenCarnet,
@@ -132,10 +126,11 @@ export function CarnetCard({
   /* Balayage : page 0 = Résumé, puis un jour par page dérivée. Un carnet sans
      aucun jour ne garde que le Résumé — aucune page n'est fabriquée. */
   const days = detail.days ?? [];
+  const [dayPage, setDayPage] = React.useState(0);
   const pageCount = days.length + 1;
-  const dayIndex = clampDayPage(dayIndexProp, days.length);
-  const day = dayForPage(days, dayIndex);
-  const swipe = useDaySwipe({ count: pageCount, index: dayIndex, onChange: onDayChange });
+  const dayIndex = Math.max(0, Math.min(pageCount - 1, dayPage));
+  const day = dayIndex === 0 ? null : days[dayIndex - 1];
+  const swipe = useDaySwipe({ count: pageCount, index: dayIndex, onChange: setDayPage });
   const motion = useDayMotion(dayIndex, swipe.direction);
 
   /* Moments de la page : tous sur le Résumé, ceux du jour ensuite. */

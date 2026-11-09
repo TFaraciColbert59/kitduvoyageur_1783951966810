@@ -30,7 +30,7 @@ export function SharePane() {
     return `${window.location.origin}${stats.url}`;
   }, [stats?.url]);
   const qrUrl = absoluteUrl
-    ? `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=8&data=${encodeURIComponent(absoluteUrl)}`
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=160x160&margin=6&data=${encodeURIComponent(absoluteUrl)}`
     : '';
 
   if (profileQuery.isLoading || shareQuery.isLoading) return <DrawerSkeleton />;
@@ -100,8 +100,8 @@ export function SharePane() {
             <img
               src={qrUrl}
               alt={`QR code du profil de ${profile.name || 'voyageur'}`}
-              width={176}
-              height={176}
+              width={110}
+              height={110}
               loading="lazy"
               onError={(event) => {
                 event.currentTarget.style.display = 'none';

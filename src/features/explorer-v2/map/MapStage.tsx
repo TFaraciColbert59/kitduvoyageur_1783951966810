@@ -8,6 +8,7 @@ import type { CameraIntent, Level, PoiKind } from '../state/types';
 import { clusterPins, selectVisiblePins, type PinCluster } from './hierarchy';
 import {
   boundsOfTrack,
+  cinematicStartupZoom,
   flyToLevel,
   flyoverTrack,
   followAt,
@@ -175,8 +176,18 @@ export default function MapStage({
     map.on('styledata', onStyleData);
     map.on('render', onFirstRender);
 
+    let startupTimer: number | null = null;
+
     map.on('load', () => {
       map.setProjection({ type: 'globe' });
+      // 3.1 Animation cinématique au démarrage :
+      // La Terre est d'abord entièrement visible (globe).
+      // Après 300 ms, zoom vers la position de l'utilisateur à l'échelle ville (durée <= 2 s).
+      startupTimer = window.setTimeout(() => {
+        if (!mapRef.current) return;
+        const target = me ? [me.lng, me.lat] : (Array.isArray(center) ? center : [2.35, 48.85]);
+        cinematicStartupZoom(map, target as [number, number], reducedMotion);
+      }, 300);
       try {
         map.setSky({
           'sky-color': 'rgba(233,238,231,0.0)',
@@ -382,6 +393,7 @@ export default function MapStage({
     });
 
     return () => {
+      if (startupTimer) window.clearTimeout(startupTimer);
       if (orbitRef.current) window.clearInterval(orbitRef.current);
       map.remove();
       mapRef.current = null;

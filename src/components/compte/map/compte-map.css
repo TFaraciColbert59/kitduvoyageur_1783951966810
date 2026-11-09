@@ -449,47 +449,178 @@
   }
 }
 
-/* Marqueurs massif : pastille de verre lisible, nom révélé à la sélection. */
+/* Marqueurs massif : points épurés et discrets, qui s'adaptent selon l'importance et ne grossissent jamais au dézoom */
 .lkdv-map-massif {
-  width: 36px !important;
-  height: 36px !important;
-  gap: 6px;
-  padding: 0 9px !important;
-  border: 1.5px solid rgba(47, 107, 69, 0.42);
-  background: linear-gradient(180deg, rgba(255,255,255,.94), rgba(244,250,241,.76));
-  box-shadow:
-    inset 0 1px 0 #fff,
-    0 0 0 0.5px rgba(23,43,36,.12),
-    0 6px 16px rgba(23,43,36,.16),
-    0 0 0 6px rgba(255,255,255,.2);
-  color: #17402c;
-  font-size: 12px !important;
-  transition: width .24s var(--motion-ease-standard), background .2s ease, color .2s ease, box-shadow .2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px !important;
+  cursor: pointer;
+  pointer-events: auto;
+  border: none !important;
+  transition: width 0.22s var(--motion-ease-standard), height 0.22s var(--motion-ease-standard), background 0.2s ease, box-shadow 0.2s ease;
+  background: rgba(23, 64, 44, 0.9) !important;
+  color: #fff !important;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.75), 0 2px 6px rgba(0, 0, 0, 0.2) !important;
 }
-.lkdv-map-massif b { color: #2f6b45; font-size: 12px; }
+
+.lkdv-map-massif b {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: #fff;
+}
+
 .lkdv-map-massif-name {
   display: none;
-  max-width: 118px;
+  max-width: 120px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font: 600 10px/1 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif;
+  font: 600 10.5px/1 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif;
+  color: #fff;
 }
+
+/* Monde & Pays (dézoom total) : points épurés et discrets catégorisés par importance */
+.lkdv-map-root[data-zoom-band='world'] .lkdv-map-massif,
+.lkdv-map-root[data-zoom-band='country'] .lkdv-map-massif,
+.lkdv-map-root:not([data-zoom-band]) .lkdv-map-massif {
+  min-width: 0 !important;
+  padding: 0 !important;
+}
+
+.lkdv-map-root[data-zoom-band='world'] .lkdv-map-massif[data-importance='low'],
+.lkdv-map-root[data-zoom-band='country'] .lkdv-map-massif[data-importance='low'],
+.lkdv-map-root:not([data-zoom-band]) .lkdv-map-massif[data-importance='low'] {
+  width: 5px !important;
+  height: 5px !important;
+  background: rgba(47, 107, 69, 0.75) !important;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.6) !important;
+}
+
+.lkdv-map-root[data-zoom-band='world'] .lkdv-map-massif[data-importance='medium'],
+.lkdv-map-root[data-zoom-band='country'] .lkdv-map-massif[data-importance='medium'],
+.lkdv-map-root:not([data-zoom-band]) .lkdv-map-massif[data-importance='medium'] {
+  width: 7px !important;
+  height: 7px !important;
+  background: #2f6b45 !important;
+  box-shadow: 0 0 0 1.2px rgba(255, 255, 255, 0.85), 0 1px 3px rgba(0, 0, 0, 0.25) !important;
+}
+
+.lkdv-map-root[data-zoom-band='world'] .lkdv-map-massif[data-importance='high'],
+.lkdv-map-root[data-zoom-band='country'] .lkdv-map-massif[data-importance='high'],
+.lkdv-map-root:not([data-zoom-band]) .lkdv-map-massif[data-importance='high'] {
+  width: 9px !important;
+  height: 9px !important;
+  background: #C89A3B !important;
+  box-shadow: 0 0 0 1.5px #FFFFFF, 0 2px 5px rgba(200, 154, 59, 0.45) !important;
+}
+
+.lkdv-map-root[data-zoom-band='world'] .lkdv-map-massif b,
+.lkdv-map-root[data-zoom-band='world'] .lkdv-map-massif .lkdv-map-massif-name,
+.lkdv-map-root[data-zoom-band='country'] .lkdv-map-massif b,
+.lkdv-map-root[data-zoom-band='country'] .lkdv-map-massif .lkdv-map-massif-name,
+.lkdv-map-root:not([data-zoom-band]) .lkdv-map-massif b,
+.lkdv-map-root:not([data-zoom-band]) .lkdv-map-massif .lkdv-map-massif-name {
+  display: none !important;
+}
+
+/* Bande région : mini-pastilles sobres */
+.lkdv-map-root[data-zoom-band='region'] .lkdv-map-massif[data-importance='low'] {
+  width: 8px !important;
+  height: 8px !important;
+  padding: 0 !important;
+  background: rgba(47, 107, 69, 0.85) !important;
+  box-shadow: 0 0 0 1.2px rgba(255, 255, 255, 0.85) !important;
+}
+.lkdv-map-root[data-zoom-band='region'] .lkdv-map-massif[data-importance='low'] b {
+  display: none !important;
+}
+
+.lkdv-map-root[data-zoom-band='region'] .lkdv-map-massif[data-importance='medium'] {
+  width: 17px !important;
+  height: 17px !important;
+  padding: 0 !important;
+  background: rgba(23, 64, 44, 0.9) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  backdrop-filter: blur(8px) !important;
+  box-shadow: 0 0 0 1.2px rgba(255, 255, 255, 0.9), 0 2px 6px rgba(0, 0, 0, 0.2) !important;
+}
+.lkdv-map-root[data-zoom-band='region'] .lkdv-map-massif[data-importance='medium'] b {
+  color: #fff !important;
+  font-size: 9.5px !important;
+}
+
+.lkdv-map-root[data-zoom-band='region'] .lkdv-map-massif[data-importance='high'] {
+  width: 21px !important;
+  height: 21px !important;
+  padding: 0 !important;
+  background: linear-gradient(135deg, #17402C, #2f6b45) !important;
+  box-shadow: 0 0 0 1.5px #FFFFFF, 0 3px 8px rgba(23, 64, 44, 0.35) !important;
+}
+.lkdv-map-root[data-zoom-band='region'] .lkdv-map-massif[data-importance='high'] b {
+  color: #fff !important;
+  font-size: 10.5px !important;
+}
+
+/* Bande place (zoom rapproché) : pastilles Liquid Glass épurées */
+.lkdv-map-root[data-zoom-band='place'] .lkdv-map-massif[data-importance='low'] {
+  width: 18px !important;
+  height: 18px !important;
+  padding: 0 !important;
+  background: rgba(23, 64, 44, 0.88) !important;
+  box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.85) !important;
+}
+.lkdv-map-root[data-zoom-band='place'] .lkdv-map-massif[data-importance='low'] b {
+  font-size: 10px !important;
+  color: #fff !important;
+}
+
+.lkdv-map-root[data-zoom-band='place'] .lkdv-map-massif[data-importance='medium'] {
+  width: 22px !important;
+  height: 22px !important;
+  padding: 0 !important;
+  background: rgba(23, 64, 44, 0.92) !important;
+  box-shadow: 0 0 0 1.5px #FFFFFF, 0 3px 10px rgba(0, 0, 0, 0.25) !important;
+}
+.lkdv-map-root[data-zoom-band='place'] .lkdv-map-massif[data-importance='medium'] b {
+  font-size: 11px !important;
+  color: #fff !important;
+}
+
+.lkdv-map-root[data-zoom-band='place'] .lkdv-map-massif[data-importance='high'] {
+  width: 25px !important;
+  height: 25px !important;
+  padding: 0 !important;
+  background: linear-gradient(135deg, #17402C, #205537) !important;
+  box-shadow: 0 0 0 2px #FFFFFF, 0 4px 12px rgba(23, 64, 44, 0.4) !important;
+}
+.lkdv-map-root[data-zoom-band='place'] .lkdv-map-massif[data-importance='high'] b {
+  font-size: 11.5px !important;
+  color: #fff !important;
+}
+
+/* Survol / Sélection : expansion élégante avec nom */
 .lkdv-map-massif:hover,
 .lkdv-map-massif:focus-visible,
 .lkdv-map-massif.is-selected {
   width: auto !important;
-  background: linear-gradient(180deg, #2f6b45, #17402c);
-  border-color: rgba(255,255,255,.5);
-  color: #fff;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.3), 0 8px 20px rgba(10,20,14,.26), 0 0 0 6px rgba(255,255,255,.16);
+  height: 22px !important;
+  padding: 0 8px !important;
+  background: #17402C !important;
+  box-shadow: 0 0 0 1.5px #FFFFFF, 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+  gap: 5px !important;
 }
 .lkdv-map-massif:hover b,
-.lkdv-map-massif:focus-visible b,
-.lkdv-map-massif.is-selected b { color: #d8f3de; }
+.lkdv-map-massif.is-selected b {
+  display: inline !important;
+  color: #A6C1A0 !important;
+  font-size: 10.5px !important;
+}
 .lkdv-map-massif:hover .lkdv-map-massif-name,
-.lkdv-map-massif:focus-visible .lkdv-map-massif-name,
-.lkdv-map-massif.is-selected .lkdv-map-massif-name { display: inline; }
+.lkdv-map-massif.is-selected .lkdv-map-massif-name {
+  display: inline !important;
+  color: #FFFFFF !important;
+}
 
 /* POIs : pastille + libellé, lisibles dès le zoom sentier. */
 .lkdv-map-poi {
@@ -540,31 +671,6 @@
 }
 .lkdv-map-poi.is-compact .lkdv-map-poi-label { display: none; }
 .lkdv-map-poi.is-compact .lkdv-map-poi-dot { width: 9px; height: 9px; }
-
-/* — Design unifié des éléments de carte — */
-.lkdv-map-massif {
-  width: 34px !important;
-  height: 34px !important;
-  gap: 4px !important;
-  padding: 0 8px !important;
-  border: 1px solid rgba(47,107,69,.35) !important;
-  background: linear-gradient(180deg, rgba(255,255,255,.9), rgba(244,250,241,.68)) !important;
-  -webkit-backdrop-filter: blur(18px) saturate(1.8) !important;
-  backdrop-filter: blur(18px) saturate(1.8) !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 0 0 .5px rgba(23,43,36,.1), 0 6px 16px rgba(23,43,36,.14) !important;
-  color: #17402c !important;
-  font-size: 11px !important;
-}
-.lkdv-map-massif-ico { width: 13px; height: 13px; display: grid; place-items: center; flex: none; color: #2f6b45; }
-.lkdv-map-massif-ico svg { width: 13px; height: 13px; display: block; }
-.lkdv-map-massif b { font-size: 11px !important; color: #2f6b45 !important; }
-.lkdv-map-massif-name { font-size: 10px !important; }
-.lkdv-map-massif:hover, .lkdv-map-massif:focus-visible, .lkdv-map-massif.is-selected {
-  background: linear-gradient(180deg, #2f6b45, #17402c) !important;
-  color: #fff !important;
-}
-.lkdv-map-massif:hover .lkdv-map-massif-ico, .lkdv-map-massif.is-selected .lkdv-map-massif-ico { color: #d8f3de; }
-.lkdv-map-massif:hover b, .lkdv-map-massif.is-selected b { color: #d8f3de !important; }
 
 /* POI : pastille de verre 26 px, icône seule, aucune étiquette au repos. */
 .lkdv-map-poi {

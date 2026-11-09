@@ -331,9 +331,20 @@ const hlArt = id => {
   return `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17402C" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>`;
 };
 var hlCover = h => {
-  const img = h && (h.coverImage || (Array.isArray(h.stories) && h.stories[0]?.image) || h.image || h.carnet?.coverImage);
+  const firstStoryImg = Array.isArray(h?.stories) && h.stories.length > 0
+    ? (h.coverStoryId ? h.stories.find(s => s && s.id === h.coverStoryId)?.image : null) || (h.stories[0]?.image || h.stories[0]?.media_url)
+    : null;
+  const img = firstStoryImg || (h && (h.coverImage || h.image || h.carnet?.coverImage || h.carnet?.cover_image));
   if (img) return `<img src="${esc(img)}" alt="" loading="lazy" decoding="async" />`;
-  return hlArt(h ? h.id : '');
+  if (h && h.id === 'hl4') return hlArt('hl4');
+  if (h && h.id === 'hl5') return hlArt('hl5');
+  const fallback = ["https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=600&q=80",
+                    "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=600&q=80",
+                    "https://images.unsplash.com/photo-1505765050516-f72dcac9c60e?auto=format&fit=crop&w=600&q=80",
+                    "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=600&q=80",
+                    "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=600&q=80"];
+  const hash = h && h.id ? String(h.id).split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) : 0;
+  return `<img src="${fallback[hash % fallback.length]}" alt="" loading="lazy" decoding="async" />`;
 };
 const seg = (a, labels, sel, extra = "") => `<div class="segc" role="group" ${extra}>${labels.map((l, i) => `<button data-a="${a}" data-v="${i}" aria-pressed="${sel === i}">${l}</button>`).join("")}<span class="th" style="width:calc((100% - 4px)/${labels.length});transform:translateX(${Math.max(0, sel) * 100}%);${sel < 0 ? "opacity:0" : ""}"></span></div>`;
 
@@ -440,6 +451,7 @@ let _MOCK_HIGHLIGHTS = [
   }
 ];
 let HIGHLIGHTS = JSON.parse(JSON.stringify(_MOCK_HIGHLIGHTS));
+if (typeof window !== "undefined") window.__lkdvHighlights = HIGHLIGHTS;
 
 let STORY_HIGHLIGHTS = [];
 
@@ -2497,10 +2509,10 @@ let act = function(a, v, meta) {
       if (window.__lkdvCompteMap3D) {
         try {
           window.__lkdvCompteMap3D.flyTo({
-            center: [2.5, 46.5], zoom: 1.8, pitch: 0, bearing: 0,
+            center: [2.35, 46.6], zoom: 6.1, pitch: 0, bearing: 0,
             essential: true,
           });
-          island("Mont-Blanc & Alpes IT·FR", "Centré sur ton parcours vivant 3D", false);
+          island("Échelle nationale", "Vue d'ensemble de ton empreinte terrain", false);
         } catch (_) {}
       }
       break;
@@ -2836,6 +2848,14 @@ let fit = function() {
   w.style.height = 844 * sc + "px";
 }
 window.addEventListener("resize", () => { fit(); syncCardBounds(); }); fit();
+const syncRuntimeHighlights = () => {
+  if (typeof window !== "undefined" && Array.isArray(window.__lkdvHighlights)) {
+    HIGHLIGHTS = window.__lkdvHighlights;
+  }
+  refresh(true);
+};
+window.addEventListener("lkdv:highlights-changed", syncRuntimeHighlights);
+window.__lkdvRefreshHighlights = syncRuntimeHighlights;
 let fitVB = function() {
   const tm = $("tm");
   if (!tm) return;
@@ -2973,9 +2993,24 @@ hlList = function () {
 };
 
 hlCover = h => {
-  const img = h && (h.coverImage || (Array.isArray(h.stories) && h.stories[0]?.image) || h.image || h.carnet?.coverImage);
-  if (img) return `<img src="${esc(img)}" alt="" loading="lazy" decoding="async" />`;
-  return hlArt(h ? h.id : '');
+  const hIdx = Array.isArray(HIGHLIGHTS) ? HIGHLIGHTS.findIndex(x => x && x.id === h?.id) : -1;
+  const m = _MOCK_HIGHLIGHTS.find(x => x.id === h?.id) ||
+            (h?.title ? _MOCK_HIGHLIGHTS.find(x => x.title && x.title.toLowerCase() === h.title.toLowerCase()) : null) ||
+            (hIdx >= 0 && hIdx < _MOCK_HIGHLIGHTS.length ? _MOCK_HIGHLIGHTS[hIdx] : null);
+
+  const firstStoryImg = (Array.isArray(h?.stories) && h.stories.length > 0 && (h.stories[0]?.image || h.stories[0]?.media_url)) ||
+                        (m && Array.isArray(m.stories) && m.stories.length > 0 && (m.stories[0]?.image || m.stories[0]?.media_url)) ||
+                        h?.coverImage || m?.coverImage;
+  if (firstStoryImg) return `<img src="${esc(firstStoryImg)}" alt="" loading="lazy" decoding="async" />`;
+  if (h && h.id === 'hl4') return hlArt('hl4');
+  if (h && h.id === 'hl5') return hlArt('hl5');
+  const fallback = ["https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=600&q=80",
+                    "https://images.unsplash.com/photo-1506197603052-3cc9c3a201bd?auto=format&fit=crop&w=600&q=80",
+                    "https://images.unsplash.com/photo-1505765050516-f72dcac9c60e?auto=format&fit=crop&w=600&q=80",
+                    "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=600&q=80",
+                    "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=600&q=80"];
+  const hash = h && h.id ? String(h.id).split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) : 0;
+  return `<img src="${fallback[hash % fallback.length]}" alt="" loading="lazy" decoding="async" />`;
 };
 
 const unseen = () => 0;
@@ -2986,21 +3021,37 @@ const STORIES = {
 };
 
 const storyFor = id => {
-  const real = Array.isArray(HIGHLIGHTS) ? HIGHLIGHTS.find((h) => h.id === id) : null;
-  if (real) {
-    const slides = Array.isArray(real.stories) && real.stories.length
-      ? real.stories.map((story) => ({
-          k: 'image',
-          src: story.image,
-          storyId: story.id,
-          t: story.caption || real.title || 'Story',
-          s: 'Story à la une',
-        }))
-      : [real.coverImage
-          ? { k: 'image', src: real.coverImage, t: real.title || 'Story', s: 'Story à la une' }
-          : { k: 'photo', art: real.id, t: real.title || 'Story', s: 'Story à la une' }];
-    return { title: real.title || 'Story', slides };
+  let real = Array.isArray(HIGHLIGHTS) ? HIGHLIGHTS.find((h) => h && h.id === id) : null;
+  const realIdx = Array.isArray(HIGHLIGHTS) ? HIGHLIGHTS.findIndex(h => h && h.id === id) : -1;
+  const mock = _MOCK_HIGHLIGHTS.find((m) => m.id === id) || 
+               (real && real.title ? _MOCK_HIGHLIGHTS.find(m => m.title && m.title.toLowerCase() === real.title.toLowerCase()) : null) ||
+               (realIdx >= 0 && realIdx < _MOCK_HIGHLIGHTS.length ? _MOCK_HIGHLIGHTS[realIdx] : null);
+
+  const stories = (real && Array.isArray(real.stories) && real.stories.length > 0)
+    ? real.stories
+    : (mock && Array.isArray(mock.stories) && mock.stories.length > 0 ? mock.stories : []);
+
+  const title = (real && real.title) || (mock && mock.title) || 'Story';
+  const cover = (real && real.coverImage) || (mock && mock.coverImage) || (stories[0] && (stories[0].image || stories[0].image_url)) || '';
+
+  if (stories.length > 0) {
+    const slides = stories.map((story, idx) => ({
+      k: 'image',
+      src: story.image || story.image_url || cover,
+      storyId: story.id || `s_${id}_${idx}`,
+      t: story.caption || title,
+      s: 'Story à la une',
+    }));
+    return { title, slides };
   }
+
+  if (cover) {
+    return {
+      title,
+      slides: [{ k: 'image', src: cover, t: title, s: 'Story à la une' }]
+    };
+  }
+
   if (STORIES[id]) return STORIES[id];
   if (id.startsWith('hl_ca_')) {
     const cId = id.slice(6);
@@ -3089,6 +3140,8 @@ function openStory(id) {
   X.story = { id, i: 0 }; X.seen[id] = 1; closeVisMenu(true); S.popv = false;
   const el = $('story');
   if (el) { el.classList.remove('closing', 'dragging'); el.style.transform = ''; el.style.opacity = ''; }
+  $('phone')?.classList.add('story-open');
+  document.body.classList.add('story-open');
   renderPopv(); renderStory(); renderTop(); lensSoon(); haptic(8); void loadStoryEngagement();
   requestAnimationFrame(() => { if (X.story) $('story')?.classList.add('on'); });
 }
@@ -3103,6 +3156,8 @@ function dismissStory(distance = 0) {
   setTimeout(() => {
     if (X.story !== storyRef) return;
     X.story = null; X.storyClosing = false;
+    $('phone')?.classList.remove('story-open');
+    document.body.classList.remove('story-open');
     el.classList.remove('on', 'closing', 'dragging');
     el.style.transform = ''; el.style.opacity = '';
     renderStory();
@@ -3416,7 +3471,7 @@ renderTop = function () {
 };
 
 /* ---------- Glissement grille ↔ sorties (v20) ---------- */
-const SWIPE_MIN = 60, SWIPE_STRONG = 120, SWIPE_EDGE = 24, SWIPE_MAX_Y = 44;
+const SWIPE_MIN = 36, SWIPE_STRONG = 50, SWIPE_EDGE = 32, SWIPE_MAX_Y = 60;
 let igSwipe = null;
 let bindIgSwipe = function () {
   const top = $('top');
@@ -3462,9 +3517,18 @@ let bindIgSwipe = function () {
     }
     igSwipe = null;
     const target = e.target;
+    // Ne pas capturer le swipe de grille si l'utilisateur fait défiler les sorties ou les stories horizontalement
+    if (target && target.closest) {
+      if (target.closest('.st-wrap, .stories-wrap, .ig-stories, .story, .ig-hl-row')) return;
+      if (target.closest('.voyages-carousel') && !target.closest('.ig-swipe-back')) {
+        const topRect = top.getBoundingClientRect();
+        if (e.clientX > topRect.left + SWIPE_EDGE) return;
+      }
+    }
     const view = target && target.closest ? target.closest('.ig-swipe-view') : null;
     if (!view || !top.contains(view)) return;
-    const edge = !!(target.closest && target.closest('.ig-swipe-back'));
+    const topRect = top.getBoundingClientRect();
+    const edge = !!(target.closest && target.closest('.ig-swipe-back')) || (e.clientX <= topRect.left + SWIPE_EDGE);
     igSwipe = { x: e.clientX, y: e.clientY, dx: 0, dy: 0, view: view, id: e.pointerId, tab: S.igTab, active: false, cap: false, edge: edge };
   });
 
@@ -3475,20 +3539,23 @@ let bindIgSwipe = function () {
     igSwipe.dx = dx;
     igSwipe.dy = dy;
     if (!igSwipe.active) {
-      if (Math.abs(dx) <= 10 || Math.abs(dx) <= Math.abs(dy)) return;
+      // Détection de l'axe : le mouvement horizontal doit dominer le scroll vertical
+      if (Math.abs(dx) <= 10 || Math.abs(dx) <= Math.abs(dy) * 1.2) return;
+      if (igSwipe.tab <= 0 && dx > 0) return;
+      if (igSwipe.tab >= 3 && dx < 0) return;
       igSwipe.active = true;
       igSwipe.view.classList.remove('settle');
       igSwipe.view.classList.add('swiping');
       G.sup = Date.now() + 350;
       G.supEl = igSwipe.view;
     }
-    if (igSwipe.tab === 0 || igSwipe.edge) {
+    if (igSwipe.tab >= 0 && igSwipe.tab <= 3) {
       if (!igSwipe.cap) {
         igSwipe.cap = true;
         try { igSwipe.view.setPointerCapture(igSwipe.id); } catch (_) {}
       }
       if (e.cancelable) e.preventDefault();
-      if (igSwipe.tab === 0) igSwipe.view.style.transform = 'translateX(' + (dx * 0.45).toFixed(1) + 'px)';
+      igSwipe.view.style.transform = 'translateX(' + (dx * 0.45).toFixed(1) + 'px)';
     }
   }, { passive: false });
 
@@ -3503,13 +3570,17 @@ let bindIgSwipe = function () {
     const dy = (!canceled && hasX) ? e.clientY - st.y : st.dy;
     G.sup = Date.now() + 350;
     G.supEl = st.view;
-    if (st.tab === 0) {
-      if (!canceled && dx < -SWIPE_MIN) swipeTo(st.view, 1, 'out-left', 'in-right');
-      else settle(st.view);
-      return;
+    if (!canceled && Math.abs(dy) < SWIPE_MAX_Y) {
+      if (dx < -SWIPE_MIN && st.tab < 3) {
+        swipeTo(st.view, st.tab + 1, 'out-left', 'in-right');
+        return;
+      }
+      if (dx > SWIPE_MIN && st.tab > 0) {
+        swipeTo(st.view, st.tab - 1, 'out-right', 'in-left');
+        return;
+      }
     }
-    if (!canceled && ((st.edge && dx < -SWIPE_MIN) || (dx < -SWIPE_STRONG && Math.abs(dy) < SWIPE_MAX_Y))) swipeTo(st.view, 0, 'out-right', 'in-left');
-    else settle(st.view);
+    settle(st.view);
   };
   top.addEventListener('pointerup', endSwipe);
   top.addEventListener('pointercancel', endSwipe);
@@ -3644,7 +3715,7 @@ const editProfileBody = (P) => `
   <div class="apple-grouped-card">
     <div class="apple-avatar-header">
       <div class="apple-av-wrap" data-a="changeAvatar" title="Changer la photo de profil">
-        ${P.avatarUrl ? `<img id="ep_av_preview" src="${P.avatarUrl}" alt="Avatar" class="apple-av-img" />` : `<span id="ep_av_preview" class="apple-av-img" style="display:grid;place-items:center;background:#DDEBD8;color:#17402C;font:700 24px var(--sf)">${(P.name || 'V').charAt(0).toUpperCase()}</span>`}
+        ${(P.avatarUrl || TONY_AVATAR) ? `<img id="ep_av_preview" src="${P.avatarUrl || TONY_AVATAR}" alt="Avatar" class="apple-av-img" />` : `<span id="ep_av_preview" class="apple-av-img" style="display:grid;place-items:center;background:#DDEBD8;color:#17402C;font:700 24px var(--sf)">${(P.name || 'V').charAt(0).toUpperCase()}</span>`}
         <span class="apple-av-cam">${ic(IC.plus, 'xs')}</span>
       </div>
       <button class="mbtn soft" style="height:28px;padding:0 14px" data-a="changeAvatar">Changer la photo</button>
@@ -3675,7 +3746,7 @@ const editProfileBody = (P) => `
     <div class="chips">${["Lyon", "Chamonix", "Grenoble", "Annecy", "Turin", "Paris"].map(h => `<button class="chip" data-a="home" data-v="${h}" data-sim="1" aria-pressed="${S.traveller.home === h}">${h}</button>`).join("")}</div>
     <small style="color:var(--label2);font-size:10.5px;margin-top:4px">Zone floutée à 1 km près sur la carte (RLS stricte).</small>
   </div>
-  <button class="mbtn p" style="width:100%;height:42px;justify-content:center;border-radius:999px;font-size:14px;font-weight:700" data-a="save_full_profile">Enregistrer les modifications</button>
+  <button class="lkdv-apill is-primary has-text ep-floating-save" data-a="save_full_profile" style="position:fixed;bottom:calc(16px + env(safe-area-inset-bottom, 0px));right:18px;z-index:90;box-shadow:0 8px 24px rgba(23,64,44,0.35);">${ic(IC.check || '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\"><polyline points=\"20 6 9 17 4 12\"/></svg>', 'xs')}<span>Enregistrer</span></button>
 `;
 const EXK = {
   edit_profile_full: () => {
@@ -3871,12 +3942,46 @@ const EXK = {
       })
     }]
   }),
-  story_edit_drawer: () => ({
-    title: "Story à la une",
-    peek: "Titre, couverture et stories de la sélection",
-    noFooter: true,
-    flow: [{ l: "Story à la une", r: () => ({ per: [3, 5], title: "Story à la une", rows: [] }) }]
-  }),
+  story_edit_drawer: () => {
+    const curHlId = (S.sh && S.sh.props && S.sh.props.hlId) || 'hl1';
+    const curHl = hlList().find(q => q.id === curHlId) || HIGHLIGHTS[0] || { id: curHlId, title: 'Story à la une', stories: [] };
+    const storiesList = Array.isArray(curHl.stories) ? curHl.stories : [];
+    const coverUrl = curHl.coverImage || (storiesList[0] && storiesList[0].image) || '';
+    return {
+      title: "Story à la une",
+      peek: "Titre, couverture et stories de la sélection",
+      noFooter: true,
+      flow: [{
+        l: "Modifier",
+        r: () => ({
+          per: [3, 5],
+          title: curHl.title || "Story à la une",
+          rows: [
+            `<div class="apple-grouped-card" style="padding:14px;display:flex;align-items:center;gap:12px;">
+              <div style="width:58px;height:58px;border-radius:14px;overflow:hidden;flex:none;background:#17402C;box-shadow:inset 0 1px 0 rgba(255,255,255,0.8);">
+                ${coverUrl ? `<img src="${coverUrl}" style="width:100%;height:100%;object-fit:cover;" alt="Couverture" />` : `<div style="width:100%;height:100%;display:grid;place-items:center;color:#fff;">○</div>`}
+              </div>
+              <div style="flex:1;min-width:0;">
+                <label style="font:600 10px var(--sf);text-transform:uppercase;color:var(--label2);letter-spacing:0.04em;">Titre de la sélection</label>
+                <input id="hl_edit_title" class="apple-input" value="${(curHl.title || '').replace(/"/g, '&quot;')}" style="margin-top:4px;" />
+              </div>
+            </div>`,
+            `<div class="apple-grouped-card" style="padding:12px 14px;">
+              <div class="apple-grouped-title" style="margin-bottom:8px;">Stories incluses (${storiesList.length})</div>
+              ${storiesList.length ? `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">
+                ${storiesList.map((s, idx) => `
+                  <div style="position:relative;aspect-ratio:1/1;border-radius:10px;overflow:hidden;background:#0d1e15;">
+                    <img src="${s.image}" style="width:100%;height:100%;object-fit:cover;" alt="" />
+                    ${idx === 0 ? `<span style="position:absolute;top:3px;left:3px;padding:1px 5px;border-radius:6px;background:rgba(23,64,44,0.85);color:#fff;font:600 8.5px var(--sf);">Couv.</span>` : ''}
+                  </div>
+                `).join('')}
+              </div>` : `<div style="font:400 12px var(--sf);color:var(--label2);text-align:center;padding:12px 0;">Aucune story dans cette sélection.</div>`}
+            </div>`
+          ]
+        })
+      }]
+    };
+  },
   account_drawer: () => {
     const tab = clamp(X.drawerTab || 0, 0, 4);
     const P = S.profile || { handle: 'tony_frc' };
@@ -4744,9 +4849,9 @@ var EXA = {
     const map = window.__lkdvCompteMap3D;
     if (preset === 'ORBITE') {
       if (map && typeof map.flyTo === 'function') {
-        map.flyTo({ center: [2.5, 46.5], zoom: 1.6, pitch: 0, bearing: 0, duration: 2000, essential: true });
+        map.flyTo({ center: [2.35, 46.6], zoom: 6.1, pitch: 0, bearing: 0, duration: 2000, essential: true });
       }
-      island('Globe Terrestre', 'Empreinte mondiale @tony_frc · 5 massifs foulés', false);
+      island('Échelle Nationale', 'Empreinte nationale @tony_frc · 5 massifs foulés', false);
     } else if (preset === 'MASSIF') {
       if (map && typeof map.flyTo === 'function') {
         map.flyTo({ center: [6.82, 45.88], zoom: 8.5, pitch: 48, bearing: -25, duration: 2200, essential: true });

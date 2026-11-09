@@ -103,10 +103,13 @@ describe('clés et descriptions', () => {
     expect(swatchThumb(SWATCHES[0]).key).toBe(`c:${SWATCHES[0][1]}`);
   });
 
-  it('dessine un sac à s = min(0,8 ; 0,8 × L/42)', () => {
-    expect(bagThumbScale(42)).toBeCloseTo(0.8);
-    expect(bagThumbScale(60)).toBeCloseTo(0.8);
-    expect(bagThumbScale(BAGS.b28.L)).toBeCloseTo((0.8 * BAGS.b28.L) / 42);
+  it('dessine un sac à son échelle relative (15 L visiblement plus petit que 80 L)', () => {
+    expect(bagThumbScale(15)).toBeCloseTo(0.52);
+    expect(bagThumbScale(80)).toBeCloseTo(0.90);
+    expect(bagThumbScale(15)).toBeLessThan(bagThumbScale(28));
+    expect(bagThumbScale(28)).toBeLessThan(bagThumbScale(45));
+    expect(bagThumbScale(45)).toBeLessThan(bagThumbScale(60));
+    expect(bagThumbScale(60)).toBeLessThan(bagThumbScale(80));
     const t = bagThumb('b28', COLORWAYS.nuit);
     expect(t.spec.scale).toBeCloseTo(bagThumbScale(BAGS.b28.L));
   });
@@ -380,5 +383,49 @@ describe('moteur de vignettes', () => {
     expect(renderers).toHaveLength(1);
     expect(renderers[0].renders).toBe(12);
     expect(elapsed).toBeLessThan(600);
+  });
+});
+
+describe("invalidation d'une vignette", () => {
+  it("oublie l'image, révoque son URL et la refait tant qu'une carte l'affiche", async () => {
+    const r = rig();
+    const t = item('a');
+    const vues: (string | null | undefined)[] = [];
+    r.engine.subscribe(t.key, (v) => vues.push(v));
+    r.engine.request(t.key, { spec: t.spec });
+    r.step();
+    await flush();
+    expect(r.engine.get(t.key)).toBe('blob:fake/0');
+    expect(r.drawn).toEqual(['a']);
+
+    // Le maillage réel arrive après coup : l'image de repli déjà dessinée doit céder la place.
+    r.engine.invalidate(t.key);
+    expect(r.revoked).toEqual(['blob:fake/0']);
+    expect(r.engine.get(t.key)).toBeUndefined();
+    r.step();
+    await flush();
+    expect(r.drawn).toEqual(['a', 'a']);
+    expect(r.engine.get(t.key)).toBe('blob:fake/1');
+  });
+
+  it("ne refait rien pour une clé que plus personne n'affiche", async () => {
+    const r = rig();
+    const t = item('b');
+    const off = r.engine.subscribe(t.key, () => {});
+    r.engine.request(t.key, { spec: t.spec });
+    r.step();
+    await flush();
+    off();
+
+    r.engine.invalidate(t.key);
+    expect(r.engine.get(t.key)).toBeUndefined();
+    expect(r.step()).toBe(false);
+    expect(r.drawn).toEqual(['b']);
+  });
+
+  it('ignore une clé inconnue', () => {
+    const r = rig();
+    expect(() => r.engine.invalidate('b:jamais-demandee')).not.toThrow();
+    expect(r.pendingSlots()).toBe(0);
   });
 });

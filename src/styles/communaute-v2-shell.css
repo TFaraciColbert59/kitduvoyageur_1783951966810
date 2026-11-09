@@ -1,0 +1,472 @@
+/* ============================================================================
+   COMMUNAUTÉ V2 — COQUE DES TIROIRS (Explorer + Création)
+   Traduction React de la coque /compte : carte clippée, capsule 56 px,
+   mini-capsule 30 px + bouton de tri, pile de détails, poignée rubber-band.
+   Valeurs : annexes A/B, `compte-apple-hig.css` L2096-2101 / L2796-2810 /
+   L2955-2977 / L3160. Portée : `.lkdv-communaute-v2.lkdv-cv2-layer`.
+   Aucun littéral hexadécimal (garde U-D60) ; les rgba() sont les valeurs
+   exactes du système /compte (source citée).
+   ========================================================================== */
+
+.lkdv-cv2-layer {
+  position: fixed;
+  inset: 0;
+  z-index: var(--cv2-layer-z, 60);
+  pointer-events: none;
+  isolation: isolate;
+  --cv2-card-top: calc(var(--safe-top, env(safe-area-inset-top, 0px)) + 44px);
+  --cv2-card-bottom: calc(var(--safe-bottom, env(safe-area-inset-bottom, 0px)) + 14px);
+  --cv2-card-side: 8px;
+  --cv2-radius: 24px;
+}
+
+/* La barre d'onglets de l'application s'efface derrière la carte, comme sur
+   /compte (`.tb/.acc` : opacity 0, translateY(120%) — HIG L1147-1176). */
+body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(120%);
+  transition:
+    opacity 0.25s ease,
+    transform 0.35s var(--motion-ease-standard);
+}
+
+.lkdv-cv2-wrap {
+  position: absolute;
+  top: var(--cv2-card-top);
+  left: var(--cv2-card-side);
+  right: var(--cv2-card-side);
+  bottom: var(--cv2-card-bottom);
+  max-width: 430px;
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: var(--cv2-radius);
+  pointer-events: none;
+  visibility: hidden;
+}
+.lkdv-cv2-wrap[data-state='opening'],
+.lkdv-cv2-wrap[data-state='open'],
+.lkdv-cv2-wrap[data-state='closing'] {
+  visibility: visible;
+}
+
+.lkdv-cv2-sheet {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-radius: inherit;
+  padding: 0;
+  pointer-events: auto;
+  background: var(--sheet-bg);
+  -webkit-backdrop-filter: var(--sheet-blur);
+  backdrop-filter: var(--sheet-blur);
+  box-shadow: var(--sheet-shadow);
+  transform: translateY(100%);
+  transition: transform 0.72s var(--ease-out);
+  will-change: transform;
+  outline: 0;
+  color: var(--label);
+  overflow: hidden;
+}
+.lkdv-cv2-wrap[data-state='open'] .lkdv-cv2-sheet {
+  transform: translateY(0);
+}
+.lkdv-cv2-wrap[data-state='closing'] .lkdv-cv2-sheet {
+  transform: translateY(100%);
+  transition: transform 0.56s var(--ease-out);
+}
+
+/* Poignée : 18 px de haut, pastille 38 × 5, zone de préhension élargie. */
+.lkdv-cv2-grab {
+  flex: none;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  position: relative;
+  z-index: 15;
+  touch-action: none;
+  cursor: grab;
+}
+.lkdv-cv2-grab span {
+  display: block;
+  width: 38px;
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 1px 6px rgba(23, 43, 36, 0.18);
+}
+.lkdv-cv2-grab::after {
+  content: '';
+  position: absolute;
+  inset: 0 -30px -6px;
+}
+
+/* Barre de capsule 56 px (/compte : onglets icône seule, lentille .42 s). */
+.lkdv-cv2-topnav {
+  flex: none;
+  display: flex;
+  justify-content: center;
+  padding: 5px 14px 8px;
+  touch-action: none;
+}
+.lkdv-cv2-capsule.lkdv-capsule {
+  height: 56px !important;
+  padding: 4px !important;
+}
+/* FID-077 — marqueur d'invité : pilule discrète sous la capsule (le libellé
+   « Mode invité · lecture seule » est porté par le composant coque). Le vert
+   doux `--cv2-soft` est le jeton d'état du système (J-14 : aucune teinte
+   ochre hors danger), texte encre forêt, hauteur 26 px, largeur au contenu. */
+.lkdv-cv2-guest {
+  flex: none;
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 26px;
+  margin: -3px 14px 7px;
+  padding: 0 10px;
+  border-radius: var(--lkv-radius-full);
+  background: var(--cv2-soft);
+  box-shadow: inset 0 0 0 0.5px var(--cv2-soft-line);
+  color: var(--lkv-forest-900);
+  font: 600 10.5px/1.2 var(--font-sans);
+  letter-spacing: 0.02em;
+}
+
+.lkdv-cv2-guest svg {
+  width: 13px;
+  height: 13px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.lkdv-cv2-capsule .sel-lens {
+  top: 4px !important;
+  bottom: 4px !important;
+  left: 4px !important;
+  width: calc((100% - 8px) / var(--n, 4)) !important;
+  transition: transform 0.42s var(--motion-ease-standard) !important;
+}
+.lkdv-cv2-capsule button {
+  min-height: 48px !important;
+  height: 48px !important;
+}
+.lkdv-cv2-capsule button .ic {
+  width: 24px !important;
+  height: 24px !important;
+}
+.lkdv-cv2-capsule button svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* FID-056 — aperçu vivant : emplacement **fixe de 150 px** entre la capsule et
+   le pager (maquette `.cr-prev`, L2692 : `flex:none`, `max-height:150px`,
+   marge latérale 14 px). Hors du pane, il ne défile pas avec le formulaire.
+   Vide, il ne réserve aucune hauteur (détail empilé, formulaire sans aperçu). */
+.lkdv-cv2-preview-slot {
+  flex: none;
+  height: 150px;
+  min-height: 150px;
+  margin: 0 14px 8px;
+  overflow: hidden;
+  border-radius: 20px;
+  pointer-events: none;
+}
+
+.lkdv-cv2-preview-slot:empty {
+  display: none;
+}
+
+.lkdv-cv2-preview-frame {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+.lkdv-cv2-preview-frame > * {
+  width: 100%;
+}
+
+/* Corps : une pane par volet, glissement horizontal (LensPager). */
+.lkdv-cv2-body {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0 14px;
+}
+.lkdv-cv2-body .lkdv-lens-pager {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 18px;
+  touch-action: pan-y;
+}
+.lkdv-cv2-body .lkdv-lens-track {
+  display: flex;
+  height: 100%;
+  will-change: transform;
+}
+.lkdv-cv2-pane {
+  flex: 0 0 100%;
+  min-width: 0;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding: 2px 1px 76px;
+  scrollbar-width: none;
+}
+.lkdv-cv2-pane::-webkit-scrollbar {
+  display: none;
+}
+.lkdv-cv2-body.has-footer .lkdv-cv2-pane {
+  padding-bottom: 16px;
+}
+
+/* Mini-capsule 30 px + bouton de tri (30 px) sur la même ligne, en bas à droite. */
+.lkdv-cv2-mini-slot {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  z-index: 16;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.lkdv-cv2-mini-slot.has-footer {
+  bottom: 72px;
+}
+.lkdv-cv2-mini-slot .lkdv-lens-float {
+  position: static;
+  right: auto;
+  bottom: auto;
+  left: auto;
+  top: auto;
+}
+.lkdv-cv2-mini .ig-th.lens {
+  transition: transform 0.28s var(--ease-spring) !important;
+}
+
+/* Pied de formulaire : Retour / Suivant / action finale, au-dessus du clavier. */
+.lkdv-cv2-footer {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px calc(12px + max(0px, env(safe-area-inset-bottom, 0px) - 14px));
+  position: relative;
+  z-index: 18;
+  background: linear-gradient(180deg, rgba(245, 242, 236, 0), rgba(245, 242, 236, 0.55));
+}
+.lkdv-cv2-footer > * {
+  flex: 1 1 auto;
+}
+
+/* ── Détail empilé (‹ Retour + titre + compteur) ────────────────────────── */
+.lkdv-cv2-detail {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-radius: inherit;
+  background: var(--sheet-bg);
+  -webkit-backdrop-filter: var(--sheet-blur);
+  backdrop-filter: var(--sheet-blur);
+  animation: cv2DetailIn 0.42s var(--ease-glass) both;
+  /* Au-dessus de la poignée (z 15) : sinon la zone de préhension (18 px + son
+     débordement `::after`) recouvre le bouton ‹ Retour et intercepte le tap.
+     Le glissement de fermeture reste possible depuis `.lkdv-cv2-detail-nav`
+     (qui porte aussi `data-cv2-drag`). */
+  z-index: 16;
+}
+.lkdv-cv2-detail-nav {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 46px;
+  padding: 0 14px 0 8px;
+  touch-action: none;
+}
+.lkdv-cv2-back {
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border-radius: 50%;
+  border: 0;
+  display: grid;
+  place-items: center;
+  color: var(--lkv-primary);
+  background: var(--drawer-card-bg);
+  box-shadow: var(--drawer-card-shadow);
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.12s var(--ease-spring);
+}
+.lkdv-cv2-back::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+}
+.lkdv-cv2-back:active {
+  transform: scale(0.94);
+}
+.lkdv-cv2-back svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.lkdv-cv2-detail-title {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font: 600 15px/1.2 var(--font-sans);
+  letter-spacing: -0.01em;
+  color: var(--lkv-primary);
+}
+.lkdv-cv2-detail-meta {
+  margin-left: auto;
+  font: 500 11px/1 var(--font-mono);
+  color: var(--lkv-text-secondary);
+}
+.lkdv-cv2-detail .lkdv-lens-pager {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  touch-action: pan-y;
+}
+.lkdv-cv2-detail .lkdv-lens-track {
+  display: flex;
+  height: 100%;
+}
+.lkdv-cv2-detail-pane {
+  padding: 0 14px calc(24px + env(safe-area-inset-bottom, 0px));
+  animation: cv2RowIn 0.45s var(--ease-glass) both;
+}
+.lkdv-cv2-detail-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 14px calc(24px + env(safe-area-inset-bottom, 0px));
+  scrollbar-width: none;
+  animation: cv2RowIn 0.45s var(--ease-glass) both;
+}
+.lkdv-cv2-detail-body::-webkit-scrollbar,
+.lkdv-cv2-detail-pane::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes cv2DetailIn {
+  from {
+    opacity: 0;
+    transform: translateX(24px) scale(0.995);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Cascade d'entrée des rangées (`.45s` ease-glass, délais 0/.03/.06/.09) */
+@keyframes cv2RowIn {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Focus visible : même contrat que /compte (anneau sage 2 px, offset 2 — A §4).
+   L'anneau suit le rayon de la cible (l'`outline` épouse `border-radius`) :
+   ne jamais forcer `border-radius` ici, sinon les pilules, chips et capsules
+   se déforment au clavier (ECARTS-TRANSVERSES N12). */
+.lkdv-cv2-sheet :focus-visible {
+  outline: 2px solid var(--lkv-secondary);
+  outline-offset: 2px;
+}
+.lkdv-cv2-sheet:focus {
+  outline: none;
+}
+
+/* ── Réductions ─────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .lkdv-cv2-sheet {
+    transition-duration: 0.01ms !important;
+  }
+  .lkdv-cv2-wrap[data-state='closing'] .lkdv-cv2-sheet {
+    transition-duration: 0.01ms !important;
+  }
+  .lkdv-cv2-detail,
+  .lkdv-cv2-detail-body,
+  .lkdv-cv2-detail-pane {
+    animation: none !important;
+  }
+  .lkdv-cv2-capsule .sel-lens,
+  .lkdv-cv2-mini .ig-th.lens {
+    transition-duration: 0.01ms !important;
+  }
+  body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
+    transition: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .lkdv-cv2-sheet,
+  .lkdv-cv2-detail {
+    background: var(--lkv-surface);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+/* ── Grand écran : carte flottante centrée, au-dessus de la barre d'onglets ── */
+@media (min-width: 768px) {
+  .lkdv-cv2-layer {
+    --cv2-card-top: calc(var(--safe-top, env(safe-area-inset-top, 0px)) + 56px);
+    --cv2-card-bottom: calc(var(--safe-bottom, env(safe-area-inset-bottom, 0px)) + 42px);
+  }
+  .lkdv-cv2-wrap {
+    left: 50%;
+    right: auto;
+    width: min(430px, calc(100vw - 32px));
+    transform: translateX(-50%);
+  }
+}
+
+/* Volets : les 4 conteneurs cohabitent dans le corps (les inactifs restent dans
+   le DOM pour `aria-hidden`/`inert` mais sont superposés absolument, sinon ils
+   s'empileraient verticalement et pousseraient le volet actif hors du cadre). */
+.lkdv-cv2-pane--volet {
+  position: absolute;
+  inset: 0;
+  height: auto;
+  overflow: hidden;
+  padding: 0;
+}
+.lkdv-cv2-pane--volet[aria-hidden='true'] {
+  display: none;
+}
+.lkdv-cv2-pane--volet > .lkdv-lens-pager {
+  height: 100%;
+}

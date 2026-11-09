@@ -1,0 +1,30 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - `__dirname` (vitest.config.ts:50:25). Use `import.meta.dirname` instead
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v4.1.11 /Users/fr168256/.codex/worktrees/scene-atelier/lkdv-kit-studio
+
+(node:58387) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ src/features/kit-studio/__tests__/atlas.test.ts (9 tests | 1 failed | 8 skipped) 1600ms
+     × teinte uniquement le tissu entre forest et ochre, préserve boucles/sangles/écusson, et garantit le contraste local RMS de la trame au cadrage Studio par défaut 1599ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/features/kit-studio/__tests__/atlas.test.ts > Atlas — rendu WebGL pixel à pixel sur lkdv-one-45 > teinte uniquement le tissu entre forest et ochre, préserve boucles/sangles/écusson, et garantit le contraste local RMS de la trame au cadrage Studio par défaut
+AssertionError: expected 0 to be greater than 53441.299999999996
+ ❯ src/features/kit-studio/__tests__/atlas.test.ts:520:42
+    518|         // 1. Les texels du tissu diffèrent franchement entre 'forest'…
+    519|         expect(stats.fabricPixelCount).toBeGreaterThan(20_000);
+    520|         expect(stats.fabricChangedCount).toBeGreaterThan(stats.fabricP…
+       |                                          ^
+    521|         expect(stats.fabricMeanDelta).toBeGreaterThan(25);
+    522|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 skipped (9)
+   Start at  13:33:37
+   Duration  1.94s (transform 49ms, setup 45ms, import 197ms, tests 1.60s, environment 0ms)

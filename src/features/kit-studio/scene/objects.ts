@@ -1,10 +1,10 @@
 // Objets rangés et fantômes dans la scène (maquette Kit_Studio_v2.html l.1090-1109 et l.1126-1162).
 // Synchronisation avec l'état (addObj / killObj animés, libération des ressources), mise en place par zone :
 // au repos les objets rangés sont invisibles dans le sac ; ils se déploient en arc devant la caméra sur la zone au
-// premier plan, ou s'écartent autour du sac en « pièces séparées ». Les objets portés restent près du personnage.
+// premier plan, ou s'écartent autour du sac en « pièces séparées ». Les objets de « Sur toi » reposent sur l’établi.
 // Rien ici n'écrit dans l'état : la couche lit KitState (jamais modifié) et pilote uniquement des objets three.
 // Aucune allocation dans step() : vecteurs et tableaux sont créés à la synchronisation.
-import { Plane, Raycaster, Vector2, Vector3 } from 'three';
+import { Box3, Plane, Raycaster, Vector2, Vector3 } from 'three';
 import type { Camera, Group, Object3D, Sprite, Texture } from 'three';
 import { ANCHORS, PACK_ZONE_IDS } from '../domain/catalog';
 import type { Ghost, PartNameId, ZoneId } from '../domain/catalog';
@@ -16,7 +16,7 @@ import { effG } from '../domain/totals';
 import type { KitState } from '../domain/types';
 import type { BagHandle } from './bagBuilder';
 import { ghostMesh, halo, haloTexture, itemMesh, releaseItemMesh } from './itemMesh';
-import { WORN_CENTER, WORN_OFFSETS } from './layout';
+import { GROUND_Y, WORN_CENTER, WORN_OFFSETS } from './layout';
 import { clamp, damp } from './math';
 import type { ResourceTracker } from './resources';
 
@@ -100,6 +100,7 @@ interface Entry {
   readonly local: Vector3;
   consK: number;
   readonly worn: Vector3;
+  readonly restingLift: number;
   /** Rang dans la liste de sa zone (objets rangés + fantômes). */
   zi: number;
   zn: number;
@@ -151,9 +152,9 @@ export function createObjectLayer(o: ObjectLayerOptions): ObjectLayer {
     return bag.group.localToWorld(out.set(a[0], a[1], a[2]));
   };
 
-  const wornPos = (fn: string, out: Vector3): Vector3 => {
+  const wornPos = (e: Entry, fn: string, out: Vector3): Vector3 => {
     const off = WORN_OFFSETS[fn] ?? [0, 0, 0];
-    return out.set(WORN_CENTER[0] + off[0], WORN_CENTER[1] + off[1], WORN_CENTER[2] + off[2]);
+    return out.set(WORN_CENTER[0] + off[0], GROUND_Y + e.restingLift * e.consK, WORN_CENTER[2] + off[2]);
   };
 
   const apply = (e: Entry): void => {
@@ -167,6 +168,7 @@ export function createObjectLayer(o: ObjectLayerOptions): ObjectLayer {
     return {
       key, g, ghost, zone, base: ghost ? Math.max(base, 0.18) : base,
       cur: new Vector3(), sc: 0, local: new Vector3(), consK: 1, worn: new Vector3(),
+      restingLift: -new Box3().setFromObject(g).min.y * base,
       zi: 0, zn: 1, er: 1, ea: 0, ey: 0, eyAdd: 0,
       arcOn: false, arcP: new Vector3(), arcSp: 0, ov: new Vector3(), hasOv: false, ovTtl: 0, t: 0, on: false, halo: sprite,
     };
@@ -296,7 +298,7 @@ export function createObjectLayer(o: ObjectLayerOptions): ObjectLayer {
       if (e.local.x !== l[0] || e.local.y !== l[1] || e.local.z !== l[2]) { e.local.set(l[0], l[1], l[2]); changed = true; }
       const ck = it.cons && it.g ? clamp(Math.cbrt(effG(s, it) / it.g), 0.45, 1) : 1;
       if (ck !== e.consK) { e.consK = ck; changed = true; }
-      wornPos(it.fn, e.worn);
+      wornPos(e, it.fn, e.worn);
       if (e.cur.lengthSq() === 0 && e.sc === 0) {
         // Apparition : depuis la position de rangement (ou du personnage).
         if (e.zone === 'worn') e.cur.copy(e.worn);

@@ -346,6 +346,8 @@ export function CommunitySectionsDrawer({
       onClose={onClose}
       title="Explorer"
       ariaLabel="Explorer la communauté"
+      heightPercent={tab === 'recherche' ? 80 : undefined}
+      className={tab === 'recherche' ? 'lkdv-drawer--search' : undefined}
       onSwipeLeft={() => {
         if (selected) return;
         const index = SECTION_TABS.findIndex((item) => item.id === tab);

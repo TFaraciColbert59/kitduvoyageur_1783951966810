@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it, beforeEach } from 'vitest';
 import {
   OFM_PREFIX,
@@ -180,7 +180,8 @@ describe('branchement', () => {
   });
 
   it('hors ligne : le service worker ne met pas en cache les tuiles OpenFreeMap (lot J)', () => {
-    expect(readFileSync('public/sw.js', 'utf8')).not.toContain('openfreemap');
+    const swPath = existsSync('public/sw-v18.js') ? 'public/sw-v18.js' : 'public/sw.js';
+    expect(readFileSync(swPath, 'utf8')).not.toContain('openfreemap');
   });
 
   it('la CSP (rapport) autorise tiles.openfreemap.org en connexion', () => {

@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "moduleId": "lkdv-m11",
+  "code": "M11",
+  "label": "Porte-sac de couchage",
+  "units": "meters",
+  "origin": "procedural",
+  "fitRule": "porteur",
+  "boundingBoxM": {
+    "w": 0.42,
+    "h": 0.23,
+    "d": 0.23
+  },
+  "cotesReferenceMm": {
+    "w": 420,
+    "h": 230,
+    "d": 230
+  },
+  "referenceState": "ouvert_sans_sac_de_couchage",
+  "orientation": {
+    "up": "Y",
+    "front": "+Z",
+    "back": "-Z",
+    "bakedInGlbRoot": true,
+    "rootYawDegInGlb": 0,
+    "loadRotationDeg": [
+      0,
+      0,
+      0
+    ],
+    "loadScale": 1
+  },
+  "platine": {
+    "position": [
+      0,
+      0.115,
+      -0.115
+    ],
+    "normal": [
+      0,
+      0,
+      -1
+    ]
+  },
+  "reserve": null,
+  "rigidPanelConvention": {
+    "thicknessMm": 3.5,
+    "status": "convention_projet",
+    "measuredOnPrototype": false,
+    "source": "Reprise du socle de la platine standard (80 × 54 × 3,5 mm)"
+  }
+}

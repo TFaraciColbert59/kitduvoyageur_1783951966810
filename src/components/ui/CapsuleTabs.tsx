@@ -149,7 +149,9 @@ export function CapsuleTabs({
             }}
           >
             {item.icon ? <span className="ic s">{item.icon}</span> : null}
-            {showLabels || !item.icon || (isSmall && hasLabels) ? (
+            {showLabels ? (
+              <span className="lbl">{item.label}</span>
+            ) : !item.icon ? (
               <span className="lbl">{item.label}</span>
             ) : null}
             {item.badge != null && (

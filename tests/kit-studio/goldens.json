@@ -1,0 +1,850 @@
+[
+ {
+  "label": "kit 0 au chargement",
+  "kit": "tmb",
+  "bag": "b42",
+  "bagWeight_g": 1128,
+  "totalCap_L": 42.125,
+  "capOf": {
+   "lid": 4,
+   "main": 30,
+   "front": 2.625,
+   "sides": 2,
+   "hip": 1,
+   "back": 2.5
+  },
+  "totals": {
+   "base": 5761,
+   "back": 10281,
+   "worn": 1252,
+   "cons": 4520,
+   "used_L": 29.26,
+   "cap_L": 42.125,
+   "buy": 0,
+   "rent": 0
+  },
+  "cog": {
+   "x": 0.0099,
+   "y": -0.0397,
+   "z": -0.0
+  },
+  "cogState": "Trop loin du dos",
+  "blockers": [
+   "Manque : veste imperméable",
+   "Manque : couverture de survie",
+   "Trousse de secours périmée"
+  ],
+  "readiness": 54,
+  "tips": [],
+  "pieces": [
+   [
+    "chassis",
+    "own",
+    "foret"
+   ],
+   [
+    "corps:b42",
+    "own",
+    "foret"
+   ],
+   [
+    "mod:lid",
+    "own",
+    "foret"
+   ],
+   [
+    "mod:front",
+    "own",
+    "foret"
+   ],
+   [
+    "mod:sides",
+    "own",
+    "foret"
+   ]
+  ],
+  "orderTotal_eur": 0,
+  "ptsCorps": [
+   6,
+   8
+  ],
+  "ptsChassis": [
+   0,
+   4
+  ],
+  "mods": {
+   "lid": true,
+   "front": true,
+   "sides": true,
+   "tool": false,
+   "hipp": false,
+   "flask": false
+  },
+  "cabin": null
+ },
+ {
+  "label": "kit 1 au chargement",
+  "kit": "vercors",
+  "bag": "b42",
+  "bagWeight_g": 1128,
+  "totalCap_L": 42.125,
+  "capOf": {
+   "lid": 4,
+   "main": 30,
+   "front": 2.625,
+   "sides": 2,
+   "hip": 1,
+   "back": 2.5
+  },
+  "totals": {
+   "base": 4646,
+   "back": 9166,
+   "worn": 892,
+   "cons": 4520,
+   "used_L": 20.91,
+   "cap_L": 42.125,
+   "buy": 0,
+   "rent": 0
+  },
+  "cog": {
+   "x": 0.0411,
+   "y": -0.005,
+   "z": -0.0779
+  },
+  "cogState": "Bien équilibré",
+  "blockers": [
+   "Manque : filtre à eau",
+   "Trousse de secours périmée"
+  ],
+  "readiness": 74,
+  "tips": [],
+  "pieces": [
+   [
+    "chassis",
+    "own",
+    "foret"
+   ],
+   [
+    "corps:b42",
+    "own",
+    "foret"
+   ],
+   [
+    "mod:lid",
+    "own",
+    "foret"
+   ],
+   [
+    "mod:front",
+    "own",
+    "foret"
+   ],
+   [
+    "mod:sides",
+    "own",
+    "foret"
+   ]
+  ],
+  "orderTotal_eur": 0,
+  "ptsCorps": [
+   6,
+   8
+  ],
+  "ptsChassis": [
+   0,
+   4
+  ],
+  "mods": {
+   "lid": true,
+   "front": true,
+   "sides": true,
+   "tool": false,
+   "hipp": false,
+   "flask": false
+  },
+  "cabin": null
+ },
+ {
+  "label": "kit 2 au chargement",
+  "kit": "cabine",
+  "bag": "b28",
+  "bagWeight_g": 860,
+  "totalCap_L": 27.55,
+  "capOf": {
+   "lid": 3,
+   "main": 18.5,
+   "front": 1.75,
+   "sides": 1.5,
+   "hip": 0.8,
+   "back": 2
+  },
+  "totals": {
+   "base": 3690,
+   "back": 3720,
+   "worn": 1012,
+   "cons": 30,
+   "used_L": 10.91,
+   "cap_L": 27.55,
+   "buy": 0,
+   "rent": 0
+  },
+  "cog": {
+   "x": -0.0012,
+   "y": 0.0744,
+   "z": -0.0531
+  },
+  "cogState": "Bien équilibré",
+  "blockers": [
+   "Couteau interdit en cabine",
+   "Dépasse de 4 cm en profondeur"
+  ],
+  "readiness": 74,
+  "tips": [],
+  "pieces": [
+   [
+    "chassis",
+    "own",
+    "foret"
+   ],
+   [
+    "corps:b28",
+    "new",
+    "foret"
+   ],
+   [
+    "mod:lid",
+    "own",
+    "foret"
+   ],
+   [
+    "mod:front",
+    "own",
+    "foret"
+   ],
+   [
+    "mod:sides",
+    "own",
+    "foret"
+   ]
+  ],
+  "orderTotal_eur": 119,
+  "ptsCorps": [
+   6,
+   6
+  ],
+  "ptsChassis": [
+   0,
+   4
+  ],
+  "mods": {
+   "lid": true,
+   "front": true,
+   "sides": true,
+   "tool": false,
+   "hipp": false,
+   "flask": false
+  },
+  "cabin": {
+   "w": 33.44,
+   "h": 54.33,
+   "d": 23.46
+  }
+ },
+ {
+  "label": "kit 0 après rangement automatique",
+  "kit": "tmb",
+  "bag": "b42",
+  "bagWeight_g": 1128,
+  "totalCap_L": 42.125,
+  "capOf": {
+   "lid": 4,
+   "main": 30,
+   "front": 2.625,
+   "sides": 2,
+   "hip": 1,
+   "back": 2.5
+  },
+  "totals": {
+   "base": 5761,
+   "back": 10281,
+   "worn": 1252,
+   "cons": 4520,
+   "used_L": 29.26,
+   "cap_L": 42.125,
+   "buy": 0,
+   "rent": 0
+  },
+  "cog": {
+   "x": 0.0244,
+   "y": 0.0268,
+   "z": -0.0605
+  },
+  "cogState": "Bien équilibré",
+  "blockers": [
+   "Manque : veste imperméable",
+   "Manque : couverture de survie",
+   "Trousse de secours périmée"
+  ],
+  "readiness": 61,
+  "tips": [],
+  "pieces": [
+   [
+    "chassis",
+    "own",
+    "foret"
+   ],
+   [
+    "corps:b42",
+    "own",
+    "foret"
+   ],
+   [
+    "mod:lid",
+    "own",
+    "foret"
+   ],
+   [
+    "mod:front",
+    "own",
+    "foret"
+   ],
+   [
+    "mod:sides",
+    "own",
+    "foret"
+   ]
+  ],
+  "orderTotal_eur": 0,
+  "ptsCorps": [
+   6,
+   8
+  ],
+  "ptsChassis": [
+   0,
+   4
+  ],
+  "mods": {
+   "lid": true,
+   "front": true,
+   "sides": true,
+   "tool": false,
+   "hipp": false,
+   "flask": false
+  },
+  "cabin": null
+ },
+ {
+  "label": "optList modules kit 0",
+  "opts": [
+   [
+    "lid",
+    "Monté",
+    true,
+    false
+   ],
+   [
+    "front",
+    "Monté",
+    true,
+    false
+   ],
+   [
+    "sides",
+    "Monté",
+    true,
+    false
+   ],
+   [
+    "tool",
+    "+15 €",
+    false,
+    false
+   ],
+   [
+    "hipp",
+    "+29 €",
+    false,
+    false
+   ],
+   [
+    "flask",
+    "+19 €",
+    false,
+    false
+   ]
+  ]
+ },
+ {
+  "label": "kit 0 + porte-piolet + poches de ceinture",
+  "kit": "tmb",
+  "bag": "b42",
+  "bagWeight_g": 1200,
+  "totalCap_L": 42.875,
+  "capOf": {
+   "lid": 4,
+   "main": 30,
+   "front": 2.625,
+   "sides": 2,
+   "hip": 1.75,
+   "back": 2.5
+  },
+  "totals": {
+   "base": 5833,
+   "back": 10353,
+   "worn": 1252,
+   "cons": 4520,
+   "used_L": 29.26,
+   "cap_L": 42.875,
+   "buy": 0,
+   "rent": 0
+  },
+  "cog": {
+   "x": 0.0242,
+   "y": 0.0266,
+   "z": -0.0604
+  },
+  "cogState": "Bien équilibré",
+  "blockers": [
+   "Manque : veste imperméable",
+   "Manque : couverture de survie",
+   "Trousse de secours périmée"
+  ],
+  "readiness": 61,
+  "tips": [],
+  "pieces": [
+   [
+    "chassis",
+    "own",
+    "foret"
+   ],
+   [
+    "corps:b42",
+    "own",
+    "foret"
+   ],
+   [
+    "mod:lid",
+    "own",
+    "foret"
+   ],
+   [
+    "mod:front",
+    "own",
+    "foret"
+   ],
+   [
+    "mod:sides",
+    "own",
+    "foret"
+   ],
+   [
+    "mod:tool",
+    "new",
+    "foret"
+   ],
+   [
+    "mod:hipp",
+    "new",
+    "foret"
+   ]
+  ],
+  "orderTotal_eur": 44,
+  "ptsCorps": [
+   7,
+   8
+  ],
+  "ptsChassis": [
+   2,
+   4
+  ],
+  "mods": {
+   "lid": true,
+   "front": true,
+   "sides": true,
+   "tool": true,
+   "hipp": true,
+   "flask": false
+  },
+  "cabin": null
+ },
+ {
+  "label": "optList corps (7 points utilisés)",
+  "opts": [
+   [
+    "b42",
+    "Actuel",
+    true,
+    false,
+    ""
+   ],
+   [
+    "b28",
+    "Plus de place",
+    false,
+    true,
+    "Corps 28 L : 6 points d’attache, tes modules en utilisent 7. Retire d’abord un module."
+   ]
+  ]
+ },
+ {
+  "label": "kit 0 passé au corps 28 L",
+  "kit": "tmb",
+  "bag": "b28",
+  "bagWeight_g": 904,
+  "totalCap_L": 27.917,
+  "capOf": {
+   "lid": 3,
+   "main": 18.5,
+   "front": 1.75,
+   "sides": 1.5,
+   "hip": 1.167,
+   "back": 2
+  },
+  "totals": {
+   "base": 5537,
+   "back": 10057,
+   "worn": 1252,
+   "cons": 4520,
+   "used_L": 29.26,
+   "cap_L": 27.917,
+   "buy": 0,
+   "rent": 0
+  },
+  "cog": {
+   "x": 0.0237,
+   "y": 0.0205,
+   "z": -0.0539
+  },
+  "cogState": "Bien équilibré",
+  "blockers": [
+   "Manque : veste imperméable",
+   "Manque : couverture de survie",
+   "Trousse de secours périmée",
+   "Principal trop plein",
+   "Dos trop plein"
+  ],
+  "readiness": 35,
+  "tips": [],
+  "pieces": [
+   [
+    "chassis",
+    "own",
+    "foret"
+   ],
+   [
+    "corps:b28",
+    "new",
+    "foret"
+   ],
+   [
+    "mod:lid",
+    "own",
+    "foret"
+   ],
+   [
+    "mod:front",
+    "own",
+    "foret"
+   ],
+   [
+    "mod:sides",
+    "own",
+    "foret"
+   ],
+   [
+    "mod:hipp",
+    "new",
+    "foret"
+   ]
+  ],
+  "orderTotal_eur": 148,
+  "ptsCorps": [
+   6,
+   6
+  ],
+  "ptsChassis": [
+   2,
+   4
+  ],
+  "mods": {
+   "lid": true,
+   "front": true,
+   "sides": true,
+   "tool": false,
+   "hipp": true,
+   "flask": false
+  },
+  "cabin": null
+ },
+ {
+  "label": "kit 0 coloris Nuit",
+  "kit": "tmb",
+  "bag": "b28",
+  "bagWeight_g": 904,
+  "totalCap_L": 27.917,
+  "capOf": {
+   "lid": 3,
+   "main": 18.5,
+   "front": 1.75,
+   "sides": 1.5,
+   "hip": 1.167,
+   "back": 2
+  },
+  "totals": {
+   "base": 5537,
+   "back": 10057,
+   "worn": 1252,
+   "cons": 4520,
+   "used_L": 29.26,
+   "cap_L": 27.917,
+   "buy": 0,
+   "rent": 0
+  },
+  "cog": {
+   "x": 0.0237,
+   "y": 0.0205,
+   "z": -0.0539
+  },
+  "cogState": "Bien équilibré",
+  "blockers": [
+   "Manque : veste imperméable",
+   "Manque : couverture de survie",
+   "Trousse de secours périmée",
+   "Principal trop plein",
+   "Dos trop plein"
+  ],
+  "readiness": 35,
+  "tips": [],
+  "pieces": [
+   [
+    "chassis",
+    "new",
+    "nuit"
+   ],
+   [
+    "corps:b28",
+    "new",
+    "nuit"
+   ],
+   [
+    "mod:lid",
+    "new",
+    "nuit"
+   ],
+   [
+    "mod:front",
+    "new",
+    "nuit"
+   ],
+   [
+    "mod:sides",
+    "new",
+    "nuit"
+   ],
+   [
+    "mod:hipp",
+    "new",
+    "nuit"
+   ]
+  ],
+  "orderTotal_eur": 460,
+  "ptsCorps": [
+   6,
+   6
+  ],
+  "ptsChassis": [
+   2,
+   4
+  ],
+  "mods": {
+   "lid": true,
+   "front": true,
+   "sides": true,
+   "tool": false,
+   "hipp": true,
+   "flask": false
+  },
+  "cabin": null
+ },
+ {
+  "label": "kit 0 après précommande",
+  "kit": "tmb",
+  "bag": "b28",
+  "bagWeight_g": 904,
+  "totalCap_L": 27.917,
+  "capOf": {
+   "lid": 3,
+   "main": 18.5,
+   "front": 1.75,
+   "sides": 1.5,
+   "hip": 1.167,
+   "back": 2
+  },
+  "totals": {
+   "base": 5537,
+   "back": 10057,
+   "worn": 1252,
+   "cons": 4520,
+   "used_L": 29.26,
+   "cap_L": 27.917,
+   "buy": 0,
+   "rent": 0
+  },
+  "cog": {
+   "x": 0.0237,
+   "y": 0.0205,
+   "z": -0.0539
+  },
+  "cogState": "Bien équilibré",
+  "blockers": [
+   "Manque : veste imperméable",
+   "Manque : couverture de survie",
+   "Trousse de secours périmée",
+   "Principal trop plein",
+   "Dos trop plein"
+  ],
+  "readiness": 35,
+  "tips": [],
+  "pieces": [
+   [
+    "chassis",
+    "order",
+    "nuit"
+   ],
+   [
+    "corps:b28",
+    "order",
+    "nuit"
+   ],
+   [
+    "mod:lid",
+    "order",
+    "nuit"
+   ],
+   [
+    "mod:front",
+    "order",
+    "nuit"
+   ],
+   [
+    "mod:sides",
+    "order",
+    "nuit"
+   ],
+   [
+    "mod:hipp",
+    "order",
+    "nuit"
+   ]
+  ],
+  "orderTotal_eur": 0,
+  "ptsCorps": [
+   6,
+   6
+  ],
+  "ptsChassis": [
+   2,
+   4
+  ],
+  "mods": {
+   "lid": true,
+   "front": true,
+   "sides": true,
+   "tool": false,
+   "hipp": true,
+   "flask": false
+  },
+  "cabin": null
+ },
+ {
+  "label": "kit 2 cabine",
+  "kit": "cabine",
+  "bag": "b28",
+  "bagWeight_g": 904,
+  "totalCap_L": 27.917,
+  "capOf": {
+   "lid": 3,
+   "main": 18.5,
+   "front": 1.75,
+   "sides": 1.5,
+   "hip": 1.167,
+   "back": 2
+  },
+  "totals": {
+   "base": 3734,
+   "back": 3764,
+   "worn": 1012,
+   "cons": 30,
+   "used_L": 10.91,
+   "cap_L": 27.917,
+   "buy": 0,
+   "rent": 0
+  },
+  "cog": {
+   "x": -0.0012,
+   "y": 0.0735,
+   "z": -0.053
+  },
+  "cogState": "Bien équilibré",
+  "blockers": [
+   "Couteau interdit en cabine",
+   "Dépasse de 4 cm en profondeur"
+  ],
+  "readiness": 74,
+  "tips": [],
+  "pieces": [
+   [
+    "chassis",
+    "order",
+    "nuit"
+   ],
+   [
+    "corps:b28",
+    "order",
+    "nuit"
+   ],
+   [
+    "mod:lid",
+    "order",
+    "nuit"
+   ],
+   [
+    "mod:front",
+    "order",
+    "nuit"
+   ],
+   [
+    "mod:sides",
+    "order",
+    "nuit"
+   ],
+   [
+    "mod:hipp",
+    "order",
+    "nuit"
+   ]
+  ],
+  "orderTotal_eur": 0,
+  "ptsCorps": [
+   6,
+   6
+  ],
+  "ptsChassis": [
+   2,
+   4
+  ],
+  "mods": {
+   "lid": true,
+   "front": true,
+   "sides": true,
+   "tool": false,
+   "hipp": true,
+   "flask": false
+  },
+  "cabin": {
+   "w": 33.44,
+   "h": 54.33,
+   "d": 23.46
+  }
+ }
+]

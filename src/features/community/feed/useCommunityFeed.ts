@@ -214,7 +214,7 @@ export function useCommunityFeed(userId?: string) {
           ...prev,
           loading: false,
           loadingMore: false,
-          error: 'Le fil n’a pas pu être chargé.',
+          error: prev.posts.length > 0 ? null : 'Le fil n’a pas pu être chargé.',
         }));
       } finally {
         if (inFlightRef.current === controller) inFlightRef.current = null;

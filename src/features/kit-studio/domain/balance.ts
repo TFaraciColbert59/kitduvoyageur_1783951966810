@@ -13,7 +13,7 @@ export function cog(s: KitState): Cog {
   const k = currentKit(s);
   const sc = BAGS[currentBag(s).id].sc;
   const idx = reindex(s);
-  const bw = bagWeight(s);
+  const bw = bagWeight(s) ?? 0;
   let M = bw;
   let x = 0;
   let y = 0;

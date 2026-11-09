@@ -4,7 +4,7 @@
 //  - Zones : la caméra parcourt les ZONES (Sur toi, Sac, Couvercle, Principal…) sur une position continue `s`
 //    (ressort amorti) ; chaque zone fixe l'azimut, la hauteur, la distance et l'ancre regardée.
 //  - Inclinaison (tilt) et pièces séparées (ex) : cibles amorties. Mouvement réduit = aucun amortissement.
-import { PerspectiveCamera, Vector3 } from 'three';
+import { Box3, PerspectiveCamera, Vector3 } from 'three';
 import { ZONES } from '../domain/catalog';
 import type { ZoneId } from '../domain/catalog';
 import { GROUND_Y } from './layout';
@@ -16,7 +16,8 @@ export const DK_RATE = 3.6;
 export const DK_RATE_REDUCED = 60;
 
 /** Décalage vertical de la vue, en fraction de la hauteur d'écran. */
-export const viewOffsetFraction = (dk: number): number => lerp(-0.095, 0.035, dk);
+export const viewOffsetFraction = (dk: number): number =>
+  lerp(-0.095, 0.035, clamp(dk / DRAWER_OPEN, 0, 1));
 /** Zoom caméra selon l'ouverture du tiroir. */
 export const zoomFor = (dk: number): number => 1 + (1 - dk) * 0.05;
 
@@ -31,10 +32,12 @@ const ZONE_COUNT = ZONES.length;
 const ZONE_INDEX: Readonly<Record<string, number>> = Object.fromEntries(ZONES.map((z, i) => [z.id, i]));
 const BAG_INDEX = ZONE_INDEX.bag ?? 1;
 
-/** Ce que la caméra doit connaître du monde : ancre d'une zone et centre du sac, en coordonnées monde. */
+/** Ce que la caméra doit connaître du monde : ancre d'une zone, centre du sac et boîte englobante de l'ensemble (sac + modules). */
 export interface CameraWorld {
   anchor(zone: ZoneId, out: Vector3): Vector3;
   center(out: Vector3): Vector3;
+  bounds?(out: Box3): Box3;
+  bodyBounds?(out: Box3): Box3;
 }
 
 export interface CameraRig {
@@ -85,6 +88,12 @@ export interface CameraRig {
   advance(dt: number): boolean;
   /** Replace la caméra d'après l'état courant (le monde doit être à jour). */
   place(): void;
+  /**
+   * Rectangle écran occupé par le sujet (sac + modules), en fractions de l'écran :
+   * 0 = bord gauche/haut, 1 = bord droit/bas. `null` tant qu'aucune boîte n'est connue.
+   * Sert à vérifier, sans heuristique de couleur, que le sujet est cadré et non coupé.
+   */
+  subjectRect(): { x0: number; y0: number; x1: number; y1: number } | null;
   /** advance() puis place(). */
   step(dt: number): boolean;
 }
@@ -95,6 +104,19 @@ export function createCameraRig(options: { readonly reducedMotion: boolean }): C
   let w = 1;
   let h = 1;
   let aspectK = 1;
+  const framingBox = new Box3();
+  const bodyBox = new Box3();
+  let framingBoxValid = false;
+  /**
+   * Part minimale de la bande visible que le corps garde, quoi qu'il porte. Un porte-skis de
+   * 1,70 m sur un sac de 66 cm est cadré en entier par la règle générale, et le sac tombe alors au
+   * cinquième de l'écran : illisible. Passé ce seuil, le module déborde et le sac reste lisible.
+   */
+  const MIN_BODY_FRACTION = 0.5;
+  const vProj = new Vector3();
+  /** Part de la bande visible qu'occupe le sac après correction par projection. */
+  const FIT_OCCUPANCY = 0.78;
+  let subject: { x0: number; y0: number; x1: number; y1: number } | null = null;
   let dk = DRAWER_CLOSED;
   let dkT = DRAWER_CLOSED;
   let fx = 0;
@@ -102,6 +124,11 @@ export function createCameraRig(options: { readonly reducedMotion: boolean }): C
   let fz = 0;
   let appliedYoff = Number.NaN;
   let world: CameraWorld | null = null;
+  const tempBox = new Box3();
+  let adaptiveDistTarget = 2.2;
+  let adaptiveDistCurrent = 2.2;
+  const adaptiveCenterTarget = new Vector3(0, GROUND_Y + 0.725, 0);
+  const adaptiveCenterCurrent = new Vector3(0, GROUND_Y + 0.725, 0);
 
   // Zones
   let s = BAG_INDEX;
@@ -140,6 +167,39 @@ export function createCameraRig(options: { readonly reducedMotion: boolean }): C
   };
 
   function place(): void {
+    if (world?.bounds) {
+      world.bounds(tempBox);
+      if (!tempBox.isEmpty()) {
+        const spanY = Math.max(0.2, tempBox.max.y - tempBox.min.y);
+        const spanX = Math.max(0.1, tempBox.max.x - tempBox.min.x);
+        const spanZ = Math.max(0.1, tempBox.max.z - tempBox.min.z);
+        const spanHoriz = Math.max(spanX, spanZ);
+        tempBox.getCenter(adaptiveCenterTarget);
+
+        // L'animation de décomposition (ex > 0) écarte les objets jusqu'à 1,95 m de rayon
+        // Le cadrage doit inclure l'enveloppe maximale de décomposition pour ne jamais sortir du cadre
+        const effectiveSpanY = spanY + ex * 1.5;
+        const effectiveSpanHoriz = spanHoriz + ex * 2.8;
+
+        // Cadrage adaptatif : 75% à 80% (cible 78%) de la hauteur utile au-dessus du tiroir
+        // Le tiroir mange près de 40% de l'écran en position déployée (dk = 1.7)
+        const drawerCoverage = clamp((dk / DRAWER_OPEN) * 0.38, 0, 0.42);
+        const visibleHeightFraction = Math.max(0.5, 1 - drawerCoverage);
+
+        const TARGET_OCCUPANCY = 0.78;
+        const reqH = effectiveSpanY / (TARGET_OCCUPANCY * visibleHeightFraction);
+        const reqW = effectiveSpanHoriz / TARGET_OCCUPANCY;
+        const reqHFromW = reqW / Math.max(0.2, camera.aspect);
+        const effectiveH = Math.max(reqH, reqHFromW);
+
+        const fovRad = (camera.fov * Math.PI) / 180;
+        const halfTan = Math.tan(fovRad * 0.5);
+        adaptiveDistTarget = clamp(effectiveH / (2 * halfTan), 0.9, 8.5);
+        framingBox.copy(tempBox);
+        framingBoxValid = true;
+      }
+    }
+
     const n = ZONE_COUNT;
     const i = clamp(Math.floor(s), 0, n - 2);
     const f = s - i;
@@ -147,34 +207,166 @@ export function createCameraRig(options: { readonly reducedMotion: boolean }): C
     const B = ZONES[i + 1];
     theta = lerp(A.th, B.th, f);
     phi = lerp(A.ph, B.ph, f);
-    let di = lerp(A.d, B.d, f);
+    const dA = A.id === 'bag' ? adaptiveDistCurrent : A.d * (adaptiveDistCurrent / 5.0);
+    const dB = B.id === 'bag' ? adaptiveDistCurrent : B.d * (adaptiveDistCurrent / 5.0);
+    let di = lerp(dA, dB, f);
     let ph = phi + tiltV;
     if (world) {
       world.anchor(A.id, va);
       world.anchor(B.id, vb);
       tgt.copy(va).lerp(vb, clamp(f, 0, 1));
-      world.center(bagC);
+      bagC.copy(adaptiveCenterCurrent);
       wornW = A.id === 'worn' ? clamp(1 - f, 0, 1) : 0;
-      tgt.lerp(bagC, Math.max(ex * 0.75, 0.38 * (1 - wornW)));
+      // Centre d'orbite : centre composite dynamique sac + modules montés
+      const bagWeight =
+        A.id === 'bag' && B.id === 'bag'
+          ? 1
+          : A.id === 'bag'
+            ? 1 - f
+            : B.id === 'bag'
+              ? f
+              : 0;
+      const effectiveBagWeight = Math.max(bagWeight * (1 - wornW), ex * 0.9);
+      tgt.lerp(bagC, effectiveBagWeight);
     } else {
       tgt.set(fx, fy, fz);
     }
-    di *= 1 + ex * (camera.aspect < 0.75 ? 0.55 : 0.32);
     di *= aspectK;
     ph = clamp(ph, 0.35, 1.62);
-    camera.position.set(tgt.x + di * Math.sin(ph) * Math.sin(theta), tgt.y + di * Math.cos(ph), tgt.z + di * Math.sin(ph) * Math.cos(theta));
+    camera.position.set(
+      tgt.x + di * Math.sin(ph) * Math.sin(theta),
+      tgt.y + di * Math.cos(ph),
+      tgt.z + di * Math.sin(ph) * Math.cos(theta),
+    );
     camera.position.y = Math.max(camera.position.y, GROUND_Y + 0.15);
-    camera.lookAt(tgt.x, tgt.y - (0.17 * di) / 3.6, tgt.z);
+    camera.lookAt(tgt.x, tgt.y, tgt.z);
+
+    // Correction finale d'après la projection réelle du sac (SPEC : le sac ne sort jamais du cadre).
+    // Les ancres de zone, l'arc et les facteurs d'aspect déplacent le sujet de façon difficile à
+    // prévoir ; on mesure donc où le sac tombe réellement à l'écran et on corrige distance et
+    // décalage de vue pour le poser au centre de la bande visible, à l'occupation voulue.
+    let fitYoff = 0;
+    let fitXoff = 0;
+    if (framingBoxValid) {
+      // La projection doit être mesurée sans décalage de vue, sinon la correction se mord la queue.
+      if (camera.view?.enabled) {
+        camera.clearViewOffset();
+        appliedYoff = 0;
+      }
+      const corpsSeul = world?.bodyBounds ? world.bodyBounds(bodyBox) : null;
+      const aCorps = corpsSeul != null && !corpsSeul.isEmpty();
+      const drawerCov = clamp((dk / DRAWER_OPEN) * 0.38, 0, 0.42);
+      const bandBottom = -1 + 2 * drawerCov;
+      const bandCenter = (bandBottom + 1) / 2;
+      const bandHeight = 1 - bandBottom;
+      for (let pass = 0; pass < 2; pass++) {
+        camera.updateMatrixWorld();
+        camera.updateProjectionMatrix();
+        const etendue = (b: Box3) => {
+          let bas = Infinity;
+          let haut = -Infinity;
+          let g = Infinity;
+          let d = -Infinity;
+          for (let c = 0; c < 8; c++) {
+            vProj.set(c & 1 ? b.max.x : b.min.x, c & 2 ? b.max.y : b.min.y, c & 4 ? b.max.z : b.min.z);
+            vProj.project(camera);
+            if (vProj.y < bas) bas = vProj.y;
+            if (vProj.y > haut) haut = vProj.y;
+            if (vProj.x < g) g = vProj.x;
+            if (vProj.x > d) d = vProj.x;
+          }
+          return { bas, haut, g, d };
+        };
+        const tout = etendue(framingBox);
+        let lo = tout.bas;
+        let hi = tout.haut;
+        let gauche = tout.g;
+        let droite = tout.d;
+        if (!Number.isFinite(lo) || !Number.isFinite(hi) || hi <= lo) break;
+        const span = hi - lo;
+        const wanted = FIT_OCCUPANCY * bandHeight;
+        // Vue de biais, la boîte englobante projette plus large que le sac : sans contrainte
+        // horizontale, un cadrage juste en hauteur déborde latéralement sur un écran de téléphone.
+        const spanH = droite - gauche;
+        const wantedH = FIT_OCCUPANCY * 2;
+        let ratio = Math.max(span / wanted, spanH / wantedH);
+
+        // Plancher de lisibilité : on recule pour tout montrer, mais jamais au point de réduire le
+        // corps sous sa part minimale. Au-delà, on cadre sur le corps et le module déborde.
+        // Plancher de lisibilité, appliqué quoi qu'il arrive : sans module, la boîte du corps est
+        // celle de l'ensemble et le plancher (50 %) reste sous l'occupation voulue (78 %), donc il
+        // ne change rien. Avec un module très long, il empêche le sac de rétrécir indéfiniment —
+        // et c'est alors le corps qu'on centre, sinon le sac descend au bas du cadre pendant que
+        // le module occupe tout le haut.
+        // En vue décomposée, tout le kit doit tenir dans le cadre : le plancher de lisibilité
+        // y ferait sortir des objets, ce qui est précisément le défaut qu'on a corrigé.
+        if (aCorps && ex < 0.05) {
+          const corps = etendue(bodyBox);
+          const spanCorps = corps.haut - corps.bas;
+          const plafond = spanCorps / (MIN_BODY_FRACTION * bandHeight);
+          if (plafond > 0 && ratio > plafond) {
+            ratio = plafond;
+            lo = corps.bas;
+            hi = corps.haut;
+            gauche = corps.g;
+            droite = corps.d;
+          }
+        }
+
+        if (pass === 0 && Math.abs(ratio - 1) > 0.02) {
+          di = clamp(di * ratio, 0.6, 9.5);
+          camera.position.set(
+            tgt.x + di * Math.sin(ph) * Math.sin(theta),
+            tgt.y + di * Math.cos(ph),
+            tgt.z + di * Math.sin(ph) * Math.cos(theta),
+          );
+          camera.position.y = Math.max(camera.position.y, GROUND_Y + 0.15);
+          camera.lookAt(tgt.x, tgt.y, tgt.z);
+          continue;
+        }
+        fitYoff = ((bandCenter - (lo + hi) / 2) / 2) * h;
+        fitXoff = ((0 - (gauche + droite) / 2) / 2) * w;
+        break;
+      }
+    }
+
     // Le sac se recentre au-dessus du tiroir : glissement et léger recul, amortis (dk de 0, fermé, à 1,7, ouvert).
-    const yoff = viewOffsetFraction(dk) * h - arc * (1 - ex) * h * 0.16;
+    const yoff = framingBoxValid ? fitYoff : viewOffsetFraction(dk) * h - arc * (1 - ex) * h * 0.16;
     if (yoff !== appliedYoff) {
-      if (Math.abs(yoff) > 0.5) camera.setViewOffset(w, h, 0, yoff, w, h);
+      if (Math.abs(yoff) > 0.5 || Math.abs(fitXoff) > 0.5) camera.setViewOffset(w, h, -fitXoff, yoff, w, h);
       else if (camera.view && camera.view.enabled) camera.clearViewOffset();
       appliedYoff = yoff;
     }
     const zt = zoomFor(dk);
     if (Math.abs(camera.zoom - zt) > 0.0004) { camera.zoom = zt; camera.updateProjectionMatrix(); }
     camera.updateMatrixWorld();
+
+    if (framingBoxValid) {
+      // Le rectangle rendu est celui du corps : c'est lui qui doit rester dans le cadre. Un
+      // module très long déborde volontairement (voir MIN_BODY_FRACTION), mesurer l'ensemble
+      // rendrait le contrôle vert alors même que le sac serait devenu minuscule.
+      const mesure = !bodyBox.isEmpty() ? bodyBox : framingBox;
+      let nx0 = Infinity;
+      let ny0 = Infinity;
+      let nx1 = -Infinity;
+      let ny1 = -Infinity;
+      for (let c = 0; c < 8; c++) {
+        vProj.set(
+          c & 1 ? mesure.max.x : mesure.min.x,
+          c & 2 ? mesure.max.y : mesure.min.y,
+          c & 4 ? mesure.max.z : mesure.min.z,
+        );
+        vProj.project(camera);
+        if (vProj.x < nx0) nx0 = vProj.x;
+        if (vProj.x > nx1) nx1 = vProj.x;
+        if (vProj.y < ny0) ny0 = vProj.y;
+        if (vProj.y > ny1) ny1 = vProj.y;
+      }
+      // NDC (-1..1, y vers le haut) → fractions d'écran (0..1, y vers le bas).
+      subject = { x0: (nx0 + 1) / 2, y0: (1 - ny1) / 2, x1: (nx1 + 1) / 2, y1: (1 - ny0) / 2 };
+    } else {
+      subject = null;
+    }
   }
 
   function advance(dt: number): boolean {
@@ -182,6 +374,21 @@ export function createCameraRig(options: { readonly reducedMotion: boolean }): C
     // Drawer
     dk += (dkT - dk) * damp(rm ? DK_RATE_REDUCED : DK_RATE, dt);
     if (Math.abs(dkT - dk) > 0.001) moving = true; else dk = dkT;
+
+    // Transition continue de centre et de cadrage adaptatif : 400 à 500 ms (taux 7.0), courbe sortante
+    const kDist = rm ? 60 : 7.0;
+    if (adaptiveCenterCurrent.distanceToSquared(adaptiveCenterTarget) > 1e-6) {
+      adaptiveCenterCurrent.lerp(adaptiveCenterTarget, rm ? 1 : damp(kDist, dt));
+      moving = true;
+    } else {
+      adaptiveCenterCurrent.copy(adaptiveCenterTarget);
+    }
+    if (Math.abs(adaptiveDistTarget - adaptiveDistCurrent) > 0.001) {
+      adaptiveDistCurrent += (adaptiveDistTarget - adaptiveDistCurrent) * (rm ? 1 : damp(kDist, dt));
+      moving = true;
+    } else {
+      adaptiveDistCurrent = adaptiveDistTarget;
+    }
 
     // Zone : ressort amorti vers la cible (la main qui orbite impose `s` directement).
     if (scrubbing) {
@@ -269,6 +476,7 @@ export function createCameraRig(options: { readonly reducedMotion: boolean }): C
 
     advance,
     place,
+    subjectRect: () => (subject ? { ...subject } : null),
     step(dt) {
       const moving = advance(dt);
       place();

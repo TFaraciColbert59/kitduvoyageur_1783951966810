@@ -1,0 +1,1651 @@
+/* =========================================================
+   Carnet V2 — Styles 100% alignés sur /compte et Apple Liquid Glass
+   ========================================================= */
+
+/* Root Phone Viewport Layout */
+.lkdv-carnet-v2-root {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  grid-template-rows: calc(69% - 46px) 1fr;
+  transition: grid-template-rows 0.55s var(--motion-ease-standard);
+  background: var(--page, #f5f2ec);
+  color: var(--label, #172b24);
+  overflow: hidden;
+  isolation: isolate;
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif);
+
+  /* Jetons du socle /compte — source : compte-v8.css `.phone` (L26-34).
+     La fiche ne monte pas `.phone` : elle déclare la même palette pour que
+     `--label`, `--label2` et `--tint` soient les encres du verre CLAIR et
+     jamais les encres blanches du thème liquide global (`--lkv-*`). */
+  --label: #172b24;
+  --label2: #56665d;
+  --label3: rgba(23, 43, 36, 0.44);
+  --sep: rgba(23, 43, 36, 0.1);
+  --fill: rgba(23, 43, 36, 0.09);
+  --fill2: rgba(23, 43, 36, 0.06);
+  --fill3: rgba(255, 255, 255, 0.62);
+  --tint: #17402c;
+  --tint-ink: #fff;
+  --accent: #5b7f55;
+  --subtle: #a6c1a0;
+  --mint: #ebf2ec;
+  --good: #3d7a52;
+  --warn: #b98a2e;
+  --warn-bg: #fbf1dc;
+  --bad: #a8443a;
+  --bad-bg: #f5ddd9;
+  --info: #4b6b7c;
+  --water: #3f93b8;
+  --ga: 0.19;
+  --gb: 7px;
+  --la: 140deg;
+}
+
+.lkdv-carnet-v2-root.mapbig {
+  grid-template-rows: 144px 1fr;
+}
+
+.lkdv-carnet-v2-root.outdoor {
+  --ga: 0.9;
+  --gb: 30px;
+  --label2: #2f3f37;
+  --label3: rgba(23, 43, 36, 0.7);
+  font-size: 15px;
+}
+
+/* Une feuille ouverte retire la barre flottante (socle §4.6, mockup
+   `.phone.sheet-open .tb`). Le crochet est posé par useCarnetDialog. */
+body.lkdv-dialog-open .lkdv-floating-tabbar {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(120%);
+  transition:
+    opacity 0.25s ease,
+    transform 0.35s var(--motion-ease-standard);
+}
+
+/* Réduction des animations demandée depuis le popover Affichage.
+   Scopée à la fiche (jamais `*` global, cf. D-13 du socle). */
+.lkdv-carnet-v2-root[data-reduce-motion='true'] *,
+.lkdv-carnet-v2-root[data-reduce-motion='true'] *::before,
+.lkdv-carnet-v2-root[data-reduce-motion='true'] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Fond : photo de couverture floutée par la recette du socle (00-socle §2.1). */
+.lkdv-carnet-bg {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  background: linear-gradient(180deg, #7fa38a 0%, #c8dbc6 38%, #edebdd 70%);
+}
+
+.lkdv-carnet-bg img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 30%;
+  filter: brightness(1.1) saturate(1.05);
+}
+
+.lkdv-carnet-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 250, 236, 0.08),
+    rgba(255, 255, 255, 0) 30%,
+    rgba(245, 242, 236, 0.12) 60%
+  );
+}
+
+/* Top Section (69%) */
+.lkdv-carnet-top {
+  position: relative;
+  min-height: 0;
+  min-width: 0;
+  padding: calc(var(--safe-area-top, 0px) + 8px) 12px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  z-index: 2;
+}
+
+/* Top Bar */
+.lkdv-carnet-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  height: 36px;
+  flex: none;
+}
+
+.lkdv-carnet-topbar-r {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+}
+
+/* Morph Title Pill */
+.lkdv-title-pill {
+  height: 34px;
+  padding: 0 12px 0 11px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 0;
+  font: 600 13px var(--font-sans, sans-serif);
+  color: var(--tint, #17402c);
+  background: var(--bar-glass-bg, rgba(255, 255, 255, 0.72));
+  -webkit-backdrop-filter: var(--bar-glass-blur, blur(16px));
+  backdrop-filter: var(--bar-glass-blur, blur(16px));
+  box-shadow: var(--bar-glass-shadow, 0 2px 8px rgba(23, 43, 36, 0.08));
+  transition: transform 0.35s var(--ease-spring);
+  max-width: 210px;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.lkdv-title-pill b {
+  font-weight: 650;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.01em;
+}
+
+.lkdv-title-pill .edot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--good, #3d7a52);
+  box-shadow: 0 0 0 2px rgba(61, 122, 82, 0.15);
+}
+
+.lkdv-title-pill:active {
+  transform: scale(0.96);
+}
+
+/* Circle Glass Button */
+.lkdv-gbtn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 0;
+  display: grid;
+  place-items: center;
+  flex: none;
+  color: var(--tint, #17402c);
+  position: relative;
+  background: rgba(255, 255, 255, 0.65);
+  -webkit-backdrop-filter: blur(8px) saturate(1.8);
+  backdrop-filter: blur(8px) saturate(1.8);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 2px 8px rgba(23, 43, 36, 0.08);
+  cursor: pointer;
+  transition:
+    transform 0.12s,
+    background 0.2s;
+}
+
+.lkdv-gbtn::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  min-width: 44px;
+  min-height: 44px;
+  width: 100%;
+  height: 100%;
+}
+
+.lkdv-gbtn:active {
+  transform: scale(0.94);
+}
+
+.lkdv-gbtn[aria-expanded='true'],
+.lkdv-gbtn[aria-pressed='true'] {
+  background: rgba(150, 186, 142, 0.35);
+  box-shadow:
+    inset 0 0 0 1px rgba(91, 127, 85, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+/* Card Shell */
+.lkdv-carnet-card {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  border-radius: 24px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  /* Recette `.cs` de /compte (compte-v8.css L77), pas une approximation. */
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, calc(var(--ga) + 0.3)),
+    rgba(255, 255, 255, calc(var(--ga) + 0.2))
+  );
+  -webkit-backdrop-filter: blur(calc(var(--gb) + 18px)) saturate(1.8) brightness(1.05);
+  backdrop-filter: blur(calc(var(--gb) + 18px)) saturate(1.8) brightness(1.05);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.4),
+    inset 0 0 16px rgba(255, 255, 255, 0.12),
+    0 0 0 0.5px rgba(23, 43, 36, 0.12),
+    0 10px 30px rgba(23, 43, 36, 0.14);
+}
+
+.lkdv-carnet-card-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 8px 12px 56px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  overscroll-behavior: contain;
+  scroll-padding-bottom: 56px;
+}
+
+.lkdv-carnet-card-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* Header Avatar + Stats */
+.lkdv-ig-header {
+  display: grid;
+  grid-template-columns: 66px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  padding: 2px 2px 0;
+}
+
+.lkdv-ig-avi-wrap {
+  position: relative;
+  width: 66px;
+  height: 66px;
+  border-radius: 50%;
+  padding: 3px;
+  border: 0;
+  background: conic-gradient(
+    from 140deg,
+    rgba(23, 64, 44, 0.62),
+    rgba(150, 179, 145, 0.55),
+    rgba(255, 255, 255, 0.9),
+    rgba(91, 127, 85, 0.5),
+    rgba(23, 64, 44, 0.62)
+  );
+  box-shadow:
+    0 3px 14px rgba(23, 64, 44, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 0 0 1.5px rgba(91, 127, 85, 0.3);
+  transition: transform 0.15s;
+  flex: none;
+  display: block;
+  cursor: pointer;
+}
+
+.lkdv-ig-avi-wrap:active {
+  transform: scale(0.95);
+}
+
+.lkdv-ig-avi-wrap.live {
+  background: conic-gradient(
+    var(--tint, #17402c),
+    var(--accent, #5b7f55),
+    #96b391,
+    #3d7a52,
+    var(--tint, #17402c)
+  );
+  animation: lkdv-ring 3.4s linear infinite;
+}
+
+@keyframes lkdv-ring {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.lkdv-ig-avi-wrap.live .lkdv-ig-avi {
+  animation: lkdv-ring 3.4s linear infinite reverse;
+}
+
+.lkdv-ig-avi {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.92);
+  background: #ddebd8;
+  overflow: hidden;
+  position: relative;
+}
+
+.lkdv-ig-avi img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lkdv-ig-avi-wrap .seal {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: linear-gradient(155deg, #ffffff, #ebf2ec);
+  box-shadow:
+    0 2px 6px rgba(23, 43, 36, 0.2),
+    0 0 0 1.5px #ffffff;
+  display: grid;
+  place-items: center;
+  color: var(--tint, #17402c);
+}
+
+/* Stats items (Jours, Km, D+) */
+.lkdv-ig-stats {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  width: 100%;
+  gap: 4px;
+}
+
+.lkdv-ig-stat {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 4px 6px;
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  border-radius: 12px;
+  transition:
+    background 0.14s ease,
+    transform 0.12s;
+  cursor: pointer;
+}
+
+.lkdv-ig-stat:active {
+  background: rgba(255, 255, 255, 0.85);
+  transform: scale(0.96);
+}
+
+.lkdv-ig-stat b {
+  font: 700 18px/1.2 var(--font-display, var(--font-sans, sans-serif));
+  letter-spacing: -0.02em;
+  color: var(--tint, #17402c);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.lkdv-ig-stat span {
+  font: 500 11.5px/1.2 var(--font-sans, sans-serif);
+  color: var(--label2, #56665d);
+}
+
+/* Bio info */
+.lkdv-ig-bio {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 2px 2px 0;
+}
+
+.lkdv-ig-name {
+  font: 700 14px/1.2 var(--font-display, var(--font-sans, sans-serif));
+  color: var(--tint, #17402c);
+  letter-spacing: -0.01em;
+}
+
+.lkdv-ig-handle-sub {
+  font: 500 11.5px/1.25 var(--font-sans, sans-serif);
+  color: var(--label2, #56665d);
+}
+
+/* Highlights ("À la une") */
+.lkdv-ig-hl-row {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  padding: 6px 2px 0;
+}
+
+.lkdv-ig-hl {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  border: 0;
+  background: none;
+  padding: 0;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.lkdv-ig-hl:active {
+  transform: scale(0.94);
+}
+
+.lkdv-ig-hl-ring {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  padding: 2px;
+  background: conic-gradient(
+    from 140deg,
+    rgba(23, 64, 44, 0.4),
+    rgba(255, 255, 255, 0.8),
+    rgba(91, 127, 85, 0.4)
+  );
+  box-shadow: 0 2px 6px rgba(23, 64, 44, 0.08);
+}
+
+.lkdv-ig-hl-thumb {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #ddebd8;
+}
+
+.lkdv-ig-hl-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lkdv-ig-hl-label {
+  font: 500 10.5px/1 var(--font-sans, sans-serif);
+  color: var(--label2, #56665d);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 52px;
+}
+
+/* Statut + action principale, puis résumé du carnet (maquette `.pbtn`/`.ig-tabs`) */
+.lkdv-ig-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 2px 2px 0;
+}
+
+.lkdv-ig-live,
+.lkdv-ig-open {
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 600 12px var(--font-sans, sans-serif);
+  color: var(--tint, #17402c);
+  white-space: nowrap;
+}
+
+.lkdv-ig-live {
+  background: rgba(255, 255, 255, 0.5);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 0 0 0.5px rgba(23, 43, 36, 0.1);
+  min-width: 0;
+}
+
+.lkdv-ig-live svg {
+  color: var(--good, #3d7a52);
+  flex: none;
+}
+
+.lkdv-ig-live[data-state='done'] {
+  color: var(--label2, #56665d);
+}
+
+.lkdv-ig-live[data-state='done'] svg {
+  color: var(--label2, #56665d);
+}
+
+.lkdv-ig-open {
+  border: 0;
+  cursor: pointer;
+  background: var(
+    --lg-bar-bg,
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.72),
+      rgba(255, 255, 255, 0.42) 55%,
+      rgba(255, 255, 255, 0.52)
+    )
+  );
+  -webkit-backdrop-filter: var(--lg-bar-blur, blur(7px) saturate(1.9) brightness(1.07));
+  backdrop-filter: var(--lg-bar-blur, blur(7px) saturate(1.9) brightness(1.07));
+  box-shadow: var(
+    --lg-bar-shadow,
+    0 0 0 0.5px rgba(23, 43, 36, 0.14),
+    0 8px 22px rgba(23, 43, 36, 0.12)
+  );
+  transition: transform 0.12s var(--ease-spring);
+}
+
+.lkdv-ig-open:active {
+  transform: scale(0.96);
+}
+
+.lkdv-ig-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 4px 2px 0;
+}
+
+.lkdv-ig-summary-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lkdv-ig-summary-row b {
+  font: 600 13.5px/1.2 var(--font-sans, sans-serif);
+  color: var(--label, #172b24);
+  letter-spacing: -0.01em;
+}
+
+.lkdv-ig-summary-chip {
+  flex: none;
+  height: 28px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 9999px;
+  font: 600 12px var(--font-sans, sans-serif);
+  color: var(--label2, #56665d);
+  background: rgba(255, 255, 255, 0.42);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 0 0 0.5px rgba(23, 43, 36, 0.1);
+  cursor: pointer;
+}
+
+.lkdv-ig-summary-chip[aria-pressed='true'] {
+  color: var(--tint-ink, #fff);
+  background: var(--tint, #17402c);
+  box-shadow: 0 2px 8px rgba(23, 64, 44, 0.22);
+}
+
+.lkdv-ig-summary-stats {
+  font: 400 11.5px/1.3 var(--font-sans, sans-serif);
+  color: var(--label2, #56665d);
+  padding-left: 2px;
+}
+
+/* Day Swipe Container */
+.lkdv-day-swipe-view {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+  touch-action: pan-y;
+  transition: transform 0.24s var(--ease-glass);
+}
+
+.lkdv-day-swipe-view.out-left {
+  animation: lkdv-swipe-out-l 0.18s ease-in forwards;
+}
+
+.lkdv-day-swipe-view.out-right {
+  animation: lkdv-swipe-out-r 0.18s ease-in forwards;
+}
+
+.lkdv-day-swipe-view.in-left {
+  animation: lkdv-swipe-in-l 0.34s var(--ease-glass) forwards;
+}
+
+.lkdv-day-swipe-view.in-right {
+  animation: lkdv-swipe-in-r 0.34s var(--ease-glass) forwards;
+}
+
+@keyframes lkdv-swipe-out-l {
+  to {
+    opacity: 0;
+    transform: translateX(-40px);
+  }
+}
+
+@keyframes lkdv-swipe-out-r {
+  to {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+}
+
+@keyframes lkdv-swipe-in-l {
+  from {
+    opacity: 0;
+    transform: translateX(-40px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes lkdv-swipe-in-r {
+  from {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Day Overview Narrative Banner */
+.lkdv-day-banner {
+  padding: 8px 10px;
+  border-radius: 14px;
+  background: var(--drawer-card-bg);
+  -webkit-backdrop-filter: var(--drawer-card-blur);
+  backdrop-filter: var(--drawer-card-blur);
+  box-shadow: var(--drawer-card-shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.lkdv-day-banner-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font: 600 12px var(--font-sans, sans-serif);
+  color: var(--tint, #17402c);
+}
+
+.lkdv-day-banner-text {
+  font: 400 11.5px/1.35 var(--font-sans, sans-serif);
+  color: var(--label2, #56665d);
+}
+
+/* 3-Column Media Grid */
+.lkdv-ig-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  padding: 2px;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.lkdv-ig-tile {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  border-radius: 2px;
+  overflow: hidden;
+  border: 0;
+  padding: 0;
+  background: #ddebd8;
+  cursor: pointer;
+  transition: transform 0.12s var(--ease-spring);
+}
+
+.lkdv-ig-tile:active {
+  transform: scale(0.96);
+}
+
+.lkdv-ig-tile img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lkdv-ig-tile-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  padding: 2px 5px;
+  border-radius: 9999px;
+  background: rgba(23, 43, 36, 0.72);
+  color: #ffffff;
+  font: 600 9px var(--font-sans, sans-serif);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+/* Floating Mini Capsule Tabs (Days selector) */
+.lkdv-tabs-float {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  z-index: 12;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  pointer-events: auto;
+}
+
+.lkdv-day-capsule {
+  position: relative;
+  height: 30px;
+  padding: 2.5px;
+  border-radius: 9999px;
+  display: flex;
+  align-items: stretch;
+  background: rgba(255, 255, 255, 0.65);
+  background-image: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.72),
+    rgba(255, 255, 255, 0.42) 55%,
+    rgba(255, 255, 255, 0.52)
+  );
+  -webkit-backdrop-filter: blur(28px) saturate(180%) brightness(1.04);
+  backdrop-filter: blur(28px) saturate(180%) brightness(1.04);
+  border: 0.5px solid rgba(255, 255, 255, 0.8);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.45),
+    0 0 0 0.5px rgba(23, 43, 36, 0.14),
+    0 8px 22px rgba(23, 43, 36, 0.12);
+}
+
+.lkdv-day-capsule-lens {
+  position: absolute;
+  top: 2.5px;
+  left: 2.5px;
+  height: 25px;
+  border-radius: 9999px;
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.22));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.4),
+    0 0 0 0.5px rgba(23, 43, 36, 0.06);
+  transition: transform 0.28s var(--ease-spring);
+}
+
+.lkdv-day-capsule-btn {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 0;
+  min-width: 32px;
+  height: 25px;
+  border: 0;
+  background: none;
+  border-radius: 9999px;
+  display: grid;
+  place-items: center;
+  font: 600 11px var(--font-sans, sans-serif);
+  color: var(--label2, #56665d);
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.lkdv-day-capsule-btn[aria-selected='true'] {
+  color: var(--tint, #17402c);
+  font-weight: 700;
+}
+
+/* Map Zone (Bottom 1fr) */
+.lkdv-carnet-mapzone {
+  position: relative;
+  min-height: 0;
+  z-index: 1;
+}
+
+/* Grab handle */
+.lkdv-mgrab {
+  position: absolute;
+  left: 50%;
+  top: 6px;
+  width: 84px;
+  height: 22px;
+  margin-left: -42px;
+  z-index: 4;
+  border: 0;
+  background: none;
+  touch-action: none;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  cursor: pointer;
+}
+
+.lkdv-mgrab span {
+  display: block;
+  width: 38px;
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 1px 6px rgba(23, 43, 36, 0.18);
+}
+
+/* Map Controls */
+.lkdv-mctl {
+  position: absolute;
+  right: 10px;
+  top: 34px;
+  width: 42px;
+  border-radius: 9999px;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.65);
+  -webkit-backdrop-filter: blur(28px) saturate(180%) brightness(1.04);
+  backdrop-filter: blur(28px) saturate(180%) brightness(1.04);
+  border: 0.5px solid rgba(255, 255, 255, 0.8);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 4px 14px rgba(23, 43, 36, 0.08);
+}
+
+.lkdv-mctl button {
+  width: 42px;
+  height: 40px;
+  border: 0;
+  background: none;
+  display: grid;
+  place-items: center;
+  color: var(--tint, #17402c);
+  cursor: pointer;
+}
+
+.lkdv-mctl button + button {
+  box-shadow: 0 -0.5px 0 rgba(23, 43, 36, 0.08);
+}
+
+.lkdv-mctl button:active {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.72));
+}
+
+/* Bottom Bar / Sparkline Profile */
+.lkdv-carnet-acc {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 84px;
+  height: 42px;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 10px 0 4px;
+  z-index: 12;
+  background: var(--bar-glass-bg, rgba(255, 255, 255, 0.65));
+  -webkit-backdrop-filter: var(--bar-glass-blur, blur(16px));
+  backdrop-filter: var(--bar-glass-blur, blur(16px));
+  box-shadow: var(--bar-glass-shadow, 0 8px 22px rgba(23, 43, 36, 0.12));
+  transition:
+    opacity 0.25s ease,
+    transform 0.35s var(--motion-ease-standard);
+}
+
+.lkdv-carnet-v2-root.overlay-open .lkdv-carnet-acc {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(12px);
+}
+
+.lkdv-acc-badge {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  flex: none;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.34);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  font: 700 10px var(--font-sans, sans-serif);
+  color: var(--tint, #17402c);
+}
+
+.lkdv-acc-ro {
+  flex: none;
+  width: 104px;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+  min-width: 0;
+}
+
+.lkdv-acc-ro b {
+  font: 600 13.5px var(--font-sans, sans-serif);
+  color: var(--label, #172b24);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.lkdv-acc-ro span {
+  font: 400 10.5px var(--font-sans, sans-serif);
+  color: var(--label2, #56665d);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lkdv-altitude {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  display: block;
+  overflow: visible;
+  touch-action: none;
+}
+
+.lkdv-altitude.is-interactive {
+  cursor: ew-resize;
+}
+
+.lkdv-altitude:focus-visible {
+  outline: 2px solid var(--accent, #5b7f55);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* Carte du profil dans le tiroir Route > Altitude */
+.lkdv-altitude-card {
+  padding: 12px;
+  border-radius: 16px;
+  background: var(--drawer-card-bg);
+  -webkit-backdrop-filter: var(--drawer-card-blur);
+  backdrop-filter: var(--drawer-card-blur);
+  box-shadow: var(--drawer-card-shadow);
+}
+
+.lkdv-altitude-card b {
+  font: 600 13px var(--font-sans, sans-serif);
+  color: var(--label, #172b24);
+}
+
+.lkdv-altitude-card p {
+  margin: 4px 0 12px;
+  font: 400 12px/1.4 var(--font-sans, sans-serif);
+  color: var(--label2, #56665d);
+}
+
+.lkdv-altitude-empty {
+  display: grid;
+  place-items: center;
+  min-height: 80px;
+  margin: 0 !important;
+  border-radius: 10px;
+  background: var(--fill2, rgba(23, 43, 36, 0.06));
+  color: var(--label2, #56665d) !important;
+  text-align: center;
+}
+
+/* Floating "Reprendre" pill (bottom left on Sac slot & Fiche objet) */
+.lkdv-pill-reprendre {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  z-index: 15;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0.5px solid rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.75);
+  -webkit-backdrop-filter: blur(20px) saturate(1.8);
+  backdrop-filter: blur(20px) saturate(1.8);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 4px 14px rgba(23, 43, 36, 0.1);
+  font: 600 12px var(--font-sans, sans-serif);
+  color: var(--tint, #17402c);
+  cursor: pointer;
+  transition: transform 0.12s;
+}
+
+.lkdv-pill-reprendre:active {
+  transform: scale(0.95);
+}
+
+/* Peek & Pop — menu contextuel (famille D, appui long 460 ms).
+   Recette de la maquette `.ctx` : voile flouté, boîte verre max 310,
+   aperçu 104 puis menu 44 par action. */
+.lkdv-peek {
+  position: absolute;
+  inset: 0;
+  z-index: 38;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: color-mix(in srgb, var(--page, #f5f2ec) 35%, transparent);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  animation: lkdv-peek-fade 0.25s ease;
+}
+
+.lkdv-peek.closing {
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+
+.lkdv-peek-box {
+  width: 100%;
+  max-width: 310px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transform-origin: center;
+  animation: lkdv-peek-in 0.35s var(--ease-spring);
+}
+
+@keyframes lkdv-peek-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes lkdv-peek-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.lkdv-peek-preview {
+  border-radius: 22px;
+  padding: 13px 15px;
+  background: var(
+    --lg-bar-bg,
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.72),
+      rgba(255, 255, 255, 0.42) 55%,
+      rgba(255, 255, 255, 0.52)
+    )
+  );
+  -webkit-backdrop-filter: var(--lg-bar-blur, blur(7px) saturate(1.9) brightness(1.07));
+  backdrop-filter: var(--lg-bar-blur, blur(7px) saturate(1.9) brightness(1.07));
+  box-shadow: var(
+    --lg-bar-shadow,
+    0 0 0 0.5px rgba(23, 43, 36, 0.14),
+    0 8px 22px rgba(23, 43, 36, 0.12)
+  );
+}
+
+.lkdv-peek-preview img,
+.lkdv-peek-fallback {
+  display: block;
+  width: 100%;
+  height: 104px;
+  border-radius: 15px;
+  object-fit: cover;
+  margin-bottom: 8px;
+  background: var(--tint, #17402c);
+}
+
+.lkdv-peek-fallback {
+  display: grid;
+  place-items: center;
+  padding: 10px;
+  color: var(--tint-ink, #fff);
+  font: 600 14px var(--font-sans, sans-serif);
+  text-align: center;
+}
+
+.lkdv-peek-meta b {
+  display: block;
+  font: 600 15px var(--font-sans, sans-serif);
+  color: var(--label, #172b24);
+  margin-bottom: 3px;
+}
+
+.lkdv-peek-meta span {
+  font: 400 12.5px/1.35 var(--font-sans, sans-serif);
+  color: var(--label2, #56665d);
+}
+
+.lkdv-peek-menu {
+  border-radius: 18px;
+  overflow: hidden;
+  background: var(
+    --lg-bar-bg,
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.72),
+      rgba(255, 255, 255, 0.42) 55%,
+      rgba(255, 255, 255, 0.52)
+    )
+  );
+  -webkit-backdrop-filter: var(--lg-bar-blur, blur(7px) saturate(1.9) brightness(1.07));
+  backdrop-filter: var(--lg-bar-blur, blur(7px) saturate(1.9) brightness(1.07));
+  box-shadow: var(
+    --lg-bar-shadow,
+    0 0 0 0.5px rgba(23, 43, 36, 0.14),
+    0 8px 22px rgba(23, 43, 36, 0.12)
+  );
+}
+
+.lkdv-peek-menu button {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  height: 44px;
+  padding: 0 15px;
+  border: 0;
+  background: none;
+  font: 400 15px var(--font-sans, sans-serif);
+  color: var(--label, #172b24);
+  cursor: pointer;
+}
+
+.lkdv-peek-menu button + button {
+  box-shadow: 0 -0.5px 0 var(--sep, rgba(23, 43, 36, 0.1));
+}
+
+.lkdv-peek-menu button svg {
+  color: var(--accent, #5b7f55);
+  flex: none;
+}
+
+.lkdv-peek-menu button[aria-pressed='true'] {
+  color: var(--tint, #17402c);
+  font-weight: 600;
+}
+
+.lkdv-peek-menu button[aria-pressed='true'] svg {
+  color: var(--tint, #17402c);
+}
+
+.lkdv-peek-menu button:active {
+  background: rgba(23, 64, 44, 0.08);
+}
+
+/* Dynamic Island for Carnet */
+.lkdv-carnet-island {
+  position: absolute;
+  top: 56px;
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 140px;
+  max-width: 366px;
+  height: auto;
+  min-height: 40px;
+  border-radius: 20px;
+  background: #000000;
+  z-index: 3100;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 12px 4px 16px;
+  gap: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  animation: lkdv-island-in 0.35s var(--ease-spring);
+}
+
+@keyframes lkdv-island-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -10px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+}
+
+.lkdv-carnet-island-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.lkdv-carnet-island-text b {
+  font: 600 12px/1.2 var(--font-sans, sans-serif);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lkdv-carnet-island-undo {
+  flex: none;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 9999px;
+  border: 0;
+  background: rgba(255, 255, 255, 0.2);
+  color: #d8f3de;
+  font: 600 11.5px var(--font-sans, sans-serif);
+  cursor: pointer;
+}
+
+.lkdv-carnet-island-undo:active {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Dropdown Menu (Morph pill popup) */
+.lkdv-carnet-topbar-l {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.lkdv-carnet-topbar-r {
+  position: relative;
+}
+
+/* Popover « Affichage » — famille D du socle (verre, r22, 2 interrupteurs). */
+.lkdv-display-popover {
+  position: absolute;
+  right: 0;
+  top: 44px;
+  width: 262px;
+  border-radius: 22px;
+  padding: 4px 13px;
+  z-index: 34;
+  background: var(
+    --lg-bar-bg,
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.72),
+      rgba(255, 255, 255, 0.42) 55%,
+      rgba(255, 255, 255, 0.52)
+    )
+  );
+  -webkit-backdrop-filter: var(--lg-bar-blur, blur(7px) saturate(1.9) brightness(1.07));
+  backdrop-filter: var(--lg-bar-blur, blur(7px) saturate(1.9) brightness(1.07));
+  box-shadow: var(
+    --lg-bar-shadow,
+    0 0 0 0.5px rgba(23, 43, 36, 0.14),
+    0 8px 22px rgba(23, 43, 36, 0.12)
+  );
+  animation: lkdv-pop-in 0.35s var(--ease-spring);
+}
+
+.lkdv-display-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 46px;
+  border-top: 0.5px solid var(--sep, rgba(23, 43, 36, 0.1));
+}
+
+.lkdv-display-row:first-child {
+  border-top: 0;
+}
+
+.lkdv-display-row b {
+  display: block;
+  font: 600 13.5px var(--font-sans, sans-serif);
+  color: var(--label, #172b24);
+}
+
+.lkdv-display-row small {
+  display: block;
+  font: 400 11.5px var(--font-sans, sans-serif);
+  color: var(--label2, #56665d);
+}
+
+.lkdv-menu-popover {
+  position: absolute;
+  left: 12px;
+  top: 50px;
+  width: 220px;
+  border-radius: 18px;
+  padding: 6px;
+  z-index: 40;
+  background: rgba(255, 255, 255, 0.88);
+  -webkit-backdrop-filter: blur(28px) saturate(1.8);
+  backdrop-filter: blur(28px) saturate(1.8);
+  border: 0.5px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 12px 36px rgba(23, 43, 36, 0.16);
+  animation: lkdv-pop-in 0.2s var(--ease-smooth);
+}
+
+@keyframes lkdv-pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.lkdv-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: 38px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  font: 500 13px var(--font-sans, sans-serif);
+  color: var(--label, #172b24);
+  cursor: pointer;
+  text-align: left;
+}
+
+.lkdv-menu-item:hover,
+.lkdv-menu-item:active {
+  background: rgba(23, 64, 44, 0.08);
+}
+
+/* Feuille dans la carte — famille A du socle (00-socle §4.2, §7).
+   Géométrie mesurée : 406 × 521.9 à 12,48 (56dvh), r24, verre `--sheet-*`.
+   La carte et la carte du bas restent visibles : ce n'est pas un plein écran. */
+.lkdv-carnet-drawer,
+.lkdv-stack-sheet {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  top: 48px;
+  z-index: 20;
+  height: 56dvh;
+  max-height: calc(100% - 48px);
+  border-radius: 24px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: var(
+    --sheet-bg,
+    linear-gradient(
+      180deg,
+      rgba(245, 242, 236, 0.34),
+      rgba(245, 242, 236, 0.2) 48%,
+      rgba(245, 242, 236, 0.26)
+    )
+  );
+  -webkit-backdrop-filter: var(--sheet-blur, blur(30px) saturate(1.7) brightness(1.04));
+  backdrop-filter: var(--sheet-blur, blur(30px) saturate(1.7) brightness(1.04));
+  box-shadow: var(
+    --sheet-shadow,
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.4),
+    0 0 0 0.5px rgba(23, 43, 36, 0.12),
+    0 10px 30px rgba(23, 43, 36, 0.14)
+  );
+  animation: lkdv-sheet-up 0.38s var(--motion-ease-standard);
+}
+
+@keyframes lkdv-sheet-up {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Poignée de la feuille : 18 px, barre 38×5 (recette `.grab`, socle §7.1). */
+.lkdv-carnet-drawer > .lkdv-mgrab {
+  position: relative;
+  left: auto;
+  top: auto;
+  width: 100%;
+  height: 18px;
+  margin: 0;
+  flex: none;
+  border: 0;
+  background: none;
+  display: grid;
+  place-items: center;
+  cursor: grab;
+}
+
+.lkdv-carnet-drawer > .lkdv-mgrab span {
+  width: 38px;
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(23, 43, 36, 0.2);
+  box-shadow: 0 1px 6px rgba(255, 255, 255, 0.4);
+}
+
+/* Le SlotShell occupe la feuille, sans déborder. */
+.lkdv-carnet-drawer > .lkdv-slot-shell {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 2px 10px 46px;
+}
+
+@keyframes lkdv-sheet-push {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: none;
+  }
+}
+
+.lkdv-stack-header {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 8px;
+  border-bottom: 0.5px solid rgba(23, 43, 36, 0.1);
+  background: rgba(255, 255, 255, 0.6);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+}
+
+.lkdv-stack-back {
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 9999px;
+  border: 0;
+  background: rgba(23, 43, 36, 0.06);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font: 600 12px var(--font-sans, sans-serif);
+  color: var(--tint, #17402c);
+  cursor: pointer;
+}
+
+.lkdv-stack-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* =========================================================
+   Responsive — 430 est la vérité ; ≥ 768 se vérifie.
+   La fiche est une colonne de 430 centrée (comme /messagerie), jamais une
+   carte étirée. La barre flottante globale, non stylée ≥ 768 (dette D-01),
+   est retirée quand la fiche est montée.
+   ========================================================= */
+@media (min-width: 768px) {
+  .lkdv-carnet-v2-root {
+    width: min(430px, 100vw);
+    height: 100dvh;
+    min-height: 100dvh;
+    max-height: 100dvh;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding: 0 !important;
+    box-shadow:
+      0 0 0 0.5px rgba(23, 43, 36, 0.12),
+      0 30px 70px rgba(23, 43, 36, 0.18);
+  }
+
+  body:has(.lkdv-carnet-v2-root) .lkdv-floating-tabbar {
+    display: none !important;
+  }
+}
+
+/* La fiche porte sa propre toile : le calque global sombre est inutile
+   (même motif que `body:has(.lkdv-feed-shell)` pour le fil). */
+body:has(.lkdv-carnet-v2-root) .lkv-app-background {
+  display: none !important;
+}
+
+body:has(.lkdv-carnet-v2-root) {
+  background: var(--page, #f5f2ec);
+}
+
+/* La toile de la fiche est claire (thème du Compte, `--page` #F5F2EC) ;
+   `html` porte le fond sombre global, on le remplace quand la fiche est là. */
+html:has(.lkdv-carnet-v2-root) {
+  background: #f5f2ec !important;
+}
+
+/* Le sélecteur de jour de la carte s'efface quand une feuille est ouverte. */
+.lkdv-carnet-v2-root.overlay-open .lkdv-tabs-float {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+/* Le contenu du tiroir laisse la place à la mini-capsule des lentilles (30). */
+.lkdv-carnet-drawer .lkdv-lens-pane {
+  padding-bottom: 44px !important;
+}
+
+/* Badges de nuit N1/N2/N3 sur la carte (maquette `.mk.nbadge`). */
+.lkdv-carnet-map-marker.has-badge {
+  width: auto;
+  height: auto;
+  background: none;
+  border: 0;
+  box-shadow: none;
+}
+
+.lkdv-map-night-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 5px;
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--tint, #17402c) 88%, transparent);
+  color: var(--tint-ink, #fff);
+  font: 700 9.5px var(--font-mono, ui-monospace, SFMono-Regular, monospace);
+  letter-spacing: 0.02em;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    0 0 0 0.5px rgba(255, 255, 255, 0.35),
+    0 2px 8px rgba(23, 43, 36, 0.25);
+  -webkit-backdrop-filter: blur(8px) saturate(1.4);
+  backdrop-filter: blur(8px) saturate(1.4);
+}
+
+/* Badge d'état de la carte : Tout / J{n} (maquette `.mbadge`). */
+.lkdv-map-badge {
+  position: absolute;
+  left: 14px;
+  top: 60px;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 9999px;
+  background: var(--lg-bar-bg, linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.42) 55%, rgba(255, 255, 255, 0.52)));
+  -webkit-backdrop-filter: var(--lg-bar-blur, blur(7px) saturate(1.9) brightness(1.07));
+  backdrop-filter: var(--lg-bar-blur, blur(7px) saturate(1.9) brightness(1.07));
+  box-shadow: var(--lg-bar-shadow, 0 0 0 0.5px rgba(23, 43, 36, 0.14), 0 8px 22px rgba(23, 43, 36, 0.12));
+  color: var(--tint, #17402c);
+  font: 600 11px var(--font-sans, sans-serif);
+  pointer-events: none;
+}
+
+/* Toute feuille de la fiche (drawer, peek, post, stories, signalement) retire
+   la barre flottante : elle passait au-dessus du pied des feuilles Radix et
+   interceptait leurs boutons. */
+body.lkdv-overlay-open .lkdv-floating-tabbar {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(120%);
+  transition: opacity 0.25s ease, transform 0.35s var(--motion-ease-standard);
+}
+
+/* La carte du carnet reprend la topo claire de la maquette : le fond réel
+   reste MapLibre (ADR-002), seulement désaturé pour laisser le tracé lire. */
+.lkdv-carnet-mapzone .maplibregl-canvas {
+  filter: saturate(0.55) brightness(1.06) contrast(0.96);
+}
+
+/* Post du carnet : le média ne doit pas pousser la légende hors de la feuille. */
+.lkdv-post-drawer .lkdv-feed-post-stack {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.lkdv-post-drawer .lkdv-feed-post {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+  aspect-ratio: auto;
+}
+.lkdv-post-drawer .lkdv-feed-post-footer {
+  flex: none;
+}
+.lkdv-post-drawer .ckp-empty,
+.lkdv-post-drawer .lkdv-post-panel-body {
+  color: var(--label, #172b24);
+}
+.lkdv-post-drawer .ckp-empty svg {
+  color: var(--tint, #17402c);
+}
+
+/* Carte agrandie : l'en-tête tient dans 144 px, sans contenu qui passe sous la carte. */
+.lkdv-carnet-v2-root.mapbig .lkdv-carnet-top {
+  overflow: hidden;
+}
+.lkdv-carnet-v2-root.mapbig .lkdv-carnet-card {
+  overflow: hidden;
+}
+.lkdv-carnet-v2-root.mapbig .lkdv-ig-actions,
+.lkdv-carnet-v2-root.mapbig .lkdv-ig-hl-row {
+  display: none;
+}

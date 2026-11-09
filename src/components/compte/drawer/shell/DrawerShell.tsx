@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 export interface DrawerTab {
   id: string;
@@ -100,6 +100,27 @@ export function DrawerShell({
     ? ({ '--n': secondary.items.length } as React.CSSProperties)
     : undefined;
 
+  const pointerStart = useRef<{ x: number; y: number } | null>(null);
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    pointerStart.current = { x: e.clientX, y: e.clientY };
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (!pointerStart.current) return;
+    const dx = e.clientX - pointerStart.current.x;
+    const dy = e.clientY - pointerStart.current.y;
+    pointerStart.current = null;
+    if (Math.abs(dx) > 36 && Math.abs(dx) > Math.abs(dy) * 1.3) {
+      if (dx < 0 && safeIndex < tabs.length - 1) {
+        onIndexChange(safeIndex + 1);
+      } else if (dx > 0 && safeIndex > 0) {
+        onIndexChange(safeIndex - 1);
+      }
+    }
+  };
+
   return (
     <div className="lkdv-drawer-shell" data-state={state} data-secondary={secondary ? 'true' : 'false'}>
       <style dangerouslySetInnerHTML={{ __html: DRAWER_SHELL_CSS }} />
@@ -137,7 +158,12 @@ export function DrawerShell({
         </div>
       </div>
 
-      <div className="lkdv-drawer-viewport">
+      <div
+        className="lkdv-drawer-viewport"
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={() => { pointerStart.current = null; }}
+      >
         {state === 'loading' ? <DrawerSkeleton /> : null}
         {state === 'error' ? <DrawerError onRetry={onRetry} /> : null}
         {state === 'ready' ? (
@@ -199,8 +225,8 @@ export function DrawerShell({
 export const DRAWER_SHELL_CSS = `
 .lkdv-drawer-root{display:flex!important;flex-direction:column!important;flex:1 1 auto!important;min-height:0!important;width:100%!important;}
 body .phone.sheet-open[data-det="card"] .map-scale-selector,body .phone.sheet-open[data-det="card"] .mctl,body .phone[data-sheet-open="true"][data-det="card"] .map-scale-selector,body .phone[data-sheet-open="true"][data-det="card"] .mctl{opacity:0!important;pointer-events:none!important;transform:translateY(12px)!important;}
-.lkdv-drawer-shell{position:relative!important;display:flex!important;flex-direction:column!important;flex:1 1 auto!important;min-height:0!important;width:100%!important;padding:0 14px 16px!important;box-sizing:border-box!important;gap:8px!important;color:var(--label)!important;}
-.lkdv-drawer-shell[data-secondary="true"]{padding-bottom:calc(56px + env(safe-area-inset-bottom,0px))!important;}
+.lkdv-drawer-shell{position:relative!important;display:flex!important;flex-direction:column!important;flex:1 1 auto!important;min-height:0!important;width:100%!important;padding:2px!important;box-sizing:border-box!important;gap:8px!important;color:var(--label)!important;}
+.lkdv-drawer-shell[data-secondary="true"]{padding-bottom:calc(8px + env(safe-area-inset-bottom,0px))!important;}
 .lkdv-drawer-topnav{display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;flex:none!important;}
 .lkdv-drawer-shell .lkdv-drawer-topnav .segc.lkdv-drawer-tabs{display:grid!important;grid-auto-flow:column!important;grid-auto-columns:minmax(0,1fr)!important;align-items:stretch!important;gap:0!important;width:100%!important;max-width:none!important;height:48px!important;margin:0!important;padding:2px!important;border-radius:999px!important;background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.04) 46%,rgba(0,0,0,.12)),rgba(23,29,26,.76)!important;-webkit-backdrop-filter:blur(28px) saturate(180%)!important;backdrop-filter:blur(28px) saturate(180%)!important;border:.5px solid rgba(255,255,255,.18)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.26),inset 0 -1px 1px rgba(255,255,255,.06),0 10px 30px rgba(0,0,0,.24)!important;box-sizing:border-box!important;flex:none!important;overflow:visible!important;}
 .lkdv-drawer-shell .lkdv-drawer-topnav .lkdv-drawer-tabs .sel-lens{top:4px!important;bottom:4px!important;left:3px!important;width:calc((100% - 6px)/var(--n,2))!important;height:auto!important;border-radius:999px!important;background:linear-gradient(180deg,rgba(255,255,255,.23),rgba(255,255,255,.1))!important;border:.5px solid rgba(255,255,255,.28)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.38),0 1px 4px rgba(0,0,0,.12)!important;transform:translateX(calc(var(--i,0)*100%))!important;transition:transform .42s var(--motion-ease-standard)!important;z-index:1!important;pointer-events:none!important;}
@@ -210,7 +236,7 @@ body .phone.sheet-open[data-det="card"] .map-scale-selector,body .phone.sheet-op
 .lkdv-drawer-shell .lkdv-drawer-topnav .lkdv-drawer-tabs button:focus-visible,.lkdv-drawer-shell .lkdv-drawer-secondary .ig-tabs button:focus-visible{outline:2px solid #d8f3de!important;outline-offset:2px!important;}
 .lkdv-drawer-viewport{position:relative!important;flex:1 1 auto!important;min-height:0!important;overflow:hidden!important;}
 .lkdv-drawer-track{position:relative!important;display:block!important;height:100%!important;}
-.lkdv-drawer-pane{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;overflow-y:auto!important;overflow-x:hidden!important;-webkit-overflow-scrolling:touch!important;overscroll-behavior:contain!important;padding:0 1px 4px!important;box-sizing:border-box!important;opacity:0!important;visibility:hidden!important;transform:translateY(5px) scale(.998)!important;transition:opacity .26s ease,transform .34s var(--ease-glass),visibility 0s linear .34s!important;pointer-events:none!important;}
+.lkdv-drawer-pane{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;overflow-y:auto!important;overflow-x:hidden!important;-webkit-overflow-scrolling:touch!important;overscroll-behavior:contain!important;padding:2px!important;box-sizing:border-box!important;opacity:0!important;visibility:hidden!important;transform:translateY(5px) scale(.998)!important;transition:opacity .26s ease,transform .34s var(--ease-glass),visibility 0s linear .34s!important;pointer-events:none!important;}
 .lkdv-drawer-pane.active{opacity:1!important;visibility:visible!important;transform:none!important;pointer-events:auto!important;transition:opacity .3s ease,transform .36s var(--ease-glass),visibility 0s!important;}
 .lkdv-drawer-shell .lkdv-drawer-secondary{position:absolute!important;right:10px!important;bottom:10px!important;left:auto!important;top:auto!important;z-index:14!important;}
 .lkdv-drawer-shell .lkdv-drawer-secondary .ig-tabs{width:calc(var(--n,2)*44px + 5px)!important;max-width:calc(var(--n,2)*44px + 5px)!important;grid-template-columns:repeat(var(--n,2),minmax(0,1fr))!important;align-items:stretch!important;height:30px!important;padding:2.5px!important;border-radius:9999px!important;background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.04) 46%,rgba(0,0,0,.12)),rgba(23,29,26,.76)!important;border:.5px solid rgba(255,255,255,.18)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.26),inset 0 -1px 1px rgba(255,255,255,.06),0 10px 30px rgba(0,0,0,.24)!important;-webkit-backdrop-filter:blur(28px) saturate(180%)!important;backdrop-filter:blur(28px) saturate(180%)!important;box-sizing:border-box!important;}

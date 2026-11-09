@@ -471,6 +471,11 @@ html[data-hub-drawer-open='true'] .lkdv-floating-tabbar,
 body[data-hub-drawer-open='true'] .lkdv-floating-tabbar,
 body:has([data-testid="kit-studio-view"]) .lkdv-floating-tabbar,
 body:has([data-testid="kit-studio-view"]) [data-testid="bottom-tab-bar"],
+body:has(.ks-root) .lkdv-floating-tabbar,
+body:has([data-testid="hub-studio-host"]) .lkdv-floating-tabbar,
+body:has([data-studio-scene]) .lkdv-floating-tabbar,
+body:has(.ks-root) [data-testid="bottom-tab-bar"],
+body:has([data-testid="hub-studio-host"]) [data-testid="bottom-tab-bar"],
 body:has(.hub-camp-drawer-overlay) .lkdv-floating-tabbar {
   display: none !important;
   opacity: 0 !important;

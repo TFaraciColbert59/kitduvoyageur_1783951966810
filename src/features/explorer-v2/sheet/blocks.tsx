@@ -19,6 +19,17 @@ export function XpCardRow({ children }: { children: React.ReactNode }) {
   );
 }
 
+export function isoToEmojiFlag(iso?: string | null): string {
+  if (!iso || typeof iso !== 'string' || iso.trim().length !== 2) return '🌍';
+  const clean = iso.trim().toUpperCase();
+  const first = clean.charCodeAt(0);
+  const second = clean.charCodeAt(1);
+  if (first >= 65 && first <= 90 && second >= 65 && second <= 90) {
+    return String.fromCodePoint(127397 + first, 127397 + second);
+  }
+  return '🌍';
+}
+
 export function XpCard({
   title,
   sub,
@@ -40,10 +51,17 @@ export function XpCard({
   onClick?: () => void;
   ariaLabel?: string;
 }) {
+  const isCountryCode = Boolean(initial && initial.trim().length === 2 && /^[A-Za-z]{2}$/.test(initial.trim()));
   const content = (
     <>
-      <span className="xp-card-thumb" data-tone={tone} aria-hidden="true">
-        {icon ? <XpIcon name={icon} size={17} /> : (initial ?? title.slice(0, 1)).toUpperCase()}
+      <span className="xp-card-thumb" data-tone={tone} aria-hidden="true" style={isCountryCode ? { background: 'rgba(255, 255, 255, 0.85)', fontSize: 20 } : undefined}>
+        {icon ? (
+          <XpIcon name={icon} size={17} />
+        ) : isCountryCode ? (
+          isoToEmojiFlag(initial)
+        ) : (
+          (initial ?? title.slice(0, 1)).toUpperCase()
+        )}
       </span>
       <span className="xp-card-text">
         <span className="xp-card-title">{title}</span>
@@ -84,6 +102,7 @@ export function XpRows({ children }: { children: React.ReactNode }) {
 
 export function XpRow({
   icon,
+  image,
   tone = 'ink',
   title,
   sub,
@@ -93,6 +112,7 @@ export function XpRow({
   ariaLabel,
 }: {
   icon?: string;
+  image?: string;
   tone?: Tone;
   title: string;
   sub?: string | null;
@@ -103,7 +123,22 @@ export function XpRow({
 }) {
   const content = (
     <>
-      {icon ? (
+      {image ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={image}
+          alt=""
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: 10,
+            objectFit: 'cover',
+            flexShrink: 0,
+            border: '0.5px solid rgba(255, 255, 255, 0.9)',
+            boxShadow: '0 2px 8px rgba(23, 43, 36, 0.12)',
+          }}
+        />
+      ) : icon ? (
         <span className="xp-row-ico" data-tone={tone} aria-hidden="true">
           <XpIcon name={icon} size={15} />
         </span>

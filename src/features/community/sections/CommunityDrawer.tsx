@@ -12,13 +12,25 @@ export interface CommunityDrawerProps {
   ariaLabel?: string;
   onSwipeLeft?: () => void;
   onSwipeRight?: () => void;
+  heightPercent?: number;
+  className?: string;
 }
 
 /**
  * Demi-tiroir bas 50dvh, même forme que le drawer Profil du Compte :
  * poignée, aucun titre, aucune croix ; fermeture backdrop / Échap / glissement.
  */
-export function CommunityDrawer({ open, onClose, title = 'Explorer', children, ariaLabel, onSwipeLeft, onSwipeRight }: CommunityDrawerProps) {
+export function CommunityDrawer({
+  open,
+  onClose,
+  title = 'Explorer',
+  children,
+  ariaLabel,
+  onSwipeLeft,
+  onSwipeRight,
+  heightPercent,
+  className,
+}: CommunityDrawerProps) {
   const panelRef = useRef<HTMLDivElement | null>(null);
   const dragStart = useRef<number | null>(null);
   const [dragY, setDragY] = useState(0);
@@ -73,12 +85,15 @@ export function CommunityDrawer({ open, onClose, title = 'Explorer', children, a
       <div className="lkdv-drawer-backdrop" aria-hidden="true" onClick={onClose} />
       <div
         ref={panelRef}
-        className="lkdv-half-drawer"
+        className={`lkdv-half-drawer${className ? ` ${className}` : ''}`}
         role="dialog"
         aria-modal="true"
         aria-label={ariaLabel || title}
         data-gesture={gesture ? 'true' : undefined}
-        style={dragY ? { transform: `translateY(${dragY}px)`, transition: 'none' } : undefined}
+        style={{
+          ...(dragY ? { transform: `translateY(${dragY}px)`, transition: 'none' } : {}),
+          ...(heightPercent ? { height: `${heightPercent}dvh`, maxHeight: `${heightPercent}dvh` } : {}),
+        }}
       >
         <div
           className="lkdv-drawer-grab"

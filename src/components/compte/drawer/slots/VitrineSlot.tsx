@@ -626,7 +626,7 @@ function StatsLens({
         </div>
         <div className="lkdv-vitrine-metric">
           <b>{formatOptional(stats.dplus, formatMeters)}</b>
-          <span>Dénivelé positif</span>
+          <span>Dénivelé</span>
         </div>
         <div className="lkdv-vitrine-metric">
           <b>{formatOptional(stats.outings, formatInteger)}</b>
@@ -1008,8 +1008,8 @@ export const VITRINE_CSS = `
 .lkdv-vitrine-hero{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;padding:12px 6px;}
 .lkdv-vitrine-metric{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;padding:0 4px;text-align:center;}
 .lkdv-vitrine-metric+.lkdv-vitrine-metric::before{content:"";position:absolute;left:0;top:4px;bottom:4px;width:.5px;background:var(--sep,rgba(23,43,36,.1));}
-.lkdv-vitrine-metric b{display:block;font-family:var(--sf);font-weight:700;font-size:clamp(20px,7.2vw,28px);line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums;color:var(--label);white-space:nowrap;}
-.lkdv-vitrine-metric span{display:block;font-family:var(--sf);font-weight:600;font-size:9.5px;line-height:1.15;letter-spacing:.02em;text-transform:uppercase;color:var(--label2);text-align:center;}
+.lkdv-vitrine-metric b{display:block;font-family:var(--sf);font-weight:700;font-size:clamp(17px,5.5vw,22px);line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums;color:var(--label);white-space:nowrap;}
+.lkdv-vitrine-metric span{display:block;font-family:var(--sf);font-weight:600;font-size:8.5px;line-height:1.15;letter-spacing:.04em;text-transform:uppercase;color:var(--label2);text-align:center;opacity:.88;}
 .lkdv-vitrine-tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;}
 .lkdv-vitrine .lkdv-stat-tile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-width:0;min-height:60px;padding:7px 5px;border-top:0;border-radius:16px;background:var(--glass-bg-medium,rgba(255,255,255,.46));box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 0 0 .5px var(--glass-border,rgba(23,43,36,.1));text-align:center;box-sizing:border-box;}
 .lkdv-stat-tile-ico{display:grid;place-items:center;width:16px;height:16px;color:var(--accent);opacity:.9;}
@@ -1039,7 +1039,7 @@ export const VITRINE_CSS = `
 .lkdv-vitrine-vis button[aria-pressed="true"]{background:rgba(255,255,255,.9);color:var(--tint,#17402C);box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.1);}
 .lkdv-vitrine-vis button:disabled{opacity:.55;cursor:wait;}
 .lkdv-vitrine-vis-error{margin:4px 0 0;font-size:11px;line-height:1.35;color:var(--bad,#B3261E);}
-.lkdv-empreinte-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;}
+.lkdv-empreinte-list{list-style:none;margin:0;padding:0 2px 0 0;display:flex;flex-direction:column;gap:4px;max-height:190px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;}
 .lkdv-empreinte-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:8px;padding:6px 7px;border-radius:12px;background:rgba(255,255,255,.4);box-shadow:inset 0 0 0 .5px rgba(23,43,36,.05);}
 .lkdv-empreinte-name{min-width:0;font-family:var(--sf);font-weight:600;font-size:12.5px;line-height:1.2;color:var(--label);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .lkdv-empreinte-outings{font-family:var(--sf);font-weight:500;font-size:10px;line-height:1.2;color:var(--label2);white-space:nowrap;}

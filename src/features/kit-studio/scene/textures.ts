@@ -1,5 +1,5 @@
-// Textures du décor et du sac (maquette l.918-975) : panorama, bois de la table, tissus.
-// Le panorama, le bois et les tissus techniques (mesh, rembourrage, sangle, chiné) restent dessinés
+// Textures du décor et du sac : mur neutre, bois de l’établi, tissus.
+// Le mur, le bois et les tissus techniques (mesh, rembourrage, sangle, chiné) restent dessinés
 // par code ; toutes leurs couleurs viennent de domain/palette.scene.ts.
 // Les quatre matières que la personne choisit (ripstop, cordura, X-Pac, toile cirée) sont, elles,
 // des relevés de tissu réels (lot D) : une carte de détail neutre et une carte de relief, dans
@@ -8,18 +8,41 @@
 import { CanvasTexture, ClampToEdgeWrapping, RepeatWrapping, SRGBColorSpace } from 'three';
 import type { Texture } from 'three';
 import {
-  CLOUD_CORE, CLOUD_EDGE, FIR_DARK, FIR_LIGHT, FLOWER_PINK, FLOWER_WHITE, FLOWER_YELLOW, GRASS_DARK, GRASS_LIGHT,
-  HAZE_FAR_STOPS, HAZE_MID_STOPS, MEADOW_STOPS, RIDGE_FAR, RIDGE_MID, RIDGE_NEAR, SKY_STOPS, SNOW, SUN_STOPS,
-  TEX_BASE, WOOD_JOINT, WOOD_PLANK_COUNT, inkA, whiteA, woodPlank, woodVein,
+  WALL_STOPS, TEX_BASE, inkA, whiteA, woodPlank,
 } from '../domain/palette.scene';
-import { FABRIC_REPEAT } from './bag/fabricMaps';
 import type { ResourceTracker } from './resources';
 
-export type FabricKind = 'ripstop' | 'cordura' | 'dcf' | 'xpac' | 'waxed' | 'mesh' | 'pad' | 'web' | 'heather';
-const FABRIC_KINDS: readonly FabricKind[] = ['ripstop', 'cordura', 'dcf', 'xpac', 'waxed', 'mesh', 'pad', 'web', 'heather'];
+/**
+ * Pas physique de la trame : une image couvre 100 mm de tissu réel. Avec des UV exprimées en
+ * mètres (§2 de la spec matières), la répétition correcte est donc exactement 10, sans réglage
+ * à l'œil. Une seule source pour la scène ET la couche GLB.
+ */
+export const FABRIC_TILE_M = 0.1;
+export const FABRIC_REPEAT = 1 / FABRIC_TILE_M;
+
+export type FabricKind = 'ripstop' | 'cordura' | 'dcf' | 'xpac' | 'waxed' | 'brushed-pet' | 'mesh' | 'pad' | 'web' | 'heather';
+const FABRIC_KINDS: readonly FabricKind[] = ['ripstop', 'cordura', 'dcf', 'xpac', 'waxed', 'brushed-pet', 'mesh', 'pad', 'web', 'heather'];
 export const isFabricKind = (s: string): s is FabricKind => (FABRIC_KINDS as readonly string[]).includes(s);
 
-export interface TextureBank {
+/**
+ * Cartes de détail d'une matière, pour les sacs chargés depuis un GLB.
+ * L'albédo est NEUTRE et clair (moyenne 235/255) : la couleur vient du token, par
+ * multiplication `mat.color × mat.map` — jamais de coloris cuit dans l'image.
+ */
+export interface FabricMaps {
+  /** Carte de détail neutre, à multiplier par la couleur du token. */
+  readonly albedo: Texture;
+  /** Carte de relief en espace tangent OpenGL, ou `null` si le tissu n'a pas de relevé. */
+  readonly normal: Texture | null;
+}
+
+/** Ce que `applyPartCustomization` attend du banc : les cartes de détail d'un preset. */
+export interface FabricDetailProvider {
+  /** Cartes du preset, ou `null` si ce preset n'a pas de relevé photographique. */
+  forPreset(presetId: string | undefined): FabricMaps | null;
+}
+
+export interface TextureBank extends FabricDetailProvider {
   /** Texture de tissu (créée à la première demande, partagée ensuite). Nom inconnu : ripstop. */
   fabric(name: string): Texture;
   /** Carte de relief du tissu, pour les matières relevées sur du tissu réel. `null` pour les autres. */
@@ -30,8 +53,26 @@ export interface TextureBank {
   dispose(): void;
 }
 
+/**
+ * Relevé de tissu utilisé par chaque preset de matière de la couche GLB
+ * (`bag/materials.ts` BAG_MATERIAL_PRESETS).
+ * `ballistic-nylon` partage la trame du Cordura : ce sont deux armures toile de nylon
+ * lourdes, que seule la densité sépare — et la densité est déjà portée par la rugosité du
+ * preset. Mieux vaut la bonne armure partagée qu'une trame inventée.
+ */
+const FABRIC_BY_PRESET: Readonly<Record<string, string>> = {
+  'cordura-matte': 'cordura',
+  'ballistic-nylon': 'cordura',
+  'ripstop-ultralight': 'ripstop',
+  'waxed-canvas': 'waxed',
+  'recycled-pet': 'brushed-pet',
+};
+
+/** Presets qui disposent d'un relevé de tissu. Exporté pour les tests et l'inventaire. */
+export const PRESETS_WITH_FABRIC_MAPS: readonly string[] = Object.keys(FABRIC_BY_PRESET);
+
 /** Les quatre matières dont on a un relevé photographique dans public/assets/materials. */
-const PHOTO_FABRICS: ReadonlySet<FabricKind> = new Set<FabricKind>(['ripstop', 'cordura', 'xpac', 'waxed']);
+const PHOTO_FABRICS: ReadonlySet<FabricKind> = new Set<FabricKind>(['ripstop', 'cordura', 'xpac', 'waxed', 'brushed-pet']);
 const MATERIALS_URL = '/assets/materials';
 
 /**
@@ -86,115 +127,26 @@ function gradient(g: CanvasGradient, stops: Stops): CanvasGradient {
   return g;
 }
 
-type Harmonic = readonly [number, number, number];
-
+/** Mur sans motif ni horizon ; conserve l'API du banc pour les consommateurs existants. */
 function drawPanorama(x: CanvasRenderingContext2D, W: number, H: number): void {
-  const hY = Math.round(H * 0.69);
-  let seed = 7;
-  const rnd = (): number => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
-  const per = (u: number, k: readonly Harmonic[]): number => k.reduce((a, [f, amp, ph]) => a + amp * Math.sin(u * Math.PI * 2 * f + ph), 0);
-
-  x.fillStyle = gradient(x.createLinearGradient(0, 0, 0, hY), SKY_STOPS);
-  x.fillRect(0, 0, W, hY + 2);
-  const sx = W * 0.86;
-  const sy = H * 0.16;
-  x.fillStyle = gradient(x.createRadialGradient(sx, sy, 0, sx, sy, H * 0.55), SUN_STOPS);
-  x.fillRect(0, 0, W, hY);
-
-  for (let i = 0; i < 14; i++) {
-    const cx = rnd() * W;
-    const cy = H * (0.1 + rnd() * 0.28);
-    const w = 120 + rnd() * 260;
-    for (let j = 0; j < 7; j++) {
-      const ox = (rnd() - 0.5) * w;
-      const oy = (rnd() - 0.5) * w * 0.18;
-      const r = w * (0.12 + rnd() * 0.16);
-      for (const d of [-W, 0, W]) {
-        x.fillStyle = gradient(x.createRadialGradient(cx + ox + d, cy + oy, 0, cx + ox + d, cy + oy, r), [[0, CLOUD_CORE], [1, CLOUD_EDGE]]);
-        x.fillRect(cx + ox + d - r, cy + oy - r, 2 * r, 2 * r);
-      }
-    }
-  }
-
-  const ridge = (base: number, amp: number, k: readonly Harmonic[], fill: string, snow: number): void => {
-    const norm = k.reduce((a, q) => a + q[1], 0);
-    x.beginPath();
-    x.moveTo(0, H);
-    const pts: number[] = [];
-    for (let i = 0; i <= W; i += 4) {
-      const y = base - amp * (0.5 + (0.5 * per(i / W, k)) / norm);
-      pts.push(y);
-      x.lineTo(i, y);
-    }
-    x.lineTo(W, H);
-    x.closePath();
-    x.fillStyle = fill;
-    x.fill();
-    if (snow) {
-      x.save();
-      x.clip();
-      x.fillStyle = SNOW;
-      for (let i = 0; i <= W; i += 4) {
-        const y = pts[i / 4];
-        if (y < base - amp * snow) x.fillRect(i, y, 4, (base - amp * snow - y) * 0.9 + 6);
-      }
-      x.restore();
-    }
-  };
-
-  ridge(hY - 60, 300, [[2, 1, 0.4], [5, 0.55, 1.3], [11, 0.25, 2.1], [23, 0.12, 0.7]], RIDGE_FAR, 0.78);
-  x.fillStyle = gradient(x.createLinearGradient(0, hY - 220, 0, hY), HAZE_FAR_STOPS);
-  x.fillRect(0, hY - 220, W, 220);
-  ridge(hY - 10, 190, [[3, 1, 2.2], [7, 0.5, 0.3], [17, 0.2, 1.7]], RIDGE_MID, 0.86);
-  x.fillStyle = gradient(x.createLinearGradient(0, hY - 140, 0, hY), HAZE_MID_STOPS);
-  x.fillRect(0, hY - 140, W, 140);
-  ridge(hY + 14, 90, [[4, 1, 0.9], [9, 0.4, 2.6], [19, 0.2, 0.2]], RIDGE_NEAR, 0);
-
-  for (let i = 0; i < 420; i++) {
-    const tx = rnd() * W;
-    const band = rnd();
-    const ty = hY - 6 + band * 26;
-    const th = 14 + rnd() * 22 * (1 - band * 0.4);
-    x.fillStyle = band < 0.5 ? FIR_DARK : FIR_LIGHT;
-    for (const d of [-W, 0, W]) {
-      x.beginPath();
-      x.moveTo(tx + d, ty - th);
-      x.lineTo(tx + d + th * 0.32, ty);
-      x.lineTo(tx + d - th * 0.32, ty);
-      x.closePath();
-      x.fill();
-    }
-  }
-
-  x.fillStyle = gradient(x.createLinearGradient(0, hY + 8, 0, H), MEADOW_STOPS);
-  x.fillRect(0, hY + 12, W, H - hY);
-  for (let i = 0; i < 5000; i++) {
-    const fx = rnd() * W;
-    const fy = hY + 14 + Math.pow(rnd(), 0.7) * (H - hY - 14);
-    const q = rnd();
-    x.fillStyle = q < 0.06 ? FLOWER_WHITE : q < 0.1 ? FLOWER_YELLOW : q < 0.12 ? FLOWER_PINK : q < 0.6 ? GRASS_DARK : GRASS_LIGHT;
-    const r = q < 0.12 ? 1.6 : 1.2;
-    x.fillRect(fx, fy, r, r * (q < 0.12 ? 1 : 3));
-  }
+  x.fillStyle = gradient(x.createLinearGradient(0, 0, 0, H), WALL_STOPS);
+  x.fillRect(0, 0, W, H);
 }
 
 function drawWood(x: CanvasRenderingContext2D): void {
-  const planks = WOOD_PLANK_COUNT;
-  const ph = 256 / planks;
-  for (let p = 0; p < planks; p++) {
-    x.fillStyle = woodPlank(p);
-    x.fillRect(0, p * ph, 512, ph);
-    for (let i = 0; i < 46; i++) {
-      const y = p * ph + Math.random() * ph;
-      x.strokeStyle = woodVein(Math.random() >= 0.5, 0.08 + Math.random() * 0.14);
-      x.lineWidth = 0.6 + Math.random() * 1.4;
-      x.beginPath();
-      x.moveTo(0, y);
-      for (let q = 0; q <= 512; q += 32) x.lineTo(q, y + Math.sin(q / 60 + i) * 2.2);
-      x.stroke();
+  x.fillStyle = woodPlank(2);
+  x.fillRect(0, 0, 512, 256);
+  // Fil fin déterministe : pas de larges lames rayées, ni de scintillement à la reconstruction.
+  for (let i = 0; i < 100; i++) {
+    const y = i * 2.6;
+    x.strokeStyle = i % 3 ? inkA(0.025) : whiteA(0.10);
+    x.lineWidth = 0.4;
+    x.beginPath();
+    for (let q = 0; q <= 512; q += 8) {
+      const v = y + Math.sin(q / 85 + i * 1.7) * 0.7;
+      if (q === 0) x.moveTo(q, v); else x.lineTo(q, v);
     }
-    x.fillStyle = WOOD_JOINT;
-    x.fillRect(0, p * ph, 512, 1.5);
+    x.stroke();
   }
 }
 
@@ -283,6 +235,23 @@ const FABRIC: Readonly<Record<FabricKind, { readonly repeat: number; readonly dr
       x.strokeStyle = inkA(0.09);
       for (let y = 0; y <= 128; y += 3) { x.beginPath(); x.moveTo(0, y + 0.5); x.lineTo(128, y + 0.5); x.stroke(); }
       grain(x, 6);
+    },
+  },
+  'brushed-pet': {
+    repeat: 8,
+    draw: (x) => {
+      // Repli dessiné du polyester recyclé brossé : grain fin sans direction. L'image réelle
+      // « brushed-pet » du lot D se pose par-dessus dès qu'elle est chargée.
+      grain(x, 30);
+      x.strokeStyle = whiteA(0.16);
+      for (let i = 0; i < 120; i++) {
+        const px = Math.random() * 128;
+        const py = Math.random() * 128;
+        x.beginPath();
+        x.moveTo(px, py);
+        x.lineTo(px + 4, py + (Math.random() - 0.5) * 3);
+        x.stroke();
+      }
     },
   },
   heather: {
@@ -379,6 +348,17 @@ export function createTextureBank(tr: ResourceTracker, maxAnisotropy: number): T
   return {
     fabric,
     fabricNormal,
+    /**
+     * Cartes de détail d'un preset de matière. Fusion de l'ancien `bag/fabricMaps.ts` :
+     * un seul banc de textures pour la scène survivante. Les textures sont celles de
+     * `fabric()` / `fabricNormal()`, donc suivies par le `ResourceTracker` et libérées avec lui.
+     */
+    forPreset(presetId) {
+      if (!presetId) return null;
+      const fabricName = FABRIC_BY_PRESET[presetId];
+      if (!fabricName) return null;
+      return { albedo: fabric(fabricName), normal: fabricNormal(fabricName) };
+    },
     panorama,
     wood: woodTex,
     dispose() {

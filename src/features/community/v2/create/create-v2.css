@@ -1,0 +1,2682 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Communauté v2 — tiroir Création (`src/features/community/v2/create/**`)
+
+   Portée : `.lkdv-communaute-v2` (coque partagée). Toutes les couleurs et
+   matériaux passent par des jetons `var(--…)` : aucun hexadécimal, aucune
+   courbe littérale (garde `tests/design/unification.spec.ts`). Les classes des
+   fondations (`lkdv-cv2-*` : champs, chips, médias, brouillon, confirmation)
+   sont réutilisées ; ce fichier n'ajoute que le préfixe `lkdv-cv2c-`.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Racine du tiroir ───────────────────────────────────────────────────── */
+
+/*
+ * Place réservée **sous le contenu** pour la mini-capsule d'étapes (30 px, à
+ * 72 px du bas de la feuille quand le pied est présent : elle mord donc les
+ * 38 derniers pixels du pane). La maquette réserve 120 px
+ * (`.cr-vp .lp-pane { padding: 2px 14px 120px }`, HTML L1130) ; la coque réduit
+ * son propre padding à 16 px quand un pied est présent
+ * (`communaute-v2-shell.css`, `.has-footer .lkdv-cv2-pane`), d'où ces 76 px sur
+ * le pane Création : 16 + 76 = 92 px > 38 px, avec marge de confort (T2a).
+ * Vérifié sur Story Média, Kit Inventaire, Club Univers, Sortie RDV,
+ * Publication Légende.
+ */
+.lkdv-cv2c-form {
+  --cv2c-mini-clearance: 76px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 100%;
+}
+
+.lkdv-cv2c-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+  margin: 0;
+  padding: 0 0 var(--cv2c-mini-clearance, 76px);
+  border: 0;
+}
+
+/* Le champ actif reste entièrement visible quand le clavier le ramène à l'écran. */
+.lkdv-cv2c-pane :is(input, textarea, select, button, [tabindex]) {
+  scroll-margin-top: 16px;
+  scroll-margin-bottom: 96px;
+}
+
+.lkdv-cv2c-form-host {
+  min-height: 100%;
+}
+
+.lkdv-cv2c-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ── En-tête de champ avec action (compteur, bouton IA) ─────────────────── */
+
+.lkdv-cv2c-field-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 16px;
+}
+
+.lkdv-cv2c-field-action {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.lkdv-cv2c-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.lkdv-cv2c-section-label {
+  display: block;
+  font: 600 10px/1.2 var(--font-sans);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--lkv-text-secondary);
+}
+
+/* ── Compteur d'erreurs, brouillon, envoi ───────────────────────────────── */
+
+.lkdv-cv2c-error-summary {
+  /* Collé en haut du pane : le compteur reste lisible quand le moteur amène le
+     focus au premier champ fautif (T4a/T10b). */
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  width: 100%;
+  justify-content: flex-start;
+  border: 0;
+  text-align: left;
+  cursor: pointer;
+  min-height: var(--lkv-touch-min);
+}
+
+.lkdv-cv2c-error-summary:active {
+  transform: scale(0.99);
+}
+
+.lkdv-cv2c-draft {
+  width: 100%;
+}
+
+.lkdv-cv2c-send-note {
+  margin: 0;
+  font: 500 11px/1.35 var(--font-sans);
+  color: var(--lkv-text-secondary);
+}
+
+.lkdv-cv2c-server {
+  margin: 0 0 6px;
+  padding: 8px 10px;
+  border-radius: var(--cv2-field-radius);
+  background: var(--lkv-danger-bg);
+  color: var(--lkv-danger-dark);
+  font: 600 11.5px/1.35 var(--font-sans);
+}
+
+/* ── Aperçu vivant en tête de formulaire ────────────────────────────────── */
+
+.lkdv-cv2c-live-preview {
+  position: relative;
+  width: 100%;
+  max-height: 250px;
+  overflow: hidden;
+  border-radius: var(--cv2-radius-tile-lg);
+  pointer-events: none;
+  transform: scale(0.94);
+  transform-origin: top center;
+  margin-bottom: -14px;
+}
+
+.lkdv-cv2c-live-preview > * {
+  pointer-events: none;
+}
+
+.lkdv-cv2c-recap {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.lkdv-cv2c-recap b {
+  font: 600 14px/1.25 var(--font-display);
+  color: var(--lkv-text-primary);
+}
+
+.lkdv-cv2c-recap small {
+  font: 400 11px/1.35 var(--font-sans);
+  color: var(--lkv-text-secondary);
+}
+
+/* ── Pied : Retour / Suivant / action finale ────────────────────────────── */
+
+.lkdv-cv2-footer > .lkdv-cv2c-footbar {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.lkdv-cv2c-foot-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.lkdv-cv2c-foot-actions > .lkdv-cv2c-back {
+  flex: 0 0 auto;
+  min-width: 92px;
+}
+
+/* Maquette : `Opacité 0,4` sur un « Retour » désactivé (HTML L1144). */
+.lkdv-cv2c-foot-actions > .lkdv-cv2c-back[disabled] {
+  opacity: var(--opacity-disabled);
+  cursor: default;
+}
+
+.lkdv-cv2c-foot-actions > .lkdv-cv2c-next {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.lkdv-cv2c-foot-actions .lkdv-cv2c-next[disabled] {
+  opacity: var(--opacity-disabled);
+  cursor: default;
+}
+
+/* ── Mini-capsule d'étapes (numéros 1..n) ───────────────────────────────── */
+
+.lkdv-cv2c-step-num {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--lkv-radius-full);
+  font: 600 10.5px/1 var(--font-sans);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Confirmation de fermeture (alertdialog) ────────────────────────────── */
+
+.lkdv-cv2c-confirm-layer {
+  /* FID-036 — maquette `confirm-back` (HTML L1759-1764) : scrim **plein
+     écran** `inset:0`, jamais une couche absolue dans la feuille (le fond
+     restait cliquable hors du tiroir). Le dialogue est porté par la couche v2
+     (`position:fixed; inset:0`) : `fixed` ici couvre donc le viewport, et le
+     clic hors dialogue est intercepté par le scrim (annulation maquette). */
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  pointer-events: auto;
+  border-radius: inherit;
+  background: var(--lkv-app-bg-scrim);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+.lkdv-cv2c-confirm {
+  width: min(320px, 100%);
+  animation: cv2cConfirmIn 0.28s var(--ease-out) both;
+}
+
+@keyframes cv2cConfirmIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ── Avertissement (audience / média, invitation) ───────────────────────── */
+
+.lkdv-cv2c-warning {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--cv2-field-radius);
+  background: var(--lkv-warning-bg, var(--sage-50));
+  color: var(--lkv-warning-dark);
+  font: 500 11.5px/1.4 var(--font-sans);
+  box-shadow: inset 0 0 0 0.5px var(--lkv-border);
+}
+
+/* ── Champs : steppers, nombres, dates, lieu, hashtags ──────────────────── */
+
+.lkdv-cv2c-stepper-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.lkdv-cv2c-number-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lkdv-cv2c-number-row .lkdv-cv2-input {
+  padding-right: 40px;
+}
+
+.lkdv-cv2c-unit {
+  font: 500 12px/1 var(--font-sans);
+  color: var(--lkv-text-secondary);
+}
+
+.lkdv-cv2c-number-unit {
+  position: absolute;
+  right: 14px;
+  pointer-events: none;
+}
+
+.lkdv-cv2c-date {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lkdv-cv2c-date > svg {
+  position: absolute;
+  left: 13px;
+  color: var(--lkv-text-secondary);
+  pointer-events: none;
+}
+
+.lkdv-cv2c-date .lkdv-cv2-input {
+  padding-left: 38px;
+}
+
+.lkdv-cv2c-date-range {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+}
+
+.lkdv-cv2c-inline-add {
+  display: flex;
+  gap: 8px;
+}
+
+.lkdv-cv2c-tag-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.lkdv-cv2c-chip-x {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  margin-left: 2px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--lkv-border);
+  color: var(--lkv-text-secondary);
+  cursor: pointer;
+}
+
+.lkdv-cv2c-chip-x::after {
+  content: '';
+  position: absolute;
+  inset: -13px;
+}
+
+/* ── Lieu : recherche + « Ma position » ─────────────────────────────────── */
+
+.lkdv-cv2c-place-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.lkdv-cv2c-place {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.lkdv-cv2c-place > svg {
+  position: absolute;
+  left: 13px;
+  color: var(--lkv-text-secondary);
+  pointer-events: none;
+}
+
+.lkdv-cv2c-place .lkdv-cv2-input {
+  padding-left: 38px;
+  padding-right: 34px;
+}
+
+.lkdv-cv2c-place .lkdv-cv2c-spin {
+  position: absolute;
+  right: 12px;
+}
+
+.lkdv-cv2c-geo-btn {
+  flex: 0 0 auto;
+  padding: 0 12px;
+  font-size: 12px;
+}
+
+.lkdv-cv2c-place-list {
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+  border-radius: var(--cv2-radius-tile);
+  background: var(--cv2-menu-bg);
+  box-shadow: var(--elevation-2), inset 0 0 0 0.5px var(--cv2-menu-border);
+  -webkit-backdrop-filter: blur(var(--cv2-menu-blur)) saturate(1.8);
+  backdrop-filter: blur(var(--cv2-menu-blur)) saturate(1.8);
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.lkdv-cv2c-place-list li button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: var(--lkv-touch-min);
+  padding: 6px 10px;
+  border: 0;
+  border-radius: var(--cv2-field-radius);
+  background: none;
+  color: var(--lkv-text-primary);
+  text-align: left;
+  cursor: pointer;
+}
+
+.lkdv-cv2c-place-list li button:active {
+  background: var(--lkv-secondary-subtle);
+}
+
+.lkdv-cv2c-place-list span {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.lkdv-cv2c-place-list b {
+  font: 600 13px/1.25 var(--font-sans);
+}
+
+.lkdv-cv2c-place-list small {
+  font: 400 11px/1.25 var(--font-sans);
+  color: var(--lkv-text-secondary);
+}
+
+.lkdv-cv2c-spin {
+  animation: cv2cSpin 0.9s linear infinite;
+}
+
+@keyframes cv2cSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.lkdv-cv2c-notice {
+  color: var(--lkv-warning-dark);
+}
+
+/* ── Segmented contrôlé ─────────────────────────────────────────────────── */
+
+.lkdv-cv2c-seg-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lkdv-cv2c-seg button {
+  min-height: 34px;
+}
+
+/* ── Format et audience (étape 1 de Publication) ────────────────────────── */
+
+.lkdv-cv2c-format-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.lkdv-cv2c-format-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  min-height: 84px;
+  padding: 11px 12px;
+  border: 0;
+  border-radius: var(--cv2-radius-tile);
+  background: var(--cv2-field-bg);
+  box-shadow: inset 0 0 0 0.5px var(--cv2-field-border);
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.12s var(--ease-spring);
+}
+
+.lkdv-cv2c-format-card:active {
+  transform: scale(0.975);
+}
+
+.lkdv-cv2c-format-card[data-active='true'] {
+  background: var(--lkv-secondary-subtle);
+  box-shadow: inset 0 0 0 1.5px var(--lkv-secondary);
+}
+
+.lkdv-cv2c-format-ico {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--lkv-radius-full);
+  background: var(--lkv-surface-muted);
+  color: var(--lkv-forest-900);
+}
+
+.lkdv-cv2c-format-card b {
+  font: 600 13px/1.2 var(--font-sans);
+  color: var(--lkv-text-primary);
+}
+
+.lkdv-cv2c-format-card small {
+  font: 400 10.5px/1.3 var(--font-sans);
+  color: var(--lkv-text-secondary);
+}
+
+/* « Créer dans Sortie », sous la note de l'option Événement (maquette L2814). */
+.lkdv-cv2c-format-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  min-height: var(--lkv-touch-min);
+}
+
+/* Réglages inertes de l'étape Diffusion (présentation maquette, L2832-2836). */
+.lkdv-cv2c-inert-switches {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.lkdv-cv2c-inert-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.lkdv-cv2c-inert-row b {
+  display: block;
+  font: 600 13px/1.25 var(--font-sans);
+  color: var(--lkv-text-primary);
+}
+
+.lkdv-cv2c-inert-row small {
+  display: block;
+  font: 400 11px/1.3 var(--font-sans);
+  color: var(--lkv-text-secondary);
+}
+
+.lkdv-cv2c-inert-row .lkdv-cv2c-switch {
+  opacity: var(--opacity-disabled);
+  cursor: default;
+}
+
+.lkdv-cv2c-audience-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.lkdv-cv2c-audience-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 54px;
+  padding: 9px 12px;
+  border: 0;
+  border-radius: var(--cv2-radius-tile);
+  background: var(--cv2-field-bg);
+  box-shadow: inset 0 0 0 0.5px var(--cv2-field-border);
+  text-align: left;
+  cursor: pointer;
+}
+
+.lkdv-cv2c-audience-card[data-active='true'] {
+  background: var(--lkv-secondary-subtle);
+  box-shadow: inset 0 0 0 1.5px var(--lkv-secondary);
+}
+
+.lkdv-cv2c-audience-card b {
+  display: block;
+  font: 600 13px/1.25 var(--font-sans);
+  color: var(--lkv-text-primary);
+}
+
+.lkdv-cv2c-audience-card small {
+  display: block;
+  font: 400 10.5px/1.3 var(--font-sans);
+  color: var(--lkv-text-secondary);
+}
+
+.lkdv-cv2c-radio {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid var(--lkv-border);
+  background: var(--lkv-surface-paper);
+}
+
+.lkdv-cv2c-audience-card[data-active='true'] .lkdv-cv2c-radio {
+  border-color: var(--lkv-forest-900);
+  background: radial-gradient(circle at center, var(--lkv-forest-900) 0 6px, var(--lkv-surface-paper) 6.5px);
+}
+
+/* ── Médias en lignes (maquette `.mrow`, HTML L1205-1211 et L2787) ──────── */
+
+.lkdv-cv2c-media {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.lkdv-cv2c-medialist {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Grille de la maquette : poignée 44 · vignette 56 · texte 1fr · supprimer 44. */
+.lkdv-cv2c-medialist-row {
+  display: grid;
+  grid-template-columns: 44px 56px minmax(0, 1fr) 44px;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 4px 6px 0;
+  border-radius: var(--cv2-radius-tile);
+  background: var(--cv2-field-bg);
+  box-shadow: inset 0 0 0 0.5px var(--lkv-border);
+}
+
+.lkdv-cv2c-medialist-grip,
+.lkdv-cv2c-medialist-del {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: var(--lkv-radius-full);
+  background: none;
+  color: var(--lkv-text-secondary);
+  cursor: pointer;
+}
+
+.lkdv-cv2c-medialist-grip[data-dragging='true'] {
+  color: var(--lkv-forest-900);
+  background: var(--lkv-secondary-subtle);
+}
+
+.lkdv-cv2c-medialist-thumb {
+  position: relative;
+  display: block;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--lkv-radius-md);
+  overflow: hidden;
+  background: var(--lkv-surface-muted);
+}
+
+.lkdv-cv2c-medialist-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lkdv-cv2c-medialist-cover {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 2px 3px;
+  background: var(--lkv-overlay-scrim);
+  color: var(--lkv-text-inverted);
+  font: 600 8px/1.15 var(--font-sans);
+  font-style: normal;
+  text-align: center;
+}
+
+.lkdv-cv2c-medialist-progress {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  background: var(--lkv-forest-900);
+}
+
+.lkdv-cv2c-medialist-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.lkdv-cv2c-medialist-info b {
+  font: 600 13px/1.2 var(--font-sans);
+  color: var(--lkv-text-primary);
+}
+
+.lkdv-cv2c-medialist-info small {
+  font: 500 11px/1.2 var(--font-sans);
+  color: var(--lkv-text-secondary);
+}
+
+.lkdv-cv2c-medialist-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 10px;
+}
+
+/* « Décrire l'image », « Réessayer », « Couverture » : cible 28 px + marge. */
+.lkdv-cv2c-linkbtn {
+  min-height: 28px;
+  padding: 4px 0;
+  border: 0;
+  background: none;
+  color: var(--lkv-forest-900);
+  font: 600 11px/1.2 var(--font-sans);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.lkdv-cv2c-medialist-crop {
+  display: inline-flex;
+  gap: 4px;
+  margin-top: 3px;
+}
+
+.lkdv-cv2c-medialist-crop button {
+  min-width: 44px;
+  min-height: 28px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--lkv-radius-full);
+  background: var(--lkv-surface-muted);
+  color: var(--lkv-text-secondary);
+  font: 600 10.5px/1 var(--font-sans);
+  box-shadow: inset 0 0 0 0.5px var(--lkv-border);
+  cursor: pointer;
+}
+
+.lkdv-cv2c-medialist-crop button[aria-pressed='true'] {
+  background: var(--lkv-secondary-subtle);
+  color: var(--lkv-forest-900);
+  box-shadow: inset 0 0 0 1px var(--lkv-secondary);
+}
+
+.lkdv-cv2c-medialist-alt {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 4px 6px 52px;
+}
+
+.lkdv-cv2c-media-empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font: 500 10px/1.2 var(--font-sans);
+  color: var(--lkv-text-secondary);
+}
+
+.lkdv-cv2c-media-open {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.lkdv-cv2c-media-open[aria-pressed='true'] {
+  box-shadow: inset 0 0 0 2px var(--lkv-forest-900);
+  border-radius: var(--lkv-radius-sm);
+}
+
+.lkdv-cv2c-media-cover {
+  position: absolute;
+  left: 4px;
+  bottom: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 6px;
+  border-radius: var(--lkv-radius-full);
+  background: var(--cv2-menu-bg);
+  color: var(--lkv-forest-900);
+  font: 600 9px/1 var(--font-sans);
+  z-index: 2;
+}
+
+.lkdv-cv2c-media-error {
+  position: absolute;
+  inset: auto 0 0;
+  z-index: 3;
+  min-height: 26px;
+  border: 0;
+  background: var(--lkv-danger);
+  color: var(--lkv-text-inverted);
+  font: 600 10px/1 var(--font-sans);
+  cursor: pointer;
+}
+
+.lkdv-cv2c-media-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border-radius: var(--cv2-radius-tile);
+  background: var(--lkv-surface-card);
+  box-shadow: var(--elevation-1), inset 0 0 0 0.5px var(--lkv-border);
+}
+
+.lkdv-cv2c-media-edit-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.lkdv-cv2c-media-edit-head b {
+  font: 600 12px/1.2 var(--font-sans);
+  color: var(--lkv-text-primary);
+}
+
+.lkdv-cv2c-icon-btn {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--lkv-surface-muted);
+  color: var(--lkv-text-secondary);
+  cursor: pointer;
+}
+
+.lkdv-cv2c-icon-btn::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+}
+
+.lkdv-cv2c-crop-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lkdv-cv2c-crop-preview {
+  max-height: 180px;
+  width: auto;
+  max-width: 100%;
+  margin: 0 auto;
+  aspect-ratio: 4 / 5;
+}
+
+.lkdv-cv2c-crop-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lkdv-cv2c-add-media {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  min-height: var(--lkv-touch-min);
+  padding: 0 14px;
+  border: 0;
+  border-radius: var(--cv2-field-radius);
+  background: var(--cv2-field-bg);
+  color: var(--lkv-forest-900);
+  font: 600 13px/1 var(--font-sans);
+  box-shadow: inset 0 0 0 1px var(--lkv-border);
+  cursor: pointer;
+}
+
+.lkdv-cv2c-add-media:active {
+  transform: scale(0.985);
+}
+
+/* ── Story : scène 9:16, calques, stickers, dock ────────────────────────── */
+
+/* Aperçu compact de l'étape Média (maquette `.sprev` 112 px, HTML L1249). */
+.lkdv-cv2c-story-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px;
+  border-radius: var(--cv2-radius-tile);
+  background: var(--cv2-field-bg);
+  box-shadow: inset 0 0 0 0.5px var(--cv2-field-border);
+}
+
+.lkdv-cv2c-story-thumb {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 100px;
+  border-radius: var(--lkv-radius-sm);
+  overflow: hidden;
+  background: var(--lkv-surface-muted);
+  color: var(--lkv-text-secondary);
+}
+
+.lkdv-cv2c-story-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lkdv-cv2c-story-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.lkdv-cv2c-story-meta b {
+  font: 600 14px/1.2 var(--font-display);
+  color: var(--lkv-text-primary);
+}
+
+.lkdv-cv2c-story-meta small {
+  font: 400 11px/1.3 var(--font-sans);
+  color: var(--lkv-text-secondary);
+}
+
+/* Deux pilules Galerie / Caméra (maquette `.src-btns`, HTML L1227/L2890). */
+.lkdv-cv2c-src-btns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.lkdv-cv2c-src-btns .lkdv-cv2-pill {
+  width: 100%;
+  gap: 6px;
+}
+
+/* Aperçu figé de l'étape Diffusion (« Aperçu final exact », HTML L2907). */
+.lkdv-cv2c-final-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lkdv-cv2c-story-stage {
+  position: relative;
+  /* Cadre 9:16 de la maquette : 300 px de haut, largeur déduite
+     (`.crop916 { height: 300px; aspect-ratio: 9/16 }`, HTML L1233). */
+  height: 300px;
+  width: auto;
+  max-width: 100%;
+  aspect-ratio: 9 / 16;
+  margin: 0 auto;
+  border-radius: var(--cv2-radius-tile-lg);
+  overflow: hidden;
+  background: var(--lkv-surface-muted);
+  touch-action: none;
+}
+
+.lkdv-cv2c-story-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--lkv-text-secondary);
+  font: 500 12px/1.35 var(--font-sans);
+  text-align: center;
+  padding: 16px;
+}
+
+.lkdv-cv2c-story-dock {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 6px;
+  border-radius: var(--lkv-radius-full);
+  background: var(--cv2-menu-bg);
+  box-shadow: var(--elevation-2), inset 0 0 0 0.5px var(--cv2-menu-border);
+  -webkit-backdrop-filter: blur(var(--cv2-menu-blur)) saturate(1.8);
+  backdrop-filter: blur(var(--cv2-menu-blur)) saturate(1.8);
+}
+
+.lkdv-cv2c-story-dock button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 36px;
+  padding: 0 11px;
+  border: 0;
+  border-radius: var(--lkv-radius-full);
+  background: none;
+  color: var(--lkv-forest-900);
+  font: 600 11.5px/1 var(--font-sans);
+  cursor: pointer;
+}
+
+.lkdv-cv2c-story-dock button[aria-pressed='true'] {
+  background: var(--lkv-secondary-subtle);
+}
+
+.lkdv-cv2c-story-layer {
+  position: absolute;
+  z-index: 3;
+  touch-action: none;
+  cursor: grab;
+}
+
+.lkdv-cv2c-story-layer:active {
+  cursor: grabbing;
+}
+
+.lkdv-cv2c-story-layer-text {
+  padding: 6px 10px;
+  border-radius: var(--lkv-radius-md);
+  white-space: pre-wrap;
+  text-align: center;
+  max-width: 82%;
+  user-select: none;
+  line-height: 1.25;
+}
+
+.lkdv-cv2c-story-layer-text[data-style='clair'] {
+  background: var(--lkv-overlay-scrim);
+  color: var(--lkv-text-inverted);
+}
+
+.lkdv-cv2c-story-layer-text[data-style='encre'] {
+  background: var(--lkv-surface-paper);
+  color: var(--lkv-forest-900);
+}
+
+.lkdv-cv2c-story-layer-text[data-style='sauge'] {
+  background: var(--lkv-secondary-subtle);
+  color: var(--lkv-forest-900);
+}
+
+.lkdv-cv2c-story-sticker {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 9px;
+  border-radius: var(--lkv-radius-full);
+  background: var(--cv2-menu-bg);
+  color: var(--lkv-forest-900);
+  font: 600 10.5px/1 var(--font-sans);
+  box-shadow: var(--elevation-1);
+  -webkit-backdrop-filter: blur(var(--cv2-menu-blur)) saturate(1.8);
+  backdrop-filter: blur(var(--cv2-menu-blur)) saturate(1.8);
+}
+
+.lkdv-cv2c-story-tools {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Cadrage : − / zoom / + / Remplacer, en ligne (maquette `.zoomc`, L1239). */
+.lkdv-cv2c-zoom-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.lkdv-cv2c-zoom-row button {
+  min-width: 44px;
+  min-height: var(--lkv-touch-min);
+  border: 0;
+  border-radius: var(--cv2-field-radius);
+  background: var(--cv2-field-bg);
+  color: var(--lkv-text-secondary);
+  font: 600 11px/1 var(--font-sans);
+  box-shadow: inset 0 0 0 0.5px var(--lkv-border);
+  cursor: pointer;
+}
+
+.lkdv-cv2c-zoom-row .lkdv-cv2c-zoom-value {
+  min-width: 58px;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--lkv-forest-900);
+}
+
+.lkdv-cv2c-zoom-row button:disabled {
+  opacity: var(--opacity-disabled);
+  cursor: default;
+}
+
+.lkdv-cv2c-trim {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lkdv-cv2c-trim input[type='range'] {
+  width: 100%;
+  height: var(--lkv-touch-min);
+  accent-color: var(--lkv-forest-900);
+}
+
+.lkdv-cv2c-layer-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.lkdv-cv2c-layer-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: var(--cv2-field-radius);
+  background: var(--lkv-surface-card);
+  box-shadow: inset 0 0 0 0.5px var(--lkv-border);
+}
+
+.lkdv-cv2c-layer-row input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* ── Carte (tracé du carnet, rendez-vous de sortie) ─────────────────────── */
+
+.lkdv-cv2c-map {
+  position: relative;
+  width: 100%;
+  height: 260px;
+  border-radius: var(--cv2-radius-tile-lg);
+  overflow: hidden;
+  background: var(--lkv-surface-muted);
+}
+
+.lkdv-cv2c-map iframe,
+.lkdv-cv2c-map canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.lkdv-cv2c-map-actions {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  z-index: 2;
+}
+
+.lkdv-cv2c-map-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 38px;
+  padding: 0 11px;
+  border: 0;
+  border-radius: var(--lkv-radius-full);
+  background: var(--cv2-menu-bg);
+  color: var(--lkv-forest-900);
+  font: 600 11.5px/1 var(--font-sans);
+  box-shadow: var(--elevation-1);
+  -webkit-backdrop-filter: blur(var(--cv2-menu-blur));
+  backdrop-filter: blur(var(--cv2-menu-blur));
+  cursor: pointer;
+}
+
+.lkdv-cv2c-map-btn[aria-pressed='true'] {
+  background: var(--lkv-secondary-subtle);
+  box-shadow: inset 0 0 0 1px var(--lkv-secondary);
+}
+
+.lkdv-cv2c-map-status {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  z-index: 2;
+  padding: 4px 8px;
+  border-radius: var(--lkv-radius-full);
+  background: var(--cv2-menu-bg);
+  color: var(--lkv-text-secondary);
+  font: 500 10px/1 var(--font-sans);
+  -webkit-backdrop-filter: blur(var(--cv2-menu-blur));
+  backdrop-filter: blur(var(--cv2-menu-blur));
+}
+
+.lkdv-cv2c-map-help {
+  margin: 0;
+  font: 400 10.5px/1.35 var(--font-sans);
+  color: var(--lkv-text-secondary);
+}
+
+.lkdv-cv2c-elevation {
+  width: 100%;
+  height: 64px;
+  border-radius: var(--cv2-field-radius);
+  background: var(--lkv-surface-muted);
+}
+
+.lkdv-cv2c-elevation svg {
+  width: 100%;
+  height: 100%;
+}
+
+.lkdv-cv2c-metric-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.lkdv-cv2c-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: var(--cv2-field-radius);
+  background: var(--lkv-surface-card);
+  box-shadow: inset 0 0 0 0.5px var(--lkv-border);
+}
+
+.lkdv-cv2c-metric span {
+  font: 600 10px/1.2 var(--font-sans);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--lkv-text-secondary);
+}
+
+.lkdv-cv2c-metric b {
+  font: 600 14px/1.2 var(--font-display);
+  color: var(--lkv-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Carnet : jours et moments ──────────────────────────────────────────── */
+
+.lkdv-cv2c-days {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.lkdv-cv2c-day-tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+
+.lkdv-cv2c-day-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.lkdv-cv2c-day-tab {
+  flex: 0 0 auto;
+  min-height: 34px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--lkv-radius-full);
+  background: var(--cv2-field-bg);
+  color: var(--lkv-text-secondary);
+  font: 600 11.5px/1 var(--font-sans);
+  box-shadow: inset 0 0 0 0.5px var(--lkv-border);
+  cursor: pointer;
+}
+
+.lkdv-cv2c-day-tab[aria-selected='true'] {
+  background: var(--lkv-secondary-subtle);
+  color: var(--lkv-forest-900);
+  box-shadow: inset 0 0 0 1px var(--lkv-secondary);
+}
+
+/* FID-068 — cible du glisser entre jours : la pastille s'entoure, sans motion. */
+.lkdv-cv2c-day-tabs [data-drop='true'] {
+  background: var(--lkv-secondary-subtle);
+  box-shadow: inset 0 0 0 2px var(--lkv-secondary);
+}
+
+.lkdv-cv2c-days[data-dragging='true'] .lkdv-cv2c-day-tabs {
+  cursor: grabbing;
+}
+
+.lkdv-cv2c-day-tab-add {
+  flex: 0 0 auto;
+  width: 34px;
+  min-height: 34px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--cv2-field-bg);
+  color: var(--lkv-forest-900);
+  font: 600 16px/1 var(--font-sans);
+  box-shadow: inset 0 0 0 0.5px var(--lkv-border);
+  cursor: pointer;
+}
+
+.lkdv-cv2c-moments {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.lkdv-cv2c-moment {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border-radius: var(--cv2-radius-tile);
+  background: var(--lkv-surface-card);
+  box-shadow: inset 0 0 0 0.5px var(--lkv-border);
+}
+
+.lkdv-cv2c-moment-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lkdv-cv2c-moment-kind {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 28px;
+  padding: 0 8px;
+  border-radius: var(--lkv-radius-full);
+  background: var(--lkv-surface-muted);
+  color: var(--lkv-forest-900);
+  font: 600 10px/1 var(--font-sans);
+}
+
+.lkdv-cv2c-moment .lkdv-cv2c-moment-delete {
+  margin-left: auto;
+}
+
+/* FID-068 — moment en cours de glisser et ligne « Nuitée + poignée ». */
+.lkdv-cv2c-moment[data-dragging='true'] {
+  opacity: 0.55;
+}
+
+.lkdv-cv2c-night-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lkdv-cv2c-night-head .lkdv-cv2c-switch {
+  flex: 1 1 auto;
+}
+
+.lkdv-cv2c-moment-photo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lkdv-cv2c-moment-photo img {
+  width: 46px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: var(--lkv-radius-sm);
+}
+
+.lkdv-cv2c-empty {
+  padding: 10px 12px;
+  border-radius: var(--cv2-field-radius);
+  background: var(--lkv-surface-muted);
+  color: var(--lkv-text-secondary);
+  font: 400 11.5px/1.4 var(--font-sans);
+}
+
+/* ── Kit : inventaire, jauge de poids, objet personnalisé ───────────────── */
+
+.lkdv-cv2c-kit {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.lkdv-cv2c-weight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--cv2-radius-tile);
+  background: var(--lkv-surface-card);
+  box-shadow: inset 0 0 0 0.5px var(--lkv-border);
+}
+
+.lkdv-cv2c-weight-main {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 0 0 auto;
+}
+
+.lkdv-cv2c-weight-main b {
+  font: 600 17px/1.1 var(--font-display);
+  color: var(--lkv-forest-900);
+  font-variant-numeric: tabular-nums;
+}
+
+.lkdv-cv2c-weight-main small {
+  font: 600 9.5px/1.2 var(--font-sans);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--lkv-text-secondary);
+}
+
+.lkdv-cv2c-kit-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lkdv-cv2c-kit-group {
+  border-radius: var(--cv2-radius-tile);
+  background: var(--lkv-surface-card);
+  box-shadow: inset 0 0 0 0.5px var(--lkv-border);
+  overflow: hidden;
+}
+
+.lkdv-cv2c-kit-group-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: var(--lkv-touch-min);
+  padding: 6px 12px;
+  border: 0;
+  background: none;
+  color: var(--lkv-text-primary);
+  font: 600 12px/1.2 var(--font-sans);
+  text-align: left;
+  cursor: pointer;
+}
+
+.lkdv-cv2c-kit-group-head small {
+  margin-left: auto;
+  font: 500 10.5px/1 var(--font-mono);
+  color: var(--lkv-text-secondary);
+}
+
+.lkdv-cv2c-kit-items {
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+  margin: 0;
+  padding: 0 8px 8px;
+}
+
+.lkdv-cv2c-kit-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 2px 4px;
+  border-top: 0.5px solid var(--cv2-list-sep);
+}
+
+.lkdv-cv2c-kit-item:first-child {
+  border-top: 0;
+}
+
+/* Catégorie vide : « Glisse un objet ici » (maquette `kg-e`, HTML L3191). */
+.lkdv-cv2c-kit-item-empty {
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  padding: 2px 4px;
+  font: 400 11px/1.2 var(--font-sans);
+  font-style: italic;
+  color: var(--lkv-text-muted);
+}
+
+.lkdv-cv2c-kit-item-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 500 12.5px/1.2 var(--font-sans);
+  color: var(--lkv-text-primary);
+}
+
+.lkdv-cv2c-kit-item small {
+  font: 500 10.5px/1 var(--font-mono);
+  color: var(--lkv-text-secondary);
+}
+
+.lkdv-cv2c-kit-item .lkdv-cv2c-icon-btn {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+}
+
+.lkdv-cv2c-kit-object-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 70px 92px 34px;
+  gap: 6px;
+  align-items: center;
+}
+
+.lkdv-cv2c-kit-object-row .lkdv-cv2-input {
+  min-height: 40px;
+  padding: 0 10px;
+  font-size: 16px;
+}
+
+.lkdv-cv2c-object-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  min-height: var(--lkv-touch-min);
+  border: 0;
+  border-radius: var(--cv2-field-radius);
+  background: var(--cv2-field-bg);
+  color: var(--lkv-forest-900);
+  font: 600 12.5px/1 var(--font-sans);
+  box-shadow: inset 0 0 0 0.5px var(--lkv-border);
+  cursor: pointer;
+}
+
+.lkdv-cv2c-product-tools {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lkdv-cv2c-product-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lkdv-cv2c-product-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.lkdv-cv2c-product-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--lkv-touch-min);
+  padding: 6px 10px;
+  border: 0;
+  border-radius: var(--cv2-field-radius);
+  background: var(--lkv-surface-card);
+  box-shadow: inset 0 0 0 0.5px var(--lkv-border);
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
+}
+
+.lkdv-cv2c-product-row b {
+  font: 600 12.5px/1.2 var(--font-sans);
+  color: var(--lkv-text-primary);
+}
+
+.lkdv-cv2c-product-row small {
+  display: block;
+  font: 400 10.5px/1.25 var(--font-sans);
+  color: var(--lkv-text-secondary);
+}
+
+.lkdv-cv2c-product-row .lkdv-cv2c-kit-item {
+  border-top: 0;
+}
+
+/* ── Club : blason, slug, adhésion, questions ───────────────────────────── */
+
+.lkdv-cv2c-crest-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--cv2-radius-tile);
+  background: var(--lkv-surface-card);
+  box-shadow: inset 0 0 0 0.5px var(--lkv-border);
+}
+
+/* Aperçu du club : ligne blason + nom (maquette `.kprev`, L3304) ; la
+   bannière 3:1 reste réservée à l'étape Univers (FID-056 : slot 150 px). */
+.lkdv-cv2c-club-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lkdv-cv2c-club-avatar {
+  flex: none;
+  display: block;
+  width: 44px;
+  height: 44px;
+  overflow: hidden;
+  border-radius: var(--lkv-radius-md);
+  background: var(--lkv-surface-muted);
+}
+
+.lkdv-cv2c-club-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lkdv-cv2c-crest-row b {
+  font: 600 14px/1.25 var(--font-display);
+  color: var(--lkv-text-primary);
+}
+
+.lkdv-cv2c-crest-row small {
+  display: block;
+  font: 400 10.5px/1.3 var(--font-sans);
+  color: var(--lkv-text-secondary);
+}
+
+.lkdv-cv2c-url-preview {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  border-radius: var(--cv2-field-radius);
+  background: var(--lkv-surface-muted);
+  font: 500 12px/1.2 var(--font-mono);
+  color: var(--lkv-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.lkdv-cv2c-url-preview b {
+  color: var(--lkv-forest-900);
+  font-weight: 600;
+}
+
+.lkdv-cv2c-url-preview[data-state='invalid'] b {
+  color: var(--lkv-danger-dark);
+}
+
+.lkdv-cv2c-mode-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.lkdv-cv2c-mode-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-height: 96px;
+  padding: 11px 12px;
+  border: 0;
+  border-radius: var(--cv2-radius-tile);
+  background: var(--cv2-field-bg);
+  box-shadow: inset 0 0 0 0.5px var(--cv2-field-border);
+  text-align: left;
+  cursor: pointer;
+}
+
+.lkdv-cv2c-mode-card[aria-checked='true'] {
+  background: var(--lkv-secondary-subtle);
+  box-shadow: inset 0 0 0 1.5px var(--lkv-secondary);
+}
+
+.lkdv-cv2c-mode-card b {
+  font: 600 13px/1.2 var(--font-sans);
+  color: var(--lkv-text-primary);
+}
+
+.lkdv-cv2c-mode-card small {
+  font: 400 10.5px/1.35 var(--font-sans);
+  color: var(--lkv-text-secondary);
+}
+
+/* FID-051 — cartes « Point de départ du tracé » (maquette `.rcards/.rcard`,
+   HTML L2984-2987 et CSS L1173-1180 : colonne, carte 60 px, icône 38 px). */
+.lkdv-cv2c-rcards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lkdv-cv2c-rcard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 60px;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 18px;
+  background: var(--cv2-field-bg);
+  box-shadow: inset 0 0 0 0.5px var(--cv2-field-border);
+  text-align: left;
+  cursor: pointer;
+}
+
+.lkdv-cv2c-rcard-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: var(--cv2-soft);
+  color: var(--lkv-forest-900);
+}
+
+.lkdv-cv2c-rcard-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.lkdv-cv2c-rcard-text b {
+  font: 600 14px/1.25 var(--font-sans);
+  color: var(--lkv-text-primary);
+}
+
+.lkdv-cv2c-rcard-text small {
+  font: 400 12px/1.35 var(--font-sans);
+  color: var(--lkv-text-secondary);
+}
+
+.lkdv-cv2c-rcard:active {
+  transform: scale(0.99);
+}
+
+.lkdv-cv2c-questions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.lkdv-cv2c-question-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* FID-054 — poignée de glisser : cible 44 px (maquette `.grip`), sans déplacer
+   la ligne ; la cible survolée est marquée, le reste ne bouge pas. */
+.lkdv-cv2c-drag {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: var(--lkv-radius-sm);
+  background: transparent;
+  color: var(--lkv-text-secondary);
+  touch-action: none;
+  cursor: grab;
+}
+
+.lkdv-cv2c-drag:active {
+  cursor: grabbing;
+}
+
+.lkdv-cv2c-question-row[data-dragging='true'] {
+  opacity: 0.55;
+}
+
+.lkdv-cv2c-question-row[data-over='true'] {
+  border-radius: var(--lkv-radius-sm);
+  box-shadow: inset 0 0 0 1.5px var(--lkv-secondary);
+}
+
+.lkdv-cv2c-question-row .lkdv-cv2-input {
+  flex: 1 1 auto;
+}
+
+.lkdv-cv2c-charter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* ── Sortie : difficulté, capacité, rendez-vous, aperçu ─────────────────── */
+
+/* Échelle à 5 niveaux de la maquette (`.ladder`/`.rung`, HTML L1331-1335). */
+.lkdv-cv2c-difficulty {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.lkdv-cv2c-difficulty button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 60px;
+  padding: 6px 4px;
+  border: 0;
+  border-radius: var(--cv2-field-radius);
+  background: var(--cv2-field-bg);
+  color: var(--lkv-text-secondary);
+  box-shadow: inset 0 0 0 0.5px var(--lkv-border);
+  cursor: pointer;
+}
+
+.lkdv-cv2c-difficulty button[aria-checked='true'] {
+  background: var(--lkv-secondary-subtle);
+  color: var(--lkv-forest-900);
+  box-shadow: inset 0 0 0 1.5px var(--lkv-secondary);
+}
+
+.lkdv-cv2c-difficulty b {
+  font: 700 15px/1 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.lkdv-cv2c-difficulty small {
+  font: 600 10px/1.15 var(--font-sans);
+  text-align: center;
+}
+
+/* Définition du niveau choisi, sous l'échelle (maquette `ladder-def`). */
+.lkdv-cv2c-difficulty-def {
+  margin: 2px 0 0;
+  font: 400 11px/1.35 var(--font-sans);
+  color: var(--lkv-text-secondary);
+}
+
+.lkdv-cv2c-difficulty-def b {
+  color: var(--lkv-text-primary);
+}
+
+.lkdv-cv2c-capacity-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.lkdv-cv2c-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--lkv-touch-min);
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--lkv-text-primary);
+  font: 500 12.5px/1.2 var(--font-sans);
+  cursor: pointer;
+}
+
+.lkdv-cv2c-switch-track {
+  position: relative;
+  width: 44px;
+  height: 26px;
+  border-radius: var(--lkv-radius-full);
+  background: var(--lkv-border);
+  transition: background 0.18s var(--ease-out);
+}
+
+.lkdv-cv2c-switch[aria-checked='true'] .lkdv-cv2c-switch-track {
+  background: var(--lkv-forest-900);
+}
+
+.lkdv-cv2c-switch-dot {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--lkv-surface-paper);
+  box-shadow: var(--elevation-1);
+  transition: transform 0.18s var(--ease-out);
+}
+
+.lkdv-cv2c-switch[aria-checked='true'] .lkdv-cv2c-switch-dot {
+  transform: translateX(18px);
+}
+
+.lkdv-cv2c-ticket-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lkdv-cv2c-weather {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: var(--lkv-radius-full);
+  background: var(--lkv-surface-muted);
+  color: var(--lkv-text-secondary);
+  font: 500 11px/1.2 var(--font-sans);
+}
+
+/* ── Clavier : le pied et les capsules restent au-dessus du clavier ──────── */
+
+.lkdv-cv2c-keyboard .lkdv-cv2-footer {
+  padding-bottom: calc(8px + var(--keyboard-inset, 0px));
+}
+
+.lkdv-cv2c-keyboard .lkdv-cv2-mini-slot {
+  bottom: calc(72px + var(--keyboard-inset, 0px));
+}
+
+/* ── Mouvement réduit ───────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .lkdv-cv2c-confirm {
+    animation: none;
+  }
+
+  .lkdv-cv2c-format-card,
+  .lkdv-cv2c-live-preview {
+    transition: none;
+  }
+
+  .lkdv-cv2c-spin {
+    animation-duration: 1.6s;
+  }
+
+  .lkdv-cv2c-switch-track,
+  .lkdv-cv2c-switch-dot {
+    transition: none;
+  }
+
+  .lkdv-cv2c-rcard:active {
+    transform: none;
+  }
+}
+
+/* ── Story : cadre de composition du visualiseur existant ───────────────── */
+
+.lkdv-story-compose-frame {
+  position: absolute;
+  inset: 0;
+  display: block;
+  overflow: hidden;
+  background: var(--lkv-surface-muted);
+}
+
+.lkdv-story-compose-media {
+  position: absolute;
+  inset: 0;
+  transition: transform 0.12s var(--ease-out);
+  will-change: transform;
+}
+
+.lkdv-story-compose-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.lkdv-story-compose-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 18px;
+  text-align: center;
+  color: var(--lkv-text-secondary);
+  font: 500 12px/1.35 var(--font-sans);
+}
+
+.lkdv-story-compose-empty p {
+  margin: 0;
+}
+
+.lkdv-story-compose-empty p + p {
+  font-size: 10.5px;
+  opacity: 0.8;
+}
+
+.lkdv-story-compose-scrim {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.lkdv-story-compose-scrim--top {
+  top: 0;
+  height: 64px;
+  background: linear-gradient(180deg, var(--lkv-overlay-scrim), transparent);
+}
+
+.lkdv-story-compose-scrim--bottom {
+  bottom: 0;
+  height: 96px;
+  background: linear-gradient(0deg, var(--lkv-overlay-scrim), transparent);
+}
+
+.lkdv-cv2c-story-stickers {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 58px;
+  z-index: 4;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.lkdv-cv2c-story-layer.is-selected {
+  outline: 1.5px dashed var(--lkv-text-inverted);
+  outline-offset: 4px;
+  border-radius: var(--lkv-radius-md);
+}
+
+.lkdv-cv2c-trim-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lkdv-cv2c-trim-row input[type='range'] {
+  width: 100%;
+  height: 32px;
+  accent-color: var(--lkv-forest-900);
+}
+
+.lkdv-cv2c-layer-row[data-selected='true'] {
+  box-shadow: inset 0 0 0 1.5px var(--lkv-secondary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lkdv-story-compose-media {
+    transition: none;
+  }
+}
+
+/* ── Carnet : couverture, photo du kit, carte plein cadre ───────────────── */
+
+.lkdv-cv2c-map-canvas {
+  position: absolute;
+  inset: 0;
+}
+
+.lkdv-cv2c-carnet-cover {
+  width: 100%;
+  max-height: 150px;
+  object-fit: cover;
+  border-radius: var(--cv2-field-radius);
+  display: block;
+}
+
+.lkdv-cv2c-kit-cover {
+  width: 46px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: var(--lkv-radius-sm);
+  display: block;
+}
+
+.lkdv-cv2c-product-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  background: none;
+  padding: 0;
+  text-align: left;
+  color: var(--lkv-text-primary);
+  cursor: pointer;
+}
+
+.lkdv-cv2c-product-main b {
+  display: block;
+  font: 600 12.5px/1.25 var(--font-sans);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lkdv-cv2c-product-main small {
+  display: block;
+  font: 400 10.5px/1.3 var(--font-sans);
+  color: var(--lkv-text-secondary);
+}
+
+/* ── Carnet : liste accessible des points du tracé ──────────────────────── */
+
+.lkdv-cv2c-point-list {
+  border-radius: var(--cv2-field-radius);
+  background: var(--lkv-surface-card);
+  box-shadow: inset 0 0 0 0.5px var(--lkv-border);
+  padding: 8px 12px;
+}
+
+.lkdv-cv2c-point-list summary {
+  cursor: pointer;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+}
+
+.lkdv-cv2c-point-list ol {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px 10px;
+  font: 500 10.5px/1.4 var(--font-mono);
+  color: var(--lkv-text-secondary);
+}
+
+/* ── Pages d'étapes de la coque (glisser = étapes, pas de type) ─────────── */
+
+.lkdv-cv2c-step-host {
+  display: contents;
+}
+
+.lkdv-cv2c-form-mount {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  overflow: visible;
+}
+
+.lkdv-cv2c-form-mount > * {
+  display: block;
+}
+
+/* ── Cibles tactiles ≥ 44 px : extension invisible autour des petits boutons ─ */
+
+.lkdv-cv2-sheet .lkdv-cv2-chip--sm::after,
+.lkdv-cv2-sheet .lkdv-cv2c-chip-x::after,
+.lkdv-cv2-sheet .lkdv-cv2c-day-tab::after,
+.lkdv-cv2-sheet .lkdv-cv2c-map-btn::after,
+.lkdv-cv2-sheet .lkdv-cv2c-story-dock button::after,
+.lkdv-cv2-sheet .lkdv-cv2c-story-sticker::after {
+  content: '';
+  position: absolute;
+  left: -6px;
+  right: -6px;
+  top: -8px;
+  bottom: -8px;
+}
+
+.lkdv-cv2c-map-btn {
+  position: relative;
+}
+
+.lkdv-cv2c-story-dock button,
+.lkdv-cv2c-story-sticker,
+.lkdv-cv2c-day-tab {
+  position: relative;
+}
+
+/* Mini-carte du rendez-vous : état vide lisible (pas un 2ᵉ champ). */
+.lkdv-cv2c-meeting-map {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.lkdv-cv2c-map-empty {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: calc(100% - 24px);
+  padding: 8px 12px;
+  border-radius: var(--lkv-radius-full);
+  background: var(--cv2-menu-bg);
+  color: var(--lkv-forest-900);
+  font: 600 11.5px/1.2 var(--font-sans);
+  text-align: center;
+  box-shadow: var(--elevation-1), inset 0 0 0 0.5px var(--cv2-menu-border);
+  -webkit-backdrop-filter: blur(var(--cv2-menu-blur)) saturate(1.8);
+  backdrop-filter: blur(var(--cv2-menu-blur)) saturate(1.8);
+  pointer-events: none;
+}
+
+
+/* ── FID-060 : erreurs de champ et capsule en erreur ────────────────────────
+   La maquette n'entoure pas le champ fautif : le message rouge suffit
+   (`.ferr`, HTML L2796). La bordure `aria-invalid` du système est donc
+   neutralisée ici, dans le seul tiroir Création. */
+.lkdv-cv2c-form .lkdv-cv2-input[aria-invalid='true'] {
+  box-shadow: var(--cv2-field-shadow);
+}
+
+/* Rebond de l'onglet d'étape en erreur (maquette `bounce()` L2000 : 440 ms).
+   La capsule appartient à la coque : le moteur marque la feuille
+   (`lkdv-cv2c-step-error`) et cette règle cible l'onglet actif. */
+@keyframes cv2cStepBounce {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-4px);
+  }
+  55% {
+    transform: translateX(4px);
+  }
+  80% {
+    transform: translateX(-2px);
+  }
+}
+
+.lkdv-cv2-sheet.lkdv-cv2c-step-error .lkdv-cv2-mini [role='tab'][aria-selected='true'] {
+  animation: cv2cStepBounce 0.44s var(--ease-out) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lkdv-cv2-sheet.lkdv-cv2c-step-error .lkdv-cv2-mini [role='tab'][aria-selected='true'] {
+    animation: none;
+  }
+}
+
+/* ── Kit : aperçu KitCard, anneau, sac en couches, points de départ ─────────
+   Valeurs de la maquette : `.kcard` (HTML L3217), `ring()` L3223, `bagSVG`
+   L3225, `FROM` L3169, `SUGG` L3202-3204. Tous les matériaux passent par des
+   jetons du système ; aucune couleur littérale. */
+
+.lkdv-cv2c-kit-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: var(--cv2-radius-tile-lg);
+  background: var(--lkv-surface-card);
+  box-shadow: var(--elevation-1), inset 0 0 0 0.5px var(--lkv-border);
+}
+
+.lkdv-cv2c-kit-mosaic {
+  display: grid;
+  grid-template-columns: repeat(2, 30px);
+  grid-template-rows: repeat(2, 30px);
+  gap: 3px;
+  flex: none;
+}
+
+.lkdv-cv2c-kit-mosaic > span {
+  display: grid;
+  place-items: center;
+  border-radius: var(--lkv-radius-sm);
+  background: var(--cv2-soft);
+  color: var(--lkv-forest-900);
+}
+
+.lkdv-cv2c-kit-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.lkdv-cv2c-kit-card-body b {
+  font: 600 13.5px/1.25 var(--font-display);
+  color: var(--lkv-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lkdv-cv2c-kit-card-body small {
+  font: 500 10.5px/1.3 var(--font-sans);
+  color: var(--lkv-text-secondary);
+}
+
+.lkdv-cv2c-kit-badge {
+  align-self: flex-start;
+  margin-top: 2px;
+  padding: 2px 8px;
+  border-radius: var(--lkv-radius-full);
+  background: var(--cv2-soft);
+  color: var(--lkv-forest-900);
+  font: 600 9.5px/1.4 var(--font-sans);
+  letter-spacing: 0.02em;
+}
+
+/* Mini anneau de 40 px (maquette `miniRing`, L3221). */
+.lkdv-cv2c-kit-mini-ring {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--lkv-radius-full);
+  background: conic-gradient(
+    var(--lkv-action) calc(var(--p, 0) * 1%),
+    var(--cv2-soft) 0
+  );
+  -webkit-mask: radial-gradient(circle, transparent 13px, var(--lkv-forest-900) 14px);
+  mask: radial-gradient(circle, transparent 13px, var(--lkv-forest-900) 14px);
+}
+
+/* Anneau de 120 px (maquette `.kring big`, L3223) : conic-gradient plutôt que
+   SVG, même lecture (part de l'objectif atteinte). */
+.lkdv-cv2c-kit-weight-panel {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px;
+  border-radius: var(--cv2-radius-tile);
+  background: var(--lkv-surface-card);
+  box-shadow: inset 0 0 0 0.5px var(--lkv-border);
+}
+
+.lkdv-cv2c-kit-ring {
+  position: relative;
+  flex: none;
+  width: 104px;
+  height: 104px;
+  border-radius: var(--lkv-radius-full);
+  background: conic-gradient(
+    var(--lkv-action) calc(var(--p, 0) * 1%),
+    var(--cv2-soft) 0
+  );
+}
+
+.lkdv-cv2c-kit-ring-core {
+  position: absolute;
+  inset: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  border-radius: var(--lkv-radius-full);
+  background: var(--lkv-surface-card);
+  text-align: center;
+}
+
+.lkdv-cv2c-kit-ring-core b {
+  font: 700 15px/1.1 var(--font-display);
+  color: var(--lkv-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.lkdv-cv2c-kit-ring-core small {
+  font: 600 9px/1.2 var(--font-sans);
+  color: var(--lkv-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.lkdv-cv2c-kit-weight-side {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.lkdv-cv2c-kit-weight-side > small {
+  font: 500 10.5px/1.3 var(--font-sans);
+  color: var(--lkv-text-secondary);
+}
+
+/* Sac en couches : une barre par couche (porté / sac / consommable). */
+.lkdv-cv2c-kit-layers {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.lkdv-cv2c-kit-layer {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+  font: 500 10px/1.25 var(--font-sans);
+  color: var(--lkv-text-secondary);
+}
+
+.lkdv-cv2c-kit-layer > i {
+  grid-column: 1 / -1;
+  display: block;
+  height: 4px;
+  width: var(--share, 0%);
+  border-radius: var(--lkv-radius-full);
+  background: var(--lkv-action);
+}
+
+.lkdv-cv2c-kit-layer[data-layer='porte'] > i {
+  background: var(--lkv-secondary);
+}
+
+.lkdv-cv2c-kit-layer[data-layer='conso'] > i {
+  background: var(--cv2-soft-line);
+}
+
+.lkdv-cv2c-kit-layer > b {
+  font-weight: 600;
+  color: var(--lkv-text-primary);
+}
+
+.lkdv-cv2c-kit-layer > small {
+  justify-self: end;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Points de départ (FROM) : liste de kits/carnets, lignes 44 px. */
+.lkdv-cv2c-kit-sources {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.lkdv-cv2c-kit-source {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: var(--lkv-touch-min);
+  padding: 8px 10px;
+  border: 0;
+  border-radius: var(--cv2-field-radius);
+  background: var(--lkv-surface-muted);
+  color: var(--lkv-text-primary);
+  font: 600 12px/1.3 var(--font-sans);
+  text-align: left;
+  cursor: pointer;
+}
+
+.lkdv-cv2c-kit-source small {
+  font: 500 10.5px/1.3 var(--font-sans);
+  color: var(--lkv-text-secondary);
+}
+
+/* Suggestions actionnables : ligne + bouton « Ajouter » 44 px. */
+.lkdv-cv2c-kit-suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lkdv-cv2c-kit-suggestion {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--lkv-touch-min);
+  padding: 4px 6px 4px 10px;
+  border-radius: var(--cv2-field-radius);
+  background: var(--lkv-surface-muted);
+  color: var(--lkv-forest-900);
+}
+
+.lkdv-cv2c-kit-suggestion > span {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.lkdv-cv2c-kit-suggestion b {
+  font: 600 12px/1.3 var(--font-sans);
+  color: var(--lkv-text-primary);
+}
+
+.lkdv-cv2c-kit-suggestion small {
+  font: 500 10px/1.3 var(--font-sans);
+  color: var(--lkv-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.lkdv-cv2c-kit-suggestion .lkdv-cv2c-kit-add {
+  min-height: var(--lkv-touch-min);
+  white-space: nowrap;
+}
+
+/* ── Carnet : aperçu vivant d'Infos (FID-029) ─────────────────────────────
+   Maquette `preview` (HTML L3008) : couverture + visa + titre + méta. */
+.lkdv-cv2c-carnet-preview {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 10px;
+  align-items: stretch;
+  padding: 8px;
+  border-radius: var(--cv2-radius-tile-lg);
+  background: var(--lkv-surface-card);
+  box-shadow: var(--elevation-1), inset 0 0 0 0.5px var(--lkv-border);
+}
+
+.lkdv-cv2c-carnet-preview-cover {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border-radius: var(--cv2-radius-tile);
+  background: var(--cv2-soft);
+  color: var(--lkv-forest-900);
+}
+
+.lkdv-cv2c-carnet-preview-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lkdv-cv2c-carnet-preview-visa {
+  position: absolute;
+  left: 5px;
+  bottom: 5px;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 2px 6px;
+  border-radius: var(--lkv-radius-full);
+  background: var(--lkv-surface-paper);
+  color: var(--lkv-forest-900);
+  box-shadow: inset 0 0 0 0.5px var(--lkv-border);
+}
+
+.lkdv-cv2c-carnet-preview-visa b {
+  font: 700 9px/1.2 var(--font-sans);
+  letter-spacing: 0.04em;
+}
+
+.lkdv-cv2c-carnet-preview-visa i {
+  font: 600 8px/1.2 var(--font-mono);
+  font-style: normal;
+  color: var(--lkv-text-secondary);
+}
+
+.lkdv-cv2c-carnet-preview-body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  min-width: 0;
+}
+
+.lkdv-cv2c-carnet-preview-body b {
+  font: 600 14px/1.25 var(--font-display);
+  color: var(--lkv-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lkdv-cv2c-carnet-preview-body small {
+  font: 500 10.5px/1.35 var(--font-sans);
+  color: var(--lkv-text-secondary);
+}
+
+/* ── Publication : pastille d'audience et visuel de repli (FID-047) ─────── */
+.lkdv-cv2c-audience-pill {
+  flex: none;
+  padding: 2px 8px;
+  border-radius: var(--lkv-radius-full);
+  background: var(--cv2-soft);
+  color: var(--lkv-forest-900);
+  font: 600 9.5px/1.5 var(--font-sans);
+}
+
+.lkdv-cv2c-post-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 96px;
+  margin-bottom: 6px;
+  border-radius: var(--cv2-radius-tile);
+  background: var(--cv2-soft);
+  color: var(--lkv-forest-900);
+}
+
+.lkdv-cv2c-post-placeholder small {
+  font: 500 10.5px/1.3 var(--font-sans);
+  color: var(--lkv-text-secondary);
+}
+
+/* FID-056 : l'aperçu vivant est monté dans le slot fixe de la coque
+   (`.lkdv-cv2-preview-slot`, 150 px au-dessus du pager) — plus de `sticky`
+   dans le pane : il ne défile plus avec les champs. */
+.lkdv-cv2c-live-preview {
+  position: relative;
+  z-index: auto;
+  max-height: 150px;
+  height: 150px;
+  margin-bottom: 0;
+  transform: none;
+  background: var(--lkv-surface-paper);
+}
+
+/* Les six aperçus gardent leur propre carte ; le slot borne la hauteur. */
+.lkdv-cv2c-story-preview,
+.lkdv-cv2c-carnet-preview,
+.lkdv-cv2c-kit-card,
+.lkdv-cv2c-club-preview,
+.lkdv-cv2c-ticket-preview {
+  max-height: 150px;
+}
+
+/* ── Sortie : météo du billet d'aperçu (FID-052) ────────────────────────── */
+.lkdv-cv2c-ticket-weather {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 6px 2px 0;
+  font: 500 10.5px/1.35 var(--font-sans);
+  color: var(--lkv-text-secondary);
+}
+
+/* Suggestion déjà dans le sac : bouton coché/désactivé (FID-023). */
+.lkdv-cv2c-kit-suggestion[data-added] {
+  background: var(--lkv-surface-card);
+}
+
+.lkdv-cv2c-kit-suggestion[data-added] .lkdv-cv2c-kit-add {
+  opacity: var(--opacity-disabled);
+  cursor: default;
+}
+
+/* Profil d'altitude encadré (FID-051, maquette `.card2 prof`). */
+.lkdv-cv2c-elevation-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}

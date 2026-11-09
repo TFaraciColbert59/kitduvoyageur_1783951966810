@@ -1,13 +1,18 @@
 import { buildDays, buildSummary, toMomentItems } from './days';
 import { formatDateRange, formatElevation, formatKm, toNumber } from './format';
 import { buildCarnetPlace } from './place';
+import { pickElevationProfile } from './elevationProfile';
 import type {
   BuildCarnetDetailInput,
   CarnetEtapeDay,
   CarnetDetail,
   CarnetMomentItem,
+  CarnetNightItem,
   CarnetParticipant,
   CarnetStatItem,
+  CarnetViewerRole,
+  CarnetKitVerdictItem,
+  KitVerdictType,
 } from './types';
 
 const UNTITLED = 'Carnet sans titre';
@@ -65,17 +70,18 @@ export function buildParticipants(input: BuildCarnetDetailInput): CarnetParticip
 
 function buildEtapes(input: BuildCarnetDetailInput): CarnetEtapeDay[] {
   const overnightByDay = new Map<number, string>();
-  for (const h of input.hebergements) {
+  for (const h of input.hebergements ?? []) {
     const day = h.apres_jour_numero;
     if (day && h.nom) overnightByDay.set(day, h.nom);
   }
 
-  if (input.etapes.length > 0) {
-    return input.etapes.map((e) => {
+  const rawEtapes = input.etapes ?? [];
+  if (rawEtapes.length > 0) {
+    return rawEtapes.map((e) => {
       const dayNumber = e.jour_numero ?? e.ordre ?? 1;
       const dateLabel = e.date_etape
         ? new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' }).format(
-            new Date(`${e.date_etape}T12:00:00Z`),
+            new Date(`${e.date_etape}T12:00:00Z`)
           )
         : null;
       return {
@@ -89,7 +95,12 @@ function buildEtapes(input: BuildCarnetDetailInput): CarnetEtapeDay[] {
         elevationM: toNumber(e.denivele_m),
         durationText: e.duree_texte?.trim() || null,
         weather:
-          [e.meteo?.trim(), e.temperature_c !== null && e.temperature_c !== undefined ? `${e.temperature_c} °C` : null]
+          [
+            e.meteo?.trim(),
+            e.temperature_c !== null && e.temperature_c !== undefined
+              ? `${e.temperature_c} °C`
+              : null,
+          ]
             .filter(Boolean)
             .join(' · ') || null,
         overnight: overnightByDay.get(dayNumber) ?? null,
@@ -135,7 +146,25 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
   /* Jours dérivés : les moments nomment leur jour, les points GPS des sorties
      datent le leur. Aucune valeur n'est inventée quand une source manque. */
   const sessions = input.sessions ?? (hikeSession ? [hikeSession] : []);
-  const days = buildDays({ moments: input.moments, sessions, startDate: carnet.start_date ?? null });
+  const elevationProfile = pickElevationProfile(sessions);
+  const builtDays = buildDays({
+    moments: input.moments,
+    sessions,
+    startDate: carnet.start_date ?? null,
+  });
+  /* Une sortie GPS datée hors du séjour (seed de démo, sortie rattachée après
+     coup) créait des jours J211/J212 sans aucun moment. Le carnet a des dates
+     de début et de fin : un jour hors de cette fenêtre n'appartient pas à la
+     fiche. Les moments réels restent dans leur jour. */
+  const start = carnet.start_date ? new Date(`${carnet.start_date}T12:00:00Z`) : null;
+  const end = carnet.end_date ? new Date(`${carnet.end_date}T12:00:00Z`) : null;
+  const spanDays =
+    start && end && Number.isFinite(start.getTime()) && Number.isFinite(end.getTime())
+      ? Math.max(1, Math.round((end.getTime() - start.getTime()) / 86_400_000) + 1)
+      : null;
+  const days = spanDays
+    ? builtDays.filter((day) => (day.dayNumber ?? day.index) <= spanDays)
+    : builtDays;
   const summary = buildSummary(days);
 
   const stats: CarnetStatItem[] = [];
@@ -154,6 +183,43 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
   /* La trace affichée est celle de la sortie la plus récente qui en porte une
      (`pickCarnetTrace`), pas forcément celle qui donne les statistiques. */
   const trace = input.trace ?? hikeSession?.positions_geojson ?? null;
+
+  const nights: CarnetNightItem[] =
+    input.nights && input.nights.length > 0
+      ? input.nights
+      : (input.hebergements ?? []).map((h) => ({
+          id: h.id,
+          dayNumber: h.apres_jour_numero ?? 1,
+          name: h.nom?.trim() || 'Hébergement',
+          type: (['refuge', 'gite', 'bivouac', 'hotel', 'camping', 'autre'].includes(
+            (h as { type_hebergement?: string | null }).type_hebergement ?? ''
+          )
+            ? (h as { type_hebergement?: string | null }).type_hebergement
+            : 'refuge') as CarnetNightItem['type'],
+          altitudeM: toNumber(h.altitude_m),
+          infos: h.prix_note || h.note || null,
+          lat: null,
+          lng: null,
+          mapRefugeId: null,
+        }));
+
+  const viewerRole: CarnetViewerRole =
+    input.viewerRole ??
+    (input.viewerId && carnet.author_id === input.viewerId ? 'participant' : 'visitor');
+  const budget = viewerRole === 'visitor' ? null : (input.budget ?? null);
+
+  const kitVerdicts: Record<string, CarnetKitVerdictItem> = { ...(input.kitVerdicts ?? {}) };
+  for (const k of input.kitItems ?? []) {
+    const verdict = (k.verdict ?? k.verdict_status ?? null) as KitVerdictType | null;
+    if (verdict && !kitVerdicts[k.id]) {
+      kitVerdicts[k.id] = {
+        itemId: k.id,
+        verdict,
+        verdictNote: k.verdict_note ?? k.verdict_notes ?? null,
+        joursUtilises: k.jours_utilises ?? [],
+      };
+    }
+  }
 
   return {
     id: carnet.id,
@@ -193,17 +259,30 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
     summary,
     kit: {
       totalWeightG: kitWeight,
-      items: input.kitItems.map((k) => ({
+      items: (input.kitItems ?? []).map((k) => ({
         id: k.id,
         name: k.nom?.trim() || 'Élément sans nom',
         detail: k.detail?.trim() || null,
         weightG: toNumber(k.poids_g),
         color: k.couleur_tag ?? null,
+        verdict: ((k.verdict ?? k.verdict_status ?? null) as KitVerdictType) || null,
+        verdictNote: k.verdict_note ?? k.verdict_notes ?? null,
+        joursUtilises: k.jours_utilises ?? [],
       })),
     },
     trace,
+    elevationProfile,
     place: buildCarnetPlace(carnet, trace),
     distanceKm,
     elevationM,
+    viewerRole,
+    nights,
+    dayReactions: input.dayReactions ?? {},
+    momentEngagement: input.momentEngagement ?? {},
+    kitVerdicts,
+    livePosition: input.livePosition ?? null,
+    publicZone: input.publicZone ?? null,
+    budget,
+    liveSharing: Boolean(carnet.live_sharing),
   };
 }

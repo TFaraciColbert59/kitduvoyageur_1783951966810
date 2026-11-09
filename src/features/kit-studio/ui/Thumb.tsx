@@ -17,11 +17,20 @@ const HOST_STYLE: CSSProperties = { display: 'grid', placeItems: 'center', width
 const PRIORITY_VISIBLE = 10;
 const PRIORITY_LOW = 0;
 
+/**
+ * Les constructeurs de vignettes ne sont enregistrés qu'une fois par session : chaque carte montée
+ * demandait auparavant `registerThumbBuilders()` à nouveau (garde d'idempotence au niveau module).
+ */
+let buildersRegistered = false;
+
 /** Three n'entre dans le chunk de l'interface qu'à la première vignette demandée. */
 async function sharedEngine(): Promise<ThumbnailEngine> {
   const m = await import('../scene/thumbnails');
-  const { registerThumbBuilders } = await import('../scene/thumbBuilders');
-  registerThumbBuilders();
+  if (!buildersRegistered) {
+    buildersRegistered = true;
+    const { registerThumbBuilders } = await import('../scene/thumbBuilders');
+    registerThumbBuilders();
+  }
   return m.getThumbnailEngine();
 }
 

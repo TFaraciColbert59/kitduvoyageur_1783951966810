@@ -24,12 +24,14 @@ export function OrderButton({ state, onClick }: OrderButtonProps) {
   const lines = toOrder(state);
   const pending = lines.length > 0;
   const preordered = !pending && pieces(state).some((k) => pieceState(state, k) === 'order');
+  const totalCents = orderTotalCents(state);
+  const totalLabel = totalCents != null ? formatEuro(totalCents) : 'prix non renseigné';
   return (
     <button type="button" className="ks-gbtn" data-pro={pending} onClick={onClick}>
       {pending ? (
         <>
           <Icon name="cart" />
-          {`${TXT_ORDER} · ${piecesLabel(lines.length)} · ${formatEuro(orderTotalCents(state))}`}
+          {`${TXT_ORDER} · ${piecesLabel(lines.length)} · ${totalLabel}`}
         </>
       ) : preordered ? (
         TXT_ALL_PREORDERED

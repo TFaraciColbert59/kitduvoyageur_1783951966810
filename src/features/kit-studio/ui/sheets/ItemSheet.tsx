@@ -1,12 +1,13 @@
 'use client';
 import { useState, type CSSProperties } from 'react';
-import { FAMILIES, ZONE_NAMES } from '../../domain/catalog';
+import { ZONE_NAMES } from '../../domain/catalog';
 import { formatEuro, formatLitres, formatWeight } from '../../domain/format';
 import { unpack } from '../../domain/packing';
 import { RAW_MATERIALS } from '../../domain/palette';
+import { studioData } from '../../domain/studioData';
 import { currentKit, getItem, zoneOf } from '../../domain/state';
 import { addPlanned, altsFor, swapItem } from '../../domain/swap';
-import { effG } from '../../domain/totals';
+import { effG, toCents } from '../../domain/totals';
 import type { AnyItemId, KitState } from '../../domain/types';
 import { Capsule } from '../Drawer/Capsule';
 import { Pager } from '../Drawer/Pager';
@@ -56,7 +57,7 @@ export function ItemSheet({ state, itemId, page, onPage, onAction, onBack }: Ite
   const k = currentKit(state);
   const z = zoneOf(state, itemId);
   const ex = it as { planned?: 'shop' | 'rent'; eur?: number; day?: number };
-  const fam = FAMILIES.find((f) => f.id === it.fam)?.n ?? '';
+  const fam = studioData().families.find((f) => f.id === it.fam)?.n ?? '';
   const color = RAW_MATERIALS[it.color];
   const fg = onSwatch(color);
   const alts = z ? altsFor(state, itemId) : [];
@@ -80,8 +81,8 @@ export function ItemSheet({ state, itemId, page, onPage, onAction, onBack }: Ite
     it.expired ? `Périmée depuis ${it.expired}.` : '',
     it.care ?? '',
     it.loc && it.loc !== 'Lille' && !ex.planned ? `${S.item.location}${NB}: ${it.loc}${k.start === it.loc ? ', ton point de départ.' : '.'}` : '',
-    ex.planned === 'shop' ? `Boutique LKDV · ${formatEuro((ex.eur ?? 0) * 100)}` : '',
-    ex.planned === 'rent' ? `Location entre membres · ${formatEuro((ex.day ?? 0) * 100)} par jour` : '',
+    ex.planned === 'shop' ? `Boutique LKDV · ${formatEuro(toCents(ex.eur ?? 0))}` : '',
+    ex.planned === 'rent' ? `Location entre membres · ${formatEuro(toCents(ex.day ?? 0))} par jour` : '',
     (it.g as number | null | undefined) == null ? S.item.unknownWeight : '',
   ].filter(Boolean);
 
@@ -209,7 +210,7 @@ export function ItemSheet({ state, itemId, page, onPage, onAction, onBack }: Ite
           'info',
           'cube',
           it.bought ? `Acheté en ${it.bought}` : ex.planned ? 'Pas encore à toi' : 'Date d’achat inconnue',
-          price ? `${formatEuro(price * 100)}${it.trips ? ` · ${formatEuro((price / it.trips) * 100)} par sortie` : ''}` : 'Ajoute le ticket pour suivre la garantie.',
+          price ? `${formatEuro(toCents(price))}${it.trips ? ` · ${formatEuro(toCents(price / it.trips))} par sortie` : ''}` : 'Ajoute le ticket pour suivre la garantie.',
         )}
         {row(it.care || it.expired ? 'warn' : 'ok', it.expired ? 'aid' : 'jacket', it.expired ? 'À renouveler' : it.care ? 'Entretien conseillé' : 'Rien à prévoir', it.expired ? `Périmée depuis ${it.expired}.` : (it.care ?? 'Aucune date d’entretien ni de péremption proche.'))}
       </div>

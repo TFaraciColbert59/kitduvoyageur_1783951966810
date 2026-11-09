@@ -8,7 +8,7 @@
  *     --out refonte-v2/notes/sdd-hub-studio/qa
  *
  * Prérequis : serveur local sur --base, Playwright installé dans le dépôt.
- * Le script tente une connexion démo (demo@lkdv.app) ; si elle échoue, il continue
+ * Le script tente une connexion démo ; si elle échoue, il continue
  * en anonyme (le Hub est public, les données peuvent être vides).
  *
  * Sortie : un PNG par drawer + `audit.json` + tableau console.
@@ -28,8 +28,8 @@ function arg(name, fallback = null) {
 const BASE = String(arg('base', 'http://localhost:4000')).replace(/\/$/, '');
 const OUT = resolve(String(arg('out', 'refonte-v2/notes/sdd-hub-studio/qa')));
 const MIN_SHEET_H = Number(arg('min-sheet', 240));
-const DEMO_EMAIL = process.env.DEMO_LOGIN_EMAIL || 'demo@lkdv.app';
-const DEMO_PASSWORD = process.env.DEMO_LOGIN_PASSWORD || 'DemoLKDV2026!';
+const DEMO_EMAIL = process.env.DEMO_LOGIN_EMAIL || 'test-account@example.com';
+const DEMO_PASSWORD = process.env.DEMO_LOGIN_PASSWORD || 'SecretLKDV2026!';
 
 const DRAWERS = [
   ['hub-itinerary', '/hub/itineraire', 'hub'],

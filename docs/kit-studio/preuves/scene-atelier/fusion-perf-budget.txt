@@ -1,0 +1,14 @@
+
+> kitduvoyageur@0.1.0 perf:budget
+> node scripts/perf/check-bundle-budget.mjs
+
+surface                 | JS gzip | plafond | fichiers | état
+/                       |   377 Ko |   400 Ko |       29 | ok
+/hub                    |   587 Ko |   590 Ko |       39 | ok
+/compas                 |   529 Ko |   560 Ko |       27 | ok
+/clubs/[id]             |   455 Ko |   475 Ko |       30 | ok
+/communaute             |   443 Ko |   460 Ko |       30 | ok
+/compte                 |   437 Ko |   460 Ko |       24 | ok
+/explorer               |   370 Ko |   390 Ko |       24 | ok
+/kit-studio             |   481 Ko |   520 Ko |       26 | ok
+(mise en page racine)   |   331 Ko |   350 Ko |       21 | ok

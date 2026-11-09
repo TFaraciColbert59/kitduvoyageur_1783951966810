@@ -39,6 +39,8 @@ export interface AccountDrawerHostProps {
   variant?: 'floating' | 'card';
   /** Sans bandeau de titre : la feuille n'affiche que la croix de fermeture. */
   hideHeader?: boolean;
+  /** Supprime le bouton de fermeture croix (fermeture par glisser vers le bas). */
+  hideCloseButton?: boolean;
   /** Action supplémentaire, à gauche de la croix (ex. « + » d'import). */
   headerAction?: React.ReactNode;
 }
@@ -52,6 +54,7 @@ export function AccountDrawerHost({
   children,
   variant = 'floating',
   hideHeader = false,
+  hideCloseButton = false,
   headerAction,
 }: AccountDrawerHostProps) {
   const sheetRef = useRef<HTMLElement>(null);
@@ -62,10 +65,67 @@ export function AccountDrawerHost({
     right: DRAWER_INSET.right,
     bottom: DRAWER_INSET.bottom,
   });
+  const [dragY, setDragY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStart = useRef<{ y: number; time: number } | null>(null);
+
+  const onGrabPointerDown = (e: React.PointerEvent) => {
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {}
+    dragStart.current = { y: e.clientY, time: performance.now() };
+    setIsDragging(true);
+  };
+
+  const onSheetPointerDown = (e: React.PointerEvent) => {
+    const target = e.target as HTMLElement | null;
+    if (!target) return;
+    if (target.closest('button, input, textarea, a, select, [role="button"], [data-no-drag]')) {
+      return;
+    }
+    const shB = sheetRef.current?.querySelector('.sh-b');
+    if (shB && shB.scrollTop > 2) return;
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {}
+    dragStart.current = { y: e.clientY, time: performance.now() };
+    setIsDragging(true);
+  };
+
+  const onGrabPointerMove = (e: React.PointerEvent) => {
+    if (!dragStart.current) return;
+    const raw = Math.max(0, e.clientY - dragStart.current.y);
+    const dy = raw > 100 ? 100 + (raw - 100) * 0.4 : raw;
+    setDragY(dy);
+    if (dy > 4 && e.cancelable) e.preventDefault();
+  };
+
+  const onGrabPointerUp = () => {
+    if (!dragStart.current) return;
+    const elapsed = performance.now() - dragStart.current.time;
+    const dy = dragY;
+    const velocity = elapsed > 0 ? dy / elapsed : 0;
+    dragStart.current = null;
+    setIsDragging(false);
+
+    if (dy > 55 || velocity > 0.28) {
+      setDragY(280);
+      setTimeout(() => {
+        setDragY(0);
+        onClose();
+      }, 160);
+    } else {
+      setDragY(0);
+    }
+  };
 
   // Échap ferme, focus ramené sur la feuille à l'ouverture.
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      setDragY(0);
+      setIsDragging(false);
+      return;
+    }
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.stopPropagation();
@@ -150,13 +210,36 @@ export function AccountDrawerHost({
         aria-modal="true"
         aria-label={title}
         tabIndex={-1}
-        style={{ inset: 0, borderRadius: isCard ? 26 : 24 }}
+        onPointerDown={onSheetPointerDown}
+        onPointerMove={onGrabPointerMove}
+        onPointerUp={onGrabPointerUp}
+        onPointerCancel={() => {
+          dragStart.current = null;
+          setIsDragging(false);
+          setDragY(0);
+        }}
+        style={{
+          inset: 0,
+          borderRadius: isCard ? 26 : 24,
+          transform: dragY > 0 ? `translate3d(0, ${dragY}px, 0)` : undefined,
+          transition: isDragging ? 'none' : 'transform 0.28s cubic-bezier(0.32, 0.72, 0, 1)',
+        }}
       >
-        {isCard ? (
-          <span className="grab" aria-hidden="true">
-            <span />
-          </span>
-        ) : null}
+        <span
+          className="grab"
+          aria-hidden="true"
+          style={{ cursor: 'grab', touchAction: 'none' }}
+          onPointerDown={onGrabPointerDown}
+          onPointerMove={onGrabPointerMove}
+          onPointerUp={onGrabPointerUp}
+          onPointerCancel={() => {
+            dragStart.current = null;
+            setIsDragging(false);
+            setDragY(0);
+          }}
+        >
+          <span />
+        </span>
         {hideHeader ? (
           <div className="sh-close-only">
             {onBack ? (
@@ -170,11 +253,13 @@ export function AccountDrawerHost({
             )}
             <span className="sh-close-only-actions">
               {headerAction}
-              <button type="button" className="lg gbtn" aria-label="Fermer" onClick={onClose}>
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M6 6l12 12M18 6 6 18" />
-                </svg>
-              </button>
+              {!hideCloseButton ? (
+                <button type="button" className="lg gbtn" aria-label="Fermer" onClick={onClose}>
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M6 6l12 12M18 6 6 18" />
+                  </svg>
+                </button>
+              ) : null}
             </span>
           </div>
         ) : (
@@ -190,11 +275,13 @@ export function AccountDrawerHost({
             <b>{title}</b>
             {subtitle ? <span>{subtitle}</span> : null}
           </div>
-          <button type="button" className="lg gbtn" aria-label="Fermer" onClick={onClose}>
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M6 6l12 12M18 6 6 18" />
-            </svg>
-          </button>
+          {!hideCloseButton ? (
+            <button type="button" className="lg gbtn" aria-label="Fermer" onClick={onClose}>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M6 6l12 12M18 6 6 18" />
+              </svg>
+            </button>
+          ) : null}
         </header>
         )}
         <div className="sh-b">{children}</div>

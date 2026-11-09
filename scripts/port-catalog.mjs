@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const SRC = resolve(ROOT, 'kit-studio-bundle/reference/Kit_Studio_actuel.html');
+const SRC = resolve(ROOT, 'tests/fixtures/kit-studio/Kit_Studio_actuel.html');
 const DOMAIN = resolve(ROOT, 'src/features/kit-studio/domain');
 const OUT_CATALOG = resolve(DOMAIN, 'catalog.ts');
 const OUT_PALETTE = resolve(DOMAIN, 'palette.ts');

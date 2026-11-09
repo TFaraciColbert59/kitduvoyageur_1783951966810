@@ -1114,4 +1114,160 @@ button.g2,
   --prep-map-share-compact: 24%;
   /* Écart entre les trois blocs d'une étape (plage 12–16 px). */
   --prep-block-gap: 14px;
+
+  /* ==========================================================================
+     CARNET V2 & TIROIRS LIQUIDES — Jetons d'ancrage (/compte & /carnets)
+     Sources : HIG L2930-2952, post-system.css L12-26, compte-apple-hig.css
+     ========================================================================== */
+  /* src: HIG L2930-2942 — Feuille de tiroir translucide ancrée */
+  --sheet-bg: linear-gradient(180deg, rgba(245, 242, 236, 0.34), rgba(245, 242, 236, 0.20) 48%, rgba(245, 242, 236, 0.26));
+  --sheet-blur: blur(30px) saturate(1.7) brightness(1.04);
+  --sheet-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.4), inset 0 0 16px rgba(255, 255, 255, 0.12), 0 0 0 0.5px rgba(23, 43, 36, 0.12), 0 10px 30px rgba(23, 43, 36, 0.14);
+
+  /* src: HIG L2943-2952 — Carte de contenu d'un tiroir */
+  --drawer-card-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.58), rgba(255, 255, 255, 0.44));
+  --drawer-card-blur: blur(18px) saturate(1.7);
+  --drawer-card-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 2px 8px rgba(23, 43, 36, 0.04);
+
+  /* src: post-system.css L12-26 — Panneaux de post verre liquide */
+  --post-glass-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.486) 0%, rgba(255, 255, 255, 0.384) 100%);
+  --post-glass-blur: blur(25.2px) saturate(1.8) brightness(1.05);
+  --post-glass-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.4), 0 0 0 0.5px rgba(23, 43, 36, 0.08), 0 8px 22px rgba(23, 43, 36, 0.1);
+  --post-radius: 28px;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   COMMUNAUTÉ V2 — FONDATIONS UI (2026-11-08)
+
+   Ajouts additifs EN FIN DE FICHIER : types de contenu par volet
+   (`--type-*`) et matériaux `--cv2-*` consommés par
+   `src/styles/communaute-v2.css`, les primitives `SortMenuButton` /
+   `DynamicIsland` (src/components/ui/drawer/), le blason `ClubCrest`,
+   le billet `EventTicket` et la bande `AgendaStrip`.
+   Aucune valeur existante n'est modifiée.
+   ══════════════════════════════════════════════════════════════════ */
+:root {
+  /* ── Types de contenu — pastille de type (10,5 px min) ─────────────
+     Uniquement des verts de la palette forêt/sauge/mousse/menthe.
+     Contraste AA (texte normal 4,5:1) vérifié sur le verre clair des
+     tuiles : `--drawer-card-bg` ≈ blanc 94 % sur photo forêt, pire cas
+     calculé sur un fond photo moyen (#6B7A6E → verre #F6F7F6) :
+       --type-post   #17402C → 11,6:1 (blanc) · 10,8:1 (verre)
+       --type-carnet #3D6038 →  7,2:1 · 6,7:1
+       --type-club   #4C7746 →  5,2:1 · 4,9:1
+       --type-sortie #3D7A52 →  5,1:1 · 4,8:1
+       --type-membre #365233 →  8,7:1 · 8,1:1
+     /compte et ces deux tiroirs sont clairs uniquement : pas de
+     variante sombre (le verre reste clair en thème sombre). */
+  --type-post: var(--lkv-forest-900);
+  --type-carnet: var(--sage-700);
+  --type-club: var(--sage-600);
+  --type-sortie: var(--lkv-forest-500);
+  --type-membre: var(--lkv-forest-600);
+
+  /* ── Matériaux v2 (tuiles, listes, menus, champs) ─────────────────
+     Sources exactes : HIG L2796-2810 (feuille), HIG L2832-2838 (carte
+     interne de tiroir), V8 L273 (ligne de liste), LC L101-127
+     (mini-capsule 30 px), HIG L877 (champ). */
+  --cv2-tile-bg: var(--drawer-card-bg);
+  --cv2-tile-blur: var(--drawer-card-blur);
+  --cv2-tile-shadow: var(--drawer-card-shadow);
+  --cv2-tile-border: var(--glass-border);
+  --cv2-radius-tile-sm: 14px;
+  --cv2-radius-tile: 16px;
+  --cv2-radius-tile-lg: 18px; /* FID-046 : rayon maquette des tuiles */
+  --cv2-list-sep: var(--lkv-border-subtle);
+  --cv2-list-sep-strong: var(--lkv-border);
+
+  /* Verre des menus flottants (tri, peek) et des cartes de détail. */
+  --cv2-menu-bg: var(--glass-bg-medium);
+  --cv2-menu-border: var(--glass-border);
+  --cv2-menu-shadow: var(--elevation-3);
+  --cv2-menu-blur: 28px;
+
+  /* Verre des champs (HIG L877 : blanc .88, bordure .5 px). */
+  --cv2-field-bg: rgba(255, 255, 255, 0.88);
+  --cv2-field-border: var(--lkv-field-border);
+  --cv2-field-radius: 12px;
+  --cv2-field-height: 48px;
+  --cv2-field-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  --cv2-field-blur: blur(18px) saturate(1.7);
+
+  /* Squelettes (barres shimmer sur le verre). */
+  --cv2-skeleton-hi: rgba(255, 255, 255, 0.92);
+  --cv2-skeleton-lo: rgba(23, 43, 36, 0.10);
+
+  /* Île dynamique (DynamicIsland) — source V8 L53-60, carnet-v2.css L681-736. */
+  --cv2-island-bg: #000000;
+  --cv2-island-ink: #FFFFFF;
+  --cv2-island-muted: rgba(255, 255, 255, 0.72);
+  --cv2-island-btn-bg: rgba(255, 255, 255, 0.16);
+  --cv2-island-btn-ink: #D8F3DE;
+  --cv2-island-action-bg: #D8F3DE;
+  --cv2-island-action-ink: #17402C;
+  /* Ombre encrée, jamais `rgba(0,0,0)` (CLAUDE.md § 4) : seule
+     correction de valeur d'un jeton existant de ce bloc. */
+  --cv2-island-shadow: 0 10px 30px rgba(11, 31, 23, 0.35);
+  /* La coque du tiroir v2 est à z 60 (zIndex.modal) : l'île se pose
+     au-dessus, sur la couche toast (70), sous les overlays du Compte. */
+  --cv2-z-island: 70;
+
+  /* ── Matière CLAIRE de la couche v2 (re-scope local) ───────────────
+     Le reste de l'application porte `html[data-liquid-ios27]` (matériau
+     sombre global : encres blanches, verres fumés). Le tiroir v2 est la
+     carte clippée du Compte, donc clair : comme `.lkdv-compte-v8` /
+     `.lkdv-cd`, la couche `.lkdv-communaute-v2` ré-applique ici les
+     valeurs claires du Compte (compte-v8.css L27-37, HIG L2706-2723).
+     Consommées uniquement par `src/styles/communaute-v2.css`. */
+  --cv2-light-ink: #172B24;
+  --cv2-light-ink-2: #56665D;
+  --cv2-light-ink-3: rgba(23, 43, 36, 0.44);
+  --cv2-light-ink-muted: #46584D;
+  --cv2-light-page: #F5F2EC;
+  --cv2-light-card: #FFFFFF;
+  --cv2-light-surface-muted: #EDF1EA;
+  --cv2-light-border: rgba(23, 43, 36, 0.14);
+  --cv2-light-border-subtle: rgba(23, 43, 36, 0.07);
+  --cv2-light-border-strong: rgba(23, 43, 36, 0.52);
+  --cv2-light-field-border: rgba(23, 43, 36, 0.22);
+  --cv2-light-focus-ring: rgba(34, 97, 72, 0.28);
+  --cv2-light-primary: #17402C;
+  --cv2-light-primary-subtle: #D3EBD9;
+  --cv2-light-secondary: #5B7F55;
+  --cv2-light-action: #226148;
+  --cv2-light-glass-medium: rgb(255 255 255 / 0.94);
+  --cv2-light-glass-strong: rgb(255 255 255 / 0.97);
+  --cv2-light-glass-light: rgb(255 255 255 / 0.88);
+  --cv2-light-success: #3D6038;
+  --cv2-light-success-bg: #E1EBDE;
+  --cv2-light-warning: #C89A3B;
+  --cv2-light-warning-bg: #FBF1DC;
+  --cv2-light-warning-dark: #765014;
+  --cv2-light-danger: #A8443A;
+  --cv2-light-danger-bg: #FDE8E6;
+  --cv2-light-danger-dark: #7E2D25;
+  --cv2-light-info: #4B6B7C;
+  --cv2-light-info-bg: #DDE7EE;
+  --cv2-light-overlay-scrim: rgba(16, 28, 23, 0.45);
+
+  /* ── États partagés — matières reprises de la maquette ─────────────
+     Valeurs exactes de `handoff/communaute-v2/annexes/maquette-communaute.html` :
+     L16 `--soft` / `--soft-line` (pastille d'état vide, bandeau brouillon,
+     anneau de l'option active du menu de tri) et L9 `--fill` (bandeau hors
+     ligne, badge neutre). Toutes vertes ou neutres : aucune teinte non verte
+     hors danger (`00-MISSION` § 3). */
+  --cv2-soft: rgba(150, 186, 142, 0.28);
+  --cv2-soft-line: rgba(91, 127, 85, 0.38);
+  --cv2-fill: rgba(23, 43, 36, 0.09);
+
+  /* ── Surtitres sur verre (FID-080) ──────────────────────────────────
+     Le surtitre (11 px, capitales) vit sur des cartes de verre translucide
+     (`--cv2-tile-bg` ≈ blanc 58 → 44 %) posées sur une feuille elle-même
+     translucide : au pire cas (photo sombre sous les deux verres, composite
+     ≈ 158/255) `--lkv-text-secondary` tombe à ≈ 2,3:1, sous AA.
+     L'encre primaire neutralise le risque (≈ 5,6:1 au même pire cas) ; les
+     tailles et le tracking du surtitre gardent la hiérarchie. Jeton
+     append-only, consommé par `.lkdv-cv2-eyebrow` (et le libellé de section
+     du tiroir Création). */
+  --cv2-eyebrow-ink: var(--cv2-light-ink);
 }

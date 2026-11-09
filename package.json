@@ -106,7 +106,8 @@
     "explorer:bench:geo": "mkdir -p node_modules/.cache && esbuild scripts/explorer-v2/bench-geo.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/lkdv-bench-geo.mjs --log-level=warning && node node_modules/.cache/lkdv-bench-geo.mjs",
     "perf:mobile": "node scripts/perf/measure-mobile.mjs",
     "perf:budget": "node scripts/perf/check-bundle-budget.mjs",
-    "perf:surfaces": "node scripts/perf/measure-surfaces.mjs"
+    "perf:surfaces": "node scripts/perf/measure-surfaces.mjs",
+    "test:unit": "vitest run"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.0",
@@ -183,6 +184,7 @@
     "@types/leaflet": "1.9.21",
     "@types/node": "^20",
     "@types/pg": "^8.23.1",
+    "@types/pngjs": "^6.0.5",
     "@types/react": "19.0.3",
     "@types/react-dom": "19.0.3",
     "@types/suncalc": "^1.9.2",
@@ -201,9 +203,11 @@
     "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-prettier": "^5.2.6",
     "jsdom": "^26.1.0",
+    "pixelmatch": "^7.2.0",
+    "pngjs": "^7.0.0",
     "postcss": "8.5.28",
     "prettier": "^3.5.3",
-    "sharp": "^0.35.4",
+    "sharp": "^0.33.5",
     "tailwindcss": "3.4.6",
     "tailwindcss-animate": "^1.0.7",
     "tsx": "^4.7.1",

@@ -1,0 +1,9 @@
+compas intact                      ok
+couleurs littérales               ok
+innerHTML / console.log            ok
+orange interdit                    ok
+typage                             ok
+eslint                             ok
+vitest                             ok
+identity_compliance.mjs            ok
+traveller_privacy.mjs              ok

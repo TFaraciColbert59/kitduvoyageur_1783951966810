@@ -30,6 +30,7 @@ export interface ItemThumbSpec {
 /** Sac miniature (clé `b:<sac>:<corps>:<poche>:<liseré>`). `scale` = min(0,8 ; 0,8 × L/42). */
 export interface BagThumbSpec {
   readonly kind: 'b';
+  readonly bagId?: string;
   readonly body: string;
   readonly pocket: string;
   readonly trim: string;
@@ -40,7 +41,13 @@ export interface BallThumbSpec {
   readonly kind: 'c';
   readonly color: string;
 }
-export type ThumbSpec = ItemThumbSpec | BagThumbSpec | BallThumbSpec;
+/** Module 3D d'attache (clé `m:<id>`). */
+export interface ModuleThumbSpec {
+  readonly kind: 'm';
+  readonly moduleId: string;
+  readonly code?: string;
+}
+export type ThumbSpec = ItemThumbSpec | BagThumbSpec | BallThumbSpec | ModuleThumbSpec;
 export type ThumbKind = ThumbSpec['kind'];
 
 /** null = vignette indisponible (repli SVG) ; undefined = pas encore rendue. */
@@ -66,6 +73,7 @@ interface Builders {
   i?: ThumbBuilder<ItemThumbSpec>;
   b?: ThumbBuilder<BagThumbSpec>;
   c?: ThumbBuilder<BallThumbSpec>;
+  m?: ThumbBuilder<ModuleThumbSpec>;
 }
 
 function ballBuilder(spec: BallThumbSpec, res: ThumbResources): Object3D {
@@ -107,10 +115,12 @@ const BUILDERS: Builders = { b: bagBuilder, c: ballBuilder };
 export function registerBuilder(kind: 'i', builder: ThumbBuilder<ItemThumbSpec>): void;
 export function registerBuilder(kind: 'b', builder: ThumbBuilder<BagThumbSpec>): void;
 export function registerBuilder(kind: 'c', builder: ThumbBuilder<BallThumbSpec>): void;
+export function registerBuilder(kind: 'm', builder: ThumbBuilder<ModuleThumbSpec>): void;
 export function registerBuilder(kind: ThumbKind, builder: ThumbBuilder<never>): void {
   if (kind === 'i') BUILDERS.i = builder as ThumbBuilder<ItemThumbSpec>;
   else if (kind === 'b') BUILDERS.b = builder as ThumbBuilder<BagThumbSpec>;
-  else BUILDERS.c = builder as ThumbBuilder<BallThumbSpec>;
+  else if (kind === 'c') BUILDERS.c = builder as ThumbBuilder<BallThumbSpec>;
+  else BUILDERS.m = builder as ThumbBuilder<ModuleThumbSpec>;
 }
 
 function runBuilder(builders: Builders, spec: ThumbSpec, res: ThumbResources): Object3D | null {
@@ -118,6 +128,7 @@ function runBuilder(builders: Builders, spec: ThumbSpec, res: ThumbResources): O
     case 'i': return builders.i ? builders.i(spec, res) : null;
     case 'b': return builders.b ? builders.b(spec, res) : null;
     case 'c': return builders.c ? builders.c(spec, res) : null;
+    case 'm': return builders.m ? builders.m(spec, res) : null;
   }
 }
 
@@ -174,7 +185,7 @@ interface Stage {
   readonly renderer: ThumbRendererLike;
   readonly tracker: ResourceTracker;
   readonly textures: TextureBank;
-  renderObject(object: Object3D): void;
+  renderObject(object: Object3D, spec?: ThumbSpec): void;
   dispose(): void;
 }
 
@@ -216,20 +227,30 @@ function createStage(renderer: ThumbRendererLike): Stage {
 
   return {
     renderer, tracker, textures,
-    renderObject(object) {
+    renderObject(object, spec) {
       pivot.clear();
       object.traverse((o) => { if (o instanceof Mesh) o.castShadow = true; });
       box.setFromObject(object);
       box.getCenter(center);
       box.getSize(size);
-      const m = Math.max(size.x, size.y, size.z) || 1;
-      object.position.sub(center);
-      pivot.add(object);
-      // 3/4 avant, légèrement vu de dessous le plan de visée : même pose que la maquette.
-      pivot.scale.setScalar(FIT / m);
-      pivot.rotation.set(0.34, -0.62, 0, 'YXZ');
-      pivot.updateMatrixWorld(true);
-      floor.position.y = box.setFromObject(pivot).min.y - 0.015;
+      if (spec?.kind === 'b') {
+        const refHeight = 1.78;
+        const scaleFactor = FIT / refHeight;
+        object.position.set(-center.x, -box.min.y - 0.89, -center.z);
+        pivot.add(object);
+        pivot.scale.setScalar(scaleFactor);
+        pivot.rotation.set(0.34, -0.62, 0, 'YXZ');
+        pivot.updateMatrixWorld(true);
+        floor.position.y = -0.89 * scaleFactor - 0.015;
+      } else {
+        const m = Math.max(size.x, size.y, size.z) || 1;
+        object.position.sub(center);
+        pivot.add(object);
+        pivot.scale.setScalar(FIT / m);
+        pivot.rotation.set(0.34, -0.62, 0, 'YXZ');
+        pivot.updateMatrixWorld(true);
+        floor.position.y = box.setFromObject(pivot).min.y - 0.015;
+      }
       renderer.render(scene, camera);
       pivot.remove(object);
     },
@@ -271,6 +292,11 @@ export interface ThumbnailEngine {
   subscribe(key: string, listener: (value: ThumbValue) => void): () => void;
   /** Retire la demande de la file si plus personne n'écoute cette clé. */
   cancel(key: string): void;
+  /**
+   * Oublie l'image d'une clé et la redemande si elle est encore affichée. Sert quand le maillage
+   * réel arrive après coup : la vignette de repli déjà dessinée doit céder la place.
+   */
+  invalidate(key: string): void;
   /** Révoque toutes les Blob URL et vide le cache et la file. */
   revokeAll(): void;
   /** revokeAll + libère le renderer et toutes les ressources. Le moteur est inutilisable ensuite. */
@@ -319,6 +345,28 @@ export function createThumbnailEngine(options: ThumbnailEngineOptions = {}): Thu
   let seq = 0;
   let renders = 0;
   let detachCanvas: (() => void) | null = null;
+
+  // Les maillages réels des corps et des modules arrivent après la première vignette, qui montre
+  // alors une silhouette de repli. À leur arrivée, les images concernées sont refaites — ici et non
+  // dans le composant React, pour que tout consommateur du moteur en profite, banc de test compris.
+  let desabonnerActifs: (() => void) | null = null;
+  let actifs: typeof import('./thumbAssets') | null = null;
+  /** Clé de vignette -> maillages dont elle dépend, relevés pendant sa construction. */
+  const dependances = new Map<string, Set<string>>();
+  void import('./thumbAssets').then(
+    (mod) => {
+      if (disposed) return;
+      actifs = mod;
+      desabonnerActifs = mod.surActifPret((id) => {
+        for (const [key, ids] of dependances) {
+          if (ids.has(id)) api.invalidate(key);
+        }
+      });
+    },
+    () => {
+      // Sans ce module, les vignettes gardent leur silhouette de repli : pas de quoi échouer.
+    },
+  );
 
   const notify = (key: string, value: ThumbValue): void => {
     const set = listeners.get(key);
@@ -419,13 +467,19 @@ export function createThumbnailEngine(options: ThumbnailEngineOptions = {}): Thu
     const { res, cleanup } = resources(s);
     let object: Object3D | null = null;
     try {
+      actifs?.commencerReleve();
       object = runBuilder({ ...BUILDERS, ...options.builders }, job.spec, res);
+      if (actifs) {
+        const demandes = actifs.terminerReleve();
+        if (demandes.length) dependances.set(job.key, new Set(demandes));
+        else dependances.delete(job.key);
+      }
       if (!object) {
         // Constructeur pas encore enregistré : rien n'est mémorisé, une demande ultérieure réessaiera.
         cleanup(null);
         return;
       }
-      s.renderObject(object);
+      s.renderObject(object, job.spec);
       renders += 1;
     } catch {
       cleanup(object);
@@ -475,7 +529,7 @@ export function createThumbnailEngine(options: ThumbnailEngineOptions = {}): Thu
     for (const k of new Set(keys)) notify(k, undefined);
   }
 
-  return {
+  const api: ThumbnailEngine = {
     register(key, spec) { specs.set(key, spec); },
 
     request(key, opts = {}) {
@@ -491,6 +545,24 @@ export function createThumbnailEngine(options: ThumbnailEngineOptions = {}): Thu
       const spec = specs.get(key);
       if (!spec) return;
       queue.set(key, { key, spec, priority, seq: seq++ });
+      pump();
+    },
+
+    invalidate(key) {
+      if (disposed) return;
+      // Une vignette dessinée avant l'arrivée du maillage réel montre la silhouette de repli :
+      // elle doit être refaite, pas conservée. On révoque l'image, on oublie la clé, et on
+      // redemande aussitôt si quelqu'un l'affiche encore.
+      const url = cache.get(key);
+      if (url) revokeUrl(url);
+      const connue = cache.delete(key);
+      const enFile = queue.delete(key);
+      if (!connue && !enFile) return;
+      notify(key, undefined);
+      if (!listeners.get(key)?.size) return;
+      const spec = specs.get(key);
+      if (!spec) return;
+      queue.set(key, { key, spec, priority: THUMB_PRIORITY.low, seq: seq++ });
       pump();
     },
 
@@ -518,6 +590,8 @@ export function createThumbnailEngine(options: ThumbnailEngineOptions = {}): Thu
       if (disposed) return;
       revokeAll();
       disposed = true;
+      desabonnerActifs?.();
+      desabonnerActifs = null;
       listeners.clear();
       specs.clear();
       detachCanvas?.();
@@ -543,6 +617,8 @@ export function createThumbnailEngine(options: ThumbnailEngineOptions = {}): Thu
       };
     },
   };
+
+  return api;
 }
 
 /* ───────────── Moteur partagé par toutes les cartes ───────────── */

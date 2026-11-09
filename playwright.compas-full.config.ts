@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from '@playwright/test';
 import { PHONE } from './tests/e2e-compas-full/_lib/device';
 
@@ -26,7 +27,8 @@ if (!base) throw new Error('[compas-full] COMPAS_BASE_URL (aperçu Vercel à tes
 // Le dossier du passage est fixé UNE fois (processus principal) puis hérité par les workers.
 if (!process.env.COMPAS_RUN_DIR) {
   const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
-  process.env.COMPAS_RUN_DIR = path.join(__dirname, 'proof/compas-full', stamp);
+  const root = path.dirname(fileURLToPath(import.meta.url));
+  process.env.COMPAS_RUN_DIR = path.join(root, 'proof/compas-full', stamp);
 }
 const RUN_DIR = process.env.COMPAS_RUN_DIR;
 fs.mkdirSync(RUN_DIR, { recursive: true });

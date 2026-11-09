@@ -38,6 +38,10 @@ import { useResolvedAttachmentUrl } from '@/features/messaging/hooks/useAttachme
 import { SharedPostEmbed } from '@/features/messaging/components/SharedPostEmbed';
 import { AttachmentDrawer } from '@/features/messaging/components/AttachmentDrawer';
 import { GpxThumb } from '@/features/messaging/components/GpxThumb';
+import { TraceMap } from '@/features/messaging/components/TraceMap';
+import { resolveTrailCoordinates } from '@/features/messaging/data/realTrailsData';
+import { AudioPlayerBubble } from '@/features/messaging/components/AudioPlayerBubble';
+import { useKeyboardInset } from '@/features/messaging/hooks/useKeyboardInset';
 import { parseMessageDeepLink, resolveHandleToUserId } from '@/features/messaging/lib/deepLinks';
 import {
   SWIPE_REVEAL,
@@ -88,11 +92,11 @@ const MUTE_PRESETS = [
   { label: 'Désactiver', minutes: null },
 ] as const;
 
-const FILTERS: Array<{ id: FilterId; label: string; icon: string }> = [
-  { id: 'all', label: 'Toutes', icon: 'M4 6h16v12H4z' },
-  { id: 'direct', label: 'Directs', icon: 'M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM4 20c.8-3.8 3.8-6 8-6s7.2 2.2 8 6' },
-  { id: 'group', label: 'Groupes', icon: 'M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM3 19c.5-3 2.8-5 6-5s5.5 2 6 5M16 10a2.5 2.5 0 1 0 0-5M17 14c2 .4 3.3 2 3.8 4.4' },
-  { id: 'requests', label: 'Demandes', icon: 'M12 3a6 6 0 0 0-6 6v4l-2 4h16l-2-4V9a6 6 0 0 0-6-6Zm-2 17a2 2 0 0 0 4 0' },
+const FILTERS: Array<{ id: FilterId; label: string; icon: React.ReactNode }> = [
+  { id: 'all', label: 'Toutes', icon: <Icon name="message-square" className="size-3.5" aria-hidden="true" /> },
+  { id: 'direct', label: 'Directs', icon: <Icon name="user" className="size-3.5" aria-hidden="true" /> },
+  { id: 'group', label: 'Groupes', icon: <Icon name="users" className="size-3.5" aria-hidden="true" /> },
+  { id: 'requests', label: 'Demandes', icon: <Icon name="bell" className="size-3.5" aria-hidden="true" /> },
 ];
 
 function initials(name: string): string {
@@ -478,15 +482,6 @@ function MessageThread({
     );
   }
 
-  if (messages.length === 0) {
-    return (
-      <div className="mstate">
-        <b>Le début de votre discussion</b>
-        <span>Écrivez le premier message.</span>
-      </div>
-    );
-  }
-
   return (
     <>
       <div
@@ -497,13 +492,20 @@ function MessageThread({
         aria-relevant="additions"
         aria-label={`Fil de discussion avec ${conversationTitle(conversation)}`}
       >
-        {hasMore ? (
-          <button type="button" className="mbtn" style={{ alignSelf: 'center', margin: '2px 0 4px' }} onClick={loadEarlier} disabled={loadingEarlier}>
-            {loadingEarlier ? 'Chargement…' : 'Messages précédents'}
-          </button>
-        ) : null}
+        {messages.length === 0 ? (
+          <div className="mstate" style={{ margin: 'auto', textAlign: 'center' }}>
+            <b>Le début de votre discussion</b>
+            <span>Écrivez le premier message.</span>
+          </div>
+        ) : (
+          <>
+            {hasMore ? (
+              <button type="button" className="mbtn" style={{ alignSelf: 'center', margin: '2px 0 4px' }} onClick={loadEarlier} disabled={loadingEarlier}>
+                {loadingEarlier ? 'Chargement…' : 'Messages précédents'}
+              </button>
+            ) : null}
 
-        {messages.map((message, index) => {
+            {messages.map((message, index) => {
           const previous = messages[index - 1];
           const next = messages[index + 1];
           const stamp = new Date(message.created_at).getTime();
@@ -513,6 +515,13 @@ function MessageThread({
           const showDay = !previous || dayKey(previous.created_at) !== dayKey(message.created_at);
           const reactions = message.reactions ?? [];
           const reads = readBy(message);
+          const isAttachment =
+            message.message_type === 'image' ||
+            message.message_type === 'product' ||
+            message.message_type === 'trail' ||
+            message.message_type === 'gpx' ||
+            message.message_type === 'kit' ||
+            message.message_type === 'post';
 
           if (message.message_type === 'system') {
             return (
@@ -543,7 +552,7 @@ function MessageThread({
 
                   <button
                     type="button"
-                    className={`bub ${mine ? 'mine' : 'other'}${sameAsPrev && sameAsNext ? ' mid' : ''} tap`}
+                    className={`bub ${mine ? 'mine' : 'other'}${sameAsPrev && sameAsNext ? ' mid' : ''}${isAttachment ? ' bub-attachment' : ''} tap`}
                     onPointerDown={(event) => {
                       pressStart.current = { x: event.clientX, y: event.clientY };
                       if (pressTimer.current) clearTimeout(pressTimer.current);
@@ -624,43 +633,54 @@ function MessageThread({
                           </small>
                         </span>
                       </span>
-                    ) : message.message_type === 'trail' ? (
-                      <span
-                        className="mcard"
-                        role="button"
-                        tabIndex={0}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          onOpenAttachment?.(message);
-                        }}
-                        onKeyDown={(event) => {
-                          if (event.key === 'Enter' || event.key === ' ') {
-                            event.preventDefault();
-                            event.stopPropagation();
-                            onOpenAttachment?.(message);
-                          }
-                        }}
-                      >
-                        <span className="mcard-ico" aria-hidden="true">
-                          <Icon name="route" className="size-4" />
-                        </span>
-                        <span className="mcard-txt">
-                          <b>{String(message.metadata?.name || 'Randonnée')}</b>
-                          <small>
-                            {[
-                              typeof message.metadata?.distance_km === 'number'
-                                ? `${message.metadata.distance_km.toFixed(1)} km`
-                                : null,
-                              typeof message.metadata?.elevation_gain_m === 'number'
-                                ? `+${Math.round(message.metadata.elevation_gain_m)} m`
-                                : null,
-                              typeof message.metadata?.region === 'string' ? message.metadata.region : null,
-                            ]
-                              .filter(Boolean)
-                              .join(' · ') || 'Trace partagée'}
-                          </small>
-                        </span>
-                      </span>
+                    ) : message.message_type === 'trail' || message.message_type === 'gpx' ? (
+                      (() => {
+                        const trailGeojson =
+                          (message.metadata?.geojson as any) ??
+                          (Array.isArray(message.metadata?.coordinates) && (message.metadata.coordinates as any[]).length > 1
+                            ? { type: 'LineString' as const, coordinates: message.metadata.coordinates as [number, number][] }
+                            : null) ??
+                          resolveTrailCoordinates(
+                            (message.metadata?.name as string) ||
+                            (message.metadata?.id as string) ||
+                            message.content
+                          );
+                        return (
+                          <div
+                            className="mbub-map"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              onOpenAttachment?.(message);
+                            }}
+                          >
+                            <TraceMap
+                              geojson={trailGeojson}
+                              height={160}
+                            />
+                            <div
+                              style={{
+                                position: 'absolute',
+                                bottom: 0,
+                                left: 0,
+                                right: 0,
+                                padding: '8px 10px',
+                                background: 'linear-gradient(180deg, transparent, rgba(23, 43, 36, 0.92))',
+                                color: '#fff',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                pointerEvents: 'none',
+                                zIndex: 10,
+                              }}
+                            >
+                              <b style={{ fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '75%' }}>
+                                {message.message_type === 'trail' ? message.content : (message.metadata?.file_name as string) || 'Tracé GPX'}
+                              </b>
+                              <span style={{ fontSize: 10, fontWeight: 600, background: 'rgba(255,255,255,0.25)', padding: '2px 8px', borderRadius: 999 }}>Voir</span>
+                            </div>
+                          </div>
+                        );
+                      })()
                     ) : message.message_type === 'kit' ? (
                       <span
                         className="mcard mcard-kit"
@@ -692,6 +712,8 @@ function MessageThread({
                         <Icon name="chevron-right" className="size-3.5 mcard-chevron" aria-hidden="true" />
                       </span>
                     ) : message.message_type === 'audio' ? (
+                      <AudioPlayerBubble audioUrl={message.content} isMine={mine} />
+                    ) : message.message_type === 'file' || message.message_type === 'video' ? (
                       <span
                         className="mcard"
                         role="button"
@@ -709,49 +731,16 @@ function MessageThread({
                         }}
                       >
                         <span className="mcard-ico" aria-hidden="true">
-                          <Icon name="mic" className="size-4" />
+                          <Icon name={message.message_type === 'video' ? 'play' : 'paperclip'} className="size-4" />
                         </span>
-                        <span className="mcard-txt">
-                          <b>Note vocale</b>
-                          <small>Message vocal partagé</small>
-                        </span>
-                      </span>
-                    ) : message.message_type === 'gpx' || message.message_type === 'file' || message.message_type === 'video' ? (
-                      <span
-                        className="mcard"
-                        role="button"
-                        tabIndex={0}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          onOpenAttachment?.(message);
-                        }}
-                        onKeyDown={(event) => {
-                          if (event.key === 'Enter' || event.key === ' ') {
-                            event.preventDefault();
-                            event.stopPropagation();
-                            onOpenAttachment?.(message);
-                          }
-                        }}
-                      >
-                        {message.message_type === 'gpx' ? (
-                          <GpxThumb content={message.content} />
-                        ) : (
-                          <span className="mcard-ico" aria-hidden="true">
-                            <Icon name={message.message_type === 'video' ? 'play' : 'paperclip'} className="size-4" />
-                          </span>
-                        )}
                         <span className="mcard-txt">
                           <b>
-                            {message.message_type === 'gpx'
-                              ? 'Trace GPX'
-                              : message.message_type === 'video'
-                                ? 'Vidéo'
-                                : 'Fichier'}
+                            {message.message_type === 'video'
+                              ? 'Vidéo'
+                              : 'Fichier'}
                           </b>
                           <small>
-                            {message.message_type === 'gpx'
-                              ? 'Toucher pour voir la carte'
-                              : message.content.split('/').pop()?.slice(0, 42) || 'Pièce jointe'}
+                            {message.content.split('/').pop()?.slice(0, 42) || 'Pièce jointe'}
                           </small>
                         </span>
                         <Icon name="chevron-right" className="size-3.5 mcard-chevron" aria-hidden="true" />
@@ -849,6 +838,8 @@ function MessageThread({
             </React.Fragment>
           );
         })}
+        </>
+        )}
 
         {typingUserNames.length > 0 ? (
           <div className="mday mtyping">
@@ -866,18 +857,89 @@ function MessageThread({
         </div>
       ) : null}
 
-      <MessageComposerBar
-        conversation={conversation}
-        currentUserId={currentUserId}
-        currentUserProfile={currentUserProfile}
-        replyTo={replyTo}
-        onCancelReply={() => setReplyTo(null)}
-        onTyping={sendTypingSignal}
-        onSend={sendThreadMessage}
-        onRefresh={refreshMessages}
-        compact={compact}
-        onOpenShareMenu={onOpenShareMenu}
-      />
+      {conversation.status === 'pending' && conversation.created_by !== currentUserId ? (
+        <div
+          className="mrequest-bar"
+          style={{
+            display: 'flex',
+            gap: 10,
+            padding: '10px 14px',
+            margin: '0 auto 6px',
+            width: 'calc(100% - 24px)',
+            maxWidth: 390,
+            boxSizing: 'border-box',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(255, 255, 255, 0.78)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            borderRadius: 22,
+            border: '0.5px solid rgba(255, 255, 255, 0.9)',
+            boxShadow: '0 4px 16px rgba(23, 43, 36, 0.08)',
+            position: 'relative',
+            zIndex: 10,
+          }}
+        >
+          <button
+            type="button"
+            className="mbtn danger"
+            style={{
+              flex: 1,
+              height: 38,
+              borderRadius: 999,
+              background: 'rgba(220, 53, 69, 0.12)',
+              color: '#dc3545',
+              fontWeight: 600,
+              fontSize: 13,
+              border: '0.5px solid rgba(220, 53, 69, 0.25)',
+              cursor: 'pointer',
+            }}
+            onClick={async () => {
+              haptic('medium');
+              await messagingService.declineMessageRequest(conversation.id, currentUserId);
+              await refreshMessages();
+            }}
+          >
+            Refuser
+          </button>
+          <button
+            type="button"
+            className="mbtn p"
+            style={{
+              flex: 1,
+              height: 38,
+              borderRadius: 999,
+              background: 'linear-gradient(180deg, #275d3f, #17402c)',
+              color: '#ffffff',
+              fontWeight: 600,
+              fontSize: 13,
+              border: 'none',
+              boxShadow: '0 2px 8px rgba(23, 64, 44, 0.25)',
+              cursor: 'pointer',
+            }}
+            onClick={async () => {
+              haptic('medium');
+              await messagingService.acceptMessageRequest(conversation.id, currentUserId);
+              await refreshMessages();
+            }}
+          >
+            Accepter
+          </button>
+        </div>
+      ) : (
+        <MessageComposerBar
+          conversation={conversation}
+          currentUserId={currentUserId}
+          currentUserProfile={currentUserProfile}
+          replyTo={replyTo}
+          onCancelReply={() => setReplyTo(null)}
+          onTyping={sendTypingSignal}
+          onSend={sendThreadMessage}
+          onRefresh={refreshMessages}
+          compact={compact}
+          onOpenShareMenu={onOpenShareMenu}
+        />
+      )}
 
       <ForwardMessageSheet
         isOpen={forwarding !== null}
@@ -1018,37 +1080,29 @@ function MessageComposerBar({
           }}
           aria-label="Joindre une photo"
         />
-        <button type="button" className="lg gbtn" onClick={() => fileInput.current?.click()} aria-label="Envoyer une photo">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <rect x="3.2" y="4.6" width="17.6" height="14.8" rx="4" />
-            <circle cx="8.6" cy="9.9" r="1.7" />
-            <path d="M3.4 16.4l4.3-4a2.4 2.4 0 0 1 3.2 0l3.1 2.9" />
-            <path d="M12.6 15.1l2.2-2a2.4 2.4 0 0 1 3.2 0l2.4 2.2" />
-          </svg>
-        </button>
 
-        <div className="mfield-wrap">
+        <div className="mfield-wrap" style={{ flex: 1, minWidth: 0 }}>
           <textarea
             ref={field}
             className="mfield"
             rows={1}
-          value={content}
-          placeholder={compact ? 'Réponse rapide…' : 'Votre message…'}
-          aria-label="Votre message"
-          enterKeyHint="send"
-          onChange={(event) => {
-            setContent(event.target.value);
-            onTyping?.();
-            const node = event.target;
-            node.style.height = 'auto';
-            node.style.height = `${Math.min(Math.max(node.scrollHeight, 36), 110)}px`;
-          }}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter' && !event.shiftKey && window.matchMedia('(pointer: fine)').matches) {
-              event.preventDefault();
-              void submit();
-            }
-          }}
+            value={content}
+            placeholder={compact ? 'Réponse rapide…' : 'Votre message…'}
+            aria-label="Votre message"
+            enterKeyHint="send"
+            onChange={(event) => {
+              setContent(event.target.value);
+              onTyping?.();
+              const node = event.target;
+              node.style.height = 'auto';
+              node.style.height = `${Math.min(Math.max(node.scrollHeight, 36), 110)}px`;
+            }}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' && !event.shiftKey && window.matchMedia('(pointer: fine)').matches) {
+                event.preventDefault();
+                void submit();
+              }
+            }}
           />
 
           <button
@@ -1064,7 +1118,7 @@ function MessageComposerBar({
             </svg>
           </button>
         </div>
-        <button type="button" className="lg gbtn" onClick={() => onOpenShareMenu?.()} aria-label="Partager un GPX, un équipement ou une randonnée">
+        <button type="button" className="lg gbtn" onClick={() => onOpenShareMenu?.()} aria-label="Partager une photo, un GPX ou un équipement">
           <Icon name="ellipsis" className="size-4" aria-hidden="true" />
         </button>
         <button
@@ -1072,8 +1126,9 @@ function MessageComposerBar({
           className={`lg gbtn msend${content.trim() ? ' on' : ''}`}
           disabled={!content.trim() || sending}
           aria-label="Envoyer le message"
+          style={{ marginRight: -4 }}
         >
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M4.4 12h14.2" />
             <path d="M12.8 6.2 18.6 12l-5.8 5.8" />
           </svg>
@@ -1098,18 +1153,38 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
   const { haptic } = useHapticFeedback();
   const router = useRouter();
   const phone = useRef<HTMLDivElement>(null);
-  // Hauteur de la card des discussions, réglable en tirant la poignée (mémorisée).
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  // Répartition 60 % carte supérieure / 40 % carte inférieure au démarrage.
   const SPLIT_KEY = 'lkdv:messages:split';
-  const SPLIT_DEFAULT = 302;
-  const [split, setSplit] = useState<number>(SPLIT_DEFAULT);
+  const computeDefaultSplit = useCallback(() => {
+    if (typeof window === 'undefined') return 480;
+    const h = phone.current?.getBoundingClientRect().height || window.innerHeight || 800;
+    return Math.round(h * 0.60);
+  }, []);
+  const [split, setSplit] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = Number(window.localStorage.getItem(SPLIT_KEY));
+        if (Number.isFinite(saved) && saved >= 160) return saved;
+      } catch {}
+      return Math.round((window.innerHeight || 800) * 0.60);
+    }
+    return 480;
+  });
   const [splitting, setSplitting] = useState(false);
   const splitDrag = useRef<{ startY: number; startSplit: number } | null>(null);
   useEffect(() => {
     try {
       const saved = Number(window.localStorage.getItem(SPLIT_KEY));
-      if (Number.isFinite(saved) && saved >= 160) setSplit(saved);
-    } catch {}
-  }, []);
+      if (Number.isFinite(saved) && saved >= 160) {
+        setSplit(saved);
+      } else {
+        setSplit(computeDefaultSplit());
+      }
+    } catch {
+      setSplit(computeDefaultSplit());
+    }
+  }, [computeDefaultSplit]);
   const clampSplit = useCallback((value: number) => {
     const total = phone.current?.getBoundingClientRect().height ?? 700;
     return Math.round(Math.min(Math.max(value, 190), Math.max(260, total - 220)));
@@ -1121,6 +1196,7 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
   };
   const searchRef = useRef<HTMLInputElement>(null);
   const { conversations, loading, error, refreshConversations } = useConversations(currentUserId ?? undefined);
+  const keyboardInset = useKeyboardInset();
 
   const [filter, setFilter] = useState<FilterId>('all');
   // Sens du changement de filtre : la liste glisse dans ce sens (voir CSS).
@@ -1133,6 +1209,7 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
   const [searchPeople, setSearchPeople] = useState<Array<{ id: string; full_name: string; avatar_url?: string | null }>>([]);
   const [optionsConv, setOptionsConv] = useState<Conversation | null>(null);
   const [notifyConv, setNotifyConv] = useState<Conversation | null>(null);
+  const [profileDrawerUser, setProfileDrawerUser] = useState<{ id: string; name: string; avatar?: string | null; username?: string | null } | null>(null);
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
   const [attachment, setAttachment] = useState<Message | null>(null);
   const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
@@ -1295,8 +1372,9 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
   };
 
   const open = useCallback((conversation: Conversation) => {
+    if (selectedId === conversation.id) return;
     setSelectedId(conversation.id);
-  }, []);
+  }, [selectedId]);
 
   const swipe = useCallback(async (conversation: Conversation, action: SwipeAction) => {
     if (!currentUserId) return;
@@ -1507,15 +1585,48 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                         </button>
                       </div>
                     ) : visible.length === 0 ? (
-                      <div className="mstate">
-                        <b>{query.trim() ? 'Aucun résultat' : filter === 'requests' ? 'Aucune demande en attente' : 'Aucune discussion'}</b>
-                        <span>{query.trim() ? 'Essayez un autre nom.' : filter === 'requests' ? 'Les nouvelles demandes apparaîtront ici.' : 'Lancez une discussion avec un membre de la communauté.'}</span>
+                      <div
+                        className="mstate"
+                        style={{
+                          margin: 'auto',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          textAlign: 'center',
+                          padding: '38px 24px',
+                          gap: 14,
+                        }}
+                      >
+                        <b style={{ font: '700 17px/1.2 var(--sf)', color: '#17402C' }}>
+                          {query.trim() ? 'Aucun résultat' : 'Aucune discussion'}
+                        </b>
                         {query.trim() ? (
-                          <button type="button" className="mbtn" onClick={() => setQuery('')}>
+                          <button
+                            type="button"
+                            className="mbtn"
+                            onClick={() => setQuery('')}
+                            style={{ height: 38, padding: '0 18px', fontSize: 13, borderRadius: 999 }}
+                          >
                             Effacer la recherche
                           </button>
                         ) : (
-                          <button type="button" className="mbtn p" onClick={focusSearch}>
+                          <button
+                            type="button"
+                            className="mbtn p"
+                            onClick={focusSearch}
+                            style={{
+                              height: 40,
+                              padding: '0 22px',
+                              fontSize: 13.5,
+                              fontWeight: 600,
+                              borderRadius: 999,
+                              background: 'linear-gradient(180deg, #275d3f, #17402c)',
+                              color: '#fff',
+                              boxShadow: '0 4px 14px rgba(23, 64, 44, 0.28)',
+                              border: 'none',
+                            }}
+                          >
                             Nouvelle discussion
                           </button>
                         )}
@@ -1535,11 +1646,12 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                     )}
                   </div>
                 </div>
-                {/* Filtre des discussions : capsule flottante en bas à droite de la card. */}
+                {/* Filtre des discussions : capsule compacte en bas à droite de la card. */}
                 <SubCapsuleTabs
                   items={FILTERS.map((item) => ({
                     id: item.id,
                     label: item.label,
+                    icon: item.icon,
                     badge: item.id === 'requests' && pendingCount > 0 ? pendingCount : undefined,
                   }))}
                   activeIndex={Math.max(0, FILTERS.findIndex((item) => item.id === filter))}
@@ -1549,6 +1661,7 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                   }}
                   ariaLabel="Filtrer les discussions"
                   placement="float"
+                  showLabels={false}
                   className="mfilters"
                 />
               </div>
@@ -1583,8 +1696,9 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                   setSplitting(false);
                 }}
                 onDoubleClick={() => {
-                  setSplit(SPLIT_DEFAULT);
-                  persistSplit(SPLIT_DEFAULT);
+                  const def = computeDefaultSplit();
+                  setSplit(def);
+                  persistSplit(def);
                 }}
                 onKeyDown={(event) => {
                   if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;
@@ -1605,10 +1719,8 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                   display: 'flex',
                   flexDirection: 'column',
                   height: '100%',
-                  // Réserve la hauteur réelle de la barre du bas (barre web ou
-                  // barre native iOS, plus haute) : la barre de saisie et ses
-                  // actions restent toujours visibles au-dessus.
-                  paddingBottom: 'calc(max(70px, var(--bottom-nav-height, 70px)) + var(--kb-inset, 0px))',
+                  // Barre de rédaction abaissée au plus près de la bottom bar ou calée au-dessus du clavier
+                  paddingBottom: keyboardInset > 0 ? `${keyboardInset + 1}px` : 'calc(env(safe-area-inset-bottom, 0px) + 42px)',
                 }}>
                 {selected ? (
                   <div className="mpane in" data-conversation={selected.id}>
@@ -1617,7 +1729,16 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                       className="mpill"
                       onClick={() => {
                         haptic('light');
-                        setOptionsConv(selected);
+                        if (selected.type === 'direct' && selected.other_member) {
+                          setProfileDrawerUser({
+                            id: selected.other_member.id,
+                            name: selected.other_member.full_name || conversationTitle(selected),
+                            avatar: selected.other_member.avatar_url || selected.avatar_url,
+                            username: selected.other_member.username,
+                          });
+                        } else {
+                          setOptionsConv(selected);
+                        }
                       }}
                       aria-label={`${conversationTitle(selected)} — ${
                         selected.type === 'group' ? `${members.length || 1} membres` : 'Membre LKDV'
@@ -1677,6 +1798,7 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                 conversation={optionsConv}
                 currentUserId={currentUserId}
                 onRefreshConversations={refreshConversations}
+                onOpenProfile={(u) => setProfileDrawerUser(u)}
                 onReport={(conversation) => {
                   setOptionsConv(null);
                   setReportTarget({
@@ -1710,10 +1832,25 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                 isOpen={shareMenuOpen}
                 onClose={() => setShareMenuOpen(false)}
                 currentUserId={currentUserId ?? ''}
-                onSendGpx={async (file) => {
+                onPickPhoto={() => photoInputRef.current?.click()}
+                onSendPhoto={async (file) => {
+                  const url = await messagingService.uploadAttachment(selected.id, file);
+                  if (url) {
+                    await messagingService.sendMessage(selected.id, currentUserId as string, url, 'image');
+                    await refreshConversations();
+                  }
+                  setShareMenuOpen(false);
+                }}
+                onSendGpx={async (file, geojson) => {
                   const url = await messagingService.uploadAttachment(selected.id, file);
                   if (!url) return;
-                  await messagingService.sendMessage(selected.id, currentUserId as string, url, 'gpx');
+                  await messagingService.sendMessage(selected.id, currentUserId as string, url, 'gpx', undefined, {
+                    file_name: file.name,
+                    file_size: file.size,
+                    url,
+                    geojson: geojson ?? null,
+                    coordinates: geojson?.coordinates ?? null,
+                  });
                   await refreshConversations();
                   setShareMenuOpen(false);
                 }}
@@ -1734,6 +1871,162 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                 }}
               />
             ) : null}
+
+            <input
+              ref={photoInputRef}
+              type="file"
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={async (event) => {
+                const file = event.target.files?.[0];
+                if (file && selected && currentUserId) {
+                  const url = await messagingService.uploadAttachment(selected.id, file);
+                  if (url) {
+                    await messagingService.sendMessage(selected.id, currentUserId, url, 'image');
+                    await refreshConversations();
+                  }
+                }
+                event.target.value = '';
+              }}
+              aria-label="Joindre une photo depuis la galerie"
+            />
+
+            {/* Drawer du profil utilisateur dans la carte supérieure (swipe down pour fermer, composition verticale centrée) */}
+            <AccountDrawerHost
+              open={profileDrawerUser !== null}
+              variant="card"
+              title=""
+              subtitle=""
+              hideHeader={true}
+              hideCloseButton={true}
+              onClose={() => setProfileDrawerUser(null)}
+            >
+              <div
+                className="mdrawer-profile"
+                style={{
+                  padding: '24px 16px 20px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 10,
+                  height: '100%',
+                  boxSizing: 'border-box',
+                  textAlign: 'center',
+                }}
+              >
+                {/* 1. Photographie de profil centrée */}
+                <div
+                  style={{
+                    position: 'relative',
+                    width: 76,
+                    height: 76,
+                    borderRadius: '50%',
+                    overflow: 'hidden',
+                    boxShadow: '0 0 0 2.5px rgba(255, 255, 255, 0.95), 0 6px 18px rgba(23, 43, 36, 0.18)',
+                    flexShrink: 0,
+                    margin: '0 auto',
+                  }}
+                >
+                  {profileDrawerUser?.avatar ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={profileDrawerUser.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', background: '#17402C', color: '#fff', font: '700 24px var(--sf)' }}>
+                      {initials(profileDrawerUser?.name || '?')}
+                    </div>
+                  )}
+                </div>
+
+                {/* 2. Pseudonyme centré sous la photo */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                  <b style={{ font: '700 17px/1.2 var(--sf)', color: '#17402C' }}>
+                    {profileDrawerUser?.username ? `@${profileDrawerUser.username}` : profileDrawerUser?.name}
+                  </b>
+
+                  {/* 3. Nombre de kilomètres parcourus centré */}
+                  <span
+                    style={{
+                      font: '600 12.5px var(--sf)',
+                      color: '#275d3f',
+                      background: 'rgba(39, 93, 63, 0.10)',
+                      padding: '3px 12px',
+                      borderRadius: 999,
+                      marginTop: 4,
+                    }}
+                  >
+                    342 km parcourus
+                  </span>
+                </div>
+
+                {/* 4. Les deux boutons d'action positionnés sous ces informations avec libellés centrés */}
+                <div
+                  className="mdrawer-actions"
+                  style={{
+                    width: '100%',
+                    maxWidth: 280,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 8,
+                    marginTop: 6,
+                  }}
+                >
+                  <button
+                    type="button"
+                    className="mbtn p"
+                    style={{
+                      width: '100%',
+                      height: 40,
+                      borderRadius: 999,
+                      background: 'linear-gradient(180deg, #275d3f, #17402c)',
+                      color: '#fff',
+                      font: '600 13px var(--sf)',
+                      border: 0,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      textAlign: 'center',
+                    }}
+                    onClick={async () => {
+                      if (!profileDrawerUser || !currentUserId) return;
+                      const id = await messagingService.getOrCreateDirectConversation(profileDrawerUser.id, currentUserId);
+                      if (id) {
+                        await refreshConversations();
+                        setSelectedId(id);
+                        setProfileDrawerUser(null);
+                      }
+                    }}
+                  >
+                    Écrire un message
+                  </button>
+                  <button
+                    type="button"
+                    className="mbtn"
+                    style={{
+                      width: '100%',
+                      height: 40,
+                      borderRadius: 999,
+                      background: 'rgba(255, 255, 255, 0.72)',
+                      border: '0.5px solid rgba(255, 255, 255, 0.85)',
+                      font: '600 13px var(--sf)',
+                      color: '#17402C',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      textAlign: 'center',
+                    }}
+                    onClick={() => {
+                      if (!profileDrawerUser) return;
+                      router.push(`/profil/${profileDrawerUser.id}`);
+                    }}
+                  >
+                    Voir le profil
+                  </button>
+                </div>
+              </div>
+            </AccountDrawerHost>
 
             <AccountDrawerHost
               open={notifyConv !== null}
