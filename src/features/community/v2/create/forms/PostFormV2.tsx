@@ -19,6 +19,7 @@ import { PlaceFieldV2 } from '../fields/PlaceFieldV2';
 import { IMAGE_LIMITS, mediaProgress } from '../fields/media';
 import { useMyClubsV2 } from '../club/useMyClubsV2';
 import { deleteMediaObjectsV2, uploadedObjectsOf } from '../fields/media';
+import { SheetPreview } from '../../shared/SheetPreview';
 import type { CreateFormV2Props } from './types';
 
 const FORMAT_OPTIONS = [
@@ -285,6 +286,11 @@ function ContentStep({ user }: { user: User | null }) {
           sans photo.
         </p>
       ) : (
+        /* FID-048 — libellé « Photos et vidéos » **seulement** si le champ
+           accepte les vidéos. En publication il n'accepte que des images :
+           la vidéo est reportée (`01-SPEC-PRODUIT.md` §6 : « Vidéo dans les
+           publications : … l'UI propose les photos seules » ; les stories
+           gardent la vidéo). Le libellé reste donc « Photos ». */
         <MediaFieldV2
           name="media"
           label={format === 'question' ? 'Photos (facultatif)' : 'Photos'}
@@ -445,19 +451,22 @@ function PostBody({
   return (
     <>
       {/* La maquette n'affiche aucun surtitre au-dessus de l'aperçu vivant
-          (T8a / T12) : l'aperçu est `aria-label="Aperçu en direct"`. */}
+          (T8a / T12) ; l'aperçu est porté par l'emplacement fixe de la coque
+          (`aria-label="Aperçu en direct"`, FID-056), hors du flux qui défile. */}
       {api.active ? (
-        <div className="lkdv-cv2c-live-preview" inert aria-hidden="true">
-          {/* FID-047 : visuel de repli de l'aperçu quand le format Photo n'a
-              pas encore de média (maquette : `art(m.art) || 'meadow'`). */}
-          {values.format === 'photo' && values.media.length === 0 ? (
-            <span className="lkdv-cv2c-post-placeholder">
-              <Mountain size={22} aria-hidden="true" />
-              <small>Ton aperçu apparaîtra ici.</small>
-            </span>
-          ) : null}
-          <CommunityFeedPost post={preview} user={user} embedded />
-        </div>
+        <SheetPreview>
+          <div className="lkdv-cv2c-live-preview" inert aria-hidden="true">
+            {/* FID-047 : visuel de repli de l'aperçu quand le format Photo n'a
+                pas encore de média (maquette : `art(m.art) || 'meadow'`). */}
+            {values.format === 'photo' && values.media.length === 0 ? (
+              <span className="lkdv-cv2c-post-placeholder">
+                <Mountain size={22} aria-hidden="true" />
+                <small>Ton aperçu apparaîtra ici.</small>
+              </span>
+            ) : null}
+            <CommunityFeedPost post={preview} user={user} embedded />
+          </div>
+        </SheetPreview>
       ) : null}
       {api.step === 0 ? <FormatStep /> : null}
       {api.step === 1 ? <ContentStep user={user} /> : null}

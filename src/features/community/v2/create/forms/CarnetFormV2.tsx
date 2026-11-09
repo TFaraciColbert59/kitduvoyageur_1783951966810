@@ -39,6 +39,7 @@ import {
 } from '../carnet/daySync';
 import { createClient } from '@/lib/supabase/client';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { SheetPreview } from '../../shared/SheetPreview';
 import type { CreateFormV2Props } from './types';
 
 const VISIBILITIES = [
@@ -176,7 +177,6 @@ function InfosStep({ user }: { user: User | null }) {
 
   return (
     <>
-      <CarnetPreviewV2 values={values} />
       <TextFieldV2
         name="title"
         label="Titre du carnet"
@@ -627,6 +627,7 @@ function CarnetBody({
   const form = api.form;
   const watchedTrace = form.watch('trace');
   const trace = useMemo(() => watchedTrace ?? [], [watchedTrace]);
+  const values = form.watch();
   const prefillValues = useMemo(() => {
     if (!prefill) return null;
     const mapped: Record<string, unknown> = {};
@@ -646,6 +647,13 @@ function CarnetBody({
   return (
     <>
       <PrefillApplierV2 values={prefillValues} nonce={prefillNonce} />
+      {/* FID-056 : l'aperçu vivant d'Infos (FID-029) passe dans l'emplacement
+          fixe de la coque, au-dessus du pager — il suit désormais les 4 étapes. */}
+      {api.active ? (
+        <SheetPreview>
+          <CarnetPreviewV2 values={values} />
+        </SheetPreview>
+      ) : null}
       {api.step === 0 ? <InfosStep user={user} /> : null}
       {api.step === 1 ? <TraceStep user={user} active={api.active} /> : null}
       {api.step === 2 ? <DaysPaneV2 user={user} /> : null}
@@ -657,10 +665,10 @@ function CarnetBody({
 /**
  * Carnet V2 (`Carnet#1-20`) : Infos → Tracé → Jours → Partage.
  *
- * FID-029/030/031/051 : aperçu vivant en tête d'Infos, stepper « Nombre de
- * jours » synchronisé aux dates dans les deux sens, jours initialisés des
- * dates à l'entrée de l'étape, voyageurs en chips + « Inviter par lien »
- * (switch collaboratif dérivé), aide à l'écriture en chips, titre 100.
+ * FID-029/030/031/051 : aperçu vivant (slot fixe de la coque depuis FID-056),
+ * stepper « Nombre de jours » synchronisé aux dates dans les deux sens, jours
+ * initialisés des dates à l'entrée de l'étape, voyageurs en chips + « Inviter
+ * par lien » (switch collaboratif dérivé), aide à l'écriture en chips, titre 100.
  * Le reste (carte MapLibre, moments, couverture, envoi `create_carnet_v2`)
  * est conservé.
  */

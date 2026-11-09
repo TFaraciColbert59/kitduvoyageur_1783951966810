@@ -16,6 +16,7 @@ import { LensPager } from '@/components/ui/drawer/LensPager';
 import { SortMenuButton, type SortOption } from '@/components/ui/drawer/SortMenuButton';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { zIndex } from '@/lib/ui/zIndex';
+import { SheetPreviewSlot } from './SheetPreview';
 
 /** Durée de l'entrée du tiroir (/compte : `.72s var(--ease-out)`). */
 export const SHEET_ENTER_MS = 720;
@@ -102,6 +103,14 @@ export interface CommunitySheetShellProps {
    * `role="status"`.
    */
   guestNotice?: boolean;
+  /**
+   * FID-056 — cible de l'**aperçu vivant** : quand ce callback est fourni, la
+   * coque rend un emplacement `150 px` entre la capsule et le pager (hors du
+   * défilement). Les formulaires y portent leur aperçu via `SheetPreview`.
+   * L'emplacement disparaît quand un détail est empilé (le formulaire n'est
+   * plus à l'écran).
+   */
+  previewSlotRef?: (element: HTMLDivElement | null) => void;
 }
 
 function cx(...classes: Array<string | false | null | undefined>): string {
@@ -142,6 +151,7 @@ export function CommunitySheetShell({
   island = null,
   kind,
   guestNotice = false,
+  previewSlotRef,
 }: CommunitySheetShellProps) {
   const { haptic } = useHapticFeedback();
   const [mounted, setMounted] = useState(open);
@@ -460,6 +470,9 @@ export function CommunitySheetShell({
               <span>Mode invité · lecture seule</span>
             </p>
           ) : null}
+
+          {/* FID-056 : emplacement fixe de l'aperçu, au-dessus du pager. */}
+          {previewSlotRef && !detail ? <SheetPreviewSlot slotRef={previewSlotRef} /> : null}
 
           {detail ? (
             <div className="lkdv-cv2-detail" data-state={state} data-testid="cv2-detail">

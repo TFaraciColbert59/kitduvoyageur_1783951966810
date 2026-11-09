@@ -167,6 +167,35 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
   height: 24px;
 }
 
+/* FID-056 — aperçu vivant : emplacement **fixe de 150 px** entre la capsule et
+   le pager (maquette `.cr-prev`, L2692 : `flex:none`, `max-height:150px`,
+   marge latérale 14 px). Hors du pane, il ne défile pas avec le formulaire.
+   Vide, il ne réserve aucune hauteur (détail empilé, formulaire sans aperçu). */
+.lkdv-cv2-preview-slot {
+  flex: none;
+  height: 150px;
+  min-height: 150px;
+  margin: 0 14px 8px;
+  overflow: hidden;
+  border-radius: 20px;
+  pointer-events: none;
+}
+
+.lkdv-cv2-preview-slot:empty {
+  display: none;
+}
+
+.lkdv-cv2-preview-frame {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+.lkdv-cv2-preview-frame > * {
+  width: 100%;
+}
+
 /* Corps : une pane par volet, glissement horizontal (LensPager). */
 .lkdv-cv2-body {
   position: relative;

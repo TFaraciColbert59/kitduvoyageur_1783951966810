@@ -16,6 +16,7 @@ import { IMAGE_LIMITS, deleteMediaObjectsV2, uploadedObjectsOf } from '../fields
 import { isValidClubSlug, slugifyClubName } from '../club/slug';
 import { moderateText } from '@/features/community/create/moderation';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { SheetPreview } from '../../shared/SheetPreview';
 import type { CreateFormV2Props } from './types';
 
 /**
@@ -49,15 +50,10 @@ function ClubPreview() {
   const values = form.watch();
   const slug = values.slug || slugifyClubName(values.name);
   const avatarUrl = values.avatar[0]?.previewUrl || values.avatar[0]?.url || '';
-  const bannerUrl = values.banner[0]?.previewUrl || values.banner[0]?.url || '';
+  // FID-056 : l'aperçu vit dans 150 px ; la maquette `.kprev` (L3304) montre le
+  // blason et la ligne d'identité, pas la bannière 3:1 (réservée à l'étape).
   return (
     <div className="lkdv-cv2c-club-preview" inert aria-hidden="true">
-      {bannerUrl ? (
-        <span className="lkdv-cv2c-club-banner">
-          {/* eslint-disable-next-line @next/next/no-img-element -- aperçu local ou URL Storage */}
-          <img src={bannerUrl} alt="" />
-        </span>
-      ) : null}
       <div className="lkdv-cv2-card lkdv-cv2c-crest-row">
         {avatarUrl ? (
           <span className="lkdv-cv2c-club-avatar">
@@ -339,6 +335,14 @@ function AdhesionStep() {
   const questionsError = readError(adhesionErrors, 'joinQuestions');
   const values = form.watch();
   const { haptic } = useHapticFeedback();
+  // FID-054 — réordonnancement au **pointeur** (maquette `.grip` 44 px) en plus
+  // des flèches haut/bas : la poignée capture le pointeur, la ligne la plus
+  // proche du doigt devient la cible, puis l'ordre est écrit d'un seul geste.
+  const rowRefs = useRef<Array<HTMLLIElement | null>>([]);
+  const dragRef = useRef<{ index: number; pointerId: number } | null>(null);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOver, setDragOver] = useState<number | null>(null);
+  const [announcement, setAnnouncement] = useState('');
 
   const updateQuestion = (index: number, text: string) => {
     const next = [...values.joinQuestions];
@@ -346,13 +350,68 @@ function AdhesionStep() {
     form.setValue('joinQuestions', next, { shouldDirty: true, shouldValidate: true });
   };
 
-  const moveQuestion = (index: number, delta: number) => {
-    const target = index + delta;
-    if (target < 0 || target >= values.joinQuestions.length) return;
+  const reorderQuestion = (from: number, to: number) => {
+    if (from === to || from < 0 || from >= values.joinQuestions.length) return;
+    if (to < 0 || to >= values.joinQuestions.length) return;
     const next = [...values.joinQuestions];
-    [next[index], next[target]] = [next[target], next[index]];
+    const [question] = next.splice(from, 1);
+    next.splice(to, 0, question as string);
     form.setValue('joinQuestions', next, { shouldDirty: true, shouldValidate: true });
+    setAnnouncement(`Question déplacée en position ${to + 1}.`);
     haptic('selection');
+  };
+
+  const moveQuestion = (index: number, delta: number) => {
+    reorderQuestion(index, index + delta);
+  };
+
+  const rowIndexAt = (clientY: number) => {
+    let target = dragRef.current?.index ?? 0;
+    let best = Number.POSITIVE_INFINITY;
+    rowRefs.current.forEach((row, index) => {
+      if (!row) return;
+      const rect = row.getBoundingClientRect();
+      const distance = Math.abs(clientY - (rect.top + rect.height / 2));
+      if (distance < best) {
+        best = distance;
+        target = index;
+      }
+    });
+    return target;
+  };
+
+  const beginDrag = (index: number, event: React.PointerEvent<HTMLButtonElement>) => {
+    if (event.button > 0) return;
+    dragRef.current = { index, pointerId: event.pointerId };
+    setDragIndex(index);
+    setDragOver(index);
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    } catch {
+      /* capture optionnelle (Safari ancien, tests) */
+    }
+  };
+
+  const moveDrag = (event: React.PointerEvent<HTMLButtonElement>) => {
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    setDragOver(rowIndexAt(event.clientY));
+  };
+
+  const endDrag = (event: React.PointerEvent<HTMLButtonElement>) => {
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    dragRef.current = null;
+    const target = rowIndexAt(event.clientY);
+    setDragIndex(null);
+    setDragOver(null);
+    reorderQuestion(drag.index, target);
+  };
+
+  const cancelDrag = () => {
+    dragRef.current = null;
+    setDragIndex(null);
+    setDragOver(null);
   };
 
   return (
@@ -418,9 +477,17 @@ function AdhesionStep() {
             Aucune question : la demande est acceptée sans formulaire.
           </p>
         ) : (
-          <ul className="lkdv-cv2c-questions">
+          <ul className="lkdv-cv2c-questions" aria-describedby="cv2c-questions-hint">
             {values.joinQuestions.map((question, index) => (
-              <li key={index} className="lkdv-cv2c-question-row">
+              <li
+                key={index}
+                ref={(element) => {
+                  rowRefs.current[index] = element;
+                }}
+                className="lkdv-cv2c-question-row"
+                data-dragging={dragIndex === index || undefined}
+                data-over={dragOver === index && dragIndex !== null && dragIndex !== index ? 'true' : undefined}
+              >
                 <input
                   type="text"
                   className="lkdv-cv2-input"
@@ -429,13 +496,17 @@ function AdhesionStep() {
                   aria-label={`Question d’adhésion ${index + 1}`}
                   onChange={(event) => updateQuestion(index, event.target.value)}
                 />
-                {/* FID-054 : **poignée de glisser** de la maquette (`.grip`,
-                    L3291) ; les flèches haut/bas restent le geste clavier
-                    (`aria-label` de la maquette). */}
+                {/* FID-054 : **poignée de glisser** de la maquette (`.grip`
+                    44 px, L3291) : glisser au pointeur ; les flèches haut/bas
+                    restent le geste clavier, avec annonce du nouvel ordre. */}
                 <button
                   type="button"
                   className="lkdv-cv2c-icon-btn lkdv-cv2c-drag"
-                  aria-label={`Déplacer la question ${index + 1}. Flèches haut et bas pour réordonner`}
+                  aria-label={`Déplacer la question ${index + 1}. Glisse la poignée, ou flèches haut et bas`}
+                  onPointerDown={(event) => beginDrag(index, event)}
+                  onPointerMove={moveDrag}
+                  onPointerUp={endDrag}
+                  onPointerCancel={cancelDrag}
                   onKeyDown={(event) => {
                     if (event.key === 'ArrowUp') {
                       event.preventDefault();
@@ -468,6 +539,12 @@ function AdhesionStep() {
             ))}
           </ul>
         )}
+        <p className="lkdv-cv2-field-hint" id="cv2c-questions-hint">
+          Glisse la poignée pour changer l’ordre, ou utilise les flèches haut et bas.
+        </p>
+        <p className="lkdv-cv2c-sr-only" role="status">
+          {announcement}
+        </p>
         {values.joinQuestions.length < 3 ? (
           <button
             type="button"
@@ -544,7 +621,12 @@ function ClubBody({
 }) {
   return (
     <>
-      {api.active ? <ClubPreview /> : null}
+      {/* FID-056 : aperçu du club dans l'emplacement fixe 150 px de la coque. */}
+      {api.active ? (
+        <SheetPreview>
+          <ClubPreview />
+        </SheetPreview>
+      ) : null}
       {api.step === 0 ? <IdentiteStep /> : null}
       {api.step === 1 ? <UniversStep user={user} /> : null}
       {api.step === 2 ? <AdhesionStep /> : null}

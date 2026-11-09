@@ -63,6 +63,7 @@ import type { PickerProduct } from '@/features/community/create/kit/types';
 import { createClient } from '@/lib/supabase/client';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { formatWeightG } from '../../shared/format';
+import { SheetPreview } from '../../shared/SheetPreview';
 import type { CreateFormV2Props } from './types';
 
 const CATEGORY_ORDER = [
@@ -1036,8 +1037,13 @@ function KitBody({
   const values = api.form.watch();
   return (
     <>
-      {/* FID-025 : la carte kit reste en tête des étapes 1 à 3. */}
-      {api.active ? <KitPreviewV2 values={values} /> : null}
+      {/* FID-025 : la carte kit reste en tête des étapes 1 à 3.
+          FID-056 : dans l'emplacement fixe 150 px de la coque, hors défilement. */}
+      {api.active ? (
+        <SheetPreview>
+          <KitPreviewV2 values={values} />
+        </SheetPreview>
+      ) : null}
       {api.step === 0 ? (
         <InventoryStep
           user={user}

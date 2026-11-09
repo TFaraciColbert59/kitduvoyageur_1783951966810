@@ -1176,6 +1176,7 @@
   right: 8px;
   bottom: 8px;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 6px;
   z-index: 2;
@@ -1305,6 +1306,16 @@
   box-shadow: inset 0 0 0 1px var(--lkv-secondary);
 }
 
+/* FID-068 — cible du glisser entre jours : la pastille s'entoure, sans motion. */
+.lkdv-cv2c-day-tabs [data-drop='true'] {
+  background: var(--lkv-secondary-subtle);
+  box-shadow: inset 0 0 0 2px var(--lkv-secondary);
+}
+
+.lkdv-cv2c-days[data-dragging='true'] .lkdv-cv2c-day-tabs {
+  cursor: grabbing;
+}
+
 .lkdv-cv2c-day-tab-add {
   flex: 0 0 auto;
   width: 34px;
@@ -1357,6 +1368,21 @@
 
 .lkdv-cv2c-moment .lkdv-cv2c-moment-delete {
   margin-left: auto;
+}
+
+/* FID-068 — moment en cours de glisser et ligne « Nuitée + poignée ». */
+.lkdv-cv2c-moment[data-dragging='true'] {
+  opacity: 0.55;
+}
+
+.lkdv-cv2c-night-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lkdv-cv2c-night-head .lkdv-cv2c-switch {
+  flex: 1 1 auto;
 }
 
 .lkdv-cv2c-moment-photo {
@@ -1597,26 +1623,12 @@
   box-shadow: inset 0 0 0 0.5px var(--lkv-border);
 }
 
-/* Aperçu du club : bannière 3:1 puis ligne blason + avatar carré. */
+/* Aperçu du club : ligne blason + nom (maquette `.kprev`, L3304) ; la
+   bannière 3:1 reste réservée à l'étape Univers (FID-056 : slot 150 px). */
 .lkdv-cv2c-club-preview {
   display: flex;
   flex-direction: column;
   gap: 6px;
-}
-
-.lkdv-cv2c-club-banner {
-  display: block;
-  width: 100%;
-  aspect-ratio: 3 / 1;
-  overflow: hidden;
-  border-radius: var(--cv2-radius-tile);
-  background: var(--lkv-surface-muted);
-}
-
-.lkdv-cv2c-club-banner img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
 }
 
 .lkdv-cv2c-club-avatar {
@@ -1703,6 +1715,60 @@
   color: var(--lkv-text-secondary);
 }
 
+/* FID-051 — cartes « Point de départ du tracé » (maquette `.rcards/.rcard`,
+   HTML L2984-2987 et CSS L1173-1180 : colonne, carte 60 px, icône 38 px). */
+.lkdv-cv2c-rcards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lkdv-cv2c-rcard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 60px;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 18px;
+  background: var(--cv2-field-bg);
+  box-shadow: inset 0 0 0 0.5px var(--cv2-field-border);
+  text-align: left;
+  cursor: pointer;
+}
+
+.lkdv-cv2c-rcard-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: var(--cv2-soft);
+  color: var(--lkv-forest-900);
+}
+
+.lkdv-cv2c-rcard-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.lkdv-cv2c-rcard-text b {
+  font: 600 14px/1.25 var(--font-sans);
+  color: var(--lkv-text-primary);
+}
+
+.lkdv-cv2c-rcard-text small {
+  font: 400 12px/1.35 var(--font-sans);
+  color: var(--lkv-text-secondary);
+}
+
+.lkdv-cv2c-rcard:active {
+  transform: scale(0.99);
+}
+
 .lkdv-cv2c-questions {
   display: flex;
   flex-direction: column;
@@ -1716,6 +1782,33 @@
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+/* FID-054 — poignée de glisser : cible 44 px (maquette `.grip`), sans déplacer
+   la ligne ; la cible survolée est marquée, le reste ne bouge pas. */
+.lkdv-cv2c-drag {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: var(--lkv-radius-sm);
+  background: transparent;
+  color: var(--lkv-text-secondary);
+  touch-action: none;
+  cursor: grab;
+}
+
+.lkdv-cv2c-drag:active {
+  cursor: grabbing;
+}
+
+.lkdv-cv2c-question-row[data-dragging='true'] {
+  opacity: 0.55;
+}
+
+.lkdv-cv2c-question-row[data-over='true'] {
+  border-radius: var(--lkv-radius-sm);
+  box-shadow: inset 0 0 0 1.5px var(--lkv-secondary);
 }
 
 .lkdv-cv2c-question-row .lkdv-cv2-input {
@@ -1875,6 +1968,10 @@
   .lkdv-cv2c-switch-track,
   .lkdv-cv2c-switch-dot {
     transition: none;
+  }
+
+  .lkdv-cv2c-rcard:active {
+    transform: none;
   }
 }
 
@@ -2535,18 +2632,26 @@
   color: var(--lkv-text-secondary);
 }
 
-/* FID-056 : aperçu vivant dans un emplacement **stable de 150 px**, hors du
-   flux qui défile. L'emplacement fixe au-dessus du pager exigerait la coque
-   (`shared/**`) : ici l'aperçu est collé en haut du pane, hauteur bornée. */
+/* FID-056 : l'aperçu vivant est monté dans le slot fixe de la coque
+   (`.lkdv-cv2-preview-slot`, 150 px au-dessus du pager) — plus de `sticky`
+   dans le pane : il ne défile plus avec les champs. */
 .lkdv-cv2c-live-preview {
-  position: sticky;
-  top: 0;
-  z-index: 5;
+  position: relative;
+  z-index: auto;
   max-height: 150px;
   height: 150px;
   margin-bottom: 0;
   transform: none;
   background: var(--lkv-surface-paper);
+}
+
+/* Les six aperçus gardent leur propre carte ; le slot borne la hauteur. */
+.lkdv-cv2c-story-preview,
+.lkdv-cv2c-carnet-preview,
+.lkdv-cv2c-kit-card,
+.lkdv-cv2c-club-preview,
+.lkdv-cv2c-ticket-preview {
+  max-height: 150px;
 }
 
 /* ── Sortie : météo du billet d'aperçu (FID-052) ────────────────────────── */

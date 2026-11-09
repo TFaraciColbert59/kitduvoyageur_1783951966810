@@ -36,6 +36,7 @@ import { deleteMediaObjectsV2, uploadedObjectsOf } from '../fields/media';
 import { MeetingMapV2 } from '../sortie/MeetingMapV2';
 import { createClient } from '@/lib/supabase/client';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { SheetPreview } from '../../shared/SheetPreview';
 import type { CreateFormV2Props } from './types';
 
 /** Icônes **linéaires** de la maquette (FID-052) : plus d'emoji. */
@@ -623,22 +624,24 @@ function SortieBody({
     <>
       <PrefillApplierV2 values={prefillValues} nonce={prefillNonce} />
       {api.active ? (
-        <div className="lkdv-cv2c-ticket-preview" inert aria-hidden="true">
-          <EventTicket event={ticket} variant="preview" />
-          {weatherState === 'loading' ? (
-            <p className="lkdv-cv2c-ticket-weather">
-              <Loader2 size={13} className="lkdv-cv2c-spin" aria-hidden="true" /> Météo prévue…
-            </p>
-          ) : weather ? (
-            <p className="lkdv-cv2c-ticket-weather">
-              <CloudSun size={13} aria-hidden="true" /> Météo prévue : {weather}
-            </p>
-          ) : weatherState === 'off' ? (
-            <p className="lkdv-cv2c-ticket-weather">
-              Météo pas encore disponible pour cette date (prévisions à 14 jours).
-            </p>
-          ) : null}
-        </div>
+        <SheetPreview>
+          <div className="lkdv-cv2c-ticket-preview" inert aria-hidden="true">
+            <EventTicket event={ticket} variant="preview" />
+            {weatherState === 'loading' ? (
+              <p className="lkdv-cv2c-ticket-weather">
+                <Loader2 size={13} className="lkdv-cv2c-spin" aria-hidden="true" /> Météo prévue…
+              </p>
+            ) : weather ? (
+              <p className="lkdv-cv2c-ticket-weather">
+                <CloudSun size={13} aria-hidden="true" /> Météo prévue : {weather}
+              </p>
+            ) : weatherState === 'off' ? (
+              <p className="lkdv-cv2c-ticket-weather">
+                Météo pas encore disponible pour cette date (prévisions à 14 jours).
+              </p>
+            ) : null}
+          </div>
+        </SheetPreview>
       ) : null}
       {api.step === 0 ? <ActivityPlaceStep prefill={prefill} /> : null}
       {api.step === 1 ? <ItineraireStep /> : null}

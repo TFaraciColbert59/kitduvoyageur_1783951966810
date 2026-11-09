@@ -38,7 +38,8 @@
 }
 
 .lkdv-cv2x-carnet-cover {
-  aspect-ratio: 4 / 3;
+  /* FID-046 : couverture portrait 4/5 (maquette), tuile large 16/10. */
+  aspect-ratio: 4 / 5;
 }
 
 .lkdv-cv2x-carnet.lkdv-cv2-tile--wide .lkdv-cv2x-carnet-cover,

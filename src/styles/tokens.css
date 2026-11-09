@@ -1175,7 +1175,7 @@ button.g2,
   --cv2-tile-border: var(--glass-border);
   --cv2-radius-tile-sm: 14px;
   --cv2-radius-tile: 16px;
-  --cv2-radius-tile-lg: 20px;
+  --cv2-radius-tile-lg: 18px; /* FID-046 : rayon maquette des tuiles */
   --cv2-list-sep: var(--lkv-border-subtle);
   --cv2-list-sep-strong: var(--lkv-border);
 

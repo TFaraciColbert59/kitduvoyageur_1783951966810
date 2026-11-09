@@ -1,11 +1,12 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Map as MapLibreMap, Marker, setWorkerUrl, type GeoJSONSource } from 'maplibre-gl';
+import { Map as MapLibreMap, Marker, setWorkerUrl, type GeoJSONSource, type MapLayerMouseEvent } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { createMapStyle } from '@/components/map/engine/createMapStyle';
 import {
   Download,
+  Grip,
   Loader2,
   LocateFixed,
   PenLine,
@@ -25,6 +26,16 @@ import {
   smooth,
   type LngLat,
 } from '@/features/community/create/carnet/traceEngine';
+import {
+  createTraceHistory,
+  deleteTraceSegment,
+  moveTracePoint,
+  traceCommit,
+  traceRedo,
+  traceSegmentCount,
+  traceUndo,
+  type TraceHistory,
+} from '../../shared/traceEditing';
 import { createClient } from '@/lib/supabase/client';
 import { getCurrentGeoPosition } from '@/lib/native/geolocation';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
@@ -72,6 +83,29 @@ function endsFeature(points: LngLat[]) {
   return features;
 }
 
+/** Segments cliquables : un `LineString` par paire de points (maquette `.seg-hit`). */
+function segmentsFeature(points: LngLat[]) {
+  const features: unknown[] = [];
+  for (let index = 0; index < points.length - 1; index += 1) {
+    features.push({
+      type: 'Feature',
+      properties: { index },
+      geometry: {
+        type: 'LineString',
+        coordinates: [points[index], points[index + 1]],
+      },
+    });
+  }
+  return features;
+}
+
+function sameTrace(a: readonly LngLat[], b: readonly LngLat[]): boolean {
+  return (
+    a.length === b.length &&
+    a.every(([lng, lat], index) => b[index]?.[0] === lng && b[index]?.[1] === lat)
+  );
+}
+
 interface SessionOption {
   id: string;
   title: string | null;
@@ -85,6 +119,11 @@ interface SessionOption {
  * WebGL) : tracé au doigt, annuler/rétablir, départ et arrivée déplaçables,
  * « Ma position », import GPX ou sortie enregistrée (`hike_sessions`), profil
  * d'altitude réel (`/api/elevation`).
+ *
+ * FID-051 : les 3 cartes de point de départ de la maquette ouvrent ces gestes.
+ * FID-068 : édition du tracé (supprimer un segment, déplacer un point
+ * intermédiaire) et historique de 50 pas, partagé avec la suppression dans
+ * `shared/traceEditing`.
  */
 export function TracePaneV2({ user }: { user: { id: string } | null }) {
   const form = useFormContext<CarnetFormValuesV2>();
@@ -94,12 +133,22 @@ export function TracePaneV2({ user }: { user: { id: string } | null }) {
   const mapRef = useRef<MapLibreMap | null>(null);
   const startMarker = useRef<Marker | null>(null);
   const endMarker = useRef<Marker | null>(null);
+  const editMarkers = useRef<Marker[]>([]);
   const drawRef = useRef<{ pointerId: number; points: LngLat[]; drawing: boolean } | null>(null);
-  const undoStack = useRef<LngLat[][]>([]);
-  const redoStack = useRef<LngLat[][]>([]);
+  /**
+   * FID-068 — historique **unique** du tracé (50 pas, `shared/traceEditing`) :
+   * un geste validé = une entrée (tracé au doigt, import, point déplacé,
+   * segment supprimé), jamais une image de pointeur.
+   */
+  const historyRef = useRef<TraceHistory>(createTraceHistory(trace));
+  const drawingRef = useRef(false);
+  const lastCenteredLength = useRef(0);
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
   const [drawing, setDrawing] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [selectedSegment, setSelectedSegment] = useState<number | null>(null);
+  const [, bumpHistory] = useState(0);
   const [elevations, setElevations] = useState<number[]>([]);
   const [gainState, setGainState] = useState<'idle' | 'loading' | 'error'>('idle');
   const [importOpen, setImportOpen] = useState(false);
@@ -107,18 +156,62 @@ export function TracePaneV2({ user }: { user: { id: string } | null }) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const { haptic } = useHapticFeedback();
 
+  // Le formulaire reste la source de vérité ; l'historique se resynchronise
+  // quand une valeur arrive d'ailleurs (brouillon rouvert, remise à zéro).
+  useEffect(() => {
+    if (sameTrace(historyRef.current.present, trace)) return;
+    historyRef.current = createTraceHistory(trace);
+    bumpHistory((tick) => tick + 1);
+  }, [trace]);
+
   const setTrace = useCallback(
     (next: LngLat[]) => {
-      const current = (form.getValues('trace') ?? []) as LngLat[];
-      if (current !== next) {
-        undoStack.current.push(current);
-        if (undoStack.current.length > 30) undoStack.current.shift();
-        redoStack.current = [];
+      const clipped = next.slice(0, MAX_POINTS);
+      const history = traceCommit(historyRef.current, clipped);
+      if (history !== historyRef.current) {
+        historyRef.current = history;
+        bumpHistory((tick) => tick + 1);
       }
-      form.setValue('trace', next.slice(0, MAX_POINTS), { shouldDirty: true, shouldValidate: true });
+      form.setValue('trace', history.present, { shouldDirty: true, shouldValidate: true });
     },
     [form],
   );
+
+  const undo = useCallback(() => {
+    const next = traceUndo(historyRef.current);
+    if (next === historyRef.current) return;
+    historyRef.current = next;
+    bumpHistory((tick) => tick + 1);
+    form.setValue('trace', next.present, { shouldDirty: true, shouldValidate: true });
+    setSelectedSegment(null);
+    haptic('light');
+  }, [form, haptic]);
+
+  const redo = useCallback(() => {
+    const next = traceRedo(historyRef.current);
+    if (next === historyRef.current) return;
+    historyRef.current = next;
+    bumpHistory((tick) => tick + 1);
+    form.setValue('trace', next.present, { shouldDirty: true, shouldValidate: true });
+    setSelectedSegment(null);
+    haptic('light');
+  }, [form, haptic]);
+
+  const removeSegment = useCallback(
+    (index: number) => {
+      const current = (form.getValues('trace') ?? []) as LngLat[];
+      const next = deleteTraceSegment(current, index);
+      if (sameTrace(current, next)) return;
+      setTrace(next);
+      setSelectedSegment(null);
+      haptic('medium');
+    },
+    [form, haptic, setTrace],
+  );
+
+  useEffect(() => {
+    drawingRef.current = drawing;
+  }, [drawing]);
 
   // ── Carte ────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -172,14 +265,34 @@ export function TracePaneV2({ user }: { user: { id: string } | null }) {
           'circle-stroke-width': 3,
         },
       });
+      // FID-068 — segments cliquables (maquette `.seg-hit`, largeur 22 px) et
+      // surbrillance du segment sélectionné, sur les jetons du tiroir.
+      const accent = cssToken('--lkv-secondary');
+      map.addSource('cv2c-carnet-segments', { type: 'geojson', data: EMPTY_FC as never });
+      map.addSource('cv2c-carnet-selected', { type: 'geojson', data: EMPTY_FC as never });
+      map.addLayer({
+        id: 'cv2c-carnet-segment-hit',
+        type: 'line',
+        source: 'cv2c-carnet-segments',
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: { 'line-color': accent, 'line-width': 26, 'line-opacity': 0 },
+      });
+      map.addLayer({
+        id: 'cv2c-carnet-segment-selected',
+        type: 'line',
+        source: 'cv2c-carnet-selected',
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: { 'line-color': accent, 'line-width': 6, 'line-opacity': 0.55 },
+      });
       setReady(true);
     });
-    map.on('click', () => undefined);
     return () => {
       startMarker.current?.remove();
       endMarker.current?.remove();
       startMarker.current = null;
       endMarker.current = null;
+      editMarkers.current.forEach((marker) => marker.remove());
+      editMarkers.current = [];
       try {
         map.remove();
       } catch {
@@ -202,6 +315,27 @@ export function TracePaneV2({ user }: { user: { id: string } | null }) {
     (map.getSource('cv2c-carnet-ends') as GeoJSONSource | undefined)?.setData({
       type: 'FeatureCollection',
       features: endsFeature(trace),
+    } as never);
+    (map.getSource('cv2c-carnet-segments') as GeoJSONSource | undefined)?.setData({
+      type: 'FeatureCollection',
+      features: segmentsFeature(trace),
+    } as never);
+    const selected =
+      selectedSegment != null && trace[selectedSegment] && trace[selectedSegment + 1]
+        ? [
+            {
+              type: 'Feature',
+              properties: { index: selectedSegment },
+              geometry: {
+                type: 'LineString',
+                coordinates: [trace[selectedSegment], trace[selectedSegment + 1]],
+              },
+            },
+          ]
+        : [];
+    (map.getSource('cv2c-carnet-selected') as GeoJSONSource | undefined)?.setData({
+      type: 'FeatureCollection',
+      features: selected,
     } as never);
 
     startMarker.current?.remove();
@@ -229,9 +363,76 @@ export function TracePaneV2({ user }: { user: { id: string } | null }) {
         });
         endMarker.current = end;
       }
-      map.easeTo({ center: trace[0], zoom: Math.max(map.getZoom(), 11), duration: 420 });
+      // Ne recadrer qu'à l'arrivée d'un nouveau tracé : déplacer un repère (même
+      // nombre de points) ne doit pas faire sauter la carte sous le doigt.
+      if (trace.length !== lastCenteredLength.current) {
+        lastCenteredLength.current = trace.length;
+        map.easeTo({ center: trace[0], zoom: Math.max(map.getZoom(), 11), duration: 420 });
+      }
     }
-  }, [form, haptic, ready, setTrace, trace]);
+  }, [form, haptic, ready, selectedSegment, setTrace, trace]);
+
+  // FID-068 — appui sur le tracé : sélectionne le segment (comme `.seg-hit`).
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    const onSegmentClick = (event: MapLayerMouseEvent) => {
+      if (drawingRef.current) return;
+      const index = Number(event.features?.[0]?.properties?.index);
+      if (!Number.isInteger(index)) return;
+      setSelectedSegment((current) => (current === index ? null : index));
+      haptic('selection');
+    };
+    const onEnter = () => {
+      if (!drawingRef.current) map.getCanvas().style.cursor = 'pointer';
+    };
+    const onLeave = () => {
+      map.getCanvas().style.cursor = '';
+    };
+    map.on('click', 'cv2c-carnet-segment-hit', onSegmentClick);
+    map.on('mouseenter', 'cv2c-carnet-segment-hit', onEnter);
+    map.on('mouseleave', 'cv2c-carnet-segment-hit', onLeave);
+    return () => {
+      map.off('click', 'cv2c-carnet-segment-hit', onSegmentClick);
+      map.off('mouseenter', 'cv2c-carnet-segment-hit', onEnter);
+      map.off('mouseleave', 'cv2c-carnet-segment-hit', onLeave);
+      map.getCanvas().style.cursor = '';
+    };
+  }, [haptic, ready]);
+
+  // FID-068 — en mode Éditer, chaque point intermédiaire (échantillonné au-delà
+  // de 40 repères) devient une poignée déplaçable (maquette `.tp-handle`).
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    editMarkers.current.forEach((marker) => marker.remove());
+    editMarkers.current = [];
+    if (!editing || trace.length < 3) return;
+    const stride = Math.max(1, Math.ceil((trace.length - 2) / 40));
+    for (let index = 1; index < trace.length - 1; index += stride) {
+      const marker = new Marker({ draggable: true }).setLngLat(trace[index]).addTo(map);
+      marker.on('dragend', () => {
+        const position = marker.getLngLat();
+        const current = (form.getValues('trace') ?? []) as LngLat[];
+        const moved = moveTracePoint(current, index, [position.lng, position.lat]);
+        if (sameTrace(current, moved)) return;
+        setTrace(moved);
+        haptic('selection');
+      });
+      editMarkers.current.push(marker);
+    }
+    return () => {
+      editMarkers.current.forEach((marker) => marker.remove());
+      editMarkers.current = [];
+    };
+  }, [editing, form, haptic, ready, setTrace, trace]);
+
+  // Un segment supprimé (ou un tracé remplacé) invalide la sélection.
+  useEffect(() => {
+    if (selectedSegment != null && selectedSegment >= traceSegmentCount(trace)) {
+      setSelectedSegment(null);
+    }
+  }, [selectedSegment, trace]);
 
   // ── Tracé au doigt ───────────────────────────────────────────────────────
   const onPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
@@ -390,6 +591,74 @@ export function TracePaneV2({ user }: { user: { id: string } | null }) {
 
   return (
     <div className="lkdv-cv2c-kit">
+      {/* FID-051 — les **3 cartes de point de départ** de la maquette
+          (HTML L2984-2987 : `Tracer sur la carte`, `Importer un GPX`,
+          `Une sortie enregistrée`). Les commandes historiques (Tracer / GPX /
+          Sortie enregistrée / Effacer) restent sous la carte. */}
+      <div className="lkdv-cv2-field">
+        <span className="lkdv-cv2-field-label">Point de départ du tracé</span>
+        <div className="lkdv-cv2c-rcards" role="group" aria-label="Point de départ du tracé">
+          <button
+            type="button"
+            className="lkdv-cv2c-rcard"
+            onClick={() => {
+              setDrawing(true);
+              setEditing(false);
+              setSelectedSegment(null);
+              haptic('selection');
+              const reduced =
+                typeof window !== 'undefined' &&
+                typeof window.matchMedia === 'function' &&
+                window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+              containerRef.current?.scrollIntoView?.({
+                block: 'center',
+                behavior: reduced ? 'auto' : 'smooth',
+              });
+            }}
+          >
+            <span className="lkdv-cv2c-rcard-icon">
+              <PenLine size={18} aria-hidden="true" />
+            </span>
+            <span className="lkdv-cv2c-rcard-text">
+              <b>Tracer sur la carte</b>
+              <small>Dessine ton parcours au doigt.</small>
+            </span>
+          </button>
+          <button
+            type="button"
+            className="lkdv-cv2c-rcard"
+            onClick={() => {
+              fileInputRef.current?.click();
+              haptic('selection');
+            }}
+          >
+            <span className="lkdv-cv2c-rcard-icon">
+              <Upload size={18} aria-hidden="true" />
+            </span>
+            <span className="lkdv-cv2c-rcard-text">
+              <b>Importer un GPX</b>
+              <small>Depuis ta montre ou une application.</small>
+            </span>
+          </button>
+          <button
+            type="button"
+            className="lkdv-cv2c-rcard"
+            onClick={() => {
+              void loadSessions();
+              haptic('selection');
+            }}
+          >
+            <span className="lkdv-cv2c-rcard-icon">
+              <Download size={18} aria-hidden="true" />
+            </span>
+            <span className="lkdv-cv2c-rcard-text">
+              <b>Une sortie enregistrée</b>
+              <small>Reprendre une trace de ton suivi (hike_sessions).</small>
+            </span>
+          </button>
+        </div>
+      </div>
+
       <div className="lkdv-cv2c-map" data-hscroll>
         <div
           ref={containerRef}
@@ -416,12 +685,30 @@ export function TracePaneV2({ user }: { user: { id: string } | null }) {
             className="lkdv-cv2c-map-btn"
             aria-pressed={drawing}
             onClick={() => {
-              setDrawing((current) => !current);
+              const next = !drawing;
+              setDrawing(next);
+              if (next) setEditing(false);
               haptic('selection');
             }}
           >
             <PenLine size={13} aria-hidden="true" />
             {drawing ? 'Terminer' : 'Tracer'}
+          </button>
+          <button
+            type="button"
+            className="lkdv-cv2c-map-btn"
+            aria-pressed={editing}
+            aria-label="Éditer le tracé : déplacer les points"
+            onClick={() => {
+              const next = !editing;
+              setEditing(next);
+              if (next) setDrawing(false);
+              setSelectedSegment(null);
+              haptic('selection');
+            }}
+          >
+            <Grip size={13} aria-hidden="true" />
+            Éditer
           </button>
           <button type="button" className="lkdv-cv2c-map-btn" onClick={() => void centerOnMyPosition()}>
             <LocateFixed size={13} aria-hidden="true" />
@@ -430,39 +717,54 @@ export function TracePaneV2({ user }: { user: { id: string } | null }) {
           <button
             type="button"
             className="lkdv-cv2c-map-btn"
-            aria-label="Annuler le dernier trait"
-            disabled={undoStack.current.length === 0}
-            onClick={() => {
-              const previous = undoStack.current.pop();
-              if (!previous) return;
-              redoStack.current.push(trace);
-              form.setValue('trace', previous, { shouldDirty: true, shouldValidate: true });
-              haptic('light');
-            }}
+            aria-label="Annuler le dernier geste"
+            disabled={historyRef.current.past.length === 0}
+            onClick={undo}
           >
             <Undo2 size={13} aria-hidden="true" />
           </button>
           <button
             type="button"
             className="lkdv-cv2c-map-btn"
-            aria-label="Rétablir le trait annulé"
-            disabled={redoStack.current.length === 0}
-            onClick={() => {
-              const next = redoStack.current.pop();
-              if (!next) return;
-              undoStack.current.push(trace);
-              form.setValue('trace', next, { shouldDirty: true, shouldValidate: true });
-              haptic('light');
-            }}
+            aria-label="Rétablir le geste annulé"
+            disabled={historyRef.current.future.length === 0}
+            onClick={redo}
           >
             <Redo2 size={13} aria-hidden="true" />
           </button>
         </div>
       </div>
       <p className="lkdv-cv2c-map-help">
-        <Route size={11} aria-hidden="true" /> {drawing ? 'Trace avec le doigt, puis touche Terminer.' : 'Glisse les repères départ/arrivée pour ajuster.'}
-        {trace.length > 1 ? ` Départ et arrivée déplaçables.` : ''}
+        <Route size={11} aria-hidden="true" />{' '}
+        {drawing
+          ? 'Trace avec le doigt, puis touche Terminer.'
+          : editing
+            ? 'Glisse un repère (départ, arrivée ou point intermédiaire) pour ajuster.'
+            : 'Touche le tracé pour choisir un segment, ou glisse le départ et l’arrivée.'}
+        {trace.length > 1 ? ' Annuler et rétablir restent disponibles.' : ''}
       </p>
+
+      {trace.length > 1 ? (
+        <div className="lkdv-cv2c-inline-add">
+          {selectedSegment != null ? (
+            <button
+              type="button"
+              className="lkdv-cv2-chip lkdv-cv2-chip--sm"
+              onClick={() => removeSegment(selectedSegment)}
+            >
+              <Trash2 size={12} aria-hidden="true" /> Supprimer le segment {selectedSegment + 1}
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="lkdv-cv2-chip lkdv-cv2-chip--sm"
+              onClick={() => removeSegment(trace.length - 2)}
+            >
+              <Trash2 size={12} aria-hidden="true" /> Retirer le dernier segment
+            </button>
+          )}
+        </div>
+      ) : null}
 
       {trace.length > 1 ? (
         <details className="lkdv-cv2c-point-list">
@@ -490,9 +792,8 @@ export function TracePaneV2({ user }: { user: { id: string } | null }) {
           className="lkdv-cv2-chip lkdv-cv2-chip--sm"
           onClick={() => {
             if (trace.length === 0) return;
-            undoStack.current.push(trace);
-            redoStack.current = [];
-            form.setValue('trace', [], { shouldDirty: true, shouldValidate: true });
+            setTrace([]);
+            setSelectedSegment(null);
             haptic('medium');
           }}
         >

@@ -1259,6 +1259,13 @@ export async function coverageOf(
   const locator = target.first();
   if (options.scroll !== false) {
     await locator.scrollIntoViewIfNeeded().catch(() => undefined);
+    // WebKit headless : `scrollIntoViewIfNeeded` peut laisser la cible sous le
+    // pli (pane plus court, clavier/footers) ; `scrollIntoView({block:'center'})`
+    // puis un court settle stabilise la géométrie avant `elementFromPoint`.
+    await locator
+      .evaluate((element) => (element as HTMLElement).scrollIntoView?.({ block: 'center' }))
+      .catch(() => undefined);
+    await page.waitForTimeout(120);
   }
   const handle = await locator.elementHandle().catch(() => null);
   if (!handle) {
@@ -1307,6 +1314,39 @@ export async function coverageOf(
     const inside = Boolean(hit && (hit === element || element.contains(hit)));
     return { ...base, hit: describe(hit), reason: inside ? 'ok' : 'covered' };
   }, handle);
+  if (report.reason !== 'ok' && report.hit?.tag === 'BODY' && options.scroll !== false) {
+    // Deuxième chance : la cible était hors du viewport au moment de la mesure.
+    await locator
+      .evaluate((element) => (element as HTMLElement).scrollIntoView?.({ block: 'center' }))
+      .catch(() => undefined);
+    await page.waitForTimeout(150);
+    const second = await page.evaluate((node): CoverageReport => {
+      const element = node as HTMLElement;
+      const rect = element.getBoundingClientRect();
+      const center = { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
+      const entry = document.elementFromPoint(center.x, center.y);
+      const hit = entry
+        ? {
+            tag: entry.tagName,
+            testid: entry.closest('[data-testid]')?.getAttribute('data-testid') ?? null,
+            text: (entry.textContent ?? '').trim().slice(0, 40),
+          }
+        : null;
+      const inside = !entry ? false : entry === element || element.contains(entry) || entry.contains(element);
+      return {
+        reason: inside ? 'ok' : 'covered',
+        target: {
+          tag: element.tagName,
+          testid: element.closest('[data-testid]')?.getAttribute('data-testid') ?? null,
+          text: (element.textContent ?? '').trim().slice(0, 40),
+          rect: { x: rect.x, y: rect.y, width: rect.width, height: rect.height },
+        },
+        hit,
+        pointerEvents: getComputedStyle(element).pointerEvents,
+      };
+    }, handle);
+    if (second.reason === 'ok') return second;
+  }
   await handle.dispose().catch(() => undefined);
   return report;
 }

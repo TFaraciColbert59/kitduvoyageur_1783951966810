@@ -138,4 +138,17 @@ describe('les six formulaires V2 passent par le même moteur', () => {
     const defaults = createDefaultsV2('carnet');
     expect(defaults.visibility).toBe('private');
   });
+
+  it('FID-056 : les six aperçus vivent dans l’emplacement fixe de la coque', async () => {
+    for (const kind of CREATE_KINDS_V2) {
+      renderKind(kind);
+      await waitFor(() =>
+        expect(screen.getByTestId('cv2-preview-slot').childElementCount).toBeGreaterThan(0),
+      );
+      expect(screen.getByTestId('cv2-preview-slot').getAttribute('aria-label')).toBe(
+        'Aperçu en direct',
+      );
+      cleanup();
+    }
+  });
 });

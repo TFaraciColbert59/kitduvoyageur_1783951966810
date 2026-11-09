@@ -31,6 +31,9 @@ import { STORY_LIMITS } from '../fields/media';
 import { StoryStageV2, type StoryTransformV2 } from '../story/StoryStageV2';
 import { cameraAvailable, captureStoryPhoto } from '../story/camera';
 import { carnetDayCountV2 } from '../carnet/daySync';
+import { SheetPreview } from '../../shared/SheetPreview';
+import { todayIso } from '../../shared/format';
+import { fetchEventDayWeather, storyWeatherSticker } from '../../data/communityDetails';
 import { createClient } from '@/lib/supabase/client';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import type { CreateFormV2Props } from './types';
@@ -54,19 +57,7 @@ const LAYER_STYLES = [
   { value: 'sauge', label: 'Sauge' },
 ] as const;
 
-const WEATHER_LABELS: Record<string, string> = {
-  clearsky: 'ciel clair',
-  fair: 'ciel dégagé',
-  partlycloudy: 'éclaircies',
-  cloudy: 'nuageux',
-  fog: 'brouillard',
-  lightrain: 'pluie faible',
-  rain: 'pluie',
-  heavyrain: 'forte pluie',
-  lightsnow: 'neige faible',
-  snow: 'neige',
-  rainandthunder: 'orage',
-};
+const WEATHER_UNAVAILABLE = 'Météo indisponible pour le moment.';
 
 interface CarnetOption {
   id: string;
@@ -85,12 +76,6 @@ function linkLiveLabel(url: string): string {
     /* adresse incomplète : la frappe continue */
   }
   return 'Lien invalide (adresse http ou https attendue).';
-}
-
-function weatherLabelFor(symbol: string | null, temperature: number | null): string {
-  const key = (symbol ?? '').replace(/_(day|night|polartwilight)$/, '');
-  const label = WEATHER_LABELS[key] ?? 'météo';
-  return temperature != null ? `${Math.round(temperature)}° · ${label}` : label;
 }
 
 function setMediaList(form: UseFormReturn<StoryFormValuesV2>, media: MediaItemV2[]) {
@@ -113,6 +98,40 @@ function StoryAudienceLine({ values }: { values: StoryFormValuesV2 }) {
   );
 }
 
+/**
+ * Aperçu compact de la Story (maquette `.sprev`, HTML L2908) : vignette 9:16,
+ * « Story · 24 h », état d'envoi et audience. Il vit dans l'emplacement fixe
+ * de la coque (FID-056) et suit donc toutes les étapes.
+ */
+function StoryLivePreview({ values }: { values: StoryFormValuesV2 }) {
+  const media = values.media?.[0] ?? null;
+  const video = media?.type.startsWith('video/') ?? false;
+  const status = !media
+    ? 'Ajoute un média pour commencer'
+    : media.status === 'uploaded'
+      ? `${video ? 'Vidéo' : 'Photo'} · envoyé`
+      : media.status === 'uploading'
+        ? `${video ? 'Vidéo' : 'Photo'} · envoi ${Math.max(0, Math.min(100, media.progress))} %`
+        : 'Échec de l’envoi · réessaie';
+  return (
+    <div className="lkdv-cv2c-story-preview" data-testid="cv2-story-preview">
+      <span className="lkdv-cv2c-story-thumb" aria-hidden="true">
+        {media?.previewUrl || media?.url ? (
+          // eslint-disable-next-line @next/next/no-img-element -- aperçu local ou URL Storage
+          <img src={media.previewUrl || media.url} alt="" />
+        ) : (
+          <ImageIcon size={18} />
+        )}
+      </span>
+      <span className="lkdv-cv2c-story-meta">
+        <b>Story · 24 h</b>
+        <small>{status}</small>
+        <StoryAudienceLine values={values} />
+      </span>
+    </div>
+  );
+}
+
 function StoryMediaStep({
   user,
   spawnFiles,
@@ -129,36 +148,11 @@ function StoryMediaStep({
   const form = useFormContext<StoryFormValuesV2>();
   const values = form.watch();
   const media = values.media?.[0] ?? null;
-  const video = media?.type.startsWith('video/') ?? false;
   const durationMs = media?.durationMs ?? 0;
   const trimStart = values.trimStartMs ?? 0;
   const trimEnd = values.trimEndMs ?? Math.min(durationMs, 60_000);
-  const status = !media
-    ? 'Ajoute un média pour commencer'
-    : media.status === 'uploaded'
-      ? `${video ? 'Vidéo' : 'Photo'} · envoyé`
-      : media.status === 'uploading'
-        ? `${video ? 'Vidéo' : 'Photo'} · envoi ${Math.max(0, Math.min(100, media.progress))} %`
-        : 'Échec de l’envoi · réessaie';
   return (
     <>
-      {/* Aperçu compact de la maquette (`.sprev` 112 px, HTML L1249/L2906) :
-          la hiérarchie de l'étape Média redevient lisible (T7). */}
-      <div className="lkdv-cv2c-story-preview" data-testid="cv2-story-preview">
-        <span className="lkdv-cv2c-story-thumb" aria-hidden="true">
-          {media?.previewUrl || media?.url ? (
-            // eslint-disable-next-line @next/next/no-img-element -- aperçu local ou URL Storage
-            <img src={media.previewUrl || media.url} alt="" />
-          ) : (
-            <ImageIcon size={18} />
-          )}
-        </span>
-        <span className="lkdv-cv2c-story-meta">
-          <b>Story · 24 h</b>
-          <small>{status}</small>
-          <StoryAudienceLine values={values} />
-        </span>
-      </div>
       <MediaFieldV2
         name="media"
         label="Photo ou vidéo"
@@ -371,7 +365,7 @@ function LayerTools({
 function StickerTools() {
   const form = useFormContext<StoryFormValuesV2>();
   const stickers = form.watch('stickers');
-  const [weatherState, setWeatherState] = useState<'idle' | 'loading' | 'error'>('idle');
+  const [weatherState, setWeatherState] = useState<'idle' | 'loading' | 'unavailable'>('idle');
   const [linkOpen, setLinkOpen] = useState(Boolean(stickers.link));
   const { haptic } = useHapticFeedback();
   const place = stickers.place;
@@ -382,23 +376,27 @@ function StickerTools() {
 
   const loadWeather = async () => {
     if (place?.lat == null || place?.lng == null) {
-      setWeatherState('error');
+      setWeatherState('unavailable');
       return;
     }
     setWeatherState('loading');
     try {
-      const response = await fetch(`/api/explorer/v2/weather?lat=${place.lat}&lng=${place.lng}`);
-      if (!response.ok) throw new Error('weather');
-      const payload = (await response.json()) as {
-        hours?: Array<{ temperature_c?: number | null; symbol?: string | null }>;
-      };
-      const first = payload.hours?.[0];
-      if (!first) throw new Error('weather');
-      setStickers({ weatherLabel: weatherLabelFor(first.symbol ?? null, first.temperature_c ?? null) });
+      // FID-069 — la Story dure 24 h : la météo est celle du **jour de
+      // publication** (date connue), à partir du lieu choisi. Même format que
+      // la maquette (`storyWeatherSticker`, HTML L3328 : « 4° · Éclaircies »).
+      // Unités impériales **hors périmètre** : aucune préférence d'unités dans
+      // le profil ni dans les données (CO `Kit#15`), donc degrés Celsius seuls.
+      const weather = await fetchEventDayWeather({ lat: place.lat, lng: place.lng }, todayIso());
+      const label = storyWeatherSticker(weather);
+      if (!label) {
+        setWeatherState('unavailable');
+        return;
+      }
+      setStickers({ weatherLabel: label });
       setWeatherState('idle');
       haptic('selection');
     } catch {
-      setWeatherState('error');
+      setWeatherState('unavailable');
     }
   };
 
@@ -465,14 +463,14 @@ function StickerTools() {
           type="button"
           className="lkdv-cv2-chip lkdv-cv2-chip--lg"
           onClick={() => void loadWeather()}
-          disabled={weatherState === 'loading'}
+          disabled={weatherState === 'loading' || place?.lat == null || place?.lng == null}
         >
           {weatherState === 'loading' ? (
             <Loader2 size={13} className="lkdv-cv2c-spin" aria-hidden="true" />
           ) : (
             <CloudSun size={13} aria-hidden="true" />
           )}
-          {stickers.weatherLabel ? 'Actualiser la météo' : 'Météo du lieu'}
+          {stickers.weatherLabel ? 'Actualiser la météo' : 'Météo du jour'}
         </button>
         {stickers.weatherLabel ? (
           <button
@@ -485,11 +483,13 @@ function StickerTools() {
           </button>
         ) : null}
       </div>
-      {weatherState === 'error' ? (
+      {place?.lat == null || place?.lng == null ? (
         <p className="lkdv-cv2-field-hint lkdv-cv2c-notice" role="status">
-          {place?.lat == null
-            ? 'Choisis d’abord un lieu avec des coordonnées.'
-            : 'Météo indisponible pour le moment.'}
+          Météo indisponible : choisis d’abord un lieu avec des coordonnées.
+        </p>
+      ) : weatherState === 'unavailable' ? (
+        <p className="lkdv-cv2-field-hint lkdv-cv2c-notice" role="status">
+          {WEATHER_UNAVAILABLE}
         </p>
       ) : null}
 
@@ -796,6 +796,13 @@ function StoryBody({
 
   return (
     <>
+      {/* FID-056 : l'aperçu compact vit dans l'emplacement fixe de la coque,
+          au-dessus du pager, et reste visible à toutes les étapes. */}
+      {api.active ? (
+        <SheetPreview>
+          <StoryLivePreview values={values} />
+        </SheetPreview>
+      ) : null}
       {api.step === 0 ? (
         <StoryMediaStep
           user={user}

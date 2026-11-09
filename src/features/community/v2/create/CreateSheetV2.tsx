@@ -14,6 +14,7 @@ import {
   Users,
 } from 'lucide-react';
 import { CommunitySheetShell } from '../shared/CommunitySheetShell';
+import { SheetPreviewContext } from '../shared/SheetPreview';
 import { DynamicIsland } from '@/components/ui/drawer/DynamicIsland';
 import { useKeyboardInsets } from '@/hooks/useKeyboardInsets';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
@@ -119,6 +120,9 @@ export function CreateSheetV2({
     {},
   );
   const [prefillNonce, setPrefillNonce] = useState(0);
+  // FID-056 : cible DOM de l'aperçu vivant, rendue par la coque au-dessus du
+  // pager ; les formulaires y portent leur aperçu (`SheetPreview`).
+  const [previewSlot, setPreviewSlot] = useState<HTMLDivElement | null>(null);
   const keepOpenRef = useRef(false);
   const finishedRef = useRef(false);
   const authAskedRef = useRef(false);
@@ -597,41 +601,44 @@ export function CreateSheetV2({
 
   return (
     <CreateSheetContext.Provider value={contextValue}>
-      <CommunitySheetShell
-        open={open}
-        onClose={requestClose}
-        kind="create"
-        guestNotice={isGuest}
-        label="Créer dans la communauté"
-        capsule={{ items: capsureItems, active: kindIndex, onChange: changeKind, ariaLabel: 'Type de création' }}
-        mini={detail ? null : mini}
-        footer={detail ? null : footer}
-        panes={panes}
-        detail={sheetDetail}
-        onEscape={handleEscape}
-        resetKey={`${activeKind}:${prefillNonce}`}
-        island={islandNode}
-        className={keyboard > 0 ? 'lkdv-cv2c-keyboard' : undefined}
-      >
-        <div className="lkdv-cv2c-form-mount" data-kind={activeKind}>
-          {activeFormByKind[activeKind]}
-        </div>
-        <ConfirmDialogV2
-          open={confirmClose}
-          title="Fermer sans publier ?"
-          // Message **générique** de la maquette (L1990), sans type interpolé
-          // (FID-061) ; il ne cite pas non plus le brouillon d'un autre type.
-          text="Ton brouillon est conservé sur cet appareil. Tu pourras reprendre où tu t’es arrêté."
-          cancelLabel="Continuer l’édition"
-          confirmLabel="Fermer"
-          // Hiérarchie de la maquette `lkvConfirm(..., danger=true)` L1759 :
-          // action sûre à gauche (focus initial), « Fermer » en danger à droite.
-          danger
-          testId="cv2c-close-confirm"
-          onCancel={() => setConfirmClose(false)}
-          onConfirm={() => closeNow()}
-        />
-      </CommunitySheetShell>
+      <SheetPreviewContext.Provider value={previewSlot}>
+        <CommunitySheetShell
+          open={open}
+          onClose={requestClose}
+          kind="create"
+          guestNotice={isGuest}
+          label="Créer dans la communauté"
+          capsule={{ items: capsureItems, active: kindIndex, onChange: changeKind, ariaLabel: 'Type de création' }}
+          mini={detail ? null : mini}
+          footer={detail ? null : footer}
+          panes={panes}
+          detail={sheetDetail}
+          onEscape={handleEscape}
+          resetKey={`${activeKind}:${prefillNonce}`}
+          island={islandNode}
+          className={keyboard > 0 ? 'lkdv-cv2c-keyboard' : undefined}
+          previewSlotRef={setPreviewSlot}
+        >
+          <div className="lkdv-cv2c-form-mount" data-kind={activeKind}>
+            {activeFormByKind[activeKind]}
+          </div>
+          <ConfirmDialogV2
+            open={confirmClose}
+            title="Fermer sans publier ?"
+            // Message **générique** de la maquette (L1990), sans type interpolé
+            // (FID-061) ; il ne cite pas non plus le brouillon d'un autre type.
+            text="Ton brouillon est conservé sur cet appareil. Tu pourras reprendre où tu t’es arrêté."
+            cancelLabel="Continuer l’édition"
+            confirmLabel="Fermer"
+            // Hiérarchie de la maquette `lkvConfirm(..., danger=true)` L1759 :
+            // action sûre à gauche (focus initial), « Fermer » en danger à droite.
+            danger
+            testId="cv2c-close-confirm"
+            onCancel={() => setConfirmClose(false)}
+            onConfirm={() => closeNow()}
+          />
+        </CommunitySheetShell>
+      </SheetPreviewContext.Provider>
     </CreateSheetContext.Provider>
   );
 }
