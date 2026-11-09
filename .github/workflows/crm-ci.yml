@@ -1,0 +1,84 @@
+name: LKDV Control — CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, 'crm/**']
+    paths: ['crm/**', 'supabase/**', '.github/workflows/crm-ci.yml', '.github/actions/**']
+  pull_request:
+    branches: [main]
+    paths: ['crm/**', 'supabase/**', '.github/workflows/crm-ci.yml']
+
+concurrency:
+  group: crm-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  crm-app:
+    name: Application (types, lint, unitaires, build)
+    runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: https://ci-placeholder.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key-0000000000000000
+      NEXT_PUBLIC_LKDV_URL: https://lekitduvoyageur.fr
+      CRM_SESSION_MAX_HOURS: '12'
+      CRM_IDLE_MINUTES: '30'
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: crm/package-lock.json
+      - name: Installer
+        working-directory: crm
+        run: npm ci --no-audit --no-fund
+      - name: Types (strict)
+        working-directory: crm
+        run: npx tsc --noEmit
+      - name: Lint
+        working-directory: crm
+        run: npx next lint --max-warnings=0
+      - name: Tests unitaires
+        working-directory: crm
+        run: npx vitest run
+      - name: Build
+        working-directory: crm
+        run: npm run build
+
+  crm-db:
+    name: Base éphémère (migrations + pgTAP + rollback)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Base éphémère (baseline + migrations du dépôt)
+        id: db
+        uses: ./.github/actions/ephemeral-postgres
+      - name: Outils pgTAP
+        run: |
+          sudo apt-get install -y -qq postgresql-17-pgtap libtap-parser-sourcehandler-pgtap-perl || true
+          which pg_prove || ls /usr/bin | grep -i prove || true
+      - name: Tests pgTAP du CRM
+        env:
+          DATABASE_URL: ${{ steps.db.outputs.database-url }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          files=(supabase/tests/database/crm_*.sql)
+          if [ ${#files[@]} -eq 0 ]; then echo "Aucun test pgTAP crm_*.sql"; exit 1; fi
+          pg_prove --dbname "$DATABASE_URL" -r supabase/tests/database/ 2>&1 | tee /tmp/pgtap.log
+      - name: Rollback de chaque migration (ordre inverse)
+        env:
+          DATABASE_URL: ${{ steps.db.outputs.database-url }}
+        run: |
+          set -euo pipefail
+          files=(supabase/migrations_down/20261109*_crm_*.down.sql)
+          if [ ${#files[@]} -eq 0 ]; then echo "Aucun .down.sql CRM"; exit 1; fi
+          for ((i=${#files[@]}-1; i>=0; i--)); do
+            echo "→ rollback $(basename "${files[$i]}")"
+            psql "$DATABASE_URL" -X -q -v ON_ERROR_STOP=1 -f "${files[$i]}"
+          done
+          psql "$DATABASE_URL" -X -At -c "select count(*) from information_schema.schemata where schema_name='admin'" | grep -qx 0
+      - name: Preuve
+        if: always()
+        run: echo "Rapport pgTAP dans les logs du job (couche 3)."

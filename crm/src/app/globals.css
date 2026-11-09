@@ -1,0 +1,21 @@
+@import '../design/tokens.css';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--lkv-surface);
+  color: var(--lkv-text-primary);
+  font-family: Inter, -apple-system, 'SF Pro Text', system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+*:focus-visible { outline: 2px solid var(--lkv-action); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; } }
+.lkv-card { background: rgba(255,255,255,.88); border: 1px solid rgba(23,43,36,.10); border-radius: 18px; box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 8px 24px rgba(11,31,23,.06); }
+.lkv-label { font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--lkv-text-secondary); }
+.lkv-mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+.lkv-scroll { scrollbar-width: thin; scrollbar-color: rgba(23,43,36,.22) transparent; }

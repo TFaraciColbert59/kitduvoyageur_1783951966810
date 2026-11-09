@@ -1,0 +1,41 @@
+{
+  "name": "lkdv-control",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 4100",
+    "build": "next build",
+    "start": "next start -p 4100",
+    "lint": "next lint --max-warnings=0",
+    "type-check": "tsc --noEmit",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "test:a11y": "playwright test --project=a11y",
+    "gen:types": "supabase gen types typescript --project-id icxyvwzfjbflcbqukpfz --schema public,admin > src/types/db.ts",
+    "catalog:diff": "node scripts/catalog-diff.mjs",
+    "catalog:gen": "node scripts/gen-commands.mjs"
+  },
+  "dependencies": {
+    "@supabase/ssr": "0.6.1",
+    "@supabase/supabase-js": "2.49.4",
+    "next": "15.5.25",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "stripe": "17.7.0",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.10.1",
+    "@playwright/test": "1.63.0",
+    "@types/node": "22.10.2",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "autoprefixer": "10.4.2",
+    "eslint": "9.17.0",
+    "eslint-config-next": "15.5.25",
+    "postcss": "8.5.28",
+    "tailwindcss": "3.4.6",
+    "typescript": "5.7.2",
+    "vitest": "4.1.11"
+  }
+}

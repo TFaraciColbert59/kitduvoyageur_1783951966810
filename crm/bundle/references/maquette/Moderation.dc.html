@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>LKDV Control — Carte de décision</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;family=IBM+Plex+Mono:wght@500;600&amp;display=swap">
+<style>
+body{margin:0;background:#F5F7F3;color:#172B24;font-family:Inter,-apple-system,'SF Pro Text',system-ui,sans-serif;font-size:14px;line-height:1.45}
+.brand{font-family:Manrope,system-ui,sans-serif}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+.card{background:rgba(255,255,255,.88);border:1px solid rgba(23,43,36,.10);border-radius:18px;box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 8px 24px rgba(11,31,23,.06)}
+.chip{display:inline-flex;align-items:center;gap:5px;min-height:22px;padding:0 9px;border-radius:999px;font-size:11.5px;font-weight:600;white-space:nowrap}
+.c-sage{background:#D8E5D5;color:#2D482A}.c-warn{background:#FBF1DC;color:#765014}.c-danger{background:#FDE8E6;color:#7E2D25}.c-info{background:#DDE7EE;color:#172B24}.c-stone{background:#EDF1EA;color:#46584D}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 16px;border-radius:14px;border:0;font:600 14px Inter,system-ui,sans-serif;cursor:pointer;text-decoration:none}
+.btn-pg{background:#D3EBD9;color:#17402C;box-shadow:inset 0 0 0 1px rgba(34,97,72,.28)}
+.btn-soft{background:rgba(255,255,255,.92);color:#172B24;box-shadow:inset 0 0 0 1px rgba(23,43,36,.16)}
+.btn-bad{background:#FDE8E6;color:#7E2D25;box-shadow:inset 0 0 0 1px rgba(168,68,58,.28)}
+.kbd{display:inline-flex;min-width:18px;height:20px;padding:0 6px;align-items:center;justify-content:center;border-radius:6px;background:rgba(23,43,36,.07);color:#46584D;font:600 11px 'IBM Plex Mono',monospace}
+.label{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#56665D}
+.muted{color:#56665D}
+.nav a{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:40px;padding:0 12px;border-radius:12px;color:#172B24;text-decoration:none;font-weight:500}
+.nav a.on{background:#D3EBD9;color:#17402C;font-weight:600}
+.nav .n{font:600 12px Inter,sans-serif;color:#56665D}
+.fact{display:flex;flex-direction:column;gap:2px;padding:12px 14px;border-radius:14px;background:#F5F7F3}
+select,input,textarea{font:500 14px Inter,system-ui,sans-serif;color:#172B24}
+a{color:#226148}a:hover{color:#17402C}
+</style>
+</helmet>
+<div style="min-height: 1040px; display: flex; flex-direction: column; position: relative">
+
+<header style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 14px 24px; background: rgba(255,255,255,.72); border-bottom: 1px solid rgba(23,43,36,.10)">
+<div style="display: flex; align-items: center; gap: 10px; min-width: 200px">
+<svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><circle cx="14" cy="14" r="12.5" fill="#17402C"></circle><path d="M14 6l3 8-3 8-3-8z" fill="#D3EBD9"></path></svg>
+<span class="brand" style="font-weight: 800; font-size: 17px; color: #17402C">LKDV Control</span>
+</div>
+<a href="Commande.dc.html" class="btn btn-soft" style="flex: 1 1 360px; max-width: 560px; justify-content: space-between; font-weight: 500; color: #56665D"><span>Chercher un membre, une commande… ou agir</span><span class="kbd">⌘K</span></a>
+<div style="display: flex; align-items: center; gap: 10px; margin-left: auto">
+<span class="chip c-warn">Mode solo</span>
+<span style="width: 36px; height: 36px; border-radius: 50%; background: #17402C; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px">TF</span>
+</div>
+</header>
+
+<div style="display: flex; flex-wrap: wrap; flex: 1; align-items: stretch">
+<nav class="nav" aria-label="Navigation principale" style="flex: 1 1 232px; max-width: 260px; padding: 20px 14px; display: flex; flex-direction: column; gap: 2px; border-right: 1px solid rgba(23,43,36,.08)">
+<a href="Main.dc.html"><span>À traiter</span><span class="n">34</span></a>
+<span class="label" style="padding: 18px 12px 6px">Pôles</span>
+<a href="Moderation.dc.html" class="on"><span>Confiance</span><span class="n" style="color: #17402C">14</span></a>
+<a href="Membre.dc.html"><span>Membres</span><span class="n">3</span></a>
+<a href="Remboursement.dc.html"><span>Commerce</span><span class="n">2</span></a>
+<a href="Main.dc.html"><span>Contenus</span><span class="n">21</span></a>
+<a href="Main.dc.html"><span>Produit et IA</span><span class="n">0</span></a>
+<a href="Main.dc.html"><span>Croissance</span><span class="n">0</span></a>
+<a href="Main.dc.html"><span>Technique</span><span class="n">1</span></a>
+<span class="label" style="padding: 18px 12px 6px">Pilotage</span>
+<a href="Agents.dc.html"><span>Équipe et agents IA</span><span class="n">6</span></a>
+<a href="Journal.dc.html"><span>Journal d'audit</span></a>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; padding: 24px 28px; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
+<span class="muted" style="font-size: 13px"><a href="Main.dc.html">À traiter</a> › Confiance › Cas 2 sur 14</span>
+<span style="display: inline-flex; gap: 8px; align-items: center"><span class="chip c-warn">Reste 12 min</span><button class="btn btn-soft" style="min-height: 36px">Cas précédent <span class="kbd">J</span></button><button class="btn btn-soft" style="min-height: 36px">Suivant <span class="kbd">K</span></button></span>
+</div>
+
+<h1 class="brand" style="margin: 0; font-size: 26px; font-weight: 800; color: #17402C">Commentaire signalé 3 fois</h1>
+
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px">
+<div class="fact"><span class="label">Quoi</span><strong>Commentaire sous un carnet</strong><span class="muted" style="font-size: 12.5px">« Traversée du GR20 en 9 jours »</span></div>
+<div class="fact"><span class="label">Qui</span><strong>@randonneur_alpin</strong><span class="muted" style="font-size: 12.5px">1 avertissement actif</span></div>
+<div class="fact"><span class="label">Signalements</span><strong>3 membres</strong><span class="muted" style="font-size: 12.5px">Harcèlement ×2, spam ×1</span></div>
+<div class="fact"><span class="label">Depuis</span><strong>38 min</strong><span class="muted" style="font-size: 12.5px">Délai cible : 50 min</span></div>
+</div>
+
+<section class="card" style="padding: 20px; display: flex; flex-direction: column; gap: 14px" aria-label="Contenu signalé">
+<span class="label">Contenu signalé</span>
+<blockquote style="margin: 0; padding: 14px 16px; border-radius: 14px; background: #F5F7F3; font-size: 15px; line-height: 1.55">« Franchement faut être sacrément nul pour se perdre sur un GR balisé. Reste chez toi la prochaine fois, tu nous feras des vacances. »</blockquote>
+<div style="display: flex; gap: 14px; align-items: center">
+<div style="width: 180px; height: 120px; border-radius: 14px; background: linear-gradient(135deg, #B8CDB4, #96B391 60%, #789972); filter: grayscale(1) blur(6px); flex: none" aria-hidden="true"></div>
+<div style="display: flex; flex-direction: column; gap: 4px">
+<strong style="font-size: 13px">Photo jointe : grisée et floutée par défaut</strong>
+<span class="muted" style="font-size: 12.5px">Survolez-la pour la voir nette. Ce réglage protège votre attention sur les cas difficiles.</span>
+</div>
+</div>
+</section>
+
+<section class="card" style="padding: 20px; display: flex; flex-direction: column; gap: 14px" aria-label="Décision">
+<span class="label">Votre décision</span>
+<div style="display: flex; flex-wrap: wrap; gap: 10px">
+<button class="btn btn-pg">Masquer le commentaire <span class="kbd">M</span></button>
+<button class="btn btn-soft">Laisser visible <span class="kbd">L</span></button>
+<button class="btn btn-bad">Sanctionner l'auteur <span class="kbd">S</span></button>
+<button class="btn btn-soft" aria-label="Plus d'actions">…</button>
+</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px">
+<label style="display: flex; flex-direction: column; gap: 6px"><span style="font-weight: 600; font-size: 13px">Motif (obligatoire)</span>
+<select style="min-height: 44px; padding: 0 12px; border-radius: 12px; border: 1px solid rgba(23,43,36,.22); background: #fff"><option>Harcèlement ou insulte</option><option>Spam ou publicité</option><option>Hors sujet</option><option>Autre (préciser)</option></select></label>
+<label style="display: flex; flex-direction: column; gap: 6px"><span style="font-weight: 600; font-size: 13px">Précision pour le membre (facultatif)</span>
+<input type="text" placeholder="Ex. : propos dénigrants envers un autre membre" style="min-height: 44px; padding: 0 12px; border-radius: 12px; border: 1px solid rgba(23,43,36,.22); background: #fff"></label>
+</div>
+<div style="padding: 14px 16px; border-radius: 14px; background: #F0F5EE; display: flex; flex-direction: column; gap: 6px">
+<span class="label">Message qui partira au membre</span>
+<span style="font-size: 13.5px">Ce contenu a été retiré car il vise une personne de façon insultante ou répétée (règles de la communauté, article « Respect »). Vous pouvez contester cette décision pendant 6 mois depuis la notification, gratuitement ; une autre personne de l'équipe réexaminera votre demande.</span>
+</div>
+</section>
+
+<section class="card" style="padding: 16px 20px; display: flex; gap: 14px; align-items: flex-start; background: rgba(240,245,238,.9)" aria-label="Suggestion de l'IA">
+<span class="chip c-stone">Agent Trieur</span>
+<span style="display: flex; flex-direction: column; gap: 4px; flex: 1"><strong style="font-size: 13.5px">Harcèlement probable · confiance moyenne</strong><span class="muted" style="font-size: 12.5px">Visible maintenant que vous avez lu le contenu. L'agent propose ; la décision et le motif restent les vôtres.</span></span>
+<button class="btn btn-soft" style="min-height: 36px">Pourquoi ?</button>
+</section>
+</main>
+
+<aside aria-label="Contexte" style="flex: 1 1 320px; max-width: 380px; padding: 24px 20px; display: flex; flex-direction: column; gap: 14px; border-left: 1px solid rgba(23,43,36,.08); background: rgba(255,255,255,.45)">
+<span class="label">Contexte</span>
+<div class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: center; gap: 10px"><span style="width: 40px; height: 40px; border-radius: 50%; background: #D8E5D5; color: #2D482A; display: inline-flex; align-items: center; justify-content: center; font-weight: 700">RA</span><span style="display: flex; flex-direction: column"><strong>@randonneur_alpin</strong><span class="muted" style="font-size: 12.5px">Membre depuis mars 2025 · 41 publications</span></span></div>
+<a href="Membre.dc.html" style="font-weight: 600; font-size: 13px">Ouvrir la fiche complète →</a>
+</div>
+<div class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 10px">
+<span class="label">Historique de modération</span>
+<span style="display: flex; justify-content: space-between; font-size: 13px"><span>Message privé (harcèlement)</span><span class="muted">12 oct.</span></span>
+<span style="display: flex; justify-content: space-between; font-size: 13px"><span>Commentaire masqué</span><span class="muted">28 oct.</span></span>
+<span class="chip c-warn" style="align-self: flex-start">Prochaine marche : suspension 7 jours</span>
+</div>
+<div class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 8px">
+<span class="label">Cas liés</span>
+<span style="font-size: 13px">2 autres commentaires de cet auteur signalés cette semaine</span>
+<span style="font-size: 13px">Le membre visé a bloqué l'auteur le 6 nov.</span>
+</div>
+<div class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 6px">
+<span class="label">Votre session</span>
+<span style="font-size: 13px">Cas sensibles : <strong>3 / 10</strong> · le cas suivant est déjà chargé</span>
+</div>
+</aside>
+</div>
+
+<div role="status" style="position: absolute; left: 50%; bottom: 28px; transform: translateX(-50%); display: flex; align-items: center; gap: 14px; padding: 12px 14px 12px 18px; border-radius: 16px; background: #172B24; color: #fff; box-shadow: 0 12px 32px rgba(11,31,23,.28)">
+<span style="font-size: 13.5px">Commentaire masqué · message envoyé à @randonneur_alpin</span>
+<button class="btn" style="min-height: 36px; background: rgba(255,255,255,.14); color: #fff">Annuler · 8 s</button>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1040}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

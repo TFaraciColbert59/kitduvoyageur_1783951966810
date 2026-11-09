@@ -1,0 +1,17 @@
+{
+  "extends": ["next/core-web-vitals", "next/typescript"],
+  "rules": {
+    "no-restricted-imports": ["error", {
+      "paths": [{ "name": "@/lib/supabase/service", "message": "La clé service_role ne sort jamais de src/server/** (08_GARDE_FOUS 1.13)." }],
+      "patterns": [{ "group": ["**/lib/supabase/service"], "message": "Import réservé à src/server/**." }]
+    }],
+    "no-restricted-syntax": ["error", {
+      "selector": "MemberExpression[property.name='insert'], MemberExpression[property.name='update'], MemberExpression[property.name='delete'], MemberExpression[property.name='upsert']",
+      "message": "Aucune écriture de table depuis le client : passer par admin.cmd_* (EX-GEN-04)."
+    }]
+  },
+  "overrides": [
+    { "files": ["src/lib/supabase/*.ts", "src/lib/supabase/**/*.ts", "src/server/**/*.ts", "src/lib/**/*.test.ts"], "rules": { "no-restricted-syntax": "off" } }
+  ],
+  "ignorePatterns": [".next/", "node_modules/", "tests/", "scripts/"]
+}

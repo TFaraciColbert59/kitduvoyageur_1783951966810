@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>LKDV Control — Équipe et agents IA</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;family=IBM+Plex+Mono:wght@500;600&amp;display=swap">
+<style>
+body{margin:0;background:#F5F7F3;color:#172B24;font-family:Inter,-apple-system,'SF Pro Text',system-ui,sans-serif;font-size:14px;line-height:1.45}
+.brand{font-family:Manrope,system-ui,sans-serif}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+.card{background:rgba(255,255,255,.88);border:1px solid rgba(23,43,36,.10);border-radius:18px;box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 8px 24px rgba(11,31,23,.06)}
+.chip{display:inline-flex;align-items:center;gap:5px;min-height:22px;padding:0 9px;border-radius:999px;font-size:11.5px;font-weight:600;white-space:nowrap}
+.c-sage{background:#D8E5D5;color:#2D482A}.c-warn{background:#FBF1DC;color:#765014}.c-danger{background:#FDE8E6;color:#7E2D25}.c-info{background:#DDE7EE;color:#172B24}.c-stone{background:#EDF1EA;color:#46584D}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 16px;border-radius:14px;border:0;font:600 14px Inter,system-ui,sans-serif;cursor:pointer;text-decoration:none}
+.btn-pg{background:#D3EBD9;color:#17402C;box-shadow:inset 0 0 0 1px rgba(34,97,72,.28)}
+.btn-soft{background:rgba(255,255,255,.92);color:#172B24;box-shadow:inset 0 0 0 1px rgba(23,43,36,.16)}
+.btn-bad{background:#FDE8E6;color:#7E2D25;box-shadow:inset 0 0 0 1px rgba(168,68,58,.28)}
+.kbd{display:inline-flex;min-width:18px;height:20px;padding:0 6px;align-items:center;justify-content:center;border-radius:6px;background:rgba(23,43,36,.07);color:#46584D;font:600 11px 'IBM Plex Mono',monospace}
+.label{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#56665D}
+.muted{color:#56665D}
+.nav a{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:40px;padding:0 12px;border-radius:12px;color:#172B24;text-decoration:none;font-weight:500}
+.nav a.on{background:#D3EBD9;color:#17402C;font-weight:600}
+.nav .n{font:600 12px Inter,sans-serif;color:#56665D}
+.agent{padding:16px;display:flex;flex-direction:column;gap:10px}
+.av{width:38px;height:38px;border-radius:12px;background:#EDF1EA;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.stat{display:flex;flex-direction:column;padding:8px 10px;border-radius:10px;background:#F5F7F3}
+.stat strong{font-size:15px}
+a{color:#226148}a:hover{color:#17402C}
+</style>
+</helmet>
+<div style="min-height: 1040px; display: flex; flex-direction: column">
+
+<header style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 14px 24px; background: rgba(255,255,255,.72); border-bottom: 1px solid rgba(23,43,36,.10)">
+<div style="display: flex; align-items: center; gap: 10px; min-width: 200px">
+<svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><circle cx="14" cy="14" r="12.5" fill="#17402C"></circle><path d="M14 6l3 8-3 8-3-8z" fill="#D3EBD9"></path></svg>
+<span class="brand" style="font-weight: 800; font-size: 17px; color: #17402C">LKDV Control</span>
+</div>
+<a href="Commande.dc.html" class="btn btn-soft" style="flex: 1 1 360px; max-width: 560px; justify-content: space-between; font-weight: 500; color: #56665D"><span>Chercher un membre, une commande… ou agir</span><span class="kbd">⌘K</span></a>
+<div style="display: flex; align-items: center; gap: 10px; margin-left: auto">
+<span class="chip c-warn">Mode solo</span>
+<span style="width: 36px; height: 36px; border-radius: 50%; background: #17402C; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px">TF</span>
+</div>
+</header>
+
+<div style="display: flex; flex-wrap: wrap; flex: 1; align-items: stretch">
+<nav class="nav" aria-label="Navigation principale" style="flex: 1 1 232px; max-width: 260px; padding: 20px 14px; display: flex; flex-direction: column; gap: 2px; border-right: 1px solid rgba(23,43,36,.08)">
+<a href="Main.dc.html"><span>À traiter</span><span class="n">34</span></a>
+<span class="label" style="padding: 18px 12px 6px">Pôles</span>
+<a href="Moderation.dc.html"><span>Confiance</span><span class="n">14</span></a>
+<a href="Membre.dc.html"><span>Membres</span><span class="n">3</span></a>
+<a href="Remboursement.dc.html"><span>Commerce</span><span class="n">2</span></a>
+<a href="Main.dc.html"><span>Contenus</span><span class="n">21</span></a>
+<a href="Main.dc.html"><span>Produit et IA</span><span class="n">0</span></a>
+<a href="Main.dc.html"><span>Croissance</span><span class="n">0</span></a>
+<a href="Main.dc.html"><span>Technique</span><span class="n">1</span></a>
+<span class="label" style="padding: 18px 12px 6px">Pilotage</span>
+<a href="Agents.dc.html" class="on"><span>Équipe et agents IA</span><span class="n" style="color: #17402C">6</span></a>
+<a href="Journal.dc.html"><span>Journal d'audit</span></a>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; padding: 24px 28px; display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h1 class="brand" style="margin: 0; font-size: 28px; font-weight: 800; color: #17402C">Équipe et agents IA</h1>
+<span class="muted">1 humain · 6 agents actifs · 7 pôles · mode solo actif</span>
+</div>
+<div style="display: flex; gap: 8px; flex-wrap: wrap"><button class="btn btn-soft">Inviter une personne</button><button class="btn btn-pg">Ajouter un agent</button></div>
+</div>
+
+<section class="card" style="padding: 18px; display: flex; flex-wrap: wrap; gap: 16px; align-items: center" aria-label="Humains">
+<span style="width: 48px; height: 48px; border-radius: 50%; background: #17402C; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 700">TF</span>
+<span style="display: flex; flex-direction: column; flex: 1; min-width: 200px"><strong>Tony</strong><span class="muted" style="font-size: 13px">Super admin · tous les droits, tous les accès · clé physique active</span></span>
+<span style="display: flex; gap: 6px; flex-wrap: wrap"><span class="chip c-sage">Tous les pôles</span><span class="chip c-warn">Valide seul (mode solo)</span></span>
+</section>
+
+<div style="display: flex; justify-content: space-between; align-items: center"><span class="label">Agents IA</span><span class="muted" style="font-size: 12.5px">Un agent propose ; il ne valide jamais.</span></div>
+
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px">
+
+<article class="card agent">
+<div style="display: flex; gap: 10px; align-items: center"><span class="av" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 20 20"><rect x="3" y="5" width="14" height="11" rx="4" fill="none" stroke="#2D482A" stroke-width="1.5"></rect><circle cx="7.5" cy="10.5" r="1.2" fill="#2D482A"></circle><circle cx="12.5" cy="10.5" r="1.2" fill="#2D482A"></circle><path d="M10 2.5v2.5" stroke="#2D482A" stroke-width="1.5"></path></svg></span><span style="display: flex; flex-direction: column; flex: 1"><strong>Trieur de signalements</strong><span class="muted" style="font-size: 12.5px">Pôle Confiance</span></span><span class="chip c-sage">Actif</span></div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px"><span class="stat"><span class="muted" style="font-size: 11.5px">24 h</span><strong>38</strong></span><span class="stat"><span class="muted" style="font-size: 11.5px">Accepté</span><strong>92 %</strong></span><span class="stat"><span class="muted" style="font-size: 11.5px">Plafond/h</span><strong>60</strong></span></div>
+<span class="muted" style="font-size: 12.5px">Outils : lire un signalement, proposer un motif, préparer un message. Ne sanctionne jamais.</span>
+<div style="display: flex; gap: 8px"><button class="btn btn-soft" style="flex: 1; min-height: 40px">Droits et outils</button><button class="btn btn-bad" style="min-height: 40px">Arrêter</button></div>
+</article>
+
+<article class="card agent">
+<div style="display: flex; gap: 10px; align-items: center"><span class="av" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 20 20"><rect x="3" y="5" width="14" height="11" rx="4" fill="none" stroke="#2D482A" stroke-width="1.5"></rect><circle cx="7.5" cy="10.5" r="1.2" fill="#2D482A"></circle><circle cx="12.5" cy="10.5" r="1.2" fill="#2D482A"></circle><path d="M10 2.5v2.5" stroke="#2D482A" stroke-width="1.5"></path></svg></span><span style="display: flex; flex-direction: column; flex: 1"><strong>Remboursements</strong><span class="muted" style="font-size: 12.5px">Pôle Commerce</span></span><span class="chip c-sage">Actif</span></div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px"><span class="stat"><span class="muted" style="font-size: 11.5px">24 h</span><strong>2</strong></span><span class="stat"><span class="muted" style="font-size: 11.5px">Accepté</span><strong>100 %</strong></span><span class="stat"><span class="muted" style="font-size: 11.5px">Plafond/h</span><strong>10</strong></span></div>
+<span class="muted" style="font-size: 12.5px">Outils : lire une commande, préparer une demande de remboursement. Aucun accès à Stripe.</span>
+<div style="display: flex; gap: 8px"><button class="btn btn-soft" style="flex: 1; min-height: 40px">Droits et outils</button><button class="btn btn-bad" style="min-height: 40px">Arrêter</button></div>
+</article>
+
+<article class="card agent">
+<div style="display: flex; gap: 10px; align-items: center"><span class="av" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 20 20"><rect x="3" y="5" width="14" height="11" rx="4" fill="none" stroke="#2D482A" stroke-width="1.5"></rect><circle cx="7.5" cy="10.5" r="1.2" fill="#2D482A"></circle><circle cx="12.5" cy="10.5" r="1.2" fill="#2D482A"></circle><path d="M10 2.5v2.5" stroke="#2D482A" stroke-width="1.5"></path></svg></span><span style="display: flex; flex-direction: column; flex: 1"><strong>Support</strong><span class="muted" style="font-size: 12.5px">Pôle Membres</span></span><span class="chip c-sage">Actif</span></div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px"><span class="stat"><span class="muted" style="font-size: 11.5px">24 h</span><strong>5</strong></span><span class="stat"><span class="muted" style="font-size: 11.5px">Accepté</span><strong>80 %</strong></span><span class="stat"><span class="muted" style="font-size: 11.5px">Plafond/h</span><strong>30</strong></span></div>
+<span class="muted" style="font-size: 12.5px">Outils : lire un ticket, chercher dans l'aide, préparer une réponse. Envoi après votre relecture.</span>
+<div style="display: flex; gap: 8px"><button class="btn btn-soft" style="flex: 1; min-height: 40px">Droits et outils</button><button class="btn btn-bad" style="min-height: 40px">Arrêter</button></div>
+</article>
+
+<article class="card agent">
+<div style="display: flex; gap: 10px; align-items: center"><span class="av" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 20 20"><rect x="3" y="5" width="14" height="11" rx="4" fill="none" stroke="#2D482A" stroke-width="1.5"></rect><circle cx="7.5" cy="10.5" r="1.2" fill="#2D482A"></circle><circle cx="12.5" cy="10.5" r="1.2" fill="#2D482A"></circle><path d="M10 2.5v2.5" stroke="#2D482A" stroke-width="1.5"></path></svg></span><span style="display: flex; flex-direction: column; flex: 1"><strong>Résumeur de fiches</strong><span class="muted" style="font-size: 12.5px">Pôle Membres</span></span><span class="chip c-sage">Actif</span></div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px"><span class="stat"><span class="muted" style="font-size: 11.5px">24 h</span><strong>17</strong></span><span class="stat"><span class="muted" style="font-size: 11.5px">Accepté</span><strong>—</strong></span><span class="stat"><span class="muted" style="font-size: 11.5px">Plafond/h</span><strong>120</strong></span></div>
+<span class="muted" style="font-size: 12.5px">Lecture seule. N'a jamais accès aux documents d'identité ni à l'orientation.</span>
+<div style="display: flex; gap: 8px"><button class="btn btn-soft" style="flex: 1; min-height: 40px">Droits et outils</button><button class="btn btn-bad" style="min-height: 40px">Arrêter</button></div>
+</article>
+
+<article class="card agent">
+<div style="display: flex; gap: 10px; align-items: center"><span class="av" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 20 20"><rect x="3" y="5" width="14" height="11" rx="4" fill="none" stroke="#2D482A" stroke-width="1.5"></rect><circle cx="7.5" cy="10.5" r="1.2" fill="#2D482A"></circle><circle cx="12.5" cy="10.5" r="1.2" fill="#2D482A"></circle><path d="M10 2.5v2.5" stroke="#2D482A" stroke-width="1.5"></path></svg></span><span style="display: flex; flex-direction: column; flex: 1"><strong>Relecteur de fiches pays</strong><span class="muted" style="font-size: 12.5px">Pôle Contenus</span></span><span class="chip c-sage">Actif</span></div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px"><span class="stat"><span class="muted" style="font-size: 11.5px">24 h</span><strong>9</strong></span><span class="stat"><span class="muted" style="font-size: 11.5px">Accepté</span><strong>67 %</strong></span><span class="stat"><span class="muted" style="font-size: 11.5px">Plafond/h</span><strong>20</strong></span></div>
+<span class="muted" style="font-size: 12.5px">Outils : lire une fiche, proposer une correction sourcée. Publication par vous.</span>
+<div style="display: flex; gap: 8px"><button class="btn btn-soft" style="flex: 1; min-height: 40px">Droits et outils</button><button class="btn btn-bad" style="min-height: 40px">Arrêter</button></div>
+</article>
+
+<article class="card agent">
+<div style="display: flex; gap: 10px; align-items: center"><span class="av" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 20 20"><rect x="3" y="5" width="14" height="11" rx="4" fill="none" stroke="#46584D" stroke-width="1.5"></rect><circle cx="7.5" cy="10.5" r="1.2" fill="#46584D"></circle><circle cx="12.5" cy="10.5" r="1.2" fill="#46584D"></circle><path d="M10 2.5v2.5" stroke="#46584D" stroke-width="1.5"></path></svg></span><span style="display: flex; flex-direction: column; flex: 1"><strong>Surveillant d'erreurs</strong><span class="muted" style="font-size: 12.5px">Pôle Technique</span></span><span class="chip c-warn">Signale un pic</span></div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px"><span class="stat"><span class="muted" style="font-size: 11.5px">24 h</span><strong>1</strong></span><span class="stat"><span class="muted" style="font-size: 11.5px">Accepté</span><strong>—</strong></span><span class="stat"><span class="muted" style="font-size: 11.5px">Plafond/h</span><strong>6</strong></span></div>
+<span class="muted" style="font-size: 12.5px">Outils : lire les erreurs, relancer une tâche en échec une fois. Aucune écriture en base.</span>
+<div style="display: flex; gap: 8px"><button class="btn btn-soft" style="flex: 1; min-height: 40px">Droits et outils</button><button class="btn btn-bad" style="min-height: 40px">Arrêter</button></div>
+</article>
+</div>
+
+<section class="card" style="padding: 16px 18px; display: flex; flex-wrap: wrap; gap: 14px; align-items: center" aria-label="Contrôle">
+<span style="display: flex; flex-direction: column; flex: 1; min-width: 240px"><strong>Relecture de la semaine</strong><span class="muted" style="font-size: 13px">10 décisions d'agents tirées au hasard à relire · 4 faites</span></span>
+<span style="display: block; width: 180px; height: 8px; border-radius: 99px; background: #EDF1EA; overflow: hidden"><span style="display: block; width: 40%; height: 100%; background: #5B7F55"></span></span>
+<button class="btn btn-soft">Continuer la relecture</button>
+<button class="btn btn-bad">Arrêter tous les agents</button>
+</section>
+</main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1040}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>
