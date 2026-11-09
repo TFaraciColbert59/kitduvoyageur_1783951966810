@@ -20,12 +20,14 @@ export function Countdown({
   dueAt,
   totalMs = null,
   initialNow,
-  fallback = 'Délai : non renseigné'
+  fallback = 'Délai : non renseigné',
+  toneOverride
 }: {
   dueAt: string | null;
   totalMs?: number | null;
   initialNow: string;
   fallback?: string;
+  toneOverride?: 'stone' | 'warn' | 'danger' | 'info';
 }) {
   const [now, setNow] = useState(() => Date.parse(initialNow));
 
@@ -42,7 +44,7 @@ export function Countdown({
   const remaining = due - now;
   const tone = countdownTone(remaining, totalMs);
   return (
-    <Chip tone={TONE_TO_CHIP[tone]} title={dueAt}>
+    <Chip tone={toneOverride ?? TONE_TO_CHIP[tone]} title={dueAt}>
       {formatRemaining(remaining)}
     </Chip>
   );

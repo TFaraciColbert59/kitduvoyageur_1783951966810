@@ -11,6 +11,16 @@ export function euros(cents: number | null | undefined): string {
 export function relativeFr(iso: string | null | undefined, now = Date.now()): string {
   if (!iso) return 'non renseigné';
   const diff = now - Date.parse(iso);
+  if (diff < 0) {
+    const ahead = Math.abs(diff);
+    const m = Math.round(ahead / 60_000);
+    if (m < 1) return 'dans un instant';
+    if (m < 60) return `dans ${m} min`;
+    const h = Math.round(m / 60);
+    if (h < 24) return `dans ${h} h`;
+    const d = Math.round(h / 24);
+    return d === 1 ? 'demain' : `dans ${d} j`;
+  }
   const min = Math.round(diff / 60_000);
   if (min < 1) return "à l'instant";
   if (min < 60) return `il y a ${min} min`;

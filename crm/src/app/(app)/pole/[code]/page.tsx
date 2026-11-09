@@ -1,6 +1,6 @@
 import { PoleScreen } from '../../../../components/pole/pole-screen';
 import { getContext, getInbox } from '../../../../components/data/admin-rpc';
-import { LOCAL_CATALOG } from '../../../../components/command/catalog';
+import { LOCAL_CATALOG } from '../../../../lib/catalog-local';
 import { ErrorState } from '../../../../ui/error-state';
 import { Workspace } from '../../../../components/shell/workspace';
 import { POLES } from '../../../../lib/catalog';

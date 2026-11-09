@@ -14,7 +14,7 @@ export default function LoginPage() {
       footer={
         <span>
           Accès refusé alors que vos identifiants sont bons ?{' '}
-          <Link href="/acces-refuse" style={{ fontWeight: 600 }}>
+          <Link href="/acces-refuse" className={s.linkAction}>
             Voir la marche à suivre
           </Link>
           .

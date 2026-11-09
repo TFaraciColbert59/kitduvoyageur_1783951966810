@@ -1,0 +1,36 @@
+{
+  "base": "http://127.0.0.1:4200",
+  "at": "2026-11-09T20:20:24.895Z",
+  "metrics": {
+    "valider-1440": {
+      "error": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:4200/valider/d1300000-0000-4000-8000-000000000001\nCall log:\n  - navigating to \"http://127.0.0.1:4200/valider/d1300000-0000-4000-8000-000000000001\", waiting until \"domcontentloaded\"\n"
+    },
+    "valider-saisie-1440": {
+      "error": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:4200/valider/d1300000-0000-4000-8000-000000000001\nCall log:\n  - navigating to \"http://127.0.0.1:4200/valider/d1300000-0000-4000-8000-000000000001\", waiting until \"domcontentloaded\"\n"
+    },
+    "valider-erreur-1440": {
+      "error": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:4200/valider/d1300000-0000-4000-8000-000000000001\nCall log:\n  - navigating to \"http://127.0.0.1:4200/valider/d1300000-0000-4000-8000-000000000001\", waiting until \"domcontentloaded\"\n"
+    },
+    "valider-validee-1440": {
+      "error": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:4200/valider/d1300000-0000-4000-8000-000000000001\nCall log:\n  - navigating to \"http://127.0.0.1:4200/valider/d1300000-0000-4000-8000-000000000001\", waiting until \"domcontentloaded\"\n"
+    },
+    "valider-390": {
+      "error": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:4200/valider/d1300000-0000-4000-8000-000000000001\nCall log:\n  - navigating to \"http://127.0.0.1:4200/valider/d1300000-0000-4000-8000-000000000001\", waiting until \"domcontentloaded\"\n"
+    },
+    "sos-390": {
+      "error": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:4200/sos/d1000000-0000-4000-8000-000000000001\nCall log:\n  - navigating to \"http://127.0.0.1:4200/sos/d1000000-0000-4000-8000-000000000001\", waiting until \"domcontentloaded\"\n"
+    },
+    "sos-pris-390": {
+      "error": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:4200/sos/d1000000-0000-4000-8000-000000000001\nCall log:\n  - navigating to \"http://127.0.0.1:4200/sos/d1000000-0000-4000-8000-000000000001\", waiting until \"domcontentloaded\"\n"
+    },
+    "sos-cloture-390": {
+      "error": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:4200/sos/d1000000-0000-4000-8000-000000000001\nCall log:\n  - navigating to \"http://127.0.0.1:4200/sos/d1000000-0000-4000-8000-000000000001\", waiting until \"domcontentloaded\"\n"
+    },
+    "sos-1440": {
+      "error": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:4200/sos/d1000000-0000-4000-8000-000000000001\nCall log:\n  - navigating to \"http://127.0.0.1:4200/sos/d1000000-0000-4000-8000-000000000001\", waiting until \"domcontentloaded\"\n"
+    },
+    "sos-liste-390": {
+      "error": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:4200/sos\nCall log:\n  - navigating to \"http://127.0.0.1:4200/sos\", waiting until \"domcontentloaded\"\n"
+    }
+  }
+}

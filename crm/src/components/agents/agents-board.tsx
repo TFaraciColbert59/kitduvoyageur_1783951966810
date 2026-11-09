@@ -9,7 +9,7 @@ import { Button } from '../../ui/button';
 import { Chip } from '../../ui/chip';
 import { Label } from '../../ui/card';
 import { Banner, EmptyState } from '../../ui/states';
-import { IconRobot, IconStop } from '../../ui/icons';
+import { IconRobot } from '../../ui/icons';
 import { useToast } from '../../ui/toast';
 import type { Agent, StaffContext } from '../../lib/rpc';
 import { POLE_LABELS } from '../command/catalog';
@@ -30,11 +30,13 @@ function percent(value: number): string {
 export function AgentsBoard({
   agents,
   solo,
-  ctx
+  ctx,
+  review = null
 }: {
   agents: Agent[];
   solo: boolean;
   ctx: StaffContext | null;
+  review?: { total: number; done: number } | null;
 }) {
   const router = useRouter();
   const { push } = useToast();
@@ -96,11 +98,11 @@ export function AgentsBoard({
       {error ? <Banner tone="danger">{error}</Banner> : null}
 
       <section className={`${s.card} ${s.padLg}`} aria-label="Humains" style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'center' }}>
-        <Avatar name={ctx?.display_name} size={48} tone="primary" />
+        <Avatar name={ctx?.initials ?? ctx?.display_name} size={48} tone="primary" />
         <span className={s.col} style={{ flex: 1, minWidth: 200 }}>
           <strong>{ctx?.display_name ?? 'Session non renseignée'}</strong>
           <span className={s.muted} style={{ fontSize: 13 }}>
-            {ctx?.role === 'super_admin' ? 'Super admin · tous les droits' : (ctx?.role ?? 'Rôle non renseigné')}
+            {ctx?.role === 'super_admin' ? 'Super admin · tous les droits, tous les accès · clé physique active' : (ctx?.role ?? 'Rôle non renseigné')}
           </span>
         </span>
         <span className={s.rowFlexWrap}>
@@ -123,7 +125,9 @@ export function AgentsBoard({
       ) : (
         <div className={s.agentGrid}>
           {agents.map((agent) => {
-            const status = STATUS[agent.status] ?? { tone: 'stone' as const, label: 'Statut non renseigné' };
+            const status = agent.status_label
+              ? { tone: 'warn' as const, label: agent.status_label }
+              : STATUS[agent.status] ?? { tone: 'stone' as const, label: 'Statut non renseigné' };
             return (
               <article key={agent.id} className={cx(s.card, s.agentCard)}>
                 <div className={s.rowFlex}>
@@ -146,7 +150,7 @@ export function AgentsBoard({
                   </span>
                   <span className={s.stat}>
                     <span className={s.muted} style={{ fontSize: 11.5 }}>Accepté</span>
-                    <strong className={s.statValue}>{percent(agent.accepted_rate)}</strong>
+                    <strong className={s.statValue}>{agent.accepted_rate === null ? '—' : percent(agent.accepted_rate)}</strong>
                   </span>
                   <span className={s.stat}>
                     <span className={s.muted} style={{ fontSize: 11.5 }}>Plafond/h</span>
@@ -155,7 +159,7 @@ export function AgentsBoard({
                 </div>
 
                 <span className={s.muted} style={{ fontSize: 12.5 }}>
-                  Outils : {agent.tools.length > 0 ? agent.tools.join(', ') : 'non renseignés'}.
+                  {agent.description ?? `Outils : ${agent.tools.length > 0 ? agent.tools.join(', ') : 'non renseignés'}.`}
                 </span>
 
                 {agent.last_error ? (
@@ -179,7 +183,6 @@ export function AgentsBoard({
                     <Button
                       tone="bad"
                       size="sm"
-                      icon={<IconStop size={14} />}
                       onClick={() => setConfirmStop(agent.id)}
                       disabled={agent.status === 'stopped'}
                     >
@@ -197,8 +200,18 @@ export function AgentsBoard({
         <span className={s.col} style={{ flex: 1, minWidth: 240 }}>
           <strong>Relecture de la semaine</strong>
           <span className={s.muted} style={{ fontSize: 13 }}>
-            Décisions d’agents tirées au hasard : non renseigné sur cet écran.
+            {review
+              ? `${review.total} décisions d’agents tirées au hasard à relire · ${review.done} faites`
+              : 'Décisions d’agents tirées au hasard : non renseigné sur cet écran.'}
           </span>
+          {review && review.total > 0 ? (
+            <span
+              aria-hidden="true"
+              style={{ display: 'block', height: 6, borderRadius: 999, background: 'var(--lkv-surface-muted)', overflow: 'hidden', maxWidth: 260 }}
+            >
+              <span style={{ display: 'block', height: '100%', width: `${Math.round((review.done / review.total) * 100)}%`, background: 'var(--lkv-action)' }} />
+            </span>
+          ) : null}
         </span>
         <Button tone="soft" onClick={() => router.push('/journal?acteur=agent')}>
           Continuer la relecture

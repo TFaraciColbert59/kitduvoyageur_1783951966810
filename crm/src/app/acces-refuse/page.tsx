@@ -14,7 +14,7 @@ export default function AccessDeniedPage() {
       subtitle="Votre session ne donne pas accès au CRM, ou la double authentification n’est pas vérifiée."
       footer={
         <span>
-          <Link href="/connexion" style={{ fontWeight: 600 }}>
+          <Link href="/connexion" className={s.linkAction}>
             Revenir à la connexion
           </Link>
         </span>

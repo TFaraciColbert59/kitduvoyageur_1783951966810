@@ -11,6 +11,25 @@ import { euros, relativeFr } from '../../../../lib/format';
 export const dynamic = 'force-dynamic';
 
 /** Commande (maquette `Membre.dc.html` adaptée : client, paiement, logistique). */
+const ORDER_STATUS: Record<string, string> = {
+  paid: 'payée',
+  pending: 'en attente de paiement',
+  shipped: 'expédiée',
+  delivered: 'livrée',
+  cancelled: 'annulée',
+  refunded: 'remboursée',
+  disputed: 'en litige'
+};
+const PAYMENT_STATUS: Record<string, string> = {
+  succeeded: 'réussi',
+  requires_action: 'action requise',
+  processing: 'en cours',
+  canceled: 'annulé',
+  failed: 'échoué'
+};
+const orderStatus = (value: string) => ORDER_STATUS[value] ?? value;
+const paymentStatus = (value: string) => PAYMENT_STATUS[value] ?? value;
+
 export default async function OrderPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const result = await getOrderDetail(id);
@@ -80,7 +99,7 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
         <div className={s.col} style={{ gap: 4 }}>
           <h1 className={s.titleSm}>Commande {order.number}</h1>
           <span className={s.subtitle}>
-            {relativeFr(order.created_at)} · {order.customer.name} · {order.status}
+            {relativeFr(order.created_at)} · {order.customer.name} · {orderStatus(order.status)}
           </span>
         </div>
         <div className={s.rowFlexWrap}>
@@ -101,7 +120,7 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
         </div>
         <div className={s.fact}>
           <span className={s.label}>Paiement</span>
-          <span className={s.factValue}>{order.payment.status || 'non renseigné'}</span>
+          <span className={s.factValue}>{paymentStatus(order.payment.status)}</span>
           <span className={s.muted} style={{ fontSize: 12.5 }}>
             <span className={s.mono}>{order.payment.intent_id ?? 'intention non renseignée'}</span> · remboursé{' '}
             {euros(order.payment.refunded_cents)}
@@ -142,7 +161,7 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
       </section>
 
       <div className={s.rowFlexWrap}>
-        <Chip tone="stone">Statut : {order.status}</Chip>
+        <Chip tone="stone">Statut : {orderStatus(order.status)}</Chip>
         <Chip tone={refundable > 0 ? 'warn' : 'stone'}>Encore remboursable : {euros(refundable)}</Chip>
         <span className={s.muted} style={{ fontSize: 12.5 }}>
           Tout remboursement passe par une validation : jamais automatique, jamais par un agent.

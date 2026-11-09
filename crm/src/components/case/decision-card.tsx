@@ -51,6 +51,37 @@ function shortcutFor(action: Action): string | null {
  * actions principales + « … », motif obligatoire, aperçu du message au membre,
  * annulation 10 s. L'IA propose, elle n'applique jamais.
  */
+const ACTION_TONE: Record<string, 'pg' | 'soft' | 'bad'> = {
+  comment_hide: 'pg',
+  post_hide: 'pg',
+  story_remove: 'pg',
+  comment_report_resolve: 'soft',
+  post_report_resolve: 'soft',
+  post_restore: 'soft',
+  member_suspend: 'bad',
+  member_ban: 'bad',
+  comment_remove: 'bad',
+  post_remove: 'bad'
+};
+
+function actionLabel(command: string, fallback: string, kind: string): string {
+  const noun = kind.includes('comment') ? 'le commentaire' : kind.includes('publication') || kind.includes('post') ? 'la publication' : 'le contenu';
+  switch (command) {
+    case 'comment_hide':
+    case 'post_hide':
+      return `Masquer ${noun}`;
+    case 'comment_report_resolve':
+    case 'post_report_resolve':
+      return 'Laisser visible';
+    case 'post_restore':
+      return 'Restaurer';
+    case 'member_suspend':
+      return 'Sanctionner l’auteur';
+    default:
+      return fallback;
+  }
+}
+
 export function DecisionCard({
   detail,
   reasonCodes
@@ -60,7 +91,7 @@ export function DecisionCard({
 }) {
   const router = useRouter();
   const { push } = useToast();
-  const [reason, setReason] = useState('');
+  const [reason, setReason] = useState(detail.rule?.code ?? '');
   const [precision, setPrecision] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -148,8 +179,12 @@ export function DecisionCard({
   useEffect(() => {
     if (!menuOpen) return;
     const close = () => setMenuOpen(false);
-    document.addEventListener('click', close);
-    return () => document.removeEventListener('click', close);
+    // Différé d'un tick : sinon le clic qui vient d'ouvrir le menu le referme aussitôt.
+    const timer = window.setTimeout(() => document.addEventListener('click', close), 0);
+    return () => {
+      window.clearTimeout(timer);
+      document.removeEventListener('click', close);
+    };
   }, [menuOpen]);
 
   return (
@@ -168,7 +203,8 @@ export function DecisionCard({
         <div className={s.rowFlexWrap}>
           {primary.map((action) => {
             const key = shortcutFor(action);
-            const tone = action.tone === 'danger' ? 'bad' : action.primary ? 'pg' : 'soft';
+            const tone = ACTION_TONE[action.command] ?? (action.tone === 'danger' ? 'bad' : action.primary ? 'pg' : 'soft');
+            const label = actionLabel(action.command, action.label, detail.target.kind);
             return (
               <Button
                 key={action.command}
@@ -177,7 +213,7 @@ export function DecisionCard({
                 disabled={decided || busy !== null}
                 onClick={() => void run(action)}
               >
-                {busy === action.command ? 'Envoi…' : action.label}
+                {busy === action.command ? 'Envoi…' : label}
               </Button>
             );
           })}

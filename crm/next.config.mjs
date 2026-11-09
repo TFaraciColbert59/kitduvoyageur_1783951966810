@@ -10,9 +10,9 @@ const csp = [
   "frame-ancestors 'none'",
   "form-action 'self'",
   "img-src 'self' data: blob: https://*.supabase.co",
-  "font-src 'self' data:",
-  "style-src 'self' 'unsafe-inline'",
-  process.env.CRM_CSP_DEV === '1' ? "script-src 'self' 'unsafe-eval' 'unsafe-inline'" : "script-src 'self' 'unsafe-inline'",
+  "font-src 'self' data: https://fonts.gstatic.com",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  process.env.CRM_CSP_DEV === '1' || process.env.NODE_ENV === 'development' ? "script-src 'self' 'unsafe-eval' 'unsafe-inline'" : "script-src 'self' 'unsafe-inline'",
   `connect-src 'self' https://${supabaseHost} wss://${supabaseHost} https://api.stripe.com`,
   "worker-src 'self' blob:"
 ].join('; ');
@@ -29,6 +29,7 @@ const securityHeaders = [
 
 const nextConfig = {
   reactStrictMode: true,
+  devIndicators: false,
   outputFileTracingRoot: new URL('.', import.meta.url).pathname,
   poweredByHeader: false,
   transpilePackages: [],

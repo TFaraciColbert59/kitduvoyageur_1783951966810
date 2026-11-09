@@ -13,15 +13,15 @@ import type { InboxItem } from '../../lib/rpc';
 
 export type QueueFilter = 'tout' | 'urgent' | 'signalements' | 'a_valider' | 'contributions';
 
-const GROUP_ORDER = ['urgence_haute', 'delai_bientot', 'a_valider', 'signalements', 'contributions'] as const;
-type GroupKey = (typeof GROUP_ORDER)[number];
+const GROUP_ORDER = ['urgence_haute', 'delai_bientot', 'a_valider', 'signalements'] as const;
+type GroupKey = 'urgence_haute' | 'delai_bientot' | 'a_valider' | 'signalements' | 'contributions';
 
 type Entry =
   | { kind: 'group'; id: string; label: string; tone: 'danger' | 'warn' | 'neutral' }
   | { kind: 'item'; item: InboxItem };
 
-const GROUP_H = 36;
-const ROW_H = 58;
+const GROUP_H = 40;
+const ROW_H = 76;
 const OVERSCAN = 8;
 
 function groupMeta(group: GroupKey): { label: string; tone: 'danger' | 'warn' | 'neutral' } {
@@ -59,10 +59,14 @@ function caseHref(item: InboxItem): string {
 function buildEntries(items: InboxItem[]): Entry[] {
   const entries: Entry[] = [];
   for (const group of GROUP_ORDER) {
-    const bucket = items.filter((item) => item.group === group);
+    const bucket = items.filter((item) =>
+      group === 'signalements'
+        ? item.group === 'signalements' || item.group === 'contributions'
+        : item.group === group
+    );
     if (bucket.length === 0) continue;
     const meta = groupMeta(group);
-    entries.push({ kind: 'group', id: `g:${group}`, label: `${meta.label} · ${bucket.length}`, tone: meta.tone });
+    entries.push({ kind: 'group', id: `g:${group}`, label: meta.label, tone: meta.tone });
     for (const item of bucket) entries.push({ kind: 'item', item });
   }
   return entries;
@@ -236,10 +240,10 @@ export function QueueList({
                 {item.group === 'urgence_haute' ? (
                   <Chip tone="danger">{item.badges[0] ?? 'Urgence haute'}</Chip>
                 ) : item.group === 'delai_bientot' ? (
-                  <Countdown dueAt={item.due_at} initialNow={now} />
+                  <Countdown dueAt={item.due_at} initialNow={now} toneOverride={item.group === 'delai_bientot' ? 'warn' : undefined} />
                 ) : (
                   item.badges.slice(0, 2).map((badge) => (
-                    <Chip key={badge} tone={item.group === 'a_valider' ? 'info' : 'stone'}>
+                    <Chip key={badge} tone={item.group === 'a_valider' && badge === 'Votre validation' ? 'info' : 'stone'}>
                       {badge}
                     </Chip>
                   ))
@@ -252,23 +256,7 @@ export function QueueList({
         </div>
       </div>
 
-      <p className={s.muted} style={{ margin: 0, fontSize: 12.5, display: 'flex', flexWrap: 'wrap', gap: 14 }}>
-        <span>
-          <Kbd>J</Kbd> <Kbd>K</Kbd> naviguer
-        </span>
-        <span>
-          <Kbd>↵</Kbd> ouvrir
-        </span>
-        <span>
-          <Kbd>⌘K</Kbd> chercher ou agir
-        </span>
-        <span>
-          <Kbd>?</Kbd> aide
-        </span>
-        <span style={{ marginLeft: 'auto' }}>
-          {filtered.length} élément{filtered.length > 1 ? 's' : ''} affiché{filtered.length > 1 ? 's' : ''}
-        </span>
-      </p>
+
     </>
   );
 }

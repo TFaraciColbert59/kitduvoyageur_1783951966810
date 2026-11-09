@@ -1,0 +1,181 @@
+{
+  "base": "http://127.0.0.1:4200",
+  "at": "2026-11-09T20:18:38.383Z",
+  "shots": [
+    {
+      "name": "01-main",
+      "url": "/",
+      "file": "01-main-1440x1040.png",
+      "width": 1440,
+      "height": 1040
+    },
+    {
+      "name": "02-moderation",
+      "url": "/cas/post_report/d1000000-0000-4000-8000-000000000002",
+      "file": "02-moderation-1440x1040.png",
+      "width": 1440,
+      "height": 1040
+    },
+    {
+      "name": "03-moderation-motif",
+      "url": "/cas/post_report/d1000000-0000-4000-8000-000000000002",
+      "file": "03-moderation-motif-1440x1040.png",
+      "width": 1440,
+      "height": 1040
+    },
+    {
+      "name": "04-moderation-menu",
+      "url": "/cas/post_report/d1000000-0000-4000-8000-000000000002",
+      "file": "04-moderation-menu-1440x1040.png",
+      "width": 1440,
+      "height": 1040
+    },
+    {
+      "name": "05-moderation-drawer",
+      "url": "/cas/post_report/d1000000-0000-4000-8000-000000000002",
+      "file": "05-moderation-drawer-1440x1040.png",
+      "width": 1440,
+      "height": 1040
+    },
+    {
+      "name": "06-membre",
+      "url": "/membres/d1200000-0000-4000-8000-000000000001",
+      "file": "06-membre-1440x1040.png",
+      "width": 1440,
+      "height": 1040
+    },
+    {
+      "name": "07-membre-pii",
+      "url": "/membres/d1200000-0000-4000-8000-000000000001",
+      "file": "07-membre-pii-1440x1040.png",
+      "width": 1440,
+      "height": 1040
+    },
+    {
+      "name": "08-membre-drawer",
+      "url": "/membres/d1200000-0000-4000-8000-000000000001",
+      "file": "08-membre-drawer-1440x1040.png",
+      "width": 1440,
+      "height": 1040
+    },
+    {
+      "name": "09-valider",
+      "url": "/valider/d1300000-0000-4000-8000-000000000001",
+      "file": "09-valider-1440x1040.png",
+      "width": 1440,
+      "height": 1040
+    },
+    {
+      "name": "10-valider-saisie",
+      "url": "/valider/d1300000-0000-4000-8000-000000000001",
+      "file": "10-valider-saisie-1440x1040.png",
+      "width": 1440,
+      "height": 1040
+    },
+    {
+      "name": "11-equipe",
+      "url": "/equipe",
+      "file": "11-equipe-1440x1040.png",
+      "width": 1440,
+      "height": 1040
+    },
+    {
+      "name": "12-equipe-arret",
+      "url": "/equipe",
+      "file": "12-equipe-arret-1440x1040.png",
+      "width": 1440,
+      "height": 1040
+    },
+    {
+      "name": "13-journal",
+      "url": "/journal",
+      "file": "13-journal-1440x1040.png",
+      "width": 1440,
+      "height": 1040
+    },
+    {
+      "name": "14-commande",
+      "url": "/",
+      "file": "14-commande-1440x1040.png",
+      "width": 1440,
+      "height": 1040
+    },
+    {
+      "name": "15-commande-drawer",
+      "url": "/",
+      "file": "15-commande-drawer-1440x1040.png",
+      "width": 1440,
+      "height": 1040
+    },
+    {
+      "name": "16-sos-mobile",
+      "url": "/sos/d1000000-0000-4000-8000-000000000001",
+      "file": "16-sos-mobile-390x844.png",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "name": "17-connexion",
+      "url": "/connexion",
+      "file": "17-connexion-1440x1040.png",
+      "width": 1440,
+      "height": 1040
+    },
+    {
+      "name": "18-connexion-mobile",
+      "url": "/connexion",
+      "file": "18-connexion-mobile-390x844.png",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "name": "19-mfa",
+      "url": "/double-authentification",
+      "file": "19-mfa-1440x1040.png",
+      "width": 1440,
+      "height": 1040
+    },
+    {
+      "name": "20-acces-refuse",
+      "url": "/acces-refuse",
+      "file": "20-acces-refuse-1440x1040.png",
+      "width": 1440,
+      "height": 1040
+    },
+    {
+      "name": "21-catalogue",
+      "url": "/catalogue",
+      "file": "21-catalogue-1440x1040.png",
+      "width": 1440,
+      "height": 1040
+    },
+    {
+      "name": "22-pole-confiance",
+      "url": "/pole/CONF",
+      "file": "22-pole-confiance-1440x1040.png",
+      "width": 1440,
+      "height": 1040
+    },
+    {
+      "name": "23-commande-fiche",
+      "url": "/commandes/d1400000-0000-4000-8000-000000000001",
+      "file": "23-commande-fiche-1440x1040.png",
+      "width": 1440,
+      "height": 1040
+    },
+    {
+      "name": "24-technique",
+      "url": "/technique",
+      "file": "24-technique-1440x1040.png",
+      "width": 1440,
+      "height": 1040
+    },
+    {
+      "name": "25-entrainement",
+      "url": "/entrainement",
+      "file": "25-entrainement-1440x1040.png",
+      "width": 1440,
+      "height": 1040
+    }
+  ]
+}

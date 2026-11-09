@@ -10,7 +10,7 @@ import { ErrorState } from '../../../../../ui/error-state';
 import { Kbd } from '../../../../../ui/kbd';
 import { Workspace } from '../../../../../components/shell/workspace';
 import { DecisionCard } from '../../../../../components/case/decision-card';
-import { POLE_LABELS } from '../../../../../components/command/catalog';
+import { POLE_LABELS } from '../../../../../lib/catalog-local';
 import { getInbox, getInboxItem, getReasonCodes } from '../../../../../components/data/admin-rpc';
 import { relativeFr } from '../../../../../lib/format';
 import type { CaseDetail } from '../../../../../lib/rpc';
@@ -42,8 +42,22 @@ function kindLabel(kind: string): string {
   return KIND_LABEL[kind] ?? kind;
 }
 
+function memberSince(value: string): string {
+  const parsed = Date.parse(value);
+  if (Number.isNaN(parsed)) return value;
+  return new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' }).format(new Date(parsed));
+}
+
+function confidenceLevel(value: number): string {
+  const ratio = value <= 1 ? value : value / 100;
+  if (ratio >= 0.85) return 'haute';
+  if (ratio >= 0.6) return 'moyenne';
+  return 'basse';
+}
+
 function caseTitle(detail: CaseDetail): string {
-  const base = kindLabel(detail.target.kind);
+  const raw = kindLabel(detail.target.kind);
+  const base = raw.charAt(0).toUpperCase() + raw.slice(1);
   const reports = detail.reports?.length ?? 0;
   if (reports > 0) return `${base} signalé ${reports} fois`;
   return base;
@@ -96,7 +110,7 @@ export default async function CasePage({ params }: { params: Promise<{ source: s
                   <span className={s.col}>
                     <strong>{detail.member.name}</strong>
                     <span className={s.muted} style={{ fontSize: 12.5 }}>
-                      {detail.member.member_since ? `Membre depuis ${detail.member.member_since}` : 'Ancienneté : non renseignée'}
+                      {detail.member.member_since ? `Membre depuis ${memberSince(detail.member.member_since)}` : 'Ancienneté : non renseignée'}
                     </span>
                   </span>
                 </div>
@@ -121,16 +135,37 @@ export default async function CasePage({ params }: { params: Promise<{ source: s
             )}
           </div>
 
+          {detail.history?.length ? (
+            <div className={`${s.card} ${s.railCard}`}>
+              <Label>Historique de modération</Label>
+              {detail.history.map((entry) => (
+                <span key={`${entry.at}-${entry.label}`} className={s.between} style={{ fontSize: 13 }}>
+                  <span>{entry.label}</span>
+                  <span className={s.muted}>{entry.at}</span>
+                </span>
+              ))}
+              {detail.next_step ? <Chip tone="warn">{detail.next_step}</Chip> : null}
+            </div>
+          ) : (
+            <div className={`${s.card} ${s.railCard}`}>
+              <Label>Règle concernée</Label>
+              {detail.rule ? (
+                <>
+                  <strong>{detail.rule.label}</strong>
+                  <span className={s.muted} style={{ fontSize: 12.5 }}>Échelle : {detail.rule.scale}</span>
+                </>
+              ) : (
+                <span className={s.muted} style={{ fontSize: 12.5 }}>Règle : non renseignée pour ce cas.</span>
+              )}
+            </div>
+          )}
+
           <div className={`${s.card} ${s.railCard}`}>
-            <Label>Règle concernée</Label>
-            {detail.rule ? (
-              <>
-                <strong>{detail.rule.label}</strong>
-                <span className={s.muted} style={{ fontSize: 12.5 }}>Échelle : {detail.rule.scale}</span>
-              </>
-            ) : (
-              <span className={s.muted} style={{ fontSize: 12.5 }}>Règle : non renseignée pour ce cas.</span>
-            )}
+            <Label>Votre session</Label>
+            <span style={{ fontSize: 13 }}>
+              Cas sensibles : <strong>{process.env.NEXT_PUBLIC_CRM_DESIGN_PREVIEW === '1' ? '3 / 10' : 'plafond 10'}</strong>
+              {' · '}le cas suivant est déjà chargé
+            </span>
           </div>
 
           <div className={`${s.card} ${s.railCard}`}>
@@ -146,13 +181,6 @@ export default async function CasePage({ params }: { params: Promise<{ source: s
             )}
           </div>
 
-          <div className={`${s.card} ${s.railCard}`}>
-            <Label>Votre session</Label>
-            <span style={{ fontSize: 13 }}>Le cas suivant est préchargé quand vous revenez à la file.</span>
-            <span className={s.muted} style={{ fontSize: 12.5 }}>
-              Une pause vous est proposée au-delà de 10 cas sensibles.
-            </span>
-          </div>
         </>
       }
     >
@@ -205,7 +233,11 @@ export default async function CasePage({ params }: { params: Promise<{ source: s
         <div className={s.fact}>
           <span className={s.label}>Depuis</span>
           <span className={s.factValue}>{relativeFr(detail.target.created_at)}</span>
-          <span className={s.muted} style={{ fontSize: 12.5 }}>Délai cible : non renseigné</span>
+          <span className={s.muted} style={{ fontSize: 12.5 }}>
+            {detail.deadline_at
+              ? `Délai cible : ${Math.max(1, Math.round((Date.parse(detail.deadline_at) - Date.parse(detail.target.created_at)) / 60_000))} min`
+              : 'Délai cible : non renseigné'}
+          </span>
         </div>
       </div>
 
@@ -229,30 +261,24 @@ export default async function CasePage({ params }: { params: Promise<{ source: s
 
       <section
         className={`${s.card} ${s.padLg}`}
-        style={{ background: 'var(--lkv-sage-50)', display: 'flex', gap: 14, alignItems: 'flex-start' }}
+        style={{ background: 'var(--lkv-sage-50)', display: 'flex', gap: 16, alignItems: 'flex-start' }}
         aria-label="Suggestion de l’IA"
       >
-        <Chip tone="stone">Suggestion IA</Chip>
-        {detail.ai_suggestion ? (
-          <span className={s.col} style={{ gap: 4, flex: 1 }}>
+        <span className={s.label} style={{ minWidth: 96, paddingTop: 2 }}>
+          {detail.ai_suggestion?.agent ?? 'Aucun agent'}
+        </span>
+        <span className={s.col} style={{ gap: 4, flex: 1, borderLeft: '1px solid var(--lkv-border-subtle)', paddingLeft: 16 }}>
+          {detail.ai_suggestion ? (
             <strong style={{ fontSize: 13.5 }}>
-              {detail.ai_suggestion.label} · confiance{' '}
-              {detail.ai_suggestion.confidence <= 1
-                ? `${Math.round(detail.ai_suggestion.confidence * 100)} %`
-                : `${detail.ai_suggestion.confidence} %`}
+              {detail.ai_suggestion.label} · confiance {confidenceLevel(detail.ai_suggestion.confidence)}
             </strong>
-            <span className={s.muted} style={{ fontSize: 12.5 }}>
-              Visible maintenant que vous avez lu le contenu. L’agent propose ; la décision et le motif restent les vôtres.
-            </span>
-          </span>
-        ) : (
-          <span className={s.col} style={{ gap: 4, flex: 1 }}>
+          ) : (
             <strong style={{ fontSize: 13.5 }}>Pas de suggestion</strong>
-            <span className={s.muted} style={{ fontSize: 12.5 }}>
-              Aucun agent n’a proposé de décision sur ce cas. Votre lecture suffit.
-            </span>
+          )}
+          <span className={s.muted} style={{ fontSize: 12.5 }}>
+            Visible maintenant que vous avez lu le contenu. L’agent propose ; la décision et le motif restent les vôtres.
           </span>
-        )}
+        </span>
       </section>
     </Workspace>
   );

@@ -7,6 +7,7 @@
  */
 import { supabaseServer } from '../../lib/supabase/server';
 import { BUNDLED_REASON_CODES, type ReasonCode } from './reason-codes';
+import { previewEnabled, previewData } from './fixtures';
 import type {
   Agent,
   AuditRow,
@@ -70,6 +71,10 @@ function friendly(error: PostgrestError): RpcFailure {
 }
 
 export async function adminRpc<T>(fn: string, args: Record<string, unknown> = {}): Promise<RpcResult<T>> {
+  if (previewEnabled()) {
+    const data = previewData(fn);
+    if (data !== undefined) return { data: data as T, failure: null };
+  }
   try {
     const supabase = await supabaseServer();
     const client = supabase.schema('admin') as unknown as AdminClient;
@@ -108,7 +113,8 @@ export const getMember360 = (id: string) => adminRpc<Member360>('member_360', { 
 export const getOrderDetail = (id: string) => adminRpc<OrderDetail>('order_detail', { p_order_id: id });
 export const getRequestsPending = () => adminRpc<{ items: import('../../lib/rpc').RequestItem[] }>('requests_pending');
 export const getRequestDetail = (id: string) => adminRpc<RequestDetail>('request_detail', { p_id: id });
-export const getAgentsOverview = () => adminRpc<{ agents: Agent[]; solo: boolean; bricks: unknown }>('agents_overview');
+export const getAgentsOverview = () =>
+  adminRpc<{ agents: Agent[]; solo: boolean; bricks: unknown; review?: { total: number; done: number } | null }>('agents_overview');
 export const getAuditPage = (args: { before?: string | null; limit?: number; filters?: Record<string, unknown> } = {}) =>
   adminRpc<{ rows: AuditRow[]; next_before: string | null }>('audit_page', {
     p_before: args.before ?? null,

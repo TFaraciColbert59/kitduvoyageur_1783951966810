@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import s from '../../ui/crm.module.css';
@@ -10,6 +10,7 @@ import { Button } from '../../ui/button';
 import { Select, Field } from '../../ui/field';
 import { EmptyState } from '../../ui/states';
 import type { AuditRow } from '../../lib/rpc';
+import { BUNDLED_REASON_CODES } from '../data/reason-codes';
 
 function time(iso: string): string {
   const date = new Date(iso);
@@ -28,10 +29,60 @@ function beforeAfter(row: AuditRow): string {
 }
 
 /** Journal d'audit (maquette `Journal.dc.html`) : filtres, pastilles, tableau. */
+const COMMAND_LABELS: Record<string, string> = {
+  order_refund: 'Remboursement validé',
+  order_confirm: 'Commande confirmée',
+  order_ship: 'Commande expédiée',
+  comment_hide: 'Commentaire masqué',
+  post_hide: 'Publication masquée',
+  comment_remove: 'Commentaire supprimé',
+  post_remove: 'Publication retirée',
+  post_restore: 'Publication restaurée',
+  post_report_resolve: 'Signalement de publication traité',
+  comment_report_resolve: 'Signalement de commentaire traité',
+  member_suspend: 'Compte suspendu',
+  member_ban: 'Compte banni',
+  member_reactivate: 'Compte réactivé',
+  member_adjust_trust: 'Score de confiance ajusté',
+  member_360: 'Fiche membre consultée',
+  reveal_pii: 'Coordonnées affichées',
+  membership_review: 'Adhésion examinée',
+  ticket_reply: 'Réponse à un ticket',
+  ticket_set_status: 'Statut de ticket modifié',
+  feature_flag_toggle: 'Indicateur basculé',
+  ai_kill_switch: 'IA du site coupée ou rallumée',
+  agent_stop: 'Agent arrêté',
+  agent_stop_all: 'Tous les agents arrêtés',
+  stripe_event_replay: 'Événement Stripe rejoué',
+  undo: 'Action annulée (10 s)'
+};
+
+function humanCommand(command: string): string {
+  return COMMAND_LABELS[command] ?? command.replace(/_/g, ' ');
+}
+
+const BUSINESS_REASONS: Record<string, string> = {
+  produit_defectueux: 'Produit défectueux',
+  colis_perdu: 'Colis perdu',
+  controle: 'Contrôle',
+  reparation: 'Réparation',
+  verification_identite: 'Vérification d’identité',
+  recette: 'Recette',
+  arret_manuel: 'Arrêt manuel'
+};
+
+function humanReason(code: string): string {
+  const found = BUNDLED_REASON_CODES.find((candidate) => candidate.code === code);
+  if (found) return found.label;
+  if (BUSINESS_REASONS[code]) return BUSINESS_REASONS[code];
+  const words = code.replace(/_/g, ' ');
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
 export function AuditTable({ rows, nextBefore }: { rows: AuditRow[]; nextBefore: string | null }) {
   const router = useRouter();
   const params = useSearchParams();
-  const [query, setQuery] = useState('');
+
 
   const filters = useMemo(
     () => ({
@@ -48,15 +99,7 @@ export function AuditTable({ rows, nextBefore }: { rows: AuditRow[]; nextBefore:
     router.push(`/journal?${next.toString()}`);
   };
 
-  const filtered = useMemo(() => {
-    const needle = query.trim().toLowerCase();
-    if (!needle) return rows;
-    return rows.filter((row) =>
-      [row.command, row.actor, row.target_id, row.reason, row.request_id]
-        .filter(Boolean)
-        .some((value) => String(value).toLowerCase().includes(needle))
-    );
-  }, [rows, query]);
+  const filtered = rows;
 
   const soloCount = rows.filter((row) => row.solo).length;
   const piiCount = rows.filter((row) => row.pii).length;
@@ -70,20 +113,23 @@ export function AuditTable({ rows, nextBefore }: { rows: AuditRow[]; nextBefore:
             Ajout seul : aucune ligne ne peut être modifiée ni supprimée · décisions conservées 3 ans, consultations 1 an
           </span>
         </div>
-        <Button tone="soft" disabled title="L’export serveur de la période n’est pas encore branché.">
+        <a
+          className={`${s.btn} ${s.btnSoft}`}
+          href={`/api/audit/export?periode=${encodeURIComponent(filters.period)}&acteur=${encodeURIComponent(filters.actor)}&type=${encodeURIComponent(filters.type)}`}
+        >
           Exporter la période
-        </Button>
+        </a>
       </div>
 
       <div className={s.rowFlexWrap} style={{ alignItems: 'flex-end' }}>
-        <Field label="Période" htmlFor="audit-period">
+        <Field label={<span className={s.label}>Période</span>} htmlFor="audit-period">
           <Select id="audit-period" value={filters.period} onChange={(event) => push({ periode: event.target.value })}>
             <option value="aujourdhui">Aujourd’hui</option>
             <option value="7j">7 derniers jours</option>
             <option value="30j">30 derniers jours</option>
           </Select>
         </Field>
-        <Field label="Acteur" htmlFor="audit-actor">
+        <Field label={<span className={s.label}>Acteur</span>} htmlFor="audit-actor">
           <Select id="audit-actor" value={filters.actor} onChange={(event) => push({ acteur: event.target.value })}>
             <option value="tous">Tout le monde</option>
             <option value="humain">Humains</option>
@@ -91,23 +137,13 @@ export function AuditTable({ rows, nextBefore }: { rows: AuditRow[]; nextBefore:
             <option value="systeme">Système</option>
           </Select>
         </Field>
-        <Field label="Type" htmlFor="audit-type">
+        <Field label={<span className={s.label}>Type</span>} htmlFor="audit-type">
           <Select id="audit-type" value={filters.type} onChange={(event) => push({ type: event.target.value })}>
             <option value="toutes">Toutes les actions</option>
             <option value="decisions">Décisions</option>
             <option value="sensibles">Consultations sensibles</option>
             <option value="argent">Argent</option>
           </Select>
-        </Field>
-        <Field label="Rechercher" htmlFor="audit-search">
-          <input
-            id="audit-search"
-            className={s.field}
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Commande, acteur, cible, motif…"
-            type="search"
-          />
         </Field>
         <span className={s.rowFlexWrap} style={{ marginLeft: 'auto' }}>
           <Chip tone="warn">{soloCount} validation{soloCount > 1 ? 's' : ''} seule{soloCount > 1 ? 's' : ''}</Chip>
@@ -137,22 +173,22 @@ export function AuditTable({ rows, nextBefore }: { rows: AuditRow[]; nextBefore:
                 <tr key={row.id}>
                   <td className={s.mono}>{time(row.created_at)}</td>
                   <td>
-                    {row.actor_kind === 'agent' ? <Chip tone="stone">Agent</Chip> : null} {row.actor}
+                    {row.actor_kind === 'agent' ? <Chip tone="stone">Agent</Chip> : null}{' '}
+                    {row.actor_kind === 'agent' ? row.actor.replace(/^Agent\s+/i, '') : row.actor}
                   </td>
                   <td>
-                    <strong>{row.command}</strong>
+                    <strong>{humanCommand(row.command)}</strong>
                     <div className={s.rowFlexWrap} style={{ marginTop: 4 }}>
                       {row.solo ? <Chip tone="warn">Validé seul · mode solo</Chip> : null}
                       {row.pii ? <Chip tone="info">Accès sensible · 15 min</Chip> : null}
                       {row.actor_kind === 'systeme' ? <Chip tone="stone">Système</Chip> : null}
                     </div>
                   </td>
-                  <td className={s.mono}>
-                    {row.target_kind ? `${row.target_kind} ` : ''}
-                    {row.target_id ?? '—'}
+                  <td>
+                    {row.target_label ?? row.target_id ?? '—'}
                   </td>
-                  <td>{row.reason ?? <span className={s.muted}>—</span>}</td>
-                  <td className={s.mono}>{beforeAfter(row)}</td>
+                  <td>{row.reason ? humanReason(row.reason) : <span className={s.muted}>—</span>}</td>
+                  <td className={s.mono}>{row.summary ?? beforeAfter(row)}</td>
                 </tr>
               ))}
             </tbody>
@@ -168,9 +204,7 @@ export function AuditTable({ rows, nextBefore }: { rows: AuditRow[]; nextBefore:
           <Link href={`/journal?avant=${nextBefore}`} className={`${s.btn} ${s.btnSoft} ${s.btnSm}`}>
             Charger la suite
           </Link>
-        ) : (
-          <span className={s.muted} style={{ fontSize: 12.5 }}>Fin de la période chargée.</span>
-        )}
+        ) : null}
       </div>
     </>
   );

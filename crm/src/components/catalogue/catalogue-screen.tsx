@@ -31,6 +31,8 @@ export function CatalogueScreen({
   const [query, setQuery] = useState(initialQuery ?? '');
   const [pole, setPole] = useState(initialPole ?? 'tous');
   const [drawer, setDrawer] = useState<CatalogCommand | null>(null);
+  const [page, setPage] = useState(0);
+  const PAGE = 25;
 
   useEffect(() => {
     let cancelled = false;
@@ -54,6 +56,11 @@ export function CatalogueScreen({
       .filter((command) => (pole === 'tous' ? true : command.pole === pole))
       .filter((command) => matches(command, query));
   }, [catalog, ctx, pole, query]);
+
+  useEffect(() => setPage(0), [query, pole]);
+
+  const visible = rows.slice(page * PAGE, (page + 1) * PAGE);
+  const pages = Math.max(1, Math.ceil(rows.length / PAGE));
 
   return (
     <>
@@ -113,9 +120,9 @@ export function CatalogueScreen({
               </tr>
             </thead>
             <tbody>
-              {rows.map((command) => (
+              {visible.map((command) => (
                 <tr key={command.command}>
-                  <td className={s.mono}>{command.id}</td>
+                  <td className={s.mono} style={{ whiteSpace: 'nowrap' }}>{command.id}</td>
                   <td>
                     <strong>{command.label}</strong>
                     <div className={s.mono} style={{ fontSize: 11.5, color: 'var(--lkv-text-secondary)' }}>{command.command}</div>
@@ -141,6 +148,22 @@ export function CatalogueScreen({
           </table>
         </section>
       )}
+
+      {loaded && rows.length > PAGE ? (
+        <div className={s.between}>
+          <span className={s.muted} style={{ fontSize: 12.5 }}>
+            {page * PAGE + 1}–{Math.min(rows.length, (page + 1) * PAGE)} sur {rows.length} actions
+          </span>
+          <span className={s.rowFlexWrap}>
+            <Button tone="soft" size="sm" disabled={page === 0} onClick={() => setPage((value) => Math.max(0, value - 1))}>
+              Précédent
+            </Button>
+            <Button tone="soft" size="sm" disabled={page >= pages - 1} onClick={() => setPage((value) => Math.min(pages - 1, value + 1))}>
+              Suivant
+            </Button>
+          </span>
+        </div>
+      ) : null}
 
       <CommandDrawer open={drawer !== null} command={drawer} ctx={ctx} onClose={() => setDrawer(null)} />
     </>

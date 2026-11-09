@@ -3,17 +3,19 @@ import { AppShell } from '../../components/shell/app-shell';
 import { KeyboardHelp } from '../../components/shell/keyboard-help';
 import { ToastProvider } from '../../ui/toast';
 import { POLES } from '../../lib/catalog';
-import { getContext, getPolesSummary, getRequestsPending } from '../../components/data/admin-rpc';
+import { getAgentsOverview, getContext, getInbox, getPolesSummary, getRequestsPending } from '../../components/data/admin-rpc';
 import type { PoleCode } from '../../lib/rpc';
 
 export const dynamic = 'force-dynamic';
 
 /** Coque de toutes les pages du CRM : session, compteurs, raccourcis, annonces. */
 export default async function AppLayout({ children }: { children: ReactNode }) {
-  const [contextResult, polesResult, requestsResult] = await Promise.all([
+  const [contextResult, polesResult, requestsResult, inboxResult, agentsResult] = await Promise.all([
     getContext(),
     getPolesSummary(),
-    getRequestsPending()
+    getRequestsPending(),
+    getInbox(),
+    getAgentsOverview()
   ]);
 
   const ctx = contextResult.data;
@@ -26,7 +28,13 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <ToastProvider>
-      <AppShell ctx={ctx} poles={poles} pendingApprovals={pending}>
+      <AppShell
+        ctx={ctx}
+        poles={poles}
+        pendingApprovals={pending}
+        queueTotal={inboxResult.data?.counts.total ?? null}
+        teamCount={agentsResult.data?.agents.length ?? null}
+      >
         {children}
       </AppShell>
       <KeyboardHelp />

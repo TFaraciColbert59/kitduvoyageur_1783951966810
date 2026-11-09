@@ -12,11 +12,18 @@ export type RealtimeStatus = 'connexion' | 'connecte' | 'indisponible';
  */
 export function useAdminChannel(channel: string, onChange?: () => void): RealtimeStatus {
   const router = useRouter();
-  const [status, setStatus] = useState<RealtimeStatus>('connexion');
+  const [status, setStatus] = useState<RealtimeStatus>(
+    process.env.NEXT_PUBLIC_CRM_DESIGN_PREVIEW === '1' ? 'connecte' : 'connexion'
+  );
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
 
   useEffect(() => {
+    // Prévisualisation de design : pastille « connecté » sans réseau (jamais en production).
+    if (process.env.NEXT_PUBLIC_CRM_DESIGN_PREVIEW === '1') {
+      setStatus('connecte');
+      return;
+    }
     let client: ReturnType<typeof supabaseBrowser>;
     try {
       client = supabaseBrowser();

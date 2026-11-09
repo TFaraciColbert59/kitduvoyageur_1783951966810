@@ -41,7 +41,7 @@ export function Tabs({
             }}
           >
             {tab.label}
-            {tab.badge !== undefined ? <span className={s.muted}>{tab.badge}</span> : null}
+            {tab.badge !== undefined ? <span className={s.muted}>· {tab.badge}</span> : null}
           </button>
         );
       })}

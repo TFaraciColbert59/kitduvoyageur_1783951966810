@@ -16,6 +16,13 @@ import { CommandDrawer } from '../command/command-drawer';
  * Pôle (maquette `Main.dc.html` filtrée) : onglets File, Rechercher, Réglages du pôle.
  * Toutes les actions du pôle sont listées et exécutables depuis cet écran.
  */
+function roleLabel(role: string | undefined | null): string {
+  if (role === 'super_admin') return 'Super admin';
+  if (role === 'responsable') return 'Responsable';
+  if (role === 'membre') return 'Membre';
+  return 'non renseigné';
+}
+
 export function PoleScreen({
   code,
   items,
@@ -54,7 +61,7 @@ export function PoleScreen({
         </div>
         <div className={s.rowFlexWrap}>
           {ctx?.poles?.find((pole) => pole.code === code) ? (
-            <Chip tone="sage">Votre rôle : {ctx.poles.find((pole) => pole.code === code)?.role}</Chip>
+            <Chip tone="sage">Votre rôle : {roleLabel(ctx.poles.find((pole) => pole.code === code)?.role)}</Chip>
           ) : (
             <Chip tone="stone">Hors de votre périmètre</Chip>
           )}

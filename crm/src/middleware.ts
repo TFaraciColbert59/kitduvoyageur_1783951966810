@@ -8,6 +8,10 @@ const PUBLIC_PATHS = ['/connexion', '/double-authentification', '/acces-refuse',
 const PUBLIC_API = ['/api/'];
 
 export async function middleware(request: NextRequest) {
+  // Prévisualisation de design : uniquement hors production et jamais en build de prod.
+  if (process.env.CRM_DESIGN_PREVIEW === '1' && process.env.NODE_ENV !== 'production') {
+    return NextResponse.next({ request });
+  }
   const { pathname } = request.nextUrl;
   const response = NextResponse.next({ request });
   if (PUBLIC_API.some((p) => pathname.startsWith(p)) || PUBLIC_PATHS.includes(pathname)) return response;

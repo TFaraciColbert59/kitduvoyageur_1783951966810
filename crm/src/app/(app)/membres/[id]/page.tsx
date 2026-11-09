@@ -5,6 +5,7 @@ import { ErrorState } from '../../../../ui/error-state';
 import { Workspace } from '../../../../components/shell/workspace';
 import { MemberRecord } from '../../../../components/member/member-record';
 import { getMember360 } from '../../../../components/data/admin-rpc';
+import { euros, relativeFr } from '../../../../lib/format';
 import type { Member360 } from '../../../../lib/rpc';
 
 export const dynamic = 'force-dynamic';
@@ -33,21 +34,24 @@ export default async function MemberPage({ params }: { params: Promise<{ id: str
   const member = result.data;
 
   return (
-    <Workspace bare rail={<MemberRail member={member} />}>
-      <MemberRecord member={member} />
+    <Workspace bare>
+      <MemberRecord member={member} rail={<MemberRail member={member} />} />
     </Workspace>
   );
 }
 
+/** Rail de contexte : confiance, commandes, support, sessions (maquette `Membre.dc.html`). */
 function MemberRail({ member }: { member: Member360 }) {
   const score = member.trust_score;
+  const orders = member.orders ?? [];
+  const sessions = member.sessions;
+  const openTickets = member.support?.open_tickets ?? null;
+
   return (
     <>
-      <Label>Contexte</Label>
-
-      <div className={`${s.card} ${s.railCard}`}>
+      <Card className={s.railCard} style={{ gap: 8 }}>
         <Label>Confiance</Label>
-        <span className={s.between}>
+        <span className={s.between} style={{ flexWrap: 'nowrap', gap: 12 }}>
           <span>Score de confiance</span>
           <strong>{score === null ? 'non renseigné' : `${score} / 100`}</strong>
         </span>
@@ -58,39 +62,49 @@ function MemberRail({ member }: { member: Member360 }) {
           />
         </span>
         <span className={s.muted} style={{ fontSize: 12.5 }}>
-          Signalements reçus : {member.activity.reports_against} · avertissements actifs :{' '}
-          {member.strikes.filter((strike) => strike.active).length}
+          Sorties prouvées au GPS : {member.gps_proofs ?? 'non renseigné'} · signalements reçus :{' '}
+          {member.activity.reports_against}
         </span>
-      </div>
+      </Card>
 
-      <div className={`${s.card} ${s.railCard}`}>
+      <Card className={s.railCard} style={{ gap: 8 }}>
         <Label>Commandes</Label>
-        <span style={{ fontSize: 13 }}>{member.activity.orders} commande(s) au compteur</span>
-        <span className={s.muted} style={{ fontSize: 12.5 }}>
-          Le détail s’ouvre par la commande « Ouvrir une commande » (barre de commande).
-        </span>
-      </div>
+        {orders.length === 0 ? (
+          <span className={s.muted} style={{ fontSize: 13 }}>
+            Aucune commande au compteur
+          </span>
+        ) : (
+          orders.map((order) => (
+            <span key={order.number} className={s.between} style={{ flexWrap: 'nowrap', gap: 12, fontSize: 13 }}>
+              <span className={s.mono}>{order.number}</span>
+              <span>
+                {euros(order.amount_cents)} · {order.status}
+              </span>
+            </span>
+          ))
+        )}
+      </Card>
 
-      <div className={`${s.card} ${s.railCard}`}>
+      <Card className={s.railCard} style={{ gap: 8 }}>
         <Label>Support</Label>
-        <span style={{ fontSize: 13 }}>Tickets ouverts : non renseigné</span>
-        <span className={s.muted} style={{ fontSize: 12.5 }}>
-          La fiche ne reçoit pas la liste des tickets ; elle s’ouvre depuis le pôle Membres.
+        <span style={{ fontSize: 13 }}>
+          {openTickets === null
+            ? 'Tickets ouverts : non renseigné'
+            : openTickets === 0
+              ? 'Aucun ticket ouvert'
+              : `${openTickets} ticket${openTickets > 1 ? 's' : ''} ouvert${openTickets > 1 ? 's' : ''}`}
         </span>
-      </div>
+      </Card>
 
-      <div className={`${s.card} ${s.railCard}`}>
+      <Card className={s.railCard} style={{ gap: 8 }}>
         <Label>Appareils et sessions</Label>
-        <span style={{ fontSize: 13 }}>Sessions actives : non renseigné</span>
-        <span className={s.muted} style={{ fontSize: 12.5 }}>
-          Dernière activité : {member.activity.last_seen ? new Date(member.activity.last_seen).toLocaleString('fr-FR') : 'non renseignée'}
+        <span style={{ fontSize: 13 }}>
+          {sessions
+            ? `${sessions.count} session${sessions.count > 1 ? 's' : ''} active${sessions.count > 1 ? 's' : ''} · ${sessions.device}`
+            : 'Sessions actives : non renseigné'}
         </span>
-      </div>
-
-      <Card className={s.railCard} style={{ background: 'var(--lkv-sage-50)' }}>
-        <Label>Rappel</Label>
         <span className={s.muted} style={{ fontSize: 12.5 }}>
-          Un agent ne valide jamais une sanction. Les documents d’identité restent hors de cet écran.
+          Dernière connexion {sessions?.last_seen ? relativeFr(sessions.last_seen) : 'non renseignée'}
         </span>
       </Card>
     </>

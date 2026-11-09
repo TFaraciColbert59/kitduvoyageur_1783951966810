@@ -237,13 +237,13 @@ export function TrainingScreen() {
           <Label>Votre décision</Label>
           <div className={s.rowFlexWrap}>
             <Button tone="pg" shortcut="M" disabled={Boolean(answer)} onClick={() => decide('masquer')}>
-              Masquer <Kbd>M</Kbd>
+              Masquer
             </Button>
             <Button tone="soft" shortcut="L" disabled={Boolean(answer)} onClick={() => decide('laisser')}>
-              Laisser visible <Kbd>L</Kbd>
+              Laisser visible
             </Button>
             <Button tone="bad" shortcut="S" disabled={Boolean(answer)} onClick={() => decide('sanctionner')}>
-              Sanctionner <Kbd>S</Kbd>
+              Sanctionner
             </Button>
           </div>
 
@@ -260,9 +260,9 @@ export function TrainingScreen() {
           <div className={s.rowFlexWrap}>
             <Button
               tone="soft"
-              disabled={!answer}
+              disabled={index >= CASES.length - 1}
               onClick={() => {
-                setIndex((value) => value + 1);
+                setIndex((value) => Math.min(CASES.length - 1, value + 1));
                 setReason('');
               }}
             >
@@ -272,6 +272,19 @@ export function TrainingScreen() {
               Cas précédent
             </Button>
             <Chip tone="stone">{Object.keys(answers).length} / {CASES.length}</Chip>
+            <span
+              aria-hidden="true"
+              style={{ flex: 1, minWidth: 80, height: 6, borderRadius: 999, background: 'var(--lkv-surface-muted)', overflow: 'hidden' }}
+            >
+              <span
+                style={{
+                  display: 'block',
+                  height: '100%',
+                  width: `${Math.round((Object.keys(answers).length / CASES.length) * 100)}%`,
+                  background: 'var(--lkv-action)'
+                }}
+              />
+            </span>
           </div>
         </div>
       </section>

@@ -26,7 +26,12 @@ export default async function AgentsPage() {
 
   return (
     <Workspace>
-      <AgentsBoard agents={overview.data.agents ?? []} solo={overview.data.solo} ctx={context.data} />
+      <AgentsBoard
+        agents={overview.data.agents ?? []}
+        solo={overview.data.solo}
+        ctx={context.data}
+        review={overview.data.review ?? null}
+      />
     </Workspace>
   );
 }

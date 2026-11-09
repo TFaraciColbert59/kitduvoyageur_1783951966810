@@ -1,42 +1,18 @@
 'use client';
 
-import { COMMANDS, POLES, type CommandDef } from '../../lib/catalog';
-import type { PoleCode, Role } from '../../lib/rpc';
 import { supabaseBrowser } from '../../lib/supabase/browser';
+import type { PoleCode, Role } from '../../lib/rpc';
+import {
+  LOCAL_CATALOG as LOCAL_CATALOG_VALUE,
+  POLE_LABELS as POLE_LABELS_VALUE,
+  commandDefinition,
+  type CatalogCommand
+} from '../../lib/catalog-local';
 
-export type CatalogCommand = {
-  id: string;
-  command: string;
-  label: string;
-  pole: PoleCode;
-  roleMin: Role;
-  needsValidation: boolean;
-  reasonRequired: boolean;
-  undoable: boolean;
-  agent: 'propose' | 'read' | 'never';
-  realtime: string;
-  domain: string;
-};
-
-export const POLE_LABELS: Record<string, string> = Object.fromEntries(POLES.map((p) => [p.code, p.label]));
-
-function fromRegistry(def: CommandDef): CatalogCommand {
-  return {
-    id: def.id,
-    command: def.command,
-    label: def.label,
-    pole: def.pole,
-    roleMin: def.roleMin,
-    needsValidation: def.needsValidation,
-    reasonRequired: def.reasonRequired,
-    undoable: def.undoable,
-    agent: def.agent,
-    realtime: def.realtime,
-    domain: def.domain
-  };
-}
-
-export const LOCAL_CATALOG: CatalogCommand[] = COMMANDS.map(fromRegistry);
+export type { CatalogCommand };
+export const POLE_LABELS = POLE_LABELS_VALUE;
+export const LOCAL_CATALOG = LOCAL_CATALOG_VALUE;
+export { commandDefinition };
 
 type CatalogRow = {
   id: string;
@@ -105,4 +81,33 @@ export function matches(command: CatalogCommand, query: string): boolean {
     .split(/\s+/)
     .filter(Boolean)
     .every((word) => haystack.includes(normalize(word)));
+}
+
+/** Libellé affichable : le registre porte parfois du balisage Markdown (`**…**`). */
+export function displayLabel(label: string): string {
+  return label.replace(/[*`]/g, '').replace(/\s+/g, ' ').trim();
+}
+
+export type CommandVisual = { glyph: string; bg: string; fg: string };
+
+/** Tuiles sémantiques de la maquette : € commerce, ! confiance, CV membre, ≡ commande… */
+const POLE_VISUALS: Record<string, CommandVisual> = {
+  CONF: { glyph: '!', bg: 'var(--lkv-warning-bg)', fg: 'var(--lkv-warning-dark)' },
+  MEMB: { glyph: 'M', bg: 'var(--lkv-sage-100)', fg: 'var(--lkv-sage-800)' },
+  COMM: { glyph: '€', bg: 'var(--lkv-action-soft)', fg: 'var(--lkv-primary)' },
+  CONT: { glyph: 'C', bg: 'var(--lkv-info-bg)', fg: 'var(--lkv-text-primary)' },
+  PRIA: { glyph: 'IA', bg: 'var(--lkv-surface-muted)', fg: 'var(--lkv-text-secondary)' },
+  CROI: { glyph: '↗', bg: 'var(--lkv-success-bg)', fg: 'var(--lkv-text-primary)' },
+  TECH: { glyph: 'T', bg: 'var(--lkv-surface-muted)', fg: 'var(--lkv-text-secondary)' }
+};
+
+const ORDER_VISUAL: CommandVisual = {
+  glyph: '≡',
+  bg: 'var(--lkv-surface-muted)',
+  fg: 'var(--lkv-text-secondary)'
+};
+
+export function commandVisual(command: CatalogCommand): CommandVisual {
+  if (command.domain === 'D11') return ORDER_VISUAL;
+  return POLE_VISUALS[command.pole] ?? POLE_VISUALS.TECH;
 }

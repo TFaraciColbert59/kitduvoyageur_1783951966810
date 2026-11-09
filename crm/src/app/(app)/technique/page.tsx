@@ -68,10 +68,10 @@ export default async function TechniquePage() {
         <div className={s.rowFlexWrap}>
           <ActionButtons
             actions={[
+              { command: 'errors_view', label: 'Voir les erreurs' },
               { command: 'cron_run_now', label: 'Lancer une tâche planifiée' },
               { command: 'alert_resolve', label: 'Résoudre une alerte' },
-              { command: 'ai_job_retry', label: 'Relancer un job IA' },
-              { command: 'errors_view', label: 'Voir les erreurs' }
+              { command: 'ai_job_retry', label: 'Relancer un job IA' }
             ]}
             target={{ kind: 'technique', id: 'global' }}
             max={4}

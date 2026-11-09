@@ -43,6 +43,26 @@ export function ActionButtons({
     };
   };
 
+  const TONE: Record<string, 'pg' | 'soft' | 'bad'> = {
+    order_ship: 'pg',
+    order_confirm: 'pg',
+    errors_view: 'pg',
+    alert_resolve: 'pg',
+    order_refund: 'bad',
+    order_cancel: 'bad',
+    member_ban: 'bad',
+    member_suspend: 'bad',
+    post_remove: 'bad',
+    comment_remove: 'bad'
+  };
+  const LABEL: Record<string, string> = {
+    order_refund: 'Rembourser',
+    order_cancel: 'Annuler la commande',
+    order_ship: 'Marquer expédiée',
+    order_confirm: 'Confirmer la commande',
+    errors_view: 'Voir les erreurs'
+  };
+
   const visible = all ? actions : actions.slice(0, max);
 
   return (
@@ -50,10 +70,10 @@ export function ActionButtons({
       {visible.map((action) => (
         <Button
           key={action.command}
-          tone={action.tone === 'danger' ? 'bad' : 'soft'}
+          tone={TONE[action.command] ?? (action.tone === 'danger' ? 'bad' : action.tone === 'positive' ? 'pg' : 'soft')}
           onClick={() => setDrawer(resolve(action))}
         >
-          {action.label}
+          {LABEL[action.command] ?? action.label}
         </Button>
       ))}
       {actions.length > max && !all ? (

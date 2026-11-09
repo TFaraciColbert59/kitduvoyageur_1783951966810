@@ -28,6 +28,7 @@ export type ApiErrorCode =
   | 'fingerprint_mismatch'
   | 'conflict'
   | 'not_found'
+  | 'rpc_failed'
   | 'rate_limited'
   | 'agent_stopped'
   | 'agent_paused'
@@ -73,6 +74,7 @@ const MESSAGES: Record<ApiErrorCode, string> = {
   request_expired: 'Cette demande a expiré : elle ne peut plus être validée.',
   fingerprint_mismatch: 'Les paramètres ont changé depuis la demande : elle ne peut plus être validée.',
   conflict: 'L’élément a changé entre-temps. Rechargez puis réessayez.',
+  rpc_failed: 'La base n’a pas pu répondre. Réessayez dans un instant.',
   not_found: 'L’élément demandé n’existe pas ou n’est plus accessible.',
   rate_limited: 'Trop de requêtes. Réessayez dans un instant.',
   agent_stopped: 'Cet agent est arrêté.',
@@ -120,6 +122,7 @@ const STATUS: Record<ApiErrorCode, number> = {
   request_expired: 410,
   fingerprint_mismatch: 409,
   conflict: 409,
+  rpc_failed: 500,
   not_found: 404,
   rate_limited: 429,
   agent_stopped: 409,

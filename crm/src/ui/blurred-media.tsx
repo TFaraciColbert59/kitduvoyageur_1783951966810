@@ -3,8 +3,6 @@
 import { useState } from 'react';
 import s from './crm.module.css';
 import { cx } from './cx';
-import { Button } from './button';
-import { IconEye } from './icons';
 
 /**
  * Média grisé et flouté au repos, net au survol ou au focus.
@@ -49,19 +47,11 @@ export function BlurredMedia({
         )}
       </div>
       <div className={s.colGapSm} style={{ maxWidth: 320 }}>
-        <strong style={{ fontSize: 13 }}>Média : grisé et flouté par défaut</strong>
+        <strong style={{ fontSize: 13 }}>Photo jointe : grisée et floutée par défaut</strong>
         <span className={s.muted} style={{ fontSize: 12.5 }}>
-          Survolez-le ou utilisez le bouton pour le voir net. Ce réglage protège votre attention sur les cas difficiles.
+          Survolez-la pour la voir nette. Ce réglage protège votre attention sur les cas difficiles.
+          Au clavier, tabulez jusqu’à l’image : elle se révèle au focus.
         </span>
-        <Button
-          size="sm"
-          tone="soft"
-          icon={<IconEye size={16} />}
-          aria-pressed={revealed}
-          onClick={() => setRevealed((value) => !value)}
-        >
-          {revealed ? 'Masquer le média' : 'Afficher'}
-        </Button>
       </div>
     </div>
   );

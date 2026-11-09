@@ -18,14 +18,29 @@ const PILOTAGE = [
 export function NavPoles({
   poles,
   total,
+  teamCount = null,
   sessionCard
 }: {
   poles: NavPole[];
   total: number | null;
+  teamCount?: number | null;
   sessionCard: React.ReactNode;
 }) {
   const pathname = usePathname();
   const onHome = pathname === '/';
+  const poleFromPath: Record<string, PoleCode> = {
+    '/membres': 'MEMB',
+    '/commandes': 'COMM',
+    '/catalogue': 'COMM',
+    '/contenus': 'CONT',
+    '/ia': 'PRIA',
+    '/cas': 'CONF',
+    '/valider': 'COMM',
+    '/reglages': 'PRIA',
+    '/technique': 'TECH'
+  };
+  const entry = Object.entries(poleFromPath).find(([prefix]) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+  const activePole = entry?.[1] ?? (pathname.startsWith('/pole/') ? (pathname.split('/')[2] as PoleCode) : null);
 
   return (
     <nav className={s.nav} aria-label="Navigation principale">
@@ -37,7 +52,7 @@ export function NavPoles({
       <span className={cx(s.label, s.navGroup)}>Pôles</span>
       {poles.map((pole) => {
         const href = `/pole/${pole.code}`;
-        const active = pathname === href;
+        const active = activePole === pole.code;
         return (
           <Link
             key={pole.code}
@@ -62,11 +77,14 @@ export function NavPoles({
             aria-current={active ? 'page' : undefined}
           >
             <span>{item.label}</span>
+            {item.href === '/equipe' && teamCount !== null ? (
+              <span className={cx(s.navCount, active && s.navCountOn)}>{teamCount}</span>
+            ) : null}
           </Link>
         );
       })}
 
-      {sessionCard}
+      {sessionCard ? <div key="session-card">{sessionCard}</div> : null}
     </nav>
   );
 }
