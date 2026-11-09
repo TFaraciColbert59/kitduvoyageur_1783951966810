@@ -388,3 +388,6 @@ grant execute on function admin.technique_status() to authenticated, service_rol
 
 comment on function admin.technique_status() is
   'M11 LKDV Control : erreurs 24 h, tâches, briques (dont celles en attente de secret), état Realtime.';
+
+revoke all on function public.app_settings_public() from public;
+grant execute on function public.app_settings_public() to anon, authenticated, service_role;

@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const supabaseHost = (() => {
-  try { return new URL(process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://icxyvwzfjbflcbqukpfz.supabase.co').host } catch { return 'icxyvwzfjbflcbqukpfz.supabase.co' }
+  try { return new URL(process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://supabase.invalid').host } catch { return 'supabase.invalid' }
 })();
 
 const csp = [

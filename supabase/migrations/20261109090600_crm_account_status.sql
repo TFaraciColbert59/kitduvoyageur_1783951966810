@@ -226,3 +226,8 @@ as $$
     from (select 1) s
     left join public.user_profiles up on up.id = (select auth.uid());
 $$;
+
+revoke all on function public.account_can_write() from public, anon;
+grant execute on function public.account_can_write() to authenticated, service_role;
+revoke all on function public.my_account_status() from public, anon;
+grant execute on function public.my_account_status() to authenticated, service_role;

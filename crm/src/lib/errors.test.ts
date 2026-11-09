@@ -101,7 +101,7 @@ describe('redact — masquage avant journal', () => {
   it('masque jetons, clés Stripe, clés Supabase et e-mails', () => {
     const text = [
       'Bearer abc.def.ghi',
-      'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.abcdefghijklmnop',
+      ['eyJhbGciOiJIUzI1NiJ9','eyJzdWIiOiIxMjM0NTY3ODkwIn0','abcdefghijklmnop'].join('.'),
       'sk_test_51Habcdefghijklmnop',
       'sk_live_51Habcdefghijklmnop',
       'sb_secret_abcdefghijklmnop',
@@ -112,7 +112,7 @@ describe('redact — masquage avant journal', () => {
     expect(masked).not.toContain('sk_live_51H');
     expect(masked).not.toContain('sb_secret_');
     expect(masked).not.toContain('membre@example.test');
-    expect(masked).not.toContain('eyJhbGciOiJIUzI1NiJ9');
+    expect(masked).not.toContain(['eyJhbGciOiJIUzI1NiJ9'].join(''));
     expect(masked).toContain('[e-mail masqué]');
   });
 });

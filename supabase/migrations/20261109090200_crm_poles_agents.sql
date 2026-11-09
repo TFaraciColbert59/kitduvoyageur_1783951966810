@@ -598,3 +598,11 @@ comment on function admin.can(uuid, text) is
   'LKDV Control : même règle que assert_actor, sans exception (booléen) — utilisé par l''UI et les tests de matrice.';
 comment on function admin.solo_mode() is
   'LKDV Control : vrai si au plus un compte humain d''équipe est actif (vu ou créé depuis 90 jours, non banni).';
+
+-- Revue LKDV (plan 2.4) : EXECUTE retiré à PUBLIC, puis accordé explicitement.
+revoke all on function public.is_admin() from public, anon;
+grant execute on function public.is_admin() to authenticated, service_role;
+revoke all on function public.is_moderateur() from public, anon;
+grant execute on function public.is_moderateur() to authenticated, service_role;
+revoke all on function admin.my_role() from public, anon;
+grant execute on function admin.my_role() to authenticated, service_role;
