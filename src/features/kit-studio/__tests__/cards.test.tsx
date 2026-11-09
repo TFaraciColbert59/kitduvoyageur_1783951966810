@@ -15,6 +15,7 @@ import { useKitStore } from '../store/kitStore';
 import { useUiStore } from '../store/uiStore';
 import { cardSide } from '../ui/cards/CardRail';
 import { CardsView } from '../ui/cards/CardsView';
+import { UndoButton } from '../ui/UndoButton';
 
 const hapticMock = vi.hoisted(() => vi.fn());
 const CSS = readFileSync(join(__dirname, '../ui/cards/cards.css'), 'utf8');
@@ -95,13 +96,22 @@ describe('familles', () => {
 });
 
 describe('apparence', () => {
-  it('liste les coloris, le bouton Commander est sous les cartes, ↺ seulement si annulable', () => {
+  it('liste les coloris ; la barre basse reste celle de la maquette, sans ↺ même annulable', () => {
     useUiStore.setState({ mode: 'appearance', category: 'col' });
     render(<CardsView />);
     for (const cw of Object.values(COLORWAYS)) expect(screen.getByRole('button', { name: new RegExp(`^${cw.n}`) })).toBeTruthy();
-    expect(screen.queryByRole('button', { name: /Annuler/ })).toBeNull();
+    // Constat du 09/11/2026 : ↺ dans la barre faisait déborder la capsule des familles (boussole coupée).
     act(() => useKitStore.setState({ canUndo: true }));
-    expect(screen.getByRole('button', { name: /Annuler/ })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /Annuler/ })).toBeNull();
+  });
+
+  it('↺ flotte hors du tiroir, seulement si annulable, et annule', () => {
+    render(<UndoButton />);
+    expect(screen.queryByRole('button', { name: /Annuler/ })).toBeNull();
+    const undo = vi.fn(() => true);
+    act(() => useKitStore.setState({ canUndo: true, undo }));
+    fireEvent.click(screen.getByRole('button', { name: /Annuler/ }));
+    expect(undo).toHaveBeenCalledTimes(1);
   });
 
   it('choisir un coloris écrit dans le store', () => {

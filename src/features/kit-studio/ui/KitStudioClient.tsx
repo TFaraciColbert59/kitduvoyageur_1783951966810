@@ -19,6 +19,7 @@ import { getScene } from '../scene/sceneRef';
 import { Dock } from './Drawer/Dock';
 import { OfflineContext, useOffline } from './offline';
 import { Pill } from './Pill';
+import { UndoButton } from './UndoButton';
 import { S, pillLabel } from './strings';
 import './kit-studio.css';
 import './route.css';
@@ -293,6 +294,7 @@ export function KitStudioClient(props: KitStudioClientProps) {
           viewKey={view}
           label={pillLabel(kg, bl.length)}
           onClick={openBilan}
+          aside={<UndoButton />}
         />
         {mode === 'debug' ? (
           <div role="status" data-testid="studio-mode-banner" style={bannerStyle}>
