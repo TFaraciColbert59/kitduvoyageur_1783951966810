@@ -54,6 +54,14 @@ import { elevationProfileGain } from '@/features/carnet/detail/elevationProfile'
 export type CarnetSlotId = 'fil' | 'route' | 'sac' | 'chiffres' | 'equipage';
 
 /** Seuil (px) au-delà duquel la descente dans une lentille est mémorisée. */
+/** Rôles du carnet : les données serveur sont en anglais, l'interface en français. */
+function roleLabel(role: string): string {
+  if (role === 'author') return 'auteur';
+  if (role === 'collaborator') return 'contributeur';
+  if (role === 'participant') return 'participant';
+  return role;
+}
+
 const RESUME_MEMO_MIN = 20;
 /** Seuil (px) sous lequel la lentille est considérée « en haut ». */
 const RESUME_TOP_MAX = 10;
@@ -133,13 +141,15 @@ export function CarnetDrawerV2({
   const [verdictFilter, setVerdictFilter] = useState<'all' | KitVerdictType>('all');
   const [newCommentText, setNewCommentText] = useState('');
 
-  // Reactions for the current active day
+  // Reactions : le jour choisi dans la lentille, sinon le jour actif.
   const effectiveDay = activeDay > 0 ? activeDay : 1;
+  const [reactionDay, setReactionDay] = useState(effectiveDay);
+  useEffect(() => setReactionDay(effectiveDay), [effectiveDay]);
   const reactions = useCarnetDayReactions({
     carnetId: detail.id,
-    dayNumber: effectiveDay,
-    initialLikes: detail.dayReactions?.[effectiveDay]?.likesCount ?? 0,
-    initialLiked: detail.dayReactions?.[effectiveDay]?.userLiked ?? false,
+    dayNumber: reactionDay,
+    initialLikes: detail.dayReactions?.[reactionDay]?.likesCount ?? 0,
+    initialLiked: detail.dayReactions?.[reactionDay]?.userLiked ?? false,
     userId,
     onRequireAuth,
     onIsland,
@@ -530,7 +540,7 @@ export function CarnetDrawerV2({
                   <b style={{ fontSize: '15px' }}>{currentStackItem.participant.name}</b>
                   {currentStackItem.participant.role ? (
                     <p style={{ margin: 0, fontSize: '12px', color: 'var(--label2)' }}>
-                      {currentStackItem.participant.role}
+                      {roleLabel(currentStackItem.participant.role)}
                     </p>
                   ) : null}
                 </div>
@@ -986,6 +996,21 @@ export function CarnetDrawerV2({
                   <ChevronRight size={16} color="var(--accent)" />
                 </button>
               ))}
+              {(detail.nights ?? []).length === 0 ? (
+                <div
+                  style={{
+                    padding: '24px 16px',
+                    borderRadius: '16px',
+                    background: 'var(--drawer-card-bg)',
+                    textAlign: 'center',
+                  }}
+                >
+                  <b style={{ fontSize: '13px' }}>Aucune nuit enregistrée.</b>
+                  <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--label2)' }}>
+                    Les nuits apparaissent ici dès qu’elles sont renseignées sur le terrain.
+                  </p>
+                </div>
+              ) : null}
             </div>
           );
         }
@@ -1433,7 +1458,7 @@ export function CarnetDrawerV2({
                       <b style={{ fontSize: '13px' }}>{p.name}</b>
                       {p.role ? (
                         <p style={{ margin: 0, fontSize: '11px', color: 'var(--label2)' }}>
-                          {p.role}
+                          {roleLabel(p.role)}
                         </p>
                       ) : null}
                     </div>
@@ -1448,6 +1473,36 @@ export function CarnetDrawerV2({
           return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '6px' }}>
               <div
+                role="group"
+                aria-label="Jour des réactions"
+                style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}
+              >
+                {(detail.days.length > 0 ? detail.days : [{ dayNumber: 1 }]).map((d) => {
+                  const n = d.dayNumber ?? 1;
+                  const on = n === reactionDay;
+                  return (
+                    <button
+                      key={n}
+                      type="button"
+                      aria-pressed={on}
+                      onClick={() => setReactionDay(n)}
+                      style={{
+                        height: 28,
+                        padding: '0 11px',
+                        borderRadius: 9999,
+                        border: 0,
+                        background: on ? 'var(--tint)' : 'rgba(23,64,44,.08)',
+                        color: on ? 'var(--tint-ink, #fff)' : 'var(--tint)',
+                        font: '600 11px var(--font-sans)',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Jour {n}
+                    </button>
+                  );
+                })}
+              </div>
+              <div
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -1458,7 +1513,7 @@ export function CarnetDrawerV2({
                 }}
               >
                 <div>
-                  <b style={{ fontSize: '14px' }}>Jour {effectiveDay}</b>
+                  <b style={{ fontSize: '14px' }}>Jour {reactionDay}</b>
                   <p style={{ margin: 0, fontSize: '12px', color: 'var(--label2)' }}>
                     {reactions.likesCount} mention{reactions.likesCount > 1 ? 's' : ''} J’aime
                   </p>

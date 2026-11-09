@@ -1,11 +1,9 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { Bookmark, Flag, Heart, MessageCircle, Share2 } from 'lucide-react';
-import type {
-  CarnetMomentEngagementItem,
-  CarnetMomentItem,
-} from '@/features/carnet/detail/types';
+import { Bookmark, Flag, MessageCircle, Share2 } from 'lucide-react';
+import { LikeIcon } from '@/components/social-kit';
+import type { CarnetMomentEngagementItem, CarnetMomentItem } from '@/features/carnet/detail/types';
 import { useMomentEngagement } from '@/features/carnet/detail/useMomentEngagement';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useCarnetDialog } from './useCarnetDialog';
@@ -144,7 +142,7 @@ export function CarnetPeek({
               {liked ? 'Retirer mon j’aime' : 'J’aime'}
               {likesCount > 0 ? ` · ${likesCount}` : ''}
             </span>
-            <Heart size={18} fill={liked ? 'currentColor' : 'none'} />
+            <LikeIcon active={liked} size={18} />
           </button>
 
           {hasPost ? (

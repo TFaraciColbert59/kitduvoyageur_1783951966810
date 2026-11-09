@@ -1198,7 +1198,7 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
 /* Dynamic Island for Carnet */
 .lkdv-carnet-island {
   position: absolute;
-  top: 9px;
+  top: 56px;
   left: 50%;
   transform: translateX(-50%);
   min-width: 140px;
@@ -1612,4 +1612,40 @@ body.lkdv-overlay-open .lkdv-floating-tabbar {
    reste MapLibre (ADR-002), seulement désaturé pour laisser le tracé lire. */
 .lkdv-carnet-mapzone .maplibregl-canvas {
   filter: saturate(0.55) brightness(1.06) contrast(0.96);
+}
+
+/* Post du carnet : le média ne doit pas pousser la légende hors de la feuille. */
+.lkdv-post-drawer .lkdv-feed-post-stack {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.lkdv-post-drawer .lkdv-feed-post {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+  aspect-ratio: auto;
+}
+.lkdv-post-drawer .lkdv-feed-post-footer {
+  flex: none;
+}
+.lkdv-post-drawer .ckp-empty,
+.lkdv-post-drawer .lkdv-post-panel-body {
+  color: var(--label, #172b24);
+}
+.lkdv-post-drawer .ckp-empty svg {
+  color: var(--tint, #17402c);
+}
+
+/* Carte agrandie : l'en-tête tient dans 144 px, sans contenu qui passe sous la carte. */
+.lkdv-carnet-v2-root.mapbig .lkdv-carnet-top {
+  overflow: hidden;
+}
+.lkdv-carnet-v2-root.mapbig .lkdv-carnet-card {
+  overflow: hidden;
+}
+.lkdv-carnet-v2-root.mapbig .lkdv-ig-actions,
+.lkdv-carnet-v2-root.mapbig .lkdv-ig-hl-row {
+  display: none;
 }

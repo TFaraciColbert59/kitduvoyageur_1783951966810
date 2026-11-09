@@ -467,7 +467,9 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
           onCreateMoment={() => {
             // Participant: open create moment sheet or drawer
             handleOpenDrawerSlot('fil');
-            showIsland('Sélectionnez un lieu ou photo pour le nouveau moment');
+            showIsland('Sélectionnez un lieu ou photo pour le nouveau moment', () =>
+              setDrawerOpen(false)
+            );
           }}
           onToggleOutdoor={() => setOutdoor((prev) => !prev)}
           isOutdoor={outdoor}
