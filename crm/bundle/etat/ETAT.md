@@ -49,6 +49,7 @@ T-1.03 — pgTAP + CI base éphémère ; puis application production après sauv
 | `RESEND_API_KEY` (P8) | Alertes SOS / astreinte | Poser la variable Vercel | Alertes e-mail | 2026-11-09 |
 
 ## Production
+- PR de phase (brouillon, NE PAS FUSIONNER avant portes P3/P4) : https://github.com/TFaraciColbert59/kitduvoyageur_1783951966810/pull/157
 - CRM : pas encore déployé
 - LKDV : inchangé (main `2c22d49`)
 - Dernière migration appliquée : aucune par ce chantier
