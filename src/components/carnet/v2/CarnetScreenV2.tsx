@@ -284,6 +284,18 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
   );
 
   // Markers for steps and nights on map
+  /* Le jour actif recadre la carte sur ses propres points GPS ; sans points
+     réels pour ce jour, on garde la trace complète (aucun tracé inventé). */
+  const mapTrace = useMemo(() => {
+    if (activeDay <= 0) return detail.trace;
+    const day = detail.days.find((entry) => (entry.dayNumber ?? entry.index) === activeDay);
+    if (!day || day.points.length < 2) return detail.trace;
+    return {
+      type: 'LineString' as const,
+      coordinates: day.points.map((point) => [point.lng, point.lat]),
+    };
+  }, [activeDay, detail.days, detail.trace]);
+
   const mapMarkers = useMemo(() => {
     const list: Array<{
       id: string;
@@ -508,7 +520,7 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
           authState={user ? 'owner' : 'guest'}
           context={{ mode: 'overview' }}
           variant="carnet"
-          trace={detail.trace}
+          trace={mapTrace}
           focus={mapFocus}
           activeDay={activeDay}
           livePosition={

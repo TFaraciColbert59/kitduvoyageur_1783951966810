@@ -32,9 +32,9 @@ fermée par une mesure ou une capture, pas par une impression.
 
 - [x] Fond topo (contours) pour le carnet : bascule topo par défaut, vérifiée en capture
 - [x] Badges N1/N2/N3 verre/encre codés ; aucune nuit en démo, donc non affichés (donnée manquante)
-- [~] Départ/arrivée / tracé actif : partiel (tracé unique, pas de nuits)
+- [x] Départ/arrivée (marqueurs réels) et tracé du jour actif (si points GPS du jour)
 - [ ] Clic sur un tracé → change de jour
-- [~] Badge carte `Tout`/`J{n}` + zoom/recentrer ; échelle non exposée
+- [x] Badge carte `Tout`/`J{n}`, échelle globe/massif/sentier, recentrer, zoom ± (3 contrôles)
 - [~] Mode contexte du tiroir : badge + couches réduites partiels
 
 ## Phase 3 — Altitude réelle
