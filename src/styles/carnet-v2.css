@@ -1582,7 +1582,7 @@ html:has(.lkdv-carnet-v2-root) {
 .lkdv-map-badge {
   position: absolute;
   left: 14px;
-  top: 30px;
+  top: 60px;
   z-index: 4;
   display: inline-flex;
   align-items: center;

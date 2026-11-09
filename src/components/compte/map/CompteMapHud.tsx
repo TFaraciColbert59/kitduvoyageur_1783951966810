@@ -27,6 +27,8 @@ export interface CompteMapHudProps {
   onLayers: () => void;
   onZoomIn: () => void;
   onZoomOut: () => void;
+  /** Le carnet garde les trois contrôles de la maquette (pas de calques). */
+  showLayers?: boolean;
 }
 
 const SCALE_ITEMS = [
@@ -51,6 +53,7 @@ export function CompteMapHud({
   onLayers,
   onZoomIn,
   onZoomOut,
+  showLayers = true,
 }: CompteMapHudProps) {
   if (config.hud === 'none') return null;
 
@@ -73,14 +76,16 @@ export function CompteMapHud({
       </div>
 
       <div className="lkdv-map-controls" role="group" aria-label="Contrôles de la carte">
-        <button
-          type="button"
-          onClick={onLayers}
-          aria-label="Personnaliser la carte d'empreinte"
-          title="Personnaliser la carte d'empreinte"
-        >
-          <Layers size={18} aria-hidden="true" />
-        </button>
+        {showLayers ? (
+          <button
+            type="button"
+            onClick={onLayers}
+            aria-label="Personnaliser la carte d'empreinte"
+            title="Personnaliser la carte d'empreinte"
+          >
+            <Layers size={18} aria-hidden="true" />
+          </button>
+        ) : null}
         <button type="button" onClick={onRecenter} aria-label="Recentrer" title="Recentrer">
           <MapPin size={18} aria-hidden="true" />
         </button>
