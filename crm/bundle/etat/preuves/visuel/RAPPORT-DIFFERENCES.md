@@ -1,9 +1,9 @@
 # Parité visuelle — captures et différences justifiées
 
 - Base : http://localhost:4100
-- Captures : 0 / 48
-- Non capturé : 48
-- Date : 2026-11-09T04:25:47.966Z
+- Captures : 6 / 48
+- Non capturé : 42
+- Date : 2026-11-09T04:46:49.583Z
 
 ## Différences globales
 
@@ -62,9 +62,6 @@
 | ia | 1440x1040 | skipped | identifiants de test absents (CRM_TEST_EMAIL/CRM_TEST_PASSWORD/CRM_TEST_TOTP_SECRET) |
 | technique | 1440x1040 | skipped | identifiants de test absents (CRM_TEST_EMAIL/CRM_TEST_PASSWORD/CRM_TEST_TOTP_SECRET) |
 | entrainement | 1440x1040 | skipped | identifiants de test absents (CRM_TEST_EMAIL/CRM_TEST_PASSWORD/CRM_TEST_TOTP_SECRET) |
-| connexion | 1440x1040 | http-error | HTTP 500 |
-| double-authentification | 1440x1040 | http-error | HTTP 500 |
-| acces-refuse | 1440x1040 | http-error | HTTP 500 |
 | a-traiter | 390x844 | skipped | identifiants de test absents (CRM_TEST_EMAIL/CRM_TEST_PASSWORD/CRM_TEST_TOTP_SECRET) |
 | pole-confiance | 390x844 | skipped | identifiants de test absents (CRM_TEST_EMAIL/CRM_TEST_PASSWORD/CRM_TEST_TOTP_SECRET) |
 | pole-membres | 390x844 | skipped | identifiants de test absents (CRM_TEST_EMAIL/CRM_TEST_PASSWORD/CRM_TEST_TOTP_SECRET) |
@@ -86,6 +83,3 @@
 | ia | 390x844 | skipped | identifiants de test absents (CRM_TEST_EMAIL/CRM_TEST_PASSWORD/CRM_TEST_TOTP_SECRET) |
 | technique | 390x844 | skipped | identifiants de test absents (CRM_TEST_EMAIL/CRM_TEST_PASSWORD/CRM_TEST_TOTP_SECRET) |
 | entrainement | 390x844 | skipped | identifiants de test absents (CRM_TEST_EMAIL/CRM_TEST_PASSWORD/CRM_TEST_TOTP_SECRET) |
-| connexion | 390x844 | http-error | HTTP 500 |
-| double-authentification | 390x844 | http-error | HTTP 500 |
-| acces-refuse | 390x844 | http-error | HTTP 500 |

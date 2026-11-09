@@ -98,7 +98,7 @@ as $$
   u1 as (
     select 'sos'::text as source, sa.id::text as id,
            'SOS en cours'::text as title,
-           coalesce(sa.country_iso_a2, 'Position non renseignée') as subtitle,
+           coalesce(to_jsonb(sa) ->> 'country_iso_a2', 'Position non renseignée') as subtitle,
            'CONF'::text as pole_code, 3 as urgency,
            sa.created_at + make_interval(mins => coalesce(sla.target_minutes, 5)) as due_at,
            sa.created_at,
@@ -140,7 +140,7 @@ as $$
            'CONF', 2,
            pr.created_at + make_interval(mins => coalesce(sla.target_minutes, 240)),
            pr.created_at, array['signalement']::text[],
-           jsonb_build_object('targetType', pr.target_type, 'targetId', pr.post_id,
+           jsonb_build_object('targetType', coalesce(to_jsonb(pr) ->> 'target_type', 'post'), 'targetId', pr.post_id,
                               'reporterId', pr.reporter_id), true
       from public.post_reports pr left join sla on sla.source = 'post_report'
      where coalesce(pr.status, 'pending') = 'pending'
@@ -173,7 +173,7 @@ as $$
            'CONF', 2,
            clr.created_at + make_interval(mins => coalesce(sla.target_minutes, 480)),
            clr.created_at, array['signalement']::text[],
-           jsonb_build_object('clubId', clr.club_id, 'targetType', clr.target_type,
+           jsonb_build_object('clubId', clr.club_id, 'targetType', coalesce(to_jsonb(clr) ->> 'target_type', 'topic'),
                               'targetId', clr.target_id, 'reporterId', clr.reporter_id), true
       from public.club_reports clr left join sla on sla.source = 'club_report'
      where coalesce(clr.status, 'pending') = 'pending'

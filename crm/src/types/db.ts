@@ -21,7 +21,7 @@ export type PoleCode = 'CONF' | 'MEMB' | 'COMM' | 'CONT' | 'PRIA' | 'CROI' | 'TE
 export type AccountStatus = 'active' | 'suspended' | 'banned';
 export type ModerationState = 'visible' | 'hidden' | 'removed';
 
-type Timestamps = { created_at: string | null };
+export type Timestamps = { created_at: string | null };
 
 export type Database = {
   public: {

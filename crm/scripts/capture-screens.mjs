@@ -110,7 +110,9 @@ async function main() {
   for (const viewport of registry.viewports) {
     const context = await browser.newContext({
       viewport: { width: viewport.width, height: viewport.height },
-      deviceScaleFactor: viewport.id === 'mobile' ? 3 : 1,
+      // 1 pixel CSS = 1 pixel d'image : les captures sont comparables telles quelles
+      // aux maquettes 1440×1040 et 390×844 (la densité 3× fausserait la comparaison).
+      deviceScaleFactor: 1,
       isMobile: viewport.id === 'mobile',
       hasTouch: viewport.id === 'mobile',
       locale: 'fr-FR',
