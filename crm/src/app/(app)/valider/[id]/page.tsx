@@ -1,13 +1,13 @@
 import Link from 'next/link';
-import s from '@/ui/crm.module.css';
-import { Label } from '@/ui/card';
-import { Chip } from '@/ui/chip';
-import { ErrorState } from '@/ui/error-state';
-import { Workspace } from '@/components/shell/workspace';
-import { ApprovalPanel } from '@/components/approval/approval-panel';
-import { LOCAL_CATALOG } from '@/components/command/catalog';
-import { getRequestDetail } from '@/components/data/admin-rpc';
-import { euros } from '@/lib/format';
+import s from '../../../../ui/crm.module.css';
+import { Label } from '../../../../ui/card';
+import { Chip } from '../../../../ui/chip';
+import { ErrorState } from '../../../../ui/error-state';
+import { Workspace } from '../../../../components/shell/workspace';
+import { ApprovalPanel } from '../../../../components/approval/approval-panel';
+import { LOCAL_CATALOG } from '../../../../components/command/catalog';
+import { getRequestDetail } from '../../../../components/data/admin-rpc';
+import { euros } from '../../../../lib/format';
 
 export const dynamic = 'force-dynamic';
 

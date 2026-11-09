@@ -2,18 +2,18 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import s from '@/ui/crm.module.css';
-import { cx } from '@/ui/cx';
-import { Avatar } from '@/ui/avatar';
-import { Button } from '@/ui/button';
-import { Chip } from '@/ui/chip';
-import { Label } from '@/ui/card';
-import { Banner, EmptyState } from '@/ui/states';
-import { IconRobot, IconStop } from '@/ui/icons';
-import { useToast } from '@/ui/toast';
-import type { Agent, StaffContext } from '@/lib/rpc';
-import { POLE_LABELS } from '@/components/command/catalog';
-import { errorMessage, runCommand } from '@/components/data/cmd';
+import s from '../../ui/crm.module.css';
+import { cx } from '../../ui/cx';
+import { Avatar } from '../../ui/avatar';
+import { Button } from '../../ui/button';
+import { Chip } from '../../ui/chip';
+import { Label } from '../../ui/card';
+import { Banner, EmptyState } from '../../ui/states';
+import { IconRobot, IconStop } from '../../ui/icons';
+import { useToast } from '../../ui/toast';
+import type { Agent, StaffContext } from '../../lib/rpc';
+import { POLE_LABELS } from '../command/catalog';
+import { errorMessage, runCommand } from '../data/cmd';
 
 const STATUS: Record<Agent['status'], { tone: 'sage' | 'warn' | 'danger'; label: string }> = {
   active: { tone: 'sage', label: 'Actif' },

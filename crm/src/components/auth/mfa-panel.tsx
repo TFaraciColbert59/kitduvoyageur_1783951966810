@@ -2,12 +2,12 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import s from '@/ui/crm.module.css';
-import { Banner, Skeleton } from '@/ui/states';
-import { Button } from '@/ui/button';
-import { Chip } from '@/ui/chip';
-import { Field, TextInput } from '@/ui/field';
-import { supabaseBrowser } from '@/lib/supabase/browser';
+import s from '../../ui/crm.module.css';
+import { Banner, Skeleton } from '../../ui/states';
+import { Button } from '../../ui/button';
+import { Chip } from '../../ui/chip';
+import { Field, TextInput } from '../../ui/field';
+import { supabaseBrowser } from '../../lib/supabase/browser';
 
 type TotpFactor = { id: string; friendly_name?: string | null; status: string };
 

@@ -1,11 +1,11 @@
 import Link from 'next/link';
-import s from '@/ui/crm.module.css';
-import { Chip } from '@/ui/chip';
-import { ErrorState } from '@/ui/error-state';
-import { EmptyState } from '@/ui/states';
-import { Workspace } from '@/components/shell/workspace';
-import { getSosBoard } from '@/components/data/admin-rpc';
-import { relativeFr } from '@/lib/format';
+import s from '../../../ui/crm.module.css';
+import { Chip } from '../../../ui/chip';
+import { ErrorState } from '../../../ui/error-state';
+import { EmptyState } from '../../../ui/states';
+import { Workspace } from '../../../components/shell/workspace';
+import { getSosBoard } from '../../../components/data/admin-rpc';
+import { relativeFr } from '../../../lib/format';
 
 export const dynamic = 'force-dynamic';
 

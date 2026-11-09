@@ -1,6 +1,6 @@
 'use client';
 
-import { supabaseBrowser } from '@/lib/supabase/browser';
+import { supabaseBrowser } from '../../lib/supabase/browser';
 import { BUNDLED_REASON_CODES, type ReasonCode } from './reason-codes';
 
 type PostgrestError = { message: string; code?: string };

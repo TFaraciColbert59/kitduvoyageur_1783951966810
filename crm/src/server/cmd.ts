@@ -1,9 +1,9 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { apiError, translateDbError } from '@/lib/errors';
-import { parseCommandParams } from '@/lib/cmd';
-import type { CommandResult } from '@/lib/rpc';
-import type { Database, Json } from '@/types/db';
-import type { ServiceDb } from '@/server/db';
+import { apiError, translateDbError } from '../lib/errors';
+import { parseCommandParams } from '../lib/cmd';
+import type { CommandResult } from '../lib/rpc';
+import type { Database, Json } from '../types/db';
+import type { ServiceDb } from './db';
 
 /**
  * Passage obligé de toute écriture : `admin.run_command` en base, avec le jeton

@@ -1,6 +1,6 @@
 import 'server-only';
-import { logServer } from '@/lib/errors';
-import type { ServiceDb } from '@/server/db';
+import { logServer } from '../lib/errors';
+import type { ServiceDb } from './db';
 
 /**
  * Journal des tâches : `ops.job_runs` via `ops.job_run_start` /

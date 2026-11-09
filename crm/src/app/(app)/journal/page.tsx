@@ -1,10 +1,10 @@
 import { Suspense } from 'react';
-import { AuditTable } from '@/components/audit/audit-table';
-import { getAuditPage } from '@/components/data/admin-rpc';
-import { ErrorState } from '@/ui/error-state';
-import { SkeletonList } from '@/ui/states';
-import { Workspace } from '@/components/shell/workspace';
-import s from '@/ui/crm.module.css';
+import { AuditTable } from '../../../components/audit/audit-table';
+import { getAuditPage } from '../../../components/data/admin-rpc';
+import { ErrorState } from '../../../ui/error-state';
+import { SkeletonList } from '../../../ui/states';
+import { Workspace } from '../../../components/shell/workspace';
+import s from '../../../ui/crm.module.css';
 
 export const dynamic = 'force-dynamic';
 

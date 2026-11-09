@@ -1,6 +1,6 @@
 import 'server-only';
-import { apiError } from '@/lib/errors';
-import { bearerToken } from '@/server/http';
+import { apiError } from '../lib/errors';
+import { bearerToken } from './http';
 
 /**
  * Authentification des tâches planifiées : `Authorization: Bearer ${CRON_SECRET}`.

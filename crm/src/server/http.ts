@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { ApiError, apiError, errorBody, isApiError, logUnknownError, translateDbError } from '@/lib/errors';
+import { ApiError, apiError, errorBody, isApiError, logUnknownError, translateDbError } from '../lib/errors';
 
 /** Identifiant de requête corrélé aux journaux (`request_ref`). */
 export function requestRef(): string {

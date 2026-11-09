@@ -1,10 +1,10 @@
 import { z } from 'zod';
-import { apiError } from '@/lib/errors';
-import { guard, jsonOk, methodNotAllowed, readJsonBody, requestRef, clientIp } from '@/server/http';
-import { rateLimit } from '@/server/rate-limit';
-import { requireStaffSession } from '@/server/session';
-import { runCommand } from '@/server/cmd';
-import { executeDelegated } from '@/server/external';
+import { apiError } from '../../../lib/errors';
+import { guard, jsonOk, methodNotAllowed, readJsonBody, requestRef, clientIp } from '../../../server/http';
+import { rateLimit } from '../../../server/rate-limit';
+import { requireStaffSession } from '../../../server/session';
+import { runCommand } from '../../../server/cmd';
+import { executeDelegated } from '../../../server/external';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';

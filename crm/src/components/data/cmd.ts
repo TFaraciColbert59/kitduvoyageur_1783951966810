@@ -1,6 +1,6 @@
 'use client';
 
-import type { CommandResult } from '@/lib/rpc';
+import type { CommandResult } from '../../lib/rpc';
 
 /** Toute écriture passe par une route serveur (jamais d'écriture de table ici). */
 async function post(path: string, body: unknown): Promise<CommandResult> {

@@ -1,5 +1,5 @@
-import { brickStatus } from '@/lib/env';
-import { guard, jsonOk, nowIso, methodNotAllowed, requestRef } from '@/server/http';
+import { brickStatus } from '../../../lib/env';
+import { guard, jsonOk, nowIso, methodNotAllowed, requestRef } from '../../../server/http';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';

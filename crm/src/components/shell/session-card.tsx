@@ -1,6 +1,6 @@
-import s from '@/ui/crm.module.css';
-import { Label } from '@/ui/card';
-import type { StaffContext } from '@/lib/rpc';
+import s from '../../ui/crm.module.css';
+import { Label } from '../../ui/card';
+import type { StaffContext } from '../../lib/rpc';
 
 const ROLE_LABEL: Record<string, string> = {
   super_admin: 'Super admin',

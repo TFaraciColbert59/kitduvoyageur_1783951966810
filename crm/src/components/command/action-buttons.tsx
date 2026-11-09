@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/ui/button';
+import { Button } from '../../ui/button';
 import { LOCAL_CATALOG, type CatalogCommand } from './catalog';
 import { CommandDrawer, type CommandTarget } from './command-drawer';
 

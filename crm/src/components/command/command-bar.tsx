@@ -2,13 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import s from '@/ui/crm.module.css';
-import { cx } from '@/ui/cx';
-import { Chip } from '@/ui/chip';
-import { IconArrowRight, IconSearch } from '@/ui/icons';
-import { Kbd } from '@/ui/kbd';
-import { canRun } from '@/lib/rbac';
-import type { InboxItem, StaffContext } from '@/lib/rpc';
+import s from '../../ui/crm.module.css';
+import { cx } from '../../ui/cx';
+import { Chip } from '../../ui/chip';
+import { IconArrowRight, IconSearch } from '../../ui/icons';
+import { Kbd } from '../../ui/kbd';
+import { canRun } from '../../lib/rbac';
+import type { InboxItem, StaffContext } from '../../lib/rpc';
 import { loadCatalog, matches, normalize, POLE_LABELS, type CatalogCommand } from './catalog';
 import { CommandDrawer } from './command-drawer';
 

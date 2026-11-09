@@ -3,15 +3,15 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import s from '@/ui/crm.module.css';
-import { Chip } from '@/ui/chip';
-import { Label } from '@/ui/card';
-import { Button } from '@/ui/button';
-import { Banner } from '@/ui/states';
-import { IconChevronLeft, IconPhone } from '@/ui/icons';
-import { useToast } from '@/ui/toast';
-import { relativeFr } from '@/lib/format';
-import { errorMessage, runCommand } from '@/components/data/cmd';
+import s from '../../ui/crm.module.css';
+import { Chip } from '../../ui/chip';
+import { Label } from '../../ui/card';
+import { Button } from '../../ui/button';
+import { Banner } from '../../ui/states';
+import { IconChevronLeft, IconPhone } from '../../ui/icons';
+import { useToast } from '../../ui/toast';
+import { relativeFr } from '../../lib/format';
+import { errorMessage, runCommand } from '../data/cmd';
 
 export type SosAlert = {
   id: string;

@@ -1,7 +1,7 @@
 import Link from 'next/link';
-import { AuthCard } from '@/components/auth/auth-card';
-import { MfaPanel } from '@/components/auth/mfa-panel';
-import s from '@/ui/crm.module.css';
+import { AuthCard } from '../../components/auth/auth-card';
+import { MfaPanel } from '../../components/auth/mfa-panel';
+import s from '../../ui/crm.module.css';
 
 export const metadata = { title: 'Double authentification — LKDV Control', robots: { index: false, follow: false } };
 

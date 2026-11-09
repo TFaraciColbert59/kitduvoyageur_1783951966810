@@ -2,11 +2,11 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import s from '@/ui/crm.module.css';
-import { Banner } from '@/ui/states';
-import { Button } from '@/ui/button';
-import { Field, TextInput } from '@/ui/field';
-import { supabaseBrowser } from '@/lib/supabase/browser';
+import s from '../../ui/crm.module.css';
+import { Banner } from '../../ui/states';
+import { Button } from '../../ui/button';
+import { Field, TextInput } from '../../ui/field';
+import { supabaseBrowser } from '../../lib/supabase/browser';
 
 function frenchAuthError(message: string): string {
   const value = message.toLowerCase();

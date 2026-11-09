@@ -1,10 +1,10 @@
 import 'server-only';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '@/types/db';
-import { apiError, isApiError, logServer } from '@/lib/errors';
-import { hasServiceRole, serviceDb } from '@/server/db';
-import { finishJob, startJob } from '@/server/jobs';
-import { completeRequest } from '@/server/stripe';
+import type { Database } from '../types/db';
+import { apiError, isApiError, logServer } from '../lib/errors';
+import { hasServiceRole, serviceDb } from './db';
+import { finishJob, startJob } from './jobs';
+import { completeRequest } from './stripe';
 
 /**
  * Effets externes `delegated` (EX-COM-04, 02_ARCHITECTURE § 6).

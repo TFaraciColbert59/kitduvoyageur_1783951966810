@@ -1,11 +1,11 @@
 import type { ReactNode } from 'react';
-import s from '@/ui/crm.module.css';
-import { Avatar } from '@/ui/avatar';
-import { Chip } from '@/ui/chip';
-import { BrandMark } from '@/ui/icons';
-import { OfflineBanner } from '@/ui/offline-banner';
-import type { StaffContext } from '@/lib/rpc';
-import { CommandBar } from '@/components/command/command-bar';
+import s from '../../ui/crm.module.css';
+import { Avatar } from '../../ui/avatar';
+import { Chip } from '../../ui/chip';
+import { BrandMark } from '../../ui/icons';
+import { OfflineBanner } from '../../ui/offline-banner';
+import type { StaffContext } from '../../lib/rpc';
+import { CommandBar } from '../command/command-bar';
 import { NavPoles, type NavPole } from './nav-poles';
 import { NotificationsButton } from './notifications-button';
 import { RealtimeChip } from './realtime-chip';

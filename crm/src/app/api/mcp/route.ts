@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
-import { apiError, isApiError, logUnknownError } from '@/lib/errors';
-import { bearerToken, clientIp, methodNotAllowed, readJsonBody, requestRef } from '@/server/http';
-import { rateLimit } from '@/server/rate-limit';
-import { serviceDb } from '@/server/db';
-import { assertAgentActive, loadAgentByAuthUserId } from '@/server/agents/store';
-import { authError, dispatchRpc, MCP_PROTOCOL_VERSION } from '@/server/mcp/protocol';
-import { verifyAgentToken } from '@/server/agents/token';
+import { apiError, isApiError, logUnknownError } from '../../../lib/errors';
+import { bearerToken, clientIp, methodNotAllowed, readJsonBody, requestRef } from '../../../server/http';
+import { rateLimit } from '../../../server/rate-limit';
+import { serviceDb } from '../../../server/db';
+import { assertAgentActive, loadAgentByAuthUserId } from '../../../server/agents/store';
+import { authError, dispatchRpc, MCP_PROTOCOL_VERSION } from '../../../server/mcp/protocol';
+import { verifyAgentToken } from '../../../server/agents/token';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';

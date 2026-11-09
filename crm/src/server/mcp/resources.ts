@@ -1,5 +1,5 @@
 import 'server-only';
-import type { ServiceDb } from '@/server/db';
+import type { ServiceDb } from '../db';
 
 /**
  * Ressources MCP en lecture : file du pôle de l'agent.

@@ -2,14 +2,14 @@
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import s from '@/ui/crm.module.css';
-import { Chip } from '@/ui/chip';
-import { Countdown } from '@/ui/countdown';
-import { Label } from '@/ui/card';
-import { Tabs, type TabDef } from '@/ui/tabs';
-import { Workspace } from '@/components/shell/workspace';
-import { POLE_LABELS } from '@/components/command/catalog';
-import type { InboxItem, InboxPayload } from '@/lib/rpc';
+import s from '../../ui/crm.module.css';
+import { Chip } from '../../ui/chip';
+import { Countdown } from '../../ui/countdown';
+import { Label } from '../../ui/card';
+import { Tabs, type TabDef } from '../../ui/tabs';
+import { Workspace } from '../shell/workspace';
+import { POLE_LABELS } from '../command/catalog';
+import type { InboxItem, InboxPayload } from '../../lib/rpc';
 import { QueueList, matchesFilter, type QueueFilter } from './queue-list';
 
 /**

@@ -1,6 +1,6 @@
-import { CatalogueScreen } from '@/components/catalogue/catalogue-screen';
-import { getContext } from '@/components/data/admin-rpc';
-import { Workspace } from '@/components/shell/workspace';
+import { CatalogueScreen } from '../../../components/catalogue/catalogue-screen';
+import { getContext } from '../../../components/data/admin-rpc';
+import { Workspace } from '../../../components/shell/workspace';
 
 export const dynamic = 'force-dynamic';
 

@@ -1,9 +1,9 @@
-import { QueueScreen } from '@/components/queue/queue-screen';
-import { getInbox } from '@/components/data/admin-rpc';
-import { ErrorState } from '@/ui/error-state';
-import { EmptyState } from '@/ui/states';
-import { Workspace } from '@/components/shell/workspace';
-import s from '@/ui/crm.module.css';
+import { QueueScreen } from '../../components/queue/queue-screen';
+import { getInbox } from '../../components/data/admin-rpc';
+import { ErrorState } from '../../ui/error-state';
+import { EmptyState } from '../../ui/states';
+import { Workspace } from '../../components/shell/workspace';
+import s from '../../ui/crm.module.css';
 
 export const dynamic = 'force-dynamic';
 

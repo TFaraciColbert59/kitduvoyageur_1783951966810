@@ -1,8 +1,8 @@
 import Link from 'next/link';
-import s from '@/ui/crm.module.css';
-import { AuthCard } from '@/components/auth/auth-card';
-import { SignOutButton } from '@/components/auth/sign-out-button';
-import { Banner } from '@/ui/states';
+import s from '../../ui/crm.module.css';
+import { AuthCard } from '../../components/auth/auth-card';
+import { SignOutButton } from '../../components/auth/sign-out-button';
+import { Banner } from '../../ui/states';
 
 export const metadata = { title: 'Accès refusé — LKDV Control', robots: { index: false, follow: false } };
 

@@ -1,8 +1,8 @@
 import Stripe from 'stripe';
-import { apiError, logServer, translateDbError } from '@/lib/errors';
-import { guard, jsonOk, methodNotAllowed, nowIso, requestRef } from '@/server/http';
-import { serviceDb } from '@/server/db';
-import { finishJob, startJob } from '@/server/jobs';
+import { apiError, logServer, translateDbError } from '../../../../lib/errors';
+import { guard, jsonOk, methodNotAllowed, nowIso, requestRef } from '../../../../server/http';
+import { serviceDb } from '../../../../server/db';
+import { finishJob, startJob } from '../../../../server/jobs';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';

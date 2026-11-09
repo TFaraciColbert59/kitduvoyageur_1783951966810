@@ -1,6 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
-import { publicEnv, idleMinutes, sessionMaxHours } from '@/lib/env';
+import { publicEnv, idleMinutes, sessionMaxHours } from './lib/env';
 
 const PUBLIC_PATHS = ['/connexion', '/double-authentification', '/acces-refuse', '/robots.txt'];
 // Les routes /api/* font leur propre contrôle (session, aal2, rôle) et répondent
@@ -17,7 +17,8 @@ export async function middleware(request: NextRequest) {
   const supabase = createServerClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
     cookies: {
       getAll: () => request.cookies.getAll(),
-      setAll: (list) => list.forEach(({ name, value, options }) => response.cookies.set(name, value, options))
+      setAll: (list: { name: string; value: string; options?: Record<string, unknown> }[]) =>
+        list.forEach(({ name, value, options }) => response.cookies.set(name, value, options as never))
     }
   });
 

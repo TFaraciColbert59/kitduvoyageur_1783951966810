@@ -1,10 +1,10 @@
 import 'server-only';
-import { apiError, isApiError, messageFor, translateDbError } from '@/lib/errors';
-import { commandToolDescriptor, isAgentExposedCommand, parseCommandParams } from '@/lib/cmd';
-import { authorizeAgent, runCommandAs } from '@/server/cmd';
-import { assertAgentActive, type AgentRecord } from '@/server/agents/store';
-import { readPoleInbox } from '@/server/mcp/resources';
-import type { ServiceDb } from '@/server/db';
+import { apiError, isApiError, messageFor, translateDbError } from '../../lib/errors';
+import { commandToolDescriptor, isAgentExposedCommand, parseCommandParams } from '../../lib/cmd';
+import { authorizeAgent, runCommandAs } from '../cmd';
+import { assertAgentActive, type AgentRecord } from '../agents/store';
+import { readPoleInbox } from './resources';
+import type { ServiceDb } from '../db';
 
 /**
  * Serveur MCP du CRM — JSON-RPC 2.0 sur HTTP streamable, implémenté à la main

@@ -1,19 +1,19 @@
 import Link from 'next/link';
-import s from '@/ui/crm.module.css';
-import { Avatar } from '@/ui/avatar';
-import { Label } from '@/ui/card';
-import { Chip } from '@/ui/chip';
-import { Countdown } from '@/ui/countdown';
-import { BlurredMedia } from '@/ui/blurred-media';
-import { EmptyState } from '@/ui/states';
-import { ErrorState } from '@/ui/error-state';
-import { Kbd } from '@/ui/kbd';
-import { Workspace } from '@/components/shell/workspace';
-import { DecisionCard } from '@/components/case/decision-card';
-import { POLE_LABELS } from '@/components/command/catalog';
-import { getInbox, getInboxItem, getReasonCodes } from '@/components/data/admin-rpc';
-import { relativeFr } from '@/lib/format';
-import type { CaseDetail } from '@/lib/rpc';
+import s from '../../../../../ui/crm.module.css';
+import { Avatar } from '../../../../../ui/avatar';
+import { Label } from '../../../../../ui/card';
+import { Chip } from '../../../../../ui/chip';
+import { Countdown } from '../../../../../ui/countdown';
+import { BlurredMedia } from '../../../../../ui/blurred-media';
+import { EmptyState } from '../../../../../ui/states';
+import { ErrorState } from '../../../../../ui/error-state';
+import { Kbd } from '../../../../../ui/kbd';
+import { Workspace } from '../../../../../components/shell/workspace';
+import { DecisionCard } from '../../../../../components/case/decision-card';
+import { POLE_LABELS } from '../../../../../components/command/catalog';
+import { getInbox, getInboxItem, getReasonCodes } from '../../../../../components/data/admin-rpc';
+import { relativeFr } from '../../../../../lib/format';
+import type { CaseDetail } from '../../../../../lib/rpc';
 
 export const dynamic = 'force-dynamic';
 

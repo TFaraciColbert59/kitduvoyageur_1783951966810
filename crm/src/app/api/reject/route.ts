@@ -1,9 +1,9 @@
 import { z } from 'zod';
-import { apiError } from '@/lib/errors';
-import { clientIp, guard, jsonOk, methodNotAllowed, readJsonBody, requestRef } from '@/server/http';
-import { rateLimit } from '@/server/rate-limit';
-import { requireStaffSession } from '@/server/session';
-import { rejectRequest } from '@/server/cmd';
+import { apiError } from '../../../lib/errors';
+import { clientIp, guard, jsonOk, methodNotAllowed, readJsonBody, requestRef } from '../../../server/http';
+import { rateLimit } from '../../../server/rate-limit';
+import { requireStaffSession } from '../../../server/session';
+import { rejectRequest } from '../../../server/cmd';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';

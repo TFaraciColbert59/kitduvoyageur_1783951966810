@@ -1,8 +1,8 @@
 import 'server-only';
 import Stripe from 'stripe';
-import { apiError, isApiError, logServer, redact } from '@/lib/errors';
+import { apiError, isApiError, logServer, redact } from '../lib/errors';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database, Json } from '@/types/db';
+import type { Database, Json } from '../types/db';
 
 /**
  * Stripe côté serveur — remboursements.

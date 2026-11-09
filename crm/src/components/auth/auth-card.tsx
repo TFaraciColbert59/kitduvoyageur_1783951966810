@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
-import s from '@/ui/crm.module.css';
-import { BrandMark } from '@/ui/icons';
+import s from '../../ui/crm.module.css';
+import { BrandMark } from '../../ui/icons';
 
 /** Carte centrée et sobre des écrans d'accès (connexion, double authentification). */
 export function AuthCard({

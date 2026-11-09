@@ -1,10 +1,10 @@
 import type { ReactNode } from 'react';
-import { AppShell } from '@/components/shell/app-shell';
-import { KeyboardHelp } from '@/components/shell/keyboard-help';
-import { ToastProvider } from '@/ui/toast';
-import { POLES } from '@/lib/catalog';
-import { getContext, getPolesSummary, getRequestsPending } from '@/components/data/admin-rpc';
-import type { PoleCode } from '@/lib/rpc';
+import { AppShell } from '../../components/shell/app-shell';
+import { KeyboardHelp } from '../../components/shell/keyboard-help';
+import { ToastProvider } from '../../ui/toast';
+import { POLES } from '../../lib/catalog';
+import { getContext, getPolesSummary, getRequestsPending } from '../../components/data/admin-rpc';
+import type { PoleCode } from '../../lib/rpc';
 
 export const dynamic = 'force-dynamic';
 

@@ -1,8 +1,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { supabaseServer } from '@/lib/supabase/server';
-import { apiError, translateDbError } from '@/lib/errors';
-import type { StaffContext } from '@/lib/rpc';
-import type { Database } from '@/types/db';
+import { supabaseServer } from '../lib/supabase/server';
+import { apiError, translateDbError } from '../lib/errors';
+import type { StaffContext } from '../lib/rpc';
+import type { Database } from '../types/db';
 
 /**
  * Contexte d'appel d'une personne de l'équipe.
@@ -50,7 +50,7 @@ export async function requireStaffSession(): Promise<StaffSession> {
   if (!context.staff) throw apiError('staff_only');
 
   return {
-    client,
+    client: client as unknown as SupabaseClient<Database>,
     user: { id: user.id, email: user.email ?? null },
     context,
     role: context.role,

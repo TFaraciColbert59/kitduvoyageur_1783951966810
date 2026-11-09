@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect } from 'react';
-import s from '@/ui/crm.module.css';
-import { ErrorState } from '@/ui/error-state';
-import { Workspace } from '@/components/shell/workspace';
+import s from '../../ui/crm.module.css';
+import { ErrorState } from '../../ui/error-state';
+import { Workspace } from '../../components/shell/workspace';
 
 /** Filet de sécurité : une erreur d'écran ne laisse jamais une page blanche. */
 export default function AppError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {

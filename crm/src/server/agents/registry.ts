@@ -1,5 +1,5 @@
-import type { PoleCode } from '@/lib/catalog';
-import { commandByCommand, COMMANDS } from '@/lib/catalog';
+import type { PoleCode } from '../../lib/catalog';
+import { commandByCommand, COMMANDS } from '../../lib/catalog';
 
 /**
  * Contrats des 6 agents (bundle/agents/agents-ia.md, 02_ARCHITECTURE § 8).

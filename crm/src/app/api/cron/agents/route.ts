@@ -1,9 +1,9 @@
-import { guard, jsonOk, methodNotAllowed, nowIso, requestRef } from '@/server/http';
-import { rateLimit } from '@/server/rate-limit';
-import { cronBucket, requireCronAuth } from '@/server/cron';
-import { clientIp } from '@/server/http';
-import { runAgents } from '@/server/agents/runner';
-import { nimConfigured } from '@/server/agents/nim';
+import { guard, jsonOk, methodNotAllowed, nowIso, requestRef } from '../../../../server/http';
+import { rateLimit } from '../../../../server/rate-limit';
+import { cronBucket, requireCronAuth } from '../../../../server/cron';
+import { clientIp } from '../../../../server/http';
+import { runAgents } from '../../../../server/agents/runner';
+import { nimConfigured } from '../../../../server/agents/nim';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';

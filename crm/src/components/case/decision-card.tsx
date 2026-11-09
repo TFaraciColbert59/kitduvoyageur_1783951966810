@@ -2,19 +2,19 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import s from '@/ui/crm.module.css';
-import { Banner } from '@/ui/states';
-import { Button } from '@/ui/button';
-import { CardSoft } from '@/ui/card';
-import { Field, Select, TextInput } from '@/ui/field';
-import { Kbd } from '@/ui/kbd';
-import { useToast } from '@/ui/toast';
-import { useHotkeys } from '@/ui/use-hotkeys';
-import type { CaseDetail } from '@/lib/rpc';
-import type { ReasonCode } from '@/components/data/reason-codes';
-import { errorMessage, runCommand, undoAudit } from '@/components/data/cmd';
-import { LOCAL_CATALOG, type CatalogCommand } from '@/components/command/catalog';
-import { CommandDrawer } from '@/components/command/command-drawer';
+import s from '../../ui/crm.module.css';
+import { Banner } from '../../ui/states';
+import { Button } from '../../ui/button';
+import { CardSoft } from '../../ui/card';
+import { Field, Select, TextInput } from '../../ui/field';
+import { Kbd } from '../../ui/kbd';
+import { useToast } from '../../ui/toast';
+import { useHotkeys } from '../../ui/use-hotkeys';
+import type { CaseDetail } from '../../lib/rpc';
+import type { ReasonCode } from '../data/reason-codes';
+import { errorMessage, runCommand, undoAudit } from '../data/cmd';
+import { LOCAL_CATALOG, type CatalogCommand } from '../command/catalog';
+import { CommandDrawer } from '../command/command-drawer';
 
 type Action = CaseDetail['actions'][number];
 

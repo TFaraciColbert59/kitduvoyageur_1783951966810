@@ -1,15 +1,15 @@
 import 'server-only';
-import { apiError, isApiError, logServer, translateDbError } from '@/lib/errors';
-import { commandInputJsonSchema, parseCommandParams } from '@/lib/cmd';
-import { authorizeAgent, runCommandAs } from '@/server/cmd';
-import { serviceDb, type ServiceDb } from '@/server/db';
-import { finishJob, monthSpendCents, startJob } from '@/server/jobs';
-import { listActiveAgents, type AgentRecord } from '@/server/agents/store';
-import { MAX_TOOL_CALLS, agentContractByName, toolsForContract, type AgentContract } from '@/server/agents/registry';
-import { nimChat, nimConfigured, nimModelFor, type NimMessage, type NimTool } from '@/server/agents/nim';
-import { systemPromptFor, userPromptFor, wrapUntrusted } from '@/server/agents/prompts';
-import { redactForModel } from '@/server/agents/redact';
-import { sendTeamAlert } from '@/server/resend';
+import { apiError, isApiError, logServer, translateDbError } from '../../lib/errors';
+import { commandInputJsonSchema, parseCommandParams } from '../../lib/cmd';
+import { authorizeAgent, runCommandAs } from '../cmd';
+import { serviceDb, type ServiceDb } from '../db';
+import { finishJob, monthSpendCents, startJob } from '../jobs';
+import { listActiveAgents, type AgentRecord } from './store';
+import { MAX_TOOL_CALLS, agentContractByName, toolsForContract, type AgentContract } from './registry';
+import { nimChat, nimConfigured, nimModelFor, type NimMessage, type NimTool } from './nim';
+import { systemPromptFor, userPromptFor, wrapUntrusted } from './prompts';
+import { redactForModel } from './redact';
+import { sendTeamAlert } from '../resend';
 
 /**
  * Exécution d’un agent : tâche → plan → outils → vérification → résultat →

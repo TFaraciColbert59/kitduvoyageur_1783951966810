@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { countdownTone, formatRemaining, type CountdownTone } from '@/lib/countdown';
+import { countdownTone, formatRemaining, type CountdownTone } from '../lib/countdown';
 import { Chip } from './chip';
 
 const TONE_TO_CHIP: Record<CountdownTone, 'stone' | 'warn' | 'danger' | 'info'> = {

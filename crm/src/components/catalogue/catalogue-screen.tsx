@@ -1,16 +1,16 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import s from '@/ui/crm.module.css';
-import { cx } from '@/ui/cx';
-import { Button } from '@/ui/button';
-import { Chip } from '@/ui/chip';
-import { Field, Select, TextInput } from '@/ui/field';
-import { EmptyState, SkeletonList } from '@/ui/states';
-import { canRun } from '@/lib/rbac';
-import type { PoleCode, StaffContext } from '@/lib/rpc';
-import { loadCatalog, matches, POLE_LABELS, type CatalogCommand } from '@/components/command/catalog';
-import { CommandDrawer } from '@/components/command/command-drawer';
+import s from '../../ui/crm.module.css';
+import { cx } from '../../ui/cx';
+import { Button } from '../../ui/button';
+import { Chip } from '../../ui/chip';
+import { Field, Select, TextInput } from '../../ui/field';
+import { EmptyState, SkeletonList } from '../../ui/states';
+import { canRun } from '../../lib/rbac';
+import type { PoleCode, StaffContext } from '../../lib/rpc';
+import { loadCatalog, matches, POLE_LABELS, type CatalogCommand } from '../command/catalog';
+import { CommandDrawer } from '../command/command-drawer';
 
 /**
  * Catalogue complet : les 144 actions du registre, filtrables, toutes exécutables.

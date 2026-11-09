@@ -1,11 +1,11 @@
 import Link from 'next/link';
-import s from '@/ui/crm.module.css';
-import { Card, Label } from '@/ui/card';
-import { Chip } from '@/ui/chip';
-import { Banner } from '@/ui/states';
-import { Workspace } from '@/components/shell/workspace';
-import { ActionButtons } from '@/components/command/action-buttons';
-import { getTechniqueStatus } from '@/components/data/admin-rpc';
+import s from '../../../ui/crm.module.css';
+import { Card, Label } from '../../../ui/card';
+import { Chip } from '../../../ui/chip';
+import { Banner } from '../../../ui/states';
+import { Workspace } from '../../../components/shell/workspace';
+import { ActionButtons } from '../../../components/command/action-buttons';
+import { getTechniqueStatus } from '../../../components/data/admin-rpc';
 
 export const dynamic = 'force-dynamic';
 

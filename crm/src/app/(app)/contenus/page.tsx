@@ -1,12 +1,12 @@
 import Link from 'next/link';
-import s from '@/ui/crm.module.css';
-import { Chip } from '@/ui/chip';
-import { EmptyState } from '@/ui/states';
-import { ErrorState } from '@/ui/error-state';
-import { Workspace } from '@/components/shell/workspace';
-import { ActionButtons } from '@/components/command/action-buttons';
-import { getInbox } from '@/components/data/admin-rpc';
-import { relativeFr } from '@/lib/format';
+import s from '../../../ui/crm.module.css';
+import { Chip } from '../../../ui/chip';
+import { EmptyState } from '../../../ui/states';
+import { ErrorState } from '../../../ui/error-state';
+import { Workspace } from '../../../components/shell/workspace';
+import { ActionButtons } from '../../../components/command/action-buttons';
+import { getInbox } from '../../../components/data/admin-rpc';
+import { relativeFr } from '../../../lib/format';
 
 export const dynamic = 'force-dynamic';
 

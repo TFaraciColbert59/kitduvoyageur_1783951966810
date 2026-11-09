@@ -3,13 +3,13 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import s from '@/ui/crm.module.css';
-import { cx } from '@/ui/cx';
-import { Chip } from '@/ui/chip';
-import { Button } from '@/ui/button';
-import { Select, Field } from '@/ui/field';
-import { EmptyState } from '@/ui/states';
-import type { AuditRow } from '@/lib/rpc';
+import s from '../../ui/crm.module.css';
+import { cx } from '../../ui/cx';
+import { Chip } from '../../ui/chip';
+import { Button } from '../../ui/button';
+import { Select, Field } from '../../ui/field';
+import { EmptyState } from '../../ui/states';
+import type { AuditRow } from '../../lib/rpc';
 
 function time(iso: string): string {
   const date = new Date(iso);

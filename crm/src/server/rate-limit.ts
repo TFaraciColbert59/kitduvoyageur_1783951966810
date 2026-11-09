@@ -1,4 +1,4 @@
-import { apiError } from '@/lib/errors';
+import { apiError } from '../lib/errors';
 
 /**
  * Limitation de débit simple, en mémoire du processus.

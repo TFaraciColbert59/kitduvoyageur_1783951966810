@@ -1,6 +1,6 @@
-import s from '@/ui/crm.module.css';
-import { SkeletonCard, SkeletonList } from '@/ui/states';
-import { Workspace } from '@/components/shell/workspace';
+import s from '../../ui/crm.module.css';
+import { SkeletonCard, SkeletonList } from '../../ui/states';
+import { Workspace } from '../../components/shell/workspace';
 
 /** Chargement : squelettes, jamais d'écran blanc. */
 export default function AppLoading() {

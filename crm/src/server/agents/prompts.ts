@@ -1,4 +1,4 @@
-import type { AgentContract } from '@/server/agents/registry';
+import type { AgentContract } from './registry';
 
 /**
  * Prompts système des agents.

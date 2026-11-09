@@ -5,7 +5,7 @@
  * On renvoie `{ data: null, cause, solution }` et l'écran rend un état vide ou une
  * erreur avec « Réessayer ».
  */
-import { supabaseServer } from '@/lib/supabase/server';
+import { supabaseServer } from '../../lib/supabase/server';
 import { BUNDLED_REASON_CODES, type ReasonCode } from './reason-codes';
 import type {
   Agent,
@@ -19,7 +19,7 @@ import type {
   RequestDetail,
   Role,
   StaffContext
-} from '@/lib/rpc';
+} from '../../lib/rpc';
 
 export type RpcFailure = { cause: string; solution: string; missing: boolean };
 export type RpcResult<T> = { data: T | null; failure: RpcFailure | null };
@@ -106,7 +106,7 @@ export const getInbox = () => adminRpc<InboxPayload>('inbox');
 export const getInboxItem = (source: string, id: string) => adminRpc<CaseDetail>('inbox_item', { p_source: source, p_id: id });
 export const getMember360 = (id: string) => adminRpc<Member360>('member_360', { p_user_id: id });
 export const getOrderDetail = (id: string) => adminRpc<OrderDetail>('order_detail', { p_order_id: id });
-export const getRequestsPending = () => adminRpc<{ items: import('@/lib/rpc').RequestItem[] }>('requests_pending');
+export const getRequestsPending = () => adminRpc<{ items: import('../../lib/rpc').RequestItem[] }>('requests_pending');
 export const getRequestDetail = (id: string) => adminRpc<RequestDetail>('request_detail', { p_id: id });
 export const getAgentsOverview = () => adminRpc<{ agents: Agent[]; solo: boolean; bricks: unknown }>('agents_overview');
 export const getAuditPage = (args: { before?: string | null; limit?: number; filters?: Record<string, unknown> } = {}) =>

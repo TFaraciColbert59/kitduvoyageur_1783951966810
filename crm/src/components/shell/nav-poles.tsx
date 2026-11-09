@@ -2,9 +2,9 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import s from '@/ui/crm.module.css';
-import { cx } from '@/ui/cx';
-import type { PoleCode } from '@/lib/rpc';
+import s from '../../ui/crm.module.css';
+import { cx } from '../../ui/cx';
+import type { PoleCode } from '../../lib/rpc';
 
 export type NavPole = { code: PoleCode; label: string; count: number | null };
 

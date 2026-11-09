@@ -2,10 +2,10 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import s from '@/ui/crm.module.css';
-import { Chip } from '@/ui/chip';
-import { IconBell } from '@/ui/icons';
-import { Button } from '@/ui/button';
+import s from '../../ui/crm.module.css';
+import { Chip } from '../../ui/chip';
+import { IconBell } from '../../ui/icons';
+import { Button } from '../../ui/button';
 
 /**
  * Notifications : uniquement des faits disponibles (demandes à valider).

@@ -1,11 +1,11 @@
-import { PoleScreen } from '@/components/pole/pole-screen';
-import { getContext, getInbox } from '@/components/data/admin-rpc';
-import { LOCAL_CATALOG } from '@/components/command/catalog';
-import { ErrorState } from '@/ui/error-state';
-import { Workspace } from '@/components/shell/workspace';
-import { POLES } from '@/lib/catalog';
-import s from '@/ui/crm.module.css';
-import type { PoleCode } from '@/lib/rpc';
+import { PoleScreen } from '../../../../components/pole/pole-screen';
+import { getContext, getInbox } from '../../../../components/data/admin-rpc';
+import { LOCAL_CATALOG } from '../../../../components/command/catalog';
+import { ErrorState } from '../../../../ui/error-state';
+import { Workspace } from '../../../../components/shell/workspace';
+import { POLES } from '../../../../lib/catalog';
+import s from '../../../../ui/crm.module.css';
+import type { PoleCode } from '../../../../lib/rpc';
 
 export const dynamic = 'force-dynamic';
 

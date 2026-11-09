@@ -1,9 +1,9 @@
 import Link from 'next/link';
-import s from '@/ui/crm.module.css';
-import { ErrorState } from '@/ui/error-state';
-import { Workspace } from '@/components/shell/workspace';
-import { SosScreen } from '@/components/sos/sos-screen';
-import { getSosBoard } from '@/components/data/admin-rpc';
+import s from '../../../../ui/crm.module.css';
+import { ErrorState } from '../../../../ui/error-state';
+import { Workspace } from '../../../../components/shell/workspace';
+import { SosScreen } from '../../../../components/sos/sos-screen';
+import { getSosBoard } from '../../../../components/data/admin-rpc';
 
 export const dynamic = 'force-dynamic';
 

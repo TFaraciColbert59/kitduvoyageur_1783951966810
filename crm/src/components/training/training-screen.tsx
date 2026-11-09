@@ -1,13 +1,13 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import s from '@/ui/crm.module.css';
-import { Banner } from '@/ui/states';
-import { Button } from '@/ui/button';
-import { Card, Label } from '@/ui/card';
-import { Chip } from '@/ui/chip';
-import { Kbd } from '@/ui/kbd';
-import { useHotkeys } from '@/ui/use-hotkeys';
+import s from '../../ui/crm.module.css';
+import { Banner } from '../../ui/states';
+import { Button } from '../../ui/button';
+import { Card, Label } from '../../ui/card';
+import { Chip } from '../../ui/chip';
+import { Kbd } from '../../ui/kbd';
+import { useHotkeys } from '../../ui/use-hotkeys';
 
 type Verdict = 'masquer' | 'laisser' | 'sanctionner';
 

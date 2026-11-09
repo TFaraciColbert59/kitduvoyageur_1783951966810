@@ -1,6 +1,6 @@
 import 'server-only';
-import { apiError, translateDbError } from '@/lib/errors';
-import type { ServiceDb } from '@/server/db';
+import { apiError, translateDbError } from '../../lib/errors';
+import type { ServiceDb } from '../db';
 
 /** Statut d'agent, tel que la base le publie (M03). */
 export type AgentStatus = 'active' | 'paused' | 'stopped';

@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/ui/button';
-import { supabaseBrowser } from '@/lib/supabase/browser';
+import { Button } from '../../ui/button';
+import { supabaseBrowser } from '../../lib/supabase/browser';
 
 /** Ferme la session et renvoie vers la connexion. */
 export function SignOutButton() {

@@ -1,8 +1,8 @@
 import 'server-only';
-import { logServer, translateDbError } from '@/lib/errors';
-import type { ServiceDb } from '@/server/db';
-import { finishJob, startJob } from '@/server/jobs';
-import { sendTeamAlert } from '@/server/resend';
+import { logServer, translateDbError } from '../lib/errors';
+import type { ServiceDb } from './db';
+import { finishJob, startJob } from './jobs';
+import { sendTeamAlert } from './resend';
 
 /**
  * SOS — alerte haute, « Je prends », escalade à 5 minutes.

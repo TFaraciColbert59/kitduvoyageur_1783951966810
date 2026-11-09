@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabaseBrowser } from '@/lib/supabase/browser';
+import { supabaseBrowser } from '../../lib/supabase/browser';
 
 export type RealtimeStatus = 'connexion' | 'connecte' | 'indisponible';
 

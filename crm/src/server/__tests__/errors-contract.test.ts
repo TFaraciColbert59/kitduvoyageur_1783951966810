@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeEach } from 'vitest';
-import { API_ERROR_CODES, codeFromHint, messageFor, redact, statusFor, translateDbError } from '@/lib/errors';
-import { rateLimit, resetRateLimits } from '@/server/rate-limit';
+import { API_ERROR_CODES, codeFromHint, messageFor, redact, statusFor, translateDbError } from '../../lib/errors';
+import { rateLimit, resetRateLimits } from '../rate-limit';
 
 /**
  * Contrat d'erreurs backend (task-3) : chaque marqueur levé par la base a une

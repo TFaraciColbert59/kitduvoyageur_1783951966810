@@ -1,5 +1,5 @@
 import 'server-only';
-import { apiError } from '@/lib/errors';
+import { apiError } from '../../lib/errors';
 
 /**
  * Jeton court d'agent MCP (10 min), signé HS256 avec `AGENT_TOKEN_SIGNING`.
@@ -98,7 +98,7 @@ export async function verifyAgentToken(token: string): Promise<AgentTokenClaims>
   }
   if (parsedHeader.alg !== 'HS256') throw apiError('agent_token_invalid');
 
-  const valid = await crypto.subtle.verify('HMAC', await hmacKey(), signatureBytes, encoder.encode(`${header}.${payload}`));
+  const valid = await crypto.subtle.verify('HMAC', await hmacKey(), signatureBytes as unknown as BufferSource, encoder.encode(`${header}.${payload}`));
   if (!valid) throw apiError('agent_token_invalid');
 
   let claims: Partial<AgentTokenClaims>;

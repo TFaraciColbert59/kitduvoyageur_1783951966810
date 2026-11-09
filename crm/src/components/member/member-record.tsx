@@ -2,22 +2,22 @@
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import s from '@/ui/crm.module.css';
-import { cx } from '@/ui/cx';
-import { Avatar } from '@/ui/avatar';
-import { Banner, EmptyState } from '@/ui/states';
-import { Button } from '@/ui/button';
-import { Chip } from '@/ui/chip';
-import { Field, TextArea, TextInput } from '@/ui/field';
-import { Tabs, TabPanel } from '@/ui/tabs';
-import { useToast } from '@/ui/toast';
-import { IconEye } from '@/ui/icons';
-import { supabaseBrowser } from '@/lib/supabase/browser';
-import { relativeFr } from '@/lib/format';
-import type { Member360 } from '@/lib/rpc';
-import { errorMessage, runCommand } from '@/components/data/cmd';
-import { LOCAL_CATALOG, type CatalogCommand } from '@/components/command/catalog';
-import { CommandDrawer } from '@/components/command/command-drawer';
+import s from '../../ui/crm.module.css';
+import { cx } from '../../ui/cx';
+import { Avatar } from '../../ui/avatar';
+import { Banner, EmptyState } from '../../ui/states';
+import { Button } from '../../ui/button';
+import { Chip } from '../../ui/chip';
+import { Field, TextArea, TextInput } from '../../ui/field';
+import { Tabs, TabPanel } from '../../ui/tabs';
+import { useToast } from '../../ui/toast';
+import { IconEye } from '../../ui/icons';
+import { supabaseBrowser } from '../../lib/supabase/browser';
+import { relativeFr } from '../../lib/format';
+import type { Member360 } from '../../lib/rpc';
+import { errorMessage, runCommand } from '../data/cmd';
+import { LOCAL_CATALOG, type CatalogCommand } from '../command/catalog';
+import { CommandDrawer } from '../command/command-drawer';
 
 const STATUS_CHIP: Record<Member360['account_status'], { tone: 'sage' | 'warn' | 'danger'; label: string }> = {
   active: { tone: 'sage', label: 'Compte actif' },

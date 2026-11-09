@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import s from '@/ui/crm.module.css';
-import { Kbd } from '@/ui/kbd';
-import { IconClose } from '@/ui/icons';
+import s from '../../ui/crm.module.css';
+import { Kbd } from '../../ui/kbd';
+import { IconClose } from '../../ui/icons';
 
 const SHORTCUTS: { keys: string[]; label: string }[] = [
   { keys: ['J', 'K'], label: 'Naviguer dans la file' },

@@ -1,4 +1,4 @@
-import type { Role } from '@/lib/rpc';
+import type { Role } from './rpc';
 
 export const ROLE_RANK: Record<Role, number> = { membre: 1, responsable: 2, super_admin: 3 };
 

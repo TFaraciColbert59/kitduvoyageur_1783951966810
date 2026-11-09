@@ -2,19 +2,19 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import s from '@/ui/crm.module.css';
-import { Banner } from '@/ui/states';
-import { Button } from '@/ui/button';
-import { Chip } from '@/ui/chip';
-import { Drawer } from '@/ui/drawer';
-import { Field, Select, TextArea, TextInput } from '@/ui/field';
-import { Kbd } from '@/ui/kbd';
-import { useToast } from '@/ui/toast';
-import { canRun } from '@/lib/rbac';
-import type { StaffContext } from '@/lib/rpc';
-import { errorMessage, runCommand, undoAudit } from '@/components/data/cmd';
-import { loadReasonCodes } from '@/components/data/reason-codes-client';
-import type { ReasonCode } from '@/components/data/reason-codes';
+import s from '../../ui/crm.module.css';
+import { Banner } from '../../ui/states';
+import { Button } from '../../ui/button';
+import { Chip } from '../../ui/chip';
+import { Drawer } from '../../ui/drawer';
+import { Field, Select, TextArea, TextInput } from '../../ui/field';
+import { Kbd } from '../../ui/kbd';
+import { useToast } from '../../ui/toast';
+import { canRun } from '../../lib/rbac';
+import type { StaffContext } from '../../lib/rpc';
+import { errorMessage, runCommand, undoAudit } from '../data/cmd';
+import { loadReasonCodes } from '../data/reason-codes-client';
+import type { ReasonCode } from '../data/reason-codes';
 import { POLE_LABELS, type CatalogCommand } from './catalog';
 
 /** Commandes sans cible : elles portent sur le système entier. */

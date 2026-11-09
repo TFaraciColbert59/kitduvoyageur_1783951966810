@@ -1,11 +1,11 @@
 import Link from 'next/link';
-import s from '@/ui/crm.module.css';
-import { Card, Label } from '@/ui/card';
-import { ErrorState } from '@/ui/error-state';
-import { Workspace } from '@/components/shell/workspace';
-import { MemberRecord } from '@/components/member/member-record';
-import { getMember360 } from '@/components/data/admin-rpc';
-import type { Member360 } from '@/lib/rpc';
+import s from '../../../../ui/crm.module.css';
+import { Card, Label } from '../../../../ui/card';
+import { ErrorState } from '../../../../ui/error-state';
+import { Workspace } from '../../../../components/shell/workspace';
+import { MemberRecord } from '../../../../components/member/member-record';
+import { getMember360 } from '../../../../components/data/admin-rpc';
+import type { Member360 } from '../../../../lib/rpc';
 
 export const dynamic = 'force-dynamic';
 

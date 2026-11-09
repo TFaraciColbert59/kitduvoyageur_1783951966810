@@ -1,8 +1,8 @@
 'use client';
 
-import { COMMANDS, POLES, type CommandDef } from '@/lib/catalog';
-import type { PoleCode, Role } from '@/lib/rpc';
-import { supabaseBrowser } from '@/lib/supabase/browser';
+import { COMMANDS, POLES, type CommandDef } from '../../lib/catalog';
+import type { PoleCode, Role } from '../../lib/rpc';
+import { supabaseBrowser } from '../../lib/supabase/browser';
 
 export type CatalogCommand = {
   id: string;

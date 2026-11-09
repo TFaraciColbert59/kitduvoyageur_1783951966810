@@ -1,5 +1,5 @@
 import 'server-only';
-import { logServer, redact } from '@/lib/errors';
+import { logServer, redact } from '../lib/errors';
 
 /**
  * Resend — alertes d’équipe uniquement.

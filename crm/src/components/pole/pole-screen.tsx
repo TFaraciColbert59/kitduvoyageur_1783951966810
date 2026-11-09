@@ -1,16 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import s from '@/ui/crm.module.css';
-import { Button } from '@/ui/button';
-import { Chip } from '@/ui/chip';
-import { EmptyState } from '@/ui/states';
-import { Tabs, TabPanel } from '@/ui/tabs';
-import { TextInput } from '@/ui/field';
-import type { InboxItem, PoleCode, StaffContext } from '@/lib/rpc';
-import { QueueList } from '@/components/queue/queue-list';
-import { POLE_LABELS, type CatalogCommand } from '@/components/command/catalog';
-import { CommandDrawer } from '@/components/command/command-drawer';
+import s from '../../ui/crm.module.css';
+import { Button } from '../../ui/button';
+import { Chip } from '../../ui/chip';
+import { EmptyState } from '../../ui/states';
+import { Tabs, TabPanel } from '../../ui/tabs';
+import { TextInput } from '../../ui/field';
+import type { InboxItem, PoleCode, StaffContext } from '../../lib/rpc';
+import { QueueList } from '../queue/queue-list';
+import { POLE_LABELS, type CatalogCommand } from '../command/catalog';
+import { CommandDrawer } from '../command/command-drawer';
 
 /**
  * Pôle (maquette `Main.dc.html` filtrée) : onglets File, Rechercher, Réglages du pôle.

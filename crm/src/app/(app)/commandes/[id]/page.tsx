@@ -1,12 +1,12 @@
 import Link from 'next/link';
-import s from '@/ui/crm.module.css';
-import { Label } from '@/ui/card';
-import { Chip } from '@/ui/chip';
-import { ErrorState } from '@/ui/error-state';
-import { Workspace } from '@/components/shell/workspace';
-import { ActionButtons } from '@/components/command/action-buttons';
-import { getOrderDetail } from '@/components/data/admin-rpc';
-import { euros, relativeFr } from '@/lib/format';
+import s from '../../../../ui/crm.module.css';
+import { Label } from '../../../../ui/card';
+import { Chip } from '../../../../ui/chip';
+import { ErrorState } from '../../../../ui/error-state';
+import { Workspace } from '../../../../components/shell/workspace';
+import { ActionButtons } from '../../../../components/command/action-buttons';
+import { getOrderDetail } from '../../../../components/data/admin-rpc';
+import { euros, relativeFr } from '../../../../lib/format';
 
 export const dynamic = 'force-dynamic';
 

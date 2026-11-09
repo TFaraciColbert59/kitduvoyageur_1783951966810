@@ -1,5 +1,5 @@
 import 'server-only';
-import { apiError, logServer, redact } from '@/lib/errors';
+import { apiError, logServer, redact } from '../../lib/errors';
 
 /**
  * Client NVIDIA NIM — seul fournisseur IA autorisé (décision Tony 2026-10-07).

@@ -1,7 +1,7 @@
 import Link from 'next/link';
-import { AuthCard } from '@/components/auth/auth-card';
-import { LoginForm } from '@/components/auth/login-form';
-import s from '@/ui/crm.module.css';
+import { AuthCard } from '../../components/auth/auth-card';
+import { LoginForm } from '../../components/auth/login-form';
+import s from '../../ui/crm.module.css';
 
 export const metadata = { title: 'Connexion — LKDV Control', robots: { index: false, follow: false } };
 

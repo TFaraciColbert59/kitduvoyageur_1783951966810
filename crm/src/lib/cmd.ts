@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { COMMANDS, commandByCommand, type CommandDef } from '@/lib/catalog';
-import { apiError } from '@/lib/errors';
+import { COMMANDS, commandByCommand, type CommandDef } from './catalog';
+import { apiError } from './errors';
 
 // Messages zod en français (QA : aucun « Invalid input » à l'écran). Les messages
 // personnalisés de nos schémas restent prioritaires sur la locale.

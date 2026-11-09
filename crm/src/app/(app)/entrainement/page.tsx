@@ -1,5 +1,5 @@
-import { TrainingScreen } from '@/components/training/training-screen';
-import { Workspace } from '@/components/shell/workspace';
+import { TrainingScreen } from '../../../components/training/training-screen';
+import { Workspace } from '../../../components/shell/workspace';
 
 export const dynamic = 'force-dynamic';
 

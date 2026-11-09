@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import s from '@/ui/crm.module.css';
+import s from '../../ui/crm.module.css';
 
 /**
  * Zone de travail : colonne centrale + rail de contexte à droite.

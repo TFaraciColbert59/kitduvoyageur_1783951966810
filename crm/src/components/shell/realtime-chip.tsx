@@ -1,7 +1,7 @@
 'use client';
 
-import { useAdminChannel } from '@/components/data/use-admin-channel';
-import { Chip } from '@/ui/chip';
+import { useAdminChannel } from '../data/use-admin-channel';
+import { Chip } from '../../ui/chip';
 
 /** Pastille « Temps réel connecté » : l'état réel du canal, jamais une décoration. */
 export function RealtimeChip({ channel = 'queue' }: { channel?: string }) {

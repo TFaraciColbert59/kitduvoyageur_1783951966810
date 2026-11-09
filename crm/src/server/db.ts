@@ -1,6 +1,6 @@
 import 'server-only';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import { apiError } from '@/lib/errors';
+import { apiError } from '../lib/errors';
 
 /**
  * Client `service_role`. Trois usages seulement (02_ARCHITECTURE § 3) :

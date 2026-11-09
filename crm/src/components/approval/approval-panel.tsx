@@ -2,18 +2,18 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import s from '@/ui/crm.module.css';
-import { Banner } from '@/ui/states';
-import { Button } from '@/ui/button';
-import { CardSoft, Label } from '@/ui/card';
-import { Chip } from '@/ui/chip';
-import { Field, TextInput } from '@/ui/field';
-import { Kbd } from '@/ui/kbd';
-import { useToast } from '@/ui/toast';
-import { useHotkeys } from '@/ui/use-hotkeys';
-import { euros, relativeFr } from '@/lib/format';
-import type { RequestDetail } from '@/lib/rpc';
-import { approveRequest, errorMessage, runCommand } from '@/components/data/cmd';
+import s from '../../ui/crm.module.css';
+import { Banner } from '../../ui/states';
+import { Button } from '../../ui/button';
+import { CardSoft, Label } from '../../ui/card';
+import { Chip } from '../../ui/chip';
+import { Field, TextInput } from '../../ui/field';
+import { Kbd } from '../../ui/kbd';
+import { useToast } from '../../ui/toast';
+import { useHotkeys } from '../../ui/use-hotkeys';
+import { euros, relativeFr } from '../../lib/format';
+import type { RequestDetail } from '../../lib/rpc';
+import { approveRequest, errorMessage, runCommand } from '../data/cmd';
 
 const PARAM_LABEL: Record<string, string> = {
   amount_cents: 'Montant',

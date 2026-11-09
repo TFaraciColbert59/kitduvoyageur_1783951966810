@@ -2,14 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import s from '@/ui/crm.module.css';
-import { cx } from '@/ui/cx';
-import { Chip } from '@/ui/chip';
-import { Countdown } from '@/ui/countdown';
-import { Kbd } from '@/ui/kbd';
-import { EmptyState } from '@/ui/states';
-import { useHotkeys } from '@/ui/use-hotkeys';
-import type { InboxItem } from '@/lib/rpc';
+import s from '../../ui/crm.module.css';
+import { cx } from '../../ui/cx';
+import { Chip } from '../../ui/chip';
+import { Countdown } from '../../ui/countdown';
+import { Kbd } from '../../ui/kbd';
+import { EmptyState } from '../../ui/states';
+import { useHotkeys } from '../../ui/use-hotkeys';
+import type { InboxItem } from '../../lib/rpc';
 
 export type QueueFilter = 'tout' | 'urgent' | 'signalements' | 'a_valider' | 'contributions';
 

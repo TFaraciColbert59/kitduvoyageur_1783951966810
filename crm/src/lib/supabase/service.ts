@@ -1,6 +1,6 @@
 import 'server-only';
 import { createClient } from '@supabase/supabase-js';
-import type { Database } from '@/types/db';
+import type { Database } from '../../types/db';
 
 /**
  * Clé service_role : trois usages seulement (02_ARCHITECTURE § 3) —
