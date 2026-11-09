@@ -435,64 +435,33 @@ describe('Deux origines de module : cohabitation des 15 modules .glb et des 5 mo
     });
   });
 
-  it('construit par code M09, M10, M11, M12 et M14 sans aucun fichier .glb et les fait cohabiter avec les maillages importés sur les ancres auditées du 80 L', async () => {
-    const proceduralStrictProvider: ModuleAssetProvider = {
+  // Règle produit (Tony, 09/11/2026) : le Studio n'affiche que des maillages réels. Un module
+  // dont le `.glb` n'est pas publié n'est plus dessiné par du code — il est refusé, avec sa
+  // raison, pour qu'on sache qu'il manque au lieu de croire qu'on le voit.
+  it('refuse les cinq modules sans maillage publié plutôt que d’en dessiner une approximation', async () => {
+    const refusTotal: ModuleAssetProvider = {
       fetchManifest: publicModulesProvider.fetchManifest,
       async fetchGlb(): Promise<ArrayBuffer> {
-        throw new Error('Aucun .glb ne doit être chargé pour un module procédural');
+        throw new Error('Aucun .glb ne doit être chargé pour un module sans maillage');
       },
     };
 
-    const loadedProcedural = await Promise.all(
-      ['lkdv-m09', 'lkdv-m10', 'lkdv-m11', 'lkdv-m12', 'lkdv-m14'].map((id) =>
-        loadModuleAsset(id, proceduralStrictProvider),
-      ),
-    );
-
-    for (const res of loadedProcedural) {
-      expect(res.status).toBe('ready');
-      if (res.status !== 'ready') return;
-      expect(res.manifest.origin).toBe('procedural');
-      expect(res.manifest.rigidPanelConvention).toEqual(RIGID_PANEL_CONVENTION);
-      expect(res.triangleCount).toBeGreaterThan(0);
-
-      const feet = res.platineGroup.children.filter((c) => c.userData.isPlatineFoot === true);
-      expect(feet).toHaveLength(2);
+    const sansMaillage = ['lkdv-m09', 'lkdv-m10', 'lkdv-m11', 'lkdv-m12', 'lkdv-m14'];
+    for (const id of sansMaillage) {
+      const res = await loadModuleAsset(id, refusTotal);
+      expect(res.status).toBe('degraded');
+      if (res.status !== 'degraded') return;
+      expect(res.reason).toBe('maillage-absent');
+      expect(res.moduleId).toBe(id);
     }
+  });
 
-    const [m09, m10, m11, m12, m14] = loadedProcedural;
-    if (
-      m09.status !== 'ready' ||
-      m10.status !== 'ready' ||
-      m11.status !== 'ready' ||
-      m12.status !== 'ready' ||
-      m14.status !== 'ready'
-    ) {
-      return;
-    }
-
-    // Cohabitation simultanée d'un module .glb importé (lkdv-m04) et d'un module procédural (lkdv-m12)
-    // sur les deux ancres auditées ('facade' et 'flanc-droit') du sac LKDV ONE 80 L
-    const m04Glb = await loadModuleAsset('lkdv-m04', publicModulesProvider);
-    expect(m04Glb.status).toBe('ready');
-    if (m04Glb.status !== 'ready') return;
-
-    const bagRoot = new THREE.Group();
-    const bag80Manifest = lireBagManifest('lkdv-one-80');
-    const anchors80 = resolveBagAttachmentAnchors(bag80Manifest);
-    const controller = createModuleAttachmentController(bagRoot, anchors80);
-
-    expect(controller.attach(m04Glb, 'facade').ok).toBe(true);
-    expect(controller.attach(m12, 'flanc-droit').ok).toBe(true);
-    expect(bagRoot.children).toHaveLength(2);
-    expect(controller.getMountedModule('facade')?.manifest.origin).toBe('glb');
-    expect(controller.getMountedModule('flanc-droit')?.manifest.origin).toBe('procedural');
-
-    controller.dispose();
-    m09.dispose();
-    m10.dispose();
-    m11.dispose();
-    m14.dispose();
+  it('charge normalement les quinze modules dont le maillage est publié', async () => {
+    const res = await loadModuleAsset('lkdv-m03', publicModulesProvider);
+    expect(res.status).toBe('ready');
+    if (res.status !== 'ready') return;
+    expect(res.manifest.origin).toBe('glb');
+    expect(res.triangleCount).toBeGreaterThan(0);
   });
 });
 

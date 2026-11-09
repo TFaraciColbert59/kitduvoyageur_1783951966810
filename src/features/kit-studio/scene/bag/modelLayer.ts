@@ -234,6 +234,8 @@ export function createBagModelLayer(deps: BagModelLayerDeps): BagModelLayer {
   holder.name = 'bag-model-layer';
   holder.visible = false;
   scene.add(holder);
+  // Jamais de doublure à l'écran : voir `clearLoaded`.
+  proceduralBag.visible = false;
 
   let info: BagModelRuntimeInfo = DEGRADED_INFO;
   let loaded: LoadedBagAsset | null = null;
@@ -262,7 +264,10 @@ export function createBagModelLayer(deps: BagModelLayerDeps): BagModelLayer {
     model = null;
     atlasMaps = { zones: null, weaveNormal: null };
     holder.visible = false;
-    proceduralBag.visible = true;
+    // Règle produit : le Studio ne montre que des maillages réels. Le sac procédural ne remplace
+    // plus rien — à l'ouverture, on préfère un plan de travail vide une seconde au sac grossier
+    // que Tony voyait s'afficher en premier.
+    proceduralBag.visible = false;
   };
 
   const applyAppearance = (): void => {
@@ -420,8 +425,9 @@ export function createBagModelLayer(deps: BagModelLayerDeps): BagModelLayer {
         }
         if (!out.isEmpty()) return out;
       }
-      proceduralBag.updateMatrixWorld(true);
-      out.setFromObject(proceduralBag);
+      // Sans maillage réel il n'y a rien à cadrer : une boîte vide laisse la caméra à sa pose
+      // nominale plutôt que de cadrer une doublure qu'on n'affiche plus.
+      out.makeEmpty();
       return out;
     },
     getBounds(out: THREE.Box3) {
@@ -430,8 +436,8 @@ export function createBagModelLayer(deps: BagModelLayerDeps): BagModelLayer {
         out.setFromObject(loaded.root);
         return out;
       }
-      proceduralBag.updateMatrixWorld(true);
-      out.setFromObject(proceduralBag);
+      // Même raison que `getBodyBounds` : plus de doublure affichée, donc rien à cadrer.
+      out.makeEmpty();
       return out;
     },
     info() {

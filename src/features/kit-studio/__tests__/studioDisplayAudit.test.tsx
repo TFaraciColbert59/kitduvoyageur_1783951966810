@@ -149,20 +149,28 @@ describe('Validation des 3 portes d’affichage du Kit Studio (URGENT)', () => {
     setScene(null);
   });
 
-  it('4. Affiche la mention de débordement pour les modules porteurs dans les cartes d’interface', () => {
+  it('4. Annonce « visuel à venir » et refuse les modules dont le maillage n’est pas publié', () => {
     const state = createInitialState(); // b42 -> lkdv-one-45
     useKitStore.setState({ kit: state });
     useUiStore.setState({ mode: 'appearance', category: 'mod', part: 'all' });
 
     const cards = optionCards(useKitStore.getState().kit, 'all', 'mod');
-    const m14Card = cards.find((c) => c.id === 'lkdv-m14');
-    expect(m14Card).toBeDefined();
-    expect(m14Card?.sub).toMatch(/\+\d+ cm au-dessus/);
-    expect(m14Card?.overflowNotice).toMatch(/\+\d+ cm au-dessus/);
-    expect(m14Card?.label).toMatch(/\+\d+ cm au-dessus/);
 
-    const m10Card = cards.find((c) => c.id === 'lkdv-m10');
-    expect(m10Card).toBeDefined();
-    expect(m10Card?.sub).toMatch(/\+\d+ cm en largeur/);
+    // Règle produit : seuls les maillages réels s'affichent. Les cinq porteurs (M09 à M12, M14)
+    // n'ont pas encore de `.glb` : leur carte le dit et n'est pas sélectionnable, plutôt que de
+    // promettre un visuel que le Studio ne peut pas montrer.
+    for (const id of ['lkdv-m09', 'lkdv-m10', 'lkdv-m11', 'lkdv-m12', 'lkdv-m14']) {
+      const carte = cards.find((c) => c.id === id);
+      expect(carte, id).toBeDefined();
+      expect(carte?.sub).toBe('Visuel à venir');
+      expect(carte?.disabled).toBe(true);
+      expect(carte?.why).toMatch(/maillage 3D n’est pas encore publié/);
+    }
+
+    // Les modules livrés gardent leur mention de débordement et restent sélectionnables.
+    const m13 = cards.find((c) => c.id === 'lkdv-m13');
+    expect(m13).toBeDefined();
+    expect(m13?.disabled).toBe(false);
+    expect(m13?.sub).not.toBe('Visuel à venir');
   });
 });

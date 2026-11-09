@@ -81,13 +81,16 @@ describe('Choix de la source de rendu du sac', () => {
 });
 
 describe('Chargement du maillage dans la scène survivante', () => {
-  it('sans modèle : le sac procédural reste seul, rien n’est annoncé', async () => {
+  // Règle produit : le Studio n'affiche que des maillages réels. Le sac procédural existe encore
+  // dans la scène comme support de secours, mais il n'est jamais montré : à l'ouverture, un plan
+  // de travail vide une seconde vaut mieux que la forme grossière qui s'affichait avant.
+  it('sans modèle : rien ne s’affiche, et surtout pas la doublure', async () => {
     const { layer, procedural } = makeLayer();
     const info = await layer.load(null);
     expect(info.status).toBe('procedural');
     expect(info.parts).toEqual([]);
     expect(info.capabilities).toBeNull();
-    expect(procedural.visible).toBe(true);
+    expect(procedural.visible).toBe(false);
     layer.dispose();
   });
 
@@ -113,12 +116,12 @@ describe('Chargement du maillage dans la scène survivante', () => {
     layer.dispose();
   });
 
-  it('un modèle absent dégrade proprement : raison annoncée, procédural restauré', async () => {
+  it('un modèle absent dégrade proprement : raison annoncée, et toujours aucune doublure', async () => {
     const { layer, procedural } = makeLayer();
     const info = await layer.load('modele-fantome-999');
     expect(info.status).toBe('degraded');
     expect(info.reason).toBeTruthy();
-    expect(procedural.visible).toBe(true);
+    expect(procedural.visible).toBe(false);
     layer.dispose();
   });
 
@@ -145,13 +148,13 @@ describe('Chargement du maillage dans la scène survivante', () => {
     textures.dispose();
   });
 
-  it('revenir au procédural libère le maillage et le réaffiche', async () => {
+  it('revenir à « aucun modèle » libère le maillage sans rien remettre à l’écran', async () => {
     const { layer, procedural } = makeLayer();
     await layer.load('daypack-22');
     expect(procedural.visible).toBe(false);
     const info = await layer.load(null);
     expect(info.status).toBe('procedural');
-    expect(procedural.visible).toBe(true);
+    expect(procedural.visible).toBe(false);
     layer.dispose();
   });
 

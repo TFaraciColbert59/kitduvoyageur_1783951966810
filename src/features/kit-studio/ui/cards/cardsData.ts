@@ -142,18 +142,28 @@ export function optionCards(s: KitState, part: PartNameId, cat: OptionCat, readV
           ? ctrl.listAnchors().some((a) => ctrl.getMountedModule(a.id)?.moduleId === m.moduleId)
           : false;
         const overflow = calculateModuleOverflowNotice(m, bagStub);
-        const sub = on ? 'Monté' : (overflow ?? m.code ?? 'Disponible');
+        // Règle produit : le Studio n'affiche que des maillages réels. Un module dont le `.glb`
+        // n'est pas publié ne peut donc pas être montré — on le dit sur la carte plutôt que de
+        // laisser l'utilisateur appuyer sur quelque chose qui ne se passera jamais.
+        const sansMaillage = m.origin === 'procedural';
+        const sub = sansMaillage
+          ? 'Visuel à venir'
+          : on
+            ? 'Monté'
+            : (overflow ?? m.code ?? 'Disponible');
         out.push({
           id: m.moduleId,
           kind: 'opt',
           name: m.label,
           sub,
-          label: `${m.code ? `${m.code} · ` : ''}${m.label}${overflow ? ` (${overflow})` : ''}${on ? ', monté' : ''}`,
+          label: `${m.code ? `${m.code} · ` : ''}${m.label}${sansMaillage ? ', visuel à venir' : ''}${overflow && !sansMaillage ? ` (${overflow})` : ''}${on ? ', monté' : ''}`,
           thumb: moduleThumb(m.moduleId, m.code),
           glyph: 'cube',
           selected: on,
-          disabled: false,
-          why: overflow ?? undefined,
+          disabled: sansMaillage,
+          why: sansMaillage
+            ? `${m.label} : le maillage 3D n’est pas encore publié.`
+            : (overflow ?? undefined),
           overflowNotice: overflow ?? undefined,
         });
       }
