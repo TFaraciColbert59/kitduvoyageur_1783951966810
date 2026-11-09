@@ -92,9 +92,19 @@ export function parseRegistry(sql) {
 async function fetchDbFunctions() {
   const url = process.env.SUPABASE_DB_URL;
   if (!url) return null;
+  // Résolution souple du pilote : `pg` du projet, sinon PG_MODULE, sinon
+  // l'installation locale de validation (supabase/tests/local/pg.mjs).
   let pg;
-  try { pg = await import('pg'); } catch { return { error: 'module pg absent' }; }
-  const client = new pg.default.Client({ connectionString: url });
+  try {
+    pg = (await import('pg')).default;
+  } catch {
+    try {
+      pg = (await import(process.env.PG_MODULE ?? path.join(repoRoot, 'supabase/tests/local/pg.mjs'))).default;
+    } catch {
+      return { error: 'pilote pg absent (npm i pg, ou PG_MODULE=/chemin/pg)' };
+    }
+  }
+  const client = new pg.Client({ connectionString: url });
   try {
     await client.connect();
     const { rows } = await client.query(`

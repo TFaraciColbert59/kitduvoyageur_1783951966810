@@ -64,35 +64,10 @@ comment on column public.sos_alerts.closed_at is
   'M07 LKDV Control : clôture (note interne dans close_note).';
 
 -- ───────────────────────────────────────────────────────────────────────────
--- Propositions d'agents (écrites par M13/M14, affichées dans la file)
+-- Propositions d'agents : table créée en M02 (structure), avec les autres
+-- tables du plan de contrôle, pour que les fonctions `language sql` de ce
+-- fichier n'aient aucune dépendance d'ordre. Écrite en M14, lue ici.
 -- ───────────────────────────────────────────────────────────────────────────
-create table if not exists admin.agent_proposals (
-  id          uuid primary key default gen_random_uuid(),
-  agent_id    uuid references admin.agents (id) on delete set null,
-  command     text not null,
-  params      jsonb not null default '{}'::jsonb,
-  target_type text,
-  target_id   text,
-  rationale   text,
-  status      text not null default 'pending',
-  decided_by  uuid,
-  decided_at  timestamptz,
-  decision    text,
-  created_at  timestamptz not null default now(),
-  constraint agent_proposals_status_check check (status in ('pending','accepted','rejected'))
-);
-
-create index if not exists agent_proposals_pending_idx
-  on admin.agent_proposals (created_at) where status = 'pending';
-
-alter table admin.agent_proposals enable row level security;
-revoke all on admin.agent_proposals from public, anon, authenticated;
-grant select on admin.agent_proposals to authenticated;
-grant select, insert, update on admin.agent_proposals to service_role;
-
-drop policy if exists agent_proposals_read_staff on admin.agent_proposals;
-create policy agent_proposals_read_staff on admin.agent_proposals
-  for select to authenticated using (admin.is_staff());
 
 -- ───────────────────────────────────────────────────────────────────────────
 -- Fabrique d'items (interne)
@@ -348,16 +323,32 @@ as $$
              ) order by o.grp_rank, o.due_at nulls last, o.created_at)
         from ordered o
     ), '[]'::jsonb),
-    'counts', coalesce((
-      select jsonb_object_agg(g.grp, g.n)
-        from (select o.grp, count(*) as n from ordered o group by o.grp) g
-    ), '{}'::jsonb),
-    'sla', coalesce((
-      select jsonb_object_agg(s.source, jsonb_build_object(
-               'label', s.label, 'minutes', s.target_minutes,
-               'escalationMinutes', s.escalation_minutes, 'urgency', s.urgency))
-        from admin.sla_targets s
-    ), '{}'::jsonb),
+    -- counts : forme attendue par l'interface (rpc.ts) + répartition par groupe.
+    'counts', jsonb_build_object(
+      'total', (select count(*) from ordered),
+      'urgent', (select count(*) from ordered o where o.grp = 'urgence_haute'),
+      'reports', (select count(*) from ordered o where o.is_report),
+      'approvals', (select count(*) from ordered o where o.grp = 'a_valider'),
+      'contributions', (select count(*) from ordered o where o.grp = 'contributions'),
+      'by_pole', coalesce((select jsonb_object_agg(x.pole_code, x.n)
+                             from (select o.pole_code, count(*) as n from ordered o group by o.pole_code) x), '{}'::jsonb),
+      'by_group', coalesce((select jsonb_object_agg(y.grp, y.n)
+                              from (select o.grp, count(*) as n from ordered o group by o.grp) y), '{}'::jsonb)
+    ),
+    -- sla : compte à rebours (EX-INBOX-03) + progression du jour (EX-INBOX-06).
+    'sla', jsonb_build_object(
+      'held_days', (select count(distinct date_trunc('day', al.at))
+                      from admin.audit_log al
+                     where al.at > now() - interval '30 days'),
+      'treated_today', (select count(*) from admin.audit_log al
+                         where al.at >= date_trunc('day', now())),
+      'target_today', (select count(*) from ordered o
+                        where o.created_at >= date_trunc('day', now())),
+      'by_source', coalesce((select jsonb_object_agg(s.source, jsonb_build_object(
+                                 'label', s.label, 'minutes', s.target_minutes,
+                                 'escalationMinutes', s.escalation_minutes, 'urgency', s.urgency))
+                               from admin.sla_targets s), '{}'::jsonb)
+    ),
     'overdue', (select count(*) from ordered o where o.due_at < now())
   );
 $$;

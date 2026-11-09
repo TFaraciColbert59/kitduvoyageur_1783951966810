@@ -63,3 +63,19 @@ Toutes les routes serveur : validation zod, erreurs traduites en français (`425
 ## Interdits rappelés
 
 Pas de `service_role` côté client, pas d'écriture directe de table dans le navigateur, pas de couleur littérale hors jetons, pas de fournisseur IA autre que NVIDIA, pas de secret dans le dépôt, pas de test affaibli, pas de production touchée par un rôle autre que l'orchestrateur.
+
+## RPC complémentaires (figées le 2026-11-09)
+
+| RPC | Retour | Usage |
+| --- | --- | --- |
+| `admin.run_command_as(p_auth_user_id, p_command, p_params)` | `{ok,data,request_id,audit_id,message}` | agents, `service_role` seul, `auth.uid()` nul |
+| `admin.agent_authorize(p_command, p_auth_user_id?)` | `{ok,agent_id,pole,status,used,cap}` | MCP (consomme 1 unité) |
+| `admin.complete_request(p_request, p_result?, p_error?)` | `{ok,status,request_id,audit_id}` | jeton utilisateur aal2 ou service_role |
+| `admin.stripe_event_ingest(p_event_id, p_type, p_payload)` | `{ok,ingested,duplicate?,status,order_id}` | webhook, idempotent |
+| `admin.sos_overdue(p_minutes?)` · `admin.requests_overdue()` | `{items,count}` | cron SLA |
+| `admin.purge_logs(p_days?)` | `{ok,deleted,cutoff_*}` | cron purge (audit 3 ans fixe) |
+| `ops.job_run_start(p_job,p_key,p_payload)` · `ops.job_run_finish(p_id,p_status,p_result,p_error)` | bigint · void | tâches durables |
+| `admin.elevate(p_command,p_reason,p_minutes?)` · `admin.settings_edit(p_key,p_value,p_reason?)` | jsonb | T-03 / T-10 |
+| `admin.my_context()` · `admin.order_detail(p_order)` · `admin.agent_inbox(p_pole)` | cf. M09/M10 | UI / MCP |
+
+Marqueurs d'erreur (toujours dans `hint`, message français) : `not_allowed, mfa_required, staff_only, role_too_low, reason_required, invalid_params, unknown_command, domain_pending, not_found, conflict, fingerprint_mismatch, not_pending, request_expired, self_approval, undo_expired, undo_not_allowed, rate_limited, agent_stopped, agent_paused, agent_not_allowed, agent_cannot_validate, command_disabled`.

@@ -11,6 +11,8 @@ drop function if exists admin.is_responsable(text);
 drop function if exists admin.is_super_admin_for(uuid);
 drop function if exists admin.is_team_member(uuid);
 
+drop policy if exists agent_proposals_read_staff on admin.agent_proposals;
+drop table if exists admin.agent_proposals;
 drop policy if exists commands_read_staff on admin.commands;
 drop policy if exists elevations_read_own on admin.elevations;
 drop policy if exists agents_read_staff on admin.agents;

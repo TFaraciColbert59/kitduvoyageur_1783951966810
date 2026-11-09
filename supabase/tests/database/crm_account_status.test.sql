@@ -36,9 +36,13 @@ SELECT lives_ok(
     VALUES ('d3100000-0000-4000-8000-000000000099','d4000000-0000-4000-8000-000000000001','spam','post')$$,
   'un compte suspendu peut toujours signaler');
 
--- Suspension échue : le droit d''écrire revient.
+-- Suspension échue : le droit d''écrire revient (fixture par le propriétaire).
+RESET ROLE;
+SET LOCAL "request.jwt.claims" = '{}';
 UPDATE public.user_profiles SET suspended_until = now() - interval '1 minute'
  WHERE id = 'd4000000-0000-4000-8000-000000000001';
+SET LOCAL ROLE authenticated;
+SET LOCAL "request.jwt.claims" = '{"sub":"d4000000-0000-4000-8000-000000000001","role":"authenticated","aal":"aal2"}';
 SELECT is(public.account_can_write(), true, 'suspension échue : écriture de nouveau possible');
 
 -- Un membre ne peut pas modifier son propre statut.
@@ -48,8 +52,12 @@ SELECT throws_ok(
   '42501', NULL, 'un membre ne peut pas changer son propre statut de compte');
 
 -- Banni : plus aucune écriture, même échu.
+RESET ROLE;
+SET LOCAL "request.jwt.claims" = '{}';
 UPDATE public.user_profiles SET account_status = 'banned', suspended_until = null
  WHERE id = 'd4000000-0000-4000-8000-000000000001';
+SET LOCAL ROLE authenticated;
+SET LOCAL "request.jwt.claims" = '{"sub":"d4000000-0000-4000-8000-000000000001","role":"authenticated","aal":"aal2"}';
 SELECT is(public.account_can_write(), false, 'compte banni : écriture refusée');
 SELECT is(public.my_account_status() ->> 'status', 'banned', 'le membre lit son propre statut');
 

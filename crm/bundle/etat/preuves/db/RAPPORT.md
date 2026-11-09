@@ -47,16 +47,17 @@ Couverture demandée : aal1 refusé · non-équipe refusée · journal immuable 
 
 ## 2. Preuves exécutées (hors production)
 
-Base Postgres locale éphémère (`127.0.0.1:55432`, base `lkdv_shim`), schéma de substitution reproduisant les objets touchés + claims JWT simulés.
+Base Postgres locale éphémère (`127.0.0.1:55432`, base `lkdv_shim`), schéma de substitution reproduisant les objets touchés + claims JWT simulés. Le harnais rejouable est versionné : `supabase/tests/local/` (voir son README). Dernier passage complet : 19 migrations (les 18 ci-dessous + `20261109093000_crm_context_agent_inbox.sql` du backend), 19 rollbacks, 19 réapplications.
 
 | Vérification | Commande | Résultat |
 | --- | --- | --- |
 | Application M00→M15 | `node /tmp/dbcheck.mjs` | **18/18 OK** |
-| Rollback des 18 | `node /tmp/dbdown.mjs` | **18/18 OK** |
+| Rollback des 18 (+ M13 backend) | `node supabase/tests/local/rollback.mjs` | **19/19 OK** |
 | Réapplication après rollback (idempotence) | idem | **18/18 OK** |
 | Fumée fonctionnelle (droits, moteur, demandes, undo, SOS, PII, agents, purge) | `node /tmp/smoke.mjs` | **41 ok, 0 échec** |
 | pgTAP (10 fichiers, substitut local de l'extension) | `node /tmp/runtests.mjs` | **10/10 verts** |
-| Parité catalogue | `node crm/scripts/catalog-diff.mjs` | `ok:true`, 144/144, 0 écart de drapeau |
+| Parité catalogue (fichiers) | `node crm/scripts/catalog-diff.mjs` | `ok:true`, 144/144, 0 écart de drapeau |
+| Parité catalogue (**base**) | idem avec `SUPABASE_DB_URL` | `mode:"base"`, **144 fonctions `admin.cmd_*` en base** = registre |
 | Types | `npx tsc --noEmit` (crm) | exit 0 |
 
 Relevés en lecture sur la production (métadonnées seulement) avant écriture : colonnes des 10 tables de contenu, des 8 tables de signalement, `sos_alerts`, `support_tickets`, `orders`, `notifications`, `auth.users`, `app_errors` (`at`, pas `created_at`), `progression_ops.job_runs`; policies des tables cibles; 41 tables RLS sans policy; 6 comptes `super_admin`.

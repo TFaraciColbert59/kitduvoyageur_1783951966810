@@ -117,6 +117,37 @@ create table if not exists admin.elevations (
 create index if not exists elevations_user_idx on admin.elevations (user_id) where revoked_at is null;
 
 -- ───────────────────────────────────────────────────────────────────────────
+-- Propositions d'agents (écrites par M13/M14, affichées dans la file)
+-- ───────────────────────────────────────────────────────────────────────────
+create table if not exists admin.agent_proposals (
+  id          uuid primary key default gen_random_uuid(),
+  agent_id    uuid references admin.agents (id) on delete set null,
+  command     text not null,
+  params      jsonb not null default '{}'::jsonb,
+  target_type text,
+  target_id   text,
+  rationale   text,
+  status      text not null default 'pending',
+  decided_by  uuid,
+  decided_at  timestamptz,
+  decision    text,
+  created_at  timestamptz not null default now(),
+  constraint agent_proposals_status_check check (status in ('pending','accepted','rejected'))
+);
+
+create index if not exists agent_proposals_pending_idx
+  on admin.agent_proposals (created_at) where status = 'pending';
+
+alter table admin.agent_proposals enable row level security;
+revoke all on admin.agent_proposals from public, anon, authenticated;
+grant select on admin.agent_proposals to authenticated;
+grant select, insert, update on admin.agent_proposals to service_role;
+
+drop policy if exists agent_proposals_read_staff on admin.agent_proposals;
+create policy agent_proposals_read_staff on admin.agent_proposals
+  for select to authenticated using (admin.is_staff());
+
+-- ───────────────────────────────────────────────────────────────────────────
 -- Registre des commandes (structure ; amorçage en M03)
 -- ───────────────────────────────────────────────────────────────────────────
 create table if not exists admin.commands (
@@ -145,17 +176,18 @@ create table if not exists admin.commands (
 create index if not exists commands_pole_idx on admin.commands (pole_code);
 create index if not exists commands_sort_idx on admin.commands (sort, id);
 
+alter table admin.agent_proposals    enable row level security;
 alter table admin.poles              enable row level security;
 alter table admin.staff_memberships  enable row level security;
 alter table admin.agents             enable row level security;
 alter table admin.elevations         enable row level security;
 alter table admin.commands           enable row level security;
 
-revoke all on admin.poles, admin.staff_memberships, admin.agents, admin.elevations, admin.commands
+revoke all on admin.poles, admin.staff_memberships, admin.agents, admin.elevations, admin.commands, admin.agent_proposals
   from public, anon, authenticated;
-grant select on admin.poles, admin.staff_memberships, admin.agents, admin.elevations, admin.commands
+grant select on admin.poles, admin.staff_memberships, admin.agents, admin.elevations, admin.commands, admin.agent_proposals
   to authenticated;
-grant select, insert, update, delete on admin.poles, admin.staff_memberships, admin.agents, admin.elevations, admin.commands
+grant select, insert, update, delete on admin.poles, admin.staff_memberships, admin.agents, admin.elevations, admin.commands, admin.agent_proposals
   to service_role;
 
 drop policy if exists poles_read_staff on admin.poles;
@@ -171,6 +203,10 @@ create policy agents_read_staff on admin.agents for select to authenticated usin
 drop policy if exists elevations_read_own on admin.elevations;
 create policy elevations_read_own on admin.elevations
   for select to authenticated using ((select auth.uid()) = user_id or admin.is_staff());
+
+drop policy if exists agent_proposals_read_staff on admin.agent_proposals;
+create policy agent_proposals_read_staff on admin.agent_proposals
+  for select to authenticated using (admin.is_staff());
 
 drop policy if exists commands_read_staff on admin.commands;
 create policy commands_read_staff on admin.commands for select to authenticated using (admin.is_staff());

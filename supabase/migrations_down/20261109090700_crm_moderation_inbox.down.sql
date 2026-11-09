@@ -13,7 +13,5 @@ drop function if exists admin.inbox();
 drop function if exists admin._inbox_json(boolean, text);
 drop function if exists admin._inbox_rows();
 
-drop policy if exists agent_proposals_read_staff on admin.agent_proposals;
-drop table if exists admin.agent_proposals;
 drop policy if exists sla_targets_read_staff on admin.sla_targets;
 drop table if exists admin.sla_targets;

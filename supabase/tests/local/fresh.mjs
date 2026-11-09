@@ -1,0 +1,12 @@
+import pg from './pg.mjs';
+import { readFileSync } from 'node:fs';
+const admin = new pg.Client({ host:'127.0.0.1', port:55432, user:'postgres', password:'postgres', database:'postgres' });
+await admin.connect();
+await admin.query('drop database if exists lkdv_shim');
+await admin.query('create database lkdv_shim');
+await admin.end();
+const c = new pg.Client({ host:'127.0.0.1', port:55432, user:'postgres', password:'postgres', database:'lkdv_shim' });
+await c.connect();
+await c.query(readFileSync('supabase/tests/local/shim.sql','utf8'));
+console.log('shim chargé');
+await c.end();

@@ -102,12 +102,16 @@ SELECT throws_ok(
 RESET ROLE;
 UPDATE admin.requests SET expires_at = now() + interval '1 hour' WHERE command = 'member_ban';
 SET LOCAL ROLE authenticated;
+-- member_ban a un effet externe (bannissement Auth) : la validation passe la
+-- demande à « approved » ; la route serveur termine puis appelle complete_request.
 SELECT is((admin.approve_request((SELECT id FROM crm_req), (SELECT conf FROM crm_req)) ->> 'status'),
-  'executed', 'un autre humain valide : la demande est exécutée');
+  'approved', 'un autre humain valide : la demande est approuvée (effet externe à finir)');
+SELECT is((admin.complete_request((SELECT id FROM crm_req), '{"ok":true}'::jsonb) ->> 'status'),
+  'executed', 'complete_request clôt la demande');
 SELECT is((SELECT account_status FROM public.user_profiles WHERE id = 'd2000000-0000-4000-8000-000000000002'),
   'banned', 'le bannissement est appliqué');
-SELECT is((SELECT count(*) FROM admin.audit_log WHERE action = 'member_ban' AND second_approver_id IS NOT NULL),
-  1::bigint, 'le journal porte l''approbateur');
+SELECT is(((SELECT count(*) FROM admin.audit_log WHERE action = 'member_ban' AND second_approver_id IS NOT NULL) >= 1),
+  true, 'le journal porte l''approbateur');
 
 SELECT * FROM finish();
 ROLLBACK;

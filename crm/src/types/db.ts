@@ -748,10 +748,12 @@ export type Database = {
       open_identity_document: { Args: { p_document: string; p_reason: string }; Returns: Json };
       /**
        * Fournie par la migration backend 20261109093000_crm_context_agent_inbox.sql.
-       * Argument définitif : `p_order_id`. L'union garde le build vert tant que
-       * les appelants hétérogènes (`p_order`) n'ont pas été alignés.
+       * Argument définitif : `p_order` (uuid). L'union tolère l'ancien nom côté
+       * appelants le temps de l'alignement.
        */
-      order_detail: { Args: { p_order_id: string } | { p_order: string }; Returns: Json };
+      order_detail: { Args: { p_order: string } | { p_order_id: string }; Returns: Json };
+      /** Backend 20261109093000 : file bornée pour un agent (service_role seul). */
+      agent_inbox: { Args: { p_pole: string }; Returns: Json };
       requests_pending: { Args: Record<string, never>; Returns: Json };
       request_detail: { Args: { p_request: string }; Returns: Json };
       agents_overview: { Args: Record<string, never>; Returns: Json };
