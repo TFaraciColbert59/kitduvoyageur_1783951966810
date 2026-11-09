@@ -66,7 +66,7 @@ fermée par une mesure ou une capture, pas par une impression.
 
 - [x] Morphing de la pilule titre + point d'édition
 - [x] Cascade des lignes du tiroir 0/30/60/90 ms
-- [ ] Lentille chromatique : barre globale, hors fiche (non faite)
+- [x] Lentille chromatique : glow au press/glissement de la barre globale
 - [x] Poignée de carte : drag > 20 px et clic
 - [~] `prefers-reduced-motion` respecté ; `prefers-reduced-transparency` global seulement
 
