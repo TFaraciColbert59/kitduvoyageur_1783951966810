@@ -26,7 +26,7 @@ export default function LoginPage() {
         <span className={s.muted} style={{ fontSize: 12.5 }}>
           Double authentification obligatoire
         </span>
-        <Link href="/double-authentification" style={{ fontSize: 12.5, fontWeight: 600 }}>
+        <Link href="/double-authentification" className={s.linkAction}>
           Vérifier un code →
         </Link>
       </div>

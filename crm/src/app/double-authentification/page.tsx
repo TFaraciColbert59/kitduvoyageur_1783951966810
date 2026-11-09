@@ -23,7 +23,7 @@ export default function MfaPage() {
     >
       <MfaPanel />
       <div className={s.rowFlexWrap} style={{ justifyContent: 'space-between' }}>
-        <Link href="/connexion" style={{ fontSize: 12.5, fontWeight: 600 }}>
+        <Link href="/connexion" className={s.linkAction}>
           ← Revenir à la connexion
         </Link>
       </div>

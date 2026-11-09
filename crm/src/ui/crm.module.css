@@ -1089,3 +1089,12 @@ textarea.field {
   display: flex;
   flex-direction: column;
 }
+
+/* Lien d'action secondaire : cible tactile d'au moins 44 px (WCAG 2.2 AA, contrôle 32). */
+.linkAction {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 12.5px;
+  font-weight: 600;
+}
