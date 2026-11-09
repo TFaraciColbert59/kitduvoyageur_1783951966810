@@ -15,8 +15,14 @@ Un écart = différence entre l'attendu (bundle) et l'existant. Ne jamais suppri
 | E-0010 | 2026-11-09 | base-de-donnees | 04_CATALOGUE_ACTIONS | 23 commandes sans effet porté par le moteur → `0A000` + `hint='domain_pending'` (jamais un faux succès) : place_set_verified, place_update, place_merge, place_photo_set, map_point_verify, story_comment_remove, carnet_media_remove, club_event_cancel, trip_unpublish, qa_moderate, ama_schedule, ama_question_moderate, badge_create, badge_award_revoke, challenge_create, season_open_close, progression_event_reverse, content_feature, route_revision_fix, gear_function_review, affiliate_clicks_view, ai_usage_view, delivery_failures_view. | haute | base-de-donnees | T-5.x | ouvert | | Effets portés + test pgTAP par commande |
 | E-0011 | 2026-11-09 | base-de-donnees | 03 § 2 M00 | M00 partiel assumé : `public_profiles` reste `security_invoker=false` (décision D-0004) ; `public.app_settings_public()` pas branchée côté LKDV. | moyenne | base-de-donnees | T-1.01 | ouvert | | Décision validée + fonction branchée ou écart fermé |
 | E-0009 | 2026-11-09 | orchestrateur | EX-LKDV-05 | L'ancien `/admin` de LKDV n'est pas retiré (dépend de la mise en production du CRM). | haute | deploiement | T-8.x | blocked-by-tony | | E-0001/E-0002 levés puis retrait + test 404 |
+| E-0012 | 2026-11-09 | auditeur | 00_PROMPT_MAITRE § 3 | ETAT.md annonçait « 0 écart ouvert » alors que ECARTS en portait 10 (A-01 de l'audit). | critique | orchestrateur | T-0.06 | fermé | 2026-11-09 | ETAT.md mis à jour (3/5/5/1) |
+| E-0013 | 2026-11-09 | auditeur | 07_VERIFICATION § 3 | Aucune matrice de couverture des 88 EX : seuls 7 identifiants étaient cités dans `preuves/`. | haute | orchestrateur | T-0.06 | fermé | 2026-11-09 | `preuves/exigences/COUVERTURE_EX.md` (88 lignes) |
+| E-0014 | 2026-11-09 | auditeur | couche 9 | Aucun test E2E exécuté (222 skips) ; l'artefact `--list` n'est pas une preuve. | haute | testeur | T-9.x | blocked-by-tony | | base migrée + comptes `is_demo` (P4/P10) |
+| E-0015 | 2026-11-09 | auditeur | couche 6 | 6 / 48 captures, aucune des 8 maquettes. | haute | parite-design | T-7.x | blocked-by-tony | | session aal2 + base migrée |
+| E-0016 | 2026-11-09 | auditeur | couche 1/10 | Logs de build et de CI non archivés. | moyenne | orchestrateur | T-0.06 | fermé | 2026-11-09 | `preuves/build/build-2026-11-09.log`, `preuves/ci/HISTORIQUE_CI.md` |
+| E-0017 | 2026-11-09 | auditeur | 08 § 1.13 | `service_role` apparaît dans 5 fichiers hors `src/server` (commentaires, libellés, regex) ; aucune instanciation cliente. | basse | orchestrateur | T-0.06 | fermé | 2026-11-09 | grep vérifié : aucune clé ni client |
 
 ## Historique des audits
 | Audit | Date | Écarts nouveaux | Écarts ouverts à la fin | Note mini (axe) | Rapport |
 | --- | --- | --- | --- | --- | --- |
-| 1 | | | | | `preuves/audits/audit-1.md` |
+| 1 | 2026-11-09 | 10 (E-0012→E-0017 + A-01→A-10 de l'audit) | 13 | Complétude 44 / Sécurité 74 | `preuves/audits/audit-1.md` |

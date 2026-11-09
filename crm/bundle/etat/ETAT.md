@@ -1,6 +1,6 @@
 # État du chantier LKDV Control
 
-Mis à jour : 2026-11-09 05:55 (Europe/Paris) — cycle 2
+Mis à jour : 2026-11-09 18:10 (Europe/Paris) — cycle 3
 
 ## En une phrase
 Application CRM complète (30 routes) qui compile et se construit ; 18 migrations M00→M15 appliquées sans erreur sur une base locale reproduisant le schéma de production ; moteur de commandes vérifié (masquage + audit + notification + refus). Déploiement bloqué : pas de sauvegarde P4, pas de droit de création de projet Vercel.
@@ -11,27 +11,27 @@ Phase 0 — Préparation et point de référence · branche `crm/phase-0-prepara
 ## Compteurs (preuves à l'appui)
 | Élément | Fait / total | Bloqué par Tony |
 | --- | --- | --- |
-| Exigences `EX-…` | 24 / 88 (preuves locales) | 6 (P4, P5, P7, P8, P3, P10) |
-| Actions `ACT-…` | 144 / 144 enregistrées et appelables (tests pgTAP/E2E à faire) | 0 |
+| Exigences `EX-…` | 14 prouvées / 88 ; 53 partielles ; 7 non prouvées (matrice `preuves/exigences/COUVERTURE_EX.md`) | 14 (P3, P4, P5-P8, P10) |
+| Actions `ACT-…` | 144 / 144 au registre ; 121 avec effet porté ; 23 `domain_pending` (E-0010) | 0 |
 | Commandes transverses `T-…` | 0 / 10 | 0 |
-| Migrations M00–M15 appliquées en production | 0 / 16 (prêtes, testées localement) | 16 |
-| Écrans conformes à la maquette | 8 / 8 livrés (captures authentifiées à faire) | — |
-| Écarts ouverts (critique / haute / moyenne / basse) | 0 / 0 / 0 / 0 | — |
+| Migrations M00–M15 appliquées en production | 0 / 19 fichiers (prêtes, testées sur base locale ; CI en cours) | 19 (P4) |
+| Écrans conformes à la maquette | 0 / 8 capturés (6 / 48 captures) ; 8 écrans livrés et buildés | — |
+| Écarts ouverts (critique / haute / moyenne / basse) | 3 / 5 / 5 / 1 (voir ECARTS.md) | — |
 
 ## Couches de vérification (dernier passage)
 | # | Couche | Statut | Date | Preuve |
 | --- | --- | --- | --- | --- |
 | 1 | Statique | vert local | 2026-11-09 | `tsc --noEmit` 0 erreur, `next lint` 0 avertissement, `next build` OK |
 | 2 | Unitaire | vert local | 2026-11-09 | 87+ tests Vitest (lib + serveur + contrat) |
-| 3 | Base | vert local (shim) | 2026-11-09 | 18 migrations appliquées, 144 commandes, `run_command` prouvé |
+| 3 | Base | en cours (CI) | 2026-11-09 | 19 migrations appliquées sur base éphémère ; pgTAP 10 suites, 1 fixture en correction |
 | 4 | Contrat d'API | — | | |
-| 5 | Accessibilité | — | | |
-| 6 | Parité visuelle | — | | |
-| 7 | Performance | — | | |
-| 8 | Sécurité | — | | |
-| 9 | E2E | — | | |
-| 10 | Production | — | | |
-| 11 | Audit indépendant | — | | |
+| 5 | Accessibilité | partiel | 2026-11-09 | 4 tests rouges corrigés (cibles 44 px) ; rejeu axe non archivé |
+| 6 | Parité visuelle | partiel | 2026-11-09 | 6 / 48 captures (3 écrans publics ×2) ; 0 capture des 8 maquettes |
+| 7 | Performance | non mesuré | | seuils écrits dans les tests |
+| 8 | Sécurité | partiel | 2026-11-09 | grep secrets/écritures, advisors avant relevés ; banc d’injection non exécuté |
+| 9 | E2E | non exécuté | | 21 fichiers écrits, 204 skips motivés (base migrée requise) |
+| 10 | Production | bloqué | | P3/P4 |
+| 11 | Audit indépendant | fait (audit-1) | 2026-11-09 | `preuves/audits/audit-1.md` — verdict NON |
 
 ## Dernière tâche terminée
 T-0.02/0.03/0.04 — captures des 8 maquettes, état base relevé, socle applicatif (UI 30 routes + backend + tests)
