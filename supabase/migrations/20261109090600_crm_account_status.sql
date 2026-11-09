@@ -228,6 +228,7 @@ as $$
 $$;
 
 revoke all on function public.account_can_write() from public, anon;
-grant execute on function public.account_can_write() to authenticated, service_role;
+-- La policy restrictive est évaluée aussi pour anon : EXECUTE doit rester accordé.
+grant execute on function public.account_can_write() to anon, authenticated, service_role;
 revoke all on function public.my_account_status() from public, anon;
 grant execute on function public.my_account_status() to authenticated, service_role;
