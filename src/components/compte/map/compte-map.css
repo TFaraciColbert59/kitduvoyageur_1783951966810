@@ -1121,3 +1121,26 @@
   max-height: calc(100% - var(--bottom-nav-height, 60px) - 24px);
   overflow-y: auto;
 }
+
+
+/* Fiche carnet : tiroir ouvert = carte en « mode contexte » (maquette
+   `.mapzone[data-map-context] .map`), contrôles masqués (`.sheet-open .mctl`).
+   Sans transition de filtre : on n'anime que transform et opacity. */
+.lkdv-map-root[data-map-variant='carnet'][data-map-context='true'] .lkdv-map-canvas {
+  filter: saturate(0.6) brightness(0.97);
+}
+
+.lkdv-map-hud[data-hidden='true'] {
+  opacity: 0;
+  transform: translateY(12px);
+  pointer-events: none;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lkdv-map-hud[data-hidden='true'] {
+    transition: none;
+  }
+}

@@ -86,6 +86,17 @@ export interface CompteMapProps {
     type?: string;
     badge?: string;
   }>;
+  /** Une trace par jour : la fiche carnet les peint toutes, le jour actif en avant. */
+  dayTraces?: Array<{ day: number; coordinates: Array<[number, number]> }>;
+  /** Toucher la trace d'un jour change de jour (fiche carnet). */
+  onDayPick?: (day: number) => void;
+  /** Toucher un marqueur cliquable (moment) : identifiant du marqueur. */
+  onMarkerPick?: (id: string) => void;
+  /**
+   * Tiroir ouvert : carte en « mode contexte » (`saturate(.6) brightness(.97)`),
+   * contrôles masqués (maquette `.mapzone[data-map-context]`, `.sheet-open .mctl`).
+   */
+  contextMode?: boolean;
 }
 
 type Selected =
@@ -286,7 +297,17 @@ export function CompteMap({
   livePosition = null,
   publicZone = null,
   markers = [],
+  dayTraces,
+  onDayPick,
+  onMarkerPick,
+  contextMode = false,
 }: CompteMapProps) {
+  const onDayPickRef = useRef(onDayPick);
+  const onMarkerPickRef = useRef(onMarkerPick);
+  useEffect(() => {
+    onDayPickRef.current = onDayPick;
+    onMarkerPickRef.current = onMarkerPick;
+  }, [onDayPick, onMarkerPick]);
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
@@ -720,7 +741,7 @@ export function CompteMap({
         paint: { 'line-color': '#17402C', 'line-width': 3, 'line-opacity': 0.9 },
       });
     });
-    const visible = tracePoints.length >= 2 ? 'visible' : 'none';
+    const visible = tracePoints.length >= 2 && !(dayTraces && dayTraces.length > 0) ? 'visible' : 'none';
     for (const layer of [
       'compte-carnet-trace-casing',
       'compte-carnet-trace-glow',
@@ -728,7 +749,112 @@ export function CompteMap({
     ]) {
       if (map.getLayer(layer)) map.setLayoutProperty(layer, 'visibility', visible);
     }
-  }, [map, ready, isCarnet, tracePoints]);
+  }, [map, ready, isCarnet, tracePoints, dayTraces]);
+
+  /* Traces des jours (spec 01 § 1.3) : blanc 6 / sauge 7 / forêt 3, le jour affiché
+     en avant et les autres atténuées. Une couche de capture large (22 px) rend la
+     trace touchable : toucher la trace d'un jour change de jour. */
+  useEffect(() => {
+    if (!map || !ready || !isCarnet) return;
+    const collection = {
+      type: 'FeatureCollection' as const,
+      features: (dayTraces ?? []).map((trace) => ({
+        type: 'Feature' as const,
+        properties: { day: trace.day },
+        geometry: { type: 'LineString' as const, coordinates: trace.coordinates },
+      })),
+    };
+    ensureSource(map, 'compte-carnet-days', collection as unknown as ReturnType<typeof tracksCollection>);
+    const layout = { 'line-cap': 'round', 'line-join': 'round' } as const;
+    ensureLayer(map, 'compte-carnet-days-casing', () => {
+      map.addLayer({
+        id: 'compte-carnet-days-casing',
+        type: 'line',
+        source: 'compte-carnet-days',
+        layout,
+        paint: { 'line-color': '#FFFFFF', 'line-width': 6, 'line-opacity': 0.68 },
+      });
+    });
+    ensureLayer(map, 'compte-carnet-days-glow', () => {
+      map.addLayer({
+        id: 'compte-carnet-days-glow',
+        type: 'line',
+        source: 'compte-carnet-days',
+        layout,
+        paint: { 'line-color': '#5B7F55', 'line-width': 7, 'line-opacity': 0.35, 'line-blur': 4 },
+      });
+    });
+    ensureLayer(map, 'compte-carnet-days-line', () => {
+      map.addLayer({
+        id: 'compte-carnet-days-line',
+        type: 'line',
+        source: 'compte-carnet-days',
+        layout,
+        paint: { 'line-color': '#17402C', 'line-width': 3, 'line-opacity': 0.9 },
+      });
+    });
+    ensureLayer(map, 'compte-carnet-days-hit', () => {
+      map.addLayer({
+        id: 'compte-carnet-days-hit',
+        type: 'line',
+        source: 'compte-carnet-days',
+        layout,
+        paint: { 'line-color': '#FFFFFF', 'line-width': 22, 'line-opacity': 0.01 },
+      });
+    });
+    const wanted = dayTraces && dayTraces.length > 0 ? 'visible' : 'none';
+    for (const layer of [
+      'compte-carnet-days-casing',
+      'compte-carnet-days-glow',
+      'compte-carnet-days-line',
+      'compte-carnet-days-hit',
+    ]) {
+      if (map.getLayer(layer)) map.setLayoutProperty(layer, 'visibility', wanted);
+    }
+    /* Le jour affiché en avant : opacité pleine, les autres atténuées. */
+    const emphasise = (base: number, dim: number) =>
+      activeDay && activeDay > 0
+        ? ['case', ['==', ['get', 'day'], activeDay], base, dim]
+        : base;
+    const setOpacity = (layer: string, base: number, dim: number) => {
+      if (map.getLayer(layer)) {
+        map.setPaintProperty(layer, 'line-opacity', emphasise(base, dim) as never);
+      }
+    };
+    setOpacity('compte-carnet-days-casing', 0.68, 0.25);
+    setOpacity('compte-carnet-days-glow', 0.35, 0.1);
+    setOpacity('compte-carnet-days-line', 0.9, 0.3);
+    if (activeDay && activeDay > 0 && map.getLayer('compte-carnet-days-line')) {
+      /* Ordre de rendu : le jour affiché ne passe jamais sous un autre. */
+      map.setPaintProperty('compte-carnet-days-line', 'line-width', ['case', ['==', ['get', 'day'], activeDay], 3.4, 2.4] as never);
+    } else if (map.getLayer('compte-carnet-days-line')) {
+      map.setPaintProperty('compte-carnet-days-line', 'line-width', 3);
+    }
+  }, [map, ready, isCarnet, dayTraces, activeDay]);
+
+  useEffect(() => {
+    if (!map || !ready || !isCarnet) return;
+    const layer = 'compte-carnet-days-hit';
+    if (!map.getLayer(layer)) return;
+    const onClick = (event: MapLayerMouseEvent) => {
+      const day = Number(event.features?.[0]?.properties?.day);
+      if (Number.isFinite(day) && day > 0) onDayPickRef.current?.(day);
+    };
+    const enter = () => {
+      map.getCanvas().style.cursor = 'pointer';
+    };
+    const leave = () => {
+      map.getCanvas().style.cursor = '';
+    };
+    map.on('click', layer, onClick);
+    map.on('mouseenter', layer, enter);
+    map.on('mouseleave', layer, leave);
+    return () => {
+      map.off('click', layer, onClick);
+      map.off('mouseenter', layer, enter);
+      map.off('mouseleave', layer, leave);
+    };
+  }, [map, ready, isCarnet, dayTraces]);
 
   /* Cadrage du tracé du carnet : le parcours remplit la bande carte, en 3D
      (même inclinaison que la carte d'une sortie du Compte). */
@@ -963,9 +1089,20 @@ export function CompteMap({
     carnetMarkerRefs.current = [];
 
     for (const marker of markers) {
-      const el = document.createElement('div');
+      const clickable = Boolean(marker.id.startsWith('moment-') && onMarkerPickRef.current);
+      const el = document.createElement(clickable ? 'button' : 'div');
+      if (clickable) (el as HTMLButtonElement).type = 'button';
       el.className = 'lkdv-carnet-map-marker';
+      el.dataset.markerType = marker.type ?? 'poi';
+      el.dataset.markerId = marker.id;
       el.title = marker.title;
+      if (clickable) {
+        el.setAttribute('aria-label', marker.title);
+        el.addEventListener('click', (event) => {
+          event.stopPropagation();
+          onMarkerPickRef.current?.(marker.id);
+        });
+      }
       if (marker.badge) {
         el.classList.add('has-badge');
         const badge = document.createElement('span');
@@ -973,21 +1110,6 @@ export function CompteMap({
         badge.textContent = marker.badge;
         el.appendChild(badge);
         el.setAttribute('aria-label', `${marker.badge} · ${marker.title}`);
-      } else {
-        const scrub = marker.type === 'scrub';
-        el.style.width = scrub ? '14px' : '18px';
-        el.style.height = scrub ? '14px' : '18px';
-        el.style.borderRadius = '9999px';
-        el.style.background =
-          marker.type === 'start'
-            ? '#FFFFFF'
-            : marker.type === 'bivouac' || marker.type === 'refuge' || marker.type === 'end'
-              ? '#5B7F55'
-              : '#17402C';
-        el.style.border = marker.type === 'start' ? '2px solid #17402C' : '2px solid #FFFFFF';
-        el.style.boxShadow = scrub
-          ? '0 0 0 5px rgba(23,64,44,0.18), 0 2px 6px rgba(0,0,0,0.3)'
-          : '0 2px 6px rgba(0,0,0,0.3)';
       }
 
       const m = new Marker({ element: el, anchor: 'center' })
@@ -999,12 +1121,6 @@ export function CompteMap({
     if (livePosition) {
       const el = document.createElement('div');
       el.className = 'lkdv-carnet-live-marker';
-      el.style.width = '16px';
-      el.style.height = '16px';
-      el.style.borderRadius = '9999px';
-      el.style.background = '#226148';
-      el.style.border = '2.5px solid #FFFFFF';
-      el.style.boxShadow = '0 0 0 4px rgba(34,97,72,0.35)';
 
       const m = new Marker({ element: el, anchor: 'center' })
         .setLngLat([livePosition.lng, livePosition.lat])
@@ -1015,11 +1131,6 @@ export function CompteMap({
     if (publicZone) {
       const el = document.createElement('div');
       el.className = 'lkdv-carnet-public-zone';
-      el.style.width = '48px';
-      el.style.height = '48px';
-      el.style.borderRadius = '9999px';
-      el.style.background = 'rgba(91,127,85,0.2)';
-      el.style.border = '1.5px dashed rgba(23,64,44,0.4)';
 
       const m = new Marker({ element: el, anchor: 'center' })
         .setLngLat([publicZone.centerLng, publicZone.centerLat])
@@ -1098,6 +1209,7 @@ export function CompteMap({
       data-map-dimmed={config.dimmed ? 'true' : 'false'}
       data-map-fallback={fallback ? 'true' : 'false'}
       data-map-variant={variant}
+      data-map-context={contextMode ? 'true' : 'false'}
       data-map-trace={isCarnet ? (tracePoints.length >= 2 ? 'true' : 'false') : 'account'}
       data-offline={!online ? 'true' : 'false'}
     >
@@ -1116,8 +1228,20 @@ export function CompteMap({
         <div className="lkdv-map-loading" aria-hidden="true" />
       ) : null}
 
-      {fallback || styleFailed ? (
+      {(fallback || styleFailed) && !isCarnet ? (
         <CompteMapFallback tracks={data?.tracks ?? []} massifs={data?.massifs ?? []} />
+      ) : null}
+
+      {(fallback || styleFailed) && isCarnet ? (
+        <CompteMapState
+          kind="neutral"
+          title="Carte indisponible."
+          hint={
+            online
+              ? 'Le fond de carte ne répond pas. Le tracé reste lisible dans les tiroirs.'
+              : 'Tu es hors ligne : le fond de carte reviendra avec la connexion.'
+          }
+        />
       ) : null}
 
       {showGuest ? <CompteMapState kind="guest" /> : null}
@@ -1156,6 +1280,7 @@ export function CompteMap({
           !query.isError &&
           !fallback)) ? (
         <CompteMapHud
+          hidden={contextMode}
           config={config}
           scale={scale}
           onScale={handleScale}

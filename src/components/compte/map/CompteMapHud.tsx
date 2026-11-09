@@ -29,6 +29,8 @@ export interface CompteMapHudProps {
   onZoomOut: () => void;
   /** Le carnet garde les trois contrôles de la maquette (pas de calques). */
   showLayers?: boolean;
+  /** Tiroir ouvert (fiche carnet) : contrôles masqués, retirés de l'ordre de tabulation. */
+  hidden?: boolean;
 }
 
 const SCALE_ITEMS = [
@@ -54,11 +56,17 @@ export function CompteMapHud({
   onZoomIn,
   onZoomOut,
   showLayers = true,
+  hidden = false,
 }: CompteMapHudProps) {
   if (config.hud === 'none') return null;
 
   return (
-    <div className="lkdv-map-hud">
+    <div
+      className="lkdv-map-hud"
+      data-hidden={hidden ? 'true' : undefined}
+      aria-hidden={hidden ? true : undefined}
+      inert={hidden ? true : undefined}
+    >
       <div className="lkdv-map-scale" role="group" aria-label="Échelle de la carte">
         {SCALE_ITEMS.map(({ id, label, Icon }) => (
           <button
