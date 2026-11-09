@@ -86,6 +86,8 @@ async function main() {
           f(suivant);
           window.__state = suivant;
           window.__scene.update(suivant);
+          // Le rail suit l'etat comme les cartes de l'app (CardsView relit le kit a chaque changement).
+          remplirRail(suivant);
         };
         window.__THREE = THREE;
 
@@ -106,19 +108,38 @@ async function main() {
           rail.appendChild(el);
         }
 
-        // Populate thumbnails in UI rail
+        // Vignettes du rail. Les corps prennent le coloris de l'etat courant, comme optionCards :
+        // le rail fige sur Foret ne pouvait pas prouver que les vignettes suivent le coloris choisi.
         const engine = getThumbnailEngine();
         const thumbEls = document.querySelectorAll('[data-thumb-key]');
+        const desabonnements = new Map();
+        function remplirRail(etat) {
+          const kit = etat.kits[etat.kitId];
+          const conf = etat.config[kit.bag] ?? {};
+          const cw = COLORWAYS[kit.cw] ?? COLORWAYS.foret;
+          const couleurs = {
+            body: conf.body?.col ?? cw.body,
+            pocket: conf.front?.col ?? cw.pocket,
+            trim: conf.harness?.col ?? cw.trim,
+          };
+          thumbEls.forEach((el) => {
+            if (el.getAttribute('data-thumb-kind') !== 'b') return;
+            const ref = bagThumb(el.getAttribute('data-thumb-id'), couleurs);
+            if (el.getAttribute('data-thumb-key') === ref.key) return;
+            el.setAttribute('data-thumb-key', ref.key);
+            desabonnements.get(el)?.();
+            desabonnements.set(el, engine.subscribe(ref.key, (url) => {
+              if (url) el.innerHTML = '<img src="' + url + '" style="width:100%;height:100%;object-fit:contain;" />';
+            }));
+            engine.request(ref.key, { spec: ref.spec, priority: 100 });
+          });
+        }
+        remplirRail(state);
         thumbEls.forEach((el) => {
-          const key = el.getAttribute('data-thumb-key');
           const kind = el.getAttribute('data-thumb-kind');
           const id = el.getAttribute('data-thumb-id');
           if (kind === 'b') {
-            const ref = bagThumb(id, { body: 'm-2d482a', pocket: 'm-3d6038', trim: 'm-1e301c' });
-            engine.subscribe(ref.key, (url) => {
-              if (url) el.innerHTML = '<img src="' + url + '" style="width:100%;height:100%;object-fit:contain;" />';
-            });
-            engine.request(ref.key, { spec: ref.spec, priority: 100 });
+            return;
           } else if (kind === 'm') {
             const ref = moduleThumb(id);
             engine.subscribe(ref.key, (url) => {
