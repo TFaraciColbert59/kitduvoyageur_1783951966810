@@ -48,12 +48,15 @@ import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useCarnetDayReactions } from '@/features/carnet/detail/useCarnetDayReactions';
 import { useKitFork } from '@/features/carnet/detail/useKitFork';
 import { useCarnetDialog } from './useCarnetDialog';
+import { CarnetPostGrid } from './CarnetPostGrid';
+import { MOMENT_TYPE_LABELS, isMomentType, type MomentType } from '@/features/carnet/detail/momentTypes';
+import { dayMetric, selectDayData } from '@/features/carnet/detail/dayView';
+import { isParticipantRole } from '@/features/carnet/detail/viewerRole';
 import { CarnetAltitude } from './CarnetAltitude';
 import { elevationProfileGain } from '@/features/carnet/detail/elevationProfile';
 
 export type CarnetSlotId = 'fil' | 'route' | 'sac' | 'chiffres' | 'equipage';
 
-/** Seuil (px) au-delà duquel la descente dans une lentille est mémorisée. */
 /** Rôles du carnet : les données serveur sont en anglais, l'interface en français. */
 function roleLabel(role: string): string {
   if (role === 'author') return 'auteur';
@@ -62,9 +65,6 @@ function roleLabel(role: string): string {
   return role;
 }
 
-const RESUME_MEMO_MIN = 20;
-/** Seuil (px) sous lequel la lentille est considérée « en haut ». */
-const RESUME_TOP_MAX = 10;
 
 /**
  * Cascade des lignes du tiroir — maquette `.ds-row` (`sheetRowIn`) :
@@ -99,7 +99,26 @@ export interface CarnetDrawerV2Props {
   onSelectMoment?: (moment: CarnetMomentItem, index: number) => void;
   onOpenStories?: () => void;
   isAccountDrawer?: boolean;
+  /** Mode modification : « + Ajouter … » et pilules « Modifier » en place. */
+  isEditing?: boolean;
+  /** Ouvre la feuille « Créer » (type d'emblée pour « + Ajouter une rencontre »). */
+  onCreate?: (type?: MomentType) => void;
+  /** Moments épinglés (coche sur les tuiles). */
+  pinnedIds?: ReadonlySet<string>;
+  /** Slot et lentille actifs, lus par la carte du bas (couches réduites au tiroir). */
+  onContextChange?: (context: { slot: CarnetSlotId | 'account'; lensId: string } | null) => void;
+  /** Toucher une barre de jour dans Chiffres : change le jour de la fiche. */
+  onDayPick?: (day: number) => void;
+  /** Ouverture demandée par la carte du haut (pastille À la une) ; `nonce` la rejoue. */
+  intent?: { nonce: number; view: StackIntent } | null;
+  /** Banc seulement : force l'état d'erreur d'un slot ou d'une lentille. */
+  forceError?: { slot?: boolean; lens?: string } | null;
 }
+
+export type StackIntent =
+  | { type: 'lens'; slot: CarnetSlotId; index: number }
+  | { type: 'participant'; userId: string }
+  | { type: 'etape'; etapeId: string };
 
 type StackView =
   | { type: 'etape'; etape: CarnetEtapeDay }
@@ -112,6 +131,64 @@ type StackView =
       detailText?: string | null;
     }
   | { type: 'participant'; participant: CarnetParticipant };
+
+/** « + Ajouter … » du mode modification (maquette `edcap`). */
+function AddCaption({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <div className="lkdv-ed">
+      <button type="button" className="lkdv-edcap" aria-label={label} onClick={onClick}>
+        + {label}
+      </button>
+    </div>
+  );
+}
+
+/** Carte d'état vide ou d'erreur d'une lentille (`.empty`). */
+function LensState({
+  tone = 'empty',
+  title,
+  hint,
+  action,
+}: {
+  tone?: 'empty' | 'error';
+  title: string;
+  hint?: string;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div className="lkdv-lens-state" data-tone={tone} role={tone === 'error' ? 'alert' : 'status'}>
+      <span className="lkdv-lens-state-gl" aria-hidden="true">
+        {tone === 'error' ? '!' : '○'}
+      </span>
+      <b>{title}</b>
+      {hint ? <p>{hint}</p> : null}
+      {action}
+    </div>
+  );
+}
+
+/** Une lentille qui plante n'emporte pas les autres : état d'erreur + « Réessayer ». */
+class LensBoundary extends React.Component<
+  { resetKey: string; fallback: React.ReactNode; children: React.ReactNode },
+  { crashed: boolean }
+> {
+  state = { crashed: false };
+  static getDerivedStateFromError() {
+    return { crashed: true };
+  }
+  componentDidUpdate(prev: { resetKey: string }) {
+    if (prev.resetKey !== this.props.resetKey && this.state.crashed) {
+      this.setState({ crashed: false });
+    }
+  }
+  render() {
+    return this.state.crashed ? this.props.fallback : this.props.children;
+  }
+}
+
+function Boom(): React.ReactElement {
+  throw new Error('lentille simulée en échec');
+}
 
 export function CarnetDrawerV2({
   isOpen,
@@ -127,8 +204,20 @@ export function CarnetDrawerV2({
   onSelectMoment,
   onOpenStories,
   isAccountDrawer = false,
+  isEditing = false,
+  onCreate,
+  pinnedIds,
+  onContextChange,
+  onDayPick,
+  intent = null,
+  forceError = null,
 }: CarnetDrawerV2Props) {
   const { haptic } = useHapticFeedback();
+  const dayData = useMemo(() => selectDayData(detail, activeDay), [detail, activeDay]);
+  const dayPhotoMoments = dayData.photoMoments;
+  const canEdit = isEditing && isParticipantRole(detail.viewerRole);
+  const [slotRetry, setSlotRetry] = useState(0);
+  const [lensRetry, setLensRetry] = useState(0);
   const [lensIndexBySlot, setLensIndexBySlot] = useState<Record<CarnetSlotId, number>>({
     fil: 0,
     route: 0,
@@ -208,7 +297,7 @@ export function CarnetDrawerV2({
 
   // Lenses for each slot
   const slotLenses: Record<CarnetSlotId, SlotLens[]> = useMemo(() => {
-    const isVisitor = detail.viewerRole === 'visitor';
+    const isViewerParticipant = isParticipantRole(detail.viewerRole);
     return {
       fil: [
         { id: 'moments', label: 'Moments', icon: <Clock size={15} /> },
@@ -219,8 +308,8 @@ export function CarnetDrawerV2({
       route: [
         { id: 'etapes', label: 'Étapes', icon: <Flag size={15} /> },
         { id: 'altitude', label: 'Altitude', icon: <Mountain size={15} /> },
-        { id: 'nuits', label: 'Nuits', icon: <Moon size={15} /> },
-        { id: 'meteo', label: 'Météo', icon: <CloudSun size={15} /> },
+        { id: 'nuits', label: 'Nuit', icon: <Moon size={15} /> },
+        { id: 'meteo', label: 'Météo et ciel', icon: <CloudSun size={15} /> },
       ],
       sac: [
         { id: 'kit', label: 'Kit', icon: <Package size={15} /> },
@@ -232,7 +321,7 @@ export function CarnetDrawerV2({
         { id: 'denivele', label: 'Dénivelé', icon: <TrendingUp size={15} /> },
         { id: 'duree', label: 'Durée', icon: <Timer size={15} /> },
         // Budget is only displayed if participant or budget data is available
-        ...(!isVisitor && detail.budget
+        ...(isViewerParticipant
           ? [{ id: 'budget', label: 'Budget', icon: <Wallet size={15} /> }]
           : []),
       ],
@@ -242,7 +331,7 @@ export function CarnetDrawerV2({
         { id: 'suivre', label: 'Suivre', icon: <Radio size={15} /> },
       ],
     };
-  }, [detail.budget, detail.viewerRole]);
+  }, [detail.viewerRole]);
 
   // Account / Settings Tabs
   const accountTabs = useMemo(() => {
@@ -255,76 +344,55 @@ export function CarnetDrawerV2({
     ];
   }, [detail.isOwner]);
 
-  // ---- Lecture : position mémorisée par lentille (`${slot}:${lens.id}`) ----
-  const activeLensId = (slotLenses[activeSlot] ?? [])[activeLensIndex]?.id;
-  const activeLensKey = activeLensId ? `${activeSlot}:${activeLensId}` : null;
-  const scrollMemoRef = useRef<Record<string, number>>({});
-  const paneRootRef = useRef<HTMLDivElement | null>(null);
-  const [resumePill, setResumePill] = useState<{ key: string; top: number } | null>(null);
-
-  // Le conteneur du tiroir porte aussi le piège de focus de `useCarnetDialog` :
-  // un seul nœud, deux références.
-  const attachPaneRoot = useCallback(
-    (node: HTMLDivElement | null) => {
-      paneRootRef.current = node;
-      dialogRef.current = node;
-    },
-    [dialogRef]
-  );
-
+  /* Contexte lu par la carte du bas : slot + lentille actifs (couches réduites). */
+  const activeLensId = (slotLenses[activeSlot] ?? [])[activeLensIndex]?.id ?? '';
   useEffect(() => {
-    if (!isOpen || !activeLensKey) {
-      setResumePill(null);
+    if (!onContextChange) return;
+    if (!isOpen) {
+      onContextChange(null);
       return;
     }
-    const root = paneRootRef.current;
-    if (!root) return;
+    onContextChange({ slot: isAccountDrawer ? 'account' : activeSlot, lensId: activeLensId });
+  }, [activeLensId, activeSlot, isAccountDrawer, isOpen, onContextChange]);
 
-    const readPane = () =>
-      root.querySelector<HTMLElement>('.lkdv-lens-pane[data-testid="slot-content"]');
+  /* Ouverture demandée par une pastille « À la une » : fiche voyageur ou étape. */
+  const lastIntent = useRef(0);
+  useEffect(() => {
+    if (!isOpen || !intent || intent.nonce === lastIntent.current) return;
+    lastIntent.current = intent.nonce;
+    if (intent.view.type === 'lens') {
+      const target = intent.view;
+      setLensIndexBySlot((prev) => ({ ...prev, [target.slot]: target.index }));
+    } else if (intent.view.type === 'participant') {
+      const userIdWanted = intent.view.userId;
+      const participant = detail.participants.find((p) => p.userId === userIdWanted);
+      if (participant) setStack([{ type: 'participant', participant }]);
+    } else {
+      const etapeId = intent.view.etapeId;
+      const etape = detail.etapes.find((e) => e.id === etapeId);
+      if (etape) setStack([{ type: 'etape', etape }]);
+    }
+  }, [detail.etapes, detail.participants, intent, isOpen]);
 
-    const syncPill = (key: string, top: number) => {
-      const saved = scrollMemoRef.current[key] ?? 0;
-      // Nulle, ou déjà à la position mémorisée : pas de pilule.
-      const visible = saved > 0 && top < RESUME_TOP_MAX && Math.abs(saved - top) > RESUME_TOP_MAX;
-      setResumePill((prev) => {
-        if (!visible) return prev === null ? prev : null;
-        if (prev && prev.key === key && prev.top === saved) return prev;
-        return { key, top: saved };
-      });
-    };
-
-    syncPill(activeLensKey, readPane()?.scrollTop ?? 0);
-
-    const onScroll = (event: Event) => {
-      const pane = event.target as HTMLElement | null;
-      if (!pane || typeof pane.classList === 'undefined') return;
-      if (!pane.classList.contains('lkdv-lens-pane')) return;
-      const lensId = pane.getAttribute('data-lens');
-      if (!lensId) return;
-      const key = `${activeSlot}:${lensId}`;
-      if (pane.scrollTop > RESUME_MEMO_MIN) scrollMemoRef.current[key] = pane.scrollTop;
-      syncPill(key, pane.scrollTop);
-    };
-
-    root.addEventListener('scroll', onScroll, true);
-    return () => root.removeEventListener('scroll', onScroll, true);
-  }, [isOpen, activeLensKey, activeSlot]);
-
-  const resumeReading = useCallback(() => {
-    if (!resumePill) return;
-    const root = paneRootRef.current;
-    const pane = root?.querySelector<HTMLElement>('.lkdv-lens-pane[data-testid="slot-content"]');
-    const manualReduce = Boolean(root?.closest('[data-reduce-motion="true"]'));
-    const systemReduce =
-      typeof window !== 'undefined' &&
-      typeof window.matchMedia === 'function' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const reduce = manualReduce || systemReduce;
-    pane?.scrollTo({ top: resumePill.top, behavior: reduce ? 'auto' : 'smooth' });
-    haptic('selection');
-    setResumePill(null);
-  }, [haptic, resumePill]);
+  /* « Reprendre » : le kit entier, annulable par l'île. Visible dans le slot Sac
+     et sur la fiche d'un objet seulement (maquette `syncKitPill`). */
+  const kitIds = useMemo(() => detail.kit.items.map((item) => item.id), [detail.kit.items]);
+  const kitSaved = kitIds.length > 0 && kitIds.every((id) => isForked(id));
+  const slotErrored = Boolean(forceError?.slot) && slotRetry === 0;
+  const topOfStack = stack[stack.length - 1];
+  const showKitPill =
+    isOpen &&
+    !isAccountDrawer &&
+    kitIds.length > 0 &&
+    !slotErrored &&
+    (topOfStack ? topOfStack.type === 'item' : activeSlot === 'sac');
+  const saveKit = useCallback(async () => {
+    if (kitSaved) {
+      onIsland?.('Kit enregistré dans ton Compas');
+      return;
+    }
+    await forkAllItems(kitIds);
+  }, [forkAllItems, kitIds, kitSaved, onIsland]);
 
   if (!isOpen) return null;
 
@@ -546,28 +614,17 @@ export function CarnetDrawerV2({
                 </div>
               </div>
 
-              <b style={{ fontSize: '13px', margin: '4px 0 0' }}>Médias de ce voyageur</b>
-              <div className="lkdv-ig-grid">
-                {detail.photoMoments
-                  .filter(
-                    (m) =>
-                      m.authorId === currentStackItem.participant.userId ||
-                      m.authorName === currentStackItem.participant.name
-                  )
-                  .map((m, idx) => (
-                    <button
-                      key={m.id}
-                      type="button"
-                      className="lkdv-ig-tile"
-                      onClick={() => onSelectMoment?.(m, idx)}
-                    >
-                      {m.imageUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={m.imageUrl} alt="" loading="lazy" />
-                      ) : null}
-                    </button>
-                  ))}
-              </div>
+              <b style={{ fontSize: '13px', margin: '4px 0 0' }}>Ses moments</b>
+              <CarnetPostGrid
+                moments={detail.moments.filter(
+                  (m) =>
+                    m.authorId === currentStackItem.participant.userId ||
+                    m.authorName === currentStackItem.participant.name
+                )}
+                onSelect={(m, idx) => onSelectMoment?.(m, idx)}
+                emptyLabel="Ce voyageur n’a pas encore partagé de moment."
+                pinnedIds={pinnedIds}
+              />
             </div>
           )}
         </div>
@@ -751,7 +808,20 @@ export function CarnetDrawerV2({
         if (lens.id === 'moments') {
           return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '6px' }}>
-              {detail.moments.map((m, idx) => (
+              {dayData.moments.length === 0 ? (
+                <LensState
+                  title="Aucun moment publié."
+                  hint="Ajoute ton premier moment pour le voir apparaître ici."
+                  action={
+                    canEdit ? (
+                      <button type="button" className="lkdv-lens-cta" onClick={() => onCreate?.()}>
+                        Ajouter un moment
+                      </button>
+                    ) : null
+                  }
+                />
+              ) : null}
+              {dayData.moments.map((m, idx) => (
                 <button
                   key={m.id}
                   type="button"
@@ -807,6 +877,9 @@ export function CarnetDrawerV2({
                       }}
                     >
                       <b style={{ fontSize: '13px' }}>
+                        {isMomentType(m.type) ? (
+                          <span className="lkdv-mo-kind">{MOMENT_TYPE_LABELS[m.type]}</span>
+                        ) : null}
                         {m.place || m.title || `Jour ${m.dayNumber}`}
                       </b>
                       <span style={{ fontSize: '11px', color: 'var(--label2)' }}>{m.time}</span>
@@ -828,33 +901,25 @@ export function CarnetDrawerV2({
                   </div>
                 </button>
               ))}
+              {canEdit ? <AddCaption label="Ajouter un moment" onClick={() => onCreate?.()} /> : null}
             </div>
           );
         }
         if (lens.id === 'medias') {
           return (
-            <div className="lkdv-ig-grid" style={{ padding: '6px' }}>
-              {detail.photoMoments.map((m, idx) => (
-                <button
-                  key={m.id}
-                  type="button"
-                  className="lkdv-ig-tile"
-                  onClick={() => onSelectMoment?.(m, idx)}
-                >
-                  {m.imageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={m.imageUrl} alt="" loading="lazy" />
-                  ) : null}
-                </button>
-              ))}
+            <div style={{ padding: '6px' }}>
+              <CarnetPostGrid
+                moments={dayPhotoMoments}
+                onSelect={(m, idx) => onSelectMoment?.(m, idx)}
+                emptyLabel="Pas de photo ni de vidéo pour ce jour."
+                pinnedIds={pinnedIds}
+              />
+              {canEdit ? <AddCaption label="Ajouter des médias" onClick={() => onCreate?.('photo')} /> : null}
             </div>
           );
         }
         if (lens.id === 'rencontres') {
-          const encounters = detail.moments.filter(
-            (m) =>
-              m.type === 'rencontre' || (m.caption && m.caption.toLowerCase().includes('rencontre'))
-          );
+          const encounters = dayData.moments.filter((m) => m.type === 'meet');
           return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '6px' }}>
               {encounters.length === 0 ? (
@@ -882,13 +947,7 @@ export function CarnetDrawerV2({
           );
         }
         if (lens.id === 'nature') {
-          const natureMoments = detail.moments.filter(
-            (m) =>
-              m.type === 'faune_flore' ||
-              (m.caption &&
-                (m.caption.toLowerCase().includes('faune') ||
-                  m.caption.toLowerCase().includes('flore')))
-          );
+          const natureMoments = dayData.moments.filter((m) => m.type === 'species');
           return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '6px' }}>
               {natureMoments.length === 0 ? (
@@ -921,7 +980,7 @@ export function CarnetDrawerV2({
         if (lens.id === 'etapes') {
           return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '6px' }}>
-              {detail.etapes.map((e, idx) => (
+              {dayData.etapes.map((e, idx) => (
                 <button
                   key={e.id}
                   type="button"
@@ -960,7 +1019,7 @@ export function CarnetDrawerV2({
         if (lens.id === 'nuits') {
           return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '6px' }}>
-              {(detail.nights ?? []).map((n, idx) => (
+              {dayData.nights.map((n, idx) => (
                 <button
                   key={n.id}
                   type="button"
@@ -996,7 +1055,7 @@ export function CarnetDrawerV2({
                   <ChevronRight size={16} color="var(--accent)" />
                 </button>
               ))}
-              {(detail.nights ?? []).length === 0 ? (
+              {dayData.nights.length === 0 ? (
                 <div
                   style={{
                     padding: '24px 16px',
@@ -1045,7 +1104,7 @@ export function CarnetDrawerV2({
         if (lens.id === 'meteo') {
           return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '6px' }}>
-              {detail.etapes.map((e) => (
+              {dayData.etapes.map((e) => (
                 <div
                   key={e.id}
                   style={{
@@ -1080,15 +1139,24 @@ export function CarnetDrawerV2({
                     background: 'rgba(150, 186, 142, 0.25)',
                   }}
                 >
-                  <b style={{ fontSize: '13px' }}>Poids total du sac</b>
+                  <b style={{ fontSize: '13px' }}>
+                    {activeDay > 0 ? 'Poids cité ce jour' : 'Poids total du sac'}
+                  </b>
                   <span style={{ fontWeight: 700, fontSize: '14px' }}>
-                    {detail.kit.totalWeightG
-                      ? `${(detail.kit.totalWeightG / 1000).toFixed(1)} kg`
+                    {dayData.kitItems.some((i) => i.weightG)
+                      ? `${(
+                          dayData.kitItems
+                            .filter((i) => i.verdict !== 'manquait')
+                            .reduce((sum, i) => sum + (i.weightG ?? 0), 0) / 1000
+                        ).toFixed(2)} kg`
                       : '—'}
                   </span>
                 </div>
 
-                {detail.kit.items.map((item, idx) => (
+                {dayData.kitItems.length === 0 ? (
+                  <LensState title="Aucun matériel." hint="Aucun objet cité ce jour." />
+                ) : null}
+                {dayData.kitItems.map((item, idx) => (
                   <button
                     key={item.id}
                     type="button"
@@ -1129,25 +1197,15 @@ export function CarnetDrawerV2({
                     <ChevronRight size={15} color="var(--accent)" />
                   </button>
                 ))}
+                {canEdit ? <AddCaption label="Ajouter un objet" onClick={() => onCreate?.('kit')} /> : null}
               </div>
-
-              {/* Floating pill "Reprendre" on Sac slot bottom-left */}
-              <button
-                type="button"
-                className="lkdv-pill-reprendre"
-                onClick={() => {
-                  const ids = detail.kit.items.map((i) => i.id);
-                  void forkAllItems(ids);
-                }}
-              >
-                <Package size={14} />
-                <span>Reprendre le kit</span>
-              </button>
             </div>
           );
         }
         if (lens.id === 'verdicts') {
-          const verdictsList = detail.kit.items.filter((i) => i.verdict);
+          const verdictsList = dayData.kitItems.filter((i) => i.verdict);
+          const countOf = (f: 'all' | KitVerdictType) =>
+            f === 'all' ? verdictsList.length : verdictsList.filter((v) => v.verdict === f).length;
           const filtered = verdictsList.filter((v) => {
             if (verdictFilter === 'all') return true;
             return v.verdict === verdictFilter;
@@ -1163,6 +1221,7 @@ export function CarnetDrawerV2({
             flop: 'Flop',
             neutre: 'Neutre',
           };
+          const VERDICT_FALLBACK = { bg: 'var(--fill2)', color: 'var(--label2)' };
           const VERDICT_STYLES: Record<KitVerdictType, { bg: string; color: string }> = {
             essentiel: { bg: 'var(--mint, #E1EBDE)', color: 'var(--good, #3D7A52)' },
             utile: { bg: 'var(--fill2, rgba(23,43,36,.06))', color: 'var(--info, #4B6B7C)' },
@@ -1201,9 +1260,11 @@ export function CarnetDrawerV2({
                       fontWeight: 600,
                       cursor: 'pointer',
                     }}
-                    onClick={() => setVerdictFilter(f)}
+                    aria-pressed={verdictFilter === f}
+                    data-verdict-filter={f}
+                    onClick={() => setVerdictFilter(f === verdictFilter ? 'all' : f)}
                   >
-                    {f === 'all' ? 'Tous' : VERDICT_LABELS[f]}
+                    {f === 'all' ? 'Tous' : VERDICT_LABELS[f]} <b>{countOf(f)}</b>
                   </button>
                 ))}
               </div>
@@ -1248,11 +1309,11 @@ export function CarnetDrawerV2({
                         fontSize: '10px',
                         fontWeight: 700,
                         textTransform: 'uppercase',
-                        background: item.verdict ? VERDICT_STYLES[item.verdict].bg : undefined,
-                        color: item.verdict ? VERDICT_STYLES[item.verdict].color : undefined,
+                        background: item.verdict ? (VERDICT_STYLES[item.verdict] ?? VERDICT_FALLBACK).bg : undefined,
+                        color: item.verdict ? (VERDICT_STYLES[item.verdict] ?? VERDICT_FALLBACK).color : undefined,
                       }}
                     >
-                      {item.verdict ? VERDICT_LABELS[item.verdict] : '—'}
+                      {item.verdict ? (VERDICT_LABELS[item.verdict] ?? item.verdict) : '—'}
                     </span>
                   </div>
                   {item.verdictNote ? (
@@ -1295,66 +1356,64 @@ export function CarnetDrawerV2({
         break;
 
       case 'chiffres':
-        if (lens.id === 'distance') {
+        if (lens.id === 'distance' || lens.id === 'denivele' || lens.id === 'duree') {
+          const key = lens.id === 'distance' ? 'distance' : lens.id === 'denivele' ? 'elevation' : 'duration';
+          const metric = dayMetric(detail, activeDay, key);
+          const fmt = (v: number | null): string => {
+            if (v === null) return '—';
+            if (key === 'distance') return `${v.toLocaleString('fr-FR', { maximumFractionDigits: 1 })} km`;
+            if (key === 'elevation') return `+${Math.round(v).toLocaleString('fr-FR')} m`;
+            return `${Math.floor(v / 60)} h ${String(Math.round(v % 60)).padStart(2, '0')}`;
+          };
+          const title =
+            key === 'distance' ? 'Distance' : key === 'elevation' ? 'Dénivelé positif' : 'Durée de marche';
+          const max = Math.max(1, ...metric.rows.map((r) => r.value ?? 0)) * 1.08;
           return (
-            <div
-              style={{ padding: '12px', borderRadius: '16px', background: 'var(--drawer-card-bg)' }}
-            >
-              <b>Distance totale</b>
-              <p
-                style={{
-                  margin: '4px 0 0',
-                  fontSize: '20px',
-                  fontWeight: 700,
-                  color: 'var(--tint)',
-                }}
-              >
-                {detail.distanceKm ? `${Math.round(detail.distanceKm)} km` : '—'}
-              </p>
-              <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--label2)' }}>
-                Moyenne journalière :{' '}
-                {detail.distanceKm && detail.days.length
-                  ? `${(detail.distanceKm / detail.days.length).toFixed(1)} km/j`
-                  : '—'}
+            <div className="lkdv-metric" data-metric={key}>
+              <div className="lkdv-card2">
+                <div className="lkdv-h5">
+                  {title} · {activeDay > 0 ? `jour ${activeDay}` : 'total'}
+                </div>
+                <span className="lkdv-big">{fmt(activeDay > 0 ? metric.current : metric.total)}</span>
+              </div>
+              <div className="lkdv-card2">
+                {metric.rows.map((row) => (
+                  <button
+                    key={row.dayNumber}
+                    type="button"
+                    className="lkdv-brow"
+                    aria-label={`Jour ${row.dayNumber}, ${fmt(row.value)}`}
+                    aria-current={row.dayNumber === activeDay ? 'true' : undefined}
+                    onClick={() => onDayPick?.(row.dayNumber)}
+                  >
+                    <b>J{row.dayNumber}</b>
+                    <span className="lkdv-btrack">
+                      <i
+                        className={row.dayNumber === activeDay ? 'cur' : undefined}
+                        style={{ width: `${((row.value ?? 0) / max) * 100}%` }}
+                      />
+                    </span>
+                    <span className="lkdv-mono">{fmt(row.value)}</span>
+                  </button>
+                ))}
+              </div>
+              <p className="lkdv-mute">
+                {activeDay > 0 && metric.deltaPct !== null
+                  ? `${metric.deltaPct >= 0 ? '+' : ''}${metric.deltaPct} % par rapport à la moyenne des ${metric.rows.length} jours.`
+                  : metric.average !== null
+                    ? `Moyenne par jour : ${fmt(metric.average)}`
+                    : 'Aucune valeur renseignée pour ce carnet.'}
               </p>
             </div>
           );
         }
-        if (lens.id === 'denivele') {
+        if (lens.id === 'budget' && !detail.budget) {
           return (
-            <div
-              style={{ padding: '12px', borderRadius: '16px', background: 'var(--drawer-card-bg)' }}
-            >
-              <b>Dénivelé positif</b>
-              <p
-                style={{
-                  margin: '4px 0 0',
-                  fontSize: '20px',
-                  fontWeight: 700,
-                  color: 'var(--tint)',
-                }}
-              >
-                {detail.elevationM ? `+${Math.round(detail.elevationM)} m` : '—'}
-              </p>
-              <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--label2)' }}>
-                Moyenne journalière :{' '}
-                {detail.elevationM && detail.days.length
-                  ? `+${Math.round(detail.elevationM / detail.days.length)} m/j`
-                  : '—'}
-              </p>
-            </div>
-          );
-        }
-        if (lens.id === 'duree') {
-          return (
-            <div
-              style={{ padding: '12px', borderRadius: '16px', background: 'var(--drawer-card-bg)' }}
-            >
-              <b>Durée d’expédition</b>
-              <p style={{ margin: '4px 0 0', fontSize: '18px', fontWeight: 700 }}>
-                {detail.days.length} journées de marche
-              </p>
-            </div>
+            <LensState
+              title="Aucune dépense."
+              hint="Les dépenses du carnet apparaissent ici."
+              action={canEdit ? <AddCaption label="Ajouter une dépense" onClick={() => onCreate?.('spend')} /> : null}
+            />
           );
         }
         if (lens.id === 'budget' && detail.budget) {
@@ -1379,7 +1438,7 @@ export function CarnetDrawerV2({
                   {detail.budget.total} {detail.budget.currency}
                 </p>
               </div>
-              {detail.budget.items.map((item) => (
+              {(activeDay > 0 ? dayData.budgetItems : detail.budget.items).map((item) => (
                 <div
                   key={item.id}
                   style={{
@@ -1678,7 +1737,7 @@ export function CarnetDrawerV2({
 
   return (
     <div
-      ref={attachPaneRoot}
+      ref={dialogRef}
       className="lkdv-carnet-drawer"
       role="dialog"
       aria-modal="true"
@@ -1698,6 +1757,9 @@ export function CarnetDrawerV2({
         lenses={currentSlotLenses}
         activeLensIndex={activeLensIndex}
         onLensChange={handleLensChange}
+        state={slotErrored ? 'error' : 'ready'}
+        errorLabel="Impossible de charger ce carnet."
+        onRetry={() => setSlotRetry((n) => n + 1)}
         selector={
           <CapsuleTabs
             items={slotTabs}
@@ -1710,19 +1772,47 @@ export function CarnetDrawerV2({
             size="default"
           />
         }
-        renderLens={(lens) => renderCurrentSlotContent(lens)}
+        renderLens={(lens) => (
+          <LensBoundary
+            resetKey={`${activeSlot}:${lens.id}:${lensRetry}`}
+            fallback={
+              <LensState
+                tone="error"
+                title="Ce volet n’a pas pu s’afficher."
+                hint="Les autres volets du carnet restent disponibles."
+                action={
+                  <button
+                    type="button"
+                    className="lkdv-lens-cta"
+                    onClick={() => setLensRetry((n) => n + 1)}
+                  >
+                    Réessayer
+                  </button>
+                }
+              />
+            }
+          >
+            {forceError?.lens === `${activeSlot}:${lens.id}` && lensRetry === 0 ? (
+              <Boom />
+            ) : (
+              renderCurrentSlotContent(lens)
+            )}
+          </LensBoundary>
+        )}
       />
 
-      {/* Reprise de lecture — au-dessus de la pilule « Reprendre le kit » (30). */}
-      {resumePill && resumePill.key === activeLensKey ? (
+      {/* Pilule « Reprendre » : slot Sac et fiche objet seulement (maquette `syncKitPill`). */}
+      {showKitPill ? (
         <button
           type="button"
-          className="lkdv-pill-reprendre lkdv-pill-resume"
-          style={{ left: '10px', bottom: '48px', zIndex: 16 }}
-          onClick={resumeReading}
-          aria-label="Reprendre la lecture"
+          className="lkdv-pill-reprendre"
+          id="kitpill"
+          aria-pressed={kitSaved}
+          aria-label={kitSaved ? 'Kit enregistré dans ton Compas' : 'Reprendre ce kit'}
+          title="Reprendre ce kit"
+          onClick={() => void saveKit()}
         >
-          <Bookmark size={14} />
+          <Bookmark size={15} aria-hidden="true" fill={kitSaved ? 'currentColor' : 'none'} />
           <span>Reprendre</span>
         </button>
       ) : null}

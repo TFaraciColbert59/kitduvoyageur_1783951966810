@@ -253,8 +253,9 @@ describe('CarnetScreenV2 Component', () => {
 
     fireEvent.click(titlePill);
     expect(screen.getByRole('menu', { name: /Options du carnet/i })).toBeTruthy();
-    expect(screen.getByText('Modifier le carnet')).toBeTruthy();
-    expect(screen.getByText('Partager')).toBeTruthy();
+    expect(screen.getByRole('menuitemcheckbox', { name: /Modifier le carnet/ })).toBeTruthy();
+    expect(screen.getByText('Partager…')).toBeTruthy();
+    expect(screen.getByText('Copier le lien')).toBeTruthy();
   });
 
   it('bascule en mode plein soleil depuis le popover Affichage', () => {
@@ -328,7 +329,10 @@ describe('CarnetTopBarV2 Component', () => {
     const pill = screen.getByRole('button', { name: /Menu du carnet GR20 Corse/i });
     fireEvent.click(pill);
 
-    expect(screen.getByText('Signaler ce carnet')).toBeTruthy();
+    expect(screen.getByText('Suivre le carnet')).toBeTruthy();
+    expect(screen.getByText('Partager…')).toBeTruthy();
+    expect(screen.getByText('Copier le lien')).toBeTruthy();
+    expect(screen.getByText('Signaler')).toBeTruthy();
     expect(screen.queryByText('Modifier le carnet')).toBeNull();
   });
 });

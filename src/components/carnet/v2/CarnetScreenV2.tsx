@@ -14,6 +14,8 @@ import { CarnetCardV2 } from './CarnetCardV2';
 import { CarnetDrawerV2, type CarnetSlotId } from './CarnetDrawerV2';
 import { CarnetIsland, type CarnetIslandToast } from './CarnetIsland';
 import { CarnetPeek } from './CarnetPeek';
+import { CarnetCreateSheet } from './CarnetCreateSheet';
+import { CarnetHighlightEditSheet } from './CarnetHighlightEditSheet';
 import { CarnetAltitude } from './CarnetAltitude';
 import { CarnetMapBadge } from './CarnetMapBadge';
 import { CompteMap } from '@/components/compte/map/CompteMap';
@@ -32,6 +34,14 @@ import { elevationProfileGain } from '@/features/carnet/detail/elevationProfile'
 import { createClient } from '@/lib/supabase/client';
 import { replyToCarnetStory } from '@/lib/stories/carnetReply';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
+import { useCarnetEdits } from '@/features/carnet/detail/useCarnetEdits';
+import { useCarnetHighlights, type CarnetHighlight } from '@/features/carnet/detail/highlights';
+import { useFollowAuthor } from '@/features/carnet/detail/useFollowAuthor';
+import { isParticipantRole } from '@/features/carnet/detail/viewerRole';
+import { buildDayTraces, momentPosition, selectMapLayers, type MapContext } from '@/features/carnet/detail/mapLayers';
+import type { MomentType } from '@/features/carnet/detail/momentTypes';
+import type { StackIntent } from './CarnetDrawerV2';
 
 import '@/styles/tokens.css';
 import '@/styles/carnet-v2.css';
@@ -40,9 +50,18 @@ import '@/components/compte/compte-v8.css';
 
 export interface CarnetScreenV2Props {
   detail: CarnetDetail;
+  /** Banc seulement : force l'état d'erreur d'un slot ou d'une lentille. */
+  simulate?: { slot?: boolean; lens?: string } | null;
 }
 
-export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
+const MAX_UNDO = 40;
+
+export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetScreenV2Props) {
+  /* La fiche est rendue par le serveur : les écritures du mode modification
+     s'appliquent ici tout de suite, puis le prochain chargement les confirme. */
+  const [detail, setDetail] = useState<CarnetDetail>(detailProp);
+  useEffect(() => setDetail(detailProp), [detailProp]);
+
   const router = useRouter();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -54,7 +73,21 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
   const [activeDay, setActiveDay] = useState<number>(0);
   const [mapBig, setMapBig] = useState(false);
   const [outdoor, setOutdoor] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
+  const [editRequested, setEditRequested] = useState(false);
+  const isParticipant = isParticipantRole(detail.viewerRole);
+  /* Le mode modification n'existe que pour un participant (spec § 7). */
+  const isEditing = editRequested && isParticipant;
+  const { isOnline } = useOnlineStatus();
+  const [createSheet, setCreateSheet] = useState<{ type: MomentType | null } | null>(null);
+  const [hlEdit, setHlEdit] = useState<CarnetHighlight | null>(null);
+  const [drawerContext, setDrawerContext] = useState<{
+    slot: MapContext['slot'];
+    lensId: string;
+  } | null>(null);
+  const [drawerIntent, setDrawerIntent] = useState<{ nonce: number; view: StackIntent } | null>(
+    null
+  );
+  const [pinnedIds, setPinnedIds] = useState<ReadonlySet<string>>(new Set());
   const [reduceMotion, setReduceMotion] = useState(false);
   const grabRef = useRef<{ startY: number; dragged: boolean } | null>(null);
   const suppressGrabClickRef = useRef(false);
@@ -63,7 +96,7 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerSlot, setDrawerSlot] = useState<CarnetSlotId>('fil');
   const [isAccountDrawer, setIsAccountDrawer] = useState(false);
-  const [postSheetIndex, setPostSheetIndex] = useState<number | null>(null);
+  const [postMomentId, setPostMomentId] = useState<string | null>(null);
   const [postSheetPanel, setPostSheetPanel] = useState<'comments' | null>(null);
   const [peekMoment, setPeekMoment] = useState<CarnetMomentItem | null>(null);
   const [scrubPoint, setScrubPoint] = useState<{
@@ -97,7 +130,13 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
   const [islandToast, setIslandToast] = useState<CarnetIslandToast | null>(null);
 
   const overlayOpen =
-    drawerOpen || peekMoment !== null || postSheetIndex !== null || storiesOpen || reportOpen;
+    drawerOpen ||
+    peekMoment !== null ||
+    postMomentId !== null ||
+    storiesOpen ||
+    reportOpen ||
+    createSheet !== null ||
+    hlEdit !== null;
 
   /* Les feuilles Radix (post, stories, signalement) ne passent pas par
      `useCarnetDialog` : sans ce crochet, la barre flottante reste au-dessus
@@ -108,16 +147,70 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
     return () => document.body.classList.remove('lkdv-overlay-open');
   }, [overlayOpen]);
 
-  const showIsland = useCallback((message: string, undo?: () => void) => {
+  /* Pile d'annulation (maquette `U`) : chaque confirmation annulable s'y empile,
+     Ctrl/⌘+Z défait la dernière, 40 au plus. */
+  const undoStack = useRef<Array<{ label: string; run: () => void }>>([]);
+
+  const showIsland = useCallback((message: string, undo?: () => void, subtitle?: string) => {
+    if (undo) {
+      undoStack.current.push({ label: message, run: undo });
+      if (undoStack.current.length > MAX_UNDO) undoStack.current.shift();
+    }
     setIslandToast({
-      id: String(Date.now()),
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       message,
+      subtitle,
       undo,
     });
   }, []);
 
+  const doUndo = useCallback((): boolean => {
+    const entry = undoStack.current.pop();
+    if (!entry) return false;
+    entry.run();
+    haptic('medium');
+    setIslandToast({
+      id: `${Date.now()}-undo`,
+      message: 'Annulé',
+      subtitle: entry.label,
+    });
+    return true;
+  }, [haptic]);
+
   const dismissIsland = useCallback(() => {
     setIslandToast(null);
+  }, []);
+
+  const addMoment = useCallback((moment: CarnetMomentItem) => {
+    setDetail((d) => {
+      const byDay = (a: CarnetMomentItem, b: CarnetMomentItem) =>
+        a.dayNumber - b.dayNumber || (a.time ?? '').localeCompare(b.time ?? '');
+      const moments = [...d.moments, moment].sort(byDay);
+      return {
+        ...d,
+        moments,
+        photoMoments: moments.filter((m) => Boolean(m.imageUrl)),
+        days: d.days.map((day) =>
+          (day.dayNumber ?? day.index) === moment.dayNumber
+            ? { ...day, moments: moments.filter((m) => m.dayNumber === moment.dayNumber) }
+            : day
+        ),
+        summary: { ...d.summary, moments: moments.length },
+      };
+    });
+  }, []);
+
+  const removeMomentLocal = useCallback((momentId: string) => {
+    setDetail((d) => {
+      const moments = d.moments.filter((m) => m.id !== momentId);
+      return {
+        ...d,
+        moments,
+        photoMoments: moments.filter((m) => Boolean(m.imageUrl)),
+        days: d.days.map((day) => ({ ...day, moments: day.moments.filter((m) => m.id !== momentId) })),
+        summary: { ...d.summary, moments: moments.length },
+      };
+    });
   }, []);
 
   const requireAuth = useCallback(() => {
@@ -153,6 +246,69 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
   });
 
   const comments = useCarnetComments({ carnetId: detail.id, user });
+
+  const edits = useCarnetEdits({
+    carnetId: detail.id,
+    userId: currentUserId,
+    authorName: user?.user_metadata?.full_name ?? user?.email?.split('@')[0] ?? null,
+    onIsland: showIsland,
+    onMomentAdded: addMoment,
+    onMomentRemoved: removeMomentLocal,
+  });
+
+  const follow = useFollowAuthor({
+    authorId: detail.author?.id ?? null,
+    userId: currentUserId,
+    onRequireAuth: requireAuth,
+    onIsland: showIsland,
+  });
+
+  const { highlights, rename: renameHighlight, remove: removeHighlight, restore: restoreHighlight } =
+    useCarnetHighlights(detail);
+
+  /* Épingles : préférence de l'appareil (aucune table serveur). */
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(`lkdv:carnet:${detail.id}:pins`);
+      const ids = raw ? (JSON.parse(raw) as unknown) : [];
+      setPinnedIds(new Set(Array.isArray(ids) ? ids.filter((v): v is string => typeof v === 'string') : []));
+    } catch {
+      setPinnedIds(new Set());
+    }
+  }, [detail.id]);
+
+  const writePins = useCallback(
+    (next: Set<string>) => {
+      setPinnedIds(next);
+      try {
+        window.localStorage.setItem(`lkdv:carnet:${detail.id}:pins`, JSON.stringify([...next]));
+      } catch {
+        /* stockage refusé : l'épingle reste valable pour la session */
+      }
+    },
+    [detail.id]
+  );
+
+  const togglePin = useCallback(
+    (moment: CarnetMomentItem) => {
+      const was = pinnedIds.has(moment.id);
+      const next = new Set(pinnedIds);
+      if (was) next.delete(moment.id);
+      else next.add(moment.id);
+      writePins(next);
+      showIsland(
+        was ? 'Moment désépinglé' : 'Moment épinglé',
+        () => {
+          const back = new Set(next);
+          if (was) back.add(moment.id);
+          else back.delete(moment.id);
+          writePins(back);
+        },
+        moment.place ?? undefined
+      );
+    },
+    [pinnedIds, showIsland, writePins]
+  );
 
   /* État vivant des moments. La fiche n'est pas rechargée après une action :
      sans ce cache, un j'aime posé dans le Peek réapparaîtrait non aimé en le
@@ -190,10 +346,16 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
     []
   );
 
-  const postMoment =
-    postSheetIndex === null || detail.photoMoments.length === 0
-      ? null
-      : detail.photoMoments[Math.max(0, Math.min(postSheetIndex, detail.photoMoments.length - 1))];
+  /* Le post d'un moment photo navigue entre les médias ; un moment sans image
+     s'ouvre seul (variante texte du post). */
+  const postMoment = detail.moments.find((m) => m.id === postMomentId) ?? null;
+  const postItems = useMemo(
+    () => (postMoment ? (postMoment.imageUrl ? detail.photoMoments : [postMoment]) : []),
+    [detail.photoMoments, postMoment]
+  );
+  const postIndex = Math.max(0, postItems.findIndex((m) => m.id === postMomentId));
+  const postDetail = useMemo(() => ({ ...detail, photoMoments: postItems }), [detail, postItems]);
+  const openPost = useCallback((moment: CarnetMomentItem) => setPostMomentId(moment.id), []);
 
   /* Signalement d'un moment : `post_reports.post_id` porte une FK vers
      `community_posts` en production, un id de moment y serait rejeté (23503).
@@ -240,6 +402,9 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
       const d = parseInt(dayParam, 10);
       if (!Number.isNaN(d) && d >= 0) setActiveDay(d);
     }
+    if (params.get('modifier') === '1') {
+      setEditRequested(true);
+    }
     const tiroirParam = params.get('tiroir');
     if (tiroirParam && ['fil', 'route', 'sac', 'chiffres', 'equipage'].includes(tiroirParam)) {
       setDrawerSlot(tiroirParam as CarnetSlotId);
@@ -274,10 +439,13 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
 
   // Open Drawer to a specific slot
   const handleOpenDrawerSlot = useCallback(
-    (slot: CarnetSlotId) => {
+    (slot: CarnetSlotId, lensIndex?: number) => {
       haptic('light');
       setIsAccountDrawer(false);
       setDrawerSlot(slot);
+      if (lensIndex != null) {
+        setDrawerIntent({ nonce: Date.now(), view: { type: 'lens', slot, index: lensIndex } });
+      }
       setDrawerOpen(true);
     },
     [haptic]
@@ -296,15 +464,24 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
     };
   }, [activeDay, detail.days, detail.trace]);
 
+  /* Couches de la carte selon le tiroir actif (Fil → moments, Route → étapes ou
+     nuits, Sac → objets du kit, Équipage → position). */
+  const mapContext: MapContext | null = drawerOpen
+    ? (drawerContext ?? { slot: 'fil', lensId: 'moments' })
+    : null;
+  const layers = useMemo(
+    () => selectMapLayers({ detail, activeDay, context: mapContext, scrub: scrubPoint }),
+    // `mapContext` est dérivé de deux états déjà listés.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [detail, activeDay, drawerOpen, drawerContext, scrubPoint]
+  );
+  const dayTraces = useMemo(() => buildDayTraces(detail.days), [detail.days]);
+
+  /* Sans point GPS par jour (anciens carnets), on garde le départ/l'arrivée de la
+     trace complète et les nuits : aucune géométrie inventée. */
   const mapMarkers = useMemo(() => {
-    const list: Array<{
-      id: string;
-      lat: number;
-      lng: number;
-      title: string;
-      type?: string;
-      badge?: string;
-    }> = [];
+    if (dayTraces.length > 0) return layers.markers;
+    const list: typeof layers.markers = [];
     const tracePoints = parsePositions(detail.trace);
     if (tracePoints.length >= 2) {
       const start = tracePoints[0];
@@ -315,28 +492,104 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
       );
     }
     for (const night of detail.nights ?? []) {
-      if (night.lat && night.lng) {
+      if (night.lat != null && night.lng != null) {
         list.push({
           id: `night-${night.id}`,
           lat: night.lat,
           lng: night.lng,
           title: night.name,
-          type: night.type,
+          type: 'night',
           badge: `N${night.dayNumber}`,
         });
       }
     }
-    if (scrubPoint) {
-      list.push({
-        id: 'scrub',
-        lat: scrubPoint.lat,
-        lng: scrubPoint.lng,
-        title: 'Point du profil',
-        type: 'scrub',
-      });
-    }
-    return list;
-  }, [detail.nights, detail.trace, scrubPoint]);
+    return list.concat(layers.markers.filter((m) => m.type === 'scrub'));
+  }, [dayTraces.length, detail.nights, detail.trace, layers]);
+
+  const focusMoment = useCallback(
+    (moment: CarnetMomentItem) => {
+      const day = detail.days.find((d) => (d.dayNumber ?? d.index) === moment.dayNumber);
+      const ofDay = detail.moments.filter((m) => m.dayNumber === moment.dayNumber);
+      const position = momentPosition(
+        day,
+        moment,
+        Math.max(0, ofDay.findIndex((m) => m.id === moment.id)),
+        ofDay.length
+      );
+      if (!position) {
+        showIsland('Pas de position GPS pour ce moment');
+        return;
+      }
+      if (activeDay > 0 && activeDay !== moment.dayNumber) setActiveDay(moment.dayNumber);
+      setMapFocus({ lat: position.lat, lng: position.lng, zoom: 13 });
+    },
+    [activeDay, detail.days, detail.moments, showIsland]
+  );
+
+  const openCreate = useCallback(
+    (type?: MomentType) => {
+      if (!isParticipant) return;
+      haptic('light');
+      setCreateSheet({ type: type ?? null });
+    },
+    [haptic, isParticipant]
+  );
+
+  const createDay =
+    activeDay > 0
+      ? activeDay
+      : detail.days.reduce((max, d) => Math.max(max, d.dayNumber ?? d.index), 0) || 1;
+
+  const handleHighlightTap = useCallback(
+    (highlight: CarnetHighlight) => {
+      setIsAccountDrawer(false);
+      if (highlight.kind === 'crew') {
+        setDrawerSlot('equipage');
+        setDrawerIntent({ nonce: Date.now(), view: { type: 'participant', userId: highlight.refId } });
+        setDrawerOpen(true);
+        return;
+      }
+      const etape = detail.etapes.find((e) => e.id === highlight.refId);
+      setDrawerSlot('route');
+      setDrawerIntent({ nonce: Date.now(), view: { type: 'etape', etapeId: highlight.refId } });
+      setDrawerOpen(true);
+      if (etape) {
+        const day = detail.days.find((d) => (d.dayNumber ?? d.index) === etape.dayNumber);
+        const last = day?.points[day.points.length - 1];
+        if (last) setMapFocus({ lat: last.lat, lng: last.lng, zoom: 12 });
+      }
+    },
+    [detail.days, detail.etapes]
+  );
+
+  /* Clavier : Ctrl/⌘+Z annule la dernière confirmation, ← → changent de jour
+     quand rien d'autre n'a la main (maquette, écouteur `keydown` du document). */
+  const maxDay = detail.days.reduce((max, d) => Math.max(max, d.dayNumber ?? d.index), 0);
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const tag = (target?.tagName ?? '').toLowerCase();
+      const typing = tag === 'input' || tag === 'textarea' || tag === 'select';
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z' && !typing) {
+        if (doUndo()) event.preventDefault();
+        return;
+      }
+      if (typing || event.ctrlKey || event.metaKey || event.altKey) return;
+      if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+      if (overlayOpen) return;
+      if (
+        target?.closest?.(
+          '[role="tablist"],[role="slider"],[aria-roledescription="carrousel"],[role="menu"],[role="dialog"]'
+        )
+      ) {
+        return;
+      }
+      event.preventDefault();
+      setActiveDay((day) => Math.max(0, Math.min(maxDay, day + (event.key === 'ArrowRight' ? 1 : -1))));
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [doUndo, maxDay, overlayOpen]);
 
   // Prepare Stories users grouped by author
   const storyUsers: StoryUser[] = useMemo(() => {
@@ -416,22 +669,18 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
     }
   }, [shareUrl, showIsland]);
 
-  const handleExportJson = useCallback(() => {
-    const blob = new Blob([JSON.stringify(detail, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${detail.title.replace(/[^a-zA-Z0-9]/g, '_')}-carnet.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    showIsland('Carnet exporté en JSON');
-  }, [detail, showIsland]);
+
+  const showLive = layers.showLive;
+  const zoneLabel = live.publicZone?.zoneLabel ?? detail.place.locality ?? null;
 
   return (
     <div
-      className={`lkdv-carnet-v2-root lkdv-compte-v8 ${mapBig ? 'mapbig' : ''} ${outdoor ? 'outdoor' : ''} ${overlayOpen ? 'overlay-open' : ''}`}
+      className={`lkdv-carnet-v2-root lkdv-compte-v8 ${mapBig ? 'mapbig' : ''} ${outdoor ? 'outdoor' : ''} ${overlayOpen ? 'overlay-open' : ''} ${isEditing ? 'editing' : ''}`}
       data-testid="carnet-v2-root"
       data-reduce-motion={reduceMotion ? 'true' : 'false'}
+      data-role={isParticipant ? 'participant' : 'visitor'}
+      data-day={activeDay}
+      data-online={isOnline ? 'true' : 'false'}
     >
       {/* Coquille des tiroirs : le SlotShell n'a pas de CSS global, le Compte
           l'injecte lui-même. Sans cette feuille, le tiroir n'a ni position ni
@@ -448,6 +697,12 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
       {/* Dynamic Island notification */}
       <CarnetIsland toast={islandToast} onDismiss={dismissIsland} />
 
+      {!isOnline ? (
+        <div className="lkdv-carnet-offline" role="status" data-testid="carnet-offline">
+          Hors ligne · les données affichées sont celles du dernier chargement
+        </div>
+      ) : null}
+
       {/* Top Section (69%) */}
       <section
         className="lkdv-carnet-top"
@@ -459,32 +714,35 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
           title={detail.title}
           viewerRole={viewerRole}
           isEditing={isEditing}
-          onToggleEdit={() => setIsEditing((prev) => !prev)}
+          onToggleEdit={() => {
+            const next = !editRequested;
+            setEditRequested(next);
+            showIsland(
+              next ? 'Mode modification activé' : 'Mode modification terminé',
+              undefined,
+              next ? 'Les actions d’édition apparaissent en place.' : undefined
+            );
+          }}
           onOpenSettings={() => {
             setIsAccountDrawer(true);
             setDrawerOpen(true);
           }}
-          onCreateMoment={() => {
-            // Participant: open create moment sheet or drawer
-            handleOpenDrawerSlot('fil');
-            showIsland('Sélectionnez un lieu ou photo pour le nouveau moment', () =>
-              setDrawerOpen(false)
-            );
-          }}
+          onCreateMoment={() => openCreate()}
           onToggleOutdoor={() => setOutdoor((prev) => !prev)}
           isOutdoor={outdoor}
           reduceMotion={reduceMotion}
           onToggleReduceMotion={() => setReduceMotion((prev) => !prev)}
           onShare={() => {
             if (navigator.share) {
-              void navigator.share({ title: detail.title, url: shareUrl });
+              void navigator.share({ title: detail.title, url: shareUrl }).catch(() => {});
             } else {
               handleCopyLink();
             }
           }}
-          onExport={handleExportJson}
           onReport={() => setReportTarget({ kind: 'carnet' })}
           onCopyLink={handleCopyLink}
+          onFollow={() => void follow.toggle()}
+          isFollowing={follow.following}
         />
 
         <CarnetCardV2
@@ -496,18 +754,21 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
             if (storyUsers.length > 0) setStoriesOpen(true);
             else showIsland('Aucune story disponible pour ce carnet');
           }}
-          onSelectMoment={(moment, idx) => {
-            // Find photo index in photoMoments for PostSheet
-            const photoIdx = detail.photoMoments.findIndex((m) => m.id === moment.id);
-            setPostSheetIndex(photoIdx >= 0 ? photoIdx : idx);
-          }}
+          onSelectMoment={(moment) => openPost(moment)}
           onPeekMoment={(moment) => {
             setPeekMoment(moment);
           }}
           isEditing={isEditing}
-          onAddMoment={() => {
-            handleOpenDrawerSlot('fil');
+          onAddMoment={() => openCreate()}
+          onEndEdit={() => {
+            setEditRequested(false);
+            showIsland('Mode modification terminé');
           }}
+          highlights={highlights}
+          onHighlightTap={handleHighlightTap}
+          onHighlightEdit={(highlight) => setHlEdit(highlight)}
+          pinnedIds={pinnedIds}
+          zoneLabel={zoneLabel}
         />
       </section>
 
@@ -525,10 +786,25 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
           trace={mapTrace}
           focus={mapFocus}
           activeDay={activeDay}
+          dayTraces={dayTraces}
+          onDayPick={(day) => {
+            if (day !== activeDay) {
+              haptic('light');
+              setActiveDay(day);
+            }
+          }}
+          onMarkerPick={(id) => {
+            const moment = detail.moments.find((m) => `moment-${m.id}` === id);
+            if (moment) focusMoment(moment);
+          }}
+          contextMode={drawerOpen}
           livePosition={
-            live.livePosition ? { lat: live.livePosition.lat, lng: live.livePosition.lng } : null
+            showLive && live.livePosition
+              ? { lat: live.livePosition.lat, lng: live.livePosition.lng }
+              : null
           }
           publicZone={
+            showLive &&
             live.publicZone &&
             typeof live.publicZone.centerLat === 'number' &&
             typeof live.publicZone.centerLng === 'number'
@@ -644,12 +920,16 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
         onIsland={showIsland}
         userId={currentUserId}
         onRequireAuth={requireAuth}
-        onSelectMoment={(moment, idx) => {
-          const photoIdx = detail.photoMoments.findIndex((m) => m.id === moment.id);
-          setPostSheetIndex(photoIdx >= 0 ? photoIdx : idx);
-        }}
+        onSelectMoment={(moment) => openPost(moment)}
         onOpenStories={() => setStoriesOpen(true)}
         isAccountDrawer={isAccountDrawer}
+        isEditing={isEditing}
+        onCreate={openCreate}
+        pinnedIds={pinnedIds}
+        onContextChange={setDrawerContext}
+        onDayPick={(day) => setActiveDay(day)}
+        intent={drawerIntent}
+        forceError={simulate}
       />
 
       {/* Peek & Pop d'un moment (appui long 460 ms) */}
@@ -663,10 +943,18 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
           onIsland={showIsland}
           onEngagementChange={rememberMomentEngagement}
           onClose={() => setPeekMoment(null)}
+          pinned={pinnedIds.has(peekMoment.id)}
+          onTogglePin={() => {
+            togglePin(peekMoment);
+            setPeekMoment(null);
+          }}
+          onShowOnMap={() => {
+            focusMoment(peekMoment);
+            setPeekMoment(null);
+          }}
           onOpenPost={(mode) => {
-            const photoIdx = detail.photoMoments.findIndex((m) => m.id === peekMoment.id);
             setPostSheetPanel(mode === 'comments' ? 'comments' : null);
-            setPostSheetIndex(photoIdx >= 0 ? photoIdx : 0);
+            setPostMomentId(peekMoment.id);
             setPeekMoment(null);
           }}
           onShare={() => {
@@ -690,14 +978,14 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
         />
       ) : null}
 
-      {/* Post Sheet Overlay (Photo Moments) */}
-      {postSheetIndex !== null ? (
+      {/* Post Sheet Overlay (tout moment) */}
+      {postMoment ? (
         <CarnetPostSheet
-          detail={detail}
-          index={postSheetIndex}
-          onIndexChange={(idx) => setPostSheetIndex(idx)}
+          detail={postDetail}
+          index={postIndex}
+          onIndexChange={(idx) => setPostMomentId(postItems[idx]?.id ?? null)}
           onClose={() => {
-            setPostSheetIndex(null);
+            setPostMomentId(null);
             setPostSheetPanel(null);
           }}
           initialPanel={postSheetPanel}
@@ -706,7 +994,7 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
           canWrite={canWrite}
           currentUserId={currentUserId}
           onRequireAuth={requireAuth}
-          initialEngagement={postMoment ? momentEngagementFor(postMoment.id) : null}
+          initialEngagement={momentEngagementFor(postMoment.id)}
           onEngagementChange={rememberMomentEngagement}
           onIsland={showIsland}
           liked={engagement.liked}
@@ -715,6 +1003,40 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
           onCopied={handleCopyLink}
           saved={engagement.favorited}
           onReport={() => setReportTarget({ kind: 'carnet' })}
+        />
+      ) : null}
+
+      {/* Feuille « Créer » (mode modification, participant) */}
+      {createSheet && isParticipant ? (
+        <CarnetCreateSheet
+          day={createDay}
+          defaultPlace={detail.etapes.find((e) => e.dayNumber === createDay)?.to ?? ''}
+          kitItems={detail.kit.items}
+          initialType={createSheet.type}
+          onSubmit={async (input, file) => {
+            if (!isOnline) return { ok: false, error: 'Tu es hors ligne : réessaie avec du réseau.' };
+            return edits.createMoment(input, file);
+          }}
+          onClose={() => setCreateSheet(null)}
+        />
+      ) : null}
+
+      {/* Tiroir d'édition d'une pastille « À la une » */}
+      {hlEdit && isParticipant ? (
+        <CarnetHighlightEditSheet
+          highlight={hlEdit}
+          onSave={(label) => {
+            renameHighlight(hlEdit.id, label);
+            showIsland('Sélection modifiée', undefined, label);
+            setHlEdit(null);
+          }}
+          onRemove={() => {
+            const target = hlEdit;
+            removeHighlight(target.id);
+            setHlEdit(null);
+            showIsland('Retiré des stories à la une', () => restoreHighlight(target.id), target.label);
+          }}
+          onClose={() => setHlEdit(null)}
         />
       ) : null}
 

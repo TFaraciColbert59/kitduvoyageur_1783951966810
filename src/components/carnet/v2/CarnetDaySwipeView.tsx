@@ -2,6 +2,7 @@
 
 import React, { useRef, useState, useCallback, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
+import { AlignLeft } from 'lucide-react';
 import type {
   CarnetDay,
   CarnetEtapeDay,
@@ -23,6 +24,8 @@ export interface CarnetDaySwipeViewProps {
   onPeekMoment?: (moment: CarnetMomentItem) => void;
   isEditing?: boolean;
   onAddMoment?: () => void;
+  /** Moments épinglés (coche dorée sur la tuile). */
+  pinnedIds?: ReadonlySet<string>;
   /** Nuits réelles du carnet (`detail.nights`) : seule source de l'altitude d'une nuit. */
   nights?: CarnetNightItem[];
   /** Couverture du carnet, repli quand le jour ne porte aucun moment photo. */
@@ -133,6 +136,7 @@ export function CarnetDaySwipeView({
   onPeekMoment,
   isEditing = false,
   onAddMoment,
+  pinnedIds,
   nights,
   coverImage = null,
   travellers = 1,
@@ -231,8 +235,12 @@ export function CarnetDaySwipeView({
   };
 
   // Day options for the floating selector: 0 (Résumé), 1..maxDay
-  const dayOptions = [
-    { label: 'R', value: 0, fullLabel: 'Résumé' },
+  const dayOptions: Array<{ label: React.ReactNode; value: number; fullLabel: string }> = [
+    {
+      label: <AlignLeft size={14} strokeWidth={1.9} aria-hidden="true" />,
+      value: 0,
+      fullLabel: 'Résumé de tout le carnet',
+    },
     ...dayViews.map((day) => ({
       label: `J${day.dayNumber}`,
       value: day.dayNumber,
@@ -371,6 +379,7 @@ export function CarnetDaySwipeView({
               onPeek={onPeekMoment}
               isEditing={isEditing}
               onAddMoment={onAddMoment}
+              pinnedIds={pinnedIds}
             />
           </>
         )}
@@ -383,8 +392,25 @@ export function CarnetDaySwipeView({
               <div
                 className="lkdv-day-capsule"
                 role="tablist"
-                aria-label="Sélection du jour"
+                aria-label="Jour affiché"
+                aria-orientation="horizontal"
                 style={{ width: `${dayOptions.length * 36 + 6}px` }}
+                onKeyDown={(event) => {
+                  const tabs = Array.from(
+                    event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]')
+                  );
+                  const at = tabs.indexOf(document.activeElement as HTMLButtonElement);
+                  if (at < 0) return;
+                  let next: number | null = null;
+                  if (event.key === 'ArrowRight') next = (at + 1) % tabs.length;
+                  else if (event.key === 'ArrowLeft') next = (at - 1 + tabs.length) % tabs.length;
+                  else if (event.key === 'Home') next = 0;
+                  else if (event.key === 'End') next = tabs.length - 1;
+                  if (next === null) return;
+                  event.preventDefault();
+                  event.stopPropagation();
+                  tabs[next].focus();
+                }}
               >
                 <span
                   className="lkdv-day-capsule-lens"

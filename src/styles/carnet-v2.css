@@ -695,33 +695,53 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   color: var(--label2, #56665d);
 }
 
-/* 3-Column Media Grid */
+/* 3-Column Media Grid — maquette `.ig-grid` / `.ig-tile` (HIG L1744-1783) */
+.lkdv-ig-grid-wrap {
+  margin: 0 -12px -14px;
+  border-radius: 22px;
+  overflow: hidden;
+}
+
 .lkdv-ig-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 2px;
-  padding: 2px;
-  border-radius: 16px;
-  overflow: hidden;
+  width: 100%;
+}
+
+.lkdv-ig-grid-empty {
+  margin: 0;
+  padding: 24px 16px;
+  text-align: center;
+  color: var(--label2);
+  font: 400 13px var(--font-sans, sans-serif);
 }
 
 .lkdv-ig-tile {
   position: relative;
+  display: block;
+  width: 100%;
   aspect-ratio: 1 / 1;
   border-radius: 2px;
   overflow: hidden;
   border: 0;
   padding: 0;
-  background: #ddebd8;
+  background: var(--tint);
   cursor: pointer;
-  transition: transform 0.12s var(--ease-spring);
+  transition:
+    transform 0.15s var(--ease-spring),
+    opacity 0.25s;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: pan-y;
 }
 
 .lkdv-ig-tile:active {
   transform: scale(0.96);
 }
 
-.lkdv-ig-tile img {
+.lkdv-ig-tile > img {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -729,17 +749,140 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   object-fit: cover;
 }
 
-.lkdv-ig-tile-badge {
+/* Pastille de type : 20 px, icône seule, en haut à droite (`.t-type`). */
+.lkdv-ig-tile-type {
   position: absolute;
-  top: 4px;
-  right: 4px;
-  padding: 2px 5px;
-  border-radius: 9999px;
-  background: rgba(23, 43, 36, 0.72);
-  color: #ffffff;
-  font: 600 9px var(--font-sans, sans-serif);
-  -webkit-backdrop-filter: blur(4px);
-  backdrop-filter: blur(4px);
+  top: 6px;
+  right: 6px;
+  z-index: 2;
+  width: 20px;
+  height: 20px;
+  border-radius: 7px;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  color: var(--tint-ink, #fff);
+  background: rgba(11, 31, 23, 0.5);
+  -webkit-backdrop-filter: blur(8px) saturate(1.4);
+  backdrop-filter: blur(8px) saturate(1.4);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    0 1px 4px rgba(11, 31, 23, 0.25);
+}
+
+/* Heure en bas à gauche (`.t-h`). */
+.lkdv-ig-tile-h {
+  position: absolute;
+  left: 6px;
+  bottom: 5px;
+  z-index: 2;
+  pointer-events: none;
+  font: 600 9px var(--font-mono, ui-monospace, monospace);
+  color: var(--tint-ink, #fff);
+  text-shadow: 0 1px 3px rgba(11, 31, 23, 0.55);
+}
+
+/* Épingle (`.t-pinned`) : coche dorée en haut à gauche. */
+.lkdv-ig-tile-pinned {
+  position: absolute;
+  left: 6px;
+  top: 6px;
+  z-index: 2;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--lkv-warning);
+  color: var(--tint-ink, #fff);
+}
+
+/* Aplats par type (`.tfill`) — une couleur de jeton par type. */
+.lkdv-tfill {
+  position: absolute;
+  inset: 0;
+  padding: 9px 8px 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  text-align: left;
+}
+
+.lkdv-tfill.c-voice {
+  background: linear-gradient(160deg, var(--tint), var(--sage-800));
+  color: var(--sage-100);
+}
+
+.lkdv-tfill.c-text {
+  background: var(--lkv-stone-100);
+  color: var(--tint);
+}
+
+.lkdv-tfill.c-meet {
+  background: var(--mint);
+  color: var(--tint);
+}
+
+.lkdv-tfill.c-spend {
+  background: var(--warn-bg);
+  color: var(--lkv-warning-dark);
+}
+
+.lkdv-tfill.c-kit {
+  background: var(--sage-100);
+  color: var(--tint);
+}
+
+.lkdv-tfill.c-species {
+  background: var(--sage-100);
+  color: var(--tint);
+}
+
+.lkdv-tfill.c-inc {
+  background: var(--bad-bg);
+  color: var(--lkv-danger-dark);
+}
+
+.lkdv-tfill big {
+  font: 700 17px/1 var(--font-mono, ui-monospace, monospace);
+  letter-spacing: -0.02em;
+}
+
+.lkdv-tfill small {
+  font: 500 9.5px/1.2 var(--font-sans, sans-serif);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.lkdv-tfill .ic {
+  width: 22px;
+  height: 22px;
+  opacity: 0.9;
+}
+
+.lkdv-tfill .wv {
+  display: flex;
+  align-items: center;
+  gap: 1.5px;
+  height: 20px;
+}
+
+.lkdv-tfill .wv i {
+  flex: 1;
+  background: currentColor;
+  border-radius: 2px;
+  opacity: 0.75;
+}
+
+/* Tuile « + » du mode modification. */
+.lkdv-ig-tile-add {
+  display: grid;
+  place-items: center;
+  background: var(--soft, rgba(150, 186, 142, 0.28));
+  color: var(--tint);
 }
 
 /* Floating Mini Capsule Tabs (Days selector) */
@@ -1214,7 +1357,7 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   justify-content: space-between;
   padding: 4px 12px 4px 16px;
   gap: 10px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 10px 30px rgba(11, 31, 23, 0.35);
   animation: lkdv-island-in 0.35s var(--ease-spring);
 }
 
@@ -1648,4 +1791,356 @@ body.lkdv-overlay-open .lkdv-floating-tabbar {
 .lkdv-carnet-v2-root.mapbig .lkdv-ig-actions,
 .lkdv-carnet-v2-root.mapbig .lkdv-ig-hl-row {
   display: none;
+}
+
+/* =========================================================
+   Lot finition fiche carnet : marqueurs, mode modification, états
+   ========================================================= */
+
+/* Marqueurs de la carte par type (spec 01 § 1.3 : moments 21 px, POI 20 px). */
+.lkdv-carnet-map-marker[data-marker-type] {
+  box-sizing: border-box;
+  border-radius: 9999px;
+  border: 2px solid var(--tint-ink, #fff);
+  background: var(--tint, #17402c);
+  box-shadow: 0 2px 6px rgba(11, 31, 23, 0.3);
+  padding: 0;
+}
+.lkdv-carnet-map-marker[data-marker-type='start'] {
+  width: 18px;
+  height: 18px;
+  background: var(--tint-ink, #fff);
+  border-color: var(--tint, #17402c);
+}
+.lkdv-carnet-map-marker[data-marker-type='end'] {
+  width: 18px;
+  height: 18px;
+  background: var(--accent, #5b7f55);
+}
+.lkdv-carnet-map-marker[data-marker-type='moment'] {
+  width: 21px;
+  height: 21px;
+  cursor: pointer;
+}
+.lkdv-carnet-map-marker[data-marker-type='poi'] {
+  width: 20px;
+  height: 20px;
+  background: var(--accent, #5b7f55);
+}
+.lkdv-carnet-map-marker[data-marker-type='scrub'] {
+  width: 14px;
+  height: 14px;
+  box-shadow:
+    0 0 0 5px rgba(23, 64, 44, 0.18),
+    0 2px 6px rgba(11, 31, 23, 0.3);
+}
+.lkdv-carnet-map-marker.has-badge[data-marker-type] {
+  width: auto;
+  height: auto;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+.lkdv-carnet-live-marker {
+  width: 16px;
+  height: 16px;
+  border-radius: 9999px;
+  background: var(--lkv-action, #226148);
+  border: 2.5px solid var(--tint-ink, #fff);
+  box-shadow: 0 0 0 4px rgba(34, 97, 72, 0.35);
+}
+.lkdv-carnet-public-zone {
+  width: 60px;
+  height: 60px;
+  border-radius: 9999px;
+  background: rgba(91, 127, 85, 0.2);
+  border: 1.5px dashed rgba(23, 64, 44, 0.4);
+}
+
+/* Île dynamique : ombre à base d'encre, jamais rgba(0,0,0). */
+.lkdv-carnet-island-text span {
+  display: block;
+  margin-top: 2px;
+  font: 500 11px/1.3 var(--font-sans, sans-serif);
+  opacity: 0.72;
+}
+
+/* Menu de la pastille titre : séparateur de la maquette (`hr`). */
+.lkdv-menu-sep {
+  height: 0;
+  margin: 3px 8px;
+  border: 0;
+  border-top: 0.5px solid var(--sep, rgba(23, 43, 36, 0.1));
+}
+
+/* Rangée « À la une » : glyphe (initiale ou drapeau) dans l'anneau. */
+.lkdv-ig-hl-glyph {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: rgba(244, 247, 243, 0.88);
+  border: 1.5px solid rgba(255, 255, 255, 0.95);
+  font: 700 15px var(--font-display, var(--font-sans, sans-serif));
+  font-style: normal;
+  color: var(--tint, #17402c);
+}
+.lkdv-ig-hl-glyph svg {
+  color: var(--accent, #5b7f55);
+}
+.lkdv-ig-live {
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+}
+.lkdv-ig-end-edit {
+  gap: 6px;
+}
+
+/* Mode modification : « + Ajouter … » et pilules « Modifier ». */
+.lkdv-ed {
+  display: flex;
+  justify-content: center;
+  padding: 4px 0;
+}
+.lkdv-edcap {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 9999px;
+  background: var(--soft, rgba(150, 186, 142, 0.28));
+  color: var(--tint, #17402c);
+  font: 600 12.5px var(--font-sans, sans-serif);
+  box-shadow: inset 0 0 0 1px var(--soft-line, rgba(91, 127, 85, 0.38));
+  cursor: pointer;
+}
+.lkdv-edpill {
+  align-self: flex-start;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 9999px;
+  background: var(--soft, rgba(150, 186, 142, 0.28));
+  color: var(--tint, #17402c);
+  font: 600 11.5px var(--font-sans, sans-serif);
+  cursor: pointer;
+}
+.lkdv-carnet-create-cta {
+  width: 100%;
+  min-height: 48px;
+  border: 0;
+  border-radius: 9999px;
+  background: var(--tint, #17402c);
+  color: var(--tint-ink, #fff);
+  font: 600 14px var(--font-sans, sans-serif);
+  cursor: pointer;
+}
+.lkdv-carnet-create-cta:disabled {
+  opacity: 0.55;
+}
+.lkdv-carnet-create-msg {
+  min-height: 16px;
+  margin-top: 6px;
+  font: 600 12px var(--font-sans, sans-serif);
+  color: var(--bad, #a8443a);
+}
+.lkdv-carnet-create-msg[data-ok='true'] {
+  color: var(--good, #3d7a52);
+}
+
+/* États d'une lentille : vide et erreur (`.empty`, `.empty.err`). */
+.lkdv-lens-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  padding: 24px 18px;
+}
+.lkdv-lens-state-gl {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--soft, rgba(150, 186, 142, 0.28));
+  color: var(--accent, #5b7f55);
+  font: 700 16px var(--font-sans, sans-serif);
+}
+.lkdv-lens-state[data-tone='error'] .lkdv-lens-state-gl {
+  background: var(--bad-bg, #f5ddd9);
+  color: var(--bad, #a8443a);
+}
+.lkdv-lens-state b {
+  font: 650 15px var(--font-sans, sans-serif);
+  color: var(--label);
+}
+.lkdv-lens-state p {
+  margin: 0;
+  max-width: 270px;
+  font: 400 12.5px/1.45 var(--font-sans, sans-serif);
+  color: var(--label2);
+}
+.lkdv-lens-cta {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 9999px;
+  background: var(--tint, #17402c);
+  color: var(--tint-ink, #fff);
+  font: 600 13px var(--font-sans, sans-serif);
+  cursor: pointer;
+}
+.lkdv-mo-kind {
+  margin-right: 6px;
+  font: 700 9.5px var(--font-sans, sans-serif);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--accent, #5b7f55);
+}
+
+/* Chiffres : total ou jour contre moyenne (barres). */
+.lkdv-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 6px;
+}
+.lkdv-card2 {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 11px 12px;
+  border-radius: 18px;
+  background: var(--drawer-card-bg);
+}
+.lkdv-h5 {
+  font: 700 11px var(--font-sans, sans-serif);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--label2);
+}
+.lkdv-big {
+  font: 700 28px/1 var(--font-sans, sans-serif);
+  letter-spacing: -0.03em;
+  color: var(--tint, #17402c);
+  font-variant-numeric: tabular-nums;
+}
+.lkdv-brow {
+  display: grid;
+  grid-template-columns: 26px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.lkdv-btrack {
+  position: relative;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--fill, rgba(23, 43, 36, 0.09));
+  overflow: hidden;
+}
+.lkdv-btrack i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 4px;
+  background: var(--sage-300, #96b391);
+}
+.lkdv-btrack i.cur {
+  background: var(--tint, #17402c);
+}
+.lkdv-mono {
+  font: 600 11px var(--font-mono, ui-monospace, monospace);
+  color: var(--label2);
+}
+.lkdv-mute {
+  margin: 0;
+  font: 400 12px/1.35 var(--font-sans, sans-serif);
+  color: var(--label2);
+}
+
+/* Pilule « Reprendre » : bas gauche, pendant de la mini-capsule (maquette `.kit-pill`). */
+.lkdv-carnet-drawer .lkdv-pill-reprendre[aria-pressed='true'] svg {
+  color: var(--tint, #17402c);
+}
+
+/* Réduction de transparence : verre remplacé par un aplat, composant par composant
+   (maquette `prefers-reduced-transparency`). */
+@media (prefers-reduced-transparency: reduce) {
+  .lkdv-carnet-card,
+  .lkdv-title-pill,
+  .lkdv-gbtn,
+  .lkdv-day-capsule,
+  .lkdv-menu-popover,
+  .lkdv-display-popover,
+  .lkdv-carnet-drawer,
+  .lkdv-ig-tile-type,
+  .lkdv-pill-reprendre,
+  .lkdv-map-badge,
+  .lkdv-lens-tabs,
+  .lkdv-carnet-acc {
+    background: var(--lkv-surface-paper, #fff) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+}
+.lkdv-carnet-v2-root[data-reduce-transparency='true'] .lkdv-carnet-card,
+.lkdv-carnet-v2-root[data-reduce-transparency='true'] .lkdv-title-pill,
+.lkdv-carnet-v2-root[data-reduce-transparency='true'] .lkdv-gbtn,
+.lkdv-carnet-v2-root[data-reduce-transparency='true'] .lkdv-day-capsule,
+.lkdv-carnet-v2-root[data-reduce-transparency='true'] .lkdv-menu-popover,
+.lkdv-carnet-v2-root[data-reduce-transparency='true'] .lkdv-display-popover,
+.lkdv-carnet-v2-root[data-reduce-transparency='true'] .lkdv-carnet-drawer,
+.lkdv-carnet-v2-root[data-reduce-transparency='true'] .lkdv-ig-tile-type,
+.lkdv-carnet-v2-root[data-reduce-transparency='true'] .lkdv-pill-reprendre,
+.lkdv-carnet-v2-root[data-reduce-transparency='true'] .lkdv-map-badge,
+.lkdv-carnet-v2-root[data-reduce-transparency='true'] .lkdv-lens-tabs,
+.lkdv-carnet-v2-root[data-reduce-transparency='true'] .lkdv-carnet-acc {
+  background: var(--lkv-surface-paper, #fff) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+/* Réduction des animations, par composant (en plus du filet global ci-dessus). */
+@media (prefers-reduced-motion: reduce) {
+  .lkdv-day-swipe-view,
+  .lkdv-day-capsule-lens,
+  .lkdv-ig-tile,
+  .lkdv-ig-hl,
+  .lkdv-carnet-island,
+  .lkdv-pill-reprendre,
+  .lkdv-carnet-drawer,
+  .lkdv-lens-state {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+.lkdv-carnet-cta-danger {
+  margin-top: 8px;
+  background: var(--bad-bg, #f5ddd9);
+  color: var(--lkv-danger-dark, #7e2d25);
+}
+
+/* Bandeau hors ligne : sous la barre haute, jamais bloquant. */
+.lkdv-carnet-offline {
+  position: absolute;
+  top: 52px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 60;
+  max-width: calc(100% - 24px);
+  padding: 6px 12px;
+  border-radius: 9999px;
+  background: var(--warn-bg, #fbf1dc);
+  color: var(--lkv-warning-dark, #765014);
+  font: 600 11px var(--font-sans, sans-serif);
+  box-shadow: 0 2px 8px rgba(11, 31, 23, 0.12);
 }
