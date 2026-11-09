@@ -539,7 +539,7 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
           }
           markers={mapMarkers}
         />
-        <CarnetMapBadge activeDay={activeDay} />
+        {drawerOpen && !isAccountDrawer ? <CarnetMapBadge activeDay={activeDay} /> : null}
 
         {/* Grab handle : tap ou glisser > 20 px (maquette `.mgrab`) */}
         <button
