@@ -1649,3 +1649,34 @@ body.lkdv-overlay-open .lkdv-floating-tabbar {
 .lkdv-carnet-v2-root.mapbig .lkdv-ig-hl-row {
   display: none;
 }
+
+/* État vide du post : le composant historique n'affiche qu'un tiret, on rend
+   son libellé visible dans la feuille du carnet. */
+.lkdv-post-drawer .ckp-empty-state {
+  flex-direction: column;
+  gap: 8px;
+  color: var(--label, #172b24);
+}
+.lkdv-post-drawer .ckp-empty-state .ckp-empty-dash {
+  display: none;
+}
+.lkdv-post-drawer .ckp-empty-state::after {
+  content: attr(aria-label);
+  font: 500 12.5px var(--font-sans, sans-serif);
+  color: var(--label, #172b24);
+}
+
+/* Le signalement est une feuille de la fiche : même verre clair que le reste. */
+.lkdv-report-sheet {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.96),
+    rgba(242, 247, 238, 0.95) 45%,
+    rgba(255, 255, 255, 0.97)
+  ) !important;
+  color: var(--label, #172b24) !important;
+}
+.lkdv-report-sheet .lkv-sheet-up,
+.lkdv-report-sheet [class*='text-[color:var(--lkv-text'] {
+  color: var(--label, #172b24);
+}

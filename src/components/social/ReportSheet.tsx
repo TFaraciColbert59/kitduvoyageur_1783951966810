@@ -65,6 +65,7 @@ export default function ReportSheet({
         if (!open) onClose();
       }}
       title={submitted ? 'Signalement envoyé' : 'Signaler ce contenu'}
+      panelClassName="lkdv-report-sheet"
       dragToDismiss
       footer={
         submitted ? undefined : (
