@@ -546,7 +546,7 @@ returns boolean
 language sql
 stable
 security definer
-set search_path = ''
+set search_path = public, pg_temp
 as $$
   select admin.is_super_admin_for((select auth.uid()))
       or exists (
@@ -562,7 +562,7 @@ returns boolean
 language sql
 stable
 security definer
-set search_path = ''
+set search_path = public, pg_temp
 as $$
   select admin.is_team_member();
 $$;

@@ -82,8 +82,8 @@ end $$;
 do $$
 declare t text;
   tables text[] := array[
-    'api_credit_days','app_errors','geo_areas','geo_areas_coverage','geo_cache',
-    'geo_pois','geo_pois_coverage','geo_rivers','geo_rivers_coverage','geo_sites',
+    'api_credit_days','app_errors','geo_areas','geo_areas_coverage',
+    'geo_rivers','geo_rivers_coverage','geo_sites',
     'geo_sites_coverage','geo_trails','geo_trails_coverage','leaderboard_access_log',
     'leaderboard_refresh_queue','ops_daily_reports','ops_preparation_events',
     'order_encashment_events','osm_poi_cache','progression_award_intents',
