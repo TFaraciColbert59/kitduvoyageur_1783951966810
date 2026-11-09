@@ -18,6 +18,19 @@ décision.
 > une **décision du JOURNAL**, ou une **limite de la recette locale** (base de production non
 > migrée, J-08). Chaque ligne le dit dans la colonne « Statut ».
 
+## État final du chantier de fidélité (2026-11-09)
+
+> **83 / 85 items comblés et vérifiés ; 0 partiel ; 2 bloqués externes (J-08).**
+> Voir [`BILAN-FIDELITE.md`](./BILAN-FIDELITE.md) (preuves, commits, reprise) et
+> [`CHECKLIST-100.md`](./CHECKLIST-100.md) (suivi item par item). Galerie appairée :
+> [`GALERIE.html`](./GALERIE.html) (82 captures). Les sections de ce document décrivent
+> l'**audit initial** (état avant corrections) ; leurs écarts ont été comblés ou explicitement
+> documentés comme exceptions `01 § 6`.
+
+Preuves finales : build vert, TypeScript 0 erreur, vitest **279/279**, e2e **46/46 Chromium ET
+WebKit**, axe **4/4** (0 critical/serious), captures **82/82** (390×844 + 360/430), visuel 4/4,
+contraste 42/42. Reproduire : `VERIFIER.sh`.
+
 ## Synthèse
 
 Compteurs **par document** (occurrences taguées ; une même cause transverse peut apparaître dans

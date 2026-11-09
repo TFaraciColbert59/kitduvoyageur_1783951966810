@@ -493,17 +493,16 @@ test('captures Création — kit, sélecteur produit et étapes 1-3', async ({ p
     await page.waitForTimeout(1_200);
   });
   await scenario(page, 'creation-kit-etape1', async () => {
-    // Inventaire et boutique simulés vides : on revient au formulaire et on
-    // ajoute un objet personnalisé (parcours réel de premier kit).
+    // Retour au formulaire, puis « Partir de : Modèle → Bivouac » (FID-024),
+    // qui préremplit l'inventaire avec les objets de la maquette.
     const picker = page.getByRole('dialog').filter({ hasText: 'Choisir un produit' });
     await picker.getByTestId('cv2-back').click();
     await picker.waitFor({ state: 'detached', timeout: 8_000 }).catch(() => undefined);
-    await page.waitForTimeout(700);
-    await page.getByTestId('cv2-field-items').getByRole('button', { name: /Objet personnalisé/ }).click();
-    await page.getByRole('textbox', { name: 'Nom de l’objet personnalisé' }).fill('Sac de couchage');
-    await page.getByRole('spinbutton', { name: 'Poids de l’objet en grammes' }).fill('900');
-    await page.getByRole('button', { name: 'Ajouter l’objet personnalisé' }).click();
-    await page.waitForTimeout(1_200);
+    await page.waitForTimeout(600);
+    await page.getByTestId('cv2-field-kit-start').getByRole('radio', { name: 'Modèle' }).click();
+    await page.waitForTimeout(300);
+    await page.getByRole('radiogroup', { name: 'Modèle de kit' }).getByRole('radio', { name: 'Bivouac' }).click();
+    await page.waitForTimeout(1_000);
   });
   await scenario(page, 'creation-kit-etape2', async () => {
     await next(page);

@@ -8,10 +8,15 @@ Ce dossier compare les **tiroirs livrés** (Explorer + Création, sous-tiroirs e
 
 | Fichier | Rôle |
 |---|---|
-| `captures-v2/` | **48 captures 390×844** du build V2 (données simulées `@ui-mock`, zéro réseau/base), + `MANIFEST.json` |
+| `captures-v2/` | **82 captures** (390×844 + variantes 360/430) du build V2 (données simulées `@ui-mock`, zéro réseau/base), + `MANIFEST.json` |
 | `capture-all.spec.ts` | Spec Playwright de capture (rejouable : voir en tête du fichier) |
+| `VERIFIER.sh` | Pipeline de vérification complet (build, vitest, e2e ×2, axe, captures) |
 | `playwright.capture.config.ts` | Config Playwright dédiée (viewport 390×844) |
 | `ECARTS-MAQUETTE.md` | **Index + synthèse** des écarts (gravités, décisions, suites) |
+| `BILAN-FIDELITE.md` | **Résultat du chantier de fidélité** (83/85 comblés, preuves, blocages J-08, reprise) |
+| `CHECKLIST-100.md` | Suivi item par item (cases, statuts, journal de progression) |
+| `BACKLOG-100.md` | Backlog exhaustif dédupliqué (85 items, lots, preuves) |
+| `GALERIE.html` | Galerie appairée des captures V2 ↔ maquette |
 | `ECARTS-EXPLORER.md` | Détail des écarts — tiroir Explorer et ses sous-tiroirs |
 | `ECARTS-CREATION.md` | Détail des écarts — tiroir Création, 6 formulaires, sous-tiroirs |
 | `ECARTS-TRANSVERSES.md` | Écarts transverses (couleurs, typo, rayons, motion, densités, états) |
