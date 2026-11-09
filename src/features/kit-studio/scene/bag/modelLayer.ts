@@ -139,6 +139,8 @@ export interface BagModelLayer {
   attachments(): ModuleAttachmentController | null;
   /** Boîte englobante de l'ensemble actif (sac + modules attachés). */
   getBounds(out: THREE.Box3): THREE.Box3;
+  /** Boîte du seul corps, modules montés exclus : sert à garder le sac lisible au cadrage. */
+  getBodyBounds(out: THREE.Box3): THREE.Box3;
   info(): BagModelRuntimeInfo;
   dispose(): void;
 }
@@ -232,6 +234,8 @@ export function createBagModelLayer(deps: BagModelLayerDeps): BagModelLayer {
   holder.name = 'bag-model-layer';
   holder.visible = false;
   scene.add(holder);
+  // Jamais de doublure à l'écran : voir `clearLoaded`.
+  proceduralBag.visible = false;
 
   let info: BagModelRuntimeInfo = DEGRADED_INFO;
   let loaded: LoadedBagAsset | null = null;
@@ -260,7 +264,10 @@ export function createBagModelLayer(deps: BagModelLayerDeps): BagModelLayer {
     model = null;
     atlasMaps = { zones: null, weaveNormal: null };
     holder.visible = false;
-    proceduralBag.visible = true;
+    // Règle produit : le Studio ne montre que des maillages réels. Le sac procédural ne remplace
+    // plus rien — à l'ouverture, on préfère un plan de travail vide une seconde au sac grossier
+    // que Tony voyait s'afficher en premier.
+    proceduralBag.visible = false;
   };
 
   const applyAppearance = (): void => {
@@ -408,14 +415,29 @@ export function createBagModelLayer(deps: BagModelLayerDeps): BagModelLayer {
     attachments() {
       return attachmentCtrl;
     },
+    getBodyBounds(out: THREE.Box3) {
+      if (loaded && holder.visible) {
+        loaded.root.updateMatrixWorld(true);
+        out.makeEmpty();
+        for (const enfant of loaded.root.children) {
+          if (enfant.name.startsWith('module:')) continue;
+          out.expandByObject(enfant);
+        }
+        if (!out.isEmpty()) return out;
+      }
+      // Sans maillage réel il n'y a rien à cadrer : une boîte vide laisse la caméra à sa pose
+      // nominale plutôt que de cadrer une doublure qu'on n'affiche plus.
+      out.makeEmpty();
+      return out;
+    },
     getBounds(out: THREE.Box3) {
       if (loaded && holder.visible) {
         loaded.root.updateMatrixWorld(true);
         out.setFromObject(loaded.root);
         return out;
       }
-      proceduralBag.updateMatrixWorld(true);
-      out.setFromObject(proceduralBag);
+      // Même raison que `getBodyBounds` : plus de doublure affichée, donc rien à cadrer.
+      out.makeEmpty();
       return out;
     },
     info() {

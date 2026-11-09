@@ -286,13 +286,38 @@ Toutes dans `handoff/communaute-v2/JOURNAL.md` :
   (`explore-v2.css` L990) + captures/e2e 5a/5b/5e de contrôle. Les 43 autres écarts P2/P3 non
   documentés de l'audit sont listés par priorité dans le même dossier.
 
+## 9 bis. Chantier « fidélité 100 % à la maquette » (post-livraison, 2026-11-09)
+
+Après la livraison de la v2, un audit image par image (48 puis 82 captures) a recensé 85 écarts
+avec la maquette (`docs/audit/communaute-v2-2026-11-08/ecarts-maquette/`). Un chantier de fidélité
+en 3 vagues parallélisées (sous-agents, périmètres de fichiers disjoints) les a comblés :
+
+- **PR #158 fusionnée** (squash `c2d8077`), **83 / 85 items corrigés et vérifiés**, 0 partiel,
+  **2 bloqués par J-08** (fidélité sur données réelles + drapeau prod ; migration
+  `carnets.country_iso` préparée mais non appliquée). Aperçu V2 vérifié : capsule 4 volets,
+  tiroir Création 6 types, slot d'aperçu 150 px, Retour désactivé à l'étape 1, prévu par
+  `preuves-preview/` (déploiement `kitduvoyageur-1783951966810-d9uwhebh5.vercel.app`).
+  CI : `database-gates` vert ; `quality-gates` rouge sur **4 tests pré-existants de `main`**
+  (PostGlassPanel flake + 3 régressions d'autres chantiers constatées à l'identique sur `main`
+  `8b8aaa2`), hors périmètre — fusion admin comme documenté J-12.
+- Preuves : build vert, TypeScript 0 erreur, vitest **279/279**, e2e **46/46 Chromium ET WebKit**,
+  axe **4/4** (0 critical/serious), captures **82/82** (390×844 + 360/430), visuel 4/4.
+- Bilan complet, commits et reprise : `docs/audit/communaute-v2-2026-11-08/ecarts-maquette/
+  BILAN-FIDELITE.md` ; suivi item par item : `CHECKLIST-100.md` ; galerie : `GALERIE.html`.
+- Corrections notables : P1 Recherche (résultats masqués + bascule carte), Peek `role=menu` 4
+  actions, météo J-7 tuile/détail, visa pays + anneau « En route », slot d'aperçu fixe 150 px,
+  Retour désactivé étape 1, brouillon repris à l'étape quittée, 5 niveaux + DVA ski, avatar +
+  bannière Club, kit « Partir de » + aperçu/anneau, tracé éditable (segments/points/jours),
+  focus rendu après peek/détail, Échap en layout effect, densités/rayons maquette.
+
 ## 10. Pièces jointes
 
 - `handoff/communaute-v2/` : mission, spec, design, données, plan, qualité, déploiement,
   recette, journal, contrats RPC, procédure prod.
 - `docs/audit/communaute-v2-2026-11-08/` : `COUVERTURE-200.md`, `integration/` (rapport + 19
   captures), `recette/` (preuves, captures, fixtures), `DEPLOIEMENT.md` côté `docs/communaute-v2/`,
-  et **`ecarts-maquette/`** : **48 captures 390×844** des tiroirs/sous-tiroirs/formulaires +
+  et **`ecarts-maquette/`** : **82 captures** (390×844 + 360/430) des tiroirs/sous-tiroirs/formulaires +
   `ECARTS-MAQUETTE.md` (index, gravités, top corrections) + `ECARTS-EXPLORER.md` +
   `ECARTS-CREATION.md` + `ECARTS-TRANSVERSES.md` (inventaire complet des différences avec la
-  maquette, preuves image par image, harnais `capture-all.spec.ts` rejouable).
+  maquette, preuves image par image, harnais `capture-all.spec.ts` rejouable), `BILAN-FIDELITE.md`,
+  `CHECKLIST-100.md`, `BACKLOG-100.md`, `GALERIE.html`, `VERIFIER.sh`.

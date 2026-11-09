@@ -593,7 +593,7 @@
   display: flex;
   align-items: flex-end;
   gap: 8px;
-  padding: 4px 6px 1px 10px !important;
+  padding: 4px 6px 0 10px !important;
   margin: 0 !important;
 }
 .lkdv-messages .mfield {

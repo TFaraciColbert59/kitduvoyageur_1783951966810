@@ -3,9 +3,11 @@
 import React from 'react';
 import { EventTicket } from '../../shared/EventTicket';
 import type { EventCardVM, EventRegistration } from '../../shared/types';
-import { formatDateShort, formatDateStamp, formatKm, formatTime } from '../../shared/format';
+import { formatCountFr, formatDateShort, formatDateStamp, formatKm, formatTime } from '../../shared/format';
 import { ExploreIcon } from '../ExploreIcons';
+import { useEventTileWeather } from '../../data/useEventTileWeather';
 import { useLongPress } from '../useLongPress';
+import { weatherIconName } from '../weatherIcon';
 
 export type EventRegistrationState = EventRegistration;
 
@@ -129,11 +131,32 @@ export function EventTicketV2({
   onPeek,
 }: EventTicketV2Props) {
   const longPress = useLongPress({ onLongPress: (element) => onPeek(event, element) });
+  // FID-071 — pastille météo du billet : uniquement la variante « ticket »
+  // (maquette `.wxc`, L1071/L2466), dans la fenêtre J-7 et avec coordonnées.
+  const { weather } = useEventTileWeather(event, variant === 'ticket');
   const effectiveEvent: EventCardVM = {
     ...event,
     myStatus: status,
     spotsLeft: event.maxParticipants > 0 ? Math.max(0, spotsLeft) : event.spotsLeft,
+    // Maquette (L2480) : la distance n'apparaît que dans « Près de moi »
+    // (`o.dist`). Le composant partagé l'affiche dès qu'elle existe : on la
+    // neutralise ici quand le filtre ne la demande pas.
+    distanceKmFromMe: showDistance ? event.distanceKmFromMe : null,
   };
+
+  // Maquette (`gauge`, L2442-2445) : le pied du billet porte la jauge puis
+  // « n places restantes » (sans fraction). L'état d'inscription est porté par
+  // la pilule, pas par un second badge.
+  const footNote = (() => {
+    if (event.past) return formatCountFr(event.currentParticipants, 'participant');
+    if (event.maxParticipants <= 0) {
+      return `${formatCountFr(event.currentParticipants, 'inscrit')} · places illimitées`;
+    }
+    if (Math.max(0, spotsLeft) <= 0) {
+      return event.waitlistEnabled ? 'Complet · liste d’attente' : 'Complet';
+    }
+    return formatCountFr(Math.max(0, spotsLeft), 'place restante', 'places restantes');
+  })();
 
   if (variant === 'compact') {
     const stamp = formatDateStamp(event.startsAt ?? `${event.eventDate}T09:00:00+01:00`);
@@ -182,6 +205,7 @@ export function EventTicketV2({
       className="lkdv-cv2x-event"
       data-testid="cv2-tile-sortie"
       data-id={event.id}
+      data-level={event.level ?? undefined}
       {...longPress}
       onClickCapture={(domEvent) => {
         const anchor = (domEvent.target as Element).closest('a.lkdv-cv2-ticket');
@@ -192,6 +216,20 @@ export function EventTicketV2({
       }}
     >
       <EventTicket event={effectiveEvent} />
+      {weather ? (
+        <span
+          className="lkdv-cv2x-wxc"
+          title={`${weather.label}, prévu le jour J`}
+          data-testid="cv2-event-weather"
+        >
+          <ExploreIcon name={weatherIconName(weather.label)} size={14} />
+          <b>{weather.tempMax}°</b>
+          <i>{weather.tempMin}°</i>
+        </span>
+      ) : null}
+      <span className="lkdv-cv2x-event-foot-note">
+        {footNote}
+      </span>
       <div className="lkdv-cv2x-event-action">
         <EventActionButton event={event} status={status} spotsLeft={spotsLeft} busy={busy} onSignup={onSignup} />
       </div>

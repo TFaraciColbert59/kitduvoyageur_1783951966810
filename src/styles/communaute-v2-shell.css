@@ -115,6 +115,38 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
   height: 56px !important;
   padding: 4px !important;
 }
+/* FID-077 — marqueur d'invité : pilule discrète sous la capsule (le libellé
+   « Mode invité · lecture seule » est porté par le composant coque). Le vert
+   doux `--cv2-soft` est le jeton d'état du système (J-14 : aucune teinte
+   ochre hors danger), texte encre forêt, hauteur 26 px, largeur au contenu. */
+.lkdv-cv2-guest {
+  flex: none;
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 26px;
+  margin: -3px 14px 7px;
+  padding: 0 10px;
+  border-radius: var(--lkv-radius-full);
+  background: var(--cv2-soft);
+  box-shadow: inset 0 0 0 0.5px var(--cv2-soft-line);
+  color: var(--lkv-forest-900);
+  font: 600 10.5px/1.2 var(--font-sans);
+  letter-spacing: 0.02em;
+}
+
+.lkdv-cv2-guest svg {
+  width: 13px;
+  height: 13px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .lkdv-cv2-capsule .sel-lens {
   top: 4px !important;
   bottom: 4px !important;
@@ -133,6 +165,35 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
 .lkdv-cv2-capsule button svg {
   width: 24px;
   height: 24px;
+}
+
+/* FID-056 — aperçu vivant : emplacement **fixe de 150 px** entre la capsule et
+   le pager (maquette `.cr-prev`, L2692 : `flex:none`, `max-height:150px`,
+   marge latérale 14 px). Hors du pane, il ne défile pas avec le formulaire.
+   Vide, il ne réserve aucune hauteur (détail empilé, formulaire sans aperçu). */
+.lkdv-cv2-preview-slot {
+  flex: none;
+  height: 150px;
+  min-height: 150px;
+  margin: 0 14px 8px;
+  overflow: hidden;
+  border-radius: 20px;
+  pointer-events: none;
+}
+
+.lkdv-cv2-preview-slot:empty {
+  display: none;
+}
+
+.lkdv-cv2-preview-frame {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+.lkdv-cv2-preview-frame > * {
+  width: 100%;
 }
 
 /* Corps : une pane par volet, glissement horizontal (LensPager). */
@@ -336,11 +397,13 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
   }
 }
 
-/* Focus visible : même contrat que /compte (anneau sage 2 px). */
+/* Focus visible : même contrat que /compte (anneau sage 2 px, offset 2 — A §4).
+   L'anneau suit le rayon de la cible (l'`outline` épouse `border-radius`) :
+   ne jamais forcer `border-radius` ici, sinon les pilules, chips et capsules
+   se déforment au clavier (ECARTS-TRANSVERSES N12). */
 .lkdv-cv2-sheet :focus-visible {
   outline: 2px solid var(--lkv-secondary);
   outline-offset: 2px;
-  border-radius: 8px;
 }
 .lkdv-cv2-sheet:focus {
   outline: none;

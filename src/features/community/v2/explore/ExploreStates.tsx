@@ -10,20 +10,18 @@ export function ExploreSkeleton({
   variant: 'tiles' | 'tickets' | 'rows' | 'tile4' | 'tile5';
 }) {
   if (variant === 'tiles' || variant === 'tile4' || variant === 'tile5') {
-    const count = variant === 'tile5' ? 5 : 4;
+    // Maquette `etat-st-load.png` : grille de 6 tuiles uniformes, deux
+    // colonnes, shimmer vert — pas de grande tuile de vedette ni de barres de
+    // titre. Le squelette est purement décoratif (`aria-hidden`).
     return (
-      <div className="lkdv-cv2x-skeleton" aria-hidden="true">
-        <div className="lkdv-cv2-skeleton">
-          <span className="lkdv-cv2-skeleton-bar lkdv-cv2-skeleton-bar--tile" />
-        </div>
-        <div className="lkdv-cv2-grid">
-          {Array.from({ length: count }, (_, index) => (
-            <div key={index} className="lkdv-cv2-skeleton">
-              <span className="lkdv-cv2-skeleton-bar lkdv-cv2-skeleton-bar--lg" />
-              <span className="lkdv-cv2-skeleton-bar lkdv-cv2-skeleton-bar--sm" />
-            </div>
-          ))}
-        </div>
+      <div className="lkdv-cv2x-skeleton lkdv-cv2x-skeleton--tiles" aria-hidden="true">
+        {Array.from({ length: 6 }, (_, index) => (
+          <span
+            key={index}
+            className="lkdv-cv2-skeleton-bar lkdv-cv2x-skeleton-tile"
+            style={{ animationDelay: `${index * 0.08}s` }}
+          />
+        ))}
       </div>
     );
   }
@@ -60,16 +58,38 @@ export function ExploreError({
   message?: string;
 }) {
   return (
-    <div className="lkdv-cv2-error-state" role="alert">
+    <div className="lkdv-cv2-error-state" role="alert" data-tone="danger">
       <span className="lkdv-cv2-error-state-ico" aria-hidden="true">
         !
       </span>
       <b>{title}</b>
       <p>{message}</p>
-      <button type="button" className="lkdv-cv2-pill lkdv-cv2-pill--secondary" onClick={onRetry}>
+      <button
+        type="button"
+        className="lkdv-cv2-pill lkdv-cv2-pill--secondary lkdv-cv2x-error-retry"
+        onClick={onRetry}
+      >
         Réessayer
       </button>
     </div>
+  );
+}
+
+/** Illustration « montagne » de la maquette (`etat-st-empty.png`, L2282). */
+function EmptyMountainArt() {
+  return (
+    <svg
+      viewBox="0 0 64 64"
+      width="40"
+      height="40"
+      className="lkdv-cv2x-empty-ill"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M10 50 L26 24 L36 38 L44 28 L56 50z" />
+      <path d="M8 54H58" />
+      <circle cx="46" cy="14" r="5" />
+    </svg>
   );
 }
 
@@ -78,17 +98,20 @@ export function ExploreEmpty({
   icon,
   title,
   description,
+  illustration,
   children,
 }: {
   icon: ExploreIconName;
   title: string;
   description: string;
+  /** Illustration pleine de la maquette (repli : icône du jeu local). */
+  illustration?: 'mountain';
   children?: React.ReactNode;
 }) {
   return (
     <div className="lkdv-cv2-empty" role="status">
       <span className="lkdv-cv2-empty-ico" aria-hidden="true">
-        <ExploreIcon name={icon} size={20} />
+        {illustration === 'mountain' ? <EmptyMountainArt /> : <ExploreIcon name={icon} size={20} />}
       </span>
       <b>{title}</b>
       <p>{description}</p>

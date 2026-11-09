@@ -91,11 +91,10 @@ export function FieldV2({
       </div>
       {children({ id: fieldId, labelId, describedBy, invalid })}
       {hint ? <p id={hintId} className="lkdv-cv2-field-hint">{hint}</p> : null}
+      {/* FID-060 / maquette `.ferr` (HTML L2796) : **texte rouge seul**, sans
+          bordure ni icône ⚠ ; le message reste annoncé par `role="alert"`. */}
       {message ? (
         <p id={errorId} className="lkdv-cv2-field-error" role="alert">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M12 4l9 16H3zM12 10v4M12 17v.5" />
-          </svg>
           {message}
         </p>
       ) : null}

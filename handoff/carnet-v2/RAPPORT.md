@@ -156,3 +156,13 @@ like post/peek fonctionnels ; 390/360 sans débordement ; `tsc` ciblé 0 ; 118/1
 - **Migrations prod appliquées** (additives, RLS) : Lots A–E + `post_reports.target_type`.
 - Reste bloqué par la donnée : nuits et verdicts vides, J211/J212, km/D+ par jour
   absents ; accès anonyme hors périmètre sécurité.
+
+
+### Reprise finale (9 novembre 2026, 18 h)
+
+- **Jours hors séjour filtrés** : J211/J212 issus d'une sortie GPS datée hors des dates du carnet ne polluent plus la capsule ni les cartes ; le carnet démo passe à 5 jours.
+- **Carte** : échelle globe/massif/sentier, recentrage sur le tracé, 3 contrôles, marqueurs départ/arrivée, tracé du jour actif, badge `Tout`/`J{n}` visible sous le tiroir seulement.
+- **Barre globale** : lentille chromatique au press/glissement (`data-dragging`), sans changer la navigation.
+- **Chargement** : squelette aligné sur la coque v2.
+- **Prod** : commit `a91f890`, déploiement READY, alias `koosmoweb.fr`. Vérifié : 6 capsules (R+J1..J5), 5 cartes-jour, échelle 3, contrôles 3, 2 marqueurs, badge sous tiroir, axe 0 critical/serious.
+- **Reste données** : nuits et verdicts vides, km/D+ par jour absents. **Reste produit** : accès anonyme, mode contexte/hors-ligne partiels.

@@ -1198,7 +1198,7 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
 /* Dynamic Island for Carnet */
 .lkdv-carnet-island {
   position: absolute;
-  top: 9px;
+  top: 56px;
   left: 50%;
   transform: translateX(-50%);
   min-width: 140px;
@@ -1582,7 +1582,7 @@ html:has(.lkdv-carnet-v2-root) {
 .lkdv-map-badge {
   position: absolute;
   left: 14px;
-  top: 30px;
+  top: 60px;
   z-index: 4;
   display: inline-flex;
   align-items: center;
@@ -1612,4 +1612,71 @@ body.lkdv-overlay-open .lkdv-floating-tabbar {
    reste MapLibre (ADR-002), seulement désaturé pour laisser le tracé lire. */
 .lkdv-carnet-mapzone .maplibregl-canvas {
   filter: saturate(0.55) brightness(1.06) contrast(0.96);
+}
+
+/* Post du carnet : le média ne doit pas pousser la légende hors de la feuille. */
+.lkdv-post-drawer .lkdv-feed-post-stack {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.lkdv-post-drawer .lkdv-feed-post {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+  aspect-ratio: auto;
+}
+.lkdv-post-drawer .lkdv-feed-post-footer {
+  flex: none;
+}
+.lkdv-post-drawer .ckp-empty,
+.lkdv-post-drawer .lkdv-post-panel-body {
+  color: var(--label, #172b24);
+}
+.lkdv-post-drawer .ckp-empty svg {
+  color: var(--tint, #17402c);
+}
+
+/* Carte agrandie : l'en-tête tient dans 144 px, sans contenu qui passe sous la carte. */
+.lkdv-carnet-v2-root.mapbig .lkdv-carnet-top {
+  overflow: hidden;
+}
+.lkdv-carnet-v2-root.mapbig .lkdv-carnet-card {
+  overflow: hidden;
+}
+.lkdv-carnet-v2-root.mapbig .lkdv-ig-actions,
+.lkdv-carnet-v2-root.mapbig .lkdv-ig-hl-row {
+  display: none;
+}
+
+/* État vide du post : le composant historique n'affiche qu'un tiret, on rend
+   son libellé visible dans la feuille du carnet. */
+.lkdv-post-drawer .ckp-empty-state {
+  flex-direction: column;
+  gap: 8px;
+  color: var(--label, #172b24);
+}
+.lkdv-post-drawer .ckp-empty-state .ckp-empty-dash {
+  display: none;
+}
+.lkdv-post-drawer .ckp-empty-state::after {
+  content: attr(aria-label);
+  font: 500 12.5px var(--font-sans, sans-serif);
+  color: var(--label, #172b24);
+}
+
+/* Le signalement est une feuille de la fiche : même verre clair que le reste. */
+.lkdv-report-sheet {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.96),
+    rgba(242, 247, 238, 0.95) 45%,
+    rgba(255, 255, 255, 0.97)
+  ) !important;
+  color: var(--label, #172b24) !important;
+}
+.lkdv-report-sheet .lkv-sheet-up,
+.lkdv-report-sheet [class*='text-[color:var(--lkv-text'] {
+  color: var(--label, #172b24);
 }

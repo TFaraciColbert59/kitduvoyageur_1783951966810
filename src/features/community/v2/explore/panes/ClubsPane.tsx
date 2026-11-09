@@ -4,6 +4,7 @@ import React from 'react';
 import type { ClubCardVM, ClubFilter, ClubSort, GeoPermissionState, MemberStatus } from '../../shared/types';
 import type { CursorFeedResult } from '../../data/useCursorFeed';
 import { activityLabel } from '../../data/communityFeedMappers';
+import { formatCountFr } from '../../shared/format';
 import { ClubTileV2 } from '../tiles/ClubTileV2';
 import { ExploreEmpty, ExploreError, ExploreGeoPrompt, ExploreListFoot, ExploreOfflineBanner, ExploreSkeleton } from '../ExploreStates';
 import { usePaneNearBottom, usePaneScrollMemory } from '../usePaneScrollMemory';
@@ -227,7 +228,7 @@ export function ClubsPane({
           loadingMore={feed.loadingMore}
           onLoadMore={feed.loadMore}
           total={feed.items.length}
-          label={`${feed.items.length} clubs`}
+          label={formatCountFr(feed.items.length, 'club')}
         />
       </div>
     </div>

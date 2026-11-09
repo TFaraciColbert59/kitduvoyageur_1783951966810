@@ -385,3 +385,47 @@ describe('moteur de vignettes', () => {
     expect(elapsed).toBeLessThan(600);
   });
 });
+
+describe("invalidation d'une vignette", () => {
+  it("oublie l'image, révoque son URL et la refait tant qu'une carte l'affiche", async () => {
+    const r = rig();
+    const t = item('a');
+    const vues: (string | null | undefined)[] = [];
+    r.engine.subscribe(t.key, (v) => vues.push(v));
+    r.engine.request(t.key, { spec: t.spec });
+    r.step();
+    await flush();
+    expect(r.engine.get(t.key)).toBe('blob:fake/0');
+    expect(r.drawn).toEqual(['a']);
+
+    // Le maillage réel arrive après coup : l'image de repli déjà dessinée doit céder la place.
+    r.engine.invalidate(t.key);
+    expect(r.revoked).toEqual(['blob:fake/0']);
+    expect(r.engine.get(t.key)).toBeUndefined();
+    r.step();
+    await flush();
+    expect(r.drawn).toEqual(['a', 'a']);
+    expect(r.engine.get(t.key)).toBe('blob:fake/1');
+  });
+
+  it("ne refait rien pour une clé que plus personne n'affiche", async () => {
+    const r = rig();
+    const t = item('b');
+    const off = r.engine.subscribe(t.key, () => {});
+    r.engine.request(t.key, { spec: t.spec });
+    r.step();
+    await flush();
+    off();
+
+    r.engine.invalidate(t.key);
+    expect(r.engine.get(t.key)).toBeUndefined();
+    expect(r.step()).toBe(false);
+    expect(r.drawn).toEqual(['b']);
+  });
+
+  it('ignore une clé inconnue', () => {
+    const r = rig();
+    expect(() => r.engine.invalidate('b:jamais-demandee')).not.toThrow();
+    expect(r.pendingSlots()).toBe(0);
+  });
+});

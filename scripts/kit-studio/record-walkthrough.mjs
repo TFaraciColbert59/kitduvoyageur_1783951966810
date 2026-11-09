@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import esbuild from 'esbuild';
 import { chromium } from '@playwright/test';
+import sharp from 'sharp';
 
 const rootDir = process.cwd();
 const capturesDir = path.join(rootDir, 'docs', 'kit-studio', 'captures');
@@ -87,6 +88,23 @@ async function main() {
           window.__scene.update(suivant);
         };
         window.__THREE = THREE;
+
+        // Le rail du tiroir : cinq corps puis six modules, pour que les captures montrent les
+        // vignettes réellement produites et non un tiroir vide.
+        const rail = document.getElementById('dock-rail');
+        const cellules = [
+
+          ...['lkdv-one-15', 'lkdv-one-25', 'lkdv-one-45', 'lkdv-one-60', 'lkdv-one-80'].map((id) => ({ kind: 'b', id })),
+          ...['lkdv-m01', 'lkdv-m03', 'lkdv-m05', 'lkdv-m13', 'lkdv-m17', 'lkdv-m19'].map((id) => ({ kind: 'm', id })),
+        ];
+        for (const c of cellules) {
+          const el = document.createElement('span');
+          el.className = 'dock-cell';
+          el.setAttribute('data-thumb-kind', c.kind);
+          el.setAttribute('data-thumb-id', c.id);
+          el.setAttribute('data-thumb-key', c.kind + ':' + c.id);
+          rail.appendChild(el);
+        }
 
         // Populate thumbnails in UI rail
         const engine = getThumbnailEngine();
@@ -256,6 +274,14 @@ async function main() {
       scrollbar-width: none;
     }
     .dock-rail::-webkit-scrollbar { display: none; }
+    .dock-cell {
+      flex: 0 0 86px;
+      height: 96px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 14px;
+      display: block;
+      overflow: hidden;
+    }
     .card-item {
       flex: 0 0 86px;
       height: 96px;
@@ -379,9 +405,7 @@ async function main() {
       <span class="dock-tab" id="tab-colors">Couleurs</span>
       <span class="dock-tab" id="tab-modules">Modules</span>
     </div>
-    <div class="dock-rail" id="dock-rail">
-      <!-- Rempli dynamiquement -->
-    </div>
+    <div class="dock-rail" id="dock-rail"></div>
   </section>
 
   <script src="/bundle.js"></script>
@@ -420,10 +444,11 @@ async function main() {
       await page.waitForFunction(
         () => window['__scene']?.info?.().bagModel?.status === 'glb',
         undefined,
-        { timeout: 20000 },
+        { timeout: 45000 },
       );
     } catch {
-      throw new Error("Le sac n'est jamais apparu a l'ecran : capture impossible.");
+      const etat = await page.evaluate(() => JSON.stringify(window['__scene']?.info?.().bagModel ?? null));
+      throw new Error("Le sac n'est jamais apparu a l'ecran : capture impossible. Etat : " + etat);
     }
     await page.waitForTimeout(500);
   }
@@ -432,6 +457,50 @@ async function main() {
    * Capture une image et verifie que le sac tient dans le cadre. `minHaut` abaisse le seuil de
    * hauteur pour les vues ou le sujet est legitimement plus petit (decomposition, porteur).
    */
+  /**
+   * Vérifie qu'à l'emplacement annoncé du sac, l'image contient bien un objet : une part
+   * suffisante de pixels s'écarte de la couleur du fond, relevée dans un coin vide de la vue.
+   */
+  async function verifierPixels(fichier, rect) {
+    if (!rect) return null;
+    const meta = await sharp(fichier).metadata();
+    const L = meta.width ?? 0;
+    const H = meta.height ?? 0;
+    if (!L || !H) return 'image illisible';
+
+    const fond = await sharp(fichier)
+      .extract({ left: 4, top: Math.round(H * 0.3), width: 24, height: 24 })
+      .stats();
+    const ref = fond.channels.slice(0, 3).map((c) => c.mean);
+
+    const x = Math.max(0, Math.round(rect.x0 * L));
+    const y = Math.max(0, Math.round(rect.y0 * H));
+    const w = Math.min(L - x, Math.round((rect.x1 - rect.x0) * L));
+    const h = Math.min(H - y, Math.round((rect.y1 - rect.y0) * H));
+    if (w < 8 || h < 8) return 'rectangle du sujet trop petit pour etre verifie';
+
+    const { data, info } = await sharp(fichier)
+      .extract({ left: x, top: y, width: w, height: h })
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+
+    const canaux = info.channels;
+    let dessines = 0;
+    const total = info.width * info.height;
+    for (let i = 0; i < total; i++) {
+      const o = i * canaux;
+      const ecart =
+        Math.abs(data[o] - ref[0]) + Math.abs(data[o + 1] - ref[1]) + Math.abs(data[o + 2] - ref[2]);
+      if (ecart > 24) dessines += 1;
+    }
+    const part = dessines / total;
+    // Un sac remplit largement son rectangle ; en dessous d'un tiers, la scene est vide ou
+    // l'objet annonce n'est pas celui qui est dessine.
+    return part < 0.33
+      ? `rien de dessine a l'emplacement du sac (${Math.round(part * 100)} % de pixels)`
+      : null;
+  }
+
   async function shoot(nom, minHaut = undefined) {
     const vu = await page.evaluate(() => ({
       rect: window['__scene']?.info?.().view?.subjectRect ?? null,
@@ -446,9 +515,37 @@ async function main() {
     if (raison && minHaut !== undefined && rect && (rect.y1 - rect.y0) * 100 >= minHaut && /trop petit/.test(raison)) {
       raison = null;
     }
-    await page.screenshot({ path: path.join(capturesDir, nom) });
+    const fichier = path.join(capturesDir, nom);
+    await page.screenshot({ path: fichier });
+
+    // Contrôle sur l'image, pas sur l'état du moteur. C'est la leçon du premier garde-fou : il
+    // déclarait les treize vues conformes pendant que l'écran montrait une doublure grossière,
+    // parce qu'il interrogeait la scène au lieu de regarder ce qui était dessiné.
+    if (!raison) raison = await verifierPixels(fichier, rect);
     console.log('  ' + nom.padEnd(34) + describeRect(rect).padEnd(52) + (raison ? 'ECHEC : ' + raison : 'ok'));
     if (raison) cadrageEchecs.push({ nom, raison });
+  }
+
+  /**
+   * Les vignettes se rendent une par tick d'inactivité, et les corps et modules attendent leur
+   * maillage réel avant d'être redessinés. Photographier avant produit un tiroir vide ou des
+   * silhouettes de repli, qui ne prouvent rien.
+   */
+  async function attendreVignettes() {
+    try {
+      await page.waitForFunction(
+        () => [...document.querySelectorAll('[data-thumb-key]')].every((e) => e.querySelector('img')),
+        undefined,
+        { timeout: 30000 },
+      );
+    } catch {
+      const manquantes = await page.evaluate(() =>
+        [...document.querySelectorAll('[data-thumb-key]')]
+          .filter((e) => !e.querySelector('img'))
+          .map((e) => e.getAttribute('data-thumb-key')),
+      );
+      throw new Error('Vignettes jamais rendues : ' + manquantes.join(', '));
+    }
   }
 
   console.log('Navigating to local studio on simulated iPhone 16 Pro (393x852)...');
@@ -576,14 +673,14 @@ async function main() {
   await page.waitForTimeout(600);
   await shoot('walkthrough-09-attach-m04.png');
 
-  console.log('Attaching module M14 Porte-skis (smooth swap and adaptive reframing to 1.70m)...');
+  console.log('Attaching module M13 Porte-piolets (maillage publie)...');
   await page.evaluate(async () => {
-    document.getElementById('action-badge').textContent = '5/8 · MODULE PORTEUR : M14 PORTE-SKIS';
+    document.getElementById('action-badge').textContent = '5/8 · MODULE : M13 PORTE-PIOLETS';
     const scene = window['__scene'];
-    await scene.attachModule('lkdv-m14');
+    await scene.attachModule('lkdv-m13');
   });
   await page.waitForTimeout(600);
-  await shoot('walkthrough-10-attach-m14.png');
+  await shoot('walkthrough-10-attach-m13.png');
 
   // 6. Closing Drawer (Front E)
   console.log('Closing drawer: verifying smooth transform/opacity transition and 3-dot reopen pill...');
@@ -610,7 +707,8 @@ async function main() {
     const scene = window['__scene'];
     scene.setDrawerOpen(true);
   });
-  await page.waitForTimeout(600);
+  await page.waitForTimeout(1400);
+  await attendreVignettes();
   await shoot('walkthrough-12-drawer-reopened.png');
 
   // 8. Exploded animation (Front A: envelope includes all items without clipping)
@@ -621,7 +719,9 @@ async function main() {
     scene.setExploded(1.0);
   });
   await page.waitForTimeout(700);
-  await shoot('walkthrough-13-exploded.png', 15);
+  // En décomposition, le sac partage volontairement le cadre avec tout le kit : il y est plus
+  // petit qu'ailleurs, et le plancher de lisibilité ne s'y applique pas.
+  await shoot('walkthrough-13-exploded.png', 20);
 
   await browser.close();
   console.log('Walkthrough capture complete! All 13 frames saved to ' + capturesDir);

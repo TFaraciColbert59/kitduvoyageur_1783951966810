@@ -18,6 +18,7 @@ import { CarnetAltitude } from './CarnetAltitude';
 import { CarnetMapBadge } from './CarnetMapBadge';
 import { CompteMap } from '@/components/compte/map/CompteMap';
 import { DRAWER_V2_CSS } from '@/components/compte/drawer/SlotShell';
+import { parsePositions } from '@/features/compte/map/geometry';
 import { CarnetPostSheet } from '@/components/carnet/profile/CarnetPostSheet';
 import StoriesViewer, {
   type StoryUser,
@@ -31,7 +32,6 @@ import { elevationProfileGain } from '@/features/carnet/detail/elevationProfile'
 import { createClient } from '@/lib/supabase/client';
 import { replyToCarnetStory } from '@/lib/stories/carnetReply';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
-import { ZoomIn, ZoomOut, Compass } from 'lucide-react';
 
 import '@/styles/tokens.css';
 import '@/styles/carnet-v2.css';
@@ -284,6 +284,18 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
   );
 
   // Markers for steps and nights on map
+  /* Le jour actif recadre la carte sur ses propres points GPS ; sans points
+     réels pour ce jour, on garde la trace complète (aucun tracé inventé). */
+  const mapTrace = useMemo(() => {
+    if (activeDay <= 0) return detail.trace;
+    const day = detail.days.find((entry) => (entry.dayNumber ?? entry.index) === activeDay);
+    if (!day || day.points.length < 2) return detail.trace;
+    return {
+      type: 'LineString' as const,
+      coordinates: day.points.map((point) => [point.lng, point.lat]),
+    };
+  }, [activeDay, detail.days, detail.trace]);
+
   const mapMarkers = useMemo(() => {
     const list: Array<{
       id: string;
@@ -293,6 +305,15 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
       type?: string;
       badge?: string;
     }> = [];
+    const tracePoints = parsePositions(detail.trace);
+    if (tracePoints.length >= 2) {
+      const start = tracePoints[0];
+      const end = tracePoints[tracePoints.length - 1];
+      list.push(
+        { id: 'trace-start', lat: start.lat, lng: start.lng, title: 'Départ', type: 'start' },
+        { id: 'trace-end', lat: end.lat, lng: end.lng, title: 'Arrivée', type: 'end' }
+      );
+    }
     for (const night of detail.nights ?? []) {
       if (night.lat && night.lng) {
         list.push({
@@ -315,7 +336,7 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
       });
     }
     return list;
-  }, [detail.nights, scrubPoint]);
+  }, [detail.nights, detail.trace, scrubPoint]);
 
   // Prepare Stories users grouped by author
   const storyUsers: StoryUser[] = useMemo(() => {
@@ -446,7 +467,9 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
           onCreateMoment={() => {
             // Participant: open create moment sheet or drawer
             handleOpenDrawerSlot('fil');
-            showIsland('Sélectionnez un lieu ou photo pour le nouveau moment');
+            showIsland('Sélectionnez un lieu ou photo pour le nouveau moment', () =>
+              setDrawerOpen(false)
+            );
           }}
           onToggleOutdoor={() => setOutdoor((prev) => !prev)}
           isOutdoor={outdoor}
@@ -499,7 +522,7 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
           authState={user ? 'owner' : 'guest'}
           context={{ mode: 'overview' }}
           variant="carnet"
-          trace={detail.trace}
+          trace={mapTrace}
           focus={mapFocus}
           activeDay={activeDay}
           livePosition={
@@ -518,7 +541,7 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
           }
           markers={mapMarkers}
         />
-        <CarnetMapBadge activeDay={activeDay} />
+        {drawerOpen && !isAccountDrawer ? <CarnetMapBadge activeDay={activeDay} /> : null}
 
         {/* Grab handle : tap ou glisser > 20 px (maquette `.mgrab`) */}
         <button
@@ -561,44 +584,6 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
         >
           <span />
         </button>
-
-        {/* Map Zoom Controls */}
-        <div className="lkdv-mctl" role="group" aria-label="Contrôles de la carte">
-          <button
-            type="button"
-            onClick={() => {
-              const map3D = (window as unknown as { __lkdvCompteMap3D?: { zoomIn: () => void } })
-                .__lkdvCompteMap3D;
-              map3D?.zoomIn();
-            }}
-            aria-label="Zoom avant"
-          >
-            <ZoomIn size={18} />
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              const map3D = (window as unknown as { __lkdvCompteMap3D?: { zoomOut: () => void } })
-                .__lkdvCompteMap3D;
-              map3D?.zoomOut();
-            }}
-            aria-label="Zoom arrière"
-          >
-            <ZoomOut size={18} />
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              // Recenter
-              if (detail.place?.lat && detail.place?.lng) {
-                setMapFocus({ lat: detail.place.lat, lng: detail.place.lng, zoom: 11 });
-              }
-            }}
-            aria-label="Recentrer la carte"
-          >
-            <Compass size={18} />
-          </button>
-        </div>
       </section>
 
       {/* Accessoire altimétrique — seulement avec de vraies mesures */}

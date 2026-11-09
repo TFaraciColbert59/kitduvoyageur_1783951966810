@@ -701,7 +701,8 @@ export type ModuleLoadErrorReason =
   | 'manifest-fetch-failed'
   | 'manifest-invalid'
   | 'glb-fetch-failed'
-  | 'glb-parse-failed';
+  | 'glb-parse-failed'
+  | 'maillage-absent';
 
 export interface ModuleLoadDegraded {
   readonly status: 'degraded';
@@ -1237,44 +1238,10 @@ export async function loadModuleAsset(
   const origin: ModuleOrigin = manifest.origin === 'procedural' ? 'procedural' : 'glb';
 
   if (origin === 'procedural') {
-    const root = new THREE.Group();
-    root.name = `module:${manifest.moduleId}`;
-    root.userData.origin = 'procedural';
-    root.userData.loadScale = 1;
-    root.userData.loadRotationDeg = [0, 0, 0];
-    root.userData.reserve = manifest.reserve ?? null;
-    root.userData.rigidPanelConvention =
-      manifest.rigidPanelConvention ?? RIGID_PANEL_CONVENTION;
-
-    const bodyGroup = buildProceduralModuleMesh(manifest);
-    bodyGroup.scale.set(1, 1, 1);
-    bodyGroup.rotation.set(0, 0, 0);
-    root.add(bodyGroup);
-
-    const platineGroup = buildPlatineMesh(manifest.platine);
-    root.add(platineGroup);
-    root.updateMatrixWorld(true);
-
-    const triangleCount = countTrianglesInObject(bodyGroup);
-    let disposed = false;
-    const dispose = (): void => {
-      if (disposed) return;
-      disposed = true;
-      if (root.parent) {
-        root.parent.remove(root);
-      }
-      disposeObject3D(root);
-    };
-
-    return {
-      status: 'ready',
-      moduleId: manifest.moduleId,
-      manifest,
-      root,
-      platineGroup,
-      triangleCount,
-      dispose,
-    };
+    // Règle produit : le Studio n'affiche que des maillages réels. Un module sans `.glb` n'est
+    // plus représenté par une forme dessinée à la main — il est signalé comme non disponible,
+    // pour qu'on sache qu'il manque au lieu de croire qu'on le voit.
+    return degraded('maillage-absent', `Aucun maillage publié pour ${manifest.moduleId}.`);
   }
 
   let glbBuffer: ArrayBuffer;

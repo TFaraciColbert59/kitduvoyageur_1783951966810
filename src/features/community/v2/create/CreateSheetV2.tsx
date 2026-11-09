@@ -3,15 +3,26 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { User } from '@supabase/supabase-js';
-import { BookOpen, Backpack, Camera, Map as MapIcon, PenLine, Users } from 'lucide-react';
+import {
+  BookOpen,
+  Backpack,
+  Camera,
+  ChevronLeft,
+  ChevronRight,
+  Map as MapIcon,
+  PenLine,
+  Users,
+} from 'lucide-react';
 import { CommunitySheetShell } from '../shared/CommunitySheetShell';
+import { SheetPreviewContext } from '../shared/SheetPreview';
 import { DynamicIsland } from '@/components/ui/drawer/DynamicIsland';
 import { useKeyboardInsets } from '@/hooks/useKeyboardInsets';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { CREATE_KINDS_V2, type CreateKindV2 } from './engine/createSchemasV2';
 import { createKindConfig, stepAriaLabel } from './engine/steps';
 import type { CreateNavV2 } from './engine/nav';
-import { flushDraftV2 } from './engine/useDraftV2';
+import { flushDraftV2, hasDraftContentV2 } from './engine/useDraftV2';
+import { ConfirmDialogV2 } from './ConfirmDialogV2';
 import { PostFormV2 } from './forms/PostFormV2';
 import { StoryFormV2 } from './forms/StoryFormV2';
 import { SortieFormV2 } from './forms/SortieFormV2';
@@ -96,6 +107,7 @@ export function CreateSheetV2({
   initialPrefill = null,
   onCreateRequested,
 }: CreateSheetV2Props) {
+  const isGuest = !user?.id || user.is_anonymous === true;
   const router = useRouter();
   const { haptic } = useHapticFeedback();
   const keyboard = useKeyboardInsets();
@@ -108,11 +120,12 @@ export function CreateSheetV2({
     {},
   );
   const [prefillNonce, setPrefillNonce] = useState(0);
+  // FID-056 : cible DOM de l'aperçu vivant, rendue par la coque au-dessus du
+  // pager ; les formulaires y portent leur aperçu (`SheetPreview`).
+  const [previewSlot, setPreviewSlot] = useState<HTMLDivElement | null>(null);
   const keepOpenRef = useRef(false);
   const finishedRef = useRef(false);
   const authAskedRef = useRef(false);
-  const confirmDialogRef = useRef<HTMLDivElement | null>(null);
-  const confirmTriggerRef = useRef<HTMLElement | null>(null);
   const activeKind = CREATE_KINDS_V2[kindIndex] ?? 'post';
   const activeNav = navs.get(activeKind) ?? null;
   const config = createKindConfig(activeKind);
@@ -166,43 +179,6 @@ export function CreateSheetV2({
     onRequireAuth();
   }, [onRequireAuth, open, user]);
 
-  // Confirmation de fermeture : piège de focus réel (l'alertdialog prend le
-  // focus, le reste du tiroir devient inerte, le focus revient au champ).
-  useEffect(() => {
-    if (!confirmClose || typeof document === 'undefined') return;
-    const dialog = confirmDialogRef.current;
-    confirmTriggerRef.current = document.activeElement as HTMLElement | null;
-    const sheet = dialog?.closest('.lkdv-cv2-sheet');
-    const touched: Array<{ element: Element; inert: boolean; ariaHidden: string | null }> = [];
-    if (sheet) {
-      sheet.querySelectorAll('.lkdv-cv2-body, .lkdv-cv2-topnav, .lkdv-cv2-mini-slot, .lkdv-cv2-footer').forEach((element) => {
-        if (dialog && element.contains(dialog)) return;
-        const html = element as HTMLElement;
-        touched.push({
-          element,
-          inert: html.inert || element.hasAttribute('inert'),
-          ariaHidden: element.getAttribute('aria-hidden'),
-        });
-        html.inert = true;
-        element.setAttribute('inert', '');
-        element.setAttribute('aria-hidden', 'true');
-      });
-    }
-    const focusTimer = window.setTimeout(() => {
-      dialog?.querySelector<HTMLElement>('[data-cv2-confirm-autofocus]')?.focus();
-    }, 80);
-    return () => {
-      window.clearTimeout(focusTimer);
-      touched.forEach(({ element, inert, ariaHidden }) => {
-        (element as HTMLElement).inert = inert;
-        if (!inert) element.removeAttribute('inert');
-        if (ariaHidden == null) element.removeAttribute('aria-hidden');
-        else element.setAttribute('aria-hidden', ariaHidden);
-      });
-      confirmTriggerRef.current?.focus?.();
-    };
-  }, [confirmClose]);
-
   const reportNav = useMemo(() => {
     const map = new Map<CreateKindV2, (nav: CreateNavV2) => void>();
     for (const kind of CREATE_KINDS_V2) {
@@ -252,6 +228,9 @@ export function CreateSheetV2({
       }
       setKindIndex(kindIndexOf(kind));
       setDetail(null);
+      // Une nouvelle création dans le même montage doit pouvoir re-remonter
+      // l'île de succès (enchaînement Club → Sortie, Kit → Sortie).
+      finishedRef.current = false;
       onCreateRequested?.(kind, prefill);
     },
     [kindIndex, navs, onCreateRequested],
@@ -269,6 +248,20 @@ export function CreateSheetV2({
     onClose();
   }, [flushAllDrafts, onClose]);
 
+  /**
+   * FID-035 — la maquette confirme la fermeture dès que `CRE.dirty()` est vrai
+   * **tous types confondus** (HTML L1988-1993), pas seulement le type affiché.
+   * `activeNav.hasContent` ne voit que le type courant : on interroge aussi les
+   * brouillons des cinq autres types (mémoire vive, puis localStorage).
+   */
+  const dirtyKinds = useMemo(
+    () =>
+      CREATE_KINDS_V2.filter((kind) =>
+        kind === activeKind ? Boolean(activeNav?.hasContent) : hasDraftContentV2(kind),
+      ),
+    [activeKind, activeNav?.hasContent],
+  );
+
   const requestClose = useCallback(() => {
     if (island) return;
     if (detail) {
@@ -276,14 +269,29 @@ export function CreateSheetV2({
       return;
     }
     if (activeNav?.busy) return;
-    if (activeNav?.hasContent) {
-      activeNav.flushDraft();
+    if (dirtyKinds.length > 0) {
+      activeNav?.flushDraft();
       setConfirmClose(true);
       haptic('medium');
       return;
     }
     closeNow();
-  }, [activeNav, closeNow, detail, haptic, island]);
+  }, [activeNav, closeNow, detail, dirtyKinds.length, haptic, island]);
+
+  /**
+   * FID-033 — maquette `finish()` → `startSheetClose()` (HTML L1991) : la
+   * feuille se ferme **derrière** l'île de succès, qui reste au-dessus du fil.
+   * Le formulaire du moteur est remis à neuf juste après l'envoi (même frame) ;
+   * `onCreated` rafraîchit le fil et ferme le tiroir côté page.
+   */
+  const closeBehindIsland = useCallback(
+    (kind: CreateKindV2) => {
+      if (finishedRef.current) return;
+      finishedRef.current = true;
+      onCreated(kind);
+    },
+    [onCreated],
+  );
 
   const handleEscape = useCallback((): boolean => {
     if (island) {
@@ -357,7 +365,7 @@ export function CreateSheetV2({
                   ? 'Les participants peuvent s’inscrire.'
                   : kind === 'story'
                     ? 'Visible 24 h.'
-                    : 'Visible dans le fil.',
+                    : 'Dans le fil de la communauté.',
         kind,
         actionLabel:
           kind === 'carnet' || kind === 'club'
@@ -392,8 +400,10 @@ export function CreateSheetV2({
         };
       }
       setIsland(base);
+      // L'île est posée : la feuille se referme derrière elle (FID-033).
+      closeBehindIsland(kind);
     },
-    [config.successTitle, finishCreated, haptic, requestCreate, router],
+    [closeBehindIsland, config.successTitle, finishCreated, haptic, requestCreate, router],
   );
 
   const contextValue = useMemo<CreateSheetContextValue>(
@@ -466,16 +476,18 @@ export function CreateSheetV2({
         </p>
       ) : null}
       <div className="lkdv-cv2c-foot-actions">
-        {activeNav.canBack ? (
-          <button
-            type="button"
-            className="lkdv-cv2-pill lkdv-cv2-pill--secondary lkdv-cv2c-back"
-            onClick={activeNav.goBack}
-            disabled={activeNav.busy}
-          >
-            Retour
-          </button>
-        ) : null}
+        {/* Maquette (`cr-foot .back`, HTML L1138-1144) : « Retour » reste
+            **visible et désactivé** à l'étape 1 — la spec § 4.1 le voulait masqué,
+            la maquette fait foi (item 2). */}
+        <button
+          type="button"
+          className="lkdv-cv2-pill lkdv-cv2-pill--secondary lkdv-cv2c-back"
+          onClick={activeNav.goBack}
+          disabled={activeNav.busy || !activeNav.canBack}
+        >
+          <ChevronLeft size={15} aria-hidden="true" />
+          Retour
+        </button>
         <button
           type="button"
           className="lkdv-cv2-pill lkdv-cv2-pill--primary lkdv-cv2c-next"
@@ -486,7 +498,16 @@ export function CreateSheetV2({
           {activeNav.busy
             ? 'Envoi…'
             : activeNav.busyLabel ??
-              (activeNav.stepIndex >= activeNav.stepCount - 1 ? activeNav.finalLabel : 'Suivant')}
+              (activeNav.stepIndex >= activeNav.stepCount - 1
+                ? // Maquette L2715 : après échec serveur, l'action finale devient
+                  // « Réessayer » (même action) ; elle reprend son libellé
+                  // nominal dès que l'erreur est levée (FID-032).
+                  activeNav.serverError
+                  ? 'Réessayer'
+                  : activeNav.finalLabel
+                : 'Suivant')}
+          {/* Chevron de la maquette (`.cr-foot .next`, HTML L1138-1142). */}
+          <ChevronRight size={15} aria-hidden="true" />
         </button>
       </div>
     </div>
@@ -580,72 +601,44 @@ export function CreateSheetV2({
 
   return (
     <CreateSheetContext.Provider value={contextValue}>
-      <CommunitySheetShell
-        open={open}
-        onClose={requestClose}
-        kind="create"
-        label="Créer dans la communauté"
-        capsule={{ items: capsureItems, active: kindIndex, onChange: changeKind, ariaLabel: 'Type de création' }}
-        mini={detail ? null : mini}
-        footer={detail ? null : footer}
-        panes={panes}
-        detail={sheetDetail}
-        onEscape={handleEscape}
-        resetKey={`${activeKind}:${prefillNonce}`}
-        island={islandNode}
-        className={keyboard > 0 ? 'lkdv-cv2c-keyboard' : undefined}
-      >
-        <div className="lkdv-cv2c-form-mount" data-kind={activeKind}>
-          {activeFormByKind[activeKind]}
-        </div>
-        {confirmClose ? (
-          <div className="lkdv-cv2c-confirm-layer">
-            <div
-              ref={confirmDialogRef}
-              className="lkdv-cv2-confirm lkdv-cv2c-confirm"
-              role="alertdialog"
-              aria-modal="true"
-              aria-labelledby="cv2c-confirm-title"
-              aria-describedby="cv2c-confirm-text"
-              onKeyDown={(event) => {
-                if (event.key !== 'Tab') return;
-                const nodes = [...event.currentTarget.querySelectorAll<HTMLElement>('button')];
-                if (nodes.length === 0) return;
-                event.preventDefault();
-                const index = nodes.indexOf(document.activeElement as HTMLElement);
-                const next = event.shiftKey
-                  ? nodes[(index - 1 + nodes.length) % nodes.length]
-                  : nodes[(index + 1) % nodes.length];
-                next?.focus();
-              }}
-            >
-              <b id="cv2c-confirm-title">Fermer sans publier ?</b>
-              <p id="cv2c-confirm-text" className="lkdv-cv2-field-hint">
-                Ton brouillon de {KIND_META[activeKind].label.toLowerCase()} est conservé sur cet
-                appareil. Tu pourras reprendre où tu t’es arrêté.
-              </p>
-              <div className="lkdv-cv2-confirm-actions">
-                <button
-                  type="button"
-                  className="lkdv-cv2-pill lkdv-cv2-pill--secondary"
-                  onClick={() => closeNow()}
-                >
-                  Fermer
-                </button>
-                <button
-                  type="button"
-                  className="lkdv-cv2-pill lkdv-cv2-pill--primary"
-                  data-cv2-autofocus
-                  data-cv2-confirm-autofocus
-                  onClick={() => setConfirmClose(false)}
-                >
-                  Continuer l’édition
-                </button>
-              </div>
-            </div>
+      <SheetPreviewContext.Provider value={previewSlot}>
+        <CommunitySheetShell
+          open={open}
+          onClose={requestClose}
+          kind="create"
+          guestNotice={isGuest}
+          label="Créer dans la communauté"
+          capsule={{ items: capsureItems, active: kindIndex, onChange: changeKind, ariaLabel: 'Type de création' }}
+          mini={detail ? null : mini}
+          footer={detail ? null : footer}
+          panes={panes}
+          detail={sheetDetail}
+          onEscape={handleEscape}
+          resetKey={`${activeKind}:${prefillNonce}`}
+          island={islandNode}
+          className={keyboard > 0 ? 'lkdv-cv2c-keyboard' : undefined}
+          previewSlotRef={setPreviewSlot}
+        >
+          <div className="lkdv-cv2c-form-mount" data-kind={activeKind}>
+            {activeFormByKind[activeKind]}
           </div>
-        ) : null}
-      </CommunitySheetShell>
+          <ConfirmDialogV2
+            open={confirmClose}
+            title="Fermer sans publier ?"
+            // Message **générique** de la maquette (L1990), sans type interpolé
+            // (FID-061) ; il ne cite pas non plus le brouillon d'un autre type.
+            text="Ton brouillon est conservé sur cet appareil. Tu pourras reprendre où tu t’es arrêté."
+            cancelLabel="Continuer l’édition"
+            confirmLabel="Fermer"
+            // Hiérarchie de la maquette `lkvConfirm(..., danger=true)` L1759 :
+            // action sûre à gauche (focus initial), « Fermer » en danger à droite.
+            danger
+            testId="cv2c-close-confirm"
+            onCancel={() => setConfirmClose(false)}
+            onConfirm={() => closeNow()}
+          />
+        </CommunitySheetShell>
+      </SheetPreviewContext.Provider>
     </CreateSheetContext.Provider>
   );
 }

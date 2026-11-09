@@ -14,14 +14,14 @@ const today = new Date();
 const tomorrow = new Date(today.getTime() + 86_400_000).toISOString().slice(0, 10);
 
 describe('schémas V2 — une validation par étape', () => {
-  it('Publication photo : médias et légende requis', () => {
+  it('Publication photo : média requis, légende facultative (maquette L2802-2806)', () => {
     const values = createDefaultsV2('post');
     const result = postSchemaV2.safeParse(values);
     expect(result.success).toBe(false);
     if (!result.success) {
       const paths = result.error.issues.map((issue) => issue.path.join('.'));
       expect(paths).toContain('media');
-      expect(paths).toContain('content');
+      expect(paths).not.toContain('content');
     }
   });
 
@@ -77,6 +77,44 @@ describe('schémas V2 — une validation par étape', () => {
     if (!result.success) {
       expect(result.error.issues.some((issue) => issue.path[0] === 'title')).toBe(true);
     }
+  });
+
+  it('Publication : le format Événement renvoie vers Sortie (maquette L2803)', () => {
+    const values = {
+      ...createDefaultsV2('post'),
+      format: 'event' as const,
+      audience: 'public' as const,
+    };
+    const result = postSchemaV2.safeParse(values);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const issues = result.error.issues.filter((issue) => issue.path[0] === 'format');
+      expect(issues).toHaveLength(1);
+      expect(issues[0].message).toBe('Un événement se crée dans le formulaire Sortie.');
+    }
+  });
+
+  it('Sortie : ski de rando sans DVA → une seule erreur de check-list', () => {
+    const base = {
+      ...createDefaultsV2('sortie'),
+      title: 'Col du Galibier',
+      location: 'Valloire',
+      date: tomorrow,
+      startTime: '07:00',
+      activity: 'ski' as const,
+    };
+    const withoutDva = sortieSchemaV2.safeParse({ ...base, safetyChecklist: ['Pelle', 'Sonde'] });
+    expect(withoutDva.success).toBe(false);
+    if (!withoutDva.success) {
+      const issues = withoutDva.error.issues.filter((issue) => issue.path[0] === 'safetyChecklist');
+      expect(issues).toHaveLength(1);
+      expect(issues[0].message).toBe(
+        'Pour le ski de rando, le DVA est obligatoire dans la check-list.',
+      );
+    }
+    expect(
+      sortieSchemaV2.safeParse({ ...base, safetyChecklist: ['DVA', 'Pelle', 'Sonde'] }).success,
+    ).toBe(true);
   });
 
   it('Publication : public sans club choisi → une seule erreur club', () => {
@@ -182,7 +220,7 @@ describe('schémas V2 — une validation par étape', () => {
   });
 
   it('Club : nom requis, slug valide, activités multiples, 3 questions maximum', () => {
-    const base = { ...createDefaultsV2('club'), name: 'La Cordée' };
+    const base = { ...createDefaultsV2('club'), name: 'La Cordée', activities: ['Randonnée'] };
     expect(clubSchemaV2.safeParse(base).success).toBe(true);
     expect(clubSchemaV2.safeParse({ ...base, slug: 'La Cordée !' }).success).toBe(false);
     expect(clubSchemaV2.safeParse({ ...base, slug: 'la-cordee-du-vercors' }).success).toBe(true);

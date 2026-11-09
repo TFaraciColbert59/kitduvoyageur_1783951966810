@@ -34,7 +34,9 @@ const POST_STEPS: readonly CreateStepV2[] = [
     label: 'Contenu',
     fields: ['media', 'title', 'content', 'location', 'locationLat', 'locationLng'],
   },
-  { id: 'diffusion', label: 'Diffusion', fields: ['tags', 'mentions'] },
+  // FID-062/FID-064 : Hashtags/Mentions séparés retirés (le hint maquette
+  // vit dans la légende) ; la Diffusion ne valide plus de champ propre.
+  { id: 'diffusion', label: 'Diffusion', fields: [] },
 ];
 
 const STORY_STEPS: readonly CreateStepV2[] = [
@@ -51,7 +53,9 @@ const CARNET_STEPS: readonly CreateStepV2[] = [
   {
     id: 'infos',
     label: 'Infos',
-    fields: ['title', 'destination', 'startDate', 'endDate', 'description', 'nbVoyageurs', 'visibility'],
+    // FID-064 : le stepper « Nombre de jours » vit en Infos (maquette L2970).
+    // `days` reste validé à l'étape Jours (moments incomplets).
+    fields: ['title', 'destination', 'startDate', 'endDate', 'nbJours', 'description', 'nbVoyageurs', 'visibility'],
   },
   { id: 'trace', label: 'Tracé', fields: ['trace', 'distanceKm', 'deniveleM'] },
   { id: 'jours', label: 'Jours', fields: ['days'] },
@@ -62,37 +66,54 @@ const SORTIE_STEPS: readonly CreateStepV2[] = [
   {
     id: 'activite',
     label: 'Activité et lieu',
-    fields: ['activity', 'title', 'location', 'meetingPoint', 'meetingLat', 'meetingLng', 'cover'],
+    // FID-064 : date, heure et récurrence sont sur l'étape 1 de la maquette
+    // (fieldset « Rendez-vous », HTML L3120-3124), avec le lieu du RDV.
+    fields: [
+      'activity',
+      'title',
+      'location',
+      'meetingPoint',
+      'meetingLat',
+      'meetingLng',
+      'date',
+      'startTime',
+      'endTime',
+      'recurrence',
+    ],
   },
   {
     id: 'itineraire',
     label: 'Itinéraire',
-    fields: ['date', 'startTime', 'endTime', 'level', 'distanceKm', 'elevationGainM', 'duration', 'recurrence'],
+    fields: ['level', 'distanceKm', 'elevationGainM', 'duration'],
   },
   {
     id: 'participants',
     label: 'Participants',
-    fields: ['maxParticipants', 'waitlist', 'clubId', 'kitId'],
+    fields: ['maxParticipants', 'waitlist', 'clubId'],
   },
   {
     id: 'securite',
     label: 'Sécurité',
-    fields: ['safetyChecklist', 'safetyNotes', 'description', 'announce', 'clientRequestId'],
+    // FID-064 : le matériel requis (kit) est sur l'étape Sécurité (L3138).
+    fields: ['safetyChecklist', 'safetyNotes', 'kitId', 'description', 'announce', 'clientRequestId'],
   },
 ];
 
 const KIT_STEPS: readonly CreateStepV2[] = [
   { id: 'inventaire', label: 'Inventaire', fields: ['items'] },
-  { id: 'completer', label: 'Compléter', fields: ['description', 'season', 'cover'] },
-  { id: 'partager', label: 'Partager', fields: ['name', 'isPublic', 'clientRequestId'] },
+  { id: 'completer', label: 'Compléter', fields: ['season', 'cover'] },
+  // FID-053 : la description passe en étape 3 (maquette L3208).
+  { id: 'partager', label: 'Partager', fields: ['name', 'description', 'isPublic', 'clientRequestId'] },
 ];
 
 const CLUB_STEPS: readonly CreateStepV2[] = [
-  { id: 'identite', label: 'Identité', fields: ['name', 'slug', 'cover'] },
+  { id: 'identite', label: 'Identité', fields: ['name', 'slug'] },
   {
     id: 'univers',
     label: 'Univers',
-    fields: ['activities', 'description', 'locationLabel', 'zoneRadiusKm'],
+    // Images du club (avatar carré + bannière 3:1) sur l'étape Univers, comme
+    // la maquette (HTML L3283-3289), avec les activités et la description.
+    fields: ['activities', 'description', 'locationLabel', 'zoneRadiusKm', 'avatar', 'banner'],
   },
   { id: 'adhesion', label: 'Adhésion', fields: ['privacy', 'membershipRules', 'joinQuestions'] },
   { id: 'publication', label: 'Publication', fields: ['welcomePost', 'welcomeContent', 'clientRequestId'] },

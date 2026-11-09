@@ -6,11 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import Icon from '@/components/ui/Icon';
 import { warmFreedomReels } from '@/features/community/reels/freedomReelsService';
 import { evaluateCurrentPrefetchPolicy } from '@/lib/perf/networkPrefs';
-import {
-  DESTINATIONS,
-  getActiveDestinationId,
-  type DestinationId,
-} from './destinationRegistry';
+import { DESTINATIONS, getActiveDestinationId, type DestinationId } from './destinationRegistry';
 import BottomNavReservation from './navigation/BottomNavReservation';
 import {
   HUB_SWITCHER_AUTOPEN_KEY,
@@ -44,8 +40,12 @@ export function FloatingLiquidTabBar() {
   const pathname = usePathname();
   const router = useRouter();
   const activeId = getActiveDestinationId(pathname);
-  const activeIndex = Math.max(0, DESTINATIONS.findIndex((d) => d.id === activeId));
+  const activeIndex = Math.max(
+    0,
+    DESTINATIONS.findIndex((d) => d.id === activeId)
+  );
   const [hiddenByEvent, setHiddenByEvent] = useState(false);
+  const [dragging, setDragging] = useState(false);
   const lastCommunityClickRef = useRef<number>(0);
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressFiredRef = useRef<boolean>(false);
@@ -131,7 +131,9 @@ export function FloatingLiquidTabBar() {
     const warmIfAllowed = () => {
       if (evaluateCurrentPrefetchPolicy().allowData) warmFreedom();
     };
-    const handle = w.requestIdleCallback ? w.requestIdleCallback(warmIfAllowed) : window.setTimeout(warmIfAllowed, 1200);
+    const handle = w.requestIdleCallback
+      ? w.requestIdleCallback(warmIfAllowed)
+      : window.setTimeout(warmIfAllowed, 1200);
     return () => {
       if (w.cancelIdleCallback && w.requestIdleCallback) w.cancelIdleCallback(handle);
       else window.clearTimeout(handle);
@@ -207,7 +209,14 @@ export function FloatingLiquidTabBar() {
     <>
       <BottomNavReservation hasUpperExtension={false} hasDayPlateau={false} />
       <nav className="lkdv-floating-tabbar" aria-label="Navigation principale">
-        <div className="lkdv-floating-tabbar-surface">
+        <div
+          className="lkdv-floating-tabbar-surface"
+          data-dragging={dragging ? 'true' : undefined}
+          onPointerDown={() => setDragging(true)}
+          onPointerUp={() => setDragging(false)}
+          onPointerCancel={() => setDragging(false)}
+          onPointerLeave={() => setDragging(false)}
+        >
           <span
             className="lkdv-floating-lens"
             aria-hidden="true"
@@ -224,8 +233,8 @@ export function FloatingLiquidTabBar() {
                   destination.id === 'community'
                     ? `${destination.ariaLabel} (double-clic pour Freedom)`
                     : destination.id === 'adventures'
-                    ? `${destination.ariaLabel} (maintien pour changer d'aventure)`
-                    : destination.ariaLabel
+                      ? `${destination.ariaLabel} (maintien pour changer d'aventure)`
+                      : destination.ariaLabel
                 }
                 aria-current={active ? 'page' : undefined}
                 className={`lkdv-floating-tab${active ? ' is-active' : ''}`}
@@ -241,7 +250,11 @@ export function FloatingLiquidTabBar() {
                 onClick={(e) => handleTabClick(destination.id, e)}
               >
                 <span className="lkdv-floating-tab-icon" aria-hidden="true">
-                  <Icon name={TAB_ICON[destination.id]} size={ICON_SIZE} strokeWidth={active ? 2.25 : 1.75} />
+                  <Icon
+                    name={TAB_ICON[destination.id]}
+                    size={ICON_SIZE}
+                    strokeWidth={active ? 2.25 : 1.75}
+                  />
                 </span>
               </Link>
             );

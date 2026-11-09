@@ -3,6 +3,7 @@ import { test, expect } from '@playwright/test';
 import {
   SKIP_SERVER,
   SKIP_V2_BUILD,
+  expectNoWrites,
   freezeClock,
   gotoCommunity,
   installCommunityV2Mock,
@@ -41,16 +42,24 @@ test.describe('Invité — lecture seule et requireAuth @ui-mock @mobile', () =>
 
     await expect(page.getByTestId('cv2-tile-carnet').first()).toBeVisible();
     await expect(page.getByTestId('cv2-sort-button')).toBeVisible();
+    // FID-077 : marqueur visible « Mode invité · lecture seule ».
+    await expect(page.getByTestId('cv2-guest-mode')).toBeVisible();
+    await expect(page.getByTestId('cv2-guest-mode')).toContainText(/invité/i);
 
-    // Lecture seule : aucune RPC d'écriture partie, le tiroir reste ouvert.
-    const writes = mock.calls.filter(
-      (call) => call.kind === 'rpc' && /^(join_|leave_|create_|review_|cancel_)/.test(call.name),
-    );
-    expect(writes).toEqual([]);
+    // Lecture des 3 volets accessible à l'invité.
+    const tabs = page.getByRole('tablist', { name: 'Volets de l’explorateur' });
+    await tabs.getByRole('tab', { name: 'Clubs' }).click();
+    await expect(page.getByTestId('cv2-tile-club').first()).toBeVisible({ timeout: 15_000 });
+    await tabs.getByRole('tab', { name: 'Sorties' }).click();
+    await expect(page.getByTestId('cv2-tile-sortie').first()).toBeVisible({ timeout: 15_000 });
+
+    // Lecture seule : aucune RPC/table d'écriture partie, le tiroir reste ouvert.
+    expectNoWrites(mock, 'Explorer invité : lecture seule');
+    await expect(page.getByTestId('communaute-v2-explore')).toBeVisible();
   });
 
   test('8b. like en invité → requireAuth (redirection connexion)', async ({ page }) => {
-    await installCommunityV2Mock(page, { role: 'anonymous' });
+    const mock = await installCommunityV2Mock(page, { role: 'anonymous' });
     await freezeClock(page);
     await gotoCommunity(page);
     const opened = await openExplorer(page);
@@ -62,10 +71,13 @@ test.describe('Invité — lecture seule et requireAuth @ui-mock @mobile', () =>
     // finale, pas la forme exacte de la query.
     await expect(page).toHaveURL(/\/connexion/, { timeout: 15_000 });
     expect(decodeURIComponent(page.url())).toContain('/communaute');
+    // Toast d'invitation (requireAuth) — jamais un like appliqué en local.
+    await expect(page.getByText(/Créez un compte pour enregistrer/).first()).toBeVisible({ timeout: 10_000 });
+    expectNoWrites(mock, 'like invité');
   });
 
   test('8c. ouvrir Création en invité → requireAuth (le tiroir ne s’ouvre pas)', async ({ page }) => {
-    await installCommunityV2Mock(page, { role: 'anonymous' });
+    const mock = await installCommunityV2Mock(page, { role: 'anonymous' });
     await freezeClock(page);
     await gotoCommunity(page);
 
@@ -93,10 +105,12 @@ test.describe('Invité — lecture seule et requireAuth @ui-mock @mobile', () =>
       )
       .not.toBe('none');
     await expect(page.getByTestId('communaute-v2-create')).toHaveCount(0);
+    await expect(page.getByText(/Créez un compte pour enregistrer/).first()).toBeVisible({ timeout: 10_000 });
+    expectNoWrites(mock, 'ouverture Création invitée');
   });
 
   test('8d. rejoindre un club en invité → requireAuth', async ({ page }) => {
-    await installCommunityV2Mock(page, { role: 'anonymous' });
+    const mock = await installCommunityV2Mock(page, { role: 'anonymous' });
     await freezeClock(page);
     await gotoCommunity(page);
     const opened = await openExplorer(page);
@@ -112,6 +126,32 @@ test.describe('Invité — lecture seule et requireAuth @ui-mock @mobile', () =>
       .getByTestId('cv2-club-join')
       .click();
     await expect(page).toHaveURL(/\/connexion/, { timeout: 15_000 });
+    await expect(page.getByText(/Créez un compte pour enregistrer/).first()).toBeVisible({ timeout: 10_000 });
+    expectNoWrites(mock, 'adhésion invitée');
+  });
+
+  /**
+   * FID-077 — « s'inscrire » (4e action d'écriture) : la garde `requireAuth`
+   * s'applique aussi à l'inscription à une sortie, sans aucune mutation émise.
+   */
+  test('8f. s’inscrire à une sortie en invité → requireAuth, aucune inscription', async ({ page }) => {
+    const mock = await installCommunityV2Mock(page, { role: 'anonymous' });
+    await freezeClock(page);
+    await gotoCommunity(page);
+    const opened = await openExplorer(page);
+    test.skip(!opened, SKIP_V2_BUILD);
+
+    await page.getByRole('tablist', { name: 'Volets de l’explorateur' }).getByRole('tab', { name: 'Sorties' }).click();
+    const register = page.getByTestId('cv2-event-register').first();
+    await expect(register).toBeVisible({ timeout: 15_000 });
+    await register.click();
+
+    await expect(page).toHaveURL(/\/connexion/, { timeout: 15_000 });
+    expect(decodeURIComponent(page.url())).toContain('/communaute');
+    await expect(page.getByText(/Créez un compte pour enregistrer/).first()).toBeVisible({ timeout: 10_000 });
+    // Aucune confirmation locale ni inscription dans le journal.
+    await expect(page.locator('.lkdv-island-pill')).toHaveCount(0);
+    expectNoWrites(mock, 'inscription invitée');
   });
 
   test('8e. session absente : le middleware renvoie vers /connexion (contrôle de garde)', async ({

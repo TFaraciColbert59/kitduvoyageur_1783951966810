@@ -81,7 +81,7 @@ function buildEtapes(input: BuildCarnetDetailInput): CarnetEtapeDay[] {
       const dayNumber = e.jour_numero ?? e.ordre ?? 1;
       const dateLabel = e.date_etape
         ? new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' }).format(
-            new Date(`${e.date_etape}T12:00:00Z`),
+            new Date(`${e.date_etape}T12:00:00Z`)
           )
         : null;
       return {
@@ -95,7 +95,12 @@ function buildEtapes(input: BuildCarnetDetailInput): CarnetEtapeDay[] {
         elevationM: toNumber(e.denivele_m),
         durationText: e.duree_texte?.trim() || null,
         weather:
-          [e.meteo?.trim(), e.temperature_c !== null && e.temperature_c !== undefined ? `${e.temperature_c} °C` : null]
+          [
+            e.meteo?.trim(),
+            e.temperature_c !== null && e.temperature_c !== undefined
+              ? `${e.temperature_c} °C`
+              : null,
+          ]
             .filter(Boolean)
             .join(' · ') || null,
         overnight: overnightByDay.get(dayNumber) ?? null,
@@ -142,7 +147,24 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
      datent le leur. Aucune valeur n'est inventée quand une source manque. */
   const sessions = input.sessions ?? (hikeSession ? [hikeSession] : []);
   const elevationProfile = pickElevationProfile(sessions);
-  const days = buildDays({ moments: input.moments, sessions, startDate: carnet.start_date ?? null });
+  const builtDays = buildDays({
+    moments: input.moments,
+    sessions,
+    startDate: carnet.start_date ?? null,
+  });
+  /* Une sortie GPS datée hors du séjour (seed de démo, sortie rattachée après
+     coup) créait des jours J211/J212 sans aucun moment. Le carnet a des dates
+     de début et de fin : un jour hors de cette fenêtre n'appartient pas à la
+     fiche. Les moments réels restent dans leur jour. */
+  const start = carnet.start_date ? new Date(`${carnet.start_date}T12:00:00Z`) : null;
+  const end = carnet.end_date ? new Date(`${carnet.end_date}T12:00:00Z`) : null;
+  const spanDays =
+    start && end && Number.isFinite(start.getTime()) && Number.isFinite(end.getTime())
+      ? Math.max(1, Math.round((end.getTime() - start.getTime()) / 86_400_000) + 1)
+      : null;
+  const days = spanDays
+    ? builtDays.filter((day) => (day.dayNumber ?? day.index) <= spanDays)
+    : builtDays;
   const summary = buildSummary(days);
 
   const stats: CarnetStatItem[] = [];
@@ -182,7 +204,8 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
         }));
 
   const viewerRole: CarnetViewerRole =
-    input.viewerRole ?? (input.viewerId && carnet.author_id === input.viewerId ? 'participant' : 'visitor');
+    input.viewerRole ??
+    (input.viewerId && carnet.author_id === input.viewerId ? 'participant' : 'visitor');
   const budget = viewerRole === 'visitor' ? null : (input.budget ?? null);
 
   const kitVerdicts: Record<string, CarnetKitVerdictItem> = { ...(input.kitVerdicts ?? {}) };

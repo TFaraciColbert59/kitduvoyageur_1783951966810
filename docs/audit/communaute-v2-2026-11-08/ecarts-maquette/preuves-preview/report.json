@@ -1,0 +1,28 @@
+{
+  "base": "https://kitduvoyageur-1783951966810-d9uwhebh5.vercel.app",
+  "steps": [
+    "preview-fil",
+    "preview-explorer",
+    "preview-creation-publication",
+    "preview-creation-carnet"
+  ],
+  "consoleErrors": [
+    "pageerror: TypeError: Cannot read properties of null (reading 'appendChild')",
+    "pageerror: TypeError: Cannot read properties of null (reading 'appendChild')",
+    "pageerror: TypeError: Cannot read properties of null (reading 'appendChild')",
+    "pageerror: TypeError: Cannot read properties of null (reading 'appendChild')",
+    "Failed to load resource: the server responded with a status of 404 ()"
+  ],
+  "checks": {
+    "explorerSheet": 2,
+    "explorerTabs": 4,
+    "guestPill": 0,
+    "createSheet": 1,
+    "createTabs": 6,
+    "previewSlot": 1,
+    "previewAria": 1,
+    "backCount": 1,
+    "backDisabled": true,
+    "carnetPreviewSlot": 1
+  }
+}

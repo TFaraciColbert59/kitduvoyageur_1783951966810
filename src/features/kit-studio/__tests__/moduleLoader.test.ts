@@ -435,64 +435,33 @@ describe('Deux origines de module : cohabitation des 15 modules .glb et des 5 mo
     });
   });
 
-  it('construit par code M09, M10, M11, M12 et M14 sans aucun fichier .glb et les fait cohabiter avec les maillages importés sur les ancres auditées du 80 L', async () => {
-    const proceduralStrictProvider: ModuleAssetProvider = {
+  // Règle produit (Tony, 09/11/2026) : le Studio n'affiche que des maillages réels. Un module
+  // dont le `.glb` n'est pas publié n'est plus dessiné par du code — il est refusé, avec sa
+  // raison, pour qu'on sache qu'il manque au lieu de croire qu'on le voit.
+  it('refuse les cinq modules sans maillage publié plutôt que d’en dessiner une approximation', async () => {
+    const refusTotal: ModuleAssetProvider = {
       fetchManifest: publicModulesProvider.fetchManifest,
       async fetchGlb(): Promise<ArrayBuffer> {
-        throw new Error('Aucun .glb ne doit être chargé pour un module procédural');
+        throw new Error('Aucun .glb ne doit être chargé pour un module sans maillage');
       },
     };
 
-    const loadedProcedural = await Promise.all(
-      ['lkdv-m09', 'lkdv-m10', 'lkdv-m11', 'lkdv-m12', 'lkdv-m14'].map((id) =>
-        loadModuleAsset(id, proceduralStrictProvider),
-      ),
-    );
-
-    for (const res of loadedProcedural) {
-      expect(res.status).toBe('ready');
-      if (res.status !== 'ready') return;
-      expect(res.manifest.origin).toBe('procedural');
-      expect(res.manifest.rigidPanelConvention).toEqual(RIGID_PANEL_CONVENTION);
-      expect(res.triangleCount).toBeGreaterThan(0);
-
-      const feet = res.platineGroup.children.filter((c) => c.userData.isPlatineFoot === true);
-      expect(feet).toHaveLength(2);
+    const sansMaillage = ['lkdv-m09', 'lkdv-m10', 'lkdv-m11', 'lkdv-m12', 'lkdv-m14'];
+    for (const id of sansMaillage) {
+      const res = await loadModuleAsset(id, refusTotal);
+      expect(res.status).toBe('degraded');
+      if (res.status !== 'degraded') return;
+      expect(res.reason).toBe('maillage-absent');
+      expect(res.moduleId).toBe(id);
     }
+  });
 
-    const [m09, m10, m11, m12, m14] = loadedProcedural;
-    if (
-      m09.status !== 'ready' ||
-      m10.status !== 'ready' ||
-      m11.status !== 'ready' ||
-      m12.status !== 'ready' ||
-      m14.status !== 'ready'
-    ) {
-      return;
-    }
-
-    // Cohabitation simultanée d'un module .glb importé (lkdv-m04) et d'un module procédural (lkdv-m12)
-    // sur les deux ancres auditées ('facade' et 'flanc-droit') du sac LKDV ONE 80 L
-    const m04Glb = await loadModuleAsset('lkdv-m04', publicModulesProvider);
-    expect(m04Glb.status).toBe('ready');
-    if (m04Glb.status !== 'ready') return;
-
-    const bagRoot = new THREE.Group();
-    const bag80Manifest = lireBagManifest('lkdv-one-80');
-    const anchors80 = resolveBagAttachmentAnchors(bag80Manifest);
-    const controller = createModuleAttachmentController(bagRoot, anchors80);
-
-    expect(controller.attach(m04Glb, 'facade').ok).toBe(true);
-    expect(controller.attach(m12, 'flanc-droit').ok).toBe(true);
-    expect(bagRoot.children).toHaveLength(2);
-    expect(controller.getMountedModule('facade')?.manifest.origin).toBe('glb');
-    expect(controller.getMountedModule('flanc-droit')?.manifest.origin).toBe('procedural');
-
-    controller.dispose();
-    m09.dispose();
-    m10.dispose();
-    m11.dispose();
-    m14.dispose();
+  it('charge normalement les quinze modules dont le maillage est publié', async () => {
+    const res = await loadModuleAsset('lkdv-m03', publicModulesProvider);
+    expect(res.status).toBe('ready');
+    if (res.status !== 'ready') return;
+    expect(res.manifest.origin).toBe('glb');
+    expect(res.triangleCount).toBeGreaterThan(0);
   });
 });
 
@@ -674,5 +643,52 @@ describe('placage des ancres sur la surface du maillage', () => {
       corpsTest(),
     );
     expect(ancre.position).toEqual(depart);
+  });
+});
+
+describe('les manifestes publiés concordent avec le catalogue du code', () => {
+  /**
+   * La scène charge le manifeste servi depuis `public/assets/modules/`, pas la constante
+   * TypeScript : celle-ci ne sert que de secours et alimente les tests purs. Les deux peuvent donc
+   * diverger sans que rien ne le signale — c'est arrivé sur la platine de M14, corrigée dans le
+   * code et restée à sa valeur d'origine dans le fichier servi, donc sans effet à l'écran.
+   */
+  it('même platine, mêmes cotes et même origine pour les 20 modules', () => {
+    const ecarts: string[] = [];
+    for (const attendu of AVAILABLE_3D_MODULE_MANIFESTS) {
+      const fichier = path.join(MODULES_DIR, `${attendu.moduleId}.manifest.json`);
+      if (!fs.existsSync(fichier)) {
+        ecarts.push(`${attendu.moduleId} : aucun manifeste servi`);
+        continue;
+      }
+      const servi = JSON.parse(fs.readFileSync(fichier, 'utf8')) as typeof attendu;
+      // Les deux sources sont écrites à la main : un dixième de millimètre d'arrondi n'est pas
+      // une dérive. On compare les nombres à 0,5 mm près, le reste à l'identique.
+      const TOLERANCE_M = 0.0005;
+      const concorde = (a: unknown, b: unknown): boolean => {
+        if (typeof a === 'number' && typeof b === 'number') return Math.abs(a - b) <= TOLERANCE_M;
+        if (Array.isArray(a) && Array.isArray(b)) {
+          return a.length === b.length && a.every((v, i) => concorde(v, b[i]));
+        }
+        if (a && b && typeof a === 'object' && typeof b === 'object') {
+          const ca = a as Record<string, unknown>;
+          const cb = b as Record<string, unknown>;
+          const cles = new Set([...Object.keys(ca), ...Object.keys(cb)]);
+          return [...cles].every((k) => concorde(ca[k], cb[k]));
+        }
+        return a === b;
+      };
+      const compare = (champ: string, a: unknown, b: unknown) => {
+        if (!concorde(a, b)) {
+          ecarts.push(`${attendu.moduleId}.${champ} : servi ${JSON.stringify(a)} vs code ${JSON.stringify(b)}`);
+        }
+      };
+      compare('platine', servi.platine, attendu.platine);
+      compare('boundingBoxM', servi.boundingBoxM, attendu.boundingBoxM);
+      compare('cotesReferenceMm', servi.cotesReferenceMm, attendu.cotesReferenceMm);
+      compare('origin', servi.origin, attendu.origin);
+      compare('fitRule', servi.fitRule, attendu.fitRule);
+    }
+    expect(ecarts).toEqual([]);
   });
 });

@@ -9,8 +9,11 @@ import {
   SKIP_REAL_DB,
   SKIP_SERVER,
   SKIP_V2_BUILD,
+  activeElement,
   closeByEscape,
+  dragLensPager,
   dragSheetDown,
+  expectNotCovered,
   freezeClock,
   gotoCommunity,
   horizontalOverflow,
@@ -19,6 +22,7 @@ import {
   isServerReady,
   longPress,
   openExplorer,
+  pressEscapeAndExpectConsumed,
   swipeFilterPager,
   type CommunityV2Mock,
 } from './communaute-v2.fixtures';
@@ -86,16 +90,6 @@ async function expectPaneInViewport(page: Page, id: string): Promise<void> {
   const pane = panelVisibility(page, id);
   await expect(pane).toHaveAttribute('aria-hidden', 'false');
   await expect(pane).toBeInViewport();
-}
-
-/**
- * Clic DOM direct (élément `.click()`), pour les cas où un recouvrement de
- * layout empêche le clic natif Playwright d'atteindre le bouton alors que
- * l'utilisateur, lui, déclenche bien l'action (recouvrements à qualifier dans le
- * rapport : barre de retour du détail, bascule « Sur la carte »).
- */
-async function domClick(locator: import('@playwright/test').Locator): Promise<void> {
-  await locator.evaluate((element) => (element as HTMLElement).click());
 }
 
 test.describe('Explorer v2 — ouverture, capsule, gestes @ui-mock @mobile', () => {
@@ -240,7 +234,7 @@ test.describe('Explorer v2 — ouverture, capsule, gestes @ui-mock @mobile', () 
     for (const width of [360, 390, 430]) {
       await page.setViewportSize({ width, height: 844 });
       expect(await horizontalOverflow(page)).toBeLessThanOrEqual(0);
-      for (const volet of ['Carnets', 'Clubs', 'Sorties']) {
+      for (const volet of ['Carnets', 'Clubs', 'Sorties', 'Recherche']) {
         await tab(page, 'Volets de l’explorateur', volet).click();
         expect(await horizontalOverflow(page), `${volet} à ${width}px`).toBeLessThanOrEqual(0);
       }
@@ -248,6 +242,152 @@ test.describe('Explorer v2 — ouverture, capsule, gestes @ui-mock @mobile', () 
     // La fermeture reste fonctionnelle en mouvement réduit.
     await page.keyboard.press('Escape');
     await expect(page.getByTestId('communaute-v2-explore')).toHaveCount(0, { timeout: 3_000 });
+  });
+
+  /**
+   * FID-081 — preuve clavier : ordre de tabulation, piège de focus (Tab et
+   * Shift+Tab bouclent), anneau `:focus-visible` 2 px (FID-058) et restitution
+   * du focus au déclencheur après Échap. Le scénario 1c couvre déjà WebKit en
+   * activation clavier ; ce test renforce l'ordre et le piège.
+   */
+  test('1g. focus clavier : piège Tab/Shift+Tab, anneau 2 px, restitution au déclencheur', async ({
+    page,
+    browserName,
+  }) => {
+    await installCommunityV2Mock(page);
+    await freezeClock(page);
+    await gotoCommunity(page);
+
+    const trigger = page.getByRole('button', { name: 'Explorer et rechercher' });
+    await trigger.focus();
+    await page.keyboard.press('Enter');
+    await expect(page.getByTestId('communaute-v2-explore')).toBeVisible({ timeout: 8_000 });
+    await page.waitForTimeout(900);
+
+    const focusable = () =>
+      page.evaluate(() => {
+        const sheet = document.querySelector('[data-testid="communaute-v2-explore"]');
+        const nodes = Array.from(
+          sheet?.querySelectorAll<HTMLElement>(
+            'button:not([disabled]), [href], input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+          ) ?? [],
+        ).filter((node) => node.getClientRects().length > 0);
+        const first = nodes[0] ?? null;
+        const last = nodes[nodes.length - 1] ?? null;
+        return {
+          count: nodes.length,
+          firstIsActive: first === document.activeElement,
+          lastIsActive: last === document.activeElement,
+          firstLabel: first ? (first.dataset.testid ?? first.getAttribute('aria-label') ?? first.textContent?.trim() ?? '') : '',
+          lastLabel: last ? (last.dataset.testid ?? last.getAttribute('aria-label') ?? last.textContent?.trim() ?? '') : '',
+        };
+      });
+
+    // Piège au bord haut : dernier focusable → Tab → premier.
+    await page.evaluate(() => {
+      const sheet = document.querySelector('[data-testid="communaute-v2-explore"]');
+      const nodes = Array.from(
+        sheet?.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), [href], input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ) ?? [],
+      ).filter((node) => node.getClientRects().length > 0);
+      nodes[nodes.length - 1]?.focus();
+    });
+    await page.keyboard.press('Tab');
+    expect((await focusable()).firstIsActive, 'Tab depuis le dernier doit boucler sur le premier').toBe(true);
+
+    // Anneau visible (FID-058) sur un focus atteint au clavier.
+    const outline = await page.evaluate(() => {
+      const element = document.activeElement as HTMLElement | null;
+      if (!element) return null;
+      const style = getComputedStyle(element);
+      return { outlineStyle: style.outlineStyle, outlineWidth: style.outlineWidth };
+    });
+    expect(outline?.outlineStyle, 'anneau absent au clavier').toBe('solid');
+    expect(parseFloat(outline?.outlineWidth ?? '0'), 'anneau < 2 px').toBeGreaterThanOrEqual(2);
+
+    // Piège au bord bas : premier focusable → Shift+Tab → dernier.
+    await page.keyboard.press('Shift+Tab');
+    expect((await focusable()).lastIsActive, 'Shift+Tab depuis le premier doit boucler sur le dernier').toBe(true);
+
+    if (browserName === 'webkit') {
+      // Safari/WebKit (projet iPhone) n'inclut pas les liens dans l'ordre Tab
+      // par défaut et sort transitoirement sur BODY entre deux sous-cycles :
+      // l'ordre libre n'est donc pas comparable à Chromium. Le piège de bord
+      // ci-dessus (les deux sens) et 1c (restitution du focus) couvrent WebKit.
+    } else {
+      // Ordre de tabulation : 30 Tab restent tous dans le tiroir, avec anneau visible.
+      const visited = new Set<string>();
+      for (let index = 1; index <= 30; index += 1) {
+        await page.keyboard.press('Tab');
+        const focused = await activeElement(page);
+        expect(focused.inSheet, `Tab ${index} sort du tiroir (${focused.tag} ${focused.testid ?? ''})`).toBe(true);
+        expect(focused.outlineStyle, `anneau absent sur Tab ${index}`).toBe('solid');
+        expect(parseFloat(focused.outlineWidth), `anneau < 2 px sur Tab ${index}`).toBeGreaterThanOrEqual(2);
+        visited.add(`${focused.tag}:${focused.testid ?? focused.ariaLabel ?? focused.text}`);
+      }
+      // Un vrai cycle : plusieurs arrêts distincts, pas un focus figé.
+      expect(visited.size).toBeGreaterThanOrEqual(5);
+    }
+
+    await closeByEscape(page, 'communaute-v2-explore');
+    await expect(trigger).toBeFocused();
+  });
+
+  /**
+   * FID-079 — preuve du geste LensPager : seuil 48 px (`DEFAULT_SWIPE_THRESHOLD_PX`),
+   * verrou d'axe à 8 px (`DEFAULT_MOVE_TOLERANCE_PX`) et vecteur vertical sans
+   * changement. Le geste rejoue le contrat pointer du pager (voir `dragLensPager`).
+   */
+  test('1h. LensPager : sous-seuil 48 px inchangé, au-delà volet suivant, axe vertical ignoré', async ({ page }) => {
+    await setupExplorer(page);
+    const filter = (name: string) => tab(page, 'Filtres des carnets', name);
+    const pagerIndex = () => page.locator('[data-lens-index]').last().getAttribute('data-lens-index');
+
+    await expect(filter('Découvrir')).toHaveAttribute('aria-selected', 'true');
+    expect(await pagerIndex()).toBe('0');
+
+    // 1) Sous le seuil de 48 px : le volet ne change pas.
+    await dragLensPager(page, { dx: -40, moves: 8 });
+    await expect(filter('Découvrir')).toHaveAttribute('aria-selected', 'true');
+    await expect(filter('Mes carnets')).toHaveAttribute('aria-selected', 'false');
+    expect(await pagerIndex()).toBe('0');
+
+    // 2) Au-delà de 48 px : volet suivant, même avec un premier mouvement < 8 px
+    //    (tolérance d'axe : le verrou se pose au premier move qui la dépasse).
+    await dragLensPager(page, { dx: -60, moves: 12 });
+    await expect(filter('Mes carnets')).toHaveAttribute('aria-selected', 'true');
+    expect(await pagerIndex()).toBe('1');
+
+    // 3) Retour par glisser inverse (seuil franchi dans l'autre sens).
+    await dragLensPager(page, { dx: 60 });
+    await expect(filter('Découvrir')).toHaveAttribute('aria-selected', 'true');
+    expect(await pagerIndex()).toBe('0');
+
+    // 4) Vecteur vertical : |dy| > |dx| verrouille l'axe y → aucun changement,
+    //    même si le déplacement horizontal dépasse 48 px.
+    await dragLensPager(page, { dx: -160, dy: -170 });
+    await expect(filter('Découvrir')).toHaveAttribute('aria-selected', 'true');
+    expect(await pagerIndex()).toBe('0');
+  });
+
+  /** FID-082 — 360 px et 430 px : aucun débordement horizontal sur les 4 volets. */
+  test('1i. 360 et 430 px : scrollWidth <= innerWidth sur les 4 volets', async ({ page }) => {
+    await setupExplorer(page);
+    for (const width of [360, 430]) {
+      await page.setViewportSize({ width, height: 844 });
+      for (const volet of ['Carnets', 'Clubs', 'Sorties', 'Recherche']) {
+        await tab(page, 'Volets de l’explorateur', volet).click();
+        await page.waitForTimeout(400);
+        const metrics = await page.evaluate(() => ({
+          scrollWidth: document.documentElement.scrollWidth,
+          innerWidth: window.innerWidth,
+        }));
+        expect(metrics.scrollWidth, `${volet} à ${width}px : débordement horizontal`).toBeLessThanOrEqual(
+          metrics.innerWidth,
+        );
+      }
+    }
   });
 });
 
@@ -307,14 +447,19 @@ test.describe('Explorer v2 — Carnets : tri, j’aime, Peek, état vide @ui-moc
     await expect(page).toHaveURL(/\/communaute/);
   });
 
-  test('2d. Peek : appui long 460 ms, 3 actions, Échap ferme l’aperçu seul', async ({ page }) => {
+  test('2d. Peek : appui long 460 ms, 4 actions dont Fermer, Échap ferme l’aperçu seul', async ({ page }) => {
     await setupExplorer(page);
     const tile = page.getByTestId('cv2-tile-carnet').first();
     await longPress(page, tile);
 
     const peek = page.getByRole('dialog', { name: /Aperçu :/ });
     await expect(peek).toBeVisible();
-    await expect(peek.getByRole('button')).toHaveCount(3);
+    // Maquette L1772 : `role=menu` et 4 `menuitem` (3 actions + « Fermer »).
+    const actions = peek.getByRole('menu', { name: 'Actions' });
+    await expect(actions).toBeVisible();
+    await expect(actions.getByRole('menuitem')).toHaveCount(4);
+    await expect(peek.getByRole('menuitem', { name: 'Fermer' })).toBeVisible();
+    await expect(peek.locator('[data-cv2-peek-close]')).toHaveCSS('min-height', /44px|2\.75rem|44/);
 
     await page.keyboard.press('Escape');
     await expect(peek).toHaveCount(0);
@@ -328,7 +473,9 @@ test.describe('Explorer v2 — Carnets : tri, j’aime, Peek, état vide @ui-moc
 
     const empty = page.getByRole('status').filter({ hasText: 'Aucun carnet pour l’instant' });
     await expect(empty).toBeVisible();
-    await empty.getByRole('button', { name: /Créer mon premier carnet/ }).click();
+    const emptyCta = empty.getByRole('button', { name: /Créer mon premier carnet/ });
+    await expectNotCovered(page, emptyCta, { label: 'CTA état vide « Mes carnets »' });
+    await emptyCta.click();
 
     await expect(page.getByTestId('communaute-v2-create')).toBeVisible();
     // Le moteur porte le contenu dans les panneaux d'étape (`mini.pages`) : le
@@ -371,7 +518,8 @@ test.describe('Explorer v2 — Clubs : chips, tri, détail, adhésion @ui-mock @
     await expect(detail).toBeVisible();
     await expect(page.getByTestId('cv2-capsule')).toHaveCount(0);
     // Clic NATIF (z-index de `.lkdv-cv2-detail` corrigé : le bouton n'est plus
-    // recouvert par la poignée de drag).
+    // recouvert par la poignée de drag) — la garde le prouve au centre.
+    await expectNotCovered(page, page.getByTestId('cv2-back'), { label: 'Retour détail club' });
     await page.getByTestId('cv2-back').click();
     await expect(detail).toHaveCount(0);
     await expect(page.getByTestId('cv2-capsule')).toBeVisible();
@@ -387,7 +535,9 @@ test.describe('Explorer v2 — Clubs : chips, tri, détail, adhésion @ui-mock @
       .getByTestId('cv2-tile-club')
       .filter({ hasText: 'Cordée des Écrins' })
       .first();
-    await openTile.getByTestId('cv2-club-join').click();
+    const openJoin = openTile.getByTestId('cv2-club-join');
+    await expectNotCovered(page, openJoin, { label: 'Rejoindre un club ouvert' });
+    await openJoin.click();
     const island = page.locator('.lkdv-island-pill');
     await expect(island).toBeVisible();
     await expect(island).toContainText('Club rejoint');
@@ -412,7 +562,9 @@ test.describe('Explorer v2 — Clubs : chips, tri, détail, adhésion @ui-mock @
       .getByTestId('cv2-tile-club')
       .filter({ hasText: 'Ski de rando Belledonne' })
       .first();
-    await closedTile.getByTestId('cv2-club-join').click();
+    const closedJoin = closedTile.getByTestId('cv2-club-join');
+    await expectNotCovered(page, closedJoin, { label: 'Demander l’adhésion (club fermé)' });
+    await closedJoin.click();
     const island = page.locator('.lkdv-island-pill');
     await expect(island).toContainText('Demande envoyée');
 
@@ -454,9 +606,12 @@ test.describe('Explorer v2 — Sorties : agenda, détail, inscription, .ics @ui-
     await page.getByTestId('cv2-tile-sortie').first().click();
     await expect(page.getByTestId('cv2-detail')).toBeVisible();
     await expect(page.getByTestId('cv2-detail')).toContainText(/Itinéraire|Participants/);
+    await expectNotCovered(page, page.getByTestId('cv2-back'), { label: 'Retour détail sortie' });
     await page.getByTestId('cv2-back').click();
 
-    await page.getByTestId('cv2-event-register').first().click();
+    const register = page.getByTestId('cv2-event-register').first();
+    await expectNotCovered(page, register, { label: 'S’inscrire à une sortie' });
+    await register.click();
     const island = page.locator('.lkdv-island-pill');
     await expect(island).toContainText('Inscription confirmée');
     await expect.poll(() => mock.getJoinedEvents()).toContain(EVENT_ID);
@@ -468,6 +623,7 @@ test.describe('Explorer v2 — Sorties : agenda, détail, inscription, .ics @ui-
 
     const fullRegister = page.getByTestId('cv2-event-register').filter({ hasText: /Liste d’attente/ });
     await expect(fullRegister.first()).toBeVisible();
+    await expectNotCovered(page, fullRegister.first(), { label: 'Liste d’attente' });
     await fullRegister.first().click();
     await expect(page.locator('.lkdv-island-pill')).toContainText('liste d’attente');
     await expect.poll(() => mock.getJoinedEvents()).toContain(EVENT_ID_FULL);
@@ -499,6 +655,30 @@ test.describe('Explorer v2 — Recherche : accents, ponctuation, erreur, clavier
     await expect(page.getByTestId('cv2-tile-carnet').first()).toBeVisible({ timeout: 10_000 });
     await expect(page.getByTestId('cv2-tile-carnet').first()).toContainText('Écrins');
     expect(await page.locator('mark').count()).toBeGreaterThan(0);
+
+    // Garde-fou FID-001 : le repli de couverture (`.lkdv-cv2x-cover-fallback`,
+    // positionné en absolu) doit rester DANS sa vignette 52×48. Sans
+    // `position: relative` sur `.lkdv-cv2x-search-cover`, il s'étirait sur tout
+    // le corps et masquait les résultats sans que `toBeVisible()` ne le voie.
+    const fallbackBoxes = await page
+      .locator('.lkdv-cv2x-cover-fallback')
+      .evaluateAll((nodes) => nodes.map((node) => node.getBoundingClientRect()).map((r) => ({ w: r.width, h: r.height })));
+    for (const box of fallbackBoxes) {
+      expect(box.w, 'repli de couverture échappé de sa vignette (largeur)').toBeLessThanOrEqual(60);
+      expect(box.h, 'repli de couverture échappé de sa vignette (hauteur)').toBeLessThanOrEqual(56);
+    }
+    const covering = await page.evaluate(() => {
+      const row = document.querySelector('.lkdv-cv2x-search-row');
+      if (!row) return null;
+      const r = row.getBoundingClientRect();
+      const top = document.elementFromPoint(r.left + r.width / 2, r.top + Math.min(20, r.height / 2));
+      return { tag: top?.tagName ?? null, cls: (top as HTMLElement | null)?.className ?? null, inRow: row.contains(top) };
+    });
+    expect(covering?.inRow, `résultat recouvert par ${covering?.tag}.${covering?.cls}`).toBe(true);
+    // FID-072/FID-074 : la garde générique couvre aussi le résultat cliquable.
+    await expectNotCovered(page, page.getByTestId('cv2-tile-carnet').first(), {
+      label: 'Résultat de recherche',
+    });
   });
 
   test('5b. ponctuation « vercors, alpin » ne casse pas la recherche', async ({ page }) => {
@@ -538,12 +718,193 @@ test.describe('Explorer v2 — Recherche : accents, ponctuation, erreur, clavier
     await input.fill('vercors');
     await expect(page.getByTestId('cv2-tile-carnet').first()).toBeVisible({ timeout: 10_000 });
 
-    await domClick(
-      page
-        .getByRole('group', { name: 'Affichage des résultats' })
-        .getByRole('button', { name: 'Sur la carte' }),
-    );
+    // Clic natif : la bascule n'est plus interceptée par le repli de couverture
+    // (FID-001). Plus de clic DOM de contournement. La garde FID-074 le prouve
+    // au centre avant le geste (la bascule est le CTA exact du P1).
+    const mapToggle = page
+      .getByRole('group', { name: 'Affichage des résultats' })
+      .getByRole('button', { name: 'Sur la carte' });
+    await expectNotCovered(page, mapToggle, { label: 'Bascule « Sur la carte »' });
+    await mapToggle.click();
     await expect(page.locator('.lkdv-cv2x-search-map, canvas').first()).toBeVisible({ timeout: 15_000 });
+  });
+
+  /**
+   * FID-074 — preuve de valeur de la garde : elle doit être ROUGE quand un
+   * élément recouvre le CTA (même mécanisme que FID-001, où
+   * `.lkdv-cv2x-cover-fallback` s'étirait sur le corps) et VERTE sur le build
+   * actuel. On injecte un recouvrement DOM au runtime : aucun CSS de `src/`
+   * n'est modifié.
+   */
+  test('5f. garde anti-recouvrement : rouge sur CTA recouvert, vert après retrait', async ({ page }) => {
+    await openSearch(page);
+    const input = page.getByRole('searchbox', { name: 'Rechercher dans toute la communauté' });
+    await input.fill('vercors');
+    await expect(page.getByTestId('cv2-tile-carnet').first()).toBeVisible({ timeout: 10_000 });
+
+    const mapToggle = page
+      .getByRole('group', { name: 'Affichage des résultats' })
+      .getByRole('button', { name: 'Sur la carte' });
+    await expectNotCovered(page, mapToggle, { label: 'Bascule « Sur la carte » (saine)' });
+
+    // Recouvrement de test : un calque plein cadre au-dessus de la bascule.
+    await page.evaluate(() => {
+      const toggle = Array.from(
+        document.querySelectorAll<HTMLElement>(
+          '[role="group"][aria-label="Affichage des résultats"] button',
+        ),
+      ).find((button) => (button.textContent ?? '').includes('Sur la carte'));
+      if (!toggle) throw new Error('bascule introuvable');
+      const rect = toggle.getBoundingClientRect();
+      const cover = document.createElement('div');
+      cover.id = 'cv2-test-cover';
+      cover.setAttribute('data-testid', 'cv2-test-cover');
+      cover.style.cssText = [
+        'position:fixed',
+        `left:${rect.left}px`,
+        `top:${rect.top}px`,
+        `width:${rect.width}px`,
+        `height:${rect.height}px`,
+        'z-index:2147483647',
+        'background:rgba(224,80,28,.35)',
+      ].join(';');
+      document.body.appendChild(cover);
+    });
+
+    // La garde échoue bien (preuve qu'elle détecte la classe de FID-001).
+    await expect(expectNotCovered(page, mapToggle, { label: 'Bascule recouverte (test)' })).rejects.toThrow(
+      /RECOUVERT/,
+    );
+
+    await page.evaluate(() => document.getElementById('cv2-test-cover')?.remove());
+    await expectNotCovered(page, mapToggle, { label: 'Bascule après retrait du recouvrement' });
+  });
+});
+
+/**
+ * FID-076 — états d'erreur des 3 volets et bandeau hors-ligne.
+ * Un état d'erreur ne doit jamais dire « Aucun … » (confusion vide/erreur) ;
+ * le hors-ligne conserve le dernier contenu affiché.
+ */
+test.describe('Explorer v2 — erreurs des volets et hors-ligne @ui-mock @mobile', () => {
+  const PANES: Record<string, { id: string; title: string }> = {
+    Carnets: { id: 'carnets', title: 'Carnets indisponibles' },
+    Clubs: { id: 'clubs', title: 'Clubs indisponibles' },
+    Sorties: { id: 'sorties', title: 'Sorties indisponibles' },
+  };
+
+  test('10a. Carnets/Clubs/Sorties en erreur : message dédié + Réessayer, jamais « Aucun … »', async ({
+    page,
+  }) => {
+    const mock = await setupExplorer(page, { state: 'error' });
+
+    for (const [volet, expected] of Object.entries(PANES)) {
+      await tab(page, 'Volets de l’explorateur', volet).click();
+      const pane = page.getByTestId(`cv2-pane-${expected.id}`);
+      const error = pane.locator('.lkdv-cv2-error-state');
+      await expect(error).toBeVisible({ timeout: 15_000 });
+      await expect(error).toContainText(expected.title);
+      await expect(error.getByRole('button', { name: 'Réessayer' })).toBeVisible();
+      // L'erreur ne doit jamais emprunter le vocabulaire de l'état vide.
+      await expect(error).not.toContainText('Aucun');
+      await expect(pane.locator('.lkdv-cv2-empty'), `${volet} : état vide affiché à la place de l’erreur`).toHaveCount(
+        0,
+      );
+    }
+
+    // Les trois flux ont bien été sollicités (mock câblé, pas un faux vert).
+    const feeds = mock.calls
+      .filter((call) => call.kind === 'rpc')
+      .map((call) => call.name)
+      .filter((name) => /^community_(carnets|clubs|events)_feed$/.test(name));
+    expect(new Set(feeds)).toEqual(
+      new Set(['community_carnets_feed', 'community_clubs_feed', 'community_events_feed']),
+    );
+  });
+
+  test('10b. une seule RPC en échec n’efface pas les autres volets', async ({ page }) => {
+    await setupExplorer(page, { failRpcs: ['community_carnets_feed'] });
+
+    // Carnets en erreur…
+    await expect(page.getByTestId('cv2-pane-carnets').locator('.lkdv-cv2-error-state')).toContainText(
+      'Carnets indisponibles',
+      { timeout: 15_000 },
+    );
+
+    // …Clubs et Sorties restent servis normalement.
+    await tab(page, 'Volets de l’explorateur', 'Clubs').click();
+    await expect(page.getByTestId('cv2-tile-club').first()).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId('cv2-pane-clubs').locator('.lkdv-cv2-error-state')).toHaveCount(0);
+
+    await tab(page, 'Volets de l’explorateur', 'Sorties').click();
+    await expect(page.getByTestId('cv2-tile-sortie').first()).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId('cv2-pane-sorties').locator('.lkdv-cv2-error-state')).toHaveCount(0);
+  });
+
+  test('10c. hors-ligne : bandeau visible et dernier contenu conservé', async ({ page }) => {
+    await setupExplorer(page);
+    await expect(page.getByTestId('cv2-tile-carnet').first()).toBeVisible({ timeout: 15_000 });
+    const tilesBefore = await page.getByTestId('cv2-tile-carnet').count();
+    expect(tilesBefore).toBeGreaterThan(0);
+
+    await page.context().setOffline(true);
+    try {
+      const banner = page.locator('.lkdv-cv2-offline');
+      await expect(banner).toBeVisible({ timeout: 10_000 });
+      await expect(banner).toContainText('Hors ligne');
+      // « dernier contenu conservé » : les tuiles chargées restent affichées.
+      await expect(page.getByTestId('cv2-tile-carnet')).toHaveCount(tilesBefore);
+      await expect(page.getByTestId('cv2-tile-carnet').first()).toBeVisible();
+    } finally {
+      await page.context().setOffline(false);
+    }
+    await expect(page.locator('.lkdv-cv2-offline')).toHaveCount(0, { timeout: 10_000 });
+  });
+});
+
+/**
+ * FID-075 — Échap hiérarchisé. Côté Explorer : menu de tri → peek → détail →
+ * tiroir ; 1 Échap ferme 1 seul niveau, est consommée (`defaultPrevented`) et
+ * le tiroir survit aux niveaux précédents. La confirmation de fermeture
+ * (5e niveau) est couverte par `communaute-v2-creation.spec.ts` (6f) : elle
+ * n'existe que dans le tiroir Création.
+ */
+test.describe('Explorer v2 — Échap hiérarchisé @ui-mock @mobile', () => {
+  test('11a. menu de tri → peek → détail → tiroir : 1 Échap = 1 niveau', async ({ page }) => {
+    await setupExplorer(page);
+
+    // Niveau 1 — menu de tri : Échap le ferme, le tiroir reste ouvert.
+    await page.getByTestId('cv2-sort-button').click();
+    await expect(page.getByTestId('cv2-sort-menu')).toBeVisible();
+    await expect(page.getByTestId('cv2-sort-menu').getByRole('menuitemradio').first()).toBeFocused();
+    await pressEscapeAndExpectConsumed(page);
+    await expect(page.getByTestId('cv2-sort-menu')).toHaveCount(0);
+    await expect(page.getByTestId('communaute-v2-explore')).toBeVisible();
+    // Le menu rend le focus à son bouton (contrat SortMenuButton).
+    expect((await activeElement(page)).testid).toBe('cv2-sort-button');
+
+    // Niveau 2 — peek : Échap le ferme seul, la capsule et le fil restent.
+    await longPress(page, page.getByTestId('cv2-tile-carnet').first());
+    const peek = page.getByRole('dialog', { name: /Aperçu :/ });
+    await expect(peek).toBeVisible();
+    await pressEscapeAndExpectConsumed(page);
+    await expect(peek).toHaveCount(0);
+    await expect(page.getByTestId('communaute-v2-explore')).toBeVisible();
+    await expect(tab(page, 'Filtres des carnets', 'Découvrir')).toBeVisible();
+
+    // Niveau 3 — détail empilé : Échap le ferme, la capsule revient.
+    await tab(page, 'Volets de l’explorateur', 'Clubs').click();
+    await page.getByTestId('cv2-tile-club').first().click();
+    await expect(page.getByTestId('cv2-detail')).toBeVisible();
+    await expect(page.getByTestId('cv2-back')).toBeFocused();
+    await pressEscapeAndExpectConsumed(page);
+    await expect(page.getByTestId('cv2-detail')).toHaveCount(0);
+    await expect(page.getByTestId('communaute-v2-explore')).toBeVisible();
+    await expect(page.getByTestId('cv2-capsule')).toBeVisible();
+
+    // Niveau 4 — le tiroir lui-même : Échap le ferme, focus au déclencheur.
+    await pressEscapeAndExpectConsumed(page);
+    await expect(page.getByTestId('communaute-v2-explore')).toHaveCount(0, { timeout: 5_000 });
   });
 });
 

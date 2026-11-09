@@ -1719,8 +1719,8 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                   display: 'flex',
                   flexDirection: 'column',
                   height: '100%',
-                  // Barre de rédaction positionnée à exactement 1px au-dessus de la véritable bottom bar ou du clavier
-                  paddingBottom: keyboardInset > 0 ? `${keyboardInset + 1}px` : 'calc(env(safe-area-inset-bottom, 0px) + 67px)',
+                  // Barre de rédaction abaissée au plus près de la bottom bar ou calée au-dessus du clavier
+                  paddingBottom: keyboardInset > 0 ? `${keyboardInset + 1}px` : 'calc(env(safe-area-inset-bottom, 0px) + 42px)',
                 }}>
                 {selected ? (
                   <div className="mpane in" data-conversation={selected.id}>

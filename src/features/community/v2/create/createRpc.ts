@@ -10,6 +10,7 @@ import type {
   SortieFormValuesV2,
   StoryFormValuesV2,
 } from './engine/createSchemasV2';
+import { SORTIE_LEVEL_TO_DB_V2 } from './engine/createSchemasV2';
 import { parseServerError } from './engine/errors';
 import type { MediaBucketV2 } from './fields/media';
 
@@ -280,7 +281,8 @@ export async function publishStoryV2(
     trim_start_ms: isVideo ? values.trimStartMs ?? 0 : null,
     trim_end_ms: isVideo ? values.trimEndMs ?? media.durationMs ?? null : null,
     linked_carnet_id: values.stickers.carnetId || null,
-    linked_carnet_day: null,
+    // FID-028 : jour du carnet lié (`linked_carnet_day`, migration lot F L22).
+    linked_carnet_day: values.stickers.carnetId ? values.stickers.carnetDay ?? null : null,
   };
   const { error } = await supabase.from('post_stories').insert(insert);
   if (error) {
@@ -312,7 +314,10 @@ export function buildEventPayload(values: SortieFormValuesV2): Record<string, un
     description: values.description.trim() || null,
     location: values.location.trim(),
     meeting_point: values.meetingPoint.trim() || null,
-    level: values.level,
+    /* Repli TS : `events.level` n'accepte que facile/moyen/difficile (CHECK,
+       migration 20261108130003 L30). Les 5 niveaux de la maquette restent dans
+       l'UI ; on écrit la borne la plus proche jusqu'à la migration dédiée. */
+    level: SORTIE_LEVEL_TO_DB_V2[values.level],
     distance_km: values.distanceKm,
     elevation_gain_m: values.elevationGainM,
     max_participants: values.maxParticipants,
@@ -343,7 +348,8 @@ export async function createEventWithPostV2(values: SortieFormValuesV2): Promise
 
 export function buildClubPayload(values: ClubFormValuesV2, slug: string): Record<string, unknown> {
   const activities = values.activities.map((activity) => activity.trim()).filter(Boolean);
-  const cover = values.cover[0];
+  const avatar = values.avatar[0];
+  const banner = values.banner[0];
   const payload: Record<string, unknown> = {
     name: values.name.trim(),
     slug: slug || undefined,
@@ -359,6 +365,14 @@ export function buildClubPayload(values: ClubFormValuesV2, slug: string): Record
     welcome_post_content: values.welcomeContent.trim() || null,
     client_request_id: values.clientRequestId,
   };
+  /*
+   * Repli TS (migration hors périmètre) : `create_club_with_admin` n'accepte que
+   * `cover_image` (migration 20261108130005, L322-327) et `clubs` n'a pas de
+   * colonne bannière. On envoie donc l'**avatar carré** — ou la bannière à
+   * défaut — dans `cover_image` ; la bannière 3:1 reste locale jusqu'à une
+   * migration qui ajoutera `clubs.banner_url` et l'argument `banner_url`.
+   */
+  const cover = avatar?.status === 'uploaded' && avatar.url ? avatar : banner;
   if (cover?.status === 'uploaded' && cover.url) payload.cover_image = cover.url;
   return payload;
 }

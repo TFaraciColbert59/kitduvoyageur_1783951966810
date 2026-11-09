@@ -17,7 +17,11 @@ const REPORT_REASONS = [
   { id: 'spam', label: 'Spam ou contenu indésirable', icon: 'ArchiveBoxXMarkIcon' },
   { id: 'harassment', label: 'Harcèlement ou intimidation', icon: 'ExclamationTriangleIcon' },
   { id: 'inappropriate', label: 'Contenu inapproprié ou offensant', icon: 'NoSymbolIcon' },
-  { id: 'misinformation', label: 'Fausse information sur un itinéraire', icon: 'QuestionMarkCircleIcon' },
+  {
+    id: 'misinformation',
+    label: 'Fausse information sur un itinéraire',
+    icon: 'QuestionMarkCircleIcon',
+  },
   { id: 'other', label: 'Autre motif', icon: 'EllipsisHorizontalIcon' },
 ];
 
@@ -61,10 +65,11 @@ export default function ReportSheet({
         if (!open) onClose();
       }}
       title={submitted ? 'Signalement envoyé' : 'Signaler ce contenu'}
+      panelClassName="lkdv-report-sheet"
       dragToDismiss
       footer={
         submitted ? undefined : (
-          <div className="flex items-center gap-[var(--space-3)]">
+          <div className="grid grid-cols-2 items-center gap-[var(--space-3)]">
             <Button type="button" variant="secondary" fullWidth onClick={onClose}>
               Annuler
             </Button>
@@ -102,7 +107,7 @@ export default function ReportSheet({
 
           {/* Reasons list */}
           <Card className="my-[var(--space-2)] overflow-hidden p-0">
-            {REPORT_REASONS.map(reason => {
+            {REPORT_REASONS.map((reason) => {
               const isSelected = selectedReason === reason.id;
               return (
                 <ListItem
@@ -113,7 +118,13 @@ export default function ReportSheet({
                     triggerHaptic('light');
                     setSelectedReason(reason.id);
                   }}
-                  leading={<Icon name={reason.icon} size={18} className="text-[color:var(--lkv-text-secondary)]" />}
+                  leading={
+                    <Icon
+                      name={reason.icon}
+                      size={18}
+                      className="text-[color:var(--lkv-text-secondary)]"
+                    />
+                  }
                   title={reason.label}
                   trailing={
                     <span
@@ -123,7 +134,9 @@ export default function ReportSheet({
                           : 'border-[color:var(--btn-glass-border)]'
                       }`}
                     >
-                      {isSelected && <span className="size-1.5 rounded-full bg-[color:var(--lkv-on-action)]" />}
+                      {isSelected && (
+                        <span className="size-1.5 rounded-full bg-[color:var(--lkv-on-action)]" />
+                      )}
                     </span>
                   }
                 />

@@ -332,6 +332,7 @@ export function createKitScene(canvas: HTMLCanvasElement, options: KitSceneOptio
       return world.bag.group.localToWorld(out.set(0, 0.35, 0));
     },
     bounds: (out) => world.bagModel.getBounds(out),
+    bodyBounds: (out) => world.bagModel.getBodyBounds(out),
   });
   rig.onZoneChange(options.onZoneChange ?? null);
   const objectFrame: ObjectFrame = { focus: 'bag', arcAmt: 0, ex: 0, pos: 1, ghostsOn: true };
@@ -356,6 +357,14 @@ export function createKitScene(canvas: HTMLCanvasElement, options: KitSceneOptio
       // premier geste de l'utilisateur.
       rig.place();
       lifecycle.invalidate();
+      // Le sac est posé : les vignettes peuvent aller chercher leurs propres maillages. Avant,
+      // leurs téléchargements retardaient celui-ci de plus de vingt secondes.
+      void import('./thumbAssets').then(
+        (m) => m.ouvrirChargementsVignettes(),
+        () => {
+          // Les vignettes se débloqueront d'elles-mêmes au bout de leur délai de secours.
+        },
+      );
     });
   };
 

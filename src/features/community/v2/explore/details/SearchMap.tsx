@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 import type { SearchHitVM } from '../../shared/types';
+import { formatCountFr } from '../../shared/format';
 import { PlaceMiniMap, type PlaceMiniMapPoint } from '../../shared/PlaceMiniMap';
 import { SearchResultRow } from '../search/SearchResults';
 
@@ -63,7 +64,7 @@ export function SearchMap({ hits, terms, onPeek }: SearchMapProps) {
         }}
         height={220}
         interactive
-        label={`Carte des résultats : ${entries.length} repères`}
+        label={`Carte des résultats : ${formatCountFr(entries.length, 'repère')}`}
       />
       <p className="lkdv-cv2-meta lkdv-cv2x-map-hint">
         {entries.length} {entries.length > 1 ? 'repères' : 'repère'} sur la carte. Touche un repère pour voir le

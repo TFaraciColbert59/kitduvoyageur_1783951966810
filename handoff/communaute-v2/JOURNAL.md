@@ -146,3 +146,44 @@ pointait vers un autre checkout) — commit `chore(ios)` — et les libellés d'
 caméra/photothèque (`NSCameraUsageDescription`, `NSPhotoLibrary*`) manquaient au `Info.plist` :
 ajoutés en français (`plutil -lint` OK). Aucun de ces correctifs ne change le comportement web v2
 validé par la recette ; ils sont documentés ici car ils sortent du périmètre initial.
+
+### J-14. Chantier « fidélité 100 % à la maquette » — arbitrages tranchés (2026-11-08)
+Le client a demandé de combler **tous** les écarts recensés dans
+`docs/audit/communaute-v2-2026-11-08/ecarts-maquette/` (85 items, `BACKLOG-100.md`). En cas de
+divergence entre la maquette et une spec/doctrine antérieure, **la maquette fait foi** (demande
+explicite), sauf impossibilité technique ou produit documentée ci-dessous. Décisions prises seul,
+conformément à l'autonomie demandée :
+- **FID-005** — « Retour » visible et **désactivé** à l'étape 1 (maquette HTML L2715), au lieu
+  d'être masqué (l'ancienne spec §4.1 autorisait le masquage).
+- **FID-009** — format « Événement » : vraie `radio` + note explicative + bouton « Créer dans
+  Sortie » (maquette L2814), pas une carte-bouton.
+- **FID-010** — compteur d'erreurs **collant** sous la capsule pour rester visible quand le focus
+  saute au champ fautif.
+- **FID-032** — après échec serveur, l'action finale devient « **Réessayer** » (maquette L2715).
+- **FID-033** — l'île de succès s'affiche **après fermeture de la feuille** (maquette `finish()` →
+  `startSheetClose()` L1991), formulaire réinitialisé après fermeture.
+- **FID-035** — confirmation de fermeture si **n'importe quel type** a du contenu (maquette
+  `CRE.dirty()` global), pas seulement le type courant.
+- **FID-062/063** — fidélité maquette : options de diffusion conformes (commentaires/j'aime/
+  programmation tels que la maquette les présente), mention « prochaine version » retirée,
+  Hashtags/Mentions séparés retirés au profit du hint maquette « Tape @ pour mentionner, # pour un
+  hashtag » dans la légende ; les ajouts V2 sans équivalent maquette (switch « Publier une annonce
+  dans le fil », photo de couverture Sortie, etc.) sont retirés ou repliés dans le flux maquette.
+  Programmation : présentée comme la maquette, stockée en `creation_meta` (migration déjà prévue),
+  **sans cron d'envoi** : champ inerte assumé et documenté.
+- **FID-065** — Peek : **4 actions** dont « Fermer » (maquette L1772) ; l'e2e est adapté.
+- **FID-066** — dialogue de fermeture : « Continuer l'édition » en ghost à gauche (focus initial),
+  « Fermer » en **danger rouge** à droite (maquette `lkvConfirm(..., danger=true)` L1759).
+- **FID-070** — cibles des chips : **28 px comme la maquette** (dérogation documentée à la règle
+  44 px de `CLAUDE.md §4`, arbitrage fidélité client).
+- **FID-071** — météo : brancher les blocs maquette (tuile, détail, sticker Story) dès que les
+  coordonnées existent, avec les états maquette (« Prévisions disponibles à partir de J-7 ») ;
+  aucune nouvelle origine réseau hors de la route `/api/weather` existante.
+- **FID-008** — **non-écart** : la maquette ne conserve pas la capsule dans les détails empilés
+  (`renderStack()` remplace `SROOT`, L2084 ; capture `explorer-clubs-detail.png` sans capsule).
+  La ligne de l'audit était erronée ; l'e2e existant (capsule absente en détail) reste valide.
+- **FID-078/083 (données réelles)** — restent **bloqués par J-08** (aucune migration prod sans
+  sauvegarde vérifiée, `BACKUP_PASSPHRASE` absent) : la fidélité « sur données réelles » sera
+  attestée après application des migrations ; tout le reste est vérifié sur le backend simulé.
+- **Ochre hors danger** — décision : supprimer `--lkv-warning` des usages v2 (hors-ligne, compteur
+  proche limite, badge warn, `create-v2.css`), au profit des jetons verts/neutres du système.

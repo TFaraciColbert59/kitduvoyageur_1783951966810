@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef } from 'react';
 import { LocateFixed, Mountain, Play, Ruler, CloudSun, Link2, MapPin, Pause, RotateCcw } from 'lucide-react';
 import StoriesViewer from '@/components/communaute/StoriesViewer';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
@@ -21,12 +21,17 @@ export interface StoryStageV2Props {
   trimEndMs: number | null;
   playing: boolean;
   onTogglePlaying: () => void;
+  /** Cadrage courant (`−` / `+` / `Remplacer` vivent dans le formulaire). */
+  transform: StoryTransformV2;
+  onTransformChange: (next: StoryTransformV2) => void;
   /** Affiche le dock de composition (Galerie / Caméra / aperçu). */
   onGallery?: () => void;
   onCamera?: () => void;
+  /** Aperçu figé de l'étape Diffusion (« Aperçu final exact », maquette L2907). */
+  previewOnly?: boolean;
 }
 
-interface TransformState {
+export interface StoryTransformV2 {
   scale: number;
   x: number;
   y: number;
@@ -60,14 +65,16 @@ export function StoryStageV2({
   trimEndMs,
   playing,
   onTogglePlaying,
+  transform,
+  onTransformChange,
   onGallery,
   onCamera,
+  previewOnly = false,
 }: StoryStageV2Props) {
   const { haptic } = useHapticFeedback();
   const stageRef = useRef<HTMLDivElement | null>(null);
-  const [transform, setTransform] = useState<TransformState>({ scale: 1, x: 0, y: 0 });
   const mediaGesture = useRef<Map<number, { x: number; y: number }>>(new Map());
-  const mediaOrigin = useRef<{ transform: TransformState; distance: number; center: { x: number; y: number } } | null>(null);
+  const mediaOrigin = useRef<{ transform: StoryTransformV2; distance: number; center: { x: number; y: number } } | null>(null);
   const layerGesture = useRef<Map<number, { x: number; y: number }>>(new Map());
   const layerOrigin = useRef<{
     id: string;
@@ -173,7 +180,7 @@ export function StoryStageV2({
     if (mediaGesture.current.size === 1) {
       const deltaX = event.clientX - current.x;
       const deltaY = event.clientY - current.y;
-      setTransform({
+      onTransformChange({
         scale: origin.transform.scale,
         x: clamp(origin.transform.x + deltaX, -MAX_PAN, MAX_PAN),
         y: clamp(origin.transform.y + deltaY, -MAX_PAN, MAX_PAN),
@@ -182,14 +189,14 @@ export function StoryStageV2({
       const points = [...mediaGesture.current.values()];
       const distance = Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y);
       if (origin.distance > 0 && distance > 0) {
-        setTransform({
+        onTransformChange({
           scale: clamp((origin.transform.scale * distance) / origin.distance, MIN_SCALE, MAX_SCALE),
           x: origin.transform.x,
           y: origin.transform.y,
         });
       }
     }
-  }, []);
+  }, [onTransformChange]);
 
   const onStagePointerEnd = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
     mediaGesture.current.delete(event.pointerId);
@@ -291,7 +298,7 @@ export function StoryStageV2({
         <button
           type="button"
           onClick={() => {
-            setTransform({ scale: 1, x: 0, y: 0 });
+            onTransformChange({ scale: 1, x: 0, y: 0 });
             haptic('selection');
           }}
           aria-label="Recentrer le média"
@@ -353,10 +360,11 @@ export function StoryStageV2({
       className="lkdv-cv2c-story-stage"
       data-hscroll
       data-testid="cv2-story-stage"
-      onPointerDown={onStagePointerDown}
-      onPointerMove={onStagePointerMove}
-      onPointerUp={onStagePointerEnd}
-      onPointerCancel={onStagePointerEnd}
+      onPointerDown={previewOnly ? undefined : onStagePointerDown}
+      onPointerMove={previewOnly ? undefined : onStagePointerMove}
+      onPointerUp={previewOnly ? undefined : onStagePointerEnd}
+      onPointerCancel={previewOnly ? undefined : onStagePointerEnd}
+      data-preview-only={previewOnly || undefined}
     >
       <StoriesViewer
         users={[]}
@@ -367,7 +375,7 @@ export function StoryStageV2({
           trimStartMs,
           trimEndMs,
           layers,
-          dock,
+          dock: previewOnly ? null : dock,
           playing,
           mediaTransform: transform,
         }}

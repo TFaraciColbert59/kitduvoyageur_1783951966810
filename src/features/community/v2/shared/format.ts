@@ -1,3 +1,4 @@
+import type { EventLevelVM } from './types';
 /**
  * Communauté v2 — formatage français et calculs purs.
  *
@@ -147,6 +148,24 @@ export function daysBetweenIso(from: string, to: string): number {
   const a = Date.UTC(y1, (m1 ?? 1) - 1, d1 ?? 1);
   const b = Date.UTC(y2, (m2 ?? 1) - 1, d2 ?? 1);
   return Math.round((b - a) / 86400000);
+}
+
+/** Libellé maquette d'un niveau de sortie (5 niveaux ; null si non renseigné). */
+export function levelLabel(level: EventLevelVM): string | null {
+  switch (level) {
+    case 'tres_facile':
+      return 'Très facile';
+    case 'facile':
+      return 'Facile';
+    case 'moyen':
+      return 'Moyen';
+    case 'difficile':
+      return 'Difficile';
+    case 'expert':
+      return 'Expert';
+    default:
+      return null;
+  }
 }
 
 export function formatInt(value: number | null | undefined): string {

@@ -32,9 +32,9 @@ fermée par une mesure ou une capture, pas par une impression.
 
 - [x] Fond topo (contours) pour le carnet : bascule topo par défaut, vérifiée en capture
 - [x] Badges N1/N2/N3 verre/encre codés ; aucune nuit en démo, donc non affichés (donnée manquante)
-- [~] Départ/arrivée / tracé actif : partiel (tracé unique, pas de nuits)
+- [x] Départ/arrivée (marqueurs réels) et tracé du jour actif (si points GPS du jour)
 - [ ] Clic sur un tracé → change de jour
-- [~] Badge carte `Tout`/`J{n}` + zoom/recentrer ; échelle non exposée
+- [x] Badge carte `Tout`/`J{n}`, échelle globe/massif/sentier, recentrer, zoom ± (3 contrôles)
 - [~] Mode contexte du tiroir : badge + couches réduites partiels
 
 ## Phase 3 — Altitude réelle
@@ -66,13 +66,13 @@ fermée par une mesure ou une capture, pas par une impression.
 
 - [x] Morphing de la pilule titre + point d'édition
 - [x] Cascade des lignes du tiroir 0/30/60/90 ms
-- [ ] Lentille chromatique : barre globale, hors fiche (non faite)
+- [x] Lentille chromatique : glow au press/glissement de la barre globale
 - [x] Poignée de carte : drag > 20 px et clic
 - [~] `prefers-reduced-motion` respecté ; `prefers-reduced-transparency` global seulement
 
 ## Phase 7 — États, rôles, accès
 
-- [ ] Squelettes de slot/onglet : non faits
+- [x] Squelette de chargement de la fiche aligné sur la coque v2
 - [~] Erreur de slot : SlotShell fournit l'état, pas de scénario erreur dédié
 - [ ] Hors ligne / carte indisponible : non testés
 - [ ] Visiteur : zone floue différée, pas de budget, pas de `+`
