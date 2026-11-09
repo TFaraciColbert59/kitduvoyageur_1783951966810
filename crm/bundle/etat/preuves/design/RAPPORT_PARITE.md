@@ -44,3 +44,11 @@ Aucun sur les 8 écrans de la maquette. Finitions secondaires : onglets de la fi
 - `tsc --noEmit`, `next lint --max-warnings=0`, `vitest run` (93/93) : verts au moment de la remise ; build relancé après les corrections.
 - Captures sans badge de développement (`devIndicators: false`), console sans erreur.
 - Fichiers de design : `etat/preuves/design/` ; checklist : `etat/PARITE_MAQUETTE.md`.
+
+
+## 6. Clôture
+
+- Commit de référence : `56eea1a` (branche `crm/phase-0-preparation`).
+- CI : `LKDV Control — CI` **verte** (types, lint 0 avertissement, 93 tests, build, 19 migrations + 10 suites pgTAP + rollback) ; `Lighthouse` et `iOS` verts ; `database-gates` LKDV vert.
+- 25 captures régénérées après corrections ; axe 0 violation sur 15 écrans + SOS mobile.
+- Aucun écart non justifié sur les 8 écrans de la maquette ; les 8 points justifiés du § 3 et les finitions du § 4 restent documentés.

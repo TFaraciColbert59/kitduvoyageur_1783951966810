@@ -1,6 +1,6 @@
 # État du chantier LKDV Control
 
-Mis à jour : 2026-11-09 18:15 (Europe/Paris) — cycle 4 (CI verte)
+Mis à jour : 2026-11-09 23:00 (Europe/Paris) — cycle 5 (parité maquette)
 
 ## En une phrase
 Application CRM complète (30 routes) qui compile et se construit ; 18 migrations M00→M15 appliquées sans erreur sur une base locale reproduisant le schéma de production ; moteur de commandes vérifié (masquage + audit + notification + refus). Déploiement bloqué : pas de sauvegarde P4, pas de droit de création de projet Vercel.
@@ -54,3 +54,4 @@ T-1.03 — pgTAP + CI base éphémère ; puis application production après sauv
 - CRM : pas encore déployé
 - LKDV : inchangé (main `2c22d49`)
 - Dernière migration appliquée : aucune par ce chantier
+- Dernier commit : `56eea1a` — parité maquette 8/8, axe 0 violation
