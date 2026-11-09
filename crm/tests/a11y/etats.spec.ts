@@ -42,7 +42,7 @@ test.describe('Accessibilité — états et écrans publics', () => {
 
     for (const state of ['vide', 'erreur', 'chargement']) {
       test(`file — état ${state} accessible`, async ({ page }) => {
-        test.skip(true, `État ${state} : exige un jeu de données dédié (voir crm/tests/README.md § 5).`);
+        test.skip(true, 'Jeu de données dédié requis pour cet état (voir crm/tests/README.md § 5).');
         await page.goto('/');
         await expectNoAxeViolations(page, `File — ${state}`);
         await expectTapTargets(page);

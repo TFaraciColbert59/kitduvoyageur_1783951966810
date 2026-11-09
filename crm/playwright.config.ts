@@ -28,7 +28,7 @@ const MOBILE_VIEWPORT = { width: 390, height: 844 } as const;
 
 export default defineConfig({
   testDir: './tests/e2e',
-  outputDir: './bundle/etat/preuves/playwright/artefacts',
+  outputDir: './test-results/artefacts',
   timeout: 45_000,
   expect: { timeout: 7_500 },
   fullyParallel: false,

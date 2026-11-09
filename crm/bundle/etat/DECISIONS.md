@@ -14,3 +14,16 @@ Format : `templates/DECISION.md`. Les décisions « à montrer à Tony » sont r
 - **Alternative écartée** : travailler sur `main` directement (interdit : PR par phase).
 - **Comment défaire** : `git worktree remove lkdv-control-work` et suppression de la branche.
 - **À montrer à Tony** : non
+
+## D-0002 — Base Postgres locale de vérification (shim du schéma de production)
+
+- **Date** : 2026-11-09 · **Par** : orchestrateur · **Tâche** : T-1.02 · **Exigences** : EX-SEC-05, 07_VERIFICATION couche 3
+- **Contexte** : pas de Docker ni de PostgreSQL sur la machine ; la CI GitHub est la seule base éphémère officielle, mais son cycle est lent et l'application ne peut pas être exercée sans base.
+- **Options étudiées** :
+  1. Attendre uniquement la CI — correct mais lent, impossible de prouver le moteur de commandes localement.
+  2. Monter un PostgreSQL embarqué (paquet `embedded-postgres`) avec une copie **assainie** de la baseline de production (PostGIS remplacé par du texte, vues recréées), plus des doublures pour les tables ajoutées après la baseline.
+- **Choix** : option 2, base strictement locale (`127.0.0.1:55432`), aucune donnée réelle, aucun accès réseau.
+- **Pourquoi** : permet de prouver M00→M15, les 144 commandes, l'audit et les refus sans toucher la production ; la CI reste la preuve officielle (couche 3).
+- **Alternative écartée** : créer un projet Supabase de test (coût et hors bundle).
+- **Comment défaire** : supprimer `/tmp/pgtest`.
+- **À montrer à Tony** : non

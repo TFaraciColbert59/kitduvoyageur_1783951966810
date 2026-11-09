@@ -4,7 +4,17 @@ Un écart = différence entre l'attendu (bundle) et l'existant. Ne jamais suppri
 
 | ID | Trouvé le | Par | Source attendue | Constat (ce qui est / ce qui devrait être) | Gravité | Rôle | Tâche | Statut | Fermé le | Preuve de fermeture (même vérification rejouée) |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| E-0001 | 2026-11-09 | orchestrateur | 02_ARCHITECTURE § 2, 09 § 3 | Projet Vercel `lkdv-control` inexistant ; `create_deployment` → 403 « You don't have permission to create a project ». Le CRM n'est pas déployé. | critique | deploiement | T-0.05 | blocked-by-tony | | Permission « créer un projet » sur l'équipe Vercel |
+| E-0002 | 2026-11-09 | orchestrateur | 08_GARDE_FOUS § 2.2 | `SUPABASE_DB_URL` et `BACKUP_PASSPHRASE` absents (workflow `db-backup` → `ready=false`). Aucune migration de production appliquée : le schéma `admin` n'existe pas en production. | critique | deploiement | T-1.03 | blocked-by-tony | | Poser les 2 secrets, lancer la sauvegarde, vérifier l'artefact |
+| E-0003 | 2026-11-09 | orchestrateur | EX-COM-04 | Les commandes à effet externe (remboursement Stripe, bannissement Auth, e-mail) enregistrent la demande mais l'effet externe n'est pas exécuté : `external.handled=false` explicite, journalisé. | haute | integrations | T-4.x | ouvert | | Appels Stripe/Auth/Resend branchés et testés en mode test |
+| E-0004 | 2026-11-09 | orchestrateur | EX-AGT-03 / 09 § 8 | Ressource MCP « file du pôle » indisponible : `admin.inbox()` exige un jeton équipe, `admin.agent_inbox(p_pole)` manquante. Les outils MCP restent fonctionnels. | moyenne | agents-ia | T-6.x | ouvert | | RPC `admin.agent_inbox` + test MCP |
+| E-0005 | 2026-11-09 | backend | CONTRACT.md | `admin.my_context()` et `admin.order_detail(uuid)` manquantes en base : l'UI affiche un état vide sur ces écrans. | haute | base-de-donnees | T-2.x | ouvert | | RPC présentes + écrans alimentés |
+| E-0006 | 2026-11-09 | orchestrateur | 07_VERIFICATION couche 3 | Les tests pgTAP CRM ne sont pas encore écrits/exécutés en CI (job base éphémère rouge sur « aucun test »). | haute | base-de-donnees | T-1.02 | en cours | | Job `crm-db` vert |
+| E-0007 | 2026-11-09 | qa | 07_VERIFICATION couche 5 | `src/lib/test-guardrails.test.ts` rouge : `tests/a11y/etats.spec.ts:45` (garde-fou de test). | moyenne | testeur | T-7.x | ouvert | | Test a11y conforme, garde-fou vert |
+| E-0008 | 2026-11-09 | orchestrateur | 03_MODELE_DE_DONNEES § 1 | Écart de volume : 335 tables `public` (bundle : 307), 815 policies, 176 comptes (conforme), 6 admin_roles (conforme). Aucune conséquence connue. | basse | base-de-donnees | T-0.04 | fermé | 2026-11-09 | `preuves/base/ETAT_BASE_2026-11-09.md` |
+| E-0009 | 2026-11-09 | orchestrateur | EX-LKDV-05 | L'ancien `/admin` de LKDV n'est pas retiré (dépend de la mise en production du CRM). | haute | deploiement | T-8.x | blocked-by-tony | | E-0001/E-0002 levés puis retrait + test 404 |
 
 ## Historique des audits
 | Audit | Date | Écarts nouveaux | Écarts ouverts à la fin | Note mini (axe) | Rapport |
 | --- | --- | --- | --- | --- | --- |
+| 1 | | | | | `preuves/audits/audit-1.md` |

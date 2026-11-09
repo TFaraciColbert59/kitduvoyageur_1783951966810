@@ -21,7 +21,7 @@ const readinessUrl = `${url.replace(/\/$/, '')}/robots.txt`;
 
 export default defineConfig({
   testDir: './tests/a11y',
-  outputDir: './bundle/etat/preuves/playwright/a11y-artefacts',
+  outputDir: './test-results/a11y-artefacts',
   timeout: 60_000,
   expect: { timeout: 7_500 },
   fullyParallel: false,
