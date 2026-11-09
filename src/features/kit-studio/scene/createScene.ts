@@ -108,8 +108,8 @@ export interface SceneInfo {
     readonly exploded: number;
     readonly explodedTarget: number;
   };
-  /** Objets rangés vivants, fantômes, objets en train de sortir. */
-  readonly objects: { readonly items: number; readonly ghosts: number; readonly dying: number };
+  /** Objets rangés vivants (maillage publié seulement), objets en train de sortir. */
+  readonly objects: { readonly items: number; readonly dying: number };
   /** Sac affiché : maillage GLB ou repli procédural, parties et ancrages réels. */
   readonly bagModel: BagModelRuntimeInfo;
 }
@@ -335,7 +335,7 @@ export function createKitScene(canvas: HTMLCanvasElement, options: KitSceneOptio
     bodyBounds: (out) => world.bagModel.getBodyBounds(out),
   });
   rig.onZoneChange(options.onZoneChange ?? null);
-  const objectFrame: ObjectFrame = { focus: 'bag', arcAmt: 0, ex: 0, pos: 1, ghostsOn: true };
+  const objectFrame: ObjectFrame = { focus: 'bag', arcAmt: 0, ex: 0, pos: 1 };
 
   /** Source de rendu pour l'état courant (GLB déclaré, sinon procédural). */
   const renderSource = (current: KitState) => selectBagRenderSource(options.bagModelId, currentKit(current).bag);
@@ -397,7 +397,6 @@ export function createKitScene(canvas: HTMLCanvasElement, options: KitSceneOptio
     objectFrame.arcAmt = fx.focusAmt;
     objectFrame.ex = rig.exploded();
     objectFrame.pos = rig.position();
-    objectFrame.ghostsOn = gestion;
     const objMoving = world.objects.step(dt, objectFrame);
     const attachMoving = world.bagModel.attachments()?.advance?.(dt) ?? false;
     world.syncBackdrop();
@@ -466,7 +465,6 @@ export function createKitScene(canvas: HTMLCanvasElement, options: KitSceneOptio
     const raw = world.objects.pick(n.x, n.y);
     if (!raw) return null;
     if (raw.type === 'item') return { kind: 'item', id: raw.id };
-    if (raw.type === 'ghost') return { kind: 'ghost', id: raw.fn };
     return mode === 'gestion' ? { kind: 'zone', id: raw.zone } : { kind: 'part', id: raw.part, zone: raw.zone };
   };
   const zoneOfPick = (pk: ScenePick | null): ZoneId | null => (pk === null ? null : pk.kind === 'zone' ? pk.id : pk.kind === 'part' ? pk.zone : null);

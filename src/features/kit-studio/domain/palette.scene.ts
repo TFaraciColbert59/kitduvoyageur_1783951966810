@@ -55,25 +55,11 @@ export const THUMB_HEMI_SKY = '#FFFFFF';
 export const THUMB_HEMI_GROUND = '#C9D4C6';
 export const THUMB_FILL = '#DDEBFF';
 
-/* ───────────── Objets rangés : teintes de détail (hors coloris du catalogue) ───────────── */
-export const ITEM_LENS = '#FFF6DD';
-export const ITEM_SCREEN = '#1D2A24';
-export const ITEM_BLADE = '#CFD6D2';
-export const ITEM_CROSS = '#FFFFFF';
-/** Objets manquants (« fantômes ») : filaire ambre et halo. */
-export const GHOST_COLOR = '#C89A3B';
-
 /* ───────────── Modules 3D (vignettes) ───────────── */
 export const MODULE_THUMB_OLIVE = '#3D4E3B';
 export const MODULE_THUMB_TRIM = '#222823';
 export const MODULE_THUMB_ACCENT = '#D4973B';
 export const MODULE_THUMB_NET = '#2B3629';
-const GHOST_GLOW: Rgb = [200, 154, 59];
-export const GHOST_HALO_STOPS: readonly (readonly [number, string])[] = [
-  [0, rgba(GHOST_GLOW, 1)],
-  [0.3, rgba(GHOST_GLOW, 0.7)],
-  [1, rgba(GHOST_GLOW, 0)],
-];
 
 /* ───────────── Illustration du tiroir Personnaliser (drawers/PersonnaliserDrawer.tsx) ─────────────
    Dégradés et ombres du dessin SVG : mêmes valeurs que la branche hub-camp-3d, nommées ici pour que

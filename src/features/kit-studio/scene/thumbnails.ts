@@ -109,7 +109,7 @@ function bagBuilder(spec: BagThumbSpec, res: ThumbResources): Object3D {
 const BUILDERS: Builders = { b: bagBuilder, c: ballBuilder };
 
 /**
- * Enregistre le constructeur de mesh d'un type de vignette (les objets 'i' sont fournis par itemMesh, injecté ici).
+ * Enregistre le constructeur de mesh d'un type de vignette (les objets 'i' : aucun maillage publié, groupe vide, voir thumbBuilders.ts).
  * S'applique à tous les moteurs, y compris déjà créés.
  */
 export function registerBuilder(kind: 'i', builder: ThumbBuilder<ItemThumbSpec>): void;

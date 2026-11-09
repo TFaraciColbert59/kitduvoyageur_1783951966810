@@ -13,8 +13,6 @@ import { clamp } from './math';
 
 export type ScenePick =
   | { readonly kind: 'item'; readonly id: string }
-  /** Objet manquant touché : `id` est sa fonction (Ghost.fn). */
-  | { readonly kind: 'ghost'; readonly id: string }
   /** Pièce du sac touchée en mode Apparence (`id` : 'body', 'lid', … ou 'webbing'). */
   | { readonly kind: 'part'; readonly id: PartNameId; readonly zone: ZoneId }
   /** Zone du sac touchée en mode Gestion. */
@@ -239,7 +237,7 @@ export function attachGestures(canvas: HTMLCanvasElement, target: GestureTarget,
       target.invalidate();
       return;
     }
-    if (pk && (pk.kind === 'item' || pk.kind === 'ghost')) {
+    if (pk && pk.kind === 'item') {
       lastTap = { t: 0, x: 0, y: 0, delayed: false };
       cb.onPick?.(pk);
       return;

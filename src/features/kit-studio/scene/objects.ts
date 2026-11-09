@@ -1,21 +1,24 @@
-// Objets rangés et fantômes dans la scène (maquette Kit_Studio_v2.html l.1090-1109 et l.1126-1162).
-// Synchronisation avec l'état (addObj / killObj animés, libération des ressources), mise en place par zone :
+// Objets rangés dans la scène (maquette Kit_Studio_v2.html l.1090-1109 et l.1126-1162).
+// Règle produit (09/11/2026) : maillages réels uniquement. Un objet n'a d'entrée ici que s'il a un `.glb` publié
+// (itemAssets.ts) ; aucun objet n'est dessiné par code et les « fantômes » (fonctions manquantes) ne sont plus
+// dessinés du tout : le manque reste lisible en 2D (bilan, cartes). Registre vide aujourd'hui : la couche ne
+// contient donc aucun mesh, aucune entrée, aucun tir de rayon sur un objet.
+// Synchronisation avec l'état (addObj / killObj animés), mise en place par zone :
 // au repos les objets rangés sont invisibles dans le sac ; ils se déploient en arc devant la caméra sur la zone au
 // premier plan, ou s'écartent autour du sac en « pièces séparées ». Les objets de « Sur toi » reposent sur l’établi.
 // Rien ici n'écrit dans l'état : la couche lit KitState (jamais modifié) et pilote uniquement des objets three.
 // Aucune allocation dans step() : vecteurs et tableaux sont créés à la synchronisation.
-import { Box3, Plane, Raycaster, Vector2, Vector3 } from 'three';
-import type { Camera, Group, Object3D, Sprite, Texture } from 'three';
+import { Plane, Raycaster, Vector2, Vector3 } from 'three';
+import type { Camera, Group, Object3D, Texture } from 'three';
 import { ANCHORS, PACK_ZONE_IDS } from '../domain/catalog';
-import type { Ghost, PartNameId, ZoneId } from '../domain/catalog';
-import { activeGhosts } from '../domain/blockers';
+import type { PartNameId, ZoneId } from '../domain/catalog';
 import { packedLocal, reindex } from '../domain/layout';
 import type { PackIndex } from '../domain/layout';
 import { currentKit, getItem } from '../domain/state';
 import { effG } from '../domain/totals';
 import type { KitState } from '../domain/types';
 import type { BagHandle } from './bagBuilder';
-import { ghostMesh, halo, haloTexture, itemMesh, releaseItemMesh } from './itemMesh';
+import { hasItemModel } from './itemAssets';
 import { GROUND_Y, WORN_CENTER, WORN_OFFSETS } from './layout';
 import { clamp, damp } from './math';
 import type { ResourceTracker } from './resources';
@@ -29,18 +32,16 @@ export interface ObjectFrame {
   ex: number;
   /** Position continue de la caméra sur la liste des zones (0 = Sur toi). */
   pos: number;
-  /** Fantômes affichés (mode Gestion). */
-  ghostsOn: boolean;
 }
 
 /** Résultat brut d'un tir de rayon. */
 export type RawPick =
   | { readonly type: 'item'; readonly id: string }
-  | { readonly type: 'ghost'; readonly fn: string }
   | { readonly type: 'bag'; readonly zone: ZoneId; readonly part: PartNameId };
 
 export interface ObjectLayerOptions {
   readonly root: Object3D;
+  /** Inventaire de ressources et tissu : réservés au futur chargeur de maillages d'objets (aucun mesh dessiné ici). */
   readonly tr: ResourceTracker;
   readonly bag: BagHandle;
   readonly camera: Camera & { readonly fov: number };
@@ -58,7 +59,7 @@ export interface ObjectLayer {
   step(dt: number, frame: ObjectFrame): boolean;
   /** Ancre monde d'une zone (le sac doit avoir sa matrice à jour). */
   anchor(zone: ZoneId, out: Vector3): Vector3;
-  /** Tir de rayon en coordonnées normalisées (-1..1) : objet, fantôme ou pièce du sac. */
+  /** Tir de rayon en coordonnées normalisées (-1..1) : objet (maillage publié) ou pièce du sac. */
   pick(ndcX: number, ndcY: number): RawPick | null;
   /** Projection écran (px, dans le canvas) d'un objet / d'une zone ; null si l'objet n'existe pas. */
   projectItem(id: string, out: { x: number; y: number }): { x: number; y: number } | null;
@@ -69,8 +70,8 @@ export interface ObjectLayer {
   liftMove(ndcX: number, ndcY: number): void;
   /** Fin du soulevé : `keep` garde l'objet à l'endroit relâché le temps que l'interface le range ailleurs. */
   liftEnd(keep: boolean): void;
-  /** Nombre d'objets vivants (hors sortants) et de fantômes, pour les tests et l'inspection. */
-  counts(): { readonly items: number; readonly ghosts: number; readonly dying: number };
+  /** Nombre d'objets vivants (hors sortants), pour les tests et l'inspection. */
+  counts(): { readonly items: number; readonly dying: number };
   dispose(): void;
 }
 
@@ -88,10 +89,9 @@ const OUTER: Readonly<Record<string, readonly [number, number, number]>> = {
 const OUTER_DEFAULT: readonly [number, number, number] = [1.2, 0, 0];
 
 interface Entry {
-  /** Identifiant (objet) ou fonction manquante (fantôme). */
+  /** Identifiant de l'objet. */
   readonly key: string;
   readonly g: Group;
-  readonly ghost: boolean;
   zone: ZoneId;
   base: number;
   readonly cur: Vector3;
@@ -101,7 +101,7 @@ interface Entry {
   consK: number;
   readonly worn: Vector3;
   readonly restingLift: number;
-  /** Rang dans la liste de sa zone (objets rangés + fantômes). */
+  /** Rang dans la liste de sa zone. */
   zi: number;
   zn: number;
   /** Paramètres de séparation : rayon, angle, hauteur (× échelle du sac) et décalage fixe. */
@@ -117,20 +117,13 @@ interface Entry {
   hasOv: boolean;
   ovTtl: number;
   t: number;
-  /** Fantôme actif (sa fonction n'est couverte par aucun objet rangé). */
-  on: boolean;
-  readonly halo: Sprite | null;
 }
 
 export function createObjectLayer(o: ObjectLayerOptions): ObjectLayer {
-  const { root, tr, bag, camera, reducedMotion } = o;
+  const { root, bag, camera, reducedMotion } = o;
   const entries = new Map<string, Entry>();
   const items: Entry[] = [];
-  const ghosts: Entry[] = [];
   let dying: Entry[] = [];
-  let ghostSource: readonly Ghost[] | null = null;
-  let ghostKit = '';
-  let haloMap: Texture | null = null;
   let idx: PackIndex = {};
   let lifted: Entry | null = null;
   let arcZone: ZoneId | null = null;
@@ -163,58 +156,30 @@ export function createObjectLayer(o: ObjectLayerOptions): ObjectLayer {
     e.g.visible = e.sc > 0.003;
   };
 
-  function makeEntry(key: string, g: Group, ghost: boolean, zone: ZoneId, sprite: Sprite | null): Entry {
-    const base = typeof g.userData.s === 'number' ? g.userData.s : 0.25;
-    return {
-      key, g, ghost, zone, base: ghost ? Math.max(base, 0.18) : base,
-      cur: new Vector3(), sc: 0, local: new Vector3(), consK: 1, worn: new Vector3(),
-      restingLift: -new Box3().setFromObject(g).min.y * base,
-      zi: 0, zn: 1, er: 1, ea: 0, ey: 0, eyAdd: 0,
-      arcOn: false, arcP: new Vector3(), arcSp: 0, ov: new Vector3(), hasOv: false, ovTtl: 0, t: 0, on: false, halo: sprite,
-    };
+  /** Retire le groupe d'un objet de la scène. Le maillage publié est un actif partagé : il n'est pas libéré ici. */
+  function releaseEntry(e: Entry): void {
+    e.g.removeFromParent();
   }
 
+  /**
+   * Entrée 3D d'un objet : uniquement s'il a un maillage réel publié (itemAssets.ts). Sinon : pas de mesh, pas
+   * d'entrée, pas de pick. Point d'extension : quand un chargeur de `.glb` d'objet sera branché (celui des sacs et
+   * des modules, scene/bag/loader.ts), c'est ici que le groupe chargé est ajouté à `root` puis enregistré dans
+   * `entries` et `items` avec son échelle de base (`userData.s`) et sa hauteur de repos (`restingLift`).
+   * Tant que ce chargeur n'existe pas, même un objet inscrit au registre ne dessine rien.
+   */
   function addItem(s: KitState, id: string): Entry | null {
-    const it = getItem(s, id);
-    if (!it) return null;
-    const g = itemMesh(it, tr, o.fabric);
-    root.add(g);
-    const e = makeEntry(id, g, false, 'bag', null);
-    g.visible = false;
-    entries.set(id, e);
-    items.push(e);
-    return e;
+    if (!hasItemModel(id) || !getItem(s, id)) return null;
+    return null;
   }
 
   function killItem(e: Entry): void {
     entries.delete(e.key);
     items.splice(items.indexOf(e), 1);
     if (lifted === e) lifted = null;
-    if (reducedMotion) { releaseItemMesh(e.g, tr); return; }
+    if (reducedMotion) { releaseEntry(e); return; }
     e.t = 0;
     dying.push(e);
-  }
-
-  function dropGhosts(): void {
-    for (const e of ghosts) {
-      releaseItemMesh(e.g, tr);
-      if (e.halo) { root.remove(e.halo); e.halo.material.dispose(); }
-    }
-    ghosts.length = 0;
-  }
-
-  function buildGhosts(list: readonly Ghost[]): void {
-    dropGhosts();
-    if (list.length > 0 && !haloMap) haloMap = haloTexture(tr);
-    for (const gh of list) {
-      const g = ghostMesh(gh, tr);
-      const sprite = halo(tr, haloMap as Texture);
-      root.add(g, sprite);
-      const e = makeEntry(gh.fn, g, true, gh.zone, sprite);
-      anchor(gh.zone, e.cur);
-      g.visible = false;
-      ghosts.push(e);
-    }
   }
 
   /** Paramètres de séparation d'une entrée selon sa zone (maquette explodePos l.1140-1146). */
@@ -262,32 +227,17 @@ export function createObjectLayer(o: ObjectLayerOptions): ObjectLayer {
       }
     }
 
-    // Fantômes : reconstruits au changement de kit, sinon seulement leur activité.
-    const list = kit.ghosts ?? [];
-    if (ghostSource !== list || ghostKit !== kit.id) {
-      buildGhosts(list);
-      ghostSource = list;
-      ghostKit = kit.id;
-      changed = true;
-    }
-    const activeFns = new Set(activeGhosts(s).map((g) => g.fn));
-    for (const e of ghosts) {
-      const on = activeFns.has(e.key);
-      if (on !== e.on) { e.on = on; changed = true; }
-    }
-
-    // Listes par zone (objets rangés puis fantômes actifs) → rang, effectif, position et séparation.
+    // Listes par zone (objets rangés) → rang, effectif, position et séparation.
     for (const z of PACK_ZONE_IDS) {
       const keys: Entry[] = [];
       for (const id of kit.packed[z] ?? []) {
         const e = entries.get(id);
         if (e) keys.push(e);
       }
-      for (const e of ghosts) if (e.on && e.zone === z) keys.push(e);
       keys.forEach((e, i) => {
         e.zi = i;
         e.zn = keys.length;
-        if (!e.ghost) e.zone = z;
+        e.zone = z;
         setExplode(e, z);
       });
     }
@@ -329,7 +279,6 @@ export function createObjectLayer(o: ObjectLayerOptions): ObjectLayer {
     const { width: W, height: H } = o.viewport();
     let n = 0;
     for (const e of items) if (e.zone === zone) n++;
-    for (const e of ghosts) if (e.on && e.zone === zone) n++;
     if (n === 0) return;
     anchor(zone, va);
     arc.L = camera.position.distanceTo(va) * 0.6;
@@ -344,12 +293,10 @@ export function createObjectLayer(o: ObjectLayerOptions): ObjectLayer {
     arc.H = H;
     arc.j = 0;
     for (const e of items) if (e.zone === zone) placeArc(e);
-    for (const e of ghosts) if (e.on && e.zone === zone) placeArc(e);
   }
 
   function clearArc(): void {
     for (const e of items) e.arcOn = false;
-    for (const e of ghosts) e.arcOn = false;
   }
 
   function step(dt: number, f: ObjectFrame): boolean {
@@ -393,44 +340,6 @@ export function createObjectLayer(o: ObjectLayerOptions): ObjectLayer {
       apply(e);
     }
 
-    const showGhosts = f.ghostsOn;
-    for (const e of ghosts) {
-      const on = e.on && showGhosts;
-      let s = 0;
-      anchor(e.zone, va);
-      vc.copy(va);
-      if (on) {
-        vb.set(Math.sin(e.ea) * e.er, e.ey * bs.y + e.eyAdd, Math.cos(e.ea) * e.er).add(bag.group.position);
-        vc.lerp(vb, ex);
-        s = e.base * 0.9 * ex;
-        if (e.arcOn) {
-          vc.lerp(e.arcP, arcK);
-          s = Math.max(s, Math.min(e.base, e.arcSp * 0.55) * arcK);
-        }
-      }
-      const near = e.cur.distanceToSquared(vc) > 1e-6;
-      const grow = Math.abs(s - e.sc) > 5e-4;
-      if (near) e.cur.lerp(vc, kp); else e.cur.copy(vc);
-      if (grow) e.sc += (s - e.sc) * ks; else e.sc = s;
-      if (near || grow) moving = true;
-      apply(e);
-
-      // Halo : visible au repos sur l'ancre de la zone, qui s'efface en arc, en pièces séparées ou couvercle ouvert.
-      const sprite = e.halo;
-      if (sprite) {
-        const hv = on && !e.arcOn && ex < 0.3 && !(e.zone === 'lid' && f.focus === 'main');
-        bag.group.localToWorld(vd.set(0, 0, 0));
-        vd.copy(va).sub(vd);
-        vd.y = e.zone === 'lid' ? 1 : 0;
-        vd.normalize();
-        sprite.position.copy(va).addScaledVector(vd, 0.12);
-        const target = hv ? 0.9 : 0;
-        const m = sprite.material;
-        if (Math.abs(target - m.opacity) > 0.01) { m.opacity += (target - m.opacity) * damp(reducedMotion ? 60 : 8, dt); moving = true; } else m.opacity = target;
-        sprite.visible = m.opacity > 0.02;
-      }
-    }
-
     // Objets qui sortent : ils rejoignent leur point de chute (s'il y en a un) en rétrécissant.
     for (let i = dying.length - 1; i >= 0; i--) {
       const e = dying[i];
@@ -439,7 +348,7 @@ export function createObjectLayer(o: ObjectLayerOptions): ObjectLayer {
       e.sc += (0 - e.sc) * damp(10, dt);
       apply(e);
       if (e.t > DYING_S) {
-        releaseItemMesh(e.g, tr);
+        releaseEntry(e);
         dying[i] = dying[dying.length - 1];
         dying.pop();
       } else moving = true;
@@ -453,11 +362,9 @@ export function createObjectLayer(o: ObjectLayerOptions): ObjectLayer {
     ray.setFromCamera(ndc, camera);
     const list: Object3D[] = [];
     for (const e of items) if (e.g.visible && e.sc > 0.02) list.push(e.g);
-    for (const e of ghosts) if (e.g.visible && e.sc > 0.02) list.push(e.g);
     const hi = ray.intersectObjects(list, true)[0];
     if (hi) {
-      const u = hi.object.userData as { itemId?: string; ghost?: string };
-      if (u.ghost !== undefined) return { type: 'ghost', fn: u.ghost };
+      const u = hi.object.userData as { itemId?: string };
       if (u.itemId !== undefined) return { type: 'item', id: u.itemId };
     }
     const hb = ray.intersectObjects([...bag.pickables()], false)[0];
@@ -515,17 +422,15 @@ export function createObjectLayer(o: ObjectLayerOptions): ObjectLayer {
       if (!e) return;
       if (keep) e.ovTtl = HOLD_S; else e.hasOv = false;
     },
-    counts: () => ({ items: items.length, ghosts: ghosts.length, dying: dying.length }),
+    counts: () => ({ items: items.length, dying: dying.length }),
     dispose() {
       if (disposed) return;
       disposed = true;
-      for (const e of items) releaseItemMesh(e.g, tr);
-      for (const e of dying) releaseItemMesh(e.g, tr);
+      for (const e of items) releaseEntry(e);
+      for (const e of dying) releaseEntry(e);
       items.length = 0;
       dying = [];
       entries.clear();
-      dropGhosts();
-      haloMap?.dispose();
     },
   };
 }

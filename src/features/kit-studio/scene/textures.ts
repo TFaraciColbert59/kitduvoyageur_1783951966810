@@ -82,10 +82,6 @@ const MATERIALS_URL = '/assets/materials';
  *
  * Les textures dessinées par code gardent leur propre valeur, calée sur leur motif et sur des UV
  * normalisées 0..1.
- *
- * Limite connue : les objets du catalogue (`itemMesh.ts`) partagent leurs géométries par clé entre
- * objets de tailles différentes, et ne peuvent donc pas porter d'UV en mètres — une géométrie
- * partagée n'a pas d'échelle propre. Sur eux, la trame reste approximative.
  */
 const PHOTO_FABRIC_REPEAT = FABRIC_REPEAT;
 

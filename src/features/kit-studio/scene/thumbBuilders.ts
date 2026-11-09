@@ -2,7 +2,6 @@
 // affichaient donc toujours le repli SVG. Enregistrés à la première vignette demandée (voir ui/Thumb.tsx).
 import { Box3, Color, Group, Mesh, Vector3 } from 'three';
 import type { Object3D } from 'three';
-import { itemMesh } from './itemMesh';
 import { maillageCorps, maillageModule, zonesDuCorps } from './thumbAssets';
 import { registerBuilder } from './thumbnails';
 import type { BagThumbSpec, ItemThumbSpec, ModuleThumbSpec, ThumbResources } from './thumbnails';
@@ -58,21 +57,15 @@ function copiePourVignette(
   return enveloppe;
 }
 
-/** Objet du catalogue : même maillage que la scène, couleur déjà résolue par la palette. */
-function itemBuilder(spec: ItemThumbSpec, res: ThumbResources): Object3D {
-  return itemMesh(
-    {
-      id: spec.id,
-      sh: spec.shape,
-      gl: spec.glyph,
-      L: spec.liters,
-      // `hex` porte déjà la teinte résolue (palette.ts) : pas de relecture du catalogue.
-      hex: spec.color,
-      planned: spec.planned,
-    },
-    res.tracker,
-    res.fabric('ripstop'),
-  );
+/**
+ * Vignette d'un objet du catalogue : le maillage réel publié, et rien d'autre.
+ *
+ * Aucun `.glb` d'objet n'est publié (itemAssets.ts) : le groupe est vide, et les cartes d'objets ne
+ * demandent d'ailleurs plus de vignette 3D, elles affichent leur pictogramme 2D plat. Le jour où un
+ * maillage existe, c'est ici qu'on le copie, comme `bagBuilder` et `moduleBuilder`.
+ */
+export function itemBuilder(_spec: ItemThumbSpec): Object3D {
+  return new Group();
 }
 
 /**
