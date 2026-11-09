@@ -1680,3 +1680,34 @@ body.lkdv-overlay-open .lkdv-floating-tabbar {
 .lkdv-report-sheet [class*='text-[color:var(--lkv-text'] {
   color: var(--label, #172b24);
 }
+
+/* Le scope du post hérite d'un `--label` clair : l'état vide est sur fond blanc. */
+.lkdv-post-drawer .ckp-empty-state,
+.lkdv-post-drawer .ckp-empty-state::after {
+  color: #172b24 !important;
+}
+.lkdv-post-drawer .ckp-empty-state svg {
+  color: #5b7f55 !important;
+}
+
+/* Même correction pour la feuille de signalement claire. */
+.lkdv-report-sheet,
+.lkdv-report-sheet p,
+.lkdv-report-sheet h4,
+.lkdv-report-sheet b {
+  color: #172b24 !important;
+}
+.lkdv-report-sheet button[data-variant='secondary'] {
+  color: #172b24 !important;
+}
+.lkdv-report-sheet button[data-variant='primary'] {
+  color: #ffffff !important;
+}
+
+.lkdv-report-sheet h2,
+.lkdv-report-sheet [id^='radix-'] > h2 {
+  color: #172b24 !important;
+}
+.lkdv-report-sheet button:disabled {
+  color: rgba(23, 43, 36, 0.55) !important;
+}
