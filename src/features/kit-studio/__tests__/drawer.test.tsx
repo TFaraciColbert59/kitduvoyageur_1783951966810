@@ -181,4 +181,22 @@ describe('Aucune bordure colorée', () => {
       expect(ok, `${prop}: ${val}`).toBe(true);
     }
   });
+
+  // Constat du 09/11/2026 : le tiroir, focalisé à l'ouverture, portait l'anneau de `.ks-root
+  // :focus-visible` (même spécificité, déclaré plus bas) autour de tout le verre.
+  it('le tiroir focalisé ne porte pas d’anneau : la neutralisation est plus spécifique que .ks-root :focus-visible', () => {
+    const css = readFileSync(join(__dirname, '../ui/kit-studio.css'), 'utf8');
+    const regle = css.match(/([^{}]*\.ks-root \.ks-dock:focus-visible[^{}]*)\{([^}]*)\}/);
+    expect(regle, 'règle .ks-root .ks-dock:focus-visible absente').not.toBeNull();
+    expect(regle?.[2]).toMatch(/outline:\s*none/);
+  });
+
+  // Constat du 09/11/2026 : sans maillage réaliste, le pictogramme est le seul visuel d'un objet ;
+  // ses 42 % se calculaient sur un conteneur sans taille et la carte paraissait vide.
+  it('le pictogramme d’une carte occupe toute la zone de l’objet', () => {
+    const css = readFileSync(join(__dirname, '../ui/cards/cards.css'), 'utf8');
+    const regle = css.match(/\.ks-card__gl\s*\{([^}]*)\}/);
+    expect(regle?.[1]).toMatch(/width:\s*100%/);
+    expect(regle?.[1]).toMatch(/height:\s*100%/);
+  });
 });

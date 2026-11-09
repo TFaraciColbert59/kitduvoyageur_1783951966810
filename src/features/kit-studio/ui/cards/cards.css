@@ -99,6 +99,16 @@
   place-items: center;
   pointer-events: none;
 }
+/* Maquette `.tile .thumb{position:absolute;inset:…}` : la vignette occupe exactement la zone de
+   l'objet. En simple élément de grille, son hôte n'avait pas de hauteur définie : l'image carrée
+   (98 px) débordait de la zone (58 px) et passait sous la légende. */
+.ks-card__obj .ks-thumb {
+  position: absolute;
+  inset: 0;
+  /* L'hôte est une grille (style en ligne de Thumb) : sans piste définie, les 100 % de hauteur de
+     l'image se résolvaient sur son contenu, pas sur la zone. */
+  grid-template: 100% / 100%;
+}
 .ks-card__obj .ks-thumb__img {
   transform: translateY(-4%);
   transition: transform 0.5s var(--ks-spring);
@@ -106,9 +116,13 @@
 .ks-card:active .ks-card__obj .ks-thumb__img {
   transform: translateY(-8%) scale(1.06);
 }
+/* Le pictogramme est l'unique visuel d'un objet sans maillage réaliste : il occupe toute la zone
+   de l'objet, sinon les 42 % ci-dessous se calculent sur un conteneur sans taille et il disparaît. */
 .ks-card__gl {
   display: grid;
   place-items: center;
+  width: 100%;
+  height: 100%;
   color: var(--ks-ink);
 }
 .ks-card__gl svg {
@@ -251,15 +265,20 @@
   height: 90%;
 }
 
-/* barre basse : mode + ↺, points, familles / options */
+/* barre basse : mode, points, familles / options (maquette : rien d'autre, la largeur est pleine) */
 .ks-modegrp {
   display: flex;
   align-items: center;
   gap: 6px;
 }
+/* ↺ flottant, sur la ligne de la pilule de poids (.ks-top), aligné sur le bord gauche du tiroir */
 .ks-undo {
-  width: 30px;
-  height: 30px;
+  position: absolute;
+  top: calc(env(safe-area-inset-top, 0px) + 10px); /* lkdv-safe-area-ok : même ligne que la pilule */
+  left: calc(50% - (min(100vw, 560px) - 2 * var(--gx)) / 2);
+  pointer-events: auto;
+  width: 44px;
+  height: 44px;
   display: grid;
   place-items: center;
   padding: 0;

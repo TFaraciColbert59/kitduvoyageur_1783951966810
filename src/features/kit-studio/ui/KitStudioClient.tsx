@@ -19,6 +19,7 @@ import { getScene } from '../scene/sceneRef';
 import { Dock } from './Drawer/Dock';
 import { OfflineContext, useOffline } from './offline';
 import { Pill } from './Pill';
+import { UndoButton } from './UndoButton';
 import { S, pillLabel } from './strings';
 import './kit-studio.css';
 import './route.css';
@@ -201,6 +202,18 @@ export function KitStudioClient(props: KitStudioClientProps) {
     };
   }, [mode, initialData]);
 
+  // Crochet du banc d'images (`scripts/kit-studio/record-walkthrough.mjs`) : exposé UNIQUEMENT en mode
+  // démonstration (`?debug=1`), jamais en production normale (mode `server` ou `offline`). Il donne
+  // accès aux vrais stores et à la vraie scène, pas à une copie : le banc photographie l'écran réel.
+  useEffect(() => {
+    if (mode !== 'debug') return;
+    const w = window as unknown as { __kitStudioDebug?: unknown };
+    w.__kitStudioDebug = { kit: useKitStore, ui: useUiStore, scene: getScene };
+    return () => {
+      delete w.__kitStudioDebug;
+    };
+  }, [mode]);
+
   // Ouverture automatique à 750 ms, sauf si la personne a déjà agi (tout setter de l'UI annule le jeton).
   useEffect(() => {
     const token = useUiStore.getState().armOpen();
@@ -281,6 +294,7 @@ export function KitStudioClient(props: KitStudioClientProps) {
           viewKey={view}
           label={pillLabel(kg, bl.length)}
           onClick={openBilan}
+          aside={<UndoButton />}
         />
         {mode === 'debug' ? (
           <div role="status" data-testid="studio-mode-banner" style={bannerStyle}>

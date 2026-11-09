@@ -1,5 +1,5 @@
 'use client';
-import { useLayoutEffect, useRef, useState, type CSSProperties, type RefObject } from 'react';
+import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from 'react';
 import { alertsText, kgText } from './strings';
 
 const CIRC = 47.12; // 2 * PI * 7.5
@@ -19,6 +19,8 @@ interface PillProps {
   viewKey?: string;
   label: string;
   onClick: () => void;
+  /** Élément posé sur la même ligne, au bord gauche du tiroir (↺) : il suit la pilule quand elle monte ou descend. */
+  aside?: ReactNode;
 }
 
 /** Décalage vertical : bord bas de la pilule à 2 px du tiroir, à partir des hauteurs mesurées. */
@@ -27,7 +29,7 @@ export function pillOffset(innerHeight: number, gb: number, dockH: number, pillH
 }
 
 /** Pilule du poids : bague de remplissage, kg tabulaire, pastille d'alertes. */
-export function Pill({ kg, ratio, alerts, open, dockRef, viewKey, label, onClick }: PillProps) {
+export function Pill({ kg, ratio, alerts, open, dockRef, viewKey, label, onClick, aside }: PillProps) {
   const wrap = useRef<HTMLDivElement>(null);
   const btn = useRef<HTMLButtonElement>(null);
   const [ity, setIty] = useState(0);
@@ -58,6 +60,7 @@ export function Pill({ kg, ratio, alerts, open, dockRef, viewKey, label, onClick
   const dash = `${(Math.min(1, Math.max(0, ratio)) * CIRC).toFixed(2)} ${CIRC}`;
   return (
     <div ref={wrap} className="ks-top" style={{ '--ks-ity': `${ity}px` } as CSSProperties}>
+      {aside}
       <button ref={btn} type="button" className="ks-pill" aria-label={label} onClick={onClick}>
         <svg className="ks-ring" viewBox="0 0 20 20" aria-hidden="true">
           <circle cx="10" cy="10" r="7.5" className="ks-ring-bg" />

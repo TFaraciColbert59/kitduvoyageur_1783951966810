@@ -20,6 +20,7 @@ import {
   LKDV_ONE_BAG_BBOXES,
 } from '../../domain/bagAnchorsTable';
 import { getScene } from '../../scene/sceneRef';
+import { hasItemModel } from '../../scene/itemAssets';
 
 export type OptionCat = 'shape' | 'mod' | 'col';
 export type CardKind = 'item' | 'bag' | 'opt' | 'add';
@@ -71,7 +72,8 @@ export function contentCards(s: KitState, zone: ZoneId, family: string | null, r
       name: it.n,
       sub: tag ? `${w} · ${tag}` : w,
       label: tileLabel(it.n, w, tag || undefined),
-      thumb: itemThumb(it, readVar, !!(it as ExtraItem).planned),
+      // Pas de vignette 3D sans maillage réel publié : la carte affiche son pictogramme 2D (glyph).
+      thumb: hasItemModel(it.id) ? itemThumb(it, readVar, !!(it as ExtraItem).planned) : null,
       glyph: it.gl,
       selected: false,
       disabled: it.state === 'lent',

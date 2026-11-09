@@ -59,7 +59,6 @@ function targetZone(card: CardModel | undefined, zone: ZoneId): ZoneId {
 export function CardsView({ zone = 'bag', projectZone, highlightZone, onAdd }: CardsViewProps) {
   const { haptic } = useHapticFeedback();
   const kit = useKitStore((s) => s.kit);
-  const canUndo = useKitStore((s) => s.canUndo);
   const mode = useUiStore((s) => s.mode);
   const family = useUiStore((s) => s.family);
   const category = useUiStore((s) => s.category);
@@ -273,10 +272,6 @@ export function CardsView({ zone = 'bag', projectZone, highlightZone, onAdd }: C
           onChange={(m) => {
             setPage(0);
             useUiStore.getState().setMode(m);
-          }}
-          canUndo={canUndo}
-          onUndo={() => {
-            if (useKitStore.getState().undo()) haptic('light');
           }}
         />
         <PageDots count={cards.length} page={page} />

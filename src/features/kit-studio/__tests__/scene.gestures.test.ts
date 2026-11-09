@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-// Gestes, caméra de zone, objets et fantômes de la scène — sans WebGL (faux renderer injecté).
+// Gestes, caméra de zone, objets de la scène — sans WebGL (faux renderer injecté).
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ACESFilmicToneMapping, PCFShadowMap } from 'three';
 import { pack, unpack } from '../domain/packing';
@@ -287,17 +287,25 @@ describe('caméra de zone', () => {
 });
 
 describe('objets, fantômes et sélection', () => {
-  it('toucher un objet séparé appelle onPick({ kind: "item" })', () => {
+  // Règle produit du 09/11/2026 : aucun maillage publié pour les objets, donc aucun objet 3D, ni fantôme.
+  // Les anciens tests « toucher / soulever un objet séparé » vérifiaient un objet dessiné par code : interdit.
+  it('sans maillage publié, aucun objet n\'est projeté ni touchable, même en pièces séparées', () => {
     const picks: ScenePick[] = [];
-    const { scene, r } = make({ onPick: (p) => picks.push(p) });
+    const lifts: LiftEvent[] = [];
+    const { scene, r } = make({ onPick: (p) => picks.push(p), onLift: (e) => lifts.push(e), armY: () => 700 });
     scene.setExploded(true);
     play(r, 300);
-    const at = scene.projectItem('bladder');
-    expect(at).not.toBeNull();
-    if (!at) return;
-    down(1, at.x, at.y);
-    up(1, at.x, at.y);
-    expect(picks).toEqual([{ kind: 'item', id: 'bladder' }]);
+    expect(scene.projectItem('bladder')).toBeNull();
+    // Geste de soulevé sur le sac : jamais un objet ni un début de soulevé.
+    const c = scene.projectZone('main');
+    down(1, c.x, c.y);
+    move(1, c.x + 1, c.y + 30);
+    move(1, c.x + 2, c.y + 330);
+    play(r, 3);
+    up(1, c.x + 2, c.y + 330);
+    vi.advanceTimersByTime(400);
+    expect(lifts).toEqual([]);
+    expect(picks.some((p) => p.kind === 'item')).toBe(false);
     scene.dispose();
   });
 
@@ -320,33 +328,9 @@ describe('objets, fantômes et sélection', () => {
     scene.dispose();
   });
 
-  it('soulever un objet : onLift start → move → end, armé en bas, l\'état reste intact', () => {
-    const state = deepFreeze(createInitialState('tmb'));
-    const events: LiftEvent[] = [];
-    const { scene, r } = make({ onLift: (e) => events.push(e), armY: () => 700 }, state);
-    scene.setExploded(true);
-    play(r, 300);
-    const at = scene.projectItem('bladder');
-    if (!at) throw new Error('objet absent');
-    down(1, at.x, at.y);
-    move(1, at.x + 1, at.y + 30);
-    move(1, at.x + 2, at.y + 330);
-    play(r, 3);
-    up(1, at.x + 2, at.y + 330);
-    expect(events.map((e) => e.phase)).toEqual(['start', 'move', 'move', 'end']);
-    expect(events[events.length - 1]).toMatchObject({ id: 'bladder', armed: true });
-    expect(scene.info().objects.items).toBeGreaterThan(0);
-    // L'objet reste où on l'a lâché le temps que l'interface le range, puis revient s'il n'a pas bougé.
-    play(r, 120);
-    expect(scene.info().objects.items).toBeGreaterThan(0);
-    scene.dispose();
-  });
-
-  it('fantômes du kit : un par manque, tous libérés au démontage', () => {
+  it('ni objet ni fantôme dans la scène (aucun maillage publié) ; tout est libéré au démontage', () => {
     const { scene } = make();
-    const o = scene.info().objects;
-    expect(o.ghosts).toBeGreaterThan(0);
-    expect(o.items).toBeGreaterThan(10);
+    expect(scene.info().objects).toEqual({ items: 0, dying: 0 });
     scene.dispose();
     expect(scene.info().resources).toEqual({ geometries: 0, materials: 0, textures: 0, renderTargets: 0 });
   });
@@ -358,11 +342,11 @@ describe('ressources et état', () => {
     const { scene, r } = make({}, base);
     play(r, 30);
     const start = scene.info().resources;
-    const startObjects = scene.info().objects.items;
+    const startObjects = scene.info().objects.items; // 0 : aucun maillage d'objet publié
     for (let i = 0; i < 20; i++) {
       const out = unpack(base, 'stove');
       scene.update(out);
-      expect(scene.info().objects.items).toBe(startObjects - 1);
+      expect(scene.info().objects.items).toBe(startObjects);
       play(r, 12);
       const back = pack(out, 'stove', 'main');
       expect(back.ok).toBe(true);
