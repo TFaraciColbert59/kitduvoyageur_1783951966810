@@ -66,8 +66,9 @@ function maskItem(raw: unknown, pole: string): MaskedInboxItem | null {
     subtitle: maskText(item.subtitle),
     pole,
     urgency: item.urgency === 'haute' ? 'haute' : 'normale',
-    due_at: typeof item.due_at === 'string' ? item.due_at : null,
-    created_at: typeof item.created_at === 'string' ? item.created_at : '',
+    due_at: typeof item.due_at === 'string' ? item.due_at : typeof item.dueAt === 'string' ? item.dueAt : null,
+    created_at:
+      typeof item.created_at === 'string' ? item.created_at : typeof item.createdAt === 'string' ? item.createdAt : '',
     badges: Array.isArray(item.badges)
       ? item.badges.filter((badge): badge is string => typeof badge === 'string').slice(0, 6).map((badge) => maskText(badge, 40))
       : []

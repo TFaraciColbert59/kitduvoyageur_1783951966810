@@ -5,6 +5,7 @@ import { rateLimit } from '@/server/rate-limit';
 import { requireStaffSession } from '@/server/session';
 import { approveRequest } from '@/server/cmd';
 import { settleApprovedRequest } from '@/server/stripe';
+import { executeDelegated } from '@/server/external';
 import { sendTeamAlert } from '@/server/resend';
 import { logServer } from '@/lib/errors';
 
@@ -59,20 +60,36 @@ export async function POST(request: Request): Promise<Response> {
     const result = await approveRequest(session.client, parsed.data.id, parsed.data.confirmation);
 
     // Effet externe uniquement APRÈS `admin.approve_request` réussi.
-    const external =
-      result.status === 'executed' ? await settleApprovedRequest(session.client, parsed.data.id, snapshot ?? undefined) : null;
+    // Stripe (remboursement) et Auth (ban/suspension/révocation) passent par ici,
+    // avec request_id comme clé d'idempotence.
+    const AUTH_COMMANDS = new Set(['member_ban', 'member_suspend', 'member_revoke_sessions']);
+    let external: unknown = null;
+    if (result.status === 'executed' && snapshot) {
+      if (AUTH_COMMANDS.has(snapshot.command)) {
+        external = await executeDelegated({
+          client: session.client,
+          command: snapshot.command,
+          data: snapshot.params,
+          requestId: parsed.data.id
+        });
+      } else {
+        external = await settleApprovedRequest(session.client, parsed.data.id, snapshot);
+      }
+    }
 
-    if (external?.attempted) {
+    const ext = external as { attempted?: boolean; ok?: boolean; status?: string; message?: string } | null;
+    if (ext && (ext.attempted || ext.status === 'delegated_executed' || ext.status === 'delegated_not_executed' || ext.status === 'delegated_refused')) {
+      const success = ext.ok === true || ext.status === 'delegated_executed';
       await sendTeamAlert({
-        subject: `[LKDV Control] Remboursement ${external.ok ? 'exécuté (test)' : 'échoué'} — demande ${parsed.data.id}`,
-        text: `${external.message}\nDemande : ${parsed.data.id}\nCommande : ${String(snapshot?.params.order_id ?? 'non renseignée')}`,
-        idempotencyKey: `refund-notice-${parsed.data.id}`
+        subject: `[LKDV Control] Effet externe ${success ? 'exécuté' : 'non exécuté'} — demande ${parsed.data.id}`,
+        text: `${ext.message ?? ''}\nDemande : ${parsed.data.id}\nCommande : ${String(snapshot?.params.order_id ?? 'non renseignée')}`,
+        idempotencyKey: `external-notice-${parsed.data.id}`
       });
       logServer({
-        level: external.ok ? 'info' : 'warn',
+        level: success ? 'info' : 'warn',
         scope: 'crm',
         event: 'approve_external_effect',
-        message: external.message
+        message: ext.message ?? ext.status ?? 'effet externe'
       });
     }
 

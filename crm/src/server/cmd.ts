@@ -2,7 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { apiError, translateDbError } from '@/lib/errors';
 import { parseCommandParams } from '@/lib/cmd';
 import type { CommandResult } from '@/lib/rpc';
-import type { Database } from '@/types/db';
+import type { Database, Json } from '@/types/db';
 import type { ServiceDb } from '@/server/db';
 
 /**
@@ -44,7 +44,7 @@ export async function runCommand(
   const parsed = parseCommandParams(command, params);
   const { data, error } = await client.schema('admin').rpc('run_command', {
     p_command: command,
-    p_params: parsed
+    p_params: parsed as Json
   });
   if (error) throw translateDbError(error);
   return normalizeResult(data, command);
@@ -146,7 +146,9 @@ export async function undoAction(
   client: AdminClient,
   auditId: string | number
 ): Promise<{ ok: boolean; message: string | null; undo_id: string | number | null }> {
-  const { data, error } = await client.schema('admin').rpc('undo', { p_audit_id: auditId });
+  const numericAuditId = typeof auditId === 'string' ? Number(auditId) : auditId;
+  if (!Number.isFinite(numericAuditId)) throw apiError('invalid_params');
+  const { data, error } = await client.schema('admin').rpc('undo', { p_audit_id: numericAuditId });
   if (error) throw translateDbError(error);
   const row = asRecord(data);
   return {

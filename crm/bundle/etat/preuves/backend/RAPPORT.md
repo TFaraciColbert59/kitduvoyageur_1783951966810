@@ -30,7 +30,9 @@ Rien n'a été commité, poussé, ni appliqué en base. Aucun appel réel Stripe
 | `src/server/agents/nim.ts` | NIM `https://integrate.api.nvidia.com/v1/chat/completions` uniquement, retry borné, jamais de prompt loggé |
 | `src/server/agents/redact.ts` | Bannit `trip_documents`, `user_orientation`, coordonnées, messages privés avant le modèle |
 | `src/server/agents/runner.ts` | Boucle outils bornée, `agent_authorize` avant chaque appel, budget, `ops.job_runs`, escalade |
+| `src/server/external.ts` | Effets `delegated` (Auth : ban, suspension, révocation) : `service_role`, idempotence `request_id`, statut explicite `delegated_not_executed` si clé absente, refus des e-mails membre |
 | `src/server/__tests__/errors-contract.test.ts` | 6 tests : tous les marqueurs db, pas de fuite, `redact`, rate limit |
+| `supabase/migrations/20261109093000_crm_context_agent_inbox.sql` (+ `.down.sql`) | `admin.my_context()`, `admin.order_detail(p_order uuid)`, `admin.agent_inbox(p_pole text)` — lectures contrôlées, grants conformes au socle db |
 
 ## 2. Routes HTTP
 
@@ -64,10 +66,11 @@ Aucune route n'écrit une table métier : toutes les écritures passent par une 
 | Plafond `admin.agent_rate` atteint | `agent_authorize` lève `rate_limited` → `isError:true` + phrase ; agent mis en pause par la base |
 | Tentative de validation | impossible : `approve_request` n'est pas un outil du registre ; la base lève `agent_cannot_validate` |
 
-Ressources : `lkdv://pole/<CODE>/file`. La PII est masquée avant sortie. **Limite connue** :
-`admin.inbox()` exige `is_staff()` (jeton humain) ; il n'existe pas encore d'`admin.agent_inbox(p_pole)`,
-donc en service_role la ressource répond `{unavailable:true}` au lieu d'échouer. Les outils
-de lecture restent la voie normale pour l'agent.
+Ressources : `lkdv://pole/<CODE>/file`, servie par `admin.agent_inbox(p_pole)` (migration
+`20261109093000`, `service_role` uniquement, réutilise `admin._inbox_json`, PII masquée en
+défense en profondeur). L'agent ne lit que le pôle inscrit dans son jeton ; tout autre URI
+est refusé (`-32602`). Repli : si la RPC manque, la ressource répond `{unavailable:true}`
+sans erreur brute.
 
 ## 4. Agents (6 contrats)
 
@@ -90,6 +93,17 @@ dépassement → arrêt + e-mail, jamais de poursuite silencieuse.
 Interdits tenus : aucun autre fournisseur IA, aucun `service_role` hors `src/server/**`,
 aucune écriture directe, aucun accès `trip_documents` / `user_orientation` (allowlist +
 `redactForModel` qui remplace ces clés par `[masqué]`).
+
+## 4 bis. Effets externes `delegated` (EX-COM-04)
+
+`/api/cmd` : si la base renvoie `data.delegated=true`, `server/external.ts` exécute l'effet
+Auth avec `service_role` (ban `ban_duration`, suspension calculée depuis `until`/`days`,
+révocation via l'endpoint admin `POST /auth/v1/admin/users/<id>/logout`, repli bannissement
+bref + levée). Clé d'idempotence : `request_id` (ou `audit_id`) + `ops.job_runs`.
+Clé `service_role` absente → `status:'delegated_not_executed'` + journal + `complete_request`
+en échec si une demande était ouverte. E-mail vers un membre → `delegated_refused` (jamais
+d'envoi). Remboursement en direct sans demande → `delegated_refused` : le chemin reste
+`/api/approve` → `stripe.refunds.create` → `complete_request`.
 
 ## 5. Stripe
 
@@ -148,6 +162,9 @@ curl -s -o /dev/null -w '%{http_code}\n' -X POST https://<apercu>/api/stripe/web
 $ npx tsc --noEmit
 (0 erreur)
 
+$ npx next lint --max-warnings=0
+0 erreur (1 warning dans src/types/db.ts, fichier généré par le rôle base)
+
 $ npx vitest run src/server/__tests__/errors-contract.test.ts src/lib/cmd-schema.test.ts src/lib/errors.test.ts
 Test Files  3 passed (3)
 Tests       27 passed (27)
@@ -169,14 +186,16 @@ collisions (même source, second run vert). Le build isolé ci-dessus fait foi.
 1. **Middleware (hors périmètre)** : `/api/cmd|approve|reject|undo` ne sont pas dans
    `PUBLIC_API`. Une requête sans session reçoit une **redirection 307** vers `/connexion`
    au lieu du 401 JSON typé. Correctif d'une ligne dans `crm/src/middleware.ts` (orchestrateur).
-2. **Ressource MCP « file du pôle »** : pas d'`admin.agent_inbox(p_pole)` en base ;
-   `admin.inbox()` exige un jeton équipe. Dégradation propre (`unavailable:true`) en attendant.
-3. **`admin.my_context`, `admin.order_detail`** : présentes au CONTRACT, pas encore dans les
-   migrations au moment de l'écriture. Noms d'arguments supposés `p_order_id` (comme
-   `p_request` pour `request_detail`, corrigé après lecture des migrations).
-4. **`delegated`** : les commandes à effet externe Auth (bannir, révoquer) et e-mail ne sont
-   **pas exécutées** par `/api/cmd` ; la réponse le dit (`external.handled=false`) et le
-   journal le trace. À brancher (Auth admin) ou à traiter côté base.
+2. **`admin.my_context` / `admin.order_detail` / `admin.agent_inbox`** : livrées dans
+   `supabase/migrations/20261109093000_crm_context_agent_inbox.sql` (argument `p_order`,
+   aligné sur `src/types/db.ts` régénéré par db). À appliquer/valider par le rôle base sur
+   son Postgres éphémère ; rollback `.down.sql` fourni (3 `drop function`).
+3. **Typage** : `src/types/db.ts` a été régénéré par db (vrais types) ; mes appels sont alignés
+   (`p_order`, `p_request`, `p_params` en `Json`, `p_audit_id` numérique). ESLint signale un
+   warning dans ce fichier généré (`Timestamps` inutilisé) — hors de mon périmètre.
+4. **`delegated`** : exécuté (Auth) ou explicitement refusé/non exécuté (e-mail, clé absente,
+   remboursement direct). Aucun succès silencieux ; chaque issue est journalisée et exposée
+   dans `external.status`.
 5. **Build** : vert en isolation (`/tmp`, source identique, exit 0). Dans `crm/` partagé,
    `.next` est écrasé par les builds des autres rôles : lancer les vérifications de build
    dans une copie isolée (ou accepter les collisions). Aucune erreur de compilation dans

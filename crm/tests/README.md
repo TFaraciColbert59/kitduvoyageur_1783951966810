@@ -60,7 +60,10 @@ sont `test.skip` **motivés** — ils ne passent pas en silence, ils sont listé
 | `format.test.ts` | `maskEmail` (2 caractères max), `euros`, `firstName`, `relativeFr`, « non renseigné » au lieu d'un chiffre inventé |
 | `fingerprint.test.ts` | empreinte SHA-256 stable (ordre des clés) et sensible à tout changement de valeur/type/liste |
 | `totp-harness.test.ts` | l'outillage TOTP des tests suit la RFC 6238 (vecteurs officiels) |
-| `test-guardrails.test.ts` | méta-tests : pas de `.only`, pas de `waitForTimeout`, `skip` motivés, `fixme` « en attente de la page », aucune donnée réelle, aucune action inventée, un fichier par domaine, seuils écrits |
+| `errors.test.ts` | traduction Postgres/PostgREST (`42501` → « Votre rôle ne permet pas cette action. »), priorité du marqueur `hint`, catalogue des phrases et des statuts, corps d'erreur sans détail technique, `redact` (jetons, clés Stripe/Supabase, e-mails) |
+| `cmd-schema.test.ts` | schémas zod des routes (`/api/cmd`, outils MCP) : 1 schéma strict par commande, champ inconnu refusé, motif obligatoire, montants entiers positifs, `unknown_command` en 400, JSON Schema `tools/list`, commandes « jamais » non exposées aux agents |
+| `totp-harness.test.ts` | l'outillage TOTP des tests suit la RFC 6238 (vecteurs officiels) |
+| `test-guardrails.test.ts` | méta-tests : pas de `.only`, pas de `waitForTimeout`, `skip` motivés, `fixme` éventuel « en attente de la page », aucune donnée réelle, aucune action inventée, un fichier par domaine, seuils écrits |
 
 ### E2E (couche 9) — `crm/tests/e2e/`
 
@@ -118,24 +121,44 @@ Stables, documentés dans `tests/support/selectors.ts`. À poser côté frontend
 `order-detail`, `order-total`, `order-refund`, et les racines `contenus-root`, `ia-root`,
 `technique-root`, `order-status`, `ia-cost`.
 
-## 5. Ce qui reste à faire (état au 2026-11-09)
+## 5. État au 2026-11-09 (ce qui est vert, rouge, en attente)
 
-Bloqué par des dépendances extérieures — chaque point est listé ici pour ne pas être oublié :
+**Vert, exécuté :**
 
-1. **Pages non livrées** : tous les `test.describe.fixme` portent le commentaire
-   « en attente de la page … ». Ils s'activent en retirant `.fixme` dès que la page existe
-   (aucune autre modification n'est nécessaire).
-2. **Identifiants de test** (`CRM_TEST_*`) et **base migrée** : les scénarios authentifiés
-   sont `test.skip` motivés tant que le compte `is_demo` et les seeds n'existent pas.
-3. **Un test par action** : les 19 familles sont couvertes (c'est le minimum demandé) ;
-   les 144 `ACT-…` seront couvertes une par une à la porte de phase 9, pilotées par
+- `npx vitest run` : 11 fichiers, **tous verts** (couche 2 + schémas zod des routes, erreurs traduites, garde-fous du corpus).
+- Playwright, aucune base requise : `/api/health` (200, aucune valeur de secret),
+  `/api/mcp` sans jeton (refus), `GET /api/cmd` → 405 + `Allow`, en-têtes de sécurité et
+  `robots.txt`, registre des différences de parité, tailles des captures de référence,
+  captures des 3 écrans publics aux deux tailles.
+- `npx playwright test` complet : **0 test rouge inattendu** ; les scénarios qui exigent la
+  base migrée ou le compte de test sont `test.skip` **motivés** (voir ci-dessous).
+
+**Rouge, à corriger côté frontend (défaut réel, mesuré) :**
+
+- Cibles tactiles < 44 px sur les liens secondaires des écrans d'authentification
+  (`a[Vérifier un code →]` 112 × 18 px sur `/connexion`, `a[← Revenir à la connexion]`
+  151 × 18 px sur `/double-authentification`). Contrôle 32 de `05_UI_UX_DESIGN` § 8.
+  Test : `tests/a11y/etats.spec.ts` (projets `a11y` et `a11y-mobile`).
+
+**En attente d'une base migrée / des identifiants (non exécutable ici) :**
+
+1. **Identifiants de test** (`CRM_TEST_EMAIL`, `CRM_TEST_PASSWORD`, `CRM_TEST_TOTP_SECRET`)
+   et `NEXT_PUBLIC_SUPABASE_URL`/`ANON_KEY` : sans eux, le middleware ne démarre pas et
+   aucun scénario authentifié ne peut se connecter. Tous les `test.skip` correspondants
+   portent `NO_CREDENTIALS_MOTIF` / `NO_SUPABASE_MOTIF`.
+2. **Jeux de données de test** (rôle base de données) : file vide, panne simulée, réponse
+   lente, cas déjà décidé, 10 000 lignes pour la virtualisation, contenus `[TEST CRM]`,
+   commandes Stripe de test, SOS ouvert. Les tests concernés sont `test.skip` motivés.
+3. **Un test par action** : les 19 familles sont couvertes (minimum demandé) ; les 144
+   `ACT-…` seront couvertes une par une à la porte de phase 9, pilotées par
    `scripts/catalog-diff.mjs`.
-4. **Données de test** : le script de seed est du rôle base de données ; les captures et
-   les tests ne créent aucune donnée réelle.
-5. **Parcours croisés CRM ↔ LKDV** (`croises.spec.ts`, deux navigateurs) et **test
-   « novice »** (contrôle 38) : à écrire après les écrans.
-6. **Couche 10 (production)** : volontairement absente de ce corpus — aucune suite ne
+4. **Parcours croisés CRM ↔ LKDV** (`croises.spec.ts`, deux navigateurs) et **test
+   « novice »** (contrôle 38) : à écrire dès que les écrans sont stables.
+5. **Couche 10 (production)** : volontairement absente de ce corpus — aucune suite ne
    vise la production pendant le chantier.
+6. **Artefacts Playwright** : traces et captures d'échec vont dans `crm/test-results/`
+   (ignoré par git), jamais dans `crm/bundle/etat/preuves/` où seuls les rapports et les
+   captures de parité ont leur place.
 
 ## 6. Règles
 
@@ -144,4 +167,7 @@ Bloqué par des dépendances extérieures — chaque point est listé ici pour n
 - Un seuil ne se baisse pas (100/400/200 ms, 44 px, 0 violation axe).
 - Aucune donnée réelle, aucun compte réel, aucun e-mail réel (`@example.test`,
   `delivered@resend.dev` uniquement).
-- Les `fixme` sont temporaires et portent toujours « en attente de la page ».
+- Les `fixme` sont temporaires et portent toujours « en attente de la page » ; aujourd'hui
+  toutes les pages du CONTRACT existent, il n'en reste aucun.
+- Les artefacts Playwright (traces, captures d'échec) ne sont pas versionnés :
+  `outputDir` pointe sur `crm/test-results/`.

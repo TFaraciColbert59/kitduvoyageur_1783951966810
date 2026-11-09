@@ -4,7 +4,7 @@ import { guard, jsonOk, methodNotAllowed, readJsonBody, requestRef, clientIp } f
 import { rateLimit } from '@/server/rate-limit';
 import { requireStaffSession } from '@/server/session';
 import { runCommand } from '@/server/cmd';
-import { logServer } from '@/lib/errors';
+import { executeDelegated } from '@/server/external';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -36,20 +36,21 @@ export async function POST(request: Request): Promise<Response> {
 
     const result = await runCommand(session.client, parsed.data.command, parsed.data.params);
 
-    // Commande à effet externe (Auth, e-mail) : la base a journalisé et autorisé,
-    // mais cette route ne l'exécute pas. On le dit, on ne prétend pas l'avoir fait.
-    const delegated = Boolean(
-      result.data && typeof result.data === 'object' && (result.data as Record<string, unknown>).delegated === true
-    );
-    if (delegated) {
-      logServer({
-        level: 'warn',
-        scope: 'crm',
-        event: 'delegated_effect_not_executed',
-        message: `commande=${parsed.data.command} : effet externe non exécuté par /api/cmd`
-      });
-    }
-    return jsonOk({ ...result, external: delegated ? { handled: false, message: 'Effet externe non exécuté par cette route.' } : null });
+    // EX-COM-04 : effet externe marqué `delegated` par la base → exécution ici,
+    // avec service_role, clé d'idempotence request_id/audit_id, et statut explicite
+    // si la brique est absente. Jamais silencieux.
+    const data = result.data && typeof result.data === 'object' ? (result.data as Record<string, unknown>) : {};
+    const delegated = data.delegated === true;
+    const external = delegated
+      ? await executeDelegated({
+          client: session.client,
+          command: parsed.data.command,
+          data,
+          requestId: result.request_id ?? null,
+          auditId: result.audit_id ?? null
+        })
+      : null;
+    return jsonOk({ ...result, external });
   }, ref);
 }
 

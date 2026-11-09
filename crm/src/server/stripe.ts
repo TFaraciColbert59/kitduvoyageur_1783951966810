@@ -2,7 +2,7 @@ import 'server-only';
 import Stripe from 'stripe';
 import { apiError, isApiError, logServer, redact } from '@/lib/errors';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '@/types/db';
+import type { Database, Json } from '@/types/db';
 
 /**
  * Stripe côté serveur — remboursements.
@@ -85,7 +85,7 @@ export async function completeRequest(
 ): Promise<{ ok: boolean; applied: boolean }> {
   const { data, error } = await client.schema('admin').rpc('complete_request', {
     p_request: requestId,
-    p_result: result,
+    p_result: result as unknown as Json,
     p_error: errorCode ?? (result.ok === false && typeof result.error === 'string' ? result.error : null)
   });
   if (error) {
@@ -133,7 +133,7 @@ async function resolvePaymentIntent(
   client: SupabaseClient<Database>,
   orderId: string
 ): Promise<string | null> {
-  const { data, error } = await client.schema('admin').rpc('order_detail', { p_order_id: orderId });
+  const { data, error } = await client.schema('admin').rpc('order_detail', { p_order: orderId });
   if (error) return null;
   const detail = (data ?? {}) as { payment?: { intent_id?: unknown } };
   const intent = detail.payment?.intent_id;

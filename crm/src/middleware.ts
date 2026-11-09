@@ -12,6 +12,7 @@ export async function middleware(request: NextRequest) {
   const response = NextResponse.next({ request });
   if (PUBLIC_API.some((p) => pathname.startsWith(p)) || PUBLIC_PATHS.includes(pathname)) return response;
 
+  try {
   const env = publicEnv();
   const supabase = createServerClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
     cookies: {
@@ -57,6 +58,11 @@ export async function middleware(request: NextRequest) {
   if (!role) return NextResponse.redirect(new URL('/acces-refuse', request.url));
   response.headers.set('x-crm-role', String(role));
   return response;
+  } catch {
+    // Toute panne (variables absentes, réseau, base non installée) ramène à la
+    // connexion : jamais d'écran blanc ni de 500 (05_UI_UX_DESIGN § 6).
+    return NextResponse.redirect(new URL('/connexion', request.url));
+  }
 }
 
 export const config = {
