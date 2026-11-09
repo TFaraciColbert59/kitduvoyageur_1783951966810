@@ -106,9 +106,13 @@
 .ks-card:active .ks-card__obj .ks-thumb__img {
   transform: translateY(-8%) scale(1.06);
 }
+/* Le pictogramme est l'unique visuel d'un objet sans maillage réaliste : il occupe toute la zone
+   de l'objet, sinon les 42 % ci-dessous se calculent sur un conteneur sans taille et il disparaît. */
 .ks-card__gl {
   display: grid;
   place-items: center;
+  width: 100%;
+  height: 100%;
   color: var(--ks-ink);
 }
 .ks-card__gl svg {

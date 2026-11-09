@@ -299,7 +299,11 @@
     animation: none !important;
   }
 }
-.ks-dock:focus {
+/* Le tiroir reçoit le focus à l'ouverture (maquette `.dock:focus{outline:none}`). `.ks-root
+   :focus-visible`, même spécificité et déclaré plus bas, lui dessinait un anneau vert autour de
+   tout le verre : on le neutralise pour le seul conteneur, ses boutons gardent leur anneau. */
+.ks-root .ks-dock:focus,
+.ks-root .ks-dock:focus-visible {
   outline: none;
 }
 .ks-dock::after {
