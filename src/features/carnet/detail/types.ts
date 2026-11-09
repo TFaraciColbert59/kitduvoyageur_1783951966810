@@ -100,6 +100,11 @@ export interface MomentRow {
   media_type?: string | null;
   media_url?: string | null;
   prive?: boolean | null;
+  /** Type canonique (colonne `moment_type`, migration 20261109100001). */
+  moment_type?: string | null;
+  /** Données structurées du type (montant, citation, objet…) — `moment_meta`. */
+  moment_meta?: unknown;
+  auteur_id?: string | null;
 }
 
 export interface KitItemRow {
@@ -152,8 +157,11 @@ export interface CarnetMomentItem {
   place: string | null;
   imageUrl: string | null;
   title?: string | null;
+  /** Type canonique (`MomentType`) ou `null` quand rien ne permet de le dire. */
   type?: string | null;
   authorId?: string | null;
+  /** Données structurées du type (montant, citation, objet du kit…). */
+  meta?: import('./momentTypes').MomentMeta | null;
 }
 
 /** Un point GPS d'un jour : sa coordonnée réelle et son heure réelle. */

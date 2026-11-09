@@ -3,6 +3,7 @@ import { formatDateRange, formatElevation, formatKm, toNumber } from './format';
 import { buildCarnetPlace } from './place';
 import { pickElevationProfile } from './elevationProfile';
 import type {
+  HikeSessionRow,
   BuildCarnetDetailInput,
   CarnetEtapeDay,
   CarnetDetail,
@@ -138,8 +139,16 @@ function buildEtapes(input: BuildCarnetDetailInput): CarnetEtapeDay[] {
 
 export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
   const { carnet, hikeSession } = input;
-  const distanceKm = toNumber(hikeSession?.distance_km) ?? toNumber(carnet.distance_km);
-  const elevationM = toNumber(hikeSession?.elevation_gain_m) ?? toNumber(carnet.denivele_m);
+  /* Totaux du carnet : somme de TOUTES les sorties (un carnet de quatre jours porte
+     quatre sorties, la plus récente seule n'en est qu'un quart), à défaut le total
+     déclaré sur le carnet. Jamais la dernière sortie prise pour le tout. */
+  const allSessions = input.sessions ?? (hikeSession ? [hikeSession] : []);
+  const sumOf = (pick: (session: HikeSessionRow) => number | null): number | null => {
+    const values = allSessions.map(pick).filter((v): v is number => v !== null);
+    return values.length > 0 ? values.reduce((a, b) => a + b, 0) : null;
+  };
+  const distanceKm = sumOf((s) => toNumber(s.distance_km)) ?? toNumber(carnet.distance_km);
+  const elevationM = sumOf((s) => toNumber(s.elevation_gain_m)) ?? toNumber(carnet.denivele_m);
   const moments = toMomentItems(input.moments);
   const etapes = buildEtapes(input);
 

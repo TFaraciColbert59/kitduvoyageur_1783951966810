@@ -21,6 +21,7 @@
 
 import { parsePositions } from '@/features/compte/map/geometry';
 import { haversineDistanceKm } from '@/features/explorer-osm/domain/geometry';
+import { parseMomentMeta, resolveMomentType } from './momentTypes';
 import type {
   CarnetDay,
   CarnetDayPoint,
@@ -167,6 +168,13 @@ export function toMomentItems(rows: MomentRow[]): CarnetMomentItem[] {
     authorName: row.auteur_nom?.trim() || null,
     place: row.lieu?.trim() || null,
     imageUrl: row.image_url?.trim() || null,
+    type: resolveMomentType({
+      raw: row.moment_type,
+      imageUrl: row.image_url,
+      caption: row.citation,
+    }),
+    authorId: row.auteur_id ?? null,
+    meta: parseMomentMeta(row.moment_meta),
   }));
 }
 
