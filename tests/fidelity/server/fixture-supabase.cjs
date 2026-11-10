@@ -16,6 +16,8 @@
 const HOST = 'fixture.supabase.co';
 const CARNET_ID = '749e9e8c-9540-5a73-8b6c-6ab07264f62f';
 const EMPTY_ID = '00000000-0000-4000-8000-00000000e0e0';
+const STORIES_ID = '00000000-0000-4000-8000-0000000051f0';
+const LOADING_ID = '00000000-0000-4000-8000-0000000010ad';
 const GROUPE_ID = '5a0f0b2e-3c1d-4f6a-9a2e-0d4c1b7e8f01';
 const OWNER_ID = '11111111-1111-4111-8111-111111111111';
 const CREW = [
@@ -37,29 +39,67 @@ const NIGHTS = [
   { jour_numero: 3, nom: 'Bivouac au Lac de la Muzelle', type: 'bivouac', altitude_m: 2105, infos: 'Tente, pas de feu, eau du lac filtrée', lat: 45.0522, lng: 6.3321 },
 ].map((n, i) => ({ id: `n-${i + 1}`, map_refuge_id: null, ...n }));
 
-const MOMENTS = [
-  [1, '07:10', 'La Bérarde · 1 738 m', 'Camille', 'Départ tranquille, le vallon sent le mélèze.'],
-  [1, '11:30', 'Plan de Lanchâtra', 'Camille', 'Pause casse-croûte au Plan de Lanchâtra.'],
-  [1, '16:45', 'Refuge du Pigeonnier', 'Camille', 'Arrivés, ça souffle.'],
-  [2, '09:45', 'Col de l’Eychauda', 'Inès', 'On est au col.'],
-  [2, '14:20', 'Vallouise', 'Camille', 'Le berger nous a montré le passage à gué.'],
-  [3, '06:50', 'Vallouise', 'Léo', 'Brume dans la vallée, on part tôt. Léo a mal au talon.'],
-  [3, '11:40', 'Passage du couloir', 'Camille', 'Chute de pierres dans le couloir. Personne touché, détour de vingt minutes.'],
-  [4, '10:20', 'Chalet-refuge du Chardon', 'Camille', 'Prenez le sentier haut, l’autre est coupé.'],
-].map((m, i) => ({
-  id: `m-${i + 1}`, jour_numero: m[0], heure: m[1], lieu: m[2], auteur_nom: m[3], citation: m[4], image_url: null,
+/* Moments : les 21 moments saisis (M0) et les 7 photos de la galerie de la maquette
+   (`M0`, `DAYS[n].gal`), soit 28 moments typés comme dans le tiroir de la maquette. */
+const WHO = { C: CREW[0], L: CREW[1], I: CREW[2] };
+const M0 = [
+  [1, '07:10', 'photo', 'La Bérarde · 1 738 m', 'L', '', null],
+  [1, '09:05', 'species', 'Vallon du Chardon', 'C', 'Bouquetin des Alpes', { latin: 'Capra ibex' }],
+  [1, '11:30', 'kit', 'Plan de Lanchâtra', 'C', '', { itemId: 'k-batons' }],
+  [1, '13:20', 'spend', 'Plan de Lanchâtra', 'L', 'Casse-croûte', { amountEur: 14, category: 'Repas' }],
+  [1, '16:45', 'voice', 'Refuge du Pigeonnier', 'C', 'Arrivés, ça souffle.', { durationLabel: '0:42' }],
+  [2, '07:42', 'photo', 'Aube sur la moraine', 'L', '', null],
+  [2, '09:45', 'voice', 'Col de l’Eychauda', 'I', 'On est au col.', { durationLabel: '0:38' }],
+  [2, '11:02', 'kit', 'Lac de l’Eychauda', 'I', '', { itemId: 'k-filtre' }],
+  [2, '12:30', 'spend', 'Pré de l’Alp', 'L', 'Pique-nique pour trois', { amountEur: 38, category: 'Repas' }],
+  [2, '13:50', 'video', 'Torrent de l’Eychauda', 'C', '', null],
+  [2, '14:20', 'meet', 'Vallouise', 'C', 'Le berger nous a montré le passage à gué.', { who: 'Marc, berger' }],
+  [3, '06:50', 'text', 'Vallouise', 'L', 'Brume dans la vallée, on part tôt. Léo a mal au talon.', null],
+  [3, '09:30', 'species', 'Chalet des Prés', 'I', 'Edelweiss', { latin: 'Leontopodium nivale' }],
+  [3, '11:40', 'inc', 'Passage du couloir', 'C', 'Chute de pierres dans le couloir. Personne touché, détour de vingt minutes.', null],
+  [3, '14:10', 'kit', 'Col de la Muzelle', 'I', '', { itemId: 'k-guetres' }],
+  [3, '15:20', 'video', 'Lac de la Muzelle', 'L', '', null],
+  [4, '07:20', 'photo', 'Lac de la Muzelle', 'C', '', null],
+  [4, '09:30', 'species', 'Col des Clots', 'L', 'Chocard à bec jaune', { latin: 'Pyrrhocorax graculus' }],
+  [4, '10:20', 'meet', 'Chalet-refuge du Chardon', 'C', 'Prenez le sentier haut, l’autre est coupé.', { who: 'La gardienne du chalet' }],
+  [4, '10:40', 'spend', 'Chalet-refuge du Chardon', 'I', 'Repas au refuge', { amountEur: 26, category: 'Repas' }],
+  [4, '11:10', 'kit', 'Pont de la Pierre', 'L', '', { itemId: 'k-rechaud' }],
+  /* photos de la galerie */
+  [1, '08:20', 'photo', 'Forêt de mélèzes', 'L', '', null],
+  [1, '11:40', 'photo', 'Pause au Plan de Lanchâtra', 'L', '', null],
+  [2, '11:20', 'photo', 'Lac de l’Eychauda', 'L', '', null],
+  [3, '20:30', 'photo', 'Bivouac au crépuscule', 'L', '', null],
+  [3, '13:40', 'photo', 'Arête de la Muzelle', 'L', '', null],
+  [4, '08:45', 'photo', 'Dernier col', 'L', '', null],
+  [4, '11:55', 'photo', 'Descente en forêt', 'L', '', null],
+].sort((x, y) => x[0] - y[0] || x[1].localeCompare(y[1]));
+const KIT_NAMES = { 'k-batons': 'Bâtons carbone', 'k-filtre': 'Filtre à eau', 'k-guetres': 'Guêtres', 'k-rechaud': 'Réchaud' };
+const MOMENTS = M0.map((m, i) => ({
+  id: `m-${i + 1}`, jour_numero: m[0], heure: m[1], lieu: m[3], auteur_nom: WHO[m[4]].full_name.split(' ')[0],
+  auteur_id: WHO[m[4]].id, citation: m[2] === 'kit' ? KIT_NAMES[m[6].itemId] : m[5],
+  image_url: null, moment_type: m[2], moment_meta: m[6],
   created_at: `2026-07-1${2 + m[0]}T${m[1]}:00+02:00`,
 }));
 
+/* Kit : les 14 objets de la maquette (catégorie dans `detail`, verdict, jours d'utilisation). */
 const KIT = [
-  ['Sac 45 L', 'Portage', 1150, 'essentiel'], ['Bâtons carbone', 'Portage', 440, 'essentiel'], ['Tente 2 places', 'Abri', 1380, 'defaillant'],
-  ['Duvet 0 °C', 'Abri', 780, 'utile'], ['Matelas isolant', 'Abri', 420, 'utile'], ['Réchaud', 'Cuisine', 360, 'jamais_servi'],
-  ['Popote', 'Cuisine', 210, 'utile'], ['Veste imperméable', 'Vêtements', 320, 'utile'], ['Polaire', 'Vêtements', 280, 'essentiel'],
-  ['Frontale', 'Électronique', 85, 'essentiel'], ['Batterie externe', 'Électronique', 240, 'utile'], ['Filtre à eau', 'Sécurité', 65, 'utile'],
-  ['Trousse de secours', 'Sécurité', 290, 'jamais_servi'],
+  ['sac', 'Sac 45 L', 'Portage', 1150, 'essentiel', [1, 2, 3, 4]],
+  ['batons', 'Bâtons carbone', 'Portage', 440, 'essentiel', [1, 3]],
+  ['tente', 'Tente 2 places', 'Abri', 1380, 'defaillant', [3], 'fermeture cassée'],
+  ['duvet', 'Duvet 0 °C', 'Abri', 780, 'utile', [3]],
+  ['matelas', 'Matelas isolant', 'Abri', 420, 'utile', [3]],
+  ['rechaud', 'Réchaud', 'Cuisine', 360, 'jamais_servi', [3, 4]],
+  ['popote', 'Popote', 'Cuisine', 210, 'utile', [3]],
+  ['veste', 'Veste imperméable', 'Vêtements', 320, 'utile', [2, 4]],
+  ['polaire', 'Polaire', 'Vêtements', 280, 'essentiel', [1, 3]],
+  ['guetres', 'Guêtres', 'Vêtements', 0, 'manquait', [3], 'à prévoir, environ 180 g'],
+  ['frontale', 'Frontale', 'Électronique', 85, 'essentiel', [3]],
+  ['batterie', 'Batterie externe', 'Électronique', 240, 'utile', [2]],
+  ['filtre', 'Filtre à eau', 'Sécurité', 65, 'utile', [2]],
+  ['trousse', 'Trousse de secours', 'Sécurité', 290, 'jamais_servi', [1, 3]],
 ].map((k, i) => ({
-  id: `k-${i + 1}`, nom: k[0], detail: k[1], poids_g: k[2], couleur_tag: null, sort_order: i, verdict: k[3],
-  verdict_note: k[3] === 'defaillant' ? 'fermeture cassée' : null, jours_utilises: [1, 2, 3, 4].slice(0, 1 + (i % 4)),
+  id: `k-${k[0]}`, nom: k[1], detail: k[2], poids_g: k[3], couleur_tag: null, sort_order: i, verdict: k[4],
+  verdict_note: k[6] || null, jours_utilises: k[5],
 }));
 
 function sessionFor(day) {
@@ -82,8 +122,8 @@ const TABLES = {
     description: 'Boucle depuis La Bérarde, quatre jours, refuge, gîte et bivouac.',
     cover_image: null, cover_image_alt: null, start_date: '2026-07-13', end_date: '2026-07-16',
     visibility: 'public', verified: true, likes_count: 128, comments_count: 14, views_count: 940,
-    distance_km: 72.4, denivele_m: 4520, groupe_id: GROUPE_ID, lieu_depart: 'La Bérarde', lieu_arrivee: 'La Bérarde',
-    country_iso: 'FR', trip_id: null, live_sharing: false,
+    distance_km: 72.4, denivele_m: 4520, groupe_id: GROUPE_ID, lieu_depart: 'Boucle depuis La Bérarde', lieu_arrivee: 'La Bérarde',
+    country_iso: 'FR', trip_id: null, live_sharing: true,
   }],
   public_profiles: CREW.map((c) => ({ id: c.id, full_name: c.full_name, handle: c.handle, avatar_url: null, trust_score: 0.8, bio: null, location: null, website: null, loyalty_points: 0, loyalty_level: null, xp: 0, level: 1, created_at: '2026-01-01T00:00:00Z' })),
   hike_sessions: DAYS.map(sessionFor),
@@ -172,7 +212,10 @@ function userFromAuth(headers) {
   };
 }
 
-function handleSupabase(url, init, headers) {
+async function handleSupabase(url, init, headers) {
+  if (url.pathname === '/rest/v1/carnets' && url.search.includes(LOADING_ID)) {
+    await new Promise((resolve) => setTimeout(resolve, 6000));
+  }
   const method = (init.method || 'GET').toUpperCase();
   if (url.pathname.startsWith('/auth/v1/user')) {
     const user = userFromAuth(headers);
@@ -183,8 +226,18 @@ function handleSupabase(url, init, headers) {
   const m = /^\/rest\/v1\/([a-z_]+)$/.exec(url.pathname);
   if (!m) return json({ message: 'fixture: route inconnue' }, 404);
   if (method !== 'GET' && method !== 'HEAD') return json([], 201);
+  /* Carnet « stories » : mêmes données que le carnet de référence, mais ses photos et vidéos portent une image
+     servie par l'app elle-même (aucun réseau) : une story a besoin d'un média, les autres scénarios non
+     (leurs cartes restent des illustrations, comme dans la maquette). */
+  const aliased = url.search.includes(STORIES_ID);
+  const params = new URLSearchParams(url.searchParams);
+  if (aliased) for (const [key, value] of params) params.set(key, value.split(STORIES_ID).join(CARNET_ID));
   const all = TABLES[m[1]] || [];
-  const rows = applyFilters(all, url.searchParams);
+  let rows = applyFilters(all, params);
+  if (aliased && m[1] === 'carnets') rows = rows.map((r) => ({ ...r, id: STORIES_ID }));
+  if (aliased && m[1] === 'carnet_moments') {
+    rows = rows.map((r) => (r.moment_type === 'photo' || r.moment_type === 'video' ? { ...r, image_url: '/assets/images/account-bg.webp' } : r));
+  }
   const prefer = headers.get('prefer') || '';
   const range = { 'content-range': `${rows.length ? `0-${rows.length - 1}` : '*'}/${rows.length}` };
   if (method === 'HEAD') return new Response(null, { status: 200, headers: prefer.includes('count') ? range : {} });
@@ -207,7 +260,7 @@ globalThis.fetch = async function fidelityFetch(input, init = {}) {
     const raw = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
     const url = new URL(raw);
     const headers = new Headers(init.headers || (typeof input === 'object' && input.headers) || undefined);
-    if (url.hostname === HOST) return handleSupabase(url, { method: init.method || (typeof input === 'object' && input.method) || 'GET' }, headers);
+    if (url.hostname === HOST) return await handleSupabase(url, { method: init.method || (typeof input === 'object' && input.method) || 'GET' }, headers);
     if (url.hostname === 'api.open-meteo.com') return handleElevation(url);
   } catch {
     /* tombe sur le vrai fetch */
@@ -215,4 +268,8 @@ globalThis.fetch = async function fidelityFetch(input, init = {}) {
   return realFetch(input, init);
 };
 
-module.exports = { CARNET_ID, OWNER_ID, TABLES };
+/* Carnet « chargement » : mêmes données, mais la ligne `carnets` n'arrive qu'après 6 s. */
+TABLES.carnets.push({ ...TABLES.carnets[0], id: LOADING_ID });
+TABLES.carnets.push({ ...TABLES.carnets[0], id: STORIES_ID });
+
+module.exports = { STORIES_ID, LOADING_ID, CARNET_ID, OWNER_ID, TABLES };

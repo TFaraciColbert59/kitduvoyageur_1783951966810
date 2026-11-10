@@ -61,10 +61,13 @@ async function openApp(ctx: BrowserContext, scenario: Scenario, baseURL: string)
   const page = await ctx.newPage();
   await installCommunityV2Mock(page, { role: scenario.app.session, appOrigin: baseURL, ...scenario.app.mock });
   await page.addInitScript((value) => localStorage.setItem('lkdv_cookie_consent', value), CONSENT);
-  await freezeClock(page);
+  if (scenario.app.now) await page.clock.install({ time: new Date(scenario.app.now) });
+  else await freezeClock(page);
   await page.goto(scenario.app.url, { waitUntil: 'domcontentloaded' });
-  await page.waitForLoadState('load').catch(() => undefined);
-  if (scenario.app.hydrate) {
+  if (!scenario.app.noHydrate) await page.waitForLoadState('load').catch(() => undefined);
+  if (scenario.app.noHydrate) {
+    await page.waitForTimeout(1_200);
+  } else if (scenario.app.hydrate) {
     await page.locator(scenario.app.hydrate).first().waitFor({ state: 'visible', timeout: 30_000 });
     await waitForHydration(page, scenario.app.hydrate);
   } else {

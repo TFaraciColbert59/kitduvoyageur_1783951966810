@@ -56,6 +56,10 @@ export interface Scenario {
     mock?: MockOptions;
     /** Élément dont l'hydratation React conditionne les étapes (sélecteur CSS). */
     hydrate?: string;
+    /** Horloge figée de la page (ISO) ; sinon l'horloge du banc Communauté. */
+    now?: string;
+    /** Ne pas attendre l'hydratation : capture d'un état de chargement. */
+    noHydrate?: boolean;
     steps: Step[];
     /** Sélecteur du cadre applicatif (sinon la fenêtre entière). */
     frame?: string;
