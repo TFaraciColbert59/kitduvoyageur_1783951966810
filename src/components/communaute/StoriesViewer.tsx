@@ -101,6 +101,7 @@ export default function StoriesViewer({
   onDelete,
   onReport,
   onBlock,
+  onAuthor,
   likedStoryIds,
   followedAuthorIds,
   myUserId,
@@ -111,6 +112,11 @@ export default function StoriesViewer({
   onClose: () => void;
   onReport?: (user: StoryUser, slide: StorySlide) => void;
   onBlock?: (user: StoryUser) => void;
+  /**
+   * Contexte où le profil public n'est pas la bonne destination (fiche carnet :
+   * la pilule ouvre la fiche du voyageur dans le carnet). Absent : lien `/profil/<id>`.
+   */
+  onAuthor?: (user: StoryUser) => void;
   onDelete?: (slide: StorySlide) => void;
   onView?: (slide: StorySlide) => void;
   onToggleLike?: (slide: StorySlide, liked: boolean) => void;
@@ -615,13 +621,17 @@ export default function StoriesViewer({
 
         {/* Pillule auteur — copie de la pillule d'un post. Aucun bouton. */}
         <div className="absolute left-[var(--space-4)] top-[max(var(--space-8),calc(var(--safe-top)+var(--space-6)))] z-[var(--z-sticky)] max-w-[calc(100%-var(--space-8))]">
-          <Link
-            href={`/profil/${user.id}`}
-            className="lkdv-post-author lkdv-account-glass"
-            aria-label={`Profil de ${user.name}`}
-            onPointerDown={(event) => event.stopPropagation()}
-            onClick={(event) => event.stopPropagation()}
-          >
+          {onAuthor ? (
+            <button
+              type="button"
+              className="lkdv-post-author lkdv-account-glass"
+              aria-label={`Fiche de ${user.name}`}
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={(event) => {
+                event.stopPropagation();
+                onAuthor(user);
+              }}
+            >
             {user.avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element -- avatar distant
               <img className="lkdv-post-author-av" src={user.avatarUrl} alt="" />
@@ -636,7 +646,31 @@ export default function StoriesViewer({
               </span>
               {user.time ? <span className="lkdv-post-author-meta">{user.time}</span> : null}
             </span>
-          </Link>
+            </button>
+          ) : (
+            <Link
+              href={`/profil/${user.id}`}
+              className="lkdv-post-author lkdv-account-glass"
+              aria-label={`Profil de ${user.name}`}
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={(event) => event.stopPropagation()}
+            >
+            {user.avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element -- avatar distant
+              <img className="lkdv-post-author-av" src={user.avatarUrl} alt="" />
+            ) : (
+              <span className="lkdv-post-author-av flex items-center justify-center bg-[rgba(23,64,44,.12)] text-[13px] font-bold text-[#17402C]">
+                {user.name.charAt(0)}
+              </span>
+            )}
+            <span className="lkdv-post-author-txt">
+              <span className="lkdv-post-author-line">
+                <b>{user.name}</b>
+              </span>
+              {user.time ? <span className="lkdv-post-author-meta">{user.time}</span> : null}
+            </span>
+            </Link>
+          )}
         </div>
 
         <div className="lkdv-story-options lkdv-account-glass">
@@ -748,6 +782,17 @@ export default function StoriesViewer({
                   }}
                 >
                   <Icon key={likePulse} className={likePulse > 0 ? 'is-pop' : ''} name="heart" size={16} color={liked ? '#E0245E' : '#17402C'} />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Partager la story"
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    void shareStory();
+                  }}
+                >
+                  <Icon name="share2" size={16} color="#17402C" />
                 </button>
               </div>
             ) : null}

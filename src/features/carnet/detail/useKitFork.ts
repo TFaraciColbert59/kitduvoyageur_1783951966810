@@ -141,7 +141,12 @@ export function useKitFork({
         const { error } = await supabase.from('kit_forks').insert(rows);
         if (error) throw error;
 
-        onIsland?.(`${toAdd.length} équipement${toAdd.length > 1 ? 's' : ''} ajouté${toAdd.length > 1 ? 's' : ''} à votre sac`);
+        onIsland?.(
+          `${toAdd.length} équipement${toAdd.length > 1 ? 's' : ''} ajouté${toAdd.length > 1 ? 's' : ''} à votre sac`,
+          () => {
+            toAdd.forEach((id) => void undoFork(id));
+          }
+        );
         return true;
       } catch {
         setForkedItemIds((prev) => {
@@ -155,7 +160,7 @@ export function useKitFork({
         setLoading(false);
       }
     },
-    [carnetId, forkedItemIds, onIsland, onRequireAuth, supabase, userId]
+    [carnetId, forkedItemIds, onIsland, onRequireAuth, supabase, undoFork, userId]
   );
 
   return {

@@ -1,0 +1,12 @@
+{
+  "stats": {
+    "etats": 50,
+    "libelles": 116,
+    "contrasteMin": 4.84,
+    "cibles": 900,
+    "ciblesSous44": 0,
+    "focus": 12,
+    "focusDeformes": 0
+  },
+  "findings": []
+}

@@ -198,12 +198,26 @@ export async function getCarnetDetail(id: string) {
             .eq('groupe_id', carnet.groupe_id)
             .order('apres_jour_numero', { ascending: true })
         : Promise.resolve({ data: [] as HebergementRow[] }),
+      /* Colonnes de la v2 (`auteur_id`, `moment_type`, `moment_meta`) : la
+         migration 20261109100001 n'est peut-être pas appliquée, on retombe alors
+         sur la lecture historique (type déduit, jamais inventé). */
       supabase
         .from('carnet_moments')
-        .select('id, jour_numero, heure, citation, auteur_nom, lieu, image_url')
+        .select('id, jour_numero, heure, citation, auteur_nom, lieu, image_url, auteur_id, moment_type, moment_meta')
         .eq('carnet_id', carnet.id)
         .order('jour_numero', { ascending: true })
-        .order('created_at', { ascending: true }),
+        .order('created_at', { ascending: true })
+        .then((res) => {
+          if (res.error?.code === '42703') {
+            return supabase
+              .from('carnet_moments')
+              .select('id, jour_numero, heure, citation, auteur_nom, lieu, image_url')
+              .eq('carnet_id', carnet.id)
+              .order('jour_numero', { ascending: true })
+              .order('created_at', { ascending: true });
+          }
+          return res;
+        }),
       supabase
         .from('carnet_kit_items')
         .select('id, nom, detail, poids_g, couleur_tag, sort_order, verdict, verdict_note, jours_utilises')

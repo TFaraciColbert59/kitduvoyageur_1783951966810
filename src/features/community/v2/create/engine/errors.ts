@@ -162,3 +162,54 @@ export function parseServerError(error: unknown): ServerErrorInfo {
 export function stepLabelForField(kind: CreateKindV2, field: string): string {
   return String(stepIndexOfField(kind, field) + 1);
 }
+
+// ---------------------------------------------------------------------------
+// Validation en direct d'un seul champ (Story#17)
+// ---------------------------------------------------------------------------
+
+export type LiveFieldOutcome =
+  | { kind: 'ok' }
+  | { kind: 'empty'; message: string }
+  | { kind: 'invalid'; message: string };
+
+interface SafeParseLike {
+  safeParse: (value: unknown) => {
+    success: boolean;
+    error?: { issues: ReadonlyArray<{ path: ReadonlyArray<PropertyKey>; message: string }> };
+  };
+}
+
+function readValueAt(values: unknown, name: string): unknown {
+  let node: unknown = values;
+  for (const key of name.split('.')) {
+    if (node == null || typeof node !== 'object') return undefined;
+    node = (node as Record<string, unknown>)[key];
+  }
+  return node;
+}
+
+function isBlank(value: unknown): boolean {
+  if (value == null) return true;
+  if (typeof value === 'string') return value.trim() === '';
+  if (Array.isArray(value)) return value.length === 0;
+  return false;
+}
+
+/**
+ * Revalide le schéma complet mais ne retient que le message du champ `name`
+ * (chemin exact ou descendant). `empty` signale une erreur sur une valeur
+ * vide : l'appelant la tait tant que la personne n'a rien tenté (aucune
+ * remontrance avant la saisie).
+ */
+export function liveFieldIssue(schema: SafeParseLike, values: unknown, name: string): LiveFieldOutcome {
+  const parsed = schema.safeParse(values);
+  if (parsed.success || !parsed.error) return { kind: 'ok' };
+  const issue = parsed.error.issues.find((entry) => {
+    const path = entry.path.map(String).join('.');
+    return path === name || path.startsWith(`${name}.`);
+  });
+  if (!issue) return { kind: 'ok' };
+  return isBlank(readValueAt(values, name))
+    ? { kind: 'empty', message: issue.message }
+    : { kind: 'invalid', message: issue.message };
+}

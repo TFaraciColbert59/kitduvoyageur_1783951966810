@@ -1,21 +1,21 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import {
-  ChevronLeft,
+  ChevronDown,
   Plus,
   Sun,
   SlidersHorizontal,
   Share2,
   Link2,
-  Download,
   Flag,
   Pencil,
+  UserPlus,
 } from 'lucide-react';
 import { Switch } from '@/components/ui/Switch';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import type { CarnetViewerRole } from '@/features/carnet/detail/types';
+import { isParticipantRole } from '@/features/carnet/detail/viewerRole';
 
 /**
  * Morphing de la pilule titre — maquette `.rp` + `@keyframes morph` (0,5 s,
@@ -44,9 +44,13 @@ export interface CarnetTopBarV2Props {
   reduceMotion?: boolean;
   onToggleReduceMotion?: () => void;
   onShare: () => void;
-  onExport: () => void;
+  /** Conservé pour compatibilité : l'export JSON vit dans l'onglet « Gérer ». */
+  onExport?: () => void;
   onReport: () => void;
   onCopyLink: () => void;
+  /** Visiteur : suivre (ou ne plus suivre) l'auteur du carnet. */
+  onFollow?: () => void;
+  isFollowing?: boolean;
 }
 
 /**
@@ -67,11 +71,11 @@ export function CarnetTopBarV2({
   reduceMotion = false,
   onToggleReduceMotion,
   onShare,
-  onExport,
   onReport,
   onCopyLink,
+  onFollow,
+  isFollowing = false,
 }: CarnetTopBarV2Props) {
-  const router = useRouter();
   const { haptic } = useHapticFeedback();
   const [menuOpen, setMenuOpen] = useState(false);
   const [displayOpen, setDisplayOpen] = useState(false);
@@ -81,7 +85,7 @@ export function CarnetTopBarV2({
   const displayRef = useRef<HTMLDivElement>(null);
   const displayBtnRef = useRef<HTMLButtonElement>(null);
 
-  const isParticipant = viewerRole === 'participant';
+  const isParticipant = isParticipantRole(viewerRole);
 
   // Clic extérieur + Échap, une seule écoute par surface ouverte.
   useEffect(() => {
@@ -148,15 +152,6 @@ export function CarnetTopBarV2({
 
       <div className="lkdv-carnet-topbar-l">
         <button
-          type="button"
-          className="lkdv-gbtn"
-          onClick={() => router.back()}
-          aria-label="Retour"
-        >
-          <ChevronLeft size={18} />
-        </button>
-
-        <button
           ref={pillRef}
           type="button"
           className="lkdv-title-pill"
@@ -169,6 +164,7 @@ export function CarnetTopBarV2({
         >
           {isEditing ? <span className="edot" aria-hidden="true" /> : null}
           <b>{title}</b>
+          <ChevronDown size={15} aria-hidden="true" className="lkdv-title-chev" />
         </button>
       </div>
 
@@ -179,53 +175,19 @@ export function CarnetTopBarV2({
               {onToggleEdit ? (
                 <button
                   type="button"
-                  role="menuitem"
+                  role="menuitemcheckbox"
+                  aria-checked={isEditing}
                   className="lkdv-menu-item"
                   onClick={() => {
                     closeMenu();
                     onToggleEdit();
                   }}
                 >
-                  <Pencil size={15} />
-                  <span>{isEditing ? 'Terminer l’édition' : 'Modifier le carnet'}</span>
+                  <Pencil size={15} aria-hidden="true" />
+                  <span>Modifier le carnet</span>
                 </button>
               ) : null}
-              <button
-                type="button"
-                role="menuitem"
-                className="lkdv-menu-item"
-                onClick={() => {
-                  closeMenu();
-                  onShare();
-                }}
-              >
-                <Share2 size={15} />
-                <span>Partager</span>
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                className="lkdv-menu-item"
-                onClick={() => {
-                  closeMenu();
-                  onCopyLink();
-                }}
-              >
-                <Link2 size={15} />
-                <span>Copier le lien</span>
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                className="lkdv-menu-item"
-                onClick={() => {
-                  closeMenu();
-                  onExport();
-                }}
-              >
-                <Download size={15} />
-                <span>Exporter en JSON</span>
-              </button>
+              <hr className="lkdv-menu-sep" />
             </>
           ) : (
             <>
@@ -235,36 +197,13 @@ export function CarnetTopBarV2({
                 className="lkdv-menu-item"
                 onClick={() => {
                   closeMenu();
-                  onShare();
+                  onFollow?.();
                 }}
               >
-                <Share2 size={15} />
-                <span>Partager</span>
+                <UserPlus size={15} aria-hidden="true" />
+                <span>{isFollowing ? 'Ne plus suivre le carnet' : 'Suivre le carnet'}</span>
               </button>
-              <button
-                type="button"
-                role="menuitem"
-                className="lkdv-menu-item"
-                onClick={() => {
-                  closeMenu();
-                  onCopyLink();
-                }}
-              >
-                <Link2 size={15} />
-                <span>Copier le lien</span>
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                className="lkdv-menu-item"
-                onClick={() => {
-                  closeMenu();
-                  onReport();
-                }}
-              >
-                <Flag size={15} />
-                <span>Signaler ce carnet</span>
-              </button>
+              <hr className="lkdv-menu-sep" />
             </>
           )}
 
@@ -274,12 +213,39 @@ export function CarnetTopBarV2({
             className="lkdv-menu-item"
             onClick={() => {
               closeMenu();
-              onOpenSettings();
+              onShare();
             }}
           >
-            <SlidersHorizontal size={15} />
-            <span>Paramètres et partage</span>
+            <Share2 size={15} aria-hidden="true" />
+            <span>Partager…</span>
           </button>
+          <button
+            type="button"
+            role="menuitem"
+            className="lkdv-menu-item"
+            onClick={() => {
+              closeMenu();
+              onCopyLink();
+            }}
+          >
+            <Link2 size={15} aria-hidden="true" />
+            <span>Copier le lien</span>
+          </button>
+          {!isParticipant ? (
+            <button
+              type="button"
+              role="menuitem"
+              className="lkdv-menu-item"
+              onClick={() => {
+                closeMenu();
+                onReport();
+              }}
+            >
+              <Flag size={15} aria-hidden="true" />
+              <span>Signaler</span>
+            </button>
+          ) : null}
+
         </div>
       ) : null}
 
@@ -344,6 +310,15 @@ export function CarnetTopBarV2({
             </div>
           </div>
         ) : null}
+        <button
+          type="button"
+          className="lkdv-gbtn"
+          onClick={onOpenSettings}
+          aria-label="Carnet : notifications, partage, paramètres"
+          aria-haspopup="dialog"
+        >
+          <SlidersHorizontal size={17} />
+        </button>
       </div>
     </div>
   );

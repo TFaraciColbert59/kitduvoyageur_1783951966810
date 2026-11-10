@@ -1,0 +1,617 @@
+<title>Carnets de bord LKDV</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@500;700&display=swap">
+<style>
+/* Mise en page : en-tête court, trois écrans maquettes côte à côte, puis 66 propositions filtrables par thème. Valeurs reprises de src/styles/tokens.css. */
+:root{
+  --forest:#17402C; --action:#226148; --sage:#5B7F55; --sage-subtle:#D8E5D5;
+  --surface:#F5F7F3; --paper:#FFFFFF; --ink:#172B24; --ink-2:#56665D;
+  --warn:#C89A3B; --warn-bg:#FBF1DC; --warn-ink:#765014; --danger:#A8443A; --danger-bg:#FDE8E6;
+  --info:#4B6B7C; --info-bg:#DDE7EE;
+  --line:rgba(23,43,36,.14); --line-soft:rgba(23,43,36,.07);
+  --glass:rgba(255,255,255,.62); --glass-edge:rgba(255,255,255,.7);
+  --shadow:0 8px 22px rgba(23,43,36,.10); --shadow-lg:0 18px 44px rgba(23,64,44,.16);
+  --sky-1:#DDE7EE; --sky-2:#F3EFEA; --m-1:#A6C1A0; --m-2:#5B7F55; --m-3:#365233; --m-4:#17402C;
+  --veil:rgba(23,43,36,.62);
+  --f-sans:"SF Pro Text",-apple-system,Inter,"Segoe UI",system-ui,sans-serif;
+  --f-serif:"Instrument Serif",Georgia,serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --r-card:24px; --r-sub:14px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --forest:#7FC49A; --action:#7FC49A; --sage:#9DBE96; --sage-subtle:#24382C;
+  --surface:#0F1A15; --paper:#16241D; --ink:#E6EEE8; --ink-2:#A9B8AE;
+  --warn:#D9B160; --warn-bg:#3A2F17; --warn-ink:#E9CD8E; --danger:#E08A80; --danger-bg:#3B1F1C;
+  --info:#9CB8C7; --info-bg:#1E2C35;
+  --line:rgba(230,238,232,.16); --line-soft:rgba(230,238,232,.08);
+  --glass:rgba(22,36,29,.66); --glass-edge:rgba(230,238,232,.12);
+  --shadow:0 8px 22px rgba(0,8,4,.45); --shadow-lg:0 18px 44px rgba(0,8,4,.5);
+  --sky-1:#1E2C35; --sky-2:#24382C; --m-1:#3E5B45; --m-2:#2F4A37; --m-3:#22392A; --m-4:#16291E;
+  --veil:rgba(5,14,10,.7); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --forest:#7FC49A; --action:#7FC49A; --sage:#9DBE96; --sage-subtle:#24382C;
+  --surface:#0F1A15; --paper:#16241D; --ink:#E6EEE8; --ink-2:#A9B8AE;
+  --warn:#D9B160; --warn-bg:#3A2F17; --warn-ink:#E9CD8E; --danger:#E08A80; --danger-bg:#3B1F1C;
+  --info:#9CB8C7; --info-bg:#1E2C35;
+  --line:rgba(230,238,232,.16); --line-soft:rgba(230,238,232,.08);
+  --glass:rgba(22,36,29,.66); --glass-edge:rgba(230,238,232,.12);
+  --shadow:0 8px 22px rgba(0,8,4,.45); --shadow-lg:0 18px 44px rgba(0,8,4,.5);
+  --sky-1:#1E2C35; --sky-2:#24382C; --m-1:#3E5B45; --m-2:#2F4A37; --m-3:#22392A; --m-4:#16291E;
+  --veil:rgba(5,14,10,.7); color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--surface);color:var(--ink);font-family:var(--f-sans);font-size:15px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 64px}
+.wrap{max-width:1180px;margin:0 auto}
+em.s{font-family:var(--f-serif);font-style:italic;font-weight:400;color:var(--forest)}
+.eyebrow{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2)}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+
+header.top{padding-block:40px 24px;display:grid;gap:14px;max-width:760px}
+header.top h1{margin:0;font-size:clamp(32px,6vw,52px);line-height:1.05;letter-spacing:-.022em;font-weight:700;text-wrap:balance}
+header.top p{margin:0;color:var(--ink-2);font-size:17px;max-width:62ch}
+.facts{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;font-size:12px;font-weight:500;background:var(--sage-subtle);color:var(--forest)}
+.pill.warn{background:var(--warn-bg);color:var(--warn-ink)}
+.pill.danger{background:var(--danger-bg);color:var(--danger)}
+.pill.info{background:var(--info-bg);color:var(--info)}
+
+/* ---------- maquettes ---------- */
+.mocks{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px;margin-block:12px 48px}
+@media (max-width:980px){.mocks{grid-template-columns:minmax(0,1fr);max-width:420px;margin-inline:auto}}
+.mock{display:grid;gap:10px;min-width:0;align-content:start}
+.mock-cap{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.mock-cap b{font-size:14px}
+.phone{position:relative;border-radius:34px;padding:10px;background:var(--paper);box-shadow:var(--shadow-lg);border:1px solid var(--line-soft);overflow:hidden}
+.screen{border-radius:26px;overflow:hidden;background:var(--surface);display:grid;gap:10px;padding:10px;min-height:640px;align-content:start}
+
+.ph{position:relative;display:block;width:100%;overflow:hidden;background:var(--sky-1)}
+.ph svg{display:block;width:100%;height:100%}
+.ph::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,var(--veil))}
+.ph.nov::after{display:none}
+
+.card{border-radius:var(--r-card);overflow:hidden;background:var(--paper);box-shadow:var(--shadow);position:relative}
+.cover{aspect-ratio:4/5}
+.cover .ov{position:absolute;inset:auto 0 0 0;padding:16px;color:#fff;display:grid;gap:8px;z-index:2}
+.cover h3{margin:0;font-family:var(--f-serif);font-style:italic;font-weight:400;font-size:30px;line-height:1.02;text-wrap:balance}
+.cover .row{display:flex;gap:14px}
+.cover .m{display:grid;line-height:1.1}
+.cover .m b{font-family:var(--f-mono);font-size:16px}
+.cover .m span{font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.82}
+.live{position:absolute;top:12px;left:12px;z-index:3;display:inline-flex;align-items:center;gap:7px;padding:6px 11px;border-radius:999px;
+  background:var(--glass);backdrop-filter:blur(24px) saturate(1.5);-webkit-backdrop-filter:blur(24px) saturate(1.5);
+  border:1px solid var(--glass-edge);font-size:12px;font-weight:600;color:var(--ink)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--action);position:relative}
+.dot::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:2px solid var(--action);opacity:.5;animation:pulse 1.8s var(--ease,ease-out) infinite}
+@keyframes pulse{0%{transform:scale(.6);opacity:.7}100%{transform:scale(1.6);opacity:0}}
+.stamp{position:absolute;top:12px;right:12px;z-index:3;width:54px;height:54px;border-radius:50%;border:2px dashed rgba(255,255,255,.85);
+  display:grid;place-items:center;text-align:center;color:#fff;font-family:var(--f-mono);font-size:9px;line-height:1.1;transform:rotate(-12deg)}
+.trace{position:absolute;inset:0;z-index:1;pointer-events:none}
+.avatars{display:flex}
+.avatars i{width:26px;height:26px;border-radius:50%;border:2px solid #fff;margin-left:-8px;background:var(--m-1);display:block}
+.avatars i:first-child{margin-left:0;background:var(--warn)}
+.avatars i:nth-child(3){background:var(--info)}
+
+.strip{display:flex;gap:8px;overflow:hidden}
+.mini{flex:0 0 42%;border-radius:18px;overflow:hidden;position:relative;aspect-ratio:3/4;box-shadow:var(--shadow)}
+.mini .ov{position:absolute;inset:auto 0 0;padding:10px;color:#fff;z-index:2;font-size:12px;line-height:1.2}
+.mini .ov b{display:block;font-family:var(--f-serif);font-style:italic;font-weight:400;font-size:18px}
+
+.capsule{display:flex;gap:4px;padding:4px;border-radius:999px;background:var(--glass);border:1px solid var(--line-soft);backdrop-filter:blur(24px) saturate(1.5);-webkit-backdrop-filter:blur(24px) saturate(1.5)}
+.capsule span{flex:1;text-align:center;font-size:12px;font-weight:500;padding:7px 4px;border-radius:999px;color:var(--ink-2);white-space:nowrap}
+.capsule span.on{background:var(--paper);color:var(--forest);font-weight:600;box-shadow:0 1px 0 var(--line-soft)}
+
+/* fil de bord */
+.dayhead{display:flex;align-items:center;gap:12px;padding:4px 4px 0}
+.dayhead .n{font-family:var(--f-mono);font-weight:700;font-size:34px;line-height:1;color:var(--forest)}
+.dayhead .t{display:grid;line-height:1.25;min-width:0}
+.dayhead .t b{font-size:14px}
+.dayhead .t span{font-size:12px;color:var(--ink-2)}
+.weather{margin-left:auto;display:grid;justify-items:end;font-size:12px;color:var(--ink-2)}
+.weather b{font-family:var(--f-mono);color:var(--ink);font-size:15px}
+.timeline{display:grid;gap:8px;position:relative;padding-left:22px}
+.timeline::before{content:"";position:absolute;left:8px;top:6px;bottom:6px;width:2px;border-radius:2px;background:linear-gradient(var(--warn-bg),var(--sage-subtle) 60%,var(--info-bg))}
+.mo{position:relative;border-radius:18px;background:var(--paper);box-shadow:var(--shadow);overflow:hidden}
+.mo::before{content:"";position:absolute;left:-19px;top:14px;width:10px;height:10px;border-radius:50%;background:var(--paper);border:2px solid var(--sage)}
+.mo .meta{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--ink-2);padding:9px 12px 0}
+.mo .meta .k{font-weight:600;letter-spacing:.1em;text-transform:uppercase;font-size:10px;color:var(--forest)}
+.mo .meta .h{margin-left:auto;font-family:var(--f-mono)}
+.mo .body{padding:6px 12px 11px;font-size:13px}
+.mo.photo .ph{aspect-ratio:16/9}
+.mo.photo .meta{position:absolute;z-index:2;top:0;left:0;right:0;color:#fff;padding:10px 12px}
+.mo.photo .meta .k{color:#fff}
+.mo.photo .ph::after{background:linear-gradient(180deg,var(--veil),transparent 45%)}
+.wave{display:flex;align-items:center;gap:10px;padding:4px 12px 12px}
+.play{flex:0 0 36px;height:36px;border-radius:50%;background:var(--forest);display:grid;place-items:center}
+.play svg{width:12px;height:12px;fill:var(--paper)}
+.bars{display:flex;align-items:center;gap:2px;height:28px;flex:1;min-width:0}
+.bars i{flex:1;border-radius:2px;background:var(--sage);opacity:.75}
+.bars i.p{background:var(--forest);opacity:1}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.chip-obj{display:flex;gap:10px;align-items:center;padding:4px 12px 12px}
+.obj{width:40px;height:40px;border-radius:12px;background:var(--sage-subtle);display:grid;place-items:center}
+.obj svg{width:22px;height:22px;stroke:var(--forest);fill:none;stroke-width:1.6}
+.verdict{font-size:10px;font-weight:600;padding:3px 8px;border-radius:999px;background:var(--sage-subtle);color:var(--forest)}
+.ticket{padding:4px 12px 12px;display:grid;gap:6px}
+.ticket .tot{font-family:var(--f-mono);font-weight:700;font-size:20px}
+.tbar{display:flex;height:6px;border-radius:6px;overflow:hidden;gap:2px}
+.tbar i{display:block}
+.meet{display:flex;gap:10px;align-items:center;padding:4px 12px 12px}
+.meet .face{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--warn),var(--m-1))}
+.meet q{font-family:var(--f-serif);font-style:italic;font-size:16px;line-height:1.2;quotes:"« " " »"}
+
+/* suivi live */
+.signal{display:grid;gap:10px;padding:14px;border-radius:var(--r-card);background:var(--paper);box-shadow:var(--shadow)}
+.signal .top{display:flex;align-items:center;gap:10px}
+.ava{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--m-1),var(--m-3));position:relative;flex:0 0 44px}
+.ava::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:2px solid var(--action)}
+.signal .who{display:grid;line-height:1.25;min-width:0}
+.signal .who b{font-size:14px}
+.signal .who span{font-size:12px;color:var(--ink-2)}
+.prog{display:grid;gap:6px}
+.prog .track{position:relative;height:8px;border-radius:8px;background:var(--sage-subtle)}
+.prog .track i{position:absolute;inset:0 auto 0 0;width:38%;border-radius:8px;background:var(--forest)}
+.prog .track b{position:absolute;left:38%;top:50%;width:16px;height:16px;border-radius:50%;background:var(--paper);border:3px solid var(--forest);transform:translate(-50%,-50%)}
+.prog .lbl{display:flex;justify-content:space-between;font-size:11px;color:var(--ink-2)}
+.zone{border-radius:18px;overflow:hidden;position:relative;aspect-ratio:16/10;background:var(--sage-subtle)}
+.zone svg{width:100%;height:100%;display:block}
+.zone .tag{position:absolute;left:10px;bottom:10px;padding:6px 10px;border-radius:999px;background:var(--glass);border:1px solid var(--glass-edge);
+  backdrop-filter:blur(24px) saturate(1.5);-webkit-backdrop-filter:blur(24px) saturate(1.5);font-size:11px;font-weight:600}
+.beats{display:flex;align-items:flex-end;gap:3px;height:34px}
+.beats i{flex:1;border-radius:3px;background:var(--sage-subtle)}
+.beats i.on{background:var(--sage)}
+.beats i.now{background:var(--forest)}
+.notif{display:grid;gap:6px}
+.opt{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:var(--surface);font-size:13px;min-height:44px}
+.opt .rad{width:18px;height:18px;border-radius:50%;border:2px solid var(--line);flex:0 0 18px}
+.opt.on .rad{border:5px solid var(--forest)}
+.opt small{margin-left:auto;color:var(--ink-2);font-size:11px}
+.evening{display:flex;gap:10px;align-items:center;padding:10px;border-radius:18px;background:var(--warn-bg);color:var(--warn-ink)}
+.evening .th{width:52px;height:52px;border-radius:12px;overflow:hidden;flex:0 0 52px}
+.evening div{font-size:12px;line-height:1.3}
+.evening b{display:block;font-size:13px}
+
+/* ---------- propositions ---------- */
+section.props{display:grid;gap:18px}
+.props-head{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:12px}
+.props-head h2{margin:0;font-size:28px;letter-spacing:-.02em;text-wrap:balance}
+.filters{display:flex;flex-wrap:wrap;gap:6px}
+.filters button{font:inherit;font-size:13px;font-weight:500;min-height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer}
+.filters button[aria-pressed="true"]{background:var(--forest);border-color:var(--forest);color:var(--paper)}
+.filters button:focus-visible,.legend:focus-visible{outline:2px solid var(--action);outline-offset:3px}
+.legend{display:flex;flex-wrap:wrap;gap:8px;font-size:12px;color:var(--ink-2);align-items:center}
+.group{display:grid;gap:10px}
+.group h3{margin:14px 0 0;font-size:18px;display:flex;align-items:baseline;gap:10px}
+.group h3 .c{font-family:var(--f-mono);font-size:12px;color:var(--ink-2);font-weight:500}
+.group > p{margin:0;color:var(--ink-2);font-size:14px;max-width:70ch}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px}
+.item{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;padding:14px;border-radius:18px;background:var(--paper);border:1px solid var(--line-soft);align-content:start;min-width:0}
+.item .num{grid-row:span 3;font-family:var(--f-mono);font-weight:700;font-size:15px;color:var(--sage);min-width:24px}
+.item b{font-size:14px;line-height:1.3}
+.item p{margin:0;font-size:13px;color:var(--ink-2);line-height:1.45}
+.item .tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
+.item .tags span{font-size:11px;padding:2px 8px;border-radius:999px}
+.t-ok{background:var(--sage-subtle);color:var(--forest)}
+.t-col{background:var(--info-bg);color:var(--info)}
+.t-new{background:var(--warn-bg);color:var(--warn-ink)}
+.t-fix{background:var(--danger-bg);color:var(--danger)}
+.t-p1{border:1px solid var(--forest);color:var(--forest)}
+.t-p2{border:1px solid var(--line);color:var(--ink-2)}
+
+.alert{display:grid;gap:6px;padding:16px;border-radius:18px;background:var(--danger-bg);color:var(--ink);border:1px solid var(--line-soft);margin-top:24px}
+.alert b{color:var(--danger)}
+.alert p{margin:0;font-size:14px;overflow-wrap:anywhere}
+.next{margin-top:28px;display:grid;gap:8px;max-width:760px}
+.next h2{margin:0;font-size:22px}
+.next ol{overflow-wrap:anywhere;margin:0;padding-left:20px;display:grid;gap:6px;color:var(--ink-2)}
+.next ol b{color:var(--ink)}
+/* ---------- architecture de la fiche ---------- */
+.arch{display:grid;gap:18px;margin-block:0 48px}
+.arch-head h2{margin:0;font-size:28px;letter-spacing:-.02em;text-wrap:balance}
+.arch-head p{margin:6px 0 0;color:var(--ink-2);max-width:70ch}
+.states{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px}
+@media (max-width:980px){.states{grid-template-columns:minmax(0,1fr);max-width:420px;margin-inline:auto;width:100%}}
+.st .screen{min-height:0;gap:8px}
+.topbar{display:flex;align-items:center;gap:6px}
+.gbtn{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:var(--glass);border:1px solid var(--glass-edge);backdrop-filter:blur(24px) saturate(1.5);-webkit-backdrop-filter:blur(24px) saturate(1.5);flex:0 0 38px}
+.gbtn svg{width:16px;height:16px;stroke:var(--ink);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.gbtn.edit{background:var(--forest);border-color:var(--forest)}
+.gbtn.edit svg{stroke:var(--paper)}
+.tpill{flex:1;min-width:0;height:38px;border-radius:999px;display:flex;align-items:center;padding:0 14px;font-weight:600;font-size:13px;background:var(--glass);border:1px solid var(--glass-edge);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.daycard{border-radius:var(--r-card);background:var(--paper);box-shadow:var(--shadow);padding:12px;display:grid;gap:10px;position:relative}
+.dots{display:flex;gap:5px;justify-content:center}
+.dots i{width:6px;height:6px;border-radius:3px;background:var(--line)}
+.dots i.on{width:18px;background:var(--forest)}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.kpi{border-radius:var(--r-sub);background:var(--surface);padding:8px;display:grid;line-height:1.15}
+.kpi b{font-family:var(--f-mono);font-size:15px}
+.kpi span{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2)}
+.mosaic{display:grid;grid-template-columns:2fr 1fr;grid-template-rows:1fr 1fr;gap:4px;height:120px;border-radius:14px;overflow:hidden}
+.mosaic .ph:first-child{grid-row:span 2}
+.mosaic .ph::after{display:none}
+.chapters{display:grid;gap:5px}
+.chap{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:12px;background:var(--surface);font-size:12px}
+.chap b{font-family:var(--f-mono);color:var(--forest);width:24px}
+.chap span{color:var(--ink-2);margin-left:auto;font-family:var(--f-mono);font-size:11px}
+.caps{display:flex;justify-content:space-between;padding:4px;border-radius:999px;background:var(--glass);border:1px solid var(--line-soft);backdrop-filter:blur(24px) saturate(1.5);-webkit-backdrop-filter:blur(24px) saturate(1.5)}
+.caps i{flex:1;height:34px;border-radius:999px;display:grid;place-items:center}
+.caps i.on{background:var(--paper);box-shadow:0 1px 0 var(--line-soft)}
+.caps svg{width:17px;height:17px;stroke:var(--ink-2);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.caps i.on svg{stroke:var(--forest)}
+.subcaps{display:inline-flex;gap:2px;padding:3px;border-radius:999px;background:var(--surface);align-self:start}
+.subcaps span{font-size:11px;padding:4px 10px;border-radius:999px;color:var(--ink-2)}
+.subcaps span.on{background:var(--paper);color:var(--forest);font-weight:600}
+.grab{width:42px;height:5px;border-radius:3px;background:var(--line);justify-self:center}
+.dchip{position:absolute;top:10px;right:12px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--sage-subtle);color:var(--forest)}
+.etape{display:grid;grid-template-columns:auto 1fr auto;gap:2px 10px;align-items:center;padding:8px 10px;border-radius:12px;background:var(--surface);font-size:12px}
+.etape .pin{width:10px;height:10px;border-radius:50%;border:2px solid var(--forest);background:var(--paper)}
+.etape .pin.end{background:var(--forest)}
+.etape span{color:var(--ink-2);font-family:var(--f-mono);font-size:11px}
+.mapz{position:relative;border-radius:var(--r-card);overflow:hidden;aspect-ratio:16/11;background:var(--sage-subtle);box-shadow:var(--shadow)}
+.mapz svg{width:100%;height:100%;display:block}
+.mapz .lbl{position:absolute;left:10px;bottom:10px;padding:5px 10px;border-radius:999px;background:var(--glass);border:1px solid var(--glass-edge);font-size:11px;font-weight:600;backdrop-filter:blur(24px) saturate(1.5);-webkit-backdrop-filter:blur(24px) saturate(1.5)}
+.mapz .fixed{position:absolute;right:10px;top:10px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2)}
+.tree{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.node{padding:14px;border-radius:18px;background:var(--paper);border:1px solid var(--line-soft);display:grid;gap:8px;align-content:start;min-width:0}
+.node .nh{display:flex;align-items:center;gap:8px}
+.node .nh .ic{width:30px;height:30px;border-radius:50%;background:var(--sage-subtle);display:grid;place-items:center}
+.node .nh .ic svg{width:15px;height:15px;stroke:var(--forest);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.node .nh b{font-size:15px}
+.node ul{margin:0;padding:0;list-style:none;display:grid;gap:6px}
+.node li{font-size:13px;color:var(--ink-2);line-height:1.35}
+.node li b{color:var(--ink);font-weight:600}
+.node .sum{font-size:12px;padding:6px 8px;border-radius:10px;background:var(--surface);color:var(--ink-2)}
+.rules{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.rule{padding:12px 14px;border-radius:14px;background:var(--surface);border:1px solid var(--line-soft);font-size:13px;color:var(--ink-2)}
+.rule b{display:block;color:var(--ink);font-size:14px;margin-bottom:2px}
+@media (prefers-reduced-motion:reduce){.dot::after{animation:none}}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <span class="eyebrow">LKDV · page Carnets · proposition de refonte</span>
+  <h1>Le carnet de bord se lit comme <em class="s">une aventure</em>, et se suit pendant qu'elle a lieu.</h1>
+  <p>66 améliorations visuelles et d'interaction, construites sur la grammaire actuelle (carte 406&nbsp;px r24, verre, capsule, tokens <span class="mono">--lkv-*</span>). Les trois écrans ci-dessous sont des maquettes : les paysages sont dessinés, pas de vraies photos.</p>
+  <div class="facts">
+    <span class="pill">Palette forest · sage · stone</span>
+    <span class="pill info">Médias : photo seule aujourd'hui</span>
+    <span class="pill warn">Pas de statut « en route » en base</span>
+    <span class="pill danger">Route /carnets absente</span>
+  </div>
+</header>
+
+<div class="mocks">
+  <!-- ÉCRAN 1 : hub -->
+  <div class="mock">
+    <div class="mock-cap"><b>1 · Le hub /carnets</b><span class="eyebrow">n° 1-12</span></div>
+    <div class="phone"><div class="screen">
+      <div class="capsule"><span class="on">En route</span><span>Suivis</span><span>Monde</span><span>Les miens</span></div>
+      <div class="card cover">
+        <span class="ph" data-ph="alps" style="position:absolute;inset:0"></span>
+        <svg class="trace" viewBox="0 0 100 125" preserveAspectRatio="none" aria-hidden="true"><path d="M14 98 C24 86 22 74 34 70 S50 58 48 46 S62 30 72 34 S84 22 88 16" fill="none" stroke="rgba(255,255,255,.9)" stroke-width="1.1" stroke-dasharray="2.2 1.6" stroke-linecap="round"/><circle cx="72" cy="34" r="2.4" fill="#fff"/></svg>
+        <span class="live"><span class="dot"></span>En route · J4 sur 9</span>
+        <span class="stamp">ÉCRINS<br>FR<br>2026</span>
+        <div class="ov">
+          <span class="eyebrow" style="color:rgba(255,255,255,.85)">Dernier signal il y a 2 h</span>
+          <h3>Tour des Écrins, sans se presser</h3>
+          <div class="row">
+            <div class="m"><b>4/9</b><span>jours</span></div>
+            <div class="m"><b>61 km</b><span>parcourus</span></div>
+            <div class="m"><b>+4 120</b><span>m D+</span></div>
+            <div class="avatars" style="margin-left:auto;align-self:end"><i></i><i></i><i></i></div>
+          </div>
+        </div>
+      </div>
+      <span class="eyebrow" style="padding:4px 4px 0">Rentrés cette semaine</span>
+      <div class="strip">
+        <div class="mini"><span class="ph" data-ph="coast" style="position:absolute;inset:0"></span><div class="ov"><b>Sentier des douaniers</b>6 j · 112 km</div></div>
+        <div class="mini"><span class="ph" data-ph="desert" style="position:absolute;inset:0"></span><div class="ov"><b>Wadi Rum à pied</b>5 j · 78 km</div></div>
+        <div class="mini"><span class="ph" data-ph="alps" style="position:absolute;inset:0"></span><div class="ov"><b>GR20 nord</b>7 j</div></div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- ÉCRAN 2 : fil de bord -->
+  <div class="mock">
+    <div class="mock-cap"><b>2 · Le fil de bord, jour 4</b><span class="eyebrow">n° 21-36, 47-58</span></div>
+    <div class="phone"><div class="screen">
+      <div class="dayhead">
+        <span class="n">J4</span>
+        <div class="t"><b>Refuge du Pigeonnier → Vallouise</b><span>18,4 km · +1 080 m · 7 h 10</span></div>
+        <div class="weather"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="9" r="4" fill="var(--warn)"/><path d="M7 18h10a3.5 3.5 0 0 0 0-7 5 5 0 0 0-9.6 1.5A3 3 0 0 0 7 18z" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.2"/></svg><b>14°</b></div>
+      </div>
+      <div class="timeline">
+        <div class="mo photo"><span class="ph" data-ph="alps"></span><div class="meta"><span class="k">Photo</span><span>Col de l'Eychauda · 2 425 m</span><span class="h">07:42</span></div></div>
+        <div class="mo"><div class="meta"><span class="k">Note vocale</span><span>0:38</span><span class="h">09:15</span></div>
+          <div class="wave"><span class="play"><svg viewBox="0 0 12 12"><path d="M2 1l9 5-9 5z"/></svg></span><span class="bars" data-bars="34"></span></div></div>
+        <div class="duo">
+          <div class="mo"><div class="meta"><span class="k">Kit</span><span class="h">11:02</span></div>
+            <div class="chip-obj"><span class="obj"><svg viewBox="0 0 24 24"><path d="M5 9h14l-1 10H6z"/><path d="M9 9V6a3 3 0 0 1 6 0v3"/></svg></span><div style="display:grid;gap:3px"><b style="font-size:12px">Bâtons carbone</b><span class="verdict">Essentiel</span></div></div></div>
+          <div class="mo"><div class="meta"><span class="k">Budget</span><span class="h">12:30</span></div>
+            <div class="ticket"><span class="tot">38 €</span><div class="tbar"><i style="flex:5;background:var(--sage)"></i><i style="flex:3;background:var(--warn)"></i><i style="flex:2;background:var(--info)"></i></div></div></div>
+        </div>
+        <div class="mo"><div class="meta"><span class="k">Rencontre</span><span>Vallouise</span><span class="h">16:20</span></div>
+          <div class="meet"><span class="face"></span><q>Le berger nous a montré le passage à gué.</q></div></div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- ÉCRAN 3 : suivre en direct -->
+  <div class="mock">
+    <div class="mock-cap"><b>3 · Suivre pendant le voyage</b><span class="eyebrow">n° 37-46</span></div>
+    <div class="phone"><div class="screen">
+      <div class="signal">
+        <div class="top"><span class="ava"></span><div class="who"><b>Camille est en route</b><span>Tour des Écrins · jour 4 sur 9</span></div><span class="pill" style="margin-left:auto">Suivi</span></div>
+        <div class="prog"><div class="track"><i></i><b></b></div><div class="lbl"><span>La Bérarde</span><span class="mono">61 / 162 km</span><span>Vallouise</span></div></div>
+        <div class="zone">
+          <svg viewBox="0 0 320 200" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+            <g fill="none" stroke="var(--sage)" stroke-opacity=".45" stroke-width="1"><path d="M-10 160 C60 120 120 170 200 130 S300 90 340 110"/><path d="M-10 130 C70 90 130 140 210 100 S300 60 340 80"/><path d="M-10 100 C80 60 140 110 220 70 S300 30 340 50"/><path d="M-10 70 C90 30 150 80 230 40 S300 0 340 20"/></g>
+            <circle cx="170" cy="96" r="54" fill="var(--forest)" fill-opacity=".12" stroke="var(--forest)" stroke-opacity=".5" stroke-dasharray="4 4"/>
+          </svg>
+          <span class="tag">Massif des Écrins · position différée de 3 h</span>
+        </div>
+        <span class="eyebrow">Battements · un trait par moment</span>
+        <div class="beats" data-beats></div>
+        <div class="evening"><span class="th ph nov" data-ph="alps"></span><div><b>Résumé du soir, J3</b>22 km, +1 340 m, 6 moments. Bivouac au lac de la Muzelle.</div></div>
+      </div>
+      <div class="notif">
+        <span class="eyebrow" style="padding:4px 4px 0">Me prévenir</span>
+        <div class="opt"><span class="rad"></span>À chaque moment<small>bavard</small></div>
+        <div class="opt on"><span class="rad"></span>Résumé du soir<small>1 par jour</small></div>
+        <div class="opt"><span class="rad"></span>Départ, sommets, arrivée<small>discret</small></div>
+      </div>
+    </div></div>
+  </div>
+</div>
+
+<section class="arch" aria-labelledby="ah">
+  <div class="arch-head">
+    <span class="eyebrow">Architecture de la fiche, version du 7 novembre</span>
+    <h2 id="ah">En haut, le jour qui glisse. En bas, <em class="s">la carte qui reste</em>.</h2>
+    <p>On garde la fiche actuelle. La carte du haut glisse : d'abord le Résumé global, puis le jour 1, le jour 2, et ainsi de suite. La carte 3D du bas ne bouge jamais, seuls ses tracés et repères changent pour montrer le jour affiché. Tiroirs et sous-tiroirs suivent le même filtre.</p>
+  </div>
+
+  <div class="states">
+    <!-- Résumé -->
+    <div class="mock st">
+      <div class="mock-cap"><b>Page 0 · Résumé global</b><span class="eyebrow">participant</span></div>
+      <div class="phone"><div class="screen">
+        <div class="topbar">
+          <span class="gbtn edit" aria-label="Modifier"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></span>
+          <span class="tpill">Tour des Écrins</span>
+          <span class="gbtn"><svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 21h4"/></svg></span>
+          <span class="gbtn"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></span>
+        </div>
+        <div class="daycard">
+          <div class="dots"><i class="on"></i><i></i><i></i><i></i></div>
+          <div class="dayhead" style="padding:0"><span class="n" style="font-size:18px">Tout</span><div class="t"><b>9 jours · 3 voyageurs</b><span>La Bérarde → Vallouise · juil. 2026</span></div></div>
+          <div class="kpis"><div class="kpi"><b>162</b><span>km</span></div><div class="kpi"><b>+9 840</b><span>m D+</span></div><div class="kpi"><b>8</b><span>nuits</span></div></div>
+          <div class="chapters">
+            <div class="chap"><b>J1</b>La Bérarde → Pigeonnier<span>17 km</span></div>
+            <div class="chap"><b>J2</b>Pigeonnier → Vallouise<span>18 km</span></div>
+            <div class="chap"><b>J3</b>Vallouise → Muzelle<span>22 km</span></div>
+          </div>
+          <div class="caps"><i class="on"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/></svg></i><i><svg viewBox="0 0 24 24"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/></svg></i><i><svg viewBox="0 0 24 24"><path d="M7 8h10l1 12H6z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg></i><i><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></i><i><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><circle cx="17" cy="9" r="2.5"/><path d="M15 14a5 5 0 0 1 6 6"/></svg></i></div>
+        </div>
+        <div class="mapz"><span class="fixed">Carte fixe</span>
+          <svg viewBox="0 0 280 190" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><g fill="none" stroke="var(--sage)" stroke-opacity=".35"><path d="M-10 160 C60 130 120 175 200 140 S290 100 300 120"/><path d="M-10 120 C70 90 130 140 210 100 S290 60 300 80"/><path d="M-10 80 C80 50 140 100 220 60 S290 20 300 40"/></g>
+          <path d="M20 150 C50 120 70 135 95 110 C120 85 140 70 170 85 C200 100 230 60 260 40" fill="none" stroke="var(--paper)" stroke-width="7" stroke-linecap="round"/>
+          <path d="M20 150 C50 120 70 135 95 110 C120 85 140 70 170 85 C200 100 230 60 260 40" fill="none" stroke="var(--forest)" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="95" cy="110" r="4" fill="var(--paper)" stroke="var(--forest)" stroke-width="2"/><circle cx="170" cy="85" r="4" fill="var(--paper)" stroke="var(--forest)" stroke-width="2"/></svg>
+          <span class="lbl">Tracé entier · repères de nuit</span></div>
+      </div></div>
+    </div>
+
+    <!-- Jour 2 -->
+    <div class="mock st">
+      <div class="mock-cap"><b>Page 2 · Jour 2 après un glissement</b><span class="eyebrow">visiteur</span></div>
+      <div class="phone"><div class="screen">
+        <div class="topbar">
+          <span class="tpill">Tour des Écrins</span>
+          <span class="gbtn"><svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 21h4"/></svg></span>
+          <span class="gbtn"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></span>
+        </div>
+        <div class="daycard">
+          <div class="dots"><i></i><i></i><i class="on"></i><i></i></div>
+          <div class="dayhead" style="padding:0"><span class="n" style="font-size:28px">J2</span><div class="t"><b>Pigeonnier → Vallouise</b><span>mar. 15 juil. · 7 h 10</span></div><div class="weather"><b>14°</b>éclaircies</div></div>
+          <div class="kpis"><div class="kpi"><b>18,4</b><span>km</span></div><div class="kpi"><b>+1 080</b><span>m D+</span></div><div class="kpi"><b>6</b><span>moments</span></div></div>
+          <div class="mosaic"><span class="ph" data-ph="alps"></span><span class="ph" data-ph="coast"></span><span class="ph" data-ph="desert"></span></div>
+          <div class="caps"><i class="on"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/></svg></i><i><svg viewBox="0 0 24 24"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/></svg></i><i><svg viewBox="0 0 24 24"><path d="M7 8h10l1 12H6z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg></i><i><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></i><i><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><circle cx="17" cy="9" r="2.5"/><path d="M15 14a5 5 0 0 1 6 6"/></svg></i></div>
+        </div>
+        <div class="mapz"><span class="fixed">Carte fixe</span>
+          <svg viewBox="40 40 200 140" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><g fill="none" stroke="var(--sage)" stroke-opacity=".35"><path d="M-10 160 C60 130 120 175 200 140 S290 100 300 120"/><path d="M-10 120 C70 90 130 140 210 100 S290 60 300 80"/><path d="M-10 80 C80 50 140 100 220 60 S290 20 300 40"/></g>
+          <path d="M20 150 C50 120 70 135 95 110 C120 85 140 70 170 85 C200 100 230 60 260 40" fill="none" stroke="var(--forest)" stroke-opacity=".25" stroke-width="2.4" stroke-linecap="round"/>
+          <path d="M95 110 C120 85 140 70 170 85" fill="none" stroke="var(--paper)" stroke-width="7" stroke-linecap="round"/>
+          <path d="M95 110 C120 85 140 70 170 85" fill="none" stroke="var(--forest)" stroke-width="3.4" stroke-linecap="round"/>
+          <circle cx="95" cy="110" r="4.5" fill="var(--paper)" stroke="var(--forest)" stroke-width="2.2"/><circle cx="170" cy="85" r="4.5" fill="var(--forest)"/>
+          <circle cx="128" cy="82" r="3" fill="var(--warn)"/><circle cx="150" cy="76" r="3" fill="var(--warn)"/></svg>
+          <span class="lbl">Jour 2 cadré · reste du tracé atténué</span></div>
+      </div></div>
+    </div>
+
+    <!-- Tiroir Route / Étapes au J2 -->
+    <div class="mock st">
+      <div class="mock-cap"><b>Tiroir Route › Étapes, toujours au jour 2</b><span class="eyebrow">sous-tiroir</span></div>
+      <div class="phone"><div class="screen">
+        <div class="topbar">
+          <span class="gbtn edit" aria-label="Modifier"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></span>
+          <span class="tpill">Tour des Écrins</span>
+          <span class="gbtn"><svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 21h4"/></svg></span>
+        </div>
+        <div class="daycard">
+          <span class="grab"></span><span class="dchip">J2</span>
+          <div class="subcaps"><span class="on">Étapes</span><span>Altitude</span><span>Nuit</span><span>Météo</span></div>
+          <div class="etape"><span class="pin"></span><b>Refuge du Pigeonnier</b><span>07:05</span></div>
+          <div class="etape"><span class="pin" style="border-color:var(--warn)"></span><b>Col de l'Eychauda · 2 425 m</b><span>09:40</span></div>
+          <div class="etape"><span class="pin" style="border-color:var(--warn)"></span><b>Lac de l'Eychauda</b><span>11:15</span></div>
+          <div class="etape"><span class="pin end"></span><b>Vallouise · gîte</b><span>14:15</span></div>
+          <div class="caps"><i><svg viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/></svg></i><i class="on"><svg viewBox="0 0 24 24"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/></svg></i><i><svg viewBox="0 0 24 24"><path d="M7 8h10l1 12H6z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg></i><i><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></i><i><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><circle cx="17" cy="9" r="2.5"/><path d="M15 14a5 5 0 0 1 6 6"/></svg></i></div>
+        </div>
+        <div class="mapz"><span class="fixed">Carte fixe</span>
+          <svg viewBox="40 40 200 140" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><g fill="none" stroke="var(--sage)" stroke-opacity=".35"><path d="M-10 120 C70 90 130 140 210 100 S290 60 300 80"/><path d="M-10 80 C80 50 140 100 220 60 S290 20 300 40"/></g>
+          <path d="M20 150 C50 120 70 135 95 110 C120 85 140 70 170 85 C200 100 230 60 260 40" fill="none" stroke="var(--forest)" stroke-opacity=".25" stroke-width="2.4" stroke-linecap="round"/>
+          <path d="M95 110 C120 85 140 70 170 85" fill="none" stroke="var(--forest)" stroke-width="3.4" stroke-linecap="round"/>
+          <circle cx="95" cy="110" r="4.5" fill="var(--paper)" stroke="var(--forest)" stroke-width="2.2"/><circle cx="128" cy="82" r="6" fill="var(--warn)" stroke="var(--paper)" stroke-width="2"/><circle cx="150" cy="76" r="3.4" fill="var(--warn)"/><circle cx="170" cy="85" r="4.5" fill="var(--forest)"/></svg>
+          <span class="lbl">Étape touchée → repère grossi</span></div>
+      </div></div>
+    </div>
+  </div>
+
+  <div class="arch-head"><span class="eyebrow">La capsule du bas de la carte</span><h2 style="font-size:22px">Cinq tiroirs, chacun avec ses sous-tiroirs</h2>
+    <p>La capsule n'affiche que des icônes, et chaque tiroir a sa sous-capsule de 30&nbsp;px. Sur le Résumé, un tiroir montre tout le voyage. Sur un jour, il montre uniquement ce jour-là. Glisser à l'horizontale change toujours de jour, y compris dans un tiroir ; changer de sous-tiroir se fait d'un toucher.</p></div>
+  <div class="tree">
+    <div class="node"><div class="nh"><span class="ic"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/></svg></span><b>Fil de bord</b></div>
+      <ul><li><b>Moments</b> : frise horaire avec une forme par type (photo, vidéo, son, texte, objet, dépense, incident).</li><li><b>Médias</b> : mosaïque, galerie plein écran, vidéos, sons.</li><li><b>Rencontres</b> : portraits avec consentement, citations.</li><li><b>Nature</b> : herbier et bestiaire, identification d'espèces.</li></ul>
+      <span class="sum">Résumé : la carte postale de chaque jour. Jour : sa frise.</span></div>
+    <div class="node"><div class="nh"><span class="ic"><svg viewBox="0 0 24 24"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/></svg></span><b>Route</b></div>
+      <ul><li><b>Étapes</b> : départ, passages, arrivée ; toucher une étape fait voler la carte vers elle.</li><li><b>Altitude</b> : profil synchronisé avec la carte.</li><li><b>Nuit</b> : refuge, bivouac, gîte, altitude.</li><li><b>Météo et ciel</b> : température, lever et coucher du soleil, lune.</li></ul>
+      <span class="sum">Résumé : toutes les étapes et le GPX. Jour : l'étape du jour.</span></div>
+    <div class="node"><div class="nh"><span class="ic"><svg viewBox="0 0 24 24"><path d="M7 8h10l1 12H6z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg></span><b>Sac</b></div>
+      <ul><li><b>Kit</b> : le sac en vue éclatée, par catégorie.</li><li><b>Verdicts</b> : essentiel, utile, jamais servi, défaillant, manquait.</li><li><b>Poids</b> : anneau par catégorie, quincaillerie technique à part.</li></ul>
+      <span class="sum">Résumé : le kit entier, « Reprendre ce kit ». Jour : les objets cités ce jour-là.</span></div>
+    <div class="node"><div class="nh"><span class="ic"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span><b>Chiffres</b></div>
+      <ul><li><b>Distance</b>, <b>Dénivelé</b>, <b>Durée</b> : les trois volets actuels des statistiques.</li><li><b>Budget</b> : le reçu, par jour et par personne. Caché aux visiteurs par défaut.</li></ul>
+      <span class="sum">Résumé : barres par jour. Jour : valeurs du jour comparées à la moyenne.</span></div>
+    <div class="node"><div class="nh"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><circle cx="17" cy="9" r="2.5"/><path d="M15 14a5 5 0 0 1 6 6"/></svg></span><b>Équipage</b></div>
+      <ul><li><b>Participants</b> : rôle, jours partagés, ce que chacun a ajouté. Lien vers le groupe.</li><li><b>J'aime</b> et <b>Commentaires</b>, rattachés au jour ou au moment.</li><li><b>Suivre</b> : choix des notifications ; statut et dernier signal pendant le voyage.</li></ul>
+      <span class="sum">Résumé : tout l'équipage. Jour : qui était là et les échanges du jour.</span></div>
+  </div>
+
+  <div class="rules">
+    <div class="rule"><b>Le crayon, en haut à gauche</b>Bouton rond de 38 px, du même style que la cloche, visible des seuls participants. Il passe la fiche en mode modification : chaque carte et chaque sous-tiroir affiche ses actions.</div>
+    <div class="rule"><b>Le menu ··· en haut à droite</b>Enregistrer, Partager, Copier le lien, Signaler. Pour le propriétaire : Gérer (rôles, visibilité, export, suppression). La page Gérer et le volet Partage quittent le carrousel.</div>
+    <div class="rule"><b>Le visiteur ne voit que ce qu'il peut voir</b>Un sous-tiroir non autorisé est masqué, pas grisé. Les documents ne sont jamais visibles, le budget et la position sont privés par défaut.</div>
+    <div class="rule"><b>Un seul état pour le jour</b>Le jour vit dans l'écran, pas dans la carte : il survit à l'ouverture d'un tiroir, et la carte, les tiroirs et la capsule lisent la même valeur.</div>
+  </div>
+</section>
+
+<section class="props" aria-labelledby="ph">
+  <div class="props-head">
+    <div><span class="eyebrow">Les propositions</span><h2 id="ph">66 améliorations, par chapitre</h2></div>
+    <div class="filters" role="group" aria-label="Filtrer par chapitre" id="filters"></div>
+  </div>
+  <div class="legend">
+    <span class="t-ok" style="padding:2px 8px;border-radius:999px">données existantes</span>
+    <span class="t-col" style="padding:2px 8px;border-radius:999px">petite colonne à ajouter</span>
+    <span class="t-new" style="padding:2px 8px;border-radius:999px">nouveau schéma</span>
+    <span class="t-fix" style="padding:2px 8px;border-radius:999px">correctif</span>
+    <span class="t-p1" style="padding:2px 8px;border-radius:999px">P1 lot 1</span>
+    <span class="t-p2" style="padding:2px 8px;border-radius:999px">P2 ensuite</span>
+  </div>
+  <div id="groups"></div>
+</section>
+
+<div class="alert" role="note">
+  <b>Point RGPD à trancher avant le suivi en direct</b>
+  <p>La policy <span class="mono">hike_sessions_select_owner_or_public_carnet</span> (migration <span class="mono">20260911550000</span>) laisse lire à un anonyme toutes les colonnes des sorties d'un carnet public, dont <span class="mono">positions_geojson</span> et <span class="mono">positions_timed</span>, sans floutage. Les propositions 39 et 40 supposent l'inverse : le public ne reçoit qu'un massif et un tracé simplifié, jamais les points bruts.</p>
+</div>
+
+<div class="next">
+  <h2>Ordre proposé</h2>
+  <ol>
+    <li><b>Lot 1 · visuel sans migration</b> : 1-5, 12-17, 21-22 (types existants), 24, 26-27, 30, 47-48, 57, 63, 65-66.</li>
+    <li><b>Lot 2 · le carnet en route</b> : colonne <span class="mono">carnets.status</span>, moment typé (<span class="mono">kind</span>, <span class="mono">media_type</span>, <span class="mono">duration_s</span>), puis 37-46, après correction du point RGPD.</li>
+    <li><b>Lot 3 · médias riches et rencontres</b> : vidéo, son, rencontres, budget par moment (31-32, 53, 55).</li>
+  </ol>
+</div>
+</div>
+
+<script>
+const G=[
+ {id:"hub",t:"Le hub /carnets",d:"Donner envie d'ouvrir un carnet avant d'avoir lu un mot. Aujourd'hui la route n'existe pas : les composants du hub sont orphelins.",i:[
+  ["Créer la page /carnets","Monter MobileCarnetsHub et CarnetHubCard (aujourd'hui orphelins) dans une vraie route, sur la grammaire Compte v3 : zéro scroll de page, scroll interne.","fix","p1"],
+  ["Couverture plein visuel 4/5","Photo pleine carte, voile encre en bas, titre en Instrument Serif italique, trois métriques mono : jours, km, D+.","ok","p1"],
+  ["Tracé en filigrane","Le parcours en pointillé blanc dessiné sur la photo de couverture, à partir de la trace déjà calculée par CarnetCard.","ok","p1"],
+  ["Bande « En route maintenant »","Carrousel en tête des carnets en cours, pastille vivante « J4 · il y a 2 h ».","col","p2"],
+  ["Couverture sans photo qui reste belle","Mosaïque des trois dernières photos de moments ; sans photo du tout, carte topographique du tracé (courbes de niveau) au lieu de l'initiale.","ok","p1"],
+  ["Capsule de filtres","En route · Suivis · Monde · Les miens, puis milieu (montagne, côte, désert, ville), durée et saison en sous-capsule.","ok","p2"],
+  ["Grille en mosaïque","Desktop : colonnes de hauteurs variées selon le format de couverture. Mobile : une colonne, cartes 406 px.","ok","p2"],
+  ["Carte du monde des carnets","Vue MapLibre avec points regroupés par massif, jamais par coordonnée. Un seul contexte WebGL (WebGLArbiter).","ok","p2"],
+  ["Feuilleter du doigt","Glisser horizontalement sur une couverture fait défiler ses photos, comme on feuillette un carnet papier.","ok","p2"],
+  ["Tampon de pays","Cachet rond en pointillé, incliné, avec massif, code pays et année : le visa du carnet.","ok","p1"],
+  ["Pastilles de non-lu sur les suivis","Compteur de nouveaux moments depuis ma dernière visite sur les carnets que je suis (user_follows).","col","p2"],
+  ["Squelettes à la forme des cartes","Chargement en silhouettes 4/5 au lieu d'un spinner centré au milieu d'une grille vide.","ok","p1"]]},
+ {id:"couv",t:"La couverture du carnet",d:"La première carte de la fiche doit dire où, quand, avec qui, et à quel point c'était dur, en un coup d'œil.",i:[
+  ["Hero immersif dans la carte 406","Photo (ou vidéo muette en boucle, lot 3) plein cadre, titre en surimpression sur voile encre.","ok","p1"],
+  ["Bandeau d'identité du voyage","Dates, durée, avatars empilés des compagnons, tampon de pays, type d'aventure en icônes LkvIcon.","ok","p1"],
+  ["Chiffres du bord","Quatre sous-cartes mono : km, D+, nuits, poids du sac, chacune avec une mini-courbe par jour.","ok","p1"],
+  ["Carte 3D qui se dessine","Split 60/40 MapLibre ; le tracé se trace en 1,2 s à l'ouverture (statique si mouvement réduit).","ok","p1"],
+  ["Profil altimétrique synchronisé","Sous la carte ; toucher un point surligne le jour et le moment correspondants.","ok","p1"],
+  ["Barre d'avancement","Pour un carnet en cours : J4 sur 9, km faits sur km prévus (trip lié via trip_id).","col","p2"],
+  ["Citation d'ouverture","Le premier moment avec citation, en serif italique sous le titre.","ok","p2"],
+  ["Suivre le carnet, pas seulement la personne","Bouton distinct, avec le choix de notification au même endroit.","new","p2"]]},
+ {id:"fil",t:"Le fil de bord, jour par jour",d:"Chaque jour devient un chapitre, chaque moment a une forme selon ce qu'il raconte.",i:[
+  ["Chapitres de jour","Grand numéro mono, étape départ → arrivée, photo dominante du jour, stats du jour en pied.","ok","p1"],
+  ["Moments typés, une forme chacun","Photo, vidéo, note vocale, texte, rencontre, dépense, objet du kit, espèce, bivouac, incident. Colonne kind sur carnet_moments.","col","p1"],
+  ["Ligne horaire du jour","Les moments posés sur l'heure réelle, fond qui va de l'aube au crépuscule (lever et coucher calculés).","ok","p2"],
+  ["Météo du jour","Pictogramme et température, depuis groupe_etapes.meteo et temperature_c, déjà lus.","ok","p1"],
+  ["Carte de nuit","Refuge, bivouac ou hôtel avec icône de lune, altitude et nom d'hébergement (groupe_hebergements).","ok","p2"],
+  ["Mini-carte du jour","Au swipe entre jours (existant), la carte zoome sur la portion du tracé de ce jour.","ok","p1"],
+  ["Carte postale du jour","Un moment phare par jour, choisi par l'auteur ou le plus apprécié, mis en grand.","col","p2"],
+  ["Mode récit plein écran","Une photo par écran, texte en surimpression, défilement vertical. Le plaisir de lecture d'une story, la durée en moins.","ok","p2"],
+  ["Sommaire de jours collant","Pastilles J1 à J9 avec vignettes en haut du fil ; le jour courant en forest.","ok","p1"]]},
+ {id:"media",t:"Photo, vidéo, son",d:"Aujourd'hui un moment ne porte qu'une image. Le bucket carnet-media n'a ni contrôle de type ni plafond de taille.",i:[
+  ["Galerie plein écran tactile","Swipe, pincer pour zoomer, légende, heure et lieu ; fermeture par glissement vers le bas.","ok","p1"],
+  ["Vidéos courtes","60 s max, lecture muette en boucle dans le fil, son au toucher. Colonne media_type, contrôle MIME et taille sur le bucket.","new","p2"],
+  ["Notes vocales et sons d'ambiance","Forme d'onde dessinée dans une capsule, bouton 44 px, transcription affichée sous l'onde.","new","p2"],
+  ["Diaporama d'une journée","Lecture enchaînée des photos du jour, avec la mini-carte qui suit.","ok","p2"],
+  ["Mosaïque adaptative","Par jour : une grande et deux petites, ou trois en bande selon les formats ; fini la grille uniforme.","ok","p1"],
+  ["Détails de prise de vue","Heure et altitude sous la photo, jamais de coordonnées.","col","p2"]]},
+ {id:"live",t:"Suivre pendant le voyage",d:"Un suivi qui n'est pas un flux en continu : des signaux espacés, différés et choisis par le voyageur.",i:[
+  ["Statut du carnet","En préparation, en route, rentré. Pastille vivante sur l'avatar et la couverture. Colonne carnets.status.","col","p1"],
+  ["Signal de bord","Publier en deux gestes depuis /randonnee-active : une photo et une ligne, rangées dans le jour courant.","col","p1"],
+  ["Position différée et floutée","« Dernier signal : massif des Écrins, il y a 3 h ». Délai au choix (2 h minimum), cercle de zone, jamais de point.","col","p1"],
+  ["Battements","Un trait par moment sur la journée : on voit le rythme du voyage sans rien lire.","ok","p2"],
+  ["Résumé du soir","Généré à la fin de la journée : km, D+, photo phare, nuit. Envoyé aux suiveurs qui l'ont choisi.","new","p1"],
+  ["Choix de notification par suiveur","À chaque moment, résumé du soir, ou seulement départ, sommets et arrivée. Tables notification_preferences existantes.","new","p1"],
+  ["Encouragements groupés","Les réactions reçues pendant le voyage arrivent en un lot le soir, pour ne pas déranger sur le sentier.","new","p2"],
+  ["Compte à rebours de départ","Pour un carnet en préparation lié à un voyage du Compas : J-12, avec le kit qui se remplit.","ok","p2"],
+  ["File d'attente hors ligne","« 3 moments en attente d'envoi », envoyés au retour du réseau (useOfflineCache).","ok","p2"],
+  ["« Je vais bien »","Pointage de sécurité visible des seuls proches, branché sur trip_safety_checkpoints.","ok","p2"]]},
+ {id:"kit",t:"Kit, objets, quincaillerie",d:"Le sac est un personnage du carnet. On doit voir ce qui a servi, et pouvoir le reprendre.",i:[
+  ["Le sac en vue éclatée","Objets en vignettes visuelles groupées par catégorie, poids total en grande métrique mono.","ok","p1"],
+  ["Verdict terrain par objet","Essentiel, utile, jamais servi, défaillant, manquait : pastilles depuis kit_field_reports.","ok","p1"],
+  ["L'objet du jour","Lier un moment à un objet (« la frontale m'a sauvé ») ; la carte objet apparaît dans le fil.","col","p2"],
+  ["Anneau du poids","Répartition par catégorie : dormir, cuisiner, s'habiller, technique, eau.","ok","p2"],
+  ["Reprendre ce kit","Ajouter à mon Compas ou forker, avec le vocabulaire public : lignée, kit souche, éprouvé.","ok","p1"],
+  ["Badge quincaillerie technique","Corde, crampons, piolet, baudrier marqués à part, avec l'usage réel noté.","col","p2"]]},
+ {id:"vie",t:"Rencontres, budget, nature",d:"Ce qui fait qu'on se souvient d'un voyage, au-delà des kilomètres.",i:[
+  ["Carte rencontre","Portrait seulement avec consentement (sinon silhouette), prénom, lieu au niveau du village ou du massif, citation.","new","p2"],
+  ["Compagnons de route","Avatars, rôle, jours partagés, depuis carnet_collaborators et hike_session_participants.","ok","p1"],
+  ["Le budget en reçu","Carte façon ticket : total, par jour, par personne, barres par catégorie. trip_expenses via trip_id.","ok","p2"],
+  ["Coût par jour dans la frise","Mini-barre de dépense sur chaque chapitre de jour.","ok","p2"],
+  ["Herbier et bestiaire","Planche naturaliste des espèces identifiées. identified_species est déjà écrit en base mais jamais affiché.","ok","p1"],
+  ["Ciel et lumière","Lever et coucher du soleil, phase de lune pour chaque nuit, calculés à partir de la date et du massif.","ok","p2"]]},
+ {id:"fin",t:"Engagement et finitions",d:"Ce qui rend la page sûre, accessible et cohérente avec le design système.",i:[
+  ["Réactions sur chaque moment","Les cinq réactions existantes (utile, sécurité, sac, feu, cœur) en pastilles verre, plus seulement sur le carnet.","col","p2"],
+  ["Commentaires ancrés","Un commentaire rattaché à un moment, ouvert dans le tiroir à trois hauteurs.","col","p2"],
+  ["Préparer cette aventure","Bouton qui ouvre le Compas avec la destination et la durée du carnet.","ok","p1"],
+  ["Livre de bord à imprimer","Export A4 visuel : couverture, carte, un jour par double page, sans données privées.","ok","p2"],
+  ["États vides illustrés","Sac vide dessiné, carte vierge à courbes de niveau, avec l'action pour remplir.","ok","p1"],
+  ["Haptique","Retour léger au changement de jour, au j'aime et à l'envoi d'un signal (useHapticFeedback).","ok","p2"],
+  ["Accessibilité","Texte alternatif sur chaque photo, transcription des notes vocales, voile encre pour un contraste AA sur photo, cibles 44 px.","ok","p1"],
+  ["Tokens au lieu des littéraux","carnet-profile.css n'utilise aucune variable --lkv-* : remplacer #C13B34, #dfe8dc, #6B7A70 et les autres par des tokens.","fix","p1"],
+  ["Mouvement sobre","Animer seulement transform et opacity, tracé et pulsations coupés sous prefers-reduced-motion.","ok","p1"]]}
+];
+const TAG={ok:["t-ok","données existantes"],col:["t-col","petite colonne"],new:["t-new","nouveau schéma"],fix:["t-fix","correctif"]};
+const PRI={p1:["t-p1","P1"],p2:["t-p2","P2"]};
+const host=document.getElementById("groups"),fl=document.getElementById("filters");
+let n=0;const esc=s=>s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+G.forEach(g=>{const s=document.createElement("div");s.className="group";s.dataset.g=g.id;
+ s.innerHTML=`<h3>${esc(g.t)}<span class="c">${g.i.length}</span></h3><p>${esc(g.d)}</p><div class="grid">${g.i.map(it=>{n++;const a=TAG[it[2]],b=PRI[it[3]];
+ return `<article class="item"><span class="num">${n}</span><b>${esc(it[0])}</b><p>${esc(it[1])}</p><div class="tags"><span class="${a[0]}">${a[1]}</span><span class="${b[0]}">${b[1]}</span></div></article>`}).join("")}</div>`;host.appendChild(s)});
+[["all","Tout ("+n+")"],...G.map(g=>[g.id,g.t])].forEach(([id,l],k)=>{const b=document.createElement("button");b.type="button";b.textContent=l;b.setAttribute("aria-pressed",k===0?"true":"false");
+ b.onclick=()=>{fl.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed","false"));b.setAttribute("aria-pressed","true");
+ host.querySelectorAll(".group").forEach(x=>x.hidden=!(id==="all"||x.dataset.g===id))};fl.appendChild(b)});
+
+/* paysages dessinés */
+const P={
+ alps:`<defs><linearGradient id="s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--sky-1)"/><stop offset="1" stop-color="var(--sky-2)"/></linearGradient></defs><rect width="400" height="300" fill="url(#s)"/><circle cx="300" cy="70" r="26" fill="var(--warn)" opacity=".55"/><path d="M0 190 L70 110 L110 150 L170 70 L230 150 L280 105 L340 160 L400 120 V300 H0z" fill="var(--m-1)"/><path d="M150 92 L170 70 L190 96 L178 92 L170 100 L160 92z" fill="var(--paper)" opacity=".85"/><path d="M0 230 L90 170 L160 210 L240 160 L320 205 L400 175 V300 H0z" fill="var(--m-2)"/><path d="M0 265 L120 225 L210 255 L300 222 L400 250 V300 H0z" fill="var(--m-3)"/><path d="M0 290 L140 262 L260 285 L400 268 V300 H0z" fill="var(--m-4)"/>`,
+ coast:`<rect width="400" height="300" fill="var(--sky-1)"/><circle cx="90" cy="80" r="30" fill="var(--warn)" opacity=".5"/><rect y="170" width="400" height="130" fill="var(--info)" opacity=".55"/><path d="M220 170 C260 120 330 110 400 130 V300 H250 C240 250 230 210 220 170z" fill="var(--m-2)"/><path d="M290 300 C300 240 340 200 400 190 V300z" fill="var(--m-4)"/>`,
+ desert:`<rect width="400" height="300" fill="var(--sky-2)"/><circle cx="260" cy="90" r="34" fill="var(--warn)" opacity=".7"/><path d="M0 200 C80 150 160 190 240 160 S360 150 400 170 V300 H0z" fill="var(--warn)" opacity=".45"/><path d="M0 250 C100 210 200 250 290 220 S380 230 400 225 V300 H0z" fill="var(--warn-ink)" opacity=".55"/><path d="M60 200 L80 120 L120 118 L140 205z" fill="var(--warn-ink)" opacity=".5"/>`
+};
+document.querySelectorAll("[data-ph]").forEach(e=>{e.innerHTML=`<svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${P[e.dataset.ph]}</svg>`;if(!e.style.position)e.style.aspectRatio=e.closest(".mo")?"16/9":""});
+document.querySelectorAll("[data-bars]").forEach(e=>{let h="";for(let i=0;i<+e.dataset.bars;i++){const v=20+Math.round(70*Math.abs(Math.sin(i*1.7)*Math.cos(i*.45)));h+=`<i class="${i<12?"p":""}" style="height:${v}%"></i>`}e.innerHTML=h});
+document.querySelectorAll("[data-beats]").forEach(e=>{const on=[3,4,7,9,10,11,14,16,17,21];let h="";for(let i=0;i<24;i++){const c=i===21?"now":on.includes(i)?"on":"";h+=`<i class="${c}" style="height:${c?40+((i*37)%55):18}%"></i>`}e.innerHTML=h});
+</script>

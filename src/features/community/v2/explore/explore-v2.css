@@ -1224,7 +1224,7 @@
 .lkdv-cv2x-trend-body {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 0;
   min-width: 0;
   flex: 1 1 auto;
 }
@@ -1728,12 +1728,14 @@
 .lkdv-cv2x-peek-text {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  /* Maquette `.ctx .pv b{margin-bottom:5px}` + `.s2{margin-bottom:4px}`. */
+  gap: 5px;
+  padding-bottom: 4px;
   min-width: 0;
 }
 
 .lkdv-cv2x-peek-text b {
-  font: 600 15px/1.2 var(--font-sans);
+  font: 600 15px/normal var(--font-sans);
   color: var(--lkv-text-primary);
 }
 
@@ -1830,12 +1832,8 @@
   height: auto;
   aspect-ratio: 4 / 5.6;
   border-radius: 18px;
-  background: linear-gradient(
-    90deg,
-    var(--lkv-secondary-subtle),
-    var(--sage-50),
-    var(--lkv-secondary-subtle)
-  );
+  /* Maquette `.ct-skel` (L1028) : verre translucide encre 6 % → blanc 72 %. */
+  background: linear-gradient(90deg, var(--cv2-skeleton-lo), var(--cv2-skeleton-hi), var(--cv2-skeleton-lo));
   background-size: 220% 100%;
   animation: lkdv-cv2-shimmer 1.3s ease-in-out infinite;
 }
@@ -1856,7 +1854,13 @@
   flex: 0 0 auto;
   justify-content: flex-start;
   min-height: 0;
-  padding: 14px 18px 24px;
+  /* Maquette `.empty{padding:28px 18px}` (L373). */
+  padding: 28px 18px;
+}
+
+.lkdv-cv2-empty b,
+.lkdv-cv2-error-state b {
+  line-height: normal;
 }
 
 .lkdv-cv2x-empty-ill {
@@ -1881,12 +1885,22 @@
   text-align: center;
 }
 
+/* Pied de volet « Créer … / Tout voir » (maquette `.pane-foot`, L974) : deux
+   pilules de 44 px centrées, dans la réserve sous la mini-capsule. */
+.lkdv-cv2x-pane-foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 0 4px;
+}
+
 .lkdv-cv2x-empty-actions {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   gap: 8px;
-  margin-top: 4px;
+  margin-top: 0;
 }
 
 /* ── préfers-reduced-motion : les animations décoratives tombent ────────── */
@@ -2028,4 +2042,295 @@
   -webkit-appearance: none;
   appearance: none;
   display: none;
+}
+
+/* ── Fidélité maquette (banc tests/fidelity) ────────────────────────────── */
+
+/* Champ de recherche : verre « bar-glass » (maquette `.srch`, L917), 48 px. */
+.lkdv-cv2-layer .lkdv-cv2-search {
+  background-color: transparent;
+  background-image: var(--cv2-bar-glass-bg);
+  -webkit-backdrop-filter: var(--cv2-bar-glass-blur);
+  backdrop-filter: var(--cv2-bar-glass-blur);
+  box-shadow: var(--cv2-bar-glass-shadow);
+  padding: 0 4px 0 14px;
+}
+
+/* CTA de l'état vide : apparence de la maquette (`.empty .cta`, L377 : 36 px,
+   12,5 px) ; la zone tactile reste de 44 px par une extension invisible. */
+.lkdv-cv2-empty .lkdv-cv2-pill--primary {
+  min-height: 36px;
+  padding: 0 15px;
+  font-size: 12.5px;
+  box-shadow: 0 4px 14px rgba(23, 64, 44, 0.2);
+  margin-top: 3px;
+}
+
+.lkdv-cv2-empty .lkdv-cv2-pill--primary::after {
+  content: '';
+  position: absolute;
+  inset: -4px -2px;
+}
+
+/* ── Passe 2 de fidélité : Recherche (accueil), mesures de la maquette ──────
+   Maquette `.sl-head` / `.srch` / `.ctxrow` / `.seg-s` / `.eyebrow-row` (L917-940) :
+   champ 48 px à y = 130, rangée de puces de 32 px (puces 28 px), rangée du
+   sélecteur Liste / Sur la carte de 32 px (sélecteur 30 px, icône en ligne),
+   surtitres de 13 px (marge 8 2 2) et pas de 8 px entre les blocs. Les zones
+   tactiles restent ≥ 44 px (extensions `::after`). */
+.lkdv-cv2x-search-pane {
+  margin-top: -2px;
+}
+
+.lkdv-cv2x-search-pane > .lkdv-cv2x-search-field {
+  gap: 6px;
+  margin-bottom: -2px;
+}
+
+.lkdv-cv2x-search-pane > .lkdv-cv2x-search-field input {
+  height: 44px;
+  font-weight: 500;
+}
+
+.lkdv-cv2-layer .lkdv-cv2x-search-field:focus-within {
+  box-shadow: var(--cv2-bar-glass-shadow), 0 0 0 2px var(--lkv-focus-ring);
+}
+
+/* Rangée de 32 px ; le défilement horizontal rogne tout ce qui dépasse en hauteur, donc la
+   zone tactile de 44 px (`::after`) vit dans un rembourrage de 8 px annulé par une marge négative. */
+.lkdv-cv2x-search-pane > .lkdv-cv2x-ctx-chips {
+  box-sizing: content-box;
+  align-items: center;
+  height: 32px;
+  padding: 8px 0;
+  margin: -8px 0 -10px;
+}
+
+.lkdv-cv2x-ctx-chips .lkdv-cv2-chip,
+.lkdv-cv2x-recents .lkdv-cv2-chip {
+  min-height: 28px;
+  padding: 0 11px;
+  flex: none;
+}
+
+.lkdv-cv2x-ctx-chips .lkdv-cv2-chip::after,
+.lkdv-cv2x-recents .lkdv-cv2-chip::after {
+  inset: -8px -1px;
+}
+
+.lkdv-cv2x-search-pane > .lkdv-cv2x-search-view {
+  min-height: 30px;
+  height: 30px;
+  margin-bottom: 2px;
+  padding: 3px;
+  gap: 0;
+}
+
+.lkdv-cv2x-search-view button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 24px;
+  padding: 0 10px;
+  font-size: 11.5px;
+}
+
+.lkdv-cv2x-search-home {
+  gap: 8px;
+}
+
+.lkdv-cv2x-search-home > .lkdv-cv2-group {
+  display: contents;
+}
+
+.lkdv-cv2x-search-pane .lkdv-cv2-group-head {
+  min-height: 0;
+  margin: 8px 2px 2px;
+}
+
+.lkdv-cv2x-search-pane .lkdv-cv2-group-head .lkdv-cv2-eyebrow {
+  margin-block: -2px;
+}
+
+.lkdv-cv2x-search-pane .lkdv-cv2-group-head .lkdv-cv2-eyebrow {
+  flex: 0 1 auto;
+}
+
+/* Puces de contexte et récentes : remplissage encre 9 % sans filet (maquette `.chip`, L276). */
+.lkdv-cv2x-ctx-chips .lkdv-cv2-chip,
+.lkdv-cv2x-recents .lkdv-cv2-chip {
+  background: var(--cv2-fill);
+  box-shadow: none;
+}
+
+.lkdv-cv2x-ctx-chips .lkdv-cv2-chip[aria-pressed='true'] {
+  background: var(--lkv-secondary-subtle);
+  box-shadow: inset 0 0 0 1px var(--lkv-secondary), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+/* Sélecteur Liste / Sur la carte : verre « segc » de la maquette (L280-283). */
+.lkdv-cv2x-search-pane > .lkdv-cv2x-search-view {
+  background: rgba(255, 255, 255, 0.65);
+  -webkit-backdrop-filter: blur(28px) saturate(1.8);
+  backdrop-filter: blur(28px) saturate(1.8);
+  border: 0.5px solid rgba(255, 255, 255, 0.8);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 4px 14px rgba(23, 43, 36, 0.08);
+}
+
+.lkdv-cv2x-search-view button[aria-pressed='true'] {
+  background: var(--lkv-surface-card);
+  box-shadow: 0 2px 8px rgba(23, 64, 44, 0.12), inset 0 1px 0 rgba(255, 255, 255, 1);
+}
+
+/* Carte des tendances : matière « carte de tiroir » (maquette `.menu2`, L2255 + L1103). */
+.lkdv-cv2x-trends {
+  background: var(--cv2-tile-bg);
+  -webkit-backdrop-filter: var(--cv2-tile-blur);
+  backdrop-filter: var(--cv2-tile-blur);
+  box-shadow: var(--cv2-tile-shadow);
+}
+
+/* Icône du champ de recherche : sauge (maquette `.srch-ic`, L918). */
+.lkdv-cv2-layer .lkdv-cv2-search > svg {
+  stroke: var(--lkv-secondary);
+}
+
+/* Interlignage « normal » de la maquette (polices à 12–12,5 px sans `line-height`) :
+   position des glyphes au pixel près. */
+.lkdv-cv2x-ctx-chips .lkdv-cv2-chip,
+.lkdv-cv2x-recents .lkdv-cv2-chip,
+.lkdv-cv2x-search-view button,
+.lkdv-cv2x-trend-rank {
+  line-height: normal;
+}
+
+.lkdv-cv2x-search-pane > .lkdv-cv2x-search-field input {
+  line-height: normal;
+}
+
+.lkdv-cv2x-trend-ico {
+  background: rgba(23, 64, 44, 0.07);
+}
+
+/* Compteur de groupe : pastille de 14 px (maquette `.eyebrow-row .cnt`, L939). */
+.lkdv-cv2x-search-pane .lkdv-cv2-eyebrow .lkdv-cv2x-count {
+  line-height: 12px;
+}
+
+/* Pastille de type des résultats : 20 px sur `--mint` (maquette `.rr-pill`, L958). */
+.lkdv-cv2x-search-end .lkdv-cv2-type {
+  min-height: 20px;
+  background: var(--lkv-forest-50);
+}
+
+/* Squelettes : `.sk-pad{padding:6px 14px}` de la maquette (L1409) ; le volet porte déjà 2 px. */
+.lkdv-cv2x-pane > .lkdv-cv2x-skeleton {
+  margin-top: 4px;
+}
+
+/* ── Passe 2 : tuiles Carnets et Clubs à la mesure de la maquette ───────────
+   `.ct{padding:6px;gap:6px}`, `.ct-link{gap:3px}`, `.ct-t{margin-top:3px;padding:0 4px}`,
+   `.ct-foot{gap:2px;min-height:44px}` (L998-1017). Couverture pleine largeur (346 − 12). */
+.lkdv-cv2-tile.lkdv-cv2x-carnet {
+  padding: 6px;
+  gap: 6px;
+}
+
+.lkdv-cv2x-carnet .lkdv-cv2x-tile-link,
+.lkdv-cv2x-club .lkdv-cv2x-tile-link {
+  gap: 3px;
+}
+
+.lkdv-cv2x-carnet .lkdv-cv2x-carnet-body {
+  gap: 3px;
+  margin-top: 3px;
+  padding: 0 4px;
+}
+
+.lkdv-cv2x-carnet .lkdv-cv2x-tile-foot,
+.lkdv-cv2x-club .lkdv-cv2x-tile-foot {
+  gap: 2px;
+  margin-top: 0;
+}
+
+/* Carte de la semaine : `.ct.week{margin-bottom:10px}` (L999) en plus du pas de 8 px ; grille à
+   10 px ; tuiles à 18 px de rayon (L998). */
+.lkdv-cv2x-featured {
+  margin-bottom: 8px;
+}
+
+.lkdv-cv2x-carnet-grid {
+  gap: 10px;
+}
+
+.lkdv-cv2-tile.lkdv-cv2x-carnet,
+.lkdv-cv2-tile.lkdv-cv2x-club {
+  border-radius: var(--cv2-radius-tile-lg);
+}
+
+/* Tuile club : `.kt{padding:10px;gap:8px}`, `.kt-head{margin-bottom:4px}`, titre `.ct-t` (marge 3 px,
+   retrait 4 px), signal et amis à 4 px de retrait, avatars de 24 px (L1030-1039, L1018-1019). */
+.lkdv-cv2-tile.lkdv-cv2x-club {
+  padding: 10px;
+  gap: 8px;
+}
+
+.lkdv-cv2x-club .lkdv-cv2x-club-head {
+  margin-bottom: 4px;
+}
+
+.lkdv-cv2x-club .lkdv-cv2x-club-title {
+  margin-top: 3px;
+  padding: 0 4px;
+}
+
+.lkdv-cv2x-club .lkdv-cv2-meta {
+  padding: 0 4px;
+}
+
+.lkdv-cv2x-club .lkdv-cv2x-club-signal {
+  padding: 0 4px;
+  white-space: normal;
+  text-overflow: clip;
+}
+
+.lkdv-cv2x-club .lkdv-cv2x-club-signal > i {
+  width: 7px;
+  height: 7px;
+}
+
+.lkdv-cv2x-club .lkdv-cv2x-club-friends {
+  padding: 2px 4px 0;
+}
+
+.lkdv-cv2x-club .lkdv-cv2x-club-friends .lkdv-cv2-avatars {
+  padding-left: 6px;
+}
+
+.lkdv-cv2x-club .lkdv-cv2x-club-friends .lkdv-cv2-avatar {
+  width: 24px;
+  height: 24px;
+  margin-left: -6px;
+  font-size: 10.5px;
+}
+
+/* Puces d'activité des clubs : rangée de 28 px (maquette), zone tactile de 44 px dans un
+   rembourrage de 8 px annulé par une marge négative (le défilement rogne le débordement). */
+.lkdv-cv2x-club-chips {
+  box-sizing: content-box;
+  height: 28px;
+  padding: 8px 0;
+  margin: -8px 0;
+}
+
+/* Sorties : agenda collé au haut du volet (`.sl-head`, L1049 : 130 px) et billets à y = 240. */
+.lkdv-cv2x-agenda-block {
+  margin-top: -2px;
+  margin-bottom: -6px;
+}
+
+.lkdv-cv2-agenda-day i {
+  color: var(--lkv-text-secondary);
+  text-transform: none;
 }

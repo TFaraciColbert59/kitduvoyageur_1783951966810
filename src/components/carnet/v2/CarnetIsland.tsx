@@ -5,6 +5,8 @@ import React, { useEffect, useState } from 'react';
 export interface CarnetIslandToast {
   id: string;
   message: string;
+  /** Deuxième ligne (maquette `#isl-s`) : lieu, jour, précision. */
+  subtitle?: string;
   undo?: () => void;
 }
 
@@ -43,6 +45,7 @@ export function CarnetIsland({ toast, onDismiss }: CarnetIslandProps) {
     >
       <div className="lkdv-carnet-island-text">
         <b>{toast.message}</b>
+        {toast.subtitle ? <span>{toast.subtitle}</span> : null}
       </div>
       {toast.undo ? (
         <button

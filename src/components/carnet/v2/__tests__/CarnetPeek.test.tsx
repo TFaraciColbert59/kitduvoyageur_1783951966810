@@ -91,8 +91,8 @@ function base(overrides: Partial<React.ComponentProps<typeof CarnetPeek>> = {}) 
   };
 }
 
-describe('CarnetPeek — les cinq actions réelles du moment', () => {
-  it('affiche exactement les cinq actions, dans l’ordre du socle', () => {
+describe('CarnetPeek — les actions réelles du moment', () => {
+  it('affiche Lire, les cinq actions réelles dans l’ordre du socle, puis Fermer', () => {
     render(<CarnetPeek {...base()} />);
 
     const dialog = screen.getByRole('dialog', { name: /Moment/ });
@@ -101,7 +101,15 @@ describe('CarnetPeek — les cinq actions réelles du moment', () => {
     const labels = Array.from(dialog.querySelectorAll('.lkdv-peek-menu button')).map((button) =>
       (button.textContent ?? '').trim()
     );
-    expect(labels).toEqual(['J’aime · 3', 'Commenter', 'Enregistrer', 'Partager', 'Signaler']);
+    expect(labels).toEqual([
+      'Lire',
+      'J’aime · 3',
+      'Commenter',
+      'Enregistrer',
+      'Partager',
+      'Signaler',
+      'Fermer',
+    ]);
   });
 
   it('porte l’état du moment : compteur réel et aria-pressed sur le j’aime', async () => {
@@ -158,7 +166,32 @@ describe('CarnetPeek — les cinq actions réelles du moment', () => {
   it('un moment sans image n’expose pas Commenter (pas de post à ouvrir)', () => {
     render(<CarnetPeek {...base({ moment: { ...moment, imageUrl: null } })} />);
 
-    expect(screen.getAllByRole('button')).toHaveLength(4);
+    expect(screen.getAllByRole('button')).toHaveLength(6);
     expect(screen.queryByRole('button', { name: 'Commenter' })).toBeNull();
+  });
+});
+
+describe('CarnetPeek — aperçu de la maquette (Lire, Voir sur la carte, Épingler, Fermer)', () => {
+  it('ajoute Voir sur la carte et Épingler quand la fiche les branche', () => {
+    const onShowOnMap = vi.fn();
+    const onTogglePin = vi.fn();
+    render(<CarnetPeek {...base({ onShowOnMap, onTogglePin, pinned: false })} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Voir sur la carte' }));
+    expect(onShowOnMap).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Épingler' }));
+    expect(onTogglePin).toHaveBeenCalledTimes(1);
+  });
+
+  it('propose Désépingler sur un moment déjà épinglé', () => {
+    render(<CarnetPeek {...base({ onTogglePin: vi.fn(), pinned: true })} />);
+    expect(screen.getByRole('button', { name: 'Désépingler' }).getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('Lire ouvre le post du moment', () => {
+    const onOpenPost = vi.fn();
+    render(<CarnetPeek {...base({ onOpenPost })} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Lire' }));
+    expect(onOpenPost).toHaveBeenCalledWith('open');
   });
 });

@@ -1287,6 +1287,30 @@
   display: none;
 }
 
+/* Carnet#20 : le tablist ne porte que les onglets ; le « + » reste à côté. */
+.lkdv-cv2c-day-tablist {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Carnet#11 : le panneau suit le doigt (transform seul) ; le défilement
+   vertical reste au navigateur. */
+.lkdv-cv2c-day-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  touch-action: pan-y;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lkdv-cv2c-day-panel {
+    transition: none !important;
+    transform: none !important;
+  }
+}
+
 .lkdv-cv2c-day-tab {
   flex: 0 0 auto;
   min-height: 34px;
@@ -2421,7 +2445,7 @@
 
 .lkdv-cv2c-kit-layer {
   display: grid;
-  grid-template-columns: 44px minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: 6px;
   font: 500 10px/1.25 var(--font-sans);
@@ -2456,6 +2480,23 @@
 }
 
 /* Points de départ (FROM) : liste de kits/carnets, lignes 44 px. */
+/* Sortie#20 / Carnet : groupes de champs en vrais `fieldset` + `legend` visible
+   (étiquette de champ, majuscules 10 px). */
+.lkdv-cv2c-fset {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.lkdv-cv2c-fset > legend {
+  padding: 0;
+  margin-bottom: 6px;
+}
+
 .lkdv-cv2c-kit-sources {
   display: flex;
   flex-direction: column;
@@ -2481,6 +2522,97 @@
 .lkdv-cv2c-kit-source small {
   font: 500 10.5px/1.3 var(--font-sans);
   color: var(--lkv-text-secondary);
+}
+
+/* Kit#15 / Kit#12 — commutateurs « Mode préparation » et « Unités impériales »
+   (maquette `F.sw`) : libellé + aide à gauche, interrupteur 44 px à droite. */
+.lkdv-cv2c-kit-switches {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.lkdv-cv2c-kit-switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: var(--lkv-touch-min);
+}
+
+.lkdv-cv2c-kit-switch > span {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.lkdv-cv2c-kit-switch b {
+  font: 600 12.5px/1.3 var(--font-sans);
+  color: var(--lkv-text-primary);
+}
+
+.lkdv-cv2c-kit-switch small {
+  font: 500 10.5px/1.3 var(--font-sans);
+  color: var(--lkv-text-secondary);
+}
+
+/* Kit#9 — action météo sous les suggestions. */
+.lkdv-cv2c-kit-weather {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.lkdv-cv2c-kit-weather small {
+  font: 500 10.5px/1.3 var(--font-sans);
+  color: var(--lkv-text-secondary);
+}
+
+/* Kit#12 — check-list de préparation : case « emporté » + puce « Emprunté ». */
+.lkdv-cv2c-kit-prep {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lkdv-cv2c-kit-prep-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lkdv-cv2c-kit-prep-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--lkv-touch-min);
+}
+
+.lkdv-cv2c-kit-prep-row > span {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.lkdv-cv2c-kit-prep-row b {
+  font: 600 12px/1.3 var(--font-sans);
+  color: var(--lkv-text-primary);
+}
+
+.lkdv-cv2c-kit-prep-row small {
+  font: 500 10.5px/1.3 var(--font-sans);
+  color: var(--lkv-text-secondary);
+}
+
+.lkdv-cv2c-kit-prep-row .lkdv-cv2c-icon-btn {
+  position: relative;
 }
 
 /* Suggestions actionnables : ligne + bouton « Ajouter » 44 px. */
@@ -2556,6 +2688,20 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+/* Carnet#10 : filigrane du tracé ; sans photo, vert forêt (le blanc se perdrait
+   sur le fond clair de repli). */
+.lkdv-cv2c-carnet-preview-trace {
+  opacity: 0.75;
+}
+
+.lkdv-cv2c-carnet-preview-cover:not([data-photo]) .lkdv-cv2c-carnet-preview-trace path {
+  stroke: var(--lkv-forest-900);
+}
+
+.lkdv-cv2c-carnet-preview-cover:not([data-photo]) .lkdv-cv2c-carnet-preview-trace circle {
+  fill: var(--lkv-forest-900);
 }
 
 .lkdv-cv2c-carnet-preview-visa {

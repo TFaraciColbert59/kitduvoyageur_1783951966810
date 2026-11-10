@@ -79,9 +79,18 @@ export function PeekOverlay({ peek, onClose }: PeekOverlayProps) {
   const stamp = peek.kind === 'sortie' ? formatDateStamp(peek.dateIso) : null;
 
   return (
-    <div className="lkdv-cv2-peek" role="dialog" aria-modal="true" aria-label={`Aperçu : ${peek.title}`}>
+    <div className="lkdv-cv2-peek">
       <div className="lkdv-cv2x-peek-scrim" aria-hidden="true" onPointerDown={onClose} />
-      <div className="lkdv-cv2-peek-box lkdv-cv2x-peek-box" ref={boxRef} onKeyDown={onKeyDown}>
+      {/* Le dialogue est la **carte** (310 px, maquette `.ctx .box`), pas le voile
+          pleine feuille : sa géométrie est celle que le banc de fidélité mesure. */}
+      <div
+        className="lkdv-cv2-peek-box lkdv-cv2x-peek-box"
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Aperçu : ${peek.title}`}
+        ref={boxRef}
+        onKeyDown={onKeyDown}
+      >
         <div className="lkdv-cv2x-peek-preview">
           <span className="lkdv-cv2x-peek-media" data-kind={peek.kind} aria-hidden="true">
             {peek.kind === 'club' ? (

@@ -30,6 +30,8 @@ export interface EventDetailViewProps {
   spotsLeft: number;
   busy: boolean;
   onSignup: (event: EventCardVM) => void;
+  /** Lecteur connecté : sert à distinguer les amis inscrits (Sorties#11). */
+  viewerId?: string | null;
 }
 
 /**
@@ -38,9 +40,16 @@ export interface EventDetailViewProps {
  * avec « Itinéraire », organisateur, participants, sécurité, `.ics` et lien
  * vers la fiche.
  */
-export function EventDetailView({ event, status, spotsLeft, busy, onSignup }: EventDetailViewProps) {
+export function EventDetailView({
+  event,
+  status,
+  spotsLeft,
+  busy,
+  onSignup,
+  viewerId = null,
+}: EventDetailViewProps) {
   const { haptic } = useHapticFeedback();
-  const detailState = useEventDetail(event);
+  const detailState = useEventDetail(event, true, viewerId);
   const detail = detailState.detail;
   const weather = detailState.weather;
   const weatherLoading = detailState.weatherLoading;
@@ -268,6 +277,30 @@ export function EventDetailView({ event, status, spotsLeft, busy, onSignup }: Ev
               <small>Organisateur</small>
             </span>
           </div>
+
+          {detail.friends.length > 0 ? (
+            <div className="lkdv-cv2-card lkdv-cv2x-friends-card" data-testid="cv2-event-friends">
+              <span className="lkdv-cv2-avatars" aria-hidden="true">
+                {detail.friends.slice(0, 3).map((friend) => (
+                  <span key={friend.id || friend.name} className="lkdv-cv2-avatar">
+                    {friend.avatarUrl ? (
+                      <AppImage src={friend.avatarUrl} alt="" width={28} height={28} className="lkdv-cv2x-avatar-img" />
+                    ) : (
+                      friend.initials.slice(0, 1)
+                    )}
+                  </span>
+                ))}
+              </span>
+              <span>
+                <b>
+                  {detail.friends.length === 1
+                    ? '1 ami est inscrit'
+                    : `${detail.friends.length} amis sont inscrits`}
+                </b>
+                <small>{detail.friends.map((friend) => friend.name.split(' ')[0]).join(', ')}</small>
+              </span>
+            </div>
+          ) : null}
 
           <div className="lkdv-cv2-card">
             <span className="lkdv-cv2-eyebrow">Participants</span>

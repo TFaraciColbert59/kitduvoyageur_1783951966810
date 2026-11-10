@@ -1,5 +1,9 @@
 # Écarts maquette ↔ fiche carnet v2 — état après la reprise du 8 nov. 2026
 
+> **Mise à jour du 9 nov.** : ce document est historique. Les tableaux § 1 à § 5 contiennent des énoncés dépassés
+> (« tables non migrées en prod », « pas de pilule de reprise »). La source de vérité est `CHECKLIST-100.md` et
+> `docs/claude/FINITION-SUIVI.md` ; voir § 7.
+
 **Référence** : `annexes/maquette-fiche-carnet.html`, rendue à **430 × 932** (capture
 `docs/audit/carnet-v2-2026-11-08/captures/maquette-430x932.png`).
 **Mesure** : prod locale Next 15 + Supabase de démo, compte `@lea.fontaine`,
@@ -113,3 +117,23 @@ Tables : `carnet_moment_likes/saves/comments`, `carnet_day_likes/comments`,
 - **Lentille chromatique** : barre flottante globale, hors fiche.
 - **Échelle de carte, départ/arrivée, couches par tiroir** : partiels.
 - **Squelettes/chargement/hors-ligne** : partiels.
+
+## 7. Reprise du 9 novembre 2026 (banc de fidélité)
+
+| Surface | Avant | Après | Preuve |
+|---|---|---|---|
+| Tiroirs (5) : capsule | 402×36 à y=66 | 338×56 à y=69 | banc : 31/31 mesures sur les 5 tiroirs (était 16/31) |
+| Tiroirs : contenu, barre de lentilles | y=122/140, 132 px | y=133, 181×30 à y=490,4, verre clair | idem |
+| Résumé : pastille titre | x=52 (bouton Retour en trop) | x=12, chevron, 3 boutons ronds | banc : 64/69 mesures (était 48/69) |
+| Résumé : km / D+ | 15 km, +860 (dernière sortie) | 72,4 km, +4 520 (somme des sorties) | `finition.test.ts` « totaux du carnet » |
+| Résumé : cartes-jour, avatar | aplat sombre | illustration `CarnetArt` en repli de photo | capture `resume-*` |
+| Fil › Résumé | liste de moments | une carte postale par jour | capture |
+| Sac : verdict inconnu | plantage | repli neutre | test « verdict inconnu » |
+| Pixels différents (Résumé 390) | 41,5 % | 30,3 % | `FINITION-SUIVI.md` §Scores |
+| Pixels différents (tiroirs 390) | 41–53 % | 13–38 % | idem |
+
+Décisions : le bouton Retour de la barre haute est retiré (la maquette n'en a pas ; retour par le navigateur ou le geste
+système) ; la pastille de lecture « Reprendre » est retirée (absente de la maquette) ; les lentilles « Nuit » et « Météo
+et ciel » portent le nom de la maquette ; Équipage garde trois lentilles (la maquette n'a pas de « Commentaires » : ils
+sont dans « Réactions ») ; le menu « Enregistrer » de la maquette est le rail ··· du post (Enregistrer, Copier le lien,
+Signaler), déjà fourni par `CommunityFeedPost` via `CarnetPostSheet`.
