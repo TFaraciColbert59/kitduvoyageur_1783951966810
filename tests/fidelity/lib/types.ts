@@ -82,8 +82,14 @@ export interface Scenario {
    * Fond neutralisé (voir `lib/neutral.ts`) : même aplat uni derrière le tiroir des deux
    * côtés, et comparaison limitée à la zone du tiroir. Absent : capture brute, plein cadre.
    */
-  neutre?: { app: { sheet: string; root: string; keep?: string[] }; maquette: { sheet: string; root: string; keep?: string[] } };
+  neutre?: { app: { sheet: string; root: string; keep?: string[]; hide?: string[] }; maquette: { sheet: string; root: string; keep?: string[]; hide?: string[] } };
   mesures: MeasureSpec[];
+  /**
+   * Textes de données alignés sur ceux de la maquette (banc uniquement) : le n-ième élément `app`
+   * reçoit le texte du n-ième élément `maquette`. Les textes sont déjà masqués du diff ; seule la
+   * mise en page (retours à la ligne, hauteurs de tuile) dépend de leur longueur.
+   */
+  alignerTextes?: Array<{ app: string; maquette: string }>;
   /** État que l'app ou la maquette ne permet pas d'atteindre : raison écrite. */
   nonAtteignable?: { app?: string; maquette?: string };
 }

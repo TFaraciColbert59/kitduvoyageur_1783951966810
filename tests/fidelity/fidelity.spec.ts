@@ -174,6 +174,19 @@ for (const scenario of scenarios) {
       const appFrameSel = use.viewport.width >= 768 && scenario.app.frameWide ? scenario.app.frameWide : scenario.app.frame;
       const maqFrameSel = scenario.maquette.frame;
 
+      // Textes de données alignés sur la maquette (retours à la ligne, hauteurs de tuile).
+      for (const pair of scenario.alignerTextes ?? []) {
+        const texts = await maqPage.evaluate((sel) => Array.from(document.querySelectorAll(sel)).map((el) => el.textContent ?? ''), pair.maquette);
+        await appPage.evaluate(
+          ({ sel, values }) => {
+            document.querySelectorAll(sel).forEach((el, index) => {
+              if (values[index] != null) el.textContent = values[index];
+            });
+          },
+          { sel: pair.app, values: texts },
+        );
+      }
+
       // Fond neutralisé (banc uniquement) : même aplat des deux côtés, zone = tiroir.
       let appSheet: Rect | null = null;
       let maqSheet: Rect | null = null;

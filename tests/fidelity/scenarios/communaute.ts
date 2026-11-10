@@ -24,8 +24,9 @@ const DATA_MASKS = {
     '.lkdv-cv2-title',
     '.lkdv-cv2-meta',
     '.lkdv-cv2-visa',
+    '.lkdv-cv2x-tile-foot .lkdv-cv2-num',
   ],
-  maquette: ['#phone .ct-cover', '#phone .tvs', '#phone .ct-t', '#phone .ct-m', '#phone .visa'],
+  maquette: ['#phone .ct-cover', '#phone .tvs', '#phone .ct-t', '#phone .ct-m', '#phone .visa', '#phone .ct-foot .ct-b span'],
 };
 
 /**
@@ -33,7 +34,8 @@ const DATA_MASKS = {
  * (appui long) est conservé : il peut être monté hors du tiroir.
  */
 const NEUTRE: Scenario['neutre'] = {
-  app: { sheet: '.lkdv-cv2-sheet', root: APP_FRAME, keep: ['[role="dialog"][aria-label^="Aperçu"]'] },
+  // Pilule « Mode invité · lecture seule » : ajout de l'app (01-SPEC), absente de la maquette (qui passe par l'île « Se connecter »).
+  app: { sheet: '.lkdv-cv2-sheet', root: APP_FRAME, keep: ['[role="dialog"][aria-label^="Aperçu"]'], hide: ['.lkdv-cv2-guest'] },
   maquette: { sheet: '#phone .sheet', root: MAQ_FRAME, keep: ['#phone .ctx'] },
 };
 
@@ -91,6 +93,9 @@ function scenario(
     session?: 'member' | 'anonymous';
     mock?: MockOptions;
     rpc?: Record<string, unknown>;
+    alignerTextes?: Scenario['alignerTextes'];
+    /** Garde le focus que la maquette donne d'elle-même (recherche : champ focalisé des deux côtés). */
+    keepMaquetteFocus?: boolean;
     /** Masques ajoutés à ceux de la surface (données propres à l'écran). */
     masques?: { app: string[]; maquette: string[] };
     nonAtteignable?: Scenario['nonAtteignable'];
@@ -103,10 +108,16 @@ function scenario(
     etat,
     role,
     app: app('/communaute', options.appSteps, options.session ?? (role === 'invite' ? 'anonymous' : 'member'), options.mock, options.rpc),
-    maquette: { file: MAQUETTE_COMMUNAUTE, hash: options.hash, steps: options.maqSteps ?? [], frame: MAQ_FRAME },
+    maquette: {
+      file: MAQUETTE_COMMUNAUTE,
+      hash: options.hash,
+      steps: [...(options.maqSteps ?? []), ...(options.keepMaquetteFocus ? [] : [BLUR_MAQUETTE])],
+      frame: MAQ_FRAME,
+    },
     masques: { app: [...MASQUES.app, ...(options.masques?.app ?? [])], maquette: [...MASQUES.maquette, ...(options.masques?.maquette ?? [])] },
     neutre: NEUTRE,
     mesures: options.measures,
+    alignerTextes: options.alignerTextes,
     nonAtteignable: options.nonAtteignable,
   };
 }
@@ -126,9 +137,19 @@ const MAQUETTE_TRENDS = [
   { kind: 'lieu', label: 'GR20', hits: 45 },
 ];
 /** La maquette amorce trois recherches récentes ; l'app n'en garde aucune sans saisie (mémoire de session) : on les retire côté maquette. */
+/**
+ * La maquette ouvre un deep link en donnant le focus clavier à l'onglet actif (anneau `:focus-visible`
+ * vert autour de la lentille) : artefact du banc, absent de l'app. Retiré hors recherche (où le focus
+ * du champ est voulu des deux côtés).
+ */
+const BLUR_MAQUETTE: Step = { eval: 'document.activeElement && document.activeElement.blur && document.activeElement.blur()' };
+
 const CLEAR_MAQUETTE_RECENTS: Step = {
   eval: `for (let n = 0; n < 9; n += 1) { const b = document.querySelector('#phone [data-a="q-del"]'); if (!b) break; b.click(); }`,
 };
+
+/** Titres des tuiles carnet : même longueur que la maquette, donc mêmes retours à la ligne. */
+const CARNET_TITLES = [{ app: '[data-testid="cv2-tile-carnet"] .lkdv-cv2x-carnet-title', maquette: '#phone .ct .ct-t' }];
 
 const CARNET_TILE = TILE('Tuile carnet', '[data-testid="cv2-tile-carnet"]', '#phone .ct');
 const CLUB_TILE = TILE('Tuile club', '[data-testid="cv2-tile-club"]', '#phone .kt');
@@ -139,6 +160,7 @@ export const COMMUNAUTE_SCENARIOS: Scenario[] = [
   scenario('communaute-explorer-carnets', 'Explorer · carnets', 'chargé', 'membre', {
     hash: 'explorer-carnets',
     appSteps: [...openExplorer, volet('Carnets'), { wait: 600 }],
+    alignerTextes: CARNET_TITLES,
     measures: [...SHEET_MEASURES, CARNET_TILE, SORT_BUTTON],
   }),
   scenario('communaute-explorer-clubs', 'Explorer · clubs', 'chargé', 'membre', {
@@ -153,6 +175,7 @@ export const COMMUNAUTE_SCENARIOS: Scenario[] = [
   }),
   scenario('communaute-recherche-accueil', 'Explorer · recherche', 'accueil de la recherche', 'membre', {
     hash: 'explorer-search',
+    keepMaquetteFocus: true,
     appSteps: openSearch,
     maqSteps: [CLEAR_MAQUETTE_RECENTS],
     rpc: { community_search_trending: MAQUETTE_TRENDS },
@@ -183,6 +206,7 @@ export const COMMUNAUTE_SCENARIOS: Scenario[] = [
   }),
   scenario('communaute-recherche-resultats', 'Explorer · recherche', 'résultats pour « ecrins »', 'membre', {
     hash: 'explorer-search',
+    keepMaquetteFocus: true,
     appSteps: [
       ...openSearch,
       { fill: { role: 'searchbox', name: 'Rechercher dans toute la communauté' }, value: 'ecrins' },
@@ -190,7 +214,15 @@ export const COMMUNAUTE_SCENARIOS: Scenario[] = [
       { wait: 700 },
     ],
     maqSteps: [{ fill: { css: '#phone .srch input' }, value: 'ecrins' }, { wait: 900 }],
-    measures: SHEET_MEASURES,
+    // Couvertures, titres, sous-titres : données (jeux d'exemple différents).
+    masques: { app: ['.lkdv-cv2x-search-media', '.lkdv-cv2x-search-body'], maquette: ['#phone .res-row .rr-cover', '#phone .res-row .rr-t'] },
+    measures: [
+      ...SHEET_MEASURES,
+      measure('Ligne de résultat', '.lkdv-cv2x-search-list > a', '#phone .res-row', ['border-radius', 'background-image', 'box-shadow']),
+      // Sans position : la maquette n'affiche la distance que géolocalisée, la RPC simulée la renvoie toujours.
+      measure('Pastille de type', '.lkdv-cv2x-search-end .lkdv-cv2-type', '#phone .res-row .rr-pill', ['border-radius', 'background-color', 'font-size', 'font-weight', 'height'], false),
+      measure('Surtitre de groupe', '.lkdv-cv2x-search-pane .lkdv-cv2-group-head', '#phone .eyebrow-row', []),
+    ],
   }),
   scenario('communaute-peek-carnet', 'Explorer · carnets', 'aperçu (appui long sur une tuile)', 'membre', {
     hash: 'explorer-carnets',
@@ -225,7 +257,8 @@ export const COMMUNAUTE_SCENARIOS: Scenario[] = [
     mock: { latencyMs: 15_000 },
     appSteps: [...openExplorer, volet('Carnets'), { wait: 300 }],
     maqSteps: [panel('[data-p="st-load"]'), { wait: 300 }],
-    measures: SHEET_MEASURES,
+    // Le dégradé des tuiles est lisse : le diff pixel ne voit pas un décalage de 4 px, la mesure le voit.
+    measures: [...SHEET_MEASURES, measure('Tuile squelette', '.lkdv-cv2x-skeleton-tile', '#phone .ct-skel', ['border-radius'])],
   }),
   scenario('communaute-explorer-carnets-vide', 'Explorer · carnets', 'vide', 'membre', {
     hash: 'explorer-carnets',
@@ -246,6 +279,7 @@ export const COMMUNAUTE_SCENARIOS: Scenario[] = [
     session: 'anonymous',
     appSteps: [...openExplorer, volet('Carnets'), { wait: 600 }],
     maqSteps: [panel('[data-p="role"][data-v="g"]'), { wait: 500 }],
+    alignerTextes: CARNET_TITLES,
     measures: [...SHEET_MEASURES, CARNET_TILE],
   }),
 ];

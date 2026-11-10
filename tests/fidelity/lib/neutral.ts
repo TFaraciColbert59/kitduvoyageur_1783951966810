@@ -30,6 +30,11 @@ export interface NeutralSpec {
   keep?: string[];
   /** Cadre (le téléphone, la couche de l'app) peint de l'aplat. */
   root: string;
+  /**
+   * Éléments retirés de la capture parce que l'autre côté n'a pas d'équivalent (écart de produit
+   * décidé, listé dans le rapport : ex. pilule « Mode invité » de l'app, absente de la maquette).
+   */
+  hide?: string[];
 }
 
 /**
@@ -38,7 +43,10 @@ export interface NeutralSpec {
  */
 export async function neutralizeBackground(page: Page, spec: NeutralSpec): Promise<Rect | null> {
   return page.evaluate(
-    ({ sheet, keep, root, color }) => {
+    ({ sheet, keep, root, color, hide }) => {
+      for (const sel of hide ?? []) {
+        document.querySelectorAll<HTMLElement>(sel).forEach((el) => el.style.setProperty('display', 'none', 'important'));
+      }
       const sheetEl = document.querySelector<HTMLElement>(sheet);
       if (!sheetEl) return null;
       const keepEls = [sheetEl, ...(keep ?? []).flatMap((sel) => Array.from(document.querySelectorAll<HTMLElement>(sel)))];
@@ -78,7 +86,7 @@ export async function neutralizeBackground(page: Page, spec: NeutralSpec): Promi
       const r = sheetEl.getBoundingClientRect();
       return { x: r.left, y: r.top, w: r.width, h: r.height };
     },
-    { sheet: spec.sheet, keep: spec.keep, root: spec.root, color: NEUTRAL_BACKGROUND },
+    { sheet: spec.sheet, keep: spec.keep, root: spec.root, color: NEUTRAL_BACKGROUND, hide: spec.hide },
   );
 }
 
