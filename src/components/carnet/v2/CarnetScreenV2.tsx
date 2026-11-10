@@ -662,7 +662,7 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
       });
 
       if (res.ok) {
-        showIsland('Réponse envoyée en message privé');
+        showIsland(`Message envoyé à ${storyUser.name.split(' ')[0]}`, undefined, 'Réponse privée à sa story');
         return true;
       } else {
         showIsland(res.error || 'Impossible d’envoyer la réponse');
@@ -1089,6 +1089,24 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
           startUser={0}
           onClose={() => setStoriesOpen(false)}
           onReply={handleStoryReply}
+          onAuthor={(storyUser) => {
+            setStoriesOpen(false);
+            if (detail.participants.some((p) => p.userId === storyUser.id)) {
+              setIsAccountDrawer(false);
+              setDrawerSlot('equipage');
+              setDrawerIntent({ nonce: Date.now(), view: { type: 'participant', userId: storyUser.id } });
+              setDrawerOpen(true);
+            }
+          }}
+          onReport={(_storyUser, slide) => {
+            if (!slide.storyId) return;
+            setStoriesOpen(false);
+            if (!canWrite) {
+              requireAuth();
+              return;
+            }
+            setReportTarget({ kind: 'moment', momentId: slide.storyId });
+          }}
           myUserId={currentUserId ?? undefined}
         />
       ) : null}

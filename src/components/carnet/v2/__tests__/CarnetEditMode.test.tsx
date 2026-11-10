@@ -54,7 +54,22 @@ vi.mock('@/lib/supabase/client', () => {
 });
 vi.mock('@/components/compte/map/CompteMap', () => ({ CompteMap: () => <div data-testid="compte-map-mock" /> }));
 vi.mock('@/components/carnet/profile/CarnetPostSheet', () => ({ CarnetPostSheet: () => <div /> }));
-vi.mock('@/components/communaute/StoriesViewer', () => ({ default: () => <div /> }));
+vi.mock('@/components/communaute/StoriesViewer', () => ({
+  default: (props: {
+    users: Array<{ id: string; name: string; slides: Array<{ storyId?: string }> }>;
+    onAuthor?: (user: { id: string; name: string }) => void;
+    onReport?: (user: unknown, slide: { storyId?: string }) => void;
+  }) => (
+    <div data-testid="stories-mock" data-groups={props.users.length}>
+      <button type="button" onClick={() => props.onAuthor?.(props.users[0])}>
+        pilule auteur
+      </button>
+      <button type="button" onClick={() => props.onReport?.(props.users[0], props.users[0].slides[0])}>
+        signaler
+      </button>
+    </div>
+  ),
+}));
 
 const ETAPE_ID = '0b1c9c0e-3c1d-4f6a-9a2e-0d4c1b7e8f01';
 
@@ -289,5 +304,26 @@ describe('tiroir « Carnet » (curseurs)', () => {
     expect(within(dialog).queryByRole('tab', { name: 'Gérer' })).toBeNull();
     fireEvent.click(within(dialog).getByRole('tab', { name: 'Paramètres' }));
     expect(within(dialog).queryByRole('switch')).toBeNull();
+  });
+});
+
+describe('stories des voyageurs (toucher la couverture)', () => {
+  it('un groupe par voyageur ; la pilule auteur ouvre sa fiche dans l’Équipage', () => {
+    const detail = buildEcrinsDetail();
+    render(<CarnetScreenV2 detail={detail} />);
+    fireEvent.click(screen.getByRole('button', { name: /Ouvrir les stories du carnet/ }));
+    const stories = screen.getByTestId('stories-mock');
+    expect(Number(stories.getAttribute('data-groups'))).toBeGreaterThan(0);
+    fireEvent.click(within(stories).getByRole('button', { name: 'pilule auteur' }));
+    expect(screen.queryByTestId('stories-mock')).toBeNull();
+    const drawer = screen.getByRole('dialog', { name: 'Détail du carnet' });
+    expect(within(drawer).getByRole('button', { name: 'Retour' })).toBeTruthy();
+  });
+
+  it('« Signaler » ferme les stories et ouvre le signalement du moment', () => {
+    render(<CarnetScreenV2 detail={buildEcrinsDetail()} />);
+    fireEvent.click(screen.getByRole('button', { name: /Ouvrir les stories du carnet/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'signaler' }));
+    expect(screen.queryByTestId('stories-mock')).toBeNull();
   });
 });
