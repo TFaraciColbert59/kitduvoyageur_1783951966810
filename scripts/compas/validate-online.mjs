@@ -25,18 +25,28 @@ if (!base || !phrasesFile) {
   );
   process.exit(2);
 }
-const phrases = JSON.parse(fs.readFileSync(phrasesFile, 'utf8'));
+// Deux formes acceptées : ["phrase", …] (jeux de la phase 7) ou le jeu « demandes-or »
+// { version, demandes: [{ id, phrase, … }] } (v6). DEMANDES_FROM / DEMANDES_TO (rangs à partir
+// de 1, bornes comprises) ne jouent qu'une tranche : plusieurs passages se partagent le jeu.
+const rawPhrases = JSON.parse(fs.readFileSync(phrasesFile, 'utf8'));
+const allPhrases = (Array.isArray(rawPhrases) ? rawPhrases : rawPhrases.demandes).map((x, i) =>
+  typeof x === 'string' ? { id: String(i + 1).padStart(2, '0'), say: x } : { id: x.id, say: x.phrase }
+);
+const from = Math.max(1, Number(process.env.DEMANDES_FROM) || 1);
+const to = Math.min(allPhrases.length, Number(process.env.DEMANDES_TO) || allPhrases.length);
+const phrases = allPhrases.slice(from - 1, to);
 const outDir =
   outArg ?? path.join('proof/compas', new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-'));
 const SPACING_MS = 125_000;
 fs.mkdirSync(outDir, { recursive: true });
 const log = (o) => fs.appendFileSync(path.join(outDir, 'results.jsonl'), JSON.stringify(o) + '\n');
 
-const browser = await chromium.launch(
-  process.env.PLAYWRIGHT_CHROMIUM_PATH
-    ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH }
-    : {}
-);
+// Derrière un mandataire de sortie (session cloud) : Chromium ne lit pas HTTPS_PROXY tout seul.
+const proxy = process.env.HTTPS_PROXY || process.env.https_proxy;
+const browser = await chromium.launch({
+  ...(process.env.PLAYWRIGHT_CHROMIUM_PATH ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH } : {}),
+  ...(proxy ? { proxy: { server: proxy } } : {}),
+});
 // Le cadre de référence des captures du projet : 393 × 852, densité 2, tactile.
 const context = await browser.newContext({
   // STORAGE_STATE : session d'un espace d'essai déjà créé (la création est limitée à 5 par heure et par adresse).
@@ -76,9 +86,9 @@ if (!process.env.STORAGE_STATE) {
 }
 console.info('connecté');
 
-for (const [i, say] of phrases.entries()) {
+for (const [i, { id, say }] of phrases.entries()) {
   const t0 = Date.now();
-  const slug = String(i + 1).padStart(2, '0');
+  const slug = id;
   try {
     await page.goto(`${base}/compas?nouvelle=1`, {
       waitUntil: 'domcontentloaded',
@@ -106,12 +116,13 @@ for (const [i, say] of phrases.entries()) {
       .waitFor({ timeout: 330_000 });
     const head = (await status.innerText().catch(() => '')).slice(0, 600);
     await page.screenshot({ path: path.join(outDir, `${slug}.png`), fullPage: false });
-    log({ i: i + 1, say, url: page.url(), seconds: Math.round((Date.now() - t0) / 1000), head });
+    log({ i: from + i, id, say, url: page.url(), seconds: Math.round((Date.now() - t0) / 1000), head });
     console.info(slug, Math.round((Date.now() - t0) / 1000), 's', say);
   } catch (e) {
     await page.screenshot({ path: path.join(outDir, `${slug}-erreur.png`) }).catch(() => undefined);
     log({
-      i: i + 1,
+      i: from + i,
+      id,
       say,
       url: page.url(),
       seconds: Math.round((Date.now() - t0) / 1000),

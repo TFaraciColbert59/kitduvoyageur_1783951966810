@@ -77,3 +77,74 @@ $ npx vitest run src/features/compas/__tests__/briefSchema.test.ts
  Test Files  1 passed (1)
       Tests  19 passed (19)
 ```
+
+## 2026-11-10 — Phase 0, second lot : relecture de l'ADR, notation, socle du Brief
+
+### T0.2 — relecture `architect` : verdict « à revoir », 17 constats
+
+Trois bloquants, tous sur la vie privée du Brief : (1) `can_read_trip` rend vrai pour un voyage public, y compris pour `anon` — le Brief et les passages de la phrase auraient été lisibles par tous ; (2) le filtre de stockage laissait passer une valeur *déduite* du profil ; (3) la relance par un collaborateur n'était pas couverte. L'ADR est en **révision 2** : chaque constat a sa réponse dans le tableau de sa section 10, et le code a suivi (marque `prive` héritée, `evidence` jamais rangé, contrôle « la valeur sort du passage », dates jamais acceptées de l'IA, `checks` exige `brief`). Une décision **D6** s'ajoute pour Tony (profil d'un autre membre du groupe). **Une seconde relecture est requise avant la migration `trip_briefs` (T1.6), qui n'est pas écrite.**
+
+### T0.4 — notation d'un voyage (`builder`, deux passes ; durcie après la relecture)
+
+`engine/score/` (pur) et `scripts/compas/score-trip.mjs` (modes `--snapshot`, `--lot`, `--trip`). Grilles `J0`, `C0`, `F0`, `P0`.
+
+```
+$ npx vitest run src/features/compas/__tests__/scoreTrip.test.ts
+ Test Files  1 passed (1)
+      Tests  64 passed (64)
+```
+
+Correction de l'orchestrateur à la relecture du code : une distance d'étape sans source dite était comptée comme réelle (`src !== 'estimation'`) ; elle ne l'est plus, test ajouté.
+
+Faits établis par l'agent, preuves à l'appui :
+- **Les enfants ne sont rangés nulle part en base** (ni colonne de `trips`, ni clé de `metadata.compas`) : le critère « enfants » de la justesse est « non mesurable » aujourd'hui. 50 demandes du jeu sont des familles.
+- **Aucun marqueur stable du trajet d'approche** dans les lignes de dépense : il est reconnu par la catégorie `transport` et le titre « aller-retour », écrit en français en dur. À remplacer par une clé le jour où elle existe.
+- Sources de montant écrites par le code : `mesure` (carburant au bulletin, péages), `base` (refuge au prix en base, boutique), `estimation` (tout le reste).
+
+### Contrôle « la note dit vrai » sur deux voyages réels (lus en base le 10 novembre, projet `icxyvwzfjbflcbqukpfz`)
+
+```
+== Mixte · Vercors (3 jours, 4 personnes)
+completude 38 8/21  | ratés : distance, dénivelé et heure des 3 jours, contenu des jours 2 et 3, nuits 1 et 2
+faisabilite 88 7/8  | raté : F0-04 (journée de marche sans distance)
+precision 41 9/19   | ratés : 3 distances, 3 dépenses (toutes « estimation »), 4 objets hors inventaire
+== Trek · Vercors (3 jours, seul)
+completude 57 12/21 | ratés : distance et dénivelé du jour 1, heure des 3 jours, contenu des jours 2 et 3, nuits 1 et 2
+faisabilite 88 7/8  | raté : F0-04
+precision 58 12/20
+```
+
+Lecture à la main des deux voyages : le premier pose ses trois jours au même point (Le Pont-de-Claix, banlieue de Grenoble, pour une demande « Vercors »), sans distance, sans nuit nommée, avec un **vol aller-retour pour quatre vers Grenoble** chiffré depuis le domicile ; le second a deux journées mesurées sur trois et aucune nuit nommée. Les notes basses de complétude et de précision disent donc vrai. **Limite constatée : la grille F0 est trop indulgente** (88 pour un voyage qui prend l'avion pour le Vercors) ; c'est l'objet de la phase 3, et la référence sera renotée avec les invariants.
+
+Constat annexe, hors chantier, à trancher par Tony : la préparation actuelle range déjà sur le voyage `papers.abroadFrom = 'domicile'`, `papers.abroad` et `papers.launchedBy`, et une note « Trajet chiffré depuis ton domicile (ton profil voyageur) ». Aucune valeur du profil n'y figure, mais « à l'étranger depuis le domicile » est une déduction du profil lisible par qui lit le voyage. La règle v6 (§3.3 de l'ADR) ne rangerait pas cette déduction.
+
+### T1.4 — fusion du Brief (`builder`, deux passes) · T1.5 — allure réelle (`builder`, deux passes, **non branchée**, D4)
+
+```
+$ npx vitest run src/features/compas/__tests__/briefMerge.test.ts src/features/compas/__tests__/briefSchema.test.ts
+ Test Files  2 passed (2)
+      Tests  67 passed (67)
+$ npx vitest run src/features/compas/__tests__/briefPace.test.ts
+ Test Files  1 passed (1)
+      Tests  20 passed (20)
+```
+
+`hike_sessions` : `distance_km`, `duration_seconds`, `elevation_gain_m` (`20260809200000_hike_sessions_and_carnet_moments.sql:12-14`) ; `positions_geojson` n'est jamais sélectionnée. Règle de Naismith reprise de `src/features/trips/planner/plannerEngine.ts:131-132`.
+
+### Contrôles d'ensemble avant commit
+
+```
+$ NODE_OPTIONS=--max-old-space-size=6144 npx tsc --noEmit -p .
+tsc exit 0
+$ npx vitest run src/features/compas
+ Test Files  256 passed (256)
+      Tests  5340 passed (5340)
+$ npx eslint <tous les fichiers nouveaux ou modifiés>
+eslint=0
+```
+
+`next build` et `npm run perf:budget` : non lancés sur la machine de la session (mémoire) ; le build est celui de l'aperçu Vercel de la PR. Rien n'est fusionné dans `main`.
+
+### T0.5 — passage de référence : **non joué, porte 0 non franchie**
+
+Cause : le réseau de la session cloud refuse l'hôte de l'aperçu (`CONNECT tunnel failed, response 403` sur `*.vercel.app`). `validate-online.mjs` est prêt pour le jeu (lecture de `demandes-or.json`, tranche `DEMANDES_FROM` / `DEMANDES_TO`, mandataire de sortie, identifiant de demande dans le journal). Durée prévue : 300 demandes à 125 s d'écart, soit environ 10 h 30 en une session, ou 2 h en six sessions parallèles (limite : 5 espaces d'essai par heure et par adresse).

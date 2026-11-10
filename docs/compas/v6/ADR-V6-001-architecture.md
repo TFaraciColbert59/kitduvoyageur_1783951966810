@@ -1,7 +1,7 @@
 # ADR-V6-001 — Architecture du moteur de préparation Compas v6
 
 **Date :** 2026-11-10
-**Statut :** Proposé — relecture `architect` consignée en fin de document.
+**Statut :** Proposé, révision 2 — la relecture `architect` du 10 novembre a rendu « à revoir » (17 constats, dont 3 bloquants) ; cette révision les traite un à un (section 10). Une seconde relecture est requise avant la migration `trip_briefs`.
 **Source :** `docs/compas/SPEC-V6-MOTEUR.md`, lecture de `main` au commit `571142e`.
 **Décideur des points ouverts :** Tony (D1 à D5, section 9).
 
@@ -42,7 +42,9 @@ Les modules `engine/` restent sans entrée-sortie. Tout accès (base, IA, résea
 
 ### 2.1 Interrupteurs
 
-Un seul lecteur : `engine/v6Flags.ts`, fonction pure `v6Flags(env)` qui rend `{ brief, archetypes, checks, planner, graph }`. Une valeur est allumée seulement si la variable vaut exactement `1`. Dépendances imposées : `archetypes` exige `brief` ; `planner` exige `archetypes` et `checks` ; `graph` exige `brief`. Une combinaison incohérente éteint le maillon dépendant (jamais d'erreur à l'exécution). Les variables sont lues côté serveur uniquement (aucun `NEXT_PUBLIC_`).
+Un seul lecteur : `engine/v6Flags.ts`, fonction pure `v6Flags(env)` qui rend `{ brief, archetypes, checks, planner, graph }`. Une valeur est allumée seulement si la variable vaut exactement `1`. Dépendances imposées : `archetypes`, `checks` et `graph` exigent `brief` ; `planner` exige `archetypes` et `checks`. Une combinaison incohérente éteint le maillon dépendant (jamais d'erreur à l'exécution). Les variables sont lues côté serveur uniquement (aucun `NEXT_PUBLIC_`).
+
+**Le chemin réellement pris est rangé.** Chaque préparation écrit dans `metadata.compas.autofill.engine` la liste des maillons actifs (`[]` pour l'ancien chemin). Le banc relit cette liste : un passage qui croit mesurer v6 et lit `[]` est rejeté. L'aperçu et la production partagent la même base ; un rafraîchissement partiel sur un voyage préparé par un autre chemin que le chemin courant devient une préparation complète, annoncée. La migration `trip_briefs` est appliquée en production avant tout aperçu dont le code s'en sert.
 
 ### 2.2 IA éteinte (R4)
 
@@ -67,30 +69,43 @@ Le Brief est un objet à onze blocs (`projet`, `ou`, `quand`, `qui`, `effort`, `
 
 ### 3.2 Règles de valeur
 
-- **R2, vérifiée par le code et non par confiance** : `source = 'dit'` exige que `evidence` soit retrouvée dans la phrase après normalisation (casse, espaces, apostrophes typographiques, forme Unicode NFC). Sinon la valeur est rejetée et la variable retombe sur la source suivante. Cela vaut pour l'IA comme pour les règles.
-- **R1** : aucune variable du Brief n'est une coordonnée, un prix constaté, un horaire ou une distance réelle. Le Brief contient des *souhaits* (« 15 km par jour », « 800 € ») et des *noms* (« Annecy »). Le lieu est retrouvé ensuite par `resolvePlaceByName`, inchangé. Les types le garantissent : aucun champ `lat` / `lon` dans le schéma.
-- **Verrou** : `locked = true` ne peut être levé que par la personne. La fusion ne remplace jamais une valeur verrouillée, quelle que soit la source entrante.
-- **Ordre de priorité à la fusion** : verrouillée > dit > profil > historique > déduit > défaut. À source égale, la confiance la plus haute gagne.
-- **Désaccord règles / IA** sur une valeur dite : la valeur des règles gagne pour un nombre ou une date, celle de l'IA sinon ; accord = confiance 0,95 ; désaccord = confiance 0,6 et une ligne de journal (`ops_preparation_events`, sans la phrase entière).
+- **R1.** Aucune variable du Brief n'est une coordonnée, un prix constaté, un horaire réel ou une distance mesurée. Le Brief contient des *souhaits* (« 15 km par jour », « 800 € » sont des souhaits de la personne, pas des faits fournis par l'IA) et des *noms* (« Annecy »). Le lieu est retrouvé ensuite par `resolvePlaceByName`, inchangé. Aucun champ `lat` / `lon` dans le schéma (test).
+- **R2, en deux contrôles faits par le code.** Pour une valeur `dit` : (a) le passage cité est dans la phrase après normalisation NFKC (chiffres pleine chasse, ligatures), casse, apostrophes, espaces, et fait au moins deux signes (un signe seul se retrouve toujours en japonais ou en chinois) ; (b) **la valeur sort du passage** : un nom y figure tel quel ; un nombre y figure en chiffres ou en lettres (table des cinq langues) ; un choix dans une liste ou un oui/non est une lecture, le passage suffit. « En famille » ne prouve pas « 4 » : la valeur est rejetée.
+- **Dates.** L'IA ne fournit jamais une date (`CLAUDE.md` §2). Une date du Brief ne vient que de l'analyseur déterministe (`parseIntentRules`), d'un réglage posé par la personne, ou reste absente. L'extraction peut dire « le week-end prochain » comme passage d'un *moment* (mois, saison, moment de la journée) ; la date se calcule par les règles.
+- **Origine du contrôle.** `briefIssues(brief, phrase, 'regles' | 'ia')` : les règles calculent leurs nombres et leurs dates (le passage doit exister, la valeur n'est pas recomptée) ; l'IA subit les deux contrôles.
+- **Ordre de priorité à la fusion** : réglage posé par la personne > dit > profil > historique > déduit > défaut.
+- **Désaccord règles / IA** sur une valeur dite : la valeur des règles gagne pour un nombre ou une date, celle de l'IA sinon (spec §6) ; accord = confiance 0,95 ; désaccord = confiance 0,6, compté (section 3.6). Risque connu : sur un nom, « l'IA gagne » peut contredire une règle acquise par un constat (C-001 à C-021). Garde-fou : la porte 1 exige une justesse ≥ référence partout, IA allumée, et chaque désaccord sur `ou.destination` est relu au premier passage du banc.
 
 ### 3.3 Vie privée (R5) — décision structurante
 
-Un voyage se partage ; son Brief aussi. Or le profil (`user_traveller`, `user_orientation`) et l'historique (`hike_sessions`) sont privés. Donc :
+Un voyage se partage, parfois publiquement. Le profil (`user_traveller`, `user_orientation`), l'historique (`hike_sessions`) et la phrase elle-même sont privés. Donc :
 
-- La table `trip_briefs` ne range **que** les valeurs de source `dit`, `deduit`, `defaut` et les valeurs verrouillées par la personne. Une valeur de source `profil` ou `historique` n'est **jamais écrite** : elle est recalculée côté serveur, pour le propriétaire, au moment de préparer (« surcouche privée »).
-- Conséquence assumée : un collaborateur voit le résultat (des journées plus courtes), pas la valeur privée ni sa source. C'est déjà le cas aujourd'hui pour les préférences.
-- Un contrôle à l'écriture (`briefForStorage`) retire toute valeur `profil` / `historique` et un test le prouve ; la porte 1 le relit en base.
-- Rien du profil ni de l'historique n'entre dans la consigne donnée à l'IA : l'extraction ne reçoit que la phrase et la date du jour.
+1. **Marque de confidentialité portée par chaque valeur.** `BriefValue.prive` est vrai pour toute valeur de source `profil` ou `historique` **et pour toute valeur qui en est déduite** (devise tirée du pays de résidence, niveau tiré de l'allure, « à l'étranger » tiré du domicile) : une déduction hérite de la source la plus privée de ses entrées. La fusion force `prive` sur tout ce qui vient des surcouches.
+2. **Rien de privé n'est rangé.** `briefForStorage` rend « absente » toute valeur privée, verrou ou non, et un contrôle (`isStorable`) précède l'écriture. Tests à l'appui ; la porte 1 le relit en base.
+3. **Aucun passage de la phrase n'est rangé.** `evidence` sert au contrôle pendant la préparation, puis est vidé avant écriture : la phrase peut dire des choses intimes (santé, peur, enfants) et `start_say` est déjà effacé du voyage après application (`compasActions.ts:2096-2110`). Aucune empreinte de la phrase n'est rangée non plus.
+4. **Lecture réservée à ceux qui peuvent modifier.** `trip_briefs` n'est lisible que par `can_edit_trip` (propriétaire, éditeurs). `can_read_trip` rend vrai pour un voyage public ou non répertorié, y compris pour `anon` : il n'ouvre **pas** le Brief.
+5. **La surcouche privée est celle de la personne qui lance la préparation**, lue par sa propre session (RLS), jamais par une clé de service. Le résultat peut donc différer selon qui lance. Ce qui est rangé : l'identifiant du lanceur et un oui/non « profil appliqué », sans aucune valeur. Quand le lanceur change, les tâches qui dépendent du profil sont refaites. **Jamais le profil ni l'historique d'un autre membre sans son accord explicite** : « au rythme du plus faible » (phase 5) attend la décision D6.
+6. **Rien de privé dans l'empreinte de recalcul** (elle est rangée sur le voyage, `autofillActions.ts:3033`) : une allure n'a que quelques valeurs possibles, la hacher la révélerait. L'empreinte porte seulement le marqueur du point 5.
+7. Rien du profil ni de l'historique n'entre dans la consigne donnée à l'IA : l'extraction ne reçoit que la phrase, la langue et la date du jour.
 
-### 3.4 Stockage
+### 3.4 Les réglages modifiables restent où ils sont
 
-`trip_briefs` : une ligne par voyage (`trip_id` clé primaire, `brief jsonb`, `schema_version int`, `phrase_hash text`, `updated_at`). RLS activée à la création, politiques calquées sur `trips` via `can_read_trip` / `can_edit_trip`. Retour arrière fourni. La phrase elle-même n'y est pas recopiée (elle est déjà sur le voyage).
+Aucun écran n'écrit le Brief dans ce chantier (spec §12). Les colonnes de `trips` et `metadata.compas.prefs` restent la vérité des réglages que la personne modifie ; le Brief ne les double pas. Conséquences :
 
-Cache d'extraction : clé = empreinte SHA-256 de (phrase normalisée, langue de l'interface, version du schéma, version de la consigne, date du jour quand la phrase contient un repère relatif). Table `geo_cache` existante si elle convient, sinon mémoire seule en phase 1 ; pas de nouvelle table sans mesure.
+- `locked` n'est pas saisi : il est **déduit** au chargement, quand la valeur actuelle d'un réglage diffère de la dernière que le moteur a écrite (même idée que `untouchedSince`, `dependencies.ts:173`). La valeur du réglage entre alors dans le Brief par `lockValue` (source `dit`, verrouillée, publique).
+- Poser soi-même une valeur que le moteur proposait depuis le profil en fait un réglage du voyage, donc partagé avec lui : l'écran devra l'annoncer (chantier d'interface, après la porte 1).
 
-### 3.5 Branchement
+### 3.5 Stockage et cache
 
-`buildTripContext` garde sa signature. Avec `COMPAS_V6_BRIEF=1`, un adaptateur pur `briefToTripContextInput(brief, trip)` produit son entrée ; sans l'interrupteur, rien ne change. Les lecteurs de réglages qui contournent `tripContext.ts` (inventaire T1.2) sont ramenés derrière lui avant la bascule.
+`trip_briefs` : une ligne par voyage (`trip_id` clé primaire, `brief jsonb`, `schema_version int`, `engine jsonb`, `launched_by uuid`, `profile_applied boolean`, `updated_at`). RLS activée à la création ; lecture et écriture par `can_edit_trip` seulement ; retour arrière fourni ; relecture `architect` avant application.
+
+Cache d'extraction : en mémoire de l'instance seulement en phase 1 (dit tel quel : sur Vercel il ne vit que le temps de l'instance ; `geo_cache` ne convient pas, sa contrainte `kind` exclut un Brief). Clé = SHA-256 de (phrase normalisée, langue, version du schéma, version de la consigne). La date du jour n'a pas à y entrer : la valeur en cache ne contient jamais de date absolue (section 3.2). Un cache en base ne sera proposé qu'avec une mesure du taux de réutilisation.
+
+### 3.6 Branchement et journal
+
+- `buildTripContext` garde sa signature. Avec `COMPAS_V6_BRIEF=1`, un adaptateur pur `briefToTripContextInput(brief, trip)` produit son entrée (jours, heures, groupe, activité, destination).
+- `TripContextInput` ne porte ni effort, ni nuits, ni repas : ces variables passent par un **second adaptateur**, `briefToPreferences(brief)`, vers la forme lue aujourd'hui par `readCompasMeta` et `resolveProjectContext` (`autofillActions.ts:1551-1560`). Les lecteurs qui contournent ces deux entrées (inventaire T1.2) y sont ramenés avant la bascule.
+- Désaccords : `ops_preparation_events` n'a que `at` et un `kind` fermé à cinq valeurs. La migration de la phase 1 y ajoute un `kind` « brief_disagreement », compté sans valeur ni identifiant de voyage. Le détail (chemin de la variable, source retenue) va dans le résultat du banc, pas en base.
 
 ## 4. Archétypes et segments
 
@@ -106,18 +121,29 @@ En phase 0, avant que `engine/checks/` existe, la faisabilité est mesurée par 
 
 ## 6. La mesure (phase 0)
 
-`engine/score/` est pur : il reçoit un **instantané** du voyage (ligne `trips`, étapes, objets, dépenses, documents, événements de préparation) et, quand elle existe, la demande attendue du jeu. Le script `scripts/compas/score-trip.mjs` ne fait que lire la base (ou un fichier d'instantané) et appeler ce module.
+`engine/score/` est pur : il reçoit un **instantané** du voyage (ligne `trips`, étapes, objets, dépenses) et, quand elle existe, la demande attendue du jeu. Le script `scripts/compas/score-trip.mjs` ne fait que lire (base ou fichier d'instantané) et appeler ce module, chargé par `tsx`.
 
-| Axe | Calcul | Sans objet |
+| Axe (grille) | Calcul | Hors total |
 |---|---|---|
-| Justesse | part des critères attendus tenus : pays, distance au lieu ≤ rayon, jours, heures, personnes, enfants, activité, mois | un critère dont l'attendu est `null` ne compte pas ; sans demande attendue, l'axe est « non mesuré » |
-| Complétude | part des éléments attendus présents (liste de la spec §5) | les nuits ne comptent pas pour une sortie à la journée |
-| Faisabilité | part des invariants tenus (grille F0, puis `engine/checks/`) | un invariant inapplicable ne compte pas |
-| Précision | part des valeurs présentes qui viennent d'une donnée réelle et non d'un défaut ou d'un « non évalué » | — |
+| Justesse (J0) | part des critères attendus tenus : pays, distance au lieu ≤ rayon, jours (avec tolérance quand la phrase ne dit pas un nombre), heures, personnes, activité, mois | un attendu `null` ; les enfants (rangés nulle part aujourd'hui : « non mesurable », dit) |
+| Complétude (C0) | part des éléments attendus présents (spec §5) | les nuits d'une sortie à la journée ; la météo et les risques, calculés à la lecture et non rangés (« non mesurables en base », dit) |
+| Faisabilité (F0, puis `engine/checks/`) | part des invariants tenus | ce qui est sans objet par structure seulement |
+| Précision (P0) | moyenne de quatre familles (étapes, dépenses, réglages, sac), chacune = part de ses valeurs **attendues** qui viennent d'une donnée réelle | les lignes saisies à la main |
 
-Règles : chaque axe rend `{ note, tenus, total, details[] }` ; `note = null` quand `total = 0` (jamais 100 par absence de critère) ; une demande dont l'issue attendue est `precision` est notée sur le fait que le Compas a signalé le manque, pas sur un voyage. Aucun modèle n'intervient dans ces quatre notes.
+Règles contre une note qui monte sans que le voyage s'améliore :
 
-Référence (porte 0) : les notes par famille, rangées dans `docs/compas/v6/reference/`. Règle de non-régression : aucune note ne baisse de plus de 2 points d'une phase à l'autre.
+- `note = null` quand rien n'est mesurable (jamais 100 par absence de critère).
+- **Une donnée manquante est un échec, pas un « sans objet ».** Un invariant qui ne peut pas tourner faute de coordonnées ou de distance compte comme raté.
+- **Une valeur par défaut ne compte pas comme présente.** Une heure de départ identique partout, sans source, ne tient pas le critère.
+- **L'inconnu ne vaut pas mesure.** Une distance sans source dite n'est pas réelle.
+- **Pas de biais commercial.** Un objet du sac est « réel » s'il vient de l'inventaire de la personne ; un lien vers la boutique ne compte pas.
+- **Chaque famille pèse autant** dans la précision, quel que soit son nombre de lignes.
+- Une demande dont l'issue attendue est `precision` est notée sur le fait que le Compas a signalé le manque.
+- Aucun modèle n'intervient dans ces quatre notes.
+
+**Comparabilité de la référence.** Chaque axe porte sa version de grille (`J0`, `C0`, `F0`, `P0`). Les instantanés JSON du passage de référence sont archivés dans `docs/compas/v6/reference/instantanes/` (sans phrase ni donnée de personne au-delà de ce que le voyage de test contient) : quand une grille change (la faisabilité en phase 3, la complétude quand la météo et les risques seront rangés), la référence est **renotée sur les mêmes instantanés** avec la nouvelle grille. Un invariant qui exige un Brief absent (voyages de référence) est « sans objet » pour ce voyage, et le nombre de tels cas est publié.
+
+**Seuil de non-régression.** La règle des 2 points s'applique au jeu entier. Par famille (20 à 52 demandes, soit 2 à 5 points par demande), une baisse n'est retenue que si elle dépasse 2 points **et** porte sur plus d'une demande, après rejeu des demandes en cause : la géographie interrogée en direct (constat F6) fait bouger une demande d'un passage à l'autre. Le taux d'échec externe du passage est publié avec les notes.
 
 ## 7. Le monde en base, planificateur, graphe
 
@@ -135,11 +161,32 @@ Cadrés ici, décidés dans leurs propres ADR (T4.1, T5.1) : la phase 4 ne déma
 
 | Id | Question | Effet tant que c'est ouvert |
 |---|---|---|
-| D1 | L'IA peut-elle extraire le Brief ? | T1.3 codé et testé hors ligne, jamais appelé ; porte 1 non franchissable sur les langues hors français |
+| D1 | L'IA peut-elle extraire le Brief ? (elle lit des souhaits et des noms ; jamais une date, jamais un nombre absent de la phrase) | T1.3 codé et testé hors ligne, jamais appelé ; **la porte 1 entière est infranchissable** (son premier critère), donc la phase 2 ne peut pas être déclarée ouverte |
 | D2, D3 | Stockage et zones du monde | phase 4 à l'arrêt |
 | D4 | L'allure réelle règle-t-elle les journées sans demander ? | T1.5 calculé, non branché |
 | D5 | Invariant bloquant non réparé : rendre ou refuser | T3.3 codé avec « rendre, défaut dit » par défaut (le comportement le plus proche d'aujourd'hui), réversible par un réglage |
+| D6 (nouvelle) | Le profil ou l'historique d'un autre membre du groupe peut-il régler le voyage (« au rythme du plus faible »), et avec quel accord ? | seul le profil de la personne qui lance est lu |
 
-## 10. Relecture
+## 10. Relecture `architect` du 10 novembre 2026 — verdict « à revoir », traitement
 
-_À remplir par `architect`._
+| # | Constat (gravité) | Traitement dans cette révision |
+|---|---|---|
+| 1 | Brief lisible sur un voyage public ; phrase gardée par `evidence` (bloquant) | lecture par `can_edit_trip` seulement ; `evidence` vidé avant écriture ; aucune empreinte de phrase (§3.3 points 3 et 4 ; `briefForStorage`, tests) |
+| 2 | Une valeur déduite du profil passait le filtre (bloquant) | marque `prive` héritée, filtre sur la marque (§3.3 points 1 et 2 ; tests) |
+| 3 | Relance par un collaborateur non couverte (bloquant) | surcouche du lanceur, marqueur sans valeur, D6 ouverte (§3.3 point 5) |
+| 4 | Valeur privée dans l'empreinte | exclue (§3.3 point 6) |
+| 5 | Verrou sans producteur, deux sources de vérité | `trips` et préférences restent la vérité ; verrou déduit ; `lockValue` (§3.4) |
+| 6 | R1/R2 ne tenaient pas pour nombres et dates | contrôle « la valeur sort du passage », dates jamais par l'IA (§3.2 ; `valueInEvidence`, tests) |
+| 7 | Trous de la comparaison mot pour mot | NFKC, longueur minimale, nombres en lettres, tests ja (§3.2). Reste ouvert : un même passage peut servir deux variables (voulu : « avec mes 2 enfants » dit le groupe et les enfants) |
+| 8 | Cache d'extraction | mémoire seule, sans date dans la valeur (§3.5) |
+| 9 | Journal impossible en l'état | nouveau `kind` compté sans valeur, par migration (§3.6) |
+| 10 | `checks` sans `brief` ; extinction muette | dépendance ajoutée ; chemin pris rangé et relu par le banc (§2.1) |
+| 11 | États incohérents entre chemins | version du moteur rangée, rafraîchissement croisé = préparation complète (§2.1) |
+| 12 | Précision gonflable, biais boutique | familles à poids égal, attendus au dénominateur, inventaire seul (§6) |
+| 13 | Complétude et faisabilité contournables | défaut non compté, donnée manquante = échec (§6) |
+| 14 | Référence non comparable | grille versionnée par axe, instantanés archivés, renotation (§6) |
+| 15 | Seuil sous le bruit | seuil sur le jeu entier, règle par famille avec rejeu (§6) |
+| 16 | Second adaptateur non nommé | `briefToPreferences` (§3.6) |
+| 17 | « L'IA gagne » sur les noms ; portée de D1 | risque écrit avec son garde-fou (§3.2) ; portée de D1 corrigée (§9) |
+
+Le relecteur a aussi relevé que l'empreinte compte 16 réglages (la spec en dit 15) : le chiffre du code est retenu en section 1.

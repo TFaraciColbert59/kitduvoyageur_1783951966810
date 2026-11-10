@@ -30,7 +30,8 @@ export function v6Flags(env: Record<string, string | undefined>): V6Flags {
   const on = (k: keyof V6Flags) => env[V6_FLAG_VARS[k]] === '1';
   const brief = on('brief');
   const archetypes = on('archetypes') && brief;
-  const checks = on('checks');
+  // Un invariant reçoit (voyage, brief, archétype) : sans Brief, pas de contrôle.
+  const checks = on('checks') && brief;
   return {
     brief,
     archetypes,

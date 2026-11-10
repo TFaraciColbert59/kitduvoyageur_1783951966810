@@ -12,6 +12,8 @@ import {
   evidenceInPhrase,
   getValue,
   isStorable,
+  lockValue,
+  valueInEvidence,
   parseStoredBrief,
   withValue,
   type BriefValue,
@@ -24,6 +26,7 @@ const said = <T>(value: T, evidence: string): BriefValue<T> => ({
   confidence: 0.9,
   evidence,
   locked: false,
+  prive: false,
 });
 
 describe('Brief — forme', () => {
@@ -110,6 +113,7 @@ describe('Brief — règle R2 (la valeur dite cite la phrase)', () => {
       confidence: 0.7,
       evidence: 'automne',
       locked: false,
+      prive: false,
     });
     expect(briefIssues(b, phrase)).toEqual([{ path: 'quand.mois', reason: 'preuve_sur_source_non_dite' }]);
   });
@@ -130,6 +134,53 @@ describe('Brief — règle R2 (la valeur dite cite la phrase)', () => {
   });
 });
 
+describe('Brief — la valeur sort-elle du passage ? (extraction IA)', () => {
+  it('un nombre doit être dans le passage, en chiffres ou en lettres', () => {
+    expect(valueInEvidence('quand.jours', 5, '5 jours')).toBe('oui');
+    expect(valueInEvidence('quand.jours', 5, 'cinq jours')).toBe('oui');
+    expect(valueInEvidence('quand.jours', 5, 'fünf Tage')).toBe('oui');
+    expect(valueInEvidence('qui.personnes', 2, 'zu zweit')).toBe('oui');
+    expect(valueInEvidence('quand.heures', 1.5, '1,5 h')).toBe('oui');
+    expect(valueInEvidence('qui.personnes', 4, 'en famille')).toBe('non');
+    expect(valueInEvidence('quand.jours', 3, 'un long week-end')).toBe('non');
+    expect(valueInEvidence('quand.jours', 5, '15 jours')).toBe('non');
+  });
+
+  it('lit les chiffres pleine chasse (NFKC)', () => {
+    expect(evidenceInPhrase('５日間', '北海道で５日間のハイキング')).toBe(true);
+    expect(valueInEvidence('quand.jours', 5, '５日間')).toBe('oui');
+  });
+
+  it('refuse un passage d’un seul signe (toujours retrouvé en japonais ou en chinois)', () => {
+    expect(evidenceInPhrase('日', '北海道で５日間のハイキング')).toBe(false);
+    expect(evidenceInPhrase('a', 'rando a Annecy')).toBe(false);
+  });
+
+  it('un nom doit figurer tel quel dans le passage', () => {
+    expect(valueInEvidence('ou.destination', 'Vercors', 'dans le Vercors')).toBe('oui');
+    expect(valueInEvidence('ou.destination', 'Chartreuse', 'dans le Vercors')).toBe('non');
+    expect(valueInEvidence('ou.envies', ['lacs', 'refuges'], 'des lacs et des refuges')).toBe('oui');
+    expect(valueInEvidence('ou.envies', ['lacs', 'glaciers'], 'des lacs et des refuges')).toBe('non');
+  });
+
+  it('un choix dans une liste est une lecture : le passage suffit', () => {
+    expect(valueInEvidence('projet.activite', 'hiking', 'rando')).toBe('oui');
+    expect(valueInEvidence('qui.peurDuVide', true, 'j’ai le vertige')).toBe('oui');
+  });
+
+  it('l’IA ne fournit pas une date, ni un nombre absent du passage ; les règles calculent les leurs', () => {
+    const phrase = 'en famille le week-end prochain';
+    let b = withValue(emptyBrief(), 'quand.dateDebut', said('2026-11-14', 'le week-end prochain'));
+    b = withValue(b, 'qui.personnes', said(4, 'en famille'));
+    expect(briefIssues(b, phrase, 'ia')).toEqual([
+      { path: 'quand.dateDebut', reason: 'date_non_confirmee' },
+      { path: 'qui.personnes', reason: 'valeur_absente_du_passage' },
+    ]);
+    expect(briefIssues(b, phrase, 'regles')).toEqual([]);
+    expect(getValue(dropInvalid(b, phrase, 'ia').brief, 'quand.dateDebut')).toEqual(emptyValue());
+  });
+});
+
 describe('Brief — règle R5 (rien de privé sur le voyage partagé)', () => {
   const priv = (source: 'profil' | 'historique'): BriefValue<number> => ({
     value: 4.2,
@@ -137,6 +188,7 @@ describe('Brief — règle R5 (rien de privé sur le voyage partagé)', () => {
     confidence: 0.8,
     evidence: null,
     locked: false,
+    prive: true,
   });
 
   it('retire les valeurs de profil et d’historique avant écriture', () => {
@@ -152,9 +204,46 @@ describe('Brief — règle R5 (rien de privé sur le voyage partagé)', () => {
     expect(JSON.stringify(stored)).not.toMatch(/"(profil|historique)"/);
   });
 
-  it('garde une valeur que la personne a elle-même verrouillée', () => {
-    const b = withValue(emptyBrief(), 'qui.allureKmH', { ...priv('profil'), locked: true });
-    expect(getValue(briefForStorage(b), 'qui.allureKmH').value).toBe(4.2);
+  it('retire aussi une valeur DÉDUITE du profil (devise tirée du pays de résidence)', () => {
+    const b = withValue(emptyBrief(), 'budget.devise', {
+      value: 'CHF',
+      source: 'deduit',
+      confidence: 0.7,
+      evidence: null,
+      locked: false,
+      prive: true,
+    });
+    expect(isStorable(b)).toBe(false);
+    expect(getValue(briefForStorage(b), 'budget.devise')).toEqual(emptyValue());
+  });
+
+  it('un verrou ne fait pas passer une valeur privée : seul lockValue la rend rangeable', () => {
+    const forced = withValue(emptyBrief(), 'qui.allureKmH', { ...priv('profil'), locked: true });
+    expect(getValue(briefForStorage(forced), 'qui.allureKmH')).toEqual(emptyValue());
+    const chosen = withValue(emptyBrief(), 'qui.allureKmH', lockValue(4.2));
+    expect(isStorable(chosen)).toBe(true);
+    expect(getValue(briefForStorage(chosen), 'qui.allureKmH')).toEqual({
+      value: 4.2,
+      source: 'dit',
+      confidence: 1,
+      evidence: null,
+      locked: true,
+      prive: false,
+    });
+  });
+
+  it('ne range aucun passage de la phrase', () => {
+    const b = withValue(emptyBrief(), 'qui.peurDuVide', said(true, 'j’ai le vertige depuis mon accident'));
+    expect(isStorable(b)).toBe(false);
+    const stored = briefForStorage(b);
+    expect(isStorable(stored)).toBe(true);
+    expect(getValue(stored, 'qui.peurDuVide')).toMatchObject({ value: true, source: 'dit', evidence: null });
+    expect(JSON.stringify(stored)).not.toContain('accident');
+  });
+
+  it('signale une source privée qui ne porte pas la marque « prive »', () => {
+    const b = withValue(emptyBrief(), 'qui.allureKmH', { ...priv('historique'), prive: false });
+    expect(briefIssues(b, 'x')).toEqual([{ path: 'qui.allureKmH', reason: 'source_privee_non_marquee' }]);
   });
 
   it('une version inconnue ou un jsonb abîmé rend « pas de Brief »', () => {
@@ -179,7 +268,8 @@ describe('Interrupteurs v6', () => {
 
   it('s’allume un à un', () => {
     expect(v6Flags({ COMPAS_V6_BRIEF: '1' })).toEqual({ ...V6_OFF, brief: true });
-    expect(v6Flags({ COMPAS_V6_CHECKS: '1' })).toEqual({ ...V6_OFF, checks: true });
+    expect(v6Flags({ COMPAS_V6_CHECKS: '1' })).toEqual(V6_OFF);
+    expect(v6Flags({ COMPAS_V6_BRIEF: '1', COMPAS_V6_CHECKS: '1' })).toEqual({ ...V6_OFF, brief: true, checks: true });
     expect(
       v6Flags({
         COMPAS_V6_BRIEF: '1',

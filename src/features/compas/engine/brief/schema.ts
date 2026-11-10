@@ -29,6 +29,12 @@ export interface BriefValue<T> {
   evidence: string | null;
   /** Vrai dès que la personne a modifié la valeur : plus jamais écrasée. */
   locked: boolean;
+  /**
+   * Vrai si la valeur vient du profil ou de l'historique, OU en est déduite
+   * (devise tirée du pays de résidence, niveau tiré de l'allure…). Une déduction
+   * hérite de la source la plus privée de ses entrées. Jamais rangée (règle R5).
+   */
+  prive: boolean;
 }
 
 /** Une variable du Brief autour d'un type de valeur. */
@@ -39,6 +45,7 @@ function bv<T extends z.ZodType>(value: T) {
     confidence: z.number().min(0).max(1),
     evidence: z.string().max(400).nullable(),
     locked: z.boolean(),
+    prive: z.boolean(),
   });
 }
 
@@ -184,7 +191,7 @@ export type BriefPath = { [B in BriefBlock]: `${B}.${Extract<keyof Brief[B], str
 
 /** Valeur absente : défaut, confiance nulle, non verrouillée. */
 export function emptyValue<T>(): BriefValue<T> {
-  return { value: null, source: 'defaut', confidence: 0, evidence: null, locked: false };
+  return { value: null, source: 'defaut', confidence: 0, evidence: null, locked: false, prive: false };
 }
 
 /** Toutes les variables du Brief, dans l'ordre du schéma. */
@@ -222,36 +229,125 @@ export function withValue(brief: Brief, path: BriefPath, value: AnyValue): Brief
 }
 
 /**
- * Forme comparable d'un texte : casse, accents composés (NFC), apostrophes et
- * guillemets typographiques, espaces de toute nature.
+ * Forme comparable d'un texte : compatibilité Unicode (NFKC : chiffres pleine
+ * chasse, ligatures), casse, apostrophes et guillemets typographiques, espaces.
  */
 export function normalizeForEvidence(s: string): string {
   return s
-    .normalize('NFC')
+    .normalize('NFKC')
     .toLowerCase()
     .replace(/[‘’ʼ`´]/g, "'")
     .replace(/[“”«»]/g, '"')
-    .replace(/[\s   ]+/g, ' ')
+    .replace(/\s+/g, ' ')
     .trim();
 }
+
+/** Un passage d'un seul signe se retrouve toujours (surtout en japonais ou en chinois) : il ne prouve rien. */
+const MIN_EVIDENCE_LENGTH = 2;
 
 /** Règle R2 : le passage cité est-il mot pour mot dans la phrase ? */
 export function evidenceInPhrase(evidence: string | null | undefined, phrase: string): boolean {
   if (!evidence) return false;
   const e = normalizeForEvidence(evidence);
-  return e.length > 0 && normalizeForEvidence(phrase).includes(e);
+  return [...e].length >= MIN_EVIDENCE_LENGTH && normalizeForEvidence(phrase).includes(e);
 }
+
+/** Variables dont la valeur est un nom dit : il doit figurer tel quel dans le passage cité. */
+const NAME_PATHS: ReadonlySet<string> = new Set([
+  'projet.itineraireNomme',
+  'projet.troncon',
+  'ou.destination',
+  'ou.paysDit',
+  'ou.depart',
+  'ou.retour',
+  'ou.envies',
+  'ou.aEviter',
+  'ou.passages',
+  'repas.allergies',
+  'materiel.possedeDit',
+]);
+const DATE_PATHS: ReadonlySet<string> = new Set(['quand.dateDebut', 'quand.dateFin']);
+
+/** Nombres écrits en lettres, dans les cinq langues du Compas (début de mot : « zwei » couvre « zweit »). */
+const NUMBER_WORDS: Readonly<Record<number, readonly string[]>> = {
+  1: ['un', 'une', 'one', 'uno', 'una', 'ein', 'eine', 'seul', 'seule', 'solo', 'sola', 'alone', 'allein'],
+  2: ['deux', 'two', 'dos', 'zwei', 'due', 'couple', 'coppia', 'pareja', 'paar'],
+  3: ['trois', 'three', 'tres', 'drei', 'tre'],
+  4: ['quatre', 'four', 'cuatro', 'vier', 'quattro'],
+  5: ['cinq', 'five', 'cinco', 'fünf', 'cinque'],
+  6: ['six', 'seis', 'sechs', 'sei'],
+  7: ['sept', 'seven', 'siete', 'sieben', 'sette'],
+  8: ['huit', 'eight', 'ocho', 'acht', 'otto'],
+  9: ['neuf', 'nine', 'nueve', 'neun', 'nove'],
+  10: ['dix', 'ten', 'diez', 'zehn', 'dieci'],
+  12: ['douze', 'twelve', 'doce', 'zwölf', 'dodici'],
+  15: ['quinze', 'fifteen', 'quince', 'fünfzehn', 'quindici'],
+  20: ['vingt', 'twenty', 'veinte', 'zwanzig', 'venti'],
+  30: ['trente', 'thirty', 'treinta', 'dreißig', 'trenta'],
+};
+
+function numberInEvidence(n: number, evidence: string): boolean {
+  const e = normalizeForEvidence(evidence);
+  const digits = e.match(/\d+(?:[.,]\d+)?/g) ?? [];
+  if (digits.some((d) => Number(d.replace(',', '.')) === n)) return true;
+  const words = NUMBER_WORDS[n];
+  if (!words) return false;
+  const tokens = e.split(/[^\p{L}]+/u);
+  return words.some((w) => tokens.some((t) => t === w || (w.length >= 4 && t.startsWith(w))));
+}
+
+/**
+ * La valeur sort-elle vraiment du passage cité ? Prouver que le passage existe
+ * ne suffit pas (« en famille » ne dit pas « 4 »).
+ * - nom : il figure tel quel dans le passage ;
+ * - nombre : le passage porte ce nombre, en chiffres ou en lettres ;
+ * - heure : le passage porte le chiffre de l'heure ;
+ * - date : jamais vérifiable ici (elle se calcule) ;
+ * - choix dans une liste, oui/non : c'est une lecture, le passage suffit.
+ */
+export function valueInEvidence(path: BriefPath, value: unknown, evidence: string): 'oui' | 'non' | 'date' {
+  if (DATE_PATHS.has(path)) return 'date';
+  if (NAME_PATHS.has(path)) {
+    const e = normalizeForEvidence(evidence);
+    const all = (Array.isArray(value) ? value : [value]).map((v) => normalizeForEvidence(String(v)));
+    return all.length > 0 && all.every((v) => v.length > 0 && e.includes(v)) ? 'oui' : 'non';
+  }
+  if (typeof value === 'number') return numberInEvidence(value, evidence) ? 'oui' : 'non';
+  if (Array.isArray(value) && value.length > 0 && value.every((v) => typeof v === 'number'))
+    return value.every((v) => numberInEvidence(v as number, evidence)) ? 'oui' : 'non';
+  if (typeof value === 'string' && /^\d{2}:\d{2}$/.test(value))
+    return numberInEvidence(Number(value.slice(0, 2)), evidence) ? 'oui' : 'non';
+  return 'oui';
+}
+
+export type BriefIssueReason =
+  | 'dit_sans_preuve'
+  | 'preuve_absente_de_la_phrase'
+  | 'valeur_absente_du_passage'
+  | 'date_non_confirmee'
+  | 'preuve_sur_source_non_dite'
+  | 'valeur_nulle_avec_confiance'
+  | 'source_privee_non_marquee';
 
 export interface BriefIssue {
   path: BriefPath;
-  reason: 'dit_sans_preuve' | 'preuve_absente_de_la_phrase' | 'preuve_sur_source_non_dite' | 'valeur_nulle_avec_confiance';
+  reason: BriefIssueReason;
 }
+
+/**
+ * D'où vient le Brief contrôlé.
+ * - `regles` : l'analyseur déterministe (`parseIntentRules`). Il calcule lui-même
+ *   les nombres et les dates : le passage doit exister, la valeur n'est pas recomptée.
+ * - `ia` : l'extraction. Un nombre doit se retrouver dans le passage ; une date
+ *   n'est jamais acceptée d'elle seule (CLAUDE.md §2 : l'IA ne fournit pas de date).
+ */
+export type BriefOrigin = 'regles' | 'ia';
 
 /**
  * Contrôle des règles de valeur sur un Brief déjà conforme au schéma.
  * Une valeur verrouillée (posée par la personne à l'écran) n'a pas à citer la phrase.
  */
-export function briefIssues(brief: Brief, phrase: string): BriefIssue[] {
+export function briefIssues(brief: Brief, phrase: string, origin: BriefOrigin = 'ia'): BriefIssue[] {
   const issues: BriefIssue[] = [];
   for (const path of briefPaths()) {
     const v = getValue(brief, path);
@@ -259,10 +355,19 @@ export function briefIssues(brief: Brief, phrase: string): BriefIssue[] {
       if (v.confidence > 0) issues.push({ path, reason: 'valeur_nulle_avec_confiance' });
       continue;
     }
+    if (PRIVATE_SOURCES.includes(v.source) && !v.prive) {
+      issues.push({ path, reason: 'source_privee_non_marquee' });
+      continue;
+    }
     if (v.locked) continue;
     if (v.source === 'dit') {
       if (!v.evidence) issues.push({ path, reason: 'dit_sans_preuve' });
       else if (!evidenceInPhrase(v.evidence, phrase)) issues.push({ path, reason: 'preuve_absente_de_la_phrase' });
+      else if (origin === 'ia') {
+        const found = valueInEvidence(path, v.value, v.evidence);
+        if (found === 'non') issues.push({ path, reason: 'valeur_absente_du_passage' });
+        else if (found === 'date') issues.push({ path, reason: 'date_non_confirmee' });
+      }
     } else if (v.evidence) issues.push({ path, reason: 'preuve_sur_source_non_dite' });
   }
   return issues;
@@ -272,32 +377,50 @@ export function briefIssues(brief: Brief, phrase: string): BriefIssue[] {
  * Brief sans les valeurs fautives : chacune retombe à « absente », pour que la
  * source suivante (profil, historique, défaut) puisse la remplir.
  */
-export function dropInvalid(brief: Brief, phrase: string): { brief: Brief; dropped: BriefIssue[] } {
-  const dropped = briefIssues(brief, phrase);
+export function dropInvalid(
+  brief: Brief,
+  phrase: string,
+  origin: BriefOrigin = 'ia'
+): { brief: Brief; dropped: BriefIssue[] } {
+  const dropped = briefIssues(brief, phrase, origin);
   let out = brief;
   for (const issue of dropped) out = withValue(out, issue.path, emptyValue());
   return { brief: out, dropped };
 }
 
 /**
- * Ce qui peut être rangé sur le voyage partagé (règle R5) : toute valeur de
- * source privée redevient « absente », sauf si la personne l'a verrouillée
- * (elle l'a alors posée elle-même sur le voyage).
+ * La personne pose elle-même une valeur à l'écran : elle devient un réglage du
+ * voyage (donc partagé avec lui), verrouillé, et n'est plus privée — même si la
+ * valeur proposée venait de son profil. L'écran l'annonce avant.
+ */
+export function lockValue<T>(value: T): BriefValue<T> {
+  return { value, source: 'dit', confidence: 1, evidence: null, locked: true, prive: false };
+}
+
+const isPrivate = (v: AnyValue) => v.prive || PRIVATE_SOURCES.includes(v.source);
+
+/**
+ * Ce qui peut être rangé sur le voyage (règle R5) :
+ * - toute valeur privée (profil, historique, ou déduite d'eux) redevient « absente » ;
+ * - aucun passage de la phrase n'est gardé (`evidence` vidé) : la phrase peut dire
+ *   des choses intimes et le voyage se partage.
  */
 export function briefForStorage(brief: Brief): Brief {
   let out = brief;
   for (const path of briefPaths()) {
     const v = getValue(brief, path);
-    if (PRIVATE_SOURCES.includes(v.source) && !v.locked) out = withValue(out, path, emptyValue());
+    if (v.value == null) continue;
+    if (isPrivate(v)) out = withValue(out, path, emptyValue());
+    else if (v.evidence != null) out = withValue(out, path, { ...v, evidence: null });
   }
   return out;
 }
 
-/** Vrai si aucune valeur de source privée non verrouillée ne reste (contrôle avant écriture). */
+/** Vrai si rien de privé ni aucun passage de phrase ne reste (contrôle avant écriture). */
 export function isStorable(brief: Brief): boolean {
   return briefPaths().every((p) => {
     const v = getValue(brief, p);
-    return v.locked || v.value == null || !PRIVATE_SOURCES.includes(v.source);
+    return v.value == null || (!isPrivate(v) && v.evidence == null);
   });
 }
 
