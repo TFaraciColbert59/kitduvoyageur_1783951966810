@@ -73,6 +73,11 @@ export interface Scenario {
   };
   /** Zones légitimement différentes (données réelles, carte, chrome de l'app). */
   masques: { app: string[]; maquette: string[] };
+  /**
+   * Fond neutralisé (voir `lib/neutral.ts`) : même aplat uni derrière le tiroir des deux
+   * côtés, et comparaison limitée à la zone du tiroir. Absent : capture brute, plein cadre.
+   */
+  neutre?: { app: { sheet: string; root: string; keep?: string[] }; maquette: { sheet: string; root: string; keep?: string[] } };
   mesures: MeasureSpec[];
   /** État que l'app ou la maquette ne permet pas d'atteindre : raison écrite. */
   nonAtteignable?: { app?: string; maquette?: string };
@@ -115,6 +120,8 @@ export interface FidelityResult {
     ratio: number;
     threshold: number;
     ok: boolean;
+    /** Zone comparée quand le fond est neutralisé (boîte du tiroir, en px du cadre). */
+    zone?: { x: number; y: number; w: number; h: number; fondNeutre: string };
     /** Bandes horizontales de 64 px les plus différentes (surface). */
     hotspots: Array<{ y: number; h: number; ratio: number }>;
   };

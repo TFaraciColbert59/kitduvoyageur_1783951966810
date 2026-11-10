@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { freezeClock, installCommunityV2Mock, waitForHydration } from '../e2e/communaute-v2.fixtures';
 import { diffImages, type Rect } from './lib/diff';
 import { compareMeasures, readMeasure } from './lib/measure';
+import { NEUTRAL_BACKGROUND, NEUTRAL_ENABLED, neutralizeBackground, outsideRects, unionRect } from './lib/neutral';
 import { playSteps } from './lib/steps';
 import type { FidelityResult, MeasureResult, Scenario } from './lib/types';
 import { SCENARIOS } from './scenarios';
@@ -161,6 +162,18 @@ for (const scenario of scenarios) {
 
       const appFrameSel = use.viewport.width >= 768 && scenario.app.frameWide ? scenario.app.frameWide : scenario.app.frame;
       const maqFrameSel = scenario.maquette.frame;
+
+      // Fond neutralisé (banc uniquement) : même aplat des deux côtés, zone = tiroir.
+      let appSheet: Rect | null = null;
+      let maqSheet: Rect | null = null;
+      const neutral = NEUTRAL_ENABLED ? scenario.neutre : undefined;
+      if (neutral) {
+        appSheet = await neutralizeBackground(appPage, neutral.app);
+        maqSheet = await neutralizeBackground(maqPage, neutral.maquette);
+        if (!appSheet || !maqSheet) throw new Error(`tiroir introuvable (${!appSheet ? 'app' : 'maquette'}) pour la neutralisation du fond`);
+        await Promise.all([appPage.waitForTimeout(250), maqPage.waitForTimeout(250)]);
+      }
+
       const appFrame = await frameBox(appPage, appFrameSel);
       const maqFrame = await frameBox(maqPage, maqFrameSel);
 
@@ -168,6 +181,15 @@ for (const scenario of scenarios) {
         ...(await maskRects(appPage, scenario.masques.app, appFrame)),
         ...(await maskRects(maqPage, scenario.masques.maquette, maqFrame)),
       ];
+      let zone: Rect | null = null;
+      if (appSheet && maqSheet) {
+        // Zone = union des deux tiroirs, en coordonnées du cadre ; tout le reste est masqué.
+        zone = unionRect(
+          { x: appSheet.x - appFrame.x, y: appSheet.y - appFrame.y, w: appSheet.w, h: appSheet.h },
+          { x: maqSheet.x - maqFrame.x, y: maqSheet.y - maqFrame.y, w: maqSheet.w, h: maqSheet.h },
+        );
+        masks.push(...outsideRects({ w: Math.min(appFrame.w, maqFrame.w), h: Math.min(appFrame.h, maqFrame.h) }, zone));
+      }
 
       const shotOptions = { animations: 'disabled', caret: 'hide' } as const;
       const appPng = await appPage.screenshot({ ...shotOptions, clip: { x: appFrame.x, y: appFrame.y, width: appFrame.w, height: appFrame.h } });
@@ -203,6 +225,7 @@ for (const scenario of scenarios) {
           ratio: Math.round(outcome.ratio * 100000) / 100000,
           threshold: THRESHOLD,
           ok: pixelOk,
+          zone: zone ? { ...zone, fondNeutre: NEUTRAL_BACKGROUND } : undefined,
           hotspots: outcome.hotspots,
         },
         measures: { total: results.length, ok: okCount, results },

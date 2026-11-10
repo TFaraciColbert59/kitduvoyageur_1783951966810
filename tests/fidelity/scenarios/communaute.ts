@@ -28,6 +28,15 @@ const DATA_MASKS = {
   maquette: ['#phone .ct-cover', '#phone .tvs', '#phone .ct-t', '#phone .ct-m', '#phone .visa'],
 };
 
+/**
+ * Fond neutralisé derrière le tiroir (voir `lib/neutral.ts`). Le dialogue d'aperçu
+ * (appui long) est conservé : il peut être monté hors du tiroir.
+ */
+const NEUTRE: Scenario['neutre'] = {
+  app: { sheet: '.lkdv-cv2-sheet', root: APP_FRAME, keep: ['[role="dialog"][aria-label^="Aperçu"]'] },
+  maquette: { sheet: '#phone .sheet', root: MAQ_FRAME, keep: ['#phone .ctx'] },
+};
+
 const MASQUES = {
   app: [...CHROME_MASKS.app, ...DATA_MASKS.app],
   maquette: [...CHROME_MASKS.maquette, ...DATA_MASKS.maquette],
@@ -92,6 +101,7 @@ function scenario(
     app: app('/communaute', options.appSteps, options.session ?? (role === 'invite' ? 'anonymous' : 'member'), options.mock),
     maquette: { file: MAQUETTE_COMMUNAUTE, hash: options.hash, steps: options.maqSteps ?? [], frame: MAQ_FRAME },
     masques: MASQUES,
+    neutre: NEUTRE,
     mesures: options.measures,
     nonAtteignable: options.nonAtteignable,
   };
