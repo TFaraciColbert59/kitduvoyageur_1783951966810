@@ -307,3 +307,43 @@ $ grep -rn "briefExtract" src | grep -v "__tests__\|server/briefExtract.ts"
 ```
 
 Ce poussage reconstruit l'aperçu pendant la relance de la tranche 1 (vers 22 h UTC) ; comme à 17 h 14, le moteur des deux builds est identique tant que l'interrupteur est éteint.
+
+### T1.7a — adaptateurs purs entre le Brief et le moteur actuel (`engineer`), rien de branché
+
+`engine/brief/adapters.ts` : `actionsToBrief` (ce que les règles ont lu, en Brief), `settingsToBrief` (réglages posés par la personne, verrouillés), `briefToTripContextInput`, `briefToPreferences`, `unconsumedPaths`.
+
+Trois preuves, sur 30 phrases du jeu (6 par langue) passées par le vrai `parseIntentRules` :
+1. le Brief tiré des règles ne lève aucune remarque (`briefIssues(…, 'regles')` vide), et c'est vrai aussi des 294 destinations lues sur les 300 phrases ;
+2. **équivalence avec le chemin actuel** : `buildTripContext(briefToTripContextInput(…))` rend les mêmes jours, nuits, dates, heures, groupe, activité et destination que `planApplication` appliqué aux mêmes actions — c'est la base de la règle R4 et du critère « `AI_MODE=off` : notes égales » de la porte 1 ;
+3. rien de privé ni de sensible ne sort dans les préférences (allure d'historique, niveau déduit de cette allure, devise déduite du profil, régime, allergies).
+
+Faits établis par l'agent :
+- **Les règles ne portent pas le passage qui justifie une action** : `intentActionSchema` n'a aucun champ pour cela (`engine/intent.ts:109-185`), et pour l'espagnol, l'allemand et l'italien elles travaillent sur une réécriture en anglais de la phrase (`intent.ts:967-970`). Les adaptateurs retrouvent donc le passage eux-mêmes sur la phrase d'origine ; quand ils ne le retrouvent pas, la valeur est dite « déduite », jamais faussement « dite ». Sur les 300 phrases : 1 144 valeurs « dites », 340 « déduites » (dont 217 dates de début posées au 1er du mois dit).
+- **19 variables du Brief sur 76 ont un consommateur dans le moteur actuel** ; 57 n'en ont aucun (tout le bloc risque, les repas, le transport sauf « sans voiture », les enfants et leurs âges, la forme du projet…). C'est la mesure de ce que les phases 2 à 5 doivent apprendre à lire. `ou.depart` et `budget.*` sont lus par les règles mais passent aujourd'hui par d'autres opérations de `planApplication` : à reprendre au branchement.
+- Écart tranché par l'orchestrateur : la valeur « hébergement » des nuits, que le moteur connaît, manquait au schéma du Brief ; ajoutée.
+
+#### Première mesure de la lecture par les règles, sur les 300 phrases (ratés sur mesurables)
+
+| Langue | Jours | Personnes | Activité |
+|---|---|---|---|
+| fr | 2/76 | 12/61 | 27/77 |
+| en | 10/64 | 23/60 | 25/64 |
+| es | 7/48 | 19/42 | 25/47 |
+| de | 8/46 | 18/40 | 34/45 |
+| it | 6/43 | 21/41 | 25/42 |
+
+À lire avec prudence : ce sont les règles seules, hors application, comparées aux attendus du jeu (dont l'activité attendue est parfois discutable : « trail » lu, « running » attendu). Mais l'ordre de grandeur est net : **le groupe est raté près d'une fois sur deux hors du français, et l'activité plus d'une fois sur deux en allemand, en espagnol et en italien.** C'est exactement ce que le critère « justesse + 10 points hors français » de la porte 1 demande à l'extraction de corriger.
+
+Défauts de règles croisés au passage, **non corrigés** (la spec §6 interdit d'ajouter une règle pour une phrase ; ils sont des cas de test pour l'extraction) : « giugno » lu comme le week-end prochain et lieu « Sentiero degli of » (D085) ; « 3 kids, we're 5 » donne 4 (D163) ; « siamo in tre » donne 2 (D142) ; « zu viert mit zwei Kindern » donne 3 (D244) ; destination « Navarre » absente de la phrase (D068, D196).
+
+```
+$ NODE_OPTIONS=--max-old-space-size=6144 npx tsc --noEmit -p .
+tsc exit 0
+$ npx vitest run src/features/compas
+ Test Files  258 passed (258)
+      Tests  5501 passed (5501)
+$ npx eslint src/features/compas/engine/brief src/features/compas/__tests__/brief*.test.ts
+eslint=0
+$ grep -rn "brief/adapters" src | grep -v __tests__
+(aucune ligne : aucun importeur)
+```

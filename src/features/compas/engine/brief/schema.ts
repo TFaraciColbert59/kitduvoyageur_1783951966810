@@ -56,7 +56,8 @@ const clock = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
 const count = (max: number) => z.number().int().min(0).max(max);
 const yes = z.boolean();
 
-const NIGHT_KINDS = ['bivouac', 'refuge', 'camping', 'gite', 'hotel', 'chez_habitant', 'vehicule', 'mixte'] as const;
+// « hebergement » : la valeur que le moteur actuel connaît (préférence `nights`), sans préciser gîte ou hôtel.
+const NIGHT_KINDS = ['bivouac', 'refuge', 'camping', 'hebergement', 'gite', 'hotel', 'chez_habitant', 'vehicule', 'mixte'] as const;
 const TRANSPORT_MODES = ['voiture', 'train', 'bus', 'avion', 'velo', 'marche', 'bateau', 'covoiturage'] as const;
 
 export const briefSchema = z.strictObject({
