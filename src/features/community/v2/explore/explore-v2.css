@@ -1224,7 +1224,7 @@
 .lkdv-cv2x-trend-body {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 0;
   min-width: 0;
   flex: 1 1 auto;
 }
@@ -1730,12 +1730,12 @@
   flex-direction: column;
   /* Maquette `.ctx .pv b{margin-bottom:5px}` + `.s2{margin-bottom:4px}`. */
   gap: 5px;
-  padding-bottom: 5px;
+  padding-bottom: 4px;
   min-width: 0;
 }
 
 .lkdv-cv2x-peek-text b {
-  font: 600 15px/1.2 var(--font-sans);
+  font: 600 15px/normal var(--font-sans);
   color: var(--lkv-text-primary);
 }
 
@@ -2064,4 +2064,142 @@
   content: '';
   position: absolute;
   inset: -4px -2px;
+}
+
+/* ── Passe 2 de fidélité : Recherche (accueil), mesures de la maquette ──────
+   Maquette `.sl-head` / `.srch` / `.ctxrow` / `.seg-s` / `.eyebrow-row` (L917-940) :
+   champ 48 px à y = 130, rangée de puces de 32 px (puces 28 px), rangée du
+   sélecteur Liste / Sur la carte de 32 px (sélecteur 30 px, icône en ligne),
+   surtitres de 13 px (marge 8 2 2) et pas de 8 px entre les blocs. Les zones
+   tactiles restent ≥ 44 px (extensions `::after`). */
+.lkdv-cv2x-search-pane {
+  margin-top: -2px;
+}
+
+.lkdv-cv2x-search-pane > .lkdv-cv2x-search-field {
+  gap: 6px;
+  margin-bottom: -2px;
+}
+
+.lkdv-cv2x-search-pane > .lkdv-cv2x-search-field input {
+  height: 44px;
+  font-weight: 500;
+}
+
+.lkdv-cv2-layer .lkdv-cv2x-search-field:focus-within {
+  box-shadow: var(--cv2-bar-glass-shadow), 0 0 0 2px var(--lkv-focus-ring);
+}
+
+.lkdv-cv2x-search-pane > .lkdv-cv2x-ctx-chips {
+  align-items: center;
+  height: 32px;
+  padding: 0;
+  margin-bottom: -2px;
+}
+
+.lkdv-cv2x-ctx-chips .lkdv-cv2-chip,
+.lkdv-cv2x-recents .lkdv-cv2-chip {
+  min-height: 28px;
+  padding: 0 11px;
+  flex: none;
+}
+
+.lkdv-cv2x-ctx-chips .lkdv-cv2-chip::after,
+.lkdv-cv2x-recents .lkdv-cv2-chip::after {
+  inset: -8px -1px;
+}
+
+.lkdv-cv2x-search-pane > .lkdv-cv2x-search-view {
+  min-height: 30px;
+  height: 30px;
+  margin-bottom: 2px;
+  padding: 3px;
+  gap: 0;
+}
+
+.lkdv-cv2x-search-view button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 24px;
+  padding: 0 10px;
+  font-size: 11.5px;
+}
+
+.lkdv-cv2x-search-home {
+  gap: 8px;
+}
+
+.lkdv-cv2x-search-home > .lkdv-cv2-group {
+  display: contents;
+}
+
+.lkdv-cv2x-search-home .lkdv-cv2-group-head {
+  min-height: 0;
+  margin: 8px 2px 2px;
+}
+
+.lkdv-cv2x-search-home .lkdv-cv2-group-head .lkdv-cv2-eyebrow {
+  margin-block: -2px;
+}
+
+.lkdv-cv2x-search-home .lkdv-cv2-group-head .lkdv-cv2-eyebrow {
+  flex: 0 1 auto;
+}
+
+/* Puces de contexte et récentes : remplissage encre 9 % sans filet (maquette `.chip`, L276). */
+.lkdv-cv2x-ctx-chips .lkdv-cv2-chip,
+.lkdv-cv2x-recents .lkdv-cv2-chip {
+  background: var(--cv2-fill);
+  box-shadow: none;
+}
+
+.lkdv-cv2x-ctx-chips .lkdv-cv2-chip[aria-pressed='true'] {
+  background: var(--lkv-secondary-subtle);
+  box-shadow: inset 0 0 0 1px var(--lkv-secondary), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+/* Sélecteur Liste / Sur la carte : verre « segc » de la maquette (L280-283). */
+.lkdv-cv2x-search-pane > .lkdv-cv2x-search-view {
+  background: rgba(255, 255, 255, 0.65);
+  -webkit-backdrop-filter: blur(28px) saturate(1.8);
+  backdrop-filter: blur(28px) saturate(1.8);
+  border: 0.5px solid rgba(255, 255, 255, 0.8);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 4px 14px rgba(23, 43, 36, 0.08);
+}
+
+.lkdv-cv2x-search-view button[aria-pressed='true'] {
+  background: var(--lkv-surface-card);
+  box-shadow: 0 2px 8px rgba(23, 64, 44, 0.12), inset 0 1px 0 rgba(255, 255, 255, 1);
+}
+
+/* Carte des tendances : matière « carte de tiroir » (maquette `.menu2`, L2255 + L1103). */
+.lkdv-cv2x-trends {
+  background: var(--cv2-tile-bg);
+  -webkit-backdrop-filter: var(--cv2-tile-blur);
+  backdrop-filter: var(--cv2-tile-blur);
+  box-shadow: var(--cv2-tile-shadow);
+}
+
+/* Icône du champ de recherche : sauge (maquette `.srch-ic`, L918). */
+.lkdv-cv2-layer .lkdv-cv2-search > svg {
+  stroke: var(--lkv-secondary);
+}
+
+/* Interlignage « normal » de la maquette (polices à 12–12,5 px sans `line-height`) :
+   position des glyphes au pixel près. */
+.lkdv-cv2x-ctx-chips .lkdv-cv2-chip,
+.lkdv-cv2x-recents .lkdv-cv2-chip,
+.lkdv-cv2x-search-view button,
+.lkdv-cv2x-trend-rank {
+  line-height: normal;
+}
+
+.lkdv-cv2x-search-pane > .lkdv-cv2x-search-field input {
+  line-height: normal;
+}
+
+.lkdv-cv2x-trend-ico {
+  background: rgba(23, 64, 44, 0.07);
 }

@@ -1661,7 +1661,9 @@ select.lkdv-cv2-input {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  padding: 18px;
+  /* Centré sur la fenêtre (maquette `.ctx`, L233 : voile sur tout le téléphone) et non sur
+     la feuille : la feuille commence à `--cv2-card-top` et finit 14 px avant le bas. */
+  padding: 18px 18px calc(18px + var(--cv2-card-top, 48px) - 14px);
   background: var(--lkv-overlay-scrim);
   -webkit-backdrop-filter: blur(var(--blur-md));
   backdrop-filter: blur(var(--blur-md));

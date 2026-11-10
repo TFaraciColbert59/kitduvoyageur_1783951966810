@@ -61,6 +61,17 @@ async function maskRects(page: Page, selectors: string[], frame: Rect): Promise<
 async function openApp(ctx: BrowserContext, scenario: Scenario, baseURL: string): Promise<Page> {
   const page = await ctx.newPage();
   await installCommunityV2Mock(page, { role: scenario.app.session, appOrigin: baseURL, ...scenario.app.mock });
+  for (const [name, payload] of Object.entries(scenario.app.rpc ?? {})) {
+    // Enregistrée après le mock : le dernier `route` enregistré passe en premier.
+    await page.context().route(`**/rest/v1/rpc/${name}`, async (route) => {
+      const origin = route.request().headers()['origin'] ?? '*';
+      await route.fulfill({
+        status: route.request().method() === 'OPTIONS' ? 204 : 200,
+        headers: { 'access-control-allow-origin': origin, 'access-control-allow-credentials': 'true', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' },
+        json: payload,
+      });
+    });
+  }
   await page.addInitScript((value) => localStorage.setItem('lkdv_cookie_consent', value), CONSENT);
   await freezeClock(page);
   await page.goto(scenario.app.url, { waitUntil: 'domcontentloaded' });

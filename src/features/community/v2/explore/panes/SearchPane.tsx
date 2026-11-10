@@ -241,10 +241,10 @@ export function SearchPane({
 
       <div className="lkdv-cv2-seg lkdv-cv2x-search-view" role="group" aria-label="Affichage des résultats">
         <button type="button" aria-pressed={!showMap} onClick={() => onShowMapChange(false)}>
-          <ExploreIcon name="doc" size={14} /> Liste
+          <ExploreIcon name="feed" size={14} /> Liste
         </button>
         <button type="button" aria-pressed={showMap} onClick={() => onShowMapChange(true)}>
-          <ExploreIcon name="map-pin" size={14} /> Sur la carte
+          <ExploreIcon name="map" size={14} /> Sur la carte
         </button>
       </div>
 

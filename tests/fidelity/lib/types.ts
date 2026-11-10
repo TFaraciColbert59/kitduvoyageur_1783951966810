@@ -54,6 +54,11 @@ export interface Scenario {
     /** Session synthétique : `member` (propriétaire / participant) ou `anonymous`. */
     session: 'member' | 'anonymous';
     mock?: MockOptions;
+    /**
+     * Réponses de RPC remplacées pour ce scénario (données d'exemple alignées sur celles de la
+     * maquette : le banc compare une structure, pas des jeux de données différents).
+     */
+    rpc?: Record<string, unknown>;
     /** Élément dont l'hydratation React conditionne les étapes (sélecteur CSS). */
     hydrate?: string;
     steps: Step[];
