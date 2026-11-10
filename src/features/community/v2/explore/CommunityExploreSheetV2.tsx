@@ -338,6 +338,18 @@ export function CommunityExploreSheetV2({
     [haptic, saved, setSaved, showIsland],
   );
 
+  // ── « Tout voir » (Carnets#19) ───────────────────────────────────────────
+  // Hors « Découvrir » : retour au flux complet (le tri est conservé). Dans
+  // « Découvrir » : chargement de la suite jusqu'à la fin du flux.
+  const handleCarnetsSeeAll = useCallback(() => {
+    haptic('light');
+    if (explore.carnetFilter !== 'discover') {
+      explore.setCarnetFilter('discover');
+      return;
+    }
+    carnetsFeed.loadMore();
+  }, [carnetsFeed, explore, haptic]);
+
   // ── J'aime de carnet (optimiste + retour arrière) ───────────────────────
   const handleCarnetLike = useCallback(
     async (carnet: CarnetCardVM) => {
@@ -906,6 +918,7 @@ export function CommunityExploreSheetV2({
             onCreateCarnet={() => onCreateRequested?.('carnet')}
             onDiscover={() => explore.setCarnetFilter('discover')}
             onRequestGeo={() => void nearMe.request()}
+            onSeeAll={handleCarnetsSeeAll}
           />
         </FilterSlot>
       );
@@ -984,6 +997,7 @@ export function CommunityExploreSheetV2({
         onChange: (index: number) => explore.setCarnetFilter(CARNET_FILTERS[index] ?? 'discover'),
         label: 'Filtres des carnets',
         pages: filterPages,
+        hidden: carnetsFeed.items.length === 0 && (carnetsFeed.loading || Boolean(carnetsFeed.error)),
         sort: {
           value: explore.carnetSort,
           defaultValue: 'recent',
@@ -999,6 +1013,7 @@ export function CommunityExploreSheetV2({
         onChange: (index: number) => explore.setClubFilter(CLUB_FILTERS[index] ?? 'discover'),
         label: 'Filtres des clubs',
         pages: filterPages,
+        hidden: clubsFeed.items.length === 0 && (clubsFeed.loading || Boolean(clubsFeed.error)),
         sort: {
           value: explore.clubSort,
           defaultValue: 'activity',
@@ -1013,6 +1028,7 @@ export function CommunityExploreSheetV2({
       onChange: (index: number) => explore.setEventFilter(EVENT_FILTERS[index] ?? 'discover'),
       label: 'Filtres des sorties',
       pages: filterPages,
+      hidden: eventsFeed.items.length === 0 && (eventsFeed.loading || Boolean(eventsFeed.error)),
     };
   })();
 
@@ -1071,6 +1087,7 @@ export function CommunityExploreSheetV2({
           spotsLeft={state.spotsLeft}
           busy={Boolean(busyKeys[`event:${detail.event.id}`])}
           onSignup={(event) => void handleEventSignup(event)}
+          viewerId={isGuest ? null : viewerId}
         />,
       ],
       index: 0,

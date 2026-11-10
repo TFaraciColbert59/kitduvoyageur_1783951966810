@@ -86,6 +86,8 @@ export type KitSuggestionV2 = {
   weightG: number;
   /** Déjà dans le sac : la ligne reste visible, bouton coché/désactivé. */
   added: boolean;
+  /** Pourquoi cet objet (météo du jour…) ; absent pour les suggestions de modèle. */
+  reason?: string;
 };
 
 /**

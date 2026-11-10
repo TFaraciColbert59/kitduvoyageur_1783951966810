@@ -22,7 +22,8 @@ import {
 } from '../fields/media';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { moveItemBetweenDays } from '../../shared/traceEditing';
-import { HAS_CARNET_NIGHTS } from './capabilities';
+import { useCarnetNights } from './capabilities';
+import { DAY_PANEL_ID, dayTabId, nextTabIndex, useDaySwipe } from './daySwipe';
 import { carnetDayCountV2, clampCarnetDaysV2, syncCarnetDaysV2 } from './daySync';
 
 const MOMENT_LABELS: Record<CarnetMomentKindV2, string> = {
@@ -159,7 +160,7 @@ function MomentPhotoV2({
  * Jours et moments du carnet (`Carnet#11-13`, `Carnet#20`) : mini-capsule des
  * jours dans le panneau, moments typés (photo, rencontre, nuit, dépense, objet,
  * espèce), **photos réellement téléversées** dans le bucket des carnets,
- * nuits/refuges seulement si `carnet_nights` existe (`HAS_CARNET_NIGHTS`).
+ * nuits/refuges seulement si `carnet_nights` répond (sonde `useCarnetNights`).
  */
 export function DaysPaneV2({ user }: { user: { id: string } | null }) {
   const form = useFormContext<CarnetFormValuesV2>();
@@ -169,12 +170,38 @@ export function DaysPaneV2({ user }: { user: { id: string } | null }) {
   const days = values.days ?? [];
   const [active, setActive] = useState(0);
   const { haptic } = useHapticFeedback();
+  const hasNights = useCarnetNights();
   const clampedActive = Math.max(0, Math.min(days.length - 1, active));
   const day = days[clampedActive];
 
   const setDays = (next: CarnetDayV2[]) => {
     form.setValue('days', next, { shouldDirty: true, shouldValidate: true });
   };
+
+  // Carnet#20 — tablist complet : flèches, Home/End, tabindex itinérant,
+  // activation automatique ; Carnet#11 — glisser horizontal entre les jours.
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const goToDay = (index: number, moveFocus = false) => {
+    const target = Math.max(0, Math.min(days.length - 1, index));
+    if (target === clampedActive) return;
+    setActive(target);
+    haptic('selection');
+    if (moveFocus && typeof document !== 'undefined') {
+      const id = days[target] ? dayTabId(days[target].id) : '';
+      requestAnimationFrame(() => document.getElementById(id)?.focus({ preventScroll: false }));
+    }
+  };
+  const onTabsKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    const next = nextTabIndex(event.key, clampedActive, days.length);
+    if (next == null) return;
+    event.preventDefault();
+    goToDay(next, true);
+  };
+  const swipeHandlers = useDaySwipe({
+    panelRef,
+    onSwipe: (direction) => goToDay(clampedActive + direction),
+    enabled: days.length > 1,
+  });
 
   // FID-068 — glisser un moment (ou la nuitée) d'un jour à un autre : la cible
   // est la pastille de jour sous le doigt (`data-cv2-day-drop`). La
@@ -321,27 +348,48 @@ export function DaysPaneV2({ user }: { user: { id: string } | null }) {
           {daysMessage}
         </p>
       ) : null}
-      <div className="lkdv-cv2c-day-tabs" data-hscroll role="tablist" aria-label="Jours du carnet">
-        {days.map((entry, index) => (
-          <button
-            key={entry.id}
-            type="button"
-            role="tab"
-            aria-selected={index === clampedActive}
-            className="lkdv-cv2c-day-tab"
-            data-cv2-day-drop={index}
-            data-drop={dropDay === index && drag !== null ? 'true' : undefined}
-            onClick={() => setActive(index)}
-          >
-            J{entry.dayNumber}
-          </button>
-        ))}
+      <div className="lkdv-cv2c-day-tabs" data-hscroll>
+        <div
+          className="lkdv-cv2c-day-tablist"
+          role="tablist"
+          aria-label="Jours du carnet"
+          aria-orientation="horizontal"
+          onKeyDown={onTabsKeyDown}
+        >
+          {days.map((entry, index) => (
+            <button
+              key={entry.id}
+              type="button"
+              role="tab"
+              id={dayTabId(entry.id)}
+              aria-selected={index === clampedActive}
+              aria-controls={DAY_PANEL_ID}
+              tabIndex={index === clampedActive ? 0 : -1}
+              className="lkdv-cv2c-day-tab"
+              data-cv2-day-drop={index}
+              data-drop={dropDay === index && drag !== null ? 'true' : undefined}
+              onClick={() => setActive(index)}
+            >
+              J{entry.dayNumber}
+            </button>
+          ))}
+        </div>
         {days.length < 60 ? (
           <button type="button" className="lkdv-cv2c-day-tab-add" aria-label="Ajouter un jour" onClick={addDay}>
             +
           </button>
         ) : null}
       </div>
+      <div
+        id={DAY_PANEL_ID}
+        ref={panelRef}
+        role="tabpanel"
+        aria-labelledby={day ? dayTabId(day.id) : undefined}
+        aria-label={day ? undefined : 'Jours du carnet'}
+        className="lkdv-cv2c-day-panel"
+        data-testid="cv2c-day-panel"
+        {...swipeHandlers}
+      >
       {!day ? (
         <p className="lkdv-cv2c-empty">
           Aucune date de départ : ajoute un jour, puis raconte chaque moment. Dès que le
@@ -380,7 +428,7 @@ export function DaysPaneV2({ user }: { user: { id: string } | null }) {
                 onChange={(event) => updateDay(clampedActive, { date: event.target.value })}
               />
             </div>
-            {HAS_CARNET_NIGHTS ? (
+            {hasNights ? (
               <div className="lkdv-cv2-field">
                 <div className="lkdv-cv2c-night-head">
                   <button
@@ -623,6 +671,7 @@ export function DaysPaneV2({ user }: { user: { id: string } | null }) {
           ) : null}
         </>
       )}
+      </div>
       <p className="lkdv-cv2-field-hint">
         Chaque moment peut porter une photo : elle est téléversée maintenant (EXIF retiré, 10 Mo maximum), pas à l’envoi.
       </p>

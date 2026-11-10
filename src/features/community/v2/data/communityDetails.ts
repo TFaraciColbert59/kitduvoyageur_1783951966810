@@ -464,6 +464,12 @@ export interface EventDetailExtras {
   participants: AvatarVM[];
   participantsTotal: number;
   waitlistCount: number;
+  /**
+   * Amis inscrits (Sorties#11) : participants confirmés que le lecteur suit
+   * (`user_follows`, même définition que `ClubDetailExtras.friends`). Vide pour
+   * un invité ; jamais l'identité du lecteur lui-même.
+   */
+  friends: AvatarVM[];
 }
 
 interface ParticipantRow {
@@ -475,6 +481,7 @@ interface ParticipantRow {
 export async function fetchEventDetail(
   eventId: string,
   client: DataClientLike = getDataClient(),
+  viewerId: string | null = null,
 ): Promise<{ data: EventDetailExtras | null; error: { code: string | null; message: string } | null }> {
   try {
     const eventResult = await client
@@ -502,7 +509,18 @@ export async function fetchEventDetail(
       : [];
     const confirmed = rows.filter((row) => row.status !== 'waitlist' && row.user_id);
     const waitlistCount = rows.filter((row) => row.status === 'waitlist').length;
-    const profiles = await fetchProfilesByIds(confirmed.map((row) => row.user_id), client);
+    const participantIds = confirmed.map((row) => row.user_id).filter((id) => id !== viewerId);
+    const [profiles, followsResult] = await Promise.all([
+      fetchProfilesByIds(confirmed.map((row) => row.user_id), client),
+      viewerId && participantIds.length > 0
+        ? client.from('user_follows').select('following_id').eq('follower_id', viewerId).in('following_id', participantIds)
+        : Promise.resolve({ data: null, error: null }),
+    ]);
+    const followedIds = new Set(
+      Array.isArray(followsResult.data)
+        ? (followsResult.data as Array<{ following_id: string }>).map((row) => row.following_id)
+        : [],
+    );
     const recurrence =
       event.recurrence === 'weekly' || event.recurrence === 'monthly' ? event.recurrence : null;
     return {
@@ -516,6 +534,10 @@ export async function fetchEventDetail(
         participants: confirmed.slice(0, 6).map((row) => avatarFromProfile(row.user_id, profiles)),
         participantsTotal: Number(event.current_participants ?? confirmed.length) || 0,
         waitlistCount,
+        friends: confirmed
+          .filter((row) => followedIds.has(row.user_id))
+          .slice(0, 6)
+          .map((row) => avatarFromProfile(row.user_id, profiles)),
       },
       error: null,
     };

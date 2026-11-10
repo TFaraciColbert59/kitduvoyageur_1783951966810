@@ -17,6 +17,7 @@ import {
   errorCounterLabel,
   firstFieldError,
   focusFieldByName,
+  liveFieldIssue,
   parseServerError,
 } from './errors';
 import type { CreateNavV2 } from './nav';
@@ -38,6 +39,10 @@ import { useHapticFeedback } from '@/hooks/useHapticFeedback';
  * - les flèches du clavier restent inertes dans un champ (elles ne changent ni
  *   d'étape ni de type de création) et Entrée ne soumet pas.
  */
+
+/** Message de la file d'attente hors ligne (rôle `alert` dans le pied). */
+export const QUEUED_OFFLINE_MESSAGE =
+  'Hors ligne : ta saisie est conservée et sera envoyée dès que le réseau revient.';
 
 export interface CreateFormEngineApiV2<T extends FieldValues> {
   form: UseFormReturn<T>;
@@ -71,6 +76,20 @@ export interface CreateFormEngineV2Props<T extends FieldValues> {
    * formulaire. Sans cette prop, le formulaire rend ses étapes en ligne.
    */
   stepHosts?: (HTMLElement | null)[] | null;
+  /**
+   * Validation **en direct** pendant la frappe (Story#17) : le champ modifié
+   * est revalidé à chaque changement et son erreur apparaît sous lui dès que sa
+   * valeur est non vide (ou après une tentative de « Suivant »). Un champ vide
+   * et jamais tenté reste muet : on ne gronde pas avant la saisie.
+   */
+  liveValidation?: boolean;
+  /**
+   * File d'attente hors ligne (Carnet#19) : un envoi refusé faute de réseau est
+   * mis en attente et **repart tout seul à la reconnexion** (une tentative),
+   * tant que la feuille reste ouverte. Réservé aux créations idempotentes
+   * (`client_request_id`) : un double envoi ne crée jamais deux objets.
+   */
+  queueWhenOffline?: boolean;
   children: (api: CreateFormEngineApiV2<T>) => React.ReactNode;
 }
 
@@ -83,6 +102,8 @@ export function CreateFormEngineV2<T extends FieldValues>({
   onSubmit,
   onNavChange,
   stepHosts = null,
+  liveValidation = false,
+  queueWhenOffline = false,
   children,
 }: CreateFormEngineV2Props<T>) {
   const portalMode = Boolean(stepHosts);
@@ -93,6 +114,8 @@ export function CreateFormEngineV2<T extends FieldValues>({
   const [busy, setBusy] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [attempted, setAttempted] = useState(false);
+  /** Un envoi attend la reconnexion (Carnet#19). */
+  const [queued, setQueued] = useState(false);
   /** FID-034 : « Effacer » passe par la confirmation de la maquette. */
   const [confirmClear, setConfirmClear] = useState(false);
   const [, setHostTick] = useState(0);
@@ -232,6 +255,29 @@ export function CreateFormEngineV2<T extends FieldValues>({
 
   const validateCurrentStep = useCallback(() => validateStepAt(step), [step, validateStepAt]);
 
+  // Story#17 — revalidation du seul champ modifié, avec le chemin complet
+  // (`stickers.link.url`) pour que l'erreur s'affiche sous le bon champ.
+  const attemptedRef = useRef(false);
+  attemptedRef.current = attempted;
+  useEffect(() => {
+    if (!liveValidation) return undefined;
+    const subscription = form.watch((_values, info) => {
+      const name = info.name;
+      if (!name || info.type !== 'change') return;
+      const current = steps[step];
+      const root = name.split('.')[0] ?? name;
+      if (!current || !current.fields.some((field) => (field.split('.')[0] ?? field) === root)) return;
+      const outcome = liveFieldIssue(schema, form.getValues(), name);
+      if (outcome.kind === 'ok' || (outcome.kind === 'empty' && !attemptedRef.current)) {
+        form.clearErrors(name as FieldPath<T>);
+        return;
+      }
+      form.setError(name as FieldPath<T>, { type: 'manual', message: outcome.message });
+    });
+    return () => subscription.unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `steps` est dérivé de `kind`
+  }, [form, kind, liveValidation, schema, step]);
+
   const submitAll = useCallback(() => {
     void form.handleSubmit(
       async (values) => {
@@ -246,6 +292,7 @@ export function CreateFormEngineV2<T extends FieldValues>({
         setServerError(null);
         try {
           await onSubmit(values);
+          setQueued(false);
           haptic('success');
           draft.clear();
           form.reset(defaultValues as never, { keepDefaultValues: false });
@@ -253,10 +300,12 @@ export function CreateFormEngineV2<T extends FieldValues>({
           setAttempted(false);
         } catch (error) {
           const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
+          setQueued(offline && queueWhenOffline);
           const info = offline
             ? {
-                message:
-                  'Hors ligne : ta saisie est conservée. Réessaie à la reconnexion.',
+                message: queueWhenOffline
+                  ? QUEUED_OFFLINE_MESSAGE
+                  : 'Hors ligne : ta saisie est conservée. Réessaie à la reconnexion.',
                 field: null,
                 code: 'offline',
               }
@@ -283,7 +332,31 @@ export function CreateFormEngineV2<T extends FieldValues>({
         }
       },
     )();
-  }, [bounceStep, defaultValues, draft, focusField, form, haptic, onSubmit, uploadState.pending]);
+  }, [
+    bounceStep,
+    defaultValues,
+    draft,
+    focusField,
+    form,
+    haptic,
+    onSubmit,
+    queueWhenOffline,
+    uploadState.pending,
+  ]);
+
+  // Carnet#19 — à la reconnexion, l'envoi en attente repart une fois. S'il
+  // échoue pour une autre raison, l'erreur s'affiche et la file se vide.
+  const submitRef = useRef(submitAll);
+  submitRef.current = submitAll;
+  useEffect(() => {
+    if (!queued || typeof window === 'undefined') return undefined;
+    const retry = () => {
+      setQueued(false);
+      submitRef.current();
+    };
+    window.addEventListener('online', retry, { once: true });
+    return () => window.removeEventListener('online', retry);
+  }, [queued]);
 
   const goNext = useCallback(() => {
     if (busyRef.current) return;
@@ -505,6 +578,9 @@ export function CreateFormEngineV2<T extends FieldValues>({
                   data-step={stepDefinition.id}
                   disabled={disabled || busy}
                 >
+                  <legend className="lkdv-cv2c-sr-only">
+                    {`Étape ${index + 1} sur ${steps.length} : ${stepDefinition.label}`}
+                  </legend>
                   {index === step ? header : null}
                   {children({ ...api, step: index, active: index === step })}
                 </fieldset>
@@ -532,6 +608,9 @@ export function CreateFormEngineV2<T extends FieldValues>({
       {clearDialog}
       <FormProvider {...form}>
         <fieldset className="lkdv-cv2c-pane" disabled={disabled || busy}>
+          <legend className="lkdv-cv2c-sr-only">
+            {`Étape ${step + 1} sur ${steps.length} : ${steps[step]?.label ?? ''}`}
+          </legend>
           {children(api)}
         </fieldset>
       </FormProvider>

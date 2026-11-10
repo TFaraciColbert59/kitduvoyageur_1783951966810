@@ -1728,7 +1728,9 @@
 .lkdv-cv2x-peek-text {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  /* Maquette `.ctx .pv b{margin-bottom:5px}` + `.s2{margin-bottom:4px}`. */
+  gap: 5px;
+  padding-bottom: 5px;
   min-width: 0;
 }
 
@@ -1830,12 +1832,8 @@
   height: auto;
   aspect-ratio: 4 / 5.6;
   border-radius: 18px;
-  background: linear-gradient(
-    90deg,
-    var(--lkv-secondary-subtle),
-    var(--sage-50),
-    var(--lkv-secondary-subtle)
-  );
+  /* Maquette `.ct-skel` (L1028) : verre translucide encre 6 % → blanc 72 %. */
+  background: linear-gradient(90deg, var(--cv2-skeleton-lo), var(--cv2-skeleton-hi), var(--cv2-skeleton-lo));
   background-size: 220% 100%;
   animation: lkdv-cv2-shimmer 1.3s ease-in-out infinite;
 }
@@ -1879,6 +1877,16 @@
   font: 500 11.5px/1.4 var(--font-sans);
   color: var(--lkv-text-secondary);
   text-align: center;
+}
+
+/* Pied de volet « Créer … / Tout voir » (maquette `.pane-foot`, L974) : deux
+   pilules de 44 px centrées, dans la réserve sous la mini-capsule. */
+.lkdv-cv2x-pane-foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 0 4px;
 }
 
 .lkdv-cv2x-empty-actions {
@@ -2028,4 +2036,32 @@
   -webkit-appearance: none;
   appearance: none;
   display: none;
+}
+
+/* ── Fidélité maquette (banc tests/fidelity) ────────────────────────────── */
+
+/* Champ de recherche : verre « bar-glass » (maquette `.srch`, L917), 48 px. */
+.lkdv-cv2-layer .lkdv-cv2-search {
+  background-color: transparent;
+  background-image: var(--cv2-bar-glass-bg);
+  -webkit-backdrop-filter: var(--cv2-bar-glass-blur);
+  backdrop-filter: var(--cv2-bar-glass-blur);
+  box-shadow: var(--cv2-bar-glass-shadow);
+  padding: 0 4px 0 14px;
+}
+
+/* CTA de l'état vide : apparence de la maquette (`.empty .cta`, L377 : 36 px,
+   12,5 px) ; la zone tactile reste de 44 px par une extension invisible. */
+.lkdv-cv2-empty .lkdv-cv2-pill--primary {
+  min-height: 36px;
+  padding: 0 15px;
+  font-size: 12.5px;
+  box-shadow: 0 4px 14px rgba(23, 64, 44, 0.2);
+  margin-top: 3px;
+}
+
+.lkdv-cv2-empty .lkdv-cv2-pill--primary::after {
+  content: '';
+  position: absolute;
+  inset: -4px -2px;
 }

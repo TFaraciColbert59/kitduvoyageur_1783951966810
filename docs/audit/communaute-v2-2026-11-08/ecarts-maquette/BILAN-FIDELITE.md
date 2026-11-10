@@ -5,6 +5,19 @@
 Création, sous-tiroirs, formulaires, coque, design system) et la maquette, en suivant une checklist
 par phases, avec vérification constante et sous-agents en parallèle.
 
+## Deux référentiels, un seul état (réconcilié le 2026-11-10)
+
+Ce bilan et `COUVERTURE-200.md` ne mesurent pas la même chose, ce qui avait fait lire « 0 partiel » contre « 23 partiels » :
+
+| Document | Référentiel | État au 2026-11-10 |
+|---|---|---|
+| `BACKLOG-100.md` / ce bilan | **85 écarts de fidélité** entre les tiroirs livrés et la maquette | 83 comblés, 0 partiel, 2 bloqués par la production (FID-078, FID-083) |
+| `COUVERTURE-200.md` | **200 améliorations** du document de refonte (20 × 10 volets) | 187 faites (dont 4 dépendant de la production), 0 partiel, 0 non fait, 13 reportées (`01` § 6) |
+
+Le comptage « 23 partiels / 3 non faits » de COUVERTURE datait d'un audit statique du 2026-11-08, antérieur à la PR #158 ; il n'avait pas été relu
+après elle. Il est clos ligne par ligne (preuves : fichiers et tests cités dans COUVERTURE). Les chips de 28 px ne sont plus une
+dérogation : l'apparence de la maquette est gardée, la zone tactile est portée à ≥ 44 px (pseudo-élément), mesurée par `audit-transverses.json`.
+
 ## Résultat final
 
 | Indicateur | Valeur |
@@ -18,6 +31,35 @@ par phases, avec vérification constante et sous-agents en parallèle.
 
 Suivi item par item : `CHECKLIST-100.md` (cases + journal) et `BACKLOG-100.md` (statut, preuve,
 fichiers, correction attendue). Galerie des 82 captures appairées : `GALERIE.html`.
+
+## Finition des tiroirs — scores du banc `tests/fidelity` (2026-11-10, 390×844 clair)
+
+Avant = point de départ fourni (commit `57911e3a6`) ; après = cette finition. Cellule = part de pixels différents · mesures DOM conformes.
+
+| Scénario | Avant | Après |
+|---|---|---|
+| Explorer · carnets | 48,6 % · 30/45 | 44,4 % · 44/45 |
+| Explorer · clubs | 42,1 % | 41,1 % · 43/45 |
+| Explorer · sorties | 38,0 % · 24/38 | 34,1 % · 36/38 |
+| Recherche · accueil | 58,5 % · 25/40 | 55,2 % · 39/40 |
+| Recherche · résultats | 66,3 % · 23/33 | 63,3 % · 33/33 |
+| Peek carnet | 82,5 % · 0/4 | 84,7 % · 3/4 |
+| Création · étape 1 | 52,3 % · 12/19 | 51,2 % · 18/19 |
+| Carnets · chargement | 55,3 % · 17/25 | 37,1 % · 24/25 |
+| Carnets · vide | 54,8 % · 23/33 | 53,7 % · 33/33 |
+| Carnets · erreur | 53,2 % · 17/25 | 53,9 % · 24/25 |
+| Carnets · invité | 51,0 % · 24/38 | 49,2 % · 36/38 |
+| **Mesures DOM conformes (total)** | **224 / 345 (64,9 %)** | **333 / 345 (96,5 %)** |
+
+Lecture honnête : les **mesures de structure** passent de 65 % à 96,5 % (tiroir à y = 48 / h = 782, capsule en verre « bar-glass »,
+mini-capsule 44 px par lentille et icônes globe / signet / cœur, volets inset 14 px, champ de recherche 346 px en verre, squelettes en
+verre translucide, mini-capsule retirée pendant le chargement et l'erreur, **dialogue du peek = la carte de 310 px**). Les **pixels**
+ne passent pas sous 2 % : l'écart restant est dominé par le fond — le tiroir est translucide et laisse voir la photo réelle de
+`/communaute`, la maquette une illustration verte (X1, non comparable) ; ex. « chargement » (squelettes seuls, aucune donnée) reste à 37 %.
+Les 12 mesures restantes : présence du formulaire de Création (sélecteur du banc, élément absent côté app), 2 « présence » de la mini-capsule où app et maquette sont toutes deux absentes (artefact du banc), hauteur de tuile (3 à 7 px), position des tuiles (6 px sous les chips, 30 px sous la pastille invité), rayon de la tuile sortie (le sélecteur mesure le conteneur), peek y (17 px), champ de recherche (2 px).
+
+Preuves complémentaires : `captures-finition/` (app + maquette dans le même état : 360 et 430 au-delà de l'étape 1, thème sombre de chaque
+tiroir, Création vide / chargement / erreur, invité), `audit-transverses.json` (contraste AA, focus, cibles ≥ 44 px).
 
 ## Preuves de vérification (rejouées à chaque vague)
 
@@ -88,7 +130,7 @@ registre → advisors → drapeau), puis rejouer `VERIFIER.sh`, les captures sur
   automatisables (pas de Maestro CLI) — voir `recette/IPHONE.md`.
 - **Références visuelles** : baselines `-darwin` ; la spec se saute en CI tant que les références
   Linux n'ont pas été produites (documenté dans la spec).
-- **Chips 28 px** : fidélité maquette, dérogation documentée à la règle 44 px de `CLAUDE.md` (J-14).
+- **Chips 28 px** : apparence de la maquette conservée, zone tactile ≥ 44 px par `::after` (finition du 2026-11-10, audit `audit-transverses.json`).
 
 ## Commits du chantier
 

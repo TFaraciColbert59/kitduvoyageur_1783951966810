@@ -142,7 +142,7 @@ export function PlaceFieldV2({
   };
 
   return (
-    <div className={['lkdv-cv2-field', className].filter(Boolean).join(' ')}>
+    <div className={['lkdv-cv2-field', className].filter(Boolean).join(' ')} data-testid={`cv2-field-${name}`}>
       <label id={labelId} htmlFor={fieldId} className="lkdv-cv2-field-label">
         {label}
         {required ? <span aria-hidden="true"> *</span> : null}

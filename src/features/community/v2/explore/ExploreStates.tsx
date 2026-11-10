@@ -198,6 +198,53 @@ export function ExploreListFoot({
   return <p className="lkdv-cv2x-list-foot">Tu as tout vu. {label}</p>;
 }
 
+/**
+ * Pied de volet « Créer … / Tout voir » (maquette `.pane-foot`, L2343 et L974).
+ * Deux pilules de 44 px : la création et l'élargissement au flux complet. Quand
+ * il n'y a rien de plus à voir, « Tout voir » disparaît plutôt que de ramener à
+ * la page courante (Carnets#19).
+ */
+export function ExplorePaneFoot({
+  createLabel,
+  onCreate,
+  onSeeAll,
+  seeAllBusy = false,
+  seeAllLabel = 'Tout voir',
+  seeAllDescription,
+}: {
+  createLabel: string;
+  onCreate?: () => void;
+  onSeeAll?: () => void;
+  seeAllBusy?: boolean;
+  seeAllLabel?: string;
+  seeAllDescription?: string;
+}) {
+  if (!onCreate && !onSeeAll) return null;
+  return (
+    <div className="lkdv-cv2x-pane-foot" data-testid="cv2-pane-foot">
+      {onCreate ? (
+        <button type="button" className="lkdv-cv2-pill lkdv-cv2-pill--secondary" onClick={onCreate}>
+          <ExploreIcon name="plus" size={15} />
+          {createLabel}
+        </button>
+      ) : null}
+      {onSeeAll ? (
+        <button
+          type="button"
+          className="lkdv-cv2-pill lkdv-cv2-pill--secondary"
+          onClick={onSeeAll}
+          aria-busy={seeAllBusy || undefined}
+          disabled={seeAllBusy}
+          aria-label={seeAllDescription}
+        >
+          {seeAllLabel}
+          <ExploreIcon name="chevron-right" size={15} />
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 /** En-tête de volet : titre accessible + action à droite. */
 export function ExplorePaneHead({
   title,
