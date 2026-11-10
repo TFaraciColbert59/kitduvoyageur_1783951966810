@@ -536,7 +536,7 @@ export function CarnetDrawerV2({
     display: 'flex',
     flexDirection: 'column',
     gap: '8px',
-    padding: '6px',
+    padding: '6px 14px',
   };
   const nextDay = activeDay > 0 ? activeDay : Math.max(1, ...detail.days.map((d) => d.dayNumber ?? d.index)) || 1;
 
@@ -546,7 +546,7 @@ export function CarnetDrawerV2({
         if (lens.id === 'moments' && activeDay === 0 && detail.days.length > 0) {
           const stats = resolveDayStats(detail);
           return (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '6px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '6px 14px' }}>
               <h3 className="lkdv-h5">Une carte postale par jour</h3>
               {[...detail.days]
                 .sort((a, b) => (a.dayNumber ?? a.index) - (b.dayNumber ?? b.index))
@@ -640,7 +640,7 @@ export function CarnetDrawerV2({
         }
         if (lens.id === 'medias') {
           return (
-            <div style={{ padding: '6px' }}>
+            <div style={{ padding: '6px 14px' }}>
               {dayPhotoMoments.length > 0 ? (
                 <h3 className="lkdv-h5" style={{ margin: '0 0 8px' }}>
                   {dayPhotoMoments.length} média{dayPhotoMoments.length > 1 ? 's' : ''} · photos et vidéos
@@ -922,7 +922,7 @@ export function CarnetDrawerV2({
         }
         if (lens.id === 'budget' && detail.budget) {
           return (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '6px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '6px 14px' }}>
               <div
                 style={{
                   padding: '12px',
@@ -986,7 +986,7 @@ export function CarnetDrawerV2({
         }
         if (lens.id === 'reactions') {
           return (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '6px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '6px 14px' }}>
               <div
                 role="group"
                 aria-label="Jour des réactions"

@@ -94,6 +94,36 @@ export function resolveDayStats(detail: Pick<CarnetDetail, 'days' | 'etapes'>): 
     });
 }
 
+export type WeatherKind = 'sun' | 'partly' | 'cloud' | 'rain' | 'snow';
+
+/**
+ * Lecture de la météo d'un jour (« éclaircies · 11 °C ») : le glyphe d'après les
+ * mots de la source, la température seule quand elle y est. Un texte sans mot
+ * reconnu n'a pas de glyphe : rien n'est deviné.
+ */
+export function parseWeather(text: string | null | undefined): {
+  kind: WeatherKind | null;
+  temp: string | null;
+  label: string;
+} | null {
+  const label = text?.trim();
+  if (!label) return null;
+  const temp = /(-?\d+(?:[.,]\d+)?)\s*°/.exec(label);
+  const lower = label.toLowerCase();
+  const kind: WeatherKind | null = /neige|flocon/.test(lower)
+    ? 'snow'
+    : /pluie|averse|orage|bruine/.test(lower)
+      ? 'rain'
+      : /éclaircie|variable|partiel/.test(lower)
+        ? 'partly'
+        : /nuage|couvert|brume|brouillard/.test(lower)
+          ? 'cloud'
+          : /soleil|dégagé|ensoleill|clair/.test(lower)
+            ? 'sun'
+            : null;
+  return { kind, temp: temp ? `${temp[1].replace(',', '.')}°` : null, label };
+}
+
 export type DayMetricKey = 'distance' | 'elevation' | 'duration';
 
 export interface DayMetric {

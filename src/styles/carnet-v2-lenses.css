@@ -1122,3 +1122,37 @@ button.lkdv-li {
     transition: none !important;
   }
 }
+
+/* ── Réduction de transparence : fonds opaques, aucun flou ───────────────────
+   Gardé par `reducedTransparency.test.ts` : toute surface floutée de la fiche
+   (carnet-v2.css et ce fichier) doit figurer dans un bloc de repli. */
+@media (prefers-reduced-transparency: reduce) {
+  .lkdv-stack-sheet,
+  .lkdv-stack-header,
+  .lkdv-altitude-card,
+  .lkdv-day-banner,
+  .lkdv-fiche-hero .ov,
+  .lkdv-ig-open,
+  .lkdv-map-night-badge,
+  .lkdv-mctl,
+  .lkdv-peek,
+  .lkdv-peek-menu,
+  .lkdv-peek-preview,
+  .lkdv-postcard-ov,
+  .lkdv-card2,
+  .lkdv-note-card,
+  .lkdv-menu2,
+  .lkdv-sheet-notif,
+  .lkdv-kpi,
+  .lkdv-mo,
+  .lkdv-mtile,
+  .lkdv-etape,
+  .lkdv-tile,
+  .lkdv-crew,
+  .lkdv-sig,
+  .lkdv-opt {
+    background: var(--lkv-surface-paper, #fff) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+}

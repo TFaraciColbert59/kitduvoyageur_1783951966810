@@ -2,7 +2,7 @@
 
 import React, { useRef, useState, useCallback, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { AlignLeft } from 'lucide-react';
+import { AlignLeft, Cloud, CloudRain, CloudSun, Snowflake, Sun } from 'lucide-react';
 import type {
   CarnetDay,
   CarnetEtapeDay,
@@ -12,6 +12,7 @@ import type {
 import { CarnetPostGrid } from './CarnetPostGrid';
 import { CarnetArt } from './CarnetArt';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { parseWeather } from '@/features/carnet/detail/dayView';
 import { formatDayLabel, formatDuration, formatElevation, formatKm } from '@/features/carnet/detail/format';
 import styles from './CarnetDaySwipeView.module.css';
 
@@ -127,6 +128,15 @@ function buildDayViews({
     });
 }
 
+function WeatherGlyph({ kind }: { kind: NonNullable<ReturnType<typeof parseWeather>>['kind'] }) {
+  const props = { size: 20, 'aria-hidden': true } as const;
+  if (kind === 'sun') return <Sun {...props} />;
+  if (kind === 'partly') return <CloudSun {...props} />;
+  if (kind === 'rain') return <CloudRain {...props} />;
+  if (kind === 'snow') return <Snowflake {...props} />;
+  return <Cloud {...props} />;
+}
+
 export function CarnetDaySwipeView({
   days,
   etapes,
@@ -164,6 +174,7 @@ export function CarnetDaySwipeView({
   );
   const maxDay = dayViews.reduce((max, day) => Math.max(max, day.dayNumber), 0);
   const currentDay = dayViews.find((day) => day.dayNumber === activeDay) ?? null;
+  const weather = useMemo(() => parseWeather(currentDay?.weather), [currentDay?.weather]);
 
   const handlePointerDown = (e: React.PointerEvent) => {
     if (e.button !== 0 && e.pointerType === 'mouse') return;
@@ -371,8 +382,13 @@ export function CarnetDaySwipeView({
                 <b className={cx(styles.dayheadTitle)}>{dayTitle}</b>
                 {dayMeta ? <span className={cx(styles.dayheadMeta)}>{dayMeta}</span> : null}
               </div>
-              {currentDay?.weather ? (
-                <span className={cx(styles.dayheadWeather)}>{currentDay.weather}</span>
+              {weather ? (
+                <span className={cx(styles.dayheadWeather)} title={weather.label} aria-label={weather.label}>
+                  {weather.kind ? (
+                    <WeatherGlyph kind={weather.kind} />
+                  ) : null}
+                  {weather.temp ?? (weather.kind ? null : weather.label)}
+                </span>
               ) : null}
             </div>
 

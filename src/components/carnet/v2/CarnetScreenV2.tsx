@@ -119,6 +119,15 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
     ? elevationProfile[elevationProfile.length - 1].distanceKm
     : null;
   const [storiesOpen, setStoriesOpen] = useState(false);
+  /* J'aime des stories : ce sont les j'aime des moments (`carnet_moment_likes`), les mêmes que ceux du post. */
+  const [likedStories, setLikedStories] = useState<ReadonlySet<string>>(
+    () =>
+      new Set(
+        Object.values(detailProp.momentEngagement ?? {})
+          .filter((entry) => entry.userLiked)
+          .map((entry) => entry.momentId)
+      )
+  );
   /* Signalement : la cible est le carnet (barre haute, menu ··· du post) ou le
      moment affiché dans le Peek. Une seule feuille, une seule cible. */
   const [reportTarget, setReportTarget] = useState<
@@ -672,6 +681,34 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
     [currentUserId, detail.id, requireAuth, showIsland]
   );
 
+  const handleStoryLike = useCallback(
+    async (slide: StorySlide, wasLiked: boolean) => {
+      const momentId = slide.storyId;
+      if (!momentId) return;
+      if (!currentUserId || !canWrite) {
+        requireAuth();
+        return;
+      }
+      const flip = (on: boolean) =>
+        setLikedStories((prev) => {
+          const next = new Set(prev);
+          if (on) next.add(momentId);
+          else next.delete(momentId);
+          return next;
+        });
+      flip(!wasLiked);
+      const query = wasLiked
+        ? supabase.from('carnet_moment_likes').delete().eq('moment_id', momentId).eq('user_id', currentUserId)
+        : supabase.from('carnet_moment_likes').insert({ moment_id: momentId, user_id: currentUserId });
+      const { error } = await query;
+      if (error) {
+        flip(wasLiked);
+        showIsland('Le j’aime n’a pas pu être enregistré');
+      }
+    },
+    [canWrite, currentUserId, requireAuth, showIsland, supabase]
+  );
+
   const shareUrl = useMemo(
     () => (typeof window === 'undefined' ? '' : `${window.location.origin}/carnets/${detail.id}`),
     [detail.id]
@@ -706,7 +743,17 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
         {detail.coverImage ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={detail.coverImage} alt="" loading="eager" decoding="async" />
-        ) : null}
+        ) : (
+          /* Sans photo de couverture : le paysage dessiné de la maquette (`.bg svg`), jamais une photo inventée. */
+          <svg viewBox="0 0 390 844" preserveAspectRatio="xMidYMid slice" focusable="false">
+            <circle cx="300" cy="120" r="46" fill="var(--pic-sun)" opacity=".55" />
+            <path d="M0 260 L70 170 L120 220 L190 120 L260 215 L310 160 L390 250 V844 H0z" fill="var(--bg-r1)" />
+            <path d="M0 360 L90 270 L160 330 L250 240 L330 320 L390 290 V844 H0z" fill="var(--bg-r2)" />
+            <path d="M0 470 L110 400 L210 450 L300 380 L390 440 V844 H0z" fill="var(--bg-r3)" />
+            <path d="M0 600 L120 540 L240 590 L390 530 V844 H0z" fill="var(--bg-r4)" />
+            <path d="M178 140 L190 120 L204 148 L196 144 L190 152 L184 144z" fill="var(--pic-snow)" opacity=".85" />
+          </svg>
+        )}
       </div>
 
       {/* Dynamic Island notification */}
@@ -1089,6 +1136,8 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
           startUser={0}
           onClose={() => setStoriesOpen(false)}
           onReply={handleStoryReply}
+          onToggleLike={(slide, wasLiked) => void handleStoryLike(slide, wasLiked)}
+          likedStoryIds={likedStories}
           onAuthor={(storyUser) => {
             setStoriesOpen(false);
             if (detail.participants.some((p) => p.userId === storyUser.id)) {

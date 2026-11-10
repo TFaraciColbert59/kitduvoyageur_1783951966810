@@ -59,8 +59,17 @@ vi.mock('@/components/communaute/StoriesViewer', () => ({
     users: Array<{ id: string; name: string; slides: Array<{ storyId?: string }> }>;
     onAuthor?: (user: { id: string; name: string }) => void;
     onReport?: (user: unknown, slide: { storyId?: string }) => void;
+    onToggleLike?: (slide: { storyId?: string }, wasLiked: boolean) => void;
+    likedStoryIds?: ReadonlySet<string>;
   }) => (
-    <div data-testid="stories-mock" data-groups={props.users.length}>
+    <div
+      data-testid="stories-mock"
+      data-groups={props.users.length}
+      data-liked={String(Boolean(props.likedStoryIds?.has(props.users[0].slides[0].storyId ?? '')))}
+    >
+      <button type="button" onClick={() => props.onToggleLike?.(props.users[0].slides[0], false)}>
+        aimer
+      </button>
       <button type="button" onClick={() => props.onAuthor?.(props.users[0])}>
         pilule auteur
       </button>
@@ -318,6 +327,16 @@ describe('stories des voyageurs (toucher la couverture)', () => {
     expect(screen.queryByTestId('stories-mock')).toBeNull();
     const drawer = screen.getByRole('dialog', { name: 'Détail du carnet' });
     expect(within(drawer).getByRole('button', { name: 'Retour' })).toBeTruthy();
+  });
+
+  it('le j’aime d’une story est posé tout de suite (j’aime du moment)', async () => {
+    render(<CarnetScreenV2 detail={buildEcrinsDetail()} />);
+    fireEvent.click(screen.getByRole('button', { name: /Ouvrir les stories du carnet/ }));
+    expect(screen.getByTestId('stories-mock').getAttribute('data-liked')).toBe('false');
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'aimer' }));
+    });
+    expect(screen.getByTestId('stories-mock').getAttribute('data-liked')).toBe('true');
   });
 
   it('« Signaler » ferme les stories et ouvre le signalement du moment', () => {

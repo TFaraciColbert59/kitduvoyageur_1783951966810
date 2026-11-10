@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { CarnetDetail, CarnetMomentItem } from '@/features/carnet/detail/types';
 import type { CarnetHighlight } from '@/features/carnet/detail/highlights';
 import { isParticipantRole } from '@/features/carnet/detail/viewerRole';
 import { CarnetDaySwipeView } from './CarnetDaySwipeView';
-import { BookOpen, Check, ChevronRight, Flag, Radio } from 'lucide-react';
+import { BookOpen, Check, ChevronRight, Flag } from 'lucide-react';
 import { CarnetArt } from './CarnetArt';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
@@ -99,35 +99,43 @@ export function CarnetCardV2({
    * Statut réel du carnet : la date décide, pas une étiquette décorative.
    * Aucune date inventée ; sans dates, pas de pilule de statut.
    */
+  /* L'instant est lu côté client après le montage : le serveur et le navigateur
+     ne s'accordent pas sur « maintenant », la pilule d'état se pose donc au montage
+     (la place est réservée, aucun saut de mise en page). */
+  const [nowMs, setNowMs] = useState<number | null>(null);
+  useEffect(() => setNowMs(Date.now()), []);
   const liveStatus = useMemo(() => {
+    if (nowMs === null) return null;
     const start = detail.startDate ? new Date(`${detail.startDate}T12:00:00`) : null;
     const end = detail.endDate ? new Date(`${detail.endDate}T12:00:00`) : null;
     if (!start || Number.isNaN(start.getTime())) return null;
-    const now = new Date();
+    const now = new Date(nowMs);
     const dayMs = 86_400_000;
+    /* Les jours se comptent en jours civils : « maintenant » n'a pas à franchir
+       midi pour passer au jour suivant, ni à dépasser la minute de fin. */
+    const dayOf = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+    const today = dayOf(now);
+    const hasEnd = Boolean(end) && !Number.isNaN((end as Date).getTime());
     if (!detail.liveSharing) {
       /* Sans partage en direct : « Terminé » seulement si la date de fin est passée. */
-      return end && !Number.isNaN(end.getTime()) && now > end
+      return hasEnd && today > dayOf(end as Date)
         ? { state: 'done' as const, label: `Terminé · ${daysLabel}` }
         : null;
     }
-    if (now < start) {
+    if (today < dayOf(start)) {
       return {
         state: 'upcoming' as const,
         label: `Départ le ${start.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}`,
       };
     }
-    const finished = end && !Number.isNaN(end.getTime()) ? now > end : false;
+    const finished = hasEnd ? today > dayOf(end as Date) : false;
     if (finished) return { state: 'done' as const, label: `Terminé · ${daysLabel}` };
-    const dayNumber = Math.max(
-      1,
-      Math.min(daysCount, Math.floor((now.getTime() - start.getTime()) / dayMs) + 1)
-    );
+    const dayNumber = Math.max(1, Math.min(daysCount, Math.round((today - dayOf(start)) / dayMs) + 1));
     return {
       state: 'live' as const,
       label: `En route · J${dayNumber} sur ${daysCount}${!isParticipant && zoneLabel ? ` · ${zoneLabel}` : ''}`,
     };
-  }, [daysCount, daysLabel, detail.endDate, detail.liveSharing, detail.startDate, isParticipant, zoneLabel]);
+  }, [daysCount, daysLabel, detail.endDate, detail.liveSharing, detail.startDate, isParticipant, nowMs, zoneLabel]);
 
   return (
     <div className="lkdv-carnet-card" id="card" role="region" aria-label="En-tête du carnet">
@@ -216,8 +224,8 @@ export function CarnetCardV2({
                 onOpenDrawerSlot('equipage', 2);
               }}
             >
-              <Radio size={13} aria-hidden="true" />
-              <span>{liveStatus.label}</span>
+              <span className="lkdv-livedot" aria-hidden="true" />
+              <span className="t">{liveStatus.label}</span>
               <ChevronRight size={14} aria-hidden="true" />
             </button>
           ) : (
