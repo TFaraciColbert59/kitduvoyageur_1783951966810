@@ -1,4 +1,5 @@
 import { buildDays, buildSummary, toMomentItems } from './days';
+import { etapeFromRow } from './editSchemas';
 import { formatDateRange, formatElevation, formatKm, toNumber } from './format';
 import { buildCarnetPlace } from './place';
 import { pickElevationProfile } from './elevationProfile';
@@ -78,35 +79,9 @@ function buildEtapes(input: BuildCarnetDetailInput): CarnetEtapeDay[] {
 
   const rawEtapes = input.etapes ?? [];
   if (rawEtapes.length > 0) {
-    return rawEtapes.map((e) => {
-      const dayNumber = e.jour_numero ?? e.ordre ?? 1;
-      const dateLabel = e.date_etape
-        ? new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' }).format(
-            new Date(`${e.date_etape}T12:00:00Z`)
-          )
-        : null;
-      return {
-        id: e.id,
-        dayNumber,
-        label: dateLabel ? `JOUR ${dayNumber} · ${dateLabel}` : `JOUR ${dayNumber}`,
-        from: e.lieu_depart?.trim() || null,
-        to: e.lieu_arrivee?.trim() || null,
-        note: e.recit?.trim() || null,
-        distanceKm: toNumber(e.distance_km),
-        elevationM: toNumber(e.denivele_m),
-        durationText: e.duree_texte?.trim() || null,
-        weather:
-          [
-            e.meteo?.trim(),
-            e.temperature_c !== null && e.temperature_c !== undefined
-              ? `${e.temperature_c} °C`
-              : null,
-          ]
-            .filter(Boolean)
-            .join(' · ') || null,
-        overnight: overnightByDay.get(dayNumber) ?? null,
-      };
-    });
+    return rawEtapes.map((e) =>
+      etapeFromRow(e, overnightByDay.get(e.jour_numero ?? e.ordre ?? 1) ?? null)
+    );
   }
 
   // Pas d'étapes : les moments donnent les journées, sans récit inventé
@@ -193,24 +168,30 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
      (`pickCarnetTrace`), pas forcément celle qui donne les statistiques. */
   const trace = input.trace ?? hikeSession?.positions_geojson ?? null;
 
-  const nights: CarnetNightItem[] =
-    input.nights && input.nights.length > 0
-      ? input.nights
-      : (input.hebergements ?? []).map((h) => ({
-          id: h.id,
-          dayNumber: h.apres_jour_numero ?? 1,
-          name: h.nom?.trim() || 'Hébergement',
-          type: (['refuge', 'gite', 'bivouac', 'hotel', 'camping', 'autre'].includes(
-            (h as { type_hebergement?: string | null }).type_hebergement ?? ''
-          )
-            ? (h as { type_hebergement?: string | null }).type_hebergement
-            : 'refuge') as CarnetNightItem['type'],
-          altitudeM: toNumber(h.altitude_m),
-          infos: h.prix_note || h.note || null,
-          lat: null,
-          lng: null,
-          mapRefugeId: null,
-        }));
+  /* Nuits du carnet (`carnet_nights`) ; les hébergements de l'ancien carnet de
+     groupe comblent les jours sans nuit saisie, pour qu'écrire une nuit ne
+     fasse jamais disparaître les autres. */
+  const legacyNights: CarnetNightItem[] = (input.hebergements ?? []).map((h) => ({
+    id: h.id,
+    dayNumber: h.apres_jour_numero ?? 1,
+    name: h.nom?.trim() || 'Hébergement',
+    type: (['refuge', 'gite', 'bivouac', 'hotel', 'camping', 'autre'].includes(
+      (h as { type_hebergement?: string | null }).type_hebergement ?? ''
+    )
+      ? (h as { type_hebergement?: string | null }).type_hebergement
+      : 'refuge') as CarnetNightItem['type'],
+    altitudeM: toNumber(h.altitude_m),
+    infos: h.prix_note || h.note || null,
+    lat: null,
+    lng: null,
+    mapRefugeId: null,
+  }));
+  const writtenNights = input.nights ?? [];
+  const writtenDays = new Set(writtenNights.map((n) => n.dayNumber));
+  const nights: CarnetNightItem[] = [
+    ...writtenNights,
+    ...legacyNights.filter((n) => !writtenDays.has(n.dayNumber)),
+  ].sort((x, y) => x.dayNumber - y.dayNumber);
 
   const viewerRole: CarnetViewerRole =
     input.viewerRole ??
