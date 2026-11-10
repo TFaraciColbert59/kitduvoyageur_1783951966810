@@ -32,6 +32,8 @@ async function frameBox(page: Page, selector: string | undefined): Promise<Rect>
   const box = await page.evaluate((sel) => {
     const el = document.querySelector(sel);
     if (!el) return null;
+    // sous 900 px la maquette empile son panneau de démo au-dessus du téléphone : on amène le téléphone dans la fenêtre
+    (el as HTMLElement).scrollIntoView({ block: 'start', inline: 'nearest' });
     const r = el.getBoundingClientRect();
     return { x: r.left, y: r.top, w: r.width, h: r.height };
   }, selector);
@@ -91,6 +93,8 @@ async function openMaquette(ctx: BrowserContext, scenario: Scenario): Promise<Pa
     }, undefined, { timeout: 10_000 })
     .catch(() => undefined);
   await page.waitForTimeout(1_200);
+  await page.evaluate(() => document.querySelector('#phone')?.scrollIntoView({ block: 'start' }));
+  await page.waitForTimeout(300);
   await playSteps(page, scenario.maquette.steps, 'maquette');
   await page.waitForTimeout(900);
   return page;
