@@ -3,10 +3,12 @@
 -- 1. Le contributeur du carnet (hors groupe_membres) écrit une étape du groupe.
 -- 2. Un tiers (ni participant, ni membre) ne peut pas.
 -- 3. Un participant d'un AUTRE carnet ne touche pas aux étapes de ce groupe.
+-- 4. Relecture 2026-11-10 : un tiers qui fait pointer SON carnet vers le groupe
+--    d'autrui (groupe_id lisible publiquement) n'écrit pas ses étapes.
 -- ============================================================================
 BEGIN;
 SET LOCAL search_path = public;
-SELECT plan(5);
+SELECT plan(8);
 
 INSERT INTO auth.users (id, aud, role, email, encrypted_password, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
 VALUES
@@ -65,6 +67,21 @@ SELECT results_eq(
   $$VALUES (1)$$,
   'le contributeur supprime l''étape'
 );
+
+-- 4. Détournement de groupe_id : le tiers crée son carnet sur le groupe d'autrui
+SET LOCAL "request.jwt.claims" = '{"sub": "c5000000-0000-4000-8000-000000000003", "role": "authenticated"}';
+SELECT lives_ok(
+  $$INSERT INTO public.carnets (id, author_id, title, destination, visibility, groupe_id)
+    VALUES ('c5200000-0000-4000-8000-000000000009', 'c5000000-0000-4000-8000-000000000003', 'Carnet pirate', 'Ailleurs', 'private', 'c5100000-0000-4000-8000-000000000001')$$,
+  'le tiers peut créer un carnet qui pointe vers le groupe d''autrui (groupe_id non contrôlé)'
+);
+SELECT throws_ok(
+  $$INSERT INTO public.groupe_etapes (groupe_id, jour_numero, ordre, lieu_depart, lieu_arrivee)
+    VALUES ('c5100000-0000-4000-8000-000000000001', 3, 3, 'P', 'Q')$$,
+  '42501', NULL, 'mais ce carnet ne lui ouvre pas les étapes du groupe'
+);
+SELECT is(public.carnet_author_in_group('c5200000-0000-4000-8000-000000000009'), false,
+  'carnet_author_in_group refuse un auteur étranger au groupe');
 
 SELECT * FROM finish();
 ROLLBACK;
