@@ -67,7 +67,7 @@ const projects = SIZES.flatMap((size) =>
 
 export default defineConfig({
   testDir: '.',
-  testMatch: ['fidelity.spec.ts'],
+  testMatch: ['fidelity.spec.ts', 'a11y-carnet.spec.ts'],
   fullyParallel: true,
   workers: Number(process.env.FIDELITY_WORKERS ?? 2),
   retries: 0,
