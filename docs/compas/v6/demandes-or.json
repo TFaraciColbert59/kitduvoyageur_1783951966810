@@ -1,0 +1,8968 @@
+{
+ "version": 1,
+ "demandes": [
+  {
+   "id": "D001",
+   "phrase": "Week-end rando à deux dans les Cinque Terre fin avril, on dort sur place",
+   "langue": "fr",
+   "famille": "marche",
+   "duree": "week-end",
+   "groupe": "couple",
+   "continent": "europe",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "IT",
+    "lieu": {
+     "nom": "Cinque Terre",
+     "lat": 44.12,
+     "lon": 9.7,
+     "rayonKm": 40
+    },
+    "jours": 2,
+    "heures": null,
+    "personnes": 2,
+    "enfants": 0,
+    "activite": "hiking",
+    "mois": 4,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D002",
+   "phrase": "Un mois de bivouac en solo en Nouvelle-Zélande, Te Araroa côté île du Sud, à partir de début février",
+   "langue": "fr",
+   "famille": "bivouac",
+   "duree": "1-mois",
+   "groupe": "solo",
+   "continent": "oceanie",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "NZ",
+    "lieu": {
+     "nom": "Île du Sud",
+     "lat": -44.5,
+     "lon": 169,
+     "rayonKm": 400
+    },
+    "jours": 30,
+    "heures": null,
+    "personnes": 1,
+    "enfants": 0,
+    "activite": "bivouac",
+    "mois": 2,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 3
+   }
+  },
+  {
+   "id": "D003",
+   "phrase": "2 semaines à vélo au Vietnam de Hanoï à Hué avec ma chérie, en novembre",
+   "langue": "fr",
+   "famille": "velo",
+   "duree": "2-semaines",
+   "groupe": "couple",
+   "continent": "asie",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "VN",
+    "lieu": {
+     "nom": "Hanoï - Hué",
+     "lat": 19,
+     "lon": 106,
+     "rayonKm": 400
+    },
+    "jours": 14,
+    "heures": null,
+    "personnes": 2,
+    "enfants": 0,
+    "activite": "cycling",
+    "mois": 11,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D004",
+   "phrase": "Road trip en famille 8 jours en Corse, deux enfants de 6 et 9 ans, en juillet",
+   "langue": "fr",
+   "famille": "route",
+   "duree": "semaine",
+   "groupe": "famille",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "FR",
+    "lieu": {
+     "nom": "Corse",
+     "lat": 42.15,
+     "lon": 9.1,
+     "rayonKm": 100
+    },
+    "jours": 8,
+    "heures": null,
+    "personnes": 4,
+    "enfants": 2,
+    "activite": "roadtrip",
+    "mois": 7,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D005",
+   "phrase": "Week-end à Lisbonne en octobre avec mon mari, azulejos et fado",
+   "langue": "fr",
+   "famille": "ville-culture",
+   "duree": "week-end",
+   "groupe": "couple",
+   "continent": "europe",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "PT",
+    "lieu": {
+     "nom": "Lisbonne",
+     "lat": 38.72,
+     "lon": -9.14,
+     "rayonKm": 30
+    },
+    "jours": 3,
+    "heures": null,
+    "personnes": 2,
+    "enfants": 0,
+    "activite": "citytrip",
+    "mois": 10,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D006",
+   "phrase": "Journée plage à Tamariu sur la Costa Brava, on est 5 potes, mi-juillet",
+   "langue": "fr",
+   "famille": "plage",
+   "duree": "journee",
+   "groupe": "groupe",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "ES",
+    "lieu": {
+     "nom": "Costa Brava",
+     "lat": 41.92,
+     "lon": 3.2,
+     "rayonKm": 40
+    },
+    "jours": 1,
+    "heures": null,
+    "personnes": 5,
+    "enfants": 0,
+    "activite": "beach",
+    "mois": 7,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D007",
+   "phrase": "semaine de ski à Val Thorens en février, on est 2 adultes et 3 enfants",
+   "langue": "fr",
+   "famille": "ski",
+   "duree": "semaine",
+   "groupe": "famille",
+   "continent": "europe",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "FR",
+    "lieu": {
+     "nom": "Val Thorens",
+     "lat": 45.3,
+     "lon": 6.58,
+     "rayonKm": 30
+    },
+    "jours": 7,
+    "heures": null,
+    "personnes": 5,
+    "enfants": 3,
+    "activite": "ski",
+    "mois": 2,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D008",
+   "phrase": "Mont Blanc par les Trois Monts, 5 jours avec 2 amis et un guide, fin juillet",
+   "langue": "fr",
+   "famille": "alpinisme",
+   "duree": "semaine",
+   "groupe": "groupe",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "FR",
+    "lieu": {
+     "nom": "Mont Blanc",
+     "lat": 45.83,
+     "lon": 6.86,
+     "rayonKm": 40
+    },
+    "jours": 5,
+    "heures": null,
+    "personnes": 3,
+    "enfants": 0,
+    "activite": "mountaineering",
+    "mois": 7,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D009",
+   "phrase": "Journée grimpe à Siurana avec ma copine, voies de 6a, début avril",
+   "langue": "fr",
+   "famille": "escalade",
+   "duree": "journee",
+   "groupe": "couple",
+   "continent": "europe",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "ES",
+    "lieu": {
+     "nom": "Siurana",
+     "lat": 41.26,
+     "lon": 0.93,
+     "rayonKm": 40
+    },
+    "jours": 1,
+    "heures": null,
+    "personnes": 2,
+    "enfants": 0,
+    "activite": "climbing",
+    "mois": 4,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D010",
+   "phrase": "Journée kitesurf à Dakhla avec 4 potes, en octobre",
+   "langue": "fr",
+   "famille": "eau",
+   "duree": "journee",
+   "groupe": "groupe",
+   "continent": "afrique",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "MA",
+    "lieu": {
+     "nom": "Dakhla",
+     "lat": 23.7,
+     "lon": -15.93,
+     "rayonKm": 60
+    },
+    "jours": 1,
+    "heures": null,
+    "personnes": 5,
+    "enfants": 0,
+    "activite": "water",
+    "mois": 10,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D011",
+   "phrase": "footing 1h le long du canal Saint-Martin à Paris ce matin",
+   "langue": "fr",
+   "famille": "course",
+   "duree": "1h",
+   "groupe": "solo",
+   "continent": "europe",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "FR",
+    "lieu": {
+     "nom": "Paris",
+     "lat": 48.87,
+     "lon": 2.37,
+     "rayonKm": 30
+    },
+    "jours": 1,
+    "heures": 1,
+    "personnes": 1,
+    "enfants": 0,
+    "activite": "running",
+    "mois": null,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D012",
+   "phrase": "9 jours en Sicile avec ma femme : Palerme en ville, rando sur l'Etna, puis plage à San Vito lo Capo",
+   "langue": "fr",
+   "famille": "multi",
+   "duree": "semaine",
+   "groupe": "couple",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "IT",
+    "lieu": {
+     "nom": "Sicile",
+     "lat": 37.6,
+     "lon": 14,
+     "rayonKm": 200
+    },
+    "jours": 9,
+    "heures": null,
+    "personnes": 2,
+    "enfants": 0,
+    "activite": "mixed",
+    "mois": null,
+    "segments": [
+     "citytrip",
+     "hiking",
+     "beach"
+    ],
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D013",
+   "phrase": "Une journée d'escalade à Céüse avec ma copine, voies en 6b, en juillet",
+   "langue": "fr",
+   "famille": "escalade",
+   "duree": "journee",
+   "groupe": "couple",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "FR",
+    "lieu": {
+     "nom": "Céüse",
+     "lat": 44.45,
+     "lon": 5.93,
+     "rayonKm": 30
+    },
+    "jours": 1,
+    "heures": null,
+    "personnes": 2,
+    "enfants": 0,
+    "activite": "climbing",
+    "mois": 7,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D014",
+   "phrase": "Bivouac d'hiver en forêt de Fontainebleau, 4 copains, week-end de janvier",
+   "langue": "fr",
+   "famille": "bivouac",
+   "duree": "week-end",
+   "groupe": "groupe",
+   "continent": "europe",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "FR",
+    "lieu": {
+     "nom": "Fontainebleau",
+     "lat": 48.4,
+     "lon": 2.65,
+     "rayonKm": 40
+    },
+    "jours": 2,
+    "heures": null,
+    "personnes": 4,
+    "enfants": 0,
+    "activite": "bivouac",
+    "mois": 1,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D015",
+   "phrase": "sortie vélo de 2h autour de Saint-Louis du Sénégal, seul, en janvier",
+   "langue": "fr",
+   "famille": "velo",
+   "duree": "1h",
+   "groupe": "solo",
+   "continent": "afrique",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "SN",
+    "lieu": {
+     "nom": "Saint-Louis",
+     "lat": 16.03,
+     "lon": -16.5,
+     "rayonKm": 40
+    },
+    "jours": 1,
+    "heures": 2,
+    "personnes": 1,
+    "enfants": 0,
+    "activite": "cycling",
+    "mois": 1,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D016",
+   "phrase": "Rome en famille 6 jours à Pâques, avec nos deux ados",
+   "langue": "fr",
+   "famille": "ville-culture",
+   "duree": "semaine",
+   "groupe": "famille",
+   "continent": "europe",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "IT",
+    "lieu": {
+     "nom": "Rome",
+     "lat": 41.9,
+     "lon": 12.5,
+     "rayonKm": 30
+    },
+    "jours": 6,
+    "heures": null,
+    "personnes": 4,
+    "enfants": 2,
+    "activite": "citytrip",
+    "mois": 4,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D017",
+   "phrase": "2 semaines de plage aux Fidji en août, 2 parents et un bébé",
+   "langue": "fr",
+   "famille": "plage",
+   "duree": "2-semaines",
+   "groupe": "famille",
+   "continent": "oceanie",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "FJ",
+    "lieu": {
+     "nom": "Fidji",
+     "lat": -17.7,
+     "lon": 178,
+     "rayonKm": 300
+    },
+    "jours": 14,
+    "heures": null,
+    "personnes": 3,
+    "enfants": 1,
+    "activite": "beach",
+    "mois": 8,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D018",
+   "phrase": "ski de rando week-end dans les Écrins, nuit en refuge, à deux, en janvier",
+   "langue": "fr",
+   "famille": "ski",
+   "duree": "week-end",
+   "groupe": "couple",
+   "continent": "europe",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "FR",
+    "lieu": {
+     "nom": "Écrins",
+     "lat": 44.9,
+     "lon": 6.3,
+     "rayonKm": 60
+    },
+    "jours": 2,
+    "heures": null,
+    "personnes": 2,
+    "enfants": 0,
+    "activite": "ski",
+    "mois": 1,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D019",
+   "phrase": "Kayak de mer 7 jours dans la baie d'Ha Long et Lan Ha, nous deux, en novembre",
+   "langue": "fr",
+   "famille": "eau",
+   "duree": "semaine",
+   "groupe": "couple",
+   "continent": "asie",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "VN",
+    "lieu": {
+     "nom": "Baie d'Ha Long",
+     "lat": 20.9,
+     "lon": 107.1,
+     "rayonKm": 60
+    },
+    "jours": 7,
+    "heures": null,
+    "personnes": 2,
+    "enfants": 0,
+    "activite": "water",
+    "mois": 11,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D020",
+   "phrase": "Je veux courir le Tour du Mont Blanc en 14 jours, en solo, tranquille, en août",
+   "langue": "fr",
+   "famille": "course",
+   "duree": "2-semaines",
+   "groupe": "solo",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "FR",
+    "lieu": {
+     "nom": "Tour du Mont Blanc",
+     "lat": 45.9,
+     "lon": 6.9,
+     "rayonKm": 80
+    },
+    "jours": 14,
+    "heures": null,
+    "personnes": 1,
+    "enfants": 0,
+    "activite": "running",
+    "mois": 8,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D021",
+   "phrase": "Un mois sur le GR10 de bout en bout, d'Hendaye à Banyuls, en solo, départ en juin",
+   "langue": "fr",
+   "famille": "marche",
+   "duree": "1-mois",
+   "groupe": "solo",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "FR",
+    "lieu": {
+     "nom": "Pyrénées GR10",
+     "lat": 42.8,
+     "lon": 0,
+     "rayonKm": 200
+    },
+    "jours": 30,
+    "heures": null,
+    "personnes": 1,
+    "enfants": 0,
+    "activite": "trekking",
+    "mois": 6,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 3
+   }
+  },
+  {
+   "id": "D022",
+   "phrase": "Un mois en van aménagé en Espagne et au Portugal avec mon conjoint, départ en avril",
+   "langue": "fr",
+   "famille": "route",
+   "duree": "1-mois",
+   "groupe": "couple",
+   "continent": "europe",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "ES",
+    "lieu": {
+     "nom": "Péninsule ibérique",
+     "lat": 40,
+     "lon": -5,
+     "rayonKm": 600
+    },
+    "jours": 30,
+    "heures": null,
+    "personnes": 2,
+    "enfants": 0,
+    "activite": "vanlife",
+    "mois": 4,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 3
+   }
+  },
+  {
+   "id": "D023",
+   "phrase": "Balade de 2h dans le centre de Cusco, seul, un dimanche de décembre",
+   "langue": "fr",
+   "famille": "ville-culture",
+   "duree": "1h",
+   "groupe": "solo",
+   "continent": "amerique-sud",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "PE",
+    "lieu": {
+     "nom": "Cusco",
+     "lat": -13.52,
+     "lon": -71.97,
+     "rayonKm": 30
+    },
+    "jours": 1,
+    "heures": 2,
+    "personnes": 1,
+    "enfants": 0,
+    "activite": "citytrip",
+    "mois": 12,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D024",
+   "phrase": "Rando à la journée dans la vallée de l'Ourika, Haut Atlas, avec nos deux enfants, en avril",
+   "langue": "fr",
+   "famille": "marche",
+   "duree": "journee",
+   "groupe": "famille",
+   "continent": "afrique",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "MA",
+    "lieu": {
+     "nom": "Vallée de l'Ourika",
+     "lat": 31.2,
+     "lon": -7.75,
+     "rayonKm": 50
+    },
+    "jours": 1,
+    "heures": null,
+    "personnes": 4,
+    "enfants": 2,
+    "activite": "hiking",
+    "mois": 4,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D025",
+   "phrase": "partir quelque part au chaud, pas trop loin, pas cher",
+   "langue": "fr",
+   "famille": "plage",
+   "duree": "week-end",
+   "groupe": "solo",
+   "continent": "europe",
+   "saison": "hiver",
+   "floue": true,
+   "note": "Aucun lieu, aucune durée précise : « quelque part au chaud, pas trop loin »",
+   "attendu": {
+    "pays": null,
+    "lieu": null,
+    "jours": null,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": null,
+    "mois": null,
+    "segments": null,
+    "issue": "precision",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D026",
+   "phrase": "3 jours du 1er au 15 mars en Écosse, rando dans les Highlands",
+   "langue": "fr",
+   "famille": "marche",
+   "duree": "week-end",
+   "groupe": "solo",
+   "continent": "europe",
+   "saison": "printemps",
+   "floue": true,
+   "note": "Durée contradictoire : 3 jours mais du 1er au 15 mars (15 jours)",
+   "attendu": {
+    "pays": "GB",
+    "lieu": {
+     "nom": "Highlands",
+     "lat": 57,
+     "lon": -4.8,
+     "rayonKm": 200
+    },
+    "jours": null,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": "hiking",
+    "mois": 3,
+    "segments": null,
+    "issue": "precision",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D027",
+   "phrase": "randonnée seule avec mes deux amis dans les Dolomites, une journée",
+   "langue": "fr",
+   "famille": "marche",
+   "duree": "journee",
+   "groupe": "groupe",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": true,
+   "note": "« seule avec mes deux amis » : solo ou groupe de trois ?",
+   "attendu": {
+    "pays": "IT",
+    "lieu": {
+     "nom": "Dolomites",
+     "lat": 46.5,
+     "lon": 11.9,
+     "rayonKm": 100
+    },
+    "jours": 1,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": "hiking",
+    "mois": null,
+    "segments": null,
+    "issue": "precision",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D028",
+   "phrase": "traversée de l'Atlantique à pied en 5 jours depuis Brest",
+   "langue": "fr",
+   "famille": "eau",
+   "duree": "semaine",
+   "groupe": "solo",
+   "continent": "amerique-nord",
+   "saison": "automne",
+   "floue": true,
+   "note": "Activité et durée impossibles : traverser l'océan à pied en 5 jours",
+   "attendu": {
+    "pays": null,
+    "lieu": null,
+    "jours": null,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": null,
+    "mois": null,
+    "segments": null,
+    "issue": "precision",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D029",
+   "phrase": "Four of us want to do the Routeburn and Greenstone tracks in NZ, about 6 days, mid January",
+   "langue": "en",
+   "famille": "marche",
+   "duree": "semaine",
+   "groupe": "groupe",
+   "continent": "oceanie",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "NZ",
+    "lieu": {
+     "nom": "Routeburn",
+     "lat": -44.7,
+     "lon": 168.15,
+     "rayonKm": 80
+    },
+    "jours": 6,
+    "heures": null,
+    "personnes": 4,
+    "enfants": 0,
+    "activite": "trekking",
+    "mois": 1,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D030",
+   "phrase": "Solo bushcraft overnighter in the Olympic National Forest, Washington, late September",
+   "langue": "en",
+   "famille": "bivouac",
+   "duree": "week-end",
+   "groupe": "solo",
+   "continent": "amerique-nord",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "US",
+    "lieu": {
+     "nom": "Olympic NP",
+     "lat": 47.8,
+     "lon": -123.6,
+     "rayonKm": 80
+    },
+    "jours": 2,
+    "heures": null,
+    "personnes": 1,
+    "enfants": 0,
+    "activite": "bushcraft",
+    "mois": 9,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D031",
+   "phrase": "Oregon coast by bike, Astoria to Brookings, 14 days with my husband in June",
+   "langue": "en",
+   "famille": "velo",
+   "duree": "2-semaines",
+   "groupe": "couple",
+   "continent": "amerique-nord",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "US",
+    "lieu": {
+     "nom": "Oregon coast",
+     "lat": 43.5,
+     "lon": -124.2,
+     "rayonKm": 200
+    },
+    "jours": 14,
+    "heures": null,
+    "personnes": 2,
+    "enfants": 0,
+    "activite": "cycling",
+    "mois": 6,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D032",
+   "phrase": "California trip, 8 days with two kids aged 7 and 10: a day in San Francisco, hiking in Yosemite, then down the Big Sur coast, July",
+   "langue": "en",
+   "famille": "multi",
+   "duree": "semaine",
+   "groupe": "famille",
+   "continent": "amerique-nord",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "US",
+    "lieu": {
+     "nom": "Californie",
+     "lat": 37,
+     "lon": -120.5,
+     "rayonKm": 350
+    },
+    "jours": 8,
+    "heures": null,
+    "personnes": 4,
+    "enfants": 2,
+    "activite": "mixed",
+    "mois": 7,
+    "segments": [
+     "citytrip",
+     "hiking",
+     "roadtrip"
+    ],
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D033",
+   "phrase": "Long weekend in Seville, flamenco and tapas, flying in solo on Friday in March",
+   "langue": "en",
+   "famille": "ville-culture",
+   "duree": "week-end",
+   "groupe": "solo",
+   "continent": "europe",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "ES",
+    "lieu": {
+     "nom": "Séville",
+     "lat": 37.39,
+     "lon": -5.99,
+     "rayonKm": 30
+    },
+    "jours": 3,
+    "heures": null,
+    "personnes": 1,
+    "enfants": 0,
+    "activite": "citytrip",
+    "mois": 3,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D034",
+   "phrase": "A whole month on the Thai islands, Koh Lanta and Koh Phi Phi, just the two of us, from early February",
+   "langue": "en",
+   "famille": "plage",
+   "duree": "1-mois",
+   "groupe": "couple",
+   "continent": "asie",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "TH",
+    "lieu": {
+     "nom": "Koh Lanta",
+     "lat": 7.8,
+     "lon": 99.1,
+     "rayonKm": 100
+    },
+    "jours": 30,
+    "heures": null,
+    "personnes": 2,
+    "enfants": 0,
+    "activite": "beach",
+    "mois": 2,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 3
+   }
+  },
+  {
+   "id": "D035",
+   "phrase": "Whistler ski trip for six friends, 5 days in January",
+   "langue": "en",
+   "famille": "ski",
+   "duree": "semaine",
+   "groupe": "groupe",
+   "continent": "amerique-nord",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "CA",
+    "lieu": {
+     "nom": "Whistler",
+     "lat": 50.12,
+     "lon": -122.95,
+     "rayonKm": 40
+    },
+    "jours": 5,
+    "heures": null,
+    "personnes": 6,
+    "enfants": 0,
+    "activite": "ski",
+    "mois": 1,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D036",
+   "phrase": "Climb Mount Rainier via Disappointment Cleaver, 3 days solo with a guide company, late June",
+   "langue": "en",
+   "famille": "alpinisme",
+   "duree": "week-end",
+   "groupe": "solo",
+   "continent": "amerique-nord",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "US",
+    "lieu": {
+     "nom": "Mont Rainier",
+     "lat": 46.85,
+     "lon": -121.76,
+     "rayonKm": 50
+    },
+    "jours": 3,
+    "heures": null,
+    "personnes": 1,
+    "enfants": 0,
+    "activite": "mountaineering",
+    "mois": 6,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D037",
+   "phrase": "climbing trip to Joshua Tree, 5 of us, 7 days in April, bouldering and trad",
+   "langue": "en",
+   "famille": "escalade",
+   "duree": "semaine",
+   "groupe": "groupe",
+   "continent": "amerique-nord",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "US",
+    "lieu": {
+     "nom": "Joshua Tree",
+     "lat": 33.87,
+     "lon": -115.9,
+     "rayonKm": 60
+    },
+    "jours": 7,
+    "heures": null,
+    "personnes": 5,
+    "enfants": 0,
+    "activite": "climbing",
+    "mois": 4,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D038",
+   "phrase": "Two hour kayak paddle around Wellington harbour with my girlfriend, February",
+   "langue": "en",
+   "famille": "eau",
+   "duree": "1h",
+   "groupe": "couple",
+   "continent": "oceanie",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "NZ",
+    "lieu": {
+     "nom": "Wellington",
+     "lat": -41.29,
+     "lon": 174.78,
+     "rayonKm": 30
+    },
+    "jours": 1,
+    "heures": 2,
+    "personnes": 2,
+    "enfants": 0,
+    "activite": "water",
+    "mois": 2,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D039",
+   "phrase": "Running Rim to Rim in the Grand Canyon in one day, solo, October",
+   "langue": "en",
+   "famille": "course",
+   "duree": "journee",
+   "groupe": "solo",
+   "continent": "amerique-nord",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "US",
+    "lieu": {
+     "nom": "Grand Canyon",
+     "lat": 36.1,
+     "lon": -112.1,
+     "rayonKm": 50
+    },
+    "jours": 1,
+    "heures": null,
+    "personnes": 1,
+    "enfants": 0,
+    "activite": "running",
+    "mois": 10,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D040",
+   "phrase": "Two weeks in New Zealand's South Island for 4 friends: Queenstown, a Milford Track hike, then whale watching in Kaikoura, December",
+   "langue": "en",
+   "famille": "multi",
+   "duree": "2-semaines",
+   "groupe": "groupe",
+   "continent": "oceanie",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "NZ",
+    "lieu": {
+     "nom": "Île du Sud",
+     "lat": -44,
+     "lon": 170,
+     "rayonKm": 400
+    },
+    "jours": 14,
+    "heures": null,
+    "personnes": 4,
+    "enfants": 0,
+    "activite": "mixed",
+    "mois": 12,
+    "segments": [
+     "citytrip",
+     "trekking",
+     "water"
+    ],
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D041",
+   "phrase": "Quick 90 minute hike up Lion's Head in Cape Town before work",
+   "langue": "en",
+   "famille": "marche",
+   "duree": "1h",
+   "groupe": "solo",
+   "continent": "afrique",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "ZA",
+    "lieu": {
+     "nom": "Le Cap",
+     "lat": -33.94,
+     "lon": 18.39,
+     "rayonKm": 30
+    },
+    "jours": 1,
+    "heures": 1.5,
+    "personnes": 1,
+    "enfants": 0,
+    "activite": "hiking",
+    "mois": null,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D042",
+   "phrase": "Month-long campervan trip on Australia's east coast, Melbourne to Cairns, 3 of us, from December",
+   "langue": "en",
+   "famille": "route",
+   "duree": "1-mois",
+   "groupe": "groupe",
+   "continent": "oceanie",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "AU",
+    "lieu": {
+     "nom": "Côte est",
+     "lat": -27,
+     "lon": 148,
+     "rayonKm": 1100
+    },
+    "jours": 30,
+    "heures": null,
+    "personnes": 3,
+    "enfants": 0,
+    "activite": "vanlife",
+    "mois": 12,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 3
+   }
+  },
+  {
+   "id": "D043",
+   "phrase": "Family week in Marrakech with two kids, 5 days in December",
+   "langue": "en",
+   "famille": "ville-culture",
+   "duree": "semaine",
+   "groupe": "famille",
+   "continent": "afrique",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "MA",
+    "lieu": {
+     "nom": "Marrakech",
+     "lat": 31.63,
+     "lon": -8,
+     "rayonKm": 30
+    },
+    "jours": 5,
+    "heures": null,
+    "personnes": 4,
+    "enfants": 2,
+    "activite": "citytrip",
+    "mois": 12,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D044",
+   "phrase": "Two weeks island hopping in the Philippines, Palawan and Siargao, honeymoon, March",
+   "langue": "en",
+   "famille": "plage",
+   "duree": "2-semaines",
+   "groupe": "couple",
+   "continent": "asie",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "PH",
+    "lieu": {
+     "nom": "Palawan-Siargao",
+     "lat": 9.8,
+     "lon": 122,
+     "rayonKm": 400
+    },
+    "jours": 14,
+    "heures": null,
+    "personnes": 2,
+    "enfants": 0,
+    "activite": "beach",
+    "mois": 3,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D045",
+   "phrase": "Dive trip to Raja Ampat, 8 days, 3 divers, October",
+   "langue": "en",
+   "famille": "eau",
+   "duree": "semaine",
+   "groupe": "groupe",
+   "continent": "asie",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "ID",
+    "lieu": {
+     "nom": "Raja Ampat",
+     "lat": -0.6,
+     "lon": 130.6,
+     "rayonKm": 150
+    },
+    "jours": 8,
+    "heures": null,
+    "personnes": 3,
+    "enfants": 0,
+    "activite": "water",
+    "mois": 10,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D046",
+   "phrase": "Month-long expedition to climb Aconcagua, solo with permit, January",
+   "langue": "en",
+   "famille": "alpinisme",
+   "duree": "1-mois",
+   "groupe": "solo",
+   "continent": "amerique-sud",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "AR",
+    "lieu": {
+     "nom": "Aconcagua",
+     "lat": -32.65,
+     "lon": -70,
+     "rayonKm": 80
+    },
+    "jours": 28,
+    "heures": null,
+    "personnes": 1,
+    "enfants": 0,
+    "activite": "mountaineering",
+    "mois": 1,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 3
+   }
+  },
+  {
+   "id": "D047",
+   "phrase": "Backpacking and camping the High Sierra on the John Muir Trail, 7 days, wife and I, August",
+   "langue": "en",
+   "famille": "bivouac",
+   "duree": "semaine",
+   "groupe": "couple",
+   "continent": "amerique-nord",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "US",
+    "lieu": {
+     "nom": "John Muir Trail",
+     "lat": 37.5,
+     "lon": -118.8,
+     "rayonKm": 120
+    },
+    "jours": 7,
+    "heures": null,
+    "personnes": 2,
+    "enfants": 0,
+    "activite": "bivouac",
+    "mois": 8,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D048",
+   "phrase": "Weekend hiking on Tasmania's Freycinet Peninsula, 3 mates, long weekend in March",
+   "langue": "en",
+   "famille": "marche",
+   "duree": "week-end",
+   "groupe": "groupe",
+   "continent": "oceanie",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "AU",
+    "lieu": {
+     "nom": "Freycinet",
+     "lat": -42.15,
+     "lon": 148.3,
+     "rayonKm": 60
+    },
+    "jours": 3,
+    "heures": null,
+    "personnes": 3,
+    "enfants": 0,
+    "activite": "hiking",
+    "mois": 3,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D049",
+   "phrase": "Weekend in Paris and Tokyo, I want to see the museums in both",
+   "langue": "en",
+   "famille": "ville-culture",
+   "duree": "week-end",
+   "groupe": "solo",
+   "continent": "asie",
+   "saison": "hiver",
+   "floue": true,
+   "note": "Deux pays très éloignés (France et Japon) pour un seul week-end",
+   "attendu": {
+    "pays": null,
+    "lieu": null,
+    "jours": null,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": null,
+    "mois": null,
+    "segments": null,
+    "issue": "precision",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D050",
+   "phrase": "somewhere with mountains and beach and snow, 2 days, I don't care where, in July",
+   "langue": "en",
+   "famille": "multi",
+   "duree": "week-end",
+   "groupe": "solo",
+   "continent": "asie",
+   "saison": "ete",
+   "floue": true,
+   "note": "Aucun lieu précis, trois milieux incompatibles en 2 jours (montagne, plage, neige en juillet)",
+   "attendu": {
+    "pays": null,
+    "lieu": null,
+    "jours": null,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": null,
+    "mois": null,
+    "segments": null,
+    "issue": "precision",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D051",
+   "phrase": "Trekking al Valle de Cocora y Los Nevados con tres amigos, 6 días en enero",
+   "langue": "es",
+   "famille": "marche",
+   "duree": "semaine",
+   "groupe": "groupe",
+   "continent": "amerique-sud",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "CO",
+    "lieu": {
+     "nom": "Valle de Cocora",
+     "lat": 4.64,
+     "lon": -75.5,
+     "rayonKm": 100
+    },
+    "jours": 6,
+    "heures": null,
+    "personnes": 4,
+    "enfants": 0,
+    "activite": "trekking",
+    "mois": 1,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D052",
+   "phrase": "Bivac en solitario en Picos de Europa, dos noches, octubre",
+   "langue": "es",
+   "famille": "bivouac",
+   "duree": "week-end",
+   "groupe": "solo",
+   "continent": "europe",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "ES",
+    "lieu": {
+     "nom": "Picos de Europa",
+     "lat": 43.2,
+     "lon": -4.85,
+     "rayonKm": 60
+    },
+    "jours": 3,
+    "heures": null,
+    "personnes": 1,
+    "enfants": 0,
+    "activite": "bivouac",
+    "mois": 10,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D053",
+   "phrase": "Paseo en bici de 2 horas por la Vía Verde del Aceite, Jaén, con mi pareja, abril",
+   "langue": "es",
+   "famille": "velo",
+   "duree": "1h",
+   "groupe": "couple",
+   "continent": "europe",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "ES",
+    "lieu": {
+     "nom": "Jaén",
+     "lat": 37.77,
+     "lon": -3.8,
+     "rayonKm": 60
+    },
+    "jours": 1,
+    "heures": 2,
+    "personnes": 2,
+    "enfants": 0,
+    "activite": "cycling",
+    "mois": 4,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D054",
+   "phrase": "Viaje por carretera por la Patagonia, Ruta 40 y Carretera Austral, 15 días con mis dos hijos pequeños, febrero",
+   "langue": "es",
+   "famille": "route",
+   "duree": "2-semaines",
+   "groupe": "famille",
+   "continent": "amerique-sud",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "AR",
+    "lieu": {
+     "nom": "Patagonia",
+     "lat": -47,
+     "lon": -71.5,
+     "rayonKm": 800
+    },
+    "jours": 15,
+    "heures": null,
+    "personnes": 4,
+    "enfants": 2,
+    "activite": "roadtrip",
+    "mois": 2,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D055",
+   "phrase": "Fin de semana en Cartagena de Indias con tres amigas, 3 días en noviembre",
+   "langue": "es",
+   "famille": "ville-culture",
+   "duree": "week-end",
+   "groupe": "groupe",
+   "continent": "amerique-sud",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "CO",
+    "lieu": {
+     "nom": "Cartagena",
+     "lat": 10.4,
+     "lon": -75.5,
+     "rayonKm": 30
+    },
+    "jours": 3,
+    "heures": null,
+    "personnes": 4,
+    "enfants": 0,
+    "activite": "citytrip",
+    "mois": 11,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D056",
+   "phrase": "Una semana en Tulum con los niños en diciembre; somos 2 adultos y un niño de 5 años",
+   "langue": "es",
+   "famille": "plage",
+   "duree": "semaine",
+   "groupe": "famille",
+   "continent": "amerique-nord",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "MX",
+    "lieu": {
+     "nom": "Tulum",
+     "lat": 20.2,
+     "lon": -87.46,
+     "rayonKm": 50
+    },
+    "jours": 7,
+    "heures": null,
+    "personnes": 3,
+    "enfants": 1,
+    "activite": "beach",
+    "mois": 12,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D057",
+   "phrase": "Esquiar un día en Cerro Catedral, Bariloche, voy solo, un sábado de julio",
+   "langue": "es",
+   "famille": "ski",
+   "duree": "journee",
+   "groupe": "solo",
+   "continent": "amerique-sud",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "AR",
+    "lieu": {
+     "nom": "Bariloche",
+     "lat": -41.17,
+     "lon": -71.44,
+     "rayonKm": 40
+    },
+    "jours": 1,
+    "heures": null,
+    "personnes": 1,
+    "enfants": 0,
+    "activite": "ski",
+    "mois": 7,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D058",
+   "phrase": "Expedición al Huascarán, 8 días con 3 compañeros del club, julio",
+   "langue": "es",
+   "famille": "alpinisme",
+   "duree": "semaine",
+   "groupe": "groupe",
+   "continent": "amerique-sud",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "PE",
+    "lieu": {
+     "nom": "Huascarán",
+     "lat": -9.12,
+     "lon": -77.6,
+     "rayonKm": 60
+    },
+    "jours": 8,
+    "heures": null,
+    "personnes": 4,
+    "enfants": 0,
+    "activite": "mountaineering",
+    "mois": 7,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D059",
+   "phrase": "Escalada en Rodellar, fin de semana largo, mi novio y yo, mayo",
+   "langue": "es",
+   "famille": "escalade",
+   "duree": "week-end",
+   "groupe": "couple",
+   "continent": "europe",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "ES",
+    "lieu": {
+     "nom": "Rodellar",
+     "lat": 42.33,
+     "lon": 0,
+     "rayonKm": 40
+    },
+    "jours": 3,
+    "heures": null,
+    "personnes": 2,
+    "enfants": 0,
+    "activite": "climbing",
+    "mois": 5,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D060",
+   "phrase": "Un mes de surf en Canggu, Bali, voy sola, agosto",
+   "langue": "es",
+   "famille": "eau",
+   "duree": "1-mois",
+   "groupe": "solo",
+   "continent": "asie",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "ID",
+    "lieu": {
+     "nom": "Canggu, Bali",
+     "lat": -8.65,
+     "lon": 115.14,
+     "rayonKm": 40
+    },
+    "jours": 30,
+    "heures": null,
+    "personnes": 1,
+    "enfants": 0,
+    "activite": "water",
+    "mois": 8,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 3
+   }
+  },
+  {
+   "id": "D061",
+   "phrase": "Trote de una hora por el Parque Bicentenario en Santiago al amanecer",
+   "langue": "es",
+   "famille": "course",
+   "duree": "1h",
+   "groupe": "solo",
+   "continent": "amerique-sud",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "CL",
+    "lieu": {
+     "nom": "Santiago",
+     "lat": -33.4,
+     "lon": -70.6,
+     "rayonKm": 30
+    },
+    "jours": 1,
+    "heures": 1,
+    "personnes": 1,
+    "enfants": 0,
+    "activite": "running",
+    "mois": null,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D062",
+   "phrase": "Dos semanas en Perú en mayo con mi marido: Lima y su gastronomía, trekking a Machu Picchu y la Amazonía en barco",
+   "langue": "es",
+   "famille": "multi",
+   "duree": "2-semaines",
+   "groupe": "couple",
+   "continent": "amerique-sud",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "PE",
+    "lieu": {
+     "nom": "Perú",
+     "lat": -12.8,
+     "lon": -74.5,
+     "rayonKm": 500
+    },
+    "jours": 14,
+    "heures": null,
+    "personnes": 2,
+    "enfants": 0,
+    "activite": "mixed",
+    "mois": 5,
+    "segments": [
+     "citytrip",
+     "trekking",
+     "water"
+    ],
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D063",
+   "phrase": "Camino de Santiago francés completo, de Saint-Jean-Pied-de-Port a Santiago, 31 días, voy sola, desde abril",
+   "langue": "es",
+   "famille": "marche",
+   "duree": "1-mois",
+   "groupe": "solo",
+   "continent": "europe",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "ES",
+    "lieu": {
+     "nom": "Camino Francés",
+     "lat": 42.6,
+     "lon": -5.5,
+     "rayonKm": 300
+    },
+    "jours": 31,
+    "heures": null,
+    "personnes": 1,
+    "enfants": 0,
+    "activite": "hiking",
+    "mois": 4,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D064",
+   "phrase": "Acampada libre en Torres del Paine, circuito W, 5 días, somos cinco, diciembre",
+   "langue": "es",
+   "famille": "bivouac",
+   "duree": "semaine",
+   "groupe": "groupe",
+   "continent": "amerique-sud",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "CL",
+    "lieu": {
+     "nom": "Torres del Paine",
+     "lat": -50.95,
+     "lon": -72.95,
+     "rayonKm": 80
+    },
+    "jours": 5,
+    "heures": null,
+    "personnes": 5,
+    "enfants": 0,
+    "activite": "bivouac",
+    "mois": 12,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D065",
+   "phrase": "Un paseo cultural de 3 horas por el casco histórico de Cádiz con mi hija de 7 años",
+   "langue": "es",
+   "famille": "ville-culture",
+   "duree": "1h",
+   "groupe": "famille",
+   "continent": "europe",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "ES",
+    "lieu": {
+     "nom": "Cádiz",
+     "lat": 36.53,
+     "lon": -6.29,
+     "rayonKm": 30
+    },
+    "jours": 1,
+    "heures": 3,
+    "personnes": 2,
+    "enfants": 1,
+    "activite": "citytrip",
+    "mois": null,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D066",
+   "phrase": "Un día en Essaouira, playa y viento, los dos, en mayo",
+   "langue": "es",
+   "famille": "plage",
+   "duree": "journee",
+   "groupe": "couple",
+   "continent": "afrique",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "MA",
+    "lieu": {
+     "nom": "Essaouira",
+     "lat": 31.51,
+     "lon": -9.77,
+     "rayonKm": 40
+    },
+    "jours": 1,
+    "heures": null,
+    "personnes": 2,
+    "enfants": 0,
+    "activite": "beach",
+    "mois": 5,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D067",
+   "phrase": "Una semana en Atlantis, la ciudad perdida, remando en kayak entre las ruinas",
+   "langue": "es",
+   "famille": "eau",
+   "duree": "semaine",
+   "groupe": "solo",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": true,
+   "note": "Lugar inexistente : la Atlántida",
+   "attendu": {
+    "pays": null,
+    "lieu": null,
+    "jours": null,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": null,
+    "mois": null,
+    "segments": null,
+    "issue": "precision",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D068",
+   "phrase": "Camino de Santiago en 2 días, 800 km, en bici, con mis hijos de 6 y 8 años solos, sin adultos",
+   "langue": "es",
+   "famille": "velo",
+   "duree": "week-end",
+   "groupe": "famille",
+   "continent": "europe",
+   "saison": "printemps",
+   "floue": true,
+   "note": "800 km en 2 jours impossible, enfants seuls sans adulte",
+   "attendu": {
+    "pays": "ES",
+    "lieu": {
+     "nom": "Camino de Santiago",
+     "lat": 42.6,
+     "lon": -5.5,
+     "rayonKm": 300
+    },
+    "jours": 2,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": "cycling",
+    "mois": null,
+    "segments": null,
+    "issue": "precision",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D069",
+   "phrase": "Alta Via 1 in den Dolomiten, 7 Tage mit zwei Freunden, im September",
+   "langue": "de",
+   "famille": "marche",
+   "duree": "semaine",
+   "groupe": "groupe",
+   "continent": "europe",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "IT",
+    "lieu": {
+     "nom": "Dolomiten",
+     "lat": 46.5,
+     "lon": 12.1,
+     "rayonKm": 80
+    },
+    "jours": 7,
+    "heures": null,
+    "personnes": 3,
+    "enfants": 0,
+    "activite": "trekking",
+    "mois": 9,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D070",
+   "phrase": "Allein im Zelt in den Blue Mountains bei Sydney, 2 Nächte im Oktober",
+   "langue": "de",
+   "famille": "bivouac",
+   "duree": "week-end",
+   "groupe": "solo",
+   "continent": "oceanie",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "AU",
+    "lieu": {
+     "nom": "Blue Mountains",
+     "lat": -33.65,
+     "lon": 150.3,
+     "rayonKm": 60
+    },
+    "jours": 3,
+    "heures": null,
+    "personnes": 1,
+    "enfants": 0,
+    "activite": "bivouac",
+    "mois": 10,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D071",
+   "phrase": "Radtour 7 Tage an der Donau von Passau nach Wien mit zwei Kindern, im Juli",
+   "langue": "de",
+   "famille": "velo",
+   "duree": "semaine",
+   "groupe": "famille",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "AT",
+    "lieu": {
+     "nom": "Donauradweg",
+     "lat": 48.4,
+     "lon": 14.9,
+     "rayonKm": 150
+    },
+    "jours": 7,
+    "heures": null,
+    "personnes": 4,
+    "enfants": 2,
+    "activite": "cycling",
+    "mois": 7,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D072",
+   "phrase": "Rundreise durch Namibia im Mietwagen, 14 Tage, wir zwei, im Mai",
+   "langue": "de",
+   "famille": "route",
+   "duree": "2-semaines",
+   "groupe": "couple",
+   "continent": "afrique",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "NA",
+    "lieu": {
+     "nom": "Namibia",
+     "lat": -22.5,
+     "lon": 17,
+     "rayonKm": 700
+    },
+    "jours": 14,
+    "heures": null,
+    "personnes": 2,
+    "enfants": 0,
+    "activite": "roadtrip",
+    "mois": 5,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D073",
+   "phrase": "Ein Tag in Porto, nur ich, im November",
+   "langue": "de",
+   "famille": "ville-culture",
+   "duree": "journee",
+   "groupe": "solo",
+   "continent": "europe",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "PT",
+    "lieu": {
+     "nom": "Porto",
+     "lat": 41.15,
+     "lon": -8.61,
+     "rayonKm": 30
+    },
+    "jours": 1,
+    "heures": null,
+    "personnes": 1,
+    "enfants": 0,
+    "activite": "citytrip",
+    "mois": 11,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D074",
+   "phrase": "Zwei Wochen Strandurlaub auf Phu Quoc in Vietnam, mit zwei Kindern, im Februar",
+   "langue": "de",
+   "famille": "plage",
+   "duree": "2-semaines",
+   "groupe": "famille",
+   "continent": "asie",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "VN",
+    "lieu": {
+     "nom": "Phu Quoc",
+     "lat": 10.3,
+     "lon": 104,
+     "rayonKm": 60
+    },
+    "jours": 14,
+    "heures": null,
+    "personnes": 4,
+    "enfants": 2,
+    "activite": "beach",
+    "mois": 2,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D075",
+   "phrase": "Skiwoche in Zermatt für sechs Leute, Anfang Februar",
+   "langue": "de",
+   "famille": "ski",
+   "duree": "semaine",
+   "groupe": "groupe",
+   "continent": "europe",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "CH",
+    "lieu": {
+     "nom": "Zermatt",
+     "lat": 46.02,
+     "lon": 7.75,
+     "rayonKm": 40
+    },
+    "jours": 7,
+    "heures": null,
+    "personnes": 6,
+    "enfants": 0,
+    "activite": "ski",
+    "mois": 2,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D076",
+   "phrase": "Wir wollen das Matterhorn besteigen, Hörnligrat, 3 Tage mit Bergführer, Ende August",
+   "langue": "de",
+   "famille": "alpinisme",
+   "duree": "week-end",
+   "groupe": "couple",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "CH",
+    "lieu": {
+     "nom": "Matterhorn",
+     "lat": 45.98,
+     "lon": 7.66,
+     "rayonKm": 40
+    },
+    "jours": 3,
+    "heures": null,
+    "personnes": 2,
+    "enfants": 0,
+    "activite": "mountaineering",
+    "mois": 8,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D077",
+   "phrase": "Klettern in Railay bei Krabi, ein Tag, alleine, im Dezember",
+   "langue": "de",
+   "famille": "escalade",
+   "duree": "journee",
+   "groupe": "solo",
+   "continent": "asie",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "TH",
+    "lieu": {
+     "nom": "Railay, Krabi",
+     "lat": 8.01,
+     "lon": 98.84,
+     "rayonKm": 40
+    },
+    "jours": 1,
+    "heures": null,
+    "personnes": 1,
+    "enfants": 0,
+    "activite": "climbing",
+    "mois": 12,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D078",
+   "phrase": "Segeltörn in der Bay of Islands in Neuseeland, 7 Tage mit fünf Freunden, im Februar",
+   "langue": "de",
+   "famille": "eau",
+   "duree": "semaine",
+   "groupe": "groupe",
+   "continent": "oceanie",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "NZ",
+    "lieu": {
+     "nom": "Bay of Islands",
+     "lat": -35.25,
+     "lon": 174.1,
+     "rayonKm": 60
+    },
+    "jours": 7,
+    "heures": null,
+    "personnes": 6,
+    "enfants": 0,
+    "activite": "water",
+    "mois": 2,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D079",
+   "phrase": "Trailrunning-Runde, 2 Stunden, auf dem Mont Ventoux, allein, im Juni",
+   "langue": "de",
+   "famille": "course",
+   "duree": "1h",
+   "groupe": "solo",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "FR",
+    "lieu": {
+     "nom": "Mont Ventoux",
+     "lat": 44.17,
+     "lon": 5.28,
+     "rayonKm": 40
+    },
+    "jours": 1,
+    "heures": 2,
+    "personnes": 1,
+    "enfants": 0,
+    "activite": "running",
+    "mois": 6,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D080",
+   "phrase": "Einen Monat Südostasien ab Januar, zu zweit: Bangkok als Stadt, Trekking im Norden Thailands, dann Strand auf Koh Tao",
+   "langue": "de",
+   "famille": "multi",
+   "duree": "1-mois",
+   "groupe": "couple",
+   "continent": "asie",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "TH",
+    "lieu": {
+     "nom": "Thailand",
+     "lat": 14,
+     "lon": 100.5,
+     "rayonKm": 600
+    },
+    "jours": 30,
+    "heures": null,
+    "personnes": 2,
+    "enfants": 0,
+    "activite": "mixed",
+    "mois": 1,
+    "segments": [
+     "citytrip",
+     "trekking",
+     "beach"
+    ],
+    "issue": "pret",
+    "joursTolerance": 3
+   }
+  },
+  {
+   "id": "D081",
+   "phrase": "Kleiner Spaziergang von 2 Stunden im Siebengebirge, wir vier mit unseren zwei Kindern",
+   "langue": "de",
+   "famille": "marche",
+   "duree": "1h",
+   "groupe": "famille",
+   "continent": "europe",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "DE",
+    "lieu": {
+     "nom": "Siebengebirge",
+     "lat": 50.67,
+     "lon": 7.2,
+     "rayonKm": 30
+    },
+    "jours": 1,
+    "heures": 2,
+    "personnes": 4,
+    "enfants": 2,
+    "activite": "hiking",
+    "mois": null,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D082",
+   "phrase": "Einen Monat Roadtrip durch den Südwesten der USA mit vier Freunden: Las Vegas, Wandern in Utah, Rafting auf dem Colorado, im September",
+   "langue": "de",
+   "famille": "multi",
+   "duree": "1-mois",
+   "groupe": "groupe",
+   "continent": "amerique-nord",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "US",
+    "lieu": {
+     "nom": "Südwesten USA",
+     "lat": 37,
+     "lon": -111.5,
+     "rayonKm": 500
+    },
+    "jours": 30,
+    "heures": null,
+    "personnes": 5,
+    "enfants": 0,
+    "activite": "mixed",
+    "mois": 9,
+    "segments": [
+     "citytrip",
+     "hiking",
+     "water"
+    ],
+    "issue": "pret",
+    "joursTolerance": 3
+   }
+  },
+  {
+   "id": "D083",
+   "phrase": "Zwei Wochen allein wandern und im Zelt schlafen in Lappland, Kungsleden, Juli",
+   "langue": "de",
+   "famille": "bivouac",
+   "duree": "2-semaines",
+   "groupe": "solo",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "SE",
+    "lieu": {
+     "nom": "Kungsleden",
+     "lat": 67.5,
+     "lon": 18,
+     "rayonKm": 150
+    },
+    "jours": 14,
+    "heures": null,
+    "personnes": 1,
+    "enfants": 0,
+    "activite": "bivouac",
+    "mois": 7,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D084",
+   "phrase": "In 2 Stunden von Berlin auf den Mount Everest und zurück",
+   "langue": "de",
+   "famille": "alpinisme",
+   "duree": "1h",
+   "groupe": "solo",
+   "continent": "asie",
+   "saison": "printemps",
+   "floue": true,
+   "note": "Durée impossible : Everest aller-retour depuis Berlin en 2 heures",
+   "attendu": {
+    "pays": null,
+    "lieu": null,
+    "jours": null,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": null,
+    "mois": null,
+    "segments": null,
+    "issue": "precision",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D085",
+   "phrase": "Weekend sul Sentiero degli Dei in Costiera Amalfitana con la mia ragazza, giugno",
+   "langue": "it",
+   "famille": "marche",
+   "duree": "week-end",
+   "groupe": "couple",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "IT",
+    "lieu": {
+     "nom": "Costiera Amalfitana",
+     "lat": 40.63,
+     "lon": 14.5,
+     "rayonKm": 40
+    },
+    "jours": 2,
+    "heures": null,
+    "personnes": 2,
+    "enfants": 0,
+    "activite": "hiking",
+    "mois": 6,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D086",
+   "phrase": "Un mese di bivacco nel Sahara marocchino da solo, a novembre, da Merzouga a Zagora",
+   "langue": "it",
+   "famille": "bivouac",
+   "duree": "1-mois",
+   "groupe": "solo",
+   "continent": "afrique",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "MA",
+    "lieu": {
+     "nom": "Sahara marocchino",
+     "lat": 30.5,
+     "lon": -5,
+     "rayonKm": 200
+    },
+    "jours": 30,
+    "heures": null,
+    "personnes": 1,
+    "enfants": 0,
+    "activite": "bivouac",
+    "mois": 11,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 3
+   }
+  },
+  {
+   "id": "D087",
+   "phrase": "Due settimane in bici in Puglia con i nostri due figli, agosto",
+   "langue": "it",
+   "famille": "velo",
+   "duree": "2-semaines",
+   "groupe": "famille",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "IT",
+    "lieu": {
+     "nom": "Puglia",
+     "lat": 40.9,
+     "lon": 17,
+     "rayonKm": 150
+    },
+    "jours": 14,
+    "heures": null,
+    "personnes": 4,
+    "enfants": 2,
+    "activite": "cycling",
+    "mois": 8,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D088",
+   "phrase": "Road trip di tre giorni a Bali con due amici in scooter, luglio",
+   "langue": "it",
+   "famille": "route",
+   "duree": "week-end",
+   "groupe": "groupe",
+   "continent": "asie",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "ID",
+    "lieu": {
+     "nom": "Bali",
+     "lat": -8.4,
+     "lon": 115.2,
+     "rayonKm": 80
+    },
+    "jours": 3,
+    "heures": null,
+    "personnes": 3,
+    "enfants": 0,
+    "activite": "roadtrip",
+    "mois": 7,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D089",
+   "phrase": "Un mese in Andalusia, Granada e Siviglia, arte e tapas, a marzo con mio marito",
+   "langue": "it",
+   "famille": "ville-culture",
+   "duree": "1-mois",
+   "groupe": "couple",
+   "continent": "europe",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "ES",
+    "lieu": {
+     "nom": "Andalusia",
+     "lat": 37.4,
+     "lon": -4.5,
+     "rayonKm": 200
+    },
+    "jours": 30,
+    "heures": null,
+    "personnes": 2,
+    "enfants": 0,
+    "activite": "cultural",
+    "mois": 3,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 3
+   }
+  },
+  {
+   "id": "D090",
+   "phrase": "Un mese sulle spiagge di Capo Verde, Sal e Boa Vista, da solo, febbraio",
+   "langue": "it",
+   "famille": "plage",
+   "duree": "1-mois",
+   "groupe": "solo",
+   "continent": "afrique",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "CV",
+    "lieu": {
+     "nom": "Sal e Boa Vista",
+     "lat": 16,
+     "lon": -22.9,
+     "rayonKm": 150
+    },
+    "jours": 30,
+    "heures": null,
+    "personnes": 1,
+    "enfants": 0,
+    "activite": "beach",
+    "mois": 2,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 3
+   }
+  },
+  {
+   "id": "D091",
+   "phrase": "Weekend sulla neve a Cortina con due bambini, gennaio",
+   "langue": "it",
+   "famille": "ski",
+   "duree": "week-end",
+   "groupe": "famille",
+   "continent": "europe",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "IT",
+    "lieu": {
+     "nom": "Cortina d'Ampezzo",
+     "lat": 46.54,
+     "lon": 12.14,
+     "rayonKm": 40
+    },
+    "jours": 2,
+    "heures": null,
+    "personnes": 4,
+    "enfants": 2,
+    "activite": "ski",
+    "mois": 1,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D092",
+   "phrase": "Gran Paradiso e Monte Rosa in 6 giorni con quattro amici del CAI, luglio",
+   "langue": "it",
+   "famille": "alpinisme",
+   "duree": "semaine",
+   "groupe": "groupe",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "IT",
+    "lieu": {
+     "nom": "Monte Rosa",
+     "lat": 45.94,
+     "lon": 7.87,
+     "rayonKm": 80
+    },
+    "jours": 6,
+    "heures": null,
+    "personnes": 5,
+    "enfants": 0,
+    "activite": "mountaineering",
+    "mois": 7,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D093",
+   "phrase": "Arrampicata ai Grampians in Australia, una giornata in coppia, ad aprile",
+   "langue": "it",
+   "famille": "escalade",
+   "duree": "journee",
+   "groupe": "couple",
+   "continent": "oceanie",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "AU",
+    "lieu": {
+     "nom": "Grampians",
+     "lat": -37.15,
+     "lon": 142.4,
+     "rayonKm": 60
+    },
+    "jours": 1,
+    "heures": null,
+    "personnes": 2,
+    "enfants": 0,
+    "activite": "climbing",
+    "mois": 4,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D094",
+   "phrase": "Una giornata di immersione alle Egadi con tre amici, settembre",
+   "langue": "it",
+   "famille": "eau",
+   "duree": "journee",
+   "groupe": "groupe",
+   "continent": "europe",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "IT",
+    "lieu": {
+     "nom": "Isole Egadi",
+     "lat": 37.95,
+     "lon": 12.3,
+     "rayonKm": 60
+    },
+    "jours": 1,
+    "heures": null,
+    "personnes": 4,
+    "enfants": 0,
+    "activite": "water",
+    "mois": 9,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D095",
+   "phrase": "Corsetta di un'ora nei parchi di Milano, Sempione, presto al mattino",
+   "langue": "it",
+   "famille": "course",
+   "duree": "1h",
+   "groupe": "solo",
+   "continent": "europe",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "IT",
+    "lieu": {
+     "nom": "Milano",
+     "lat": 45.47,
+     "lon": 9.17,
+     "rayonKm": 30
+    },
+    "jours": 1,
+    "heures": 1,
+    "personnes": 1,
+    "enfants": 0,
+    "activite": "running",
+    "mois": null,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D096",
+   "phrase": "Una settimana in Sardegna a luglio, in due: kayak a Cala Goloritzé, trekking sul Supramonte e spiaggia",
+   "langue": "it",
+   "famille": "multi",
+   "duree": "semaine",
+   "groupe": "couple",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "IT",
+    "lieu": {
+     "nom": "Sardegna",
+     "lat": 40.1,
+     "lon": 9.3,
+     "rayonKm": 150
+    },
+    "jours": 7,
+    "heures": null,
+    "personnes": 2,
+    "enfants": 0,
+    "activite": "mixed",
+    "mois": 7,
+    "segments": [
+     "water",
+     "trekking",
+     "beach"
+    ],
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D097",
+   "phrase": "Salita al Monte Kinabalu e trekking nel Borneo, 14 giorni con 4 amici, luglio",
+   "langue": "it",
+   "famille": "marche",
+   "duree": "2-semaines",
+   "groupe": "groupe",
+   "continent": "asie",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "MY",
+    "lieu": {
+     "nom": "Kinabalu, Borneo",
+     "lat": 6.07,
+     "lon": 116.56,
+     "rayonKm": 150
+    },
+    "jours": 14,
+    "heures": null,
+    "personnes": 5,
+    "enfants": 0,
+    "activite": "trekking",
+    "mois": 7,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D098",
+   "phrase": "Passeggiata di 3 ore a Matera tra i Sassi, da sola, in primavera",
+   "langue": "it",
+   "famille": "ville-culture",
+   "duree": "1h",
+   "groupe": "solo",
+   "continent": "europe",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "IT",
+    "lieu": {
+     "nom": "Matera",
+     "lat": 40.67,
+     "lon": 16.6,
+     "rayonKm": 30
+    },
+    "jours": 1,
+    "heures": 3,
+    "personnes": 1,
+    "enfants": 0,
+    "activite": "cultural",
+    "mois": 3,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D099",
+   "phrase": "Due settimane di surf in Marocco a Taghazout, da solo, ottobre",
+   "langue": "it",
+   "famille": "eau",
+   "duree": "2-semaines",
+   "groupe": "solo",
+   "continent": "afrique",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "MA",
+    "lieu": {
+     "nom": "Taghazout",
+     "lat": 30.54,
+     "lon": -9.71,
+     "rayonKm": 50
+    },
+    "jours": 14,
+    "heures": null,
+    "personnes": 1,
+    "enfants": 0,
+    "activite": "water",
+    "mois": 10,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D100",
+   "phrase": "Voglio fare il giro del mondo in 3 giorni a piedi",
+   "langue": "it",
+   "famille": "marche",
+   "duree": "week-end",
+   "groupe": "solo",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": true,
+   "note": "Durée et activité impossibles : tour du monde à pied en 3 jours",
+   "attendu": {
+    "pays": null,
+    "lieu": null,
+    "jours": null,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": null,
+    "mois": null,
+    "segments": null,
+    "issue": "precision",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D101",
+   "phrase": "footing d'une heure autour du Palais impérial à Tokyo, en octobre, avant le petit-déj",
+   "langue": "fr",
+   "famille": "course",
+   "duree": "1h",
+   "groupe": "solo",
+   "continent": "asie",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "JP",
+    "lieu": {
+     "nom": "Tokyo, Palais impérial",
+     "lat": 35.68,
+     "lon": 139.75,
+     "rayonKm": 30
+    },
+    "jours": 1,
+    "heures": 1,
+    "personnes": 1,
+    "enfants": null,
+    "activite": "running",
+    "mois": 10,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D102",
+   "phrase": "balade d'une petite heure avec ma femme au parc Ibirapuera à São Paulo en avril",
+   "langue": "fr",
+   "famille": "marche",
+   "duree": "1h",
+   "groupe": "couple",
+   "continent": "amerique-sud",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "BR",
+    "lieu": {
+     "nom": "São Paulo, Ibirapuera",
+     "lat": -23.59,
+     "lon": -46.66,
+     "rayonKm": 30
+    },
+    "jours": 1,
+    "heures": 1,
+    "personnes": 2,
+    "enfants": null,
+    "activite": "hiking",
+    "mois": 4,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D103",
+   "phrase": "sortie vélo 2h sur le canal du Midi à Toulouse avec deux potes",
+   "langue": "fr",
+   "famille": "velo",
+   "duree": "1h",
+   "groupe": "groupe",
+   "continent": "europe",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "FR",
+    "lieu": {
+     "nom": "Toulouse",
+     "lat": 43.6,
+     "lon": 1.44,
+     "rayonKm": 30
+    },
+    "jours": 1,
+    "heures": 2,
+    "personnes": 3,
+    "enfants": null,
+    "activite": "cycling",
+    "mois": null,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D104",
+   "phrase": "petit jogging d'une heure en famille (2 adultes + 2 enfants) le long de l'Ill à Strasbourg en janvier",
+   "langue": "fr",
+   "famille": "course",
+   "duree": "1h",
+   "groupe": "famille",
+   "continent": "europe",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "FR",
+    "lieu": {
+     "nom": "Strasbourg",
+     "lat": 48.58,
+     "lon": 7.75,
+     "rayonKm": 30
+    },
+    "jours": 1,
+    "heures": 1,
+    "personnes": 4,
+    "enfants": 2,
+    "activite": "running",
+    "mois": 1,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D105",
+   "phrase": "quick one hour walk up Cerro San Cristóbal in Santiago before lunch",
+   "langue": "en",
+   "famille": "marche",
+   "duree": "1h",
+   "groupe": "solo",
+   "continent": "amerique-sud",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "CL",
+    "lieu": {
+     "nom": "Santiago, Cerro San Cristóbal",
+     "lat": -33.42,
+     "lon": -70.63,
+     "rayonKm": 30
+    },
+    "jours": 1,
+    "heures": 1,
+    "personnes": 1,
+    "enfants": null,
+    "activite": "hiking",
+    "mois": null,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D106",
+   "phrase": "salgo a correr una horita por el Retiro de Madrid",
+   "langue": "es",
+   "famille": "course",
+   "duree": "1h",
+   "groupe": "solo",
+   "continent": "europe",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "ES",
+    "lieu": {
+     "nom": "Madrid, Retiro",
+     "lat": 40.415,
+     "lon": -3.684,
+     "rayonKm": 30
+    },
+    "jours": 1,
+    "heures": 1,
+    "personnes": 1,
+    "enfants": null,
+    "activite": "running",
+    "mois": null,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D107",
+   "phrase": "Eine Stunde Spaziergang auf dem Signal Hill in Kapstadt im Oktober, nur wir zwei",
+   "langue": "de",
+   "famille": "marche",
+   "duree": "1h",
+   "groupe": "couple",
+   "continent": "afrique",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "ZA",
+    "lieu": {
+     "nom": "Kapstadt, Signal Hill",
+     "lat": -33.92,
+     "lon": 18.4,
+     "rayonKm": 30
+    },
+    "jours": 1,
+    "heures": 1,
+    "personnes": 2,
+    "enfants": null,
+    "activite": "hiking",
+    "mois": 10,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D108",
+   "phrase": "un'oretta di arrampicata nella palestra di roccia ad Arco con i figli, siamo in quattro",
+   "langue": "it",
+   "famille": "escalade",
+   "duree": "1h",
+   "groupe": "famille",
+   "continent": "europe",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "IT",
+    "lieu": {
+     "nom": "Arco",
+     "lat": 45.92,
+     "lon": 10.89,
+     "rayonKm": 30
+    },
+    "jours": 1,
+    "heures": 1,
+    "personnes": 4,
+    "enfants": 2,
+    "activite": "climbing",
+    "mois": null,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D109",
+   "phrase": "2h d'escalade en salle à Grenoble avec 3 collègues après le boulot",
+   "langue": "fr",
+   "famille": "escalade",
+   "duree": "1h",
+   "groupe": "groupe",
+   "continent": "europe",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "FR",
+    "lieu": {
+     "nom": "Grenoble",
+     "lat": 45.19,
+     "lon": 5.72,
+     "rayonKm": 30
+    },
+    "jours": 1,
+    "heures": 2,
+    "personnes": 4,
+    "enfants": null,
+    "activite": "climbing",
+    "mois": null,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D110",
+   "phrase": "paddling an hour on Lake Placid with the kids, two adults and two children, in July",
+   "langue": "en",
+   "famille": "eau",
+   "duree": "1h",
+   "groupe": "famille",
+   "continent": "amerique-nord",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "US",
+    "lieu": {
+     "nom": "Lake Placid, New York",
+     "lat": 44.28,
+     "lon": -73.98,
+     "rayonKm": 30
+    },
+    "jours": 1,
+    "heures": 1,
+    "personnes": 4,
+    "enfants": 2,
+    "activite": "water",
+    "mois": 7,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D111",
+   "phrase": "pedalear una hora por la costa de Río de Janeiro por la mañana temprano",
+   "langue": "es",
+   "famille": "velo",
+   "duree": "1h",
+   "groupe": "solo",
+   "continent": "amerique-sud",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "BR",
+    "lieu": {
+     "nom": "Rio de Janeiro",
+     "lat": -22.97,
+     "lon": -43.19,
+     "rayonKm": 30
+    },
+    "jours": 1,
+    "heures": 1,
+    "personnes": 1,
+    "enfants": null,
+    "activite": "cycling",
+    "mois": null,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D112",
+   "phrase": "trail 1h30 avec le club dans les bois de Meudon, on sera 6",
+   "langue": "fr",
+   "famille": "course",
+   "duree": "1h",
+   "groupe": "groupe",
+   "continent": "europe",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "FR",
+    "lieu": {
+     "nom": "Meudon",
+     "lat": 48.8,
+     "lon": 2.23,
+     "rayonKm": 30
+    },
+    "jours": 1,
+    "heures": 1.5,
+    "personnes": 6,
+    "enfants": null,
+    "activite": "running",
+    "mois": null,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D113",
+   "phrase": "Eine Stunde mit dem Rad durch die Tempel von Angkor, wir zwei, im Februar",
+   "langue": "de",
+   "famille": "velo",
+   "duree": "1h",
+   "groupe": "couple",
+   "continent": "asie",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "KH",
+    "lieu": {
+     "nom": "Angkor",
+     "lat": 13.41,
+     "lon": 103.87,
+     "rayonKm": 30
+    },
+    "jours": 1,
+    "heures": 1,
+    "personnes": 2,
+    "enfants": null,
+    "activite": "cycling",
+    "mois": 2,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D114",
+   "phrase": "passeggiata di un'ora a Villa Borghese con la bimba, siamo in tre",
+   "langue": "it",
+   "famille": "marche",
+   "duree": "1h",
+   "groupe": "famille",
+   "continent": "europe",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "IT",
+    "lieu": {
+     "nom": "Roma, Villa Borghese",
+     "lat": 41.914,
+     "lon": 12.49,
+     "rayonKm": 30
+    },
+    "jours": 1,
+    "heures": 1,
+    "personnes": 3,
+    "enfants": 1,
+    "activite": "hiking",
+    "mois": null,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D115",
+   "phrase": "journée de grande voie aux Aiguilles Rouges depuis Chamonix, seul avec un guide à trouver, en juillet",
+   "langue": "fr",
+   "famille": "escalade",
+   "duree": "journee",
+   "groupe": "solo",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "FR",
+    "lieu": {
+     "nom": "Aiguilles Rouges, Chamonix",
+     "lat": 45.97,
+     "lon": 6.87,
+     "rayonKm": 30
+    },
+    "jours": 1,
+    "heures": null,
+    "personnes": 1,
+    "enfants": null,
+    "activite": "climbing",
+    "mois": 7,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D116",
+   "phrase": "day push to the summit of Huayna Potosí from the high camp, three of us, in July",
+   "langue": "en",
+   "famille": "alpinisme",
+   "duree": "journee",
+   "groupe": "groupe",
+   "continent": "amerique-sud",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "BO",
+    "lieu": {
+     "nom": "Huayna Potosí",
+     "lat": -16.26,
+     "lon": -68.15,
+     "rayonKm": 40
+    },
+    "jours": 1,
+    "heures": null,
+    "personnes": 3,
+    "enfants": null,
+    "activite": "mountaineering",
+    "mois": 7,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D117",
+   "phrase": "Skitag in Kitzbühel zu zweit, im Februar",
+   "langue": "de",
+   "famille": "ski",
+   "duree": "journee",
+   "groupe": "couple",
+   "continent": "europe",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "AT",
+    "lieu": {
+     "nom": "Kitzbühel",
+     "lat": 47.45,
+     "lon": 12.39,
+     "rayonKm": 40
+    },
+    "jours": 1,
+    "heures": null,
+    "personnes": 2,
+    "enfants": null,
+    "activite": "ski",
+    "mois": 2,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D118",
+   "phrase": "tour à vélo des vignobles de Maipú près de Mendoza, en couple, en novembre",
+   "langue": "fr",
+   "famille": "velo",
+   "duree": "journee",
+   "groupe": "couple",
+   "continent": "amerique-sud",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "AR",
+    "lieu": {
+     "nom": "Mendoza, Maipú",
+     "lat": -33,
+     "lon": -68.8,
+     "rayonKm": 40
+    },
+    "jours": 1,
+    "heures": null,
+    "personnes": 2,
+    "enfants": null,
+    "activite": "cycling",
+    "mois": 11,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D119",
+   "phrase": "un día de escalada en Red Rocks, Las Vegas, vamos cuatro en marzo",
+   "langue": "es",
+   "famille": "escalade",
+   "duree": "journee",
+   "groupe": "groupe",
+   "continent": "amerique-nord",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "US",
+    "lieu": {
+     "nom": "Red Rock Canyon, Las Vegas",
+     "lat": 36.13,
+     "lon": -115.43,
+     "rayonKm": 30
+    },
+    "jours": 1,
+    "heures": null,
+    "personnes": 4,
+    "enfants": null,
+    "activite": "climbing",
+    "mois": 3,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D120",
+   "phrase": "gita in giornata alle Tre Cime di Lavaredo, noi due e due bambini, in agosto",
+   "langue": "it",
+   "famille": "marche",
+   "duree": "journee",
+   "groupe": "famille",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "IT",
+    "lieu": {
+     "nom": "Tre Cime di Lavaredo",
+     "lat": 46.62,
+     "lon": 12.3,
+     "rayonKm": 40
+    },
+    "jours": 1,
+    "heures": null,
+    "personnes": 4,
+    "enfants": 2,
+    "activite": "hiking",
+    "mois": 8,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D121",
+   "phrase": "one day sea kayaking in Johnstone Strait hoping to see orcas, going alone in August",
+   "langue": "en",
+   "famille": "eau",
+   "duree": "journee",
+   "groupe": "solo",
+   "continent": "amerique-nord",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "CA",
+    "lieu": {
+     "nom": "Johnstone Strait, Vancouver Island",
+     "lat": 50.4,
+     "lon": -126,
+     "rayonKm": 100
+    },
+    "jours": 1,
+    "heures": null,
+    "personnes": 1,
+    "enfants": null,
+    "activite": "water",
+    "mois": 8,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D122",
+   "phrase": "journée de bloc à Rocklands en Afrique du Sud avec 4 amis, en août",
+   "langue": "fr",
+   "famille": "escalade",
+   "duree": "journee",
+   "groupe": "groupe",
+   "continent": "afrique",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "ZA",
+    "lieu": {
+     "nom": "Rocklands",
+     "lat": -32.2,
+     "lon": 19,
+     "rayonKm": 50
+    },
+    "jours": 1,
+    "heures": null,
+    "personnes": 5,
+    "enfants": null,
+    "activite": "climbing",
+    "mois": 8,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D123",
+   "phrase": "a day hike to Wineglass Bay in Tasmania for the two of us, in January",
+   "langue": "en",
+   "famille": "marche",
+   "duree": "journee",
+   "groupe": "couple",
+   "continent": "oceanie",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "AU",
+    "lieu": {
+     "nom": "Wineglass Bay, Tasmanie",
+     "lat": -42.17,
+     "lon": 148.3,
+     "rayonKm": 40
+    },
+    "jours": 1,
+    "heures": null,
+    "personnes": 2,
+    "enfants": null,
+    "activite": "hiking",
+    "mois": 1,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D124",
+   "phrase": "journée à Carcassonne avec les 3 enfants, on est 5, en mai",
+   "langue": "fr",
+   "famille": "ville-culture",
+   "duree": "journee",
+   "groupe": "famille",
+   "continent": "europe",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "FR",
+    "lieu": {
+     "nom": "Carcassonne",
+     "lat": 43.21,
+     "lon": 2.35,
+     "rayonKm": 30
+    },
+    "jours": 1,
+    "heures": null,
+    "personnes": 5,
+    "enfants": 3,
+    "activite": "citytrip",
+    "mois": 5,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D125",
+   "phrase": "Tagesausflug zum Bondi Beach in Sydney, wir zwei, im Januar",
+   "langue": "de",
+   "famille": "plage",
+   "duree": "journee",
+   "groupe": "couple",
+   "continent": "oceanie",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "AU",
+    "lieu": {
+     "nom": "Sydney, Bondi Beach",
+     "lat": -33.89,
+     "lon": 151.27,
+     "rayonKm": 30
+    },
+    "jours": 1,
+    "heures": null,
+    "personnes": 2,
+    "enfants": null,
+    "activite": "beach",
+    "mois": 1,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D126",
+   "phrase": "ruta de un día al Fitz Roy desde El Chaltén, voy sola en febrero",
+   "langue": "es",
+   "famille": "marche",
+   "duree": "journee",
+   "groupe": "solo",
+   "continent": "amerique-sud",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "AR",
+    "lieu": {
+     "nom": "El Chaltén, Fitz Roy",
+     "lat": -49.27,
+     "lon": -72.95,
+     "rayonKm": 50
+    },
+    "jours": 1,
+    "heures": null,
+    "personnes": 1,
+    "enfants": null,
+    "activite": "hiking",
+    "mois": 2,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D127",
+   "phrase": "Gran Paradiso in giornata dal rifugio Chabod, parto da solo a luglio",
+   "langue": "it",
+   "famille": "alpinisme",
+   "duree": "journee",
+   "groupe": "solo",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "IT",
+    "lieu": {
+     "nom": "Gran Paradiso",
+     "lat": 45.52,
+     "lon": 7.27,
+     "rayonKm": 40
+    },
+    "jours": 1,
+    "heures": null,
+    "personnes": 1,
+    "enfants": null,
+    "activite": "mountaineering",
+    "mois": 7,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D128",
+   "phrase": "journée ski à Val Thorens avec 4 amis en janvier",
+   "langue": "fr",
+   "famille": "ski",
+   "duree": "journee",
+   "groupe": "groupe",
+   "continent": "europe",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "FR",
+    "lieu": {
+     "nom": "Val Thorens",
+     "lat": 45.3,
+     "lon": 6.58,
+     "rayonKm": 40
+    },
+    "jours": 1,
+    "heures": null,
+    "personnes": 5,
+    "enfants": null,
+    "activite": "ski",
+    "mois": 1,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D129",
+   "phrase": "week-end bivouac dans les Cévennes, nous deux, fin septembre",
+   "langue": "fr",
+   "famille": "bivouac",
+   "duree": "week-end",
+   "groupe": "couple",
+   "continent": "europe",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "FR",
+    "lieu": {
+     "nom": "Cévennes",
+     "lat": 44.2,
+     "lon": 3.6,
+     "rayonKm": 80
+    },
+    "jours": 2,
+    "heures": null,
+    "personnes": 2,
+    "enfants": null,
+    "activite": "bivouac",
+    "mois": 9,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D130",
+   "phrase": "long weekend hiking in the Drakensberg with 5 friends in April",
+   "langue": "en",
+   "famille": "marche",
+   "duree": "week-end",
+   "groupe": "groupe",
+   "continent": "afrique",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "ZA",
+    "lieu": {
+     "nom": "Drakensberg",
+     "lat": -29.2,
+     "lon": 29.2,
+     "rayonKm": 80
+    },
+    "jours": 3,
+    "heures": null,
+    "personnes": 6,
+    "enfants": null,
+    "activite": "hiking",
+    "mois": 4,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D131",
+   "phrase": "week-end canyoning dans la sierra de Guara avec 3 amis, en juin",
+   "langue": "fr",
+   "famille": "eau",
+   "duree": "week-end",
+   "groupe": "groupe",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "ES",
+    "lieu": {
+     "nom": "Sierra de Guara",
+     "lat": 42.2,
+     "lon": -0.2,
+     "rayonKm": 60
+    },
+    "jours": 2,
+    "heures": null,
+    "personnes": 4,
+    "enfants": null,
+    "activite": "water",
+    "mois": 6,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D132",
+   "phrase": "Skiwochenende in Portillo in Chile, wir zwei, im August",
+   "langue": "de",
+   "famille": "ski",
+   "duree": "week-end",
+   "groupe": "couple",
+   "continent": "amerique-sud",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "CL",
+    "lieu": {
+     "nom": "Portillo",
+     "lat": -32.84,
+     "lon": -70.13,
+     "rayonKm": 40
+    },
+    "jours": 3,
+    "heures": null,
+    "personnes": 2,
+    "enfants": null,
+    "activite": "ski",
+    "mois": 8,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D133",
+   "phrase": "fin de semana en Buenos Aires, en pareja, en abril",
+   "langue": "es",
+   "famille": "ville-culture",
+   "duree": "week-end",
+   "groupe": "couple",
+   "continent": "amerique-sud",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "AR",
+    "lieu": {
+     "nom": "Buenos Aires",
+     "lat": -34.6,
+     "lon": -58.38,
+     "rayonKm": 30
+    },
+    "jours": 3,
+    "heures": null,
+    "personnes": 2,
+    "enfants": null,
+    "activite": "citytrip",
+    "mois": 4,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D134",
+   "phrase": "weekend al mare in Puglia con due figli piccoli, a giugno, siamo in 4",
+   "langue": "it",
+   "famille": "plage",
+   "duree": "week-end",
+   "groupe": "famille",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "IT",
+    "lieu": {
+     "nom": "Puglia",
+     "lat": 40.8,
+     "lon": 17,
+     "rayonKm": 120
+    },
+    "jours": 3,
+    "heures": null,
+    "personnes": 4,
+    "enfants": 2,
+    "activite": "beach",
+    "mois": 6,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D135",
+   "phrase": "week-end en van autour de Byron Bay, seul, en octobre",
+   "langue": "fr",
+   "famille": "route",
+   "duree": "week-end",
+   "groupe": "solo",
+   "continent": "oceanie",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "AU",
+    "lieu": {
+     "nom": "Byron Bay",
+     "lat": -28.64,
+     "lon": 153.61,
+     "rayonKm": 60
+    },
+    "jours": 3,
+    "heures": null,
+    "personnes": 1,
+    "enfants": null,
+    "activite": "vanlife",
+    "mois": 10,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D136",
+   "phrase": "weekend climbing at the Gunks in New York, four of us, in October",
+   "langue": "en",
+   "famille": "escalade",
+   "duree": "week-end",
+   "groupe": "groupe",
+   "continent": "amerique-nord",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "US",
+    "lieu": {
+     "nom": "Shawangunks, New York",
+     "lat": 41.74,
+     "lon": -74.19,
+     "rayonKm": 40
+    },
+    "jours": 2,
+    "heures": null,
+    "personnes": 4,
+    "enfants": null,
+    "activite": "climbing",
+    "mois": 10,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D137",
+   "phrase": "week-end à vélo le long du canal de Bourgogne, 2 adultes et 2 ados, en août",
+   "langue": "fr",
+   "famille": "velo",
+   "duree": "week-end",
+   "groupe": "famille",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "FR",
+    "lieu": {
+     "nom": "Canal de Bourgogne",
+     "lat": 47.3,
+     "lon": 4.8,
+     "rayonKm": 80
+    },
+    "jours": 2,
+    "heures": null,
+    "personnes": 4,
+    "enfants": 2,
+    "activite": "cycling",
+    "mois": 8,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D138",
+   "phrase": "Wochenende in den Blue Mountains bei Sydney, allein, im Oktober",
+   "langue": "de",
+   "famille": "marche",
+   "duree": "week-end",
+   "groupe": "solo",
+   "continent": "oceanie",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "AU",
+    "lieu": {
+     "nom": "Blue Mountains",
+     "lat": -33.72,
+     "lon": 150.31,
+     "rayonKm": 60
+    },
+    "jours": 2,
+    "heures": null,
+    "personnes": 1,
+    "enfants": null,
+    "activite": "hiking",
+    "mois": 10,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D139",
+   "phrase": "week-end ascension de la Barre des Écrins avec mon conjoint, en juillet",
+   "langue": "fr",
+   "famille": "alpinisme",
+   "duree": "week-end",
+   "groupe": "couple",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "FR",
+    "lieu": {
+     "nom": "Barre des Écrins",
+     "lat": 44.92,
+     "lon": 6.36,
+     "rayonKm": 40
+    },
+    "jours": 2,
+    "heures": null,
+    "personnes": 2,
+    "enfants": null,
+    "activite": "mountaineering",
+    "mois": 7,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D140",
+   "phrase": "trail running training weekend on the Cornish coast path, solo, in May",
+   "langue": "en",
+   "famille": "course",
+   "duree": "week-end",
+   "groupe": "solo",
+   "continent": "europe",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "GB",
+    "lieu": {
+     "nom": "Cornwall, South West Coast Path",
+     "lat": 50.2,
+     "lon": -5.5,
+     "rayonKm": 80
+    },
+    "jours": 2,
+    "heures": null,
+    "personnes": 1,
+    "enfants": null,
+    "activite": "running",
+    "mois": 5,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D141",
+   "phrase": "fin de semana de vivac en los Picos de Europa con 3 amigos, en julio",
+   "langue": "es",
+   "famille": "bivouac",
+   "duree": "week-end",
+   "groupe": "groupe",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "ES",
+    "lieu": {
+     "nom": "Picos de Europa",
+     "lat": 43.2,
+     "lon": -4.85,
+     "rayonKm": 60
+    },
+    "jours": 2,
+    "heures": null,
+    "personnes": 4,
+    "enfants": null,
+    "activite": "bivouac",
+    "mois": 7,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D142",
+   "phrase": "weekend a Firenze con la bambina a marzo, siamo in tre",
+   "langue": "it",
+   "famille": "ville-culture",
+   "duree": "week-end",
+   "groupe": "famille",
+   "continent": "europe",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "IT",
+    "lieu": {
+     "nom": "Firenze",
+     "lat": 43.77,
+     "lon": 11.25,
+     "rayonKm": 30
+    },
+    "jours": 2,
+    "heures": null,
+    "personnes": 3,
+    "enfants": 1,
+    "activite": "citytrip",
+    "mois": 3,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D143",
+   "phrase": "6 jours de grimpe à Céüse et Orpierre avec 4 amis, fin juillet",
+   "langue": "fr",
+   "famille": "escalade",
+   "duree": "semaine",
+   "groupe": "groupe",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "FR",
+    "lieu": {
+     "nom": "Céüse - Orpierre",
+     "lat": 44.42,
+     "lon": 5.82,
+     "rayonKm": 60
+    },
+    "jours": 6,
+    "heures": null,
+    "personnes": 5,
+    "enfants": null,
+    "activite": "climbing",
+    "mois": 7,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D144",
+   "phrase": "six day trek in the Simien Mountains in Ethiopia, just the two of us, in November",
+   "langue": "en",
+   "famille": "marche",
+   "duree": "semaine",
+   "groupe": "couple",
+   "continent": "afrique",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "ET",
+    "lieu": {
+     "nom": "Simien Mountains",
+     "lat": 13.2,
+     "lon": 38,
+     "rayonKm": 80
+    },
+    "jours": 6,
+    "heures": null,
+    "personnes": 2,
+    "enfants": null,
+    "activite": "trekking",
+    "mois": 11,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D145",
+   "phrase": "Wanderwoche mit Kindern in Südtirol, zwei Erwachsene und zwei Kinder, im August",
+   "langue": "de",
+   "famille": "marche",
+   "duree": "semaine",
+   "groupe": "famille",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "IT",
+    "lieu": {
+     "nom": "Südtirol",
+     "lat": 46.6,
+     "lon": 11.5,
+     "rayonKm": 80
+    },
+    "jours": 7,
+    "heures": null,
+    "personnes": 4,
+    "enfants": 2,
+    "activite": "hiking",
+    "mois": 8,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D146",
+   "phrase": "ruta en bici de 7 días por la Carretera Austral, voy solo, en enero",
+   "langue": "es",
+   "famille": "velo",
+   "duree": "semaine",
+   "groupe": "solo",
+   "continent": "amerique-sud",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "CL",
+    "lieu": {
+     "nom": "Carretera Austral",
+     "lat": -45.5,
+     "lon": -72.5,
+     "rayonKm": 300
+    },
+    "jours": 7,
+    "heures": null,
+    "personnes": 1,
+    "enfants": null,
+    "activite": "cycling",
+    "mois": 1,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D147",
+   "phrase": "a week's campervan trip along the Great Ocean Road and the Grampians, the two of us, in January",
+   "langue": "en",
+   "famille": "route",
+   "duree": "semaine",
+   "groupe": "couple",
+   "continent": "oceanie",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "AU",
+    "lieu": {
+     "nom": "Great Ocean Road",
+     "lat": -38.5,
+     "lon": 143,
+     "rayonKm": 150
+    },
+    "jours": 7,
+    "heures": null,
+    "personnes": 2,
+    "enfants": null,
+    "activite": "vanlife",
+    "mois": 1,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D148",
+   "phrase": "semaine de ski aux Arcs, 2 parents et 2 enfants, en février",
+   "langue": "fr",
+   "famille": "ski",
+   "duree": "semaine",
+   "groupe": "famille",
+   "continent": "europe",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "FR",
+    "lieu": {
+     "nom": "Les Arcs",
+     "lat": 45.57,
+     "lon": 6.83,
+     "rayonKm": 40
+    },
+    "jours": 7,
+    "heures": null,
+    "personnes": 4,
+    "enfants": 2,
+    "activite": "ski",
+    "mois": 2,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D149",
+   "phrase": "settimana in barca a vela alle Eolie con 5 amici a luglio",
+   "langue": "it",
+   "famille": "eau",
+   "duree": "semaine",
+   "groupe": "groupe",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "IT",
+    "lieu": {
+     "nom": "Isole Eolie",
+     "lat": 38.55,
+     "lon": 14.95,
+     "rayonKm": 80
+    },
+    "jours": 7,
+    "heures": null,
+    "personnes": 6,
+    "enfants": null,
+    "activite": "water",
+    "mois": 7,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D150",
+   "phrase": "une semaine de plage au Sénégal, vers Saly, à deux, en février",
+   "langue": "fr",
+   "famille": "plage",
+   "duree": "semaine",
+   "groupe": "couple",
+   "continent": "afrique",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "SN",
+    "lieu": {
+     "nom": "Saly, Sénégal",
+     "lat": 14.45,
+     "lon": -17,
+     "rayonKm": 60
+    },
+    "jours": 7,
+    "heures": null,
+    "personnes": 2,
+    "enfants": null,
+    "activite": "beach",
+    "mois": 2,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D151",
+   "phrase": "Alpinwoche im Bernina: Piz Palü und Piz Bernina, wir sind drei, im August",
+   "langue": "de",
+   "famille": "alpinisme",
+   "duree": "semaine",
+   "groupe": "groupe",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "CH",
+    "lieu": {
+     "nom": "Bernina",
+     "lat": 46.38,
+     "lon": 9.92,
+     "rayonKm": 40
+    },
+    "jours": 6,
+    "heures": null,
+    "personnes": 3,
+    "enfants": null,
+    "activite": "mountaineering",
+    "mois": 8,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D152",
+   "phrase": "una semana de acampada con los niños en la Sierra de Gredos, 2 adultos y 2 niños, en agosto",
+   "langue": "es",
+   "famille": "bivouac",
+   "duree": "semaine",
+   "groupe": "famille",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "ES",
+    "lieu": {
+     "nom": "Sierra de Gredos",
+     "lat": 40.25,
+     "lon": -5.25,
+     "rayonKm": 60
+    },
+    "jours": 7,
+    "heures": null,
+    "personnes": 4,
+    "enfants": 2,
+    "activite": "bivouac",
+    "mois": 8,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D153",
+   "phrase": "une semaine de bivouac dans le Haut Atlas avec 5 amis, en octobre",
+   "langue": "fr",
+   "famille": "bivouac",
+   "duree": "semaine",
+   "groupe": "groupe",
+   "continent": "afrique",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "MA",
+    "lieu": {
+     "nom": "Haut Atlas",
+     "lat": 31.06,
+     "lon": -7.9,
+     "rayonKm": 80
+    },
+    "jours": 7,
+    "heures": null,
+    "personnes": 6,
+    "enfants": null,
+    "activite": "bivouac",
+    "mois": 10,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D154",
+   "phrase": "semaine d'entraînement trail dans les Vosges avec le club, on est 8, en septembre",
+   "langue": "fr",
+   "famille": "course",
+   "duree": "semaine",
+   "groupe": "groupe",
+   "continent": "europe",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "FR",
+    "lieu": {
+     "nom": "Vosges",
+     "lat": 48,
+     "lon": 7,
+     "rayonKm": 80
+    },
+    "jours": 7,
+    "heures": null,
+    "personnes": 8,
+    "enfants": null,
+    "activite": "running",
+    "mois": 9,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D155",
+   "phrase": "week-long climbing trip to Kalymnos with my partner in May",
+   "langue": "en",
+   "famille": "escalade",
+   "duree": "semaine",
+   "groupe": "couple",
+   "continent": "europe",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "GR",
+    "lieu": {
+     "nom": "Kalymnos",
+     "lat": 36.97,
+     "lon": 26.98,
+     "rayonKm": 30
+    },
+    "jours": 7,
+    "heures": null,
+    "personnes": 2,
+    "enfants": null,
+    "activite": "climbing",
+    "mois": 5,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D156",
+   "phrase": "une semaine au Québec en famille, 2 adultes et 2 enfants : Montréal d'abord, puis randonnée dans Charlevoix, en septembre",
+   "langue": "fr",
+   "famille": "multi",
+   "duree": "semaine",
+   "groupe": "famille",
+   "continent": "amerique-nord",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "CA",
+    "lieu": {
+     "nom": "Québec",
+     "lat": 46.5,
+     "lon": -72,
+     "rayonKm": 300
+    },
+    "jours": 7,
+    "heures": null,
+    "personnes": 4,
+    "enfants": 2,
+    "activite": "mixed",
+    "mois": 9,
+    "segments": [
+     "citytrip",
+     "hiking"
+    ],
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D157",
+   "phrase": "two weeks trekking in Kyrgyzstan around Karakol, Altyn Arashan and Ala-Kul, group of four, in July",
+   "langue": "en",
+   "famille": "marche",
+   "duree": "2-semaines",
+   "groupe": "groupe",
+   "continent": "asie",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "KG",
+    "lieu": {
+     "nom": "Karakol, Ala-Kul",
+     "lat": 42.45,
+     "lon": 78.5,
+     "rayonKm": 150
+    },
+    "jours": 14,
+    "heures": null,
+    "personnes": 4,
+    "enfants": null,
+    "activite": "trekking",
+    "mois": 7,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D158",
+   "phrase": "tour du Manaslu en 14 jours à deux, en octobre",
+   "langue": "fr",
+   "famille": "marche",
+   "duree": "2-semaines",
+   "groupe": "couple",
+   "continent": "asie",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "NP",
+    "lieu": {
+     "nom": "Manaslu",
+     "lat": 28.55,
+     "lon": 84.6,
+     "rayonKm": 100
+    },
+    "jours": 14,
+    "heures": null,
+    "personnes": 2,
+    "enfants": null,
+    "activite": "trekking",
+    "mois": 10,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D159",
+   "phrase": "14 días en Botsuana, delta del Okavango y Chobe, familia de 5 con 3 niños, en agosto",
+   "langue": "es",
+   "famille": "route",
+   "duree": "2-semaines",
+   "groupe": "famille",
+   "continent": "afrique",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "BW",
+    "lieu": {
+     "nom": "Delta del Okavango",
+     "lat": -19,
+     "lon": 23,
+     "rayonKm": 400
+    },
+    "jours": 14,
+    "heures": null,
+    "personnes": 5,
+    "enfants": 3,
+    "activite": "roadtrip",
+    "mois": 8,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D160",
+   "phrase": "two-week camper van road trip in the Canadian Rockies from Calgary to Jasper, four friends, in September",
+   "langue": "en",
+   "famille": "route",
+   "duree": "2-semaines",
+   "groupe": "groupe",
+   "continent": "amerique-nord",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "CA",
+    "lieu": {
+     "nom": "Rocheuses canadiennes",
+     "lat": 51.8,
+     "lon": -116.5,
+     "rayonKm": 200
+    },
+    "jours": 14,
+    "heures": null,
+    "personnes": 4,
+    "enfants": null,
+    "activite": "vanlife",
+    "mois": 9,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D161",
+   "phrase": "Zwei Wochen mit dem Rad auf dem Elberadweg von Dresden nach Hamburg, zu zweit, im Juni",
+   "langue": "de",
+   "famille": "velo",
+   "duree": "2-semaines",
+   "groupe": "couple",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "DE",
+    "lieu": {
+     "nom": "Elberadweg",
+     "lat": 52.3,
+     "lon": 11.9,
+     "rayonKm": 250
+    },
+    "jours": 14,
+    "heures": null,
+    "personnes": 2,
+    "enfants": null,
+    "activite": "cycling",
+    "mois": 6,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D162",
+   "phrase": "due settimane di trekking in Bhutan verso il Jomolhari, da solo, a ottobre",
+   "langue": "it",
+   "famille": "marche",
+   "duree": "2-semaines",
+   "groupe": "solo",
+   "continent": "asie",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "BT",
+    "lieu": {
+     "nom": "Jomolhari, Bhutan",
+     "lat": 27.8,
+     "lon": 89.4,
+     "rayonKm": 150
+    },
+    "jours": 14,
+    "heures": null,
+    "personnes": 1,
+    "enfants": null,
+    "activite": "trekking",
+    "mois": 10,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D163",
+   "phrase": "two weeks of beach and snorkelling on Zanzibar with our 3 kids, we're 5, in August",
+   "langue": "en",
+   "famille": "plage",
+   "duree": "2-semaines",
+   "groupe": "famille",
+   "continent": "afrique",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "TZ",
+    "lieu": {
+     "nom": "Zanzibar",
+     "lat": -6.16,
+     "lon": 39.2,
+     "rayonKm": 60
+    },
+    "jours": 14,
+    "heures": null,
+    "personnes": 5,
+    "enfants": 3,
+    "activite": "beach",
+    "mois": 8,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D164",
+   "phrase": "due settimane in Lapponia svedese tra Sarek e Kungsleden, da solo, in agosto",
+   "langue": "it",
+   "famille": "marche",
+   "duree": "2-semaines",
+   "groupe": "solo",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "SE",
+    "lieu": {
+     "nom": "Sarek, Lapponia svedese",
+     "lat": 67.3,
+     "lon": 17.7,
+     "rayonKm": 200
+    },
+    "jours": 14,
+    "heures": null,
+    "personnes": 1,
+    "enfants": null,
+    "activite": "trekking",
+    "mois": 8,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D165",
+   "phrase": "Zwei Wochen Bushcraft in Schwedisch-Lappland, allein mit Zelt und Kanu, im Juni",
+   "langue": "de",
+   "famille": "bivouac",
+   "duree": "2-semaines",
+   "groupe": "solo",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "SE",
+    "lieu": {
+     "nom": "Schwedisch-Lappland",
+     "lat": 66.8,
+     "lon": 19.5,
+     "rayonKm": 250
+    },
+    "jours": 14,
+    "heures": null,
+    "personnes": 1,
+    "enfants": null,
+    "activite": "bushcraft",
+    "mois": 6,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D166",
+   "phrase": "dos semanas de buceo en la Gran Barrera de Coral, en pareja, en octubre",
+   "langue": "es",
+   "famille": "eau",
+   "duree": "2-semaines",
+   "groupe": "couple",
+   "continent": "oceanie",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "AU",
+    "lieu": {
+     "nom": "Gran Barrera de Coral",
+     "lat": -18.3,
+     "lon": 147.5,
+     "rayonKm": 500
+    },
+    "jours": 14,
+    "heures": null,
+    "personnes": 2,
+    "enfants": null,
+    "activite": "water",
+    "mois": 10,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D167",
+   "phrase": "expédition de 15 jours au Mera Peak, Népal, à 4, en novembre",
+   "langue": "fr",
+   "famille": "alpinisme",
+   "duree": "2-semaines",
+   "groupe": "groupe",
+   "continent": "asie",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "NP",
+    "lieu": {
+     "nom": "Mera Peak",
+     "lat": 27.7,
+     "lon": 86.9,
+     "rayonKm": 80
+    },
+    "jours": 15,
+    "heures": null,
+    "personnes": 4,
+    "enfants": null,
+    "activite": "mountaineering",
+    "mois": 11,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D168",
+   "phrase": "two weeks ski touring in the Lyngen Alps, Norway, with three friends, in April",
+   "langue": "en",
+   "famille": "ski",
+   "duree": "2-semaines",
+   "groupe": "groupe",
+   "continent": "europe",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "NO",
+    "lieu": {
+     "nom": "Lyngen Alps",
+     "lat": 69.6,
+     "lon": 20.2,
+     "rayonKm": 80
+    },
+    "jours": 14,
+    "heures": null,
+    "personnes": 4,
+    "enfants": null,
+    "activite": "ski",
+    "mois": 4,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D169",
+   "phrase": "Zwei Wochen Rundreise durch Sri Lanka: Kandy, Sigiriya und Südküste, zu zweit, im Februar",
+   "langue": "de",
+   "famille": "ville-culture",
+   "duree": "2-semaines",
+   "groupe": "couple",
+   "continent": "asie",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "LK",
+    "lieu": {
+     "nom": "Sri Lanka",
+     "lat": 7.5,
+     "lon": 80.7,
+     "rayonKm": 200
+    },
+    "jours": 14,
+    "heures": null,
+    "personnes": 2,
+    "enfants": null,
+    "activite": "cultural",
+    "mois": 2,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D170",
+   "phrase": "deux semaines de trail à Madère, seul, en mai",
+   "langue": "fr",
+   "famille": "course",
+   "duree": "2-semaines",
+   "groupe": "solo",
+   "continent": "europe",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "PT",
+    "lieu": {
+     "nom": "Madère",
+     "lat": 32.75,
+     "lon": -17,
+     "rayonKm": 80
+    },
+    "jours": 14,
+    "heures": null,
+    "personnes": 1,
+    "enfants": null,
+    "activite": "running",
+    "mois": 5,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D171",
+   "phrase": "un mese sul Cammino di Santiago, il Camino Francés, da solo, da maggio",
+   "langue": "it",
+   "famille": "marche",
+   "duree": "1-mois",
+   "groupe": "solo",
+   "continent": "europe",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "ES",
+    "lieu": {
+     "nom": "Camino Francés",
+     "lat": 42.7,
+     "lon": -4.5,
+     "rayonKm": 300
+    },
+    "jours": 30,
+    "heures": null,
+    "personnes": 1,
+    "enfants": null,
+    "activite": "trekking",
+    "mois": 5,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 3
+   }
+  },
+  {
+   "id": "D172",
+   "phrase": "the Long Trail in Vermont end to end, about four weeks, my husband and I, starting in June",
+   "langue": "en",
+   "famille": "marche",
+   "duree": "1-mois",
+   "groupe": "couple",
+   "continent": "amerique-nord",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "US",
+    "lieu": {
+     "nom": "Long Trail, Vermont",
+     "lat": 44,
+     "lon": -72.8,
+     "rayonKm": 150
+    },
+    "jours": 28,
+    "heures": null,
+    "personnes": 2,
+    "enfants": null,
+    "activite": "trekking",
+    "mois": 6,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 3
+   }
+  },
+  {
+   "id": "D173",
+   "phrase": "Ein Monat Roadtrip an der Westküste Australiens von Perth bis Broome, wir sind vier, im Juli",
+   "langue": "de",
+   "famille": "route",
+   "duree": "1-mois",
+   "groupe": "groupe",
+   "continent": "oceanie",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "AU",
+    "lieu": {
+     "nom": "Perth à Broome",
+     "lat": -25,
+     "lon": 118,
+     "rayonKm": 800
+    },
+    "jours": 30,
+    "heures": null,
+    "personnes": 4,
+    "enfants": null,
+    "activite": "roadtrip",
+    "mois": 7,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 3
+   }
+  },
+  {
+   "id": "D174",
+   "phrase": "un mese in fuoristrada tra Zambia e Malawi, in due, ad agosto",
+   "langue": "it",
+   "famille": "route",
+   "duree": "1-mois",
+   "groupe": "couple",
+   "continent": "afrique",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "ZM",
+    "lieu": {
+     "nom": "Zambia e Malawi",
+     "lat": -14,
+     "lon": 28,
+     "rayonKm": 700
+    },
+    "jours": 30,
+    "heures": null,
+    "personnes": 2,
+    "enfants": null,
+    "activite": "roadtrip",
+    "mois": 8,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 3
+   }
+  },
+  {
+   "id": "D175",
+   "phrase": "un mese in camper in Norvegia fino a Capo Nord, in due, a luglio",
+   "langue": "it",
+   "famille": "route",
+   "duree": "1-mois",
+   "groupe": "couple",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "NO",
+    "lieu": {
+     "nom": "Norvegia",
+     "lat": 66,
+     "lon": 14,
+     "rayonKm": 800
+    },
+    "jours": 30,
+    "heures": null,
+    "personnes": 2,
+    "enfants": null,
+    "activite": "vanlife",
+    "mois": 7,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 3
+   }
+  },
+  {
+   "id": "D176",
+   "phrase": "un mois à vélo sur la Pamir Highway, à deux, en juillet",
+   "langue": "fr",
+   "famille": "velo",
+   "duree": "1-mois",
+   "groupe": "couple",
+   "continent": "asie",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "TJ",
+    "lieu": {
+     "nom": "Pamir Highway",
+     "lat": 38.5,
+     "lon": 72.5,
+     "rayonKm": 400
+    },
+    "jours": 30,
+    "heures": null,
+    "personnes": 2,
+    "enfants": null,
+    "activite": "cycling",
+    "mois": 7,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 3
+   }
+  },
+  {
+   "id": "D177",
+   "phrase": "a month canoeing and camping solo down the Yukon River from Whitehorse to Dawson, in July",
+   "langue": "en",
+   "famille": "eau",
+   "duree": "1-mois",
+   "groupe": "solo",
+   "continent": "amerique-nord",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "CA",
+    "lieu": {
+     "nom": "Yukon River",
+     "lat": 63,
+     "lon": -136.5,
+     "rayonKm": 300
+    },
+    "jours": 30,
+    "heures": null,
+    "personnes": 1,
+    "enfants": null,
+    "activite": "water",
+    "mois": 7,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 3
+   }
+  },
+  {
+   "id": "D178",
+   "phrase": "Vier Wochen Cordillera Blanca in Peru mit Alpamayo und Huascarán, wir sind fünf, im Juni",
+   "langue": "de",
+   "famille": "alpinisme",
+   "duree": "1-mois",
+   "groupe": "groupe",
+   "continent": "amerique-sud",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "PE",
+    "lieu": {
+     "nom": "Cordillera Blanca",
+     "lat": -9.5,
+     "lon": -77.5,
+     "rayonKm": 100
+    },
+    "jours": 28,
+    "heures": null,
+    "personnes": 5,
+    "enfants": null,
+    "activite": "mountaineering",
+    "mois": 6,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 3
+   }
+  },
+  {
+   "id": "D179",
+   "phrase": "un mois en Tanzanie à deux en août : safari au Serengeti, rando dans les Usambara, puis plage à Zanzibar",
+   "langue": "fr",
+   "famille": "multi",
+   "duree": "1-mois",
+   "groupe": "couple",
+   "continent": "afrique",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "TZ",
+    "lieu": {
+     "nom": "Tanzanie",
+     "lat": -6.5,
+     "lon": 35.5,
+     "rayonKm": 500
+    },
+    "jours": 30,
+    "heures": null,
+    "personnes": 2,
+    "enfants": null,
+    "activite": "mixed",
+    "mois": 8,
+    "segments": [
+     "roadtrip",
+     "hiking",
+     "beach"
+    ],
+    "issue": "pret",
+    "joursTolerance": 3
+   }
+  },
+  {
+   "id": "D180",
+   "phrase": "Vier Wochen Laufen in Neuseeland rund um Queenstown und Wanaka, allein, im Januar",
+   "langue": "de",
+   "famille": "course",
+   "duree": "1-mois",
+   "groupe": "solo",
+   "continent": "oceanie",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "NZ",
+    "lieu": {
+     "nom": "Queenstown et Wanaka",
+     "lat": -44.9,
+     "lon": 169,
+     "rayonKm": 200
+    },
+    "jours": 28,
+    "heures": null,
+    "personnes": 1,
+    "enfants": null,
+    "activite": "running",
+    "mois": 1,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 3
+   }
+  },
+  {
+   "id": "D181",
+   "phrase": "un mese di sci in Nuova Zelanda a Queenstown, da solo, ad agosto",
+   "langue": "it",
+   "famille": "ski",
+   "duree": "1-mois",
+   "groupe": "solo",
+   "continent": "oceanie",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "NZ",
+    "lieu": {
+     "nom": "Queenstown",
+     "lat": -45.03,
+     "lon": 168.66,
+     "rayonKm": 100
+    },
+    "jours": 30,
+    "heures": null,
+    "personnes": 1,
+    "enfants": null,
+    "activite": "ski",
+    "mois": 8,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 3
+   }
+  },
+  {
+   "id": "D182",
+   "phrase": "un mes de surf en Costa Rica, somos 3 amigos, en febrero",
+   "langue": "es",
+   "famille": "eau",
+   "duree": "1-mois",
+   "groupe": "groupe",
+   "continent": "amerique-nord",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "CR",
+    "lieu": {
+     "nom": "Costa Rica",
+     "lat": 9.9,
+     "lon": -84.6,
+     "rayonKm": 200
+    },
+    "jours": 30,
+    "heures": null,
+    "personnes": 3,
+    "enfants": null,
+    "activite": "water",
+    "mois": 2,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 3
+   }
+  },
+  {
+   "id": "D183",
+   "phrase": "un mese di sci in Valle d'Aosta, da solo, a gennaio",
+   "langue": "it",
+   "famille": "ski",
+   "duree": "1-mois",
+   "groupe": "solo",
+   "continent": "europe",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "IT",
+    "lieu": {
+     "nom": "Valle d'Aosta",
+     "lat": 45.7,
+     "lon": 7.3,
+     "rayonKm": 60
+    },
+    "jours": 30,
+    "heures": null,
+    "personnes": 1,
+    "enfants": null,
+    "activite": "ski",
+    "mois": 1,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 3
+   }
+  },
+  {
+   "id": "D184",
+   "phrase": "a month island hopping in the Philippines, Palawan and Siargao, the two of us, in March",
+   "langue": "en",
+   "famille": "plage",
+   "duree": "1-mois",
+   "groupe": "couple",
+   "continent": "asie",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "PH",
+    "lieu": {
+     "nom": "Palawan et Siargao",
+     "lat": 10,
+     "lon": 122,
+     "rayonKm": 600
+    },
+    "jours": 30,
+    "heures": null,
+    "personnes": 2,
+    "enfants": null,
+    "activite": "beach",
+    "mois": 3,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 3
+   }
+  },
+  {
+   "id": "D185",
+   "phrase": "long weekend in Edinburgh and the Highlands, city on day one and a hike in Glen Coe after, for two in October",
+   "langue": "en",
+   "famille": "multi",
+   "duree": "week-end",
+   "groupe": "couple",
+   "continent": "europe",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "GB",
+    "lieu": {
+     "nom": "Édimbourg et Glen Coe",
+     "lat": 56.3,
+     "lon": -4.2,
+     "rayonKm": 150
+    },
+    "jours": 3,
+    "heures": null,
+    "personnes": 2,
+    "enfants": null,
+    "activite": "mixed",
+    "mois": 10,
+    "segments": [
+     "citytrip",
+     "hiking"
+    ],
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D186",
+   "phrase": "7 jours en Autriche, 2 jours à Vienne puis rando dans le Salzkammergut, seul, fin juin",
+   "langue": "fr",
+   "famille": "multi",
+   "duree": "semaine",
+   "groupe": "solo",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "AT",
+    "lieu": {
+     "nom": "Vienne et Salzkammergut",
+     "lat": 47.9,
+     "lon": 14.9,
+     "rayonKm": 200
+    },
+    "jours": 7,
+    "heures": null,
+    "personnes": 1,
+    "enfants": null,
+    "activite": "mixed",
+    "mois": 6,
+    "segments": [
+     "citytrip",
+     "hiking"
+    ],
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D187",
+   "phrase": "Zwei Wochen Kalifornien zu sechst im September: Los Angeles Stadt, Yosemite wandern, danach Surfen bei Santa Cruz",
+   "langue": "de",
+   "famille": "multi",
+   "duree": "2-semaines",
+   "groupe": "groupe",
+   "continent": "amerique-nord",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "US",
+    "lieu": {
+     "nom": "Californie",
+     "lat": 36.5,
+     "lon": -120,
+     "rayonKm": 400
+    },
+    "jours": 14,
+    "heures": null,
+    "personnes": 6,
+    "enfants": null,
+    "activite": "mixed",
+    "mois": 9,
+    "segments": [
+     "citytrip",
+     "hiking",
+     "water"
+    ],
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D188",
+   "phrase": "una semana en las Azores en pareja en mayo: senderismo por Sete Cidades y luego buceo",
+   "langue": "es",
+   "famille": "multi",
+   "duree": "semaine",
+   "groupe": "couple",
+   "continent": "europe",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "PT",
+    "lieu": {
+     "nom": "Azores, São Miguel",
+     "lat": 37.8,
+     "lon": -25.5,
+     "rayonKm": 100
+    },
+    "jours": 7,
+    "heures": null,
+    "personnes": 2,
+    "enfants": null,
+    "activite": "mixed",
+    "mois": 5,
+    "segments": [
+     "hiking",
+     "water"
+    ],
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D189",
+   "phrase": "weekend sulle Dolomiti: sci il sabato e ciaspolata la domenica, siamo in 4, a febbraio",
+   "langue": "it",
+   "famille": "multi",
+   "duree": "week-end",
+   "groupe": "groupe",
+   "continent": "europe",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "IT",
+    "lieu": {
+     "nom": "Cortina d'Ampezzo",
+     "lat": 46.54,
+     "lon": 12.14,
+     "rayonKm": 60
+    },
+    "jours": 2,
+    "heures": null,
+    "personnes": 4,
+    "enfants": null,
+    "activite": "mixed",
+    "mois": 2,
+    "segments": [
+     "ski",
+     "hiking"
+    ],
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D190",
+   "phrase": "a week in Queensland, 2 adults and 2 kids, in September: Brisbane first, then camping on Fraser Island and snorkelling on the Great Barrier Reef",
+   "langue": "en",
+   "famille": "multi",
+   "duree": "semaine",
+   "groupe": "famille",
+   "continent": "oceanie",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "AU",
+    "lieu": {
+     "nom": "Queensland",
+     "lat": -24,
+     "lon": 152,
+     "rayonKm": 500
+    },
+    "jours": 7,
+    "heures": null,
+    "personnes": 4,
+    "enfants": 2,
+    "activite": "mixed",
+    "mois": 9,
+    "segments": [
+     "citytrip",
+     "bivouac",
+     "water"
+    ],
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D191",
+   "phrase": "on part quelque part au chaud pas trop loin",
+   "langue": "fr",
+   "famille": "plage",
+   "duree": "week-end",
+   "groupe": "couple",
+   "continent": "europe",
+   "saison": "hiver",
+   "floue": true,
+   "note": "destination, durée et date indéterminables ('quelque part au chaud pas trop loin')",
+   "attendu": {
+    "pays": null,
+    "lieu": null,
+    "jours": null,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": null,
+    "mois": null,
+    "segments": null,
+    "issue": "precision",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D192",
+   "phrase": "3 jours en Bretagne du 1er au 15 mars",
+   "langue": "fr",
+   "famille": "marche",
+   "duree": "week-end",
+   "groupe": "solo",
+   "continent": "europe",
+   "saison": "printemps",
+   "floue": true,
+   "note": "durée contradictoire : '3 jours' mais 'du 1er au 15 mars' = 15 jours",
+   "attendu": {
+    "pays": "FR",
+    "lieu": {
+     "nom": "Bretagne",
+     "lat": 48.2,
+     "lon": -2.9,
+     "rayonKm": 150
+    },
+    "jours": null,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": null,
+    "mois": 3,
+    "segments": null,
+    "issue": "precision",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D193",
+   "phrase": "week-end à Annecy, seule avec mes deux amis",
+   "langue": "fr",
+   "famille": "ville-culture",
+   "duree": "week-end",
+   "groupe": "groupe",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": true,
+   "note": "groupe contradictoire : 'seule' mais 'avec mes deux amis'",
+   "attendu": {
+    "pays": "FR",
+    "lieu": {
+     "nom": "Annecy",
+     "lat": 45.9,
+     "lon": 6.13,
+     "rayonKm": 30
+    },
+    "jours": null,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": null,
+    "mois": null,
+    "segments": null,
+    "issue": "precision",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D194",
+   "phrase": "5 days hiking in Atlantis, the lost city",
+   "langue": "en",
+   "famille": "marche",
+   "duree": "semaine",
+   "groupe": "solo",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": true,
+   "note": "lieu inexistant (Atlantis, cité légendaire)",
+   "attendu": {
+    "pays": null,
+    "lieu": null,
+    "jours": null,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": null,
+    "mois": null,
+    "segments": null,
+    "issue": "precision",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D195",
+   "phrase": "Ein Wochenende in Rom und New York, zu zweit",
+   "langue": "de",
+   "famille": "ville-culture",
+   "duree": "week-end",
+   "groupe": "couple",
+   "continent": "europe",
+   "saison": "printemps",
+   "floue": true,
+   "note": "deux destinations incompatibles en un week-end : Rome et New York",
+   "attendu": {
+    "pays": null,
+    "lieu": null,
+    "jours": null,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": null,
+    "mois": null,
+    "segments": null,
+    "issue": "precision",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D196",
+   "phrase": "queremos hacer el Camino de Santiago entero en un fin de semana",
+   "langue": "es",
+   "famille": "marche",
+   "duree": "week-end",
+   "groupe": "groupe",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": true,
+   "note": "durée impossible : tout le Camino de Santiago en un week-end",
+   "attendu": {
+    "pays": "ES",
+    "lieu": {
+     "nom": "Camino de Santiago",
+     "lat": 42.7,
+     "lon": -4.5,
+     "rayonKm": 300
+    },
+    "jours": null,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": null,
+    "mois": null,
+    "segments": null,
+    "issue": "precision",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D197",
+   "phrase": "vorrei una vacanza, non so dove e non so quando, tipo una settimana",
+   "langue": "it",
+   "famille": "ville-culture",
+   "duree": "semaine",
+   "groupe": "couple",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": true,
+   "note": "ni lieu ni date ni activité : 'non so dove, non so quando'",
+   "attendu": {
+    "pays": null,
+    "lieu": null,
+    "jours": null,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": null,
+    "mois": null,
+    "segments": null,
+    "issue": "precision",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D198",
+   "phrase": "ski touring in the Sahara in July, 3 days",
+   "langue": "en",
+   "famille": "ski",
+   "duree": "week-end",
+   "groupe": "solo",
+   "continent": "afrique",
+   "saison": "ete",
+   "floue": true,
+   "note": "activité impossible : ski de randonnée dans le Sahara en juillet",
+   "attendu": {
+    "pays": null,
+    "lieu": null,
+    "jours": null,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": null,
+    "mois": null,
+    "segments": null,
+    "issue": "precision",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D199",
+   "phrase": "trek de 10 jours en 2 heures dans l'Himalaya",
+   "langue": "fr",
+   "famille": "marche",
+   "duree": "semaine",
+   "groupe": "groupe",
+   "continent": "asie",
+   "saison": "ete",
+   "floue": true,
+   "note": "durée contradictoire : trek de 10 jours en 2 heures, lieu vague",
+   "attendu": {
+    "pays": null,
+    "lieu": null,
+    "jours": null,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": null,
+    "mois": null,
+    "segments": null,
+    "issue": "precision",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D200",
+   "phrase": "Wir sind zu viert, also ich allein, und wollen drei Tage zelten irgendwo am Meer",
+   "langue": "de",
+   "famille": "bivouac",
+   "duree": "week-end",
+   "groupe": "groupe",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": true,
+   "note": "groupe contradictoire : 'zu viert' mais 'ich allein', lieu vague",
+   "attendu": {
+    "pays": null,
+    "lieu": null,
+    "jours": null,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": null,
+    "mois": null,
+    "segments": null,
+    "issue": "precision",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D201",
+   "phrase": "Quince días en Nueva Caledonia con nuestros dos hijos, lagón y senderos, en octubre",
+   "langue": "es",
+   "famille": "plage",
+   "duree": "2-semaines",
+   "groupe": "famille",
+   "continent": "oceanie",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "NC",
+    "lieu": {
+     "nom": "Nouvelle-Calédonie",
+     "lat": -21.5,
+     "lon": 165.5,
+     "rayonKm": 300
+    },
+    "jours": 15,
+    "heures": null,
+    "personnes": 4,
+    "enfants": 2,
+    "activite": "beach",
+    "mois": 10,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D202",
+   "phrase": "Semaine de trail à La Réunion, Cilaos et Mafate, fin août",
+   "langue": "fr",
+   "famille": "course",
+   "duree": "semaine",
+   "groupe": "solo",
+   "continent": "afrique",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "RE",
+    "lieu": {
+     "nom": "Cilaos - Mafate",
+     "lat": -21.1,
+     "lon": 55.45,
+     "rayonKm": 60
+    },
+    "jours": 7,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": "running",
+    "mois": 8,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D203",
+   "phrase": "Zwei Wochen Kolumbien: Medellín, Kaffeeregion und Karibikküste, mit Frau und Kind",
+   "langue": "de",
+   "famille": "ville-culture",
+   "duree": "2-semaines",
+   "groupe": "famille",
+   "continent": "amerique-sud",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "CO",
+    "lieu": {
+     "nom": "Colombie",
+     "lat": 6,
+     "lon": -74.5,
+     "rayonKm": 400
+    },
+    "jours": 14,
+    "heures": null,
+    "personnes": 3,
+    "enfants": 1,
+    "activite": "cultural",
+    "mois": null,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D204",
+   "phrase": "Wochenendtour auf den Olymp, Mytikas, Übernachtung in der Hütte Spilios Agapitos, im Juni, wir sind drei",
+   "langue": "de",
+   "famille": "alpinisme",
+   "duree": "week-end",
+   "groupe": "groupe",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "GR",
+    "lieu": {
+     "nom": "Mont Olympe",
+     "lat": 40.09,
+     "lon": 22.35,
+     "rayonKm": 30
+    },
+    "jours": 2,
+    "heures": null,
+    "personnes": 3,
+    "enfants": 0,
+    "activite": "mountaineering",
+    "mois": 6,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D205",
+   "phrase": "Zwei Wochen Japan: Tokio, wandern auf dem Nakasendo, dann Strand auf Okinawa, meine Freundin und ich",
+   "langue": "de",
+   "famille": "multi",
+   "duree": "2-semaines",
+   "groupe": "couple",
+   "continent": "asie",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "JP",
+    "lieu": {
+     "nom": "Japon",
+     "lat": 35,
+     "lon": 137,
+     "rayonKm": 600
+    },
+    "jours": 14,
+    "heures": null,
+    "personnes": 2,
+    "enfants": 0,
+    "activite": "mixed",
+    "mois": null,
+    "segments": [
+     "citytrip",
+     "hiking",
+     "beach"
+    ],
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D206",
+   "phrase": "Footing de 1h à quatre dans le parc du Cinquantenaire à Bruxelles",
+   "langue": "fr",
+   "famille": "course",
+   "duree": "1h",
+   "groupe": "groupe",
+   "continent": "europe",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "BE",
+    "lieu": {
+     "nom": "Bruxelles",
+     "lat": 50.84,
+     "lon": 4.39,
+     "rayonKm": 30
+    },
+    "jours": 1,
+    "heures": 1,
+    "personnes": 4,
+    "enfants": 0,
+    "activite": "running",
+    "mois": null,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D207",
+   "phrase": "Hiking in Atlantis for a long weekend",
+   "langue": "en",
+   "famille": "marche",
+   "duree": "week-end",
+   "groupe": "solo",
+   "continent": "europe",
+   "saison": "printemps",
+   "floue": true,
+   "note": "lieu inexistant",
+   "attendu": {
+    "pays": null,
+    "lieu": null,
+    "jours": 3,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": "hiking",
+    "mois": null,
+    "segments": null,
+    "issue": "precision",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D208",
+   "phrase": "bike ride around the Imperial Palace loop in Tokyo, about an hour",
+   "langue": "en",
+   "famille": "velo",
+   "duree": "1h",
+   "groupe": "solo",
+   "continent": "asie",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "JP",
+    "lieu": {
+     "nom": "Tokyo",
+     "lat": 35.68,
+     "lon": 139.75,
+     "rayonKm": 30
+    },
+    "jours": 1,
+    "heures": 1,
+    "personnes": null,
+    "enfants": null,
+    "activite": "cycling",
+    "mois": null,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D209",
+   "phrase": "Une journée à vélo dans les vignobles du Luxembourg, le long de la Moselle, début octobre",
+   "langue": "fr",
+   "famille": "velo",
+   "duree": "journee",
+   "groupe": "solo",
+   "continent": "europe",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "LU",
+    "lieu": {
+     "nom": "Moselle luxembourgeoise",
+     "lat": 49.6,
+     "lon": 6.4,
+     "rayonKm": 40
+    },
+    "jours": 1,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": "cycling",
+    "mois": 10,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D210",
+   "phrase": "Dos semanas en coche por Costa Rica con los niños (3 y 10 años), en enero",
+   "langue": "es",
+   "famille": "route",
+   "duree": "2-semaines",
+   "groupe": "famille",
+   "continent": "amerique-nord",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "CR",
+    "lieu": {
+     "nom": "Costa Rica",
+     "lat": 10,
+     "lon": -84.2,
+     "rayonKm": 200
+    },
+    "jours": 14,
+    "heures": null,
+    "personnes": 4,
+    "enfants": 2,
+    "activite": "roadtrip",
+    "mois": 1,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D211",
+   "phrase": "Une semaine à Tahiti et Moorea avec les enfants (4 et 7 ans), en juillet",
+   "langue": "fr",
+   "famille": "plage",
+   "duree": "semaine",
+   "groupe": "famille",
+   "continent": "oceanie",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "PF",
+    "lieu": {
+     "nom": "Tahiti - Moorea",
+     "lat": -17.55,
+     "lon": -149.6,
+     "rayonKm": 100
+    },
+    "jours": 7,
+    "heures": null,
+    "personnes": 4,
+    "enfants": 2,
+    "activite": "beach",
+    "mois": 7,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D212",
+   "phrase": "Una semana trekking hasta Ciudad Perdida, en la Sierra Nevada de Santa Marta, somos cinco",
+   "langue": "es",
+   "famille": "marche",
+   "duree": "semaine",
+   "groupe": "groupe",
+   "continent": "amerique-sud",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "CO",
+    "lieu": {
+     "nom": "Ciudad Perdida",
+     "lat": 11.04,
+     "lon": -73.93,
+     "rayonKm": 60
+    },
+    "jours": 6,
+    "heures": null,
+    "personnes": 5,
+    "enfants": 0,
+    "activite": "trekking",
+    "mois": null,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D213",
+   "phrase": "visite rapide de 2h du Parthénon et de l'Acropole",
+   "langue": "fr",
+   "famille": "ville-culture",
+   "duree": "1h",
+   "groupe": "solo",
+   "continent": "europe",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "GR",
+    "lieu": {
+     "nom": "Athènes",
+     "lat": 37.97,
+     "lon": 23.73,
+     "rayonKm": 30
+    },
+    "jours": 1,
+    "heures": 2,
+    "personnes": null,
+    "enfants": null,
+    "activite": "cultural",
+    "mois": null,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D214",
+   "phrase": "salir a correr una hora por el Bosque de Chapultepec",
+   "langue": "es",
+   "famille": "course",
+   "duree": "1h",
+   "groupe": "solo",
+   "continent": "amerique-nord",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "MX",
+    "lieu": {
+     "nom": "Mexico",
+     "lat": 19.42,
+     "lon": -99.19,
+     "rayonKm": 30
+    },
+    "jours": 1,
+    "heures": 1,
+    "personnes": 1,
+    "enfants": null,
+    "activite": "running",
+    "mois": null,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D215",
+   "phrase": "Passeggiata di un'ora sul Bosforo a Istanbul, noi due con i bambini di 5 e 8 anni",
+   "langue": "it",
+   "famille": "marche",
+   "duree": "1h",
+   "groupe": "famille",
+   "continent": "europe",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "TR",
+    "lieu": {
+     "nom": "Istanbul",
+     "lat": 41.04,
+     "lon": 29,
+     "rayonKm": 30
+    },
+    "jours": 1,
+    "heures": 1,
+    "personnes": 4,
+    "enfants": 2,
+    "activite": "hiking",
+    "mois": null,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D216",
+   "phrase": "A week in the Azores hiking crater lakes, with our two teenagers",
+   "langue": "en",
+   "famille": "marche",
+   "duree": "semaine",
+   "groupe": "famille",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "PT",
+    "lieu": {
+     "nom": "Açores",
+     "lat": 37.74,
+     "lon": -25.67,
+     "rayonKm": 250
+    },
+    "jours": 7,
+    "heures": null,
+    "personnes": 4,
+    "enfants": 2,
+    "activite": "hiking",
+    "mois": null,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D217",
+   "phrase": "Tageskajak in der Halong-Bucht in Vietnam, wir zwei, im Oktober",
+   "langue": "de",
+   "famille": "eau",
+   "duree": "journee",
+   "groupe": "couple",
+   "continent": "asie",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "VN",
+    "lieu": {
+     "nom": "Baie d'Ha Long",
+     "lat": 20.9,
+     "lon": 107.1,
+     "rayonKm": 40
+    },
+    "jours": 1,
+    "heures": null,
+    "personnes": 2,
+    "enfants": 0,
+    "activite": "water",
+    "mois": 10,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D218",
+   "phrase": "Zwei Wochen mit Zelt durch Albanien: Theth-Valbona und Komani-See, im August",
+   "langue": "de",
+   "famille": "bivouac",
+   "duree": "2-semaines",
+   "groupe": "solo",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "AL",
+    "lieu": {
+     "nom": "Alpes albanaises",
+     "lat": 42.4,
+     "lon": 19.8,
+     "rayonKm": 150
+    },
+    "jours": 14,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": "bivouac",
+    "mois": 8,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D219",
+   "phrase": "Week-end farniente sur l'île de Djerba en octobre, à deux",
+   "langue": "fr",
+   "famille": "plage",
+   "duree": "week-end",
+   "groupe": "couple",
+   "continent": "afrique",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "TN",
+    "lieu": {
+     "nom": "Djerba",
+     "lat": 33.81,
+     "lon": 10.85,
+     "rayonKm": 40
+    },
+    "jours": 3,
+    "heures": null,
+    "personnes": 2,
+    "enfants": 0,
+    "activite": "beach",
+    "mois": 10,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D220",
+   "phrase": "Una horita en bici por el Malecón de La Habana por la mañana",
+   "langue": "es",
+   "famille": "velo",
+   "duree": "1h",
+   "groupe": "solo",
+   "continent": "amerique-nord",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "CU",
+    "lieu": {
+     "nom": "La Habana",
+     "lat": 23.14,
+     "lon": -82.36,
+     "rayonKm": 30
+    },
+    "jours": 1,
+    "heures": 1,
+    "personnes": null,
+    "enfants": null,
+    "activite": "cycling",
+    "mois": null,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D221",
+   "phrase": "Una settimana alle Seychelles, a Mahé e Praslin, passeggiate nella foresta e mare, da sola",
+   "langue": "it",
+   "famille": "marche",
+   "duree": "semaine",
+   "groupe": "solo",
+   "continent": "afrique",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "SC",
+    "lieu": {
+     "nom": "Seychelles",
+     "lat": -4.62,
+     "lon": 55.45,
+     "rayonKm": 100
+    },
+    "jours": 7,
+    "heures": null,
+    "personnes": 1,
+    "enfants": null,
+    "activite": "hiking",
+    "mois": null,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D222",
+   "phrase": "Fin de semana en Lisboa con mis hijos de 6 y 9 años",
+   "langue": "es",
+   "famille": "ville-culture",
+   "duree": "week-end",
+   "groupe": "famille",
+   "continent": "europe",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "PT",
+    "lieu": {
+     "nom": "Lisbonne",
+     "lat": 38.72,
+     "lon": -9.14,
+     "rayonKm": 30
+    },
+    "jours": 3,
+    "heures": null,
+    "personnes": 3,
+    "enfants": 2,
+    "activite": "cultural",
+    "mois": null,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D223",
+   "phrase": "A week in Mauritius with our twin 6-year-olds: beaches and the Black River Gorges, in June",
+   "langue": "en",
+   "famille": "multi",
+   "duree": "semaine",
+   "groupe": "famille",
+   "continent": "afrique",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "MU",
+    "lieu": {
+     "nom": "Maurice",
+     "lat": -20.3,
+     "lon": 57.5,
+     "rayonKm": 60
+    },
+    "jours": 7,
+    "heures": null,
+    "personnes": 4,
+    "enfants": 2,
+    "activite": "mixed",
+    "mois": 6,
+    "segments": [
+     "beach",
+     "hiking"
+    ],
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D224",
+   "phrase": "Ascension du mont Cameroun en 3 jours avec 3 amis, en janvier",
+   "langue": "fr",
+   "famille": "alpinisme",
+   "duree": "week-end",
+   "groupe": "groupe",
+   "continent": "afrique",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "CM",
+    "lieu": {
+     "nom": "Mont Cameroun",
+     "lat": 4.2,
+     "lon": 9.17,
+     "rayonKm": 40
+    },
+    "jours": 3,
+    "heures": null,
+    "personnes": 4,
+    "enfants": 0,
+    "activite": "mountaineering",
+    "mois": 1,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D225",
+   "phrase": "Una semana escalando en El Potrero Chico, Monterrey, con dos amigos en diciembre",
+   "langue": "es",
+   "famille": "escalade",
+   "duree": "semaine",
+   "groupe": "groupe",
+   "continent": "amerique-nord",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "MX",
+    "lieu": {
+     "nom": "Potrero Chico",
+     "lat": 25.95,
+     "lon": -100.47,
+     "rayonKm": 40
+    },
+    "jours": 7,
+    "heures": null,
+    "personnes": 3,
+    "enfants": 0,
+    "activite": "climbing",
+    "mois": 12,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D226",
+   "phrase": "Climbing weekend at Suesca near Bogotá, two days, with 3 friends",
+   "langue": "en",
+   "famille": "escalade",
+   "duree": "week-end",
+   "groupe": "groupe",
+   "continent": "amerique-sud",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "CO",
+    "lieu": {
+     "nom": "Suesca",
+     "lat": 5.1,
+     "lon": -73.8,
+     "rayonKm": 30
+    },
+    "jours": 2,
+    "heures": null,
+    "personnes": 4,
+    "enfants": 0,
+    "activite": "climbing",
+    "mois": null,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D227",
+   "phrase": "Eine Woche Papua-Neuguinea: Kokoda Track wandern, danach Tauchen in der Milne Bay",
+   "langue": "de",
+   "famille": "multi",
+   "duree": "semaine",
+   "groupe": "solo",
+   "continent": "oceanie",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "PG",
+    "lieu": {
+     "nom": "Papouasie-Nouvelle-Guinée",
+     "lat": -9,
+     "lon": 148,
+     "rayonKm": 300
+    },
+    "jours": 8,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": "mixed",
+    "mois": null,
+    "segments": [
+     "trekking",
+     "water"
+    ],
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D228",
+   "phrase": "Una semana de esquí en las Maldivas en julio",
+   "langue": "es",
+   "famille": "ski",
+   "duree": "semaine",
+   "groupe": "solo",
+   "continent": "asie",
+   "saison": "ete",
+   "floue": true,
+   "note": "ski impossible aux Maldives (pas de neige)",
+   "attendu": {
+    "pays": "MV",
+    "lieu": null,
+    "jours": 7,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": null,
+    "mois": 7,
+    "segments": null,
+    "issue": "precision",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D229",
+   "phrase": "Long weekend on Oahu surfing the North Shore in January, solo",
+   "langue": "en",
+   "famille": "eau",
+   "duree": "week-end",
+   "groupe": "solo",
+   "continent": "oceanie",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "US",
+    "lieu": {
+     "nom": "Côte nord d'Oahu",
+     "lat": 21.6,
+     "lon": -158.1,
+     "rayonKm": 40
+    },
+    "jours": 3,
+    "heures": null,
+    "personnes": 1,
+    "enfants": null,
+    "activite": "water",
+    "mois": 1,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D230",
+   "phrase": "Day hike in the Cocora Valley, Colombia, 5 of us, in October",
+   "langue": "en",
+   "famille": "marche",
+   "duree": "journee",
+   "groupe": "groupe",
+   "continent": "amerique-sud",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "CO",
+    "lieu": {
+     "nom": "Vallée de Cocora",
+     "lat": 4.64,
+     "lon": -75.49,
+     "rayonKm": 30
+    },
+    "jours": 1,
+    "heures": null,
+    "personnes": 5,
+    "enfants": 0,
+    "activite": "hiking",
+    "mois": 10,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D231",
+   "phrase": "Semaine de ski au Japon à Niseko, poudreuse en janvier, à deux",
+   "langue": "fr",
+   "famille": "ski",
+   "duree": "semaine",
+   "groupe": "couple",
+   "continent": "asie",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "JP",
+    "lieu": {
+     "nom": "Niseko",
+     "lat": 42.86,
+     "lon": 140.7,
+     "rayonKm": 40
+    },
+    "jours": 8,
+    "heures": null,
+    "personnes": 2,
+    "enfants": 0,
+    "activite": "ski",
+    "mois": 1,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D232",
+   "phrase": "Je pars seule avec mes deux amis à Santorin",
+   "langue": "fr",
+   "famille": "plage",
+   "duree": "week-end",
+   "groupe": "groupe",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": true,
+   "note": "seule contredit avec mes deux amis : taille du groupe incertaine",
+   "attendu": {
+    "pays": "GR",
+    "lieu": {
+     "nom": "Santorin",
+     "lat": 36.39,
+     "lon": 25.46,
+     "rayonKm": 30
+    },
+    "jours": null,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": null,
+    "mois": null,
+    "segments": null,
+    "issue": "precision",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D233",
+   "phrase": "Fin de semana con los niños en Cartagena de Indias, ciudad amurallada y playa, somos cuatro",
+   "langue": "es",
+   "famille": "ville-culture",
+   "duree": "week-end",
+   "groupe": "famille",
+   "continent": "amerique-sud",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "CO",
+    "lieu": {
+     "nom": "Carthagène des Indes",
+     "lat": 10.39,
+     "lon": -75.5,
+     "rayonKm": 30
+    },
+    "jours": 3,
+    "heures": null,
+    "personnes": 4,
+    "enfants": 2,
+    "activite": "cultural",
+    "mois": null,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D234",
+   "phrase": "Due settimane in Sri Lanka tra templi e altopiani di tè, in aprile, siamo in quattro amici",
+   "langue": "it",
+   "famille": "ville-culture",
+   "duree": "2-semaines",
+   "groupe": "groupe",
+   "continent": "asie",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "LK",
+    "lieu": {
+     "nom": "Sri Lanka",
+     "lat": 7.5,
+     "lon": 80.7,
+     "rayonKm": 150
+    },
+    "jours": 14,
+    "heures": null,
+    "personnes": 4,
+    "enfants": 0,
+    "activite": "cultural",
+    "mois": 4,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D235",
+   "phrase": "Zwei Stunden Baden am Strand von Rovinj, wir sind sechs Freunde",
+   "langue": "de",
+   "famille": "plage",
+   "duree": "1h",
+   "groupe": "groupe",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "HR",
+    "lieu": {
+     "nom": "Rovinj",
+     "lat": 45.08,
+     "lon": 13.64,
+     "rayonKm": 30
+    },
+    "jours": 1,
+    "heures": 2,
+    "personnes": 6,
+    "enfants": 0,
+    "activite": "beach",
+    "mois": null,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D236",
+   "phrase": "A week in Mexico: Mexico City museums, then beaches on the Oaxacan coast, in November",
+   "langue": "en",
+   "famille": "multi",
+   "duree": "semaine",
+   "groupe": "solo",
+   "continent": "amerique-nord",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "MX",
+    "lieu": {
+     "nom": "Mexique",
+     "lat": 18,
+     "lon": -97.5,
+     "rayonKm": 400
+    },
+    "jours": 7,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": "mixed",
+    "mois": 11,
+    "segments": [
+     "cultural",
+     "beach"
+    ],
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D237",
+   "phrase": "A week diving and snorkelling around Kimbe Bay, Papua New Guinea, couple",
+   "langue": "en",
+   "famille": "eau",
+   "duree": "semaine",
+   "groupe": "couple",
+   "continent": "oceanie",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "PG",
+    "lieu": {
+     "nom": "Baie de Kimbe",
+     "lat": -5.45,
+     "lon": 150.1,
+     "rayonKm": 100
+    },
+    "jours": 7,
+    "heures": null,
+    "personnes": 2,
+    "enfants": 0,
+    "activite": "water",
+    "mois": null,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D238",
+   "phrase": "Excursión de un día con los peques por el Cañón del Sumidero, Chiapas, somos cuatro con dos niños",
+   "langue": "es",
+   "famille": "marche",
+   "duree": "journee",
+   "groupe": "famille",
+   "continent": "amerique-nord",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "MX",
+    "lieu": {
+     "nom": "Cañón del Sumidero",
+     "lat": 16.83,
+     "lon": -93.09,
+     "rayonKm": 40
+    },
+    "jours": 1,
+    "heures": null,
+    "personnes": 4,
+    "enfants": 2,
+    "activite": "hiking",
+    "mois": null,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D239",
+   "phrase": "Due settimane in India, Rajasthan: Jaipur, Udaipur, Jodhpur, a febbraio, con mia moglie e i bambini",
+   "langue": "it",
+   "famille": "ville-culture",
+   "duree": "2-semaines",
+   "groupe": "famille",
+   "continent": "asie",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "IN",
+    "lieu": {
+     "nom": "Rajasthan",
+     "lat": 26.5,
+     "lon": 73.5,
+     "rayonKm": 300
+    },
+    "jours": 14,
+    "heures": null,
+    "personnes": 4,
+    "enfants": 2,
+    "activite": "cultural",
+    "mois": 2,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D240",
+   "phrase": "Ein Monat Südostasien: Hanoi, Trekking in Sapa, Strände auf Phu Quoc, im Februar, allein",
+   "langue": "de",
+   "famille": "multi",
+   "duree": "1-mois",
+   "groupe": "solo",
+   "continent": "asie",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "VN",
+    "lieu": {
+     "nom": "Vietnam",
+     "lat": 17,
+     "lon": 106,
+     "rayonKm": 800
+    },
+    "jours": 30,
+    "heures": null,
+    "personnes": 1,
+    "enfants": null,
+    "activite": "mixed",
+    "mois": 2,
+    "segments": [
+     "citytrip",
+     "trekking",
+     "beach"
+    ],
+    "issue": "pret",
+    "joursTolerance": 3
+   }
+  },
+  {
+   "id": "D241",
+   "phrase": "Un week-end à Papeete et sur le lagon de Moorea, à deux",
+   "langue": "fr",
+   "famille": "plage",
+   "duree": "week-end",
+   "groupe": "couple",
+   "continent": "oceanie",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "PF",
+    "lieu": {
+     "nom": "Papeete - Moorea",
+     "lat": -17.55,
+     "lon": -149.7,
+     "rayonKm": 60
+    },
+    "jours": 3,
+    "heures": null,
+    "personnes": 2,
+    "enfants": 0,
+    "activite": "beach",
+    "mois": null,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D242",
+   "phrase": "Einen Monat wandern in Georgien, Swanetien und Tuschetien, im August",
+   "langue": "de",
+   "famille": "marche",
+   "duree": "1-mois",
+   "groupe": "solo",
+   "continent": "asie",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "GE",
+    "lieu": {
+     "nom": "Géorgie",
+     "lat": 42.2,
+     "lon": 43.5,
+     "rayonKm": 250
+    },
+    "jours": 30,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": "trekking",
+    "mois": 8,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 3
+   }
+  },
+  {
+   "id": "D243",
+   "phrase": "Two weeks island hopping in Fiji for our honeymoon",
+   "langue": "en",
+   "famille": "plage",
+   "duree": "2-semaines",
+   "groupe": "couple",
+   "continent": "oceanie",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "FJ",
+    "lieu": {
+     "nom": "Fidji",
+     "lat": -17.8,
+     "lon": 177.9,
+     "rayonKm": 300
+    },
+    "jours": 14,
+    "heures": null,
+    "personnes": 2,
+    "enfants": 0,
+    "activite": "beach",
+    "mois": null,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D244",
+   "phrase": "Eine Woche Rundreise durch Irland, Wild Atlantic Way, im Mai, wir sind zu viert mit zwei Kindern",
+   "langue": "de",
+   "famille": "route",
+   "duree": "semaine",
+   "groupe": "famille",
+   "continent": "europe",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "IE",
+    "lieu": {
+     "nom": "Wild Atlantic Way",
+     "lat": 53,
+     "lon": -9,
+     "rayonKm": 150
+    },
+    "jours": 7,
+    "heures": null,
+    "personnes": 4,
+    "enfants": 2,
+    "activite": "roadtrip",
+    "mois": 5,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D245",
+   "phrase": "Wochenende in Tokio und Rom, zwei Tage",
+   "langue": "de",
+   "famille": "ville-culture",
+   "duree": "week-end",
+   "groupe": "solo",
+   "continent": "asie",
+   "saison": "printemps",
+   "floue": true,
+   "note": "deux continents incompatibles en deux jours",
+   "attendu": {
+    "pays": null,
+    "lieu": null,
+    "jours": 2,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": null,
+    "mois": null,
+    "segments": null,
+    "issue": "precision",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D246",
+   "phrase": "Día de playa en Tulum con mi pareja, a finales de febrero",
+   "langue": "es",
+   "famille": "plage",
+   "duree": "journee",
+   "groupe": "couple",
+   "continent": "amerique-nord",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "MX",
+    "lieu": {
+     "nom": "Tulum",
+     "lat": 20.21,
+     "lon": -87.46,
+     "rayonKm": 30
+    },
+    "jours": 1,
+    "heures": null,
+    "personnes": 2,
+    "enfants": 0,
+    "activite": "beach",
+    "mois": 2,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D247",
+   "phrase": "15 jours de voile en Grèce, Cyclades et Dodécanèse, 6 amis, en juillet",
+   "langue": "fr",
+   "famille": "eau",
+   "duree": "2-semaines",
+   "groupe": "groupe",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "GR",
+    "lieu": {
+     "nom": "Cyclades et Dodécanèse",
+     "lat": 37,
+     "lon": 26,
+     "rayonKm": 250
+    },
+    "jours": 15,
+    "heures": null,
+    "personnes": 6,
+    "enfants": 0,
+    "activite": "water",
+    "mois": 7,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D248",
+   "phrase": "Quick 1 hour run along the Liffey in Dublin before work",
+   "langue": "en",
+   "famille": "course",
+   "duree": "1h",
+   "groupe": "solo",
+   "continent": "europe",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "IE",
+    "lieu": {
+     "nom": "Dublin",
+     "lat": 53.35,
+     "lon": -6.26,
+     "rayonKm": 30
+    },
+    "jours": 1,
+    "heures": 1,
+    "personnes": 1,
+    "enfants": null,
+    "activite": "running",
+    "mois": null,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D249",
+   "phrase": "Biwak-Wochenende in den Pirin-Bergen in Bulgarien mit meiner Frau",
+   "langue": "de",
+   "famille": "bivouac",
+   "duree": "week-end",
+   "groupe": "couple",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "BG",
+    "lieu": {
+     "nom": "Pirin",
+     "lat": 41.75,
+     "lon": 23.48,
+     "rayonKm": 50
+    },
+    "jours": 3,
+    "heures": null,
+    "personnes": 2,
+    "enfants": 0,
+    "activite": "bivouac",
+    "mois": null,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D250",
+   "phrase": "A month of bushcraft and survival in the Scottish Highlands, summer, solo",
+   "langue": "en",
+   "famille": "bivouac",
+   "duree": "1-mois",
+   "groupe": "solo",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "GB",
+    "lieu": {
+     "nom": "Highlands",
+     "lat": 57.2,
+     "lon": -4.8,
+     "rayonKm": 150
+    },
+    "jours": 28,
+    "heures": null,
+    "personnes": 1,
+    "enfants": null,
+    "activite": "bushcraft",
+    "mois": 6,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 3
+   }
+  },
+  {
+   "id": "D251",
+   "phrase": "Eine Stunde Spaziergang am Strand von Scheveningen, wir sind zu zweit",
+   "langue": "de",
+   "famille": "marche",
+   "duree": "1h",
+   "groupe": "couple",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "NL",
+    "lieu": {
+     "nom": "Scheveningen",
+     "lat": 52.1,
+     "lon": 4.27,
+     "rayonKm": 30
+    },
+    "jours": 1,
+    "heures": 1,
+    "personnes": 2,
+    "enfants": 0,
+    "activite": "hiking",
+    "mois": null,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D252",
+   "phrase": "Quince días por Ecuador: avenida de los Volcanes, Cotopaxi y Quilotoa, con dos amigas",
+   "langue": "es",
+   "famille": "marche",
+   "duree": "2-semaines",
+   "groupe": "groupe",
+   "continent": "amerique-sud",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "EC",
+    "lieu": {
+     "nom": "Avenue des Volcans",
+     "lat": -0.7,
+     "lon": -78.5,
+     "rayonKm": 150
+    },
+    "jours": 15,
+    "heures": null,
+    "personnes": 3,
+    "enfants": 0,
+    "activite": "trekking",
+    "mois": null,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D253",
+   "phrase": "Un mes en furgoneta por la Baja California, de Tijuana a Cabo San Lucas, con mi pareja y el perro, en noviembre",
+   "langue": "es",
+   "famille": "route",
+   "duree": "1-mois",
+   "groupe": "couple",
+   "continent": "amerique-nord",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "MX",
+    "lieu": {
+     "nom": "Basse-Californie",
+     "lat": 25,
+     "lon": -111.5,
+     "rayonKm": 600
+    },
+    "jours": 30,
+    "heures": null,
+    "personnes": 2,
+    "enfants": 0,
+    "activite": "vanlife",
+    "mois": 11,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 3
+   }
+  },
+  {
+   "id": "D254",
+   "phrase": "Due settimane in Madagascar tra baobab e lemuri, in settembre, noi due",
+   "langue": "it",
+   "famille": "marche",
+   "duree": "2-semaines",
+   "groupe": "couple",
+   "continent": "afrique",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "MG",
+    "lieu": {
+     "nom": "Madagascar",
+     "lat": -19,
+     "lon": 46.5,
+     "rayonKm": 500
+    },
+    "jours": 14,
+    "heures": null,
+    "personnes": 2,
+    "enfants": 0,
+    "activite": "hiking",
+    "mois": 9,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D255",
+   "phrase": "Tagesausflug in Kappadokien: morgens Ballonfahrt, nachmittags Wandern im Rose Valley",
+   "langue": "de",
+   "famille": "multi",
+   "duree": "journee",
+   "groupe": "solo",
+   "continent": "asie",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "TR",
+    "lieu": {
+     "nom": "Cappadoce",
+     "lat": 38.64,
+     "lon": 34.83,
+     "rayonKm": 50
+    },
+    "jours": 1,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": "mixed",
+    "mois": null,
+    "segments": [
+     "cultural",
+     "hiking"
+    ],
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D256",
+   "phrase": "Sieben Tage wandern und biwakieren im Durmitor-Nationalpark in Montenegro, allein, September",
+   "langue": "de",
+   "famille": "bivouac",
+   "duree": "semaine",
+   "groupe": "solo",
+   "continent": "europe",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "ME",
+    "lieu": {
+     "nom": "Durmitor",
+     "lat": 43.13,
+     "lon": 19,
+     "rayonKm": 50
+    },
+    "jours": 7,
+    "heures": null,
+    "personnes": 1,
+    "enfants": null,
+    "activite": "bivouac",
+    "mois": 9,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D257",
+   "phrase": "Une semaine dans le Caucase, ascension du Kazbek en Géorgie, en juillet",
+   "langue": "fr",
+   "famille": "alpinisme",
+   "duree": "semaine",
+   "groupe": "solo",
+   "continent": "asie",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "GE",
+    "lieu": {
+     "nom": "Kazbek",
+     "lat": 42.7,
+     "lon": 44.52,
+     "rayonKm": 50
+    },
+    "jours": 7,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": "mountaineering",
+    "mois": 7,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D258",
+   "phrase": "Un par de horas de escalada en El Chorro, Málaga, voy solo",
+   "langue": "es",
+   "famille": "escalade",
+   "duree": "1h",
+   "groupe": "solo",
+   "continent": "europe",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "ES",
+    "lieu": {
+     "nom": "El Chorro",
+     "lat": 36.91,
+     "lon": -4.76,
+     "rayonKm": 30
+    },
+    "jours": 1,
+    "heures": 2,
+    "personnes": 1,
+    "enfants": null,
+    "activite": "climbing",
+    "mois": null,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D259",
+   "phrase": "Due giorni sul vulcano Cotopaxi con la guida, a ottobre",
+   "langue": "it",
+   "famille": "alpinisme",
+   "duree": "week-end",
+   "groupe": "solo",
+   "continent": "amerique-sud",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "EC",
+    "lieu": {
+     "nom": "Cotopaxi",
+     "lat": -0.68,
+     "lon": -78.44,
+     "rayonKm": 30
+    },
+    "jours": 2,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": "mountaineering",
+    "mois": 10,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D260",
+   "phrase": "Weekend 5k with my wife and our daughter in Hyde Park, London, about an hour",
+   "langue": "en",
+   "famille": "course",
+   "duree": "1h",
+   "groupe": "famille",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "GB",
+    "lieu": {
+     "nom": "Londres",
+     "lat": 51.51,
+     "lon": -0.16,
+     "rayonKm": 30
+    },
+    "jours": 1,
+    "heures": 1,
+    "personnes": 3,
+    "enfants": 1,
+    "activite": "running",
+    "mois": null,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D261",
+   "phrase": "Una settimana in auto in Turchia lungo la costa turchese, in coppia a maggio",
+   "langue": "it",
+   "famille": "route",
+   "duree": "semaine",
+   "groupe": "couple",
+   "continent": "asie",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "TR",
+    "lieu": {
+     "nom": "Côte turquoise",
+     "lat": 36.5,
+     "lon": 30,
+     "rayonKm": 200
+    },
+    "jours": 7,
+    "heures": null,
+    "personnes": 2,
+    "enfants": 0,
+    "activite": "roadtrip",
+    "mois": 5,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D262",
+   "phrase": "3 jours du 1er au 15 mars en Turquie",
+   "langue": "fr",
+   "famille": "ville-culture",
+   "duree": "week-end",
+   "groupe": "solo",
+   "continent": "asie",
+   "saison": "printemps",
+   "floue": true,
+   "note": "3 jours contredit la période du 1er au 15 mars",
+   "attendu": {
+    "pays": "TR",
+    "lieu": null,
+    "jours": null,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": null,
+    "mois": 3,
+    "segments": null,
+    "issue": "precision",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D263",
+   "phrase": "Fin de semana en bici por Bogotá y la Sabana, con la ciclovía del domingo",
+   "langue": "es",
+   "famille": "velo",
+   "duree": "week-end",
+   "groupe": "solo",
+   "continent": "amerique-sud",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "CO",
+    "lieu": {
+     "nom": "Bogotá",
+     "lat": 4.71,
+     "lon": -74.07,
+     "rayonKm": 60
+    },
+    "jours": 2,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": "cycling",
+    "mois": null,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D264",
+   "phrase": "Fortnight of mountaineering in Turkey: Mount Ararat and the Kackar range, August, 3 of us",
+   "langue": "en",
+   "famille": "alpinisme",
+   "duree": "2-semaines",
+   "groupe": "groupe",
+   "continent": "asie",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "TR",
+    "lieu": {
+     "nom": "Ararat et Kaçkar",
+     "lat": 39.7,
+     "lon": 43.3,
+     "rayonKm": 400
+    },
+    "jours": 14,
+    "heures": null,
+    "personnes": 3,
+    "enfants": 0,
+    "activite": "mountaineering",
+    "mois": 8,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D265",
+   "phrase": "Tres días para ver a los gorilas en Ruanda, Volcanes, en julio",
+   "langue": "es",
+   "famille": "marche",
+   "duree": "week-end",
+   "groupe": "solo",
+   "continent": "afrique",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "RW",
+    "lieu": {
+     "nom": "Parc des Volcans",
+     "lat": -1.47,
+     "lon": 29.5,
+     "rayonKm": 60
+    },
+    "jours": 3,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": "trekking",
+    "mois": 7,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D266",
+   "phrase": "One day climbing sport routes on Kalymnos, Telendos sector, me and my partner",
+   "langue": "en",
+   "famille": "escalade",
+   "duree": "journee",
+   "groupe": "couple",
+   "continent": "europe",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "GR",
+    "lieu": {
+     "nom": "Kalymnos",
+     "lat": 36.98,
+     "lon": 26.98,
+     "rayonKm": 30
+    },
+    "jours": 1,
+    "heures": null,
+    "personnes": 2,
+    "enfants": 0,
+    "activite": "climbing",
+    "mois": null,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D267",
+   "phrase": "Deux semaines de trek en Arménie sur le Transcaucasian Trail, en septembre",
+   "langue": "fr",
+   "famille": "marche",
+   "duree": "2-semaines",
+   "groupe": "solo",
+   "continent": "asie",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "AM",
+    "lieu": {
+     "nom": "Arménie",
+     "lat": 40.2,
+     "lon": 44.5,
+     "rayonKm": 200
+    },
+    "jours": 14,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": "trekking",
+    "mois": 9,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D268",
+   "phrase": "partir quelque part au chaud pas trop loin",
+   "langue": "fr",
+   "famille": "plage",
+   "duree": "week-end",
+   "groupe": "solo",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": true,
+   "note": "destination, durée et groupe indéterminés",
+   "attendu": {
+    "pays": null,
+    "lieu": null,
+    "jours": null,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": null,
+    "mois": null,
+    "segments": null,
+    "issue": "precision",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D269",
+   "phrase": "Un mois de plongée et de kayak en Polynésie française : Rangiroa, Fakarava, Bora Bora, avec mon mari",
+   "langue": "fr",
+   "famille": "eau",
+   "duree": "1-mois",
+   "groupe": "couple",
+   "continent": "oceanie",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "PF",
+    "lieu": {
+     "nom": "Polynésie française",
+     "lat": -16.5,
+     "lon": -146,
+     "rayonKm": 400
+    },
+    "jours": 30,
+    "heures": null,
+    "personnes": 2,
+    "enfants": 0,
+    "activite": "water",
+    "mois": null,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 3
+   }
+  },
+  {
+   "id": "D270",
+   "phrase": "Long weekend skiing in Bansko, Bulgaria, 4 of us, January",
+   "langue": "en",
+   "famille": "ski",
+   "duree": "week-end",
+   "groupe": "groupe",
+   "continent": "europe",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "BG",
+    "lieu": {
+     "nom": "Bansko",
+     "lat": 41.84,
+     "lon": 23.49,
+     "rayonKm": 40
+    },
+    "jours": 3,
+    "heures": null,
+    "personnes": 4,
+    "enfants": 0,
+    "activite": "ski",
+    "mois": 1,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D271",
+   "phrase": "Wild camping weekend in Snowdonia, two nights, we're a couple, late June",
+   "langue": "en",
+   "famille": "bivouac",
+   "duree": "week-end",
+   "groupe": "couple",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "GB",
+    "lieu": {
+     "nom": "Snowdonia",
+     "lat": 53.07,
+     "lon": -4.08,
+     "rayonKm": 60
+    },
+    "jours": 3,
+    "heures": null,
+    "personnes": 2,
+    "enfants": 0,
+    "activite": "bivouac",
+    "mois": 6,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D272",
+   "phrase": "Una giornata a Dubrovnik con i nostri due bambini, mura e funivia",
+   "langue": "it",
+   "famille": "ville-culture",
+   "duree": "journee",
+   "groupe": "famille",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "HR",
+    "lieu": {
+     "nom": "Dubrovnik",
+     "lat": 42.65,
+     "lon": 18.09,
+     "rayonKm": 30
+    },
+    "jours": 1,
+    "heures": null,
+    "personnes": 4,
+    "enfants": 2,
+    "activite": "cultural",
+    "mois": null,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D273",
+   "phrase": "Trek around Mount Kenya in 20 minutes",
+   "langue": "en",
+   "famille": "marche",
+   "duree": "1h",
+   "groupe": "solo",
+   "continent": "afrique",
+   "saison": "ete",
+   "floue": true,
+   "note": "durée impossible pour ce trek",
+   "attendu": {
+    "pays": "KE",
+    "lieu": null,
+    "jours": null,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": null,
+    "mois": null,
+    "segments": null,
+    "issue": "precision",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D274",
+   "phrase": "Weekend ascent of Mount Toubkal from Imlil, 2 days, in April",
+   "langue": "en",
+   "famille": "alpinisme",
+   "duree": "week-end",
+   "groupe": "solo",
+   "continent": "afrique",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "MA",
+    "lieu": {
+     "nom": "Toubkal",
+     "lat": 31.06,
+     "lon": -7.92,
+     "rayonKm": 30
+    },
+    "jours": 2,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": "mountaineering",
+    "mois": 4,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D275",
+   "phrase": "Week-end à Tokyo : ville le samedi, puis le dimanche rando au mont Takao",
+   "langue": "fr",
+   "famille": "multi",
+   "duree": "week-end",
+   "groupe": "solo",
+   "continent": "asie",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "JP",
+    "lieu": {
+     "nom": "Tokyo - Takao",
+     "lat": 35.66,
+     "lon": 139.5,
+     "rayonKm": 60
+    },
+    "jours": 2,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": "mixed",
+    "mois": null,
+    "segments": [
+     "citytrip",
+     "hiking"
+    ],
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D276",
+   "phrase": "Un mese in Giappone, solo città e templi, in primavera, noi due",
+   "langue": "it",
+   "famille": "ville-culture",
+   "duree": "1-mois",
+   "groupe": "couple",
+   "continent": "asie",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "JP",
+    "lieu": {
+     "nom": "Japon",
+     "lat": 36,
+     "lon": 138,
+     "rayonKm": 700
+    },
+    "jours": 30,
+    "heures": null,
+    "personnes": 2,
+    "enfants": 0,
+    "activite": "cultural",
+    "mois": 3,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 3
+   }
+  },
+  {
+   "id": "D277",
+   "phrase": "A month in Hawaii with our three kids: Oahu, Maui and the Big Island, in July",
+   "langue": "en",
+   "famille": "plage",
+   "duree": "1-mois",
+   "groupe": "famille",
+   "continent": "oceanie",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "US",
+    "lieu": {
+     "nom": "Hawaï",
+     "lat": 20.8,
+     "lon": -156.3,
+     "rayonKm": 400
+    },
+    "jours": 30,
+    "heures": null,
+    "personnes": 5,
+    "enfants": 3,
+    "activite": "beach",
+    "mois": 7,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 3
+   }
+  },
+  {
+   "id": "D278",
+   "phrase": "Escapada de tres días a escalar en Wadi Rum con tres amigos",
+   "langue": "es",
+   "famille": "escalade",
+   "duree": "week-end",
+   "groupe": "groupe",
+   "continent": "asie",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "JO",
+    "lieu": {
+     "nom": "Wadi Rum",
+     "lat": 29.58,
+     "lon": 35.42,
+     "rayonKm": 50
+    },
+    "jours": 3,
+    "heures": null,
+    "personnes": 4,
+    "enfants": 0,
+    "activite": "climbing",
+    "mois": null,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D279",
+   "phrase": "un voyage sympa en famille quelque part, on verra, le budget est de 0 euro",
+   "langue": "fr",
+   "famille": "route",
+   "duree": "semaine",
+   "groupe": "famille",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": true,
+   "note": "destination absente, budget nul, durée vague",
+   "attendu": {
+    "pays": null,
+    "lieu": null,
+    "jours": null,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": null,
+    "mois": null,
+    "segments": null,
+    "issue": "precision",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D280",
+   "phrase": "2 semaines à vélo en Bosnie-Herzégovine et Croatie, de Sarajevo à Dubrovnik",
+   "langue": "fr",
+   "famille": "velo",
+   "duree": "2-semaines",
+   "groupe": "solo",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "BA",
+    "lieu": {
+     "nom": "Sarajevo - Dubrovnik",
+     "lat": 43.5,
+     "lon": 18,
+     "rayonKm": 250
+    },
+    "jours": 14,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": "cycling",
+    "mois": null,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D281",
+   "phrase": "Settimana bianca in Georgia a Gudauri, a febbraio con amici (5)",
+   "langue": "it",
+   "famille": "ski",
+   "duree": "semaine",
+   "groupe": "groupe",
+   "continent": "asie",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "GE",
+    "lieu": {
+     "nom": "Gudauri",
+     "lat": 42.48,
+     "lon": 44.48,
+     "rayonKm": 40
+    },
+    "jours": 7,
+    "heures": null,
+    "personnes": 5,
+    "enfants": 0,
+    "activite": "ski",
+    "mois": 2,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D282",
+   "phrase": "une heure de marche à Tbilissi, de la vieille ville jusqu'à la forteresse de Narikala",
+   "langue": "fr",
+   "famille": "marche",
+   "duree": "1h",
+   "groupe": "solo",
+   "continent": "asie",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "GE",
+    "lieu": {
+     "nom": "Tbilissi",
+     "lat": 41.69,
+     "lon": 44.81,
+     "rayonKm": 30
+    },
+    "jours": 1,
+    "heures": 1,
+    "personnes": null,
+    "enfants": null,
+    "activite": "hiking",
+    "mois": null,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D283",
+   "phrase": "Una carrera de trail de un día por el Nevado de Toluca, México, en noviembre",
+   "langue": "es",
+   "famille": "course",
+   "duree": "journee",
+   "groupe": "solo",
+   "continent": "amerique-nord",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "MX",
+    "lieu": {
+     "nom": "Nevado de Toluca",
+     "lat": 19.1,
+     "lon": -99.76,
+     "rayonKm": 40
+    },
+    "jours": 1,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": "running",
+    "mois": 11,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D284",
+   "phrase": "Un mese in Ecuador per salire Cotopaxi, Chimborazo e Cayambe, con tre compagni di cordata, a dicembre",
+   "langue": "it",
+   "famille": "alpinisme",
+   "duree": "1-mois",
+   "groupe": "groupe",
+   "continent": "amerique-sud",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "EC",
+    "lieu": {
+     "nom": "Équateur",
+     "lat": -1,
+     "lon": -78.5,
+     "rayonKm": 200
+    },
+    "jours": 28,
+    "heures": null,
+    "personnes": 4,
+    "enfants": 0,
+    "activite": "mountaineering",
+    "mois": 12,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 3
+   }
+  },
+  {
+   "id": "D285",
+   "phrase": "Una giornata in barca a Zante per vedere le tartarughe, con i nostri due figli",
+   "langue": "it",
+   "famille": "eau",
+   "duree": "journee",
+   "groupe": "famille",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "GR",
+    "lieu": {
+     "nom": "Zante",
+     "lat": 37.78,
+     "lon": 20.88,
+     "rayonKm": 40
+    },
+    "jours": 1,
+    "heures": null,
+    "personnes": 4,
+    "enfants": 2,
+    "activite": "water",
+    "mois": null,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D286",
+   "phrase": "Une journée à Séoul : palais Gyeongbokgung, Bukchon et marché de Gwangjang",
+   "langue": "fr",
+   "famille": "ville-culture",
+   "duree": "journee",
+   "groupe": "solo",
+   "continent": "asie",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "KR",
+    "lieu": {
+     "nom": "Séoul",
+     "lat": 37.57,
+     "lon": 126.98,
+     "rayonKm": 30
+    },
+    "jours": 1,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": "cultural",
+    "mois": null,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D287",
+   "phrase": "Journée de plongée aux Maldives, atoll d'Ari, en mars",
+   "langue": "fr",
+   "famille": "eau",
+   "duree": "journee",
+   "groupe": "solo",
+   "continent": "asie",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "MV",
+    "lieu": {
+     "nom": "Atoll d'Ari",
+     "lat": 3.87,
+     "lon": 72.85,
+     "rayonKm": 100
+    },
+    "jours": 1,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": "water",
+    "mois": 3,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D288",
+   "phrase": "Un mois à vélo en Turquie, d'Istanbul à Antalya, en mai",
+   "langue": "fr",
+   "famille": "velo",
+   "duree": "1-mois",
+   "groupe": "solo",
+   "continent": "asie",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "TR",
+    "lieu": {
+     "nom": "Istanbul - Antalya",
+     "lat": 39.5,
+     "lon": 30,
+     "rayonKm": 400
+    },
+    "jours": 30,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": "cycling",
+    "mois": 5,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 3
+   }
+  },
+  {
+   "id": "D289",
+   "phrase": "Weekend road trip around the Ring of Kerry with two kids, July",
+   "langue": "en",
+   "famille": "route",
+   "duree": "week-end",
+   "groupe": "famille",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "IE",
+    "lieu": {
+     "nom": "Ring of Kerry",
+     "lat": 51.99,
+     "lon": -9.74,
+     "rayonKm": 80
+    },
+    "jours": 3,
+    "heures": null,
+    "personnes": 4,
+    "enfants": 2,
+    "activite": "roadtrip",
+    "mois": 7,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D290",
+   "phrase": "Un mes acampando por Colombia: Sierra Nevada del Cocuy y Parque Los Nevados, en julio, yo solo",
+   "langue": "es",
+   "famille": "bivouac",
+   "duree": "1-mois",
+   "groupe": "solo",
+   "continent": "amerique-sud",
+   "saison": "ete",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "CO",
+    "lieu": {
+     "nom": "Cocuy - Los Nevados",
+     "lat": 5.7,
+     "lon": -73.5,
+     "rayonKm": 400
+    },
+    "jours": 30,
+    "heures": null,
+    "personnes": 1,
+    "enfants": null,
+    "activite": "bivouac",
+    "mois": 7,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 3
+   }
+  },
+  {
+   "id": "D291",
+   "phrase": "Un mois à Mexico pour apprendre l'espagnol et visiter les musées, en mars",
+   "langue": "fr",
+   "famille": "ville-culture",
+   "duree": "1-mois",
+   "groupe": "solo",
+   "continent": "amerique-nord",
+   "saison": "printemps",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "MX",
+    "lieu": {
+     "nom": "Mexico",
+     "lat": 19.43,
+     "lon": -99.13,
+     "rayonKm": 30
+    },
+    "jours": 30,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": "cultural",
+    "mois": 3,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 3
+   }
+  },
+  {
+   "id": "D292",
+   "phrase": "A month driving around Mexico's Yucatan, Chiapas and Oaxaca in a rental car, January, my husband and I",
+   "langue": "en",
+   "famille": "route",
+   "duree": "1-mois",
+   "groupe": "couple",
+   "continent": "amerique-nord",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "MX",
+    "lieu": {
+     "nom": "Sud du Mexique",
+     "lat": 18.5,
+     "lon": -91,
+     "rayonKm": 600
+    },
+    "jours": 30,
+    "heures": null,
+    "personnes": 2,
+    "enfants": 0,
+    "activite": "roadtrip",
+    "mois": 1,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 3
+   }
+  },
+  {
+   "id": "D293",
+   "phrase": "Une semaine aux îles Galápagos, plongée et snorkeling, en juin",
+   "langue": "fr",
+   "famille": "eau",
+   "duree": "semaine",
+   "groupe": "solo",
+   "continent": "amerique-sud",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "EC",
+    "lieu": {
+     "nom": "Galápagos",
+     "lat": -0.74,
+     "lon": -90.3,
+     "rayonKm": 200
+    },
+    "jours": 7,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": "water",
+    "mois": 6,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D294",
+   "phrase": "Day of skiing at Jahorina near Sarajevo in February, solo",
+   "langue": "en",
+   "famille": "ski",
+   "duree": "journee",
+   "groupe": "solo",
+   "continent": "europe",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "BA",
+    "lieu": {
+     "nom": "Jahorina",
+     "lat": 43.73,
+     "lon": 18.57,
+     "rayonKm": 30
+    },
+    "jours": 1,
+    "heures": null,
+    "personnes": 1,
+    "enfants": null,
+    "activite": "ski",
+    "mois": 2,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  },
+  {
+   "id": "D295",
+   "phrase": "Two weeks of rock climbing in Greece: Leonidio and Meteora, October, 2 climbers",
+   "langue": "en",
+   "famille": "escalade",
+   "duree": "2-semaines",
+   "groupe": "couple",
+   "continent": "europe",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "GR",
+    "lieu": {
+     "nom": "Léonidio et Météores",
+     "lat": 38.5,
+     "lon": 22.3,
+     "rayonKm": 200
+    },
+    "jours": 14,
+    "heures": null,
+    "personnes": 2,
+    "enfants": 0,
+    "activite": "climbing",
+    "mois": 10,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D296",
+   "phrase": "Eine Woche Radtour durch Neuseeland und Norwegen",
+   "langue": "de",
+   "famille": "velo",
+   "duree": "semaine",
+   "groupe": "solo",
+   "continent": "oceanie",
+   "saison": "ete",
+   "floue": true,
+   "note": "deux pays aux antipodes en une semaine",
+   "attendu": {
+    "pays": null,
+    "lieu": null,
+    "jours": 7,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": "cycling",
+    "mois": null,
+    "segments": null,
+    "issue": "precision",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D297",
+   "phrase": "Fare il giro del mondo in tre giorni",
+   "langue": "it",
+   "famille": "multi",
+   "duree": "week-end",
+   "groupe": "solo",
+   "continent": "europe",
+   "saison": "ete",
+   "floue": true,
+   "note": "durée impossible pour un tour du monde",
+   "attendu": {
+    "pays": null,
+    "lieu": null,
+    "jours": 3,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": null,
+    "mois": null,
+    "segments": null,
+    "issue": "precision",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D298",
+   "phrase": "Two-week ski trip to the Japan Alps and Hokkaido in February, 4 of us",
+   "langue": "en",
+   "famille": "ski",
+   "duree": "2-semaines",
+   "groupe": "groupe",
+   "continent": "asie",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "JP",
+    "lieu": {
+     "nom": "Alpes japonaises et Hokkaido",
+     "lat": 39,
+     "lon": 139,
+     "rayonKm": 700
+    },
+    "jours": 14,
+    "heures": null,
+    "personnes": 4,
+    "enfants": 0,
+    "activite": "ski",
+    "mois": 2,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D299",
+   "phrase": "Week-end trail à La Réunion, Piton des Neiges, on est deux",
+   "langue": "fr",
+   "famille": "course",
+   "duree": "week-end",
+   "groupe": "couple",
+   "continent": "afrique",
+   "saison": "hiver",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "RE",
+    "lieu": {
+     "nom": "Piton des Neiges",
+     "lat": -21.1,
+     "lon": 55.48,
+     "rayonKm": 60
+    },
+    "jours": 2,
+    "heures": null,
+    "personnes": 2,
+    "enfants": 0,
+    "activite": "running",
+    "mois": null,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 1
+   }
+  },
+  {
+   "id": "D300",
+   "phrase": "Un mois de randonnée dans les Alpes japonaises et sur le Kumano Kodo, du 1er au 30 octobre",
+   "langue": "fr",
+   "famille": "marche",
+   "duree": "1-mois",
+   "groupe": "solo",
+   "continent": "asie",
+   "saison": "automne",
+   "floue": false,
+   "note": null,
+   "attendu": {
+    "pays": "JP",
+    "lieu": {
+     "nom": "Alpes japonaises et Kumano",
+     "lat": 35,
+     "lon": 136.5,
+     "rayonKm": 300
+    },
+    "jours": 30,
+    "heures": null,
+    "personnes": null,
+    "enfants": null,
+    "activite": "hiking",
+    "mois": 10,
+    "segments": null,
+    "issue": "pret",
+    "joursTolerance": 0
+   }
+  }
+ ]
+}
