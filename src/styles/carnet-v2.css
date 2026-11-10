@@ -41,6 +41,19 @@
   --bad-bg: #f5ddd9;
   --info: #4b6b7c;
   --water: #3f93b8;
+  /* Jetons de contenu des tiroirs (maquette `:root`, A §1) : cartes de moment,
+     verdicts, étoile de moyenne, cœur, encres d'erreur. */
+  --soft: rgba(150, 186, 142, 0.28);
+  --soft-line: rgba(91, 127, 85, 0.38);
+  --sage-300: #96b391;
+  --switch-on: #8db287;
+  --star: #c99a3b;
+  --like: #e0245e;
+  --err-ink: #9c2f22;
+  --amber-ink: #7a5a17;
+  --forest-ink: #2c5e3e;
+  --mint-dk: #d8f3de;
+  --white: #fff;
   --ga: 0.19;
   --gb: 7px;
   --la: 140deg;
