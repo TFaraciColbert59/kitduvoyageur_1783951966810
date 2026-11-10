@@ -997,6 +997,7 @@ export function CommunityExploreSheetV2({
         onChange: (index: number) => explore.setCarnetFilter(CARNET_FILTERS[index] ?? 'discover'),
         label: 'Filtres des carnets',
         pages: filterPages,
+        hidden: carnetsFeed.items.length === 0 && (carnetsFeed.loading || Boolean(carnetsFeed.error)),
         sort: {
           value: explore.carnetSort,
           defaultValue: 'recent',
@@ -1012,6 +1013,7 @@ export function CommunityExploreSheetV2({
         onChange: (index: number) => explore.setClubFilter(CLUB_FILTERS[index] ?? 'discover'),
         label: 'Filtres des clubs',
         pages: filterPages,
+        hidden: clubsFeed.items.length === 0 && (clubsFeed.loading || Boolean(clubsFeed.error)),
         sort: {
           value: explore.clubSort,
           defaultValue: 'activity',
@@ -1026,6 +1028,7 @@ export function CommunityExploreSheetV2({
       onChange: (index: number) => explore.setEventFilter(EVENT_FILTERS[index] ?? 'discover'),
       label: 'Filtres des sorties',
       pages: filterPages,
+      hidden: eventsFeed.items.length === 0 && (eventsFeed.loading || Boolean(eventsFeed.error)),
     };
   })();
 

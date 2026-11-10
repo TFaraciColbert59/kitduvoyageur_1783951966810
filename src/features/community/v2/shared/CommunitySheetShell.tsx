@@ -47,6 +47,8 @@ export interface SheetMiniCapsule {
    * Sans elle, l'ancien comportement (glisser entre volets) est conservé.
    */
   pages?: ReactNode[][];
+  /** Premier chargement du volet : la maquette retire la mini-capsule (squelette seul). */
+  hidden?: boolean;
   /** Bouton de tri (Carnets, Clubs) : masqué en Recherche/Sorties. */
   sort?: {
     value: string;
@@ -577,7 +579,7 @@ export function CommunitySheetShell({
 
           {footer && !detail ? <div className="lkdv-cv2-footer">{footer}</div> : null}
 
-          {mini && !detail ? (
+          {mini && !mini.hidden && !detail ? (
             <div
               className={cx(
                 'lkdv-cv2-mini-slot',

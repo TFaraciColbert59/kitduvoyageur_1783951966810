@@ -2445,7 +2445,7 @@
 
 .lkdv-cv2c-kit-layer {
   display: grid;
-  grid-template-columns: 44px minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: 6px;
   font: 500 10px/1.25 var(--font-sans);

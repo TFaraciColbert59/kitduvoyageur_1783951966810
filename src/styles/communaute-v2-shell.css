@@ -222,6 +222,9 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
   height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
+  /* `clip` : jamais défilable, même par `scrollIntoView` / `focus()` (le formulaire
+     glissait de 14 px vers la gauche après une erreur de validation). */
+  overflow-x: clip;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   padding: 2px 1px 76px;
@@ -469,4 +472,86 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
 }
 .lkdv-cv2-pane--volet > .lkdv-lens-pager {
   height: 100%;
+}
+
+/* ============================================================================
+   FIDÉLITÉ MAQUETTE — banc `tests/fidelity` (mesures DOM de la maquette)
+   Tiroir à y = 48 (hauteur 782), poignée de 18 px puis capsule à +18 px,
+   verre « bar-glass » de la maquette (flou 7 px, dégradé 49/33/41 %), mini-
+   capsule de 44 px par lentille, bouton de tri au même verre, volets inset
+   14 px. Les rgba() sont les valeurs exactes du système /compte (`--c15`,
+   `--c39`…, maquette L8-19) : aucune teinte nouvelle.
+   ========================================================================== */
+
+.lkdv-cv2-layer {
+  --cv2-card-top: calc(var(--safe-top, env(safe-area-inset-top, 0px)) + 48px);
+  --cv2-bar-glass-bg: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.49),
+    rgba(255, 255, 255, 0.33) 55%,
+    rgba(255, 255, 255, 0.41)
+  );
+  --cv2-bar-glass-blur: blur(7px) saturate(1.9) brightness(1.07);
+  --cv2-bar-glass-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9), inset 0 -1px 1px rgba(255, 255, 255, 0.45),
+    inset 1px 0 1px rgba(255, 255, 255, 0.28), inset -1px 0 1px rgba(255, 255, 255, 0.28),
+    inset 0 0 12px rgba(255, 255, 255, 0.14), 0 0 0 0.5px rgba(23, 43, 36, 0.14),
+    0 8px 22px rgba(23, 43, 36, 0.12);
+  --cv2-pill-glass-bg: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.72),
+    rgba(255, 255, 255, 0.42) 55%,
+    rgba(255, 255, 255, 0.52)
+  );
+}
+@media (min-width: 768px) {
+  .lkdv-cv2-layer {
+    --cv2-card-top: calc(var(--safe-top, env(safe-area-inset-top, 0px)) + 56px);
+  }
+}
+
+.lkdv-cv2-topnav {
+  padding: 0 14px 8px;
+}
+
+.lkdv-cv2-capsule.lkdv-capsule {
+  background-color: transparent;
+  background-image: var(--cv2-bar-glass-bg);
+  -webkit-backdrop-filter: var(--cv2-bar-glass-blur);
+  backdrop-filter: var(--cv2-bar-glass-blur);
+  border: 0;
+  box-shadow: var(--cv2-bar-glass-shadow);
+}
+
+/* Volets : colonne inset 14 px, réserve basse 64 px de la maquette. */
+.lkdv-cv2-pane--volet .lkdv-cv2-pane {
+  padding: 2px 14px 64px;
+}
+
+/* Mini-capsule : 44 px par lentille (et non la largeur du libellé). */
+.lkdv-cv2-mini.lkdv-lens-float.has-labels {
+  width: calc(var(--n, 2) * 44px + 5px);
+  max-width: calc(var(--n, 2) * 44px + 5px);
+}
+.lkdv-cv2-mini.lkdv-lens-float.has-labels button {
+  padding: 0;
+}
+.lkdv-cv2-mini.lkdv-lens-float,
+.lkdv-cv2-layer .lkdv-sort-btn {
+  background-color: rgba(255, 255, 255, 0.65);
+  background-image: var(--cv2-pill-glass-bg);
+  -webkit-backdrop-filter: blur(28px) saturate(1.8) brightness(1.04);
+  backdrop-filter: blur(28px) saturate(1.8) brightness(1.04);
+}
+.lkdv-cv2-layer .lkdv-sort-btn {
+  border: 0;
+  box-shadow:
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.45),
+    0 0 0 0.5px rgba(23, 43, 36, 0.14), 0 8px 22px rgba(23, 43, 36, 0.12);
+}
+
+.lkdv-cv2-layer .lkdv-sort-btn::after {
+  content: '';
+  position: absolute;
+  inset: -7px;
 }
