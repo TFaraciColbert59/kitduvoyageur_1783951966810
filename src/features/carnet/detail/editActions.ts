@@ -9,6 +9,7 @@
  */
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
+import { removeCarnetFiles, removeMomentFiles, type MomentMediaRow } from './mediaCleanup';
 import {
   CarnetDeleteSchema,
   CarnetSettingsSchema,
@@ -371,9 +372,11 @@ export async function deleteMomentAction(input: unknown): Promise<ActionResult> 
     .delete()
     .eq('id', id)
     .eq('carnet_id', carnetId)
-    .select('id');
+    .select('id, image_url, moment_meta, auteur_id');
   if (error) return { ok: false, error: OFFLINE };
   if (!data || data.length === 0) return { ok: false, error: REFUSED };
+  /* Ligne supprimée : on efface aussi ses fichiers (droit à l'effacement). */
+  await removeMomentFiles(data as MomentMediaRow[], carnetId);
   return done(carnetId, {});
 }
 
@@ -414,10 +417,18 @@ export async function deleteCarnetAction(input: unknown): Promise<ActionResult> 
   const { carnetId } = parsed.data;
   const ctx = await participantContext(carnetId);
   if (!ctx.ok) return ctx;
+  /* Chemins lus AVANT la suppression : les moments partent avec le carnet. */
+  const { data: moments } = await ctx.supabase
+    .from('carnet_moments')
+    .select('image_url, moment_meta, auteur_id')
+    .eq('carnet_id', carnetId);
   const { data, error } = await ctx.supabase.from('carnets').delete().eq('id', carnetId).select('id');
   if (error) return { ok: false, error: OFFLINE };
   if (!data || data.length === 0) {
     return { ok: false, error: 'Seul l’auteur du carnet peut le supprimer.' };
   }
+  await removeCarnetFiles(Array.isArray(moments) ? (moments as MomentMediaRow[]) : [], carnetId, ctx.userId);
+  revalidatePath('/carnets');
+  revalidatePath(`/carnets/${carnetId}`);
   return { ok: true };
 }

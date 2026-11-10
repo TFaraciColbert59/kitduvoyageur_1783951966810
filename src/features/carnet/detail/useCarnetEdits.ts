@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { deleteMomentAction } from './editActions';
 import { stripImageMetadata } from '@/lib/media/stripImageMetadata';
 import {
   momentInsertRow,
@@ -80,16 +81,13 @@ export function useCarnetEdits({
 
   const removeMoment = useCallback(
     async (momentId: string): Promise<boolean> => {
-      const { error } = await supabase
-        .from('carnet_moments')
-        .delete()
-        .eq('id', momentId)
-        .eq('carnet_id', carnetId);
-      if (error) return false;
+      /* Server Action : supprime la ligne puis ses fichiers (clé service, serveur). */
+      const result = await deleteMomentAction({ carnetId, id: momentId });
+      if (!result.ok) return false;
       onMomentRemoved(momentId);
       return true;
     },
-    [carnetId, onMomentRemoved, supabase]
+    [carnetId, onMomentRemoved]
   );
 
   const createMoment = useCallback(
