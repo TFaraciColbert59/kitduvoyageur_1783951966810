@@ -7,6 +7,7 @@ import * as paysRecommendations from './paysRecommendations';
 import * as itinerary from './itinerary';
 import * as trajectoireNarration from './trajectoireNarration';
 import * as compasIntent from './compasIntent';
+import * as compasBrief from './compasBrief';
 import * as compasAutofill from './compasAutofill';
 import * as compasVerdict from './compasVerdict';
 import * as trailAiEnrichment from './trailAiEnrichment';
@@ -100,6 +101,13 @@ export const FEATURES: Record<string, FeatureSpec> = {
     cacheTtlSeconds: compasIntent.COMPAS_INTENT_SPEC.cacheTtlSeconds,
     maxPerUserPerDay: compasIntent.COMPAS_INTENT_SPEC.maxPerUserPerDay,
     fallbackResponse: compasIntent.fallbackResponse,
+  },
+  'compas-brief': {
+    tier: compasBrief.COMPAS_BRIEF_SPEC.tier,
+    maxReasoningBudget: compasBrief.COMPAS_BRIEF_SPEC.maxReasoningBudget,
+    cacheTtlSeconds: compasBrief.COMPAS_BRIEF_SPEC.cacheTtlSeconds,
+    maxPerUserPerDay: compasBrief.COMPAS_BRIEF_SPEC.maxPerUserPerDay,
+    fallbackResponse: compasBrief.fallbackResponse,
   },
   'compas-verdict': {
     tier: compasVerdict.COMPAS_VERDICT_SPEC.tier,

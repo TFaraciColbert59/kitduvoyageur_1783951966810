@@ -1,0 +1,157 @@
+{
+ "demande": "D011",
+ "banc": {
+  "at": "2026-11-10T17:27:33.419Z",
+  "seconds": 23,
+  "prepSeconds": 15,
+  "outcome": "Ton aventure est prête",
+  "error": null
+ },
+ "trip": {
+  "id": "1477a8bc-51f9-4692-8567-d31787c1801e",
+  "title": "Course à pied · Paris",
+  "destination_name": "Paris",
+  "destination_country_code": "FR",
+  "start_date": "2026-11-10",
+  "end_date": "2026-11-10",
+  "party_size": null,
+  "primary_activity": "running",
+  "estimated_budget": null,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": {
+     "lat": 48.8535,
+     "lon": 2.34839,
+     "kind": "city",
+     "name": "Paris",
+     "extent": [
+      2.224122,
+      48.902156,
+      2.4697602,
+      48.8155755
+     ],
+     "osmTag": "place=city",
+     "country": "France",
+     "countryCode": "FR"
+    },
+    "planned_days": null,
+    "duration_h": 1,
+    "prefs": {
+     "pace": "normal",
+     "avoid": [],
+     "nights": null,
+     "wishes": [
+      "Canal Saint-Martin"
+     ]
+    },
+    "origin": {
+     "lat": 48.85,
+     "lon": 2.35,
+     "name": "Paris",
+     "source": "dit",
+     "countryCode": "FR"
+    },
+    "autofill": {
+     "runId": "r",
+     "undone": false,
+     "at": "2026-11-10T17:27:55.386Z",
+     "notes": [
+      "Seul·e : laisse ton itinéraire et ton heure de retour à un proche. Urgence : 112.",
+      "Matériel conseillé non compté au budget : 91 € à la boutique si tu ne l’as pas (facultatif).",
+      "Suggestion de l’IA (facultatif) : prévois des chaussures de course adaptées à ton pied et au bitume parisien.",
+      "Suggestion de l’IA (facultatif) : pense à appliquer une crème solaire haute protection SPF 50+ avant de partir.",
+      "Suggestion de l’IA (facultatif) : n'oublie pas de porter un brassard ou une lampe réfléchissante pour être visible."
+     ],
+     "papers": {
+      "abroad": false,
+      "country": "France",
+      "abroadFrom": "dit",
+      "countryCode": "FR"
+     },
+     "basis": {
+      "days": 1,
+      "pace": null,
+      "hours": 1,
+      "level": null,
+      "month": 11,
+      "party": 1,
+      "nights": null,
+      "origin": "Paris@48.85,2.35",
+      "carFree": null,
+      "terrain": null,
+      "activity": "running",
+      "autonomy": null,
+      "priority": null,
+      "targetKm": null,
+      "destination": "Paris@48.85,2.35",
+      "outdoorNights": null
+     },
+     "engine": []
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "day_number": 1,
+   "title": "Jour 1 · Paris",
+   "description": "Boucle d’environ 9 km (estimation selon la durée et l’allure).",
+   "latitude": 48.8535,
+   "longitude": 2.34839,
+   "distance_km": 9,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "estimation"
+    }
+   }
+  }
+ ],
+ "items": [
+  {
+   "item_name": "Chaussures de course",
+   "category": "clothing",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Flasque ou bouteille souple",
+   "category": "tools",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "b6034a5b-301c-4dda-bce4-e13969bc013c",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Lampe ou brassard réfléchissant",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "0ce62ae3-6398-48d4-be3a-de2ff265c26f"
+  },
+  {
+   "item_name": "Trousse de premiers secours complète",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": "f56a5199-7b77-45e9-9697-1b7f082e4902",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Crème solaire haute protection SPF 50+",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "a30a619b-5f1e-48f9-8439-d396c4a84f46"
+  }
+ ],
+ "expenses": []
+}

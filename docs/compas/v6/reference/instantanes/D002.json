@@ -1,0 +1,802 @@
+{
+ "demande": "D002",
+ "banc": {
+  "at": "2026-11-10T17:06:27.293Z",
+  "seconds": 254,
+  "prepSeconds": 247,
+  "outcome": "Ton aventure est prête",
+  "error": null
+ },
+ "trip": {
+  "id": "10622854-2dc6-4c10-82e2-466135c69513",
+  "title": "Bivouac · Nouvelle-Zélande",
+  "destination_name": "Nouvelle-Zélande",
+  "destination_country_code": "NZ",
+  "start_date": "2027-02-01",
+  "end_date": "2027-03-02",
+  "party_size": 1,
+  "primary_activity": "bivouac",
+  "estimated_budget": 1888,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": {
+     "lat": -41.50008,
+     "lon": 172.83441,
+     "kind": "country",
+     "name": "Nouvelle-Zélande",
+     "extent": [
+      -179.059153,
+      -29.0303303,
+      179.3643594,
+      -52.8213687
+     ],
+     "osmTag": "place=country",
+     "country": "Nouvelle-Zélande",
+     "countryCode": "NZ"
+    },
+    "planned_days": null,
+    "duration_h": null,
+    "prefs": {
+     "pace": "normal",
+     "avoid": [],
+     "level": "aguerri",
+     "nights": "bivouac",
+     "wishes": [
+      "Te Araroa côté île",
+      "Te Araroa"
+     ]
+    },
+    "origin": null,
+    "autofill": {
+     "runId": "r",
+     "undone": false,
+     "at": "2026-11-10T17:10:06.070Z",
+     "notes": [
+      "Papiers : conditions d’entrée (Nouvelle-Zélande) à vérifier auprès du service officiel de ton pays avant de partir.",
+      "Prises de type I (Nouvelle-Zélande) : vérifie que tes chargeurs s’y branchent.",
+      "Seul·e : laisse ton itinéraire et ton heure de retour à un proche, et note le numéro d’urgence du pays avant de partir.",
+      "Bivouac : vérifie les règles du lieu ; dans les parcs nationaux et les réserves, il est souvent limité (horaires, distance à la route) ou interdit.",
+      "10 lieu(x) proposé(s) introuvable(s) sur la carte : étape gardée au lieu précédent.",
+      "Matériel conseillé non compté au budget : 163 € à la boutique si tu ne l’as pas (facultatif).",
+      "Suggestion de l’IA (facultatif) : prévois de t'acheter une popote adaptée à la randonnée légère avant le départ, ainsi qu'un filtre à eau ou une paille filtrante pour sécuriser l'approvisionnement en eau tout au l…",
+      "Suggestion de l’IA (facultatif) : vérifie l'état de ton sac à dos technique et de tes bâtons de trekking avant le départ, les 30 jours d'activité continue et les fortes distances à pied nécessitent un équipement e…"
+     ],
+     "papers": {
+      "abroad": true,
+      "country": "Nouvelle-Zélande",
+      "abroadFrom": "gps",
+      "countryCode": "NZ"
+     },
+     "basis": {
+      "days": 30,
+      "pace": null,
+      "hours": null,
+      "level": "aguerri",
+      "month": 2,
+      "party": 1,
+      "nights": "bivouac",
+      "origin": null,
+      "carFree": null,
+      "terrain": null,
+      "activity": "bivouac",
+      "autonomy": null,
+      "priority": null,
+      "targetKm": null,
+      "destination": "Nouvelle-Zélande@-41.50,172.83",
+      "outdoorNights": null
+     },
+     "engine": []
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "day_number": 1,
+   "title": "Jour 1 · Auckland",
+   "description": "arrivee",
+   "latitude": -36.85209,
+   "longitude": 174.76318,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": "Bivouac",
+   "transport_mode": "plane",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 2,
+   "title": "Jour 2 · Wellsford",
+   "description": "depart TA",
+   "latitude": -36.29574,
+   "longitude": 174.52326,
+   "distance_km": 76.7,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": "Bivouac",
+   "transport_mode": "bus",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 3,
+   "title": "Jour 3 · Tomarata",
+   "description": "foret",
+   "latitude": -36.23121,
+   "longitude": 174.63537,
+   "distance_km": 15.6,
+   "elevation_gain_m": 71,
+   "start_time": null,
+   "accommodation_name": "Bivouac",
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 4,
+   "title": "Jour 4 · Kaiwaka",
+   "description": "bush",
+   "latitude": -36.16121,
+   "longitude": 174.44359,
+   "distance_km": 26.2,
+   "elevation_gain_m": 307,
+   "start_time": null,
+   "accommodation_name": "Bivouac",
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 5,
+   "title": "Jour 5 · Brynderwyn",
+   "description": "col",
+   "latitude": -36.09672,
+   "longitude": 174.42968,
+   "distance_km": 7.9,
+   "elevation_gain_m": 114,
+   "start_time": null,
+   "accommodation_name": "Bivouac",
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 6,
+   "title": "Jour 6 · Waipu",
+   "description": "cote",
+   "latitude": -35.98501,
+   "longitude": 174.4475,
+   "distance_km": 26,
+   "elevation_gain_m": 163,
+   "start_time": null,
+   "accommodation_name": "Bivouac",
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 7,
+   "title": "Jour 7 · Waipu Cove",
+   "description": "plage",
+   "latitude": -36.02878,
+   "longitude": 174.50423,
+   "distance_km": 7.7,
+   "elevation_gain_m": 21,
+   "start_time": null,
+   "accommodation_name": "Bivouac",
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 8,
+   "title": "Jour 8 · Ruakaka",
+   "description": "estuaire",
+   "latitude": -35.87544,
+   "longitude": 174.45571,
+   "distance_km": 20.8,
+   "elevation_gain_m": 33,
+   "start_time": null,
+   "accommodation_name": "Bivouac",
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 9,
+   "title": "Jour 9 · Whangarei",
+   "description": "ville",
+   "latitude": -35.72753,
+   "longitude": 174.31942,
+   "distance_km": 30.6,
+   "elevation_gain_m": 157,
+   "start_time": null,
+   "accommodation_name": "Bivouac",
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 10,
+   "title": "Jour 10 · Whangarei",
+   "description": "repos",
+   "latitude": -35.72753,
+   "longitude": 174.31942,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": "Bivouac",
+   "transport_mode": "foot",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 11,
+   "title": "Jour 11 · Hatea",
+   "description": "riviere",
+   "latitude": -35.70998,
+   "longitude": 174.33143,
+   "distance_km": 3,
+   "elevation_gain_m": 20,
+   "start_time": null,
+   "accommodation_name": "Bivouac",
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 12,
+   "title": "Jour 12 · Hatea",
+   "description": "bush",
+   "latitude": -35.70998,
+   "longitude": 174.33143,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": "Bivouac",
+   "transport_mode": "foot",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 13,
+   "title": "Jour 13 · Hatea",
+   "description": "vergers",
+   "latitude": -35.70998,
+   "longitude": 174.33143,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": "Bivouac",
+   "transport_mode": "foot",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 14,
+   "title": "Jour 14 · Hatea",
+   "description": "histoire",
+   "latitude": -35.70998,
+   "longitude": 174.33143,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": "Bivouac",
+   "transport_mode": "foot",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 15,
+   "title": "Jour 15 · Hatea",
+   "description": "campagne",
+   "latitude": -35.70998,
+   "longitude": 174.33143,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": "Bivouac",
+   "transport_mode": "foot",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 16,
+   "title": "Jour 16 · Hatea",
+   "description": "centre",
+   "latitude": -35.70998,
+   "longitude": 174.33143,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": "Bivouac",
+   "transport_mode": "foot",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 17,
+   "title": "Jour 17 · Hatea",
+   "description": "foret",
+   "latitude": -35.70998,
+   "longitude": 174.33143,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": "Bivouac",
+   "transport_mode": "foot",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 18,
+   "title": "Jour 18 · Hatea",
+   "description": "fleuve",
+   "latitude": -35.70998,
+   "longitude": 174.33143,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": "Bivouac",
+   "transport_mode": "foot",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 19,
+   "title": "Jour 19 · Hatea",
+   "description": "plage 90",
+   "latitude": -35.70998,
+   "longitude": 174.33143,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": "Bivouac",
+   "transport_mode": "foot",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 20,
+   "title": "Jour 20 · Hatea",
+   "description": "dunes",
+   "latitude": -35.70998,
+   "longitude": 174.33143,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": "Bivouac",
+   "transport_mode": "foot",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 21,
+   "title": "Jour 21 · Hatea",
+   "description": "cote",
+   "latitude": -35.70998,
+   "longitude": 174.33143,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": "Bivouac",
+   "transport_mode": "foot",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 22,
+   "title": "Jour 22 · Waipu",
+   "description": "retour",
+   "latitude": -35.98501,
+   "longitude": 174.4475,
+   "distance_km": 41.4,
+   "elevation_gain_m": 159,
+   "start_time": null,
+   "accommodation_name": "Bivouac",
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 23,
+   "title": "Jour 23 · Wellsford",
+   "description": "fin nord",
+   "latitude": -36.29574,
+   "longitude": 174.52326,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": "Bivouac",
+   "transport_mode": "foot",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 24,
+   "title": "Jour 24 · Auckland",
+   "description": "transfert",
+   "latitude": -36.85209,
+   "longitude": 174.76318,
+   "distance_km": 75.7,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": "Bivouac",
+   "transport_mode": "bus",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 25,
+   "title": "Jour 25 · Auckland",
+   "description": "repos",
+   "latitude": -36.85209,
+   "longitude": 174.76318,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": "Bivouac",
+   "transport_mode": "foot",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 26,
+   "title": "Jour 26 · Hunua",
+   "description": "depart sud",
+   "latitude": -37.07979,
+   "longitude": 175.07297,
+   "distance_km": 46.1,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": "Bivouac",
+   "transport_mode": "bus",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 27,
+   "title": "Jour 27 · Papakura",
+   "description": "urbain",
+   "latitude": -37.06426,
+   "longitude": 174.94467,
+   "distance_km": 14.6,
+   "elevation_gain_m": 148,
+   "start_time": null,
+   "accommodation_name": "Bivouac",
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 28,
+   "title": "Jour 28 · Pokeno",
+   "description": "bombay",
+   "latitude": -37.24482,
+   "longitude": 175.02195,
+   "distance_km": 25.9,
+   "elevation_gain_m": 310,
+   "start_time": null,
+   "accommodation_name": "Bivouac",
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 29,
+   "title": "Jour 29 · Mercer",
+   "description": "fleuve",
+   "latitude": -37.27657,
+   "longitude": 175.0485,
+   "distance_km": 15.7,
+   "elevation_gain_m": 44,
+   "start_time": null,
+   "accommodation_name": "Bivouac",
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 30,
+   "title": "Jour 30 · Te Kauwhata",
+   "description": "vignoble",
+   "latitude": -37.40346,
+   "longitude": 175.1468,
+   "distance_km": 21.8,
+   "elevation_gain_m": 157,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  }
+ ],
+ "items": [
+  {
+   "item_name": "Tente",
+   "category": "shelter",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": "b54e4aaf-979a-47a8-95fb-79c7568153bb",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Sac de couchage",
+   "category": "sleep",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "f29331bb-1e42-4f93-b6be-5b94452ff551"
+  },
+  {
+   "item_name": "Matelas de sol",
+   "category": "sleep",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "5d9dbcad-8781-434c-bca4-dd5517f30527"
+  },
+  {
+   "item_name": "Réchaud",
+   "category": "cook",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "809da83b-9944-4b01-94e5-dc8105beb43e",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Popote",
+   "category": "cook",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Trousse de premiers secours complète",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": "f56a5199-7b77-45e9-9697-1b7f082e4902",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Sifflet de survie et détresse",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "f767e762-d417-48c2-909d-eea829081a65"
+  },
+  {
+   "item_name": "Lampe frontale LED haute autonomie",
+   "category": "tech",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "0ce62ae3-6398-48d4-be3a-de2ff265c26f"
+  },
+  {
+   "item_name": "Kit de réparation multi-usage",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "95c582ab-05ef-4d72-aa9b-9291c2ec35df"
+  },
+  {
+   "item_name": "Filtre à eau / paille filtrante",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Crème solaire haute protection SPF 50+",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "a30a619b-5f1e-48f9-8439-d396c4a84f46"
+  },
+  {
+   "item_name": "Gourde isotherme / Thermos en acier inoxydable",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "b6034a5b-301c-4dda-bce4-e13969bc013c",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Bouteille d’eau légère de randonnée",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "d403c58a-cf66-4346-9f14-33ecc31f9701"
+  },
+  {
+   "item_name": "Briquet / allume-feu résistant au vent",
+   "category": "cook",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "549d7f9e-aa98-4618-82ec-bb913ca14d0c"
+  },
+  {
+   "item_name": "Bâtons de trekking télescopiques",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "549d7f9e-aa98-4618-82ec-bb913ca14d0c"
+  },
+  {
+   "item_name": "Couteau pliant multifonction en inox",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "72a3d504-7b6b-4501-87d0-427a51114b90"
+  },
+  {
+   "item_name": "Batterie externe étanche Power Bank",
+   "category": "tech",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "846f5f27-9f48-4492-a917-99768934eba5",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Sac à dos technique de randonnée",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "e137cfe3-ff6e-4a73-a6a7-d6ea415b9739",
+   "shop_product_id": null
+  }
+ ],
+ "expenses": [
+  {
+   "title": "Vol aller-retour × 1",
+   "amount": 1150,
+   "currency": "EUR",
+   "category": "transport",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · vol aller-retour, plus de 11 000 km · vol aller-retour depuis ta position, NCY → AKL (Annecy Meythet airport → Auckland International Airport), environ 18650 km · vrai prix dans Résa · Vols",
+    "source": "estimation",
+    "autofill": "abfe3ff6-dc55-4159-8a60-870ccc064f24"
+   }
+  },
+  {
+   "title": "Transports sur place (3 trajets)",
+   "amount": 84,
+   "currency": "EUR",
+   "category": "transport",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Nouvelle-Zélande 110 (France = 100) · bus, bus, bus",
+    "source": "estimation",
+    "autofill": "abfe3ff6-dc55-4159-8a60-870ccc064f24"
+   }
+  },
+  {
+   "title": "Repas · 30 jour(s) × 1",
+   "amount": 508,
+   "currency": "EUR",
+   "category": "nourriture",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Nouvelle-Zélande 110 (France = 100) · selon la nuit (bivouac, refuge, hébergement) · repas en autonomie (bivouac, journée) : alimentation : Nouvelle-Zélande 109 (France = 100) · ICP 2021, Banque mondiale, lu le 12 octobre 2026",
+    "source": "estimation",
+    "autofill": "abfe3ff6-dc55-4159-8a60-870ccc064f24"
+   }
+  },
+  {
+   "title": "Matériel à acheter",
+   "amount": 56,
+   "currency": "EUR",
+   "category": "matériel",
+   "is_planned": true,
+   "metadata": {
+    "basis": "prix de la boutique",
+    "source": "base",
+    "autofill": "abfe3ff6-dc55-4159-8a60-870ccc064f24"
+   }
+  },
+  {
+   "title": "Assurance voyage et rapatriement",
+   "amount": 90,
+   "currency": "EUR",
+   "category": "divers",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · forfait par jour",
+    "source": "estimation",
+    "autofill": "abfe3ff6-dc55-4159-8a60-870ccc064f24"
+   }
+  }
+ ]
+}

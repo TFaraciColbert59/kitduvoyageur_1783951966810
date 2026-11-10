@@ -1,0 +1,359 @@
+{
+ "demande": "D012",
+ "banc": {
+  "at": "2026-11-10T17:29:38.423Z",
+  "seconds": 33,
+  "prepSeconds": 26,
+  "outcome": "Ton aventure est prête",
+  "error": null
+ },
+ "trip": {
+  "id": "b0bec206-db2d-45f8-88e3-c9e791c7556e",
+  "title": "Plage · Sicile",
+  "destination_name": "Sicile",
+  "destination_country_code": "IT",
+  "start_date": "2027-06-05",
+  "end_date": "2027-06-13",
+  "party_size": 2,
+  "primary_activity": "beach",
+  "estimated_budget": 2088,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": {
+     "lat": 37.58779,
+     "lon": 14.15505,
+     "kind": "state",
+     "name": "Sicile",
+     "extent": [
+      11.9258571,
+      38.8176638,
+      15.6530796,
+      35.4929521
+     ],
+     "osmTag": "place=state",
+     "country": "Italie",
+     "countryCode": "IT"
+    },
+    "planned_days": 9,
+    "duration_h": null,
+    "prefs": null,
+    "origin": null,
+    "autofill": {
+     "runId": "r",
+     "undone": false,
+     "at": "2026-11-10T17:30:08.631Z",
+     "notes": [
+      "Papiers : conditions d’entrée (Italie) à vérifier auprès du service officiel de ton pays avant de partir.",
+      "Période proposée : juin (mer déjà chaude, moins de monde qu’en juillet-août). Change-la dans « Quand » si elle ne te va pas.",
+      "Matériel conseillé non compté au budget : 30 € à la boutique si tu ne l’as pas (facultatif).",
+      "Suggestion de l’IA (facultatif) : prévois un maillot de bain et une serviette pour les activités beach, à se procurer avant le départ.",
+      "Suggestion de l’IA (facultatif) : pense à emporter une bouteille d'eau légère de randonnée pour rester hydraté durant les trajets en voiture entre les étapes.",
+      "Suggestion de l’IA (facultatif) : choisis une crème solaire haute protection SPF 50+ pour une exposition solaire optimale en Sicile durant la période estivale."
+     ],
+     "papers": {
+      "abroad": true,
+      "country": "Italie",
+      "abroadFrom": "gps",
+      "countryCode": "IT"
+     },
+     "basis": {
+      "days": 9,
+      "pace": null,
+      "hours": null,
+      "level": null,
+      "month": 6,
+      "party": 2,
+      "nights": null,
+      "origin": null,
+      "carFree": null,
+      "terrain": null,
+      "activity": "beach",
+      "autonomy": null,
+      "priority": null,
+      "targetKm": null,
+      "destination": "Sicile@37.59,14.16",
+      "outdoorNights": null
+     },
+     "engine": []
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "day_number": 1,
+   "title": "Jour 1 · Catane",
+   "description": "arrivee, plage",
+   "latitude": 37.50236,
+   "longitude": 15.08737,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "plane",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 2,
+   "title": "Jour 2 · Catane",
+   "description": "plage, Etna",
+   "latitude": 37.50236,
+   "longitude": 15.08737,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 3,
+   "title": "Jour 3 · Syracuse",
+   "description": "Ortigia, plage",
+   "latitude": 37.06461,
+   "longitude": 15.29072,
+   "distance_km": 66.1,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "car",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 4,
+   "title": "Jour 4 · Syracuse",
+   "description": "plage, reserve",
+   "latitude": 37.06461,
+   "longitude": 15.29072,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 5,
+   "title": "Jour 5 · Noto",
+   "description": "baroque, plage",
+   "latitude": 36.89089,
+   "longitude": 15.07065,
+   "distance_km": 38.2,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "car",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 6,
+   "title": "Jour 6 · Marzamemi",
+   "description": "plage, village",
+   "latitude": 36.74184,
+   "longitude": 15.11765,
+   "distance_km": 22.9,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "car",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 7,
+   "title": "Jour 7 · San Vito Lo Capo",
+   "description": "plage, Zingaro",
+   "latitude": 38.17235,
+   "longitude": 12.73493,
+   "distance_km": 408,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "car",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 8,
+   "title": "Jour 8 · San Vito Lo Capo",
+   "description": "plage, rando",
+   "latitude": 38.17235,
+   "longitude": 12.73493,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 9,
+   "title": "Jour 9 · Palerme",
+   "description": "vol retour",
+   "latitude": 38.11123,
+   "longitude": 13.35244,
+   "distance_km": 110.3,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "car",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  }
+ ],
+ "items": [
+  {
+   "item_name": "Maillot de bain",
+   "category": "clothing",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Serviette",
+   "category": "tools",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Trousse de premiers secours complète",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": "f56a5199-7b77-45e9-9697-1b7f082e4902",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Crème solaire haute protection SPF 50+",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "a30a619b-5f1e-48f9-8439-d396c4a84f46"
+  },
+  {
+   "item_name": "Bouteille d’eau légère de randonnée",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "d403c58a-cf66-4346-9f14-33ecc31f9701"
+  },
+  {
+   "item_name": "Batterie externe étanche Power Bank",
+   "category": "tech",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "846f5f27-9f48-4492-a917-99768934eba5",
+   "shop_product_id": null
+  }
+ ],
+ "expenses": [
+  {
+   "title": "8 nuit(s) en hébergement",
+   "amount": 688,
+   "currency": "EUR",
+   "category": "hébergement",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Italie 95 (France = 100) · chambre partagée à deux · vrais prix dans Résa · Nuits",
+    "source": "estimation",
+    "autofill": "65252b5a-99cf-464d-a7f5-0a3119105ef3"
+   }
+  },
+  {
+   "title": "Vol aller-retour × 2",
+   "amount": 360,
+   "currency": "EUR",
+   "category": "transport",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · vol aller-retour, moins de 1 200 km · vol aller-retour depuis ta position, NCY → CTA (Annecy Meythet airport → Catania-Fontanarossa Airport), environ 1198 km · vrai prix dans Résa · Vols",
+    "source": "estimation",
+    "autofill": "65252b5a-99cf-464d-a7f5-0a3119105ef3"
+   }
+  },
+  {
+   "title": "Carburant sur place (646 km)",
+   "amount": 87,
+   "currency": "EUR",
+   "category": "transport",
+   "is_planned": true,
+   "metadata": {
+    "basis": "kilomètres mesurés entre les étapes · 6,5 L/100 km · Euro-super 95 à 2,07 €/L (bulletin pétrolier de l’UE du 5 octobre 2026) · péages non comptés (le trajet mesuré ne donne pas ses km d’autoroute à péage ; Italie : 7,9 c€/km TTC en plaine et 9,3 c€/km TTC en montagne sur le réseau Autostrade per l’Italia (classe A, tarifs du 1er janvier 2026, TVA comprise, source : l’opérateur) ; le réseau Autostrade per l’Italia seulement : chaque autre concessionnaire a son propre tarif au km, non lu)",
+    "source": "mesure",
+    "autofill": "65252b5a-99cf-464d-a7f5-0a3119105ef3"
+   }
+  },
+  {
+   "title": "Location de voiture · 9 jour(s)",
+   "amount": 387,
+   "currency": "EUR",
+   "category": "transport",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Italie 95 (France = 100) · catégorie économique · à comparer dans Résa · Trajets",
+    "source": "estimation",
+    "autofill": "65252b5a-99cf-464d-a7f5-0a3119105ef3"
+   }
+  },
+  {
+   "title": "Repas · 9 jour(s) × 2",
+   "amount": 506,
+   "currency": "EUR",
+   "category": "nourriture",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Italie 95 (France = 100) · selon la nuit (bivouac, refuge, hébergement) · repas en autonomie (bivouac, journée) : alimentation : Italie 96 (France = 100) · ICP 2021, Banque mondiale, lu le 12 octobre 2026",
+    "source": "estimation",
+    "autofill": "65252b5a-99cf-464d-a7f5-0a3119105ef3"
+   }
+  },
+  {
+   "title": "Assurance voyage et rapatriement",
+   "amount": 60,
+   "currency": "EUR",
+   "category": "divers",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · forfait par jour",
+    "source": "estimation",
+    "autofill": "65252b5a-99cf-464d-a7f5-0a3119105ef3"
+   }
+  }
+ ]
+}

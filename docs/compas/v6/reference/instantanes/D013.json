@@ -1,0 +1,214 @@
+{
+ "demande": "D013",
+ "banc": {
+  "at": "2026-11-10T17:31:43.428Z",
+  "seconds": 47,
+  "prepSeconds": 41,
+  "outcome": "Ton aventure est prête",
+  "error": null
+ },
+ "trip": {
+  "id": "04403c3c-4706-459c-be49-d25a67a09c17",
+  "title": "Escalade · Céüse",
+  "destination_name": "Céüse",
+  "destination_country_code": "FR",
+  "start_date": "2027-07-01",
+  "end_date": "2027-07-01",
+  "party_size": 2,
+  "primary_activity": "climbing",
+  "estimated_budget": 89,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": {
+     "lat": 44.52002,
+     "lon": 5.95809,
+     "kind": "other",
+     "name": "Céüse",
+     "extent": [
+      5.9392101,
+      44.5306077,
+      5.9617107,
+      44.5009801
+     ],
+     "country": "France",
+     "countryCode": "FR"
+    },
+    "planned_days": null,
+    "duration_h": null,
+    "prefs": null,
+    "origin": null,
+    "autofill": {
+     "runId": "r",
+     "undone": false,
+     "at": "2026-11-10T17:32:10.871Z",
+     "notes": [
+      "Altitude du parcours non mesurée : au-delà de 2 500 m, monte progressivement et bois souvent ; mal de tête, nausée ou essoufflement au repos : redescends.",
+      "« Montagne de Céüse » retenu pour Céüse (lieu naturel, adapté à l’activité).",
+      "Départ de Gap, à 10 km du centre du lieu.",
+      "Matériel conseillé non compté au budget : 129 € à la boutique si tu ne l’as pas (facultatif).",
+      "Suggestion de l’IA (facultatif) : prévois d'acheter un baudrier et un casque d'escalade avant le départ, a se procurer dans un magasin spécialisé.",
+      "Suggestion de l’IA (facultatif) : pense à t'équiper de chaussons d'escalade adaptés à la pratique du bloc et de la voie, indispensable pour le confort et la sécurité.",
+      "Suggestion de l’IA (facultatif) : n'oublie pas le système d'assurage et le mousqueton à vis, éléments obligatoires pour assurer en toute sécurité."
+     ],
+     "papers": {
+      "abroad": false,
+      "country": "France",
+      "abroadFrom": "gps",
+      "countryCode": "FR"
+     },
+     "basis": {
+      "days": 1,
+      "pace": null,
+      "hours": null,
+      "level": null,
+      "month": 7,
+      "party": 2,
+      "nights": null,
+      "origin": null,
+      "carFree": null,
+      "terrain": null,
+      "activity": "climbing",
+      "autonomy": null,
+      "priority": null,
+      "targetKm": null,
+      "destination": "Céüse@44.52,5.96",
+      "outdoorNights": null
+     },
+     "engine": []
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "day_number": 1,
+   "title": "Jour 1 · Gap",
+   "description": null,
+   "latitude": 44.5586,
+   "longitude": 6.07868,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  }
+ ],
+ "items": [
+  {
+   "item_name": "Baudrier",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Casque d’escalade",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Système d’assurage et mousqueton à vis",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Chaussons d’escalade",
+   "category": "clothing",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Trousse de premiers secours complète",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": "f56a5199-7b77-45e9-9697-1b7f082e4902",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Sifflet de survie et détresse",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "f767e762-d417-48c2-909d-eea829081a65"
+  },
+  {
+   "item_name": "Lampe frontale LED haute autonomie",
+   "category": "tech",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "0ce62ae3-6398-48d4-be3a-de2ff265c26f"
+  },
+  {
+   "item_name": "Crème solaire haute protection SPF 50+",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "a30a619b-5f1e-48f9-8439-d396c4a84f46"
+  },
+  {
+   "item_name": "Bouteille d’eau légère de randonnée",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "d403c58a-cf66-4346-9f14-33ecc31f9701"
+  },
+  {
+   "item_name": "Couteau pliant multifonction en inox",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "72a3d504-7b6b-4501-87d0-427a51114b90"
+  },
+  {
+   "item_name": "Sac à dos technique de randonnée",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "e137cfe3-ff6e-4a73-a6a7-d6ea415b9739",
+   "shop_product_id": null
+  }
+ ],
+ "expenses": [
+  {
+   "title": "Carburant aller-retour (421.5 km)",
+   "amount": 61,
+   "currency": "EUR",
+   "category": "transport",
+   "is_planned": true,
+   "metadata": {
+    "basis": "itinéraire routier mesuré · 6,5 L/100 km · Euro-super 95 à 2,21 €/L (bulletin pétrolier de l’UE du 5 octobre 2026) · 1 voiture · péages non comptés (le trajet mesuré ne donne pas ses km d’autoroute à péage ; France : 11,1 c€/km TTC en moyenne sur les autoroutes concédées (véhicules légers, tarifs du 1er février 2024, TVA de 20 % ajoutée au prix hors taxes, source : ART) ; moyenne de tout le réseau concédé : un axe peut coûter bien plus ou moins ; les hausses des 1er février 2025 et 2026 ne sont pas lues)",
+    "source": "mesure",
+    "autofill": "b6e8e429-42e8-41b7-8962-7814e9a67094"
+   }
+  },
+  {
+   "title": "Repas · 1 jour(s) × 2",
+   "amount": 28,
+   "currency": "EUR",
+   "category": "nourriture",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : France 100 (référence) · selon la nuit (bivouac, refuge, hébergement) · repas en autonomie (bivouac, journée) : alimentation : France 100 (France = 100) · ICP 2021, Banque mondiale, lu le 12 octobre 2026",
+    "source": "estimation",
+    "autofill": "b6e8e429-42e8-41b7-8962-7814e9a67094"
+   }
+  }
+ ]
+}

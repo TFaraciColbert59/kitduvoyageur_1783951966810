@@ -2,21 +2,17 @@ import 'server-only';
 /**
  * Compas v6 — extraction du Brief par l'IA, côté serveur (T1.3).
  *
- * VERROUILLÉ : tant que la décision D1 du propriétaire n'est pas prise
- * (`BRIEF_AI_EXTRACTION_ALLOWED = false`), `extractBrief` rend « off » sans rien lire,
- * sans compter de quota et sans appeler le modèle. Aucun fichier de production
- * n'importe ce module (verrou de lecture : `briefExtract.test.ts`).
- *
- * AVANT D'OUVRIR D1 : ajouter `compas-brief` au registre des fonctions IA
- * (`src/lib/ai/features/registry.ts`) ; le `call` par défaut emprunte `compas-intent` en attendant.
+ * Décision D1 prise par Tony le 10 novembre 2026 : l'IA peut extraire le Brief. L'extraction
+ * reste derrière COMPAS_V6_BRIEF, éteint par défaut. Aucun fichier de production
+ * n'importe encore ce module (verrou de lecture : `briefExtract.test.ts`).
  *
  * Ordre des gardes : décision D1 → drapeau `COMPAS_V6_BRIEF` → `AI_MODE` → cache mémoire →
- * quota « fast » de la personne → appel borné à 8 s → `parseExtraction`.
+ * appel borné à 8 s (le quota « fast » de la personne est compté par `askAI`, fonction
+ * `compas-brief` du registre) → `parseExtraction`.
  *
  * Aucun journal ne contient la phrase ni une valeur extraite : statut et durée seulement.
  */
 import { aiEnabled } from '@/lib/ai/aiMode';
-import { consumeQuota } from '@/lib/ai/quota';
 import { extractIntentJson } from '@/lib/ai/features/compasIntent';
 import { v6Flags } from '../engine/v6Flags';
 import {
@@ -29,10 +25,10 @@ import {
 } from '../engine/brief/extract';
 
 /**
- * Décision D1 (propriétaire) : l'IA peut-elle extraire le Brief ? NON tant que ce n'est pas
- * tranché. Seule une modification de cette constante, relue, l'autorise.
+ * Décision D1 prise par Tony le 10 novembre 2026 : l'IA peut extraire le Brief.
+ * L'extraction reste derrière COMPAS_V6_BRIEF, éteint par défaut.
  */
-export const BRIEF_AI_EXTRACTION_ALLOWED = false;
+export const BRIEF_AI_EXTRACTION_ALLOWED = true;
 
 export type ExtractOutcome =
   | { status: 'ok'; result: ExtractionResult; cached: boolean; ms: number }
@@ -43,14 +39,11 @@ export type ExtractOutcome =
 export const BRIEF_CALL_TIMEOUT_MS = 8_000;
 /** Taille maximale du cache mémoire (plus ancienne entrée retirée d'abord). */
 export const BRIEF_CACHE_MAX = 500;
-/** Compteur de la personne : palier « fast » (400 par jour), plafond propre à cette fonction. */
-export const BRIEF_QUOTA_FEATURE = 'compas-brief';
-export const BRIEF_QUOTA_FEATURE_LIMIT = 200;
-
 export type BriefCall = (
   messages: ExtractionMessage[],
   jsonSchema: object,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  userId?: string
 ) => Promise<unknown>;
 
 /** Erreurs que le `call` par défaut sait nommer : elles deviennent `quota` ou `timeout`. */
@@ -80,19 +73,19 @@ function remember(key: string, value: ExtractionResult): void {
  * Appel par défaut : le client IA du Compas (`askAI`, NVIDIA NIM), palier « fast », JSON.
  * - `askAI` ne sait demander que `response_format: json_object` (nvidia.ts:154), pas un schéma
  *   JSON : la forme attendue est donc écrite dans la demande, et `parseExtraction` valide tout.
- * - Pas de `userId` : le quota de la personne est déjà compté par `extractBrief` (sinon double).
- * - Cache de `askAI` coupé (TTL 0) : il rangerait la phrase dans un cache partagé.
- * - `askAI` exige une fonction du registre : on emprunte `compas-intent` (même palier, même
- *   repli). À remplacer par une entrée `compas-brief` du registre avant d'ouvrir D1.
- * - Chargé à la demande : le client IA n'est jamais tiré tant que D1 est fermée.
+ * - `userId` passé à `askAI` : il compte lui-même le quota de la personne (palier « fast » et
+ *   plafond de la fonction `compas-brief`, askAI.ts:117-133) ; `extractBrief` ne le compte pas.
+ * - Cache de `askAI` coupé (TTL 0, aussi dans le registre) : il rangerait la phrase dans un cache partagé.
+ * - Chargé à la demande : le client IA n'est tiré que si l'extraction est réellement tentée.
  */
-const defaultCall: BriefCall = async (messages, jsonSchema, signal) => {
+const defaultCall: BriefCall = async (messages, jsonSchema, signal, userId) => {
   const { askAI } = await import('@/lib/ai/askAI');
   const system = messages.find((m) => m.role === 'system')?.content ?? '';
   const user = messages.find((m) => m.role === 'user')?.content ?? '';
   const res = await askAI({
-    feature: 'compas-intent',
+    feature: 'compas-brief',
     tier: 'fast',
+    ...(userId ? { userId } : {}),
     system,
     prompt: `Forme de la réponse (schéma JSON) :\n${JSON.stringify(jsonSchema)}\n\n${user}`,
     maxTokens: 2_048,
@@ -139,9 +132,6 @@ export async function extractBrief(
   const hit = cache.get(key);
   if (hit) return done({ status: 'ok', result: structuredClone(hit), cached: true, ms: now() - started }, started);
 
-  const allowedByQuota = await consumeQuota(input.userId, 'fast', BRIEF_QUOTA_FEATURE, BRIEF_QUOTA_FEATURE_LIMIT).catch(() => false);
-  if (!allowedByQuota) return done({ status: 'failed', reason: 'quota' }, started);
-
   const call = deps.call ?? defaultCall;
   const controller = new AbortController();
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -154,7 +144,7 @@ export async function extractBrief(
 
   let raw: unknown;
   try {
-    raw = await Promise.race([call(extractionMessages(input), extractionJsonSchema(), controller.signal), timeout]);
+    raw = await Promise.race([call(extractionMessages(input), extractionJsonSchema(), controller.signal, input.userId), timeout]);
   } catch (err) {
     const kind = err instanceof BriefCallError ? err.kind : 'error';
     return done({ status: 'failed', reason: kind }, started);

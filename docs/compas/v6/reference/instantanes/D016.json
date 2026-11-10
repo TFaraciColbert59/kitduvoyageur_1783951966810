@@ -1,0 +1,245 @@
+{
+ "demande": "D016",
+ "banc": {
+  "at": "2026-11-10T17:37:58.441Z",
+  "seconds": 40,
+  "prepSeconds": 34,
+  "outcome": "Ton aventure est prête",
+  "error": null
+ },
+ "trip": {
+  "id": "407994ae-54a9-4771-9a97-22ff4566baa0",
+  "title": "Culturel · Rome",
+  "destination_name": "Rome",
+  "destination_country_code": "IT",
+  "start_date": "2027-03-28",
+  "end_date": "2027-04-02",
+  "party_size": null,
+  "primary_activity": "cultural",
+  "estimated_budget": 666,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": {
+     "lat": 41.89332,
+     "lon": 12.48293,
+     "kind": "city",
+     "name": "Rome",
+     "extent": [
+      12.2344416,
+      42.1410285,
+      12.8557603,
+      41.6556417
+     ],
+     "osmTag": "place=city",
+     "country": "Italie",
+     "countryCode": "IT"
+    },
+    "planned_days": null,
+    "duration_h": null,
+    "prefs": null,
+    "origin": null,
+    "autofill": {
+     "runId": "r",
+     "undone": false,
+     "at": "2026-11-10T17:38:17.666Z",
+     "notes": [
+      "Papiers : conditions d’entrée (Italie) à vérifier auprès du service officiel de ton pays avant de partir.",
+      "Matériel conseillé non compté au budget : 30 € à la boutique si tu ne l’as pas (facultatif).",
+      "Suggestion de l’IA (facultatif) : prévois une protection solaire adaptée au climat méditerranéen printanier.",
+      "Suggestion de l’IA (facultatif) : emporte une bouteille d'eau légère pour rester hydraté lors des visites urbaines."
+     ],
+     "papers": {
+      "abroad": true,
+      "country": "Italie",
+      "abroadFrom": "gps",
+      "countryCode": "IT"
+     },
+     "basis": {
+      "days": 6,
+      "pace": null,
+      "hours": null,
+      "level": null,
+      "month": 3,
+      "party": 1,
+      "nights": null,
+      "origin": null,
+      "carFree": null,
+      "terrain": null,
+      "activity": "cultural",
+      "autonomy": null,
+      "priority": null,
+      "targetKm": null,
+      "destination": "Rome@41.89,12.48",
+      "outdoorNights": null
+     },
+     "engine": []
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "day_number": 1,
+   "title": "Jour 1 · Rome",
+   "description": "Base du séjour.",
+   "latitude": 41.89332,
+   "longitude": 12.48293,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 2,
+   "title": "Jour 2 · Rome",
+   "description": null,
+   "latitude": 41.89332,
+   "longitude": 12.48293,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 3,
+   "title": "Jour 3 · Rome",
+   "description": null,
+   "latitude": 41.89332,
+   "longitude": 12.48293,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 4,
+   "title": "Jour 4 · Rome",
+   "description": null,
+   "latitude": 41.89332,
+   "longitude": 12.48293,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 5,
+   "title": "Jour 5 · Rome",
+   "description": null,
+   "latitude": 41.89332,
+   "longitude": 12.48293,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 6,
+   "title": "Jour 6 · Rome",
+   "description": null,
+   "latitude": 41.89332,
+   "longitude": 12.48293,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  }
+ ],
+ "items": [
+  {
+   "item_name": "Trousse de premiers secours complète",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": "f56a5199-7b77-45e9-9697-1b7f082e4902",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Crème solaire haute protection SPF 50+",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "a30a619b-5f1e-48f9-8439-d396c4a84f46"
+  },
+  {
+   "item_name": "Bouteille d’eau légère de randonnée",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "d403c58a-cf66-4346-9f14-33ecc31f9701"
+  },
+  {
+   "item_name": "Batterie externe étanche Power Bank",
+   "category": "tech",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "846f5f27-9f48-4492-a917-99768934eba5",
+   "shop_product_id": null
+  }
+ ],
+ "expenses": [
+  {
+   "title": "5 nuit(s) en hébergement",
+   "amount": 215,
+   "currency": "EUR",
+   "category": "hébergement",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Italie 95 (France = 100) · chambre partagée à deux · vrais prix dans Résa · Nuits",
+    "source": "estimation",
+    "autofill": "e6c3a899-3197-41b5-809e-9587e105495a"
+   }
+  },
+  {
+   "title": "Carburant aller-retour (1854.2 km)",
+   "amount": 258,
+   "currency": "EUR",
+   "category": "transport",
+   "is_planned": true,
+   "metadata": {
+    "basis": "itinéraire routier mesuré · 6,5 L/100 km · Euro-super 95, moyenne des pays du trajet : FR 2,21 €/L, IT 2,07 €/L (bulletin pétrolier de l’UE du 5 octobre 2026) · 1 voiture · péages non comptés (le trajet mesuré ne donne pas ses km d’autoroute à péage ; Italie : 7,9 c€/km TTC en plaine et 9,3 c€/km TTC en montagne sur le réseau Autostrade per l’Italia (classe A, tarifs du 1er janvier 2026, TVA comprise, source : l’opérateur) ; le réseau Autostrade per l’Italia seulement : chaque autre concessionnaire a son propre tarif au km, non lu)",
+    "source": "mesure",
+    "autofill": "e6c3a899-3197-41b5-809e-9587e105495a"
+   }
+  },
+  {
+   "title": "Repas · 6 jour(s) × 1",
+   "amount": 163,
+   "currency": "EUR",
+   "category": "nourriture",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Italie 95 (France = 100) · selon la nuit (bivouac, refuge, hébergement) · repas en autonomie (bivouac, journée) : alimentation : Italie 96 (France = 100) · ICP 2021, Banque mondiale, lu le 12 octobre 2026",
+    "source": "estimation",
+    "autofill": "e6c3a899-3197-41b5-809e-9587e105495a"
+   }
+  },
+  {
+   "title": "Assurance voyage et rapatriement",
+   "amount": 30,
+   "currency": "EUR",
+   "category": "divers",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · forfait par jour",
+    "source": "estimation",
+    "autofill": "e6c3a899-3197-41b5-809e-9587e105495a"
+   }
+  }
+ ]
+}

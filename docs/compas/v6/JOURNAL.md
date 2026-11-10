@@ -235,3 +235,75 @@ eslint=0
 ```
 
 ### Passage de référence, tranche 1 : l'aperçu a basculé sur un nouveau build à 17 h 14 UTC (poussage du banc réparé) pendant la tranche. Les demandes D003 à D005, jouées autour de la bascule, sont sorties « prêtes » ; la bascule est notée ici parce qu'elle fait partie des conditions du passage. Le code des deux builds est identique côté moteur (rien n'est branché).
+
+## 2026-11-10 (nuit) — décisions de Tony, reprise du passage de référence
+
+### Décisions reçues (détail et lecture dans l'ADR §9)
+
+| Id | Réponse de Tony | Suite |
+|---|---|---|
+| D1 | « On autorise l'IA » | extraction ouverte dans le code, derrière `COMPAS_V6_BRIEF` (éteint) ; fonction `compas-brief` au registre IA ; exception écrite dans `CLAUDE.md` §2 |
+| D4 | « oui » | allure réelle à brancher avec le Brief (T1.7) |
+| D5 | « tout dépend le blocage, la gravité de celui-ci » | deux niveaux de bloquant, critique (voyage non rendu comme prêt) et majeur (rendu avec le défaut dit) — lecture de l'orchestrateur, à corriger si elle est fausse |
+| D6 | vote des participants pour toute modification lourde, acceptation automatique réglable dans le compte | le profil d'un autre membre n'est lu qu'après son accord ; le vote et le réglage sont un chantier d'interface et de base à spécifier |
+| D7 | « on invitera les gens à le renseigner dans leur paramètre de compte au préalable » | les données sensibles vivent dans le profil, jamais sur le voyage ; champs de profil et invitation à ajouter (chantier d'interface) |
+
+D2 et D3 restent ouvertes (phase 4).
+
+### Tranche 1 interrompue à 17 h 40 UTC
+
+Le processus du banc a été tué par les redémarrages de la session (limite d'utilisation atteinte côté compte) après 15 demandes (D002 à D016), toutes « prêtes », aucune erreur. Relance à 21 h 52 UTC de D017 à D070, en tâche suivie (elle réveille la session à sa fin), pour rester sous le quota IA du jour (70 préparations au total le 10 novembre). **Le calendrier des tranches glisse** : D071 à D190 le 11 novembre, D191 à D300 le 12.
+
+### Notes partielles sur les 16 premières demandes (grilles J0, C0, F0, P0 ; à ne pas lire comme la référence)
+
+```
+$ node scripts/compas/snapshot-reference.mjs <aperçu> <instantanés> D001-essai.jsonl t1/results.jsonl
+16 demandes, 16 voyages lus, 16 instantanés écrits
+$ node scripts/compas/score-trip.mjs --lot <instantanés> --jeu docs/compas/v6/demandes-or.json --date 2026-11-10
+famille         n    justesse  complétude  faisabilité  précision
+alpinisme       1    83        26          88           43
+bivouac         2    92        65          88           58
+course          1    100       55          100          30
+eau             1    67        64          86           32
+escalade        2    100       60          86           36
+marche          1    100       63          88           53
+multi           1    80        41          88           51
+plage           1    100       64          86           30
+route           1    83        33          100          56
+ski             1    100       20          88           38
+velo            2    93        55          100          51
+ville-culture   2    75        32          88           35
+tous            16   90        49          91           43
+```
+
+Durée de préparation sur ces 16 : médiane 41 s, 95ᵉ centile 131 s, maximum 247 s (un mois de bivouac en Nouvelle-Zélande).
+
+Première lecture, sous réserve du jeu entier : le lieu et les réglages sont justes (90), le contenu des journées est mince (49) et moins de la moitié des valeurs viennent d'une donnée réelle (43) — ce que la spec annonçait. La faisabilité à 91 confirme que la grille F0 est trop indulgente.
+
+Instantanés archivés dans `docs/compas/v6/reference/instantanes/` (sans identifiant de personne, sans tracé), journal du banc dans `reference/journaux/`.
+
+### Lecture à la main de trois des plus mal notés (la note dit-elle vrai ?)
+
+| Demande | Ce que le voyage contient réellement | Ce que dit la note |
+|---|---|---|
+| D016 « Rome en famille 6 jours à Pâques, avec nos deux ados » | Rome, 28 mars au 2 avril, activité « cultural » ; **groupe non renseigné** (4 attendus : le budget des repas est compté pour 1) ; six jours « Jour N · Rome » sans contenu, ni distance, ni nuit nommée ; 4 objets | moyenne 47 : vrai |
+| D008 « Mont Blanc par les Trois Monts, 5 jours avec 2 amis et un guide » | **2 personnes au lieu de 3** ; cinq jours posés à La Thuile, sans contenu ; aucun refuge, aucun guide, aucune course | 60 : vrai, et la faisabilité à 88 est fausse (une ascension sans étape n'a rien de faisable) |
+| D007 « semaine de ski à Val Thorens, 2 adultes et 3 enfants » | lieu, dates et groupe justes ; sept jours vides ; pas de forfait, pas de location de matériel au budget | 61 : vrai |
+
+Deux défauts de lecture du groupe apparaissent déjà (« avec nos deux ados », « avec 2 amis et un guide ») : ce sont des cas pour l'extraction du Brief, pas de nouvelles règles (spec §6).
+
+### D1 ouverte dans le code (`builder`) — toujours derrière `COMPAS_V6_BRIEF`, éteint
+
+`src/lib/ai/features/compasBrief.ts` et son entrée au registre ; `BRIEF_AI_EXTRACTION_ALLOWED = true` ; le quota est compté par `askAI` lui-même (`src/lib/ai/askAI.ts:117-133`), la consommation manuelle est retirée. À vérifier au branchement : `askAI` exige un `userId` au format UUID (`askAI.ts:75`).
+
+```
+$ NODE_OPTIONS=--max-old-space-size=6144 npx tsc --noEmit -p .
+tsc exit 0
+$ npx vitest run tests/ai <tests du Brief et de la notation>
+ Test Files  21 passed (21)
+      Tests  365 passed (365)
+$ grep -rn "briefExtract" src | grep -v "__tests__\|server/briefExtract.ts"
+(aucune ligne : aucun importeur)
+```
+
+Ce poussage reconstruit l'aperçu pendant la relance de la tranche 1 (vers 22 h UTC) ; comme à 17 h 14, le moteur des deux builds est identique tant que l'interrupteur est éteint.

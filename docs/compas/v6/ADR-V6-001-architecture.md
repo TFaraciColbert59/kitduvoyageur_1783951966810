@@ -165,16 +165,18 @@ Cadrés ici, décidés dans leurs propres ADR (T4.1, T5.1) : la phase 4 ne déma
 - **Injection par la phrase.** La sortie de l'IA est contrainte par schéma, chaque valeur dite est revérifiée mot pour mot, et aucune valeur extraite n'est un fait : le pire cas est une variable mal comprise, que les règles contredisent pour les nombres et les dates.
 - **Référence instable.** La géographie interrogée en direct fait varier les résultats (constat F6) : la référence note l'heure du passage et le taux d'échec externe, et une baisse n'est retenue qu'après rejeu.
 
-## 9. Points ouverts (Tony)
+## 9. Décisions de Tony
 
-| Id | Question | Effet tant que c'est ouvert |
-|---|---|---|
-| D1 | L'IA peut-elle extraire le Brief ? (elle lit des souhaits et des noms ; jamais une date, jamais un nombre absent de la phrase) | T1.3 codé et testé hors ligne, jamais appelé ; **la porte 1 entière est infranchissable** (son premier critère), donc la phase 2 ne peut pas être déclarée ouverte |
-| D2, D3 | Stockage et zones du monde | phase 4 à l'arrêt |
-| D4 | L'allure réelle règle-t-elle les journées sans demander ? | T1.5 calculé, non branché |
-| D5 | Invariant bloquant non réparé : rendre ou refuser | T3.3 codé avec « rendre, défaut dit » par défaut (le comportement le plus proche d'aujourd'hui), réversible par un réglage |
-| D7 (nouvelle) | Les variables sensibles dites dans la phrase (régime, allergies, peur du vide, mal des transports, mobilité réduite — santé ou conviction, RGPD art. 9) peuvent-elles être rangées sur le voyage ? | elles servent à la préparation en cours et ne sont jamais rangées (`SENSITIVE_PATHS`) |
-| D6 (nouvelle) | Le profil ou l'historique d'un autre membre du groupe peut-il régler le voyage (« au rythme du plus faible »), et avec quel accord ? | seul le profil de la personne qui lance est lu |
+Réponses données le 10 novembre 2026 (mots de Tony entre guillemets ; ce qui suit chaque citation est la lecture qu'en fait l'orchestrateur, à corriger si elle est fausse).
+
+| Id | Question | Réponse | Ce qui en découle |
+|---|---|---|---|
+| D1 | L'IA peut-elle extraire le Brief ? | « On autorise l'IA » | `BRIEF_AI_EXTRACTION_ALLOWED = true`, fonction `compas-brief` au registre IA ; l'extraction reste derrière `COMPAS_V6_BRIEF`, éteint par défaut ; `CLAUDE.md` §2 porte l'exception |
+| D4 | L'allure réelle règle-t-elle les journées sans demander ? | « oui » | la surcouche « historique » sera branchée avec le Brief (T1.7), privée et annoncée comme telle |
+| D5 | Invariant bloquant non réparé : rendre ou refuser ? | « tout dépend le blocage, la gravité de celui-ci » | lecture : deux niveaux de bloquant. **Critique** (la sécurité de la personne est en jeu : nuit sans lieu en hiver, journée au-delà de la capacité avec engagement, altitude sans palier) : le voyage n'est pas rendu comme « prêt », le Compas dit ce qui manque. **Majeur** (le reste) : le voyage est rendu avec le défaut dit en clair. Le niveau fait partie du contrat de chaque invariant (phase 3) |
+| D6 | Profil ou historique d'un autre membre du groupe | « si il est participant chaque modification lourde nécessite un vote des autres participants. Avec un réglage possible d'acceptation automatique dans les réglages du compte » | lecture : sur un voyage à plusieurs, une modification lourde (dates, lieu, effort, rythme réglé sur un membre) se décide par un vote des participants ; chacun peut choisir « accepter automatiquement » dans son compte. Le moteur ne lit donc le profil d'un autre membre qu'après son accord (vote ou acceptation automatique). **Le vote et le réglage sont un chantier d'interface et de base à part**, à spécifier ; d'ici là, seul le profil de la personne qui lance est lu |
+| D7 | Données sensibles (régime, allergies, peur du vide, mal des transports, mobilité réduite) | « on invitera les gens à le renseigner dans leur paramètre de compte au préalable » | ces données vivent dans le **profil** (privé), pas sur le voyage : elles entrent dans le Brief par la surcouche privée du lanceur. Dites dans la phrase, elles servent à la préparation en cours et ne sont pas rangées (`SENSITIVE_PATHS`). Les champs de profil et l'invitation à les remplir sont à ajouter aux paramètres du compte (chantier d'interface à part) |
+| D2, D3 | Stockage et zones du monde | en attente | phase 4 à l'arrêt |
 
 ## 10. Relecture `architect` du 10 novembre 2026 — verdict « à revoir », traitement
 

@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { consumeQuota } from '@/lib/ai/quota';
+import { askAI } from '@/lib/ai/askAI';
 import {
   BRIEF_PROMPT_VERSION,
   extractionCacheKey,
@@ -32,9 +32,12 @@ import {
   extractBrief,
 } from '../server/briefExtract';
 
-// Aucun réseau, aucune base : le quota est simulé, l'appel au modèle aussi.
-vi.mock('@/lib/ai/quota', () => ({ consumeQuota: vi.fn(async () => true) }));
-const quota = vi.mocked(consumeQuota);
+// Aucun réseau, aucune base : le client IA (qui compte lui-même le quota) est simulé.
+vi.mock('@/lib/ai/askAI', () => ({ askAI: vi.fn() }));
+const ask = vi.mocked(askAI);
+const okResponse = (text: string) => ({ text, model: 'm', degraded: false, cached: false, provider: 'nvidia' }) as never;
+const failResponse = (failureReason: string) =>
+  ({ text: '{}', model: 'fallback-deterministe', degraded: true, cached: false, provider: 'fallback', failureReason }) as never;
 
 const ON = { COMPAS_V6_BRIEF: '1' };
 const TODAY = '2026-11-10';
@@ -53,8 +56,7 @@ const reasonOf = (r: ReturnType<typeof parseExtraction>, p: string) => r.dropped
 
 beforeEach(() => {
   clearBriefCache();
-  quota.mockReset();
-  quota.mockResolvedValue(true);
+  ask.mockReset();
 });
 afterEach(() => {
   vi.useRealTimers();
@@ -70,17 +72,27 @@ const input = (phrase = FR, extra: Partial<{ locale: string; today: string; user
 });
 
 describe('extractBrief — les gardes, dans l\'ordre', () => {
-  it('la décision D1 est fermée dans le code', () => {
-    expect(BRIEF_AI_EXTRACTION_ALLOWED).toBe(false);
+  it('la décision D1 est ouverte dans le code (Tony, 10/11/2026)', () => {
+    expect(BRIEF_AI_EXTRACTION_ALLOWED).toBe(true);
   });
 
-  it('D1 fermée (défaut) : « off / decision_d1 » même avec le drapeau et l\'IA allumés, sans quota ni appel', async () => {
+  it('par défaut, D1 ouverte mais interrupteur éteint : « off / flag », sans appel ni quota', async () => {
     const call = vi.fn(async () => ({}));
     const fetchSpy = vi.spyOn(globalThis, 'fetch');
-    const out = await extractBrief(input(), { call, env: { ...ON, AI_MODE: 'on' } });
+    const out = await extractBrief(input(), { call, env: { AI_MODE: 'on' } });
+    expect(out).toEqual({ status: 'off', reason: 'flag' });
+    expect(call).not.toHaveBeenCalled();
+    expect(ask).not.toHaveBeenCalled();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it('garde D1 (allowed = false) : « off / decision_d1 » même avec le drapeau et l\'IA allumés, sans appel', async () => {
+    const call = vi.fn(async () => ({}));
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+    const out = await extractBrief(input(), { call, env: { ...ON, AI_MODE: 'on' }, allowed: false });
     expect(out).toEqual({ status: 'off', reason: 'decision_d1' });
     expect(call).not.toHaveBeenCalled();
-    expect(quota).not.toHaveBeenCalled();
+    expect(ask).not.toHaveBeenCalled();
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
@@ -92,7 +104,6 @@ describe('extractBrief — les gardes, dans l\'ordre', () => {
       reason: 'flag',
     });
     expect(call).not.toHaveBeenCalled();
-    expect(quota).not.toHaveBeenCalled();
   });
 
   it('D1 ouverte, drapeau allumé, AI_MODE=off : « off / ai_mode »', async () => {
@@ -100,7 +111,6 @@ describe('extractBrief — les gardes, dans l\'ordre', () => {
     const out = await extractBrief(input(), { call, env: { ...ON, AI_MODE: 'off' }, allowed: true });
     expect(out).toEqual({ status: 'off', reason: 'ai_mode' });
     expect(call).not.toHaveBeenCalled();
-    expect(quota).not.toHaveBeenCalled();
   });
 
   it('les gardes passent dans l\'ordre : D1 avant le drapeau, le drapeau avant AI_MODE', async () => {
@@ -109,24 +119,23 @@ describe('extractBrief — les gardes, dans l\'ordre', () => {
     expect(await extractBrief(input(), { call, env: { AI_MODE: 'off' }, allowed: true })).toMatchObject({ reason: 'flag' });
   });
 
-  it('tout ouvert : appelle le modèle, compte le quota « fast » de la personne, rend « ok »', async () => {
+  it('tout ouvert : appelle le modèle (avec l\'identifiant, pour le quota compté par askAI), rend « ok »', async () => {
     const call = vi.fn(async () => ({ qui: { personnes: leaf(2, 'à deux') } }));
     const out = await extractBrief(input(), { call, env: ON, allowed: true });
     expect(out.status).toBe('ok');
     if (out.status !== 'ok') return;
     expect(out.cached).toBe(false);
     expect(val(out.result, 'qui.personnes').value).toBe(2);
-    expect(quota).toHaveBeenCalledTimes(1);
-    expect(quota.mock.calls[0].slice(0, 3)).toEqual([USER, 'fast', 'compas-brief']);
     expect(call).toHaveBeenCalledTimes(1);
+    expect((call.mock.calls[0] as unknown[])[3]).toBe(USER);
   });
 
-  it('phrase vide : « ok » sans appel ni quota', async () => {
+  it('phrase vide : « ok » sans appel (donc sans quota)', async () => {
     const call = vi.fn(async () => ({}));
     const out = await extractBrief(input('   '), { call, env: ON, allowed: true });
     expect(out.status).toBe('ok');
     expect(call).not.toHaveBeenCalled();
-    expect(quota).not.toHaveBeenCalled();
+    expect(ask).not.toHaveBeenCalled();
   });
 });
 
@@ -138,7 +147,6 @@ describe('extractBrief — cache, quota, délai, erreurs', () => {
     expect(a).toMatchObject({ status: 'ok', cached: false });
     expect(b).toMatchObject({ status: 'ok', cached: true });
     expect(call).toHaveBeenCalledTimes(1);
-    expect(quota).toHaveBeenCalledTimes(1); // un hit ne consomme pas de quota
     if (a.status === 'ok' && b.status === 'ok') expect(b.result).toEqual(a.result);
   });
 
@@ -187,18 +195,28 @@ describe('extractBrief — cache, quota, délai, erreurs', () => {
     expect(call).toHaveBeenCalledTimes(2);
   });
 
-  it('quota refusé : « failed / quota », le modèle n\'est pas appelé', async () => {
-    quota.mockResolvedValue(false);
-    const call = vi.fn(async () => ({}));
-    expect(await extractBrief(input(), { call, env: ON, allowed: true })).toEqual({ status: 'failed', reason: 'quota' });
-    expect(call).not.toHaveBeenCalled();
+  const UUID = '123e4567-e89b-42d3-a456-426614174000';
+
+  it('appel par défaut : fonction « compas-brief », palier fast, cache 0, identifiant transmis (un seul décompte, par askAI)', async () => {
+    ask.mockResolvedValue(okResponse(JSON.stringify({ qui: { personnes: leaf(2, 'à deux') } })));
+    const out = await extractBrief(input(FR, { userId: UUID }), { env: { ...ON, AI_MODE: 'on' } });
+    expect(out).toMatchObject({ status: 'ok', cached: false });
+    expect(ask).toHaveBeenCalledTimes(1);
+    expect(ask.mock.calls[0][0]).toMatchObject({ feature: 'compas-brief', tier: 'fast', cacheTtlSeconds: 0, userId: UUID, json: true });
   });
 
-  it('compteur de quota en exception : refus (« failed / quota »), jamais d\'appel', async () => {
-    quota.mockRejectedValue(new Error('boom'));
-    const call = vi.fn(async () => ({}));
-    expect(await extractBrief(input(), { call, env: ON, allowed: true })).toEqual({ status: 'failed', reason: 'quota' });
-    expect(call).not.toHaveBeenCalled();
+  it('appel par défaut : quota épuisé ou compteur illisible → « failed / quota » ; délai → « timeout » ; repli → « error »', async () => {
+    const env = { ...ON, AI_MODE: 'on' };
+    for (const [reason, expected] of [
+      ['quota_epuise', 'quota'],
+      ['compteur_illisible', 'quota'],
+      ['delai_depasse', 'timeout'],
+      ['provider_indisponible', 'error'],
+    ] as const) {
+      clearBriefCache();
+      ask.mockResolvedValueOnce(failResponse(reason));
+      expect(await extractBrief(input(FR, { userId: UUID }), { env })).toEqual({ status: 'failed', reason: expected });
+    }
   });
 
   it('délai de 8 s dépassé : « failed / timeout », l\'appel est annulé par son signal', async () => {
@@ -234,6 +252,7 @@ describe('extractBrief — cache, quota, délai, erreurs', () => {
     await extractBrief(input(phrase), { call, env: { ...ON, AI_MODE: 'off' }, allowed: true });
     const all = lines.join('\n');
     expect(lines.length).toBeGreaterThan(0);
+    expect(ask).not.toHaveBeenCalled();
     expect(all).toMatch(/status=ok/);
     for (const secret of ['Annecy', 'Zoé', 'randonnée', phrase, USER]) expect(all.toLowerCase()).not.toContain(secret.toLowerCase());
   });

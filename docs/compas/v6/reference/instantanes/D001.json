@@ -1,0 +1,250 @@
+{
+ "demande": "D001",
+ "banc": {
+  "at": "2026-11-10T17:02:00.000Z",
+  "seconds": 60,
+  "prepSeconds": 51,
+  "outcome": "Ton aventure est prête",
+  "error": null
+ },
+ "trip": {
+  "id": "b77c4fcc-f631-4262-920b-af9abf212068",
+  "title": "Randonnée · Cinque Terre",
+  "destination_name": "Cinque Terre",
+  "destination_country_code": "IT",
+  "start_date": "2027-04-24",
+  "end_date": "2027-04-25",
+  "party_size": 2,
+  "primary_activity": "hiking",
+  "estimated_budget": 367,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": {
+     "lat": 44.12221,
+     "lon": 9.71325,
+     "kind": "other",
+     "name": "Cinque Terre",
+     "extent": null,
+     "osmTag": "place=region",
+     "country": "Italie",
+     "countryCode": "IT"
+    },
+    "planned_days": null,
+    "duration_h": null,
+    "prefs": null,
+    "origin": null,
+    "autofill": {
+     "runId": "r",
+     "undone": false,
+     "at": "2026-11-10T17:02:38.356Z",
+     "notes": [
+      "Papiers : conditions d’entrée (Italie) à vérifier auprès du service officiel de ton pays avant de partir.",
+      "Itinéraire en boucle construit sur des lieux réels de la carte (2 lieux où dormir).",
+      "Matériel conseillé non compté au budget : 147 € à la boutique si tu ne l’as pas (facultatif).",
+      "Suggestion de l’IA (facultatif) : prévois des gants thermiques coupe-vent pour affronter les bourrasques marines et le vent sur les sentiers côtiers.",
+      "Suggestion de l’IA (facultatif) : pense à vérifier l'état de tes gommes de randonnée avant le départ, les sentiers de Cinque Terre peuvent être glissants et escarpés.",
+      "Suggestion de l’IA (facultatif) : n'oublie pas ta crème solaire haute protection SPF 50+ : l'exposition au soleil est forte sur les falaises sans beaucoup d'ombre."
+     ],
+     "papers": {
+      "abroad": true,
+      "country": "Italie",
+      "abroadFrom": "gps",
+      "countryCode": "IT"
+     },
+     "basis": {
+      "days": 2,
+      "pace": null,
+      "hours": null,
+      "level": null,
+      "month": 4,
+      "party": 2,
+      "nights": null,
+      "origin": null,
+      "carFree": null,
+      "terrain": null,
+      "activity": "hiking",
+      "autonomy": null,
+      "priority": null,
+      "targetKm": null,
+      "destination": "Cinque Terre@44.12,9.71",
+      "outdoorNights": null
+     },
+     "engine": []
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "day_number": 1,
+   "title": "Jour 1 · Pignone",
+   "description": "Départ de Corniglia.",
+   "latitude": 44.1778,
+   "longitude": 9.72327,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 2,
+   "title": "Jour 2 · Corniglia",
+   "description": null,
+   "latitude": 44.1199,
+   "longitude": 9.70805,
+   "distance_km": 11.3,
+   "elevation_gain_m": 670,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  }
+ ],
+ "items": [
+  {
+   "item_name": "Trousse de premiers secours complète",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": "f56a5199-7b77-45e9-9697-1b7f082e4902",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Sifflet de survie et détresse",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "f767e762-d417-48c2-909d-eea829081a65"
+  },
+  {
+   "item_name": "Lampe frontale LED haute autonomie",
+   "category": "tech",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "0ce62ae3-6398-48d4-be3a-de2ff265c26f"
+  },
+  {
+   "item_name": "Kit de réparation multi-usage",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "95c582ab-05ef-4d72-aa9b-9291c2ec35df"
+  },
+  {
+   "item_name": "Gants thermiques coupe-vent",
+   "category": "clothing",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Crème solaire haute protection SPF 50+",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "a30a619b-5f1e-48f9-8439-d396c4a84f46"
+  },
+  {
+   "item_name": "Gourde isotherme / Thermos en acier inoxydable",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "b6034a5b-301c-4dda-bce4-e13969bc013c",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Bouteille d’eau légère de randonnée",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "d403c58a-cf66-4346-9f14-33ecc31f9701"
+  },
+  {
+   "item_name": "Couteau pliant multifonction en inox",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "72a3d504-7b6b-4501-87d0-427a51114b90"
+  },
+  {
+   "item_name": "Batterie externe étanche Power Bank",
+   "category": "tech",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "846f5f27-9f48-4492-a917-99768934eba5",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Sac à dos technique de randonnée",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "e137cfe3-ff6e-4a73-a6a7-d6ea415b9739",
+   "shop_product_id": null
+  }
+ ],
+ "expenses": [
+  {
+   "title": "1 nuit(s) en hébergement",
+   "amount": 86,
+   "currency": "EUR",
+   "category": "hébergement",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Italie 95 (France = 100) · chambre partagée à deux · vrais prix dans Résa · Nuits",
+    "source": "estimation",
+    "autofill": "c1902f28-6b16-4c19-a560-7b03898a1952"
+   }
+  },
+  {
+   "title": "Carburant aller-retour (972.4 km)",
+   "amount": 135,
+   "currency": "EUR",
+   "category": "transport",
+   "is_planned": true,
+   "metadata": {
+    "basis": "itinéraire routier mesuré · 6,5 L/100 km · Euro-super 95, moyenne des pays du trajet : FR 2,21 €/L, IT 2,07 €/L (bulletin pétrolier de l’UE du 5 octobre 2026) · 1 voiture · péages non comptés (le trajet mesuré ne donne pas ses km d’autoroute à péage ; Italie : 7,9 c€/km TTC en plaine et 9,3 c€/km TTC en montagne sur le réseau Autostrade per l’Italia (classe A, tarifs du 1er janvier 2026, TVA comprise, source : l’opérateur) ; le réseau Autostrade per l’Italia seulement : chaque autre concessionnaire a son propre tarif au km, non lu)",
+    "source": "mesure",
+    "autofill": "c1902f28-6b16-4c19-a560-7b03898a1952"
+   }
+  },
+  {
+   "title": "Repas · 2 jour(s) × 2",
+   "amount": 86,
+   "currency": "EUR",
+   "category": "nourriture",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Italie 95 (France = 100) · selon la nuit (bivouac, refuge, hébergement) · repas en autonomie (bivouac, journée) : alimentation : Italie 96 (France = 100) · ICP 2021, Banque mondiale, lu le 12 octobre 2026",
+    "source": "estimation",
+    "autofill": "c1902f28-6b16-4c19-a560-7b03898a1952"
+   }
+  },
+  {
+   "title": "Assurance voyage et rapatriement",
+   "amount": 60,
+   "currency": "EUR",
+   "category": "divers",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · forfait par jour",
+    "source": "estimation",
+    "autofill": "c1902f28-6b16-4c19-a560-7b03898a1952"
+   }
+  }
+ ]
+}
