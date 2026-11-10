@@ -5,7 +5,8 @@ import type { CarnetDetail, CarnetMomentItem } from '@/features/carnet/detail/ty
 import type { CarnetHighlight } from '@/features/carnet/detail/highlights';
 import { isParticipantRole } from '@/features/carnet/detail/viewerRole';
 import { CarnetDaySwipeView } from './CarnetDaySwipeView';
-import { Check, ChevronRight, Flag, Radio } from 'lucide-react';
+import { BookOpen, Check, ChevronRight, Flag, Radio } from 'lucide-react';
+import { CarnetArt } from './CarnetArt';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 /** Appui long d'une pastille « À la une » : édition (maquette, 500 ms). */
@@ -72,20 +73,44 @@ export function CarnetCardV2({
 
   const daysCount = detail.days.length || detail.etapes.length || 1;
   const daysLabel = `${daysCount} ${daysCount > 1 ? 'jours' : 'jour'}`;
-  const distanceFormatted = detail.distanceKm ? `${Math.round(detail.distanceKm)}` : '—';
-  const elevationFormatted = detail.elevationM ? `+${Math.round(detail.elevationM)}` : '—';
+  const distanceFormatted = detail.distanceKm
+    ? detail.distanceKm.toLocaleString('fr-FR', { maximumFractionDigits: 1 })
+    : '—';
+  const elevationFormatted = detail.elevationM
+    ? `+${Math.round(detail.elevationM).toLocaleString('fr-FR')}`
+    : '—';
+  const travellers = Math.max(1, detail.participants.length);
+  /* « lieu de départ · mois année · n voyageurs » (spec § 1.2). */
+  const subtitle = [
+    detail.place.locality ?? detail.destination,
+    detail.startDate
+      ? new Date(`${detail.startDate}T12:00:00Z`).toLocaleDateString('fr-FR', {
+          month: 'short',
+          year: 'numeric',
+          timeZone: 'UTC',
+        })
+      : null,
+    `${travellers} voyageur${travellers > 1 ? 's' : ''}`,
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
   /**
    * Statut réel du carnet : la date décide, pas une étiquette décorative.
    * Aucune date inventée ; sans dates, pas de pilule de statut.
    */
   const liveStatus = useMemo(() => {
-    if (!detail.liveSharing) return null;
     const start = detail.startDate ? new Date(`${detail.startDate}T12:00:00`) : null;
     const end = detail.endDate ? new Date(`${detail.endDate}T12:00:00`) : null;
     if (!start || Number.isNaN(start.getTime())) return null;
     const now = new Date();
     const dayMs = 86_400_000;
+    if (!detail.liveSharing) {
+      /* Sans partage en direct : « Terminé » seulement si la date de fin est passée. */
+      return end && !Number.isNaN(end.getTime()) && now > end
+        ? { state: 'done' as const, label: `Terminé · ${daysLabel}` }
+        : null;
+    }
     if (now < start) {
       return {
         state: 'upcoming' as const,
@@ -121,7 +146,9 @@ export function CarnetCardV2({
               {detail.coverImage ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={detail.coverImage} alt={detail.title} loading="lazy" decoding="async" />
-              ) : null}
+              ) : (
+                <CarnetArt className="lkdv-ig-avi-art" />
+              )}
             </span>
             <span className="seal" aria-hidden="true">
               <Check size={11} strokeWidth={2.5} />
@@ -165,7 +192,7 @@ export function CarnetCardV2({
               aria-label={`${elevationFormatted} mètres de dénivelé positif`}
             >
               <b>{elevationFormatted}</b>
-              <span>D+ m</span>
+              <span>D+</span>
             </button>
           </div>
         </div>
@@ -173,13 +200,7 @@ export function CarnetCardV2({
         <div className="lkdv-ig-bio">
           <span className="lkdv-ig-name">{detail.title}</span>
           <span className="lkdv-ig-handle-sub">
-            {[
-              detail.destination,
-              detail.dateRange,
-              detail.author ? `par ${detail.author.name}` : null,
-            ]
-              .filter(Boolean)
-              .join(' · ')}
+            {subtitle}
           </span>
         </div>
 
@@ -224,8 +245,8 @@ export function CarnetCardV2({
                 onOpenDrawerSlot('fil');
               }}
             >
+              <BookOpen size={15} aria-hidden="true" />
               <span>Ouvrir le carnet</span>
-              <ChevronRight size={15} aria-hidden="true" />
             </button>
           )}
         </div>

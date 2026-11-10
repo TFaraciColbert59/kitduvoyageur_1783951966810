@@ -242,7 +242,7 @@ describe('CarnetScreenV2 Component', () => {
 
     expect(screen.getByText(/^jours?$/)).toBeTruthy();
     expect(screen.getByText('km')).toBeTruthy();
-    expect(screen.getByText('D+ m')).toBeTruthy();
+    expect(screen.getByText('D+')).toBeTruthy();
   });
 
   it('affiche la pilule de titre et permet d’ouvrir le menu déroulant', () => {

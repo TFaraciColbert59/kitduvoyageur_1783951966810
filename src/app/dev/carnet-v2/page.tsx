@@ -9,7 +9,7 @@ import { CarnetV2Lab } from './CarnetV2Lab';
  * comparées à la maquette dans le même état. Introuvable hors `next dev` (même garde que
  * `/dev/compas`, testée dans `labPolicy.test.ts`).
  *
- * Paramètres : `role=participant|visitor`, `vide=1`, `jour=0..4`, `tiroir=fil|route|sac|chiffres|equipage`.
+ * Paramètres : `role=participant|visitor`, `vide=1`, `erreur=slot|volet`, `jour=0..4`, `tiroir=fil|route|sac|chiffres|equipage`.
  */
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
@@ -18,11 +18,19 @@ export const metadata: Metadata = {
 };
 
 interface Props {
-  searchParams: Promise<{ role?: string; vide?: string }>;
+  searchParams: Promise<{ role?: string; vide?: string; erreur?: string }>;
 }
 
 export default async function CarnetV2LabPage({ searchParams }: Props) {
   if (!canOpenCompasLab(process.env.NODE_ENV)) notFound();
   const params = await searchParams;
-  return <CarnetV2Lab role={params.role === 'visitor' ? 'visitor' : 'participant'} empty={params.vide === '1'} />;
+  return (
+    <CarnetV2Lab
+      role={params.role === 'visitor' ? 'visitor' : 'participant'}
+      empty={params.vide === '1'}
+      simulate={
+        params.erreur === 'slot' ? { slot: true } : params.erreur === 'volet' ? { lens: 'fil:moments' } : null
+      }
+    />
+  );
 }

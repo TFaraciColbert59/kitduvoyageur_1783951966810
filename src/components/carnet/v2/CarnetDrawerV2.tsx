@@ -49,6 +49,7 @@ import { useCarnetDayReactions } from '@/features/carnet/detail/useCarnetDayReac
 import { useKitFork } from '@/features/carnet/detail/useKitFork';
 import { useCarnetDialog } from './useCarnetDialog';
 import { CarnetPostGrid } from './CarnetPostGrid';
+import { CarnetArt } from './CarnetArt';
 import { MOMENT_TYPE_LABELS, isMomentType, type MomentType } from '@/features/carnet/detail/momentTypes';
 import { dayMetric, resolveDayStats, selectDayData } from '@/features/carnet/detail/dayView';
 import { isParticipantRole } from '@/features/carnet/detail/viewerRole';
@@ -836,7 +837,9 @@ export function CarnetDrawerV2({
                       {image ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={image} alt="" loading="lazy" decoding="async" />
-                      ) : null}
+                      ) : (
+                        <CarnetArt className="lkdv-postcard-art" />
+                      )}
                       <span className="lkdv-postcard-stamp">
                         <b>J{n}</b>
                         {date ? <span>{date}</span> : null}
@@ -1332,9 +1335,13 @@ export function CarnetDrawerV2({
                     textAlign: 'center',
                   }}
                 >
-                  <b style={{ fontSize: '13px' }}>Aucun verdict pour ce carnet.</b>
+                  <b style={{ fontSize: '13px' }}>
+                    {verdictsList.length > 0 ? 'Aucun objet pour ce verdict.' : 'Aucun verdict pour ce carnet.'}
+                  </b>
                   <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--label2)' }}>
-                    Les verdicts se remplissent depuis le terrain, après les sorties.
+                    {verdictsList.length > 0
+                      ? 'Touche « Tous » pour revoir les autres.'
+                      : 'Les verdicts se remplissent depuis le terrain, après les sorties.'}
                   </p>
                 </div>
               ) : null}

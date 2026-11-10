@@ -1126,6 +1126,9 @@
 /* Fiche carnet : tiroir ouvert = carte en « mode contexte » (maquette
    `.mapzone[data-map-context] .map`), contrôles masqués (`.sheet-open .mctl`).
    Sans transition de filtre : on n'anime que transform et opacity. */
+.lkdv-map-root[data-map-variant='carnet'] .lkdv-map-canvas {
+  transition: none;
+}
 .lkdv-map-root[data-map-variant='carnet'][data-map-context='true'] .lkdv-map-canvas {
   filter: saturate(0.6) brightness(0.97);
 }

@@ -10,6 +10,7 @@ import type {
   CarnetNightItem,
 } from '@/features/carnet/detail/types';
 import { CarnetPostGrid } from './CarnetPostGrid';
+import { CarnetArt } from './CarnetArt';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { formatDayLabel, formatDuration, formatElevation, formatKm } from '@/features/carnet/detail/format';
 import styles from './CarnetDaySwipeView.module.css';
@@ -242,7 +243,7 @@ export function CarnetDaySwipeView({
       fullLabel: 'Résumé de tout le carnet',
     },
     ...dayViews.map((day) => ({
-      label: `J${day.dayNumber}`,
+      label: String(day.dayNumber),
       value: day.dayNumber,
       fullLabel: `Jour ${day.dayNumber}`,
     })),
@@ -341,7 +342,9 @@ export function CarnetDaySwipeView({
                           loading="lazy"
                           decoding="async"
                         />
-                      ) : null}
+                      ) : (
+                        <CarnetArt className={cx(styles.voyageImage)} />
+                      )}
                       <span className={cx(styles.voyagePillDay)}>
                         {dateLabel ? `J${number} · ${dateLabel}` : `J${number}`}
                       </span>
@@ -394,7 +397,7 @@ export function CarnetDaySwipeView({
                 role="tablist"
                 aria-label="Jour affiché"
                 aria-orientation="horizontal"
-                style={{ width: `${dayOptions.length * 36 + 6}px` }}
+                style={{ width: `${dayOptions.length * 35}px` }}
                 onKeyDown={(event) => {
                   const tabs = Array.from(
                     event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]')
@@ -415,8 +418,8 @@ export function CarnetDaySwipeView({
                 <span
                   className="lkdv-day-capsule-lens"
                   style={{
-                    width: `${(dayOptions.length * 36) / dayOptions.length}px`,
-                    transform: `translateX(${activeDay * 36}px)`,
+                    width: `calc((100% - 5px) / ${dayOptions.length})`,
+                    transform: `translateX(${activeDay * 100}%)`,
                   }}
                 />
                 {dayOptions.map((opt) => {

@@ -44,6 +44,19 @@
   --ga: 0.19;
   --gb: 7px;
   --la: 140deg;
+  /* Verre de barre (maquette `--bar-glass-*`) : pastille titre, boutons ronds, capsule de jours. */
+  --bar-glass-bg: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, calc(var(--ga) + 0.3)),
+    rgba(255, 255, 255, calc(var(--ga) + 0.14)) 55%,
+    rgba(255, 255, 255, calc(var(--ga) + 0.22))
+  );
+  --bar-glass-blur: blur(var(--gb)) saturate(1.9) brightness(1.07);
+  --bar-glass-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9), inset 0 -1px 1px rgba(255, 255, 255, 0.45),
+    inset 1px 0 1px rgba(255, 255, 255, 0.28), inset -1px 0 1px rgba(255, 255, 255, 0.28),
+    inset 0 0 12px rgba(255, 255, 255, 0.14), 0 0 0 0.5px rgba(23, 43, 36, 0.14),
+    0 8px 22px rgba(23, 43, 36, 0.12);
 }
 
 .lkdv-carnet-v2-root.mapbig {
@@ -191,9 +204,9 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   flex: none;
   color: var(--tint, #17402c);
   position: relative;
-  background: rgba(255, 255, 255, 0.65);
-  -webkit-backdrop-filter: blur(8px) saturate(1.8);
-  backdrop-filter: blur(8px) saturate(1.8);
+  background: rgba(255, 255, 255, 0.5);
+  -webkit-backdrop-filter: blur(4px) saturate(1.9) brightness(1.07);
+  backdrop-filter: blur(4px) saturate(1.9) brightness(1.07);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.9),
     0 2px 8px rgba(23, 43, 36, 0.08);
@@ -503,12 +516,12 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
 .lkdv-ig-live,
 .lkdv-ig-open {
   height: 30px;
-  padding: 0 12px;
+  padding: 0 13px;
   border-radius: 9999px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font: 600 12px var(--font-sans, sans-serif);
+  font: 600 12.5px var(--font-sans, sans-serif);
   color: var(--tint, #17402c);
   white-space: nowrap;
 }
@@ -1523,10 +1536,11 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   position: absolute;
   left: 12px;
   right: 12px;
-  top: 48px;
+  /* Même boîte que la carte du haut (maquette : la feuille recouvre `#card`) :
+     haut = safe-area + 10 + barre 36 + 5, bas = fin de la rangée haute. */
+  top: calc(var(--safe-area-top, 0px) + 51px);
+  bottom: calc(31% + 52px);
   z-index: 20;
-  height: 56dvh;
-  max-height: calc(100% - 48px);
   border-radius: 24px;
   overflow: hidden;
   display: flex;
@@ -2154,11 +2168,18 @@ body.lkdv-overlay-open .lkdv-floating-tabbar {
   gap: 8px !important;
 }
 .lkdv-carnet-v2-root .lkdv-carnet-drawer .lkdv-slot-shell > .lkdv-slot-topnav {
+  height: 56px !important;
+  min-height: 0 !important;
+  margin: 0 !important;
   padding: 0 14px !important;
   width: 100% !important;
   box-sizing: border-box !important;
 }
 .lkdv-carnet-v2-root .lkdv-carnet-drawer .lkdv-slot-topnav .lkdv-capsule {
+  margin: 0 !important;
+  align-self: flex-start !important;
+  position: relative !important;
+  top: 0 !important;
   width: 100% !important;
   height: 56px !important;
   padding: 4px !important;
@@ -2176,10 +2197,11 @@ body.lkdv-overlay-open .lkdv-floating-tabbar {
   bottom: 4px !important;
   height: auto !important;
 }
-.lkdv-carnet-v2-root .lkdv-carnet-drawer .lkdv-slot-shell > .lkdv-lens-tabs {
+.lkdv-carnet-v2-root .lkdv-carnet-drawer .lkdv-slot-shell > .lkdv-lens-tabs:not(#lkdv-tabbar-glass) {
   width: calc(var(--n, 4) * 44px + 5px) !important;
   max-width: none !important;
-  background: linear-gradient(
+  background-color: rgba(255, 255, 255, 0.65) !important;
+  background-image: linear-gradient(
     180deg,
     rgba(255, 255, 255, 0.72),
     rgba(255, 255, 255, 0.42) 55%,
@@ -2267,4 +2289,13 @@ body.lkdv-overlay-open .lkdv-floating-tabbar {
   gap: 8px;
   font: 500 10.5px var(--font-mono, ui-monospace, monospace);
   color: var(--label2);
+}
+
+.lkdv-ig-avi-art,
+.lkdv-postcard-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
 }
