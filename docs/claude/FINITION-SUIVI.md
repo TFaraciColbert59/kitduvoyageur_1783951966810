@@ -118,6 +118,9 @@ Galerie côte à côte (app | maquette | carte de diff) : `tests/fidelity/out/ga
 | Date | Lot | Résultat | Preuve |
 | --- | --- | --- | --- |
 | 2026-11-09 | État des lieux | Communauté : 161 fait / 23 partiel / 13 reporté / 3 non fait (COUVERTURE-200), 2 bloqués J-08 ; Carnet : checklist 40 [x] / 5 [~] / 8 [ ], 3 failles RLS ouvertes | rapports scout, prompt §4 |
+| 2026-11-10 | Carnet, passe 1 (46be4dc…17e180a) | Résumé 41,5 → 30,3 % px (mesures 48→64/69) ; J1 31,9 → 31,2 % (44→60/65) ; tiroirs 41–53 → 13–38 % (16→31/31) ; checklist l.27/36/38/61/63/76/78 faites, l.29/71/77 partielles | tsc 0, vitest carnet/compte 620/620, e2e finition 14/14, next build vert |
+| 2026-11-10 | Sécurité carnet (a01454f, 8d082ad) | Auto-inscription, moments chez autrui, sortie d'intrus : fermés | pgTAP local 12/12 + 15/15, relecture architect, rollback rejouable ; non appliqué en production (pas d'accès) |
+| 2026-11-10 | Migration moment_type (20261109100001) | Additive (2 colonnes + contraintes) | pgTAP local 8/8, rollback ×2, réapplication ×2 ; non appliquée en production |
 | 2026-11-09 | Carnet · lot finition (branche `worktree-agent-af359c35138b559f1`) | Résumé 41,5 → 30,3 % de pixels (mesures 48/69 → 64/69), les 5 tiroirs 41–53 → 13–38 % (mesures 16/31 → 31/31), 390×844 et 430×932 clair ; 620 tests Vitest, 14/14 e2e `carnet-v2-finition`, `tsc` 0, ESLint 0 erreur, `next build` vert. Pas sous 2 % : illustration de la maquette contre le jeu du banc, anticrénelage, carte | `tests/fidelity/out/`, `docs/audit/carnet-v2-2026-11-09/captures/`, `handoff/carnet-v2/CHECKLIST-100.md` |
 
 ## Décisions ouvertes (Tony)
