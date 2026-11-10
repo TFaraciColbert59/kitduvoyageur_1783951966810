@@ -64,6 +64,8 @@ import {
   saveNightAction,
   saveStepAction,
   saveVerdictAction,
+  deleteCarnetAction,
+  updateCarnetSettingsAction,
   updateMomentAction,
   updateTravelerAction,
 } from '../editActions';
@@ -264,5 +266,34 @@ describe('updateMomentAction', () => {
     const update = state.calls.find((c) => c.op === 'update');
     expect(update?.payload).toEqual({ lieu: 'Col', citation: 'Brume' });
     expect(update?.filters).toContainEqual(['eq:carnet_id', CARNET]);
+  });
+});
+
+describe('réglages du carnet', () => {
+  it('n’écrit que les colonnes fournies, valide la longueur de la description', async () => {
+    state.responses['carnets.update'] = { data: [{ id: CARNET }] };
+    const ok = await updateCarnetSettingsAction({ carnetId: CARNET, visibility: 'private', liveSharing: true });
+    expect(ok).toMatchObject({ ok: true, changes: { visibility: 'private', live_sharing: true } });
+    const update = state.calls.find((c) => c.op === 'update');
+    expect(update?.payload).toEqual({ visibility: 'private', live_sharing: true });
+    expect(
+      await updateCarnetSettingsAction({ carnetId: CARNET, description: 'x'.repeat(161) })
+    ).toEqual({ ok: false, error: 'La description tient en 160 caractères.' });
+    expect(await updateCarnetSettingsAction({ carnetId: CARNET })).toEqual({
+      ok: false,
+      error: 'Rien à enregistrer.',
+    });
+  });
+
+  it('dit que seul l’auteur modifie ou supprime quand la RLS renvoie 0 ligne', async () => {
+    state.responses['carnets.update'] = { data: [] };
+    expect(await updateCarnetSettingsAction({ carnetId: CARNET, title: 'Nouveau' })).toMatchObject({
+      ok: false,
+      error: 'Seul l’auteur du carnet peut changer ses réglages.',
+    });
+    state.responses['carnets.delete'] = { data: [] };
+    expect(await deleteCarnetAction({ carnetId: CARNET })).toMatchObject({ ok: false });
+    state.responses['carnets.delete'] = { data: [{ id: CARNET }] };
+    expect(await deleteCarnetAction({ carnetId: CARNET })).toEqual({ ok: true });
   });
 });

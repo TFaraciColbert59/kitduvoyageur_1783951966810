@@ -480,7 +480,11 @@ export function VerdictList({
   onFilter: (next: 'all' | KitVerdictType) => void;
   onOpen: (item: CarnetKitItemRow) => void;
 }) {
-  const shown = filter === 'all' ? VERDICT_ORDER : VERDICT_ORDER.filter((k) => k === filter);
+  const known = VERDICT_ORDER as readonly string[];
+  /* Un verdict hors liste (donnée ancienne) reste visible, sous son libellé brut. */
+  const extra = [...new Set(items.map((x) => x.verdict).filter((v): v is KitVerdictType => Boolean(v) && !known.includes(v as string)))];
+  const shown: string[] =
+    filter === 'all' ? [...VERDICT_ORDER, ...extra] : [...VERDICT_ORDER, ...extra].filter((k) => k === filter);
   return (
     <>
       <div className="lkdv-vpills" role="group" aria-label="Filtrer par verdict">
@@ -507,7 +511,9 @@ export function VerdictList({
         return (
           <section className="lkdv-cat" key={k}>
             <header>
-              <span className={`lkdv-v lkdv-v-${k}`}>{VERDICT_LABELS[k]}</span>
+              <span className={`lkdv-v lkdv-v-${k}`}>
+                {(VERDICT_LABELS as Record<string, string>)[k] ?? k}
+              </span>
             </header>
             {list.map((x) => (
               <button key={x.id} type="button" className="lkdv-litem" onClick={() => onOpen(x)}>

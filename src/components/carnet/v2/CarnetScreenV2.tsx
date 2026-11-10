@@ -16,6 +16,7 @@ import { CarnetIsland, type CarnetIslandToast } from './CarnetIsland';
 import { CarnetPeek } from './CarnetPeek';
 import { CarnetCreateSheet } from './CarnetCreateSheet';
 import { CarnetHighlightEditSheet } from './CarnetHighlightEditSheet';
+import { CarnetEditSheet, type CarnetEditTarget } from './CarnetEditSheet';
 import { CarnetAltitude } from './CarnetAltitude';
 import { CarnetMapBadge } from './CarnetMapBadge';
 import { CompteMap } from '@/components/compte/map/CompteMap';
@@ -36,6 +37,7 @@ import { replyToCarnetStory } from '@/lib/stories/carnetReply';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { useCarnetEdits } from '@/features/carnet/detail/useCarnetEdits';
+import { useCarnetStructureEdits } from '@/features/carnet/detail/useCarnetStructureEdits';
 import { useCarnetHighlights, type CarnetHighlight } from '@/features/carnet/detail/highlights';
 import { useFollowAuthor } from '@/features/carnet/detail/useFollowAuthor';
 import { isParticipantRole } from '@/features/carnet/detail/viewerRole';
@@ -45,6 +47,7 @@ import type { StackIntent } from './CarnetDrawerV2';
 
 import '@/styles/tokens.css';
 import '@/styles/carnet-v2.css';
+import '@/styles/carnet-v2-lenses.css';
 import '@/components/compte/compte-apple-hig.css';
 import '@/components/compte/compte-v8.css';
 
@@ -80,6 +83,9 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
   const { isOnline } = useOnlineStatus();
   const [createSheet, setCreateSheet] = useState<{ type: MomentType | null } | null>(null);
   const [hlEdit, setHlEdit] = useState<CarnetHighlight | null>(null);
+  const [editTarget, setEditTarget] = useState<CarnetEditTarget | null>(null);
+  const detailRef = useRef(detail);
+  detailRef.current = detail;
   const [drawerContext, setDrawerContext] = useState<{
     slot: MapContext['slot'];
     lensId: string;
@@ -136,6 +142,7 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
     storiesOpen ||
     reportOpen ||
     createSheet !== null ||
+    editTarget !== null ||
     hlEdit !== null;
 
   /* Les feuilles Radix (post, stories, signalement) ne passent pas par
@@ -255,6 +262,13 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
     onIsland: showIsland,
     onMomentAdded: addMoment,
     onMomentRemoved: removeMomentLocal,
+  });
+
+  const structure = useCarnetStructureEdits({
+    carnetId: detail.id,
+    setDetail,
+    getDetail: () => detailRef.current,
+    onIsland: showIsland,
   });
 
   const follow = useFollowAuthor({
@@ -931,6 +945,21 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
         onDayPick={(day) => setActiveDay(day)}
         intent={drawerIntent}
         forceError={simulate}
+        onEdit={isParticipant ? (target) => setEditTarget(target) : undefined}
+        onSettingsSaved={(changes) =>
+          setDetail((d) => ({
+            ...d,
+            title: typeof changes.title === 'string' ? changes.title : d.title,
+            description:
+              typeof changes.description === 'string' ? changes.description || null : d.description,
+            visibility: typeof changes.visibility === 'string' ? changes.visibility : d.visibility,
+            isPublic:
+              typeof changes.visibility === 'string' ? changes.visibility === 'public' : d.isPublic,
+            liveSharing:
+              typeof changes.live_sharing === 'boolean' ? changes.live_sharing : d.liveSharing,
+          }))
+        }
+        onDeleted={() => router.push('/compte')}
       />
 
       {/* Peek & Pop d'un moment (appui long 460 ms) */}
@@ -1019,6 +1048,18 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
             return edits.createMoment(input, file);
           }}
           onClose={() => setCreateSheet(null)}
+        />
+      ) : null}
+
+      {/* Feuille d'édition : étape, nuit, verdict, voyageur, texte d'un moment */}
+      {editTarget && isParticipant ? (
+        <CarnetEditSheet
+          target={editTarget}
+          detail={detail}
+          edits={structure}
+          canManageTravelers={detail.isOwner}
+          onMomentRemoved={removeMomentLocal}
+          onClose={() => setEditTarget(null)}
         />
       ) : null}
 

@@ -276,6 +276,38 @@ export type MomentUpdateInput = z.infer<typeof MomentUpdateSchema>;
 
 export const MomentDeleteSchema = z.object({ carnetId, id: entityId });
 
+// ── Réglages du carnet (tiroir « Carnet » › Paramètres, Gérer) ────────────
+
+export const CarnetSettingsSchema = z
+  .object({
+    carnetId,
+    title: z.string().trim().min(1, 'Donne un titre au carnet.').max(120, 'Le titre est trop long.').optional(),
+    description: z.string().trim().max(160, 'La description tient en 160 caractères.').optional(),
+    visibility: z.enum(['public', 'private'], { message: 'Choisis public ou privé.' }).optional(),
+    liveSharing: z.boolean().optional(),
+  })
+  .refine(
+    (v) =>
+      v.title !== undefined ||
+      v.description !== undefined ||
+      v.visibility !== undefined ||
+      v.liveSharing !== undefined,
+    { message: 'Rien à enregistrer.' }
+  );
+export type CarnetSettingsInput = z.infer<typeof CarnetSettingsSchema>;
+
+export const CarnetDeleteSchema = z.object({ carnetId });
+
+/** Colonnes `carnets` modifiées : seules les valeurs fournies sont écrites. */
+export function carnetSettingsRow(value: CarnetSettingsInput) {
+  const row: Record<string, string | boolean> = {};
+  if (value.title !== undefined) row.title = value.title;
+  if (value.description !== undefined) row.description = value.description;
+  if (value.visibility !== undefined) row.visibility = value.visibility;
+  if (value.liveSharing !== undefined) row.live_sharing = value.liveSharing;
+  return row;
+}
+
 /** Premier message d'erreur d'un résultat zod, ou un repli neutre. */
 export function firstIssue(error: z.ZodError): string {
   return error.issues[0]?.message ?? 'Saisie invalide.';

@@ -10,6 +10,8 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import {
+  CarnetDeleteSchema,
+  CarnetSettingsSchema,
   MomentDeleteSchema,
   MomentUpdateSchema,
   NightDeleteSchema,
@@ -20,6 +22,7 @@ import {
   TravelerRemoveSchema,
   TravelerUpdateSchema,
   VerdictInputSchema,
+  carnetSettingsRow,
   etapeFromRow,
   firstIssue,
   nightFromRow,
@@ -372,4 +375,49 @@ export async function deleteMomentAction(input: unknown): Promise<ActionResult> 
   if (error) return { ok: false, error: OFFLINE };
   if (!data || data.length === 0) return { ok: false, error: REFUSED };
   return done(carnetId, {});
+}
+
+// ── Carnet (auteur seulement : la RLS `Auth update carnets` l'impose) ──────
+
+export async function updateCarnetSettingsAction(
+  input: unknown
+): Promise<ActionResult<{ changes: Record<string, string | boolean> }>> {
+  const parsed = CarnetSettingsSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: firstIssue(parsed.error) };
+  const value = parsed.data;
+  const ctx = await participantContext(value.carnetId);
+  if (!ctx.ok) return ctx;
+  const changes = carnetSettingsRow(value);
+  const { data, error } = await ctx.supabase
+    .from('carnets')
+    .update(changes)
+    .eq('id', value.carnetId)
+    .select('id');
+  if (error) {
+    return {
+      ok: false,
+      error:
+        error.code === '42703' && 'live_sharing' in changes
+          ? 'Le partage de position n’est pas encore disponible sur ce serveur.'
+          : OFFLINE,
+    };
+  }
+  if (!data || data.length === 0) {
+    return { ok: false, error: 'Seul l’auteur du carnet peut changer ses réglages.' };
+  }
+  return done(value.carnetId, { changes });
+}
+
+export async function deleteCarnetAction(input: unknown): Promise<ActionResult> {
+  const parsed = CarnetDeleteSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: firstIssue(parsed.error) };
+  const { carnetId } = parsed.data;
+  const ctx = await participantContext(carnetId);
+  if (!ctx.ok) return ctx;
+  const { data, error } = await ctx.supabase.from('carnets').delete().eq('id', carnetId).select('id');
+  if (error) return { ok: false, error: OFFLINE };
+  if (!data || data.length === 0) {
+    return { ok: false, error: 'Seul l’auteur du carnet peut le supprimer.' };
+  }
+  return { ok: true };
 }

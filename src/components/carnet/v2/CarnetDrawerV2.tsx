@@ -23,25 +23,17 @@ import {
   Timer,
   Wallet,
   Radio,
-  Share2,
   ChevronLeft,
-  ChevronRight,
-  Download,
   Bookmark,
-  Copy,
-  Check,
   Send,
   Trash2,
 } from 'lucide-react';
 import LikeIcon from '@/components/social-kit/LikeIcon';
-import { SlotShell, type SlotId, type SlotLens } from '@/components/compte/drawer/SlotShell';
+import { SlotShell, type SlotLens } from '@/components/compte/drawer/SlotShell';
 import { CapsuleTabs, type CapsuleTabItem } from '@/components/ui/CapsuleTabs';
 import type {
   CarnetDetail,
-  CarnetEtapeDay,
-  CarnetNightItem,
   CarnetMomentItem,
-  CarnetParticipant,
   KitVerdictType,
 } from '@/features/carnet/detail/types';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
@@ -50,22 +42,30 @@ import { useKitFork } from '@/features/carnet/detail/useKitFork';
 import { useCarnetDialog } from './useCarnetDialog';
 import { CarnetPostGrid } from './CarnetPostGrid';
 import { CarnetArt } from './CarnetArt';
-import { MOMENT_TYPE_LABELS, isMomentType, type MomentType } from '@/features/carnet/detail/momentTypes';
+import type { MomentType } from '@/features/carnet/detail/momentTypes';
 import { dayMetric, resolveDayStats, selectDayData } from '@/features/carnet/detail/dayView';
 import { isParticipantRole } from '@/features/carnet/detail/viewerRole';
 import { CarnetAltitude } from './CarnetAltitude';
+import { CarnetAccountDrawer, NOTIF_PREFS, useNotifPref } from './CarnetAccountDrawer';
+import type { CarnetEditTarget } from './CarnetEditSheet';
+import {
+  CrewCard,
+  EditPill,
+  EtapeRows,
+  KitTiles,
+  MomentCard,
+  NightCards,
+  VerdictList,
+  WeightDonut,
+  momentsOfParticipant,
+  useVoicePlayer,
+} from './CarnetLenses';
+import { EtapeFiche, ItemFiche, NightFiche, ParticipantFiche } from './CarnetFiches';
+import { MOMENT_TYPE_ICONS } from './CarnetMomentTile';
+import { relativeTime } from '@/features/carnet/detail/useCarnetNotifications';
 import { elevationProfileGain } from '@/features/carnet/detail/elevationProfile';
 
 export type CarnetSlotId = 'fil' | 'route' | 'sac' | 'chiffres' | 'equipage';
-
-/** Rôles du carnet : les données serveur sont en anglais, l'interface en français. */
-function roleLabel(role: string): string {
-  if (role === 'author') return 'auteur';
-  if (role === 'collaborator') return 'contributeur';
-  if (role === 'participant') return 'participant';
-  return role;
-}
-
 
 /**
  * Cascade des lignes du tiroir — maquette `.ds-row` (`sheetRowIn`) :
@@ -114,6 +114,11 @@ export interface CarnetDrawerV2Props {
   intent?: { nonce: number; view: StackIntent } | null;
   /** Banc seulement : force l'état d'erreur d'un slot ou d'une lentille. */
   forceError?: { slot?: boolean; lens?: string } | null;
+  /** Ouvre la feuille d'édition (étape, nuit, verdict, voyageur, moment). */
+  onEdit?: (target: CarnetEditTarget) => void;
+  /** Réglages écrits sur `carnets` (tiroir « Carnet ») : l'écran les reporte sur la fiche. */
+  onSettingsSaved?: (changes: Record<string, string | boolean>) => void;
+  onDeleted?: () => void;
 }
 
 export type StackIntent =
@@ -122,16 +127,10 @@ export type StackIntent =
   | { type: 'etape'; etapeId: string };
 
 type StackView =
-  | { type: 'etape'; etape: CarnetEtapeDay }
-  | { type: 'night'; night: CarnetNightItem }
-  | {
-      type: 'item';
-      itemId: string;
-      name: string;
-      weightG: number | null;
-      detailText?: string | null;
-    }
-  | { type: 'participant'; participant: CarnetParticipant };
+  | { type: 'etape'; etapeId: string }
+  | { type: 'night'; nightId: string }
+  | { type: 'item'; itemId: string }
+  | { type: 'participant'; userId: string };
 
 /** « + Ajouter … » du mode modification (maquette `edcap`). */
 function AddCaption({ label, onClick }: { label: string; onClick: () => void }) {
@@ -203,7 +202,6 @@ export function CarnetDrawerV2({
   userId,
   onRequireAuth,
   onSelectMoment,
-  onOpenStories,
   isAccountDrawer = false,
   isEditing = false,
   onCreate,
@@ -212,6 +210,9 @@ export function CarnetDrawerV2({
   onDayPick,
   intent = null,
   forceError = null,
+  onEdit,
+  onSettingsSaved,
+  onDeleted,
 }: CarnetDrawerV2Props) {
   const { haptic } = useHapticFeedback();
   const dayData = useMemo(() => selectDayData(detail, activeDay), [detail, activeDay]);
@@ -226,7 +227,6 @@ export function CarnetDrawerV2({
     chiffres: 0,
     equipage: 0,
   });
-  const [accountTab, setAccountTab] = useState<number>(0);
   const [stack, setStack] = useState<StackView[]>([]);
   const [verdictFilter, setVerdictFilter] = useState<'all' | KitVerdictType>('all');
   const [newCommentText, setNewCommentText] = useState('');
@@ -246,12 +246,15 @@ export function CarnetDrawerV2({
   });
 
   // Kit fork hook
-  const { isForked, forkItem, forkAllItems } = useKitFork({
+  const { isForked, forkAllItems } = useKitFork({
     carnetId: detail.id,
     userId,
     onRequireAuth,
     onIsland,
   });
+
+  const voice = useVoicePlayer(() => onIsland?.('Aucun enregistrement à écouter pour cette note'));
+  const [notifPref, setNotifPref] = useNotifPref(detail.id);
 
   // Focus piégé, Échap, retour de focus, verrou de scroll (socle §7.2).
   const dialogRef = useCarnetDialog(isOpen, onClose);
@@ -334,17 +337,6 @@ export function CarnetDrawerV2({
     };
   }, [detail.viewerRole]);
 
-  // Account / Settings Tabs
-  const accountTabs = useMemo(() => {
-    const isOwner = detail.isOwner;
-    return [
-      { id: 'notif', label: 'Notifications' },
-      { id: 'part', label: 'Partage' },
-      { id: 'param', label: 'Paramètres' },
-      ...(isOwner ? [{ id: 'gerer', label: 'Gérer' }] : []),
-    ];
-  }, [detail.isOwner]);
-
   /* Contexte lu par la carte du bas : slot + lentille actifs (couches réduites). */
   const activeLensId = (slotLenses[activeSlot] ?? [])[activeLensIndex]?.id ?? '';
   useEffect(() => {
@@ -366,12 +358,12 @@ export function CarnetDrawerV2({
       setLensIndexBySlot((prev) => ({ ...prev, [target.slot]: target.index }));
     } else if (intent.view.type === 'participant') {
       const userIdWanted = intent.view.userId;
-      const participant = detail.participants.find((p) => p.userId === userIdWanted);
-      if (participant) setStack([{ type: 'participant', participant }]);
+      if (detail.participants.some((p) => p.userId === userIdWanted)) {
+        setStack([{ type: 'participant', userId: userIdWanted }]);
+      }
     } else {
       const etapeId = intent.view.etapeId;
-      const etape = detail.etapes.find((e) => e.id === etapeId);
-      if (etape) setStack([{ type: 'etape', etape }]);
+      if (detail.etapes.some((e) => e.id === etapeId)) setStack([{ type: 'etape', etapeId }]);
     }
   }, [detail.etapes, detail.participants, intent, isOpen]);
 
@@ -395,12 +387,97 @@ export function CarnetDrawerV2({
     await forkAllItems(kitIds);
   }, [forkAllItems, kitIds, kitSaved, onIsland]);
 
+  const kitPillNode = showKitPill ? (
+    <button
+      type="button"
+      className="lkdv-pill-reprendre"
+      id="kitpill"
+      aria-pressed={kitSaved}
+      aria-label={kitSaved ? 'Kit enregistré dans ton Compas' : 'Reprendre ce kit'}
+      title="Reprendre ce kit"
+      onClick={() => void saveKit()}
+    >
+      <Bookmark size={15} aria-hidden="true" fill={kitSaved ? 'currentColor' : 'none'} />
+      <span>Reprendre</span>
+    </button>
+  ) : null;
+
   if (!isOpen) return null;
 
-  // Render Stack Views (Fiches)
+  // Fiches empilées (étape, nuit, objet, voyageur) : relues depuis `detail` à
+  // chaque rendu, pour refléter une modification faite depuis la fiche.
   const currentStackItem = stack[stack.length - 1];
 
   if (currentStackItem) {
+    const dateOfDay = (day: number): string | null =>
+      detail.days.find((d) => (d.dayNumber ?? d.index) === day)?.date ?? null;
+    let title = '';
+    let body: React.ReactNode = null;
+    if (currentStackItem.type === 'etape') {
+      const etape = detail.etapes.find((e) => e.id === currentStackItem.etapeId);
+      if (etape) {
+        title = [etape.from, etape.to].filter(Boolean).join(' → ') || etape.label;
+        const lastPoint = detail.days.find((d) => (d.dayNumber ?? d.index) === etape.dayNumber)?.points.slice(-1)[0];
+        body = (
+          <EtapeFiche
+            etape={etape}
+            canEdit={canEdit}
+            onShowOnMap={lastPoint ? () => onFocusMap?.(lastPoint.lat, lastPoint.lng, 12) : undefined}
+            onEdit={() => onEdit?.({ kind: 'etape', etape, day: etape.dayNumber })}
+          />
+        );
+      }
+    } else if (currentStackItem.type === 'night') {
+      const night = (detail.nights ?? []).find((n) => n.id === currentStackItem.nightId);
+      if (night) {
+        title = night.name;
+        body = (
+          <NightFiche
+            night={night}
+            date={dateOfDay(night.dayNumber)}
+            canEdit={canEdit}
+            onShowOnMap={
+              night.lat != null && night.lng != null
+                ? () => {
+                    onFocusMap?.(night.lat as number, night.lng as number, 13);
+                    onIsland?.('Caméra centrée sur la nuit');
+                  }
+                : undefined
+            }
+            onEdit={() => onEdit?.({ kind: 'nuit', night, day: night.dayNumber })}
+          />
+        );
+      }
+    } else if (currentStackItem.type === 'item') {
+      const item = detail.kit.items.find((i) => i.id === currentStackItem.itemId);
+      if (item) {
+        title = item.name;
+        body = (
+          <ItemFiche
+            item={item}
+            days={item.joursUtilises ?? []}
+            canEdit={canEdit}
+            onEdit={() => onEdit?.({ kind: 'verdict', itemId: item.id })}
+          />
+        );
+      }
+    } else {
+      const participant = detail.participants.find((p) => p.userId === currentStackItem.userId);
+      if (participant) {
+        title = participant.name || participant.handle || 'Voyageur';
+        body = (
+          <ParticipantFiche
+            detail={detail}
+            participant={participant}
+            canEdit={canEdit}
+            pinnedIds={pinnedIds}
+            onSelectMoment={(m, idx) => onSelectMoment?.(m, idx)}
+            onEdit={() => onEdit?.({ kind: 'voyageur', participant })}
+          />
+        );
+      }
+    }
+
     return (
       <div
         ref={dialogRef}
@@ -415,394 +492,54 @@ export function CarnetDrawerV2({
             <ChevronLeft size={16} />
             <span>Retour</span>
           </button>
-          <b style={{ fontSize: '13.5px', color: 'var(--tint, #17402C)' }}>
-            {currentStackItem.type === 'etape' && (currentStackItem.etape.label || 'Étape')}
-            {currentStackItem.type === 'night' && currentStackItem.night.name}
-            {currentStackItem.type === 'item' && currentStackItem.name}
-            {currentStackItem.type === 'participant' && currentStackItem.participant.name}
-          </b>
+          <b style={{ fontSize: '13.5px', color: 'var(--tint)' }}>{title}</b>
         </div>
-
         <div className="lkdv-stack-body">
-          {currentStackItem.type === 'etape' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  padding: '12px',
-                  borderRadius: '16px',
-                  background: 'var(--drawer-card-bg)',
-                }}
-              >
-                <div>
-                  <small style={{ color: 'var(--label2)' }}>Distance</small>
-                  <p style={{ margin: 0, fontWeight: 700, fontSize: '16px' }}>
-                    {currentStackItem.etape.distanceKm
-                      ? `${currentStackItem.etape.distanceKm} km`
-                      : '—'}
-                  </p>
-                </div>
-                <div>
-                  <small style={{ color: 'var(--label2)' }}>Dénivelé +</small>
-                  <p style={{ margin: 0, fontWeight: 700, fontSize: '16px' }}>
-                    {currentStackItem.etape.elevationM
-                      ? `+${currentStackItem.etape.elevationM} m`
-                      : '—'}
-                  </p>
-                </div>
-                <div>
-                  <small style={{ color: 'var(--label2)' }}>Durée</small>
-                  <p style={{ margin: 0, fontWeight: 700, fontSize: '16px' }}>
-                    {currentStackItem.etape.durationText || '—'}
-                  </p>
-                </div>
-              </div>
-
-              {currentStackItem.etape.note ? (
-                <div
-                  style={{
-                    padding: '12px',
-                    borderRadius: '16px',
-                    background: 'var(--drawer-card-bg)',
-                  }}
-                >
-                  <b>Récit de l’étape</b>
-                  <p style={{ margin: '4px 0 0', fontSize: '13px', lineHeight: 1.4 }}>
-                    {currentStackItem.etape.note}
-                  </p>
-                </div>
-              ) : null}
-            </div>
-          )}
-
-          {currentStackItem.type === 'night' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <div
-                style={{
-                  padding: '12px',
-                  borderRadius: '16px',
-                  background: 'var(--drawer-card-bg)',
-                }}
-              >
-                <b>Type d’hébergement</b>
-                <p style={{ margin: '4px 0 0', textTransform: 'capitalize' }}>
-                  {currentStackItem.night.type}
-                </p>
-                {currentStackItem.night.altitudeM ? (
-                  <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'var(--label2)' }}>
-                    Altitude : {currentStackItem.night.altitudeM} m
-                  </p>
-                ) : null}
-              </div>
-
-              {currentStackItem.night.lat && currentStackItem.night.lng ? (
-                <button
-                  type="button"
-                  style={{
-                    height: '38px',
-                    borderRadius: '9999px',
-                    border: '0',
-                    background: 'var(--tint, #17402C)',
-                    color: '#fff',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '6px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}
-                  onClick={() => {
-                    if (currentStackItem.night.lat && currentStackItem.night.lng) {
-                      onFocusMap?.(currentStackItem.night.lat, currentStackItem.night.lng, 13);
-                      onIsland?.('Caméra centrée sur le bivouac');
-                    }
-                  }}
-                >
-                  <MapPin size={16} />
-                  <span>Localiser sur la carte</span>
-                </button>
-              ) : null}
-            </div>
-          )}
-
-          {currentStackItem.type === 'item' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <div
-                style={{
-                  padding: '12px',
-                  borderRadius: '16px',
-                  background: 'var(--drawer-card-bg)',
-                }}
-              >
-                <b>Poids</b>
-                <p style={{ margin: '4px 0 0', fontWeight: 600 }}>
-                  {currentStackItem.weightG ? `${currentStackItem.weightG} g` : 'Non renseigné'}
-                </p>
-                {currentStackItem.detailText ? (
-                  <p style={{ margin: '6px 0 0', fontSize: '12.5px', color: 'var(--label2)' }}>
-                    {currentStackItem.detailText}
-                  </p>
-                ) : null}
-              </div>
-
-              <button
-                type="button"
-                className="lkdv-pill-reprendre"
-                style={{
-                  position: 'relative',
-                  left: 'auto',
-                  bottom: 'auto',
-                  alignSelf: 'flex-start',
-                }}
-                onClick={() => {
-                  void forkItem(currentStackItem.itemId);
-                }}
-              >
-                <Package size={14} />
-                <span>
-                  {isForked(currentStackItem.itemId) ? 'Dans mon sac' : 'Reprendre dans mon sac'}
-                </span>
-              </button>
-            </div>
-          )}
-
-          {currentStackItem.type === 'participant' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  padding: '12px',
-                  borderRadius: '16px',
-                  background: 'var(--drawer-card-bg)',
-                }}
-              >
-                {currentStackItem.participant.avatarUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={currentStackItem.participant.avatarUrl}
-                    alt=""
-                    style={{
-                      width: '48px',
-                      height: '48px',
-                      borderRadius: '50%',
-                      objectFit: 'cover',
-                    }}
-                  />
-                ) : (
-                  <div
-                    style={{
-                      width: '48px',
-                      height: '48px',
-                      borderRadius: '50%',
-                      background: 'var(--fill)',
-                      display: 'grid',
-                      placeItems: 'center',
-                    }}
-                  >
-                    <Users size={22} />
-                  </div>
-                )}
-                <div>
-                  <b style={{ fontSize: '15px' }}>{currentStackItem.participant.name}</b>
-                  {currentStackItem.participant.role ? (
-                    <p style={{ margin: 0, fontSize: '12px', color: 'var(--label2)' }}>
-                      {roleLabel(currentStackItem.participant.role)}
-                    </p>
-                  ) : null}
-                </div>
-              </div>
-
-              <b style={{ fontSize: '13px', margin: '4px 0 0' }}>Ses moments</b>
-              <CarnetPostGrid
-                moments={detail.moments.filter(
-                  (m) =>
-                    m.authorId === currentStackItem.participant.userId ||
-                    m.authorName === currentStackItem.participant.name
-                )}
-                onSelect={(m, idx) => onSelectMoment?.(m, idx)}
-                emptyLabel="Ce voyageur n’a pas encore partagé de moment."
-                pinnedIds={pinnedIds}
-              />
-            </div>
+          {body ?? (
+            <LensState title="Cet élément n’existe plus." hint="Il a été supprimé ou modifié depuis." />
           )}
         </div>
+        {kitPillNode}
       </div>
     );
   }
 
-  // Render Secondary Account Drawer
+  // Tiroir « Carnet » (bouton curseurs de la barre)
   if (isAccountDrawer) {
     return (
-      <div
-        ref={dialogRef}
-        className="lkdv-stack-sheet"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Paramètres du carnet"
-        tabIndex={-1}
-      >
-        <div className="lkdv-stack-header">
-          <button type="button" className="lkdv-stack-back" onClick={onClose}>
-            <ChevronLeft size={16} />
-            <span>Fermer</span>
-          </button>
-          <b style={{ fontSize: '13.5px', color: 'var(--tint, #17402C)' }}>Carnet</b>
-        </div>
-
-        <div style={{ padding: '8px 12px 0' }}>
-          <div
-            className="lkdv-day-capsule"
-            role="tablist"
-            style={{ width: '100%', justifyContent: 'space-around' }}
-          >
-            {accountTabs.map((tab, idx) => (
-              <button
-                key={tab.id}
-                type="button"
-                role="tab"
-                className="lkdv-day-capsule-btn"
-                aria-selected={accountTab === idx}
-                onClick={() => setAccountTab(idx)}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="lkdv-stack-body">
-          {accountTab === 0 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div
-                style={{
-                  padding: '12px',
-                  borderRadius: '16px',
-                  background: 'var(--drawer-card-bg)',
-                }}
-              >
-                <b>Alertes de progression</b>
-                <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--label2)' }}>
-                  Recevoir une notification lors de chaque publication d’étape.
-                </p>
-              </div>
-            </div>
-          )}
-
-          {accountTab === 1 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div
-                style={{
-                  padding: '12px',
-                  borderRadius: '16px',
-                  background: 'var(--drawer-card-bg)',
-                }}
-              >
-                <b>Lien public</b>
-                <p style={{ margin: '4px 0 8px', fontSize: '12px', color: 'var(--label2)' }}>
-                  Partagez ce carnet d’expédition avec vos proches.
-                </p>
-                <button
-                  type="button"
-                  style={{
-                    height: '32px',
-                    padding: '0 12px',
-                    borderRadius: '9999px',
-                    border: '0',
-                    background: 'var(--tint, #17402C)',
-                    color: '#fff',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    fontSize: '12px',
-                    cursor: 'pointer',
-                  }}
-                  onClick={() => {
-                    if (typeof window !== 'undefined') {
-                      void navigator.clipboard.writeText(window.location.href);
-                      onIsland?.('Lien copié dans le presse-papier');
-                    }
-                  }}
-                >
-                  <Copy size={13} />
-                  <span>Copier le lien</span>
-                </button>
-              </div>
-            </div>
-          )}
-
-          {accountTab === 2 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div
-                style={{
-                  padding: '12px',
-                  borderRadius: '16px',
-                  background: 'var(--drawer-card-bg)',
-                }}
-              >
-                <b>Unités</b>
-                <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--label2)' }}>
-                  Système métrique (km, mètres de dénivelé).
-                </p>
-              </div>
-            </div>
-          )}
-
-          {accountTab === 3 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div
-                style={{
-                  padding: '12px',
-                  borderRadius: '16px',
-                  background: 'var(--drawer-card-bg)',
-                }}
-              >
-                <b>Exportation</b>
-                <p style={{ margin: '4px 0 8px', fontSize: '12px', color: 'var(--label2)' }}>
-                  Téléchargez l’intégralité des données du carnet au format standard JSON.
-                </p>
-                <button
-                  type="button"
-                  style={{
-                    height: '32px',
-                    padding: '0 12px',
-                    borderRadius: '9999px',
-                    border: '0',
-                    background: 'var(--tint, #17402C)',
-                    color: '#fff',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    fontSize: '12px',
-                    cursor: 'pointer',
-                  }}
-                  onClick={() => {
-                    const blob = new Blob([JSON.stringify(detail, null, 2)], {
-                      type: 'application/json',
-                    });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `carnet-${detail.id}.json`;
-                    a.click();
-                    URL.revokeObjectURL(url);
-                    onIsland?.('Carnet exporté en JSON');
-                  }}
-                >
-                  <Download size={13} />
-                  <span>Télécharger le JSON</span>
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+      <CarnetAccountDrawer
+        detail={detail}
+        userId={userId}
+        dialogRef={dialogRef}
+        onClose={onClose}
+        onIsland={onIsland}
+        onRequireAuth={onRequireAuth}
+        onSettingsSaved={(changes) => onSettingsSaved?.(changes)}
+        onDeleted={() => onDeleted?.()}
+      />
     );
   }
 
   // Render Main Slot Content (by Slot and Lens)
+  const dateOfDay = (day: number): string | null => {
+    const iso = detail.days.find((d) => (d.dayNumber ?? d.index) === day)?.date ?? null;
+    return iso
+      ? new Date(`${iso}T12:00:00Z`).toLocaleDateString('fr-FR', {
+          weekday: 'short',
+          day: 'numeric',
+          month: 'short',
+          timeZone: 'UTC',
+        })
+      : null;
+  };
+  const stackWrap: React.CSSProperties = {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px',
+    padding: '6px',
+  };
+  const nextDay = activeDay > 0 ? activeDay : Math.max(1, ...detail.days.map((d) => d.dayNumber ?? d.index)) || 1;
+
   const renderCurrentSlotContent = (lens: SlotLens) => {
     switch (activeSlot) {
       case 'fil':
@@ -864,7 +601,7 @@ export function CarnetDrawerV2({
         }
         if (lens.id === 'moments') {
           return (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '6px' }}>
+            <div style={stackWrap}>
               {dayData.moments.length === 0 ? (
                 <LensState
                   title="Aucun moment publié."
@@ -878,93 +615,37 @@ export function CarnetDrawerV2({
                   }
                 />
               ) : null}
-              {dayData.moments.map((m, idx) => (
-                <button
-                  key={m.id}
-                  type="button"
-                  data-carnet-row=""
-                  style={{
-                    ...rowStyle(idx),
-                    display: 'flex',
-                    gap: '10px',
-                    width: '100%',
-                    padding: '10px',
-                    border: 0,
-                    borderRadius: '16px',
-                    background: 'var(--drawer-card-bg)',
-                    color: 'inherit',
-                    font: 'inherit',
-                    textAlign: 'left',
-                    cursor: 'pointer',
-                  }}
-                  onClick={() => onSelectMoment?.(m, idx)}
-                >
-                  {m.imageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={m.imageUrl}
-                      alt=""
-                      style={{
-                        width: '56px',
-                        height: '56px',
-                        borderRadius: '10px',
-                        objectFit: 'cover',
-                      }}
-                    />
-                  ) : (
-                    <div
-                      style={{
-                        width: '56px',
-                        height: '56px',
-                        borderRadius: '10px',
-                        background: '#DDEBD8',
-                        display: 'grid',
-                        placeItems: 'center',
-                      }}
-                    >
-                      <Clock size={20} color="var(--tint)" />
-                    </div>
-                  )}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                      }}
-                    >
-                      <b style={{ fontSize: '13px' }}>
-                        {isMomentType(m.type) ? (
-                          <span className="lkdv-mo-kind">{MOMENT_TYPE_LABELS[m.type]}</span>
-                        ) : null}
-                        {m.place || m.title || `Jour ${m.dayNumber}`}
-                      </b>
-                      <span style={{ fontSize: '11px', color: 'var(--label2)' }}>{m.time}</span>
-                    </div>
-                    {m.caption ? (
-                      <p
-                        style={{
-                          margin: '2px 0 0',
-                          fontSize: '12px',
-                          color: 'var(--label2)',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {m.caption}
-                      </p>
-                    ) : null}
-                  </div>
-                </button>
-              ))}
-              {canEdit ? <AddCaption label="Ajouter un moment" onClick={() => onCreate?.()} /> : null}
+              {canEdit && dayData.moments.length > 0 ? (
+                <AddCaption label="Ajouter un moment" onClick={() => onCreate?.()} />
+              ) : null}
+              <div className="lkdv-tl">
+                {dayData.moments.map((m, idx) => (
+                  <MomentCard
+                    key={m.id}
+                    moment={m}
+                    showDay={activeDay === 0}
+                    kitItems={detail.kit.items}
+                    playing={voice.playingId === m.id}
+                    canEdit={canEdit}
+                    index={idx}
+                    onOpen={(moment) => onSelectMoment?.(moment, idx)}
+                    onPlay={(moment) => voice.toggle(moment.id, moment.meta?.audioUrl)}
+                    onEdit={(moment) => onEdit?.({ kind: 'moment', moment })}
+                    onOpenItem={(itemId) => pushStack({ type: 'item', itemId })}
+                  />
+                ))}
+              </div>
             </div>
           );
         }
         if (lens.id === 'medias') {
           return (
             <div style={{ padding: '6px' }}>
+              {dayPhotoMoments.length > 0 ? (
+                <h3 className="lkdv-h5" style={{ margin: '0 0 8px' }}>
+                  {dayPhotoMoments.length} média{dayPhotoMoments.length > 1 ? 's' : ''} · photos et vidéos
+                </h3>
+              ) : null}
               <CarnetPostGrid
                 moments={dayPhotoMoments}
                 onSelect={(m, idx) => onSelectMoment?.(m, idx)}
@@ -978,56 +659,60 @@ export function CarnetDrawerV2({
         if (lens.id === 'rencontres') {
           const encounters = dayData.moments.filter((m) => m.type === 'meet');
           return (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '6px' }}>
+            <div style={stackWrap}>
               {encounters.length === 0 ? (
-                <p style={{ textAlign: 'center', color: 'var(--label2)', fontSize: '13px' }}>
-                  Aucune rencontre répertoriée.
-                </p>
+                <LensState title="Aucune rencontre." hint="Pas de rencontre notée ce jour." />
               ) : (
                 encounters.map((m, idx) => (
-                  <div
+                  <MomentCard
                     key={m.id}
-                    data-carnet-row=""
-                    style={{
-                      ...rowStyle(idx),
-                      padding: '12px',
-                      borderRadius: '16px',
-                      background: 'var(--drawer-card-bg)',
-                    }}
-                  >
-                    <b>{m.place || m.title || 'Rencontre'}</b>
-                    <p style={{ margin: '4px 0 0', fontSize: '12.5px' }}>{m.caption}</p>
-                  </div>
+                    moment={m}
+                    showDay={activeDay === 0}
+                    kitItems={detail.kit.items}
+                    playing={false}
+                    canEdit={canEdit}
+                    index={idx}
+                    onOpen={(moment) => onSelectMoment?.(moment, idx)}
+                    onPlay={() => undefined}
+                    onEdit={(moment) => onEdit?.({ kind: 'moment', moment })}
+                    onOpenItem={() => undefined}
+                  />
                 ))
               )}
+              {canEdit ? <AddCaption label="Ajouter une rencontre" onClick={() => onCreate?.('meet')} /> : null}
             </div>
           );
         }
         if (lens.id === 'nature') {
-          const natureMoments = dayData.moments.filter((m) => m.type === 'species');
+          const species = dayData.moments.filter((m) => m.type === 'species');
+          const Glyph = MOMENT_TYPE_ICONS.species;
           return (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '6px' }}>
-              {natureMoments.length === 0 ? (
-                <p style={{ textAlign: 'center', color: 'var(--label2)', fontSize: '13px' }}>
-                  Aucune observation nature consignée.
-                </p>
+            <div style={stackWrap}>
+              <h3 className="lkdv-h5">Planche d’espèces · {species.length}</h3>
+              {species.length === 0 ? (
+                <LensState title="Aucune espèce." hint="Aucune espèce notée ce jour." />
               ) : (
-                natureMoments.map((m, idx) => (
-                  <div
-                    key={m.id}
-                    data-carnet-row=""
-                    style={{
-                      ...rowStyle(idx),
-                      padding: '12px',
-                      borderRadius: '16px',
-                      background: 'var(--drawer-card-bg)',
-                    }}
-                  >
-                    <b>{m.place || m.title || 'Observation'}</b>
-                    <p style={{ margin: '4px 0 0', fontSize: '12.5px' }}>{m.caption}</p>
-                  </div>
-                ))
+                <div className="lkdv-twocol">
+                  {species.map((m, idx) => (
+                    <div key={m.id} className="lkdv-mtile" data-carnet-row="" style={rowStyle(idx)}>
+                      <span className="sp-gl" aria-hidden="true">
+                        <Glyph size={26} strokeWidth={1.5} />
+                      </span>
+                      <b style={{ fontSize: 13 }}>{m.caption || m.title || m.place}</b>
+                      {m.meta?.latin ? (
+                        <i style={{ font: 'italic 400 12.5px var(--font-sans, sans-serif)', color: 'var(--label2)' }}>
+                          {m.meta.latin}
+                        </i>
+                      ) : null}
+                      <span className="lkdv-mute">
+                        J{m.dayNumber} · {m.time ?? ''}
+                      </span>
+                      {canEdit ? <EditPill label="Modifier l’espèce" onClick={() => onEdit?.({ kind: 'moment', moment: m })} /> : null}
+                    </div>
+                  ))}
+                </div>
               )}
+              {canEdit ? <AddCaption label="Ajouter une espèce" onClick={() => onCreate?.('species')} /> : null}
             </div>
           );
         }
@@ -1036,96 +721,40 @@ export function CarnetDrawerV2({
       case 'route':
         if (lens.id === 'etapes') {
           return (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '6px' }}>
-              {dayData.etapes.map((e, idx) => (
-                <button
-                  key={e.id}
-                  type="button"
-                  data-carnet-row=""
-                  style={{
-                    ...rowStyle(idx),
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    width: '100%',
-                    padding: '12px',
-                    border: 0,
-                    borderRadius: '16px',
-                    background: 'var(--drawer-card-bg)',
-                    color: 'inherit',
-                    font: 'inherit',
-                    textAlign: 'left',
-                    cursor: 'pointer',
-                  }}
-                  onClick={() => pushStack({ type: 'etape', etape: e })}
-                >
-                  <div>
-                    <b style={{ fontSize: '13.5px' }}>{e.label}</b>
-                    {e.from && e.to ? (
-                      <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'var(--label2)' }}>
-                        {e.from} → {e.to}
-                      </p>
-                    ) : null}
-                  </div>
-                  <ChevronRight size={16} color="var(--accent)" />
-                </button>
-              ))}
+            <div style={stackWrap}>
+              {dayData.etapes.length === 0 ? (
+                <LensState title="Aucune étape." hint="Les étapes du parcours apparaissent ici dès qu’elles sont renseignées." />
+              ) : (
+                <EtapeRows
+                  etapes={dayData.etapes}
+                  activeDay={activeDay}
+                  onOpen={(e) => pushStack({ type: 'etape', etapeId: e.id })}
+                />
+              )}
+              {canEdit ? (
+                <AddCaption label="Ajouter une étape" onClick={() => onEdit?.({ kind: 'etape', etape: null, day: nextDay })} />
+              ) : null}
             </div>
           );
         }
         if (lens.id === 'nuits') {
           return (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '6px' }}>
-              {dayData.nights.map((n, idx) => (
-                <button
-                  key={n.id}
-                  type="button"
-                  data-carnet-row=""
-                  style={{
-                    ...rowStyle(idx),
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    width: '100%',
-                    padding: '12px',
-                    border: 0,
-                    borderRadius: '16px',
-                    background: 'var(--drawer-card-bg)',
-                    color: 'inherit',
-                    font: 'inherit',
-                    textAlign: 'left',
-                    cursor: 'pointer',
-                  }}
-                  onClick={() => {
-                    pushStack({ type: 'night', night: n });
-                    if (n.lat && n.lng) {
-                      onFocusMap?.(n.lat, n.lng, 13);
-                    }
-                  }}
-                >
-                  <div>
-                    <b style={{ fontSize: '13.5px' }}>{n.name}</b>
-                    <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'var(--label2)' }}>
-                      Jour {n.dayNumber} · {n.type} {n.altitudeM ? `(${n.altitudeM} m)` : ''}
-                    </p>
-                  </div>
-                  <ChevronRight size={16} color="var(--accent)" />
-                </button>
-              ))}
+            <div style={stackWrap}>
               {dayData.nights.length === 0 ? (
-                <div
-                  style={{
-                    padding: '24px 16px',
-                    borderRadius: '16px',
-                    background: 'var(--drawer-card-bg)',
-                    textAlign: 'center',
+                <LensState title="Aucune nuit enregistrée." hint="Les nuits apparaissent ici dès qu’elles sont renseignées." />
+              ) : (
+                <NightCards
+                  nights={dayData.nights}
+                  activeDay={activeDay}
+                  dateOf={dateOfDay}
+                  onOpen={(n) => {
+                    pushStack({ type: 'night', nightId: n.id });
+                    if (n.lat != null && n.lng != null) onFocusMap?.(n.lat, n.lng, 13);
                   }}
-                >
-                  <b style={{ fontSize: '13px' }}>Aucune nuit enregistrée.</b>
-                  <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--label2)' }}>
-                    Les nuits apparaissent ici dès qu’elles sont renseignées sur le terrain.
-                  </p>
-                </div>
+                />
+              )}
+              {canEdit ? (
+                <AddCaption label="Ajouter une nuit" onClick={() => onEdit?.({ kind: 'nuit', night: null, day: nextDay })} />
               ) : null}
             </div>
           );
@@ -1144,12 +773,7 @@ export function CarnetDrawerV2({
                     : 'Dénivelé total non renseigné'}
               </p>
               {profile.length >= 2 ? (
-                <CarnetAltitude
-                  points={profile}
-                  height={80}
-                  interactive
-                  label="Profil d’altitude du tracé"
-                />
+                <CarnetAltitude points={profile} height={80} interactive label="Profil d’altitude du tracé" />
               ) : (
                 <p className="lkdv-altitude-empty" role="status">
                   Aucune mesure d’altitude enregistrée pour ce carnet.
@@ -1159,23 +783,24 @@ export function CarnetDrawerV2({
           );
         }
         if (lens.id === 'meteo') {
+          const withWeather = dayData.etapes.filter((e) => e.weather);
           return (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '6px' }}>
-              {dayData.etapes.map((e) => (
-                <div
-                  key={e.id}
-                  style={{
-                    padding: '12px',
-                    borderRadius: '16px',
-                    background: 'var(--drawer-card-bg)',
-                  }}
-                >
-                  <b>{e.label}</b>
-                  <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--label2)' }}>
-                    {e.weather || 'Météo stable, ensoleillée avec brume d’altitude.'}
-                  </p>
-                </div>
-              ))}
+            <div style={stackWrap}>
+              {withWeather.length === 0 ? (
+                <LensState title="Météo non renseignée." hint="Aucune condition n’a été notée pour cette période." />
+              ) : (
+                withWeather.map((e) => (
+                  <div key={e.id} className="lkdv-card2">
+                    <div className="lkdv-row2">
+                      <b className="lkdv-mono" style={{ color: 'var(--tint)' }}>
+                        J{e.dayNumber}
+                      </b>
+                      <span>{e.weather}</span>
+                    </div>
+                    <span className="lkdv-mute">{[e.from, e.to].filter(Boolean).join(' → ')}</span>
+                  </div>
+                ))
+              )}
             </div>
           );
         }
@@ -1185,237 +810,55 @@ export function CarnetDrawerV2({
         if (lens.id === 'kit') {
           return (
             <div style={{ position: 'relative', minHeight: '100%', paddingBottom: '48px' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '6px' }}>
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    padding: '10px 12px',
-                    borderRadius: '14px',
-                    background: 'rgba(150, 186, 142, 0.25)',
-                  }}
-                >
-                  <b style={{ fontSize: '13px' }}>
-                    {activeDay > 0 ? 'Poids cité ce jour' : 'Poids total du sac'}
-                  </b>
-                  <span style={{ fontWeight: 700, fontSize: '14px' }}>
-                    {dayData.kitItems.some((i) => i.weightG)
-                      ? `${(
-                          dayData.kitItems
-                            .filter((i) => i.verdict !== 'manquait')
-                            .reduce((sum, i) => sum + (i.weightG ?? 0), 0) / 1000
-                        ).toFixed(2)} kg`
-                      : '—'}
-                  </span>
-                </div>
-
+              <div style={stackWrap}>
                 {dayData.kitItems.length === 0 ? (
                   <LensState title="Aucun matériel." hint="Aucun objet cité ce jour." />
-                ) : null}
-                {dayData.kitItems.map((item, idx) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    data-carnet-row=""
-                    style={{
-                      ...rowStyle(idx),
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      width: '100%',
-                      padding: '10px 12px',
-                      border: 0,
-                      borderRadius: '14px',
-                      background: 'var(--drawer-card-bg)',
-                      color: 'inherit',
-                      font: 'inherit',
-                      textAlign: 'left',
-                      cursor: 'pointer',
-                    }}
-                    onClick={() =>
-                      pushStack({
-                        type: 'item',
-                        itemId: item.id,
-                        name: item.name,
-                        weightG: item.weightG,
-                        detailText: item.detail,
-                      })
-                    }
-                  >
-                    <div>
-                      <b style={{ fontSize: '13px' }}>{item.name}</b>
-                      {item.weightG ? (
-                        <p style={{ margin: 0, fontSize: '11px', color: 'var(--label2)' }}>
-                          {item.weightG} g
-                        </p>
-                      ) : null}
-                    </div>
-                    <ChevronRight size={15} color="var(--accent)" />
-                  </button>
-                ))}
+                ) : (
+                  <KitTiles items={dayData.kitItems} onOpen={(item) => pushStack({ type: 'item', itemId: item.id })} />
+                )}
                 {canEdit ? <AddCaption label="Ajouter un objet" onClick={() => onCreate?.('kit')} /> : null}
               </div>
             </div>
           );
         }
         if (lens.id === 'verdicts') {
-          const verdictsList = dayData.kitItems.filter((i) => i.verdict);
-          const countOf = (f: 'all' | KitVerdictType) =>
-            f === 'all' ? verdictsList.length : verdictsList.filter((v) => v.verdict === f).length;
-          const filtered = verdictsList.filter((v) => {
-            if (verdictFilter === 'all') return true;
-            return v.verdict === verdictFilter;
-          });
-
-          const VERDICT_LABELS: Record<KitVerdictType, string> = {
-            essentiel: 'Essentiel',
-            utile: 'Utile',
-            jamais_servi: 'Jamais servi',
-            defaillant: 'Défaillant',
-            manquait: 'Manquait',
-            top: 'Top',
-            flop: 'Flop',
-            neutre: 'Neutre',
-          };
-          const VERDICT_FALLBACK = { bg: 'var(--fill2)', color: 'var(--label2)' };
-          const VERDICT_STYLES: Record<KitVerdictType, { bg: string; color: string }> = {
-            essentiel: { bg: 'var(--mint, #E1EBDE)', color: 'var(--good, #3D7A52)' },
-            utile: { bg: 'var(--fill2, rgba(23,43,36,.06))', color: 'var(--info, #4B6B7C)' },
-            jamais_servi: {
-              bg: 'var(--fill2, rgba(23,43,36,.06))',
-              color: 'var(--label2, #56665D)',
-            },
-            defaillant: { bg: 'var(--bad-bg, #F5DDD9)', color: 'var(--bad, #A8443A)' },
-            manquait: { bg: 'var(--warn-bg, #FBF1DC)', color: 'var(--warn, #B98A2E)' },
-            top: { bg: 'var(--mint, #E1EBDE)', color: 'var(--good, #3D7A52)' },
-            flop: { bg: 'var(--bad-bg, #F5DDD9)', color: 'var(--bad, #A8443A)' },
-            neutre: {
-              bg: 'var(--fill2, rgba(23,43,36,.06))',
-              color: 'var(--label2, #56665D)',
-            },
-          };
-
+          const withVerdict = dayData.kitItems.filter((i) => i.verdict);
           return (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '6px' }}>
-              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                {(
-                  ['all', 'essentiel', 'utile', 'jamais_servi', 'defaillant', 'manquait'] as const
-                ).map((f) => (
-                  <button
-                    key={f}
-                    type="button"
-                    style={{
-                      height: '26px',
-                      padding: '0 10px',
-                      borderRadius: '9999px',
-                      border: '0',
-                      background:
-                        verdictFilter === f ? 'var(--tint, #17402C)' : 'rgba(23, 64, 44, 0.08)',
-                      color: verdictFilter === f ? 'var(--tint-ink, #fff)' : 'var(--tint)',
-                      fontSize: '11px',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                    }}
-                    aria-pressed={verdictFilter === f}
-                    data-verdict-filter={f}
-                    onClick={() => setVerdictFilter(f === verdictFilter ? 'all' : f)}
-                  >
-                    {f === 'all' ? 'Tous' : VERDICT_LABELS[f]} <b>{countOf(f)}</b>
-                  </button>
-                ))}
-              </div>
-
-              {filtered.length === 0 ? (
-                <div
-                  style={{
-                    padding: '24px 16px',
-                    borderRadius: '16px',
-                    background: 'var(--drawer-card-bg)',
-                    textAlign: 'center',
-                  }}
-                >
-                  <b style={{ fontSize: '13px' }}>
-                    {verdictsList.length > 0 ? 'Aucun objet pour ce verdict.' : 'Aucun verdict pour ce carnet.'}
-                  </b>
-                  <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--label2)' }}>
-                    {verdictsList.length > 0
-                      ? 'Touche « Tous » pour revoir les autres.'
-                      : 'Les verdicts se remplissent depuis le terrain, après les sorties.'}
-                  </p>
-                </div>
+            <div style={stackWrap}>
+              {dayData.kitItems.length === 0 ? (
+                <LensState title="Aucun matériel." hint="Aucun objet cité ce jour." />
+              ) : (
+                <VerdictList
+                  items={withVerdict}
+                  filter={verdictFilter}
+                  onFilter={setVerdictFilter}
+                  onOpen={(item) => pushStack({ type: 'item', itemId: item.id })}
+                />
+              )}
+              {dayData.kitItems.length > 0 && withVerdict.length === 0 ? (
+                <LensState title="Aucun verdict pour ce carnet." hint="Les verdicts se remplissent après les sorties." />
               ) : null}
-
-              {filtered.map((item) => (
-                <div
-                  key={item.id}
-                  style={{
-                    padding: '12px',
-                    borderRadius: '16px',
-                    background: 'var(--drawer-card-bg)',
-                  }}
-                >
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <b>{item.name}</b>
-                    <span
-                      style={{
-                        padding: '2px 8px',
-                        borderRadius: '9999px',
-                        fontSize: '10px',
-                        fontWeight: 700,
-                        textTransform: 'uppercase',
-                        background: item.verdict ? (VERDICT_STYLES[item.verdict] ?? VERDICT_FALLBACK).bg : undefined,
-                        color: item.verdict ? (VERDICT_STYLES[item.verdict] ?? VERDICT_FALLBACK).color : undefined,
-                      }}
-                    >
-                      {item.verdict ? (VERDICT_LABELS[item.verdict] ?? item.verdict) : '—'}
-                    </span>
-                  </div>
-                  {item.verdictNote ? (
-                    <p style={{ margin: '6px 0 0', fontSize: '12px', lineHeight: 1.35 }}>
-                      « {item.verdictNote} »
-                    </p>
-                  ) : null}
-                </div>
-              ))}
+              {canEdit ? (
+                <AddCaption label="Ajouter un verdict" onClick={() => onEdit?.({ kind: 'verdict', itemId: null })} />
+              ) : null}
             </div>
           );
         }
         if (lens.id === 'poids') {
+          const known = dayData.kitItems.some((i) => i.weightG);
           return (
-            <div
-              style={{ padding: '12px', borderRadius: '16px', background: 'var(--drawer-card-bg)' }}
-            >
-              <b>Répartition du poids du sac</b>
-              <p style={{ margin: '4px 0 12px', fontSize: '12px', color: 'var(--label2)' }}>
-                {detail.kit.totalWeightG
-                  ? `${(detail.kit.totalWeightG / 1000).toFixed(2)} kg au total`
-                  : 'Poids non renseigné'}
-              </p>
-              <div
-                style={{
-                  height: '120px',
-                  borderRadius: '12px',
-                  background: 'rgba(23, 64, 44, 0.06)',
-                  display: 'grid',
-                  placeItems: 'center',
-                  fontSize: '12px',
-                  color: 'var(--tint)',
-                }}
-              >
-                Anneau de répartition catégorielle
-              </div>
+            <div style={stackWrap}>
+              {dayData.kitItems.length === 0 ? (
+                <LensState title="Aucun matériel." hint="Aucun objet cité ce jour." />
+              ) : known ? (
+                <WeightDonut items={dayData.kitItems} />
+              ) : (
+                <LensState title="Poids non renseigné." hint="Aucun objet de ce kit n’a de poids." />
+              )}
             </div>
           );
         }
         break;
-
       case 'chiffres':
         if (lens.id === 'distance' || lens.id === 'denivele' || lens.id === 'duree') {
           const key = lens.id === 'distance' ? 'distance' : lens.id === 'denivele' ? 'elevation' : 'duration';
@@ -1524,68 +967,20 @@ export function CarnetDrawerV2({
       case 'equipage':
         if (lens.id === 'participants') {
           return (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '6px' }}>
+            <div style={stackWrap}>
               {detail.participants.map((p, idx) => (
-                <button
-                  key={p.id}
-                  type="button"
-                  data-carnet-row=""
-                  style={{
-                    ...rowStyle(idx),
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    width: '100%',
-                    padding: '10px 12px',
-                    border: 0,
-                    borderRadius: '14px',
-                    background: 'var(--drawer-card-bg)',
-                    color: 'inherit',
-                    font: 'inherit',
-                    textAlign: 'left',
-                    cursor: 'pointer',
-                  }}
-                  onClick={() => pushStack({ type: 'participant', participant: p })}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    {p.avatarUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={p.avatarUrl}
-                        alt=""
-                        style={{
-                          width: '36px',
-                          height: '36px',
-                          borderRadius: '50%',
-                          objectFit: 'cover',
-                        }}
-                      />
-                    ) : (
-                      <div
-                        style={{
-                          width: '36px',
-                          height: '36px',
-                          borderRadius: '50%',
-                          background: 'var(--fill)',
-                          display: 'grid',
-                          placeItems: 'center',
-                        }}
-                      >
-                        <Users size={16} />
-                      </div>
-                    )}
-                    <div>
-                      <b style={{ fontSize: '13px' }}>{p.name}</b>
-                      {p.role ? (
-                        <p style={{ margin: 0, fontSize: '11px', color: 'var(--label2)' }}>
-                          {roleLabel(p.role)}
-                        </p>
-                      ) : null}
-                    </div>
-                  </div>
-                  <ChevronRight size={15} color="var(--accent)" />
-                </button>
+                <CrewCard
+                  key={p.userId}
+                  participant={p}
+                  index={idx}
+                  momentCount={momentsOfParticipant(detail, p)}
+                  isAuthor={p.role === 'author'}
+                  onOpen={() => pushStack({ type: 'participant', userId: p.userId })}
+                />
               ))}
+              {canEdit ? (
+                <AddCaption label="Inviter un voyageur" onClick={() => onEdit?.({ kind: 'voyageur', participant: null })} />
+              ) : null}
             </div>
           );
         }
@@ -1611,8 +1006,8 @@ export function CarnetDrawerV2({
                         padding: '0 11px',
                         borderRadius: 9999,
                         border: 0,
-                        background: on ? 'var(--tint)' : 'rgba(23,64,44,.08)',
-                        color: on ? 'var(--tint-ink, #fff)' : 'var(--tint)',
+                        background: on ? 'var(--tint)' : 'var(--fill2)',
+                        color: on ? 'var(--tint-ink)' : 'var(--tint)',
                         font: '600 11px var(--font-sans)',
                         cursor: 'pointer',
                       }}
@@ -1645,8 +1040,8 @@ export function CarnetDrawerV2({
                     padding: '0 14px',
                     borderRadius: '9999px',
                     border: '0',
-                    background: reactions.liked ? '#E0245E' : 'rgba(23, 64, 44, 0.08)',
-                    color: reactions.liked ? '#fff' : 'var(--tint)',
+                    background: reactions.liked ? 'var(--like)' : 'var(--fill2)',
+                    color: reactions.liked ? 'var(--white)' : 'var(--tint)',
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '6px',
@@ -1717,8 +1112,8 @@ export function CarnetDrawerV2({
                     height: '36px',
                     padding: '0 12px',
                     borderRadius: '9999px',
-                    border: '0.5px solid rgba(23, 43, 36, 0.2)',
-                    background: 'rgba(255, 255, 255, 0.8)',
+                    border: '0.5px solid var(--sep)',
+                    background: 'var(--fill3)',
                     fontSize: '12.5px',
                   }}
                 />
@@ -1729,8 +1124,8 @@ export function CarnetDrawerV2({
                     height: '36px',
                     borderRadius: '50%',
                     border: 0,
-                    background: 'var(--tint, #17402C)',
-                    color: '#fff',
+                    background: 'var(--tint)',
+                    color: 'var(--tint-ink)',
                     display: 'grid',
                     placeItems: 'center',
                     cursor: 'pointer',
@@ -1750,40 +1145,46 @@ export function CarnetDrawerV2({
           );
         }
         if (lens.id === 'suivre') {
+          const signal = detail.livePosition?.recordedAt ?? detail.publicZone?.recordedAt ?? null;
           return (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '6px' }}>
-              <div
-                style={{
-                  padding: '12px',
-                  borderRadius: '16px',
-                  background: 'var(--drawer-card-bg)',
-                }}
-              >
-                <b>Suivi du carnet</b>
-                <p style={{ margin: '4px 0 10px', fontSize: '12px', color: 'var(--label2)' }}>
-                  Abonnez-vous aux notifications pour suivre l’aventure pas à pas.
-                </p>
-                <button
-                  type="button"
-                  style={{
-                    height: '34px',
-                    padding: '0 16px',
-                    borderRadius: '9999px',
-                    border: '0',
-                    background: 'var(--tint, #17402C)',
-                    color: '#fff',
-                    fontWeight: 600,
-                    fontSize: '12px',
-                    cursor: 'pointer',
-                  }}
-                  onClick={() => {
-                    if (!userId) onRequireAuth?.();
-                    else onIsland?.('Vous suivez désormais cette expédition');
-                  }}
-                >
-                  Suivre cette expédition
-                </button>
+            <div style={stackWrap}>
+              <div className="lkdv-sig">
+                <Radio size={18} aria-hidden />
+                <span>
+                  <b>Dernier signal</b>
+                  {signal
+                    ? ` : ${detail.place.locality ?? 'position reçue'}, ${relativeTime(signal)}.`
+                    : ' : aucun signal reçu pour l’instant.'}
+                  <br />
+                  <span className="lkdv-mute">
+                    {isParticipantRole(detail.viewerRole)
+                      ? 'Tu vois la position exacte sur la carte.'
+                      : 'Position affichée au niveau du massif, différée.'}
+                  </span>
+                </span>
               </div>
+              <h3 className="lkdv-h5">Me prévenir</h3>
+              <div role="radiogroup" aria-label="Notifications" style={{ display: 'grid', gap: 6 }}>
+                {NOTIF_PREFS.map(([label, hint], i) => (
+                  <button
+                    key={label}
+                    type="button"
+                    className="lkdv-opt"
+                    role="radio"
+                    aria-checked={notifPref === i}
+                    aria-label={label}
+                    onClick={() => {
+                      setNotifPref(i);
+                      if (!userId) onRequireAuth?.();
+                    }}
+                  >
+                    <span className="rad" />
+                    {label}
+                    <small>{hint}</small>
+                  </button>
+                ))}
+              </div>
+              <p className="lkdv-mute">Préférence gardée sur cet appareil.</p>
             </div>
           );
         }
@@ -1863,20 +1264,7 @@ export function CarnetDrawerV2({
       />
 
       {/* Pilule « Reprendre » : slot Sac et fiche objet seulement (maquette `syncKitPill`). */}
-      {showKitPill ? (
-        <button
-          type="button"
-          className="lkdv-pill-reprendre"
-          id="kitpill"
-          aria-pressed={kitSaved}
-          aria-label={kitSaved ? 'Kit enregistré dans ton Compas' : 'Reprendre ce kit'}
-          title="Reprendre ce kit"
-          onClick={() => void saveKit()}
-        >
-          <Bookmark size={15} aria-hidden="true" fill={kitSaved ? 'currentColor' : 'none'} />
-          <span>Reprendre</span>
-        </button>
-      ) : null}
+      {kitPillNode}
     </div>
   );
 }
