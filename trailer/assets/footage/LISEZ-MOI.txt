@@ -1,0 +1,11 @@
+Dépose ici les 21 images générées avec ChatGPT (version 3 du prompt), avec exactement ces noms :
+
+01_cloud_sea_balloons.png      02_iceland_route1_lupines.png   03_van_door_friends.png
+04_harbour_handover.png        05_landmannalaugar_colors.png   06_hot_river_steam.png
+07_beach_campfire_midnight.png 08_k2_concordia_solo.png        09_lyon_dawn_runner.png
+10_burgundy_autumn_peloton.png 11_sahara_dune_ridge.png        12_amazon_river_dawn.png
+13_uyuni_mirror_jump.png       14_baikal_ice_turquoise.png     15_raja_ampat_lagoon.png
+16_antelope_canyon_beam.png    17_nepal_prayer_flags.png       18_atacama_bivouac_milkyway.png
+19_night_train_alps.png        20_accessible_trail_autumn.png  21_norway_aurora_final.png
+
+Le prompt est dans assets/PROMPT_CHATGPT_IMAGES.txt.

@@ -1,0 +1,80 @@
+=== VERSION 3 (remplace les précédentes) : 21 plans, monde entier, histoires, gens variés. À COLLER TEL QUEL DANS CHATGPT (mode image). Le prompt est entre les deux lignes « ===== ». ===
+
+=====================================================================
+You are a world-class expedition photographer and photo editor. I need 21 PHOTOGRAPHS for a 60-second film about the freedom of travelling the whole planet: heat, cold, sun, madness, joy. They will later be animated with slow camera moves, so each one must be sharp, deep and immersive. Generate all 21 yourself, one after another, without asking me questions. If you reach a limit, tell me the plate number you reached and I will say "continue".
+
+WHAT I WANT: images that make people dream. Each one is a real, rare, spectacular moment on Earth, photographed as if you had been there at the perfect second. Photographic realism AND wonder. Vivid colour that comes from real phenomena (alpenglow, aurora, golden dust, glacial ice, turquoise water, wet rock, flowers), never from filters. Each plate must be unusual, a surprise, not a postcard cliche.
+
+EVERY PLATE TELLS A STORY
+Each plate has a STORY line: a human moment caught mid-action (a laugh, a jump, a hug, a gesture, someone pulling a friend up, sharing tea, looking at a map). The viewer should wonder what happened just before and what happens next. Humans are real adults of all ages, body types and origins, in the scene and large enough to feel present, not tiny dolls. Faces may be visible when it is natural (laughing, concentrating, squinting at the sun), but all faces are fictional and must not resemble any real person; prefer three-quarter back views, profiles and backlit faces. No celebrities.
+
+HUMANS AND CLOTHES MUST BE VERY DIFFERENT FROM PLATE TO PLATE
+- Never reuse the same outfit style or the same dominant clothing colour in two plates. Mix: oversized yellow rain shell, orange down jacket, patterned wool sweater, turquoise windbreaker, wide sun hat, indigo scarf, red beanie, faded denim, linen shirt, neon-pink trail shorts, olive field jacket, mustard hoodie, white desert robes, bright blue helmet, tie-dye t-shirt, etc.
+- Vary ages (20s to 60s), skin tones, hair, body types, styles (sporty, bohemian, retro, minimalist, rugged).
+- Gear is real-looking, worn, personal, unmarked (no logos, no text).
+
+REALISM RULES
+- It must look like an unretouched photo from a real camera: full-frame mirrorless body, real lens, real exposure. Lens and settings are given per plate.
+- Real-world imperfections: natural grain, slight lens flare facing the sun, haze and dust in the air, uneven natural clouds, asymmetric composition, believable details (scuffed boots, tyre tracks, creased clothes).
+- Real textures and physics of light: correct shadows, reflections and atmospheric perspective.
+- Do NOT produce: digital art, concept art, CGI, 3D render, illustration, plastic or waxy skin, glowing edges, symmetrical fantasy compositions, text anywhere.
+
+IMMERSION RULES
+- First-person vantage, at eye or ground level, inside the scene, with a real foreground element very close to the lens slightly out of focus (grass, sand ripples, ice, a rope, a hand, a paddle drip). Wide angle (16-24 mm) unless the plate says otherwise.
+- Life and motion in every frame: wind, sand blown off dunes, steam, spray, breath, sparks, mist, birds.
+- Light: sunrise, sunset, golden hour, midnight sun, blue hour, or night with real aurora or stars. No flat midday light, except where a plate asks for harsh sun.
+- Each plate must differ from the others in camera angle, scale, time of day and colour. No two plates may look alike.
+- Absolutely no text, letters, numbers, signs, logos, brand names or watermarks.
+
+THE 21 PLATES (name each image exactly with the file name given; landscape 3:2, highest resolution available)
+
+01_cloud_sea_balloons.png - Above a sea of clouds at sunrise over Cappadocia, Turkey, seen from the wicker basket of a hot-air balloon, basket rim and ropes blurred at the bottom edge. Dozens of colourful balloons float over the clouds in golden light, a couple in the basket in the foreground pointing at them, laughing. STORY: they did not expect this when they climbed in at 4 a.m. 20 mm, f/8.
+
+02_iceland_route1_lupines.png - Iceland in June, low drone 30 m above a road, behind a cream camper van. Entire hillsides covered in blue-purple lupine flowers beside a deep blue fjord, black sand edges, waterfalls, midnight-sun gold light. STORY: the van, small in the landscape, has a surfboard and a kayak on the roof and one passenger's arm waving out of the window. 24 mm, f/5.6.
+
+03_van_door_friends.png - Inside a cream camper van, camera at head height, sliding door wide open on the Icelandic coast in golden light. Three friends of different origins and styles: a Black woman in her 30s in a big yellow raincoat laughing and pulling a friend up into the van by the hand; a young East Asian man in an orange beanie and green jacket holding a map; a white-haired woman in her 60s in a patterned sweater pouring tea from a thermos. Wind in hair and grass. STORY: they have just decided to skip the plan and keep driving. 20 mm, f/4.
+
+04_harbour_handover.png - Reykjavik Old Harbour at amber hour, eye-level on the quay with a rope and a bollard in the near foreground. A bearded man in his 50s in a red wool sweater hands a heavy tent bag to a young South Asian woman in a turquoise windbreaker; behind them they embrace, strangers an hour ago. Cream van, fishing boats, wet cobbles. STORY: a loan between two people who just met. 28 mm, f/4.
+
+05_landmannalaugar_colors.png - Landmannalaugar, Iceland: rhyolite slopes in real vivid colours (rust, mustard, turquoise, green moss), steam rising from vents, ground-level camera in the gravel. Two hikers in the middle ground, one in a bright blue helmet-less cap and a mustard hoodie, one in white linen shirt, comparing the colours of the mountain with their hands. STORY: they stop because the mountain is unreal. 18 mm, f/8.
+
+06_hot_river_steam.png - A geothermal river in Iceland at dusk with snow patches on the banks, thick steam, blue hour sky. Four friends of different ages soak in the warm water, one tossing a handful of snow, mid-laugh, steam curling around them, clothes piled on the rocks in bright mixed colours. STORY: heat and cold in the same minute. 24 mm, f/2.8, ISO 800.
+
+07_beach_campfire_midnight.png - A black sand beach in Iceland at midnight sun. Ground-level camera behind driftwood, a campfire with rising sparks, five people around it: one strumming a guitar, one wrapped in a blanket reading a handwritten travel journal aloud, one dancing barefoot in a long tie-dye skirt. The low sun is gold above the sea. STORY: the group's notebook becomes the evening's entertainment. 24 mm, f/2.8, ISO 800.
+
+08_k2_concordia_solo.png - Concordia on the Baltoro Glacier in the Karakoram, Pakistan, at sunrise. The K2 pyramid glows pink-gold in alpenglow, a river of rocky ice below. A woman in her 40s, alone, in a bright red down jacket and a blue cap, standing on a moraine ridge with trekking poles planted, a small tent behind her. Wind blowing snow off the summits. STORY: day 12 of a solo trek, she made it, she is crying and smiling. 24 mm, f/8.
+
+09_lyon_dawn_runner.png - Lyon, France, 6:50 a.m. The Rhone quay in golden mist, stone bridges fading in the haze, sky going from pink to blue. A young Black man in neon-pink running shorts and a grey t-shirt sits on a bench catching his breath, phone in his hand showing a mountain photo reflected on his sunglasses, a small grin. STORY: a stranger's mountain photo makes his morning run feel like an adventure. 35 mm, f/2.8.
+
+10_burgundy_autumn_peloton.png - Cote de Nuits, Burgundy, in October, backlit golden hour. Vines in red, gold and green in endless rows, golden dust in the light. A peloton of twelve cyclists of all ages and genders in mismatched colourful jerseys rides toward the camera, laughing; one in the middle is pointing out something to a neighbour. Camera low between vine rows. STORY: a Saturday club ride that ends with a picnic. 70 mm, f/4.
+
+11_sahara_dune_ridge.png - The Sahara at sunrise, Erg Chebbi, Morocco. A sharp dune crest in orange-red light with perfect wind ripples in the foreground, sand blowing off the ridge, deep blue shadows on the other side. A woman in her 30s in an indigo scarf and a loose white shirt walks the crest toward the camera, laughing, a friend in a mustard shirt behind her with a camel. Heat shimmer at the horizon. STORY: they walked all night to reach this ridge at dawn. 24 mm, f/8.
+
+12_amazon_river_dawn.png - The Rio Negro, Amazon, at dawn. Black-water river reflecting the canopy like a mirror, golden light breaking through mist, a pair of scarlet macaws flying across. A wooden canoe with a local guide in a faded blue shirt and a traveller in a wide sun hat, both looking up at the birds, water dripping from the paddle in the foreground. STORY: the traveller just stopped talking because there are no words. 24 mm, f/5.6.
+
+13_uyuni_mirror_jump.png - Salar de Uyuni, Bolivia, at sunset after rain: the salt flat is a perfect mirror, the sky glowing orange, pink and deep blue below and above. Four friends in colourful clothes (red coat, yellow jacket, green sweater, orange scarf) jump together in mid-air, reflections beneath them, a dusty off-road vehicle in the distance. STORY: pure madness, they have been laughing for an hour. 16 mm, f/8.
+
+14_baikal_ice_turquoise.png - Lake Baikal, Siberia, in March. Giant cracks and bubbles in transparent turquoise ice, camera very low at ice level. A woman in her 20s in a mustard parka and a fur-trimmed hat ice skating across the lake, scarf flying, another person in a bright red coat far behind. Low golden sun, frozen breath. STORY: it is -25 and she has never felt so alive. 16 mm, f/8.
+
+15_raja_ampat_lagoon.png - Raja Ampat, Indonesia, midday sun for once, strong and joyful. Limestone islands covered in jungle, a lagoon in every shade of turquoise. Three friends of different ages jump off a wooden boat into the water in mid-air, splashes frozen, one in a bright pink swimsuit, one in a white shirt, one in blue shorts, a local boat captain laughing at the back. STORY: the leap they were afraid of. 20 mm, f/8, fast shutter.
+
+16_antelope_canyon_beam.png - A slot canyon in Arizona. A single shaft of golden light cuts down through swirling orange and purple sandstone, dust glowing in the beam. A man in his 60s in an olive field jacket and a straw hat tilts his head back and looks up into the light with his hand stretched out to catch it, a young woman in a red scarf beside him. STORY: they have waited an hour in line for this ten seconds. 16 mm, f/5.6.
+
+17_nepal_prayer_flags.png - A high pass in the Everest region of Nepal at sunrise, thousands of colourful prayer flags snapping in a strong wind, Ama Dablam rising in the background in warm light. A trekker in a bright orange down jacket and a local Sherpa guide in a navy cap share a flask of tea, laughing, flags whipping all around. STORY: summit of a ten-day trek, first tea of the day. 24 mm, f/8.
+
+18_atacama_bivouac_milkyway.png - The Atacama desert, Chile, at night, long exposure. A yellow tent glowing from inside, a person in a white fleece sitting outside with a blanket, pointing at the sky, a second person lying on their back. A real, strong Milky Way arching over salt-white ground and red rocks, with the dark clouds of the galaxy visible. 14 mm, f/2, 20 seconds, ISO 3200. STORY: the stars so numerous they cannot name them.
+
+19_night_train_alps.png - A generic, unmarked night train crossing a stone viaduct in snowy mountains under a full moon, in the style of the Landwasser Viaduct in Switzerland. Snow on trees and rock, lit windows glowing amber, a soft trail of snow dust, branches covered in frost in the foreground. Through one lit window, a passenger in a wool hat is writing in a notebook. STORY: someone is writing the story of their journey right now. 35 mm, f/4, 4 seconds.
+
+20_accessible_trail_autumn.png - A lakeside path at Lake Bohinj, Slovenia, in peak autumn: flaming red, orange and yellow forest reflected in calm blue water, golden low sun. A woman in her 40s in a wheelchair in a mint green jacket, laughing, with a friend in a purple scarf walking beside her and a golden retriever running ahead on the leaf-covered path. Natural, respectful, not staged. STORY: the best seat for the best view. 35 mm, f/4.
+
+21_norway_aurora_final.png - A frozen fjord in Norway in deep winter at night, long exposure. A spectacular real aurora filling the whole sky, green with natural pink and violet fringes, reflected in open black water. In the foreground five travellers in colourful winter gear (red, yellow, blue, green, white) stand in snow looking up, arms around each other, a tent glowing orange on the shore, breath visible. STORY: the group from the beginning, now friends. 14 mm, f/2, 10 seconds, ISO 3200.
+
+SELF-CHECK AFTER EACH IMAGE
+Ask yourself: (1) would a photo editor believe this is a real photograph? (2) does it tell a human story? (3) is it unusual and beautiful, not a cliche? (4) are the people and clothes clearly different from the previous plates? If not, regenerate it once and keep the better one. Check there is no text anywhere.
+
+WHEN ALL 21 ARE DONE
+1. Using your Python tool, create a ZIP file named LKDV_plates.zip that contains the 21 images with exactly the file names above, then give me the download link.
+2. If you cannot access the generated images from your Python tool, do NOT pretend a ZIP exists. Say so clearly, list the 21 file names in order so I can download each image myself, and tell me which plates, if any, were not generated and why.
+3. Do not add commentary between images. Only report problems.
+=====================================================================
