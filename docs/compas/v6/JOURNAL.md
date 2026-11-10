@@ -148,3 +148,45 @@ eslint=0
 ### T0.5 — passage de référence : **non joué, porte 0 non franchie**
 
 Cause : le réseau de la session cloud refuse l'hôte de l'aperçu (`CONNECT tunnel failed, response 403` sur `*.vercel.app`). `validate-online.mjs` est prêt pour le jeu (lecture de `demandes-or.json`, tranche `DEMANDES_FROM` / `DEMANDES_TO`, mandataire de sortie, identifiant de demande dans le journal). Durée prévue : 300 demandes à 125 s d'écart, soit environ 10 h 30 en une session, ou 2 h en six sessions parallèles (limite : 5 espaces d'essai par heure et par adresse).
+
+## 2026-11-10 (soir) — T0.5, passage de référence : banc remis en état, première tranche lancée
+
+### Réseau
+
+Tony a approuvé un environnement cloud dédié, `kitduvoyageur`, qui n'autorise que deux hôtes : l'alias d'aperçu de la branche et l'hôte Supabase du projet (le navigateur du banc en a besoin pour tenir sa session). Le reste (tuiles, `vercel.live`, images) reste refusé et n'empêche pas une préparation.
+
+### Le banc en ligne ne tournait plus : trois causes, corrigées dans `validate-online.mjs`
+
+| Cause | Fait | Correction |
+|---|---|---|
+| Le bouton « Essayer sans compte » n'existe plus sur `/connexion` | `grep` : la chaîne n'est plus dans `src/` ; « Connexion démo » est un lien vers `/api/demo-login` depuis #154 | l'entrée accepte un lien ; il est suivi par son adresse dans un onglet à part (cliqué avant l'hydratation il ne navigue pas) |
+| L'écran de départ est celui de la v5 (`V5Start`) | un champ d'une ligne « Ta destination, en une phrase » et un bouton « C'est parti », plus de zone de texte ni de « Préparer mon aventure » | les deux écrans sont reconnus ; la fin se lit sur « Ton aventure est prête » / « Préparation arrêtée » |
+| La connexion démo mène à `/compte` | elle ne lit pas `next` | le banc ouvre `/compas` lui-même |
+
+Le banc d'écran Playwright (`tests/e2e-compas-full/_lib/compas.ts:142`) cherche lui aussi une zone de texte : **il est périmé de la même façon**, non corrigé ici (hors du périmètre de la phase 0), à reprendre.
+
+Conséquence pour la référence : **tout le passage se fait sous le compte de démonstration**, une seule personne. Donc : (a) le trajet est chiffré depuis la position simulée du banc (Annecy) et les objets du sac sont rapprochés de l'inventaire de ce compte ; (b) le quota IA par personne (120 appels « heavy » par jour) borne le passage. Mesuré en base après la demande D001 : une préparation = 1 appel « heavy » + 1 « fast » (`ai_usage_daily`). **Le jeu est donc joué en trois tranches sur trois jours UTC** (110, 115, 75 demandes), sinon les dernières préparations passeraient sans IA et la référence mélangerait deux régimes.
+
+### Circuit complet prouvé sur D001
+
+```
+$ DEMANDES_FROM=1 DEMANDES_TO=1 node scripts/compas/validate-online.mjs <aperçu> docs/compas/v6/demandes-or.json <dossier>
+connecté
+D001 60 s Week-end rando à deux dans les Cinque Terre fin avril, on dort sur place
+{"id":"D001","prepSeconds":51,"outcome":"Ton aventure est prête","head":"… Budget 367 € · 1 hébergement · 486 km de route (depuis ta position) · 11 objets au kit"}
+
+$ node scripts/compas/snapshot-reference.mjs <aperçu> <instantanés> <results.jsonl>
+1 demandes, 1 voyages lus, 1 instantanés écrits
+
+$ node scripts/compas/score-trip.mjs --lot <instantanés> --jeu docs/compas/v6/demandes-or.json --date 2026-11-10
+famille         n    justesse  complétude  faisabilité  précision
+marche          1    100       63          88           53
+```
+
+Lu en base pour contrôle (voyage `b77c4fcc`) : Italie, ancre « Cinque Terre » (44,12 ; 9,71), 24-25 avril 2027, 2 personnes, randonnée — conforme à l'attendu. Deux étapes dont une sans distance, aucune nuit nommée, trois dépenses sur quatre en « estimation » : la complétude et la précision basses disent vrai.
+
+`snapshot-reference.mjs` (nouveau) relit les voyages par la session de démonstration elle-même (RLS), sans clé de service ; il retire le tracé, l'identifiant du lanceur et l'état de file avant d'écrire.
+
+### Tranche 1 lancée à 17 h 06 UTC : demandes D002 à D110, 125 s d'écart, fin prévue vers 20 h 55 UTC.
+
+Tranche 2 (D111 à D225) après minuit UTC le 11 novembre ; tranche 3 (D226 à D300) après minuit UTC le 12. **La porte 0 n'est pas franchie tant que les trois tranches ne sont pas notées et que les dix plus mal notés ne sont pas relus.**

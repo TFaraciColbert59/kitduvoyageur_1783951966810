@@ -77,12 +77,28 @@ if (!process.env.STORAGE_STATE) {
   // Essai sans compte (un espace propre à chaque passage) dès qu'il est ouvert ;
   // sinon le compte démo partagé.
   // COMPAS_DEMO=1 : la connexion démo seulement (l'essai sans compte est limité à 5 par heure et par adresse).
-  await page
-    .getByRole('button', { name: process.env.COMPAS_DEMO ? /^Connexion démo$/ : /^(Essayer sans compte|Connexion démo)$/ })
-    .first()
-    .click({ timeout: 60_000 });
+  // « Connexion démo » est un lien depuis la refonte de /connexion (#154) ; l'essai sans compte,
+  // quand il est proposé, reste un bouton. Les deux formes sont acceptées.
+  const entry = process.env.COMPAS_DEMO ? /^Connexion démo$/ : /^(Essayer sans compte|Connexion démo)$/;
+  const link = page.getByRole('link', { name: entry }).first();
+  const button = page.getByRole('button', { name: entry }).first();
+  await button.or(link).first().waitFor({ timeout: 60_000 });
+  if ((await button.count()) > 0) await button.click({ timeout: 60_000 });
+  else {
+    // Le lien est suivi par son adresse, dans un onglet à part : cliqué avant l'hydratation il ne
+    // navigue pas, et suivi dans le même onglet il se fait doubler par la navigation de /connexion.
+    // Les cookies de session valent pour tout le contexte.
+    const href = await link.getAttribute('href');
+    const tab = await context.newPage();
+    await tab
+      .goto(new URL(href ?? '/api/demo-login', base).toString(), { waitUntil: 'domcontentloaded', timeout: 90_000 })
+      .catch((e) => console.warn('connexion démo :', String(e).split('\n')[0].slice(0, 160)));
+    await tab.waitForURL((u) => !u.pathname.startsWith('/api/'), { timeout: 90_000 }).catch(() => undefined);
+    await tab.close();
+    await page.goto(`${base}/compas`, { waitUntil: 'domcontentloaded', timeout: 90_000 });
+  }
   // Le chemin, pas l'URL entière (« /connexion?next=%2Fcompas » contient « compas »).
-  await page.waitForURL((u) => u.pathname.startsWith('/compas'), { timeout: 90_000 });
+  await page.waitForURL((u) => !u.pathname.startsWith('/connexion'), { timeout: 90_000 });
 }
 console.info('connecté');
 
@@ -98,31 +114,43 @@ for (const [i, { id, say }] of phrases.entries()) {
     await page.waitForLoadState('networkidle', { timeout: 60_000 }).catch(() => undefined);
     const cookies = page.getByRole('button', { name: 'Refuser' });
     if (await cookies.isVisible().catch(() => false)) await cookies.click().catch(() => undefined);
-    const box = page.locator('textarea').first();
-    await box.waitFor({ timeout: 60_000 });
+    // Écran v5 (`V5Start`) : un champ d'une ligne et un bouton « C'est parti » ; la préparation
+    // part d'elle-même une fois le voyage créé. L'ancien écran (zone de texte et bouton
+    // « Préparer mon aventure ») reste accepté.
+    const v5Box = page.getByRole('textbox', { name: 'Ta destination, en une phrase' });
+    const oldBox = page.locator('textarea').first();
+    await v5Box.or(oldBox).first().waitFor({ timeout: 60_000 });
+    const isV5 = (await v5Box.count()) > 0;
+    const box = isV5 ? v5Box : oldBox;
+    const go = isV5
+      ? page.getByRole('button', { name: 'C’est parti' })
+      : page.getByRole('button', { name: 'Préparer mon aventure' });
     // La saisie ne tient qu'une fois la page interactive (hydratation) : on vérifie.
-    const go = page.getByRole('button', { name: 'Préparer mon aventure' });
     for (let k = 0; k < 5 && !(await go.isEnabled().catch(() => false)); k += 1) {
       await box.fill('');
       await box.pressSequentially(say, { delay: 10 });
       await page.waitForTimeout(1500);
     }
     await go.click({ timeout: 30_000 });
-    const status = page.getByRole('status', { name: 'Préparation de l’aventure' });
-    await status.waitFor({ timeout: 90_000 });
-    await page
-      .getByText(/Ton aventure est prête|Préparation interrompue|Préparation arrêtée/)
-      .first()
-      .waitFor({ timeout: 330_000 });
-    const head = (await status.innerText().catch(() => '')).slice(0, 600);
+    const tStart = Date.now();
+    const end = page.getByText(/Ton aventure est prête|Préparation interrompue|Préparation arrêtée|La préparation s’est arrêtée/).first();
+    await end.waitFor({ timeout: 420_000 });
+    const prepSeconds = Math.round((Date.now() - tStart) / 1000);
+    const outcome = (await end.innerText().catch(() => '')).slice(0, 80);
+    const head = (
+      await (isV5 ? end.locator('xpath=ancestor::*[self::section or self::div][1]') : page.getByRole('status', { name: 'Préparation de l’aventure' }))
+        .innerText()
+        .catch(() => '')
+    ).slice(0, 600);
     await page.screenshot({ path: path.join(outDir, `${slug}.png`), fullPage: false });
-    log({ i: from + i, id, say, url: page.url(), seconds: Math.round((Date.now() - t0) / 1000), head });
+    log({ i: from + i, id, at: new Date(t0).toISOString(), say, url: page.url(), seconds: Math.round((Date.now() - t0) / 1000), prepSeconds, outcome, head });
     console.info(slug, Math.round((Date.now() - t0) / 1000), 's', say);
   } catch (e) {
     await page.screenshot({ path: path.join(outDir, `${slug}-erreur.png`) }).catch(() => undefined);
     log({
       i: from + i,
       id,
+      at: new Date(t0).toISOString(),
       say,
       url: page.url(),
       seconds: Math.round((Date.now() - t0) / 1000),
