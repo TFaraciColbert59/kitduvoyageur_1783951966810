@@ -249,7 +249,10 @@ export const COMMUNAUTE_SCENARIOS: Scenario[] = [
     measures: [
       measure('Tiroir', '.lkdv-cv2-sheet', '#phone .sheet', GLASS),
       measure('Capsule des 6 types', '.lkdv-cv2-topnav .lkdv-cv2-capsule', '.slot-topnav .capsule', GLASS),
-      measure('Formulaire', '[data-testid="cv2-form-post"]', '#phone .cr-vp', []),
+      // Le formulaire vit dans le pager : on mesure le conteneur du corps (maquette `.cr-vp`), l'aperçu et le pied.
+      measure('Corps du formulaire', '.lkdv-cv2-body', '#phone .cr-vp', []),
+      measure('Aperçu du post', '.lkdv-cv2-preview-slot', '#phone .cr-prev', ['border-radius']),
+      measure('Pied de formulaire', '.lkdv-cv2-footer', '#phone .cr-foot', []),
     ],
   }),
   scenario('communaute-explorer-carnets-chargement', 'Explorer · carnets', 'chargement (squelette)', 'membre', {

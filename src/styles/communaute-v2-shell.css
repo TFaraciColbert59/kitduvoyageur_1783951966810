@@ -176,7 +176,7 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
   flex: none;
   height: 150px;
   min-height: 150px;
-  margin: 0 14px 8px;
+  margin: 0 14px 6px;
   overflow: hidden;
   border-radius: 20px;
   pointer-events: none;
@@ -268,7 +268,8 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 14px calc(12px + max(0px, env(safe-area-inset-bottom, 0px) - 14px));
+  /* Maquette `.cr-foot` : 60 px (6 px au-dessus, 10 px au-dessous des boutons de 44 px). */
+  padding: 6px 14px calc(10px + max(0px, env(safe-area-inset-bottom, 0px) - 14px));
   position: relative;
   z-index: 18;
   background: linear-gradient(180deg, rgba(245, 242, 236, 0), rgba(245, 242, 236, 0.55));
