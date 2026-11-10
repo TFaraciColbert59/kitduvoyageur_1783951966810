@@ -157,6 +157,8 @@ export interface KitItemV2 {
   ownershipId: string | null;
   /** Mode préparation (`Kit#10`) : objet coché « emporté ». */
   isChecked: boolean;
+  /** Emprunté (Kit#12) : interface seule, non envoyé à la RPC. */
+  borrowed?: boolean;
 }
 
 export interface CarnetMomentV2 {
@@ -631,6 +633,8 @@ const kitItemSchema = z.object({
   productId: z.string().nullable().default(null),
   ownershipId: z.string().nullable().default(null),
   isChecked: z.boolean().default(false),
+  /** Emprunté (Kit#12) : champ d'interface, non envoyé à la RPC. */
+  borrowed: z.boolean().optional(),
 });
 
 export const kitSchemaV2 = z
@@ -643,6 +647,13 @@ export const kitSchemaV2 = z
     model: z.enum(['jour', 'bivouac', 'alpi']).default('bivouac'),
     /** Objectif de poids sélectionnable (`GOALS`, L3172) — interface seule. */
     goal: z.enum(['ultra', 'light', 'std']).default('light'),
+    /**
+     * Unités d'affichage (Kit#15) : champ d'interface, non envoyé à la RPC
+     * (le poids reste en grammes). Valeur initiale = préférence du compte.
+     */
+    units: z.enum(['metric', 'imperial']).default('metric'),
+    /** Mode préparation (Kit#12) : check-list « emporté / emprunté », interface seule. */
+    prep: z.boolean().default(false),
     name: z
       .string()
       .default('')
@@ -710,6 +721,9 @@ export const clubSchemaV2 = z.object({
     .default([]),
   description: z.string().max(1500, '1 500 caractères maximum.').default(''),
   locationLabel: z.string().max(120, '120 caractères maximum.').default(''),
+  /** Centre de la zone d'activité (Club#4) : mini-carte, épingle déplaçable. */
+  zoneLat: z.number().min(-90).max(90).nullable().default(null),
+  zoneLng: z.number().min(-180).max(180).nullable().default(null),
   zoneRadiusKm: z.number().min(1, '1 km minimum.').max(500, '500 km maximum.').nullable().default(null),
   membershipRules: z.string().max(1000, '1 000 caractères maximum.').default(''),
   joinQuestions: z
@@ -893,6 +907,8 @@ const defaultsFactories = {
   kit: (): KitFormValuesV2 => ({
     model: 'bivouac',
     goal: 'light',
+    units: 'metric',
+    prep: false,
     name: '',
     description: '',
     season: 'toute_saison',
@@ -910,6 +926,8 @@ const defaultsFactories = {
     activities: [],
     description: '',
     locationLabel: '',
+    zoneLat: null,
+    zoneLng: null,
     zoneRadiusKm: null,
     membershipRules: '',
     joinQuestions: [],

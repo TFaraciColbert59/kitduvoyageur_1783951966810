@@ -29,22 +29,22 @@ export interface MiniFilterItem {
 
 /** Mini-capsule Carnets : Découvrir, Mes carnets, Suivis, Près de moi. */
 export const CARNET_FILTER_ITEMS: MiniFilterItem[] = [
-  { value: 'discover', label: 'Découvrir', icon: miniIcon('compass') },
-  { value: 'mine', label: 'Mes carnets', icon: miniIcon('book') },
-  { value: 'followed', label: 'Suivis', icon: miniIcon('users') },
+  { value: 'discover', label: 'Découvrir', icon: miniIcon('globe') },
+  { value: 'mine', label: 'Mes carnets', icon: miniIcon('bookmark') },
+  { value: 'followed', label: 'Suivis', icon: miniIcon('heart') },
   { value: 'near', label: 'Près de moi', icon: miniIcon('map-pin') },
 ];
 
 /** Mini-capsule Clubs : Découvrir, Mes clubs, Près de moi. */
 export const CLUB_FILTER_ITEMS: MiniFilterItem[] = [
-  { value: 'discover', label: 'Découvrir', icon: miniIcon('compass') },
+  { value: 'discover', label: 'Découvrir', icon: miniIcon('globe') },
   { value: 'mine', label: 'Mes clubs', icon: miniIcon('users') },
   { value: 'near', label: 'Près de moi', icon: miniIcon('map-pin') },
 ];
 
 /** Mini-capsule Sorties : Découvrir, Mes sorties, Près de moi. */
 export const EVENT_FILTER_ITEMS: MiniFilterItem[] = [
-  { value: 'discover', label: 'Découvrir', icon: miniIcon('compass') },
+  { value: 'discover', label: 'Découvrir', icon: miniIcon('globe') },
   { value: 'mine', label: 'Mes sorties', icon: miniIcon('bookmark') },
   { value: 'near', label: 'Près de moi', icon: miniIcon('map-pin') },
 ];

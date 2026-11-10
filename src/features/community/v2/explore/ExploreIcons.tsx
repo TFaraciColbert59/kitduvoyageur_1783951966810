@@ -38,11 +38,18 @@ export type ExploreIconName =
   | 'filter'
   | 'leaf'
   | 'sun'
+  | 'globe'
   | 'partly'
   | 'rain'
   | 'snow';
 
 const PATHS: Record<ExploreIconName, React.ReactNode> = {
+  globe: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18" />
+    </>
+  ),
   search: (
     <>
       <circle cx="11" cy="11" r="6.5" />

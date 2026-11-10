@@ -955,6 +955,7 @@ export function StoryFormV2({ active, onNavChange, stepHosts }: CreateFormV2Prop
       disabled={!user}
       onNavChange={onNavChange}
       stepHosts={stepHosts}
+      liveValidation
       onSubmit={async (values) => {
         if (!user) throw new Error('Connecte-toi pour publier une story.');
         const result = await publishStoryV2(values, user.id);

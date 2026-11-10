@@ -15,7 +15,11 @@ import {
 import { useFormContext } from 'react-hook-form';
 import type { User } from '@supabase/supabase-js';
 import { EventTicket } from '../../shared/EventTicket';
-import { elevationGain, lengthKm, sampleAlong } from '@/features/community/create/carnet/traceEngine';
+import {
+  elevationGain,
+  lengthKm,
+  sampleAlong,
+} from '@/features/community/create/carnet/traceEngine';
 import { parseGpxTrace } from '../carnet/gpx';
 import type { EventCardVM } from '../../shared/types';
 import { CreateFormEngineV2, type CreateFormEngineApiV2 } from '../engine/CreateFormEngineV2';
@@ -34,6 +38,13 @@ import { PlaceFieldV2 } from '../fields/PlaceFieldV2';
 import { PrefillApplierV2 } from '../fields/PrefillApplierV2';
 import { deleteMediaObjectsV2, uploadedObjectsOf } from '../fields/media';
 import { MeetingMapV2 } from '../sortie/MeetingMapV2';
+import {
+  formatFiguresFr,
+  importedFiguresV2,
+  loadItinerarySourcesV2,
+  type ItinerarySourceKindV2,
+  type ItinerarySourceV2,
+} from '../sortie/itinerarySourcesV2';
 import { createClient } from '@/lib/supabase/client';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { SheetPreview } from '../../shared/SheetPreview';
@@ -187,29 +198,41 @@ function ActivityPlaceStep({ prefill }: { prefill?: Record<string, unknown> | nu
           <small>La sortie sera rattachée au club.</small>
         </p>
       ) : null}
-      <TextFieldV2
-        name="meetingPoint"
-        label="Point de rendez-vous"
-        placeholder="Parking de la Flégère, 8 h"
-        maxLength={120}
-      />
-      <MeetingMapV2
-        lat={values.meetingLat}
-        lng={values.meetingLng}
-        onChange={(lat, lng) => {
-          form.setValue('meetingLat', lat, { shouldDirty: true, shouldValidate: true });
-          form.setValue('meetingLng', lng, { shouldDirty: true, shouldValidate: true });
-        }}
-      />
-      {/* FID-064 — fieldset « Rendez-vous » de la maquette (L3120-3124) :
+      <fieldset className="lkdv-cv2c-fset" data-testid="cv2-sortie-rdv">
+        <legend className="lkdv-cv2-field-label">Rendez-vous</legend>
+        <TextFieldV2
+          name="meetingPoint"
+          label="Point de rendez-vous"
+          placeholder="Parking de la Flégère, 8 h"
+          maxLength={120}
+        />
+        <MeetingMapV2
+          lat={values.meetingLat}
+          lng={values.meetingLng}
+          onChange={(lat, lng) => {
+            form.setValue('meetingLat', lat, { shouldDirty: true, shouldValidate: true });
+            form.setValue('meetingLng', lng, { shouldDirty: true, shouldValidate: true });
+          }}
+        />
+        {/* FID-064 — fieldset « Rendez-vous » de la maquette (L3120-3124) :
           date, heure de départ, heure de fin et récurrence sont sur l'étape 1.
           FID-063 — la photo de couverture (ajout V2 sans équivalent maquette)
           est retirée du flux. */}
-      <div className="lkdv-cv2c-date-range">
-        <DateFieldV2 name="date" label="Date" required min={new Date().toISOString().slice(0, 10)} />
-        <TimeFieldV2 name="startTime" label="Départ" required />
-      </div>
-      <TimeFieldV2 name="endTime" label="Fin (optionnel)" hint="Laisse vide si la durée est libre." />
+        <div className="lkdv-cv2c-date-range">
+          <DateFieldV2
+            name="date"
+            label="Date"
+            required
+            min={new Date().toISOString().slice(0, 10)}
+          />
+          <TimeFieldV2 name="startTime" label="Départ" required />
+        </div>
+        <TimeFieldV2
+          name="endTime"
+          label="Fin (optionnel)"
+          hint="Laisse vide si la durée est libre."
+        />
+      </fieldset>
       <SegmentedFieldV2
         label="Récurrence"
         options={RECURRENCES.map((entry) => ({ ...entry }))}
@@ -234,6 +257,39 @@ function ItineraireStep() {
   const { haptic } = useHapticFeedback();
   const [traceState, setTraceState] = useState<'idle' | 'loading' | 'error'>('idle');
   const traceInputRef = useRef<HTMLInputElement | null>(null);
+  // Sortie#5 — import depuis un carnet ou une sortie enregistrée.
+  const { user } = useCreateSheet();
+  const [sourceKind, setSourceKind] = useState<ItinerarySourceKindV2 | null>(null);
+  const [sources, setSources] = useState<ItinerarySourceV2[] | null>(null);
+  const [sourcesError, setSourcesError] = useState<string | null>(null);
+  const [imported, setImported] = useState<string | null>(null);
+
+  const openSources = async (kind: ItinerarySourceKindV2) => {
+    haptic('selection');
+    if (sourceKind === kind) {
+      setSourceKind(null);
+      return;
+    }
+    setSourceKind(kind);
+    setSources(null);
+    setSourcesError(null);
+    const result = await loadItinerarySourcesV2(kind, user?.id ?? '');
+    setSources(result.data);
+    setSourcesError(result.error);
+  };
+
+  const pickSource = (source: ItinerarySourceV2) => {
+    const figures = importedFiguresV2(source);
+    form.setValue('distanceKm', figures.distanceKm, { shouldDirty: true, shouldValidate: true });
+    form.setValue('elevationGainM', figures.elevationGainM, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    setImported(source.name);
+    setSourceKind(null);
+    setTraceState('idle');
+    haptic('success');
+  };
 
   const importTrace = async (file: File | undefined) => {
     if (!file) return;
@@ -248,13 +304,16 @@ function ItineraireStep() {
       const response = await fetch(`/api/elevation?points=${query}`);
       if (response.ok) {
         const payload = (await response.json()) as { elevations?: Array<number | null> };
-        const gain = elevationGain(Array.isArray(payload.elevations) ? payload.elevations : []).gain;
+        const gain = elevationGain(
+          Array.isArray(payload.elevations) ? payload.elevations : []
+        ).gain;
         form.setValue('elevationGainM', Math.min(20_000, gain), {
           shouldDirty: true,
           shouldValidate: true,
         });
       }
       setTraceState('idle');
+      setImported(file.name);
       haptic('success');
     } catch {
       setTraceState('error');
@@ -267,11 +326,7 @@ function ItineraireStep() {
         <span className="lkdv-cv2-field-label" id="cv2c-level-label">
           Niveau de difficulté
         </span>
-        <div
-          className="lkdv-cv2c-difficulty"
-          role="radiogroup"
-          aria-labelledby="cv2c-level-label"
-        >
+        <div className="lkdv-cv2c-difficulty" role="radiogroup" aria-labelledby="cv2c-level-label">
           {LEVELS.map((level, index) => (
             <button
               key={level.value}
@@ -297,9 +352,17 @@ function ItineraireStep() {
       <div className="lkdv-cv2c-metric-row">
         <NumberFieldV2 name="distanceKm" label="Distance" unit="km" max={500} step={0.1} />
         {/* Maquette L3129 : dénivelé en **stepper** (pas de champ libre). */}
-        <NumberStepperV2 name="elevationGainM" label="Dénivelé positif" unit="m" min={0} max={20_000} step={50} />
+        <NumberStepperV2
+          name="elevationGainM"
+          label="Dénivelé positif"
+          unit="m"
+          min={0}
+          max={20_000}
+          step={50}
+        />
       </div>
-      <div className="lkdv-cv2c-inline-add">
+      <fieldset className="lkdv-cv2c-fset" data-testid="cv2-sortie-import">
+        <legend className="lkdv-cv2-field-label">Importer un itinéraire</legend>
         <input
           ref={traceInputRef}
           type="file"
@@ -311,25 +374,92 @@ function ItineraireStep() {
             event.target.value = '';
           }}
         />
-        <button
-          type="button"
-          className="lkdv-cv2-chip lkdv-cv2-chip--lg"
-          onClick={() => traceInputRef.current?.click()}
-          disabled={traceState === 'loading'}
-        >
-          {traceState === 'loading' ? (
-            <Loader2 size={13} className="lkdv-cv2c-spin" aria-hidden="true" />
-          ) : (
-            <Upload size={13} aria-hidden="true" />
-          )}
-          Importer une trace (distance et D+)
-        </button>
-      </div>
-      {traceState === 'error' ? (
-        <p className="lkdv-cv2-field-hint lkdv-cv2c-notice" role="status">
-          Trace illisible ou vide : distance et dénivelé peuvent être saisis à la main.
-        </p>
-      ) : null}
+        <div className="lkdv-cv2-chips" role="group" aria-label="Source de l’itinéraire">
+          <button
+            type="button"
+            className="lkdv-cv2-chip lkdv-cv2-chip--lg"
+            onClick={() => traceInputRef.current?.click()}
+            disabled={traceState === 'loading'}
+          >
+            {traceState === 'loading' ? (
+              <Loader2 size={13} className="lkdv-cv2c-spin" aria-hidden="true" />
+            ) : (
+              <Upload size={13} aria-hidden="true" />
+            )}
+            Une trace
+          </button>
+          <button
+            type="button"
+            className="lkdv-cv2-chip lkdv-cv2-chip--lg"
+            aria-expanded={sourceKind === 'carnet'}
+            aria-controls="cv2c-import-list"
+            onClick={() => void openSources('carnet')}
+          >
+            Un carnet
+          </button>
+          <button
+            type="button"
+            className="lkdv-cv2-chip lkdv-cv2-chip--lg"
+            aria-expanded={sourceKind === 'sortie'}
+            aria-controls="cv2c-import-list"
+            onClick={() => void openSources('sortie')}
+          >
+            Une sortie enregistrée
+          </button>
+        </div>
+        {sourceKind ? (
+          <div
+            id="cv2c-import-list"
+            className="lkdv-cv2c-kit-sources"
+            data-testid="cv2-import-list"
+          >
+            {sources == null ? (
+              <p className="lkdv-cv2-field-hint" role="status">
+                <Loader2 size={12} className="lkdv-cv2c-spin" aria-hidden="true" /> Chargement…
+              </p>
+            ) : null}
+            {sourcesError ? (
+              <p className="lkdv-cv2-field-hint lkdv-cv2c-notice" role="status">
+                {sourcesError}
+              </p>
+            ) : null}
+            {sources && !sourcesError && sources.length === 0 ? (
+              <p className="lkdv-cv2-field-hint">
+                {sourceKind === 'carnet'
+                  ? 'Aucun de tes carnets n’a de distance renseignée.'
+                  : 'Aucune sortie enregistrée avec une distance.'}
+              </p>
+            ) : null}
+            {sources?.map((source) => (
+              <button
+                key={source.id}
+                type="button"
+                className="lkdv-cv2c-kit-source"
+                onClick={() => pickSource(source)}
+              >
+                <b>{source.name}</b>
+                <small>
+                  {formatFiguresFr(source)} · {source.meta}
+                </small>
+              </button>
+            ))}
+          </div>
+        ) : null}
+        {imported && traceState !== 'error' ? (
+          <p
+            className="lkdv-cv2-field-hint lkdv-cv2c-notice"
+            role="status"
+            data-testid="cv2-import-done"
+          >
+            Importé : {imported}. Distance et D+ calculés.
+          </p>
+        ) : null}
+        {traceState === 'error' ? (
+          <p className="lkdv-cv2-field-hint lkdv-cv2c-notice" role="status">
+            Trace illisible ou vide : distance et dénivelé peuvent être saisis à la main.
+          </p>
+        ) : null}
+      </fieldset>
       <TextFieldV2 name="duration" label="Durée estimée" placeholder="5 h" maxLength={60} />
     </>
   );
@@ -362,9 +492,13 @@ function ParticipantsStep() {
             if (!club || typeof club !== 'object') return null;
             const record = club as Record<string, unknown>;
             if (typeof record.id !== 'string') return null;
-            return { id: record.id, name: String(record.name ?? ''), slug: String(record.slug ?? '') };
+            return {
+              id: record.id,
+              name: String(record.name ?? ''),
+              slug: String(record.slug ?? ''),
+            };
           })
-          .filter((entry): entry is ClubOption => entry !== null),
+          .filter((entry): entry is ClubOption => entry !== null)
       );
     } catch {
       setClubs([]);
@@ -374,9 +508,7 @@ function ParticipantsStep() {
   };
 
   const percentage =
-    values.maxParticipants > 0
-      ? Math.min(100, Math.round((1 / values.maxParticipants) * 100))
-      : 0;
+    values.maxParticipants > 0 ? Math.min(100, Math.round((1 / values.maxParticipants) * 100)) : 0;
 
   return (
     <>
@@ -410,8 +542,17 @@ function ParticipantsStep() {
         Activer la liste d’attente quand c’est complet
       </button>
       <div className="lkdv-cv2c-inline-add">
-        <button type="button" className="lkdv-cv2-chip lkdv-cv2-chip--lg" onClick={() => void loadOptions()} disabled={loading}>
-          {loading ? <Loader2 size={13} className="lkdv-cv2c-spin" aria-hidden="true" /> : <MapPin size={13} aria-hidden="true" />}
+        <button
+          type="button"
+          className="lkdv-cv2-chip lkdv-cv2-chip--lg"
+          onClick={() => void loadOptions()}
+          disabled={loading}
+        >
+          {loading ? (
+            <Loader2 size={13} className="lkdv-cv2c-spin" aria-hidden="true" />
+          ) : (
+            <MapPin size={13} aria-hidden="true" />
+          )}
           Choisir un club et un kit
         </button>
       </div>
@@ -425,7 +566,12 @@ function ParticipantsStep() {
                 type="button"
                 className="lkdv-cv2-chip lkdv-cv2-chip--lg"
                 aria-pressed={values.clubId === club.id}
-                onClick={() => form.setValue('clubId', values.clubId === club.id ? '' : club.id, { shouldDirty: true, shouldValidate: true })}
+                onClick={() =>
+                  form.setValue('clubId', values.clubId === club.id ? '' : club.id, {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  })
+                }
               >
                 {club.name}
               </button>
@@ -518,7 +664,11 @@ function SecuriteStep() {
           ))}
         </div>
         {kits === null ? (
-          <button type="button" className="lkdv-cv2-chip lkdv-cv2-chip--lg" onClick={() => void loadKits()}>
+          <button
+            type="button"
+            className="lkdv-cv2-chip lkdv-cv2-chip--lg"
+            onClick={() => void loadKits()}
+          >
             {loading ? (
               <Loader2 size={13} className="lkdv-cv2c-spin" aria-hidden="true" />
             ) : (
@@ -542,8 +692,8 @@ function SecuriteStep() {
           publie l'annonce avec la sortie (`commit`), et la RPC l'écrit dans la
           même transaction. */}
       <p className="lkdv-cv2-field-hint">
-        Une annonce part dans le fil avec la sortie, dans la même transaction : si elle échoue,
-        rien n’est créé.
+        Une annonce part dans le fil avec la sortie, dans la même transaction : si elle échoue, rien
+        n’est créé.
       </p>
     </>
   );
@@ -587,7 +737,7 @@ function SortieBody({
       try {
         const response = await fetch(
           `/api/weather?lat=${values.meetingLat}&lon=${values.meetingLng}&from=${values.date}&to=${values.date}`,
-          { signal: controller.signal },
+          { signal: controller.signal }
         );
         const payload = (await response.json()) as {
           status?: string;
@@ -658,7 +808,13 @@ function SortieBody({
  * check-list sécurité, kit requis, récurrence stockée, aperçu billet vivant,
  * et **une seule RPC atomique** (`create_event_with_post`).
  */
-export function SortieFormV2({ active, prefill, prefillNonce, onNavChange, stepHosts }: CreateFormV2Props) {
+export function SortieFormV2({
+  active,
+  prefill,
+  prefillNonce,
+  onNavChange,
+  stepHosts,
+}: CreateFormV2Props) {
   const { user, reportCreated } = useCreateSheet();
   const defaults = React.useRef(createDefaultsV2('sortie')).current;
 

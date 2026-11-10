@@ -5,7 +5,15 @@ import type { CarnetCardVM, CarnetFilter, CarnetSort, GeoPermissionState } from 
 import type { CursorFeedResult } from '../../data/useCursorFeed';
 import { formatCountFr } from '../../shared/format';
 import { CarnetTileV2 } from '../tiles/CarnetTileV2';
-import { ExploreEmpty, ExploreError, ExploreGeoPrompt, ExploreListFoot, ExploreOfflineBanner, ExploreSkeleton } from '../ExploreStates';
+import {
+  ExploreEmpty,
+  ExploreError,
+  ExploreGeoPrompt,
+  ExploreListFoot,
+  ExploreOfflineBanner,
+  ExplorePaneFoot,
+  ExploreSkeleton,
+} from '../ExploreStates';
 import { usePaneNearBottom, usePaneScrollMemory } from '../usePaneScrollMemory';
 
 export interface CarnetsPaneProps {
@@ -21,6 +29,12 @@ export interface CarnetsPaneProps {
   onCreateCarnet: () => void;
   onDiscover: () => void;
   onRequestGeo: () => void;
+  /**
+   * « Tout voir » (Carnets#19) : élargit au flux complet. Le hub `/carnets`
+   * n'existe pas côté produit (la route `/carnets/[id]` est hors périmètre) ;
+   * le geste reste donc dans le tiroir et ne ramène jamais à la page courante.
+   */
+  onSeeAll?: () => void;
 }
 
 /**
@@ -41,6 +55,7 @@ export function CarnetsPane({
   onCreateCarnet,
   onDiscover,
   onRequestGeo,
+  onSeeAll,
 }: CarnetsPaneProps) {
   const scrollRef = usePaneScrollMemory<HTMLDivElement>(`cv2:explore:scroll:carnets:${filter}`);
   const nearBottomRef = usePaneNearBottom<HTMLDivElement>(
@@ -163,6 +178,15 @@ export function CarnetsPane({
           label={formatCountFr(feed.items.length, 'carnet')}
         />
       </div>
+      <ExplorePaneFoot
+        createLabel="Créer un carnet"
+        onCreate={onCreateCarnet}
+        onSeeAll={filter === 'discover' && !feed.hasMore ? undefined : onSeeAll}
+        seeAllBusy={feed.loadingMore}
+        seeAllDescription={
+          filter === 'discover' ? 'Tout voir : charger tous les carnets' : 'Tout voir : afficher tous les carnets de la communauté'
+        }
+      />
     </div>
   );
 }

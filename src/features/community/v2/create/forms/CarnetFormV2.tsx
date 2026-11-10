@@ -29,7 +29,8 @@ import { NumberStepperV2 } from '../fields/NumberStepperV2';
 import { PlaceFieldV2 } from '../fields/PlaceFieldV2';
 import { PrefillApplierV2 } from '../fields/PrefillApplierV2';
 import { deleteMediaObjectsV2, uploadedObjectsOf } from '../fields/media';
-import { HAS_CARNET_NIGHTS } from '../carnet/capabilities';
+import { normalizeRouteTrace } from '../../data/communityFeedMappers';
+import { useCarnetNights } from '../carnet/capabilities';
 import { TracePaneV2 } from '../carnet/TracePaneV2';
 import { DaysPaneV2 } from '../carnet/DaysPaneV2';
 import {
@@ -82,15 +83,31 @@ function formatKm(km: number): string {
 function CarnetPreviewV2({ values }: { values: CarnetFormValuesV2 }) {
   const cover = carnetCover(values);
   const days = values.nbJours || values.days.length || 1;
+  // Carnet#10 : le tracé dessiné apparaît en filigrane sur la couverture, comme
+  // sur la tuile (maquette `cprev`, L3008) ; il se met à jour à chaque geste.
+  const trace = normalizeRouteTrace(values.trace);
   return (
     <div className="lkdv-cv2c-carnet-preview" data-testid="cv2c-carnet-preview" inert aria-hidden="true">
-      <span className="lkdv-cv2c-carnet-preview-cover">
+      <span className="lkdv-cv2c-carnet-preview-cover" data-photo={cover?.url ? 'true' : undefined}>
         {cover?.url ? (
           // eslint-disable-next-line @next/next/no-img-element -- URL Storage du carnet
           <img src={cover.url} alt="" />
         ) : (
           <Mountain size={22} />
         )}
+        {trace ? (
+          <svg
+            className="lkdv-cv2-trace lkdv-cv2c-carnet-preview-trace"
+            viewBox="0 0 100 100"
+            preserveAspectRatio="xMidYMid meet"
+            aria-hidden="true"
+            data-testid="cv2c-carnet-preview-trace"
+          >
+            <path d={trace.map(([x, y], index) => `${index === 0 ? 'M' : 'L'}${x} ${y}`).join(' ')} />
+            <circle cx={trace[0]?.[0]} cy={trace[0]?.[1]} r={2.2} />
+            <circle cx={trace[trace.length - 1]?.[0]} cy={trace[trace.length - 1]?.[1]} r={2.2} />
+          </svg>
+        ) : null}
         <span className="lkdv-cv2c-carnet-preview-visa">
           <b>{values.destination.slice(0, 2).toUpperCase() || 'FR'}</b>
           <i>
@@ -675,6 +692,7 @@ function CarnetBody({
 export function CarnetFormV2({ active, prefill, prefillNonce, onNavChange, stepHosts }: CreateFormV2Props) {
   const { user, reportCreated } = useCreateSheet();
   const defaults = useRef(createDefaultsV2('carnet')).current;
+  const hasNights = useCarnetNights();
 
   return (
     <CreateFormEngineV2<CarnetFormValuesV2>
@@ -685,12 +703,16 @@ export function CarnetFormV2({ active, prefill, prefillNonce, onNavChange, stepH
       disabled={!user}
       onNavChange={onNavChange}
       stepHosts={stepHosts}
+      queueWhenOffline
       onSubmit={async (values) => {
         try {
-          const result = await createCarnetV2(values, { hasCarnetNights: HAS_CARNET_NIGHTS });
+          const result = await createCarnetV2(values, { hasCarnetNights: hasNights });
           reportCreated('carnet', { id: result.id, name: values.title.trim() });
         } catch (error) {
-          await deleteMediaObjectsV2(uploadedObjectsOf(carnetPhotos(values)));
+          // Hors ligne, l'envoi est mis en file (Carnet#19) : les photos déjà
+          // téléversées doivent rester en place pour la reprise.
+          const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
+          if (!offline) await deleteMediaObjectsV2(uploadedObjectsOf(carnetPhotos(values)));
           throw error;
         }
       }}
