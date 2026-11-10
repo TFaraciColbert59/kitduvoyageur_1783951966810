@@ -242,6 +242,9 @@ export function normalizeForEvidence(s: string): string {
     .trim();
 }
 
+/** Longueur maximale (en signes) du passage qui justifie un nombre. */
+const MAX_NUMBER_EVIDENCE = 60;
+
 /** Un passage d'un seul signe se retrouve toujours (surtout en japonais ou en chinois) : il ne prouve rien. */
 const MIN_EVIDENCE_LENGTH = 2;
 
@@ -268,12 +271,29 @@ const NAME_PATHS: ReadonlySet<string> = new Set([
 ]);
 const DATE_PATHS: ReadonlySet<string> = new Set(['quand.dateDebut', 'quand.dateFin']);
 
-/** Nombres écrits en lettres, dans les cinq langues du Compas (début de mot : « zwei » couvre « zweit »). */
+/**
+ * Variables sensibles (santé, conviction : RGPD art. 9, ou vulnérabilité). Elles servent
+ * à la préparation en cours et ne sont JAMAIS rangées sur le voyage, quelle que soit leur
+ * source — sauf décision contraire du propriétaire du produit (décision D7).
+ */
+export const SENSITIVE_PATHS: ReadonlySet<string> = new Set([
+  'qui.peurDuVide',
+  'qui.malDesTransports',
+  'qui.mobiliteReduite',
+  'repas.regime',
+  'repas.allergies',
+]);
+
+/**
+ * Nombres écrits en lettres, dans les cinq langues du Compas. Mot ENTIER seulement
+ * (« septembre » ne dit pas 7) ; les formes fléchies utiles sont listées (« zu zweit »).
+ * Les articles (un, une, ein, a…) n'y sont pas : « une semaine » ne dit pas « une personne ».
+ */
 const NUMBER_WORDS: Readonly<Record<number, readonly string[]>> = {
-  1: ['un', 'une', 'one', 'uno', 'una', 'ein', 'eine', 'seul', 'seule', 'solo', 'sola', 'alone', 'allein'],
-  2: ['deux', 'two', 'dos', 'zwei', 'due', 'couple', 'coppia', 'pareja', 'paar'],
-  3: ['trois', 'three', 'tres', 'drei', 'tre'],
-  4: ['quatre', 'four', 'cuatro', 'vier', 'quattro'],
+  1: ['seul', 'seule', 'solo', 'sola', 'alone', 'allein', 'alleine'],
+  2: ['deux', 'two', 'dos', 'zwei', 'zweit', 'due', 'couple', 'coppia', 'pareja', 'paar'],
+  3: ['trois', 'three', 'tres', 'drei', 'dritt', 'tre'],
+  4: ['quatre', 'four', 'cuatro', 'vier', 'viert', 'quattro'],
   5: ['cinq', 'five', 'cinco', 'fünf', 'cinque'],
   6: ['six', 'seis', 'sechs', 'sei'],
   7: ['sept', 'seven', 'siete', 'sieben', 'sette'],
@@ -286,14 +306,41 @@ const NUMBER_WORDS: Readonly<Record<number, readonly string[]>> = {
   30: ['trente', 'thirty', 'treinta', 'dreißig', 'trenta'],
 };
 
+/** Noms des mois (et abréviations courantes) dans les cinq langues, sans accent de casse : rang = mois − 1. */
+const MONTH_WORDS: ReadonlyArray<readonly string[]> = [
+  ['janvier', 'january', 'jan', 'enero', 'januar', 'gennaio'],
+  ['février', 'fevrier', 'february', 'feb', 'febrero', 'februar', 'febbraio'],
+  ['mars', 'march', 'marzo', 'märz', 'maerz'],
+  ['avril', 'april', 'abril', 'aprile'],
+  ['mai', 'may', 'mayo', 'maggio'],
+  ['juin', 'june', 'junio', 'juni', 'giugno'],
+  ['juillet', 'july', 'julio', 'juli', 'luglio'],
+  ['août', 'aout', 'august', 'agosto'],
+  ['septembre', 'september', 'sept', 'septiembre', 'setiembre', 'settembre'],
+  ['octobre', 'october', 'octubre', 'oktober', 'ottobre'],
+  ['novembre', 'november', 'noviembre'],
+  ['décembre', 'decembre', 'december', 'diciembre', 'dezember', 'dicembre'],
+];
+
+/** Le mois est nommé dans le passage (mot entier), et c'est le seul mois nommé. */
+function monthInEvidence(month: number, evidence: string): boolean {
+  const tokens = normalizeForEvidence(evidence).split(/[^\p{L}]+/u);
+  const named = MONTH_WORDS.flatMap((list, i) => (tokens.some((t) => list.includes(t)) ? [i + 1] : []));
+  return named.length === 1 && named[0] === month;
+}
+
 function numberInEvidence(n: number, evidence: string): boolean {
   const e = normalizeForEvidence(evidence);
-  const digits = e.match(/\d+(?:[.,]\d+)?/g) ?? [];
-  if (digits.some((d) => Number(d.replace(',', '.')) === n)) return true;
-  const words = NUMBER_WORDS[n];
-  if (!words) return false;
+  // Passage court : citer la phrase entière ne prouve aucune valeur en particulier.
+  if ([...e].length > MAX_NUMBER_EVIDENCE) return false;
+  const digits = (e.match(/\d+(?:[.,]\d+)?/g) ?? []).map((d) => Number(d.replace(',', '.')));
   const tokens = e.split(/[^\p{L}]+/u);
-  return words.some((w) => tokens.some((t) => t === w || (w.length >= 4 && t.startsWith(w))));
+  const words = Object.entries(NUMBER_WORDS).flatMap(([k, list]) =>
+    tokens.filter((t) => list.includes(t)).map(() => Number(k))
+  );
+  // Un seul nombre dans le passage : « 2 adultes et 3 enfants » ne dit pas lequel est demandé.
+  const found = [...digits, ...words];
+  return found.length === 1 && found[0] === n;
 }
 
 /**
@@ -310,11 +357,20 @@ export function valueInEvidence(path: BriefPath, value: unknown, evidence: strin
   if (NAME_PATHS.has(path)) {
     const e = normalizeForEvidence(evidence);
     const all = (Array.isArray(value) ? value : [value]).map((v) => normalizeForEvidence(String(v)));
-    return all.length > 0 && all.every((v) => v.length > 0 && e.includes(v)) ? 'oui' : 'non';
+    return all.length > 0 && all.every((v) => [...v].length >= MIN_EVIDENCE_LENGTH && e.includes(v)) ? 'oui' : 'non';
   }
+  // Un mois se dit par son nom (« fin avril ») ; « le mois prochain » ne le dit pas : il se calcule.
+  if (path === 'quand.mois' && typeof value === 'number')
+    return monthInEvidence(value, evidence) || numberInEvidence(value, evidence) ? 'oui' : 'non';
   if (typeof value === 'number') return numberInEvidence(value, evidence) ? 'oui' : 'non';
-  if (Array.isArray(value) && value.length > 0 && value.every((v) => typeof v === 'number'))
-    return value.every((v) => numberInEvidence(v as number, evidence)) ? 'oui' : 'non';
+  // Une liste de nombres (âges des enfants) : chaque nombre est dans le passage, en chiffres.
+  if (Array.isArray(value) && value.length > 0 && value.every((v) => typeof v === 'number')) {
+    const e = normalizeForEvidence(evidence);
+    const digits = (e.match(/\d+/g) ?? []).map(Number).sort();
+    return [...e].length <= MAX_NUMBER_EVIDENCE && JSON.stringify(digits) === JSON.stringify([...(value as number[])].sort())
+      ? 'oui'
+      : 'non';
+  }
   if (typeof value === 'string' && /^\d{2}:\d{2}$/.test(value))
     return numberInEvidence(Number(value.slice(0, 2)), evidence) ? 'oui' : 'non';
   return 'oui';
@@ -327,7 +383,10 @@ export type BriefIssueReason =
   | 'date_non_confirmee'
   | 'preuve_sur_source_non_dite'
   | 'valeur_nulle_avec_confiance'
-  | 'source_privee_non_marquee';
+  | 'source_privee_non_marquee'
+  | 'verrou_interdit'
+  | 'source_interdite'
+  | 'deduction_chiffree_interdite';
 
 export interface BriefIssue {
   path: BriefPath;
@@ -344,8 +403,13 @@ export interface BriefIssue {
 export type BriefOrigin = 'regles' | 'ia';
 
 /**
- * Contrôle des règles de valeur sur un Brief déjà conforme au schéma.
- * Une valeur verrouillée (posée par la personne à l'écran) n'a pas à citer la phrase.
+ * Contrôle des règles de valeur sur un Brief PRODUIT PAR UN LECTEUR de la phrase
+ * (règles ou IA), déjà conforme au schéma. Un lecteur ne peut :
+ * - ni verrouiller une valeur (seule la personne le fait, par `lockValue`) ;
+ * - ni se dire « profil », « historique » ou « défaut » : il rend du dit ou du déduit ;
+ * et l'IA, en plus :
+ * - ne rend jamais une date, quelle que soit la source qu'elle lui donne ;
+ * - ne rend jamais un nombre ou une heure « déduit » (un nombre est dit et prouvé, ou absent).
  */
 export function briefIssues(brief: Brief, phrase: string, origin: BriefOrigin = 'ia'): BriefIssue[] {
   const issues: BriefIssue[] = [];
@@ -355,11 +419,22 @@ export function briefIssues(brief: Brief, phrase: string, origin: BriefOrigin = 
       if (v.confidence > 0) issues.push({ path, reason: 'valeur_nulle_avec_confiance' });
       continue;
     }
-    if (PRIVATE_SOURCES.includes(v.source) && !v.prive) {
-      issues.push({ path, reason: 'source_privee_non_marquee' });
+    if (v.locked) {
+      issues.push({ path, reason: 'verrou_interdit' });
       continue;
     }
-    if (v.locked) continue;
+    if (v.source !== 'dit' && v.source !== 'deduit') {
+      issues.push({ path, reason: 'source_interdite' });
+      continue;
+    }
+    if (origin === 'ia' && DATE_PATHS.has(path)) {
+      issues.push({ path, reason: 'date_non_confirmee' });
+      continue;
+    }
+    if (origin === 'ia' && v.source === 'deduit' && isNumeric(v.value)) {
+      issues.push({ path, reason: 'deduction_chiffree_interdite' });
+      continue;
+    }
     if (v.source === 'dit') {
       if (!v.evidence) issues.push({ path, reason: 'dit_sans_preuve' });
       else if (!evidenceInPhrase(v.evidence, phrase)) issues.push({ path, reason: 'preuve_absente_de_la_phrase' });
@@ -371,6 +446,32 @@ export function briefIssues(brief: Brief, phrase: string, origin: BriefOrigin = 
     } else if (v.evidence) issues.push({ path, reason: 'preuve_sur_source_non_dite' });
   }
   return issues;
+}
+
+/** Nombre, liste de nombres ou heure « HH:MM ». */
+function isNumeric(value: unknown): boolean {
+  if (typeof value === 'number') return true;
+  if (Array.isArray(value)) return value.length > 0 && value.every((v) => typeof v === 'number');
+  return typeof value === 'string' && value.length === 5 && value[2] === ':' && !Number.isNaN(Number(value.slice(0, 2)));
+}
+
+/** Une surcouche privée mal marquée (contrôle des entrées `profil` / `historique` de la fusion). */
+export function unmarkedPrivate(brief: Brief): BriefPath[] {
+  return briefPaths().filter((p) => {
+    const v = getValue(brief, p);
+    return v.value != null && PRIVATE_SOURCES.includes(v.source) && !v.prive;
+  });
+}
+
+/**
+ * Valeur DÉDUITE d'autres valeurs : elle hérite de la confidentialité de la plus privée de
+ * ses entrées (devise tirée du pays de résidence, niveau tiré de l'allure…). Toute déduction
+ * passe par ici : c'est ce qui garantit qu'une déduction du profil n'est jamais rangée.
+ */
+export function derive<T>(value: T, inputs: ReadonlyArray<BriefValue<unknown>>, confidence = 0.6): BriefValue<T> {
+  const prive = inputs.some((v) => v.prive || PRIVATE_SOURCES.includes(v.source));
+  const c = Math.min(confidence, ...inputs.map((v) => v.confidence));
+  return { value, source: 'deduit', confidence: Math.max(0, c), evidence: null, locked: false, prive };
 }
 
 /**
@@ -398,19 +499,23 @@ export function lockValue<T>(value: T): BriefValue<T> {
 }
 
 const isPrivate = (v: AnyValue) => v.prive || PRIVATE_SOURCES.includes(v.source);
+const notStorable = (path: BriefPath, v: AnyValue) => isPrivate(v) || SENSITIVE_PATHS.has(path);
 
 /**
  * Ce qui peut être rangé sur le voyage (règle R5) :
  * - toute valeur privée (profil, historique, ou déduite d'eux) redevient « absente » ;
- * - aucun passage de la phrase n'est gardé (`evidence` vidé) : la phrase peut dire
- *   des choses intimes et le voyage se partage.
+ * - toute variable sensible (santé, conviction) redevient « absente », même verrouillée ;
+ * - aucun passage de la phrase n'est gardé (`evidence` vidé, y compris sur une valeur
+ *   nulle) : la phrase peut dire des choses intimes et le voyage se partage.
  */
 export function briefForStorage(brief: Brief): Brief {
   let out = brief;
   for (const path of briefPaths()) {
     const v = getValue(brief, path);
-    if (v.value == null) continue;
-    if (isPrivate(v)) out = withValue(out, path, emptyValue());
+    if (v.value == null) {
+      if (v.evidence != null || v.confidence !== 0 || v.source !== 'defaut' || v.locked || v.prive)
+        out = withValue(out, path, emptyValue());
+    } else if (notStorable(path, v)) out = withValue(out, path, emptyValue());
     else if (v.evidence != null) out = withValue(out, path, { ...v, evidence: null });
   }
   return out;
@@ -420,7 +525,7 @@ export function briefForStorage(brief: Brief): Brief {
 export function isStorable(brief: Brief): boolean {
   return briefPaths().every((p) => {
     const v = getValue(brief, p);
-    return v.value == null || (!isPrivate(v) && v.evidence == null);
+    return v.evidence == null && (v.value == null || !notStorable(p, v));
   });
 }
 

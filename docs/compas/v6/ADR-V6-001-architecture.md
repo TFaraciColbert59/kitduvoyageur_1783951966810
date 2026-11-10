@@ -1,7 +1,7 @@
 # ADR-V6-001 — Architecture du moteur de préparation Compas v6
 
 **Date :** 2026-11-10
-**Statut :** Proposé, révision 2 — la relecture `architect` du 10 novembre a rendu « à revoir » (17 constats, dont 3 bloquants) ; cette révision les traite un à un (section 10). Une seconde relecture est requise avant la migration `trip_briefs`.
+**Statut :** Accepté sous réserve (seconde relecture `architect`, 10 novembre) ; révision 3, qui traite les six réserves (section 11). Historique : révision 2 — la relecture `architect` du 10 novembre a rendu « à revoir » (17 constats, dont 3 bloquants) ; cette révision les traite un à un (section 10). La migration `trip_briefs` est **reportée** (section 3.5).
 **Source :** `docs/compas/SPEC-V6-MOTEUR.md`, lecture de `main` au commit `571142e`.
 **Décideur des points ouverts :** Tony (D1 à D5, section 9).
 
@@ -97,7 +97,14 @@ Aucun écran n'écrit le Brief dans ce chantier (spec §12). Les colonnes de `tr
 
 ### 3.5 Stockage et cache
 
-`trip_briefs` : une ligne par voyage (`trip_id` clé primaire, `brief jsonb`, `schema_version int`, `engine jsonb`, `launched_by uuid`, `profile_applied boolean`, `updated_at`). RLS activée à la création ; lecture et écriture par `can_edit_trip` seulement ; retour arrière fourni ; relecture `architect` avant application.
+**Pas de table `trip_briefs` pour l'instant** (décision de la révision 3). Rien ne la lit : aucun écran n'écrit le Brief, les réglages modifiables restent dans `trips` et les préférences (§3.4), et une valeur dite rangée sans son passage ne peut pas être revérifiée à la relance. Le Brief vit donc **en mémoire, le temps d'une préparation**, reconstruit à chaque fois depuis la phrase (tant qu'elle est sur le voyage), les réglages du voyage, le profil du lanceur et les défauts. La règle « une variable que rien ne lit n'entre pas » vaut aussi pour une table. Elle sera créée quand un lecteur existera (écran d'édition du Brief, ou graphe de la phase 5), avec la forme arrêtée par la seconde relecture :
+
+- `trip_id uuid` clé primaire, `references trips on delete cascade` ; `brief jsonb not null` (objet, taille bornée) ; `schema_version int not null` ; `engine jsonb` (tableau) ; `launched_by uuid references auth.users on delete set null` ; `profile_applied boolean not null default false` ; `updated_at` par déclencheur ;
+- défense en base : `check (not jsonb_path_exists(brief, '$.*.* ? (@.prive == true || @.evidence != null)'))` ;
+- RLS `enable` + `force`, `revoke all` à `anon` (car `can_edit_trip` reste exécutable par `anon`), politiques `to authenticated` : lecture `using (can_edit_trip(trip_id))`, insertion et mise à jour `with check (can_edit_trip(trip_id) and launched_by = auth.uid())`, pas de suppression directe ;
+- retour arrière : `drop table`.
+
+`briefForStorage` et `isStorable` existent et sont testés dès maintenant : ce sont eux qui diront ce qui a le droit d'entrer dans cette table, et dans tout ce que les adaptateurs écrivent sur le voyage (§3.6).
 
 Cache d'extraction : en mémoire de l'instance seulement en phase 1 (dit tel quel : sur Vercel il ne vit que le temps de l'instance ; `geo_cache` ne convient pas, sa contrainte `kind` exclut un Brief). Clé = SHA-256 de (phrase normalisée, langue, version du schéma, version de la consigne). La date du jour n'a pas à y entrer : la valeur en cache ne contient jamais de date absolue (section 3.2). Un cache en base ne sera proposé qu'avec une mesure du taux de réutilisation.
 
@@ -105,6 +112,7 @@ Cache d'extraction : en mémoire de l'instance seulement en phase 1 (dit tel que
 
 - `buildTripContext` garde sa signature. Avec `COMPAS_V6_BRIEF=1`, un adaptateur pur `briefToTripContextInput(brief, trip)` produit son entrée (jours, heures, groupe, activité, destination).
 - `TripContextInput` ne porte ni effort, ni nuits, ni repas : ces variables passent par un **second adaptateur**, `briefToPreferences(brief)`, vers la forme lue aujourd'hui par `readCompasMeta` et `resolveProjectContext` (`autofillActions.ts:1551-1560`). Les lecteurs qui contournent ces deux entrées (inventaire T1.2) y sont ramenés avant la bascule.
+- **Les adaptateurs n'écrivent jamais une valeur privée ou sensible sur le voyage.** `trips` et `metadata.compas.prefs` sont lisibles par `anon` sur un voyage public (`trips_core.sql:406-409`) : toute écriture issue du Brief passe d'abord par `briefForStorage`, et un test le prouvera à l'écriture des adaptateurs (T1.7).
 - Désaccords : `ops_preparation_events` n'a que `at` et un `kind` fermé à cinq valeurs. La migration de la phase 1 y ajoute un `kind` « brief_disagreement », compté sans valeur ni identifiant de voyage. Le détail (chemin de la variable, source retenue) va dans le résultat du banc, pas en base.
 
 ## 4. Archétypes et segments
@@ -165,6 +173,7 @@ Cadrés ici, décidés dans leurs propres ADR (T4.1, T5.1) : la phase 4 ne déma
 | D2, D3 | Stockage et zones du monde | phase 4 à l'arrêt |
 | D4 | L'allure réelle règle-t-elle les journées sans demander ? | T1.5 calculé, non branché |
 | D5 | Invariant bloquant non réparé : rendre ou refuser | T3.3 codé avec « rendre, défaut dit » par défaut (le comportement le plus proche d'aujourd'hui), réversible par un réglage |
+| D7 (nouvelle) | Les variables sensibles dites dans la phrase (régime, allergies, peur du vide, mal des transports, mobilité réduite — santé ou conviction, RGPD art. 9) peuvent-elles être rangées sur le voyage ? | elles servent à la préparation en cours et ne sont jamais rangées (`SENSITIVE_PATHS`) |
 | D6 (nouvelle) | Le profil ou l'historique d'un autre membre du groupe peut-il régler le voyage (« au rythme du plus faible »), et avec quel accord ? | seul le profil de la personne qui lance est lu |
 
 ## 10. Relecture `architect` du 10 novembre 2026 — verdict « à revoir », traitement
@@ -190,3 +199,19 @@ Cadrés ici, décidés dans leurs propres ADR (T4.1, T5.1) : la phase 4 ne déma
 | 17 | « L'IA gagne » sur les noms ; portée de D1 | risque écrit avec son garde-fou (§3.2) ; portée de D1 corrigée (§9) |
 
 Le relecteur a aussi relevé que l'empreinte compte 16 réglages (la spec en dit 15) : le chiffre du code est retenu en section 1.
+
+## 11. Seconde relecture `architect` du 10 novembre 2026 — verdict « accepté sous réserve », traitement
+
+Les trois bloquants de la première relecture ont été jugés « levés en partie » ; six réserves vérifiables ont été posées, plus un contournement reproduit par script.
+
+| Réserve | Ce qui était faux | Traitement (code et test) |
+|---|---|---|
+| R1 | Une date ou un nombre de l'IA étiqueté `deduit`, ou une valeur marquée `locked`, échappait aux deux contrôles | un lecteur de phrase ne peut ni verrouiller ni se donner une autre source que `dit` / `deduit` ; l'IA ne rend aucune date quelle que soit la source, ni aucun nombre « déduit » (`briefIssues`, tests « contournements fermés ») |
+| R2 | Un passage restait sur une valeur nulle et `isStorable` l'acceptait | `briefForStorage` vide et `isStorable` exige `evidence = null` partout |
+| R3 | L'héritage de confidentialité d'une déduction n'était garanti par aucun code | `derive(valeur, entrées)` : `prive` = OU des entrées ; règle des adaptateurs écrite en §3.6 |
+| R4 | `readRealPace(supabase, userId)` acceptait n'importe quel identifiant, alors que la RLS de `hike_sessions` ouvre les sorties d'un carnet public | l'identifiant vient de `auth.getUser()` |
+| R5 | « septembre » prouvait 7, « une semaine » prouvait 1, « 2 adultes et 3 enfants » prouvait enfants = 2, la phrase entière servait de passage | mot entier, articles retirés, un seul nombre par passage, passage ≤ 60 signes, nom ≥ 2 signes ; un mois se prouve par son nom |
+| R6, point 6 | Régime, allergies, peur du vide, mobilité : données de santé ou de conviction qu'aucun réglage ne range aujourd'hui | jamais rangées (`SENSITIVE_PATHS`), décision D7 ouverte |
+| R6, point 7 | Rôle de la table flou, deux producteurs de verrou | pas de table maintenant (§3.5) ; le verrou a un seul producteur, `lockValue`, alimenté par les réglages du voyage |
+
+Limites qui restent, dites : « due to » prouve 2 (mot italien) ; une durée dite en semaines ou en mois (« 2 semaines », « un mois ») n'est pas prouvable par l'IA et vient des règles ; une valeur que la phrase écrit elle-même dans les bornes du schéma passe les deux contrôles (acceptable tant que la phrase vient de la personne, à revoir si une phrase vient un jour d'un tiers) ; `launched_by` et `profile_applied` ne sont pas encore codés (ils le seront avec le branchement, T1.7).

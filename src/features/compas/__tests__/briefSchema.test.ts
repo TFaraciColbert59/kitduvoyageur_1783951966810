@@ -11,7 +11,10 @@ import {
   emptyValue,
   evidenceInPhrase,
   getValue,
+  derive,
   isStorable,
+  SENSITIVE_PATHS,
+  unmarkedPrivate,
   lockValue,
   valueInEvidence,
   parseStoredBrief,
@@ -115,12 +118,19 @@ describe('Brief — règle R2 (la valeur dite cite la phrase)', () => {
       locked: false,
       prive: false,
     });
-    expect(briefIssues(b, phrase)).toEqual([{ path: 'quand.mois', reason: 'preuve_sur_source_non_dite' }]);
+    expect(briefIssues(b, phrase, 'regles')).toEqual([{ path: 'quand.mois', reason: 'preuve_sur_source_non_dite' }]);
   });
 
-  it('une valeur verrouillée par la personne n’a pas à citer la phrase', () => {
-    const b = withValue(emptyBrief(), 'quand.jours', { ...said(7, ''), evidence: null, locked: true });
-    expect(briefIssues(b, phrase)).toEqual([]);
+  it('un lecteur de phrase ne verrouille rien et ne se dit ni profil ni défaut', () => {
+    let b = withValue(emptyBrief(), 'quand.jours', { ...said(7, '7 jours'), locked: true });
+    b = withValue(b, 'qui.niveau', { value: 'aguerri', source: 'profil', confidence: 0.9, evidence: null, locked: false, prive: true });
+    b = withValue(b, 'effort.rythme', { value: 'soutenu', source: 'defaut', confidence: 0.3, evidence: null, locked: false, prive: false });
+    for (const origin of ['regles', 'ia'] as const)
+      expect(briefIssues(b, 'rando 7 jours', origin)).toEqual([
+        { path: 'quand.jours', reason: 'verrou_interdit' },
+        { path: 'qui.niveau', reason: 'source_interdite' },
+        { path: 'effort.rythme', reason: 'source_interdite' },
+      ]);
   });
 
   it('dropInvalid rend la valeur fautive « absente » et garde les autres', () => {
@@ -181,6 +191,75 @@ describe('Brief — la valeur sort-elle du passage ? (extraction IA)', () => {
   });
 });
 
+describe('Brief — contournements fermés (seconde relecture)', () => {
+  const phrase = 'rando dans le Vercors le week-end prochain, en famille';
+  const deduced = <T>(value: T): BriefValue<T> => ({ value, source: 'deduit', confidence: 0.7, evidence: null, locked: false, prive: false });
+
+  it('l’IA ne fait pas passer une date en la disant « déduite »', () => {
+    const b = withValue(emptyBrief(), 'quand.dateDebut', deduced('2027-01-01'));
+    expect(briefIssues(b, phrase, 'ia')).toEqual([{ path: 'quand.dateDebut', reason: 'date_non_confirmee' }]);
+    expect(briefIssues(b, phrase, 'regles')).toEqual([]);
+  });
+
+  it('l’IA ne fait pas passer un nombre, une liste de nombres ou une heure en les disant « déduits »', () => {
+    let b = withValue(emptyBrief(), 'qui.personnes', deduced(4));
+    b = withValue(b, 'qui.agesEnfants', deduced([6, 9]));
+    b = withValue(b, 'quand.heureDepart', deduced('08:00'));
+    b = withValue(b, 'quand.saison', deduced('automne' as const));
+    expect(briefIssues(b, phrase, 'ia').map((i) => [i.path, i.reason])).toEqual([
+      ['quand.heureDepart', 'deduction_chiffree_interdite'],
+      ['qui.personnes', 'deduction_chiffree_interdite'],
+      ['qui.agesEnfants', 'deduction_chiffree_interdite'],
+    ]);
+  });
+
+  it('un nombre en lettres est un mot entier : « septembre » ne dit pas 7, « seulement » ne dit pas 1', () => {
+    expect(valueInEvidence('quand.jours', 7, 'en septembre')).toBe('non');
+    expect(valueInEvidence('quand.jours', 9, 'en novembre')).toBe('non');
+    expect(valueInEvidence('qui.personnes', 1, 'seulement le matin')).toBe('non');
+    expect(valueInEvidence('qui.personnes', 1, 'une semaine')).toBe('non');
+    expect(valueInEvidence('qui.personnes', 1, 'toute seule')).toBe('oui');
+  });
+
+  it('un seul nombre par passage : « 2 adultes et 3 enfants » ne prouve ni 2 ni 3', () => {
+    expect(valueInEvidence('qui.enfants', 2, '2 adultes et 3 enfants')).toBe('non');
+    expect(valueInEvidence('qui.enfants', 3, '2 adultes et 3 enfants')).toBe('non');
+    expect(valueInEvidence('qui.enfants', 3, '3 enfants')).toBe('oui');
+    expect(valueInEvidence('qui.agesEnfants', [6, 9], 'mes enfants de 6 et 9 ans')).toBe('oui');
+    expect(valueInEvidence('qui.agesEnfants', [6, 8], 'mes enfants de 6 et 9 ans')).toBe('non');
+  });
+
+  it('citer toute la phrase ne prouve pas un nombre', () => {
+    const long = 'je voudrais partir marcher 5 jours quelque part de beau avec des amis et dormir en refuge';
+    expect(valueInEvidence('quand.jours', 5, long)).toBe('non');
+  });
+
+  it('un nom d’un seul signe ne prouve rien', () => {
+    expect(valueInEvidence('ou.destination', 'a', 'à la mer')).toBe('non');
+  });
+
+  it('un mois se dit par son nom, dans les cinq langues ; « le mois prochain » ne le dit pas', () => {
+    expect(valueInEvidence('quand.mois', 4, 'fin avril')).toBe('oui');
+    expect(valueInEvidence('quand.mois', 8, 'im August')).toBe('oui');
+    expect(valueInEvidence('quand.mois', 6, 'a giugno')).toBe('oui');
+    expect(valueInEvidence('quand.mois', 1, 'en enero')).toBe('oui');
+    expect(valueInEvidence('quand.mois', 3, 'in March')).toBe('oui');
+    expect(valueInEvidence('quand.mois', 5, 'fin avril')).toBe('non');
+    expect(valueInEvidence('quand.mois', 12, 'le mois prochain')).toBe('non');
+    expect(valueInEvidence('quand.mois', 4, 'entre avril et juin')).toBe('non');
+  });
+
+  it('une déduction hérite de la confidentialité de ses entrées', () => {
+    const home: BriefValue<string> = { value: 'CH', source: 'profil', confidence: 0.9, evidence: null, locked: false, prive: true };
+    const dest = said('Chamonix', 'à Chamonix');
+    expect(derive('CHF', [home, dest])).toMatchObject({ source: 'deduit', prive: true, evidence: null, locked: false });
+    expect(derive('EUR', [dest]).prive).toBe(false);
+    expect(derive('x', [dest, home], 0.95).confidence).toBe(0.9);
+    const b = withValue(emptyBrief(), 'budget.devise', derive('CHF', [home]));
+    expect(getValue(briefForStorage(b), 'budget.devise')).toEqual(emptyValue());
+  });
+});
+
 describe('Brief — règle R5 (rien de privé sur le voyage partagé)', () => {
   const priv = (source: 'profil' | 'historique'): BriefValue<number> => ({
     value: 4.2,
@@ -232,18 +311,35 @@ describe('Brief — règle R5 (rien de privé sur le voyage partagé)', () => {
     });
   });
 
-  it('ne range aucun passage de la phrase', () => {
-    const b = withValue(emptyBrief(), 'qui.peurDuVide', said(true, 'j’ai le vertige depuis mon accident'));
+  it('ne range aucun passage de la phrase, même sur une valeur nulle', () => {
+    let b = withValue(emptyBrief(), 'qui.animal', said('chien' as const, 'avec mon chien, depuis mon accident'));
+    b = withValue(b, 'qui.poussette', { ...emptyValue(), evidence: 'j’ai une prothèse' });
     expect(isStorable(b)).toBe(false);
     const stored = briefForStorage(b);
     expect(isStorable(stored)).toBe(true);
-    expect(getValue(stored, 'qui.peurDuVide')).toMatchObject({ value: true, source: 'dit', evidence: null });
-    expect(JSON.stringify(stored)).not.toContain('accident');
+    expect(getValue(stored, 'qui.animal')).toMatchObject({ value: 'chien', source: 'dit', evidence: null });
+    expect(getValue(stored, 'qui.poussette')).toEqual(emptyValue());
+    expect(JSON.stringify(stored)).not.toMatch(/accident|prothèse/);
   });
 
-  it('signale une source privée qui ne porte pas la marque « prive »', () => {
+  it('ne range jamais une variable sensible (santé, conviction), même posée par la personne', () => {
+    expect([...SENSITIVE_PATHS].sort()).toEqual(
+      ['qui.malDesTransports', 'qui.mobiliteReduite', 'qui.peurDuVide', 'repas.allergies', 'repas.regime'].sort()
+    );
+    let b = withValue(emptyBrief(), 'repas.regime', said('halal' as const, 'je mange halal'));
+    b = withValue(b, 'qui.peurDuVide', lockValue(true));
+    b = withValue(b, 'repas.allergies', said(['arachide'], 'allergique à l’arachide'));
+    expect(isStorable(b)).toBe(false);
+    const stored = briefForStorage(b);
+    for (const p of ['repas.regime', 'qui.peurDuVide', 'repas.allergies'] as const)
+      expect(getValue(stored, p)).toEqual(emptyValue());
+    expect(JSON.stringify(stored)).not.toMatch(/halal|arachide/);
+  });
+
+  it('repère une surcouche privée qui ne porte pas la marque « prive »', () => {
     const b = withValue(emptyBrief(), 'qui.allureKmH', { ...priv('historique'), prive: false });
-    expect(briefIssues(b, 'x')).toEqual([{ path: 'qui.allureKmH', reason: 'source_privee_non_marquee' }]);
+    expect(unmarkedPrivate(b)).toEqual(['qui.allureKmH']);
+    expect(unmarkedPrivate(withValue(emptyBrief(), 'qui.allureKmH', priv('historique')))).toEqual([]);
   });
 
   it('une version inconnue ou un jsonb abîmé rend « pas de Brief »', () => {

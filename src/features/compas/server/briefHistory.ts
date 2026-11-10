@@ -36,9 +36,16 @@ function toNum(x: number | string | null | undefined): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-export async function readRealPace(supabase: Reader, userId: string): Promise<RealPace | null> {
-  if (!userId) return null;
+/**
+ * L'allure de LA PERSONNE CONNECTÉE, et d'elle seule : l'identifiant vient de sa session
+ * (`auth.getUser()`), jamais d'un paramètre. La RLS de `hike_sessions` ouvre aussi les sorties
+ * rattachées à un carnet public : un identifiant passé en argument lirait celles d'autrui.
+ */
+export async function readRealPace(supabase: Reader): Promise<RealPace | null> {
   try {
+    const { data: auth } = await (supabase as Supa).auth.getUser();
+    const userId = auth?.user?.id;
+    if (!userId) return null;
     const { data, error } = await (supabase as Supa)
       .from('hike_sessions')
       .select(COLUMNS)

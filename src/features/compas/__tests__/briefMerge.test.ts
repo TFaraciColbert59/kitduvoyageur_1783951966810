@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   briefPaths,
   briefSchema,
+  derive,
   emptyBrief,
   emptyValue,
   getValue,
@@ -289,18 +290,45 @@ describe('mergeBrief — priorité des sources', () => {
     expect(r.disagreements).toEqual([]);
   });
 
-  it("'deduit' règles et IA : même arbitrage (accord 0,95, désaccord numérique aux règles)", () => {
+  it("'deduit' règles et IA : même arbitrage (accord 0,95, désaccord de texte à l'IA)", () => {
     const agree = run({
-      rules: brief({ 'effort.rythme': val('tranquille', 'deduit', 0.5) }),
-      ai: brief({ 'effort.rythme': val('Tranquille', 'deduit', 0.6) }),
+      rules: brief({ 'quand.saison': val('ete', 'deduit', 0.5) }),
+      ai: brief({ 'quand.saison': val('ETE', 'deduit', 0.6) }),
     });
-    expect(get(agree.brief, 'effort.rythme')).toMatchObject({ source: 'deduit', confidence: 0.95, evidence: null });
+    expect(get(agree.brief, 'quand.saison')).toMatchObject({ source: 'deduit', confidence: 0.95, evidence: null });
     const clash = run({
+      rules: brief({ 'projet.forme': val('boucle', 'deduit', 0.5) }),
+      ai: brief({ 'projet.forme': val('traversee', 'deduit', 0.6) }),
+    });
+    expect(get(clash.brief, 'projet.forme')).toMatchObject({ value: 'traversee', confidence: 0.6 });
+    expect(clash.disagreements).toEqual([{ path: 'projet.forme', rules: 'boucle', ai: 'traversee', kept: 'ai' }]);
+  });
+
+  it("a : un nombre 'deduit' de l'IA est écarté ; la valeur 'deduit' des règles reste seule, sans désaccord", () => {
+    const r = run({
       rules: brief({ 'effort.kmParJour': val(12, 'deduit', 0.5) }),
       ai: brief({ 'effort.kmParJour': val(18, 'deduit', 0.6) }),
     });
-    expect(get(clash.brief, 'effort.kmParJour')).toMatchObject({ value: 12, confidence: 0.6 });
-    expect(clash.disagreements).toEqual([{ path: 'effort.kmParJour', rules: 12, ai: 18, kept: 'rules' }]);
+    expect(get(r.brief, 'effort.kmParJour')).toMatchObject({ value: 12, confidence: 0.5 });
+    expect(r.disagreements).toEqual([]);
+    expect(r.dropped).toEqual([{ path: 'effort.kmParJour', reason: 'deduction_chiffree_interdite', origin: 'ai' }]);
+  });
+
+  it("b : une date 'deduit' de l'IA n'entre jamais", () => {
+    const r = run({ ai: brief({ 'quand.dateDebut': val('2026-12-01', 'deduit', 0.6) }) });
+    expect(get(r.brief, 'quand.dateDebut')).toEqual(emptyValue());
+    expect(r.dropped).toEqual([{ path: 'quand.dateDebut', reason: 'date_non_confirmee', origin: 'ai' }]);
+  });
+
+  it("c : une valeur locked rendue par l'IA ou par les règles n'entre jamais", () => {
+    const lockedVal = val('ete', 'dit', 1, 'été', true);
+    const phrase = 'cet été';
+    const fromAi = run({ phrase, ai: brief({ 'quand.saison': lockedVal }) });
+    const fromRules = run({ phrase, rules: brief({ 'quand.saison': lockedVal }) });
+    for (const r of [fromAi, fromRules]) {
+      expect(get(r.brief, 'quand.saison')).toEqual(emptyValue());
+      expect(r.dropped[0]).toMatchObject({ path: 'quand.saison', reason: 'verrou_interdit' });
+    }
   });
 });
 
@@ -330,6 +358,12 @@ describe('mergeBrief — vie privée (prive)', () => {
     expect(get(r.brief, 'effort.rythme').prive).toBe(true);
     expect(get(r.brief, 'budget.devise').prive).toBe(false);
     expect(get(r.brief, 'effort.kmParJour').prive).toBe(true);
+  });
+
+  it('un défaut marqué prive (calculé depuis le profil par derive) garde prive true en sortie', () => {
+    const p = priv('EUR', 'profil');
+    const r = run({ defaults: brief({ 'budget.devise': { ...derive('EUR', [p]), source: 'defaut' } }) });
+    expect(get(r.brief, 'budget.devise')).toMatchObject({ source: 'defaut', prive: true });
   });
 
   it('c : accord règles / IA : prive est le OU logique des deux', () => {

@@ -105,7 +105,10 @@ function out(
   };
 }
 
-/** Valeur participante : non nulle et de la source attendue (défense contre une source mal étiquetée). */
+/**
+ * Valeur participante au niveau de source demandé. Pour règles et IA, `dropInvalid` a déjà écarté
+ * verrous et sources interdites ; ici on ne fait que choisir le niveau (et défendre les surcouches).
+ */
 function usable(v: AnyValue | null, source: BriefSource): AnyValue | null {
   return v && v.value != null && v.source === source ? v : null;
 }
