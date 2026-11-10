@@ -171,6 +171,17 @@ export function CommunityExploreSheetV2({
 
   const showIsland = useCallback((message: IslandMessage) => setIsland(message), []);
 
+  // Invité : l'île « Se connecter » s'affiche d'abord (maquette `requireAuth`, L1928) ; la
+  // navigation vers la connexion n'a lieu qu'au toucher de son bouton, jamais d'office.
+  const requireAuthIsland = useCallback(() => {
+    haptic('medium');
+    showIsland({
+      title: 'Connectez-vous pour continuer.',
+      subtitle: 'Créez un compte pour enregistrer, commenter ou publier.',
+      action: { label: 'Se connecter', onAction: onRequireAuth },
+    });
+  }, [haptic, onRequireAuth, showIsland]);
+
   // ── Ouverture : volet mémorisé, sauf loupe (Recherche focalisée) ──────────
   const setTab = explore.setTab;
   useEffect(() => {
@@ -354,7 +365,7 @@ export function CommunityExploreSheetV2({
   const handleCarnetLike = useCallback(
     async (carnet: CarnetCardVM) => {
       if (isGuest) {
-        onRequireAuth();
+        requireAuthIsland();
         return;
       }
       const key = `like:${carnet.id}`;
@@ -396,7 +407,7 @@ export function CommunityExploreSheetV2({
         },
       });
     },
-    [busyKeys, carnetsFeed, haptic, isGuest, markBusy, onRequireAuth, showIsland, viewerId],
+    [busyKeys, carnetsFeed, haptic, isGuest, markBusy, requireAuthIsland, showIsland, viewerId],
   );
 
   // ── Adhésion club ────────────────────────────────────────────────────────
@@ -557,7 +568,7 @@ export function CommunityExploreSheetV2({
         return;
       }
       if (isGuest) {
-        onRequireAuth();
+        requireAuthIsland();
         return;
       }
       const key = `club:${club.id}`;
@@ -600,7 +611,7 @@ export function CommunityExploreSheetV2({
       haptic,
       isGuest,
       markBusy,
-      onRequireAuth,
+      requireAuthIsland,
       openClubPeek,
       setClubOverride,
       showIsland,
@@ -610,7 +621,7 @@ export function CommunityExploreSheetV2({
   const handleClubLeave = useCallback(
     async (club: ClubCardVM) => {
       if (isGuest) {
-        onRequireAuth();
+        requireAuthIsland();
         return;
       }
       const key = `club:${club.id}`;
@@ -643,13 +654,13 @@ export function CommunityExploreSheetV2({
         },
       });
     },
-    [busyKeys, clubsFeed, clubOverrides, haptic, isGuest, markBusy, onRequireAuth, setClubOverride, showIsland],
+    [busyKeys, clubsFeed, clubOverrides, haptic, isGuest, markBusy, requireAuthIsland, setClubOverride, showIsland],
   );
 
   const handleCancelRequest = useCallback(
     async (club: ClubCardVM) => {
       if (isGuest) {
-        onRequireAuth();
+        requireAuthIsland();
         return;
       }
       const key = `club:${club.id}`;
@@ -681,7 +692,7 @@ export function CommunityExploreSheetV2({
         },
       });
     },
-    [busyKeys, clubsFeed, haptic, isGuest, markBusy, onRequireAuth, setClubOverride, showIsland],
+    [busyKeys, clubsFeed, haptic, isGuest, markBusy, requireAuthIsland, setClubOverride, showIsland],
   );
 
   const handleReviewRequest = useCallback(
@@ -718,7 +729,7 @@ export function CommunityExploreSheetV2({
       }
       if (event.past) return;
       if (isGuest) {
-        onRequireAuth();
+        requireAuthIsland();
         return;
       }
       const key = `event:${event.id}`;
@@ -762,7 +773,7 @@ export function CommunityExploreSheetV2({
       haptic,
       isGuest,
       markBusy,
-      onRequireAuth,
+      requireAuthIsland,
       openEventPeek,
       showIsland,
     ],
@@ -771,7 +782,7 @@ export function CommunityExploreSheetV2({
   const handleEventLeave = useCallback(
     async (event: EventCardVM) => {
       if (isGuest) {
-        onRequireAuth();
+        requireAuthIsland();
         return;
       }
       const key = `event:${event.id}`;
@@ -804,7 +815,7 @@ export function CommunityExploreSheetV2({
         },
       });
     },
-    [busyKeys, eventOverrides, eventsFeed, haptic, isGuest, markBusy, onRequireAuth, showIsland],
+    [busyKeys, eventOverrides, eventsFeed, haptic, isGuest, markBusy, requireAuthIsland, showIsland],
   );
 
   // Les refs d'action pointent sur les mutations réelles (après leur définition).

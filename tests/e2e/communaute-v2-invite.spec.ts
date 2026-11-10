@@ -66,14 +66,17 @@ test.describe('Invité — lecture seule et requireAuth @ui-mock @mobile', () =>
     test.skip(!opened, SKIP_V2_BUILD);
 
     await page.getByTestId('cv2-carnet-like').first().click();
-    // L'invité anonyme est envoyé vers /inscription?next=…, que le middleware
-    // redirige vers /connexion?mode=inscription&next=… : on vérifie la destination
-    // finale, pas la forme exacte de la query.
+    // Maquette (`requireAuth`) : l'île « Se connecter » s'affiche D'ABORD, sans navigation.
+    await expect(page.getByText(/Créez un compte pour enregistrer/).first()).toBeVisible({ timeout: 10_000 });
+    await expect(page).not.toHaveURL(/\/connexion/);
+    // Jamais un like appliqué en local.
+    expectNoWrites(mock, 'like invité');
+    // Le bouton de l'île mène à la connexion. L'invité anonyme est envoyé vers
+    // /inscription?next=…, que le middleware redirige vers /connexion?mode=inscription&next=… :
+    // on vérifie la destination finale, pas la forme exacte de la query.
+    await page.getByRole('button', { name: 'Se connecter' }).first().click();
     await expect(page).toHaveURL(/\/connexion/, { timeout: 15_000 });
     expect(decodeURIComponent(page.url())).toContain('/communaute');
-    // Toast d'invitation (requireAuth) — jamais un like appliqué en local.
-    await expect(page.getByText(/Créez un compte pour enregistrer/).first()).toBeVisible({ timeout: 10_000 });
-    expectNoWrites(mock, 'like invité');
   });
 
   test('8c. ouvrir Création en invité → requireAuth (le tiroir ne s’ouvre pas)', async ({ page }) => {

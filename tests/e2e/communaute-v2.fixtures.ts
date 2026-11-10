@@ -1438,32 +1438,37 @@ export async function activeElement(page: Page): Promise<ActiveElementInfo> {
  * se fait dans une microtâche, après tout `preventDefault` de la couche.
  */
 export async function pressEscapeAndExpectConsumed(page: Page): Promise<void> {
-  const captured = page.evaluate(
-    () =>
-      new Promise<boolean>((resolve) => {
-        let settled = false;
-        const finish = (value: boolean) => {
-          if (settled) return;
-          settled = true;
-          resolve(value);
-        };
-        window.addEventListener(
-          'keydown',
-          (event) => {
-            if (event.key !== 'Escape') return;
-            // Lecture en macrotâche : les checkpoints de microtâches du
-            // navigateur peuvent s'intercaler ENTRE deux listeners d'un même
-            // événement ; `setTimeout(0)` garantit que toute la propagation
-            // (et donc tous les `preventDefault`) est terminée.
-            window.setTimeout(() => finish(event.defaultPrevented), 0);
-          },
-          true,
-        );
-        window.setTimeout(() => finish(false), 5_000);
-      }),
-  );
+  // Cause de l'instabilité (11a, 6f) : l'écouteur était posé par un `evaluate` non attendu ; sur
+  // une machine chargée, `keyboard.press` pouvait partir AVANT que l'écouteur existe et l'Échap
+  // n'était alors jamais observée. On attend l'état « écouteur installé » avant d'appuyer.
+  await page.evaluate(() => {
+    const w = window as unknown as { __cv2EscapeConsumed?: Promise<boolean> };
+    w.__cv2EscapeConsumed = new Promise<boolean>((resolve) => {
+      let settled = false;
+      const finish = (value: boolean) => {
+        if (settled) return;
+        settled = true;
+        resolve(value);
+      };
+      window.addEventListener(
+        'keydown',
+        (event) => {
+          if (event.key !== 'Escape') return;
+          // Lecture en macrotâche : les checkpoints de microtâches du navigateur peuvent
+          // s'intercaler ENTRE deux listeners d'un même événement ; `setTimeout(0)` garantit
+          // que toute la propagation (et donc tous les `preventDefault`) est terminée.
+          window.setTimeout(() => finish(event.defaultPrevented), 0);
+        },
+        { capture: true, once: true },
+      );
+      window.setTimeout(() => finish(false), 5_000);
+    });
+  });
   await page.keyboard.press('Escape');
-  expect(await captured, 'Échap doit être consommée par la couche active (defaultPrevented)').toBe(true);
+  const consumed = await page.evaluate(
+    () => (window as unknown as { __cv2EscapeConsumed: Promise<boolean> }).__cv2EscapeConsumed,
+  );
+  expect(consumed, 'Échap doit être consommée par la couche active (defaultPrevented)').toBe(true);
 }
 
 // ── Écritures réseau (FID-077 : invité, aucune mutation) ───────────────────
