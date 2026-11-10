@@ -576,5 +576,6 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
 /* Aperçu (peek) centré sur la fenêtre (maquette `.ctx`, L233 : voile sur tout le téléphone) et non
    sur la feuille, qui commence à `--cv2-card-top` et finit 14 px avant le bas. */
 .lkdv-cv2-layer .lkdv-cv2-peek {
+  padding-inline: 14px;
   padding-bottom: calc(18px + var(--cv2-card-top) - 14px);
 }

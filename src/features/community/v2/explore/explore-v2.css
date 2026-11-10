@@ -2323,3 +2323,14 @@
   padding: 8px 0;
   margin: -8px 0;
 }
+
+/* Sorties : agenda collé au haut du volet (`.sl-head`, L1049 : 130 px) et billets à y = 240. */
+.lkdv-cv2x-agenda-block {
+  margin-top: -2px;
+  margin-bottom: -6px;
+}
+
+.lkdv-cv2-agenda-day i {
+  color: var(--lkv-text-secondary);
+  text-transform: none;
+}

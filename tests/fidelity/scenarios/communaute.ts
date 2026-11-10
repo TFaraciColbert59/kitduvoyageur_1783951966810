@@ -153,7 +153,7 @@ const CARNET_TITLES = [{ app: '[data-testid="cv2-tile-carnet"] .lkdv-cv2x-carnet
 
 const CARNET_TILE = TILE('Tuile carnet', '[data-testid="cv2-tile-carnet"]', '#phone .ct');
 const CLUB_TILE = TILE('Tuile club', '[data-testid="cv2-tile-club"]', '#phone .kt');
-const SORTIE_TILE = TILE('Tuile sortie', '[data-testid="cv2-tile-sortie"]', '#phone .tk');
+const SORTIE_TILE = TILE('Tuile sortie', '[data-testid="cv2-tile-sortie"] .lkdv-cv2-ticket', '#phone .tk');
 const SORT_BUTTON = measure('Bouton de tri', '[data-testid="cv2-sort-button"]', '#phone .sort-btn', ['border-radius', 'background-color', 'background-image']);
 
 export const COMMUNAUTE_SCENARIOS: Scenario[] = [
