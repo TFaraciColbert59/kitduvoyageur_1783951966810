@@ -128,9 +128,12 @@ test.describe('Invité — lecture seule et requireAuth @ui-mock @mobile', () =>
       .first()
       .getByTestId('cv2-club-join')
       .click();
-    await expect(page).toHaveURL(/\/connexion/, { timeout: 15_000 });
+    // L'île « Se connecter » d'abord (maquette), la navigation seulement au toucher de son bouton.
     await expect(page.getByText(/Créez un compte pour enregistrer/).first()).toBeVisible({ timeout: 10_000 });
+    await expect(page).not.toHaveURL(/\/connexion/);
     expectNoWrites(mock, 'adhésion invitée');
+    await page.getByRole('button', { name: 'Se connecter' }).first().click();
+    await expect(page).toHaveURL(/\/connexion/, { timeout: 15_000 });
   });
 
   /**
@@ -149,12 +152,15 @@ test.describe('Invité — lecture seule et requireAuth @ui-mock @mobile', () =>
     await expect(register).toBeVisible({ timeout: 15_000 });
     await register.click();
 
+    // L'île « Se connecter » d'abord (maquette), la navigation seulement au toucher de son bouton.
+    await expect(page.getByText(/Créez un compte pour enregistrer/).first()).toBeVisible({ timeout: 10_000 });
+    await expect(page).not.toHaveURL(/\/connexion/);
+    // Aucune confirmation locale d'inscription : la seule île est l'invitation à se connecter.
+    await expect(page.getByTestId('cv2-island').first()).toContainText('Connectez-vous pour continuer.');
+    expectNoWrites(mock, 'inscription invitée');
+    await page.getByRole('button', { name: 'Se connecter' }).first().click();
     await expect(page).toHaveURL(/\/connexion/, { timeout: 15_000 });
     expect(decodeURIComponent(page.url())).toContain('/communaute');
-    await expect(page.getByText(/Créez un compte pour enregistrer/).first()).toBeVisible({ timeout: 10_000 });
-    // Aucune confirmation locale ni inscription dans le journal.
-    await expect(page.locator('.lkdv-island-pill')).toHaveCount(0);
-    expectNoWrites(mock, 'inscription invitée');
   });
 
   test('8e. session absente : le middleware renvoie vers /connexion (contrôle de garde)', async ({
