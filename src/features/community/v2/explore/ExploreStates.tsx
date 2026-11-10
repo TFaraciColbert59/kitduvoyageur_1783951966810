@@ -80,8 +80,8 @@ function EmptyMountainArt() {
   return (
     <svg
       viewBox="0 0 64 64"
-      width="40"
-      height="40"
+      width="44"
+      height="44"
       className="lkdv-cv2x-empty-ill"
       aria-hidden="true"
       focusable="false"

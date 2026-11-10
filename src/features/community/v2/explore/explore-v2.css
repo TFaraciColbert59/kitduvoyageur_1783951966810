@@ -1854,7 +1854,13 @@
   flex: 0 0 auto;
   justify-content: flex-start;
   min-height: 0;
-  padding: 14px 18px 24px;
+  /* Maquette `.empty{padding:28px 18px}` (L373). */
+  padding: 28px 18px;
+}
+
+.lkdv-cv2-empty b,
+.lkdv-cv2-error-state b {
+  line-height: normal;
 }
 
 .lkdv-cv2x-empty-ill {
@@ -1894,7 +1900,7 @@
   flex-wrap: wrap;
   justify-content: center;
   gap: 8px;
-  margin-top: 4px;
+  margin-top: 0;
 }
 
 /* ── préfers-reduced-motion : les animations décoratives tombent ────────── */
@@ -2090,11 +2096,14 @@
   box-shadow: var(--cv2-bar-glass-shadow), 0 0 0 2px var(--lkv-focus-ring);
 }
 
+/* Rangée de 32 px ; le défilement horizontal rogne tout ce qui dépasse en hauteur, donc la
+   zone tactile de 44 px (`::after`) vit dans un rembourrage de 8 px annulé par une marge négative. */
 .lkdv-cv2x-search-pane > .lkdv-cv2x-ctx-chips {
+  box-sizing: content-box;
   align-items: center;
   height: 32px;
-  padding: 0;
-  margin-bottom: -2px;
+  padding: 8px 0;
+  margin: -8px 0 -10px;
 }
 
 .lkdv-cv2x-ctx-chips .lkdv-cv2-chip,
@@ -2135,16 +2144,16 @@
   display: contents;
 }
 
-.lkdv-cv2x-search-home .lkdv-cv2-group-head {
+.lkdv-cv2x-search-pane .lkdv-cv2-group-head {
   min-height: 0;
   margin: 8px 2px 2px;
 }
 
-.lkdv-cv2x-search-home .lkdv-cv2-group-head .lkdv-cv2-eyebrow {
+.lkdv-cv2x-search-pane .lkdv-cv2-group-head .lkdv-cv2-eyebrow {
   margin-block: -2px;
 }
 
-.lkdv-cv2x-search-home .lkdv-cv2-group-head .lkdv-cv2-eyebrow {
+.lkdv-cv2x-search-pane .lkdv-cv2-group-head .lkdv-cv2-eyebrow {
   flex: 0 1 auto;
 }
 
@@ -2202,4 +2211,115 @@
 
 .lkdv-cv2x-trend-ico {
   background: rgba(23, 64, 44, 0.07);
+}
+
+/* Compteur de groupe : pastille de 14 px (maquette `.eyebrow-row .cnt`, L939). */
+.lkdv-cv2x-search-pane .lkdv-cv2-eyebrow .lkdv-cv2x-count {
+  line-height: 12px;
+}
+
+/* Pastille de type des résultats : 20 px sur `--mint` (maquette `.rr-pill`, L958). */
+.lkdv-cv2x-search-end .lkdv-cv2-type {
+  min-height: 20px;
+  background: var(--lkv-forest-50);
+}
+
+/* Squelettes : `.sk-pad{padding:6px 14px}` de la maquette (L1409) ; le volet porte déjà 2 px. */
+.lkdv-cv2x-pane > .lkdv-cv2x-skeleton {
+  margin-top: 4px;
+}
+
+/* ── Passe 2 : tuiles Carnets et Clubs à la mesure de la maquette ───────────
+   `.ct{padding:6px;gap:6px}`, `.ct-link{gap:3px}`, `.ct-t{margin-top:3px;padding:0 4px}`,
+   `.ct-foot{gap:2px;min-height:44px}` (L998-1017). Couverture pleine largeur (346 − 12). */
+.lkdv-cv2-tile.lkdv-cv2x-carnet {
+  padding: 6px;
+  gap: 6px;
+}
+
+.lkdv-cv2x-carnet .lkdv-cv2x-tile-link,
+.lkdv-cv2x-club .lkdv-cv2x-tile-link {
+  gap: 3px;
+}
+
+.lkdv-cv2x-carnet .lkdv-cv2x-carnet-body {
+  gap: 3px;
+  margin-top: 3px;
+  padding: 0 4px;
+}
+
+.lkdv-cv2x-carnet .lkdv-cv2x-tile-foot,
+.lkdv-cv2x-club .lkdv-cv2x-tile-foot {
+  gap: 2px;
+  margin-top: 0;
+}
+
+/* Carte de la semaine : `.ct.week{margin-bottom:10px}` (L999) en plus du pas de 8 px ; grille à
+   10 px ; tuiles à 18 px de rayon (L998). */
+.lkdv-cv2x-featured {
+  margin-bottom: 8px;
+}
+
+.lkdv-cv2x-carnet-grid {
+  gap: 10px;
+}
+
+.lkdv-cv2-tile.lkdv-cv2x-carnet,
+.lkdv-cv2-tile.lkdv-cv2x-club {
+  border-radius: var(--cv2-radius-tile-lg);
+}
+
+/* Tuile club : `.kt{padding:10px;gap:8px}`, `.kt-head{margin-bottom:4px}`, titre `.ct-t` (marge 3 px,
+   retrait 4 px), signal et amis à 4 px de retrait, avatars de 24 px (L1030-1039, L1018-1019). */
+.lkdv-cv2-tile.lkdv-cv2x-club {
+  padding: 10px;
+  gap: 8px;
+}
+
+.lkdv-cv2x-club .lkdv-cv2x-club-head {
+  margin-bottom: 4px;
+}
+
+.lkdv-cv2x-club .lkdv-cv2x-club-title {
+  margin-top: 3px;
+  padding: 0 4px;
+}
+
+.lkdv-cv2x-club .lkdv-cv2-meta {
+  padding: 0 4px;
+}
+
+.lkdv-cv2x-club .lkdv-cv2x-club-signal {
+  padding: 0 4px;
+  white-space: normal;
+  text-overflow: clip;
+}
+
+.lkdv-cv2x-club .lkdv-cv2x-club-signal > i {
+  width: 7px;
+  height: 7px;
+}
+
+.lkdv-cv2x-club .lkdv-cv2x-club-friends {
+  padding: 2px 4px 0;
+}
+
+.lkdv-cv2x-club .lkdv-cv2x-club-friends .lkdv-cv2-avatars {
+  padding-left: 6px;
+}
+
+.lkdv-cv2x-club .lkdv-cv2x-club-friends .lkdv-cv2-avatar {
+  width: 24px;
+  height: 24px;
+  margin-left: -6px;
+  font-size: 10.5px;
+}
+
+/* Puces d'activité des clubs : rangée de 28 px (maquette), zone tactile de 44 px dans un
+   rembourrage de 8 px annulé par une marge négative (le défilement rogne le débordement). */
+.lkdv-cv2x-club-chips {
+  box-sizing: content-box;
+  height: 28px;
+  padding: 8px 0;
+  margin: -8px 0;
 }

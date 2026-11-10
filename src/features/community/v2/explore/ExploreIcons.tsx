@@ -69,7 +69,7 @@ const PATHS: Record<ExploreIconName, React.ReactNode> = {
   'chevron-left': <path d="M15 5l-7 7 7 7" />,
   heart: <path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" />,
   'heart-filled': <path d="M12 20s-6.8-4.3-8.2-8A4.6 4.6 0 0 1 12 6.4 4.6 4.6 0 0 1 20.2 12C18.8 15.7 12 20 12 20z" fill="currentColor" />,
-  comment: <path d="M20 11.5a7.5 7.5 0 0 1-11 6.7L4 20l1.8-4.6A7.5 7.5 0 1 1 20 11.5z" />,
+  comment: <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z" />,
   lock: (
     <>
       <rect x="5" y="11" width="14" height="9" rx="3" />
