@@ -69,7 +69,8 @@ export function compareMeasures(
   const out: MeasureResult[] = [];
   if (!app || !maquette) {
     const note = !app && !maquette ? 'absent des deux côtés' : !app ? 'absent de l’app' : 'absent de la maquette';
-    out.push({ id: spec.id, prop: '(présence)', app: app ? 'présent' : null, maquette: maquette ? 'présent' : null, ok: false, note });
+    // Absent des deux côtés (ex. mini-capsule retirée pendant le chargement) : même état, conforme.
+    out.push({ id: spec.id, prop: '(présence)', app: app ? 'présent' : null, maquette: maquette ? 'présent' : null, ok: !app && !maquette, note });
     return out;
   }
   if (spec.rect) {

@@ -94,8 +94,9 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
   width: 38px;
   height: 5px;
   border-radius: 3px;
-  background: rgba(255, 255, 255, 0.82);
-  box-shadow: 0 1px 6px rgba(23, 43, 36, 0.18);
+  /* Maquette L303 : encre 20 %, halo blanc 40 %. */
+  background: rgba(23, 43, 36, 0.2);
+  box-shadow: 0 1px 6px rgba(255, 255, 255, 0.4);
 }
 .lkdv-cv2-grab::after {
   content: '';
@@ -175,7 +176,7 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
   flex: none;
   height: 150px;
   min-height: 150px;
-  margin: 0 14px 8px;
+  margin: 0 14px 6px;
   overflow: hidden;
   border-radius: 20px;
   pointer-events: none;
@@ -267,7 +268,8 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 14px calc(12px + max(0px, env(safe-area-inset-bottom, 0px) - 14px));
+  /* Maquette `.cr-foot` : 60 px (6 px au-dessus, 10 px au-dessous des boutons de 44 px). */
+  padding: 6px 14px calc(10px + max(0px, env(safe-area-inset-bottom, 0px) - 14px));
   position: relative;
   z-index: 18;
   background: linear-gradient(180deg, rgba(245, 242, 236, 0), rgba(245, 242, 236, 0.55));
@@ -554,4 +556,26 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
   content: '';
   position: absolute;
   inset: -7px;
+}
+
+/* Capsule des volets : icône inactive à l'encre pleine, active en forêt (maquette L329-331). */
+.lkdv-cv2-capsule.lkdv-capsule button {
+  color: var(--cv2-light-ink);
+}
+.lkdv-cv2-capsule.lkdv-capsule button.active,
+.lkdv-cv2-capsule.lkdv-capsule button[aria-selected='true'] {
+  color: var(--lkv-forest-900);
+}
+
+/* Mini-capsule : filet de 0,5 px blanc 80 % de la maquette (`.ig-tabs`, L252) ; rendu à 1 px
+   à 1x, il décale la lentille de 1 px (position des icônes au pixel près). */
+.lkdv-cv2-mini.lkdv-lens-float {
+  border: 0.5px solid rgba(255, 255, 255, 0.8);
+}
+
+/* Aperçu (peek) centré sur la fenêtre (maquette `.ctx`, L233 : voile sur tout le téléphone) et non
+   sur la feuille, qui commence à `--cv2-card-top` et finit 14 px avant le bas. */
+.lkdv-cv2-layer .lkdv-cv2-peek {
+  padding-inline: 14px;
+  padding-bottom: calc(18px + var(--cv2-card-top) - 14px);
 }

@@ -139,6 +139,7 @@ Galerie côte à côte (app | maquette | carte de diff) : `tests/fidelity/out/ga
 | Date | Lot | Résultat | Preuve |
 | --- | --- | --- | --- |
 | 2026-11-09 | État des lieux | Communauté : 161 fait / 23 partiel / 13 reporté / 3 non fait (COUVERTURE-200), 2 bloqués J-08 ; Carnet : checklist 40 [x] / 5 [~] / 8 [ ], 3 failles RLS ouvertes | rapports scout, prompt §4 |
+| 2026-11-11 | Communauté, passe 2 (b0dc9e9…e4d3d1d) | Banc à fond neutralisé (zone du tiroir seule). 390×844 : Recherche accueil 26,8 → 1,8 %, résultats 15,7 → 1,2 %, peek 4,7 → 0,8 %, carnets 0,6 %, invité 0,6 %, vide 0,4 %, erreur 1,5 %, chargement 0,0 % ; Clubs 16,4 %, Sorties 11,1 %, Création étape 1 17,1 % ; 23/33 cellules sous 2 % ; mesures 1356/1356 | tsc 0, vitest community 396/396, build vert, e2e Chromium verts (Échap 12/12), axe 4/4 ; WebKit non jouable (binaire non téléchargeable) |
 | 2026-11-10 | Carnet, passe 1 (46be4dc…17e180a) | Résumé 41,5 → 30,3 % px (mesures 48→64/69) ; J1 31,9 → 31,2 % (44→60/65) ; tiroirs 41–53 → 13–38 % (16→31/31) ; checklist l.27/36/38/61/63/76/78 faites, l.29/71/77 partielles | tsc 0, vitest carnet/compte 620/620, e2e finition 14/14, next build vert |
 | 2026-11-10 | Sécurité carnet (a01454f, 8d082ad) | Auto-inscription, moments chez autrui, sortie d'intrus : fermés | pgTAP local 12/12 + 15/15, relecture architect, rollback rejouable ; non appliqué en production (pas d'accès) |
 | 2026-11-10 | Migration moment_type (20261109100001) | Additive (2 colonnes + contraintes) | pgTAP local 8/8, rollback ×2, réapplication ×2 ; non appliquée en production |

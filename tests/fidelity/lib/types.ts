@@ -54,6 +54,11 @@ export interface Scenario {
     /** Session synthétique : `member` (propriétaire / participant) ou `anonymous`. */
     session: 'member' | 'anonymous';
     mock?: MockOptions;
+    /**
+     * Réponses de RPC remplacées pour ce scénario (données d'exemple alignées sur celles de la
+     * maquette : le banc compare une structure, pas des jeux de données différents).
+     */
+    rpc?: Record<string, unknown>;
     /** Élément dont l'hydratation React conditionne les étapes (sélecteur CSS). */
     hydrate?: string;
     /** Horloge figée de la page (ISO) ; sinon l'horloge du banc Communauté. */
@@ -77,7 +82,18 @@ export interface Scenario {
   };
   /** Zones légitimement différentes (données réelles, carte, chrome de l'app). */
   masques: { app: string[]; maquette: string[] };
+  /**
+   * Fond neutralisé (voir `lib/neutral.ts`) : même aplat uni derrière le tiroir des deux
+   * côtés, et comparaison limitée à la zone du tiroir. Absent : capture brute, plein cadre.
+   */
+  neutre?: { app: { sheet: string; root: string; keep?: string[]; hide?: string[] }; maquette: { sheet: string; root: string; keep?: string[]; hide?: string[] } };
   mesures: MeasureSpec[];
+  /**
+   * Textes de données alignés sur ceux de la maquette (banc uniquement) : le n-ième élément `app`
+   * reçoit le texte du n-ième élément `maquette`. Les textes sont déjà masqués du diff ; seule la
+   * mise en page (retours à la ligne, hauteurs de tuile) dépend de leur longueur.
+   */
+  alignerTextes?: Array<{ app: string; maquette: string }>;
   /** État que l'app ou la maquette ne permet pas d'atteindre : raison écrite. */
   nonAtteignable?: { app?: string; maquette?: string };
 }
@@ -119,6 +135,8 @@ export interface FidelityResult {
     ratio: number;
     threshold: number;
     ok: boolean;
+    /** Zone comparée quand le fond est neutralisé (boîte du tiroir, en px du cadre). */
+    zone?: { x: number; y: number; w: number; h: number; fondNeutre: string };
     /** Bandes horizontales de 64 px les plus différentes (surface). */
     hotspots: Array<{ y: number; h: number; ratio: number }>;
   };

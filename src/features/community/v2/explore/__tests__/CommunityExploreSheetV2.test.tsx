@@ -182,6 +182,11 @@ describe('CommunityExploreSheetV2', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Clubs' }));
     await waitFor(() => expect(screen.getByTestId('cv2-club-join')).toBeTruthy());
     fireEvent.click(screen.getByTestId('cv2-club-join'));
+    // L'île « Se connecter » d'abord (maquette) : aucune navigation avant le toucher de son bouton.
+    expect(onRequireAuth).not.toHaveBeenCalled();
+    const islands = await screen.findAllByTestId('cv2-island');
+    expect(islands[0].textContent).toContain('Connectez-vous pour continuer.');
+    fireEvent.click(screen.getAllByRole('button', { name: 'Se connecter' })[0]);
     expect(onRequireAuth).toHaveBeenCalledTimes(1);
   });
 

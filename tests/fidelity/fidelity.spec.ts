@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { freezeClock, installCommunityV2Mock, waitForHydration } from '../e2e/communaute-v2.fixtures';
 import { diffImages, type Rect } from './lib/diff';
 import { compareMeasures, readMeasure } from './lib/measure';
+import { NEUTRAL_BACKGROUND, NEUTRAL_ENABLED, neutralizeBackground, outsideRects, unionRect } from './lib/neutral';
 import { playSteps } from './lib/steps';
 import type { FidelityResult, MeasureResult, Scenario } from './lib/types';
 import { SCENARIOS } from './scenarios';
@@ -62,6 +63,17 @@ async function maskRects(page: Page, selectors: string[], frame: Rect): Promise<
 async function openApp(ctx: BrowserContext, scenario: Scenario, baseURL: string): Promise<Page> {
   const page = await ctx.newPage();
   await installCommunityV2Mock(page, { role: scenario.app.session, appOrigin: baseURL, ...scenario.app.mock });
+  for (const [name, payload] of Object.entries(scenario.app.rpc ?? {})) {
+    // Enregistrée après le mock : le dernier `route` enregistré passe en premier.
+    await page.context().route(`**/rest/v1/rpc/${name}`, async (route) => {
+      const origin = route.request().headers()['origin'] ?? '*';
+      await route.fulfill({
+        status: route.request().method() === 'OPTIONS' ? 204 : 200,
+        headers: { 'access-control-allow-origin': origin, 'access-control-allow-credentials': 'true', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' },
+        json: payload,
+      });
+    });
+  }
   await page.addInitScript((value) => localStorage.setItem('lkdv_cookie_consent', value), CONSENT);
   if (scenario.app.now) await page.clock.install({ time: new Date(scenario.app.now) });
   else await freezeClock(page);
@@ -168,6 +180,31 @@ for (const scenario of scenarios) {
 
       const appFrameSel = use.viewport.width >= 768 && scenario.app.frameWide ? scenario.app.frameWide : scenario.app.frame;
       const maqFrameSel = scenario.maquette.frame;
+
+      // Textes de données alignés sur la maquette (retours à la ligne, hauteurs de tuile).
+      for (const pair of scenario.alignerTextes ?? []) {
+        const texts = await maqPage.evaluate((sel) => Array.from(document.querySelectorAll(sel)).map((el) => el.textContent ?? ''), pair.maquette);
+        await appPage.evaluate(
+          ({ sel, values }) => {
+            document.querySelectorAll(sel).forEach((el, index) => {
+              if (values[index] != null) el.textContent = values[index];
+            });
+          },
+          { sel: pair.app, values: texts },
+        );
+      }
+
+      // Fond neutralisé (banc uniquement) : même aplat des deux côtés, zone = tiroir.
+      let appSheet: Rect | null = null;
+      let maqSheet: Rect | null = null;
+      const neutral = NEUTRAL_ENABLED ? scenario.neutre : undefined;
+      if (neutral) {
+        appSheet = await neutralizeBackground(appPage, neutral.app);
+        maqSheet = await neutralizeBackground(maqPage, neutral.maquette);
+        if (!appSheet || !maqSheet) throw new Error(`tiroir introuvable (${!appSheet ? 'app' : 'maquette'}) pour la neutralisation du fond`);
+        await Promise.all([appPage.waitForTimeout(250), maqPage.waitForTimeout(250)]);
+      }
+
       const appFrame = await frameBox(appPage, appFrameSel);
       const maqFrame = await frameBox(maqPage, maqFrameSel);
 
@@ -175,6 +212,15 @@ for (const scenario of scenarios) {
         ...(await maskRects(appPage, scenario.masques.app, appFrame)),
         ...(await maskRects(maqPage, scenario.masques.maquette, maqFrame)),
       ];
+      let zone: Rect | null = null;
+      if (appSheet && maqSheet) {
+        // Zone = union des deux tiroirs, en coordonnées du cadre ; tout le reste est masqué.
+        zone = unionRect(
+          { x: appSheet.x - appFrame.x, y: appSheet.y - appFrame.y, w: appSheet.w, h: appSheet.h },
+          { x: maqSheet.x - maqFrame.x, y: maqSheet.y - maqFrame.y, w: maqSheet.w, h: maqSheet.h },
+        );
+        masks.push(...outsideRects({ w: Math.min(appFrame.w, maqFrame.w), h: Math.min(appFrame.h, maqFrame.h) }, zone));
+      }
 
       const shotOptions = { animations: 'disabled', caret: 'hide' } as const;
       const appPng = await appPage.screenshot({ ...shotOptions, clip: { x: appFrame.x, y: appFrame.y, width: appFrame.w, height: appFrame.h } });
@@ -210,6 +256,7 @@ for (const scenario of scenarios) {
           ratio: Math.round(outcome.ratio * 100000) / 100000,
           threshold: THRESHOLD,
           ok: pixelOk,
+          zone: zone ? { ...zone, fondNeutre: NEUTRAL_BACKGROUND } : undefined,
           hotspots: outcome.hotspots,
         },
         measures: { total: results.length, ok: okCount, results },

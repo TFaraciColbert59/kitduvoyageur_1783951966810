@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import LkvIcon from '@/components/ui/LkvIcon';
 import type { SortOption } from '@/components/ui/drawer/SortMenuButton';
 import type { SheetCapsuleItem } from '../shared/CommunitySheetShell';
 import type { CarnetFilter, ClubFilter, EventFilter, ExploreTab, SearchScope } from '../shared/types';
@@ -11,10 +10,10 @@ import { ExploreIcon, type ExploreIconName } from './ExploreIcons';
 export const EXPLORE_TAB_ORDER: ExploreTab[] = ['search', 'carnets', 'clubs', 'sorties'];
 
 export const EXPLORE_CAPSULE_ITEMS: SheetCapsuleItem[] = [
-  { id: 'search', label: 'Recherche', icon: <LkvIcon name="search" size={24} /> },
-  { id: 'carnets', label: 'Carnets', icon: <LkvIcon name="book" size={24} /> },
-  { id: 'clubs', label: 'Clubs', icon: <LkvIcon name="users" size={24} /> },
-  { id: 'sorties', label: 'Sorties', icon: <LkvIcon name="compass" size={24} /> },
+  { id: 'search', label: 'Recherche', icon: <ExploreIcon name="search" size={24} /> },
+  { id: 'carnets', label: 'Carnets', icon: <ExploreIcon name="book" size={24} /> },
+  { id: 'clubs', label: 'Clubs', icon: <ExploreIcon name="users" size={24} /> },
+  { id: 'sorties', label: 'Sorties', icon: <ExploreIcon name="compass" size={24} /> },
 ];
 
 function miniIcon(name: ExploreIconName): React.ReactNode {
@@ -51,12 +50,12 @@ export const EVENT_FILTER_ITEMS: MiniFilterItem[] = [
 
 /** Mini-capsule Recherche : Tout, Posts, Carnets, Clubs, Sorties, Membres. */
 export const SEARCH_SCOPE_ITEMS: MiniFilterItem[] = [
-  { value: 'all', label: 'Tout', icon: miniIcon('filter') },
-  { value: 'posts', label: 'Publications', icon: miniIcon('doc') },
+  { value: 'all', label: 'Tout', icon: miniIcon('feed') },
+  { value: 'posts', label: 'Publications', icon: miniIcon('quote') },
   { value: 'carnets', label: 'Carnets', icon: miniIcon('book') },
   { value: 'clubs', label: 'Clubs', icon: miniIcon('users') },
   { value: 'sorties', label: 'Sorties', icon: miniIcon('compass') },
-  { value: 'membres', label: 'Membres', icon: miniIcon('mountain') },
+  { value: 'membres', label: 'Membres', icon: miniIcon('user') },
 ];
 
 /** Menu de tri des Carnets (Carnets#7). */

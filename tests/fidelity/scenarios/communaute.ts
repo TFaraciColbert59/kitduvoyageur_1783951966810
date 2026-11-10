@@ -24,8 +24,19 @@ const DATA_MASKS = {
     '.lkdv-cv2-title',
     '.lkdv-cv2-meta',
     '.lkdv-cv2-visa',
+    '.lkdv-cv2x-tile-foot .lkdv-cv2-num',
   ],
-  maquette: ['#phone .ct-cover', '#phone .tvs', '#phone .ct-t', '#phone .ct-m', '#phone .visa'],
+  maquette: ['#phone .ct-cover', '#phone .tvs', '#phone .ct-t', '#phone .ct-m', '#phone .visa', '#phone .ct-foot .ct-b span'],
+};
+
+/**
+ * Fond neutralisé derrière le tiroir (voir `lib/neutral.ts`). Le dialogue d'aperçu
+ * (appui long) est conservé : il peut être monté hors du tiroir.
+ */
+const NEUTRE: Scenario['neutre'] = {
+  // Pilule « Mode invité · lecture seule » : ajout de l'app (01-SPEC), absente de la maquette (qui passe par l'île « Se connecter »).
+  app: { sheet: '.lkdv-cv2-sheet', root: APP_FRAME, keep: ['[role="dialog"][aria-label^="Aperçu"]'], hide: ['.lkdv-cv2-guest'] },
+  maquette: { sheet: '#phone .sheet', root: MAQ_FRAME, keep: ['#phone .ctx'] },
 };
 
 const MASQUES = {
@@ -42,11 +53,12 @@ const SHEET_MEASURES: MeasureSpec[] = [
 
 const TILE = (id: string, app: string, maq: string, props: string[] = ['border-radius']): MeasureSpec => measure(id, app, maq, props);
 
-function app(url: string, steps: Step[], session: 'member' | 'anonymous' = 'member', mock?: MockOptions): Scenario['app'] {
+function app(url: string, steps: Step[], session: 'member' | 'anonymous' = 'member', mock?: MockOptions, rpc?: Record<string, unknown>): Scenario['app'] {
   return {
     url,
     session,
     mock,
+    rpc,
     hydrate: 'button[aria-label="Explorer et rechercher"]',
     steps,
     frame: APP_FRAME,
@@ -80,6 +92,12 @@ function scenario(
     measures: MeasureSpec[];
     session?: 'member' | 'anonymous';
     mock?: MockOptions;
+    rpc?: Record<string, unknown>;
+    alignerTextes?: Scenario['alignerTextes'];
+    /** Garde le focus que la maquette donne d'elle-même (recherche : champ focalisé des deux côtés). */
+    keepMaquetteFocus?: boolean;
+    /** Masques ajoutés à ceux de la surface (données propres à l'écran). */
+    masques?: { app: string[]; maquette: string[] };
     nonAtteignable?: Scenario['nonAtteignable'];
   },
 ): Scenario {
@@ -89,23 +107,60 @@ function scenario(
     ecran,
     etat,
     role,
-    app: app('/communaute', options.appSteps, options.session ?? (role === 'invite' ? 'anonymous' : 'member'), options.mock),
-    maquette: { file: MAQUETTE_COMMUNAUTE, hash: options.hash, steps: options.maqSteps ?? [], frame: MAQ_FRAME },
-    masques: MASQUES,
+    app: app('/communaute', options.appSteps, options.session ?? (role === 'invite' ? 'anonymous' : 'member'), options.mock, options.rpc),
+    maquette: {
+      file: MAQUETTE_COMMUNAUTE,
+      hash: options.hash,
+      steps: [...(options.maqSteps ?? []), ...(options.keepMaquetteFocus ? [] : [BLUR_MAQUETTE])],
+      frame: MAQ_FRAME,
+    },
+    masques: { app: [...MASQUES.app, ...(options.masques?.app ?? [])], maquette: [...MASQUES.maquette, ...(options.masques?.maquette ?? [])] },
+    neutre: NEUTRE,
     mesures: options.measures,
+    alignerTextes: options.alignerTextes,
     nonAtteignable: options.nonAtteignable,
   };
 }
 
+/**
+ * Tendances de la maquette (`D.TRENDS`, L1887) : mêmes six libellés, quatre « lieux » pour les
+ * quatre vignettes de « Lieux populaires » (l'app tire les deux blocs de la même RPC). Les
+ * compteurs diffèrent de nature (« recherches » dans la maquette, « publications » dans l'app :
+ * décision documentée dans `SearchHome.tsx`) et sont masqués.
+ */
+const MAQUETTE_TRENDS = [
+  { kind: 'lieu', label: 'Lac Blanc', hits: 40 },
+  { kind: 'tag', label: 'ski de rando', hits: 77 },
+  { kind: 'lieu', label: 'Vercors', hits: 114 },
+  { kind: 'tag', label: 'bivouac', hits: 61 },
+  { kind: 'lieu', label: 'Mercantour', hits: 98 },
+  { kind: 'lieu', label: 'GR20', hits: 45 },
+];
+/** La maquette amorce trois recherches récentes ; l'app n'en garde aucune sans saisie (mémoire de session) : on les retire côté maquette. */
+/**
+ * La maquette ouvre un deep link en donnant le focus clavier à l'onglet actif (anneau `:focus-visible`
+ * vert autour de la lentille) : artefact du banc, absent de l'app. Retiré hors recherche (où le focus
+ * du champ est voulu des deux côtés).
+ */
+const BLUR_MAQUETTE: Step = { eval: 'document.activeElement && document.activeElement.blur && document.activeElement.blur()' };
+
+const CLEAR_MAQUETTE_RECENTS: Step = {
+  eval: `for (let n = 0; n < 9; n += 1) { const b = document.querySelector('#phone [data-a="q-del"]'); if (!b) break; b.click(); }`,
+};
+
+/** Titres des tuiles carnet : même longueur que la maquette, donc mêmes retours à la ligne. */
+const CARNET_TITLES = [{ app: '[data-testid="cv2-tile-carnet"] .lkdv-cv2x-carnet-title', maquette: '#phone .ct .ct-t' }];
+
 const CARNET_TILE = TILE('Tuile carnet', '[data-testid="cv2-tile-carnet"]', '#phone .ct');
 const CLUB_TILE = TILE('Tuile club', '[data-testid="cv2-tile-club"]', '#phone .kt');
-const SORTIE_TILE = TILE('Tuile sortie', '[data-testid="cv2-tile-sortie"]', '#phone .tk');
+const SORTIE_TILE = TILE('Tuile sortie', '[data-testid="cv2-tile-sortie"] .lkdv-cv2-ticket', '#phone .tk');
 const SORT_BUTTON = measure('Bouton de tri', '[data-testid="cv2-sort-button"]', '#phone .sort-btn', ['border-radius', 'background-color', 'background-image']);
 
 export const COMMUNAUTE_SCENARIOS: Scenario[] = [
   scenario('communaute-explorer-carnets', 'Explorer · carnets', 'chargé', 'membre', {
     hash: 'explorer-carnets',
     appSteps: [...openExplorer, volet('Carnets'), { wait: 600 }],
+    alignerTextes: CARNET_TITLES,
     measures: [...SHEET_MEASURES, CARNET_TILE, SORT_BUTTON],
   }),
   scenario('communaute-explorer-clubs', 'Explorer · clubs', 'chargé', 'membre', {
@@ -120,15 +175,38 @@ export const COMMUNAUTE_SCENARIOS: Scenario[] = [
   }),
   scenario('communaute-recherche-accueil', 'Explorer · recherche', 'accueil de la recherche', 'membre', {
     hash: 'explorer-search',
+    keepMaquetteFocus: true,
     appSteps: openSearch,
+    maqSteps: [CLEAR_MAQUETTE_RECENTS],
+    rpc: { community_search_trending: MAQUETTE_TRENDS },
+    masques: {
+      // Compteurs et noms des lieux : données ; illustrations des vignettes : couvertures.
+      // + rang : police mono de repli de la maquette (IBM Plex Mono absente du banc) contre celle de l'app.
+      app: ['.lkdv-cv2x-trend-meta', '.lkdv-cv2x-trend-rank', '.lkdv-cv2x-place-label small', '.lkdv-cv2x-place-label b', '.lkdv-cv2x-place-art'],
+      maquette: ['#phone .trends small', '#phone .trends .rk', '#phone .place small', '#phone .place b', '#phone .place svg.art'],
+    },
     measures: [
       ...SHEET_MEASURES,
       // Parent direct du champ : la maquette mesure le conteneur `.srch`, pas l'<input>.
-      measure('Champ de recherche', ':has(> input[type="search"])', '#phone .srch', ['border-radius', 'background-color', 'background-image']),
+      measure('Champ de recherche', ':has(> input[type="search"])', '#phone .srch', ['border-radius', 'background-color', 'background-image', 'box-shadow']),
+      measure('Puce de contexte', '.lkdv-cv2x-ctx-chips .lkdv-cv2-chip', '#phone .ctxrow .chip', ['border-radius', 'background-color', 'box-shadow', 'color', 'font-size', 'font-weight']),
+      measure('Sélecteur Liste / Carte', '.lkdv-cv2x-search-view', '#phone .seg-s', ['border-radius', 'background-color', 'background-image', 'box-shadow']),
+      // Couleur non comparée : l'encre du surtitre reste l'encre pleine (AA sur verre, FID-080) ; la maquette utilise `--label2`.
+      measure('Surtitre', '.lkdv-cv2x-search-home .lkdv-cv2-eyebrow', '#phone .eyebrow-row .h5', ['font-size', 'font-weight', 'letter-spacing'], false),
+      measure('Carte des tendances', '.lkdv-cv2x-trends', '#phone .menu2.trends', ['border-radius', 'background-color', 'background-image', 'box-shadow']),
+      measure('Ligne de tendance', '.lkdv-cv2x-trend-row', '#phone .menu2.trends .li', ['color']),
+      measure('Vignette de lieu', '.lkdv-cv2x-place', '#phone .place', ['border-radius']),
+      measure('Libellé de tendance', '.lkdv-cv2x-trend-label', '#phone .menu2.trends .tt', ['font-size', 'font-weight', 'line-height', 'color'], false),
+      measure('Rang de tendance', '.lkdv-cv2x-trend-rank', '#phone .menu2.trends .rk', ['font-size', 'font-weight', 'line-height', 'color'], false),
+      measure('Icône de tendance', '.lkdv-cv2x-trend-ico', '#phone .menu2.trends .ico', ['border-radius', 'background-color']),
+      measure('Texte de puce', '.lkdv-cv2x-ctx-chips .lkdv-cv2-chip', '#phone .ctxrow .chip', ['line-height']),
+      measure('Bouton du sélecteur', '.lkdv-cv2x-search-view button', '#phone .seg-s button', ['line-height', 'font-size', 'color']),
+      measure('Saisie', '.lkdv-cv2x-search-field input', '#phone .srch input', ['font-size', 'font-weight', 'line-height', 'color']),
     ],
   }),
   scenario('communaute-recherche-resultats', 'Explorer · recherche', 'résultats pour « ecrins »', 'membre', {
     hash: 'explorer-search',
+    keepMaquetteFocus: true,
     appSteps: [
       ...openSearch,
       { fill: { role: 'searchbox', name: 'Rechercher dans toute la communauté' }, value: 'ecrins' },
@@ -136,7 +214,15 @@ export const COMMUNAUTE_SCENARIOS: Scenario[] = [
       { wait: 700 },
     ],
     maqSteps: [{ fill: { css: '#phone .srch input' }, value: 'ecrins' }, { wait: 900 }],
-    measures: SHEET_MEASURES,
+    // Couvertures, titres, sous-titres : données (jeux d'exemple différents).
+    masques: { app: ['.lkdv-cv2x-search-media', '.lkdv-cv2x-search-body'], maquette: ['#phone .res-row .rr-cover', '#phone .res-row .rr-t'] },
+    measures: [
+      ...SHEET_MEASURES,
+      measure('Ligne de résultat', '.lkdv-cv2x-search-list > a', '#phone .res-row', ['border-radius', 'background-image', 'box-shadow']),
+      // Sans position : la maquette n'affiche la distance que géolocalisée, la RPC simulée la renvoie toujours.
+      measure('Pastille de type', '.lkdv-cv2x-search-end .lkdv-cv2-type', '#phone .res-row .rr-pill', ['border-radius', 'background-color', 'font-size', 'font-weight', 'height'], false),
+      measure('Surtitre de groupe', '.lkdv-cv2x-search-pane .lkdv-cv2-group-head', '#phone .eyebrow-row', []),
+    ],
   }),
   scenario('communaute-peek-carnet', 'Explorer · carnets', 'aperçu (appui long sur une tuile)', 'membre', {
     hash: 'explorer-carnets',
@@ -149,6 +235,8 @@ export const COMMUNAUTE_SCENARIOS: Scenario[] = [
       { wait: 500 },
     ],
     maqSteps: [{ longPress: { css: '#phone .ct' } }, { wait: 600 }],
+    // Couverture et textes de la carte : données (jeu d'exemple de la maquette contre fixtures).
+    masques: { app: ['.lkdv-cv2x-peek-media', '.lkdv-cv2x-peek-text'], maquette: ['#phone .ctx .pk-art', '#phone .ctx .pv > b', '#phone .ctx .pv .s2'] },
     measures: [measure('Aperçu (peek)', '[role="dialog"][aria-label^="Aperçu"]', '#phone .ctx .box', [])],
   }),
   scenario('communaute-creation-publication-etape1', 'Création · publication', 'étape 1', 'membre', {
@@ -161,7 +249,10 @@ export const COMMUNAUTE_SCENARIOS: Scenario[] = [
     measures: [
       measure('Tiroir', '.lkdv-cv2-sheet', '#phone .sheet', GLASS),
       measure('Capsule des 6 types', '.lkdv-cv2-topnav .lkdv-cv2-capsule', '.slot-topnav .capsule', GLASS),
-      measure('Formulaire', '[data-testid="cv2-form-post"]', '#phone .cr-vp', []),
+      // Le formulaire vit dans le pager : on mesure le conteneur du corps (maquette `.cr-vp`), l'aperçu et le pied.
+      measure('Corps du formulaire', '.lkdv-cv2-body', '#phone .cr-vp', []),
+      measure('Aperçu du post', '.lkdv-cv2-preview-slot', '#phone .cr-prev', ['border-radius']),
+      measure('Pied de formulaire', '.lkdv-cv2-footer', '#phone .cr-foot', []),
     ],
   }),
   scenario('communaute-explorer-carnets-chargement', 'Explorer · carnets', 'chargement (squelette)', 'membre', {
@@ -169,7 +260,8 @@ export const COMMUNAUTE_SCENARIOS: Scenario[] = [
     mock: { latencyMs: 15_000 },
     appSteps: [...openExplorer, volet('Carnets'), { wait: 300 }],
     maqSteps: [panel('[data-p="st-load"]'), { wait: 300 }],
-    measures: SHEET_MEASURES,
+    // Le dégradé des tuiles est lisse : le diff pixel ne voit pas un décalage de 4 px, la mesure le voit.
+    measures: [...SHEET_MEASURES, measure('Tuile squelette', '.lkdv-cv2x-skeleton-tile', '#phone .ct-skel', ['border-radius'])],
   }),
   scenario('communaute-explorer-carnets-vide', 'Explorer · carnets', 'vide', 'membre', {
     hash: 'explorer-carnets',
@@ -190,6 +282,7 @@ export const COMMUNAUTE_SCENARIOS: Scenario[] = [
     session: 'anonymous',
     appSteps: [...openExplorer, volet('Carnets'), { wait: 600 }],
     maqSteps: [panel('[data-p="role"][data-v="g"]'), { wait: 500 }],
+    alignerTextes: CARNET_TITLES,
     measures: [...SHEET_MEASURES, CARNET_TILE],
   }),
 ];

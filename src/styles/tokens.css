@@ -1188,7 +1188,7 @@ button.g2,
   /* Verre des champs (HIG L877 : blanc .88, bordure .5 px). */
   --cv2-field-bg: rgba(255, 255, 255, 0.88);
   /* Plaque sous les libellés de champ (AA sur fond sombre du verre). */
-  --cv2-label-plate: rgba(255, 255, 255, 0.82);
+  --cv2-label-plate: rgba(255, 255, 255, 0.4);
   --cv2-field-border: var(--lkv-field-border);
   --cv2-field-radius: 12px;
   --cv2-field-height: 48px;

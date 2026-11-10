@@ -41,7 +41,11 @@ export type ExploreIconName =
   | 'globe'
   | 'partly'
   | 'rain'
-  | 'snow';
+  | 'snow'
+  | 'feed'
+  | 'quote'
+  | 'user'
+  | 'map';
 
 const PATHS: Record<ExploreIconName, React.ReactNode> = {
   globe: (
@@ -63,33 +67,33 @@ const PATHS: Record<ExploreIconName, React.ReactNode> = {
   ),
   'chevron-right': <path d="M9 5l7 7-7 7" />,
   'chevron-left': <path d="M15 5l-7 7 7 7" />,
-  heart: <path d="M12 20s-6.8-4.3-8.2-8A4.6 4.6 0 0 1 12 6.4 4.6 4.6 0 0 1 20.2 12C18.8 15.7 12 20 12 20z" />,
+  heart: <path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" />,
   'heart-filled': <path d="M12 20s-6.8-4.3-8.2-8A4.6 4.6 0 0 1 12 6.4 4.6 4.6 0 0 1 20.2 12C18.8 15.7 12 20 12 20z" fill="currentColor" />,
-  comment: <path d="M20 11.5a7.5 7.5 0 0 1-11 6.7L4 20l1.8-4.6A7.5 7.5 0 1 1 20 11.5z" />,
+  comment: <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z" />,
   lock: (
     <>
-      <rect x="5.5" y="10.5" width="13" height="9" rx="2.4" />
-      <path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5" />
+      <rect x="5" y="11" width="14" height="9" rx="3" />
+      <path d="M8 11V8a4 4 0 0 1 8 0v3" />
     </>
   ),
   plus: <path d="M12 5v14M5 12h14" />,
   check: <path d="M5 12.5l4.5 4.5L19 7.5" />,
   clock: (
     <>
-      <circle cx="12" cy="12" r="7.5" />
-      <path d="M12 8v4.3l2.6 1.6" />
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 7.5V12l3 2" />
     </>
   ),
   shield: (
     <>
-      <path d="M12 3.5l6.5 2.4v5c0 4.4-3 7.3-6.5 9.1-3.5-1.8-6.5-4.7-6.5-9.1v-5z" />
+      <path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z" />
       <path d="M9 12l2.2 2.2L15.5 10" />
     </>
   ),
   calendar: (
     <>
-      <rect x="4" y="6" width="16" height="14" rx="2.6" />
-      <path d="M4 10h16M8.5 4v4M15.5 4v4" />
+      <rect x="4" y="5.5" width="16" height="14.5" rx="3" />
+      <path d="M4 10h16M8.5 3.5v4M15.5 3.5v4" />
     </>
   ),
   'map-pin': (
@@ -100,21 +104,26 @@ const PATHS: Record<ExploreIconName, React.ReactNode> = {
   ),
   route: (
     <>
-      <circle cx="6" cy="6" r="2" />
-      <circle cx="18" cy="18" r="2" />
-      <path d="M8 6h6a4 4 0 0 1 0 8H9a4 4 0 0 0 0 8h7" />
+      <circle cx="6" cy="18" r="2.5" />
+      <circle cx="18" cy="6" r="2.5" />
+      <path d="M8.5 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.5" />
     </>
   ),
   eye: (
     <>
-      <path d="M2.5 12S6 5.8 12 5.8 21.5 12 21.5 12 18 18.2 12 18.2 2.5 12 2.5 12z" />
-      <circle cx="12" cy="12" r="2.8" />
+      <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" />
+      <circle cx="12" cy="12" r="3" />
     </>
   ),
-  bookmark: <path d="M7 4h10v16l-5-3.5L7 20z" />,
+  bookmark: <path d="M7 4h10v17l-5-4-5 4z" />,
   'bookmark-filled': <path d="M7 4h10v16l-5-3.5L7 20z" fill="currentColor" />,
-  send: <path d="M21 4L3.8 11.2l7.3 2.3 2.3 7.3z" />,
-  close: <path d="M7 7l10 10M17 7L7 17" />,
+  send: (
+    <>
+      <path d="M22 2 11 13" />
+      <path d="M22 2l-7 20-4-9-9-4z" />
+    </>
+  ),
+  close: <path d="M6 6l12 12M18 6L6 18" />,
   cloud: <path d="M7.5 18.5a4.5 4.5 0 0 1-.6-8.95A5.8 5.8 0 0 1 18 10.4a4.05 4.05 0 0 1-.4 8.1z" />,
   sparkles: (
     <>
@@ -132,21 +141,23 @@ const PATHS: Record<ExploreIconName, React.ReactNode> = {
   ),
   users: (
     <>
-      <circle cx="9" cy="9" r="3.2" />
-      <path d="M3.5 19a5.6 5.6 0 0 1 11 0M16 6.6a3.2 3.2 0 0 1 0 6M17.5 14.3a5.7 5.7 0 0 1 3 4.7" />
+      <circle cx="9" cy="8" r="3" />
+      <path d="M3 20a6 6 0 0 1 12 0" />
+      <circle cx="17" cy="9" r="2.5" />
+      <path d="M15 14a5 5 0 0 1 6 6" />
     </>
   ),
-  mountain: <path d="M3 19.5L9.5 7l4 7.5 2-3 5.5 8z" />,
+  mountain: <path d="M3 19l6-10 4 6 2.5-4L21 19z" />,
   compass: (
     <>
-      <circle cx="12" cy="12" r="8.5" />
+      <circle cx="12" cy="12" r="9" />
       <path d="M15.5 8.5l-2 5-5 2 2-5z" />
     </>
   ),
   book: (
     <>
-      <path d="M4.5 5.5A2.5 2.5 0 0 1 7 3h12.5v16.5H7a2.5 2.5 0 0 0-2.5 2.5z" />
-      <path d="M4.5 5.5v16.5" />
+      <path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z" />
+      <path d="M5 17a3 3 0 0 1 3-3h11" />
     </>
   ),
   doc: (
@@ -156,8 +167,12 @@ const PATHS: Record<ExploreIconName, React.ReactNode> = {
     </>
   ),
   filter: <path d="M4 6h16M7 12h10M10 18h4" />,
-  leaf: <path d="M5 19C5 9 13 4 20 4c0 9-5 15-15 15zM5 19l7-7" />,
-  // Météo (FID-071) : mêmes familles que la maquette (`WXS`, L1071/L2466).
+  leaf: (
+    <>
+      <path d="M5 19c0-8 5-13 15-14 0 9-4 14-12 14" />
+      <path d="M5 19c3-5 6-8 10-10" />
+    </>
+  ),
   sun: (
     <>
       <circle cx="12" cy="12" r="3.6" />
@@ -181,6 +196,20 @@ const PATHS: Record<ExploreIconName, React.ReactNode> = {
     <>
       <path d="M7.5 14.5a4.2 4.2 0 0 1-.55-8.35A5.4 5.4 0 0 1 17.3 7.3a3.8 3.8 0 0 1-.35 7.6z" />
       <path d="M9 18v3M7.7 18.75h2.6M7.7 20.25h2.6M15 18v3M13.7 18.75h2.6M13.7 20.25h2.6" />
+    </>
+  ),
+  feed: <path d="M4 5h16M4 10h10M4 15h16M4 20h10" />,
+  quote: <path d="M7 7h4v5c0 3-1 4-4 5M15 7h4v5c0 3-1 4-4 5" />,
+  user: (
+    <>
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 21a8 8 0 0 1 16 0" />
+    </>
+  ),
+  map: (
+    <>
+      <path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2z" />
+      <path d="M9 4v14M15 6v14" />
     </>
   ),
 };
