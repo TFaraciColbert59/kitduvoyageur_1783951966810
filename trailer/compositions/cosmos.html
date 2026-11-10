@@ -1,0 +1,22 @@
+<template>
+  <!-- COSMOS — seul contexte WebGL du film. Hôte 0 → 60 s, z 20 (au-dessus des plans au sol, sous l'interface).
+       Ce fichier ne fait que monter le canvas : les modules sont dans assets/cosmos/*.js (chargés par index.html). -->
+  <style>
+    #root { position: absolute; inset: 0; }
+    #cosmos-canvas { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: block; }
+  </style>
+  <div id="root" data-composition-id="cosmos" data-width="1920" data-height="1080" data-layout-ignore>
+    <canvas id="cosmos-canvas"></canvas>
+  </div>
+  <script>
+    (function () {
+      const root = document.querySelector('[data-composition-id="cosmos"]');
+      const canvas = document.getElementById("cosmos-canvas");
+      const ready = LKDV.cosmos.mount(canvas, root);
+      const tl = gsap.timeline({ paused: true });
+      // La timeline ne porte que la durée : le dessin se fait sur l'événement hf-seek (temps du film).
+      tl.to({}, { duration: 60 }, 0);
+      ready.then(function () { window.__timelines["cosmos"] = tl; });
+    })();
+  </script>
+</template>

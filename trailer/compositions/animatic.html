@@ -1,0 +1,354 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; font-family: "IBM Plex Mono", monospace; pointer-events: none; }
+    .an-card { position: absolute; left: 40px; right: 40px; bottom: 28px; height: 92px; padding: 10px 18px; border-radius: 12px;
+      background: rgb(20 25 22 / 0.72); color: #fff; display: grid; grid-template-columns: 120px 1fr; grid-template-rows: 22px 26px 22px; column-gap: 18px; align-items: center; }
+    .an-tc { grid-row: 1 / 4; font-size: 44px; font-weight: 600; font-variant-numeric: tabular-nums; }
+    .an-act { font-size: 14px; letter-spacing: 0.14em; opacity: 0.7; }
+    .an-idea { font-size: 22px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .an-ui { font-size: 14px; opacity: 0.8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .an-mark { position: absolute; right: 40px; top: 28px; padding: 8px 16px; border-radius: 999px; background: #C89A3B; color: #141916; font-size: 20px; font-weight: 600; letter-spacing: 0.1em; }
+    .an-choc { background: #A8443A; color: #fff; } .an-silence { background: #fff; color: #141916; } .an-logo { background: #5B7F55; color: #fff; }
+    #an-beat { position: absolute; left: 40px; top: 28px; width: 28px; height: 28px; border-radius: 50%; background: #fff; }
+  </style>
+  <div id="root" data-composition-id="animatic" data-width="1920" data-height="1080" data-layout-ignore>
+    <div id="an-beatwrap" class="clip" data-start="0" data-duration="60" data-track-index="3"><div id="an-beat"></div></div>
+    <div id="an-s0" class="clip an-card" data-start="0" data-duration="1" data-track-index="0">
+      <span class="an-tc">0:00</span><span class="an-act">ACTE 1 · Ouverture</span>
+      <span class="an-idea">Nébuleuse plein cadre, déjà en mouvement</span>
+      <span class="an-ui">—</span>
+    </div>
+    <div id="an-s1" class="clip an-card" data-start="1" data-duration="1" data-track-index="1">
+      <span class="an-tc">0:01</span><span class="an-act">ACTE 1 · Ouverture</span>
+      <span class="an-idea">Le nuage s'effondre en disque, le Soleil naît</span>
+      <span class="an-ui">—</span>
+    </div>
+    <div id="an-s2" class="clip an-card" data-start="2" data-duration="1" data-track-index="0">
+      <span class="an-tc">0:02</span><span class="an-act">ACTE 1 · Ouverture</span>
+      <span class="an-idea">La Terre se forme et refroidit</span>
+      <span class="an-ui">—</span>
+    </div>
+    <div id="an-s3" class="clip an-card" data-start="3" data-duration="1" data-track-index="1">
+      <span class="an-tc">0:03</span><span class="an-act">ACTE 1 · Ouverture</span>
+      <span class="an-idea">La Terre d'aujourd'hui ; le logo dans l'aurore</span>
+      <span class="an-ui">—</span>
+    </div>
+    <div id="an-s4" class="clip an-card" data-start="4" data-duration="1" data-track-index="0">
+      <span class="an-tc">0:04</span><span class="an-act">ACTE 1 · Ouverture</span>
+      <span class="an-idea">Quelques mots tapés sur le verre</span>
+      <span class="an-ui">Barre de saisie IA (pilule de verre, ressort 250 ms), avatar L, frappe « Islande · van · 10 jours · 4 » à 40 car./s</span>
+    </div>
+    <div id="an-s5" class="clip an-card" data-start="5" data-duration="1" data-track-index="1">
+      <span class="an-tc">0:05</span><span class="an-act">ACTE 1 · Ouverture</span>
+      <span class="an-idea">Les mots deviennent des pictos ; envoi</span>
+      <span class="an-ui">4 pastilles-pictos, une par double-croche : map-pin sur l'île, van, calendar « 10 », users ×4 ; bouton send enfoncé à 5,5 ; Spinner</span>
+    </div>
+    <div id="an-s6" class="clip an-card" data-start="6" data-duration="1" data-track-index="0">
+      <span class="an-tc">0:06</span><span class="an-act">ACTE 2 · Descente</span>
+      <span class="an-idea">CHOC 1 : un point sage tombe sur l'Islande</span>
+      <span class="an-ui">Les pastilles fusionnent en un point ; réticule : 4 coins qui se verrouillent ; altimètre qui dégringole depuis 408</span>
+    </div>
+    <div id="an-s7" class="clip an-card" data-start="7" data-duration="1" data-track-index="1">
+      <span class="an-tc">0:07</span><span class="an-act">ACTE 2 · Descente</span>
+      <span class="an-idea">La route se trace autour de l'île</span>
+      <span class="an-ui">Picto route coché dans la pile ; « 1 322 km »</span>
+    </div>
+    <div id="an-s8" class="clip an-card" data-start="8" data-duration="1" data-track-index="0">
+      <span class="an-tc">0:08</span><span class="an-act">ACTE 2 · Descente</span>
+      <span class="an-idea">La météo se peint</span>
+      <span class="an-ui">Picto météo coché ; frise de 10 pictos sun / cloud / cloud-rain</span>
+    </div>
+    <div id="an-s9" class="clip an-card" data-start="9" data-duration="1" data-track-index="1">
+      <span class="an-tc">0:09</span><span class="an-act">ACTE 2 · Descente</span>
+      <span class="an-idea">Les nuits s'allument</span>
+      <span class="an-ui">Picto moon coché ; 7 vans et 2 tentes miniatures</span>
+    </div>
+    <div id="an-s10" class="clip an-card" data-start="10" data-duration="1" data-track-index="0">
+      <span class="an-tc">0:10</span><span class="an-act">ACTE 2 · Descente</span>
+      <span class="an-idea">38 objets pleuvent ; le budget se remplit</span>
+      <span class="an-ui">Picto backpack coché ; barre de budget à 98 %</span>
+    </div>
+    <div id="an-s11" class="clip an-card" data-start="11" data-duration="1" data-track-index="1">
+      <span class="an-tc">0:11</span><span class="an-act">ACTE 2 · Descente</span>
+      <span class="an-idea">Plongée dans la mer de nuages ; silence</span>
+      <span class="an-ui">La pile se replie en un point ; grande coche sage 0,5 s ; tout se dissout en particules à 11,5</span>
+    </div>
+    <div id="an-s12" class="clip an-card" data-start="12" data-duration="1" data-track-index="0">
+      <span class="an-tc">0:12</span><span class="an-act">ACTE 3 · Le groupe</span>
+      <span class="an-idea">CHOC 2 : le nuage se déchire sur le fjord</span>
+      <span class="an-ui">— (respiration 1)</span>
+    </div>
+    <div id="an-s13" class="clip an-card" data-start="13" data-duration="1" data-track-index="1">
+      <span class="an-tc">0:13</span><span class="an-act">ACTE 3 · Le groupe</span>
+      <span class="an-idea">Le Hub du groupe s'ouvre au-dessus du van</span>
+      <span class="an-ui">Carte de verre : silhouette de l'île + route + point au tiers ; avatars L, S, I + cercle en pointillés ; 3 anneaux ; capsule de navigation</span>
+    </div>
+    <div id="an-s14" class="clip an-card" data-start="14" data-duration="1" data-track-index="0">
+      <span class="an-tc">0:14</span><span class="an-act">ACTE 3 · Le groupe</span>
+      <span class="an-idea">Le cercle vide devient une bouteille à la mer</span>
+      <span class="an-ui">Bouteille de verre, « LKDV » moulé révélé par un reflet 0,5 s ; papier roulé : van + 3 avatars + 1 vide</span>
+    </div>
+    <div id="an-s15" class="clip an-card" data-start="15" data-duration="1" data-track-index="1">
+      <span class="an-tc">0:15</span><span class="an-act">ACTE 3 · Le groupe</span>
+      <span class="an-idea">La bouteille part ; une bulle revient ; ils sont quatre</span>
+      <span class="an-ui">Sillage = ligne sage ; mini-globe de points ; la bulle remplit le cercle ; îlot : avatar H en sage</span>
+    </div>
+    <div id="an-s16" class="clip an-card" data-start="16" data-duration="1" data-track-index="0">
+      <span class="an-tc">0:16</span><span class="an-act">ACTE 3 · Le groupe</span>
+      <span class="an-idea">Une colonne de verre par personne</span>
+      <span class="an-ui">4 colonnes : L cloud-snow ; S (appareil photo), sunrise ; I leaf, « 1 » ; H footprints</span>
+    </div>
+    <div id="an-s17" class="clip an-card" data-start="17" data-duration="1" data-track-index="1">
+      <span class="an-tc">0:17</span><span class="an-act">ACTE 3 · Le groupe</span>
+      <span class="an-idea">Le kit se réordonne ; le trait sage explique</span>
+      <span class="an-ui">Trait sage du flocon de Léa au sac de couchage qui monte en tête ; 10 points dont 8 pleins</span>
+    </div>
+    <div id="an-s18" class="clip an-card" data-start="18" data-duration="1" data-track-index="0">
+      <span class="an-tc">0:18</span><span class="an-act">ACTE 3 · Le groupe</span>
+      <span class="an-idea">38 objets : 6 allumés, 32 fantômes</span>
+      <span class="an-ui">Grille de 38 silhouettes ; « 6 / 38 »</span>
+    </div>
+    <div id="an-s19" class="clip an-card" data-start="19" data-duration="1" data-track-index="1">
+      <span class="an-tc">0:19</span><span class="an-act">ACTE 3 · Le groupe</span>
+      <span class="an-idea">Sage, poignée de main : la tente arrive de M</span>
+      <span class="an-ui">Vague de pastilles sage (handshake) ; avatar M ; « 2,1 km »</span>
+    </div>
+    <div id="an-s20" class="clip an-card" data-start="20" data-duration="1" data-track-index="0">
+      <span class="an-tc">0:20</span><span class="an-act">ACTE 3 · Le groupe</span>
+      <span class="an-idea">Ambre, bleu, Stone : trois vagues</span>
+      <span class="an-ui">recycle ambre (chaussures, sac étanche) ; calendar bleu (doudoune) ; tag Stone (batterie)</span>
+    </div>
+    <div id="an-s21" class="clip an-card" data-start="21" data-duration="1" data-track-index="1">
+      <span class="an-tc">0:21</span><span class="an-act">ACTE 3 · Le groupe</span>
+      <span class="an-idea">La grille est entièrement allumée</span>
+      <span class="an-ui">Onde de lumière ; « 38 / 38 »</span>
+    </div>
+    <div id="an-s22" class="clip an-card" data-start="22" data-duration="1" data-track-index="0">
+      <span class="an-tc">0:22</span><span class="an-act">ACTE 3 · Le groupe</span>
+      <span class="an-idea">HÉROS : la porte du van ouverte sur l'océan</span>
+      <span class="an-ui">— (étiquettes de couleur discrètes sur le matériel, sans texte)</span>
+    </div>
+    <div id="an-s23" class="clip an-card" data-start="23" data-duration="1" data-track-index="1">
+      <span class="an-tc">0:23</span><span class="an-act">ACTE 3 · Le groupe</span>
+      <span class="an-idea">L'étiquette sage devient un anneau</span>
+      <span class="an-ui">Étiquette qui tourne → anneau qui grossit vers la caméra</span>
+    </div>
+    <div id="an-s24" class="clip an-card" data-start="24" data-duration="1" data-track-index="0">
+      <span class="an-tc">0:24</span><span class="an-act">ACTE 4 · Confiance et terrain</span>
+      <span class="an-idea">L'anneau de confiance de Marc se remplit</span>
+      <span class="an-ui">Tiroir mi-hauteur ; avatar M au centre ; « 96 » ; 12 petites coches sage</span>
+    </div>
+    <div id="an-s25" class="clip an-card" data-start="25" data-duration="1" data-track-index="1">
+      <span class="an-tc">0:25</span><span class="an-act">ACTE 4 · Confiance et terrain</span>
+      <span class="an-idea">La tente change de mains</span>
+      <span class="an-ui">Double coche sage ; 4 barres à pictos (compass, backpack, plume, handshake), la dernière monte — sans chiffre</span>
+    </div>
+    <div id="an-s26" class="clip an-card" data-start="26" data-duration="1" data-track-index="0">
+      <span class="an-tc">0:26</span><span class="an-act">ACTE 4 · Confiance et terrain</span>
+      <span class="an-idea">Chaque objet émet une onde sage</span>
+      <span class="an-ui">Selon AUDIT-APP : balise / montre / batterie, ou batterie partagée + carte ; pastilles de verre : « 14,2 km », jauge 82 %</span>
+    </div>
+    <div id="an-s27" class="clip an-card" data-start="27" data-duration="1" data-track-index="1">
+      <span class="an-tc">0:27</span><span class="an-act">ACTE 4 · Confiance et terrain</span>
+      <span class="an-idea">Plus de réseau : la carte reste vivante</span>
+      <span class="an-ui">wifi-off ; 4 points d'avatars qui bougent toujours sur la carte</span>
+    </div>
+    <div id="an-s28" class="clip an-card" data-start="28" data-duration="1" data-track-index="0">
+      <span class="an-tc">0:28</span><span class="an-act">ACTE 4 · Confiance et terrain</span>
+      <span class="an-idea">La trace avance avec les marcheurs</span>
+      <span class="an-ui">Carte en relief dans un tiroir bas ; « 6,8 km », « +412 m » ; picto source chaude qui pulse</span>
+    </div>
+    <div id="an-s29" class="clip an-card" data-start="29" data-duration="1" data-track-index="1">
+      <span class="an-tc">0:29</span><span class="an-act">ACTE 4 · Confiance et terrain</span>
+      <span class="an-idea">Le vent arrive : la route se redessine</span>
+      <span class="an-ui">wind ambre ; ancien tracé en pointillés, nouveau en sage plein</span>
+    </div>
+    <div id="an-s30" class="clip an-card" data-start="30" data-duration="1" data-track-index="0">
+      <span class="an-tc">0:30</span><span class="an-act">ACTE 5 · Le relais</span>
+      <span class="an-idea">Le carnet s'écrit tout seul au feu de camp</span>
+      <span class="an-ui">Page Paper : photos qui tombent en place, écriture = texture</span>
+    </div>
+    <div id="an-s31" class="clip an-card" data-start="31" data-duration="1" data-track-index="1">
+      <span class="an-tc">0:31</span><span class="an-act">ACTE 5 · Le relais</span>
+      <span class="an-idea">Publié ; le pouce s'arrête sur une photo</span>
+      <span class="an-ui">send coché ; carte du fil : avatar N + photo du plan 08</span>
+    </div>
+    <div id="an-s32" class="clip an-card" data-start="32" data-duration="1" data-track-index="0">
+      <span class="an-tc">0:32</span><span class="an-act">ACTE 5 · Le relais</span>
+      <span class="an-idea">PLONGÉE 1 : à travers l'écran, chez Nora</span>
+      <span class="an-ui">— (respiration 2 : 32,5–33,0)</span>
+    </div>
+    <div id="an-s33" class="clip an-card" data-start="33" data-duration="1" data-track-index="1">
+      <span class="an-tc">0:33</span><span class="an-act">ACTE 5 · Le relais</span>
+      <span class="an-idea">Son kit se déplie en éventail</span>
+      <span class="an-ui">Éventail de silhouettes aux 4 couleurs ; « 9,8 kg » ; selon AUDIT-APP : position partagée à 2 avatars</span>
+    </div>
+    <div id="an-s34" class="clip an-card" data-start="34" data-duration="1" data-track-index="0">
+      <span class="an-tc">0:34</span><span class="an-act">ACTE 5 · Le relais</span>
+      <span class="an-idea">Son carnet : 5 pages en 5 flips</span>
+      <span class="an-ui">5 flips ; mini-carte de la trace qui s'allonge</span>
+    </div>
+    <div id="an-s35" class="clip an-card" data-start="35" data-duration="1" data-track-index="1">
+      <span class="an-tc">0:35</span><span class="an-act">ACTE 5 · Le relais</span>
+      <span class="an-idea">Bras ouverts au sommet ; la crête refait le logo</span>
+      <span class="an-ui">La photo part vers le haut en bulle de verre</span>
+    </div>
+    <div id="an-s36" class="clip an-card" data-start="36" data-duration="1" data-track-index="0">
+      <span class="an-tc">0:36</span><span class="an-act">ACTE 5 · Le relais</span>
+      <span class="an-idea">PLONGÉE 2 : la bulle retombe chez Tom</span>
+      <span class="an-ui">Îlot : avatar N + vignette du sommet ; picto course, « 5,2 km », pause</span>
+    </div>
+    <div id="an-s37" class="clip an-card" data-start="37" data-duration="1" data-track-index="1">
+      <span class="an-tc">0:37</span><span class="an-act">ACTE 5 · Le relais</span>
+      <span class="an-idea">Silence ; il sourit, se lève</span>
+      <span class="an-ui">pause → play</span>
+    </div>
+    <div id="an-s38" class="clip an-card" data-start="38" data-duration="1" data-track-index="0">
+      <span class="an-tc">0:38</span><span class="an-act">ACTE 5 · Le relais</span>
+      <span class="an-idea">Sa trace dessine les montagnes du logo</span>
+      <span class="an-ui">« 8,0 km » ; barre compass qui monte — sans chiffre</span>
+    </div>
+    <div id="an-s39" class="clip an-card" data-start="39" data-duration="1" data-track-index="1">
+      <span class="an-tc">0:39</span><span class="an-act">ACTE 5 · Le relais</span>
+      <span class="an-idea">Il partage ; le club montre des vélos</span>
+      <span class="an-ui">bike ; grappe de 12 avatars</span>
+    </div>
+    <div id="an-s40" class="clip an-card" data-start="40" data-duration="1" data-track-index="0">
+      <span class="an-tc">0:40</span><span class="an-act">ACTE 5 · Le relais</span>
+      <span class="an-idea">PLONGÉE 3 : le peloton dans les vignes</span>
+      <span class="an-ui">12 avatars cochés ; « 42 km » ; barre handshake qui monte — sans chiffre</span>
+    </div>
+    <div id="an-s41" class="clip an-card" data-start="41" data-duration="1" data-track-index="1">
+      <span class="an-tc">0:41</span><span class="an-act">ACTE 5 · Le relais</span>
+      <span class="an-idea">RAFALE : le monde entier</span>
+      <span class="an-ui">—</span>
+    </div>
+    <div id="an-s42" class="clip an-card" data-start="42" data-duration="1" data-track-index="0">
+      <span class="an-tc">0:42</span><span class="an-act">ACTE 5 · Le relais</span>
+      <span class="an-idea">Tous les voyages, tous les publics</span>
+      <span class="an-ui">train ; picto accessibilité</span>
+    </div>
+    <div id="an-s43" class="clip an-card" data-start="43" data-duration="1" data-track-index="1">
+      <span class="an-tc">0:43</span><span class="an-act">ACTE 5 · Le relais</span>
+      <span class="an-idea">Inès garde le carnet de Nora, lève les yeux</span>
+      <span class="an-ui">bookmark qui se remplit</span>
+    </div>
+    <div id="an-s44" class="clip an-card" data-start="44" data-duration="1" data-track-index="0">
+      <span class="an-tc">0:44</span><span class="an-act">ACTE 6 · Retour et envol</span>
+      <span class="an-idea">La tente est rendue, accolade</span>
+      <span class="an-ui">Double coche ; l'anneau de Léa gagne un cran, « 88 » → « 91 »</span>
+    </div>
+    <div id="an-s45" class="clip an-card" data-start="45" data-duration="1" data-track-index="1">
+      <span class="an-tc">0:45</span><span class="an-act">ACTE 6 · Retour et envol</span>
+      <span class="an-idea">Le carnet terminé se referme</span>
+      <span class="an-ui">Couverture Paper, logo en creux 1 s ; au dos : île, « 1 322 km », grille des 38 objets</span>
+    </div>
+    <div id="an-s46" class="clip an-card" data-start="46" data-duration="1" data-track-index="0">
+      <span class="an-tc">0:46</span><span class="an-act">ACTE 6 · Retour et envol</span>
+      <span class="an-idea">CHOC 3 : arrachement vertical</span>
+      <span class="an-ui">4 écrans en surimpression, 0,25 s chacun : carte des sentiers · globe des pays · capsule d'étapes du Compas · fiche d'un objet</span>
+    </div>
+    <div id="an-s47" class="clip an-card" data-start="47" data-duration="1" data-track-index="1">
+      <span class="an-tc">0:47</span><span class="an-act">ACTE 6 · Retour et envol</span>
+      <span class="an-idea">À travers les nuages, vers le haut</span>
+      <span class="an-ui">4 écrans, 0,25 s chacun : messages du groupe · sortie de club · profil et saison · kit en 3D</span>
+    </div>
+    <div id="an-s48" class="clip an-card" data-start="48" data-duration="1" data-track-index="0">
+      <span class="an-tc">0:48</span><span class="an-act">ACTE 6 · Retour et envol</span>
+      <span class="an-idea">Les traces du film s'allument sur le globe</span>
+      <span class="an-ui">— (avatars dessinés par cosmos, ancrés au globe)</span>
+    </div>
+    <div id="an-s49" class="clip an-card" data-start="49" data-duration="1" data-track-index="1">
+      <span class="an-tc">0:49</span><span class="an-act">ACTE 6 · Retour et envol</span>
+      <span class="an-idea">Des milliers d'autres traces ; les prêts scintillent</span>
+      <span class="an-ui">—</span>
+    </div>
+    <div id="an-s50" class="clip an-card" data-start="50" data-duration="1" data-track-index="0">
+      <span class="an-tc">0:50</span><span class="an-act">ACTE 6 · Retour et envol</span>
+      <span class="an-idea">RESPIRATION 3 : le globe seul</span>
+      <span class="an-ui">—</span>
+    </div>
+    <div id="an-s51" class="clip an-card" data-start="51" data-duration="1" data-track-index="1">
+      <span class="an-tc">0:51</span><span class="an-act">ACTE 6 · Retour et envol</span>
+      <span class="an-idea">Les traces redessinent les montagnes du logo</span>
+      <span class="an-ui">—</span>
+    </div>
+    <div id="an-s52" class="clip an-card" data-start="52" data-duration="1" data-track-index="0">
+      <span class="an-tc">0:52</span><span class="an-act">ACTE 7 · Signature</span>
+      <span class="an-idea">Le badge complet s'assemble</span>
+      <span class="an-ui">Badge LKDV autour des montagnes (seul texte depuis 0:04)</span>
+    </div>
+    <div id="an-s53" class="clip an-card" data-start="53" data-duration="1" data-track-index="1">
+      <span class="an-tc">0:53</span><span class="an-act">ACTE 7 · Signature</span>
+      <span class="an-idea">Le logo respire</span>
+      <span class="an-ui">Logo seul (pas d'adresse)</span>
+    </div>
+    <div id="an-s54" class="clip an-card" data-start="54" data-duration="1" data-track-index="0">
+      <span class="an-tc">0:54</span><span class="an-act">ACTE 7 · Signature</span>
+      <span class="an-idea">LE BOUTON : noir sec, un téléphone s'allume</span>
+      <span class="an-ui">Îlot : avatar H + picto bouteille</span>
+    </div>
+    <div id="an-s55" class="clip an-card" data-start="55" data-duration="1" data-track-index="1">
+      <span class="an-tc">0:55</span><span class="an-act">ACTE 7 · Signature</span>
+      <span class="an-idea">Une nouvelle bouteille : fjord sous l'aurore</span>
+      <span class="an-ui">Carte de verre : photo, avatars H, S, I, cercle en pointillés</span>
+    </div>
+    <div id="an-s56" class="clip an-card" data-start="56" data-duration="1" data-track-index="0">
+      <span class="an-tc">0:56</span><span class="an-act">ACTE 7 · Signature</span>
+      <span class="an-idea">Le pouce touche le cercle : il se remplit</span>
+      <span class="an-ui">Avatar L qui s'allume</span>
+    </div>
+    <div id="an-s57" class="clip an-card" data-start="57" data-duration="1" data-track-index="1">
+      <span class="an-tc">0:57</span><span class="an-act">ACTE 7 · Signature</span>
+      <span class="an-idea">Norvège : l'aurore emplit le ciel</span>
+      <span class="an-ui">—</span>
+    </div>
+    <div id="an-s58" class="clip an-card" data-start="58" data-duration="1" data-track-index="0">
+      <span class="an-tc">0:58</span><span class="an-act">ACTE 7 · Signature</span>
+      <span class="an-idea">On monte dans l'aurore</span>
+      <span class="an-ui">—</span>
+    </div>
+    <div id="an-s59" class="clip an-card" data-start="59" data-duration="1" data-track-index="1">
+      <span class="an-tc">0:59</span><span class="an-act">ACTE 7 · Signature</span>
+      <span class="an-idea">L'aurore est redevenue la nébuleuse</span>
+      <span class="an-ui">—</span>
+    </div>
+    <div id="an-m0" class="clip an-mark an-onde" data-start="0.75" data-duration="0.5" data-track-index="2">ONDE</div>
+    <div id="an-m1" class="clip an-mark an-impact" data-start="1.5" data-duration="0.5" data-track-index="2">IMPACT</div>
+    <div id="an-m2" class="clip an-mark an-impact" data-start="2.25" data-duration="0.5" data-track-index="2">IMPACT</div>
+    <div id="an-m3" class="clip an-mark an-logo" data-start="3" data-duration="0.5" data-track-index="2">LOGO</div>
+    <div id="an-m4" class="clip an-mark an-geste" data-start="5.5" data-duration="0.5" data-track-index="2">GESTE</div>
+    <div id="an-m5" class="clip an-mark an-coupeson" data-start="5.9" data-duration="0.5" data-track-index="2">COUPE-SON</div>
+    <div id="an-m6" class="clip an-mark an-choc" data-start="6" data-duration="0.5" data-track-index="2">CHOC</div>
+    <div id="an-m7" class="clip an-mark an-silence" data-start="11.5" data-duration="0.5" data-track-index="2">SILENCE</div>
+    <div id="an-m8" class="clip an-mark an-choc" data-start="12" data-duration="0.5" data-track-index="2">CHOC</div>
+    <div id="an-m9" class="clip an-mark an-logo" data-start="14" data-duration="0.5" data-track-index="2">LOGO</div>
+    <div id="an-m10" class="clip an-mark an-hros" data-start="22" data-duration="0.5" data-track-index="2">HÉROS</div>
+    <div id="an-m11" class="clip an-mark an-logo" data-start="25" data-duration="0.5" data-track-index="2">LOGO</div>
+    <div id="an-m12" class="clip an-mark an-plonge" data-start="32" data-duration="0.5" data-track-index="2">PLONGÉE</div>
+    <div id="an-m13" class="clip an-mark an-respiration" data-start="32.5" data-duration="0.5" data-track-index="2">RESPIRATION</div>
+    <div id="an-m14" class="clip an-mark an-logo" data-start="35" data-duration="0.5" data-track-index="2">LOGO</div>
+    <div id="an-m15" class="clip an-mark an-plonge" data-start="36" data-duration="0.5" data-track-index="2">PLONGÉE</div>
+    <div id="an-m16" class="clip an-mark an-silence" data-start="37" data-duration="0.5" data-track-index="2">SILENCE</div>
+    <div id="an-m17" class="clip an-mark an-logo" data-start="38" data-duration="0.5" data-track-index="2">LOGO</div>
+    <div id="an-m18" class="clip an-mark an-plonge" data-start="40" data-duration="0.5" data-track-index="2">PLONGÉE</div>
+    <div id="an-m19" class="clip an-mark an-rafale" data-start="41" data-duration="0.5" data-track-index="2">RAFALE</div>
+    <div id="an-m20" class="clip an-mark an-logo" data-start="45" data-duration="0.5" data-track-index="2">LOGO</div>
+    <div id="an-m21" class="clip an-mark an-silence" data-start="45.5" data-duration="0.5" data-track-index="2">SILENCE</div>
+    <div id="an-m22" class="clip an-mark an-choc" data-start="46" data-duration="0.5" data-track-index="2">CHOC</div>
+    <div id="an-m23" class="clip an-mark an-respiration" data-start="50" data-duration="0.5" data-track-index="2">RESPIRATION</div>
+    <div id="an-m24" class="clip an-mark an-logo" data-start="51" data-duration="0.5" data-track-index="2">LOGO</div>
+    <div id="an-m25" class="clip an-mark an-logo" data-start="52" data-duration="0.5" data-track-index="2">LOGO</div>
+    <div id="an-m26" class="clip an-mark an-coupe" data-start="54" data-duration="0.5" data-track-index="2">COUPE</div>
+    <div id="an-m27" class="clip an-mark an-boucle" data-start="59" data-duration="0.5" data-track-index="2">BOUCLE</div>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      for (let b = 0; b < 120; b++) {
+        tl.fromTo("#an-beat", { opacity: 1, scale: b % 4 === 0 ? 1.7 : 1.2 }, { opacity: 0.2, scale: 1, duration: 0.22, ease: "power2.out" }, b * 0.5);
+      }
+      window.__timelines["animatic"] = tl;
+    })();
+  </script>
+</template>

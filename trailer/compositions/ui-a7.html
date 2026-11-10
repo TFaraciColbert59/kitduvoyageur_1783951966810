@@ -1,0 +1,19 @@
+<template>
+  <!-- BOÎTE GRISE (P1) — à remplacer par ui-builder. Hôte : 52 s → 57 s, z 30. Badge final, téléphone du bouton, carte de la nouvelle bouteille -->
+  <style>
+    #root { position: absolute; inset: 0; }
+    #ui-a7-box { position: absolute; inset: 0; background: transparent; }
+    #ui-a7-tag { position: absolute; right: 40px; top: 80px; padding: 6px 12px; border-radius: 8px; background: rgb(20 25 22 / 0.6); color: #fff; font: 600 16px "IBM Plex Mono", monospace; letter-spacing: 0.08em; }
+  </style>
+  <div id="root" data-composition-id="ui-a7" data-width="1920" data-height="1080" data-layout-ignore>
+    <div id="ui-a7-box"></div>
+    <div id="ui-a7-tag">UI-A7 · PLACEHOLDER</div>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo("#ui-a7-tag", { opacity: 0.4 }, { opacity: 1, duration: 5, ease: "none" }, 0);
+      window.__timelines["ui-a7"] = tl;
+    })();
+  </script>
+</template>

@@ -1,0 +1,3873 @@
+/* =============================================================================
+   Compas — préparateur ultime. Matériau Liquid Glass iOS 27 (maquette v8).
+
+   Règles de la maquette validée, reprises telles quelles :
+   - 60 % haut = étape courante, 40 % bas = carte vivante (agrandissable) ;
+   - carte agrandie : le haut se réduit à une carte-titre, la carte ne zoome pas ;
+   - verre très translucide, bords lumineux, aucune couleur primaire pleine sur
+     les boutons et pastilles (verre teinté doux à la place) ;
+   - tiroirs en verre à deux hauteurs ; la hauteur moyenne ne déborde JAMAIS
+     sur la carte ;
+   - étapes = même capsule que la barre d'onglets (icône + libellé) ;
+   - mode plein soleil : verre plus opaque, textes plus contrastés.
+   Aucun jeton parallèle : les couleurs viennent de tokens.css (--lkv-*).
+   ============================================================================= */
+
+/* Encre du thème clair prise sur les primitives (--lkv-ink-*, --lkv-sage-*) :
+   la couche globale html[data-liquid-ios27] force --lkv-text-* et
+   --lkv-secondary en BLANC pour le hub sombre, ce qui rendait le Compas
+   (verre clair) illisible sur un vrai paysage. Le Compas est clair
+   uniquement (CompasLightTheme force le thème clair sur /compas) : il n'a
+   aucune variante sombre. */
+.compas {
+  --cp-ink: var(--lkv-ink-900);
+  /* Contraste WCAG AA (4,5:1) mesuré au pixel sur la carte réelle (audit du
+     2026-10-06) : ink-500 et 50 % tombaient entre 1,8 et 4,4 sur le verre. */
+  --cp-ink2: var(--lkv-ink-700);
+  --cp-ink3: rgb(23 43 36 / 0.78);
+  --cp-sep: rgb(23 43 36 / 0.1);
+  --cp-fill: rgb(23 43 36 / 0.07);
+  --cp-accent: var(--lkv-sage-500);
+  --cp-good: var(--lkv-sage-700);
+  --cp-good-bg: rgb(61 96 56 / 0.14);
+  --cp-warn: var(--lkv-amber-800);
+  --cp-warn-bg: rgb(200 154 59 / 0.2);
+  --cp-bad: var(--lkv-brick-600);
+  --cp-bad-bg: rgb(168 68 58 / 0.14);
+  --cp-info: var(--lkv-sky-600);
+  --cp-water: var(--lkv-sky-600);
+  /* Verre assez dense pour garder le texte lisible sur une carte sombre
+     (forêt, relief) ; le mode extérieur (☀) monte à 0,9. */
+  --cp-ga: 0.6;
+  --cp-gb: 10px;
+  --cp-la: 140deg;
+  --cp-soft: rgb(150 186 142 / 0.28);
+  --cp-soft-line: rgb(91 127 85 / 0.38);
+  --cp-pg:
+    linear-gradient(
+      180deg,
+      rgb(255 255 255 / 0.62),
+      rgb(255 255 255 / 0.16) 52%,
+      rgb(255 255 255 / 0.3)
+    ),
+    rgb(150 186 142 / 0.34);
+  --cp-pg-ink: var(--lkv-primary);
+  --cp-pg-sh:
+    inset 0 1px 0 rgb(255 255 255 / 0.95), inset 0 -1px 0 rgb(255 255 255 / 0.4),
+    inset 0 0 0 0.6px rgb(255 255 255 / 0.5), 0 0 0 0.6px rgb(23 64 44 / 0.16),
+    0 5px 14px rgb(23 64 44 / 0.13);
+  --cp-hi: rgb(255 255 255 / 0.9);
+  --cp-shadow: 0 8px 22px rgb(23 43 36 / 0.12);
+  --cp-map-h: 48%;
+  --cp-gap: 8px;
+  --cp-row-h: 3rem;
+  /* La barre d'onglets flotte AU-DESSUS de la carte (comme dans Plans et la
+     maquette v8) : le Compas descend sous la barre, seule la carte y passe. */
+  --cp-nav-clear: calc(
+    max(var(--bottom-nav-height, 0px), var(--cookie-banner-h, 0px)) + var(--space-6, 24px)
+  );
+  --cp-island-bg: var(--lkv-ink-900);
+  --cp-island-ink: var(--lkv-on-dark);
+  --cp-island-ink2: rgb(255 255 255 / 0.72);
+  --cp-island-accent: var(--lkv-secondary-subtle);
+
+  position: relative;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) var(--cp-map-h);
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--cp-gap);
+  height: calc(100dvh - var(--shell-top-padding, 0px));
+  min-height: 560px;
+  margin-bottom: calc(-1 * var(--cp-nav-clear));
+  padding-inline: 12px;
+  color: var(--cp-ink);
+  font-size: 0.875rem;
+  letter-spacing: -0.01em;
+  -webkit-tap-highlight-color: transparent;
+  transition: grid-template-rows 0.55s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.compas[data-map='big'] {
+  grid-template-rows: auto minmax(0, 1fr);
+}
+.compas > * {
+  min-width: 0;
+}
+.compas[data-outdoor='1'] {
+  --cp-ga: 0.9;
+  --cp-gb: 30px;
+  --cp-ink2: var(--lkv-ink-900);
+  --cp-ink3: rgb(23 43 36 / 0.85);
+  font-size: 0.9375rem;
+}
+.compas b,
+.compas strong {
+  color: inherit;
+}
+.compas a {
+  color: inherit;
+  text-decoration: none;
+}
+.cp-ibtn:not(.cp-glass) {
+  background: transparent;
+}
+
+/* Fond propre au Compas (maquette v8) : le vrai paysage LKDV, éclairci, pour
+   un verre clair lisible. Remplace la toile assombrie globale sur cette route. */
+.cp-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      180deg,
+      rgb(255 250 236 / 0.08),
+      rgb(255 255 255 / 0) 30%,
+      rgb(245 242 236 / 0.12) 60%
+    ),
+    var(--lkv-app-bg-image-portrait) center 30% / cover no-repeat,
+    var(--lkv-app-bg-fallback);
+  filter: brightness(1.1) saturate(1.05);
+}
+@media (min-aspect-ratio: 1 / 1) {
+  .cp-bg {
+    background:
+      linear-gradient(
+        180deg,
+        rgb(255 250 236 / 0.08),
+        rgb(255 255 255 / 0) 30%,
+        rgb(245 242 236 / 0.12) 60%
+      ),
+      var(--lkv-app-bg-image-landscape) center / cover no-repeat,
+      var(--lkv-app-bg-fallback);
+  }
+}
+.compas button,
+.compas input,
+.compas select {
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+}
+.compas :focus-visible {
+  outline: 2px solid var(--cp-accent);
+  outline-offset: 2px;
+}
+
+/* ---------- Matériau ---------- */
+.cp-glass {
+  position: relative;
+  background: linear-gradient(
+    180deg,
+    rgb(255 255 255 / calc(var(--cp-ga) + 0.14)),
+    rgb(255 255 255 / calc(var(--cp-ga) - 0.04)) 50%,
+    rgb(255 255 255 / calc(var(--cp-ga) + 0.06))
+  );
+  -webkit-backdrop-filter: blur(var(--cp-gb)) saturate(1.9) brightness(1.07);
+  backdrop-filter: blur(var(--cp-gb)) saturate(1.9) brightness(1.07);
+  box-shadow:
+    inset 0 1px 0 var(--cp-hi),
+    inset 0 -1px 1px rgb(255 255 255 / 0.45),
+    inset 1px 0 1px rgb(255 255 255 / 0.28),
+    inset -1px 0 1px rgb(255 255 255 / 0.28),
+    inset 0 0 12px rgb(255 255 255 / 0.14),
+    0 0 0 0.5px rgb(23 43 36 / 0.14),
+    var(--cp-shadow);
+}
+.cp-glass::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  pointer-events: none;
+  background: conic-gradient(
+    from var(--cp-la),
+    rgb(255 255 255 / 1),
+    rgb(255 255 255 / 0.25) 18%,
+    rgb(255 255 255 / 0) 32%,
+    rgb(255 255 255 / 0.7) 50%,
+    rgb(255 255 255 / 0) 68%,
+    rgb(255 255 255 / 0.25) 82%,
+    rgb(255 255 255 / 1)
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+}
+.cp-glass > * {
+  position: relative;
+  z-index: 1;
+}
+.cp-sheet-glass {
+  background: linear-gradient(
+    180deg,
+    rgb(255 255 255 / calc(var(--cp-ga) + 0.3)),
+    rgb(255 255 255 / calc(var(--cp-ga) + 0.2))
+  );
+  -webkit-backdrop-filter: blur(calc(var(--cp-gb) + 18px)) saturate(1.8) brightness(1.05);
+  backdrop-filter: blur(calc(var(--cp-gb) + 18px)) saturate(1.8) brightness(1.05);
+  box-shadow:
+    inset 0 1px 0 var(--cp-hi),
+    inset 0 -1px 1px rgb(255 255 255 / 0.4),
+    inset 0 0 16px rgb(255 255 255 / 0.12),
+    0 0 0 0.5px rgb(23 43 36 / 0.12),
+    0 10px 30px rgb(23 43 36 / 0.14);
+}
+@media (prefers-reduced-transparency: reduce) {
+  .cp-glass,
+  .cp-sheet-glass {
+    background: var(--lkv-surface-paper) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+}
+
+/* ---------- Haut ---------- */
+.cp-top {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-height: 0;
+  padding-top: 4px;
+}
+.cp-headrow {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.cp-gbtn {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  color: var(--cp-ink);
+  cursor: pointer;
+}
+.cp-gbtn[aria-expanded='true'] {
+  background: var(--cp-pg);
+  box-shadow: var(--cp-pg-sh);
+}
+.cp-ibtn {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  color: var(--cp-ink);
+}
+.cp-ibtn[aria-pressed='true'] {
+  color: var(--cp-accent);
+}
+
+/* ---------- Capsule d'étapes = barre d'onglets ---------- */
+.cp-steps {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  padding: 2px;
+  border-radius: 999px;
+}
+/* Lentille qui glisse d'une étape à l'autre, comme la barre d'onglets. */
+.cp-steps__lens {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  left: 2px;
+  width: calc((100% - 4px) / 5);
+  border-radius: 999px;
+  z-index: 1;
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.62), rgb(255 255 255 / 0.26));
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 1),
+    inset 0 -1px 1px rgb(255 255 255 / 0.5),
+    0 0 0 0.5px rgb(23 43 36 / 0.08),
+    0 3px 10px rgb(23 43 36 / 0.1);
+  transition: transform 0.55s cubic-bezier(0.3, 1.35, 0.4, 1);
+}
+.cp-steps {
+  touch-action: pan-y;
+}
+/* Pendant le glissement, la lentille colle au doigt (pas de transition). */
+.cp-steps[data-drag] .cp-steps__lens {
+  transition: none;
+}
+.cp-step {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  min-width: 0;
+  min-height: 2.875rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--cp-ink2);
+  cursor: pointer;
+  transition:
+    background 0.25s,
+    color 0.25s;
+}
+.cp-step__l {
+  font-size: 0.65625rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.cp-step[aria-current='step'] {
+  color: var(--lkv-primary);
+}
+.cp-step__dot {
+  position: absolute;
+  top: 4px;
+  right: calc(50% - 17px);
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--cp-bad);
+  box-shadow: 0 0 0 1.5px rgb(255 255 255 / 0.9);
+}
+.cp-step__dot[data-tone='warn'] {
+  background: var(--lkv-warning);
+}
+
+/* ---------- Carte d'étape ---------- */
+.cp-card {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 13px 14px;
+  border-radius: 26px;
+  overflow: hidden;
+  container-type: size;
+  container-name: cp-card;
+}
+.cp-card > * {
+  flex: none;
+}
+
+.cp-mini {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px 10px 16px;
+  border-radius: 24px;
+}
+/* Mesures */
+
+.cp-trial {
+  margin: 0;
+  padding: 6px 14px;
+  border-radius: 16px;
+  font-size: 0.78125rem;
+  line-height: 1.4;
+  color: var(--cp-ink2);
+}
+.cp-trial a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  font-weight: 600;
+  color: var(--cp-ink);
+  text-decoration: underline;
+}
+.compas[data-map='big'] .cp-trial {
+  display: none;
+}
+.cp-note {
+  margin: 0;
+  font-size: 0.78125rem;
+  line-height: 1.4;
+  color: var(--cp-ink2);
+}
+
+/* Lignes (hauteur fixe : pagination exacte, jamais de défilement) */
+.cp-list {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.cp-list__page {
+  display: flex;
+  flex-direction: column;
+}
+.cp-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--cp-row-h);
+  padding: 0.375rem 4px;
+  border: 0;
+  border-bottom: 0.5px solid var(--cp-sep);
+  background: transparent;
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.cp-row:last-child {
+  border-bottom: 0;
+}
+.cp-row__t {
+  flex: 1;
+  min-width: 0;
+}
+.cp-row__main {
+  /* Commande principale d'une ligne d'objet : un vrai bouton (Entrée et Espace
+     natifs) qui occupe la ligne, sans l'aspect d'un bouton. */
+  flex: 1;
+  min-width: 0;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.cp-row__t b {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.cp-row__t span {
+  display: block;
+  margin-top: 1px;
+  font-size: 0.75rem;
+  color: var(--cp-ink2);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.cp-row__end {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78125rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--cp-ink2);
+}
+.cp-pager {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 30px;
+}
+.cp-pager button {
+  width: 28px;
+  height: 28px;
+  display: inline-grid;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: var(--cp-fill);
+  cursor: pointer;
+}
+.cp-pager button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.cp-pager > span {
+  font-size: 0.75rem;
+  color: var(--cp-ink2);
+  font-variant-numeric: tabular-nums;
+  min-width: 36px;
+  text-align: center;
+}
+
+/* Vignette produit */
+.cp-thumb {
+  flex: none;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: var(--cp-soft);
+  box-shadow: inset 0 0 0 0.6px var(--cp-soft-line);
+  color: var(--cp-ink);
+}
+.cp-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.cp-thumb--lg {
+  width: 88px;
+  height: 88px;
+  border-radius: 20px;
+}
+
+/* Pastilles (verre teinté doux, jamais de primaire pleine) */
+.cp-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 1.5rem;
+  padding: 0 9px;
+  border-radius: 999px;
+  font-size: 0.71875rem;
+  font-weight: 600;
+  white-space: nowrap;
+  background: var(--cp-fill);
+  color: var(--cp-ink);
+}
+.cp-chip[data-tone='good'] {
+  background: var(--cp-good-bg);
+  color: var(--cp-good);
+}
+.cp-chip[data-tone='warn'] {
+  background: var(--cp-warn-bg);
+  color: var(--cp-warn);
+}
+.cp-chip[data-tone='bad'] {
+  background: var(--cp-bad-bg);
+  color: var(--cp-bad);
+}
+.cp-chip[data-tone='soft'] {
+  background: var(--cp-soft);
+  box-shadow: inset 0 0 0 0.6px var(--cp-soft-line);
+}
+
+/* Boutons */
+.cp-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.cp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 2.5rem;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--cp-fill);
+  font-size: 0.84375rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  color: var(--cp-ink);
+  white-space: nowrap;
+}
+.cp-btn--pg {
+  background: var(--cp-pg);
+  box-shadow: var(--cp-pg-sh);
+  color: var(--cp-pg-ink);
+}
+.cp-btn--soft {
+  background: var(--cp-soft);
+  box-shadow: inset 0 0 0 0.6px var(--cp-soft-line);
+}
+.cp-btn--bad {
+  background: var(--cp-bad-bg);
+  color: var(--cp-bad);
+}
+.cp-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.cp-btn--block {
+  flex: 1;
+}
+
+/* Jauges */
+.cp-meter {
+  position: relative;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--cp-fill);
+  overflow: hidden;
+}
+.cp-meter i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+  background: var(--cp-accent);
+}
+.cp-meter[data-tone='warn'] i {
+  background: var(--lkv-warning);
+}
+.cp-meter[data-tone='bad'] i {
+  background: var(--cp-bad);
+}
+
+/* Segments (même capsule que les étapes) */
+.cp-seg {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 2px;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--cp-fill);
+}
+.cp-seg button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 2.125rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  font-size: 0.78125rem;
+  font-weight: 600;
+  color: var(--cp-ink2);
+  cursor: pointer;
+  min-width: 0;
+  white-space: nowrap;
+}
+.cp-seg button[aria-pressed='true'] {
+  background: var(--cp-soft);
+  box-shadow:
+    inset 0 0 0 0.6px var(--cp-soft-line),
+    inset 0 1px 0 rgb(255 255 255 / 0.7);
+  color: var(--cp-ink);
+}
+
+/* ---------- Carte ---------- */
+.cp-map {
+  position: relative;
+  /* Contexte d'empilement propre : les z-index de Leaflet (crédit à --z-hud, 400, forcé par
+     tokens.css) ne passent plus par-dessus les tiroirs du Compas (constat C-005). */
+  isolation: isolate;
+  min-height: 0;
+  margin-inline: -12px;
+  border-radius: 32px 32px 0 0;
+  overflow: hidden;
+  background: var(--prep-map-skeleton-bg, var(--cp-fill));
+  box-shadow:
+    0 0 0 0.5px rgb(23 43 36 / 0.14),
+    var(--cp-shadow);
+}
+/* Le crédit de la carte reste lisible mais sous les panneaux du Compas (tiroirs, « Personnaliser la
+   carte »). Plus spécifique que la règle globale de tokens.css (z-index forcé à --z-hud). */
+.cp-map .leaflet-bottom.leaflet-right {
+  z-index: 3 !important;
+}
+.cp-map__canvas {
+  position: absolute;
+  inset: 0;
+  /* Couche propre : le crédit de la carte (z-index 100, `Powered by Esri`) reste sous le panneau des calques et
+     les tiroirs du Compas (constat D-32). */
+  z-index: 0;
+}
+/* Les pastilles de lieux de la carte du hub sont en verre fumé sombre et
+   héritent leur couleur : sous l'encre sombre du Compas, elles devenaient
+   illisibles. Elles gardent ici l'encre claire prévue pour leur fond. */
+.cp-map__canvas .hub-globe-poi-chip {
+  color: var(--cp-island-ink);
+}
+.cp-map__actions {
+  position: absolute;
+  top: 14px;
+  right: 10px;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  border-radius: 21px;
+  overflow: hidden;
+}
+.cp-map__actions button {
+  width: 40px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  color: var(--cp-ink);
+}
+.cp-map__actions button + button {
+  box-shadow: 0 -0.5px 0 var(--cp-sep);
+}
+.cp-map__grab {
+  position: absolute;
+  z-index: 6;
+  top: 0;
+  left: 50%;
+  /* Cible tactile de 44 px (WCAG 2.5.8, règle LKDV), la barre reste fine. */
+  width: 88px;
+  height: 44px;
+  margin-left: -44px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: grab;
+  touch-action: none;
+}
+.cp-map__grab span {
+  width: 36px;
+  height: 5px;
+  border-radius: 3px;
+  background: rgb(23 43 36 / 0.28);
+}
+.cp-map__grab:focus-visible {
+  outline: 2px solid var(--lkv-primary);
+  outline-offset: -2px;
+  border-radius: 8px;
+}
+
+.cp-map__empty {
+  position: absolute;
+  z-index: 4;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: max-content;
+  max-width: calc(100% - 48px);
+  margin: 0;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.82);
+  box-shadow: 0 6px 18px rgb(23 43 36 / 0.14);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  backdrop-filter: blur(16px) saturate(1.4);
+  text-align: center;
+  color: var(--cp-ink2);
+  font-size: 0.8125rem;
+}
+
+/* ---------- Tiroirs ---------- */
+.cp-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  background: transparent;
+  border: 0;
+}
+.cp-sheet {
+  position: absolute;
+  z-index: 21;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: calc(var(--cp-map-h) + var(--cp-gap));
+  display: flex;
+  flex-direction: column;
+  border-radius: 30px;
+  overflow: hidden;
+  transition:
+    bottom 0.45s cubic-bezier(0.32, 0.72, 0, 1),
+    top 0.45s cubic-bezier(0.32, 0.72, 0, 1);
+  animation: cp-sheet-in 0.42s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.cp-sheet[data-detent='small'] {
+  top: auto;
+  height: min(46%, 340px);
+}
+.cp-sheet[data-detent='large'] {
+  bottom: var(--cp-nav-clear);
+}
+@keyframes cp-sheet-in {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+.cp-sheet__grab {
+  flex: none;
+  display: grid;
+  place-items: center;
+  height: 16px;
+  border: 0;
+  background: transparent;
+  cursor: ns-resize;
+  touch-action: none;
+}
+.cp-sheet__grab::after {
+  content: '';
+  width: 38px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--cp-ink3);
+}
+.cp-sheet__h {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px 8px 16px;
+}
+.cp-sheet__h h3 {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+}
+.cp-sheet__body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 14px 14px;
+  /* Dernier recours (très petits écrans) : jamais de contenu coupé. */
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.cp-sheet__body::-webkit-scrollbar {
+  display: none;
+}
+.cp-sheet__body > * {
+  flex: none;
+}
+.cp-sheet__body > .cp-list {
+  flex: 1;
+}
+.cp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: var(--cp-ink2);
+}
+.cp-field input,
+.cp-field select {
+  min-height: 2.625rem;
+  padding: 0 12px;
+  border-radius: 14px;
+  border: 0.5px solid var(--cp-sep);
+  background: rgb(255 255 255 / 0.55);
+  color: var(--cp-ink);
+  font-size: 0.9375rem;
+}
+.cp-grid2 {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+}
+.cp-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.84375rem;
+  color: var(--cp-ink);
+}
+.cp-kv {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 6px 12px;
+  margin: 0;
+  font-size: 0.8125rem;
+}
+.cp-kv dt {
+  color: var(--cp-ink2);
+}
+.cp-kv dd {
+  margin: 0;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+/* Annonces : elles sortent de l'îlot, en haut de l'écran (maquette finale :
+   l'îlot s'élargit en carte noire, puis s'y résorbe). Transform et opacité
+   seulement. */
+.cp-island {
+  position: fixed;
+  z-index: 90;
+  top: max(8px, calc(env(safe-area-inset-top, 0px) - 48px));
+  left: 50%;
+  width: min(366px, calc(100vw - 24px));
+  min-height: 3.5rem;
+  margin-left: calc(min(366px, calc(100vw - 24px)) / -2);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 10px 11px 18px;
+  border-radius: 28px;
+  background: var(--cp-island-bg);
+  color: var(--cp-island-ink);
+  box-shadow: 0 10px 30px rgb(23 43 36 / 0.28);
+  cursor: pointer;
+  transform-origin: 50% 18px;
+  animation: cp-island-in 0.5s cubic-bezier(0.3, 1.25, 0.4, 1) both;
+}
+.cp-island[data-tone='bad'] {
+  background: var(--lkv-danger-dark);
+}
+.cp-island__t {
+  flex: 1;
+  min-width: 0;
+  animation: cp-island-txt 0.32s 0.14s ease both;
+}
+.cp-island__t b {
+  display: block;
+  font-size: 0.90625rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+.cp-island__t span {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--cp-island-ink2);
+  font-variant-numeric: tabular-nums;
+}
+.cp-island__btn {
+  flex: none;
+  min-height: 2rem;
+  padding: 0 13px;
+  border: 0;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.16);
+  color: var(--cp-island-accent);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  animation: cp-island-txt 0.32s 0.14s ease both;
+}
+.cp-island__btn:focus-visible {
+  outline: 2px solid var(--cp-island-ink);
+  outline-offset: 2px;
+}
+.cp-island__btn:disabled {
+  opacity: 0.5;
+}
+@keyframes cp-island-in {
+  from {
+    transform: scale(0.34, 0.6);
+    opacity: 0.4;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+@keyframes cp-island-txt {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cp-island,
+  .cp-island__t,
+  .cp-island__btn {
+    animation: none;
+  }
+}
+
+/* Écran vide */
+.cp-empty {
+  display: grid;
+  gap: 14px;
+  justify-items: start;
+  margin: 12px;
+  padding: 20px;
+  border-radius: 28px;
+}
+.cp-empty h1 {
+  margin: 0;
+  font-size: 1.375rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* Tiroir au plus haut : le résumé de la carte et la décision passent sous le
+   verre du tiroir et leurs textes se superposaient au contenu. Ils
+   s'effacent (opacité seule) et reviennent dès que le tiroir redescend. */
+.cp-acc,
+.cp-decision {
+  transition: opacity 0.2s ease;
+}
+.compas[data-sheet='large'] .cp-acc,
+.compas[data-sheet='large'] .cp-decision {
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cp-acc,
+  .cp-decision,
+  .compas,
+  .cp-sheet,
+  .cp-step {
+    transition: none;
+    animation: none;
+  }
+}
+
+/* Aucune aventure active : même matériau, sans la grille carte/étape. */
+.compas--empty {
+  display: block;
+  height: auto;
+  min-height: 0;
+}
+.cp-mini {
+  border: 0;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+.cp-mini__t {
+  flex: 1;
+  min-width: 0;
+}
+.cp-mini__t b,
+.cp-mini__t span {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.cp-mini__t b {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.cp-mini__t span {
+  margin-top: 1px;
+  font-size: 0.75rem;
+  color: var(--cp-ink2);
+  overflow-wrap: anywhere;
+}
+
+/* Petits écrans : la liste garde au moins deux lignes, les blocs secondaires
+   (mesures, notes) s'effacent avant elle. */
+@container cp-card (max-height: 300px) {
+  .cp-hide-sm {
+    display: none !important;
+  }
+}
+
+/* =============================================================================
+   Cartes d'étape (maquette v8) : un résumé par étape, le détail dans les tiroirs.
+   ============================================================================= */
+.cp-t2 {
+  margin: 0;
+  font-size: 1.1875rem;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+}
+.cp-sub {
+  margin: 0;
+  font-size: 0.78125rem;
+  line-height: 1.3;
+  color: var(--cp-ink2);
+}
+.cp-sub b {
+  color: var(--cp-ink);
+  font-weight: 600;
+}
+.cp-hl {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+.cp-num {
+  font-variant-numeric: tabular-nums;
+}
+.cp-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* Règle de durée (lecture seule : la durée vient des dates et du parcours) */
+.cp-ruler {
+  border-radius: 18px;
+  padding: 6px 12px 4px;
+}
+.cp-ruler__h {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--cp-ink2);
+}
+.cp-ruler__h b {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--cp-ink);
+  font-variant-numeric: tabular-nums;
+}
+.cp-zone {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 8px;
+  border-radius: 99px;
+  background: var(--lkv-primary-subtle);
+  color: var(--lkv-primary);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1rem;
+}
+.cp-ruler__track {
+  position: relative;
+  height: 26px;
+}
+.cp-ruler__track::before,
+.cp-ruler__fill {
+  content: '';
+  position: absolute;
+  left: 15px;
+  top: 11px;
+  height: 4px;
+  border-radius: 99px;
+}
+.cp-ruler__track::before {
+  right: 15px;
+  background: rgb(23 43 36 / 0.14);
+}
+/* Piste remplie jusqu'au curseur (vert de la maquette). `--lkv-secondary`
+   est forcé en blanc par la couche globale du hub sombre : la piste était
+   invisible sur le verre clair. */
+.cp-ruler__fill {
+  background: var(--lkv-sage-300);
+}
+.cp-ruler__thumb {
+  position: absolute;
+  top: 3px;
+  width: 30px;
+  height: 20px;
+  margin-left: -15px;
+  border-radius: 999px;
+  background: var(--lkv-surface-paper);
+  box-shadow:
+    0 2px 8px rgb(23 43 36 / 0.28),
+    inset 0 0 0 0.5px rgb(0 0 0 / 0.08);
+}
+.cp-ticks {
+  position: relative;
+  height: 15px;
+  font-size: 0.625rem;
+  font-weight: 500;
+  color: var(--cp-ink3);
+}
+.cp-ticks span {
+  position: absolute;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+/* Liste résumé (Activité, Parcours, Quand…) */
+.cp-fsum {
+  border-radius: 18px;
+  padding: 2px 0;
+  display: flex;
+  flex-direction: column;
+}
+.cp-fr {
+  display: grid;
+  grid-template-columns: 24px auto minmax(0, 1fr) 14px;
+  align-items: center;
+  gap: 8px;
+  min-height: 2rem;
+  padding: 0 10px 0 9px;
+  border: 0;
+  background: none;
+  text-align: left;
+  color: var(--cp-ink);
+  cursor: pointer;
+}
+.cp-fr + .cp-fr {
+  border-top: 0.5px solid var(--cp-sep);
+}
+.cp-fr__i {
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  background: var(--lkv-primary-subtle);
+  color: var(--lkv-primary);
+}
+.cp-fr__l {
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.cp-fr__v {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+  font-size: 0.78125rem;
+  color: var(--cp-ink2);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.cp-fr__v > span {
+  overflow-wrap: anywhere;
+}
+.cp-fr > :last-child {
+  color: var(--cp-ink3);
+}
+.cp-fr:active {
+  background: var(--cp-fill);
+}
+.cp-qdot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--cp-good);
+}
+.cp-qdot[data-tone='warn'] {
+  background: var(--lkv-warning);
+}
+.cp-qdot[data-tone='bad'] {
+  background: var(--cp-bad);
+}
+
+/* Nous */
+.cp-av {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+.cp-avi {
+  position: relative;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  font-size: 0.78125rem;
+  font-weight: 600;
+  color: var(--lkv-primary);
+  background: linear-gradient(160deg, var(--lkv-primary-subtle), var(--lkv-secondary-subtle));
+  box-shadow: 0 0 0 1.5px var(--lkv-surface-paper);
+}
+.cp-avi img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.cp-avi--sm {
+  width: 24px;
+  height: 24px;
+  font-size: 0.65625rem;
+}
+.cp-avadd {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1.3px dashed rgb(23 43 36 / 0.35);
+  background: rgb(255 255 255 / 0.5);
+  display: grid;
+  place-items: center;
+  color: var(--cp-ink);
+  padding: 0;
+  cursor: pointer;
+}
+.cp-bigsum {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+.cp-bigsum b {
+  font-size: 1.3125rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.cp-bar {
+  height: 5px;
+  border-radius: 99px;
+  background: var(--cp-fill);
+  overflow: hidden;
+  display: flex;
+}
+.cp-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  background: var(--cp-accent);
+  transition: width 0.5s;
+}
+.cp-bar[data-tone='warn'] i {
+  background: var(--lkv-warning);
+}
+.cp-bar[data-tone='bad'] i {
+  background: var(--cp-bad);
+}
+.cp-alertline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 2.25rem;
+  padding: 6px 11px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--cp-warn-bg);
+  color: var(--cp-warn);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.cp-alertline__t {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Réserver */
+.cp-tchips {
+  display: flex;
+  gap: 5px;
+}
+.cp-tchip {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  min-height: 2.875rem;
+  border: 0;
+  border-radius: 14px;
+  background: rgb(255 255 255 / 0.3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  font-size: 0.65625rem;
+  font-weight: 500;
+  color: var(--cp-ink2);
+  cursor: pointer;
+}
+.cp-tchip[data-on='1'] {
+  background: var(--cp-soft);
+  box-shadow: inset 0 0 0 1px var(--cp-soft-line);
+  color: var(--cp-ink);
+}
+.cp-tchip__bd {
+  position: absolute;
+  top: 3px;
+  right: 5px;
+  min-width: 15px;
+  min-height: 0.9375rem;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: rgb(141 178 135 / 0.55);
+  color: var(--lkv-primary);
+  font-size: 0.59375rem;
+  font-weight: 700;
+  line-height: 0.9375rem;
+}
+.cp-days {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 6px;
+}
+.cp-day {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 7px 7px 8px;
+  border: 0;
+  border-radius: 14px;
+  background: rgb(255 255 255 / 0.4);
+  box-shadow: inset 0 0 0 0.6px rgb(23 43 36 / 0.1);
+  text-align: left;
+  cursor: pointer;
+}
+.cp-day b {
+  font-size: 0.78125rem;
+  font-weight: 700;
+}
+.cp-day small {
+  font-size: 0.65625rem;
+  color: var(--cp-ink2);
+  overflow-wrap: anywhere;
+}
+.cp-slots {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+}
+.cp-slot {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  font-size: 0.59375rem;
+  font-weight: 700;
+  background: var(--cp-fill);
+  color: var(--cp-ink2);
+}
+.cp-slot[data-s='confirmed'] {
+  background: var(--cp-good-bg);
+  color: var(--cp-good);
+}
+.cp-slot[data-s='noted'] {
+  background: var(--cp-fill);
+  color: var(--cp-ink2);
+}
+.cp-slot[data-s='pending'] {
+  background: var(--cp-warn-bg);
+  color: var(--cp-warn);
+}
+.cp-slot[data-s='need'] {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.2px var(--lkv-warning);
+  color: var(--cp-warn);
+}
+.cp-sumline {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 11px;
+  border-radius: 14px;
+  background: rgb(255 255 255 / 0.3);
+  font-size: 0.8125rem;
+}
+.cp-sumline > span {
+  min-width: 0;
+}
+.cp-sumline b {
+  font-weight: 600;
+}
+.cp-disc {
+  margin: 0;
+  font-size: 0.6875rem;
+  line-height: 1.3;
+  color: var(--cp-ink3);
+}
+
+/* Verdict (sans score) */
+.cp-vl {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.cp-vl i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--c, var(--cp-accent));
+}
+.cp-why {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+.cp-why li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.8125rem;
+  line-height: 1.3;
+}
+.cp-why li > span {
+  flex: 1;
+  min-width: 0;
+}
+.cp-why small {
+  display: block;
+  color: var(--cp-ink2);
+  font-size: 0.71875rem;
+}
+.cp-why i {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-top: 5px;
+  border-radius: 50%;
+  background: var(--cp-ink3);
+}
+.cp-why i[data-tone='block'] {
+  background: var(--cp-bad);
+}
+.cp-why i[data-tone='warn'] {
+  background: var(--lkv-warning);
+}
+
+/* Barres de risque par axe (onglet « Risques ») : jamais une note. Le niveau est écrit, le nombre de
+   segments pleins le redit, un axe non évalué est vide et hachuré ; la teinte ne porte jamais seule. */
+.cp-risks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.cp-risks__h {
+  margin: 0;
+  font-size: 0.84375rem;
+  font-weight: 600;
+}
+.cp-risks__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+.cp-risk {
+  --risk-c: var(--cp-ink3);
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  padding: 0.5rem 0.6875rem;
+  border-radius: 1rem;
+  background: var(--cp-fill);
+}
+.cp-risk[data-level='faible'] {
+  --risk-c: var(--cp-good);
+}
+.cp-risk[data-level='modere'] {
+  --risk-c: var(--cp-warn);
+}
+.cp-risk[data-level='eleve'] {
+  --risk-c: var(--cp-bad);
+}
+.cp-risk__top {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-height: 2rem;
+}
+.cp-risk__name {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.cp-risk__lvl {
+  flex: none;
+  min-width: 4.5rem;
+  text-align: right;
+  font-size: 0.78125rem;
+  font-weight: 700;
+  color: var(--cp-ink);
+}
+.cp-gauge {
+  flex: none;
+  display: inline-flex;
+  gap: 0.1875rem;
+}
+.cp-gauge i {
+  display: block;
+  width: 1.5rem;
+  height: 0.625rem;
+  border: 1px solid var(--cp-ink3);
+  border-radius: 0.1875rem;
+  background: transparent;
+}
+.cp-gauge i[data-on='1'] {
+  border-color: var(--risk-c);
+  background: var(--risk-c);
+}
+/* Non évalué : trois segments vides, hachurés et pointillés, jamais une barre « à zéro ». */
+.cp-gauge[data-level='non_evalue'] i {
+  border-style: dashed;
+  background: repeating-linear-gradient(135deg, var(--cp-ink3) 0 0.0625rem, transparent 0.0625rem 0.25rem);
+}
+.cp-risk__src,
+.cp-risk__note {
+  margin: 0;
+  font-size: 0.71875rem;
+  line-height: 1.35;
+  color: var(--cp-ink2);
+  overflow-wrap: anywhere;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .cp-gauge i[data-on='1'] {
+    transform-origin: left center;
+    animation: cp-gauge-in 0.45s ease both;
+  }
+  @keyframes cp-gauge-in {
+    from {
+      transform: scaleX(0.35);
+      opacity: 0.4;
+    }
+    to {
+      transform: none;
+      opacity: 1;
+    }
+  }
+}
+
+/* Kit */
+.cp-weights {
+  display: flex;
+  height: 6px;
+  gap: 2px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--cp-fill);
+}
+.cp-weights i {
+  display: block;
+  transition: flex 0.4s;
+}
+.cp-wl {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 0.71875rem;
+  font-weight: 500;
+  color: var(--cp-ink2);
+  font-variant-numeric: tabular-nums;
+}
+.cp-wl span {
+  white-space: nowrap;
+}
+.cp-wl span::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 5px;
+  border-radius: 2px;
+  background: var(--c, var(--cp-accent));
+}
+.cp-ready {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.cp-ready > div {
+  min-width: 0;
+}
+.cp-ready b {
+  font-size: 1.3125rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.cp-mbs {
+  display: grid;
+  gap: 5px;
+}
+.cp-mb {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 0.71875rem;
+  font-weight: 500;
+  color: var(--cp-ink2);
+  text-align: left;
+  cursor: pointer;
+}
+.cp-mb b {
+  font-weight: 500;
+  color: var(--cp-ink);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Îlot de la prochaine décision : une capsule en verre posée juste au-dessus de la barre d'onglets
+   (et au-dessus de l'accessoire quand il est là). « Voir » ouvre l'étape ; « Appliquer » n'existe que
+   quand la décision est un calcul sûr et défaisable. Cibles d'au moins 2,75 rem (44 px). */
+.cp-decision {
+  position: absolute;
+  z-index: 5;
+  left: 0.75rem;
+  right: 0.75rem;
+  bottom: calc(var(--cp-nav-clear) - var(--space-6, 1.5rem) + 0.625rem);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 3.25rem;
+  padding: 0.25rem 0.375rem 0.25rem 0.5rem;
+  border-radius: 1.75rem;
+  text-align: left;
+  color: var(--cp-ink);
+  cursor: pointer;
+}
+.cp-decision[data-acc='1'] {
+  bottom: calc(var(--cp-nav-clear) - var(--space-6, 1.5rem) + 0.625rem + 2.75rem);
+}
+.cp-decision__i {
+  flex: none;
+  width: 1.875rem;
+  height: 1.875rem;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--cp-warn-bg);
+  color: var(--cp-warn);
+}
+.cp-decision__i[data-tone='bad'] {
+  background: var(--cp-bad-bg);
+  color: var(--cp-bad);
+}
+.cp-decision__t {
+  flex: 1;
+  min-width: 0;
+}
+.cp-decision__t b,
+.cp-decision__t span {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.cp-decision__t b {
+  font-size: 0.84375rem;
+  font-weight: 600;
+}
+.cp-decision__t span {
+  font-size: 0.71875rem;
+  color: var(--cp-ink2);
+  overflow-wrap: anywhere;
+}
+.cp-decision__btn {
+  flex: none;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  padding: 0 0.875rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--cp-fill);
+  color: var(--cp-ink);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.cp-decision__btn--pg {
+  background: var(--cp-pg);
+  box-shadow: var(--cp-pg-sh);
+  color: var(--cp-pg-ink);
+}
+.cp-decision__btn:focus-visible {
+  outline: 2px solid var(--lkv-primary);
+  outline-offset: 2px;
+}
+.cp-decision__btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.cp-acc {
+  position: absolute;
+  z-index: 5;
+  left: 14px;
+  bottom: calc(var(--cp-nav-clear) - var(--space-6, 24px) + 10px);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 2.25rem;
+  max-width: 190px;
+  padding: 0 12px;
+  border-radius: 999px;
+}
+.cp-acc__v {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  min-width: 0;
+  line-height: 1;
+}
+.cp-acc__v b {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.cp-acc__v span {
+  font-size: 0.65625rem;
+  color: var(--cp-ink2);
+  white-space: nowrap;
+}
+
+/* Profil d'altitude réel (maquette : .acc svg.spk) — glisser pour lire. */
+.cp-acc__ro {
+  flex: none;
+  min-width: 64px;
+}
+.cp-acc__ro span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cp-spk {
+  flex: none;
+  width: 84px;
+  height: 20px;
+  overflow: visible;
+  cursor: ew-resize;
+  touch-action: none;
+  border-radius: 6px;
+}
+.cp-spk:focus-visible {
+  outline: 2px solid var(--lkv-primary);
+  outline-offset: 3px;
+}
+.cp-spk__line {
+  fill: none;
+  stroke: var(--lkv-primary);
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+}
+.cp-spk__fill {
+  fill: color-mix(in srgb, var(--lkv-sage-300) 38%, transparent);
+  stroke: none;
+}
+.cp-spk__cur {
+  stroke: var(--lkv-ink-900, currentColor);
+  stroke-width: 1;
+  stroke-dasharray: 2 2;
+}
+
+/* Réglage d'affichage (soleil) */
+.cp-popv {
+  position: absolute;
+  z-index: 34;
+  top: 62px;
+  right: 12px;
+  width: min(262px, calc(100% - 24px));
+  padding: 4px 13px;
+  border-radius: 22px;
+  transform-origin: top right;
+  animation: cp-pop 0.3s cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+@keyframes cp-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(-8px);
+  }
+}
+.cp-popv__r {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 2.875rem;
+  font-size: 0.875rem;
+}
+.cp-popv__r + .cp-popv__r {
+  border-top: 0.5px solid var(--cp-sep);
+}
+.cp-popv__col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 0;
+  font-size: 0.875rem;
+}
+.cp-popv__col input {
+  width: 100%;
+  accent-color: var(--lkv-primary);
+}
+.cp-popv__sel {
+  min-height: 2.75rem;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--cp-fill);
+  color: var(--cp-ink);
+  font: inherit;
+  font-size: 0.875rem;
+}
+.cp-popv__lbl {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.71875rem;
+  color: var(--cp-ink2);
+}
+.cp-popv__note {
+  margin: 4px 0 0;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: var(--cp-ink2);
+}
+.cp-popv__note a {
+  color: var(--cp-ink);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.cp-switch {
+  flex: none;
+  position: relative;
+  width: 46px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: var(--cp-fill);
+  cursor: pointer;
+  transition: background 0.25s;
+}
+.cp-switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--lkv-surface-paper);
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.22);
+  transition: transform 0.35s cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+.cp-switch[aria-checked='true'] {
+  background: var(--lkv-secondary);
+}
+.cp-switch[aria-checked='true']::after {
+  transform: translateX(18px);
+}
+
+/* Mini carte-titre quand la carte est agrandie */
+
+/* Carte agrandie (maquette v8) : la capsule d'étapes reste, la carte d'étape
+   se réduit à sa carte-titre ; la carte gagne la hauteur sans changer de zoom. */
+.compas[data-map='big'] .cp-card {
+  display: none;
+}
+.compas[data-map='big'] .cp-mini {
+  display: flex;
+}
+
+/* =============================================================================
+   Lot 1 — Où et quand : règle interactive, parcours, calendrier, envies, Dis-le
+   ============================================================================= */
+
+/* Petits boutons ronds (règle, Dis-le, pas-à-pas) */
+.cp-ibtn--sm {
+  width: 28px;
+  height: 28px;
+}
+.cp-ibtn--pg {
+  background: var(--cp-pg);
+  box-shadow: var(--cp-pg-sh);
+  color: var(--cp-pg-ink);
+}
+.cp-ibtn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* Règle modifiable : le pouce se saisit, la proposition attend ✓ */
+.cp-ruler[data-edit='1'] .cp-ruler__track {
+  cursor: ew-resize;
+  touch-action: none;
+}
+.cp-ruler__track:focus-visible {
+  outline: 2px solid var(--lkv-secondary);
+  outline-offset: 2px;
+  border-radius: 999px;
+}
+.cp-ruler__ask {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-block: -4px;
+}
+.cp-ruler__ask b {
+  color: var(--lkv-primary);
+}
+
+/* Rangée champ + bouton (recherche, ajout d'étiquette) */
+.cp-searchrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.cp-searchrow .cp-field {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Pastilles cliquables (sources de parcours, nuits, étiquettes, jours) */
+.cp-chiprow {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-block: 1px;
+}
+.cp-chiprow::-webkit-scrollbar {
+  display: none;
+}
+.cp-pill {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 1.875rem;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--cp-fill);
+  color: var(--cp-ink2);
+  font-size: 0.78125rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.cp-pill[aria-pressed='true'] {
+  background: var(--cp-soft);
+  box-shadow:
+    inset 0 0 0 0.6px var(--cp-soft-line),
+    inset 0 1px 0 rgb(255 255 255 / 0.7);
+  color: var(--cp-ink);
+}
+.cp-pill:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.cp-row:disabled {
+  cursor: default;
+}
+.cp-thumb[data-on='1'] {
+  background: var(--cp-pg);
+  box-shadow: var(--cp-pg-sh);
+  color: var(--cp-pg-ink);
+}
+
+/* Pas-à-pas (nombre de jours) */
+.cp-stepper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.8125rem;
+  color: var(--cp-ink2);
+}
+.cp-stepper b {
+  min-width: 64px;
+  text-align: center;
+  color: var(--cp-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Quand : départ + durée */
+.cp-when {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 8px;
+  align-items: end;
+}
+.cp-when__dur {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 64px;
+  gap: 6px;
+}
+.cp-when__dur select,
+.cp-when__dur input {
+  min-width: 0;
+}
+.cp-when__note {
+  grid-column: 1 / -1;
+}
+.cp-when .cp-btn {
+  grid-column: 1 / -1;
+}
+
+/* Calendrier six semaines (prévision puis tendance) */
+.cp-cal {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.cp-cal__grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 3px;
+}
+.cp-cal__wd {
+  text-align: center;
+  font-size: 0.65625rem;
+  font-weight: 600;
+  color: var(--cp-ink3);
+}
+.cp-cal__d {
+  --q: transparent;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 2.125rem;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--cp-ink);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.cp-cal__d:disabled {
+  cursor: default;
+}
+.cp-cal__d > span {
+  white-space: nowrap;
+  font-size: 0.71875rem;
+}
+/* Forme (●◆▲ pleine, ○◇△ creuse) : la qualité ne tient jamais à la couleur seule. */
+.cp-cal__d i,
+.cp-cal__legend i {
+  display: inline-block;
+  min-width: 0.5rem;
+  font-style: normal;
+  font-size: 0.625rem;
+  line-height: 1;
+  color: var(--q);
+}
+.cp-cal__d[data-q='bon'],
+.cp-cal__legend i[data-q='bon'] {
+  --q: var(--cp-good);
+}
+.cp-cal__d[data-q='moyen'],
+.cp-cal__legend i[data-q='moyen'] {
+  --q: var(--lkv-warning);
+}
+.cp-cal__d[data-q='mauvais'],
+.cp-cal__legend i[data-q='mauvais'] {
+  --q: var(--cp-bad);
+}
+.cp-cal__d[data-kind='inconnu'] {
+  color: var(--cp-ink3);
+}
+.cp-cal__d[data-sel='1'] {
+  background: var(--cp-soft);
+  box-shadow: inset 0 0 0 0.6px var(--cp-soft-line);
+}
+.cp-cal__d[data-start='1'] {
+  background: var(--cp-pg);
+  box-shadow: var(--cp-pg-sh);
+  font-weight: 700;
+}
+.cp-cal__legend {
+  margin: 0;
+  font-size: 0.6875rem;
+  line-height: 1.5;
+  color: var(--cp-ink2);
+}
+.cp-cal__legend i {
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+/* Détail d'un jour de marche */
+.cp-dayd {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 11px;
+  border-radius: 16px;
+  background: rgb(255 255 255 / 0.3);
+}
+.cp-dayd__h {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  font-size: 0.84375rem;
+}
+.cp-dayd__h b {
+  flex: none;
+}
+.cp-dayd__h span {
+  min-width: 0;
+  color: var(--cp-ink2);
+  font-size: 0.78125rem;
+  overflow-wrap: anywhere;
+}
+.cp-dayd__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.cp-linkbtn {
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--cp-accent);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.cp-note--warn {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  color: var(--cp-warn);
+}
+.cp-note--warn > :first-child {
+  flex: none;
+  margin-top: 1px;
+}
+
+/* Heure de passage à chaque étape (onglet « Quand ») : du texte à chaque ligne, jamais une teinte seule. */
+.cp-pass {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.625rem 0.6875rem;
+  border-radius: 1rem;
+  background: var(--cp-fill);
+}
+.cp-pass__h {
+  margin: 0;
+  font-size: 0.84375rem;
+  font-weight: 600;
+}
+.cp-pass__sim input {
+  min-height: 2.75rem;
+}
+.cp-pass__dep {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+.cp-pass__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+}
+.cp-pass__row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  min-height: 2.75rem;
+  padding: 0.375rem 0;
+  border-bottom: 0.5px solid var(--cp-sep);
+}
+.cp-pass__row:last-child {
+  border-bottom: 0;
+}
+.cp-pass__day {
+  flex: none;
+  min-width: 1.75rem;
+  font-size: 0.78125rem;
+  font-weight: 700;
+  color: var(--cp-ink2);
+  font-variant-numeric: tabular-nums;
+}
+.cp-pass__t {
+  flex: 1;
+  min-width: 0;
+}
+.cp-pass__t b,
+.cp-pass__t small {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.cp-pass__t b {
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.cp-pass__t small {
+  font-size: 0.71875rem;
+  color: var(--cp-ink2);
+}
+.cp-pass__dark {
+  color: var(--cp-warn);
+  font-weight: 600;
+}
+.cp-pass__v {
+  flex: none;
+  max-width: 45%;
+  text-align: right;
+  font-size: 0.78125rem;
+  color: var(--cp-ink2);
+  font-variant-numeric: tabular-nums;
+}
+.cp-pass__v b {
+  font-size: 0.9375rem;
+  color: var(--cp-ink);
+  white-space: nowrap;
+}
+.cp-pass__row[data-missing] .cp-pass__v {
+  font-style: italic;
+}
+
+/* Heure par heure : défile dans sa propre bande, jamais la page */
+.cp-hours {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin-inline: -4px;
+  padding-inline: 4px;
+}
+.cp-hours::-webkit-scrollbar {
+  display: none;
+}
+.cp-hour {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  /* Au moins 44 px, davantage si le texte agrandi l'exige (« 100 % », « 12° »). */
+  min-width: 2.75rem;
+  padding: 6px 2px;
+  border-radius: 12px;
+  background: var(--cp-fill);
+  font-variant-numeric: tabular-nums;
+}
+.cp-hour small {
+  font-size: 0.65625rem;
+  color: var(--cp-ink2);
+}
+.cp-hour b {
+  font-size: 0.8125rem;
+}
+.cp-hour[data-q='moyen'] {
+  background: var(--cp-warn-bg);
+}
+.cp-hour[data-q='mauvais'] {
+  background: var(--cp-bad-bg);
+}
+.cp-hour__q {
+  font-style: normal;
+  font-size: 0.625rem;
+  line-height: 1;
+  color: var(--cp-ink2);
+}
+
+/* Envies */
+.cp-prefs__block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.cp-prefs__l {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--cp-ink2);
+}
+
+/* Contexte projet : source de chaque valeur, adaptations au projet */
+.cp-src {
+  margin-left: 6px;
+  font-weight: 400;
+  color: var(--cp-ink3);
+}
+.cp-adapt {
+  margin: 0;
+  padding: 8px 12px;
+  list-style: none;
+  border-radius: 12px;
+  background: var(--lkv-sage-100);
+  color: var(--cp-ink2);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+.cp-adapt li + li {
+  margin-top: 4px;
+}
+
+/* Dis-le : toujours en bas du tiroir */
+.cp-disle {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 4px;
+}
+.cp-disle__in {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 2.625rem;
+  padding: 0 7px 0 13px;
+  border-radius: 999px;
+  color: var(--cp-ink2);
+}
+.cp-disle__in input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--cp-ink);
+  font-size: 0.875rem;
+  outline: none;
+}
+.cp-disle__in:focus-within {
+  box-shadow: 0 0 0 2px var(--lkv-secondary);
+}
+.cp-disle__out {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 11px;
+  border-radius: 16px;
+  background: rgb(255 255 255 / 0.3);
+}
+.cp-props {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.cp-prop {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 2.125rem;
+  font-size: 0.84375rem;
+  color: var(--cp-ink3);
+}
+.cp-prop[data-ok='1'] {
+  color: var(--cp-ink);
+}
+.cp-prop input {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--lkv-secondary);
+}
+.cp-prop__t {
+  flex: 1;
+  min-width: 0;
+}
+.cp-prop__ai {
+  flex: none;
+  color: var(--lkv-secondary);
+}
+.cp-prop__why {
+  flex: none;
+  max-width: 50%;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--cp-bad-bg);
+  color: var(--cp-bad);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Lots 2 à 6 : onglets nombreux, lignes à texte long, saisie dans une ligne ---------- */
+/* Plus de 4 onglets : chaque onglet garde sa largeur de contenu, la capsule défile. */
+.cp-seg {
+  grid-auto-columns: minmax(max-content, 1fr);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.cp-seg::-webkit-scrollbar {
+  display: none;
+}
+.cp-seg button {
+  padding-inline: 12px;
+}
+/* Lignes dont le texte doit se lire en entier (conseils, kits). */
+.cp-row__t--wrap span {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+/* Champ de saisie placé dans une ligne (hébergement d'une nuit). */
+.cp-row__t input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 2.25rem;
+  margin-top: 4px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--cp-fill);
+  color: var(--cp-ink);
+  font: inherit;
+  font-size: 0.875rem;
+}
+.cp-row__t input::placeholder {
+  color: var(--cp-ink2);
+}
+.cp-row--tall {
+  height: auto;
+  min-height: var(--cp-row-h);
+  padding-block: 8px;
+  align-items: flex-start;
+}
+/* Ligne dont le texte passe à la ligne au lieu de finir en « … » (signaux du verdict) */
+.cp-row--wrap .cp-row__t > b,
+.cp-row--wrap .cp-row__t > span {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  overflow-wrap: anywhere;
+}
+
+/* Texte officiel d'une alerte (Meteoalarm) : description et consignes du service national, telles que publiées */
+.cp-official {
+  margin: 4px 0 0;
+  font-size: 0.78125rem;
+  line-height: 1.4;
+  color: var(--cp-ink2);
+  user-select: text;
+  -webkit-user-select: text;
+}
+.cp-official > summary {
+  min-height: 2rem;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-weight: 500;
+  color: var(--cp-ink3);
+}
+.cp-official__lang {
+  margin-top: 6px;
+  padding-left: 10px;
+  border-left: 2px solid var(--cp-sep);
+}
+.cp-official p,
+.cp-official ul {
+  margin: 2px 0 0;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+.cp-official ul {
+  padding-left: 18px;
+}
+.cp-official__title {
+  font-weight: 600;
+  color: var(--cp-ink);
+}
+
+/* =============================================================================
+   Maquette finale (LKDV_Compas.html, 2026-10-01) — écarts relevés écran par
+   écran dans Chromium 390×844, maquette et Compas côte à côte.
+   ============================================================================= */
+
+/* « Dis-le » sur la carte Où (.intent de la maquette) : un champ discret dans
+   la carte, entre le titre et la règle de durée. */
+.cp-intent {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 2.25rem;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: rgb(23 43 36 / 0.06);
+  color: var(--cp-ink2);
+}
+.cp-intent input {
+  flex: 1;
+  min-width: 0;
+  min-height: 2.125rem;
+  border: 0;
+  background: none;
+  color: var(--cp-ink);
+  font-size: 0.90625rem;
+  outline: none;
+}
+.cp-intent input::placeholder {
+  color: var(--cp-ink2);
+}
+.cp-intent:focus-within {
+  box-shadow: 0 0 0 2px var(--cp-accent);
+}
+
+/* Barres posées sur le paysage : couche lumineuse (maquette : « .head .steps.lg,
+   .head .gbtn.lg »). Sans elle, la capsule d'étapes et les deux boutons ronds
+   prenaient la couleur de la photo (soleil jaune derrière ☰ et ☀). */
+:root:not([data-theme='dark']) .cp-headrow :is(.cp-steps, .cp-gbtn).cp-glass {
+  background: linear-gradient(
+    180deg,
+    rgb(255 255 255 / calc(var(--cp-ga) + 0.3)),
+    rgb(255 255 255 / calc(var(--cp-ga) + 0.14)) 55%,
+    rgb(255 255 255 / calc(var(--cp-ga) + 0.22))
+  );
+}
+
+/* Kit : le pourcentage reste sur une ligne (« 100 % » se coupait en deux). */
+.cp-ready b {
+  flex: none;
+  white-space: nowrap;
+}
+
+/* Résa : tuiles de catégorie au remplissage d'encre léger de la maquette. */
+:root:not([data-theme='dark']) .cp-tchip:not([data-on='1']) {
+  background: rgb(23 43 36 / 0.06);
+}
+
+/* Carte : pastilles de lieu en verre clair, comme le reste de la maquette. */
+:root:not([data-theme='dark']) .cp-map__canvas .hub-globe-poi-chip {
+  color: var(--cp-ink);
+  background: rgb(255 255 255 / 0.78);
+  border-color: rgb(255 255 255 / 0.9);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.95),
+    0 0 0 0.5px rgb(23 43 36 / 0.12),
+    0 4px 12px rgb(23 43 36 / 0.12);
+}
+:root:not([data-theme='dark']) .cp-map__canvas .hub-globe-poi-chip[aria-pressed='true'] {
+  color: var(--lkv-primary);
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.7), rgb(255 255 255 / 0.4)),
+    rgb(150 186 142 / 0.4);
+}
+
+/* Barre d'onglets du Compas et de la création : verre clair de la maquette
+   (onglet actif vert forêt, les autres à l'encre). Les onglets eux-mêmes ne
+   changent pas : seule la matière suit l'écran. */
+:root:not([data-theme='dark']) body:has(.compas, .prep-material-compas) .lkv-nav-surface {
+  --hub-label-primary: var(--lkv-forest-700);
+  --hub-symbol: var(--lkv-ink-900);
+  --glass-label: var(--lkv-forest-700);
+  --glass-label-tertiary: var(--lkv-ink-900);
+  /* Matériau de la barre (.lkv-material-bar, variante non optique). */
+  --glass-fill-top: rgb(255 255 255 / 0.62);
+  --glass-fill-bottom: rgb(255 255 255 / 0.4);
+  --glass-base: rgb(255 255 255 / 0.16);
+  --material-bar-border: rgb(255 255 255 / 0.7);
+  --glass-shadow-final:
+    inset 0 1px 0 rgb(255 255 255 / 0.9), 0 0 0 0.5px rgb(23 43 36 / 0.14),
+    0 8px 22px rgb(23 43 36 / 0.14);
+}
+html[data-liquid-ios27]:not([data-theme='dark'])
+  body:has(.compas, .prep-material-compas)
+  .lkv-nav-surface[data-optical='true']
+  .lkv-material-bar {
+  background:
+    linear-gradient(
+      180deg,
+      rgb(255 255 255 / 0.62),
+      rgb(255 255 255 / 0.38) 55%,
+      rgb(255 255 255 / 0.5)
+    ),
+    rgb(255 255 255 / 0.16) !important;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.9),
+    inset 0 -1px 1px rgb(255 255 255 / 0.45),
+    0 0 0 0.5px rgb(23 43 36 / 0.14),
+    0 8px 22px rgb(23 43 36 / 0.14) !important;
+}
+html[data-liquid-ios27]:not([data-theme='dark'])
+  body:has(.compas, .prep-material-compas)
+  .lkv-nav-surface[data-optical='true']
+  .lkv-nav-refraction
+  > span
+  > span:last-of-type {
+  background: rgb(255 255 255 / 0.12) !important;
+}
+html[data-liquid-ios27]:not([data-theme='dark'])
+  body:has(.compas, .prep-material-compas)
+  .lkv-nav-surface[data-optical='true']
+  .lkv-nav-active-lens {
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.62), rgb(255 255 255 / 0.3));
+  border-color: rgb(255 255 255 / 0.9);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 1),
+    inset 0 -1px 1px rgb(255 255 255 / 0.5),
+    0 0 0 0.5px rgb(23 43 36 / 0.08),
+    0 3px 10px rgb(23 43 36 / 0.1);
+}
+
+/* Verdict : l'état d'un axe se lit SOUS son nom. En pastille d'angle, un état
+   long (« RAS partiel », « Non évalué ») recouvrait le nom de l'axe. */
+.cp-tchip--axis {
+  height: auto;
+  min-height: 3.25rem;
+  padding: 6px 4px;
+  gap: 3px;
+}
+.cp-tchip--axis .cp-tchip__bd {
+  position: static;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+/* Tiroir (maquette finale) : fermer à gauche, titre centré et discret, plein
+   écran à droite ; au pied, Retour · Dis-le · Suivant sur une seule ligne. */
+.cp-sheet__h {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px 8px;
+}
+.cp-sheet__h h3 {
+  flex: none;
+  max-width: 100%;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+}
+.cp-sheet__side {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.cp-sheet__side--end {
+  justify-content: flex-end;
+}
+.cp-disle__row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.cp-disle__row > .cp-disle__in {
+  flex: 1;
+  min-width: 0;
+}
+.cp-disle__row--nav {
+  margin-top: auto;
+  justify-content: space-between;
+}
+.cp-sheet__prev:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+.cp-sheet__next {
+  flex: none;
+  min-height: 2.625rem;
+  gap: 4px;
+}
+/* Le tiroir reçoit le focus à l'ouverture pour l'accessibilité clavier : son
+   propre anneau entourait tout le verre (absent de la maquette). Les
+   contrôles qu'il contient gardent le leur. */
+.compas .cp-sheet:focus-visible {
+  outline: none;
+}
+/* Le tiroir flotte à 8 px des bords, comme dans la maquette. */
+.cp-sheet {
+  left: 8px;
+  right: 8px;
+}
+
+/* Tuiles (maquette finale : « .grid2 » / « .tile2 ») — activités du tiroir
+   Préparer : quatre par ligne, icône au-dessus du nom. */
+.cp-tiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+.cp-tile {
+  min-width: 0;
+  min-height: 3.875rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 4px;
+  border: 0;
+  border-radius: 14px;
+  background: rgb(23 43 36 / 0.06);
+  color: var(--cp-ink);
+  font-size: 0.71875rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+.cp-tile span {
+  max-width: 100%;
+  overflow: hidden;
+  text-align: center;
+  line-height: 1.15;
+  hyphens: auto;
+  overflow-wrap: anywhere;
+}
+.cp-tile[aria-pressed='true'] {
+  background: var(--cp-soft);
+  color: var(--lkv-primary);
+  font-weight: 600;
+  box-shadow:
+    inset 0 0 0 1px var(--cp-soft-line),
+    inset 0 1px 0 rgb(255 255 255 / 0.6);
+}
+.cp-tile:disabled {
+  cursor: default;
+}
+
+/* Météo du verdict (maquette : « .wx ») : une case par jour, deux colonnes. */
+.cp-wx {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+.cp-wx > div {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  padding: 9px 11px;
+  border-radius: 14px;
+  background: rgb(23 43 36 / 0.06);
+  font-size: 0.78125rem;
+  line-height: 1.45;
+  color: var(--cp-ink2);
+}
+.cp-wx b {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--cp-ink);
+}
+
+/* Veille du verdict (maquette : « .vb » et lignes à interrupteur). */
+.cp-vb {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 9px 11px;
+  border-radius: 14px;
+  background: rgb(23 43 36 / 0.06);
+}
+.cp-vb p {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+}
+.cp-vb__h {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.71875rem !important;
+  font-weight: 600;
+  color: var(--cp-ink2);
+}
+.cp-pd {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--cp-good);
+  animation: cp-pulse 1.6s infinite;
+}
+@keyframes cp-pulse {
+  50% {
+    opacity: 0.3;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cp-pd {
+    animation: none;
+  }
+}
+.cp-rules {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.cp-rules li {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 7px 2px;
+  border-top: 0.5px solid var(--cp-sep);
+}
+.cp-rules li:first-child {
+  border-top: 0;
+}
+.cp-rules b {
+  font-size: 0.84375rem;
+  font-weight: 600;
+}
+.cp-rules span {
+  font-size: 0.75rem;
+  color: var(--cp-ink2);
+}
+.cp-rules li[data-hit='1'] span {
+  color: var(--cp-warn);
+}
+
+/* Barre d'onglets réduite (maquette finale, .tabmin) : en défilant un tiroir
+   vers le bas, seul l'onglet actif reste, en bulle à gauche. Changement
+   instantané (aucune animation de largeur) ; remonter la rend entière. */
+body:has(.compas[data-tabmin]) .lkv-nav-surface > div {
+  width: auto !important;
+  align-self: flex-start;
+  margin-left: 14px;
+}
+body:has(.compas[data-tabmin]) .lkv-nav-surface .lkv-material-bar {
+  width: 64px !important;
+  justify-content: center !important;
+  padding: 0 !important;
+}
+body:has(.compas[data-tabmin]) .lkv-nav-surface .lkv-nav-tab:not([aria-current='page']) {
+  display: none;
+}
+
+/* Glisser à gauche sur un objet du kit : « Retirer » apparaît, la ligne
+   recule légèrement (transform seul). */
+.cp-row[data-swiped] .cp-row__t {
+  transform: translateX(-6px);
+  transition: transform 0.2s ease;
+}
+.cp-row__swipe {
+  min-height: 2.25rem;
+  padding: 0 12px;
+}
+.cp-row {
+  touch-action: pan-y;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cp-row[data-swiped] .cp-row__t {
+    transition: none;
+  }
+}
+
+/* Résa : six catégories (maquette finale) sur une ligne. */
+.cp-tchips--six {
+  gap: 4px;
+}
+.cp-tchips--six .cp-tchip span:not(.cp-tchip__bd) {
+  font-size: 0.65625rem;
+}
+.cp-tchip:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* Formulaire de dépense (Nous · Budget). */
+.cp-expense {
+  display: grid;
+  gap: 8px;
+  margin: 4px 0 10px;
+}
+
+/* Personnaliser la carte (maquette finale, .mopts) : calques réels. */
+.cp-mopts {
+  position: absolute;
+  z-index: 6;
+  top: 14px;
+  right: 58px;
+  width: min(280px, calc(100% - 76px));
+  /* La barre d'onglets flotte par-dessus le bas de la carte : le panneau défile au lieu de glisser
+     dessous (constat D-31) et passe au-dessus du crédit de la carte (constat D-32). */
+  max-height: calc(100% - 14px - var(--cp-nav-clear, 0px) - 8px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 10px;
+  border-radius: 22px;
+  display: grid;
+  gap: 8px;
+}
+.cp-mopts__h {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 0.8125rem;
+}
+.cp-mopts__h span {
+  font-size: 0.6875rem;
+  color: var(--cp-ink2);
+}
+.cp-mopts__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 5px;
+}
+.cp-mopts__grid button {
+  position: relative;
+  min-height: 3.25rem;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 3px;
+  border: 0;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--lkv-ink-900) 5%, transparent);
+  color: var(--cp-ink2);
+  font: inherit;
+  font-size: 0.65625rem;
+  cursor: pointer;
+}
+.cp-mopts__grid button[aria-checked='true'] {
+  background: color-mix(in srgb, var(--lkv-primary) 14%, transparent);
+  color: var(--lkv-primary);
+}
+.cp-mopts__grid button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.cp-mopts__grid small {
+  position: absolute;
+  top: 3px;
+  right: 5px;
+  font-size: 0.59375rem;
+  font-variant-numeric: tabular-nums;
+}
+.cp-mopts__f {
+  display: flex;
+  justify-content: space-between;
+  /* Le pied reste toujours visible et atteignable au toucher, même quand la liste des calques défile
+     (constat D-31) : collé au bas du panneau, sur un fond opaque. */
+  position: sticky;
+  bottom: -10px;
+  margin: 0 -10px -10px;
+  padding: 4px 10px 10px;
+  background: var(--lkv-surface-paper);
+  border-radius: 0 0 22px 22px;
+}
+.cp-mopts__f button {
+  border: 0;
+  background: none;
+  color: var(--lkv-primary);
+  font: inherit;
+  font-size: 0.78125rem;
+  font-weight: 600;
+  min-height: 2rem;
+  cursor: pointer;
+}
+
+/* Compas vide (premier écran) : lignes de l'étape Où, non renseignées. */
+.compas--start .cp-fr:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+/* Texte de la carte vide : jamais à nu sur la photo, dans une pastille. */
+.compas--start .cp-map__empty {
+  inset: auto 16px 50% 16px;
+  /* La règle de base centre par translate(-50 %) : avec des bords fixés, ce
+     décalage poussait la pastille hors de l'écran à gauche. */
+  transform: none;
+  text-align: center;
+  justify-self: center;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.62);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.9), 0 4px 14px rgb(23 43 36 / 0.12);
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  backdrop-filter: blur(14px) saturate(1.4);
+  color: var(--cp-ink);
+}
+
+/* Mention partenaires (DGCCRF) : une ligne, le détail sur le « i » */
+.cp-aff {
+  margin: 0;
+  font-size: 0.71875rem;
+  line-height: 1.35;
+  color: var(--cp-ink3);
+}
+.cp-aff > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 1.5rem;
+  cursor: pointer;
+  list-style: none;
+  font-weight: 500;
+}
+.cp-aff > summary::-webkit-details-marker {
+  display: none;
+}
+.cp-aff > p {
+  margin: 2px 0 0;
+  color: var(--cp-ink2);
+}
+
+/* Fenêtre choisie sous le calendrier (maquette : .qsum) */
+.cp-cal__sum {
+  margin: 6px 0 0;
+  font-size: 0.78125rem;
+  color: var(--cp-ink2);
+}
+.cp-cal__sum b {
+  color: var(--cp-ink);
+  font-weight: 600;
+}
+
+/* « Créer mon kit » (Mes kits) */
+.cp-mkkit {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 20px;
+}
+.cp-mkkit__t {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+/* Bouteille à la mer (Nous) */
+.cp-bottle {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 20px;
+}
+.cp-bottle__h {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.cp-bottle__h b {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.cp-bottle textarea {
+  resize: vertical;
+}
+.cp-bottle input[type='range'] {
+  accent-color: var(--lkv-primary);
+}
+
+/* Trace du préremplissage (Où) : ce qui a été écrit, annulable. */
+.cp-autofill {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+}
+.cp-autofill .cp-props li {
+  font-size: 0.84375rem;
+  color: var(--cp-ink2);
+}
+
+/* Compas vide : toutes les activités dépliées restent atteignables. La carte
+   (conteneur de taille fixée par la colonne) défile elle-même. */
+.compas--start .cp-top > .cp-card {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* ---------- « Où » = la demande (phrase libre + compris + précisions) ---------- */
+.cp-ask {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.cp-ask__in {
+  width: 100%;
+  min-height: 5.25rem;
+  padding: 12px 14px;
+  border: 0;
+  border-radius: 18px;
+  background: var(--cp-fill);
+  color: var(--cp-ink);
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1.4;
+  resize: vertical;
+}
+.cp-ask__in:focus-visible {
+  outline: 2px solid var(--cp-accent);
+  outline-offset: 2px;
+}
+.cp-understood__h {
+  margin: 2px 0 0;
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--cp-ink3);
+}
+.cp-fr[data-state='defaut'] .cp-fr__v,
+.cp-fr[data-state='a_trouver'] .cp-fr__v {
+  color: var(--cp-ink3);
+  font-style: italic;
+}
+.cp-fr[data-state='precise'] .cp-fr__v {
+  color: var(--cp-accent);
+}
+.cp-precise > summary {
+  cursor: pointer;
+  min-height: 2.75rem;
+  display: flex;
+  align-items: center;
+  font-size: 0.875rem;
+  color: var(--cp-ink2);
+}
+.cp-precise__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 2.75rem;
+  font-size: 0.875rem;
+}
+.cp-precise .cp-stepper output {
+  min-width: 4.5em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.cp-tile[aria-pressed='true'] {
+  outline: 2px solid var(--cp-accent);
+  outline-offset: -2px;
+}
+
+/* ---------- Préparation visible ---------- */
+.cp-prep {
+  position: fixed;
+  z-index: 85;
+  left: 50%;
+  bottom: calc(var(--cp-nav-clear, 96px) + 8px);
+  width: min(420px, calc(100vw - 32px));
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 24px;
+  box-shadow: var(--cp-shadow);
+  animation: cp-prep-in 0.35s ease-out both;
+  /* Avec la mention « IA » et la note de position, le panneau peut dépasser un écran court
+     (paysage) : il défile au lieu de sortir de l'écran, « Arrêter » reste atteignable. */
+  max-height: calc(100dvh - var(--cp-nav-clear, 96px) - 24px);
+  overflow-y: auto;
+}
+@keyframes cp-prep-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 12px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+.cp-prep__steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.cp-prep__step {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+}
+.cp-prep__t {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  font-size: 0.875rem;
+}
+.cp-prep__t > span {
+  font-size: 0.78125rem;
+  color: var(--cp-ink2);
+}
+.cp-prep__step[data-state='todo'] .cp-prep__t {
+  opacity: 0.55;
+}
+.cp-prep__dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: var(--cp-fill);
+  color: var(--cp-pg-ink);
+}
+.cp-prep__step[data-state='done'] .cp-prep__dot {
+  background: var(--cp-pg);
+}
+.cp-prep__step[data-state='halt'] .cp-prep__dot {
+  background: var(--cp-warn-bg);
+}
+.cp-prep__spin {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 2px solid var(--cp-sep);
+  border-top-color: var(--cp-accent);
+  animation: cp-prep-spin 0.9s linear infinite;
+}
+@keyframes cp-prep-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cp-prep {
+    animation: none;
+  }
+  .cp-prep__spin {
+    animation-duration: 3s;
+  }
+}
+
+/* =============================================================================
+   Contraste forcé (Windows « thèmes à contraste élevé », forced-colors: active).
+   Le navigateur remplace couleurs et bordures par celles du système et ôte
+   ombres et dégradés : le verre, les états « choisi », les barres et les icônes
+   en masque y disparaîtraient. On les redessine avec des couleurs système
+   uniquement (verrou : forcedColors.test.ts). WCAG 1.4.11, 1.4.1.
+   ============================================================================= */
+@media (forced-colors: active) {
+  /* Surfaces : un fond plein et un trait, plus de verre. */
+  .cp-glass,
+  .cp-sheet-glass,
+  .cp-island,
+  .cp-popv,
+  .cp-mopts,
+  .cp-prep,
+  .cp-card {
+    background: Canvas;
+    color: CanvasText;
+    border: 1px solid CanvasText;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .cp-glass::before {
+    display: none;
+  }
+  .cp-island[data-tone='bad'] {
+    border-width: 3px;
+  }
+
+  /* Commandes : toujours cernées. */
+  .cp-btn,
+  .cp-ibtn,
+  .cp-gbtn,
+  .cp-pill,
+  .cp-seg button,
+  .cp-tile,
+  .cp-chip,
+  .cp-tchip,
+  .cp-cal__d,
+  .cp-day,
+  .cp-switch,
+  .cp-pager button,
+  .cp-island__btn,
+  .cp-sheet__grab,
+  .cp-decision,
+  .cp-decision__btn,
+  .cp-mini,
+  .cp-hour {
+    border: 1px solid ButtonText;
+  }
+  .cp-btn:disabled,
+  .cp-ibtn:disabled,
+  .cp-pill:disabled,
+  .cp-tile:disabled,
+  .cp-cal__d:disabled,
+  .cp-island__btn:disabled,
+  .cp-decision__btn:disabled,
+  .cp-mopts button:disabled {
+    color: GrayText;
+    border-color: GrayText;
+  }
+
+  /* États « choisi » : plus de teinte de fond, le système les signale. */
+  .compas [aria-pressed='true'],
+  .compas [aria-current='step'],
+  .compas [aria-checked='true'],
+  .cp-cal__d[data-start='1'],
+  .cp-tchip[data-on='1'] {
+    background: Highlight;
+    color: HighlightText;
+    border-color: Highlight;
+  }
+  .cp-cal__d[data-sel='1'] {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
+  .cp-hour[data-q='mauvais'] {
+    border-width: 3px;
+  }
+  .cp-hour[data-q='moyen'] {
+    border-style: dashed;
+    border-width: 2px;
+  }
+
+  /* Lentille, barres, pastilles, interrupteurs : formes système. */
+  .cp-steps__lens {
+    background: transparent;
+    border: 2px solid Highlight;
+    box-shadow: none;
+  }
+  .cp-bar {
+    background: Canvas;
+    border: 1px solid CanvasText;
+  }
+  .cp-bar i {
+    background: Highlight;
+  }
+  .cp-gauge i {
+    background: Canvas;
+    border: 1px solid CanvasText;
+  }
+  .cp-gauge i[data-on='1'] {
+    background: Highlight;
+    border-color: Highlight;
+    forced-color-adjust: none;
+  }
+  .cp-gauge[data-level='non_evalue'] i {
+    border-style: dashed;
+  }
+  .cp-step__dot {
+    background: Highlight;
+    box-shadow: none;
+    forced-color-adjust: none;
+  }
+  .cp-switch::after {
+    background: ButtonText;
+    box-shadow: none;
+  }
+  .cp-ruler__thumb {
+    background: ButtonText;
+    forced-color-adjust: none;
+  }
+
+  /* Icônes en masque : leur fond (currentColor) EST le dessin ; sans cela il devient Canvas. */
+  .compas [style*='mask-image'] {
+    forced-color-adjust: none;
+  }
+
+  .compas :focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+  }
+}
+
+/* =============================================================================
+   Nous · Équipe en lecture (lot AD 5.5) : rôle et niveau en pastilles, charge portée
+   avec sa barre, invitations en attente. La gestion du groupe reste au Hub.
+   ============================================================================= */
+.cp-btn--tap {
+  min-height: 2.75rem;
+}
+.cp-row__t .cp-mem__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 3px 0 2px;
+}
+.cp-row__t .cp-mem__tags .cp-chip {
+  display: inline-flex;
+  margin: 0;
+  font-size: 0.6875rem;
+  color: var(--cp-ink);
+}
+.cp-row__t .cp-mem__bar {
+  display: block;
+  height: 6px;
+  margin: 4px 0 3px;
+}
+.cp-mem__hub {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+.cp-mem__facts {
+  margin: 0;
+}
+
+/* Fiche d'un objet · Historique, et « Emprunter · Louer · Acheter » complet (lot AD 5.5). */
+.cp-ibtn--tap {
+  width: 2.75rem;
+  height: 2.75rem;
+}
+.cp-hist {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.cp-hist__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.cp-hist__list > .cp-row {
+  align-items: flex-start;
+  gap: 10px;
+}
+.cp-hist__ic {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 10px;
+  background: var(--cp-soft);
+  color: var(--cp-ink);
+}
+
+/* =============================================================================
+   Carte (lot AD 5.5) : fond Relief / Clair / Satellite, pastilles d'étape et encart du point touché,
+   d'après la maquette. Couleurs : jetons --lkv-* seulement. Aucune animation.
+   ============================================================================= */
+.cp-mopts__base {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--cp-fill);
+}
+.cp-mopts__base button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 2.75rem;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--cp-ink);
+  font: inherit;
+  font-size: 0.78125rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+.cp-mopts__base button[aria-pressed='true'] {
+  background: var(--lkv-on-dark);
+  font-weight: 700;
+  box-shadow:
+    0 1px 3px rgb(23 43 36 / 0.14),
+    0 3px 8px rgb(23 43 36 / 0.08);
+}
+.cp-mopts__base button:focus-visible {
+  outline: 2px solid var(--lkv-primary);
+  outline-offset: 1px;
+}
+
+/* Pastilles d'étape : disque de 19 px cerclé de 2 px, dans une cible de 44 px. */
+.cp-map__canvas .cp-pin {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.cp-map__canvas .cp-pin__disc {
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  border: 2px solid var(--lkv-on-dark);
+  background: var(--lkv-on-dark);
+  color: var(--lkv-primary);
+  font-size: 0.59375rem;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: 0 2px 6px rgb(23 43 36 / 0.3);
+}
+.cp-map__canvas .cp-pin--mid .cp-pin__disc {
+  border-color: var(--lkv-primary);
+}
+.cp-map__canvas .cp-pin--start .cp-pin__disc {
+  background: var(--lkv-sage-500);
+  color: var(--lkv-on-dark);
+}
+.cp-map__canvas .cp-pin--end .cp-pin__disc {
+  background: var(--lkv-primary);
+  color: var(--lkv-on-dark);
+}
+.cp-map__canvas .cp-pin:focus-visible .cp-pin__disc {
+  outline: 2px solid var(--lkv-primary);
+  outline-offset: 2px;
+}
+
+/* Encart du point touché : capsule de verre posée dans la carte, titre, ligne de détail, deux boutons ronds. */
+.cp-callout {
+  position: absolute;
+  z-index: 6;
+  left: 0.75rem;
+  right: 0.75rem;
+  bottom: calc(var(--cp-nav-clear) - var(--space-6, 1.5rem) + 0.625rem);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 3.5rem;
+  padding: 0.375rem 0.5rem 0.375rem 0.875rem;
+  border-radius: 1.25rem;
+  color: var(--cp-ink);
+}
+.cp-callout[data-acc='1'] {
+  bottom: calc(var(--cp-nav-clear) - var(--space-6, 1.5rem) + 0.625rem + 2.75rem);
+}
+.cp-callout__t {
+  flex: 1;
+  min-width: 0;
+}
+.cp-callout__t b {
+  display: block;
+  font-size: 0.84375rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.cp-callout__t span {
+  display: block;
+  margin-top: 1px;
+  font-size: 0.71875rem;
+  color: var(--cp-ink2);
+  overflow-wrap: anywhere;
+}
+.cp-callout__a {
+  flex: none;
+  display: flex;
+  gap: 5px;
+}
+.cp-callout__btn {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--cp-fill);
+  color: var(--cp-ink);
+  cursor: pointer;
+}
+.cp-callout__btn--p {
+  background: var(--cp-pg);
+  box-shadow: var(--cp-pg-sh);
+  color: var(--cp-pg-ink);
+}
+.cp-callout__btn:focus-visible {
+  outline: 2px solid var(--lkv-primary);
+  outline-offset: 2px;
+}
+/* L'encart prend la place de la prochaine décision tant qu'il est là (une seule capsule au bas de la carte). */
+.cp-map[data-callout] .cp-decision {
+  visibility: hidden;
+}
+@media (forced-colors: active) {
+  .cp-map__canvas .cp-pin__disc {
+    border-color: CanvasText;
+    background: Canvas;
+    color: CanvasText;
+    forced-color-adjust: none;
+  }
+}
+
+/* =============================================================================
+   Bureau et tablette (lot AD 5.6) : à partir de 768 px, la carte devient LARGE et occupe tout le
+   reste de l'écran, l'étape courante passe en colonne à gauche, les tiroirs sont LATÉRAUX (à gauche,
+   sur la colonne de l'étape) au lieu de monter du bas. Sous 768 px, rien ne change : le Compas est
+   d'abord mobile, le verre Liquid Glass v8 est le même partout. Animations : transform et opacité.
+   ============================================================================= */
+@media (min-width: 768px) {
+  .compas:not(.compas--empty) {
+    --cp-side-w: clamp(22.5rem, 34vw, 27.5rem);
+    grid-template-columns: var(--cp-side-w) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    gap: 1rem;
+    padding-inline: 1rem;
+  }
+  /* Carte agrandie : la colonne de l'étape se réduit à sa carte-titre, la carte prend le reste. */
+  .compas[data-map='big']:not(.compas--empty) {
+    grid-template-columns: minmax(17.5rem, 22rem) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+  }
+  .compas:not(.compas--empty) > .cp-top {
+    grid-column: 1;
+    grid-row: 1;
+    padding-bottom: 1rem;
+  }
+  .compas:not(.compas--empty) > .cp-map {
+    grid-column: 2;
+    grid-row: 1;
+    margin-inline: 0;
+    margin-bottom: 1rem;
+    border-radius: 1.75rem;
+  }
+  /* La poignée verticale n'a de sens que sur mobile (la carte est déjà large) ; le bouton « Agrandir » reste. */
+  .cp-map__grab {
+    display: none;
+  }
+  /* Tiroir latéral : à gauche, sur la colonne de l'étape et toute sa hauteur : la carte reste entière
+     (crédit « Powered by Esri » et commandes compris), comme le tiroir mobile s'arrête au-dessus d'elle.
+     « Grand » s'élargit par-dessus la carte, comme sur mobile. */
+  .cp-sheet,
+  .cp-sheet[data-detent='small'],
+  .cp-sheet[data-detent='medium'] {
+    top: 0.25rem;
+    left: 1rem;
+    right: auto;
+    bottom: 1rem;
+    height: auto;
+    width: var(--cp-side-w);
+    border-radius: 1.75rem;
+    animation-name: cp-sheet-in-side;
+  }
+  .cp-sheet[data-detent='large'] {
+    bottom: 1rem;
+    width: min(51rem, calc(100% - 2rem));
+  }
+  /* Écran d'accueil sans aventure active (choix du voyage) : une colonne lisible, centrée. */
+  .compas--empty {
+    max-width: 46rem;
+    margin-inline: auto;
+  }
+}
+@keyframes cp-sheet-in-side {
+  from {
+    transform: translateX(-24px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cp-sheet {
+    animation: none;
+  }
+}
+
+/* ---------- Squelette de chargement (plan 5.1) ----------
+   Même grille que le Compas réel (.compas > .cp-top + .cp-map) et mêmes
+   mesures (capsule d'étapes, rangées de --cp-row-h) : à l'arrivée de l'écran,
+   rien ne se déplace. Teinte : le jeton --lkv-ink-900 en voile (--cp-fill en
+   repli). Seule l'opacité s'anime ; avec prefers-reduced-motion, plus rien. */
+.cp-skel {
+  display: block;
+  border-radius: 999px;
+  background: var(--cp-fill);
+  background: color-mix(in srgb, var(--lkv-ink-900) 9%, transparent);
+  animation: cp-skel-pulse 1.5s ease-in-out infinite;
+}
+@keyframes cp-skel-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cp-skel {
+    animation: none;
+  }
+}
+.cp-skel-step {
+  gap: 5px;
+  cursor: default;
+}
+.cp-skel--icon {
+  width: 20px;
+  height: 20px;
+}
+.cp-skel--label {
+  width: 30px;
+  height: 8px;
+}
+.cp-skel--title {
+  flex: none;
+  width: 58%;
+  height: 20px;
+  border-radius: 10px;
+}
+.cp-skel--sub {
+  flex: none;
+  width: 86%;
+  height: 12px;
+}
+.cp-skel-rows {
+  display: flex;
+  flex-direction: column;
+  margin-top: 6px;
+}
+.cp-skel-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: var(--cp-row-h);
+  padding: 0 4px;
+  border-bottom: 0.5px solid var(--cp-sep);
+}
+.cp-skel-row:last-child {
+  border-bottom: 0;
+}
+.cp-skel--thumb {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+}
+.cp-skel-row__t {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.cp-skel--line {
+  width: 72%;
+  height: 11px;
+}
+.cp-skel--short {
+  width: 42%;
+}
+.cp-skel--map {
+  border-radius: 32px 32px 0 0;
+}

@@ -1,0 +1,19 @@
+<template>
+  <!-- BOÎTE GRISE (P1) — à remplacer par landscape-director B. Hôte : 30 s → 44 s, z 10. Plans au sol 07–20 : feu de camp, K2, Lyon, Bourgogne, rafale mondiale, train, sentier -->
+  <style>
+    #root { position: absolute; inset: 0; }
+    #gnd-relay-box { position: absolute; inset: 0; background: rgb(122 122 118); }
+    #gnd-relay-tag { position: absolute; left: 40px; top: 80px; padding: 6px 12px; border-radius: 8px; background: rgb(20 25 22 / 0.6); color: #fff; font: 600 16px "IBM Plex Mono", monospace; letter-spacing: 0.08em; }
+  </style>
+  <div id="root" data-composition-id="gnd-relay" data-width="1920" data-height="1080" data-layout-ignore>
+    <div id="gnd-relay-box"></div>
+    <div id="gnd-relay-tag">GND-RELAY · PLACEHOLDER</div>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo("#gnd-relay-tag", { opacity: 0.4 }, { opacity: 1, duration: 14, ease: "none" }, 0);
+      window.__timelines["gnd-relay"] = tl;
+    })();
+  </script>
+</template>

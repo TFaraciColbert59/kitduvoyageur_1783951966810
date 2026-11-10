@@ -1,0 +1,5 @@
+GSAP 3.15.1 (npm "gsap") - license field: "Standard 'no charge' license: https://gsap.com/standard-license."
+The package ships no LICENSE file; each dist file header reads "Copyright 2026, GreenSock. All rights reserved. Subject to the terms at https://gsap.com/standard-license."
+Text fetched 2026-11-10 from https://gsap.com/standard-license/ :
+"You may use the code at no charge in commercial or non-commercial apps, web sites, games, components, and other software as long as end users are not charged a fee of any kind to use your product or gain access to any part of it."
+"Can I really use GSAP in commercial projects without paying anything? Yes, really! Commercial usage is covered under the standard license. All of GSAP including the plugins that were formerly "members-only" like SplitText and MorphSVG can be used in commercial projects at no charge."

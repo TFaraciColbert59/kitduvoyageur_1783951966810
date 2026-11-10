@@ -1,0 +1,19 @@
+<template>
+  <!-- BOÎTE GRISE (P1) — à remplacer par ui-builder. Hôte : 44 s → 48 s, z 30. Double coche du retour, carnet fermé, 8 écrans en surimpression -->
+  <style>
+    #root { position: absolute; inset: 0; }
+    #ui-a6-box { position: absolute; inset: 0; background: transparent; }
+    #ui-a6-tag { position: absolute; right: 40px; top: 80px; padding: 6px 12px; border-radius: 8px; background: rgb(20 25 22 / 0.6); color: #fff; font: 600 16px "IBM Plex Mono", monospace; letter-spacing: 0.08em; }
+  </style>
+  <div id="root" data-composition-id="ui-a6" data-width="1920" data-height="1080" data-layout-ignore>
+    <div id="ui-a6-box"></div>
+    <div id="ui-a6-tag">UI-A6 · PLACEHOLDER</div>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo("#ui-a6-tag", { opacity: 0.4 }, { opacity: 1, duration: 4, ease: "none" }, 0);
+      window.__timelines["ui-a6"] = tl;
+    })();
+  </script>
+</template>

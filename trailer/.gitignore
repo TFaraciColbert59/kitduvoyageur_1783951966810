@@ -1,0 +1,8 @@
+node_modules/
+.hyperframes/
+renders/
+out/*.mp4
+out/frames/
+qa/tmp/
+*.log
+assets/footage/candidates/*/*.tmp
