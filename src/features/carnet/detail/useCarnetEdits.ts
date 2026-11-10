@@ -13,6 +13,44 @@ import type { CarnetMomentItem } from './types';
 
 /** 25 Mo : au-delà, le téléversement est refusé avant tout appel réseau. */
 export const MAX_MEDIA_BYTES = 25 * 1024 * 1024;
+export const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
+
+
+export type MediaKind = 'photo' | 'video' | 'voice';
+
+/** Seau de stockage : les images restent dans `carnet-media`, vidéo et voix ont le leur. */
+export function bucketFor(type: MediaKind): 'carnet-media' | 'carnet-moments-media' {
+  return type === 'photo' ? 'carnet-media' : 'carnet-moments-media';
+}
+
+export function extensionOf(type: MediaKind, mime: string): string {
+  if (type === 'photo') return mime === 'image/png' ? 'png' : 'jpg';
+  if (type === 'video') return mime === 'video/webm' ? 'webm' : mime === 'video/quicktime' ? 'mov' : 'mp4';
+  if (mime.includes('mp4') || mime.includes('aac')) return 'm4a';
+  if (mime.includes('ogg')) return 'ogg';
+  return 'webm';
+}
+
+/** Vérifie le fichier avant tout appel réseau (type, présence, taille). */
+export function mediaPlan(
+  type: MediaKind,
+  file: File | null
+): { ok: true; file: File } | { ok: false; error: string } {
+  if (!file) {
+    return { ok: false, error: type === 'voice' ? 'Enregistre ta note vocale.' : 'Ajoute un fichier.' };
+  }
+  const expected = type === 'photo' ? 'image/' : type === 'video' ? 'video/' : 'audio/';
+  if (!file.type.startsWith(expected)) {
+    return {
+      ok: false,
+      error: type === 'photo' ? 'Choisis une image.' : type === 'video' ? 'Choisis une vidéo.' : 'Enregistrement invalide.',
+    };
+  }
+  /* `carnet-media` plafonne les images à 10 Mo (migration 20261021093000). */
+  const max = type === 'photo' ? MAX_PHOTO_BYTES : MAX_MEDIA_BYTES;
+  if (file.size > max) return { ok: false, error: `Le fichier dépasse ${max / (1024 * 1024)} Mo.` };
+  return { ok: true, file };
+}
 
 export interface UseCarnetEditsOptions {
   carnetId: string;
@@ -62,25 +100,30 @@ export function useCarnetEdits({
       const value: MomentInput = checked.value;
 
       let imageUrl: string | null = null;
-      if (value.type === 'photo' || value.type === 'video') {
-        if (!file) return { ok: false, error: 'Ajoute un fichier.' };
-        const expected = value.type === 'photo' ? 'image/' : 'video/';
-        if (!file.type.startsWith(expected)) {
-          return { ok: false, error: value.type === 'photo' ? 'Choisis une image.' : 'Choisis une vidéo.' };
-        }
-        if (file.size > MAX_MEDIA_BYTES) return { ok: false, error: 'Le fichier dépasse 25 Mo.' };
-        const prepared = value.type === 'photo' ? await stripImageMetadata(file) : file;
-        const ext = prepared.type === 'image/png' ? 'png' : value.type === 'video' ? 'mp4' : 'jpg';
-        const path = `carnet-moments/${userId}/${carnetId}/${crypto.randomUUID()}.${ext}`;
-        const upload = await supabase.storage.from('carnet-media').upload(path, prepared, {
+      let audioUrl: string | undefined;
+      if (value.type === 'photo' || value.type === 'video' || value.type === 'voice') {
+        const media = mediaPlan(value.type, file ?? null);
+        if (!media.ok) return media;
+        const prepared = value.type === 'photo' ? await stripImageMetadata(media.file) : media.file;
+        const ext = extensionOf(value.type, prepared.type);
+        /* Le premier segment du chemin est l'identifiant de la personne : c'est
+           ce que vérifient les politiques de stockage (`carnet_media_insert_owner`
+           et `carnet_moments_media_insert_owner`). */
+        const path = `${userId}/carnet-moments/${carnetId}/${crypto.randomUUID()}.${ext}`;
+        const bucket = bucketFor(value.type);
+        const upload = await supabase.storage.from(bucket).upload(path, prepared, {
           contentType: prepared.type || undefined,
           upsert: false,
         });
         if (upload.error) return { ok: false, error: 'Le fichier n’a pas pu être envoyé.' };
-        imageUrl = supabase.storage.from('carnet-media').getPublicUrl(path).data.publicUrl;
+        const publicUrl = supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;
+        if (value.type === 'voice') audioUrl = publicUrl;
+        else imageUrl = publicUrl;
       }
 
-      const row = momentInsertRow(value, {
+      const finalValue: MomentInput =
+        value.type === 'voice' && audioUrl ? { ...value, audioUrl } : value;
+      const row = momentInsertRow(finalValue, {
         carnetId,
         userId,
         authorName,

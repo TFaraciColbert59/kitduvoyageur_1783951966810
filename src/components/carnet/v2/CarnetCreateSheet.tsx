@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import { OverlaySheet } from '@/components/compte/overlay/OverlaySheet';
 import { ActionPill } from '@/components/ui/ActionPill';
@@ -13,6 +13,8 @@ import {
 import type { CreateMomentResult } from '@/features/carnet/detail/useCarnetEdits';
 import type { CarnetKitItemRow } from '@/features/carnet/detail/types';
 import { MOMENT_TYPE_ICONS } from './CarnetMomentTile';
+import { useVoiceRecorder } from '@/features/carnet/detail/useVoiceRecorder';
+import { formatClock } from '@/features/carnet/detail/useVoiceRecorder';
 
 /** Textes d'aide de la maquette (`PLACEH`). */
 const PLACEHOLDERS: Record<MomentType, string> = {
@@ -67,11 +69,22 @@ export function CarnetCreateSheet({
   const [latin, setLatin] = useState('');
   const [amount, setAmount] = useState('12');
   const [category, setCategory] = useState<string>(MOMENT_EXPENSE_CATEGORIES[0]);
-  const [duration, setDuration] = useState('0:30');
   const [itemId, setItemId] = useState(kitItems[0]?.id ?? '');
   const [file, setFile] = useState<File | null>(null);
   const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
+  const voice = useVoiceRecorder();
+
+  const recordedUrl = useMemo(
+    () => (voice.recording ? URL.createObjectURL(voice.recording.file) : null),
+    [voice.recording]
+  );
+  useEffect(
+    () => () => {
+      if (recordedUrl) URL.revokeObjectURL(recordedUrl);
+    },
+    [recordedUrl]
+  );
 
   const preview = useMemo(
     () => (file && file.type.startsWith('image/') ? URL.createObjectURL(file) : null),
@@ -92,7 +105,7 @@ export function CarnetCreateSheet({
       place,
       caption: type === 'kit' ? selectedItem?.name : main,
     };
-    if (type === 'voice') input.durationLabel = duration;
+    if (type === 'voice') input.durationLabel = voice.recording?.durationLabel;
     if (type === 'meet') input.who = who;
     if (type === 'spend') {
       input.amountEur = Number(amount.replace(',', '.'));
@@ -103,7 +116,7 @@ export function CarnetCreateSheet({
 
     setBusy(true);
     setMessage(null);
-    const result = await onSubmit(input, file);
+    const result = await onSubmit(input, type === 'voice' ? (voice.recording?.file ?? null) : file);
     setBusy(false);
     if (!result.ok) {
       setMessage({ text: result.error, ok: false });
@@ -200,13 +213,46 @@ export function CarnetCreateSheet({
 
           {type === 'voice' ? (
             <>
-              <Field label="Durée">
-                <select value={duration} onChange={(event) => setDuration(event.target.value)}>
-                  <option>0:30</option>
-                  <option>0:45</option>
-                  <option>1:12</option>
-                </select>
-              </Field>
+              <div className="lkdv-overlay-field" data-testid="voice-recorder">
+                <span>Enregistrement</span>
+                <div className="lkdv-row-actions" style={{ alignItems: 'center' }}>
+                  {voice.state === 'recording' ? (
+                    <button type="button" className="lkdv-mbtn danger" onClick={voice.stop}>
+                      Arrêter · {formatClock(voice.seconds)}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="lkdv-mbtn solid"
+                      disabled={!voice.supported}
+                      onClick={() => void voice.start()}
+                    >
+                      {voice.state === 'ready' ? 'Réenregistrer' : 'Enregistrer'}
+                    </button>
+                  )}
+                  {voice.state === 'ready' ? (
+                    <button type="button" className="lkdv-mbtn ghost" onClick={voice.reset}>
+                      Effacer
+                    </button>
+                  ) : null}
+                </div>
+                {voice.state === 'ready' && voice.recording ? (
+                  <audio
+                    controls
+                    src={recordedUrl ?? undefined}
+                    aria-label={`Réécouter la note vocale, ${voice.recording.durationLabel}`}
+                    style={{ width: '100%' }}
+                  />
+                ) : null}
+                <p className="lkdv-mute" role="status">
+                  {voice.message ??
+                    (voice.state === 'ready' && voice.recording
+                      ? `Note de ${voice.recording.durationLabel}, prête à être ajoutée.`
+                      : voice.supported
+                        ? '3 minutes au plus. Le micro ne s’ouvre qu’à l’appui.'
+                        : 'Ton navigateur ne peut pas enregistrer de son.')}
+                </p>
+              </div>
               <Field label="Titre">
                 <input
                   type="text"

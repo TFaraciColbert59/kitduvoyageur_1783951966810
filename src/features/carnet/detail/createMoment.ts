@@ -37,6 +37,12 @@ export const MomentInputSchema = z.discriminatedUnion('type', [
       .trim()
       .regex(/^\d{1,2}:\d{2}$/, 'Durée au format 0:30.')
       .optional(),
+    audioUrl: z
+      .string()
+      .trim()
+      .max(600)
+      .regex(/^https:\/\/\S+$/, 'Enregistrement invalide.')
+      .optional(),
   }),
   z.object({ ...common, type: z.literal('text'), caption: required('Donne un titre à ton moment.', 400) }),
   z.object({
@@ -86,8 +92,12 @@ export function isCreatableType(value: unknown): value is MomentType {
 
 export function metaOf(value: MomentInput): MomentMeta | null {
   switch (value.type) {
-    case 'voice':
-      return value.durationLabel ? { durationLabel: value.durationLabel } : null;
+    case 'voice': {
+      const meta: MomentMeta = {};
+      if (value.durationLabel) meta.durationLabel = value.durationLabel;
+      if (value.audioUrl) meta.audioUrl = value.audioUrl;
+      return Object.keys(meta).length > 0 ? meta : null;
+    }
     case 'meet':
       return value.who ? { who: value.who } : null;
     case 'spend':

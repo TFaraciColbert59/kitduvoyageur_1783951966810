@@ -79,6 +79,8 @@ export interface MomentMeta {
   itemId?: string;
   latin?: string;
   durationLabel?: string;
+  /** URL publique de la note vocale enregistrée (https seulement). */
+  audioUrl?: string;
 }
 
 const EXPENSE_CATEGORIES = ['Repas', 'Hébergement', 'Transport', 'Matériel'] as const;
@@ -96,5 +98,7 @@ export function parseMomentMeta(raw: unknown): MomentMeta | null {
     const value = source[key];
     if (typeof value === 'string' && value.trim()) meta[key] = value.trim().slice(0, 120);
   }
+  const audio = source.audioUrl;
+  if (typeof audio === 'string' && /^https:\/\/[^\s]{1,580}$/.test(audio)) meta.audioUrl = audio;
   return Object.keys(meta).length > 0 ? meta : null;
 }
