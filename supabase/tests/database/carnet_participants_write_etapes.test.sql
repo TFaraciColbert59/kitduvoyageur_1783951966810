@@ -22,8 +22,10 @@ VALUES
   ('c5000000-0000-4000-8000-000000000003', 'et_other@test.local', 'Autre', now())
 ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO public.groupes (id, nom, created_by)
-VALUES ('c5100000-0000-4000-8000-000000000001', 'Groupe étapes', 'c5000000-0000-4000-8000-000000000001')
+-- `groupes` est une vue de compatibilité sur `crews` (slug NOT NULL) : on
+-- écrit dans la table source.
+INSERT INTO public.crews (id, name, slug, created_by)
+VALUES ('c5100000-0000-4000-8000-000000000001', 'Groupe étapes', 'groupe-etapes-test', 'c5000000-0000-4000-8000-000000000001')
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO public.carnets (id, author_id, title, destination, visibility, groupe_id)
@@ -52,16 +54,15 @@ SELECT throws_ok(
     VALUES ('c5100000-0000-4000-8000-000000000001', 2, 2, 'X', 'Y')$$,
   '42501', NULL, 'un tiers ne peut pas écrire une étape'
 );
-SELECT is(
-  (WITH d AS (DELETE FROM public.groupe_etapes WHERE groupe_id = 'c5100000-0000-4000-8000-000000000001' RETURNING 1) SELECT count(*)::int FROM d),
-  0,
+SELECT is_empty(
+  $$DELETE FROM public.groupe_etapes WHERE groupe_id = 'c5100000-0000-4000-8000-000000000001' RETURNING 1$$,
   'un tiers ne supprime aucune étape'
 );
 
 SET LOCAL "request.jwt.claims" = '{"sub": "c5000000-0000-4000-8000-000000000002", "role": "authenticated"}';
-SELECT is(
-  (WITH d AS (DELETE FROM public.groupe_etapes WHERE groupe_id = 'c5100000-0000-4000-8000-000000000001' RETURNING 1) SELECT count(*)::int FROM d),
-  1,
+SELECT results_eq(
+  $$DELETE FROM public.groupe_etapes WHERE groupe_id = 'c5100000-0000-4000-8000-000000000001' RETURNING 1$$,
+  $$VALUES (1)$$,
   'le contributeur supprime l''étape'
 );
 
