@@ -18,7 +18,6 @@ const CARNET_ID = '749e9e8c-9540-5a73-8b6c-6ab07264f62f';
 const EMPTY_ID = '00000000-0000-4000-8000-00000000e0e0';
 const STORIES_ID = '00000000-0000-4000-8000-0000000051f0';
 const LOADING_ID = '00000000-0000-4000-8000-0000000010ad';
-const GROUPE_ID = '5a0f0b2e-3c1d-4f6a-9a2e-0d4c1b7e8f01';
 const OWNER_ID = '11111111-1111-4111-8111-111111111111';
 const CREW = [
   { id: OWNER_ID, full_name: 'Camille Rey', handle: 'camille', role: 'owner' },
@@ -122,18 +121,14 @@ const TABLES = {
     description: 'Boucle depuis La Bérarde, quatre jours, refuge, gîte et bivouac.',
     cover_image: null, cover_image_alt: null, start_date: '2026-07-13', end_date: '2026-07-16',
     visibility: 'public', verified: true, likes_count: 128, comments_count: 14, views_count: 940,
-    distance_km: 72.4, denivele_m: 4520, groupe_id: GROUPE_ID, lieu_depart: 'Boucle depuis La Bérarde', lieu_arrivee: 'La Bérarde',
+    distance_km: 72.4, denivele_m: 4520, groupe_id: null, lieu_depart: 'Boucle depuis La Bérarde', lieu_arrivee: 'La Bérarde',
     country_iso: 'FR', trip_id: null, live_sharing: true,
   }],
   public_profiles: CREW.map((c) => ({ id: c.id, full_name: c.full_name, handle: c.handle, avatar_url: null, trust_score: 0.8, bio: null, location: null, website: null, loyalty_points: 0, loyalty_level: null, xp: 0, level: 1, created_at: '2026-01-01T00:00:00Z' })),
   hike_sessions: DAYS.map(sessionFor),
-  groupe_etapes: DAYS.map((d, i) => ({
-    id: `e-${d.n}`, groupe_id: GROUPE_ID, jour_numero: d.n, ordre: i, date_etape: d.date, lieu_depart: d.from, lieu_arrivee: d.to,
+  carnet_etapes: DAYS.map((d, i) => ({
+    id: `e-${d.n}`, carnet_id: CARNET_ID, jour_numero: d.n, ordre: i, date_etape: d.date, lieu_depart: d.from, lieu_arrivee: d.to,
     recit: `Jour ${d.n} : ${d.from} → ${d.to}.`, distance_km: d.km, denivele_m: d.dp, duree_texte: d.txt, meteo: d.w, temperature_c: d.t,
-  })),
-  groupe_hebergements: NIGHTS.map((n) => ({
-    id: `h-${n.jour_numero}`, groupe_id: GROUPE_ID, apres_jour_numero: n.jour_numero, nom: n.nom, prix_cents: 5800, prix_note: null,
-    altitude_m: n.altitude_m, note: n.infos, hote: null, type_hebergement: n.type,
   })),
   carnet_moments: MOMENTS.map((m) => ({ ...m, carnet_id: CARNET_ID })),
   carnet_kit_items: KIT.map((k) => ({ ...k, carnet_id: CARNET_ID })),

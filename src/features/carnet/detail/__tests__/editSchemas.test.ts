@@ -10,6 +10,7 @@ import {
   firstIssue,
   nightFromRow,
   nightRow,
+  stepChanges,
   stepRow,
   verdictItem,
   verdictRow,
@@ -44,7 +45,7 @@ describe('étape', () => {
     expect(StepInputSchema.safeParse({ ...base, carnetId: 'pas-un-uuid' }).success).toBe(false);
   });
 
-  it('écrit les colonnes historiques de groupe_etapes et rend l’étape lisible', () => {
+  it('écrit les colonnes de carnet_etapes et rend l’étape lisible', () => {
     const value = StepInputSchema.parse({
       carnetId: CARNET,
       dayNumber: 3,
@@ -52,9 +53,10 @@ describe('étape', () => {
       to: 'Lac de la Muzelle',
       distanceKm: 22,
     });
-    const row = stepRow(value, 'g-1');
+    const row = stepRow(value, 'u-1');
     expect(row).toMatchObject({
-      groupe_id: 'g-1',
+      carnet_id: CARNET,
+      created_by: 'u-1',
       jour_numero: 3,
       ordre: 3,
       lieu_depart: 'Vallouise',
@@ -62,6 +64,11 @@ describe('étape', () => {
       distance_km: 22,
       denivele_m: null,
     });
+    expect(row).not.toHaveProperty('groupe_id');
+    const changes = stepChanges(value, '2026-11-11T00:00:00.000Z');
+    expect(changes).toMatchObject({ jour_numero: 3, updated_at: '2026-11-11T00:00:00.000Z' });
+    expect(changes).not.toHaveProperty('carnet_id');
+    expect(changes).not.toHaveProperty('created_by');
     const etape = etapeFromRow(
       { ...row, id: 'e-1', date_etape: null, temperature_c: null } as never,
       'Gîte'

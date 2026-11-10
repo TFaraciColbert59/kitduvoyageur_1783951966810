@@ -98,53 +98,75 @@ describe('saveStepAction', () => {
     expect(state.calls).toHaveLength(0);
   });
 
-  it('écrit dans groupe_etapes du groupe du carnet', async () => {
-    state.responses['carnets.select'] = { data: { groupe_id: 'g-1' } };
-    state.responses['groupe_etapes.insert'] = {
+  it('écrit dans carnet_etapes avec carnet_id et created_by, sans lire le carnet ni son groupe', async () => {
+    state.responses['carnet_etapes.insert'] = {
       data: { id: 'e-9', jour_numero: 1, ordre: 1, date_etape: null, lieu_depart: 'A', lieu_arrivee: 'B', recit: null, distance_km: null, denivele_m: null, duree_texte: null, meteo: null, temperature_c: null },
     };
     const result = await saveStepAction(step);
     expect(result).toMatchObject({ ok: true, etape: { id: 'e-9', from: 'A', to: 'B', dayNumber: 1 } });
-    const insert = state.calls.find((c) => c.table === 'groupe_etapes');
+    const insert = state.calls.find((c) => c.table === 'carnet_etapes');
     expect(insert?.op).toBe('insert');
-    expect(insert?.payload).toMatchObject({ groupe_id: 'g-1', lieu_depart: 'A' });
+    expect(insert?.payload).toMatchObject({ carnet_id: CARNET, created_by: USER, lieu_depart: 'A' });
+    expect(insert?.payload).not.toHaveProperty('groupe_id');
+    expect(state.calls.some((c) => c.table === 'carnets' || c.table.startsWith('groupe'))).toBe(false);
   });
 
-  it('dit les limites : pas de groupe, ligne refusée par la RLS', async () => {
-    state.responses['carnets.select'] = { data: { groupe_id: null } };
-    expect(await saveStepAction(step)).toMatchObject({ ok: false });
-    state.responses['carnets.select'] = { data: { groupe_id: 'g-1' } };
-    state.responses['groupe_etapes.insert'] = { data: null };
+  it('dit la limite : ligne refusée par la RLS, erreur réseau', async () => {
+    state.responses['carnet_etapes.insert'] = { data: null };
     expect(await saveStepAction(step)).toEqual({
       ok: false,
       error: 'Tu n’as pas le droit de modifier ce carnet.',
     });
+    state.responses['carnet_etapes.insert'] = { data: null, error: { code: '23514' } };
+    expect(await saveStepAction(step)).toMatchObject({ ok: false });
   });
 
-  it('met à jour par identifiant et restreint au groupe', async () => {
-    state.responses['carnets.select'] = { data: { groupe_id: 'g-1' } };
-    state.responses['groupe_etapes.update'] = {
+  it('refuse un identifiant d’étape qui n’est pas un uuid', async () => {
+    expect(await saveStepAction({ ...step, id: 'pas-un-uuid' })).toEqual({
+      ok: false,
+      error: 'Élément introuvable.',
+    });
+    expect(state.calls).toHaveLength(0);
+  });
+
+  it('met à jour par id ET carnet_id (pas d’IDOR), sans changer carnet_id ni created_by', async () => {
+    state.responses['carnet_etapes.update'] = {
       data: { id: ITEM, jour_numero: 1, ordre: 1, date_etape: null, lieu_depart: 'A', lieu_arrivee: 'B', recit: null, distance_km: null, denivele_m: null, duree_texte: null, meteo: null, temperature_c: null },
     };
     const result = await saveStepAction({ ...step, id: ITEM });
     expect(result.ok).toBe(true);
     const update = state.calls.find((c) => c.op === 'update');
+    expect(update?.table).toBe('carnet_etapes');
     expect(update?.filters).toEqual([
       ['eq:id', ITEM],
-      ['eq:groupe_id', 'g-1'],
+      ['eq:carnet_id', CARNET],
     ]);
+    expect(update?.payload).toHaveProperty('updated_at');
+    expect(update?.payload).not.toHaveProperty('carnet_id');
+    expect(update?.payload).not.toHaveProperty('created_by');
   });
 });
 
 describe('deleteStepAction / deleteNightAction', () => {
   it('signale une suppression que la base a refusée (0 ligne)', async () => {
-    state.responses['carnets.select'] = { data: { groupe_id: 'g-1' } };
-    state.responses['groupe_etapes.delete'] = { data: [] };
+    state.responses['carnet_etapes.delete'] = { data: [] };
     expect(await deleteStepAction({ carnetId: CARNET, id: ITEM })).toMatchObject({ ok: false });
-    state.responses['groupe_etapes.delete'] = { data: [{ id: ITEM }] };
+    state.responses['carnet_etapes.delete'] = { data: [{ id: ITEM }] };
     expect(await deleteStepAction({ carnetId: CARNET, id: ITEM })).toEqual({ ok: true });
+    const del = state.calls.filter((c) => c.op === 'delete');
+    expect(del.every((c) => c.table === 'carnet_etapes')).toBe(true);
+    expect(del[0].filters).toEqual([
+      ['eq:id', ITEM],
+      ['eq:carnet_id', CARNET],
+    ]);
     state.responses['carnet_nights.delete'] = { data: [{ id: 'n' }] };
     expect(await deleteNightAction({ carnetId: CARNET, dayNumber: 2 })).toEqual({ ok: true });
+  });
+
+  it('exige le droit de participant avant de supprimer une étape', async () => {
+    state.participant = false;
+    expect(await deleteStepAction({ carnetId: CARNET, id: ITEM })).toMatchObject({ ok: false });
+    expect(state.calls).toHaveLength(0);
   });
 });
 

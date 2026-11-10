@@ -30,7 +30,6 @@ function input(overrides: Partial<BuildCarnetDetailInput> = {}): BuildCarnetDeta
     author: { id: 'u1', full_name: 'Camille Rochat', handle: 'camille', avatar_url: null, trust_score: 94 },
     hikeSession: null,
     etapes: [],
-    hebergements: [],
     moments: [],
     kitItems: [],
     viewerId: null,
@@ -158,14 +157,14 @@ describe('buildCarnetDetail — statistiques', () => {
 });
 
 describe('buildCarnetDetail — jours, moments, kit', () => {
-  it('construit un jour par étape réelle avec son hébergement', () => {
+  it('construit un jour par étape réelle avec sa nuit (carnet_nights)', () => {
     const detail = buildCarnetDetail(
       input({
         etapes: [
           { id: 'e1', jour_numero: 1, ordre: 1, date_etape: '2026-09-26', lieu_depart: 'Chamonix', lieu_arrivee: 'Les Houches', recit: 'Départ sous la pluie.', distance_km: 12, denivele_m: 800, duree_texte: '5h', meteo: 'pluie', temperature_c: 11 },
         ],
-        hebergements: [
-          { id: 'h1', apres_jour_numero: 1, nom: 'Refuge de Bellachat', prix_cents: 4600, prix_note: 'demi-pension', altitude_m: 2100, note: null, hote: null },
+        nights: [
+          { id: 'h1', dayNumber: 1, name: 'Refuge de Bellachat', type: 'refuge', altitudeM: 2100, infos: null, lat: null, lng: null, mapRefugeId: null },
         ],
       }),
     );

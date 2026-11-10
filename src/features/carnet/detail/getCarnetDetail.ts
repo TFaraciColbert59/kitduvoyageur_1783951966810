@@ -14,7 +14,6 @@ import type {
   CarnetPublicZone,
   CarnetRow,
   EtapeRow,
-  HebergementRow,
   HikeSessionRow,
   KitItemRow,
   KitVerdictType,
@@ -52,7 +51,6 @@ const CARNET_COLUMNS_WITH_LIVE = [
   'views_count',
   'distance_km',
   'denivele_m',
-  'groupe_id',
   'lieu_depart',
   'lieu_arrivee',
   'country_iso',
@@ -77,7 +75,6 @@ const CARNET_COLUMNS_BASE = [
   'views_count',
   'distance_km',
   'denivele_m',
-  'groupe_id',
   'lieu_depart',
   'lieu_arrivee',
   'country_iso',
@@ -127,7 +124,7 @@ export async function getCarnetDetail(id: string) {
   const carnet = carnetData as unknown as CarnetRow;
 
   /* Tout ce qui ne dépend que du carnet part dans le même `Promise.all` :
-     auteur, sorties, étapes, hébergements, moments, kit, collaborateurs,
+     auteur, sorties, étapes, moments, kit, collaborateurs,
      identifiants de sorties, j'aime et favori du lecteur. Une seule vague de
      requêtes, donc un seul aller-retour au lieu de quatre. */
   const viewerFlags: Promise<[{ data: unknown }, { data: unknown }]> = viewerId
@@ -152,7 +149,6 @@ export async function getCarnetDetail(id: string) {
       authorResult,
       hikeResult,
       etapesResult,
-      hebergementsResult,
       momentsResult,
       kitResult,
       likesRows,
@@ -182,22 +178,16 @@ export async function getCarnetDetail(id: string) {
         .eq('carnet_id', carnet.id)
         .order('started_at', { ascending: false })
         .limit(10),
-      carnet.groupe_id
-        ? supabase
-            .from('groupe_etapes')
-            .select(
-              'id, jour_numero, ordre, date_etape, lieu_depart, lieu_arrivee, recit, distance_km, denivele_m, duree_texte, meteo, temperature_c',
-            )
-            .eq('groupe_id', carnet.groupe_id)
-            .order('ordre', { ascending: true })
-        : Promise.resolve({ data: [] as EtapeRow[] }),
-      carnet.groupe_id
-        ? supabase
-            .from('groupe_hebergements')
-            .select('id, apres_jour_numero, nom, prix_cents, prix_note, altitude_m, note, hote')
-            .eq('groupe_id', carnet.groupe_id)
-            .order('apres_jour_numero', { ascending: true })
-        : Promise.resolve({ data: [] as HebergementRow[] }),
+      /* Étapes du carnet (`carnet_etapes`, RLS `can_view_carnet`) : une erreur
+         ou une table vide donne `[]`, jamais d'étape inventée. */
+      supabase
+        .from('carnet_etapes')
+        .select(
+          'id, jour_numero, ordre, date_etape, lieu_depart, lieu_arrivee, recit, distance_km, denivele_m, duree_texte, meteo, temperature_c',
+        )
+        .eq('carnet_id', carnet.id)
+        .order('jour_numero', { ascending: true })
+        .order('ordre', { ascending: true }),
       /* Colonnes de la v2 (`auteur_id`, `moment_type`, `moment_meta`) : la
          migration 20261109100001 n'est peut-être pas appliquée, on retombe alors
          sur la lecture historique (type déduit, jamais inventé). */
@@ -537,7 +527,6 @@ export async function getCarnetDetail(id: string) {
     sessions,
     trace: pickCarnetTrace(sessions),
     etapes: (etapesResult.data as unknown as EtapeRow[]) ?? [],
-    hebergements: (hebergementsResult.data as unknown as HebergementRow[]) ?? [],
     moments: momentRows,
     kitItems: (kitResult.data as unknown as KitItemRow[]) ?? [],
     viewerId,

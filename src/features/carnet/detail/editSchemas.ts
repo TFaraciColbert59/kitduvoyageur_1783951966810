@@ -94,13 +94,15 @@ export type StepInput = z.infer<typeof StepInputSchema>;
 export const StepDeleteSchema = z.object({ carnetId, id: entityId });
 
 /**
- * Ligne `groupe_etapes` à écrire (colonnes historiques de la table). La météo et
- * la date ne sont jamais réécrites par ce formulaire : une modification ne
- * peut pas les effacer.
+ * Ligne `carnet_etapes` à écrire. La météo et la date ne sont jamais
+ * réécrites par ce formulaire : une modification ne peut pas les effacer.
+ * `created_by` n'est posé qu'à la création (`stepRow(value, userId)` pour un
+ * insert) ; `stepChanges` ne contient jamais `carnet_id` ni `created_by`.
  */
-export function stepRow(value: StepInput, groupeId: string) {
+export function stepRow(value: StepInput, userId: string) {
   return {
-    groupe_id: groupeId,
+    carnet_id: value.carnetId,
+    created_by: userId,
     jour_numero: value.dayNumber,
     ordre: value.dayNumber,
     lieu_depart: value.from,
@@ -110,6 +112,12 @@ export function stepRow(value: StepInput, groupeId: string) {
     duree_texte: value.durationText ?? null,
     recit: value.note ?? null,
   };
+}
+
+/** Colonnes modifiées lors d'une mise à jour : ni `carnet_id` ni `created_by`. */
+export function stepChanges(value: StepInput, now: string = new Date().toISOString()) {
+  const { carnet_id: _carnetId, created_by: _createdBy, ...changes } = stepRow(value, '');
+  return { ...changes, updated_at: now };
 }
 
 /** L'étape telle que la fiche l'affiche tout de suite après l'écriture. */
