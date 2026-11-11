@@ -11,20 +11,32 @@ import { TraceImportError } from './model';
  * caractère XML 1.0 valide sont décodées.
  *
  * Les noms qualifiés (préfixe compris) sont conservés pour vérifier qu'une
- * fermeture correspond exactement à son ouverture. La résolution de l'URI des
- * préfixes reste à la charge du lecteur de format, qui connaît son schéma.
+ * fermeture correspond exactement à son ouverture. Les namespaces sont résolus
+ * ici, avec héritage des déclarations `xmlns` / `xmlns:préfixe` et gestion de
+ * `xmlns=""` : un préfixe non lié est refusé, et le lecteur de format reçoit
+ * l'URI effective de chaque élément, jamais un simple nom local.
  */
+
+const XML_NAMESPACE = 'http://www.w3.org/XML/1998/namespace';
+const XMLNS_NAMESPACE = 'http://www.w3.org/2000/xmlns/';
+
+export interface SafeXmlElement {
+  qualifiedName: string;
+  localName: string;
+  prefix: string | null;
+  /** URI résolue, `null` si l'élément n'est dans aucun namespace. */
+  namespaceURI: string | null;
+}
 
 export interface SafeXmlSink {
   /** `depth` commence à 1 pour l'élément racine. */
   open(
-    qualifiedName: string,
-    localName: string,
+    element: SafeXmlElement,
     attributes: Readonly<Record<string, string>>,
     selfClosing: boolean,
     depth: number,
   ): void;
-  close(qualifiedName: string, localName: string, depth: number): void;
+  close(element: SafeXmlElement, depth: number): void;
   text(value: string): void;
 }
 
@@ -37,17 +49,23 @@ interface ScanOptions {
   maxDepth: number;
 }
 
-interface OpenElement {
-  qualifiedName: string;
-  localName: string;
+interface NamespaceContext {
+  defaultNamespace: string | null;
+  prefixes: Readonly<Record<string, string>>;
 }
+
+const EMPTY_NAMESPACE_CONTEXT: NamespaceContext = Object.freeze({
+  defaultNamespace: null,
+  prefixes: Object.freeze(Object.create(null) as Record<string, string>),
+});
 
 export function scanSafeXml(
   xml: string,
   sink: SafeXmlSink,
   options: ScanOptions,
 ): SafeXmlScanResult {
-  const stack: OpenElement[] = [];
+  const stack: SafeXmlElement[] = [];
+  const namespaceStack: NamespaceContext[] = [];
   let position = 0;
   let rootName: string | null = null;
   let rootClosed = false;
@@ -127,8 +145,7 @@ export function scanSafeXml(
 
     if (rawTag.startsWith('/')) {
       const rawName = rawTag.slice(1).trim();
-      assertElementName(rawName);
-      const localName = toLocalName(rawName);
+      const { localName } = parseQualifiedName(rawName);
       const expected = stack.pop();
 
       if (expected == null) {
@@ -144,13 +161,23 @@ export function scanSafeXml(
         );
       }
 
-      sink.close(rawName, localName, stack.length + 1);
+      namespaceStack.pop();
+      sink.close(expected, stack.length + 1);
       if (stack.length === 0) rootClosed = true;
     } else {
       const selfClosing = rawTag.endsWith('/');
       const tagContent = selfClosing ? rawTag.slice(0, -1).trim() : rawTag;
       const { name, attributes } = parseStartTag(tagContent);
-      const localName = toLocalName(name);
+      const { prefix, localName } = parseQualifiedName(name);
+      const parentNamespaces = namespaceStack[namespaceStack.length - 1] ?? EMPTY_NAMESPACE_CONTEXT;
+      const namespaces = buildNamespaceContext(attributes, parentNamespaces);
+      const element: SafeXmlElement = {
+        qualifiedName: name,
+        localName,
+        prefix,
+        namespaceURI: resolveElementNamespace(prefix, namespaces, name),
+      };
+      assertAttributeNamespaces(attributes, namespaces);
 
       if (stack.length === 0) {
         if (rootClosed) {
@@ -171,13 +198,14 @@ export function scanSafeXml(
       }
 
       const depth = stack.length + 1;
-      sink.open(name, localName, attributes, selfClosing, depth);
+      sink.open(element, attributes, selfClosing, depth);
 
       if (selfClosing) {
-        sink.close(name, localName, depth);
+        sink.close(element, depth);
         if (stack.length === 0) rootClosed = true;
       } else {
-        stack.push({ qualifiedName: name, localName });
+        stack.push(element);
+        namespaceStack.push(namespaces);
       }
     }
 
@@ -254,8 +282,10 @@ function parseStartTag(content: string): {
   }
 
   const name = nameMatch[0];
-  const attributes: Record<string, string> = {};
+  // Objet sans prototype : un attribut nommé `__proto__` reste une donnée.
+  const attributes: Record<string, string> = Object.create(null);
   let index = name.length;
+  parseQualifiedName(name);
 
   while (index < content.length) {
     // Un attribut doit être séparé du nom ou de l'attribut précédent par au
@@ -275,6 +305,7 @@ function parseStartTag(content: string): {
     }
 
     const attributeName = attributeMatch[0];
+    parseQualifiedName(attributeName);
     index += attributeName.length;
     while (index < content.length && isWhitespace(content[index])) index += 1;
 
@@ -319,15 +350,112 @@ function parseStartTag(content: string): {
   return { name, attributes };
 }
 
-function assertElementName(rawName: string): void {
-  if (!/^[A-Za-z_][A-Za-z0-9_.:-]*$/.test(rawName)) {
-    throw new TraceImportError('invalid-xml', `Nom de balise invalide : ${excerpt(rawName)}.`);
+/** Un QName XML a au plus un `:` et deux parties NCName valides. */
+function parseQualifiedName(rawName: string): { prefix: string | null; localName: string } {
+  const parts = rawName.split(':');
+  if (parts.length > 2 || parts.some((part) => !/^[A-Za-z_][A-Za-z0-9_.-]*$/.test(part))) {
+    throw new TraceImportError('invalid-xml', `Nom qualifié invalide : ${excerpt(rawName)}.`);
   }
+  return parts.length === 1
+    ? { prefix: null, localName: parts[0] }
+    : { prefix: parts[0], localName: parts[1] };
 }
 
-function toLocalName(name: string): string {
-  const separator = name.lastIndexOf(':');
-  return separator >= 0 ? name.slice(separator + 1) : name;
+function buildNamespaceContext(
+  attributes: Readonly<Record<string, string>>,
+  parent: NamespaceContext,
+): NamespaceContext {
+  let defaultNamespace = parent.defaultNamespace;
+  const prefixes: Record<string, string> = Object.create(null);
+  for (const [prefix, uri] of Object.entries(parent.prefixes)) prefixes[prefix] = uri;
+
+  for (const [name, rawValue] of Object.entries(attributes)) {
+    if (name === 'xmlns') {
+      defaultNamespace = rawValue.length > 0 ? rawValue : null;
+      continue;
+    }
+    if (!name.startsWith('xmlns:')) continue;
+
+    const prefix = name.slice('xmlns:'.length);
+    if (prefix === 'xmlns' || prefix.length === 0) {
+      throw new TraceImportError(
+        'invalid-xml',
+        `Déclaration de namespace interdite : ${excerpt(name)}.`,
+      );
+    }
+    if (rawValue.length === 0) {
+      throw new TraceImportError(
+        'invalid-xml',
+        `Le préfixe « ${excerpt(prefix)} » ne peut pas être lié à un namespace vide.`,
+      );
+    }
+    if (prefix === 'xml') {
+      if (rawValue !== XML_NAMESPACE) {
+        throw new TraceImportError(
+          'invalid-xml',
+          'Le préfixe réservé « xml » doit rester lié à son namespace standard.',
+        );
+      }
+      continue;
+    }
+    if (rawValue === XMLNS_NAMESPACE || rawValue === XML_NAMESPACE) {
+      throw new TraceImportError(
+        'invalid-xml',
+        `Le namespace réservé « ${excerpt(rawValue)} » ne peut pas être lié au préfixe « ${excerpt(prefix)} ».`,
+      );
+    }
+    prefixes[prefix] = rawValue;
+  }
+
+  return { defaultNamespace, prefixes };
+}
+
+function resolveElementNamespace(
+  prefix: string | null,
+  namespaces: NamespaceContext,
+  qualifiedName: string,
+): string | null {
+  if (prefix == null) return namespaces.defaultNamespace;
+  if (prefix === 'xml') return XML_NAMESPACE;
+  if (prefix === 'xmlns') {
+    throw new TraceImportError(
+      'invalid-xml',
+      `Le préfixe « xmlns » ne peut pas nommer un élément : ${excerpt(qualifiedName)}.`,
+    );
+  }
+  const namespace = namespaces.prefixes[prefix];
+  if (namespace == null) {
+    throw new TraceImportError(
+      'invalid-xml',
+      `Préfixe « ${excerpt(prefix)} » non lié pour <${excerpt(qualifiedName)}>.`,
+    );
+  }
+  return namespace;
+}
+
+function assertAttributeNamespaces(
+  attributes: Readonly<Record<string, string>>,
+  namespaces: NamespaceContext,
+): void {
+  for (const name of Object.keys(attributes)) {
+    if (name === 'xmlns' || name.startsWith('xmlns:')) continue;
+    const separator = name.indexOf(':');
+    if (separator < 0) continue;
+    const prefix = name.slice(0, separator);
+    if (prefix === 'xml') continue;
+    if (prefix === 'xmlns') {
+      throw new TraceImportError(
+        'invalid-xml',
+        `Le préfixe « xmlns » ne peut pas nommer un attribut : ${excerpt(name)}.`,
+      );
+    }
+    if (namespaces.prefixes[prefix] == null) {
+      throw new TraceImportError(
+        'invalid-xml',
+        `Préfixe « ${excerpt(prefix)} » non lié pour l’attribut ${excerpt(name)}.`,
+      );
+    }
+  }
 }
 
 function decodeEntities(raw: string, where: string): string {

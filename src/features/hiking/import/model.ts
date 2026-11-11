@@ -12,7 +12,8 @@
  * - cadence course : pas par minute ;
  * - puissance : watts ;
  * - température : degrés Celsius ;
- * - horodatages : ISO 8601 UTC (`Date#toISOString`).
+ * - horodatages : ISO 8601 UTC (`Date#toISOString`) ; un `xsd:dateTime` sans
+ *   fuseau est interprété comme UTC, jamais dans le fuseau de la machine.
  *
  * Les champs absents valent `null` : un consommateur ne peut pas confondre une
  * mesure manquante avec un zéro.

@@ -15,9 +15,18 @@ import { scanSafeXml } from './xml';
 
 const TCX_V1_NAMESPACE = 'http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v1';
 const TCX_V2_NAMESPACE = 'http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2';
+const ACTIVITY_EXTENSION_V2_NAMESPACE =
+  'http://www.garmin.com/xmlschemas/ActivityExtension/v2';
 
+/** Sections TCX valides mais hors du périmètre « une activité » de cet import. */
+const IGNORED_SECTIONS = new Set(['Courses', 'Workouts', 'Folders']);
+
+/**
+ * `xsd:dateTime` autorise l'absence de fuseau. Un tel horodatage est interprété
+ * comme UTC (règle explicite et testée), puis normalisé en ISO 8601 UTC.
+ */
 const ISO_DATE_TIME =
-  /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/;
+  /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d+)?(Z|[+-]\d{2}:\d{2})?$/;
 
 const DECIMAL_NUMBER = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/;
 
@@ -39,11 +48,17 @@ const METRIC_ORDER: readonly TraceMetric[] = [
  *
  * Périmètre volontairement borné :
  * - seul le namespace TCX v2 est accepté ; TCX v1 est refusé explicitement ;
- * - une seule `<Activity>` par fichier : plusieurs activités sont refusées au
- *   lieu d'être fusionnées silencieusement ;
+ * - tous les noms sont résolus par namespace : un élément TCX dans un autre
+ *   namespace est ignoré, jamais interprété comme une donnée TCX ;
+ * - une seule `<Activity>` par fichier : plusieurs activités et toute
+ *   `<MultiSportSession>` sont refusées explicitement (`multiple-activities`)
+ *   au lieu d'être fusionnées silencieusement ;
  * - structure contrôlée `Activities > Activity > Lap > Track > Trackpoint` ;
+ *   `Courses`, `Workouts` et `Folders` sont ignorés, ainsi que leurs sous-arbres ;
+ * - plusieurs `<Track>` sont acceptés dans un même `<Lap>` (segmentation XSD) ;
  * - les activités sans `<Position>` restent lisibles et conservent leurs
  *   bornes d'altitude ;
+ * - un `xsd:dateTime` sans fuseau est lu comme UTC et normalisé en ISO 8601 UTC ;
  * - les `<Trackpoint>` sans aucune mesure sont ignorés et signalés.
  *
  * - fichier complet : `status: 'complete'` ;
@@ -87,28 +102,37 @@ export function parseTcx(
   let activityId: string | null = null;
   let activityLapCount = 0;
   let sport: string | null = null;
-  let creatorDepth: number | null = null;
-  let creatorName: string | null = null;
-  let productId: string | null = null;
   let rootNamespace: string | null = null;
+  let ignoredSectionDepth: number | null = null;
   let lapDepth: number | null = null;
-  let lapHasTrack = false;
   let currentLap: NormalizedTraceLap | null = null;
   let trackDepth: number | null = null;
   let pointDepth: number | null = null;
   let currentPoint: NormalizedTrackPoint | null = null;
+  let extensionsDepth: number | null = null;
   let positionDepth: number | null = null;
   let pointHeartRateDepth: number | null = null;
   let averageHeartRateDepth: number | null = null;
   let maximumHeartRateDepth: number | null = null;
   let tpxDepth: number | null = null;
+  let tpxNamespace: string | null = null;
+  let activityCreatorDepth: number | null = null;
+  let activityCreatorSeen = false;
+  let activityCreatorName: string | null = null;
+  let activityCreatorProductId: string | null = null;
+  let authorDepth: number | null = null;
+  let authorSeen = false;
+  let authorName: string | null = null;
+  let authorProductId: string | null = null;
   let lastPointTime: string | null = null;
   let lastLapEnd: string | null = null;
 
   const scanned = scanSafeXml(
     xml,
     {
-      open(qualifiedName, localName, attributes, _selfClosing, depth) {
+      open(element, attributes, _selfClosing, depth) {
+        const { localName, namespaceURI } = element;
+        const tcx = namespaceURI === TCX_V2_NAMESPACE;
         path.push(localName);
         textStack.push('');
 
@@ -119,37 +143,43 @@ export function parseTcx(
               `Racine « ${excerpt(localName)} » inconnue : un TCX commence par TrainingCenterDatabase.`,
             );
           }
-
-          const namespace = resolveRootNamespace(qualifiedName, attributes);
-          if (namespace == null) {
+          if (namespaceURI == null) {
             throw new TraceImportError(
               'not-tcx',
               'Namespace TCX absent : la racine doit déclarer TrainingCenterDatabase/v2.',
             );
           }
-          if (namespace === TCX_V1_NAMESPACE) {
+          if (namespaceURI === TCX_V1_NAMESPACE) {
             throw new TraceImportError(
               'unsupported-version',
               'TCX v1 n’est pas pris en charge : seul le namespace TrainingCenterDatabase/v2 est accepté.',
             );
           }
-          if (namespace !== TCX_V2_NAMESPACE) {
+          if (namespaceURI !== TCX_V2_NAMESPACE) {
             throw new TraceImportError(
               'not-tcx',
-              `Namespace « ${excerpt(namespace)} » inconnu : seul TrainingCenterDatabase/v2 est accepté.`,
+              `Namespace « ${excerpt(namespaceURI)} » inconnu : seul TrainingCenterDatabase/v2 est accepté.`,
             );
           }
-          rootNamespace = namespace;
+          rootNamespace = namespaceURI;
         }
 
-        if (localName === 'TrainingCenterDatabase' && depth > 1) {
+        // Sections hors périmètre : tout leur sous-arbre est ignoré, y compris
+        // les Lap/Track/Trackpoint de Course et les Creator de parcours.
+        if (ignoredSectionDepth != null) return;
+        if (tcx && depth > 1 && IGNORED_SECTIONS.has(localName)) {
+          ignoredSectionDepth = depth;
+          return;
+        }
+
+        if (tcx && localName === 'TrainingCenterDatabase' && depth > 1) {
           throw new TraceImportError(
             'invalid-structure',
             'Un document TCX ne peut contenir qu’un seul élément racine.',
           );
         }
 
-        if (localName === 'Activities') {
+        if (tcx && localName === 'Activities') {
           if (depth !== 2 || activitiesDepth != null || activitiesSeen) {
             throw new TraceImportError(
               'invalid-structure',
@@ -160,7 +190,20 @@ export function parseTcx(
           activitiesDepth = depth;
         }
 
-        if (localName === 'Activity') {
+        if (tcx && localName === 'MultiSportSession') {
+          if (activitiesDepth == null || depth !== activitiesDepth + 1) {
+            throw new TraceImportError(
+              'invalid-structure',
+              'Une MultiSportSession doit être un enfant direct de Activities.',
+            );
+          }
+          throw new TraceImportError(
+            'multiple-activities',
+            'Le fichier TCX contient une MultiSportSession (plusieurs sports) : la fusion silencieuse est refusée.',
+          );
+        }
+
+        if (tcx && localName === 'Activity') {
           if (
             activitiesDepth == null
             || depth !== activitiesDepth + 1
@@ -184,7 +227,7 @@ export function parseTcx(
           sport = attributes.Sport?.trim() || null;
         }
 
-        if (localName === 'Lap') {
+        if (tcx && localName === 'Lap') {
           if (activityDepth == null || depth !== activityDepth + 1 || lapDepth != null) {
             throw new TraceImportError(
               'invalid-structure',
@@ -192,30 +235,24 @@ export function parseTcx(
             );
           }
           lapDepth = depth;
-          lapHasTrack = false;
           currentLap = createLap(
             laps.length,
             readTime(attributes.StartTime, 'Lap@StartTime'),
           );
         }
 
-        if (localName === 'Track') {
-          if (
-            lapDepth == null
-            || depth !== lapDepth + 1
-            || trackDepth != null
-            || lapHasTrack
-          ) {
+        if (tcx && localName === 'Track') {
+          if (lapDepth == null || depth !== lapDepth + 1 || trackDepth != null) {
             throw new TraceImportError(
               'invalid-structure',
-              'Un Track doit être l’unique enfant direct de Lap.',
+              'Un Track doit être un enfant direct de Lap, sans imbrication.',
             );
           }
+          // Un Lap peut contenir plusieurs Track (maxOccurs="unbounded").
           trackDepth = depth;
-          lapHasTrack = true;
         }
 
-        if (localName === 'Trackpoint') {
+        if (tcx && localName === 'Trackpoint') {
           if (trackDepth == null || depth !== trackDepth + 1 || pointDepth != null) {
             throw new TraceImportError(
               'invalid-structure',
@@ -239,28 +276,81 @@ export function parseTcx(
           };
         }
 
-        if (localName === 'Creator' && creatorDepth == null) creatorDepth = depth;
-        if (localName === 'Position' && pointDepth != null) positionDepth = depth;
-        if (localName === 'HeartRateBpm' && pointDepth != null) pointHeartRateDepth = depth;
-        if (localName === 'AverageHeartRateBpm' && lapDepth != null) averageHeartRateDepth = depth;
-        if (localName === 'MaximumHeartRateBpm' && lapDepth != null) maximumHeartRateDepth = depth;
-        if (localName === 'TPX' && pointDepth != null) tpxDepth = depth;
+        // Provenance : uniquement le Creator direct de l'Activity, avec repli
+        // sur l'Author direct de la racine. Un Creator de Course ou d'extension
+        // ne peut donc plus écraser la provenance de l'activité.
+        if (
+          tcx
+          && localName === 'Creator'
+          && isDirectChild(activityDepth, depth)
+          && !activityCreatorSeen
+        ) {
+          activityCreatorDepth = depth;
+          activityCreatorSeen = true;
+        }
+        if (
+          tcx
+          && localName === 'Author'
+          && depth === 2
+          && rootNamespace === TCX_V2_NAMESPACE
+          && !authorSeen
+        ) {
+          authorDepth = depth;
+          authorSeen = true;
+        }
+
+        if (tcx && localName === 'Extensions' && isDirectChild(pointDepth, depth)) {
+          extensionsDepth = depth;
+        }
+        if (tcx && localName === 'Position' && isDirectChild(pointDepth, depth)) {
+          positionDepth = depth;
+        }
+        if (tcx && localName === 'HeartRateBpm' && isDirectChild(pointDepth, depth)) {
+          pointHeartRateDepth = depth;
+        }
+        if (tcx && localName === 'AverageHeartRateBpm' && isDirectChild(lapDepth, depth)) {
+          averageHeartRateDepth = depth;
+        }
+        if (tcx && localName === 'MaximumHeartRateBpm' && isDirectChild(lapDepth, depth)) {
+          maximumHeartRateDepth = depth;
+        }
+        if (
+          localName === 'TPX'
+          && pointDepth != null
+          && namespaceURI === ACTIVITY_EXTENSION_V2_NAMESPACE
+          && (isDirectChild(extensionsDepth, depth) || isDirectChild(pointDepth, depth))
+        ) {
+          tpxDepth = depth;
+          tpxNamespace = namespaceURI;
+        }
       },
 
-      close(_qualifiedName, localName, depth) {
+      close(element, depth) {
+        const { localName, namespaceURI } = element;
+        const tcx = namespaceURI === TCX_V2_NAMESPACE;
         const value = textStack.pop() ?? '';
         const at = path.join('/');
 
-        if (isDirectChild(creatorDepth, depth)) {
-          if (localName === 'Name') creatorName = clean(value);
-          else if (localName === 'ProductID') productId = clean(value);
+        if (ignoredSectionDepth != null) {
+          if (depth === ignoredSectionDepth) ignoredSectionDepth = null;
+          path.pop();
+          return;
         }
 
-        if (isDirectChild(activityDepth, depth) && localName === 'Id') {
+        if (tcx && isDirectChild(activityCreatorDepth, depth)) {
+          if (localName === 'Name') activityCreatorName = clean(value);
+          else if (localName === 'ProductID') activityCreatorProductId = clean(value);
+        }
+        if (tcx && isDirectChild(authorDepth, depth)) {
+          if (localName === 'Name') authorName = clean(value);
+          else if (localName === 'ProductID') authorProductId = clean(value);
+        }
+
+        if (tcx && isDirectChild(activityDepth, depth) && localName === 'Id') {
           activityId ??= readTime(value, at);
         }
 
-        if (isDirectChild(lapDepth, depth) && currentLap != null) {
+        if (tcx && isDirectChild(lapDepth, depth) && currentLap != null) {
           if (localName === 'TotalTimeSeconds') currentLap.elapsedSeconds = readNonNegativeNumber(value, at);
           else if (localName === 'DistanceMeters') currentLap.distanceM = readNonNegativeNumber(value, at);
           else if (localName === 'MaximumSpeed') currentLap.maxSpeedMps = readNonNegativeNumber(value, at);
@@ -270,7 +360,7 @@ export function parseTcx(
           else if (localName === 'TriggerMethod') currentLap.triggerMethod = clean(value);
         }
 
-        if (isDirectChild(pointDepth, depth) && currentPoint != null) {
+        if (tcx && isDirectChild(pointDepth, depth) && currentPoint != null) {
           if (localName === 'Time') currentPoint.recordedAt = readTime(value, at);
           else if (localName === 'AltitudeMeters') currentPoint.altitudeM = readNumber(value, at);
           else if (localName === 'DistanceMeters') currentPoint.distanceM = readNonNegativeNumber(value, at);
@@ -278,7 +368,7 @@ export function parseTcx(
           else if (localName === 'Temperature') currentPoint.temperatureC = readNumber(value, at);
         }
 
-        if (isDirectChild(positionDepth, depth) && currentPoint != null) {
+        if (tcx && isDirectChild(positionDepth, depth) && currentPoint != null) {
           if (localName === 'LatitudeDegrees') {
             currentPoint.latitudeDeg = readNumber(value, at);
           } else if (localName === 'LongitudeDegrees') {
@@ -286,54 +376,85 @@ export function parseTcx(
           }
         }
 
-        if (isDirectChild(pointHeartRateDepth, depth) && currentPoint != null && localName === 'Value') {
+        if (
+          tcx
+          && isDirectChild(pointHeartRateDepth, depth)
+          && currentPoint != null
+          && localName === 'Value'
+        ) {
           currentPoint.heartRateBpm = readNonNegativeNumber(value, at);
         }
-        if (isDirectChild(averageHeartRateDepth, depth) && currentLap != null && localName === 'Value') {
+        if (
+          tcx
+          && isDirectChild(averageHeartRateDepth, depth)
+          && currentLap != null
+          && localName === 'Value'
+        ) {
           currentLap.averageHeartRateBpm = readNonNegativeNumber(value, at);
         }
-        if (isDirectChild(maximumHeartRateDepth, depth) && currentLap != null && localName === 'Value') {
+        if (
+          tcx
+          && isDirectChild(maximumHeartRateDepth, depth)
+          && currentLap != null
+          && localName === 'Value'
+        ) {
           currentLap.maxHeartRateBpm = readNonNegativeNumber(value, at);
         }
 
-        if (isDirectChild(tpxDepth, depth) && currentPoint != null) {
+        if (
+          isDirectChild(tpxDepth, depth)
+          && tpxNamespace === namespaceURI
+          && currentPoint != null
+        ) {
           if (localName === 'Speed') currentPoint.speedMps = readNonNegativeNumber(value, at);
           else if (localName === 'Watts') currentPoint.powerW = readNonNegativeNumber(value, at);
           else if (localName === 'RunCadence') currentPoint.runCadenceSpm = readNonNegativeNumber(value, at);
           else if (localName === 'Temperature') currentPoint.temperatureC = readNumber(value, at);
         }
 
-        if (localName === 'Position' && positionDepth === depth) {
+        if (tcx && localName === 'Extensions' && extensionsDepth === depth) {
+          extensionsDepth = null;
+        }
+        if (tcx && localName === 'Position' && positionDepth === depth) {
           if (currentPoint != null) validatePosition(currentPoint, at);
           positionDepth = null;
         }
-        if (localName === 'HeartRateBpm' && pointHeartRateDepth === depth) {
+        if (tcx && localName === 'HeartRateBpm' && pointHeartRateDepth === depth) {
           pointHeartRateDepth = null;
         }
-        if (localName === 'AverageHeartRateBpm' && averageHeartRateDepth === depth) {
+        if (tcx && localName === 'AverageHeartRateBpm' && averageHeartRateDepth === depth) {
           averageHeartRateDepth = null;
         }
-        if (localName === 'MaximumHeartRateBpm' && maximumHeartRateDepth === depth) {
+        if (tcx && localName === 'MaximumHeartRateBpm' && maximumHeartRateDepth === depth) {
           maximumHeartRateDepth = null;
         }
-        if (localName === 'TPX' && tpxDepth === depth) tpxDepth = null;
-        if (localName === 'Creator' && creatorDepth === depth) creatorDepth = null;
+        if (tcx && localName === 'TPX' && tpxDepth === depth) {
+          tpxDepth = null;
+          tpxNamespace = null;
+        }
+        if (tcx && localName === 'Creator' && activityCreatorDepth === depth) {
+          activityCreatorDepth = null;
+        }
+        if (tcx && localName === 'Author' && authorDepth === depth) {
+          authorDepth = null;
+        }
 
-        if (localName === 'Trackpoint' && pointDepth === depth) {
+        if (tcx && localName === 'Trackpoint' && pointDepth === depth) {
           finalizePoint(at);
           pointDepth = null;
           currentPoint = null;
         }
-        if (localName === 'Track' && trackDepth === depth) {
+        if (tcx && localName === 'Track' && trackDepth === depth) {
+          // Fin d'un Track : le Lap peut en contenir un autre.
           trackDepth = null;
         }
-        if (localName === 'Lap' && lapDepth === depth) {
+        if (tcx && localName === 'Lap' && lapDepth === depth) {
           finalizeLap(at);
           lapDepth = null;
           currentLap = null;
           activityLapCount += 1;
         }
-        if (localName === 'Activity' && activityDepth === depth) {
+        if (tcx && localName === 'Activity' && activityDepth === depth) {
           if (activityLapCount === 0) {
             throw new TraceImportError(
               'invalid-structure',
@@ -342,7 +463,7 @@ export function parseTcx(
           }
           activityDepth = null;
         }
-        if (localName === 'Activities' && activitiesDepth === depth) {
+        if (tcx && localName === 'Activities' && activitiesDepth === depth) {
           activitiesDepth = null;
         }
 
@@ -399,8 +520,8 @@ export function parseTcx(
       fileName: clean(options.fileName),
       byteLength,
       schema: rootNamespace,
-      creator: creatorName,
-      productId,
+      creator: activityCreatorName ?? authorName,
+      productId: activityCreatorProductId ?? authorProductId,
       sport,
       startedAt,
       endedAt,
@@ -557,11 +678,21 @@ export function parseTcx(
     const value = raw?.trim();
     if (value == null || value.length === 0) return null;
     const match = ISO_DATE_TIME.exec(value);
-    if (match == null || !isValidCivilDateTime(match) || !Number.isFinite(Date.parse(value))) {
+    if (match == null || !isValidCivilDateTime(match)) {
       addIssue('invalid-time', `Horodatage invalide « ${excerpt(value)} ».`, at);
       return null;
     }
-    return new Date(value).toISOString();
+
+    // `xsd:dateTime` autorise l'absence de fuseau. On la lit comme UTC pour
+    // que `Date.parse` ne dépende pas du fuseau de la machine, puis on
+    // normalise toujours en ISO 8601 UTC.
+    const hasTimeZone = match[7] != null;
+    const timestamp = Date.parse(hasTimeZone ? value : `${value}Z`);
+    if (!Number.isFinite(timestamp)) {
+      addIssue('invalid-time', `Horodatage invalide « ${excerpt(value)} ».`, at);
+      return null;
+    }
+    return new Date(timestamp).toISOString();
   }
 
   function addIssue(code: TraceImportIssueCode, message: string, at: string): void {
@@ -648,17 +779,6 @@ function isPointEmpty(point: NormalizedTrackPoint): boolean {
     && point.powerW == null
     && point.temperatureC == null
   );
-}
-
-function resolveRootNamespace(
-  qualifiedName: string,
-  attributes: Readonly<Record<string, string>>,
-): string | null {
-  const separator = qualifiedName.indexOf(':');
-  const prefix = separator >= 0 ? qualifiedName.slice(0, separator) : null;
-  const declaration = prefix == null ? attributes.xmlns : attributes[`xmlns:${prefix}`];
-  const namespace = declaration?.trim();
-  return namespace != null && namespace.length > 0 ? namespace : null;
 }
 
 function clean(value: string | undefined): string | null {

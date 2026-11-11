@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TrainingCenterDatabase xmlns="http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2">
+  <Courses>
+    <Course>
+      <Name>Parcours seul</Name>
+      <Lap>
+        <TotalTimeSeconds>60</TotalTimeSeconds>
+        <Track>
+          <Trackpoint>
+            <Time>2026-08-15T09:00:00.000Z</Time>
+            <Position>
+              <LatitudeDegrees>46.0000</LatitudeDegrees>
+              <LongitudeDegrees>7.0000</LongitudeDegrees>
+            </Position>
+          </Trackpoint>
+        </Track>
+      </Lap>
+    </Course>
+  </Courses>
+</TrainingCenterDatabase>
