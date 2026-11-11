@@ -20,7 +20,7 @@ Tu es l'ORCHESTRATEUR du trailer de 60 secondes de l'app « Le Kit du Voyageur �
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 LE FILM
 - 60 s, 1920×1080, 60 i/s, soit 3 600 images, avec l'audio synchronisé, plus une déclinaison verticale 9:16 recomposée (pas un simple recadrage aveugle).
-- 54 plans. AUCUN plan ne dure plus de 2 s sans coupure. Rythme mesuré sur les références : coupes sur le temps, plans de 1,0 à 1,8 s.
+- 54 plans. AUCUN plan ne dure plus de 2 s sans coupure. Toutes les coupes sont déjà posées sur les temps de la musique : plans de 0,44 à 2,00 s.
 - Histoire, une boucle d'inspiration. Espace → descente → Léa voit un carnet LKDV sur son téléphone (photo d'un lac) → elle prépare l'aventure avec le Compas → dans Kit Studio, elle part presque sans argent grâce au prêt, à la location et à l'occasion, et commande son sac LKDV ONE 45 → colis → départ → montagne avec ses trois amis → un coureur prend le relais → puis une cycliste → bivouac → Léa publie son carnet → un inconnu dans un bus de nuit le découvre → remontée vers l'espace → des milliers de tracés forment le logo.
 - Huit plans « ★ » à couper le souffle : humains minuscules face aux Dolomites (Seceda, Tre Cime, Sorapis, Tofana, gravel doré, épingle, Passo Giau, bivouac sous la Voie lactée).
 
@@ -33,7 +33,7 @@ RÈGLES DE CRÉATION
 - La caméra bouge en permanence : poussées, filés, rampes de vitesse, FPV, parallaxe 2,5D.
 
 DOCUMENTS DE RÉFÉRENCE (à lire en entier, sans sauter de section)
-- trailer/TRAME-60s.md : la trame v4 seconde par seconde, avec les 54 plans, les images de début et de fin de chaque plan, les 13 écrans E1–E13 à capturer et la finition attendue. C'EST LA RÉFÉRENCE.
+- trailer/TRAME-60s.md : la trame v4.1, calée sur la musique, seconde par seconde, avec les 54 plans, les images de début et de fin de chaque plan, les 13 écrans E1–E13 à capturer et la finition attendue. C'EST LA RÉFÉRENCE.
 - trailer/PROMPTS-CHATGPT.md : la bible visuelle, les 7 personnages et les 51 images que Tony génère dans ChatGPT (img01 à img49, img09b, img35a/b).
 - trailer/ANALYSE-REFERENCES.md : les coupes mesurées sur les 3 vidéos de référence et ce qu'on en garde.
 - trailer/MUSIQUE.md : la structure de STORM II, le montage musical de 60 s coupé sur les premiers temps de mesure (drop 1 à 5,41 s, drop 2 à 33,48 s, outro à 47,47 s, impact final à 58,00 s) et la commande FFmpeg. Les temps sont dans trailer/assets/audio/storm-ii.beats.json. Les 54 coupes de la trame v4.1 sont déjà posées sur les temps : ne les déplace pas sans raison.
@@ -69,7 +69,7 @@ OUTILS ET MOTEUR
   - render : rendu final.
 
 RESSOURCES ATTENDUES (leur absence n'est PAS un blocage de la préparation)
-- trailer/assets/footage/ : les 51 images générées par Tony dans ChatGPT, nommées exactement img01.png … img49.png, img09b.png, img35a.png, img35b.png.
+- trailer/assets/footage/ : les 51 images générées par Tony dans ChatGPT, nommées exactement img01.png … img49.png, img09b.png, img35a.png, img35b.png, plus les fiches personnages F1-lea.png à F7-noah.png (références de cohérence des visages).
 - La musique « STORM II » est FOURNIE et analysée (136,9 BPM). Le fichier n'est pas versionné : Tony le joint à ce message. Place-le dans trailer/assets/audio/storm-ii.mp3, puis refais trailer/assets/audio/storm-ii-montage-60s.wav avec la commande de trailer/MUSIQUE.md. La licence du titre est à vérifier avant toute diffusion publique.
 - Les 13 écrans réels E1–E13 : à capturer plus tard sur l'aperçu Vercel avec un compte de démonstration rempli (voyage dans les Dolomites, 4 participants, kit, carnet).
 
@@ -104,7 +104,7 @@ g) Inventaire : liste ce qui est présent et ce qui manque (images, audio, écra
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 4. CE QUE TU FERAS APRÈS (ne pas commencer maintenant)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-P1 Squelette de timeline dans HyperFrames : 54 plans, des images 0 à 3 600, avec un gabarit par plan aux durées exactes de la trame v4.
+P1 Squelette de timeline dans HyperFrames : 54 plans, des images 0 à 3 600, avec un gabarit par plan aux durées exactes de la trame v4.1.
 P2 Captures des 13 écrans réels de l'app (ui-builder).
 P3 Espace, descente, remontée, tracés et logo, entièrement en code (cosmos-vfx).
 P4 Animation des 51 images et raccords (landscape-director), dès que les images arrivent.
