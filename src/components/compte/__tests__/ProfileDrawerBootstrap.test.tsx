@@ -724,4 +724,117 @@ describe('Compte — pont de suivi runtime', () => {
       expect(runtimeState().followPending.alice).toBeUndefined();
     });
   });
+
+  it('hydrate une demande sortante au chargement, avant toute action', async () => {
+    bootstrapAnswer = () =>
+      Promise.resolve(
+        okResponse({
+          ...BOOTSTRAP_PAYLOAD,
+          followers: [
+            {
+              id: 'target-1',
+              n: 'Alice',
+              ps: 'alice',
+              i: 'A',
+              sub: 'Voyageuse',
+              img: '',
+            },
+          ],
+          followStates: { alice: 'requested' },
+        })
+      );
+
+    await renderCompte();
+    await waitFor(() => expect(bootstrapCalls).toBe(1));
+    await waitFor(() => expect(runtimeState().followStates.alice).toBe('requested'));
+    expect(runtimeState().followPending.alice).toBeUndefined();
+    expect(followCalls).toHaveLength(0);
+
+    await act(async () => {
+      (window as any).__lkdvCompteAct('igtab', 2);
+      (window as any).__lkdvCompteAct('toggleReseau', 'followers');
+    });
+    expect(document.body.textContent).toContain('Demande envoyée');
+  });
+
+  it('affiche le message d’erreur du pont et restaure le fallback', async () => {
+    // Aucune demande pending : le rollback doit retomber sur l'état confirmé
+    // d'avant la bascule, pas sur une demande supposée.
+    supabaseState.rows.follow_requests = [];
+    await renderCompte();
+    await act(async () => {
+      (window as any).__lkdvHydrateCompte({ followStates: { alice: 'none' } });
+    });
+    followAnswer = () =>
+      Promise.resolve({
+        ok: false,
+        status: 409,
+        json: async () => ({
+          error: 'Cette demande de suivi est déjà close.',
+          code: 'follow_request_closed',
+        }),
+      });
+
+    act(() => {
+      (window as any).EXA.toggleFollowUser('alice');
+    });
+
+    await waitFor(() =>
+      expect(document.getElementById('island')?.textContent).toContain(
+        'Cette demande de suivi est déjà close.'
+      )
+    );
+    expect(document.getElementById('island')?.textContent).toContain('Suivi impossible');
+    expect(followCalls).toHaveLength(1);
+    expect(runtimeState().followStates.alice).toBe('none');
+    expect(runtimeState().followPending.alice).toBeUndefined();
+    expect(document.getElementById('live-status')?.textContent).toContain(
+      'Cette demande de suivi est déjà close.'
+    );
+  });
+
+  it('nettoie la bascule quand le pont hôte est absent', async () => {
+    await renderCompte();
+    await act(async () => {
+      (window as any).__lkdvHydrateCompte({ followStates: { alice: 'none' } });
+    });
+    delete (window as any).__lkdvOnAction;
+
+    act(() => {
+      (window as any).EXA.toggleFollowUser('alice');
+    });
+
+    await waitFor(() => expect(runtimeState().followPending.alice).toBeUndefined());
+    expect(runtimeState().followStates.alice).toBe('none');
+    expect(followCalls).toHaveLength(0);
+    expect(document.getElementById('island')?.textContent).toContain(
+      'Le suivi est momentanément indisponible.'
+    );
+  });
+
+  it('refuse une cible privée absente de la vue publique sans appeler l’API', async () => {
+    // `public_profiles` n'expose pas un profil privé sans invitation acceptée :
+    // le pont doit s'arrêter avant toute mutation.
+    supabaseState.rows.public_profiles = [];
+    await renderCompte();
+
+    let result: any;
+    await act(async () => {
+      result = await (window as any).__lkdvOnAction(
+        'toggleFollowUser',
+        { handle: 'alice', followed: true },
+        runtimeState().S
+      );
+    });
+
+    expect(result).toMatchObject({
+      ok: false,
+      code: 'target_not_found',
+      state: 'none',
+      restored: true,
+      message: 'Ce profil n’est plus disponible.',
+    });
+    expect(followCalls).toHaveLength(0);
+    expect(runtimeState().followStates.alice).toBe('none');
+  });
 });

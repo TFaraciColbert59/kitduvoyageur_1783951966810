@@ -288,6 +288,12 @@ export type FollowProfileRow = {
   location?: string | null;
 };
 
+/** Demande de suivi sortante du compte courant (jamais un identifiant exposé). */
+export type OutgoingFollowRequestRow = {
+  target_id?: string | null;
+  status?: string | null;
+};
+
 export type StoryRow = {
   id: string;
   caption?: string | null;
@@ -845,6 +851,33 @@ export function mapTribu(rows: FollowProfileRow[]) {
     online: 0,
     avatar: row.avatar_url || null,
   }));
+}
+
+/**
+ * États `requested` à hydrater au chargement du Compte.
+ *
+ * Seules les cibles réellement visibles (`public_profiles` : public, soi-même
+ * ou privé avec invitation acceptée) ont un handle : un profil privé non
+ * invité ne produit donc jamais d'état, même si une demande existe en base.
+ * L'appelant retire au préalable les cibles déjà suivies : un suivi réel prime
+ * toujours sur une demande `pending` résiduelle.
+ */
+export function mapOutgoingFollowStates(
+  requests: readonly OutgoingFollowRequestRow[],
+  profiles: readonly FollowProfileRow[]
+): Record<string, 'requested'> {
+  const handleById = new Map<string, string>();
+  for (const row of profiles) {
+    const handle = row.handle?.replace(/^@/, '').trim();
+    if (row.id && handle) handleById.set(row.id, handle);
+  }
+  const states: Record<string, 'requested'> = {};
+  for (const row of requests) {
+    if (row.status !== 'pending' || !row.target_id) continue;
+    const handle = handleById.get(row.target_id);
+    if (handle) states[handle] = 'requested';
+  }
+  return states;
 }
 
 export function mapStories(rows: StoryRow[]) {
@@ -1609,13 +1642,20 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
   const user = authData?.user;
   if (!user) return { authenticated: false as const };
 
-  const [profileRes, followerRows, followingRows] = await Promise.all([
+  const [profileRes, followerRows, followingRows, outgoingRequestRows] = await Promise.all([
     supabase.from('user_profiles').select('*').eq('id', user.id).maybeSingle(),
     safeRows<{ follower_id?: string | null }>(
       supabase.from('user_follows').select('follower_id').eq('following_id', user.id)
     ),
     safeRows<{ following_id?: string | null }>(
       supabase.from('user_follows').select('following_id').eq('follower_id', user.id)
+    ),
+    safeRows<OutgoingFollowRequestRow>(
+      supabase
+        .from('follow_requests')
+        .select('target_id, status')
+        .eq('requester_id', user.id)
+        .eq('status', 'pending')
     ),
   ]);
 
@@ -1634,6 +1674,19 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
         .filter((id): id is string => typeof id === 'string' && id.length > 0)
     ),
   ];
+  // Les demandes sortantes déjà satisfaites par un suivi réel ne doivent pas
+  // repeindre le bouton en « Demande envoyée » (propagation en cours).
+  const pendingFollowTargetIds = [
+    ...new Set(
+      outgoingRequestRows
+        .filter((row) => row.status === 'pending')
+        .map((row) => row.target_id)
+        .filter(
+          (id): id is string =>
+            typeof id === 'string' && id.length > 0 && !followingIds.includes(id)
+        )
+    ),
+  ];
   const followers = followerIds.length;
 
   const [
@@ -1644,6 +1697,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
     notificationRows,
     followingProfiles,
     followerProfiles,
+    outgoingRequestProfiles,
     clubMembers,
     kitRows,
     storyRows,
@@ -1710,6 +1764,17 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
             .from('public_profiles')
             .select('id,handle,full_name,avatar_url,trust_score,location')
             .in('id', followerIds)
+        )
+      : Promise.resolve([] as FollowProfileRow[]),
+    // Cibles des demandes sortantes : la vue `public_profiles` applique déjà
+    // les règles de visibilité (public, soi, ou privé avec invitation
+    // acceptée). Une cible privée non invitée reste donc sans handle.
+    pendingFollowTargetIds.length
+      ? safeRows<FollowProfileRow>(
+          supabase
+            .from('public_profiles')
+            .select('id,handle')
+            .in('id', pendingFollowTargetIds)
         )
       : Promise.resolve([] as FollowProfileRow[]),
     safeRows<ClubMemberRow>(supabase.from('club_members').select('club_id,role,status').eq('user_id', user.id)),
@@ -2204,6 +2269,9 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
     tribu: mapTribu(followingProfiles),
     followers: mapTribu(followerProfiles),
     following: mapTribu(followingProfiles),
+    // Demandes sortantes restaurées au chargement : le bouton réseau affiche
+    // « Demande envoyée » avant toute nouvelle action.
+    followStates: mapOutgoingFollowStates(outgoingRequestRows, outgoingRequestProfiles),
     reposts: mapReposts(repostRows, repostSources, profileById),
     badges: mapBadges(badgeRows, userBadgeRows),
     challenges: mapChallenges(challengeRows, challengeProgress, progressionRows, userProgressionRows[0] ?? null),

@@ -142,4 +142,38 @@ describe('DetailDrawers — suivi réel', () => {
     expect(screen.getByRole('button', { name: 'Suivre' })).toBeTruthy();
     expect(screen.queryByText('Abonné')).toBeNull();
   });
+
+  it('une réponse périmée ne réarme pas le verrou d’une requête en cours', async () => {
+    const releases: Array<(value: unknown) => void> = [];
+    followAnswer = () =>
+      new Promise((resolve) => {
+        releases.push(resolve);
+      });
+    mocks.rows.public_profiles = [
+      { id: 'target-1', full_name: 'Alice Randonneuse', handle: 'alice' },
+      { id: 'target-2', full_name: 'Bruno Traverseur', handle: 'bruno' },
+    ];
+    const view = renderDrawer();
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Suivre' }));
+    view.rerender(<ProfilePreviewDrawer userId="target-2" onClose={() => {}} />);
+
+    const second = await screen.findByRole('button', { name: 'Suivre' });
+    fireEvent.click(second);
+    expect(mocks.calls).toHaveLength(2);
+
+    // La première requête (target-1) répond après le changement de cible.
+    await act(async () => releases[0](json({ status: 'following' })));
+
+    // Le verrou de la seconde requête doit rester posé. On retire l'attribut
+    // `disabled` pour éprouver directement le garde impératif, sans dépendre
+    // de la couche de présentation qui le masque.
+    const busyButton = screen.getByRole('button', { name: 'Abonné' });
+    busyButton.removeAttribute('disabled');
+    fireEvent.click(busyButton);
+    expect(mocks.calls).toHaveLength(2);
+
+    await act(async () => releases[1](json({ status: 'following' })));
+    await waitFor(() => expect(screen.getByText('Abonné')).toBeTruthy());
+  });
 });

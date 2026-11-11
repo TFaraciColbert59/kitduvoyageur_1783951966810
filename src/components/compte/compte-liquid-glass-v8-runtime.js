@@ -2935,6 +2935,15 @@ function followBusy(handle) {
   return Boolean(key && X.followPending && X.followPending[key] !== undefined);
 }
 
+/**
+ * Rend l'échec du pont visible (îlot + région live), sans jamais laisser la
+ * bascule optimiste en place. Le message serveur est borné par la route.
+ */
+function showFollowError(message) {
+  const text = String(message || 'Impossible de mettre à jour cet abonnement.').trim();
+  island('Suivi impossible', text, false);
+}
+
 {
   const st = document.createElement('div'); st.className = 'story'; st.id = 'story'; st.setAttribute('role', 'dialog'); st.setAttribute('aria-label', 'Story à la une'); phone.appendChild(st);
   const sh = document.createElement('div'); sh.className = 'sunshade'; sh.setAttribute('aria-hidden', 'true'); $('map').insertBefore(sh, $('mgrab'));
@@ -4878,23 +4887,45 @@ var EXA = {
       outcome
         .then((result) => {
           if (!isCurrent()) return;
+          // Une requête déjà en vol garde sa bascule : ce doublon ne doit pas
+          // réarmer le bouton avant la réponse de la première.
+          if (result && result.code === 'in_flight') return;
           if (result && result.state) {
-            window.__lkdvApplyFollowStates?.({ [handle]: result.state });
+            const applied = window.__lkdvApplyFollowStates?.({ [handle]: result.state });
+            if (!applied) {
+              const state = normalizeFollowState(result.state);
+              if (state) {
+                X.followStates[handle] = state;
+                X.followedUsers[handle] = state !== 'none';
+              }
+              delete X.followPending[handle];
+            }
+            if (result.ok === false) showFollowError(result.message);
             renderSheet();
             return;
           }
           if (!result || result.restored === false) {
             delete X.followPending[handle];
             delete X.followedUsers[handle];
-            renderSheet();
           }
+          if (!result || result.ok === false) showFollowError(result && result.message);
+          renderSheet();
         })
         .catch(() => {
           if (!isCurrent()) return;
           delete X.followPending[handle];
           delete X.followedUsers[handle];
+          showFollowError('Le suivi est momentanément indisponible.');
           renderSheet();
         });
+    } else {
+      // Pont absent (ou action jetée avant de rendre sa promesse) : aucune
+      // réponse ne viendra. On rend la main au fallback confirmé au lieu de
+      // laisser le bouton bloqué sur « Envoi ».
+      delete X.followPending[handle];
+      delete X.followedUsers[handle];
+      showFollowError('Le suivi est momentanément indisponible.');
+      renderSheet();
     }
   },
   openUserProfile: v => {

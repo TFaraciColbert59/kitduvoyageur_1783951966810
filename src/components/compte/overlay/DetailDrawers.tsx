@@ -205,8 +205,12 @@ export function ProfilePreviewDrawer({ userId, onClose }: { userId: string; onCl
         followErrorMessage(error, 'L’abonnement n’a pas été enregistré. Réessayez.')
       );
     } finally {
-      followBusyRef.current = false;
-      if (epoch === readEpochRef.current) setFollowBusy(false);
+      // Une réponse périmée ne doit pas réarmer le verrou d'une requête plus
+      // récente : seule la requête courante rend la main au bouton.
+      if (epoch === readEpochRef.current) {
+        followBusyRef.current = false;
+        setFollowBusy(false);
+      }
     }
   };
   return (

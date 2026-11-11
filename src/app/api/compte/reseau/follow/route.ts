@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { requireUser } from '@/lib/api/requireUser';
 import { fail, ok } from '@/lib/api/respond';
+import { invalidateUserCache } from '@/lib/perf/userMemo';
 import { followUser, readReseauError, unfollowUser } from '@/features/compte/server/reseau';
 
 export const runtime = 'nodejs';
@@ -44,7 +45,11 @@ export async function POST(request: Request) {
   if (parsed.data.userId === auth.user.id) return fail('conflict', 'Impossible de se suivre soi-même.');
   try {
     // L'acteur est celui du JWT côté RPC : la route ne transmet que la cible.
-    return ok(await followUser(auth.supabase, parsed.data.userId));
+    const status = await followUser(auth.supabase, parsed.data.userId);
+    // Le bootstrap met en cache 15 s : sans invalidation, un rechargement
+    // immédiat pourrait encore afficher « Suivre » avant la demande envoyée.
+    invalidateUserCache(auth.user.id);
+    return ok(status);
   } catch (error) {
     return followFailure(error);
   }
@@ -57,6 +62,7 @@ export async function DELETE(request: Request) {
   if (!parsed.success) return fail('not_found', 'Profil inconnu.');
   try {
     await unfollowUser(auth.supabase, parsed.data.userId);
+    invalidateUserCache(auth.user.id);
     return ok({ status: 'unfollowed' });
   } catch (error) {
     return unfollowFailure(error);

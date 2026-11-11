@@ -666,7 +666,14 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
           ? (val as { handle?: unknown; followed?: unknown })
           : { handle: val, followed: undefined };
       const targetHandle = String(contract.handle ?? '').replace(/^@/, '').trim();
-      if (!targetHandle) return { ok: false, code: 'invalid_target', restored: false };
+      if (!targetHandle) {
+        return {
+          ok: false,
+          code: 'invalid_target',
+          restored: false,
+          message: 'Profil inconnu.',
+        };
+      }
       if (followInFlight.has(targetHandle)) {
         return { ok: false, code: 'in_flight', restored: false };
       }
@@ -680,7 +687,12 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
         const { data: auth } = await supabase.auth.getUser();
         const me = auth?.user;
         if (!isCurrent() || !me || me.id !== owner) {
-          return { ok: false, code: 'stale', restored: false };
+          return {
+            ok: false,
+            code: 'stale',
+            restored: false,
+            message: 'Session expirée. Reconnecte-toi pour continuer.',
+          };
         }
 
         const { data: target, error: targetError } = await supabase
@@ -688,10 +700,36 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
           .select('id')
           .eq('handle', targetHandle)
           .maybeSingle();
-        if (!isCurrent()) return { ok: false, code: 'stale', restored: false };
-        if (targetError || !target?.id || target.id === me.id) {
+        if (!isCurrent()) {
+          return {
+            ok: false,
+            code: 'stale',
+            restored: false,
+            message: 'Session expirée. Reconnecte-toi pour continuer.',
+          };
+        }
+        if (targetError) {
           const restored = applyFollowState(targetHandle, previous);
-          return { ok: false, code: 'target_not_found', state: previous, restored };
+          return {
+            ok: false,
+            code: 'target_not_found',
+            state: previous,
+            restored,
+            message: 'Impossible de vérifier ce profil pour le moment.',
+          };
+        }
+        if (!target?.id || target.id === me.id) {
+          const restored = applyFollowState(targetHandle, previous);
+          return {
+            ok: false,
+            code: 'target_not_found',
+            state: previous,
+            restored,
+            message:
+              target?.id === me.id
+                ? 'Impossible de se suivre soi-même.'
+                : 'Ce profil n’est plus disponible.',
+          };
         }
 
         let action: 'follow' | 'unfollow';
@@ -1243,6 +1281,7 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
             tribu: payload.tribu || [],
             followers: payload.followers || [],
             following: payload.following || [],
+            followStates: payload.followStates || {},
             kits: payload.kits || [],
             stories: payload.stories || [],
             highlights: payload.highlights || [],
