@@ -7,10 +7,12 @@ import type {
   Detent,
   ExplorerState,
   Level,
+  PendingStart,
   PoiKind,
   Selection,
   SheetKind,
   Sport,
+  SportSelection,
   ToastMessage,
 } from './types';
 import { LEVEL_ZOOM, SCENES, type SceneName } from './scenes';
@@ -40,7 +42,13 @@ interface ExplorerActions {
   setCamera: (camera: CameraIntent) => void;
   showToast: (toast: Omit<ToastMessage, 'id'>) => void;
   dismissToast: () => void;
-  startActivity: (sport: Sport, sessionId?: string | null) => void;
+  /** Arme le compte à rebours sans encore créer d’activité. */
+  requestStart: (sport: Sport, selection?: SportSelection) => void;
+  /** Termine le compte à rebours en conservant la variante choisie. */
+  confirmStart: () => void;
+  /** Annule la demande sans créer d’activité. */
+  cancelStart: () => void;
+  startActivity: (sport: Sport, sessionId?: string | null, selection?: SportSelection) => void;
   updateActivity: (patch: Partial<ActivityState>) => void;
   stopActivity: () => void;
   setTheme: (theme: 'light' | 'dark') => void;
@@ -97,13 +105,31 @@ function emit(event: string, detail?: Record<string, unknown>) {
   w.__explorerEvents.push({ event, detail: detail ?? null, t: Date.now() });
 }
 
+function activityStarted(
+  sport: Sport,
+  sessionId: string | null,
+  selection?: SportSelection,
+): ActivityState {
+  return {
+    sport,
+    ...(selection ? { selection } : {}),
+    sessionId,
+    startedAt: Date.now(),
+    paused: false,
+    offRoute: false,
+    distanceM: 0,
+    elevGainM: 0,
+    movingS: 0,
+  };
+}
+
 export const useExplorerStore = create<ExplorerStore>((set, get) => ({
   ...initialState,
 
   hydrateFromScene: (sceneName) => {
     const preset = SCENES[sceneName];
     if (!preset) return;
-    set({ ...(preset as Partial<ExplorerStore>), scene: sceneName });
+    set({ ...(preset as Partial<ExplorerStore>), pendingStart: undefined, scene: sceneName });
     emit('scene', { scene: sceneName });
   },
 
@@ -234,19 +260,53 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
 
   dismissToast: () => set({ toast: undefined }),
 
-  startActivity: (sport, sessionId = null) => {
-    const activity: ActivityState = {
+  requestStart: (sport, selection) => {
+    const pendingStart: PendingStart = { sport, selection };
+    set({ pendingStart });
+    emit('activity-request', { sport, variantId: selection?.variantId ?? null });
+  },
+
+  confirmStart: () => {
+    const pendingStart = get().pendingStart;
+    if (!pendingStart) return;
+    const activity = activityStarted(
+      pendingStart.sport,
+      null,
+      pendingStart.selection,
+    );
+    set({
+      activity,
+      pendingStart: undefined,
+      sheet: 'live',
+      detent: 'peek',
+      camera: { type: 'follow' },
+    });
+    emit('activity-start', {
+      sport: activity.sport,
+      sessionId: activity.sessionId,
+      variantId: activity.selection?.variantId ?? null,
+    });
+  },
+
+  cancelStart: () => {
+    set({ pendingStart: undefined });
+    emit('activity-cancel', {});
+  },
+
+  startActivity: (sport, sessionId = null, selection) => {
+    const activity = activityStarted(sport, sessionId, selection);
+    set({
+      activity,
+      pendingStart: undefined,
+      sheet: 'live',
+      detent: 'peek',
+      camera: { type: 'follow' },
+    });
+    emit('activity-start', {
       sport,
       sessionId,
-      startedAt: Date.now(),
-      paused: false,
-      offRoute: false,
-      distanceM: 0,
-      elevGainM: 0,
-      movingS: 0,
-    };
-    set({ activity, sheet: 'live', detent: 'peek', camera: { type: 'follow' } });
-    emit('activity-start', { sport, sessionId });
+      variantId: selection?.variantId ?? null,
+    });
   },
 
   updateActivity: (patch) =>

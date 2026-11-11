@@ -33,6 +33,22 @@ import {
   type SheetContext,
 } from './context';
 import type { Sport } from '../state/types';
+import {
+  SPORT_FAMILIES,
+  availabilityLabel,
+  defaultVariantForSport,
+  familySummary,
+  getSportFamily,
+  getSportVariant,
+  metricsLabel,
+  missingOptionalMetrics,
+  startAvailability,
+  toSportSelection,
+  type SportFamily,
+  type SportSelection,
+  type SportStartContext,
+  type SportVariant,
+} from './sportSelection';
 
 export interface SheetModel {
   title: string;
@@ -55,7 +71,231 @@ const CATEGORY_LABEL: Record<string, string> = {
   flood: 'Crue',
 };
 
-const SPORTS: Sport[] = ['course', 'rando', 'velo', 'kayak', 'trail', 'ski', 'escalade', 'famille', 'bivouac'];
+/** Contexte de démarrage : permission réelle + présence de l’API GPS. */
+function useSportStartContext(ctx: SheetContext): SportStartContext {
+  return React.useMemo(
+    () => ({
+      locationPermission: ctx.state.locationPermission,
+      gpsAvailable: typeof navigator !== 'undefined' && Boolean(navigator.geolocation),
+    }),
+    [ctx.state.locationPermission],
+  );
+}
+
+function startSport(ctx: SheetContext, sport: Sport, selection?: SportSelection) {
+  if (ctx.onStartSport) ctx.onStartSport(sport, selection);
+  else ctx.state.startActivity(sport, null, selection);
+}
+
+/** Unique chemin de départ d’une variante : garde + conversion + callback. */
+function startVariant(
+  ctx: SheetContext,
+  family: SportFamily,
+  variant: SportVariant,
+  startContext: SportStartContext,
+): boolean {
+  if (!startAvailability(variant, startContext).startable) return false;
+  startSport(ctx, variant.sport, toSportSelection(family, variant));
+  return true;
+}
+
+/**
+ * Limite honnête de cette tranche : le suivi local démarre, mais l’API de
+ * création de séance n’existe pas encore dans le dépôt. Aucun identifiant
+ * serveur ne doit être inventé côté client.
+ */
+function StartLimitNote() {
+  return (
+    <p
+      style={{
+        margin: '10px 2px 6px',
+        fontSize: 11.5,
+        lineHeight: 1.45,
+        color: 'var(--xp-mut)',
+      }}
+    >
+      Le suivi démarre localement. La création de séance serveur n’est pas branchée : aucun
+      identifiant n’est envoyé et le bilan ne sera pas enregistré.
+    </p>
+  );
+}
+
+/**
+ * Choix en deux temps : famille de sport existante, puis variante.
+ * Une variante indisponible n’a aucun handler de clic et porte le motif exact.
+ */
+export function SportPicker({ ctx }: { ctx: SheetContext }) {
+  const startContext = useSportStartContext(ctx);
+  const [sport, setSport] = React.useState<Sport | null>(null);
+  const [variantId, setVariantId] = React.useState<string | null>(null);
+  const family = sport ? getSportFamily(sport) : null;
+  const variant = variantId ? getSportVariant(variantId) : null;
+  const availability = variant ? startAvailability(variant, startContext) : null;
+
+  const openFamily = (next: Sport) => {
+    setSport(next);
+    const nextFamily = getSportFamily(next);
+    const preferred = defaultVariantForSport(next, startContext);
+    setVariantId(preferred?.id ?? nextFamily?.variants[0]?.id ?? null);
+  };
+
+  const start = () => {
+    if (!family || !variant) return;
+    startVariant(ctx, family, variant, startContext);
+  };
+
+  if (!family) {
+    return (
+      <>
+        <XpEyebrow>Choisir un sport</XpEyebrow>
+        <XpRows>
+          {SPORT_FAMILIES.map((entry) => {
+            const available = entry.variants.filter(
+              (candidate) => startAvailability(candidate, startContext).startable,
+            );
+            return (
+              <XpRow
+                key={entry.sport}
+                icon={entry.icon}
+                title={entry.label}
+                sub={`${entry.description} · ${familySummary(entry)}`}
+                badge={
+                  available.length > 0
+                    ? {
+                        label: `${available.length} départ${available.length > 1 ? 's' : ''}`,
+                        tone: 'good',
+                      }
+                    : { label: 'Indisponible', tone: 'muted' }
+                }
+                onClick={() => openFamily(entry.sport)}
+              />
+            );
+          })}
+        </XpRows>
+        <StartLimitNote />
+      </>
+    );
+  }
+
+  return (
+    <>
+      <XpRows>
+        <XpRow
+          icon="chevl"
+          title="Tous les sports"
+          sub={familySummary(family)}
+          onClick={() => {
+            setSport(null);
+            setVariantId(null);
+          }}
+        />
+      </XpRows>
+      <XpEyebrow>
+        {family.label} · {family.description}
+      </XpEyebrow>
+      <XpRows>
+        {family.variants.map((entry) => {
+          const entryAvailability = startAvailability(entry, startContext);
+          const selected = entry.id === variantId;
+          const missing = missingOptionalMetrics(entry);
+          return (
+            <XpRow
+              key={entry.id}
+              icon={entry.environment === 'indoor' ? 'house' : family.icon}
+              title={entry.label}
+              sub={
+                entryAvailability.startable
+                  ? `${entry.environment === 'indoor' ? 'Indoor' : 'Extérieur'} · ${metricsLabel(
+                      entry.requiredMetrics,
+                    )}${missing.length > 0 ? ` · non mesuré : ${metricsLabel(missing)}` : ''}`
+                  : `${entry.environment === 'indoor' ? 'Indoor' : 'Extérieur'} · ${
+                      entryAvailability.reason ?? 'Indisponible'
+                    }`
+              }
+              badge={
+                !entryAvailability.startable
+                  ? { label: 'Indisponible', tone: 'muted' }
+                  : selected
+                    ? { label: 'Choisi', tone: 'good' }
+                    : {
+                        label: availabilityLabel(entryAvailability),
+                        tone: entryAvailability.status === 'needs-permission' ? 'warn' : 'good',
+                      }
+              }
+              onClick={entryAvailability.startable ? () => setVariantId(entry.id) : undefined}
+            />
+          );
+        })}
+      </XpRows>
+      {variant && availability ? (
+        <>
+          <p
+            style={{
+              margin: '10px 2px 8px',
+              fontSize: 12,
+              lineHeight: 1.45,
+              color: 'var(--xp-mut)',
+            }}
+          >
+            {availability.startable
+              ? `Métriques suivies : ${metricsLabel(variant.requiredMetrics)}.`
+              : `Départ impossible : ${availability.reason ?? 'variante indisponible'}`}
+          </p>
+          <button type="button" className="xp-primary" onClick={start} disabled={!availability.startable}>
+            {availability.startable ? `Démarrer · ${variant.label}` : 'Départ indisponible'}
+          </button>
+        </>
+      ) : null}
+      <StartLimitNote />
+    </>
+  );
+}
+
+/** Suggestions construites sur la même taxonomie, sans chiffre inventé. */
+function RecommendedSports({ ctx }: { ctx: SheetContext }) {
+  const startContext = useSportStartContext(ctx);
+  const sports: Sport[] = ['rando', 'trail', 'velo'];
+  return (
+    <>
+      <XpEyebrow>Suggestions de départ · {ctx.country?.name ?? 'votre secteur'}</XpEyebrow>
+      <XpRows>
+        {sports.map((sport) => {
+          const family = getSportFamily(sport);
+          if (!family) return null;
+          const variant = defaultVariantForSport(sport, startContext);
+          const availability = variant ? startAvailability(variant, startContext) : null;
+          const startable = Boolean(variant && availability?.startable);
+          return (
+            <XpRow
+              key={sport}
+              icon={family.icon}
+              title={variant?.label ?? family.label}
+              sub={
+                startable && variant
+                  ? `${family.label} · ${metricsLabel(variant.requiredMetrics)}`
+                  : availability?.reason ?? 'Aucune variante démarrable avec la capture actuelle'
+              }
+              badge={
+                startable && availability
+                  ? {
+                      label: availabilityLabel(availability),
+                      tone: availability.status === 'needs-permission' ? 'warn' : 'good',
+                    }
+                  : { label: 'Indisponible', tone: 'muted' }
+              }
+              onClick={
+                startable && variant
+                  ? () => startVariant(ctx, family, variant, startContext)
+                  : undefined
+              }
+            />
+          );
+        })}
+      </XpRows>
+      <StartLimitNote />
+    </>
+  );
+}
 
 function CarnetsTab({ ctx, where }: { ctx: SheetContext; where: string }) {
   const items = ctx.carnets;
@@ -1434,15 +1674,10 @@ function LiveSafetyTab({ ctx }: { ctx: SheetContext }) {
 
 function ActivityTabs(ctx: SheetContext, kind: string): SheetTab[] {
   const { state } = ctx;
-  const startSport = (sport: Sport) => {
-    if (ctx.onStartSport) ctx.onStartSport(sport);
-    else state.startActivity(sport);
-  };
   if (kind === 'start') {
     const isReco = state.mini === 0;
     const isCatalog = state.mini === 1;
     const isRoutes = state.mini === 2;
-    const locName = ctx.country?.name ?? 'votre secteur';
 
     return [
       {
@@ -1450,51 +1685,9 @@ function ActivityTabs(ctx: SheetContext, kind: string): SheetTab[] {
         label: isReco ? 'Recommandé' : isCatalog ? 'Catalogue' : 'Itinéraires',
         icon: isReco ? 'star' : isCatalog ? 'run' : 'map',
         render: () => {
-          if (isReco) {
-            return (
-              <>
-                <XpEyebrow>Recommandé selon ta localisation · {locName}</XpEyebrow>
-                <XpRows>
-                  <XpRow
-                    icon="hike"
-                    title="Randonnée & Bivouac"
-                    sub="Activité phare recommandée dans ce secteur · Dénivelé moyen +850 m"
-                    badge={{ label: 'Idéal ici', tone: 'good' }}
-                    onClick={() => startSport('rando')}
-                  />
-                  <XpRow
-                    icon="run"
-                    title="Trail Running d’altitude"
-                    sub="Rythme soutenu sur sentiers balisés et crêtes"
-                    badge={{ label: 'Populaire', tone: 'good' }}
-                    onClick={() => startSport('trail')}
-                  />
-                  <XpRow
-                    icon="bike"
-                    title="Sortie Vélo & Gravel"
-                    sub="Parcours panoramique avec profil altimétrique en direct"
-                    onClick={() => startSport('velo')}
-                  />
-                </XpRows>
-              </>
-            );
-          }
-          if (isRoutes) {
-            return <RoutesTab ctx={ctx} />;
-          }
-          return (
-            <XpRows>
-              {SPORTS.map((sport) => (
-                <XpRow
-                  key={sport}
-                  icon={SPORT_META[sport].icon}
-                  title={SPORT_META[sport].label}
-                  sub="Enregistrement GPS précis · Cadence, dénivelé et vitesse"
-                  onClick={() => startSport(sport)}
-                />
-              ))}
-            </XpRows>
-          );
+          if (isReco) return <RecommendedSports ctx={ctx} />;
+          if (isRoutes) return <RoutesTab ctx={ctx} />;
+          return <SportPicker ctx={ctx} />;
         },
       },
     ];
@@ -1579,14 +1772,17 @@ function ActivityTabs(ctx: SheetContext, kind: string): SheetTab[] {
               <XpRows>
                 <XpRow
                   icon={SPORT_META[summary.sport].icon}
-                  title={SPORT_META[summary.sport].label}
-                  sub={new Date(summary.startedAt).toLocaleString('fr-FR', {
-                    weekday: 'short',
-                    day: 'numeric',
-                    month: 'short',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
+                  title={summary.selection?.variantLabel ?? SPORT_META[summary.sport].label}
+                  sub={[
+                    SPORT_META[summary.sport].label,
+                    new Date(summary.startedAt).toLocaleString('fr-FR', {
+                      weekday: 'short',
+                      day: 'numeric',
+                      month: 'short',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    }),
+                  ].join(' · ')}
                 />
                 <XpRow
                   icon={state.summarySaved === 'saved' ? 'check' : 'alert'}
@@ -1790,10 +1986,17 @@ export function buildSheetModel(ctx: SheetContext): SheetModel {
       summary: ['Bilan', 'Fin de sortie'],
     };
     const [title, subtitle] = titles[kind];
-    const sport = state.activity?.sport;
+    const activity = state.activity;
+    const sport = activity?.sport;
     return {
-      title: kind === 'live' && sport ? SPORT_META[sport].label : title,
-      subtitle: kind === 'live' && sport ? 'Suivi en cours' : subtitle,
+      title:
+        kind === 'live' && sport
+          ? (activity?.selection?.variantLabel ?? SPORT_META[sport].label)
+          : title,
+      subtitle:
+        kind === 'live' && sport
+          ? `${SPORT_META[sport].label} · Suivi en cours`
+          : subtitle,
       tabs: ActivityTabs(ctx, kind),
       mini:
         kind === 'start'

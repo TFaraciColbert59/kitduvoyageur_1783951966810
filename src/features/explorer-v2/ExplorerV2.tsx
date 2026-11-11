@@ -49,7 +49,7 @@ import {
   type RegionGroup,
   type SheetContext,
 } from './sheet/context';
-import type { PoiKind, Sport } from './state/types';
+import type { PoiKind } from './state/types';
 import '@/styles/explorer-v2.css';
 
 const MapStage = dynamic(() => import('./map/MapStage'), {
@@ -139,7 +139,6 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
   const [me, setMe] = useState<{ lat: number; lng: number } | null>(null);
   const [sheetOpen, setSheetOpen] = useState(Boolean(initialScene));
   const [sheetHeight, setSheetHeight] = useState(176);
-  const [pendingSport, setPendingSport] = useState<Sport | null>(null);
   const [offlineQueue, setOfflineQueue] = useState(0);
   // Accès de recette à la machine d'état (lecture seule, jamais en production sans scène autorisée).
   useEffect(() => {
@@ -449,10 +448,6 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
     void updateLiveActivity(payload);
   }, [state.activity]);
 
-  const startWithCountdown = useCallback((sport: Sport) => {
-    setPendingSport(sport);
-  }, []);
-
   // ── contexte de feuille ────────────────────────────────────────────────
   const ctx = useMemo<SheetContext>(
     () => ({
@@ -471,11 +466,12 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
       trips: (tripsData ?? []) as TripItem[],
       selectedPoi,
       me,
-      onStartSport: startWithCountdown,
+      // Même fonction que le test : aucune couche ne peut perdre la variante.
+      onStartSport: state.requestStart,
       onConfirmReport,
       locale: 'fr-FR',
     }),
-    [state, countries, country, regionsGeo, regionGroups, place, pois, routes, weather, unitsForCountry, reportsData, carnetsData, tripsData, selectedPoi, me, startWithCountdown, onConfirmReport],
+    [state, countries, country, regionsGeo, regionGroups, place, pois, routes, weather, unitsForCountry, reportsData, carnetsData, tripsData, selectedPoi, me, onConfirmReport],
   );
 
   const model = useMemo(() => buildSheetModel(ctx), [ctx]);
@@ -719,14 +715,11 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
         layerVisibility={state.layerVisibility}
       />
 
-      {pendingSport ? (
+      {state.pendingStart ? (
         <Countdown
-          key={pendingSport}
-          onDone={() => {
-            state.startActivity(pendingSport);
-            setPendingSport(null);
-          }}
-          onCancel={() => setPendingSport(null)}
+          key={`${state.pendingStart.sport}:${state.pendingStart.selection?.variantId ?? 'base'}`}
+          onDone={() => useExplorerStore.getState().confirmStart()}
+          onCancel={() => useExplorerStore.getState().cancelStart()}
         />
       ) : null}
 
@@ -880,7 +873,7 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
 
       {activity && state.sheet === 'live' ? (
         <ActivityPill
-          sportLabel={SPORT_META[activity.sport].label}
+          sportLabel={activity.selection?.variantLabel ?? SPORT_META[activity.sport].label}
           elapsed={elapsed}
           distanceLabel={formatDistance(activity.distanceM / 1000)}
           paused={activity.paused}

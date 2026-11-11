@@ -66,8 +66,51 @@ export type CameraIntent =
 
 export type Profile = 'solo' | 'famille' | 'enfants' | 'senior' | 'pmr' | 'sportif' | null;
 
+export type SportEnvironment = 'outdoor' | 'indoor';
+
+/**
+ * Métriques du catalogue de sports. Le tracker actuel n’en alimente qu’une
+ * partie (distance, durée, D+, vitesse/allure) ; les autres restent déclarées
+ * et ne doivent pas être présentées comme mesurées.
+ */
+export type SportMetricKey =
+  | 'distance'
+  | 'duration'
+  | 'elevation'
+  | 'speed'
+  | 'pace'
+  | 'cadence'
+  | 'power'
+  | 'heartRate'
+  | 'strokeRate'
+  | 'verticalDrop'
+  | 'grade'
+  | 'laps';
+
+/**
+ * Variante locale choisie dans le drawer (S1.02). Elle conserve le `sport`
+ * historique pour le tracker et la persistance ; les champs de variante sont
+ * un enrichissement en mémoire, pas un nouveau contrat serveur.
+ */
+export interface SportSelection {
+  sport: Sport;
+  variantId: string;
+  variantLabel: string;
+  catalogSlug: string | null;
+  environment: SportEnvironment;
+  metrics: readonly SportMetricKey[];
+}
+
+/** Demande de départ en attente du compte à rebours 3·2·1. */
+export interface PendingStart {
+  sport: Sport;
+  selection?: SportSelection;
+}
+
 export interface ActivityState {
   sport: Sport;
+  /** Variante choisie ; absente pour les scènes et les anciens appels. */
+  selection?: SportSelection;
   sessionId: string | null;
   startedAt: number;
   paused: boolean;
@@ -96,6 +139,8 @@ export interface ExplorerState {
   mini: number;
   selection?: Selection;
   activity?: ActivityState;
+  /** Départ choisi, en attente du compte à rebours 3·2·1. */
+  pendingStart?: PendingStart;
   /** Dernière sortie terminée, affichée dans l'écran Bilan. */
   summary?: (ActivityState & { endedAt: number }) | null;
   /** Résultat de l'enregistrement du bilan. */

@@ -30,6 +30,8 @@ describe('explorer-v2 · machine d’état', () => {
       tab: 0,
       selection: undefined,
       activity: undefined,
+      pendingStart: undefined,
+      summary: undefined,
       center: [2.35, 48.85],
       zoom: 1.6,
     });

@@ -14,7 +14,8 @@ import type {
   GeoCollection,
 } from '../data/hooks';
 import type { ExplorerStore } from '../state/store';
-import type { Sport } from '../state/types';
+import type { Sport, SportSelection } from '../state/types';
+import { SPORT_FAMILIES } from './sportSelection';
 
 export interface CountryEntry {
   iso: string;
@@ -45,8 +46,12 @@ export interface SheetContext {
   trips: TripItem[];
   selectedPoi: PoiItem | null;
   me: { lat: number; lng: number } | null;
-  /** Démarrage avec compte à rebours (le parent décide de l'animation). */
-  onStartSport?: (sport: Sport) => void;
+  /**
+   * Démarrage avec compte à rebours (le parent décide de l'animation).
+   * `selection` porte la variante jusqu’au démarrage ; `sport` reste
+   * l’identifiant historique transmis au tracker et à la persistance.
+   */
+  onStartSport?: (sport: Sport, selection?: SportSelection) => void;
   /** Confirmer un signalement (« présent » / « disparu »). */
   onConfirmReport?: (reportId: string, verdict: 'present' | 'gone') => void;
   locale: string;
@@ -88,17 +93,10 @@ export const POI_TONE: Record<string, 'ink' | 'water' | 'warn' | 'bad' | 'good'>
   trail: 'ink',
 };
 
-export const SPORT_META: Record<Sport, { label: string; icon: string }> = {
-  course: { label: 'Course', icon: 'run' },
-  rando: { label: 'Randonnée', icon: 'hike' },
-  velo: { label: 'Vélo', icon: 'bike' },
-  kayak: { label: 'Kayak', icon: 'kayak' },
-  trail: { label: 'Trail', icon: 'run' },
-  ski: { label: 'Ski de rando', icon: 'ski' },
-  escalade: { label: 'Escalade', icon: 'climb' },
-  famille: { label: 'Balade en famille', icon: 'walk' },
-  bivouac: { label: 'Bivouac', icon: 'tent' },
-};
+/** Libellés/icônes de base dérivés de la taxonomie : une seule source. */
+export const SPORT_META: Record<Sport, { label: string; icon: string }> = Object.fromEntries(
+  SPORT_FAMILIES.map((family) => [family.sport, { label: family.label, icon: family.icon }]),
+) as Record<Sport, { label: string; icon: string }>;
 
 export function distanceKm(a?: [number, number] | null, b?: [number, number] | null): number {
   if (!a || !b || !Number.isFinite(a[0]) || !Number.isFinite(a[1]) || !Number.isFinite(b[0]) || !Number.isFinite(b[1])) {
