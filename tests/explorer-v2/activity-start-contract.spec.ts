@@ -4,6 +4,8 @@ import {
   MAX_ROUTE_ID,
   STARTABLE_VARIANTS,
   buildStartActivityRpcBody,
+  isCanonicalRouteId,
+  normalizeRouteId,
   parseActivityStartBody,
   parseStartActivityRpcResult,
 } from '@/features/explorer-v2/server/activityStart';
@@ -118,27 +120,76 @@ describe('explorer-v2 · contrat serveur de démarrage (S1.02, K6.15)', () => {
     ).toEqual({ ok: false, code: 'invalid_body', error: 'démarrage invalide' });
   });
 
-  it('borne clientSessionId et routeId', () => {
+  it('borne clientSessionId', () => {
     expect(parseActivityStartBody({ clientSessionId: 'pas-un-uuid', sport: 'rando' })).toEqual({
       ok: false,
       code: 'invalid_body',
       error: 'démarrage invalide',
     });
+  });
 
-    for (const routeId of [0, -1, 1.5, MAX_ROUTE_ID + 1, Number.NaN, Number.POSITIVE_INFINITY]) {
+  it('accepte les identifiants bigint du dépôt, nombres sûrs ou chaînes exactes', () => {
+    // 1790027540898 est l'identifiant à 13 chiffres manipulé par la migration
+    // 20261003090000 ; il dépasse largement la borne integer 2^31-1.
+    const cases: Array<string | number> = [
+      1790027540898,
+      '1790027540898',
+      Number.MAX_SAFE_INTEGER,
+      String(Number.MAX_SAFE_INTEGER),
+      MAX_ROUTE_ID,
+      '9007199254740993',
+    ];
+
+    for (const routeId of cases) {
+      const parsed = parseActivityStartBody({
+        clientSessionId: CLIENT_ID,
+        sport: 'rando',
+        routeId,
+      });
+      expect(parsed.ok, String(routeId)).toBe(true);
+      if (parsed.ok) expect(parsed.value.routeId).toBe(String(routeId));
+    }
+  });
+
+  it('refuse les nombres non sûrs et les chaînes non canoniques sans arrondi', () => {
+    const invalid: unknown[] = [
+      0,
+      -1,
+      1.5,
+      Number.MAX_SAFE_INTEGER + 1,
+      Number.NaN,
+      Number.POSITIVE_INFINITY,
+      '0',
+      '00',
+      '01',
+      '1.0',
+      '1e3',
+      ' 42',
+      '42 ',
+      '+42',
+      '-42',
+      '9223372036854775808',
+      '99999999999999999999',
+      'abc',
+      '',
+    ];
+
+    for (const routeId of invalid) {
       expect(
         parseActivityStartBody({ clientSessionId: CLIENT_ID, sport: 'rando', routeId }),
         String(routeId)
       ).toEqual({ ok: false, code: 'invalid_body', error: 'démarrage invalide' });
     }
 
-    expect(
-      parseActivityStartBody({
-        clientSessionId: CLIENT_ID,
-        sport: 'rando',
-        routeId: MAX_ROUTE_ID,
-      })
-    ).toMatchObject({ ok: true, value: { routeId: MAX_ROUTE_ID } });
+    // Un nombre au-delà de 2^53-1 est déjà arrondi par JavaScript : on le
+    // refuse au lieu de transmettre un identifiant faux.
+    expect(normalizeRouteId(Number.MAX_SAFE_INTEGER + 1)).toEqual({ ok: false });
+    expect(normalizeRouteId('9007199254740993')).toEqual({
+      ok: true,
+      value: '9007199254740993',
+    });
+    expect(isCanonicalRouteId(MAX_ROUTE_ID)).toBe(true);
+    expect(isCanonicalRouteId('9223372036854775808')).toBe(false);
   });
 
   it('normalise l’absence de variante et d’itinéraire en null', () => {
@@ -159,13 +210,13 @@ describe('explorer-v2 · contrat serveur de démarrage (S1.02, K6.15)', () => {
         clientSessionId: CLIENT_ID,
         sport: 'rando',
         variantId: 'rando-journee',
-        routeId: 42,
+        routeId: '1790027540898',
       })
     ).toEqual({
       p_client_session_id: CLIENT_ID,
       p_sport: 'rando',
       p_variant_id: 'rando-journee',
-      p_route_id: 42,
+      p_route_id: '1790027540898',
     });
   });
 
@@ -189,11 +240,40 @@ describe('explorer-v2 · contrat serveur de démarrage (S1.02, K6.15)', () => {
         clientSessionId: CLIENT_ID,
         sport: 'rando',
         variantId: 'rando-journee',
-        routeId: 42,
+        routeId: '42',
         startedAt: '2026-11-11T15:00:00+00:00',
         sessionStatus: 'live',
       },
     });
+  });
+
+  it('normalise la réponse bigint en chaîne et refuse une réponse non sûre', () => {
+    const exact = parseStartActivityRpcResult({
+      ok: true,
+      created: true,
+      sessionId: SESSION_ID,
+      clientSessionId: CLIENT_ID,
+      sport: 'rando',
+      variantId: 'rando-journee',
+      routeId: '9007199254740993',
+      startedAt: '2026-11-11T15:00:00+00:00',
+      sessionStatus: 'live',
+    });
+    expect(exact).toMatchObject({ ok: true, session: { routeId: '9007199254740993' } });
+
+    expect(
+      parseStartActivityRpcResult({
+        ok: true,
+        created: true,
+        sessionId: SESSION_ID,
+        clientSessionId: CLIENT_ID,
+        sport: 'rando',
+        variantId: null,
+        routeId: Number.MAX_SAFE_INTEGER + 1,
+        startedAt: '2026-11-11T15:00:00+00:00',
+        sessionStatus: 'live',
+      })
+    ).toEqual({ ok: false, reason: 'invalid_response' });
   });
 
   it('distingue un conflit de contenu d’une réponse invalide', () => {

@@ -53,7 +53,55 @@ export const STARTABLE_VARIANTS: ReadonlyMap<string, SportVariant> = startableVa
 
 /** Bornes partagées entre la route, le test de contrat et la migration SQL. */
 export const VARIANT_ID_PATTERN = /^[a-z0-9][a-z0-9-]{0,63}$/;
-export const MAX_ROUTE_ID = 2_147_483_647;
+
+/**
+ * `hiking_routes.id` est un bigint. La migration `20261003090000` manipule
+ * déjà un identifiant à 13 chiffres ; la borne 2^31-1 d'un `integer` n'est
+ * donc pas la bonne. On accepte un entier JSON sûr (compatibilité des anciens
+ * clients) ou une chaîne décimale canonique, puis on transmet toujours une
+ * chaîne à la RPC `bigint` : au-delà de 2^53-1, un nombre JavaScript perdrait
+ * des chiffres.
+ */
+export const ROUTE_ID_PATTERN = /^[1-9][0-9]{0,18}$/;
+export const MAX_ROUTE_ID = '9223372036854775807';
+
+export type NormalizedRouteId = { ok: true; value: string } | { ok: false };
+
+/** Vrai pour une chaîne décimale canonique dans la plage du bigint signé. */
+export function isCanonicalRouteId(value: string): boolean {
+  if (!ROUTE_ID_PATTERN.test(value)) return false;
+  return (
+    value.length < MAX_ROUTE_ID.length ||
+    (value.length === MAX_ROUTE_ID.length && value <= MAX_ROUTE_ID)
+  );
+}
+
+/**
+ * Normalise un identifiant de route sans jamais passer par un `Number` pour
+ * une valeur qui dépasserait `Number.MAX_SAFE_INTEGER`. Un nombre non sûr est
+ * refusé (le client doit envoyer la chaîne) au lieu d'être arrondi.
+ */
+export function normalizeRouteId(value: unknown): NormalizedRouteId {
+  if (typeof value === 'number') {
+    if (!Number.isSafeInteger(value) || value < 1) return { ok: false };
+    return { ok: true, value: String(value) };
+  }
+  if (typeof value === 'string' && isCanonicalRouteId(value)) {
+    return { ok: true, value };
+  }
+  return { ok: false };
+}
+
+const routeIdSchema = z
+  .union([z.number(), z.string()])
+  .transform((value, ctx) => {
+    const normalized = normalizeRouteId(value);
+    if (!normalized.ok) {
+      ctx.addIssue({ code: 'custom', message: 'routeId invalide' });
+      return z.NEVER;
+    }
+    return normalized.value;
+  });
 
 const variantIdSchema = z.string().regex(VARIANT_ID_PATTERN);
 const sports = ACTIVITY_START_SPORTS as unknown as [Sport, ...Sport[]];
@@ -66,8 +114,8 @@ const bodySchema = z
     sport: z.string().min(1).max(32),
     /** Variante facultative ; absente = comportement historique. */
     variantId: variantIdSchema.nullable().optional(),
-    /** Itinéraire facultatif, borné à un entier positif JSON-safe. */
-    routeId: z.number().int().positive().max(MAX_ROUTE_ID).nullable().optional(),
+    /** Itinéraire facultatif : entier JSON sûr ou chaîne bigint canonique. */
+    routeId: routeIdSchema.nullable().optional(),
   })
   .strict();
 
@@ -75,7 +123,8 @@ export interface ActivityStartValue {
   clientSessionId: string;
   sport: Sport;
   variantId: string | null;
-  routeId: number | null;
+  /** Chaîne décimale exacte, jamais un nombre arrondi. */
+  routeId: string | null;
 }
 
 export type ActivityStartRejectionCode =
@@ -142,7 +191,8 @@ export function buildStartActivityRpcBody(value: ActivityStartValue): {
   p_client_session_id: string;
   p_sport: Sport;
   p_variant_id: string | null;
-  p_route_id: number | null;
+  /** PostgREST/PostgreSQL convertit cette chaîne en `bigint` sans perte. */
+  p_route_id: string | null;
 } {
   return {
     p_client_session_id: value.clientSessionId,
@@ -159,7 +209,7 @@ export interface ActivityStartSession {
   clientSessionId: string;
   sport: Sport;
   variantId: string | null;
-  routeId: number | null;
+  routeId: string | null;
   startedAt: string;
   sessionStatus: ActivitySessionStatus;
   created: boolean;
@@ -173,6 +223,24 @@ const rpcConflictSchema = z
   .object({ ok: z.literal(false), reason: z.literal('payload_mismatch') })
   .strict();
 
+const rpcRouteIdSchema = z
+  .union([z.string(), z.number()])
+  .transform((value, ctx) => {
+    // Une réponse numérique non sûre a déjà perdu des chiffres dans
+    // `JSON.parse` : on refuse plutôt que de fabriquer un identifiant faux.
+    if (typeof value === 'number' && !Number.isSafeInteger(value)) {
+      ctx.addIssue({ code: 'custom', message: 'routeId hors précision' });
+      return z.NEVER;
+    }
+    const normalized = normalizeRouteId(value);
+    if (!normalized.ok) {
+      ctx.addIssue({ code: 'custom', message: 'routeId invalide' });
+      return z.NEVER;
+    }
+    return normalized.value;
+  })
+  .nullable();
+
 const rpcSuccessSchema = z
   .object({
     ok: z.literal(true),
@@ -181,7 +249,7 @@ const rpcSuccessSchema = z
     clientSessionId: z.string().uuid(),
     sport: z.enum(sports),
     variantId: variantIdSchema.nullable(),
-    routeId: z.number().int().positive().max(MAX_ROUTE_ID).nullable(),
+    routeId: rpcRouteIdSchema,
     startedAt: z.string().min(1).max(64),
     sessionStatus: z.enum(['live', 'paused', 'finished', 'abandoned']),
   })

@@ -15,10 +15,17 @@ function json(body: unknown, status: number): NextResponse {
 }
 
 function upstreamStatus(status: number): number {
-  if (status === 401 || status === 403) return 401;
+  if (status === 401) return 401;
+  if (status === 403) return 403;
   if (status === 409) return 409;
   if (status === 400 || status === 422) return 400;
   return 503;
+}
+
+/** Le schéma HTTP `Bearer` est insensible à la casse ; le jeton reste intact. */
+function bearerToken(header: string | null): string {
+  const match = header ? /^Bearer\s+(\S+)\s*$/i.exec(header) : null;
+  return match?.[1] ?? '';
 }
 
 /**
@@ -36,8 +43,7 @@ function upstreamStatus(status: number): number {
  * d'idempotence propriétaire et l'insertion dans `activity_sessions`.
  */
 export async function POST(request: Request): Promise<NextResponse> {
-  const authorization = request.headers.get('authorization');
-  const token = authorization?.startsWith('Bearer ') ? authorization.slice(7).trim() : '';
+  const token = bearerToken(request.headers.get('authorization'));
   if (!token) {
     return json({ error: 'authentification requise' }, 401);
   }
@@ -68,9 +74,11 @@ export async function POST(request: Request): Promise<NextResponse> {
       return json(
         {
           error:
-            res.status === 401 || res.status === 403
+            res.status === 401
               ? 'authentification refusée'
-              : 'démarrage refusé',
+              : res.status === 403
+                ? 'accès refusé'
+                : 'démarrage refusé',
         },
         upstreamStatus(res.status)
       );

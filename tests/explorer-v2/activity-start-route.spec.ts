@@ -10,11 +10,12 @@ const CLIENT_ID = '11111111-1111-4111-8111-111111111111';
 const SESSION_ID = '22222222-2222-4222-8222-222222222222';
 const START_URL = 'http://localhost/api/explorer/v2/activity/start';
 
+const BIG_ROUTE_ID = '1790027540898';
 const BODY = {
   clientSessionId: CLIENT_ID,
   sport: 'rando',
   variantId: 'rando-journee',
-  routeId: 42,
+  routeId: BIG_ROUTE_ID,
 };
 
 function rpcBody(created: boolean) {
@@ -25,7 +26,7 @@ function rpcBody(created: boolean) {
     clientSessionId: CLIENT_ID,
     sport: 'rando',
     variantId: 'rando-journee',
-    routeId: 42,
+    routeId: BIG_ROUTE_ID,
     startedAt: '2026-11-11T15:00:00+00:00',
     sessionStatus: 'live',
   };
@@ -110,6 +111,17 @@ describe('POST /api/explorer/v2/activity/start', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it('accepte le schéma Bearer sans tenir compte de la casse', async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse(rpcBody(true)));
+
+    const res = await POST(request(BODY, { authorization: 'bearer jeton-de-test' }));
+
+    expect(res.status).toBe(201);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(init.headers).toMatchObject({ Authorization: `Bearer ${TOKEN}` });
+  });
+
   it('crée la séance via la RPC, avec le jeton relayé et sans acteur client', async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse(rpcBody(true)));
 
@@ -133,7 +145,7 @@ describe('POST /api/explorer/v2/activity/start', () => {
       p_client_session_id: CLIENT_ID,
       p_sport: 'rando',
       p_variant_id: 'rando-journee',
-      p_route_id: 42,
+      p_route_id: BIG_ROUTE_ID,
     });
     expect(JSON.parse(String(init.body))).not.toHaveProperty('user_id');
     expect(JSON.parse(String(init.body))).not.toHaveProperty('p_user_id');
@@ -160,7 +172,7 @@ describe('POST /api/explorer/v2/activity/start', () => {
   it('refuse un identifiant client réutilisé avec un contenu différent', async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse({ ok: false, reason: 'payload_mismatch' }));
 
-    const res = await POST(request({ ...BODY, routeId: 43 }));
+    const res = await POST(request({ ...BODY, routeId: '1790027540899' }));
 
     expect(res.status).toBe(409);
     expect(await res.json()).toEqual({
@@ -188,7 +200,7 @@ describe('POST /api/explorer/v2/activity/start', () => {
     const cases: Array<[number, number, string]> = [
       [400, 400, 'démarrage refusé'],
       [401, 401, 'authentification refusée'],
-      [403, 401, 'authentification refusée'],
+      [403, 403, 'accès refusé'],
       [404, 503, 'démarrage refusé'],
       [422, 400, 'démarrage refusé'],
       [500, 503, 'démarrage refusé'],
