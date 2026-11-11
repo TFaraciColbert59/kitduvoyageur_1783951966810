@@ -113,3 +113,19 @@ Restent ouverts après ce lot : les fiches (moment/étape/objet/voyageur) à cap
 - **Dénivelé** : totaux déclarés du carnet prioritaires (170 km / +10 000 m pour la démo), profil d'altitude calculé depuis les points horodatés (altitude par point), carte du bas et lentille Route « Dénivelé » alimentées.
 - **Recherche d'une randonnée** : nouvelle feuille `HikeSearchSheet` branchée sur `GET /api/hikes` (RPC `trails_in_viewport`, polygone France explicite car la RPC plafonne le viewport à 20°). Accessible depuis la lentille Route (« Rechercher une randonnée »), résultats avec distance/D+/difficulté, sélection = recentrage carte + message d'île. 3 tests RTL (URL API, rendu des chiffres, sélection, seuil de 2 lettres).
 - Vérifié : tsc 0, lint 0 erreur, 53 fichiers / 530 tests verts.
+
+
+## 8. Troisième passe (2026-11-11, après déploiement `cfde9aee` + `e6bee650`) — preuves demandées
+
+**Tracé réel sur la carte** : visible sur `prod3/01-fiche.png` (tracé dense en boucle autour des Vuches / Chamonix-Mont-Blanc, marqueurs de jour) — les sorties de démonstration ont été recalées dans les dates du carnet (3 sorties, 1819/173/326 points horodatés avec altitude, 26–28 mars 2026).
+
+**Dénivelé** :
+- `prod3/10-chiffres-denivele.png` : « DÉNIVELÉ POSITIF · JOUR 1 → +980 m », barres J1 +980, J2 +980, J3 +1 420, J4/J5 « — », écart à la moyenne ;
+- `prod3/10-route-altitude.png` : profil d'altitude dessiné (« Dénivelé du tracé : +117 m ») ;
+- `prod3/20-sous-route-etape.png` : fiche d'étape avec **Distance 40,89 km, Dénivelé +980 m, Durée 6 h** (plus de « — »).
+
+**Recherche d'une randonnée** : `prod3/30-recherche-vide.png` et `prod3/31-recherche-resultats.png` — feuille « Rechercher une randonnée », requête « mont », résultats issus de `GET /api/hikes` (nom, distance, D+, difficulté). Sélection = recentrage carte + message.
+
+**Galerie complète** (`prod3/`, session visiteur réelle) : fiche, menu, tiroir du compte (`03-compte`, `03-compte-notifications`, `-partage`, `-parametres`), les 5 volets × toutes leurs lentilles (Fil : moments/médias/rencontres/nature · Route : étapes/altitude/nuit/météo · Sac : kit/verdicts/poids · Chiffres : distance/dénivelé/durée · Équipage : participants/réactions/suivre), sous-tiroirs capturés : **étape**, **objet du sac**, **voyageur**, et la liste des moments.
+
+**Limites de capture** : en session visiteur (anonyme), la visionneuse de moment plein écran et la fiche de nuit ne s'ouvrent pas au clic automatisé (elles restent accessibles aux comptes connectés) ; `Gérer` du tiroir du compte est réservé au propriétaire. À compléter en recette connectée sur iPhone.
