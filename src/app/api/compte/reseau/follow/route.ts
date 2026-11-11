@@ -1,12 +1,40 @@
 import { z } from 'zod';
 import { requireUser } from '@/lib/api/requireUser';
 import { fail, ok } from '@/lib/api/respond';
-import { followUser, unfollowUser } from '@/features/compte/server/reseau';
+import { followUser, readReseauError, unfollowUser } from '@/features/compte/server/reseau';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const Body = z.object({ userId: z.string().uuid() });
+
+function followFailure(error: unknown): ReturnType<typeof fail> {
+  switch (readReseauError(error, 'follow_failed')) {
+    case 'authentication_required':
+      return fail('unauthorized', 'Session requise.');
+    case 'target_not_found':
+      return fail('not_found', 'Profil inconnu.');
+    case 'self':
+      return fail('conflict', 'Impossible de se suivre soi-même.');
+    case 'blocked':
+      return fail('conflict', 'Ce profil n’est pas disponible.');
+    case 'follow_request_closed':
+      return fail('conflict', 'Cette demande de suivi est déjà close.');
+    default:
+      return fail('server', 'Impossible de suivre ce profil.');
+  }
+}
+
+function unfollowFailure(error: unknown): ReturnType<typeof fail> {
+  switch (readReseauError(error, 'unfollow_failed')) {
+    case 'authentication_required':
+      return fail('unauthorized', 'Session requise.');
+    case 'target_not_found':
+      return fail('not_found', 'Profil inconnu.');
+    default:
+      return fail('server', 'Impossible de retirer ce profil.');
+  }
+}
 
 export async function POST(request: Request) {
   const auth = await requireUser();
@@ -15,9 +43,10 @@ export async function POST(request: Request) {
   if (!parsed.success) return fail('not_found', 'Profil inconnu.');
   if (parsed.data.userId === auth.user.id) return fail('conflict', 'Impossible de se suivre soi-même.');
   try {
-    return ok(await followUser(auth.supabase, auth.user.id, parsed.data.userId));
-  } catch {
-    return fail('server', 'Impossible de suivre ce profil.');
+    // L'acteur est celui du JWT côté RPC : la route ne transmet que la cible.
+    return ok(await followUser(auth.supabase, parsed.data.userId));
+  } catch (error) {
+    return followFailure(error);
   }
 }
 
@@ -27,9 +56,9 @@ export async function DELETE(request: Request) {
   const parsed = Body.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return fail('not_found', 'Profil inconnu.');
   try {
-    await unfollowUser(auth.supabase, auth.user.id, parsed.data.userId);
+    await unfollowUser(auth.supabase, parsed.data.userId);
     return ok({ status: 'unfollowed' });
-  } catch {
-    return fail('server', 'Impossible de retirer ce profil.');
+  } catch (error) {
+    return unfollowFailure(error);
   }
 }

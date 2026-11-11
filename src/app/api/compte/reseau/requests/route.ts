@@ -1,8 +1,11 @@
 import { z } from 'zod';
 import { requireUser } from '@/lib/api/requireUser';
 import { fail, ok } from '@/lib/api/respond';
-import { createServiceClient } from '@/lib/api/serviceClient';
-import { loadFollowRequests, respondFollowRequest } from '@/features/compte/server/reseau';
+import {
+  loadFollowRequests,
+  readReseauError,
+  respondFollowRequest,
+} from '@/features/compte/server/reseau';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -11,6 +14,23 @@ const Body = z.object({
   requestId: z.string().uuid(),
   action: z.enum(['accept', 'decline']),
 });
+
+function requestFailure(error: unknown): ReturnType<typeof fail> {
+  switch (readReseauError(error, 'respond_failed')) {
+    case 'authentication_required':
+      return fail('unauthorized', 'Session requise.');
+    case 'request_not_found':
+      return fail('not_found', 'Demande introuvable.');
+    case 'request_not_pending':
+      return fail('conflict', 'Cette demande a déjà été traitée.');
+    case 'blocked':
+      return fail('conflict', 'Ce profil n’est pas disponible.');
+    case 'invalid_action':
+      return fail('conflict', 'Action invalide.');
+    default:
+      return fail('server', 'Impossible de répondre à cette demande.');
+  }
+}
 
 export async function GET() {
   const auth = await requireUser();
@@ -28,18 +48,10 @@ export async function POST(request: Request) {
   const parsed = Body.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return fail('not_found', 'Demande inconnue.');
   try {
-    await respondFollowRequest(
-      auth.supabase,
-      auth.user.id,
-      parsed.data.requestId,
-      parsed.data.action,
-      createServiceClient()
-    );
+    // La RPC vérifie elle-même que auth.uid() est la cible de la demande.
+    await respondFollowRequest(auth.supabase, parsed.data.requestId, parsed.data.action);
     return ok({ status: parsed.data.action });
   } catch (error) {
-    if (error instanceof Error && error.message === 'request_not_found') {
-      return fail('not_found', 'Demande introuvable.');
-    }
-    return fail('server', 'Impossible de répondre à cette demande.');
+    return requestFailure(error);
   }
 }

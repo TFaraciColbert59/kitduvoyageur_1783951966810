@@ -1,549 +1,216 @@
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { followUser, respondFollowRequest, unfollowUser } from '../reseau';
+import {
+  followUser,
+  readReseauError,
+  respondFollowRequest,
+  unfollowUser,
+} from '../reseau';
 
-type Row = Record<string, unknown>;
-type Result = { data: Row | null; error: Error | null };
-type Table = 'user_blocks' | 'user_profiles' | 'follow_requests' | 'user_follows';
-type Filter = { column: string; value: unknown; op: 'eq' | 'in' };
-
-const ME = '00000000-0000-4000-8000-000000000001';
 const TARGET = '00000000-0000-4000-8000-000000000002';
-const OTHER = '00000000-0000-4000-8000-000000000003';
 const REQUEST_ID = '00000000-0000-4000-8000-000000000004';
 
+type RpcReply = {
+  data: unknown;
+  error: { message: string; code?: string } | null;
+};
+
 /**
- * Faux client minimal qui rejoue les policies lues dans les migrations :
- * - `user_blocks_select_own` : bloqué par moi OU m'ayant bloqué ;
- * - `follow_requests_select_own` : demandeur OU cible ;
- * - `user_profiles` / `user_follows` : lecture publique.
- *
- * Les fixtures sont synthétiques et aucune requête réseau n'est émise.
+ * Faux client RPC : aucune requête réseau, aucune table simulée. Il vérifie
+ * que le service n'écrit plus directement dans `user_profiles`, `user_follows`
+ * ou `follow_requests` et que l'acteur n'est jamais un paramètre d'écriture.
  */
-class FakeSupabase {
-  readonly tables: Record<Table, Row[]>;
-  readonly writes: Array<{ table: Table; kind: 'upsert' | 'update'; values: Row }> = [];
-  beforeFollowRequestUpsert?: (db: FakeSupabase) => void;
+class FakeRpcClient {
+  readonly calls: Array<{ fn: string; args: Record<string, unknown> }> = [];
+  private readonly replies: RpcReply[] = [];
 
-  private readonly viewer: string;
-  private readonly failures: Partial<Record<Table, string>>;
-
-  constructor(options: {
-    viewer: string;
-    profiles?: Row[];
-    blocks?: Row[];
-    requests?: Row[];
-    follows?: Row[];
-    failures?: Partial<Record<Table, string>>;
-  }) {
-    this.viewer = options.viewer;
-    this.failures = options.failures ?? {};
-    this.tables = {
-      user_blocks: options.blocks ?? [],
-      user_profiles: options.profiles ?? [],
-      follow_requests: options.requests ?? [],
-      user_follows: options.follows ?? [],
-    };
+  reply(data: unknown): this {
+    this.replies.push({ data, error: null });
+    return this;
   }
 
-  from(table: Table): FakeQuery {
-    return new FakeQuery(this, table);
+  fail(message: string, code = 'P0001'): this {
+    this.replies.push({ data: null, error: { message, code } });
+    return this;
   }
 
-  visibleRows(table: Table): Row[] {
-    const rows = this.tables[table];
-    if (table === 'user_blocks') {
-      return rows.filter(
-        (row) => row.blocker_id === this.viewer || row.blocked_id === this.viewer
-      );
-    }
-    if (table === 'follow_requests') {
-      return rows.filter(
-        (row) => row.requester_id === this.viewer || row.target_id === this.viewer
-      );
-    }
-    return rows;
-  }
-
-  selectSingle(table: Table, filters: Filter[]): Result {
-    const failure = this.failureFor(table);
-    if (failure) return { data: null, error: failure };
-
-    const matches = this.visibleRows(table).filter((row) =>
-      filters.every((filter) => this.matchesFilter(row, filter))
-    );
-    if (matches.length > 1) {
-      return { data: null, error: new Error(`multiple_rows:${table}`) };
-    }
-    return { data: matches[0] ?? null, error: null };
-  }
-
-  upsertRow(table: Table, values: Row, ignoreDuplicates: boolean): Result {
-    const failure = this.failureFor(table);
-    if (failure) return { data: null, error: failure };
-
-    if (table === 'follow_requests') {
-      // Simule un acteur concurrent qui écrit entre la lecture et l'upsert.
-      const hook = this.beforeFollowRequestUpsert;
-      if (hook) {
-        this.beforeFollowRequestUpsert = undefined;
-        hook(this);
-      }
-    }
-
-    const rows = this.tables[table];
-    const existing = rows.find((row) => this.sameKey(table, row, values));
-    if (!existing) {
-      rows.push({ ...values });
-      return { data: null, error: null };
-    }
-    if (!ignoreDuplicates) Object.assign(existing, values);
-    return { data: null, error: null };
-  }
-
-  updateRows(table: Table, values: Row, filters: Filter[]): Result {
-    const failure = this.failureFor(table);
-    if (failure) return { data: null, error: failure };
-
-    const matches = this.tables[table].filter((row) =>
-      filters.every((filter) => this.matchesFilter(row, filter))
-    );
-    for (const row of matches) Object.assign(row, values);
-    return { data: null, error: null };
-  }
-
-  deleteRows(table: Table, filters: Filter[]): Result {
-    const failure = this.failureFor(table);
-    if (failure) return { data: null, error: failure };
-
-    this.tables[table] = this.tables[table].filter(
-      (row) => !filters.every((filter) => this.matchesFilter(row, filter))
-    );
-    return { data: null, error: null };
-  }
-
-  recordWrite(table: Table, kind: 'upsert' | 'update', values: Row) {
-    this.writes.push({ table, kind, values });
-  }
-
-  private matchesFilter(row: Row, filter: Filter): boolean {
-    if (filter.op === 'in') {
-      return Array.isArray(filter.value) && filter.value.includes(row[filter.column]);
-    }
-    return row[filter.column] === filter.value;
-  }
-
-  private sameKey(table: Table, row: Row, values: Row): boolean {
-    if (table === 'user_blocks') {
-      return row.blocker_id === values.blocker_id && row.blocked_id === values.blocked_id;
-    }
-    if (table === 'follow_requests') {
-      return row.requester_id === values.requester_id && row.target_id === values.target_id;
-    }
-    if (table === 'user_follows') {
-      return row.follower_id === values.follower_id && row.following_id === values.following_id;
-    }
-    return row.id === values.id;
-  }
-
-  private failureFor(table: Table): Error | null {
-    const message = this.failures[table];
-    return message ? new Error(message) : null;
+  async rpc(fn: string, args: Record<string, unknown> = {}): Promise<RpcReply> {
+    this.calls.push({ fn, args });
+    const reply = this.replies.shift();
+    if (!reply) throw new Error(`unexpected_rpc:${fn}`);
+    return reply;
   }
 }
 
-class FakeQuery {
-  private readonly filters: Filter[] = [];
-  private payload: Row | null = null;
-  private operation: 'update' | 'delete' | null = null;
-
-  constructor(
-    private readonly db: FakeSupabase,
-    private readonly table: Table
-  ) {}
-
-  select(_columns: string): this {
-    return this;
-  }
-
-  eq(column: string, value: unknown): this {
-    this.filters.push({ column, value, op: 'eq' });
-    return this;
-  }
-
-  in(column: string, values: unknown[]): this {
-    this.filters.push({ column, value: values, op: 'in' });
-    return this;
-  }
-
-  maybeSingle(): Promise<Result> {
-    return Promise.resolve(this.db.selectSingle(this.table, this.filters));
-  }
-
-  upsert(values: Row, options?: { ignoreDuplicates?: boolean }): Promise<Result> {
-    this.db.recordWrite(this.table, 'upsert', values);
-    return Promise.resolve(
-      this.db.upsertRow(this.table, values, options?.ignoreDuplicates === true)
-    );
-  }
-
-  update(values: Row): this {
-    this.operation = 'update';
-    this.payload = values;
-    return this;
-  }
-
-  delete(): this {
-    this.operation = 'delete';
-    return this;
-  }
-
-  then<TResult1 = Result, TResult2 = never>(
-    onfulfilled?: ((value: Result) => TResult1 | PromiseLike<TResult1>) | null,
-    onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null
-  ): Promise<TResult1 | TResult2> {
-    if (this.operation === 'update' && this.payload) {
-      this.db.recordWrite(this.table, 'update', this.payload);
-      return Promise.resolve(
-        this.db.updateRows(this.table, this.payload, this.filters)
-      ).then(onfulfilled, onrejected);
-    }
-    if (this.operation === 'delete') {
-      return Promise.resolve(
-        this.db.deleteRows(this.table, this.filters)
-      ).then(onfulfilled, onrejected);
-    }
-    return Promise.reject(new Error('write_without_operation')).then(onfulfilled, onrejected);
-  }
+function asClient(fake: FakeRpcClient): SupabaseClient {
+  return fake as unknown as SupabaseClient;
 }
 
-function asClient(db: FakeSupabase): SupabaseClient {
-  return db as unknown as SupabaseClient;
+function sourceOf(name: string): string {
+  const source = readFileSync(fileURLToPath(new URL('../reseau.ts', import.meta.url)), 'utf8');
+  const start = source.indexOf(`export async function ${name}`);
+  expect(start, `fonction ${name} introuvable`).toBeGreaterThanOrEqual(0);
+  const next = source.indexOf('\nexport ', start + 1);
+  return source.slice(start, next === -1 ? undefined : next);
 }
 
-function privateTarget(extra: Row = {}): Row {
-  return { id: TARGET, profile_visibility: 'prive', ...extra };
-}
+describe('reseau — suivre une cible (contrat RPC)', () => {
+  it('suit une cible publique et ne transmet que la cible', async () => {
+    const db = new FakeRpcClient().reply('following');
 
-describe('reseau — suivi face à un blocage', () => {
-  it('refuse quand la cible a bloqué la session, sans écrire', async () => {
-    const db = new FakeSupabase({
-      viewer: ME,
-      profiles: [privateTarget()],
-      blocks: [{ blocker_id: TARGET, blocked_id: ME }],
-    });
-
-    await expect(followUser(asClient(db), ME, TARGET)).rejects.toThrow('blocked');
-    expect(db.writes).toEqual([]);
+    await expect(followUser(asClient(db), TARGET)).resolves.toEqual({ status: 'following' });
+    expect(db.calls).toEqual([{ fn: 'reseau_follow', args: { p_target_id: TARGET } }]);
   });
 
-  it('refuse quand la session a bloqué la cible, sans écrire', async () => {
-    const db = new FakeSupabase({
-      viewer: ME,
-      profiles: [privateTarget()],
-      blocks: [{ blocker_id: ME, blocked_id: TARGET }],
-    });
+  it('demande à suivre une cible privée sans réécrire la décision côté client', async () => {
+    const db = new FakeRpcClient().reply('requested');
 
-    await expect(followUser(asClient(db), ME, TARGET)).rejects.toThrow('blocked');
-    expect(db.writes).toEqual([]);
+    await expect(followUser(asClient(db), TARGET)).resolves.toEqual({ status: 'requested' });
+    expect(db.calls).toEqual([{ fn: 'reseau_follow', args: { p_target_id: TARGET } }]);
   });
 
-  it('ignore un blocage qui ne concerne pas la session (RLS)', async () => {
-    const db = new FakeSupabase({
-      viewer: ME,
-      profiles: [privateTarget()],
-      blocks: [{ blocker_id: TARGET, blocked_id: OTHER }],
-    });
-
-    await expect(followUser(asClient(db), ME, TARGET)).resolves.toEqual({
-      status: 'requested',
-    });
-    expect(db.writes).toEqual([
-      {
-        table: 'follow_requests',
-        kind: 'upsert',
-        values: { requester_id: ME, target_id: TARGET, status: 'pending' },
-      },
-    ]);
+  it('mappe self, blocked, cible inconnue et demande close', async () => {
+    for (const code of ['self', 'blocked', 'target_not_found', 'follow_request_closed']) {
+      const db = new FakeRpcClient().fail(code);
+      await expect(followUser(asClient(db), TARGET)).rejects.toThrow(code);
+    }
   });
 
-  it('refuse de se suivre soi-même', async () => {
-    const db = new FakeSupabase({ viewer: ME });
-    await expect(followUser(asClient(db), ME, ME)).rejects.toThrow('self');
-    expect(db.writes).toEqual([]);
+  it('ramène les erreurs SQL inconnues à follow_failed, sans fuite de détail', async () => {
+    const db = new FakeRpcClient().fail('permission denied for table user_profiles', '42501');
+
+    await expect(followUser(asClient(db), TARGET)).rejects.toThrow('follow_failed');
+  });
+
+  it('refuse un résultat RPC hors du vocabulaire borné', async () => {
+    for (const data of [null, 42, 'accepted', { status: 'following' }]) {
+      const db = new FakeRpcClient().reply(data);
+      await expect(followUser(asClient(db), TARGET)).rejects.toThrow('follow_failed');
+    }
+  });
+
+  it('n’accepte aucun identifiant d’acteur dans sa signature', () => {
+    expect(followUser.length).toBe(2);
+    const body = sourceOf('followUser');
+    expect(body).toContain("rpc('reseau_follow'");
+    expect(body).not.toContain('user_profiles');
+    expect(body).not.toContain('service_role');
+    expect(body).not.toContain('privileged');
   });
 });
 
-describe('reseau — demandes de suivi existantes', () => {
-  it('renvoie `requested` sans réécrire une demande déjà pendante', async () => {
-    const db = new FakeSupabase({
-      viewer: ME,
-      profiles: [privateTarget()],
-      requests: [
-        {
-          id: REQUEST_ID,
-          requester_id: ME,
-          target_id: TARGET,
-          status: 'pending',
-          created_at: '2026-11-10T09:00:00.000Z',
-        },
-      ],
-    });
+describe('reseau — révoquer un suivi (contrat RPC)', () => {
+  it('révoque via la RPC et renvoie un résultat borné', async () => {
+    const db = new FakeRpcClient().reply('unfollowed');
 
-    await expect(followUser(asClient(db), ME, TARGET)).resolves.toEqual({
-      status: 'requested',
-    });
-    expect(db.writes).toEqual([]);
-    expect(db.tables.follow_requests[0]?.status).toBe('pending');
+    await expect(unfollowUser(asClient(db), TARGET)).resolves.toBeUndefined();
+    expect(db.calls).toEqual([{ fn: 'reseau_unfollow', args: { p_target_id: TARGET } }]);
   });
 
-  it('ne rouvre pas une demande refusée', async () => {
-    const db = new FakeSupabase({
-      viewer: ME,
-      profiles: [privateTarget()],
-      requests: [
-        {
-          id: REQUEST_ID,
-          requester_id: ME,
-          target_id: TARGET,
-          status: 'declined',
-          created_at: '2026-11-10T09:00:00.000Z',
-        },
-      ],
-    });
-
-    await expect(followUser(asClient(db), ME, TARGET)).rejects.toThrow(
-      'follow_request_closed'
-    );
-    expect(db.writes).toEqual([]);
-    expect(db.tables.follow_requests[0]?.status).toBe('declined');
+  it('refuse un résultat inattendu sans supposer la révocation faite', async () => {
+    const db = new FakeRpcClient().reply('following');
+    await expect(unfollowUser(asClient(db), TARGET)).rejects.toThrow('unfollow_failed');
   });
 
-  it('conserve le suivi existant d’une demande acceptée sans réécrire le statut', async () => {
-    const db = new FakeSupabase({
-      viewer: ME,
-      profiles: [privateTarget()],
-      requests: [
-        {
-          id: REQUEST_ID,
-          requester_id: ME,
-          target_id: TARGET,
-          status: 'accepted',
-          created_at: '2026-11-10T09:00:00.000Z',
-        },
-      ],
-      follows: [{ follower_id: ME, following_id: TARGET }],
-    });
+  it('mappe les erreurs de révocation', async () => {
+    const db = new FakeRpcClient().fail('blocked');
+    await expect(unfollowUser(asClient(db), TARGET)).rejects.toThrow('blocked');
 
-    await expect(followUser(asClient(db), ME, TARGET)).resolves.toEqual({
-      status: 'following',
-    });
-    expect(db.writes).toEqual([]);
-    expect(db.tables.follow_requests[0]?.status).toBe('accepted');
-    expect(db.tables.user_follows).toEqual([
-      { follower_id: ME, following_id: TARGET },
-    ]);
+    const unknown = new FakeRpcClient().fail('deadlock detected', '40P01');
+    await expect(unfollowUser(asClient(unknown), TARGET)).rejects.toThrow('unfollow_failed');
   });
 
-  it('ne recrée jamais un suivi privé depuis un statut accepted historique', async () => {
-    const db = new FakeSupabase({
-      viewer: ME,
-      profiles: [privateTarget()],
-      requests: [
-        {
-          id: REQUEST_ID,
-          requester_id: ME,
-          target_id: TARGET,
-          status: 'accepted',
-          created_at: '2026-11-10T09:00:00.000Z',
-        },
-      ],
-    });
-
-    await expect(followUser(asClient(db), ME, TARGET)).rejects.toThrow(
-      'follow_request_closed'
-    );
-    expect(db.writes).toEqual([]);
-    expect(db.tables.user_follows).toEqual([]);
-    expect(db.tables.follow_requests[0]?.status).toBe('accepted');
-  });
-
-  it('ne réécrit pas une demande concurrente créée entre la lecture et l’écriture', async () => {
-    const db = new FakeSupabase({ viewer: ME, profiles: [privateTarget()] });
-    // Simule un autre acteur qui refuse la demande après notre lecture et
-    // avant notre upsert : `DO NOTHING` ne doit pas la repasser en `pending`.
-    db.beforeFollowRequestUpsert = (database) => {
-      database.tables.follow_requests.push({
-        id: REQUEST_ID,
-        requester_id: ME,
-        target_id: TARGET,
-        status: 'declined',
-        created_at: '2026-11-10T09:00:00.000Z',
-      });
-    };
-
-    await expect(followUser(asClient(db), ME, TARGET)).resolves.toEqual({
-      status: 'requested',
-    });
-    expect(db.tables.follow_requests).toHaveLength(1);
-    expect(db.tables.follow_requests[0]?.status).toBe('declined');
-  });
-
-  it('crée une seule demande quand le même suivi est rejoué', async () => {
-    const db = new FakeSupabase({ viewer: ME, profiles: [privateTarget()] });
-
-    await expect(followUser(asClient(db), ME, TARGET)).resolves.toEqual({
-      status: 'requested',
-    });
-    await expect(followUser(asClient(db), ME, TARGET)).resolves.toEqual({
-      status: 'requested',
-    });
-
-    expect(db.tables.follow_requests).toHaveLength(1);
-    expect(db.tables.follow_requests[0]?.status).toBe('pending');
-    expect(db.writes.filter((write) => write.table === 'follow_requests')).toHaveLength(1);
-  });
-
-  it('conserve le suivi direct d’un profil public', async () => {
-    const db = new FakeSupabase({
-      viewer: ME,
-      profiles: [{ id: TARGET, profile_visibility: 'public' }],
-    });
-
-    await expect(followUser(asClient(db), ME, TARGET)).resolves.toEqual({
-      status: 'following',
-    });
-    expect(db.writes).toEqual([
-      {
-        table: 'user_follows',
-        kind: 'upsert',
-        values: { follower_id: ME, following_id: TARGET },
-      },
-    ]);
+  it('n’accepte aucun identifiant d’acteur dans sa signature', () => {
+    expect(unfollowUser.length).toBe(2);
+    const body = sourceOf('unfollowUser');
+    expect(body).toContain("rpc('reseau_unfollow'");
+    expect(body).not.toContain('user_profiles');
+    expect(body).not.toContain('service_role');
   });
 });
 
-describe('reseau — révocation', () => {
-  it('supprime le suivi et l’autorisation acceptée, puis exige une nouvelle demande', async () => {
-    const db = new FakeSupabase({
-      viewer: ME,
-      profiles: [privateTarget()],
-      requests: [
-        {
-          id: REQUEST_ID,
-          requester_id: ME,
-          target_id: TARGET,
-          status: 'accepted',
-          created_at: '2026-11-10T09:00:00.000Z',
-        },
-      ],
-      follows: [{ follower_id: ME, following_id: TARGET }],
-    });
-
-    await unfollowUser(asClient(db), ME, TARGET);
-    expect(db.tables.user_follows).toEqual([]);
-    expect(db.tables.follow_requests).toEqual([]);
-
-    await expect(followUser(asClient(db), ME, TARGET)).resolves.toEqual({
-      status: 'requested',
-    });
-    expect(db.tables.follow_requests).toHaveLength(1);
-    expect(db.tables.follow_requests[0]?.status).toBe('pending');
-  });
-
-  it('conserve un refus lors de la révocation pour empêcher sa réouverture', async () => {
-    const db = new FakeSupabase({
-      viewer: ME,
-      profiles: [privateTarget()],
-      requests: [
-        {
-          id: REQUEST_ID,
-          requester_id: ME,
-          target_id: TARGET,
-          status: 'declined',
-          created_at: '2026-11-10T09:00:00.000Z',
-        },
-      ],
-    });
-
-    await unfollowUser(asClient(db), ME, TARGET);
-    expect(db.tables.follow_requests).toHaveLength(1);
-    expect(db.tables.follow_requests[0]?.status).toBe('declined');
-  });
-});
-
-describe('reseau — réponse à une demande', () => {
-  const pendingRequest: Row = {
-    id: REQUEST_ID,
-    requester_id: TARGET,
-    target_id: ME,
-    status: 'pending',
-    created_at: '2026-11-10T09:00:00.000Z',
-  };
-
-  it('ne recrée pas un suivi en rejouant une demande acceptée historique', async () => {
-    const db = new FakeSupabase({
-      viewer: ME,
-      requests: [{ ...pendingRequest, status: 'accepted' }],
-    });
+describe('reseau — répondre à une demande (contrat RPC)', () => {
+  it('accepte une demande et transmet uniquement demande + action', async () => {
+    const db = new FakeRpcClient().reply('accepted');
 
     await expect(
-      respondFollowRequest(asClient(db), ME, REQUEST_ID, 'accept')
-    ).rejects.toThrow('request_not_pending');
-    expect(db.writes).toEqual([]);
-    expect(db.tables.user_follows).toEqual([]);
-    expect(db.tables.follow_requests[0]?.status).toBe('accepted');
-  });
-
-  it('refuse d’accepter si un blocage existe dans un sens', async () => {
-    const db = new FakeSupabase({
-      viewer: ME,
-      requests: [{ ...pendingRequest }],
-      blocks: [{ blocker_id: TARGET, blocked_id: ME }],
-    });
-
-    await expect(
-      respondFollowRequest(asClient(db), ME, REQUEST_ID, 'accept')
-    ).rejects.toThrow('blocked');
-    expect(db.writes).toEqual([]);
-    expect(db.tables.follow_requests[0]?.status).toBe('pending');
-  });
-
-  it('laisse toujours refuser une demande, même avec un blocage', async () => {
-    const db = new FakeSupabase({
-      viewer: ME,
-      requests: [{ ...pendingRequest }],
-      blocks: [{ blocker_id: ME, blocked_id: TARGET }],
-    });
-
-    await expect(
-      respondFollowRequest(asClient(db), ME, REQUEST_ID, 'decline')
+      respondFollowRequest(asClient(db), REQUEST_ID, 'accept')
     ).resolves.toBeUndefined();
-    expect(db.tables.follow_requests[0]?.status).toBe('declined');
-    expect(db.writes).toEqual([
+    expect(db.calls).toEqual([
       {
-        table: 'follow_requests',
-        kind: 'update',
-        values: {
-          status: 'declined',
-          responded_at: expect.any(String),
-        },
+        fn: 'reseau_respond_follow_request',
+        args: { p_request_id: REQUEST_ID, p_action: 'accept' },
       },
     ]);
   });
 
-  it('accepte normalement une demande sans blocage', async () => {
-    const db = new FakeSupabase({
-      viewer: ME,
-      requests: [{ ...pendingRequest }],
-    });
+  it('refuse une demande et attend le statut correspondant', async () => {
+    const db = new FakeRpcClient().reply('declined');
 
     await expect(
-      respondFollowRequest(asClient(db), ME, REQUEST_ID, 'accept')
+      respondFollowRequest(asClient(db), REQUEST_ID, 'decline')
     ).resolves.toBeUndefined();
-    expect(db.tables.follow_requests[0]?.status).toBe('accepted');
-    expect(db.tables.user_follows).toEqual([
-      { follower_id: TARGET, following_id: ME },
+    expect(db.calls).toEqual([
+      {
+        fn: 'reseau_respond_follow_request',
+        args: { p_request_id: REQUEST_ID, p_action: 'decline' },
+      },
     ]);
+  });
+
+  it('refuse un statut qui ne correspond pas à l’action demandée', async () => {
+    const db = new FakeRpcClient().reply('declined');
+    await expect(
+      respondFollowRequest(asClient(db), REQUEST_ID, 'accept')
+    ).rejects.toThrow('respond_failed');
+  });
+
+  it('refuse un résultat RPC malformé', async () => {
+    for (const data of [null, 'pending', { status: 'accepted' }]) {
+      const db = new FakeRpcClient().reply(data);
+      await expect(
+        respondFollowRequest(asClient(db), REQUEST_ID, 'accept')
+      ).rejects.toThrow('respond_failed');
+    }
+  });
+
+  it('mappe les refus métier sans exposer le message SQL', async () => {
+    for (const code of ['request_not_found', 'request_not_pending', 'blocked', 'invalid_action']) {
+      const db = new FakeRpcClient().fail(code);
+      await expect(
+        respondFollowRequest(asClient(db), REQUEST_ID, 'accept')
+      ).rejects.toThrow(code);
+    }
+
+    const unknown = new FakeRpcClient().fail('relation does not exist', '42P01');
+    await expect(
+      respondFollowRequest(asClient(unknown), REQUEST_ID, 'decline')
+    ).rejects.toThrow('respond_failed');
+  });
+
+  it('n’accepte ni acteur ni client privilégié dans sa signature', () => {
+    expect(respondFollowRequest.length).toBe(3);
+    const body = sourceOf('respondFollowRequest');
+    expect(body).toContain("rpc('reseau_respond_follow_request'");
+    expect(body).not.toContain('user_profiles');
+    expect(body).not.toContain('createServiceClient');
+    expect(body).not.toContain('service_role');
+    expect(body).not.toContain('privileged');
+  });
+});
+
+describe('reseau — lecture bornée des erreurs', () => {
+  it('ne laisse passer que le vocabulaire connu', () => {
+    expect(readReseauError(new Error('blocked'), 'follow_failed')).toBe('blocked');
+    expect(readReseauError({ message: ' target_not_found ' }, 'follow_failed')).toBe(
+      'target_not_found'
+    );
+    expect(readReseauError(new Error('permission denied'), 'follow_failed')).toBe(
+      'follow_failed'
+    );
+    expect(readReseauError('blocked', 'follow_failed')).toBe('follow_failed');
+    expect(readReseauError(null, 'follow_failed')).toBe('follow_failed');
   });
 });

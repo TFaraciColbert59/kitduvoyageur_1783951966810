@@ -47,45 +47,66 @@ function displayHandle(row: ProfileRow | undefined, fallbackId: string) {
   return row?.handle?.trim() || fallbackId.slice(0, 8);
 }
 
-/**
- * La policy `user_blocks_select_own` expose à une session les lignes où elle
- * est bloqueuse **ou** bloquée. Les deux sens sont donc lisibles avec le client
- * de session, sans service_role : on interroge les deux orientations.
- */
-async function hasBlockBetween(
-  supabase: SupabaseClient,
-  userId: string,
-  targetId: string
-): Promise<boolean> {
-  const [{ data: blockedByMe, error: blockedByMeError }, { data: blockedMe, error: blockedMeError }] =
-    await Promise.all([
-      supabase
-        .from('user_blocks')
-        .select('blocker_id')
-        .eq('blocker_id', userId)
-        .eq('blocked_id', targetId)
-        .maybeSingle(),
-      supabase
-        .from('user_blocks')
-        .select('blocker_id')
-        .eq('blocker_id', targetId)
-        .eq('blocked_id', userId)
-        .maybeSingle(),
-    ]);
-  if (blockedByMeError) throw blockedByMeError;
-  if (blockedMeError) throw blockedMeError;
-  return Boolean(blockedByMe || blockedMe);
+type ReseauRpcClient = Pick<SupabaseClient, 'rpc'>;
+
+const FOLLOW_STATUSES = ['following', 'requested'] as const;
+type FollowStatus = (typeof FOLLOW_STATUSES)[number];
+
+const FOLLOW_RESPONSE_STATUSES = ['accepted', 'declined'] as const;
+type FollowResponseStatus = (typeof FOLLOW_RESPONSE_STATUSES)[number];
+
+export type ReseauErrorCode =
+  | 'authentication_required'
+  | 'self'
+  | 'blocked'
+  | 'target_not_found'
+  | 'follow_request_closed'
+  | 'request_not_found'
+  | 'request_not_pending'
+  | 'invalid_action'
+  | 'follow_failed'
+  | 'unfollow_failed'
+  | 'respond_failed';
+
+// Vocabulaire fermé : une erreur PostgreSQL inconnue ne doit jamais remonter
+// telle quelle jusqu'au client HTTP.
+const RESEAU_ERROR_CODES = new Set<ReseauErrorCode>([
+  'authentication_required',
+  'self',
+  'blocked',
+  'target_not_found',
+  'follow_request_closed',
+  'request_not_found',
+  'request_not_pending',
+  'invalid_action',
+  'follow_failed',
+  'unfollow_failed',
+  'respond_failed',
+]);
+
+function errorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message.trim();
+  if (error && typeof error === 'object' && 'message' in error) {
+    return String((error as { message?: unknown }).message ?? '').trim();
+  }
+  return '';
 }
 
-async function upsertFollow(
-  supabase: SupabaseClient,
-  userId: string,
-  targetId: string
-): Promise<void> {
-  const { error } = await supabase
-    .from('user_follows')
-    .upsert({ follower_id: userId, following_id: targetId }, { onConflict: 'follower_id,following_id' });
-  if (error) throw error;
+/** Ramène toute erreur de RPC à un code borné, sans exposer le détail SQL. */
+export function readReseauError(error: unknown, fallback: ReseauErrorCode): ReseauErrorCode {
+  const code = errorMessage(error) as ReseauErrorCode;
+  return RESEAU_ERROR_CODES.has(code) ? code : fallback;
+}
+
+function readRpcStatus<T extends string>(
+  data: unknown,
+  allowed: readonly T[],
+  fallback: ReseauErrorCode
+): T {
+  if (typeof data === 'string' && (allowed as readonly string[]).includes(data)) {
+    return data as T;
+  }
+  throw new Error(fallback);
 }
 
 export async function loadReseau(
@@ -172,147 +193,51 @@ export async function loadReseau(
   return { users, total: users.length, mutuals };
 }
 
+/**
+ * Suit une cible publique ou crée une demande pour une cible privée.
+ *
+ * La décision public/privé et le contrôle de blocage sont pris par la RPC
+ * `reseau_follow` avec `auth.uid()` : le client de session ne lit jamais
+ * `user_profiles` pour une cible arbitraire, et aucun identifiant d'acteur
+ * n'est accepté depuis l'appelant.
+ */
 export async function followUser(
-  supabase: SupabaseClient,
-  userId: string,
+  supabase: ReseauRpcClient,
   targetId: string
-): Promise<{ status: 'following' | 'requested' }> {
-  if (targetId === userId) throw new Error('self');
-  if (await hasBlockBetween(supabase, userId, targetId)) throw new Error('blocked');
-
-  const { data: target, error: targetError } = await supabase
-    .from('user_profiles')
-    .select('profile_visibility')
-    .eq('id', targetId)
-    .maybeSingle();
-  if (targetError) throw targetError;
-  if (!target) throw new Error('target_not_found');
-
-  if (target.profile_visibility === 'prive') {
-    // Le demandeur voit sa propre demande (policy `follow_requests_select_own`).
-    // On ne réécrit donc jamais une demande existante : un upsert nu repasserait
-    // une demande acceptée ou refusée en `pending`.
-    const { data: existing, error: requestError } = await supabase
-      .from('follow_requests')
-      .select('status')
-      .eq('requester_id', userId)
-      .eq('target_id', targetId)
-      .maybeSingle();
-    if (requestError) throw requestError;
-
-    if (existing?.status === 'pending') return { status: 'requested' };
-    if (existing?.status === 'accepted') {
-      // Un statut historique n'autorise rien : après un unfollow, la relation
-      // a été révoquée et le statut `accepted` peut subsister (legacy). On
-      // vérifie donc la relation actuelle et on ne recrée jamais un suivi à
-      // partir du seul statut.
-      const { data: currentFollow, error: followError } = await supabase
-        .from('user_follows')
-        .select('follower_id')
-        .eq('follower_id', userId)
-        .eq('following_id', targetId)
-        .maybeSingle();
-      if (followError) throw followError;
-      if (!currentFollow) throw new Error('follow_request_closed');
-      return { status: 'following' };
-    }
-    if (existing) throw new Error('follow_request_closed');
-
-    const { error } = await supabase.from('follow_requests').upsert(
-      { requester_id: userId, target_id: targetId, status: 'pending' },
-      // `DO NOTHING` : si une autre requête crée la ligne entre la lecture et
-      // l'écriture, on ne remplace pas son état (pending/declined).
-      { onConflict: 'requester_id,target_id', ignoreDuplicates: true }
-    );
-    if (error) throw error;
-    return { status: 'requested' };
-  }
-
-  await upsertFollow(supabase, userId, targetId);
-  return { status: 'following' };
+): Promise<{ status: FollowStatus }> {
+  const { data, error } = await supabase.rpc('reseau_follow', { p_target_id: targetId });
+  if (error) throw new Error(readReseauError(error, 'follow_failed'));
+  return { status: readRpcStatus(data, FOLLOW_STATUSES, 'follow_failed') };
 }
 
 export async function unfollowUser(
-  supabase: SupabaseClient,
-  userId: string,
+  supabase: ReseauRpcClient,
   targetId: string
 ): Promise<void> {
-  const [{ error: followError }, { error: requestError }] = await Promise.all([
-    supabase.from('user_follows').delete().eq('follower_id', userId).eq('following_id', targetId),
-    supabase
-      .from('follow_requests')
-      .delete()
-      .eq('requester_id', userId)
-      .eq('target_id', targetId)
-      // La révocation emporte aussi l'autorisation acceptée : elle ne doit pas
-      // rester un droit de suivi latent. Un refus (`declined`) est conservé
-      // pour empêcher sa réouverture.
-      .in('status', ['pending', 'accepted']),
-  ]);
-  if (followError) throw followError;
-  if (requestError) throw requestError;
+  const { data, error } = await supabase.rpc('reseau_unfollow', { p_target_id: targetId });
+  if (error) throw new Error(readReseauError(error, 'unfollow_failed'));
+  readRpcStatus(data, ['unfollowed'] as const, 'unfollow_failed');
 }
 
+/**
+ * Accepte ou refuse une demande reçue. La RPC vérifie que `auth.uid()` est bien
+ * la cible de la demande, puis écrit le suivi et le statut dans la même
+ * transaction. Plus aucun chemin privilégié n'est nécessaire.
+ */
 export async function respondFollowRequest(
-  supabase: SupabaseClient,
-  userId: string,
+  supabase: ReseauRpcClient,
   requestId: string,
-  action: 'accept' | 'decline',
-  privileged?: SupabaseClient | null
+  action: 'accept' | 'decline'
 ): Promise<void> {
-  const { data: request, error } = await supabase
-    .from('follow_requests')
-    .select('id, requester_id, target_id, status')
-    .eq('id', requestId)
-    .eq('target_id', userId)
-    .maybeSingle();
-  if (error) throw error;
-  if (!request) throw new Error('request_not_found');
-  if (request.status !== 'pending') {
-    // Une demande acceptée/refusée est historique : la rejouer ne doit ni
-    // recréer un suivi (accepted) ni rouvrir une décision (declined).
-    throw new Error('request_not_pending');
-  }
+  const { data, error } = await supabase.rpc('reseau_respond_follow_request', {
+    p_request_id: requestId,
+    p_action: action,
+  });
+  if (error) throw new Error(readReseauError(error, 'respond_failed'));
 
-  if (action === 'accept' && (await hasBlockBetween(supabase, userId, request.requester_id))) {
-    // Un blocage posé après la demande interdit de créer la relation ; le
-    // refus reste possible pour vider la demande.
-    throw new Error('blocked');
-  }
-
-  if (action === 'accept') {
-    const followRow = { follower_id: request.requester_id, following_id: request.target_id };
-    const { error: followError } = await supabase
-      .from('user_follows')
-      .upsert(followRow, {
-        // `DO NOTHING` : le target ne peut pas modifier une ligne de follow
-        // existante (RLS `follower_id = auth.uid()`), il peut seulement créer
-        // la relation quand elle n'existe pas encore.
-        onConflict: 'follower_id,following_id',
-        ignoreDuplicates: true,
-      });
-
-    if (followError) {
-      // La RLS historique interdit au target d'insérer la relation. La policy
-      // additive `20261023100000_follow_request_accept.sql` corrige la base ;
-      // tant qu'elle n'est pas appliquée, le service_role (déjà vérifié par la
-      // lecture `target_id = userId` ci-dessus) permet l'acceptation.
-      const isRls =
-        String((followError as { code?: string }).code) === '42501' ||
-        String(followError.message).toLowerCase().includes('row-level security');
-      if (!isRls || !privileged) throw followError;
-      const { error: privilegedError } = await privileged
-        .from('user_follows')
-        .upsert(followRow, { onConflict: 'follower_id,following_id', ignoreDuplicates: true });
-      if (privilegedError) throw privilegedError;
-    }
-  }
-
-  const { error: updateError } = await supabase
-    .from('follow_requests')
-    .update({ status: action === 'accept' ? 'accepted' : 'declined', responded_at: new Date().toISOString() })
-    .eq('id', requestId);
-  if (updateError) throw updateError;
+  const status = readRpcStatus(data, FOLLOW_RESPONSE_STATUSES, 'respond_failed');
+  const expected: FollowResponseStatus = action === 'accept' ? 'accepted' : 'declined';
+  if (status !== expected) throw new Error('respond_failed');
 }
 
 export async function toggleCordee(
