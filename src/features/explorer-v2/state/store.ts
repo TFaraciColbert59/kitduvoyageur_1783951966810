@@ -71,7 +71,7 @@ const initialState: ExplorerState = {
   profile: null,
   easyMode: false,
   theme: 'light',
-  autoPauseEnabled: true,
+  autoPauseEnabled: false,
   online: true,
   locationPermission: 'prompt',
   orbitPaused: false,
@@ -330,6 +330,26 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
     emit('auto-pause-setting', { enabled });
   },
 }));
+
+/**
+ * Applique la préférence de pause automatique stockée localement.
+ *
+ * Appelée après le montage (jamais pendant le rendu serveur) : sans valeur,
+ * le réglage garde son défaut OFF et les métriques historiques sont préservées.
+ */
+export function hydrateAutoPausePreference(): void {
+  try {
+    if (typeof window === 'undefined') return;
+    const raw = window.localStorage.getItem(AUTO_PAUSE_STORAGE_KEY);
+    if (raw === '1' || raw === 'true') {
+      useExplorerStore.setState({ autoPauseEnabled: true });
+    } else if (raw === '0' || raw === 'false') {
+      useExplorerStore.setState({ autoPauseEnabled: false });
+    }
+  } catch {
+    /* stockage indisponible : défaut OFF */
+  }
+}
 
 export interface TransientStart {
   pendingStart: PendingStart | null;

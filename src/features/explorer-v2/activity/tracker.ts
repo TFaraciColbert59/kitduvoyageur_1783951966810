@@ -131,7 +131,7 @@ export const AUTO_PAUSE_BY_SPORT: Readonly<Record<Sport, AutoPauseConfig>> = {
  */
 export function autoPauseConfigForSport(
   sport: Sport | null | undefined,
-  enabled = true,
+  enabled = false,
 ): AutoPauseConfig {
   if (!enabled || !sport) return { ...AUTO_PAUSE_DISABLED };
   return { ...AUTO_PAUSE_BY_SPORT[sport] };

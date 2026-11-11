@@ -3,6 +3,7 @@ import {
   ActivityTracker,
   AUTO_PAUSE_BY_SPORT,
   AUTO_PAUSE_DISABLED,
+  autoPauseConfigForSport,
   averageSpeedKmh,
   type AutoPauseConfig,
   type GpsFix,
@@ -245,6 +246,13 @@ describe('explorer-v2 · auto-pause', () => {
     expect(disabled.state.autoPaused).toBe(false);
     expect(disabled.pauses).toBe(0);
     expect(AUTO_PAUSE_DISABLED.enabled).toBe(false);
+  });
+
+  it('désactive le profil par défaut et ne l’active que sur demande explicite', () => {
+    expect(autoPauseConfigForSport('course').enabled).toBe(false);
+    expect(autoPauseConfigForSport('course', false).enabled).toBe(false);
+    expect(autoPauseConfigForSport('course', true).enabled).toBe(true);
+    expect(autoPauseConfigForSport(null, true).enabled).toBe(false);
   });
 
   it('expose un profil cohérent pour chaque sport', () => {

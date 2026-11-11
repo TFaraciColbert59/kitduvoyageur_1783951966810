@@ -23,7 +23,7 @@ export interface TrackerOptions {
 
 export function useGpsTracker({ distanceToRouteM, onFix }: TrackerOptions = {}) {
   const activity = useExplorerStore((state) => state.activity);
-  const autoPauseEnabled = useExplorerStore((state) => state.autoPauseEnabled) ?? true;
+  const autoPauseEnabled = useExplorerStore((state) => state.autoPauseEnabled) ?? false;
   const permission = useExplorerStore((state) => state.locationPermission);
   const scene = useExplorerStore((state) => state.scene);
   const running = !!activity && !activity.paused;
@@ -37,11 +37,12 @@ export function useGpsTracker({ distanceToRouteM, onFix }: TrackerOptions = {}) 
   const lastFixTimeRef = useRef<number>(Date.now());
 
   handleFix.current = (fix: GpsFix) => {
-    lastFixTimeRef.current = Date.now();
     const current = useExplorerStore.getState().activity;
     // Pause manuelle : un fix tardif ne doit ni déplacer la carte ni avancer
-    // les métriques. La pause automatique, elle, laisse passer les fixes.
-    if (!current || (autoPauseEnabled && current.paused)) return;
+    // les métriques, que la pause automatique soit activée ou non. La pause
+    // automatique, elle, laisse passer les fixes pour détecter la reprise.
+    if (!current || current.paused) return;
+    lastFixTimeRef.current = Date.now();
 
     const metrics = trackerRef.current.addFix(fix);
     useExplorerStore.setState((state) => ({
@@ -146,7 +147,8 @@ export function useGpsTracker({ distanceToRouteM, onFix }: TrackerOptions = {}) 
   }, [activity, autoPauseEnabled]);
 
   // Pause manuelle : une transition (aller ou retour) casse la continuité pour
-  // que le trou ne soit compté ni en distance, ni en durée, ni en D+.
+  // que le trou ne soit compté ni en distance, ni en durée, ni en D+, que la
+  // pause automatique soit activée ou non.
   useEffect(() => {
     if (!activity) {
       manualPausedRef.current = null;
@@ -155,13 +157,13 @@ export function useGpsTracker({ distanceToRouteM, onFix }: TrackerOptions = {}) 
     const previous = manualPausedRef.current;
     manualPausedRef.current = activity.paused;
     if (previous === null || previous === activity.paused) return;
-    if (autoPauseEnabled) trackerRef.current.breakContinuity();
+    trackerRef.current.breakContinuity();
     if (activity.paused && activity.autoPaused) {
       useExplorerStore.setState((state) =>
         state.activity ? { activity: { ...state.activity, autoPaused: false } } : {},
       );
     }
-  }, [activity, autoPauseEnabled]);
+  }, [activity]);
 
   useEffect(() => {
     if (!running || permission === 'denied') return;

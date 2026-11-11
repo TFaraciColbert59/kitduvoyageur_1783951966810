@@ -28,7 +28,7 @@ describe('explorer-v2 · drawer de départ', () => {
       configurable: true,
       value: {},
     });
-    useExplorerStore.setState({ autoPauseEnabled: true });
+    useExplorerStore.setState({ autoPauseEnabled: false });
   });
 
   it('transmet la variante choisie au callback de démarrage', () => {
@@ -52,6 +52,15 @@ describe('explorer-v2 · drawer de départ', () => {
         environment: 'outdoor',
       }),
     );
+  });
+
+  it('rend la pause automatique désactivée par défaut', () => {
+    render(<SportPicker ctx={context(vi.fn())} />);
+
+    expect(
+      screen.getByRole('switch', { name: /Pause automatique/ }).getAttribute('aria-checked'),
+    ).toBe('false');
+    expect(useExplorerStore.getState().autoPauseEnabled).toBe(false);
   });
 
   it('expose le réglage de préparation et persiste la pause automatique', () => {

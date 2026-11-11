@@ -137,7 +137,7 @@ function autoPauseDurationLabel(seconds: number): string {
  * Désactivée, le tracker garde exactement le comportement historique.
  */
 function AutoPauseSetting({ sport }: { sport?: Sport | null }) {
-  const enabled = useExplorerStore((state) => state.autoPauseEnabled) ?? true;
+  const enabled = useExplorerStore((state) => state.autoPauseEnabled) ?? false;
   const setEnabled = useExplorerStore((state) => state.setAutoPauseEnabled);
   const config = sport ? AUTO_PAUSE_BY_SPORT[sport] : null;
   const sub = !enabled

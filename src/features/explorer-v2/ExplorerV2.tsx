@@ -20,7 +20,7 @@ import { offRouteLabel } from './activity/offRoute';
 import { XpIcon } from './ui/XpIcon';
 import { haptic } from './state/haptics';
 import {
-  AUTO_PAUSE_STORAGE_KEY,
+  hydrateAutoPausePreference,
   useExplorerStore,
   useTransientStart,
 } from './state/store';
@@ -209,18 +209,9 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
   }, [online]);
 
   // Réglage local de préparation : hydraté après le montage pour ne pas
-  // opposer le rendu serveur (défaut activé) au stockage du navigateur.
+  // opposer le rendu serveur (défaut désactivé) au stockage du navigateur.
   useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(AUTO_PAUSE_STORAGE_KEY);
-      if (raw === '0' || raw === 'false') {
-        useExplorerStore.setState({ autoPauseEnabled: false });
-      } else if (raw === '1' || raw === 'true') {
-        useExplorerStore.setState({ autoPauseEnabled: true });
-      }
-    } catch {
-      /* stockage indisponible : réglage par défaut */
-    }
+    hydrateAutoPausePreference();
   }, []);
 
   // Service worker de zone + file d'écritures hors ligne.
