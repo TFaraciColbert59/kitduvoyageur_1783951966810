@@ -15,6 +15,7 @@ import { CarnetDrawerV2, type CarnetSlotId } from './CarnetDrawerV2';
 import { CarnetIsland, type CarnetIslandToast } from './CarnetIsland';
 import { CarnetPeek } from './CarnetPeek';
 import { CarnetCreateSheet } from './CarnetCreateSheet';
+import { HikeSearchSheet } from './HikeSearchSheet';
 import { CarnetHighlightEditSheet } from './CarnetHighlightEditSheet';
 import { CarnetEditSheet, type CarnetEditTarget } from './CarnetEditSheet';
 import { CarnetAltitude } from './CarnetAltitude';
@@ -100,6 +101,7 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
 
   // Drawer & Overlay States
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [hikeSearchOpen, setHikeSearchOpen] = useState(false);
   const [drawerSlot, setDrawerSlot] = useState<CarnetSlotId>('fil');
   const [isAccountDrawer, setIsAccountDrawer] = useState(false);
   const [postMomentId, setPostMomentId] = useState<string | null>(null);
@@ -460,6 +462,13 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
     if (typeof window === 'undefined') return;
     window.localStorage.setItem('lkdv:carnet:reduce-motion', String(reduceMotion));
   }, [reduceMotion]);
+
+  /* Recentre la carte sur une randonnée trouvée par la recherche. */
+  const focusMap = useCallback((lat: number, lng: number, zoom?: number) => {
+    setMapFocus({ lat, lng, zoom });
+    setDrawerOpen(false);
+    setMapBig(true);
+  }, []);
 
   // Open Drawer to a specific slot
   const handleOpenDrawerSlot = useCallback(
@@ -974,11 +983,8 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
         activeSlot={drawerSlot}
         onSlotChange={(slot) => setDrawerSlot(slot)}
         activeDay={activeDay}
-        onFocusMap={(lat, lng, zoom) => {
-          setMapFocus({ lat, lng, zoom });
-          setDrawerOpen(false);
-          setMapBig(true);
-        }}
+        onFocusMap={focusMap}
+        onSearchHike={() => setHikeSearchOpen(true)}
         onIsland={showIsland}
         userId={currentUserId}
         onRequireAuth={requireAuth}
@@ -1095,6 +1101,29 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
             return edits.createMoment(input, file);
           }}
           onClose={() => setCreateSheet(null)}
+        />
+      ) : null}
+
+      {/* Recherche d'une randonnée existante (API Explorer) */}
+      {hikeSearchOpen ? (
+        <HikeSearchSheet
+          open
+          onClose={() => setHikeSearchOpen(false)}
+          onPick={(trail) => {
+            setHikeSearchOpen(false);
+            focusMap(trail.lat, trail.lng, 13);
+            const subtitle = [
+              trail.distance_km != null ? `${trail.distance_km.toLocaleString('fr-FR')} km` : null,
+              trail.elevation_gain != null ? `+${trail.elevation_gain.toLocaleString('fr-FR')} m` : null,
+            ]
+              .filter(Boolean)
+              .join(' · ');
+            showIsland(
+              `Randonnée : ${trail.name?.trim() || 'sans nom'}`,
+              undefined,
+              subtitle || undefined
+            );
+          }}
         />
       ) : null}
 

@@ -2521,3 +2521,14 @@ body.lkdv-overlay-open .lkdv-floating-tabbar {
 .lkdv-carnet-v2-root .lkdv-carnet-drawer .lkdv-slot-stage {
   padding-bottom: 46px !important;
 }
+
+/* Indicateur de recherche (feuille « Rechercher une randonnée »). */
+@keyframes lkdv-spin {
+  to { transform: rotate(360deg); }
+}
+.lkdv-spin {
+  animation: lkdv-spin 0.9s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lkdv-spin { animation: none; }
+}

@@ -134,19 +134,22 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
     const values = rows.map(pick).filter((v): v is number => v !== null);
     return values.length > 0 ? values.reduce((a, b) => a + b, 0) : null;
   };
-  /* Les sorties datées dans le séjour portent la preuve terrain (priorité aux
-     totaux GPS) ; les colonnes déclarées ne servent que de repli. Une sortie
-     hors séjour (autre mois) ne compte jamais dans ces totaux. */
-  const distanceKm = sumOf((s) => toNumber(s.distance_km)) ?? toNumber(carnet.distance_km);
-  const elevationM = sumOf((s) => toNumber(s.elevation_gain_m)) ?? toNumber(carnet.denivele_m);
+  /* Le carnet déclare son parcours (distance, D+) : ces valeurs font foi et
+     couvrent les journées sans relevé GPS. À défaut seulement, on somme les
+     sorties datées dans le séjour. Une sortie hors séjour ne compte jamais. */
+  const distanceKm = toNumber(carnet.distance_km) ?? sumOf((s) => toNumber(s.distance_km));
+  const elevationM = toNumber(carnet.denivele_m) ?? sumOf((s) => toNumber(s.elevation_gain_m));
   const moments = toMomentItems(input.moments);
   const etapes = buildEtapes(input);
 
   /* Jours dérivés : les moments nomment leur jour, les points GPS des sorties
      datent le leur. Aucune valeur n'est inventée quand une source manque. */
   const sessions = input.sessions ?? (hikeSession ? [hikeSession] : []);
-  /* Profil d'altitude cohérent avec la carte : uniquement les sorties du séjour. */
-  const elevationProfile = pickElevationProfile(sessionsInWindow);
+  /* Profil d'altitude : sorties du séjour d'abord, sinon la sortie rattachée
+     (même repli que la trace) pour que le dénivelé s'affiche dès qu'il existe. */
+  const elevationProfile = pickElevationProfile(
+    sessionsInWindow.length > 0 ? sessionsInWindow : sessions
+  );
   const builtDays = buildDays({
     moments: input.moments,
     sessions,

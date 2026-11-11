@@ -104,3 +104,12 @@ Captures `after/after-prod-fiche.png`, `after/after-prod-route.png` (session vis
 - Reste à contrôler sur iPhone : rendu du verre (blur réel) et barre des lentilles en bas de tiroir.
 
 Restent ouverts après ce lot : les fiches (moment/étape/objet/voyageur) à capturer manuellement, la lisibilité du verre sans `backdrop-filter` à contrôler sur iPhone, les tuiles Esri du banc fixtures, le recentrage de la carte sur le départ du carnet quand aucune trace n'est affichée (P3), et la capture du tiroir Sac après la réserve basse.
+
+
+## 7. Deuxième passe (2026-11-11 soir) — tracé réel, dénivelé, recherche de randonnée
+
+- **Données de démonstration recalées en production** : les 3 sorties GPS du carnet `749e9e8c…` (1819, 173 et 326 points horodatés avec altitude) ont été redatées dans la fenêtre du carnet (26–28 mars 2026, points répartis sur 6 h) et les 3 doublons sans GPS supprimés. Le parcours, le dénivelé et les statistiques quotidiennes redeviennent calculables et cohérents.
+- **Repli du tracé** : `pickCarnetTrace` préfère une trace datée dans le séjour et se replie sinon sur la trace d'une sortie réellement rattachée au carnet (jamais vide si une trace existe, jamais une géométrie inventée). Le profil d'altitude suit le même repli (`pickElevationProfile`).
+- **Dénivelé** : totaux déclarés du carnet prioritaires (170 km / +10 000 m pour la démo), profil d'altitude calculé depuis les points horodatés (altitude par point), carte du bas et lentille Route « Dénivelé » alimentées.
+- **Recherche d'une randonnée** : nouvelle feuille `HikeSearchSheet` branchée sur `GET /api/hikes` (RPC `trails_in_viewport`, polygone France explicite car la RPC plafonne le viewport à 20°). Accessible depuis la lentille Route (« Rechercher une randonnée »), résultats avec distance/D+/difficulté, sélection = recentrage carte + message d'île. 3 tests RTL (URL API, rendu des chiffres, sélection, seuil de 2 lettres).
+- Vérifié : tsc 0, lint 0 erreur, 53 fichiers / 530 tests verts.

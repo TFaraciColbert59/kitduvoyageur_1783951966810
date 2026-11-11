@@ -106,7 +106,9 @@ describe('buildCarnetDetail — statistiques', () => {
       }),
     );
     expect(detail.trace).toBe(trace);
-    expect(detail.distanceKm).toBe(22);
+    /* Totaux déclarés du carnet prioritaires ; la trace, elle, reste celle de
+       la sortie trouvée par `pickCarnetTrace`. */
+    expect(detail.distanceKm).toBeCloseTo(106.4, 6);
     expect(detail.place.lat).toBeCloseTo(45.83, 6);
   });
 
@@ -115,7 +117,7 @@ describe('buildCarnetDetail — statistiques', () => {
     expect(detail.trace).toBeNull();
   });
 
-  it('préfère la trace GPS aux colonnes du carnet', () => {
+  it('préfère les totaux déclarés du carnet aux colonnes des sorties', () => {
     const detail = buildCarnetDetail(
       input({
         hikeSession: {
@@ -129,9 +131,9 @@ describe('buildCarnetDetail — statistiques', () => {
         },
       }),
     );
-    expect(detail.distanceKm).toBe(118.2);
-    expect(detail.elevationM).toBe(2410);
-    expect(detail.stats[0].value).toBe('118,2 km');
+    expect(detail.distanceKm).toBe(106.4);
+    expect(detail.elevationM).toBe(2002);
+    expect(detail.stats[0].value).toBe('106,4 km');
   });
 
   it('compte les jours réels des étapes, jamais une division', () => {
@@ -349,17 +351,24 @@ function sessionAt(id: string, started_at: string, coordinates: Array<[number, n
 
 describe('buildCarnetDetail — fenêtre du séjour', () => {
   it('ignore une sortie datée hors séjour pour la trace et les totaux', () => {
+    const trace = {
+      type: 'LineString' as const,
+      coordinates: [
+        [6.9, 45.85],
+        [6.91, 45.86],
+      ] as Array<[number, number]>,
+    };
     const detail = buildCarnetDetail(
       input({
-        sessions: [
-          sessionAt('hors', '2026-10-20T06:00:00Z', [
-            [6.9, 45.85],
-            [6.91, 45.86],
-          ]),
-        ],
+        /* `getCarnetDetail` fournit la trace choisie par `pickCarnetTrace`,
+           qui se replie sur la sortie rattachée quand aucune n'est datée dans
+           le séjour. */
+        trace,
+        sessions: [sessionAt('hors', '2026-10-20T06:00:00Z', trace.coordinates)],
       }),
     );
-    expect(detail.trace).toBeNull();
+    /* Repli : la trace réelle de la sortie rattachée s'affiche quand même. */
+    expect(detail.trace).not.toBeNull();
     expect(detail.distanceKm).toBeCloseTo(106.4, 6);
     expect(detail.elevationM).toBe(2002);
     expect(detail.days.every((day) => day.distanceKm === null)).toBe(true);

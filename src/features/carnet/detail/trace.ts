@@ -36,5 +36,14 @@ export function pickCarnetTrace(
     if (!positions) continue;
     if (parsePositions(positions).length >= 2) return positions;
   }
+  /* Repli : à défaut de trace datée dans le séjour, on montre la trace d'une
+     sortie réellement rattachée au carnet — jamais une géométrie inventée,
+     jamais un tracé emprunté à un autre carnet. La carte signale alors que la
+     sortie est hors des dates du séjour par le badge « sortie du … ». */
+  for (const session of sessions) {
+    const positions = session?.positions_geojson;
+    if (!positions) continue;
+    if (parsePositions(positions).length >= 2) return positions;
+  }
   return null;
 }

@@ -61,21 +61,24 @@ describe('pickCarnetTrace — trace réellement exposée', () => {
 
 
 describe('pickCarnetTrace — fenêtre du séjour', () => {
-  it('ignore une trace datée hors du séjour du carnet', () => {
-    const sessions = [session({ started_at: '2026-10-20T06:00:00Z', positions_geojson: LINE })];
-    expect(
-      pickCarnetTrace(sessions, { startDate: '2026-09-26', endDate: '2026-10-02' }),
-    ).toBeNull();
-  });
-
-  it('rend la trace datée dans la fenêtre', () => {
+  it('préfère une trace datée dans le séjour et se replie sur la sortie rattachée', () => {
+    const hors = { type: 'LineString', coordinates: [[7, 46], [7.1, 46.1]] };
+    const dans = { type: 'LineString', coordinates: [[6.86, 45.83], [6.87, 45.84]] };
     const sessions = [
-      session({ id: 'hors', started_at: '2026-10-20T06:00:00Z', positions_geojson: LINE }),
-      session({ id: 'dans', started_at: '2026-09-27T06:00:00Z', positions_geojson: LINE }),
+      session({ id: 'hors', started_at: '2026-10-20T06:00:00Z', positions_geojson: hors }),
+      session({ id: 'dans', started_at: '2026-09-27T06:00:00Z', positions_geojson: dans }),
     ];
     expect(
       pickCarnetTrace(sessions, { startDate: '2026-09-26', endDate: '2026-10-02' }),
-    ).toBe(LINE);
+    ).toBe(dans);
+    /* Aucune trace dans la fenêtre : repli sur la sortie rattachée, jamais null
+       quand une trace réelle existe ailleurs dans le carnet. */
+    expect(
+      pickCarnetTrace([session({ started_at: '2026-10-20T06:00:00Z', positions_geojson: hors })], {
+        startDate: '2026-09-26',
+        endDate: '2026-10-02',
+      }),
+    ).toBe(hors);
   });
 
   it('sans dates de carnet, garde la trace (compatibilité)', () => {
