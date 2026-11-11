@@ -1,0 +1,47 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; background: transparent; overflow: hidden; pointer-events: none; }
+    #p01-halo-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  </style>
+  <!-- P01 — calque transparent « logo fondu dans le halo du limbe », à poser AU-DESSUS de p01 (img01),
+       images 0 à 88 du film (89 images, coupe sur P02 à l'image 89). Le logo se devine dans le liseré lumineux, jamais net, et se dissout avant l'image 80.
+       Réglages : objet HALO ci-dessous (cercle du limbe en px dans le cadre 1920×1080 au début du plan, angle,
+       taille, intensité) et MOTION (doit reprendre exactement la poussée et le roulis de p01). -->
+  <div id="root" data-composition-id="p01-halo" data-start="0" data-duration="1.4833333333333334" data-width="1920" data-height="1080">
+    <canvas id="p01-halo-canvas" width="1920" height="1080" data-layout-allow-overflow></canvas>
+  </div>
+  <script src="lib/fx/core.js"></script>
+  <script src="lib/fx/plates.js"></script>
+  <script src="lib/fx/traces.js"></script>
+  <script src="lib/fx/transitions.js"></script>
+  <script>
+    (function () {
+      var FX = window.LKDVFX;
+      /* À recaler sur img01 : centre et rayon du cercle du limbe, position du logo sur le limbe (degrés, −90 = sommet). */
+      var HALO = { cx: 1650, cy: 2820, R: 2600, angle: -104, size: 300, intensity: 1, appear: [8, 34], dissolve: [46, 80] };
+      /* Même mouvement que p01 : poussée (échelle) et roulis (degrés) autour de l'origine, de l'image 0 à 89. */
+      var MOTION = { push: [1, 1.07], roll: [0, 8], origin: [960, 540] };
+      var cv = document.getElementById("p01-halo-canvas");
+      var ctx = cv.getContext("2d");
+      var clock = FX.bindClock("p01-halo", 89, function (t, f) {
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, 1920, 1080);
+        var u = FX.ease.inOutSine(f / 88);
+        var k = FX.lerp(MOTION.push[0], MOTION.push[1], u);
+        var r = (FX.lerp(MOTION.roll[0], MOTION.roll[1], u) * Math.PI) / 180;
+        // Le halo est dessiné dans le repère de l'image, puis on applique poussée et roulis comme sur p01.
+        var off = FX.Plates.shared("haloLayer", null);
+        var ox = off.getContext("2d");
+        ox.setTransform(1, 0, 0, 1, 0, 0);
+        ox.clearRect(0, 0, 1920, 1080);
+        FX.Transitions.limbHalo(ox, f, HALO);
+        ctx.translate(MOTION.origin[0], MOTION.origin[1]);
+        ctx.rotate(r);
+        ctx.scale(k, k);
+        ctx.translate(-MOTION.origin[0], -MOTION.origin[1]);
+        ctx.drawImage(off, 0, 0);
+      });
+      window.__timelines["p01-halo"] = clock.tl;
+    })();
+  </script>
+</template>

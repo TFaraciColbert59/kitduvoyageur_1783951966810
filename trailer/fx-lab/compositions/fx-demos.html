@@ -1,0 +1,114 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; background: #0B1F17; overflow: hidden; }
+    #fx-demos-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  </style>
+  <!-- Démonstrations (fx-lab seulement) : les 7 transitions de lib/fx/transitions.js sur des plaques factices
+       en code, 90 images chacune : 1 flash solaire, 2 flou radial de chute, 3 traversée de nuage,
+       4 traversée de vitre, 5 éclat d'objectif, 6 étincelle qui monte, 7 remontée accélérée. -->
+  <div id="root" data-composition-id="fx-demos" data-start="0" data-duration="10.516666666666667" data-width="1920" data-height="1080">
+    <canvas id="fx-demos-canvas" width="1920" height="1080" data-layout-allow-overflow></canvas>
+  </div>
+  <script src="lib/fx/core.js"></script>
+  <script src="lib/fx/plates.js"></script>
+  <script src="lib/fx/transitions.js"></script>
+  <script>
+    (function () {
+      var FX = window.LKDVFX;
+      var TR = FX.Transitions;
+      var W = 1920, H = 1080, SEG = 90;
+      var P = FX.Plates;
+      var ridges = P.shared("ridges", null);
+      var limb = P.shared("limb", null);
+      var city = P.shared("city", 505);
+      var clouds = P.shared("clouds", 404);
+      var strato = P.shared("strato", 303);
+      var fire = P.shared("campfire", null);
+      var room = P.shared("room", null);
+      var buf = FX.canvas(W, H), bx = buf.getContext("2d");
+      var cityView = FX.canvas(W, H), cvx = cityView.getContext("2d");
+      var cv = document.getElementById("fx-demos-canvas");
+      var ctx = cv.getContext("2d");
+
+      function drawScaled(c, img, sc, rot) {
+        c.save();
+        c.setTransform(1, 0, 0, 1, 0, 0);
+        c.translate(W / 2, H / 2);
+        if (rot) c.rotate(rot);
+        c.scale(sc, sc);
+        c.drawImage(img, -img.width / 2, -img.height / 2);
+        c.restore();
+      }
+      function cityAt(sc) {
+        cvx.setTransform(1, 0, 0, 1, 0, 0);
+        drawScaled(cvx, city, sc);
+        return cityView;
+      }
+
+      var demos = [
+        function flash(f) { // 1. P01→P02 : limbe, coupe sur les crêtes à l'image 45, flash de 4 images.
+          if (f < 45) drawScaled(ctx, limb.canvas, 1.05 + f * 0.001);
+          else drawScaled(ctx, ridges, 1.12 - (f - 45) * 0.0012);
+          TR.solarFlash(ctx, f, { cut: 45, pre: 2, post: 2, origin: [W * 0.8, H * 0.25] });
+        },
+        function fall(f) { // 2. P02→P03 : chute, flou radial qui croît, vibration.
+          var u = f / (SEG - 1);
+          bx.setTransform(1, 0, 0, 1, 0, 0);
+          drawScaled(bx, ridges, 1 + 0.6 * FX.ease.inCubic(u));
+          ctx.fillStyle = "#0B1F17";
+          ctx.fillRect(0, 0, W, H);
+          TR.radialBlur(ctx, buf, { amount: 0.12 * FX.ease.inQuad(u), origin: [W / 2, H / 2], shake: 2 + 6 * u, frame: f, samples: 10 });
+        },
+        function cloud(f) { // 3. P03→P04 : on entre dans le nuage, il se déchire sur la ville.
+          var p = f / (SEG - 1);
+          if (p < 0.5) drawScaled(ctx, strato.canvas, 1.25 + 0.25 * p, 0.17);
+          else drawScaled(ctx, city, 0.62 + 0.1 * p);
+          TR.cloudPass(ctx, p, { clouds: clouds, hole: true, origin: [W / 2, H / 2] });
+        },
+        function glass(f) { // 4. P05→P06 : plongée sur la fenêtre de Léa, traversée de la vitre.
+          var p = f / (SEG - 1);
+          var o = cityAt(2.4);
+          TR.glassPass(ctx, o, room, p, { rect: [W / 2 - 22, H / 2 - 14, 44, 28], pass: 0.62 });
+        },
+        function flare(f) { // 5. Soleil dans le cadre : voile et petites taches, sobre.
+          var u = f / (SEG - 1);
+          drawScaled(ctx, ridges, 1.05);
+          var sx = 1500 - 500 * u, sy = 260 + 60 * Math.sin(u * 3);
+          TR.lensFlare(ctx, { sun: [sx, sy], intensity: 0.6 + 0.4 * Math.sin(u * Math.PI) });
+        },
+        function spark(f) { // 6. P47/P50 : une étincelle quitte le feu et monte vers le ciel, la caméra la suit.
+          var t = f / 60;
+          var tilt = 260 * FX.ease.inOutSine(FX.ramp(0.35, 1.45, t));
+          ctx.save();
+          ctx.setTransform(1, 0, 0, 1, 0, 0);
+          ctx.fillStyle = "rgb(8,16,28)";
+          ctx.fillRect(0, 0, W, H);
+          ctx.drawImage(fire, 0, tilt - 20, W, H + 40);
+          ctx.restore();
+          ctx.save();
+          ctx.translate(0, tilt);
+          TR.ember(ctx, t, { origin: [W / 2, H * 0.86 + tilt], heroStart: 0.25, heroDuration: 1.2, rise: H * 0.9 });
+          ctx.restore();
+        },
+        function rise(f) { // 7. Remontée accélérée (version courte de P52) : ville → nuage → stratosphère.
+          var stages = [
+            { from: 0, to: 0.45, draw: function (c, u, l) { drawScaled(c, city, 1.2 - 0.4 * l); } },
+            { from: 0.35, to: 0.72, fadeIn: 0.02, draw: function (c, u, l) { drawScaled(c, city, 0.62 + 0.2 * (1 - l)); TR.cloudPass(c, 1 - 0.8 * l, { clouds: clouds, hole: true }); } },
+            { from: 0.66, to: 1, fadeIn: 0.05, draw: function (c, u, l) { drawScaled(c, strato.canvas, 1.3 - 0.08 * l, 0.17 - 0.1 * l); c.fillStyle = "rgba(232,238,245," + (0.8 * Math.pow(1 - FX.smooth(0, 0.35, l), 2)).toFixed(3) + ")"; c.fillRect(0, 0, W, H); } },
+          ];
+          TR.ascent(ctx, stages, f / (SEG - 1), { accel: 1.8, blur: 0.07 });
+        },
+      ];
+
+      var clock = FX.bindClock("fx-demos", SEG * demos.length + 1, function (t, f) {
+        var i = Math.min(demos.length - 1, Math.floor(f / SEG));
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.globalAlpha = 1;
+        ctx.globalCompositeOperation = "source-over";
+        ctx.filter = "none";
+        demos[i](f - i * SEG);
+      });
+      window.__timelines["fx-demos"] = clock.tl;
+    })();
+  </script>
+</template>

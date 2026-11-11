@@ -1,0 +1,44 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; background: #0B1F17; overflow: hidden; }
+    #fx-limb-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  </style>
+  <!-- Démonstration (fx-lab seulement) : limbe terrestre en code à la place d'img01, poussée et roulis de 8°,
+       éclat d'objectif sobre au lever du soleil, flash solaire de sortie (coupe P01→P02 à l'image 89).
+       Le calque p01-halo se pose par-dessus. -->
+  <div id="root" data-composition-id="fx-limb" data-start="0" data-duration="1.4833333333333334" data-width="1920" data-height="1080">
+    <canvas id="fx-limb-canvas" width="1920" height="1080" data-layout-allow-overflow></canvas>
+  </div>
+  <script src="lib/fx/core.js"></script>
+  <script src="lib/fx/plates.js"></script>
+  <script src="lib/fx/transitions.js"></script>
+  <script>
+    (function () {
+      var FX = window.LKDVFX;
+      var TR = FX.Transitions;
+      var MOTION = { push: [1, 1.07], roll: [0, 8], origin: [960, 540] };
+      var limb = FX.Plates.shared("limb", null);
+      var cv = document.getElementById("fx-limb-canvas");
+      var ctx = cv.getContext("2d");
+      var clock = FX.bindClock("fx-limb", 89, function (t, f) {
+        var u = FX.ease.inOutSine(f / 88);
+        var k = FX.lerp(MOTION.push[0], MOTION.push[1], u);
+        var r = (FX.lerp(MOTION.roll[0], MOTION.roll[1], u) * Math.PI) / 180;
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.fillStyle = "#0B1F17";
+        ctx.fillRect(0, 0, 1920, 1080);
+        ctx.translate(960, 540);
+        ctx.rotate(r);
+        ctx.scale(k * 1.08, k * 1.08);
+        ctx.translate(-960, -540);
+        ctx.drawImage(limb.canvas, 0, 0);
+        // Le soleil perce le limbe en haut à droite.
+        var sun = FX.smooth(10, 70, f);
+        TR.lensFlare(ctx, { sun: [1880, 330], intensity: 0.2 + 0.8 * sun });
+        // Sortie : flash solaire sur les deux dernières images (la coupe tombe à l'image 90).
+        TR.solarFlash(ctx, f, { cut: 89, pre: 2, post: 2, origin: [1880, 330] });
+      });
+      window.__timelines["fx-limb"] = clock.tl;
+    })();
+  </script>
+</template>
