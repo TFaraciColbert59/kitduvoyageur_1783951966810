@@ -807,7 +807,11 @@ export const carnetSchemaV2 = z
     isCollaborative: z.boolean().default(false),
     collaborators: z.array(z.string()).max(20, '20 collaborateurs maximum.').default([]),
     tags: tagArray,
-    trace: z.array(tracePointSchema).max(2000, 'Tracé trop long.').default([]),
+    trace: z
+      .array(tracePointSchema)
+      .min(2, 'Un carnet doit avoir un tracé : cherche une randonnée, dessine-le ou importe un GPX.')
+      .max(2000, 'Tracé trop long.')
+      .default([]),
     distanceKm: z.number().min(0).max(10_000, '10 000 km maximum.').default(0),
     deniveleM: z.number().int().min(0).max(30_000, '30 000 m maximum.').default(0),
     startLat: z.number().nullable().default(null),

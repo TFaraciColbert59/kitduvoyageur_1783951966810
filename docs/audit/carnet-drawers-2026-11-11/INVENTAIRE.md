@@ -139,3 +139,11 @@ Restent ouverts après ce lot : les fiches (moment/étape/objet/voyageur) à cap
 - Tests : `CompteMapState` rend l'action sous le message d'état ; suite complète verte (979 tests, 102 fichiers), lint 0 erreur.
 - **Vérifié en production** (`prod4/`) : carnet sans trace → « Aucun tracé enregistré pour ce carnet » + bouton « Rechercher une randonnée » → feuille de recherche → résultats (« lac » → GRP 125 Lac de Val Joly, 10,7 km, +220 m) ; **0 erreur `user_presence`** en session anonyme ; en-tête de carnet vide sans « — · 1 voyageur » ; carte d'état remontée pour ne pas rogner le bouton.
 - Restent volontairement hors périmètre : visionneuse de moment et fiche de nuit en session anonyme (données/gestes réservés aux comptes connectés dans la recette), « Gérer » réservé au propriétaire, tuiles Esri du banc fixtures (réseau du harnais, pas l'app).
+
+
+## 10. Correction demandée par Tony — la recherche va dans la création, pas sur la fiche
+
+- **Retiré de la fiche carnet** : le bouton « Rechercher une randonnée » de l'état vide de la carte et de la lentille Route (et son composant `HikeSearchSheet`), ainsi que l'action d'état vide associée. Une fiche carnet n'est pas un point d'entrée de recherche.
+- **Ajouté là où c'est sa place** : dans le **formulaire de création de carnet de la page Communauté**, étape **Tracé**, un champ « Rechercher une randonnée existante ». Il interroge `GET /api/hikes` (recherche) puis `GET /api/hikes/{id}` (géométrie GeoJSON réelle via `get_route_geojson`) et importe le tracé dans le formulaire comme un GPX : la carte, la distance et le dénivelé se remplissent ensuite comme après un import.
+- **Un carnet sans tracé n'existe pas** : le schéma de création exige désormais au moins 2 points de tracé (`trace` min 2). L'étape Tracé bloque la validation tant qu'aucun tracé n'est dessiné, importé ou choisi par recherche.
+- Tests : conversion GeoJSON (LineString / MultiLineString / Feature), recherche API + import réel (URL et tracé), refus d'un carnet sans tracé ; tsc 0, lint 0 erreur, 94 fichiers / 871 tests verts sur les suites concernées.

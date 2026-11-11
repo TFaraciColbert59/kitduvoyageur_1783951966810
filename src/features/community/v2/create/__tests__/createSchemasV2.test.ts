@@ -232,8 +232,19 @@ describe('schémas V2 — une validation par étape', () => {
   it('Carnet : privé par défaut, fin avant début refusée, moment vide refusé', () => {
     const defaults = createDefaultsV2('carnet');
     expect(defaults.visibility).toBe('private');
-    const base = { ...defaults, title: 'Tour des Écrins', destination: 'Écrins' };
+    const base = {
+      ...defaults,
+      title: 'Tour des Écrins',
+      destination: 'Écrins',
+      trace: [
+        [6.1, 44.9],
+        [6.2, 44.95],
+      ],
+    };
     expect(carnetSchemaV2.safeParse(base).success).toBe(true);
+    /* Un carnet n'existe pas sans tracé : le schéma refuse un carnet vide de
+       tracé (la recherche de randonnée de l'étape Tracé en importe un). */
+    expect(carnetSchemaV2.safeParse({ ...base, trace: [] }).success).toBe(false);
     expect(
       carnetSchemaV2.safeParse({ ...base, startDate: '2026-05-02', endDate: '2026-05-01' }).success,
     ).toBe(false);

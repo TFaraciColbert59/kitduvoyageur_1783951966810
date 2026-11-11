@@ -97,8 +97,6 @@ export interface CarnetDrawerV2Props {
   onSlotChange: (slot: CarnetSlotId) => void;
   activeDay: number;
   onFocusMap?: (lat: number, lng: number, zoom?: number) => void;
-  /** Ouvre la recherche d'une randonnée du référentiel (API Explorer). */
-  onSearchHike?: () => void;
   onIsland?: (message: string, undo?: () => void) => void;
   userId: string | null;
   onRequireAuth?: () => void;
@@ -203,7 +201,6 @@ export function CarnetDrawerV2({
   onSlotChange,
   activeDay,
   onFocusMap,
-  onSearchHike,
   onIsland,
   userId,
   onRequireAuth,
@@ -761,16 +758,6 @@ export function CarnetDrawerV2({
           });
           return (
             <div style={stackWrap}>
-              {onSearchHike ? (
-                <button
-                  type="button"
-                  className="lkdv-lens-cta"
-                  onClick={onSearchHike}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: 8, minHeight: 44 }}
-                >
-                  Rechercher une randonnée
-                </button>
-              ) : null}
               {etapesWithStats.length === 0 ? (
                 <LensState title="Aucune étape." hint="Les étapes du parcours apparaissent ici dès qu’elles sont renseignées." />
               ) : (

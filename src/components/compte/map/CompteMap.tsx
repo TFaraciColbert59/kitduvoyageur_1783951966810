@@ -73,8 +73,6 @@ export interface CompteMapProps {
   emptyHint?: string;
   /** Coordonnée de repli quand le carnet n'a pas de trace (départ réel). */
   homeFocus?: { lat: number; lng: number } | null;
-  /** Action proposée dans l'état vide (rechercher une randonnée). */
-  emptyAction?: React.ReactNode;
   /** Jour actif sur la fiche carnet (filtrage visuel optionnel de la trace). */
   activeDay?: number | null;
   /** Position GPS live (participant en partage direct). */
@@ -298,7 +296,6 @@ export function CompteMap({
   emptyTitle,
   emptyHint,
   homeFocus = null,
-  emptyAction = null,
   activeDay = null,
   livePosition = null,
   publicZone = null,
@@ -1292,7 +1289,6 @@ export function CompteMap({
           kind="neutral"
           title={emptyTitle ?? 'Aucun tracé enregistré pour ce carnet.'}
           hint={emptyHint ?? 'L’auteur n’a pas joint de trace GPS à ce carnet.'}
-          action={emptyAction}
         />
       ) : null}
 

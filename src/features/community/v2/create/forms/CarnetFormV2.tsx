@@ -32,6 +32,7 @@ import { deleteMediaObjectsV2, uploadedObjectsOf } from '../fields/media';
 import { normalizeRouteTrace } from '../../data/communityFeedMappers';
 import { useCarnetNights } from '../carnet/capabilities';
 import { TracePaneV2 } from '../carnet/TracePaneV2';
+import { TrailSearchFieldV2 } from '../carnet/TrailSearchFieldV2';
 import { DaysPaneV2 } from '../carnet/DaysPaneV2';
 import {
   carnetDayCountV2,
@@ -315,7 +316,10 @@ function TraceStep({ user, active }: { user: { id: string } | null; active: bool
   return (
     <>
       {active ? (
-        <TracePaneV2 user={user} />
+        <>
+          <TrailSearchFieldV2 />
+          <TracePaneV2 user={user} />
+        </>
       ) : (
         <p className="lkdv-cv2-field-hint">Le tracé s’affiche quand tu reviens sur cette étape.</p>
       )}
@@ -327,7 +331,7 @@ function TraceStep({ user, active }: { user: { id: string } | null; active: bool
       <p className="lkdv-cv2-field-hint">
         {trace.length > 1
           ? `Tracé enregistré : ${trace.length} points, ${km.toFixed(1).replace('.', ',')} km, +${gain} m.`
-          : 'Trace au doigt ou importe un GPX : distance et dénivelé se remplissent seuls.'}
+          : 'Cherche une randonnée, trace au doigt ou importe un GPX : un carnet a toujours un tracé.'}
       </p>
     </>
   );
