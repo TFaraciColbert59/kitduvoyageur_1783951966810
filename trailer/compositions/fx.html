@@ -1,18 +1,55 @@
 <template>
-  <!-- BOÎTE GRISE (P1) — à remplacer par orchestrateur. Hôte : 0 s → 60 s, z 40. Flashs des chocs, grain et vignette communs -->
+  <!-- FX — calque commun au-dessus de tout (hôte 0 → 60 s, z 40) : flash du CHOC 1, grain et vignette légers.
+       Le grain et la vignette unifient les plans (même matière partout) sans toucher à leurs couleurs.
+       Tout est fonction du temps : le grain se décale d'après le numéro d'image, jamais d'après une horloge. -->
   <style>
-    #root { position: absolute; inset: 0; }
-    #fx-box { position: absolute; inset: 0; background: transparent; }
-    #fx-tag { position: absolute; right: 40px; top: 80px; padding: 6px 12px; border-radius: 8px; background: rgb(20 25 22 / 0.6); color: #fff; font: 600 16px "IBM Plex Mono", monospace; letter-spacing: 0.08em; }
+    #root { position: absolute; inset: 0; pointer-events: none; }
+    #fx-flash { position: absolute; inset: 0; background: rgb(245 242 236); opacity: 0; }
+    #fx-vignette { position: absolute; inset: 0;
+      background: radial-gradient(ellipse 78% 78% at 50% 50%, rgb(20 25 22 / 0) 58%, rgb(20 25 22 / 0.2) 100%); }
+    #fx-grain { position: absolute; left: -256px; top: -256px; right: -256px; bottom: -256px;
+      background-repeat: repeat; background-size: 512px 512px; opacity: 0.07; mix-blend-mode: soft-light; }
   </style>
   <div id="root" data-composition-id="fx" data-width="1920" data-height="1080" data-layout-ignore>
-    <div id="fx-box"></div>
-    <div id="fx-tag">FX · PLACEHOLDER</div>
+    <div id="fx-vig-clip" class="clip" data-start="0" data-duration="60" data-track-index="1"><div id="fx-vignette"></div></div>
+    <div id="fx-grain-clip" class="clip" data-start="0" data-duration="60" data-track-index="2"><div id="fx-grain"></div></div>
+    <div id="fx-flash-clip" class="clip" data-start="5.9" data-duration="0.4" data-track-index="3"><div id="fx-flash"></div></div>
   </div>
   <script>
     (function () {
+      // Tuile de grain 512 × 512, bruit gris centré, graine fixe (1783).
+      const rnd = LKDV.rng(40);
+      const c = document.createElement("canvas");
+      c.width = 512; c.height = 512;
+      const ctx = c.getContext("2d");
+      const img = ctx.createImageData(512, 512);
+      for (let i = 0; i < img.data.length; i += 4) {
+        const g = 128 + (rnd() + rnd() + rnd() - 1.5) * 150;
+        img.data[i] = img.data[i + 1] = img.data[i + 2] = g;
+        img.data[i + 3] = 255;
+      }
+      ctx.putImageData(img, 0, 0);
+      const grain = document.getElementById("fx-grain");
+      grain.style.backgroundImage = "url(" + c.toDataURL("image/png") + ")";
+
+      function seek(t) {
+        // Une position de tuile par image : le grain « vit » à 60 i/s sans aucune horloge.
+        const f = Math.round(t * LKDV.FPS);
+        const x = Math.floor(LKDV.hash(f, 41) * 256), y = Math.floor(LKDV.hash(f, 42) * 256);
+        grain.style.backgroundPosition = x + "px " + y + "px";
+      }
+      window.addEventListener("hf-seek", function (e) { seek(e.detail.time); });
+      seek(0);
+
       const tl = gsap.timeline({ paused: true });
-      tl.fromTo("#fx-tag", { opacity: 0.4 }, { opacity: 1, duration: 60, ease: "none" }, 0);
+      // CHOC 1 (6,000 s) : flash de 3 images (hôte à 0 s, donc temps local = temps du film).
+      const F = 1 / LKDV.FPS;
+      tl.set("#fx-flash", { opacity: 0 }, 0);
+      tl.set("#fx-flash", { opacity: 0.9 }, 6.0);
+      tl.set("#fx-flash", { opacity: 0.55 }, 6.0 + F);
+      tl.set("#fx-flash", { opacity: 0.25 }, 6.0 + 2 * F);
+      tl.set("#fx-flash", { opacity: 0 }, 6.0 + 3 * F);
+      tl.to({}, { duration: 60 }, 0);
       window.__timelines["fx"] = tl;
     })();
   </script>
