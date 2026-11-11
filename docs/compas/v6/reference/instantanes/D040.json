@@ -1,0 +1,515 @@
+{
+ "demande": "D040",
+ "banc": {
+  "at": "2026-11-10T22:49:21.083Z",
+  "seconds": 271,
+  "prepSeconds": 264,
+  "outcome": "Ton aventure est prête",
+  "error": null
+ },
+ "trip": {
+  "id": "cfd61a58-e21e-482f-aaed-af44644f92b7",
+  "title": "Randonnée · Île du Sud",
+  "destination_name": "Île du Sud",
+  "destination_country_code": "NZ",
+  "start_date": "2026-12-05",
+  "end_date": "2026-12-18",
+  "party_size": 4,
+  "primary_activity": "hiking",
+  "estimated_budget": 8488,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": {
+     "lat": -43.53095,
+     "lon": 172.63643,
+     "kind": "region",
+     "name": "Île du Sud",
+     "extent": null,
+     "osmTag": "place=city",
+     "country": "Nouvelle-Zélande",
+     "countryCode": "NZ"
+    },
+    "planned_days": 14,
+    "duration_h": null,
+    "prefs": {
+     "pace": "normal",
+     "avoid": [],
+     "nights": null,
+     "wishes": [
+      "Milford Track"
+     ]
+    },
+    "origin": null,
+    "autofill": {
+     "runId": "r",
+     "undone": false,
+     "at": "2026-11-10T22:53:36.752Z",
+     "notes": [
+      "Papiers : conditions d’entrée (Nouvelle-Zélande) à vérifier auprès du service officiel de ton pays avant de partir.",
+      "Prises de type I (Nouvelle-Zélande) : vérifie que tes chargeurs s’y branchent.",
+      "Bivouac : vérifie les règles du lieu ; dans les parcs nationaux et les réserves, il est souvent limité (horaires, distance à la route) ou interdit.",
+      "Période proposée : décembre (journées longues et douces, avant l’affluence de l’été). Change-la dans « Quand » si elle ne te va pas.",
+      "Étapes du sentier « Milford Track » non retrouvées sur la carte : itinéraire calculé sur les lieux réels de la zone.",
+      "Itinéraire en traversée construit sur des lieux réels de la carte (14 lieux où dormir).",
+      "Matériel conseillé non compté au budget : 155 € à la boutique si tu ne l’as pas (facultatif).",
+      "Suggestion de l’IA (facultatif) : n'oublie pas le kit de réparation multi-usage et la crème solaire haute protection SPF 50+ pour protéger ta peau durant toute la randonnée."
+     ],
+     "papers": {
+      "abroad": true,
+      "country": "Nouvelle-Zélande",
+      "abroadFrom": "gps",
+      "countryCode": "NZ"
+     },
+     "basis": {
+      "days": 14,
+      "pace": null,
+      "hours": null,
+      "level": null,
+      "month": 12,
+      "party": 4,
+      "nights": null,
+      "origin": null,
+      "carFree": null,
+      "terrain": null,
+      "activity": "hiking",
+      "autonomy": null,
+      "priority": null,
+      "targetKm": null,
+      "destination": "Île du Sud@-43.53,172.64",
+      "outdoorNights": null
+     },
+     "engine": []
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "day_number": 1,
+   "title": "Jour 1 · Leeston",
+   "description": "Départ de Southbridge.",
+   "latitude": -43.7667,
+   "longitude": 172.3,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 2,
+   "title": "Jour 2 · Bivouac entre Leeston et Springston (1/3)",
+   "description": "Bivouac : aucun lieu où dormir à une journée de marche (Springston est à 16 km à vol d’oiseau) ; emplacement à choisir sur place, après avoir vérifié les règles du lieu (bivouac souvent limité ou interdit dans les parcs et les réserves).",
+   "latitude": -43.73752,
+   "longitude": 172.32925,
+   "distance_km": 4.6,
+   "elevation_gain_m": 0,
+   "start_time": null,
+   "accommodation_name": "Bivouac",
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 3,
+   "title": "Jour 3 · Bivouac entre Leeston et Springston (2/3)",
+   "description": "Bivouac : aucun lieu où dormir à une journée de marche (Springston est à 12 km à vol d’oiseau) ; emplacement à choisir sur place, après avoir vérifié les règles du lieu (bivouac souvent limité ou interdit dans les parcs et les réserves).",
+   "latitude": -43.70835,
+   "longitude": 172.3585,
+   "distance_km": 4,
+   "elevation_gain_m": 0,
+   "start_time": null,
+   "accommodation_name": "Bivouac",
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 4,
+   "title": "Jour 4 · Bivouac entre Leeston et Springston (3/3)",
+   "description": "Bivouac : aucun lieu où dormir à une journée de marche (Springston est à 8 km à vol d’oiseau) ; emplacement à choisir sur place, après avoir vérifié les règles du lieu (bivouac souvent limité ou interdit dans les parcs et les réserves).",
+   "latitude": -43.67917,
+   "longitude": 172.38775,
+   "distance_km": 4.1,
+   "elevation_gain_m": 0,
+   "start_time": null,
+   "accommodation_name": "Bivouac",
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 5,
+   "title": "Jour 5 · Springston",
+   "description": null,
+   "latitude": -43.65,
+   "longitude": 172.417,
+   "distance_km": 7.2,
+   "elevation_gain_m": 10,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 6,
+   "title": "Jour 6 · Lincoln",
+   "description": null,
+   "latitude": -43.65,
+   "longitude": 172.483,
+   "distance_km": 7.9,
+   "elevation_gain_m": 0,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 7,
+   "title": "Jour 7 · Ladbrooks",
+   "description": null,
+   "latitude": -43.6167,
+   "longitude": 172.533,
+   "distance_km": 6.7,
+   "elevation_gain_m": 0,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 8,
+   "title": "Jour 8 · Prebbleton",
+   "description": null,
+   "latitude": -43.5833,
+   "longitude": 172.517,
+   "distance_km": 4.8,
+   "elevation_gain_m": 0,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 9,
+   "title": "Jour 9 · Hornby",
+   "description": null,
+   "latitude": -43.55,
+   "longitude": 172.533,
+   "distance_km": 4.5,
+   "elevation_gain_m": 0,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 10,
+   "title": "Jour 10 · Yaldhurst",
+   "description": null,
+   "latitude": -43.5167,
+   "longitude": 172.517,
+   "distance_km": 5.5,
+   "elevation_gain_m": 0,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 11,
+   "title": "Jour 11 · Harewood",
+   "description": null,
+   "latitude": -43.4833,
+   "longitude": 172.583,
+   "distance_km": 9,
+   "elevation_gain_m": 0,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 12,
+   "title": "Jour 12 · Belfast",
+   "description": null,
+   "latitude": -43.45,
+   "longitude": 172.633,
+   "distance_km": 6.9,
+   "elevation_gain_m": 0,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 13,
+   "title": "Jour 13 · Clarkville",
+   "description": null,
+   "latitude": -43.4167,
+   "longitude": 172.617,
+   "distance_km": 9.7,
+   "elevation_gain_m": 0,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 14,
+   "title": "Jour 14 · Kaiapoi",
+   "description": null,
+   "latitude": -43.3783,
+   "longitude": 172.64,
+   "distance_km": 5.7,
+   "elevation_gain_m": 0,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  }
+ ],
+ "items": [
+  {
+   "item_name": "Tente",
+   "category": "shelter",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": "b54e4aaf-979a-47a8-95fb-79c7568153bb",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Sac de couchage",
+   "category": "sleep",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "f29331bb-1e42-4f93-b6be-5b94452ff551"
+  },
+  {
+   "item_name": "Matelas de sol",
+   "category": "sleep",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "5d9dbcad-8781-434c-bca4-dd5517f30527"
+  },
+  {
+   "item_name": "Réchaud",
+   "category": "cook",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "809da83b-9944-4b01-94e5-dc8105beb43e",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Popote",
+   "category": "cook",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Trousse de premiers secours complète",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": "f56a5199-7b77-45e9-9697-1b7f082e4902",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Sifflet de survie et détresse",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "f767e762-d417-48c2-909d-eea829081a65"
+  },
+  {
+   "item_name": "Lampe frontale LED haute autonomie",
+   "category": "tech",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "0ce62ae3-6398-48d4-be3a-de2ff265c26f"
+  },
+  {
+   "item_name": "Kit de réparation multi-usage",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "95c582ab-05ef-4d72-aa9b-9291c2ec35df"
+  },
+  {
+   "item_name": "Crème solaire haute protection SPF 50+",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "a30a619b-5f1e-48f9-8439-d396c4a84f46"
+  },
+  {
+   "item_name": "Gourde isotherme / Thermos en acier inoxydable",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "b6034a5b-301c-4dda-bce4-e13969bc013c",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Bouteille d’eau légère de randonnée",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "d403c58a-cf66-4346-9f14-33ecc31f9701"
+  },
+  {
+   "item_name": "Bâtons de trekking télescopiques",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "549d7f9e-aa98-4618-82ec-bb913ca14d0c"
+  },
+  {
+   "item_name": "Couteau pliant multifonction en inox",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "72a3d504-7b6b-4501-87d0-427a51114b90"
+  },
+  {
+   "item_name": "Batterie externe étanche Power Bank",
+   "category": "tech",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "846f5f27-9f48-4492-a917-99768934eba5",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Sac à dos technique de randonnée",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "e137cfe3-ff6e-4a73-a6a7-d6ea415b9739",
+   "shop_product_id": null
+  }
+ ],
+ "expenses": [
+  {
+   "title": "10 nuit(s) en hébergement",
+   "amount": 2000,
+   "currency": "EUR",
+   "category": "hébergement",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Nouvelle-Zélande 110 (France = 100) · chambre partagée à deux · vrais prix dans Résa · Nuits",
+    "source": "estimation",
+    "autofill": "9201b0e7-c67a-4955-a0b7-70b331966de6"
+   }
+  },
+  {
+   "title": "Vol aller-retour × 4",
+   "amount": 4600,
+   "currency": "EUR",
+   "category": "transport",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · vol aller-retour, plus de 11 000 km · vol aller-retour depuis ta position, NCY → CHC (Annecy Meythet airport → Christchurch International Airport), environ 18911 km · vrai prix dans Résa · Vols",
+    "source": "estimation",
+    "autofill": "9201b0e7-c67a-4955-a0b7-70b331966de6"
+   }
+  },
+  {
+   "title": "Repas · 14 jour(s) × 4",
+   "amount": 1664,
+   "currency": "EUR",
+   "category": "nourriture",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Nouvelle-Zélande 110 (France = 100) · selon la nuit (bivouac, refuge, hébergement) · repas en autonomie (bivouac, journée) : alimentation : Nouvelle-Zélande 109 (France = 100) · ICP 2021, Banque mondiale, lu le 12 octobre 2026",
+    "source": "estimation",
+    "autofill": "9201b0e7-c67a-4955-a0b7-70b331966de6"
+   }
+  },
+  {
+   "title": "Matériel à acheter",
+   "amount": 56,
+   "currency": "EUR",
+   "category": "matériel",
+   "is_planned": true,
+   "metadata": {
+    "basis": "prix de la boutique",
+    "source": "base",
+    "autofill": "9201b0e7-c67a-4955-a0b7-70b331966de6"
+   }
+  },
+  {
+   "title": "Assurance voyage et rapatriement",
+   "amount": 168,
+   "currency": "EUR",
+   "category": "divers",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · forfait par jour",
+    "source": "estimation",
+    "autofill": "9201b0e7-c67a-4955-a0b7-70b331966de6"
+   }
+  }
+ ]
+}

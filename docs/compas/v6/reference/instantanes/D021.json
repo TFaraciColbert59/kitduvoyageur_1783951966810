@@ -1,0 +1,746 @@
+{
+ "demande": "D021",
+ "banc": {
+  "at": "2026-11-10T22:02:24.355Z",
+  "seconds": 240,
+  "prepSeconds": 232,
+  "outcome": "Ton aventure est prête",
+  "error": null
+ },
+ "trip": {
+  "id": "07c97b10-7afb-4cfa-a571-faaec712e40d",
+  "title": "Trek · Banyuls-sur-Mer",
+  "destination_name": "Banyuls-sur-Mer",
+  "destination_country_code": "FR",
+  "start_date": "2027-06-01",
+  "end_date": "2027-06-30",
+  "party_size": 1,
+  "primary_activity": "trekking",
+  "estimated_budget": 2347,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": {
+     "lat": 42.47941,
+     "lon": 3.12759,
+     "kind": "city",
+     "name": "Banyuls-sur-Mer",
+     "extent": [
+      3.0405513,
+      42.4953665,
+      3.1622358,
+      42.4251065
+     ],
+     "osmTag": "place=village",
+     "country": "France",
+     "countryCode": "FR"
+    },
+    "planned_days": null,
+    "duration_h": null,
+    "prefs": {
+     "pace": "normal",
+     "avoid": [],
+     "nights": null,
+     "wishes": [
+      "GR10"
+     ]
+    },
+    "origin": {
+     "lat": 43.36,
+     "lon": -1.76,
+     "name": "Hendaye",
+     "source": "dit",
+     "countryCode": "FR"
+    },
+    "autofill": {
+     "runId": "r",
+     "undone": false,
+     "at": "2026-11-10T22:06:18.587Z",
+     "notes": [
+      "Altitude du parcours non mesurée : au-delà de 2 500 m, monte progressivement et bois souvent ; mal de tête, nausée ou essoufflement au repos : redescends.",
+      "Seul·e : laisse ton itinéraire et ton heure de retour à un proche. Urgence : 112.",
+      "Bivouac : vérifie les règles du lieu ; dans les parcs nationaux et les réserves, il est souvent limité (horaires, distance à la route) ou interdit.",
+      "Grand itinéraire « GR10 » introuvable sur la carte : itinéraire calculé sans suivre son tracé.",
+      "Étapes du sentier « GR10 » non retrouvées sur la carte : itinéraire calculé sur les lieux réels de la zone.",
+      "Itinéraire en traversée construit sur des lieux réels de la carte (16 lieux où dormir).",
+      "Matériel conseillé non compté au budget : 163 € à la boutique si tu ne l’as pas (facultatif).",
+      "Suggestion de l’IA (facultatif) : prévois d'acheter un sac de couchage adapté aux températures nocturnes de juin en Catalogne (nuits fraîches possibles), un matelas de sol pour isoler du sol dur et un filtre à eau…"
+     ],
+     "papers": {
+      "abroad": false,
+      "country": "France",
+      "abroadFrom": "dit",
+      "countryCode": "FR"
+     },
+     "basis": {
+      "days": 30,
+      "pace": null,
+      "hours": null,
+      "level": null,
+      "month": 6,
+      "party": 1,
+      "nights": null,
+      "origin": "Hendaye@43.36,-1.76",
+      "carFree": null,
+      "terrain": null,
+      "activity": "trekking",
+      "autonomy": null,
+      "priority": null,
+      "targetKm": null,
+      "destination": "Banyuls-sur-Mer@42.48,3.13",
+      "outdoorNights": null
+     },
+     "engine": []
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "day_number": 1,
+   "title": "Jour 1 · Cervera de la Marenda",
+   "description": "Départ de Banyuls-sur-Mer.",
+   "latitude": 42.4409,
+   "longitude": 3.16518,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 2,
+   "title": "Jour 2 · Colera",
+   "description": null,
+   "latitude": 42.4039,
+   "longitude": 3.15153,
+   "distance_km": 7.3,
+   "elevation_gain_m": 374,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 3,
+   "title": "Jour 3 · Llançà",
+   "description": null,
+   "latitude": 42.3624,
+   "longitude": 3.15213,
+   "distance_km": 6.8,
+   "elevation_gain_m": 159,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 4,
+   "title": "Jour 4 · el Port de la Selva",
+   "description": null,
+   "latitude": 42.3369,
+   "longitude": 3.20492,
+   "distance_km": 7.4,
+   "elevation_gain_m": 121,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 5,
+   "title": "Jour 5 · Cadaqués",
+   "description": null,
+   "latitude": 42.2886,
+   "longitude": 3.27706,
+   "distance_km": 11.8,
+   "elevation_gain_m": 345,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 6,
+   "title": "Jour 6 · Bivouac entre Cadaqués et Roses (1/2)",
+   "description": "Bivouac : aucun lieu où dormir à une journée de marche (Roses est à 9 km à vol d’oiseau) ; emplacement à choisir sur place, après avoir vérifié les règles du lieu (bivouac souvent limité ou interdit dans les parcs et les réserves).",
+   "latitude": 42.27973,
+   "longitude": 3.24367,
+   "distance_km": 5.6,
+   "elevation_gain_m": 449,
+   "start_time": null,
+   "accommodation_name": "Bivouac",
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 7,
+   "title": "Jour 7 · Bivouac entre Cadaqués et Roses (2/2)",
+   "description": "Bivouac : aucun lieu où dormir à une journée de marche (Roses est à 6 km à vol d’oiseau) ; emplacement à choisir sur place, après avoir vérifié les règles du lieu (bivouac souvent limité ou interdit dans les parcs et les réserves).",
+   "latitude": 42.27087,
+   "longitude": 3.21028,
+   "distance_km": 5.1,
+   "elevation_gain_m": 68,
+   "start_time": null,
+   "accommodation_name": "Bivouac",
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 8,
+   "title": "Jour 8 · Roses",
+   "description": null,
+   "latitude": 42.262,
+   "longitude": 3.17689,
+   "distance_km": 3.2,
+   "elevation_gain_m": 0,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 9,
+   "title": "Jour 9 · Empuriabrava",
+   "description": null,
+   "latitude": 42.2469,
+   "longitude": 3.12059,
+   "distance_km": 7.7,
+   "elevation_gain_m": 0,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 10,
+   "title": "Jour 10 · Vilamacolum",
+   "description": null,
+   "latitude": 42.1962,
+   "longitude": 3.05662,
+   "distance_km": 12.6,
+   "elevation_gain_m": 0,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 11,
+   "title": "Jour 11 · l'Armentera",
+   "description": null,
+   "latitude": 42.1715,
+   "longitude": 3.07439,
+   "distance_km": 5.2,
+   "elevation_gain_m": 0,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 12,
+   "title": "Jour 12 · Ventalló",
+   "description": null,
+   "latitude": 42.1492,
+   "longitude": 3.02635,
+   "distance_km": 5.2,
+   "elevation_gain_m": 20,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 13,
+   "title": "Jour 13 · Garrigoles",
+   "description": null,
+   "latitude": 42.1,
+   "longitude": 3.03333,
+   "distance_km": 5.9,
+   "elevation_gain_m": 101,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 14,
+   "title": "Jour 14 · la Tallada d'Empordà",
+   "description": null,
+   "latitude": 42.0802,
+   "longitude": 3.05583,
+   "distance_km": 4.4,
+   "elevation_gain_m": 10,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 15,
+   "title": "Jour 15 · Albons",
+   "description": "Retour par un autre chemin : la zone s’arrête ici.",
+   "latitude": 42.1039,
+   "longitude": 3.08433,
+   "distance_km": 4.1,
+   "elevation_gain_m": 11,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 16,
+   "title": "Jour 16 · l'Escala",
+   "description": null,
+   "latitude": 42.1256,
+   "longitude": 3.13261,
+   "distance_km": 5.3,
+   "elevation_gain_m": 11,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 17,
+   "title": "Jour 17 · l'Escala",
+   "description": "Journée sur place : aucun lieu où dormir à distance d’une étape.",
+   "latitude": 42.1256,
+   "longitude": 3.13261,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 18,
+   "title": "Jour 18 · l'Escala",
+   "description": "Journée sur place : aucun lieu où dormir à distance d’une étape.",
+   "latitude": 42.1256,
+   "longitude": 3.13261,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 19,
+   "title": "Jour 19 · l'Escala",
+   "description": "Journée sur place : aucun lieu où dormir à distance d’une étape.",
+   "latitude": 42.1256,
+   "longitude": 3.13261,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 20,
+   "title": "Jour 20 · l'Escala",
+   "description": "Journée sur place : aucun lieu où dormir à distance d’une étape.",
+   "latitude": 42.1256,
+   "longitude": 3.13261,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 21,
+   "title": "Jour 21 · l'Escala",
+   "description": "Journée sur place : aucun lieu où dormir à distance d’une étape.",
+   "latitude": 42.1256,
+   "longitude": 3.13261,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 22,
+   "title": "Jour 22 · l'Escala",
+   "description": "Journée sur place : aucun lieu où dormir à distance d’une étape.",
+   "latitude": 42.1256,
+   "longitude": 3.13261,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 23,
+   "title": "Jour 23 · l'Escala",
+   "description": "Journée sur place : aucun lieu où dormir à distance d’une étape.",
+   "latitude": 42.1256,
+   "longitude": 3.13261,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 24,
+   "title": "Jour 24 · l'Escala",
+   "description": "Journée sur place : aucun lieu où dormir à distance d’une étape.",
+   "latitude": 42.1256,
+   "longitude": 3.13261,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 25,
+   "title": "Jour 25 · l'Escala",
+   "description": "Journée sur place : aucun lieu où dormir à distance d’une étape.",
+   "latitude": 42.1256,
+   "longitude": 3.13261,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 26,
+   "title": "Jour 26 · l'Escala",
+   "description": "Journée sur place : aucun lieu où dormir à distance d’une étape.",
+   "latitude": 42.1256,
+   "longitude": 3.13261,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 27,
+   "title": "Jour 27 · l'Escala",
+   "description": "Journée sur place : aucun lieu où dormir à distance d’une étape.",
+   "latitude": 42.1256,
+   "longitude": 3.13261,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 28,
+   "title": "Jour 28 · l'Escala",
+   "description": "Journée sur place : aucun lieu où dormir à distance d’une étape.",
+   "latitude": 42.1256,
+   "longitude": 3.13261,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 29,
+   "title": "Jour 29 · l'Escala",
+   "description": "Journée sur place : aucun lieu où dormir à distance d’une étape.",
+   "latitude": 42.1256,
+   "longitude": 3.13261,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 30,
+   "title": "Jour 30 · l'Escala",
+   "description": "Journée sur place : aucun lieu où dormir à distance d’une étape.",
+   "latitude": 42.1256,
+   "longitude": 3.13261,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  }
+ ],
+ "items": [
+  {
+   "item_name": "Tente",
+   "category": "shelter",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": "b54e4aaf-979a-47a8-95fb-79c7568153bb",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Sac de couchage",
+   "category": "sleep",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "f29331bb-1e42-4f93-b6be-5b94452ff551"
+  },
+  {
+   "item_name": "Matelas de sol",
+   "category": "sleep",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "5d9dbcad-8781-434c-bca4-dd5517f30527"
+  },
+  {
+   "item_name": "Réchaud",
+   "category": "cook",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "809da83b-9944-4b01-94e5-dc8105beb43e",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Popote",
+   "category": "cook",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Trousse de premiers secours complète",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": "f56a5199-7b77-45e9-9697-1b7f082e4902",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Sifflet de survie et détresse",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "f767e762-d417-48c2-909d-eea829081a65"
+  },
+  {
+   "item_name": "Lampe frontale LED haute autonomie",
+   "category": "tech",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "0ce62ae3-6398-48d4-be3a-de2ff265c26f"
+  },
+  {
+   "item_name": "Kit de réparation multi-usage",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "95c582ab-05ef-4d72-aa9b-9291c2ec35df"
+  },
+  {
+   "item_name": "Filtre à eau / paille filtrante",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Crème solaire haute protection SPF 50+",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "a30a619b-5f1e-48f9-8439-d396c4a84f46"
+  },
+  {
+   "item_name": "Gourde isotherme / Thermos en acier inoxydable",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "b6034a5b-301c-4dda-bce4-e13969bc013c",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Bouteille d’eau légère de randonnée",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "d403c58a-cf66-4346-9f14-33ecc31f9701"
+  },
+  {
+   "item_name": "Briquet / allume-feu résistant au vent",
+   "category": "cook",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "549d7f9e-aa98-4618-82ec-bb913ca14d0c"
+  },
+  {
+   "item_name": "Bâtons de trekking télescopiques",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "549d7f9e-aa98-4618-82ec-bb913ca14d0c"
+  },
+  {
+   "item_name": "Couteau pliant multifonction en inox",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "72a3d504-7b6b-4501-87d0-427a51114b90"
+  },
+  {
+   "item_name": "Batterie externe étanche Power Bank",
+   "category": "tech",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "846f5f27-9f48-4492-a917-99768934eba5",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Sac à dos technique de randonnée",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "e137cfe3-ff6e-4a73-a6a7-d6ea415b9739",
+   "shop_product_id": null
+  }
+ ],
+ "expenses": [
+  {
+   "title": "27 nuit(s) en hébergement",
+   "amount": 1215,
+   "currency": "EUR",
+   "category": "hébergement",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : France 100 (référence) · chambre partagée à deux · vrais prix dans Résa · Nuits",
+    "source": "estimation",
+    "autofill": "889ab735-938d-48ea-96ee-a0d5e76f9b5c"
+   }
+  },
+  {
+   "title": "Carburant aller-retour (1153.3 km)",
+   "amount": 166,
+   "currency": "EUR",
+   "category": "transport",
+   "is_planned": true,
+   "metadata": {
+    "basis": "itinéraire routier mesuré · 6,5 L/100 km · Euro-super 95 à 2,21 €/L (bulletin pétrolier de l’UE du 5 octobre 2026) · 1 voiture · péages non comptés (le trajet mesuré ne donne pas ses km d’autoroute à péage ; France : 11,1 c€/km TTC en moyenne sur les autoroutes concédées (véhicules légers, tarifs du 1er février 2024, TVA de 20 % ajoutée au prix hors taxes, source : ART) ; moyenne de tout le réseau concédé : un axe peut coûter bien plus ou moins ; les hausses des 1er février 2025 et 2026 ne sont pas lues)",
+    "source": "mesure",
+    "autofill": "889ab735-938d-48ea-96ee-a0d5e76f9b5c"
+   }
+  },
+  {
+   "title": "Repas · 30 jour(s) × 1",
+   "amount": 910,
+   "currency": "EUR",
+   "category": "nourriture",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : France 100 (référence) · selon la nuit (bivouac, refuge, hébergement) · repas en autonomie (bivouac, journée) : alimentation : France 100 (France = 100) · ICP 2021, Banque mondiale, lu le 12 octobre 2026",
+    "source": "estimation",
+    "autofill": "889ab735-938d-48ea-96ee-a0d5e76f9b5c"
+   }
+  },
+  {
+   "title": "Matériel à acheter",
+   "amount": 56,
+   "currency": "EUR",
+   "category": "matériel",
+   "is_planned": true,
+   "metadata": {
+    "basis": "prix de la boutique",
+    "source": "base",
+    "autofill": "889ab735-938d-48ea-96ee-a0d5e76f9b5c"
+   }
+  }
+ ]
+}

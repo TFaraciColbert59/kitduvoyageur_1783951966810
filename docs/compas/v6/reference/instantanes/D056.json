@@ -1,0 +1,364 @@
+{
+ "demande": "D056",
+ "banc": {
+  "at": "2026-11-10T23:25:07.285Z",
+  "seconds": 58,
+  "prepSeconds": 52,
+  "outcome": "Ton aventure est prête",
+  "error": null
+ },
+ "trip": {
+  "id": "d41afc7b-302e-4876-b25b-b8ba85ebe337",
+  "title": "Mixte · Tulum",
+  "destination_name": "Tulum",
+  "destination_country_code": "MX",
+  "start_date": "2026-12-01",
+  "end_date": "2026-12-07",
+  "party_size": 3,
+  "primary_activity": "mixed",
+  "estimated_budget": 3763,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": {
+     "lat": 20.42965,
+     "lon": -87.65293,
+     "kind": "administrative",
+     "name": "Tulum",
+     "extent": [
+      -87.9950654,
+      20.5160898,
+      -87.3026413,
+      19.7772997
+     ],
+     "osmTag": "boundary=administrative",
+     "country": "Mexique",
+     "countryCode": "MX"
+    },
+    "planned_days": null,
+    "duration_h": null,
+    "prefs": {
+     "pace": "tranquille",
+     "avoid": [],
+     "nights": null,
+     "wishes": []
+    },
+    "origin": null,
+    "autofill": {
+     "runId": "r",
+     "undone": false,
+     "at": "2026-11-10T23:25:43.567Z",
+     "notes": [
+      "Papiers : conditions d’entrée (Mexique) à vérifier auprès du service officiel de ton pays avant de partir.",
+      "Prises de type A/B (Mexique) : vérifie que tes chargeurs s’y branchent.",
+      "Sous les tropiques, l’eau du robinet et celle des ruisseaux n’est pas toujours potable : traite-la (filtre, pastilles ou ébullition) ou prends de l’eau en bouteille scellée.",
+      "Itinéraire depuis une base construit sur des lieux réels de la carte (1 lieu où dormir).",
+      "Matériel conseillé non compté au budget : 163 € à la boutique si tu ne l’as pas (facultatif)."
+     ],
+     "papers": {
+      "abroad": true,
+      "country": "Mexique",
+      "abroadFrom": "gps",
+      "countryCode": "MX"
+     },
+     "basis": {
+      "days": 7,
+      "pace": "tranquille",
+      "hours": null,
+      "level": null,
+      "month": 12,
+      "party": 3,
+      "nights": null,
+      "origin": null,
+      "carFree": null,
+      "terrain": null,
+      "activity": "mixed",
+      "autonomy": null,
+      "priority": null,
+      "targetKm": null,
+      "destination": "Tulum@20.43,-87.65",
+      "outdoorNights": null
+     },
+     "engine": []
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "day_number": 1,
+   "title": "Jour 1 · Francisco Uh May",
+   "description": "Base du séjour.",
+   "latitude": 20.3647,
+   "longitude": -87.5903,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 2,
+   "title": "Jour 2 · Francisco Uh May",
+   "description": null,
+   "latitude": 20.3647,
+   "longitude": -87.5903,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 3,
+   "title": "Jour 3 · Francisco Uh May",
+   "description": null,
+   "latitude": 20.3647,
+   "longitude": -87.5903,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 4,
+   "title": "Jour 4 · Francisco Uh May",
+   "description": null,
+   "latitude": 20.3647,
+   "longitude": -87.5903,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 5,
+   "title": "Jour 5 · Francisco Uh May",
+   "description": null,
+   "latitude": 20.3647,
+   "longitude": -87.5903,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 6,
+   "title": "Jour 6 · Francisco Uh May",
+   "description": null,
+   "latitude": 20.3647,
+   "longitude": -87.5903,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 7,
+   "title": "Jour 7 · Francisco Uh May",
+   "description": null,
+   "latitude": 20.3647,
+   "longitude": -87.5903,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  }
+ ],
+ "items": [
+  {
+   "item_name": "Trousse de premiers secours complète",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": "f56a5199-7b77-45e9-9697-1b7f082e4902",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Crème solaire haute protection SPF 50+",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "a30a619b-5f1e-48f9-8439-d396c4a84f46"
+  },
+  {
+   "item_name": "Sifflet de survie et détresse",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "f767e762-d417-48c2-909d-eea829081a65"
+  },
+  {
+   "item_name": "Lampe frontale LED haute autonomie",
+   "category": "tech",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "0ce62ae3-6398-48d4-be3a-de2ff265c26f"
+  },
+  {
+   "item_name": "Kit de réparation multi-usage",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "95c582ab-05ef-4d72-aa9b-9291c2ec35df"
+  },
+  {
+   "item_name": "Filtre à eau / paille filtrante",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Pastilles de purification d’eau",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Répulsif anti-moustiques",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "e4c51d60-99ad-46e2-bf10-7a2ff701e61f"
+  },
+  {
+   "item_name": "Gourde isotherme / Thermos en acier inoxydable",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "b6034a5b-301c-4dda-bce4-e13969bc013c",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Bouteille d’eau légère de randonnée",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "d403c58a-cf66-4346-9f14-33ecc31f9701"
+  },
+  {
+   "item_name": "Bâtons de trekking télescopiques",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "549d7f9e-aa98-4618-82ec-bb913ca14d0c"
+  },
+  {
+   "item_name": "Couteau pliant multifonction en inox",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "72a3d504-7b6b-4501-87d0-427a51114b90"
+  },
+  {
+   "item_name": "Batterie externe étanche Power Bank",
+   "category": "tech",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "846f5f27-9f48-4492-a917-99768934eba5",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Sac à dos technique de randonnée",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "e137cfe3-ff6e-4a73-a6a7-d6ea415b9739",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Lunettes de soleil sport UV400 cat. 3/4",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "371d08c1-7865-4352-a09f-ac551e487ead"
+  }
+ ],
+ "expenses": [
+  {
+   "title": "6 nuit(s) en hébergement",
+   "amount": 450,
+   "currency": "EUR",
+   "category": "hébergement",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Mexique 55 (France = 100) · chambre partagée à deux · vrais prix dans Résa · Nuits",
+    "source": "estimation",
+    "autofill": "bce52087-3462-4ccd-9cca-b4fb37fe5f66"
+   }
+  },
+  {
+   "title": "Vol aller-retour × 3",
+   "amount": 2850,
+   "currency": "EUR",
+   "category": "transport",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · vol aller-retour, 8 000 à 11 000 km · vol aller-retour depuis ta position, NCY → TQO (Annecy Meythet airport → Felipe Carrillo Puerto International Airport Tulum), environ 8692 km · vrai prix dans Résa · Vols",
+    "source": "estimation",
+    "autofill": "bce52087-3462-4ccd-9cca-b4fb37fe5f66"
+   }
+  },
+  {
+   "title": "Repas · 7 jour(s) × 3",
+   "amount": 357,
+   "currency": "EUR",
+   "category": "nourriture",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Mexique 55 (France = 100) · selon la nuit (bivouac, refuge, hébergement) · repas en autonomie (bivouac, journée) : alimentation : Mexique 78 (France = 100) · ICP 2021, Banque mondiale, lu le 12 octobre 2026",
+    "source": "estimation",
+    "autofill": "bce52087-3462-4ccd-9cca-b4fb37fe5f66"
+   }
+  },
+  {
+   "title": "Matériel à acheter",
+   "amount": 16,
+   "currency": "EUR",
+   "category": "matériel",
+   "is_planned": true,
+   "metadata": {
+    "basis": "prix de la boutique",
+    "source": "base",
+    "autofill": "bce52087-3462-4ccd-9cca-b4fb37fe5f66"
+   }
+  },
+  {
+   "title": "Assurance voyage et rapatriement",
+   "amount": 90,
+   "currency": "EUR",
+   "category": "divers",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · forfait par jour",
+    "source": "estimation",
+    "autofill": "bce52087-3462-4ccd-9cca-b4fb37fe5f66"
+   }
+  }
+ ]
+}

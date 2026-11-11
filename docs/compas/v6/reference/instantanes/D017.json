@@ -1,0 +1,464 @@
+{
+ "demande": "D017",
+ "banc": {
+  "at": "2026-11-10T21:52:20.597Z",
+  "seconds": 37,
+  "prepSeconds": 32,
+  "outcome": "Ton aventure est prête",
+  "error": null
+ },
+ "trip": {
+  "id": "55299ebd-e197-4929-b7d6-8322428a08f0",
+  "title": "Plage · Fidji",
+  "destination_name": "Fidji",
+  "destination_country_code": "FJ",
+  "start_date": "2027-08-01",
+  "end_date": "2027-08-14",
+  "party_size": 3,
+  "primary_activity": "beach",
+  "estimated_budget": 6300,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": {
+     "lat": -18.12397,
+     "lon": 179.01227,
+     "kind": "country",
+     "name": "Fidji",
+     "extent": [
+      -180,
+      -12.2613866,
+      180,
+      -21.9434274
+     ],
+     "osmTag": "place=country",
+     "country": "Fidji",
+     "countryCode": "FJ"
+    },
+    "planned_days": null,
+    "duration_h": null,
+    "prefs": {
+     "pace": "tranquille",
+     "avoid": [],
+     "nights": null,
+     "wishes": []
+    },
+    "origin": null,
+    "autofill": {
+     "runId": "r",
+     "undone": false,
+     "at": "2026-11-10T21:54:14.032Z",
+     "notes": [
+      "Papiers : conditions d’entrée (Fidji) à vérifier auprès du service officiel de ton pays avant de partir.",
+      "Prises de type I (Fidji) : vérifie que tes chargeurs s’y branchent.",
+      "Sous les tropiques, l’eau du robinet et celle des ruisseaux n’est pas toujours potable : traite-la (filtre, pastilles ou ébullition) ou prends de l’eau en bouteille scellée.",
+      "3 lieu(x) proposé(s) introuvable(s) sur la carte : étape gardée au lieu précédent.",
+      "Plusieurs lieux de l’itinéraire n’existent pas sur la carte : je le redemande à ta prochaine visite.",
+      "1 étape avec une distance estimée (itinéraire non calculé) : à vérifier."
+     ],
+     "papers": {
+      "abroad": true,
+      "country": "Fidji",
+      "abroadFrom": "gps",
+      "countryCode": "FJ"
+     },
+     "basis": {
+      "days": 14,
+      "pace": "tranquille",
+      "hours": null,
+      "level": null,
+      "month": 8,
+      "party": 3,
+      "nights": null,
+      "origin": null,
+      "carFree": null,
+      "terrain": null,
+      "activity": "beach",
+      "autonomy": null,
+      "priority": null,
+      "targetKm": null,
+      "destination": "Fidji@-18.12,179.01",
+      "outdoorNights": null
+     },
+     "engine": []
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "day_number": 1,
+   "title": "Jour 1 · Nadi",
+   "description": "arrivee",
+   "latitude": -17.79927,
+   "longitude": 177.41785,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "plane",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 2,
+   "title": "Jour 2 · Mamanuca Islands",
+   "description": "transfert",
+   "latitude": -17.58878,
+   "longitude": 177.0551,
+   "distance_km": 45,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "boat",
+   "metadata": {
+    "distance": {
+     "source": "vol_oiseau"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 3,
+   "title": "Jour 3 · Mamanuca Islands",
+   "description": "plage",
+   "latitude": -17.58878,
+   "longitude": 177.0551,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 4,
+   "title": "Jour 4 · Mamanuca Islands",
+   "description": "snorkeling",
+   "latitude": -17.58878,
+   "longitude": 177.0551,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 5,
+   "title": "Jour 5 · Yasawa",
+   "description": "transfert",
+   "latitude": -17.29095,
+   "longitude": 177.12579,
+   "distance_km": 34,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "boat",
+   "metadata": {
+    "distance": {
+     "source": "vol_oiseau"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 6,
+   "title": "Jour 6 · Yasawa",
+   "description": "plage",
+   "latitude": -17.29095,
+   "longitude": 177.12579,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 7,
+   "title": "Jour 7 · Yasawa",
+   "description": "repos",
+   "latitude": -17.29095,
+   "longitude": 177.12579,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 8,
+   "title": "Jour 8 · Yasawa",
+   "description": "randonnee",
+   "latitude": -17.29095,
+   "longitude": 177.12579,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 9,
+   "title": "Jour 9 · Yasawa",
+   "description": "transfert",
+   "latitude": -17.29095,
+   "longitude": 177.12579,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 10,
+   "title": "Jour 10 · Yasawa",
+   "description": "route",
+   "latitude": -17.29095,
+   "longitude": 177.12579,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 11,
+   "title": "Jour 11 · Yasawa",
+   "description": "plage",
+   "latitude": -17.29095,
+   "longitude": 177.12579,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 12,
+   "title": "Jour 12 · Pacific Harbour",
+   "description": "route Distance estimée : environ 189,4 km (vol d’oiseau × 1,3, itinéraire non calculé), à vérifier.",
+   "latitude": -18.23815,
+   "longitude": 178.07633,
+   "distance_km": 189.4,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "car",
+   "metadata": {
+    "distance": {
+     "source": "estimation"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 13,
+   "title": "Jour 13 · Pacific Harbour",
+   "description": "activites",
+   "latitude": -18.23815,
+   "longitude": 178.07633,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 14,
+   "title": "Jour 14 · Nadi",
+   "description": "depart",
+   "latitude": -17.79927,
+   "longitude": 177.41785,
+   "distance_km": 141.3,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "car",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  }
+ ],
+ "items": [
+  {
+   "item_name": "Maillot de bain",
+   "category": "clothing",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Serviette",
+   "category": "tools",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Trousse de premiers secours complète",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": "f56a5199-7b77-45e9-9697-1b7f082e4902",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Crème solaire haute protection SPF 50+",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "a30a619b-5f1e-48f9-8439-d396c4a84f46"
+  },
+  {
+   "item_name": "Répulsif anti-moustiques",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "e4c51d60-99ad-46e2-bf10-7a2ff701e61f"
+  },
+  {
+   "item_name": "Bouteille d’eau légère de randonnée",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "d403c58a-cf66-4346-9f14-33ecc31f9701"
+  },
+  {
+   "item_name": "Batterie externe étanche Power Bank",
+   "category": "tech",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "846f5f27-9f48-4492-a917-99768934eba5",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Lunettes de soleil sport UV400 cat. 3/4",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "371d08c1-7865-4352-a09f-ac551e487ead"
+  }
+ ],
+ "expenses": [
+  {
+   "title": "13 nuit(s) en hébergement",
+   "amount": 1209,
+   "currency": "EUR",
+   "category": "hébergement",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Fidji 70 (France = 100) · chambre partagée à deux · vrais prix dans Résa · Nuits",
+    "source": "estimation",
+    "autofill": "153e95fb-ab7c-4d18-b592-e6d0d91f6e1f"
+   }
+  },
+  {
+   "title": "Vol aller-retour × 3",
+   "amount": 3450,
+   "currency": "EUR",
+   "category": "transport",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · vol aller-retour, plus de 11 000 km · vol aller-retour depuis ta position, NCY → NAN (Annecy Meythet airport → Nadi International Airport), environ 16783 km · vrai prix dans Résa · Vols",
+    "source": "estimation",
+    "autofill": "153e95fb-ab7c-4d18-b592-e6d0d91f6e1f"
+   }
+  },
+  {
+   "title": "Carburant sur place (331 km)",
+   "amount": 43,
+   "currency": "EUR",
+   "category": "transport",
+   "is_planned": true,
+   "metadata": {
+    "basis": "kilomètres mesurés entre les étapes · 6,5 L/100 km · carburant estimé hors UE (aucune source gratuite) : moyenne de l’UE-27 à 2,01 €/L, de 1,34 à 2,61 €/L selon les pays de l’UE (bulletin pétrolier de l’UE du 5 octobre 2026) ; à vérifier sur place · péages non comptés (le trajet mesuré ne donne pas ses km d’autoroute à péage)",
+    "source": "estimation",
+    "autofill": "153e95fb-ab7c-4d18-b592-e6d0d91f6e1f"
+   }
+  },
+  {
+   "title": "Location de voiture · 14 jour(s)",
+   "amount": 434,
+   "currency": "EUR",
+   "category": "transport",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Fidji 70 (France = 100) · catégorie économique · à comparer dans Résa · Trajets",
+    "source": "estimation",
+    "autofill": "153e95fb-ab7c-4d18-b592-e6d0d91f6e1f"
+   }
+  },
+  {
+   "title": "Transports sur place (2 trajets)",
+   "amount": 150,
+   "currency": "EUR",
+   "category": "transport",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Fidji 70 (France = 100) · bateau, bateau",
+    "source": "estimation",
+    "autofill": "153e95fb-ab7c-4d18-b592-e6d0d91f6e1f"
+   }
+  },
+  {
+   "title": "Repas · 14 jour(s) × 3",
+   "amount": 888,
+   "currency": "EUR",
+   "category": "nourriture",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Fidji 70 (France = 100) · selon la nuit (bivouac, refuge, hébergement) · repas en autonomie (bivouac, journée) : alimentation : Fidji 73 (France = 100) · ICP 2021, Banque mondiale, lu le 12 octobre 2026",
+    "source": "estimation",
+    "autofill": "153e95fb-ab7c-4d18-b592-e6d0d91f6e1f"
+   }
+  },
+  {
+   "title": "Assurance voyage et rapatriement",
+   "amount": 126,
+   "currency": "EUR",
+   "category": "divers",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · forfait par jour",
+    "source": "estimation",
+    "autofill": "153e95fb-ab7c-4d18-b592-e6d0d91f6e1f"
+   }
+  }
+ ]
+}

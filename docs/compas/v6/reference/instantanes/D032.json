@@ -1,0 +1,360 @@
+{
+ "demande": "D032",
+ "banc": {
+  "at": "2026-11-10T22:32:41.055Z",
+  "seconds": 36,
+  "prepSeconds": 27,
+  "outcome": "Ton aventure est prête",
+  "error": null
+ },
+ "trip": {
+  "id": "f8fe830d-eed4-4c8e-9862-41f415729b54",
+  "title": "Randonnée · San Francisco",
+  "destination_name": "San Francisco",
+  "destination_country_code": "US",
+  "start_date": "2027-04-03",
+  "end_date": "2027-04-10",
+  "party_size": null,
+  "primary_activity": "hiking",
+  "estimated_budget": 1637,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": {
+     "lat": 37.78794,
+     "lon": -122.40752,
+     "kind": "city",
+     "name": "San Francisco",
+     "extent": [
+      -123.173825,
+      37.9296678,
+      -122.2814578,
+      37.6403143
+     ],
+     "osmTag": "place=city",
+     "country": "États-Unis d'Amérique",
+     "countryCode": "US"
+    },
+    "planned_days": 8,
+    "duration_h": null,
+    "prefs": {
+     "pace": "tranquille",
+     "avoid": [],
+     "nights": null,
+     "wishes": []
+    },
+    "origin": null,
+    "autofill": {
+     "runId": "r",
+     "undone": false,
+     "at": "2026-11-10T22:33:15.825Z",
+     "notes": [
+      "Papiers : conditions d’entrée (États-Unis d'Amérique) à vérifier auprès du service officiel de ton pays avant de partir.",
+      "Prises de type A/B (États-Unis d'Amérique) : vérifie que tes chargeurs s’y branchent.",
+      "Seul·e : laisse ton itinéraire et ton heure de retour à un proche, et note le numéro d’urgence du pays avant de partir.",
+      "Période proposée : avril (avant la chaleur de l’été). Change-la dans « Quand » si elle ne te va pas.",
+      "Itinéraire en boucle construit sur des lieux réels de la carte (7 lieux où dormir).",
+      "Matériel conseillé non compté au budget : 155 € à la boutique si tu ne l’as pas (facultatif).",
+      "Suggestion de l’IA (facultatif) : prévois un vêtement coupe-vent léger pour la brise marine de San Francisco, même au printemps.",
+      "Suggestion de l’IA (facultatif) : pense à vérifier l'état de la semelle de tes chaussures de marche avant le départ pour éviter les ampoules sur les longs trajets."
+     ],
+     "papers": {
+      "abroad": true,
+      "country": "États-Unis d'Amérique",
+      "abroadFrom": "gps",
+      "countryCode": "US"
+     },
+     "basis": {
+      "days": 8,
+      "pace": "tranquille",
+      "hours": null,
+      "level": null,
+      "month": 4,
+      "party": 1,
+      "nights": null,
+      "origin": null,
+      "carFree": null,
+      "terrain": null,
+      "activity": "hiking",
+      "autonomy": null,
+      "priority": null,
+      "targetKm": null,
+      "destination": "San Francisco@37.79,-122.41",
+      "outdoorNights": null
+     },
+     "engine": []
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "day_number": 1,
+   "title": "Jour 1 · Bayview-Hunters Point",
+   "description": "Départ de San Francisco.",
+   "latitude": 37.7285,
+   "longitude": -122.381,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 2,
+   "title": "Jour 2 · Brisbane",
+   "description": null,
+   "latitude": 37.6808,
+   "longitude": -122.4,
+   "distance_km": 6.9,
+   "elevation_gain_m": 68,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 3,
+   "title": "Jour 3 · Broadmoor",
+   "description": null,
+   "latitude": 37.6866,
+   "longitude": -122.483,
+   "distance_km": 11.3,
+   "elevation_gain_m": 212,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 4,
+   "title": "Jour 4 · South San Francisco",
+   "description": null,
+   "latitude": 37.6547,
+   "longitude": -122.408,
+   "distance_km": 8.2,
+   "elevation_gain_m": 12,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 5,
+   "title": "Jour 5 · Colma",
+   "description": null,
+   "latitude": 37.6769,
+   "longitude": -122.46,
+   "distance_km": 5.5,
+   "elevation_gain_m": 41,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 6,
+   "title": "Jour 6 · San Bruno",
+   "description": null,
+   "latitude": 37.6305,
+   "longitude": -122.411,
+   "distance_km": 7.2,
+   "elevation_gain_m": 0,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 7,
+   "title": "Jour 7 · San Bruno",
+   "description": "Journée sur place : aucun lieu où dormir à distance d’une étape.",
+   "latitude": 37.6305,
+   "longitude": -122.411,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 8,
+   "title": "Jour 8 · San Francisco",
+   "description": null,
+   "latitude": 37.78794,
+   "longitude": -122.40752,
+   "distance_km": 19.6,
+   "elevation_gain_m": 117,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  }
+ ],
+ "items": [
+  {
+   "item_name": "Trousse de premiers secours complète",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": "f56a5199-7b77-45e9-9697-1b7f082e4902",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Sifflet de survie et détresse",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "f767e762-d417-48c2-909d-eea829081a65"
+  },
+  {
+   "item_name": "Lampe frontale LED haute autonomie",
+   "category": "tech",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "0ce62ae3-6398-48d4-be3a-de2ff265c26f"
+  },
+  {
+   "item_name": "Kit de réparation multi-usage",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "95c582ab-05ef-4d72-aa9b-9291c2ec35df"
+  },
+  {
+   "item_name": "Crème solaire haute protection SPF 50+",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "a30a619b-5f1e-48f9-8439-d396c4a84f46"
+  },
+  {
+   "item_name": "Gourde isotherme / Thermos en acier inoxydable",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "b6034a5b-301c-4dda-bce4-e13969bc013c",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Bouteille d’eau légère de randonnée",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "d403c58a-cf66-4346-9f14-33ecc31f9701"
+  },
+  {
+   "item_name": "Bâtons de trekking télescopiques",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "549d7f9e-aa98-4618-82ec-bb913ca14d0c"
+  },
+  {
+   "item_name": "Couteau pliant multifonction en inox",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "72a3d504-7b6b-4501-87d0-427a51114b90"
+  },
+  {
+   "item_name": "Batterie externe étanche Power Bank",
+   "category": "tech",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "846f5f27-9f48-4492-a917-99768934eba5",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Sac à dos technique de randonnée",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "e137cfe3-ff6e-4a73-a6a7-d6ea415b9739",
+   "shop_product_id": null
+  }
+ ],
+ "expenses": [
+  {
+   "title": "7 nuit(s) en hébergement",
+   "amount": 378,
+   "currency": "EUR",
+   "category": "hébergement",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : États-Unis d'Amérique 120 (France = 100) · chambre partagée à deux · vrais prix dans Résa · Nuits",
+    "source": "estimation",
+    "autofill": "b4037d3c-8385-48e0-a395-a808fd5b05c7"
+   }
+  },
+  {
+   "title": "Vol aller-retour × 1",
+   "amount": 950,
+   "currency": "EUR",
+   "category": "transport",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · vol aller-retour, 8 000 à 11 000 km · vol aller-retour depuis ta position, NCY → SFO (Annecy Meythet airport → San Francisco International Airport), environ 9396 km · vrai prix dans Résa · Vols",
+    "source": "estimation",
+    "autofill": "b4037d3c-8385-48e0-a395-a808fd5b05c7"
+   }
+  },
+  {
+   "title": "Repas · 8 jour(s) × 1",
+   "amount": 279,
+   "currency": "EUR",
+   "category": "nourriture",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : États-Unis d'Amérique 120 (France = 100) · selon la nuit (bivouac, refuge, hébergement) · repas en autonomie (bivouac, journée) : alimentation : États-Unis d'Amérique 90 (France = 100) · ICP 2021, Banque mondiale, lu le 12 octobre 2026",
+    "source": "estimation",
+    "autofill": "b4037d3c-8385-48e0-a395-a808fd5b05c7"
+   }
+  },
+  {
+   "title": "Assurance voyage et rapatriement",
+   "amount": 30,
+   "currency": "EUR",
+   "category": "divers",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · forfait par jour",
+    "source": "estimation",
+    "autofill": "b4037d3c-8385-48e0-a395-a808fd5b05c7"
+   }
+  }
+ ]
+}

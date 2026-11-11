@@ -1,0 +1,194 @@
+{
+ "demande": "D030",
+ "banc": {
+  "at": "2026-11-10T22:28:31.047Z",
+  "seconds": 36,
+  "prepSeconds": 29,
+  "outcome": "Ton aventure est prête",
+  "error": null
+ },
+ "trip": {
+  "id": "ee23d63a-bac3-4e23-9521-8e669e27feca",
+  "title": "Bushcraft · Olympic National Forest",
+  "destination_name": "Olympic National Forest",
+  "destination_country_code": "US",
+  "start_date": "2027-09-22",
+  "end_date": "2027-09-22",
+  "party_size": 1,
+  "primary_activity": "bushcraft",
+  "estimated_budget": 993,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": {
+     "lat": 47.41558,
+     "lon": -123.42235,
+     "kind": "other",
+     "name": "Olympic National Forest",
+     "extent": [
+      -124.3526208,
+      48.1653982,
+      -122.8809578,
+      47.2992132
+     ],
+     "country": "États-Unis d'Amérique",
+     "countryCode": "US"
+    },
+    "planned_days": null,
+    "duration_h": null,
+    "prefs": null,
+    "origin": null,
+    "autofill": {
+     "runId": "r",
+     "undone": false,
+     "at": "2026-11-10T22:28:50.954Z",
+     "notes": [
+      "Papiers : conditions d’entrée (États-Unis d'Amérique) à vérifier auprès du service officiel de ton pays avant de partir.",
+      "Prises de type A/B (États-Unis d'Amérique) : vérifie que tes chargeurs s’y branchent.",
+      "Seul·e : laisse ton itinéraire et ton heure de retour à un proche, et note le numéro d’urgence du pays avant de partir.",
+      "Matériel conseillé non compté au budget : 129 € à la boutique si tu ne l’as pas (facultatif).",
+      "Suggestion de l’IA (facultatif) : prévois un masque anti-poussière ou un foulard pour filtrer les particules lors des activités de bushcraft.",
+      "Suggestion de l’IA (facultatif) : pense à emporter des lunettes de soleil de catégorie 3 pour protéger tes yeux du soleil alpin.",
+      "Suggestion de l’IA (facultatif) : n'oublie pas d'acheter une gourde isotherme pour garder tes boissons au frais pendant la journée."
+     ],
+     "papers": {
+      "abroad": true,
+      "country": "États-Unis d'Amérique",
+      "abroadFrom": "gps",
+      "countryCode": "US"
+     },
+     "basis": {
+      "days": 1,
+      "pace": null,
+      "hours": null,
+      "level": null,
+      "month": 9,
+      "party": 1,
+      "nights": null,
+      "origin": null,
+      "carFree": null,
+      "terrain": null,
+      "activity": "bushcraft",
+      "autonomy": null,
+      "priority": null,
+      "targetKm": null,
+      "destination": "Olympic National Forest@47.42,-123.42",
+      "outdoorNights": null
+     },
+     "engine": []
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "day_number": 1,
+   "title": "Jour 1 · Olympic National Forest",
+   "description": null,
+   "latitude": 47.41558,
+   "longitude": -123.42235,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  }
+ ],
+ "items": [
+  {
+   "item_name": "Trousse de premiers secours complète",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": "f56a5199-7b77-45e9-9697-1b7f082e4902",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Sifflet de survie et détresse",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "f767e762-d417-48c2-909d-eea829081a65"
+  },
+  {
+   "item_name": "Lampe frontale LED haute autonomie",
+   "category": "tech",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "0ce62ae3-6398-48d4-be3a-de2ff265c26f"
+  },
+  {
+   "item_name": "Crème solaire haute protection SPF 50+",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "a30a619b-5f1e-48f9-8439-d396c4a84f46"
+  },
+  {
+   "item_name": "Bouteille d’eau légère de randonnée",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "d403c58a-cf66-4346-9f14-33ecc31f9701"
+  },
+  {
+   "item_name": "Couteau pliant multifonction en inox",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "72a3d504-7b6b-4501-87d0-427a51114b90"
+  },
+  {
+   "item_name": "Sac à dos technique de randonnée",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "e137cfe3-ff6e-4a73-a6a7-d6ea415b9739",
+   "shop_product_id": null
+  }
+ ],
+ "expenses": [
+  {
+   "title": "Vol aller-retour × 1",
+   "amount": 950,
+   "currency": "EUR",
+   "category": "transport",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · vol aller-retour, 8 000 à 11 000 km · vol aller-retour depuis ta position, NCY → SEA (Annecy Meythet airport → Seattle–Tacoma International Airport), environ 8483 km · vrai prix dans Résa · Vols",
+    "source": "estimation",
+    "autofill": "d67ef3d7-31aa-4282-82ea-9c36f9a6d2a3"
+   }
+  },
+  {
+   "title": "Repas · 1 jour(s) × 1",
+   "amount": 13,
+   "currency": "EUR",
+   "category": "nourriture",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : États-Unis d'Amérique 120 (France = 100) · selon la nuit (bivouac, refuge, hébergement) · repas en autonomie (bivouac, journée) : alimentation : États-Unis d'Amérique 90 (France = 100) · ICP 2021, Banque mondiale, lu le 12 octobre 2026",
+    "source": "estimation",
+    "autofill": "d67ef3d7-31aa-4282-82ea-9c36f9a6d2a3"
+   }
+  },
+  {
+   "title": "Assurance voyage et rapatriement",
+   "amount": 30,
+   "currency": "EUR",
+   "category": "divers",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · forfait par jour",
+    "source": "estimation",
+    "autofill": "d67ef3d7-31aa-4282-82ea-9c36f9a6d2a3"
+   }
+  }
+ ]
+}

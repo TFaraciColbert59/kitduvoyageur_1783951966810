@@ -1,0 +1,49 @@
+{
+ "demande": "D067",
+ "banc": {
+  "at": "2026-11-10T23:48:08.233Z",
+  "seconds": 43,
+  "prepSeconds": 37,
+  "outcome": "La préparation s’est arrêtée",
+  "error": null
+ },
+ "trip": {
+  "id": "2d9ce177-203a-40d7-8294-89566d3ff649",
+  "title": "Eau · Atlantis",
+  "destination_name": "Atlantis",
+  "destination_country_code": "US",
+  "start_date": null,
+  "end_date": null,
+  "party_size": null,
+  "primary_activity": "water",
+  "estimated_budget": null,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": {
+     "lat": 26.5909,
+     "lon": -80.10088,
+     "kind": "administrative",
+     "name": "Atlantis",
+     "extent": [
+      -80.1147842,
+      26.6036218,
+      -80.0897101,
+      26.5879564
+     ],
+     "osmTag": "boundary=administrative",
+     "country": "États-Unis d'Amérique",
+     "countryCode": "US"
+    },
+    "planned_days": null,
+    "duration_h": null,
+    "prefs": null,
+    "origin": null,
+    "autofill": null
+   }
+  }
+ },
+ "steps": [],
+ "items": [],
+ "expenses": []
+}

@@ -1,0 +1,226 @@
+{
+ "demande": "D061",
+ "banc": {
+  "at": "2026-11-10T23:35:32.303Z",
+  "seconds": 44,
+  "prepSeconds": 38,
+  "outcome": "Ton aventure est prête",
+  "error": null
+ },
+ "trip": {
+  "id": "0e804db0-1e11-47de-b4b0-3e63279819cc",
+  "title": "Course à pied · Parque Bicentenario",
+  "destination_name": "Parque Bicentenario",
+  "destination_country_code": "CL",
+  "start_date": "2027-10-02",
+  "end_date": "2027-10-04",
+  "party_size": null,
+  "primary_activity": "running",
+  "estimated_budget": 120,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": {
+     "lat": -33.50183,
+     "lon": -70.70556,
+     "kind": "other",
+     "name": "Parque Bicentenario",
+     "extent": [
+      -70.7064524,
+      -33.5008943,
+      -70.7046779,
+      -33.5027499
+     ],
+     "country": "Chili",
+     "countryCode": "CL"
+    },
+    "planned_days": 3,
+    "duration_h": null,
+    "prefs": {
+     "pace": "normal",
+     "avoid": [],
+     "nights": null,
+     "wishes": [
+      "Santiago al amanecer ·"
+     ]
+    },
+    "origin": {
+     "lat": -33.44,
+     "lon": -70.65,
+     "name": "Santiago",
+     "source": "dit",
+     "countryCode": "CL"
+    },
+    "autofill": {
+     "runId": "r",
+     "undone": false,
+     "at": "2026-11-10T23:35:58.557Z",
+     "notes": [
+      "Seul·e : laisse ton itinéraire et ton heure de retour à un proche, et note le numéro d’urgence du pays avant de partir.",
+      "« Laguna del Parque Bicentenario » retenu pour Parque Bicentenario (lieu naturel, adapté à l’activité).",
+      "Période proposée : octobre (avant la chaleur de l’été). Change-la dans « Quand » si elle ne te va pas.",
+      "Itinéraire depuis une base construit sur des lieux réels de la carte (1 lieu où dormir).",
+      "Matériel conseillé non compté au budget : 97 € à la boutique si tu ne l’as pas (facultatif).",
+      "Suggestion de l’IA (facultatif) : prévois d'acheter des chaussures de course adaptées au terrain avant ton départ.",
+      "Suggestion de l’IA (facultatif) : pense à vérifier l'état de ta lampe ou de ton brassard réfléchissant avant chaque étape.",
+      "Suggestion de l’IA (facultatif) : n'oublie pas de t'appliquer une crème solaire haute protection SPF 50+ avant de courir."
+     ],
+     "papers": {
+      "abroad": false,
+      "country": "Chili",
+      "abroadFrom": "dit",
+      "countryCode": "CL"
+     },
+     "basis": {
+      "days": 3,
+      "pace": null,
+      "hours": null,
+      "level": null,
+      "month": 10,
+      "party": 1,
+      "nights": null,
+      "origin": "Santiago@-33.44,-70.65",
+      "carFree": null,
+      "terrain": null,
+      "activity": "running",
+      "autonomy": null,
+      "priority": null,
+      "targetKm": null,
+      "destination": "Parque Bicentenario@-33.50,-70.71",
+      "outdoorNights": null
+     },
+     "engine": []
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "day_number": 1,
+   "title": "Jour 1 · Campamento El Molino",
+   "description": "Base du séjour.",
+   "latitude": -33.47512,
+   "longitude": -70.75932,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 2,
+   "title": "Jour 2 · Campamento El Molino",
+   "description": null,
+   "latitude": -33.47512,
+   "longitude": -70.75932,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 3,
+   "title": "Jour 3 · Campamento El Molino",
+   "description": null,
+   "latitude": -33.47512,
+   "longitude": -70.75932,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  }
+ ],
+ "items": [
+  {
+   "item_name": "Chaussures de course",
+   "category": "clothing",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Flasque ou bouteille souple",
+   "category": "tools",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "b6034a5b-301c-4dda-bce4-e13969bc013c",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Lampe ou brassard réfléchissant",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "0ce62ae3-6398-48d4-be3a-de2ff265c26f"
+  },
+  {
+   "item_name": "Trousse de premiers secours complète",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": "f56a5199-7b77-45e9-9697-1b7f082e4902",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Sifflet de survie et détresse",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "f767e762-d417-48c2-909d-eea829081a65"
+  },
+  {
+   "item_name": "Crème solaire haute protection SPF 50+",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "a30a619b-5f1e-48f9-8439-d396c4a84f46"
+  }
+ ],
+ "expenses": [
+  {
+   "title": "2 nuit(s) en hébergement",
+   "amount": 58,
+   "currency": "EUR",
+   "category": "hébergement",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Chili 65 (France = 100) · chambre partagée à deux · vrais prix dans Résa · Nuits",
+    "source": "estimation",
+    "autofill": "4b8b3994-ff9c-4957-b410-792e5acacbcc"
+   }
+  },
+  {
+   "title": "Carburant aller-retour (46.9 km)",
+   "amount": 6,
+   "currency": "EUR",
+   "category": "transport",
+   "is_planned": true,
+   "metadata": {
+    "basis": "itinéraire routier mesuré · 6,5 L/100 km · carburant estimé hors UE (aucune source gratuite) : moyenne de l’UE-27 à 2,01 €/L, de 1,34 à 2,61 €/L selon les pays de l’UE (bulletin pétrolier de l’UE du 5 octobre 2026) ; à vérifier sur place · entre 4 € et 8 € pour ce trajet · 1 voiture · péages non comptés (le trajet mesuré ne donne pas ses km d’autoroute à péage)",
+    "source": "estimation",
+    "autofill": "4b8b3994-ff9c-4957-b410-792e5acacbcc"
+   }
+  },
+  {
+   "title": "Repas · 3 jour(s) × 1",
+   "amount": 56,
+   "currency": "EUR",
+   "category": "nourriture",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Chili 65 (France = 100) · selon la nuit (bivouac, refuge, hébergement) · repas en autonomie (bivouac, journée) : alimentation : Chili 97 (France = 100) · ICP 2021, Banque mondiale, lu le 12 octobre 2026",
+    "source": "estimation",
+    "autofill": "4b8b3994-ff9c-4957-b410-792e5acacbcc"
+   }
+  }
+ ]
+}

@@ -1,0 +1,200 @@
+{
+ "demande": "D005",
+ "banc": {
+  "at": "2026-11-10T17:15:03.402Z",
+  "seconds": 49,
+  "prepSeconds": 39,
+  "outcome": "Ton aventure est prête",
+  "error": null
+ },
+ "trip": {
+  "id": "517df9d6-4bb6-486f-bc31-2c0144c270dd",
+  "title": "City trip · Lisbonne",
+  "destination_name": "Lisbonne",
+  "destination_country_code": "PT",
+  "start_date": "2027-10-02",
+  "end_date": "2027-10-03",
+  "party_size": 2,
+  "primary_activity": "citytrip",
+  "estimated_budget": 770,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": {
+     "lat": 38.70775,
+     "lon": -9.13659,
+     "kind": "city",
+     "name": "Lisbonne",
+     "extent": [
+      -9.2298356,
+      38.7967584,
+      -9.0863328,
+      38.6913994
+     ],
+     "osmTag": "place=city",
+     "country": "Portugal",
+     "countryCode": "PT"
+    },
+    "planned_days": null,
+    "duration_h": null,
+    "prefs": {
+     "pace": "normal",
+     "avoid": [],
+     "nights": null,
+     "wishes": [
+      "azulejos et fado"
+     ]
+    },
+    "origin": null,
+    "autofill": {
+     "runId": "r",
+     "undone": false,
+     "at": "2026-11-10T17:15:29.992Z",
+     "notes": [
+      "Papiers : conditions d’entrée (Portugal) à vérifier auprès du service officiel de ton pays avant de partir.",
+      "Matériel conseillé non compté au budget : 30 € à la boutique si tu ne l’as pas (facultatif).",
+      "Suggestion de l’IA (facultatif) : prévois une bouteille d'eau légère de randonnée pour rester hydraté pendant les visites urbaines.",
+      "Suggestion de l’IA (facultatif) : applique une crème solaire haute protection SPF 50+ pour une protection optimale contre le soleil de Lisbonne."
+     ],
+     "papers": {
+      "abroad": true,
+      "country": "Portugal",
+      "abroadFrom": "gps",
+      "countryCode": "PT"
+     },
+     "basis": {
+      "days": 2,
+      "pace": null,
+      "hours": null,
+      "level": null,
+      "month": 10,
+      "party": 2,
+      "nights": null,
+      "origin": null,
+      "carFree": null,
+      "terrain": null,
+      "activity": "citytrip",
+      "autonomy": null,
+      "priority": null,
+      "targetKm": null,
+      "destination": "Lisbonne@38.71,-9.14",
+      "outdoorNights": null
+     },
+     "engine": []
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "day_number": 1,
+   "title": "Jour 1 · Lisbonne",
+   "description": "Base du séjour.",
+   "latitude": 38.70775,
+   "longitude": -9.13659,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 2,
+   "title": "Jour 2 · Lisbonne",
+   "description": null,
+   "latitude": 38.70775,
+   "longitude": -9.13659,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  }
+ ],
+ "items": [
+  {
+   "item_name": "Trousse de premiers secours complète",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": "f56a5199-7b77-45e9-9697-1b7f082e4902",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Crème solaire haute protection SPF 50+",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "a30a619b-5f1e-48f9-8439-d396c4a84f46"
+  },
+  {
+   "item_name": "Bouteille d’eau légère de randonnée",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "d403c58a-cf66-4346-9f14-33ecc31f9701"
+  },
+  {
+   "item_name": "Batterie externe étanche Power Bank",
+   "category": "tech",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "846f5f27-9f48-4492-a917-99768934eba5",
+   "shop_product_id": null
+  }
+ ],
+ "expenses": [
+  {
+   "title": "1 nuit(s) en hébergement",
+   "amount": 72,
+   "currency": "EUR",
+   "category": "hébergement",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Portugal 80 (France = 100) · chambre partagée à deux · vrais prix dans Résa · Nuits",
+    "source": "estimation",
+    "autofill": "065ab640-1145-411c-9303-b90fa5802a05"
+   }
+  },
+  {
+   "title": "Vol aller-retour × 2",
+   "amount": 560,
+   "currency": "EUR",
+   "category": "transport",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · vol aller-retour, 1 200 à 2 500 km · vol aller-retour depuis ta position, NCY → LIS (Annecy Meythet airport → Lisbon Humberto Delgado Airport), environ 1479 km · vrai prix dans Résa · Vols",
+    "source": "estimation",
+    "autofill": "065ab640-1145-411c-9303-b90fa5802a05"
+   }
+  },
+  {
+   "title": "Repas · 2 jour(s) × 2",
+   "amount": 78,
+   "currency": "EUR",
+   "category": "nourriture",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Portugal 80 (France = 100) · selon la nuit (bivouac, refuge, hébergement) · repas en autonomie (bivouac, journée) : alimentation : Portugal 92 (France = 100) · ICP 2021, Banque mondiale, lu le 12 octobre 2026",
+    "source": "estimation",
+    "autofill": "065ab640-1145-411c-9303-b90fa5802a05"
+   }
+  },
+  {
+   "title": "Assurance voyage et rapatriement",
+   "amount": 60,
+   "currency": "EUR",
+   "category": "divers",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · forfait par jour",
+    "source": "estimation",
+    "autofill": "065ab640-1145-411c-9303-b90fa5802a05"
+   }
+  }
+ ]
+}

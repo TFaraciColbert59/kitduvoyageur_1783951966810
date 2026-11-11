@@ -1,0 +1,295 @@
+{
+ "demande": "D068",
+ "banc": {
+  "at": "2026-11-10T23:50:13.238Z",
+  "seconds": 79,
+  "prepSeconds": 72,
+  "outcome": "Ton aventure est prête",
+  "error": null
+ },
+ "trip": {
+  "id": "4992cf36-c0f3-425c-a078-4b516257212c",
+  "title": "Vélo · Navarre",
+  "destination_name": "Navarre",
+  "destination_country_code": "ES",
+  "start_date": "2027-06-05",
+  "end_date": "2027-06-06",
+  "party_size": null,
+  "primary_activity": "cycling",
+  "estimated_budget": 313,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": {
+     "lat": 42.70279,
+     "lon": -1.70862,
+     "kind": "administrative",
+     "name": "Navarre",
+     "extent": [
+      -2.4999443,
+      43.3149461,
+      -0.7233404,
+      41.9098937
+     ],
+     "osmTag": "boundary=administrative",
+     "country": "Espagne",
+     "countryCode": "ES"
+    },
+    "planned_days": 2,
+    "duration_h": null,
+    "prefs": {
+     "pace": "tranquille",
+     "avoid": [],
+     "nights": null,
+     "wishes": [
+      "en bici con hijos",
+      "Chemin de Saint-Jacques"
+     ]
+    },
+    "origin": null,
+    "autofill": {
+     "runId": "r",
+     "undone": false,
+     "at": "2026-11-10T23:51:30.355Z",
+     "notes": [
+      "Papiers : conditions d’entrée (Espagne) à vérifier auprès du service officiel de ton pays avant de partir.",
+      "Seul·e : laisse ton itinéraire et ton heure de retour à un proche. Urgence : 112.",
+      "Période proposée : juin (journées longues et douces, avant l’affluence de l’été). Change-la dans « Quand » si elle ne te va pas.",
+      "Matériel conseillé non compté au budget : 129 € à la boutique si tu ne l’as pas (facultatif).",
+      "Suggestion de l’IA (facultatif) : prévois l'achat d'un casque de vélo homologué et d'un antivol robuste avant ton départ.",
+      "Suggestion de l’IA (facultatif) : pense à vérifier la compatibilité des connecteurs électriques pour ton matériel électronique en Espagne.",
+      "Suggestion de l’IA (facultatif) : pense à réserver ton hébergement à Puente la Reina pour la nuit du 5 au 6 juin, la période est estivale."
+     ],
+     "papers": {
+      "abroad": true,
+      "country": "Espagne",
+      "abroadFrom": "gps",
+      "countryCode": "ES"
+     },
+     "basis": {
+      "days": 2,
+      "pace": "tranquille",
+      "hours": null,
+      "level": null,
+      "month": 6,
+      "party": 1,
+      "nights": null,
+      "origin": null,
+      "carFree": null,
+      "terrain": null,
+      "activity": "cycling",
+      "autonomy": null,
+      "priority": null,
+      "targetKm": null,
+      "destination": "Navarre@42.70,-1.71",
+      "outdoorNights": null
+     },
+     "engine": []
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "day_number": 1,
+   "title": "Jour 1 · Pampelune",
+   "description": "arrivee, velo",
+   "latitude": 42.8182,
+   "longitude": -1.64401,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "car",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 2,
+   "title": "Jour 2 · Puente la Reina",
+   "description": "Chemin Saint-Jacques",
+   "latitude": 42.69143,
+   "longitude": -1.81232,
+   "distance_km": 23.6,
+   "elevation_gain_m": 403,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "bike",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  }
+ ],
+ "items": [
+  {
+   "item_name": "Casque de vélo",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Kit de réparation (chambre à air, démonte-pneus, pompe)",
+   "category": "tools",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "95c582ab-05ef-4d72-aa9b-9291c2ec35df"
+  },
+  {
+   "item_name": "Éclairage avant et arrière",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "549d7f9e-aa98-4618-82ec-bb913ca14d0c"
+  },
+  {
+   "item_name": "Antivol",
+   "category": "tools",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Trousse de premiers secours complète",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": "f56a5199-7b77-45e9-9697-1b7f082e4902",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Sifflet de survie et détresse",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "f767e762-d417-48c2-909d-eea829081a65"
+  },
+  {
+   "item_name": "Lampe frontale LED haute autonomie",
+   "category": "tech",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "0ce62ae3-6398-48d4-be3a-de2ff265c26f"
+  },
+  {
+   "item_name": "Crème solaire haute protection SPF 50+",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "a30a619b-5f1e-48f9-8439-d396c4a84f46"
+  },
+  {
+   "item_name": "Gourde isotherme / Thermos en acier inoxydable",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "b6034a5b-301c-4dda-bce4-e13969bc013c",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Bouteille d’eau légère de randonnée",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "d403c58a-cf66-4346-9f14-33ecc31f9701"
+  },
+  {
+   "item_name": "Couteau pliant multifonction en inox",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "72a3d504-7b6b-4501-87d0-427a51114b90"
+  },
+  {
+   "item_name": "Batterie externe étanche Power Bank",
+   "category": "tech",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "846f5f27-9f48-4492-a917-99768934eba5",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Sac à dos technique de randonnée",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "e137cfe3-ff6e-4a73-a6a7-d6ea415b9739",
+   "shop_product_id": null
+  }
+ ],
+ "expenses": [
+  {
+   "title": "1 nuit(s) en hébergement",
+   "amount": 38,
+   "currency": "EUR",
+   "category": "hébergement",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Espagne 85 (France = 100) · chambre partagée à deux · vrais prix dans Résa · Nuits",
+    "source": "estimation",
+    "autofill": "34ef5cbb-4098-4d68-9ba0-d0ccdaad246d"
+   }
+  },
+  {
+   "title": "Vol aller-retour × 1",
+   "amount": 180,
+   "currency": "EUR",
+   "category": "transport",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · vol aller-retour, moins de 1 200 km · vol aller-retour depuis ta position, NCY → PNA (Annecy Meythet airport → Pamplona Airport), environ 709 km · vrai prix dans Résa · Vols",
+    "source": "estimation",
+    "autofill": "34ef5cbb-4098-4d68-9ba0-d0ccdaad246d"
+   }
+  },
+  {
+   "title": "Repas · 2 jour(s) × 1",
+   "amount": 39,
+   "currency": "EUR",
+   "category": "nourriture",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Espagne 85 (France = 100) · selon la nuit (bivouac, refuge, hébergement) · repas en autonomie (bivouac, journée) : alimentation : Espagne 89 (France = 100) · ICP 2021, Banque mondiale, lu le 12 octobre 2026",
+    "source": "estimation",
+    "autofill": "34ef5cbb-4098-4d68-9ba0-d0ccdaad246d"
+   }
+  },
+  {
+   "title": "Matériel à acheter",
+   "amount": 26,
+   "currency": "EUR",
+   "category": "matériel",
+   "is_planned": true,
+   "metadata": {
+    "basis": "prix de la boutique",
+    "source": "base",
+    "autofill": "34ef5cbb-4098-4d68-9ba0-d0ccdaad246d"
+   }
+  },
+  {
+   "title": "Assurance voyage et rapatriement",
+   "amount": 30,
+   "currency": "EUR",
+   "category": "divers",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · forfait par jour",
+    "source": "estimation",
+    "autofill": "34ef5cbb-4098-4d68-9ba0-d0ccdaad246d"
+   }
+  }
+ ]
+}

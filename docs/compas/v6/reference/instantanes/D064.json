@@ -1,0 +1,393 @@
+{
+ "demande": "D064",
+ "banc": {
+  "at": "2026-11-10T23:41:47.316Z",
+  "seconds": 131,
+  "prepSeconds": 124,
+  "outcome": "Ton aventure est prête",
+  "error": null
+ },
+ "trip": {
+  "id": "57a22ecf-dde8-4b11-a0ba-1eb1fe8a873e",
+  "title": "Trek · Torres del Paine",
+  "destination_name": "Torres del Paine",
+  "destination_country_code": "CL",
+  "start_date": "2027-03-06",
+  "end_date": "2027-03-10",
+  "party_size": 5,
+  "primary_activity": "trekking",
+  "estimated_budget": 6358,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": {
+     "lat": -51.08272,
+     "lon": -72.92545,
+     "kind": "administrative",
+     "name": "Torres del Paine",
+     "extent": [
+      -73.4688378,
+      -50.6016846,
+      -72.2459819,
+      -51.5637467
+     ],
+     "osmTag": "boundary=administrative",
+     "country": "Chili",
+     "countryCode": "CL"
+    },
+    "planned_days": 5,
+    "duration_h": null,
+    "prefs": {
+     "pace": "normal",
+     "avoid": [],
+     "nights": "bivouac",
+     "wishes": []
+    },
+    "origin": null,
+    "autofill": {
+     "runId": "r",
+     "undone": false,
+     "at": "2026-11-10T23:43:21.413Z",
+     "notes": [
+      "Papiers : conditions d’entrée (Chili) à vérifier auprès du service officiel de ton pays avant de partir.",
+      "Altitude du parcours non mesurée : au-delà de 2 500 m, monte progressivement et bois souvent ; mal de tête, nausée ou essoufflement au repos : redescends.",
+      "Bivouac : vérifie les règles du lieu ; dans les parcs nationaux et les réserves, il est souvent limité (horaires, distance à la route) ou interdit.",
+      "Période proposée : mars (sentiers déneigés, moins de monde qu’en août). Change-la dans « Quand » si elle ne te va pas.",
+      "Itinéraire en traversée construit sur des lieux réels de la carte (5 lieux où dormir).",
+      "Matériel conseillé non compté au budget : 175 € à la boutique si tu ne l’as pas (facultatif).",
+      "Suggestion de l’IA (facultatif) : prévois d'acheter une popote avant le départ pour la cuisson des repas.",
+      "Suggestion de l’IA (facultatif) : n'oublie pas d'acheter des gants thermiques coupe-vent pour affronter les conditions froides du Chili en mars."
+     ],
+     "papers": {
+      "abroad": true,
+      "country": "Chili",
+      "abroadFrom": "gps",
+      "countryCode": "CL"
+     },
+     "basis": {
+      "days": 5,
+      "pace": null,
+      "hours": null,
+      "level": null,
+      "month": 3,
+      "party": 5,
+      "nights": "bivouac",
+      "origin": null,
+      "carFree": null,
+      "terrain": null,
+      "activity": "trekking",
+      "autonomy": null,
+      "priority": null,
+      "targetKm": null,
+      "destination": "Torres del Paine@-51.08,-72.93",
+      "outdoorNights": null
+     },
+     "engine": []
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "day_number": 1,
+   "title": "Jour 1 · Villa Monzino - Administración Parque Torres del Paine",
+   "description": "Départ de Hostería Pehoé.",
+   "latitude": -51.17587,
+   "longitude": -72.95448,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": "Bivouac",
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 2,
+   "title": "Jour 2 · Río Serrano",
+   "description": null,
+   "latitude": -51.234,
+   "longitude": -72.97878,
+   "distance_km": 9.1,
+   "elevation_gain_m": 87,
+   "start_time": null,
+   "accommodation_name": "Bivouac",
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 3,
+   "title": "Jour 3 · Lugar para acampar",
+   "description": null,
+   "latitude": -51.35626,
+   "longitude": -72.79781,
+   "distance_km": 29,
+   "elevation_gain_m": 534,
+   "start_time": null,
+   "accommodation_name": "Bivouac",
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 4,
+   "title": "Jour 4 · Camping Río Serrano",
+   "description": "Retour par un autre chemin : la zone s’arrête ici.",
+   "latitude": -51.228,
+   "longitude": -72.97066,
+   "distance_km": 27.4,
+   "elevation_gain_m": 463,
+   "start_time": null,
+   "accommodation_name": "Bivouac",
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 5,
+   "title": "Jour 5 · Lago Pehoé Camping",
+   "description": null,
+   "latitude": -51.10712,
+   "longitude": -72.98538,
+   "distance_km": 16.1,
+   "elevation_gain_m": 147,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  }
+ ],
+ "items": [
+  {
+   "item_name": "Tente",
+   "category": "shelter",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": "b54e4aaf-979a-47a8-95fb-79c7568153bb",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Sac de couchage",
+   "category": "sleep",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "f29331bb-1e42-4f93-b6be-5b94452ff551"
+  },
+  {
+   "item_name": "Matelas de sol",
+   "category": "sleep",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "5d9dbcad-8781-434c-bca4-dd5517f30527"
+  },
+  {
+   "item_name": "Réchaud",
+   "category": "cook",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "809da83b-9944-4b01-94e5-dc8105beb43e",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Popote",
+   "category": "cook",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Trousse de premiers secours complète",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": "f56a5199-7b77-45e9-9697-1b7f082e4902",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Poncho imperméable & coupe-vent",
+   "category": "clothing",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "649ebc6b-9e65-4256-8c31-983a7617a38d"
+  },
+  {
+   "item_name": "Sifflet de survie et détresse",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "f767e762-d417-48c2-909d-eea829081a65"
+  },
+  {
+   "item_name": "Lampe frontale LED haute autonomie",
+   "category": "tech",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "0ce62ae3-6398-48d4-be3a-de2ff265c26f"
+  },
+  {
+   "item_name": "Kit de réparation multi-usage",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "95c582ab-05ef-4d72-aa9b-9291c2ec35df"
+  },
+  {
+   "item_name": "Filtre à eau / paille filtrante",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Gants thermiques coupe-vent",
+   "category": "clothing",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Crème solaire haute protection SPF 50+",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "a30a619b-5f1e-48f9-8439-d396c4a84f46"
+  },
+  {
+   "item_name": "Gourde isotherme / Thermos en acier inoxydable",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "b6034a5b-301c-4dda-bce4-e13969bc013c",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Bouteille d’eau légère de randonnée",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "d403c58a-cf66-4346-9f14-33ecc31f9701"
+  },
+  {
+   "item_name": "Sac étanche / Dry bag de protection",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "e137cfe3-ff6e-4a73-a6a7-d6ea415b9739",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Briquet / allume-feu résistant au vent",
+   "category": "cook",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "549d7f9e-aa98-4618-82ec-bb913ca14d0c"
+  },
+  {
+   "item_name": "Bâtons de trekking télescopiques",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "549d7f9e-aa98-4618-82ec-bb913ca14d0c"
+  },
+  {
+   "item_name": "Couteau pliant multifonction en inox",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "72a3d504-7b6b-4501-87d0-427a51114b90"
+  },
+  {
+   "item_name": "Batterie externe étanche Power Bank",
+   "category": "tech",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "846f5f27-9f48-4492-a917-99768934eba5",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Sac à dos technique de randonnée",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "4cd21d3f-7c42-431d-af70-886b21d68de5"
+  }
+ ],
+ "expenses": [
+  {
+   "title": "Vol aller-retour × 5",
+   "amount": 5750,
+   "currency": "EUR",
+   "category": "transport",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · vol aller-retour, plus de 11 000 km · vol aller-retour depuis ta position, NCY → PNT (Annecy Meythet airport → Lieutenant Julio Gallardo Airport), environ 13187 km · vrai prix dans Résa · Vols",
+    "source": "estimation",
+    "autofill": "30c28383-e3b6-4a09-860f-b5ce8162a4c3"
+   }
+  },
+  {
+   "title": "Repas · 5 jour(s) × 5",
+   "amount": 390,
+   "currency": "EUR",
+   "category": "nourriture",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Chili 65 (France = 100) · selon la nuit (bivouac, refuge, hébergement) · repas en autonomie (bivouac, journée) : alimentation : Chili 97 (France = 100) · ICP 2021, Banque mondiale, lu le 12 octobre 2026",
+    "source": "estimation",
+    "autofill": "30c28383-e3b6-4a09-860f-b5ce8162a4c3"
+   }
+  },
+  {
+   "title": "Matériel à acheter",
+   "amount": 68,
+   "currency": "EUR",
+   "category": "matériel",
+   "is_planned": true,
+   "metadata": {
+    "basis": "prix de la boutique",
+    "source": "base",
+    "autofill": "30c28383-e3b6-4a09-860f-b5ce8162a4c3"
+   }
+  },
+  {
+   "title": "Assurance voyage et rapatriement",
+   "amount": 150,
+   "currency": "EUR",
+   "category": "divers",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · forfait par jour",
+    "source": "estimation",
+    "autofill": "30c28383-e3b6-4a09-860f-b5ce8162a4c3"
+   }
+  }
+ ]
+}

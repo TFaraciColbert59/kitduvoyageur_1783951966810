@@ -1,0 +1,44 @@
+{
+ "demande": "D048",
+ "banc": {
+  "at": "2026-11-10T23:08:27.253Z",
+  "seconds": 41,
+  "prepSeconds": 35,
+  "outcome": "La préparation s’est arrêtée",
+  "error": null
+ },
+ "trip": {
+  "id": "4a535861-4627-4655-9cae-a506b20deeff",
+  "title": "Randonnée · Péninsule de Freycinet",
+  "destination_name": "Péninsule de Freycinet",
+  "destination_country_code": "AU",
+  "start_date": null,
+  "end_date": null,
+  "party_size": null,
+  "primary_activity": "hiking",
+  "estimated_budget": null,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": {
+     "lat": -42.12522,
+     "lon": 148.28854,
+     "kind": "region",
+     "name": "Péninsule de Freycinet",
+     "extent": null,
+     "osmTag": "boundary=administrative",
+     "country": "Australie",
+     "countryCode": "AU"
+    },
+    "planned_days": null,
+    "duration_h": null,
+    "prefs": null,
+    "origin": null,
+    "autofill": null
+   }
+  }
+ },
+ "steps": [],
+ "items": [],
+ "expenses": []
+}

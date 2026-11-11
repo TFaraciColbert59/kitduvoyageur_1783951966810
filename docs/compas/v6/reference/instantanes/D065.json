@@ -1,0 +1,172 @@
+{
+ "demande": "D065",
+ "banc": {
+  "at": "2026-11-10T23:43:58.226Z",
+  "seconds": 51,
+  "prepSeconds": 45,
+  "outcome": "Ton aventure est prête",
+  "error": null
+ },
+ "trip": {
+  "id": "82e6c038-0362-4126-a2cf-10bb702a5d9c",
+  "title": "Culturel · Cadiz",
+  "destination_name": "Cadiz",
+  "destination_country_code": "PH",
+  "start_date": "2026-11-11",
+  "end_date": "2026-11-11",
+  "party_size": null,
+  "primary_activity": "cultural",
+  "estimated_budget": 46,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": {
+     "lat": 10.95665,
+     "lon": 123.3057,
+     "kind": "administrative",
+     "name": "Cadiz",
+     "extent": [
+      123.124286,
+      11.1378412,
+      123.3748101,
+      10.6867349
+     ],
+     "osmTag": "boundary=administrative",
+     "country": "Philippines",
+     "countryCode": "PH"
+    },
+    "planned_days": null,
+    "duration_h": 3,
+    "prefs": null,
+    "origin": null,
+    "autofill": {
+     "runId": "r",
+     "undone": false,
+     "at": "2026-11-10T23:44:33.185Z",
+     "notes": [
+      "Papiers : conditions d’entrée (Philippines) à vérifier auprès du service officiel de ton pays avant de partir.",
+      "Sous les tropiques, l’eau du robinet et celle des ruisseaux n’est pas toujours potable : traite-la (filtre, pastilles ou ébullition) ou prends de l’eau en bouteille scellée.",
+      "Matériel conseillé non compté au budget : 50 € à la boutique si tu ne l’as pas (facultatif).",
+      "Suggestion de l’IA (facultatif) : pense à emporter des mouchoirs en papier pour les fortes chaleurs."
+     ],
+     "papers": {
+      "abroad": true,
+      "country": "Philippines",
+      "abroadFrom": "gps",
+      "countryCode": "PH"
+     },
+     "basis": {
+      "days": 1,
+      "pace": null,
+      "hours": 3,
+      "level": null,
+      "month": 11,
+      "party": 1,
+      "nights": null,
+      "origin": null,
+      "carFree": null,
+      "terrain": null,
+      "activity": "cultural",
+      "autonomy": null,
+      "priority": null,
+      "targetKm": null,
+      "destination": "Cadiz@10.96,123.31",
+      "outdoorNights": null
+     },
+     "engine": []
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "day_number": 1,
+   "title": "Jour 1 · Cadiz",
+   "description": null,
+   "latitude": 10.95665,
+   "longitude": 123.3057,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  }
+ ],
+ "items": [
+  {
+   "item_name": "Trousse de premiers secours complète",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": "f56a5199-7b77-45e9-9697-1b7f082e4902",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Crème solaire haute protection SPF 50+",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "a30a619b-5f1e-48f9-8439-d396c4a84f46"
+  },
+  {
+   "item_name": "Répulsif anti-moustiques",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "e4c51d60-99ad-46e2-bf10-7a2ff701e61f"
+  },
+  {
+   "item_name": "Bouteille d’eau légère de randonnée",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "d403c58a-cf66-4346-9f14-33ecc31f9701"
+  },
+  {
+   "item_name": "Poncho imperméable & coupe-vent",
+   "category": "clothing",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "649ebc6b-9e65-4256-8c31-983a7617a38d"
+  },
+  {
+   "item_name": "Lunettes de soleil sport UV400 cat. 3/4",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "371d08c1-7865-4352-a09f-ac551e487ead"
+  }
+ ],
+ "expenses": [
+  {
+   "title": "Matériel à acheter",
+   "amount": 16,
+   "currency": "EUR",
+   "category": "matériel",
+   "is_planned": true,
+   "metadata": {
+    "basis": "prix de la boutique",
+    "source": "base",
+    "autofill": "3eadfd4c-10d3-4243-85ff-852e06e88cf9"
+   }
+  },
+  {
+   "title": "Assurance voyage et rapatriement",
+   "amount": 30,
+   "currency": "EUR",
+   "category": "divers",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · forfait par jour",
+    "source": "estimation",
+    "autofill": "3eadfd4c-10d3-4243-85ff-852e06e88cf9"
+   }
+  }
+ ]
+}

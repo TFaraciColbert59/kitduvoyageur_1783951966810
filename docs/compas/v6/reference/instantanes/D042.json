@@ -1,0 +1,49 @@
+{
+ "demande": "D042",
+ "banc": {
+  "at": "2026-11-10T22:55:57.237Z",
+  "seconds": 44,
+  "prepSeconds": 36,
+  "outcome": "La préparation s’est arrêtée",
+  "error": null
+ },
+ "trip": {
+  "id": "7705ba44-ea4a-4667-9e48-0a81b46bec9b",
+  "title": "Van · Australia",
+  "destination_name": "Australia",
+  "destination_country_code": "AU",
+  "start_date": null,
+  "end_date": null,
+  "party_size": null,
+  "primary_activity": "vanlife",
+  "estimated_budget": null,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": {
+     "lat": -31.9526,
+     "lon": 152.55513,
+     "kind": "island",
+     "name": "Australia",
+     "extent": [
+      152.5544755,
+      -31.9521897,
+      152.5557987,
+      -31.953055
+     ],
+     "osmTag": "place=island",
+     "country": "Australie",
+     "countryCode": "AU"
+    },
+    "planned_days": null,
+    "duration_h": null,
+    "prefs": null,
+    "origin": null,
+    "autofill": null
+   }
+  }
+ },
+ "steps": [],
+ "items": [],
+ "expenses": []
+}

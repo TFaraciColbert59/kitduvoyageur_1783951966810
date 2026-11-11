@@ -1,0 +1,210 @@
+{
+ "demande": "D034",
+ "banc": {
+  "at": "2026-11-10T22:36:51.062Z",
+  "seconds": 39,
+  "prepSeconds": 30,
+  "outcome": "Ton aventure est prête",
+  "error": null
+ },
+ "trip": {
+  "id": "550ed548-4d63-46ca-b5f8-eb15c2c0072e",
+  "title": "Plage · Koh Lanta et Koh Phi Phi",
+  "destination_name": "Koh Lanta et Koh Phi Phi",
+  "destination_country_code": "TH",
+  "start_date": "2027-02-01",
+  "end_date": "2027-02-01",
+  "party_size": 2,
+  "primary_activity": "beach",
+  "estimated_budget": 1994,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": {
+     "lat": 8.05924,
+     "lon": 98.91243,
+     "kind": "region",
+     "name": "Koh Lanta et Koh Phi Phi",
+     "extent": null,
+     "osmTag": "place=town",
+     "country": "Thaïlande",
+     "countryCode": "TH"
+    },
+    "planned_days": null,
+    "duration_h": null,
+    "prefs": {
+     "pace": "normal",
+     "avoid": [],
+     "nights": null,
+     "wishes": [
+      "Koh Lanta",
+      "Koh Phi Phi",
+      "Thai islands"
+     ]
+    },
+    "origin": null,
+    "autofill": {
+     "runId": "r",
+     "undone": false,
+     "at": "2026-11-10T22:37:15.586Z",
+     "notes": [
+      "Papiers : conditions d’entrée (Thaïlande) à vérifier auprès du service officiel de ton pays avant de partir.",
+      "Sous les tropiques, l’eau du robinet et celle des ruisseaux n’est pas toujours potable : traite-la (filtre, pastilles ou ébullition) ou prends de l’eau en bouteille scellée.",
+      "Matériel conseillé non compté au budget : 38 € à la boutique si tu ne l’as pas (facultatif).",
+      "Suggestion de l’IA (facultatif) : prévois un maillot de bain et une serviette pour profiter des plages de Koh Lanta et Koh Phi Phi.",
+      "Suggestion de l’IA (facultatif) : pense à acheter une bouteille d'eau légère avant le départ, même si elle est dans ta liste matériel, pour rester hydraté sous le soleil thaïlandais.",
+      "Suggestion de l’IA (facultatif) : n'oublie pas de te procurer du répulsif anti-moustiques, indispensable pour les soirées sur les îles."
+     ],
+     "papers": {
+      "abroad": true,
+      "country": "Thaïlande",
+      "abroadFrom": "gps",
+      "countryCode": "TH"
+     },
+     "basis": {
+      "days": 1,
+      "pace": null,
+      "hours": null,
+      "level": null,
+      "month": 2,
+      "party": 2,
+      "nights": null,
+      "origin": null,
+      "carFree": null,
+      "terrain": null,
+      "activity": "beach",
+      "autonomy": null,
+      "priority": null,
+      "targetKm": null,
+      "destination": "Koh Lanta et Koh Phi Phi@8.06,98.91",
+      "outdoorNights": null
+     },
+     "engine": []
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "day_number": 1,
+   "title": "Jour 1 · Koh Lanta et Koh Phi Phi",
+   "description": null,
+   "latitude": 8.05924,
+   "longitude": 98.91243,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  }
+ ],
+ "items": [
+  {
+   "item_name": "Maillot de bain",
+   "category": "clothing",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Serviette",
+   "category": "tools",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Trousse de premiers secours complète",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": "f56a5199-7b77-45e9-9697-1b7f082e4902",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Crème solaire haute protection SPF 50+",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "a30a619b-5f1e-48f9-8439-d396c4a84f46"
+  },
+  {
+   "item_name": "Répulsif anti-moustiques",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "e4c51d60-99ad-46e2-bf10-7a2ff701e61f"
+  },
+  {
+   "item_name": "Bouteille d’eau légère de randonnée",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "d403c58a-cf66-4346-9f14-33ecc31f9701"
+  },
+  {
+   "item_name": "Lunettes de soleil sport UV400 cat. 3/4",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "371d08c1-7865-4352-a09f-ac551e487ead"
+  }
+ ],
+ "expenses": [
+  {
+   "title": "Vol aller-retour × 2",
+   "amount": 1900,
+   "currency": "EUR",
+   "category": "transport",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · vol aller-retour, 8 000 à 11 000 km · vol aller-retour depuis ta position, NCY → KBV (Annecy Meythet airport → Krabi International Airport), environ 9584 km · vrai prix dans Résa · Vols",
+    "source": "estimation",
+    "autofill": "9919a0e5-5747-414c-b882-f6b4b45153df"
+   }
+  },
+  {
+   "title": "Repas · 1 jour(s) × 2",
+   "amount": 18,
+   "currency": "EUR",
+   "category": "nourriture",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Thaïlande 45 (France = 100) · selon la nuit (bivouac, refuge, hébergement) · repas en autonomie (bivouac, journée) : alimentation : Thaïlande 66 (France = 100) · ICP 2021, Banque mondiale, lu le 12 octobre 2026",
+    "source": "estimation",
+    "autofill": "9919a0e5-5747-414c-b882-f6b4b45153df"
+   }
+  },
+  {
+   "title": "Matériel à acheter",
+   "amount": 16,
+   "currency": "EUR",
+   "category": "matériel",
+   "is_planned": true,
+   "metadata": {
+    "basis": "prix de la boutique",
+    "source": "base",
+    "autofill": "9919a0e5-5747-414c-b882-f6b4b45153df"
+   }
+  },
+  {
+   "title": "Assurance voyage et rapatriement",
+   "amount": 60,
+   "currency": "EUR",
+   "category": "divers",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · forfait par jour",
+    "source": "estimation",
+    "autofill": "9919a0e5-5747-414c-b882-f6b4b45153df"
+   }
+  }
+ ]
+}

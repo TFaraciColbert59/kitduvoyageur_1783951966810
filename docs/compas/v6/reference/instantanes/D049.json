@@ -1,0 +1,218 @@
+{
+ "demande": "D049",
+ "banc": {
+  "at": "2026-11-10T23:10:32.258Z",
+  "seconds": 55,
+  "prepSeconds": 49,
+  "outcome": "Ton aventure est prête",
+  "error": null
+ },
+ "trip": {
+  "id": "605612bb-e2dc-4176-adf9-388200004991",
+  "title": "Culturel · Tokyo",
+  "destination_name": "Tokyo",
+  "destination_country_code": "JP",
+  "start_date": "2026-11-14",
+  "end_date": "2026-11-15",
+  "party_size": null,
+  "primary_activity": "cultural",
+  "estimated_budget": 1071,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": {
+     "lat": 35.67686,
+     "lon": 139.76389,
+     "kind": "administrative",
+     "name": "Tokyo",
+     "extent": [
+      135.8536855,
+      35.8984245,
+      154.205541,
+      20.2145811
+     ],
+     "osmTag": "boundary=administrative",
+     "country": "Japon",
+     "countryCode": "JP"
+    },
+    "planned_days": null,
+    "duration_h": null,
+    "prefs": {
+     "pace": "normal",
+     "avoid": [],
+     "nights": null,
+     "wishes": [
+      "Paris"
+     ]
+    },
+    "origin": {
+     "lat": 48.85,
+     "lon": 2.35,
+     "name": "Paris",
+     "source": "dit",
+     "countryCode": "FR"
+    },
+    "autofill": {
+     "runId": "r",
+     "undone": false,
+     "at": "2026-11-10T23:11:25.270Z",
+     "notes": [
+      "Papiers : conditions d’entrée (Japon) à vérifier auprès du service officiel de ton pays avant de partir.",
+      "Prises de type A/B (Japon) : vérifie que tes chargeurs s’y branchent.",
+      "Matériel conseillé non compté au budget : 42 € à la boutique si tu ne l’as pas (facultatif).",
+      "Suggestion de l’IA (facultatif) : pense à réserver tes billets d'entrée pour les sites culturels populaires à l'avance."
+     ],
+     "papers": {
+      "abroad": true,
+      "country": "Japon",
+      "abroadFrom": "dit",
+      "countryCode": "JP"
+     },
+     "basis": {
+      "days": 2,
+      "pace": null,
+      "hours": null,
+      "level": null,
+      "month": 11,
+      "party": 1,
+      "nights": null,
+      "origin": "Paris@48.85,2.35",
+      "carFree": null,
+      "terrain": null,
+      "activity": "cultural",
+      "autonomy": null,
+      "priority": null,
+      "targetKm": null,
+      "destination": "Tokyo@35.68,139.76",
+      "outdoorNights": null
+     },
+     "engine": []
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "day_number": 1,
+   "title": "Jour 1 · Tokyo",
+   "description": "arrivee decouverte",
+   "latitude": 35.67686,
+   "longitude": 139.76389,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "plane",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 2,
+   "title": "Jour 2 · Tokyo",
+   "description": "visites temples quartiers",
+   "latitude": 35.67686,
+   "longitude": 139.76389,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "aiProposed": true
+   }
+  }
+ ],
+ "items": [
+  {
+   "item_name": "Trousse de premiers secours complète",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": "f56a5199-7b77-45e9-9697-1b7f082e4902",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Crème solaire haute protection SPF 50+",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "a30a619b-5f1e-48f9-8439-d396c4a84f46"
+  },
+  {
+   "item_name": "Bouteille d’eau légère de randonnée",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "d403c58a-cf66-4346-9f14-33ecc31f9701"
+  },
+  {
+   "item_name": "Poncho imperméable & coupe-vent",
+   "category": "clothing",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "649ebc6b-9e65-4256-8c31-983a7617a38d"
+  },
+  {
+   "item_name": "Batterie externe étanche Power Bank",
+   "category": "tech",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "846f5f27-9f48-4492-a917-99768934eba5",
+   "shop_product_id": null
+  }
+ ],
+ "expenses": [
+  {
+   "title": "1 nuit(s) en hébergement",
+   "amount": 41,
+   "currency": "EUR",
+   "category": "hébergement",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Japon 90 (France = 100) · chambre partagée à deux · vrais prix dans Résa · Nuits",
+    "source": "estimation",
+    "autofill": "5fa9fac7-b66a-4826-a80f-5bffd5c8af9e"
+   }
+  },
+  {
+   "title": "Vol aller-retour × 1",
+   "amount": 950,
+   "currency": "EUR",
+   "category": "transport",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · vol aller-retour, 8 000 à 11 000 km · vol aller-retour depuis Paris, ORY → HND (Paris-Orly Airport → Tokyo Haneda International Airport), environ 9741 km · vrai prix dans Résa · Vols",
+    "source": "estimation",
+    "autofill": "5fa9fac7-b66a-4826-a80f-5bffd5c8af9e"
+   }
+  },
+  {
+   "title": "Repas · 2 jour(s) × 1",
+   "amount": 50,
+   "currency": "EUR",
+   "category": "nourriture",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Japon 90 (France = 100) · selon la nuit (bivouac, refuge, hébergement) · repas en autonomie (bivouac, journée) : alimentation : Japon 148 (France = 100) · ICP 2021, Banque mondiale, lu le 12 octobre 2026",
+    "source": "estimation",
+    "autofill": "5fa9fac7-b66a-4826-a80f-5bffd5c8af9e"
+   }
+  },
+  {
+   "title": "Assurance voyage et rapatriement",
+   "amount": 30,
+   "currency": "EUR",
+   "category": "divers",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · forfait par jour",
+    "source": "estimation",
+    "autofill": "5fa9fac7-b66a-4826-a80f-5bffd5c8af9e"
+   }
+  }
+ ]
+}

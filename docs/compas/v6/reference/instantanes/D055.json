@@ -1,0 +1,49 @@
+{
+ "demande": "D055",
+ "banc": {
+  "at": "2026-11-10T23:23:02.280Z",
+  "seconds": 41,
+  "prepSeconds": 34,
+  "outcome": "La préparation s’est arrêtée",
+  "error": null
+ },
+ "trip": {
+  "id": "0ad3cd7c-cecd-45ca-a09b-a088cad6f119",
+  "title": "Mixte · Cartagena",
+  "destination_name": "Cartagena",
+  "destination_country_code": "CL",
+  "start_date": null,
+  "end_date": null,
+  "party_size": null,
+  "primary_activity": "mixed",
+  "estimated_budget": null,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": {
+     "lat": -33.54685,
+     "lon": -71.60317,
+     "kind": "administrative",
+     "name": "Cartagena",
+     "extent": [
+      -71.6277158,
+      -33.4512397,
+      -71.3279101,
+      -33.6087224
+     ],
+     "osmTag": "boundary=administrative",
+     "country": "Chili",
+     "countryCode": "CL"
+    },
+    "planned_days": null,
+    "duration_h": null,
+    "prefs": null,
+    "origin": null,
+    "autofill": null
+   }
+  }
+ },
+ "steps": [],
+ "items": [],
+ "expenses": []
+}

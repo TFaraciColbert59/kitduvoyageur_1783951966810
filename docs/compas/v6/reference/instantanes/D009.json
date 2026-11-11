@@ -1,0 +1,220 @@
+{
+ "demande": "D009",
+ "banc": {
+  "at": "2026-11-10T17:23:23.414Z",
+  "seconds": 55,
+  "prepSeconds": 49,
+  "outcome": "Ton aventure est prête",
+  "error": null
+ },
+ "trip": {
+  "id": "dc8ce84a-51d9-4da4-9775-442c0dc2a486",
+  "title": "Escalade · Siurana",
+  "destination_name": "Siurana",
+  "destination_country_code": "ES",
+  "start_date": "2027-04-01",
+  "end_date": "2027-04-01",
+  "party_size": 2,
+  "primary_activity": "climbing",
+  "estimated_budget": 444,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": {
+     "lat": 41.26566,
+     "lon": 0.90571,
+     "kind": "region",
+     "name": "Siurana",
+     "extent": null,
+     "osmTag": "place=village",
+     "country": "Espagne",
+     "countryCode": "ES"
+    },
+    "planned_days": null,
+    "duration_h": null,
+    "prefs": null,
+    "origin": null,
+    "autofill": {
+     "runId": "r",
+     "undone": false,
+     "at": "2026-11-10T17:23:55.562Z",
+     "notes": [
+      "Papiers : conditions d’entrée (Espagne) à vérifier auprès du service officiel de ton pays avant de partir.",
+      "Altitude du parcours non mesurée : au-delà de 2 500 m, monte progressivement et bois souvent ; mal de tête, nausée ou essoufflement au repos : redescends.",
+      "Matériel conseillé non compté au budget : 129 € à la boutique si tu ne l’as pas (facultatif).",
+      "Suggestion de l’IA (facultatif) : prévois un baudrier, un casque d'escalade, un système d'assurage avec mousqueton à vis et des chaussons d'escalade à se procurer avant le départ.",
+      "Suggestion de l’IA (facultatif) : pense à réserver ton vol aller-retour vers l'Espagne bien à l'avance pour avril 2027."
+     ],
+     "papers": {
+      "abroad": true,
+      "country": "Espagne",
+      "abroadFrom": "gps",
+      "countryCode": "ES"
+     },
+     "basis": {
+      "days": 1,
+      "pace": null,
+      "hours": null,
+      "level": null,
+      "month": 4,
+      "party": 2,
+      "nights": null,
+      "origin": null,
+      "carFree": null,
+      "terrain": null,
+      "activity": "climbing",
+      "autonomy": null,
+      "priority": null,
+      "targetKm": null,
+      "destination": "Siurana@41.27,0.91",
+      "outdoorNights": null
+     },
+     "engine": []
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "day_number": 1,
+   "title": "Jour 1 · Siurana",
+   "description": null,
+   "latitude": 41.26566,
+   "longitude": 0.90571,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  }
+ ],
+ "items": [
+  {
+   "item_name": "Baudrier",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Casque d’escalade",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Système d’assurage et mousqueton à vis",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Chaussons d’escalade",
+   "category": "clothing",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Trousse de premiers secours complète",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": "f56a5199-7b77-45e9-9697-1b7f082e4902",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Sifflet de survie et détresse",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "f767e762-d417-48c2-909d-eea829081a65"
+  },
+  {
+   "item_name": "Lampe frontale LED haute autonomie",
+   "category": "tech",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "0ce62ae3-6398-48d4-be3a-de2ff265c26f"
+  },
+  {
+   "item_name": "Crème solaire haute protection SPF 50+",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "a30a619b-5f1e-48f9-8439-d396c4a84f46"
+  },
+  {
+   "item_name": "Bouteille d’eau légère de randonnée",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "d403c58a-cf66-4346-9f14-33ecc31f9701"
+  },
+  {
+   "item_name": "Couteau pliant multifonction en inox",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "72a3d504-7b6b-4501-87d0-427a51114b90"
+  },
+  {
+   "item_name": "Sac à dos technique de randonnée",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "e137cfe3-ff6e-4a73-a6a7-d6ea415b9739",
+   "shop_product_id": null
+  }
+ ],
+ "expenses": [
+  {
+   "title": "Vol aller-retour × 2",
+   "amount": 360,
+   "currency": "EUR",
+   "category": "transport",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · vol aller-retour, moins de 1 200 km · vol aller-retour depuis ta position, NCY → REU (Annecy Meythet airport → Reus Airport), environ 663 km · vrai prix dans Résa · Vols",
+    "source": "estimation",
+    "autofill": "08c9e608-0eea-4d8a-af13-7cdb10af3a74"
+   }
+  },
+  {
+   "title": "Repas · 1 jour(s) × 2",
+   "amount": 24,
+   "currency": "EUR",
+   "category": "nourriture",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Espagne 85 (France = 100) · selon la nuit (bivouac, refuge, hébergement) · repas en autonomie (bivouac, journée) : alimentation : Espagne 89 (France = 100) · ICP 2021, Banque mondiale, lu le 12 octobre 2026",
+    "source": "estimation",
+    "autofill": "08c9e608-0eea-4d8a-af13-7cdb10af3a74"
+   }
+  },
+  {
+   "title": "Assurance voyage et rapatriement",
+   "amount": 60,
+   "currency": "EUR",
+   "category": "divers",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · forfait par jour",
+    "source": "estimation",
+    "autofill": "08c9e608-0eea-4d8a-af13-7cdb10af3a74"
+   }
+  }
+ ]
+}

@@ -1,0 +1,238 @@
+{
+ "demande": "D033",
+ "banc": {
+  "at": "2026-11-10T22:34:46.060Z",
+  "seconds": 42,
+  "prepSeconds": 35,
+  "outcome": "Ton aventure est prête",
+  "error": null
+ },
+ "trip": {
+  "id": "3a937795-17f1-41c4-9f31-1ade69614306",
+  "title": "Mixte · Séville",
+  "destination_name": "Séville",
+  "destination_country_code": "ES",
+  "start_date": "2027-03-06",
+  "end_date": "2027-03-07",
+  "party_size": 1,
+  "primary_activity": "mixed",
+  "estimated_budget": 387,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": {
+     "lat": 37.38863,
+     "lon": -5.99534,
+     "kind": "region",
+     "name": "Séville",
+     "extent": null,
+     "osmTag": "place=city",
+     "country": "Espagne",
+     "countryCode": "ES"
+    },
+    "planned_days": null,
+    "duration_h": null,
+    "prefs": null,
+    "origin": null,
+    "autofill": {
+     "runId": "r",
+     "undone": false,
+     "at": "2026-11-10T22:35:06.829Z",
+     "notes": [
+      "Papiers : conditions d’entrée (Espagne) à vérifier auprès du service officiel de ton pays avant de partir.",
+      "Seul·e : laisse ton itinéraire et ton heure de retour à un proche. Urgence : 112.",
+      "Itinéraire depuis une base construit sur des lieux réels de la carte (1 lieu où dormir).",
+      "Matériel conseillé non compté au budget : 147 € à la boutique si tu ne l’as pas (facultatif).",
+      "Suggestion de l’IA (facultatif) : prévois d'acheter une bouteille d'eau légère de randonnée pour l'hydratation quotidienne.",
+      "Suggestion de l’IA (facultatif) : pense à t'acheter un couteau pliant multifonction en inox pour les petites réparations sur place."
+     ],
+     "papers": {
+      "abroad": true,
+      "country": "Espagne",
+      "abroadFrom": "gps",
+      "countryCode": "ES"
+     },
+     "basis": {
+      "days": 2,
+      "pace": null,
+      "hours": null,
+      "level": null,
+      "month": 3,
+      "party": 1,
+      "nights": null,
+      "origin": null,
+      "carFree": null,
+      "terrain": null,
+      "activity": "mixed",
+      "autonomy": null,
+      "priority": null,
+      "targetKm": null,
+      "destination": "Séville@37.39,-6.00",
+      "outdoorNights": null
+     },
+     "engine": []
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "day_number": 1,
+   "title": "Jour 1 · Sevilla",
+   "description": "Base du séjour.",
+   "latitude": 37.3828,
+   "longitude": -5.97317,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 2,
+   "title": "Jour 2 · Sevilla",
+   "description": null,
+   "latitude": 37.3828,
+   "longitude": -5.97317,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  }
+ ],
+ "items": [
+  {
+   "item_name": "Trousse de premiers secours complète",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": "f56a5199-7b77-45e9-9697-1b7f082e4902",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Sifflet de survie et détresse",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "f767e762-d417-48c2-909d-eea829081a65"
+  },
+  {
+   "item_name": "Lampe frontale LED haute autonomie",
+   "category": "tech",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "0ce62ae3-6398-48d4-be3a-de2ff265c26f"
+  },
+  {
+   "item_name": "Kit de réparation multi-usage",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "95c582ab-05ef-4d72-aa9b-9291c2ec35df"
+  },
+  {
+   "item_name": "Crème solaire haute protection SPF 50+",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "a30a619b-5f1e-48f9-8439-d396c4a84f46"
+  },
+  {
+   "item_name": "Gourde isotherme / Thermos en acier inoxydable",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "b6034a5b-301c-4dda-bce4-e13969bc013c",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Bouteille d’eau légère de randonnée",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "d403c58a-cf66-4346-9f14-33ecc31f9701"
+  },
+  {
+   "item_name": "Couteau pliant multifonction en inox",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "72a3d504-7b6b-4501-87d0-427a51114b90"
+  },
+  {
+   "item_name": "Batterie externe étanche Power Bank",
+   "category": "tech",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "846f5f27-9f48-4492-a917-99768934eba5",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Sac à dos technique de randonnée",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "e137cfe3-ff6e-4a73-a6a7-d6ea415b9739",
+   "shop_product_id": null
+  }
+ ],
+ "expenses": [
+  {
+   "title": "1 nuit(s) en hébergement",
+   "amount": 38,
+   "currency": "EUR",
+   "category": "hébergement",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Espagne 85 (France = 100) · chambre partagée à deux · vrais prix dans Résa · Nuits",
+    "source": "estimation",
+    "autofill": "5da21e8c-8267-482a-84f3-a4ed16781331"
+   }
+  },
+  {
+   "title": "Vol aller-retour × 1",
+   "amount": 280,
+   "currency": "EUR",
+   "category": "transport",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · vol aller-retour, 1 200 à 2 500 km · vol aller-retour depuis ta position, NCY → SVQ (Annecy Meythet airport → Seville Airport), environ 1371 km · vrai prix dans Résa · Vols",
+    "source": "estimation",
+    "autofill": "5da21e8c-8267-482a-84f3-a4ed16781331"
+   }
+  },
+  {
+   "title": "Repas · 2 jour(s) × 1",
+   "amount": 39,
+   "currency": "EUR",
+   "category": "nourriture",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Espagne 85 (France = 100) · selon la nuit (bivouac, refuge, hébergement) · repas en autonomie (bivouac, journée) : alimentation : Espagne 89 (France = 100) · ICP 2021, Banque mondiale, lu le 12 octobre 2026",
+    "source": "estimation",
+    "autofill": "5da21e8c-8267-482a-84f3-a4ed16781331"
+   }
+  },
+  {
+   "title": "Assurance voyage et rapatriement",
+   "amount": 30,
+   "currency": "EUR",
+   "category": "divers",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · forfait par jour",
+    "source": "estimation",
+    "autofill": "5da21e8c-8267-482a-84f3-a4ed16781331"
+   }
+  }
+ ]
+}

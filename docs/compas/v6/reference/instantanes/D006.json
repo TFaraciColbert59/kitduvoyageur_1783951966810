@@ -1,0 +1,172 @@
+{
+ "demande": "D006",
+ "banc": {
+  "at": "2026-11-10T17:17:08.403Z",
+  "seconds": 46,
+  "prepSeconds": 40,
+  "outcome": "Ton aventure est prête",
+  "error": null
+ },
+ "trip": {
+  "id": "3d6d8e06-ee18-418f-a090-0902e496bf36",
+  "title": "Plage · Tamariu",
+  "destination_name": "Tamariu",
+  "destination_country_code": "ES",
+  "start_date": "2027-07-15",
+  "end_date": "2027-07-15",
+  "party_size": 5,
+  "primary_activity": "beach",
+  "estimated_budget": 1110,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": {
+     "lat": 41.91836,
+     "lon": 3.16199,
+     "kind": "region",
+     "name": "Tamariu",
+     "extent": null,
+     "osmTag": "place=town",
+     "country": "Espagne",
+     "countryCode": "ES"
+    },
+    "planned_days": null,
+    "duration_h": null,
+    "prefs": null,
+    "origin": null,
+    "autofill": {
+     "runId": "r",
+     "undone": false,
+     "at": "2026-11-10T17:17:36.906Z",
+     "notes": [
+      "Papiers : conditions d’entrée (Espagne) à vérifier auprès du service officiel de ton pays avant de partir.",
+      "Matériel conseillé non compté au budget : 30 € à la boutique si tu ne l’as pas (facultatif).",
+      "Suggestion de l’IA (facultatif) : prévois un maillot de bain adapté à la baignade en mer, à se procurer avant le départ.",
+      "Suggestion de l’IA (facultatif) : pense à emporter une serviette de plage rapide à sécher pour le groupe.",
+      "Suggestion de l’IA (facultatif) : choisis une crème solaire haute protection SPF 50+ et une bouteille d’eau légère, déjà listés dans ton matériel."
+     ],
+     "papers": {
+      "abroad": true,
+      "country": "Espagne",
+      "abroadFrom": "gps",
+      "countryCode": "ES"
+     },
+     "basis": {
+      "days": 1,
+      "pace": null,
+      "hours": null,
+      "level": null,
+      "month": 7,
+      "party": 5,
+      "nights": null,
+      "origin": null,
+      "carFree": null,
+      "terrain": null,
+      "activity": "beach",
+      "autonomy": null,
+      "priority": null,
+      "targetKm": null,
+      "destination": "Tamariu@41.92,3.16",
+      "outdoorNights": null
+     },
+     "engine": []
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "day_number": 1,
+   "title": "Jour 1 · Tamariu",
+   "description": null,
+   "latitude": 41.91836,
+   "longitude": 3.16199,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  }
+ ],
+ "items": [
+  {
+   "item_name": "Maillot de bain",
+   "category": "clothing",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Serviette",
+   "category": "tools",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Trousse de premiers secours complète",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": "f56a5199-7b77-45e9-9697-1b7f082e4902",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Crème solaire haute protection SPF 50+",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "a30a619b-5f1e-48f9-8439-d396c4a84f46"
+  },
+  {
+   "item_name": "Bouteille d’eau légère de randonnée",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "d403c58a-cf66-4346-9f14-33ecc31f9701"
+  }
+ ],
+ "expenses": [
+  {
+   "title": "Vol aller-retour × 5",
+   "amount": 900,
+   "currency": "EUR",
+   "category": "transport",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · vol aller-retour, moins de 1 200 km · vol aller-retour depuis ta position, NCY → GRO (Annecy Meythet airport → Girona-Costa Brava Airport), environ 521 km · vrai prix dans Résa · Vols",
+    "source": "estimation",
+    "autofill": "fb1c0045-f6e1-4856-a052-c111ec22888e"
+   }
+  },
+  {
+   "title": "Repas · 1 jour(s) × 5",
+   "amount": 60,
+   "currency": "EUR",
+   "category": "nourriture",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Espagne 85 (France = 100) · selon la nuit (bivouac, refuge, hébergement) · repas en autonomie (bivouac, journée) : alimentation : Espagne 89 (France = 100) · ICP 2021, Banque mondiale, lu le 12 octobre 2026",
+    "source": "estimation",
+    "autofill": "fb1c0045-f6e1-4856-a052-c111ec22888e"
+   }
+  },
+  {
+   "title": "Assurance voyage et rapatriement",
+   "amount": 150,
+   "currency": "EUR",
+   "category": "divers",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · forfait par jour",
+    "source": "estimation",
+    "autofill": "fb1c0045-f6e1-4856-a052-c111ec22888e"
+   }
+  }
+ ]
+}

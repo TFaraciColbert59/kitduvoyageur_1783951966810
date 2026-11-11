@@ -1,0 +1,177 @@
+{
+ "demande": "D066",
+ "banc": {
+  "at": "2026-11-10T23:46:03.229Z",
+  "seconds": 51,
+  "prepSeconds": 45,
+  "outcome": "Ton aventure est prête",
+  "error": null
+ },
+ "trip": {
+  "id": "3c4183f0-85c2-40ad-ad4a-7c5f4ec5f843",
+  "title": "Plage · Essaouira",
+  "destination_name": "Essaouira",
+  "destination_country_code": "MA",
+  "start_date": "2027-05-01",
+  "end_date": "2027-05-01",
+  "party_size": null,
+  "primary_activity": "beach",
+  "estimated_budget": 320,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": {
+     "lat": 31.51183,
+     "lon": -9.76209,
+     "kind": "administrative",
+     "name": "Essaouira",
+     "extent": [
+      -9.8429051,
+      31.5353633,
+      -9.6769676,
+      31.3600146
+     ],
+     "osmTag": "boundary=administrative",
+     "country": "Maroc",
+     "countryCode": "MA"
+    },
+    "planned_days": null,
+    "duration_h": null,
+    "prefs": null,
+    "origin": null,
+    "autofill": {
+     "runId": "r",
+     "undone": false,
+     "at": "2026-11-10T23:46:36.867Z",
+     "notes": [
+      "Papiers : conditions d’entrée (Maroc) à vérifier auprès du service officiel de ton pays avant de partir.",
+      "Matériel conseillé non compté au budget : 30 € à la boutique si tu ne l’as pas (facultatif).",
+      "Suggestion de l’IA (facultatif) : prévois un maillot de bain et une serviette pour profiter de la plage.",
+      "Suggestion de l’IA (facultatif) : pense à acheter une bouteille d'eau légère si ce n'est pas déjà fait.",
+      "Suggestion de l’IA (facultatif) : n'oublie pas la crème solaire haute protection SPF 50+ pour le soleil marocain."
+     ],
+     "papers": {
+      "abroad": true,
+      "country": "Maroc",
+      "abroadFrom": "gps",
+      "countryCode": "MA"
+     },
+     "basis": {
+      "days": 1,
+      "pace": null,
+      "hours": null,
+      "level": null,
+      "month": 5,
+      "party": 1,
+      "nights": null,
+      "origin": null,
+      "carFree": null,
+      "terrain": null,
+      "activity": "beach",
+      "autonomy": null,
+      "priority": null,
+      "targetKm": null,
+      "destination": "Essaouira@31.51,-9.76",
+      "outdoorNights": null
+     },
+     "engine": []
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "day_number": 1,
+   "title": "Jour 1 · Essaouira",
+   "description": null,
+   "latitude": 31.51183,
+   "longitude": -9.76209,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  }
+ ],
+ "items": [
+  {
+   "item_name": "Maillot de bain",
+   "category": "clothing",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Serviette",
+   "category": "tools",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Trousse de premiers secours complète",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": "f56a5199-7b77-45e9-9697-1b7f082e4902",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Crème solaire haute protection SPF 50+",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "a30a619b-5f1e-48f9-8439-d396c4a84f46"
+  },
+  {
+   "item_name": "Bouteille d’eau légère de randonnée",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "d403c58a-cf66-4346-9f14-33ecc31f9701"
+  }
+ ],
+ "expenses": [
+  {
+   "title": "Vol aller-retour × 1",
+   "amount": 280,
+   "currency": "EUR",
+   "category": "transport",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · vol aller-retour, 1 200 à 2 500 km · vol aller-retour depuis ta position, NCY → ESU (Annecy Meythet airport → Essaouira-Mogador Airport), environ 2111 km · vrai prix dans Résa · Vols",
+    "source": "estimation",
+    "autofill": "b076849a-4f7e-4daf-9510-b56fade098e1"
+   }
+  },
+  {
+   "title": "Repas · 1 jour(s) × 1",
+   "amount": 10,
+   "currency": "EUR",
+   "category": "nourriture",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Maroc 45 (France = 100) · selon la nuit (bivouac, refuge, hébergement) · repas en autonomie (bivouac, journée) : alimentation : Maroc 72 (France = 100) · ICP 2021, Banque mondiale, lu le 12 octobre 2026",
+    "source": "estimation",
+    "autofill": "b076849a-4f7e-4daf-9510-b56fade098e1"
+   }
+  },
+  {
+   "title": "Assurance voyage et rapatriement",
+   "amount": 30,
+   "currency": "EUR",
+   "category": "divers",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · forfait par jour",
+    "source": "estimation",
+    "autofill": "b076849a-4f7e-4daf-9510-b56fade098e1"
+   }
+  }
+ ]
+}

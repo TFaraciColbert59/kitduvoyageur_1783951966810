@@ -1,0 +1,400 @@
+{
+ "demande": "D035",
+ "banc": {
+  "at": "2026-11-10T22:38:56.066Z",
+  "seconds": 39,
+  "prepSeconds": 33,
+  "outcome": "Ton aventure est prête",
+  "error": null
+ },
+ "trip": {
+  "id": "c6be4d9b-4324-471a-ac33-afd64b3e87a7",
+  "title": "Ski · Whistler",
+  "destination_name": "Whistler",
+  "destination_country_code": "CA",
+  "start_date": "2027-01-01",
+  "end_date": "2027-01-05",
+  "party_size": 6,
+  "primary_activity": "ski",
+  "estimated_budget": 8028,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": {
+     "lat": 50.11719,
+     "lon": -122.9543,
+     "kind": "city",
+     "name": "Whistler",
+     "extent": [
+      -123.153214,
+      50.1758448,
+      -122.8609243,
+      50.0267102
+     ],
+     "osmTag": "place=town",
+     "country": "Canada",
+     "countryCode": "CA"
+    },
+    "planned_days": null,
+    "duration_h": null,
+    "prefs": null,
+    "origin": null,
+    "autofill": {
+     "runId": "r",
+     "undone": false,
+     "at": "2026-11-10T22:39:13.953Z",
+     "notes": [
+      "Papiers : conditions d’entrée (Canada) à vérifier auprès du service officiel de ton pays avant de partir.",
+      "Prises de type A/B (Canada) : vérifie que tes chargeurs s’y branchent.",
+      "Altitude du parcours non mesurée : au-delà de 2 500 m, monte progressivement et bois souvent ; mal de tête, nausée ou essoufflement au repos : redescends.",
+      "Montagne en hiver : lis le bulletin d’avalanche du massif la veille et le matin du départ.",
+      "Matériel conseillé non compté au budget : 189 € à la boutique si tu ne l’as pas (facultatif).",
+      "Suggestion de l’IA (facultatif) : prévois un masque de ski et un casque de ski pour la sécurité et le confort sur les pistes.",
+      "Suggestion de l’IA (facultatif) : pense à t'acheter des gants thermiques coupe-vent pour protéger tes mains du froid et du vent.",
+      "Suggestion de l’IA (facultatif) : n'oublie pas les crampons de traction / neige & glace pour assurer une bonne adhérence sur les surfaces glacées."
+     ],
+     "papers": {
+      "abroad": true,
+      "country": "Canada",
+      "abroadFrom": "gps",
+      "countryCode": "CA"
+     },
+     "basis": {
+      "days": 5,
+      "pace": null,
+      "hours": null,
+      "level": null,
+      "month": 1,
+      "party": 6,
+      "nights": null,
+      "origin": null,
+      "carFree": null,
+      "terrain": null,
+      "activity": "ski",
+      "autonomy": null,
+      "priority": null,
+      "targetKm": null,
+      "destination": "Whistler@50.12,-122.95",
+      "outdoorNights": null
+     },
+     "engine": []
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "day_number": 1,
+   "title": "Jour 1 · Whistler",
+   "description": "Base du séjour.",
+   "latitude": 50.11719,
+   "longitude": -122.9543,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 2,
+   "title": "Jour 2 · Whistler",
+   "description": null,
+   "latitude": 50.11719,
+   "longitude": -122.9543,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 3,
+   "title": "Jour 3 · Whistler",
+   "description": null,
+   "latitude": 50.11719,
+   "longitude": -122.9543,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 4,
+   "title": "Jour 4 · Whistler",
+   "description": null,
+   "latitude": 50.11719,
+   "longitude": -122.9543,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 5,
+   "title": "Jour 5 · Whistler",
+   "description": null,
+   "latitude": 50.11719,
+   "longitude": -122.9543,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  }
+ ],
+ "items": [
+  {
+   "item_name": "DVA (détecteur de victimes d’avalanche)",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Pelle à neige",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Sonde",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Masque de ski",
+   "category": "clothing",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Casque de ski",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Trousse de premiers secours complète",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": "f56a5199-7b77-45e9-9697-1b7f082e4902",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Poncho imperméable & coupe-vent",
+   "category": "clothing",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "649ebc6b-9e65-4256-8c31-983a7617a38d"
+  },
+  {
+   "item_name": "Sifflet de survie et détresse",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "f767e762-d417-48c2-909d-eea829081a65"
+  },
+  {
+   "item_name": "Lampe frontale LED haute autonomie",
+   "category": "tech",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "0ce62ae3-6398-48d4-be3a-de2ff265c26f"
+  },
+  {
+   "item_name": "Kit de réparation multi-usage",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "95c582ab-05ef-4d72-aa9b-9291c2ec35df"
+  },
+  {
+   "item_name": "Gants thermiques coupe-vent",
+   "category": "clothing",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Chauffe-mains / Chauffe-pieds d’urgence",
+   "category": "clothing",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "d76a28d5-fae8-4df6-aadd-916c2729f850"
+  },
+  {
+   "item_name": "Crème solaire haute protection SPF 50+",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "a30a619b-5f1e-48f9-8439-d396c4a84f46"
+  },
+  {
+   "item_name": "Gourde isotherme / Thermos en acier inoxydable",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "b6034a5b-301c-4dda-bce4-e13969bc013c",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Bouteille d’eau légère de randonnée",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "d403c58a-cf66-4346-9f14-33ecc31f9701"
+  },
+  {
+   "item_name": "Sac étanche / Dry bag de protection",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "e137cfe3-ff6e-4a73-a6a7-d6ea415b9739",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Bâtons de trekking télescopiques",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "549d7f9e-aa98-4618-82ec-bb913ca14d0c"
+  },
+  {
+   "item_name": "Couteau pliant multifonction en inox",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "72a3d504-7b6b-4501-87d0-427a51114b90"
+  },
+  {
+   "item_name": "Batterie externe étanche Power Bank",
+   "category": "tech",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "846f5f27-9f48-4492-a917-99768934eba5",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Sac à dos technique de randonnée",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "4cd21d3f-7c42-431d-af70-886b21d68de5"
+  },
+  {
+   "item_name": "Crampons de traction / neige & glace",
+   "category": "clothing",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Doudoune grand froid en duvet compressible",
+   "category": "clothing",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Lunettes de soleil sport UV400 cat. 3/4",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "371d08c1-7865-4352-a09f-ac551e487ead"
+  }
+ ],
+ "expenses": [
+  {
+   "title": "4 nuit(s) en hébergement",
+   "amount": 1200,
+   "currency": "EUR",
+   "category": "hébergement",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Canada 110 (France = 100) · chambre partagée à deux · vrais prix dans Résa · Nuits",
+    "source": "estimation",
+    "autofill": "93c297ad-201e-471f-8476-7b6954b7f929"
+   }
+  },
+  {
+   "title": "Vol aller-retour × 6",
+   "amount": 5700,
+   "currency": "EUR",
+   "category": "transport",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · vol aller-retour, 8 000 à 11 000 km · vol aller-retour depuis ta position, NCY → YVR (Annecy Meythet airport → Vancouver International Airport), environ 8358 km · vrai prix dans Résa · Vols",
+    "source": "estimation",
+    "autofill": "93c297ad-201e-471f-8476-7b6954b7f929"
+   }
+  },
+  {
+   "title": "Repas · 5 jour(s) × 6",
+   "amount": 936,
+   "currency": "EUR",
+   "category": "nourriture",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Canada 110 (France = 100) · selon la nuit (bivouac, refuge, hébergement) · repas en autonomie (bivouac, journée) : alimentation : Canada 113 (France = 100) · ICP 2021, Banque mondiale, lu le 12 octobre 2026",
+    "source": "estimation",
+    "autofill": "93c297ad-201e-471f-8476-7b6954b7f929"
+   }
+  },
+  {
+   "title": "Matériel à acheter",
+   "amount": 12,
+   "currency": "EUR",
+   "category": "matériel",
+   "is_planned": true,
+   "metadata": {
+    "basis": "prix de la boutique",
+    "source": "base",
+    "autofill": "93c297ad-201e-471f-8476-7b6954b7f929"
+   }
+  },
+  {
+   "title": "Assurance voyage et rapatriement",
+   "amount": 180,
+   "currency": "EUR",
+   "category": "divers",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · forfait par jour",
+    "source": "estimation",
+    "autofill": "93c297ad-201e-471f-8476-7b6954b7f929"
+   }
+  }
+ ]
+}

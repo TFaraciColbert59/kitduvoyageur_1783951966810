@@ -1,0 +1,44 @@
+{
+ "demande": "D054",
+ "banc": {
+  "at": "2026-11-10T23:20:57.277Z",
+  "seconds": 45,
+  "prepSeconds": 36,
+  "outcome": "La préparation s’est arrêtée",
+  "error": null
+ },
+ "trip": {
+  "id": "958dfc9c-35eb-45c6-a6e6-378c708bee6d",
+  "title": "Road trip · Patagonie",
+  "destination_name": "Patagonie",
+  "destination_country_code": "AR",
+  "start_date": null,
+  "end_date": null,
+  "party_size": null,
+  "primary_activity": "roadtrip",
+  "estimated_budget": null,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": {
+     "lat": -50.33874,
+     "lon": -72.27372,
+     "kind": "region",
+     "name": "Patagonie",
+     "extent": null,
+     "osmTag": "boundary=administrative",
+     "country": "Argentine",
+     "countryCode": "AR"
+    },
+    "planned_days": null,
+    "duration_h": null,
+    "prefs": null,
+    "origin": null,
+    "autofill": null
+   }
+  }
+ },
+ "steps": [],
+ "items": [],
+ "expenses": []
+}

@@ -1,0 +1,295 @@
+{
+ "demande": "D028",
+ "banc": {
+  "at": "2026-11-10T22:24:21.038Z",
+  "seconds": 65,
+  "prepSeconds": 59,
+  "outcome": "Ton aventure est prête",
+  "error": null
+ },
+ "trip": {
+  "id": "c2d0bc4a-8379-43ad-811a-8b12bcc3316e",
+  "title": "Randonnée · nouvelle aventure",
+  "destination_name": null,
+  "destination_country_code": null,
+  "start_date": "2027-06-05",
+  "end_date": "2027-06-09",
+  "party_size": null,
+  "primary_activity": "hiking",
+  "estimated_budget": 342,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": null,
+    "planned_days": 5,
+    "duration_h": null,
+    "prefs": {
+     "pace": "normal",
+     "avoid": [],
+     "nights": null,
+     "wishes": [
+      "traverser l'atlantique",
+      "traversée de l'Atlantique"
+     ]
+    },
+    "origin": {
+     "lat": 48.39,
+     "lon": -4.49,
+     "name": "Brest",
+     "source": "dit",
+     "countryCode": "FR"
+    },
+    "autofill": {
+     "runId": "r",
+     "undone": false,
+     "at": "2026-11-10T22:24:46.594Z",
+     "notes": [
+      "Seul·e : laisse ton itinéraire et ton heure de retour à un proche. Urgence : 112.",
+      "Lieu non précisé : préparé autour de Brest, ton point de départ. Change-le dans « Où » si tu pensais à un autre endroit.",
+      "Période proposée : juin (journées longues et douces, avant l’affluence de l’été). Change-la dans « Quand » si elle ne te va pas.",
+      "Itinéraire en traversée construit sur des lieux réels de la carte (5 lieux où dormir).",
+      "Matériel conseillé non compté au budget : 155 € à la boutique si tu ne l’as pas (facultatif).",
+      "Suggestion de l’IA (facultatif) : prévois un sac à dos étanche ou une housse de protection pour tes affaires personnelles compte tenu des fortes précipitations habituelles sur la côte bretonne.",
+      "Suggestion de l’IA (facultatif) : pense à vérifier la marée et les horaires d'ouverture des sites avant chaque étape, notamment pour les accès aux sentiers côtiers de Crozon et de Saint-Nic."
+     ],
+     "papers": {
+      "abroad": false,
+      "country": null,
+      "abroadFrom": "dit",
+      "countryCode": "FR"
+     },
+     "basis": {
+      "days": 5,
+      "pace": null,
+      "hours": null,
+      "level": null,
+      "month": 6,
+      "party": 1,
+      "nights": null,
+      "origin": "Brest@48.39,-4.49",
+      "carFree": null,
+      "terrain": null,
+      "activity": "hiking",
+      "autonomy": null,
+      "priority": null,
+      "targetKm": null,
+      "destination": null,
+      "outdoorNights": null
+     },
+     "engine": []
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "day_number": 1,
+   "title": "Jour 1 · Roscanvel",
+   "description": "Départ de Brest.",
+   "latitude": 48.3152,
+   "longitude": -4.54937,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 2,
+   "title": "Jour 2 · Crozon",
+   "description": null,
+   "latitude": 48.2464,
+   "longitude": -4.48993,
+   "distance_km": 10.5,
+   "elevation_gain_m": 164,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 3,
+   "title": "Jour 3 · Keravel",
+   "description": null,
+   "latitude": 48.1857,
+   "longitude": -4.54074,
+   "distance_km": 8.6,
+   "elevation_gain_m": 114,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 4,
+   "title": "Jour 4 · Elléouët",
+   "description": null,
+   "latitude": 48.2095,
+   "longitude": -4.36059,
+   "distance_km": 20,
+   "elevation_gain_m": 286,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 5,
+   "title": "Jour 5 · Saint-Nic",
+   "description": null,
+   "latitude": 48.2022,
+   "longitude": -4.28303,
+   "distance_km": 7.8,
+   "elevation_gain_m": 90,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  }
+ ],
+ "items": [
+  {
+   "item_name": "Trousse de premiers secours complète",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": "f56a5199-7b77-45e9-9697-1b7f082e4902",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Sifflet de survie et détresse",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "f767e762-d417-48c2-909d-eea829081a65"
+  },
+  {
+   "item_name": "Lampe frontale LED haute autonomie",
+   "category": "tech",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "0ce62ae3-6398-48d4-be3a-de2ff265c26f"
+  },
+  {
+   "item_name": "Kit de réparation multi-usage",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "95c582ab-05ef-4d72-aa9b-9291c2ec35df"
+  },
+  {
+   "item_name": "Crème solaire haute protection SPF 50+",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "a30a619b-5f1e-48f9-8439-d396c4a84f46"
+  },
+  {
+   "item_name": "Gourde isotherme / Thermos en acier inoxydable",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "b6034a5b-301c-4dda-bce4-e13969bc013c",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Bouteille d’eau légère de randonnée",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "d403c58a-cf66-4346-9f14-33ecc31f9701"
+  },
+  {
+   "item_name": "Bâtons de trekking télescopiques",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "549d7f9e-aa98-4618-82ec-bb913ca14d0c"
+  },
+  {
+   "item_name": "Couteau pliant multifonction en inox",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "72a3d504-7b6b-4501-87d0-427a51114b90"
+  },
+  {
+   "item_name": "Batterie externe étanche Power Bank",
+   "category": "tech",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "846f5f27-9f48-4492-a917-99768934eba5",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Sac à dos technique de randonnée",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "e137cfe3-ff6e-4a73-a6a7-d6ea415b9739",
+   "shop_product_id": null
+  }
+ ],
+ "expenses": [
+  {
+   "title": "4 nuit(s) en hébergement",
+   "amount": 180,
+   "currency": "EUR",
+   "category": "hébergement",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : France 100 (référence) · chambre partagée à deux · vrais prix dans Résa · Nuits",
+    "source": "estimation",
+    "autofill": "acf5e725-9b2d-45a2-be23-8bc015ee65a2"
+   }
+  },
+  {
+   "title": "Carburant aller-retour (140.8 km)",
+   "amount": 20,
+   "currency": "EUR",
+   "category": "transport",
+   "is_planned": true,
+   "metadata": {
+    "basis": "itinéraire routier mesuré · 6,5 L/100 km · Euro-super 95 à 2,21 €/L (bulletin pétrolier de l’UE du 5 octobre 2026) · 1 voiture · péages non comptés (le trajet mesuré ne donne pas ses km d’autoroute à péage ; France : 11,1 c€/km TTC en moyenne sur les autoroutes concédées (véhicules légers, tarifs du 1er février 2024, TVA de 20 % ajoutée au prix hors taxes, source : ART) ; moyenne de tout le réseau concédé : un axe peut coûter bien plus ou moins ; les hausses des 1er février 2025 et 2026 ne sont pas lues)",
+    "source": "mesure",
+    "autofill": "acf5e725-9b2d-45a2-be23-8bc015ee65a2"
+   }
+  },
+  {
+   "title": "Repas · 5 jour(s) × 1",
+   "amount": 142,
+   "currency": "EUR",
+   "category": "nourriture",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : France 100 (référence) · selon la nuit (bivouac, refuge, hébergement) · repas en autonomie (bivouac, journée) : alimentation : FR 100 (France = 100) · ICP 2021, Banque mondiale, lu le 12 octobre 2026",
+    "source": "estimation",
+    "autofill": "acf5e725-9b2d-45a2-be23-8bc015ee65a2"
+   }
+  }
+ ]
+}

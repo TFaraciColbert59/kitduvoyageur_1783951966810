@@ -1,0 +1,488 @@
+{
+ "demande": "D031",
+ "banc": {
+  "at": "2026-11-10T22:30:36.052Z",
+  "seconds": 30,
+  "prepSeconds": 23,
+  "outcome": "Ton aventure est prête",
+  "error": null
+ },
+ "trip": {
+  "id": "0e29356f-5b94-4d45-b6e7-9117dbcf57e8",
+  "title": "Vélo · Côte de l'Oregon",
+  "destination_name": "Côte de l'Oregon",
+  "destination_country_code": "US",
+  "start_date": "2027-06-01",
+  "end_date": "2027-06-14",
+  "party_size": 2,
+  "primary_activity": "cycling",
+  "estimated_budget": 4428,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": {
+     "lat": 46.1882,
+     "lon": -123.83198,
+     "kind": "region",
+     "name": "Côte de l'Oregon",
+     "extent": null,
+     "osmTag": "place=town",
+     "country": "États-Unis d'Amérique",
+     "countryCode": "US"
+    },
+    "planned_days": null,
+    "duration_h": null,
+    "prefs": {
+     "pace": "normal",
+     "avoid": [],
+     "nights": null,
+     "wishes": [
+      "Brookings"
+     ]
+    },
+    "origin": null,
+    "autofill": {
+     "runId": "r",
+     "undone": false,
+     "at": "2026-11-10T22:31:04.342Z",
+     "notes": [
+      "Papiers : conditions d’entrée (États-Unis d'Amérique) à vérifier auprès du service officiel de ton pays avant de partir.",
+      "Prises de type A/B (États-Unis d'Amérique) : vérifie que tes chargeurs s’y branchent.",
+      "Itinéraire en boucle construit sur des lieux réels de la carte (14 lieux où dormir).",
+      "Matériel conseillé non compté au budget : 129 € à la boutique si tu ne l’as pas (facultatif).",
+      "Suggestion de l’IA (facultatif) : achete un antivol robuste pour sécuriser ton vélo lors des étapes en ville ou chez l'hébergement."
+     ],
+     "papers": {
+      "abroad": true,
+      "country": "États-Unis d'Amérique",
+      "abroadFrom": "gps",
+      "countryCode": "US"
+     },
+     "basis": {
+      "days": 14,
+      "pace": null,
+      "hours": null,
+      "level": null,
+      "month": 6,
+      "party": 2,
+      "nights": null,
+      "origin": null,
+      "carFree": null,
+      "terrain": null,
+      "activity": "cycling",
+      "autonomy": null,
+      "priority": null,
+      "targetKm": null,
+      "destination": "Côte de l'Oregon@46.19,-123.83",
+      "outdoorNights": null
+     },
+     "engine": []
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "day_number": 1,
+   "title": "Jour 1 · Long Beach",
+   "description": "Départ d’Astoria.",
+   "latitude": 46.3523,
+   "longitude": -124.054,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "bike",
+   "metadata": {}
+  },
+  {
+   "day_number": 2,
+   "title": "Jour 2 · Warrenton",
+   "description": null,
+   "latitude": 46.1651,
+   "longitude": -123.924,
+   "distance_km": 37.2,
+   "elevation_gain_m": 67,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "bike",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 3,
+   "title": "Jour 3 · Ocean Park",
+   "description": null,
+   "latitude": 46.4918,
+   "longitude": -124.052,
+   "distance_km": 54.3,
+   "elevation_gain_m": 37,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "bike",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 4,
+   "title": "Jour 4 · Grayland",
+   "description": null,
+   "latitude": 46.8101,
+   "longitude": -124.093,
+   "distance_km": 132.7,
+   "elevation_gain_m": 349,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "bike",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 5,
+   "title": "Jour 5 · Aberdeen",
+   "description": null,
+   "latitude": 46.9754,
+   "longitude": -123.816,
+   "distance_km": 35.9,
+   "elevation_gain_m": 82,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "bike",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 6,
+   "title": "Jour 6 · Ocean Shores",
+   "description": null,
+   "latitude": 46.9737,
+   "longitude": -124.156,
+   "distance_km": 42.1,
+   "elevation_gain_m": 129,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "bike",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 7,
+   "title": "Jour 7 · Central Park",
+   "description": null,
+   "latitude": 46.9734,
+   "longitude": -123.692,
+   "distance_km": 54.2,
+   "elevation_gain_m": 166,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "bike",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 8,
+   "title": "Jour 8 · McCleary",
+   "description": null,
+   "latitude": 47.0532,
+   "longitude": -123.265,
+   "distance_km": 38.8,
+   "elevation_gain_m": 118,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "bike",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 9,
+   "title": "Jour 9 · Shelton",
+   "description": null,
+   "latitude": 47.2151,
+   "longitude": -123.101,
+   "distance_km": 34.5,
+   "elevation_gain_m": 213,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "bike",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 10,
+   "title": "Jour 10 · Tumwater",
+   "description": null,
+   "latitude": 47.0073,
+   "longitude": -122.909,
+   "distance_km": 40.2,
+   "elevation_gain_m": 337,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "bike",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 11,
+   "title": "Jour 11 · Centralia",
+   "description": null,
+   "latitude": 46.7162,
+   "longitude": -122.954,
+   "distance_km": 39,
+   "elevation_gain_m": 45,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "bike",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 12,
+   "title": "Jour 12 · Vader",
+   "description": null,
+   "latitude": 46.4026,
+   "longitude": -122.96,
+   "distance_km": 41.8,
+   "elevation_gain_m": 225,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "bike",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 13,
+   "title": "Jour 13 · Cathlamet",
+   "description": null,
+   "latitude": 46.2032,
+   "longitude": -123.383,
+   "distance_km": 73.7,
+   "elevation_gain_m": 948,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "bike",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 14,
+   "title": "Jour 14 · Astoria",
+   "description": null,
+   "latitude": 46.1879,
+   "longitude": -123.831,
+   "distance_km": 57.3,
+   "elevation_gain_m": 521,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "bike",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  }
+ ],
+ "items": [
+  {
+   "item_name": "Casque de vélo",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Kit de réparation (chambre à air, démonte-pneus, pompe)",
+   "category": "tools",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "95c582ab-05ef-4d72-aa9b-9291c2ec35df"
+  },
+  {
+   "item_name": "Éclairage avant et arrière",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "549d7f9e-aa98-4618-82ec-bb913ca14d0c"
+  },
+  {
+   "item_name": "Antivol",
+   "category": "tools",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Trousse de premiers secours complète",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": "f56a5199-7b77-45e9-9697-1b7f082e4902",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Sifflet de survie et détresse",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "f767e762-d417-48c2-909d-eea829081a65"
+  },
+  {
+   "item_name": "Lampe frontale LED haute autonomie",
+   "category": "tech",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "0ce62ae3-6398-48d4-be3a-de2ff265c26f"
+  },
+  {
+   "item_name": "Crème solaire haute protection SPF 50+",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "a30a619b-5f1e-48f9-8439-d396c4a84f46"
+  },
+  {
+   "item_name": "Gourde isotherme / Thermos en acier inoxydable",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "b6034a5b-301c-4dda-bce4-e13969bc013c",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Bouteille d’eau légère de randonnée",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "d403c58a-cf66-4346-9f14-33ecc31f9701"
+  },
+  {
+   "item_name": "Couteau pliant multifonction en inox",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "72a3d504-7b6b-4501-87d0-427a51114b90"
+  },
+  {
+   "item_name": "Batterie externe étanche Power Bank",
+   "category": "tech",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "846f5f27-9f48-4492-a917-99768934eba5",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Sac à dos technique de randonnée",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "e137cfe3-ff6e-4a73-a6a7-d6ea415b9739",
+   "shop_product_id": null
+  }
+ ],
+ "expenses": [
+  {
+   "title": "13 nuit(s) en hébergement",
+   "amount": 1404,
+   "currency": "EUR",
+   "category": "hébergement",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : États-Unis d'Amérique 120 (France = 100) · chambre partagée à deux · vrais prix dans Résa · Nuits",
+    "source": "estimation",
+    "autofill": "411a73af-aef6-4fac-b326-d01624daf2a3"
+   }
+  },
+  {
+   "title": "Vol aller-retour × 2",
+   "amount": 1900,
+   "currency": "EUR",
+   "category": "transport",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · vol aller-retour, 8 000 à 11 000 km · vol aller-retour depuis ta position, NCY → PDX (Annecy Meythet airport → Portland International Airport), environ 8667 km · vrai prix dans Résa · Vols",
+    "source": "estimation",
+    "autofill": "411a73af-aef6-4fac-b326-d01624daf2a3"
+   }
+  },
+  {
+   "title": "Repas · 14 jour(s) × 2",
+   "amount": 1014,
+   "currency": "EUR",
+   "category": "nourriture",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : États-Unis d'Amérique 120 (France = 100) · selon la nuit (bivouac, refuge, hébergement) · repas en autonomie (bivouac, journée) : alimentation : États-Unis d'Amérique 90 (France = 100) · ICP 2021, Banque mondiale, lu le 12 octobre 2026",
+    "source": "estimation",
+    "autofill": "411a73af-aef6-4fac-b326-d01624daf2a3"
+   }
+  },
+  {
+   "title": "Matériel à acheter",
+   "amount": 26,
+   "currency": "EUR",
+   "category": "matériel",
+   "is_planned": true,
+   "metadata": {
+    "basis": "prix de la boutique",
+    "source": "base",
+    "autofill": "411a73af-aef6-4fac-b326-d01624daf2a3"
+   }
+  },
+  {
+   "title": "Assurance voyage et rapatriement",
+   "amount": 84,
+   "currency": "EUR",
+   "category": "divers",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · forfait par jour",
+    "source": "estimation",
+    "autofill": "411a73af-aef6-4fac-b326-d01624daf2a3"
+   }
+  }
+ ]
+}

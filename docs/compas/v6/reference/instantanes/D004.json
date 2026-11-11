@@ -1,0 +1,337 @@
+{
+ "demande": "D004",
+ "banc": {
+  "at": "2026-11-10T17:12:58.401Z",
+  "seconds": 98,
+  "prepSeconds": 91,
+  "outcome": "Ton aventure est prête",
+  "error": null
+ },
+ "trip": {
+  "id": "78697d08-190c-48b5-bb8d-98d727672b6b",
+  "title": "Road trip · Corse",
+  "destination_name": "Corse",
+  "destination_country_code": "FR",
+  "start_date": "2027-07-01",
+  "end_date": "2027-07-08",
+  "party_size": null,
+  "primary_activity": "roadtrip",
+  "estimated_budget": 834,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": {
+     "lat": 42.1881,
+     "lon": 9.06831,
+     "kind": "administrative",
+     "name": "Corse",
+     "extent": [
+      8.534717,
+      43.0277079,
+      9.5600125,
+      41.333191
+     ],
+     "osmTag": "boundary=administrative",
+     "country": "France",
+     "countryCode": "FR"
+    },
+    "planned_days": null,
+    "duration_h": null,
+    "prefs": {
+     "pace": "tranquille",
+     "avoid": [],
+     "nights": null,
+     "wishes": []
+    },
+    "origin": null,
+    "autofill": {
+     "runId": "r",
+     "undone": false,
+     "at": "2026-11-10T17:13:51.881Z",
+     "notes": [
+      "Itinéraire en boucle construit sur des lieux réels de la carte (8 lieux où dormir).",
+      "Matériel conseillé non compté au budget : 141 € à la boutique si tu ne l’as pas (facultatif).",
+      "Suggestion de l’IA (facultatif) : prévois des arrêts réguliers pour étirer les jambes lors des longs trajets en voiture entre les étapes.",
+      "Suggestion de l’IA (facultatif) : pense à vérifier l'état de la batterie externe étanche avant chaque étape, surtout par forte chaleur.",
+      "Suggestion de l’IA (facultatif) : pense à appliquer la crème solaire haute protection SPF 50+ avant chaque exposition au soleil, même par temps couvert."
+     ],
+     "papers": {
+      "abroad": false,
+      "country": "France",
+      "abroadFrom": "gps",
+      "countryCode": "FR"
+     },
+     "basis": {
+      "days": 8,
+      "pace": "tranquille",
+      "hours": null,
+      "level": null,
+      "month": 7,
+      "party": 1,
+      "nights": null,
+      "origin": null,
+      "carFree": null,
+      "terrain": null,
+      "activity": "roadtrip",
+      "autonomy": null,
+      "priority": null,
+      "targetKm": null,
+      "destination": "Corse@42.19,9.07",
+      "outdoorNights": null
+     },
+     "engine": []
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "day_number": 1,
+   "title": "Jour 1 · Calvi",
+   "description": "Départ d’Ajaccio.",
+   "latitude": 42.566,
+   "longitude": 8.75713,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "car",
+   "metadata": {}
+  },
+  {
+   "day_number": 2,
+   "title": "Jour 2 · Bastia",
+   "description": null,
+   "latitude": 42.7022,
+   "longitude": 9.45123,
+   "distance_km": 92.2,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "car",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 3,
+   "title": "Jour 3 · L'Île-Rousse",
+   "description": null,
+   "latitude": 42.6337,
+   "longitude": 8.93764,
+   "distance_km": 68,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "car",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 4,
+   "title": "Jour 4 · Brando",
+   "description": null,
+   "latitude": 42.7667,
+   "longitude": 9.45,
+   "distance_km": 80,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "car",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 5,
+   "title": "Jour 5 · Cervione",
+   "description": null,
+   "latitude": 42.3284,
+   "longitude": 9.49343,
+   "distance_km": 64,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "car",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 6,
+   "title": "Jour 6 · Porto-Vecchio",
+   "description": null,
+   "latitude": 41.591,
+   "longitude": 9.27947,
+   "distance_km": 101.2,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "car",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 7,
+   "title": "Jour 7 · Ghisonaccia",
+   "description": null,
+   "latitude": 42.0158,
+   "longitude": 9.40507,
+   "distance_km": 56.4,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "car",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 8,
+   "title": "Jour 8 · Ajaccio",
+   "description": null,
+   "latitude": 41.9189,
+   "longitude": 8.73812,
+   "distance_km": 102,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "car",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  }
+ ],
+ "items": [
+  {
+   "item_name": "Trousse de premiers secours complète",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": "f56a5199-7b77-45e9-9697-1b7f082e4902",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Lampe frontale LED haute autonomie",
+   "category": "tech",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "0ce62ae3-6398-48d4-be3a-de2ff265c26f"
+  },
+  {
+   "item_name": "Kit de réparation multi-usage",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "95c582ab-05ef-4d72-aa9b-9291c2ec35df"
+  },
+  {
+   "item_name": "Crème solaire haute protection SPF 50+",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "a30a619b-5f1e-48f9-8439-d396c4a84f46"
+  },
+  {
+   "item_name": "Gourde isotherme / Thermos en acier inoxydable",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "b6034a5b-301c-4dda-bce4-e13969bc013c",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Bouteille d’eau légère de randonnée",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "d403c58a-cf66-4346-9f14-33ecc31f9701"
+  },
+  {
+   "item_name": "Couteau pliant multifonction en inox",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "72a3d504-7b6b-4501-87d0-427a51114b90"
+  },
+  {
+   "item_name": "Batterie externe étanche Power Bank",
+   "category": "tech",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "846f5f27-9f48-4492-a917-99768934eba5",
+   "shop_product_id": null
+  }
+ ],
+ "expenses": [
+  {
+   "title": "7 nuit(s) en hébergement",
+   "amount": 315,
+   "currency": "EUR",
+   "category": "hébergement",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : France 100 (référence) · chambre partagée à deux · vrais prix dans Résa · Nuits",
+    "source": "estimation",
+    "autofill": "fbeb2037-33fe-45b3-b78a-40f538a9c28a"
+   }
+  },
+  {
+   "title": "Carburant aller-retour (1393.8 km)",
+   "amount": 200,
+   "currency": "EUR",
+   "category": "transport",
+   "is_planned": true,
+   "metadata": {
+    "basis": "itinéraire routier mesuré · 6,5 L/100 km · Euro-super 95 à 2,21 €/L (bulletin pétrolier de l’UE du 5 octobre 2026) · 1 voiture · péages non comptés (le trajet mesuré ne donne pas ses km d’autoroute à péage ; France : 11,1 c€/km TTC en moyenne sur les autoroutes concédées (véhicules légers, tarifs du 1er février 2024, TVA de 20 % ajoutée au prix hors taxes, source : ART) ; moyenne de tout le réseau concédé : un axe peut coûter bien plus ou moins ; les hausses des 1er février 2025 et 2026 ne sont pas lues)",
+    "source": "mesure",
+    "autofill": "fbeb2037-33fe-45b3-b78a-40f538a9c28a"
+   }
+  },
+  {
+   "title": "Carburant sur place (564 km)",
+   "amount": 81,
+   "currency": "EUR",
+   "category": "transport",
+   "is_planned": true,
+   "metadata": {
+    "basis": "kilomètres mesurés entre les étapes · 6,5 L/100 km · Euro-super 95 à 2,21 €/L (bulletin pétrolier de l’UE du 5 octobre 2026) · péages non comptés (le trajet mesuré ne donne pas ses km d’autoroute à péage ; France : 11,1 c€/km TTC en moyenne sur les autoroutes concédées (véhicules légers, tarifs du 1er février 2024, TVA de 20 % ajoutée au prix hors taxes, source : ART) ; moyenne de tout le réseau concédé : un axe peut coûter bien plus ou moins ; les hausses des 1er février 2025 et 2026 ne sont pas lues)",
+    "source": "mesure",
+    "autofill": "fbeb2037-33fe-45b3-b78a-40f538a9c28a"
+   }
+  },
+  {
+   "title": "Repas · 8 jour(s) × 1",
+   "amount": 238,
+   "currency": "EUR",
+   "category": "nourriture",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : France 100 (référence) · selon la nuit (bivouac, refuge, hébergement) · repas en autonomie (bivouac, journée) : alimentation : France 100 (France = 100) · ICP 2021, Banque mondiale, lu le 12 octobre 2026",
+    "source": "estimation",
+    "autofill": "fbeb2037-33fe-45b3-b78a-40f538a9c28a"
+   }
+  }
+ ]
+}

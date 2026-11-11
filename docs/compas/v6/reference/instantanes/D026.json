@@ -1,0 +1,526 @@
+{
+ "demande": "D026",
+ "banc": {
+  "at": "2026-11-10T22:15:09.869Z",
+  "seconds": 426,
+  "prepSeconds": null,
+  "outcome": null,
+  "error": "TimeoutError: locator.waitFor: Timeout 420000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByText(/Ton aventure est prête|Préparation interrompue|Préparation arrêtée|La préparation s’est arrêtée/).first() to be visible\u001b[22m\n\u001b[2m    - waiting for \"https://kitduvoyageur-17839519668-git-c3c1a7-tonyfara"
+ },
+ "trip": {
+  "id": "ac779a7d-29e8-47e5-89dc-0c07d4d1d17a",
+  "title": "Randonnée · Écosse",
+  "destination_name": "Écosse",
+  "destination_country_code": "GB",
+  "start_date": "2027-03-01",
+  "end_date": "2027-03-15",
+  "party_size": null,
+  "primary_activity": "hiking",
+  "estimated_budget": 1659,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": {
+     "lat": 56.78611,
+     "lon": -4.11405,
+     "kind": "administrative",
+     "name": "Écosse",
+     "extent": [
+      -14.015517,
+      61.061,
+      -0.3209221,
+      54.4339831
+     ],
+     "osmTag": "boundary=administrative",
+     "country": "Royaume-Uni",
+     "countryCode": "GB"
+    },
+    "planned_days": null,
+    "duration_h": null,
+    "prefs": null,
+    "origin": null,
+    "autofill": {
+     "runId": "r",
+     "undone": false,
+     "at": "2026-11-10T22:17:00.277Z",
+     "notes": [
+      "Papiers : conditions d’entrée (Royaume-Uni) à vérifier auprès du service officiel de ton pays avant de partir.",
+      "Prises de type G (Royaume-Uni) : vérifie que tes chargeurs s’y branchent.",
+      "Seul·e : laisse ton itinéraire et ton heure de retour à un proche. Urgence : 112.",
+      "Matériel conseillé non compté au budget : 167 € à la boutique si tu ne l’as pas (facultatif).",
+      "Suggestion de l’IA (facultatif) : prévois des gants thermiques coupe-vent pour affronter le vent et le froid écossais, même en mars.",
+      "Suggestion de l’IA (facultatif) : pense à vérifier l'état de tes batteries externes étanches avant chaque étape longue.",
+      "Suggestion de l’IA (facultatif) : n'oublie pas ta lampe frontale LED haute autonomie pour les départs matinaux ou les nuits en hébergement."
+     ],
+     "papers": {
+      "abroad": true,
+      "country": "Royaume-Uni",
+      "abroadFrom": "gps",
+      "countryCode": "GB"
+     },
+     "basis": {
+      "days": 15,
+      "pace": null,
+      "hours": null,
+      "level": null,
+      "month": 3,
+      "party": 1,
+      "nights": null,
+      "origin": null,
+      "carFree": null,
+      "terrain": null,
+      "activity": "hiking",
+      "autonomy": null,
+      "priority": null,
+      "targetKm": null,
+      "destination": "Écosse@56.79,-4.11",
+      "outdoorNights": null
+     },
+     "engine": []
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "day_number": 1,
+   "title": "Jour 1 · Fort William",
+   "description": "arrivee",
+   "latitude": 56.81783,
+   "longitude": -5.11095,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "plane",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 2,
+   "title": "Jour 2 · Glen Nevis Youth Hostel",
+   "description": "West Highland Way",
+   "latitude": 56.79972,
+   "longitude": -5.06761,
+   "distance_km": 4.7,
+   "elevation_gain_m": 22,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 3,
+   "title": "Jour 3 · Inveroran",
+   "description": "Rannoch Moor",
+   "latitude": 56.53291,
+   "longitude": -4.80745,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 4,
+   "title": "Jour 4 · Kingshouse Hotel",
+   "description": "Glencoe",
+   "latitude": 56.65149,
+   "longitude": -4.84129,
+   "distance_km": 20.8,
+   "elevation_gain_m": 229,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 5,
+   "title": "Jour 5 · Kinlochleven",
+   "description": "Devil's Staircase",
+   "latitude": 56.7143,
+   "longitude": -4.96478,
+   "distance_km": 14.4,
+   "elevation_gain_m": 320,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 6,
+   "title": "Jour 6 · Fort William",
+   "description": "Lairigmor",
+   "latitude": 56.81783,
+   "longitude": -5.11095,
+   "distance_km": 20.3,
+   "elevation_gain_m": 489,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 7,
+   "title": "Jour 7 · Fort William",
+   "description": "repos",
+   "latitude": 56.81783,
+   "longitude": -5.11095,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 8,
+   "title": "Jour 8 · Glenfinnan",
+   "description": "transfert",
+   "latitude": 56.87107,
+   "longitude": -5.44644,
+   "distance_km": 28.1,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "bus",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 9,
+   "title": "Jour 9 · Morar",
+   "description": "cote",
+   "latitude": 56.97062,
+   "longitude": -5.8235,
+   "distance_km": 37.2,
+   "elevation_gain_m": 471,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 10,
+   "title": "Jour 10 · Arisaig",
+   "description": "plages",
+   "latitude": 56.91081,
+   "longitude": -5.84323,
+   "distance_km": 8,
+   "elevation_gain_m": 106,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 11,
+   "title": "Jour 11 · Mallaig",
+   "description": "ferry vue",
+   "latitude": 57.00552,
+   "longitude": -5.8287,
+   "distance_km": 11.9,
+   "elevation_gain_m": 147,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 12,
+   "title": "Jour 12 · Mallaig",
+   "description": "repos",
+   "latitude": 57.00552,
+   "longitude": -5.8287,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 13,
+   "title": "Jour 13 · Fort William",
+   "description": "Jacobite",
+   "latitude": 56.81783,
+   "longitude": -5.11095,
+   "distance_km": 68.8,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "train",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 14,
+   "title": "Jour 14 · Fort William",
+   "description": "Ben Nevis",
+   "latitude": 56.81783,
+   "longitude": -5.11095,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 15,
+   "title": "Jour 15 · Fort William",
+   "description": "depart",
+   "latitude": 56.81783,
+   "longitude": -5.11095,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "aiProposed": true
+   }
+  }
+ ],
+ "items": [
+  {
+   "item_name": "Trousse de premiers secours complète",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": "f56a5199-7b77-45e9-9697-1b7f082e4902",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Poncho imperméable & coupe-vent",
+   "category": "clothing",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "649ebc6b-9e65-4256-8c31-983a7617a38d"
+  },
+  {
+   "item_name": "Sifflet de survie et détresse",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "f767e762-d417-48c2-909d-eea829081a65"
+  },
+  {
+   "item_name": "Lampe frontale LED haute autonomie",
+   "category": "tech",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "0ce62ae3-6398-48d4-be3a-de2ff265c26f"
+  },
+  {
+   "item_name": "Kit de réparation multi-usage",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "95c582ab-05ef-4d72-aa9b-9291c2ec35df"
+  },
+  {
+   "item_name": "Gants thermiques coupe-vent",
+   "category": "clothing",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Crème solaire haute protection SPF 50+",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "a30a619b-5f1e-48f9-8439-d396c4a84f46"
+  },
+  {
+   "item_name": "Gourde isotherme / Thermos en acier inoxydable",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "b6034a5b-301c-4dda-bce4-e13969bc013c",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Bouteille d’eau légère de randonnée",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "d403c58a-cf66-4346-9f14-33ecc31f9701"
+  },
+  {
+   "item_name": "Sac étanche / Dry bag de protection",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "e137cfe3-ff6e-4a73-a6a7-d6ea415b9739",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Bâtons de trekking télescopiques",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "549d7f9e-aa98-4618-82ec-bb913ca14d0c"
+  },
+  {
+   "item_name": "Couteau pliant multifonction en inox",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "72a3d504-7b6b-4501-87d0-427a51114b90"
+  },
+  {
+   "item_name": "Batterie externe étanche Power Bank",
+   "category": "tech",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "846f5f27-9f48-4492-a917-99768934eba5",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Sac à dos technique de randonnée",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "4cd21d3f-7c42-431d-af70-886b21d68de5"
+  }
+ ],
+ "expenses": [
+  {
+   "title": "14 nuit(s) en hébergement",
+   "amount": 728,
+   "currency": "EUR",
+   "category": "hébergement",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Royaume-Uni 115 (France = 100) · chambre partagée à deux · vrais prix dans Résa · Nuits",
+    "source": "estimation",
+    "autofill": "02fe8677-8ed1-42ab-8315-6cdd646db4fd"
+   }
+  },
+  {
+   "title": "Vol aller-retour × 1",
+   "amount": 280,
+   "currency": "EUR",
+   "category": "transport",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · vol aller-retour, 1 200 à 2 500 km · vol aller-retour depuis ta position, NCY → GLA (Annecy Meythet airport → Glasgow Airport), environ 1326 km · vrai prix dans Résa · Vols",
+    "source": "estimation",
+    "autofill": "02fe8677-8ed1-42ab-8315-6cdd646db4fd"
+   }
+  },
+  {
+   "title": "Transports sur place (2 trajets)",
+   "amount": 64,
+   "currency": "EUR",
+   "category": "transport",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Royaume-Uni 115 (France = 100) · bus, train",
+    "source": "estimation",
+    "autofill": "02fe8677-8ed1-42ab-8315-6cdd646db4fd"
+   }
+  },
+  {
+   "title": "Repas · 15 jour(s) × 1",
+   "amount": 530,
+   "currency": "EUR",
+   "category": "nourriture",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Royaume-Uni 115 (France = 100) · selon la nuit (bivouac, refuge, hébergement) · repas en autonomie (bivouac, journée) : alimentation : Royaume-Uni 86 (France = 100) · ICP 2021, Banque mondiale, lu le 12 octobre 2026",
+    "source": "estimation",
+    "autofill": "02fe8677-8ed1-42ab-8315-6cdd646db4fd"
+   }
+  },
+  {
+   "title": "Matériel à acheter",
+   "amount": 12,
+   "currency": "EUR",
+   "category": "matériel",
+   "is_planned": true,
+   "metadata": {
+    "basis": "prix de la boutique",
+    "source": "base",
+    "autofill": "02fe8677-8ed1-42ab-8315-6cdd646db4fd"
+   }
+  },
+  {
+   "title": "Assurance voyage et rapatriement",
+   "amount": 45,
+   "currency": "EUR",
+   "category": "divers",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · forfait par jour",
+    "source": "estimation",
+    "autofill": "02fe8677-8ed1-42ab-8315-6cdd646db4fd"
+   }
+  }
+ ]
+}

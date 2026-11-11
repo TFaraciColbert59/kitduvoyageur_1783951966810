@@ -1,0 +1,655 @@
+{
+ "demande": "D060",
+ "banc": {
+  "at": "2026-11-10T23:33:27.298Z",
+  "seconds": 49,
+  "prepSeconds": 42,
+  "outcome": "Ton aventure est prête",
+  "error": null
+ },
+ "trip": {
+  "id": "ae3a908e-1e1b-4fa2-b4e8-65657b35c788",
+  "title": "Eau · Canggu",
+  "destination_name": "Canggu",
+  "destination_country_code": "ID",
+  "start_date": "2027-07-03",
+  "end_date": "2027-08-01",
+  "party_size": 1,
+  "primary_activity": "water",
+  "estimated_budget": 2177,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": {
+     "lat": -8.6399,
+     "lon": 115.1436,
+     "kind": "region",
+     "name": "Canggu",
+     "extent": null,
+     "osmTag": "place=village",
+     "country": "Indonésie",
+     "countryCode": "ID"
+    },
+    "planned_days": 30,
+    "duration_h": null,
+    "prefs": {
+     "pace": "normal",
+     "avoid": [],
+     "nights": null,
+     "wishes": [
+      "Bali"
+     ]
+    },
+    "origin": null,
+    "autofill": {
+     "runId": "r",
+     "undone": false,
+     "at": "2026-11-10T23:33:51.805Z",
+     "notes": [
+      "Papiers : conditions d’entrée (Indonésie) à vérifier auprès du service officiel de ton pays avant de partir.",
+      "Rivière : gilet attaché en permanence ; vérifie le niveau de l’eau et les lâchers de barrage en amont avant d’embarquer.",
+      "Seul·e : laisse ton itinéraire et ton heure de retour à un proche, et note le numéro d’urgence du pays avant de partir.",
+      "Sous les tropiques, l’eau du robinet et celle des ruisseaux n’est pas toujours potable : traite-la (filtre, pastilles ou ébullition) ou prends de l’eau en bouteille scellée.",
+      "Période proposée : juillet (saison sèche (mai à septembre)). Change-la dans « Quand » si elle ne te va pas.",
+      "Itinéraire depuis une base construit sur des lieux réels de la carte (1 lieu où dormir), en passant par Banjar Triwangsakeliki.",
+      "Matériel conseillé non compté au budget : 155 € à la boutique si tu ne l’as pas (facultatif).",
+      "Suggestion de l’IA (facultatif) : n'oublie pas ta crème solaire haute protection SPF 50+ et des lunettes de soleil UV400 cat. 3/4 pour une exposition solaire intense."
+     ],
+     "papers": {
+      "abroad": true,
+      "country": "Indonésie",
+      "abroadFrom": "gps",
+      "countryCode": "ID"
+     },
+     "basis": {
+      "days": 30,
+      "pace": null,
+      "hours": null,
+      "level": null,
+      "month": 7,
+      "party": 1,
+      "nights": null,
+      "origin": null,
+      "carFree": null,
+      "terrain": null,
+      "activity": "water",
+      "autonomy": null,
+      "priority": null,
+      "targetKm": null,
+      "destination": "Canggu@-8.64,115.14",
+      "outdoorNights": null
+     },
+     "engine": []
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "day_number": 1,
+   "title": "Jour 1 · Banjar Triwangsakeliki",
+   "description": "Base du séjour. Visite : Bali (nuit au lieu habité le plus proche).",
+   "latitude": -8.452,
+   "longitude": 115.262,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 2,
+   "title": "Jour 2 · Banjar Triwangsakeliki",
+   "description": null,
+   "latitude": -8.452,
+   "longitude": 115.262,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 3,
+   "title": "Jour 3 · Banjar Triwangsakeliki",
+   "description": null,
+   "latitude": -8.452,
+   "longitude": 115.262,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 4,
+   "title": "Jour 4 · Banjar Triwangsakeliki",
+   "description": null,
+   "latitude": -8.452,
+   "longitude": 115.262,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 5,
+   "title": "Jour 5 · Banjar Triwangsakeliki",
+   "description": null,
+   "latitude": -8.452,
+   "longitude": 115.262,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 6,
+   "title": "Jour 6 · Banjar Triwangsakeliki",
+   "description": null,
+   "latitude": -8.452,
+   "longitude": 115.262,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 7,
+   "title": "Jour 7 · Banjar Triwangsakeliki",
+   "description": null,
+   "latitude": -8.452,
+   "longitude": 115.262,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 8,
+   "title": "Jour 8 · Banjar Triwangsakeliki",
+   "description": null,
+   "latitude": -8.452,
+   "longitude": 115.262,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 9,
+   "title": "Jour 9 · Banjar Triwangsakeliki",
+   "description": null,
+   "latitude": -8.452,
+   "longitude": 115.262,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 10,
+   "title": "Jour 10 · Banjar Triwangsakeliki",
+   "description": null,
+   "latitude": -8.452,
+   "longitude": 115.262,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 11,
+   "title": "Jour 11 · Banjar Triwangsakeliki",
+   "description": null,
+   "latitude": -8.452,
+   "longitude": 115.262,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 12,
+   "title": "Jour 12 · Banjar Triwangsakeliki",
+   "description": null,
+   "latitude": -8.452,
+   "longitude": 115.262,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 13,
+   "title": "Jour 13 · Banjar Triwangsakeliki",
+   "description": null,
+   "latitude": -8.452,
+   "longitude": 115.262,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 14,
+   "title": "Jour 14 · Banjar Triwangsakeliki",
+   "description": null,
+   "latitude": -8.452,
+   "longitude": 115.262,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 15,
+   "title": "Jour 15 · Banjar Triwangsakeliki",
+   "description": null,
+   "latitude": -8.452,
+   "longitude": 115.262,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 16,
+   "title": "Jour 16 · Banjar Triwangsakeliki",
+   "description": null,
+   "latitude": -8.452,
+   "longitude": 115.262,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 17,
+   "title": "Jour 17 · Banjar Triwangsakeliki",
+   "description": null,
+   "latitude": -8.452,
+   "longitude": 115.262,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 18,
+   "title": "Jour 18 · Banjar Triwangsakeliki",
+   "description": null,
+   "latitude": -8.452,
+   "longitude": 115.262,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 19,
+   "title": "Jour 19 · Banjar Triwangsakeliki",
+   "description": null,
+   "latitude": -8.452,
+   "longitude": 115.262,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 20,
+   "title": "Jour 20 · Banjar Triwangsakeliki",
+   "description": null,
+   "latitude": -8.452,
+   "longitude": 115.262,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 21,
+   "title": "Jour 21 · Banjar Triwangsakeliki",
+   "description": null,
+   "latitude": -8.452,
+   "longitude": 115.262,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 22,
+   "title": "Jour 22 · Banjar Triwangsakeliki",
+   "description": null,
+   "latitude": -8.452,
+   "longitude": 115.262,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 23,
+   "title": "Jour 23 · Banjar Triwangsakeliki",
+   "description": null,
+   "latitude": -8.452,
+   "longitude": 115.262,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 24,
+   "title": "Jour 24 · Banjar Triwangsakeliki",
+   "description": null,
+   "latitude": -8.452,
+   "longitude": 115.262,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 25,
+   "title": "Jour 25 · Banjar Triwangsakeliki",
+   "description": null,
+   "latitude": -8.452,
+   "longitude": 115.262,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 26,
+   "title": "Jour 26 · Banjar Triwangsakeliki",
+   "description": null,
+   "latitude": -8.452,
+   "longitude": 115.262,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 27,
+   "title": "Jour 27 · Banjar Triwangsakeliki",
+   "description": null,
+   "latitude": -8.452,
+   "longitude": 115.262,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 28,
+   "title": "Jour 28 · Banjar Triwangsakeliki",
+   "description": null,
+   "latitude": -8.452,
+   "longitude": 115.262,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 29,
+   "title": "Jour 29 · Banjar Triwangsakeliki",
+   "description": null,
+   "latitude": -8.452,
+   "longitude": 115.262,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 30,
+   "title": "Jour 30 · Banjar Triwangsakeliki",
+   "description": null,
+   "latitude": -8.452,
+   "longitude": 115.262,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  }
+ ],
+ "items": [
+  {
+   "item_name": "Gilet d’aide à la flottabilité",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Sac étanche",
+   "category": "tools",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "bf43a2e0-bb83-464c-95ad-651ff7979e1c"
+  },
+  {
+   "item_name": "Combinaison ou lycra",
+   "category": "clothing",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Trousse de premiers secours complète",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": "f56a5199-7b77-45e9-9697-1b7f082e4902",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Crème solaire haute protection SPF 50+",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "a30a619b-5f1e-48f9-8439-d396c4a84f46"
+  },
+  {
+   "item_name": "Sifflet de survie et détresse",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "f767e762-d417-48c2-909d-eea829081a65"
+  },
+  {
+   "item_name": "Lampe frontale LED haute autonomie",
+   "category": "tech",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "0ce62ae3-6398-48d4-be3a-de2ff265c26f"
+  },
+  {
+   "item_name": "Kit de réparation multi-usage",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "95c582ab-05ef-4d72-aa9b-9291c2ec35df"
+  },
+  {
+   "item_name": "Filtre à eau / paille filtrante",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Pastilles de purification d’eau",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Répulsif anti-moustiques",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "e4c51d60-99ad-46e2-bf10-7a2ff701e61f"
+  },
+  {
+   "item_name": "Bouteille d’eau légère de randonnée",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "d403c58a-cf66-4346-9f14-33ecc31f9701"
+  },
+  {
+   "item_name": "Couteau pliant multifonction en inox",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "72a3d504-7b6b-4501-87d0-427a51114b90"
+  },
+  {
+   "item_name": "Lunettes de soleil sport UV400 cat. 3/4",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "371d08c1-7865-4352-a09f-ac551e487ead"
+  }
+ ],
+ "expenses": [
+  {
+   "title": "29 nuit(s) en hébergement",
+   "amount": 522,
+   "currency": "EUR",
+   "category": "hébergement",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Indonésie 40 (France = 100) · chambre partagée à deux · vrais prix dans Résa · Nuits",
+    "source": "estimation",
+    "autofill": "7e134a7b-d588-4ed8-8ac5-5183f8771543"
+   }
+  },
+  {
+   "title": "Vol aller-retour × 1",
+   "amount": 1150,
+   "currency": "EUR",
+   "category": "transport",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · vol aller-retour, plus de 11 000 km · vol aller-retour depuis ta position, NCY → DPS (Annecy Meythet airport → Denpasar I Gusti Ngurah Rai International Airport), environ 12176 km · vrai prix dans Résa · Vols",
+    "source": "estimation",
+    "autofill": "7e134a7b-d588-4ed8-8ac5-5183f8771543"
+   }
+  },
+  {
+   "title": "Repas · 30 jour(s) × 1",
+   "amount": 387,
+   "currency": "EUR",
+   "category": "nourriture",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Indonésie 40 (France = 100) · selon la nuit (bivouac, refuge, hébergement) · repas en autonomie (bivouac, journée) : alimentation : Indonésie 69 (France = 100) · ICP 2021, Banque mondiale, lu le 12 octobre 2026",
+    "source": "estimation",
+    "autofill": "7e134a7b-d588-4ed8-8ac5-5183f8771543"
+   }
+  },
+  {
+   "title": "Matériel à acheter",
+   "amount": 28,
+   "currency": "EUR",
+   "category": "matériel",
+   "is_planned": true,
+   "metadata": {
+    "basis": "prix de la boutique",
+    "source": "base",
+    "autofill": "7e134a7b-d588-4ed8-8ac5-5183f8771543"
+   }
+  },
+  {
+   "title": "Assurance voyage et rapatriement",
+   "amount": 90,
+   "currency": "EUR",
+   "category": "divers",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · forfait par jour",
+    "source": "estimation",
+    "autofill": "7e134a7b-d588-4ed8-8ac5-5183f8771543"
+   }
+  }
+ ]
+}

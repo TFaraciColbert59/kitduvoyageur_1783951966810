@@ -1,0 +1,211 @@
+{
+ "demande": "D015",
+ "banc": {
+  "at": "2026-11-10T17:35:53.436Z",
+  "seconds": 51,
+  "prepSeconds": 45,
+  "outcome": "Ton aventure est prête",
+  "error": null
+ },
+ "trip": {
+  "id": "1e11461a-0e15-4f45-b988-e481d666cb20",
+  "title": "Vélo · Saint-Louis du Sénégal",
+  "destination_name": "Saint-Louis du Sénégal",
+  "destination_country_code": "SN",
+  "start_date": "2027-01-01",
+  "end_date": "2027-01-01",
+  "party_size": 1,
+  "primary_activity": "cycling",
+  "estimated_budget": 72,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": {
+     "lat": 14.47506,
+     "lon": -14.45296,
+     "kind": "country",
+     "name": "Saint-Louis du Sénégal",
+     "extent": [
+      -17.7498686,
+      16.6919712,
+      -11.3459503,
+      12.2402664
+     ],
+     "osmTag": "place=country",
+     "country": "Sénégal",
+     "countryCode": "SN"
+    },
+    "planned_days": null,
+    "duration_h": 2,
+    "prefs": null,
+    "origin": null,
+    "autofill": {
+     "runId": "r",
+     "undone": false,
+     "at": "2026-11-10T17:36:26.126Z",
+     "notes": [
+      "Papiers : conditions d’entrée (Sénégal) à vérifier auprès du service officiel de ton pays avant de partir.",
+      "Seul·e : laisse ton itinéraire et ton heure de retour à un proche, et note le numéro d’urgence du pays avant de partir.",
+      "Sous les tropiques, l’eau du robinet et celle des ruisseaux n’est pas toujours potable : traite-la (filtre, pastilles ou ébullition) ou prends de l’eau en bouteille scellée.",
+      "Matériel conseillé non compté au budget : 38 € à la boutique si tu ne l’as pas (facultatif).",
+      "Suggestion de l’IA (facultatif) : prévois un casque de vélo homologué pour rouler en toute sécurité sur les routes sénégalaises",
+      "Suggestion de l’IA (facultatif) : pense à emporter un antivol solide pour sécuriser ton vélo lors des arrêts à Saint-Louis"
+     ],
+     "papers": {
+      "abroad": true,
+      "country": "Sénégal",
+      "abroadFrom": "gps",
+      "countryCode": "SN"
+     },
+     "basis": {
+      "days": 1,
+      "pace": null,
+      "hours": 2,
+      "level": null,
+      "month": 1,
+      "party": 1,
+      "nights": null,
+      "origin": null,
+      "carFree": null,
+      "terrain": null,
+      "activity": "cycling",
+      "autonomy": null,
+      "priority": null,
+      "targetKm": null,
+      "destination": "Saint-Louis du Sénégal@14.48,-14.45",
+      "outdoorNights": null
+     },
+     "engine": []
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "day_number": 1,
+   "title": "Jour 1 · Saint-Louis",
+   "description": "visite ville, pont Faidherbe Boucle d’environ 36 km (estimation selon la durée et l’allure).",
+   "latitude": 16.02804,
+   "longitude": -16.50487,
+   "distance_km": 36,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "plane",
+   "metadata": {
+    "distance": {
+     "source": "estimation"
+    },
+    "aiProposed": true
+   }
+  }
+ ],
+ "items": [
+  {
+   "item_name": "Casque de vélo",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Kit de réparation (chambre à air, démonte-pneus, pompe)",
+   "category": "tools",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "95c582ab-05ef-4d72-aa9b-9291c2ec35df"
+  },
+  {
+   "item_name": "Éclairage avant et arrière",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "549d7f9e-aa98-4618-82ec-bb913ca14d0c"
+  },
+  {
+   "item_name": "Antivol",
+   "category": "tools",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Trousse de premiers secours complète",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": "f56a5199-7b77-45e9-9697-1b7f082e4902",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Crème solaire haute protection SPF 50+",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "a30a619b-5f1e-48f9-8439-d396c4a84f46"
+  },
+  {
+   "item_name": "Répulsif anti-moustiques",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "e4c51d60-99ad-46e2-bf10-7a2ff701e61f"
+  },
+  {
+   "item_name": "Bouteille d’eau légère de randonnée",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "d403c58a-cf66-4346-9f14-33ecc31f9701"
+  },
+  {
+   "item_name": "Sac à dos technique de randonnée",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "e137cfe3-ff6e-4a73-a6a7-d6ea415b9739",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Lunettes de soleil sport UV400 cat. 3/4",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "371d08c1-7865-4352-a09f-ac551e487ead"
+  }
+ ],
+ "expenses": [
+  {
+   "title": "Matériel à acheter",
+   "amount": 42,
+   "currency": "EUR",
+   "category": "matériel",
+   "is_planned": true,
+   "metadata": {
+    "basis": "prix de la boutique",
+    "source": "base",
+    "autofill": "54f8a47f-f9b9-44fe-a6ae-3ae091ed578e"
+   }
+  },
+  {
+   "title": "Assurance voyage et rapatriement",
+   "amount": 30,
+   "currency": "EUR",
+   "category": "divers",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · forfait par jour",
+    "source": "estimation",
+    "autofill": "54f8a47f-f9b9-44fe-a6ae-3ae091ed578e"
+   }
+  }
+ ]
+}

@@ -1,0 +1,44 @@
+{
+ "demande": "D051",
+ "banc": {
+  "at": "2026-11-10T23:14:42.267Z",
+  "seconds": 42,
+  "prepSeconds": 35,
+  "outcome": "La préparation s’est arrêtée",
+  "error": null
+ },
+ "trip": {
+  "id": "a602dca0-352c-4671-8bcd-dbcad516de6b",
+  "title": "Trek · Vallée de Cocora",
+  "destination_name": "Vallée de Cocora",
+  "destination_country_code": "CO",
+  "start_date": null,
+  "end_date": null,
+  "party_size": null,
+  "primary_activity": "trekking",
+  "estimated_budget": null,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": {
+     "lat": 4.6373,
+     "lon": -75.5698,
+     "kind": "region",
+     "name": "Vallée de Cocora",
+     "extent": null,
+     "osmTag": "boundary=administrative",
+     "country": "Colombie",
+     "countryCode": "CO"
+    },
+    "planned_days": null,
+    "duration_h": null,
+    "prefs": null,
+    "origin": null,
+    "autofill": null
+   }
+  }
+ },
+ "steps": [],
+ "items": [],
+ "expenses": []
+}
