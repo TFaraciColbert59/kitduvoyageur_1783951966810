@@ -7,19 +7,24 @@ import { TraceImportError } from './model';
  * Il ne construit pas de DOM et n'interprète aucune déclaration de type de
  * document. `<!DOCTYPE>`, `<!ENTITY>` et toute entité nommée non prédéfinie
  * sont refusés avant lecture : aucune entité externe ne peut être résolue.
- * Seules les cinq entités XML prédéfinies et les références numériques sont
- * décodées.
+ * Seules les cinq entités XML prédéfinies et les références numériques vers un
+ * caractère XML 1.0 valide sont décodées.
+ *
+ * Les noms qualifiés (préfixe compris) sont conservés pour vérifier qu'une
+ * fermeture correspond exactement à son ouverture. La résolution de l'URI des
+ * préfixes reste à la charge du lecteur de format, qui connaît son schéma.
  */
 
 export interface SafeXmlSink {
   /** `depth` commence à 1 pour l'élément racine. */
   open(
+    qualifiedName: string,
     localName: string,
     attributes: Readonly<Record<string, string>>,
     selfClosing: boolean,
     depth: number,
   ): void;
-  close(localName: string, depth: number): void;
+  close(qualifiedName: string, localName: string, depth: number): void;
   text(value: string): void;
 }
 
@@ -32,16 +37,22 @@ interface ScanOptions {
   maxDepth: number;
 }
 
+interface OpenElement {
+  qualifiedName: string;
+  localName: string;
+}
+
 export function scanSafeXml(
   xml: string,
   sink: SafeXmlSink,
   options: ScanOptions,
 ): SafeXmlScanResult {
-  const stack: string[] = [];
+  const stack: OpenElement[] = [];
   let position = 0;
   let rootName: string | null = null;
   let rootClosed = false;
   let sawRoot = false;
+  let sawXmlDeclaration = false;
 
   while (position < xml.length) {
     const nextOpen = xml.indexOf('<', position);
@@ -56,29 +67,45 @@ export function scanSafeXml(
 
     if (xml.startsWith('<!--', nextOpen)) {
       const end = xml.indexOf('-->', nextOpen + 4);
-      if (end < 0) return { rootName, truncated: true };
+      if (end < 0) return incomplete();
       position = end + 3;
       continue;
     }
 
     if (xml.startsWith('<![CDATA[', nextOpen)) {
       const end = xml.indexOf(']]>', nextOpen + 9);
-      if (end < 0) return { rootName, truncated: true };
+      if (end < 0) return incomplete();
       if (stack.length === 0) {
         throw new TraceImportError('invalid-xml', 'CDATA hors de l’élément racine.');
       }
-      sink.text(xml.slice(nextOpen + 9, end));
+      const cdata = xml.slice(nextOpen + 9, end);
+      assertValidXmlCharacters(cdata, 'CDATA');
+      sink.text(cdata);
       position = end + 3;
       continue;
     }
 
     if (xml.startsWith('<?', nextOpen)) {
       const end = xml.indexOf('?>', nextOpen + 2);
-      if (end < 0) return { rootName, truncated: true };
+      if (end < 0) return incomplete();
       const instruction = xml.slice(nextOpen + 2, end).trim();
-      if (sawRoot || !/^xml(?:\s|$)/i.test(instruction)) {
+      if (sawRoot || sawXmlDeclaration) {
+        throw new TraceImportError(
+          'invalid-xml',
+          'Déclaration ou instruction de traitement XML inattendue.',
+        );
+      }
+      if (!/^xml(?:\s|$)/i.test(instruction)) {
         throw new TraceImportError('invalid-xml', 'Instruction de traitement XML inattendue.');
       }
+      const afterBom = nextOpen === 1 && xml.charCodeAt(0) === 0xfeff;
+      if (nextOpen !== 0 && !afterBom) {
+        throw new TraceImportError(
+          'invalid-xml',
+          'La déclaration XML doit être le premier contenu du document.',
+        );
+      }
+      sawXmlDeclaration = true;
       position = end + 2;
       continue;
     }
@@ -91,7 +118,7 @@ export function scanSafeXml(
     }
 
     const tagEnd = findTagEnd(xml, nextOpen + 1);
-    if (tagEnd < 0) return { rootName, truncated: true };
+    if (tagEnd < 0) return incomplete();
 
     const rawTag = xml.slice(nextOpen + 1, tagEnd).trim();
     if (rawTag.length === 0) {
@@ -105,16 +132,19 @@ export function scanSafeXml(
       const expected = stack.pop();
 
       if (expected == null) {
-        throw new TraceImportError('invalid-xml', `Fermeture de <${localName}> sans ouverture.`);
-      }
-      if (expected !== localName) {
         throw new TraceImportError(
           'invalid-xml',
-          `Fermeture de <${localName}> alors que <${expected}> est ouvert.`,
+          `Fermeture de <${excerpt(localName)}> sans ouverture.`,
+        );
+      }
+      if (expected.qualifiedName !== rawName) {
+        throw new TraceImportError(
+          'invalid-xml',
+          `Fermeture de <${excerpt(rawName)}> alors que <${excerpt(expected.qualifiedName)}> est ouvert.`,
         );
       }
 
-      sink.close(localName, stack.length + 1);
+      sink.close(rawName, localName, stack.length + 1);
       if (stack.length === 0) rootClosed = true;
     } else {
       const selfClosing = rawTag.endsWith('/');
@@ -141,13 +171,13 @@ export function scanSafeXml(
       }
 
       const depth = stack.length + 1;
-      sink.open(localName, attributes, selfClosing, depth);
+      sink.open(name, localName, attributes, selfClosing, depth);
 
       if (selfClosing) {
-        sink.close(localName, depth);
+        sink.close(name, localName, depth);
         if (stack.length === 0) rootClosed = true;
       } else {
-        stack.push(localName);
+        stack.push({ qualifiedName: name, localName });
       }
     }
 
@@ -157,12 +187,27 @@ export function scanSafeXml(
   if (!sawRoot) {
     throw new TraceImportError('invalid-xml', 'Élément racine absent.');
   }
-  if (stack.length > 0) return { rootName, truncated: true };
+  if (stack.length > 0) return incomplete();
   if (!rootClosed) {
     throw new TraceImportError('invalid-xml', 'Document XML incomplet.');
   }
 
   return { rootName, truncated: false };
+
+  /**
+   * Une fin de fichier n'est une troncature que si la racine est encore
+   * ouverte. Après sa fermeture, un commentaire ou une balise inachevée est
+   * un document mal formé, pas un fichier coupé.
+   */
+  function incomplete(): SafeXmlScanResult {
+    if (rootClosed) {
+      throw new TraceImportError(
+        'invalid-xml',
+        'Contenu XML incomplet après la fermeture de l’élément racine.',
+      );
+    }
+    return { rootName, truncated: true };
+  }
 
   function emitText(value: string): void {
     if (value.length === 0) return;
@@ -172,6 +217,7 @@ export function scanSafeXml(
       }
       return;
     }
+    assertValidXmlCharacters(value, 'texte XML');
     sink.text(decodeEntities(value, 'texte XML'));
   }
 }
@@ -212,42 +258,61 @@ function parseStartTag(content: string): {
   let index = name.length;
 
   while (index < content.length) {
-    while (index < content.length && /\s/.test(content[index])) index += 1;
+    // Un attribut doit être séparé du nom ou de l'attribut précédent par au
+    // moins un espace : `<a x="1"y="2">` est du XML mal formé.
+    if (!isWhitespace(content[index])) {
+      throw new TraceImportError(
+        'invalid-xml',
+        `Attribut non séparé par un espace dans <${excerpt(name)}>.`,
+      );
+    }
+    while (index < content.length && isWhitespace(content[index])) index += 1;
     if (index >= content.length) break;
 
     const attributeMatch = /^[A-Za-z_][A-Za-z0-9_.:-]*/.exec(content.slice(index));
     if (attributeMatch == null) {
-      throw new TraceImportError('invalid-xml', `Attribut invalide dans <${name}>.`);
+      throw new TraceImportError('invalid-xml', `Attribut invalide dans <${excerpt(name)}>.`);
     }
 
     const attributeName = attributeMatch[0];
     index += attributeName.length;
-    while (index < content.length && /\s/.test(content[index])) index += 1;
+    while (index < content.length && isWhitespace(content[index])) index += 1;
 
     if (content[index] !== '=') {
-      throw new TraceImportError('invalid-xml', `Attribut ${attributeName} sans valeur.`);
+      throw new TraceImportError(
+        'invalid-xml',
+        `Attribut ${excerpt(attributeName)} sans valeur.`,
+      );
     }
 
     index += 1;
-    while (index < content.length && /\s/.test(content[index])) index += 1;
+    while (index < content.length && isWhitespace(content[index])) index += 1;
 
     const quote = content[index];
     if (quote !== '"' && quote !== "'") {
-      throw new TraceImportError('invalid-xml', `Valeur de ${attributeName} non citée.`);
+      throw new TraceImportError(
+        'invalid-xml',
+        `Valeur de ${excerpt(attributeName)} non citée.`,
+      );
     }
 
     const end = content.indexOf(quote, index + 1);
     if (end < 0) {
-      throw new TraceImportError('invalid-xml', `Valeur de ${attributeName} non terminée.`);
+      throw new TraceImportError(
+        'invalid-xml',
+        `Valeur de ${excerpt(attributeName)} non terminée.`,
+      );
     }
     if (Object.prototype.hasOwnProperty.call(attributes, attributeName)) {
-      throw new TraceImportError('invalid-xml', `Attribut ${attributeName} dupliqué.`);
+      throw new TraceImportError(
+        'invalid-xml',
+        `Attribut ${excerpt(attributeName)} dupliqué.`,
+      );
     }
 
-    attributes[attributeName] = decodeEntities(
-      content.slice(index + 1, end),
-      `attribut ${attributeName}`,
-    );
+    const rawValue = content.slice(index + 1, end);
+    assertValidXmlCharacters(rawValue, `attribut ${attributeName}`);
+    attributes[attributeName] = decodeEntities(rawValue, `attribut ${attributeName}`);
     index = end + 1;
   }
 
@@ -256,7 +321,7 @@ function parseStartTag(content: string): {
 
 function assertElementName(rawName: string): void {
   if (!/^[A-Za-z_][A-Za-z0-9_.:-]*$/.test(rawName)) {
-    throw new TraceImportError('invalid-xml', `Nom de balise invalide : ${rawName}.`);
+    throw new TraceImportError('invalid-xml', `Nom de balise invalide : ${excerpt(rawName)}.`);
   }
 }
 
@@ -293,7 +358,7 @@ function decodeEntities(raw: string, where: string): string {
     } else {
       throw new TraceImportError(
         'external-entity-forbidden',
-        `Entité nommée « ${entity} » interdite dans ${where} : aucune entité externe n’est traitée.`,
+        `Entité nommée « ${excerpt(entity)} » interdite dans ${where} : aucune entité externe n’est traitée.`,
       );
     }
 
@@ -309,14 +374,50 @@ function decodeCodePoint(raw: string, radix: 10 | 16, where: string): string {
   }
 
   const codePoint = Number.parseInt(raw, radix);
-  if (
-    !Number.isInteger(codePoint)
-    || codePoint < 0
-    || codePoint > 0x10ffff
-    || (codePoint >= 0xd800 && codePoint <= 0xdfff)
-  ) {
-    throw new TraceImportError('invalid-xml', `Point de code invalide dans ${where}.`);
+  if (!Number.isInteger(codePoint) || !isXmlCodePoint(codePoint)) {
+    throw new TraceImportError(
+      'invalid-xml',
+      `Point de code U+${excerpt(raw)} interdit par XML 1.0 dans ${where}.`,
+    );
   }
 
   return String.fromCodePoint(codePoint);
+}
+
+/** Production `Char` de XML 1.0 (les contrôles C0 et les non-caractères sont exclus). */
+function isXmlCodePoint(codePoint: number): boolean {
+  return (
+    codePoint === 0x09
+    || codePoint === 0x0a
+    || codePoint === 0x0d
+    || (codePoint >= 0x20 && codePoint <= 0xd7ff)
+    || (codePoint >= 0xe000 && codePoint <= 0xfffd)
+    || (codePoint >= 0x10000 && codePoint <= 0x10ffff)
+  );
+}
+
+function assertValidXmlCharacters(value: string, where: string): void {
+  let index = 0;
+
+  while (index < value.length) {
+    const codePoint = value.codePointAt(index);
+    if (codePoint == null) return;
+    if (!isXmlCodePoint(codePoint)) {
+      throw new TraceImportError(
+        'invalid-xml',
+        `Caractère U+${codePoint.toString(16).toUpperCase()} interdit par XML 1.0 dans ${where}.`,
+      );
+    }
+    index += codePoint > 0xffff ? 2 : 1;
+  }
+}
+
+function isWhitespace(character: string | undefined): boolean {
+  return character === ' ' || character === '\t' || character === '\n' || character === '\r';
+}
+
+function excerpt(value: string, maxLength = 40): string {
+  return value.length <= maxLength
+    ? value
+    : `${value.slice(0, maxLength)}… (${value.length} caractères)`;
 }

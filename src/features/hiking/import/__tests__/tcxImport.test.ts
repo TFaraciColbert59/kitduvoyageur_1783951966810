@@ -9,6 +9,8 @@ import {
   type TraceImportErrorCode,
 } from '..';
 
+const TCX_V2_NAMESPACE = 'http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2';
+
 function fixture(name: string): string {
   return readFileSync(new URL(`./fixtures/${name}`, import.meta.url), 'utf8');
 }
@@ -44,6 +46,20 @@ describe('import TCX · fichier valide', () => {
       endedAt: '2026-08-09T08:15:00.000Z',
     });
     expect(trace.issues).toEqual([]);
+  });
+
+  it('mesure la taille UTF-8 des caractères multi-octets sans copie du document', () => {
+    const withAccents = xml.replace('<Activities>', '<!-- éà漢字 --><Activities>');
+    const trace = parseTcx(withAccents);
+
+    expect(trace.provenance.byteLength).toBe(Buffer.byteLength(withAccents, 'utf8'));
+  });
+
+  it('accepte un BOM UTF-8 avant la déclaration XML', () => {
+    const trace = parseTcx(`\uFEFF${xml}`);
+
+    expect(trace.status).toBe('complete');
+    expect(trace.points).toHaveLength(3);
   });
 
   it('normalise les tours, les index de points et les unités métriques', () => {
@@ -203,20 +219,228 @@ describe('import TCX · bornes et erreurs de lecture', () => {
   });
 
   it('refuse une entité nommée non prédéfinie', () => {
-    const entity = `<TrainingCenterDatabase><Activities><Activity Sport="Running"><Id>2026-08-09T08:00:00.000Z</Id><Lap><TotalTimeSeconds>1</TotalTimeSeconds><Track><Trackpoint><Time>&xxe;</Time></Trackpoint></Track></Lap></Activity></Activities></TrainingCenterDatabase>`;
+    const entity = `<TrainingCenterDatabase xmlns="${TCX_V2_NAMESPACE}"><Activities><Activity Sport="Running"><Id>2026-08-09T08:00:00.000Z</Id><Lap><TotalTimeSeconds>1</TotalTimeSeconds><Track><Trackpoint><Time>&xxe;</Time></Trackpoint></Track></Lap></Activity></Activities></TrainingCenterDatabase>`;
     expectTraceError(() => parseTcx(entity), 'external-entity-forbidden');
   });
 
   it('refuse un XML mal formé, une mauvaise racine et une activité absente', () => {
     expectTraceError(
-      () => parseTcx('<TrainingCenterDatabase><Activities></TrainingCenterDatabase>'),
+      () => parseTcx(
+        `<TrainingCenterDatabase xmlns="${TCX_V2_NAMESPACE}"><Activities></TrainingCenterDatabase>`,
+      ),
       'invalid-xml',
     );
     expectTraceError(() => parseTcx('<gpx version="1.1"></gpx>'), 'not-tcx');
     expectTraceError(
-      () => parseTcx('<TrainingCenterDatabase><Activities></Activities></TrainingCenterDatabase>'),
+      () => parseTcx(
+        `<TrainingCenterDatabase xmlns="${TCX_V2_NAMESPACE}"><Activities></Activities></TrainingCenterDatabase>`,
+      ),
       'no-activity',
     );
+  });
+});
+
+describe('import TCX · namespaces et versions', () => {
+  it('résout le namespace de la racine préfixée, même si xmlns:xsi précède le préfixe TCX', () => {
+    const trace = parseTcx(fixture('activity-prefixed-v2.tcx'));
+
+    expect(trace.status).toBe('complete');
+    expect(trace.provenance.schema).toBe(TCX_V2_NAMESPACE);
+    expect(trace.provenance.sport).toBe('Cycling');
+    expect(trace.laps).toHaveLength(1);
+    expect(trace.points).toHaveLength(1);
+    expect(trace.points[0]).toMatchObject({
+      latitudeDeg: 44.1,
+      longitudeDeg: 7.1,
+      altitudeM: 800,
+      heartRateBpm: 110,
+    });
+    expect(trace.issues).toEqual([]);
+  });
+
+  it('refuse explicitement un TCX v1 au lieu de perdre ses champs silencieusement', () => {
+    expectTraceError(() => parseTcx(fixture('activity-v1.tcx')), 'unsupported-version');
+  });
+
+  it('refuse un document sans namespace ou avec un namespace étranger', () => {
+    expectTraceError(
+      () => parseTcx('<TrainingCenterDatabase><Activities></Activities></TrainingCenterDatabase>'),
+      'not-tcx',
+    );
+    expectTraceError(
+      () => parseTcx(
+        '<TrainingCenterDatabase xmlns="urn:example:tcx"><Activities></Activities></TrainingCenterDatabase>',
+      ),
+      'not-tcx',
+    );
+  });
+
+  it('refuse une fermeture dont le préfixe diffère de l’ouverture', () => {
+    const xml = `<t:TrainingCenterDatabase xmlns:t="${TCX_V2_NAMESPACE}"><t:Activities></x:Activities></t:TrainingCenterDatabase>`;
+    expectTraceError(() => parseTcx(xml), 'invalid-xml');
+  });
+});
+
+describe('import TCX · structure et multi-activités', () => {
+  it('refuse plusieurs activités au lieu de les fusionner silencieusement', () => {
+    expectTraceError(() => parseTcx(fixture('activity-multi.tcx')), 'multiple-activities');
+  });
+
+  it('refuse une Activity hors de Activities', () => {
+    const xml = `<TrainingCenterDatabase xmlns="${TCX_V2_NAMESPACE}"><Activity Sport="Running"><Lap/></Activity></TrainingCenterDatabase>`;
+    expectTraceError(() => parseTcx(xml), 'invalid-structure');
+  });
+
+  it('refuse deux conteneurs Activities, même si le premier est vide', () => {
+    const xml = `<TrainingCenterDatabase xmlns="${TCX_V2_NAMESPACE}"><Activities></Activities><Activities><Activity Sport="Running"><Id>2026-08-09T08:00:00.000Z</Id><Lap/></Activity></Activities></TrainingCenterDatabase>`;
+    expectTraceError(() => parseTcx(xml), 'invalid-structure');
+  });
+
+  it('refuse un Lap imbriqué', () => {
+    const xml = `<TrainingCenterDatabase xmlns="${TCX_V2_NAMESPACE}"><Activities><Activity Sport="Running"><Id>2026-08-09T08:00:00.000Z</Id><Lap><Track><Trackpoint/></Track><Lap/></Lap></Activity></Activities></TrainingCenterDatabase>`;
+    expectTraceError(() => parseTcx(xml), 'invalid-structure');
+  });
+
+  it('refuse un Trackpoint hors de Track', () => {
+    const xml = `<TrainingCenterDatabase xmlns="${TCX_V2_NAMESPACE}"><Activities><Activity Sport="Running"><Id>2026-08-09T08:00:00.000Z</Id><Lap><Trackpoint/></Lap></Activity></Activities></TrainingCenterDatabase>`;
+    expectTraceError(() => parseTcx(xml), 'invalid-structure');
+  });
+
+  it('refuse une Activity sans Lap', () => {
+    const xml = `<TrainingCenterDatabase xmlns="${TCX_V2_NAMESPACE}"><Activities><Activity Sport="Running"><Id>2026-08-09T08:00:00.000Z</Id></Activity></Activities></TrainingCenterDatabase>`;
+    expectTraceError(() => parseTcx(xml), 'invalid-structure');
+  });
+
+  it('signale un Lap entièrement vide sans le confondre avec un Lap de résumé', () => {
+    const xml = `<TrainingCenterDatabase xmlns="${TCX_V2_NAMESPACE}"><Activities><Activity Sport="Running"><Id>2026-08-09T08:00:00.000Z</Id><Lap/></Activity></Activities></TrainingCenterDatabase>`;
+    const trace = parseTcx(xml);
+
+    expect(trace.laps).toHaveLength(1);
+    expect(trace.points).toEqual([]);
+    expect(trace.issues).toEqual([expect.objectContaining({ code: 'empty-lap' })]);
+  });
+
+  it('accepte un Lap de résumé sans Track', () => {
+    const xml = `<TrainingCenterDatabase xmlns="${TCX_V2_NAMESPACE}"><Activities><Activity Sport="Running"><Id>2026-08-09T08:00:00.000Z</Id><Lap StartTime="2026-08-09T08:00:00.000Z"><TotalTimeSeconds>60</TotalTimeSeconds></Lap></Activity></Activities></TrainingCenterDatabase>`;
+    const trace = parseTcx(xml);
+
+    expect(trace.status).toBe('complete');
+    expect(trace.laps).toHaveLength(1);
+    expect(trace.laps[0]).toMatchObject({ elapsedSeconds: 60, pointCount: 0 });
+    expect(trace.points).toEqual([]);
+  });
+});
+
+describe('import TCX · activité sans GPS et points vides', () => {
+  it('conserve les bornes d’altitude quand aucune position n’est présente', () => {
+    const trace = parseTcx(fixture('activity-no-gps.tcx'));
+
+    expect(trace.bounds).toEqual({
+      minLatitudeDeg: null,
+      maxLatitudeDeg: null,
+      minLongitudeDeg: null,
+      maxLongitudeDeg: null,
+      minAltitudeM: 1500,
+      maxAltitudeM: 1510,
+    });
+    expect(trace.availableMetrics).toEqual([
+      'time',
+      'altitude',
+      'distance',
+      'speed',
+      'heartRate',
+      'cadence',
+      'power',
+      'temperature',
+    ]);
+    expect(trace.points[0]).toMatchObject({
+      latitudeDeg: null,
+      longitudeDeg: null,
+      altitudeM: 1500,
+      distanceM: 0,
+      speedMps: 2.5,
+      heartRateBpm: 120,
+      cadenceRpm: 80,
+      runCadenceSpm: 160,
+      powerW: 180,
+      temperatureC: 18,
+    });
+  });
+
+  it('rend des bornes nulles quand ni position ni altitude ne sont présentes', () => {
+    const xml = `<TrainingCenterDatabase xmlns="${TCX_V2_NAMESPACE}"><Activities><Activity Sport="Running"><Id>2026-08-09T08:00:00.000Z</Id><Lap StartTime="2026-08-09T08:00:00.000Z"><TotalTimeSeconds>60</TotalTimeSeconds><Track><Trackpoint><Time>2026-08-09T08:00:00.000Z</Time><DistanceMeters>100</DistanceMeters><HeartRateBpm><Value>110</Value></HeartRateBpm></Trackpoint></Track></Lap></Activity></Activities></TrainingCenterDatabase>`;
+    const trace = parseTcx(xml);
+
+    expect(trace.bounds).toBeNull();
+    expect(trace.points).toHaveLength(1);
+    expect(trace.availableMetrics).toEqual(['time', 'distance', 'heartRate']);
+  });
+
+  it('ignore un Trackpoint vide sans consommer la borne maxPoints', () => {
+    const xml = `<TrainingCenterDatabase xmlns="${TCX_V2_NAMESPACE}"><Activities><Activity Sport="Running"><Id>2026-08-09T08:00:00.000Z</Id><Lap StartTime="2026-08-09T08:00:00.000Z"><TotalTimeSeconds>60</TotalTimeSeconds><Track><Trackpoint/><Trackpoint><Time>2026-08-09T08:00:00.000Z</Time><Position><LatitudeDegrees>45.1</LatitudeDegrees><LongitudeDegrees>6.1</LongitudeDegrees></Position></Trackpoint></Track></Lap></Activity></Activities></TrainingCenterDatabase>`;
+    const trace = parseTcx(xml, { maxPoints: 1 });
+
+    expect(trace.points).toHaveLength(1);
+    expect(trace.laps[0]).toMatchObject({ firstPointIndex: 0, pointCount: 1 });
+    expect(trace.issues).toEqual([expect.objectContaining({ code: 'empty-point' })]);
+  });
+
+  it('borne la liste d’alertes et signale la troncature de cette liste', () => {
+    const emptyPoints = '<Trackpoint/>'.repeat(4);
+    const xml = `<TrainingCenterDatabase xmlns="${TCX_V2_NAMESPACE}"><Activities><Activity Sport="Running"><Id>2026-08-09T08:00:00.000Z</Id><Lap><Track>${emptyPoints}</Track></Lap></Activity></Activities></TrainingCenterDatabase>`;
+    const trace = parseTcx(xml, { maxIssues: 2 });
+
+    expect(trace.issues).toHaveLength(3);
+    expect(trace.issues.at(-1)).toMatchObject({ code: 'issue-limit' });
+  });
+});
+
+describe('import TCX · robustesse XML', () => {
+  it('refuse deux attributs sans espace entre eux', () => {
+    const xml = `<TrainingCenterDatabase xmlns="${TCX_V2_NAMESPACE}" a="1"b="2"></TrainingCenterDatabase>`;
+    expectTraceError(() => parseTcx(xml), 'invalid-xml');
+  });
+
+  it('refuse une référence numérique vers un caractère interdit par XML 1.0', () => {
+    const xml = `<TrainingCenterDatabase xmlns="${TCX_V2_NAMESPACE}"><Activities><Activity Sport="Running"><Id>&#0;</Id></Activity></Activities></TrainingCenterDatabase>`;
+    expectTraceError(() => parseTcx(xml), 'invalid-xml');
+  });
+
+  it('refuse un caractère de contrôle littéral', () => {
+    const xml = `<TrainingCenterDatabase xmlns="${TCX_V2_NAMESPACE}"><Activities><Activity Sport="Running"><Id>2026-08-09T08:00:00.000Z</Id></Activity></Activities></TrainingCenterDatabase>`;
+    expectTraceError(() => parseTcx(xml), 'invalid-xml');
+  });
+
+  it('refuse une seconde déclaration XML et une instruction après la racine', () => {
+    const declared = `<?xml version="1.0"?><?xml version="1.0"?><TrainingCenterDatabase xmlns="${TCX_V2_NAMESPACE}"><Activities></Activities></TrainingCenterDatabase>`;
+    expectTraceError(() => parseTcx(declared), 'invalid-xml');
+
+    const trailing = `<TrainingCenterDatabase xmlns="${TCX_V2_NAMESPACE}"><Activities></Activities></TrainingCenterDatabase><?pi?>`;
+    expectTraceError(() => parseTcx(trailing), 'invalid-xml');
+  });
+
+  it('refuse un contenu inachevé après la fermeture de la racine', () => {
+    const xml = `<TrainingCenterDatabase xmlns="${TCX_V2_NAMESPACE}"><Activities></Activities></TrainingCenterDatabase><!-- commentaire ouvert`;
+    expectTraceError(() => parseTcx(xml), 'invalid-xml');
+  });
+
+  it('refuse une date civile impossible au lieu de la normaliser', () => {
+    const xml = `<TrainingCenterDatabase xmlns="${TCX_V2_NAMESPACE}"><Activities><Activity Sport="Running"><Id>2026-02-30T08:00:00Z</Id><Lap StartTime="2026-08-09T08:00:00.000Z"><TotalTimeSeconds>60</TotalTimeSeconds></Lap></Activity></Activities></TrainingCenterDatabase>`;
+    const trace = parseTcx(xml);
+
+    expect(trace.provenance.startedAt).toBe('2026-08-09T08:00:00.000Z');
+    expect(trace.issues).toEqual([expect.objectContaining({ code: 'invalid-time' })]);
+  });
+
+  it('tronque les valeurs brutes dans les messages d’alerte', () => {
+    const huge = '1'.repeat(500);
+    const xml = `<TrainingCenterDatabase xmlns="${TCX_V2_NAMESPACE}"><Activities><Activity Sport="Running"><Id>2026-08-09T08:00:00.000Z</Id><Lap StartTime="2026-08-09T08:00:00.000Z"><Track><Trackpoint><Time>2026-08-09T08:00:00.000Z</Time><Position><LatitudeDegrees>${huge}</LatitudeDegrees><LongitudeDegrees>6</LongitudeDegrees></Position></Trackpoint></Track></Lap></Activity></Activities></TrainingCenterDatabase>`;
+    const trace = parseTcx(xml);
+    const issue = trace.issues.find((entry) => entry.code === 'invalid-number');
+
+    expect(issue).toBeDefined();
+    expect(issue?.message.length ?? 0).toBeLessThan(120);
+    expect(issue?.message).toContain('500 caractères');
   });
 });
 

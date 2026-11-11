@@ -42,6 +42,11 @@ export const FIT_SDK_READ_OPTIONS = {
  * `recordMesgs`, `lapMesgs`, `sessionMesgs`, `activityMesgs`, `fileIdMesgs`,
  * `deviceInfoMesgs`, `eventMesgs` (profil FIT 21.x).
  *
+ * Cette liste est un contrat de travail pour l'adaptateur futur, pas une
+ * compatibilité acquise : le modèle normalisé actuel ne porte encore ni le
+ * résumé de session, ni le multi-sport, ni les métadonnées appareil, et
+ * `parseFit` continue de refuser explicitement un fichier FIT.
+ *
  * Repères d'unités du SDK :
  * - `positionLat` / `positionLong` restent en semicircles (scale 1) : convertir
  *   avec `semicircles * (180 / 2 ** 31)` puis valider les bornes du modèle ;

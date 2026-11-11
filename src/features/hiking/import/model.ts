@@ -1,5 +1,6 @@
 /**
- * Modèle normalisé d'import de trace, partagé par les lectures TCX et FIT.
+ * Modèle normalisé d'import de trace, partagé par le lecteur TCX et le futur
+ * adaptateur FIT.
  *
  * Unités, sans exception :
  * - distance : mètres ;
@@ -43,7 +44,10 @@ export type TraceImportErrorCode =
   | 'invalid-xml'
   | 'external-entity-forbidden'
   | 'not-tcx'
+  | 'unsupported-version'
   | 'no-activity'
+  | 'multiple-activities'
+  | 'invalid-structure'
   | 'fit-decoder-unavailable';
 
 export type TraceImportIssueCode =
@@ -51,6 +55,8 @@ export type TraceImportIssueCode =
   | 'invalid-number'
   | 'invalid-time'
   | 'missing-position'
+  | 'empty-point'
+  | 'empty-lap'
   | 'truncated'
   | 'issue-limit';
 
@@ -75,11 +81,17 @@ export interface TraceImportProvenance {
   endedAt: string | null;
 }
 
+/**
+ * Bornes d'une trace. Les quatre bornes de position valent `null` quand
+ * l'activité ne contient aucune coordonnée (activité indoor, tapis, home
+ * trainer) : les bornes d'altitude restent alors disponibles. `bounds` vaut
+ * `null` seulement quand ni position ni altitude ne sont exploitables.
+ */
 export interface TraceBounds {
-  minLatitudeDeg: number;
-  maxLatitudeDeg: number;
-  minLongitudeDeg: number;
-  maxLongitudeDeg: number;
+  minLatitudeDeg: number | null;
+  maxLatitudeDeg: number | null;
+  minLongitudeDeg: number | null;
+  maxLongitudeDeg: number | null;
   minAltitudeM: number | null;
   maxAltitudeM: number | null;
 }
@@ -175,7 +187,27 @@ function positiveInteger(value: number | undefined, fallback: number): number {
     : fallback;
 }
 
+/**
+ * Longueur UTF-8 sans allouer une copie du document (le plafond `maxBytes`
+ * s'applique avant lecture, sur des fichiers qui peuvent peser 16 Mo).
+ */
 export function utf8ByteLength(value: string): number {
-  if (typeof TextEncoder !== 'undefined') return new TextEncoder().encode(value).byteLength;
-  return value.length;
+  let bytes = 0;
+  let index = 0;
+
+  while (index < value.length) {
+    const codePoint = value.codePointAt(index);
+    if (codePoint == null) break;
+
+    if (codePoint <= 0x7f) bytes += 1;
+    else if (codePoint <= 0x7ff) bytes += 2;
+    else if (codePoint <= 0xffff) bytes += 3;
+    else {
+      bytes += 4;
+      index += 1;
+    }
+    index += 1;
+  }
+
+  return bytes;
 }

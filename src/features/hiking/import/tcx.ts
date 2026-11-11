@@ -13,8 +13,13 @@ import {
 } from './model';
 import { scanSafeXml } from './xml';
 
+const TCX_V1_NAMESPACE = 'http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v1';
+const TCX_V2_NAMESPACE = 'http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2';
+
 const ISO_DATE_TIME =
-  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/;
+  /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/;
+
+const DECIMAL_NUMBER = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/;
 
 const METRIC_ORDER: readonly TraceMetric[] = [
   'time',
@@ -32,10 +37,20 @@ const METRIC_ORDER: readonly TraceMetric[] = [
  * Lit un document TCX 2 local et rend un modèle normalisé commun avec le futur
  * import FIT. Aucun DOM, aucune entité externe, aucune écriture.
  *
+ * Périmètre volontairement borné :
+ * - seul le namespace TCX v2 est accepté ; TCX v1 est refusé explicitement ;
+ * - une seule `<Activity>` par fichier : plusieurs activités sont refusées au
+ *   lieu d'être fusionnées silencieusement ;
+ * - structure contrôlée `Activities > Activity > Lap > Track > Trackpoint` ;
+ * - les activités sans `<Position>` restent lisibles et conservent leurs
+ *   bornes d'altitude ;
+ * - les `<Trackpoint>` sans aucune mesure sont ignorés et signalés.
+ *
  * - fichier complet : `status: 'complete'` ;
  * - fichier coupé dans la dernière balise : les points/tours entièrement lus
  *   sont conservés, `status: 'truncated'` et une alerte `truncated` sont posés ;
- * - XML invalide, mauvaise racine, activité absente ou borne dépassée :
+ * - XML invalide, mauvaise racine, namespace/version non pris en charge,
+ *   activité absente, structure invalide ou borne dépassée :
  *   `TraceImportError` avec un code stable.
  */
 export function parseTcx(
@@ -65,16 +80,21 @@ export function parseTcx(
   const textStack: string[] = [];
 
   let issueLimitReported = false;
+  let activitiesDepth: number | null = null;
+  let activitiesSeen = false;
   let activityDepth: number | null = null;
   let activitySeen = false;
   let activityId: string | null = null;
+  let activityLapCount = 0;
   let sport: string | null = null;
   let creatorDepth: number | null = null;
   let creatorName: string | null = null;
   let productId: string | null = null;
   let rootNamespace: string | null = null;
   let lapDepth: number | null = null;
+  let lapHasTrack = false;
   let currentLap: NormalizedTraceLap | null = null;
+  let trackDepth: number | null = null;
   let pointDepth: number | null = null;
   let currentPoint: NormalizedTrackPoint | null = null;
   let positionDepth: number | null = null;
@@ -88,31 +108,120 @@ export function parseTcx(
   const scanned = scanSafeXml(
     xml,
     {
-      open(localName, attributes, _selfClosing, depth) {
+      open(qualifiedName, localName, attributes, _selfClosing, depth) {
         path.push(localName);
         textStack.push('');
 
-        if (localName === 'TrainingCenterDatabase' && depth === 1) {
-          rootNamespace = attributes.xmlns
-            ?? Object.entries(attributes).find(([name]) => name.startsWith('xmlns:'))?.[1]
-            ?? null;
+        if (depth === 1) {
+          if (localName !== 'TrainingCenterDatabase') {
+            throw new TraceImportError(
+              'not-tcx',
+              `Racine « ${excerpt(localName)} » inconnue : un TCX commence par TrainingCenterDatabase.`,
+            );
+          }
+
+          const namespace = resolveRootNamespace(qualifiedName, attributes);
+          if (namespace == null) {
+            throw new TraceImportError(
+              'not-tcx',
+              'Namespace TCX absent : la racine doit déclarer TrainingCenterDatabase/v2.',
+            );
+          }
+          if (namespace === TCX_V1_NAMESPACE) {
+            throw new TraceImportError(
+              'unsupported-version',
+              'TCX v1 n’est pas pris en charge : seul le namespace TrainingCenterDatabase/v2 est accepté.',
+            );
+          }
+          if (namespace !== TCX_V2_NAMESPACE) {
+            throw new TraceImportError(
+              'not-tcx',
+              `Namespace « ${excerpt(namespace)} » inconnu : seul TrainingCenterDatabase/v2 est accepté.`,
+            );
+          }
+          rootNamespace = namespace;
+        }
+
+        if (localName === 'TrainingCenterDatabase' && depth > 1) {
+          throw new TraceImportError(
+            'invalid-structure',
+            'Un document TCX ne peut contenir qu’un seul élément racine.',
+          );
+        }
+
+        if (localName === 'Activities') {
+          if (depth !== 2 || activitiesDepth != null || activitiesSeen) {
+            throw new TraceImportError(
+              'invalid-structure',
+              'L’élément Activities doit être l’unique enfant direct de TrainingCenterDatabase.',
+            );
+          }
+          activitiesSeen = true;
+          activitiesDepth = depth;
         }
 
         if (localName === 'Activity') {
-          activityDepth = depth;
+          if (
+            activitiesDepth == null
+            || depth !== activitiesDepth + 1
+            || activityDepth != null
+          ) {
+            throw new TraceImportError(
+              'invalid-structure',
+              'Une Activity doit être un enfant direct de Activities, sans imbrication.',
+            );
+          }
+          if (activitySeen) {
+            throw new TraceImportError(
+              'multiple-activities',
+              'Le fichier TCX contient plusieurs activités : la fusion silencieuse est refusée.',
+            );
+          }
+
           activitySeen = true;
-          if (sport == null) sport = attributes.Sport?.trim() || null;
+          activityDepth = depth;
+          activityLapCount = 0;
+          sport = attributes.Sport?.trim() || null;
         }
 
-        if (localName === 'Lap' && activityDepth != null) {
+        if (localName === 'Lap') {
+          if (activityDepth == null || depth !== activityDepth + 1 || lapDepth != null) {
+            throw new TraceImportError(
+              'invalid-structure',
+              'Un Lap doit être un enfant direct d’Activity, sans imbrication.',
+            );
+          }
           lapDepth = depth;
+          lapHasTrack = false;
           currentLap = createLap(
             laps.length,
             readTime(attributes.StartTime, 'Lap@StartTime'),
           );
         }
 
-        if (localName === 'Trackpoint' && lapDepth != null && currentLap != null) {
+        if (localName === 'Track') {
+          if (
+            lapDepth == null
+            || depth !== lapDepth + 1
+            || trackDepth != null
+            || lapHasTrack
+          ) {
+            throw new TraceImportError(
+              'invalid-structure',
+              'Un Track doit être l’unique enfant direct de Lap.',
+            );
+          }
+          trackDepth = depth;
+          lapHasTrack = true;
+        }
+
+        if (localName === 'Trackpoint') {
+          if (trackDepth == null || depth !== trackDepth + 1 || pointDepth != null) {
+            throw new TraceImportError(
+              'invalid-structure',
+              'Un Trackpoint doit être un enfant direct de Track, sans imbrication.',
+            );
+          }
           pointDepth = depth;
           currentPoint = {
             recordedAt: null,
@@ -126,11 +235,11 @@ export function parseTcx(
             runCadenceSpm: null,
             powerW: null,
             temperatureC: null,
-            lapIndex: currentLap.index,
+            lapIndex: currentLap?.index ?? 0,
           };
         }
 
-        if (localName === 'Creator') creatorDepth = depth;
+        if (localName === 'Creator' && creatorDepth == null) creatorDepth = depth;
         if (localName === 'Position' && pointDepth != null) positionDepth = depth;
         if (localName === 'HeartRateBpm' && pointDepth != null) pointHeartRateDepth = depth;
         if (localName === 'AverageHeartRateBpm' && lapDepth != null) averageHeartRateDepth = depth;
@@ -138,7 +247,7 @@ export function parseTcx(
         if (localName === 'TPX' && pointDepth != null) tpxDepth = depth;
       },
 
-      close(localName, depth) {
+      close(_qualifiedName, localName, depth) {
         const value = textStack.pop() ?? '';
         const at = path.join('/');
 
@@ -211,17 +320,34 @@ export function parseTcx(
         if (localName === 'Creator' && creatorDepth === depth) creatorDepth = null;
 
         if (localName === 'Trackpoint' && pointDepth === depth) {
-          finalizePoint();
+          finalizePoint(at);
           pointDepth = null;
           currentPoint = null;
         }
+        if (localName === 'Track' && trackDepth === depth) {
+          trackDepth = null;
+        }
         if (localName === 'Lap' && lapDepth === depth) {
-          finalizeLap();
+          finalizeLap(at);
           lapDepth = null;
           currentLap = null;
+          activityLapCount += 1;
         }
-        if (localName === 'Activity' && activityDepth === depth) activityDepth = null;
+        if (localName === 'Activity' && activityDepth === depth) {
+          if (activityLapCount === 0) {
+            throw new TraceImportError(
+              'invalid-structure',
+              'Une Activity TCX doit contenir au moins un Lap.',
+            );
+          }
+          activityDepth = null;
+        }
+        if (localName === 'Activities' && activitiesDepth === depth) {
+          activitiesDepth = null;
+        }
 
+        // Le scanner a déjà vérifié que le nom qualifié de fermeture
+        // correspond exactement à l'ouverture, préfixe compris.
         path.pop();
       },
 
@@ -241,6 +367,12 @@ export function parseTcx(
       `Racine « ${scanned.rootName} » inconnue : un TCX commence par TrainingCenterDatabase.`,
     );
   }
+  if (rootNamespace == null) {
+    throw new TraceImportError(
+      'not-tcx',
+      'Namespace TCX absent : la racine doit déclarer TrainingCenterDatabase/v2.',
+    );
+  }
   if (!activitySeen) {
     throw new TraceImportError('no-activity', 'Aucune activité TCX à importer.');
   }
@@ -249,7 +381,7 @@ export function parseTcx(
     // Le point ouvert au moment de la coupure est incomplet : il est écarté.
     currentPoint = null;
     pointDepth = null;
-    if (currentLap != null) finalizeLap();
+    if (currentLap != null) finalizeLap('$');
     addIssue('truncated', 'Le fichier TCX se termine avant la fermeture de la racine.', '$');
   }
 
@@ -298,7 +430,7 @@ export function parseTcx(
     };
   }
 
-  function finalizePoint(): void {
+  function finalizePoint(at: string): void {
     const point = currentPoint;
     if (point == null) return;
 
@@ -306,9 +438,16 @@ export function parseTcx(
     // doit pas devenir un point au large. `validatePosition` a déjà traité le
     // cas d'un Position complet ; ici on protège les documents sans Position.
     if ((point.latitudeDeg == null) !== (point.longitudeDeg == null)) {
-      addIssue('missing-position', 'Latitude et longitude doivent être présentes ensemble.', 'Trackpoint');
+      addIssue('missing-position', 'Latitude et longitude doivent être présentes ensemble.', at);
       point.latitudeDeg = null;
       point.longitudeDeg = null;
+    }
+
+    // Un Trackpoint vide n'est pas un point : il ne doit ni gonfler le compte
+    // de points, ni consommer `maxPoints`, ni créer un trou dans la trace.
+    if (isPointEmpty(point)) {
+      addIssue('empty-point', 'Trackpoint sans aucune mesure exploitable ignoré.', at);
+      return;
     }
 
     if (points.length >= limits.maxPoints) {
@@ -329,7 +468,7 @@ export function parseTcx(
     }
   }
 
-  function finalizeLap(): void {
+  function finalizeLap(at: string): void {
     const lap = currentLap;
     if (lap == null) return;
 
@@ -348,6 +487,10 @@ export function parseTcx(
         'too-many-laps',
         `Plus de ${limits.maxLaps} tours dans le fichier TCX.`,
       );
+    }
+
+    if (isEmptyLap(lap)) {
+      addIssue('empty-lap', 'Lap sans aucune mesure exploitable conservé comme tour vide.', at);
     }
 
     if (lap.startedAt != null && lap.elapsedSeconds != null) {
@@ -389,9 +532,13 @@ export function parseTcx(
   function readNumber(raw: string, at: string): number | null {
     const value = raw.trim();
     if (value.length === 0) return null;
+    if (!DECIMAL_NUMBER.test(value)) {
+      addIssue('invalid-number', `Valeur numérique invalide « ${excerpt(value)} ».`, at);
+      return null;
+    }
     const parsed = Number(value);
     if (!Number.isFinite(parsed)) {
-      addIssue('invalid-number', `Valeur numérique invalide « ${value} ».`, at);
+      addIssue('invalid-number', `Valeur numérique invalide « ${excerpt(value)} ».`, at);
       return null;
     }
     return parsed;
@@ -409,8 +556,9 @@ export function parseTcx(
   function readTime(raw: string | undefined, at: string): string | null {
     const value = raw?.trim();
     if (value == null || value.length === 0) return null;
-    if (!ISO_DATE_TIME.test(value) || !Number.isFinite(Date.parse(value))) {
-      addIssue('invalid-time', `Horodatage invalide « ${value} ».`, at);
+    const match = ISO_DATE_TIME.exec(value);
+    if (match == null || !isValidCivilDateTime(match) || !Number.isFinite(Date.parse(value))) {
+      addIssue('invalid-time', `Horodatage invalide « ${excerpt(value)} ».`, at);
       return null;
     }
     return new Date(value).toISOString();
@@ -418,7 +566,7 @@ export function parseTcx(
 
   function addIssue(code: TraceImportIssueCode, message: string, at: string): void {
     if (issues.length < limits.maxIssues) {
-      issues.push({ code, message, path: at });
+      issues.push({ code, message, path: excerpt(at, 200) });
       return;
     }
     if (!issueLimitReported) {
@@ -426,7 +574,7 @@ export function parseTcx(
       issues.push({
         code: 'issue-limit',
         message: `Liste d’alertes bornée à ${limits.maxIssues} entrées.`,
-        path: at,
+        path: excerpt(at, 200),
       });
     }
   }
@@ -434,6 +582,83 @@ export function parseTcx(
 
 function isDirectChild(parentDepth: number | null, depth: number): boolean {
   return parentDepth != null && depth === parentDepth + 1;
+}
+
+/**
+ * `Date.parse` normalise les dates civiles impossibles (`2026-02-30` devient
+ * le 2 mars) : on valide donc les composantes avant de convertir.
+ */
+function isValidCivilDateTime(match: RegExpExecArray): boolean {
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const hour = Number(match[4]);
+  const minute = Number(match[5]);
+  const second = Number(match[6]);
+
+  if (month < 1 || month > 12 || day < 1 || hour > 23 || minute > 59 || second > 59) {
+    return false;
+  }
+
+  const leapYear = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+  const daysInMonth = [
+    31,
+    leapYear ? 29 : 28,
+    31,
+    30,
+    31,
+    30,
+    31,
+    31,
+    30,
+    31,
+    30,
+    31,
+  ];
+
+  return day <= daysInMonth[month - 1];
+}
+
+function isEmptyLap(lap: NormalizedTraceLap): boolean {
+  return (
+    lap.pointCount === 0
+    && lap.elapsedSeconds == null
+    && lap.distanceM == null
+    && lap.maxSpeedMps == null
+    && lap.caloriesKcal == null
+    && lap.averageHeartRateBpm == null
+    && lap.maxHeartRateBpm == null
+    && lap.averageCadenceRpm == null
+    && lap.intensity == null
+    && lap.triggerMethod == null
+  );
+}
+
+function isPointEmpty(point: NormalizedTrackPoint): boolean {
+  return (
+    point.recordedAt == null
+    && point.latitudeDeg == null
+    && point.longitudeDeg == null
+    && point.altitudeM == null
+    && point.distanceM == null
+    && point.speedMps == null
+    && point.heartRateBpm == null
+    && point.cadenceRpm == null
+    && point.runCadenceSpm == null
+    && point.powerW == null
+    && point.temperatureC == null
+  );
+}
+
+function resolveRootNamespace(
+  qualifiedName: string,
+  attributes: Readonly<Record<string, string>>,
+): string | null {
+  const separator = qualifiedName.indexOf(':');
+  const prefix = separator >= 0 ? qualifiedName.slice(0, separator) : null;
+  const declaration = prefix == null ? attributes.xmlns : attributes[`xmlns:${prefix}`];
+  const namespace = declaration?.trim();
+  return namespace != null && namespace.length > 0 ? namespace : null;
 }
 
 function clean(value: string | undefined): string | null {
@@ -492,13 +717,13 @@ function computeBounds(points: NormalizedTrackPoint[]): TraceBounds | null {
     }
   }
 
-  if (!hasPosition) return null;
+  if (!hasPosition && !hasAltitude) return null;
 
   return {
-    minLatitudeDeg,
-    maxLatitudeDeg,
-    minLongitudeDeg,
-    maxLongitudeDeg,
+    minLatitudeDeg: hasPosition ? minLatitudeDeg : null,
+    maxLatitudeDeg: hasPosition ? maxLatitudeDeg : null,
+    minLongitudeDeg: hasPosition ? minLongitudeDeg : null,
+    maxLongitudeDeg: hasPosition ? maxLongitudeDeg : null,
     minAltitudeM: hasAltitude ? minAltitudeM : null,
     maxAltitudeM: hasAltitude ? maxAltitudeM : null,
   };
@@ -541,4 +766,10 @@ function computeAvailableMetrics(
   if (points.some((point) => point.temperatureC != null)) available.add('temperature');
 
   return METRIC_ORDER.filter((metric) => available.has(metric));
+}
+
+function excerpt(value: string, maxLength = 40): string {
+  return value.length <= maxLength
+    ? value
+    : `${value.slice(0, maxLength)}… (${value.length} caractères)`;
 }
