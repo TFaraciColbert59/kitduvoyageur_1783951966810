@@ -16,6 +16,9 @@ vi.mock('@/contexts/AuthContext', () => ({
 }));
 vi.mock('@/contexts/ToastContext', () => ({ useToast: () => ({ toast: vi.fn() }) }));
 vi.mock('@/hooks/useOnlineStatus', () => ({ useOnlineStatus: () => ({ isOnline: online }) }));
+vi.mock('@/features/carnet/detail/editActions', () => ({
+  deleteMomentAction: async () => ({ ok: true }),
+}));
 vi.mock('@/lib/supabase/client', () => {
   const chain = (): unknown => {
     const target: Record<string, unknown> = {};

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { bucketFor, extensionOf, mediaPlan } from '../useCarnetEdits';
 import { formatClock, pickRecorderMime } from '../useVoiceRecorder';
 import { momentInsertRow, validateMomentInput } from '../createMoment';
@@ -56,6 +56,7 @@ describe('enregistreur vocal (fonctions pures)', () => {
 
 describe('moment vocal', () => {
   it('garde l’URL https de l’enregistrement dans moment_meta, refuse le reste', () => {
+    vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://x.supabase.co');
     const ok = validateMomentInput({
       type: 'voice',
       day: 1,
@@ -83,6 +84,7 @@ describe('moment vocal', () => {
       validateMomentInput({ type: 'voice', day: 1, place: 'Col', caption: 'x', audioUrl: 'javascript:alert(1)' }).ok
     ).toBe(false);
     expect(parseMomentMeta({ audioUrl: 'http://insecure/a.webm' })).toBeNull();
-    expect(parseMomentMeta({ audioUrl: 'https://ok/a.webm' })).toEqual({ audioUrl: 'https://ok/a.webm' });
+    expect(parseMomentMeta({ audioUrl: 'https://ok/a.webm' })).toBeNull();
+    vi.unstubAllEnvs();
   });
 });

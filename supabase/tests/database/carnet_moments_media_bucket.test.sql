@@ -7,7 +7,7 @@
 -- ============================================================================
 BEGIN;
 SET LOCAL search_path = public;
-SELECT plan(7);
+SELECT plan(9);
 
 INSERT INTO auth.users (id, aud, role, email, encrypted_password, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
 VALUES ('c4000000-0000-4000-8000-000000000001', 'authenticated', 'authenticated', 'media_a@test.local', 'x', '{}', '{}', now(), now())
@@ -43,7 +43,19 @@ SELECT throws_ok(
   '42501', NULL, 'fichier de plus de 25 Mo refusé'
 );
 
+-- Pas de politique SELECT (relecture 2026-11-10) : le seau public sert les
+-- fichiers par leur chemin exact ; aucune énumération via storage.objects.
+SET LOCAL "request.jwt.claims" = '{"sub": "c4000000-0000-4000-8000-0000000000ff", "role": "authenticated"}';
+SELECT is_empty(
+  $$SELECT 1 FROM storage.objects WHERE bucket_id = 'carnet-moments-media'$$,
+  'un authentifié non propriétaire ne liste rien'
+);
+
 SET LOCAL ROLE anon;
+SELECT is_empty(
+  $$SELECT 1 FROM storage.objects WHERE bucket_id = 'carnet-moments-media'$$,
+  'un anonyme ne liste rien'
+);
 SELECT throws_ok(
   $$INSERT INTO storage.objects (bucket_id, name, metadata)
     VALUES ('carnet-moments-media', 'anon/a.webm', '{"size": 10}'::jsonb)$$,

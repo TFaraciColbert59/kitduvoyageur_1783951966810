@@ -35,7 +35,6 @@ function input(overrides: Partial<BuildCarnetDetailInput> = {}): BuildCarnetDeta
     author: AUTHOR,
     hikeSession: null,
     etapes: [],
-    hebergements: [],
     moments: [],
     kitItems: [],
     viewerId: null,

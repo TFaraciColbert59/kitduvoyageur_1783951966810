@@ -17,7 +17,8 @@ export interface CarnetRow {
   views_count: number | null;
   distance_km: number | string | null;
   denivele_m: number | string | null;
-  groupe_id: string | null;
+  /** Colonne historique : plus lue ni écrite (les tables `groupe_*` n'existent plus). */
+  groupe_id?: string | null;
   lieu_depart: string | null;
   lieu_arrivee: string | null;
   /** Code ISO 3166-1 alpha-2 réel de la colonne `carnets.country_iso`. */
@@ -72,18 +73,6 @@ export interface CarnetStepRow {
   duree_minutes?: number | null;
   points_passage?: unknown[];
   created_at?: string | null;
-}
-
-export interface HebergementRow {
-  id: string;
-  apres_jour_numero: number | null;
-  nom: string | null;
-  prix_cents: number | null;
-  prix_note: string | null;
-  altitude_m: number | null;
-  note: string | null;
-  hote: string | null;
-  type_hebergement?: string | null;
 }
 
 export interface MomentRow {
@@ -426,7 +415,7 @@ export interface CarnetDetail {
    * Un jour sans donnée n'est pas créé : la numérotation reste celle du carnet.
    */
   days: CarnetDay[];
-  /** Étapes déclarées du carnet (`groupe_etapes`), lecture historique inchangée. */
+  /** Étapes déclarées du carnet (`carnet_etapes`). */
   etapes: CarnetEtapeDay[];
   /** Totaux du carnet (`buildSummary`). */
   summary: CarnetSummary;
@@ -470,7 +459,6 @@ export interface BuildCarnetDetailInput {
   trace?: unknown | null;
   etapes?: EtapeRow[];
   steps?: CarnetStepRow[];
-  hebergements?: HebergementRow[];
   moments: MomentRow[];
   kitItems: KitItemRow[];
   viewerId: string | null;

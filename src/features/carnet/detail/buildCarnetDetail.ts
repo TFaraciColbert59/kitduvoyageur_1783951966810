@@ -71,10 +71,10 @@ export function buildParticipants(input: BuildCarnetDetailInput): CarnetParticip
 }
 
 function buildEtapes(input: BuildCarnetDetailInput): CarnetEtapeDay[] {
+  /* La nuit d'un jour vient de `carnet_nights` : absente, `overnight` reste nul. */
   const overnightByDay = new Map<number, string>();
-  for (const h of input.hebergements ?? []) {
-    const day = h.apres_jour_numero;
-    if (day && h.nom) overnightByDay.set(day, h.nom);
+  for (const n of input.nights ?? []) {
+    if (n.dayNumber && n.name) overnightByDay.set(n.dayNumber, n.name);
   }
 
   const rawEtapes = input.etapes ?? [];
@@ -168,30 +168,11 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
      (`pickCarnetTrace`), pas forcément celle qui donne les statistiques. */
   const trace = input.trace ?? hikeSession?.positions_geojson ?? null;
 
-  /* Nuits du carnet (`carnet_nights`) ; les hébergements de l'ancien carnet de
-     groupe comblent les jours sans nuit saisie, pour qu'écrire une nuit ne
-     fasse jamais disparaître les autres. */
-  const legacyNights: CarnetNightItem[] = (input.hebergements ?? []).map((h) => ({
-    id: h.id,
-    dayNumber: h.apres_jour_numero ?? 1,
-    name: h.nom?.trim() || 'Hébergement',
-    type: (['refuge', 'gite', 'bivouac', 'hotel', 'camping', 'autre'].includes(
-      (h as { type_hebergement?: string | null }).type_hebergement ?? ''
-    )
-      ? (h as { type_hebergement?: string | null }).type_hebergement
-      : 'refuge') as CarnetNightItem['type'],
-    altitudeM: toNumber(h.altitude_m),
-    infos: h.prix_note || h.note || null,
-    lat: null,
-    lng: null,
-    mapRefugeId: null,
-  }));
-  const writtenNights = input.nights ?? [];
-  const writtenDays = new Set(writtenNights.map((n) => n.dayNumber));
-  const nights: CarnetNightItem[] = [
-    ...writtenNights,
-    ...legacyNights.filter((n) => !writtenDays.has(n.dayNumber)),
-  ].sort((x, y) => x.dayNumber - y.dayNumber);
+  /* Nuits du carnet (`carnet_nights`), triées par jour. Aucun repli : les
+     anciennes tables `groupe_*` n'existent plus, une nuit absente n'est pas inventée. */
+  const nights: CarnetNightItem[] = [...(input.nights ?? [])].sort(
+    (x, y) => x.dayNumber - y.dayNumber
+  );
 
   const viewerRole: CarnetViewerRole =
     input.viewerRole ??

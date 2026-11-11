@@ -6,6 +6,7 @@
 import { z } from 'zod';
 import {
   MOMENT_EXPENSE_CATEGORIES,
+  isOwnMediaUrl,
   MOMENT_TYPES,
   type MomentMeta,
   type MomentType,
@@ -41,7 +42,7 @@ export const MomentInputSchema = z.discriminatedUnion('type', [
       .string()
       .trim()
       .max(600)
-      .regex(/^https:\/\/\S+$/, 'Enregistrement invalide.')
+      .refine((url) => isOwnMediaUrl(url, 'carnet-moments-media'), 'Enregistrement invalide.')
       .optional(),
   }),
   z.object({ ...common, type: z.literal('text'), caption: required('Donne un titre à ton moment.', 400) }),
@@ -132,7 +133,11 @@ export function momentInsertRow(value: MomentInput, ctx: MomentInsertContext) {
     auteur_nom: ctx.authorName,
     auteur_id: ctx.userId,
     lieu: value.place,
-    image_url: ctx.imageUrl,
+    // photo : `carnet-media` ; vidéo : `carnet-moments-media` (même colonne).
+    image_url:
+      isOwnMediaUrl(ctx.imageUrl, 'carnet-media') || isOwnMediaUrl(ctx.imageUrl, 'carnet-moments-media')
+        ? ctx.imageUrl
+        : null,
     moment_timestamp: ctx.now.toISOString(),
     source: 'manuel' as const,
     moment_type: value.type,

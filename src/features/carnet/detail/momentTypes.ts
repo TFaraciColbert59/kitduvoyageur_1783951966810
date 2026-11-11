@@ -86,6 +86,18 @@ export interface MomentMeta {
 const EXPENSE_CATEGORIES = ['Repas', 'Hébergement', 'Transport', 'Matériel'] as const;
 export const MOMENT_EXPENSE_CATEGORIES = EXPENSE_CATEGORIES;
 
+/** Préfixe des URL publiques d'un seau Supabase du projet (lu à l'appel : l'env peut changer en test). */
+export function publicMediaPrefix(bucket: 'carnet-media' | 'carnet-moments-media'): string {
+  const base = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? '').replace(/\/+$/, '');
+  return `${base}/storage/v1/object/public/${bucket}/`;
+}
+
+/** Vrai si l'URL est une URL publique du seau indiqué, sur le projet Supabase de l'app. */
+export function isOwnMediaUrl(url: unknown, bucket: 'carnet-media' | 'carnet-moments-media'): url is string {
+  if (typeof url !== 'string' || !process.env.NEXT_PUBLIC_SUPABASE_URL) return false;
+  return url.startsWith(publicMediaPrefix(bucket)) && !/\s/.test(url) && !url.includes('..');
+}
+
 /** Lecture défensive de `moment_meta` : tout champ hors format est ignoré. */
 export function parseMomentMeta(raw: unknown): MomentMeta | null {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
@@ -99,6 +111,6 @@ export function parseMomentMeta(raw: unknown): MomentMeta | null {
     if (typeof value === 'string' && value.trim()) meta[key] = value.trim().slice(0, 120);
   }
   const audio = source.audioUrl;
-  if (typeof audio === 'string' && /^https:\/\/[^\s]{1,580}$/.test(audio)) meta.audioUrl = audio;
+  if (isOwnMediaUrl(audio, 'carnet-moments-media') && audio.length <= 600) meta.audioUrl = audio;
   return Object.keys(meta).length > 0 ? meta : null;
 }

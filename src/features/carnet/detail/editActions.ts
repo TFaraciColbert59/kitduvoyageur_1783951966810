@@ -9,6 +9,7 @@
  */
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
+import { removeCarnetFiles, removeMomentFiles, type MomentMediaRow } from './mediaCleanup';
 import {
   CarnetDeleteSchema,
   CarnetSettingsSchema,
@@ -27,6 +28,7 @@ import {
   firstIssue,
   nightFromRow,
   nightRow,
+  stepChanges,
   stepRow,
   verdictItem,
   verdictRow,
@@ -83,28 +85,23 @@ export async function saveStepAction(
   const value = parsed.data;
   const ctx = await participantContext(value.carnetId);
   if (!ctx.ok) return ctx;
-  const { supabase } = ctx;
+  const { supabase, userId } = ctx;
 
-  const { data: carnet } = await supabase
-    .from('carnets')
-    .select('groupe_id')
-    .eq('id', value.carnetId)
-    .maybeSingle();
-  const groupeId = (carnet as { groupe_id: string | null } | null)?.groupe_id ?? null;
-  if (!groupeId) {
-    return { ok: false, error: 'Ce carnet n’a pas encore de parcours à étapes.' };
-  }
-
-  const row = stepRow(value, groupeId);
+  /* Toujours `id` ET `carnet_id` : une étape d'un autre carnet n'est jamais
+     touchée, même avec un `id` valide (pas d'IDOR). */
   const query = value.id
     ? supabase
-        .from('groupe_etapes')
-        .update(row)
+        .from('carnet_etapes')
+        .update(stepChanges(value))
         .eq('id', value.id)
-        .eq('groupe_id', groupeId)
+        .eq('carnet_id', value.carnetId)
         .select(ETAPE_COLUMNS)
         .maybeSingle()
-    : supabase.from('groupe_etapes').insert(row).select(ETAPE_COLUMNS).maybeSingle();
+    : supabase
+        .from('carnet_etapes')
+        .insert(stepRow(value, userId))
+        .select(ETAPE_COLUMNS)
+        .maybeSingle();
   const { data, error } = await query;
   if (error) return { ok: false, error: OFFLINE };
   if (!data) return { ok: false, error: REFUSED };
@@ -117,19 +114,11 @@ export async function deleteStepAction(input: unknown): Promise<ActionResult> {
   const { carnetId, id } = parsed.data;
   const ctx = await participantContext(carnetId);
   if (!ctx.ok) return ctx;
-  const { supabase } = ctx;
-  const { data: carnet } = await supabase
-    .from('carnets')
-    .select('groupe_id')
-    .eq('id', carnetId)
-    .maybeSingle();
-  const groupeId = (carnet as { groupe_id: string | null } | null)?.groupe_id ?? null;
-  if (!groupeId) return { ok: false, error: 'Ce carnet n’a pas encore de parcours à étapes.' };
-  const { data, error } = await supabase
-    .from('groupe_etapes')
+  const { data, error } = await ctx.supabase
+    .from('carnet_etapes')
     .delete()
     .eq('id', id)
-    .eq('groupe_id', groupeId)
+    .eq('carnet_id', carnetId)
     .select('id');
   if (error) return { ok: false, error: OFFLINE };
   if (!data || data.length === 0) return { ok: false, error: REFUSED };
@@ -176,8 +165,8 @@ export async function saveNightAction(
   }
 
   if (!saved) {
-    /* Création, ou nuit lue depuis l'ancien carnet de groupe (aucune ligne
-       `carnet_nights` à mettre à jour) : une ligne par jour, remplacée si elle existe. */
+    /* Création, ou nuit sans ligne à mettre à jour : une ligne par jour,
+       remplacée si elle existe. */
     const inserted = await supabase
       .from('carnet_nights')
       .upsert(row, { onConflict: 'carnet_id,jour_numero' })
@@ -371,9 +360,11 @@ export async function deleteMomentAction(input: unknown): Promise<ActionResult> 
     .delete()
     .eq('id', id)
     .eq('carnet_id', carnetId)
-    .select('id');
+    .select('id, image_url, moment_meta, auteur_id');
   if (error) return { ok: false, error: OFFLINE };
   if (!data || data.length === 0) return { ok: false, error: REFUSED };
+  /* Ligne supprimée : on efface aussi ses fichiers (droit à l'effacement). */
+  await removeMomentFiles(data as MomentMediaRow[], carnetId);
   return done(carnetId, {});
 }
 
@@ -414,10 +405,18 @@ export async function deleteCarnetAction(input: unknown): Promise<ActionResult> 
   const { carnetId } = parsed.data;
   const ctx = await participantContext(carnetId);
   if (!ctx.ok) return ctx;
+  /* Chemins lus AVANT la suppression : les moments partent avec le carnet. */
+  const { data: moments } = await ctx.supabase
+    .from('carnet_moments')
+    .select('image_url, moment_meta, auteur_id')
+    .eq('carnet_id', carnetId);
   const { data, error } = await ctx.supabase.from('carnets').delete().eq('id', carnetId).select('id');
   if (error) return { ok: false, error: OFFLINE };
   if (!data || data.length === 0) {
     return { ok: false, error: 'Seul l’auteur du carnet peut le supprimer.' };
   }
+  await removeCarnetFiles(Array.isArray(moments) ? (moments as MomentMediaRow[]) : [], carnetId, ctx.userId);
+  revalidatePath('/carnets');
+  revalidatePath(`/carnets/${carnetId}`);
   return { ok: true };
 }

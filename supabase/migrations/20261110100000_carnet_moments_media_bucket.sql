@@ -46,7 +46,9 @@ using (
   and (storage.foldername(name))[1] = (select auth.uid())::text
 );
 
+-- Pas de politique SELECT (relecture du 2026-11-10) : un seau public sert déjà
+-- les fichiers par /object/public/<chemin> sans elle, et une politique SELECT
+-- ouverte laissait `storage.list()` énumérer les dossiers, donc récupérer les
+-- notes vocales et vidéos des carnets privés. Sans elle, un fichier n'est
+-- lisible que par qui connaît son chemin exact (uuid de carnet + nom aléatoire).
 drop policy if exists "carnet_moments_media_read_public" on storage.objects;
-create policy "carnet_moments_media_read_public"
-on storage.objects for select
-using (bucket_id = 'carnet-moments-media');
