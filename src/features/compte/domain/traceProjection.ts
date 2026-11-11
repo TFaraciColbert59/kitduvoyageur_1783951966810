@@ -12,6 +12,13 @@
  * zones sont des disques ou des boîtes en degrés. Aucun appel réseau, aucune
  * lecture de base et aucune donnée réelle n'est nécessaire.
  *
+ * Défense en profondeur : une trace ou une zone hors du domaine de calcul sûr
+ * (pôle, antiméridien, trop grande) échoue fermée. Les zones et les masques
+ * début/fin sont élargis de 50 m, les points publiés sont arrondis à 5
+ * décimales, puis chaque morceau est vérifié avant publication : il doit rester
+ * assez long et hors des zones élargies, y compris en son milieu. Une coupure
+ * n'est jamais recollée.
+ *
  * En cas d'entrée douteuse, le projecteur échoue fermé : il ne rend aucune
  * géométrie plutôt que de risquer de divulguer une portion masquée.
  */
@@ -20,7 +27,11 @@
 // Intelligence. Les helpers de `compte/map/geometry` parsent, simplifient et
 // bornent une trace, mais ne découpent pas de segments : les réutiliser ici
 // n'apporterait pas la primitive manquante.
-import { EARTH_RADIUS_M, cumulativeDistancesM } from '../../adventure-intelligence/domain/geo';
+import {
+  EARTH_RADIUS_M,
+  cumulativeDistancesM,
+  haversineM,
+} from '../../adventure-intelligence/domain/geo';
 
 export interface TracePoint {
   lng: number;
@@ -39,7 +50,8 @@ export type TraceMask =
   | { kind: 'all' }
   | { kind: 'zone'; zone: PrivacyZone };
 
-export type TraceProjectionError = 'invalid_points' | 'invalid_masks' | null;
+export type TraceProjectionError =
+  'invalid_points' | 'invalid_masks' | 'unsafe_geometry' | 'unpublishable_geometry' | null;
 
 export interface TraceProjection {
   /** Morceaux visibles, dans l'ordre de la trace. Jamais reliés à travers un masque. */
@@ -57,6 +69,20 @@ export interface TraceProjection {
 const DEG_TO_RAD = Math.PI / 180;
 const EPSILON = 1e-9;
 const MIN_INTERVAL = 1e-10;
+
+/** Au-delà, la projection locale et la lecture de zone ne sont plus sûres. */
+const MAX_SAFE_ABS_LAT = 85;
+const MAX_SAFE_ANTIMERIDIAN_SPAN_DEG = 180;
+const MAX_SAFE_ZONE_RADIUS_M = 100_000;
+
+/** Marge volontairement perdue autour d'une zone privée (mètres). */
+const ZONE_SAFETY_MARGIN_M = 50;
+/** Tolérance de quantification : le point reste à ≥ 48,5 m de la zone. */
+const QUANTIZATION_TOLERANCE_M = 1.5;
+/** 5 décimales ≈ 1,1 m : assez fin, sans exposer une frontière au mètre. */
+const COORDINATE_DECIMALS = 5;
+/** Un morceau plus court que cette longueur n'est pas publiable. */
+const MIN_PUBLISHABLE_SEGMENT_M = 2;
 
 type Interval = [start: number, end: number];
 
@@ -86,39 +112,80 @@ function readPoint(value: unknown): TracePoint | null {
   return { lng: lng as number, lat: lat as number };
 }
 
-function readZone(value: unknown): PrivacyZone | null {
-  if (!isRecord(value)) return null;
+type ZoneRead =
+  { zone: PrivacyZone; error: null } | { zone: null; error: 'invalid_masks' | 'unsafe_geometry' };
+
+type MasksRead =
+  { masks: TraceMask[]; error: null } | { masks: []; error: 'invalid_masks' | 'unsafe_geometry' };
+
+function invalidZone(): ZoneRead {
+  return { zone: null, error: 'invalid_masks' };
+}
+
+function unsafeZone(): ZoneRead {
+  return { zone: null, error: 'unsafe_geometry' };
+}
+
+function readZone(value: unknown): ZoneRead {
+  if (!isRecord(value)) return invalidZone();
 
   if (value.kind === 'circle') {
     const center = readPoint(value.center);
     const radiusM = value.radiusM;
-    if (!center || !isFiniteNumber(radiusM) || radiusM <= 0) return null;
-    return { kind: 'circle', center, radiusM };
+    if (!center || !isFiniteNumber(radiusM) || radiusM <= 0) return invalidZone();
+    if (Math.abs(center.lat) > MAX_SAFE_ABS_LAT || radiusM > MAX_SAFE_ZONE_RADIUS_M) {
+      return unsafeZone();
+    }
+    const radiusDeg =
+      (radiusM + ZONE_SAFETY_MARGIN_M) /
+      (EARTH_RADIUS_M * DEG_TO_RAD * Math.max(Math.cos(center.lat * DEG_TO_RAD), 1e-6));
+    if (Math.abs(center.lng) + radiusDeg > MAX_SAFE_ANTIMERIDIAN_SPAN_DEG) {
+      return unsafeZone();
+    }
+    return { zone: { kind: 'circle', center, radiusM }, error: null };
   }
 
   if (value.kind === 'bbox') {
     const bounds = value.bounds;
-    if (!Array.isArray(bounds) || bounds.length !== 4) return null;
+    if (!Array.isArray(bounds) || bounds.length !== 4) return invalidZone();
     const southWest = readPoint({ lng: bounds[0], lat: bounds[1] });
     const northEast = readPoint({ lng: bounds[2], lat: bounds[3] });
-    if (!southWest || !northEast) return null;
-    if (southWest.lng >= northEast.lng || southWest.lat >= northEast.lat) return null;
+    if (!southWest || !northEast) return invalidZone();
+    // Une boîte ouest > est traverse l'antiméridien : hors domaine sûr.
+    if (southWest.lng > northEast.lng) return unsafeZone();
+    if (southWest.lng === northEast.lng || southWest.lat >= northEast.lat) {
+      return invalidZone();
+    }
+    if (
+      Math.abs(southWest.lat) > MAX_SAFE_ABS_LAT ||
+      Math.abs(northEast.lat) > MAX_SAFE_ABS_LAT ||
+      northEast.lng - southWest.lng > MAX_SAFE_ANTIMERIDIAN_SPAN_DEG
+    ) {
+      return unsafeZone();
+    }
+    const padding = longitudePaddingDeg(southWest.lat, northEast.lat, ZONE_SAFETY_MARGIN_M);
+    if (southWest.lng - padding < -180 || northEast.lng + padding > 180) {
+      return unsafeZone();
+    }
     return {
-      kind: 'bbox',
-      bounds: [southWest.lng, southWest.lat, northEast.lng, northEast.lat],
+      zone: {
+        kind: 'bbox',
+        bounds: [southWest.lng, southWest.lat, northEast.lng, northEast.lat],
+      },
+      error: null,
     };
   }
 
-  return null;
+  return invalidZone();
 }
 
-function readMasks(value: unknown): TraceMask[] | null {
-  if (value === undefined) return [];
-  if (!Array.isArray(value)) return null;
+function readMasks(value: unknown): MasksRead {
+  if (value === undefined) return { masks: [], error: null };
+  if (!Array.isArray(value)) return { masks: [], error: 'invalid_masks' };
 
   const masks: TraceMask[] = [];
   for (const raw of value) {
-    if (!isRecord(raw)) return null;
+    if (!isRecord(raw)) return { masks: [], error: 'invalid_masks' };
 
     if (raw.kind === 'all') {
       masks.push({ kind: 'all' });
@@ -127,22 +194,24 @@ function readMasks(value: unknown): TraceMask[] | null {
 
     if (raw.kind === 'start' || raw.kind === 'end') {
       const meters = raw.meters;
-      if (!isFiniteNumber(meters) || meters < 0) return null;
+      if (!isFiniteNumber(meters) || meters < 0) {
+        return { masks: [], error: 'invalid_masks' };
+      }
       masks.push({ kind: raw.kind, meters });
       continue;
     }
 
     if (raw.kind === 'zone') {
-      const zone = readZone(raw.zone);
-      if (!zone) return null;
-      masks.push({ kind: 'zone', zone });
+      const parsed = readZone(raw.zone);
+      if (parsed.error) return { masks: [], error: parsed.error };
+      masks.push({ kind: 'zone', zone: parsed.zone });
       continue;
     }
 
-    return null;
+    return { masks: [], error: 'invalid_masks' };
   }
 
-  return masks;
+  return { masks, error: null };
 }
 
 /**
@@ -164,6 +233,30 @@ function readPoints(value: unknown): TracePoint[] | null {
   }
 
   return points.length >= 2 ? points : null;
+}
+
+/**
+ * Refuse les géométries où la projection locale n'est plus fiable : pôles et
+ * traversée de l'antiméridien. Un segment dont la longitude saute de 180° ou
+ * plus est ambigu (le chemin court passe de l'autre côté du globe).
+ */
+function isSafePointGeometry(points: TracePoint[]): boolean {
+  for (let index = 0; index < points.length; index += 1) {
+    const point = points[index];
+    if (
+      Math.abs(point.lat) > MAX_SAFE_ABS_LAT ||
+      Math.abs(point.lng) >= MAX_SAFE_ANTIMERIDIAN_SPAN_DEG
+    ) {
+      return false;
+    }
+    if (
+      index > 0 &&
+      Math.abs(point.lng - points[index - 1].lng) >= MAX_SAFE_ANTIMERIDIAN_SPAN_DEG
+    ) {
+      return false;
+    }
+  }
+  return true;
 }
 
 function interpolate(a: TracePoint, b: TracePoint, t: number): TracePoint {
@@ -219,11 +312,35 @@ function subtractIntervals(visible: Interval, removed: Interval[]): Interval[] {
   return current.filter(([start, end]) => end - start > MIN_INTERVAL);
 }
 
-/** Intervalle du segment [a,b] situé dans un cercle, en projection locale. */
+/** Marge en longitude pour une marge métrique, à la latitude la plus défavorable. */
+function longitudePaddingDeg(southLat: number, northLat: number, meters: number): number {
+  const latPad = meters / (EARTH_RADIUS_M * DEG_TO_RAD);
+  const cosLat = Math.max(
+    Math.cos(Math.max(Math.abs(southLat), Math.abs(northLat)) * DEG_TO_RAD),
+    1e-6
+  );
+  return latPad / cosLat;
+}
+
+/** Boîte élargie de la marge de sécurité, bornée au monde connu. */
+function expandedBbox(bounds: TraceBounds, marginM: number): TraceBounds {
+  const [west, south, east, north] = bounds;
+  const latPad = marginM / (EARTH_RADIUS_M * DEG_TO_RAD);
+  const lngPad = longitudePaddingDeg(south, north, marginM);
+  return [
+    Math.max(-180, west - lngPad),
+    Math.max(-90, south - latPad),
+    Math.min(180, east + lngPad),
+    Math.min(90, north + latPad),
+  ];
+}
+
+/** Intervalle du segment [a,b] situé dans un cercle élargi, en projection locale. */
 function circleInterval(
   a: TracePoint,
   b: TracePoint,
-  zone: Extract<PrivacyZone, { kind: 'circle' }>
+  zone: Extract<PrivacyZone, { kind: 'circle' }>,
+  marginM: number
 ): Interval | null {
   const cosLat = Math.cos(zone.center.lat * DEG_TO_RAD);
   const toX = (lng: number) => (lng - zone.center.lng) * DEG_TO_RAD * EARTH_RADIUS_M * cosLat;
@@ -235,7 +352,7 @@ function circleInterval(
   const by = toY(b.lat);
   const dx = bx - ax;
   const dy = by - ay;
-  const radiusSq = zone.radiusM ** 2;
+  const radiusSq = (zone.radiusM + marginM) ** 2;
   const c = ax * ax + ay * ay - radiusSq;
   const aa = dx * dx + dy * dy;
 
@@ -258,13 +375,14 @@ function circleInterval(
   return [start, end];
 }
 
-/** Intervalle du segment [a,b] situé dans une boîte alignée sur les axes. */
+/** Intervalle du segment [a,b] situé dans une boîte élargie. */
 function bboxInterval(
   a: TracePoint,
   b: TracePoint,
-  zone: Extract<PrivacyZone, { kind: 'bbox' }>
+  zone: Extract<PrivacyZone, { kind: 'bbox' }>,
+  marginM: number
 ): Interval | null {
-  const [west, south, east, north] = zone.bounds;
+  const [west, south, east, north] = expandedBbox(zone.bounds, marginM);
   let start = 0;
   let end = 1;
 
@@ -292,8 +410,15 @@ function bboxInterval(
   return [start, end];
 }
 
-function zoneInterval(a: TracePoint, b: TracePoint, zone: PrivacyZone): Interval | null {
-  return zone.kind === 'circle' ? circleInterval(a, b, zone) : bboxInterval(a, b, zone);
+function zoneInterval(
+  a: TracePoint,
+  b: TracePoint,
+  zone: PrivacyZone,
+  marginM: number
+): Interval | null {
+  return zone.kind === 'circle'
+    ? circleInterval(a, b, zone, marginM)
+    : bboxInterval(a, b, zone, marginM);
 }
 
 function removedIntervals(
@@ -313,18 +438,20 @@ function removedIntervals(
     }
 
     if (mask.kind === 'start') {
-      if (mask.meters <= 0 || startDistance >= mask.meters - EPSILON) continue;
-      if (startDistance + segmentLength <= mask.meters + EPSILON) {
+      const effectiveMeters = mask.meters > 0 ? mask.meters + ZONE_SAFETY_MARGIN_M : 0;
+      if (effectiveMeters <= 0 || startDistance >= effectiveMeters - EPSILON) continue;
+      if (startDistance + segmentLength <= effectiveMeters + EPSILON) {
         removed.push([0, 1]);
       } else {
-        removed.push([0, (mask.meters - startDistance) / segmentLength]);
+        removed.push([0, (effectiveMeters - startDistance) / segmentLength]);
       }
       continue;
     }
 
     if (mask.kind === 'end') {
-      if (mask.meters <= 0) continue;
-      const boundary = totalDistance - mask.meters;
+      const effectiveMeters = mask.meters > 0 ? mask.meters + ZONE_SAFETY_MARGIN_M : 0;
+      if (effectiveMeters <= 0) continue;
+      const boundary = totalDistance - effectiveMeters;
       if (startDistance >= boundary - EPSILON) {
         removed.push([0, 1]);
       } else if (startDistance + segmentLength <= boundary + EPSILON) {
@@ -335,7 +462,7 @@ function removedIntervals(
       continue;
     }
 
-    const interval = zoneInterval(a, b, mask.zone);
+    const interval = zoneInterval(a, b, mask.zone, ZONE_SAFETY_MARGIN_M);
     if (interval) removed.push(interval);
   }
 
@@ -344,9 +471,83 @@ function removedIntervals(
 
 interface Piece {
   segmentIndex: number;
-  startT: number;
   endT: number;
   points: TracePoint[];
+}
+
+function roundCoordinate(value: number): number {
+  const factor = 10 ** COORDINATE_DECIMALS;
+  const rounded = Math.round(value * factor) / factor;
+  return Object.is(rounded, -0) ? 0 : rounded;
+}
+
+/** Réduit la précision sans jamais laisser un point sur une frontière exacte. */
+function quantizePiece(points: TracePoint[]): TracePoint[] {
+  const quantized: TracePoint[] = [];
+  for (const point of points) {
+    const next = {
+      lng: roundCoordinate(point.lng),
+      lat: roundCoordinate(point.lat),
+    };
+    const last = quantized[quantized.length - 1];
+    if (last && last.lng === next.lng && last.lat === next.lat) continue;
+    quantized.push(next);
+  }
+  return quantized;
+}
+
+function pieceLengthM(points: TracePoint[]): number {
+  let total = 0;
+  for (let index = 1; index < points.length; index += 1) {
+    total += haversineM(points[index - 1], points[index]);
+  }
+  return total;
+}
+
+function isOutsideZones(point: TracePoint, masks: TraceMask[]): boolean {
+  for (const mask of masks) {
+    if (mask.kind !== 'zone') continue;
+    const zone = mask.zone;
+    if (zone.kind === 'circle') {
+      if (
+        haversineM(point, zone.center) <
+        zone.radiusM + ZONE_SAFETY_MARGIN_M - QUANTIZATION_TOLERANCE_M
+      ) {
+        return false;
+      }
+      continue;
+    }
+    const [west, south, east, north] = expandedBbox(
+      zone.bounds,
+      ZONE_SAFETY_MARGIN_M - QUANTIZATION_TOLERANCE_M
+    );
+    if (point.lng > west && point.lng < east && point.lat > south && point.lat < north) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * Dernier contrôle avant publication : le morceau quantifié doit rester long
+ * assez et rester hors de toutes les zones élargies, y compris en son milieu.
+ */
+function isPublishablePiece(points: TracePoint[], masks: TraceMask[]): boolean {
+  if (points.length < 2 || pieceLengthM(points) < MIN_PUBLISHABLE_SEGMENT_M) return false;
+  for (const point of points) {
+    if (
+      Math.abs(point.lat) > MAX_SAFE_ABS_LAT ||
+      Math.abs(point.lng) >= MAX_SAFE_ANTIMERIDIAN_SPAN_DEG
+    ) {
+      return false;
+    }
+    if (!isOutsideZones(point, masks)) return false;
+  }
+  for (let index = 1; index < points.length; index += 1) {
+    const midpoint = interpolate(points[index - 1], points[index], 0.5);
+    if (!isOutsideZones(midpoint, masks)) return false;
+  }
+  return true;
 }
 
 function emptyProjection(
@@ -372,6 +573,10 @@ function emptyProjection(
  * la base ou d'une requête et sont validés ici. Un masque invalide ne doit
  * jamais être ignoré (il pourrait divulguer une zone) : la projection échoue
  * alors entièrement.
+ *
+ * Invariants d'erreur : si `error !== null`, `segments` est vide,
+ * `visiblePointCount` vaut 0 et `fullyMasked` reste faux. `fullyMasked` n'est
+ * vrai que pour une entrée valide, masquée, sans aucun morceau publiable.
  */
 export function projectShareableTrace(points: unknown, masks: unknown = []): TraceProjection {
   const inputPointCount = Array.isArray(points) ? points.length : 0;
@@ -379,14 +584,20 @@ export function projectShareableTrace(points: unknown, masks: unknown = []): Tra
   if (!parsedPoints) {
     return emptyProjection(inputPointCount, 'invalid_points', false);
   }
+  if (!isSafePointGeometry(parsedPoints)) {
+    return emptyProjection(inputPointCount, 'unsafe_geometry', false);
+  }
 
   const parsedMasks = readMasks(masks);
-  if (!parsedMasks) {
-    return emptyProjection(inputPointCount, 'invalid_masks', true);
+  if (parsedMasks.error) {
+    return emptyProjection(inputPointCount, parsedMasks.error, true);
   }
 
   const cumulative = cumulativeDistancesM(parsedPoints);
   const totalDistance = cumulative[cumulative.length - 1] ?? 0;
+  if (!Number.isFinite(totalDistance) || totalDistance <= EPSILON) {
+    return emptyProjection(inputPointCount, 'unsafe_geometry', false);
+  }
 
   const pieces: Piece[] = [];
 
@@ -399,7 +610,7 @@ export function projectShareableTrace(points: unknown, masks: unknown = []): Tra
 
     const visibleIntervals = subtractIntervals(
       [0, 1],
-      removedIntervals(startDistance, segmentLength, totalDistance, a, b, parsedMasks)
+      removedIntervals(startDistance, segmentLength, totalDistance, a, b, parsedMasks.masks)
     );
 
     for (const [startT, endT] of visibleIntervals) {
@@ -420,7 +631,6 @@ export function projectShareableTrace(points: unknown, masks: unknown = []): Tra
       } else {
         pieces.push({
           segmentIndex: index,
-          startT,
           endT,
           points: [startPoint, endPoint],
         });
@@ -428,10 +638,18 @@ export function projectShareableTrace(points: unknown, masks: unknown = []): Tra
     }
   }
 
-  const segments = pieces.map((piece) => piece.points);
-  const visiblePointCount = segments.reduce((sum, segment) => sum + segment.length, 0);
-  const masked = parsedMasks.length > 0;
+  // La quantification se fait pièce par pièce : deux pièces séparées ne sont
+  // jamais fusionnées, même si leurs extrémités arrondies coïncident.
+  const masked = parsedMasks.masks.length > 0;
+  const segments = pieces
+    .map((piece) => quantizePiece(piece.points))
+    .filter((piece) => isPublishablePiece(piece, parsedMasks.masks));
 
+  if (segments.length === 0 && !masked) {
+    return emptyProjection(inputPointCount, 'unpublishable_geometry', false);
+  }
+
+  const visiblePointCount = segments.reduce((sum, segment) => sum + segment.length, 0);
   return {
     segments,
     masked,

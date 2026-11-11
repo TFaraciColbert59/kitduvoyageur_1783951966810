@@ -4,6 +4,7 @@ import {
   type PrivacyZone,
   type TraceMask,
   type TracePoint,
+  type TraceProjection,
 } from '../traceProjection';
 
 const EARTH_RADIUS_M = 6_371_008.8;
@@ -46,6 +47,23 @@ function expectNoPointInside(zone: PrivacyZone, segments: TracePoint[][]): void 
   }
 }
 
+function expectClosedError(
+  result: TraceProjection,
+  error: Exclude<TraceProjection['error'], null>
+): void {
+  expect(result.error).toBe(error);
+  expect(result.segments).toEqual([]);
+  expect(result.visiblePointCount).toBe(0);
+  expect(result.fullyMasked).toBe(false);
+}
+
+function expectReducedPrecision(segments: TracePoint[][]): void {
+  for (const point of segments.flat()) {
+    expect(Math.abs(point.lng - Number(point.lng.toFixed(5)))).toBeLessThan(1e-12);
+    expect(Math.abs(point.lat - Number(point.lat.toFixed(5)))).toBeLessThan(1e-12);
+  }
+}
+
 describe('projectShareableTrace — absence de masque', () => {
   it('rend la trace intacte, en un seul segment', () => {
     const points = line(5);
@@ -80,22 +98,33 @@ describe('projectShareableTrace — absence de masque', () => {
 
     expect(points).toEqual(snapshot);
   });
+
+  it('échoue fermé sur une trace sans masque trop courte pour être publiée', () => {
+    const result = projectShareableTrace([
+      { lng: 0, lat: 0 },
+      { lng: 0.000005, lat: 0 },
+    ]);
+
+    expectClosedError(result, 'unpublishable_geometry');
+    expect(result.masked).toBe(false);
+  });
 });
 
 describe('projectShareableTrace — masques début et fin', () => {
-  it('coupe le début au mètre demandé', () => {
+  it('coupe le début au mètre demandé, avec la marge de sécurité', () => {
     const points = line(11);
     const result = projectShareableTrace(points, [{ kind: 'start', meters: 250 }]);
 
     expect(result.error).toBeNull();
     expect(result.segments).toHaveLength(1);
     const visible = result.segments[0];
-    expect(distanceM(points[0], visible[0])).toBeGreaterThan(249);
-    expect(distanceM(points[0], visible[0])).toBeLessThan(251);
+    // 250 m demandés + 50 m de marge conservatrice.
+    expect(distanceM(points[0], visible[0])).toBeGreaterThan(299);
+    expect(distanceM(points[0], visible[0])).toBeLessThan(301);
     expect(visible.at(-1)).toEqual(points.at(-1));
   });
 
-  it('coupe la fin au mètre demandé', () => {
+  it('coupe la fin au mètre demandé, avec la marge de sécurité', () => {
     const points = line(11);
     const result = projectShareableTrace(points, [{ kind: 'end', meters: 250 }]);
 
@@ -104,9 +133,9 @@ describe('projectShareableTrace — masques début et fin', () => {
     const visible = result.segments[0];
     expect(visible[0]).toEqual(points[0]);
     expect(distanceM(visible.at(-1) as TracePoint, points.at(-1) as TracePoint)).toBeGreaterThan(
-      249
+      299
     );
-    expect(distanceM(visible.at(-1) as TracePoint, points.at(-1) as TracePoint)).toBeLessThan(251);
+    expect(distanceM(visible.at(-1) as TracePoint, points.at(-1) as TracePoint)).toBeLessThan(301);
   });
 
   it('cumule début et fin en conservant un seul segment central', () => {
@@ -119,12 +148,12 @@ describe('projectShareableTrace — masques début et fin', () => {
     expect(result.error).toBeNull();
     expect(result.segments).toHaveLength(1);
     const visible = result.segments[0];
-    expect(distanceM(points[0], visible[0])).toBeGreaterThan(249);
-    expect(distanceM(points[0], visible[0])).toBeLessThan(251);
+    expect(distanceM(points[0], visible[0])).toBeGreaterThan(299);
+    expect(distanceM(points[0], visible[0])).toBeLessThan(301);
     expect(distanceM(visible.at(-1) as TracePoint, points.at(-1) as TracePoint)).toBeGreaterThan(
-      249
+      299
     );
-    expect(distanceM(visible.at(-1) as TracePoint, points.at(-1) as TracePoint)).toBeLessThan(251);
+    expect(distanceM(visible.at(-1) as TracePoint, points.at(-1) as TracePoint)).toBeLessThan(301);
   });
 
   it('ne fabrique aucun segment quand les deux masques se recouvrent', () => {
@@ -143,6 +172,20 @@ describe('projectShareableTrace — masques début et fin', () => {
   it('masque la totalité de la trace', () => {
     const points = line(11);
     const result = projectShareableTrace(points, [{ kind: 'all' }]);
+
+    expect(result.error).toBeNull();
+    expect(result.masked).toBe(true);
+    expect(result.fullyMasked).toBe(true);
+    expect(result.segments).toEqual([]);
+  });
+
+  it('filtre un morceau quasi nul plutôt que de le publier', () => {
+    const points = line(11);
+    // 1111,95 m - (500 + 50) - (510 + 50) ≈ 1,95 m, sous le seuil publiable.
+    const result = projectShareableTrace(points, [
+      { kind: 'start', meters: 500 },
+      { kind: 'end', meters: 510 },
+    ]);
 
     expect(result.error).toBeNull();
     expect(result.masked).toBe(true);
@@ -178,9 +221,10 @@ describe('projectShareableTrace — zone géographique', () => {
     const [before, after] = result.segments;
     expect(before.at(-1)!.lng).toBeLessThan(0.005);
     expect(after[0].lng).toBeGreaterThan(0.005);
-    expect(distanceM(circle.center, before.at(-1)!)).toBeCloseTo(150, 0);
-    expect(distanceM(circle.center, after[0])).toBeCloseTo(150, 0);
+    expect(distanceM(circle.center, before.at(-1)!)).toBeCloseTo(200, 0);
+    expect(distanceM(circle.center, after[0])).toBeCloseTo(200, 0);
     expectNoPointInside(circle, result.segments);
+    expectReducedPrecision(result.segments);
   });
 
   it('découpe une polyligne qui traverse une boîte géographique', () => {
@@ -193,9 +237,12 @@ describe('projectShareableTrace — zone géographique', () => {
 
     expect(result.error).toBeNull();
     expect(result.segments).toHaveLength(2);
-    expect(result.segments[0].at(-1)!.lng).toBeCloseTo(0.0035, 6);
-    expect(result.segments[1][0].lng).toBeCloseTo(0.0065, 6);
+    // La boîte est élargie d'au moins 50 m : les extrémités ne sont plus sur
+    // les bords exacts 0.0035 / 0.0065.
+    expect(result.segments[0].at(-1)!.lng).toBeLessThan(0.0035 - 0.0003);
+    expect(result.segments[1][0].lng).toBeGreaterThan(0.0065 + 0.0003);
     expectNoPointInside(zone, result.segments);
+    expectReducedPrecision(result.segments);
   });
 
   it('préserve deux coupures distinctes et leur ordre', () => {
@@ -234,8 +281,9 @@ describe('projectShareableTrace — zone géographique', () => {
     expect(result.error).toBeNull();
     expect(result.segments).toHaveLength(1);
     const visible = result.segments[0];
-    expect(distanceM(points[0], visible[0])).toBeGreaterThan(249);
-    expect(distanceM(points[0], visible[0])).toBeLessThan(251);
+    // 250 m de zone + 50 m de marge conservatrice.
+    expect(distanceM(points[0], visible[0])).toBeGreaterThan(299);
+    expect(distanceM(points[0], visible[0])).toBeLessThan(301);
     expect(visible.at(-1)).toEqual(points.at(-1));
     expectNoPointInside(zone, result.segments);
   });
@@ -274,12 +322,13 @@ describe('projectShareableTrace — masques cumulés', () => {
     expect(result.error).toBeNull();
     expect(result.segments).toHaveLength(2);
     const [before, after] = result.segments;
-    expect(distanceM(points[0], before[0])).toBeGreaterThan(149);
-    expect(distanceM(points[0], before[0])).toBeLessThan(151);
-    expect(distanceM(before.at(-1)!, zone.center)).toBeCloseTo(100, 0);
-    expect(distanceM(after[0], zone.center)).toBeCloseTo(100, 0);
-    expect(distanceM(after.at(-1)!, points.at(-1)!)).toBeGreaterThan(149);
-    expect(distanceM(after.at(-1)!, points.at(-1)!)).toBeLessThan(151);
+    expect(distanceM(points[0], before[0])).toBeGreaterThan(199);
+    expect(distanceM(points[0], before[0])).toBeLessThan(201);
+    // 100 m de rayon + 50 m de marge.
+    expect(distanceM(before.at(-1)!, zone.center)).toBeCloseTo(150, 0);
+    expect(distanceM(after[0], zone.center)).toBeCloseTo(150, 0);
+    expect(distanceM(after.at(-1)!, points.at(-1)!)).toBeGreaterThan(199);
+    expect(distanceM(after.at(-1)!, points.at(-1)!)).toBeLessThan(201);
     expect(before.at(-1)!.lng).toBeLessThan(after[0].lng);
     expectNoPointInside(zone, result.segments);
   });
@@ -295,6 +344,96 @@ describe('projectShareableTrace — masques cumulés', () => {
     expect(result.error).toBeNull();
     expect(result.fullyMasked).toBe(true);
     expect(result.segments).toEqual([]);
+  });
+});
+
+describe('projectShareableTrace — hors domaine de calcul sûr', () => {
+  it('refuse une trace qui traverse l’antiméridien', () => {
+    const result = projectShareableTrace([
+      { lng: 179.9, lat: 0 },
+      { lng: -179.9, lat: 0 },
+    ]);
+
+    expectClosedError(result, 'unsafe_geometry');
+    expect(result.masked).toBe(false);
+  });
+
+  it('refuse un point exactement sur l’antiméridien', () => {
+    const result = projectShareableTrace([
+      { lng: 180, lat: 0 },
+      { lng: 179.9, lat: 0 },
+    ]);
+
+    expectClosedError(result, 'unsafe_geometry');
+    expect(result.masked).toBe(false);
+  });
+
+  it('refuse une trace en zone polaire', () => {
+    const result = projectShareableTrace([
+      { lng: 0, lat: 86 },
+      { lng: 0.001, lat: 86 },
+    ]);
+
+    expectClosedError(result, 'unsafe_geometry');
+    expect(result.masked).toBe(false);
+  });
+
+  it('refuse une zone circulaire polaire', () => {
+    const points = line(4);
+    const result = projectShareableTrace(points, [
+      {
+        kind: 'zone',
+        zone: { kind: 'circle', center: { lng: 0, lat: 86 }, radiusM: 500 },
+      },
+    ]);
+
+    expectClosedError(result, 'unsafe_geometry');
+    expect(result.masked).toBe(true);
+  });
+
+  it('refuse une boîte qui traverse l’antiméridien', () => {
+    const points = line(4);
+    const result = projectShareableTrace(points, [
+      {
+        kind: 'zone',
+        zone: { kind: 'bbox', bounds: [179.9, -1, -179.9, 1] },
+      },
+    ]);
+
+    expectClosedError(result, 'unsafe_geometry');
+    expect(result.masked).toBe(true);
+  });
+
+  it('refuse un cercle privé qui déborde sur l’antiméridien', () => {
+    const points = line(4);
+    const result = projectShareableTrace(points, [
+      {
+        kind: 'zone',
+        zone: { kind: 'circle', center: { lng: 179.99, lat: 0 }, radiusM: 5000 },
+      },
+    ]);
+
+    expectClosedError(result, 'unsafe_geometry');
+    expect(result.masked).toBe(true);
+  });
+
+  it('refuse une zone qui dépasse les bornes de calcul', () => {
+    const points = line(4);
+    const oversized = projectShareableTrace(points, [
+      {
+        kind: 'zone',
+        zone: { kind: 'circle', center: { lng: 0, lat: 0 }, radiusM: 150_000 },
+      },
+    ]);
+    const tooWide = projectShareableTrace(points, [
+      {
+        kind: 'zone',
+        zone: { kind: 'bbox', bounds: [-179, -1, 179, 1] },
+      },
+    ]);
+
+    expectClosedError(oversized, 'unsafe_geometry');
+    expectClosedError(tooWide, 'unsafe_geometry');
   });
 });
 
@@ -329,9 +468,8 @@ describe('projectShareableTrace — entrées invalides', () => {
   it('échoue fermé sur des points absents ou corrompus', () => {
     for (const input of invalidPoints) {
       const result = projectShareableTrace(input);
-      expect(result.error).toBe('invalid_points');
-      expect(result.segments).toEqual([]);
-      expect(result.fullyMasked).toBe(false);
+      expectClosedError(result, 'invalid_points');
+      expect(result.masked).toBe(false);
     }
   });
 
@@ -355,10 +493,6 @@ describe('projectShareableTrace — entrées invalides', () => {
       },
       {
         kind: 'zone',
-        zone: { kind: 'bbox', bounds: [1, 0, 0, 1] },
-      },
-      {
-        kind: 'zone',
         zone: { kind: 'bbox', bounds: [0, 0, 0, 0] },
       },
       {
@@ -369,9 +503,8 @@ describe('projectShareableTrace — entrées invalides', () => {
 
     for (const mask of invalidMasks) {
       const result = projectShareableTrace(points, [mask]);
-      expect(result.error).toBe('invalid_masks');
+      expectClosedError(result, 'invalid_masks');
       expect(result.masked).toBe(true);
-      expect(result.segments).toEqual([]);
     }
   });
 
@@ -379,8 +512,7 @@ describe('projectShareableTrace — entrées invalides', () => {
     const points = line(4);
     for (const masks of [null, {}, 'all', 42]) {
       const result = projectShareableTrace(points, masks);
-      expect(result.error).toBe('invalid_masks');
-      expect(result.segments).toEqual([]);
+      expectClosedError(result, 'invalid_masks');
     }
   });
 });
