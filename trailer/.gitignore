@@ -4,3 +4,6 @@ assets/audio/*.mp3
 assets/audio/*.wav
 assets/audio/*.m4a
 qa/*.mp4
+film/.hyperframes/
+film/renders/
+film/node_modules/
