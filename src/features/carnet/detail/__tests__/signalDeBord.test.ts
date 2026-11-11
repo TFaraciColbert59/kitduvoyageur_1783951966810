@@ -65,7 +65,11 @@ describe('publishSignal — envoi vers /api/carnets/signal', () => {
   } as unknown as Response;
 
   it('poste un FormData same-origin et rend le carnet/jour publiés', async () => {
-    const fetchImpl = vi.fn(async () => okResponse);
+    const calls: Array<[string, RequestInit]> = [];
+    const fetchImpl = (async (url: string, init: RequestInit) => {
+      calls.push([url, init]);
+      return okResponse;
+    }) as unknown as typeof fetch;
     const result = await publishSignal(
       {
         kind: 'photo',
@@ -77,12 +81,12 @@ describe('publishSignal — envoi vers /api/carnets/signal', () => {
       { fetchImpl: fetchImpl as unknown as typeof fetch }
     );
     expect(result).toEqual({ ok: true, carnetId: 'c-1', day: 4, momentId: 'm-1' });
-    expect(fetchImpl).toHaveBeenCalledTimes(1);
-    const [url, init] = fetchImpl.mock.calls[0];
+    expect(calls).toHaveLength(1);
+    const [url, init] = calls[0];
     expect(url).toBe('/api/carnets/signal');
-    expect((init as RequestInit).method).toBe('POST');
-    expect((init as RequestInit).credentials).toBe('same-origin');
-    const body = (init as RequestInit).body as FormData;
+    expect(init.method).toBe('POST');
+    expect(init.credentials).toBe('same-origin');
+    const body = init.body as FormData;
     expect(body.get('kind')).toBe('photo');
     expect(body.get('text')).toBe('Col de l’Eychauda');
     expect(body.get('tripId')).toBe('11111111-1111-4111-8111-111111111111');
@@ -90,7 +94,7 @@ describe('publishSignal — envoi vers /api/carnets/signal', () => {
   });
 
   it('refuse une note vide avant tout appel réseau', async () => {
-    const fetchImpl = vi.fn();
+    const fetchImpl = vi.fn() as unknown as typeof fetch;
     const result = await publishSignal(
       { kind: 'note', text: '   ' },
       { fetchImpl: fetchImpl as unknown as typeof fetch }
@@ -100,7 +104,7 @@ describe('publishSignal — envoi vers /api/carnets/signal', () => {
   });
 
   it('refuse une ligne trop longue avant tout appel réseau', async () => {
-    const fetchImpl = vi.fn();
+    const fetchImpl = vi.fn() as unknown as typeof fetch;
     const result = await publishSignal(
       { kind: 'note', text: 'x'.repeat(SIGNAL_TEXT_MAX + 1) },
       { fetchImpl: fetchImpl as unknown as typeof fetch }
@@ -110,7 +114,11 @@ describe('publishSignal — envoi vers /api/carnets/signal', () => {
   });
 
   it('ne transmet ni carnetId ni tripId qui ne sont pas des UUID', async () => {
-    const fetchImpl = vi.fn(async () => okResponse);
+    const calls: Array<[string, RequestInit]> = [];
+    const fetchImpl = (async (url: string, init: RequestInit) => {
+      calls.push([url, init]);
+      return okResponse;
+    }) as unknown as typeof fetch;
     await publishSignal(
       {
         kind: 'note',
@@ -120,7 +128,7 @@ describe('publishSignal — envoi vers /api/carnets/signal', () => {
       },
       { fetchImpl: fetchImpl as unknown as typeof fetch }
     );
-    const body = (fetchImpl.mock.calls[0][1] as RequestInit).body as FormData;
+    const body = calls[0][1].body as FormData;
     expect(body.get('carnetId')).toBeNull();
     expect(body.get('tripId')).toBeNull();
   });

@@ -33,9 +33,10 @@ export async function POST(
       return NextResponse.json({ error: 'Authentification requise' }, { status: 401 });
     }
 
-    // Récupérer la session
+    // Récupérer la session (vue participant : `poi_events` et `narratives` ne
+    // sont plus lisibles sur la table pour le rôle authenticated, cf. RGPD).
     const { data: session, error: sessionError } = await supabase
-      .from('hike_sessions')
+      .from('hike_sessions_participant')
       .select('id, user_id, route_id, carnet_id, started_at, ended_at, distance_km, duration_seconds, elevation_gain_m, poi_events, narratives')
       .eq('id', id)
       .single();

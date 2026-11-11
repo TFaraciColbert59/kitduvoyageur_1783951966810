@@ -255,7 +255,9 @@ export async function loadCompteMap(
 ): Promise<CompteMapPayload> {
   const [sessionRes, statsRes] = await Promise.all([
     supabase
-      .from('hike_sessions')
+      // RGPD : traces et événements bruts sur la vue participant (ses propres
+      // sorties), plus sur la table ; les colonnes neutres restent en table.
+      .from('hike_sessions_participant')
       .select(
         'id,title,route_id,started_at,distance_km,elevation_gain_m,max_altitude_m,positions_geojson,visibility,kit_id,carnet_id,poi_events'
       )

@@ -563,7 +563,9 @@ export function TracePaneV2({ user }: { user: { id: string } | null }) {
     try {
       const supabase = createClient();
       const { data } = await supabase
-        .from('hike_sessions')
+        // RGPD : la trace brute de ses propres sorties se lit sur la vue
+        // participant, plus sur la table (colonne retirée au rôle authenticated).
+        .from('hike_sessions_participant')
         .select('id, title, started_at, positions_geojson')
         .eq('user_id', user.id)
         .not('positions_geojson', 'is', null)

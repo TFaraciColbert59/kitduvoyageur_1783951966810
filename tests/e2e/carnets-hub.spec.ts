@@ -67,7 +67,7 @@ const EXPECTED = {
   mine: 3,
 };
 
-type HubRole = 'member' | 'anonymous';
+type HubRole = 'member' | 'anonymous' | 'signed-out';
 
 interface OpenedHub {
   mock: Awaited<ReturnType<typeof installCommunityV2Mock>>;

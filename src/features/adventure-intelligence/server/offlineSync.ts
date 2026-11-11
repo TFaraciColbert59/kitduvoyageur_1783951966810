@@ -301,7 +301,9 @@ export function createSupabaseOfflineSyncClient(
       const routeId = finiteNumber(payload.routeId);
 
       const { data: existing, error: lookupError } = await supabase
-        .from('hike_sessions')
+        // RGPD : `positions_timed` et `poi_events` se lisent sur la vue
+        // participant (ses propres sorties), plus sur la table.
+        .from('hike_sessions_participant')
         .select(
           'id, created_at, ended_at, distance_km, duration_seconds, elevation_gain_m, positions_timed, poi_events, route_id, kit_id, carnet_id'
         )

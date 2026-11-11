@@ -440,10 +440,14 @@ async function handleSupabase(url, init, headers) {
   const m = /^\/rest\/v1\/([a-z_]+)$/.exec(url.pathname);
   if (!m) return json({ message: 'fixture: route inconnue' }, 404);
   if (method !== 'GET' && method !== 'HEAD') return json([], 201);
-  /* Vue publique des sorties (RGPD, non appliquée en prod) : le visiteur lit
-     `hike_sessions_public` ; le fixture sert les mêmes lignes (la vue réelle
-     simplifie le tracé, ce que l'écran ne distingue pas). */
-  const tableName = m[1] === 'hike_sessions_public' ? 'hike_sessions' : m[1];
+  /* Vues RGPD des sorties (non appliquées en prod) : le visiteur lit
+     `hike_sessions_public`, le participant `hike_sessions_participant` ; le
+     fixture sert les mêmes lignes (la vue réelle simplifie le tracé et réserve
+     les bruts aux participants, ce que l'écran ne distingue pas). */
+  const tableName =
+    m[1] === 'hike_sessions_public' || m[1] === 'hike_sessions_participant'
+      ? 'hike_sessions'
+      : m[1];
   /* Carnet « stories » : mêmes données que le carnet de référence, mais ses photos et vidéos portent une image
      servie par l'app elle-même (aucun réseau) : une story a besoin d'un média, les autres scénarios non
      (leurs cartes restent des illustrations, comme dans la maquette). */

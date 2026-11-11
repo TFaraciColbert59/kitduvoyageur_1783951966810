@@ -434,7 +434,8 @@ export function createSupabaseCockpitDataClient(
 
     async listRecentSessions(userId, limit) {
       const { data, error } = await supabase
-        .from('hike_sessions')
+        // RGPD : les échantillons horodatés se lisent sur la vue participant.
+        .from('hike_sessions_participant')
         .select(
           'id, started_at, ended_at, distance_km, duration_seconds, positions_timed, created_at'
         )

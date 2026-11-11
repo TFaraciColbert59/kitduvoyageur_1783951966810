@@ -362,7 +362,9 @@ export async function GET(req: NextRequest) {
     const carnetId = searchParams.get('carnetId');
 
     let query = supabase
-      .from('hike_sessions')
+      // RGPD : les événements et récits bruts ne se lisent plus sur la table
+      // (colonnes retirées au rôle authenticated) mais sur la vue participant.
+      .from('hike_sessions_participant')
       .select('id, route_id, kit_id, carnet_id, started_at, ended_at, distance_km, duration_seconds, elevation_gain_m, poi_events, narratives, created_at')
       .eq('user_id', user.id)
       .order('started_at', { ascending: false });

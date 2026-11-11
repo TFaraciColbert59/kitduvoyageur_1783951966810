@@ -136,7 +136,12 @@ export async function getCarnetDetail(id: string) {
     p_carnet: carnet.id,
   });
   const viewerIsParticipant = participantCheck.data === true;
-  const sessionsSource = viewerIsParticipant ? 'hike_sessions' : 'hike_sessions_public';
+  /* RGPD : la table ne rend plus les points bruts au rôle authenticated ; le
+     participant lit la ligne complète par la vue dédiée, le visiteur la vue
+     publique simplifiée. */
+  const sessionsSource = viewerIsParticipant
+    ? 'hike_sessions_participant'
+    : 'hike_sessions_public';
 
   /* Tout ce qui ne dépend que du carnet part dans le même `Promise.all` :
      auteur, sorties, étapes, moments, kit, collaborateurs,

@@ -1,15 +1,13 @@
 -- pgTAP — 20261111101000_carnet_public_trace_scope
--- RGPD / suivi en direct : le rôle anonyme ne lit plus les points GPS bruts.
--- 1. anon ne peut plus lire public.hike_sessions (ni la colonne positions_geojson).
--- 2. anon lit public.hike_sessions_public pour un carnet public, pas pour un privé.
--- 3. La vue échantillonne et arrondit le tracé (pas de point brut, pas d'horodatage).
--- 4. La vue n'expose ni user_id ni positions_timed horodatées.
--- 5. Reste connu : le rôle authenticated garde l'accès table (documenté dans la
---    migration et docs/carnets/SUIVI-REPRISE-2026-11-11.md) — ce test le fige
---    pour qu'une future migration soit consciemment testée.
+-- RGPD / suivi en direct : le public ne lit plus les points GPS bruts.
+-- 1. anon ne lit plus la table hike_sessions ; il lit la vue publique.
+-- 2. La vue publique échantillonne et arrondit le tracé, sans horodatage ni user_id.
+-- 3. authenticated garde les colonnes neutres de la table, pas les points bruts.
+-- 4. La vue participant rend la ligne complète aux seuls participants (et à soi).
+-- 5. Un visiteur connecté non participant ne voit ni la vue participant ni les bruts.
 BEGIN;
 SET LOCAL search_path = public;
-SELECT plan(10);
+SELECT plan(16);
 
 -- Fixtures -------------------------------------------------------------------
 INSERT INTO auth.users (id, aud, role, email, encrypted_password, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
@@ -62,7 +60,7 @@ VALUES (
   jsonb_build_object('type', 'LineString', 'coordinates', jsonb_build_array(jsonb_build_array(5.5, 44.5), jsonb_build_array(5.6, 44.6)))
 );
 
--- 1-5. anon : la table brute est fermée, la vue publique est ouverte --------
+-- 1-5. anon : table fermée, vue publique ouverte -----------------------------
 SET LOCAL ROLE anon;
 SET LOCAL "request.jwt.claims" = '{"role": "anon"}';
 
@@ -86,8 +84,12 @@ SELECT is_empty(
   $$SELECT 1 FROM public.hike_sessions_public WHERE carnet_id = 'cd100000-0000-4000-8000-000000000002'$$,
   'anon ne voit pas les sorties d''un carnet privé via la vue'
 );
+SELECT throws_ok(
+  $$SELECT 1 FROM public.hike_sessions_participant LIMIT 1$$,
+  '42501', NULL, 'anon ne lit pas la vue participant'
+);
 
--- 6-9. La vue échantillonne, arrondit et ne publie ni horodatage ni user_id --
+-- 6-9. La vue publique échantillonne, arrondit, ne publie rien de brûlant ----
 SELECT results_eq(
   $$SELECT jsonb_array_length(positions_geojson -> 'coordinates')
     FROM public.hike_sessions_public WHERE id = 'cd200000-0000-4000-8000-000000000001'$$,
@@ -118,10 +120,48 @@ SELECT ok(
   'les mesures publiques ne portent aucun horodatage'
 );
 
--- 10. Reste connu : le rôle authenticated garde l'accès table ---------------
+-- 10-11. authenticated : colonnes neutres oui, bruts non --------------------
+RESET ROLE;
+SET LOCAL ROLE authenticated;
+SET LOCAL "request.jwt.claims" = '{"sub": "cd000000-0000-4000-8000-000000000002", "role": "authenticated"}';
 SELECT ok(
   has_table_privilege('authenticated', 'public.hike_sessions', 'SELECT'),
-  'reste connu : authenticated garde la table brute (fermeture complète = suite dédiée)'
+  'authenticated garde le SELECT table (colonnes neutres)'
+);
+SELECT ok(
+  NOT has_column_privilege('authenticated', 'public.hike_sessions', 'positions_geojson', 'SELECT'),
+  'authenticated n''a pas le privilège sur positions_geojson'
+);
+
+-- 12-14. Vue participant : participant oui, visiteur non ---------------------
+SELECT isnt_empty(
+  $$SELECT positions_geojson FROM public.hike_sessions_participant
+    WHERE id = 'cd200000-0000-4000-8000-000000000001'$$,
+  'un collaborateur voit la ligne complète de la sortie du carnet'
+);
+
+SET LOCAL "request.jwt.claims" = '{"sub": "cd000000-0000-4000-8000-000000000003", "role": "authenticated"}';
+SELECT is_empty(
+  $$SELECT 1 FROM public.hike_sessions_participant
+    WHERE id = 'cd200000-0000-4000-8000-000000000001'$$,
+  'un visiteur connecté non participant ne voit pas la vue participant'
+);
+SELECT throws_ok(
+  $$SELECT positions_geojson FROM public.hike_sessions WHERE id = 'cd200000-0000-4000-8000-000000000001'$$,
+  '42501', NULL, 'un visiteur connecté ne lit pas les bruts sur la table'
+);
+
+-- 15-16. L'auteur lit sa propre sortie --------------------------------------
+SET LOCAL "request.jwt.claims" = '{"sub": "cd000000-0000-4000-8000-000000000001", "role": "authenticated"}';
+SELECT isnt_empty(
+  $$SELECT positions_timed FROM public.hike_sessions_participant
+    WHERE id = 'cd200000-0000-4000-8000-000000000002'$$,
+  'l''auteur lit sa sortie privée par la vue participant'
+);
+SELECT is_empty(
+  $$SELECT 1 FROM public.hike_sessions_participant
+    WHERE id = 'cd200000-0000-4000-8000-000000000001' AND user_id <> 'cd000000-0000-4000-8000-000000000001'$$,
+  'la vue participant ne rend pas les sorties des autres'
 );
 
 SELECT * FROM finish();

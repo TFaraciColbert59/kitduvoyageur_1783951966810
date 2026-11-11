@@ -245,7 +245,10 @@ export async function loadOutingDetail(
   outingId: string
 ): Promise<OutingDetail | null> {
   const { data: sessionData, error: sessionError } = await supabase
-    .from('hike_sessions')
+    // RGPD : la trace brute et les notes ne se lisent plus sur la table pour le
+    // rôle authenticated ; la vue participant rend la ligne complète de sa
+    // propre sortie (appelée ici avec l'identifiant du lecteur).
+    .from('hike_sessions_participant')
     .select(
       'id,user_id,route_id,title,started_at,ended_at,distance_km,duration_seconds,elevation_gain_m,max_altitude_m,positions_timed,positions_geojson,visibility,kit_id,weather,notes'
     )
@@ -540,7 +543,9 @@ async function assertOwner(
   outingId: string
 ): Promise<SessionRow | null> {
   const { data } = await supabase
-    .from('hike_sessions')
+    // RGPD : `notes` n'est plus lisible sur la table ; la vue participant rend
+    // la ligne de sa propre sortie (filtre user_id ci-dessous).
+    .from('hike_sessions_participant')
     .select('id,user_id,kit_id,title,notes,visibility')
     .eq('id', outingId)
     .eq('user_id', userId)

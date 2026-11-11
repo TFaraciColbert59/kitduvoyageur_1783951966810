@@ -61,23 +61,19 @@ Branche : `claude/kind-bell-bfyt69` (worktree `lkdv-carnets-claude`). Plan de la
   base le 2026-11-11 (`table_exists=1`, `rls_enabled`, 4 policies, advisors relancés : aucune
   alerte nouvelle sur cette table). Rollback prêt :
   `supabase/migrations_down/20261110100100_carnet_etapes.down.sql`.
-- **Écrite, validée, NON appliquée** : `20261111101000_carnet_public_trace_scope`.
-  - Retire au rôle `anon` tout accès direct à `hike_sessions` (le trou nommé par la maquette).
-  - Expose `hike_sessions_public` : carnets publics uniquement, colonnes neutres, tracé
-    échantillonné (1 point sur 5) arrondi à 3 décimales (~110 m), mesures d'altitude arrondies,
-    sans horodatage ni `user_id`.
+- **Écrite, validée, NON appliquée** : `20261111101000_carnet_public_trace_scope`, portée
+  complète (voir « Fermeture RGPD du rôle authenticated » plus bas).
+  - Retire au rôle `anon` tout accès direct à `hike_sessions` ; expose `hike_sessions_public`
+    (carnets publics, tracé échantillonné 1 point sur 5 arrondi à ~110 m, sans horodatage ni
+    `user_id`).
   - `getCarnetDetail` tranche le rôle **avant** les sorties (`is_carnet_participant`) : un
-    participant lit la table, un visiteur lit la vue simplifiée.
+    participant lit `hike_sessions_participant`, un visiteur la vue simplifiée.
   - Validation faite dans une transaction annulée sur la production : `anon` sans privilège table,
     vue lue avec 6 lignes pour un carnet public réel, tracé 326 → 66 points, premier point
     `[6.895, 45.936]`. Aucune écriture conservée (vérifié après rollback).
   - **À appliquer impérativement avec le déploiement du code** : le code actuellement en
-    production lit la table brute pour les visiteurs ; la migration seule casserait leur carte.
-- **Reste connu (documenté, non fait)** : le rôle `authenticated` garde l'accès table (donc des
-  points bruts à un visiteur connecté qui interrogerait PostgREST directement). Le fermer exige
-  des vues « participant » et la migration des lecteurs de sorties personnelles (`compte`,
-  cockpit, synchronisation hors ligne) : chantier distinct, testé par pgTAP pour ne pas être
-  rouvert par accident.
+    production lit la table brute pour les visiteurs et les sorties personnelles ; la migration
+    seule casserait leur carte et leurs écrans de sortie.
 
 ### Vérifications (preuves)
 
@@ -165,6 +161,25 @@ Deuxième vague, même jour, pour finir ce qui restait du lot 2 et du lot 3 de l
   species, inc`) et leurs cartes existaient déjà (ticket budget, rencontre, planche d'espèces,
   note vocale, objets, incident) ; la vidéo était le rendu manquant.
 
+### Fermeture RGPD du rôle authenticated (même migration, non appliquée)
+
+- `hike_sessions_participant` (SECURITY DEFINER) rend la ligne complète à sa propre sortie,
+  à un carnet où l'on participe ou à une sortie où l'on est présent ; `anon` en est exclu
+  (les privilèges par défaut Supabase accordaient la vue aux deux rôles : `revoke` explicite,
+  constaté en validation).
+- `authenticated` perd le SELECT direct de `positions_geojson`, `positions_timed`, `poi_events`,
+  `narratives` et `notes` ; il garde les colonnes neutres (statistiques, kit, route, traitement).
+- Huit lecteurs migrés vers la vue participant : API liste des sorties, API narrative, cockpit
+  (adventure-intelligence), synchronisation hors ligne, bootstrap du compte, carte du compte,
+  sorties du compte (détail + contrôle propriétaire), fiche carnet (participant), plus l'import
+  de trace du formulaire de carnet. Les tâches de fond à clé de service (cron) gardent la table.
+- Invariant `tests/security/hike-sessions-raw-access.spec.ts` : casse le build si un futur code
+  resélectionne une colonne brûlante sur la table, ou si un écran concerné n'utilise plus la vue.
+- Validation transactionnelle sur la production (annulée ensuite) : `anon` sans table ni vue
+  participant, `authenticated` sans colonne brute mais avec les colonnes neutres, vue participant
+  à 6 lignes pour l'auteur du carnet de référence et 0 pour un visiteur connecté, vue publique
+  34 lignes. **Non appliquée** : le code déployé lit encore la table brute.
+
 ### Vérifications (2e vague)
 
 | Porte | Résultat |
@@ -184,8 +199,10 @@ Deuxième vague, même jour, pour finir ce qui restait du lot 2 et du lot 3 de l
    toujours pas appliquées en production, et la migration RGPD ci-dessus doit l'être avec le
    déploiement du code adapté. Le drapeau `NEXT_PUBLIC_COMMUNAUTE_V2` n'est pas activé en
    production. Aucune mise en production n'a été faite dans cette reprise.
-2. **Fermeture complète RGPD** du rôle `authenticated` (voir ci-dessus) : vues participant +
-   migration des lecteurs de sorties personnelles (compte, cockpit, synchronisation hors ligne).
+2. **Fermeture RGPD du rôle `authenticated`** : faite sur la branche (migration
+   `20261111101000` étendue — vue `hike_sessions_participant`, colonnes brûlantes retirées au
+   rôle authenticated, huit lecteurs migrés, invariant `tests/security/hike-sessions-raw-access.spec.ts`),
+   **à appliquer avec le déploiement** : le code en production lit encore la table brute.
 3. **Galerie plein écran et vidéo** : la visionneuse du moment (`CarnetPostSheet`) et la galerie
    de la lentille Médias affichent les images ; une vidéo s'y ouvre encore comme une image. Le
    fil et les tuiles la lisent désormais, la visionneuse plein écran reste à adapter.
