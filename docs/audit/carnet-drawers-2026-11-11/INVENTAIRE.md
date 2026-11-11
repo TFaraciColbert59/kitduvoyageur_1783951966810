@@ -100,6 +100,7 @@ Captures `after/after-prod-fiche.png`, `after/after-prod-route.png` (session vis
 - Cartes-jour : « 1 moment » sans « — · — » (les chiffres absents ne sont plus affichés comme des tirets).
 - Carte : état vide honnête **« Aucun tracé enregistré pour ce carnet. L'auteur n'a pas joint de trace GPS à ce carnet. »** — l'ancienne trace d'octobre n'est plus présentée comme le parcours d'un carnet de mars.
 - Aucune nouvelle erreur runtime (les 400/403 et le heartbeat `user_presence` existaient déjà pour une session anonyme).
+- Lentille Route : les lignes n'affichent plus « Chiffres non renseignés » (vérifié sur la capture finale `after/after-prod-route.png`, déploiement `e7e8e5ff`) ; la barre des lentilles ne recouvre plus le contenu (la réserve basse est en place ; le texte qui transparaît sous le verre est le contenu de la fiche derrière, flouté sur l'appareil).
 - Reste à contrôler sur iPhone : rendu du verre (blur réel) et barre des lentilles en bas de tiroir.
 
 Restent ouverts après ce lot : les fiches (moment/étape/objet/voyageur) à capturer manuellement, la lisibilité du verre sans `backdrop-filter` à contrôler sur iPhone, les tuiles Esri du banc fixtures, le recentrage de la carte sur le départ du carnet quand aucune trace n'est affichée (P3), et la capture du tiroir Sac après la réserve basse.
