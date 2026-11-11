@@ -1,1 +1,3 @@
-/* b-earth.js — module cosmos (à écrire). Voir assets/cosmos/core.js pour le contrat. */
+(function(){ var P; LKDV.cosmos.register({id:'probe',order:10,ranges:[[0,60]],init:function(C){ var gl=C.gl; console.log('MAX_TEX', gl.getParameter(gl.MAX_TEXTURE_SIZE), gl.getParameter(gl.RENDERER));
+P=C.program(C.VS_QUAD,"#version 300 es\nprecision highp float; in vec2 vUv; out vec4 o; uniform float uT;\nfloat h(vec3 p){p=fract(p*vec3(.1031,.103,.0973));p+=dot(p,p.yxz+33.33);return fract((p.x+p.y)*p.z);}\nfloat vn(vec3 x){vec3 i=floor(x),f=fract(x);f=f*f*(3.-2.*f);return mix(mix(mix(h(i),h(i+vec3(1,0,0)),f.x),mix(h(i+vec3(0,1,0)),h(i+vec3(1,1,0)),f.x),f.y),mix(mix(h(i+vec3(0,0,1)),h(i+vec3(1,0,1)),f.x),mix(h(i+vec3(0,1,1)),h(i+vec3(1,1,1)),f.x),f.y),f.z);}\nvoid main(){float s=0.,a=.5;vec3 p=vec3(vUv*8.,uT);for(int k=0;k<5;k++){s+=a*vn(p);p*=2.03;a*=.5;}o=vec4(vec3(s),1);}");},
+draw:function(C,t){var gl=C.gl;gl.useProgram(P.p);gl.uniform1f(P.u.uT,t);C.quad();}});})();

@@ -1,0 +1,381 @@
+/* LKDV — bibliothèque d'interface du trailer. Classes préfixées lk-. Mode d'emploi : docs/UI-LIB.md.
+   Aucune couleur littérale ici : tout passe par les variables de lkdv-tokens.css (à charger avant).
+   Unités : « logiques » = pixels d'un téléphone de 390 × 693 (.lk-phone), mis à l'échelle par la colonne
+   (×1,559 en 16:9, ×2,769 en 9:16). Aucun texte sous 17 unités logiques (≥ 26 px réels en 16:9). */
+
+/* ============ Colonne, téléphone logique, bandes sûres ============ */
+.lk-col { position: absolute; left: var(--lk-col-x, 656px); top: var(--lk-col-y, 0px); width: var(--lk-col-w, 608px); height: var(--lk-col-h, 1080px); overflow: visible; pointer-events: none; }
+/* Surface logique : ne JAMAIS animer cet élément avec GSAP (il porte l'échelle). Pas d'opacity/filter dessus (casse le verre). */
+.lk-phone { position: absolute; left: 0; top: 0; width: 390px; height: 693px; transform: scale(var(--lk-s, 1.5590)); transform-origin: 0 0;
+  font-family: var(--lk-font-ui); font-size: 17px; line-height: 1.2; letter-spacing: -0.01em; color: var(--cp-ink); -webkit-font-smoothing: antialiased; }
+.lk-phone *, .lk-phone *::before, .lk-phone *::after { box-sizing: border-box; }
+/* Bande utile : tout l'essentiel entre --lk-band-top et --lk-band-bottom (unités logiques, posées par mountColumn). */
+.lk-safe { position: absolute; left: 0; right: 0; top: var(--lk-band-top, 35px); bottom: calc(693px - var(--lk-band-bottom, 658px)); }
+.lk-abs { position: absolute; }
+.lk-fill { position: absolute; inset: 0; }
+.lk-stack-v { display: flex; flex-direction: column; gap: 10px; }
+.lk-stack-h { display: flex; flex-direction: row; align-items: center; gap: 10px; }
+.lk-center { display: grid; place-items: center; }
+.lk-num { font-family: var(--lk-font-brand); font-weight: 800; font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; letter-spacing: -0.01em; }
+.lk-mono { font-family: var(--lk-font-mono); font-weight: 500; font-variant-numeric: tabular-nums; letter-spacing: var(--tracking-caps); text-transform: uppercase; }
+
+/* ============ Matériau : verre Liquid Glass v8 (compas.css .cp-glass, .cp-sheet-glass) ============ */
+/* backdrop-filter : au plus 6 panneaux .lk-glass / .lk-sheet-glass / .lk-tabbar visibles en même temps dans une scène. */
+.lk-glass { position: relative;
+  background: linear-gradient(180deg, rgb(var(--lk-white-rgb) / calc(var(--cp-ga) + 0.14)), rgb(var(--lk-white-rgb) / calc(var(--cp-ga) - 0.04)) 50%, rgb(var(--lk-white-rgb) / calc(var(--cp-ga) + 0.06)));
+  -webkit-backdrop-filter: blur(var(--cp-gb)) saturate(1.9) brightness(1.07); backdrop-filter: blur(var(--cp-gb)) saturate(1.9) brightness(1.07);
+  box-shadow: inset 0 1px 0 var(--cp-hi), inset 0 -1px 1px rgb(var(--lk-white-rgb) / 0.45), inset 1px 0 1px rgb(var(--lk-white-rgb) / 0.28), inset -1px 0 1px rgb(var(--lk-white-rgb) / 0.28), inset 0 0 12px rgb(var(--lk-white-rgb) / 0.14), 0 0 0 0.5px rgb(var(--lk-ink-rgb) / 0.14), var(--cp-shadow); }
+.lk-glass::before { content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1px; pointer-events: none;
+  background: conic-gradient(from var(--cp-la), rgb(var(--lk-white-rgb) / 1), rgb(var(--lk-white-rgb) / 0.25) 18%, rgb(var(--lk-white-rgb) / 0) 32%, rgb(var(--lk-white-rgb) / 0.7) 50%, rgb(var(--lk-white-rgb) / 0) 68%, rgb(var(--lk-white-rgb) / 0.25) 82%, rgb(var(--lk-white-rgb) / 1));
+  -webkit-mask: linear-gradient(black 0 0) content-box, linear-gradient(black 0 0); -webkit-mask-composite: xor; mask: linear-gradient(black 0 0) content-box exclude, linear-gradient(black 0 0); }
+.lk-sheet-glass {
+  background: linear-gradient(180deg, rgb(var(--lk-white-rgb) / calc(var(--cp-ga) + 0.3)), rgb(var(--lk-white-rgb) / calc(var(--cp-ga) + 0.2)));
+  -webkit-backdrop-filter: blur(calc(var(--cp-gb) + 18px)) saturate(1.8) brightness(1.05); backdrop-filter: blur(calc(var(--cp-gb) + 18px)) saturate(1.8) brightness(1.05);
+  box-shadow: inset 0 1px 0 var(--cp-hi), inset 0 -1px 1px rgb(var(--lk-white-rgb) / 0.4), inset 0 0 16px rgb(var(--lk-white-rgb) / 0.12), 0 0 0 0.5px rgb(var(--lk-ink-rgb) / 0.12), 0 10px 30px rgb(var(--lk-ink-rgb) / 0.14); }
+/* Petite surface SANS flou (grilles, pastilles : ne compte pas dans les 6 panneaux). */
+.lk-flat { background: var(--lk-flat); box-shadow: inset 0 1px 0 var(--cp-hi), 0 0 0 0.5px rgb(var(--lk-ink-rgb) / 0.14), 0 3px 10px rgb(var(--lk-ink-rgb) / 0.1); }
+
+/* ============ Pictos : masque + currentColor (méthode unique ; classes générées en bas de fichier) ============ */
+.lk-ic { display: inline-block; flex: none; width: var(--lk-ic, 24px); height: var(--lk-ic, 24px); background-color: currentColor;
+  -webkit-mask: var(--lk-ic-url) center / contain no-repeat; mask: var(--lk-ic-url) center / contain no-repeat; }
+.lk-ic--s { --lk-ic: 18px; } .lk-ic--m { --lk-ic: 24px; } .lk-ic--l { --lk-ic: 32px; } .lk-ic--xl { --lk-ic: 44px; }
+
+/* ============ 1. Barre de saisie IA + bouton d'envoi + Spinner ============ */
+.lk-ask { position: relative; display: flex; align-items: center; gap: 10px; height: 60px; padding: 6px 6px 6px 8px; border-radius: var(--lk-r-full); }
+.lk-ask__txt { flex: 1; min-width: 0; display: flex; align-items: center; height: 100%; font-size: 19px; font-weight: 500; color: var(--cp-ink); white-space: nowrap; overflow: hidden; }
+.lk-ask__txt > span { white-space: pre; }
+.lk-caret { flex: none; width: 2px; height: 24px; margin-left: 2px; border-radius: 1px; background: var(--lkv-primary); }
+.lk-send { flex: none; width: 48px; height: 48px; display: grid; place-items: center; border: 0; border-radius: var(--lk-r-full); background: var(--cp-pg); color: var(--cp-pg-ink); box-shadow: var(--cp-pg-sh); }
+.lk-send--s { width: 40px; height: 40px; }
+/* État enfoncé statique (le mouvement passe par LKDV.ui.press) */
+.lk-send.is-pressed { box-shadow: inset 0 1px 2px rgb(var(--lk-forest-rgb) / 0.22), 0 0 0 0.6px rgb(var(--lk-forest-rgb) / 0.2); }
+/* Spinner officiel (src/components/ui/Spinner.tsx) : rond, bordure 2 px, haut transparent. La rotation est posée par LKDV.ui.spin. */
+.lk-spinner { display: inline-block; flex: none; width: 20px; height: 20px; border-radius: var(--lk-r-full); border: 2px solid var(--cp-ink); border-top-color: transparent; }
+.lk-spinner--sm { width: 16px; height: 16px; } .lk-spinner--lg { width: 28px; height: 28px; }
+.lk-spinner--inverted { border-color: var(--lkv-on-dark); border-top-color: transparent; }
+.lk-spinner--accent { border-color: var(--cp-accent); border-top-color: transparent; }
+
+/* ============ 2. Pastille-picto de verre et pastilles de provenance ============ */
+.lk-pill { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-width: 48px; height: 48px; padding: 0 12px; border-radius: var(--lk-r-full); color: var(--cp-ink); }
+.lk-pill--round { width: 48px; padding: 0; }
+.lk-pill .lk-num { font-size: 19px; }
+/* Provenance : mêmes couleurs et mêmes pictos dans tout le film. Teinte posée sur une base claire opaque (lisible sur photo). */
+.lk-prov { --t: var(--cp-good-bg); --f: var(--cp-good); position: relative; display: inline-grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: var(--lk-r-full); color: var(--f);
+  background: linear-gradient(var(--t), var(--t)), rgb(var(--lk-white-rgb) / 0.88); box-shadow: inset 0 1px 0 var(--cp-hi), 0 0 0 0.5px rgb(var(--lk-ink-rgb) / 0.14), 0 3px 8px rgb(var(--lk-ink-rgb) / 0.12); }
+.lk-prov--pret { --t: var(--cp-good-bg); --f: var(--cp-good); }                       /* sage + handshake */
+.lk-prov--occasion { --t: var(--cp-warn-bg); --f: var(--cp-warn); }                    /* ambre + recycle */
+.lk-prov--location { --t: rgb(var(--lk-info-rgb) / 0.2); --f: var(--cp-info); }        /* bleu + calendar */
+.lk-prov--achat { --t: rgb(var(--lk-stone-rgb) / 0.55); --f: var(--stone-700); }       /* Stone + tag */
+.lk-prov--s { width: 28px; height: 28px; } .lk-prov--s .lk-ic { --lk-ic: 17px; }
+.lk-prov--l { width: 52px; height: 52px; } .lk-prov--l .lk-ic { --lk-ic: 30px; }
+
+/* ============ 3. Avatar en initiale ============ */
+.lk-avatar { position: relative; display: inline-grid; place-items: center; flex: none; width: 44px; height: 44px; border-radius: var(--lk-r-full); font-family: var(--lk-font-brand); font-weight: 800; font-size: 21px; line-height: 1; color: var(--lkv-primary);
+  background: linear-gradient(rgb(var(--lk-sage-rgb) / 0.3), rgb(var(--lk-sage-rgb) / 0.3)), rgb(var(--lk-white-rgb) / 0.86); box-shadow: inset 0 1px 0 var(--cp-hi), 0 0 0 0.5px rgb(var(--lk-ink-rgb) / 0.14), 0 3px 8px rgb(var(--lk-ink-rgb) / 0.1); }
+.lk-avatar--s { width: 36px; height: 36px; font-size: 18px; }
+.lk-avatar--l { width: 68px; height: 68px; font-size: 32px; }
+.lk-avatar--on { background: var(--cp-accent); color: var(--lkv-on-dark); box-shadow: inset 0 1px 0 rgb(var(--lk-white-rgb) / 0.4), 0 0 0 2px rgb(var(--lk-white-rgb) / 0.9), 0 3px 10px rgb(var(--lk-forest-rgb) / 0.25); }
+.lk-avatar--empty { background: rgb(var(--lk-white-rgb) / 0.18); color: var(--cp-ink3); box-shadow: none; border: 2px dashed var(--lkv-sage-500); }
+.lk-avatar--ink { background: rgb(var(--lk-white-rgb) / 0.16); color: var(--cp-island-accent); box-shadow: inset 0 0 0 1px rgb(var(--lk-white-rgb) / 0.2); }
+.lk-avatars { display: inline-flex; align-items: center; } .lk-avatars > .lk-avatar + .lk-avatar { margin-left: -8px; }
+
+/* ============ 4. Îlot dynamique (v5 Island + .cp-island) ============ */
+.lk-island { position: relative; display: flex; align-items: center; gap: 10px; min-height: 56px; padding: 8px 18px 8px 10px; border-radius: 28px; background: var(--cp-island-bg); color: var(--cp-island-ink); box-shadow: var(--cp-island-shadow); }
+.lk-island .lk-ic { color: var(--cp-island-accent); }
+.lk-island .lk-num { font-size: 21px; color: var(--cp-island-ink); }
+.lk-island__sp { flex: 1; }
+.lk-island--prog { flex-wrap: wrap; row-gap: 0; padding-bottom: 14px; }
+.lk-island--prog .lk-bar { flex: 0 0 100%; margin: 6px 4px 0 6px; background: rgb(var(--lk-white-rgb) / 0.16); }
+.lk-island--prog .lk-bar i { background: var(--cp-island-accent); }
+
+/* ============ 5. Carte de verre, tiroir à trois hauteurs, onglets ============ */
+.lk-card { position: relative; border-radius: var(--lk-r-card); padding: 16px; }
+.lk-sheet { position: absolute; left: 0; right: 0; bottom: var(--lk-sheet-gap, 0px); height: var(--lk-sheet-h, 440px); border-radius: var(--lk-r-sheet) var(--lk-r-sheet) 0 0; padding: 22px 16px 16px; display: flex; flex-direction: column; gap: 12px; overflow: hidden; }
+.lk-sheet--low { --lk-sheet-h: 300px; } .lk-sheet--mid { --lk-sheet-h: 440px; } .lk-sheet--high { --lk-sheet-h: 620px; }
+.lk-sheet--float { border-radius: var(--lk-r-sheet); }
+.lk-sheet__grab { position: absolute; left: 50%; top: 8px; width: 40px; height: 5px; margin-left: -20px; border-radius: 3px; background: var(--lk-grab); }
+.lk-seg { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 2px; padding: 3px; border-radius: var(--lk-r-full); background: var(--cp-fill); }
+.lk-seg > * { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 40px; border-radius: var(--lk-r-full); color: var(--cp-ink2); }
+.lk-seg > .is-on { background: var(--cp-soft); box-shadow: inset 0 0 0 0.6px var(--cp-soft-line), inset 0 1px 0 rgb(var(--lk-white-rgb) / 0.7); color: var(--cp-ink); }
+
+/* ============ 6. Ligne, pastille, barre, anneau, coche ============ */
+.lk-row { display: flex; align-items: center; gap: 10px; width: 100%; min-height: var(--cp-row-h); padding: 6px 4px; border-bottom: 0.5px solid var(--cp-sep); }
+.lk-row__tile { flex: none; width: 34px; height: 34px; display: grid; place-items: center; border-radius: var(--lk-r-xs); color: var(--cp-good); background: var(--cp-soft); box-shadow: inset 0 0 0 0.6px var(--cp-soft-line); }
+.lk-row__line { flex: 1; height: 9px; max-width: var(--w, 60%); border-radius: 5px; background: var(--cp-fill); }   /* le « titre » est une barre, jamais un mot */
+.lk-row__val { margin-left: auto; font-size: 19px; color: var(--cp-ink); }
+.lk-row__chev { --lk-ic: 18px; flex: none; color: var(--cp-ink3); }
+.lk-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 11px; border-radius: var(--lk-r-full); background: var(--cp-fill); color: var(--cp-ink); font-family: var(--lk-font-brand); font-weight: 700; font-size: 17px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.lk-chip[data-tone="good"] { background: var(--cp-good-bg); color: var(--cp-good); }
+.lk-chip[data-tone="warn"] { background: var(--cp-warn-bg); color: var(--cp-warn); }
+.lk-chip[data-tone="bad"] { background: var(--cp-bad-bg); color: var(--cp-bad); }
+.lk-chip[data-tone="soft"] { background: var(--cp-soft); box-shadow: inset 0 0 0 0.6px var(--cp-soft-line); }
+.lk-chip[data-tone="info"] { background: rgb(var(--lk-info-rgb) / 0.2); color: var(--cp-info); }
+.lk-bar { display: flex; height: 6px; border-radius: 99px; background: var(--cp-fill); overflow: hidden; }
+.lk-bar > i { display: block; width: 100%; height: 100%; border-radius: 99px; background: var(--cp-accent); clip-path: inset(0 0 0 0 round 99px); }
+.lk-bar[data-tone="warn"] > i { background: var(--lkv-warning); } .lk-bar[data-tone="bad"] > i { background: var(--cp-bad); }
+.lk-bar--thick { height: 10px; }
+/* Jauge de compétence : tuile-picto + barre (+ petit chiffre « +25 ») */
+.lk-skill { display: flex; align-items: center; gap: 10px; min-height: 44px; }
+.lk-skill .lk-bar { flex: 1; }
+.lk-skill__ic { flex: none; width: 36px; height: 36px; display: grid; place-items: center; border-radius: var(--lk-r-xs); color: var(--cp-good); background: var(--cp-soft); box-shadow: inset 0 0 0 0.6px var(--cp-soft-line); }
+.lk-skill__plus { flex: none; min-width: 52px; text-align: right; font-size: 19px; color: var(--cp-good); }
+/* Anneau (SVG 100×100, pathLength 100, tracé sage-500 sur fond --cp-fill) : avatar au centre, chiffre en bas */
+.lk-ring { position: relative; flex: none; width: var(--lk-ring, 120px); height: var(--lk-ring, 120px); }
+.lk-ring > svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.lk-ring__bg { fill: none; stroke: var(--cp-fill); stroke-width: 9; }
+.lk-ring__fg { fill: none; stroke: var(--cp-accent); stroke-width: 9; stroke-linecap: round; stroke-dasharray: 100 100; stroke-dashoffset: 100; }
+.lk-ring__ctr { position: absolute; inset: 0; display: grid; place-items: center; }
+.lk-ring__num { position: absolute; left: 50%; bottom: -6px; transform: translateX(-50%); padding: 0 12px; height: 34px; display: grid; place-items: center; border-radius: var(--lk-r-full); font-size: 22px; color: var(--cp-ink); }
+.lk-ring--big { --lk-ring: 170px; }
+.lk-ring--num .lk-ring__num { position: static; transform: none; background: none; box-shadow: none; font-size: 40px; }
+.lk-check { display: inline-grid; place-items: center; flex: none; width: 28px; height: 28px; border-radius: var(--lk-r-full); background: var(--cp-accent); color: var(--lkv-on-dark); box-shadow: inset 0 1px 0 rgb(var(--lk-white-rgb) / 0.35), 0 2px 6px rgb(var(--lk-forest-rgb) / 0.2); }
+.lk-check .lk-ic { --lk-ic: 17px; }
+.lk-check--l { width: 44px; height: 44px; } .lk-check--l .lk-ic { --lk-ic: 28px; }
+.lk-check--soft { background: var(--cp-good-bg); color: var(--cp-good); box-shadow: none; }
+.lk-check--double { width: 40px; border-radius: var(--lk-r-full); } .lk-check--double .lk-ic { --lk-ic: 24px; }
+/* Pastille d'objet connecté (satellite, montre, batterie) : picto + chiffre ou jauge */
+.lk-obj { display: inline-flex; align-items: center; gap: 10px; height: 52px; padding: 0 16px 0 12px; border-radius: var(--lk-r-full); color: var(--cp-ink); }
+.lk-obj .lk-ic { color: var(--cp-good); --lk-ic: 28px; }
+.lk-obj .lk-num { font-size: 21px; }
+.lk-obj .lk-bar { width: 54px; height: 8px; }
+.lk-ping { position: absolute; left: 50%; top: 50%; width: 60px; height: 60px; margin: -30px 0 0 -30px; border-radius: var(--lk-r-full); border: 2px solid var(--cp-accent); opacity: 0; pointer-events: none; }
+.lk-tick { position: relative; display: inline-grid; place-items: center; width: 52px; height: 52px; border-radius: var(--lk-r-full); color: var(--cp-ink); }
+.lk-tick > .lk-check { position: absolute; right: -4px; top: -4px; width: 22px; height: 22px; } .lk-tick > .lk-check .lk-ic { --lk-ic: 13px; }
+
+/* ============ 7. Capsule de navigation, capsule d'étapes ============ */
+.lk-tabbar { position: relative; display: flex; align-items: stretch; height: 60px; padding: 4px; border-radius: var(--lk-r-full); background: var(--lk-bar-bg);
+  -webkit-backdrop-filter: var(--lk-bar-blur); backdrop-filter: var(--lk-bar-blur);
+  box-shadow: inset 0 1px 0 var(--cp-hi), inset 0 -1px 1px rgb(var(--lk-white-rgb) / 0.4), 0 0 0 0.5px rgb(var(--lk-ink-rgb) / 0.12), var(--lk-bar-shadow); }
+.lk-tabbar__lens, .lk-steps__lens { position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc((100% - 8px) / 5); border-radius: var(--lk-r-full);
+  background: linear-gradient(180deg, rgb(var(--lk-white-rgb) / 0.62), rgb(var(--lk-white-rgb) / 0.26));
+  box-shadow: inset 0 1px 0 rgb(var(--lk-white-rgb) / 1), inset 0 -1px 1px rgb(var(--lk-white-rgb) / 0.5), 0 0 0 0.5px rgb(var(--lk-ink-rgb) / 0.08), 0 3px 10px rgb(var(--lk-ink-rgb) / 0.1); }
+.lk-tabbar > .lk-tab { position: relative; z-index: 1; flex: 1 1 0; display: grid; place-items: center; border-radius: var(--lk-r-full); color: var(--cp-ink2); }
+.lk-tabbar > .lk-tab.is-active { color: var(--lkv-primary); }
+.lk-tab .lk-ic { --lk-ic: 28px; }
+/* Capsule d'étapes (.cp-steps) : Où, Nous, Résa, Verdict, Kit ; l'active en verre teinté sage */
+.lk-steps { position: relative; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); height: 52px; padding: 2px; border-radius: var(--lk-r-full); }
+.lk-steps__lens { top: 2px; bottom: 2px; left: 2px; width: calc((100% - 4px) / 5);
+  background: linear-gradient(180deg, rgb(var(--lk-white-rgb) / 0.62), rgb(var(--lk-white-rgb) / 0.26)), var(--cp-soft); box-shadow: inset 0 0 0 0.6px var(--cp-soft-line), inset 0 1px 0 rgb(var(--lk-white-rgb) / 0.9), 0 3px 10px rgb(var(--lk-ink-rgb) / 0.1); }
+.lk-steps > .lk-step { position: relative; z-index: 1; display: grid; place-items: center; border-radius: var(--lk-r-full); color: var(--cp-ink3); }
+.lk-steps > .lk-step.is-active { color: var(--cp-ink); }
+.lk-step .lk-ic { --lk-ic: 26px; }
+
+/* ============ 8. Réticule orbital (seul élément inventé) ============ */
+.lk-reticle { position: absolute; width: var(--lk-ret-w, 360px); height: var(--lk-ret-h, 360px); color: rgb(var(--lk-white-rgb) / 0.6); font-family: var(--lk-font-mono); font-weight: 500; font-size: var(--lk-ret-fs, 22px); letter-spacing: var(--tracking-caps); text-transform: uppercase; font-variant-numeric: tabular-nums; }
+.lk-reticle__c { position: absolute; width: var(--lk-ret-arm, 40px); height: var(--lk-ret-arm, 40px); border: 0 solid currentColor; }
+.lk-reticle__c--tl { left: 0; top: 0; border-left-width: 1px; border-top-width: 1px; } .lk-reticle__c--tr { right: 0; top: 0; border-right-width: 1px; border-top-width: 1px; }
+.lk-reticle__c--bl { left: 0; bottom: 0; border-left-width: 1px; border-bottom-width: 1px; } .lk-reticle__c--br { right: 0; bottom: 0; border-right-width: 1px; border-bottom-width: 1px; }
+.lk-reticle__lbl { position: absolute; left: 50%; transform: translateX(-50%); white-space: nowrap; } .lk-reticle__lbl--t { top: -1.6em; } .lk-reticle__lbl--b { bottom: -1.6em; }
+
+/* ============ 9. Téléphone générique sans marque (plongées) ============ */
+.lk-device { position: relative; width: var(--lk-dev-w, 300px); height: var(--lk-dev-h, 620px); padding: 9px; border-radius: 54px; background: var(--ink-900); box-shadow: inset 0 0 0 1.5px rgb(var(--lk-white-rgb) / 0.12), 0 24px 60px rgb(var(--lk-ink-rgb) / 0.35), 0 4px 12px rgb(var(--lk-ink-rgb) / 0.25); }
+.lk-device__screen { position: relative; width: 100%; height: 100%; border-radius: 46px; overflow: hidden; background: var(--lk-paper); }
+.lk-device__isl { position: absolute; left: 50%; top: 10px; width: 92px; height: 26px; margin-left: -46px; border-radius: var(--lk-r-full); background: var(--ink-900); z-index: 5; }
+
+/* ============ 10. Page de carnet ============ */
+.lk-page { position: relative; width: var(--lk-pg-w, 300px); height: var(--lk-pg-h, 420px); padding: 18px; border-radius: 8px; background: var(--lk-paper); box-shadow: inset 0 0 0 0.5px rgb(var(--lk-ink-rgb) / 0.08), 0 14px 34px rgb(var(--lk-ink-rgb) / 0.22), 0 2px 6px rgb(var(--lk-ink-rgb) / 0.12); overflow: hidden; }
+.lk-page__photo { position: absolute; left: var(--x, 18px); top: var(--y, 18px); width: var(--w, 120px); height: var(--h, 90px); border-radius: 4px; background: var(--ph, linear-gradient(160deg, var(--sage-300), var(--sage-500))); box-shadow: 0 0 0 4px var(--lk-paper), 0 0 0 4.5px rgb(var(--lk-ink-rgb) / 0.12), 0 4px 10px rgb(var(--lk-ink-rgb) / 0.18); }
+/* Écriture « manuscrite » = texture de traits (masque d'un tracé ondulé), jamais du texte lisible */
+.lk-scrib { position: absolute; left: var(--x, 18px); top: var(--y, 0px); width: var(--w, 200px); height: 14px; background: var(--ink-700); opacity: 0.78; clip-path: inset(0 0 0 0);
+  -webkit-mask: var(--lk-scrib-url) 0 50% / 64px 14px repeat-x; mask: var(--lk-scrib-url) 0 50% / 64px 14px repeat-x; }
+.lk-scrib--b { -webkit-mask-size: 52px 14px; mask-size: 52px 14px; -webkit-mask-position: 11px 50%; mask-position: 11px 50%; }
+.lk-scrib--c { -webkit-mask-size: 78px 14px; mask-size: 78px 14px; -webkit-mask-position: 27px 50%; mask-position: 27px 50%; }
+.lk-rule { position: absolute; left: var(--x, 18px); right: 18px; top: var(--y, 0px); height: 0; border-top: 0.5px solid var(--cp-sep); }
+/* Couverture : Paper, logo en creux (drop-shadow sur un masque = embossage) */
+.lk-cover { position: relative; width: var(--lk-pg-w, 300px); height: var(--lk-pg-h, 420px); border-radius: 6px 14px 14px 6px; background: linear-gradient(90deg, rgb(var(--lk-ink-rgb) / 0.1), rgb(var(--lk-ink-rgb) / 0) 6%), var(--lk-paper); box-shadow: inset 0 0 0 0.5px rgb(var(--lk-ink-rgb) / 0.1), 0 18px 40px rgb(var(--lk-ink-rgb) / 0.25), 0 3px 8px rgb(var(--lk-ink-rgb) / 0.12); }
+.lk-cover__logo { position: absolute; left: 50%; top: 42%; width: 46%; aspect-ratio: 1; transform: translate(-50%, -50%); filter: drop-shadow(0 1.5px 0 rgb(var(--lk-white-rgb) / 0.95)) drop-shadow(0 -1.5px 1.5px rgb(var(--lk-ink-rgb) / 0.32)); }
+.lk-cover__logo::after { content: ""; position: absolute; inset: 0; background: rgb(var(--lk-ink-rgb) / 0.14); -webkit-mask: var(--lk-logo-url) center / contain no-repeat; mask: var(--lk-logo-url) center / contain no-repeat; }
+
+/* ============ 11. Silhouettes d'objets du kit et grille de 38 ============ */
+.lk-item { position: relative; display: grid; place-items: center; flex: none; width: 54px; height: 54px; border-radius: 16px; color: var(--cp-ink3); border: 1.5px dashed var(--lk-ghost-line); background: rgb(var(--lk-white-rgb) / 0.08); }
+.lk-item .lk-ic { --lk-ic: 30px; opacity: 0.4; }
+/* État allumé : calque .lk-item__lit (opacité 0 → 1 par la timeline, ou classe .is-on en statique) */
+.lk-item__lit { position: absolute; inset: -1.5px; display: grid; place-items: center; border-radius: inherit; opacity: 0; color: var(--lkv-primary); background: rgb(var(--lk-white-rgb) / 0.92); box-shadow: inset 0 1px 0 var(--cp-hi), 0 0 0 0.5px rgb(var(--lk-ink-rgb) / 0.14), 0 4px 12px rgb(var(--lk-ink-rgb) / 0.12); }
+.lk-item__lit .lk-ic { opacity: 1; }
+.lk-item.is-on .lk-item__lit, .lk-item.is-on > .lk-prov { opacity: 1; }
+.lk-item > .lk-prov { position: absolute; right: -6px; bottom: -6px; width: 24px; height: 24px; opacity: 0; } .lk-item > .lk-prov .lk-ic { --lk-ic: 15px; opacity: 1; }
+.lk-item--l { width: 84px; height: 84px; border-radius: 24px; } .lk-item--l .lk-ic { --lk-ic: 46px; } .lk-item--l > .lk-prov { width: 34px; height: 34px; } .lk-item--l > .lk-prov .lk-ic, .lk-item--l .lk-item__lit .lk-ic { --lk-ic: 46px; } .lk-item--l > .lk-prov .lk-ic { --lk-ic: 21px; }
+.lk-grid38 { display: grid; grid-template-columns: repeat(6, 54px); gap: 10px 8px; justify-content: center; }
+.lk-dots { display: inline-flex; gap: 5px; } .lk-dots > i { width: 8px; height: 8px; border-radius: 50%; background: var(--cp-fill); } .lk-dots > i.is-on { background: var(--cp-accent); }
+
+/* ============ Pictos : classes générées (scripts de génération : voir docs/UI-LIB.md) ============ */
+/*GEN-ICONS*/
+/* Généré par scratchpad/ui-work/geniconsx.mjs : un sélecteur par picto (sf = app, extra = ajoutés). Chemins relatifs à CE fichier. */
+.lk-ic[data-ic="alert-circle"]{--lk-ic-url:url(icons/sf/alert-circle.svg)}
+.lk-ic[data-ic="alert-triangle"]{--lk-ic-url:url(icons/sf/alert-triangle.svg)}
+.lk-ic[data-ic="archive"]{--lk-ic-url:url(icons/sf/archive.svg)}
+.lk-ic[data-ic="archive-restore"]{--lk-ic-url:url(icons/sf/archive-restore.svg)}
+.lk-ic[data-ic="arrow-down"]{--lk-ic-url:url(icons/sf/arrow-down.svg)}
+.lk-ic[data-ic="arrow-left"]{--lk-ic-url:url(icons/sf/arrow-left.svg)}
+.lk-ic[data-ic="arrow-right"]{--lk-ic-url:url(icons/sf/arrow-right.svg)}
+.lk-ic[data-ic="arrow-right-left"]{--lk-ic-url:url(icons/sf/arrow-right-left.svg)}
+.lk-ic[data-ic="arrow-up"]{--lk-ic-url:url(icons/sf/arrow-up.svg)}
+.lk-ic[data-ic="arrow-up-right"]{--lk-ic-url:url(icons/sf/arrow-up-right.svg)}
+.lk-ic[data-ic="award"]{--lk-ic-url:url(icons/sf/award.svg)}
+.lk-ic[data-ic="backpack"]{--lk-ic-url:url(icons/sf/backpack.svg)}
+.lk-ic[data-ic="banknote"]{--lk-ic-url:url(icons/sf/banknote.svg)}
+.lk-ic[data-ic="battery"]{--lk-ic-url:url(icons/sf/battery.svg)}
+.lk-ic[data-ic="bed-double"]{--lk-ic-url:url(icons/sf/bed-double.svg)}
+.lk-ic[data-ic="bell"]{--lk-ic-url:url(icons/sf/bell.svg)}
+.lk-ic[data-ic="bell-off"]{--lk-ic-url:url(icons/sf/bell-off.svg)}
+.lk-ic[data-ic="bell-ring"]{--lk-ic-url:url(icons/sf/bell-ring.svg)}
+.lk-ic[data-ic="bike"]{--lk-ic-url:url(icons/sf/bike.svg)}
+.lk-ic[data-ic="book-open"]{--lk-ic-url:url(icons/sf/book-open.svg)}
+.lk-ic[data-ic="bookmark"]{--lk-ic-url:url(icons/sf/bookmark.svg)}
+.lk-ic[data-ic="building"]{--lk-ic-url:url(icons/sf/building.svg)}
+.lk-ic[data-ic="building2"]{--lk-ic-url:url(icons/sf/building2.svg)}
+.lk-ic[data-ic="bus"]{--lk-ic-url:url(icons/sf/bus.svg)}
+.lk-ic[data-ic="calendar"]{--lk-ic-url:url(icons/sf/calendar.svg)}
+.lk-ic[data-ic="calendar-check"]{--lk-ic-url:url(icons/sf/calendar-check.svg)}
+.lk-ic[data-ic="calendar-days"]{--lk-ic-url:url(icons/sf/calendar-days.svg)}
+.lk-ic[data-ic="calendar-plus"]{--lk-ic-url:url(icons/sf/calendar-plus.svg)}
+.lk-ic[data-ic="car"]{--lk-ic-url:url(icons/sf/car.svg)}
+.lk-ic[data-ic="check"]{--lk-ic-url:url(icons/sf/check.svg)}
+.lk-ic[data-ic="check-check"]{--lk-ic-url:url(icons/sf/check-check.svg)}
+.lk-ic[data-ic="check-circle"]{--lk-ic-url:url(icons/sf/check-circle.svg)}
+.lk-ic[data-ic="check-circle2"]{--lk-ic-url:url(icons/sf/check-circle2.svg)}
+.lk-ic[data-ic="check-square"]{--lk-ic-url:url(icons/sf/check-square.svg)}
+.lk-ic[data-ic="chevron-down"]{--lk-ic-url:url(icons/sf/chevron-down.svg)}
+.lk-ic[data-ic="chevron-left"]{--lk-ic-url:url(icons/sf/chevron-left.svg)}
+.lk-ic[data-ic="chevron-right"]{--lk-ic-url:url(icons/sf/chevron-right.svg)}
+.lk-ic[data-ic="chevron-up"]{--lk-ic-url:url(icons/sf/chevron-up.svg)}
+.lk-ic[data-ic="chevrons-up-down"]{--lk-ic-url:url(icons/sf/chevrons-up-down.svg)}
+.lk-ic[data-ic="circle"]{--lk-ic-url:url(icons/sf/circle.svg)}
+.lk-ic[data-ic="clipboard-list"]{--lk-ic-url:url(icons/sf/clipboard-list.svg)}
+.lk-ic[data-ic="clock"]{--lk-ic-url:url(icons/sf/clock.svg)}
+.lk-ic[data-ic="cloud"]{--lk-ic-url:url(icons/sf/cloud.svg)}
+.lk-ic[data-ic="cloud-drizzle"]{--lk-ic-url:url(icons/sf/cloud-drizzle.svg)}
+.lk-ic[data-ic="cloud-fog"]{--lk-ic-url:url(icons/sf/cloud-fog.svg)}
+.lk-ic[data-ic="cloud-lightning"]{--lk-ic-url:url(icons/sf/cloud-lightning.svg)}
+.lk-ic[data-ic="cloud-off"]{--lk-ic-url:url(icons/sf/cloud-off.svg)}
+.lk-ic[data-ic="cloud-rain"]{--lk-ic-url:url(icons/sf/cloud-rain.svg)}
+.lk-ic[data-ic="cloud-rain-wind"]{--lk-ic-url:url(icons/sf/cloud-rain-wind.svg)}
+.lk-ic[data-ic="cloud-snow"]{--lk-ic-url:url(icons/sf/cloud-snow.svg)}
+.lk-ic[data-ic="cloud-sun"]{--lk-ic-url:url(icons/sf/cloud-sun.svg)}
+.lk-ic[data-ic="coins"]{--lk-ic-url:url(icons/sf/coins.svg)}
+.lk-ic[data-ic="compass"]{--lk-ic-url:url(icons/sf/compass.svg)}
+.lk-ic[data-ic="copy"]{--lk-ic-url:url(icons/sf/copy.svg)}
+.lk-ic[data-ic="credit-card"]{--lk-ic-url:url(icons/sf/credit-card.svg)}
+.lk-ic[data-ic="crown"]{--lk-ic-url:url(icons/sf/crown.svg)}
+.lk-ic[data-ic="download"]{--lk-ic-url:url(icons/sf/download.svg)}
+.lk-ic[data-ic="droplet"]{--lk-ic-url:url(icons/sf/droplet.svg)}
+.lk-ic[data-ic="droplets"]{--lk-ic-url:url(icons/sf/droplets.svg)}
+.lk-ic[data-ic="edit2"]{--lk-ic-url:url(icons/sf/edit2.svg)}
+.lk-ic[data-ic="edit3"]{--lk-ic-url:url(icons/sf/edit3.svg)}
+.lk-ic[data-ic="ellipsis"]{--lk-ic-url:url(icons/sf/ellipsis.svg)}
+.lk-ic[data-ic="euro"]{--lk-ic-url:url(icons/sf/euro.svg)}
+.lk-ic[data-ic="external-link"]{--lk-ic-url:url(icons/sf/external-link.svg)}
+.lk-ic[data-ic="eye"]{--lk-ic-url:url(icons/sf/eye.svg)}
+.lk-ic[data-ic="eye-off"]{--lk-ic-url:url(icons/sf/eye-off.svg)}
+.lk-ic[data-ic="file-check"]{--lk-ic-url:url(icons/sf/file-check.svg)}
+.lk-ic[data-ic="file-text"]{--lk-ic-url:url(icons/sf/file-text.svg)}
+.lk-ic[data-ic="filter"]{--lk-ic-url:url(icons/sf/filter.svg)}
+.lk-ic[data-ic="flag"]{--lk-ic-url:url(icons/sf/flag.svg)}
+.lk-ic[data-ic="flame"]{--lk-ic-url:url(icons/sf/flame.svg)}
+.lk-ic[data-ic="flask-conical"]{--lk-ic-url:url(icons/sf/flask-conical.svg)}
+.lk-ic[data-ic="footprints"]{--lk-ic-url:url(icons/sf/footprints.svg)}
+.lk-ic[data-ic="globe"]{--lk-ic-url:url(icons/sf/globe.svg)}
+.lk-ic[data-ic="grip-vertical"]{--lk-ic-url:url(icons/sf/grip-vertical.svg)}
+.lk-ic[data-ic="hand-coins"]{--lk-ic-url:url(icons/sf/hand-coins.svg)}
+.lk-ic[data-ic="handshake"]{--lk-ic-url:url(icons/sf/handshake.svg)}
+.lk-ic[data-ic="heart"]{--lk-ic-url:url(icons/sf/heart.svg)}
+.lk-ic[data-ic="heart-pulse"]{--lk-ic-url:url(icons/sf/heart-pulse.svg)}
+.lk-ic[data-ic="help-circle"]{--lk-ic-url:url(icons/sf/help-circle.svg)}
+.lk-ic[data-ic="home"]{--lk-ic-url:url(icons/sf/home.svg)}
+.lk-ic[data-ic="image-off"]{--lk-ic-url:url(icons/sf/image-off.svg)}
+.lk-ic[data-ic="image-plus"]{--lk-ic-url:url(icons/sf/image-plus.svg)}
+.lk-ic[data-ic="info"]{--lk-ic-url:url(icons/sf/info.svg)}
+.lk-ic[data-ic="key-round"]{--lk-ic-url:url(icons/sf/key-round.svg)}
+.lk-ic[data-ic="layers"]{--lk-ic-url:url(icons/sf/layers.svg)}
+.lk-ic[data-ic="leaf"]{--lk-ic-url:url(icons/sf/leaf.svg)}
+.lk-ic[data-ic="link"]{--lk-ic-url:url(icons/sf/link.svg)}
+.lk-ic[data-ic="lock"]{--lk-ic-url:url(icons/sf/lock.svg)}
+.lk-ic[data-ic="log-out"]{--lk-ic-url:url(icons/sf/log-out.svg)}
+.lk-ic[data-ic="mail"]{--lk-ic-url:url(icons/sf/mail.svg)}
+.lk-ic[data-ic="mail-plus"]{--lk-ic-url:url(icons/sf/mail-plus.svg)}
+.lk-ic[data-ic="map"]{--lk-ic-url:url(icons/sf/map.svg)}
+.lk-ic[data-ic="map-pin"]{--lk-ic-url:url(icons/sf/map-pin.svg)}
+.lk-ic[data-ic="message-square"]{--lk-ic-url:url(icons/sf/message-square.svg)}
+.lk-ic[data-ic="message-square-plus"]{--lk-ic-url:url(icons/sf/message-square-plus.svg)}
+.lk-ic[data-ic="mic"]{--lk-ic-url:url(icons/sf/mic.svg)}
+.lk-ic[data-ic="minus"]{--lk-ic-url:url(icons/sf/minus.svg)}
+.lk-ic[data-ic="moon"]{--lk-ic-url:url(icons/sf/moon.svg)}
+.lk-ic[data-ic="moon-star"]{--lk-ic-url:url(icons/sf/moon-star.svg)}
+.lk-ic[data-ic="more-horizontal"]{--lk-ic-url:url(icons/sf/more-horizontal.svg)}
+.lk-ic[data-ic="more-vertical"]{--lk-ic-url:url(icons/sf/more-vertical.svg)}
+.lk-ic[data-ic="mountain"]{--lk-ic-url:url(icons/sf/mountain.svg)}
+.lk-ic[data-ic="navigation"]{--lk-ic-url:url(icons/sf/navigation.svg)}
+.lk-ic[data-ic="package"]{--lk-ic-url:url(icons/sf/package.svg)}
+.lk-ic[data-ic="paperclip"]{--lk-ic-url:url(icons/sf/paperclip.svg)}
+.lk-ic[data-ic="pause"]{--lk-ic-url:url(icons/sf/pause.svg)}
+.lk-ic[data-ic="pencil"]{--lk-ic-url:url(icons/sf/pencil.svg)}
+.lk-ic[data-ic="phone"]{--lk-ic-url:url(icons/sf/phone.svg)}
+.lk-ic[data-ic="phone-call"]{--lk-ic-url:url(icons/sf/phone-call.svg)}
+.lk-ic[data-ic="pin"]{--lk-ic-url:url(icons/sf/pin.svg)}
+.lk-ic[data-ic="plane"]{--lk-ic-url:url(icons/sf/plane.svg)}
+.lk-ic[data-ic="play"]{--lk-ic-url:url(icons/sf/play.svg)}
+.lk-ic[data-ic="plus"]{--lk-ic-url:url(icons/sf/plus.svg)}
+.lk-ic[data-ic="printer"]{--lk-ic-url:url(icons/sf/printer.svg)}
+.lk-ic[data-ic="radio"]{--lk-ic-url:url(icons/sf/radio.svg)}
+.lk-ic[data-ic="recycle"]{--lk-ic-url:url(icons/sf/recycle.svg)}
+.lk-ic[data-ic="refresh-cw"]{--lk-ic-url:url(icons/sf/refresh-cw.svg)}
+.lk-ic[data-ic="reply"]{--lk-ic-url:url(icons/sf/reply.svg)}
+.lk-ic[data-ic="rotate-ccw"]{--lk-ic-url:url(icons/sf/rotate-ccw.svg)}
+.lk-ic[data-ic="route"]{--lk-ic-url:url(icons/sf/route.svg)}
+.lk-ic[data-ic="scale"]{--lk-ic-url:url(icons/sf/scale.svg)}
+.lk-ic[data-ic="search"]{--lk-ic-url:url(icons/sf/search.svg)}
+.lk-ic[data-ic="send"]{--lk-ic-url:url(icons/sf/send.svg)}
+.lk-ic[data-ic="share2"]{--lk-ic-url:url(icons/sf/share2.svg)}
+.lk-ic[data-ic="shield"]{--lk-ic-url:url(icons/sf/shield.svg)}
+.lk-ic[data-ic="shield-alert"]{--lk-ic-url:url(icons/sf/shield-alert.svg)}
+.lk-ic[data-ic="shield-check"]{--lk-ic-url:url(icons/sf/shield-check.svg)}
+.lk-ic[data-ic="ship"]{--lk-ic-url:url(icons/sf/ship.svg)}
+.lk-ic[data-ic="shirt"]{--lk-ic-url:url(icons/sf/shirt.svg)}
+.lk-ic[data-ic="shopping-bag"]{--lk-ic-url:url(icons/sf/shopping-bag.svg)}
+.lk-ic[data-ic="shopping-cart"]{--lk-ic-url:url(icons/sf/shopping-cart.svg)}
+.lk-ic[data-ic="siren"]{--lk-ic-url:url(icons/sf/siren.svg)}
+.lk-ic[data-ic="smile"]{--lk-ic-url:url(icons/sf/smile.svg)}
+.lk-ic[data-ic="sparkles"]{--lk-ic-url:url(icons/sf/sparkles.svg)}
+.lk-ic[data-ic="square"]{--lk-ic-url:url(icons/sf/square.svg)}
+.lk-ic[data-ic="star"]{--lk-ic-url:url(icons/sf/star.svg)}
+.lk-ic[data-ic="sun"]{--lk-ic-url:url(icons/sf/sun.svg)}
+.lk-ic[data-ic="sunrise"]{--lk-ic-url:url(icons/sf/sunrise.svg)}
+.lk-ic[data-ic="sunset"]{--lk-ic-url:url(icons/sf/sunset.svg)}
+.lk-ic[data-ic="tag"]{--lk-ic-url:url(icons/sf/tag.svg)}
+.lk-ic[data-ic="tent"]{--lk-ic-url:url(icons/sf/tent.svg)}
+.lk-ic[data-ic="thermometer"]{--lk-ic-url:url(icons/sf/thermometer.svg)}
+.lk-ic[data-ic="ticket"]{--lk-ic-url:url(icons/sf/ticket.svg)}
+.lk-ic[data-ic="train"]{--lk-ic-url:url(icons/sf/train.svg)}
+.lk-ic[data-ic="trash2"]{--lk-ic-url:url(icons/sf/trash2.svg)}
+.lk-ic[data-ic="trending-down"]{--lk-ic-url:url(icons/sf/trending-down.svg)}
+.lk-ic[data-ic="trending-up"]{--lk-ic-url:url(icons/sf/trending-up.svg)}
+.lk-ic[data-ic="unlock"]{--lk-ic-url:url(icons/sf/unlock.svg)}
+.lk-ic[data-ic="user"]{--lk-ic-url:url(icons/sf/user.svg)}
+.lk-ic[data-ic="user-minus"]{--lk-ic-url:url(icons/sf/user-minus.svg)}
+.lk-ic[data-ic="user-plus"]{--lk-ic-url:url(icons/sf/user-plus.svg)}
+.lk-ic[data-ic="users"]{--lk-ic-url:url(icons/sf/users.svg)}
+.lk-ic[data-ic="weight"]{--lk-ic-url:url(icons/sf/weight.svg)}
+.lk-ic[data-ic="wifi"]{--lk-ic-url:url(icons/sf/wifi.svg)}
+.lk-ic[data-ic="wifi-off"]{--lk-ic-url:url(icons/sf/wifi-off.svg)}
+.lk-ic[data-ic="wind"]{--lk-ic-url:url(icons/sf/wind.svg)}
+.lk-ic[data-ic="x"]{--lk-ic-url:url(icons/sf/x.svg)}
+.lk-ic[data-ic="x-circle"]{--lk-ic-url:url(icons/sf/x-circle.svg)}
+.lk-ic[data-ic="zap"]{--lk-ic-url:url(icons/sf/zap.svg)}
+.lk-ic[data-ic="bookmark-fill"]{--lk-ic-url:url(icons/extra/bookmark-fill.svg)}
+.lk-ic[data-ic="bottle"]{--lk-ic-url:url(icons/extra/bottle.svg)}
+.lk-ic[data-ic="camera"]{--lk-ic-url:url(icons/extra/camera.svg)}
+.lk-ic[data-ic="feather"]{--lk-ic-url:url(icons/extra/feather.svg)}
+.lk-ic[data-ic="hot-spring"]{--lk-ic-url:url(icons/extra/hot-spring.svg)}
+.lk-ic[data-ic="paddle"]{--lk-ic-url:url(icons/extra/paddle.svg)}
+.lk-ic[data-ic="pause-fill"]{--lk-ic-url:url(icons/extra/pause-fill.svg)}
+.lk-ic[data-ic="play-fill"]{--lk-ic-url:url(icons/extra/play-fill.svg)}
+.lk-ic[data-ic="run"]{--lk-ic-url:url(icons/extra/run.svg)}
+.lk-ic[data-ic="satellite"]{--lk-ic-url:url(icons/extra/satellite.svg)}
+.lk-ic[data-ic="sneaker"]{--lk-ic-url:url(icons/extra/sneaker.svg)}
+.lk-ic[data-ic="snowflake"]{--lk-ic-url:url(icons/extra/snowflake.svg)}
+.lk-ic[data-ic="van"]{--lk-ic-url:url(icons/extra/van.svg)}
+.lk-ic[data-ic="watch"]{--lk-ic-url:url(icons/extra/watch.svg)}
+.lk-ic[data-ic="wheelchair"]{--lk-ic-url:url(icons/extra/wheelchair.svg)}
+.lk-ic[data-ic="logo"],.lk-cover__logo{--lk-logo-url:url(brand/logo-mark.svg)}
+.lk-ic[data-ic="logo"]{--lk-ic-url:url(brand/logo-mark.svg)}
+:root{--lk-scrib-url:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 14'%3E%3Cpath d='M1 9 q3-8 6-2 t5 1 q3-7 7-1 t6 2 q2-6 6-1 t6 1 q3-7 7-1 t6 2 q2-5 5-1 t6 1 q3-6 5-1 t5 2' fill='none' stroke='black' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
