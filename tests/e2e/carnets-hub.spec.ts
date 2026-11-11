@@ -507,4 +507,46 @@ test.describe('fiche carnet — lentille Équipage › Suivre (lot L2)', () => {
     ).toEqual([]);
     expect(badResponses, 'réseau sans 4xx/5xx évitables').toEqual([]);
   });
+
+  test('un visiteur voit « Suivre ce carnet » et garde la préférence sur l’appareil', async ({
+    page,
+    baseURL,
+  }, testInfo) => {
+    // Session anonyme : la RLS et is_carnet_participant rendent « visiteur ».
+    const mock = await installCommunityV2Mock(page, {
+      role: 'anonymous',
+      appOrigin: baseURL as string,
+    });
+    await page.addInitScript((value) => localStorage.setItem('lkdv_cookie_consent', value), CONSENT);
+    await page.clock.install({ time: new Date('2026-07-16T12:00:00+02:00') });
+    const badResponses = trackBadResponses(page);
+
+    await page.goto(`/carnets/${CARNET_ID}`, { waitUntil: 'domcontentloaded' });
+    await page.locator('.lkdv-title-pill').first().waitFor({ state: 'visible', timeout: 30_000 });
+    await waitForHydration(page, '.lkdv-title-pill');
+    await page.waitForTimeout(700);
+
+    await page.getByRole('button', { name: 'Ouvrir le carnet' }).click();
+    const drawer = page.locator('.lkdv-carnet-drawer');
+    await drawer.waitFor({ state: 'visible', timeout: 15_000 });
+    await drawer.getByRole('tab', { name: 'Équipage', exact: true }).click();
+    await drawer.getByRole('tab', { name: 'Suivre', exact: true }).click();
+
+    // Proposition n° 20 : suivre le carnet, pas seulement la personne.
+    const follow = drawer.getByRole('button', { name: 'Suivre le carnet' });
+    await expect(follow).toBeVisible();
+    await expect(follow).toHaveAttribute('aria-pressed', 'false');
+    // Invité : la préférence reste locale, elle ne prétend pas être au compte.
+    await expect(drawer).toContainText('Préférence gardée sur cet appareil.');
+
+    await follow.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(200);
+    await capture(page, testInfo, 'suivi-lentille-suivre-visiteur');
+
+    expect(
+      mock.consoleErrors.filter((error) => !HARNESS_IMAGE_DECODE.test(error)),
+      'console propre hors bruit de tuiles DEM du harnais',
+    ).toEqual([]);
+    expect(badResponses, 'réseau sans 4xx/5xx évitables').toEqual([]);
+  });
 });

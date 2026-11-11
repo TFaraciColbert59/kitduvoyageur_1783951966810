@@ -175,6 +175,9 @@ Deuxième vague, même jour, pour finir ce qui restait du lot 2 et du lot 3 de l
   de trace du formulaire de carnet. Les tâches de fond à clé de service (cron) gardent la table.
 - Invariant `tests/security/hike-sessions-raw-access.spec.ts` : casse le build si un futur code
   resélectionne une colonne brûlante sur la table, ou si un écran concerné n'utilise plus la vue.
+- Vérifications après migration des lecteurs : tsc 0 ; **76 fichiers / 669 tests verts** (dont
+  l'invariant RGPD) ; rebuild fixtures vert ; recette Playwright hub + fiche carnet participant
+  **28/28** ; banc de fidélité Carnet + axe **36/36** — aucune régression.
 - Validation transactionnelle sur la production (annulée ensuite) : `anon` sans table ni vue
   participant, `authenticated` sans colonne brute mais avec les colonnes neutres, vue participant
   à 6 lignes pour l'auteur du carnet de référence et 0 pour un visiteur connecté, vue publique
