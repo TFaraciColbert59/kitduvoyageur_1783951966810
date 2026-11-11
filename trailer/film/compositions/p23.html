@@ -1,0 +1,153 @@
+<!-- hf-skeleton generated id=p23 sha256=d2ce9be2d197daea — carte provisoire générée par tools/timeline/build-skeleton.mjs depuis film/shots.json ; toute retouche hors de la zone hf-footage la soustrait au générateur -->
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: #4A6B45;
+      font-family: "Inter", sans-serif;
+      color: #FAF8F5;
+    }
+    .p23-card {
+      position: absolute;
+      inset: 0;
+      padding: 96px 120px 120px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .p23-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 34px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+    .p23-mid {
+      display: flex;
+      align-items: flex-end;
+      gap: 72px;
+    }
+    .p23-num {
+      font-weight: 900;
+      font-size: 360px;
+      line-height: 0.8;
+      letter-spacing: -0.04em;
+    }
+    .p23-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      padding-bottom: 8px;
+    }
+    .p23-source {
+      font-family: "JetBrains Mono", monospace;
+      font-weight: 700;
+      font-size: 64px;
+    }
+    .p23-frames {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 36px;
+    }
+    .p23-star {
+      font-weight: 700;
+      font-size: 40px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .p23-intent {
+      max-width: 1600px;
+      font-size: 52px;
+      line-height: 1.2;
+      font-weight: 400;
+    }
+    .p23-track {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 12px;
+      background: rgba(250, 248, 245, 0.18);
+    }
+    .p23-bar {
+      position: absolute;
+      inset: 0;
+      background: #FAF8F5;
+      transform-origin: 0 50%;
+    }
+    .p23-frame {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+    .p23-shot,
+    .p23-shot-inner {
+      position: absolute;
+      inset: 0;
+    }
+    .p23-shot {
+      opacity: 0;
+    }
+    .p23-shot-img {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1920px;
+      height: 1080px;
+      /* Remplit le 16:9 sans déformer, quel que soit le rapport de l'image : recadrage au centre. */
+      object-fit: cover;
+      object-position: 50% 50%;
+    }
+  </style>
+  <div id="root" data-composition-id="p23" data-width="1920" data-height="1080" data-duration="1.3166666666666667">
+    <!-- Carte provisoire : outil de travail, disparaît quand l'image du plan est là. -->
+    <div id="p23-card" class="p23-card" data-shot="p23" data-act="5">
+      <div id="p23-top" class="p23-top">
+        <span id="p23-act">Acte 5 · DÉPART</span>
+        <span id="p23-range">1323–1402</span>
+      </div>
+      <div id="p23-mid" class="p23-mid">
+        <div id="p23-num" class="p23-num">P23</div>
+        <div id="p23-meta" class="p23-meta">
+          <div id="p23-source" class="p23-source">img16</div>
+          <div id="p23-frames" class="p23-frames">79 images · 1,32 s</div>
+        </div>
+      </div>
+      <div id="p23-intent" class="p23-intent">Retrouvailles à l'aube ; Sami tend sa tente à Léa (le prêt)</div>
+      <div id="p23-track" class="p23-track"><div id="p23-bar" class="p23-bar"></div></div>
+    </div>
+    <!-- Emplacement d'image plein cadre : assets/footage/img16.png.
+         Chaque calque : .p23-shot (opacité, séquence) > .p23-shot-inner (libre pour le mouvement) > img. -->
+    <div id="p23-frame" class="p23-frame" data-layout-allow-overflow>
+      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) --><!-- hf-footage:end -->
+    </div>
+  </div>
+  <script>
+    (function () {
+      var D = 79 / 60;
+      var tl = gsap.timeline({ paused: true });
+      // Barre de progression : se remplit sur la durée du plan.
+      tl.fromTo("#p23-bar", { scaleX: 0 }, { scaleX: 1, duration: D, ease: "none" }, 0);
+      // Images présentes : chaque source occupe sa part égale du plan (ordre de la trame) ;
+      // la carte reste visible là où l'image manque.
+      var shots = Array.prototype.slice.call(document.querySelectorAll(".p23-shot"));
+      if (shots.length) {
+        var n = Number(shots[0].getAttribute("data-seq-count"));
+        var bySeq = {};
+        shots.forEach(function (el) { bySeq[el.getAttribute("data-seq")] = el; });
+        for (var k = 0; k < n; k++) {
+          var t = (k * D) / n;
+          var el = bySeq[String(k)];
+          shots.forEach(function (other) {
+            tl.set(other, { opacity: other === el ? 1 : 0 }, t);
+          });
+          tl.set("#p23-card", { opacity: el ? 0 : 1 }, t);
+        }
+      }
+      window.__timelines["p23"] = tl;
+    })();
+  </script>
+</template>

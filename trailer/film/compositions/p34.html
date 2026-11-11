@@ -1,0 +1,153 @@
+<!-- hf-skeleton generated id=p34 sha256=0d344aeee232412b — carte provisoire générée par tools/timeline/build-skeleton.mjs depuis film/shots.json ; toute retouche hors de la zone hf-footage la soustrait au générateur -->
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: #4B4A44;
+      font-family: "Inter", sans-serif;
+      color: #FAF8F5;
+    }
+    .p34-card {
+      position: absolute;
+      inset: 0;
+      padding: 96px 120px 120px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .p34-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 34px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+    .p34-mid {
+      display: flex;
+      align-items: flex-end;
+      gap: 72px;
+    }
+    .p34-num {
+      font-weight: 900;
+      font-size: 360px;
+      line-height: 0.8;
+      letter-spacing: -0.04em;
+    }
+    .p34-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      padding-bottom: 8px;
+    }
+    .p34-source {
+      font-family: "JetBrains Mono", monospace;
+      font-weight: 700;
+      font-size: 64px;
+    }
+    .p34-frames {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 36px;
+    }
+    .p34-star {
+      font-weight: 700;
+      font-size: 40px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .p34-intent {
+      max-width: 1600px;
+      font-size: 52px;
+      line-height: 1.2;
+      font-weight: 400;
+    }
+    .p34-track {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 12px;
+      background: rgba(250, 248, 245, 0.18);
+    }
+    .p34-bar {
+      position: absolute;
+      inset: 0;
+      background: #FAF8F5;
+      transform-origin: 0 50%;
+    }
+    .p34-frame {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+    .p34-shot,
+    .p34-shot-inner {
+      position: absolute;
+      inset: 0;
+    }
+    .p34-shot {
+      opacity: 0;
+    }
+    .p34-shot-img {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1920px;
+      height: 1080px;
+      /* Remplit le 16:9 sans déformer, quel que soit le rapport de l'image : recadrage au centre. */
+      object-fit: cover;
+      object-position: 50% 50%;
+    }
+  </style>
+  <div id="root" data-composition-id="p34" data-width="1920" data-height="1080" data-duration="0.85">
+    <!-- Carte provisoire : outil de travail, disparaît quand l'image du plan est là. -->
+    <div id="p34-card" class="p34-card" data-shot="p34" data-act="7">
+      <div id="p34-top" class="p34-top">
+        <span id="p34-act">Acte 7 · COUREUR</span>
+        <span id="p34-range">2063–2114</span>
+      </div>
+      <div id="p34-mid" class="p34-mid">
+        <div id="p34-num" class="p34-num">P34</div>
+        <div id="p34-meta" class="p34-meta">
+          <div id="p34-source" class="p34-source">img25</div>
+          <div id="p34-frames" class="p34-frames">51 images · 0,85 s</div>
+        </div>
+      </div>
+      <div id="p34-intent" class="p34-intent">Impact sur la pierre</div>
+      <div id="p34-track" class="p34-track"><div id="p34-bar" class="p34-bar"></div></div>
+    </div>
+    <!-- Emplacement d'image plein cadre : assets/footage/img25.png.
+         Chaque calque : .p34-shot (opacité, séquence) > .p34-shot-inner (libre pour le mouvement) > img. -->
+    <div id="p34-frame" class="p34-frame" data-layout-allow-overflow>
+      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) --><!-- hf-footage:end -->
+    </div>
+  </div>
+  <script>
+    (function () {
+      var D = 51 / 60;
+      var tl = gsap.timeline({ paused: true });
+      // Barre de progression : se remplit sur la durée du plan.
+      tl.fromTo("#p34-bar", { scaleX: 0 }, { scaleX: 1, duration: D, ease: "none" }, 0);
+      // Images présentes : chaque source occupe sa part égale du plan (ordre de la trame) ;
+      // la carte reste visible là où l'image manque.
+      var shots = Array.prototype.slice.call(document.querySelectorAll(".p34-shot"));
+      if (shots.length) {
+        var n = Number(shots[0].getAttribute("data-seq-count"));
+        var bySeq = {};
+        shots.forEach(function (el) { bySeq[el.getAttribute("data-seq")] = el; });
+        for (var k = 0; k < n; k++) {
+          var t = (k * D) / n;
+          var el = bySeq[String(k)];
+          shots.forEach(function (other) {
+            tl.set(other, { opacity: other === el ? 1 : 0 }, t);
+          });
+          tl.set("#p34-card", { opacity: el ? 0 : 1 }, t);
+        }
+      }
+      window.__timelines["p34"] = tl;
+    })();
+  </script>
+</template>

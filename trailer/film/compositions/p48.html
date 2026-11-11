@@ -1,0 +1,153 @@
+<!-- hf-skeleton generated id=p48 sha256=000bb4b41856ca57 — carte provisoire générée par tools/timeline/build-skeleton.mjs depuis film/shots.json ; toute retouche hors de la zone hf-footage la soustrait au générateur -->
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: #8A3E1A;
+      font-family: "Inter", sans-serif;
+      color: #FAF8F5;
+    }
+    .p48-card {
+      position: absolute;
+      inset: 0;
+      padding: 96px 120px 120px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .p48-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 34px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+    .p48-mid {
+      display: flex;
+      align-items: flex-end;
+      gap: 72px;
+    }
+    .p48-num {
+      font-weight: 900;
+      font-size: 360px;
+      line-height: 0.8;
+      letter-spacing: -0.04em;
+    }
+    .p48-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      padding-bottom: 8px;
+    }
+    .p48-source {
+      font-family: "JetBrains Mono", monospace;
+      font-weight: 700;
+      font-size: 64px;
+    }
+    .p48-frames {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 36px;
+    }
+    .p48-star {
+      font-weight: 700;
+      font-size: 40px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .p48-intent {
+      max-width: 1600px;
+      font-size: 52px;
+      line-height: 1.2;
+      font-weight: 400;
+    }
+    .p48-track {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 12px;
+      background: rgba(250, 248, 245, 0.18);
+    }
+    .p48-bar {
+      position: absolute;
+      inset: 0;
+      background: #FAF8F5;
+      transform-origin: 0 50%;
+    }
+    .p48-frame {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+    .p48-shot,
+    .p48-shot-inner {
+      position: absolute;
+      inset: 0;
+    }
+    .p48-shot {
+      opacity: 0;
+    }
+    .p48-shot-img {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1920px;
+      height: 1080px;
+      /* Remplit le 16:9 sans déformer, quel que soit le rapport de l'image : recadrage au centre. */
+      object-fit: cover;
+      object-position: 50% 50%;
+    }
+  </style>
+  <div id="root" data-composition-id="p48" data-width="1920" data-height="1080" data-duration="1.3166666666666667">
+    <!-- Carte provisoire : outil de travail, disparaît quand l'image du plan est là. -->
+    <div id="p48-card" class="p48-card" data-shot="p48" data-act="9">
+      <div id="p48-top" class="p48-top">
+        <span id="p48-act">Acte 9 · BIVOUAC</span>
+        <span id="p48-range">2981–3060</span>
+      </div>
+      <div id="p48-mid" class="p48-mid">
+        <div id="p48-num" class="p48-num">P48</div>
+        <div id="p48-meta" class="p48-meta">
+          <div id="p48-source" class="p48-source">img37 + E11</div>
+          <div id="p48-frames" class="p48-frames">79 images · 1,32 s</div>
+        </div>
+      </div>
+      <div id="p48-intent" class="p48-intent">Carnet : la photo du lac + « Essentiel » sur le réchaud</div>
+      <div id="p48-track" class="p48-track"><div id="p48-bar" class="p48-bar"></div></div>
+    </div>
+    <!-- Emplacement d'image plein cadre : assets/footage/img37.png.
+         Chaque calque : .p48-shot (opacité, séquence) > .p48-shot-inner (libre pour le mouvement) > img. -->
+    <div id="p48-frame" class="p48-frame" data-layout-allow-overflow>
+      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) --><!-- hf-footage:end -->
+    </div>
+  </div>
+  <script>
+    (function () {
+      var D = 79 / 60;
+      var tl = gsap.timeline({ paused: true });
+      // Barre de progression : se remplit sur la durée du plan.
+      tl.fromTo("#p48-bar", { scaleX: 0 }, { scaleX: 1, duration: D, ease: "none" }, 0);
+      // Images présentes : chaque source occupe sa part égale du plan (ordre de la trame) ;
+      // la carte reste visible là où l'image manque.
+      var shots = Array.prototype.slice.call(document.querySelectorAll(".p48-shot"));
+      if (shots.length) {
+        var n = Number(shots[0].getAttribute("data-seq-count"));
+        var bySeq = {};
+        shots.forEach(function (el) { bySeq[el.getAttribute("data-seq")] = el; });
+        for (var k = 0; k < n; k++) {
+          var t = (k * D) / n;
+          var el = bySeq[String(k)];
+          shots.forEach(function (other) {
+            tl.set(other, { opacity: other === el ? 1 : 0 }, t);
+          });
+          tl.set("#p48-card", { opacity: el ? 0 : 1 }, t);
+        }
+      }
+      window.__timelines["p48"] = tl;
+    })();
+  </script>
+</template>

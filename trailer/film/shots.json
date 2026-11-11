@@ -1,0 +1,1090 @@
+{
+  "$comment": "Source unique du minutage du trailer. Extrait de TRAME-60s.md (v4.1) par tools/timeline/trame-to-shots.mjs. Les images (60 i/s) font foi ; startFrame inclus, endFrame exclu.",
+  "fps": 60,
+  "width": 1920,
+  "height": 1080,
+  "totalFrames": 3600,
+  "shots": [
+    {
+      "id": "p01",
+      "act": {
+        "number": 1,
+        "name": "ESPACE"
+      },
+      "startFrame": 0,
+      "endFrame": 89,
+      "sources": [
+        "img01"
+      ],
+      "screen": null,
+      "code": false,
+      "star": false,
+      "sourceLabel": "img01",
+      "timeLabel": "0,00–1,48",
+      "cadre": "Orbite, poussée avant, roulis de 8°",
+      "action": "La Terre surgit, le soleil perce le limbe, logo fondu dans le halo",
+      "raccord": "Flash solaire"
+    },
+    {
+      "id": "p02",
+      "act": {
+        "number": 1,
+        "name": "ESPACE"
+      },
+      "startFrame": 89,
+      "endFrame": 166,
+      "sources": [
+        "img02"
+      ],
+      "screen": null,
+      "code": false,
+      "star": false,
+      "sourceLabel": "img02",
+      "timeLabel": "1,48–2,77",
+      "cadre": "Téléobjectif, poussée vers les Dolomites",
+      "action": "Les Alpes au lever du jour",
+      "raccord": "Plongée, flou radial"
+    },
+    {
+      "id": "p03",
+      "act": {
+        "number": 2,
+        "name": "DESCENTE"
+      },
+      "startFrame": 166,
+      "endFrame": 220,
+      "sources": [
+        "img03"
+      ],
+      "screen": null,
+      "code": false,
+      "star": false,
+      "sourceLabel": "img03",
+      "timeLabel": "2,77–3,67",
+      "cadre": "Chute, vibration",
+      "action": "Stratosphère, mer de nuages",
+      "raccord": "On entre dans un nuage"
+    },
+    {
+      "id": "p04",
+      "act": {
+        "number": 2,
+        "name": "DESCENTE"
+      },
+      "startFrame": 220,
+      "endFrame": 272,
+      "sources": [
+        "img04"
+      ],
+      "screen": null,
+      "code": false,
+      "star": false,
+      "sourceLabel": "img04",
+      "timeLabel": "3,67–4,53",
+      "cadre": "Traversée",
+      "action": "Le nuage se déchire sur une ville",
+      "raccord": "Trouée"
+    },
+    {
+      "id": "p05",
+      "act": {
+        "number": 2,
+        "name": "DESCENTE"
+      },
+      "startFrame": 272,
+      "endFrame": 325,
+      "sources": [
+        "img05"
+      ],
+      "screen": null,
+      "code": false,
+      "star": false,
+      "sourceLabel": "img05",
+      "timeLabel": "4,53–5,41",
+      "cadre": "Plongée verticale qui accélère",
+      "action": "Ville à l'heure bleue ; on traverse la fenêtre éclairée",
+      "raccord": "Vitre"
+    },
+    {
+      "id": "p06",
+      "act": {
+        "number": 3,
+        "name": "DÉCLIC"
+      },
+      "startFrame": 325,
+      "endFrame": 403,
+      "sources": [
+        "img06"
+      ],
+      "screen": null,
+      "code": false,
+      "star": false,
+      "sourceLabel": "img06",
+      "timeLabel": "5,41–6,72",
+      "cadre": "Travelling latéral",
+      "action": "**DROP.** Léa rêve à sa fenêtre, un soir de pluie",
+      "raccord": "Regard vers l'écran"
+    },
+    {
+      "id": "p07",
+      "act": {
+        "number": 3,
+        "name": "DÉCLIC"
+      },
+      "startFrame": 403,
+      "endFrame": 482,
+      "sources": [
+        "img07"
+      ],
+      "screen": "E1",
+      "code": false,
+      "star": false,
+      "sourceLabel": "img07 + E1",
+      "timeLabel": "6,72–8,03",
+      "cadre": "Gros plan, poussée lente",
+      "action": "Elle fait défiler le carnet d'un voyageur, le pouce ralentit sur le lac",
+      "raccord": "Turquoise"
+    },
+    {
+      "id": "p08",
+      "act": {
+        "number": 3,
+        "name": "DÉCLIC"
+      },
+      "startFrame": 482,
+      "endFrame": 508,
+      "sources": [
+        "img08"
+      ],
+      "screen": null,
+      "code": false,
+      "star": false,
+      "sourceLabel": "img08",
+      "timeLabel": "8,03–8,47",
+      "cadre": "Très gros plan de l'œil",
+      "action": "Le lac se reflète dans sa pupille",
+      "raccord": "Rond de la pupille"
+    },
+    {
+      "id": "p09",
+      "act": {
+        "number": 3,
+        "name": "DÉCLIC"
+      },
+      "startFrame": 508,
+      "endFrame": 560,
+      "sources": [
+        "img07"
+      ],
+      "screen": "E1",
+      "code": false,
+      "star": false,
+      "sourceLabel": "img07 + E1",
+      "timeLabel": "8,47–9,34",
+      "cadre": "Pouce qui tape, poussée violente dans l'écran du téléphone",
+      "action": "La photo remplit le cadre",
+      "raccord": "La photo s'anime"
+    },
+    {
+      "id": "p10",
+      "act": {
+        "number": 3,
+        "name": "DÉCLIC"
+      },
+      "startFrame": 560,
+      "endFrame": 614,
+      "sources": [
+        "img09"
+      ],
+      "screen": null,
+      "code": false,
+      "star": false,
+      "sourceLabel": "img09",
+      "timeLabel": "9,34–10,23",
+      "cadre": "Drone au ras de l'eau",
+      "action": "Le rêve : le lac devient réel",
+      "raccord": "Coupe sèche"
+    },
+    {
+      "id": "p11",
+      "act": {
+        "number": 4,
+        "name": "DÉCISION"
+      },
+      "startFrame": 614,
+      "endFrame": 692,
+      "sources": [
+        "img10"
+      ],
+      "screen": null,
+      "code": false,
+      "star": false,
+      "sourceLabel": "img10",
+      "timeLabel": "10,23–11,53",
+      "cadre": "Épaule",
+      "action": "Léa se lève d'un bond",
+      "raccord": "Pouce sur l'écran"
+    },
+    {
+      "id": "p12",
+      "act": {
+        "number": 4,
+        "name": "DÉCISION"
+      },
+      "startFrame": 692,
+      "endFrame": 745,
+      "sources": [
+        "img40"
+      ],
+      "screen": "E2",
+      "code": false,
+      "star": false,
+      "sourceLabel": "img40 + E2",
+      "timeLabel": "11,53–12,42",
+      "cadre": "Gros plan, glissé latéral",
+      "action": "Compas : « Où », Dolomites",
+      "raccord": "La capsule avance"
+    },
+    {
+      "id": "p13",
+      "act": {
+        "number": 4,
+        "name": "DÉCISION"
+      },
+      "startFrame": 745,
+      "endFrame": 823,
+      "sources": [
+        "img41"
+      ],
+      "screen": "E3",
+      "code": false,
+      "star": false,
+      "sourceLabel": "img41 + E3",
+      "timeLabel": "12,42–13,72",
+      "cadre": "Par-dessus l'épaule",
+      "action": "« Nous » : elle invite ses trois amis",
+      "raccord": "Les avatars deviennent des visages"
+    },
+    {
+      "id": "p14",
+      "act": {
+        "number": 4,
+        "name": "DÉCISION"
+      },
+      "startFrame": 823,
+      "endFrame": 876,
+      "sources": [
+        "img11"
+      ],
+      "screen": null,
+      "code": false,
+      "star": false,
+      "sourceLabel": "img11",
+      "timeLabel": "13,72–14,60",
+      "cadre": "Volets qui s'ouvrent",
+      "action": "Sami, Inès et Tom disent oui",
+      "raccord": "Volets qui se ferment"
+    },
+    {
+      "id": "p15",
+      "act": {
+        "number": 4,
+        "name": "DÉCISION"
+      },
+      "startFrame": 876,
+      "endFrame": 928,
+      "sources": [
+        "img41"
+      ],
+      "screen": "E4",
+      "code": false,
+      "star": false,
+      "sourceLabel": "img41 + E4",
+      "timeLabel": "14,60–15,47",
+      "cadre": "Poussée",
+      "action": "L'itinéraire 3D se trace",
+      "raccord": "Elle se laisse tomber sur le lit"
+    },
+    {
+      "id": "p16",
+      "act": {
+        "number": 4,
+        "name": "DÉCISION"
+      },
+      "startFrame": 928,
+      "endFrame": 1034,
+      "sources": [
+        "img42"
+      ],
+      "screen": "E5",
+      "code": false,
+      "star": false,
+      "sourceLabel": "img42 + E5",
+      "timeLabel": "15,47–17,23",
+      "cadre": "Plongée sur Léa allongée, téléphone au-dessus du visage",
+      "action": "Kit Studio : le sac tourne, « Prêté par Sami », « À louer », « Occasion »… le total fond. Elle sourit",
+      "raccord": "Pouce"
+    },
+    {
+      "id": "p17",
+      "act": {
+        "number": 4,
+        "name": "DÉCISION"
+      },
+      "startFrame": 1034,
+      "endFrame": 1060,
+      "sources": [
+        "img43"
+      ],
+      "screen": "E6",
+      "code": false,
+      "star": false,
+      "sourceLabel": "img43 + E6",
+      "timeLabel": "17,23–17,67",
+      "cadre": "Très gros plan du pouce",
+      "action": "« Commander »",
+      "raccord": "**Impact**, sonnette"
+    },
+    {
+      "id": "p18",
+      "act": {
+        "number": 4,
+        "name": "DÉCISION"
+      },
+      "startFrame": 1060,
+      "endFrame": 1139,
+      "sources": [
+        "img44"
+      ],
+      "screen": null,
+      "code": false,
+      "star": false,
+      "sourceLabel": "img44",
+      "timeLabel": "17,67–18,99",
+      "cadre": "Plan rapproché, légère contre-plongée",
+      "action": "Le colis : elle sort le LKDV ONE 45 du carton",
+      "raccord": "Le sac sur le lit"
+    },
+    {
+      "id": "p19",
+      "act": {
+        "number": 4,
+        "name": "DÉCISION"
+      },
+      "startFrame": 1139,
+      "endFrame": 1191,
+      "sources": [
+        "img12"
+      ],
+      "screen": null,
+      "code": false,
+      "star": false,
+      "sourceLabel": "img12",
+      "timeLabel": "18,99–19,85",
+      "cadre": "Vue de dessus, poussée rapide",
+      "action": "Tout le matériel étalé, elle remplit le sac",
+      "raccord": "Sangle"
+    },
+    {
+      "id": "p20",
+      "act": {
+        "number": 5,
+        "name": "DÉPART"
+      },
+      "startFrame": 1191,
+      "endFrame": 1219,
+      "sources": [
+        "img13"
+      ],
+      "screen": null,
+      "code": false,
+      "star": false,
+      "sourceLabel": "img13",
+      "timeLabel": "19,85–20,31",
+      "cadre": "Très gros plan",
+      "action": "Clac de la boucle",
+      "raccord": "**Impact**"
+    },
+    {
+      "id": "p21",
+      "act": {
+        "number": 5,
+        "name": "DÉPART"
+      },
+      "startFrame": 1219,
+      "endFrame": 1271,
+      "sources": [
+        "img14"
+      ],
+      "screen": null,
+      "code": false,
+      "star": false,
+      "sourceLabel": "img14",
+      "timeLabel": "20,31–21,18",
+      "cadre": "Plongée dans la cage d'escalier",
+      "action": "Elle dévale l'escalier",
+      "raccord": "Filé latéral"
+    },
+    {
+      "id": "p22",
+      "act": {
+        "number": 5,
+        "name": "DÉPART"
+      },
+      "startFrame": 1271,
+      "endFrame": 1323,
+      "sources": [
+        "img15"
+      ],
+      "screen": null,
+      "code": false,
+      "star": false,
+      "sourceLabel": "img15",
+      "timeLabel": "21,18–22,05",
+      "cadre": "À travers la vitre du train",
+      "action": "Les Dolomites défilent",
+      "raccord": "Arrêt"
+    },
+    {
+      "id": "p23",
+      "act": {
+        "number": 5,
+        "name": "DÉPART"
+      },
+      "startFrame": 1323,
+      "endFrame": 1402,
+      "sources": [
+        "img16"
+      ],
+      "screen": null,
+      "code": false,
+      "star": false,
+      "sourceLabel": "img16",
+      "timeLabel": "22,05–23,36",
+      "cadre": "Plan moyen, rampe de vitesse",
+      "action": "Retrouvailles à l'aube ; **Sami tend sa tente à Léa** (le prêt)",
+      "raccord": "Vers le sol"
+    },
+    {
+      "id": "p24",
+      "act": {
+        "number": 5,
+        "name": "DÉPART"
+      },
+      "startFrame": 1402,
+      "endFrame": 1454,
+      "sources": [
+        "img17"
+      ],
+      "screen": null,
+      "code": false,
+      "star": false,
+      "sourceLabel": "img17",
+      "timeLabel": "23,36–24,24",
+      "cadre": "Ras du sol",
+      "action": "Premiers pas sur le sentier",
+      "raccord": "Montée vers la bretelle"
+    },
+    {
+      "id": "p25",
+      "act": {
+        "number": 5,
+        "name": "DÉPART"
+      },
+      "startFrame": 1454,
+      "endFrame": 1507,
+      "sources": [
+        "img18"
+      ],
+      "screen": "E7",
+      "code": false,
+      "star": false,
+      "sourceLabel": "img18 + E7",
+      "timeLabel": "24,24–25,11",
+      "cadre": "Gros plan, téléphone sur la bretelle",
+      "action": "Le suivi démarre",
+      "raccord": "Le drone s'arrache"
+    },
+    {
+      "id": "p26",
+      "act": {
+        "number": 6,
+        "name": "MONTAGNE"
+      },
+      "startFrame": 1507,
+      "endFrame": 1612,
+      "sources": [
+        "img45"
+      ],
+      "screen": null,
+      "code": false,
+      "star": true,
+      "sourceLabel": "img45",
+      "timeLabel": "25,11–26,86",
+      "cadre": "Drone, glissé lent",
+      "action": "★ **Seceda** : quatre points minuscules sur la crête herbeuse, mer de nuages",
+      "raccord": "Ligne de crête"
+    },
+    {
+      "id": "p27",
+      "act": {
+        "number": 6,
+        "name": "MONTAGNE"
+      },
+      "startFrame": 1612,
+      "endFrame": 1717,
+      "sources": [
+        "img19"
+      ],
+      "screen": null,
+      "code": false,
+      "star": true,
+      "sourceLabel": "img19",
+      "timeLabel": "26,86–28,61",
+      "cadre": "FPV qui franchit l'arête",
+      "action": "★ **Tre Cime** : le groupe minuscule au lever du soleil",
+      "raccord": "Descente vers eux"
+    },
+    {
+      "id": "p28",
+      "act": {
+        "number": 6,
+        "name": "MONTAGNE"
+      },
+      "startFrame": 1717,
+      "endFrame": 1769,
+      "sources": [
+        "img20"
+      ],
+      "screen": null,
+      "code": false,
+      "star": false,
+      "sourceLabel": "img20",
+      "timeLabel": "28,61–29,49",
+      "cadre": "Contre-plongée",
+      "action": "La main tendue, les rires",
+      "raccord": "Épaule de Léa"
+    },
+    {
+      "id": "p29",
+      "act": {
+        "number": 6,
+        "name": "MONTAGNE"
+      },
+      "startFrame": 1769,
+      "endFrame": 1822,
+      "sources": [
+        "img46"
+      ],
+      "screen": "E8",
+      "code": false,
+      "star": false,
+      "sourceLabel": "img46 + E8",
+      "timeLabel": "29,49–30,37",
+      "cadre": "Téléphone net devant les Tre Cime floues",
+      "action": "Cockpit 6,4 km · D+ 812 m",
+      "raccord": "Le tracé file vers un lac"
+    },
+    {
+      "id": "p30",
+      "act": {
+        "number": 6,
+        "name": "MONTAGNE"
+      },
+      "startFrame": 1822,
+      "endFrame": 1901,
+      "sources": [
+        "img09b"
+      ],
+      "screen": null,
+      "code": false,
+      "star": true,
+      "sourceLabel": "img09b",
+      "timeLabel": "30,37–31,69",
+      "cadre": "Plan large en hauteur",
+      "action": "★ **Sorapis** : Léa minuscule face au lac de la photo",
+      "raccord": "Elle lève le téléphone"
+    },
+    {
+      "id": "p31",
+      "act": {
+        "number": 6,
+        "name": "MONTAGNE"
+      },
+      "startFrame": 1901,
+      "endFrame": 1954,
+      "sources": [
+        "img22"
+      ],
+      "screen": "E9",
+      "code": false,
+      "star": false,
+      "sourceLabel": "img22 + E9",
+      "timeLabel": "31,69–32,57",
+      "cadre": "Par-dessus l'épaule",
+      "action": "Elle prend la même photo que dans le carnet",
+      "raccord": "Coureur en amorce"
+    },
+    {
+      "id": "p32",
+      "act": {
+        "number": 6,
+        "name": "MONTAGNE"
+      },
+      "startFrame": 1954,
+      "endFrame": 2009,
+      "sources": [
+        "img23"
+      ],
+      "screen": null,
+      "code": false,
+      "star": false,
+      "sourceLabel": "img23",
+      "timeLabel": "32,57–33,48",
+      "cadre": "Plan bas",
+      "action": "Malik traverse le cadre, flou",
+      "raccord": "La caméra part avec lui"
+    },
+    {
+      "id": "p33",
+      "act": {
+        "number": 7,
+        "name": "COUREUR"
+      },
+      "startFrame": 2009,
+      "endFrame": 2063,
+      "sources": [
+        "img24"
+      ],
+      "screen": null,
+      "code": false,
+      "star": false,
+      "sourceLabel": "img24",
+      "timeLabel": "33,48–34,39",
+      "cadre": "Filé latéral",
+      "action": "Malik sur le balcon au-dessus du vide",
+      "raccord": "Pieds"
+    },
+    {
+      "id": "p34",
+      "act": {
+        "number": 7,
+        "name": "COUREUR"
+      },
+      "startFrame": 2063,
+      "endFrame": 2114,
+      "sources": [
+        "img25"
+      ],
+      "screen": null,
+      "code": false,
+      "star": false,
+      "sourceLabel": "img25",
+      "timeLabel": "34,39–35,24",
+      "cadre": "Très gros plan au ras du sol, ralenti",
+      "action": "Impact sur la pierre",
+      "raccord": "Vue arrière"
+    },
+    {
+      "id": "p35",
+      "act": {
+        "number": 7,
+        "name": "COUREUR"
+      },
+      "startFrame": 2114,
+      "endFrame": 2192,
+      "sources": [
+        "img26"
+      ],
+      "screen": null,
+      "code": false,
+      "star": false,
+      "sourceLabel": "img26",
+      "timeLabel": "35,24–36,54",
+      "cadre": "FPV",
+      "action": "Descente technique",
+      "raccord": "Bras"
+    },
+    {
+      "id": "p36",
+      "act": {
+        "number": 7,
+        "name": "COUREUR"
+      },
+      "startFrame": 2192,
+      "endFrame": 2245,
+      "sources": [
+        "img27"
+      ],
+      "screen": "E10",
+      "code": false,
+      "star": false,
+      "sourceLabel": "img27 + E10",
+      "timeLabel": "36,54–37,42",
+      "cadre": "Gros plan du brassard",
+      "action": "Cockpit : vitesse et allure",
+      "raccord": "Torrent"
+    },
+    {
+      "id": "p37",
+      "act": {
+        "number": 7,
+        "name": "COUREUR"
+      },
+      "startFrame": 2245,
+      "endFrame": 2297,
+      "sources": [
+        "img28"
+      ],
+      "screen": null,
+      "code": false,
+      "star": false,
+      "sourceLabel": "img28",
+      "timeLabel": "37,42–38,29",
+      "cadre": "Profil, figé à l'apex",
+      "action": "Saut au-dessus du torrent",
+      "raccord": "Il atterrit"
+    },
+    {
+      "id": "p38",
+      "act": {
+        "number": 7,
+        "name": "COUREUR"
+      },
+      "startFrame": 2297,
+      "endFrame": 2378,
+      "sources": [
+        "img47"
+      ],
+      "screen": null,
+      "code": false,
+      "star": true,
+      "sourceLabel": "img47",
+      "timeLabel": "38,29–39,63",
+      "cadre": "Drone qui recule",
+      "action": "★ **Tofana** : Malik minuscule sous une paroi immense",
+      "raccord": "Piste blanche"
+    },
+    {
+      "id": "p39",
+      "act": {
+        "number": 7,
+        "name": "COUREUR"
+      },
+      "startFrame": 2378,
+      "endFrame": 2429,
+      "sources": [
+        "img29"
+      ],
+      "screen": null,
+      "code": false,
+      "star": false,
+      "sourceLabel": "img29",
+      "timeLabel": "39,63–40,49",
+      "cadre": "Large",
+      "action": "Clara le dépasse, salut",
+      "raccord": "La caméra prend Clara"
+    },
+    {
+      "id": "p40",
+      "act": {
+        "number": 8,
+        "name": "CYCLISTE"
+      },
+      "startFrame": 2429,
+      "endFrame": 2508,
+      "sources": [
+        "img30"
+      ],
+      "screen": null,
+      "code": false,
+      "star": true,
+      "sourceLabel": "img30",
+      "timeLabel": "40,49–41,80",
+      "cadre": "Drone latéral",
+      "action": "★ Clara minuscule sur le gravel au bord du lac doré",
+      "raccord": "Roue"
+    },
+    {
+      "id": "p41",
+      "act": {
+        "number": 8,
+        "name": "CYCLISTE"
+      },
+      "startFrame": 2508,
+      "endFrame": 2560,
+      "sources": [
+        "img31"
+      ],
+      "screen": null,
+      "code": false,
+      "star": false,
+      "sourceLabel": "img31",
+      "timeLabel": "41,80–42,67",
+      "cadre": "Ras de la roue",
+      "action": "Gravillons projetés",
+      "raccord": "Vue du ciel"
+    },
+    {
+      "id": "p42",
+      "act": {
+        "number": 8,
+        "name": "CYCLISTE"
+      },
+      "startFrame": 2560,
+      "endFrame": 2640,
+      "sources": [
+        "img32"
+      ],
+      "screen": null,
+      "code": false,
+      "star": true,
+      "sourceLabel": "img32",
+      "timeLabel": "42,67–44,00",
+      "cadre": "Plongée verticale, rotation",
+      "action": "★ Épingle dans les mélèzes dorés",
+      "raccord": "Route qui monte"
+    },
+    {
+      "id": "p43",
+      "act": {
+        "number": 8,
+        "name": "CYCLISTE"
+      },
+      "startFrame": 2640,
+      "endFrame": 2718,
+      "sources": [
+        "img48"
+      ],
+      "screen": null,
+      "code": false,
+      "star": true,
+      "sourceLabel": "img48",
+      "timeLabel": "44,00–45,30",
+      "cadre": "Drone, élévation",
+      "action": "★ **Passo Giau** : Clara minuscule dans les lacets, Ra Gusela au soleil couchant",
+      "raccord": "Elle surgit face caméra"
+    },
+    {
+      "id": "p44",
+      "act": {
+        "number": 8,
+        "name": "CYCLISTE"
+      },
+      "startFrame": 2718,
+      "endFrame": 2770,
+      "sources": [
+        "img33"
+      ],
+      "screen": null,
+      "code": false,
+      "star": false,
+      "sourceLabel": "img33",
+      "timeLabel": "45,30–46,17",
+      "cadre": "Contre-plongée de face",
+      "action": "Bras levés, cri de joie",
+      "raccord": "Passage"
+    },
+    {
+      "id": "p45",
+      "act": {
+        "number": 8,
+        "name": "CYCLISTE"
+      },
+      "startFrame": 2770,
+      "endFrame": 2848,
+      "sources": [
+        "img34"
+      ],
+      "screen": null,
+      "code": false,
+      "star": false,
+      "sourceLabel": "img34",
+      "timeLabel": "46,17–47,47",
+      "cadre": "Elle passe, la caméra reste",
+      "action": "Salut au groupe au bivouac",
+      "raccord": "Le ciel accélère"
+    },
+    {
+      "id": "p46",
+      "act": {
+        "number": 9,
+        "name": "BIVOUAC"
+      },
+      "startFrame": 2848,
+      "endFrame": 2930,
+      "sources": [
+        "img35a",
+        "img35b"
+      ],
+      "screen": null,
+      "code": false,
+      "star": false,
+      "sourceLabel": "img35a→35b",
+      "timeLabel": "47,47–48,84",
+      "cadre": "Timelapse",
+      "action": "La nuit tombe, la Voie lactée apparaît",
+      "raccord": "Le feu"
+    },
+    {
+      "id": "p47",
+      "act": {
+        "number": 9,
+        "name": "BIVOUAC"
+      },
+      "startFrame": 2930,
+      "endFrame": 2981,
+      "sources": [
+        "img36"
+      ],
+      "screen": null,
+      "code": false,
+      "star": false,
+      "sourceLabel": "img36",
+      "timeLabel": "48,84–49,69",
+      "cadre": "Gros plan, rotation lente",
+      "action": "Rires autour du feu",
+      "raccord": "Léa sort son téléphone"
+    },
+    {
+      "id": "p48",
+      "act": {
+        "number": 9,
+        "name": "BIVOUAC"
+      },
+      "startFrame": 2981,
+      "endFrame": 3060,
+      "sources": [
+        "img37"
+      ],
+      "screen": "E11",
+      "code": false,
+      "star": false,
+      "sourceLabel": "img37 + E11",
+      "timeLabel": "49,69–51,00",
+      "cadre": "Gros plan",
+      "action": "Carnet : la photo du lac + « Essentiel » sur le réchaud",
+      "raccord": "Pouce"
+    },
+    {
+      "id": "p49",
+      "act": {
+        "number": 9,
+        "name": "BIVOUAC"
+      },
+      "startFrame": 3060,
+      "endFrame": 3113,
+      "sources": [
+        "img37"
+      ],
+      "screen": "E12",
+      "code": false,
+      "star": false,
+      "sourceLabel": "img37 + E12",
+      "timeLabel": "51,00–51,89",
+      "cadre": "Très gros plan (recadrage)",
+      "action": "Elle publie",
+      "raccord": "Le drone s'élève"
+    },
+    {
+      "id": "p50",
+      "act": {
+        "number": 9,
+        "name": "BIVOUAC"
+      },
+      "startFrame": 3113,
+      "endFrame": 3192,
+      "sources": [
+        "img49"
+      ],
+      "screen": null,
+      "code": false,
+      "star": true,
+      "sourceLabel": "img49",
+      "timeLabel": "51,89–53,20",
+      "cadre": "Drone qui recule et s'élève",
+      "action": "★ Le bivouac, point de lumière minuscule sous la Voie lactée et les Tre Cime",
+      "raccord": "Une lumière d'écran ailleurs"
+    },
+    {
+      "id": "p51",
+      "act": {
+        "number": 10,
+        "name": "FINAL"
+      },
+      "startFrame": 3192,
+      "endFrame": 3271,
+      "sources": [
+        "img38"
+      ],
+      "screen": "E13",
+      "code": false,
+      "star": false,
+      "sourceLabel": "img38 + E13",
+      "timeLabel": "53,20–54,51",
+      "cadre": "Gros plan",
+      "action": "Bus de nuit, autre ville : Noah tombe sur le carnet de Léa",
+      "raccord": "La caméra s'arrache"
+    },
+    {
+      "id": "p52",
+      "act": {
+        "number": 10,
+        "name": "FINAL"
+      },
+      "startFrame": 3271,
+      "endFrame": 3376,
+      "sources": [
+        "img05",
+        "img04",
+        "img03"
+      ],
+      "screen": null,
+      "code": false,
+      "star": false,
+      "sourceLabel": "img05→04→03",
+      "timeLabel": "54,51–56,26",
+      "cadre": "Remontée à l'envers, accélérée",
+      "action": "Ville, nuages, stratosphère",
+      "raccord": "Orbite"
+    },
+    {
+      "id": "p53",
+      "act": {
+        "number": 10,
+        "name": "FINAL"
+      },
+      "startFrame": 3376,
+      "endFrame": 3480,
+      "sources": [
+        "img39"
+      ],
+      "screen": null,
+      "code": true,
+      "star": false,
+      "sourceLabel": "img39 + code",
+      "timeLabel": "56,26–58,00",
+      "cadre": "Orbite, poussée lente",
+      "action": "Des milliers de tracés s'allument, un par aventure, et convergent",
+      "raccord": "Les lignes se tressent"
+    },
+    {
+      "id": "p54",
+      "act": {
+        "number": 10,
+        "name": "FINAL"
+      },
+      "startFrame": 3480,
+      "endFrame": 3600,
+      "sources": [],
+      "screen": null,
+      "code": true,
+      "star": false,
+      "sourceLabel": "code",
+      "timeLabel": "58,00–60,00",
+      "cadre": "Fixe, léger recul",
+      "action": "Les tracés forment le **logo LKDV**, net pour la première fois",
+      "raccord": "**Impact final**"
+    }
+  ]
+}

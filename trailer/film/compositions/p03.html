@@ -1,0 +1,153 @@
+<!-- hf-skeleton generated id=p03 sha256=aa092a656297bf3a — carte provisoire générée par tools/timeline/build-skeleton.mjs depuis film/shots.json ; toute retouche hors de la zone hf-footage la soustrait au générateur -->
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: #2E4A63;
+      font-family: "Inter", sans-serif;
+      color: #FAF8F5;
+    }
+    .p03-card {
+      position: absolute;
+      inset: 0;
+      padding: 96px 120px 120px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .p03-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 34px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+    .p03-mid {
+      display: flex;
+      align-items: flex-end;
+      gap: 72px;
+    }
+    .p03-num {
+      font-weight: 900;
+      font-size: 360px;
+      line-height: 0.8;
+      letter-spacing: -0.04em;
+    }
+    .p03-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      padding-bottom: 8px;
+    }
+    .p03-source {
+      font-family: "JetBrains Mono", monospace;
+      font-weight: 700;
+      font-size: 64px;
+    }
+    .p03-frames {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 36px;
+    }
+    .p03-star {
+      font-weight: 700;
+      font-size: 40px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .p03-intent {
+      max-width: 1600px;
+      font-size: 52px;
+      line-height: 1.2;
+      font-weight: 400;
+    }
+    .p03-track {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 12px;
+      background: rgba(250, 248, 245, 0.18);
+    }
+    .p03-bar {
+      position: absolute;
+      inset: 0;
+      background: #FAF8F5;
+      transform-origin: 0 50%;
+    }
+    .p03-frame {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+    .p03-shot,
+    .p03-shot-inner {
+      position: absolute;
+      inset: 0;
+    }
+    .p03-shot {
+      opacity: 0;
+    }
+    .p03-shot-img {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1920px;
+      height: 1080px;
+      /* Remplit le 16:9 sans déformer, quel que soit le rapport de l'image : recadrage au centre. */
+      object-fit: cover;
+      object-position: 50% 50%;
+    }
+  </style>
+  <div id="root" data-composition-id="p03" data-width="1920" data-height="1080" data-duration="0.9">
+    <!-- Carte provisoire : outil de travail, disparaît quand l'image du plan est là. -->
+    <div id="p03-card" class="p03-card" data-shot="p03" data-act="2">
+      <div id="p03-top" class="p03-top">
+        <span id="p03-act">Acte 2 · DESCENTE</span>
+        <span id="p03-range">166–220</span>
+      </div>
+      <div id="p03-mid" class="p03-mid">
+        <div id="p03-num" class="p03-num">P03</div>
+        <div id="p03-meta" class="p03-meta">
+          <div id="p03-source" class="p03-source">img03</div>
+          <div id="p03-frames" class="p03-frames">54 images · 0,90 s</div>
+        </div>
+      </div>
+      <div id="p03-intent" class="p03-intent">Stratosphère, mer de nuages</div>
+      <div id="p03-track" class="p03-track"><div id="p03-bar" class="p03-bar"></div></div>
+    </div>
+    <!-- Emplacement d'image plein cadre : assets/footage/img03.png.
+         Chaque calque : .p03-shot (opacité, séquence) > .p03-shot-inner (libre pour le mouvement) > img. -->
+    <div id="p03-frame" class="p03-frame" data-layout-allow-overflow>
+      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) --><!-- hf-footage:end -->
+    </div>
+  </div>
+  <script>
+    (function () {
+      var D = 54 / 60;
+      var tl = gsap.timeline({ paused: true });
+      // Barre de progression : se remplit sur la durée du plan.
+      tl.fromTo("#p03-bar", { scaleX: 0 }, { scaleX: 1, duration: D, ease: "none" }, 0);
+      // Images présentes : chaque source occupe sa part égale du plan (ordre de la trame) ;
+      // la carte reste visible là où l'image manque.
+      var shots = Array.prototype.slice.call(document.querySelectorAll(".p03-shot"));
+      if (shots.length) {
+        var n = Number(shots[0].getAttribute("data-seq-count"));
+        var bySeq = {};
+        shots.forEach(function (el) { bySeq[el.getAttribute("data-seq")] = el; });
+        for (var k = 0; k < n; k++) {
+          var t = (k * D) / n;
+          var el = bySeq[String(k)];
+          shots.forEach(function (other) {
+            tl.set(other, { opacity: other === el ? 1 : 0 }, t);
+          });
+          tl.set("#p03-card", { opacity: el ? 0 : 1 }, t);
+        }
+      }
+      window.__timelines["p03"] = tl;
+    })();
+  </script>
+</template>

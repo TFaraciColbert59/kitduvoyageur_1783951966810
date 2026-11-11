@@ -1,0 +1,153 @@
+<!-- hf-skeleton generated id=p52 sha256=9261b5d9bf296da0 — carte provisoire générée par tools/timeline/build-skeleton.mjs depuis film/shots.json ; toute retouche hors de la zone hf-footage la soustrait au générateur -->
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: #0B1F17;
+      font-family: "Inter", sans-serif;
+      color: #FAF8F5;
+    }
+    .p52-card {
+      position: absolute;
+      inset: 0;
+      padding: 96px 120px 120px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .p52-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 34px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+    .p52-mid {
+      display: flex;
+      align-items: flex-end;
+      gap: 72px;
+    }
+    .p52-num {
+      font-weight: 900;
+      font-size: 360px;
+      line-height: 0.8;
+      letter-spacing: -0.04em;
+    }
+    .p52-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      padding-bottom: 8px;
+    }
+    .p52-source {
+      font-family: "JetBrains Mono", monospace;
+      font-weight: 700;
+      font-size: 64px;
+    }
+    .p52-frames {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 36px;
+    }
+    .p52-star {
+      font-weight: 700;
+      font-size: 40px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .p52-intent {
+      max-width: 1600px;
+      font-size: 52px;
+      line-height: 1.2;
+      font-weight: 400;
+    }
+    .p52-track {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 12px;
+      background: rgba(250, 248, 245, 0.18);
+    }
+    .p52-bar {
+      position: absolute;
+      inset: 0;
+      background: #FAF8F5;
+      transform-origin: 0 50%;
+    }
+    .p52-frame {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+    .p52-shot,
+    .p52-shot-inner {
+      position: absolute;
+      inset: 0;
+    }
+    .p52-shot {
+      opacity: 0;
+    }
+    .p52-shot-img {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1920px;
+      height: 1080px;
+      /* Remplit le 16:9 sans déformer, quel que soit le rapport de l'image : recadrage au centre. */
+      object-fit: cover;
+      object-position: 50% 50%;
+    }
+  </style>
+  <div id="root" data-composition-id="p52" data-width="1920" data-height="1080" data-duration="1.75">
+    <!-- Carte provisoire : outil de travail, disparaît quand l'image du plan est là. -->
+    <div id="p52-card" class="p52-card" data-shot="p52" data-act="10">
+      <div id="p52-top" class="p52-top">
+        <span id="p52-act">Acte 10 · FINAL</span>
+        <span id="p52-range">3271–3376</span>
+      </div>
+      <div id="p52-mid" class="p52-mid">
+        <div id="p52-num" class="p52-num">P52</div>
+        <div id="p52-meta" class="p52-meta">
+          <div id="p52-source" class="p52-source">img05→04→03</div>
+          <div id="p52-frames" class="p52-frames">105 images · 1,75 s</div>
+        </div>
+      </div>
+      <div id="p52-intent" class="p52-intent">Ville, nuages, stratosphère</div>
+      <div id="p52-track" class="p52-track"><div id="p52-bar" class="p52-bar"></div></div>
+    </div>
+    <!-- Emplacement d'image plein cadre : assets/footage/img05.png, assets/footage/img04.png, assets/footage/img03.png.
+         Chaque calque : .p52-shot (opacité, séquence) > .p52-shot-inner (libre pour le mouvement) > img. -->
+    <div id="p52-frame" class="p52-frame" data-layout-allow-overflow>
+      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) --><!-- hf-footage:end -->
+    </div>
+  </div>
+  <script>
+    (function () {
+      var D = 105 / 60;
+      var tl = gsap.timeline({ paused: true });
+      // Barre de progression : se remplit sur la durée du plan.
+      tl.fromTo("#p52-bar", { scaleX: 0 }, { scaleX: 1, duration: D, ease: "none" }, 0);
+      // Images présentes : chaque source occupe sa part égale du plan (ordre de la trame) ;
+      // la carte reste visible là où l'image manque.
+      var shots = Array.prototype.slice.call(document.querySelectorAll(".p52-shot"));
+      if (shots.length) {
+        var n = Number(shots[0].getAttribute("data-seq-count"));
+        var bySeq = {};
+        shots.forEach(function (el) { bySeq[el.getAttribute("data-seq")] = el; });
+        for (var k = 0; k < n; k++) {
+          var t = (k * D) / n;
+          var el = bySeq[String(k)];
+          shots.forEach(function (other) {
+            tl.set(other, { opacity: other === el ? 1 : 0 }, t);
+          });
+          tl.set("#p52-card", { opacity: el ? 0 : 1 }, t);
+        }
+      }
+      window.__timelines["p52"] = tl;
+    })();
+  </script>
+</template>

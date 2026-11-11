@@ -1,0 +1,154 @@
+<!-- hf-skeleton generated id=p43 sha256=80d37eb57215406b — carte provisoire générée par tools/timeline/build-skeleton.mjs depuis film/shots.json ; toute retouche hors de la zone hf-footage la soustrait au générateur -->
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: #646A1E;
+      font-family: "Inter", sans-serif;
+      color: #FAF8F5;
+    }
+    .p43-card {
+      position: absolute;
+      inset: 0;
+      padding: 96px 120px 120px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .p43-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 34px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+    .p43-mid {
+      display: flex;
+      align-items: flex-end;
+      gap: 72px;
+    }
+    .p43-num {
+      font-weight: 900;
+      font-size: 360px;
+      line-height: 0.8;
+      letter-spacing: -0.04em;
+    }
+    .p43-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      padding-bottom: 8px;
+    }
+    .p43-source {
+      font-family: "JetBrains Mono", monospace;
+      font-weight: 700;
+      font-size: 64px;
+    }
+    .p43-frames {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 36px;
+    }
+    .p43-star {
+      font-weight: 700;
+      font-size: 40px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .p43-intent {
+      max-width: 1600px;
+      font-size: 52px;
+      line-height: 1.2;
+      font-weight: 400;
+    }
+    .p43-track {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 12px;
+      background: rgba(250, 248, 245, 0.18);
+    }
+    .p43-bar {
+      position: absolute;
+      inset: 0;
+      background: #FAF8F5;
+      transform-origin: 0 50%;
+    }
+    .p43-frame {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+    .p43-shot,
+    .p43-shot-inner {
+      position: absolute;
+      inset: 0;
+    }
+    .p43-shot {
+      opacity: 0;
+    }
+    .p43-shot-img {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1920px;
+      height: 1080px;
+      /* Remplit le 16:9 sans déformer, quel que soit le rapport de l'image : recadrage au centre. */
+      object-fit: cover;
+      object-position: 50% 50%;
+    }
+  </style>
+  <div id="root" data-composition-id="p43" data-width="1920" data-height="1080" data-duration="1.3">
+    <!-- Carte provisoire : outil de travail, disparaît quand l'image du plan est là. -->
+    <div id="p43-card" class="p43-card" data-shot="p43" data-act="8">
+      <div id="p43-top" class="p43-top">
+        <span id="p43-act">Acte 8 · CYCLISTE</span>
+        <span id="p43-range">2640–2718</span>
+      </div>
+      <div id="p43-mid" class="p43-mid">
+        <div id="p43-num" class="p43-num">P43</div>
+        <div id="p43-meta" class="p43-meta">
+          <div id="p43-source" class="p43-source">img48</div>
+          <div id="p43-frames" class="p43-frames">78 images · 1,30 s</div>
+          <div id="p43-star" class="p43-star">★ plan d'échelle</div>
+        </div>
+      </div>
+      <div id="p43-intent" class="p43-intent">★ Passo Giau : Clara minuscule dans les lacets, Ra Gusela au soleil couchant</div>
+      <div id="p43-track" class="p43-track"><div id="p43-bar" class="p43-bar"></div></div>
+    </div>
+    <!-- Emplacement d'image plein cadre : assets/footage/img48.png.
+         Chaque calque : .p43-shot (opacité, séquence) > .p43-shot-inner (libre pour le mouvement) > img. -->
+    <div id="p43-frame" class="p43-frame" data-layout-allow-overflow>
+      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) --><!-- hf-footage:end -->
+    </div>
+  </div>
+  <script>
+    (function () {
+      var D = 78 / 60;
+      var tl = gsap.timeline({ paused: true });
+      // Barre de progression : se remplit sur la durée du plan.
+      tl.fromTo("#p43-bar", { scaleX: 0 }, { scaleX: 1, duration: D, ease: "none" }, 0);
+      // Images présentes : chaque source occupe sa part égale du plan (ordre de la trame) ;
+      // la carte reste visible là où l'image manque.
+      var shots = Array.prototype.slice.call(document.querySelectorAll(".p43-shot"));
+      if (shots.length) {
+        var n = Number(shots[0].getAttribute("data-seq-count"));
+        var bySeq = {};
+        shots.forEach(function (el) { bySeq[el.getAttribute("data-seq")] = el; });
+        for (var k = 0; k < n; k++) {
+          var t = (k * D) / n;
+          var el = bySeq[String(k)];
+          shots.forEach(function (other) {
+            tl.set(other, { opacity: other === el ? 1 : 0 }, t);
+          });
+          tl.set("#p43-card", { opacity: el ? 0 : 1 }, t);
+        }
+      }
+      window.__timelines["p43"] = tl;
+    })();
+  </script>
+</template>

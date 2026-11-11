@@ -1,0 +1,153 @@
+<!-- hf-skeleton generated id=p13 sha256=be6c1de2ef20ab87 — carte provisoire générée par tools/timeline/build-skeleton.mjs depuis film/shots.json ; toute retouche hors de la zone hf-footage la soustrait au générateur -->
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: #17402C;
+      font-family: "Inter", sans-serif;
+      color: #FAF8F5;
+    }
+    .p13-card {
+      position: absolute;
+      inset: 0;
+      padding: 96px 120px 120px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .p13-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 34px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+    .p13-mid {
+      display: flex;
+      align-items: flex-end;
+      gap: 72px;
+    }
+    .p13-num {
+      font-weight: 900;
+      font-size: 360px;
+      line-height: 0.8;
+      letter-spacing: -0.04em;
+    }
+    .p13-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      padding-bottom: 8px;
+    }
+    .p13-source {
+      font-family: "JetBrains Mono", monospace;
+      font-weight: 700;
+      font-size: 64px;
+    }
+    .p13-frames {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 36px;
+    }
+    .p13-star {
+      font-weight: 700;
+      font-size: 40px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .p13-intent {
+      max-width: 1600px;
+      font-size: 52px;
+      line-height: 1.2;
+      font-weight: 400;
+    }
+    .p13-track {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 12px;
+      background: rgba(250, 248, 245, 0.18);
+    }
+    .p13-bar {
+      position: absolute;
+      inset: 0;
+      background: #FAF8F5;
+      transform-origin: 0 50%;
+    }
+    .p13-frame {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+    .p13-shot,
+    .p13-shot-inner {
+      position: absolute;
+      inset: 0;
+    }
+    .p13-shot {
+      opacity: 0;
+    }
+    .p13-shot-img {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1920px;
+      height: 1080px;
+      /* Remplit le 16:9 sans déformer, quel que soit le rapport de l'image : recadrage au centre. */
+      object-fit: cover;
+      object-position: 50% 50%;
+    }
+  </style>
+  <div id="root" data-composition-id="p13" data-width="1920" data-height="1080" data-duration="1.3">
+    <!-- Carte provisoire : outil de travail, disparaît quand l'image du plan est là. -->
+    <div id="p13-card" class="p13-card" data-shot="p13" data-act="4">
+      <div id="p13-top" class="p13-top">
+        <span id="p13-act">Acte 4 · DÉCISION</span>
+        <span id="p13-range">745–823</span>
+      </div>
+      <div id="p13-mid" class="p13-mid">
+        <div id="p13-num" class="p13-num">P13</div>
+        <div id="p13-meta" class="p13-meta">
+          <div id="p13-source" class="p13-source">img41 + E3</div>
+          <div id="p13-frames" class="p13-frames">78 images · 1,30 s</div>
+        </div>
+      </div>
+      <div id="p13-intent" class="p13-intent">« Nous » : elle invite ses trois amis</div>
+      <div id="p13-track" class="p13-track"><div id="p13-bar" class="p13-bar"></div></div>
+    </div>
+    <!-- Emplacement d'image plein cadre : assets/footage/img41.png.
+         Chaque calque : .p13-shot (opacité, séquence) > .p13-shot-inner (libre pour le mouvement) > img. -->
+    <div id="p13-frame" class="p13-frame" data-layout-allow-overflow>
+      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) --><!-- hf-footage:end -->
+    </div>
+  </div>
+  <script>
+    (function () {
+      var D = 78 / 60;
+      var tl = gsap.timeline({ paused: true });
+      // Barre de progression : se remplit sur la durée du plan.
+      tl.fromTo("#p13-bar", { scaleX: 0 }, { scaleX: 1, duration: D, ease: "none" }, 0);
+      // Images présentes : chaque source occupe sa part égale du plan (ordre de la trame) ;
+      // la carte reste visible là où l'image manque.
+      var shots = Array.prototype.slice.call(document.querySelectorAll(".p13-shot"));
+      if (shots.length) {
+        var n = Number(shots[0].getAttribute("data-seq-count"));
+        var bySeq = {};
+        shots.forEach(function (el) { bySeq[el.getAttribute("data-seq")] = el; });
+        for (var k = 0; k < n; k++) {
+          var t = (k * D) / n;
+          var el = bySeq[String(k)];
+          shots.forEach(function (other) {
+            tl.set(other, { opacity: other === el ? 1 : 0 }, t);
+          });
+          tl.set("#p13-card", { opacity: el ? 0 : 1 }, t);
+        }
+      }
+      window.__timelines["p13"] = tl;
+    })();
+  </script>
+</template>

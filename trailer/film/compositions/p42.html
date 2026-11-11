@@ -1,0 +1,154 @@
+<!-- hf-skeleton generated id=p42 sha256=176e99db0750f8e2 — carte provisoire générée par tools/timeline/build-skeleton.mjs depuis film/shots.json ; toute retouche hors de la zone hf-footage la soustrait au générateur -->
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: #646A1E;
+      font-family: "Inter", sans-serif;
+      color: #FAF8F5;
+    }
+    .p42-card {
+      position: absolute;
+      inset: 0;
+      padding: 96px 120px 120px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .p42-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 34px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+    .p42-mid {
+      display: flex;
+      align-items: flex-end;
+      gap: 72px;
+    }
+    .p42-num {
+      font-weight: 900;
+      font-size: 360px;
+      line-height: 0.8;
+      letter-spacing: -0.04em;
+    }
+    .p42-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      padding-bottom: 8px;
+    }
+    .p42-source {
+      font-family: "JetBrains Mono", monospace;
+      font-weight: 700;
+      font-size: 64px;
+    }
+    .p42-frames {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 36px;
+    }
+    .p42-star {
+      font-weight: 700;
+      font-size: 40px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .p42-intent {
+      max-width: 1600px;
+      font-size: 52px;
+      line-height: 1.2;
+      font-weight: 400;
+    }
+    .p42-track {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 12px;
+      background: rgba(250, 248, 245, 0.18);
+    }
+    .p42-bar {
+      position: absolute;
+      inset: 0;
+      background: #FAF8F5;
+      transform-origin: 0 50%;
+    }
+    .p42-frame {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+    .p42-shot,
+    .p42-shot-inner {
+      position: absolute;
+      inset: 0;
+    }
+    .p42-shot {
+      opacity: 0;
+    }
+    .p42-shot-img {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1920px;
+      height: 1080px;
+      /* Remplit le 16:9 sans déformer, quel que soit le rapport de l'image : recadrage au centre. */
+      object-fit: cover;
+      object-position: 50% 50%;
+    }
+  </style>
+  <div id="root" data-composition-id="p42" data-width="1920" data-height="1080" data-duration="1.3333333333333333">
+    <!-- Carte provisoire : outil de travail, disparaît quand l'image du plan est là. -->
+    <div id="p42-card" class="p42-card" data-shot="p42" data-act="8">
+      <div id="p42-top" class="p42-top">
+        <span id="p42-act">Acte 8 · CYCLISTE</span>
+        <span id="p42-range">2560–2640</span>
+      </div>
+      <div id="p42-mid" class="p42-mid">
+        <div id="p42-num" class="p42-num">P42</div>
+        <div id="p42-meta" class="p42-meta">
+          <div id="p42-source" class="p42-source">img32</div>
+          <div id="p42-frames" class="p42-frames">80 images · 1,33 s</div>
+          <div id="p42-star" class="p42-star">★ plan d'échelle</div>
+        </div>
+      </div>
+      <div id="p42-intent" class="p42-intent">★ Épingle dans les mélèzes dorés</div>
+      <div id="p42-track" class="p42-track"><div id="p42-bar" class="p42-bar"></div></div>
+    </div>
+    <!-- Emplacement d'image plein cadre : assets/footage/img32.png.
+         Chaque calque : .p42-shot (opacité, séquence) > .p42-shot-inner (libre pour le mouvement) > img. -->
+    <div id="p42-frame" class="p42-frame" data-layout-allow-overflow>
+      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) --><!-- hf-footage:end -->
+    </div>
+  </div>
+  <script>
+    (function () {
+      var D = 80 / 60;
+      var tl = gsap.timeline({ paused: true });
+      // Barre de progression : se remplit sur la durée du plan.
+      tl.fromTo("#p42-bar", { scaleX: 0 }, { scaleX: 1, duration: D, ease: "none" }, 0);
+      // Images présentes : chaque source occupe sa part égale du plan (ordre de la trame) ;
+      // la carte reste visible là où l'image manque.
+      var shots = Array.prototype.slice.call(document.querySelectorAll(".p42-shot"));
+      if (shots.length) {
+        var n = Number(shots[0].getAttribute("data-seq-count"));
+        var bySeq = {};
+        shots.forEach(function (el) { bySeq[el.getAttribute("data-seq")] = el; });
+        for (var k = 0; k < n; k++) {
+          var t = (k * D) / n;
+          var el = bySeq[String(k)];
+          shots.forEach(function (other) {
+            tl.set(other, { opacity: other === el ? 1 : 0 }, t);
+          });
+          tl.set("#p42-card", { opacity: el ? 0 : 1 }, t);
+        }
+      }
+      window.__timelines["p42"] = tl;
+    })();
+  </script>
+</template>

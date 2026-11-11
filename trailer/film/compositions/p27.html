@@ -1,0 +1,154 @@
+<!-- hf-skeleton generated id=p27 sha256=cc734b40ee80596e — carte provisoire générée par tools/timeline/build-skeleton.mjs depuis film/shots.json ; toute retouche hors de la zone hf-footage la soustrait au générateur -->
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: #7A5A1E;
+      font-family: "Inter", sans-serif;
+      color: #FAF8F5;
+    }
+    .p27-card {
+      position: absolute;
+      inset: 0;
+      padding: 96px 120px 120px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .p27-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 34px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+    .p27-mid {
+      display: flex;
+      align-items: flex-end;
+      gap: 72px;
+    }
+    .p27-num {
+      font-weight: 900;
+      font-size: 360px;
+      line-height: 0.8;
+      letter-spacing: -0.04em;
+    }
+    .p27-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      padding-bottom: 8px;
+    }
+    .p27-source {
+      font-family: "JetBrains Mono", monospace;
+      font-weight: 700;
+      font-size: 64px;
+    }
+    .p27-frames {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 36px;
+    }
+    .p27-star {
+      font-weight: 700;
+      font-size: 40px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .p27-intent {
+      max-width: 1600px;
+      font-size: 52px;
+      line-height: 1.2;
+      font-weight: 400;
+    }
+    .p27-track {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 12px;
+      background: rgba(250, 248, 245, 0.18);
+    }
+    .p27-bar {
+      position: absolute;
+      inset: 0;
+      background: #FAF8F5;
+      transform-origin: 0 50%;
+    }
+    .p27-frame {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+    .p27-shot,
+    .p27-shot-inner {
+      position: absolute;
+      inset: 0;
+    }
+    .p27-shot {
+      opacity: 0;
+    }
+    .p27-shot-img {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1920px;
+      height: 1080px;
+      /* Remplit le 16:9 sans déformer, quel que soit le rapport de l'image : recadrage au centre. */
+      object-fit: cover;
+      object-position: 50% 50%;
+    }
+  </style>
+  <div id="root" data-composition-id="p27" data-width="1920" data-height="1080" data-duration="1.75">
+    <!-- Carte provisoire : outil de travail, disparaît quand l'image du plan est là. -->
+    <div id="p27-card" class="p27-card" data-shot="p27" data-act="6">
+      <div id="p27-top" class="p27-top">
+        <span id="p27-act">Acte 6 · MONTAGNE</span>
+        <span id="p27-range">1612–1717</span>
+      </div>
+      <div id="p27-mid" class="p27-mid">
+        <div id="p27-num" class="p27-num">P27</div>
+        <div id="p27-meta" class="p27-meta">
+          <div id="p27-source" class="p27-source">img19</div>
+          <div id="p27-frames" class="p27-frames">105 images · 1,75 s</div>
+          <div id="p27-star" class="p27-star">★ plan d'échelle</div>
+        </div>
+      </div>
+      <div id="p27-intent" class="p27-intent">★ Tre Cime : le groupe minuscule au lever du soleil</div>
+      <div id="p27-track" class="p27-track"><div id="p27-bar" class="p27-bar"></div></div>
+    </div>
+    <!-- Emplacement d'image plein cadre : assets/footage/img19.png.
+         Chaque calque : .p27-shot (opacité, séquence) > .p27-shot-inner (libre pour le mouvement) > img. -->
+    <div id="p27-frame" class="p27-frame" data-layout-allow-overflow>
+      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) --><!-- hf-footage:end -->
+    </div>
+  </div>
+  <script>
+    (function () {
+      var D = 105 / 60;
+      var tl = gsap.timeline({ paused: true });
+      // Barre de progression : se remplit sur la durée du plan.
+      tl.fromTo("#p27-bar", { scaleX: 0 }, { scaleX: 1, duration: D, ease: "none" }, 0);
+      // Images présentes : chaque source occupe sa part égale du plan (ordre de la trame) ;
+      // la carte reste visible là où l'image manque.
+      var shots = Array.prototype.slice.call(document.querySelectorAll(".p27-shot"));
+      if (shots.length) {
+        var n = Number(shots[0].getAttribute("data-seq-count"));
+        var bySeq = {};
+        shots.forEach(function (el) { bySeq[el.getAttribute("data-seq")] = el; });
+        for (var k = 0; k < n; k++) {
+          var t = (k * D) / n;
+          var el = bySeq[String(k)];
+          shots.forEach(function (other) {
+            tl.set(other, { opacity: other === el ? 1 : 0 }, t);
+          });
+          tl.set("#p27-card", { opacity: el ? 0 : 1 }, t);
+        }
+      }
+      window.__timelines["p27"] = tl;
+    })();
+  </script>
+</template>

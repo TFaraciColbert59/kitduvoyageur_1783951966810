@@ -1,0 +1,153 @@
+<!-- hf-skeleton generated id=p15 sha256=faf16c0f59a6428b — carte provisoire générée par tools/timeline/build-skeleton.mjs depuis film/shots.json ; toute retouche hors de la zone hf-footage la soustrait au générateur -->
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: #17402C;
+      font-family: "Inter", sans-serif;
+      color: #FAF8F5;
+    }
+    .p15-card {
+      position: absolute;
+      inset: 0;
+      padding: 96px 120px 120px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .p15-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 34px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+    .p15-mid {
+      display: flex;
+      align-items: flex-end;
+      gap: 72px;
+    }
+    .p15-num {
+      font-weight: 900;
+      font-size: 360px;
+      line-height: 0.8;
+      letter-spacing: -0.04em;
+    }
+    .p15-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      padding-bottom: 8px;
+    }
+    .p15-source {
+      font-family: "JetBrains Mono", monospace;
+      font-weight: 700;
+      font-size: 64px;
+    }
+    .p15-frames {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 36px;
+    }
+    .p15-star {
+      font-weight: 700;
+      font-size: 40px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .p15-intent {
+      max-width: 1600px;
+      font-size: 52px;
+      line-height: 1.2;
+      font-weight: 400;
+    }
+    .p15-track {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 12px;
+      background: rgba(250, 248, 245, 0.18);
+    }
+    .p15-bar {
+      position: absolute;
+      inset: 0;
+      background: #FAF8F5;
+      transform-origin: 0 50%;
+    }
+    .p15-frame {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+    .p15-shot,
+    .p15-shot-inner {
+      position: absolute;
+      inset: 0;
+    }
+    .p15-shot {
+      opacity: 0;
+    }
+    .p15-shot-img {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1920px;
+      height: 1080px;
+      /* Remplit le 16:9 sans déformer, quel que soit le rapport de l'image : recadrage au centre. */
+      object-fit: cover;
+      object-position: 50% 50%;
+    }
+  </style>
+  <div id="root" data-composition-id="p15" data-width="1920" data-height="1080" data-duration="0.8666666666666667">
+    <!-- Carte provisoire : outil de travail, disparaît quand l'image du plan est là. -->
+    <div id="p15-card" class="p15-card" data-shot="p15" data-act="4">
+      <div id="p15-top" class="p15-top">
+        <span id="p15-act">Acte 4 · DÉCISION</span>
+        <span id="p15-range">876–928</span>
+      </div>
+      <div id="p15-mid" class="p15-mid">
+        <div id="p15-num" class="p15-num">P15</div>
+        <div id="p15-meta" class="p15-meta">
+          <div id="p15-source" class="p15-source">img41 + E4</div>
+          <div id="p15-frames" class="p15-frames">52 images · 0,87 s</div>
+        </div>
+      </div>
+      <div id="p15-intent" class="p15-intent">L'itinéraire 3D se trace</div>
+      <div id="p15-track" class="p15-track"><div id="p15-bar" class="p15-bar"></div></div>
+    </div>
+    <!-- Emplacement d'image plein cadre : assets/footage/img41.png.
+         Chaque calque : .p15-shot (opacité, séquence) > .p15-shot-inner (libre pour le mouvement) > img. -->
+    <div id="p15-frame" class="p15-frame" data-layout-allow-overflow>
+      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) --><!-- hf-footage:end -->
+    </div>
+  </div>
+  <script>
+    (function () {
+      var D = 52 / 60;
+      var tl = gsap.timeline({ paused: true });
+      // Barre de progression : se remplit sur la durée du plan.
+      tl.fromTo("#p15-bar", { scaleX: 0 }, { scaleX: 1, duration: D, ease: "none" }, 0);
+      // Images présentes : chaque source occupe sa part égale du plan (ordre de la trame) ;
+      // la carte reste visible là où l'image manque.
+      var shots = Array.prototype.slice.call(document.querySelectorAll(".p15-shot"));
+      if (shots.length) {
+        var n = Number(shots[0].getAttribute("data-seq-count"));
+        var bySeq = {};
+        shots.forEach(function (el) { bySeq[el.getAttribute("data-seq")] = el; });
+        for (var k = 0; k < n; k++) {
+          var t = (k * D) / n;
+          var el = bySeq[String(k)];
+          shots.forEach(function (other) {
+            tl.set(other, { opacity: other === el ? 1 : 0 }, t);
+          });
+          tl.set("#p15-card", { opacity: el ? 0 : 1 }, t);
+        }
+      }
+      window.__timelines["p15"] = tl;
+    })();
+  </script>
+</template>

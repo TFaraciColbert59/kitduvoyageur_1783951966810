@@ -1,0 +1,153 @@
+<!-- hf-skeleton generated id=p10 sha256=951a75397de37dea — carte provisoire générée par tools/timeline/build-skeleton.mjs depuis film/shots.json ; toute retouche hors de la zone hf-footage la soustrait au générateur -->
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: #1D5E5E;
+      font-family: "Inter", sans-serif;
+      color: #FAF8F5;
+    }
+    .p10-card {
+      position: absolute;
+      inset: 0;
+      padding: 96px 120px 120px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .p10-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 34px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+    .p10-mid {
+      display: flex;
+      align-items: flex-end;
+      gap: 72px;
+    }
+    .p10-num {
+      font-weight: 900;
+      font-size: 360px;
+      line-height: 0.8;
+      letter-spacing: -0.04em;
+    }
+    .p10-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      padding-bottom: 8px;
+    }
+    .p10-source {
+      font-family: "JetBrains Mono", monospace;
+      font-weight: 700;
+      font-size: 64px;
+    }
+    .p10-frames {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 36px;
+    }
+    .p10-star {
+      font-weight: 700;
+      font-size: 40px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .p10-intent {
+      max-width: 1600px;
+      font-size: 52px;
+      line-height: 1.2;
+      font-weight: 400;
+    }
+    .p10-track {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 12px;
+      background: rgba(250, 248, 245, 0.18);
+    }
+    .p10-bar {
+      position: absolute;
+      inset: 0;
+      background: #FAF8F5;
+      transform-origin: 0 50%;
+    }
+    .p10-frame {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+    .p10-shot,
+    .p10-shot-inner {
+      position: absolute;
+      inset: 0;
+    }
+    .p10-shot {
+      opacity: 0;
+    }
+    .p10-shot-img {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1920px;
+      height: 1080px;
+      /* Remplit le 16:9 sans déformer, quel que soit le rapport de l'image : recadrage au centre. */
+      object-fit: cover;
+      object-position: 50% 50%;
+    }
+  </style>
+  <div id="root" data-composition-id="p10" data-width="1920" data-height="1080" data-duration="0.9">
+    <!-- Carte provisoire : outil de travail, disparaît quand l'image du plan est là. -->
+    <div id="p10-card" class="p10-card" data-shot="p10" data-act="3">
+      <div id="p10-top" class="p10-top">
+        <span id="p10-act">Acte 3 · DÉCLIC</span>
+        <span id="p10-range">560–614</span>
+      </div>
+      <div id="p10-mid" class="p10-mid">
+        <div id="p10-num" class="p10-num">P10</div>
+        <div id="p10-meta" class="p10-meta">
+          <div id="p10-source" class="p10-source">img09</div>
+          <div id="p10-frames" class="p10-frames">54 images · 0,90 s</div>
+        </div>
+      </div>
+      <div id="p10-intent" class="p10-intent">Le rêve : le lac devient réel</div>
+      <div id="p10-track" class="p10-track"><div id="p10-bar" class="p10-bar"></div></div>
+    </div>
+    <!-- Emplacement d'image plein cadre : assets/footage/img09.png.
+         Chaque calque : .p10-shot (opacité, séquence) > .p10-shot-inner (libre pour le mouvement) > img. -->
+    <div id="p10-frame" class="p10-frame" data-layout-allow-overflow>
+      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) --><!-- hf-footage:end -->
+    </div>
+  </div>
+  <script>
+    (function () {
+      var D = 54 / 60;
+      var tl = gsap.timeline({ paused: true });
+      // Barre de progression : se remplit sur la durée du plan.
+      tl.fromTo("#p10-bar", { scaleX: 0 }, { scaleX: 1, duration: D, ease: "none" }, 0);
+      // Images présentes : chaque source occupe sa part égale du plan (ordre de la trame) ;
+      // la carte reste visible là où l'image manque.
+      var shots = Array.prototype.slice.call(document.querySelectorAll(".p10-shot"));
+      if (shots.length) {
+        var n = Number(shots[0].getAttribute("data-seq-count"));
+        var bySeq = {};
+        shots.forEach(function (el) { bySeq[el.getAttribute("data-seq")] = el; });
+        for (var k = 0; k < n; k++) {
+          var t = (k * D) / n;
+          var el = bySeq[String(k)];
+          shots.forEach(function (other) {
+            tl.set(other, { opacity: other === el ? 1 : 0 }, t);
+          });
+          tl.set("#p10-card", { opacity: el ? 0 : 1 }, t);
+        }
+      }
+      window.__timelines["p10"] = tl;
+    })();
+  </script>
+</template>
