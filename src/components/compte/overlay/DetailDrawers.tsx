@@ -151,10 +151,12 @@ export function ProfilePreviewDrawer({ userId, onClose }: { userId: string; onCl
   const [followError, setFollowError] = useState('');
   const [loading, setLoading] = useState(true);
   const readEpochRef = useRef(0);
+  const followBusyRef = useRef(false);
   useEffect(() => {
     let cancelled = false;
     const epoch = ++readEpochRef.current;
     const supabase = createClient();
+    followBusyRef.current = false;
     setFollowing(false);
     setRequested(false);
     setFollowBusy(false);
@@ -180,7 +182,8 @@ export function ProfilePreviewDrawer({ userId, onClose }: { userId: string; onCl
     return () => { cancelled = true; };
   }, [userId, viewerId]);
   const toggle = async () => {
-    if (followBusy || !user || !profile || user.id === profile.id) return;
+    if (followBusyRef.current || !user || !profile || user.id === profile.id) return;
+    followBusyRef.current = true;
     const epoch = ++readEpochRef.current;
     const wasFollowing = following;
     const wasRequested = requested;
@@ -202,6 +205,7 @@ export function ProfilePreviewDrawer({ userId, onClose }: { userId: string; onCl
         followErrorMessage(error, 'L’abonnement n’a pas été enregistré. Réessayez.')
       );
     } finally {
+      followBusyRef.current = false;
       if (epoch === readEpochRef.current) setFollowBusy(false);
     }
   };
@@ -219,6 +223,7 @@ export function ProfilePreviewDrawer({ userId, onClose }: { userId: string; onCl
               <ActionPill
                 tone={following || requested ? 'glass' : 'primary'}
                 label={requested ? 'Demande envoyée' : following ? 'Abonné' : 'Suivre'}
+                text={requested ? 'Demande envoyée' : following ? 'Abonné' : 'Suivre'}
                 aria-pressed={following || requested}
                 icon={following || requested ? <UserCheck /> : <UserPlus />}
                 busy={followBusy}

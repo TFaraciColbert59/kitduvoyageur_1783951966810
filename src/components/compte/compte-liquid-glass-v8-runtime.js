@@ -68,6 +68,26 @@ export function canUndoMutation(key, changed) {
   return Boolean(changed) && key !== 'profilevis';
 }
 
+/**
+ * Normalise l'état de suivi échangé avec l'hôte.
+ *
+ * Le pont reçoit `{ handle, followed }` du runtime et renvoie un état exact
+ * (`following`, `requested` ou `none`) : une demande envoyée à un profil privé
+ * n'est jamais confondue avec un abonnement actif.
+ */
+export function normalizeFollowState(value) {
+  return value === 'following' || value === 'requested' || value === 'none'
+    ? value
+    : null;
+}
+
+/** Libellé visible d'un état de suivi, y compris la demande en attente. */
+export function followButtonLabel(state) {
+  if (state === 'requested') return 'Demande envoyée';
+  if (state === 'following') return 'Abonné(e)';
+  return 'Suivre';
+}
+
 /* Nationalités proposées par le runtime : la valeur reçue doit être l'une de
    ces chaînes exactes, sans normalisation silencieuse. */
 const NATIONALITY_VALUES = Object.freeze([
@@ -2875,9 +2895,46 @@ window.__QR={"n":37,"rows":["1111111011101010010100110111001111111","10000010010
 
 /* ================= Compte — 50 améliorations : couche d'extension (override des fonctions du générateur) ================= */
 (() => {
-const X = { filter: 'all', feed: false, visitor: false, ligSub: 0, cmp: null, prof: 'km', story: null, vault: 0, scan: 0, seen: {}, hov: false, mon: null, evt: null, acct: 'me', hold: 0 };
+const X = { filter: 'all', feed: false, visitor: false, ligSub: 0, cmp: null, prof: 'km', story: null, vault: 0, scan: 0, seen: {}, hov: false, mon: null, evt: null, acct: 'me', hold: 0, followStates: {}, followPending: {} };
 // Interaction state stays inside the owning runtime.
 interactionState = X;
+
+/** Handle normalisé pour les cartes d'état de suivi. */
+function followHandle(handle) {
+  return String(handle || '').replace(/^@/, '').trim();
+}
+
+/**
+ * État affiché d'un bouton de suivi.
+ *
+ * La bascule optimiste vit dans `followPending` ; `followStates` ne contient
+ * que l'état confirmé par le pont. Une demande (`requested`) reste donc
+ * visible jusqu'à la réponse serveur, puis après elle.
+ */
+function followStateFor(handle, fallback) {
+  const key = followHandle(handle);
+  if (!key) return fallback;
+  if (X.followPending && X.followPending[key] !== undefined) return X.followPending[key];
+  if (X.followStates && X.followStates[key] !== undefined) return X.followStates[key];
+  if (X.followedUsers && X.followedUsers[key] !== undefined) {
+    return X.followedUsers[key] ? 'following' : 'none';
+  }
+  return fallback;
+}
+
+function followIsOn(state) {
+  return state === 'following' || state === 'requested';
+}
+
+function followClass(state, activeClass, idleClass) {
+  return followIsOn(state) ? activeClass : idleClass;
+}
+
+function followBusy(handle) {
+  const key = followHandle(handle);
+  return Boolean(key && X.followPending && X.followPending[key] !== undefined);
+}
+
 {
   const st = document.createElement('div'); st.className = 'story'; st.id = 'story'; st.setAttribute('role', 'dialog'); st.setAttribute('aria-label', 'Story à la une'); phone.appendChild(st);
   const sh = document.createElement('div'); sh.className = 'sunshade'; sh.setAttribute('aria-hidden', 'true'); $('map').insertBefore(sh, $('mgrab'));
@@ -3353,6 +3410,8 @@ renderIgTabContent = function (D) {
       '</div>' +
       (currentList.length ? '<div class="reseau-list">' +
         currentList.map(u => {
+          const follow = followStateFor(u.h, u.followed ? 'following' : 'none');
+          const pending = followBusy(u.h);
           return '<div class="reseau-user-row">' +
             '<div class="reseau-av-wrap" data-a="openUserProfile" data-v="' + u.h + '" style="cursor:pointer">' +
               (u.img ? '<img src="' + u.img + '" alt="' + u.n + '" class="reseau-av" loading="lazy" />' : '<span class="reseau-av" style="display:grid;place-items:center;background:#DDEBD8;color:#17402C;font:700 12px var(--sf)">' + u.i + '</span>') +
@@ -3362,8 +3421,8 @@ renderIgTabContent = function (D) {
               '<div class="reseau-name-row"><b>' + u.n + '</b><span class="reseau-handle">@' + u.h + '</span></div>' +
               '<div class="reseau-sub">' + u.sub + '</div>' +
             '</div>' +
-            '<button class="reseau-btn ' + (u.followed ? 'active' : 'primary') + '" data-a="toggleFollowUser" data-v="' + u.h + '">' +
-              (u.followed ? 'Abonné(e)' : 'Suivre') +
+            '<button class="reseau-btn ' + followClass(follow, 'active', 'primary') + '" data-a="toggleFollowUser" data-v="' + u.h + '" aria-busy="' + pending + '"' + (pending ? ' disabled' : '') + '>' +
+              followButtonLabel(follow) +
             '</button>' +
           '</div>';
         }).join('') +
@@ -3838,7 +3897,10 @@ const EXK = {
               <button class="${isFollowers ? 'active' : ''}" data-a="toggleFollowersSheet" data-v="followers" role="tab" aria-selected="${isFollowers}" aria-label="Abonnés (${fCount})" title="Abonnés (${fCount})">${ic(IC.people, 's')}</button>
             </div>`,
             currentList.length ? `<div class="reseau-list">
-              ${currentList.map(u => `
+              ${currentList.map(u => {
+                const follow = followStateFor(u.h, u.followed ? 'following' : 'none');
+                const pending = followBusy(u.h);
+                return `
                 <div class="reseau-user-row">
                   <div class="reseau-av-wrap" data-a="openUserProfile" data-v="${u.h}" style="cursor:pointer">
                     ${u.img ? `<img src="${u.img}" alt="${u.n}" class="reseau-av" loading="lazy" />` : `<span class="reseau-av" style="display:grid;place-items:center;background:#DDEBD8;color:#17402C;font:700 12px var(--sf)">${u.i}</span>`}
@@ -3851,11 +3913,12 @@ const EXK = {
                     </div>
                     <div class="reseau-sub">${u.sub}</div>
                   </div>
-                  <button class="reseau-btn ${u.followed ? 'active' : 'primary'}" data-a="toggleFollowUser" data-v="${u.h}">
-                    ${u.followed ? 'Abonné(e)' : 'Suivre'}
+                  <button class="reseau-btn ${followClass(follow, 'active', 'primary')}" data-a="toggleFollowUser" data-v="${u.h}" aria-busy="${pending}" ${pending ? 'disabled' : ''}>
+                    ${followButtonLabel(follow)}
                   </button>
                 </div>
-              `).join('')}
+              `;
+              }).join('')}
             </div>` : `<div style="padding:28px 16px;text-align:center;color:var(--label2);font:400 12px/1.4 var(--sf);">${isFollowers ? 'Aucun abonné pour le moment.' : 'Aucun abonnement pour le moment.'}</div>`
           ]
         })
@@ -3884,7 +3947,9 @@ const EXK = {
       outings: null,
       km: null
     };
-    const isUserFollowed = (X.followedUsers && X.followedUsers[user.handle] !== undefined) ? X.followedUsers[user.handle] : user.following;
+    const follow = followStateFor(user.handle, user.following ? 'following' : 'none');
+    const followPending = followBusy(user.handle);
+    const isUserFollowed = followIsOn(follow);
 
     return {
       title: '@' + user.handle,
@@ -3907,8 +3972,8 @@ const EXK = {
                 <span>Massif : <b>${user.massif}</b></span>
               </div>
               <div style="display:flex;gap:8px;width:100%">
-                <button class="mbtn ${isUserFollowed ? 'soft' : 'p'}" style="flex:1;height:36px;justify-content:center" data-a="toggleFollowUser" data-v="${user.handle}">
-                  ${isUserFollowed ? 'Abonné(e)' : 'Suivre ce randonneur'}
+                <button class="mbtn ${isUserFollowed ? 'soft' : 'p'}" style="flex:1;height:36px;justify-content:center" data-a="toggleFollowUser" data-v="${user.handle}" aria-busy="${followPending}" ${followPending ? 'disabled' : ''}>
+                  ${followButtonLabel(follow)}
                 </button>
                 <button class="mbtn soft" style="height:36px;padding:0 14px" data-a="openUserProfile" data-v="${user.handle}">
                   Profil complet
@@ -4219,7 +4284,7 @@ function applyAccountBootstrap(data) {
 const notifyHostAction = (a, v) => {
   if (!isCurrent()) return;
   if (typeof window.__lkdvOnAction === 'function') {
-    try { window.__lkdvOnAction(a, v, S); } catch (_) {}
+    try { return window.__lkdvOnAction(a, v, S); } catch (_) {}
   }
 };
 /* ---------- Point 3 : Modal Post Instagram (100 % Réplique Native Liquid Glass) ---------- */
@@ -4777,24 +4842,60 @@ var EXA = {
     haptic(6);
   },
   toggleFollowUser: v => {
+    const handle = followHandle(v);
+    if (!handle || followBusy(handle)) return;
     X.followedUsers = X.followedUsers || {};
+    X.followStates = X.followStates || {};
+    X.followPending = X.followPending || {};
     let current;
-    if (X.followedUsers[v] !== undefined) {
-      current = X.followedUsers[v];
+    if (X.followStates[handle] !== undefined) {
+      current = followIsOn(X.followStates[handle]);
+    } else if (X.followedUsers[handle] !== undefined) {
+      current = X.followedUsers[handle];
     } else {
-      const btn = document.querySelector(`[data-a="toggleFollowUser"][data-v="${v}"]`);
+      const btn = document.querySelector(`[data-a="toggleFollowUser"][data-v="${handle}"]`);
       current = btn ? btn.classList.contains('active') : true;
     }
-    X.followedUsers[v] = !current;
-    const isNowFollowed = X.followedUsers[v];
+    const nextState = current ? 'none' : 'following';
+    const isNowFollowed = nextState !== 'none';
+    // Bascule optimiste locale : le pont confirmera `requested` pour un profil
+    // privé, et `none` en cas d'échec (rollback par le vrai hydrate).
+    X.followPending[handle] = nextState;
+    X.followedUsers[handle] = isNowFollowed;
     island(
-      isNowFollowed ? `Abonné(e) à @${v}` : `Désabonné(e) de @${v}`,
+      isNowFollowed ? `Abonné(e) à @${handle}` : `Désabonné(e) de @${handle}`,
       isNowFollowed ? 'Tu verras ses sorties et carnets alpins' : 'Mise à jour immédiate',
       false
     );
     haptic(10);
     renderSheet();
-    notifyHostAction('toggleFollowUser', { handle: v, followed: isNowFollowed });
+    const outcome = notifyHostAction('toggleFollowUser', { handle, followed: isNowFollowed });
+    // Le pont peut confirmer `requested`, restaurer l'état précédent via le
+    // vrai hydrate, ou échouer sans hydrate. Dans ce dernier cas, le retour
+    // explicite porte `state` : on l'applique, sinon on rend la main au
+    // fallback confirmé (jamais un bouton bloqué sur « Envoi »).
+    if (outcome && typeof outcome.then === 'function') {
+      outcome
+        .then((result) => {
+          if (!isCurrent()) return;
+          if (result && result.state) {
+            window.__lkdvApplyFollowStates?.({ [handle]: result.state });
+            renderSheet();
+            return;
+          }
+          if (!result || result.restored === false) {
+            delete X.followPending[handle];
+            delete X.followedUsers[handle];
+            renderSheet();
+          }
+        })
+        .catch(() => {
+          if (!isCurrent()) return;
+          delete X.followPending[handle];
+          delete X.followedUsers[handle];
+          renderSheet();
+        });
+    }
   },
   openUserProfile: v => {
     const cleanHandle = String(v || '').replace(/^@/, '').trim();
@@ -5396,10 +5497,38 @@ window.__lkdvHydrateCompte = function (data) {
 
   refresh(true);
 };
+/** États de suivi confirmés et bascules en cours, lus par le pont hôte. */
+window.__lkdvGetFollowState = () => isCurrent() ? ({
+  followStates: X.followStates,
+  followPending: X.followPending,
+}) : null;
+
+/**
+ * Applique un patch `followStates` venu de l'hôte. Le vrai hydrate remplace
+ * la bascule optimiste et efface le pending ; un état inconnu est ignoré.
+ */
+window.__lkdvApplyFollowStates = (followStates) => {
+  if (!isCurrent() || !followStates || typeof followStates !== 'object') return false;
+  X.followStates = X.followStates || {};
+  X.followPending = X.followPending || {};
+  X.followedUsers = X.followedUsers || {};
+  let changed = false;
+  for (const [rawHandle, rawState] of Object.entries(followStates)) {
+    const handle = followHandle(rawHandle);
+    const state = normalizeFollowState(rawState);
+    if (!handle || !state) continue;
+    X.followStates[handle] = state;
+    X.followedUsers[handle] = state !== 'none';
+    delete X.followPending[handle];
+    changed = true;
+  }
+  return changed;
+};
 /* ---------- Montage ---------- */
 bindIgSwipe();
 refresh(true);
 })();
+
 
 
 
@@ -5413,6 +5542,8 @@ window.__lkdvGetState = () => isCurrent() ? ({
   ORDERS,
   ORDERS_BOOKINGS,
   KITS_LINEAGE,
+  followStates: window.__lkdvGetFollowState?.()?.followStates,
+  followPending: window.__lkdvGetFollowState?.()?.followPending,
 }) : null;
 
 window.__lkdvCompteAct = (actionName, val, meta) => {
@@ -5433,6 +5564,12 @@ const hydrateAccountReplace = window.__lkdvHydrateCompte;
 window.__lkdvHydrateCompte = (data) => {
   if (!isCurrent()) return;
   if (!data || typeof data !== 'object') return;
+  // États de suivi confirmés par le pont : `following`, `requested` ou `none`.
+  // Le vrai hydrate remplace la bascule optimiste ; un échec réapplique ici
+  // l'état confirmé précédent, jamais un `undefined` silencieux.
+  if (data.followStates && typeof data.followStates === 'object') {
+    window.__lkdvApplyFollowStates?.(data.followStates);
+  }
   if (data.replace === true) {
     hydrateAccountReplace(data);
     return;

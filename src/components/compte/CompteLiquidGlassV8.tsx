@@ -8,7 +8,7 @@ import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
-import { loadFollowState, setFollow } from '@/features/compte/client/followClient';
+import { followErrorMessage, loadFollowState, setFollow, type FollowState } from '@/features/compte/client/followClient';
 import { requestCarnetPublicationAward } from '@/lib/progression-award-requests';
 // Invoque /api/voyages/mine via le client cache
 import { fetchMyTripsCached, getMyTripsSessionGeneration, isMyTripsSessionCurrent } from '@/features/trips/client/fetchMyTrips';
@@ -628,6 +628,125 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
       }
     };
 
+    // Pont de suivi : le runtime envoie `{ handle, followed }`, pas un handle
+    // nu. On résout la cible, l'API décide `following` / `requested`, puis le
+    // vrai hydrate replace la bascule optimiste. Un échec restaure l'état
+    // confirmé (relu sous RLS) et le retour reste explicite.
+    type FollowBridgeResult = {
+      ok: boolean;
+      code?: 'invalid_target' | 'in_flight' | 'stale' | 'target_not_found' | 'follow_failed';
+      status?: 'following' | 'requested' | 'unfollowed';
+      state?: FollowState;
+      restored?: boolean;
+      message?: string;
+    };
+    const followInFlight = new Set<string>();
+    const applyFollowState = (targetHandle: string, state: FollowState): boolean => {
+      const hydrate = (window as any).__lkdvHydrateCompte;
+      if (typeof hydrate !== 'function') return false;
+      try {
+        hydrate({ followStates: { [targetHandle]: state } });
+        return true;
+      } catch (_) {
+        return false;
+      }
+    };
+    const confirmedFollowState = (
+      targetHandle: string,
+      followed: boolean | undefined
+    ): FollowState => {
+      const known = (window as any).__lkdvGetState?.()?.followStates?.[targetHandle];
+      if (known === 'following' || known === 'requested' || known === 'none') return known;
+      if (followed === false) return 'following';
+      return 'none';
+    };
+    const applyFollowAction = async (val: unknown): Promise<FollowBridgeResult> => {
+      const contract =
+        val && typeof val === 'object'
+          ? (val as { handle?: unknown; followed?: unknown })
+          : { handle: val, followed: undefined };
+      const targetHandle = String(contract.handle ?? '').replace(/^@/, '').trim();
+      if (!targetHandle) return { ok: false, code: 'invalid_target', restored: false };
+      if (followInFlight.has(targetHandle)) {
+        return { ok: false, code: 'in_flight', restored: false };
+      }
+
+      followInFlight.add(targetHandle);
+      const followed =
+        typeof contract.followed === 'boolean' ? contract.followed : undefined;
+      const previous = confirmedFollowState(targetHandle, followed);
+      try {
+        const supabase = createClient();
+        const { data: auth } = await supabase.auth.getUser();
+        const me = auth?.user;
+        if (!isCurrent() || !me || me.id !== owner) {
+          return { ok: false, code: 'stale', restored: false };
+        }
+
+        const { data: target, error: targetError } = await supabase
+          .from('public_profiles')
+          .select('id')
+          .eq('handle', targetHandle)
+          .maybeSingle();
+        if (!isCurrent()) return { ok: false, code: 'stale', restored: false };
+        if (targetError || !target?.id || target.id === me.id) {
+          const restored = applyFollowState(targetHandle, previous);
+          return { ok: false, code: 'target_not_found', state: previous, restored };
+        }
+
+        let action: 'follow' | 'unfollow';
+        if (followed !== undefined) {
+          action = followed ? 'follow' : 'unfollow';
+        } else {
+          const current = await loadFollowState(supabase, me.id, target.id);
+          if (!isCurrent()) return { ok: false, code: 'stale', restored: false };
+          action = current === 'none' ? 'follow' : 'unfollow';
+        }
+
+        try {
+          const status = await setFollow(target.id, action);
+          if (!isCurrent()) return { ok: false, code: 'stale', restored: false };
+          const state: FollowState =
+            status === 'following'
+              ? 'following'
+              : status === 'requested'
+                ? 'requested'
+                : 'none';
+          const restored = applyFollowState(targetHandle, state);
+          return { ok: true, status, state, restored };
+        } catch (error) {
+          // La mutation a pu échouer avant ou après l'écriture : on relit
+          // l'état réel sous RLS. Si cette lecture échoue aussi, on réapplique
+          // l'état confirmé d'avant la bascule.
+          let restoredState = previous;
+          try {
+            restoredState = await loadFollowState(supabase, me.id, target.id);
+          } catch (_) {}
+          if (!isCurrent()) return { ok: false, code: 'stale', restored: false };
+          const restored = applyFollowState(targetHandle, restoredState);
+          return {
+            ok: false,
+            code: 'follow_failed',
+            state: restoredState,
+            restored,
+            message: followErrorMessage(error),
+          };
+        }
+      } catch (error) {
+        if (!isCurrent()) return { ok: false, code: 'stale', restored: false };
+        const restored = applyFollowState(targetHandle, previous);
+        return {
+          ok: false,
+          code: 'follow_failed',
+          state: previous,
+          restored,
+          message: followErrorMessage(error),
+        };
+      } finally {
+        followInFlight.delete(targetHandle);
+      }
+    };
+
     // Register real browser & backend action handlers
     (window as any).__lkdvOnAction = async (action: string, val: any, S: any) => {
       if (!isCurrent()) return;
@@ -734,30 +853,8 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
             body: JSON.stringify({ sourceHandle: handle }),
           }).catch(() => {});
         } catch (_) {}
-      } else if (action === 'toggleFollowUser' && typeof val === 'string') {
-        try {
-          const supabase = createClient();
-          const { data: auth } = await supabase.auth.getUser();
-          const me = auth?.user;
-          if (!isCurrent() || !me || me.id !== owner) return;
-          const clean = val.replace(/^@/, '').trim();
-          const { data: target } = await supabase
-            .from('public_profiles')
-            .select('id')
-            .eq('handle', clean)
-            .maybeSingle();
-          if (!isCurrent() || !target?.id || target.id === me.id) return;
-          try {
-            const state = await loadFollowState(supabase, me.id, target.id);
-            if (!isCurrent()) return;
-            await setFollow(target.id, state === 'none' ? 'follow' : 'unfollow');
-          } catch (error) {
-            // La maquette bascule avant l'appel : on relit l'état serveur pour
-            // annuler une bascule qui n'a pas été enregistrée.
-            if (isCurrent()) (window as any).__lkdvHydrateCompte?.();
-            throw error;
-          }
-        } catch (_) {}
+      } else if (action === 'toggleFollowUser') {
+        return applyFollowAction(val);
       } else if (action === 'signout') {
         try {
           pendingLogoutRef.current = owner;

@@ -39,6 +39,15 @@ const mocks = vi.hoisted(() => ({
   },
 }));
 
+/**
+ * Fixtures de lecture Supabase : seules `public_profiles`, `user_follows` et
+ * `follow_requests` portent des lignes. Toutes les autres tables répondent
+ * vide, comme le bootstrap du host l'attend.
+ */
+const supabaseState = vi.hoisted(() => ({
+  rows: {} as Record<string, Array<Record<string, unknown>>>,
+}));
+
 vi.mock('next/navigation', () => ({
   useRouter: () => mocks.router,
   useSearchParams: () => new URLSearchParams(),
@@ -76,26 +85,50 @@ vi.mock('@/contexts/AuthContext', () => ({
   }),
 }));
 
-/** Requête Supabase vide, résolue : le host ne lit que `.data` / `.count`. */
-function emptyQuery(result: unknown) {
+/**
+ * Requête Supabase générique : filtres `.eq`, puis `limit` / `maybeSingle`.
+ * Les lignes viennent de `supabaseState.rows[table]`, ce qui permet de
+ * prouver la lecture de l'état de suivi sans simuler PostgREST.
+ */
+function tableQuery(table: string) {
+  const filters: Array<[string, unknown]> = [];
+  const matching = () =>
+    (supabaseState.rows[table] ?? []).filter((row) =>
+      filters.every(([column, value]) => row[column] === value)
+    );
+  const result = () => {
+    const rows = matching();
+    return { data: rows, error: null, count: rows.length };
+  };
   const query: Record<string, unknown> = {};
-  for (const method of ['select', 'eq', 'order', 'limit']) {
-    query[method] = () => query;
+  for (const method of ['select', 'eq', 'order']) {
+    query[method] = (...args: unknown[]) => {
+      if (method === 'eq') filters.push([String(args[0]), args[1]]);
+      return query;
+    };
   }
-  query.maybeSingle = () => Promise.resolve(result);
-  query.single = () => Promise.resolve(result);
+  query.limit = () => Promise.resolve(result());
+  query.maybeSingle = () => Promise.resolve({ data: matching()[0] ?? null, error: null });
+  query.single = () => Promise.resolve({ data: matching()[0] ?? null, error: null });
   query.then = (onFulfilled: any, onRejected: any) =>
-    Promise.resolve(result).then(onFulfilled, onRejected);
+    Promise.resolve(result()).then(onFulfilled, onRejected);
   return query;
 }
 
 vi.mock('@/lib/supabase/client', () => ({
   createClient: () => ({
-    from: () => emptyQuery({ data: null, error: null, count: 0 }),
+    from: (table: string) => tableQuery(table),
+    auth: {
+      getUser: async () => ({
+        data: { user: mocks.auth.user ? { id: mocks.auth.user.id } : null },
+        error: null,
+      }),
+    },
   }),
 }));
 
 import { setMyTripsAuthUser } from '@/features/trips/client/fetchMyTrips';
+import { followButtonLabel } from '../compte-liquid-glass-v8-runtime';
 import { CompteLiquidGlassV8 } from '../CompteLiquidGlassV8';
 
 const BOOTSTRAP_PAYLOAD = {
@@ -130,8 +163,18 @@ function okResponse(json: unknown) {
 
 let bootstrapCalls = 0;
 let bootstrapAnswer: () => Promise<unknown>;
+let followCalls: Array<{ url: string; init?: RequestInit }> = [];
+let followAnswer: () => Promise<unknown>;
 
 function deferredBootstrap() {
+  let resolve!: (value: unknown) => void;
+  const promise = new Promise<unknown>((r) => {
+    resolve = r;
+  });
+  return { promise, resolve };
+}
+
+function deferredFollow() {
   let resolve!: (value: unknown) => void;
   const promise = new Promise<unknown>((r) => {
     resolve = r;
@@ -145,13 +188,20 @@ beforeEach(() => {
   mocks.router.push.mockClear();
   setMyTripsAuthUser('owner-1', true);
   localStorage.clear();
+  supabaseState.rows = {};
   bootstrapCalls = 0;
+  followCalls = [];
   bootstrapAnswer = () => new Promise(() => {});
-  vi.stubGlobal('fetch', (input: unknown) => {
+  followAnswer = () => Promise.resolve(okResponse({ status: 'following' }));
+  vi.stubGlobal('fetch', (input: unknown, init?: RequestInit) => {
     const url = String(input);
     if (url.includes('/api/compte/bootstrap')) {
       bootstrapCalls += 1;
       return bootstrapAnswer();
+    }
+    if (url.includes('/api/compte/reseau/follow')) {
+      followCalls.push({ url, init });
+      return followAnswer();
     }
     return Promise.resolve({ ok: false, status: 404, json: async () => null });
   });
@@ -502,5 +552,176 @@ describe('Compte — isolation entre identités', () => {
     expect(mocks.router.push).not.toHaveBeenCalledWith('/connexion');
     await switchAccount(view, null);
     expect(mocks.router.push).toHaveBeenCalledWith('/connexion');
+  });
+});
+
+describe('Compte — pont de suivi runtime', () => {
+  const runtimeState = () => (window as any).__lkdvGetState?.();
+
+  beforeEach(() => {
+    supabaseState.rows.public_profiles = [{ id: 'target-1', handle: 'alice' }];
+    supabaseState.rows.user_follows = [];
+    supabaseState.rows.follow_requests = [
+      { requester_id: 'owner-1', target_id: 'target-1', status: 'pending' },
+    ];
+  });
+
+  it('le runtime envoie bien { handle, followed } au pont puis à l’API', async () => {
+    await renderCompte();
+    await act(async () => {
+      (window as any).__lkdvHydrateCompte({ followStates: { alice: 'none' } });
+    });
+
+    act(() => {
+      (window as any).EXA.toggleFollowUser('alice');
+    });
+
+    await waitFor(() => expect(followCalls).toHaveLength(1));
+    expect(followCalls[0].init?.method).toBe('POST');
+    expect(JSON.parse(String(followCalls[0].init?.body))).toEqual({ userId: 'target-1' });
+    await waitFor(() => expect(runtimeState().followStates.alice).toBe('following'));
+    expect(runtimeState().followPending.alice).toBeUndefined();
+  });
+
+  it('consomme { handle, followed } et appelle l’API avec la cible résolue', async () => {
+    await renderCompte();
+    let result: any;
+    await act(async () => {
+      result = await (window as any).__lkdvOnAction(
+        'toggleFollowUser',
+        { handle: 'alice', followed: true },
+        runtimeState().S
+      );
+    });
+
+    expect(followCalls).toHaveLength(1);
+    expect(followCalls[0].init?.method).toBe('POST');
+    expect(JSON.parse(String(followCalls[0].init?.body))).toEqual({ userId: 'target-1' });
+    expect(result).toMatchObject({ ok: true, status: 'following', state: 'following' });
+    expect(runtimeState().followStates.alice).toBe('following');
+  });
+
+  it('rend la demande visible quand l’API répond requested', async () => {
+    followAnswer = () => Promise.resolve(okResponse({ status: 'requested' }));
+    await renderCompte();
+    let result: any;
+    await act(async () => {
+      result = await (window as any).__lkdvOnAction(
+        'toggleFollowUser',
+        { handle: 'alice', followed: true },
+        runtimeState().S
+      );
+    });
+
+    expect(result).toMatchObject({ ok: true, status: 'requested', state: 'requested' });
+    expect(runtimeState().followStates.alice).toBe('requested');
+    expect(followButtonLabel(runtimeState().followStates.alice)).toBe('Demande envoyée');
+  });
+
+  it('restaure l’état confirmé avec hydrate après un échec de l’API', async () => {
+    await renderCompte();
+    await act(async () => {
+      (window as any).__lkdvHydrateCompte({
+        followStates: { alice: 'requested' },
+      });
+    });
+    followAnswer = () =>
+      Promise.resolve({
+        ok: false,
+        status: 500,
+        json: async () => ({ error: 'follow_failed' }),
+      });
+
+    let result: any;
+    await act(async () => {
+      result = await (window as any).__lkdvOnAction(
+        'toggleFollowUser',
+        { handle: 'alice', followed: false },
+        runtimeState().S
+      );
+    });
+
+    expect(followCalls[0].init?.method).toBe('DELETE');
+    expect(result).toMatchObject({
+      ok: false,
+      code: 'follow_failed',
+      state: 'requested',
+      restored: true,
+    });
+    expect(runtimeState().followStates.alice).toBe('requested');
+    expect(runtimeState().followPending.alice).toBeUndefined();
+  });
+
+  it('retourne un échec explicite quand le vrai hydrate est absent', async () => {
+    await renderCompte();
+    delete (window as any).__lkdvHydrateCompte;
+    followAnswer = () =>
+      Promise.resolve({
+        ok: false,
+        status: 500,
+        json: async () => ({ error: 'follow_failed' }),
+      });
+
+    let result: any;
+    await act(async () => {
+      result = await (window as any).__lkdvOnAction(
+        'toggleFollowUser',
+        { handle: 'alice', followed: true },
+        runtimeState().S
+      );
+    });
+
+    expect(result).toMatchObject({
+      ok: false,
+      code: 'follow_failed',
+      restored: false,
+    });
+  });
+
+  it('désactive les doubles clics pendant la requête', async () => {
+    const pending = deferredFollow();
+    followAnswer = () => pending.promise;
+    await renderCompte();
+
+    let first!: Promise<unknown>;
+    act(() => {
+      first = (window as any).__lkdvOnAction(
+        'toggleFollowUser',
+        { handle: 'alice', followed: true },
+        runtimeState().S
+      );
+    });
+    const second = await (window as any).__lkdvOnAction(
+      'toggleFollowUser',
+      { handle: 'alice', followed: true },
+      runtimeState().S
+    );
+
+    expect(second).toMatchObject({ ok: false, code: 'in_flight', restored: false });
+    await act(async () => pending.resolve(okResponse({ status: 'following' })));
+    await act(async () => {
+      await first;
+    });
+    expect(followCalls).toHaveLength(1);
+  });
+
+  it('applique le retour explicite du pont quand le vrai hydrate manque', async () => {
+    await renderCompte();
+    delete (window as any).__lkdvHydrateCompte;
+    followAnswer = () =>
+      Promise.resolve({
+        ok: false,
+        status: 500,
+        json: async () => ({ error: 'follow_failed' }),
+      });
+
+    act(() => {
+      (window as any).EXA.toggleFollowUser('alice');
+    });
+
+    await waitFor(() => {
+      expect(runtimeState().followStates.alice).toBe('requested');
+      expect(runtimeState().followPending.alice).toBeUndefined();
+    });
   });
 });
