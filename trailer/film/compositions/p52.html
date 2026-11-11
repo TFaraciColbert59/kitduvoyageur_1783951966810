@@ -122,7 +122,23 @@
     <!-- Emplacement d'image plein cadre : assets/footage/img05.png, assets/footage/img04.png, assets/footage/img03.png.
          Chaque calque : .p52-shot (opacité, séquence) > .p52-shot-inner (libre pour le mouvement) > img. -->
     <div id="p52-frame" class="p52-frame" data-layout-allow-overflow>
-      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) --><!-- hf-footage:end -->
+      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) -->
+      <div id="p52-shot-1" class="p52-shot" data-src="img05" data-seq="0" data-seq-count="3">
+        <div id="p52-shot-1-inner" class="p52-shot-inner">
+          <img id="p52-shot-1-img" class="p52-shot-img" src="assets/footage/img05.png" alt="" />
+        </div>
+      </div>
+      <div id="p52-shot-2" class="p52-shot" data-src="img04" data-seq="1" data-seq-count="3">
+        <div id="p52-shot-2-inner" class="p52-shot-inner">
+          <img id="p52-shot-2-img" class="p52-shot-img" src="assets/footage/img04.png" alt="" />
+        </div>
+      </div>
+      <div id="p52-shot-3" class="p52-shot" data-src="img03" data-seq="2" data-seq-count="3">
+        <div id="p52-shot-3-inner" class="p52-shot-inner">
+          <img id="p52-shot-3-img" class="p52-shot-img" src="assets/footage/img03.png" alt="" />
+        </div>
+      </div>
+    <!-- hf-footage:end -->
     </div>
   </div>
   <script>

@@ -122,7 +122,13 @@
     <!-- Emplacement d'image plein cadre : assets/footage/img33.png.
          Chaque calque : .p44-shot (opacité, séquence) > .p44-shot-inner (libre pour le mouvement) > img. -->
     <div id="p44-frame" class="p44-frame" data-layout-allow-overflow>
-      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) --><!-- hf-footage:end -->
+      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) -->
+      <div id="p44-shot-1" class="p44-shot" data-src="img33" data-seq="0" data-seq-count="1">
+        <div id="p44-shot-1-inner" class="p44-shot-inner">
+          <img id="p44-shot-1-img" class="p44-shot-img" src="assets/footage/img33.png" alt="" />
+        </div>
+      </div>
+    <!-- hf-footage:end -->
     </div>
   </div>
   <script>

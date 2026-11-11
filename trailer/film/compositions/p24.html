@@ -122,7 +122,13 @@
     <!-- Emplacement d'image plein cadre : assets/footage/img17.png.
          Chaque calque : .p24-shot (opacité, séquence) > .p24-shot-inner (libre pour le mouvement) > img. -->
     <div id="p24-frame" class="p24-frame" data-layout-allow-overflow>
-      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) --><!-- hf-footage:end -->
+      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) -->
+      <div id="p24-shot-1" class="p24-shot" data-src="img17" data-seq="0" data-seq-count="1">
+        <div id="p24-shot-1-inner" class="p24-shot-inner">
+          <img id="p24-shot-1-img" class="p24-shot-img" src="assets/footage/img17.png" alt="" />
+        </div>
+      </div>
+    <!-- hf-footage:end -->
     </div>
   </div>
   <script>

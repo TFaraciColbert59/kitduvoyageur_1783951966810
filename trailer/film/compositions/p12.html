@@ -122,7 +122,13 @@
     <!-- Emplacement d'image plein cadre : assets/footage/img40.png.
          Chaque calque : .p12-shot (opacité, séquence) > .p12-shot-inner (libre pour le mouvement) > img. -->
     <div id="p12-frame" class="p12-frame" data-layout-allow-overflow>
-      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) --><!-- hf-footage:end -->
+      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) -->
+      <div id="p12-shot-1" class="p12-shot" data-src="img40" data-seq="0" data-seq-count="1">
+        <div id="p12-shot-1-inner" class="p12-shot-inner">
+          <img id="p12-shot-1-img" class="p12-shot-img" src="assets/footage/img40.png" alt="" />
+        </div>
+      </div>
+    <!-- hf-footage:end -->
     </div>
   </div>
   <script>

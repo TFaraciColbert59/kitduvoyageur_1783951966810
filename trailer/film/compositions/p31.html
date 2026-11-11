@@ -122,7 +122,13 @@
     <!-- Emplacement d'image plein cadre : assets/footage/img22.png.
          Chaque calque : .p31-shot (opacité, séquence) > .p31-shot-inner (libre pour le mouvement) > img. -->
     <div id="p31-frame" class="p31-frame" data-layout-allow-overflow>
-      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) --><!-- hf-footage:end -->
+      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) -->
+      <div id="p31-shot-1" class="p31-shot" data-src="img22" data-seq="0" data-seq-count="1">
+        <div id="p31-shot-1-inner" class="p31-shot-inner">
+          <img id="p31-shot-1-img" class="p31-shot-img" src="assets/footage/img22.png" alt="" />
+        </div>
+      </div>
+    <!-- hf-footage:end -->
     </div>
   </div>
   <script>

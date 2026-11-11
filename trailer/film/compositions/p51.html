@@ -122,7 +122,13 @@
     <!-- Emplacement d'image plein cadre : assets/footage/img38.png.
          Chaque calque : .p51-shot (opacité, séquence) > .p51-shot-inner (libre pour le mouvement) > img. -->
     <div id="p51-frame" class="p51-frame" data-layout-allow-overflow>
-      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) --><!-- hf-footage:end -->
+      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) -->
+      <div id="p51-shot-1" class="p51-shot" data-src="img38" data-seq="0" data-seq-count="1">
+        <div id="p51-shot-1-inner" class="p51-shot-inner">
+          <img id="p51-shot-1-img" class="p51-shot-img" src="assets/footage/img38.png" alt="" />
+        </div>
+      </div>
+    <!-- hf-footage:end -->
     </div>
   </div>
   <script>

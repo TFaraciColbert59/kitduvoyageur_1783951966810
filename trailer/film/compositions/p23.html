@@ -122,7 +122,13 @@
     <!-- Emplacement d'image plein cadre : assets/footage/img16.png.
          Chaque calque : .p23-shot (opacité, séquence) > .p23-shot-inner (libre pour le mouvement) > img. -->
     <div id="p23-frame" class="p23-frame" data-layout-allow-overflow>
-      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) --><!-- hf-footage:end -->
+      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) -->
+      <div id="p23-shot-1" class="p23-shot" data-src="img16" data-seq="0" data-seq-count="1">
+        <div id="p23-shot-1-inner" class="p23-shot-inner">
+          <img id="p23-shot-1-img" class="p23-shot-img" src="assets/footage/img16.png" alt="" />
+        </div>
+      </div>
+    <!-- hf-footage:end -->
     </div>
   </div>
   <script>

@@ -122,7 +122,13 @@
     <!-- Emplacement d'image plein cadre : assets/footage/img03.png.
          Chaque calque : .p03-shot (opacité, séquence) > .p03-shot-inner (libre pour le mouvement) > img. -->
     <div id="p03-frame" class="p03-frame" data-layout-allow-overflow>
-      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) --><!-- hf-footage:end -->
+      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) -->
+      <div id="p03-shot-1" class="p03-shot" data-src="img03" data-seq="0" data-seq-count="1">
+        <div id="p03-shot-1-inner" class="p03-shot-inner">
+          <img id="p03-shot-1-img" class="p03-shot-img" src="assets/footage/img03.png" alt="" />
+        </div>
+      </div>
+    <!-- hf-footage:end -->
     </div>
   </div>
   <script>

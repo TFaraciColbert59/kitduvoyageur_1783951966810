@@ -122,7 +122,13 @@
     <!-- Emplacement d'image plein cadre : assets/footage/img08.png.
          Chaque calque : .p08-shot (opacité, séquence) > .p08-shot-inner (libre pour le mouvement) > img. -->
     <div id="p08-frame" class="p08-frame" data-layout-allow-overflow>
-      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) --><!-- hf-footage:end -->
+      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) -->
+      <div id="p08-shot-1" class="p08-shot" data-src="img08" data-seq="0" data-seq-count="1">
+        <div id="p08-shot-1-inner" class="p08-shot-inner">
+          <img id="p08-shot-1-img" class="p08-shot-img" src="assets/footage/img08.png" alt="" />
+        </div>
+      </div>
+    <!-- hf-footage:end -->
     </div>
   </div>
   <script>

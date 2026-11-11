@@ -122,7 +122,13 @@
     <!-- Emplacement d'image plein cadre : assets/footage/img43.png.
          Chaque calque : .p17-shot (opacité, séquence) > .p17-shot-inner (libre pour le mouvement) > img. -->
     <div id="p17-frame" class="p17-frame" data-layout-allow-overflow>
-      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) --><!-- hf-footage:end -->
+      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) -->
+      <div id="p17-shot-1" class="p17-shot" data-src="img43" data-seq="0" data-seq-count="1">
+        <div id="p17-shot-1-inner" class="p17-shot-inner">
+          <img id="p17-shot-1-img" class="p17-shot-img" src="assets/footage/img43.png" alt="" />
+        </div>
+      </div>
+    <!-- hf-footage:end -->
     </div>
   </div>
   <script>

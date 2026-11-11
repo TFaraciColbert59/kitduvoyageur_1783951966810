@@ -122,7 +122,13 @@
     <!-- Emplacement d'image plein cadre : assets/footage/img09.png.
          Chaque calque : .p10-shot (opacité, séquence) > .p10-shot-inner (libre pour le mouvement) > img. -->
     <div id="p10-frame" class="p10-frame" data-layout-allow-overflow>
-      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) --><!-- hf-footage:end -->
+      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) -->
+      <div id="p10-shot-1" class="p10-shot" data-src="img09" data-seq="0" data-seq-count="1">
+        <div id="p10-shot-1-inner" class="p10-shot-inner">
+          <img id="p10-shot-1-img" class="p10-shot-img" src="assets/footage/img09.png" alt="" />
+        </div>
+      </div>
+    <!-- hf-footage:end -->
     </div>
   </div>
   <script>

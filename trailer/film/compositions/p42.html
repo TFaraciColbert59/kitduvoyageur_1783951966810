@@ -123,7 +123,13 @@
     <!-- Emplacement d'image plein cadre : assets/footage/img32.png.
          Chaque calque : .p42-shot (opacité, séquence) > .p42-shot-inner (libre pour le mouvement) > img. -->
     <div id="p42-frame" class="p42-frame" data-layout-allow-overflow>
-      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) --><!-- hf-footage:end -->
+      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) -->
+      <div id="p42-shot-1" class="p42-shot" data-src="img32" data-seq="0" data-seq-count="1">
+        <div id="p42-shot-1-inner" class="p42-shot-inner">
+          <img id="p42-shot-1-img" class="p42-shot-img" src="assets/footage/img32.png" alt="" />
+        </div>
+      </div>
+    <!-- hf-footage:end -->
     </div>
   </div>
   <script>

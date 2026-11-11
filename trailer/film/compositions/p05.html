@@ -122,7 +122,13 @@
     <!-- Emplacement d'image plein cadre : assets/footage/img05.png.
          Chaque calque : .p05-shot (opacité, séquence) > .p05-shot-inner (libre pour le mouvement) > img. -->
     <div id="p05-frame" class="p05-frame" data-layout-allow-overflow>
-      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) --><!-- hf-footage:end -->
+      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) -->
+      <div id="p05-shot-1" class="p05-shot" data-src="img05" data-seq="0" data-seq-count="1">
+        <div id="p05-shot-1-inner" class="p05-shot-inner">
+          <img id="p05-shot-1-img" class="p05-shot-img" src="assets/footage/img05.png" alt="" />
+        </div>
+      </div>
+    <!-- hf-footage:end -->
     </div>
   </div>
   <script>

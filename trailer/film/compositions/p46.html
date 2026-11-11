@@ -122,7 +122,18 @@
     <!-- Emplacement d'image plein cadre : assets/footage/img35a.png, assets/footage/img35b.png.
          Chaque calque : .p46-shot (opacité, séquence) > .p46-shot-inner (libre pour le mouvement) > img. -->
     <div id="p46-frame" class="p46-frame" data-layout-allow-overflow>
-      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) --><!-- hf-footage:end -->
+      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) -->
+      <div id="p46-shot-1" class="p46-shot" data-src="img35a" data-seq="0" data-seq-count="2">
+        <div id="p46-shot-1-inner" class="p46-shot-inner">
+          <img id="p46-shot-1-img" class="p46-shot-img" src="assets/footage/img35a.png" alt="" />
+        </div>
+      </div>
+      <div id="p46-shot-2" class="p46-shot" data-src="img35b" data-seq="1" data-seq-count="2">
+        <div id="p46-shot-2-inner" class="p46-shot-inner">
+          <img id="p46-shot-2-img" class="p46-shot-img" src="assets/footage/img35b.png" alt="" />
+        </div>
+      </div>
+    <!-- hf-footage:end -->
     </div>
   </div>
   <script>

@@ -122,7 +122,13 @@
     <!-- Emplacement d'image plein cadre : assets/footage/img25.png.
          Chaque calque : .p34-shot (opacité, séquence) > .p34-shot-inner (libre pour le mouvement) > img. -->
     <div id="p34-frame" class="p34-frame" data-layout-allow-overflow>
-      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) --><!-- hf-footage:end -->
+      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) -->
+      <div id="p34-shot-1" class="p34-shot" data-src="img25" data-seq="0" data-seq-count="1">
+        <div id="p34-shot-1-inner" class="p34-shot-inner">
+          <img id="p34-shot-1-img" class="p34-shot-img" src="assets/footage/img25.png" alt="" />
+        </div>
+      </div>
+    <!-- hf-footage:end -->
     </div>
   </div>
   <script>

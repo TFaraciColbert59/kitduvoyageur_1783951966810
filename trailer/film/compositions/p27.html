@@ -123,7 +123,13 @@
     <!-- Emplacement d'image plein cadre : assets/footage/img19.png.
          Chaque calque : .p27-shot (opacité, séquence) > .p27-shot-inner (libre pour le mouvement) > img. -->
     <div id="p27-frame" class="p27-frame" data-layout-allow-overflow>
-      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) --><!-- hf-footage:end -->
+      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) -->
+      <div id="p27-shot-1" class="p27-shot" data-src="img19" data-seq="0" data-seq-count="1">
+        <div id="p27-shot-1-inner" class="p27-shot-inner">
+          <img id="p27-shot-1-img" class="p27-shot-img" src="assets/footage/img19.png" alt="" />
+        </div>
+      </div>
+    <!-- hf-footage:end -->
     </div>
   </div>
   <script>
