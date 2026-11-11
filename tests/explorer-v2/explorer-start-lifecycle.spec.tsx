@@ -13,7 +13,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Countdown } from '@/features/explorer-v2/activity/Countdown';
 import { useGpsTracker } from '@/features/explorer-v2/activity/useGpsTracker';
 import { useExplorerStore, useTransientStart } from '@/features/explorer-v2/state/store';
-import type { ActivityState, SportSelection } from '@/features/explorer-v2/state/types';
+import type { ActivityState, Sport, SportSelection } from '@/features/explorer-v2/state/types';
 import { buildSheetModel, LiveDirectTab } from '@/features/explorer-v2/sheet/SheetContent';
 import type { SheetContext } from '@/features/explorer-v2/sheet/context';
 import {
@@ -24,7 +24,7 @@ import {
 
 const permissionsDescriptor = Object.getOwnPropertyDescriptor(navigator, 'permissions');
 
-function selection(sport: 'rando' | 'velo', variantId: string): SportSelection {
+function selection(sport: Sport, variantId: string): SportSelection {
   const family = getSportFamily(sport);
   const variant = getSportVariant(variantId);
   if (!family || !variant) throw new Error(`variante absente: ${variantId}`);
@@ -236,13 +236,62 @@ describe('explorer-v2 · bilan local', () => {
 });
 
 describe('explorer-v2 · direct et permission réelle', () => {
-  it('affiche « Vitesse » pour Gravel, pas « Allure »', () => {
+  it('affiche « Vitesse » et son unité pour Gravel, pas « Allure »', () => {
     const chosen = selection('velo', 'velo-gravel');
     useExplorerStore.getState().startActivity('velo', null, chosen);
+    useExplorerStore.getState().updateActivity({ distanceM: 1200, movingS: 600 });
     render(<LiveDirectTab ctx={context()} />);
 
     expect(screen.getByText('Vitesse')).toBeTruthy();
+    expect(screen.getByText('7,2 km/h')).toBeTruthy();
     expect(screen.queryByText('Allure')).toBeNull();
+    expect(screen.queryByText(/\/km/)).toBeNull();
+  });
+
+  it('affiche une allure calculée pour Course, avec l’unité LKDV', () => {
+    const chosen = selection('course', 'course-route');
+    useExplorerStore.getState().startActivity('course', null, chosen);
+    useExplorerStore.getState().updateActivity({ distanceM: 1200, movingS: 600 });
+    render(<LiveDirectTab ctx={context()} />);
+
+    expect(screen.getByText('Allure')).toBeTruthy();
+    expect(screen.getByText('8\'20"/km')).toBeTruthy();
+    expect(screen.queryByText('Vitesse')).toBeNull();
+    expect(screen.queryByText(/km\/h/)).toBeNull();
+  });
+
+  it('affiche une allure calculée pour Trail, avec l’unité LKDV', () => {
+    const chosen = selection('trail', 'trail-10k');
+    useExplorerStore.getState().startActivity('trail', null, chosen);
+    useExplorerStore.getState().updateActivity({ distanceM: 1000, movingS: 600 });
+    render(<LiveDirectTab ctx={context()} />);
+
+    expect(screen.getByText('Allure')).toBeTruthy();
+    expect(screen.getByText('10\'00"/km')).toBeTruthy();
+    expect(screen.queryByText('Vitesse')).toBeNull();
+  });
+
+  it('garde la vitesse préexistante pour les autres sports', () => {
+    useExplorerStore.getState().startActivity('rando');
+    useExplorerStore.getState().updateActivity({ distanceM: 1200, movingS: 600 });
+    render(<LiveDirectTab ctx={context()} />);
+
+    expect(screen.getByText('Vitesse')).toBeTruthy();
+    expect(screen.getByText('7,2 km/h')).toBeTruthy();
+    expect(screen.queryByText('Allure')).toBeNull();
+  });
+
+  it('ne montre aucune allure fictive quand le GPS est refusé', () => {
+    const chosen = selection('course', 'course-route');
+    useExplorerStore.getState().startActivity('course', null, chosen);
+    useExplorerStore.getState().updateActivity({ distanceM: 1200, movingS: 600 });
+    useExplorerStore.setState({ locationPermission: 'denied' });
+    render(<LiveDirectTab ctx={context()} />);
+
+    expect(screen.getByText('Allure')).toBeTruthy();
+    expect(screen.queryByText('8\'20"/km')).toBeNull();
+    expect(screen.queryByText(/km\/h/)).toBeNull();
+    expect(screen.getAllByText('—').length).toBeGreaterThanOrEqual(3);
   });
 
   it('ne laisse pas croire que le GPS enregistre quand la position est refusée', () => {

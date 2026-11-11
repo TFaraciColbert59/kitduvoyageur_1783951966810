@@ -98,7 +98,7 @@ export const SPORT_FAMILIES: readonly SportFamily[] = [
         catalogSlug: 'course-5k',
         environment: 'outdoor',
         requiresGps: true,
-        requiredMetrics: ['distance', 'duration', 'speed'],
+        requiredMetrics: ['distance', 'duration', 'pace'],
         optionalMetrics: ['cadence', 'heartRate'],
       },
       {
@@ -240,7 +240,7 @@ export const SPORT_FAMILIES: readonly SportFamily[] = [
         catalogSlug: 'trail-10k',
         environment: 'outdoor',
         requiresGps: true,
-        requiredMetrics: ['distance', 'duration', 'elevation', 'speed'],
+        requiredMetrics: ['distance', 'duration', 'elevation', 'pace'],
         optionalMetrics: ['cadence', 'heartRate'],
       },
       {
@@ -250,7 +250,7 @@ export const SPORT_FAMILIES: readonly SportFamily[] = [
         catalogSlug: 'trail-ultra-65k',
         environment: 'outdoor',
         requiresGps: true,
-        requiredMetrics: ['distance', 'duration', 'elevation', 'speed'],
+        requiredMetrics: ['distance', 'duration', 'elevation', 'pace'],
         optionalMetrics: ['heartRate', 'laps'],
       },
     ],
@@ -470,6 +470,20 @@ export function availabilityLabel(availability: SportStartAvailability): string 
 
 export function metricsLabel(metrics: readonly SportMetricKey[]): string {
   return metrics.map((metric) => SPORT_METRIC_LABEL[metric]).join(', ');
+}
+
+/** Métrique de rythme affichée en Direct : allure ou vitesse. */
+export type RhythmMetric = Extract<SportMetricKey, 'pace' | 'speed'>;
+
+/**
+ * La sélection locale fait foi quand elle porte une métrique de rythme.
+ * Sinon Course et Trail se lisent en allure (min/km) ; les autres sports
+ * gardent la vitesse (km/h) déjà affichée.
+ */
+export function rhythmMetric(sport: Sport, selection?: SportSelection): RhythmMetric {
+  if (selection?.metrics.includes('pace')) return 'pace';
+  if (selection?.metrics.includes('speed')) return 'speed';
+  return sport === 'course' || sport === 'trail' ? 'pace' : 'speed';
 }
 
 /** Métriques propres au sport qu’aucun capteur ne fournit aujourd’hui. */

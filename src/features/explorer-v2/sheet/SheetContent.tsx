@@ -42,6 +42,7 @@ import {
   getSportVariant,
   metricsLabel,
   missingOptionalMetrics,
+  rhythmMetric,
   startAvailability,
   toSportSelection,
   type SportFamily,
@@ -1578,6 +1579,14 @@ function useElapsed(startedAt: number | undefined): string {
     : `${m}:${String(sec).padStart(2, '0')}`;
 }
 
+/** Allure LKDV (même conversion que StatsSheet) : 500 s/km → 8'20". */
+function formatPace(secondsPerKm: number): string {
+  const total = Math.max(0, Math.round(secondsPerKm));
+  const minutes = Math.floor(total / 60);
+  const seconds = total % 60;
+  return `${minutes}'${String(seconds).padStart(2, '0')}"`;
+}
+
 export function LiveDirectTab({ ctx }: { ctx: SheetContext }) {
   const activity = ctx.state.activity;
   const elapsed = useElapsed(activity?.startedAt);
@@ -1585,7 +1594,28 @@ export function LiveDirectTab({ ctx }: { ctx: SheetContext }) {
     return <XpEmpty title="Aucune activité en cours" hint="Démarre une activité pour voir les métriques en direct." />;
   }
   const gpsDenied = ctx.state.locationPermission === 'denied';
+  const rhythm = rhythmMetric(activity.sport, activity.selection);
+  const rhythmLabel = rhythm === 'pace' ? 'Allure' : 'Vitesse';
   const speed = activity.movingS > 0 ? (activity.distanceM / activity.movingS) * 3.6 : null;
+  const paceSeconds =
+    activity.movingS > 0 && activity.distanceM > 0
+      ? activity.movingS / (activity.distanceM / 1000)
+      : null;
+  const rhythmValue = gpsDenied
+    ? '—'
+    : rhythm === 'pace'
+      ? paceSeconds !== null
+        ? `${formatPace(paceSeconds)}/km`
+        : '—'
+      : speed !== null
+        ? `${speed.toFixed(1).replace('.', ',')} km/h`
+        : '—';
+  const metrics = [
+    { label: 'Distance', value: gpsDenied ? '—' : formatDistance(activity.distanceM / 1000) },
+    { label: rhythmLabel, value: rhythmValue },
+    { label: 'Temps', value: formatDuration(activity.movingS) },
+    { label: 'D+', value: gpsDenied ? '—' : `${Math.round(activity.elevGainM)} m` },
+  ];
   const next = ctx.pois[0];
   return (
     <>
@@ -1598,23 +1628,7 @@ export function LiveDirectTab({ ctx }: { ctx: SheetContext }) {
       <div className="xp-chrono" aria-live="off">
         {elapsed}
       </div>
-      <XpMetrics
-        items={
-          gpsDenied
-            ? [
-                { label: 'Distance', value: '—' },
-                { label: 'Vitesse', value: '—' },
-                { label: 'Temps', value: formatDuration(activity.movingS) },
-                { label: 'D+', value: '—' },
-              ]
-            : [
-                { label: 'Distance', value: formatDistance(activity.distanceM / 1000) },
-                { label: 'Vitesse', value: speed ? `${speed.toFixed(1).replace('.', ',')} km/h` : '—' },
-                { label: 'Temps', value: formatDuration(activity.movingS) },
-                { label: 'D+', value: `${Math.round(activity.elevGainM)} m` },
-              ]
-        }
-      />
+      <XpMetrics items={metrics} />
       <XpEyebrow>Prochain repère</XpEyebrow>
       {next ? (
         <XpRows>

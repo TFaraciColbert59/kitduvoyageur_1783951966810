@@ -11,6 +11,7 @@ import {
   getSportVariant,
   metricsLabel,
   missingOptionalMetrics,
+  rhythmMetric,
   startAvailability,
   toSportSelection,
   type SportStartContext,
@@ -205,6 +206,21 @@ describe('explorer-v2 · taxonomie des sports (S1.02)', () => {
         expect(SPORT_METRIC_LABEL[metric], `${variant.id}:${metric}`).toBeTruthy();
       }
     }
+  });
+
+  it('aligne la métrique annoncée en préparation sur celle du Direct', () => {
+    const course = getSportVariant('course-route') as SportVariant;
+    const trail = getSportVariant('trail-10k') as SportVariant;
+    const gravel = getSportVariant('velo-gravel') as SportVariant;
+
+    expect(metricsLabel(course.requiredMetrics)).toBe('distance, durée, allure');
+    expect(metricsLabel(trail.requiredMetrics)).toBe('distance, durée, D+, allure');
+    expect(metricsLabel(gravel.requiredMetrics)).toBe('distance, durée, D+, vitesse');
+
+    expect(rhythmMetric('course', toSportSelection(getSportFamily('course')!, course))).toBe('pace');
+    expect(rhythmMetric('trail', toSportSelection(getSportFamily('trail')!, trail))).toBe('pace');
+    expect(rhythmMetric('velo', toSportSelection(getSportFamily('velo')!, gravel))).toBe('speed');
+    expect(rhythmMetric('rando')).toBe('speed');
   });
 
   it('résume les variantes et signale l’indoor', () => {
