@@ -212,6 +212,7 @@ export const config = {
     '/compte',
     '/compas',
     '/compas/:path*',
+    '/carnets',
     '/carnets/:path*',
     '/clubs/:path*',
     '/sorties/:path*',

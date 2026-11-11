@@ -30,12 +30,6 @@
       "note": "Creation de carnet supprimee : publication depuis la communaute."
     },
     {
-      "source": "/carnets",
-      "destination": "/communaute",
-      "permanent": true,
-      "note": "Index des carnets supprime ; les fiches /carnets/[id] restent servies."
-    },
-    {
       "source": "/clubs/nouveau",
       "destination": "/communaute",
       "permanent": true,
@@ -432,6 +426,10 @@
     {
       "route": "/carte-interactive",
       "note": "Carte vivante + schema.org WebPage."
+    },
+    {
+      "route": "/carnets",
+      "note": "Index des carnets (hub /carnets) : canonique depuis la reprise du 2026-11-11, plus jamais redirige vers /communaute ; les fiches /carnets/[id] restent servies."
     }
   ],
   "blocked": [],
