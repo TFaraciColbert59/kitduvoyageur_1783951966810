@@ -7,3 +7,11 @@ qa/*.mp4
 film/.hyperframes/
 film/renders/
 film/node_modules/
+qa/*.wav
+qa/tmp/
+*/.hyperframes/
+*/renders/
+grade-lab/samples/
+film/assets/audio/*.wav
+film/assets/audio/*.mp3
+film/assets/footage/
