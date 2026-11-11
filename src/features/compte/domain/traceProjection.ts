@@ -13,11 +13,21 @@
  * lecture de base et aucune donnée réelle n'est nécessaire.
  *
  * Défense en profondeur : une trace ou une zone hors du domaine de calcul sûr
- * (pôle, antiméridien, trop grande) échoue fermée. Les zones et les masques
- * début/fin sont élargis de 50 m, les points publiés sont arrondis à 5
- * décimales, puis chaque morceau est vérifié avant publication : il doit rester
- * assez long et hors des zones élargies, y compris en son milieu. Une coupure
- * n'est jamais recollée.
+ * (pôle, antiméridien, zone trop grande, segment trop long) échoue fermée. Les
+ * zones et les masques début/fin sont élargis de 50 m, les points publiés sont
+ * arrondis à 5 décimales, puis chaque morceau est vérifié avant publication :
+ * il doit rester assez long et hors des zones élargies, segment par segment.
+ * Une coupure n'est jamais recollée.
+ *
+ * Domaine géométrique couvert : chaque segment de la trace mesure au plus
+ * `MAX_SAFE_SEGMENT_M` (2 km) et son arc orthodromique reste dans
+ * `|lat| <= MAX_SAFE_ABS_LAT` (85°) sans traverser l'antiméridien. Sur un
+ * segment de 2 km, l'écart entre l'arc géodésique et la corde interpolée en
+ * lng/lat reste inférieur à ~2 m, très en dessous de la marge de 50 m. Un
+ * segment plus long est refusé (`unsafe_geometry`) au lieu d'être projeté avec
+ * une hypothèse locale fausse. Les cercles privés sont intersectés sur la
+ * sphère (et non par projection locale), donc la taille de la zone n'introduit
+ * pas d'erreur supplémentaire.
  *
  * En cas d'entrée douteuse, le projecteur échoue fermé : il ne rend aucune
  * géométrie plutôt que de risquer de divulguer une portion masquée.
@@ -56,9 +66,18 @@ export type TraceProjectionError =
 export interface TraceProjection {
   /** Morceaux visibles, dans l'ordre de la trace. Jamais reliés à travers un masque. */
   segments: TracePoint[][];
-  /** Vrai dès qu'un masque a été demandé, même s'il ne coupe rien. */
+  /**
+   * Vrai dès qu'une liste de masques non vide a été fournie, même si la
+   * géométrie ou les masques sont invalides. `error` reste prioritaire : aucune
+   * géométrie n'est rendue tant qu'il est non nul.
+   */
   masked: boolean;
-  /** Vrai si des masques valides ne laissent plus aucun morceau visible. */
+  /**
+   * Vrai uniquement si `error === null`, qu'au moins un masque a été fourni et
+   * que les masques ont retiré la totalité de la trace. Faux si des intervalles
+   * visibles subsistent mais sont trop courts pour être publiés : ce cas rend
+   * `unpublishable_geometry`, jamais `fullyMasked`.
+   */
   fullyMasked: boolean;
   /** `null` si l'entrée est exploitable ; sinon la trace n'est jamais rendue. */
   error: TraceProjectionError;
@@ -70,10 +89,16 @@ const DEG_TO_RAD = Math.PI / 180;
 const EPSILON = 1e-9;
 const MIN_INTERVAL = 1e-10;
 
-/** Au-delà, la projection locale et la lecture de zone ne sont plus sûres. */
+/** Au-delà, l'arc géodésique et la lecture de zone ne sont plus sûres. */
 const MAX_SAFE_ABS_LAT = 85;
 const MAX_SAFE_ANTIMERIDIAN_SPAN_DEG = 180;
 const MAX_SAFE_ZONE_RADIUS_M = 100_000;
+/**
+ * Longueur maximale d'un segment pour que l'arc géodésique reste à moins de
+ * ~2 m de la corde interpolée en lng/lat, même à 85° de latitude. Au-delà, la
+ * géométrie n'est pas couverte par la projection locale : elle échoue fermée.
+ */
+const MAX_SAFE_SEGMENT_M = 2_000;
 
 /** Marge volontairement perdue autour d'une zone privée (mètres). */
 const ZONE_SAFETY_MARGIN_M = 50;
@@ -235,26 +260,93 @@ function readPoints(value: unknown): TracePoint[] | null {
   return points.length >= 2 ? points : null;
 }
 
+type Vec3 = readonly [x: number, y: number, z: number];
+
+function toUnitVector(point: TracePoint): Vec3 {
+  const lat = point.lat * DEG_TO_RAD;
+  const lng = point.lng * DEG_TO_RAD;
+  const cosLat = Math.cos(lat);
+  return [cosLat * Math.cos(lng), cosLat * Math.sin(lng), Math.sin(lat)];
+}
+
+function dot3(a: Vec3, b: Vec3): number {
+  return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+}
+
+function cross3(a: Vec3, b: Vec3): Vec3 {
+  return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+}
+
+function norm3(value: Vec3): number {
+  return Math.sqrt(dot3(value, value));
+}
+
+/** Angle central (radians) entre deux vecteurs unitaires. */
+function angle3(a: Vec3, b: Vec3): number {
+  return Math.atan2(norm3(cross3(a, b)), dot3(a, b));
+}
+
 /**
- * Refuse les géométries où la projection locale n'est plus fiable : pôles et
- * traversée de l'antiméridien. Un segment dont la longitude saute de 180° ou
- * plus est ambigu (le chemin court passe de l'autre côté du globe).
+ * Latitude absolue maximale atteinte par l'arc orthodromique [a,b].
+ *
+ * L'arc appartient au grand cercle dont le plan passe par l'origine et dont la
+ * normale est `a × b`. Le sommet nord de ce grand cercle est la projection du
+ * pôle sur ce plan. On ne retient ce sommet (ou son antipode sud) que s'il
+ * tombe effectivement sur l'arc court, sinon le maximum est porté par une
+ * extrémité. C'est ce contrôle qui ferme le cas « sommets à 85°, arc au-delà ».
  */
-function isSafePointGeometry(points: TracePoint[]): boolean {
+function maxAbsLatitudeOnArc(a: TracePoint, b: TracePoint): number {
+  const av = toUnitVector(a);
+  const bv = toUnitVector(b);
+  const base = Math.max(Math.abs(a.lat), Math.abs(b.lat));
+  const normal = cross3(av, bv);
+  const normalNorm = norm3(normal);
+  if (normalNorm <= EPSILON) return base;
+
+  const nz = normal[2];
+  const factor = nz / (normalNorm * normalNorm);
+  const rawNorth: Vec3 = [-factor * normal[0], -factor * normal[1], 1 - factor * normal[2]];
+  const rawNorm = norm3(rawNorth);
+  if (rawNorm <= EPSILON) return base;
+
+  const north: Vec3 = [rawNorth[0] / rawNorm, rawNorth[1] / rawNorm, rawNorth[2] / rawNorm];
+  const south: Vec3 = [-north[0], -north[1], -north[2]];
+  const arcAngle = angle3(av, bv);
+  const onArc = (vertex: Vec3): boolean =>
+    angle3(av, vertex) + angle3(vertex, bv) <= arcAngle + 1e-9;
+
+  if (!onArc(north) && !onArc(south)) return base;
+  const vertexLat = Math.asin(Math.max(-1, Math.min(1, north[2]))) / DEG_TO_RAD;
+  return Math.max(base, Math.abs(vertexLat));
+}
+
+function isSafePoint(point: TracePoint): boolean {
+  return (
+    Math.abs(point.lat) <= MAX_SAFE_ABS_LAT && Math.abs(point.lng) < MAX_SAFE_ANTIMERIDIAN_SPAN_DEG
+  );
+}
+
+/**
+ * Refuse un segment dont la corde lng/lat n'est plus une approximation sûre de
+ * l'arc orthodromique : saut de longitude ambigu, longueur excessive ou arc qui
+ * sort de la bande de latitude couverte. Le contrôle est fait sur le segment,
+ * pas seulement sur ses extrémités : deux sommets sûrs peuvent porter un arc
+ * qui passe au-dessus de 85° ou traverse une zone loin de la corde.
+ */
+function isSafeSegment(a: TracePoint, b: TracePoint): boolean {
+  if (Math.abs(b.lng - a.lng) >= MAX_SAFE_ANTIMERIDIAN_SPAN_DEG) return false;
+
+  const length = haversineM(a, b);
+  if (!Number.isFinite(length) || length > MAX_SAFE_SEGMENT_M) return false;
+
+  const maxAbsLat = maxAbsLatitudeOnArc(a, b);
+  return Number.isFinite(maxAbsLat) && maxAbsLat <= MAX_SAFE_ABS_LAT;
+}
+
+function isSafeGeometry(points: TracePoint[]): boolean {
   for (let index = 0; index < points.length; index += 1) {
-    const point = points[index];
-    if (
-      Math.abs(point.lat) > MAX_SAFE_ABS_LAT ||
-      Math.abs(point.lng) >= MAX_SAFE_ANTIMERIDIAN_SPAN_DEG
-    ) {
-      return false;
-    }
-    if (
-      index > 0 &&
-      Math.abs(point.lng - points[index - 1].lng) >= MAX_SAFE_ANTIMERIDIAN_SPAN_DEG
-    ) {
-      return false;
-    }
+    if (!isSafePoint(points[index])) return false;
+    if (index > 0 && !isSafeSegment(points[index - 1], points[index])) return false;
   }
   return true;
 }
@@ -335,44 +427,87 @@ function expandedBbox(bounds: TraceBounds, marginM: number): TraceBounds {
   ];
 }
 
-/** Intervalle du segment [a,b] situé dans un cercle élargi, en projection locale. */
+/**
+ * Intervalle du segment [a,b] situé dans un cercle élargi, calculé sur la
+ * sphère.
+ *
+ * On paramètre l'arc par `u = t * Ω` et on écrit la distance au centre comme
+ * `f(u) = A cos u + C sin u`. L'ensemble `f(u) >= cos(alpha)` est un intervalle
+ * unique (le cap sphérique est convexe), que l'on intersecte avec `[0, Ω]`.
+ * Cette formulation ne dépend pas d'une projection locale : elle reste exacte
+ * même pour une zone de 100 km ou un point éloigné du centre, là où
+ * l'équirectangulaire dérive de plusieurs centaines de mètres.
+ */
 function circleInterval(
   a: TracePoint,
   b: TracePoint,
   zone: Extract<PrivacyZone, { kind: 'circle' }>,
   marginM: number
 ): Interval | null {
-  const cosLat = Math.cos(zone.center.lat * DEG_TO_RAD);
-  const toX = (lng: number) => (lng - zone.center.lng) * DEG_TO_RAD * EARTH_RADIUS_M * cosLat;
-  const toY = (lat: number) => (lat - zone.center.lat) * DEG_TO_RAD * EARTH_RADIUS_M;
+  const angularRadius = (zone.radiusM + marginM) / EARTH_RADIUS_M;
+  const threshold = Math.cos(angularRadius);
+  const av = toUnitVector(a);
+  const bv = toUnitVector(b);
+  const cv = toUnitVector(zone.center);
 
-  const ax = toX(a.lng);
-  const ay = toY(a.lat);
-  const bx = toX(b.lng);
-  const by = toY(b.lat);
-  const dx = bx - ax;
-  const dy = by - ay;
-  const radiusSq = (zone.radiusM + marginM) ** 2;
-  const c = ax * ax + ay * ay - radiusSq;
-  const aa = dx * dx + dy * dy;
+  // Angle et tangente sont dérivés des vecteurs unitaires, pas d'une
+  // différence de cosinus : sur un segment de 2 km, cette différence perd
+  // plusieurs chiffres significatifs et déplacerait la frontière de la zone.
+  const cosArc = Math.max(-1, Math.min(1, dot3(av, bv)));
+  const arcAngle = Math.atan2(norm3(cross3(av, bv)), cosArc);
 
-  if (aa <= EPSILON) {
-    return c <= 0 ? [0, 1] : null;
+  if (arcAngle <= EPSILON) {
+    return haversineM(a, zone.center) <= zone.radiusM + marginM ? [0, 1] : null;
   }
 
-  const bb = 2 * (ax * dx + ay * dy);
-  const discriminant = bb * bb - 4 * aa * c;
-  if (discriminant < 0) return null;
+  const sinArc = Math.sqrt(Math.max(0, 1 - cosArc * cosArc));
+  if (sinArc <= EPSILON) {
+    // Arc quasi demi-grand-cercle : ambigu, le domaine l'a déjà refusé.
+    return null;
+  }
 
-  const root = Math.sqrt(discriminant);
-  let first = (-bb - root) / (2 * aa);
-  let second = (-bb + root) / (2 * aa);
-  if (first > second) [first, second] = [second, first];
+  const tangent: Vec3 = [
+    (bv[0] - av[0] * cosArc) / sinArc,
+    (bv[1] - av[1] * cosArc) / sinArc,
+    (bv[2] - av[2] * cosArc) / sinArc,
+  ];
+  const ca = dot3(cv, av);
+  const cm = dot3(cv, tangent);
+  const amplitude = Math.hypot(ca, cm);
+  if (amplitude <= EPSILON) {
+    return threshold <= 0 ? [0, 1] : null;
+  }
 
-  const start = Math.max(0, first);
-  const end = Math.min(1, second);
-  if (end - start <= MIN_INTERVAL) return null;
-  return [start, end];
+  const ratio = threshold / amplitude;
+  if (ratio > 1) return null;
+  if (ratio < -1) return [0, 1];
+
+  const halfWidth = Math.acos(Math.max(-1, Math.min(1, ratio)));
+  const phase = Math.atan2(cm, ca);
+  const TWO_PI = 2 * Math.PI;
+
+  // Le début de l'intervalle est ramené dans [0, 2π). Comme la largeur peut
+  // dépasser 2π - début, on teste aussi la branche décalée d'un tour : sans
+  // cela, un arc situé juste après 0 manquerait la fin de l'intervalle.
+  const intervalStart = (((phase - halfWidth) % TWO_PI) + TWO_PI) % TWO_PI;
+  const intervalEnd = intervalStart + 2 * halfWidth;
+  let best: Interval | null = null;
+
+  for (const shift of [0, -TWO_PI]) {
+    const clippedStart = Math.max(0, intervalStart + shift);
+    const clippedEnd = Math.min(arcAngle, intervalEnd + shift);
+    if (clippedEnd - clippedStart <= MIN_INTERVAL) continue;
+    const interval: Interval = [clippedStart / arcAngle, clippedEnd / arcAngle];
+    if (!best) {
+      best = interval;
+    } else {
+      // Fusion conservatrice si une erreur d'arrondi produisait deux branches.
+      best[0] = Math.min(best[0], interval[0]);
+      best[1] = Math.max(best[1], interval[1]);
+    }
+  }
+
+  return best;
 }
 
 /** Intervalle du segment [a,b] situé dans une boîte élargie. */
@@ -504,23 +639,17 @@ function pieceLengthM(points: TracePoint[]): number {
   return total;
 }
 
-function isOutsideZones(point: TracePoint, masks: TraceMask[]): boolean {
+function isOutsideZones(point: TracePoint, masks: TraceMask[], marginM: number): boolean {
   for (const mask of masks) {
     if (mask.kind !== 'zone') continue;
     const zone = mask.zone;
     if (zone.kind === 'circle') {
-      if (
-        haversineM(point, zone.center) <
-        zone.radiusM + ZONE_SAFETY_MARGIN_M - QUANTIZATION_TOLERANCE_M
-      ) {
+      if (haversineM(point, zone.center) < zone.radiusM + marginM) {
         return false;
       }
       continue;
     }
-    const [west, south, east, north] = expandedBbox(
-      zone.bounds,
-      ZONE_SAFETY_MARGIN_M - QUANTIZATION_TOLERANCE_M
-    );
+    const [west, south, east, north] = expandedBbox(zone.bounds, marginM);
     if (point.lng > west && point.lng < east && point.lat > south && point.lat < north) {
       return false;
     }
@@ -530,23 +659,31 @@ function isOutsideZones(point: TracePoint, masks: TraceMask[]): boolean {
 
 /**
  * Dernier contrôle avant publication : le morceau quantifié doit rester long
- * assez et rester hors de toutes les zones élargies, y compris en son milieu.
+ * assez, dans le domaine couvert, et hors de toutes les zones élargies. Le
+ * contrôle n'échantillonne plus un milieu : chaque sous-segment est intersecté
+ * analytiquement avec chaque zone, ce qui ferme le cas d'une zone frôlée près
+ * d'une extrémité du morceau.
  */
 function isPublishablePiece(points: TracePoint[], masks: TraceMask[]): boolean {
   if (points.length < 2 || pieceLengthM(points) < MIN_PUBLISHABLE_SEGMENT_M) return false;
-  for (const point of points) {
-    if (
-      Math.abs(point.lat) > MAX_SAFE_ABS_LAT ||
-      Math.abs(point.lng) >= MAX_SAFE_ANTIMERIDIAN_SPAN_DEG
-    ) {
-      return false;
-    }
-    if (!isOutsideZones(point, masks)) return false;
+
+  const marginM = ZONE_SAFETY_MARGIN_M - QUANTIZATION_TOLERANCE_M;
+  for (let index = 0; index < points.length; index += 1) {
+    const point = points[index];
+    if (!isSafePoint(point)) return false;
+    if (index > 0 && !isSafeSegment(points[index - 1], point)) return false;
+    if (!isOutsideZones(point, masks, marginM)) return false;
   }
+
   for (let index = 1; index < points.length; index += 1) {
-    const midpoint = interpolate(points[index - 1], points[index], 0.5);
-    if (!isOutsideZones(midpoint, masks)) return false;
+    for (const mask of masks) {
+      if (mask.kind !== 'zone') continue;
+      if (zoneInterval(points[index - 1], points[index], mask.zone, marginM)) {
+        return false;
+      }
+    }
   }
+
   return true;
 }
 
@@ -565,38 +702,29 @@ function emptyProjection(
   };
 }
 
-/**
- * Projette une trace pour un partage : seuls les intervalles non masqués sont
- * rendus, sous forme d'un tableau de segments disjoints.
- *
- * `points` et `masks` sont volontairement reçus en `unknown` : ils viennent de
- * la base ou d'une requête et sont validés ici. Un masque invalide ne doit
- * jamais être ignoré (il pourrait divulguer une zone) : la projection échoue
- * alors entièrement.
- *
- * Invariants d'erreur : si `error !== null`, `segments` est vide,
- * `visiblePointCount` vaut 0 et `fullyMasked` reste faux. `fullyMasked` n'est
- * vrai que pour une entrée valide, masquée, sans aucun morceau publiable.
- */
-export function projectShareableTrace(points: unknown, masks: unknown = []): TraceProjection {
-  const inputPointCount = Array.isArray(points) ? points.length : 0;
+function projectShareableTraceInternal(
+  points: unknown,
+  masks: unknown,
+  inputPointCount: number,
+  masked: boolean
+): TraceProjection {
   const parsedPoints = readPoints(points);
   if (!parsedPoints) {
-    return emptyProjection(inputPointCount, 'invalid_points', false);
+    return emptyProjection(inputPointCount, 'invalid_points', masked);
   }
-  if (!isSafePointGeometry(parsedPoints)) {
-    return emptyProjection(inputPointCount, 'unsafe_geometry', false);
+  if (!isSafeGeometry(parsedPoints)) {
+    return emptyProjection(inputPointCount, 'unsafe_geometry', masked);
   }
 
   const parsedMasks = readMasks(masks);
   if (parsedMasks.error) {
-    return emptyProjection(inputPointCount, parsedMasks.error, true);
+    return emptyProjection(inputPointCount, parsedMasks.error, masked);
   }
 
   const cumulative = cumulativeDistancesM(parsedPoints);
   const totalDistance = cumulative[cumulative.length - 1] ?? 0;
   if (!Number.isFinite(totalDistance) || totalDistance <= EPSILON) {
-    return emptyProjection(inputPointCount, 'unsafe_geometry', false);
+    return emptyProjection(inputPointCount, 'unsafe_geometry', masked);
   }
 
   const pieces: Piece[] = [];
@@ -638,26 +766,75 @@ export function projectShareableTrace(points: unknown, masks: unknown = []): Tra
     }
   }
 
+  // `pieces` contient les intervalles encore visibles après soustraction, avant
+  // le filtre de longueur. C'est la seule source fiable pour distinguer
+  // « les masques ont tout retiré » de « il reste un morceau trop court ».
+  const masksRemovedEverything = pieces.length === 0;
+
   // La quantification se fait pièce par pièce : deux pièces séparées ne sont
   // jamais fusionnées, même si leurs extrémités arrondies coïncident.
-  const masked = parsedMasks.masks.length > 0;
   const segments = pieces
     .map((piece) => quantizePiece(piece.points))
     .filter((piece) => isPublishablePiece(piece, parsedMasks.masks));
 
-  if (segments.length === 0 && !masked) {
-    return emptyProjection(inputPointCount, 'unpublishable_geometry', false);
+  if (segments.length === 0) {
+    if (masked && masksRemovedEverything) {
+      return {
+        segments: [],
+        masked: true,
+        fullyMasked: true,
+        error: null,
+        inputPointCount,
+        visiblePointCount: 0,
+      };
+    }
+    return emptyProjection(inputPointCount, 'unpublishable_geometry', masked);
   }
 
   const visiblePointCount = segments.reduce((sum, segment) => sum + segment.length, 0);
   return {
     segments,
     masked,
-    fullyMasked: masked && segments.length === 0,
+    fullyMasked: false,
     error: null,
     inputPointCount,
     visiblePointCount,
   };
+}
+
+/**
+ * Projette une trace pour un partage : seuls les intervalles non masqués sont
+ * rendus, sous forme d'un tableau de segments disjoints.
+ *
+ * `points` et `masks` sont volontairement reçus en `unknown` : ils viennent de
+ * la base ou d'une requête et sont validés ici. Un masque invalide ne doit
+ * jamais être ignoré (il pourrait divulguer une zone) : la projection échoue
+ * alors entièrement.
+ *
+ * Sémantique des états :
+ * - `masked` dit qu'une liste de masques non vide a été fournie, même si la
+ *   géométrie ou les masques sont invalides.
+ * - `fullyMasked` n'est vrai que pour une entrée valide dont les masques ont
+ *   retiré la totalité de la trace (`error === null`, `segments === []`).
+ * - `unpublishable_geometry` signale qu'un intervalle visible subsiste mais
+ *   qu'aucun morceau n'atteint `MIN_PUBLISHABLE_SEGMENT_M` ; ce n'est jamais
+ *   `fullyMasked`.
+ *
+ * Invariants d'erreur : si `error !== null`, `segments` est vide,
+ * `visiblePointCount` vaut 0 et `fullyMasked` reste faux. Toute exception
+ * inattendue échoue fermée en `unsafe_geometry`.
+ */
+export function projectShareableTrace(points: unknown, masks: unknown = []): TraceProjection {
+  let inputPointCount = 0;
+  let masked = false;
+
+  try {
+    inputPointCount = Array.isArray(points) ? points.length : 0;
+    masked = Array.isArray(masks) && masks.length > 0;
+    return projectShareableTraceInternal(points, masks, inputPointCount, masked);
+  } catch {
+    return emptyProjection(inputPointCount, 'unsafe_geometry', masked);
+  }
 }
 
 /** Alias court, pour les appels internes au domaine. */

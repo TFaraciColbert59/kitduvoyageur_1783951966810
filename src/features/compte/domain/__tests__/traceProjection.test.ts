@@ -179,7 +179,7 @@ describe('projectShareableTrace — masques début et fin', () => {
     expect(result.segments).toEqual([]);
   });
 
-  it('filtre un morceau quasi nul plutôt que de le publier', () => {
+  it('distingue un morceau visible trop court d’une trace entièrement masquée', () => {
     const points = line(11);
     // 1111,95 m - (500 + 50) - (510 + 50) ≈ 1,95 m, sous le seuil publiable.
     const result = projectShareableTrace(points, [
@@ -187,9 +187,11 @@ describe('projectShareableTrace — masques début et fin', () => {
       { kind: 'end', meters: 510 },
     ]);
 
-    expect(result.error).toBeNull();
+    // Les masques n'ont pas tout retiré : il reste un intervalle visible, mais
+    // trop court pour être publié. Ce n'est donc pas `fullyMasked`.
+    expect(result.error).toBe('unpublishable_geometry');
     expect(result.masked).toBe(true);
-    expect(result.fullyMasked).toBe(true);
+    expect(result.fullyMasked).toBe(false);
     expect(result.segments).toEqual([]);
   });
 
@@ -347,6 +349,100 @@ describe('projectShareableTrace — masques cumulés', () => {
   });
 });
 
+describe('projectShareableTrace — segments longs', () => {
+  it('refuse un segment de 1 000 km dont les deux sommets sont pourtant sûrs', () => {
+    // Cas de revue : 60° / ±9°, longueur ≈ 1 000 km, arc ~34 km au nord de la
+    // corde interpolée en lng/lat. La validation pointwise le laissait passer.
+    const result = projectShareableTrace([
+      { lng: -9, lat: 60 },
+      { lng: 9, lat: 60 },
+    ]);
+
+    expectClosedError(result, 'unsafe_geometry');
+  });
+
+  it('refuse un segment dont l’arc sort de la bande de latitude malgré des sommets à 85°', () => {
+    // Sommets à 84,9999999° (donc sous la limite), segment de ~1,94 km : l'arc
+    // orthodromique bombe au-dessus de 85° et doit faire échouer la projection.
+    const result = projectShareableTrace([
+      { lng: 0, lat: 84.9999999 },
+      { lng: 0.2, lat: 84.9999999 },
+    ]);
+
+    expectClosedError(result, 'unsafe_geometry');
+  });
+
+  it('refuse le cas 84° / 179,9° de la revue, dont l’arc monte à ~90°', () => {
+    const result = projectShareableTrace([
+      { lng: 0, lat: 84 },
+      { lng: 179.9, lat: 84 },
+    ]);
+
+    expectClosedError(result, 'unsafe_geometry');
+  });
+
+  it('accepte un segment juste sous 2 km, même à 60° de latitude', () => {
+    // 0,035° de longitude à 60° ≈ 1 946 m.
+    const result = projectShareableTrace([
+      { lng: 0, lat: 60 },
+      { lng: 0.035, lat: 60 },
+    ]);
+
+    expect(result.error).toBeNull();
+    expect(result.segments).toHaveLength(1);
+  });
+
+  it('refuse un segment juste au-dessus de 2 km', () => {
+    // 0,036° de longitude à 60° ≈ 2 002 m.
+    const result = projectShareableTrace([
+      { lng: 0, lat: 60 },
+      { lng: 0.036, lat: 60 },
+    ]);
+
+    expectClosedError(result, 'unsafe_geometry');
+  });
+
+  it('accepte un segment de 1,94 km à 84,9° sans le confondre avec la limite polaire', () => {
+    // L'arc bombe de ~0,08 m au-dessus de 84,9°, restant sous 85°.
+    const result = projectShareableTrace([
+      { lng: 0, lat: 84.9 },
+      { lng: 0.2, lat: 84.9 },
+    ]);
+
+    expect(result.error).toBeNull();
+    expect(result.segments).toHaveLength(1);
+  });
+});
+
+describe('projectShareableTrace — cercle privé de grande taille', () => {
+  it('coupe au rayon exact sur la sphère, sans dérive de projection locale', () => {
+    // Trace est-ouest à 60°, zone de 44,48 km centrée 0,4° plus au nord : la
+    // frontière élargie (44,53 km) coupe la trace en deux, à ~25 km du centre.
+    // Une projection équirectangulaire centrée sur la zone dériverait de
+    // plusieurs centaines de mètres à cette distance.
+    const points: TracePoint[] = Array.from({ length: 1001 }, (_, index) => ({
+      lng: -0.5 + index * 0.001,
+      lat: 60,
+    }));
+    const zone: PrivacyZone = {
+      kind: 'circle',
+      center: { lng: 0, lat: 60.4 },
+      radiusM: 44_480,
+    };
+    const result = projectShareableTrace(points, [{ kind: 'zone', zone }]);
+
+    expect(result.error).toBeNull();
+    expect(result.segments).toHaveLength(2);
+    const [before, after] = result.segments;
+    for (const edge of [before.at(-1)!, after[0]]) {
+      // 44 480 m de rayon + 50 m de marge, à quelques mètres de quantification.
+      expect(distanceM(zone.center, edge)).toBeGreaterThan(44_520);
+      expect(distanceM(zone.center, edge)).toBeLessThan(44_540);
+    }
+    expectNoPointInside(zone, result.segments);
+  });
+});
+
 describe('projectShareableTrace — hors domaine de calcul sûr', () => {
   it('refuse une trace qui traverse l’antiméridien', () => {
     const result = projectShareableTrace([
@@ -434,6 +530,19 @@ describe('projectShareableTrace — hors domaine de calcul sûr', () => {
 
     expectClosedError(oversized, 'unsafe_geometry');
     expectClosedError(tooWide, 'unsafe_geometry');
+  });
+
+  it('conserve masked quand la géométrie est refusée mais qu’un masque a été fourni', () => {
+    const result = projectShareableTrace(
+      [
+        { lng: -9, lat: 60 },
+        { lng: 9, lat: 60 },
+      ],
+      [{ kind: 'start', meters: 100 }]
+    );
+
+    expectClosedError(result, 'unsafe_geometry');
+    expect(result.masked).toBe(true);
   });
 });
 
