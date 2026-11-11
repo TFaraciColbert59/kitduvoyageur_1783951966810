@@ -139,12 +139,10 @@ export interface ExplorerState {
   mini: number;
   selection?: Selection;
   activity?: ActivityState;
-  /** Départ choisi, en attente du compte à rebours 3·2·1. */
-  pendingStart?: PendingStart;
   /** Dernière sortie terminée, affichée dans l'écran Bilan. */
   summary?: (ActivityState & { endedAt: number }) | null;
   /** Résultat de l'enregistrement du bilan. */
-  summarySaved?: 'pending' | 'saved' | 'unauthenticated' | 'failed';
+  summarySaved?: 'pending' | 'saved' | 'local' | 'unauthenticated' | 'failed';
   camera: CameraIntent;
   profile: Profile;
   easyMode: boolean;

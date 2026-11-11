@@ -24,6 +24,7 @@ export interface TrackerOptions {
 export function useGpsTracker({ distanceToRouteM, onFix }: TrackerOptions = {}) {
   const activity = useExplorerStore((state) => state.activity);
   const permission = useExplorerStore((state) => state.locationPermission);
+  const scene = useExplorerStore((state) => state.scene);
   const running = !!activity && !activity.paused;
   const trackerRef = useRef(new ActivityTracker());
   const offRouteRef = useRef<OffRouteState>({ offRoute: false, distanceM: 0, outSinceS: 0 });
@@ -83,6 +84,42 @@ export function useGpsTracker({ distanceToRouteM, onFix }: TrackerOptions = {}) 
       delete target.__xpPushFix;
     };
   }, []);
+
+  // Permission réelle : le store peut être resté à « prompt » alors que le
+  // navigateur a déjà refusé. Les scènes de recette gardent leur état simulé.
+  useEffect(() => {
+    if (scene) return;
+    if (typeof navigator === 'undefined' || !navigator.permissions?.query) return;
+    let cancelled = false;
+    let status: PermissionStatus | null = null;
+    const apply = (state: PermissionState) => {
+      if (cancelled) return;
+      const next =
+        state === 'granted' ? 'granted' : state === 'denied' ? 'denied' : 'prompt';
+      const current = useExplorerStore.getState().locationPermission;
+      // Un fix GPS réellement reçu ne doit pas être rétrogradé par un « prompt »
+      // transitoire ; un refus réel doit toujours être affiché.
+      if (current === 'granted' && next === 'prompt') return;
+      if (current !== next) useExplorerStore.setState({ locationPermission: next });
+    };
+    try {
+      navigator.permissions
+        .query({ name: 'geolocation' })
+        .then((result) => {
+          if (cancelled) return;
+          status = result;
+          apply(result.state);
+          result.onchange = () => apply(result.state);
+        })
+        .catch(() => undefined);
+    } catch {
+      // API Permissions absente ou refusée : le watchPosition reste la source.
+    }
+    return () => {
+      cancelled = true;
+      if (status) status.onchange = null;
+    };
+  }, [scene]);
 
   useEffect(() => {
     if (!running || permission === 'denied') return;

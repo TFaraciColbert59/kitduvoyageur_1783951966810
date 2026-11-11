@@ -1578,26 +1578,42 @@ function useElapsed(startedAt: number | undefined): string {
     : `${m}:${String(sec).padStart(2, '0')}`;
 }
 
-function LiveDirectTab({ ctx }: { ctx: SheetContext }) {
+export function LiveDirectTab({ ctx }: { ctx: SheetContext }) {
   const activity = ctx.state.activity;
   const elapsed = useElapsed(activity?.startedAt);
   if (!activity) {
     return <XpEmpty title="Aucune activité en cours" hint="Démarre une activité pour voir les métriques en direct." />;
   }
+  const gpsDenied = ctx.state.locationPermission === 'denied';
   const speed = activity.movingS > 0 ? (activity.distanceM / activity.movingS) * 3.6 : null;
   const next = ctx.pois[0];
   return (
     <>
+      {gpsDenied ? (
+        <XpEmpty
+          title="Position refusée"
+          hint="Aucun point GPS n’est enregistré. Autorise la position pour reprendre une trace."
+        />
+      ) : null}
       <div className="xp-chrono" aria-live="off">
         {elapsed}
       </div>
       <XpMetrics
-        items={[
-          { label: 'Distance', value: formatDistance(activity.distanceM / 1000) },
-          { label: 'Allure', value: speed ? `${speed.toFixed(1).replace('.', ',')} km/h` : '—' },
-          { label: 'Temps', value: formatDuration(activity.movingS) },
-          { label: 'D+', value: `${Math.round(activity.elevGainM)} m` },
-        ]}
+        items={
+          gpsDenied
+            ? [
+                { label: 'Distance', value: '—' },
+                { label: 'Vitesse', value: '—' },
+                { label: 'Temps', value: formatDuration(activity.movingS) },
+                { label: 'D+', value: '—' },
+              ]
+            : [
+                { label: 'Distance', value: formatDistance(activity.distanceM / 1000) },
+                { label: 'Vitesse', value: speed ? `${speed.toFixed(1).replace('.', ',')} km/h` : '—' },
+                { label: 'Temps', value: formatDuration(activity.movingS) },
+                { label: 'D+', value: `${Math.round(activity.elevGainM)} m` },
+              ]
+        }
       />
       <XpEyebrow>Prochain repère</XpEyebrow>
       {next ? (
@@ -1785,23 +1801,39 @@ function ActivityTabs(ctx: SheetContext, kind: string): SheetTab[] {
                   ].join(' · ')}
                 />
                 <XpRow
-                  icon={state.summarySaved === 'saved' ? 'check' : 'alert'}
-                  tone={state.summarySaved === 'saved' ? 'good' : 'warn'}
+                  icon={
+                    state.summarySaved === 'saved'
+                      ? 'check'
+                      : state.summarySaved === 'local'
+                        ? 'info'
+                        : 'alert'
+                  }
+                  tone={
+                    state.summarySaved === 'saved'
+                      ? 'good'
+                      : state.summarySaved === 'local'
+                        ? 'muted'
+                        : 'warn'
+                  }
                   title={
                     state.summarySaved === 'saved'
                       ? 'Sortie enregistrée'
                       : state.summarySaved === 'pending'
                         ? 'Enregistrement en cours…'
-                        : state.summarySaved === 'unauthenticated'
-                          ? 'Sortie non enregistrée'
-                          : 'Enregistrement impossible'
+                        : state.summarySaved === 'local'
+                          ? 'Sortie locale'
+                          : state.summarySaved === 'unauthenticated'
+                            ? 'Sortie non enregistrée'
+                            : 'Enregistrement impossible'
                   }
                   sub={
-                    state.summarySaved === 'unauthenticated'
-                      ? 'Connecte-toi pour conserver tes sorties'
-                      : state.summarySaved === 'failed'
-                        ? 'Réessaie depuis ton compte'
-                        : undefined
+                    state.summarySaved === 'local'
+                      ? 'Aucune séance serveur n’est créée dans cette tranche.'
+                      : state.summarySaved === 'unauthenticated'
+                        ? 'Connecte-toi pour conserver tes sorties'
+                        : state.summarySaved === 'failed'
+                          ? 'Réessaie depuis ton compte'
+                          : undefined
                   }
                 />
               </XpRows>
@@ -1995,7 +2027,9 @@ export function buildSheetModel(ctx: SheetContext): SheetModel {
           : title,
       subtitle:
         kind === 'live' && sport
-          ? `${SPORT_META[sport].label} · Suivi en cours`
+          ? state.locationPermission === 'denied'
+            ? `${SPORT_META[sport].label} · GPS refusé`
+            : `${SPORT_META[sport].label} · Suivi en cours`
           : subtitle,
       tabs: ActivityTabs(ctx, kind),
       mini:

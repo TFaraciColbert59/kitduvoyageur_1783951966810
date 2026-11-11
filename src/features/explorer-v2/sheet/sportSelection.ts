@@ -51,43 +51,6 @@ export const TRACKER_METRICS: ReadonlySet<SportMetricKey> = new Set<SportMetricK
   'pace',
 ]);
 
-/**
- * Slugs `explorer_sport_map` à la révision de référence. Ils sont vérifiés par
- * le test de compatibilité : aucune variante ne peut inventer un type de
- * séance absent du catalogue.
- */
-export const BASE_CATALOG_SLUG: Record<Sport, string> = {
-  course: 'course-5k',
-  rando: 'rando-journee',
-  velo: 'velo-route',
-  kayak: 'canoe-journee',
-  trail: 'trail-10k',
-  ski: 'ski-randonnee',
-  escalade: 'escalade-voie',
-  famille: 'rando-famille',
-  bivouac: 'bivouac-1n',
-};
-
-/** Slugs du catalogue réellement utilisés par cette taxonomie. */
-export const KNOWN_CATALOG_SLUGS: ReadonlySet<string> = new Set<string>([
-  'course-5k',
-  'rando-journee',
-  'rando-refuge',
-  'rando-matin',
-  'rando-famille',
-  'velo-route',
-  'gravel-bivouac',
-  'bikepacking-3j',
-  'canoe-journee',
-  'kayak-sea',
-  'trail-10k',
-  'trail-ultra-65k',
-  'ski-randonnee',
-  'escalade-voie',
-  'bivouac-1n',
-  'bivouac-2n',
-]);
-
 export interface SportVariant {
   /** Identifiant stable de la variante, distinct des identifiants `Sport`. */
   id: string;
@@ -277,7 +240,7 @@ export const SPORT_FAMILIES: readonly SportFamily[] = [
         catalogSlug: 'trail-10k',
         environment: 'outdoor',
         requiresGps: true,
-        requiredMetrics: ['distance', 'duration', 'elevation', 'pace'],
+        requiredMetrics: ['distance', 'duration', 'elevation', 'speed'],
         optionalMetrics: ['cadence', 'heartRate'],
       },
       {
@@ -287,7 +250,7 @@ export const SPORT_FAMILIES: readonly SportFamily[] = [
         catalogSlug: 'trail-ultra-65k',
         environment: 'outdoor',
         requiresGps: true,
-        requiredMetrics: ['distance', 'duration', 'elevation', 'pace'],
+        requiredMetrics: ['distance', 'duration', 'elevation', 'speed'],
         optionalMetrics: ['heartRate', 'laps'],
       },
     ],

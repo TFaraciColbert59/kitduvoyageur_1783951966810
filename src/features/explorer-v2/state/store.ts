@@ -1,5 +1,6 @@
 'use client';
 
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { create } from 'zustand';
 import type {
   ActivityState,
@@ -42,12 +43,6 @@ interface ExplorerActions {
   setCamera: (camera: CameraIntent) => void;
   showToast: (toast: Omit<ToastMessage, 'id'>) => void;
   dismissToast: () => void;
-  /** Arme le compte à rebours sans encore créer d’activité. */
-  requestStart: (sport: Sport, selection?: SportSelection) => void;
-  /** Termine le compte à rebours en conservant la variante choisie. */
-  confirmStart: () => void;
-  /** Annule la demande sans créer d’activité. */
-  cancelStart: () => void;
   startActivity: (sport: Sport, sessionId?: string | null, selection?: SportSelection) => void;
   updateActivity: (patch: Partial<ActivityState>) => void;
   stopActivity: () => void;
@@ -129,7 +124,7 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
   hydrateFromScene: (sceneName) => {
     const preset = SCENES[sceneName];
     if (!preset) return;
-    set({ ...(preset as Partial<ExplorerStore>), pendingStart: undefined, scene: sceneName });
+    set({ ...(preset as Partial<ExplorerStore>), scene: sceneName });
     emit('scene', { scene: sceneName });
   },
 
@@ -260,44 +255,10 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
 
   dismissToast: () => set({ toast: undefined }),
 
-  requestStart: (sport, selection) => {
-    const pendingStart: PendingStart = { sport, selection };
-    set({ pendingStart });
-    emit('activity-request', { sport, variantId: selection?.variantId ?? null });
-  },
-
-  confirmStart: () => {
-    const pendingStart = get().pendingStart;
-    if (!pendingStart) return;
-    const activity = activityStarted(
-      pendingStart.sport,
-      null,
-      pendingStart.selection,
-    );
-    set({
-      activity,
-      pendingStart: undefined,
-      sheet: 'live',
-      detent: 'peek',
-      camera: { type: 'follow' },
-    });
-    emit('activity-start', {
-      sport: activity.sport,
-      sessionId: activity.sessionId,
-      variantId: activity.selection?.variantId ?? null,
-    });
-  },
-
-  cancelStart: () => {
-    set({ pendingStart: undefined });
-    emit('activity-cancel', {});
-  },
-
   startActivity: (sport, sessionId = null, selection) => {
     const activity = activityStarted(sport, sessionId, selection);
     set({
       activity,
-      pendingStart: undefined,
       sheet: 'live',
       detent: 'peek',
       camera: { type: 'follow' },
@@ -317,7 +278,9 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
     set({
       activity: undefined,
       summary: current ? { ...current, endedAt: Date.now() } : null,
-      summarySaved: 'pending',
+      // Sans UUID serveur, le bilan est local : ne jamais suggérer un problème
+      // de connexion à un utilisateur authentifié.
+      summarySaved: current?.sessionId ? 'pending' : 'local',
       sheet: 'summary',
       detent: 'full',
       camera: { type: 'overview' },
@@ -348,5 +311,54 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
       },
     })),
 }));
+
+export interface TransientStart {
+  pendingStart: PendingStart | null;
+  requestStart: (sport: Sport, selection?: SportSelection) => void;
+  confirmStart: () => void;
+  cancelStart: () => void;
+}
+
+/**
+ * Brouillon de départ lié au montage de l’Explorer.
+ *
+ * Il vit dans l’état React du composant, jamais dans le store global : une
+ * navigation qui démonte Explorer annule donc le compte à rebours et aucun
+ * départ ne peut repartir tout seul au retour. `pendingRef` rend `confirmStart`
+ * stable et bloque un double départ.
+ */
+export function useTransientStart(): TransientStart {
+  const [pendingStart, setPendingStart] = useState<PendingStart | null>(null);
+  const pendingRef = useRef<PendingStart | null>(null);
+
+  const cancelStart = useCallback(() => {
+    pendingRef.current = null;
+    setPendingStart(null);
+  }, []);
+
+  const requestStart = useCallback((sport: Sport, selection?: SportSelection) => {
+    const next: PendingStart = { sport, selection };
+    pendingRef.current = next;
+    setPendingStart(next);
+  }, []);
+
+  const confirmStart = useCallback(() => {
+    const current = pendingRef.current;
+    if (!current) return;
+    pendingRef.current = null;
+    setPendingStart(null);
+    useExplorerStore.getState().startActivity(current.sport, null, current.selection);
+  }, []);
+
+  useEffect(
+    () => () => {
+      // Le démontage d’Explorer jette le brouillon, sans effet de bord.
+      pendingRef.current = null;
+    },
+    [],
+  );
+
+  return { pendingStart, requestStart, confirmStart, cancelStart };
+}
 
 export type { PoiKind };

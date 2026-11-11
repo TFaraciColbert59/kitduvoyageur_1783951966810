@@ -19,7 +19,7 @@ import { registerOfflineWorker } from './offline/zone';
 import { offRouteLabel } from './activity/offRoute';
 import { XpIcon } from './ui/XpIcon';
 import { haptic } from './state/haptics';
-import { useExplorerStore } from './state/store';
+import { useExplorerStore, useTransientStart } from './state/store';
 import { isSceneName, sceneEnabled, SCENES } from './state/scenes';
 import type { GeoCollection } from './data/hooks';
 import {
@@ -133,6 +133,7 @@ class ExplorerErrorBoundary extends React.Component<
 
 function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
   const state = useExplorerStore();
+  const { pendingStart, requestStart, confirmStart, cancelStart } = useTransientStart();
   const systemTheme = useSystemTheme();
   const reducedMotion = useReducedMotion();
   const online = useOnline();
@@ -251,7 +252,10 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
         setMe(next);
         state.patch({ locationPermission: 'granted', center: [next.lng, next.lat] });
       },
-      () => {
+      (error) => {
+        if (error.code === 1 /* PERMISSION_DENIED */) {
+          state.patch({ locationPermission: 'denied' });
+        }
         setMe((current) => current ?? { lat: state.center[1], lng: state.center[0] });
       },
       { enableHighAccuracy: false, timeout: 5000, maximumAge: 300_000 },
@@ -466,12 +470,12 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
       trips: (tripsData ?? []) as TripItem[],
       selectedPoi,
       me,
-      // Même fonction que le test : aucune couche ne peut perdre la variante.
-      onStartSport: state.requestStart,
+      // Brouillon local : aucune couche ne peut perdre la variante.
+      onStartSport: requestStart,
       onConfirmReport,
       locale: 'fr-FR',
     }),
-    [state, countries, country, regionsGeo, regionGroups, place, pois, routes, weather, unitsForCountry, reportsData, carnetsData, tripsData, selectedPoi, me, onConfirmReport],
+    [state, countries, country, regionsGeo, regionGroups, place, pois, routes, weather, unitsForCountry, reportsData, carnetsData, tripsData, selectedPoi, me, requestStart, onConfirmReport],
   );
 
   const model = useMemo(() => buildSheetModel(ctx), [ctx]);
@@ -584,7 +588,9 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
     if (!summary || state.summarySaved !== 'pending') return;
     const sessionId = summary.sessionId;
     if (!sessionId || !/^[0-9a-f-]{36}$/i.test(sessionId)) {
-      useExplorerStore.setState({ summarySaved: 'unauthenticated' });
+      // Séance locale sans identifiant serveur : ce n’est pas un problème de
+      // connexion, même pour un utilisateur authentifié.
+      useExplorerStore.setState({ summarySaved: 'local' });
       return;
     }
     let cancelled = false;
@@ -715,11 +721,11 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
         layerVisibility={state.layerVisibility}
       />
 
-      {state.pendingStart ? (
+      {pendingStart ? (
         <Countdown
-          key={`${state.pendingStart.sport}:${state.pendingStart.selection?.variantId ?? 'base'}`}
-          onDone={() => useExplorerStore.getState().confirmStart()}
-          onCancel={() => useExplorerStore.getState().cancelStart()}
+          key={`${pendingStart.sport}:${pendingStart.selection?.variantId ?? 'base'}`}
+          onDone={confirmStart}
+          onCancel={cancelStart}
         />
       ) : null}
 

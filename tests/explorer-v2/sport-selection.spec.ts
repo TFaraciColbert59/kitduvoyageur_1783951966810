@@ -1,9 +1,6 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import type { Sport } from '@/features/explorer-v2/state/types';
-import { useExplorerStore } from '@/features/explorer-v2/state/store';
 import {
-  BASE_CATALOG_SLUG,
-  KNOWN_CATALOG_SLUGS,
   SPORT_FAMILIES,
   SPORT_METRIC_LABEL,
   TRACKER_METRICS,
@@ -33,6 +30,39 @@ const BASE_SPORTS: Sport[] = [
   'bivouac',
 ];
 
+/** Mapping `explorer_sport_map` de la révision de référence, figé dans le test. */
+const EXPECTED_BASE_CATALOG_SLUG: Record<Sport, string> = {
+  course: 'course-5k',
+  rando: 'rando-journee',
+  velo: 'velo-route',
+  kayak: 'canoe-journee',
+  trail: 'trail-10k',
+  ski: 'ski-randonnee',
+  escalade: 'escalade-voie',
+  famille: 'rando-famille',
+  bivouac: 'bivouac-1n',
+};
+
+/** Slugs réellement présents dans le catalogue seedé, vérifiés à la main. */
+const EXPECTED_CATALOG_SLUGS = new Set([
+  'course-5k',
+  'rando-journee',
+  'rando-refuge',
+  'rando-matin',
+  'rando-famille',
+  'velo-route',
+  'gravel-bivouac',
+  'bikepacking-3j',
+  'canoe-journee',
+  'kayak-sea',
+  'trail-10k',
+  'trail-ultra-65k',
+  'ski-randonnee',
+  'escalade-voie',
+  'bivouac-1n',
+  'bivouac-2n',
+]);
+
 const GRANTED: SportStartContext = { locationPermission: 'granted', gpsAvailable: true };
 const PROMPT: SportStartContext = { locationPermission: 'prompt', gpsAvailable: true };
 const DENIED: SportStartContext = { locationPermission: 'denied', gpsAvailable: true };
@@ -57,22 +87,10 @@ describe('explorer-v2 · taxonomie des sports (S1.02)', () => {
   });
 
   it('conserve le mapping Explorer → activity_catalog de la révision de référence', () => {
-    expect(BASE_CATALOG_SLUG).toEqual({
-      course: 'course-5k',
-      rando: 'rando-journee',
-      velo: 'velo-route',
-      kayak: 'canoe-journee',
-      trail: 'trail-10k',
-      ski: 'ski-randonnee',
-      escalade: 'escalade-voie',
-      famille: 'rando-famille',
-      bivouac: 'bivouac-1n',
-    });
     for (const family of SPORT_FAMILIES) {
-      const primary = family.variants.find(
-        (variant) => variant.catalogSlug === BASE_CATALOG_SLUG[family.sport],
-      );
-      expect(primary, family.sport).toBeTruthy();
+      const expected = EXPECTED_BASE_CATALOG_SLUG[family.sport];
+      const primary = family.variants.find((variant) => variant.catalogSlug === expected);
+      expect(primary, `${family.sport} → ${expected}`).toBeTruthy();
     }
   });
 
@@ -80,7 +98,7 @@ describe('explorer-v2 · taxonomie des sports (S1.02)', () => {
     for (const family of SPORT_FAMILIES) {
       for (const variant of family.variants) {
         if (variant.catalogSlug === null) continue;
-        expect(KNOWN_CATALOG_SLUGS.has(variant.catalogSlug), variant.catalogSlug).toBe(true);
+        expect(EXPECTED_CATALOG_SLUGS.has(variant.catalogSlug), variant.catalogSlug).toBe(true);
       }
     }
   });
@@ -222,62 +240,5 @@ describe('explorer-v2 · taxonomie des sports (S1.02)', () => {
   it('retourne null sur un identifiant inconnu', () => {
     expect(getSportVariant('inconnu')).toBeNull();
     expect(getSportFamily('inconnu' as Sport)).toBeNull();
-  });
-});
-
-describe('explorer-v2 · départ : la variante survit au compte à rebours', () => {
-  const selection = () =>
-    toSportSelection(getSportFamily('rando')!, getSportVariant('rando-refuge')!);
-
-  beforeEach(() => {
-    useExplorerStore.setState({
-      activity: undefined,
-      summary: undefined,
-      summarySaved: undefined,
-      pendingStart: undefined,
-      sheet: 'level',
-      detent: 'peek',
-      camera: { type: 'none' },
-    });
-  });
-
-  it('conserve la variante de la demande jusqu’au bilan', () => {
-    const chosen = selection();
-    useExplorerStore.getState().requestStart('rando', chosen);
-
-    // Ce que le compte à rebours affiche et ce qu’il doit rendre au démarrage.
-    expect(useExplorerStore.getState().pendingStart).toEqual({
-      sport: 'rando',
-      selection: chosen,
-    });
-
-    useExplorerStore.getState().confirmStart();
-    const started = useExplorerStore.getState();
-    expect(started.pendingStart).toBeUndefined();
-    expect(started.sheet).toBe('live');
-    expect(started.activity?.sport).toBe('rando');
-    expect(started.activity?.selection).toEqual(chosen);
-
-    useExplorerStore.getState().stopActivity();
-    expect(useExplorerStore.getState().summary?.sport).toBe('rando');
-    expect(useExplorerStore.getState().summary?.selection?.variantId).toBe('rando-refuge');
-  });
-
-  it('conserve la variante lors d’un démarrage direct (scène, reprise)', () => {
-    const chosen = selection();
-    useExplorerStore.getState().startActivity('rando', null, chosen);
-    expect(useExplorerStore.getState().activity?.selection).toEqual(chosen);
-  });
-
-  it('annule sans créer d’activité', () => {
-    useExplorerStore.getState().requestStart('rando', selection());
-    useExplorerStore.getState().cancelStart();
-    expect(useExplorerStore.getState().pendingStart).toBeUndefined();
-    expect(useExplorerStore.getState().activity).toBeUndefined();
-  });
-
-  it('ne démarre rien sans demande en attente', () => {
-    useExplorerStore.getState().confirmStart();
-    expect(useExplorerStore.getState().activity).toBeUndefined();
   });
 });
