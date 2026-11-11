@@ -32,7 +32,7 @@ export const MomentInputSchema = z.discriminatedUnion('type', [
   z.object({
     ...common,
     type: z.literal('voice'),
-    caption: required('Donne un titre à ton moment.', 120),
+    caption: optional(120),
     durationLabel: z
       .string()
       .trim()
@@ -44,6 +44,8 @@ export const MomentInputSchema = z.discriminatedUnion('type', [
       .max(600)
       .refine((url) => isOwnMediaUrl(url, 'carnet-moments-media'), 'Enregistrement invalide.')
       .optional(),
+    /** Son d'ambiance : pas de titre exigé (proposition n° 32). */
+    ambiance: z.boolean().optional(),
   }),
   z.object({ ...common, type: z.literal('text'), caption: required('Donne un titre à ton moment.', 400) }),
   z.object({
@@ -82,8 +84,15 @@ export type ValidatedMoment =
 
 export function validateMomentInput(input: unknown): ValidatedMoment {
   const parsed = MomentInputSchema.safeParse(input);
-  if (parsed.success) return { ok: true, value: parsed.data };
-  return { ok: false, error: parsed.error.issues[0]?.message ?? 'Saisie invalide.' };
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? 'Saisie invalide.' };
+  }
+  /* Une note vocale sans titre reste acceptée si c'est un son d'ambiance :
+     on ne force pas un texte que la personne n'a pas envie d'écrire. */
+  if (parsed.data.type === 'voice' && !parsed.data.caption && !parsed.data.ambiance) {
+    return { ok: false, error: 'Donne un titre, ou coche « son d’ambiance ».' };
+  }
+  return { ok: true, value: parsed.data };
 }
 
 /** Type saisi (liste fermée) : sert aussi à rejeter un `data-type` forgé. */
@@ -97,6 +106,7 @@ export function metaOf(value: MomentInput): MomentMeta | null {
       const meta: MomentMeta = {};
       if (value.durationLabel) meta.durationLabel = value.durationLabel;
       if (value.audioUrl) meta.audioUrl = value.audioUrl;
+      if (value.ambiance) meta.ambiance = true;
       return Object.keys(meta).length > 0 ? meta : null;
     }
     case 'meet':

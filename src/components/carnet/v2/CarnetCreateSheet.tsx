@@ -71,6 +71,7 @@ export function CarnetCreateSheet({
   const [category, setCategory] = useState<string>(MOMENT_EXPENSE_CATEGORIES[0]);
   const [itemId, setItemId] = useState(kitItems[0]?.id ?? '');
   const [file, setFile] = useState<File | null>(null);
+  const [ambiance, setAmbiance] = useState(false);
   const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
   const voice = useVoiceRecorder();
@@ -105,7 +106,10 @@ export function CarnetCreateSheet({
       place,
       caption: type === 'kit' ? selectedItem?.name : main,
     };
-    if (type === 'voice') input.durationLabel = voice.recording?.durationLabel;
+    if (type === 'voice') {
+      input.durationLabel = voice.recording?.durationLabel;
+      if (ambiance) input.ambiance = true;
+    }
     if (type === 'meet') input.who = who;
     if (type === 'spend') {
       input.amountEur = Number(amount.replace(',', '.'));
@@ -253,7 +257,16 @@ export function CarnetCreateSheet({
                         : 'Ton navigateur ne peut pas enregistrer de son.')}
                 </p>
               </div>
-              <Field label="Titre">
+              <label className="lkdv-overlay-field" style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <input
+                  type="checkbox"
+                  checked={ambiance}
+                  onChange={(event) => setAmbiance(event.target.checked)}
+                  style={{ width: 20, height: 20 }}
+                />
+                <span>Son d’ambiance — sans commentaire</span>
+              </label>
+              <Field label={ambiance ? 'Titre (facultatif)' : 'Titre'}>
                 <input
                   type="text"
                   value={main}

@@ -81,6 +81,11 @@ export interface MomentMeta {
   durationLabel?: string;
   /** URL publique de la note vocale enregistrée (https seulement). */
   audioUrl?: string;
+  /**
+   * Son d'ambiance (proposition n° 32) : un enregistrement sans commentaire,
+   * pour capter un lieu (torrent, vent, oiseaux) plutôt qu'un récit.
+   */
+  ambiance?: boolean;
 }
 
 const EXPENSE_CATEGORIES = ['Repas', 'Hébergement', 'Transport', 'Matériel'] as const;
@@ -112,5 +117,6 @@ export function parseMomentMeta(raw: unknown): MomentMeta | null {
   }
   const audio = source.audioUrl;
   if (isOwnMediaUrl(audio, 'carnet-moments-media') && audio.length <= 600) meta.audioUrl = audio;
+  if (source.ambiance === true) meta.ambiance = true;
   return Object.keys(meta).length > 0 ? meta : null;
 }

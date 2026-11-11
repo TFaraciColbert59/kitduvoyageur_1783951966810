@@ -206,16 +206,22 @@ Deuxième vague, même jour, pour finir ce qui restait du lot 2 et du lot 3 de l
    `20261111101000` étendue — vue `hike_sessions_participant`, colonnes brûlantes retirées au
    rôle authenticated, huit lecteurs migrés, invariant `tests/security/hike-sessions-raw-access.spec.ts`),
    **à appliquer avec le déploiement** : le code en production lit encore la table brute.
-3. **Galerie plein écran et vidéo** : la visionneuse du moment (`CarnetPostSheet`, via
-   `CommunityFeedPost`) rend déjà une vidéo en boucle muette, sans contrôle de lecture ni de son
-   au toucher ; le fil et les tuiles ont désormais leurs propres contrôles 44 px. Une lecture
-   plein écran avec son reste à ajouter (le son est toujours coupé par défaut).
-4. **Sons d'ambiance** (proposition n° 32) : la note vocale existe (MediaRecorder, onde,
-   transcription absente) ; l'enregistrement d'ambiance distinct n'est pas fait.
-5. **Décisions déjà listées par la session précédente** restent à Tony : édition (spec vs crayon),
+3. **Décisions déjà listées par la session précédente** restent à Tony : édition (spec vs crayon),
    lentille « Commentaires » séparée, dérogation chips 28 px, ombre de l'île, 13 points reportés.
-6. Couleurs littérales de `carnet-profile.css` (fiche **v1** legacy, proposition 65) non reprises :
+4. Couleurs littérales de `carnet-profile.css` (fiche **v1** legacy, proposition 65) non reprises :
    la v2 est le défaut, le fichier appartient au travail déjà livré.
-7. **Recette non faite** : iPhone réel, WebKit (binaire indisponible), et le signal de bord du
+5. **Recette non faite** : iPhone réel, WebKit (binaire indisponible), et le signal de bord du
    cockpit n'est couvert qu'en tests unitaires/RTL (pas de parcours Playwright sur
    `/randonnee-active`, qui exige une session GPS réelle).
+
+### Dernières finitions (3e vague)
+
+- **Visionneuse plein écran** : la vidéo d'un moment se lit désormais avec lecture/pause et son au
+  toucher (muette par défaut, contrôles 44 px, jamais de lecture auto), uniquement dans la
+  visionneuse — le fil Communauté garde sa vignette muette sans contrôle.
+- **Sons d'ambiance** (proposition n° 32) : la création d'une note vocale accepte « son d'ambiance —
+  sans commentaire » (titre facultatif), `moment_meta.ambiance` est validé, relu et affiché
+  (« Son d'ambiance » dans le fil). L'onde, le bouton 44 px et la durée restent ceux de la note
+  vocale ; la transcription n'est pas faite (aucun moteur dans le dépôt).
+- Vérifié : tsc 0, lint 0 erreur, **88 fichiers / 813 tests verts**, recette et banc rejoués après
+  la vague précédente.

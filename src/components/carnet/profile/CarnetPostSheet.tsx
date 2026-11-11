@@ -245,7 +245,12 @@ export function CarnetPostSheet({
     onReport,
     media:
       items.length > 0
-        ? { urls: items.map((item) => item.imageUrl ?? ''), index: safeIndex, onIndexChange }
+        ? {
+            urls: items.map((item) => item.imageUrl ?? ''),
+            index: safeIndex,
+            onIndexChange,
+            interactive: true,
+          }
         : undefined,
     renderComments: () => (
       <CarnetCommentsPane

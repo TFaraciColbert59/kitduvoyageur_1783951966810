@@ -28,6 +28,8 @@ export interface PostSource {
     urls: string[];
     index: number;
     onIndexChange: (index: number) => void;
+    /** Visionneuse : lecture/pause et son au toucher (fiche carnet). */
+    interactive?: boolean;
   };
   renderComments: (ctx: { onClose: () => void }) => React.ReactNode;
   renderShare: (ctx: { onClose: () => void }) => React.ReactNode;

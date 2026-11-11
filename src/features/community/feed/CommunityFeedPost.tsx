@@ -383,6 +383,7 @@ export function CommunityFeedPost({
         <CommunityPostMedia
           media={media}
           isVideo={video}
+          interactiveVideo={Boolean(sourceMedia?.interactive)}
           poster={post.media_urls?.find((url) => !isVideoMedia(url)) ?? undefined}
           alt={post.image_alt ?? null}
           onRatio={setMediaRatio}

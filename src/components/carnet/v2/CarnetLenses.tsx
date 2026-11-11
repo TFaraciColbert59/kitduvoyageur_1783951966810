@@ -165,7 +165,9 @@ export function MomentCard({
   const rowStyle = { animationDelay: `${Math.min(index, 10) * 30}ms` };
   const head = (
     <div className="meta">
-      <span className="k">{MOMENT_TYPE_LABELS[type]}</span>
+      <span className="k">
+        {type === 'voice' && meta?.ambiance ? 'Son d’ambiance' : MOMENT_TYPE_LABELS[type]}
+      </span>
       <span className="pl">{place}</span>
       {showDay ? <span className="lkdv-dtag">J{moment.dayNumber}</span> : null}
       <span className="lkdv-who" title={moment.authorName ?? undefined} aria-label={moment.authorName ?? 'Voyageur'}>
@@ -230,7 +232,11 @@ export function MomentCard({
           </span>
           <span className="dur">{meta?.durationLabel ?? ''}</span>
         </div>
-        {text ? <span className="lkdv-mute">{text}</span> : null}
+        {text ? (
+          <span className="lkdv-mute">{text}</span>
+        ) : meta?.ambiance ? (
+          <span className="lkdv-mute">Son d’ambiance, sans commentaire.</span>
+        ) : null}
       </>
     );
   } else if (type === 'text') {
