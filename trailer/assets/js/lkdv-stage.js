@@ -56,7 +56,10 @@
     /* Temps absolu du film → temps local d'une scène dont l'hôte démarre à `start`. */
     local: function (abs, start) { return abs - start; },
     /* Boîte des montagnes du logo (logo-mark.svg, viewBox 0 0 32 32) à 0:52, en 16:9 et en 9:16. */
-    LOGO_MARK: { h: { cx: 960, cy: 520, w: 420 }, v: { cx: 540, cy: 760, w: 420 } },
+    /* Mesuré dans lkdv-badge-1024.png : disque centré en (511, 502), rayon utile 496, sommet de la montagne en (512, 118).
+       Le badge s'affiche avec un disque de 640 px ; le tracé (largeur 340 px) pose son sommet (20, 6) sur ce sommet. */
+    LOGO_MARK: { h: { cx: 918, cy: 398.5, w: 340 }, v: { cx: 498, cy: 608.5, w: 340 } },
+    LOGO_BADGE: { h: { cx: 960, cy: 540, d: 640 }, v: { cx: 540, cy: 750, d: 640 }, art: { size: 1024, cx: 511, cy: 502, r: 496, summit: [512, 118] } },
     /* Tracés exacts de public/assets/logo-mark.svg */
     LOGO_PATHS: { ridge: "M2 24 L10 10 L14 16 L20 6 L30 24 Z", base: "M2 24 L30 24", sun: { cx: 24, cy: 9, r: 1.6 } },
   };

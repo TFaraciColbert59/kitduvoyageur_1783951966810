@@ -185,9 +185,9 @@
     "      sp += exp(-pe/(1.2 + al*0.010))*exp(-al/(uSpike*0.30 + 1.0)); }",
     "    float an2 = uRot; vec2 d2 = vec2(cos(an2), sin(an2));",
     "    sp += 0.4*exp(-abs(dot(d, vec2(-d2.y, d2.x)))/s/0.9)*exp(-abs(dot(d, d2))/s/(uSpike*0.12 + 1.0));",
-    "    float I = uGlow*(core*3.0 + halo) + uSpike*0.004*sp*(0.6 + uFlash) + uFlash*uFlash*1.5*(0.35 + 0.65*exp(-r/800.0));",
-    "    col = mix(mix(GOLD, AMBER, 0.3), STONE, clamp(core + uFlash*0.8, 0.0, 1.0))*I;",
-    "    a = 1.0 - exp(-I);",
+    "    float I = uGlow*(core*3.0 + halo) + uSpike*0.004*sp*(0.6 + uFlash) + uFlash*uFlash*2.2*exp(-r/420.0);",
+    "    col = mix(mix(GOLD, AMBER, 0.3), STONE, clamp(core + uFlash*exp(-r/500.0), 0.0, 1.0))*I + mix(AMBER, GOLD, 0.55)*uFlash*uFlash*0.35;",
+    "    a = 1.0 - exp(-I - uFlash*uFlash*0.35);",
     "  }",
     "  if (uEarth.w > 0.0) {",
     "    float re = length(fc - uEarth.xy)/max(uEarth.z, 0.5);",
@@ -246,14 +246,14 @@
   var S = {};
   /* Trajectoires des planètes (unités « min », centre du cadre) : elles naissent près du point de fuite et filent vers les bords. */
   function planetAt(kind, t, C, cam) {
-    var t0 = kind ? 1.80 : 1.93, t1 = kind ? 2.06 : 2.22;
+    var t0 = kind ? 1.78 : 1.86, t1 = kind ? 2.03 : 2.10;
     if (t < t0 || t > t1) return null;
     var dirA = kind ? 2.45 : -0.55;                         // Saturne vers le haut à gauche, Jupiter vers le bas à droite
     var z = lerp(1.0, 0.0, (t - t0) / (t1 - t0));
     var depth = 0.06 + 1.1 * z * z;
     var spin = 1.9 * Math.pow(Math.max(t - 1.75, 0), 2) * 4.0;
     var ang = dirA + spin * 0.5;
-    var off = (kind ? 0.17 : 0.22) / depth;
+    var off = (kind ? 0.20 : 0.26) / depth;
     var R = (kind ? 0.045 : 0.060) / depth;
     var mn = Math.min(C.W, C.H);
     return { x: C.W / 2 + Math.cos(ang) * off * mn, y: C.H / 2 + Math.sin(ang) * off * mn, r: R * mn, roll: kind ? -0.35 + spin * 0.3 : spin * 0.3 };
@@ -278,7 +278,7 @@
       /* 1. le gaz (la nébuleuse, puis son effondrement), réglages fonctions de t */
       var P = G.mix(G.NEBULA, {}, 0);
       var w = sstep(T_WAVE, T_WAVE + 0.05, t) * (1 - sstep(1.05, 1.30, t));
-      P.wave = w * 1.0; P.waveR = 0.95 + Math.max(t - T_WAVE, 0) * 4.5;
+      P.wave = w * 0.6; P.waveR = 0.95 + Math.max(t - T_WAVE, 0) * 4.5;
       var kc = sstep(0.90, 1.50, t);
       P.collapse = kc; P.swirl = 1.2 * Math.pow(Math.max(t - 0.85, 0), 2); P.flatten = sstep(1.0, 1.5, t);
       P.fadeR = lerp(3.0, 0.45, kc);
@@ -304,7 +304,7 @@
         var d = S.disk, u = d.u; gl.useProgram(d.p); G.bindNoise(d);
         gl.uniform2f(u.uView, C.W, C.H); gl.uniform1f(u.uMin, mn); gl.uniform1f(u.uF, cam.f);
         gl.uniform1f(u.uTau, tauv); gl.uniform1f(u.uK, K); gl.uniform1f(u.uA, dA);
-        gl.uniform1f(u.uGap, gap); gl.uniform1f(u.uHot, sstep(1.3, 1.5, t));
+        gl.uniform1f(u.uGap, gap); gl.uniform1f(u.uHot, sstep(1.3, 1.5, t) * (1 - sstep(1.75, 1.95, t)));
         gl.uniform3f(u.uGaps, GAPS[0], GAPS[1], GAPS[2]);
         camUniforms(gl, u, cam); C.quad();
       }
@@ -313,7 +313,7 @@
       if (pA > 0) {
         var p = S.p, up = p.u; gl.useProgram(p.p);
         gl.uniform1f(up.uT, t); gl.uniform1f(up.uT0, Math.max(t - SH * (1 + 3 * sstep(1.8, 2.1, t)), 0)); gl.uniform1f(up.uK, K);
-        gl.uniform1f(up.uMin, mn); gl.uniform1f(up.uA, pA); gl.uniform2f(up.uView, C.W, C.H); gl.uniform1f(up.uF, cam.f);
+        gl.uniform1f(up.uMin, mn); gl.uniform1f(up.uA, pA * (1 - 0.55 * sstep(1.85, 2.05, t))); gl.uniform2f(up.uView, C.W, C.H); gl.uniform1f(up.uF, cam.f);
         gl.uniform3f(up.uGaps, GAPS[0], GAPS[1], GAPS[2]); gl.uniform1f(up.uAE, A_E);
         camUniforms(gl, up, cam); camUniforms(gl, up, cam0, "0");
         gl.bindVertexArray(S.vao); gl.drawArrays(gl.TRIANGLES, 0, NP * 6); gl.bindVertexArray(null);

@@ -1,10 +1,10 @@
 // Génère BEATMAP.md, compositions/animatic.html et les boîtes grises des scènes absentes.
 // Usage : node tools/gen-animatic.mjs [--force-placeholders]
 import { writeFileSync, existsSync, mkdirSync } from "node:fs";
-import { SCENES, SECONDS, MARKS, SEAMS, FPS, DURATION, BPM } from "./beatmap.mjs";
+import { SCENES, SECONDS, MARKS, SEAMS, EXTRA_PLATES, MOTION_NOTE, FPS, DURATION, BPM } from "./beatmap.mjs";
 
 const force = process.argv.includes("--force-placeholders");
-const tc = (t) => `0:${String(Math.floor(t)).padStart(2, "0")}${t % 1 ? "," + String(t % 1).slice(2) : ""}`;
+const tc = (t) => { const r = Math.round(t * 1000) / 1000, f = Math.round((r % 1) * 1000); return `0:${String(Math.floor(r)).padStart(2, "0")}${f ? "," + String(f).padStart(3, "0").replace(/0+$/, "") : ""}`; };
 const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 const acts = { 1: "Ouverture", 2: "Descente", 3: "Le groupe", 4: "Confiance et terrain", 5: "Le relais", 6: "Retour et envol", 7: "Signature" };
 
@@ -13,12 +13,16 @@ let md = `# BEATMAP — LKDV Trailer 60 s\n\nGénéré par \`node tools/gen-anim
 md += `- ${BPM} BPM · temps = 0,5 s (30 images) · croche = 0,25 s (15 images) · double-croche = 0,125 s (7,5 images : arrondir \`Math.round(i * 7.5)\` depuis l'index, jamais par cumul) · mesure = 2 s\n- ${DURATION} s · ${FPS} i/s · ${DURATION * FPS} images · image n = n / ${FPS} s\n- Chocs : 0:06, 0:12, 0:46 · silences d'un demi-temps : 0:11,5, 0:37,0, 0:45,5 · respirations sans interface : 0:12,0–0:12,5, 0:32,5–0:33,0, 0:50\n\n`;
 md += `## Hôtes de la composition racine\n\n| id | fichier | début | fin | z | agent | rôle |\n| --- | --- | --- | --- | --- | --- | --- |\n`;
 for (const s of SCENES) md += `| \`${s.id}\` | \`compositions/${s.id}.html\` | ${s.start} | ${s.start + s.dur} | ${s.z} | ${s.owner} | ${s.role} |\n`;
+md += `\nL'hôte \`animatic\` n'est pas dans \`index.html\` : il vit dans \`animatic/index.html\` (même projet, liens vers \`assets/\` et \`compositions/\`).\n`;
 md += `\nLe temps local d'une scène = temps du film − début de son hôte.\n\n## Marqueurs\n\n| Temps | Image | Nature | Note |\n| --- | --- | --- | --- |\n`;
 for (const m of MARKS) md += `| ${tc(m.t)} | ${Math.round(m.t * FPS)} | ${m.kind} | ${m.note} |\n`;
 md += `\n## Seconde par seconde\n\n| T | Acte | Idée unique | Cosmos (WebGL) | Plan au sol | Interface (sans phrases) | Son |\n| --- | --- | --- | --- | --- | --- | --- |\n`;
 for (const s of SECONDS) md += `| ${tc(s.t)} | ${s.act} | **${s.idea}** | ${s.cosmos || "—"} | ${s.plate || "—"} | ${s.ui || "—"} | ${s.son || "—"} |\n`;
 md += `\n## Raccords entre fichiers\n\n| Temps | De | Vers | État exact au raccord |\n| --- | --- | --- | --- |\n`;
 for (const s of SEAMS) md += `| ${s.t} | ${s.a} | ${s.b} | ${s.rule} |\n`;
+md += `\n## Plans au sol ajoutés au jeu v3\n\n| Fichier | Emploi | Contenu |\n| --- | --- | --- |\n`;
+for (const p of EXTRA_PLATES) md += `| \`${p.id}\` | ${p.use} | ${p.note} |\n`;
+md += `\n## Mouvement des plans au sol\n\n${MOTION_NOTE}\n\n## Éléments d'interface qui durent plus de 1,5 s (prévus par le storyboard)\n\nLe réticule et l'altimètre (6,0–11,5 : instrument de caméra, seul élément inventé), la pile de pictos (7,0–11,0 : un picto de plus par seconde), la grille des 38 objets (18,0–21,75 : change d'état à chaque temps), le suivi de Tom (36,0–39,0 : pause, lecture, distance qui monte). Chacun doit changer visiblement au moins une fois par temps ; aucun autre élément ne reste plus de 1,5 s.\n`;
 writeFileSync("BEATMAP.md", md);
 
 // ── animatic.html : une étiquette par seconde + témoin de temps + bannière des marqueurs

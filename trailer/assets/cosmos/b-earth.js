@@ -79,8 +79,8 @@
     "  float tc=-dot(uCam,rd); vec3 cp=uCam+rd*max(tc,0.); float bd=length(cp);",
     "  if(!hitE && tc>0.){ float hh=bd-1.; vec3 q=cp/bd; float lit=smoothstep(-.35,.25,dot(q,uSun));",
     "    float fs=pow(max(cs,0.),6.); float tw=smoothstep(-.3,.0,dot(q,uSun))*(1.-smoothstep(.0,.45,dot(q,uSun)));",
-    "    float near=max(cs,0.); near*=near; vec3 ac=vec3(.30,.55,.95)*lit*1.1+vec3(1.,.58,.28)*tw*(.12+1.6*near*near+2.5*fs)+vec3(.55,.75,1.)*fs*lit*1.5;",
-    "    float g=exp(-hh/.008)*.9+exp(-hh/.04)*.16; g*=uAtmo;",
+    "    float near=max(cs,0.); near*=near; vec3 ac=vec3(.30,.55,.95)*lit*1.1+vec3(1.,.55,.24)*tw*(.10+1.8*near*near*near+2.5*fs)+vec3(.55,.75,1.)*fs*lit*1.5;",
+    "    float g=exp(-hh/.005)*(.28+.5*near)+exp(-hh/.03)*.12; g*=uAtmo;",
     "    col+=ac*g; alpha=max(alpha,clamp(g*max(ac.r,max(ac.g,ac.b)),0.,1.));",
     "    if(uLavaGlow>0.){ float lg=exp(-hh/.10)*uLavaGlow; col+=vec3(1.,.42,.16)*lg; alpha=max(alpha,clamp(lg,0.,1.)); } }",
     /* Lune */
@@ -94,23 +94,18 @@
     "    vec3 surf; vec3 emit=vec3(0.); float ocean=0.; float cl=0.;",
     "#ifdef EVO",
     "    if(uState<3.999){",
-    "      vec3 q=N*2.6; float sw=uT*.6;",
+    "      vec3 q=N*2.6; float sw=uT*.6; float s=uState;",
     "      float n1=fbm(q+vec3(sw,0.,-sw*.5),4); float n2=vn(q*4.6+vec3(4.,1.,uT*.3))*.6+vn(q*9.+2.)*.4;",
-    /* 0 lave */
     "      float crack=1.-smoothstep(.0,.06,abs(n1-.5)); float hot=smoothstep(.55,.85,n2);",
     "      vec3 lava=vec3(.42,.12,.08)*(.45+n2)+vec3(1.,.40,.10)*crack*1.5+vec3(1.,.80,.45)*crack*hot*1.4+vec3(.66,.20,.10)*hot*.8;",
-    /* 1 vapeur */
-    "      float vap=smoothstep(.3,.75,fbm(q*1.4+vec3(0.,uT*1.5,0.)+n1*1.2,3));",
-    "      vec3 steam=mix(vec3(.30,.10,.06)*(1.+crack*2.),vec3(.86,.80,.72),vap);",
-    /* 2 océan primitif */
+    "      float vap=0.; vec3 steam=vec3(0.); if(s<2.){ vap=smoothstep(.3,.75,fbm(q*1.4+vec3(0.,uT*1.5,0.)+n1*1.2,3)); steam=mix(vec3(.30,.10,.06)*(1.+crack*2.),vec3(.86,.80,.72),vap); }",
     "      vec3 ocn=mix(vec3(.025,.10,.16),vec3(.05,.17,.24),n2)+vec3(.8)*smoothstep(.62,.82,n1)*.5;",
-    /* 3 continents anciens */
-    "      float land=uState>2.? smoothstep(.50,.53,fbm(N*1.5+vec3(3.1,.2,1.7),4)) : 0.;",
-    "      vec3 anc=mix(vec3(.03,.11,.18),mix(vec3(.42,.27,.17),vec3(.55,.42,.30),n2),land)+vec3(.85)*smoothstep(.66,.84,n1)*.55;",
-    "      vec3 now=lin(texLL(uDay,uv).rgb);",
-    "      float s=uState; vec3 A=lava, B=steam; float u=s;",
-    "      if(s>=1.&&s<2.){A=steam;B=ocn;u=s-1.;} else if(s>=2.&&s<3.){A=ocn;B=anc;u=s-2.;} else if(s>=3.){A=anc;B=now;u=s-3.;}",
-    "      surf=lin(mix(A,B,smoothstep(0.,1.,u))); if(s>=3.) surf=mix(lin(anc),now,smoothstep(0.,1.,u));",
+    "      float land=0.; vec3 anc=ocn; if(s>2.){ float lf=fbm(N*2.2+vec3(3.1,.2,1.7),4)+vn(N*14.)*.06; land=smoothstep(.47,.485,lf);",
+    "        anc=mix(vec3(.03,.11,.18),mix(vec3(.46,.26,.16),vec3(.60,.44,.30),n2)*(.8+.4*vn(N*30.)),land)+vec3(.85)*smoothstep(.66,.84,n1)*.5; }",
+    "      vec3 now=s>3.? lin(texLL(uDay,uv).rgb) : vec3(0.);",
+    "      vec3 A=lava, B=steam; float u=s;",
+    "      if(s>=1.&&s<2.){A=steam;B=ocn;u=s-1.;} else if(s>=2.&&s<3.){A=ocn;B=anc;u=s-2.;}",
+    "      surf=lin(mix(A,B,smoothstep(0.,1.,u))); if(s>=3.) surf=mix(lin(anc),now,smoothstep(0.,1.,s-3.));",
     "      float lavaW=clamp(1.-s,0.,1.)+clamp(1.-abs(s-1.),0.,1.)*.35*(1.-vap);",
     "      emit=lin(lava)*lavaW*(1.6+uLavaGlow); surf*=(1.-clamp(1.-s,0.,1.));",
     "      ocean=smoothstep(1.5,2.2,s)*(1.-land*smoothstep(2.5,3.,s));",
@@ -129,22 +124,22 @@
     /* nuages */
     "    if(uCloudAmt>0.){ vec2 cu=uv+vec2(uCloudShift,0.); vec4 cm=texLL(uCloud,cu); float cov=cm.r;",
     "      if(uDetail>0.){ cov+=(fbm(N*900.+vec3(0.,0.,uT*.02),3)-.5)*.35*uDetail; }",
-    "      cl=smoothstep(1.-uCloudAmt,1.-uCloudAmt+.16,cov)*(.55+.45*cm.g); }",
+    "      cov=cov*.62+cm.g*.55-.12; cl=smoothstep(1.-uCloudAmt,1.-uCloudAmt+.13,cov)*(.45+.55*smoothstep(.35,.75,cm.g)); }",
     /* éclairage */
     "    vec3 lit=surf*(lam*1.25+.02)*day;",
     "    float term=smoothstep(-.1,.05,ndl)*(1.-smoothstep(.05,.35,ndl));",
     "    lit+=surf*vec3(1.,.45,.2)*term*.35;",
-    "    vec3 Hh=normalize(uSun+V); float sp=pow(max(dot(N,Hh),0.),70.)*ocean*day*uSpec; lit+=vec3(1.,.9,.75)*sp*(1.-cl)*.9;",
+    "    vec3 Hh=normalize(uSun+V); float sp=pow(max(dot(N,Hh),0.),180.)*ocean*day*uSpec; lit+=vec3(1.,.9,.75)*sp*(1.-cl)*.55;",
     "    lit+=vec3(1.,.70,.40)*sp*0.;",
     "    if(uCity>0.){ vec3 nc=texture(uNight,uv).rgb; float lum=dot(nc,vec3(.3,.55,.15));",
     "      float lights=smoothstep(.20,.75,lum)*1.6; float moon=lum*.10;",
     "      lit+=(vec3(1.,.72,.38)*lights+vec3(.25,.35,.55)*moon)*(1.-day)*uCity*(1.-cl*.8); }",
     "    vec3 cc=vec3(1.)*(lam*1.15+.015)*day+vec3(1.,.5,.25)*term*.25+vec3(.03,.04,.06)*(1.-day);",
-    "    lit=mix(lit,cc,cl*.92);",
+    "    lit=mix(lit,cc,cl*.88);",
     "    lit+=emit;",
     "    float fr=pow(1.-max(dot(N,V),0.),3.);",
     "    float al=smoothstep(-.4,.3,ndl);",
-    "    lit+=(vec3(.30,.55,.95)*al*.55+vec3(1.,.5,.25)*term*.5)*fr*uAtmo;",
+    "    lit+=(vec3(.30,.55,.95)*al*.55+vec3(1.,.5,.25)*term*.18)*fr*uAtmo;",
     "    lit*=uExpo;",
     "    if(uImpact>0.){ float di=distance(N,uImpactP); lit+=vec3(1.,.65,.3)*exp(-di*di*30.)*uImpact*3.; }",
     "    vec3 sc=srgb(lit);",
@@ -163,9 +158,9 @@
     "void main(){ float lon=(vUv.x-.5)*2.*PI, lat=(vUv.y-.5)*PI; vec3 p=vec3(cos(lat)*sin(lon),sin(lat),cos(lat)*cos(lon));",
     "  vec3 w=vec3(fbm(p*2.2,4),fbm(p*2.2+5.2,4),fbm(p*2.2+9.7,4));",
     "  vec3 q=p*3.0+(w-.5)*2.2; q.x*=1.6;",
-    "  float c=fbm(q,6); float al=abs(sin(lat));",
+    "  float c=fbm(q,4); float al=abs(sin(lat));",
     "  float band=.55+.25*exp(-pow((degrees(lat)-58.)/14.,2.))+.25*exp(-pow((degrees(lat)+55.)/14.,2.))+.18*exp(-pow(degrees(lat)/8.,2.))-.18*exp(-pow((al*90.-25.)/9.,2.));",
-    "  float d=fbm(q*3.1+3.,4);",
+    "  vec3 q2=p*11.+(w-.5)*3.5; q2.x*=1.8; float d=fbm(q2,5); d=d*.7+.3*(1.-abs(2.*fbm(q2*2.7+7.,3)-1.));",
     "  o=vec4(clamp(c*band*1.25,0.,1.), d, 0., 1.); }",
   ].join("\n");
 
@@ -506,29 +501,34 @@
   /* Aurore en rideau au-dessus du limbe (passe écran). */
   var FS_AURORA = "#version 300 es\nprecision highp float;\n" + NOISE + "\n" + [
     "in vec2 vUv; out vec4 o;",
-    "uniform vec2 uC; uniform float uRl, uS, uMorph, uT, uI, uH;", /* centre du globe (px, y vers le haut), rayon du limbe, px par unité logo, mise en forme, temps, intensité, H écran */
+    "uniform vec2 uC; uniform float uRl, uS, uMorph, uT, uI, uH;", /* centre du globe (px, y vers le haut), rayon du limbe, px par unité logo, mise en forme, temps, intensité */
     "float ridge(float x){ if(x<=2.||x>=30.) return 24.; if(x<10.) return mix(24.,10.,(x-2.)/8.); if(x<14.) return mix(10.,16.,(x-10.)/4.); if(x<20.) return mix(16.,6.,(x-14.)/6.); return mix(6.,24.,(x-20.)/10.); }",
     "void main(){",
     "  vec2 p=gl_FragCoord.xy-uC; float r=length(p); float phi=atan(p.x,p.y);",
     "  float X=16.+phi*uRl/uS; float Y=(r-uRl)/uS;", /* unités du logo : X le long du limbe, Y hauteur au-dessus */
-    "  if(Y<-1.5||Y>26.||X<-14.||X>46.) { o=vec4(0.); return; }",
-    /* plis du rideau : le rideau ondule le long du limbe ; plus fort quand il se défait */
-    "  float wob=(1.-uMorph*.85);",
-    "  float Xf=X+sin(Y*.22+uT*2.3+X*.15)*.55*wob+sin(X*.6-uT*1.7)*.25*wob+ (Y*.05)*(X-16.)*.06;",
-    /* sommet du rideau : aurore libre ↔ crête du logo */
-    "  float free=6.+4.5*sin(Xf*.33+uT*1.9)+3.*sin(Xf*.71-uT*1.3)+2.*fbm(vec3(Xf*.18,uT*.6,1.),3);",
-    "  float edge=mix(free, 24.-ridge(Xf), uMorph);",
-    "  float span=smoothstep(-6.+uMorph*8.,1.+uMorph*2.,Xf)*(1.-smoothstep(31.-uMorph*1.5,40.-uMorph*10.,Xf));",
-    /* rayons verticaux */
-    "  float rays=.55+.45*fbm(vec3(Xf*1.9,Y*.05-uT*.8,uT*.3),3); rays*=.75+.25*sin(Xf*7.+fbm(vec3(Xf,uT,2.),2)*6.);",
-    "  float body=smoothstep(-0.4,0.6,Y)*smoothstep(edge+.4,edge-1.2,Y)*pow(clamp(Y/max(edge,1.),0.,1.),1.6);",
-    "  float line=exp(-pow((Y-edge)*uS/2.2,2.))*.9+exp(-pow((Y-edge)*uS/9.,2.))*.35;",
-    "  line*=smoothstep(-.5,.8,edge-0.4);",
-    "  float a=(body*rays*.55+line*mix(.45,1.,uMorph))*span*uI;",
-    "  vec3 c=mix(vec3(.36,.50,.33),vec3(.65,.76,.63),clamp(Y/max(edge,1.),0.,1.));",
-    "  c=mix(c,vec3(.80,.90,.78),line*.6);",
-    "  c+=vec3(.16,.28,.33)*smoothstep(4.,0.,Y)*body*.6;", /* pied bleuté */
-    "  o=vec4(c*a,0.);",
+    "  if(Y<-4.||Y>31.||X<-18.||X>50.) { o=vec4(0.); return; }",
+    "  vec3 acc=vec3(0.); float wob=1.-uMorph*.78;",
+    "  for(int k=0;k<2;k++){ float fk=float(k);",
+    /* plis du rideau : déplacement latéral qui dépend de la hauteur (rideau drapé) */
+    "    float Xf=X+(sin(Y*.33+uT*2.1+X*.21+fk*2.)*.5+sin(Y*.11-uT*1.3+fk)*.45)*wob*(1.+fk*.6)-fk*1.2;",
+    "    float free=7.+4.*sin(Xf*.31+uT*1.7+fk)+2.6*sin(Xf*.73-uT*1.2)+3.*vn(vec3(Xf*.2,uT*.7,fk*3.));",
+    "    float edge=mix(free,24.-ridge(Xf),uMorph*(1.-fk*.45))*(1.-fk*.22)+fk*.4;",
+    "    float span=smoothstep(-8.+uMorph*9.5,.5+uMorph*1.5,Xf)*(1.-smoothstep(31.5-uMorph*1.,42.-uMorph*11.,Xf));",
+    "    float ry=vn(vec3(Xf*2.6,Y*.06-uT*1.4,fk*7.)); float ry2=vn(vec3(Xf*8.5,Y*.12-uT*2.3,3.+fk));",
+    "    float rays=.35+.65*(ry*ry*.7+ry2*.45);",
+    "    float hN=clamp(Y/max(edge,.5),0.,1.);",
+    "    float body=smoothstep(-.8,1.5,Y)*smoothstep(edge+.3,edge-1.1,Y)*(.18+.82*pow(hN,1.7));",
+    "    float dE=(Y-edge)*uS;",
+    "    float line=(exp(-dE*dE/9.)*.7+exp(-abs(dE)/12.)*.32)*(1.-fk);",
+    "    float up=exp(-max(dE,0.)/(34.+fk*40.))*step(0.,dE)*(.22+fk*.25);",
+    "    float a=(body*rays*.75+(line*mix(.35,1.,uMorph)+up)*(.6+.4*rays))*span*(1.-fk*.55);",
+    "    vec3 cb=mix(vec3(.20,.33,.36),vec3(.36,.52,.33),smoothstep(0.,.45,hN));",
+    "    cb=mix(cb,vec3(.62,.76,.60),smoothstep(.55,1.,hN));",
+    "    cb=mix(cb,vec3(.74,.85,.72),clamp(line,0.,1.)*.6);",
+    "    acc+=cb*a; }",
+    /* reflet vert sur la nuit, sous le rideau */
+    "  if(Y<0.){ float g=exp(Y*uS/26.)*.10*smoothstep(-10.,4.,X)*(1.-smoothstep(28.,40.,X)); acc+=vec3(.30,.45,.30)*g; }",
+    "  acc*=uI; o=vec4(acc,0.);",
     "}",
   ].join("\n");
   var aur = null;
@@ -562,18 +562,18 @@
       o.lat = lerp(12, latHero, e); o.lon = lonHero + 80 * Math.pow(1 - u2, 2.2) + 0;
       p.state = clamp(4 * sstep(0.0, 0.93, u2) * 1.0, 0, 4);
       p.state = 4 * clamp((u2 - 0.1) / 0.78, 0, 1);
-      p.lavaGlow = 0.85 * (1 - sstep(0, 0.35, u2));
+      p.lavaGlow = 0.85 * (1 - sstep(0, 0.35, u2)); p.spec = 0.2 + 0.8 * sstep(0.85, 1, u2);
       p.atmo = sstep(0.2, 0.75, u2); p.cloud = 0.62 * sstep(0.45, 0.95, u2);
-      p.dust = 1 - sstep(0, 0.9, u2);
+      p.dust = 0; p._dust = 1 - sstep(0, 0.9, u2);
       p.city = sstep(0.82, 1.0, u2) * 0.6;
-      p.sunCam = null; sunH = 1 - sstep(0.75, 1.0, u2);
+      p.sunCam = null; sunH = 1 - sstep(0.8, 1.0, u2);
     } else if (t < 3.75) {
       var u3 = (t - 3.0) / 0.75;
       o.Rs = hf.Rs * (1 + 0.035 * u3); o.cx = hf.cx; o.cy = hf.top + o.Rs; o.lat = latHero; o.lon = lonHero - 2.0 * u3;
       p.city = 0.6 + 0.4 * sstep(0, 0.4, u3); sunH = 0;
     } else if (t < 5.5) {
       /* recul vers le globe entier, la Terre tourne lentement, le jour se lève sur l'Europe */
-      var u4 = clamp((t - 3.75) / 0.6, 0, 1), e4 = ease(u4), Rf = 0.40 * m;
+      var u4 = clamp((t - 3.75) / 0.6, 0, 1), e4 = ease(u4), Rf = 0.40 * m; p.cloud = 0.62 - 0.17 * e4;
       var Rh = hf.Rs * 1.035;
       o.Rs = loglerp(Rh, Rf, e4); var topH = hf.top, topF = C.H / 2 - Rf;
       var top4 = lerp(topH, topF, e4); o.cx = C.W / 2; o.cy = top4 + o.Rs;
@@ -586,7 +586,7 @@
       var Rf2 = 0.40 * m, Rk = E.FRAME6.rs * m;
       o.Rs = lerp(Rf2, Rk, clamp(k, 0, 1)); o.cx = C.W / 2; o.cy = C.H / 2;
       o.lat = lerp(38, E.FRAME6.lat, k); o.lon = lerp(-13, E.FRAME6.lon, k);
-      p.city = 0.65; sunH = 0; p._sunBlend = 1; p._snap = k;
+      p.city = 0.65; p.cloud = 0.45; sunH = 0; p._sunBlend = 1; p._snap = k;
     }
     o.fov = 30;
     var cam = E.camera(C, o);
@@ -625,7 +625,7 @@
     var fl = Math.exp(-tau / 0.06);
     B.dot(ix, iy, m * (0.25 + 0.6 * (1 - fl)), COL.paper, fl, 0, 1);
     B.dot(ix, iy, m * 1.6, [1, 0.85, 0.6], 0.55 * Math.exp(-tau / 0.04), 0, 1);
-    B.dot(ix, iy, m * 0.9 * (0.4 + tau), [1, 0.62, 0.3], 0.45 * Math.exp(-tau / 0.12), 0, 1);
+    B.dot(ix, iy, m * 0.7 * (0.4 + tau), [1, 0.62, 0.3], 0.35 * Math.exp(-tau / 0.07), 0, 1);
     B.dot(ix, iy, m * 0.03, [1, 0.95, 0.85], fl, 0.4, 1);
     /* éjecta */
     var N = 1400;
@@ -653,13 +653,25 @@
       B.dot(x, y, rad * 2.2, c, 0.9 * life, 0.35, 0.8);
     }
   }
+  /* Reste du disque de poussière (ambre, brique) qui s'efface après l'impact : grains doux, bande inclinée. */
+  function dust(C, t, cam, a) {
+    var B = E.batch, k = cam.m / 1080;
+    for (var i = 0; i < 260; i++) {
+      var h1 = L.hash(i, 41), h2 = L.hash(i, 42), h3 = L.hash(i, 43);
+      var x = (h1 * 1.3 - 0.15) * C.W, band = (h2 - 0.5) * 0.45 * C.H;
+      var y = C.H * 0.55 - (x - C.W / 2) * 0.32 + band + (t - 2.25) * 160 * k * (0.5 + h3);
+      var c = h3 < 0.6 ? COL.amber : COL.brick;
+      B.dot(x, y, (18 + 60 * h3) * k, c, 0.05 * a * (1 - Math.abs(h2 - 0.5) * 1.6), 0, 1);
+    }
+  }
   /* Position écran de la Lune naissante [x, y, rayon px] et son équivalent monde. */
   function moonPos(C, t, cam) {
-    var tau = clamp(t - 2.25, 0, 1);
-    var e = easeOut(tau / 0.75, 3);
-    var qx = lerp(-1.25, -2.6, e), qy = lerp(1.15, 1.45, e);
-    var r = 0.27 * lerp(0.4, 1, sstep(0.1, 0.5, tau));
-    return [cam.px + qx * cam.Rs, cam.py - qy * cam.Rs, r * cam.Rs];
+    var tau = clamp(t - 2.25, 0, 1), m = cam.m;
+    var ia = 140 * D2R, ix = cam.px + cam.Rs * Math.cos(ia), iy = cam.py - cam.Rs * Math.sin(ia);
+    var e = easeOut(tau / 0.5, 3), e2 = easeIn(clamp((tau - 0.45) / 0.3, 0, 1), 3);
+    var x = lerp(lerp(ix, C.W * 0.16, e), -0.08 * C.W, e2), y = lerp(lerp(iy, C.H * 0.2, e), -0.02 * C.H, e2);
+    var r = m * lerp(0.012, 0.045, sstep(0.1, 0.7, tau));
+    return [x, y, r];
   }
   function moonWorld(C, t, cam) {
     var mp = moonPos(C, t, cam);
@@ -718,6 +730,7 @@
       E.batch.reset();
       if (t >= 2.25) E.stars(C, cam, 1);
       if (t >= 2.25 && t < 3.1) impact(C, t, cam);
+      if (p._dust > 0) dust(C, t, cam, p._dust);
       sunFlare(C, t, s);
       E.batch.flush(C, t < 2.25);
     },
