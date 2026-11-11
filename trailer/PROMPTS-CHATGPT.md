@@ -4,9 +4,77 @@ Liste à copier dans ChatGPT : 1 bible, 7 fiches personnages et 51 images de fil
 
 ---
 
+## MESSAGE −1 — Contexte et continuité (à envoyer EN PREMIER dans la nouvelle conversation, avant la bible)
+
+```
+Bonjour. Nous allons travailler ensemble pendant longtemps dans cette conversation, sur un seul projet. Lis tout attentivement : c'est le cadre de toutes mes demandes à venir.
+
+LE PROJET
+Je prépare une publicité de cinéma de 60 secondes pour une application de voyage et de randonnée. Tu vas générer environ 60 images fixes photoréalistes : 7 fiches personnages, puis 51 images de film. Un monteur les animera ensuite (mouvements de caméra, profondeur) et les montera très vite, sur une musique électronique puissante (plans de 0,4 à 2 secondes). Comme les plans s'enchaînent sans pause, la moindre incohérence (une veste qui change de couleur, un visage différent, une lumière qui saute) se verra immédiatement. LA COHÉRENCE ENTRE LES IMAGES EST TON PREMIER OBJECTIF, avant même la beauté de chaque image prise seule.
+
+L'HISTOIRE (pour que tu comprennes ce que tu fabriques)
+Un soir de pluie, en ville, Léa (27 ans) fait défiler sur son téléphone le carnet de voyage d'un inconnu et tombe sur la photo d'un lac turquoise dans les Dolomites. Elle décide de partir. Sur l'application, elle prépare l'aventure, invite trois amis (Sami, Inès, Tom), compose son équipement et découvre qu'elle peut partir presque sans argent (matériel prêté, loué ou d'occasion). Elle commande un sac à dos, le reçoit, fait son sac et part à l'aube en train. Les quatre amis marchent sur des crêtes immenses au lever du soleil, et Léa trouve le lac de la photo, le vrai, qu'elle photographie avec le même cadrage. Un coureur de trail (Malik) les croise, puis une cycliste en voyage (Clara) le dépasse sur une piste au soleil couchant et salue le groupe qui installe le bivouac. Nuit, feu de camp, Voie lactée : Léa publie à son tour son carnet. À l'autre bout du monde, dans un bus de nuit, un garçon (Noah) tombe sur la photo de Léa et s'arrête. La boucle est bouclée.
+Le ton : liberté, émerveillement, amitié, souffle coupé. Des plans où les personnages sont minuscules face à des montagnes gigantesques, alternant avec des gros plans de matière.
+
+LA CHRONOLOGIE (lumière et tenues, à respecter strictement)
+- Jour 0, soir, en ville, pluie, heure bleue : Léa en TENUE DE VILLE (grand pull crème, jean brut, chaussettes de laine grises). Images img06, img07, img08, img10, img40, img41, img42, img43.
+- Jour 0, lendemain, journée, en ville : livraison du sac (img44, tenue de ville), puis préparation du sac sur le lit (img12, manches de t-shirt écru).
+- Jour 1, aube : départ en TENUE DE RANDONNÉE, qu'elle garde jusqu'au soir (veste vert forêt, t-shirt écru, pantalon gris pierre, chaussures en cuir brun, sac LKDV ONE vert olive). Images img13 à img18.
+- Jour 1, lever du soleil puis matin : crêtes (img45, img19, img20, img46).
+- Jour 1, midi : le lac de Sorapis (img09, img09b, img22). Le groupe reprend la marche, le coureur passe (img23).
+- Jour 1, après-midi : le coureur Malik (img24 à img28, img47, img29).
+- Jour 1, heure dorée : la cycliste Clara (img29 à img33, img48).
+- Jour 1, crépuscule puis nuit : bivouac (img34, img35a, img35b, img36, img37, img49). La nuit, les quatre amis portent des doudounes : Léa vert forêt, Inès crème, Sami sable, Tom bleu encre ; Léa a aussi un bonnet gris et une couverture de laine grise.
+- Autre ville, même nuit : Noah dans un bus (img38).
+- Espace (img01 à img05, img39) : le début et la fin du film.
+
+LES OBJETS QUI DOIVENT RESTER IDENTIQUES D'UNE IMAGE À L'AUTRE
+- Le sac de Léa : le LKDV ONE 45 (planche 3D que je joindrai), vert olive à fond noir. Toujours le même.
+- Le téléphone de Léa : smartphone noir générique, sans logo ; en randonnée, dans un étui noir sur la bretelle gauche.
+- L'appartement de Léa : petit appartement sous les toits, poutre, briques peintes blanc cassé, étagère de livres et de cartes, monstera et pothos, lampe de lecture chaude, large rebord de fenêtre en bois clair, plaid vert sauge, parquet en bois miel.
+- Les deux tentes du bivouac : dôme vert sauge (celui que Sami prête à Léa, rangé dans une housse gris pierre au départ) et dôme crème.
+- Le lac de Sorapis : même point de vue et même composition dans img09 et img22.
+- Le bivouac : même cadre dans img35a et img35b.
+
+COMMENT NOUS ALLONS TRAVAILLER
+1. Je t'envoie ensuite la BIBLE (règles visuelles), puis les FICHES PERSONNAGES, puis les IMAGES une par une, dans l'ordre. Chaque prompt est détaillé : suis-le à la lettre, sans rien ajouter, retirer ou réinterpréter.
+2. Une seule image par réponse, en paysage 16:9.
+3. Quand je joins une fiche personnage ou une image précédente, elle fait AUTORITÉ : visage, cheveux, vêtements, sac, décor et lumière doivent correspondre exactement. Si un prompt et une pièce jointe se contredisent, la pièce jointe gagne pour l'apparence, le prompt gagne pour l'action et le cadrage.
+4. Après chaque image, ajoute sous l'image une FICHE DE CONTINUITÉ de 4 lignes maximum, sans rien d'autre :
+   - Image : numéro et nom.
+   - Personnages et tenues : qui est présent et ce qu'il porte.
+   - Lumière : heure et direction du soleil.
+   - Points de vigilance : ce qui pourrait ne pas correspondre aux fiches, honnêtement.
+5. Tiens un REGISTRE DE CONTINUITÉ pour toute la conversation. Avant chaque nouvelle image, relis les fiches et les images précédentes concernées. Si tu remarques qu'une image précédente contredit une fiche, signale-le.
+6. Si je réponds « corrige : … », modifie UNIQUEMENT ce que je cite, en gardant tout le reste identique.
+7. Ne pose pas de questions inutiles. Si un point du prompt est vraiment impossible, dis-le en une phrase et propose la solution la plus proche.
+8. N'écris JAMAIS de texte, de lettre ou de chiffre dans les images, et ne mets aucune marque.
+
+Si tu as tout compris, réponds seulement : « Contexte enregistré. J'attends la bible. »
+```
+
+**Chaîne de références (pour toi) :** en plus des fiches personnages, joins l'image précédente indiquée pour garder le décor et la lumière.
+
+| Image à générer | Joindre en plus |
+|---|---|
+| img10, img40, img41, img42, img43 | img06 (l'appartement) |
+| img44, img12 | img06 et `sac-lkdv-one-45.png` |
+| Toute image où Léa porte son sac (img09b, img13 à img20, img22, img23, img46) | F1 et `sac-lkdv-one-45.png` |
+| img19 | img45 (même matin, même lumière) |
+| img46 | img19 (les Tre Cime) |
+| img22 | img09 (le lac, même composition) |
+| img24 à img28, img47 | img24, une fois validée (Malik, même après-midi) |
+| img31 à img33, img48 | img30, une fois validée (Clara, même heure dorée) |
+| img34 | img16 (les quatre amis, leurs couleurs) |
+| img35b | img35a (même cadre) |
+| img36, img37 | img35b (même nuit) |
+| img49 | img35b (mêmes tentes) |
+
+---
+
 ## Reprise après l'arrêt de la génération
 
-**Option recommandée : nouvelle conversation ChatGPT.** Repars de zéro avec ce fichier, dans l'ordre : message 0, puis F1 à F7, puis les images. Les images déjà faites où le sac de Léa n'apparaît pas restent valables : img01 à img05, img06, img07, img08, img09, img10, img11, et les plans de Malik, Clara, Noah et de la Terre. Garde-les et passe ces prompts.
+**Option recommandée : nouvelle conversation ChatGPT.** Repars de zéro avec ce fichier, dans l'ordre : **message −1 (contexte)**, message 0 (bible), F1 à F7, puis les images avec la chaîne de références. Les images déjà faites où le sac de Léa n'apparaît pas restent valables : img01 à img05, img06, img07, img08, img09, img10, img11, et les plans de Malik, Clara, Noah et de la Terre. Garde-les et passe ces prompts.
 
 **Option rapide : continuer l'ancienne conversation.** Envoie d'abord ce message, avec `sac-lkdv-one-45.png` en pièce jointe :
 
@@ -36,7 +104,7 @@ Ensuite, envoie ces prompts dans cet ordre, en joignant F1 et `sac-lkdv-one-45.p
 ## Mode d'emploi (pour toi, pas pour ChatGPT)
 
 1. Ouvre **une seule conversation** dans ChatGPT et ne la quitte pas jusqu'à la fin.
-2. Envoie le **message 0, la bible**, et attends la réponse « Bible enregistrée ».
+2. Envoie le **message −1, le contexte**, et attends « Contexte enregistré ». Envoie ensuite le **message 0, la bible**, et attends « Bible enregistrée ».
 3. Envoie les **fiches personnages F1 à F7**, une par message, et télécharge chaque fiche (`F1-lea.png`…).
 4. Envoie ensuite les **images une par une, dans l'ordre**. Chaque prompt se suffit à lui-même : il répète les personnages et les règles, pour que rien ne dérive même tard dans la conversation.
 5. Quand un personnage apparaît, **joins sa fiche** (F1 pour Léa, etc.) au message, avec la phrase indiquée.
