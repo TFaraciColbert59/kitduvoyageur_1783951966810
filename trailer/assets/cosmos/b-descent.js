@@ -36,18 +36,23 @@
   }
 
   /* ---------- caméra ---------- */
+  /* Altitude de caméra (km). 6,0 → 7,0 : chute exponentielle depuis le globe entier ; 7,0 → 10,25 : l'île reste
+     cadrée entière (route, nuits, pluie d'objets) ; 10,25 → 10,75 : plongée jusqu'à LKDV.altitude(10,75), puis la
+     caméra suit exactement la loi de l'altimètre (LKDV.altitude) dans les nuages. */
   function camAt(C, t) {
     var m = Math.min(C.W, C.H), v = C.fmt && C.fmt.vertical, R = 6371;
     var c6 = E.camera(C, { lat: E.ICELAND.lat, lon: E.ICELAND.lon, Rs: E.FRAME6.rs * m, fov: 30 });
-    var h0 = (c6.d - 1) * R, h1 = v ? 1250 : 880, h2 = v ? 760 : 540, h3 = 7;
+    var h0 = (c6.d - 1) * R, h1 = v ? 1250 : 880, h2 = v ? 800 : 560;
+    var hA = L.altitude ? L.altitude(10.75) : 3.2;
     var h, lat = E.ICELAND.lat, lon = E.ICELAND.lon, pitch = 0, fov = 30;
     if (t < 7) h = U.loglerp(h0, h1, U.easeOut(t - 6, 4.2));
-    else if (t < 10.4) h = U.loglerp(h1, h2, (t - 7) / 3.4);
-    else {
-      var u = U.clamp((t - 10.4) / 0.6, 0, 1);
-      h = U.loglerp(h2, h3, U.easeIn(u, 2.6));
+    else if (t < 10.25) h = U.loglerp(h1, h2, (t - 7) / 3.25);
+    else if (t < 10.75) h = U.loglerp(h2, hA, U.easeIn((t - 10.25) / 0.5, 2.2));
+    else h = L.altitude ? L.altitude(t) : hA;
+    if (t > 10.25) {
+      var u = U.clamp((t - 10.25) / 0.5, 0, 1);
       lat = U.lerp(lat, 64.05, U.ease(u)); lon = U.lerp(lon, -19.4, U.ease(u));
-      pitch = 62 * U.ease(U.clamp((t - 10.45) / 0.5, 0, 1)); fov = U.lerp(30, 52, U.ease(u));
+      pitch = 62 * U.ease(U.clamp((t - 10.3) / 0.45, 0, 1)); fov = U.lerp(30, 52, U.ease(u));
     }
     var cam = E.camera(C, { lat: lat, lon: lon, d: 1 + h / R, fov: fov, pitch: pitch });
     cam.h = h;
@@ -83,11 +88,11 @@
     "  vec3 stone=vec3(.980,.973,.961)-(1.-sh)*.035;",
     "  cc=mix(cc,stone,uOpaque); cov=mix(cov,1.,uOpaque);",
     /* déchirure : trou du centre vers les bords, bord effiloché et étiré radialement */
-    "  if(uTear>0.){ float ang=atan(q.y,q.x); float rag=fbm2(vec2(ang*3.,r*4.-uT*.5),4)*.35+fbm2(vec2(ang*11.,uT),2)*.12;",
-    "    float edge=uTear*1.25-.12+rag*uTear;",
+    "  if(uTear>0.){ vec2 qe=(q-vec2(0.,.30))*vec2(.55,1.4); float re=length(qe); float ang=atan(qe.y,qe.x); float rag=fbm2(vec2(ang*3.,re*4.-uT*.5),4)*.35+fbm2(vec2(ang*11.,uT),2)*.12; r=re;",
+    "    float edge=uTear*1.55-.14+rag*uTear;",
     "    float hole=smoothstep(edge-.02,edge+.10,r);",
     "    float wisp=smoothstep(.4,.8,fbm2(vec2(ang*24.,r*1.5-uTear*2.),3))*(1.-hole)*smoothstep(edge-.3,edge,r)*.6;",
-    "    cov=cov*max(hole,wisp); }",
+    "    cov=cov*max(hole,wisp)*(1.-smoothstep(.96,1.,uTear)); }",
     /* la Terre vue d'en haut cède au voile (dissolution en formes de nuages) */
     "  vec4 ea=vec4(0.);",
     "  if(uEarthOn>0.){ ea=texture(uEarth,vUv); float ev=smoothstep(uDiss-.12,uDiss+.12,n*1.1+.1*n2); ea*=ev*uEarthOn; }",
@@ -114,12 +119,11 @@
     "    vec3 L=normalize(vec3(.65,.45,.6)); float dif=max(dot(n,L),0.);",
     "    float rim=pow(1.-nz,2.)*smoothstep(-.2,.6,nx);",
     "    col=base*(.22+.85*dif)+vec3(1.,.72,.32)*(rim*.9+pow(dif,6.)*.25);",
-    "    col+=vec3(.0,.0,.0)*gore;",
     "    float seam=smoothstep(.035,.0,abs(fract(ph*8./3.14159+.25)-.5))*.25; col*=1.-seam;",
     "    a=smoothstep(1.,.96,ex); }",
     /* jupe et suspentes */
-    "  if(yy<-1.25&&yy>-1.75){ float sk=abs(q.x)-mix(.27,.16,(-1.25-yy)/.5); float l=smoothstep(.025,.0,abs(abs(q.x)-mix(.26,.14,(-1.25-yy)/.5)));",
-    "    float c2=smoothstep(.02,.0,abs(q.x)-.0)*0.; col=mix(col,vec3(.25,.22,.18),l*.9); a=max(a,l*.9); void(sk); void(c2); }",
+    "  if(yy<-1.25&&yy>-1.75){ float l=smoothstep(.025,.0,abs(abs(q.x)-mix(.26,.14,(-1.25-yy)/.5)));",
+    "    col=mix(col,vec3(.25,.22,.18),l*.9); a=max(a,l*.9); }",
     /* nacelle */
     "  if(yy<-1.72&&yy>-1.98&&abs(q.x)<.15){ float sh=.5+.5*smoothstep(-.15,.15,q.x); col=vec3(.42,.28,.16)*(.5+.6*sh); a=1.; }",
     "  o=vec4(col*a*uA,a*uA);",
@@ -343,12 +347,12 @@
   }
 
   function balloon(C, t, cam) {
-    if (t < 9.95 || t > 11.15) return;
-    var gl = C.gl, u = U.clamp((t - 9.95) / 1.0, 0, 1), m = cam.m;
+    if (t < 9.95 || t >= 10.75) return;
+    var gl = C.gl, u = U.clamp((t - 9.95) / 0.8, 0, 1), m = cam.m;
     var v = C.fmt && C.fmt.vertical;
-    var x = U.lerp(v ? 0.70 : 0.74, v ? 0.62 : 0.66, u) * C.W, y = U.lerp(1.12, 0.40, U.easeOut(u, 1.5)) * C.H;
-    var s = U.loglerp(0.035, 0.12, u) * m;
-    var a = U.sstep(9.95, 10.1, t) * (1 - U.sstep(10.95, 11.15, t));
+    var x = U.lerp(v ? 0.70 : 0.76, v ? 0.60 : 0.64, u) * C.W, y = U.lerp(1.15, -0.28, Math.pow(u, 1.15)) * C.H;
+    var s = U.loglerp(0.04, 0.15, u) * m;
+    var a = U.sstep(9.95, 10.05, t);
     gl.useProgram(progBalloon.p);
     gl.uniform2f(progBalloon.u.uC, x, C.H - y); gl.uniform1f(progBalloon.u.uS, s); gl.uniform1f(progBalloon.u.uA, a); gl.uniform1f(progBalloon.u.uT, t);
     C.bind(null); gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA); C.quad();
@@ -359,7 +363,7 @@
     var p = { state: 4, t: t, bg: 1, atmo: 1, city: 0, spec: 1, expo: 1 };
     p.sun = sunFor(cam);
     p.patch = U.sstep(6.2, 6.9, t);
-    p.cloud = t < 8 ? U.lerp(0.45, 0.18, U.sstep(6.0, 6.8, t)) : t < 10.4 ? U.lerp(0.18, 0.46, U.sstep(8.0, 8.8, t)) : U.lerp(0.46, 0.92, U.sstep(10.4, 10.9, t));
+    p.cloud = t < 8 ? U.lerp(0.45, 0.18, U.sstep(6.0, 6.8, t)) : t < 10.4 ? U.lerp(0.18, 0.46, U.sstep(8.0, 8.8, t)) : U.lerp(0.46, 0.92, U.sstep(10.25, 10.75, t));
     p.cloudShift = -t * 0.004 - U.sstep(8, 9.5, t) * 0.002;
     p.detail = U.sstep(7.6, 8.4, t);
     p.city = U.lerp(0.65, 0, U.sstep(6, 6.6, t));
@@ -376,15 +380,15 @@
     },
     draw: function (C, t) {
       var gl = C.gl, cam = camAt(C, t), B = E.batch;
-      var veil = t >= 10.9;
-      if (t < 11.1) {
+      var veil = t >= 10.75;
+      if (t < 11.0) {
         var p = globeParams(C, t, cam);
         if (!veil) E.drawGlobe(C, cam, p);
         else E.drawGlobe(C, cam, p, E.half);
       }
       if (!veil) {
         B.reset();
-        var ov = 1 - U.sstep(10.55, 10.85, t);
+        var ov = 1 - U.sstep(10.4, 10.7, t);
         if (t < 7.2) E.stars(C, cam, 1 - U.sstep(6.2, 6.9, t));
         wind(C, t, cam); B.flush(C, 0);
         route(C, t, cam, ov); fallingPoint(C, t, cam); rain(C, t, cam); plane(C, t, cam); satellites(C, t, cam);
@@ -394,18 +398,17 @@
         return;
       }
       /* ---- voile de nuages ---- */
-      var zoom = U.loglerp(1.0, 0.45, U.clamp((t - 10.9) / 0.6, 0, 1)) * U.loglerp(1, 0.8, U.clamp((t - 11.5) / 1.0, 0, 1));
-      var cover = t < 11.1 ? U.lerp(0.25, 0.62, U.sstep(10.9, 11.1, t)) : t < 11.4 ? 0.62 : U.lerp(0.62, 1.0, U.sstep(11.35, 11.5, t));
+      var zoom = U.loglerp(1.0, 0.45, U.clamp((t - 10.75) / 0.75, 0, 1)) * U.loglerp(1, 0.8, U.clamp((t - 11.5) / 1.0, 0, 1));
+      var cover = t < 11.0 ? U.lerp(0.25, 0.62, U.sstep(10.75, 11.0, t)) : t < 11.4 ? 0.62 : U.lerp(0.62, 1.0, U.sstep(11.35, 11.5, t));
       var opaque = U.sstep(11.42, 11.5, t);
       var tear = t < 12 ? 0 : U.ease(U.clamp((t - 12.0) / 0.5, 0, 1));
       if (tear > 0) opaque = 1;
       gl.useProgram(progVeil.p); var u = progVeil.u;
       gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, E.half.tex); gl.uniform1i(u.uEarth, 0);
-      gl.uniform1f(u.uEarthOn, t < 11.1 ? 1 : 0); gl.uniform1f(u.uT, t); gl.uniform1f(u.uZoom, zoom); gl.uniform1f(u.uCover, cover);
-      gl.uniform1f(u.uDiss, U.lerp(-0.1, 1.2, U.sstep(10.9, 11.1, t))); gl.uniform1f(u.uOpaque, opaque); gl.uniform1f(u.uTear, tear);
+      gl.uniform1f(u.uEarthOn, t < 11.0 ? 1 : 0); gl.uniform1f(u.uT, t); gl.uniform1f(u.uZoom, zoom); gl.uniform1f(u.uCover, cover);
+      gl.uniform1f(u.uDiss, U.lerp(-0.1, 1.2, U.sstep(10.75, 11.0, t))); gl.uniform1f(u.uOpaque, opaque); gl.uniform1f(u.uTear, tear);
       gl.uniform1f(u.uAsp, C.W / C.H); gl.uniform2f(u.uRes, C.W, C.H);
       C.bind(null); gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA); C.quad();
-      if (t < 11.15) balloon(C, t, cam);
       B.reset(); geese(C, t); droplets(C, t); B.flush(C, 1);
     },
   });
