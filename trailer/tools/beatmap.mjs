@@ -1,6 +1,9 @@
 // Carte des temps du trailer LKDV 60 s — source unique (BEATMAP.md et l'animatique en sont générés).
 // 120 BPM : temps = 0,5 s, croche = 0,25 s, double-croche = 0,125 s, mesure = 2 s.
-// Référence : storyboard/LKDV — Trailer 60 s.md §4, amendé par CLAUDE.md §4 (images v3) et §5 (défauts).
+// Référence : storyboard/LKDV — Trailer 60 s.md §4, amendé par CLAUDE.md §4 (images v3).
+// Décisions de l'utilisateur du 2026-11-10 : storyboard gardé tel quel pour les fonctions (balise, montre, batterie,
+// double confirmation, anneau de confiance, itinéraire recalculé, points chiffrés) ; plans au sol créés par nous ;
+// partition synthétisée originale. Logo seul à 0:53 et mots tapés conservés (défauts de CLAUDE.md §5).
 
 export const FPS = 60;
 export const DURATION = 60;
@@ -52,7 +55,8 @@ export const MARKS = [
   { t: 50.0, kind: "respiration", note: "Respiration 3 : le globe seul" },
   { t: 51.0, kind: "logo", note: "Les traces convergent et redessinent les montagnes, 1 s" },
   { t: 52.0, kind: "logo", note: "Badge complet, 2 s · signature 3 notes" },
-  { t: 54.0, kind: "coupe", note: "Noir sec (coupe franche voulue), un seul ping" },
+  { t: 54.0, kind: "coupe", note: "Noir sec (coupe franche voulue) : silence 54,0–54,5" },
+  { t: 54.5, kind: "ping", note: "Le téléphone s'allume dans le noir, un seul ping (54,5)" },
   { t: 59.0, kind: "boucle", note: "L'aurore est redevenue la nébuleuse ; image 3599 ≈ image 0" },
 ];
 
@@ -88,23 +92,23 @@ export const SECONDS = [
   { t: 23, act: 3, idea: "L'étiquette sage devient un anneau", plate: "03 → flou", ui: "Étiquette qui tourne → anneau qui grossit vers la caméra", son: "Riser court" },
   // ───── Acte 4 — Confiance et terrain
   { t: 24, act: 4, idea: "L'anneau de confiance de Marc se remplit", plate: "04 port, heure ambre, derrière le verre", ui: "Tiroir mi-hauteur ; avatar M au centre ; « 96 » ; 12 petites coches sage", son: "Note tenue, chaude" },
-  { t: 25, act: 4, idea: "La tente change de mains", plate: "04 gros plan sur la remise ; étiquette cousue au logo 0,5 s", ui: "Double coche sage ; 4 barres à pictos (compass, backpack, plume, handshake), la dernière monte — sans chiffre", son: "Double tick, carillon" },
-  { t: 26, act: 4, idea: "Chaque objet émet une onde sage", plate: "03 intérieur, lumière ambre", ui: "Selon AUDIT-APP : balise / montre / batterie, ou batterie partagée + carte ; pastilles de verre : « 14,2 km », jauge 82 %", son: "Trois pings" },
-  { t: 27, act: 4, idea: "Plus de réseau : la carte reste vivante", plate: "03 / 06", ui: "wifi-off ; 4 points d'avatars qui bougent toujours sur la carte", son: "Grésillement coupé net" },
+  { t: 25, act: 4, idea: "La tente change de mains", plate: "04 gros plan sur la remise ; étiquette cousue au logo 0,5 s", ui: "Deux téléphones se touchent : double coche sage ; 4 barres à pictos (compass, backpack, plume, handshake), la dernière monte ; « +25 »", son: "Double tick, carillon" },
+  { t: 26, act: 4, idea: "Chaque objet émet une onde sage", plate: "03 intérieur, lumière ambre", ui: "Une onde sage par croche sur la balise, la montre, la batterie ; pastilles de verre : picto satellite ; « 14,2 km » ; jauge 82 %", son: "Trois pings" },
+  { t: 27, act: 4, idea: "Plus de réseau : la carte reste vivante", plate: "03 / 06", ui: "Trois fils de lumière vers le téléphone ; wifi-off ; 4 points d'avatars qui bougent toujours sur la carte", son: "Grésillement coupé net" },
   { t: 28, act: 4, idea: "La trace avance avec les marcheurs", plate: "05 Landmannalaugar", ui: "Carte en relief dans un tiroir bas ; « 6,8 km », « +412 m » ; picto source chaude qui pulse", son: "Pas sur gravier" },
   { t: 29, act: 4, idea: "Le vent arrive : la route se redessine", plate: "06 rivière chaude, ciel qui se charge → time-lapse 0,5 s → 07 plage", ui: "wind ambre ; ancien tracé en pointillés, nouveau en sage plein", son: "Bourrasque, puis calme" },
   // ───── Acte 5 — Le relais
   { t: 30, act: 5, idea: "Le carnet s'écrit tout seul au feu de camp", plate: "07 feu de camp, soleil de minuit", ui: "Page Paper : photos qui tombent en place, écriture = texture", son: "Crépitement, guitare sèche" },
   { t: 31, act: 5, idea: "Publié ; le pouce s'arrête sur une photo", plate: "07", ui: "send coché ; carte du fil : avatar N + photo du plan 08", son: "Tick, swipe" },
   { t: 32, act: 5, idea: "PLONGÉE 1 : à travers l'écran, chez Nora", plate: "08 Karakoram, K2 : traversée 32,0–32,5 (réfraction), ralenti, Nora minuscule", ui: "— (respiration 2 : 32,5–33,0)", son: "Le feu devient vent" },
-  { t: 33, act: 5, idea: "Son kit se déplie en éventail", plate: "08, rampe vers le sac", ui: "Éventail de silhouettes aux 4 couleurs ; « 9,8 kg » ; selon AUDIT-APP : position partagée à 2 avatars", son: "Cliquetis de bâtons" },
+  { t: 33, act: 5, idea: "Son kit se déplie en éventail", plate: "08, rampe vers le sac", ui: "Éventail de silhouettes aux 4 couleurs ; « 9,8 kg » ; la balise pulse, 2 fils de lumière vers 2 avatars", son: "Cliquetis de bâtons" },
   { t: 34, act: 5, idea: "Son carnet : 5 pages en 5 flips", plate: "08 (fonds de pages tirés des plans disponibles)", ui: "5 flips ; mini-carte de la trace qui s'allonge", son: "Pages en rythme" },
   { t: 35, act: 5, idea: "Bras ouverts au sommet ; la crête refait le logo", plate: "08 ralenti 50 %, cadrage de 0:12, logo 0,75 s", ui: "La photo part vers le haut en bulle de verre", son: "Envolée de cordes" },
   { t: 36, act: 5, idea: "PLONGÉE 2 : la bulle retombe chez Tom", plate: "09 Lyon, bord du Rhône, aube", ui: "Îlot : avatar N + vignette du sommet ; picto course, « 5,2 km », pause", son: "Souffle, ville au loin" },
   { t: 37, act: 5, idea: "Silence ; il sourit, se lève", plate: "09 plan serré", ui: "pause → play", son: "Silence 37,0–37,5, un coup sec" },
-  { t: 38, act: 5, idea: "Sa trace dessine les montagnes du logo", plate: "09 vue du ciel (trace sur le fleuve, 0,5 s)", ui: "« 8,0 km » ; barre compass qui monte — sans chiffre", son: "Foulées sur le tempo" },
+  { t: 38, act: 5, idea: "Sa trace dessine les montagnes du logo", plate: "09 vue du ciel (trace sur le fleuve, 0,5 s)", ui: "« 8,0 km » ; barre compass qui monte ; « +40 »", son: "Foulées sur le tempo" },
   { t: 39, act: 5, idea: "Il partage ; le club montre des vélos", plate: "09", ui: "bike ; grappe de 12 avatars", son: "Tick" },
-  { t: 40, act: 5, idea: "PLONGÉE 3 : le peloton dans les vignes", plate: "10 Bourgogne, automne (traversée 0,25 s)", ui: "12 avatars cochés ; « 42 km » ; barre handshake qui monte — sans chiffre", son: "Roue libre, rires" },
+  { t: 40, act: 5, idea: "PLONGÉE 3 : le peloton dans les vignes", plate: "10 Bourgogne, automne (traversée 0,25 s)", ui: "12 avatars cochés ; « 42 km » ; barre handshake qui monte ; « +60 »", son: "Roue libre, rires" },
   { t: 41, act: 5, idea: "RAFALE : le monde entier", plate: "11 Sahara · 12 Amazonie · 13 Uyuni · 14 Baïkal · 15 Raja Ampat · 16 Antelope · 17 Népal · 18 Atacama — 0,125 s chacun (double-croche)", ui: "—", son: "Un coup par double-croche" },
   { t: 42, act: 5, idea: "Tous les voyages, tous les publics", plate: "19 train de nuit (42,0–42,5) · 20 sentier accessible (42,5–43,0)", ui: "train ; picto accessibilité", son: "Un plan par temps" },
   { t: 43, act: 5, idea: "Inès garde le carnet de Nora, lève les yeux", plate: "07 même cadrage qu'à 0:30", ui: "bookmark qui se remplit", son: "Retour du crépitement" },
@@ -120,7 +124,7 @@ export const SECONDS = [
   // ───── Acte 7 — Signature
   { t: 52, act: 7, idea: "Le badge complet s'assemble", cosmos: "Terre en fond flouté", ui: "Badge LKDV autour des montagnes (seul texte depuis 0:04)", son: "Signature 3 notes" },
   { t: 53, act: 7, idea: "Le logo respire", cosmos: "Terre en fond flouté", ui: "Logo seul (pas d'adresse)", son: "Dernier accord" },
-  { t: 54, act: 7, idea: "LE BOUTON : noir sec, un téléphone s'allume", plate: "noir", ui: "Îlot : avatar H + picto bouteille", son: "Silence, un ping" },
+  { t: 54, act: 7, idea: "LE BOUTON : noir sec, un téléphone s'allume", plate: "fond encre (54,0–56,5)", ui: "Rien de 54,0 à 54,5 ; à 54,5 le téléphone s'allume : îlot avec avatar H + picto bouteille", son: "Silence 54,0–54,5, un ping à 54,5" },
   { t: 55, act: 7, idea: "Une nouvelle bouteille : fjord sous l'aurore", plate: "21 dans la carte", ui: "Carte de verre : photo, avatars H, S, I, cercle en pointillés", son: "Respiration" },
   { t: 56, act: 7, idea: "Le pouce touche le cercle : il se remplit", plate: "21 s'agrandit, plongée", ui: "Avatar L qui s'allume", son: "Tick, la pulsation reprend" },
   { t: 57, act: 7, idea: "Norvège : l'aurore emplit le ciel", cosmos: "Gaz d'aurore par-dessus le ciel du plan dès 57,5", plate: "21 plein cadre, bascule vers le haut", ui: "—", son: "Cordes, une mesure" },

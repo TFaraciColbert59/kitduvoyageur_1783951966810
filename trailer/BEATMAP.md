@@ -57,7 +57,8 @@ Le temps local d'une scène = temps du film − début de son hôte.
 | 0:50 | 3000 | respiration | Respiration 3 : le globe seul |
 | 0:51 | 3060 | logo | Les traces convergent et redessinent les montagnes, 1 s |
 | 0:52 | 3120 | logo | Badge complet, 2 s · signature 3 notes |
-| 0:54 | 3240 | coupe | Noir sec (coupe franche voulue), un seul ping |
+| 0:54 | 3240 | coupe | Noir sec (coupe franche voulue) : silence 54,0–54,5 |
+| 0:54,5 | 3270 | ping | Le téléphone s'allume dans le noir, un seul ping (54,5) |
 | 0:59 | 3540 | boucle | L'aurore est redevenue la nébuleuse ; image 3599 ≈ image 0 |
 
 ## Seconde par seconde
@@ -89,22 +90,22 @@ Le temps local d'une scène = temps du film − début de son hôte.
 | 0:22 | 3 | **HÉROS : la porte du van ouverte sur l'océan** | — | 03 plein cadre, ralenti, 1 s | — (étiquettes de couleur discrètes sur le matériel, sans texte) | Grosse caisse, vent |
 | 0:23 | 3 | **L'étiquette sage devient un anneau** | — | 03 → flou | Étiquette qui tourne → anneau qui grossit vers la caméra | Riser court |
 | 0:24 | 4 | **L'anneau de confiance de Marc se remplit** | — | 04 port, heure ambre, derrière le verre | Tiroir mi-hauteur ; avatar M au centre ; « 96 » ; 12 petites coches sage | Note tenue, chaude |
-| 0:25 | 4 | **La tente change de mains** | — | 04 gros plan sur la remise ; étiquette cousue au logo 0,5 s | Double coche sage ; 4 barres à pictos (compass, backpack, plume, handshake), la dernière monte — sans chiffre | Double tick, carillon |
-| 0:26 | 4 | **Chaque objet émet une onde sage** | — | 03 intérieur, lumière ambre | Selon AUDIT-APP : balise / montre / batterie, ou batterie partagée + carte ; pastilles de verre : « 14,2 km », jauge 82 % | Trois pings |
-| 0:27 | 4 | **Plus de réseau : la carte reste vivante** | — | 03 / 06 | wifi-off ; 4 points d'avatars qui bougent toujours sur la carte | Grésillement coupé net |
+| 0:25 | 4 | **La tente change de mains** | — | 04 gros plan sur la remise ; étiquette cousue au logo 0,5 s | Deux téléphones se touchent : double coche sage ; 4 barres à pictos (compass, backpack, plume, handshake), la dernière monte ; « +25 » | Double tick, carillon |
+| 0:26 | 4 | **Chaque objet émet une onde sage** | — | 03 intérieur, lumière ambre | Une onde sage par croche sur la balise, la montre, la batterie ; pastilles de verre : picto satellite ; « 14,2 km » ; jauge 82 % | Trois pings |
+| 0:27 | 4 | **Plus de réseau : la carte reste vivante** | — | 03 / 06 | Trois fils de lumière vers le téléphone ; wifi-off ; 4 points d'avatars qui bougent toujours sur la carte | Grésillement coupé net |
 | 0:28 | 4 | **La trace avance avec les marcheurs** | — | 05 Landmannalaugar | Carte en relief dans un tiroir bas ; « 6,8 km », « +412 m » ; picto source chaude qui pulse | Pas sur gravier |
 | 0:29 | 4 | **Le vent arrive : la route se redessine** | — | 06 rivière chaude, ciel qui se charge → time-lapse 0,5 s → 07 plage | wind ambre ; ancien tracé en pointillés, nouveau en sage plein | Bourrasque, puis calme |
 | 0:30 | 5 | **Le carnet s'écrit tout seul au feu de camp** | — | 07 feu de camp, soleil de minuit | Page Paper : photos qui tombent en place, écriture = texture | Crépitement, guitare sèche |
 | 0:31 | 5 | **Publié ; le pouce s'arrête sur une photo** | — | 07 | send coché ; carte du fil : avatar N + photo du plan 08 | Tick, swipe |
 | 0:32 | 5 | **PLONGÉE 1 : à travers l'écran, chez Nora** | — | 08 Karakoram, K2 : traversée 32,0–32,5 (réfraction), ralenti, Nora minuscule | — (respiration 2 : 32,5–33,0) | Le feu devient vent |
-| 0:33 | 5 | **Son kit se déplie en éventail** | — | 08, rampe vers le sac | Éventail de silhouettes aux 4 couleurs ; « 9,8 kg » ; selon AUDIT-APP : position partagée à 2 avatars | Cliquetis de bâtons |
+| 0:33 | 5 | **Son kit se déplie en éventail** | — | 08, rampe vers le sac | Éventail de silhouettes aux 4 couleurs ; « 9,8 kg » ; la balise pulse, 2 fils de lumière vers 2 avatars | Cliquetis de bâtons |
 | 0:34 | 5 | **Son carnet : 5 pages en 5 flips** | — | 08 (fonds de pages tirés des plans disponibles) | 5 flips ; mini-carte de la trace qui s'allonge | Pages en rythme |
 | 0:35 | 5 | **Bras ouverts au sommet ; la crête refait le logo** | — | 08 ralenti 50 %, cadrage de 0:12, logo 0,75 s | La photo part vers le haut en bulle de verre | Envolée de cordes |
 | 0:36 | 5 | **PLONGÉE 2 : la bulle retombe chez Tom** | — | 09 Lyon, bord du Rhône, aube | Îlot : avatar N + vignette du sommet ; picto course, « 5,2 km », pause | Souffle, ville au loin |
 | 0:37 | 5 | **Silence ; il sourit, se lève** | — | 09 plan serré | pause → play | Silence 37,0–37,5, un coup sec |
-| 0:38 | 5 | **Sa trace dessine les montagnes du logo** | — | 09 vue du ciel (trace sur le fleuve, 0,5 s) | « 8,0 km » ; barre compass qui monte — sans chiffre | Foulées sur le tempo |
+| 0:38 | 5 | **Sa trace dessine les montagnes du logo** | — | 09 vue du ciel (trace sur le fleuve, 0,5 s) | « 8,0 km » ; barre compass qui monte ; « +40 » | Foulées sur le tempo |
 | 0:39 | 5 | **Il partage ; le club montre des vélos** | — | 09 | bike ; grappe de 12 avatars | Tick |
-| 0:40 | 5 | **PLONGÉE 3 : le peloton dans les vignes** | — | 10 Bourgogne, automne (traversée 0,25 s) | 12 avatars cochés ; « 42 km » ; barre handshake qui monte — sans chiffre | Roue libre, rires |
+| 0:40 | 5 | **PLONGÉE 3 : le peloton dans les vignes** | — | 10 Bourgogne, automne (traversée 0,25 s) | 12 avatars cochés ; « 42 km » ; barre handshake qui monte ; « +60 » | Roue libre, rires |
 | 0:41 | 5 | **RAFALE : le monde entier** | — | 11 Sahara · 12 Amazonie · 13 Uyuni · 14 Baïkal · 15 Raja Ampat · 16 Antelope · 17 Népal · 18 Atacama — 0,125 s chacun (double-croche) | — | Un coup par double-croche |
 | 0:42 | 5 | **Tous les voyages, tous les publics** | — | 19 train de nuit (42,0–42,5) · 20 sentier accessible (42,5–43,0) | train ; picto accessibilité | Un plan par temps |
 | 0:43 | 5 | **Inès garde le carnet de Nora, lève les yeux** | — | 07 même cadrage qu'à 0:30 | bookmark qui se remplit | Retour du crépitement |
@@ -118,7 +119,7 @@ Le temps local d'une scène = temps du film − début de son hôte.
 | 0:51 | 6 | **Les traces redessinent les montagnes du logo** | Les traces quittent le globe, convergent ; le Soleil vient se placer : le point (logo 1 s) | — | — | Montée finale |
 | 0:52 | 7 | **Le badge complet s'assemble** | Terre en fond flouté | — | Badge LKDV autour des montagnes (seul texte depuis 0:04) | Signature 3 notes |
 | 0:53 | 7 | **Le logo respire** | Terre en fond flouté | — | Logo seul (pas d'adresse) | Dernier accord |
-| 0:54 | 7 | **LE BOUTON : noir sec, un téléphone s'allume** | — | noir | Îlot : avatar H + picto bouteille | Silence, un ping |
+| 0:54 | 7 | **LE BOUTON : noir sec, un téléphone s'allume** | — | fond encre (54,0–56,5) | Rien de 54,0 à 54,5 ; à 54,5 le téléphone s'allume : îlot avec avatar H + picto bouteille | Silence 54,0–54,5, un ping à 54,5 |
 | 0:55 | 7 | **Une nouvelle bouteille : fjord sous l'aurore** | — | 21 dans la carte | Carte de verre : photo, avatars H, S, I, cercle en pointillés | Respiration |
 | 0:56 | 7 | **Le pouce touche le cercle : il se remplit** | — | 21 s'agrandit, plongée | Avatar L qui s'allume | Tick, la pulsation reprend |
 | 0:57 | 7 | **Norvège : l'aurore emplit le ciel** | Gaz d'aurore par-dessus le ciel du plan dès 57,5 | 21 plein cadre, bascule vers le haut | — | Cordes, une mesure |

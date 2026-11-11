@@ -6,3 +6,5 @@ out/frames/
 qa/tmp/
 *.log
 assets/footage/candidates/*/*.tmp
+__pycache__/
+assets/audio/stem_*.wav
