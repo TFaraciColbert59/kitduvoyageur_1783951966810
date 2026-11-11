@@ -2899,3 +2899,49 @@
   color: var(--lkv-forest-900);
   box-shadow: inset 0 0 0 1px var(--cv2-soft-line), inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
+
+/* Résultats de la recherche de randonnée (étape Tracé) : liste de boutons
+   lisibles, cible ≥ 44 px, repli opaque en transparence réduite. */
+.lkdv-cv2c-trail-list {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.lkdv-cv2c-trail-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    0 0 0 0.5px rgba(23, 43, 36, 0.12);
+  color: var(--lkv-text-primary, #17402c);
+  text-align: left;
+  cursor: pointer;
+}
+.lkdv-cv2c-trail-row:hover {
+  background: rgba(255, 255, 255, 0.72);
+}
+.lkdv-cv2c-trail-row:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.lkdv-cv2c-trail-name {
+  font: 600 13.5px/1.3 var(--font-sans);
+}
+.lkdv-cv2c-trail-meta {
+  font-size: 11.5px;
+}
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .lkdv-cv2c-trail-row {
+    background: #f4f1ea;
+  }
+}

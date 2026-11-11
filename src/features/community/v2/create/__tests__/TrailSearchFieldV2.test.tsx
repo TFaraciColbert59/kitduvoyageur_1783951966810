@@ -130,3 +130,23 @@ describe('traceFromGeoJson — conversion du tracé réel', () => {
     expect(traceFromGeoJson({ type: 'LineString', coordinates: [['x', 'y']] })).toEqual([]);
   });
 });
+
+describe('TrailSearchFieldV2 — import refusé sans tracé réel', () => {
+  it('signale une randonnée dont la géométrie est absente', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.includes('/api/hikes?')) return { ok: true, json: async () => [SEARCH_RESULT] };
+        return { ok: true, json: async () => ({ geojson: null }) };
+      }) as unknown as typeof fetch
+    );
+    render(<Harness />);
+    fireEvent.change(screen.getByLabelText(/Rechercher une randonnée existante/i), {
+      target: { value: 'lac' },
+    });
+    const row = await screen.findByRole('button', { name: /GRP 125 Liaison Lac de Val Joly/i }, { timeout: 2500 });
+    fireEvent.click(row);
+    expect(await screen.findByText(/pas de tracé disponible/i, {}, { timeout: 2500 })).toBeTruthy();
+  });
+});
