@@ -2552,3 +2552,10 @@ body.lkdv-overlay-open .lkdv-floating-tabbar {
     backdrop-filter: none !important;
   }
 }
+
+/* État vide de la carte du carnet : remonter la carte d'état au-dessus de la
+   barre d'attribution et du bord bas (le bouton « Rechercher une randonnée »
+   était rogné sur les petits écrans). */
+.lkdv-carnet-mapzone .lkdv-map-state {
+  top: 24px;
+}
