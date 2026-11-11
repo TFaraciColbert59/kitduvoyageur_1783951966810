@@ -64,6 +64,7 @@ import {
 import { EtapeFiche, ItemFiche, NightFiche, ParticipantFiche } from './CarnetFiches';
 import { MOMENT_TYPE_ICONS } from './CarnetMomentTile';
 import { relativeTime } from '@/features/carnet/detail/useCarnetNotifications';
+import { CARNET_NOTIFY_MODES, useCarnetFollow } from '@/features/carnet/detail/useCarnetFollow';
 import { elevationProfileGain } from '@/features/carnet/detail/elevationProfile';
 
 export type CarnetSlotId = 'fil' | 'route' | 'sac' | 'chiffres' | 'equipage';
@@ -256,6 +257,15 @@ export function CarnetDrawerV2({
 
   const voice = useVoicePlayer(() => onIsland?.('Aucun enregistrement à écouter pour cette note'));
   const [notifPref, setNotifPref] = useNotifPref(detail.id);
+  /* Propositions n° 20 et 41 : suivre le carnet (pas seulement la personne) et
+     garder la fréquence de notification sur le compte. Repli local honnête
+     quand la table n'est pas encore appliquée ou quand on est invité. */
+  const carnetFollow = useCarnetFollow({
+    carnetId: detail.id,
+    userId,
+    isParticipant: isParticipantRole(detail.viewerRole),
+  });
+  const serverNotif = carnetFollow.persisted && !isParticipantRole(detail.viewerRole);
 
   // Focus piégé, Échap, retour de focus, verrou de scroll (socle §7.2).
   const dialogRef = useCarnetDialog(isOpen, onClose);
@@ -1153,6 +1163,42 @@ export function CarnetDrawerV2({
                   progression et les battements sont le suivi à froid, le
                   résumé du soir le rattrapage de la journée terminée. */}
               <CarnetProgression detail={detail} />
+              {/* Proposition n° 20 : suivre le carnet, pas seulement son auteur. */}
+              {!isParticipantRole(detail.viewerRole) ? (
+                <div className="lkdv-sig" data-testid="carnet-follow">
+                  <Radio size={18} aria-hidden />
+                  <span style={{ flex: 1 }}>
+                    <b>{carnetFollow.following ? 'Tu suis ce carnet' : 'Suivre ce carnet'}</b>
+                    <br />
+                    <span className="lkdv-mute">
+                      {carnetFollow.following
+                        ? 'Ses signaux arrivent selon ta fréquence de notification.'
+                        : 'Reçois ses signaux pendant le voyage, pas seulement à la publication.'}
+                    </span>
+                  </span>
+                  <button
+                    type="button"
+                    className="lkdv-lens-cta"
+                    aria-pressed={carnetFollow.following}
+                    aria-label={carnetFollow.following ? 'Ne plus suivre le carnet' : 'Suivre le carnet'}
+                    disabled={carnetFollow.busy}
+                    onClick={() => {
+                      if (!userId) {
+                        onRequireAuth?.();
+                        return;
+                      }
+                      void carnetFollow.toggle();
+                    }}
+                    style={
+                      carnetFollow.following
+                        ? { background: 'var(--fill2)', color: 'var(--tint)' }
+                        : undefined
+                    }
+                  >
+                    {carnetFollow.following ? 'Ne plus suivre' : 'Suivre'}
+                  </button>
+                </div>
+              ) : null}
               <div className="lkdv-sig">
                 <Radio size={18} aria-hidden />
                 <span>
@@ -1179,26 +1225,42 @@ export function CarnetDrawerV2({
               />
               <h3 className="lkdv-h5">Me prévenir</h3>
               <div role="radiogroup" aria-label="Notifications" style={{ display: 'grid', gap: 6 }}>
-                {NOTIF_PREFS.map(([label, hint], i) => (
-                  <button
-                    key={label}
-                    type="button"
-                    className="lkdv-opt"
-                    role="radio"
-                    aria-checked={notifPref === i}
-                    aria-label={label}
-                    onClick={() => {
-                      setNotifPref(i);
-                      if (!userId) onRequireAuth?.();
-                    }}
-                  >
-                    <span className="rad" />
-                    {label}
-                    <small>{hint}</small>
-                  </button>
-                ))}
+                {NOTIF_PREFS.map(([label, hint], i) => {
+                  const mode = CARNET_NOTIFY_MODES[i];
+                  const active = serverNotif
+                    ? carnetFollow.notifyMode === mode
+                    : notifPref === i;
+                  return (
+                    <button
+                      key={label}
+                      type="button"
+                      className="lkdv-opt"
+                      role="radio"
+                      aria-checked={active}
+                      aria-label={label}
+                      onClick={() => {
+                        /* Connecté et table appliquée : la fréquence vit sur le
+                           compte ; sinon la préférence reste sur l'appareil. */
+                        if (serverNotif) {
+                          void carnetFollow.setNotifyMode(mode);
+                          return;
+                        }
+                        setNotifPref(i);
+                        if (!userId) onRequireAuth?.();
+                      }}
+                    >
+                      <span className="rad" />
+                      {label}
+                      <small>{hint}</small>
+                    </button>
+                  );
+                })}
               </div>
-              <p className="lkdv-mute">Préférence gardée sur cet appareil.</p>
+              <p className="lkdv-mute">
+                {serverNotif
+                  ? 'Préférence enregistrée sur ton compte.'
+                  : 'Préférence gardée sur cet appareil.'}
+              </p>
             </div>
           );
         }
