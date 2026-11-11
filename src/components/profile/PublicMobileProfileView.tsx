@@ -4,6 +4,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
+import { followErrorMessage, setFollow } from '@/features/compte/client/followClient';
 import Link from 'next/link';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useUserPresence } from '@/hooks/useUserPresence';
@@ -68,6 +69,7 @@ export default function PublicMobileProfileView({
   const [tab, setTab] = useState<TabKey>('tout');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [following, setFollowing] = useState(false);
+  const [requested, setRequested] = useState(false);
   const [followBusy, setFollowBusy] = useState(false);
   const [followError, setFollowError] = useState('');
   const [trustModalOpen, setTrustModalOpen] = useState(false);
@@ -90,6 +92,7 @@ export default function PublicMobileProfileView({
   useEffect(() => {
     let active = true;
     setFollowing(false);
+    setRequested(false);
     setFollowError('');
     if (!user?.id || user.id === profile.id) return () => { active = false; };
     void createClient().from('user_follows').select('id')
@@ -106,22 +109,25 @@ export default function PublicMobileProfileView({
     if (user.id === profile.id) return;
     setFollowError('');
     setFollowBusy(true);
-    const next = !following;
-    setFollowing(next);
-    triggerHaptic(next ? 'success' : 'selection');
-    const supabase = createClient();
-    const { error } = next
-      ? await supabase.from('user_follows').upsert(
-          { follower_id: user.id, following_id: profile.id },
-          { onConflict: 'follower_id,following_id', ignoreDuplicates: true }
-        )
-      : await supabase.from('user_follows').delete()
-          .eq('follower_id', user.id).eq('following_id', profile.id);
-    if (error) {
-      setFollowing(!next);
-      setFollowError('L’abonnement n’a pas été enregistré. Réessayez.');
+    const wasFollowing = following;
+    const wasRequested = requested;
+    const action = following || requested ? 'unfollow' : 'follow';
+    setFollowing(action === 'follow');
+    setRequested(false);
+    triggerHaptic(action === 'follow' ? 'success' : 'selection');
+    try {
+      const status = await setFollow(profile.id, action);
+      setFollowing(status === 'following');
+      setRequested(status === 'requested');
+    } catch (error) {
+      setFollowing(wasFollowing);
+      setRequested(wasRequested);
+      setFollowError(
+        followErrorMessage(error, 'L’abonnement n’a pas été enregistré. Réessayez.')
+      );
+    } finally {
+      setFollowBusy(false);
     }
-    setFollowBusy(false);
   };
 
   const router = useRouter();
@@ -333,14 +339,21 @@ export default function PublicMobileProfileView({
           <div className="flex items-center gap-2 pt-4">
             {user?.id !== profile.id && (
               <Button
-                variant={following ? 'secondary' : 'primary'}
+                variant={following || requested ? 'secondary' : 'primary'}
                 size="sm"
                 onClick={() => void handleFollowToggle()}
                 disabled={followBusy}
-                aria-pressed={following}
+                aria-pressed={following || requested}
+                title={requested ? 'Annuler la demande de suivi' : undefined}
                 className="flex-1 font-bold"
               >
-                {followBusy ? 'Enregistrement…' : following ? '✓ Abonné' : "+ S'abonner"}
+                {followBusy
+                  ? 'Enregistrement…'
+                  : requested
+                    ? 'Demande envoyée'
+                    : following
+                      ? '✓ Abonné'
+                      : "+ S'abonner"}
               </Button>
             )}
 

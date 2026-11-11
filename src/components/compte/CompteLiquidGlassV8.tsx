@@ -8,6 +8,7 @@ import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
+import { setFollow } from '@/features/compte/client/followClient';
 import { requestCarnetPublicationAward } from '@/lib/progression-award-requests';
 // Invoque /api/voyages/mine via le client cache
 import { fetchMyTripsCached, getMyTripsSessionGeneration, isMyTripsSessionCurrent } from '@/features/trips/client/fetchMyTrips';
@@ -753,10 +754,13 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
             .eq('following_id', target.id)
             .maybeSingle();
           if (!isCurrent()) return;
-          if (existing?.id) {
-            await supabase.from('user_follows').delete().eq('id', existing.id);
-          } else {
-            await supabase.from('user_follows').insert({ follower_id: me.id, following_id: target.id });
+          try {
+            await setFollow(target.id, existing?.id ? 'unfollow' : 'follow');
+          } catch (error) {
+            // La maquette bascule avant l'appel : on relit l'état serveur pour
+            // annuler une bascule qui n'a pas été enregistrée.
+            if (isCurrent()) (window as any).__lkdvHydrateCompte?.();
+            throw error;
           }
         } catch (_) {}
       } else if (action === 'signout') {

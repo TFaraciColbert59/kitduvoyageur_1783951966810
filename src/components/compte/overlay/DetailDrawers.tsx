@@ -4,6 +4,7 @@ import { LikeIcon } from '@/components/social-kit';
 import React, { useEffect, useState } from 'react';
 import { Award, BadgeCheck, Compass, Lock, UserCheck, UserPlus } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { followErrorMessage, setFollow } from '@/features/compte/client/followClient';
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchSavedPosts } from '@/features/community/posts/queries';
 import type { SavedPost } from '@/features/community/posts/types';
@@ -144,6 +145,9 @@ export function ProfilePreviewDrawer({ userId, onClose }: { userId: string; onCl
   const { user } = useAuth();
   const [profile, setProfile] = useState<{ id: string; full_name?: string; handle?: string; avatar_url?: string; bio?: string; location?: string; trust_score?: number } | null>(null);
   const [following, setFollowing] = useState(false);
+  const [requested, setRequested] = useState(false);
+  const [followBusy, setFollowBusy] = useState(false);
+  const [followError, setFollowError] = useState('');
   const [loading, setLoading] = useState(true);
   useEffect(() => {
     let cancelled = false;
@@ -161,11 +165,27 @@ export function ProfilePreviewDrawer({ userId, onClose }: { userId: string; onCl
     return () => { cancelled = true; };
   }, [userId, user]);
   const toggle = async () => {
-    if (!user || !profile || user.id === profile.id) return;
-    const supabase = createClient();
-    if (following) await supabase.from('user_follows').delete().eq('follower_id', user.id).eq('following_id', profile.id);
-    else await supabase.from('user_follows').insert({ follower_id: user.id, following_id: profile.id });
-    setFollowing((v) => !v);
+    if (followBusy || !user || !profile || user.id === profile.id) return;
+    const wasFollowing = following;
+    const wasRequested = requested;
+    const action = following || requested ? 'unfollow' : 'follow';
+    setFollowBusy(true);
+    setFollowError('');
+    setFollowing(action === 'follow');
+    setRequested(false);
+    try {
+      const status = await setFollow(profile.id, action);
+      setFollowing(status === 'following');
+      setRequested(status === 'requested');
+    } catch (error) {
+      setFollowing(wasFollowing);
+      setRequested(wasRequested);
+      setFollowError(
+        followErrorMessage(error, 'L’abonnement n’a pas été enregistré. Réessayez.')
+      );
+    } finally {
+      setFollowBusy(false);
+    }
   };
   return (
     <OverlaySheet title="Profil" subtitle={profile?.handle ? `@${profile.handle}` : undefined} onClose={onClose} nested>
@@ -179,13 +199,19 @@ export function ProfilePreviewDrawer({ userId, onClose }: { userId: string; onCl
           {user?.id !== profile.id ? (
             <div className="lkdv-apill-row is-start lkdv-profile-preview-actions">
               <ActionPill
-                tone={following ? 'glass' : 'primary'}
-                label={following ? 'Abonné' : 'Suivre'}
-                aria-pressed={following}
-                icon={following ? <UserCheck /> : <UserPlus />}
+                tone={following || requested ? 'glass' : 'primary'}
+                label={requested ? 'Demande envoyée' : following ? 'Abonné' : 'Suivre'}
+                aria-pressed={following || requested}
+                icon={following || requested ? <UserCheck /> : <UserPlus />}
+                busy={followBusy}
                 onClick={() => void toggle()}
               />
             </div>
+          ) : null}
+          {followError ? (
+            <p className="lkdv-profile-preview-bio" role="alert" style={{ color: 'var(--lkv-danger)' }}>
+              {followError}
+            </p>
           ) : null}
         </div>
       )}

@@ -17,6 +17,7 @@ import { ProfileDrawerHost } from '@/components/compte/drawer/ProfileDrawerHost'
 import { DRAWER_V2_CSS } from '@/components/compte/drawer/SlotShell';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
+import { followErrorMessage, setFollow } from '@/features/compte/client/followClient';
 import type {
   CompteActiviteItem,
   CompteBadgeItem,
@@ -58,6 +59,7 @@ export function PublicProfileV2({
   const { user } = useAuth();
   const owner = Boolean(user?.id && user.id === profile.id);
   const [following, setFollowing] = useState(false);
+  const [requested, setRequested] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -92,6 +94,7 @@ export function PublicProfileV2({
   useEffect(() => {
     let active = true;
     setFollowing(false);
+    setRequested(false);
     if (!user?.id || owner) return () => { active = false; };
     void createClient()
       .from('user_follows')
@@ -117,30 +120,35 @@ export function PublicProfileV2({
     if (owner) return;
     setBusy(true);
     setMessage(null);
-    const next = !following;
-    setFollowing(next);
-    const supabase = createClient();
-    const { error } = next
-      ? await supabase
-          .from('user_follows')
-          .upsert(
-            { follower_id: user.id, following_id: profile.id },
-            { onConflict: 'follower_id,following_id', ignoreDuplicates: true }
-          )
-      : await supabase
-          .from('user_follows')
-          .delete()
-          .eq('follower_id', user.id)
-          .eq('following_id', profile.id);
-    if (error) {
-      setFollowing(!next);
-      setMessage('Abonnement non enregistré. Réessaie.');
-    } else {
-      setMessage(next ? 'Tu suis ce voyageur.' : 'Tu ne suis plus ce voyageur.');
+    const wasFollowing = following;
+    const wasRequested = requested;
+    const action = following || requested ? 'unfollow' : 'follow';
+    // Bascule optimiste : l'UI répond au geste, puis revient à l'état exact
+    // décidé par l'API (following, requested ou unfollowed).
+    setFollowing(action === 'follow');
+    setRequested(false);
+    try {
+      const status = await setFollow(profile.id, action);
+      setFollowing(status === 'following');
+      setRequested(status === 'requested');
+      setMessage(
+        status === 'following'
+          ? 'Tu suis ce voyageur.'
+          : status === 'requested'
+            ? 'Demande de suivi envoyée.'
+            : wasRequested
+              ? 'Demande de suivi annulée.'
+              : 'Tu ne suis plus ce voyageur.'
+      );
       window.setTimeout(() => setMessage(null), 2400);
+    } catch (error) {
+      setFollowing(wasFollowing);
+      setRequested(wasRequested);
+      setMessage(followErrorMessage(error, 'Abonnement non enregistré. Réessaie.'));
+    } finally {
+      setBusy(false);
     }
-    setBusy(false);
-  }, [busy, following, owner, profile.id, router, user?.id]);
+  }, [busy, following, owner, profile.id, requested, router, user?.id]);
 
   const share = useCallback(async () => {
     if (onShare) {
@@ -225,12 +233,14 @@ export function PublicProfileV2({
             ) : (
               <button
                 type="button"
-                className={`lkdv-public-follow ${following ? 'on' : ''}`}
+                className={`lkdv-public-follow ${following || requested ? 'on' : ''}`}
                 onClick={() => void toggleFollow()}
                 disabled={busy}
+                aria-pressed={following || requested}
+                title={requested ? 'Annuler la demande de suivi' : undefined}
               >
-                {following ? <UserCheck size={15} aria-hidden="true" /> : <UserPlus size={15} aria-hidden="true" />}
-                {following ? 'Abonné' : 'Suivre'}
+                {following || requested ? <UserCheck size={15} aria-hidden="true" /> : <UserPlus size={15} aria-hidden="true" />}
+                {requested ? 'Demande envoyée' : following ? 'Abonné' : 'Suivre'}
               </button>
             )}
             {!owner ? (
