@@ -18,6 +18,7 @@ import {
 } from '@/features/carnet/detail/momentTypes';
 import { NIGHT_TYPE_LABELS, VERDICT_LABELS } from '@/features/carnet/detail/editSchemas';
 import { CarnetArt } from './CarnetArt';
+import { CarnetVideoFeed } from './CarnetVideo';
 import { MOMENT_TYPE_ICONS, waveHeights } from './CarnetMomentTile';
 
 const NB = ' ';
@@ -176,6 +177,17 @@ export function MomentCard({
   const editPill = canEdit ? <EditPill label="Modifier le moment" onClick={() => onEdit(moment)} /> : null;
 
   if (type === 'photo' || type === 'video') {
+    /* Vidéo (proposition n° 31) : elle est réellement lue dans le fil (muette en
+       boucle, son au toucher) au lieu d'être rendue comme une image figée. */
+    if (type === 'video' && moment.imageUrl) {
+      return (
+        <article className="lkdv-mo media" data-carnet-row="" data-type={type} style={rowStyle}>
+          <CarnetVideoFeed src={moment.imageUrl} place={place} onOpen={() => onOpen(moment)} />
+          {head}
+          {editPill}
+        </article>
+      );
+    }
     return (
       <article className="lkdv-mo media" data-carnet-row="" data-type={type} style={rowStyle}>
         <button type="button" aria-label={`Ouvrir : ${place}`} onClick={() => onOpen(moment)}>

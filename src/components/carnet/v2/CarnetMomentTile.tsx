@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import type { CarnetMomentItem } from '@/features/carnet/detail/types';
 import { MOMENT_TYPE_LABELS, type MomentType, isMomentType } from '@/features/carnet/detail/momentTypes';
+import { CarnetVideoThumb } from './CarnetVideo';
 
 /** Pictogramme de la pastille de type — maquette `TYPE_IC`. */
 export const MOMENT_TYPE_ICONS: Record<MomentType, React.ComponentType<{ size?: number; strokeWidth?: number; 'aria-hidden'?: boolean }>> = {
@@ -67,6 +68,9 @@ export interface CarnetMomentTileBodyProps {
 export function CarnetMomentTileBody({ moment, type }: CarnetMomentTileBodyProps) {
   const text = momentText(moment);
   if ((type === 'photo' || type === 'video') && moment.imageUrl) {
+    /* Vidéo (proposition n° 31) : vignette vidéo inerte, jamais une image figée
+       qui laisserait croire à une photo ; la tuile ouvre le moment comme avant. */
+    if (type === 'video') return <CarnetVideoThumb src={moment.imageUrl} />;
     // eslint-disable-next-line @next/next/no-img-element
     return <img src={moment.imageUrl} alt="" loading="lazy" decoding="async" />;
   }
