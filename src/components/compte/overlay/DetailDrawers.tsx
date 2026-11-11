@@ -1,10 +1,10 @@
 'use client';
 
 import { LikeIcon } from '@/components/social-kit';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Award, BadgeCheck, Compass, Lock, UserCheck, UserPlus } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-import { followErrorMessage, setFollow } from '@/features/compte/client/followClient';
+import { followErrorMessage, loadFollowState, setFollow } from '@/features/compte/client/followClient';
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchSavedPosts } from '@/features/community/posts/queries';
 import type { SavedPost } from '@/features/community/posts/types';
@@ -143,29 +143,45 @@ export function SealDrawer({ data, onClose }: { data: BootstrapOverlayData; onCl
 
 export function ProfilePreviewDrawer({ userId, onClose }: { userId: string; onClose: () => void }) {
   const { user } = useAuth();
+  const viewerId = user?.id;
   const [profile, setProfile] = useState<{ id: string; full_name?: string; handle?: string; avatar_url?: string; bio?: string; location?: string; trust_score?: number } | null>(null);
   const [following, setFollowing] = useState(false);
   const [requested, setRequested] = useState(false);
   const [followBusy, setFollowBusy] = useState(false);
   const [followError, setFollowError] = useState('');
   const [loading, setLoading] = useState(true);
+  const readEpochRef = useRef(0);
   useEffect(() => {
     let cancelled = false;
+    const epoch = ++readEpochRef.current;
     const supabase = createClient();
+    setFollowing(false);
+    setRequested(false);
+    setFollowBusy(false);
+    setFollowError('');
+    setLoading(true);
     void (async () => {
       const { data } = await supabase.from('public_profiles').select('id,full_name,handle,avatar_url,bio,location,trust_score').eq('id', userId).maybeSingle();
       if (cancelled) return;
       setProfile(data ?? null);
-      if (data && user && user.id !== data.id) {
-        const { data: follow } = await supabase.from('user_follows').select('follower_id').eq('follower_id', user.id).eq('following_id', data.id).maybeSingle();
-        if (!cancelled) setFollowing(Boolean(follow));
+      if (data && viewerId && viewerId !== data.id) {
+        try {
+          const state = await loadFollowState(supabase, viewerId, data.id);
+          if (cancelled || epoch !== readEpochRef.current) return;
+          setFollowing(state === 'following');
+          setRequested(state === 'requested');
+        } catch {
+          // La lecture en échec laisse le bouton neutre, sans écraser une
+          // mutation qui aurait démarré pendant la requête.
+        }
       }
       if (!cancelled) setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, [userId, user]);
+  }, [userId, viewerId]);
   const toggle = async () => {
     if (followBusy || !user || !profile || user.id === profile.id) return;
+    const epoch = ++readEpochRef.current;
     const wasFollowing = following;
     const wasRequested = requested;
     const action = following || requested ? 'unfollow' : 'follow';
@@ -175,16 +191,18 @@ export function ProfilePreviewDrawer({ userId, onClose }: { userId: string; onCl
     setRequested(false);
     try {
       const status = await setFollow(profile.id, action);
+      if (epoch !== readEpochRef.current) return;
       setFollowing(status === 'following');
       setRequested(status === 'requested');
     } catch (error) {
+      if (epoch !== readEpochRef.current) return;
       setFollowing(wasFollowing);
       setRequested(wasRequested);
       setFollowError(
         followErrorMessage(error, 'L’abonnement n’a pas été enregistré. Réessayez.')
       );
     } finally {
-      setFollowBusy(false);
+      if (epoch === readEpochRef.current) setFollowBusy(false);
     }
   };
   return (

@@ -4,7 +4,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
-import { followErrorMessage, setFollow } from '@/features/compte/client/followClient';
+import { followErrorMessage, loadFollowState, setFollow } from '@/features/compte/client/followClient';
 import Link from 'next/link';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useUserPresence } from '@/hooks/useUserPresence';
@@ -73,6 +73,7 @@ export default function PublicMobileProfileView({
   const [followBusy, setFollowBusy] = useState(false);
   const [followError, setFollowError] = useState('');
   const [trustModalOpen, setTrustModalOpen] = useState(false);
+  const readEpochRef = useRef(0);
 
   const fullName = `${profile.first_name || 'Voyageur'} ${profile.last_name || ''}`.trim();
   const handleName = `@${profile.first_name?.toLowerCase() || 'voyageur'}`;
@@ -91,14 +92,21 @@ export default function PublicMobileProfileView({
 
   useEffect(() => {
     let active = true;
+    const epoch = ++readEpochRef.current;
     setFollowing(false);
     setRequested(false);
     setFollowError('');
+    setFollowBusy(false);
     if (!user?.id || user.id === profile.id) return () => { active = false; };
-    void createClient().from('user_follows').select('id')
-      .eq('follower_id', user.id).eq('following_id', profile.id).limit(1).maybeSingle()
-      .then(({ data, error }) => {
-        if (active && !error) setFollowing(Boolean(data));
+    void loadFollowState(createClient(), user.id, profile.id)
+      .then((state) => {
+        if (!active || epoch !== readEpochRef.current) return;
+        setFollowing(state === 'following');
+        setRequested(state === 'requested');
+      })
+      .catch(() => {
+        // Lecture en échec : l'état reste neutre et ne masque pas une mutation
+        // qui aurait démarré entre-temps.
       });
     return () => { active = false; };
   }, [user?.id, profile.id]);
@@ -107,6 +115,7 @@ export default function PublicMobileProfileView({
     if (followBusy) return;
     if (!user?.id) { setFollowError('Connectez-vous pour suivre ce voyageur.'); return; }
     if (user.id === profile.id) return;
+    const epoch = ++readEpochRef.current;
     setFollowError('');
     setFollowBusy(true);
     const wasFollowing = following;
@@ -117,16 +126,18 @@ export default function PublicMobileProfileView({
     triggerHaptic(action === 'follow' ? 'success' : 'selection');
     try {
       const status = await setFollow(profile.id, action);
+      if (epoch !== readEpochRef.current) return;
       setFollowing(status === 'following');
       setRequested(status === 'requested');
     } catch (error) {
+      if (epoch !== readEpochRef.current) return;
       setFollowing(wasFollowing);
       setRequested(wasRequested);
       setFollowError(
         followErrorMessage(error, 'L’abonnement n’a pas été enregistré. Réessayez.')
       );
     } finally {
-      setFollowBusy(false);
+      if (epoch === readEpochRef.current) setFollowBusy(false);
     }
   };
 

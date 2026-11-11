@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -17,7 +17,7 @@ import { ProfileDrawerHost } from '@/components/compte/drawer/ProfileDrawerHost'
 import { DRAWER_V2_CSS } from '@/components/compte/drawer/SlotShell';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
-import { followErrorMessage, setFollow } from '@/features/compte/client/followClient';
+import { followErrorMessage, loadFollowState, setFollow } from '@/features/compte/client/followClient';
 import type {
   CompteActiviteItem,
   CompteBadgeItem,
@@ -62,6 +62,7 @@ export function PublicProfileV2({
   const [requested, setRequested] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const readEpochRef = useRef(0);
 
   const name = `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Voyageur';
   const handle =
@@ -93,18 +94,20 @@ export function PublicProfileV2({
 
   useEffect(() => {
     let active = true;
+    const epoch = ++readEpochRef.current;
     setFollowing(false);
     setRequested(false);
+    setBusy(false);
     if (!user?.id || owner) return () => { active = false; };
-    void createClient()
-      .from('user_follows')
-      .select('id')
-      .eq('follower_id', user.id)
-      .eq('following_id', profile.id)
-      .limit(1)
-      .maybeSingle()
-      .then(({ data, error }) => {
-        if (active && !error) setFollowing(Boolean(data));
+    void loadFollowState(createClient(), user.id, profile.id)
+      .then((state) => {
+        if (!active || epoch !== readEpochRef.current) return;
+        setFollowing(state === 'following');
+        setRequested(state === 'requested');
+      })
+      .catch(() => {
+        // Une lecture en échec laisse l'état neutre ; elle n'écrase jamais une
+        // mutation partie entre-temps.
       });
     return () => {
       active = false;
@@ -118,6 +121,7 @@ export function PublicProfileV2({
       return;
     }
     if (owner) return;
+    const epoch = ++readEpochRef.current;
     setBusy(true);
     setMessage(null);
     const wasFollowing = following;
@@ -129,6 +133,7 @@ export function PublicProfileV2({
     setRequested(false);
     try {
       const status = await setFollow(profile.id, action);
+      if (epoch !== readEpochRef.current) return;
       setFollowing(status === 'following');
       setRequested(status === 'requested');
       setMessage(
@@ -142,11 +147,12 @@ export function PublicProfileV2({
       );
       window.setTimeout(() => setMessage(null), 2400);
     } catch (error) {
+      if (epoch !== readEpochRef.current) return;
       setFollowing(wasFollowing);
       setRequested(wasRequested);
       setMessage(followErrorMessage(error, 'Abonnement non enregistré. Réessaie.'));
     } finally {
-      setBusy(false);
+      if (epoch === readEpochRef.current) setBusy(false);
     }
   }, [busy, following, owner, profile.id, requested, router, user?.id]);
 

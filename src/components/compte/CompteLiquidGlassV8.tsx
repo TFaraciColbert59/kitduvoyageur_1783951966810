@@ -8,7 +8,7 @@ import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
-import { setFollow } from '@/features/compte/client/followClient';
+import { loadFollowState, setFollow } from '@/features/compte/client/followClient';
 import { requestCarnetPublicationAward } from '@/lib/progression-award-requests';
 // Invoque /api/voyages/mine via le client cache
 import { fetchMyTripsCached, getMyTripsSessionGeneration, isMyTripsSessionCurrent } from '@/features/trips/client/fetchMyTrips';
@@ -747,15 +747,10 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
             .eq('handle', clean)
             .maybeSingle();
           if (!isCurrent() || !target?.id || target.id === me.id) return;
-          const { data: existing } = await supabase
-            .from('user_follows')
-            .select('id')
-            .eq('follower_id', me.id)
-            .eq('following_id', target.id)
-            .maybeSingle();
-          if (!isCurrent()) return;
           try {
-            await setFollow(target.id, existing?.id ? 'unfollow' : 'follow');
+            const state = await loadFollowState(supabase, me.id, target.id);
+            if (!isCurrent()) return;
+            await setFollow(target.id, state === 'none' ? 'follow' : 'unfollow');
           } catch (error) {
             // La maquette bascule avant l'appel : on relit l'état serveur pour
             // annuler une bascule qui n'a pas été enregistrée.
