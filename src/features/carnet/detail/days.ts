@@ -48,6 +48,17 @@ interface DayRun {
   points: TimedPoint[];
 }
 
+function numeric(value: unknown): number | null {
+  /* PostgREST rend les `numeric` en chaîne : on accepte les deux formes. */
+  const parsed =
+    typeof value === 'number'
+      ? value
+      : typeof value === 'string' && value.trim() !== ''
+        ? Number(value)
+        : Number.NaN;
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 function asText(value: unknown): string | null {
   if (typeof value !== 'string') return null;
   const trimmed = value.trim();
@@ -212,6 +223,10 @@ export function buildDays(input: {
   const runsByDay = new Map<number, DayRun[]>();
   const durationsByDay = new Map<number, number>();
   const momentsByDay = new Map<number, CarnetMomentItem[]>();
+  /* Repli chiffré : une sortie peut porter une distance et un D+ sans points
+     exploitables (relevé non horodaté, ancien import). Ces valeurs restent la
+     vérité de la sortie et se rattachent au jour de son départ. */
+  const fallbackByDay = new Map<number, Array<{ distanceKm: number | null; elevationM: number | null }>>();
 
   for (const { session, points } of sessions) {
     /* Une sortie peut chevaucher minuit : ses points sont répartis par heure,
@@ -232,11 +247,18 @@ export function buildDays(input: {
 
     /* La durée est celle de la sortie : elle va au jour où elle a commencé,
        même quand la sortie ne porte aucun point GPS. */
+    const startedAt = asText(session.started_at) ?? points[0]?.at ?? null;
+    const sessionDay = startedAt ? dayIndexOf(startedAt, startDayStamp, dateRanks) : null;
+
     const duration = session.duration_seconds;
     if (typeof duration === 'number' && Number.isFinite(duration) && duration >= 0) {
-      const startedAt = asText(session.started_at) ?? points[0]?.at ?? null;
-      const index = startedAt ? dayIndexOf(startedAt, startDayStamp, dateRanks) : null;
-      if (index !== null) durationsByDay.set(index, (durationsByDay.get(index) ?? 0) + duration);
+      if (sessionDay !== null) durationsByDay.set(sessionDay, (durationsByDay.get(sessionDay) ?? 0) + duration);
+    }
+
+    if (sessionDay !== null) {
+      const list = fallbackByDay.get(sessionDay) ?? [];
+      list.push({ distanceKm: numeric(session.distance_km), elevationM: numeric(session.elevation_gain_m) });
+      fallbackByDay.set(sessionDay, list);
     }
   }
 
@@ -247,7 +269,9 @@ export function buildDays(input: {
     momentsByDay.set(index, list);
   }
 
-  const indexes = [...new Set([...runsByDay.keys(), ...momentsByDay.keys()])].sort((a, b) => a - b);
+  const indexes = [
+    ...new Set([...runsByDay.keys(), ...momentsByDay.keys(), ...fallbackByDay.keys(), ...durationsByDay.keys()]),
+  ].sort((a, b) => a - b);
 
   return indexes.map((index) => {
     const runs = (runsByDay.get(index) ?? []).sort((a, b) => {
@@ -259,6 +283,17 @@ export function buildDays(input: {
     const merged = runs.flatMap((run) => run.points);
     const first = merged[0];
     const firstStamp = first ? dayStamp(first.at) : null;
+    const fallback = fallbackByDay.get(index) ?? [];
+    const gpsDistance = sumOf(runs, (run) => runDistanceKm(run.points));
+    const gpsElevation = sumOf(runs, (run) => runElevationM(run.points));
+    const declaredDistance = fallback.reduce<number | null>((total, row) => {
+      if (row.distanceKm === null) return total;
+      return (total ?? 0) + row.distanceKm;
+    }, null);
+    const declaredElevation = fallback.reduce<number | null>((total, row) => {
+      if (row.elevationM === null) return total;
+      return (total ?? 0) + row.elevationM;
+    }, null);
 
     return {
       index,
@@ -268,8 +303,8 @@ export function buildDays(input: {
           : firstStamp !== null
             ? isoDate(firstStamp)
             : null,
-      distanceKm: sumOf(runs, (run) => runDistanceKm(run.points)),
-      elevationM: sumOf(runs, (run) => runElevationM(run.points)),
+      distanceKm: gpsDistance ?? declaredDistance,
+      elevationM: gpsElevation ?? declaredElevation,
       durationS: durationsByDay.get(index) ?? null,
       moments: momentsByDay.get(index) ?? [],
       points: merged.map((point) => ({ lat: point.lat, lng: point.lng, at: point.at })),

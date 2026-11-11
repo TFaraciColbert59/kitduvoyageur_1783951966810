@@ -232,3 +232,50 @@ describe('buildSummary — totaux réels du carnet', () => {
     expect(days[0].durationS).toBe(3600);
   });
 });
+
+
+describe('buildDays — repli chiffré des sorties sans points exploitables', () => {
+  it('rattache distance et D+ de la sortie au jour de son départ', () => {
+    const days = buildDays({
+      moments: [],
+      startDate: START,
+      sessions: [
+        session({
+          id: 'sans-gps',
+          started_at: '2026-04-25T06:00:00Z',
+          distance_km: '12.4',
+          elevation_gain_m: '700',
+          positions_geojson: null,
+        }),
+      ],
+    });
+    expect(days).toHaveLength(1);
+    expect(days[0].index).toBe(2);
+    expect(days[0].points).toHaveLength(0);
+    expect(days[0].distanceKm).toBeCloseTo(12.4, 6);
+    expect(days[0].elevationM).toBe(700);
+  });
+
+  it('préfère la distance GPS quand des points existent', () => {
+    const coordinates: Array<[number, number]> = [
+      [6.86, 45.83],
+      [6.87, 45.84],
+    ];
+    const days = buildDays({
+      moments: [],
+      startDate: START,
+      sessions: [
+        session({
+          id: 'gps',
+          started_at: '2026-04-25T06:00:00Z',
+          distance_km: '99',
+          elevation_gain_m: '999',
+          positions_geojson: line(coordinates),
+        }),
+      ],
+    });
+    expect(days[0].distanceKm).toBeCloseTo(runKm(coordinates), 6);
+    /* Le D+ vient de la colonne de la sortie : la géométrie seule n'en porte pas. */
+    expect(days[0].elevationM).toBe(999);
+  });
+});

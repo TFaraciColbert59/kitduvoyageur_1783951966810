@@ -93,14 +93,14 @@ SELECT throws_ok(
 SELECT results_eq(
   $$SELECT jsonb_array_length(positions_geojson -> 'coordinates')
     FROM public.hike_sessions_public WHERE id = 'cd200000-0000-4000-8000-000000000001'$$,
-  $$VALUES (4)$$,
-  'le tracé public est échantillonné (12 points → 4)'
+  $$VALUES (12)$$,
+  'le tracé public garde la densité réelle (12 points → 12)'
 );
 SELECT results_eq(
   $$SELECT positions_geojson -> 'coordinates' -> 0
     FROM public.hike_sessions_public WHERE id = 'cd200000-0000-4000-8000-000000000001'$$,
-  $$VALUES ('[6.101, 45.101]'::jsonb)$$,
-  'les coordonnées publiques sont arrondies à 3 décimales'
+  $$VALUES ('[6.1012, 45.1012]'::jsonb)$$,
+  'les coordonnées publiques sont arrondies à 4 décimales (~11 m)'
 );
 SELECT ok(
   NOT EXISTS (

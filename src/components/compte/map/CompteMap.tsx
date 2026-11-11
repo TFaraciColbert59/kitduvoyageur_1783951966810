@@ -353,7 +353,10 @@ export function CompteMap({
   /* Fiche carnet : la carte ne montre que le tracé du carnet. */
   const isCarnet = variant === 'carnet';
   const tracePoints = useMemo(
-    () => (isCarnet ? simplifyTrack(parsePositions(trace)) : []),
+    /* 120 points suffisent à un profil, pas à une carte : à cette densité les
+       lacets sont coupés et le tracé quitte le sentier. La carte garde la
+       densité réelle (jusqu'à 4 000 sommets), MapLibre la rend sans effort. */
+    () => (isCarnet ? simplifyTrack(parsePositions(trace), 4000) : []),
     [isCarnet, trace]
   );
   const traceBounds = useMemo(

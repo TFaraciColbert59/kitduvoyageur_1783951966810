@@ -266,23 +266,25 @@ function NotificationsPane({
           </button>
         ))}
       </div>
-      <div className="lkdv-set-row" style={{ padding: '2px 2px 0' }}>
-        <div className="t">
-          <b>{unread ? `${unread} non lue${unread > 1 ? 's' : ''}` : 'Tout est lu'}</b>
+      {items.length > 0 ? (
+        <div className="lkdv-set-row" style={{ padding: '2px 2px 0' }}>
+          <div className="t">
+            <b>{unread ? `${unread} non lue${unread > 1 ? 's' : ''}` : 'Tout est lu'}</b>
+          </div>
+          <button
+            type="button"
+            className="lkdv-mbtn soft"
+            disabled={unread === 0}
+            onClick={() =>
+              void markRead(items.filter((n) => !n.read).map((n) => n.id)).then((ok) =>
+                onIsland?.(ok ? 'Tout est lu' : 'Impossible de marquer comme lu')
+              )
+            }
+          >
+            Tout lire
+          </button>
         </div>
-        <button
-          type="button"
-          className="lkdv-mbtn soft"
-          disabled={unread === 0}
-          onClick={() =>
-            void markRead(items.filter((n) => !n.read).map((n) => n.id)).then((ok) =>
-              onIsland?.(ok ? 'Tout est lu' : 'Impossible de marquer comme lu')
-            )
-          }
-        >
-          Tout lire
-        </button>
-      </div>
+      ) : null}
       {items.length === 0 ? (
         <div className="lkdv-lens-state" role="status">
           <b>Aucune notification.</b>

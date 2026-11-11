@@ -77,3 +77,19 @@ La vue `hike_sessions_public` échantillonne 1 point sur 5 et arrondit à 3 déc
 - Création : liste des types, formulaire note vocale (lieu, enregistrement, titre, « Ajouter le moment »).
 - Fiche : en-tête (jours, km, D+, voyageurs), pastille d'état, bouton « Ouvrir le carnet », carte + profil, barre d'onglets.
 - Mode modification et pilules « Modifier » présents (capture bench).
+
+
+## 6. Correctifs appliqués le 2026-11-11 (branche `claude/kind-bell-bfyt69`)
+
+| Problème | Correctif | Preuve |
+| --- | --- | --- |
+| P1-1 trace d'une sortie hors séjour | `pickCarnetTrace(sessions, {startDate, endDate})` ne retient que les sorties datées dans la fenêtre ; `buildCarnetDetail` applique la même fenêtre aux totaux, au profil d'altitude et au repli mono-sortie ; sans trace datée dans le séjour, la carte affiche son état vide honnête au lieu d'une autre randonnée | 3 tests `trace.test.ts` + 2 tests `buildCarnetDetail.test.ts` ; tsc/lint 0 |
+| P1-2 journées sans chiffres | repli chiffré dans `buildDays` : distance/D+/durée d'une sortie sans points exploitables sont rattachés au jour de son départ ; la vue de jour n'affiche plus « — · — » mais seulement les valeurs connues | 2 tests `days.test.ts` + 1 test `buildCarnetDetail.test.ts` |
+| P1-3 trace coupée à 120 points | `CompteMap` garde jusqu'à 4 000 sommets pour la carte (120 réservés au profil d'altitude) | tsc + revue ; capture production à refaire après déploiement |
+| P1 public RGPD | migration `20261111190000_carnet_public_trace_precision` : densité réelle (plus d'échantillonnage 1/5) et arrondi 4 décimales (~11 m) ; protections inchangées (retard, ni horodatage ni identifiant) — **appliquée en production** | en base sur la sortie de référence : 326 → **326 points**, écart max **6,6 m** (contre 58,1 m), longueur +2,8 % (contre +9 %) ; pgTAP ajusté (16 assertions) |
+| P2 barre des lentilles qui recouvre le contenu | réserve basse de 46 px sur `.lkdv-slot-stage` | capture à refaire après déploiement |
+| P2 bouton primaire désactivé illisible | état `:disabled` explicite (fond neutre, encre lisible) pour `.lkdv-mbtn` | capture à refaire après déploiement |
+| P2 Route sans chiffres | la lentille Étapes complète distance/D+ manquants avec les stats du jour | test unitaire de rendu à ajouter ; tsc/lint 0 |
+| P3 notifications redondantes | l'en-tête « Tout est lu / Tout lire » n'apparaît plus quand la liste est vide | capture `02-tiroir-compte` à refaire |
+
+Restent ouverts après ce lot : les fiches (moment/étape/objet/voyageur) à capturer manuellement, la lisibilité du verre sans `backdrop-filter` à contrôler sur iPhone, les tuiles Esri du banc fixtures, et le contrôle visuel des trois correctifs d'interface après déploiement.

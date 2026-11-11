@@ -14,8 +14,24 @@ import type { HikeSessionRow } from './types';
  * Aucune coordonnée n'est inventée : sans session porteuse, on rend `null` et
  * la carte affiche un état vide honnête.
  */
-export function pickCarnetTrace(sessions: HikeSessionRow[]): unknown | null {
+export function pickCarnetTrace(
+  sessions: HikeSessionRow[],
+  window: { startDate: string | null; endDate: string | null } | null = null
+): unknown | null {
+  /* Une sortie datée hors du séjour n'est pas le tracé du carnet : c'est une
+     autre randonnée, parfois à des mois d'écart (seed de démo, sortie
+     rattachée après coup). On ne l'affiche jamais comme le parcours du carnet ;
+     sans trace datée dans la fenêtre, la carte montre son état vide honnête. */
+  const start = window?.startDate?.trim() || null;
+  const end = window?.endDate?.trim() || null;
+  const inWindow = (session: HikeSessionRow): boolean => {
+    if (!start || !end) return true;
+    const at = typeof session?.started_at === 'string' ? session.started_at.slice(0, 10) : '';
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(at)) return false;
+    return at >= start && at <= end;
+  };
   for (const session of sessions) {
+    if (!inWindow(session)) continue;
     const positions = session?.positions_geojson;
     if (!positions) continue;
     if (parsePositions(positions).length >= 2) return positions;

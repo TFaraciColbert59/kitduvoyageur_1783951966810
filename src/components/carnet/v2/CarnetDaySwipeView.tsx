@@ -264,11 +264,10 @@ export function CarnetDaySwipeView({
   const daysCount = days.length || etapes.length;
   const distanceLabel = formatKm(distanceKm);
   const elevationLabel = signedElevation(elevationM);
-  const resumeMeta = [
-    distanceLabel ?? '—',
-    elevationLabel ?? '—',
-    counted(moments.length, 'moment', 'moments'),
-  ].join(' · ');
+  /* Pas de « — · — » : on n'affiche que les chiffres réellement connus. */
+  const resumeMeta = [distanceLabel, elevationLabel, counted(moments.length, 'moment', 'moments')]
+    .filter(Boolean)
+    .join(' · ');
 
   /* ---- Jour n : en-tête de l'étape + grille 3 colonnes ------------------- */
   const dayNumber = activeDay;
@@ -324,10 +323,12 @@ export function CarnetDaySwipeView({
                   const title =
                     [day.from, day.to].filter(Boolean).join(' → ') || `Jour ${number}`;
                   const cardMeta = [
-                    formatKm(day.distanceKm) ?? '—',
-                    signedElevation(day.elevationM) ?? '—',
+                    formatKm(day.distanceKm),
+                    signedElevation(day.elevationM),
                     counted(day.moments.length, 'moment', 'moments'),
-                  ].join(' · ');
+                  ]
+                    .filter(Boolean)
+                    .join(' · ');
 
                   return (
                     <button

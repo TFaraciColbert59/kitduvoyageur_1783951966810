@@ -1220,3 +1220,12 @@ button.lkdv-li {
     backdrop-filter: none !important;
   }
 }
+
+/* État désactivé lisible : sur une surface claire, l'opacité seule laissait un
+   libellé blanc quasi invisible (constat recette : « Enregistrer » de la note
+   vocale quand le micro n'est pas disponible). */
+.lkdv-mbtn:disabled {
+  opacity: 1;
+  background: var(--fill2, rgba(23, 64, 44, 0.08));
+  color: var(--label2, rgba(23, 64, 44, 0.62));
+}

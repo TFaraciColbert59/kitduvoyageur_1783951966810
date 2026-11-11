@@ -333,3 +333,51 @@ describe('buildCarnetDetail — lieu réel', () => {
     expect(detail.place).toEqual({ country: null, region: null, locality: null, lat: null, lng: null });
   });
 });
+
+
+function sessionAt(id: string, started_at: string, coordinates: Array<[number, number]>) {
+  return {
+    id,
+    carnet_id: 'c1',
+    distance_km: null,
+    elevation_gain_m: null,
+    duration_seconds: 3600,
+    started_at,
+    positions_geojson: { type: 'LineString' as const, coordinates },
+  };
+}
+
+describe('buildCarnetDetail — fenêtre du séjour', () => {
+  it('ignore une sortie datée hors séjour pour la trace et les totaux', () => {
+    const detail = buildCarnetDetail(
+      input({
+        sessions: [
+          sessionAt('hors', '2026-10-20T06:00:00Z', [
+            [6.9, 45.85],
+            [6.91, 45.86],
+          ]),
+        ],
+      }),
+    );
+    expect(detail.trace).toBeNull();
+    expect(detail.distanceKm).toBeCloseTo(106.4, 6);
+    expect(detail.elevationM).toBe(2002);
+    expect(detail.days.every((day) => day.distanceKm === null)).toBe(true);
+  });
+
+  it('compte une sortie datée dans le séjour', () => {
+    const detail = buildCarnetDetail(
+      input({
+        trace: { type: 'LineString', coordinates: [[6.9, 45.85], [6.91, 45.86]] },
+        sessions: [
+          sessionAt('dans', '2026-09-27T06:00:00Z', [
+            [6.9, 45.85],
+            [6.91, 45.86],
+          ]),
+        ],
+      }),
+    );
+    expect(detail.trace).not.toBeNull();
+    expect(detail.days.some((day) => day.distanceKm !== null)).toBe(true);
+  });
+});

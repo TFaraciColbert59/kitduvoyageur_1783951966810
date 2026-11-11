@@ -731,13 +731,28 @@ export function CarnetDrawerV2({
 
       case 'route':
         if (lens.id === 'etapes') {
+          /* Une étape peut n'avoir que son nom ; les stats du jour (issues des
+             sorties datées) complètent distance et D+ au lieu d'afficher
+             « Chiffres non renseignés » alors que le carnet les connaît. */
+          const etapesWithStats = dayData.etapes.map((etape) => {
+            if (etape.distanceKm != null && etape.elevationM != null) return etape;
+            const day = detail.days.find(
+              (entry) => (entry.dayNumber ?? entry.index) === etape.dayNumber
+            );
+            if (!day) return etape;
+            return {
+              ...etape,
+              distanceKm: etape.distanceKm ?? day.distanceKm,
+              elevationM: etape.elevationM ?? day.elevationM,
+            };
+          });
           return (
             <div style={stackWrap}>
-              {dayData.etapes.length === 0 ? (
+              {etapesWithStats.length === 0 ? (
                 <LensState title="Aucune étape." hint="Les étapes du parcours apparaissent ici dès qu’elles sont renseignées." />
               ) : (
                 <EtapeRows
-                  etapes={dayData.etapes}
+                  etapes={etapesWithStats}
                   activeDay={activeDay}
                   onOpen={(e) => pushStack({ type: 'etape', etapeId: e.id })}
                 />

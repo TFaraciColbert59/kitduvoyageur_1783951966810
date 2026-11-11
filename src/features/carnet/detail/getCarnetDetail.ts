@@ -545,7 +545,10 @@ export async function getCarnetDetail(id: string) {
     /* Toutes les sorties datent leurs propres points : c'est la matière de
        `buildDays` (un carnet de sept jours peut compter sept sorties). */
     sessions,
-    trace: pickCarnetTrace(sessions),
+    trace: pickCarnetTrace(sessions, {
+      startDate: carnet.start_date ?? null,
+      endDate: carnet.end_date ?? null,
+    }),
     etapes: (etapesResult.data as unknown as EtapeRow[]) ?? [],
     moments: momentRows,
     kitItems: (kitResult.data as unknown as KitItemRow[]) ?? [],

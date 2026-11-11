@@ -118,10 +118,25 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
      quatre sorties, la plus récente seule n'en est qu'un quart), à défaut le total
      déclaré sur le carnet. Jamais la dernière sortie prise pour le tout. */
   const allSessions = input.sessions ?? (hikeSession ? [hikeSession] : []);
-  const sumOf = (pick: (session: HikeSessionRow) => number | null): number | null => {
-    const values = allSessions.map(pick).filter((v): v is number => v !== null);
+  /* Fenêtre du séjour : une sortie datée hors de [start_date, end_date] n'est
+     pas une sortie du carnet (seed de démo, sortie rattachée après coup). Elle
+     ne nourrit ni les totaux ni le tracé ; sans dates, on garde tout. */
+  const windowStart = carnet.start_date?.trim() || null;
+  const windowEnd = carnet.end_date?.trim() || null;
+  const sessionsInWindow =
+    windowStart && windowEnd
+      ? allSessions.filter((session) => {
+          const at = typeof session.started_at === 'string' ? session.started_at.slice(0, 10) : '';
+          return /^\d{4}-\d{2}-\d{2}$/.test(at) && at >= windowStart && at <= windowEnd;
+        })
+      : allSessions;
+  const sumOf = (pick: (session: HikeSessionRow) => number | null, rows = sessionsInWindow): number | null => {
+    const values = rows.map(pick).filter((v): v is number => v !== null);
     return values.length > 0 ? values.reduce((a, b) => a + b, 0) : null;
   };
+  /* Les sorties datées dans le séjour portent la preuve terrain (priorité aux
+     totaux GPS) ; les colonnes déclarées ne servent que de repli. Une sortie
+     hors séjour (autre mois) ne compte jamais dans ces totaux. */
   const distanceKm = sumOf((s) => toNumber(s.distance_km)) ?? toNumber(carnet.distance_km);
   const elevationM = sumOf((s) => toNumber(s.elevation_gain_m)) ?? toNumber(carnet.denivele_m);
   const moments = toMomentItems(input.moments);
@@ -130,7 +145,8 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
   /* Jours dérivés : les moments nomment leur jour, les points GPS des sorties
      datent le leur. Aucune valeur n'est inventée quand une source manque. */
   const sessions = input.sessions ?? (hikeSession ? [hikeSession] : []);
-  const elevationProfile = pickElevationProfile(sessions);
+  /* Profil d'altitude cohérent avec la carte : uniquement les sorties du séjour. */
+  const elevationProfile = pickElevationProfile(sessionsInWindow);
   const builtDays = buildDays({
     moments: input.moments,
     sessions,
@@ -165,8 +181,18 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
   }, null);
 
   /* La trace affichée est celle de la sortie la plus récente qui en porte une
-     (`pickCarnetTrace`), pas forcément celle qui donne les statistiques. */
-  const trace = input.trace ?? hikeSession?.positions_geojson ?? null;
+     dans la fenêtre du séjour (`pickCarnetTrace` côté lecteur). Le repli sur la
+     sortie passée seule (`hikeSession`) reste possible pour les appelants
+     historiques, mais jamais si elle est datée hors du séjour : la carte reste
+     alors vide, honnêtement. */
+  const sessionTrace = hikeSession?.positions_geojson ?? null;
+  const sessionAt =
+    typeof hikeSession?.started_at === 'string' ? hikeSession.started_at.slice(0, 10) : '';
+  const sessionInWindow =
+    !windowStart || !windowEnd
+      ? true
+      : /^\d{4}-\d{2}-\d{2}$/.test(sessionAt) && sessionAt >= windowStart && sessionAt <= windowEnd;
+  const trace = input.trace ?? (sessionInWindow ? sessionTrace : null);
 
   /* Nuits du carnet (`carnet_nights`), triées par jour. Aucun repli : les
      anciennes tables `groupe_*` n'existent plus, une nuit absente n'est pas inventée. */

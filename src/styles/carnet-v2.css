@@ -2514,3 +2514,10 @@ body.lkdv-overlay-open .lkdv-floating-tabbar {
 .lkdv-ig-open svg {
   color: var(--accent);
 }
+
+/* Réserve basse du tiroir : la barre des lentilles flotte au-dessus du contenu
+   (30 px de haut, 10 px de marge). Sans cette réserve, les dernières lignes
+   passent dessous et deviennent illisibles (constat recette du 11/11). */
+.lkdv-carnet-v2-root .lkdv-carnet-drawer .lkdv-slot-stage {
+  padding-bottom: 46px !important;
+}

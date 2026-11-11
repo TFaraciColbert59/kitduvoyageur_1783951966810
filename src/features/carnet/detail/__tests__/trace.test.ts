@@ -58,3 +58,27 @@ describe('pickCarnetTrace — trace réellement exposée', () => {
     expect(pickCarnetTrace([session()])).toBeNull();
   });
 });
+
+
+describe('pickCarnetTrace — fenêtre du séjour', () => {
+  it('ignore une trace datée hors du séjour du carnet', () => {
+    const sessions = [session({ started_at: '2026-10-20T06:00:00Z', positions_geojson: LINE })];
+    expect(
+      pickCarnetTrace(sessions, { startDate: '2026-09-26', endDate: '2026-10-02' }),
+    ).toBeNull();
+  });
+
+  it('rend la trace datée dans la fenêtre', () => {
+    const sessions = [
+      session({ id: 'hors', started_at: '2026-10-20T06:00:00Z', positions_geojson: LINE }),
+      session({ id: 'dans', started_at: '2026-09-27T06:00:00Z', positions_geojson: LINE }),
+    ];
+    expect(
+      pickCarnetTrace(sessions, { startDate: '2026-09-26', endDate: '2026-10-02' }),
+    ).toBe(LINE);
+  });
+
+  it('sans dates de carnet, garde la trace (compatibilité)', () => {
+    expect(pickCarnetTrace([session({ positions_geojson: LINE })], null)).toBe(LINE);
+  });
+});
