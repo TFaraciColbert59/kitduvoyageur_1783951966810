@@ -12,6 +12,13 @@ import { ActivityPill } from './chrome/BottomBar';
 import { SosButton } from './chrome/SosButton';
 import { Countdown, useLongPress } from './activity/Countdown';
 import { useGpsTracker } from './activity/useGpsTracker';
+import {
+  createTrackTrace,
+  interruptTrack,
+  pushTrackPoint,
+  trackGeoJson,
+} from './activity/trackTrace';
+import type { ActivityMetrics } from './activity/tracker';
 import { endLiveActivity, startLiveActivity, updateLiveActivity } from './native/liveActivity';
 import { performSosCall, planSosCall, sosSimulated } from './activity/sosCall';
 import { enqueue, flushQueue, listQueue } from './offline/queue';
@@ -209,7 +216,7 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
   }, [online]);
 
   // Réglage local de préparation : hydraté après le montage pour ne pas
-  // opposer le rendu serveur (défaut désactivé) au stockage du navigateur.
+  // opposer le rendu serveur (défaut activé) au stockage du navigateur.
   useEffect(() => {
     hydrateAutoPausePreference();
   }, []);
@@ -393,39 +400,45 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
 
   // ── démarrage d'activité (compte à rebours 3·2·1) ─────────────────────
   // Suivi GPS de l'activité en cours (métriques, tracé, hors-trace, caméra).
-  const [trackPoints, setTrackPoints] = useState<Array<[number, number]>>([]);
+  const [trackTrace, setTrackTrace] = useState(createTrackTrace);
 
-  const onGpsFix = useCallback((fix: { lat: number; lng: number }) => {
-    setMe({ lat: fix.lat, lng: fix.lng });
-    setTrackPoints((prev) => [...prev, [fix.lng, fix.lat]]);
-    state.setCenter([fix.lng, fix.lat], state.zoom);
-  }, [state]);
+  const onGpsFix = useCallback(
+    (fix: { lat: number; lng: number }, metrics: ActivityMetrics) => {
+      // Pause automatique : la capture continue pour détecter la reprise, mais
+      // le tracé et la carte restent figés. Le premier point après la reprise
+      // ouvre un nouveau segment, sans corde droite à travers la pause.
+      if (metrics.autoPaused) {
+        setTrackTrace(interruptTrack);
+        return;
+      }
+      setMe({ lat: fix.lat, lng: fix.lng });
+      setTrackTrace((prev) => pushTrackPoint(prev, [fix.lng, fix.lat]));
+      state.setCenter([fix.lng, fix.lat], state.zoom);
+    },
+    [state],
+  );
 
   useGpsTracker({ onFix: onGpsFix });
+
+  // Pause manuelle : aucun fix n'arrive pendant la pause. On marque la coupure
+  // dès que l'état bascule pour que la reprise ouvre un segment distinct.
+  useEffect(() => {
+    if (state.activity?.paused) setTrackTrace(interruptTrack);
+  }, [state.activity?.paused]);
 
   // Réinitialise le tracé au début d'une nouvelle activité
   useEffect(() => {
     if (!state.activity && state.sheet !== 'summary') {
-      if (trackPoints.length > 0) setTrackPoints([]);
+      setTrackTrace((prev) =>
+        prev.segments.length > 0 || prev.current.length > 0 ? createTrackTrace() : prev,
+      );
     }
-  }, [state.activity, state.sheet, trackPoints.length]);
+  }, [state.activity, state.sheet]);
 
-  const activityTrack = useMemo<GeoCollection | null>(() => {
-    if (trackPoints.length < 2) return null;
-    return {
-      type: 'FeatureCollection',
-      features: [
-        {
-          type: 'Feature',
-          properties: {},
-          geometry: {
-            type: 'LineString',
-            coordinates: trackPoints,
-          },
-        },
-      ],
-    };
-  }, [trackPoints]);
+  const activityTrack = useMemo<GeoCollection | null>(
+    () => trackGeoJson(trackTrace),
+    [trackTrace],
+  );
 
   // Live Activity iOS (P7-20) : démarrage, mise à jour toutes les 5 s, fin.
   const liveActivityRef = React.useRef<{ started: boolean; lastPush: number }>({ started: false, lastPush: 0 });

@@ -145,10 +145,13 @@ describe('explorer-v2 · raccordement du réglage de pause automatique', () => {
       movingS: activity?.movingS ?? 0,
       elevGainM: activity?.elevGainM ?? 0,
     };
+    const centerBeforeDrift = useExplorerStore.getState().center;
 
-    // Les fixes continuent d'arriver et dérivent : les métriques restent gelées.
+    // Les fixes continuent d'arriver et dérivent : les métriques et la carte
+    // restent gelées pendant la pause.
     push(at(45_000, 50, 0, 1300));
     push(at(50_000, 70, 0, 1300));
+    expect(useExplorerStore.getState().center).toEqual(centerBeforeDrift);
     activity = useExplorerStore.getState().activity;
     expect(activity?.distanceM).toBe(frozen.distanceM);
     expect(activity?.movingS).toBe(frozen.movingS);
@@ -235,17 +238,24 @@ describe('explorer-v2 · raccordement du réglage de pause automatique', () => {
     expect(within(live).queryByText('Pause manuelle')).toBeNull();
   });
 
-  it('hydrate une préférence stockée, avec OFF par défaut', () => {
-    expect(useExplorerStore.getInitialState().autoPauseEnabled).toBe(false);
+  it('hydrate une préférence stockée, avec ON par défaut (S1.05)', () => {
+    expect(useExplorerStore.getInitialState().autoPauseEnabled).toBe(true);
+
+    // Sans valeur stockée, le défaut reste actif.
+    window.localStorage.removeItem(AUTO_PAUSE_STORAGE_KEY);
+    useExplorerStore.setState({ autoPauseEnabled: true });
+    hydrateAutoPausePreference();
+    expect(useExplorerStore.getState().autoPauseEnabled).toBe(true);
+
+    useExplorerStore.setState({ autoPauseEnabled: true });
+    window.localStorage.setItem(AUTO_PAUSE_STORAGE_KEY, '0');
+    hydrateAutoPausePreference();
+    expect(useExplorerStore.getState().autoPauseEnabled).toBe(false);
 
     useExplorerStore.setState({ autoPauseEnabled: false });
     window.localStorage.setItem(AUTO_PAUSE_STORAGE_KEY, '1');
     hydrateAutoPausePreference();
     expect(useExplorerStore.getState().autoPauseEnabled).toBe(true);
-
-    window.localStorage.setItem(AUTO_PAUSE_STORAGE_KEY, '0');
-    hydrateAutoPausePreference();
-    expect(useExplorerStore.getState().autoPauseEnabled).toBe(false);
   });
 
   it('persiste le réglage local et le rend réversible', () => {

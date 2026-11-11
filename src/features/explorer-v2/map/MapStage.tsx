@@ -599,7 +599,15 @@ export default function MapStage({
       window.setTimeout(() => {
         suppressMoveEnd.current = false;
       }, 2500);
-      const geometry = activityTrack?.features?.[0]?.geometry ?? null;
+      // Le tracé peut être découpé aux pauses : l'emprise doit couvrir tous les
+      // segments, pas seulement le premier.
+      const geometry = activityTrack
+        ? {
+            coordinates: activityTrack.features
+              .map((feature) => feature.geometry?.coordinates)
+              .filter(Boolean),
+          }
+        : null;
       const bounds = cameraIntent.bounds ?? boundsOfTrack(geometry);
       overviewOf(map, bounds, overviewPadding(container.clientWidth, sheetHeightPx), reducedMotion);
       return;

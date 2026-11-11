@@ -28,7 +28,9 @@ describe('explorer-v2 · drawer de départ', () => {
       configurable: true,
       value: {},
     });
-    useExplorerStore.setState({ autoPauseEnabled: false });
+    useExplorerStore.setState({
+      autoPauseEnabled: useExplorerStore.getInitialState().autoPauseEnabled,
+    });
   });
 
   it('transmet la variante choisie au callback de démarrage', () => {
@@ -54,13 +56,15 @@ describe('explorer-v2 · drawer de départ', () => {
     );
   });
 
-  it('rend la pause automatique désactivée par défaut', () => {
+  it('rend le réglage par défaut de la pause automatique et sa cible tactile', () => {
     render(<SportPicker ctx={context(vi.fn())} />);
 
-    expect(
-      screen.getByRole('switch', { name: /Pause automatique/ }).getAttribute('aria-checked'),
-    ).toBe('false');
-    expect(useExplorerStore.getState().autoPauseEnabled).toBe(false);
+    const toggle = screen.getByRole('switch', { name: /Pause automatique/ });
+    const expected = useExplorerStore.getInitialState().autoPauseEnabled;
+    expect(toggle.getAttribute('aria-checked')).toBe(expected ? 'true' : 'false');
+    // Règle LKDV : cible tactile ≥ 44 px, même si le switch visuel est plus fin.
+    expect(Number.parseFloat(toggle.style.width)).toBeGreaterThanOrEqual(44);
+    expect(Number.parseFloat(toggle.style.height)).toBeGreaterThanOrEqual(44);
   });
 
   it('expose le réglage de préparation et persiste la pause automatique', () => {

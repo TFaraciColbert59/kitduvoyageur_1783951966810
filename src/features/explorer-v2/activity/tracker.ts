@@ -10,8 +10,11 @@
  *
  * Auto-pause (S1.05)
  * ------------------
- * Désactivée par défaut : `new ActivityTracker()` garde le comportement
- * historique. Le hook branche un profil de `AUTO_PAUSE_BY_SPORT` (ou
+ * La fiche demande de détecter les arrêts par sport et de laisser la fonction
+ * désactivable : elle est donc active par défaut dans le hook, et le réglage
+ * de préparation permet de la couper. `new ActivityTracker()` reste, lui,
+ * désactivé pour préserver le comportement historique des appels directs.
+ * Le hook branche un profil de `AUTO_PAUSE_BY_SPORT` (ou
  * `AUTO_PAUSE_DISABLED`) via `setConfig`.
  *
  * Pause manuelle : le hook appelle `breakContinuity()` quand il suspend la
@@ -131,7 +134,7 @@ export const AUTO_PAUSE_BY_SPORT: Readonly<Record<Sport, AutoPauseConfig>> = {
  */
 export function autoPauseConfigForSport(
   sport: Sport | null | undefined,
-  enabled = false,
+  enabled = true,
 ): AutoPauseConfig {
   if (!enabled || !sport) return { ...AUTO_PAUSE_DISABLED };
   return { ...AUTO_PAUSE_BY_SPORT[sport] };
@@ -215,11 +218,20 @@ export class ActivityTracker {
       return this.state;
     }
 
-    const dtS = Math.max(0, (fix.t - previous.t) / 1000);
+    // Horodatage non monotone : un fix plus ancien (ou dupliqué) ne doit ni
+    // ajouter de distance ni faire reculer la borne. `maximumAge: 2000` côté
+    // `watchPosition` peut livrer un point mis en cache après un point plus
+    // récent, notamment au moment d'une reprise.
+    if (!Number.isFinite(fix.t) || fix.t <= previous.t) {
+      this.metrics.rejected += 1;
+      return this.state;
+    }
+
+    const dtS = (fix.t - previous.t) / 1000;
     const distance = haversineM(previous, fix);
 
     // Perte de fix : saut impossible dans un laps de temps très court.
-    if (dtS > 0 && dtS <= MAX_JUMP_WINDOW_S && distance > MAX_JUMP_M) {
+    if (dtS <= MAX_JUMP_WINDOW_S && distance > MAX_JUMP_M) {
       this.metrics.rejected += 1;
       this.rejectedSinceLastFix = true;
       return this.state;

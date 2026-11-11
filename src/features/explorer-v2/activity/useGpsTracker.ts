@@ -55,7 +55,10 @@ export function useGpsTracker({ distanceToRouteM, onFix }: TrackerOptions = {}) 
             autoPaused: metrics.autoPaused,
           }
         : undefined,
-      center: [fix.lng, fix.lat],
+      // Pause automatique : la capture continue pour détecter la reprise, mais
+      // la carte reste sur la dernière position de mouvement. Le tracé est
+      // interrompu par l'appelant à partir de `metrics.autoPaused`.
+      ...(metrics.autoPaused ? {} : { center: [fix.lng, fix.lat] as [number, number] }),
     }));
 
     if (distanceToRouteM) {

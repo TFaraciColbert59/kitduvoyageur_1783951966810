@@ -71,7 +71,9 @@ const initialState: ExplorerState = {
   profile: null,
   easyMode: false,
   theme: 'light',
-  autoPauseEnabled: false,
+  // S1.05 : détection active par défaut, désactivable depuis le drawer de
+  // préparation. OFF seulement après un choix explicite de l'utilisateur.
+  autoPauseEnabled: true,
   online: true,
   locationPermission: 'prompt',
   orbitPaused: false,
@@ -335,7 +337,9 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
  * Applique la préférence de pause automatique stockée localement.
  *
  * Appelée après le montage (jamais pendant le rendu serveur) : sans valeur,
- * le réglage garde son défaut OFF et les métriques historiques sont préservées.
+ * le réglage garde son défaut ON (S1.05 : détection active, désactivable).
+ * Un `0`/`false` stocké coupe la fonction pour les utilisateurs qui l'ont
+ * explicitement demandé.
  */
 export function hydrateAutoPausePreference(): void {
   try {
@@ -347,7 +351,7 @@ export function hydrateAutoPausePreference(): void {
       useExplorerStore.setState({ autoPauseEnabled: false });
     }
   } catch {
-    /* stockage indisponible : défaut OFF */
+    /* stockage indisponible : défaut ON, réglage valable pour la session */
   }
 }
 

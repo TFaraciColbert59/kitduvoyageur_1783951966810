@@ -123,6 +123,29 @@ describe('explorer-v2 · tracker d’activité', () => {
     expect(metrics.movingS).toBe(0);
     expect(metrics.distanceM).toBe(0);
   });
+
+  it('ignore un fix plus ancien ou dupliqué sans faire reculer la borne', () => {
+    const tracker = new ActivityTracker();
+    tracker.addFix(at(10_000, 0, 1));
+    let state = tracker.addFix(at(15_000, 10, 1));
+    const distance = state.distanceM;
+
+    // Fix mis en cache (maximumAge: 2000) livré après un point plus récent.
+    state = tracker.addFix(at(12_000, 60, 1));
+    expect(state.distanceM).toBeCloseTo(distance, 5);
+    expect(state.lastFix?.t).toBe(15_000);
+    expect(state.rejected).toBe(1);
+
+    // Même horodatage : aucun intervalle de temps, donc aucune distance.
+    state = tracker.addFix(at(15_000, 30, 1));
+    expect(state.distanceM).toBeCloseTo(distance, 5);
+    expect(state.lastFix?.t).toBe(15_000);
+    expect(state.rejected).toBe(2);
+
+    // Le fix suivant repart de la dernière borne valide, sans trou inventé.
+    state = tracker.addFix(at(16_000, 15, 1));
+    expect(state.distanceM).toBeCloseTo(distance + 5, 1);
+  });
 });
 
 /* ------------------------------------------------------------------------- *
@@ -248,8 +271,10 @@ describe('explorer-v2 · auto-pause', () => {
     expect(AUTO_PAUSE_DISABLED.enabled).toBe(false);
   });
 
-  it('désactive le profil par défaut et ne l’active que sur demande explicite', () => {
-    expect(autoPauseConfigForSport('course').enabled).toBe(false);
+  it('active le profil par défaut et le coupe sur demande explicite', () => {
+    // S1.05 : « laisser la fonction désactivable » ⇒ active tant que
+    // l'utilisateur ne l'a pas coupée.
+    expect(autoPauseConfigForSport('course').enabled).toBe(true);
     expect(autoPauseConfigForSport('course', false).enabled).toBe(false);
     expect(autoPauseConfigForSport('course', true).enabled).toBe(true);
     expect(autoPauseConfigForSport(null, true).enabled).toBe(false);

@@ -162,31 +162,49 @@ function AutoPauseSetting({ sport }: { sport?: Sport | null }) {
               onClick={() => setEnabled(!enabled)}
               style={{
                 flex: 'none',
-                width: 46,
-                height: 28,
-                padding: 3,
-                borderRadius: 999,
+                width: 52,
+                height: 44,
+                padding: 0,
                 border: 'none',
+                background: 'transparent',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: enabled ? 'flex-end' : 'flex-start',
-                background: enabled ? 'var(--xp-inkbtn)' : 'var(--xp-thumb)',
-                boxShadow: enabled
-                  ? 'var(--xp-inkbtn-shadow)'
-                  : 'inset 0 1px 2px rgba(23,43,36,0.18)',
-                transition: 'background 160ms ease',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                WebkitTapHighlightColor: 'transparent',
               }}
             >
+              {/* Le switch visuel garde 46 × 28 ; la cible tactile est le bouton
+                  de 52 × 44, conforme à la règle des 44 px. */}
               <span
                 aria-hidden="true"
                 style={{
-                  width: 22,
-                  height: 22,
+                  width: 46,
+                  height: 28,
+                  padding: 3,
+                  boxSizing: 'border-box',
                   borderRadius: 999,
-                  background: '#fff',
-                  boxShadow: '0 1px 3px rgba(23,43,36,0.25)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: enabled ? 'flex-end' : 'flex-start',
+                  background: enabled ? 'var(--xp-inkbtn)' : 'var(--xp-thumb)',
+                  boxShadow: enabled
+                    ? 'var(--xp-inkbtn-shadow)'
+                    : 'inset 0 1px 2px rgba(23,43,36,0.18)',
+                  transition: 'background 160ms ease',
                 }}
-              />
+              >
+                <span
+                  aria-hidden="true"
+                  style={{
+                    width: 22,
+                    height: 22,
+                    borderRadius: 999,
+                    background: '#fff',
+                    boxShadow: '0 1px 3px rgba(23,43,36,0.25)',
+                  }}
+                />
+              </span>
             </button>
           }
         />
