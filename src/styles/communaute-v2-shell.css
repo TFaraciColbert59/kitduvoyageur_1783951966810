@@ -174,8 +174,8 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
    Vide, il ne réserve aucune hauteur (détail empilé, formulaire sans aperçu). */
 .lkdv-cv2-preview-slot {
   flex: none;
-  height: 150px;
-  min-height: 150px;
+  /* Maquette `.cr-prev` (L1122) : la hauteur suit l'aperçu du type (98 à 150 px), plafonnée à 150 px. */
+  max-height: 150px;
   margin: 0 14px 6px;
   overflow: hidden;
   border-radius: 20px;
@@ -190,7 +190,6 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
   display: flex;
   align-items: center;
   width: 100%;
-  height: 100%;
 }
 
 .lkdv-cv2-preview-frame > * {
@@ -578,4 +577,23 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
 .lkdv-cv2-layer .lkdv-cv2-peek {
   padding-inline: 14px;
   padding-bottom: calc(18px + var(--cv2-card-top) - 14px);
+}
+
+/* Cible tactile ≥ 44 px : les lentilles de la mini-capsule mesurent 43,3 px de large (largeur
+   de la maquette, n × 44 + 5 moins filet et marge) ; la zone tactile déborde de 1 px de chaque côté. */
+.lkdv-communaute-v2 .lkdv-lens-float button::after {
+  left: -1px;
+  right: -1px;
+}
+
+/* Capsule d'étapes du formulaire (maquette `miniHTML(..., {w:34})`, L2697) : 34 px par étape ; la zone tactile
+   garde 44 px (débord de 5 px de chaque côté). */
+.lkdv-cv2-mini-slot.has-footer .lkdv-lens-float {
+  width: calc(var(--n, 2) * 34px + 5px);
+  max-width: calc(var(--n, 2) * 34px + 5px);
+}
+
+.lkdv-communaute-v2 .lkdv-cv2-mini-slot.has-footer .lkdv-lens-float button::after {
+  left: -5px;
+  right: -5px;
 }

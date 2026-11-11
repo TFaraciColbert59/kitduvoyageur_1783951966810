@@ -381,7 +381,8 @@ button.lkdv-cv2-tile:active {
   padding: 0;
   font: 600 14px/1.25 var(--font-display);
   letter-spacing: -0.01em;
-  color: var(--lkv-text-primary);
+  /* Maquette `.ct-t` : titres en `--tint` (forêt), pas en encre. */
+  color: var(--lkv-forest-900);
   overflow: hidden;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -544,26 +545,31 @@ button.lkdv-cv2-tile:active {
 
 .lkdv-crest-shield {
   fill: var(--crest-bg, var(--lkv-forest-900));
+  /* Liseré blanc de la maquette (`.bl-s`, L1040). */
+  stroke: var(--lkv-text-inverted);
+  stroke-width: 1.2;
 }
 
+/* Teinte par activité (maquette `TONE`, L2301) : rando --tint, ski --lkv-action, vélo --accent,
+   escalade --good, trail --bg-r2 (jeton le plus proche : forest-300). */
 .lkdv-crest[data-tone='0'] {
-  --crest-bg: var(--lkv-forest-600);
+  --crest-bg: var(--lkv-primary);
 }
 
 .lkdv-crest[data-tone='1'] {
-  --crest-bg: var(--sage-700);
+  --crest-bg: var(--lkv-action);
 }
 
 .lkdv-crest[data-tone='2'] {
-  --crest-bg: var(--lkv-forest-500);
+  --crest-bg: var(--lkv-secondary);
 }
 
 .lkdv-crest[data-tone='3'] {
-  --crest-bg: var(--sage-600);
+  --crest-bg: var(--lkv-forest-500);
 }
 
 .lkdv-crest[data-tone='4'] {
-  --crest-bg: var(--lkv-forest-900);
+  --crest-bg: var(--lkv-forest-300);
 }
 
 .lkdv-crest-pattern {
@@ -617,7 +623,7 @@ button.lkdv-cv2-tile:active {
 
 /* Colonne topo décorative à droite (Sorties#1 : tampon à gauche, topo à droite). */
 .lkdv-cv2-ticket-main--topo {
-  grid-template-columns: 68px minmax(0, 1fr) 76px;
+  grid-template-columns: 68px minmax(0, 1fr) 92px;
 }
 
 .lkdv-cv2-ticket-side {
@@ -670,13 +676,14 @@ button.lkdv-cv2-tile:active {
   padding: 10px 4px;
   background: var(--lkv-forest-900);
   color: var(--lkv-text-inverted);
-  border-right: 2px dashed var(--lkv-forest-500);
+  border-right: 2px dashed var(--cv2-soft-line);
   text-align: center;
 }
 
 .lkdv-cv2-ticket-wd,
 .lkdv-cv2-ticket-mo {
-  font: 600 10.5px/1.1 var(--font-sans);
+  /* Interlignage « normal » de la maquette (`.tk-wd`, L1062 : pas de line-height). */
+  font: 600 10.5px/normal var(--font-sans);
   font-style: normal;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -712,14 +719,15 @@ button.lkdv-cv2-tile:active {
   justify-content: center;
   gap: 4px;
   min-width: 0;
-  padding: 10px 12px;
+  padding: 10px 8px;
 }
 
 .lkdv-cv2-ticket-title {
   margin: 0;
   font: 600 14px/1.25 var(--font-display);
   letter-spacing: -0.01em;
-  color: var(--lkv-text-primary);
+  /* Maquette `.ct-t` : titres en `--tint` (forêt). */
+  color: var(--lkv-forest-900);
   overflow: hidden;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -739,7 +747,8 @@ button.lkdv-cv2-tile:active {
   height: 20px;
   padding: 0 7px;
   border-radius: var(--lkv-radius-full);
-  background: var(--cv2-field-bg);
+  /* Maquette `.tk-chips i` : remplissage encre 9 %, premier chip (niveau) en `--soft`. */
+  background: var(--cv2-fill);
   color: var(--lkv-forest-900);
   font: 600 10.5px/1 var(--font-sans);
   font-style: normal;
@@ -747,21 +756,20 @@ button.lkdv-cv2-tile:active {
 }
 
 .lkdv-cv2-ticket-chips i:first-child {
-  background: var(--lkv-secondary-subtle);
+  background: var(--cv2-soft);
 }
 
 .lkdv-cv2-ticket-meta {
   margin: 0;
   font: 400 10.5px/1.3 var(--font-sans);
   color: var(--lkv-text-secondary);
-  font-variant-numeric: tabular-nums;
 }
 
 .lkdv-cv2-ticket-foot {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px;
+  padding: 8px 10px;
   border-top: 0.5px dashed var(--cv2-list-sep-strong);
 }
 
@@ -812,7 +820,7 @@ button.lkdv-cv2-tile:active {
   border: 0;
   border-radius: var(--cv2-radius-tile-sm);
   background: var(--cv2-tile-bg);
-  box-shadow: var(--cv2-tile-shadow), inset 0 0 0 0.5px var(--cv2-tile-border);
+  box-shadow: var(--cv2-tile-shadow);
   color: var(--lkv-text-primary);
   cursor: pointer;
   scroll-snap-align: start;
@@ -824,7 +832,7 @@ button.lkdv-cv2-tile:active {
 }
 
 .lkdv-cv2-agenda-day i {
-  font: 600 10.5px/1.1 var(--font-sans);
+  font: 600 10.5px/normal var(--font-sans);
   font-style: normal;
   letter-spacing: 0.02em;
   color: var(--lkv-text-secondary);
@@ -832,7 +840,7 @@ button.lkdv-cv2-tile:active {
 }
 
 .lkdv-cv2-agenda-day b {
-  font: 700 15px/1 var(--font-mono);
+  font: 700 15px/normal var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
 
@@ -840,9 +848,8 @@ button.lkdv-cv2-tile:active {
   color: var(--lkv-secondary);
 }
 
-.lkdv-cv2-agenda-day.is-today {
-  box-shadow: var(--cv2-tile-shadow), inset 0 0 0 1.5px var(--lkv-secondary);
-}
+/* Aujourd'hui : la maquette (`.ag`, L1051) ne le marque pas visuellement ; le jour porte
+   `aria-current` côté lecteur d'écran (voir `AgendaStrip`). */
 
 .lkdv-cv2-agenda-dots {
   display: flex;
@@ -856,7 +863,7 @@ button.lkdv-cv2-tile:active {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--lkv-forest-500);
+  background: var(--lkv-secondary);
 }
 
 .lkdv-cv2-agenda-day.is-active {
@@ -895,12 +902,19 @@ button.lkdv-cv2-tile:active {
    le verre du tiroir laisse passer des zones sombres de la photo (mesure : jusqu'à
    1,3 : 1). Une plaque claire sous le texte garantit ≥ 4,5 : 1 quel que soit le
    fond, sans toucher à la matière du tiroir (maquette conforme). */
+/* Le libellé de champ (maquette `.fl`, label2 #56665D) passe à l'encre pleine du surtitre : avec
+   une plaque à 40 %, #56665D ne tient que 2,6 : 1 sur le verre d'un fond de photo (audit transverses). */
+.lkdv-cv2-sheet .lkdv-cv2-field-label {
+  color: var(--cv2-eyebrow-ink);
+}
+
 .lkdv-cv2-sheet .lkdv-cv2-field-label,
 .lkdv-cv2-sheet .lkdv-cv2-eyebrow {
   width: fit-content;
   max-width: 100%;
   padding: 2px 8px;
-  margin-left: -8px;
+  /* La plaque déborde du libellé sans l'agrandir : la mise en page garde la hauteur de la maquette. */
+  margin: -2px 0 -2px -8px;
   border-radius: var(--lkv-radius-full);
   background: var(--cv2-label-plate);
 }

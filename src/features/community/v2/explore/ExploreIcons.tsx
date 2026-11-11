@@ -24,6 +24,7 @@ export type ExploreIconName =
   | 'route'
   | 'eye'
   | 'bookmark'
+  | 'ticket'
   | 'bookmark-filled'
   | 'send'
   | 'close'
@@ -45,7 +46,10 @@ export type ExploreIconName =
   | 'feed'
   | 'quote'
   | 'user'
-  | 'map';
+  | 'map'
+  | 'pen'
+  | 'camera'
+  | 'backpack';
 
 const PATHS: Record<ExploreIconName, React.ReactNode> = {
   globe: (
@@ -116,6 +120,33 @@ const PATHS: Record<ExploreIconName, React.ReactNode> = {
     </>
   ),
   bookmark: <path d="M7 4h10v17l-5-4-5 4z" />,
+  /* Pictogrammes des six types de création (maquette `IC.pen / camera / backpack`, L1557-1591). */
+  pen: (
+    <>
+      <path d="M4 20h4L19 9l-4-4L4 16z" />
+      <path d="M13.5 6.5l4 4" />
+    </>
+  ),
+  camera: (
+    <>
+      <path d="M4 8h3l1.5-2.5h7L17 8h3v11H4z" />
+      <circle cx="12" cy="13" r="3.5" />
+    </>
+  ),
+  backpack: (
+    <>
+      <path d="M8 6a4 4 0 0 1 8 0v1H8z" />
+      <path d="M6 9a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2z" />
+      <path d="M9 14h6v3H9z" />
+    </>
+  ),
+  /* Billet de la maquette (`IC.ticket`, L1651) : lentille « Mes sorties ». */
+  ticket: (
+    <>
+      <path d="M4 8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4z" />
+      <path d="M14 6v12" strokeDasharray="2 2" />
+    </>
+  ),
   'bookmark-filled': <path d="M7 4h10v16l-5-3.5L7 20z" fill="currentColor" />,
   send: (
     <>

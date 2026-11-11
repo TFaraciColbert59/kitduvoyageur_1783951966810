@@ -308,13 +308,16 @@
    grille à deux colonnes, `aria-label` complet sur le bouton. */
 .lkdv-cv2x-club > .lkdv-cv2x-join {
   width: 100%;
-  /* « Demander à rejoindre » (maquette) doit tenir dans la tuile à deux
-     colonnes : 11,5 px et 6 px de marge interne, sans ellipse. */
-  font-size: 11.5px;
-  padding: 0 6px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* « Demander à rejoindre » (maquette) doit tenir dans la tuile à deux colonnes : 11,5 px et 6 px
+   de marge interne, sans ellipse. Les autres libellés gardent les 13 px de la maquette. */
+.lkdv-cv2x-club > .lkdv-cv2x-join[data-long='true'] {
+  font-size: 11.5px;
+  padding: 0 6px;
 }
 
 .lkdv-cv2x-club-head {
@@ -337,7 +340,7 @@
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: var(--lkv-secondary-subtle);
+  background: var(--cv2-fill);
   color: var(--lkv-forest-900);
 }
 
@@ -349,7 +352,7 @@
   height: 22px;
   padding: 0 10px;
   border-radius: var(--lkv-radius-full);
-  background: var(--lkv-secondary-subtle);
+  background: var(--cv2-soft);
   color: var(--lkv-forest-900);
   font: 700 10.5px/1 var(--font-sans);
   letter-spacing: 0.04em;
@@ -415,15 +418,23 @@
   min-width: 0;
   min-height: 44px;
   max-width: 100%;
-  padding: 0 12px;
+  padding: 0 16px;
   border: 0;
   border-radius: var(--lkv-radius-full);
   background: var(--lkv-primary);
   color: var(--lkv-text-inverted);
-  font: 600 13px/1 var(--font-sans);
+  font: 600 13px/normal var(--font-sans);
+  /* Maquette `.joinbtn` (L1041) : ombre d'encre forêt. */
+  box-shadow: 0 4px 12px rgba(23, 64, 44, 0.22);
   cursor: pointer;
   position: relative;
   transition: transform 0.12s var(--ease-spring);
+}
+
+/* Inscription (`.joinbtn.reg`, L1046) : 12,5 px, retrait 14 px. */
+.lkdv-cv2x-register {
+  padding: 0 14.5px;
+  font-size: 12.5px;
 }
 
 .lkdv-cv2x-join:active {
@@ -431,15 +442,18 @@
 }
 
 .lkdv-cv2x-join[data-state='member'],
-.lkdv-cv2x-join[data-state='admin'] {
-  background: var(--lkv-secondary-subtle);
+.lkdv-cv2x-join[data-state='admin'],
+.lkdv-cv2x-join[data-state='registered'] {
+  background: var(--cv2-soft);
   color: var(--lkv-forest-900);
+  box-shadow: inset 0 0 0 1px var(--cv2-soft-line), inset 0 1px 0 rgba(255, 255, 255, 0.29);
 }
 
 .lkdv-cv2x-join[data-state='pending'],
 .lkdv-cv2x-join[data-state='waitlist'] {
-  background: var(--lkv-secondary-subtle);
+  background: var(--cv2-tile-bg);
   color: var(--lkv-forest-900);
+  box-shadow: inset 0 0 0 1px var(--cv2-soft-line);
 }
 
 .lkdv-cv2x-join[data-tone='full'],
@@ -496,8 +510,18 @@
    32 px. La cible tactile reste ≥ 44 px grâce au `::after` étendu. */
 .lkdv-cv2x-club-chips .lkdv-cv2-chip {
   min-height: 28px;
-  padding: 0 10px;
-  font-size: 12px;
+  padding: 0 11px;
+  font-size: 12.5px;
+  line-height: normal;
+  flex: none;
+  /* Maquette `.chip` (L276) : remplissage encre 9 % sans filet. */
+  background: var(--cv2-fill);
+  box-shadow: none;
+}
+
+.lkdv-cv2x-club-chips .lkdv-cv2-chip[aria-pressed='true'] {
+  background: var(--cv2-soft);
+  box-shadow: inset 0 0 0 1px var(--cv2-soft-line), inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
 .lkdv-cv2x-club-chips .lkdv-cv2-chip::after {
@@ -524,11 +548,53 @@
    places, sans bouton pleine largeur hors du billet. */
 .lkdv-cv2x-event-action {
   position: absolute;
-  right: 8px;
-  bottom: 8px;
+  right: 0;
+  bottom: 0;
+  left: 0;
   z-index: 1;
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  /* Seule la pilule reçoit le toucher : le reste du pied est celui du lien du billet. */
+  pointer-events: none;
+}
+
+.lkdv-cv2x-event-action > button {
+  flex: none;
+  pointer-events: auto;
+}
+
+/* Jauge de la maquette (`.gauge-w` / `.gauge` / `.gtx`, L1075-1078). */
+.lkdv-cv2x-gauge-w {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.lkdv-cv2x-gauge {
+  display: block;
+  height: 7px;
+  border-radius: 99px;
+  background: var(--cv2-fill);
+  overflow: hidden;
+}
+
+.lkdv-cv2x-gauge > i {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--lkv-secondary), var(--lkv-forest-500));
+}
+
+.lkdv-cv2x-gauge[data-tone='low'] > i {
+  background: linear-gradient(90deg, var(--lkv-primary), var(--lkv-action));
+}
+
+.lkdv-cv2x-gauge[data-tone='full'] > i {
+  background: var(--lkv-primary);
 }
 
 .lkdv-cv2x-wxc {
@@ -542,9 +608,10 @@
   height: 22px;
   padding: 0 7px;
   border-radius: var(--lkv-radius-full);
-  background: var(--glass-bg-medium);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
+  /* Maquette `.wxc` : verre de barre (`--bar-glass-bg`). */
+  background: var(--cv2-bar-glass-bg);
+  -webkit-backdrop-filter: var(--cv2-bar-glass-blur);
+  backdrop-filter: var(--cv2-bar-glass-blur);
   color: var(--lkv-forest-900);
   font: 700 10.5px/1 var(--font-sans);
   font-variant-numeric: tabular-nums;
@@ -568,44 +635,24 @@
 }
 
 .lkdv-cv2x-event-foot-note {
-  position: absolute;
-  left: 12px;
-  bottom: 10px;
-  z-index: 1;
-  max-width: calc(100% - 148px);
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  font: 600 10.5px/1 var(--font-sans);
-  font-variant-numeric: tabular-nums;
+  font: 500 10.5px/normal var(--font-sans);
   color: var(--lkv-text-secondary);
-  pointer-events: none;
 }
 
 /* Le pied du billet réserve la place de la pilule et aligne la jauge en haut
    (maquette : jauge, puis « n places restantes », puis la pilule à droite). */
 .lkdv-cv2x-event .lkdv-cv2-ticket-foot {
   min-height: 60px;
-  padding: 10px 12px;
-  padding-right: 140px;
-  align-items: flex-start;
+  padding: 8px 10px;
 }
 
-.lkdv-cv2x-event .lkdv-cv2-ticket-foot .lkdv-cv2-capacity {
-  flex-direction: column;
-  align-items: stretch;
-  gap: 6px;
-}
-
-/* La fraction « 9/12 » et le badge d'état doublonnent la note et la pilule :
-   on les retire du pied (maquette : une seule jauge + un seul libellé). */
-.lkdv-cv2x-event .lkdv-cv2-ticket-foot .lkdv-cv2-capacity-label,
-.lkdv-cv2x-event .lkdv-cv2-ticket-foot .lkdv-cv2-badge {
-  display: none;
-}
-
-.lkdv-cv2x-event .lkdv-cv2-capacity-track {
-  height: 7px;
+/* Le pied du billet n'est qu'un cadre (filet pointillé, 60 px) : la jauge, la note et la pilule sont
+   dans la rangée posée dessus (`.lkdv-cv2x-event-action`). Sa copie sémantique reste dans le lien. */
+.lkdv-cv2x-event .lkdv-cv2-ticket-foot > * {
+  visibility: hidden;
 }
 
 /* Maquette (L2479) : niveau capitalisé (« Moyen »), sans toucher aux autres
@@ -2090,6 +2137,8 @@
 .lkdv-cv2x-search-pane > .lkdv-cv2x-search-field input {
   height: 44px;
   font-weight: 500;
+  /* Maquette `.srch input{padding-left:2px}` : le texte part 2 px plus à droite que l'icône. */
+  padding-left: 2px;
 }
 
 .lkdv-cv2-layer .lkdv-cv2x-search-field:focus-within {
@@ -2118,7 +2167,8 @@
   inset: -8px -1px;
 }
 
-.lkdv-cv2x-search-pane > .lkdv-cv2x-search-view {
+.lkdv-cv2x-search-pane > .lkdv-cv2x-search-view,
+.lkdv-cv2x-events-head > .lkdv-cv2-seg {
   min-height: 30px;
   height: 30px;
   margin-bottom: 2px;
@@ -2126,7 +2176,8 @@
   gap: 0;
 }
 
-.lkdv-cv2x-search-view button {
+.lkdv-cv2x-search-view button,
+.lkdv-cv2x-events-head .lkdv-cv2-seg button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -2170,7 +2221,8 @@
 }
 
 /* Sélecteur Liste / Sur la carte : verre « segc » de la maquette (L280-283). */
-.lkdv-cv2x-search-pane > .lkdv-cv2x-search-view {
+.lkdv-cv2x-search-pane > .lkdv-cv2x-search-view,
+.lkdv-cv2x-events-head > .lkdv-cv2-seg {
   background: rgba(255, 255, 255, 0.65);
   -webkit-backdrop-filter: blur(28px) saturate(1.8);
   backdrop-filter: blur(28px) saturate(1.8);
@@ -2178,7 +2230,8 @@
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 4px 14px rgba(23, 43, 36, 0.08);
 }
 
-.lkdv-cv2x-search-view button[aria-pressed='true'] {
+.lkdv-cv2x-search-view button[aria-pressed='true'],
+.lkdv-cv2x-events-head .lkdv-cv2-seg button[aria-pressed='true'] {
   background: var(--lkv-surface-card);
   box-shadow: 0 2px 8px rgba(23, 64, 44, 0.12), inset 0 1px 0 rgba(255, 255, 255, 1);
 }
@@ -2201,6 +2254,7 @@
 .lkdv-cv2x-ctx-chips .lkdv-cv2-chip,
 .lkdv-cv2x-recents .lkdv-cv2-chip,
 .lkdv-cv2x-search-view button,
+.lkdv-cv2x-events-head .lkdv-cv2-seg button,
 .lkdv-cv2x-trend-rank {
   line-height: normal;
 }
@@ -2306,6 +2360,17 @@
 
 .lkdv-cv2x-club .lkdv-cv2x-club-friends .lkdv-cv2-avatars {
   padding-left: 6px;
+  /* Maquette `.tvs{margin-right:auto}` (L1018) : le décompte « N amis » se range à droite de la tuile. */
+  margin-right: auto;
+}
+
+/* Maquette `.ct-m` : chiffres proportionnels (la méta de club tient sur une ligne à 148 px). */
+.lkdv-cv2x-club .lkdv-cv2-meta {
+  font-variant-numeric: normal;
+  /* Maquette `.ct-m` : une ligne, tronquée par une ellipse (le libellé complet est dans l'aria-label du lien). */
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .lkdv-cv2x-club .lkdv-cv2x-club-friends .lkdv-cv2-avatar {
@@ -2327,10 +2392,39 @@
 /* Sorties : agenda collé au haut du volet (`.sl-head`, L1049 : 130 px) et billets à y = 240. */
 .lkdv-cv2x-agenda-block {
   margin-top: -2px;
-  margin-bottom: -6px;
+  margin-bottom: -2px;
 }
 
 .lkdv-cv2-agenda-day i {
   color: var(--lkv-text-secondary);
   text-transform: none;
+}
+
+/* Titres de tuile : `--tint` (forêt) comme `.ct-t` de la maquette, pas l'encre du texte courant. */
+.lkdv-cv2-tile .lkdv-cv2-title {
+  color: var(--lkv-forest-900);
+}
+
+/* Surtitre « Affichage » : `.h5` de la maquette est en 700. */
+.lkdv-cv2x-events-head .lkdv-cv2-eyebrow {
+  font-weight: 700;
+}
+
+/* Grille des clubs : pas de 10 px (maquette `.ct-grid{gap:10px}`) comme la grille des carnets. */
+.lkdv-cv2x-club-grid {
+  gap: 10px;
+}
+
+/* Sélecteur Grille / Liste des sorties : `.segc` est un flex à boutons de la largeur de leur libellé. */
+.lkdv-cv2x-events-head > .lkdv-cv2-seg {
+  display: flex;
+}
+
+/* Le pied du billet inclut le filet pointillé (maquette : billet de 165 px). */
+.lkdv-cv2x-event .lkdv-cv2-ticket-foot {
+  min-height: 61px;
+}
+
+.lkdv-cv2x-events-head .lkdv-cv2-seg button {
+  padding: 0 9px;
 }

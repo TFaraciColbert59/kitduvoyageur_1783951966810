@@ -31,12 +31,13 @@ describe('ClubCrest', () => {
     expect(secondRender.container.innerHTML).toBe(first);
   });
 
-  it('varie la teinte et le motif selon la graine, uniquement en jetons verts', () => {
+  it('varie le motif selon le nom et la teinte selon l’activité (maquette), uniquement en jetons', () => {
     const tones = new Set<string>();
     const patterns = new Set<string>();
+    const activities = ['rando', 'ski', 'velo', 'escalade', 'trail'];
     for (let index = 0; index < 12; index += 1) {
       const { container, unmount } = render(
-        <ClubCrest name={`Club ${index}`} seed={`seed-${index}`} />,
+        <ClubCrest name={`Club ${index}`} activity={activities[index % activities.length]} seed={`seed-${index}`} />,
       );
       const crest = container.querySelector('[data-testid="club-crest"]');
       expect(crest).toBeTruthy();
@@ -45,8 +46,16 @@ describe('ClubCrest', () => {
       expect(container.innerHTML).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
       unmount();
     }
-    expect(tones.size).toBeGreaterThan(1);
+    expect(tones.size).toBe(5);
     expect(patterns.size).toBeGreaterThan(1);
+  });
+
+  it('ne dépend pas de la graine : même nom et même activité, même blason', () => {
+    const first = render(<ClubCrest name="Trail des Aravis" activity="trail" seed="a" />);
+    const html = first.container.innerHTML;
+    first.unmount();
+    const second = render(<ClubCrest name="Trail des Aravis" activity="trail" seed="b" />);
+    expect(second.container.innerHTML).toBe(html);
   });
 
   it('choisit l’icône d’activité à partir du libellé', () => {

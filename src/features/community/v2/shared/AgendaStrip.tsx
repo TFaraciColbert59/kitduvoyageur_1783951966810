@@ -64,6 +64,7 @@ export function AgendaStrip({
             type="button"
             className={classes}
             aria-pressed={active}
+            aria-current={day.isToday ? 'date' : undefined}
             aria-label={`${fullDate} · ${countLabel}`}
             data-iso={day.iso}
             onClick={() => onChange(active ? null : day.iso)}

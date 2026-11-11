@@ -158,6 +158,12 @@ export function EventTicketV2({
     return formatCountFr(Math.max(0, spotsLeft), 'place restante', 'places restantes');
   })();
 
+  const gaugePercent =
+    !event.past && event.maxParticipants > 0
+      ? Math.min(100, Math.max(0, ((event.maxParticipants - Math.max(0, spotsLeft)) / event.maxParticipants) * 100))
+      : null;
+  const gaugeTone = spotsLeft <= 0 ? 'full' : spotsLeft <= 2 ? 'low' : 'open';
+
   if (variant === 'compact') {
     const stamp = formatDateStamp(event.startsAt ?? `${event.eventDate}T09:00:00+01:00`);
     const time = formatTime(event.startsAt);
@@ -227,10 +233,22 @@ export function EventTicketV2({
           <i>{weather.tempMin}°</i>
         </span>
       ) : null}
-      <span className="lkdv-cv2x-event-foot-note">
-        {footNote}
-      </span>
+      {/* Pied de la maquette (`.tk-foot`, L1078-1079) : jauge + « n places restantes » à gauche, pilule
+          d'inscription de 44 px à droite, sur une seule rangée posée sur le pied du billet. */}
       <div className="lkdv-cv2x-event-action">
+        <span className="lkdv-cv2x-gauge-w">
+          {gaugePercent != null ? (
+            <span
+              className="lkdv-cv2x-gauge"
+              data-tone={gaugeTone}
+              role="img"
+              aria-label={`${event.maxParticipants - Math.max(0, spotsLeft)} places prises sur ${event.maxParticipants}`}
+            >
+              <i style={{ width: `${gaugePercent}%` }} />
+            </span>
+          ) : null}
+          <span className="lkdv-cv2x-event-foot-note">{footNote}</span>
+        </span>
         <EventActionButton event={event} status={status} spotsLeft={spotsLeft} busy={busy} onSignup={onSignup} />
       </div>
     </article>

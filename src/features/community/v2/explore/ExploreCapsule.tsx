@@ -44,7 +44,7 @@ export const CLUB_FILTER_ITEMS: MiniFilterItem[] = [
 /** Mini-capsule Sorties : Découvrir, Mes sorties, Près de moi. */
 export const EVENT_FILTER_ITEMS: MiniFilterItem[] = [
   { value: 'discover', label: 'Découvrir', icon: miniIcon('globe') },
-  { value: 'mine', label: 'Mes sorties', icon: miniIcon('bookmark') },
+  { value: 'mine', label: 'Mes sorties', icon: miniIcon('ticket') },
   { value: 'near', label: 'Près de moi', icon: miniIcon('map-pin') },
 ];
 

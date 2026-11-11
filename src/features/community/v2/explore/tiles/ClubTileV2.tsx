@@ -64,7 +64,6 @@ export function ClubTileV2({
   onPeek,
 }: ClubTileV2Props) {
   const longPress = useLongPress({ onLongPress: (element) => onPeek(club, element) });
-  const isMember = status === 'member' || status === 'admin';
   const label = clubJoinDisplayLabel(club, status);
   const joinAria =
     status === 'member' || status === 'admin'
@@ -110,7 +109,8 @@ export function ClubTileV2({
             seed={club.crestSeed}
             size={month ? 64 : 52}
           />
-          {club.privacy === 'closed' && !isMember ? (
+          {/* Maquette (L2405) : `c.valid` affiche le cadenas, membre ou non. */}
+          {club.privacy === 'closed' ? (
             <span className="lkdv-cv2x-club-lock" title="Adhésion sur validation">
               <ExploreIcon name="lock" size={12} />
             </span>
@@ -150,6 +150,7 @@ export function ClubTileV2({
         type="button"
         className="lkdv-cv2x-join"
         data-state={status}
+        data-long={status === 'none' && club.privacy === 'closed' ? 'true' : undefined}
         aria-pressed={status !== 'none'}
         aria-label={joinAria}
         aria-busy={busy || undefined}

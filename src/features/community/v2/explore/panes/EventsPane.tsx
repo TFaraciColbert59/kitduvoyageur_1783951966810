@@ -118,7 +118,7 @@ export function EventsPane({
         <span className="lkdv-cv2-eyebrow">Affichage</span>
         <div className="lkdv-cv2-seg" role="group" aria-label="Affichage des sorties">
           <button type="button" aria-pressed={view === 'grid'} onClick={() => onViewChange('grid')}>
-            Billets
+            Grille
           </button>
           <button type="button" aria-pressed={view === 'list'} onClick={() => onViewChange('list')}>
             Liste

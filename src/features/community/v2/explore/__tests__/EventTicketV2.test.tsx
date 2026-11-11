@@ -66,6 +66,22 @@ describe('EventTicketV2 (Sorties#1-6, 19)', () => {
     expect(screen.getByRole('button', { name: /S’inscrire à Footing/ })).toBeTruthy();
   });
 
+  it('porte la jauge de la maquette : places prises sur le total et « n places restantes »', () => {
+    render(<EventTicketV2 {...props()} />);
+    const gauge = document.querySelector('.lkdv-cv2x-gauge') as HTMLElement;
+    expect(gauge.getAttribute('role')).toBe('img');
+    expect(gauge.getAttribute('aria-label')).toMatch(/^\d+ places prises sur \d+$/);
+    expect(gauge.getAttribute('data-tone')).toBe('open');
+    expect(document.querySelector('.lkdv-cv2x-event-foot-note')?.textContent).toMatch(/places? restantes?/);
+  });
+
+  it('jauge « presque complète » à 2 places ou moins, « complète » à 0', () => {
+    const { rerender } = render(<EventTicketV2 {...props({ spotsLeft: 2 })} />);
+    expect(document.querySelector('.lkdv-cv2x-gauge')?.getAttribute('data-tone')).toBe('low');
+    rerender(<EventTicketV2 {...props({ spotsLeft: 0 })} />);
+    expect(document.querySelector('.lkdv-cv2x-gauge')?.getAttribute('data-tone')).toBe('full');
+  });
+
   it('la tuile est un lien intercepté qui ouvre le détail', () => {
     const p = props();
     render(<EventTicketV2 {...p} />);
