@@ -3,7 +3,10 @@ import React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Sport, SportSelection } from '@/features/explorer-v2/state/types';
-import { useExplorerStore } from '@/features/explorer-v2/state/store';
+import {
+  AUTO_PAUSE_STORAGE_KEY,
+  useExplorerStore,
+} from '@/features/explorer-v2/state/store';
 import { SportPicker } from '@/features/explorer-v2/sheet/SheetContent';
 import type { SheetContext } from '@/features/explorer-v2/sheet/context';
 
@@ -25,6 +28,7 @@ describe('explorer-v2 · drawer de départ', () => {
       configurable: true,
       value: {},
     });
+    useExplorerStore.setState({ autoPauseEnabled: true });
   });
 
   it('transmet la variante choisie au callback de démarrage', () => {
@@ -47,6 +51,22 @@ describe('explorer-v2 · drawer de départ', () => {
         catalogSlug: 'rando-refuge',
         environment: 'outdoor',
       }),
+    );
+  });
+
+  it('expose le réglage de préparation et persiste la pause automatique', () => {
+    window.localStorage.removeItem(AUTO_PAUSE_STORAGE_KEY);
+    useExplorerStore.setState({ autoPauseEnabled: true });
+    render(<SportPicker ctx={context(vi.fn())} />);
+
+    const toggle = screen.getByRole('switch', { name: /Pause automatique/ });
+    expect(toggle.getAttribute('aria-checked')).toBe('true');
+
+    fireEvent.click(toggle);
+    expect(useExplorerStore.getState().autoPauseEnabled).toBe(false);
+    expect(window.localStorage.getItem(AUTO_PAUSE_STORAGE_KEY)).toBe('0');
+    expect(screen.getByRole('switch', { name: /Pause automatique/ }).getAttribute('aria-checked')).toBe(
+      'false',
     );
   });
 

@@ -19,7 +19,11 @@ import { registerOfflineWorker } from './offline/zone';
 import { offRouteLabel } from './activity/offRoute';
 import { XpIcon } from './ui/XpIcon';
 import { haptic } from './state/haptics';
-import { useExplorerStore, useTransientStart } from './state/store';
+import {
+  AUTO_PAUSE_STORAGE_KEY,
+  useExplorerStore,
+  useTransientStart,
+} from './state/store';
 import { isSceneName, sceneEnabled, SCENES } from './state/scenes';
 import type { GeoCollection } from './data/hooks';
 import {
@@ -203,6 +207,21 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
   useEffect(() => {
     useExplorerStore.setState({ online });
   }, [online]);
+
+  // Réglage local de préparation : hydraté après le montage pour ne pas
+  // opposer le rendu serveur (défaut activé) au stockage du navigateur.
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(AUTO_PAUSE_STORAGE_KEY);
+      if (raw === '0' || raw === 'false') {
+        useExplorerStore.setState({ autoPauseEnabled: false });
+      } else if (raw === '1' || raw === 'true') {
+        useExplorerStore.setState({ autoPauseEnabled: true });
+      }
+    } catch {
+      /* stockage indisponible : réglage par défaut */
+    }
+  }, []);
 
   // Service worker de zone + file d'écritures hors ligne.
   useEffect(() => {
@@ -878,15 +897,41 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
       ) : null}
 
       {activity && state.sheet === 'live' ? (
-        <ActivityPill
-          sportLabel={activity.selection?.variantLabel ?? SPORT_META[activity.sport].label}
-          elapsed={elapsed}
-          distanceLabel={formatDistance(activity.distanceM / 1000)}
-          paused={activity.paused}
-          onPause={() => state.updateActivity({ paused: !activity.paused })}
-          onFlag={() => state.showToast({ title: 'Repère posé', sub: 'Ajouté à ta sortie' })}
-          onStop={() => state.stopActivity()}
-        />
+        <>
+          <ActivityPill
+            sportLabel={activity.selection?.variantLabel ?? SPORT_META[activity.sport].label}
+            elapsed={elapsed}
+            distanceLabel={formatDistance(activity.distanceM / 1000)}
+            paused={activity.paused}
+            onPause={() =>
+              state.updateActivity({ paused: !activity.paused, autoPaused: false })
+            }
+            onFlag={() => state.showToast({ title: 'Repère posé', sub: 'Ajouté à ta sortie' })}
+            onStop={() => state.stopActivity()}
+          />
+          {activity.autoPaused && !activity.paused ? (
+            <span
+              role="status"
+              style={{
+                position: 'absolute',
+                left: 20,
+                bottom: 'calc(var(--safe-bottom) + 66px + var(--cookie-banner-h, 0px))',
+                zIndex: 9,
+                padding: '4px 9px',
+                borderRadius: 999,
+                background: 'var(--xp-inkbtn)',
+                boxShadow: 'var(--xp-inkbtn-shadow)',
+                color: '#fff',
+                fontSize: 10.5,
+                fontWeight: 700,
+                letterSpacing: '0.04em',
+                textTransform: 'uppercase',
+              }}
+            >
+              Pause auto
+            </span>
+          ) : null}
+        </>
       ) : null}
 
       {/* Attributions (P10-09) : obligatoires pour OSM, OpenFreeMap, AWS Terrain,

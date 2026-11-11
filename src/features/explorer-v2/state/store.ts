@@ -51,9 +51,14 @@ interface ExplorerActions {
   setUnits: (units: 'metric' | 'imperial') => void;
   setMapBaseStyle: (style: 'relief' | 'satellite' | 'plan') => void;
   toggleLayer: (layerId: string) => void;
+  /** Réglage local de préparation : active ou coupe la pause automatique. */
+  setAutoPauseEnabled: (enabled: boolean) => void;
 }
 
 export type ExplorerStore = ExplorerState & ExplorerActions;
+
+/** Clé locale du réglage de préparation de l'Explorer v2. */
+export const AUTO_PAUSE_STORAGE_KEY = 'lkdv.explorer.pauseAuto';
 
 const initialState: ExplorerState = {
   level: 0,
@@ -66,6 +71,7 @@ const initialState: ExplorerState = {
   profile: null,
   easyMode: false,
   theme: 'light',
+  autoPauseEnabled: true,
   online: true,
   locationPermission: 'prompt',
   orbitPaused: false,
@@ -111,6 +117,7 @@ function activityStarted(
     sessionId,
     startedAt: Date.now(),
     paused: false,
+    autoPaused: false,
     offRoute: false,
     distanceM: 0,
     elevGainM: 0,
@@ -310,6 +317,18 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
         [layerId]: !state.layerVisibility?.[layerId],
       },
     })),
+
+  setAutoPauseEnabled: (enabled) => {
+    set({ autoPauseEnabled: enabled });
+    try {
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(AUTO_PAUSE_STORAGE_KEY, enabled ? '1' : '0');
+      }
+    } catch {
+      /* stockage indisponible : le réglage reste valable pour la session */
+    }
+    emit('auto-pause-setting', { enabled });
+  },
 }));
 
 export interface TransientStart {

@@ -3,6 +3,8 @@
 import React from 'react';
 import { XpIcon } from '../ui/XpIcon';
 import { useNaturalSearch, geometryCenter } from '../data/hooks';
+import { AUTO_PAUSE_BY_SPORT } from '../activity/tracker';
+import { useExplorerStore } from '../state/store';
 import { countTiles, downloadZone, purgeZone, readZone } from '../offline/zone';
 import { ElevationProfile } from './ElevationProfile';
 import {
@@ -125,6 +127,74 @@ function StartLimitNote() {
  * Choix en deux temps : famille de sport existante, puis variante.
  * Une variante indisponible n’a aucun handler de clic et porte le motif exact.
  */
+function autoPauseDurationLabel(seconds: number): string {
+  if (seconds < 60) return `${Math.round(seconds)} s`;
+  return `${Math.round(seconds / 60)} min`;
+}
+
+/**
+ * Réglage de préparation : la pause automatique à l'arrêt, propre au sport.
+ * Désactivée, le tracker garde exactement le comportement historique.
+ */
+function AutoPauseSetting({ sport }: { sport?: Sport | null }) {
+  const enabled = useExplorerStore((state) => state.autoPauseEnabled) ?? true;
+  const setEnabled = useExplorerStore((state) => state.setAutoPauseEnabled);
+  const config = sport ? AUTO_PAUSE_BY_SPORT[sport] : null;
+  const sub = !enabled
+    ? 'Désactivée · le suivi garde le comportement historique, sans arrêt automatique.'
+    : config
+      ? `Activée · pause après ${autoPauseDurationLabel(config.durationS)} d’arrêt, reprise au mouvement.`
+      : 'Activée · chaque sport a son seuil d’arrêt et de reprise.';
+  return (
+    <>
+      <XpEyebrow>Préparation</XpEyebrow>
+      <XpRows>
+        <XpRow
+          icon="pause"
+          title="Pause automatique"
+          sub={sub}
+          trailing={
+            <button
+              type="button"
+              role="switch"
+              aria-checked={enabled}
+              aria-label="Pause automatique à l’arrêt"
+              onClick={() => setEnabled(!enabled)}
+              style={{
+                flex: 'none',
+                width: 46,
+                height: 28,
+                padding: 3,
+                borderRadius: 999,
+                border: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: enabled ? 'flex-end' : 'flex-start',
+                background: enabled ? 'var(--xp-inkbtn)' : 'var(--xp-thumb)',
+                boxShadow: enabled
+                  ? 'var(--xp-inkbtn-shadow)'
+                  : 'inset 0 1px 2px rgba(23,43,36,0.18)',
+                transition: 'background 160ms ease',
+              }}
+            >
+              <span
+                aria-hidden="true"
+                style={{
+                  width: 22,
+                  height: 22,
+                  borderRadius: 999,
+                  background: '#fff',
+                  boxShadow: '0 1px 3px rgba(23,43,36,0.25)',
+                }}
+              />
+            </button>
+          }
+        />
+      </XpRows>
+    </>
+  );
+}
+
 export function SportPicker({ ctx }: { ctx: SheetContext }) {
   const startContext = useSportStartContext(ctx);
   const [sport, setSport] = React.useState<Sport | null>(null);
@@ -173,6 +243,7 @@ export function SportPicker({ ctx }: { ctx: SheetContext }) {
             );
           })}
         </XpRows>
+        <AutoPauseSetting sport={null} />
         <StartLimitNote />
       </>
     );
@@ -228,6 +299,7 @@ export function SportPicker({ ctx }: { ctx: SheetContext }) {
           );
         })}
       </XpRows>
+      <AutoPauseSetting sport={sport} />
       {variant && availability ? (
         <>
           <p
@@ -293,6 +365,7 @@ function RecommendedSports({ ctx }: { ctx: SheetContext }) {
           );
         })}
       </XpRows>
+      <AutoPauseSetting sport={null} />
       <StartLimitNote />
     </>
   );
@@ -1624,6 +1697,20 @@ export function LiveDirectTab({ ctx }: { ctx: SheetContext }) {
           title="Position refusée"
           hint="Aucun point GPS n’est enregistré. Autorise la position pour reprendre une trace."
         />
+      ) : null}
+      {activity.paused || activity.autoPaused ? (
+        <XpRows>
+          <XpRow
+            icon="pause"
+            title={activity.paused ? 'Pause manuelle' : 'Pause automatique'}
+            sub={
+              activity.paused
+                ? 'Le suivi est suspendu · appuie sur Reprendre pour continuer.'
+                : 'Arrêt détecté · les métriques sont gelées et la reprise est automatique.'
+            }
+            badge={{ label: activity.paused ? 'pausé' : 'auto', tone: 'warn' }}
+          />
+        </XpRows>
       ) : null}
       <div className="xp-chrono" aria-live="off">
         {elapsed}

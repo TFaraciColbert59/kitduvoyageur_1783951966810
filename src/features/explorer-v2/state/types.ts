@@ -113,7 +113,13 @@ export interface ActivityState {
   selection?: SportSelection;
   sessionId: string | null;
   startedAt: number;
+  /** Pause manuelle : le suivi GPS est suspendu. */
   paused: boolean;
+  /**
+   * Pause automatique à l'arrêt, distincte de `paused`. Les fixes continuent
+   * d'arriver pour détecter la reprise ; aucune métrique n'est accumulée.
+   */
+  autoPaused?: boolean;
   offRoute: boolean;
   distanceM: number;
   elevGainM: number;
@@ -147,6 +153,8 @@ export interface ExplorerState {
   profile: Profile;
   easyMode: boolean;
   theme: 'light' | 'dark';
+  /** Réglage de préparation : pause automatique à l'arrêt, désactivable. */
+  autoPauseEnabled?: boolean;
   online: boolean;
   locationPermission: 'granted' | 'denied' | 'prompt';
   orbitPaused: boolean;

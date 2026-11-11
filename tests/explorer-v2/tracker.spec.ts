@@ -471,4 +471,86 @@ describe('explorer-v2 · auto-pause', () => {
     timerTracker.breakContinuity();
     expect(timerTracker.state.autoPaused).toBe(false);
   });
+
+  it('gèle les métriques pendant la pause automatique puis repart de la dernière position', () => {
+    const tracker = new ActivityTracker(
+      autoPause({ durationS: 20, resumeSpeedThresholdMs: 0.5, resumeDurationS: 3, maxFixGapS: 60 })
+    );
+
+    let state = tracker.addFix(at(0, 0, 1));
+    state = tracker.addFix(at(5_000, 5, 1));
+    state = tracker.addFix(at(10_000, 10, 1));
+
+    // 20 s d'arrêt : la pause se déclenche à 30 s.
+    for (let t = 15; t <= 40; t += 5) {
+      state = tracker.addFix(at(t * 1000, 10, 0, 5, 1200));
+    }
+    expect(state.autoPaused).toBe(true);
+
+    // Pendant la pause, les fixes continuent d'arriver et dérivent : aucune
+    // métrique ne doit bouger.
+    const frozen = tracker.state;
+    state = tracker.addFix(at(45_000, 50, 0, 5, 1300));
+    state = tracker.addFix(at(50_000, 70, 0, 5, 1300));
+    expect(state.distanceM).toBe(frozen.distanceM);
+    expect(state.movingS).toBe(frozen.movingS);
+    expect(state.elevGainM).toBe(frozen.elevGainM);
+    expect(state.lastFix?.t).toBe(50_000);
+
+    // Reprise : 3 s de mouvement au-dessus du seuil, puis une nouvelle borne.
+    state = tracker.addFix(at(55_000, 71, 1, 5, 1300));
+    expect(state.autoPaused).toBe(false);
+    expect(state.distanceM).toBe(frozen.distanceM);
+    state = tracker.addFix(at(60_000, 76, 1, 5, 1300));
+    expect(state.distanceM).toBeCloseTo(frozen.distanceM + 5, 1);
+    expect(state.movingS).toBeCloseTo(frozen.movingS + 5, 1);
+  });
+
+  it('ne déduit pas une reprise d’une interruption GPS sans vitesse rapportée', () => {
+    const tracker = new ActivityTracker(
+      autoPause({ durationS: 5, resumeDurationS: 3, maxFixGapS: 30 })
+    );
+    tracker.addFix(at(0, 0, 1));
+    let state = tracker.addFix(at(5_000, 0, 0));
+    expect(state.autoPaused).toBe(true);
+
+    // Le trou est long et la position a beaucoup bougé, mais aucune vitesse
+    // n'est rapportée : la pause ne doit pas se lever sur cette seule preuve.
+    state = tracker.addFix({ ...at(60_000, 500, 1), speed: null });
+    expect(state.autoPaused).toBe(true);
+    expect(state.distanceM).toBe(0);
+
+    // La reprise exige à nouveau un mouvement continu rapporté.
+    state = tracker.addFix(at(61_000, 501, 1));
+    expect(state.autoPaused).toBe(true);
+    state = tracker.addFix(at(62_000, 502, 1));
+    state = tracker.addFix(at(63_000, 503, 1));
+    state = tracker.addFix(at(64_000, 504, 1));
+    expect(state.autoPaused).toBe(false);
+  });
+
+  it('ne compte pas une interruption GPS comme du mouvement, mais la garde historique désactivée', () => {
+    const enabled = new ActivityTracker(autoPause({ maxFixGapS: 30 }));
+    let state = enabled.addFix(at(0, 0, 1));
+    state = enabled.addFix(at(5_000, 5, 1));
+    const beforeGap = state;
+
+    state = enabled.addFix(at(70_000, 1_005, 1));
+    expect(state.distanceM).toBe(beforeGap.distanceM);
+    expect(state.movingS).toBe(beforeGap.movingS);
+    expect(state.elevGainM).toBe(beforeGap.elevGainM);
+    expect(state.lastFix?.t).toBe(70_000);
+
+    // Le fix suivant repart de la nouvelle borne.
+    state = enabled.addFix(at(71_000, 1_010, 1));
+    expect(state.distanceM).toBeCloseTo(beforeGap.distanceM + 5, 1);
+
+    // Option désactivée : le comportement historique compte le trou tel quel.
+    const historical = new ActivityTracker(AUTO_PAUSE_DISABLED);
+    historical.addFix(at(0, 0, 1));
+    historical.addFix(at(5_000, 5, 1));
+    state = historical.addFix(at(70_000, 5_005, 1));
+    expect(state.distanceM).toBeGreaterThan(4_000);
+    expect(state.autoPaused).toBe(false);
+  });
 });

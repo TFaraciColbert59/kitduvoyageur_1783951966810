@@ -12,14 +12,19 @@
  * ------------------
  * Désactivée par défaut : `new ActivityTracker()` garde le comportement
  * historique. Le hook branche un profil de `AUTO_PAUSE_BY_SPORT` (ou
- * `AUTO_PAUSE_DISABLED`) via le constructeur. La détection n'ampute jamais
- * `distanceM`, `movingS` ou `elevGainM` : le hook lit `autoPaused` pour
- * suspendre/reprendre l'enregistrement.
+ * `AUTO_PAUSE_DISABLED`) via `setConfig`.
  *
  * Pause manuelle : le hook appelle `breakContinuity()` quand il suspend la
  * capture. Le premier fix valide suivant devient la nouvelle borne, sans
  * compter la durée, la distance ni le dénivelé de la pause — même si elle est
  * plus courte que `maxFixGapS`. Aucun callback ni historique n'est nécessaire.
+ *
+ * Pause automatique : les fixes continuent d'arriver (ils sont nécessaires à la
+ * détection de reprise) mais `distanceM`, `movingS` et `elevGainM` sont gelés
+ * pendant la pause ; `lastFix` avance pour que la reprise reparte de la
+ * dernière position connue. Une interruption GPS (`maxFixGapS`) n'est jamais
+ * comptée comme du mouvement continu : elle établit une nouvelle borne. Ces
+ * règles ne s'appliquent que lorsque `config.enabled` vaut `true`.
  *
  * Seuils : base historique de `TrackingEngine` (0,5 km/h pendant 120 s) et
  * `MIN_MOVING_SPEED_MS` (0,3 m/s) pour la reprise du profil de repli. Les
@@ -120,6 +125,18 @@ export const AUTO_PAUSE_BY_SPORT: Readonly<Record<Sport, AutoPauseConfig>> = {
   bivouac: profile(0.139, 300, MIN_MOVING_SPEED_MS, 10, 300),
 };
 
+/**
+ * Profil effectif d'un sport, désactivé si le réglage de préparation l'est.
+ * Retourne toujours une copie : aucun appelant ne peut muter la table.
+ */
+export function autoPauseConfigForSport(
+  sport: Sport | null | undefined,
+  enabled = true,
+): AutoPauseConfig {
+  if (!enabled || !sport) return { ...AUTO_PAUSE_DISABLED };
+  return { ...AUTO_PAUSE_BY_SPORT[sport] };
+}
+
 export function haversineM(a: GpsFix, b: GpsFix): number {
   const R = 6371000;
   const dLat = ((b.lat - a.lat) * Math.PI) / 180;
@@ -141,7 +158,7 @@ export class ActivityTracker {
 
   private smoothedEle: number | null = null;
 
-  private readonly config: AutoPauseConfig;
+  private config: AutoPauseConfig;
 
   private autoPaused = false;
 
@@ -161,6 +178,15 @@ export class ActivityTracker {
 
   get state(): ActivityMetrics {
     return { ...this.metrics, autoPaused: this.autoPaused };
+  }
+
+  /**
+   * Applique un profil sans perdre les métriques déjà acquises. Utilisé quand
+   * le sport ou le réglage de préparation change en cours de sortie.
+   */
+  setConfig(config: AutoPauseConfig): void {
+    this.config = { ...AUTO_PAUSE_DISABLED, ...config };
+    this.resetAutoPause();
   }
 
   /**
@@ -199,9 +225,62 @@ export class ActivityTracker {
       return this.state;
     }
 
-    this.metrics.distanceM += distance;
-
     const speed = fix.speed ?? (dtS > 0 ? distance / dtS : 0);
+
+    if (this.config.enabled) {
+      // Interruption GPS : la ligne droite et le temps du trou ne sont pas du
+      // mouvement observé. La nouvelle borne est la position courante. Seule
+      // une vitesse explicitement rapportée par le GPS peut reprendre la
+      // détection ; la vitesse déduite du trou ne prouve aucun mouvement.
+      if (dtS > this.config.maxFixGapS) {
+        const reportedSpeed =
+          typeof fix.speed === 'number' && Number.isFinite(fix.speed)
+            ? Math.max(0, fix.speed)
+            : null;
+        this.metrics.lastFix = fix;
+        this.smoothedEle = typeof fix.ele === 'number' ? fix.ele : this.smoothedEle;
+        this.rejectedSinceLastFix = false;
+        this.stoppedS = 0;
+        this.resumingS = 0;
+        if (
+          this.autoPaused &&
+          reportedSpeed !== null &&
+          reportedSpeed >= this.config.resumeSpeedThresholdMs
+        ) {
+          // La continuité n'est pas mesurable après la coupure : un premier
+          // fix en mouvement suffit à reprendre, sinon on resterait pausé.
+          this.autoPaused = false;
+        }
+        return this.state;
+      }
+
+      // Fix rejeté (précision ou saut) : le suivant établit une nouvelle borne,
+      // sans compter l'intervalle non prouvé.
+      if (this.rejectedSinceLastFix) {
+        this.metrics.lastFix = fix;
+        this.smoothedEle = typeof fix.ele === 'number' ? fix.ele : this.smoothedEle;
+        this.rejectedSinceLastFix = false;
+        this.stoppedS = 0;
+        this.resumingS = 0;
+        return this.state;
+      }
+
+      // Pause automatique : on garde les fixes pour détecter la reprise, mais
+      // aucune métrique n'est accumulée pendant la pause.
+      if (this.autoPaused) {
+        this.metrics.lastFix = fix;
+        if (typeof fix.ele === 'number') {
+          this.smoothedEle =
+            this.smoothedEle === null
+              ? fix.ele
+              : this.smoothedEle + ELE_SMOOTHING * (fix.ele - this.smoothedEle);
+        }
+        this.updateAutoPause(dtS, speed);
+        return this.state;
+      }
+    }
+
+    this.metrics.distanceM += distance;
     if (speed > MIN_MOVING_SPEED_MS) this.metrics.movingS += dtS;
 
     if (typeof fix.ele === 'number') {
@@ -216,15 +295,9 @@ export class ActivityTracker {
     }
 
     this.metrics.lastFix = fix;
+    this.rejectedSinceLastFix = false;
 
-    if (this.rejectedSinceLastFix) {
-      this.rejectedSinceLastFix = false;
-      this.stoppedS = 0;
-      this.resumingS = 0;
-      return this.state;
-    }
-
-    this.updateAutoPause(fix, dtS, speed);
+    this.updateAutoPause(dtS, speed);
     return this.state;
   }
 
@@ -240,23 +313,10 @@ export class ActivityTracker {
     this.resumingS = 0;
   }
 
-  private updateAutoPause(fix: GpsFix, dtS: number, rawSpeed: number): void {
+  private updateAutoPause(dtS: number, rawSpeed: number): void {
     if (!this.config.enabled) return;
 
     const speed = Number.isFinite(rawSpeed) ? Math.max(0, rawSpeed) : null;
-
-    // Trou de fix : le temps écoulé n'est pas une preuve d'arrêt ou de reprise.
-    if (dtS > this.config.maxFixGapS) {
-      this.stoppedS = 0;
-      this.resumingS = 0;
-      if (this.autoPaused && speed !== null && speed >= this.config.resumeSpeedThresholdMs) {
-        // La continuité n'est pas mesurable après la coupure : un premier fix
-        // en mouvement suffit à reprendre, sinon on resterait pausé à vie.
-        this.autoPaused = false;
-      }
-      return;
-    }
-
     if (dtS <= 0 || speed === null) return;
 
     if (!this.autoPaused) {

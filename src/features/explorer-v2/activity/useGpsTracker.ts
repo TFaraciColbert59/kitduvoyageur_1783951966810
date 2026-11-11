@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { ActivityTracker, type GpsFix } from './tracker';
+import { ActivityTracker, autoPauseConfigForSport, type GpsFix } from './tracker';
 import { haptic } from '../state/haptics';
 import { evaluateOffRoute, type OffRouteState } from './offRoute';
 import { useExplorerStore } from '../state/store';
@@ -23,10 +23,13 @@ export interface TrackerOptions {
 
 export function useGpsTracker({ distanceToRouteM, onFix }: TrackerOptions = {}) {
   const activity = useExplorerStore((state) => state.activity);
+  const autoPauseEnabled = useExplorerStore((state) => state.autoPauseEnabled) ?? true;
   const permission = useExplorerStore((state) => state.locationPermission);
   const scene = useExplorerStore((state) => state.scene);
   const running = !!activity && !activity.paused;
   const trackerRef = useRef(new ActivityTracker());
+  const trackerConfigRef = useRef<string>('');
+  const manualPausedRef = useRef<boolean | null>(null);
   const offRouteRef = useRef<OffRouteState>({ offRoute: false, distanceM: 0, outSinceS: 0 });
   const samplesRef = useRef<Array<{ t: number; distanceM: number }>>([]);
 
@@ -35,6 +38,11 @@ export function useGpsTracker({ distanceToRouteM, onFix }: TrackerOptions = {}) 
 
   handleFix.current = (fix: GpsFix) => {
     lastFixTimeRef.current = Date.now();
+    const current = useExplorerStore.getState().activity;
+    // Pause manuelle : un fix tardif ne doit ni déplacer la carte ni avancer
+    // les métriques. La pause automatique, elle, laisse passer les fixes.
+    if (!current || (autoPauseEnabled && current.paused)) return;
+
     const metrics = trackerRef.current.addFix(fix);
     useExplorerStore.setState((state) => ({
       activity: state.activity
@@ -43,6 +51,7 @@ export function useGpsTracker({ distanceToRouteM, onFix }: TrackerOptions = {}) 
             distanceM: metrics.distanceM,
             elevGainM: metrics.elevGainM,
             movingS: metrics.movingS,
+            autoPaused: metrics.autoPaused,
           }
         : undefined,
       center: [fix.lng, fix.lat],
@@ -121,6 +130,39 @@ export function useGpsTracker({ distanceToRouteM, onFix }: TrackerOptions = {}) 
     };
   }, [scene]);
 
+  // Profil de pause automatique : celui du sport courant, ou comportement
+  // historique quand le réglage de préparation est désactivé.
+  useEffect(() => {
+    if (!activity) return;
+    const key = `${activity.sport}:${autoPauseEnabled ? 'on' : 'off'}`;
+    if (trackerConfigRef.current === key) return;
+    trackerConfigRef.current = key;
+    trackerRef.current.setConfig(autoPauseConfigForSport(activity.sport, autoPauseEnabled));
+    if (!autoPauseEnabled && activity.autoPaused) {
+      useExplorerStore.setState((state) =>
+        state.activity ? { activity: { ...state.activity, autoPaused: false } } : {},
+      );
+    }
+  }, [activity, autoPauseEnabled]);
+
+  // Pause manuelle : une transition (aller ou retour) casse la continuité pour
+  // que le trou ne soit compté ni en distance, ni en durée, ni en D+.
+  useEffect(() => {
+    if (!activity) {
+      manualPausedRef.current = null;
+      return;
+    }
+    const previous = manualPausedRef.current;
+    manualPausedRef.current = activity.paused;
+    if (previous === null || previous === activity.paused) return;
+    if (autoPauseEnabled) trackerRef.current.breakContinuity();
+    if (activity.paused && activity.autoPaused) {
+      useExplorerStore.setState((state) =>
+        state.activity ? { activity: { ...state.activity, autoPaused: false } } : {},
+      );
+    }
+  }, [activity, autoPauseEnabled]);
+
   useEffect(() => {
     if (!running || permission === 'denied') return;
     if (typeof navigator === 'undefined' || !navigator.geolocation) return;
@@ -179,6 +221,8 @@ export function useGpsTracker({ distanceToRouteM, onFix }: TrackerOptions = {}) 
   useEffect(() => {
     if (!activity) {
       trackerRef.current = new ActivityTracker();
+      trackerConfigRef.current = '';
+      manualPausedRef.current = null;
       samplesRef.current = [];
       offRouteRef.current = { offRoute: false, distanceM: 0, outSinceS: 0 };
     }
