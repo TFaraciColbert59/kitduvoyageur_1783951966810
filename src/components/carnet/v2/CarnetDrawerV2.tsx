@@ -63,6 +63,7 @@ import {
 } from './CarnetLenses';
 import { EtapeFiche, ItemFiche, NightFiche, ParticipantFiche } from './CarnetFiches';
 import { MOMENT_TYPE_ICONS } from './CarnetMomentTile';
+import { formatDuration } from '@/features/carnet/detail/format';
 import { relativeTime } from '@/features/carnet/detail/useCarnetNotifications';
 import { CARNET_NOTIFY_MODES, useCarnetFollow } from '@/features/carnet/detail/useCarnetFollow';
 import { elevationProfileGain } from '@/features/carnet/detail/elevationProfile';
@@ -431,10 +432,19 @@ export function CarnetDrawerV2({
       const etape = detail.etapes.find((e) => e.id === currentStackItem.etapeId);
       if (etape) {
         title = [etape.from, etape.to].filter(Boolean).join(' → ') || etape.label;
-        const lastPoint = detail.days.find((d) => (d.dayNumber ?? d.index) === etape.dayNumber)?.points.slice(-1)[0];
+        const day = detail.days.find((d) => (d.dayNumber ?? d.index) === etape.dayNumber);
+        const lastPoint = day?.points.slice(-1)[0];
+        /* Même repli que la liste : les chiffres du jour complètent l'étape
+           quand la ligne d'étape n'en porte pas (sinon « — » pour tout). */
+        const etapeWithStats = {
+          ...etape,
+          distanceKm: etape.distanceKm ?? day?.distanceKm ?? null,
+          elevationM: etape.elevationM ?? day?.elevationM ?? null,
+          durationText: etape.durationText ?? formatDuration(day?.durationS ?? null),
+        };
         body = (
           <EtapeFiche
-            etape={etape}
+            etape={etapeWithStats}
             canEdit={canEdit}
             onShowOnMap={lastPoint ? () => onFocusMap?.(lastPoint.lat, lastPoint.lng, 12) : undefined}
             onEdit={() => onEdit?.({ kind: 'etape', etape, day: etape.dayNumber })}
