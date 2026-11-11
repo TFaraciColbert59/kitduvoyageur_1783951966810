@@ -1,6 +1,6 @@
 # LKDV — Trailer 60 s · Prompts ChatGPT, version complète
 
-Liste à copier dans ChatGPT : 1 bible, 7 fiches personnages et 41 images de film (img01 à img39, plus img09b et img35a/img35b). Elle correspond à la trame `trailer/TRAME-60s.md` et intègre l'analyse des références (`trailer/ANALYSE-REFERENCES.md`).
+Liste à copier dans ChatGPT : 1 bible, 7 fiches personnages et 51 images de film (img01 à img49, plus img09b et img35a/img35b). Elle correspond à la trame `trailer/TRAME-60s.md` et intègre l'analyse des références (`trailer/ANALYSE-REFERENCES.md`).
 
 ---
 
@@ -13,7 +13,8 @@ Liste à copier dans ChatGPT : 1 bible, 7 fiches personnages et 41 images de fil
 5. Quand un personnage apparaît, **joins sa fiche** (F1 pour Léa, etc.) au message, avec la phrase indiquée.
 6. Contrôle chaque image avec la **grille de contrôle** en bas de ce fichier. S'il y a un défaut, renvoie la **phrase de correction** correspondante, ne repars pas de zéro.
 7. Nomme les fichiers exactement `img01.png`, `img02.png`… et dépose-les dans `assets/footage/`. Garde la meilleure version de chaque image.
-8. Si ChatGPT ne parvient pas à faire un écran vert pur, accepte un écran **blanc uni** : je saurai l'incruster aussi.
+8. Avec la fiche F1 et les images où Léa porte son sac, joins aussi **`sac-lkdv-one-45.png`** (la planche de rendu 3D du vrai sac LKDV ONE 45, fournie avec ce fichier).
+9. Si ChatGPT ne parvient pas à faire un écran vert pur, accepte un écran **blanc uni** : je saurai l'incruster aussi.
 
 ---
 
@@ -44,6 +45,7 @@ Tu es à la fois directeur de la photographie, chef décorateur, chef costumier 
 4. VÊTEMENTS ET MATÉRIEL
 - Matériel de montagne réaliste, techniquement juste et un peu usé : poussière, plis, coutures, sangles qui ont servi, traces de terre sur les chaussures.
 - AUCUNE marque, aucun logo, aucune étiquette lisible, aucun texte sur aucun objet ni vêtement.
+- SEULE EXCEPTION : le sac à dos de Léa est un modèle précis, le LKDV ONE 45 (planche de rendu 3D jointe quand il apparaît). Il doit être reproduit fidèlement : corps vert olive mat, fond noir, fermetures noires en V, haut enroulable. Son écusson est un carré noir avec un pictogramme de montagne blanc, sans aucune lettre.
 - Palette des costumes : vert forêt profond, vert sauge, gris pierre, crème et écru, bleu encre, beige sable, bordeaux sombre. Jamais d'orange fluo, de jaune fluo ni de rose vif.
 
 5. TÉLÉPHONES
@@ -96,7 +98,7 @@ Selon la bible, crée la FICHE DE RÉFÉRENCE de l'héroïne, LÉA. Image 16:9, 
 
 LÉA : Française, 27 ans, 1,68 m, silhouette mince et sportive de randonneuse, épaules un peu marquées. Visage ovale aux pommettes douces, nez droit légèrement retroussé, taches de rousseur légères sur le nez et les joues, yeux noisette, sourcils naturels assez fournis, sourire franc avec une petite fossette à gauche. Cheveux châtain foncé aux reflets chauds, ondulés, mi-longs (sous les épaules), attachés en queue de cheval basse avec un élastique noir fin, deux mèches libres qui encadrent le visage. Petites créoles argentées fines aux deux oreilles. Ongles courts sans vernis. Aucun maquillage visible.
 
-TENUE RANDONNÉE (celle de la fiche) : veste softshell VERT FORÊT profond (proche de #17402C), mate, coupe ajustée, col montant, fermeture éclair noire, manches remontées jusqu'aux avant-bras ; dessous, t-shirt technique écru ; pantalon de trekking gris pierre, coupe droite, légèrement poussiéreux aux genoux ; chaussettes de laine grises qui dépassent un peu ; chaussures de randonnée montantes en cuir brun foncé, lacets brun rouge, semelle sombre usée. Sac à dos 38 litres gris anthracite, tissu mat, bretelles et ceinture ventrale VERT SAUGE (proche de #5B7F55), boucles noires mates, sans aucun logo ; sur la bretelle gauche, un étui noir de téléphone.
+TENUE RANDONNÉE (celle de la fiche) : veste softshell VERT FORÊT profond (proche de #17402C), mate, coupe ajustée, col montant, fermeture éclair noire, manches remontées jusqu'aux avant-bras ; dessous, t-shirt technique écru ; pantalon de trekking gris pierre, coupe droite, légèrement poussiéreux aux genoux ; chaussettes de laine grises qui dépassent un peu ; chaussures de randonnée montantes en cuir brun foncé, lacets brun rouge, semelle sombre usée. SAC : le sac à dos LKDV ONE 45 litres, STRICTEMENT identique à la planche de rendu 3D jointe (sac-lkdv-one-45.png) : corps vert olive mat légèrement jaune (proche de #8A9A3A), fond renforcé noir, deux longues fermetures éclair verticales noires sur la face avant qui dessinent un V sous le rabat, haut enroulable fermé par une boucle noire centrale, sangles de compression noires, bretelles vert olive à doublure noire, ceinture ventrale épaisse vert olive à boucles noires, dos noir rembourré. Sur la face avant, sous la pointe du V, un petit écusson carré noir uni portant un simple pictogramme de montagne blanc, SANS aucune lettre. Sur la bretelle gauche, un étui noir de téléphone.
 
 Photoréaliste, vraie personne, pores, asymétries naturelles, aucun aspect IA.
 ```
@@ -112,7 +114,7 @@ Même fiche pour Léa, en TENUE DE VILLE cette fois, sur le même fond et avec l
 ```
 Selon la bible, fiche de référence du personnage SAMI. Même format que la fiche de Léa (16:9, fond gris neutre, quatre vues en pied : face, trois-quarts, profil, dos, sans aucun texte).
 SAMI : 30 ans, 1,78 m, carrure moyenne et solide, origine nord-africaine, peau mate dorée. Cheveux noirs courts et bouclés, barbe courte noire bien taillée, sourcils épais, yeux bruns rieurs, petite cicatrice au sourcil gauche.
-TENUE : veste isolante beige sable mate, t-shirt gris anthracite, pantalon de randonnée vert olive foncé, chaussures de randonnée basses brun clair, bonnet de laine gris chiné un peu en arrière sur la tête, sac à dos olive 30 litres sans logo, montre à bracelet tissu noir sans cadran lisible.
+TENUE : veste isolante beige sable mate, t-shirt gris anthracite, pantalon de randonnée vert olive foncé, chaussures de randonnée basses brun clair, bonnet de laine gris chiné un peu en arrière sur la tête, sac à dos gris pierre 30 litres sans logo, montre à bracelet tissu noir sans cadran lisible.
 Photoréaliste, vraie personne.
 ```
 
@@ -258,7 +260,7 @@ RÉALISME : grain fin, texture de la maille, vapeur du thé visible, mains natur
 INTERDITS : texte sur les livres, logos, écran visible.
 ```
 
-#### img07 — Le téléphone en main (P07 et P09, 7,2–10,6 s) · joindre F1
+#### img07 — Le téléphone en main (P07 et P09, 7,2–10,0 s) · joindre F1
 
 ```
 INTENTION : gros plan sur le téléphone de Léa. J'y incrusterai l'application (un carnet de voyage avec la photo d'un lac turquoise).
@@ -271,7 +273,7 @@ COLORIMÉTRIE : crème, ambre et bleu ; le vert de l'écran est la seule note vi
 INTERDITS : logo sur le téléphone, contenu à l'écran, doigts déformés.
 ```
 
-#### img08 — L'œil de Léa (P08, 8,4–9,4 s) · joindre F1
+#### img08 — L'œil de Léa (P08, 8,4–9,2 s) · joindre F1
 
 ```
 INTENTION : déclic émotionnel. Le reflet turquoise de la photo du lac danse dans l'œil de Léa.
@@ -297,17 +299,17 @@ PERSONNAGES : aucun.
 INTERDITS : texte, personnes, bateaux, effet carte postale saturée.
 ```
 
-#### img09b — Le lac de Sorapis, Léa minuscule (variante pour les plans d'échelle) · joindre F1
+#### img09b — Le lac de Sorapis, Léa minuscule (P30, 30,9–32,1 s, plan ★) · joindre F1
 
 ```
 INTENTION : même lieu et même lumière que img09, mais avec Léa minuscule dans l'immensité.
 CADRE : plan d'ensemble pris depuis la rive opposée et en hauteur ; objectif de 35 mm. Le lac turquoise occupe la moitié basse, les falaises et le pic en aiguille la moitié haute.
-SUJET : Léa en tenue de randonnée (veste vert forêt, sac anthracite aux sangles sauge), debout seule sur un gros rocher blanc au bord de l'eau, au tiers central. Elle mesure moins de 4 % de la hauteur de l'image ; on la reconnaît à sa veste vert forêt. Elle regarde le pic, les bras légèrement écartés du corps.
+SUJET : Léa en tenue de randonnée (veste vert forêt, sac LKDV ONE vert olive à fond noir), debout seule sur un gros rocher blanc au bord de l'eau, au tiers central. Elle mesure moins de 4 % de la hauteur de l'image ; on la reconnaît à sa veste vert forêt. Elle regarde le pic, les bras légèrement écartés du corps.
 LUMIÈRE, COULEURS, SAISON : strictement identiques à img09.
 INTERDITS : autres personnes, texte.
 ```
 
-#### img10 — Léa se lève (P11, 12,0–13,2 s) · joindre F1, tenue de ville
+#### img10 — Léa se lève (P11, 11,0–12,0 s) · joindre F1, tenue de ville
 
 ```
 INTENTION : la décision. Retour brutal du rêve, Léa se lève d'un bond, prête à partir.
@@ -321,7 +323,32 @@ AMBIANCE : énergie, joie soudaine.
 INTERDITS : texte, déformation des membres en mouvement.
 ```
 
-#### img11 — Les trois amis reçoivent l'invitation (P14, 15,4–16,6 s) · joindre F2, F3, F4
+#### img40 — Le Compas, étape « Où » (P12, 12,0–13,2 s) · joindre F1, tenue de ville
+
+```
+INTENTION : Léa commence à préparer son aventure sur l'application. J'incrusterai la vraie interface sur l'écran.
+CADRE : gros plan, caméra à hauteur du téléphone, face à Léa ; objectif de 50 mm à f/2. Le téléphone occupe environ 35 % de la hauteur de l'image, au centre, ÉCRAN TOURNÉ VERS LA CAMÉRA, presque de face (légère inclinaison de 10°). Le visage de Léa, flou, au-dessus du téléphone, en haut du tiers central.
+SUJET : Léa, en tenue de ville (pull crème, jean), assise en tailleur sur le parquet de son appartement, au milieu du salon. Elle tient le téléphone à deux mains, l'index droit tape quelque chose en bas de l'écran. Concentrée, un sourire au coin des lèvres. Autour d'elle au sol, flous : une carte papier dépliée (relief sans texte lisible), la tasse de thé, ses vieilles chaussures de randonnée.
+ÉCRAN : vert chroma uni pur #00FF00, mat, quatre coins arrondis nets et visibles, l'index ne couvre que le bas de l'écran. Aucune lueur verte sur les mains ni sur le visage.
+DÉCOR : même appartement qu'img06 (briques blanc cassé, étagère de livres, plantes, lampe chaude), pluie sur la fenêtre au fond.
+LUMIÈRE : lampe chaude (2 700 K) par la droite, lumière bleue de la fenêtre par la gauche ; son visage est éclairé doucement par la lampe.
+COLORIMÉTRIE : crème, bois miel, ambre et bleu.
+INTERDITS : contenu à l'écran, texte sur la carte, logo sur le téléphone.
+```
+
+#### img41 — Par-dessus l'épaule : « Nous » et l'itinéraire (P13 et P15, 13,2–14,2 s et 15,2–16,2 s) · joindre F1, tenue de ville
+
+```
+INTENTION : on voit Léa utiliser l'application de près, comme si on était à côté d'elle. J'incrusterai deux écrans différents (inviter ses amis, puis l'itinéraire en 3D).
+CADRE : par-dessus l'épaule gauche de Léa, caméra très proche de son épaule ; objectif de 35 mm à f/2. Le téléphone au centre, écran parfaitement lisible vers la caméra, en légère plongée. Au premier plan, flous : l'épaule en maille crème et quelques mèches châtain.
+SUJET : Léa, assise sur le parquet du salon, tient le téléphone de la main gauche, le pouce droit en train de glisser sur l'écran.
+ÉCRAN : vert chroma uni pur #00FF00, mat, quatre coins nets, sans reflet ni icône.
+ARRIÈRE-PLAN : très flou, le parquet, la carte papier et une bougie allumée.
+LUMIÈRE : lampe chaude par la droite, nuit bleue par la fenêtre.
+INTERDITS : lueur verte, texte, logo.
+```
+
+#### img11 — Les trois amis reçoivent l'invitation (P14, 14,2–15,2 s) · joindre F2, F3, F4
 
 ```
 INTENTION : en même temps, à trois endroits différents, Sami, Inès et Tom reçoivent l'invitation de Léa et disent oui.
@@ -333,15 +360,51 @@ COLORIMÉTRIE : orange, ambre chaud et bleu nuit ; un caractère par bande mais 
 INTERDITS : écrans visibles, texte, logos, enseignes lisibles.
 ```
 
-#### img12 — Le matériel sur le lit (P17, 19,0–20,0 s) · joindre F1
+#### img42 — Kit Studio et le budget qui fond (P16, 16,2–17,6 s) · joindre F1, tenue de ville
+
+```
+INTENTION : Léa compose son kit dans l'application et découvre qu'elle peut partir presque sans argent (prêt d'un ami, location, occasion). C'est le moment où elle sourit de soulagement. J'incrusterai Kit Studio sur l'écran.
+CADRE : plongée verticale au-dessus du lit, caméra à 1,2 m ; objectif de 35 mm à f/2,8. Léa est au tiers central, allongée sur le ventre et en appui sur les coudes ; le téléphone est posé à plat sur le drap devant elle, écran tourné vers le haut, donc vers la caméra, entièrement visible.
+SUJET : Léa (pull crème, cheveux qui tombent sur un côté), sur le ventre, en appui sur les coudes, les pieds en chaussettes de laine relevés derrière elle. Elle regarde l'écran avec un sourire surpris et ravi, une main sur la bouche.
+ÉCRAN : smartphone posé à plat sur le drap, vert chroma uni pur #00FF00, quatre coins nets, parfaitement visible.
+DÉCOR : lit aux draps de lin blanc froissés, plaid vert sauge, quelques objets épars sur le lit (lampe frontale, gourde, chaussettes).
+LUMIÈRE : lampe de chevet chaude par la droite, douce, ombres légères.
+COLORIMÉTRIE : blanc lin, crème, ambre, vert sauge.
+INTERDITS : lueur verte, texte, logo.
+```
+
+#### img43 — Le pouce sur « Commander » (P17, 17,6–18,4 s) · joindre F1
+
+```
+INTENTION : la décision définitive. Léa commande son sac. J'incrusterai le bouton de commande.
+CADRE : très gros plan macro sur le pouce droit de Léa à l'instant où il touche l'écran ; objectif macro de 100 mm à f/2,8. L'écran occupe toute la moitié basse de l'image, vu presque de face.
+DÉTAILS : pouce aux taches de rousseur légères, ongle court sans vernis, la pulpe vient de toucher le verre ; bord de la manche en maille crème.
+ÉCRAN : vert chroma uni pur #00FF00, mat ; au moins deux coins de l'écran visibles et nets.
+LUMIÈRE : lampe chaude latérale, fond sombre et flou.
+INTERDITS : contenu à l'écran, doigt déformé.
+```
+
+#### img44 — Le colis arrive : le sac LKDV ONE (P18, 18,4–19,4 s) · joindre F1, tenue de ville, et sac-lkdv-one-45.png
+
+```
+INTENTION : la livraison. Léa découvre le sac qu'elle a composé dans l'application. Émerveillement, objet désirable, « unboxing » de publicité haut de gamme.
+CADRE : plan rapproché, légère contre-plongée, caméra au niveau du carton ; objectif de 50 mm à f/2. Le sac au centre exact de l'image, Léa derrière, un peu au-dessus.
+SUJET : Léa, en tenue de ville, à genoux sur le parquet de l'entrée, sort à deux mains de son carton le sac à dos LKDV ONE 45. Le sac doit être STRICTEMENT identique à la planche jointe : corps vert olive mat légèrement jaune, fond noir, deux fermetures éclair verticales noires en V sur la face avant, haut enroulable à boucle noire, bretelles vert olive à doublure noire, ceinture ventrale vert olive à boucles noires, et sous la pointe du V un petit écusson carré noir avec un pictogramme de montagne blanc, SANS aucune lettre. Le sac est neuf, impeccable, tissu mat, coutures nettes. Léa le regarde, bouche entrouverte, yeux brillants.
+DÉCOR : carton brun kraft ouvert sans aucune inscription ni étiquette lisible, papier de soie crème qui déborde ; entrée de l'appartement, porte entrouverte sur un palier éclairé, paillasson, chaussures.
+LUMIÈRE : lumière du jour qui entre par la porte (5 600 K), douce et un peu dorée ; reflet doux sur le tissu du sac, qui ressort sur le fond.
+COLORIMÉTRIE : vert olive du sac en vedette, kraft, crème, bois.
+INTERDITS : texte, lettres sur l'écusson, étiquettes, logo de transporteur, marque.
+```
+
+#### img12 — Le matériel sur le lit (P19, 19,4–20,2 s) · joindre F1
 
 ```
 INTENTION : l'écran devient réel. Le kit préparé dans l'application est étalé sur le lit et Léa remplit son sac.
 CADRE : vue de dessus parfaitement verticale (flat lay), caméra à 1,8 m au-dessus du lit ; objectif de 35 mm, tout net (f/8).
-CONTENU : un lit double aux draps de lin blanc légèrement froissés. Le matériel est rangé au carré en grille aérée, alignements précis, espace régulier entre les objets : au centre, le sac à dos gris anthracite aux sangles vert sauge, ouvert ; autour, dans le sens des aiguilles d'une montre : sac de couchage compressé gris, matelas gonflable roulé vert sauge, réchaud à gaz compact et popote en titane mat, lampe frontale noire, gourde métal gris, filtre à eau, trousse de secours rouge sombre sans croix ni texte, veste vert forêt pliée, bonnet de laine gris, carte papier pliée montrant un relief sans aucun texte lisible, couteau pliant à manche en bois, deux paires de chaussettes de laine grises, sachets de nourriture lyophilisée kraft sans texte, crème solaire en tube blanc sans texte, petit carnet en cuir.
+CONTENU : un lit double aux draps de lin blanc légèrement froissés. Le matériel est rangé au carré en grille aérée, alignements précis, espace régulier entre les objets : au centre, le sac LKDV ONE 45 vert olive à fond noir (planche jointe), haut déroulé, ouvert ; juste à côté, la tente prêtée par Sami dans sa housse gris pierre ; autour, dans le sens des aiguilles d'une montre : sac de couchage compressé gris, matelas gonflable roulé vert sauge, réchaud à gaz compact et popote en titane mat, lampe frontale noire, gourde métal gris, filtre à eau, trousse de secours rouge sombre sans croix ni texte, veste vert forêt pliée, bonnet de laine gris, carte papier pliée montrant un relief sans aucun texte lisible, couteau pliant à manche en bois, deux paires de chaussettes de laine grises, sachets de nourriture lyophilisée kraft sans texte, crème solaire en tube blanc sans texte, petit carnet en cuir.
 MAINS : les deux mains de Léa (taches de rousseur légères, ongles courts, poignets aux manches retroussées d'un t-shirt écru) entrent par le bas de l'image et glissent le réchaud dans le sac.
 LUMIÈRE : lumière du jour douce et blanche d'une grande fenêtre à gauche (5 600 K), ombres douces portées vers la droite.
-COLORIMÉTRIE : blanc lin, anthracite, vert sauge, vert forêt, titane.
+COLORIMÉTRIE : blanc lin, vert olive, vert sauge, vert forêt, titane.
 AMBIANCE : précision, excitation du départ.
 INTERDITS : texte, logos, marques, étiquettes.
 ```
@@ -350,31 +413,31 @@ INTERDITS : texte, logos, marques, étiquettes.
 
 ### ACTE 4 — LE DÉPART
 
-#### img13 — La boucle se ferme (P18, 20,0–20,8 s) · joindre F1
+#### img13 — La boucle se ferme (P20, 20,2–21,0 s) · joindre F1
 
 ```
 INTENTION : impact sonore et visuel, le « clac » du départ.
 CADRE : très gros plan macro ; objectif macro de 100 mm à f/4. La boucle au centre de l'image.
-CONTENU : les deux mains de Léa clipsent la boucle noire mate de la ceinture ventrale de son sac. On voit les sangles vert sauge sous tension (fibres du tissu visibles), le tissu de la veste vert forêt derrière, le t-shirt écru qui dépasse. Les deux parties de la boucle sont à l'instant précis de l'enclenchement.
+CONTENU : les deux mains de Léa clipsent la boucle noire mate de la ceinture ventrale vert olive de son sac LKDV ONE. On voit les sangles noires sous tension (fibres du tissu visibles), le tissu de la veste vert forêt derrière, le t-shirt écru qui dépasse. Les deux parties de la boucle sont à l'instant précis de l'enclenchement.
 LUMIÈRE : petit matin, lumière dure et latérale par la gauche, qui sculpte le relief de la boucle et la trame des sangles. Fond sombre.
-COLORIMÉTRIE : vert forêt, vert sauge, noir mat.
+COLORIMÉTRIE : vert forêt, vert olive, noir mat.
 MOUVEMENT : micro-flou sur les doigts.
 INTERDITS : logo ou relief de marque sur la boucle.
 ```
 
-#### img14 — La cage d'escalier (P19, 20,8–21,8 s) · joindre F1
+#### img14 — La cage d'escalier (P21, 21,0–21,8 s) · joindre F1
 
 ```
 INTENTION : Léa dévale l'escalier de son immeuble, rien ne l'arrête.
 CADRE : vue en plongée verticale au centre d'une cage d'escalier en colimaçon, depuis le 6ᵉ étage ; objectif de 16 mm. La spirale de la rampe forme une spirale graphique jusqu'au rez-de-chaussée.
-CONTENU : vieil immeuble européen, marches en bois ciré usées, rampe en fer forgé noir, murs crème, nez de marches en laiton terni. Léa, en tenue de randonnée complète avec son sac anthracite aux sangles sauge et sa veste vert forêt, dévale les marches deux étages plus bas. Elle est au tiers central de la spirale.
+CONTENU : vieil immeuble européen, marches en bois ciré usées, rampe en fer forgé noir, murs crème, nez de marches en laiton terni. Léa, en tenue de randonnée complète avec son sac LKDV ONE vert olive à fond noir et sa veste vert forêt, dévale les marches deux étages plus bas. Elle est au tiers central de la spirale.
 LUMIÈRE : lumière froide du petit matin qui tombe d'une verrière zénithale (bleu blanc), quelques appliques ambrées encore allumées.
 MOUVEMENT : fort flou de mouvement réaliste sur Léa (obturateur lent), l'escalier reste net.
 COLORIMÉTRIE : crème, bois miel, noir ; le vert forêt de Léa ressort.
 INTERDITS : texte, autres personnes.
 ```
 
-#### img15 — Le train (P20, 21,8–22,8 s) · joindre F1
+#### img15 — Le train (P22, 21,8–22,8 s) · joindre F1
 
 ```
 INTENTION : le voyage commence, les montagnes arrivent.
@@ -386,19 +449,19 @@ COLORIMÉTRIE : or, vert prairie, rose des parois.
 INTERDITS : texte, logos de compagnie ferroviaire.
 ```
 
-#### img16 — Les retrouvailles (P21, 22,8–24,0 s) · joindre F1, F2, F3, F4
+#### img16 — Les retrouvailles (P23, 22,8–24,0 s) · joindre F1, F2, F3, F4
 
 ```
 INTENTION : la bande est réunie. Joie, complicité, élan.
 CADRE : plan moyen à hauteur d'homme, 6 m de distance ; objectif de 35 mm à f/2,8. Les quatre personnages dans le tiers central, cadrés en pied.
-CONTENU : petit parking de gravier au pied d'un refuge de montagne en bois sombre et pierre, volets verts. Léa (veste vert forêt), Sami (veste beige sable, bonnet gris), Inès (veste sauge clair, tresses en chignon) et Tom (veste bleu encre, grand) se retrouvent avec leurs sacs. Action au moment précis : Léa et Inès se tapent dans la main en sautant presque, Sami rit en serrant l'épaule de Tom, Tom lève son bâton de marche. Tous sourient, expressions vraies, différentes.
+CONTENU : petit parking de gravier au pied d'un refuge de montagne en bois sombre et pierre, volets verts. Léa (veste vert forêt), Sami (veste beige sable, bonnet gris), Inès (veste sauge clair, tresses en chignon) et Tom (veste bleu encre, grand) se retrouvent avec leurs sacs. Action au moment précis : Sami tend à Léa, à bout de bras, une tente roulée dans sa housse gris pierre (il la lui prête), et Léa l'attrape au vol en riant ; à côté, Inès et Tom se tapent dans la main. Léa porte son sac LKDV ONE vert olive à fond noir (planche jointe). Tous sourient, expressions vraies, différentes.
 DÉCOR : derrière eux, d'immenses parois dolomitiques dont les sommets reçoivent la première lumière rose ; mélèzes dorés ; un vieux 4×4 poussiéreux vert foncé garé en amorce floue à gauche, sans logo.
 LUMIÈRE : aube rose : les sommets sont roses, le parking est encore dans une lumière bleue douce ; haleine visible dans l'air froid.
 COLORIMÉTRIE : rose, lavande et bleu doux ; les vestes forêt, sable, sauge et encre se distinguent nettement.
 INTERDITS : panneaux lisibles, texte, personnes supplémentaires.
 ```
 
-#### img17 — Les bottes sur le sentier (P22, 24,0–25,0 s) · joindre F1
+#### img17 — Les bottes sur le sentier (P24, 24,0–24,8 s) · joindre F1
 
 ```
 INTENTION : les premiers pas, au ras du sol.
@@ -409,12 +472,12 @@ COLORIMÉTRIE : or et brun chaud, blanc des cailloux.
 INTERDITS : logo sur les chaussures.
 ```
 
-#### img18 — Le téléphone sur la bretelle (P23, 25,0–26,0 s) · joindre F1
+#### img18 — Le téléphone sur la bretelle (P25, 24,8–25,8 s) · joindre F1
 
 ```
 INTENTION : le téléphone de Léa démarre le suivi GPS. J'y incrusterai le cockpit de l'application.
 CADRE : gros plan sur l'épaule gauche de Léa, caméra légèrement devant et au-dessus ; objectif de 50 mm à f/2,8.
-CONTENU : la bretelle vert sauge du sac porte un étui noir dans lequel est glissé un smartphone noir. Écran vert chroma uni pur #00FF00, quatre coins nets, tourné vers la caméra, presque de face. On voit une partie du col de la veste vert forêt, le menton et quelques mèches de Léa, floues.
+CONTENU : la bretelle vert olive à doublure noire du sac LKDV ONE porte un étui noir dans lequel est glissé un smartphone noir. Écran vert chroma uni pur #00FF00, quatre coins nets, tourné vers la caméra, presque de face. On voit une partie du col de la veste vert forêt, le menton et quelques mèches de Léa, floues.
 ARRIÈRE-PLAN : très flou, le sentier qui monte et des crêtes en contre-jour ; halo solaire en haut à droite.
 LUMIÈRE : contre-jour du soleil levant, contour lumineux sur la bretelle et les mèches.
 INTERDITS : lueur verte sur la peau, logo.
@@ -424,7 +487,20 @@ INTERDITS : lueur verte sur la peau, logo.
 
 ### ACTE 5 — LA MONTAGNE
 
-#### img19 — L'arête des Tre Cime (P24 et P27, 26,0–31,0 s) · joindre F1 à F4
+#### img45 — Seceda, les quatre minuscules sur la crête (P26, 25,8–27,4 s, plan ★) · joindre F1 à F4
+
+```
+INTENTION : premier plan à couper le souffle. Les quatre amis sont des points minuscules sur l'une des crêtes les plus spectaculaires des Dolomites. Il faut que le spectateur reste bouche bée.
+CADRE : grand plan d'ensemble, drone à 60 m au-dessus et sur le côté ; objectif de 24 mm. La crête de la Seceda traverse l'image en diagonale.
+DÉCOR : la crête de la Seceda dans les Dolomites : d'un côté, une immense pente d'herbe d'alpage vert doré, lisse comme du velours, qui monte doucement jusqu'au bord ; de l'autre, des aiguilles et des tours de roche pâle déchiquetées qui plongent à la verticale, comme des lames inclinées. En contrebas, une mer de nuages blancs remplit les vallées ; au loin, les massifs de l'Odle et du Sassolungo émergent des nuages, leurs sommets poudrés de neige.
+SUJET : les quatre amis marchent en file sur le fil herbeux de la crête, au tiers central. Ils sont MINUSCULES (moins de 2 % de la hauteur de l'image chacun), reconnaissables seulement à quatre points de couleur : vert forêt, sauge clair, sable, bleu encre.
+LUMIÈRE : tout premier soleil du matin, rasant par la droite ; l'herbe s'illumine d'or, les aiguilles sont roses d'un côté et bleues dans l'ombre ; très longues ombres des quatre marcheurs sur l'herbe.
+COLORIMÉTRIE : or et vert d'alpage, rose des roches, blanc des nuages, ciel bleu pâle.
+AMBIANCE : immensité, silence, liberté absolue, air cristallin.
+INTERDITS : autres personnes, clôtures, remontées mécaniques, texte.
+```
+
+#### img19 — L'arête des Tre Cime (P27, 27,4–29,0 s, plan ★) · joindre F1 à F4
 
 ```
 INTENTION : LE plan de liberté du film. Immensité, ivresse, le groupe minuscule sur l'arête.
@@ -437,7 +513,7 @@ AMBIANCE : air cristallin, souffle coupé, liberté totale.
 INTERDITS : texte, autres randonneurs, drone visible.
 ```
 
-#### img20 — La main tendue (P25, 27,4–28,6 s) · joindre F1, F4
+#### img20 — La main tendue (P28, 29,0–29,9 s) · joindre F1, F4
 
 ```
 INTENTION : l'entraide, le rire, l'amitié.
@@ -449,7 +525,18 @@ COLORIMÉTRIE : bleu profond, vert forêt, bleu encre, peaux chaudes.
 INTERDITS : mains fusionnées, doigts en trop.
 ```
 
-#### img21 — Inès pointe l'horizon (P26, 28,6–29,8 s) · joindre F3, F1, F2
+#### img46 — Le téléphone devant les Tre Cime (P29, 29,9–30,9 s) · joindre F1 et sac-lkdv-one-45.png
+
+```
+INTENTION : le cockpit de l'application en pleine montée, avec les Tre Cime derrière. J'incrusterai l'écran.
+CADRE : gros plan sur l'épaule gauche de Léa, de trois-quarts ; objectif de 50 mm à f/2. Le téléphone net au premier plan, au tiers central ; derrière, les trois tours des Tre Cime di Lavaredo, reconnaissables malgré le flou doux.
+SUJET : la bretelle vert olive à doublure noire du sac LKDV ONE porte un étui noir avec le smartphone, écran tourné vers la caméra ; on voit le col de la veste vert forêt, le menton de Léa et quelques mèches au vent.
+ÉCRAN : vert chroma uni pur #00FF00, mat, quatre coins nets.
+LUMIÈRE : matin, soleil latéral chaud ; les tours sont dorées d'un côté.
+INTERDITS : lueur verte sur la peau, texte, logo.
+```
+
+#### img21 — Inès pointe l'horizon (plan de réserve) · joindre F3, F1, F2
 
 ```
 INTENTION : regarder plus loin, la suite de l'aventure.
@@ -461,18 +548,18 @@ COLORIMÉTRIE : or et bleu poudré.
 INTERDITS : éclat d'objectif exagéré, texte.
 ```
 
-#### img22 — Léa photographie le lac (P28, 31,0–32,2 s) · joindre F1 et img09
+#### img22 — Léa photographie le lac (P31, 32,1–33,0 s) · joindre F1 et img09
 
 ```
 INTENTION : le moment clé. Léa est dans le décor de la photo qu'elle regardait chez elle, et elle reproduit le même cadrage.
 CADRE : par-dessus l'épaule droite de Léa ; objectif de 35 mm à f/4. Le téléphone au centre de l'image, à hauteur des yeux.
-CONTENU : on voit l'arrière de la tête de Léa, sa queue de cheval, son épaule en veste vert forêt et la bretelle vert sauge. Elle tient son téléphone à deux mains devant elle, à l'horizontale. Écran vert chroma uni pur #00FF00, quatre coins nets. Derrière le téléphone, le paysage réel est EXACTEMENT celui de img09 (pièce jointe) : même lac turquoise laiteux, même amphithéâtre de falaises, même pic en aiguille centré, mêmes mélèzes dorés.
+CONTENU : on voit l'arrière de la tête de Léa, sa queue de cheval, son épaule en veste vert forêt et la bretelle vert olive du sac LKDV ONE. Elle tient son téléphone à deux mains devant elle, à l'horizontale. Écran vert chroma uni pur #00FF00, quatre coins nets. Derrière le téléphone, le paysage réel est EXACTEMENT celui de img09 (pièce jointe) : même lac turquoise laiteux, même amphithéâtre de falaises, même pic en aiguille centré, mêmes mélèzes dorés.
 LUMIÈRE : midi, lumière haute et franche, eau éclatante, falaises très lumineuses.
 COLORIMÉTRIE : turquoise dominant.
 INTERDITS : contenu sur l'écran, autres personnes.
 ```
 
-#### img23 — Le coureur en amorce (P29, 32,2–34,0 s) · joindre F1 à F5
+#### img23 — Le coureur en amorce (P32, 33,0–34,0 s) · joindre F1 à F5
 
 ```
 INTENTION : passage de relais. Un coureur traverse le cadre et va emporter la caméra.
@@ -487,7 +574,7 @@ INTERDITS : visage de Malik net (il doit être flou), texte.
 
 ### ACTE 6 — LE COUREUR
 
-#### img24 — Malik sur le balcon (P30, 34,0–35,2 s) · joindre F5
+#### img24 — Malik sur le balcon (P33, 34,0–35,0 s) · joindre F5
 
 ```
 INTENTION : vitesse et vertige.
@@ -499,7 +586,7 @@ COLORIMÉTRIE : ivoire, noir, vert et or en filé.
 INTERDITS : texte, logo.
 ```
 
-#### img25 — Le pied frappe la pierre (P31, 35,2–36,2 s) · joindre F5
+#### img25 — Le pied frappe la pierre (P34, 35,0–35,8 s) · joindre F5
 
 ```
 INTENTION : impact, matière, puissance.
@@ -510,7 +597,7 @@ COLORIMÉTRIE : or, gris, blanc.
 INTERDITS : logo sur la chaussure.
 ```
 
-#### img26 — La descente en FPV (P32, 36,2–37,4 s) · joindre F5
+#### img26 — La descente en FPV (P35, 35,8–36,8 s) · joindre F5
 
 ```
 INTENTION : sensation de drone FPV collé au coureur dans une descente technique.
@@ -522,7 +609,7 @@ COLORIMÉTRIE : gris de la roche, vert et or de l'alpage.
 INTERDITS : drone visible.
 ```
 
-#### img27 — Le brassard (P33, 37,4–38,6 s) · joindre F5
+#### img27 — Le brassard (P36, 36,8–37,6 s) · joindre F5
 
 ```
 INTENTION : le cockpit de l'application en pleine course. J'incrusterai l'écran.
@@ -533,7 +620,7 @@ LUMIÈRE : soleil d'après-midi, reflets sur la peau.
 INTERDITS : lueur verte sur la peau, logo.
 ```
 
-#### img28 — Le saut au-dessus du torrent (P34, 38,6–39,8 s) · joindre F5
+#### img28 — Le saut au-dessus du torrent (P37, 37,6–38,6 s) · joindre F5
 
 ```
 INTENTION : le temps suspendu à l'apex du saut.
@@ -544,7 +631,20 @@ COLORIMÉTRIE : turquoise de l'eau, or des mélèzes, ivoire du t-shirt.
 INTERDITS : flou sur Malik, texte.
 ```
 
-#### img29 — Le relais coureur et cycliste (P35, 39,8–41,0 s) · joindre F5, F6
+#### img47 — Malik minuscule sous la paroi (P38, 38,6–39,8 s, plan ★) · joindre F5
+
+```
+INTENTION : plan d'échelle. Le coureur est une poussière au pied d'une paroi gigantesque.
+CADRE : grand plan d'ensemble, drone à 150 m qui recule, légère contre-plongée vers la paroi ; objectif de 35 mm.
+DÉCOR : la gigantesque face sud de la Tofana di Rozes dans les Dolomites, un mur de roche ocre et gris de près de 1 000 mètres strié de vires horizontales, qui occupe les trois quarts de l'image. À sa base, un immense cône d'éboulis pâle traversé par un sentier en lacets fin comme un fil.
+SUJET : Malik court sur le sentier d'éboulis, au tiers central bas. Il est MINUSCULE (moins de 1 % de la hauteur de l'image) ; on ne voit que le point ivoire de son t-shirt et un léger nuage de poussière derrière lui.
+LUMIÈRE : après-midi, soleil chaud de côté qui sculpte chaque vire de la paroi ; ombre portée d'un nuage sur une partie du mur.
+COLORIMÉTRIE : ocre, gris pâle, ciel bleu profond.
+AMBIANCE : démesure, vertige, humilité.
+INTERDITS : autres personnes, texte, câbles.
+```
+
+#### img29 — Le relais coureur et cycliste (P39, 39,8–40,6 s) · joindre F5, F6
 
 ```
 INTENTION : passage de relais entre deux inconnus, deux membres de la même communauté.
@@ -561,7 +661,7 @@ INTERDITS : texte, logo, marque sur le vélo.
 
 ### ACTE 7 — LA CYCLISTE
 
-#### img30 — Le gravel au bord du lac (P36, 41,0–42,2 s) · joindre F6
+#### img30 — Le gravel au bord du lac (P40, 40,6–41,8 s, plan ★) · joindre F6
 
 ```
 INTENTION : plan d'échelle, Clara minuscule dans l'or du soir.
@@ -572,7 +672,7 @@ COLORIMÉTRIE : dominante OR et miel.
 INTERDITS : texte, autres personnes.
 ```
 
-#### img31 — La roue (P37, 42,2–43,2 s) · joindre F6
+#### img31 — La roue (P41, 41,8–42,6 s) · joindre F6
 
 ```
 INTENTION : matière et vitesse.
@@ -584,10 +684,10 @@ COLORIMÉTRIE : or, olive, beige.
 INTERDITS : logo, texte sur le pneu.
 ```
 
-#### img32 — L'épingle vue du ciel (P38, 43,2–44,4 s) · joindre F6
+#### img32 — L'épingle vue du ciel (P42, 42,6–43,6 s, plan ★) · joindre F6
 
 ```
-INTENTION : plan graphique. Le tracé GPS de l'application se superposera à la route.
+INTENTION : plan graphique et vertigineux, la route dessine un S parfait.
 CADRE : plongée verticale parfaite de drone, à 80 m ; objectif de 35 mm.
 CONTENU : un virage en épingle d'une piste de gravier blanc qui dessine un « S » graphique à travers une forêt de mélèzes dont la moitié sont dorés et l'autre vert sombre. Clara, minuscule, est au milieu du virage, au centre de l'image, avec son ombre très allongée.
 LUMIÈRE : heure dorée, ombres longues des arbres en rayures sur la piste.
@@ -595,7 +695,20 @@ COLORIMÉTRIE : or et vert sombre, blanc de la piste.
 INTERDITS : texte, voitures.
 ```
 
-#### img33 — Les bras levés (P39, 44,4–45,6 s) · joindre F6
+#### img48 — Les lacets du Passo Giau (P43, 43,6–45,0 s, plan ★) · joindre F6
+
+```
+INTENTION : plan d'échelle de la cycliste, le plus doré du film.
+CADRE : grand plan d'ensemble, drone à 120 m en élévation ; objectif de 35 mm.
+DÉCOR : la route en lacets du col de Giau dans les Dolomites, un ruban gris clair qui serpente en épingles serrées dans des alpages d'herbe blonde. Au-dessus, la tour de roche isolée du Ra Gusela et les sommets du Nuvolau, embrasés par le soleil couchant. Quelques mélèzes dorés isolés.
+SUJET : Clara à vélo dans un des lacets, au tiers central. Elle est MINUSCULE (moins de 1,5 % de la hauteur de l'image), un point bordeaux suivi d'une longue ombre.
+LUMIÈRE : heure dorée, soleil très bas, rasant ; les alpages brillent d'or et de miel, la tour de roche est rouge orangé (alpenglow), les vallées sont déjà dans l'ombre bleue.
+COLORIMÉTRIE : or, miel, rouge orangé de la roche, ombres bleues.
+AMBIANCE : ivresse de la descente, liberté.
+INTERDITS : voitures, motos, panneaux, marquage au sol lisible, texte.
+```
+
+#### img33 — Les bras levés (P44, 45,0–45,8 s) · joindre F6
 
 ```
 INTENTION : pure joie, pure liberté.
@@ -606,7 +719,7 @@ COLORIMÉTRIE : or brûlant, bordeaux.
 INTERDITS : visage noyé dans l'ombre, éclat d'objectif exagéré.
 ```
 
-#### img34 — Le passage devant le bivouac (P40, 45,6–47,0 s) · joindre F6, F1 à F4
+#### img34 — Le passage devant le bivouac (P45, 45,8–46,8 s) · joindre F6, F1 à F4
 
 ```
 INTENTION : la cycliste passe et la caméra reste avec le groupe qui s'installe pour la nuit.
@@ -622,7 +735,7 @@ INTERDITS : texte, logos sur les tentes.
 
 ### ACTE 8 — LE BIVOUAC
 
-#### img35a — Les tentes au crépuscule (P41, début) · joindre F1 à F4
+#### img35a — Les tentes au crépuscule (P46, début) · joindre F1 à F4
 
 ```
 INTENTION : premier état d'un timelapse jour/nuit. Plan FIXE, cadre à reproduire à l'identique dans img35b.
@@ -632,7 +745,7 @@ LUMIÈRE : crépuscule, ciel dégradé du bleu profond en haut au rose orangé s
 COLORIMÉTRIE : bleu, rose, violet.
 ```
 
-#### img35b — Les tentes sous la Voie lactée (P41, fin) · joindre img35a
+#### img35b — Les tentes sous la Voie lactée (P46, fin) · joindre img35a
 
 ```
 INTENTION : second état du timelapse.
@@ -642,7 +755,7 @@ COLORIMÉTRIE : bleu nuit profond, orange du feu, ambre des tentes.
 INTERDITS : aurores, étoiles filantes exagérées, Voie lactée artificiellement colorée.
 ```
 
-#### img36 — Autour du feu (P42 et P45, 48,2–49,4 s et 52,0–53,0 s) · joindre F1 à F4
+#### img36 — Autour du feu (P47, 48,2–49,2 s) · joindre F1 à F4
 
 ```
 INTENTION : la chaleur humaine, la nuit en montagne.
@@ -654,7 +767,7 @@ AMBIANCE : chaleur, fumée légère, vapeur de la popote.
 INTERDITS : texte, visages déformés par la lumière.
 ```
 
-#### img37 — Léa publie son carnet (P43 et P44, 49,4–52,0 s) · joindre F1
+#### img37 — Léa publie son carnet (P48 et P49, 49,2–51,4 s) · joindre F1
 
 ```
 INTENTION : Léa ajoute la photo du lac à son carnet et la publie. J'incrusterai l'application.
@@ -666,9 +779,22 @@ INTERDITS : lueur verte sur le visage, contenu sur l'écran.
 
 ---
 
+#### img49 — Le bivouac sous la Voie lactée (P50, 51,4–53,0 s, plan ★) · joindre img35b
+
+```
+INTENTION : le dernier plan d'échelle, le plus beau du film. Le bivouac est un point de lumière dans l'immensité de la nuit, face aux Tre Cime.
+CADRE : grand plan d'ensemble, drone en recul et en élévation à 80 m ; objectif de 20 mm. Les tentes au tiers central bas.
+DÉCOR : un alpage en replat face aux trois tours des Tre Cime di Lavaredo, en silhouette bleu nuit. Au-dessus, la Voie lactée en arche complète, nette et réaliste, avec des milliers d'étoiles et le noyau galactique légèrement doré au-dessus des tours.
+SUJET : les deux tentes (vert sauge et crème) éclairées de l'intérieur et le petit feu orangé forment un minuscule point de lumière chaude (moins de 2 % de l'image) ; on devine quatre silhouettes autour du feu.
+LUMIÈRE : nuit sans lune, lueur des étoiles ; seule source chaude : les tentes et le feu, qui éclairent un petit cercle d'herbe.
+COLORIMÉTRIE : bleu nuit profond, noir vert, petit point orange-ambre.
+AMBIANCE : silence absolu, émerveillement, « c'est pas possible ».
+INTERDITS : étoiles filantes exagérées, aurore, Voie lactée colorée artificiellement, texte.
+```
+
 ### ACTE 9 — LE FINAL
 
-#### img38 — Noah dans le bus de nuit (P46, 53,0–54,2 s) · joindre F7
+#### img38 — Noah dans le bus de nuit (P51, 53,0–54,2 s) · joindre F7
 
 ```
 INTENTION : la boucle. À l'autre bout du monde, un inconnu tombe sur le carnet de Léa et s'arrête. C'est le prochain voyageur.
@@ -680,7 +806,7 @@ COLORIMÉTRIE : bleu nuit, néons ; contraste volontaire avec la nature précéd
 INTERDITS : caractères, enseignes ou publicités lisibles, lueur verte sur la peau.
 ```
 
-#### img39 — La Terre de nuit (P48, 56,0–58,2 s)
+#### img39 — La Terre de nuit (P53, 56,0–58,0 s)
 
 ```
 INTENTION : retour en orbite. J'ajouterai des milliers de tracés lumineux (un par aventure) qui vont converger pour former le logo.

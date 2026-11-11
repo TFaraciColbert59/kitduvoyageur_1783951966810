@@ -10,6 +10,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "hyperframes": "^0.9.33"
+    "hyperframes": "^0.9.33",
+    "three": "^0.180.0"
   }
 }
