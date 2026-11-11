@@ -248,7 +248,8 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
   gap: 6px;
 }
 .lkdv-cv2-mini-slot.has-footer {
-  bottom: 72px;
+  /* Maquette : capsule d'étapes posée 6 px plus bas (y 734 à 390 x 844). */
+  bottom: 66px;
 }
 .lkdv-cv2-mini-slot .lkdv-lens-float {
   position: static;
@@ -587,13 +588,13 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
 }
 
 /* Capsule d'étapes du formulaire (maquette `miniHTML(..., {w:34})`, L2697) : 34 px par étape ; la zone tactile
-   garde 44 px (débord de 5 px de chaque côté). */
+   garde 44 px (débord de 6 px de chaque côté). */
 .lkdv-cv2-mini-slot.has-footer .lkdv-lens-float {
   width: calc(var(--n, 2) * 34px + 5px);
   max-width: calc(var(--n, 2) * 34px + 5px);
 }
 
 .lkdv-communaute-v2 .lkdv-cv2-mini-slot.has-footer .lkdv-lens-float button::after {
-  left: -5px;
-  right: -5px;
+  left: -6px;
+  right: -6px;
 }
