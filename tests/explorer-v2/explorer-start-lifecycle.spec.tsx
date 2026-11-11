@@ -159,6 +159,48 @@ describe('explorer-v2 · compte à rebours', () => {
 });
 
 describe('explorer-v2 · bilan local', () => {
+  it('produit un bilan local en arrêtant une activité démarrée sans sessionId', () => {
+    const chosen = selection('rando', 'rando-refuge');
+    useExplorerStore.getState().startActivity('rando', null, chosen);
+    useExplorerStore.getState().updateActivity({
+      distanceM: 1200,
+      elevGainM: 80,
+      movingS: 600,
+      offRoute: true,
+    });
+
+    const startedActivity = useExplorerStore.getState().activity;
+    if (!startedActivity) throw new Error('activité locale absente après démarrage');
+    expect(startedActivity.sessionId).toBeNull();
+    expect(useExplorerStore.getState().summarySaved).toBeUndefined();
+
+    act(() => useExplorerStore.getState().stopActivity());
+
+    const stopped = useExplorerStore.getState();
+    expect(stopped.activity).toBeUndefined();
+    expect(stopped.summary).toEqual({
+      ...startedActivity,
+      distanceM: 1200,
+      elevGainM: 80,
+      movingS: 600,
+      offRoute: true,
+      endedAt: expect.any(Number),
+    });
+    expect(stopped.summarySaved).toBe('local');
+    expect(stopped.sheet).toBe('summary');
+    expect(stopped.detent).toBe('full');
+    expect(stopped.camera).toEqual({ type: 'overview' });
+
+    const model = buildSheetModel(context());
+    render(<>{model.tabs[0].render()}</>);
+
+    expect(screen.getByText('Sortie locale')).toBeTruthy();
+    expect(
+      screen.getByText('Aucune séance serveur n’est créée dans cette tranche.'),
+    ).toBeTruthy();
+    expect(screen.queryByText('Connecte-toi pour conserver tes sorties')).toBeNull();
+  });
+
   it('n’affiche pas de conseil de connexion pour une séance sans UUID', () => {
     useExplorerStore.setState({
       summary: { ...activity(), endedAt: Date.now() },
