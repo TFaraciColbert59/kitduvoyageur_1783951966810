@@ -1,15 +1,15 @@
 # Réception des images — trailer LKDV
 
-Généré par `node tools/reception/check-footage.mjs` le 2026-11-11 13:50 (heure locale), dossier `assets/footage` (dossier absent). Ce fichier est réécrit à chaque passage ; l'outil ne modifie jamais les images.
+Généré par `node tools/reception/check-footage.mjs` le 2026-11-11 23:16 (heure locale), dossier `assets/footage`. Ce fichier est réécrit à chaque passage ; l'outil ne modifie jamais les images.
 
-- Images du film : **0 reçues / 50 obligatoires** (+ img21, plan de réserve facultatif ; 51 prompts au total).
-- Fiches personnages : **0 / 7**.
-- Manquantes obligatoires (57) : F1-lea.png, F2-sami.png, F3-ines.png, F4-tom.png, F5-malik.png, F6-clara.png, F7-noah.png, img01.png, img02.png, img03.png, img04.png, img05.png, img06.png, img07.png, img08.png, img09.png, img09b.png, img10.png, img40.png, img41.png, img11.png, img42.png, img43.png, img44.png, img12.png, img13.png, img14.png, img15.png, img16.png, img17.png, img18.png, img45.png, img19.png, img20.png, img46.png, img22.png, img23.png, img24.png, img25.png, img26.png, img27.png, img28.png, img47.png, img29.png, img30.png, img31.png, img32.png, img48.png, img33.png, img34.png, img35a.png, img35b.png, img36.png, img37.png, img49.png, img38.png, img39.png.
-- Défauts bloquants : aucun · alertes à vérifier à l'œil : aucune.
+- Images du film : **51 reçues / 50 obligatoires** (+ img21, plan de réserve facultatif ; 51 prompts au total).
+- Fiches personnages : **7 / 7**.
+- Manquantes obligatoires (0) : aucune.
+- Défauts bloquants : img07, img42 · alertes à vérifier à l'œil : F7.
 - Noms presque justes (reconnus, à renommer) : aucun.
 - Fichiers inattendus (non reconnus, non contrôlés) : aucun.
-- OCR : non lancé (aucune image reçue).
-- Code de sortie : 2 (0 = complet et sans défaut bloquant, 1 = défaut bloquant, 2 = il manque des images obligatoires).
+- OCR : non testable : désactivé (--no-ocr).
+- Code de sortie : 1 (0 = complet et sans défaut bloquant, 1 = défaut bloquant, 2 = il manque des images obligatoires).
 
 Décompte : la trame numérote img01 à img49 (49 numéros). img35 n'existe pas seule : elle est remplacée par la paire img35a/img35b, et img09b s'ajoute à img09. Cela donne 49 − 1 + 3 = **51 prompts**, dont img21 (« Inès pointe l'horizon »), plan de réserve sans plan dans la trame : **50 images obligatoires + 1 facultative**.
 
@@ -17,73 +17,73 @@ Lecture d'une ligne : « DÉFAUT » bloque la réception ; « alerte » est à v
 
 ## Images du film
 
-- **img01** (P01) — manquante
-- **img02** (P02) — manquante
-- **img03** (P03) — manquante
-- **img04** (P04) — manquante
-- **img05** (P05) — manquante
-- **img06** (P06) — manquante
-- **img07** (P07, P09 · téléphone) — manquante
-- **img08** (P08) — manquante
-- **img09** (P10) — manquante
-- **img09b** (P30) — manquante
-- **img10** (P11) — manquante
-- **img40** (P12 · téléphone) — manquante
-- **img41** (P13, P15 · téléphone) — manquante
-- **img11** (P14) — manquante
-- **img42** (P16 · téléphone) — manquante
-- **img43** (P17 · téléphone) — manquante
-- **img44** (P18) — manquante
-- **img12** (P19) — manquante
-- **img13** (P20) — manquante
-- **img14** (P21) — manquante
-- **img15** (P22) — manquante
-- **img16** (P23) — manquante
-- **img17** (P24) — manquante
-- **img18** (P25 · téléphone) — manquante
-- **img45** (P26) — manquante
-- **img19** (P27) — manquante
-- **img20** (P28) — manquante
-- **img46** (P29 · téléphone) — manquante
-- **img21** (facultative) — manquante (plan de réserve facultatif)
-- **img22** (P31 · téléphone) — manquante
-- **img23** (P32) — manquante
-- **img24** (P33) — manquante
-- **img25** (P34) — manquante
-- **img26** (P35) — manquante
-- **img27** (P36 · téléphone) — manquante
-- **img28** (P37) — manquante
-- **img47** (P38) — manquante
-- **img29** (P39) — manquante
-- **img30** (P40) — manquante
-- **img31** (P41) — manquante
-- **img32** (P42) — manquante
-- **img48** (P43) — manquante
-- **img33** (P44) — manquante
-- **img34** (P45) — manquante
-- **img35a** (P46) — manquante
-- **img35b** (P46) — manquante
-- **img36** (P47) — manquante
-- **img37** (P48, P49 · téléphone) — manquante
-- **img49** (P50) — manquante
-- **img38** (P51 · téléphone) — manquante
-- **img39** (P53) — manquante
+- **img01** (P01) — OK [1920×1080, 2,6 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K
+- **img02** (P02) — OK [1920×1080, 3,3 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K
+- **img03** (P03) — OK [1920×1080, 2,5 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K
+- **img04** (P04) — OK [1920×1080, 2,6 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K
+- **img05** (P05) — OK [1920×1080, 3,2 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K
+- **img06** (P06) — OK [1920×1080, 3,0 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K ; couleurs non évaluées : veste vert forêt (tenue de ville)
+- **img07** (P07, P09 · téléphone) — DÉFAUT : coin(s) masqué(s) : bas droit (50 % vert) → « L'écran du téléphone doit être un vert chroma uni pur #00FF00, mat, sans reflet ni icône, avec les quatre coins arrondis nets et visibles, sans lueur verte sur la peau. » [1920×1080, 2,6 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K ; couleurs non évaluées : veste vert forêt (tenue de ville)
+- **img08** (P08) — OK [1920×1080, 2,4 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K ; couleurs non évaluées : veste vert forêt (tenue de ville)
+- **img09** (P10) — OK [1920×1080, 3,0 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K
+- **img09b** (P30) — OK [1920×1080, 3,2 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K
+- **img10** (P11) — OK [1920×1080, 2,9 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K ; couleurs non évaluées : veste vert forêt (tenue de ville)
+- **img40** (P12 · téléphone) — OK [1920×1080, 2,6 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K ; couleurs non évaluées : veste vert forêt (tenue de ville)
+- **img41** (P13, P15 · téléphone) — OK [1920×1080, 2,3 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K ; couleurs non évaluées : veste vert forêt (tenue de ville)
+- **img11** (P14) — OK [1920×1080, 2,8 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K
+- **img42** (P16 · téléphone) — DÉFAUT : motif dans l'écran (icône, reflet ou contenu) : 0.46 % de sa surface → « L'écran du téléphone doit être un vert chroma uni pur #00FF00, mat, sans reflet ni icône, avec les quatre coins arrondis nets et visibles, sans lueur verte sur la peau. » [1920×1080, 3,2 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K ; couleurs non évaluées : veste vert forêt (tenue de ville)
+- **img43** (P17 · téléphone) — OK [1920×1080, 2,2 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K ; 2 coins visibles sur 4 (deux suffisent pour img43) ; couleurs non évaluées : veste vert forêt (tenue de ville)
+- **img44** (P18) — OK [1920×1080, 2,7 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K ; couleurs non évaluées : veste vert forêt (tenue de ville)
+- **img12** (P19) — OK [1920×1080, 2,9 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K ; couleurs non évaluées : veste vert forêt (tenue de ville)
+- **img13** (P20) — OK [1920×1080, 3,1 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K
+- **img14** (P21) — OK [1920×1080, 3,2 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K
+- **img15** (P22) — OK [1920×1080, 2,8 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K
+- **img16** (P23) — OK [1920×1080, 3,3 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K
+- **img17** (P24) — OK [1920×1080, 2,8 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K
+- **img18** (P25 · téléphone) — OK [1920×1080, 2,7 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K
+- **img45** (P26) — OK [1920×1080, 3,1 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K
+- **img19** (P27) — OK [1920×1080, 3,0 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K
+- **img20** (P28) — OK [1920×1080, 2,9 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K
+- **img46** (P29 · téléphone) — OK [1920×1080, 2,7 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K
+- **img21** (facultative) — OK [1920×1080, 2,3 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K
+- **img22** (P31 · téléphone) — OK [1920×1080, 3,2 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K
+- **img23** (P32) — OK [1920×1080, 3,3 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K
+- **img24** (P33) — OK [1920×1080, 2,9 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K
+- **img25** (P34) — OK [1920×1080, 3,1 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K
+- **img26** (P35) — OK [1920×1080, 3,4 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K
+- **img27** (P36 · téléphone) — OK [1920×1080, 2,6 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K
+- **img28** (P37) — OK [1920×1080, 3,2 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K
+- **img47** (P38) — OK [1920×1080, 3,7 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K
+- **img29** (P39) — OK [1920×1080, 3,5 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K
+- **img30** (P40) — OK [1920×1080, 3,4 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K
+- **img31** (P41) — OK [1920×1080, 3,0 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K
+- **img32** (P42) — OK [1920×1080, 3,9 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K
+- **img48** (P43) — OK [1920×1080, 3,4 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K
+- **img33** (P44) — OK [1920×1080, 2,6 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K
+- **img34** (P45) — OK [1920×1080, 3,0 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K ; couleurs non évaluées : veste vert sauge clair (doudoune crème la nuit)
+- **img35a** (P46) — OK [1920×1080, 2,6 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K ; couleurs non évaluées : veste vert forêt (silhouettes), veste beige sable (silhouettes), veste vert sauge clair (silhouettes), veste bleu encre (silhouettes)
+- **img35b** (P46) — OK [1920×1080, 2,6 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K
+- **img36** (P47) — OK [1920×1080, 2,7 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K ; couleurs non évaluées : veste vert sauge clair (doudoune crème la nuit)
+- **img37** (P48, P49 · téléphone) — OK [1920×1080, 2,5 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K
+- **img49** (P50) — OK [1920×1080, 2,5 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K
+- **img38** (P51 · téléphone) — OK [1920×1080, 2,9 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K ; couleurs non évaluées : veste en jean délavée (couleur introuvable dans la fiche F7)
+- **img39** (P53) — OK [1920×1080, 2,8 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K
 
 ## Fiches personnages
 
-- **F1-lea.png** — manquante
-- **F1-lea-ville.png** (facultative) — manquante (seconde fiche de Léa, tenue de ville ; nom proposé, absent des prompts)
-- **F2-sami.png** — manquante
-- **F3-ines.png** — manquante
-- **F4-tom.png** — manquante
-- **F5-malik.png** — manquante
-- **F6-clara.png** — manquante
-- **F7-noah.png** — manquante
+- **F1-lea.png** — OK [1920×1080, 2,5 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K — références mesurées : veste vert forêt #3E3C39, sac LKDV ONE vert olive #7A7648
+- **F1-lea-ville.png** (facultative) — OK [1920×1080, 2,6 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K — références mesurées : 
+- **F2-sami.png** — OK [1920×1080, 2,7 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K — références mesurées : veste beige sable #B69E87
+- **F3-ines.png** — OK [1920×1080, 2,4 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K — références mesurées : veste vert sauge clair #D0C2B3
+- **F4-tom.png** — OK [1920×1080, 2,5 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K — références mesurées : veste bleu encre #302F31
+- **F5-malik.png** — OK [1920×1080, 2,5 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K — références mesurées : t-shirt ivoire #D1C6C2
+- **F6-clara.png** — OK [1920×1080, 2,6 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K — références mesurées : maillot bordeaux #563035
+- **F7-noah.png** — alerte : veste en jean délavée introuvable dans la fiche (le contrôle de couleur de ce personnage est sauté) [1920×1080, 2,3 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K — références mesurées : veste en jean délavée introuvable
 
 ## Paires
 
-- **img35a/img35b** — non mesurée : les deux images ne sont pas encore reçues.
-- **img09/img22** — non mesurée : les deux images ne sont pas encore reçues.
+- **img35a/img35b** — OK (dxPct 0, dyPct 0, shiftPct 0, ncc0 0.655, nccBest 0.655)
+- **img09/img22** — OK (bhatt 0.922, turq09Pct 34.6, turq22Pct 21.5)
 
 ## Méthode et seuils
 
