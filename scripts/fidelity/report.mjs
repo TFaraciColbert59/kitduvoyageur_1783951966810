@@ -146,7 +146,7 @@ const unreachableRows = [...unreachableByScenario.entries()].map(
 const generated = new Date().toISOString().slice(0, 10);
 const section = `${SECTION}
 
-Banc : \`tests/fidelity/\` (config \`fidelity.config.ts\`, scénarios \`scenarios/{communaute,carnet}.ts\`). Passage du ${generated}. Projets joués : ${projects.map(projectLabel).join(', ')}. Pas encore joués : 360×780, 430×932, 768×1024.
+Banc : \`tests/fidelity/\` (config \`fidelity.config.ts\`, scénarios \`scenarios/{communaute,carnet}.ts\`). Passage du ${generated}. Projets joués : ${projects.map(projectLabel).join(', ')}. Thème sombre non joué : la maquette n'a pas de rendu sombre. 768/1440 : comparaison de cadre (maquette = téléphone 390 dans un cadre, app = colonne applicative), non représentative du rendu.
 
 Lancer : \`bash tests/fidelity/build.sh\` (un seul build, mode fixtures), puis \`npx playwright test --config=tests/fidelity/fidelity.config.ts\`, puis \`node scripts/fidelity/report.mjs\` (réécrit cette section et \`tests/fidelity/out/galerie.html\`). Variables : \`FIDELITY_SIZES\`, \`FIDELITY_THEMES\`, \`FIDELITY_ONLY\`, \`FIDELITY_STRICT=1\` (un écart fait échouer le test).
 

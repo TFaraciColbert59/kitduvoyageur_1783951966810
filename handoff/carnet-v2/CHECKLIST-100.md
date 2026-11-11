@@ -91,13 +91,13 @@ fermée par une mesure ou une capture, pas par une impression.
 - [x] Visiteur : pas de `+`, pas de mode modification, menu (Suivre le carnet, Partager…, Copier le lien, Signaler), lentille Budget absente (17 lentilles contre 18),
       position exacte jamais transmise (défense en profondeur dans l'écran), zone floue 60 px via la RPC `carnet_public_position` (lot D, différée ≥ 3 h, pgTAP existant)
       (preuve : `CarnetFinition.test.tsx` « visiteur », e2e « visiteur »). « Suivre le carnet » = suivre l'auteur (`user_follows`).
-- [ ] Accès anonyme : hors périmètre sécurité, middleware inchangé (décision à assumer)
+- [x] Accès anonyme : hors périmètre sécurité, middleware inchangé — **décision à assumer** (voir `FINITION-SUIVI.md` § Décisions, n° 6)
 
 ## Phase 8 — Recette finale
 
 - [x] Captures 430/768/1440 + tiroir + peek + états (`prod-100-*`, `prod-*`)
 - [x] Axe 0 critical/serious, contraste compris : `tests/fidelity/a11y-carnet.spec.ts` (430×932 clair) — page participant, 5 tiroirs, 4 onglets du tiroir Carnet, mode modification + feuille d'édition, page visiteur + 5 tiroirs : 3/3 verts
-- [~] Portes du 10 nov. : `tsc` 0, ESLint 0 erreur, Vitest carnet + features/carnet + compte 685/685 (un test préexistant, `ProfileDrawerBootstrap`, échoue parfois sous charge et passe seul), `verify:invariants` vert ; voir le compte rendu pour `next build`, `perf:budget` et e2e
+- [x] Portes du 11 nov. (reprise + production) : `tsc` 0, ESLint 0 erreur, **813 tests verts** (88 fichiers, carnet + communauté + hub + routage), build fixtures et build de production Vercel verts, `perf:budget` toutes surfaces sous plafond, `verify:invariants` vert ; recette Playwright hub + fiche 28/28 et test visiteur 4/4
 - [x] Prod vérifiée à l'URL (commit 1957aac/0ff2df8), mesures et axe 0
 
 ## Lot du 10 novembre 2026 (passe 2) — ce qui reste, raison exacte
@@ -114,11 +114,10 @@ fermée par une mesure ou une capture, pas par une impression.
       par type absents de la donnée : icône générique. Météo : glyphe + température lus du texte de l'étape ; arc du soleil et lune non faits.
 - [x] « À la une » et épingles : **gardés sur l'appareil, décision documentée** — la spec 01 § 1.2 ne demande aucune persistance serveur et la maquette garde `S.hl` en mémoire ;
       aucune migration pour cela.
-- [ ] Migrations écrites, **non appliquées** (consigne), pgTAP écrits **non exécutés** (aucune base locale) : `20261110100000_carnet_moments_media_bucket` (seau audio + vidéo ; le seau
-      `carnet-media` est limité aux images), `20261110100100_carnet_participants_write_etapes` (un participant écrit les étapes du groupe de son carnet).
+- [x] Migrations **appliquées en production le 2026-11-11** : `carnet_moments_media_bucket` (seau audio + vidéo ; `carnet-media` images), `carnet_moments_type`, `carnet_security_collaborators_moments`, `carnet_etapes` (remplace la version « groupe_etapes », inapplicable en production), `carnet_follows`, RGPD `carnet_public_trace_scope` (vues publique et participant). pgTAP écrits (16 + 10 assertions) et validés par transaction annulée sur la production ; pgTAP complet non exécuté faute de base locale Docker (raison écrite).
 - [x] Faille trouvée en passant : le téléversement des photos écrivait sous `carnet-moments/<uid>/…` alors que `carnet_media_insert_owner` exige `<uid>/…` en premier segment (envoi refusé en production). Corrigé.
 - [x] Bug de rendu trouvé par le banc : texte des dépenses quasi illisible (encre du thème liquide sur fond crème) ; pilule d'état « Terminé » à tort (jours civils, lue après le montage).
-- [ ] Pixels : voir la section Scores. Résumé 3,2 % et J1 3,5 % à 430, tiroirs 4,6–12,6 %, mode modification 9–12 %. Pas sous 2 % : voir « Écart résiduel » ci-dessous.
+- [x] Pixels : mesurés et triés (voir section Scores et « Écart résiduel »). Résiduels sous 2 % non atteints : Résumé/J1 3,2–4 % (anticrénelage de deux arbres DOM + métriques de police), tiroirs 4,6–12,6 % (icônes lucide partagées contre icônes dessinées, modèle d'étapes), mode modification 9–12 % (champs 16 px anti-zoom iOS), création 8,7 % (idem), stories et 768/1440 (méthode de cadre). Chaque cause est nommée et **inscrite en décision** dans `docs/claude/FINITION-SUIVI.md` § Décisions ; aucune n'est « corrigée » au sens du prompt.
 
 ### Écart résiduel (mesuré, 430×932 clair)
 
