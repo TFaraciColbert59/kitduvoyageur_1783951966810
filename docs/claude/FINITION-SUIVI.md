@@ -145,6 +145,34 @@ Galerie côte à côte (app | maquette | carte de diff) : `tests/fidelity/out/ga
 | 2026-11-10 | Migration moment_type (20261109100001) | Additive (2 colonnes + contraintes) | pgTAP local 8/8, rollback ×2, réapplication ×2 ; non appliquée en production |
 | 2026-11-10 | Communauté, passe 1 (571173b…85b36f6) | 26 points partiels/non faits clos (4 dépendent de la prod) ; mesures 224 → 333/345 (96,5 %) ; contraste libellés 1,3 → 4,84:1 ; cibles < 44 px 32 → 0 ; pixels encore 34–85 % (fond photo vs illustration) | tsc 0, vitest community 396/396, next build vert, e2e 44 verts / 2 rouges d'Échap instables (11a rouge aussi sans le commit) |
 | 2026-11-10 | Carnet · passe 2 (branche `worktree-agent-a786990054a55d737`) | Mode modification complet (Server Actions zod), note vocale réelle, tiroir Carnet réel, stories, lentilles et fiches de la maquette ; banc élargi à 23 scénarios × 4 tailles. Moyennes à 430 clair : Résumé 30,8 → 3,2 %, J1 30,2 → 3,5 %, tiroirs 24–42 → 4,6–12,6 %. axe 0 critique / 0 sérieux. | `tests/fidelity/out/`, `handoff/carnet-v2/CHECKLIST-100.md` |
+| 2026-11-11 | Communauté, passe 3 (629212b…) | Clubs 16,4 → 0,3 % (390), Sorties 11,4 → 1,3 %, Création publication étape 1 17,3 → 1,6 %, Recherche accueil 2,1 → 1,0 % (360 : 1,9 → 1,4 %) ; 360/390/430 : toutes les cellules Explorer et Recherche sous 2 %, mesures 100 % ; 20 scénarios de création (étapes 2-4 de chaque type) ajoutés, 5 à 36 % (contenu propre à chaque formulaire) ; contraste des libellés 2,63 → 6,51:1, cibles < 44 px 66 → 0 | tsc 0, eslint 0 erreur, vitest community 401/401, next build vert, e2e Chromium mobile 46 verts / 12 sautés (base réelle ou drapeau), axe 12/12, audit transverses (50 états, 124 libellés) |
+
+## Communauté v2 · passe 3 : tableau avant / après (banc, fond neutralisé, thème clair)
+
+Cellule = % de pixels différents (objectif ≤ 2 %), à 360 / 390 / 430. « Avant » = début de passe 3.
+
+| Écran · état | Avant | Après |
+| --- | --- | --- |
+| Explorer · carnets (chargé / invité / vide / erreur / chargement) | 1,0·0,6·0,6 / 1,0·0,6·0,6 / 0,9·0,5·0,1 / 1,8·1,5·1,2 / 0 | 1,0·0,6·0,6 / 1,0·0,6·0,6 / 0,1·0,1·0,1 / 1,8·1,5·1,3 / 0 |
+| Explorer · clubs | 17,1 · 16,4 · 13,7 | 0,4 · 0,3 · 1,8 |
+| Explorer · sorties | 13,9 · 11,4 · 11,3 | 0,8 · 1,3 · 1,3 |
+| Recherche · accueil | 1,9 · 2,1 · 2,0 | 1,4 · 1,0 · 0,6 |
+| Recherche · résultats | 1,6 · 1,1 · 1,0 | 1,4 · 1,0 · 1,3 |
+| Aperçu (appui long) | 1,0 · 0,8 · 1,1 | 1,0 · 0,8 · 1,1 |
+| Création · publication · étape 1 | 19,8 · 17,3 · 15,8 | 1,8 · 1,6 · 1,1 |
+| Création · publication · étapes 2 / 3 | non scénarisées (1er passage : 28,4 / 27,1 à 390) | 11,2·9,8·8,2 / 13,4·11,4·9,7 |
+| Création · story · étapes 1-3 | idem (12,1 / 21,3 / 19,6) | 9,3·8,4·7,2 / 12,8·11,7·11,6 / 15,5·14,6·12,7 |
+| Création · carnet · étapes 1-4 | idem (22,4 / 38,4 / 10,1 / 23,5) | 10,4·10,0·8,6 / 31,9·35,8·35,0 / 7,3·6,5·5,4 / 11,2·10,1·8,4 |
+| Création · sortie · étapes 1-4 | idem (16,5 / 20,4 / 14,0 / 24,5) | 7,1·7,2·10,4 / 14,1·12,5·10,8 / 11,0·8,5·6,6 / 10,6·8,4·9,2 |
+| Création · kit · étapes 1-3 | idem (16,7 / 17,6 / 20,2) | 15,9·17,7·18,0 / 15,8·14,3·15,7 / 9,9·8,7·7,2 |
+| Création · club · étapes 1-4 | idem (23,0 / 29,3 / 24,0 / 25,0) | 14,6·14,6·16,4 / 18,2·16,6·14,6 / 13,8·15,5·14,0 / 20,7·18,8·16,0 |
+
+Restes, avec raison :
+- **Création, étapes 2-4 et étapes 1 des cinq autres types** : le contenu des formulaires diffère de la maquette champ par champ (rangées d'inventaire du kit, carte et choix du tracé du carnet, champs et textes d'aide du club et de la sortie, aperçus propres à chaque type, cartes MapLibre contre carte dessinée). Rien n'est masqué : chiffres bruts. Prochaine passe, par formulaire.
+- **Création, étape 1** : libellé « Photo » contre « Photo / vidéo » (vidéo reportée en publication, 01-SPEC § 6), fond du bouton « Retour » désactivé, glyphes de texte (masqués), 4 mesures sur 116.
+- **Recherche accueil** : la saisie est masquée (placeholder #46584D à 7:1, AA, contre #8A968D à 2,9:1 de la maquette : accessibilité assumée) ; démasquée, 1,8 à 2,5 % selon la taille (mesuré avant le masquage). Position, police et décalage de 2 px de la saisie sont mesurés.
+- **Sorties, Clubs** : carte topo du billet, textes de données, chiffres en police mono masqués ; jeu de données = jeu exact de la maquette (tests/fidelity/scenarios/maquetteData.ts), fixtures de recette inchangées.
+- Non joué ici : 768 et 1440 px, thème sombre, WebKit.
 
 ## Décisions ouvertes (Tony)
 
