@@ -92,4 +92,14 @@ La vue `hike_sessions_public` échantillonne 1 point sur 5 et arrondit à 3 déc
 | P2 Route sans chiffres | la lentille Étapes complète distance/D+ manquants avec les stats du jour | test unitaire de rendu à ajouter ; tsc/lint 0 |
 | P3 notifications redondantes | l'en-tête « Tout est lu / Tout lire » n'apparaît plus quand la liste est vide | capture `02-tiroir-compte` à refaire |
 
-Restent ouverts après ce lot : les fiches (moment/étape/objet/voyageur) à capturer manuellement, la lisibilité du verre sans `backdrop-filter` à contrôler sur iPhone, les tuiles Esri du banc fixtures, et le contrôle visuel des trois correctifs d'interface après déploiement.
+### Vérification en production après déploiement (`dpl_AmrrJan6fzAfERz1epms7c7vkc6T`, commit `0afc2c0e`)
+
+Captures `after/after-prod-fiche.png`, `after/after-prod-route.png` (session visiteur réelle) :
+
+- En-tête et résumé : **170 km / +10 000 m** (valeurs déclarées du carnet) au lieu du total 102 km des sorties d'un autre mois.
+- Cartes-jour : « 1 moment » sans « — · — » (les chiffres absents ne sont plus affichés comme des tirets).
+- Carte : état vide honnête **« Aucun tracé enregistré pour ce carnet. L'auteur n'a pas joint de trace GPS à ce carnet. »** — l'ancienne trace d'octobre n'est plus présentée comme le parcours d'un carnet de mars.
+- Aucune nouvelle erreur runtime (les 400/403 et le heartbeat `user_presence` existaient déjà pour une session anonyme).
+- Reste à contrôler sur iPhone : rendu du verre (blur réel) et barre des lentilles en bas de tiroir.
+
+Restent ouverts après ce lot : les fiches (moment/étape/objet/voyageur) à capturer manuellement, la lisibilité du verre sans `backdrop-filter` à contrôler sur iPhone, les tuiles Esri du banc fixtures, le recentrage de la carte sur le départ du carnet quand aucune trace n'est affichée (P3), et la capture du tiroir Sac après la réserve basse.

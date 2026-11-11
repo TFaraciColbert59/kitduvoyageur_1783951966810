@@ -363,7 +363,7 @@ export function EtapeRows({
               <span className="pin end" aria-hidden="true" />
               <b>{route}</b>
               <span className="t">{e.durationText ?? ''}</span>
-              <small className="lkdv-mono">{figures || 'Chiffres non renseignés'}</small>
+              {figures ? <small className="lkdv-mono">{figures}</small> : null}
             </button>
           </React.Fragment>
         );
