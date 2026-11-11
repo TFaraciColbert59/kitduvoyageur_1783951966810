@@ -110,6 +110,74 @@ coquille `/communaute` est un verre clair ; la capture « sombre » ne prouve pa
 complet (léger écart de fond seulement). Non testé : iPhone réel, WebKit (binaire indisponible
 dans cet environnement, comme l'indiquait la session précédente).
 
+## Reprise 2 — signal de bord, suivis persistés, vidéo (2026-11-11)
+
+Deuxième vague, même jour, pour finir ce qui restait du lot 2 et du lot 3 de la maquette.
+
+### Signal de bord (proposition n° 37) — fait
+
+- **`POST /api/carnets/signal`** (`src/app/api/carnets/signal/route.ts`) : multipart
+  `kind` (photo/vidéo/note), une ligne ≤ 400, lieu, `tripId`/`carnetId` facultatifs. Résolution
+  serveur du carnet : carnet explicite (participant vérifié par `is_carnet_participant`), sinon
+  carnet de l'utilisateur en cours (dates couvrant aujourd'hui), sinon carnet du voyage, sinon
+  **carnet minimal créé** (titre « Carnet du {date} ») — le cockpit le réutilise à l'arrêt pour
+  éviter un doublon. Jour = jours civils depuis `start_date`, borné 1..366. Médias envoyés dans
+  les buckets publics du projet avec les MIME/plafonds vérifiés en base (photo `carnet-media`
+  ≤ 10 Mo, vidéo `carnet-moments-media` ≤ 25 Mo), chemin `<uid>/carnet-moments/<carnetId>/…`
+  conforme aux policies storage. Insertion `carnet_moments` par le même schéma zod et le même
+  constructeur de ligne que la fiche (`validateMomentInput`/`momentInsertRow`, repli 42703).
+  Aucune clé de service, aucune coordonnée stockée.
+- **`src/features/carnet/detail/signalDeBord.ts`** : fonctions pures (jour, validation MIME/taille)
+  et `publishSignal` (FormData same-origin, erreurs lisibles, UUID validés).
+- **`CaptureSheet`** : les quatre gestes existants publient réellement — photo/vidéo → aperçu +
+  ligne + « Envoyer le signal » ; note/moment → une ligne + « Envoyer » ; succès
+  « Signal envoyé · J{n} », erreurs de la route affichées sans fermer la feuille ; rétrocompatible
+  (sans `publish`, ancien comportement local conservé). **`HikingCockpitPage`** mémorise le carnet
+  du premier signal et le transmet à `stopHike()`.
+- Tests : 13 tests `signalDeBord` (jour borné, MIME/plafonds, FormData, UUID, 401/réseau) + 4 tests
+  RTL du composant (publier photo/note, erreur, mode local).
+
+### Suivre le carnet + fréquence de notification (propositions n° 20 et 41) — fait
+
+- **Migration `20261111120000_carnet_follows` appliquée en production** (version
+  `20261111133704` après application MCP) : table `carnet_follows` (PK carnet+personne,
+  `notify_mode` = `moment` | `digest` | `highlights`, `updated_at`), 4 policies RLS
+  (lecture/écriture de ses seuls suivis, auto-suivi d'un participant refusé, `delete` propre),
+  `anon` sans aucun privilège. Validée d'abord dans une transaction annulée (table, RLS,
+  policies, privilèges), rollback fourni, pgTAP 10 assertions livré.
+- **`useCarnetFollow`** : lecture/écriture sous RLS, repli `localStorage` si table absente
+  (42P01/PGRST205) ou erreur réseau, participant jamais « suiveur » de son carnet, invité sans
+  appel réseau. 10 tests RTL.
+- **Lentille « Suivre »** : bloc « Suivre ce carnet / Ne plus suivre » (pilule 44 px, `aria-pressed`)
+  et les trois options « Me prévenir » adossées au compte quand la table répond
+  (« Préférence enregistrée sur ton compte »), repli appareil sinon — le reste de la lentille
+  (progression, dernier signal, battements, résumé du soir) ne bouge pas.
+
+### Vidéo (proposition n° 31) — fait
+
+- `src/components/carnet/v2/CarnetVideo.tsx` : `CarnetVideoFeed` (lecture muette en boucle, son au
+  toucher, contrôles 44 px lecture/pause + son + ouverture, mouvement réduit respecté, erreur de
+  lecture non bloquante) et `CarnetVideoThumb` (vignette inerte pour la mosaïque Médias).
+- Branchés dans `MomentCard` (fil) et `CarnetMomentTileBody` (tuiles) : un moment vidéo rend
+  désormais un `<video>` et non plus une image figée. Styles ajoutés aux CSS de lentilles
+  (tokens, repli transparence réduite). 6 tests.
+- État des lieux du reste du lot 3 : les neuf types (`photo, video, voice, text, meet, spend, kit,
+  species, inc`) et leurs cartes existaient déjà (ticket budget, rencontre, planche d'espèces,
+  note vocale, objets, incident) ; la vidéo était le rendu manquant.
+
+### Vérifications (2e vague)
+
+| Porte | Résultat |
+| --- | --- |
+| `npx tsc --noEmit -p .` | 0 erreur |
+| `npm run lint` | 0 erreur (avertissements préexistants hors périmètre) |
+| Vitest `src/features/carnet`, `src/components/carnet`, `src/features/hiking`, `tests/routing` | **66 fichiers / 582 tests verts** |
+| Nouvelles suites | signalDeBord 13, CaptureSheet 4, useCarnetFollow 10, CarnetVideo 6 |
+| Migration production `carnet_follows` | appliquée + vérifiée (table, RLS, 4 policies, anon sans accès) |
+| Recette Playwright hub + lentille Suivre (rebuild après correctifs) | **28/28 verts** (390/430 × clair/sombre) |
+| Banc de fidélité Carnet + axe (390 clair, après vidéo/suivis) | **36/36 verts** — aucune régression |
+
+
 ## Ce qui reste (honnête)
 
 1. **Déployer** : les migrations Communauté v2 (`20261108130001` → `20261108190000`) ne sont
@@ -117,18 +185,16 @@ dans cet environnement, comme l'indiquait la session précédente).
    déploiement du code adapté. Le drapeau `NEXT_PUBLIC_COMMUNAUTE_V2` n'est pas activé en
    production. Aucune mise en production n'a été faite dans cette reprise.
 2. **Fermeture complète RGPD** du rôle `authenticated` (voir ci-dessus) : vues participant +
-   migration des lecteurs de sorties personnelles.
-3. **Lot 3 de la maquette** (médias riches et rencontres) : vidéo courte, sons d'ambiance,
-   carte rencontre, budget par moment. La note vocale et les tuiles typées existent déjà dans la
-   fiche v2 ; la galerie plein écran existe (lentille Médias). Les `moment_type`/`moment_meta`
-   couvrent les types de la maquette, il reste l'édition et la mise en avant.
-4. **Signal de bord depuis `/randonnee-active`** (proposition 37) : le cockpit écrit déjà des
-   moments de journal via `JournalService`, mais le geste « une photo + une ligne en deux gestes »
-   et son placement dans le jour courant ne sont pas faits.
-5. **Choix de notification par suiveur persisté en base** (proposition 41) : la lentille
-   « Suivre » garde la préférence sur l'appareil (`localStorage`), les tables
-   `notification_preferences` ne sont pas per-carnet. Décision de schéma à prendre.
-6. **Décisions déjà listées par la session précédente** restent à Tony : édition (spec vs crayon),
+   migration des lecteurs de sorties personnelles (compte, cockpit, synchronisation hors ligne).
+3. **Galerie plein écran et vidéo** : la visionneuse du moment (`CarnetPostSheet`) et la galerie
+   de la lentille Médias affichent les images ; une vidéo s'y ouvre encore comme une image. Le
+   fil et les tuiles la lisent désormais, la visionneuse plein écran reste à adapter.
+4. **Sons d'ambiance** (proposition n° 32) : la note vocale existe (MediaRecorder, onde,
+   transcription absente) ; l'enregistrement d'ambiance distinct n'est pas fait.
+5. **Décisions déjà listées par la session précédente** restent à Tony : édition (spec vs crayon),
    lentille « Commentaires » séparée, dérogation chips 28 px, ombre de l'île, 13 points reportés.
-7. Couleurs littérales de `carnet-profile.css` (fiche **v1** legacy, proposition 65) non reprises :
+6. Couleurs littérales de `carnet-profile.css` (fiche **v1** legacy, proposition 65) non reprises :
    la v2 est le défaut, le fichier appartient au travail déjà livré.
+7. **Recette non faite** : iPhone réel, WebKit (binaire indisponible), et le signal de bord du
+   cockpit n'est couvert qu'en tests unitaires/RTL (pas de parcours Playwright sur
+   `/randonnee-active`, qui exige une session GPS réelle).
