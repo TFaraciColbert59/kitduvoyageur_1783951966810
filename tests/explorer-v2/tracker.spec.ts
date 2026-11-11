@@ -5,6 +5,7 @@ import {
   AUTO_PAUSE_DISABLED,
   autoPauseConfigForSport,
   averageSpeedKmh,
+  MIN_MOVING_SPEED_MS,
   type AutoPauseConfig,
   type GpsFix,
 } from '@/features/explorer-v2/activity/tracker';
@@ -288,6 +289,11 @@ describe('explorer-v2 · auto-pause', () => {
       expect(profile.resumeSpeedThresholdMs, sport).toBeGreaterThanOrEqual(
         profile.speedThresholdMs
       );
+      // Une reprise sous MIN_MOVING_SPEED_MS accumulerait de la distance sans
+      // temps en mouvement : le bilan afficherait une allure nulle.
+      expect(profile.resumeSpeedThresholdMs, sport).toBeGreaterThanOrEqual(
+        MIN_MOVING_SPEED_MS
+      );
     }
 
     expect(AUTO_PAUSE_BY_SPORT.velo.durationS).toBeLessThan(AUTO_PAUSE_BY_SPORT.rando.durationS);
@@ -399,13 +405,19 @@ describe('explorer-v2 · auto-pause', () => {
 
     // Saut impossible (dt <= 2 s) puis précision insuffisante : les deux sont rejetés.
     state = tracker.addFix(at(11_500, 500, 10));
+    expect(state.accepted).toBe(false);
     state = tracker.addFix(at(12_000, distanceBeforeRejections, 10, 120));
+    expect(state.accepted).toBe(false);
     expect(state.rejected).toBe(2);
     expect(state.distanceM).toBe(distanceBeforeRejections);
     expect(state.autoPaused).toBe(false);
 
     // Un arrêt réel, postérieur aux rejets, finit par déclencher la pause.
     state = tracker.addFix(at(22_000, 10, 0));
+    expect(state.accepted).toBe(true);
+    // Le premier fix valide après un rejet ouvre une nouvelle borne : le tracé
+    // ne doit pas relier l'avant et l'après à travers le point rejeté.
+    expect(state.discontinuity).toBe(true);
     expect(state.autoPaused).toBe(false);
     // Le premier fix valide après les rejets a remis la temporisation à zéro.
     state = tracker.addFix(at(32_000, 10, 0));
@@ -428,6 +440,100 @@ describe('explorer-v2 · auto-pause', () => {
     expect(state.autoPaused).toBe(true);
     state = tracker.addFix(at(47_000, 14, 1));
     expect(state.autoPaused).toBe(false);
+  });
+
+  it('refuse un fix non monotone sans l’accepter ni reculer la borne', () => {
+    const tracker = new ActivityTracker(autoPause({ durationS: 20 }));
+    tracker.addFix(at(10_000, 0, 1));
+    let state = tracker.addFix(at(15_000, 10, 1));
+    const distance = state.distanceM;
+    const lastFix = state.lastFix?.t;
+
+    // Fix mis en cache livré après un point plus récent (`maximumAge`).
+    state = tracker.addFix(at(12_000, 60, 1));
+    expect(state.accepted).toBe(false);
+    expect(state.rejected).toBe(1);
+    expect(state.lastFix?.t).toBe(lastFix);
+    expect(state.distanceM).toBe(distance);
+
+    // Le fix valide suivant repart de la dernière borne, sans le point périmé.
+    // Un simple retard de livraison ne coupe pas la continuité des métriques.
+    state = tracker.addFix(at(16_000, 15, 1));
+    expect(state.accepted).toBe(true);
+    expect(state.discontinuity).toBe(false);
+    expect(state.distanceM).toBeCloseTo(distance + 5, 1);
+  });
+
+  it('calcule la durée sur l’horloge de réception monotone, pas sur l’horloge murale', () => {
+    const tracker = new ActivityTracker(autoPause({ durationS: 20, maxFixGapS: 60 }));
+    const fix = (t: number, distanceM: number, speedMs: number, receivedAt: number): GpsFix => ({
+      ...at(t, distanceM, speedMs),
+      receivedAt,
+    });
+
+    let state = tracker.addFix(fix(0, 0, 1, 0));
+    state = tracker.addFix(fix(5_000, 5, 1, 1_000));
+    // L'horloge murale saute de 30 s, mais 1 s seulement s'est écoulée.
+    state = tracker.addFix(fix(35_000, 10, 1, 2_000));
+
+    expect(state.autoPaused).toBe(false);
+    expect(state.movingS).toBeCloseTo(2, 5);
+    expect(state.distanceM).toBeCloseTo(10, 1);
+  });
+
+  it('n’invente pas une pause sur un saut d’horloge mural', () => {
+    const tracker = new ActivityTracker(autoPause({ durationS: 20, maxFixGapS: 60 }));
+    const fix = (t: number, receivedAt: number): GpsFix => ({
+      ...at(t, 0, 0),
+      receivedAt,
+    });
+
+    tracker.addFix(fix(0, 0));
+    let state = tracker.addFix(fix(5_000, 1_000));
+    state = tracker.addFix(fix(35_000, 2_000));
+
+    expect(state.autoPaused).toBe(false);
+  });
+
+  it('ne reprend jamais sous le seuil de temps en mouvement', () => {
+    const config = AUTO_PAUSE_BY_SPORT.kayak;
+    const tracker = new ActivityTracker(config);
+
+    let state = tracker.addFix(at(0, 0, 1));
+    for (let t = 5; t <= config.durationS + 10; t += 5) {
+      state = tracker.addFix(at(t * 1000, 0, 0));
+    }
+    expect(state.autoPaused).toBe(true);
+    const frozenDistance = state.distanceM;
+
+    // 0,26 m/s : sous MIN_MOVING_SPEED_MS, la pause tient et la distance ne
+    // bouge pas (l'ancien seuil kayak à 0,25 m/s reprenait ici).
+    let distance = 0;
+    let t = config.durationS + 15;
+    for (let index = 0; index < 5; index += 1) {
+      distance += 0.26 * 5;
+      state = tracker.addFix(at(t * 1000, distance, 0.26));
+      t += 5;
+    }
+    expect(state.autoPaused).toBe(true);
+    expect(state.distanceM).toBe(frozenDistance);
+
+    // Au-dessus du seuil, la reprise compte bien le temps en mouvement.
+    distance += 0.31 * 5;
+    state = tracker.addFix(at(t * 1000, distance, 0.31));
+    t += 5;
+    expect(state.autoPaused).toBe(false);
+    const movingBefore = state.movingS;
+    distance += 0.31 * 5;
+    state = tracker.addFix(at(t * 1000, distance, 0.31));
+    expect(state.movingS).toBeGreaterThan(movingBefore);
+  });
+
+  it('compte le temps en mouvement au seuil exact de 0,3 m/s', () => {
+    const tracker = new ActivityTracker(AUTO_PAUSE_DISABLED);
+    tracker.addFix(at(0, 0, 1));
+    const state = tracker.addFix(at(5_000, 1.5, MIN_MOVING_SPEED_MS));
+    expect(state.movingS).toBeCloseTo(5, 5);
   });
 
   it('traite une longue interruption comme une inconnue, jamais comme un arrêt', () => {
@@ -569,6 +675,8 @@ describe('explorer-v2 · auto-pause', () => {
     const beforeGap = state;
 
     state = enabled.addFix(at(70_000, 1_005, 1));
+    expect(state.accepted).toBe(true);
+    expect(state.discontinuity).toBe(true);
     expect(state.distanceM).toBe(beforeGap.distanceM);
     expect(state.movingS).toBe(beforeGap.movingS);
     expect(state.elevGainM).toBe(beforeGap.elevGainM);
@@ -576,6 +684,7 @@ describe('explorer-v2 · auto-pause', () => {
 
     // Le fix suivant repart de la nouvelle borne.
     state = enabled.addFix(at(71_000, 1_010, 1));
+    expect(state.discontinuity).toBe(false);
     expect(state.distanceM).toBeCloseTo(beforeGap.distanceM + 5, 1);
 
     // Option désactivée : le comportement historique compte le trou tel quel.

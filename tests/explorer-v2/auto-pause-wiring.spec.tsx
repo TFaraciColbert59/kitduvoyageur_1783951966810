@@ -241,9 +241,10 @@ describe('explorer-v2 · raccordement du réglage de pause automatique', () => {
   it('hydrate une préférence stockée, avec ON par défaut (S1.05)', () => {
     expect(useExplorerStore.getInitialState().autoPauseEnabled).toBe(true);
 
-    // Sans valeur stockée, le défaut reste actif.
+    // Sans valeur stockée, le défaut reste actif, même si la session avait
+    // été coupée avant un remontage.
     window.localStorage.removeItem(AUTO_PAUSE_STORAGE_KEY);
-    useExplorerStore.setState({ autoPauseEnabled: true });
+    useExplorerStore.setState({ autoPauseEnabled: false });
     hydrateAutoPausePreference();
     expect(useExplorerStore.getState().autoPauseEnabled).toBe(true);
 

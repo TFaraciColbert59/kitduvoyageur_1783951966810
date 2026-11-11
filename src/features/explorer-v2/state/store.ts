@@ -71,8 +71,9 @@ const initialState: ExplorerState = {
   profile: null,
   easyMode: false,
   theme: 'light',
-  // S1.05 : détection active par défaut, désactivable depuis le drawer de
-  // préparation. OFF seulement après un choix explicite de l'utilisateur.
+  // S1.05 : décision produit retenue, détection active par défaut et
+  // désactivable depuis le drawer de préparation. OFF seulement après un choix
+  // explicite de l'utilisateur (la fiche exige la désactivabilité, pas le ON).
   autoPauseEnabled: true,
   online: true,
   locationPermission: 'prompt',
@@ -342,16 +343,20 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
  * explicitement demandé.
  */
 export function hydrateAutoPausePreference(): void {
+  if (typeof window === 'undefined') return;
   try {
-    if (typeof window === 'undefined') return;
     const raw = window.localStorage.getItem(AUTO_PAUSE_STORAGE_KEY);
-    if (raw === '1' || raw === 'true') {
-      useExplorerStore.setState({ autoPauseEnabled: true });
-    } else if (raw === '0' || raw === 'false') {
+    if (raw === '0' || raw === 'false') {
       useExplorerStore.setState({ autoPauseEnabled: false });
+    } else {
+      // Sans valeur (ou valeur inconnue), le défaut ON s'applique, y compris
+      // après un OFF de session : un remontage ne doit pas garder un état
+      // transitoire que le stockage ne confirme pas.
+      useExplorerStore.setState({ autoPauseEnabled: true });
     }
   } catch {
     /* stockage indisponible : défaut ON, réglage valable pour la session */
+    useExplorerStore.setState({ autoPauseEnabled: true });
   }
 }
 

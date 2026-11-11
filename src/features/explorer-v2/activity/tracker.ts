@@ -5,17 +5,17 @@
  * dénivelé positif, temps en mouvement. Règles produit :
  *   - une position dont la précision dépasse 30 m est ignorée ;
  *   - lissage exponentiel de l'altitude (le GPS de montagne oscille de ±10 m) ;
- *   - le mouvement n'est compté qu'au-delà de 0,3 m/s ;
+ *   - le mouvement n'est compté qu'à partir de 0,3 m/s ;
  *   - un saut de plus de 100 m en moins de 2 s est rejeté (perte de fix).
  *
  * Auto-pause (S1.05)
  * ------------------
  * La fiche demande de détecter les arrêts par sport et de laisser la fonction
- * désactivable : elle est donc active par défaut dans le hook, et le réglage
- * de préparation permet de la couper. `new ActivityTracker()` reste, lui,
- * désactivé pour préserver le comportement historique des appels directs.
- * Le hook branche un profil de `AUTO_PAUSE_BY_SPORT` (ou
- * `AUTO_PAUSE_DISABLED`) via `setConfig`.
+ * désactivable. La décision produit retenue pour cette tranche est ON par
+ * défaut ; le réglage de préparation permet de la couper. `new
+ * ActivityTracker()` reste, lui, désactivé pour préserver le comportement
+ * historique des appels directs. Le hook branche un profil de
+ * `AUTO_PAUSE_BY_SPORT` (ou `AUTO_PAUSE_DISABLED`) via `setConfig`.
  *
  * Pause manuelle : le hook appelle `breakContinuity()` quand il suspend la
  * capture. Le premier fix valide suivant devient la nouvelle borne, sans
@@ -26,12 +26,24 @@
  * détection de reprise) mais `distanceM`, `movingS` et `elevGainM` sont gelés
  * pendant la pause ; `lastFix` avance pour que la reprise reparte de la
  * dernière position connue. Une interruption GPS (`maxFixGapS`) n'est jamais
- * comptée comme du mouvement continu : elle établit une nouvelle borne. Ces
- * règles ne s'appliquent que lorsque `config.enabled` vaut `true`.
+ * comptée comme du mouvement continu : elle établit une nouvelle borne et
+ * marque `discontinuity` pour que le tracé soit coupé. Ces règles ne
+ * s'appliquent à l'accumulation des métriques que lorsque `config.enabled`
+ * vaut `true` ; la coupure d'affichage, elle, reste valable.
+ *
+ * Fixs rejetés : `accepted` vaut `false`, `lastFix` ne recule pas et l'appelant
+ * ne doit ni dessiner le point ni déplacer la carte. Le premier fix valide
+ * suivant marque `discontinuity` s'il doit repartir d'une nouvelle borne.
+ *
+ * Durée : quand `receivedAt` est fourni (horloge monotone de réception), il
+ * prime sur `t` pour `dtS` ; un saut de l'horloge murale ne gonfle donc ni
+ * `movingS` ni la temporisation de pause. Sans `receivedAt`, `t` reste la
+ * source historique.
  *
  * Seuils : base historique de `TrackingEngine` (0,5 km/h pendant 120 s) et
- * `MIN_MOVING_SPEED_MS` (0,3 m/s) pour la reprise du profil de repli. Les
- * délais par sport sont des hypothèses produit réversibles, regroupées dans
+ * `MIN_MOVING_SPEED_MS` (0,3 m/s) pour le temps en mouvement. Aucun profil ne
+ * peut reprendre sous ce seuil, sinon la distance s'accumulerait sans durée.
+ * Les délais par sport sont des hypothèses produit réversibles, regroupées dans
  * `AUTO_PAUSE_BY_SPORT`.
  *
  * Aucune dépendance d'exécution : utilisable dans le worker, dans les tests et
@@ -48,6 +60,13 @@ export interface GpsFix {
   /** Précision horizontale en mètres. */
   acc?: number | null;
   speed?: number | null;
+  /**
+   * Horodatage monotone de réception (ms). Utilisé pour la durée quand il est
+   * présent : un ajustement de l'horloge murale (`t`) ne doit ni gonfler le
+   * temps en mouvement ni déclencher une fausse pause. Absent, la durée
+   * retombe sur `t` (comportement historique des appels directs et des tests).
+   */
+  receivedAt?: number;
 }
 
 export interface AutoPauseConfig {
@@ -57,7 +76,10 @@ export interface AutoPauseConfig {
   speedThresholdMs: number;
   /** Durée continue d'arrêt avant la mise en pause (s). */
   durationS: number;
-  /** Vitesse minimale pour envisager la reprise (m/s, hystérésis). */
+  /**
+   * Vitesse minimale pour envisager la reprise (m/s, hystérésis). Toujours
+   * ramenée au moins à `MIN_MOVING_SPEED_MS` par `profile()`.
+   */
   resumeSpeedThresholdMs: number;
   /** Durée continue de mouvement avant la reprise (s). */
   resumeDurationS: number;
@@ -73,6 +95,17 @@ export interface ActivityMetrics {
   rejected: number;
   /** État de la pause automatique ; `false` quand la fonction est désactivée. */
   autoPaused: boolean;
+  /**
+   * Vrai si le dernier fix a été retenu. Un fix rejeté ne doit ni être dessiné
+   * ni déplacer la carte ni alimenter le hors-trace.
+   */
+  accepted: boolean;
+  /**
+   * Vrai si le dernier fix accepté ouvre une nouvelle borne : trou GPS,
+   * premier point après un rejet, ou reprise après une pause manuelle. Le
+   * tracé doit alors être coupé avant d'ajouter ce point.
+   */
+  discontinuity: boolean;
 }
 
 export const MAX_ACCURACY_M = 30;
@@ -92,9 +125,21 @@ function profile(
     enabled: true,
     speedThresholdMs,
     durationS,
-    resumeSpeedThresholdMs,
+    // Une reprise sous MIN_MOVING_SPEED_MS accumulerait de la distance sans
+    // temps en mouvement (allure nulle). Le seuil de reprise ne descend donc
+    // jamais sous le seuil qui alimente `movingS`.
+    resumeSpeedThresholdMs: Math.max(resumeSpeedThresholdMs, MIN_MOVING_SPEED_MS),
     resumeDurationS,
     maxFixGapS,
+  };
+}
+
+/** Normalise aussi les configs fournies directement (hors `profile()`). */
+function normalizeConfig(config: AutoPauseConfig): AutoPauseConfig {
+  return {
+    ...AUTO_PAUSE_DISABLED,
+    ...config,
+    resumeSpeedThresholdMs: Math.max(config.resumeSpeedThresholdMs, MIN_MOVING_SPEED_MS),
   };
 }
 
@@ -114,13 +159,14 @@ export const AUTO_PAUSE_BY_SPORT: Readonly<Record<Sport, AutoPauseConfig>> = {
   rando: profile(0.139, 120, MIN_MOVING_SPEED_MS, 5, 120),
   // 1 km/h : le vélo peut osciller lentement sans être à l'arrêt ; reprise 1,8 km/h.
   velo: profile(0.278, 30, 0.5, 3, 60),
-  // 0,8 km/h : dérive d'un kayak immobile ; reprise 0,9 km/h.
+  // 0,8 km/h : dérive d'un kayak immobile ; reprise au seuil de mouvement (0,3 m/s).
   kayak: profile(0.222, 45, 0.25, 5, 90),
   // Même logique que la course, avec une trace plus bruitée en montagne.
   trail: profile(0.139, 20, MIN_MOVING_SPEED_MS, 3, 60),
   // 1 km/h : peau de phoque / dérapages lents ne sont pas des arrêts.
   ski: profile(0.278, 60, MIN_MOVING_SPEED_MS, 5, 90),
-  // Escalade : progression très lente, on attend 3 min avant de conclure.
+  // Escalade : progression très lente, on attend 3 min avant de conclure ;
+  // reprise au seuil de mouvement (0,3 m/s), pas en dessous.
   escalade: profile(0.139, 180, 0.2, 5, 120),
   // Balade en famille : les pauses photo/goûter sont longues.
   famille: profile(0.139, 180, MIN_MOVING_SPEED_MS, 8, 120),
@@ -157,6 +203,8 @@ export class ActivityTracker {
     movingS: 0,
     lastFix: null,
     rejected: 0,
+    accepted: false,
+    discontinuity: false,
   };
 
   private smoothedEle: number | null = null;
@@ -176,7 +224,7 @@ export class ActivityTracker {
   private rejectedSinceLastFix = false;
 
   constructor(config: AutoPauseConfig = AUTO_PAUSE_DISABLED) {
-    this.config = { ...AUTO_PAUSE_DISABLED, ...config };
+    this.config = normalizeConfig(config);
   }
 
   get state(): ActivityMetrics {
@@ -188,7 +236,7 @@ export class ActivityTracker {
    * le sport ou le réglage de préparation change en cours de sortie.
    */
   setConfig(config: AutoPauseConfig): void {
-    this.config = { ...AUTO_PAUSE_DISABLED, ...config };
+    this.config = normalizeConfig(config);
     this.resetAutoPause();
   }
 
@@ -204,15 +252,28 @@ export class ActivityTracker {
   }
 
   addFix(fix: GpsFix): ActivityMetrics {
+    if (
+      !Number.isFinite(fix.t) ||
+      !Number.isFinite(fix.lat) ||
+      !Number.isFinite(fix.lng)
+    ) {
+      return this.rejectFix(true);
+    }
+
     if (fix.acc !== undefined && fix.acc !== null && fix.acc > MAX_ACCURACY_M) {
-      this.metrics.rejected += 1;
-      this.rejectedSinceLastFix = true;
-      return this.state;
+      return this.rejectFix(true);
     }
 
     const previous = this.metrics.lastFix;
-    if (!previous || this.continuityBroken) {
-      this.startNewSegment(fix);
+    if (!previous) {
+      this.startNewSegment(fix, false);
+      this.continuityBroken = false;
+      this.rejectedSinceLastFix = false;
+      return this.state;
+    }
+
+    if (this.continuityBroken) {
+      this.startNewSegment(fix, true);
       this.continuityBroken = false;
       this.rejectedSinceLastFix = false;
       return this.state;
@@ -222,34 +283,34 @@ export class ActivityTracker {
     // ajouter de distance ni faire reculer la borne. `maximumAge: 2000` côté
     // `watchPosition` peut livrer un point mis en cache après un point plus
     // récent, notamment au moment d'une reprise.
-    if (!Number.isFinite(fix.t) || fix.t <= previous.t) {
-      this.metrics.rejected += 1;
-      return this.state;
+    if (fix.t <= previous.t) {
+      return this.rejectFix(false);
     }
 
-    const dtS = (fix.t - previous.t) / 1000;
+    const dtS = this.elapsedSeconds(previous, fix);
     const distance = haversineM(previous, fix);
 
     // Perte de fix : saut impossible dans un laps de temps très court.
     if (dtS <= MAX_JUMP_WINDOW_S && distance > MAX_JUMP_M) {
-      this.metrics.rejected += 1;
-      this.rejectedSinceLastFix = true;
-      return this.state;
+      return this.rejectFix(true);
     }
 
     const speed = fix.speed ?? (dtS > 0 ? distance / dtS : 0);
+    const gap = dtS > this.config.maxFixGapS;
 
     if (this.config.enabled) {
       // Interruption GPS : la ligne droite et le temps du trou ne sont pas du
       // mouvement observé. La nouvelle borne est la position courante. Seule
       // une vitesse explicitement rapportée par le GPS peut reprendre la
       // détection ; la vitesse déduite du trou ne prouve aucun mouvement.
-      if (dtS > this.config.maxFixGapS) {
+      if (gap) {
         const reportedSpeed =
           typeof fix.speed === 'number' && Number.isFinite(fix.speed)
             ? Math.max(0, fix.speed)
             : null;
         this.metrics.lastFix = fix;
+        this.metrics.accepted = true;
+        this.metrics.discontinuity = true;
         this.smoothedEle = typeof fix.ele === 'number' ? fix.ele : this.smoothedEle;
         this.rejectedSinceLastFix = false;
         this.stoppedS = 0;
@@ -270,6 +331,8 @@ export class ActivityTracker {
       // sans compter l'intervalle non prouvé.
       if (this.rejectedSinceLastFix) {
         this.metrics.lastFix = fix;
+        this.metrics.accepted = true;
+        this.metrics.discontinuity = true;
         this.smoothedEle = typeof fix.ele === 'number' ? fix.ele : this.smoothedEle;
         this.rejectedSinceLastFix = false;
         this.stoppedS = 0;
@@ -281,6 +344,8 @@ export class ActivityTracker {
       // aucune métrique n'est accumulée pendant la pause.
       if (this.autoPaused) {
         this.metrics.lastFix = fix;
+        this.metrics.accepted = true;
+        this.metrics.discontinuity = false;
         if (typeof fix.ele === 'number') {
           this.smoothedEle =
             this.smoothedEle === null
@@ -292,8 +357,9 @@ export class ActivityTracker {
       }
     }
 
+    const afterRejection = this.rejectedSinceLastFix;
     this.metrics.distanceM += distance;
-    if (speed > MIN_MOVING_SPEED_MS) this.metrics.movingS += dtS;
+    if (speed >= MIN_MOVING_SPEED_MS) this.metrics.movingS += dtS;
 
     if (typeof fix.ele === 'number') {
       const smoothed =
@@ -307,14 +373,54 @@ export class ActivityTracker {
     }
 
     this.metrics.lastFix = fix;
+    this.metrics.accepted = true;
+    // Même désactivée, une coupure ne doit pas être reliée à l'écran. Les
+    // métriques, elles, gardent le comportement historique.
+    this.metrics.discontinuity = gap || afterRejection;
     this.rejectedSinceLastFix = false;
 
     this.updateAutoPause(dtS, speed);
     return this.state;
   }
 
-  private startNewSegment(fix: GpsFix): void {
+  /**
+   * Rejette le fix sans toucher à la dernière borne. `markContinuity` arme la
+   * nouvelle borne du prochain fix valide (précision, saut, coordonnée
+   * invalide) ; un simple retard de livraison ne doit pas, lui, couper la
+   * continuité des métriques.
+   */
+  private rejectFix(markContinuity: boolean): ActivityMetrics {
+    this.metrics.rejected += 1;
+    this.metrics.accepted = false;
+    this.metrics.discontinuity = false;
+    if (markContinuity) this.rejectedSinceLastFix = true;
+    return this.state;
+  }
+
+  /**
+   * Durée réellement écoulée. L'horodatage de réception monotone prime sur
+   * l'horloge murale `t`, qui peut sauter (synchronisation, réglage manuel) et
+   * gonfler `movingS` ou déclencher une fausse pause. Sans `receivedAt`, on
+   * garde le comportement historique.
+   */
+  private elapsedSeconds(previous: GpsFix, fix: GpsFix): number {
+    const previousReceivedAt = previous.receivedAt;
+    const receivedAt = fix.receivedAt;
+    if (
+      typeof previousReceivedAt === 'number' &&
+      Number.isFinite(previousReceivedAt) &&
+      typeof receivedAt === 'number' &&
+      Number.isFinite(receivedAt)
+    ) {
+      return Math.max(0, (receivedAt - previousReceivedAt) / 1000);
+    }
+    return Math.max(0, (fix.t - previous.t) / 1000);
+  }
+
+  private startNewSegment(fix: GpsFix, discontinuity: boolean): void {
     this.metrics.lastFix = fix;
+    this.metrics.accepted = true;
+    this.metrics.discontinuity = discontinuity;
     this.smoothedEle = typeof fix.ele === 'number' ? fix.ele : null;
     this.resetAutoPause();
   }

@@ -21,6 +21,14 @@ export interface TrackerOptions {
   onFix?: (fix: GpsFix, metrics: ReturnType<ActivityTracker['addFix']>) => void;
 }
 
+/** Horloge monotone de réception ; jamais l'horloge murale pour les durées. */
+function monotonicNow(): number {
+  if (typeof performance !== 'undefined' && typeof performance.now === 'function') {
+    return performance.now();
+  }
+  return Date.now();
+}
+
 export function useGpsTracker({ distanceToRouteM, onFix }: TrackerOptions = {}) {
   const activity = useExplorerStore((state) => state.activity);
   const autoPauseEnabled = useExplorerStore((state) => state.autoPauseEnabled) ?? false;
@@ -45,6 +53,10 @@ export function useGpsTracker({ distanceToRouteM, onFix }: TrackerOptions = {}) 
     lastFixTimeRef.current = Date.now();
 
     const metrics = trackerRef.current.addFix(fix);
+    // Fix rejeté : ni métrique, ni carte, ni tracé, ni hors-trace. Le point
+    // périmé (`maximumAge`) ou aberrant ne doit pas laisser de trace visuelle.
+    if (!metrics.accepted) return;
+
     useExplorerStore.setState((state) => ({
       activity: state.activity
         ? {
@@ -181,6 +193,7 @@ export function useGpsTracker({ distanceToRouteM, onFix }: TrackerOptions = {}) 
           ele: position.coords.altitude,
           acc: position.coords.accuracy,
           speed: position.coords.speed,
+          receivedAt: monotonicNow(),
         });
       },
       (err) => {
@@ -217,6 +230,7 @@ export function useGpsTracker({ distanceToRouteM, onFix }: TrackerOptions = {}) 
           ele: 1045 + (act.movingS % 40) * 0.5,
           acc: 5,
           speed: speedMs,
+          receivedAt: monotonicNow(),
         });
       }
     }, 1000);

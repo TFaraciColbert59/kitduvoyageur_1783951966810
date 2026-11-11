@@ -404,6 +404,8 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
 
   const onGpsFix = useCallback(
     (fix: { lat: number; lng: number }, metrics: ActivityMetrics) => {
+      // Défense en profondeur : le hook ne remonte déjà pas les fixes rejetés.
+      if (!metrics.accepted) return;
       // Pause automatique : la capture continue pour détecter la reprise, mais
       // le tracé et la carte restent figés. Le premier point après la reprise
       // ouvre un nouveau segment, sans corde droite à travers la pause.
@@ -412,7 +414,12 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
         return;
       }
       setMe({ lat: fix.lat, lng: fix.lng });
-      setTrackTrace((prev) => pushTrackPoint(prev, [fix.lng, fix.lat]));
+      setTrackTrace((prev) => {
+        // Trou GPS, rejet précédent ou pause manuelle : la nouvelle borne ne
+        // doit pas être reliée au dernier point par une corde droite.
+        const base = metrics.discontinuity ? interruptTrack(prev) : prev;
+        return pushTrackPoint(base, [fix.lng, fix.lat]);
+      });
       state.setCenter([fix.lng, fix.lat], state.zoom);
     },
     [state],
