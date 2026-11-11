@@ -7,7 +7,7 @@
 .lk-col { position: absolute; left: var(--lk-col-x, 656px); top: var(--lk-col-y, 0px); width: var(--lk-col-w, 608px); height: var(--lk-col-h, 1080px); overflow: visible; pointer-events: none; }
 /* Surface logique : ne JAMAIS animer cet élément avec GSAP (il porte l'échelle). Pas d'opacity/filter dessus (casse le verre). */
 .lk-phone { position: absolute; left: 0; top: 0; width: 390px; height: 693px; transform: scale(var(--lk-s, 1.5590)); transform-origin: 0 0;
-  font-family: var(--lk-font-ui); font-size: 17px; line-height: 1.2; letter-spacing: -0.01em; color: var(--cp-ink); -webkit-font-smoothing: antialiased; }
+  font-family: var(--lk-font-ui); font-size: 18px; line-height: 1.2; letter-spacing: -0.01em; color: var(--cp-ink); -webkit-font-smoothing: antialiased; }
 .lk-phone *, .lk-phone *::before, .lk-phone *::after { box-sizing: border-box; }
 /* Bande utile : tout l'essentiel entre --lk-band-top et --lk-band-bottom (unités logiques, posées par mountColumn). */
 .lk-safe { position: absolute; left: 0; right: 0; top: var(--lk-band-top, 35px); bottom: calc(693px - var(--lk-band-bottom, 658px)); }
@@ -104,7 +104,7 @@
 .lk-row__line { flex: 1; height: 9px; max-width: var(--w, 60%); border-radius: 5px; background: var(--cp-fill); }   /* le « titre » est une barre, jamais un mot */
 .lk-row__val { margin-left: auto; font-size: 19px; color: var(--cp-ink); }
 .lk-row__chev { --lk-ic: 18px; flex: none; color: var(--cp-ink3); }
-.lk-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 11px; border-radius: var(--lk-r-full); background: var(--cp-fill); color: var(--cp-ink); font-family: var(--lk-font-brand); font-weight: 700; font-size: 17px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.lk-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 11px; border-radius: var(--lk-r-full); background: var(--cp-fill); color: var(--cp-ink); font-family: var(--lk-font-brand); font-weight: 700; font-size: 18px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .lk-chip[data-tone="good"] { background: var(--cp-good-bg); color: var(--cp-good); }
 .lk-chip[data-tone="warn"] { background: var(--cp-warn-bg); color: var(--cp-warn); }
 .lk-chip[data-tone="bad"] { background: var(--cp-bad-bg); color: var(--cp-bad); }
@@ -118,7 +118,7 @@
 .lk-skill { display: flex; align-items: center; gap: 10px; min-height: 44px; }
 .lk-skill .lk-bar { flex: 1; }
 .lk-skill__ic { flex: none; width: 36px; height: 36px; display: grid; place-items: center; border-radius: var(--lk-r-xs); color: var(--cp-good); background: var(--cp-soft); box-shadow: inset 0 0 0 0.6px var(--cp-soft-line); }
-.lk-skill__plus { flex: none; min-width: 52px; text-align: right; font-size: 19px; color: var(--cp-good); }
+.lk-skill__plus { flex: none; min-width: 52px; text-align: right; font-size: 19px; color: var(--cp-ink); }
 /* Anneau (SVG 100×100, pathLength 100, tracé sage-500 sur fond --cp-fill) : avatar au centre, chiffre en bas */
 .lk-ring { position: relative; flex: none; width: var(--lk-ring, 120px); height: var(--lk-ring, 120px); }
 .lk-ring > svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
@@ -161,11 +161,11 @@
 .lk-step .lk-ic { --lk-ic: 26px; }
 
 /* ============ 8. Réticule orbital (seul élément inventé) ============ */
-.lk-reticle { position: absolute; width: var(--lk-ret-w, 360px); height: var(--lk-ret-h, 360px); color: rgb(var(--lk-white-rgb) / 0.6); font-family: var(--lk-font-mono); font-weight: 500; font-size: var(--lk-ret-fs, 22px); letter-spacing: var(--tracking-caps); text-transform: uppercase; font-variant-numeric: tabular-nums; }
+.lk-reticle { position: absolute; width: var(--lk-ret-w, 360px); height: var(--lk-ret-h, 360px); color: rgb(var(--lk-white-rgb) / 0.6); font-family: var(--lk-font-mono); font-weight: 500; font-size: var(--lk-ret-fs, 28px); letter-spacing: var(--tracking-caps); text-transform: uppercase; font-variant-numeric: tabular-nums; }
 .lk-reticle__c { position: absolute; width: var(--lk-ret-arm, 40px); height: var(--lk-ret-arm, 40px); border: 0 solid currentColor; }
 .lk-reticle__c--tl { left: 0; top: 0; border-left-width: 1px; border-top-width: 1px; } .lk-reticle__c--tr { right: 0; top: 0; border-right-width: 1px; border-top-width: 1px; }
 .lk-reticle__c--bl { left: 0; bottom: 0; border-left-width: 1px; border-bottom-width: 1px; } .lk-reticle__c--br { right: 0; bottom: 0; border-right-width: 1px; border-bottom-width: 1px; }
-.lk-reticle__lbl { position: absolute; left: 50%; transform: translateX(-50%); white-space: nowrap; } .lk-reticle__lbl--t { top: -1.6em; } .lk-reticle__lbl--b { bottom: -1.6em; }
+.lk-reticle__lbl { position: absolute; left: 50%; transform: translateX(-50%); white-space: nowrap; color: var(--lkv-on-dark); text-shadow: 0 1px 6px rgb(var(--lk-ink-rgb) / 0.55); } .lk-reticle__lbl--t { top: -1.6em; } .lk-reticle__lbl--b { bottom: -1.6em; }
 
 /* ============ 9. Téléphone générique sans marque (plongées) ============ */
 .lk-device { position: relative; width: var(--lk-dev-w, 300px); height: var(--lk-dev-h, 620px); padding: 9px; border-radius: 54px; background: var(--ink-900); box-shadow: inset 0 0 0 1.5px rgb(var(--lk-white-rgb) / 0.12), 0 24px 60px rgb(var(--lk-ink-rgb) / 0.35), 0 4px 12px rgb(var(--lk-ink-rgb) / 0.25); }

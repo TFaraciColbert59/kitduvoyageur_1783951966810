@@ -19,9 +19,11 @@
     var w = 4.4 / (zeta * dur); /* ≈ 1 % de l'amplitude restante à la fin */
     return function (p) { return p >= 1 ? 1 : p <= 0 ? 0 : springValue(p * dur, zeta, w); };
   }
+  function $(x) { return typeof x === "string" ? document.querySelector(x) : x; }
   function pick(o, k, d) { return o && o[k] != null ? o[k] : d; }
   /* Premier tween posé sur un élément : il fixe l'état de départ dès le montage (immediateRender) ; les suivants non. */
   function first(el, opts) {
+    el = $(el);
     if (opts && opts.immediate != null) return !!opts.immediate;
     if (!el || !el.getAttribute) return true;
     if (el.getAttribute("data-lk-init")) return false;
@@ -79,7 +81,7 @@
 
   /* ---- Frappe : cps caractères par seconde (40 par défaut). La part visible est fonction du temps. Renvoie le temps de fin. ---- */
   function typeText(tl, el, text, at, cps) {
-    cps = cps || 40;
+    cps = cps || 40; el = $(el);
     var n = Array.from(text).length, chars = Array.from(text), proxy = { n: 0 };
     el.textContent = "";
     tl.fromTo(proxy, { n: 0 }, {
@@ -106,7 +108,7 @@
   };
   /* ---- Compteur en chiffres tabulaires ---- */
   function countTo(tl, el, from, to, at, dur, format) {
-    format = format || fmt.int;
+    format = format || fmt.int; el = $(el);
     var proxy = { v: from };
     el.textContent = format(from);
     tl.fromTo(proxy, { v: from }, {
@@ -117,11 +119,16 @@
   }
   /* ---- Anneau SVG (circle avec pathLength="100" : classe .lk-ring__fg) : fraction from → to ---- */
   function ringTo(tl, circleEl, from, to, at, dur, ease) {
+    circleEl = $(circleEl);
+    if (from <= 0.001 && first(circleEl, { immediate: null })) { /* le bout rond d'un tracé vide dessine un point : on masque jusqu'au départ */
+      tl.set(circleEl, { opacity: 0 }, 0); tl.set(circleEl, { opacity: 1 }, at + 0.001); circleEl.setAttribute("data-lk-init", "1");
+    }
     tl.fromTo(circleEl, { strokeDashoffset: 100 * (1 - from) }, { strokeDashoffset: 100 * (1 - to), duration: dur, ease: ease || "power2.inOut", immediateRender: first(circleEl) }, at);
     return tl;
   }
   /* ---- Barre (.lk-bar > i) : fraction from → to, par clip-path (aucun layout) ---- */
   function barTo(tl, fillEl, from, to, at, dur, ease) {
+    fillEl = $(fillEl);
     function cp(v) { return "inset(0% " + (100 * (1 - v)).toFixed(3) + "% 0% 0% round 99px)"; }
     tl.fromTo(fillEl, { clipPath: cp(from) }, { clipPath: cp(to), duration: dur, ease: ease || "power2.out", immediateRender: first(fillEl) }, at);
     return tl;
@@ -140,7 +147,8 @@
   /* ---- Onde de ping (.lk-ping) : anneau qui s'étend et s'efface (une seule fois) ---- */
   function ping(tl, el, at, dur, scaleTo) {
     dur = dur || 0.5;
-    tl.fromTo(el, { scale: 0.5, opacity: 0.9 }, { scale: scaleTo || 2.6, opacity: 0, duration: dur, ease: "power2.out", immediateRender: first(el) }, at);
+    if (first(el)) tl.set(el, { opacity: 0, scale: 0.5 }, 0); /* invisible avant l'onde */
+    tl.fromTo(el, { scale: 0.5, opacity: 0.9 }, { scale: scaleTo || 2.6, opacity: 0, duration: dur, ease: "power2.out", immediateRender: false }, at);
     return tl;
   }
   /* ---- Écriture manuscrite (.lk-scrib) : la ligne se révèle de gauche à droite ---- */

@@ -47,6 +47,12 @@
     rng: function (salt) { return mulberry32(SEED + (salt | 0)); },
     hash: hash, format: format, spring: spring,
     beat: function (i) { return i * 0.5; },
+    /* Altitude de la caméra pendant la descente (km), commune au globe (cosmos) et à l'altimètre (ui-a2) :
+       408 km à 6,0 s, loi exponentielle (interpolation logarithmique), 1,5 km à 11,5 s. */
+    altitude: function (t) {
+      var k = Math.min(1, Math.max(0, (t - 6) / 5.5));
+      return 408 * Math.exp(Math.log(1.5 / 408) * k);
+    },
     /* Temps absolu du film → temps local d'une scène dont l'hôte démarre à `start`. */
     local: function (abs, start) { return abs - start; },
     /* Boîte des montagnes du logo (logo-mark.svg, viewBox 0 0 32 32) à 0:52, en 16:9 et en 9:16. */

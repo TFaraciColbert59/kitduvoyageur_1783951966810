@@ -189,7 +189,7 @@
     "  float steam = exp(-max(-sd, 0.0)/0.06)*(1.0 - m)*smoothstep(0.05, 0.6, st)*facing;",
     "  col += mix(GOLD, STONE, 0.3)*steam*illn*0.55*uMix.x*uDens;",
     /* onde : bord éclairé */
-    "  col += (GOLD*0.8 + STONE*0.3)*wf*(0.25 + dens)*0.9;",
+    "  col += (GOLD*1.1 + STONE*0.35)*wf*(0.04 + 1.2*dens + 2.0*veins)*0.9;",
     /* effondrement : extinction du nuage hors du disque en formation */
     "  if (kc > 0.0) { vec2 dd = p-uLs; dd.y *= 1.0+uColl.z*2.6; col = mix(col, mix(INK, DEEP_D, 0.4)*uBg, smoothstep(uColl.w, uColl.w+0.35, length(dd))*kc); }",
     /* ---- aurore : rideaux verticaux, bord inférieur net, frange haute brique ---- */
@@ -324,7 +324,7 @@
     pillar: 1.0, vein: 1.0, core: 1.0, blue: 1.0,
     curtain: 0.0, curtY: -0.2, stretch: 0.0, drift: 0.0,
     collapse: 0.0, swirl: 0.0, flatten: 0.0, fadeR: 3.0,
-    wave: 0.0, waveR: 0.0, waveW: 0.08, waveX: -1.6, waveY: 1.1,
+    wave: 0.0, waveR: 0.0, waveW: 0.06, waveX: -1.6, waveY: 1.1,
     stars: 1.0, extra: 0.0, dustA: 1.0, streak: 0.0, streakX: 0.0, streakY: 0.0,
     alpha: 1.0, horizon: -9.0, horizonSoft: 0.15,
   };

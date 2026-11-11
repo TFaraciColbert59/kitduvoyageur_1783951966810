@@ -1,0 +1,13 @@
+import fs from "node:fs";
+const root = process.argv[2];
+const css = root + "/assets/lkdv-ui.css";
+let s = fs.readFileSync(css, "utf8");
+const [head] = s.split("/*GEN-ICONS*/");
+const names = (d) => fs.readdirSync(root + "/assets/icons/" + d).filter(f => f.endsWith(".svg")).map(f => f.slice(0, -4)).sort();
+let out = "/*GEN-ICONS*/\n/* Généré par scratchpad/ui-work/geniconsx.mjs : un sélecteur par picto (sf = app, extra = ajoutés). Chemins relatifs à CE fichier. */\n";
+for (const n of names("sf")) out += `.lk-ic[data-ic="${n}"]{--lk-ic-url:url(icons/sf/${n}.svg)}\n`;
+for (const n of names("extra")) out += `.lk-ic[data-ic="${n}"]{--lk-ic-url:url(icons/extra/${n}.svg)}\n`;
+out += `.lk-ic[data-ic="logo"],.lk-cover__logo{--lk-logo-url:url(brand/logo-mark.svg)}\n.lk-ic[data-ic="logo"]{--lk-ic-url:url(brand/logo-mark.svg)}\n`;
+out += `:root{--lk-scrib-url:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 14'%3E%3Cpath d='M1 9 q3-8 6-2 t5 1 q3-7 7-1 t6 2 q2-6 6-1 t6 1 q3-7 7-1 t6 2 q2-5 5-1 t6 1 q3-6 5-1 t5 2' fill='none' stroke='black' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}\n`;
+fs.writeFileSync(css, head + out);
+console.log("icons:", names("sf").length, names("extra").length);
