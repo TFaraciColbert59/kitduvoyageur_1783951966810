@@ -1,0 +1,193 @@
+{
+ "demande": "D027",
+ "banc": {
+  "at": "2026-11-10T22:22:16.034Z",
+  "seconds": 34,
+  "prepSeconds": 26,
+  "outcome": "Ton aventure est prête",
+  "error": null
+ },
+ "trip": {
+  "id": "f4e2eb4b-481d-4e8d-bc79-3ca34f5bd50d",
+  "title": "Randonnée · Dolomites",
+  "destination_name": "Dolomites",
+  "destination_country_code": "IT",
+  "start_date": null,
+  "end_date": null,
+  "party_size": 2,
+  "primary_activity": "hiking",
+  "estimated_budget": 446,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": {
+     "lat": 46.29457,
+     "lon": 12.05132,
+     "kind": "other",
+     "name": "Dolomites",
+     "extent": [
+      11.3887057,
+      46.8160366,
+      12.5475598,
+      45.7731226
+     ],
+     "osmTag": "place=region",
+     "country": "Italie",
+     "countryCode": "IT"
+    },
+    "planned_days": 1,
+    "duration_h": null,
+    "prefs": null,
+    "origin": null,
+    "autofill": {
+     "runId": "r",
+     "undone": false,
+     "at": "2026-11-10T22:22:34.222Z",
+     "notes": [
+      "Papiers : conditions d’entrée (Italie) à vérifier auprès du service officiel de ton pays avant de partir.",
+      "Départ d’Agordo, au cœur du lieu.",
+      "Matériel conseillé non compté au budget : 129 € à la boutique si tu ne l’as pas (facultatif).",
+      "Suggestion de l’IA (facultatif) : prévois une protection solaire renforcée pour les fortes altitudes des Dolomites, même par temps couvert.",
+      "Suggestion de l’IA (facultatif) : pense à emporter une lampe frontale LED puissante pour les départs matinaux ou les retards imprévus sur le sentier."
+     ],
+     "papers": {
+      "abroad": true,
+      "country": "Italie",
+      "abroadFrom": "gps",
+      "countryCode": "IT"
+     },
+     "basis": {
+      "days": 1,
+      "pace": null,
+      "hours": null,
+      "level": null,
+      "month": null,
+      "party": 2,
+      "nights": null,
+      "origin": null,
+      "carFree": null,
+      "terrain": null,
+      "activity": "hiking",
+      "autonomy": null,
+      "priority": null,
+      "targetKm": null,
+      "destination": "Dolomites@46.29,12.05",
+      "outdoorNights": null
+     },
+     "engine": []
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "day_number": 1,
+   "title": "Jour 1 · Agordo",
+   "description": null,
+   "latitude": 46.282,
+   "longitude": 12.0361,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  }
+ ],
+ "items": [
+  {
+   "item_name": "Trousse de premiers secours complète",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": "f56a5199-7b77-45e9-9697-1b7f082e4902",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Sifflet de survie et détresse",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "f767e762-d417-48c2-909d-eea829081a65"
+  },
+  {
+   "item_name": "Lampe frontale LED haute autonomie",
+   "category": "tech",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "0ce62ae3-6398-48d4-be3a-de2ff265c26f"
+  },
+  {
+   "item_name": "Crème solaire haute protection SPF 50+",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "a30a619b-5f1e-48f9-8439-d396c4a84f46"
+  },
+  {
+   "item_name": "Bouteille d’eau légère de randonnée",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "d403c58a-cf66-4346-9f14-33ecc31f9701"
+  },
+  {
+   "item_name": "Couteau pliant multifonction en inox",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "72a3d504-7b6b-4501-87d0-427a51114b90"
+  },
+  {
+   "item_name": "Sac à dos technique de randonnée",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "e137cfe3-ff6e-4a73-a6a7-d6ea415b9739",
+   "shop_product_id": null
+  }
+ ],
+ "expenses": [
+  {
+   "title": "Vol aller-retour × 2",
+   "amount": 360,
+   "currency": "EUR",
+   "category": "transport",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · vol aller-retour, moins de 1 200 km · vol aller-retour depuis ta position, NCY → TSF (Annecy Meythet airport → Treviso Airport), environ 474 km · vrai prix dans Résa · Vols",
+    "source": "estimation",
+    "autofill": "84d64012-0a55-4494-b49e-31279d76a02d"
+   }
+  },
+  {
+   "title": "Repas · 1 jour(s) × 2",
+   "amount": 26,
+   "currency": "EUR",
+   "category": "nourriture",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Italie 95 (France = 100) · selon la nuit (bivouac, refuge, hébergement) · repas en autonomie (bivouac, journée) : alimentation : Italie 96 (France = 100) · ICP 2021, Banque mondiale, lu le 12 octobre 2026",
+    "source": "estimation",
+    "autofill": "84d64012-0a55-4494-b49e-31279d76a02d"
+   }
+  },
+  {
+   "title": "Assurance voyage et rapatriement",
+   "amount": 60,
+   "currency": "EUR",
+   "category": "divers",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · forfait par jour",
+    "source": "estimation",
+    "autofill": "84d64012-0a55-4494-b49e-31279d76a02d"
+   }
+  }
+ ]
+}

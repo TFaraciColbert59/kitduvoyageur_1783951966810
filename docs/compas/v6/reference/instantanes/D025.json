@@ -1,0 +1,49 @@
+{
+ "demande": "D025",
+ "banc": {
+  "at": "2026-11-10T22:13:04.865Z",
+  "seconds": 43,
+  "prepSeconds": 36,
+  "outcome": "La préparation s’est arrêtée",
+  "error": null
+ },
+ "trip": {
+  "id": "72e9b2d4-389f-4577-9c4c-9a6f5722bc1c",
+  "title": "Mixte · Puy Chaud",
+  "destination_name": "Puy Chaud",
+  "destination_country_code": "FR",
+  "start_date": null,
+  "end_date": null,
+  "party_size": null,
+  "primary_activity": "mixed",
+  "estimated_budget": null,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": {
+     "lat": 45.5442,
+     "lon": 2.19566,
+     "kind": "peak",
+     "name": "Puy Chaud",
+     "extent": [
+      2.1956122,
+      45.5442538,
+      2.1957122,
+      45.5441538
+     ],
+     "osmTag": "natural=peak",
+     "country": "France",
+     "countryCode": "FR"
+    },
+    "planned_days": null,
+    "duration_h": null,
+    "prefs": null,
+    "origin": null,
+    "autofill": null
+   }
+  }
+ },
+ "steps": [],
+ "items": [],
+ "expenses": []
+}

@@ -1,0 +1,186 @@
+{
+ "demande": "D039",
+ "banc": {
+  "at": "2026-11-10T22:47:16.080Z",
+  "seconds": 38,
+  "prepSeconds": 32,
+  "outcome": "Ton aventure est prête",
+  "error": null
+ },
+ "trip": {
+  "id": "3197c390-2ad5-4af4-9877-eb9be4160718",
+  "title": "Course à pied · Grand Canyon",
+  "destination_name": "Grand Canyon",
+  "destination_country_code": "US",
+  "start_date": "2026-11-11",
+  "end_date": "2026-11-11",
+  "party_size": 1,
+  "primary_activity": "running",
+  "estimated_budget": 46,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": {
+     "lat": 36.09804,
+     "lon": -112.09628,
+     "kind": "other",
+     "name": "Grand Canyon",
+     "extent": null,
+     "osmTag": "natural=valley",
+     "country": "États-Unis d'Amérique",
+     "countryCode": "US"
+    },
+    "planned_days": null,
+    "duration_h": null,
+    "prefs": {
+     "pace": "normal",
+     "avoid": [],
+     "nights": null,
+     "wishes": [
+      "Rim"
+     ]
+    },
+    "origin": null,
+    "autofill": {
+     "runId": "r",
+     "undone": false,
+     "at": "2026-11-10T22:47:36.757Z",
+     "notes": [
+      "Papiers : conditions d’entrée (États-Unis d'Amérique) à vérifier auprès du service officiel de ton pays avant de partir.",
+      "Prises de type A/B (États-Unis d'Amérique) : vérifie que tes chargeurs s’y branchent.",
+      "Seul·e : laisse ton itinéraire et ton heure de retour à un proche, et note le numéro d’urgence du pays avant de partir.",
+      "Départ de Grand Canyon, à 6 km du centre du lieu.",
+      "Matériel conseillé non compté au budget : 95 € à la boutique si tu ne l’as pas (facultatif).",
+      "Suggestion de l’IA (facultatif) : prévois l'achat de chaussures de course adaptées au terrain accidenté du Grand Canyon.",
+      "Suggestion de l’IA (facultatif) : pense à t'hydrater régulièrement, l'altitude et le climat sec augmentent les besoins en eau.",
+      "Suggestion de l’IA (facultatif) : applique la crème solaire haute protection SPF 50+ tout au long de la journée, même par temps couvert."
+     ],
+     "papers": {
+      "abroad": true,
+      "country": "États-Unis d'Amérique",
+      "abroadFrom": "gps",
+      "countryCode": "US"
+     },
+     "basis": {
+      "days": 1,
+      "pace": null,
+      "hours": null,
+      "level": null,
+      "month": 11,
+      "party": 1,
+      "nights": null,
+      "origin": null,
+      "carFree": null,
+      "terrain": null,
+      "activity": "running",
+      "autonomy": null,
+      "priority": null,
+      "targetKm": null,
+      "destination": "Grand Canyon@36.10,-112.10",
+      "outdoorNights": null
+     },
+     "engine": []
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "day_number": 1,
+   "title": "Jour 1 · Grand Canyon",
+   "description": null,
+   "latitude": 36.0544,
+   "longitude": -112.139,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  }
+ ],
+ "items": [
+  {
+   "item_name": "Chaussures de course",
+   "category": "clothing",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Flasque ou bouteille souple",
+   "category": "tools",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "b6034a5b-301c-4dda-bce4-e13969bc013c",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Lampe ou brassard réfléchissant",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "0ce62ae3-6398-48d4-be3a-de2ff265c26f"
+  },
+  {
+   "item_name": "Trousse de premiers secours complète",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": "f56a5199-7b77-45e9-9697-1b7f082e4902",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Crème solaire haute protection SPF 50+",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "a30a619b-5f1e-48f9-8439-d396c4a84f46"
+  },
+  {
+   "item_name": "Sifflet de survie et détresse",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "f767e762-d417-48c2-909d-eea829081a65"
+  },
+  {
+   "item_name": "Lunettes de soleil sport UV400 cat. 3/4",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "371d08c1-7865-4352-a09f-ac551e487ead"
+  }
+ ],
+ "expenses": [
+  {
+   "title": "Matériel à acheter",
+   "amount": 16,
+   "currency": "EUR",
+   "category": "matériel",
+   "is_planned": true,
+   "metadata": {
+    "basis": "prix de la boutique",
+    "source": "base",
+    "autofill": "835fd453-f20a-4dea-b51c-66a906eb6ef5"
+   }
+  },
+  {
+   "title": "Assurance voyage et rapatriement",
+   "amount": 30,
+   "currency": "EUR",
+   "category": "divers",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · forfait par jour",
+    "source": "estimation",
+    "autofill": "835fd453-f20a-4dea-b51c-66a906eb6ef5"
+   }
+  }
+ ]
+}

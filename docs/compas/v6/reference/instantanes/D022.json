@@ -1,0 +1,789 @@
+{
+ "demande": "D022",
+ "banc": {
+  "at": "2026-11-10T22:06:24.336Z",
+  "seconds": 151,
+  "prepSeconds": 144,
+  "outcome": "Ton aventure est prête",
+  "error": null
+ },
+ "trip": {
+  "id": "d157ce03-5749-41aa-b5d2-38dcd32fe13f",
+  "title": "Van · Espagne",
+  "destination_name": "Espagne",
+  "destination_country_code": "ES",
+  "start_date": "2027-04-01",
+  "end_date": "2027-04-30",
+  "party_size": 2,
+  "primary_activity": "vanlife",
+  "estimated_budget": 6002,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": {
+     "lat": 39.32607,
+     "lon": -4.83798,
+     "kind": "country",
+     "name": "Espagne",
+     "extent": [
+      -18.3936845,
+      43.9933088,
+      4.5918885,
+      27.4335426
+     ],
+     "osmTag": "place=country",
+     "country": "Espagne",
+     "countryCode": "ES"
+    },
+    "planned_days": null,
+    "duration_h": null,
+    "prefs": null,
+    "origin": null,
+    "autofill": {
+     "runId": "r",
+     "undone": false,
+     "at": "2026-11-10T22:08:46.826Z",
+     "notes": [
+      "Papiers : conditions d’entrée (Espagne) à vérifier auprès du service officiel de ton pays avant de partir.",
+      "2 étapes avec une distance estimée (itinéraire non calculé) : à vérifier.",
+      "Matériel conseillé non compté au budget : 141 € à la boutique si tu ne l’as pas (facultatif).",
+      "Suggestion de l’IA (facultatif) : prévoir des gants thermiques coupe-vent adaptés aux températures printanières espagnoles.",
+      "Suggestion de l’IA (facultatif) : vérifier la pression des pneus et le niveau d'huile de la voiture de location avant le départ.",
+      "Suggestion de l’IA (facultatif) : s'assurer que la batterie externe étanche est pleinement chargée pour les longues journées de conduite."
+     ],
+     "papers": {
+      "abroad": true,
+      "country": "Espagne",
+      "abroadFrom": "gps",
+      "countryCode": "ES"
+     },
+     "basis": {
+      "days": 30,
+      "pace": null,
+      "hours": null,
+      "level": null,
+      "month": 4,
+      "party": 2,
+      "nights": null,
+      "origin": null,
+      "carFree": null,
+      "terrain": null,
+      "activity": "vanlife",
+      "autonomy": null,
+      "priority": null,
+      "targetKm": null,
+      "destination": "Espagne@39.33,-4.84",
+      "outdoorNights": null
+     },
+     "engine": []
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "day_number": 1,
+   "title": "Jour 1 · Malaga",
+   "description": "arrivee location van",
+   "latitude": 36.79601,
+   "longitude": -4.54738,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "plane",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 2,
+   "title": "Jour 2 · Ronda",
+   "description": "visite ville",
+   "latitude": 36.74213,
+   "longitude": -5.16659,
+   "distance_km": 114.6,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "car",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 3,
+   "title": "Jour 3 · Grazalema",
+   "description": "parc naturel",
+   "latitude": 36.75839,
+   "longitude": -5.36607,
+   "distance_km": 31.8,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "car",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 4,
+   "title": "Jour 4 · Zahara de la Sierra",
+   "description": "lac vue",
+   "latitude": 36.84058,
+   "longitude": -5.39054,
+   "distance_km": 16.8,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "car",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 5,
+   "title": "Jour 5 · Tarifa",
+   "description": "cote vent",
+   "latitude": 36.01291,
+   "longitude": -5.60502,
+   "distance_km": 202.5,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "car",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 6,
+   "title": "Jour 6 · Cadix",
+   "description": "visite port",
+   "latitude": 36.52974,
+   "longitude": -6.2929,
+   "distance_km": 105.1,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "car",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 7,
+   "title": "Jour 7 · Jerez de la Frontera",
+   "description": "bodegas",
+   "latitude": 36.6799,
+   "longitude": -6.12632,
+   "distance_km": 35.6,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "car",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 8,
+   "title": "Jour 8 · Séville",
+   "description": "alcazar cathedral",
+   "latitude": 37.38863,
+   "longitude": -5.99534,
+   "distance_km": 99.4,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "car",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 9,
+   "title": "Jour 9 · Séville",
+   "description": "repos visite",
+   "latitude": 37.38863,
+   "longitude": -5.99534,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 10,
+   "title": "Jour 10 · Cordoue",
+   "description": "mesquita",
+   "latitude": 37.88458,
+   "longitude": -4.77601,
+   "distance_km": 145.5,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "car",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 11,
+   "title": "Jour 11 · Jaen",
+   "description": "chateau huile",
+   "latitude": 37.77289,
+   "longitude": -3.78833,
+   "distance_km": 118.1,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "car",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 12,
+   "title": "Jour 12 · Cazorla",
+   "description": "parc naturel",
+   "latitude": 37.91289,
+   "longitude": -3.00389,
+   "distance_km": 99.5,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "car",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 13,
+   "title": "Jour 13 · Almagro",
+   "description": "plaza mayor",
+   "latitude": 38.88824,
+   "longitude": -3.71182,
+   "distance_km": 204.4,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "car",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 14,
+   "title": "Jour 14 · Valdepeñas",
+   "description": "vignobles",
+   "latitude": 38.75946,
+   "longitude": -3.38474,
+   "distance_km": 39.3,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "car",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 15,
+   "title": "Jour 15 · Cuenca",
+   "description": "maisons pendantes",
+   "latitude": 40.0661,
+   "longitude": -2.13135,
+   "distance_km": 241.2,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "car",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 16,
+   "title": "Jour 16 · Teruel",
+   "description": "mudejar",
+   "latitude": 40.34367,
+   "longitude": -1.10819,
+   "distance_km": 146.7,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "car",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 17,
+   "title": "Jour 17 · Albarracín",
+   "description": "village medieval",
+   "latitude": 40.40728,
+   "longitude": -1.44428,
+   "distance_km": 38.6,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "car",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 18,
+   "title": "Jour 18 · Valence",
+   "description": "cite arts",
+   "latitude": 39.46971,
+   "longitude": -0.37634,
+   "distance_km": 180.7,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "car",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 19,
+   "title": "Jour 19 · Valence",
+   "description": "repos plage",
+   "latitude": 39.46971,
+   "longitude": -0.37634,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 20,
+   "title": "Jour 20 · Peníscola",
+   "description": "chateau mer",
+   "latitude": 40.35778,
+   "longitude": 0.40738,
+   "distance_km": 144.8,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "car",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 21,
+   "title": "Jour 21 · Parc naturel du delta de l'Èbre",
+   "description": "parc naturel Distance estimée : environ 40,4 km (vol d’oiseau × 1,3, itinéraire non calculé), à vérifier.",
+   "latitude": 40.57222,
+   "longitude": 0.64302,
+   "distance_km": 40.4,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "car",
+   "metadata": {
+    "distance": {
+     "source": "estimation"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 22,
+   "title": "Jour 22 · Tarragone",
+   "description": "ruines romaines Distance estimée : environ 103,3 km (vol d’oiseau × 1,3, itinéraire non calculé), à vérifier.",
+   "latitude": 41.11724,
+   "longitude": 1.25461,
+   "distance_km": 103.3,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "car",
+   "metadata": {
+    "distance": {
+     "source": "estimation"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 23,
+   "title": "Jour 23 · Barcelone",
+   "description": "sagrada familia",
+   "latitude": 41.38258,
+   "longitude": 2.17707,
+   "distance_km": 96.4,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "car",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 24,
+   "title": "Jour 24 · Barcelone",
+   "description": "visite quartiers",
+   "latitude": 41.38258,
+   "longitude": 2.17707,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 25,
+   "title": "Jour 25 · Gérone",
+   "description": "vieille ville",
+   "latitude": 41.9793,
+   "longitude": 2.81994,
+   "distance_km": 102.8,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "car",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 26,
+   "title": "Jour 26 · Cadaqués",
+   "description": "cap creus",
+   "latitude": 42.28935,
+   "longitude": 3.27522,
+   "distance_km": 73.9,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "car",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 27,
+   "title": "Jour 27 · Figuières",
+   "description": "musee dali",
+   "latitude": 42.26663,
+   "longitude": 2.96384,
+   "distance_km": 35.7,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "car",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 28,
+   "title": "Jour 28 · Besalú",
+   "description": "pont medieval",
+   "latitude": 42.19864,
+   "longitude": 2.69596,
+   "distance_km": 25.7,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "car",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 29,
+   "title": "Jour 29 · Vic",
+   "description": "place marche",
+   "latitude": 41.9302,
+   "longitude": 2.25459,
+   "distance_km": 63.7,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "car",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 30,
+   "title": "Jour 30 · Barcelone",
+   "description": "retour vol",
+   "latitude": 41.38258,
+   "longitude": 2.17707,
+   "distance_km": 71.2,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "car",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  }
+ ],
+ "items": [
+  {
+   "item_name": "Sac de couchage",
+   "category": "sleep",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "f29331bb-1e42-4f93-b6be-5b94452ff551"
+  },
+  {
+   "item_name": "Réchaud",
+   "category": "cook",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "809da83b-9944-4b01-94e5-dc8105beb43e",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Lampe frontale",
+   "category": "tools",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "0ce62ae3-6398-48d4-be3a-de2ff265c26f"
+  },
+  {
+   "item_name": "Trousse de premiers secours complète",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": "f56a5199-7b77-45e9-9697-1b7f082e4902",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Kit de réparation multi-usage",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "95c582ab-05ef-4d72-aa9b-9291c2ec35df"
+  },
+  {
+   "item_name": "Gants thermiques coupe-vent",
+   "category": "clothing",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Crème solaire haute protection SPF 50+",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "a30a619b-5f1e-48f9-8439-d396c4a84f46"
+  },
+  {
+   "item_name": "Gourde isotherme / Thermos en acier inoxydable",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "b6034a5b-301c-4dda-bce4-e13969bc013c",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Bouteille d’eau légère de randonnée",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "d403c58a-cf66-4346-9f14-33ecc31f9701"
+  },
+  {
+   "item_name": "Couteau pliant multifonction en inox",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "72a3d504-7b6b-4501-87d0-427a51114b90"
+  },
+  {
+   "item_name": "Batterie externe étanche Power Bank",
+   "category": "tech",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "846f5f27-9f48-4492-a917-99768934eba5",
+   "shop_product_id": null
+  }
+ ],
+ "expenses": [
+  {
+   "title": "29 nuit(s) en hébergement",
+   "amount": 2204,
+   "currency": "EUR",
+   "category": "hébergement",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Espagne 85 (France = 100) · chambre partagée à deux · vrais prix dans Résa · Nuits",
+    "source": "estimation",
+    "autofill": "372a3104-6ce1-415c-8262-f26e66ff0e41"
+   }
+  },
+  {
+   "title": "Vol aller-retour × 2",
+   "amount": 560,
+   "currency": "EUR",
+   "category": "transport",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · vol aller-retour, 1 200 à 2 500 km · vol aller-retour depuis ta position, NCY → AGP (Annecy Meythet airport → Málaga-Costa del Sol Airport), environ 1355 km · vrai prix dans Résa · Vols",
+    "source": "estimation",
+    "autofill": "372a3104-6ce1-415c-8262-f26e66ff0e41"
+   }
+  },
+  {
+   "title": "Carburant sur place (2578 km)",
+   "amount": 310,
+   "currency": "EUR",
+   "category": "transport",
+   "is_planned": true,
+   "metadata": {
+    "basis": "kilomètres mesurés entre les étapes · 6,5 L/100 km · Euro-super 95 à 1,85 €/L (bulletin pétrolier de l’UE du 5 octobre 2026) · péages non comptés (le trajet mesuré ne donne pas ses km d’autoroute à péage ; Espagne : 10,0 c€/km TTC en tarif avec badge (TAG) et 11,2 c€/km TTC en tarif sans badge sur les autoroutes d’État gérées par la SEITT (R-2, R-3/R-5, R-4, M-12, AP-7 Carthagène–Vera, AP-36 Ocaña–La Roda, AP-41 Madrid–Tolède) (véhicules légers, tarifs du 1er janvier 2025, TVA de 21 % ajoutée au prix hors taxes, source : BOE) ; seulement les autoroutes gérées par la SEITT ; les autoroutes concédées (AP-7 Méditerranée, AP-6, AP-9, AP-68…) ont chacune leur tarif, non lu)",
+    "source": "mesure",
+    "autofill": "372a3104-6ce1-415c-8262-f26e66ff0e41"
+   }
+  },
+  {
+   "title": "Location de voiture · 30 jour(s)",
+   "amount": 1140,
+   "currency": "EUR",
+   "category": "transport",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Espagne 85 (France = 100) · catégorie économique · à comparer dans Résa · Trajets",
+    "source": "estimation",
+    "autofill": "372a3104-6ce1-415c-8262-f26e66ff0e41"
+   }
+  },
+  {
+   "title": "Repas · 30 jour(s) × 2",
+   "amount": 1590,
+   "currency": "EUR",
+   "category": "nourriture",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Espagne 85 (France = 100) · selon la nuit (bivouac, refuge, hébergement) · repas en autonomie (bivouac, journée) : alimentation : Espagne 89 (France = 100) · ICP 2021, Banque mondiale, lu le 12 octobre 2026",
+    "source": "estimation",
+    "autofill": "372a3104-6ce1-415c-8262-f26e66ff0e41"
+   }
+  },
+  {
+   "title": "Matériel à acheter",
+   "amount": 18,
+   "currency": "EUR",
+   "category": "matériel",
+   "is_planned": true,
+   "metadata": {
+    "basis": "prix de la boutique",
+    "source": "base",
+    "autofill": "372a3104-6ce1-415c-8262-f26e66ff0e41"
+   }
+  },
+  {
+   "title": "Assurance voyage et rapatriement",
+   "amount": 180,
+   "currency": "EUR",
+   "category": "divers",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · forfait par jour",
+    "source": "estimation",
+    "autofill": "372a3104-6ce1-415c-8262-f26e66ff0e41"
+   }
+  }
+ ]
+}

@@ -1,0 +1,51 @@
+{
+ "demande": "D063",
+ "banc": {
+  "at": "2026-11-10T23:39:42.312Z",
+  "seconds": 44,
+  "prepSeconds": 38,
+  "outcome": "La préparation s’est arrêtée",
+  "error": null
+ },
+ "trip": {
+  "id": "5334d0ce-3402-41b9-93d7-795fe439ba37",
+  "title": "Trek · Santiago",
+  "destination_name": "Santiago",
+  "destination_country_code": "CL",
+  "start_date": null,
+  "end_date": null,
+  "party_size": 1,
+  "primary_activity": "trekking",
+  "estimated_budget": null,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": {
+     "lat": -33.4377,
+     "lon": -70.65107,
+     "kind": "city",
+     "name": "Santiago",
+     "extent": null,
+     "osmTag": "place=city",
+     "country": "Chili",
+     "countryCode": "CL"
+    },
+    "planned_days": null,
+    "duration_h": null,
+    "prefs": {
+     "pace": "normal",
+     "avoid": [],
+     "nights": null,
+     "wishes": [
+      "Chemin de Saint-Jacques"
+     ]
+    },
+    "origin": null,
+    "autofill": null
+   }
+  }
+ },
+ "steps": [],
+ "items": [],
+ "expenses": []
+}

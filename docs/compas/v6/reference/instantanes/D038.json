@@ -1,0 +1,173 @@
+{
+ "demande": "D038",
+ "banc": {
+  "at": "2026-11-10T22:45:11.076Z",
+  "seconds": 23,
+  "prepSeconds": 15,
+  "outcome": "Ton aventure est prête",
+  "error": null
+ },
+ "trip": {
+  "id": "d2d4fc99-c39d-4ff3-a36c-86d229a5dfa4",
+  "title": "Eau · Port de Wellington",
+  "destination_name": "Port de Wellington",
+  "destination_country_code": "NZ",
+  "start_date": "2026-11-10",
+  "end_date": "2026-11-10",
+  "party_size": 2,
+  "primary_activity": "water",
+  "estimated_budget": 72,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": {
+     "lat": -41.2888,
+     "lon": 174.77721,
+     "kind": "region",
+     "name": "Port de Wellington",
+     "extent": null,
+     "osmTag": "place=city",
+     "country": "Nouvelle-Zélande",
+     "countryCode": "NZ"
+    },
+    "planned_days": null,
+    "duration_h": 2,
+    "prefs": null,
+    "origin": null,
+    "autofill": {
+     "runId": "r",
+     "undone": false,
+     "at": "2026-11-10T22:45:32.239Z",
+     "notes": [
+      "Papiers : conditions d’entrée (Nouvelle-Zélande) à vérifier auprès du service officiel de ton pays avant de partir.",
+      "Prises de type I (Nouvelle-Zélande) : vérifie que tes chargeurs s’y branchent.",
+      "Rivière : gilet attaché en permanence ; vérifie le niveau de l’eau et les lâchers de barrage en amont avant d’embarquer.",
+      "Matériel conseillé non compté au budget : 30 € à la boutique si tu ne l’as pas (facultatif).",
+      "Suggestion de l’IA (facultatif) : pense à t'acheter une combinaison ou un lycra, l'eau étant fraîche même en novembre à cette altitude.",
+      "Suggestion de l’IA (facultatif) : n'oublie pas ta crème solaire haute protection SPF 50+ : le soleil de la Nouvelle-Zélande est très fort, même par temps couvert."
+     ],
+     "papers": {
+      "abroad": true,
+      "country": "Nouvelle-Zélande",
+      "abroadFrom": "gps",
+      "countryCode": "NZ"
+     },
+     "basis": {
+      "days": 1,
+      "pace": null,
+      "hours": 2,
+      "level": null,
+      "month": 11,
+      "party": 2,
+      "nights": null,
+      "origin": null,
+      "carFree": null,
+      "terrain": null,
+      "activity": "water",
+      "autonomy": null,
+      "priority": null,
+      "targetKm": null,
+      "destination": "Port de Wellington@-41.29,174.78",
+      "outdoorNights": null
+     },
+     "engine": []
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "day_number": 1,
+   "title": "Jour 1 · Port de Wellington",
+   "description": "Boucle d’environ 10 km (estimation selon la durée et l’allure).",
+   "latitude": -41.2888,
+   "longitude": 174.77721,
+   "distance_km": 10,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "estimation"
+    }
+   }
+  }
+ ],
+ "items": [
+  {
+   "item_name": "Gilet d’aide à la flottabilité",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Sac étanche",
+   "category": "tools",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "bf43a2e0-bb83-464c-95ad-651ff7979e1c"
+  },
+  {
+   "item_name": "Combinaison ou lycra",
+   "category": "clothing",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Trousse de premiers secours complète",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": "f56a5199-7b77-45e9-9697-1b7f082e4902",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Crème solaire haute protection SPF 50+",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "a30a619b-5f1e-48f9-8439-d396c4a84f46"
+  },
+  {
+   "item_name": "Bouteille d’eau légère de randonnée",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "d403c58a-cf66-4346-9f14-33ecc31f9701"
+  }
+ ],
+ "expenses": [
+  {
+   "title": "Matériel à acheter",
+   "amount": 12,
+   "currency": "EUR",
+   "category": "matériel",
+   "is_planned": true,
+   "metadata": {
+    "basis": "prix de la boutique",
+    "source": "base",
+    "autofill": "c2e8c740-ca3d-472f-a895-50611445e569"
+   }
+  },
+  {
+   "title": "Assurance voyage et rapatriement",
+   "amount": 60,
+   "currency": "EUR",
+   "category": "divers",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · forfait par jour",
+    "source": "estimation",
+    "autofill": "c2e8c740-ca3d-472f-a895-50611445e569"
+   }
+  }
+ ]
+}

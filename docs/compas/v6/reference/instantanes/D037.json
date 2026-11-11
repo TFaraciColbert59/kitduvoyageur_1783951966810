@@ -1,0 +1,343 @@
+{
+ "demande": "D037",
+ "banc": {
+  "at": "2026-11-10T22:43:06.074Z",
+  "seconds": 39,
+  "prepSeconds": 33,
+  "outcome": "Ton aventure est prête",
+  "error": null
+ },
+ "trip": {
+  "id": "ce29f5c9-80dd-4d89-bb69-68e5abfe151c",
+  "title": "Escalade · Joshua Tree",
+  "destination_name": "Joshua Tree",
+  "destination_country_code": "US",
+  "start_date": "2027-04-01",
+  "end_date": "2027-04-07",
+  "party_size": 5,
+  "primary_activity": "climbing",
+  "estimated_budget": 7725,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": {
+     "lat": 34.1351,
+     "lon": -116.31433,
+     "kind": "city",
+     "name": "Joshua Tree",
+     "extent": null,
+     "osmTag": "place=town",
+     "country": "États-Unis d'Amérique",
+     "countryCode": "US"
+    },
+    "planned_days": null,
+    "duration_h": null,
+    "prefs": null,
+    "origin": null,
+    "autofill": {
+     "runId": "r",
+     "undone": false,
+     "at": "2026-11-10T22:43:23.842Z",
+     "notes": [
+      "Papiers : conditions d’entrée (États-Unis d'Amérique) à vérifier auprès du service officiel de ton pays avant de partir.",
+      "Prises de type A/B (États-Unis d'Amérique) : vérifie que tes chargeurs s’y branchent.",
+      "Altitude du parcours non mesurée : au-delà de 2 500 m, monte progressivement et bois souvent ; mal de tête, nausée ou essoufflement au repos : redescends.",
+      "Matériel conseillé non compté au budget : 155 € à la boutique si tu ne l’as pas (facultatif).",
+      "Suggestion de l’IA (facultatif) : prévois l'achat d'un baudrier, d'un casque d'escalade, d'un système d'assurage avec mousqueton à vis et de chaussons d'escalade avant le départ.",
+      "Suggestion de l’IA (facultatif) : assure-toi d'avoir une assurance voyage couvrant les activités d'escalade et les soins médicaux aux USA."
+     ],
+     "papers": {
+      "abroad": true,
+      "country": "États-Unis d'Amérique",
+      "abroadFrom": "gps",
+      "countryCode": "US"
+     },
+     "basis": {
+      "days": 7,
+      "pace": null,
+      "hours": null,
+      "level": null,
+      "month": 4,
+      "party": 5,
+      "nights": null,
+      "origin": null,
+      "carFree": null,
+      "terrain": null,
+      "activity": "climbing",
+      "autonomy": null,
+      "priority": null,
+      "targetKm": null,
+      "destination": "Joshua Tree@34.14,-116.31",
+      "outdoorNights": null
+     },
+     "engine": []
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "day_number": 1,
+   "title": "Jour 1 · Joshua Tree",
+   "description": "Base du séjour.",
+   "latitude": 34.1351,
+   "longitude": -116.31433,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 2,
+   "title": "Jour 2 · Joshua Tree",
+   "description": null,
+   "latitude": 34.1351,
+   "longitude": -116.31433,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 3,
+   "title": "Jour 3 · Joshua Tree",
+   "description": null,
+   "latitude": 34.1351,
+   "longitude": -116.31433,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 4,
+   "title": "Jour 4 · Joshua Tree",
+   "description": null,
+   "latitude": 34.1351,
+   "longitude": -116.31433,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 5,
+   "title": "Jour 5 · Joshua Tree",
+   "description": null,
+   "latitude": 34.1351,
+   "longitude": -116.31433,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 6,
+   "title": "Jour 6 · Joshua Tree",
+   "description": null,
+   "latitude": 34.1351,
+   "longitude": -116.31433,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 7,
+   "title": "Jour 7 · Joshua Tree",
+   "description": null,
+   "latitude": 34.1351,
+   "longitude": -116.31433,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  }
+ ],
+ "items": [
+  {
+   "item_name": "Baudrier",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Casque d’escalade",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Système d’assurage et mousqueton à vis",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Chaussons d’escalade",
+   "category": "clothing",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Trousse de premiers secours complète",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": "f56a5199-7b77-45e9-9697-1b7f082e4902",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Sifflet de survie et détresse",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "f767e762-d417-48c2-909d-eea829081a65"
+  },
+  {
+   "item_name": "Lampe frontale LED haute autonomie",
+   "category": "tech",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "0ce62ae3-6398-48d4-be3a-de2ff265c26f"
+  },
+  {
+   "item_name": "Kit de réparation multi-usage",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "95c582ab-05ef-4d72-aa9b-9291c2ec35df"
+  },
+  {
+   "item_name": "Crème solaire haute protection SPF 50+",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "a30a619b-5f1e-48f9-8439-d396c4a84f46"
+  },
+  {
+   "item_name": "Gourde isotherme / Thermos en acier inoxydable",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "b6034a5b-301c-4dda-bce4-e13969bc013c",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Bouteille d’eau légère de randonnée",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "d403c58a-cf66-4346-9f14-33ecc31f9701"
+  },
+  {
+   "item_name": "Bâtons de trekking télescopiques",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "549d7f9e-aa98-4618-82ec-bb913ca14d0c"
+  },
+  {
+   "item_name": "Couteau pliant multifonction en inox",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "72a3d504-7b6b-4501-87d0-427a51114b90"
+  },
+  {
+   "item_name": "Batterie externe étanche Power Bank",
+   "category": "tech",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "846f5f27-9f48-4492-a917-99768934eba5",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Sac à dos technique de randonnée",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "e137cfe3-ff6e-4a73-a6a7-d6ea415b9739",
+   "shop_product_id": null
+  }
+ ],
+ "expenses": [
+  {
+   "title": "6 nuit(s) en hébergement",
+   "amount": 1620,
+   "currency": "EUR",
+   "category": "hébergement",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : États-Unis d'Amérique 120 (France = 100) · chambre partagée à deux · vrais prix dans Résa · Nuits",
+    "source": "estimation",
+    "autofill": "cf21ccb2-3bc6-45d2-88fd-d27eb3552727"
+   }
+  },
+  {
+   "title": "Vol aller-retour × 5",
+   "amount": 4750,
+   "currency": "EUR",
+   "category": "transport",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · vol aller-retour, 8 000 à 11 000 km · vol aller-retour depuis ta position, NCY → PSP (Annecy Meythet airport → Palm Springs International Airport), environ 9442 km · vrai prix dans Résa · Vols",
+    "source": "estimation",
+    "autofill": "cf21ccb2-3bc6-45d2-88fd-d27eb3552727"
+   }
+  },
+  {
+   "title": "Repas · 7 jour(s) × 5",
+   "amount": 1205,
+   "currency": "EUR",
+   "category": "nourriture",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : États-Unis d'Amérique 120 (France = 100) · selon la nuit (bivouac, refuge, hébergement) · repas en autonomie (bivouac, journée) : alimentation : États-Unis d'Amérique 90 (France = 100) · ICP 2021, Banque mondiale, lu le 12 octobre 2026",
+    "source": "estimation",
+    "autofill": "cf21ccb2-3bc6-45d2-88fd-d27eb3552727"
+   }
+  },
+  {
+   "title": "Assurance voyage et rapatriement",
+   "amount": 150,
+   "currency": "EUR",
+   "category": "divers",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · forfait par jour",
+    "source": "estimation",
+    "autofill": "cf21ccb2-3bc6-45d2-88fd-d27eb3552727"
+   }
+  }
+ ]
+}

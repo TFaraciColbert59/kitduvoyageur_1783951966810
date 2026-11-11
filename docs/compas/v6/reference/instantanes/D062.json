@@ -1,0 +1,556 @@
+{
+ "demande": "D062",
+ "banc": {
+  "at": "2026-11-10T23:37:37.307Z",
+  "seconds": 82,
+  "prepSeconds": 75,
+  "outcome": "Ton aventure est prête",
+  "error": null
+ },
+ "trip": {
+  "id": "b1c39d39-c644-4ff4-97fb-c9d69eee2567",
+  "title": "Trek · Pérou",
+  "destination_name": "Pérou",
+  "destination_country_code": "PE",
+  "start_date": "2027-05-01",
+  "end_date": "2027-05-14",
+  "party_size": null,
+  "primary_activity": "trekking",
+  "estimated_budget": 1874,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": {
+     "lat": -6.86997,
+     "lon": -75.04585,
+     "kind": "country",
+     "name": "Pérou",
+     "extent": [
+      -84.6356535,
+      -0.0392818,
+      -68.6519906,
+      -20.1984472
+     ],
+     "osmTag": "place=country",
+     "country": "Pérou",
+     "countryCode": "PE"
+    },
+    "planned_days": null,
+    "duration_h": null,
+    "prefs": null,
+    "origin": null,
+    "autofill": {
+     "runId": "r",
+     "undone": false,
+     "at": "2026-11-10T23:38:56.541Z",
+     "notes": [
+      "Papiers : conditions d’entrée (Pérou) à vérifier auprès du service officiel de ton pays avant de partir.",
+      "Au-dessus de 2 500 m, monte progressivement et bois souvent ; mal de tête, nausée ou essoufflement au repos : redescends.",
+      "Seul·e : laisse ton itinéraire et ton heure de retour à un proche, et note le numéro d’urgence du pays avant de partir.",
+      "Sous les tropiques, l’eau du robinet et celle des ruisseaux n’est pas toujours potable : traite-la (filtre, pastilles ou ébullition) ou prends de l’eau en bouteille scellée.",
+      "2 lieu(x) proposé(s) introuvable(s) sur la carte : étape gardée au lieu précédent.",
+      "Altitude jusqu’à 3 910 m environ (repère lu sur le relief : la nuit peut être plus haute). La commission médicale de l’UIAA conseille, au-dessus de 2 500 m, de ne pas dormir plus de 300 à 500 m plus haut que la nuit d’avant et de passer deux nuits à la même altitude après 2 à 4 jours de montée (UIAA, 2012, lue le 11 octobre 2026). À revoir : jour 9 (environ +560 m de couchage), jour 12 (environ +1 080 m de couchage). Ajoute une nuit intermédiaire si tu le peux. Au moindre mal de tête, nausée ou essoufflement au repos, ne monte plus et redescends ; en cas de doute, demande conseil à un médecin avant de partir.",
+      "Matériel conseillé non compté au budget : 177 € à la boutique si tu ne l’as pas (facultatif).",
+      "Suggestion de l’IA (facultatif) : pense à réserver ton billet de train Cusco-Ollantaytambo à l'avance pour garantir ta place."
+     ],
+     "papers": {
+      "abroad": true,
+      "country": "Pérou",
+      "abroadFrom": "gps",
+      "countryCode": "PE"
+     },
+     "basis": {
+      "days": 14,
+      "pace": null,
+      "hours": null,
+      "level": null,
+      "month": 5,
+      "party": 1,
+      "nights": null,
+      "origin": null,
+      "carFree": null,
+      "terrain": null,
+      "activity": "trekking",
+      "autonomy": null,
+      "priority": null,
+      "targetKm": null,
+      "destination": "Pérou@-6.87,-75.05",
+      "outdoorNights": null
+     },
+     "engine": []
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "day_number": 1,
+   "title": "Jour 1 · Cusco",
+   "description": "arrivee acclimatation",
+   "latitude": -13.55428,
+   "longitude": -71.99064,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "plane",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 2,
+   "title": "Jour 2 · Cusco",
+   "description": "acclimatation visite",
+   "latitude": -13.55428,
+   "longitude": -71.99064,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 3,
+   "title": "Jour 3 · Pisac",
+   "description": "vallee sacree marche",
+   "latitude": -13.42105,
+   "longitude": -71.8505,
+   "distance_km": 39.5,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "bus",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 4,
+   "title": "Jour 4 · Ollantaytambo",
+   "description": "site inca acclimatation",
+   "latitude": -13.25865,
+   "longitude": -72.2636,
+   "distance_km": 57.8,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "bus",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 5,
+   "title": "Jour 5 · Huayllabamba",
+   "description": "debut sentier inca",
+   "latitude": -13.32488,
+   "longitude": -72.03862,
+   "distance_km": 28.7,
+   "elevation_gain_m": 227,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 6,
+   "title": "Jour 6 · Huayllabamba",
+   "description": "col Warmiwanusca",
+   "latitude": -13.32488,
+   "longitude": -72.03862,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 7,
+   "title": "Jour 7 · Maras",
+   "description": "sites incas foret",
+   "latitude": -13.314,
+   "longitude": -72.11636,
+   "distance_km": 10.2,
+   "elevation_gain_m": 166,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 8,
+   "title": "Jour 8 · Maras",
+   "description": "Machu Picchu lever",
+   "latitude": -13.314,
+   "longitude": -72.11636,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 9,
+   "title": "Jour 9 · Cusco",
+   "description": "retour train bus",
+   "latitude": -13.55428,
+   "longitude": -71.99064,
+   "distance_km": 61,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "train",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 10,
+   "title": "Jour 10 · Cusco",
+   "description": "repos visite marche",
+   "latitude": -13.55428,
+   "longitude": -71.99064,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 11,
+   "title": "Jour 11 · Mollepata",
+   "description": "depart Salkantay",
+   "latitude": -13.50862,
+   "longitude": -72.52764,
+   "distance_km": 100.5,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "car",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 12,
+   "title": "Jour 12 · Soraypampa",
+   "description": "lac Humantay vue",
+   "latitude": -13.38718,
+   "longitude": -72.57373,
+   "distance_km": 21.6,
+   "elevation_gain_m": 1354,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 13,
+   "title": "Jour 13 · Chaullay",
+   "description": "col Salkantay descente",
+   "latitude": -13.32486,
+   "longitude": -72.66503,
+   "distance_km": 19.1,
+   "elevation_gain_m": 815,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 14,
+   "title": "Jour 14 · Cusco",
+   "description": "fin trek retour",
+   "latitude": -13.55428,
+   "longitude": -71.99064,
+   "distance_km": 236.5,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "car",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  }
+ ],
+ "items": [
+  {
+   "item_name": "Trousse de premiers secours complète",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": "f56a5199-7b77-45e9-9697-1b7f082e4902",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Filtre à eau / paille filtrante",
+   "category": "water",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Sifflet de survie et détresse",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "f767e762-d417-48c2-909d-eea829081a65"
+  },
+  {
+   "item_name": "Lampe frontale LED haute autonomie",
+   "category": "tech",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "0ce62ae3-6398-48d4-be3a-de2ff265c26f"
+  },
+  {
+   "item_name": "Kit de réparation multi-usage",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "95c582ab-05ef-4d72-aa9b-9291c2ec35df"
+  },
+  {
+   "item_name": "Pastilles de purification d’eau",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Chauffe-mains / Chauffe-pieds d’urgence",
+   "category": "clothing",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "d76a28d5-fae8-4df6-aadd-916c2729f850"
+  },
+  {
+   "item_name": "Gourde isotherme / Thermos en acier inoxydable",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "b6034a5b-301c-4dda-bce4-e13969bc013c",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Bouteille d’eau légère de randonnée",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "d403c58a-cf66-4346-9f14-33ecc31f9701"
+  },
+  {
+   "item_name": "Bâtons de trekking télescopiques",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "549d7f9e-aa98-4618-82ec-bb913ca14d0c"
+  },
+  {
+   "item_name": "Couteau pliant multifonction en inox",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "72a3d504-7b6b-4501-87d0-427a51114b90"
+  },
+  {
+   "item_name": "Batterie externe étanche Power Bank",
+   "category": "tech",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "846f5f27-9f48-4492-a917-99768934eba5",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Sac à dos technique de randonnée",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "e137cfe3-ff6e-4a73-a6a7-d6ea415b9739",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Doudoune grand froid en duvet compressible",
+   "category": "clothing",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Couverture de survie renforcée",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Gants thermiques coupe-vent",
+   "category": "clothing",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Crème solaire haute protection SPF 50+",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "a30a619b-5f1e-48f9-8439-d396c4a84f46"
+  },
+  {
+   "item_name": "Lunettes de soleil sport UV400 cat. 3/4",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "371d08c1-7865-4352-a09f-ac551e487ead"
+  }
+ ],
+ "expenses": [
+  {
+   "title": "13 nuit(s) en hébergement",
+   "amount": 260,
+   "currency": "EUR",
+   "category": "hébergement",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Pérou 45 (France = 100) · chambre partagée à deux · vrais prix dans Résa · Nuits",
+    "source": "estimation",
+    "autofill": "9084811f-152d-4e3e-92b7-9f831cce9f3f"
+   }
+  },
+  {
+   "title": "Vol aller-retour × 1",
+   "amount": 950,
+   "currency": "EUR",
+   "category": "transport",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · vol aller-retour, 8 000 à 11 000 km · vol aller-retour depuis ta position, NCY → CUZ (Annecy Meythet airport → Alejandro Velasco Astete International Airport), environ 10186 km · vrai prix dans Résa · Vols",
+    "source": "estimation",
+    "autofill": "9084811f-152d-4e3e-92b7-9f831cce9f3f"
+   }
+  },
+  {
+   "title": "Carburant sur place (337 km)",
+   "amount": 44,
+   "currency": "EUR",
+   "category": "transport",
+   "is_planned": true,
+   "metadata": {
+    "basis": "kilomètres mesurés entre les étapes · 6,5 L/100 km · carburant estimé hors UE (aucune source gratuite) : moyenne de l’UE-27 à 2,01 €/L, de 1,34 à 2,61 €/L selon les pays de l’UE (bulletin pétrolier de l’UE du 5 octobre 2026) ; à vérifier sur place · péages non comptés (le trajet mesuré ne donne pas ses km d’autoroute à péage)",
+    "source": "estimation",
+    "autofill": "9084811f-152d-4e3e-92b7-9f831cce9f3f"
+   }
+  },
+  {
+   "title": "Location de voiture · 14 jour(s)",
+   "amount": 350,
+   "currency": "EUR",
+   "category": "transport",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Pérou 45 (France = 100) · catégorie économique · à comparer dans Résa · Trajets",
+    "source": "estimation",
+    "autofill": "9084811f-152d-4e3e-92b7-9f831cce9f3f"
+   }
+  },
+  {
+   "title": "Transports sur place (3 trajets)",
+   "amount": 36,
+   "currency": "EUR",
+   "category": "transport",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Pérou 45 (France = 100) · bus, bus, train",
+    "source": "estimation",
+    "autofill": "9084811f-152d-4e3e-92b7-9f831cce9f3f"
+   }
+  },
+  {
+   "title": "Repas · 14 jour(s) × 1",
+   "amount": 192,
+   "currency": "EUR",
+   "category": "nourriture",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Pérou 45 (France = 100) · selon la nuit (bivouac, refuge, hébergement) · repas en autonomie (bivouac, journée) : alimentation : Pérou 69 (France = 100) · ICP 2021, Banque mondiale, lu le 12 octobre 2026",
+    "source": "estimation",
+    "autofill": "9084811f-152d-4e3e-92b7-9f831cce9f3f"
+   }
+  },
+  {
+   "title": "Assurance voyage et rapatriement",
+   "amount": 42,
+   "currency": "EUR",
+   "category": "divers",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · forfait par jour",
+    "source": "estimation",
+    "autofill": "9084811f-152d-4e3e-92b7-9f831cce9f3f"
+   }
+  }
+ ]
+}

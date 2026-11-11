@@ -1,0 +1,173 @@
+{
+ "demande": "D050",
+ "banc": {
+  "at": "2026-11-10T23:12:37.262Z",
+  "seconds": 38,
+  "prepSeconds": 31,
+  "outcome": "Ton aventure est prête",
+  "error": null
+ },
+ "trip": {
+  "id": "bc9970c5-aa09-4f43-be20-423b53f8c847",
+  "title": "Plage · nouvelle aventure",
+  "destination_name": null,
+  "destination_country_code": null,
+  "start_date": "2027-07-01",
+  "end_date": "2027-07-02",
+  "party_size": null,
+  "primary_activity": "beach",
+  "estimated_budget": 91,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": null,
+    "planned_days": null,
+    "duration_h": null,
+    "prefs": null,
+    "origin": null,
+    "autofill": {
+     "runId": "r",
+     "undone": false,
+     "at": "2026-11-10T23:13:13.281Z",
+     "notes": [
+      "Lieu non précisé : préparé près de chez toi (Annecy). Change-le dans « Où » si tu pensais à un autre endroit.",
+      "Tu es déjà au départ : aucun trajet à prévoir.",
+      "Matériel conseillé non compté au budget : 30 € à la boutique si tu ne l’as pas (facultatif).",
+      "Suggestion de l’IA (facultatif) : prévois un maillot de bain et une serviette pour profiter de la plage.",
+      "Suggestion de l’IA (facultatif) : pense à appliquer une crème solaire haute protection SPF 50+ pour te protéger du soleil.",
+      "Suggestion de l’IA (facultatif) : emporte une bouteille d’eau légère de randonnée pour rester hydraté."
+     ],
+     "papers": {
+      "abroad": false,
+      "country": "France",
+      "abroadFrom": "gps",
+      "countryCode": "FR"
+     },
+     "basis": {
+      "days": 2,
+      "pace": null,
+      "hours": null,
+      "level": null,
+      "month": 7,
+      "party": 1,
+      "nights": null,
+      "origin": null,
+      "carFree": null,
+      "terrain": null,
+      "activity": "beach",
+      "autonomy": null,
+      "priority": null,
+      "targetKm": null,
+      "destination": null,
+      "outdoorNights": null
+     },
+     "engine": []
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "day_number": 1,
+   "title": "Jour 1 · Annecy",
+   "description": "Base du séjour.",
+   "latitude": 45.89923,
+   "longitude": 6.12888,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 2,
+   "title": "Jour 2 · Annecy",
+   "description": null,
+   "latitude": 45.89923,
+   "longitude": 6.12888,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  }
+ ],
+ "items": [
+  {
+   "item_name": "Maillot de bain",
+   "category": "clothing",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Serviette",
+   "category": "tools",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Trousse de premiers secours complète",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": "f56a5199-7b77-45e9-9697-1b7f082e4902",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Crème solaire haute protection SPF 50+",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "a30a619b-5f1e-48f9-8439-d396c4a84f46"
+  },
+  {
+   "item_name": "Bouteille d’eau légère de randonnée",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "d403c58a-cf66-4346-9f14-33ecc31f9701"
+  },
+  {
+   "item_name": "Batterie externe étanche Power Bank",
+   "category": "tech",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "846f5f27-9f48-4492-a917-99768934eba5",
+   "shop_product_id": null
+  }
+ ],
+ "expenses": [
+  {
+   "title": "1 nuit(s) en hébergement",
+   "amount": 45,
+   "currency": "EUR",
+   "category": "hébergement",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : France 100 (référence) · chambre partagée à deux · vrais prix dans Résa · Nuits",
+    "source": "estimation",
+    "autofill": "e6762480-5448-43cd-8981-7fa5f357de84"
+   }
+  },
+  {
+   "title": "Repas · 2 jour(s) × 1",
+   "amount": 46,
+   "currency": "EUR",
+   "category": "nourriture",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : France 100 (référence) · selon la nuit (bivouac, refuge, hébergement) · repas en autonomie (bivouac, journée) : alimentation : France 100 (France = 100) · ICP 2021, Banque mondiale, lu le 12 octobre 2026",
+    "source": "estimation",
+    "autofill": "e6762480-5448-43cd-8981-7fa5f357de84"
+   }
+  }
+ ]
+}

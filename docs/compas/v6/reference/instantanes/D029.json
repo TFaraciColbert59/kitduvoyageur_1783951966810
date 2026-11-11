@@ -1,0 +1,328 @@
+{
+ "demande": "D029",
+ "banc": {
+  "at": "2026-11-10T22:26:26.042Z",
+  "seconds": 26,
+  "prepSeconds": 20,
+  "outcome": "Ton aventure est prête",
+  "error": null
+ },
+ "trip": {
+  "id": "b3f11069-806a-4ca7-a84c-51a6ee41358a",
+  "title": "Trek · Nouvelle-Zélande",
+  "destination_name": "Nouvelle-Zélande",
+  "destination_country_code": "NZ",
+  "start_date": "2027-01-15",
+  "end_date": "2027-01-20",
+  "party_size": 4,
+  "primary_activity": "trekking",
+  "estimated_budget": 6480,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": {
+     "lat": -36.85209,
+     "lon": 174.76318,
+     "kind": "region",
+     "name": "Nouvelle-Zélande",
+     "extent": null,
+     "osmTag": "place=city",
+     "country": "Nouvelle-Zélande",
+     "countryCode": "NZ"
+    },
+    "planned_days": null,
+    "duration_h": null,
+    "prefs": null,
+    "origin": null,
+    "autofill": {
+     "runId": "r",
+     "undone": false,
+     "at": "2026-11-10T22:26:51.010Z",
+     "notes": [
+      "Papiers : conditions d’entrée (Nouvelle-Zélande) à vérifier auprès du service officiel de ton pays avant de partir.",
+      "Prises de type I (Nouvelle-Zélande) : vérifie que tes chargeurs s’y branchent.",
+      "Altitude du parcours non mesurée : au-delà de 2 500 m, monte progressivement et bois souvent ; mal de tête, nausée ou essoufflement au repos : redescends.",
+      "Itinéraire en traversée construit sur des lieux réels de la carte (6 lieux où dormir).",
+      "Matériel conseillé non compté au budget : 155 € à la boutique si tu ne l’as pas (facultatif).",
+      "Suggestion de l’IA (facultatif) : prévois un filtre à eau / paille filtrante pour traiter l'eau des sources rencontrées sur le trek.",
+      "Suggestion de l’IA (facultatif) : pense à vérifier l'état de la batterie externe étanche et de la lampe frontale avant le départ.",
+      "Suggestion de l’IA (facultatif) : n'oublie pas d'emporter des bâtons de trekking télescopiques pour aider à la marche sur les 66,2 km totaux de l'itinéraire."
+     ],
+     "papers": {
+      "abroad": true,
+      "country": "Nouvelle-Zélande",
+      "abroadFrom": "gps",
+      "countryCode": "NZ"
+     },
+     "basis": {
+      "days": 6,
+      "pace": null,
+      "hours": null,
+      "level": null,
+      "month": 1,
+      "party": 4,
+      "nights": null,
+      "origin": null,
+      "carFree": null,
+      "terrain": null,
+      "activity": "trekking",
+      "autonomy": null,
+      "priority": null,
+      "targetKm": null,
+      "destination": "Nouvelle-Zélande@-36.85,174.76",
+      "outdoorNights": null
+     },
+     "engine": []
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "day_number": 1,
+   "title": "Jour 1 · Riverhead",
+   "description": "Départ de Waimauku.",
+   "latitude": -36.75,
+   "longitude": 174.6,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 2,
+   "title": "Jour 2 · Schnapper Rock",
+   "description": null,
+   "latitude": -36.7547,
+   "longitude": 174.695,
+   "distance_km": 16,
+   "elevation_gain_m": 163,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 3,
+   "title": "Jour 3 · Bayswater",
+   "description": null,
+   "latitude": -36.8156,
+   "longitude": 174.773,
+   "distance_km": 13.2,
+   "elevation_gain_m": 123,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 4,
+   "title": "Jour 4 · Mission Bay",
+   "description": null,
+   "latitude": -36.8547,
+   "longitude": 174.832,
+   "distance_km": 11,
+   "elevation_gain_m": 57,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 5,
+   "title": "Jour 5 · Pakuranga",
+   "description": null,
+   "latitude": -36.8833,
+   "longitude": 174.917,
+   "distance_km": 14.8,
+   "elevation_gain_m": 115,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  },
+  {
+   "day_number": 6,
+   "title": "Jour 6 · Whitford",
+   "description": null,
+   "latitude": -36.9333,
+   "longitude": 174.967,
+   "distance_km": 11.2,
+   "elevation_gain_m": 181,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    }
+   }
+  }
+ ],
+ "items": [
+  {
+   "item_name": "Trousse de premiers secours complète",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": "f56a5199-7b77-45e9-9697-1b7f082e4902",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Sifflet de survie et détresse",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "f767e762-d417-48c2-909d-eea829081a65"
+  },
+  {
+   "item_name": "Lampe frontale LED haute autonomie",
+   "category": "tech",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "0ce62ae3-6398-48d4-be3a-de2ff265c26f"
+  },
+  {
+   "item_name": "Kit de réparation multi-usage",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "95c582ab-05ef-4d72-aa9b-9291c2ec35df"
+  },
+  {
+   "item_name": "Filtre à eau / paille filtrante",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Crème solaire haute protection SPF 50+",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "a30a619b-5f1e-48f9-8439-d396c4a84f46"
+  },
+  {
+   "item_name": "Gourde isotherme / Thermos en acier inoxydable",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "b6034a5b-301c-4dda-bce4-e13969bc013c",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Bouteille d’eau légère de randonnée",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "d403c58a-cf66-4346-9f14-33ecc31f9701"
+  },
+  {
+   "item_name": "Bâtons de trekking télescopiques",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "549d7f9e-aa98-4618-82ec-bb913ca14d0c"
+  },
+  {
+   "item_name": "Couteau pliant multifonction en inox",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "72a3d504-7b6b-4501-87d0-427a51114b90"
+  },
+  {
+   "item_name": "Batterie externe étanche Power Bank",
+   "category": "tech",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "846f5f27-9f48-4492-a917-99768934eba5",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Sac à dos technique de randonnée",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "e137cfe3-ff6e-4a73-a6a7-d6ea415b9739",
+   "shop_product_id": null
+  }
+ ],
+ "expenses": [
+  {
+   "title": "5 nuit(s) en hébergement",
+   "amount": 1000,
+   "currency": "EUR",
+   "category": "hébergement",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Nouvelle-Zélande 110 (France = 100) · chambre partagée à deux · vrais prix dans Résa · Nuits",
+    "source": "estimation",
+    "autofill": "bb81936f-0f3b-465d-b2ca-637d4ed454e6"
+   }
+  },
+  {
+   "title": "Vol aller-retour × 4",
+   "amount": 4600,
+   "currency": "EUR",
+   "category": "transport",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · vol aller-retour, plus de 11 000 km · vol aller-retour depuis ta position, NCY → AKL (Annecy Meythet airport → Auckland International Airport), environ 18650 km · vrai prix dans Résa · Vols",
+    "source": "estimation",
+    "autofill": "bb81936f-0f3b-465d-b2ca-637d4ed454e6"
+   }
+  },
+  {
+   "title": "Repas · 6 jour(s) × 4",
+   "amount": 760,
+   "currency": "EUR",
+   "category": "nourriture",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Nouvelle-Zélande 110 (France = 100) · selon la nuit (bivouac, refuge, hébergement) · repas en autonomie (bivouac, journée) : alimentation : Nouvelle-Zélande 109 (France = 100) · ICP 2021, Banque mondiale, lu le 12 octobre 2026",
+    "source": "estimation",
+    "autofill": "bb81936f-0f3b-465d-b2ca-637d4ed454e6"
+   }
+  },
+  {
+   "title": "Assurance voyage et rapatriement",
+   "amount": 120,
+   "currency": "EUR",
+   "category": "divers",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · forfait par jour",
+    "source": "estimation",
+    "autofill": "bb81936f-0f3b-465d-b2ca-637d4ed454e6"
+   }
+  }
+ ]
+}

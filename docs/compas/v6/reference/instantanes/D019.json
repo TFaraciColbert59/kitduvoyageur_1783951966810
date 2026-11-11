@@ -1,0 +1,353 @@
+{
+ "demande": "D019",
+ "banc": {
+  "at": "2026-11-10T21:56:30.606Z",
+  "seconds": 45,
+  "prepSeconds": 38,
+  "outcome": "Ton aventure est prête",
+  "error": null
+ },
+ "trip": {
+  "id": "48bba8f8-c60d-4424-907f-ada0d3e7d0a2",
+  "title": "Eau · Baie d'Ha Long",
+  "destination_name": "Baie d'Ha Long",
+  "destination_country_code": "VN",
+  "start_date": "2026-11-28",
+  "end_date": "2026-12-04",
+  "party_size": null,
+  "primary_activity": "water",
+  "estimated_budget": 1179,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": {
+     "lat": 20.82738,
+     "lon": 107.20961,
+     "kind": "other",
+     "name": "Baie d'Ha Long",
+     "extent": [
+      106.9933333,
+      20.9357028,
+      107.3432028,
+      20.7302472
+     ],
+     "country": "Viêt Nam",
+     "countryCode": "VN"
+    },
+    "planned_days": null,
+    "duration_h": null,
+    "prefs": null,
+    "origin": null,
+    "autofill": {
+     "runId": "r",
+     "undone": false,
+     "at": "2026-11-10T21:56:54.287Z",
+     "notes": [
+      "Papiers : conditions d’entrée (Viêt Nam) à vérifier auprès du service officiel de ton pays avant de partir.",
+      "Rivière : gilet attaché en permanence ; vérifie le niveau de l’eau et les lâchers de barrage en amont avant d’embarquer.",
+      "Seul·e : laisse ton itinéraire et ton heure de retour à un proche, et note le numéro d’urgence du pays avant de partir.",
+      "Sous les tropiques, l’eau du robinet et celle des ruisseaux n’est pas toujours potable : traite-la (filtre, pastilles ou ébullition) ou prends de l’eau en bouteille scellée.",
+      "« Baie d’Ha Long – Archipel de Cat Ba » retenu pour Baie d'Ha Long (lieu naturel, adapté à l’activité).",
+      "Itinéraire depuis une base construit sur des lieux réels de la carte (1 lieu où dormir).",
+      "Matériel conseillé non compté au budget : 155 € à la boutique si tu ne l’as pas (facultatif).",
+      "Suggestion de l’IA (facultatif) : pense à emporter une combinaison ou un lycra pour te protéger du soleil et de l'eau froide lors des activités nautiques."
+     ],
+     "papers": {
+      "abroad": true,
+      "country": "Viêt Nam",
+      "abroadFrom": "gps",
+      "countryCode": "VN"
+     },
+     "basis": {
+      "days": 7,
+      "pace": null,
+      "hours": null,
+      "level": null,
+      "month": 11,
+      "party": 1,
+      "nights": null,
+      "origin": null,
+      "carFree": null,
+      "terrain": null,
+      "activity": "water",
+      "autonomy": null,
+      "priority": null,
+      "targetKm": null,
+      "destination": "Baie d'Ha Long@20.83,107.21",
+      "outdoorNights": null
+     },
+     "engine": []
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "day_number": 1,
+   "title": "Jour 1 · Hạ Long",
+   "description": "Base du séjour.",
+   "latitude": 20.9505,
+   "longitude": 107.073,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 2,
+   "title": "Jour 2 · Hạ Long",
+   "description": null,
+   "latitude": 20.9505,
+   "longitude": 107.073,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 3,
+   "title": "Jour 3 · Hạ Long",
+   "description": null,
+   "latitude": 20.9505,
+   "longitude": 107.073,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 4,
+   "title": "Jour 4 · Hạ Long",
+   "description": null,
+   "latitude": 20.9505,
+   "longitude": 107.073,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 5,
+   "title": "Jour 5 · Hạ Long",
+   "description": null,
+   "latitude": 20.9505,
+   "longitude": 107.073,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 6,
+   "title": "Jour 6 · Hạ Long",
+   "description": null,
+   "latitude": 20.9505,
+   "longitude": 107.073,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  },
+  {
+   "day_number": 7,
+   "title": "Jour 7 · Hạ Long",
+   "description": null,
+   "latitude": 20.9505,
+   "longitude": 107.073,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {}
+  }
+ ],
+ "items": [
+  {
+   "item_name": "Gilet d’aide à la flottabilité",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Sac étanche",
+   "category": "tools",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "bf43a2e0-bb83-464c-95ad-651ff7979e1c"
+  },
+  {
+   "item_name": "Combinaison ou lycra",
+   "category": "clothing",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Trousse de premiers secours complète",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": "f56a5199-7b77-45e9-9697-1b7f082e4902",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Crème solaire haute protection SPF 50+",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "a30a619b-5f1e-48f9-8439-d396c4a84f46"
+  },
+  {
+   "item_name": "Sifflet de survie et détresse",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "f767e762-d417-48c2-909d-eea829081a65"
+  },
+  {
+   "item_name": "Lampe frontale LED haute autonomie",
+   "category": "tech",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "0ce62ae3-6398-48d4-be3a-de2ff265c26f"
+  },
+  {
+   "item_name": "Kit de réparation multi-usage",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "95c582ab-05ef-4d72-aa9b-9291c2ec35df"
+  },
+  {
+   "item_name": "Filtre à eau / paille filtrante",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Pastilles de purification d’eau",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Répulsif anti-moustiques",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "e4c51d60-99ad-46e2-bf10-7a2ff701e61f"
+  },
+  {
+   "item_name": "Bouteille d’eau légère de randonnée",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "d403c58a-cf66-4346-9f14-33ecc31f9701"
+  },
+  {
+   "item_name": "Couteau pliant multifonction en inox",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "72a3d504-7b6b-4501-87d0-427a51114b90"
+  },
+  {
+   "item_name": "Lunettes de soleil sport UV400 cat. 3/4",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "371d08c1-7865-4352-a09f-ac551e487ead"
+  }
+ ],
+ "expenses": [
+  {
+   "title": "6 nuit(s) en hébergement",
+   "amount": 96,
+   "currency": "EUR",
+   "category": "hébergement",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Viêt Nam 35 (France = 100) · chambre partagée à deux · vrais prix dans Résa · Nuits",
+    "source": "estimation",
+    "autofill": "4cb97dba-9eca-4890-8cd7-4570afeb411c"
+   }
+  },
+  {
+   "title": "Vol aller-retour × 1",
+   "amount": 950,
+   "currency": "EUR",
+   "category": "transport",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · vol aller-retour, 8 000 à 11 000 km · vol aller-retour depuis ta position, NCY → HPH (Annecy Meythet airport → Cat Bi International Airport), environ 9142 km · vrai prix dans Résa · Vols",
+    "source": "estimation",
+    "autofill": "4cb97dba-9eca-4890-8cd7-4570afeb411c"
+   }
+  },
+  {
+   "title": "Repas · 7 jour(s) × 1",
+   "amount": 75,
+   "currency": "EUR",
+   "category": "nourriture",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Viêt Nam 35 (France = 100) · selon la nuit (bivouac, refuge, hébergement) · repas en autonomie (bivouac, journée) : alimentation : Viêt Nam 61 (France = 100) · ICP 2021, Banque mondiale, lu le 12 octobre 2026",
+    "source": "estimation",
+    "autofill": "4cb97dba-9eca-4890-8cd7-4570afeb411c"
+   }
+  },
+  {
+   "title": "Matériel à acheter",
+   "amount": 28,
+   "currency": "EUR",
+   "category": "matériel",
+   "is_planned": true,
+   "metadata": {
+    "basis": "prix de la boutique",
+    "source": "base",
+    "autofill": "4cb97dba-9eca-4890-8cd7-4570afeb411c"
+   }
+  },
+  {
+   "title": "Assurance voyage et rapatriement",
+   "amount": 30,
+   "currency": "EUR",
+   "category": "divers",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · forfait par jour",
+    "source": "estimation",
+    "autofill": "4cb97dba-9eca-4890-8cd7-4570afeb411c"
+   }
+  }
+ ]
+}

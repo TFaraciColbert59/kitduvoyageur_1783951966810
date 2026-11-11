@@ -1,0 +1,49 @@
+{
+ "demande": "D045",
+ "banc": {
+  "at": "2026-11-10T23:02:12.247Z",
+  "seconds": 16,
+  "prepSeconds": 8,
+  "outcome": "La préparation s’est arrêtée",
+  "error": null
+ },
+ "trip": {
+  "id": "245705b0-5556-4905-a6a3-01ffc1bb5e63",
+  "title": "Mixte · Raja Ampat",
+  "destination_name": "Raja Ampat",
+  "destination_country_code": "ID",
+  "start_date": null,
+  "end_date": null,
+  "party_size": null,
+  "primary_activity": "mixed",
+  "estimated_budget": null,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": {
+     "lat": -0.71256,
+     "lon": 130.30345,
+     "kind": "county",
+     "name": "Raja Ampat",
+     "extent": [
+      129.0848423,
+      1.2874153,
+      131.8137862,
+      -2.607637
+     ],
+     "osmTag": "boundary=administrative",
+     "country": "Indonésie",
+     "countryCode": "ID"
+    },
+    "planned_days": null,
+    "duration_h": null,
+    "prefs": null,
+    "origin": null,
+    "autofill": null
+   }
+  }
+ },
+ "steps": [],
+ "items": [],
+ "expenses": []
+}

@@ -347,3 +347,52 @@ eslint=0
 $ grep -rn "brief/adapters" src | grep -v __tests__
 (aucune ligne : aucun importeur)
 ```
+
+## 2026-11-11 (nuit) — passage de référence : 68 demandes jouées, un constat de fiabilité
+
+### Ce qui s'est passé
+
+La relance d'hier soir (D017 à D070, tâche suivie de deux heures) a joué 52 demandes avant d'atteindre sa limite de temps ; D069 et D070 restent à jouer. Sur ces 52 :
+
+| Issue lue à l'écran | Nombre | Demandes |
+|---|---|---|
+| « Ton aventure est prête » | 39 | — |
+| « La préparation s'est arrêtée — Connexion perdue : ta demande est gardée » | 11 | D024, D025, D041, D042, D048, D051, D053, D054, D055, D063, D067 |
+| « La préparation s'est arrêtée — Il me manque la durée » | 1 | D045 (« Dive trip to Raja Ampat, 8 days, 3 divers, October ») |
+| Aucune issue en 7 minutes (le banc a expiré) | 1 | D026 (« 3 jours du 1er au 15 mars en Écosse ») — préparée en base, sur 15 jours |
+
+### Constat C-V6-001 — « Connexion perdue » sur 11 préparations sur 68 (16 %)
+
+- **Observé** : l'écran annonce « Connexion perdue » 34 à 42 s après l'envoi. En base, le lieu est retrouvé et rangé, puis plus rien : ni dates, ni étape, ni dépense (`autofill` absent). Le message vient du `catch` de la lecture de la demande (`useCompasController.ts:698`) : une action serveur a levé une exception pendant l'application de ce qui a été compris.
+- **Pas lié à la phrase** : D041 rejouée seule à 02 h 54 UTC sort « prête » en 19 s.
+- **Cause : non établie.** Les journaux d'exécution de l'offre Vercel Hobby ne remontent qu'à une heure ; ceux de la soirée sont perdus. Trois des onze arrêts (D024, D025, et l'expiration de D026) tombent entre 22 h 10 et 22 h 16 UTC, pendant la reconstruction de l'aperçu déclenchée par un poussage de cette session : **le poussage pendant une tranche est la cause probable de ceux-là**, et c'est une faute de méthode de ma part. Les huit autres (22 h 53 à 23 h 48) tombent sans aucun déploiement en cours : cause inconnue (site, base, ou mandataire de sortie de la session cloud).
+- **Suite** : le banc range désormais, pour chaque demande, les appels réseau coupés ou en erreur (`net` dans le journal), pour distinguer une panne du site d'une panne du banc. Les dix arrêts « Connexion perdue » hors D041 sont rejoués en tête de la tranche du 11 novembre. **Plus aucun poussage pendant une tranche** : les commits attendent sa fin.
+- Le taux d'arrêt au premier essai est publié avec la référence ; les notes sont calculées sur le voyage du rejeu, et les deux chiffres sont donnés.
+
+D045 n'est pas rejouée : « il me manque la durée » pour une phrase qui dit « 8 days » est un résultat du moteur, pas une panne. D026 non plus : préparer 15 jours pour « 3 jours du 1er au 15 mars » sans rien signaler est le résultat à noter (demande contradictoire du jeu).
+
+### Notes provisoires sur 68 demandes, arrêts compris (elles tirent les notes vers le bas ; à ne pas lire comme la référence)
+
+```
+$ node scripts/compas/score-trip.mjs --lot <instantanés> --jeu docs/compas/v6/demandes-or.json --date 2026-11-10
+famille         n    justesse  complétude  faisabilité  précision
+alpinisme       4    67        30          88           25
+bivouac         6    81        65          88           50
+course          4    88        49          91           41
+eau             7    79        29          90           25
+escalade        4    92        47          87           31
+marche          10   68        26          87           32
+multi           5    73        45          88           42
+plage           7    86        40          87           27
+route           4    71        18          94           29
+ski             4    92        40          88           35
+velo            5    78        45          100          40
+ville-culture   8    61        38          89           28
+tous            68   76        39          89           33
+```
+
+Durée de préparation des 55 « prêtes » : médiane 40 s, 95ᵉ centile 223 s, maximum 264 s.
+
+### Tranche du 11 novembre lancée à 02 h 55 UTC
+
+Dix rejeux puis D069 à D115, 110 s d'écart (57 préparations, fin vers 04 h 40 UTC). `validate-online.mjs` accepte maintenant une liste d'identifiants (`DEMANDES_IDS`) et un écart réglable (`COMPAS_SPACING_MS`, jamais sous 100 s).

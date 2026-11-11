@@ -1,0 +1,44 @@
+{
+ "demande": "D053",
+ "banc": {
+  "at": "2026-11-10T23:18:52.273Z",
+  "seconds": 41,
+  "prepSeconds": 35,
+  "outcome": "La préparation s’est arrêtée",
+  "error": null
+ },
+ "trip": {
+  "id": "c00532d7-3fcb-4306-ad6e-9b04e198080a",
+  "title": "Vélo · Vía Verde del Aceite",
+  "destination_name": "Vía Verde del Aceite",
+  "destination_country_code": "ES",
+  "start_date": null,
+  "end_date": null,
+  "party_size": null,
+  "primary_activity": "cycling",
+  "estimated_budget": null,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": {
+     "lat": 37.77289,
+     "lon": -3.78833,
+     "kind": "region",
+     "name": "Vía Verde del Aceite",
+     "extent": null,
+     "osmTag": "boundary=administrative",
+     "country": "Espagne",
+     "countryCode": "ES"
+    },
+    "planned_days": null,
+    "duration_h": null,
+    "prefs": null,
+    "origin": null,
+    "autofill": null
+   }
+  }
+ },
+ "steps": [],
+ "items": [],
+ "expenses": []
+}

@@ -1,0 +1,540 @@
+{
+ "demande": "D044",
+ "banc": {
+  "at": "2026-11-10T23:00:07.245Z",
+  "seconds": 85,
+  "prepSeconds": 79,
+  "outcome": "Ton aventure est prête",
+  "error": null
+ },
+ "trip": {
+  "id": "5ec17c5c-087f-419c-be03-7a7e57435aa6",
+  "title": "Mixte · Philippines",
+  "destination_name": "Philippines",
+  "destination_country_code": "PH",
+  "start_date": "2027-02-06",
+  "end_date": "2027-02-19",
+  "party_size": null,
+  "primary_activity": "mixed",
+  "estimated_budget": 2037,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": {
+     "lat": 12.75035,
+     "lon": 122.73121,
+     "kind": "administrative",
+     "name": "Philippines",
+     "extent": [
+      114.1003696,
+      21.321928,
+      126.803083,
+      4.3833333
+     ],
+     "osmTag": "boundary=administrative",
+     "country": "Philippines",
+     "countryCode": "PH"
+    },
+    "planned_days": 14,
+    "duration_h": null,
+    "prefs": {
+     "pace": "normal",
+     "avoid": [],
+     "nights": null,
+     "wishes": [
+      "Palawan",
+      "Siargao"
+     ]
+    },
+    "origin": null,
+    "autofill": {
+     "runId": "r",
+     "undone": false,
+     "at": "2026-11-10T23:01:31.533Z",
+     "notes": [
+      "Papiers : conditions d’entrée (Philippines) à vérifier auprès du service officiel de ton pays avant de partir.",
+      "Seul·e : laisse ton itinéraire et ton heure de retour à un proche, et note le numéro d’urgence du pays avant de partir.",
+      "Sous les tropiques, l’eau du robinet et celle des ruisseaux n’est pas toujours potable : traite-la (filtre, pastilles ou ébullition) ou prends de l’eau en bouteille scellée.",
+      "Période proposée : février (saison sèche (décembre à mai)). Change-la dans « Quand » si elle ne te va pas.",
+      "1 étape avec une distance estimée (itinéraire non calculé) : à vérifier.",
+      "Matériel conseillé non compté au budget : 163 € à la boutique si tu ne l’as pas (facultatif).",
+      "Suggestion de l’IA (facultatif) : pense à réserver ton vol intérieur J8 vers Siargao bien à l’avance, la capacité étant limitée sur cette période.",
+      "Suggestion de l’IA (facultatif) : achete une crème solaire haute protection SPF 50+ adaptée au climat tropical et aux fortes expositions solaires."
+     ],
+     "papers": {
+      "abroad": true,
+      "country": "Philippines",
+      "abroadFrom": "gps",
+      "countryCode": "PH"
+     },
+     "basis": {
+      "days": 14,
+      "pace": null,
+      "hours": null,
+      "level": null,
+      "month": 2,
+      "party": 1,
+      "nights": null,
+      "origin": null,
+      "carFree": null,
+      "terrain": null,
+      "activity": "mixed",
+      "autonomy": null,
+      "priority": null,
+      "targetKm": null,
+      "destination": "Philippines@12.75,122.73",
+      "outdoorNights": null
+     },
+     "engine": []
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "day_number": 1,
+   "title": "Jour 1 · Puerto Princesa",
+   "description": "arrivee",
+   "latitude": 9.73986,
+   "longitude": 118.74382,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "plane",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 2,
+   "title": "Jour 2 · El Nido",
+   "description": "transfert",
+   "latitude": 11.18004,
+   "longitude": 119.3905,
+   "distance_km": 267.7,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "car",
+   "metadata": {
+    "distance": {
+     "source": "geoapify"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 3,
+   "title": "Jour 3 · El Nido",
+   "description": "iles baignade",
+   "latitude": 11.18004,
+   "longitude": 119.3905,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 4,
+   "title": "Jour 4 · El Nido",
+   "description": "Nacpan plage",
+   "latitude": 11.18004,
+   "longitude": 119.3905,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 5,
+   "title": "Jour 5 · Coron",
+   "description": "traversee",
+   "latitude": 11.99855,
+   "longitude": 120.20516,
+   "distance_km": 127,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "boat",
+   "metadata": {
+    "distance": {
+     "source": "vol_oiseau"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 6,
+   "title": "Jour 6 · Coron",
+   "description": "lacs plongee",
+   "latitude": 11.99855,
+   "longitude": 120.20516,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 7,
+   "title": "Jour 7 · Coron",
+   "description": "Mt Tapyas vue",
+   "latitude": 11.99855,
+   "longitude": 120.20516,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 8,
+   "title": "Jour 8 · Siargao",
+   "description": "via Cebu",
+   "latitude": 9.90376,
+   "longitude": 126.05074,
+   "distance_km": 679,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "plane",
+   "metadata": {
+    "distance": {
+     "source": "vol_oiseau"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 9,
+   "title": "Jour 9 · General Luna",
+   "description": "surf repos Distance estimée : environ 396,7 km (vol d’oiseau × 1,3, itinéraire non calculé), à vérifier.",
+   "latitude": 10.86072,
+   "longitude": 123.4356,
+   "distance_km": 396.7,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "car",
+   "metadata": {
+    "distance": {
+     "source": "estimation"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 10,
+   "title": "Jour 10 · General Luna",
+   "description": "iles baignade",
+   "latitude": 10.86072,
+   "longitude": 123.4356,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "bike",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 11,
+   "title": "Jour 11 · General Luna",
+   "description": "Sohoton Cove",
+   "latitude": 15.45881,
+   "longitude": 120.83376,
+   "distance_km": 584,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "boat",
+   "metadata": {
+    "distance": {
+     "source": "vol_oiseau"
+    },
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 12,
+   "title": "Jour 12 · General Luna",
+   "description": "repos piscine",
+   "latitude": 15.45881,
+   "longitude": 120.83376,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 13,
+   "title": "Jour 13 · General Luna",
+   "description": "jungle cascades",
+   "latitude": 15.45881,
+   "longitude": 120.83376,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "foot",
+   "metadata": {
+    "aiProposed": true
+   }
+  },
+  {
+   "day_number": 14,
+   "title": "Jour 14 · General Luna",
+   "description": "depart",
+   "latitude": 15.45881,
+   "longitude": 120.83376,
+   "distance_km": null,
+   "elevation_gain_m": null,
+   "start_time": null,
+   "accommodation_name": null,
+   "transport_mode": "plane",
+   "metadata": {
+    "aiProposed": true
+   }
+  }
+ ],
+ "items": [
+  {
+   "item_name": "Trousse de premiers secours complète",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": "f56a5199-7b77-45e9-9697-1b7f082e4902",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Crème solaire haute protection SPF 50+",
+   "category": "safety",
+   "is_vital": true,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "a30a619b-5f1e-48f9-8439-d396c4a84f46"
+  },
+  {
+   "item_name": "Sifflet de survie et détresse",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "f767e762-d417-48c2-909d-eea829081a65"
+  },
+  {
+   "item_name": "Lampe frontale LED haute autonomie",
+   "category": "tech",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "0ce62ae3-6398-48d4-be3a-de2ff265c26f"
+  },
+  {
+   "item_name": "Kit de réparation multi-usage",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "95c582ab-05ef-4d72-aa9b-9291c2ec35df"
+  },
+  {
+   "item_name": "Filtre à eau / paille filtrante",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Pastilles de purification d’eau",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Répulsif anti-moustiques",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "e4c51d60-99ad-46e2-bf10-7a2ff701e61f"
+  },
+  {
+   "item_name": "Gourde isotherme / Thermos en acier inoxydable",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "b6034a5b-301c-4dda-bce4-e13969bc013c",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Bouteille d’eau légère de randonnée",
+   "category": "water",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "d403c58a-cf66-4346-9f14-33ecc31f9701"
+  },
+  {
+   "item_name": "Bâtons de trekking télescopiques",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "549d7f9e-aa98-4618-82ec-bb913ca14d0c"
+  },
+  {
+   "item_name": "Couteau pliant multifonction en inox",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "72a3d504-7b6b-4501-87d0-427a51114b90"
+  },
+  {
+   "item_name": "Batterie externe étanche Power Bank",
+   "category": "tech",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "846f5f27-9f48-4492-a917-99768934eba5",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Sac à dos technique de randonnée",
+   "category": "misc",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": "e137cfe3-ff6e-4a73-a6a7-d6ea415b9739",
+   "shop_product_id": null
+  },
+  {
+   "item_name": "Lunettes de soleil sport UV400 cat. 3/4",
+   "category": "safety",
+   "is_vital": false,
+   "source": "compas-auto",
+   "inventory_item_id": null,
+   "shop_product_id": "371d08c1-7865-4352-a09f-ac551e487ead"
+  }
+ ],
+ "expenses": [
+  {
+   "title": "13 nuit(s) en hébergement",
+   "amount": 260,
+   "currency": "EUR",
+   "category": "hébergement",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Philippines 45 (France = 100) · chambre partagée à deux · vrais prix dans Résa · Nuits",
+    "source": "estimation",
+    "autofill": "28cac5ce-bff6-498c-8cc3-b9ece2fc031e"
+   }
+  },
+  {
+   "title": "Vol aller-retour × 1",
+   "amount": 950,
+   "currency": "EUR",
+   "category": "transport",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · vol aller-retour, 8 000 à 11 000 km · vol aller-retour depuis ta position, NCY → PPS (Annecy Meythet airport → Puerto Princesa International Airport / PAF Antonio Bautista Air Base), environ 10919 km · vrai prix dans Résa · Vols",
+    "source": "estimation",
+    "autofill": "28cac5ce-bff6-498c-8cc3-b9ece2fc031e"
+   }
+  },
+  {
+   "title": "Carburant sur place (664 km)",
+   "amount": 87,
+   "currency": "EUR",
+   "category": "transport",
+   "is_planned": true,
+   "metadata": {
+    "basis": "kilomètres mesurés entre les étapes · 6,5 L/100 km · carburant estimé hors UE (aucune source gratuite) : moyenne de l’UE-27 à 2,01 €/L, de 1,34 à 2,61 €/L selon les pays de l’UE (bulletin pétrolier de l’UE du 5 octobre 2026) ; à vérifier sur place · péages non comptés (le trajet mesuré ne donne pas ses km d’autoroute à péage)",
+    "source": "estimation",
+    "autofill": "28cac5ce-bff6-498c-8cc3-b9ece2fc031e"
+   }
+  },
+  {
+   "title": "Location de voiture · 14 jour(s)",
+   "amount": 350,
+   "currency": "EUR",
+   "category": "transport",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Philippines 45 (France = 100) · catégorie économique · à comparer dans Résa · Trajets",
+    "source": "estimation",
+    "autofill": "28cac5ce-bff6-498c-8cc3-b9ece2fc031e"
+   }
+  },
+  {
+   "title": "Transports sur place (4 trajets)",
+   "amount": 140,
+   "currency": "EUR",
+   "category": "transport",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Philippines 45 (France = 100) · bateau, vol, bateau, vol",
+    "source": "estimation",
+    "autofill": "28cac5ce-bff6-498c-8cc3-b9ece2fc031e"
+   }
+  },
+  {
+   "title": "Repas · 14 jour(s) × 1",
+   "amount": 192,
+   "currency": "EUR",
+   "category": "nourriture",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · indice de prix du pays : Philippines 45 (France = 100) · selon la nuit (bivouac, refuge, hébergement) · repas en autonomie (bivouac, journée) : alimentation : Philippines 72 (France = 100) · ICP 2021, Banque mondiale, lu le 12 octobre 2026",
+    "source": "estimation",
+    "autofill": "28cac5ce-bff6-498c-8cc3-b9ece2fc031e"
+   }
+  },
+  {
+   "title": "Matériel à acheter",
+   "amount": 16,
+   "currency": "EUR",
+   "category": "matériel",
+   "is_planned": true,
+   "metadata": {
+    "basis": "prix de la boutique",
+    "source": "base",
+    "autofill": "28cac5ce-bff6-498c-8cc3-b9ece2fc031e"
+   }
+  },
+  {
+   "title": "Assurance voyage et rapatriement",
+   "amount": 42,
+   "currency": "EUR",
+   "category": "divers",
+   "is_planned": true,
+   "metadata": {
+    "basis": "barème Compas 2026-10 · forfait par jour",
+    "source": "estimation",
+    "autofill": "28cac5ce-bff6-498c-8cc3-b9ece2fc031e"
+   }
+  }
+ ]
+}

@@ -1,0 +1,44 @@
+{
+ "demande": "D024",
+ "banc": {
+  "at": "2026-11-10T22:10:59.861Z",
+  "seconds": 45,
+  "prepSeconds": 38,
+  "outcome": "La préparation s’est arrêtée",
+  "error": null
+ },
+ "trip": {
+  "id": "35ad7baf-f58f-44c0-842a-0bb99892ba77",
+  "title": "Randonnée · Vallée de l'Ourika",
+  "destination_name": "Vallée de l'Ourika",
+  "destination_country_code": "MA",
+  "start_date": null,
+  "end_date": null,
+  "party_size": null,
+  "primary_activity": "hiking",
+  "estimated_budget": null,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": {
+     "lat": 31.62583,
+     "lon": -7.98916,
+     "kind": "region",
+     "name": "Vallée de l'Ourika",
+     "extent": null,
+     "osmTag": "boundary=administrative",
+     "country": "Maroc",
+     "countryCode": "MA"
+    },
+    "planned_days": null,
+    "duration_h": null,
+    "prefs": null,
+    "origin": null,
+    "autofill": null
+   }
+  }
+ },
+ "steps": [],
+ "items": [],
+ "expenses": []
+}

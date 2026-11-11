@@ -1,0 +1,44 @@
+{
+ "demande": "D041",
+ "banc": {
+  "at": "2026-11-10T22:53:52.232Z",
+  "seconds": 48,
+  "prepSeconds": 42,
+  "outcome": "La préparation s’est arrêtée",
+  "error": null
+ },
+ "trip": {
+  "id": "f352a4b9-6b13-435c-8660-9c9ed18577d2",
+  "title": "Randonnée · Le Cap",
+  "destination_name": "Le Cap",
+  "destination_country_code": "ZA",
+  "start_date": null,
+  "end_date": null,
+  "party_size": null,
+  "primary_activity": "hiking",
+  "estimated_budget": null,
+  "budget_currency": "EUR",
+  "metadata": {
+   "compas": {
+    "anchor": {
+     "lat": -33.92883,
+     "lon": 18.41722,
+     "kind": "region",
+     "name": "Le Cap",
+     "extent": null,
+     "osmTag": "place=city",
+     "country": "Afrique du Sud",
+     "countryCode": "ZA"
+    },
+    "planned_days": null,
+    "duration_h": null,
+    "prefs": null,
+    "origin": null,
+    "autofill": null
+   }
+  }
+ },
+ "steps": [],
+ "items": [],
+ "expenses": []
+}

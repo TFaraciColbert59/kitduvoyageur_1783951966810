@@ -34,10 +34,13 @@ const allPhrases = (Array.isArray(rawPhrases) ? rawPhrases : rawPhrases.demandes
 );
 const from = Math.max(1, Number(process.env.DEMANDES_FROM) || 1);
 const to = Math.min(allPhrases.length, Number(process.env.DEMANDES_TO) || allPhrases.length);
-const phrases = allPhrases.slice(from - 1, to);
+// DEMANDES_IDS="D024,D041" : ne joue que ces demandes (rejeu), dans l'ordre du jeu.
+const only = (process.env.DEMANDES_IDS ?? '').split(',').map((x) => x.trim()).filter(Boolean);
+const phrases = only.length ? allPhrases.filter((p) => only.includes(p.id)) : allPhrases.slice(from - 1, to);
 const outDir =
   outArg ?? path.join('proof/compas', new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-'));
-const SPACING_MS = 125_000;
+// 6 préparations par 10 minutes et par personne : jamais moins de 100 s d'écart.
+const SPACING_MS = Math.max(100_000, Number(process.env.COMPAS_SPACING_MS) || 125_000);
 fs.mkdirSync(outDir, { recursive: true });
 const log = (o) => fs.appendFileSync(path.join(outDir, 'results.jsonl'), JSON.stringify(o) + '\n');
 
@@ -61,6 +64,16 @@ const context = await browser.newContext({
   permissions: ['geolocation'],
 });
 const page = await context.newPage();
+// Ce qui échoue côté réseau pendant une demande (actions serveur refusées, coupées ou en erreur) :
+// rangé dans le journal, pour distinguer une panne du banc d'une panne du site.
+let net = [];
+page.on('requestfailed', (r) => {
+  if (r.method() === 'POST') net.push({ t: Date.now(), kind: 'coupé', path: new URL(r.url()).pathname, why: r.failure()?.errorText ?? '' });
+});
+page.on('response', (r) => {
+  if (r.status() >= 400 && r.request().method() === 'POST')
+    net.push({ t: Date.now(), kind: String(r.status()), path: new URL(r.url()).pathname, why: r.headers()['x-vercel-error'] ?? '' });
+});
 
 // Aperçu protégé : VERCEL_SHARE=<jeton du lien partagé> pose le cookie d'accès avant tout.
 if (process.env.VERCEL_SHARE) {
@@ -104,6 +117,7 @@ console.info('connecté');
 
 for (const [i, { id, say }] of phrases.entries()) {
   const t0 = Date.now();
+  net = [];
   const slug = id;
   try {
     await page.goto(`${base}/compas?nouvelle=1`, {
@@ -143,7 +157,7 @@ for (const [i, { id, say }] of phrases.entries()) {
         .catch(() => '')
     ).slice(0, 600);
     await page.screenshot({ path: path.join(outDir, `${slug}.png`), fullPage: false });
-    log({ i: from + i, id, at: new Date(t0).toISOString(), say, url: page.url(), seconds: Math.round((Date.now() - t0) / 1000), prepSeconds, outcome, head });
+    log({ i: from + i, id, at: new Date(t0).toISOString(), say, url: page.url(), seconds: Math.round((Date.now() - t0) / 1000), prepSeconds, outcome, head, net: net.map((n) => ({ ...n, t: Math.round((n.t - t0) / 1000) })) });
     console.info(slug, Math.round((Date.now() - t0) / 1000), 's', say);
   } catch (e) {
     await page.screenshot({ path: path.join(outDir, `${slug}-erreur.png`) }).catch(() => undefined);
@@ -155,6 +169,7 @@ for (const [i, { id, say }] of phrases.entries()) {
       url: page.url(),
       seconds: Math.round((Date.now() - t0) / 1000),
       error: String(e).slice(0, 300),
+      net: net.map((n) => ({ ...n, t: Math.round((n.t - t0) / 1000) })),
     });
     console.warn(slug, 'ERREUR', String(e).slice(0, 160));
   }
