@@ -4,6 +4,35 @@ Liste à copier dans ChatGPT : 1 bible, 7 fiches personnages et 51 images de fil
 
 ---
 
+## Reprise après l'arrêt de la génération
+
+**Option recommandée : nouvelle conversation ChatGPT.** Repars de zéro avec ce fichier, dans l'ordre : message 0, puis F1 à F7, puis les images. Les images déjà faites où le sac de Léa n'apparaît pas restent valables : img01 à img05, img06, img07, img08, img09, img10, img11, et les plans de Malik, Clara, Noah et de la Terre. Garde-les et passe ces prompts.
+
+**Option rapide : continuer l'ancienne conversation.** Envoie d'abord ce message, avec `sac-lkdv-one-45.png` en pièce jointe :
+
+```
+MISE À JOUR DE LA BIBLE (elle remplace les règles précédentes sur ces points ; tout le reste est inchangé) :
+
+1. LE SAC DE LÉA CHANGE. Ce n'est plus un sac anthracite aux sangles sauge. C'est le sac à dos LKDV ONE 45 litres de la planche de rendu 3D jointe, à reproduire fidèlement dans chaque image où il apparaît : corps vert olive mat légèrement jaune (proche de #8A9A3A), fond renforcé noir, deux longues fermetures éclair verticales noires sur la face avant qui dessinent un V sous le rabat, haut enroulable fermé par une boucle noire centrale, sangles de compression noires, bretelles vert olive à doublure noire, ceinture ventrale épaisse vert olive à boucles noires, dos noir rembourré. Sous la pointe du V, un petit écusson carré noir uni avec un simple pictogramme de montagne blanc, SANS aucune lettre. Sur la bretelle gauche, un étui noir de téléphone. C'est la seule exception à la règle « aucune marque ».
+
+2. SAMI porte désormais un sac à dos gris pierre (plus olive), pour ne pas être confondu avec Léa.
+
+3. Les écrans de téléphone restent en vert chroma uni #00FF00, coins nets, tournés vers la caméra : j'y incrusterai la vraie application.
+
+4. Nouveaux plans à venir : utilisation de l'application à la maison, le budget qui fond grâce au prêt, à la location et à l'occasion, la commande et le colis du sac, et des plans d'échelle immenses où les personnages sont minuscules face aux Dolomites.
+
+Commence par refaire la fiche de Léa en tenue de randonnée (quatre vues, fond gris neutre, sans texte) avec ce nouveau sac. Réponds ensuite « Bible mise à jour ».
+```
+
+Ensuite, envoie ces prompts dans cet ordre, en joignant F1 et `sac-lkdv-one-45.png` chaque fois que Léa porte son sac :
+
+1. Les nouvelles images : img40, img41, img42, img43, img44.
+2. Les images à REFAIRE à cause du sac ou du prêt : img09b, img12, img13, img14, img15, img16, img17, img18, img19, img20, img22, img23, img34.
+3. Les autres nouvelles images : img45, img46, img47, img48, img49.
+4. Tout ce que tu n'avais pas encore fait.
+
+---
+
 ## Mode d'emploi (pour toi, pas pour ChatGPT)
 
 1. Ouvre **une seule conversation** dans ChatGPT et ne la quitte pas jusqu'à la fin.
@@ -174,7 +203,7 @@ Préfixe à garder au début de chaque message : **« Selon la bible et les fich
 
 ### ACTE 1 — L'ESPACE
 
-#### img01 — La Terre surgit (P01, 0,0–1,5 s)
+#### img01 — La Terre surgit (P01)
 
 ```
 INTENTION : toute première image du film. La Terre entre dans le cadre au moment où le soleil se lève sur son bord. Majestueux, réel, silencieux.
@@ -187,7 +216,7 @@ RÉALISME : couleurs et nuages exactement comme sur les vraies photos orbitales 
 INTERDITS : texte, logo, effets de science-fiction, planète stylisée, atmosphère trop épaisse ou trop colorée.
 ```
 
-#### img02 — Les Alpes vues d'orbite (P02, 1,5–3,0 s)
+#### img02 — Les Alpes vues d'orbite (P02)
 
 ```
 INTENTION : la caméra s'est rapprochée. On comprend que l'on va descendre sur les Alpes, plus précisément sur les Dolomites.
@@ -204,7 +233,7 @@ INTERDITS : texte, frontières, routes dessinées, saturation exagérée.
 
 ### ACTE 2 — LA DESCENTE
 
-#### img03 — La stratosphère (P03, 3,0–4,0 s)
+#### img03 — La stratosphère (P03)
 
 ```
 INTENTION : sensation de chute libre depuis le bord de l'espace. Vitesse et vertige.
@@ -217,7 +246,7 @@ AMBIANCE : air raréfié, pureté, vitesse.
 INTERDITS : avion, parachutiste, texte, effet dessiné.
 ```
 
-#### img04 — Le nuage se déchire (P04, 4,0–5,0 s)
+#### img04 — Le nuage se déchire (P04)
 
 ```
 INTENTION : la caméra traverse un nuage ; il se déchire et révèle le sol. Moment de bascule.
@@ -229,7 +258,7 @@ COLORIMÉTRIE : blanc et gris bleuté, accent ambré au centre.
 INTERDITS : texte, avion, oiseau.
 ```
 
-#### img05 — Plongée sur la ville (P05, 5,0–6,0 s)
+#### img05 — Plongée sur la ville (P05)
 
 ```
 INTENTION : la descente finit sur une fenêtre éclairée, celle de Léa. On va traverser la vitre.
@@ -246,7 +275,7 @@ INTERDITS : texte, enseignes lisibles, publicités, monuments célèbres reconna
 
 ### ACTE 3 — LE DÉCLIC
 
-#### img06 — Léa à la fenêtre (P06, 6,0–7,2 s) · joindre F1, tenue de ville
+#### img06 — Léa à la fenêtre (P06) · joindre F1, tenue de ville
 
 ```
 INTENTION : on découvre Léa, un soir de pluie, dans son petit appartement. Elle rêve d'ailleurs en faisant défiler son téléphone. Calme avant la tempête.
@@ -260,7 +289,7 @@ RÉALISME : grain fin, texture de la maille, vapeur du thé visible, mains natur
 INTERDITS : texte sur les livres, logos, écran visible.
 ```
 
-#### img07 — Le téléphone en main (P07 et P09, 7,2–10,0 s) · joindre F1
+#### img07 — Le téléphone en main (P07 et P09) · joindre F1
 
 ```
 INTENTION : gros plan sur le téléphone de Léa. J'y incrusterai l'application (un carnet de voyage avec la photo d'un lac turquoise).
@@ -273,7 +302,7 @@ COLORIMÉTRIE : crème, ambre et bleu ; le vert de l'écran est la seule note vi
 INTERDITS : logo sur le téléphone, contenu à l'écran, doigts déformés.
 ```
 
-#### img08 — L'œil de Léa (P08, 8,4–9,2 s) · joindre F1
+#### img08 — L'œil de Léa (P08) · joindre F1
 
 ```
 INTENTION : déclic émotionnel. Le reflet turquoise de la photo du lac danse dans l'œil de Léa.
@@ -299,7 +328,7 @@ PERSONNAGES : aucun.
 INTERDITS : texte, personnes, bateaux, effet carte postale saturée.
 ```
 
-#### img09b — Le lac de Sorapis, Léa minuscule (P30, 30,9–32,1 s, plan ★) · joindre F1
+#### img09b — Le lac de Sorapis, Léa minuscule (P30, plan ★) · joindre F1
 
 ```
 INTENTION : même lieu et même lumière que img09, mais avec Léa minuscule dans l'immensité.
@@ -309,7 +338,7 @@ LUMIÈRE, COULEURS, SAISON : strictement identiques à img09.
 INTERDITS : autres personnes, texte.
 ```
 
-#### img10 — Léa se lève (P11, 11,0–12,0 s) · joindre F1, tenue de ville
+#### img10 — Léa se lève (P11) · joindre F1, tenue de ville
 
 ```
 INTENTION : la décision. Retour brutal du rêve, Léa se lève d'un bond, prête à partir.
@@ -323,7 +352,7 @@ AMBIANCE : énergie, joie soudaine.
 INTERDITS : texte, déformation des membres en mouvement.
 ```
 
-#### img40 — Le Compas, étape « Où » (P12, 12,0–13,2 s) · joindre F1, tenue de ville
+#### img40 — Le Compas, étape « Où » (P12) · joindre F1, tenue de ville
 
 ```
 INTENTION : Léa commence à préparer son aventure sur l'application. J'incrusterai la vraie interface sur l'écran.
@@ -336,7 +365,7 @@ COLORIMÉTRIE : crème, bois miel, ambre et bleu.
 INTERDITS : contenu à l'écran, texte sur la carte, logo sur le téléphone.
 ```
 
-#### img41 — Par-dessus l'épaule : « Nous » et l'itinéraire (P13 et P15, 13,2–14,2 s et 15,2–16,2 s) · joindre F1, tenue de ville
+#### img41 — Par-dessus l'épaule : « Nous » et l'itinéraire (P13 et P15) · joindre F1, tenue de ville
 
 ```
 INTENTION : on voit Léa utiliser l'application de près, comme si on était à côté d'elle. J'incrusterai deux écrans différents (inviter ses amis, puis l'itinéraire en 3D).
@@ -348,7 +377,7 @@ LUMIÈRE : lampe chaude par la droite, nuit bleue par la fenêtre.
 INTERDITS : lueur verte, texte, logo.
 ```
 
-#### img11 — Les trois amis reçoivent l'invitation (P14, 14,2–15,2 s) · joindre F2, F3, F4
+#### img11 — Les trois amis reçoivent l'invitation (P14) · joindre F2, F3, F4
 
 ```
 INTENTION : en même temps, à trois endroits différents, Sami, Inès et Tom reçoivent l'invitation de Léa et disent oui.
@@ -360,7 +389,7 @@ COLORIMÉTRIE : orange, ambre chaud et bleu nuit ; un caractère par bande mais 
 INTERDITS : écrans visibles, texte, logos, enseignes lisibles.
 ```
 
-#### img42 — Kit Studio et le budget qui fond (P16, 16,2–17,6 s) · joindre F1, tenue de ville
+#### img42 — Kit Studio et le budget qui fond (P16) · joindre F1, tenue de ville
 
 ```
 INTENTION : Léa compose son kit dans l'application et découvre qu'elle peut partir presque sans argent (prêt d'un ami, location, occasion). C'est le moment où elle sourit de soulagement. J'incrusterai Kit Studio sur l'écran.
@@ -373,7 +402,7 @@ COLORIMÉTRIE : blanc lin, crème, ambre, vert sauge.
 INTERDITS : lueur verte, texte, logo.
 ```
 
-#### img43 — Le pouce sur « Commander » (P17, 17,6–18,4 s) · joindre F1
+#### img43 — Le pouce sur « Commander » (P17) · joindre F1
 
 ```
 INTENTION : la décision définitive. Léa commande son sac. J'incrusterai le bouton de commande.
@@ -384,7 +413,7 @@ LUMIÈRE : lampe chaude latérale, fond sombre et flou.
 INTERDITS : contenu à l'écran, doigt déformé.
 ```
 
-#### img44 — Le colis arrive : le sac LKDV ONE (P18, 18,4–19,4 s) · joindre F1, tenue de ville, et sac-lkdv-one-45.png
+#### img44 — Le colis arrive : le sac LKDV ONE (P18) · joindre F1, tenue de ville, et sac-lkdv-one-45.png
 
 ```
 INTENTION : la livraison. Léa découvre le sac qu'elle a composé dans l'application. Émerveillement, objet désirable, « unboxing » de publicité haut de gamme.
@@ -396,7 +425,7 @@ COLORIMÉTRIE : vert olive du sac en vedette, kraft, crème, bois.
 INTERDITS : texte, lettres sur l'écusson, étiquettes, logo de transporteur, marque.
 ```
 
-#### img12 — Le matériel sur le lit (P19, 19,4–20,2 s) · joindre F1
+#### img12 — Le matériel sur le lit (P19) · joindre F1
 
 ```
 INTENTION : l'écran devient réel. Le kit préparé dans l'application est étalé sur le lit et Léa remplit son sac.
@@ -413,7 +442,7 @@ INTERDITS : texte, logos, marques, étiquettes.
 
 ### ACTE 4 — LE DÉPART
 
-#### img13 — La boucle se ferme (P20, 20,2–21,0 s) · joindre F1
+#### img13 — La boucle se ferme (P20) · joindre F1
 
 ```
 INTENTION : impact sonore et visuel, le « clac » du départ.
@@ -425,7 +454,7 @@ MOUVEMENT : micro-flou sur les doigts.
 INTERDITS : logo ou relief de marque sur la boucle.
 ```
 
-#### img14 — La cage d'escalier (P21, 21,0–21,8 s) · joindre F1
+#### img14 — La cage d'escalier (P21) · joindre F1
 
 ```
 INTENTION : Léa dévale l'escalier de son immeuble, rien ne l'arrête.
@@ -437,7 +466,7 @@ COLORIMÉTRIE : crème, bois miel, noir ; le vert forêt de Léa ressort.
 INTERDITS : texte, autres personnes.
 ```
 
-#### img15 — Le train (P22, 21,8–22,8 s) · joindre F1
+#### img15 — Le train (P22) · joindre F1
 
 ```
 INTENTION : le voyage commence, les montagnes arrivent.
@@ -449,7 +478,7 @@ COLORIMÉTRIE : or, vert prairie, rose des parois.
 INTERDITS : texte, logos de compagnie ferroviaire.
 ```
 
-#### img16 — Les retrouvailles (P23, 22,8–24,0 s) · joindre F1, F2, F3, F4
+#### img16 — Les retrouvailles (P23) · joindre F1, F2, F3, F4
 
 ```
 INTENTION : la bande est réunie. Joie, complicité, élan.
@@ -461,7 +490,7 @@ COLORIMÉTRIE : rose, lavande et bleu doux ; les vestes forêt, sable, sauge et 
 INTERDITS : panneaux lisibles, texte, personnes supplémentaires.
 ```
 
-#### img17 — Les bottes sur le sentier (P24, 24,0–24,8 s) · joindre F1
+#### img17 — Les bottes sur le sentier (P24) · joindre F1
 
 ```
 INTENTION : les premiers pas, au ras du sol.
@@ -472,7 +501,7 @@ COLORIMÉTRIE : or et brun chaud, blanc des cailloux.
 INTERDITS : logo sur les chaussures.
 ```
 
-#### img18 — Le téléphone sur la bretelle (P25, 24,8–25,8 s) · joindre F1
+#### img18 — Le téléphone sur la bretelle (P25) · joindre F1
 
 ```
 INTENTION : le téléphone de Léa démarre le suivi GPS. J'y incrusterai le cockpit de l'application.
@@ -487,7 +516,7 @@ INTERDITS : lueur verte sur la peau, logo.
 
 ### ACTE 5 — LA MONTAGNE
 
-#### img45 — Seceda, les quatre minuscules sur la crête (P26, 25,8–27,4 s, plan ★) · joindre F1 à F4
+#### img45 — Seceda, les quatre minuscules sur la crête (P26, plan ★) · joindre F1 à F4
 
 ```
 INTENTION : premier plan à couper le souffle. Les quatre amis sont des points minuscules sur l'une des crêtes les plus spectaculaires des Dolomites. Il faut que le spectateur reste bouche bée.
@@ -500,7 +529,7 @@ AMBIANCE : immensité, silence, liberté absolue, air cristallin.
 INTERDITS : autres personnes, clôtures, remontées mécaniques, texte.
 ```
 
-#### img19 — L'arête des Tre Cime (P27, 27,4–29,0 s, plan ★) · joindre F1 à F4
+#### img19 — L'arête des Tre Cime (P27, plan ★) · joindre F1 à F4
 
 ```
 INTENTION : LE plan de liberté du film. Immensité, ivresse, le groupe minuscule sur l'arête.
@@ -513,7 +542,7 @@ AMBIANCE : air cristallin, souffle coupé, liberté totale.
 INTERDITS : texte, autres randonneurs, drone visible.
 ```
 
-#### img20 — La main tendue (P28, 29,0–29,9 s) · joindre F1, F4
+#### img20 — La main tendue (P28) · joindre F1, F4
 
 ```
 INTENTION : l'entraide, le rire, l'amitié.
@@ -525,7 +554,7 @@ COLORIMÉTRIE : bleu profond, vert forêt, bleu encre, peaux chaudes.
 INTERDITS : mains fusionnées, doigts en trop.
 ```
 
-#### img46 — Le téléphone devant les Tre Cime (P29, 29,9–30,9 s) · joindre F1 et sac-lkdv-one-45.png
+#### img46 — Le téléphone devant les Tre Cime (P29) · joindre F1 et sac-lkdv-one-45.png
 
 ```
 INTENTION : le cockpit de l'application en pleine montée, avec les Tre Cime derrière. J'incrusterai l'écran.
@@ -548,7 +577,7 @@ COLORIMÉTRIE : or et bleu poudré.
 INTERDITS : éclat d'objectif exagéré, texte.
 ```
 
-#### img22 — Léa photographie le lac (P31, 32,1–33,0 s) · joindre F1 et img09
+#### img22 — Léa photographie le lac (P31) · joindre F1 et img09
 
 ```
 INTENTION : le moment clé. Léa est dans le décor de la photo qu'elle regardait chez elle, et elle reproduit le même cadrage.
@@ -559,7 +588,7 @@ COLORIMÉTRIE : turquoise dominant.
 INTERDITS : contenu sur l'écran, autres personnes.
 ```
 
-#### img23 — Le coureur en amorce (P32, 33,0–34,0 s) · joindre F1 à F5
+#### img23 — Le coureur en amorce (P32) · joindre F1 à F5
 
 ```
 INTENTION : passage de relais. Un coureur traverse le cadre et va emporter la caméra.
@@ -574,7 +603,7 @@ INTERDITS : visage de Malik net (il doit être flou), texte.
 
 ### ACTE 6 — LE COUREUR
 
-#### img24 — Malik sur le balcon (P33, 34,0–35,0 s) · joindre F5
+#### img24 — Malik sur le balcon (P33) · joindre F5
 
 ```
 INTENTION : vitesse et vertige.
@@ -586,7 +615,7 @@ COLORIMÉTRIE : ivoire, noir, vert et or en filé.
 INTERDITS : texte, logo.
 ```
 
-#### img25 — Le pied frappe la pierre (P34, 35,0–35,8 s) · joindre F5
+#### img25 — Le pied frappe la pierre (P34) · joindre F5
 
 ```
 INTENTION : impact, matière, puissance.
@@ -597,7 +626,7 @@ COLORIMÉTRIE : or, gris, blanc.
 INTERDITS : logo sur la chaussure.
 ```
 
-#### img26 — La descente en FPV (P35, 35,8–36,8 s) · joindre F5
+#### img26 — La descente en FPV (P35) · joindre F5
 
 ```
 INTENTION : sensation de drone FPV collé au coureur dans une descente technique.
@@ -609,7 +638,7 @@ COLORIMÉTRIE : gris de la roche, vert et or de l'alpage.
 INTERDITS : drone visible.
 ```
 
-#### img27 — Le brassard (P36, 36,8–37,6 s) · joindre F5
+#### img27 — Le brassard (P36) · joindre F5
 
 ```
 INTENTION : le cockpit de l'application en pleine course. J'incrusterai l'écran.
@@ -620,7 +649,7 @@ LUMIÈRE : soleil d'après-midi, reflets sur la peau.
 INTERDITS : lueur verte sur la peau, logo.
 ```
 
-#### img28 — Le saut au-dessus du torrent (P37, 37,6–38,6 s) · joindre F5
+#### img28 — Le saut au-dessus du torrent (P37) · joindre F5
 
 ```
 INTENTION : le temps suspendu à l'apex du saut.
@@ -631,7 +660,7 @@ COLORIMÉTRIE : turquoise de l'eau, or des mélèzes, ivoire du t-shirt.
 INTERDITS : flou sur Malik, texte.
 ```
 
-#### img47 — Malik minuscule sous la paroi (P38, 38,6–39,8 s, plan ★) · joindre F5
+#### img47 — Malik minuscule sous la paroi (P38, plan ★) · joindre F5
 
 ```
 INTENTION : plan d'échelle. Le coureur est une poussière au pied d'une paroi gigantesque.
@@ -644,7 +673,7 @@ AMBIANCE : démesure, vertige, humilité.
 INTERDITS : autres personnes, texte, câbles.
 ```
 
-#### img29 — Le relais coureur et cycliste (P39, 39,8–40,6 s) · joindre F5, F6
+#### img29 — Le relais coureur et cycliste (P39) · joindre F5, F6
 
 ```
 INTENTION : passage de relais entre deux inconnus, deux membres de la même communauté.
@@ -661,7 +690,7 @@ INTERDITS : texte, logo, marque sur le vélo.
 
 ### ACTE 7 — LA CYCLISTE
 
-#### img30 — Le gravel au bord du lac (P40, 40,6–41,8 s, plan ★) · joindre F6
+#### img30 — Le gravel au bord du lac (P40, plan ★) · joindre F6
 
 ```
 INTENTION : plan d'échelle, Clara minuscule dans l'or du soir.
@@ -672,7 +701,7 @@ COLORIMÉTRIE : dominante OR et miel.
 INTERDITS : texte, autres personnes.
 ```
 
-#### img31 — La roue (P41, 41,8–42,6 s) · joindre F6
+#### img31 — La roue (P41) · joindre F6
 
 ```
 INTENTION : matière et vitesse.
@@ -684,7 +713,7 @@ COLORIMÉTRIE : or, olive, beige.
 INTERDITS : logo, texte sur le pneu.
 ```
 
-#### img32 — L'épingle vue du ciel (P42, 42,6–43,6 s, plan ★) · joindre F6
+#### img32 — L'épingle vue du ciel (P42, plan ★) · joindre F6
 
 ```
 INTENTION : plan graphique et vertigineux, la route dessine un S parfait.
@@ -695,7 +724,7 @@ COLORIMÉTRIE : or et vert sombre, blanc de la piste.
 INTERDITS : texte, voitures.
 ```
 
-#### img48 — Les lacets du Passo Giau (P43, 43,6–45,0 s, plan ★) · joindre F6
+#### img48 — Les lacets du Passo Giau (P43, plan ★) · joindre F6
 
 ```
 INTENTION : plan d'échelle de la cycliste, le plus doré du film.
@@ -708,7 +737,7 @@ AMBIANCE : ivresse de la descente, liberté.
 INTERDITS : voitures, motos, panneaux, marquage au sol lisible, texte.
 ```
 
-#### img33 — Les bras levés (P44, 45,0–45,8 s) · joindre F6
+#### img33 — Les bras levés (P44) · joindre F6
 
 ```
 INTENTION : pure joie, pure liberté.
@@ -719,7 +748,7 @@ COLORIMÉTRIE : or brûlant, bordeaux.
 INTERDITS : visage noyé dans l'ombre, éclat d'objectif exagéré.
 ```
 
-#### img34 — Le passage devant le bivouac (P45, 45,8–46,8 s) · joindre F6, F1 à F4
+#### img34 — Le passage devant le bivouac (P45) · joindre F6, F1 à F4
 
 ```
 INTENTION : la cycliste passe et la caméra reste avec le groupe qui s'installe pour la nuit.
@@ -755,7 +784,7 @@ COLORIMÉTRIE : bleu nuit profond, orange du feu, ambre des tentes.
 INTERDITS : aurores, étoiles filantes exagérées, Voie lactée artificiellement colorée.
 ```
 
-#### img36 — Autour du feu (P47, 48,2–49,2 s) · joindre F1 à F4
+#### img36 — Autour du feu (P47) · joindre F1 à F4
 
 ```
 INTENTION : la chaleur humaine, la nuit en montagne.
@@ -767,7 +796,7 @@ AMBIANCE : chaleur, fumée légère, vapeur de la popote.
 INTERDITS : texte, visages déformés par la lumière.
 ```
 
-#### img37 — Léa publie son carnet (P48 et P49, 49,2–51,4 s) · joindre F1
+#### img37 — Léa publie son carnet (P48 et P49) · joindre F1
 
 ```
 INTENTION : Léa ajoute la photo du lac à son carnet et la publie. J'incrusterai l'application.
@@ -779,7 +808,7 @@ INTERDITS : lueur verte sur le visage, contenu sur l'écran.
 
 ---
 
-#### img49 — Le bivouac sous la Voie lactée (P50, 51,4–53,0 s, plan ★) · joindre img35b
+#### img49 — Le bivouac sous la Voie lactée (P50, plan ★) · joindre img35b
 
 ```
 INTENTION : le dernier plan d'échelle, le plus beau du film. Le bivouac est un point de lumière dans l'immensité de la nuit, face aux Tre Cime.
@@ -794,7 +823,7 @@ INTERDITS : étoiles filantes exagérées, aurore, Voie lactée colorée artific
 
 ### ACTE 9 — LE FINAL
 
-#### img38 — Noah dans le bus de nuit (P51, 53,0–54,2 s) · joindre F7
+#### img38 — Noah dans le bus de nuit (P51) · joindre F7
 
 ```
 INTENTION : la boucle. À l'autre bout du monde, un inconnu tombe sur le carnet de Léa et s'arrête. C'est le prochain voyageur.
@@ -806,7 +835,7 @@ COLORIMÉTRIE : bleu nuit, néons ; contraste volontaire avec la nature précéd
 INTERDITS : caractères, enseignes ou publicités lisibles, lueur verte sur la peau.
 ```
 
-#### img39 — La Terre de nuit (P53, 56,0–58,0 s)
+#### img39 — La Terre de nuit (P53)
 
 ```
 INTENTION : retour en orbite. J'ajouterai des milliers de tracés lumineux (un par aventure) qui vont converger pour former le logo.
