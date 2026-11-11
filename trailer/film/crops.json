@@ -1,0 +1,1628 @@
+{
+  "$comment": "Cadres 9:16 du trailer (déclinaison 1080×1920). Rectangles en % de l'image source posée en 16:9 (cover 1920×1080, comme dans le film 16:9) : x, y = coin haut gauche, w, h = taille. Rapport w/h = 81/256 (9:16 dans du 16:9). start = cadre à la première image du plan, end = cadre à la dernière (null = fixe). poi = point d'intérêt (sujet, téléphone, personnage minuscule). Tous provisoires : à ajuster à la réception des images (tools/crops/preview.mjs).",
+  "version": 1,
+  "sourceAspect": "16:9",
+  "targetAspect": "9:16",
+  "target": {
+    "width": 1080,
+    "height": 1920
+  },
+  "starFallback": "pleine-largeur = image entière calée en largeur (1080×608) au tiers haut, sur un fond prolongé de la même image (agrandie, floutée par media-treatment) ; réservé au cas où sommet et personnage ne tiennent pas dans la bande",
+  "shots": [
+    {
+      "id": "p01",
+      "frames": [
+        0,
+        89
+      ],
+      "sources": [
+        "img01"
+      ],
+      "type": "espace",
+      "start": {
+        "x": 52.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "end": {
+        "x": 46.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "poi": {
+        "x": 74,
+        "y": 30
+      },
+      "note": "Limbe et lever du soleil (tiers droit) ; glissé vers la gauche avec la poussée.",
+      "status": "provisoire, à ajuster à la réception de l'image"
+    },
+    {
+      "id": "p02",
+      "frames": [
+        89,
+        166
+      ],
+      "sources": [
+        "img02"
+      ],
+      "type": "espace",
+      "start": {
+        "x": 34.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "end": {
+        "x": 37.03,
+        "y": 11,
+        "w": 25.95,
+        "h": 82
+      },
+      "poi": {
+        "x": 50,
+        "y": 55
+      },
+      "note": "Dolomites au centre exact ; la poussée devient un resserrement.",
+      "status": "provisoire, à ajuster à la réception de l'image"
+    },
+    {
+      "id": "p03",
+      "frames": [
+        166,
+        220
+      ],
+      "sources": [
+        "img03"
+      ],
+      "type": "espace",
+      "start": {
+        "x": 34.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "end": {
+        "x": 36.39,
+        "y": 7,
+        "w": 27.21,
+        "h": 86
+      },
+      "poi": {
+        "x": 50,
+        "y": 60
+      },
+      "note": "Point de fuite du flou radial au centre.",
+      "status": "provisoire, à ajuster à la réception de l'image"
+    },
+    {
+      "id": "p04",
+      "frames": [
+        220,
+        272
+      ],
+      "sources": [
+        "img04"
+      ],
+      "type": "espace",
+      "start": {
+        "x": 34.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "end": {
+        "x": 37.66,
+        "y": 11,
+        "w": 24.68,
+        "h": 78
+      },
+      "poi": {
+        "x": 50,
+        "y": 50
+      },
+      "note": "Trouée au centre : le resserrement prolonge la traversée.",
+      "status": "provisoire, à ajuster à la réception de l'image"
+    },
+    {
+      "id": "p05",
+      "frames": [
+        272,
+        325
+      ],
+      "sources": [
+        "img05"
+      ],
+      "type": "espace",
+      "start": {
+        "x": 34.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "end": {
+        "x": 38.93,
+        "y": 15,
+        "w": 22.15,
+        "h": 70
+      },
+      "poi": {
+        "x": 50,
+        "y": 50
+      },
+      "note": "Fenêtre éclairée au centre exact : on fonce dessus.",
+      "status": "provisoire, à ajuster à la réception de l'image"
+    },
+    {
+      "id": "p06",
+      "frames": [
+        325,
+        403
+      ],
+      "sources": [
+        "img06"
+      ],
+      "type": "personnage",
+      "start": {
+        "x": 30.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "end": {
+        "x": 38.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "poi": {
+        "x": 50,
+        "y": 34
+      },
+      "note": "Léa au tiers central, tête aux genoux ; le travelling latéral devient un glissé.",
+      "status": "provisoire, à ajuster à la réception de l'image"
+    },
+    {
+      "id": "p07",
+      "frames": [
+        403,
+        482
+      ],
+      "sources": [
+        "img07"
+      ],
+      "type": "telephone",
+      "start": {
+        "x": 37.66,
+        "y": 11,
+        "w": 24.68,
+        "h": 78
+      },
+      "end": {
+        "x": 39.24,
+        "y": 16,
+        "w": 21.52,
+        "h": 68
+      },
+      "poi": {
+        "x": 50,
+        "y": 50
+      },
+      "note": "Téléphone au centre (40 % de la hauteur) : cadre serré, écran entier.",
+      "status": "provisoire, à ajuster à la réception de l'image"
+    },
+    {
+      "id": "p08",
+      "frames": [
+        482,
+        508
+      ],
+      "sources": [
+        "img08"
+      ],
+      "type": "personnage",
+      "start": {
+        "x": 34.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "end": {
+        "x": 36.39,
+        "y": 7,
+        "w": 27.21,
+        "h": 86
+      },
+      "poi": {
+        "x": 50,
+        "y": 48
+      },
+      "note": "Œil au centre ; reflet dans la pupille.",
+      "status": "provisoire, à ajuster à la réception de l'image"
+    },
+    {
+      "id": "p09",
+      "frames": [
+        508,
+        560
+      ],
+      "sources": [
+        "img07"
+      ],
+      "type": "telephone",
+      "start": {
+        "x": 38.61,
+        "y": 14,
+        "w": 22.78,
+        "h": 72
+      },
+      "end": {
+        "x": 43.36,
+        "y": 25,
+        "w": 13.29,
+        "h": 42
+      },
+      "poi": {
+        "x": 50,
+        "y": 46
+      },
+      "note": "Poussée violente dans l'écran : le cadre finit sur l'écran seul.",
+      "status": "provisoire, à ajuster à la réception de l'image"
+    },
+    {
+      "id": "p10",
+      "frames": [
+        560,
+        614
+      ],
+      "sources": [
+        "img09"
+      ],
+      "type": "paysage",
+      "start": {
+        "x": 34.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "end": {
+        "x": 35.76,
+        "y": 7,
+        "w": 28.48,
+        "h": 90
+      },
+      "poi": {
+        "x": 50,
+        "y": 40
+      },
+      "note": "Pic en aiguille au centre exact, eau au premier plan.",
+      "status": "provisoire, à ajuster à la réception de l'image"
+    },
+    {
+      "id": "p11",
+      "frames": [
+        614,
+        692
+      ],
+      "sources": [
+        "img10"
+      ],
+      "type": "personnage",
+      "start": {
+        "x": 32.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "end": {
+        "x": 40.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "poi": {
+        "x": 50,
+        "y": 35
+      },
+      "note": "Léa au centre, part vers la droite : le cadre la suit.",
+      "status": "provisoire, à ajuster à la réception de l'image"
+    },
+    {
+      "id": "p12",
+      "frames": [
+        692,
+        745
+      ],
+      "sources": [
+        "img40"
+      ],
+      "type": "telephone",
+      "start": {
+        "x": 31.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "end": {
+        "x": 37.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "poi": {
+        "x": 50,
+        "y": 55
+      },
+      "note": "Téléphone au centre (35 %), visage flou au-dessus : les deux dans la bande ; glissé latéral.",
+      "status": "provisoire, à ajuster à la réception de l'image"
+    },
+    {
+      "id": "p13",
+      "frames": [
+        745,
+        823
+      ],
+      "sources": [
+        "img41"
+      ],
+      "type": "telephone",
+      "start": {
+        "x": 37.03,
+        "y": 11,
+        "w": 25.95,
+        "h": 82
+      },
+      "end": {
+        "x": 38.29,
+        "y": 15,
+        "w": 23.41,
+        "h": 74
+      },
+      "poi": {
+        "x": 50,
+        "y": 52
+      },
+      "note": "Par-dessus l'épaule : téléphone au centre, épaule floue en bord.",
+      "status": "provisoire, à ajuster à la réception de l'image"
+    },
+    {
+      "id": "p14",
+      "frames": [
+        823,
+        876
+      ],
+      "sources": [
+        "img11"
+      ],
+      "type": "special",
+      "start": null,
+      "end": null,
+      "poi": {
+        "x": 50,
+        "y": 30
+      },
+      "note": "Trois bandes verticales (img11) : voir « bandes ».",
+      "status": "provisoire, à ajuster à la réception de l'image",
+      "layout": "trois-bandes-empilees",
+      "bands": [
+        {
+          "who": "Sami",
+          "start": {
+            "x": 0,
+            "y": 14.44,
+            "w": 33.33,
+            "h": 35.12
+          },
+          "end": {
+            "x": 0,
+            "y": 12.44,
+            "w": 33.33,
+            "h": 35.12
+          }
+        },
+        {
+          "who": "Inès",
+          "start": {
+            "x": 33.33,
+            "y": 14.44,
+            "w": 33.33,
+            "h": 35.12
+          },
+          "end": {
+            "x": 33.33,
+            "y": 12.44,
+            "w": 33.33,
+            "h": 35.12
+          }
+        },
+        {
+          "who": "Tom",
+          "start": {
+            "x": 66.67,
+            "y": 14.44,
+            "w": 33.33,
+            "h": 35.12
+          },
+          "end": {
+            "x": 66.67,
+            "y": 12.44,
+            "w": 33.33,
+            "h": 35.12
+          }
+        }
+      ]
+    },
+    {
+      "id": "p15",
+      "frames": [
+        876,
+        928
+      ],
+      "sources": [
+        "img41"
+      ],
+      "type": "telephone",
+      "start": {
+        "x": 37.34,
+        "y": 12,
+        "w": 25.31,
+        "h": 80
+      },
+      "end": {
+        "x": 39.88,
+        "y": 20,
+        "w": 20.25,
+        "h": 64
+      },
+      "poi": {
+        "x": 50,
+        "y": 52
+      },
+      "note": "Poussée sur l'itinéraire 3D.",
+      "status": "provisoire, à ajuster à la réception de l'image"
+    },
+    {
+      "id": "p16",
+      "frames": [
+        928,
+        1034
+      ],
+      "sources": [
+        "img42"
+      ],
+      "type": "telephone",
+      "start": {
+        "x": 34.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "end": {
+        "x": 35.76,
+        "y": 9,
+        "w": 28.48,
+        "h": 90
+      },
+      "poi": {
+        "x": 50,
+        "y": 60
+      },
+      "note": "Plongée : Léa au tiers central, téléphone à plat devant elle (position à vérifier).",
+      "status": "provisoire, à ajuster à la réception de l'image"
+    },
+    {
+      "id": "p17",
+      "frames": [
+        1034,
+        1060
+      ],
+      "sources": [
+        "img43"
+      ],
+      "type": "telephone",
+      "start": {
+        "x": 34.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "end": {
+        "x": 36.08,
+        "y": 12,
+        "w": 27.84,
+        "h": 88
+      },
+      "poi": {
+        "x": 50,
+        "y": 70
+      },
+      "note": "Écran dans la moitié basse, pouce au centre.",
+      "status": "provisoire, à ajuster à la réception de l'image"
+    },
+    {
+      "id": "p18",
+      "frames": [
+        1060,
+        1139
+      ],
+      "sources": [
+        "img44"
+      ],
+      "type": "objet",
+      "start": {
+        "x": 34.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "end": {
+        "x": 35.45,
+        "y": 8,
+        "w": 29.11,
+        "h": 92
+      },
+      "poi": {
+        "x": 50,
+        "y": 55
+      },
+      "note": "Sac au centre exact, Léa derrière et au-dessus.",
+      "status": "provisoire, à ajuster à la réception de l'image"
+    },
+    {
+      "id": "p19",
+      "frames": [
+        1139,
+        1191
+      ],
+      "sources": [
+        "img12"
+      ],
+      "type": "objet",
+      "start": {
+        "x": 34.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "end": {
+        "x": 36.39,
+        "y": 12,
+        "w": 27.21,
+        "h": 86
+      },
+      "poi": {
+        "x": 50,
+        "y": 55
+      },
+      "note": "Flat lay : sac au centre, mains par le bas.",
+      "status": "provisoire, à ajuster à la réception de l'image"
+    },
+    {
+      "id": "p20",
+      "frames": [
+        1191,
+        1219
+      ],
+      "sources": [
+        "img13"
+      ],
+      "type": "objet",
+      "start": {
+        "x": 35.76,
+        "y": 5,
+        "w": 28.48,
+        "h": 90
+      },
+      "end": {
+        "x": 38.29,
+        "y": 13,
+        "w": 23.41,
+        "h": 74
+      },
+      "poi": {
+        "x": 50,
+        "y": 50
+      },
+      "note": "Boucle au centre.",
+      "status": "provisoire, à ajuster à la réception de l'image"
+    },
+    {
+      "id": "p21",
+      "frames": [
+        1219,
+        1271
+      ],
+      "sources": [
+        "img14"
+      ],
+      "type": "personnage",
+      "start": {
+        "x": 34.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "end": {
+        "x": 35.45,
+        "y": 4,
+        "w": 29.11,
+        "h": 92
+      },
+      "poi": {
+        "x": 50,
+        "y": 50
+      },
+      "note": "Spirale centrée, Léa au tiers central (la rotation du 16:9 se garde).",
+      "status": "provisoire, à ajuster à la réception de l'image"
+    },
+    {
+      "id": "p22",
+      "frames": [
+        1271,
+        1323
+      ],
+      "sources": [
+        "img15"
+      ],
+      "type": "personnage",
+      "start": {
+        "x": 38.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "end": {
+        "x": 30.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "poi": {
+        "x": 50,
+        "y": 45
+      },
+      "note": "Reflet de Léa au tiers central ; le paysage défile, le cadre glisse avec lui.",
+      "status": "provisoire, à ajuster à la réception de l'image"
+    },
+    {
+      "id": "p23",
+      "frames": [
+        1323,
+        1402
+      ],
+      "sources": [
+        "img16"
+      ],
+      "type": "groupe",
+      "start": {
+        "x": 32.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "end": {
+        "x": 34.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "poi": {
+        "x": 46,
+        "y": 50
+      },
+      "note": "Quatre personnages en pied : la bande ne tient que Léa et Sami (le prêt) ; risque de couper Inès et Tom.",
+      "status": "provisoire, à ajuster à la réception de l'image"
+    },
+    {
+      "id": "p24",
+      "frames": [
+        1402,
+        1454
+      ],
+      "sources": [
+        "img17"
+      ],
+      "type": "objet",
+      "start": {
+        "x": 34.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "end": {
+        "x": 35.76,
+        "y": 10,
+        "w": 28.48,
+        "h": 90
+      },
+      "poi": {
+        "x": 50,
+        "y": 62
+      },
+      "note": "Chaussures au tiers central, ras du sol.",
+      "status": "provisoire, à ajuster à la réception de l'image"
+    },
+    {
+      "id": "p25",
+      "frames": [
+        1454,
+        1507
+      ],
+      "sources": [
+        "img18"
+      ],
+      "type": "telephone",
+      "start": {
+        "x": 35.76,
+        "y": 5,
+        "w": 28.48,
+        "h": 90
+      },
+      "end": {
+        "x": 37.34,
+        "y": 10,
+        "w": 25.31,
+        "h": 80
+      },
+      "poi": {
+        "x": 50,
+        "y": 50
+      },
+      "note": "Téléphone sur la bretelle, presque de face.",
+      "status": "provisoire, à ajuster à la réception de l'image"
+    },
+    {
+      "id": "p26",
+      "frames": [
+        1507,
+        1612
+      ],
+      "sources": [
+        "img45"
+      ],
+      "type": "star",
+      "start": {
+        "x": 40.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "end": {
+        "x": 30.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "poi": {
+        "x": 50,
+        "y": 50
+      },
+      "note": "★ Seceda : la crête en diagonale ; le glissé passe des aiguilles aux quatre points (tiers central).",
+      "status": "provisoire, à ajuster à la réception de l'image",
+      "fallback": "pleine-largeur"
+    },
+    {
+      "id": "p27",
+      "frames": [
+        1612,
+        1717
+      ],
+      "sources": [
+        "img19"
+      ],
+      "type": "star",
+      "start": {
+        "x": 28.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "end": {
+        "x": 35.45,
+        "y": 8,
+        "w": 29.11,
+        "h": 92
+      },
+      "poi": {
+        "x": 50,
+        "y": 55
+      },
+      "note": "★ Tre Cime : tours au fond, groupe au tiers central ; le cadre descend vers eux.",
+      "status": "provisoire, à ajuster à la réception de l'image",
+      "fallback": "pleine-largeur"
+    },
+    {
+      "id": "p28",
+      "frames": [
+        1717,
+        1769
+      ],
+      "sources": [
+        "img20"
+      ],
+      "type": "personnage",
+      "start": {
+        "x": 34.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "end": {
+        "x": 35.45,
+        "y": 4,
+        "w": 29.11,
+        "h": 92
+      },
+      "poi": {
+        "x": 50,
+        "y": 50
+      },
+      "note": "Mains jointes au centre, contre-plongée.",
+      "status": "provisoire, à ajuster à la réception de l'image"
+    },
+    {
+      "id": "p29",
+      "frames": [
+        1769,
+        1822
+      ],
+      "sources": [
+        "img46"
+      ],
+      "type": "telephone",
+      "start": {
+        "x": 34.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "end": {
+        "x": 35.76,
+        "y": 5,
+        "w": 28.48,
+        "h": 90
+      },
+      "poi": {
+        "x": 50,
+        "y": 50
+      },
+      "note": "Téléphone net au tiers central, Tre Cime floues derrière.",
+      "status": "provisoire, à ajuster à la réception de l'image"
+    },
+    {
+      "id": "p30",
+      "frames": [
+        1822,
+        1901
+      ],
+      "sources": [
+        "img09b"
+      ],
+      "type": "star",
+      "start": {
+        "x": 34.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "end": {
+        "x": 34.81,
+        "y": 4,
+        "w": 30.38,
+        "h": 96
+      },
+      "poi": {
+        "x": 50,
+        "y": 58
+      },
+      "note": "★ Sorapis : pic en aiguille en haut au centre, Léa sur le rocher au tiers central.",
+      "status": "provisoire, à ajuster à la réception de l'image",
+      "fallback": "pleine-largeur"
+    },
+    {
+      "id": "p31",
+      "frames": [
+        1901,
+        1954
+      ],
+      "sources": [
+        "img22"
+      ],
+      "type": "telephone",
+      "start": {
+        "x": 34.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "end": {
+        "x": 36.08,
+        "y": 4,
+        "w": 27.84,
+        "h": 88
+      },
+      "poi": {
+        "x": 50,
+        "y": 45
+      },
+      "note": "Téléphone à hauteur des yeux devant le lac : même composition que P10.",
+      "status": "provisoire, à ajuster à la réception de l'image"
+    },
+    {
+      "id": "p32",
+      "frames": [
+        1954,
+        2009
+      ],
+      "sources": [
+        "img23"
+      ],
+      "type": "personnage",
+      "start": {
+        "x": 28.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "end": {
+        "x": 24.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "poi": {
+        "x": 42,
+        "y": 55
+      },
+      "note": "Malik flou au premier plan, à gauche du centre ; le cadre part avec lui (sens à vérifier).",
+      "status": "provisoire, à ajuster à la réception de l'image"
+    },
+    {
+      "id": "p33",
+      "frames": [
+        2009,
+        2063
+      ],
+      "sources": [
+        "img24"
+      ],
+      "type": "personnage",
+      "start": {
+        "x": 34.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "end": {
+        "x": 34.81,
+        "y": 2,
+        "w": 30.38,
+        "h": 96
+      },
+      "poi": {
+        "x": 50,
+        "y": 50
+      },
+      "note": "Malik au tiers central, filé.",
+      "status": "provisoire, à ajuster à la réception de l'image"
+    },
+    {
+      "id": "p34",
+      "frames": [
+        2063,
+        2114
+      ],
+      "sources": [
+        "img25"
+      ],
+      "type": "objet",
+      "start": {
+        "x": 34.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "end": {
+        "x": 36.71,
+        "y": 14,
+        "w": 26.58,
+        "h": 84
+      },
+      "poi": {
+        "x": 50,
+        "y": 60
+      },
+      "note": "Impact de la chaussure au centre.",
+      "status": "provisoire, à ajuster à la réception de l'image"
+    },
+    {
+      "id": "p35",
+      "frames": [
+        2114,
+        2192
+      ],
+      "sources": [
+        "img26"
+      ],
+      "type": "personnage",
+      "start": {
+        "x": 34.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "end": {
+        "x": 35.45,
+        "y": 8,
+        "w": 29.11,
+        "h": 92
+      },
+      "poi": {
+        "x": 50,
+        "y": 62
+      },
+      "note": "Malik au tiers central bas, lacets en contrebas.",
+      "status": "provisoire, à ajuster à la réception de l'image"
+    },
+    {
+      "id": "p36",
+      "frames": [
+        2192,
+        2245
+      ],
+      "sources": [
+        "img27"
+      ],
+      "type": "telephone",
+      "start": {
+        "x": 36.39,
+        "y": 7,
+        "w": 27.21,
+        "h": 86
+      },
+      "end": {
+        "x": 37.98,
+        "y": 12,
+        "w": 24.05,
+        "h": 76
+      },
+      "poi": {
+        "x": 50,
+        "y": 50
+      },
+      "note": "Brassard et téléphone au centre.",
+      "status": "provisoire, à ajuster à la réception de l'image"
+    },
+    {
+      "id": "p37",
+      "frames": [
+        2245,
+        2297
+      ],
+      "sources": [
+        "img28"
+      ],
+      "type": "personnage",
+      "start": {
+        "x": 34.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "end": {
+        "x": 35.13,
+        "y": 3,
+        "w": 29.74,
+        "h": 94
+      },
+      "poi": {
+        "x": 50,
+        "y": 45
+      },
+      "note": "Malik à l'apex, au centre.",
+      "status": "provisoire, à ajuster à la réception de l'image"
+    },
+    {
+      "id": "p38",
+      "frames": [
+        2297,
+        2378
+      ],
+      "sources": [
+        "img47"
+      ],
+      "type": "star",
+      "start": {
+        "x": 36.08,
+        "y": 12,
+        "w": 27.84,
+        "h": 88
+      },
+      "end": {
+        "x": 34.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "poi": {
+        "x": 50,
+        "y": 70
+      },
+      "note": "★ Tofana : la paroi occupe les trois quarts ; Malik au tiers central bas ; le recul découvre la paroi.",
+      "status": "provisoire, à ajuster à la réception de l'image",
+      "fallback": "pleine-largeur"
+    },
+    {
+      "id": "p39",
+      "frames": [
+        2378,
+        2429
+      ],
+      "sources": [
+        "img29"
+      ],
+      "type": "groupe",
+      "start": {
+        "x": 31.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "end": {
+        "x": 39.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "poi": {
+        "x": 50,
+        "y": 55
+      },
+      "note": "Malik et Clara au tiers central ; le cadre suit Clara qui le dépasse (sens à vérifier).",
+      "status": "provisoire, à ajuster à la réception de l'image"
+    },
+    {
+      "id": "p40",
+      "frames": [
+        2429,
+        2508
+      ],
+      "sources": [
+        "img30"
+      ],
+      "type": "star",
+      "start": {
+        "x": 30.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "end": {
+        "x": 38.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "poi": {
+        "x": 50,
+        "y": 55
+      },
+      "note": "★ Clara au tiers central sur la piste, sommets au fond ; glissé latéral.",
+      "status": "provisoire, à ajuster à la réception de l'image",
+      "fallback": "pleine-largeur"
+    },
+    {
+      "id": "p41",
+      "frames": [
+        2508,
+        2560
+      ],
+      "sources": [
+        "img31"
+      ],
+      "type": "objet",
+      "start": {
+        "x": 34.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "end": {
+        "x": 35.76,
+        "y": 5,
+        "w": 28.48,
+        "h": 90
+      },
+      "poi": {
+        "x": 50,
+        "y": 55
+      },
+      "note": "Roue au centre.",
+      "status": "provisoire, à ajuster à la réception de l'image"
+    },
+    {
+      "id": "p42",
+      "frames": [
+        2560,
+        2640
+      ],
+      "sources": [
+        "img32"
+      ],
+      "type": "star",
+      "start": {
+        "x": 34.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "end": {
+        "x": 35.13,
+        "y": 3,
+        "w": 29.74,
+        "h": 94
+      },
+      "poi": {
+        "x": 50,
+        "y": 50
+      },
+      "note": "★ Épingle en S, Clara au centre exact (plongée verticale) ; la rotation du 16:9 se garde.",
+      "status": "provisoire, à ajuster à la réception de l'image",
+      "fallback": "pleine-largeur"
+    },
+    {
+      "id": "p43",
+      "frames": [
+        2640,
+        2718
+      ],
+      "sources": [
+        "img48"
+      ],
+      "type": "star",
+      "start": {
+        "x": 35.76,
+        "y": 10,
+        "w": 28.48,
+        "h": 90
+      },
+      "end": {
+        "x": 34.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "poi": {
+        "x": 50,
+        "y": 58
+      },
+      "note": "★ Passo Giau : Clara dans un lacet au tiers central, Ra Gusela au-dessus ; l'élévation ouvre le cadre.",
+      "status": "provisoire, à ajuster à la réception de l'image",
+      "fallback": "pleine-largeur"
+    },
+    {
+      "id": "p44",
+      "frames": [
+        2718,
+        2770
+      ],
+      "sources": [
+        "img33"
+      ],
+      "type": "personnage",
+      "start": {
+        "x": 34.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "end": {
+        "x": 35.13,
+        "y": 1,
+        "w": 29.74,
+        "h": 94
+      },
+      "poi": {
+        "x": 50,
+        "y": 40
+      },
+      "note": "Clara au centre, bras levés, soleil derrière la tête.",
+      "status": "provisoire, à ajuster à la réception de l'image"
+    },
+    {
+      "id": "p45",
+      "frames": [
+        2770,
+        2848
+      ],
+      "sources": [
+        "img34"
+      ],
+      "type": "groupe",
+      "start": {
+        "x": 26.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "end": {
+        "x": 36.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "poi": {
+        "x": 52,
+        "y": 55
+      },
+      "note": "Clara passe de gauche à droite au premier plan ; le cadre reste avec le groupe.",
+      "status": "provisoire, à ajuster à la réception de l'image"
+    },
+    {
+      "id": "p46",
+      "frames": [
+        2848,
+        2930
+      ],
+      "sources": [
+        "img35a",
+        "img35b"
+      ],
+      "type": "special",
+      "start": {
+        "x": 34.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "end": {
+        "x": 34.81,
+        "y": 4,
+        "w": 30.38,
+        "h": 96
+      },
+      "poi": {
+        "x": 50,
+        "y": 70
+      },
+      "note": "Timelapse img35a -> img35b : même cadre pour les deux images (tentes au tiers central bas, ciel au-dessus).",
+      "status": "provisoire, à ajuster à la réception de l'image",
+      "layout": "timelapse-meme-cadre"
+    },
+    {
+      "id": "p47",
+      "frames": [
+        2930,
+        2981
+      ],
+      "sources": [
+        "img36"
+      ],
+      "type": "groupe",
+      "start": {
+        "x": 34.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "end": {
+        "x": 35.13,
+        "y": 3,
+        "w": 29.74,
+        "h": 94
+      },
+      "poi": {
+        "x": 50,
+        "y": 45
+      },
+      "note": "Quatre visages au tiers central : risque de couper les deux du bord.",
+      "status": "provisoire, à ajuster à la réception de l'image"
+    },
+    {
+      "id": "p48",
+      "frames": [
+        2981,
+        3060
+      ],
+      "sources": [
+        "img37"
+      ],
+      "type": "telephone",
+      "start": {
+        "x": 34.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "end": {
+        "x": 35.76,
+        "y": 5,
+        "w": 28.48,
+        "h": 90
+      },
+      "poi": {
+        "x": 50,
+        "y": 50
+      },
+      "note": "Téléphone au centre, Léa de trois-quarts.",
+      "status": "provisoire, à ajuster à la réception de l'image"
+    },
+    {
+      "id": "p49",
+      "frames": [
+        3060,
+        3113
+      ],
+      "sources": [
+        "img37"
+      ],
+      "type": "telephone",
+      "start": {
+        "x": 41.14,
+        "y": 24,
+        "w": 17.72,
+        "h": 56
+      },
+      "end": {
+        "x": 42.09,
+        "y": 27,
+        "w": 15.82,
+        "h": 50
+      },
+      "poi": {
+        "x": 50,
+        "y": 52
+      },
+      "note": "Très gros plan (recadrage de img37) : l'écran seul.",
+      "status": "provisoire, à ajuster à la réception de l'image"
+    },
+    {
+      "id": "p50",
+      "frames": [
+        3113,
+        3192
+      ],
+      "sources": [
+        "img49"
+      ],
+      "type": "star",
+      "start": {
+        "x": 35.45,
+        "y": 8,
+        "w": 29.11,
+        "h": 92
+      },
+      "end": {
+        "x": 34.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "poi": {
+        "x": 50,
+        "y": 72
+      },
+      "note": "★ Bivouac au tiers central bas, Tre Cime et Voie lactée au-dessus ; recul et élévation.",
+      "status": "provisoire, à ajuster à la réception de l'image",
+      "fallback": "pleine-largeur"
+    },
+    {
+      "id": "p51",
+      "frames": [
+        3192,
+        3271
+      ],
+      "sources": [
+        "img38"
+      ],
+      "type": "telephone",
+      "start": {
+        "x": 34.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "end": {
+        "x": 35.45,
+        "y": 4,
+        "w": 29.11,
+        "h": 92
+      },
+      "poi": {
+        "x": 50,
+        "y": 50
+      },
+      "note": "Téléphone et visage de Noah au tiers central.",
+      "status": "provisoire, à ajuster à la réception de l'image"
+    },
+    {
+      "id": "p52",
+      "frames": [
+        3271,
+        3376
+      ],
+      "sources": [
+        "img05",
+        "img04",
+        "img03"
+      ],
+      "type": "espace",
+      "start": {
+        "x": 34.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "end": {
+        "x": 34.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "poi": {
+        "x": 50,
+        "y": 50
+      },
+      "note": "Remontée img05 -> img04 -> img03 : centres de fuite au centre ; même cadre pour les trois.",
+      "status": "provisoire, à ajuster à la réception de l'image"
+    },
+    {
+      "id": "p53",
+      "frames": [
+        3376,
+        3480
+      ],
+      "sources": [
+        "img39"
+      ],
+      "type": "code",
+      "start": {
+        "x": 34.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "end": {
+        "x": 34.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "poi": {
+        "x": 50,
+        "y": 45
+      },
+      "note": "Terre de nuit + tracés : les tracés se recalculent en 1080×1920 (cosmos-vfx), la Terre se recadre.",
+      "status": "provisoire, à ajuster à la réception de l'image"
+    },
+    {
+      "id": "p54",
+      "frames": [
+        3480,
+        3600
+      ],
+      "sources": [],
+      "type": "code",
+      "start": {
+        "x": 34.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "end": {
+        "x": 34.18,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "poi": {
+        "x": 50,
+        "y": 50
+      },
+      "note": "Logo codé : composé nativement en 1080×1920, ce cadre ne sert que de repère.",
+      "status": "provisoire, à ajuster à la réception de l'image",
+      "layout": "natif-vertical"
+    }
+  ]
+}
