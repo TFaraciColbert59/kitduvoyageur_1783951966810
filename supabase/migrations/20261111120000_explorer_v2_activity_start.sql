@@ -7,14 +7,26 @@
 -- historiques. `finish_activity_session` garde sa signature et propage
 -- désormais la variante vers `hike_sessions`.
 --
--- Migration strictement additive : colonnes nullables, une table de référence
--- en lecture seule, une FK composite, un index unique partiel, un trigger de
+-- Migration additive pour les données : colonnes nullables, une table de
+-- référence en lecture seule, des FK, un index unique partiel, un trigger de
 -- garde et une fonction RPC dédiée. Aucune donnée n'est supprimée ni réécrite ;
 -- aucun droit table-level n'est retiré aux anciens clients.
 --
--- Stratégie : appliquer cette migration avant de déployer la route qui appelle
--- `start_activity_session`. Si elle est déjà appliquée quelque part, ne pas
--- réécrire ce fichier : livrer une migration de suivi additive avec son down.
+-- Compatibilité route/RPC : la RPC renvoie `routeId` en nombre pour les
+-- identifiants <= 2^31-1 (lisibles par l'ancienne route) et en chaîne au-delà
+-- (la nouvelle route lit les deux). L'ordre recommandé reste : déployer la
+-- route, puis appliquer cette migration. Une migration appliquée avant la
+-- nouvelle route ne casse plus les identifiants que l'ancienne route accepte.
+--
+-- État de cette révision : migration locale sur une branche non intégrée,
+-- aucun remote configuré et version absente du baseline ; aucune preuve
+-- d'application distante n'est supposée. Si une application est constatée
+-- ailleurs, ne pas rejouer ce fichier modifié : livrer une migration de suivi
+-- additive avec son down.
+--
+-- Verrous : l'ajout des FK et de l'index prend un verrou de table. Sur une
+-- table volumineuse, prévoir une fenêtre de maintenance ; la migration reste
+-- transactionnelle et ne supprime aucune ligne.
 
 begin;
 
@@ -48,6 +60,7 @@ drop policy if exists explorer_sport_variants_read on public.explorer_sport_vari
 create policy explorer_sport_variants_read on public.explorer_sport_variants
   for select to anon, authenticated using (true);
 
+revoke all on public.explorer_sport_variants from anon, authenticated;
 grant select on public.explorer_sport_variants to anon, authenticated;
 
 insert into public.explorer_sport_variants (sport, variant_id) values
@@ -70,17 +83,68 @@ insert into public.explorer_sport_variants (sport, variant_id) values
   ('bivouac', 'bivouac-2n')
 on conflict (sport, variant_id) do nothing;
 
--- 3. Invariant structurel : une variante non nulle appartient toujours à la
---    paire (sport, variante) démarrable. `variant_id` nullable + MATCH SIMPLE
---    laisse passer les écritures historiques qui ne renseignent pas la
---    variante, donc aucun ancien client n'est régressé.
+-- 3. Invariants structurels.
+--    - `sport` doit exister dans la taxonomie (`explorer_sport_map`) ;
+--    - une variante non nulle appartient toujours à la paire démarrable.
+--    Les contraintes sont ajoutées `NOT VALID` puis validées seulement si les
+--    lignes historiques sont compatibles : aucune donnée existante n'est
+--    supprimée ou réécrite. `NOT VALID` protège déjà toutes les nouvelles
+--    écritures, y compris les mises à jour de lignes anciennes.
+alter table public.activity_sessions
+  drop constraint if exists activity_sessions_variant_id_check;
+
 alter table public.activity_sessions
   drop constraint if exists activity_sessions_variant_pair_fkey;
 alter table public.activity_sessions
   add constraint activity_sessions_variant_pair_fkey
   foreign key (sport, variant_id)
   references public.explorer_sport_variants (sport, variant_id)
-  on delete restrict;
+  on delete restrict
+  not valid;
+
+alter table public.activity_sessions
+  drop constraint if exists activity_sessions_sport_fkey;
+alter table public.activity_sessions
+  add constraint activity_sessions_sport_fkey
+  foreign key (sport)
+  references public.explorer_sport_map (sport)
+  on delete restrict
+  not valid;
+
+-- Index de support des deux FK : le préfixe `sport` sert aussi à la FK simple.
+create index if not exists activity_sessions_sport_variant_idx
+  on public.activity_sessions (sport, variant_id);
+
+do $$
+begin
+  if exists (
+    select 1
+      from public.activity_sessions s
+     where s.variant_id is not null
+       and not exists (
+         select 1
+           from public.explorer_sport_variants v
+          where v.sport = s.sport
+            and v.variant_id = s.variant_id
+       )
+  ) then
+    raise warning 'activity_sessions: variantes historiques hors référentiel, contrainte activity_sessions_variant_pair_fkey laissée NOT VALID';
+  else
+    execute 'alter table public.activity_sessions validate constraint activity_sessions_variant_pair_fkey';
+  end if;
+
+  if exists (
+    select 1
+      from public.activity_sessions s
+     where not exists (
+       select 1 from public.explorer_sport_map m where m.sport = s.sport
+     )
+  ) then
+    raise warning 'activity_sessions: sports historiques hors taxonomie, contrainte activity_sessions_sport_fkey laissée NOT VALID';
+  else
+    execute 'alter table public.activity_sessions validate constraint activity_sessions_sport_fkey';
+  end if;
+end $$;
 
 -- 4. Garde d'identité : une séance démarrée avec une clé d'idempotence ne
 --    peut plus changer d'acteur logique (clé, sport, variante, itinéraire).
@@ -147,6 +211,8 @@ set search_path = public, pg_temp
 as $$
 declare
   v_user uuid := auth.uid();
+  c_legacy_route_max constant bigint := 2147483647;
+  v_route_id jsonb;
   v_session public.activity_sessions%rowtype;
 begin
   if v_user is null then
@@ -222,6 +288,14 @@ begin
 
   -- Insertion gagnante : la séance vient d'être créée pour cet acteur.
   if found then
+    -- Nombre pour les identifiants que l'ancienne route sait lire, chaîne
+    -- exacte au-delà : aucune perte de chiffres, aucun client cassé.
+    v_route_id := case
+      when v_session.route_id is not null and v_session.route_id > c_legacy_route_max
+        then to_jsonb(v_session.route_id::text)
+      else to_jsonb(v_session.route_id)
+    end;
+
     return jsonb_build_object(
       'ok', true,
       'created', true,
@@ -229,8 +303,8 @@ begin
       'clientSessionId', v_session.client_session_id,
       'sport', v_session.sport,
       'variantId', v_session.variant_id,
-      -- `bigint` sérialisé en chaîne : le client ne perd jamais de chiffres.
-      'routeId', v_session.route_id::text,
+      -- Compatibilité : nombre si l'ancienne route peut le lire, sinon texte.
+      'routeId', v_route_id,
       'startedAt', v_session.started_at,
       'sessionStatus', v_session.status
     );
@@ -252,6 +326,12 @@ begin
     return jsonb_build_object('ok', false, 'reason', 'payload_mismatch');
   end if;
 
+  v_route_id := case
+    when v_session.route_id is not null and v_session.route_id > c_legacy_route_max
+      then to_jsonb(v_session.route_id::text)
+    else to_jsonb(v_session.route_id)
+  end;
+
   return jsonb_build_object(
     'ok', true,
     'created', false,
@@ -259,7 +339,7 @@ begin
     'clientSessionId', v_session.client_session_id,
     'sport', v_session.sport,
     'variantId', v_session.variant_id,
-    'routeId', v_session.route_id::text,
+    'routeId', v_route_id,
     'startedAt', v_session.started_at,
     'sessionStatus', v_session.status
   );
@@ -289,9 +369,10 @@ create or replace function public.finish_activity_session(p_session uuid)
 returns uuid
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, pg_temp
 as $$
 declare
+  v_user uuid := auth.uid();
   s public.activity_sessions;
   v_summary_id uuid;
   v_track jsonb;
@@ -300,18 +381,28 @@ begin
   if not found then
     raise exception 'session introuvable' using errcode = 'P0002';
   end if;
-  if s.user_id <> auth.uid() then
+  -- `auth.uid()` nul rend la comparaison nulle : le test explicite ferme le
+  -- chemin non authentifié au lieu de laisser passer la séance.
+  if v_user is null or s.user_id <> v_user then
     raise exception 'session d''un autre utilisateur' using errcode = '42501';
   end if;
   if s.status = 'finished' then
     return null;
   end if;
 
+  -- Verrou de ligne par update conditionnel : deux fins concurrentes ne
+  -- peuvent pas insérer deux résumés. La seconde voit 0 ligne et sort.
   update public.activity_sessions
      set status = 'finished',
          ended_at = coalesce(ended_at, now()),
          updated_at = now()
-   where id = p_session;
+   where id = p_session
+     and status <> 'finished'
+  returning * into s;
+
+  if not found then
+    return null;
+  end if;
 
   select jsonb_build_object(
     'type', 'LineString',
@@ -349,5 +440,78 @@ $$;
 
 revoke all on function public.finish_activity_session(uuid) from public;
 grant execute on function public.finish_activity_session(uuid) to authenticated;
+
+-- 7. Fin idempotente : le verrou de clé est pris avant la lecture et avant
+--    l'appel à `finish_activity_session`. Deux rejeux concurrents de la même
+--    clé sont donc sérialisés ; le second lit la ligne acquittée et répond
+--    `duplicate` sans produire de second résumé.
+create or replace function public.finish_activity_session_idempotent(
+  p_session uuid,
+  p_idempotency_key text
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_user uuid := auth.uid();
+  v_existing public.offline_sync_operations%rowtype;
+  v_summary uuid;
+begin
+  if v_user is null then
+    raise exception 'authentification requise' using errcode = '28000';
+  end if;
+  if p_idempotency_key is null or length(p_idempotency_key) < 8 then
+    raise exception 'clé d''idempotence invalide' using errcode = '22023';
+  end if;
+
+  perform pg_catalog.pg_advisory_xact_lock(
+    pg_catalog.hashtextextended(v_user::text || ':finish:' || p_idempotency_key, 0)
+  );
+
+  select * into v_existing
+    from public.offline_sync_operations
+   where user_id = v_user and idempotency_key = p_idempotency_key;
+
+  if found then
+    return jsonb_build_object(
+      'status', 'duplicate',
+      'summaryId', v_existing.result ->> 'summaryId'
+    );
+  end if;
+
+  v_summary := public.finish_activity_session(p_session);
+
+  insert into public.offline_sync_operations (user_id, idempotency_key, store, kind, status, result)
+  values (
+    v_user,
+    p_idempotency_key,
+    'explorer',
+    'activity.finish',
+    'applied',
+    jsonb_build_object('summaryId', v_summary, 'sessionId', p_session)
+  )
+  on conflict (user_id, idempotency_key) do nothing;
+
+  -- Une autre voie a acquitté la même clé entre-temps : relire la ligne
+  -- gagnante plutôt que de renvoyer un résumé qui n'est pas celui du registre.
+  if not found then
+    select * into v_existing
+      from public.offline_sync_operations
+     where user_id = v_user and idempotency_key = p_idempotency_key;
+
+    return jsonb_build_object(
+      'status', 'duplicate',
+      'summaryId', v_existing.result ->> 'summaryId'
+    );
+  end if;
+
+  return jsonb_build_object('status', 'applied', 'summaryId', v_summary);
+end;
+$$;
+
+revoke all on function public.finish_activity_session_idempotent(uuid, text) from public;
+grant execute on function public.finish_activity_session_idempotent(uuid, text) to authenticated;
 
 commit;

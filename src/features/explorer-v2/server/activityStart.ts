@@ -223,6 +223,11 @@ const rpcConflictSchema = z
   .object({ ok: z.literal(false), reason: z.literal('payload_mismatch') })
   .strict();
 
+/**
+ * L'ancienne route n'accepte qu'un nombre `<= 2^31-1` ; la RPC renvoie un
+ * nombre dans cette plage et une chaîne exacte au-delà. Accepter les deux
+ * rend le déploiement tolérant à l'ordre route/migration.
+ */
 const rpcRouteIdSchema = z
   .union([z.string(), z.number()])
   .transform((value, ctx) => {

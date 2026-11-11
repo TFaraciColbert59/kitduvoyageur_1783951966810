@@ -151,6 +151,26 @@ describe('POST /api/explorer/v2/activity/start', () => {
     expect(JSON.parse(String(init.body))).not.toHaveProperty('p_user_id');
   });
 
+  it('accepte un routeId numérique sûr d’un client historique', async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ ...rpcBody(true), routeId: 42 }));
+
+    const res = await POST(request({ ...BODY, routeId: 42 }));
+
+    expect(res.status).toBe(201);
+    expect((await res.json()).routeId).toBe('42');
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(JSON.parse(String(init.body))).toMatchObject({ p_route_id: '42' });
+  });
+
+  it('accepte une réponse numérique de l’ancienne RPC sans perdre le contrat', async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ ...rpcBody(true), routeId: 42 }));
+
+    const res = await POST(request(BODY));
+
+    expect(res.status).toBe(201);
+    expect(await res.json()).toMatchObject({ routeId: '42', created: true });
+  });
+
   it('rejoue le même identifiant client comme la même séance', async () => {
     fetchMock
       .mockResolvedValueOnce(jsonResponse(rpcBody(true)))

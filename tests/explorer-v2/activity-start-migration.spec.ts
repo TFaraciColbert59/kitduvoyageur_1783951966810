@@ -47,6 +47,18 @@ describe('migration additive · démarrage persistant (S1.02, K6.15)', () => {
     expect(lower).toContain('alter table public.explorer_sport_variants enable row level security');
   });
 
+  it('retire explicitement les droits hérités avant d’ouvrir la lecture', () => {
+    const revoke = lower.indexOf(
+      'revoke all on public.explorer_sport_variants from anon, authenticated'
+    );
+    const grant = lower.indexOf(
+      'grant select on public.explorer_sport_variants to anon, authenticated'
+    );
+
+    expect(revoke).toBeGreaterThan(-1);
+    expect(grant).toBeGreaterThan(revoke);
+  });
+
   it('garde la liste SQL des variantes alignée sur la taxonomie serveur', () => {
     const pairs = [...sql.matchAll(/\('([a-z0-9-]+)',\s*'([a-z0-9-]+)'\)/g)].map(
       (match) => [match[1], match[2]] as const
@@ -63,11 +75,26 @@ describe('migration additive · démarrage persistant (S1.02, K6.15)', () => {
     );
   });
 
-  it('impose la paire (sport, variante) à toutes les écritures autorisées', () => {
+  it('impose la paire (sport, variante) et le sport à toutes les écritures autorisées', () => {
     expect(lower).toContain('activity_sessions_variant_pair_fkey');
     expect(lower).toContain('foreign key (sport, variant_id)');
     expect(lower).toContain('references public.explorer_sport_variants (sport, variant_id)');
+    expect(lower).toContain('activity_sessions_sport_fkey');
+    expect(lower).toContain('foreign key (sport)');
+    expect(lower).toContain('references public.explorer_sport_map (sport)');
     expect(lower).toContain('from public.explorer_sport_variants v');
+    // Les FK sont posées NOT VALID : les lignes historiques ne sont ni
+    // supprimées ni réécrites, mais les nouvelles écritures sont contrôlées.
+    expect(lower).toContain('not valid');
+    expect(lower).toContain('raise warning');
+    expect(lower).toContain(
+      "execute 'alter table public.activity_sessions validate constraint activity_sessions_variant_pair_fkey'"
+    );
+    expect(lower).toContain('create index if not exists activity_sessions_sport_variant_idx');
+    expect(lower).toContain('on public.activity_sessions (sport, variant_id)');
+    // L'ancien CHECK de format est réconcilié : la paire référencée le rend
+    // redondant et le down le retire aussi.
+    expect(lower).toContain('drop constraint if exists activity_sessions_variant_id_check');
     // La variante reste nullable : les anciens clients qui ne la renseignent
     // pas passent grâce à MATCH SIMPLE, sans retrait de droit.
     expect(lower).toContain('add column if not exists variant_id text;');
@@ -84,12 +111,22 @@ describe('migration additive · démarrage persistant (S1.02, K6.15)', () => {
     expect(lower).toContain('before update on public.activity_sessions');
   });
 
-  it('accepte les route_id bigint et vérifie la route publique existante', () => {
+  it('accepte les route_id bigint et reste lisible par l’ancienne route jusqu’à 2^31-1', () => {
     expect(lower).toContain('p_route_id bigint');
-    expect(lower).toContain("'routeid', v_session.route_id::text");
+    expect(lower).toContain('c_legacy_route_max constant bigint := 2147483647');
+    expect(lower).toContain('v_route_id := case');
+    expect(lower).toContain('v_session.route_id > c_legacy_route_max');
+    expect(lower).toContain('to_jsonb(v_session.route_id::text)');
+    expect(lower).toContain("'routeid', v_route_id");
     expect(lower).toContain('from public.hiking_routes r where r.id = p_route_id');
     expect(lower).toContain('p_route_id <= 0');
-    expect(lower).not.toContain('2147483647');
+  });
+
+  it('documente l’ordre route puis migration et l’état local de la branche', () => {
+    expect(lower).toContain('route, puis appliquer cette migration');
+    expect(lower).not.toContain('appliquer cette migration avant de déployer la route');
+    expect(lower).toContain('migration locale sur une branche non intégrée');
+    expect(lower).toContain('application distante n\'est supposée');
   });
 
   it('détermine l’acteur avec auth.uid() et verrouille la clé propriétaire', () => {
@@ -149,24 +186,63 @@ describe('migration additive · démarrage persistant (S1.02, K6.15)', () => {
     expect(lower).not.toMatch(/drop\s+function[^;]*finish_activity_session/);
   });
 
+  it('refuse un acteur nul et sérialise la clôture concurrente de finish', () => {
+    const finish = lower.slice(
+      lower.indexOf('create or replace function public.finish_activity_session(p_session uuid)'),
+      lower.indexOf('revoke all on function public.finish_activity_session(uuid)')
+    );
+
+    expect(finish).toContain('set search_path = public, pg_temp');
+    expect(finish).toContain('v_user uuid := auth.uid()');
+    expect(finish).toContain('if v_user is null or s.user_id <> v_user');
+    expect(finish).toContain('and status <> \'finished\'');
+    expect(finish).toContain('returning * into s');
+    expect(finish).toContain('if not found then\n    return null;');
+  });
+
+  it('prend le verrou de clé d’idempotence avant d’appeler finish', () => {
+    const lock = lower.indexOf("':finish:'");
+    const call = lower.indexOf('v_summary := public.finish_activity_session(p_session)');
+
+    expect(lower).toContain('finish_activity_session_idempotent');
+    expect(lower).toContain('pg_catalog.pg_advisory_xact_lock');
+    expect(lock).toBeGreaterThan(-1);
+    expect(call).toBeGreaterThan(lock);
+    // Un conflit d'insertion relit la ligne gagnante au lieu de renvoyer un
+    // résumé qui n'est pas celui du registre.
+    expect(lower).toContain('if not found then\n    select * into v_existing');
+  });
+
   it('a un rollback ordonné qui restaure finish avant de retirer la colonne', () => {
     const restoreFinish = rollback.indexOf(
       'create or replace function public.finish_activity_session'
     );
     const dropHikeVariant = rollback.indexOf('drop column if exists variant_id');
+    const dropStart = rollback.indexOf(
+      'drop function if exists public.start_activity_session(uuid, text, text, bigint)'
+    );
+    const dropReference = rollback.indexOf(
+      'drop table if exists public.explorer_sport_variants'
+    );
 
     expect(restoreFinish).toBeGreaterThan(-1);
     expect(dropHikeVariant).toBeGreaterThan(restoreFinish);
-    expect(rollback).toContain(
-      'drop function if exists public.start_activity_session(uuid, text, text, bigint)'
-    );
+    expect(dropStart).toBeGreaterThan(-1);
+    expect(dropReference).toBeGreaterThan(dropStart);
     expect(rollback).toContain('drop index if exists public.activity_sessions_user_client_idx');
     expect(rollback).toContain('drop column if exists client_session_id');
     expect(rollback).toContain('drop column if exists variant_id');
-    expect(rollback).toContain('drop table if exists public.explorer_sport_variants');
+    expect(rollback).toContain('activity_sessions_sport_fkey');
+    expect(rollback).toContain('activity_sessions_sport_variant_idx');
     expect(rollback).not.toMatch(/delete\s+from/);
     expect(rollback).not.toMatch(/truncate/);
     expect(rollback).not.toMatch(/drop\s+table[^;]*public\.(activity_sessions|hike_sessions)/);
     expect(rollback).not.toMatch(/drop\s+function[^;]*finish_activity_session/);
+  });
+
+  it('conserve le durcissement auth et la clôture concurrente dans le down', () => {
+    expect(rollback).toContain('if v_user is null or s.user_id <> v_user');
+    expect(rollback).toContain('and status <> \'finished\'');
+    expect(rollback).toContain('set search_path = public, pg_temp');
   });
 });
