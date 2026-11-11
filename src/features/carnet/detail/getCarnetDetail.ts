@@ -86,10 +86,13 @@ const CARNET_COLUMNS_BASE = [
  * du lecteur avec le client serveur (cookies) — la RLS voit donc la session :
  * un carnet privé reste lisible par son propriétaire.
  *
- * La trace vient des `hike_sessions` liées au carnet : la policy
- * `hike_sessions_select_owner_or_public_carnet` autorise déjà la lecture
- * anonyme des sorties d'un carnet public (vérifié à la clé anon), donc aucune
- * policy supplémentaire et aucun client à privilèges élevés ne sont nécessaires.
+ * La trace vient des `hike_sessions` liées au carnet. Depuis la migration
+ * `20261111101000_carnet_public_trace_scope` (RGPD), la table brute est
+ * réservée aux participants ; un visiteur lit la vue `hike_sessions_public`
+ * (tracé échantillonné, arrondi, sans horodatage). Le rôle est tranché avant
+ * les sorties par `is_carnet_participant`, donc sans client à privilèges
+ * élevés. La migration doit être appliquée AVANT ce code ; sans elle, la fiche
+ * d'un visiteur garde une carte vide honnête, jamais les points bruts.
  *
  * Retourne `null` si le carnet n'existe pas ou n'est pas lisible : la route
  * traduit cela en `notFound()`.
@@ -122,6 +125,18 @@ export async function getCarnetDetail(id: string) {
     carnetData = initialResult.data;
   }
   const carnet = carnetData as unknown as CarnetRow;
+
+  /* RGPD (migration 20261111101000) : le rôle se tranche AVANT de lire les
+     sorties. `is_carnet_participant` est la même définition que les policies
+     (auteur, collaborateur, présent d'une sortie) ; anonyme ou visiteur
+     connecté, elle rend false. Un visiteur lit la vue simplifiée, un
+     participant la table brute. Une erreur du RPC vaut visiteur : on ne
+     retombe jamais sur les points bruts par accident. */
+  const participantCheck = await supabase.rpc('is_carnet_participant', {
+    p_carnet: carnet.id,
+  });
+  const viewerIsParticipant = participantCheck.data === true;
+  const sessionsSource = viewerIsParticipant ? 'hike_sessions' : 'hike_sessions_public';
 
   /* Tout ce qui ne dépend que du carnet part dans le même `Promise.all` :
      auteur, sorties, étapes, moments, kit, collaborateurs,
@@ -171,7 +186,7 @@ export async function getCarnetDetail(id: string) {
       /* Toutes les sorties du carnet : la plus récente porte les statistiques,
          la plus récente *avec une trace* porte le parcours 3D. */
       supabase
-        .from('hike_sessions')
+        .from(sessionsSource)
         .select(
           'id, carnet_id, distance_km, elevation_gain_m, duration_seconds, started_at, positions_geojson, positions_timed',
         )
@@ -250,7 +265,7 @@ export async function getCarnetDetail(id: string) {
       /* Toutes les sorties du carnet, sans la limite de 10 de `hikeResult` :
          les présents d'une sortie ancienne comptent aussi. */
       supabase
-        .from('hike_sessions')
+        .from(sessionsSource)
         .select('id, started_at')
         .eq('carnet_id', carnet.id)
         .order('started_at', { ascending: false }),
@@ -299,7 +314,7 @@ export async function getCarnetDetail(id: string) {
     (row) => row.user_id === viewerId && (row.role === 'owner' || row.role === 'contributor'),
   );
   const isSessionParticipant = sessionParticipantRows.some((row) => row.user_id === viewerId);
-  const isParticipant = isOwner || isCollab || isSessionParticipant;
+  const isParticipant = viewerIsParticipant || isOwner || isCollab || isSessionParticipant;
   const viewerRole = isParticipant ? ('participant' as const) : ('visitor' as const);
 
   const momentRows = ((momentsResult.data ?? []) as MomentRow[]) ?? [];
