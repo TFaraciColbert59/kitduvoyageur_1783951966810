@@ -198,10 +198,10 @@ Deuxième vague, même jour, pour finir ce qui restait du lot 2 et du lot 3 de l
 
 ## Ce qui reste (honnête)
 
-1. **Déployer** : les migrations Communauté v2 (`20261108130001` → `20261108190000`) ne sont
-   toujours pas appliquées en production, et la migration RGPD ci-dessus doit l'être avec le
-   déploiement du code adapté. Le drapeau `NEXT_PUBLIC_COMMUNAUTE_V2` n'est pas activé en
-   production. Aucune mise en production n'a été faite dans cette reprise.
+1. **Recette de la production à chaud** : les parcours authentifiés (participant qui écrit un
+   moment, un signal de bord, suit un carnet, crée un club/sortie avec les tiroirs v2) n'ont pas
+   été joués avec un vrai compte connecté — la vérification de production s'est faite en session
+   anonyme et sur les pages publiques. À rejouer avec le compte de démonstration.
 2. **Fermeture RGPD du rôle `authenticated`** : faite sur la branche (migration
    `20261111101000` étendue — vue `hike_sessions_participant`, colonnes brûlantes retirées au
    rôle authenticated, huit lecteurs migrés, invariant `tests/security/hike-sessions-raw-access.spec.ts`),
@@ -213,6 +213,36 @@ Deuxième vague, même jour, pour finir ce qui restait du lot 2 et du lot 3 de l
 5. **Recette non faite** : iPhone réel, WebKit (binaire indisponible), et le signal de bord du
    cockpit n'est couvert qu'en tests unitaires/RTL (pas de parcours Playwright sur
    `/randonnee-active`, qui exige une session GPS réelle).
+
+### Mise en production (2026-11-11)
+
+- Branche `claude/kind-bell-bfyt69` fusionnée dans `main` (fast-forward, commit `de5c3872`),
+  déployée en production (`dpl_D9RN76zfq7o58fEdGGZgStJd31dy`, état READY). Alias de production :
+  `koosmoweb.fr`, `www.koosmoweb.fr`, `kitduvoyageur-1783951966810-ruddy.vercel.app`.
+- `NEXT_PUBLIC_CARNET_V2=true` et `NEXT_PUBLIC_COMMUNAUTE_V2=true` en production (déploiement en
+  deux temps : Carnet v2 + hub + RGPD d'abord, puis activation de la Communauté v2 après
+  application de ses 9 migrations, second déploiement `dpl_9EKENqRypeWsDUNmQseRZonF7bmD` READY).
+- **9 migrations Communauté v2 appliquées** : lots A (recherche), B (géo-feeds), C (colonnes
+  sorties), D (adhésion clubs), E (créations atomiques), F (stories), phase 2 liste d'attente,
+  phase 2 confidentialité des clubs, FID-067 (pays du feed). Vérifié : `community_carnets_feed`,
+  `community_clubs_feed`, `community_events_feed`, `community_events_agenda`, `community_search`,
+  `community_search_trending`, `create_carnet_v2`, `join_club`/`leave_club`,
+  `join_event`/`leave_event` présents.
+- **Migration RGPD `20261111101000` appliquée en production** juste après le passage READY du
+  code adapté. Vérifié en base : 2 vues, `anon` sans table mais avec la vue publique, sans vue
+  participant ; `authenticated` sans `positions_geojson` mais avec les colonnes neutres et la vue
+  participant ; vue publique 34 lignes.
+- Vérifications de production (session anonyme réelle, données réelles) : `/connexion` 200 ;
+  `/carnets` protégé renvoie `connexion?next=/carnets` ; **`/carnets` 200 avec « Carnets de bord »
+  et « En route maintenant »** (hub en ligne) ; `/communaute` 200 (tiroirs v2) ; fiche publique
+  `/carnets/749e…` 200, racine v2 et bouton « Ouvrir le carnet », titre réel du carnet ; panier,
+  compte et connexion inchangés. **0 erreur runtime** sur les 20 dernières minutes (Vercel).
+- Rollback prêt : redéploiement du déploiement précédent (`dpl_Aqd4EmcSwdnaRXh6WSM4AfHmG7nX`,
+  commit `571142e5`) ou `git revert de5c3872` ; ne pas annuler la migration RGPD sans revenir
+  d'abord au code précédent (les vues servent la fiche et les sorties).
+- Migrations Communauté v2 déjà appliquées en production (additives, sans effet tant que le
+  drapeau est false) : lot C (colonnes sorties), lot D (adhésion clubs), lot F (stories),
+  phase 2 liste d'attente, phase 2 confidentialité des clubs.
 
 ### Dernières finitions (3e vague)
 
