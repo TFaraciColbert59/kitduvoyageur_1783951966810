@@ -46,6 +46,7 @@ import type { MomentType } from '@/features/carnet/detail/momentTypes';
 import { dayMetric, resolveDayStats, selectDayData } from '@/features/carnet/detail/dayView';
 import { isParticipantRole } from '@/features/carnet/detail/viewerRole';
 import { CarnetAltitude } from './CarnetAltitude';
+import { CarnetBeats, CarnetEveningSummary, CarnetProgression } from './CarnetSuivi';
 import { CarnetAccountDrawer, NOTIF_PREFS, useNotifPref } from './CarnetAccountDrawer';
 import type { CarnetEditTarget } from './CarnetEditSheet';
 import {
@@ -1148,6 +1149,10 @@ export function CarnetDrawerV2({
           const signal = detail.livePosition?.recordedAt ?? detail.publicZone?.recordedAt ?? null;
           return (
             <div style={stackWrap}>
+              {/* Lot 2 du suivi (maquette « suivre pendant le voyage ») : la
+                  progression et les battements sont le suivi à froid, le
+                  résumé du soir le rattrapage de la journée terminée. */}
+              <CarnetProgression detail={detail} />
               <div className="lkdv-sig">
                 <Radio size={18} aria-hidden />
                 <span>
@@ -1163,6 +1168,15 @@ export function CarnetDrawerV2({
                   </span>
                 </span>
               </div>
+              <CarnetBeats
+                detail={detail}
+                activeDay={activeDay}
+                onSelectDay={(day) => onDayPick?.(day)}
+              />
+              <CarnetEveningSummary
+                detail={detail}
+                onOpenDay={(day) => onDayPick?.(day)}
+              />
               <h3 className="lkdv-h5">Me prévenir</h3>
               <div role="radiogroup" aria-label="Notifications" style={{ display: 'grid', gap: 6 }}>
                 {NOTIF_PREFS.map(([label, hint], i) => (
