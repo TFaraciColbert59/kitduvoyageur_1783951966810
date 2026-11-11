@@ -206,9 +206,10 @@ Deuxième vague, même jour, pour finir ce qui restait du lot 2 et du lot 3 de l
    `20261111101000` étendue — vue `hike_sessions_participant`, colonnes brûlantes retirées au
    rôle authenticated, huit lecteurs migrés, invariant `tests/security/hike-sessions-raw-access.spec.ts`),
    **à appliquer avec le déploiement** : le code en production lit encore la table brute.
-3. **Galerie plein écran et vidéo** : la visionneuse du moment (`CarnetPostSheet`) et la galerie
-   de la lentille Médias affichent les images ; une vidéo s'y ouvre encore comme une image. Le
-   fil et les tuiles la lisent désormais, la visionneuse plein écran reste à adapter.
+3. **Galerie plein écran et vidéo** : la visionneuse du moment (`CarnetPostSheet`, via
+   `CommunityFeedPost`) rend déjà une vidéo en boucle muette, sans contrôle de lecture ni de son
+   au toucher ; le fil et les tuiles ont désormais leurs propres contrôles 44 px. Une lecture
+   plein écran avec son reste à ajouter (le son est toujours coupé par défaut).
 4. **Sons d'ambiance** (proposition n° 32) : la note vocale existe (MediaRecorder, onde,
    transcription absente) ; l'enregistrement d'ambiance distinct n'est pas fait.
 5. **Décisions déjà listées par la session précédente** restent à Tony : édition (spec vs crayon),
