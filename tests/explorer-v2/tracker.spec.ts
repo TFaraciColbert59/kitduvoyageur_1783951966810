@@ -3,10 +3,8 @@ import {
   ActivityTracker,
   AUTO_PAUSE_BY_SPORT,
   AUTO_PAUSE_DISABLED,
-  autoPauseConfigForSport,
   averageSpeedKmh,
-  resolveAutoPauseConfig,
-  type AutoPauseEvent,
+  type AutoPauseConfig,
   type GpsFix,
 } from '@/features/explorer-v2/activity/tracker';
 import type { Sport } from '@/features/explorer-v2/state/types';
@@ -134,6 +132,31 @@ const LAT0 = 45.92;
 const LNG0 = 6.87;
 const M_PER_DEG_LAT = 111320;
 
+const SPORT_IDS: Sport[] = [
+  'course',
+  'rando',
+  'velo',
+  'kayak',
+  'trail',
+  'ski',
+  'escalade',
+  'famille',
+  'bivouac',
+];
+
+const MOTION_AUTO_PAUSE: AutoPauseConfig = {
+  enabled: true,
+  speedThresholdMs: 0.2,
+  durationS: 20,
+  resumeSpeedThresholdMs: 0.5,
+  resumeDurationS: 5,
+  maxFixGapS: 120,
+};
+
+function autoPause(overrides: Partial<AutoPauseConfig> = {}): AutoPauseConfig {
+  return { ...MOTION_AUTO_PAUSE, ...overrides };
+}
+
 interface Segment {
   durationS: number;
   speedMs: number;
@@ -174,128 +197,102 @@ function buildSequence(segments: Segment[]): GpsFix[] {
   return fixes;
 }
 
-function at(t: number, distanceM: number, speedMs: number, acc = 5): GpsFix {
+function at(t: number, distanceM: number, speedMs: number, acc = 5, ele = 1200): GpsFix {
   return {
     t,
     lat: LAT0 + distanceM / M_PER_DEG_LAT,
     lng: LNG0,
-    ele: 1200,
+    ele,
     acc,
     speed: speedMs,
   };
 }
 
-function feed(tracker: ActivityTracker, fixes: GpsFix[]) {
-  let state = tracker.state;
-  for (const fix of fixes) state = tracker.addFix(fix);
-  return state;
+interface FeedResult {
+  state: ReturnType<ActivityTracker['addFix']>;
+  pauses: number;
+  resumes: number;
 }
 
-const SPORT_IDS: Sport[] = [
-  'course',
-  'rando',
-  'velo',
-  'kayak',
-  'trail',
-  'ski',
-  'escalade',
-  'famille',
-  'bivouac',
-];
+function feed(tracker: ActivityTracker, fixes: GpsFix[]): FeedResult {
+  let state = tracker.state;
+  let pauses = 0;
+  let resumes = 0;
+  for (const fix of fixes) {
+    const wasPaused = state.autoPaused;
+    state = tracker.addFix(fix);
+    if (!wasPaused && state.autoPaused) pauses += 1;
+    if (wasPaused && !state.autoPaused) resumes += 1;
+  }
+  return { state, pauses, resumes };
+}
 
 describe('explorer-v2 · auto-pause', () => {
-  it('est désactivée par défaut et reste strictement compatible avec l’historique', () => {
+  it('est désactivée par défaut et compatible avec l’historique', () => {
     const fixes = buildSequence([
       { durationS: 60, speedMs: 1.2, stepS: 5 },
       { durationS: 600, speedMs: 0, stepS: 10 },
       { durationS: 60, speedMs: 1.2, stepS: 5 },
     ]);
 
-    const historicalTracker = new ActivityTracker();
-    const historical = feed(historicalTracker, fixes);
-    const explicitOff = feed(new ActivityTracker({ autoPause: false }), fixes);
-    const sportOff = feed(
-      new ActivityTracker({ sport: 'rando', autoPause: { enabled: false } }),
-      fixes
-    );
+    const historical = feed(new ActivityTracker(), fixes);
+    const disabled = feed(new ActivityTracker(AUTO_PAUSE_DISABLED), fixes);
 
-    for (const metrics of [explicitOff, sportOff]) {
-      expect(metrics.distanceM).toBe(historical.distanceM);
-      expect(metrics.movingS).toBe(historical.movingS);
-      expect(metrics.elevGainM).toBe(historical.elevGainM);
-      expect(metrics.rejected).toBe(historical.rejected);
-      expect(metrics.autoPause.enabled).toBe(false);
-      expect(metrics.autoPaused).toBe(false);
-      expect(metrics.autoPause.pauseCount).toBe(0);
-    }
-
-    // Même une longue immobilité ne crée aucun événement quand c'est désactivé.
-    expect(historicalTracker.autoPauseEvents).toHaveLength(0);
+    expect(disabled.state.distanceM).toBe(historical.state.distanceM);
+    expect(disabled.state.movingS).toBe(historical.state.movingS);
+    expect(disabled.state.elevGainM).toBe(historical.state.elevGainM);
+    expect(disabled.state.rejected).toBe(historical.state.rejected);
+    expect(disabled.state.autoPaused).toBe(false);
+    expect(disabled.pauses).toBe(0);
     expect(AUTO_PAUSE_DISABLED.enabled).toBe(false);
   });
 
-  it('expose un profil par sport, avec surcharge et désactivation réversibles', () => {
+  it('expose un profil cohérent pour chaque sport', () => {
     for (const sport of SPORT_IDS) {
       const profile = AUTO_PAUSE_BY_SPORT[sport];
-      expect(profile.enabled).toBe(true);
-      expect(profile.durationS).toBeGreaterThan(0);
-      expect(profile.resumeSpeedThresholdMs).toBeGreaterThanOrEqual(profile.speedThresholdMs);
-      expect(autoPauseConfigForSport(sport)).toEqual(profile);
+      expect(profile.enabled, sport).toBe(true);
+      expect(profile.durationS, sport).toBeGreaterThan(0);
+      expect(profile.resumeSpeedThresholdMs, sport).toBeGreaterThanOrEqual(
+        profile.speedThresholdMs
+      );
     }
 
     expect(AUTO_PAUSE_BY_SPORT.velo.durationS).toBeLessThan(AUTO_PAUSE_BY_SPORT.rando.durationS);
     expect(AUTO_PAUSE_BY_SPORT.velo.speedThresholdMs).toBeGreaterThan(
       AUTO_PAUSE_BY_SPORT.rando.speedThresholdMs
     );
-
-    expect(resolveAutoPauseConfig('rando', false).enabled).toBe(false);
-    const overridden = resolveAutoPauseConfig('rando', { durationS: 10, enabled: false });
-    expect(overridden.enabled).toBe(false);
-    expect(overridden.durationS).toBe(10);
   });
 
   it('applique le seuil et la temporisation propres à chaque sport', () => {
     for (const sport of SPORT_IDS) {
       const profile = AUTO_PAUSE_BY_SPORT[sport];
       const movingSpeed = Math.max(profile.resumeSpeedThresholdMs * 2, 0.8);
-      const tracker = new ActivityTracker({ sport, autoPause: true });
-      const fixes = buildSequence([
-        { durationS: 5, speedMs: movingSpeed, stepS: 1 },
-        // Laisse largement dépasser le délai du sport.
-        { durationS: profile.durationS + 10, speedMs: 0, stepS: 5 },
-        // Mouvement sous le seuil de reprise : la pause tient.
-        { durationS: 15, speedMs: profile.resumeSpeedThresholdMs * 0.5, stepS: 1 },
-        // Mouvement continu au-dessus du seuil : la reprise se fait.
-        {
-          durationS: profile.resumeDurationS + 2,
-          speedMs: profile.resumeSpeedThresholdMs * 1.5,
-          stepS: 1,
-        },
-      ]);
+      const tracker = new ActivityTracker(profile);
+      const result = feed(
+        tracker,
+        buildSequence([
+          { durationS: 5, speedMs: movingSpeed, stepS: 1 },
+          // Laisse largement dépasser le délai du sport.
+          { durationS: profile.durationS + 10, speedMs: 0, stepS: 5 },
+          // Mouvement sous le seuil de reprise : la pause tient.
+          { durationS: 15, speedMs: profile.resumeSpeedThresholdMs * 0.5, stepS: 1 },
+          // Mouvement continu au-dessus du seuil : la reprise se fait.
+          {
+            durationS: profile.resumeDurationS + 2,
+            speedMs: profile.resumeSpeedThresholdMs * 1.5,
+            stepS: 1,
+          },
+        ])
+      );
 
-      const state = feed(tracker, fixes);
-      expect(state.autoPause.pauseCount, sport).toBe(1);
-      expect(state.autoPause.resumeCount, sport).toBe(1);
-      expect(state.autoPaused, sport).toBe(false);
-      expect(
-        tracker.autoPauseEvents.map((event) => event.type),
-        sport
-      ).toEqual(['pause', 'resume']);
+      expect(result.pauses, sport).toBe(1);
+      expect(result.resumes, sport).toBe(1);
+      expect(result.state.autoPaused, sport).toBe(false);
     }
   });
 
-  it('détecte l’arrêt après la temporisation du sport, pas avant', () => {
-    const tracker = new ActivityTracker({
-      sport: 'rando',
-      autoPause: {
-        enabled: true,
-        speedThresholdMs: 0.2,
-        durationS: 60,
-        resumeSpeedThresholdMs: 0.5,
-        resumeDurationS: 5,
-        maxFixGapS: 120,
-      },
-    });
+  it('détecte l’arrêt après la temporisation, pas avant', () => {
+    const tracker = new ActivityTracker(autoPause({ durationS: 60 }));
     const fixes = buildSequence([
       { durationS: 10, speedMs: 1, stepS: 5 },
       { durationS: 70, speedMs: 0, stepS: 10 },
@@ -304,35 +301,14 @@ describe('explorer-v2 · auto-pause', () => {
     let state = tracker.state;
     for (const fix of fixes) {
       state = tracker.addFix(fix);
-      if (fix.t === 60_000) {
-        expect(state.autoPaused).toBe(false);
-        expect(state.autoPause.stoppedS).toBe(50);
-      }
+      if (fix.t === 60_000) expect(state.autoPaused).toBe(false);
     }
 
     expect(state.autoPaused).toBe(true);
-    expect(state.isAutoPaused).toBe(true);
-    expect(state.autoPause.pauseCount).toBe(1);
-    expect(state.autoPause.stoppedS).toBe(60);
-    expect(tracker.autoPauseEvents).toEqual([
-      { type: 'pause', t: 70_000, sport: 'rando', afterS: 60, reason: 'stop-delay' },
-    ]);
   });
 
   it('ne reprend qu’après un mouvement continu au-dessus du seuil', () => {
-    const events: AutoPauseEvent[] = [];
-    const tracker = new ActivityTracker({
-      sport: 'rando',
-      autoPause: {
-        enabled: true,
-        speedThresholdMs: 0.2,
-        durationS: 20,
-        resumeSpeedThresholdMs: 0.5,
-        resumeDurationS: 5,
-        maxFixGapS: 120,
-      },
-      onAutoPause: (event) => events.push(event),
-    });
+    const tracker = new ActivityTracker(autoPause({ durationS: 20, resumeDurationS: 5 }));
     const fixes = buildSequence([
       { durationS: 10, speedMs: 1, stepS: 1 },
       { durationS: 30, speedMs: 0, stepS: 1 },
@@ -342,89 +318,50 @@ describe('explorer-v2 · auto-pause', () => {
     let state = tracker.state;
     for (const fix of fixes) {
       state = tracker.addFix(fix);
-      if (fix.t === 44_000) {
-        expect(state.autoPaused).toBe(true);
-        expect(state.autoPause.resumingS).toBe(4);
-      }
-      if (fix.t === 45_000) {
-        expect(state.autoPaused).toBe(false);
-        expect(state.autoPause.resumeCount).toBe(1);
-      }
+      if (fix.t === 44_000) expect(state.autoPaused).toBe(true);
+      if (fix.t === 45_000) expect(state.autoPaused).toBe(false);
     }
 
-    expect(state.autoPause.pauseCount).toBe(1);
-    expect(events.map((event) => event.type)).toEqual(['pause', 'resume']);
-    expect(events[1]).toMatchObject({ t: 45_000, afterS: 5, reason: 'resume-delay' });
+    expect(state.autoPaused).toBe(false);
   });
 
   it('ne clignote pas quand la vitesse oscille autour des seuils', () => {
-    const tracker = new ActivityTracker({
-      sport: 'trail',
-      autoPause: {
-        enabled: true,
-        speedThresholdMs: 0.2,
-        durationS: 30,
-        resumeSpeedThresholdMs: 0.5,
-        resumeDurationS: 10,
-        maxFixGapS: 120,
-      },
-    });
+    const config = autoPause({ durationS: 30, resumeDurationS: 10 });
     const oscillation: Segment[] = [];
     for (let index = 0; index < 5; index += 1) {
       oscillation.push({ durationS: 20, speedMs: 0.1, stepS: 5 });
       oscillation.push({ durationS: 5, speedMs: 1, stepS: 1 });
     }
 
-    const beforePause = buildSequence([{ durationS: 10, speedMs: 1, stepS: 1 }, ...oscillation]);
-    let state = feed(tracker, beforePause);
-    expect(state.autoPaused).toBe(false);
-    expect(state.autoPause.pauseCount).toBe(0);
+    const beforePause = feed(
+      new ActivityTracker(config),
+      buildSequence([{ durationS: 10, speedMs: 1, stepS: 1 }, ...oscillation])
+    );
+    expect(beforePause.pauses).toBe(0);
 
-    // Pause franche, puis micro-mouvements trop courts pour reprendre.
     const pausedOscillation: Segment[] = [];
     for (let index = 0; index < 3; index += 1) {
       pausedOscillation.push({ durationS: 5, speedMs: 1, stepS: 1 });
       pausedOscillation.push({ durationS: 10, speedMs: 0.1, stepS: 5 });
     }
-    const afterPause = buildSequence([
-      { durationS: 35, speedMs: 0, stepS: 5 },
-      ...pausedOscillation,
-      { durationS: 12, speedMs: 1, stepS: 1 },
-    ]);
-    const pausedTracker = new ActivityTracker({
-      sport: 'trail',
-      autoPause: {
-        enabled: true,
-        speedThresholdMs: 0.2,
-        durationS: 30,
-        resumeSpeedThresholdMs: 0.5,
-        resumeDurationS: 10,
-        maxFixGapS: 120,
-      },
-    });
-    state = feed(pausedTracker, afterPause);
+    const afterPause = feed(
+      new ActivityTracker(config),
+      buildSequence([
+        { durationS: 35, speedMs: 0, stepS: 5 },
+        ...pausedOscillation,
+        { durationS: 12, speedMs: 1, stepS: 1 },
+      ])
+    );
 
-    expect(state.autoPause.pauseCount).toBe(1);
-    expect(state.autoPause.resumeCount).toBe(1);
-    expect(state.autoPaused).toBe(false);
-    expect(pausedTracker.autoPauseEvents).toHaveLength(2);
+    expect(afterPause.pauses).toBe(1);
+    expect(afterPause.resumes).toBe(1);
+    expect(afterPause.state.autoPaused).toBe(false);
   });
 
   it('ignore les fixes rejetés sans avancer ni reculer la détection', () => {
-    const tracker = new ActivityTracker({
-      sport: 'rando',
-      autoPause: {
-        enabled: true,
-        speedThresholdMs: 0.2,
-        durationS: 20,
-        resumeSpeedThresholdMs: 0.5,
-        resumeDurationS: 3,
-        maxFixGapS: 120,
-      },
-    });
-
+    const tracker = new ActivityTracker(autoPause({ durationS: 20, resumeDurationS: 3 }));
     const moving = buildSequence([{ durationS: 10, speedMs: 1, stepS: 1 }]);
-    let state = feed(tracker, moving);
+    let state = feed(tracker, moving).state;
     const distanceBeforeRejections = state.distanceM;
 
     // Saut impossible (dt <= 2 s) puis précision insuffisante : les deux sont rejetés.
@@ -433,7 +370,6 @@ describe('explorer-v2 · auto-pause', () => {
     expect(state.rejected).toBe(2);
     expect(state.distanceM).toBe(distanceBeforeRejections);
     expect(state.autoPaused).toBe(false);
-    expect(state.autoPause.stoppedS).toBe(0);
 
     // Un arrêt réel, postérieur aux rejets, finit par déclencher la pause.
     state = tracker.addFix(at(22_000, 10, 0));
@@ -448,114 +384,91 @@ describe('explorer-v2 · auto-pause', () => {
     state = tracker.addFix(at(43_000, 10, 10, 120));
     expect(state.rejected).toBe(3);
     expect(state.autoPaused).toBe(true);
-    expect(state.autoPause.resumingS).toBe(0);
 
     // Le fix valide suivant le rejet ne compte pas le trou : la reprise exige
     // à nouveau toute la temporisation.
     state = tracker.addFix(at(44_000, 11, 1));
     expect(state.autoPaused).toBe(true);
-    expect(state.autoPause.resumingS).toBe(0);
     state = tracker.addFix(at(45_000, 12, 1));
     expect(state.autoPaused).toBe(true);
     state = tracker.addFix(at(46_000, 13, 1));
     expect(state.autoPaused).toBe(true);
     state = tracker.addFix(at(47_000, 14, 1));
     expect(state.autoPaused).toBe(false);
-    expect(state.autoPause.resumeCount).toBe(1);
   });
 
   it('traite une longue interruption comme une inconnue, jamais comme un arrêt', () => {
-    const config = {
-      enabled: true,
-      speedThresholdMs: 0.2,
-      durationS: 20,
-      resumeSpeedThresholdMs: 0.5,
-      resumeDurationS: 5,
-      maxFixGapS: 30,
-    };
+    const config = autoPause({ durationS: 20, maxFixGapS: 30 });
 
-    // Actif avant la coupure : rester actif, sans temporisation géante.
-    const active = new ActivityTracker({ sport: 'rando', autoPause: config });
-    let state = feed(
-      active,
+    const active = feed(
+      new ActivityTracker(config),
       buildSequence([
         { durationS: 10, speedMs: 1, stepS: 1, gapAfterS: 600 },
         { durationS: 5, speedMs: 1, stepS: 1 },
       ])
     );
-    expect(state.autoPaused).toBe(false);
-    expect(state.autoPause.pauseCount).toBe(0);
-    expect(state.autoPause.stoppedS).toBe(0);
+    expect(active.pauses).toBe(0);
 
-    // En pause avant la coupure : un premier fix en mouvement reprend.
-    const paused = new ActivityTracker({ sport: 'rando', autoPause: config });
-    state = feed(
-      paused,
+    const paused = feed(
+      new ActivityTracker(config),
       buildSequence([
         { durationS: 30, speedMs: 0, stepS: 1, gapAfterS: 600 },
         { durationS: 2, speedMs: 1, stepS: 1 },
       ])
     );
-    expect(state.autoPaused).toBe(false);
-    expect(state.autoPause.resumeCount).toBe(1);
-    expect(paused.autoPauseEvents.at(-1)).toMatchObject({
-      type: 'resume',
-      reason: 'gps-gap',
-      afterS: 0,
-    });
+    expect(paused.pauses).toBe(1);
+    expect(paused.resumes).toBe(1);
+    expect(paused.state.autoPaused).toBe(false);
 
     // Actif puis coupure puis arrêt : le trou ne déclenche pas la pause à lui seul.
-    const gapThenStop = new ActivityTracker({ sport: 'rando', autoPause: config });
-    state = feed(
-      gapThenStop,
+    const gapThenStop = feed(
+      new ActivityTracker(config),
       buildSequence([
         { durationS: 10, speedMs: 1, stepS: 1, gapAfterS: 600 },
         { durationS: 25, speedMs: 0, stepS: 5 },
       ])
     );
-    expect(state.autoPause.pauseCount).toBe(1);
-    expect(state.autoPause.stoppedS).toBe(20);
+    expect(gapThenStop.pauses).toBe(1);
   });
 
-  it('reconfigure le sport ou coupe la détection sans toucher aux métriques', () => {
-    const tracker = new ActivityTracker({ sport: 'rando', autoPause: true });
-    expect(tracker.autoPauseConfig.durationS).toBe(AUTO_PAUSE_BY_SPORT.rando.durationS);
-
-    const before = feed(tracker, buildSequence([{ durationS: 10, speedMs: 1, stepS: 1 }]));
+  it('repart d’une nouvelle borne après une pause manuelle plus courte que maxFixGapS', () => {
+    // 1. Métriques : le premier fix après la pause ne compte ni distance,
+    // ni temps de mouvement, ni dénivelé du trou.
+    const metricsTracker = new ActivityTracker(autoPause({ durationS: 20, maxFixGapS: 120 }));
+    const before = feed(
+      metricsTracker,
+      buildSequence([{ durationS: 10, speedMs: 1, stepS: 1 }])
+    ).state;
     const distance = before.distanceM;
     const movingS = before.movingS;
+    const elevGain = before.elevGainM;
 
-    tracker.setSport('velo');
-    expect(tracker.autoPauseConfig.durationS).toBe(AUTO_PAUSE_BY_SPORT.velo.durationS);
-    expect(tracker.autoPauseConfig.speedThresholdMs).toBe(
-      AUTO_PAUSE_BY_SPORT.velo.speedThresholdMs
-    );
-    expect(tracker.state.distanceM).toBe(distance);
-    expect(tracker.state.movingS).toBe(movingS);
+    metricsTracker.breakContinuity();
+    let state = metricsTracker.addFix(at(18_000, distance + 50, 1, 5, 1300));
+    expect(state.distanceM).toBe(distance);
+    expect(state.movingS).toBe(movingS);
+    expect(state.elevGainM).toBe(elevGain);
+    expect(state.lastFix?.t).toBe(18_000);
+    expect(state.autoPaused).toBe(false);
 
-    tracker.setAutoPause(false);
-    expect(tracker.state.autoPause.enabled).toBe(false);
-    expect(tracker.state.autoPaused).toBe(false);
-    expect(tracker.state.distanceM).toBe(distance);
-    expect(tracker.state.movingS).toBe(movingS);
+    // 2. Temporisation : la pause manuelle de 8 s (< 120 s) n'est pas comptée.
+    const timerTracker = new ActivityTracker(autoPause({ durationS: 20, maxFixGapS: 120 }));
+    feed(timerTracker, buildSequence([{ durationS: 10, speedMs: 1, stepS: 1 }]));
+    timerTracker.breakContinuity();
+    state = timerTracker.addFix(at(18_000, 60, 0, 5, 1300));
 
-    // Réarmement après une pause manuelle : l'état retombe, la configuration reste.
-    const pausable = new ActivityTracker({
-      sport: 'rando',
-      autoPause: {
-        enabled: true,
-        speedThresholdMs: 0.2,
-        durationS: 5,
-        resumeSpeedThresholdMs: 0.5,
-        resumeDurationS: 3,
-        maxFixGapS: 120,
-      },
-    });
-    expect(
-      feed(pausable, buildSequence([{ durationS: 10, speedMs: 0, stepS: 1 }])).autoPaused
-    ).toBe(true);
-    pausable.resetAutoPause();
-    expect(pausable.state.autoPaused).toBe(false);
-    expect(pausable.autoPauseConfig.durationS).toBe(5);
+    for (let t = 19; t <= 33; t += 1) {
+      state = timerTracker.addFix(at(t * 1000, 60, 0, 5, 1300));
+    }
+    expect(state.autoPaused).toBe(false);
+
+    for (let t = 34; t <= 39; t += 1) {
+      state = timerTracker.addFix(at(t * 1000, 60, 0, 5, 1300));
+    }
+    expect(state.autoPaused).toBe(true);
+
+    // La pause manuelle prend le relais et efface l'état automatique.
+    timerTracker.breakContinuity();
+    expect(timerTracker.state.autoPaused).toBe(false);
   });
 });
