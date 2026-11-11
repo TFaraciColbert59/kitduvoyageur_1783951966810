@@ -74,7 +74,26 @@ async function openApp(ctx: BrowserContext, scenario: Scenario, baseURL: string)
       });
     });
   }
+  if (scenario.app.weather) {
+    const byLat = scenario.app.weather;
+    await page.context().route('**/api/weather**', async (route) => {
+      const origin = route.request().headers()['origin'] ?? '*';
+      const headers = { 'access-control-allow-origin': origin, 'access-control-allow-credentials': 'true', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' };
+      if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers });
+      const url = new URL(route.request().url());
+      const day = byLat[Number(url.searchParams.get('lat')).toFixed(4)];
+      const from = url.searchParams.get('from') ?? '';
+      return route.fulfill({ status: 200, headers, json: day ? { status: 'ok', days: [{ date: from, label: day.label, code: day.code, tMaxC: day.tMaxC, tMinC: day.tMinC }] } : { status: 'unavailable', days: [] } });
+    });
+  }
   await page.addInitScript((value) => localStorage.setItem('lkdv_cookie_consent', value), CONSENT);
+  if (scenario.app.drafts) {
+    await page.addInitScript((drafts) => {
+      for (const [kind, step] of Object.entries(drafts)) {
+        localStorage.setItem(`lkdv.cv2-draft:${kind}:v1`, JSON.stringify({ version: 1, kind, updatedAt: Date.now(), values: {}, step }));
+      }
+    }, scenario.app.drafts);
+  }
   if (scenario.app.now) await page.clock.install({ time: new Date(scenario.app.now) });
   else await freezeClock(page);
   await page.goto(scenario.app.url, { waitUntil: 'domcontentloaded' });

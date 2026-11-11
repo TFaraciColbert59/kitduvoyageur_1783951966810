@@ -59,6 +59,16 @@ export interface Scenario {
      * maquette : le banc compare une structure, pas des jeux de données différents).
      */
     rpc?: Record<string, unknown>;
+    /**
+     * Prévision `/api/weather` par latitude (4 décimales) : la météo des tuiles de sorties de la
+     * maquette est une donnée par sortie (`tmin`, `tmax`, état), pas celle, unique, du mock.
+     */
+    weather?: Record<string, { label: string; code: number; tMaxC: number; tMinC: number }>;
+    /**
+     * Brouillons de création posés avant le chargement (`lkdv.cv2-draft:<type>:v1`) : l'étape
+     * restaurée est l'étape ouverte, sans valider les précédentes (valeurs vides, comme la maquette).
+     */
+    drafts?: Record<string, number>;
     /** Élément dont l'hydratation React conditionne les étapes (sélecteur CSS). */
     hydrate?: string;
     /** Horloge figée de la page (ISO) ; sinon l'horloge du banc Communauté. */
