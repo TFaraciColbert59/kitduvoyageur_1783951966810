@@ -47,6 +47,47 @@ function displayHandle(row: ProfileRow | undefined, fallbackId: string) {
   return row?.handle?.trim() || fallbackId.slice(0, 8);
 }
 
+/**
+ * La policy `user_blocks_select_own` expose à une session les lignes où elle
+ * est bloqueuse **ou** bloquée. Les deux sens sont donc lisibles avec le client
+ * de session, sans service_role : on interroge les deux orientations.
+ */
+async function hasBlockBetween(
+  supabase: SupabaseClient,
+  userId: string,
+  targetId: string
+): Promise<boolean> {
+  const [{ data: blockedByMe, error: blockedByMeError }, { data: blockedMe, error: blockedMeError }] =
+    await Promise.all([
+      supabase
+        .from('user_blocks')
+        .select('blocker_id')
+        .eq('blocker_id', userId)
+        .eq('blocked_id', targetId)
+        .maybeSingle(),
+      supabase
+        .from('user_blocks')
+        .select('blocker_id')
+        .eq('blocker_id', targetId)
+        .eq('blocked_id', userId)
+        .maybeSingle(),
+    ]);
+  if (blockedByMeError) throw blockedByMeError;
+  if (blockedMeError) throw blockedMeError;
+  return Boolean(blockedByMe || blockedMe);
+}
+
+async function upsertFollow(
+  supabase: SupabaseClient,
+  userId: string,
+  targetId: string
+): Promise<void> {
+  const { error } = await supabase
+    .from('user_follows')
+    .upsert({ follower_id: userId, following_id: targetId }, { onConflict: 'follower_id,following_id' });
+  if (error) throw error;
+}
+
 export async function loadReseau(
   supabase: SupabaseClient,
   userId: string,
@@ -136,25 +177,58 @@ export async function followUser(
   userId: string,
   targetId: string
 ): Promise<{ status: 'following' | 'requested' }> {
-  const { data: target } = await supabase
+  if (targetId === userId) throw new Error('self');
+  if (await hasBlockBetween(supabase, userId, targetId)) throw new Error('blocked');
+
+  const { data: target, error: targetError } = await supabase
     .from('user_profiles')
     .select('profile_visibility')
     .eq('id', targetId)
     .maybeSingle();
+  if (targetError) throw targetError;
+  if (!target) throw new Error('target_not_found');
 
-  if (target?.profile_visibility === 'prive') {
+  if (target.profile_visibility === 'prive') {
+    // Le demandeur voit sa propre demande (policy `follow_requests_select_own`).
+    // On ne réécrit donc jamais une demande existante : un upsert nu repasserait
+    // une demande acceptée ou refusée en `pending`.
+    const { data: existing, error: requestError } = await supabase
+      .from('follow_requests')
+      .select('status')
+      .eq('requester_id', userId)
+      .eq('target_id', targetId)
+      .maybeSingle();
+    if (requestError) throw requestError;
+
+    if (existing?.status === 'pending') return { status: 'requested' };
+    if (existing?.status === 'accepted') {
+      // Un statut historique n'autorise rien : après un unfollow, la relation
+      // a été révoquée et le statut `accepted` peut subsister (legacy). On
+      // vérifie donc la relation actuelle et on ne recrée jamais un suivi à
+      // partir du seul statut.
+      const { data: currentFollow, error: followError } = await supabase
+        .from('user_follows')
+        .select('follower_id')
+        .eq('follower_id', userId)
+        .eq('following_id', targetId)
+        .maybeSingle();
+      if (followError) throw followError;
+      if (!currentFollow) throw new Error('follow_request_closed');
+      return { status: 'following' };
+    }
+    if (existing) throw new Error('follow_request_closed');
+
     const { error } = await supabase.from('follow_requests').upsert(
       { requester_id: userId, target_id: targetId, status: 'pending' },
-      { onConflict: 'requester_id,target_id' }
+      // `DO NOTHING` : si une autre requête crée la ligne entre la lecture et
+      // l'écriture, on ne remplace pas son état (pending/declined).
+      { onConflict: 'requester_id,target_id', ignoreDuplicates: true }
     );
     if (error) throw error;
     return { status: 'requested' };
   }
 
-  const { error } = await supabase
-    .from('user_follows')
-    .upsert({ follower_id: userId, following_id: targetId }, { onConflict: 'follower_id,following_id' });
-  if (error) throw error;
+  await upsertFollow(supabase, userId, targetId);
   return { status: 'following' };
 }
 
@@ -170,7 +244,10 @@ export async function unfollowUser(
       .delete()
       .eq('requester_id', userId)
       .eq('target_id', targetId)
-      .eq('status', 'pending'),
+      // La révocation emporte aussi l'autorisation acceptée : elle ne doit pas
+      // rester un droit de suivi latent. Un refus (`declined`) est conservé
+      // pour empêcher sa réouverture.
+      .in('status', ['pending', 'accepted']),
   ]);
   if (followError) throw followError;
   if (requestError) throw requestError;
@@ -191,6 +268,17 @@ export async function respondFollowRequest(
     .maybeSingle();
   if (error) throw error;
   if (!request) throw new Error('request_not_found');
+  if (request.status !== 'pending') {
+    // Une demande acceptée/refusée est historique : la rejouer ne doit ni
+    // recréer un suivi (accepted) ni rouvrir une décision (declined).
+    throw new Error('request_not_pending');
+  }
+
+  if (action === 'accept' && (await hasBlockBetween(supabase, userId, request.requester_id))) {
+    // Un blocage posé après la demande interdit de créer la relation ; le
+    // refus reste possible pour vider la demande.
+    throw new Error('blocked');
+  }
 
   if (action === 'accept') {
     const followRow = { follower_id: request.requester_id, following_id: request.target_id };
