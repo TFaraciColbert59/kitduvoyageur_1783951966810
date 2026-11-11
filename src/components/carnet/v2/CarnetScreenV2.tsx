@@ -510,6 +510,7 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
   );
   const dayTraces = useMemo(() => buildDayTraces(detail.days), [detail.days]);
 
+
   /* Sans point GPS par jour (anciens carnets), on garde le départ/l'arrivée de la
      trace complète et les nuits : aucune géométrie inventée. */
   const mapMarkers = useMemo(() => {
@@ -732,6 +733,29 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
 
 
   const showLive = layers.showLive;
+  /* Départ réel du carnet, quand aucune trace n'est dessinable : position live
+     du participant, zone publique approximative du visiteur, sinon la première
+     nuit géolocalisée, sinon le lieu du carnet. La carte ne reste plus au
+     centre par défaut de la France. */
+  const homeFocus = useMemo(() => {
+    if (showLive && live.livePosition) {
+      return { lat: live.livePosition.lat, lng: live.livePosition.lng };
+    }
+    if (
+      showLive &&
+      live.publicZone &&
+      typeof live.publicZone.centerLat === 'number' &&
+      typeof live.publicZone.centerLng === 'number'
+    ) {
+      return { lat: live.publicZone.centerLat, lng: live.publicZone.centerLng };
+    }
+    const night = (detail.nights ?? []).find((n) => n.lat != null && n.lng != null);
+    if (night) return { lat: night.lat as number, lng: night.lng as number };
+    if (detail.place.lat != null && detail.place.lng != null) {
+      return { lat: detail.place.lat, lng: detail.place.lng };
+    }
+    return null;
+  }, [showLive, live, detail.nights, detail.place]);
   const zoneLabel = live.publicZone?.zoneLabel ?? detail.place.locality ?? null;
 
   return (
@@ -887,6 +911,17 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
               : null
           }
           markers={mapMarkers}
+          homeFocus={homeFocus}
+          emptyAction={
+            <button
+              type="button"
+              className="lkdv-lens-cta"
+              onClick={() => setHikeSearchOpen(true)}
+              style={{ minHeight: 44, marginTop: 10 }}
+            >
+              Rechercher une randonnée
+            </button>
+          }
         />
         {drawerOpen && !isAccountDrawer ? <CarnetMapBadge activeDay={activeDay} /> : null}
 

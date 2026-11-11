@@ -13,6 +13,7 @@ export function CompteMapState({
   onOpenOutings,
   title,
   hint,
+  action,
 }: {
   kind: CompteMapStateKind;
   onRetry?: () => void;
@@ -21,6 +22,8 @@ export function CompteMapState({
   onOpenOutings?: () => void;
   title?: string;
   hint?: string;
+  /** Action proposée sous le message (ex. rechercher une randonnée). */
+  action?: React.ReactNode;
 }) {
   const state = {
     guest: {
@@ -62,7 +65,7 @@ export function CompteMapState({
     <div className="lkdv-map-state" data-kind={kind} data-has-data={data ? 'true' : 'false'}>
       <b>{state.title}</b>
       <p>{state.hint}</p>
-      {state.cta}
+      {action ?? state.cta}
     </div>
   );
 }

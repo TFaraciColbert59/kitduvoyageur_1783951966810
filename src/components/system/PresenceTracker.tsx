@@ -18,7 +18,12 @@ export default function PresenceTracker() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    if (!user?.id) return;
+    /* Les carnets et l'Explorer s'ouvrent à des sessions anonymes : la RLS de
+       `user_presence` refuse leur écriture (`presence_essai_sans_ecriture`).
+       On ne bat que pour un vrai compte, sinon chaque ouverture d'écran
+       produisait un 403 et une erreur console. */
+    const isAnonymous = Boolean((user as { is_anonymous?: boolean } | null)?.is_anonymous);
+    if (!user?.id || isAnonymous) return;
 
     const supabase = createClient();
     const beat = async () => {

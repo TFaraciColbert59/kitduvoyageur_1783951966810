@@ -71,6 +71,10 @@ export interface CompteMapProps {
   /** État vide honnête, affiché seulement si le carnet n'a réellement aucune trace. */
   emptyTitle?: string;
   emptyHint?: string;
+  /** Coordonnée de repli quand le carnet n'a pas de trace (départ réel). */
+  homeFocus?: { lat: number; lng: number } | null;
+  /** Action proposée dans l'état vide (rechercher une randonnée). */
+  emptyAction?: React.ReactNode;
   /** Jour actif sur la fiche carnet (filtrage visuel optionnel de la trace). */
   activeDay?: number | null;
   /** Position GPS live (participant en partage direct). */
@@ -293,6 +297,8 @@ export function CompteMap({
   trace = null,
   emptyTitle,
   emptyHint,
+  homeFocus = null,
+  emptyAction = null,
   activeDay = null,
   livePosition = null,
   publicZone = null,
@@ -859,6 +865,21 @@ export function CompteMap({
     };
   }, [map, ready, isCarnet, dayTraces]);
 
+  /* Carnet sans trace : la carte se cale sur le départ réel du carnet plutôt
+     que sur le centre de la France (constat recette : carte perdue à Limoges). */
+  useEffect(() => {
+    if (!map || !ready || !isCarnet || traceBounds || !homeFocus) return;
+    if (!Number.isFinite(homeFocus.lat) || !Number.isFinite(homeFocus.lng)) return;
+    map.flyTo({
+      center: [homeFocus.lng, homeFocus.lat],
+      zoom: 11,
+      pitch: 0,
+      bearing: 0,
+      duration: prefersReducedMotion() ? 0 : 700,
+      essential: true,
+    });
+  }, [map, ready, isCarnet, traceBounds, homeFocus]);
+
   /* Cadrage du tracé du carnet : le parcours remplit la bande carte, en 3D
      (même inclinaison que la carte d'une sortie du Compte). */
   useEffect(() => {
@@ -1271,6 +1292,7 @@ export function CompteMap({
           kind="neutral"
           title={emptyTitle ?? 'Aucun tracé enregistré pour ce carnet.'}
           hint={emptyHint ?? 'L’auteur n’a pas joint de trace GPS à ce carnet.'}
+          action={emptyAction}
         />
       ) : null}
 

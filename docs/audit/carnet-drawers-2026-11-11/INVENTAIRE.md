@@ -129,3 +129,12 @@ Restent ouverts après ce lot : les fiches (moment/étape/objet/voyageur) à cap
 **Galerie complète** (`prod3/`, session visiteur réelle) : fiche, menu, tiroir du compte (`03-compte`, `03-compte-notifications`, `-partage`, `-parametres`), les 5 volets × toutes leurs lentilles (Fil : moments/médias/rencontres/nature · Route : étapes/altitude/nuit/météo · Sac : kit/verdicts/poids · Chiffres : distance/dénivelé/durée · Équipage : participants/réactions/suivre), sous-tiroirs capturés : **étape**, **objet du sac**, **voyageur**, et la liste des moments.
 
 **Limites de capture** : en session visiteur (anonyme), la visionneuse de moment plein écran et la fiche de nuit ne s'ouvrent pas au clic automatisé (elles restent accessibles aux comptes connectés) ; `Gérer` du tiroir du compte est réservé au propriétaire. À compléter en recette connectée sur iPhone.
+
+
+## 9. Derniers correctifs (2026-11-11) — fermeture des autres problèmes
+
+- **Carte sans tracé** : elle se cale désormais sur le **départ réel** du carnet (position live, zone publique, première nuit géolocalisée, sinon lieu du carnet) au lieu du centre par défaut de la France ; l'état vide propose **« Rechercher une randonnée »** (même feuille branchée sur l'API Explorer).
+- **Présence** : plus de battement `user_presence` pour une session anonyme (la RLS le refusait : 403 + erreur console à chaque ouverture d'écran). Seuls les vrais comptes battent.
+- **Verre sans flou d'arrière-plan** : repli CSS `@supports not (backdrop-filter)` — les feuilles, capsules, menus et pastilles deviennent opaques quand le navigateur ne sait pas flouter, au lieu de laisser transparaître le contenu derrière.
+- Tests : `CompteMapState` rend l'action sous le message d'état ; suite complète verte (979 tests, 102 fichiers), lint 0 erreur.
+- Restent volontairement hors périmètre : visionneuse de moment et fiche de nuit en session anonyme (données/gestes réservés aux comptes connectés dans la recette), « Gérer » réservé au propriétaire, tuiles Esri du banc fixtures (réseau du harnais, pas l'app).

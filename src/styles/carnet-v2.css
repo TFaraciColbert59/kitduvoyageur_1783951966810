@@ -2532,3 +2532,23 @@ body.lkdv-overlay-open .lkdv-floating-tabbar {
 @media (prefers-reduced-motion: reduce) {
   .lkdv-spin { animation: none; }
 }
+
+/* Repli sans flou d'arrière-plan : quand `backdrop-filter` n'existe pas (ou est
+   désactivé), les feuilles de verre laissaient voir le contenu derrière et
+   devenaient illisibles. On rend les surfaces opaques, même règle que le repli
+   « réduire la transparence ». */
+@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .lkdv-carnet-v2-root .lkdv-carnet-drawer,
+  .lkdv-carnet-v2-root .lkdv-stack-sheet,
+  .lkdv-carnet-v2-root .lkdv-lens-tabs,
+  .lkdv-carnet-v2-root .lkdv-title-pill,
+  .lkdv-carnet-v2-root .lkdv-gbtn,
+  .lkdv-carnet-v2-root .lkdv-menu-popover,
+  .lkdv-carnet-v2-root .lkdv-day-capsule,
+  .lkdv-carnet-v2-root .lkdv-live-pill,
+  .lkdv-carnet-v2-root .lkdv-carnet-acc {
+    background: var(--lkv-surface-paper, #fbfaf6) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+}
