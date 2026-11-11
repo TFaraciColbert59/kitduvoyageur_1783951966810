@@ -10,7 +10,11 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@tesseract.js-data/eng": "^1.0.0",
     "hyperframes": "^0.9.33",
-    "three": "^0.180.0"
+    "sharp": "^0.34.5",
+    "tesseract.js": "^6.0.1",
+    "three": "^0.180.0",
+    "wasm-feature-detect": "1.8.0"
   }
 }

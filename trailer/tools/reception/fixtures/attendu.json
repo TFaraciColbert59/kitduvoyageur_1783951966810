@@ -1,0 +1,58 @@
+{
+  "defauts": {
+    "img02": [
+      "ratio"
+    ],
+    "img03": [
+      "resolution"
+    ],
+    "img07": [
+      "screen-corner-out"
+    ],
+    "img18": [
+      "screen-blur",
+      "screen-uneven"
+    ],
+    "img27": [
+      "screen-spill"
+    ],
+    "img37": [
+      "screen-uneven",
+      "screen-impure"
+    ],
+    "img38": [
+      "screen-missing"
+    ],
+    "img05": [
+      "text"
+    ],
+    "img09": [
+      "name"
+    ],
+    "img10": [
+      "name"
+    ],
+    "img41": [
+      "format-mismatch"
+    ],
+    "img12": [
+      "name"
+    ],
+    "img35b": [
+      "pair35"
+    ],
+    "img16": [
+      "char-colour-absent"
+    ],
+    "img13": [
+      "char-colour-shift"
+    ],
+    "img22": [
+      "lake"
+    ]
+  },
+  "unexpected": [
+    "photo-lac.png",
+    "img35.png"
+  ]
+}
