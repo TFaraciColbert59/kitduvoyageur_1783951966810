@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
-import { ArrowRight, CalendarDays, Camera, HelpCircle, Mountain, PenLine } from 'lucide-react';
+import { ArrowRight, CalendarDays, Camera, Globe, HelpCircle, Lock, PenLine, Users } from 'lucide-react';
 import { useFormContext, useFormState } from 'react-hook-form';
 import { CommunityFeedPost } from '@/features/community/feed/CommunityFeedPost';
 import type { FeedPost } from '@/features/community/feed/useCommunityFeed';
@@ -27,19 +27,19 @@ const FORMAT_OPTIONS = [
     value: 'photo',
     label: 'Photo',
     description: 'Montrer un moment',
-    icon: <Camera size={18} aria-hidden="true" />,
+    icon: <Camera size={22} aria-hidden="true" />,
   },
   {
     value: 'billet',
     label: 'Billet',
     description: 'Raconter une histoire',
-    icon: <PenLine size={18} aria-hidden="true" />,
+    icon: <PenLine size={22} aria-hidden="true" />,
   },
   {
     value: 'question',
     label: 'Question',
     description: 'Demander à la communauté',
-    icon: <HelpCircle size={18} aria-hidden="true" />,
+    icon: <HelpCircle size={22} aria-hidden="true" />,
   },
   {
     // Vraie radio de la grille (maquette L2771/L2811) : elle ne bascule plus
@@ -47,19 +47,24 @@ const FORMAT_OPTIONS = [
     value: 'event',
     label: 'Événement',
     description: 'Donner rendez-vous',
-    icon: <CalendarDays size={18} aria-hidden="true" />,
+    icon: <CalendarDays size={22} aria-hidden="true" />,
   },
 ] as const;
 
+/** Audience : icône dans une pastille, radio à droite (maquette `AUD` L2772, `.rcard` L1174). */
 const AUDIENCE_OPTIONS = [
-  { value: 'public', label: 'Fil public', description: 'Visible par toute la communauté' },
-  { value: 'abonnies', label: 'Mes abonnés', description: 'Seuls tes abonnés le voient' },
-  { value: 'club', label: 'Un club', description: 'Réservé aux membres du club' },
+  { value: 'public', label: 'Fil public', description: 'Visible par toute la communauté', icon: <Globe size={20} aria-hidden="true" /> },
+  { value: 'abonnies', label: 'Mes abonnés', description: 'Seuls tes abonnés le voient', icon: <Users size={20} aria-hidden="true" /> },
+  { value: 'club', label: 'Un club', description: 'Réservé aux membres du club', icon: <Lock size={20} aria-hidden="true" /> },
 ] as const;
+
+/** Illustration de repli de l'aperçu (maquette `fp.art = 'meadow'`, L2840) : Photo sans média. */
+const PREVIEW_FALLBACK_ART = '/assets/images/community-preview-meadow.svg';
 
 function previewPost(values: PostFormValuesV2, user: User | null): FeedPost {
   const media = values.media.filter((item) => item.status === 'uploaded' || item.previewUrl);
-  const urls = media.map((item) => item.previewUrl || item.url).filter(Boolean);
+  const mediaUrls = media.map((item) => item.previewUrl || item.url).filter(Boolean);
+  const urls = values.format === 'photo' && mediaUrls.length === 0 ? [PREVIEW_FALLBACK_ART] : mediaUrls;
   const metadata = (user?.user_metadata ?? {}) as Record<string, unknown>;
   return {
     id: 'cv2c-preview',
@@ -69,7 +74,8 @@ function previewPost(values: PostFormValuesV2, user: User | null): FeedPost {
         ? `${values.title.trim()}\n\n${values.content.trim()}`
         : values.content.trim() || 'Ton aperçu apparaîtra ici.',
     title: values.title || null,
-    location: values.location || null,
+    // Maquette (L2837) : « Ma position · à l'instant » tant qu'aucun lieu n'est saisi.
+    location: values.location || 'Ma position',
     image_url: urls[0] ?? null,
     image_alt: media[0]?.alt ?? '',
     media_urls: urls,
@@ -118,10 +124,6 @@ function FormatStep() {
         <span className="lkdv-cv2-field-label" id="cv2c-format-label">
           Format
         </span>
-        {/* FID-047 : pastille d'audience à droite, reflet du choix d'audience. */}
-        <span className="lkdv-cv2c-audience-pill" aria-hidden="true">
-          {AUDIENCE_OPTIONS.find((option) => option.value === values.audience)?.label ?? 'Fil public'}
-        </span>
       </div>
       <div className="lkdv-cv2c-format-grid" role="radiogroup" aria-labelledby="cv2c-format-label">
         {FORMAT_OPTIONS.map((option) => {
@@ -169,9 +171,11 @@ function FormatStep() {
         </p>
       ) : null}
 
-      <span className="lkdv-cv2-field-label" id="cv2c-audience-label">
-        Audience
-      </span>
+      <div className="lkdv-cv2c-section-head">
+        <span className="lkdv-cv2-field-label" id="cv2c-audience-label">
+          Audience
+        </span>
+      </div>
       <div className="lkdv-cv2c-audience-list" role="radiogroup" aria-labelledby="cv2c-audience-label">
         {AUDIENCE_OPTIONS.map((option) => {
           const active = values.audience === option.value;
@@ -187,11 +191,14 @@ function FormatStep() {
                 form.setValue('audience', option.value, { shouldValidate: true, shouldDirty: true })
               }
             >
-              <span className="lkdv-cv2c-radio" aria-hidden="true" />
-              <span>
+              <span className="lkdv-cv2c-aud-ico" aria-hidden="true">
+                {option.icon}
+              </span>
+              <span className="lkdv-cv2c-aud-txt">
                 <b>{option.label}</b>
                 <small>{option.description}</small>
               </span>
+              <span className="lkdv-cv2c-radio" aria-hidden="true" />
             </button>
           );
         })}
@@ -456,14 +463,6 @@ function PostBody({
       {api.active ? (
         <SheetPreview>
           <div className="lkdv-cv2c-live-preview" inert aria-hidden="true">
-            {/* FID-047 : visuel de repli de l'aperçu quand le format Photo n'a
-                pas encore de média (maquette : `art(m.art) || 'meadow'`). */}
-            {values.format === 'photo' && values.media.length === 0 ? (
-              <span className="lkdv-cv2c-post-placeholder">
-                <Mountain size={22} aria-hidden="true" />
-                <small>Ton aperçu apparaîtra ici.</small>
-              </span>
-            ) : null}
             <CommunityFeedPost post={preview} user={user} embedded />
           </div>
         </SheetPreview>

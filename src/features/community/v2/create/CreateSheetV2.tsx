@@ -3,16 +3,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { User } from '@supabase/supabase-js';
-import {
-  BookOpen,
-  Backpack,
-  Camera,
-  ChevronLeft,
-  ChevronRight,
-  Map as MapIcon,
-  PenLine,
-  Users,
-} from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ExploreIcon } from '../explore/ExploreIcons';
 import { CommunitySheetShell } from '../shared/CommunitySheetShell';
 import { SheetPreviewContext } from '../shared/SheetPreview';
 import { DynamicIsland } from '@/components/ui/drawer/DynamicIsland';
@@ -73,13 +65,14 @@ export interface CreateSheetV2Props {
   onCreateRequested?: (kind: CreateKindV2, prefill?: Record<string, unknown>) => void;
 }
 
+/** Pictogrammes de la capsule : ceux de la maquette (`CRTYPES`, L2618), 24 px comme la capsule de l'Explorer. */
 const KIND_META: Record<CreateKindV2, { label: string; icon: React.ReactNode }> = {
-  post: { label: 'Publication', icon: <PenLine size={22} aria-hidden="true" /> },
-  story: { label: 'Story', icon: <Camera size={22} aria-hidden="true" /> },
-  carnet: { label: 'Carnet', icon: <BookOpen size={22} aria-hidden="true" /> },
-  sortie: { label: 'Sortie', icon: <MapIcon size={22} aria-hidden="true" /> },
-  kit: { label: 'Kit', icon: <Backpack size={22} aria-hidden="true" /> },
-  club: { label: 'Club', icon: <Users size={22} aria-hidden="true" /> },
+  post: { label: 'Publication', icon: <ExploreIcon name="pen" size={24} /> },
+  story: { label: 'Story', icon: <ExploreIcon name="camera" size={24} /> },
+  carnet: { label: 'Carnet', icon: <ExploreIcon name="book" size={24} /> },
+  sortie: { label: 'Sortie', icon: <ExploreIcon name="map" size={24} /> },
+  kit: { label: 'Kit', icon: <ExploreIcon name="backpack" size={24} /> },
+  club: { label: 'Club', icon: <ExploreIcon name="users" size={24} /> },
 };
 
 interface IslandState {

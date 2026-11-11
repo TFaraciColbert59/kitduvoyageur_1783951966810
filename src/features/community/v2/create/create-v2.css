@@ -32,7 +32,8 @@
 .lkdv-cv2c-pane {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  /* Maquette `.cr-vp .lp-pane{gap:12px}` (L1130). */
+  gap: 12px;
   min-width: 0;
   margin: 0;
   padding: 0 0 var(--cv2c-mini-clearance, 76px);
@@ -83,6 +84,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  /* Maquette `.fset>legend{margin-bottom:6px}` : 6 px entre le libellé et ses cartes (le pane écarte de 12 px). */
+  margin-bottom: -6px;
 }
 
 .lkdv-cv2c-section-label {
@@ -184,19 +187,22 @@
 }
 
 .lkdv-cv2c-foot-actions > .lkdv-cv2c-back {
-  flex: 0 0 auto;
-  min-width: 92px;
+  /* Maquette `.cr-foot .back{flex:0 0 96px}` (L1140). */
+  flex: 0 0 96px;
+  min-width: 96px;
 }
 
 /* Maquette : `Opacité 0,4` sur un « Retour » désactivé (HTML L1144). */
 .lkdv-cv2c-foot-actions > .lkdv-cv2c-back[disabled] {
-  opacity: var(--opacity-disabled);
+  opacity: 0.4;
   cursor: default;
 }
 
 .lkdv-cv2c-foot-actions > .lkdv-cv2c-next {
   flex: 1 1 auto;
   min-width: 0;
+  /* Maquette `.cr-foot .next` (L1141) : ombre d'encre forêt. */
+  box-shadow: 0 4px 12px rgba(23, 64, 44, 0.22);
 }
 
 .lkdv-cv2c-foot-actions .lkdv-cv2c-next[disabled] {
@@ -477,12 +483,16 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 3px;
-  min-height: 84px;
-  padding: 11px 12px;
+  min-height: 92px;
+  padding: 12px;
   border: 0;
-  border-radius: var(--cv2-radius-tile);
-  background: var(--cv2-field-bg);
-  box-shadow: inset 0 0 0 0.5px var(--cv2-field-border);
+  /* Maquette `.fmt` (L1201) : carte de verre de tiroir, rayon 18, texte en `--tint`. */
+  border-radius: var(--cv2-radius-tile-lg);
+  background: var(--cv2-tile-bg);
+  -webkit-backdrop-filter: var(--cv2-tile-blur);
+  backdrop-filter: var(--cv2-tile-blur);
+  box-shadow: var(--cv2-tile-shadow);
+  color: var(--lkv-forest-900);
   text-align: left;
   cursor: pointer;
   transition: transform 0.12s var(--ease-spring);
@@ -492,28 +502,28 @@
   transform: scale(0.975);
 }
 
-.lkdv-cv2c-format-card[data-active='true'] {
-  background: var(--lkv-secondary-subtle);
-  box-shadow: inset 0 0 0 1.5px var(--lkv-secondary);
+.lkdv-cv2c-format-card[data-active='true'],
+.lkdv-cv2c-audience-card[data-active='true'] {
+  /* Maquette `.fmt[aria-checked]` / `.rcard[aria-checked]` : `--c57` + filet `--soft-line`. */
+  background: color-mix(in srgb, var(--lkv-forest-50) 70%, transparent);
+  box-shadow: inset 0 0 0 1.4px var(--cv2-soft-line);
 }
 
 .lkdv-cv2c-format-ico {
   display: grid;
   place-items: center;
-  width: 30px;
-  height: 30px;
-  border-radius: var(--lkv-radius-full);
-  background: var(--lkv-surface-muted);
-  color: var(--lkv-forest-900);
+  width: 22px;
+  height: 22px;
+  color: var(--lkv-secondary);
 }
 
 .lkdv-cv2c-format-card b {
-  font: 600 13px/1.2 var(--font-sans);
-  color: var(--lkv-text-primary);
+  font: 600 14px/normal var(--font-sans);
+  color: var(--lkv-forest-900);
 }
 
 .lkdv-cv2c-format-card small {
-  font: 400 10.5px/1.3 var(--font-sans);
+  font: 400 11px/1.3 var(--font-sans);
   color: var(--lkv-text-secondary);
 }
 
@@ -561,52 +571,67 @@
 .lkdv-cv2c-audience-list {
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 8px;
 }
 
 .lkdv-cv2c-audience-card {
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-height: 54px;
-  padding: 9px 12px;
+  gap: 12px;
+  min-height: 60px;
+  padding: 10px 14px;
   border: 0;
-  border-radius: var(--cv2-radius-tile);
-  background: var(--cv2-field-bg);
-  box-shadow: inset 0 0 0 0.5px var(--cv2-field-border);
+  border-radius: var(--cv2-radius-tile-lg);
+  background: var(--cv2-tile-bg);
+  -webkit-backdrop-filter: var(--cv2-tile-blur);
+  backdrop-filter: var(--cv2-tile-blur);
+  box-shadow: var(--cv2-tile-shadow);
+  color: var(--lkv-text-primary);
   text-align: left;
   cursor: pointer;
 }
 
-.lkdv-cv2c-audience-card[data-active='true'] {
-  background: var(--lkv-secondary-subtle);
-  box-shadow: inset 0 0 0 1.5px var(--lkv-secondary);
+.lkdv-cv2c-aud-ico {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: var(--lkv-forest-50);
+  color: var(--lkv-forest-900);
+}
+
+.lkdv-cv2c-aud-txt {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 
 .lkdv-cv2c-audience-card b {
   display: block;
-  font: 600 13px/1.25 var(--font-sans);
-  color: var(--lkv-text-primary);
+  font: 600 14px/normal var(--font-sans);
+  color: var(--lkv-forest-900);
 }
 
 .lkdv-cv2c-audience-card small {
   display: block;
-  font: 400 10.5px/1.3 var(--font-sans);
+  font: 400 12px/1.35 var(--font-sans);
   color: var(--lkv-text-secondary);
 }
 
 .lkdv-cv2c-radio {
-  flex: 0 0 auto;
+  flex: none;
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  border: 1.5px solid var(--lkv-border);
-  background: var(--lkv-surface-paper);
+  box-shadow: inset 0 0 0 1.5px var(--cv2-light-ink-3);
 }
 
 .lkdv-cv2c-audience-card[data-active='true'] .lkdv-cv2c-radio {
-  border-color: var(--lkv-forest-900);
-  background: radial-gradient(circle at center, var(--lkv-forest-900) 0 6px, var(--lkv-surface-paper) 6.5px);
+  box-shadow: inset 0 0 0 6px var(--lkv-forest-900);
 }
 
 /* ── Médias en lignes (maquette `.mrow`, HTML L1205-1211 et L2787) ──────── */
@@ -2825,4 +2850,52 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+
+/* Aperçu en direct = carte de 346 × 150 (maquette `.cr-prev .cm-post .lkdv-feed-post{height:150px}`, L1123) :
+   l'illustration recouvre la carte (`slice`), au lieu d'être rognée dans un cadre 3:4. */
+.lkdv-cv2c-live-preview .lkdv-feed-post {
+  height: 150px;
+  min-height: 0;
+  max-height: 150px;
+  aspect-ratio: auto;
+  /* Maquette `--post-radius` : 28 px (le slot rogne à 20 px). */
+  border-radius: 28px;
+}
+
+/* Le menu « ... » de la carte n'existe pas dans l'aperçu (maquette `.cr-prev .pmi-more-pill{display:none}`). */
+.lkdv-cv2c-live-preview .lkdv-feed-post-options,
+.lkdv-cv2c-live-preview .pmi-more-pill {
+  display: none !important;
+}
+
+.lkdv-cv2c-live-preview .lkdv-post-main,
+.lkdv-cv2c-live-preview .lkdv-post-media-wrap,
+.lkdv-cv2c-live-preview .lkdv-post-media {
+  height: 100%;
+}
+
+.lkdv-cv2c-live-preview .lkdv-post-media img {
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Champs et puces du formulaire : verre de tiroir de la maquette (`.fin`, `.chip.big`, L1152 et L1166). */
+.lkdv-cv2c-pane :is(input, textarea, select):is(.lkdv-cv2-input, .lkdv-cv2-field),
+.lkdv-cv2c-pane .lkdv-cv2-field :is(input, textarea, select) {
+  background: var(--cv2-tile-bg);
+  -webkit-backdrop-filter: var(--cv2-tile-blur);
+  backdrop-filter: var(--cv2-tile-blur);
+  font-weight: 500;
+}
+
+.lkdv-cv2c-pane .lkdv-cv2-chip {
+  background: var(--cv2-fill);
+  box-shadow: none;
+}
+
+.lkdv-cv2c-pane .lkdv-cv2-chip:is([aria-pressed='true'], [aria-checked='true'], .is-selected) {
+  background: var(--cv2-soft);
+  color: var(--lkv-forest-900);
+  box-shadow: inset 0 0 0 1px var(--cv2-soft-line), inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }

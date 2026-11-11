@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Illustration : prairie vallonnée">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#C8DBC6"/>
+      <stop offset="1" stop-color="#EDEBDD"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#sky)"/>
+  <circle cx="320" cy="64" r="24" fill="#F5F2EC" opacity=".6"/>
+  <path d="M0 170 C100 120 200 170 300 130 S380 140 400 150 V300 H0z" fill="#8FB08E"/>
+  <path d="M0 220 C120 180 220 230 320 195 S390 200 400 205 V300 H0z" fill="#5B7F55"/>
+  <g fill="#F5F2EC">
+    <circle cx="60" cy="250" r="4"/>
+    <circle cx="120" cy="268" r="3"/>
+    <circle cx="200" cy="255" r="4"/>
+    <circle cx="270" cy="272" r="3"/>
+    <circle cx="340" cy="250" r="4"/>
+  </g>
+</svg>
