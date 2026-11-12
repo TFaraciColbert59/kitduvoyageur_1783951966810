@@ -60,6 +60,14 @@ export type ExplorerStore = ExplorerState & ExplorerActions;
 /** Clé locale du réglage de préparation de l'Explorer v2. */
 export const AUTO_PAUSE_STORAGE_KEY = 'lkdv.explorer.pauseAuto';
 
+/**
+ * Vrai quand le dernier choix de session n'a pas pu être persisté alors que
+ * `getItem` fonctionne encore (quota, politique navigateur). L'hydratation ne
+ * doit alors pas relire une valeur périmée et écraser le choix courant.
+ * Repasse à `false` dès qu'une écriture réussit.
+ */
+let autoPausePersistenceFailed = false;
+
 const initialState: ExplorerState = {
   level: 0,
   geo: '',
@@ -326,9 +334,12 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
     try {
       if (typeof window !== 'undefined') {
         window.localStorage.setItem(AUTO_PAUSE_STORAGE_KEY, enabled ? '1' : '0');
+        autoPausePersistenceFailed = false;
       }
     } catch {
-      /* stockage indisponible : le réglage reste valable pour la session */
+      // Le réglage reste valable pour la session ; l'hydratation ne doit pas
+      // relire l'ancienne valeur restée dans le stockage.
+      autoPausePersistenceFailed = true;
     }
     emit('auto-pause-setting', { enabled });
   },
@@ -346,6 +357,9 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
  */
 export function hydrateAutoPausePreference(): void {
   if (typeof window === 'undefined') return;
+  // Une écriture de session a échoué : la valeur stockée est périmée et ne
+  // doit pas écraser le choix courant au remontage.
+  if (autoPausePersistenceFailed) return;
   try {
     const raw = window.localStorage.getItem(AUTO_PAUSE_STORAGE_KEY);
     if (raw === '0' || raw === 'false') {

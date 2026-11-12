@@ -134,14 +134,15 @@ function autoPauseDurationLabel(seconds: number): string {
 
 /**
  * Réglage de préparation : la pause automatique à l'arrêt, propre au sport.
- * Désactivée, le tracker garde exactement le comportement historique.
+ * Désactivée, seule la détection d'arrêt est coupée ; les seuils GPS du sport
+ * (plausibilité, coupure de tracé) restent actifs.
  */
 function AutoPauseSetting({ sport }: { sport?: Sport | null }) {
   const enabled = useExplorerStore((state) => state.autoPauseEnabled) ?? false;
   const setEnabled = useExplorerStore((state) => state.setAutoPauseEnabled);
   const config = sport ? AUTO_PAUSE_BY_SPORT[sport] : null;
   const sub = !enabled
-    ? 'Désactivée · le suivi garde le comportement historique, sans arrêt automatique.'
+    ? 'Désactivée · pas d’arrêt automatique, seuils GPS du sport conservés.'
     : config
       ? `Activée · pause après ${autoPauseDurationLabel(config.durationS)} d’arrêt, reprise au mouvement.`
       : 'Activée · chaque sport a son seuil d’arrêt et de reprise.';

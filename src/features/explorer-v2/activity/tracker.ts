@@ -42,13 +42,14 @@
  *
  * Durée et horloges : `t` est l'instant de **mesure** (horloge murale),
  * `receivedAt` l'instant monotone de **réception**. La mesure prime pour la
- * distance et la plausibilité, car une livraison en rafale ne raccourcit pas
- * le trajet réel. `receivedAt` ne sert qu'à corriger un saut d'horloge murale
- * détecté (écart incohérent avec la distance/vitesse rapportée), jamais à
- * remplacer systématiquement l'intervalle mesuré. Un `t` qui recule est
- * d'abord traité comme un fix périmé ; deux mesures consécutives dans la
- * nouvelle époque prouvent un saut d'horloge et rebasent le curseur sans
- * geler l'activité.
+ * distance, la durée et la plausibilité, car une livraison en rafale ne
+ * raccourcit pas le trajet réel. `receivedAt` ne corrige qu'un saut d'horloge
+ * murale **prouvé** : distance incohérente avec la vitesse rapportée, ou écart
+ * mesure/réception important alors que la réception a réellement pris du temps
+ * (un lot de fixes livré en quelques millisecondes reste une rafale). Un `t`
+ * qui recule est d'abord traité comme un fix périmé ; deux mesures consécutives
+ * dans la nouvelle époque prouvent un saut d'horloge et rebasent le curseur
+ * sans geler l'activité.
  *
  * Seuils : base historique de `TrackingEngine` (0,5 km/h pendant 120 s) et
  * `MIN_MOVING_SPEED_MS` (0,3 m/s) pour le temps en mouvement. Les profils
@@ -78,10 +79,11 @@ export interface GpsFix {
   acc?: number | null;
   speed?: number | null;
   /**
-   * Horodatage monotone de réception (ms). Utilisé pour la durée quand il est
-   * présent : un ajustement de l'horloge murale (`t`) ne doit ni gonfler le
-   * temps en mouvement ni déclencher une fausse pause. Absent, la durée
-   * retombe sur `t` (comportement historique des appels directs et des tests).
+   * Horodatage monotone de réception (ms). Sert uniquement de preuve pour
+   * corriger un saut de l'horloge murale `t` : la mesure reste la référence
+   * des durées, y compris quand plusieurs fixes arrivent dans la même rafale.
+   * Absent, la durée retombe sur `t` (comportement historique des appels
+   * directs et des tests).
    */
   receivedAt?: number;
 }
@@ -123,6 +125,13 @@ export interface ActivityMetrics {
   elevGainM: number;
   movingS: number;
   lastFix: GpsFix | null;
+  /**
+   * Instant corrigé du dernier fix accepté, sur une échelle monotone : il
+   * rebase les sauts d'horloge et ne recule jamais. `null` tant qu'aucun fix
+   * n'a été accepté. Les consommateurs qui mesurent une durée (hors-trace,
+   * par exemple) doivent l'utiliser à la place de `lastFix.t`.
+   */
+  effectiveTMs: number | null;
   rejected: number;
   /** État de la pause automatique ; `false` quand la fonction est désactivée. */
   autoPaused: boolean;
@@ -147,6 +156,17 @@ export const MAX_JUMP_WINDOW_S = 2;
 const BACKWARD_CLOCK_TOLERANCE_MS = 2_000;
 /** Écart minimal entre mesure et réception pour soupçonner un saut d'horloge. */
 const CLOCK_DESYNC_TOLERANCE_S = 2;
+/**
+ * En dessous, le lot de fixes est considéré comme livré en rafale : le temps
+ * de réception ne prouve rien et ne doit jamais remplacer la mesure. Au-delà,
+ * un écart important peut être un vrai saut d'horloge.
+ */
+const CLOCK_BURST_RECEIVED_S = 1;
+/** Marge supplémentaire pour un saut en mouvement sans vitesse rapportée. */
+const CLOCK_MOVING_RECEIVED_S = 2;
+/** Rapport et écart minimaux entre mesure et réception pour parler de saut. */
+const CLOCK_MIN_RATIO = 3;
+const CLOCK_MIN_DIFF_S = 10;
 /** Plafond générique quand le sport n'est pas connu (54 km/h). */
 export const DEFAULT_MAX_PLAUSIBLE_SPEED_MS = 15;
 const ELE_SMOOTHING = 0.25;
@@ -214,7 +234,9 @@ const DEFAULT_AUTO_PAUSE = profile(0.139, 120, MIN_MOVING_SPEED_MS, 5, 120, DEFA
 /**
  * Configuration inactive : détection coupée, seuils de plausibilité génériques.
  * L'accumulation des métriques reste celle de l'historique ; seuls les fixes
- * non finis ou invraisemblables sont rejetés.
+ * non finis ou invraisemblables sont rejetés. La règle « premier fix après un
+ * rejet = nouvelle borne » continue de s'appliquer, même sur un trou long :
+ * elle évite de compter un intervalle non prouvé.
  */
 export const AUTO_PAUSE_DISABLED: ResolvedAutoPauseConfig = {
   ...DEFAULT_AUTO_PAUSE,
@@ -296,6 +318,7 @@ export class ActivityTracker {
     elevGainM: 0,
     movingS: 0,
     lastFix: null,
+    effectiveTMs: null,
     rejected: 0,
     accepted: false,
     discontinuity: false,
@@ -428,19 +451,33 @@ export class ActivityTracker {
     // Le premier fix qui suit un rejet établit une nouvelle borne, sans
     // comparer sa distance à l'ancienne : après une perte de fix, la position
     // a pu changer légitimement. Sinon un déplacement réel resterait rejeté
-    // indéfiniment et l'activité serait gelée. Ce point n'alimente ni distance
-    // ni durée ; le tracé est coupé.
-    if (!gap && this.rejectedSinceLastFix) {
+    // indéfiniment et l'activité serait gelée. Cette règle s'applique aussi
+    // quand le fix suivant tombe après un trou (`gap`) et quand la détection
+    // automatique est désactivée : sinon le trou entier serait compté. Ce
+    // point n'alimente ni distance ni durée ; le tracé est coupé.
+    if (this.rejectedSinceLastFix) {
       this.metrics.lastFix = fix;
       this.metrics.accepted = true;
       this.metrics.discontinuity = true;
       this.lastEffectiveTMs = effectiveT;
+      this.metrics.effectiveTMs = effectiveT;
       // Une nouvelle borne sans altitude ne doit pas comparer le D+ à
       // l'altitude d'avant le trou.
       this.smoothedEle = ele;
       this.rejectedSinceLastFix = false;
       this.stoppedS = 0;
       this.resumingS = 0;
+      // Même règle que la branche « trou » : après une coupure, une vitesse
+      // explicitement rapportée suffit à lever une pause automatique, sinon on
+      // resterait pausé jusqu'à la prochaine série.
+      if (
+        gap &&
+        this.autoPaused &&
+        reportedSpeed !== null &&
+        reportedSpeed >= this.config.resumeSpeedThresholdMs
+      ) {
+        this.autoPaused = false;
+      }
       return this.state;
     }
 
@@ -461,6 +498,7 @@ export class ActivityTracker {
         this.metrics.accepted = true;
         this.metrics.discontinuity = true;
         this.lastEffectiveTMs = effectiveT;
+        this.metrics.effectiveTMs = effectiveT;
         // Le premier fix après le trou est une nouvelle borne : si son
         // altitude manque, le D+ repart de zéro au lieu de traverser le trou.
         this.smoothedEle = ele;
@@ -486,6 +524,7 @@ export class ActivityTracker {
         this.metrics.accepted = true;
         this.metrics.discontinuity = false;
         this.lastEffectiveTMs = effectiveT;
+        this.metrics.effectiveTMs = effectiveT;
         if (ele !== null) {
           this.smoothedEle =
             this.smoothedEle === null
@@ -518,6 +557,7 @@ export class ActivityTracker {
     // métriques, elles, gardent le comportement historique.
     this.metrics.discontinuity = gap || afterRejection;
     this.lastEffectiveTMs = effectiveT;
+    this.metrics.effectiveTMs = effectiveT;
     this.rejectedSinceLastFix = false;
 
     this.updateAutoPause(dtS, speed);
@@ -541,9 +581,10 @@ export class ActivityTracker {
   /**
    * Durée mesurée entre deux fixes. `t` (mesure) est la référence : une
    * livraison en rafale ne doit pas transformer 20 s de terrain en 1 ms.
-   * `receivedAt` ne sert qu'à corriger un saut d'horloge murale prouvé par
-   * l'incohérence entre la distance et la vitesse rapportée (ou par un écart
-   * massif quand aucune vitesse n'est fournie).
+   * `receivedAt` ne corrige que les sauts d'horloge muraux prouvés :
+   * distance incohérente avec la vitesse rapportée, ou écart mesure/réception
+   * important alors que la réception a réellement duré. Un lot reçu en
+   * quelques millisecondes reste une rafale et garde le temps mesuré.
    */
   private elapsedSeconds(
     previous: GpsFix,
@@ -568,13 +609,27 @@ export class ActivityTracker {
           reportedSpeed !== null && reportedSpeed > 0 ? reportedSpeed * sampleS : null;
         const distanceIncoherent =
           expectedM !== null && expectedM > 20 && distanceM < expectedM * 0.25;
-        // À l'arrêt, aucune distance ne permet de trancher : un écart de
-        // plusieurs dizaines de secondes livré presque instantanément est un
-        // saut d'horloge, pas une station immobile de 30 s.
-        const stationaryDesync =
-          sampleS > 10 && receivedS * 10 < sampleS && distanceM < 10;
-        const massiveJump = sampleS > 300 && receivedS * 10 < sampleS;
-        if (distanceIncoherent || stationaryDesync || massiveJump) {
+        // Un saut d'horloge n'est retenu que si la réception a pris du temps.
+        // Plusieurs fixes livrés dans la même milliseconde constituent une
+        // rafale : leur temps de réception ne prouve aucun saut.
+        const receivedTookTime = receivedS >= CLOCK_BURST_RECEIVED_S;
+        const measuredJump =
+          sampleS - receivedS >= CLOCK_MIN_DIFF_S &&
+          sampleS >= CLOCK_MIN_RATIO * Math.max(receivedS, 0.001);
+        // À l'arrêt, la distance ne peut pas contredire l'horloge : un écart
+        // important et une réception lente suffisent à conclure au saut.
+        const stationaryJump = receivedTookTime && distanceM < 1 && measuredJump;
+        // En mouvement sans vitesse rapportée, exiger un peu plus de recul de
+        // réception évite de confondre un lot livré en 1 s avec un saut.
+        const movingWithoutSpeedJump =
+          reportedSpeed === null && receivedS >= CLOCK_MOVING_RECEIVED_S && measuredJump;
+        const massiveJump = receivedTookTime && sampleS > 300 && receivedS * 10 < sampleS;
+        if (
+          (distanceIncoherent && receivedTookTime) ||
+          stationaryJump ||
+          movingWithoutSpeedJump ||
+          massiveJump
+        ) {
           const base = this.lastEffectiveTMs ?? previous.t;
           this.clockShiftMs = base + receivedS * 1000 - fix.t;
           return receivedS;
@@ -593,6 +648,7 @@ export class ActivityTracker {
     this.metrics.accepted = true;
     this.metrics.discontinuity = discontinuity;
     this.lastEffectiveTMs = fix.t + this.clockShiftMs;
+    this.metrics.effectiveTMs = this.lastEffectiveTMs;
     this.backwardCandidateTMs = null;
     this.smoothedEle = ele;
     this.resetAutoPause();

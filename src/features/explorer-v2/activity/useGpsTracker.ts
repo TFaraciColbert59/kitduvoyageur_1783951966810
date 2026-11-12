@@ -21,7 +21,11 @@ export interface TrackerOptions {
   onFix?: (fix: GpsFix, metrics: ReturnType<ActivityTracker['addFix']>) => void;
 }
 
-/** Horloge monotone de réception ; jamais l'horloge murale pour les durées. */
+/**
+ * Horloge monotone de réception. Elle sert de preuve pour corriger un saut de
+ * l'horloge murale, jamais de référence directe pour les durées : le tracker
+ * garde le temps mesuré et ne bascule sur cette horloge que sur un saut prouvé.
+ */
 function monotonicNow(): number {
   if (typeof performance !== 'undefined' && typeof performance.now === 'function') {
     return performance.now();
@@ -85,7 +89,20 @@ export function useGpsTracker({ distanceToRouteM, onFix }: TrackerOptions = {}) 
     if (distanceToRouteM) {
       const distance = distanceToRouteM(fix);
       if (distance !== null) {
-        samplesRef.current.push({ t: fix.t, distanceM: distance });
+        // Une nouvelle borne (trou, rejet, pause manuelle, saut d'horloge) ne
+        // doit pas être comparée aux mesures de l'époque précédente : on vide
+        // le buffer sans annoncer un retour fictif si l'alerte était active.
+        if (metrics.discontinuity) {
+          samplesRef.current = [];
+          offRouteRef.current = { ...offRouteRef.current, outSinceS: 0 };
+        }
+        // Le tracker expose un instant corrigé et monotone. `fix.t` peut avoir
+        // reculé ou sauté ; l'utiliser ici fausserait `outSinceS` et pourrait
+        // déclencher l'alerte immédiatement après un saut avant.
+        samplesRef.current.push({
+          t: metrics.effectiveTMs ?? fix.t,
+          distanceM: distance,
+        });
         if (samplesRef.current.length > 40) samplesRef.current.shift();
         const next = evaluateOffRoute(samplesRef.current, offRouteRef.current);
         const wasOff = offRouteRef.current.offRoute;

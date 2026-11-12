@@ -289,6 +289,32 @@ describe('explorer-v2 · raccordement du réglage de pause automatique', () => {
     }
   });
 
+  it('ne relit pas une valeur périmée quand setItem échoue mais getItem fonctionne', () => {
+    // Ancienne valeur OFF déjà stockée ; l'utilisateur rallume pour la session.
+    window.localStorage.setItem(AUTO_PAUSE_STORAGE_KEY, '0');
+    useExplorerStore.setState({ autoPauseEnabled: true });
+
+    const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('quota atteint');
+    });
+    try {
+      act(() => useExplorerStore.getState().setAutoPauseEnabled(true));
+      expect(useExplorerStore.getState().autoPauseEnabled).toBe(true);
+
+      // `getItem` fonctionne encore : sans garde, il relirait '0' et
+      // écraserait le choix ON de la session.
+      hydrateAutoPausePreference();
+      expect(useExplorerStore.getState().autoPauseEnabled).toBe(true);
+    } finally {
+      setItem.mockRestore();
+    }
+
+    // Une écriture réussie lève le verrou pour les remontages suivants.
+    act(() => useExplorerStore.getState().setAutoPauseEnabled(true));
+    hydrateAutoPausePreference();
+    expect(useExplorerStore.getState().autoPauseEnabled).toBe(true);
+  });
+
   it('persiste le réglage local et le rend réversible', () => {
     act(() => useExplorerStore.getState().setAutoPauseEnabled(false));
     expect(useExplorerStore.getState().autoPauseEnabled).toBe(false);
