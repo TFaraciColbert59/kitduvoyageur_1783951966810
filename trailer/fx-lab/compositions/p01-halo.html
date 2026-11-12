@@ -18,9 +18,9 @@
     (function () {
       var FX = window.LKDVFX;
       /* À recaler sur img01 : centre et rayon du cercle du limbe, position du logo sur le limbe (degrés, −90 = sommet). */
-      var HALO = { cx: 1650, cy: 2820, R: 2600, angle: -104, size: 300, intensity: 1, appear: [8, 34], dissolve: [46, 80] };
+      var HALO = { cx: 3118, cy: 5377, R: 5433, angle: -107.2, lift: -38, size: 280, intensity: 1, appear: [8, 34], dissolve: [46, 80] }; // limbe mesuré sur img01 (revue P3), près du soleil (x ≈ 1750, y ≈ 180)
       /* Même mouvement que p01 : poussée (échelle) et roulis (degrés) autour de l'origine, de l'image 0 à 89. */
-      var MOTION = { push: [1, 1.07], roll: [0, 8], origin: [960, 540] };
+      var MOTION = { push: [1.08, 1.156], roll: [0, 8], origin: [960, 540] }; // 1,08 = marge pour que le roulis ne découvre pas les coins
       var cv = document.getElementById("p01-halo-canvas");
       var ctx = cv.getContext("2d");
       var clock = FX.bindClock("p01-halo", 89, function (t, f) {

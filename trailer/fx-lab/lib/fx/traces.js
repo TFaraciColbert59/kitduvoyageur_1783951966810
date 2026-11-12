@@ -5,7 +5,7 @@
  * Séquence commune aux deux plans, en images à 60 i/s : F = 0 … 223.
  *   P53 = F 0 … 103 (104 images), P54 = F 104 … 223 (120 images).
  *   NET_FRAME = 104 : première image où le logo est net (58,00 s du film, image 3480).
- * La simulation est précalculée par build() ; frame() est une fonction pure de F (testable sous Node).
+ * Les tracés partent des lumières réelles d'img39 (lib/fx/img39-lights.js). build() précalcule ; frame() est pure de F.
  */
 (function (root) {
   "use strict";
@@ -64,124 +64,111 @@
   /* Placement du logo à l'écran : centre et échelle (px par unité de viewBox). */
   var PLACE = { cx: 960, cy: 540, ux: 16, uy: 15, scale: 21 };
 
+  /* Poussée de la plaque img39 sur P53 (échelle autour du centre), fixe ensuite. Le recul de P54 est appliqué au dessin. */
+  function pushFor(F) {
+    var u = FX.clamp(F, 0, NET_FRAME - 1) / (NET_FRAME - 1);
+    return 1 + 0.045 * FX.ease.outCubic(u);
+  }
+
+  /* Ancrage : chaque tracé part d'une lumière réelle d'img39 (FX.IMG39, positions écran de la plaque). */
   function build(opts) {
     opts = opts || {};
-    var N = opts.count || 2600;
+    var N = opts.count || 2200;
     var M = opts.points || 20;
     var seed = opts.seed || 5354;
     var rnd = FX.mulberry32(seed);
-    var anchors = FX.Earth.anchors();
-    var wsum = 0;
-    for (var a = 0; a < anchors.length; a++) wsum += anchors[a][2];
+    var L = FX.IMG39.lights;
+    var cum = new Float32Array(L.length),
+      acc = 0;
+    for (var a = 0; a < L.length; a++) {
+      acc += L[a][2] * L[a][2];
+      cum[a] = acc;
+    }
     var geo = new Float32Array(N * M * 2);
     var P = {
-      kind: new Uint8Array(N),
-      s0: new Float32Array(N),
-      len: new Float32Array(N),
-      d: new Float32Array(N),
-      phase: new Float32Array(N),
-      freq: new Float32Array(N),
-      ign: new Float32Array(N),
-      conv: new Float32Array(N),
-      dur: new Float32Array(N),
-      lag: new Float32Array(N),
-      swirl: new Float32Array(N),
-      bright: new Float32Array(N),
+      kind: new Uint8Array(N), s0: new Float32Array(N), len: new Float32Array(N), d: new Float32Array(N),
+      phase: new Float32Array(N), freq: new Float32Array(N), ign: new Float32Array(N), conv: new Float32Array(N),
+      dur: new Float32Array(N), lag: new Float32Array(N), swirl: new Float32Array(N), bright: new Float32Array(N),
     };
     for (var n = 0; n < N; n++) {
-      // Ancrage pondéré : villes et massifs.
-      var pick = rnd() * wsum,
-        A = anchors[0];
-      for (var q = 0; q < anchors.length; q++) {
-        pick -= anchors[q][2];
-        if (pick <= 0) {
-          A = anchors[q];
-          break;
-        }
+      var pick = rnd() * acc,
+        lo = 0,
+        hi = L.length - 1;
+      while (lo < hi) {
+        var mid = (lo + hi) >> 1;
+        if (cum[mid] < pick) lo = mid + 1;
+        else hi = mid;
       }
-      var g1 = Math.sqrt(-2 * Math.log(1 - rnd() * 0.999)),
-        g2 = rnd() * Math.PI * 2;
-      var lat = A[0] + g1 * Math.sin(g2) * A[3] * 0.6;
-      var lon = A[1] + (g1 * Math.cos(g2) * A[3]) / Math.cos((A[0] * Math.PI) / 180);
-      // Itinéraire : marche à cap lissé, lacets occasionnels (pas de ligne droite).
+      var x = L[lo][0],
+        y = L[lo][1];
+      // Itinéraire GPS : marche à cap lissé, lacets occasionnels (pas de ligne droite), 2,5 à 6 px par pas.
       var h = rnd() * Math.PI * 2,
-        step = 0.045 + rnd() * 0.08,
+        step = 2.5 + rnd() * 3.5,
         wig = 0.35 + rnd() * 0.9;
       for (var m = 0; m < M; m++) {
-        geo[(n * M + m) * 2] = lat;
-        geo[(n * M + m) * 2 + 1] = lon;
+        geo[(n * M + m) * 2] = x;
+        geo[(n * M + m) * 2 + 1] = y;
         h += (FX.noise2(n * 1.7, m * 0.45, seed) - 0.5) * wig * 2;
         if (rnd() < 0.08) h += Math.PI * (0.55 + rnd() * 0.3) * (rnd() < 0.5 ? -1 : 1);
-        lat += Math.sin(h) * step;
-        lon += (Math.cos(h) * step) / Math.cos((lat * Math.PI) / 180);
+        x += Math.cos(h) * step;
+        y += Math.sin(h) * step * 0.7; // aplati par l'obliquité de la vue
       }
-      // Cible sur le logo.
       if (rnd() < 0.07) {
-        P.kind[n] = 1; // point-soleil
-        P.d[n] = 0.25 + rnd() * 1.15; // rayon final
+        P.kind[n] = 1;
+        P.d[n] = 0.25 + rnd() * 1.15;
         P.s0[n] = rnd() * Math.PI * 2;
         P.len[n] = (0.6 + rnd() * 1.4) * Math.PI;
       } else {
         P.kind[n] = 0;
         P.len[n] = 7 + rnd() * 12;
         P.s0[n] = rnd() * PATH_LEN;
-        P.d[n] = (rnd() * 2 - 1) * 0.72;
+        P.d[n] = (rnd() * 2 - 1) * 0.7;
       }
       P.phase[n] = rnd();
       P.freq[n] = 0.8 + rnd() * 1.6;
-      P.ign[n] = Math.pow(rnd(), 1.4) * 40; // allumage F 0–40
-      P.conv[n] = 26 + rnd() * 30 + P.ign[n] * 0.25; // départ de la convergence
-      P.lag[n] = 4 + rnd() * 8;
-      P.dur[n] = Math.max(18, 100 - P.conv[n] - P.lag[n] - rnd() * 6); // arrivée au plus tard F 100
-      P.swirl[n] = (rnd() < 0.5 ? -1 : 1) * (0.25 + rnd() * 0.45);
+      P.ign[n] = Math.pow(rnd(), 1.3) * 36; // allumage F 0–36
+      P.conv[n] = 34 + rnd() * 36 + P.ign[n] * 0.3; // départ du glissement vers la forme
+      P.lag[n] = 3 + rnd() * 5;
+      P.dur[n] = Math.max(10, Math.min(16 + rnd() * 12, 98 - P.conv[n] - P.lag[n]));
+      P.swirl[n] = (rnd() < 0.5 ? -1 : 1) * (0.2 + rnd() * 0.35);
       P.bright[n] = 0.6 + rnd() * 0.4;
     }
     return { N: N, M: M, geo: geo, P: P };
   }
 
-  /* Amplitude du tressage (unités de viewBox). Jamais nulle avant NET_FRAME, nulle à partir de NET_FRAME. */
+  /* Rassemblement final : jusqu'à F 88 la forme cible est tournée, élargie et tressée (illisible) ;
+   * elle se referme sur le vrai dessin pendant les 16 dernières images de P53, et n'est exacte qu'à NET_FRAME. */
+  function gather(F) {
+    if (F >= NET_FRAME) return 1;
+    return FX.ease.inOutCubic(FX.ramp(88, NET_FRAME - 1, F)) * 0.94;
+  }
   function braidAmp(F) {
     if (F >= NET_FRAME) return 0;
-    var u = 1 - FX.ramp(30, NET_FRAME - 1, F);
-    return 0.32 + 2.6 * Math.pow(u, 1.6);
+    return FX.lerp(2.4, 0.4, gather(F) / 0.94);
   }
-  /* Flou d'approche (px) : le logo reste doux jusqu'à l'image 103 incluse. */
   function softBlur(F) {
     if (F >= NET_FRAME) return 0;
-    var rise = FX.smooth(26, 60, F),
-      fall = 1 - FX.ramp(72, NET_FRAME - 1, F);
-    return 0.5 + 1.1 * rise + 3.4 * rise * fall;
+    if (F < 88) return 0.4 + 0.8 * FX.smooth(26, 60, F);
+    return 1.2 + 2.8 * FX.ramp(88, 100, F);
   }
-  /* Calcule toutes les positions à l'image F.
-   * view : vue Terre (FX.Earth.viewAt) ; out : { pos Float32Array N*M*2, e Float32Array N (convergence), rev Float32Array N }.
-   * Coordonnées écran avant recul (le recul est appliqué au dessin, pas à la simulation). */
-  function frame(sim, F, view, out) {
-    var N = sim.N,
-      M = sim.M,
-      P = sim.P,
-      geo = sim.geo;
+
+  /* Positions à l'image F (coordonnées écran avant recul). */
+  function frame(sim, F, out) {
+    var N = sim.N, M = sim.M, P = sim.P, geo = sim.geo;
     if (!out) out = { pos: new Float32Array(N * M * 2), e: new Float32Array(N), rev: new Float32Array(N) };
-    var pos = out.pos;
-    var tmp = [0, 0, 0],
-      pa = [0, 0, 0, 0];
-    var s = PLACE.scale,
-      ox = PLACE.cx - PLACE.ux * s,
-      oy = PLACE.cy - PLACE.uy * s;
-    var amp = braidAmp(F);
+    var pos = out.pos, pa = [0, 0, 0, 0];
+    var s = PLACE.scale, ox = PLACE.cx - PLACE.ux * s, oy = PLACE.cy - PLACE.uy * s;
+    var amp = braidAmp(F), g = gather(F);
+    var th = 0.9 * (1 - g), sc = 1 + 0.45 * (1 - g), ct = Math.cos(th), st = Math.sin(th);
+    var k = pushFor(F), W2 = 960, H2 = 540;
     var ease = FX.ease.inOutCubic;
     for (var n = 0; n < N; n++) {
-      var rev = FX.ramp(P.ign[n], P.ign[n] + 16, F);
-      out.rev[n] = rev;
-      var conv0 = P.conv[n],
-        dur = P.dur[n],
-        lag = P.lag[n];
-      out.e[n] = ease(FX.ramp(conv0, conv0 + dur + lag, F));
+      out.rev[n] = FX.ramp(P.ign[n], P.ign[n] + 14, F);
+      var c0 = P.conv[n], dur = P.dur[n], lag = P.lag[n];
+      out.e[n] = ease(FX.ramp(c0, c0 + dur + lag, F));
       for (var m = 0; m < M; m++) {
-        var u = m / (M - 1);
-        var gi = (n * M + m) * 2;
-        FX.Earth.project(view, geo[gi], geo[gi + 1], tmp);
-        var gx = tmp[0],
-          gy = tmp[1];
+        var u = m / (M - 1), gi = (n * M + m) * 2;
+        var gx = W2 + (geo[gi] - W2) * k, gy = H2 + (geo[gi + 1] - H2) * k;
         var tx, ty;
         if (P.kind[n] === 1) {
           var rr = P.d[n] * (0.35 + 0.65 * u) + amp * 0.5 * Math.sin(6.283 * (P.phase[n] + u * P.freq[n]) + F * 0.09);
@@ -194,9 +181,12 @@
           tx = ox + (pa[0] + pa[2] * off) * s;
           ty = oy + (pa[1] + pa[3] * off) * s;
         }
-        var e = ease(FX.ramp(conv0 + lag * u, conv0 + lag * u + dur, F));
-        var vx = tx - gx,
-          vy = ty - gy;
+        // Forme cible tournée et élargie autour du centre du logo tant qu'elle n'est pas rassemblée.
+        var rx = tx - PLACE.cx, ry = ty - PLACE.cy;
+        tx = PLACE.cx + (rx * ct - ry * st) * sc;
+        ty = PLACE.cy + (rx * st + ry * ct) * sc;
+        var e = ease(FX.ramp(c0 + lag * u, c0 + lag * u + dur, F));
+        var vx = tx - gx, vy = ty - gy;
         var sw = Math.sin(Math.PI * e) * P.swirl[n];
         pos[gi] = gx + vx * e - vy * sw * 0.35;
         pos[gi + 1] = gy + vy * e + vx * sw * 0.35;
@@ -237,6 +227,8 @@
     pathAt: pathAt,
     build: build,
     frame: frame,
+    pushFor: pushFor,
+    gather: gather,
     braidAmp: braidAmp,
     softBlur: softBlur,
     drawLogo: drawLogo,

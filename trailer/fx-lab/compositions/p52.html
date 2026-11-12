@@ -5,139 +5,59 @@
   </style>
   <!-- P52 : images 3271 à 3376 du film (105 images, 1,75 s). Remontée à l'envers et accélérée :
        ville (img05) → nuage (img04) → stratosphère (img03), raccord vers l'orbite de P53.
-       Emplacements des plaques de Tony : variable PLATES ci-dessous (vide = plaque en code). -->
+       Plaques réelles img05, img04, img03, puis img39 (raccord exact avec P53). -->
   <div id="root" data-composition-id="p52" data-start="0" data-duration="1.75" data-width="1920" data-height="1080">
     <canvas id="p52-canvas" width="1920" height="1080" data-layout-allow-overflow></canvas>
   </div>
   <script src="lib/fx/core.js"></script>
-  <script src="lib/fx/plates.js"></script>
   <script src="lib/fx/transitions.js"></script>
   <script>
     (function () {
       var FX = window.LKDVFX;
       var TR = FX.Transitions;
       var W = 1920, H = 1080, FRAMES = 105;
-      /* Plaques de Tony : mettre "assets/footage/img05.png" etc. quand elles sont livrées. */
-      var PLATES = { img05: "", img04: "", img03: "" };
+      /* Plaques de Tony. img39 termine le plan à l'identique de la première image de P53 (même cadrage, échelle 1). */
+      var PLATES = { img05: "assets/footage/img05.png", img04: "assets/footage/img04.png", img03: "assets/footage/img03.png", img39: "assets/footage/img39.png" };
       var cv = document.getElementById("p52-canvas");
       var ctx = cv.getContext("2d");
-      var city = FX.Plates.shared("city", 505);
-      var clouds = FX.Plates.shared("clouds", 404);
-      var strato = FX.Plates.shared("strato", 303);
       var imgs = {};
 
-      function cover(c, img, sc, cxp, cyp, rot) {
-        // Dessine img centrée sur (cxp, cyp) de l'image source, à l'échelle sc, avec rotation (radians).
-        var base = Math.max(W / img.width, H / img.height);
+      // Zoom arrière géométrique (vitesse perçue constante dans l'étage), centré.
+      function zoomed(c, img, s0, s1, l, rot) {
+        var sc = s0 * Math.pow(s1 / s0, l);
         c.save();
         c.translate(W / 2, H / 2);
         if (rot) c.rotate(rot);
-        c.scale(base * sc, base * sc);
-        c.drawImage(img, -cxp * img.width, -cyp * img.height);
-        c.restore();
-      }
-      function rain(c, f, a) {
-        c.save();
-        c.strokeStyle = "rgba(200,215,235," + (0.22 * a).toFixed(3) + ")";
-        c.lineWidth = 1;
-        c.beginPath();
-        for (var i = 0; i < 240; i++) {
-          var x0 = FX.hash2(i, 1, 52) * (W + 200) - 100;
-          var y0 = ((FX.hash2(i, 2, 52) * (H + 300) + f * 38 * (0.8 + FX.hash2(i, 3, 52))) % (H + 300)) - 150;
-          c.moveTo(x0, y0);
-          c.lineTo(x0 - 9, y0 + 34);
-        }
-        c.stroke();
+        c.scale(sc * (W / img.width), sc * (W / img.width));
+        c.drawImage(img, -img.width / 2, -img.height / 2);
         c.restore();
       }
 
+      // u = p^1.8 : chaque étage occupe une plage de u ; les fondus se chevauchent, il n'y a aucun palier.
       var stages = [
-        { // img05 : la ville, on s'arrache de la fenêtre de Léa.
-          from: 0, to: 0.42,
-          draw: function (c, u, l) {
-            var sc = 1.9 * Math.pow(0.42, l);
-            if (imgs.img05) cover(c, imgs.img05, sc * 0.6, 0.5, 0.5, 0);
-            else {
-              var k = sc * (W / city.width) * (city.width / W);
-              c.save();
-              c.translate(W / 2, H / 2);
-              c.scale(sc * 0.6, sc * 0.6);
-              c.drawImage(city, -city.width / 2, -city.height / 2);
-              c.restore();
-            }
-            rain(c, Math.round(u * 1000), 1 - l * 0.5);
-          },
-        },
-        { // img04 : on traverse le nuage à l'envers, la trouée se referme sur la ville.
-          from: 0.3, to: 0.7, fadeIn: 0.02,
-          draw: function (c, u, l) {
-            var sc = 1.9 * 0.42 * Math.pow(0.5, l) * 0.6;
-            if (imgs.img04) cover(c, imgs.img04, 1 + 0.4 * (1 - l), 0.5, 0.5, 0);
-            else {
-              c.save();
-              c.translate(W / 2, H / 2);
-              c.scale(sc, sc);
-              c.drawImage(city, -city.width / 2, -city.height / 2);
-              c.restore();
-              TR.cloudPass(c, 1 - 0.78 * l, { clouds: clouds, hole: true, origin: [W / 2, H / 2] });
-            }
-          },
-        },
-        { // img03 : stratosphère, mer de nuages, horizon qui roule ; le ciel noircit vers l'orbite.
-          from: 0.62, to: 1, fadeIn: 0.05,
-          draw: function (c, u, l) {
-            var e = FX.ease.inOutSine(l);
-            var sc = 1.34 - 0.12 * l;
-            var roll = ((10 - 6 * e) * Math.PI) / 180;
-            var img = imgs.img03 || strato.canvas;
-            var hy = imgs.img03 ? 0.36 : strato.horizonY / img.height;
-            // L'horizon monte vers le haut du cadre (y ≈ 160), comme le limbe de P53.
-            var cyp = 0.5 + 0.07 * e;
-            cover(c, img, sc, 0.5, cyp, roll);
-            c.fillStyle = "rgba(232,238,245," + (0.8 * Math.pow(1 - FX.smooth(0, 0.35, l), 2)).toFixed(3) + ")";
-            c.fillRect(0, 0, W, H);
-            var g = c.createLinearGradient(0, 0, 0, H);
-            var night = FX.smooth(0.35, 1, l);
-            g.addColorStop(0, FX.rgba(FX.RGB.inkDeep, 0.95 * night));
-            g.addColorStop(0.3, FX.rgba(FX.RGB.ink, 0.8 * night));
-            g.addColorStop(1, FX.rgba(FX.RGB.ink, 0.88 * night));
-            c.fillStyle = g;
-            c.fillRect(0, 0, W, H);
-            // Raccord P53 : le limbe de l'orbite apparaît là où il sera à l'image suivante (y ≈ 150).
-            var lim = FX.smooth(0.55, 1, l);
-            if (lim > 0) {
-              var R = 2120, lcx = 960, lcy = 150 + R;
-              var ag = c.createRadialGradient(lcx, lcy, R - 26, lcx, lcy, R + 46);
-              ag.addColorStop(0, "rgba(40,110,120,0)");
-              ag.addColorStop(0.36, "rgba(150,215,205," + (0.5 * lim).toFixed(3) + ")");
-              ag.addColorStop(0.7, "rgba(30,90,95," + (0.1 * lim).toFixed(3) + ")");
-              ag.addColorStop(1, "rgba(20,60,60,0)");
-              c.fillStyle = ag;
-              c.beginPath();
-              c.arc(lcx, lcy, R + 46, 0, Math.PI * 2);
-              c.arc(lcx, lcy, R - 26, 0, Math.PI * 2, true);
-              c.fill();
-            }
-          },
-        },
+        { from: 0, to: 0.3, draw: function (c, u, l) { zoomed(c, imgs.img05, 2.2, 1.0, l); } },
+        { from: 0.26, to: 0.58, fadeIn: 0.06, draw: function (c, u, l) { zoomed(c, imgs.img04, 2.6, 1.0, l); } },
+        { from: 0.54, to: 0.9, fadeIn: 0.06, draw: function (c, u, l) { zoomed(c, imgs.img03, 1.9, 1.06, l, (-4 + 4 * l) * Math.PI / 180); } },
+        { from: 0.88, to: 1, fadeIn: 0.12, draw: function (c, u, l) { zoomed(c, imgs.img39, 1.14, 1.0, FX.ease.outCubic(l)); } },
       ];
 
       var clock = FX.bindClock("p52", FRAMES, function (t, f) {
-        TR.ascent(ctx, stages, f / (FRAMES - 1), { accel: 1.8, blur: 0.07, samples: 9 });
+        if (!imgs.img39) return;
+        var p = f / (FRAMES - 1);
+        // Flou radial proportionnel à la vitesse, éteint sur les 8 dernières images : la dernière image = P53 image 0.
+        var blur = 0.075 * (1 - FX.smooth(0.9, 1, p));
+        TR.ascent(ctx, stages, p, { accel: 1.8, blur: blur, samples: 9 });
       });
-      var paths = Object.keys(PLATES).filter(function (k) { return PLATES[k]; });
-      if (paths.length) {
-        window.__hf = window.__hf || {};
-        window.__hf.buildReady = window.__hf.buildReady || {};
-        window.__hf.buildReady["p52-plates"] = Promise.all(paths.map(function (k) {
-          return new Promise(function (res, rej) {
-            var im = new Image();
-            im.onload = function () { imgs[k] = im; res(); };
-            im.onerror = rej;
-            im.src = PLATES[k];
-          });
-        })).then(function () { clock.redraw(); });
-      }
+      window.__hf = window.__hf || {};
+      window.__hf.buildReady = window.__hf.buildReady || {};
+      window.__hf.buildReady["p52-plates"] = Promise.all(Object.keys(PLATES).map(function (k) {
+        return new Promise(function (res, rej) {
+          var im = new Image();
+          im.onload = function () { imgs[k] = im; res(); };
+          im.onerror = rej;
+          im.src = PLATES[k];
+        });
+      })).then(function () { clock.redraw(); });
       window.__timelines["p52"] = clock.tl;
     })();
   </script>

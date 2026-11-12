@@ -5,16 +5,14 @@ import vm from "node:vm";
 const g = { LKDVFX: {} };
 g.globalThis = g;
 vm.createContext(g);
-for (const f of ["lib/fx/core.js", "lib/fx/earth-data.js", "lib/fx/earth.js", "lib/fx/traces.js"]) vm.runInContext(fs.readFileSync(f, "utf8"), g);
-// finale.js demande un document pour create(), mais viewFor/reculFor sont purs : on les charge aussi.
-vm.runInContext(fs.readFileSync("lib/fx/finale.js", "utf8"), g);
+for (const f of ["lib/fx/core.js", "lib/fx/img39-lights.js", "lib/fx/traces.js"]) vm.runInContext(fs.readFileSync(f, "utf8"), g);
 const FX = g.LKDVFX, T = FX.Traces;
-const sim = T.build({ count: 2600, seed: 5354 });
+const sim = T.build({ count: 2200, seed: 5354 });
 const NET = T.NET_FRAME;
-const ref = T.frame(sim, NET, FX.Finale.viewFor(NET)).pos.slice();
+const ref = T.frame(sim, NET).pos.slice();
 let ok = true;
-for (let F = NET - 6; F <= NET + 4; F++) {
-  const p = T.frame(sim, F, FX.Finale.viewFor(F)).pos;
+for (let F = NET - 16; F <= NET + 4; F++) {
+  const p = T.frame(sim, F).pos;
   let s = 0;
   for (let i = 0; i < p.length; i += 2) s += Math.hypot(p[i] - ref[i], p[i + 1] - ref[i + 1]);
   const d = s / (p.length / 2);

@@ -403,12 +403,13 @@
     ox.setTransform(1, 0, 0, 1, 0, 0);
     ox.globalCompositeOperation = "source-over";
     ox.clearRect(0, 0, W, H);
-    var px = cx + Math.cos(ang) * (R + 14),
-      py = cy + Math.sin(ang) * (R + 14);
+    var lift = o.lift == null ? -6 : o.lift; // décalage radial du centre du logo (px, négatif = dans l'atmosphère)
+    var px = cx + Math.cos(ang) * (R + lift),
+      py = cy + Math.sin(ang) * (R + lift);
     ox.translate(px, py);
     ox.rotate(ang + Math.PI / 2);
     // Écrasé dans l'épaisseur de l'atmosphère, comme un relief de lumière.
-    ox.scale(1, 0.62);
+    ox.scale(1, 0.45);
     ox.filter = "blur(" + (6 + 10 * dis).toFixed(1) + "px)";
     var sz = size * (1 + 0.15 * dis);
     ox.drawImage(lc, -sz / 2, -sz * 0.62, sz, sz);
@@ -416,7 +417,7 @@
     ox.setTransform(1, 0, 0, 1, 0, 0);
     // Masque : seulement dans l'anneau lumineux du limbe.
     ox.globalCompositeOperation = "destination-in";
-    var rg = ox.createRadialGradient(cx, cy, R - 30, cx, cy, R + 80);
+    var rg = ox.createRadialGradient(cx, cy, R - 45, cx, cy, R + 40);
     rg.addColorStop(0, "rgba(0,0,0,0)");
     rg.addColorStop(0.18, "rgba(0,0,0,0.75)");
     rg.addColorStop(0.32, "rgba(0,0,0,1)");
@@ -436,7 +437,7 @@
     ctx.save();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.globalCompositeOperation = "lighter";
-    ctx.globalAlpha = Math.min(1, 0.55 * vis * I);
+    ctx.globalAlpha = Math.min(1, 0.5 * vis * I);
     ctx.drawImage(oc, 0, 0);
     ctx.restore();
     return vis;
