@@ -1,126 +1,18 @@
-<!-- hf-skeleton generated id=p10 sha256=951a75397de37dea — carte provisoire générée par tools/timeline/build-skeleton.mjs depuis film/shots.json ; toute retouche hors de la zone hf-footage la soustrait au générateur -->
+<!-- P10 (images 560–614, 54 images) — landscape-director. Le rêve devient réel : drone au ras de l'eau (img09) qui
+     file vers les falaises. Parallaxe 2,5D en deux plans séparés à l'horizon de l'eau (y ≈ 588 d'img09, fondu de 46 px) :
+     l'eau grossit plus vite que les falaises (S falaises 1,08 → 1,36 ; eau jusqu'à +14 %). Légère inclinaison FPV,
+     flou de zoom qui part de celui de la fin de P09 et remonte avec la vitesse. Première image = img09 plein cadre à 1,08
+     (= dernière image de P09). Sortie en coupe sèche au plus rapide. -->
 <template>
   <style>
-    #root {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-      background: #1D5E5E;
-      font-family: "Inter", sans-serif;
-      color: #FAF8F5;
-    }
-    .p10-card {
-      position: absolute;
-      inset: 0;
-      padding: 96px 120px 120px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-    .p10-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      font-family: "JetBrains Mono", monospace;
-      font-size: 34px;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-    }
-    .p10-mid {
-      display: flex;
-      align-items: flex-end;
-      gap: 72px;
-    }
-    .p10-num {
-      font-weight: 900;
-      font-size: 360px;
-      line-height: 0.8;
-      letter-spacing: -0.04em;
-    }
-    .p10-meta {
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-      padding-bottom: 8px;
-    }
-    .p10-source {
-      font-family: "JetBrains Mono", monospace;
-      font-weight: 700;
-      font-size: 64px;
-    }
-    .p10-frames {
-      font-family: "JetBrains Mono", monospace;
-      font-size: 36px;
-    }
-    .p10-star {
-      font-weight: 700;
-      font-size: 40px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-    }
-    .p10-intent {
-      max-width: 1600px;
-      font-size: 52px;
-      line-height: 1.2;
-      font-weight: 400;
-    }
-    .p10-track {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      height: 12px;
-      background: rgba(250, 248, 245, 0.18);
-    }
-    .p10-bar {
-      position: absolute;
-      inset: 0;
-      background: #FAF8F5;
-      transform-origin: 0 50%;
-    }
-    .p10-frame {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-    }
-    .p10-shot,
-    .p10-shot-inner {
-      position: absolute;
-      inset: 0;
-    }
-    .p10-shot {
-      opacity: 0;
-    }
-    .p10-shot-img {
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 1920px;
-      height: 1080px;
-      /* Remplit le 16:9 sans déformer, quel que soit le rapport de l'image : recadrage au centre. */
-      object-fit: cover;
-      object-position: 50% 50%;
-    }
+    #root { position: absolute; inset: 0; overflow: hidden; background: #0B1F17; }
+    .p10-frame { position: absolute; inset: 0; overflow: hidden; }
+    .p10-shot, .p10-shot-inner { position: absolute; inset: 0; }
+    .p10-shot { opacity: 0; }
+    .p10-shot-img { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
+    #p10-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
   </style>
   <div id="root" data-composition-id="p10" data-width="1920" data-height="1080" data-duration="0.9">
-    <!-- Carte provisoire : outil de travail, disparaît quand l'image du plan est là. -->
-    <div id="p10-card" class="p10-card" data-shot="p10" data-act="3">
-      <div id="p10-top" class="p10-top">
-        <span id="p10-act">Acte 3 · DÉCLIC</span>
-        <span id="p10-range">560–614</span>
-      </div>
-      <div id="p10-mid" class="p10-mid">
-        <div id="p10-num" class="p10-num">P10</div>
-        <div id="p10-meta" class="p10-meta">
-          <div id="p10-source" class="p10-source">img09</div>
-          <div id="p10-frames" class="p10-frames">54 images · 0,90 s</div>
-        </div>
-      </div>
-      <div id="p10-intent" class="p10-intent">Le rêve : le lac devient réel</div>
-      <div id="p10-track" class="p10-track"><div id="p10-bar" class="p10-bar"></div></div>
-    </div>
-    <!-- Emplacement d'image plein cadre : assets/footage/img09.png.
-         Chaque calque : .p10-shot (opacité, séquence) > .p10-shot-inner (libre pour le mouvement) > img. -->
     <div id="p10-frame" class="p10-frame" data-layout-allow-overflow>
       <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) -->
       <div id="p10-shot-1" class="p10-shot" data-src="img09" data-seq="0" data-seq-count="1">
@@ -130,30 +22,65 @@
       </div>
     <!-- hf-footage:end -->
     </div>
+    <canvas id="p10-canvas" width="1920" height="1080" data-layout-allow-overflow></canvas>
   </div>
+  <script src="lib/fx/core.js"></script>
   <script>
     (function () {
-      var D = 54 / 60;
-      var tl = gsap.timeline({ paused: true });
-      // Barre de progression : se remplit sur la durée du plan.
-      tl.fromTo("#p10-bar", { scaleX: 0 }, { scaleX: 1, duration: D, ease: "none" }, 0);
-      // Images présentes : chaque source occupe sa part égale du plan (ordre de la trame) ;
-      // la carte reste visible là où l'image manque.
-      var shots = Array.prototype.slice.call(document.querySelectorAll(".p10-shot"));
-      if (shots.length) {
-        var n = Number(shots[0].getAttribute("data-seq-count"));
-        var bySeq = {};
-        shots.forEach(function (el) { bySeq[el.getAttribute("data-seq")] = el; });
-        for (var k = 0; k < n; k++) {
-          var t = (k * D) / n;
-          var el = bySeq[String(k)];
-          shots.forEach(function (other) {
-            tl.set(other, { opacity: other === el ? 1 : 0 }, t);
-          });
-          tl.set("#p10-card", { opacity: el ? 0 : 1 }, t);
-        }
+      var FX = window.LKDVFX;
+      var N = 54, W = 1920, H = 1080, HZ = 588, FEATHER = 46;
+      var img = document.getElementById("p10-shot-1-img");
+      var ctx = document.getElementById("p10-canvas").getContext("2d");
+      var buf = FX.canvas(W, H), bx = buf.getContext("2d");
+      var wat = FX.canvas(W, H), wx = wat.getContext("2d");
+      function place(c, s, cx, cy, roll, ay) {
+        // Échelle s autour du point visé (cx, cy), roulis autour du centre de l'écran ; ay = ancrage vertical
+        // (l'eau est mise à l'échelle depuis l'horizon pour rester collée aux falaises).
+        c.setTransform(1, 0, 0, 1, 0, 0);
+        c.translate(W / 2, H / 2);
+        c.rotate(roll);
+        c.translate(-W / 2, -H / 2);
+        c.transform(s, 0, 0, s, W / 2 - s * cx, ay - s * cy);
       }
-      window.__timelines["p10"] = tl;
+      var clock = FX.bindClock("p10", N, function (t, f) {
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.fillStyle = "#0B1F17";
+        ctx.fillRect(0, 0, W, H);
+        if (!img.complete || !img.naturalWidth) return;
+        var u = f / (N - 1);
+        var run = 0.55 * u + 0.45 * u * u; // vitesse qui monte jusqu'à la coupe
+        var sm = 1.08 + 0.28 * run;
+        var sw = sm * (1 + 0.14 * run);
+        var cx = 960 + 40 * run, cy = 540 - 25 * run;
+        cx = FX.clamp(cx, W / 2 / sm + 12, W - W / 2 / sm - 12);
+        cy = FX.clamp(cy, H / 2 / sm + 12, H - H / 2 / sm - 12);
+        if (f === 0) { cx = 960; cy = 540; }
+        var roll = (Math.PI / 180) * 0.7 * Math.sin(Math.PI * u) * (FX.noise2(u * 2, 4.2, 101) - 0.2);
+        // Plan lointain : falaises et rive.
+        place(bx, sm, cx, cy, roll, H / 2);
+        bx.drawImage(img, 0, 0, W, H);
+        // Plan proche : l'eau, ancrée sur l'horizon.
+        var hy = H / 2 + sm * (HZ - cy);
+        wx.setTransform(1, 0, 0, 1, 0, 0);
+        wx.clearRect(0, 0, W, H);
+        place(wx, sw, cx, HZ, roll, hy);
+        wx.drawImage(img, 0, 0, W, H);
+        wx.setTransform(1, 0, 0, 1, 0, 0);
+        var g = wx.createLinearGradient(0, hy - 6, 0, hy + FEATHER);
+        g.addColorStop(0, "rgba(0,0,0,0)");
+        g.addColorStop(1, "rgba(0,0,0,1)");
+        wx.globalCompositeOperation = "destination-in";
+        wx.fillStyle = g;
+        wx.fillRect(0, 0, W, H);
+        wx.globalCompositeOperation = "source-over";
+        bx.setTransform(1, 0, 0, 1, 0, 0);
+        bx.drawImage(wat, 0, 0);
+        // Flou de vitesse : reprend celui de la fin de P09, retombe, puis remonte avec la course.
+        var amount = 0.05 * Math.exp(-f / 4) + 0.035 * run;
+        FX.zoomBlur(ctx, buf, 960 + sm * (1000 - cx), hy, amount, 8, W, H);
+      });
+      img.addEventListener("load", function () { clock.redraw(); });
+      window.__timelines["p10"] = clock.tl;
     })();
   </script>
 </template>

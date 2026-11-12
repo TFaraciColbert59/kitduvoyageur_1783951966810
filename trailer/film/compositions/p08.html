@@ -1,126 +1,17 @@
-<!-- hf-skeleton generated id=p08 sha256=22fa6dcbb94c544e — carte provisoire générée par tools/timeline/build-skeleton.mjs depuis film/shots.json ; toute retouche hors de la zone hf-footage la soustrait au générateur -->
+<!-- P08 (images 482–508, 26 images) — landscape-director. Très gros plan de l'œil (img08), un seul temps :
+     impact (coup de zoom 1,22 → 1,10 en 5 images, flou de zoom et secousse qui retombent), puis micro-poussée vers
+     la pupille (1,10 → 1,20) ; le reflet turquoise du lac (pupille, ~1012–1112 × 497–575) s'allume d'un halo doux
+     qui gonfle jusqu'à la coupe (raccord « rond de la pupille »). -->
 <template>
   <style>
-    #root {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-      background: #1D5E5E;
-      font-family: "Inter", sans-serif;
-      color: #FAF8F5;
-    }
-    .p08-card {
-      position: absolute;
-      inset: 0;
-      padding: 96px 120px 120px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-    .p08-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      font-family: "JetBrains Mono", monospace;
-      font-size: 34px;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-    }
-    .p08-mid {
-      display: flex;
-      align-items: flex-end;
-      gap: 72px;
-    }
-    .p08-num {
-      font-weight: 900;
-      font-size: 360px;
-      line-height: 0.8;
-      letter-spacing: -0.04em;
-    }
-    .p08-meta {
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-      padding-bottom: 8px;
-    }
-    .p08-source {
-      font-family: "JetBrains Mono", monospace;
-      font-weight: 700;
-      font-size: 64px;
-    }
-    .p08-frames {
-      font-family: "JetBrains Mono", monospace;
-      font-size: 36px;
-    }
-    .p08-star {
-      font-weight: 700;
-      font-size: 40px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-    }
-    .p08-intent {
-      max-width: 1600px;
-      font-size: 52px;
-      line-height: 1.2;
-      font-weight: 400;
-    }
-    .p08-track {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      height: 12px;
-      background: rgba(250, 248, 245, 0.18);
-    }
-    .p08-bar {
-      position: absolute;
-      inset: 0;
-      background: #FAF8F5;
-      transform-origin: 0 50%;
-    }
-    .p08-frame {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-    }
-    .p08-shot,
-    .p08-shot-inner {
-      position: absolute;
-      inset: 0;
-    }
-    .p08-shot {
-      opacity: 0;
-    }
-    .p08-shot-img {
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 1920px;
-      height: 1080px;
-      /* Remplit le 16:9 sans déformer, quel que soit le rapport de l'image : recadrage au centre. */
-      object-fit: cover;
-      object-position: 50% 50%;
-    }
+    #root { position: absolute; inset: 0; overflow: hidden; background: #0B1F17; }
+    .p08-frame { position: absolute; inset: 0; overflow: hidden; }
+    .p08-shot, .p08-shot-inner { position: absolute; inset: 0; }
+    .p08-shot { opacity: 0; }
+    .p08-shot-img { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
+    #p08-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
   </style>
   <div id="root" data-composition-id="p08" data-width="1920" data-height="1080" data-duration="0.43333333333333335">
-    <!-- Carte provisoire : outil de travail, disparaît quand l'image du plan est là. -->
-    <div id="p08-card" class="p08-card" data-shot="p08" data-act="3">
-      <div id="p08-top" class="p08-top">
-        <span id="p08-act">Acte 3 · DÉCLIC</span>
-        <span id="p08-range">482–508</span>
-      </div>
-      <div id="p08-mid" class="p08-mid">
-        <div id="p08-num" class="p08-num">P08</div>
-        <div id="p08-meta" class="p08-meta">
-          <div id="p08-source" class="p08-source">img08</div>
-          <div id="p08-frames" class="p08-frames">26 images · 0,43 s</div>
-        </div>
-      </div>
-      <div id="p08-intent" class="p08-intent">Le lac se reflète dans sa pupille</div>
-      <div id="p08-track" class="p08-track"><div id="p08-bar" class="p08-bar"></div></div>
-    </div>
-    <!-- Emplacement d'image plein cadre : assets/footage/img08.png.
-         Chaque calque : .p08-shot (opacité, séquence) > .p08-shot-inner (libre pour le mouvement) > img. -->
     <div id="p08-frame" class="p08-frame" data-layout-allow-overflow>
       <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) -->
       <div id="p08-shot-1" class="p08-shot" data-src="img08" data-seq="0" data-seq-count="1">
@@ -130,30 +21,48 @@
       </div>
     <!-- hf-footage:end -->
     </div>
+    <canvas id="p08-canvas" width="1920" height="1080" data-layout-allow-overflow></canvas>
   </div>
+  <script src="lib/fx/core.js"></script>
   <script>
     (function () {
-      var D = 26 / 60;
-      var tl = gsap.timeline({ paused: true });
-      // Barre de progression : se remplit sur la durée du plan.
-      tl.fromTo("#p08-bar", { scaleX: 0 }, { scaleX: 1, duration: D, ease: "none" }, 0);
-      // Images présentes : chaque source occupe sa part égale du plan (ordre de la trame) ;
-      // la carte reste visible là où l'image manque.
-      var shots = Array.prototype.slice.call(document.querySelectorAll(".p08-shot"));
-      if (shots.length) {
-        var n = Number(shots[0].getAttribute("data-seq-count"));
-        var bySeq = {};
-        shots.forEach(function (el) { bySeq[el.getAttribute("data-seq")] = el; });
-        for (var k = 0; k < n; k++) {
-          var t = (k * D) / n;
-          var el = bySeq[String(k)];
-          shots.forEach(function (other) {
-            tl.set(other, { opacity: other === el ? 1 : 0 }, t);
-          });
-          tl.set("#p08-card", { opacity: el ? 0 : 1 }, t);
-        }
-      }
-      window.__timelines["p08"] = tl;
+      var FX = window.LKDVFX;
+      var N = 26, W = 1920, H = 1080;
+      var PX = 1062, PY = 536; // reflet dans la pupille
+      var img = document.getElementById("p08-shot-1-img");
+      var ctx = document.getElementById("p08-canvas").getContext("2d");
+      var buf = FX.canvas(W, H), bx = buf.getContext("2d");
+      var clock = FX.bindClock("p08", N, function (t, f) {
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.fillStyle = "#0B1F17";
+        ctx.fillRect(0, 0, W, H);
+        if (!img.complete || !img.naturalWidth) return;
+        var u = f / (N - 1);
+        var hit = Math.exp(-f / 2.2);
+        var S = 1.10 + 0.12 * hit + 0.10 * FX.ease.inQuad(u);
+        var shake = 7 * hit;
+        var cx = FX.lerp(1000, PX, u) + (FX.hash2(f, 1, 81) - 0.5) * 2 * shake;
+        var cy = PY + (FX.hash2(f, 2, 82) - 0.5) * 2 * shake;
+        cx = FX.clamp(cx, W / 2 / S, W - W / 2 / S);
+        cy = FX.clamp(cy, H / 2 / S, H - H / 2 / S);
+        bx.setTransform(S, 0, 0, S, W / 2 - S * cx, H / 2 - S * cy);
+        bx.drawImage(img, 0, 0, W, H);
+        // Reflet turquoise : halo additif centré sur l'écran reflété, qui gonfle vers la coupe.
+        var glow = 0.25 + 0.55 * FX.ease.inQuad(u);
+        var r = 70 + 50 * u;
+        var g = bx.createRadialGradient(PX, PY, 4, PX, PY, r);
+        g.addColorStop(0, "rgba(90,220,225," + (0.55 * glow).toFixed(3) + ")");
+        g.addColorStop(1, "rgba(90,220,225,0)");
+        bx.globalCompositeOperation = "lighter";
+        bx.fillStyle = g;
+        bx.fillRect(PX - r, PY - r, 2 * r, 2 * r);
+        bx.globalCompositeOperation = "source-over";
+        bx.setTransform(1, 0, 0, 1, 0, 0);
+        var sx = 960 + S * (PX - cx), sy = 540 + S * (PY - cy);
+        FX.zoomBlur(ctx, buf, sx, sy, 0.06 * hit + 0.02 * u * u, 8, W, H);
+      });
+      img.addEventListener("load", function () { clock.redraw(); });
+      window.__timelines["p08"] = clock.tl;
     })();
   </script>
 </template>

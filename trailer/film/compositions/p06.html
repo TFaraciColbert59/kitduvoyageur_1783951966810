@@ -1,126 +1,18 @@
-<!-- hf-skeleton generated id=p06 sha256=2d5dec4641949d11 — carte provisoire générée par tools/timeline/build-skeleton.mjs depuis film/shots.json ; toute retouche hors de la zone hf-footage la soustrait au générateur -->
+<!-- P06 (images 325–403, 78 images) — landscape-director. DROP. Entrée : fin de TR.glassPass reprise (p 0,62 → 1 sur
+     16 images : gouttes qui grossissent, éclat chaud qui retombe, img06 posé à 1,08 comme la dernière image de P05).
+     Puis travelling latéral vers la gauche (Léa glisse vers la droite du cadre) qui se courbe en poussée accélérée vers
+     le téléphone (regard) : la coupe vers P07 tombe au plus rapide de la poussée. Pluie au premier plan sur la vitre
+     (gauche) en parallaxe plus rapide que le fond. Tout est fonction de l'image locale. -->
 <template>
   <style>
-    #root {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-      background: #1D5E5E;
-      font-family: "Inter", sans-serif;
-      color: #FAF8F5;
-    }
-    .p06-card {
-      position: absolute;
-      inset: 0;
-      padding: 96px 120px 120px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-    .p06-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      font-family: "JetBrains Mono", monospace;
-      font-size: 34px;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-    }
-    .p06-mid {
-      display: flex;
-      align-items: flex-end;
-      gap: 72px;
-    }
-    .p06-num {
-      font-weight: 900;
-      font-size: 360px;
-      line-height: 0.8;
-      letter-spacing: -0.04em;
-    }
-    .p06-meta {
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-      padding-bottom: 8px;
-    }
-    .p06-source {
-      font-family: "JetBrains Mono", monospace;
-      font-weight: 700;
-      font-size: 64px;
-    }
-    .p06-frames {
-      font-family: "JetBrains Mono", monospace;
-      font-size: 36px;
-    }
-    .p06-star {
-      font-weight: 700;
-      font-size: 40px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-    }
-    .p06-intent {
-      max-width: 1600px;
-      font-size: 52px;
-      line-height: 1.2;
-      font-weight: 400;
-    }
-    .p06-track {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      height: 12px;
-      background: rgba(250, 248, 245, 0.18);
-    }
-    .p06-bar {
-      position: absolute;
-      inset: 0;
-      background: #FAF8F5;
-      transform-origin: 0 50%;
-    }
-    .p06-frame {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-    }
-    .p06-shot,
-    .p06-shot-inner {
-      position: absolute;
-      inset: 0;
-    }
-    .p06-shot {
-      opacity: 0;
-    }
-    .p06-shot-img {
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 1920px;
-      height: 1080px;
-      /* Remplit le 16:9 sans déformer, quel que soit le rapport de l'image : recadrage au centre. */
-      object-fit: cover;
-      object-position: 50% 50%;
-    }
+    #root { position: absolute; inset: 0; overflow: hidden; background: #0B1F17; }
+    .p06-frame { position: absolute; inset: 0; overflow: hidden; }
+    .p06-shot, .p06-shot-inner { position: absolute; inset: 0; }
+    .p06-shot { opacity: 0; }
+    .p06-shot-img { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
+    #p06-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
   </style>
   <div id="root" data-composition-id="p06" data-width="1920" data-height="1080" data-duration="1.3">
-    <!-- Carte provisoire : outil de travail, disparaît quand l'image du plan est là. -->
-    <div id="p06-card" class="p06-card" data-shot="p06" data-act="3">
-      <div id="p06-top" class="p06-top">
-        <span id="p06-act">Acte 3 · DÉCLIC</span>
-        <span id="p06-range">325–403</span>
-      </div>
-      <div id="p06-mid" class="p06-mid">
-        <div id="p06-num" class="p06-num">P06</div>
-        <div id="p06-meta" class="p06-meta">
-          <div id="p06-source" class="p06-source">img06</div>
-          <div id="p06-frames" class="p06-frames">78 images · 1,30 s</div>
-        </div>
-      </div>
-      <div id="p06-intent" class="p06-intent">DROP. Léa rêve à sa fenêtre, un soir de pluie</div>
-      <div id="p06-track" class="p06-track"><div id="p06-bar" class="p06-bar"></div></div>
-    </div>
-    <!-- Emplacement d'image plein cadre : assets/footage/img06.png.
-         Chaque calque : .p06-shot (opacité, séquence) > .p06-shot-inner (libre pour le mouvement) > img. -->
     <div id="p06-frame" class="p06-frame" data-layout-allow-overflow>
       <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) -->
       <div id="p06-shot-1" class="p06-shot" data-src="img06" data-seq="0" data-seq-count="1">
@@ -130,30 +22,85 @@
       </div>
     <!-- hf-footage:end -->
     </div>
+    <canvas id="p06-canvas" width="1920" height="1080" data-layout-allow-overflow></canvas>
   </div>
+  <script src="lib/fx/core.js"></script>
+  <script src="lib/fx/transitions.js"></script>
   <script>
     (function () {
-      var D = 78 / 60;
-      var tl = gsap.timeline({ paused: true });
-      // Barre de progression : se remplit sur la durée du plan.
-      tl.fromTo("#p06-bar", { scaleX: 0 }, { scaleX: 1, duration: D, ease: "none" }, 0);
-      // Images présentes : chaque source occupe sa part égale du plan (ordre de la trame) ;
-      // la carte reste visible là où l'image manque.
-      var shots = Array.prototype.slice.call(document.querySelectorAll(".p06-shot"));
-      if (shots.length) {
-        var n = Number(shots[0].getAttribute("data-seq-count"));
-        var bySeq = {};
-        shots.forEach(function (el) { bySeq[el.getAttribute("data-seq")] = el; });
-        for (var k = 0; k < n; k++) {
-          var t = (k * D) / n;
-          var el = bySeq[String(k)];
-          shots.forEach(function (other) {
-            tl.set(other, { opacity: other === el ? 1 : 0 }, t);
-          });
-          tl.set("#p06-card", { opacity: el ? 0 : 1 }, t);
-        }
+      var FX = window.LKDVFX, TR = FX.Transitions;
+      var N = 78, W = 1920, H = 1080, ENTRY = 16, PASS = 0.62;
+      var img = document.getElementById("p06-shot-1-img");
+      var ctx = document.getElementById("p06-canvas").getContext("2d");
+      var cam = FX.canvas(W, H), cx2 = cam.getContext("2d");
+      var buf = FX.canvas(W, H), bx = buf.getContext("2d");
+      // Gouttes de pluie du premier plan (sur la vitre, moitié gauche), à graine fixe.
+      var rnd = FX.mulberry32(625), streaks = [];
+      for (var i = 0; i < 70; i++) streaks.push([rnd() * 1.25, rnd(), 0.4 + rnd() * 0.6, rnd()]);
+      // Caméra : échelle totale S, point visé (cx, cy) en coordonnées d'img06.
+      function camAt(f) {
+        var u = f / (N - 1);
+        var push = FX.ease.inCubic(FX.ramp(0.45, 1, u));
+        var S = 1.08 + 0.10 * u + 0.62 * push;
+        var cx = 960 - 70 * u - 30 * push;       // travelling latéral constant, puis vers le téléphone
+        var cy = 540 - 40 * u - 150 * push;
+        var sh = 1.5 * (1 - push);               // micro-tremblement d'épaule
+        cx += (FX.noise2(f * 0.09, 3.1, 61) - 0.5) * 2 * sh;
+        cy += (FX.noise2(f * 0.09, 7.7, 62) - 0.5) * 2 * sh;
+        return { S: S, cx: cx, cy: cy, push: push, u: u };
       }
-      window.__timelines["p06"] = tl;
+      function draw(c, im, s, cx, cy) {
+        cx = FX.clamp(cx, W / 2 / s, W - W / 2 / s);
+        cy = FX.clamp(cy, H / 2 / s, H - H / 2 / s);
+        c.setTransform(s, 0, 0, s, W / 2 - s * cx, H / 2 - s * cy);
+        c.drawImage(im, 0, 0, W, H);
+        c.setTransform(1, 0, 0, 1, 0, 0);
+      }
+      var clock = FX.bindClock("p06", N, function (t, f) {
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.fillStyle = "#0B1F17";
+        ctx.fillRect(0, 0, W, H);
+        if (!img.complete || !img.naturalWidth) return;
+        var c = camAt(f);
+        bx.setTransform(1, 0, 0, 1, 0, 0);
+        if (f < ENTRY) {
+          // Fin de la traversée de vitre : glassPass rééchelonne l'intérieur de « settle » autour du centre,
+          // on compense pour que l'échelle totale reste S (continuité avec la dernière image de P05).
+          var p = PASS + (1 - PASS) * (f + 1) / ENTRY;
+          var q = FX.ramp(PASS, 1, p);
+          var settle = 1 + 0.08 * (1 - FX.ease.outCubic(q));
+          cx2.fillStyle = "#0B1F17";
+          cx2.fillRect(0, 0, W, H);
+          draw(cx2, img, Math.max(1, c.S / settle), c.cx, c.cy);
+          bx.fillStyle = "#0B1F17";
+          bx.fillRect(0, 0, W, H);
+          TR.glassPass(bx, img, cam, p, { rect: [939, 505, 40, 62], pass: PASS, drops: 90, seed: 6 });
+        } else {
+          draw(bx, img, c.S, c.cx, c.cy);
+        }
+        // Pluie sur la vitre (moitié gauche), couche plus proche : glisse plus vite que le fond.
+        bx.save();
+        bx.globalCompositeOperation = "screen";
+        bx.lineCap = "round";
+        for (var k = 0; k < streaks.length; k++) {
+          var d = streaks[k];
+          var x = ((d[0] * W * 0.62 + f * (9 + 6 * c.u)) % (W * 0.7)) - 60;
+          var y = ((d[1] + f * 0.012 * d[2]) % 1) * H * 0.9;
+          var a = 0.10 + 0.12 * d[3];
+          bx.strokeStyle = "rgba(220,228,240," + a.toFixed(3) + ")";
+          bx.lineWidth = 1.5 + 2.5 * d[2];
+          bx.beginPath();
+          bx.moveTo(x, y);
+          bx.lineTo(x - 3, y + 18 + 30 * d[2]);
+          bx.stroke();
+        }
+        bx.restore();
+        // Flou de mouvement : flou de zoom croissant avec la vitesse de la poussée finale.
+        var amount = 0.05 * c.push;
+        FX.zoomBlur(ctx, buf, 960, 540, amount, 8, W, H);
+      });
+      img.addEventListener("load", function () { clock.redraw(); });
+      window.__timelines["p06"] = clock.tl;
     })();
   </script>
 </template>

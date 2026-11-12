@@ -1,126 +1,22 @@
-<!-- hf-skeleton generated id=p09 sha256=476ca12055d6405c — carte provisoire générée par tools/timeline/build-skeleton.mjs depuis film/shots.json ; toute retouche hors de la zone hf-footage la soustrait au générateur -->
+<!-- P09 (images 508–560, 52 images) — landscape-director. Le pouce tape (img07), poussée VIOLENTE dans l'écran
+     jusqu'à ce que la photo du lac (img09) remplisse le cadre.
+     - Images 0–9 : tape (petit coup de zoom + secousse), caméra centrée sur l'écran.
+     - Images 10–51 : zoom exponentiel en inExpo de 1,30 à 9 sur le centre de l'écran (945, 485), flou de zoom
+       proportionnel à la vitesse.
+     - PROVISOIRE : img09 est incrusté dans l'écran vert à travers un masque calculé à l'exécution sur les pixels verts
+       d'img07 (le pouce reste devant). ui-builder remplacera ce remplissage par la capture E1 (photo du carnet).
+       La photo est tenue en espace écran : couverture de l'écran au départ, puis plein cadre à 1,08 sur la dernière
+       image (= première image de P10). -->
 <template>
   <style>
-    #root {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-      background: #1D5E5E;
-      font-family: "Inter", sans-serif;
-      color: #FAF8F5;
-    }
-    .p09-card {
-      position: absolute;
-      inset: 0;
-      padding: 96px 120px 120px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-    .p09-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      font-family: "JetBrains Mono", monospace;
-      font-size: 34px;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-    }
-    .p09-mid {
-      display: flex;
-      align-items: flex-end;
-      gap: 72px;
-    }
-    .p09-num {
-      font-weight: 900;
-      font-size: 360px;
-      line-height: 0.8;
-      letter-spacing: -0.04em;
-    }
-    .p09-meta {
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-      padding-bottom: 8px;
-    }
-    .p09-source {
-      font-family: "JetBrains Mono", monospace;
-      font-weight: 700;
-      font-size: 64px;
-    }
-    .p09-frames {
-      font-family: "JetBrains Mono", monospace;
-      font-size: 36px;
-    }
-    .p09-star {
-      font-weight: 700;
-      font-size: 40px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-    }
-    .p09-intent {
-      max-width: 1600px;
-      font-size: 52px;
-      line-height: 1.2;
-      font-weight: 400;
-    }
-    .p09-track {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      height: 12px;
-      background: rgba(250, 248, 245, 0.18);
-    }
-    .p09-bar {
-      position: absolute;
-      inset: 0;
-      background: #FAF8F5;
-      transform-origin: 0 50%;
-    }
-    .p09-frame {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-    }
-    .p09-shot,
-    .p09-shot-inner {
-      position: absolute;
-      inset: 0;
-    }
-    .p09-shot {
-      opacity: 0;
-    }
-    .p09-shot-img {
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 1920px;
-      height: 1080px;
-      /* Remplit le 16:9 sans déformer, quel que soit le rapport de l'image : recadrage au centre. */
-      object-fit: cover;
-      object-position: 50% 50%;
-    }
+    #root { position: absolute; inset: 0; overflow: hidden; background: #0B1F17; }
+    .p09-frame { position: absolute; inset: 0; overflow: hidden; }
+    .p09-shot, .p09-shot-inner { position: absolute; inset: 0; }
+    .p09-shot { opacity: 0; }
+    .p09-shot-img { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
+    #p09-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
   </style>
   <div id="root" data-composition-id="p09" data-width="1920" data-height="1080" data-duration="0.8666666666666667">
-    <!-- Carte provisoire : outil de travail, disparaît quand l'image du plan est là. -->
-    <div id="p09-card" class="p09-card" data-shot="p09" data-act="3">
-      <div id="p09-top" class="p09-top">
-        <span id="p09-act">Acte 3 · DÉCLIC</span>
-        <span id="p09-range">508–560</span>
-      </div>
-      <div id="p09-mid" class="p09-mid">
-        <div id="p09-num" class="p09-num">P09</div>
-        <div id="p09-meta" class="p09-meta">
-          <div id="p09-source" class="p09-source">img07 + E1</div>
-          <div id="p09-frames" class="p09-frames">52 images · 0,87 s</div>
-        </div>
-      </div>
-      <div id="p09-intent" class="p09-intent">La photo remplit le cadre</div>
-      <div id="p09-track" class="p09-track"><div id="p09-bar" class="p09-bar"></div></div>
-    </div>
-    <!-- Emplacement d'image plein cadre : assets/footage/img07.png.
-         Chaque calque : .p09-shot (opacité, séquence) > .p09-shot-inner (libre pour le mouvement) > img. -->
     <div id="p09-frame" class="p09-frame" data-layout-allow-overflow>
       <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) -->
       <div id="p09-shot-1" class="p09-shot" data-src="img07" data-seq="0" data-seq-count="1">
@@ -129,31 +25,98 @@
         </div>
       </div>
     <!-- hf-footage:end -->
+      <!-- Photo du lac (provisoire, dans l'écran) : source du canevas uniquement. -->
+      <img id="p09-lake-img" class="p09-shot-img" src="assets/footage/img09.png" alt="" style="opacity: 0" />
     </div>
+    <canvas id="p09-canvas" width="1920" height="1080" data-layout-allow-overflow></canvas>
   </div>
+  <script src="lib/fx/core.js"></script>
   <script>
     (function () {
-      var D = 52 / 60;
-      var tl = gsap.timeline({ paused: true });
-      // Barre de progression : se remplit sur la durée du plan.
-      tl.fromTo("#p09-bar", { scaleX: 0 }, { scaleX: 1, duration: D, ease: "none" }, 0);
-      // Images présentes : chaque source occupe sa part égale du plan (ordre de la trame) ;
-      // la carte reste visible là où l'image manque.
-      var shots = Array.prototype.slice.call(document.querySelectorAll(".p09-shot"));
-      if (shots.length) {
-        var n = Number(shots[0].getAttribute("data-seq-count"));
-        var bySeq = {};
-        shots.forEach(function (el) { bySeq[el.getAttribute("data-seq")] = el; });
-        for (var k = 0; k < n; k++) {
-          var t = (k * D) / n;
-          var el = bySeq[String(k)];
-          shots.forEach(function (other) {
-            tl.set(other, { opacity: other === el ? 1 : 0 }, t);
-          });
-          tl.set("#p09-card", { opacity: el ? 0 : 1 }, t);
+      var FX = window.LKDVFX;
+      var N = 52, W = 1920, H = 1080, TAP = 10;
+      var SCX = 945, SCY = 485; // centre de l'écran vert d'img07
+      var img = document.getElementById("p09-shot-1-img");
+      var lake = document.getElementById("p09-lake-img");
+      var ctx = document.getElementById("p09-canvas").getContext("2d");
+      var buf = FX.canvas(W, H), bx = buf.getContext("2d");
+      var scr = FX.canvas(W, H), sx = scr.getContext("2d");
+      var mask = null; // masque alpha de l'écran vert (coordonnées img07)
+      function prepMask() {
+        if (mask || !img.complete || !img.naturalWidth) return;
+        var m = FX.canvas(W, H), mx = m.getContext("2d");
+        mx.drawImage(img, 0, 0, W, H);
+        try {
+          var d = mx.getImageData(0, 0, W, H), a = d.data;
+          for (var i = 0; i < a.length; i += 4) {
+            var k = Math.min(a[i + 1] - a[i], a[i + 1] - a[i + 2]);
+            var al = FX.clamp((k - 25) / 50, 0, 1);
+            a[i] = a[i + 1] = a[i + 2] = 255;
+            a[i + 3] = Math.round(255 * al);
+          }
+          mx.putImageData(d, 0, 0);
+        } catch (e) {
+          // Repli : rectangle arrondi intérieur à l'écran.
+          mx.clearRect(0, 0, W, H);
+          mx.fillStyle = "#fff";
+          mx.beginPath();
+          mx.moveTo(806, 182); mx.lineTo(1070, 182); mx.lineTo(1104, 786); mx.lineTo(836, 791);
+          mx.closePath();
+          mx.fill();
         }
+        mask = m;
       }
-      window.__timelines["p09"] = tl;
+      function camAt(f) {
+        var tap = f < TAP ? Math.sin(Math.PI * f / TAP) : 0;
+        var v = FX.ramp(TAP, N - 1, f);
+        var S = 1.30 * Math.exp(Math.log(9 / 1.30) * FX.ease.inCubic(v)) * (1 + 0.035 * tap);
+        var cx = SCX, cy = FX.lerp(505, SCY, FX.ease.inQuad(v));
+        var sh = 4 * tap;
+        cx += (FX.hash2(f, 1, 91) - 0.5) * 2 * sh;
+        cy += (FX.hash2(f, 2, 92) - 0.5) * 2 * sh;
+        cx = FX.clamp(cx, W / 2 / S, W - W / 2 / S);
+        cy = FX.clamp(cy, H / 2 / S, H - H / 2 / S);
+        return { S: S, cx: cx, cy: cy, v: v };
+      }
+      window.__lkdvCam = window.__lkdvCam || {};
+      window.__lkdvCam.p09 = camAt;
+      var clock = FX.bindClock("p09", N, function (t, f) {
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.fillStyle = "#0B1F17";
+        ctx.fillRect(0, 0, W, H);
+        if (!img.complete || !img.naturalWidth) return;
+        prepMask();
+        var c = camAt(f);
+        var T = [c.S, 0, 0, c.S, W / 2 - c.S * c.cx, H / 2 - c.S * c.cy];
+        bx.setTransform(T[0], T[1], T[2], T[3], T[4], T[5]);
+        bx.drawImage(img, 0, 0, W, H);
+        bx.setTransform(1, 0, 0, 1, 0, 0);
+        if (lake.complete && lake.naturalWidth && mask) {
+          // Écran : masque transformé, puis la photo par-dessus (espace écran).
+          sx.setTransform(1, 0, 0, 1, 0, 0);
+          sx.clearRect(0, 0, W, H);
+          sx.setTransform(T[0], T[1], T[2], T[3], T[4], T[5]);
+          sx.drawImage(mask, 0, 0);
+          sx.setTransform(1, 0, 0, 1, 0, 0);
+          sx.globalCompositeOperation = "source-in";
+          var px = 960 + c.S * (SCX - c.cx), py = 540 + c.S * (SCY - c.cy);
+          var lw = Math.min(1920 * FX.lerp(1, 1.08, c.v), Math.max(1093 * c.S, 1920 * 0.6));
+          if (1093 * c.S >= 1920) lw = 1920 * FX.lerp(1, 1.08, c.v);
+          var lh = lw * 9 / 16;
+          sx.drawImage(lake, px - lw / 2, py - lh / 2, lw, lh);
+          sx.globalCompositeOperation = "source-over";
+          bx.drawImage(scr, 0, 0);
+        }
+        if (f === N - 1 && lake.complete && lake.naturalWidth) {
+          // Dernière image : plein cadre exact, raccord avec la première image de P10 (img09 à 1,08).
+          bx.drawImage(lake, W / 2 - W * 0.54, H / 2 - H * 0.54, W * 1.08, H * 1.08);
+        }
+        var amount = 0.10 * Math.pow(c.v, 1.5) * (f === N - 1 ? 0.5 : 1);
+        FX.zoomBlur(ctx, buf, 960, 540, amount, 10, W, H);
+      });
+      img.addEventListener("load", function () { mask = null; clock.redraw(); });
+      lake.addEventListener("load", function () { clock.redraw(); });
+      window.__timelines["p09"] = clock.tl;
     })();
   </script>
 </template>
