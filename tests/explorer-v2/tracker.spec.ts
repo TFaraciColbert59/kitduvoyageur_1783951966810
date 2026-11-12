@@ -289,17 +289,27 @@ describe('explorer-v2 · auto-pause', () => {
       expect(profile.resumeSpeedThresholdMs, sport).toBeGreaterThanOrEqual(
         profile.speedThresholdMs
       );
-      // Une reprise sous MIN_MOVING_SPEED_MS accumulerait de la distance sans
-      // temps en mouvement : le bilan afficherait une allure nulle.
-      expect(profile.resumeSpeedThresholdMs, sport).toBeGreaterThanOrEqual(
-        MIN_MOVING_SPEED_MS
+      expect(profile.maxPlausibleSpeedMs, sport).toBeGreaterThan(
+        profile.resumeSpeedThresholdMs
       );
     }
+
+    // Les seuils historiques des sports lents ne sont pas remontés à 0,3 m/s :
+    // le temps en mouvement est compté à leur seuil de reprise effectif.
+    expect(AUTO_PAUSE_BY_SPORT.kayak.resumeSpeedThresholdMs).toBe(0.25);
+    expect(AUTO_PAUSE_BY_SPORT.escalade.resumeSpeedThresholdMs).toBe(0.2);
 
     expect(AUTO_PAUSE_BY_SPORT.velo.durationS).toBeLessThan(AUTO_PAUSE_BY_SPORT.rando.durationS);
     expect(AUTO_PAUSE_BY_SPORT.velo.speedThresholdMs).toBeGreaterThan(
       AUTO_PAUSE_BY_SPORT.rando.speedThresholdMs
     );
+  });
+
+  it('garde les seuils du sport quand la détection est désactivée', () => {
+    const off = autoPauseConfigForSport('course', false);
+    expect(off.enabled).toBe(false);
+    expect(off.maxFixGapS).toBe(AUTO_PAUSE_BY_SPORT.course.maxFixGapS);
+    expect(off.maxPlausibleSpeedMs).toBe(AUTO_PAUSE_BY_SPORT.course.maxPlausibleSpeedMs);
   });
 
   it('applique le seuil et la temporisation propres à chaque sport', () => {
@@ -464,7 +474,7 @@ describe('explorer-v2 · auto-pause', () => {
     expect(state.distanceM).toBeCloseTo(distance + 5, 1);
   });
 
-  it('calcule la durée sur l’horloge de réception monotone, pas sur l’horloge murale', () => {
+  it('utilise le temps mesuré et ne corrige que le saut d’horloge mural', () => {
     const tracker = new ActivityTracker(autoPause({ durationS: 20, maxFixGapS: 60 }));
     const fix = (t: number, distanceM: number, speedMs: number, receivedAt: number): GpsFix => ({
       ...at(t, distanceM, speedMs),
@@ -473,15 +483,33 @@ describe('explorer-v2 · auto-pause', () => {
 
     let state = tracker.addFix(fix(0, 0, 1, 0));
     state = tracker.addFix(fix(5_000, 5, 1, 1_000));
-    // L'horloge murale saute de 30 s, mais 1 s seulement s'est écoulée.
+    // L'horloge murale saute de 30 s, mais la distance (5 m à 1 m/s) prouve
+    // que l'intervalle mesuré est faux : on le ramène à 1 s.
     state = tracker.addFix(fix(35_000, 10, 1, 2_000));
 
     expect(state.autoPaused).toBe(false);
-    expect(state.movingS).toBeCloseTo(2, 5);
+    // 5 s réellement mesurées + 1 s après correction du saut.
+    expect(state.movingS).toBeCloseTo(6, 5);
     expect(state.distanceM).toBeCloseTo(10, 1);
   });
 
   it('n’invente pas une pause sur un saut d’horloge mural', () => {
+    const tracker = new ActivityTracker(autoPause({ durationS: 20, maxFixGapS: 60 }));
+    const fix = (t: number, distanceM: number, receivedAt: number): GpsFix => ({
+      ...at(t, distanceM, 1),
+      receivedAt,
+    });
+
+    tracker.addFix(fix(0, 0, 0));
+    let state = tracker.addFix(fix(5_000, 5, 1_000));
+    state = tracker.addFix(fix(35_000, 10, 2_000));
+
+    // 5 m parcourus alors que l'horloge murale annonce 30 s : saut corrigé,
+    // aucune temporisation d'arrêt ne doit être inventée.
+    expect(state.autoPaused).toBe(false);
+  });
+
+  it('n’invente pas une pause sur un saut d’horloge mural à l’arrêt', () => {
     const tracker = new ActivityTracker(autoPause({ durationS: 20, maxFixGapS: 60 }));
     const fix = (t: number, receivedAt: number): GpsFix => ({
       ...at(t, 0, 0),
@@ -490,43 +518,219 @@ describe('explorer-v2 · auto-pause', () => {
 
     tracker.addFix(fix(0, 0));
     let state = tracker.addFix(fix(5_000, 1_000));
+    // 30 s annoncées par l'horloge murale, 1 s réellement reçue, aucune
+    // distance : c'est un saut d'horloge, pas 30 s d'arrêt.
     state = tracker.addFix(fix(35_000, 2_000));
-
     expect(state.autoPaused).toBe(false);
   });
 
-  it('ne reprend jamais sous le seuil de temps en mouvement', () => {
-    const config = AUTO_PAUSE_BY_SPORT.kayak;
-    const tracker = new ActivityTracker(config);
+  it('ne transforme pas une rafale de livraison en saut GPS', () => {
+    const tracker = new ActivityTracker(AUTO_PAUSE_BY_SPORT.course);
+    const fix = (t: number, distanceM: number, receivedAt: number): GpsFix => ({
+      ...at(t, distanceM, 7.5),
+      receivedAt,
+    });
 
-    let state = tracker.addFix(at(0, 0, 1));
-    for (let t = 5; t <= config.durationS + 10; t += 5) {
-      state = tracker.addFix(at(t * 1000, 0, 0));
+    tracker.addFix(fix(0, 0, 0));
+    // Trois fixes mesurés à 20 s d'intervalle, livrés à 1 ms d'écart.
+    let state = tracker.addFix(fix(20_000, 150, 1));
+    expect(state.accepted).toBe(true);
+    expect(state.movingS).toBeCloseTo(20, 5);
+    expect(state.distanceM).toBeCloseTo(150, 0);
+
+    state = tracker.addFix(fix(40_000, 300, 2));
+    expect(state.accepted).toBe(true);
+    expect(state.movingS).toBeCloseTo(40, 5);
+    expect(state.distanceM).toBeCloseTo(300, 0);
+  });
+
+  it('n’utilise pas receivedAt quand il n’est présent que d’un côté', () => {
+    const tracker = new ActivityTracker(AUTO_PAUSE_DISABLED);
+    tracker.addFix({ ...at(0, 0, 1), receivedAt: 0 });
+    let state = tracker.addFix(at(5_000, 5, 1));
+    expect(state.movingS).toBeCloseTo(5, 5);
+
+    state = tracker.addFix({ ...at(10_000, 10, 1), receivedAt: 1_000 });
+    // L'intervalle mesuré (5 s) reste la référence : on ne mélange pas une
+    // horloge de réception avec un fix qui n'en a pas.
+    expect(state.movingS).toBeCloseTo(10, 5);
+  });
+
+  it('reprend après un saut d’horloge murale vers l’arrière', () => {
+    const tracker = new ActivityTracker(AUTO_PAUSE_DISABLED);
+    tracker.addFix(at(3_600_000, 0, 1));
+    let state = tracker.addFix(at(3_601_000, 10, 1));
+    const distance = state.distanceM;
+
+    // Premier fix dans l'époque basse : point périmé probable, rejeté.
+    state = tracker.addFix(at(1_000, 20, 1));
+    expect(state.accepted).toBe(false);
+    expect(state.distanceM).toBe(distance);
+
+    // Deuxième fix consécutif dans l'époque basse : l'horloge a reculé d'une
+    // heure. Il devient la nouvelle borne, sans compter le trou.
+    state = tracker.addFix(at(6_000, 30, 1));
+    expect(state.accepted).toBe(true);
+    expect(state.discontinuity).toBe(true);
+    expect(state.distanceM).toBe(distance);
+
+    // Le fix suivant repart de la nouvelle époque : l'activité n'est plus gelée.
+    state = tracker.addFix(at(11_000, 35, 1));
+    expect(state.accepted).toBe(true);
+    expect(state.distanceM).toBeCloseTo(distance + 5, 1);
+    expect(state.movingS).toBeGreaterThan(0);
+  });
+
+  it('ne fait pas traverser le D+ par un trou sans altitude', () => {
+    const tracker = new ActivityTracker(AUTO_PAUSE_BY_SPORT.course);
+    tracker.addFix({ ...at(0, 0, 1), ele: 1000 });
+    let state = tracker.addFix({ ...at(5_000, 5, 1), ele: 1010 });
+    const gainBeforeGap = state.elevGainM;
+    expect(gainBeforeGap).toBeGreaterThan(0);
+
+    // Trou > maxFixGapS, sans altitude : nouvelle borne, D+ inchangé.
+    state = tracker.addFix({ ...at(70_000, 100, 1), ele: null });
+    expect(state.discontinuity).toBe(true);
+    expect(state.elevGainM).toBe(gainBeforeGap);
+
+    // L'altitude élevée qui arrive ensuite devient la nouvelle référence,
+    // elle n'ajoute pas les 490 m du trou.
+    state = tracker.addFix({ ...at(75_000, 105, 1), ele: 1500 });
+    expect(state.elevGainM).toBeCloseTo(gainBeforeGap, 5);
+  });
+
+  it('garde la discontinuité du dernier fix accepté après un rejet', () => {
+    const tracker = new ActivityTracker(AUTO_PAUSE_BY_SPORT.course);
+    tracker.addFix(at(0, 0, 1));
+    // Trou > maxFixGapS du sport : la borne est acceptée et coupe le tracé.
+    let state = tracker.addFix(at(65_000, 100, 1));
+    expect(state.accepted).toBe(true);
+    expect(state.discontinuity).toBe(true);
+
+    // Un fix plus ancien est rejeté ; `discontinuity` décrit toujours le
+    // dernier fix accepté, pas le rejet.
+    state = tracker.addFix(at(60_000, 90, 1));
+    expect(state.accepted).toBe(false);
+    expect(state.discontinuity).toBe(true);
+  });
+
+  it('rejette un saut invraisemblable même quand la pause automatique est désactivée', () => {
+    const tracker = new ActivityTracker(AUTO_PAUSE_DISABLED);
+    tracker.addFix(at(0, 0, 1));
+    const state = tracker.addFix(at(30_000, 500, 1));
+    expect(state.accepted).toBe(false);
+    expect(state.rejected).toBe(1);
+    expect(state.distanceM).toBe(0);
+  });
+
+  it('rejette les valeurs non finies sans empoisonner les métriques', () => {
+    const tracker = new ActivityTracker(AUTO_PAUSE_DISABLED);
+    tracker.addFix(at(0, 0, 1));
+
+    let state = tracker.addFix({ ...at(5_000, 5, 1), acc: Number.NaN });
+    expect(state.accepted).toBe(false);
+    expect(state.rejected).toBe(1);
+    expect(state.distanceM).toBe(0);
+
+    // Une altitude non finie est ignorée comme une altitude absente. Ce
+    // premier fix après le rejet ouvre une nouvelle borne : pas de distance.
+    state = tracker.addFix({ ...at(10_000, 10, 1), ele: Number.NaN });
+    expect(state.accepted).toBe(true);
+    expect(state.discontinuity).toBe(true);
+    expect(Number.isFinite(state.elevGainM)).toBe(true);
+
+    state = tracker.addFix(at(15_000, 15, 1));
+    expect(state.accepted).toBe(true);
+    expect(state.distanceM).toBeCloseTo(5, 1);
+
+    state = tracker.addFix({ ...at(20_000, 20, 1), lat: 91 });
+    expect(state.accepted).toBe(false);
+    state = tracker.addFix({ ...at(25_000, 25, 1), lng: -181 });
+    expect(state.accepted).toBe(false);
+
+    state = tracker.addFix({ ...at(30_000, 30, 1), speed: Number.NaN });
+    expect(state.accepted).toBe(true);
+    expect(Number.isFinite(state.movingS)).toBe(true);
+    expect(Number.isFinite(state.distanceM)).toBe(true);
+    state = tracker.addFix(at(35_000, 35, 1));
+    expect(Number.isFinite(state.distanceM)).toBe(true);
+  });
+
+  it('accepte une configuration partielle sans produire NaN', () => {
+    const tracker = new ActivityTracker({ enabled: true, durationS: 5, resumeDurationS: 1 });
+    tracker.addFix(at(0, 0, 1));
+    let state = tracker.addFix(at(5_000, 5, 1));
+    expect(state.distanceM).toBeCloseTo(5, 1);
+    expect(state.movingS).toBeCloseTo(5, 5);
+
+    for (let t = 10; t <= 20; t += 5) {
+      state = tracker.addFix(at(t * 1000, 5, 0));
     }
     expect(state.autoPaused).toBe(true);
-    const frozenDistance = state.distanceM;
 
-    // 0,26 m/s : sous MIN_MOVING_SPEED_MS, la pause tient et la distance ne
-    // bouge pas (l'ancien seuil kayak à 0,25 m/s reprenait ici).
-    let distance = 0;
-    let t = config.durationS + 15;
-    for (let index = 0; index < 5; index += 1) {
-      distance += 0.26 * 5;
-      state = tracker.addFix(at(t * 1000, distance, 0.26));
-      t += 5;
-    }
-    expect(state.autoPaused).toBe(true);
-    expect(state.distanceM).toBe(frozenDistance);
-
-    // Au-dessus du seuil, la reprise compte bien le temps en mouvement.
-    distance += 0.31 * 5;
-    state = tracker.addFix(at(t * 1000, distance, 0.31));
-    t += 5;
+    // L'ancien normalizeConfig produisait Math.max(undefined, 0.3) = NaN et
+    // la pause ne reprenait jamais.
+    state = tracker.addFix(at(21_000, 6, 1));
     expect(state.autoPaused).toBe(false);
-    const movingBefore = state.movingS;
-    distance += 0.31 * 5;
-    state = tracker.addFix(at(t * 1000, distance, 0.31));
-    expect(state.movingS).toBeGreaterThan(movingBefore);
+    state = tracker.addFix(at(22_000, 7, 1));
+    expect(state.distanceM).toBeGreaterThan(5);
+  });
+
+  it('rejette un saut de 120 m en 3 s et de 500 m en 30 s', () => {
+    const course = new ActivityTracker(AUTO_PAUSE_BY_SPORT.course);
+    course.addFix(at(0, 0, 1));
+    let state = course.addFix(at(3_000, 120, 1));
+    expect(state.accepted).toBe(false);
+    expect(state.distanceM).toBe(0);
+
+    const rando = new ActivityTracker(AUTO_PAUSE_BY_SPORT.rando);
+    rando.addFix(at(0, 0, 1));
+    state = rando.addFix(at(30_000, 500, 1));
+    expect(state.accepted).toBe(false);
+    expect(state.distanceM).toBe(0);
+    // Le fix suivant ouvre une nouvelle borne : le saut n'est jamais dessiné
+    // ni compté, et l'activité continue.
+    state = rando.addFix(at(31_000, 505, 1));
+    expect(state.accepted).toBe(true);
+    expect(state.discontinuity).toBe(true);
+    expect(state.distanceM).toBe(0);
+    state = rando.addFix(at(32_000, 510, 1));
+    expect(state.distanceM).toBeCloseTo(5, 1);
+  });
+
+  it('préserve les seuils de reprise lents du kayak et de l’escalade', () => {
+    const cases: Array<{ sport: 'kayak' | 'escalade'; speed: number }> = [
+      { sport: 'kayak', speed: 0.26 },
+      { sport: 'escalade', speed: 0.21 },
+    ];
+
+    for (const { sport, speed } of cases) {
+      const config = AUTO_PAUSE_BY_SPORT[sport];
+      expect(config.resumeSpeedThresholdMs).toBeLessThan(MIN_MOVING_SPEED_MS);
+      const tracker = new ActivityTracker(config);
+
+      let state = tracker.addFix(at(0, 0, 1));
+      for (let t = 5; t <= config.durationS + 10; t += 5) {
+        state = tracker.addFix(at(t * 1000, 0, 0));
+      }
+      expect(state.autoPaused, sport).toBe(true);
+      const frozenDistance = state.distanceM;
+      const frozenMoving = state.movingS;
+
+      // Reprise sous 0,3 m/s : le seuil historique du sport s'applique, et le
+      // temps en mouvement est compté à ce même seuil (pas d'allure nulle).
+      let distance = 0;
+      let t = config.durationS + 15;
+      for (let index = 0; index <= config.resumeDurationS; index += 1) {
+        distance += speed * 1;
+        state = tracker.addFix(at(t * 1000, distance, speed));
+        t += 1;
+      }
+      expect(state.autoPaused, sport).toBe(false);
+      expect(state.distanceM, sport).toBeGreaterThan(frozenDistance);
+      expect(state.movingS, sport).toBeGreaterThan(frozenMoving);
+      expect(averageSpeedKmh(state), sport).not.toBeNull();
+    }
   });
 
   it('compte le temps en mouvement au seuil exact de 0,3 m/s', () => {
@@ -611,6 +815,29 @@ describe('explorer-v2 · auto-pause', () => {
     expect(timerTracker.state.autoPaused).toBe(false);
   });
 
+  it('ignore un fix périmé à la reprise manuelle', () => {
+    const tracker = new ActivityTracker(AUTO_PAUSE_DISABLED);
+    tracker.addFix(at(10_000, 0, 1));
+    let state = tracker.addFix(at(15_000, 10, 1));
+    const distance = state.distanceM;
+
+    tracker.breakContinuity();
+    // Point mis en cache avant la pause, livré après la reprise : il ne doit
+    // pas devenir la nouvelle borne.
+    state = tracker.addFix(at(14_000, 100, 1));
+    expect(state.accepted).toBe(false);
+    expect(state.distanceM).toBe(distance);
+
+    // Le premier fix réellement plus récent ouvre la nouvelle borne.
+    state = tracker.addFix(at(16_000, 105, 1));
+    expect(state.accepted).toBe(true);
+    expect(state.discontinuity).toBe(true);
+    expect(state.distanceM).toBe(distance);
+
+    state = tracker.addFix(at(17_000, 110, 1));
+    expect(state.distanceM).toBeCloseTo(distance + 5, 1);
+  });
+
   it('gèle les métriques pendant la pause automatique puis repart de la dernière position', () => {
     const tracker = new ActivityTracker(
       autoPause({ durationS: 20, resumeSpeedThresholdMs: 0.5, resumeDurationS: 3, maxFixGapS: 60 })
@@ -687,12 +914,14 @@ describe('explorer-v2 · auto-pause', () => {
     expect(state.discontinuity).toBe(false);
     expect(state.distanceM).toBeCloseTo(beforeGap.distanceM + 5, 1);
 
-    // Option désactivée : le comportement historique compte le trou tel quel.
+    // Option désactivée : le comportement historique compte le trou tel quel,
+    // mais un saut physiquement impossible reste rejeté (voir test dédié).
     const historical = new ActivityTracker(AUTO_PAUSE_DISABLED);
     historical.addFix(at(0, 0, 1));
     historical.addFix(at(5_000, 5, 1));
-    state = historical.addFix(at(70_000, 5_005, 1));
-    expect(state.distanceM).toBeGreaterThan(4_000);
+    state = historical.addFix(at(70_000, 105, 1));
+    expect(state.distanceM).toBeGreaterThan(95);
+    expect(state.distanceM).toBeLessThan(110);
     expect(state.autoPaused).toBe(false);
   });
 });

@@ -9,7 +9,7 @@ import {
   waitFor,
   within,
 } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useGpsTracker } from '@/features/explorer-v2/activity/useGpsTracker';
 import type { GpsFix } from '@/features/explorer-v2/activity/tracker';
 import {
@@ -238,15 +238,20 @@ describe('explorer-v2 · raccordement du réglage de pause automatique', () => {
     expect(within(live).queryByText('Pause manuelle')).toBeNull();
   });
 
-  it('hydrate une préférence stockée, avec ON par défaut (S1.05)', () => {
+  it('hydrate une préférence stockée sans écraser un choix de session sans clé', () => {
     expect(useExplorerStore.getInitialState().autoPauseEnabled).toBe(true);
 
-    // Sans valeur stockée, le défaut reste actif, même si la session avait
-    // été coupée avant un remontage.
+    // Défaut initial ON : sans clé, il reste ON.
     window.localStorage.removeItem(AUTO_PAUSE_STORAGE_KEY);
-    useExplorerStore.setState({ autoPauseEnabled: false });
+    useExplorerStore.setState({ autoPauseEnabled: true });
     hydrateAutoPausePreference();
     expect(useExplorerStore.getState().autoPauseEnabled).toBe(true);
+
+    // OFF explicite de la session, sans clé (stockage qui n'a pas persisté) :
+    // le remontage ne doit pas le rallumer en silence.
+    useExplorerStore.setState({ autoPauseEnabled: false });
+    hydrateAutoPausePreference();
+    expect(useExplorerStore.getState().autoPauseEnabled).toBe(false);
 
     useExplorerStore.setState({ autoPauseEnabled: true });
     window.localStorage.setItem(AUTO_PAUSE_STORAGE_KEY, '0');
@@ -257,6 +262,31 @@ describe('explorer-v2 · raccordement du réglage de pause automatique', () => {
     window.localStorage.setItem(AUTO_PAUSE_STORAGE_KEY, '1');
     hydrateAutoPausePreference();
     expect(useExplorerStore.getState().autoPauseEnabled).toBe(true);
+  });
+
+  it('conserve le choix de session quand le stockage local est indisponible', () => {
+    const getItem = vi
+      .spyOn(Storage.prototype, 'getItem')
+      .mockImplementation(() => {
+        throw new Error('stockage bloqué');
+      });
+    const setItem = vi
+      .spyOn(Storage.prototype, 'setItem')
+      .mockImplementation(() => {
+        throw new Error('stockage bloqué');
+      });
+
+    try {
+      useExplorerStore.setState({ autoPauseEnabled: true });
+      act(() => useExplorerStore.getState().setAutoPauseEnabled(false));
+      expect(useExplorerStore.getState().autoPauseEnabled).toBe(false);
+
+      hydrateAutoPausePreference();
+      expect(useExplorerStore.getState().autoPauseEnabled).toBe(false);
+    } finally {
+      getItem.mockRestore();
+      setItem.mockRestore();
+    }
   });
 
   it('persiste le réglage local et le rend réversible', () => {

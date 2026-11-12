@@ -277,7 +277,7 @@ describe('explorer-v2 · tracé de bout en bout', () => {
     expect(after?.some(([, lat]) => Math.abs(lat - latFor(100)) < 1e-9)).toBe(false);
   });
 
-  it('garde une durée monotone quand l’horloge murale saute', async () => {
+  it('garde une durée mesurée quand l’horloge murale saute', async () => {
     await mount('rando');
     push(at(0, 0, 1, 0));
     push(at(5_000, 5, 1, 1_000));
@@ -286,6 +286,59 @@ describe('explorer-v2 · tracé de bout en bout', () => {
     const activity = useExplorerStore.getState().activity;
     expect(activity?.autoPaused).toBe(false);
     expect(activity?.distanceM).toBeCloseTo(10, 1);
-    expect(activity?.movingS).toBeCloseTo(2, 5);
+    // 5 s mesurées sur le premier intervalle, puis 1 s après correction du
+    // saut d'horloge (5 m à 1 m/s, pas 30 s).
+    expect(activity?.movingS).toBeCloseTo(6, 5);
+  });
+
+  it('ignore un fix de précision insuffisante et reprend sur une nouvelle borne', async () => {
+    await mount('rando');
+    push(at(0, 0, 1));
+    push(at(5_000, 5, 1));
+    await waitFor(() => expect(coordinates()).toHaveLength(1));
+
+    const before = coordinates()[0];
+    const centerBefore = useExplorerStore.getState().center;
+    push({ ...at(10_000, 10, 1), acc: 120 });
+    expect(useExplorerStore.getState().center).toEqual(centerBefore);
+    expect(coordinates()[0]).toEqual(before);
+
+    // Le premier fix valide suivant ouvre un segment, sans compter l'intervalle
+    // non prouvé ; le point suivant le rend visible.
+    push(at(11_000, 15, 1));
+    push(at(12_000, 20, 1));
+    await waitFor(() => expect(coordinates()).toHaveLength(2));
+    const after = coordinates()[1];
+    expect(after).toHaveLength(2);
+    expect(after?.[0]?.[1]).toBeCloseTo(latFor(15), 6);
+    expect(after?.[1]?.[1]).toBeCloseTo(latFor(20), 6);
+    expect(useExplorerStore.getState().activity?.distanceM).toBeCloseTo(10, 1);
+  });
+
+  it('ne dessine pas un saut de 500 m en 30 s et reprend sur une nouvelle borne', async () => {
+    await mount('rando');
+    push(at(0, 0, 1));
+    push(at(5_000, 5, 1));
+    await waitFor(() => expect(coordinates()).toHaveLength(1));
+
+    const before = coordinates()[0];
+    const centerBefore = useExplorerStore.getState().center;
+    push(at(35_000, 505, 1));
+    expect(useExplorerStore.getState().center).toEqual(centerBefore);
+    expect(coordinates()[0]).toEqual(before);
+
+    // Le premier fix suivant le rejet ouvre un segment, sans compter le saut.
+    // Un segment d'un seul point n'est pas encore rendu : le second point le
+    // révèle.
+    push(at(36_000, 510, 1));
+    expect(coordinates()).toHaveLength(1);
+    push(at(37_000, 515, 1));
+    await waitFor(() => expect(coordinates()).toHaveLength(2));
+    const after = coordinates()[1];
+    expect(after).toHaveLength(2);
+    expect(after?.[0]?.[1]).toBeCloseTo(latFor(510), 6);
+    expect(after?.[1]?.[1]).toBeCloseTo(latFor(515), 6);
+    const activity = useExplorerStore.getState().activity;
+    expect(activity?.distanceM).toBeCloseTo(10, 1);
   });
 });

@@ -337,10 +337,12 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
 /**
  * Applique la préférence de pause automatique stockée localement.
  *
- * Appelée après le montage (jamais pendant le rendu serveur) : sans valeur,
- * le réglage garde son défaut ON (S1.05 : détection active, désactivable).
- * Un `0`/`false` stocké coupe la fonction pour les utilisateurs qui l'ont
- * explicitement demandé.
+ * Appelée après le montage (jamais pendant le rendu serveur). Le défaut
+ * initial est ON (S1.05 : détection active, désactivable). Une valeur stockée
+ * `0`/`false` coupe la fonction, `1`/`true` la réactive. Sans clé — ou si le
+ * stockage est indisponible — l'état courant n'est **pas** écrasé : un OFF
+ * explicite de la session survit au remontage même quand `localStorage` ne
+ * peut pas le persister (mode privé, quota, politique navigateur).
  */
 export function hydrateAutoPausePreference(): void {
   if (typeof window === 'undefined') return;
@@ -348,15 +350,11 @@ export function hydrateAutoPausePreference(): void {
     const raw = window.localStorage.getItem(AUTO_PAUSE_STORAGE_KEY);
     if (raw === '0' || raw === 'false') {
       useExplorerStore.setState({ autoPauseEnabled: false });
-    } else {
-      // Sans valeur (ou valeur inconnue), le défaut ON s'applique, y compris
-      // après un OFF de session : un remontage ne doit pas garder un état
-      // transitoire que le stockage ne confirme pas.
+    } else if (raw === '1' || raw === 'true') {
       useExplorerStore.setState({ autoPauseEnabled: true });
     }
   } catch {
-    /* stockage indisponible : défaut ON, réglage valable pour la session */
-    useExplorerStore.setState({ autoPauseEnabled: true });
+    /* stockage indisponible : le réglage de session reste inchangé */
   }
 }
 

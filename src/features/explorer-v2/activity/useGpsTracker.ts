@@ -49,7 +49,16 @@ export function useGpsTracker({ distanceToRouteM, onFix }: TrackerOptions = {}) 
     // Pause manuelle : un fix tardif ne doit ni déplacer la carte ni avancer
     // les métriques, que la pause automatique soit activée ou non. La pause
     // automatique, elle, laisse passer les fixes pour détecter la reprise.
-    if (!current || current.paused) return;
+    if (!current) return;
+
+    // Transition manuelle vue par le callback avant l'effet passif : casser la
+    // continuité ici évite qu'un fix livré juste après la reprise soit compté
+    // depuis la position d'avant la pause. Idempotent avec l'effet plus bas.
+    if (manualPausedRef.current !== null && manualPausedRef.current !== current.paused) {
+      trackerRef.current.breakContinuity();
+      manualPausedRef.current = current.paused;
+    }
+    if (current.paused) return;
     lastFixTimeRef.current = Date.now();
 
     const metrics = trackerRef.current.addFix(fix);
