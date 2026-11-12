@@ -1879,7 +1879,7 @@ let renderSheet = function() {
     }
     return;
   }
-  const REACT_DRAWERS = { account_drawer: "compte", followers_sheet: "reseau", outing_drawer: "sortie", story_edit_drawer: "highlight" };
+  const REACT_DRAWERS = { account_drawer: "compte", followers_sheet: "reseau", outing_drawer: "sortie", trace_import_drawer: "trace-import", story_edit_drawer: "highlight" };
   if (REACT_DRAWERS[sh.k]) {
     const kind = REACT_DRAWERS[sh.k];
     if (typeof window.__lkdvUnmountSlot === "function") {
@@ -1890,7 +1890,7 @@ let renderSheet = function() {
     }
     const label = kind === "reseau"
       ? (drawerHintMode === "following" ? "Abonnements" : "Abonnés")
-      : kind === "sortie" ? "Sortie" : kind === "highlight" ? "Story à la une" : "Compte & Activité";
+      : kind === "sortie" ? "Sortie" : kind === "trace-import" ? "Importer une trace" : kind === "highlight" ? "Story à la une" : "Compte & Activité";
     const back = S.stk.length ? `<button class="lg gbtn sm sh-back" data-a="close" aria-label="Retour">${ic(IC.chevL, "s")}</button>` : "";
     $("sheet").setAttribute("aria-label", label);
     $("sheet").innerHTML = `<div class="grab" data-drag>
@@ -1913,9 +1913,11 @@ let renderSheet = function() {
       ? { tab: drawerHintMode || "followers" }
       : kind === "sortie"
         ? { outingId: sh.outingId || (sh.extra && sh.extra.outingId) || "" }
-        : kind === "highlight"
-          ? { hlId: sh.hlId || (sh.extra && sh.extra.hlId) || "", hlTitle: sh.hlTitle || (sh.extra && sh.extra.hlTitle) || "" }
-          : { tab: drawerHintTab || 0 };
+        : kind === "trace-import"
+          ? {}
+          : kind === "highlight"
+            ? { hlId: sh.hlId || (sh.extra && sh.extra.hlId) || "", hlTitle: sh.hlTitle || (sh.extra && sh.extra.hlTitle) || "" }
+            : { tab: drawerHintTab || 0 };
     if (root && typeof window.__lkdvMountDrawer === "function") {
       try { window.__lkdvMountDrawer(root, kind, props); } catch (err) {
         console.warn("[CompteLiquidGlassV8] drawer mount failed:", err);
@@ -2459,6 +2461,7 @@ let act = function(a, v, meta) {
     case "openItem": pushSheet({ k: "item", id: v }); break;
     case "openOuting": S.step = 1; openSheet("step", 0, "large"); break;
     case "openOutingDrawer": EXA.openOutingDrawer(v); break;
+    case "openTraceImport": EXA.openTraceImport(); break;
     case "openCarnet": S.step = 2; openSheet("step", 0, "large"); break;
     case "openSpecies": S.step = 2; openSheet("step", 1, "large"); break;
     case "openKit": S.step = 3; openSheet("step", 0, "large"); break;
@@ -3296,30 +3299,47 @@ renderIgTabContent = function (D) {
   // TAB 1: Voyages (Sorties faites en défilement horizontal)
   if (S.igTab === 1) {
     const list = OUTINGS;
+    const canImport = !X.visitor;
+    const importButton = canImport
+      ? '<button class="mbtn p" data-a="openTraceImport" aria-label="Importer une trace FIT ou TCX" style="height:32px;padding:0 13px;font-size:11.5px;">Importer FIT/TCX</button>'
+      : '';
+    const sortiesHeader = '<div style="display:flex;align-items:flex-end;justify-content:space-between;gap:10px;padding:2px 2px 6px;">' +
+      '<div style="display:flex;flex-direction:column;gap:1px;min-width:0;">' +
+        '<b style="font:650 16px/1.15 var(--sf);letter-spacing:-.02em;color:var(--label);">Sorties</b>' +
+        '<span style="font:500 10.5px/1.3 var(--sf);color:var(--label2);">' + list.length + ' sortie' + (list.length > 1 ? 's' : '') + ' · FIT ou TCX acceptés</span>' +
+      '</div>' + importButton + '</div>';
     if (!list.length) {
-      return '<div class="ig-voyages-tab" role="region" aria-label="Sorties faites et voyages réalisés"><div style="padding:28px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;"><b style="font:600 14px var(--sf);color:var(--label);">Aucune sortie enregistrée</b><p style="font:400 12px/1.4 var(--sf);color:var(--label2);max-width:240px;margin:0 auto;">Vos traces GPS et vos sorties apparaîtront ici dès votre première randonnée enregistrée.</p><a href="/compas" class="mbtn p" style="text-decoration:none;height:30px;padding:0 14px;font-size:12px;">Planifier un voyage</a></div></div>';
+      return '<div class="ig-voyages-tab" role="region" aria-label="Sorties faites et voyages réalisés">' + sortiesHeader +
+        '<div style="padding:22px 16px 26px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;"><b style="font:600 14px var(--sf);color:var(--label);">Aucune sortie enregistrée</b><p style="font:400 12px/1.4 var(--sf);color:var(--label2);max-width:260px;margin:0 auto;">Importe une trace FIT ou TCX, ou enregistre ta première randonnée GPS : elle apparaîtra ici.</p><div style="display:flex;flex-wrap:wrap;justify-content:center;gap:7px;">' +
+          (canImport ? '<button class="mbtn p" data-a="openTraceImport" style="height:32px;padding:0 14px;font-size:12px;">Importer FIT/TCX</button>' : '') +
+          '<a href="/compas" class="mbtn soft" style="text-decoration:none;height:32px;padding:0 14px;font-size:12px;justify-content:center;">Planifier un voyage</a></div></div></div>';
     }
     return '<div class="ig-voyages-tab" role="region" aria-label="Sorties faites et voyages réalisés">' +
+      sortiesHeader +
       '<div class="voyages-carousel">' +
         list.map((o, idx) => {
           const photo = o.coverImage || '';
           const compNames = Array.isArray(o.comp) ? o.comp.slice(0, 3).join(', ') : '';
-          const label = o.title + ', ' + o.km + ' km, +' + o.dplus + ' m, ' + o.mass;
-          return '<button type="button" class="voyage-card" data-a="openOutingDrawer" data-v="' + o.id + '" aria-label="' + label + '">' +
+          const safeTitle = esc(o.title);
+          const safeDate = esc(o.date || 'Sortie');
+          const safeComp = esc(compNames);
+          const safeMass = esc(String(o.mass || '').split(' ')[0]);
+          const label = esc(o.title + ', ' + o.km + ' km, +' + o.dplus + ' m, ' + o.mass);
+          return '<button type="button" class="voyage-card" data-a="openOutingDrawer" data-v="' + esc(o.id) + '" aria-label="' + label + '">' +
             '<span class="voyage-cover">' +
               (photo
-                ? '<img src="' + photo + '" alt="' + o.title + '" class="voyage-img" loading="lazy" />'
+                ? '<img src="' + photo + '" alt="' + safeTitle + '" class="voyage-img" loading="lazy" />'
                 : '<span class="voyage-cover-fallback" aria-hidden="true">' + ic(IC.route, 's') + '</span>') +
               '<span class="voyage-cover-overlay"></span>' +
               '<span class="voyage-chip-gps">' + (o.proven ? 'Preuve GPS ✓' : 'Sortie enregistrée') + '</span>' +
               (o.maxAlt ? '<span class="voyage-alt-badge">' + o.maxAlt + ' m</span>' : '') +
               '<span class="voyage-info">' +
-                '<b class="voyage-title">' + o.title + '</b>' +
-                '<span class="voyage-sub">' + (o.date || 'Sortie') + (compNames ? ' · avec ' + compNames : '') + '</span>' +
+                '<b class="voyage-title">' + safeTitle + '</b>' +
+                '<span class="voyage-sub">' + safeDate + (safeComp ? ' · avec ' + safeComp : '') + '</span>' +
                 '<span class="voyage-metrics">' +
                   '<span class="vm-item"><b>' + o.km + ' km</b></span><span class="vm-sep">·</span>' +
                   '<span class="vm-item"><b>+' + Number(o.dplus || 0).toLocaleString('fr-FR') + ' m</b></span><span class="vm-sep">·</span>' +
-                  '<span class="vm-item"><b>' + o.mass.split(' ')[0] + '</b></span>' +
+                  '<span class="vm-item"><b>' + safeMass + '</b></span>' +
                 '</span>' +
               '</span>' +
             '</span>' +
@@ -3930,9 +3950,10 @@ const EXK = {
     flow: [{
       l: "Créer",
       r: () => ({
-        per: [5, 6],
+        per: [6, 8],
         title: "Nouvelle création LKDV",
         rows: [
+          `<div class="li nt" data-a="openTraceImport" style="cursor:pointer"><div><div class="ttl"><span>Importer une trace FIT/TCX</span></div><div class="s2">Aperçu local, puis ajout à tes sorties privées</div></div><span class="tg p">Trace</span></div>`,
           `<div class="li nt" data-a="navtab" data-v="/carnets/nouveau" style="cursor:pointer"><div><div class="ttl"><span>Nouveau carnet de voyage</span></div><div class="s2">Raconte une expédition avec photos géolocalisées et tracé</div></div><span class="tg p">Carnet</span></div>`,
           `<div class="li nt" data-a="navtab" data-v="/voyages" style="cursor:pointer"><div><div class="ttl"><span>Nouveau voyage / sortie GPS</span></div><div class="s2">Importe un fichier GPX ou planifie un trek avec le Compas</div></div><span class="tg p">Tracé</span></div>`,
           `<div class="li nt" data-a="navtab" data-v="/materiel" style="cursor:pointer"><div><div class="ttl"><span>Nouveau kit de matériel</span></div><div class="s2">Compose un sac ultraléger personnalisé avec jauge d'endurance</div></div><span class="tg p">Kit</span></div>`,
@@ -4931,6 +4952,10 @@ var EXA = {
     openSheet('outing_drawer', 0, 'card', { outingId: o.realId || o.id });
     requestAnimationFrame(() => flyToOuting(o));
     haptic(10);
+  },
+  openTraceImport: () => {
+    pushSheet({ k: 'trace_import_drawer', det: 'large' });
+    haptic(8);
   },
   save_full_profile: () => {
     const nameEl = $('ep_name'), handleEl = $('ep_handle'), bioEl = $('ep_bio');

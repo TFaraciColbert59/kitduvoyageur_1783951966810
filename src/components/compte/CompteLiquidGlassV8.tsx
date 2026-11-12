@@ -81,6 +81,10 @@ const SortieDrawer = dynamic(
   () => import('./drawer/sortie/SortieDrawer').then((mod) => mod.SortieDrawer),
   { ssr: false }
 );
+const TraceImportDrawer = dynamic(
+  () => import('./drawer/sortie/TraceImportDrawer').then((mod) => mod.TraceImportDrawer),
+  { ssr: false }
+);
 const HighlightEditDrawer = dynamic(
   () => import('./drawer/compte/HighlightEditDrawer').then((mod) => mod.HighlightEditDrawer),
   { ssr: false, loading: () => <div style={{ padding: 16 }}>Chargement…</div> }
@@ -1497,6 +1501,8 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
           <ReseauDrawer initialTab={drawerMount.props?.tab === 'followers' ? 1 : 0} />
         ) : drawerMount.kind === 'sortie' ? (
           <SortieDrawer outingId={String(drawerMount.props?.outingId || '')} />
+        ) : drawerMount.kind === 'trace-import' ? (
+          <TraceImportDrawer />
         ) : drawerMount.kind === 'highlight' ? (
           <HighlightEditDrawer hlId={String(drawerMount.props?.hlId || '')} hlTitle={String(drawerMount.props?.hlTitle || '')} />
         ) : drawerMount.kind === 'compte' ? (

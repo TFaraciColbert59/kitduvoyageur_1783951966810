@@ -53,6 +53,42 @@ interface SaveHikeSessionBody {
   /** A10 (10.3) — échantillons horodatés, source unique de temps du traitement. */
   positionsTimed?: TimedSample[];
   poiEvents: PoiEvent[];
+  /**
+   * Champs additifs utilisés par l'import FIT/TCX. Absents des appels
+   * historiques : la route conserve alors exactement son comportement.
+   */
+  title?: string | null;
+  notes?: string | null;
+  maxAltitudeM?: number | null;
+  /**
+   * `false` pour un import : la sortie ne crée pas de carnet automatique.
+   * Sans ce champ, le comportement historique (carnet auto) reste actif.
+   */
+  createCarnet?: boolean;
+}
+
+/** Texte borné, jamais une valeur inventée quand la source est absente. */
+function boundedText(value: unknown, maxLength: number): string | null {
+  if (typeof value !== 'string') return null;
+  const text = value.trim();
+  return text ? text.slice(0, maxLength) : null;
+}
+
+function boundedInteger(value: unknown, min: number, max: number): number | null {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return null;
+  return Math.max(min, Math.min(max, Math.round(value)));
+}
+
+/**
+ * Le titre est rendu par le runtime du Compte dans du HTML (cartes Sorties).
+ * On retire les délimiteurs de balise et les caractères de contrôle à
+ * l'écriture : un nom de fichier importé ne peut pas devenir du balisage.
+ */
+function boundedTitle(value: unknown): string | null {
+  const text = boundedText(value, 120);
+  if (!text) return null;
+  const cleaned = text.replace(/[<>]/g, '').replace(/[\u0000-\u001f\u007f]/g, '').trim();
+  return cleaned ? cleaned.slice(0, 120) : null;
 }
 
 /** Reconstruit les échantillons horodatés depuis les positions brutes si besoin. */
@@ -194,7 +230,12 @@ export async function POST(req: NextRequest) {
       ? timedCandidates
       : deriveTimedPositions(simplified);
 
-    // 1. Check idempotency (prevent duplicate session creation)
+    // 1. Check idempotency (prevent duplicate session creation).
+    //    Limite assumée : ce contrôle porte sur (user_id, started_at), pas sur
+    //    l'empreinte du fichier. Un import FIT/TCX identique est donc dédupliqué
+    //    tant que son départ est identique, mais deux fichiers différents
+    //    démarrant à la même seconde resteraient confondus. La vraie unicité
+    //    (user_id, source, source_fingerprint) exige une migration dédiée.
     let query = supabase
       .from('hike_sessions')
       .select('id, carnet_id')
@@ -210,13 +251,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         sessionId: existingSession.id,
         carnetId: existingSession.carnet_id || null,
+        existing: true,
       });
     }
 
     // 2. Automatic Carnet Creation if carnetId is not provided
     let carnetId = body.carnetId || null;
 
-    if (!carnetId) {
+    if (!carnetId && body.createCarnet !== false) {
       let title = `Randonnée du ${new Date(body.startedAt).toLocaleDateString('fr-FR')}`;
       if (body.routeId) {
         const { data: rData } = await supabase
@@ -269,6 +311,10 @@ export async function POST(req: NextRequest) {
         positions_geojson: positionsGeojson,
         positions_timed: positionsTimed.length >= 2 ? positionsTimed : null,
         poi_events: body.poiEvents || [],
+        title: boundedTitle(body.title),
+        notes: boundedText(body.notes, 2000),
+        max_altitude_m: boundedInteger(body.maxAltitudeM, -500, 9000),
+        visibility: 'private',
         correlation_id: correlationId,
       })
       .select('id')
@@ -307,7 +353,7 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json(
-      { sessionId, carnetId },
+      { sessionId, carnetId, existing: false },
       { headers: correlationResponseHeaders(correlationId) }
     );
   } catch (err) {

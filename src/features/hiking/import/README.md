@@ -1,8 +1,11 @@
 # Import de traces TCX et FIT
 
-Brique locale de lecture des activités TCX et FIT, partagée par le futur
-parcours d'import. Elle ne fait aucun réseau, n'écrit rien et ne dépend d'aucun
-décodeur externe.
+Brique locale de lecture des activités TCX et FIT, branchée sur le parcours
+`Compte → Sorties → Importer FIT/TCX`. Le parseur ne fait aucun réseau et ne
+dépend d'aucun décodeur externe ; le drawer React ne téléverse jamais le
+fichier original. La seule écriture possible est la projection de la trace
+dérivée vers le mécanisme existant `hike_sessions`, sous les gardes décrites
+plus bas.
 
 Références de suivi : `A03`, `K6.02`, `S1.15`.
 
@@ -79,16 +82,30 @@ Références de suivi : `A03`, `K6.02`, `S1.15`.
   XML invalide.
 - **Sécurité XML** : pas de DOM, DTD/`ENTITY`/entités externes refusées,
   résolution de namespaces par élément, attributs sans prototype.
+- **Parcours Compte** : entrée `Compte → Sorties → Importer FIT/TCX` (et
+  `Créer → Importer une trace`). Sélection par bouton ou glisser-déposer,
+  lecture `ArrayBuffer` locale, aperçu des métriques réellement présentes,
+  provenance, empreinte, alertes et sections ignorées. Les erreurs du parseur
+  sont rendues avec leur code, jamais comme un fichier accepté.
+- **Enregistrement** : possible seulement pour une trace complète, avec des
+  bornes UTC et une durée/distance réelles. Le drawer appelle
+  `POST /api/hike-sessions` avec `createCarnet: false` : la sortie dérivée est
+  privée, aucun carnet public n'est créé, l'original reste sur l'appareil.
 
 ## Non couvert, volontairement
 
-- Le branchement UI `Compte → Sorties → ⋯ → Importer → FIT/TCX` et le drawer
-  ne sont pas dans cette brique.
-- La persistance Supabase, le stockage privé des originaux, l'unicité en base,
-  la reprise et l'export ne sont pas livrés ici. Le critère « deux imports
-  identiques donnent un seul objet » n'est donc **pas** satisfait par ce seul
-  module : il exige une contrainte de persistance sur
-  `(propriétaire, source, empreinte)`.
+- Le stockage privé des originaux, l'unicité en base par empreinte, la reprise
+  et l'export ne sont pas livrés ici. Le critère « deux imports identiques
+  donnent un seul objet » n'est satisfait que par le contrôle historique de
+  `POST /api/hike-sessions` sur `(user_id, started_at)`, qui n'est **pas** une
+  unicité d'empreinte : il ne distingue pas deux fichiers différents démarrant
+  à la même seconde. La vraie contrainte reste à créer.
+- L'écriture actuelle ne conserve ni le format source, ni l'empreinte, ni le
+  nom du fichier d'origine. Une sortie importée est donc indiscernable d'une
+  sortie GPS après rechargement ; `notes` n'est pas détourné pour stocker la
+  provenance.
+- Aucun aperçu de l'original n'est conservé : seule la trace dérivée peut
+  rejoindre `hike_sessions`.
 - GPX reste lu par `GPXEngine` ; `parseTraceFile` ne reconnaît que TCX et FIT.
 - FIT multisport, plusieurs messages `activity`, plusieurs `file_id`, TCX v1 et
   `MultiSportSession` sont refusés explicitement, pas convertis. Les types de
@@ -140,6 +157,67 @@ Références de suivi : `A03`, `K6.02`, `S1.15`.
   fichiers Garmin/Suunto réels ; il n'y a pas de mesure de couverture de
   lignes ni de banc de performance dans cette brique.
 
+## Parcours et persistance actuelle
+
+1. Le fichier est choisi dans `TraceImportDrawer` (`accept=".fit,.tcx"`), lu en
+   `ArrayBuffer`, puis passé à `parseTraceFile({ bytes, fileName })`.
+2. `buildTraceImportPreview` calcule les métriques d'aperçu sans inventer de
+   valeur : résumé FIT, puis somme des tours, puis points ; durée et distance
+   restent `null` si la source ne les porte pas.
+3. L'enregistrement est refusé dans l'interface tant que la trace est tronquée,
+   sans fuseau UTC, sans bornes ou sans durée/distance réelles. Le refus est
+   affiché avec sa raison, et `buildHikeSessionImportPayload` retourne `null`.
+4. Si la trace est enregistrable, le drawer envoie uniquement :
+   `title`, `startedAt`, `endedAt`, `distanceKm`, `durationSeconds`,
+   `elevationGainM`, `maxAltitudeM`, `positions`, `positionsTimed`,
+   `poiEvents: []`, `createCarnet: false`. La projection est échantillonnée à
+   **15 000 points géolocalisés maximum** (extrémités conservées) pour rester
+   sous la limite de charge de la plateforme ; les métriques de l'aperçu, elles,
+   portent sur la trace complète.
+5. La route existante écrit dans `hike_sessions` (`private`, titre, altitude max,
+   `positions_geojson`, `positions_timed`) et répond `existing: true` quand une
+   sortie du même propriétaire commence déjà au même instant. Aucun carnet
+   automatique n'est créé pour un import.
+6. L'aperçu reste local : aucune requête réseau n'est faite avant le geste
+   explicite « Enregistrer dans mes sorties ».
+
+### Besoins de base pour l'intégration ultérieure (aucune migration créée ici)
+
+Pour satisfaire S1.15 sans ambiguïté, une migration unique et relue devra
+ajouter, sur `public.hike_sessions` (ou une table `trace_imports` dédiée) :
+
+| Besoin | Proposition | Raison |
+|---|---|---|
+| Source | `source text not null default 'gps'` avec `check (source in ('gps','fit','tcx','gpx'))` | Distinguer un import d'un enregistrement GPS sans toucher aux lignes existantes. |
+| Empreinte | `source_fingerprint text` (SHA-256 du fichier original) | Déduplication fondée sur le contenu, pas sur l'heure de départ. |
+| Nom d'origine | `source_file_name text` | Retrouver le fichier sans exposer son contenu. |
+| Unicité | index unique partiel `(user_id, source_fingerprint)` `where source_fingerprint is not null` | « Deux imports identiques donnent un seul objet », par propriétaire. |
+| Import | `imported_at timestamptz` et éventuellement `import_metadata jsonb` | Tracer l'import sans polluer `notes`, et permettre une reprise. |
+| RPC | upsert transactionnel `import_trace_session(...)` avec `ON CONFLICT` | Éviter la course entre deux onglets et rendre la déduplication atomique. |
+
+Le contrôle actuel `started_at` de la route reste un garde-fou historique : il
+ne doit pas être présenté comme l'unicité d'empreinte. Tant que la migration
+n'existe pas, l'interface dit « déjà présente » quand ce contrôle répond, et
+documente la limite.
+
+### Dépendances de confidentialité
+
+- Le fichier original contient des coordonnées précises, parfois FC, cadence,
+  puissance et numéro de série : il relève de données personnelles sensibles.
+  S'il est conservé, ce doit être dans un bucket **privé**, avec RLS
+  propriétaire, URL signée courte, aucune URL publique et suppression/export
+  RGPD. Le parcours actuel ne le téléverse pas, ce qui évite d'ouvrir ce stockage
+  avant la migration.
+- `hike_sessions` est privé par défaut (`visibility = 'private'`). La policy de
+  lecture autorise aussi les sessions liées à un carnet public : un import ne
+  crée donc **aucun carnet** et ne doit jamais être rattaché à un carnet public
+  sans geste explicite.
+- Les chaînes de provenance (`creator`, `productId`, `sport`, `intensity`,
+  `triggerMethod`, nom de fichier) restent contrôlées par le fichier. Elles sont
+  rendues comme du texte React, tronquées, jamais injectées en HTML.
+- Aucun appel réseau tiers n'est fait par le parseur ni par le drawer en dehors
+  de l'API interne d'enregistrement.
+
 ## Contrat de consommation
 
 - `NormalizedTraceImport.points` est ordonné par le document. `recordedAt` et
@@ -161,9 +239,9 @@ Références de suivi : `A03`, `K6.02`, `S1.15`.
 
 | Fiche | État après cette passe | Ce qui reste hors de la brique |
 |---|---|---|
-| **S1.15** — importer FIT et TCX valides/tronqués, contrôler tours, unités, provenance, erreurs, déduplication | **Partielle, mais les constats bloquants sont fermés** : `file_id.type = 4` exigé, dates de fin TCX calculées depuis les laps, messages FIT bornés, laps rattachés en `O((points + laps) log laps)`, résumé de session et champs FIT conservés ou signalés, cadence TCX sport-aware, `Notes`/`Training`/`Extensions` signalés, UTF-16 accepté. | L'unicité « deux imports identiques donnent un seul objet » n'est pas en base : `traceImportDedupeKey` reste une clé, sans contrainte de persistance. |
-| **K6.02** — fixtures et parcours mobile | **Non satisfaite** : les tests sont synthétiques et aucun parcours mobile n'est branché. | Fixtures Garmin/Suunto réelles anonymisées, sélecteur binaire natif, écran d'aperçu et recette mobile. |
-| **A03** — import FIT/TCX | **Brique locale seulement** : parseurs, modèle normalisé, limites, SHA-256 et 123 tests. | UI `Compte → Sorties → Importer`, persistance Supabase, stockage privé des originaux, export. |
+| **S1.15** — importer FIT et TCX valides/tronqués, contrôler tours, unités, provenance, erreurs, déduplication | **Partielle, constats bloquants fermés côté lecture ; parcours et écriture ajoutés** : `file_id.type = 4` exigé, dates de fin TCX calculées depuis les laps, messages FIT bornés, laps rattachés en `O((points + laps) log laps)`, résumé de session et champs FIT conservés ou signalés, cadence TCX sport-aware, `Notes`/`Training`/`Extensions` signalés, UTF-16 accepté, aperçu UI et refus explicites. | L'unicité par empreinte n'est pas en base : le contrôle actuel porte sur `(user_id, started_at)`, pas sur `(user_id, source, fingerprint)`. Le stockage des originaux et la reprise restent ouverts. |
+| **K6.02** — fixtures et parcours mobile | **Parcours mobile branché** : `Compte → Sorties → Importer FIT/TCX`, sélecteur, glisser-déposer, aperçu et erreurs. | Fixtures Garmin/Suunto réelles anonymisées et recette mobile sur appareil ; aucune suite n'a été exécutée dans cette passe. |
+| **A03** — import FIT/TCX | **Parcours utilisable** : parseurs, modèle normalisé, limites, SHA-256, aperçu et enregistrement privé via le mécanisme existant. | Migration `source`/`fingerprint`/unicité, bucket privé des originaux, export, fixtures producteurs et validation en recette. |
 
 ## Vérification
 
@@ -172,3 +250,7 @@ node_modules/.bin/vitest run src/features/hiking/import
 node_modules/.bin/tsc -p <tsconfig ciblé sur src/features/hiking/import>
 node_modules/.bin/eslint src/features/hiking/import
 ```
+
+Passe A03 « interface » : ces commandes n'ont **pas** été exécutées, à la
+demande de Tony (tests et revues reportés). Seuls des contrôles de syntaxe
+locaux ont été faits ; le rapport de fin liste les points à vérifier.

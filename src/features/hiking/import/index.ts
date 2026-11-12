@@ -4,3 +4,4 @@ export * from './fit';
 export * from './time';
 export * from './fingerprint';
 export * from './traceImport';
+export * from './preview';
