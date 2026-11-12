@@ -1677,10 +1677,15 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
   // Les listes/counters et les états de suivi ont des dépendances distinctes.
   // Un échec de `user_follows` ne doit pas invalider une demande sortante
   // lisible, et un échec de `follow_requests` ne doit pas vider les listes.
-  const followListsUnavailable =
-    followerRowsResult === null || followingRowsResult === null;
+  // Chaque lecture de liste garde son propre indicateur : un échec des abonnés
+  // ne doit pas jeter la liste des suivis (et inversement).
+  const followersUnavailable = followerRowsResult === null;
+  const followingUnavailable = followingRowsResult === null;
 
   const profile = (profileRes.data ?? null) as AccountProfileRow | null;
+  // Un échec de `user_profiles` ne doit jamais devenir un faux profil
+  // « Voyageur » : le client conservera l'identité connue.
+  const profileUnavailable = profileRes.error != null;
   const followerIds = [
     ...new Set(
       followerRows
@@ -2193,13 +2198,21 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
   // Une lecture de suivi en échec ne doit jamais être présentée comme
   // « aucun état » : le client reçoit un indicateur explicite et conserve ses
   // états connus au lieu d'afficher « Suivre » à tort. Seules les lectures
-  // dont dépendent réellement les états (demandes sortantes + profils cibles)
-  // les invalident ; les listes gardent leur propre indicateur.
+  // dont dépendent réellement les états (suivis + demandes sortantes + profils
+  // cibles) les invalident ; les listes gardent leurs propres indicateurs.
+  // `followingRowsResult` est indispensable : sans les suivis réels, une
+  // demande `pending` résiduelle ne peut pas être écartée et serait affichée
+  // « Demande envoyée » à la place de « Abonné ».
   const followStatesUnavailable =
+    followingRowsResult === null ||
     outgoingRequestRowsResult === null ||
     (pendingFollowTargetIds.length > 0 && outgoingRequestProfiles === null);
+  const followersUnavailableWithProfiles =
+    followersUnavailable || followerProfiles === null;
+  const followingUnavailableWithProfiles =
+    followingUnavailable || followingProfiles === null;
   const followListsUnavailableWithProfiles =
-    followListsUnavailable || followingProfiles === null || followerProfiles === null;
+    followersUnavailableWithProfiles || followingUnavailableWithProfiles;
   const followingProfileRows = followingProfiles ?? [];
   const followerProfileRows = followerProfiles ?? [];
 
@@ -2293,11 +2306,16 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
 
   return {
     authenticated: true as const,
-    profile: mapProfile(
-      profile,
-      followerRowsResult === null ? null : followers,
-      followingRowsResult === null ? null : followingIds.length
-    ),
+    // `null` = identité illisible, à distinguer d'un compte sans ligne
+    // `user_profiles` (nouveau compte) qui garde le profil par défaut.
+    profile: profileUnavailable
+      ? null
+      : mapProfile(
+          profile,
+          followerRowsResult === null ? null : followers,
+          followingRowsResult === null ? null : followingIds.length
+        ),
+    profileUnavailable,
     carnets: mapPosts(postRows),
     outings: mapOutings(outings, routes, coverBySession),
     stats: mapStats(statsSessions, routes, geoMassifs),
@@ -2314,6 +2332,9 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
       ? {}
       : mapOutgoingFollowStates(outgoingRequestRows, outgoingRequestProfiles ?? []),
     followStatesUnavailable,
+    followersUnavailable: followersUnavailableWithProfiles,
+    followingUnavailable: followingUnavailableWithProfiles,
+    // Conservé pour les anciens clients : vrai si au moins une liste manque.
     followListsUnavailable: followListsUnavailableWithProfiles,
     reposts: mapReposts(repostRows, repostSources, profileById),
     badges: mapBadges(badgeRows, userBadgeRows),
@@ -2337,8 +2358,9 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
     ),
     companions: mapCompanions(companionRows, profileById),
     // Le bootstrap n'est servi qu'au propriétaire authentifié : il voit son
-    // propre profil privé sans passer par une invitation.
-    visibility: mapVisibility(profile),
+    // propre profil privé sans passer par une invitation. Une visibilité lue
+    // sur un profil en échec serait un faux « public » : on l'omet.
+    visibility: profileUnavailable ? null : mapVisibility(profile),
     stories: mapStories(storyRows),
     // Aucune table d'espèces ni de massifs personnels : on ne fabrique rien.
     species: [] as Array<Record<string, unknown>>,

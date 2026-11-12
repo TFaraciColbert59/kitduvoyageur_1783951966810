@@ -5615,23 +5615,34 @@ window.__lkdvApplyFollowStates = (followStates, options) => {
 /**
  * Signale un bootstrap social partiel : les états, compteurs et listes connus
  * restent affichés. `scope` distingue un échec des états (`states`), des
- * listes (`lists`) ou des deux (`all`).
+ * abonnés (`followers`), des suivis (`following`) ou des deux (`lists`/`all`).
  */
 window.__lkdvShowFollowUnavailable = (scope) => {
   if (!isCurrent()) return;
-  const kind = scope === 'lists' || scope === 'all' ? scope : 'states';
+  const kind =
+    scope === 'lists' || scope === 'all' || scope === 'followers' || scope === 'following'
+      ? scope
+      : 'states';
   const title =
     kind === 'lists'
       ? 'Listes d’abonnés indisponibles'
-      : kind === 'all'
-        ? 'Données sociales partielles'
-        : 'État de suivi indisponible';
+      : kind === 'followers'
+        ? 'Liste des abonnés indisponible'
+        : kind === 'following'
+          ? 'Liste des suivis indisponible'
+          : kind === 'all'
+            ? 'Données sociales partielles'
+            : 'État de suivi indisponible';
   const detail =
     kind === 'lists'
       ? 'Les compteurs et listes connus sont conservés. Réessaie dans un instant.'
-      : kind === 'all'
-        ? 'Les états, compteurs et listes connus sont conservés. Réessaie dans un instant.'
-        : 'Les boutons gardent leur dernier état connu. Réessaie dans un instant.';
+      : kind === 'followers'
+        ? 'La liste des abonnés connue est conservée. Réessaie dans un instant.'
+        : kind === 'following'
+          ? 'La liste des suivis connue est conservée. Réessaie dans un instant.'
+          : kind === 'all'
+            ? 'Les états, compteurs et listes connus sont conservés. Réessaie dans un instant.'
+            : 'Les boutons gardent leur dernier état connu. Réessaie dans un instant.';
   island(title, detail, false);
 };
 /* ---------- Montage ---------- */
@@ -5652,6 +5663,11 @@ window.__lkdvGetState = () => isCurrent() ? ({
   ORDERS,
   ORDERS_BOOKINGS,
   KITS_LINEAGE,
+  // Listes sociales réellement hydratées : permet de prouver leur conservation
+  // alors que les compteurs seuls ne suffisent pas.
+  followers: FOLLOWERS,
+  following: FOLLOWING,
+  tribu: TRIBU,
   followStates: window.__lkdvGetFollowState?.()?.followStates,
   followPending: window.__lkdvGetFollowState?.()?.followPending,
 }) : null;

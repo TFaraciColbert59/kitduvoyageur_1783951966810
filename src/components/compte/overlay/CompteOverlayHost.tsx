@@ -36,10 +36,45 @@ function keyOf(overlay: CompteOverlay) {
   return overlay.kind;
 }
 
+const OVERLAY_DATA_KEYS = [
+  'profile',
+  'stats',
+  'badges',
+  'gearItems',
+  'kits',
+  'followers',
+  'following',
+  'tribu',
+  'species',
+  'trust',
+] as const;
+
+/**
+ * Un 200 JSON n'est pas forcément un bootstrap exploitable : `{}` ou
+ * `{ authenticated: true }` ne portent aucune donnée et afficheraient des
+ * zéros. On exige au moins un champ connu, sans erreur ni invité.
+ */
+function isUsableBootstrap(payload: unknown): payload is BootstrapOverlayData {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return false;
+  const record = payload as Record<string, unknown>;
+  if (record.error) return false;
+  if (record.authenticated === false) return false;
+  return OVERLAY_DATA_KEYS.some((key) => key in record);
+}
+
 export function CompteOverlayHost({ onChanged }: { onChanged?: () => void }) {
   const [stack, setStack] = useState<Entry[]>([]);
   const [bootstrap, setBootstrap] = useState<BootstrapOverlayData | null>(null);
   const [bootstrapError, setBootstrapError] = useState(false);
+
+  const invalidate = useCallback(() => {
+    setBootstrap(null);
+    setBootstrapError(false);
+  }, []);
+  const handleChanged = useCallback(() => {
+    invalidate();
+    onChanged?.();
+  }, [invalidate, onChanged]);
 
   const push = useCallback((overlay: CompteOverlay) => {
     setStack((current) => {
@@ -88,6 +123,15 @@ export function CompteOverlayHost({ onChanged }: { onChanged?: () => void }) {
   const top = stack[stack.length - 1];
   const needsBootstrap = top && ['badge', 'gear', 'seal', 'trust'].includes(top.overlay.kind);
 
+  // Une fermeture complète invalide le snapshot : la prochaine ouverture relit
+  // les données au lieu d'afficher un état figé après un suivi ou du matériel
+  // ajouté. Un échec est également remis à zéro pour permettre un nouvel essai.
+  useEffect(() => {
+    if (stack.length > 0) return;
+    setBootstrap(null);
+    setBootstrapError(false);
+  }, [stack.length]);
+
   useEffect(() => {
     if (!needsBootstrap || bootstrap || bootstrapError) return;
     let cancelled = false;
@@ -105,17 +149,11 @@ export function CompteOverlayHost({ onChanged }: { onChanged?: () => void }) {
         // La route répond 200 avec un payload d'erreur explicite : un simple
         // `response.ok` ne suffit pas. On refuse aussi un corps vide pour ne
         // jamais afficher des zéros à la place d'une panne.
-        if (
-          !payload ||
-          typeof payload !== 'object' ||
-          Array.isArray(payload) ||
-          payload.error ||
-          payload.authenticated === false
-        ) {
+        if (!isUsableBootstrap(payload)) {
           setBootstrapError(true);
           return;
         }
-        setBootstrap(payload as BootstrapOverlayData);
+        setBootstrap(payload);
       })
       .catch(() => { if (!cancelled) setBootstrapError(true); });
     return () => { cancelled = true; };
@@ -125,13 +163,13 @@ export function CompteOverlayHost({ onChanged }: { onChanged?: () => void }) {
   const overlay = top.overlay;
 
   if (overlay.kind === 'post') {
-    return <PostDrawer postId={overlay.postId} initialPane={overlay.pane} initialCommentId={overlay.commentId} onClose={pop} onOpenProfile={(userId) => push({ kind: 'profile', userId })} onDeleted={() => { onChanged?.(); pop(); }} />;
+    return <PostDrawer postId={overlay.postId} initialPane={overlay.pane} initialCommentId={overlay.commentId} onClose={pop} onOpenProfile={(userId) => push({ kind: 'profile', userId })} onDeleted={() => { handleChanged(); pop(); }} />;
   }
   if (overlay.kind === 'saved') {
     return <SavedPostsDrawer onClose={pop} onOpenPost={(postId) => push({ kind: 'post', postId })} />;
   }
   if (overlay.kind === 'profile') return <ProfilePreviewDrawer userId={overlay.userId} onClose={pop} />;
-  if (overlay.kind === 'create') return <CreateDrawer initialType={overlay.type} onClose={pop} onCreated={onChanged} />;
+  if (overlay.kind === 'create') return <CreateDrawer initialType={overlay.type} onClose={pop} onCreated={handleChanged} />;
 
   if (needsBootstrap && !bootstrap) {
     return (

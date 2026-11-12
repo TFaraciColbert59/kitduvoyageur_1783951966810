@@ -72,7 +72,11 @@ function fakeBootstrapClient(
     const builder = {} as {
       [method: string]: (...args: any[]) => unknown;
     };
-    builder.select = () => builder;
+    let selected = '';
+    builder.select = (...args: any[]) => {
+      selected = String(args[0] ?? '');
+      return builder;
+    };
     builder.eq = (column: string, value: unknown) => {
       filters.push((row) => row[column] === value);
       return builder;
@@ -100,16 +104,20 @@ function fakeBootstrapClient(
       max = value;
       return builder;
     };
+    // Permet de simuler l'échec d'une seule des deux lectures `user_follows`
+    // (abonnés `follower_id` vs suivis `following_id`).
     const result = () => {
-      if (errors[table]) return { data: null, error: errors[table] };
+      const error = errors[`${table}:${selected}`] ?? errors[table];
+      if (error) return { data: null, error };
       const filtered = (rows[table] ?? [])
         .filter((row) => filters.every((filter) => filter(row)))
         .slice(0, max);
       return { data: filtered, error: null };
     };
     builder.maybeSingle = () => {
-      if (errors[table]) {
-        return Promise.resolve({ data: null, error: errors[table] });
+      const error = errors[`${table}:${selected}`] ?? errors[table];
+      if (error) {
+        return Promise.resolve({ data: null, error });
       }
       return Promise.resolve({ data: result().data?.[0] ?? null, error: null });
     };
@@ -226,7 +234,7 @@ describe('loadAccountBootstrap — lectures partielles des relations', () => {
     follow_requests: [{ requester_id: OWNER, target_id: TARGET, status: 'pending' }],
   };
 
-  it('conserve les demandes sortantes quand user_follows échoue', async () => {
+  it('invalide les états quand les suivis sont illisibles', async () => {
     const payload = await bootstrapWith(
       {
         ...relationBaseRows,
@@ -235,11 +243,14 @@ describe('loadAccountBootstrap — lectures partielles des relations', () => {
       { user_follows: { message: 'relations indisponibles' } }
     );
 
-    // Les états ne dépendent que des demandes sortantes et des profils cibles :
-    // un échec des listes ne doit pas les faire disparaître.
-    expect(payload.followStates).toEqual({ alice: 'requested' });
-    expect(payload.followStatesUnavailable).toBe(false);
+    // Sans les suivis réels, une demande pending résiduelle ne peut pas être
+    // écartée : le serveur ne doit pas la transformer en « Demande envoyée ».
+    // L'absence d'état est explicite, le client conservera le sien.
+    expect(payload.followStates).toEqual({});
+    expect(payload.followStatesUnavailable).toBe(true);
     expect(payload.followListsUnavailable).toBe(true);
+    expect(payload.followersUnavailable).toBe(true);
+    expect(payload.followingUnavailable).toBe(true);
 
     // Les compteurs dont la lecture a échoué sont omis, jamais remis à zéro.
     expect(payload.profile).not.toHaveProperty('followersCount');
@@ -248,6 +259,73 @@ describe('loadAccountBootstrap — lectures partielles des relations', () => {
     expect(payload.tribu).toEqual([]);
     expect(payload.followers).toEqual([]);
     expect(payload.following).toEqual([]);
+  });
+
+  it('un échec des seuls abonnés laisse les états et les suivis valides', async () => {
+    const payload = await bootstrapWith(
+      {
+        user_profiles: relationBaseRows.user_profiles,
+        user_follows: [{ follower_id: OWNER, following_id: TARGET }],
+        follow_requests: relationBaseRows.follow_requests,
+        public_profiles: [{ id: TARGET, handle: 'alice', full_name: 'Alice' }],
+      },
+      { 'user_follows:follower_id': { message: 'abonnés indisponibles' } }
+    );
+
+    // La demande pending est bien écartée par le suivi réel : `user_follows`
+    // des suivis a répondu, seul le compteur des abonnés manque.
+    expect(payload.followStates).toEqual({});
+    expect(payload.followStatesUnavailable).toBe(false);
+    expect(payload.followersUnavailable).toBe(true);
+    expect(payload.followingUnavailable).toBe(false);
+    expect(payload.followListsUnavailable).toBe(true);
+    expect(payload.following).toEqual([
+      expect.objectContaining({ id: TARGET, ps: 'alice' }),
+    ]);
+    expect(payload.followers).toEqual([]);
+    expect(payload.profile?.followersCount).toBeUndefined();
+    expect(payload.profile?.followingCount).toBe(1);
+  });
+
+  it('un échec des seuls suivis préserve la liste des abonnés', async () => {
+    const payload = await bootstrapWith(
+      {
+        user_profiles: relationBaseRows.user_profiles,
+        user_follows: [{ follower_id: TARGET, following_id: OWNER }],
+        follow_requests: relationBaseRows.follow_requests,
+        public_profiles: [{ id: TARGET, handle: 'alice', full_name: 'Alice' }],
+      },
+      { 'user_follows:following_id': { message: 'suivis indisponibles' } }
+    );
+
+    expect(payload.followStates).toEqual({});
+    expect(payload.followStatesUnavailable).toBe(true);
+    expect(payload.followersUnavailable).toBe(false);
+    expect(payload.followingUnavailable).toBe(true);
+    expect(payload.followers).toEqual([
+      expect.objectContaining({ id: TARGET, ps: 'alice' }),
+    ]);
+    expect(payload.following).toEqual([]);
+    expect(payload.profile?.followersCount).toBe(1);
+    expect(payload.profile?.followingCount).toBeUndefined();
+  });
+
+  it('signale un profil illisible sans fabriquer « Voyageur »', async () => {
+    const payload = await bootstrapWith(
+      {
+        ...relationBaseRows,
+        public_profiles: [{ id: TARGET, handle: 'alice', full_name: 'Alice' }],
+      },
+      { user_profiles: { message: 'profil indisponible' } }
+    );
+
+    expect(payload.profileUnavailable).toBe(true);
+    expect(payload.profile).toBeNull();
+    // Une visibilité lue sur un profil en échec serait un faux « public ».
+    expect(payload.visibility).toBeNull();
+    // Les lectures sociales valides restent servies.
+    expect(payload.followStatesUnavailable).toBe(false);
+    expect(payload.followStates).toEqual({ alice: 'requested' });
   });
 
   it('signale un échec des profils de listes sans invalider les états', async () => {
@@ -262,8 +340,8 @@ describe('loadAccountBootstrap — lectures partielles des relations', () => {
 
     // Les compteurs viennent de `user_follows`, qui a répondu : ils restent
     // exacts. Seules les fiches des listes sont indisponibles.
-    expect(payload.profile.followersCount).toBe(1);
-    expect(payload.profile.followingCount).toBe(0);
+    expect(payload.profile?.followersCount).toBe(1);
+    expect(payload.profile?.followingCount).toBe(0);
     expect(payload.followers).toEqual([]);
     expect(payload.followListsUnavailable).toBe(true);
     expect(payload.followStatesUnavailable).toBe(false);

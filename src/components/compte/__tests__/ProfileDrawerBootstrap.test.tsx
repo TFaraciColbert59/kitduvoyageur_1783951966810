@@ -46,6 +46,7 @@ const mocks = vi.hoisted(() => ({
  */
 const supabaseState = vi.hoisted(() => ({
   rows: {} as Record<string, Array<Record<string, unknown>>>,
+  errors: {} as Record<string, unknown>,
 }));
 
 vi.mock('next/navigation', () => ({
@@ -97,6 +98,9 @@ function tableQuery(table: string) {
       filters.every(([column, value]) => row[column] === value)
     );
   const result = () => {
+    if (supabaseState.errors[table]) {
+      return { data: null, error: supabaseState.errors[table], count: null };
+    }
     const rows = matching();
     return { data: rows, error: null, count: rows.length };
   };
@@ -108,8 +112,14 @@ function tableQuery(table: string) {
     };
   }
   query.limit = () => Promise.resolve(result());
-  query.maybeSingle = () => Promise.resolve({ data: matching()[0] ?? null, error: null });
-  query.single = () => Promise.resolve({ data: matching()[0] ?? null, error: null });
+  query.maybeSingle = () =>
+    supabaseState.errors[table]
+      ? Promise.resolve({ data: null, error: supabaseState.errors[table] })
+      : Promise.resolve({ data: matching()[0] ?? null, error: null });
+  query.single = () =>
+    supabaseState.errors[table]
+      ? Promise.resolve({ data: null, error: supabaseState.errors[table] })
+      : Promise.resolve({ data: matching()[0] ?? null, error: null });
   query.then = (onFulfilled: any, onRejected: any) =>
     Promise.resolve(result()).then(onFulfilled, onRejected);
   return query;
@@ -190,6 +200,7 @@ beforeEach(() => {
   setMyTripsAuthUser('owner-1', true);
   localStorage.clear();
   supabaseState.rows = {};
+  supabaseState.errors = {};
   bootstrapCalls = 0;
   bootstrapInits = [];
   followCalls = [];
@@ -964,24 +975,35 @@ describe('Compte — pont de suivi runtime', () => {
     expect(followButtonLabel(runtimeState().followStates.alice)).toBe('Demande envoyée');
   });
 
-  it('conserve les compteurs quand les relations sont indisponibles', async () => {
-    const boot = deferredBootstrap();
-    bootstrapAnswer = () => boot.promise;
+  it('conserve compteurs et listes quand les relations deviennent indisponibles', async () => {
+    // Premier bootstrap réussi : les compteurs et les deux listes sont posés.
+    bootstrapAnswer = () =>
+      Promise.resolve(
+        okResponse({
+          ...BOOTSTRAP_PAYLOAD,
+          profile: {
+            ...BOOTSTRAP_PAYLOAD.profile,
+            name: 'Relations disponibles',
+            followersCount: 7,
+            followingCount: 4,
+          },
+          followers: [{ id: 'f1', handle: 'alice', full_name: 'Alice' }],
+          following: [{ id: 'f2', handle: 'bruno', full_name: 'Bruno' }],
+          tribu: [{ id: 'f2', handle: 'bruno', full_name: 'Bruno' }],
+          followStates: { alice: 'requested' },
+        })
+      );
 
     await renderCompte();
     await waitFor(() => expect(bootstrapCalls).toBe(1));
-    await act(async () => {
-      (window as any).__lkdvHydrateCompte({
-        followersCount: 7,
-        followingCount: 4,
-        followers: [{ id: 'f1', n: 'Alice', ps: 'alice', i: 'A' }],
-        following: [{ id: 'f2', n: 'Bruno', ps: 'bruno', i: 'B' }],
-        followStates: { alice: 'requested' },
-      });
-    });
+    await waitFor(() => expect(runtimeState().followers).toHaveLength(1));
+    expect(runtimeState().following).toHaveLength(1);
 
-    await act(async () => {
-      boot.resolve(
+    // Rafraîchissement partiel : seules les listes échouent, les états restent
+    // une lecture distincte et doivent continuer à s'appliquer.
+    supabaseState.errors.user_follows = { message: 'relations indisponibles' };
+    bootstrapAnswer = () =>
+      Promise.resolve(
         okResponse({
           ...BOOTSTRAP_PAYLOAD,
           profile: { ...BOOTSTRAP_PAYLOAD.profile, name: 'Relations indisponibles' },
@@ -989,25 +1011,230 @@ describe('Compte — pont de suivi runtime', () => {
           following: [],
           tribu: [],
           followListsUnavailable: true,
-          // Les états restent une lecture distincte : ils doivent s'appliquer
-          // même quand seules les listes sont indisponibles.
           followStates: { alice: 'following' },
         })
       );
-    });
 
+    await act(async () => {
+      window.dispatchEvent(new Event('lkdv:highlights-changed'));
+    });
+    await waitFor(() => expect(bootstrapCalls).toBe(2));
     await waitFor(() =>
       expect(runtimeState().S.profile.name).toBe('Relations indisponibles')
     );
-    // Les compteurs et listes connus ne sont pas remplacés par des zéros.
+
+    // Les compteurs et les listes connus ne sont pas remplacés par des zéros.
     expect(runtimeState().S.profile.followersCount).toBe(7);
     expect(runtimeState().S.profile.followingCount).toBe(4);
+    expect(runtimeState().followers).toHaveLength(1);
+    expect(runtimeState().following).toHaveLength(1);
     expect(runtimeState().followStates.alice).toBe('following');
 
-    // Le tiroir Réseau lit ses propres données ; la preuve ici porte sur les
-    // compteurs du profil et sur l'avertissement de lecture partielle.
     expect(document.getElementById('island')?.textContent).toContain(
       'Listes d’abonnés indisponibles'
     );
+  });
+
+  it('applique indépendamment la liste encore lisible lors d’un bootstrap partiel', async () => {
+    bootstrapAnswer = () =>
+      Promise.resolve(
+        okResponse({
+          ...BOOTSTRAP_PAYLOAD,
+          profile: {
+            ...BOOTSTRAP_PAYLOAD.profile,
+            followersCount: 7,
+            followingCount: 4,
+          },
+          followers: [{ id: 'f1', handle: 'alice', full_name: 'Alice' }],
+          following: [{ id: 'f2', handle: 'bruno', full_name: 'Bruno' }],
+          tribu: [{ id: 'f2', handle: 'bruno', full_name: 'Bruno' }],
+        })
+      );
+
+    await renderCompte();
+    await waitFor(() => expect(bootstrapCalls).toBe(1));
+    await waitFor(() => expect(runtimeState().followers).toHaveLength(1));
+
+    // Abonnés KO, suivis OK : la moitié valide doit être appliquée, l'autre
+    // moitié conservée. Un indicateur global unique jetterait les deux.
+    supabaseState.errors.user_follows = { message: 'compteurs indisponibles' };
+    bootstrapAnswer = () =>
+      Promise.resolve(
+        okResponse({
+          ...BOOTSTRAP_PAYLOAD,
+          profile: { ...BOOTSTRAP_PAYLOAD.profile, followingCount: 1 },
+          followers: [],
+          following: [{ id: 'f3', handle: 'chloe', full_name: 'Chloé' }],
+          tribu: [{ id: 'f3', handle: 'chloe', full_name: 'Chloé' }],
+          followersUnavailable: true,
+          followingUnavailable: false,
+          followListsUnavailable: true,
+        })
+      );
+
+    await act(async () => {
+      window.dispatchEvent(new Event('lkdv:highlights-changed'));
+    });
+    await waitFor(() => expect(bootstrapCalls).toBe(2));
+
+    await waitFor(() =>
+      expect(runtimeState().following.map((entry: any) => entry.id)).toEqual(['f3'])
+    );
+    expect(runtimeState().followers.map((entry: any) => entry.id)).toEqual(['f1']);
+    expect(runtimeState().S.profile.followersCount).toBe(7);
+    expect(runtimeState().S.profile.followingCount).toBe(1);
+  });
+
+  it('préserve listes et compteurs après un échec puis « Réessayer »', async () => {
+    bootstrapAnswer = () =>
+      Promise.resolve(
+        okResponse({
+          ...BOOTSTRAP_PAYLOAD,
+          profile: {
+            ...BOOTSTRAP_PAYLOAD.profile,
+            followersCount: 7,
+            followingCount: 4,
+          },
+          followers: [{ id: 'f1', handle: 'alice', full_name: 'Alice' }],
+          following: [{ id: 'f2', handle: 'bruno', full_name: 'Bruno' }],
+          tribu: [{ id: 'f2', handle: 'bruno', full_name: 'Bruno' }],
+        })
+      );
+
+    await renderCompte();
+    await waitFor(() => expect(bootstrapCalls).toBe(1));
+    await waitFor(() => expect(runtimeState().followers).toHaveLength(1));
+
+    // Deuxième synchronisation en échec : le ref de payload est remis à null.
+    supabaseState.errors.user_follows = { message: 'relations indisponibles' };
+    bootstrapAnswer = () =>
+      Promise.resolve({ ok: false, status: 500, json: async () => ({}) });
+    await act(async () => {
+      window.dispatchEvent(new Event('lkdv:highlights-changed'));
+    });
+    await waitFor(() => expect(bootstrapCalls).toBe(2));
+
+    // « Réessayer » depuis le drawer en erreur, puis succès partiel : les
+    // listes connues ne doivent pas avoir été vidées avant la nouvelle lecture.
+    await openDrawer();
+    const retry = await screen.findByRole('button', { name: 'Réessayer' });
+    bootstrapAnswer = () =>
+      Promise.resolve(
+        okResponse({
+          ...BOOTSTRAP_PAYLOAD,
+          profile: { ...BOOTSTRAP_PAYLOAD.profile, name: 'Après réessai' },
+          followers: [],
+          following: [],
+          tribu: [],
+          followListsUnavailable: true,
+        })
+      );
+    fireEvent.click(retry);
+    await waitFor(() => expect(bootstrapCalls).toBe(3));
+    await waitFor(() => expect(runtimeState().S.profile.name).toBe('Après réessai'));
+
+    expect(runtimeState().S.profile.followersCount).toBe(7);
+    expect(runtimeState().S.profile.followingCount).toBe(4);
+    expect(runtimeState().followers).toHaveLength(1);
+    expect(runtimeState().following).toHaveLength(1);
+  });
+
+  it('ignore les zéros d’un ancien payload social partiel', async () => {
+    bootstrapAnswer = () =>
+      Promise.resolve(
+        okResponse({
+          ...BOOTSTRAP_PAYLOAD,
+          profile: {
+            ...BOOTSTRAP_PAYLOAD.profile,
+            followersCount: 7,
+            followingCount: 4,
+          },
+          followers: [{ id: 'f1', handle: 'alice', full_name: 'Alice' }],
+          following: [{ id: 'f2', handle: 'bruno', full_name: 'Bruno' }],
+          tribu: [{ id: 'f2', handle: 'bruno', full_name: 'Bruno' }],
+        })
+      );
+
+    await renderCompte();
+    await waitFor(() => expect(bootstrapCalls).toBe(1));
+    await waitFor(() => expect(runtimeState().following).toHaveLength(1));
+
+    // Ancienne instance serveur : pas de `followListsUnavailable`, mais un
+    // échec d'états et des compteurs/listes à zéro. Ces zéros ne doivent pas
+    // écraser un état connu plus fiable.
+    supabaseState.errors.user_follows = { message: 'relations indisponibles' };
+    bootstrapAnswer = () =>
+      Promise.resolve(
+        okResponse({
+          ...BOOTSTRAP_PAYLOAD,
+          profile: {
+            ...BOOTSTRAP_PAYLOAD.profile,
+            followersCount: 0,
+            followingCount: 0,
+          },
+          followers: [],
+          following: [],
+          tribu: [],
+          followStates: {},
+          followStatesUnavailable: true,
+        })
+      );
+
+    await act(async () => {
+      window.dispatchEvent(new Event('lkdv:highlights-changed'));
+    });
+    await waitFor(() => expect(bootstrapCalls).toBe(2));
+    await waitFor(() =>
+      expect(document.getElementById('island')?.textContent).toContain(
+        'État de suivi indisponible'
+      )
+    );
+
+    expect(runtimeState().S.profile.followersCount).toBe(7);
+    expect(runtimeState().S.profile.followingCount).toBe(4);
+    expect(runtimeState().followers).toHaveLength(1);
+    expect(runtimeState().following).toHaveLength(1);
+  });
+
+  it('préserve le profil connu quand sa lecture est indisponible', async () => {
+    bootstrapAnswer = () =>
+      Promise.resolve(
+        okResponse({
+          ...BOOTSTRAP_PAYLOAD,
+          profile: {
+            ...BOOTSTRAP_PAYLOAD.profile,
+            name: 'Propriétaire LKDV',
+            handle: 'owner',
+          },
+        })
+      );
+
+    await renderCompte();
+    await waitFor(() => expect(bootstrapCalls).toBe(1));
+    await waitFor(() => expect(runtimeState().S.profile.name).toBe('Propriétaire LKDV'));
+    expect(runtimeState().S.profile.handle).toBe('owner');
+
+    // Profil illisible : ni « Voyageur » ni handle générique ne doivent
+    // remplacer l'identité déjà connue.
+    bootstrapAnswer = () =>
+      Promise.resolve(
+        okResponse({
+          authenticated: true,
+          profileUnavailable: true,
+          stats: BOOTSTRAP_PAYLOAD.stats,
+          followers: [],
+          following: [],
+          tribu: [],
+          followStates: {},
+        })
+      );
+
+    await act(async () => {
+      window.dispatchEvent(new Event('lkdv:highlights-changed'));
+    });
+    await waitFor(() => expect(bootstrapCalls).toBe(2));
+
+    expect(runtimeState().S.profile.name).toBe('Propriétaire LKDV');
+    expect(runtimeState().S.profile.handle).toBe('owner');
   });
 });

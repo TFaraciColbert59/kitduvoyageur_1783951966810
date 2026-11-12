@@ -20,9 +20,16 @@ export interface BootstrapOverlayData {
   gearItems?: GearRowData[];
   kits?: Array<{ id: string; name?: string }>;
   followers?: unknown[];
+  following?: unknown[];
+  tribu?: unknown[];
   species?: unknown[];
   trust?: { verified?: boolean; active?: number; onTimeRate?: number | null; rating?: number | null };
-  profile?: { trustScore?: number; name?: string; handle?: string; avatarUrl?: string };
+  profile?: { trustScore?: number; name?: string; handle?: string; avatarUrl?: string } | null;
+  /** Lectures sociales partielles : ne jamais afficher un zéro trompeur. */
+  followersUnavailable?: boolean;
+  followingUnavailable?: boolean;
+  followListsUnavailable?: boolean;
+  profileUnavailable?: boolean;
 }
 
 export function SavedPostsDrawer({ onClose, onOpenPost }: { onClose: () => void; onOpenPost: (id: string) => void }) {
@@ -124,9 +131,17 @@ function radar(values: number[]): string {
 
 export function SealDrawer({ data, onClose }: { data: BootstrapOverlayData; onClose: () => void }) {
   const stats = data.stats ?? {};
-  const values = [stats.outings ?? 0, stats.km ?? 0, stats.dplus ?? 0, data.gearItems?.length ?? 0, data.kits?.length ?? 0, data.species?.length ?? 0, data.followers?.length ?? 0];
+  // Une liste illisible n'est pas une liste vide : afficher « — » plutôt que
+  // « 0 », qui laisserait croire à une tribu réellement vide.
+  const followersUnavailable =
+    data.followersUnavailable === true ||
+    (data.followersUnavailable === undefined && data.followListsUnavailable === true);
+  const followersCount = data.followers?.length ?? 0;
+  const tribeValue = followersUnavailable ? 0 : followersCount;
+  const tribeDisplay = followersUnavailable ? '—' : String(followersCount);
+  const values = [stats.outings ?? 0, stats.km ?? 0, stats.dplus ?? 0, data.gearItems?.length ?? 0, data.kits?.length ?? 0, data.species?.length ?? 0, tribeValue];
   const labels = ['Sorties', 'Kilomètres', 'Dénivelé', 'Matériel', 'Kits', 'Espèces', 'Tribu'];
-  const displays = [String(stats.outings ?? 0), formatKm(stats.km ?? 0), formatElevation(stats.dplus ?? 0), String(data.gearItems?.length ?? 0), String(data.kits?.length ?? 0), String(data.species?.length ?? 0), String(data.followers?.length ?? 0)];
+  const displays = [String(stats.outings ?? 0), formatKm(stats.km ?? 0), formatElevation(stats.dplus ?? 0), String(data.gearItems?.length ?? 0), String(data.kits?.length ?? 0), String(data.species?.length ?? 0), tribeDisplay];
   return (
     <OverlaySheet title="Empreinte" subtitle="100 % dérivé de tes sorties GPS vérifiées" onClose={onClose} className="lkdv-seal-drawer">
       <div className="lkdv-seal">
@@ -136,6 +151,9 @@ export function SealDrawer({ data, onClose }: { data: BootstrapOverlayData; onCl
           <polygon points={radar(values)} fill="rgba(23,64,44,.16)" stroke="#17402c" strokeWidth="2" /><circle cx="80" cy="80" r="4" fill="#17402c" />
         </svg></div>
         <div className="lkdv-seal-grid">{labels.map((label, i) => <div key={label}><span>{label}</span><b>{displays[i]}</b></div>)}</div>
+        {followersUnavailable ? (
+          <p className="lkdv-trust-detail-empty">Liste de la tribu momentanément indisponible.</p>
+        ) : null}
       </div>
     </OverlaySheet>
   );

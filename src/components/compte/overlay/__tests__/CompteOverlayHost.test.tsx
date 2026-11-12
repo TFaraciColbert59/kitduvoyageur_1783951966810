@@ -83,4 +83,82 @@ describe('CompteOverlayHost — bootstrap privé', () => {
     expect(await screen.findByRole('alert')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Réessayer' })).toBeTruthy();
   });
+
+  it('rend l’Empreinte sur un payload valide et affiche 0 pour une liste réellement vide', async () => {
+    answer = () => Promise.resolve(json(SUCCESS_PAYLOAD));
+
+    await openSeal();
+
+    expect(await screen.findByText('Empreinte')).toBeTruthy();
+    const tribe = screen.getByText('Tribu');
+    expect(tribe.parentElement?.textContent).toContain('0');
+    expect(screen.queryByText('Liste de la tribu momentanément indisponible.')).toBeNull();
+  });
+
+  it('affiche « — » au lieu de zéro quand la liste sociale est indisponible', async () => {
+    answer = () =>
+      Promise.resolve(
+        json({
+          ...SUCCESS_PAYLOAD,
+          followers: [],
+          followersUnavailable: true,
+          followListsUnavailable: true,
+        })
+      );
+
+    await openSeal();
+
+    const tribe = await screen.findByText('Tribu');
+    expect(tribe.parentElement?.textContent).toContain('—');
+    expect(screen.getByText('Liste de la tribu momentanément indisponible.')).toBeTruthy();
+  });
+
+  it.each([
+    ['corps vide', {}],
+    ['authentifié sans données', { authenticated: true }],
+  ])('refuse un payload 200 %s', async (_label, payload) => {
+    answer = () => Promise.resolve(json(payload));
+
+    await openSeal();
+
+    expect(await screen.findByRole('alert')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Réessayer' })).toBeTruthy();
+  });
+
+  it('refuse un HTTP 500 et un JSON invalide', async () => {
+    answer = () => Promise.resolve(json({}, 500));
+    await openSeal();
+    expect(await screen.findByRole('alert')).toBeTruthy();
+    cleanup();
+
+    answer = () =>
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        json: async () => {
+          throw new Error('json_invalide');
+        },
+      });
+    await openSeal();
+    expect(await screen.findByRole('alert')).toBeTruthy();
+  });
+
+  it('relit le bootstrap après une fermeture complète', async () => {
+    answer = () => Promise.resolve(json(SUCCESS_PAYLOAD));
+
+    await openSeal();
+    await screen.findByText('Empreinte');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      (window as any).__lkdvCompteOverlay.close();
+    });
+
+    await act(async () => {
+      (window as any).__lkdvCompteOverlay.openSeal();
+    });
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    expect(await screen.findByText('Empreinte')).toBeTruthy();
+  });
 });
