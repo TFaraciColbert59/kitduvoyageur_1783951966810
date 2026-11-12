@@ -181,7 +181,7 @@
     "  col += (GOLD*0.55*exp(-rl/0.13) + STONE*1.4*exp(-rl/0.028) + AMBER*0.28*exp(-rl/0.5))*uLight;",
     /* ---- couche proche : piliers sombres et denses, liseré éclairé par la source, volutes (D = 1.05) ---- */
     "  if (uMix.x*uDens > 0.001) {",
-    "  vec2 qn = toL(pc, 1.05); vec2 Ln = toL(uLs, 1.05);",
+    "  vec2 qn = toL(pc + vec2(0.0, 0.8*(0.5*uRes.y/uMin - 0.5)), 1.05); vec2 Ln = toL(uLs, 1.05);",
     "  vec2 wn = vec2(fbm(vec3(qn*2.4, uW + 21.0), 3), fbm(vec3(qn*2.4 + 7.1, uW + 22.0), 3));",
     "  vec2 qnw = qn + uWarp*0.035*wn;",
     "  float er = fbm(vec3(qnw*7.5, uW + 2.0), 5);",
@@ -218,7 +218,7 @@
     "    for (int j = 0; j < 4; j++) {",
     "      float fj = float(j);",
     "      float x = p.x*(0.8 + 0.30*fj) + uCurt.w*(0.6 + 0.25*fj) + fj*3.7;",
-    "      float yb = uCurt.y + 0.27*fj + 0.13*n1(vec3(x*0.8, fj*5.0, uW*0.3)) + 0.045*n1(vec3(x*2.9, fj*5.0 + 2.0, uW*0.5)) + 0.015*n1(vec3(x*9.0, fj*3.0, uW));",
+    "      float yb = uCurt.y + 0.24*fj + (fj - 1.5)*0.22*p.x + 0.20*n1(vec3(x*0.6, fj*5.0, uW*0.3)) + 0.045*n1(vec3(x*2.9, fj*5.0 + 2.0, uW*0.5)) + 0.015*n1(vec3(x*9.0, fj*3.0, uW));",
     "      float h = p.y - yb;",
     "      float soft = 0.006 + 0.10*(1.0 - cur);",
     "      float ray = T3(vec3(x*17.0, h*0.22, uW*0.8 + fj)).r;",
@@ -226,12 +226,13 @@
     "      float env = smoothstep(-soft, soft*1.5, h)*exp(-max(h, 0.0)*(4.5 + 2.5*fj)*cur*cur);",
     "      float edge = exp(-max(h, 0.0)/0.012)*smoothstep(-soft, 0.0, h);",
     "      float fold = pow(clamp(0.5 + 0.65*n1(vec3(x*1.3, 1.0 + fj, uW*0.25)), 0.0, 1.0), 2.2)*1.7;",
-    "      float eA = (env*rays + 0.8*edge)*fold*(0.50 + 0.9*gasRay)*(1.0 - 0.2*fj);",
+    "      float seg = smoothstep(-0.25, 0.35, n1(vec3(x*0.55 + fj*7.0, 2.0*fj, uW*0.2)));",
+    "      float eA = (env*rays + 0.8*edge)*fold*seg*(0.50 + 0.9*gasRay)*(1.0 - 0.15*fj);",
     "      vec3 c = mix(mix(SAGE_L, EMERALD*2.0, 0.35), EMERALD*1.8 + SAGE*0.4, smoothstep(0.0, 0.05, h));",
     "      c = mix(c, BRICK*0.9 + AMBER*0.1, smoothstep(0.12, 0.40, h)*0.55);",
     "      acol += c*eA; aur += eA;",
     "    }",
-    "    vec3 sky = mix(INK*0.9, FOREST*0.30, 0.45) + col*0.45;",
+    "    vec3 sky = mix(INK*0.9, FOREST*0.30, 0.45) + col*0.75;",
     "    col = mix(col, sky + acol*2.0, cur);",
     "  }",
     "  col = vec3(1.0) - exp(-col*uExpo);",
@@ -304,7 +305,7 @@
     "  vec2 px = pp*uMin + 0.5*uView;",
     /* traînées : étirement radial vers le centre de fuite (plongée) */
     "  vec2 sd = pp - uStreakC; float sl = length(sd); vec2 dir = sl > 1e-4 ? sd/sl : vec2(1.0, 0.0);",
-    "  float len = uStreak*sl*uMin*(0.4 + 1.2/D);",
+    "  float len = min(uStreak*sl*uMin*(0.4 + 1.2/D), 220.0*s);",
     "  float ext = max(max(rh*3.0, rc*3.0), sp) + 1.5;",
     "  vec2 cv = vec2(cn==1||cn==2||cn==4 ? 1.0 : -1.0, cn==2||cn==4||cn==5 ? 1.0 : -1.0);",
     "  vec2 nrm = vec2(-dir.y, dir.x);",
@@ -373,7 +374,7 @@
     S.comp = C.program(C.VS_QUAD, FS_COMP);
     S.star = C.program(VS_STAR, FS_STAR);
     S.vao = gl.createVertexArray();
-    S.scale = 0.5;
+    S.scale = 0.42;
     S.target = C.target(Math.round(C.W * S.scale), Math.round(C.H * S.scale));
     var N = 128, data = buildNoise(N);
     S.noise = gl.createTexture();

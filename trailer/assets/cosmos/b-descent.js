@@ -11,12 +11,12 @@
   var ROUTE = [
     [64.146, -21.942], [64.167, -21.700], [64.330, -21.790], [64.539, -21.920], [64.766, -21.556], [64.980, -21.120],
     [65.124, -21.083], [65.330, -20.850], [65.660, -20.279], [65.553, -19.452], [65.470, -18.750], [65.683, -18.091],
-    [65.683, -17.550], [65.640, -16.910], [65.642, -16.118], [65.265, -14.395], [64.790, -14.010], [64.656, -14.281],
-    [64.300, -15.300], [64.048, -16.180], [64.016, -16.966], [63.789, -18.054], [63.419, -19.006], [63.528, -19.511],
+    [65.683, -17.550], [65.640, -16.910], [65.642, -16.118], [65.265, -14.395], [65.030, -14.220], [64.930, -14.020], [64.830, -13.870], [64.790, -14.010], [64.656, -14.281],
+    [64.600, -14.550], [64.430, -14.950], [64.300, -15.300], [64.048, -16.180], [64.016, -16.966], [63.789, -18.054], [63.419, -19.006], [63.528, -19.511],
     [63.752, -20.224], [63.836, -20.400], [63.933, -20.997], [64.000, -21.187],
   ];
   /* 9 étapes (nuits) : indices dans ROUTE */
-  var STAGES = [0, 22, 20, 18, 15, 13, 11, 8, 3];
+  var STAGES = [0, 27, 25, 23, 15, 13, 11, 8, 3];
   var routeLL = null, routeCum = null, routeTot = 0, stageS = [];
 
   function prep() {
@@ -43,16 +43,15 @@
     var m = Math.min(C.W, C.H), v = C.fmt && C.fmt.vertical, R = 6371;
     var c6 = E.camera(C, { lat: E.ICELAND.lat, lon: E.ICELAND.lon, Rs: E.FRAME6.rs * m, fov: 30 });
     var h0 = (c6.d - 1) * R, h1 = v ? 1250 : 880, h2 = v ? 800 : 560;
-    var hA = L.altitude ? L.altitude(10.75) : 3.2;
+    var HMIN = 28; /* sous ~25 km la Blue Marble (500 m) devient floue : le voile prend le relais à 10,75 */
     var h, lat = E.ICELAND.lat, lon = E.ICELAND.lon, pitch = 0, fov = 30;
     if (t < 7) h = U.loglerp(h0, h1, U.easeOut(t - 6, 4.2));
     else if (t < 10.25) h = U.loglerp(h1, h2, (t - 7) / 3.25);
-    else if (t < 10.75) h = U.loglerp(h2, hA, U.easeIn((t - 10.25) / 0.5, 2.2));
-    else h = L.altitude ? L.altitude(t) : hA;
+    else h = U.loglerp(h2, HMIN, U.easeIn(U.clamp((t - 10.25) / 0.5, 0, 1), 2.2));
     if (t > 10.25) {
       var u = U.clamp((t - 10.25) / 0.5, 0, 1);
       lat = U.lerp(lat, 64.05, U.ease(u)); lon = U.lerp(lon, -19.4, U.ease(u));
-      pitch = 62 * U.ease(U.clamp((t - 10.3) / 0.45, 0, 1)); fov = U.lerp(30, 52, U.ease(u));
+      pitch = 40 * U.ease(U.clamp((t - 10.3) / 0.45, 0, 1)); fov = U.lerp(30, 52, U.ease(u));
     }
     var cam = E.camera(C, { lat: lat, lon: lon, d: 1 + h / R, fov: fov, pitch: pitch });
     cam.h = h;
@@ -72,6 +71,7 @@
     "in vec2 vUv; out vec4 o;",
     "uniform sampler2D uEarth; uniform float uEarthOn, uT, uZoom, uCover, uDiss, uOpaque, uTear, uAsp;",
     "uniform vec2 uRes;",
+    "void void_ang(float a){}",
     "void main(){",
     "  vec2 q=(vUv-.5)*vec2(uAsp,1.);",
     "  float r=length(q);",
@@ -88,10 +88,10 @@
     "  vec3 stone=vec3(.980,.973,.961)-(1.-sh)*.035;",
     "  cc=mix(cc,stone,uOpaque); cov=mix(cov,1.,uOpaque);",
     /* déchirure : trou du centre vers les bords, bord effiloché et étiré radialement */
-    "  if(uTear>0.){ vec2 qe=(q-vec2(0.,.30))*vec2(.55,1.4); float re=length(qe); float ang=atan(qe.y,qe.x); float rag=fbm2(vec2(ang*3.,re*4.-uT*.5),4)*.35+fbm2(vec2(ang*11.,uT),2)*.12; r=re;",
+    "  if(uTear>0.){ vec2 qe=(q-vec2(0.,.30))*vec2(.55,1.4); float re=length(qe); float ang=atan(qe.y,qe.x); float rag=fbm2(q*3.2+vec2(uT*.2,0.),4)*.42+fbm2(q*9.,2)*.10; r=re; void_ang(ang);",
     "    float edge=uTear*1.55-.14+rag*uTear;",
     "    float hole=smoothstep(edge-.02,edge+.10,r);",
-    "    float wisp=smoothstep(.4,.8,fbm2(vec2(ang*24.,r*1.5-uTear*2.),3))*(1.-hole)*smoothstep(edge-.3,edge,r)*.6;",
+    "    float wisp=smoothstep(.55,.85,fbm2(q*9.+vec2(0.,uTear*1.5),3))*(1.-hole)*smoothstep(edge-.18,edge,r)*.5;",
     "    cov=cov*max(hole,wisp)*(1.-smoothstep(.96,1.,uTear)); }",
     /* la Terre vue d'en haut cède au voile (dissolution en formes de nuages) */
     "  vec4 ea=vec4(0.);",
@@ -148,7 +148,7 @@
       var pts = []; for (var i = 0; i <= 18; i++) { var uu = Math.max(0, u - 0.45 * (1 - i / 18)); pts.push(at(uu)); }
       B.line(pts, function (s) { return (1 + 5 * s) * k; }, SAGEL, function (s) { return 0.9 * s * s; }, 0.6, 0.5);
       var h = at(u), r = 7 * k * U.lerp(1, 0.55, u);
-      B.dot(h[0], h[1], r * 3.2, SAGE, 0.5, 0, 1); B.dot(h[0], h[1], r, SAGEL, 1, 1, 0.2);
+      B.dot(h[0], h[1], r * 6, SAGEL, 0.45, 0, 1); B.dot(h[0], h[1], r, SAGEL, 1, 1, 0.2);
     } else {
       /* impact : onde sur le sol, la traînée retombe */
       var w = (tau - T) / 0.48, R = U.easeOut(w, 3) * 0.09 * cam.m;
@@ -190,36 +190,37 @@
   function satellites(C, t, cam) {
     var B = E.batch, m = cam.m; if (t < 6.95 || t > 7.9) return;
     var S = [
-      { t0: 6.95, d: 0.62, a: [-0.15, 0.25], b: [1.15, 0.05], s: 0.16, r: 0.3 },
-      { t0: 7.05, d: 0.55, a: [1.12, 0.85], b: [-0.12, 0.62], s: 0.10, r: -0.5 },
-      { t0: 7.18, d: 0.70, a: [0.25, -0.12], b: [0.65, 1.15], s: 0.22, r: 1.2 },
+      { t0: 6.95, d: 0.55, a: [-0.12, 0.22], b: [1.12, 0.08], s: 0.075, r: 0.3 },
+      { t0: 7.08, d: 0.50, a: [1.10, 0.86], b: [-0.10, 0.66], s: 0.05, r: -0.5 },
+      { t0: 7.20, d: 0.60, a: [0.22, -0.10], b: [0.62, 1.10], s: 0.10, r: 1.2 },
     ];
+    var dark = [0.07, 0.10, 0.12], glint = [1, 0.9, 0.7];
     for (var i = 0; i < 3; i++) {
-      var o = S[i], u = (t - o.t0) / o.d; if (u < -0.05 || u > 1.05) continue;
-      var shutter = 0.06; /* flou de mouvement : 7 positions sur l'obturation */
-      for (var j = 0; j < 7; j++) {
-        var uu = u - shutter * (j / 6);
+      var o = S[i], u = (t - o.t0) / o.d; if (u < -0.1 || u > 1.1) continue;
+      var shutter = 0.10, NS = 24; /* flou de mouvement : 24 positions sur l'obturation, bords doux (hors mise au point) */
+      for (var j = 0; j < NS; j++) {
+        var uu = u - shutter * (j / (NS - 1));
         var x = U.lerp(o.a[0], o.b[0], uu) * C.W, y = U.lerp(o.a[1], o.b[1], uu) * C.H, sz = o.s * m;
-        var ang = o.r + uu * 0.4, ca = Math.cos(ang), sa = Math.sin(ang), al = 0.2;
-        /* panneaux bleus, corps doré, sans aucune marque */
-        B.seg(x - ca * sz * 0.95, y - sa * sz * 0.95, x - ca * sz * 0.22, y - sa * sz * 0.22, sz * 0.17, sz * 0.17, BLUEL, al, BLUEL, al, 0.35, 0);
-        B.seg(x + ca * sz * 0.22, y + sa * sz * 0.22, x + ca * sz * 0.95, y + sa * sz * 0.95, sz * 0.17, sz * 0.17, BLUEL, al, BLUEL, al, 0.35, 0);
-        B.seg(x - ca * sz * 0.16, y - sa * sz * 0.16, x + ca * sz * 0.16, y + sa * sz * 0.16, sz * 0.12, sz * 0.12, AMBER, al * 1.2, AMBER, al * 1.2, 0.35, 0);
-        B.dot(x + ca * sz * 0.5 - sa * sz * 0.1, y + sa * sz * 0.5 + ca * sz * 0.1, sz * 0.06, PAPER, al * 1.4, 0, 0.8);
+        var ang = o.r + uu * 0.3, ca = Math.cos(ang), sa = Math.sin(ang), al = 0.065;
+        B.seg(x - ca * sz, y - sa * sz, x + ca * sz, y + sa * sz, sz * 0.17, sz * 0.17, [0.46, 0.58, 0.68], al, [0.62, 0.72, 0.80], al, 0.3, 0);
+        B.seg(x - sa * sz * 0.12, y + ca * sz * 0.12, x + sa * sz * 0.12, y - ca * sz * 0.12, sz * 0.2, sz * 0.2, AMBER, al * 1.6, [0.95, 0.80, 0.45], al * 1.6, 0.3, 0);
+        B.seg(x - ca * sz * 0.9, y - sa * sz * 0.9, x + ca * sz * 0.9, y + sa * sz * 0.9, sz * 0.02, sz * 0.02, dark, al, dark, al, 0.5, 0);
       }
+      var gx = U.lerp(o.a[0], o.b[0], u) * C.W, gy = U.lerp(o.a[1], o.b[1], u) * C.H;
+      B.dot(gx + Math.cos(o.r) * o.s * m * 0.5, gy + Math.sin(o.r) * o.s * m * 0.5, o.s * m * 0.5, glint, 0.35, 0, 1);
       if (i === 0 && t > 7.08 && t < 7.6) {
-        var bx = U.lerp(o.a[0], o.b[0], u) * C.W, by = U.lerp(o.a[1], o.b[1], u) * C.H, tg = P(cam, 64.95, -18.75, 0.0003);
+        var tg = P(cam, 64.95, -18.75, 0.0003);
         var ba = U.sstep(7.08, 7.18, t) * (1 - U.sstep(7.4, 7.6, t));
-        B.seg(bx, by, tg[0], tg[1], m * 0.004, m * 0.06, SAGEL, 0.30 * ba, SAGE, 0.05 * ba, 0, 1);
-        B.seg(bx, by, tg[0], tg[1], m * 0.0015, m * 0.008, SAGEL, 0.55 * ba, SAGEL, 0.25 * ba, 0.3, 0.8);
-        B.dot(tg[0], tg[1], m * 0.07, SAGE, 0.3 * ba, 0, 1);
+        B.seg(gx, gy, tg[0], tg[1], m * 0.003, m * 0.05, SAGEL, 0.22 * ba, SAGE, 0.04 * ba, 0, 1);
+        B.seg(gx, gy, tg[0], tg[1], m * 0.0012, m * 0.006, SAGEL, 0.5 * ba, SAGEL, 0.22 * ba, 0.3, 0.8);
+        B.dot(tg[0], tg[1], m * 0.06, SAGE, 0.3 * ba, 0, 1);
       }
     }
   }
 
   /* 8,00 : milliers de traits de vent qui suivent les masses d'air (dépression au sud-ouest de l'île) */
   function windField(x, y) { /* km locaux (est, nord) → vitesse (km/s fictifs) */
-    var vx = 1.0, vy = 0.15, cx = -520, cy = -260, dx = x - cx, dy = y - cy, r2 = dx * dx + dy * dy, s = 1.6 * 160000 / (r2 + 90000);
+    var vx = 0.8, vy = 0.2, cx = -330, cy = -170, dx = x - cx, dy = y - cy, r2 = dx * dx + dy * dy, s = 2.6 * 120000 / (r2 + 40000);
     vx += -dy / Math.sqrt(r2 + 1) * s; vy += dx / Math.sqrt(r2 + 1) * s;
     var dx2 = x - 520, dy2 = y - 420, r3 = dx2 * dx2 + dy2 * dy2, s2 = -0.7 * 90000 / (r3 + 70000); vx += -dy2 / Math.sqrt(r3 + 1) * s2; vy += dx2 / Math.sqrt(r3 + 1) * s2;
     return [vx, vy];
@@ -231,19 +232,19 @@
     var N = 2200, age = t - 7.95;
     for (var i = 0; i < N; i++) {
       var x = (L.hash(i, 51) - 0.5) * 1700, y = (L.hash(i, 52) - 0.5) * 1100, ph = L.hash(i, 53);
-      var travel = (age * 1.0 + ph * 0.6) * 260, steps = 7, st = travel / steps;
+      var travel = (age * 1.0 + ph * 0.6) * 200, steps = 8, st = travel / steps;
       /* avance le long du champ (intégration d'Euler depuis la graine) */
       var px = x, py = y;
       for (var j = 0; j < steps; j++) { var v = windField(px, py), vl = Math.hypot(v[0], v[1]) || 1; px += v[0] / vl * st; py += v[1] / vl * st; }
-      var pts = [], len = 70 + 60 * L.hash(i, 54), seg = 5;
+      var pts = [], len = 90 + 90 * L.hash(i, 54), seg = 8;
       for (var q = 0; q <= seg; q++) {
         var gg = localToLL(px, py), pp = P(cam, gg[0], gg[1], 0.0016); pts.push(pp[2] > 0 ? [pp[0], pp[1]] : null);
         var v2 = windField(px, py), vl2 = Math.hypot(v2[0], v2[1]) || 1; px -= v2[0] / vl2 * len / seg; py -= v2[1] / vl2 * len / seg;
       }
       pts.reverse();
       var life = Math.sin(Math.PI * U.clamp(((age + ph * 1.3) % 1.3) / 1.3, 0, 1));
-      B.line(pts, function (s) { return (0.5 + 0.9 * s) * k; }, function (s) { return [U.lerp(BLUEL[0], SAGEL[0], s), U.lerp(BLUEL[1], SAGEL[1], s), U.lerp(BLUEL[2], SAGEL[2], s)]; },
-        function (s) { return s * 0.65 * env * life; }, 0.5, 0.7);
+      B.line(pts, function (s) { return (0.6 + 1.3 * s) * k; }, function (s) { return [U.lerp(BLUEL[0], SAGEL[0], s), U.lerp(BLUEL[1], SAGEL[1], s), U.lerp(BLUEL[2], SAGEL[2], s)]; },
+        function (s) { return s * 0.75 * env * life; }, 0.5, 0.35);
     }
   }
 
@@ -269,7 +270,7 @@
     var g1 = routeAt(U.lerp(s0, s1, u)), g0 = routeAt(U.lerp(s0, s1, Math.max(0, u - 0.02)));
     var p1 = P(cam, g1[0], g1[1]), p0 = P(cam, g0[0], g0[1]);
     var dx = p1[0] - p0[0], dy = p1[1] - p0[1], dl = Math.hypot(dx, dy) || 1; dx /= dl; dy /= dl;
-    var off2 = 0.05 * m * Math.sin(Math.PI * u), x = p1[0] - off2, y = p1[1] - off2 * 0.6, L0 = 0.11 * m * (1 + 0.6 * Math.sin(Math.PI * u));
+    var off2 = 0.05 * m * Math.sin(Math.PI * u), x = p1[0] - off2, y = p1[1] - off2 * 0.6, L0 = 0.17 * m * (1 + 0.7 * Math.sin(Math.PI * u));
     var nx = -dy, ny = dx, al = U.sstep(0, 0.08, u) * (1 - U.sstep(0.9, 1, u));
     /* ombre portée lointaine, très douce */
     B.dot(x + 0.06 * m, y + 0.09 * m, L0 * 0.35, [0.02, 0.04, 0.05], 0.18 * al, 0, 0);
@@ -316,18 +317,21 @@
 
   /* 11,00 : vol d'oies en V */
   function geese(C, t) {
-    var B = E.batch, m = Math.min(C.W, C.H), k = m / 1080; if (t < 10.8 || t > 11.5) return;
-    var u = (t - 10.8) / 0.7, lx = U.lerp(-0.1, 1.1, u) * C.W, ly = U.lerp(0.62, 0.28, u) * C.H, dir = Math.atan2(-0.34 * C.H, 1.2 * C.W);
+    var B = E.batch, m = Math.min(C.W, C.H), k = m / 1080; if (t < 10.75 || t > 11.4) return;
+    var u = (t - 10.75) / 0.6, lx = U.lerp(-0.1, 1.1, u) * C.W, ly = U.lerp(0.62, 0.28, u) * C.H, dir = Math.atan2(-0.34 * C.H, 1.2 * C.W);
     var ca = Math.cos(dir), sa = Math.sin(dir);
     for (var i = 0; i < 11; i++) {
       var side = i === 0 ? 0 : (i % 2 ? 1 : -1), rank = Math.ceil(i / 2);
-      var bx = lx - ca * rank * 52 * k + (-sa) * side * rank * 38 * k * (side ? 1 : 0), by = ly - sa * rank * 52 * k + ca * side * rank * 38 * k;
+      var bx = lx - ca * rank * 110 * k + (-sa) * side * rank * 80 * k * (side ? 1 : 0), by = ly - sa * rank * 110 * k + ca * side * rank * 80 * k;
       bx += (L.hash(i, 71) - 0.5) * 8 * k; by += (L.hash(i, 72) - 0.5) * 8 * k;
-      var flap = Math.sin(t * 18 + i * 0.9), span = 15 * k, wy = flap * 7 * k;
-      var c = [0.10, 0.14, 0.13];
-      B.seg(bx - ca * 6 * k, by - sa * 6 * k, bx + ca * 7 * k, by + sa * 7 * k, 2.1 * k, 1.4 * k, c, 0.9, c, 0.9, 0.8, 0);
-      B.seg(bx, by, bx - sa * span + ca * 4 * k, by + ca * span + wy, 1.6 * k, 0.8 * k, c, 0.9, c, 0.8, 0.8, 0);
-      B.seg(bx, by, bx + sa * span + ca * 4 * k, by - ca * span + wy, 1.6 * k, 0.8 * k, c, 0.9, c, 0.8, 0.8, 0);
+      var flap = Math.sin(t * 16 + i * 0.9), span = 30 * k, c = [0.10, 0.14, 0.13];
+      var jy = -flap * 9 * k, ty = flap * 12 * k + 4 * k; /* coude et pointe de l'aile (vue de côté, en « m ») */
+      B.dot(bx, by, 3.2 * k, c, 0.9, 0.9, 0);
+      B.seg(bx + 2 * k, by, bx + 9 * k, by - 2 * k, 1.8 * k, 1.2 * k, c, 0.9, c, 0.9, 0.8, 0);
+      B.seg(bx, by, bx - span * 0.45, by + jy, 2.6 * k, 1.8 * k, c, 0.9, c, 0.9, 0.8, 0);
+      B.seg(bx - span * 0.45, by + jy, bx - span, by + ty, 1.8 * k, 0.7 * k, c, 0.9, c, 0.85, 0.8, 0);
+      B.seg(bx, by, bx + span * 0.45, by + jy, 2.6 * k, 1.8 * k, c, 0.9, c, 0.9, 0.8, 0);
+      B.seg(bx + span * 0.45, by + jy, bx + span, by + ty, 1.8 * k, 0.7 * k, c, 0.9, c, 0.85, 0.8, 0);
     }
   }
 
@@ -360,12 +364,13 @@
 
   /* état de la Terre pendant la descente */
   function globeParams(C, t, cam) {
-    var p = { state: 4, t: t, bg: 1, atmo: 1, city: 0, spec: 1, expo: 1 };
+    var p = { state: 4, t: t, bg: 1, atmo: 1, city: 0, spec: 0.12, expo: 1, oceanGrade: U.sstep(6.0, 6.6, t) * 0.8 };
     p.sun = sunFor(cam);
     p.patch = U.sstep(6.2, 6.9, t);
-    p.cloud = t < 8 ? U.lerp(0.45, 0.18, U.sstep(6.0, 6.8, t)) : t < 10.4 ? U.lerp(0.18, 0.46, U.sstep(8.0, 8.8, t)) : U.lerp(0.46, 0.92, U.sstep(10.25, 10.75, t));
+    p.band = U.sstep(7.7, 8.5, t);
+    p.cloud = t < 8 ? U.lerp(0.45, 0.16, U.sstep(6.0, 6.8, t)) : t < 10.25 ? U.lerp(0.16, 0.42, U.sstep(8.0, 8.9, t)) : U.lerp(0.42, 0.55, U.sstep(10.25, 10.75, t));
     p.cloudShift = -t * 0.004 - U.sstep(8, 9.5, t) * 0.002;
-    p.detail = U.sstep(7.6, 8.4, t);
+    p.detail = U.sstep(10.2, 10.6, t);
     p.city = U.lerp(0.65, 0, U.sstep(6, 6.6, t));
     return p;
   }
@@ -376,6 +381,7 @@
       E = L.cosmos.earth; U = E.util;
       SAGE = E.COL.sage; SAGEL = E.COL.sageL; AMBER = E.COL.amber; PAPER = E.COL.paper; BLUEL = [0.42, 0.62, 0.78]; INK = E.COL.ink;
       progVeil = C.program(C.VS_QUAD, FS_VEIL); progBalloon = C.program(C.VS_QUAD, FS_BALLOON);
+      E.ICELAND_ROUTE = ROUTE;
       return E.init(C).then(prep);
     },
     draw: function (C, t) {
@@ -388,7 +394,7 @@
       }
       if (!veil) {
         B.reset();
-        var ov = 1 - U.sstep(10.4, 10.7, t);
+        var ov = 1 - U.sstep(10.22, 10.42, t);
         if (t < 7.2) E.stars(C, cam, 1 - U.sstep(6.2, 6.9, t));
         wind(C, t, cam); B.flush(C, 0);
         route(C, t, cam, ov); fallingPoint(C, t, cam); rain(C, t, cam); plane(C, t, cam); satellites(C, t, cam);

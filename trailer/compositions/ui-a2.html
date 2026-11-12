@@ -1,18 +1,227 @@
 <template>
-  <!-- BOÎTE GRISE (P1) — à remplacer par ui-builder. Hôte : 6 s → 12 s, z 31. Réticule orbital, altimètre, pile de pictos cochés, chiffres de génération -->
+  <!-- UI-A2 · hôte 6,0 → 12,0 s (temps local = temps du film − 6,0 ; écrit T(film) dans le script).
+       6,00 réticule orbital : 4 coins qui se verrouillent autour du centre exact (0,25 s) ; altimètre en chiffres seuls = LKDV.altitude(t)
+            (408 → 1,5), graduations qui défilent (loi logarithmique, comme la caméra), réticule qui se resserre avec le zoom.
+       7,00 / 8,00 / 9,00 / 10,00 : une brique par seconde ; son détail (≤ 0,875 s) puis un picto coché dans la pile de verre à droite.
+       11,00 la pile se replie en un point sage qui file au centre ; grande coche sage 11,0 → 11,5, le réticule se referme dessus.
+       11,50 tout se dissout en 40 particules sage (positions = LKDV.hash, mouvement = temps) ; 11,75 → 12,0 plus rien.
+       Colonne sûre (LKDV.ui.mountColumn), fond transparent. Composants lk-* ; ajouts locaux : bande graduée, détails, pile (capsule à clip-path),
+       grande coche, particules. -->
   <style>
     #root { position: absolute; inset: 0; }
-    #ui-a2-box { position: absolute; inset: 0; background: transparent; }
-    #ui-a2-tag { position: absolute; right: 40px; top: 80px; padding: 6px 12px; border-radius: 8px; background: rgb(20 25 22 / 0.6); color: #fff; font: 600 16px "IBM Plex Mono", monospace; letter-spacing: 0.08em; }
+    .ui-a2-at { position: absolute; }
+    .ui-a2-fill { position: absolute; inset: 0; transform-origin: 50% 50%; }
+    /* réticule (lk-reticle) : coins 1 px blanc 60 %, liseré d'encre pour rester lisible sur les nuages */
+    #ui-a2-ret { left: 0; top: 0; --lk-ret-w: 100%; --lk-ret-h: 100%; --lk-ret-arm: 30px; width: 100%; height: 100%;
+      filter: drop-shadow(0 0 1.5px rgb(var(--lk-ink-rgb) / 0.55)); }
+    /* bande graduée de l'altimètre (défile selon le log de l'altitude) */
+    #ui-a2-tape-c { overflow: hidden; -webkit-mask: linear-gradient(transparent, black 22%, black 78%, transparent); mask: linear-gradient(transparent, black 22%, black 78%, transparent); }
+    #ui-a2-tape { position: absolute; left: 0; top: 0; width: 100%; height: 420px;
+      background:
+        repeating-linear-gradient(180deg, rgb(var(--lk-white-rgb) / 0.7) 0 1px, transparent 1px 40px) 0 0 / 16px 100% no-repeat,
+        repeating-linear-gradient(180deg, rgb(var(--lk-white-rgb) / 0.5) 0 1px, transparent 1px 10px) 0 0 / 8px 100% no-repeat; }
+    #ui-a2-tape-idx { position: absolute; left: -2px; top: 50%; width: 22px; height: 2px; margin-top: -1px; border-radius: 1px; background: var(--lkv-sage-500);
+      box-shadow: 0 0 6px rgb(var(--lk-sage-rgb) / 0.9); }
+    /* altimètre : chiffres seuls, Plex Mono tabulaires, sur verre */
+    #ui-a2-alt { display: grid; place-items: center; width: 100%; height: 100%; border-radius: var(--lk-r-full); }
+    #ui-a2-alt-n { font-size: 22px; font-weight: 600; color: var(--cp-ink); letter-spacing: 0.02em; }
+    /* détails des briques : pastilles de verre */
+    .ui-a2-det { display: flex; align-items: center; justify-content: center; gap: 5px; width: 100%; height: 100%; padding: 0 12px; border-radius: var(--lk-r-full); color: var(--cp-ink); }
+    .ui-a2-det .lk-ic { --lk-ic: 22px; }
+    #ui-a2-d1 { gap: 8px; }
+    #ui-a2-d1 > .lk-ic { --lk-ic: 26px; color: var(--cp-good); }
+    #ui-a2-km { font-size: 26px; }
+    .ui-a2-unit { font-family: var(--lk-font-brand); font-weight: 700; font-size: 20px; color: var(--cp-ink2); }
+    .ui-a2-sun { color: var(--lkv-warning); } .ui-a2-cloud { color: var(--cp-ink3); } .ui-a2-rain { color: var(--cp-info); }
+    .ui-a2-van { color: var(--cp-ink); } .ui-a2-tent { color: var(--cp-good); }
+    #ui-a2-d4 { gap: 10px; }
+    #ui-a2-d4 > .lk-ic { --lk-ic: 24px; color: var(--cp-good); }
+    #ui-a2-d4 .lk-bar { flex: 1; height: 10px; }
+    #ui-a2-pct { font-size: 20px; min-width: 52px; text-align: right; }
+    /* pile de verre : capsule révélée slot par slot (clip-path), pictos cochés posés dessus */
+    #ui-a2-pile { position: absolute; inset: 0; border-radius: 32px; }
+    .ui-a2-tick { position: absolute; left: 6px; width: 52px; height: 52px; }
+    .ui-a2-tick .lk-tick { width: 100%; height: 100%; }
+    .ui-a2-tick .lk-tick > .lk-ic { --lk-ic: 26px; }
+    #ui-a2-fold { position: absolute; left: 0; top: 0; width: 100%; height: 100%; border-radius: var(--lk-r-full); background: var(--lkv-sage-500);
+      box-shadow: 0 0 0 1px rgb(var(--lk-white-rgb) / 0.5), 0 0 10px rgb(var(--lk-sage-rgb) / 0.9); }
+    /* grande coche sage */
+    #ui-a2-check { width: 100%; height: 100%; box-shadow: inset 0 1px 0 rgb(var(--lk-white-rgb) / 0.35), 0 0 0 2px rgb(var(--lk-white-rgb) / 0.55), 0 0 26px rgb(var(--lk-sage-rgb) / 0.75), 0 6px 18px rgb(var(--lk-forest-rgb) / 0.25); }
+    #ui-a2-check .lk-ic { --lk-ic: 58px; }
+    /* particules */
+    .ui-a2-dust { position: absolute; left: 0; top: 0; border-radius: var(--lk-r-full); background: var(--lkv-sage-500); box-shadow: 0 0 5px rgb(var(--lk-sage-rgb) / 0.95); }
   </style>
-  <div id="root" data-composition-id="ui-a2" data-width="1920" data-height="1080" data-layout-ignore>
-    <div id="ui-a2-box"></div>
-    <div id="ui-a2-tag">UI-A2 · PLACEHOLDER</div>
+  <div id="root" data-composition-id="ui-a2" data-width="1920" data-height="1080">
+    <div class="lk-col" id="ui-a2-col"><div class="lk-phone" id="ui-a2-phone">
+
+      <!-- réticule orbital (6,00 → 11,56) -->
+      <div class="ui-a2-at clip" id="ui-a2-ret-c" data-start="0" data-duration="5.5625" data-track-index="2">
+        <div class="ui-a2-fill" id="ui-a2-ret-zoom"><div class="ui-a2-fill" id="ui-a2-ret-pulse">
+          <div class="lk-reticle" id="ui-a2-ret"><i class="lk-reticle__c lk-reticle__c--tl" id="ui-a2-c-tl"></i><i class="lk-reticle__c lk-reticle__c--tr" id="ui-a2-c-tr"></i><i class="lk-reticle__c lk-reticle__c--bl" id="ui-a2-c-bl"></i><i class="lk-reticle__c lk-reticle__c--br" id="ui-a2-c-br"></i></div>
+        </div></div>
+      </div>
+      <!-- bande graduée (6,00 → 11,56) -->
+      <div class="ui-a2-at clip" id="ui-a2-tape-c" data-start="0" data-duration="5.5625" data-track-index="3">
+        <div class="ui-a2-fill" id="ui-a2-tape-w"><i id="ui-a2-tape"></i><i id="ui-a2-tape-idx"></i></div>
+      </div>
+      <!-- altimètre (6,125 → 11,56) -->
+      <div class="ui-a2-at clip" id="ui-a2-alt-c" data-start="0" data-duration="5.5625" data-track-index="4">
+        <div class="lk-glass" id="ui-a2-alt"><b class="lk-mono" id="ui-a2-alt-n">408</b></div>
+      </div>
+
+      <!-- 7,00 : route, « 1 322 km » -->
+      <div class="ui-a2-at clip" id="ui-a2-d1-c" data-start="1" data-duration="0.875" data-track-index="5">
+        <div class="ui-a2-det lk-glass" id="ui-a2-d1"><span class="lk-ic" data-ic="route"></span><b class="lk-num" id="ui-a2-km">0</b><span class="ui-a2-unit">km</span></div>
+      </div>
+      <!-- 8,00 : 10 jours de météo -->
+      <div class="ui-a2-at clip" id="ui-a2-d2-c" data-start="2" data-duration="0.875" data-track-index="6">
+        <div class="ui-a2-det lk-glass" id="ui-a2-d2"><span class="lk-ic ui-a2-sun" data-ic="sun"></span><span class="lk-ic ui-a2-sun" data-ic="sun"></span><span class="lk-ic ui-a2-cloud" data-ic="cloud"></span><span class="lk-ic ui-a2-rain" data-ic="cloud-rain"></span><span class="lk-ic ui-a2-cloud" data-ic="cloud"></span><span class="lk-ic ui-a2-sun" data-ic="sun"></span><span class="lk-ic ui-a2-rain" data-ic="cloud-rain"></span><span class="lk-ic ui-a2-cloud" data-ic="cloud"></span><span class="lk-ic ui-a2-sun" data-ic="sun"></span><span class="lk-ic ui-a2-sun" data-ic="sun"></span></div>
+      </div>
+      <!-- 9,00 : 9 nuits, 7 en van et 2 sous la tente -->
+      <div class="ui-a2-at clip" id="ui-a2-d3-c" data-start="3" data-duration="0.875" data-track-index="7">
+        <div class="ui-a2-det lk-glass" id="ui-a2-d3"><span class="lk-ic ui-a2-van" data-ic="van"></span><span class="lk-ic ui-a2-van" data-ic="van"></span><span class="lk-ic ui-a2-van" data-ic="van"></span><span class="lk-ic ui-a2-tent" data-ic="tent"></span><span class="lk-ic ui-a2-van" data-ic="van"></span><span class="lk-ic ui-a2-van" data-ic="van"></span><span class="lk-ic ui-a2-tent" data-ic="tent"></span><span class="lk-ic ui-a2-van" data-ic="van"></span><span class="lk-ic ui-a2-van" data-ic="van"></span></div>
+      </div>
+      <!-- 10,00 : budget rempli à 98 % -->
+      <div class="ui-a2-at clip" id="ui-a2-d4-c" data-start="4" data-duration="0.875" data-track-index="8">
+        <div class="ui-a2-det lk-glass" id="ui-a2-d4"><span class="lk-ic" data-ic="banknote"></span><div class="lk-bar"><i id="ui-a2-bud"></i></div><b class="lk-num" id="ui-a2-pct">0 %</b></div>
+      </div>
+
+      <!-- pile de verre : un picto coché de plus par seconde (7,00 → 11,125) -->
+      <div class="ui-a2-at clip" id="ui-a2-pile-c" data-start="1" data-duration="4.125" data-track-index="9">
+        <div class="ui-a2-fill" id="ui-a2-pile-w">
+          <div class="lk-glass" id="ui-a2-pile"></div>
+          <div class="ui-a2-tick" id="ui-a2-t1"><span class="lk-tick lk-flat"><span class="lk-ic" data-ic="route"></span><span class="lk-check" id="ui-a2-k1"><span class="lk-ic" data-ic="check"></span></span></span></div>
+          <div class="ui-a2-tick" id="ui-a2-t2"><span class="lk-tick lk-flat"><span class="lk-ic" data-ic="cloud-sun"></span><span class="lk-check" id="ui-a2-k2"><span class="lk-ic" data-ic="check"></span></span></span></div>
+          <div class="ui-a2-tick" id="ui-a2-t3"><span class="lk-tick lk-flat"><span class="lk-ic" data-ic="moon"></span><span class="lk-check" id="ui-a2-k3"><span class="lk-ic" data-ic="check"></span></span></span></div>
+          <div class="ui-a2-tick" id="ui-a2-t4"><span class="lk-tick lk-flat"><span class="lk-ic" data-ic="backpack"></span><span class="lk-check" id="ui-a2-k4"><span class="lk-ic" data-ic="check"></span></span></span></div>
+        </div>
+      </div>
+      <!-- 11,00 : la pile repliée en un point sage qui file au centre -->
+      <div class="ui-a2-at clip" id="ui-a2-fold-c" data-start="5" data-duration="0.125" data-track-index="10"><i id="ui-a2-fold"></i></div>
+      <!-- 11,00 → 11,5 : grande coche sage -->
+      <div class="ui-a2-at clip" id="ui-a2-check-c" data-start="5" data-duration="0.5625" data-track-index="11">
+        <span class="lk-check" id="ui-a2-check"><span class="lk-ic" data-ic="check"></span></span>
+      </div>
+      <!-- 11,50 → 11,75 : dissolution en particules -->
+      <div class="ui-a2-at clip" id="ui-a2-dust-c" data-start="5.5" data-duration="0.25" data-track-index="12" data-layout-ignore><i class="ui-a2-dust"></i><i class="ui-a2-dust"></i><i class="ui-a2-dust"></i><i class="ui-a2-dust"></i><i class="ui-a2-dust"></i><i class="ui-a2-dust"></i><i class="ui-a2-dust"></i><i class="ui-a2-dust"></i><i class="ui-a2-dust"></i><i class="ui-a2-dust"></i><i class="ui-a2-dust"></i><i class="ui-a2-dust"></i><i class="ui-a2-dust"></i><i class="ui-a2-dust"></i><i class="ui-a2-dust"></i><i class="ui-a2-dust"></i><i class="ui-a2-dust"></i><i class="ui-a2-dust"></i><i class="ui-a2-dust"></i><i class="ui-a2-dust"></i><i class="ui-a2-dust"></i><i class="ui-a2-dust"></i><i class="ui-a2-dust"></i><i class="ui-a2-dust"></i><i class="ui-a2-dust"></i><i class="ui-a2-dust"></i><i class="ui-a2-dust"></i><i class="ui-a2-dust"></i><i class="ui-a2-dust"></i><i class="ui-a2-dust"></i><i class="ui-a2-dust"></i><i class="ui-a2-dust"></i><i class="ui-a2-dust"></i><i class="ui-a2-dust"></i><i class="ui-a2-dust"></i><i class="ui-a2-dust"></i><i class="ui-a2-dust"></i><i class="ui-a2-dust"></i><i class="ui-a2-dust"></i><i class="ui-a2-dust"></i></div>
+    </div></div>
   </div>
   <script>
     (function () {
+      const root = document.querySelector('[data-composition-id="ui-a2"]');
+      const m = LKDV.ui.mountColumn(root), s = m.s, f = LKDV.format(root), U = LKDV.ui;
+      /* centre exact du cadre en unités logiques (le point de ui-a1 et le point WebGL y sont à 6,00) */
+      const CX = (f.W / 2 - f.column.x) / s, CY = (f.H / 2 - f.column.y) / s;
+      function place(id, left, top, w, h) { const e = document.getElementById(id).style; e.left = left + "px"; e.top = top + "px"; if (w != null) e.width = w + "px"; if (h != null) e.height = h + "px"; }
+      const T = function (film) { return film - 6.0; };
+
+      /* ---- mise en page (unités logiques 390 × 693) ---- */
+      const RS = 200, RET_L = CX - RS / 2, RET_T = CY - RS / 2;
+      place("ui-a2-ret-c", RET_L, RET_T, RS, RS);
+      place("ui-a2-tape-c", RET_L - 34, RET_T, 18, RS);
+      const ALT_W = 92, ALT_H = 40, ALT_T = RET_T - 12 - ALT_H;
+      place("ui-a2-alt-c", CX - ALT_W / 2, ALT_T, ALT_W, ALT_H);
+      /* détails : sous le réticule en 16:9 ; au-dessus de l'altimètre en 9:16 (bande utile 61–480) */
+      const DET_H = 52, DET_T = f.vertical ? ALT_T - 12 - DET_H : RET_T + RS + 24;
+      [["d1", 196], ["d2", 272], ["d3", 262], ["d4", 262]].forEach(function (d) { place("ui-a2-" + d[0] + "-c", CX - d[1] / 2, DET_T, d[1], DET_H); });
+      /* pile : capsule de 4 cases (52 + 6) à droite de la colonne, centrée sur le centre du cadre */
+      const PILE_W = 64, PILE_H = 12 + 4 * 52 + 3 * 6, PILE_L = 390 - 8 - PILE_W, PILE_T = CY - PILE_H / 2;
+      place("ui-a2-pile-c", PILE_L, PILE_T, PILE_W, PILE_H);
+      for (let i = 0; i < 4; i++) document.getElementById("ui-a2-t" + (i + 1)).style.top = 6 + i * 58 + "px";
+      const FD = 12; /* point de repli : 12 unités */
+      place("ui-a2-fold-c", PILE_L + PILE_W / 2 - FD / 2, CY - FD / 2, FD, FD);
+      const CK = 96;
+      place("ui-a2-check-c", CX - CK / 2, CY - CK / 2, CK, CK);
+      place("ui-a2-dust-c", 0, 0, 390, 693);
+
       const tl = gsap.timeline({ paused: true });
-      tl.fromTo("#ui-a2-tag", { opacity: 0.4 }, { opacity: 1, duration: 6, ease: "none" }, 0);
+
+      /* ---- 6,00 : les 4 coins arrivent de plus large et se verrouillent en 0,25 s ---- */
+      const lock = U.springEase(0.9, 0.25), W = 34;
+      [["tl", -1, -1], ["tr", 1, -1], ["bl", -1, 1], ["br", 1, 1]].forEach(function (c) {
+        const el = "#ui-a2-c-" + c[0];
+        tl.fromTo(el, { x: c[1] * W, y: c[2] * W }, { x: 0, y: 0, duration: 0.25, ease: lock, immediateRender: true }, T(6.0));
+        tl.fromTo(el, { opacity: 0 }, { opacity: 1, duration: 0.06, ease: "none", immediateRender: true }, T(6.0));
+      });
+      /* le réticule se resserre avec le zoom (6,25 → 11,0), et « respire » d'un coup de mise au point à chaque brique */
+      tl.fromTo("#ui-a2-ret-zoom", { scale: 1 }, { scale: 0.9, duration: 4.75, ease: "none", immediateRender: true }, T(6.25));
+      [7, 8, 9, 10].forEach(function (b, i) {
+        tl.fromTo("#ui-a2-ret-pulse", { scale: 1.07 }, { scale: 1, duration: 0.25, ease: U.springEase(0.7, 0.25), immediateRender: i === 0 ? false : false }, T(b));
+      });
+
+      /* ---- altimètre : valeur = LKDV.altitude(temps du film) ; bande graduée = log de l'altitude (vitesse constante) ---- */
+      const altEl = document.getElementById("ui-a2-alt-n");
+      function fmtAlt(v) { return v >= 9.95 ? String(Math.round(v)) : (Math.round(v * 10) / 10).toFixed(1).replace(".", ","); }
+      const clock = { t: 6.0 };
+      tl.fromTo(clock, { t: 6.0 }, { t: 11.5, duration: 5.5, ease: "none", immediateRender: false,
+        onUpdate: function () { altEl.textContent = fmtAlt(LKDV.altitude(clock.t)); } }, T(6.0));
+      altEl.textContent = fmtAlt(LKDV.altitude(6.0));
+      const DECADE = 80; /* une décade d'altitude = 80 unités de bande */
+      const travel = DECADE * Math.log10(408 / 1.5);
+      tl.fromTo("#ui-a2-tape", { y: -10 }, { y: -10 - travel, duration: 5.5, ease: "none", immediateRender: true }, T(6.0));
+      U.springIn(tl, "#ui-a2-tape-w", T(6.0), { dur: 0.25, from: 0.7, origin: "50% 50%" });
+      U.springIn(tl, "#ui-a2-alt", T(6.125), { dur: 0.25, from: 0.8, y: 8 });
+
+      /* ---- une brique par seconde : détail (entrée ressort, lu en < 0,4 s, sortie à +0,75) + picto coché dans la pile ---- */
+      // 7,00 route + distance
+      U.springIn(tl, "#ui-a2-d1", T(7.0), { dur: 0.25, from: 0.86, y: -10 });
+      U.countTo(tl, "#ui-a2-km", 0, 1322, T(7.0), 0.375, U.fmt.thousands);
+      U.popOut(tl, "#ui-a2-d1", T(7.75), { dur: 0.12 });
+      // 8,00 météo : la frise se peint jour par jour
+      U.springIn(tl, "#ui-a2-d2", T(8.0), { dur: 0.25, from: 0.9, x: -14 });
+      tl.fromTo("#ui-a2-d2 > .lk-ic", { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.15, ease: U.springEase(0.75, 0.15), stagger: 0.025, immediateRender: true }, T(8.0) + 0.02);
+      U.popOut(tl, "#ui-a2-d2", T(8.75), { dur: 0.12 });
+      // 9,00 nuits : les vans et les tentes s'allument
+      U.springIn(tl, "#ui-a2-d3", T(9.0), { dur: 0.25, from: 0.86, y: 10 });
+      tl.fromTo("#ui-a2-d3 > .lk-ic", { opacity: 0, y: -6 }, { opacity: 1, y: 0, duration: 0.14, ease: "power3.out", stagger: 0.028, immediateRender: true }, T(9.0) + 0.02);
+      U.popOut(tl, "#ui-a2-d3", T(9.75), { dur: 0.12 });
+      // 10,00 budget : la barre se remplit à 98 %
+      U.springIn(tl, "#ui-a2-d4", T(10.0), { dur: 0.25, from: 0.9, x: 14 });
+      U.barTo(tl, "#ui-a2-bud", 0, 0.98, T(10.0) + 0.04, 0.34, "power3.out");
+      U.countTo(tl, "#ui-a2-pct", 0, 98, T(10.0) + 0.04, 0.34, U.fmt.pct);
+      U.popOut(tl, "#ui-a2-d4", T(10.75), { dur: 0.12 });
+
+      /* pile : la capsule s'ouvre d'une case par seconde ; chaque picto se pose sur le temps, sa coche une croche après */
+      function inset(k) { const h = 12 + 52 * k + 6 * (k - 1); return "inset(0px 0px " + (PILE_H - h) + "px 0px round 32px)"; }
+      U.springIn(tl, "#ui-a2-pile", T(7.0), { dur: 0.25, from: 0.8, origin: "50% 15%" });
+      tl.fromTo("#ui-a2-pile", { clipPath: inset(1) }, { clipPath: inset(2), duration: 0.25, ease: U.springEase(0.8, 0.25), immediateRender: true }, T(8.0));
+      tl.fromTo("#ui-a2-pile", { clipPath: inset(2) }, { clipPath: inset(3), duration: 0.25, ease: U.springEase(0.8, 0.25), immediateRender: false }, T(9.0));
+      tl.fromTo("#ui-a2-pile", { clipPath: inset(3) }, { clipPath: inset(4), duration: 0.25, ease: U.springEase(0.8, 0.25), immediateRender: false }, T(10.0));
+      [7, 8, 9, 10].forEach(function (b, i) {
+        U.springIn(tl, "#ui-a2-t" + (i + 1), T(b), { dur: 0.25, zeta: 0.72, from: 0.5, y: -18 });
+        U.springIn(tl, "#ui-a2-k" + (i + 1), T(b) + 0.25, { dur: 0.2, zeta: 0.6, from: 0.2 });
+      });
+
+      /* ---- 11,00 : la pile se replie en un point sage qui file au centre ; la grande coche s'ouvre, le réticule se referme dessus ---- */
+      tl.fromTo("#ui-a2-pile-w", { scale: 1, opacity: 1 }, { scale: 0.08, opacity: 0, duration: 0.1, ease: "power3.in", immediateRender: false }, T(11.0));
+      tl.fromTo("#ui-a2-fold", { x: 0, scale: 0.5, opacity: 0 }, { x: CX - (PILE_L + PILE_W / 2), scale: 1, opacity: 1, duration: 0.11, ease: "power2.inOut", immediateRender: true }, T(11.0));
+      U.springIn(tl, "#ui-a2-check", T(11.0), { dur: 0.25, zeta: 0.7, from: 0.2, origin: "50% 50%" });
+      tl.fromTo("#ui-a2-ret-pulse", { scale: 1 }, { scale: 0.62, duration: 0.25, ease: U.springEase(0.8, 0.25), immediateRender: false }, T(11.0));
+
+      /* ---- 11,50 : réticule, chiffres et coche se dissolvent en particules (0,25 s) ---- */
+      tl.fromTo(["#ui-a2-ret-zoom", "#ui-a2-tape-w"], { opacity: 1 }, { opacity: 0, duration: 0.05, ease: "none", immediateRender: false }, T(11.5));
+      tl.fromTo("#ui-a2-alt", { opacity: 1, scale: 1 }, { opacity: 0, scale: 1.08, duration: 0.05, ease: "none", immediateRender: false }, T(11.5));
+      tl.fromTo("#ui-a2-check", { opacity: 1, scale: 1 }, { opacity: 0, scale: 1.1, duration: 0.05, ease: "none", immediateRender: false }, T(11.5));
+      /* sources : 16 sur les coins (réticule à 0,9 × 0,62), 8 sur l'altimètre, 16 sur la coche */
+      const half = RS / 2 * 0.9 * 0.62, arm = 30 * 0.9 * 0.62;
+      const dust = Array.prototype.slice.call(root.querySelectorAll(".ui-a2-dust"));
+      dust.forEach(function (el, i) {
+        const h1 = LKDV.hash(i, 61), h2 = LKDV.hash(i, 62), h3 = LKDV.hash(i, 63), h4 = LKDV.hash(i, 64);
+        let x0, y0;
+        if (i < 16) { const c = i % 4, sx = c % 2 ? 1 : -1, sy = c > 1 ? 1 : -1, along = h1 * arm, onX = i < 8;
+          x0 = CX + sx * (half - (onX ? along : 0)); y0 = CY + sy * (half - (onX ? 0 : along)); }
+        else if (i < 24) { x0 = CX + (h1 - 0.5) * ALT_W * 0.8; y0 = ALT_T + ALT_H / 2 + (h2 - 0.5) * ALT_H * 0.6; }
+        else { const a = h1 * Math.PI * 2, r = Math.sqrt(h2) * CK * 0.48; x0 = CX + Math.cos(a) * r; y0 = CY + Math.sin(a) * r; }
+        const d = 4 + h3 * 5; /* diamètre 4–9 unités (6–14 px réels en 16:9) */
+        el.style.width = d + "px"; el.style.height = d + "px"; el.style.left = (x0 - d / 2) + "px"; el.style.top = (y0 - d / 2) + "px";
+        const ang = Math.atan2(y0 - CY, x0 - CX) + (h4 - 0.5) * 1.4, dist = 30 + h2 * 70;
+        const delay = h4 * 0.04;
+        tl.fromTo(el, { x: 0, y: 0, scale: 1, opacity: 1 },
+          { x: Math.cos(ang) * dist, y: Math.sin(ang) * dist - 8, scale: 0.25, opacity: 0, duration: 0.2, ease: "power2.out", immediateRender: true }, T(11.5) + delay);
+      });
+
+      /* durée de l'hôte (6 s) : de 11,75 à 12,0 plus rien */
+      tl.fromTo({ v: 0 }, { v: 0 }, { v: 1, duration: 6, ease: "none", immediateRender: false }, 0);
       window.__timelines["ui-a2"] = tl;
     })();
   </script>

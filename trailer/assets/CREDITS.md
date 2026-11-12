@@ -17,3 +17,12 @@ Mention NASA : le contenu NASA est en général non protégé par le droit d'aut
 - npm earth-visualization (nuages 4096x2048) : seule mention « bundled NASA imagery (public domain) » générique, sans provenance par fichier ni LICENSE. Non copié. Nuages à faire en procédural.
 - cesium moonSmall.jpg (256x128, provenance non documentée) ; NaturalEarthII de cesium (tuiles basse résolution) : non copiés.
 - SVS 3615 (Terre « LARGEST », 2048x1024, direction artistique de production) : non copié.
+
+## Équipe B cosmos (b-earth, b-descent, b-orbit) — ajouts du 2026-11-10
+
+| Ressource | Fichier local | Source / URL | Auteur | Licence | Commercial | Preuve |
+| --- | --- | --- | --- | --- | --- | --- |
+| Lumières nocturnes, VIIRS Black Marble 2016, mondial 4096x2048 (WMS GetMap, EPSG:4326, JPEG) | textures/earth-blackmarble-nasa-gibs-4096.jpg | https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi (LAYERS=VIIRS_Black_Marble, BBOX=-90,-180,90,180) | NASA Earth Observatory / NASA GSFC (Black Marble, VIIRS Suomi NPP) ; service NASA GIBS (ESDIS) | Données NASA, politique de données ouvertes (pas de restriction d'usage) | Oui | Crédit demandé par GIBS : « We acknowledge the use of imagery provided by services from NASA's Global Imagery Browse Services (GIBS), part of NASA's Earth Science Data and Information System (ESDIS). » Remplace la nuit three-globe (provenance non attestée), qui n'est plus utilisée par l'équipe B. |
+| Islande, Blue Marble Next Generation (500 m), emprise lon -25,0 → -12,6, lat 62,8 → 67,2, 4096x1454 | textures/iceland-bmng-nasa-gibs-4096.jpg | même service, LAYERS=BlueMarble_NextGeneration, BBOX=62.8,-25.0,67.2,-12.6 (WMS 1.3.0, ordre lat,lon) | NASA Earth Observatory (Reto Stöckli), MODIS ; service NASA GIBS | Données NASA, politique de données ouvertes | Oui | idem ; détail régional fondu dans la Blue Marble 8192 pendant la descente (6,2–11,0 s) |
+| Nuages, aurore, lave, continents anciens, voiles de nuages, étoiles, satellites, avion, montgolfière, oies, gouttelettes | (aucun fichier : procéduraux dans assets/cosmos/b-*.js) | — | équipe B | création propre | Oui | — |
+| Tracé Route 1 (28 localités) et traces K2 (Askole → Concordia → camp de base), Lyon (Rhône), Bourgogne (Beaune, Nuits) | (constantes dans b-descent.js / b-orbit.js) | coordonnées géographiques publiques de localités (faits, non protégés) | — | — | Oui | Longueur calculée de la Route 1 : voir qa/tmp/cosmos-b/RAPPORT.md |

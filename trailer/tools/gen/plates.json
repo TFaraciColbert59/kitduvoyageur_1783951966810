@@ -1,0 +1,121 @@
+{
+  "version": 1,
+  "about": "Prompts des plans au sol du trailer LKDV, générés localement par FLUX.1 [schnell] (Apache-2.0). Prompt final = prompt + ' ' + style (+ ' ' + people si people=true). Graine = 1783 + numéro du plan (08b_page_k : 1783 + 80 + k). Ordre de la file = ordre de ce tableau.",
+  "style": "Real photograph, full-frame mirrorless camera, natural film grain, real light, true vivid colours of the place, atmospheric haze; blurred foreground very close to the lens, sharp subject in the middle ground, background fading into haze. Unmarked gear and clothing, no text, no lettering, no logos, no signs.",
+  "people": "The people are fictional and anonymous, seen from behind or from afar, no close-up faces.",
+  "defaults": { "width": 1024, "height": 576, "steps": 4, "upscale": "3072x1728" },
+  "plates": [
+    {
+      "name": "02_iceland_route1_lupines", "seed": 1785, "people": false, "use": "0:12-0:15, héros 0:12 (logo dans la crête)",
+      "prompt": "Photograph from a low drone 40 m above the ground in Iceland in June at midnight sun, camera tilted toward the horizon. A narrow gravel road snakes from the bottom of the frame up the valley into the distance. Far away on the road, in the lower half of the frame near the centre, a small cream camper van seen from behind, a red kayak and a white surfboard strapped flat on its roof rack. Hillsides of blue-purple lupine flowers, green moss, a deep blue fjord with black sand shores, thin waterfalls. Across the top of the frame, a dark mountain ridge silhouetted against a pale gold sky with two distinct summits: the higher pointed summit just right of the centre, a lower rounded summit to the left. The low sun sits just to the right of the higher summit, soft lens flare. Blurred lupine flowers at the bottom edge. 24mm lens, f/5.6."
+    },
+    {
+      "name": "03_van_door_friends", "seed": 1786, "people": true, "use": "0:15-0:23 et 0:26-0:27, héros 0:22",
+      "prompt": "Photograph from inside a cream camper van at golden hour, camera at head height behind the passengers. The wide sliding side door is fully open onto the Icelandic coast: black sand, rolling ocean waves, low golden sun over the sea, in the centre of the frame. Near the door, a stack of camping gear: a rolled sleeping bag, a sage green tent bag, two backpacks, a cooking pot. Three friends sit at the doorway facing the ocean, seen from behind and in profile: a Black woman in a big yellow raincoat laughing, a young East Asian man in an orange beanie and green jacket holding a steaming tin mug, a white-haired woman in a patterned wool sweater pouring tea from a thermos. Wind in their hair. The dim van interior edge blurred in the near foreground. 20mm lens, f/4."
+    },
+    {
+      "name": "08_k2_concordia_solo", "seed": 1791, "people": true, "use": "0:31-0:35, héros 0:32 et 0:35 (logo dans la crête)",
+      "prompt": "Photograph at Concordia on the Baltoro Glacier in the Karakoram, Pakistan, at sunrise, with a lot of sky. The huge snowy pyramid of K2 dominates the frame, its summit just right of the centre, with a lower shoulder of the ridge on its left. The rising sun glows just to the right of the summit, pink and gold alpenglow on the snow, wind blowing snow plumes off the ridges. Below, a wide river of rocky ice and moraine. In the lower third of the frame near the centre, a tiny lone woman seen from behind stands on a moraine ridge in a red down jacket and a blue cap, trekking poles planted, a small tent behind her. Blurred ice and stones at the bottom edge, haze between the layers. 24mm lens, f/8."
+    },
+    {
+      "name": "21_norway_aurora_final", "seed": 1804, "people": true, "use": "0:55-0:58, finale qui se fond dans la nébuleuse",
+      "prompt": "Long exposure photograph at night of a frozen fjord in northern Norway in deep winter. A spectacular green aurora with natural pink and violet fringes fills the upper two thirds of the frame, reflected in a strip of open black water, stars behind it. Snowy mountains along the fjord. In the bottom third, small in the frame near the centre, five travellers in red, yellow, blue, green and white winter jackets stand in the snow seen from behind, arms around each other, looking up, breath visible; a tent glowing orange on the shore beside them. Blurred snow crystals at the bottom edge. 14mm lens, f/2, 10 seconds, ISO 3200."
+    },
+    {
+      "name": "04_harbour_handover", "seed": 1787, "people": true, "use": "0:24-0:25 et 0:44-0:46",
+      "prompt": "Photograph at Reykjavik old harbour at amber hour, eye level on the quay. A thick coiled mooring rope and an iron bollard blurred in the near foreground at the bottom left. In the middle ground at the centre of the frame, seen in side view, a bearded man in his 50s in a red wool sweater hands a heavy sage green tent bag to a young South Asian woman in a turquoise windbreaker; the tent bag is large and clearly visible in profile between their hands, backlit by the low sun. Behind them, fishing boats, a cream camper van parked on wet cobbles reflecting amber light, mountains across the bay in warm haze. 28mm lens, f/4."
+    },
+    {
+      "name": "07_beach_campfire_midnight", "seed": 1790, "people": true, "use": "0:29,5-0:31 et 0:43",
+      "prompt": "Photograph on a black sand beach in Iceland at the midnight sun. Camera at ground level behind a piece of driftwood blurred in the near foreground. A campfire in the centre of the frame with sparks rising, five people around it, backlit and seen from behind or in profile: one strumming an acoustic guitar, one wrapped in a wool blanket reading aloud from a notebook, one dancing barefoot in a long tie-dye skirt. The low golden sun just above the sea on the horizon, gentle waves, sea stacks fading in haze. 24mm lens, f/2.8, ISO 800."
+    },
+    {
+      "name": "22_ocean_dusk", "seed": 1805, "people": false, "use": "0:14-0:15, fond de la bouteille à la mer",
+      "prompt": "Photograph of the open ocean at dusk, the camera just above the water surface, the horizon low in the frame. A long slow swell rolls toward the camera, a blurred wave crest and water drops very close to the lens. The sky glows from deep blue above to soft amber where the sun has just set, a few thin clouds, the last light reflected on the water in the centre. Open sea only, no land, no boats, no people. 24mm lens, f/4."
+    },
+    {
+      "name": "09_lyon_dawn_runner", "seed": 1792, "people": true, "use": "0:36-0:39",
+      "prompt": "Photograph on the Rhone river quay in Lyon, France, at dawn. Golden mist over the river, old stone bridges fading in the haze, sky from pink to pale blue, plane trees along the quay. In the middle ground at the centre of the frame, a young Black man in neon pink running shorts and a grey t-shirt sits on a stone bench catching his breath, seen in three-quarter back view, a phone in his hand, a small grin. A stone parapet blurred very close to the lens in the foreground. 35mm lens, f/2.8."
+    },
+    {
+      "name": "23_rhone_aerial_dawn", "seed": 1806, "people": false, "use": "0:38, vue du ciel sur le Rhône (trace de Tom = logo)",
+      "prompt": "Top-down aerial photograph, the camera pointing straight down from a drone 120 m high, over a wide river and its stone quays lined with plane trees in Lyon, France, at dawn. Amber mist drifting over the water, soft golden light, long shadows of the trees across the quays. One tiny runner seen from directly above on the riverside path near the centre of the frame, a long shadow beside him. The river runs diagonally across the frame. Nadir view, natural colours, 24mm lens."
+    },
+    {
+      "name": "10_burgundy_autumn_peloton", "seed": 1793, "people": true, "use": "0:40",
+      "prompt": "Photograph in the Cote de Nuits vineyards of Burgundy in October, backlit golden hour. Endless rows of vines in red, gold and green, golden dust glowing in the low sun. Camera low between two vine rows, vine leaves blurred very close to the lens. In the middle ground at the centre, a group of twelve cyclists of all ages in mismatched plain colourful jerseys ride along a narrow road, small in the frame, backlit with rim light, one pointing to the side. A stone village and rolling hills fading in haze. 70mm lens, f/4."
+    },
+    {
+      "name": "01_cloud_sea_balloons", "seed": 1784, "people": true, "use": "0:10,5-0:11,5, sous le voile de nuages",
+      "prompt": "Photograph from inside the wicker basket of a hot-air balloon at sunrise above a sea of clouds over Cappadocia, Turkey. The woven basket rim and ropes run blurred across the bottom edge, very close to the lens. In the middle ground near the centre, a couple seen from behind, a man in a mustard wool sweater and a woman in a teal scarf, she points at the horizon. Dozens of hot-air balloons with plain striped fabric float over a golden sea of clouds, rock pinnacles pierce the clouds, the low sun on the horizon, layers of haze fading into the distance. 20mm lens, f/8."
+    },
+    {
+      "name": "05_landmannalaugar_colors", "seed": 1788, "people": true, "use": "0:28",
+      "prompt": "Photograph at Landmannalaugar, Iceland, in golden evening light. Rhyolite mountains in vivid real colours, rust red, mustard yellow, turquoise and green moss, steam rising from geothermal vents. Camera at ground level in the gravel, pebbles blurred very close to the lens. In the middle ground at the centre of the frame, two small hikers seen from behind on a trail, one in a bright blue cap and a mustard hoodie, one in a white linen shirt, one pointing at the coloured slopes. Distant ridges fading in haze, low sun from the side. 18mm lens, f/8."
+    },
+    {
+      "name": "06_hot_river_steam", "seed": 1789, "people": true, "use": "0:29",
+      "prompt": "Photograph of a geothermal hot river in Iceland at dusk, blue hour sky with a last pink glow. Snow patches on the mossy banks, thick steam curling over the water. In the middle ground at the centre of the frame, four friends of different ages soak in the warm river, seen from behind and from the side, one throwing a handful of snow into the air, laughing. Clothes in bright mixed colours piled on the rocks. Snowy grass blurred very close to the lens, misty hills in the background. 24mm lens, f/2.8, ISO 800."
+    },
+    {
+      "name": "19_night_train_alps", "seed": 1802, "people": false, "use": "0:42,0-0:42,5",
+      "prompt": "Photograph at night of a generic unmarked passenger train crossing a tall curved stone viaduct in snowy Alpine mountains under a full moon. Lit windows glowing amber, a soft trail of snow dust behind the train, snow on fir trees and rock, cold blue moonlight. Frosted branches blurred very close to the lens in the foreground. The viaduct and the train in the centre of the frame, mountains fading into mist. 35mm lens, f/4, 4 second exposure."
+    },
+    {
+      "name": "20_accessible_trail_autumn", "seed": 1803, "people": true, "use": "0:42,5-0:43",
+      "prompt": "Photograph of a lakeside path at Lake Bohinj, Slovenia, in peak autumn at golden hour. Flaming red, orange and yellow forest reflected in calm blue water, low golden sun. In the middle ground at the centre, a woman in a wheelchair in a mint green jacket, seen in three-quarter back view, laughing, a friend in a purple scarf walking beside her, a golden retriever running ahead on the leaf-covered path. Autumn leaves blurred very close to the lens. Mountains in haze across the lake. Natural, respectful. 35mm lens, f/4."
+    },
+    {
+      "name": "11_sahara_dune_ridge", "seed": 1794, "people": true, "band": true, "use": "0:41, bande 1 de la mosaïque",
+      "prompt": "Photograph in the Sahara at sunrise, Erg Chebbi, Morocco. A sharp dune crest runs from the bottom of the frame up to the centre, orange-red light on one side, deep blue shadow on the other, sand blowing off the ridge, wind ripples blurred very close to the lens. On the crest in the exact centre of the frame, a woman in an indigo scarf and a loose white shirt walks away, seen from behind, a friend in a mustard shirt leading a camel behind her. Heat haze on the horizon. The subject fits in a narrow vertical band in the middle of the frame. 24mm lens, f/8."
+    },
+    {
+      "name": "12_amazon_river_dawn", "seed": 1795, "people": true, "band": true, "use": "0:41, bande 2 de la mosaïque",
+      "prompt": "Photograph on the Rio Negro in the Amazon at dawn. Black water reflecting the rainforest canopy like a mirror, golden light breaking through mist, a pair of scarlet macaws flying overhead. In the centre of the frame, a long wooden canoe seen from behind with a local guide in a faded blue shirt and a traveller in a wide sun hat, both looking up at the birds. The tip of a paddle dripping water blurred very close to the lens. The subject fits in a narrow vertical band in the middle of the frame. 24mm lens, f/5.6."
+    },
+    {
+      "name": "13_uyuni_mirror_jump", "seed": 1796, "people": true, "band": true, "use": "0:41, bande 3 de la mosaïque",
+      "prompt": "Photograph on the Salar de Uyuni, Bolivia, at sunset after rain: the salt flat is a perfect mirror reflecting a sky glowing orange, pink and deep blue. In the exact centre of the frame, four friends in a red coat, a yellow jacket, a green sweater and an orange scarf jump together in mid-air, backlit, their reflections beneath them. A dusty off-road vehicle tiny in the distance. Salt crust blurred very close to the lens. The group stands close together in a narrow vertical band in the middle of the frame. 16mm lens, f/8."
+    },
+    {
+      "name": "14_baikal_ice_turquoise", "seed": 1797, "people": true, "band": true, "use": "0:41, bande 4 de la mosaïque",
+      "prompt": "Photograph on frozen Lake Baikal, Siberia, in March at sunrise. Camera very low at ice level: giant cracks and frozen bubbles in clear turquoise ice, blurred very close to the lens. In the centre of the frame, a young woman in a mustard parka and a fur-trimmed hat ice skating away, seen from behind, scarf flying, frozen breath; far behind her, a tiny person in a bright red coat. Low golden sun, snowy mountains on the horizon in haze. The subject fits in a narrow vertical band in the middle of the frame. 16mm lens, f/8."
+    },
+    {
+      "name": "15_raja_ampat_lagoon", "seed": 1798, "people": true, "band": true, "use": "0:41, bande 5 de la mosaïque (seul plan en plein soleil de midi)",
+      "prompt": "Photograph in Raja Ampat, Indonesia, in bright joyful midday sun. Limestone islands covered in jungle, a lagoon in every shade of turquoise. In the centre of the frame, three friends jump off the bow of a wooden boat into the water, in mid-air, seen from behind and from the side, one in a bright pink swimsuit, one in a white shirt, one in blue shorts, splashes frozen. The wooden boat rail and water droplets blurred very close to the lens. The jumpers fit in a narrow vertical band in the middle of the frame. 20mm lens, f/8, fast shutter."
+    },
+    {
+      "name": "16_antelope_canyon_beam", "seed": 1799, "people": true, "band": true, "use": "0:41, bande 6 de la mosaïque",
+      "prompt": "Photograph inside a narrow slot canyon in Arizona. A single vertical shaft of golden sunlight falls through swirling orange and purple sandstone walls in the exact centre of the frame, dust glowing in the beam. Beside the beam, a man in his 60s in an olive field jacket and a straw hat, seen from behind, looks up into the light with one hand stretched out, a young woman in a red scarf beside him. A sandstone curve blurred very close to the lens. The beam and the people fit in a narrow vertical band in the middle of the frame. 16mm lens, f/5.6."
+    },
+    {
+      "name": "17_nepal_prayer_flags", "seed": 1800, "people": true, "band": true, "use": "0:41, bande 7 de la mosaïque",
+      "prompt": "Photograph on a high mountain pass in the Everest region of Nepal at sunrise. Strings of plain coloured cloth flags snapping in a strong wind, flags blurred very close to the lens. The sharp snowy peak of Ama Dablam rises in warm light in the centre of the frame. Below it, a trekker in a bright orange down jacket and a mountain guide in a navy cap share a flask of tea, seen from behind, laughing. The peak and the two people fit in a narrow vertical band in the middle of the frame. 24mm lens, f/8."
+    },
+    {
+      "name": "18_atacama_bivouac_milkyway", "seed": 1801, "people": true, "band": true, "use": "0:41, bande 8 de la mosaïque",
+      "prompt": "Long exposure photograph at night in the Atacama Desert, Chile. A strong real Milky Way rises vertically through the centre of the frame, dark dust lanes visible, thousands of stars. Below it in the centre, a yellow tent glowing from inside, a person in a white fleece wrapped in a blanket sitting outside pointing at the sky, seen from behind, a second person lying on their back. White salt ground and red rocks faintly lit, pebbles blurred very close to the lens. The subject fits in a narrow vertical band in the middle of the frame. 14mm lens, f/2, 20 seconds, ISO 3200."
+    },
+    {
+      "name": "08b_page_1", "seed": 1864, "people": false, "width": 768, "height": 512, "use": "0:34, page 1 du carnet de Nora : glacier bleu",
+      "prompt": "Travel snapshot from a trek in the Karakoram, Pakistan: towering seracs of deep blue glacier ice on the Baltoro Glacier in cold morning light, meltwater pools, rocky moraine, snowy peaks behind. Handheld, slightly imperfect framing. 28mm lens."
+    },
+    {
+      "name": "08b_page_2", "seed": 1865, "people": false, "width": 768, "height": 512, "use": "0:34, page 2 : camp",
+      "prompt": "Travel snapshot from a trek in the Karakoram, Pakistan: a small camp of three plain tents on a rocky glacier moraine at dusk, one tent glowing from inside, huge dark granite peaks behind under a deep blue sky with the first stars. Handheld, slightly imperfect framing. 24mm lens."
+    },
+    {
+      "name": "08b_page_3", "seed": 1866, "people": true, "width": 768, "height": 512, "use": "0:34, page 3 : rivière à gué",
+      "prompt": "Travel snapshot from a trek in the Karakoram, Pakistan: a woman in a red down jacket seen from behind fords a milky grey glacial river with trekking poles, water splashing around her boots, stony banks and steep brown mountains in morning light. Handheld, slightly imperfect framing. 35mm lens."
+    },
+    {
+      "name": "08b_page_4", "seed": 1867, "people": false, "width": 768, "height": 512, "use": "0:34, page 4 : vallée",
+      "prompt": "Travel snapshot from a trek in the Karakoram, Pakistan: a wide high valley with a braided turquoise river, gravel bars and steep rocky peaks, warm golden afternoon light and long shadows, a thin trail along the slope. Handheld, slightly imperfect framing. 24mm lens."
+    },
+    {
+      "name": "08b_page_5", "seed": 1868, "people": true, "width": 768, "height": 512, "use": "0:34, page 5 : crête",
+      "prompt": "Travel snapshot from a trek in the Karakoram, Pakistan: a sharp snowy ridge at sunrise, wind blowing a plume of snow off the crest, a tiny figure in a red jacket standing on the ridge far away, pink and gold light on the snow, deep blue sky. Handheld, slightly imperfect framing. 50mm lens."
+    }
+  ]
+}

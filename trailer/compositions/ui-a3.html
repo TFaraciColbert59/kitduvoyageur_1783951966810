@@ -1,18 +1,586 @@
 <template>
-  <!-- BOÎTE GRISE (P1) — à remplacer par ui-builder. Hôte : 13 s → 24 s, z 30. Hub, bouteille à la mer, colonnes de profil, grille des 38 objets, anneau -->
+  <!-- UI-A3 · hôte 13,0 → 24,0 s (temps local = temps du film − 13,0), z 30, fond transparent.
+       Hub du groupe → bouteille à la mer → bulle « H » → 4 colonnes de profil → grille des 38 objets → étiquette sage → anneau.
+       Tout vit dans la colonne sûre (LKDV.ui.mountColumn) et se calcule depuis LKDV.format(root) ; composants lk-* de docs/UI-LIB.md.
+       Ajouts locaux (CSS de cette scène, jetons uniquement) : silhouette de l'île + route, bouteille de verre (SVG), papier roulé,
+       mini-globe de points, bulle, colonnes de verre, trait sage, anneau final.
+
+       RACCORD → ui-a4 (24,00). État exact de l'anneau à 23,98 (et dès 23,90, tenu immobile) :
+         16:9  : centre (960, 468) px réels ; rayon 150 px ; trait 14 px ; couleur var(--sage-500), opacité 1 ; fond transparent.
+         9:16  : centre (540, 832) = (W/2, H × 468/1080) ; rayon 150 × 1080/608 = 266,4 px ; trait 14 × 1080/608 = 24,9 px.
+         Formule : cx = col.x + col.w/2 ; cy = H × 468/1080 ; r = 150 × col.scale ; trait = 14 × col.scale (LKDV.format(root).column).
+         Forme : cercle complet du trait sage (c'est l'étiquette « prêt » devenue anneau), AUCUN arc de progression (0 %),
+         aucun avatar, aucun chiffre, intérieur vide et transparent, aucune rotation résiduelle (rotationY 0, rotation 0, scale 1). -->
   <style>
     #root { position: absolute; inset: 0; }
-    #ui-a3-box { position: absolute; inset: 0; background: transparent; }
-    #ui-a3-tag { position: absolute; right: 40px; top: 80px; padding: 6px 12px; border-radius: 8px; background: rgb(20 25 22 / 0.6); color: #fff; font: 600 16px "IBM Plex Mono", monospace; letter-spacing: 0.08em; }
+    #ui-a3-box { position: absolute; left: 0; top: 136px; width: 390px; height: 420px; }
+    .ui-a3-abs { position: absolute; }
+    /* ---------- 13,0 : Hub ---------- */
+    #ui-a3-hook { position: absolute; left: 189px; top: -18px; width: 12px; height: 12px; border-radius: 50%; background: var(--sage-500); box-shadow: 0 0 0 2px rgb(var(--lk-white-rgb) / 0.9), 0 2px 6px rgb(var(--lk-ink-rgb) / 0.3); }
+    #ui-a3-hub-zoom { position: absolute; left: 0; top: 0; width: 390px; height: 420px; }
+    #ui-a3-hub-card { position: absolute; left: 30px; top: 0; width: 330px; height: 354px; padding: 0; border-radius: var(--lk-r-card); }
+    #ui-a3-map { position: absolute; left: 15px; top: 12px; width: 300px; height: 204px; overflow: visible; }
+    .ui-a3-isl-fill { fill: rgb(var(--lk-white-rgb) / 0.62); stroke: rgb(var(--lk-sage-line-rgb) / 0.55); stroke-width: 3; stroke-linejoin: round; }
+    .ui-a3-route-u { fill: none; stroke: rgb(var(--lk-white-rgb) / 0.95); stroke-width: 20; stroke-linecap: round; stroke-linejoin: round; }
+    .ui-a3-route { fill: none; stroke: var(--sage-500); stroke-width: 11; stroke-linecap: round; stroke-linejoin: round; }
+    #ui-a3-hub-avs { position: absolute; left: 68px; top: 228px; display: flex; gap: 6px; }
+    #ui-a3-hub-rings { position: absolute; left: 53px; top: 284px; display: flex; gap: 28px; }
+    #ui-a3-hub-rings .lk-ring { --lk-ring: 56px; }
+    #ui-a3-hub-rings .lk-ring__ctr { color: var(--cp-good); }
+    #ui-a3-hav-e { position: relative; }
+    #ui-a3-hping { left: 22px; top: 22px; width: 44px; height: 44px; margin: -22px 0 0 -22px; }
+    #ui-a3-tabw { position: absolute; left: 30px; top: 360px; width: 330px; }
+    /* ---------- 14,0 : bouteille ---------- */
+    #ui-a3-btl-fly { position: absolute; left: 27px; top: 140px; width: 336px; height: 140px; }
+    #ui-a3-btl-go { position: absolute; inset: 0; }
+    #ui-a3-btl-tilt { position: absolute; inset: 0; transform: rotate(-16deg); transform-origin: 168px 70px; }
+    #ui-a3-btl-tilt > svg { position: absolute; left: 0; top: 0; width: 336px; height: 140px; overflow: visible; }
+    #ui-a3-btl-refr { position: absolute; inset: 0;
+      clip-path: path("M26 14L210 14C236 14 244 51 262 51L300 51C303 51 303 48 306 48L312 48C315 48 315 92 312 92L306 92C303 92 303 89 300 89L262 89C244 89 236 126 210 126L26 126C8 126 0 114 0 96L0 44C0 26 8 14 26 14Z");
+      -webkit-backdrop-filter: blur(2.5px) saturate(1.35) brightness(1.1); backdrop-filter: blur(2.5px) saturate(1.35) brightness(1.1); }
+    #ui-a3-btl-paper { position: absolute; left: 30px; top: 70px; width: 174px; height: 46px; border-radius: 9px / 23px; display: flex; align-items: center; justify-content: center; gap: 3px; padding-left: 8px;
+      color: var(--lkv-primary);
+      background: linear-gradient(180deg, rgb(var(--lk-ink-rgb) / 0.26) 0%, rgb(var(--lk-ink-rgb) / 0.02) 26%, rgb(var(--lk-white-rgb) / 0.35) 40%, rgb(var(--lk-ink-rgb) / 0) 62%, rgb(var(--lk-ink-rgb) / 0.3) 100%), var(--lk-paper);
+      box-shadow: inset -9px 0 6px -6px rgb(var(--lk-ink-rgb) / 0.25), 0 2px 5px rgb(var(--lk-ink-rgb) / 0.18); }
+    #ui-a3-btl-paper::before { content: ""; position: absolute; left: 7px; top: -1px; bottom: -1px; width: 4px; border-radius: 2px; background: var(--sage-500); box-shadow: 0 0 0 0.5px rgb(var(--lk-ink-rgb) / 0.2); }
+    #ui-a3-btl-paper::after { content: ""; position: absolute; right: -4px; top: 0; width: 10px; height: 46px; border-radius: 50%;
+      background: radial-gradient(ellipse 50% 50% at 50% 50%, rgb(var(--lk-ink-rgb) / 0.22) 0 18%, var(--lk-paper) 22% 38%, rgb(var(--lk-ink-rgb) / 0.16) 42% 46%, var(--lk-paper) 50%); box-shadow: 0 0 0 0.5px rgb(var(--lk-ink-rgb) / 0.2); }
+    #ui-a3-btl-paper .lk-avatar { width: 28px; height: 28px; font-size: 18px; box-shadow: 0 0 0 0.5px rgb(var(--lk-ink-rgb) / 0.2); }
+    #ui-a3-btl-paper .lk-avatar--empty { border-width: 1.5px; background: rgb(var(--lk-white-rgb) / 0.3); }
+    #ui-a3-btl-paper .lk-ic { --lk-ic: 30px; margin-right: 4px; }
+    .ui-a3-lkdv { font-family: var(--lk-font-brand); font-weight: 800; font-size: 31px; letter-spacing: 7px; }
+    /* ---------- 15,0 : sillage, mini-globe, bulle, équipe, îlot ---------- */
+    #ui-a3-wake { position: absolute; left: 0; top: 0; width: 390px; height: 420px; overflow: visible; }
+    .ui-a3-wk-u { fill: none; stroke: rgb(var(--lk-white-rgb) / 0.55); stroke-width: 9; stroke-linecap: round; }
+    .ui-a3-wk { fill: none; stroke: var(--sage-500); stroke-width: 5; stroke-linecap: round; }
+    #ui-a3-glb { position: absolute; left: 272px; top: 18px; width: 92px; height: 92px; border-radius: 50%; }
+    #ui-a3-glb > svg { position: absolute; inset: 0; width: 92px; height: 92px; }
+    .ui-a3-mer { fill: none; stroke: rgb(var(--lk-ink-rgb) / 0.16); stroke-width: 0.8; }
+    .ui-a3-gdot { fill: var(--sage-500); }
+    #ui-a3-gping { left: 46px; top: 46px; width: 92px; height: 92px; margin: -46px 0 0 -46px; }
+    #ui-a3-bub { position: absolute; left: 259px; top: 356px; width: 28px; height: 28px; border-radius: 50%;
+      background: radial-gradient(circle at 34% 30%, rgb(var(--lk-white-rgb) / 0.95) 0 14%, rgb(var(--lk-white-rgb) / 0.35) 32%, rgb(var(--lk-sage-rgb) / 0.35) 70%, rgb(var(--lk-white-rgb) / 0.7) 100%);
+      box-shadow: inset 0 0 0 1px rgb(var(--lk-white-rgb) / 0.9), 0 3px 10px rgb(var(--lk-forest-rgb) / 0.25); }
+    #ui-a3-team-pill { position: absolute; left: 83px; top: 340px; width: 224px; height: 60px; border-radius: var(--lk-r-full); display: flex; align-items: center; gap: 8px; padding: 0 12px; }
+    #ui-a3-team-h { position: absolute; left: 251px; top: 8px; }
+    #ui-a3-islc { position: absolute; left: 70px; top: 40px; width: 250px; }
+    #ui-a3-isl { width: 250px; }
+    #ui-a3-isl .ui-a3-isl-av { position: relative; width: 36px; height: 36px; }
+    #ui-a3-isl .ui-a3-isl-av > .lk-avatar { position: absolute; left: 0; top: 0; }
+    /* ---------- 16,0 : colonnes ---------- */
+    .ui-a3-colg { position: absolute; top: 30px; width: 84px; height: 334px; border-radius: 22px; }
+    .ui-a3-cav { position: absolute; top: 8px; }
+    .ui-a3-cpic { position: absolute; top: 58px; display: flex; gap: 6px; }
+    .ui-a3-pic { position: relative; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; color: var(--lkv-primary); background: var(--lk-flat); box-shadow: inset 0 1px 0 var(--cp-hi), 0 0 0 0.5px rgb(var(--lk-ink-rgb) / 0.14), 0 3px 8px rgb(var(--lk-ink-rgb) / 0.1); }
+    .ui-a3-pic .lk-ic { --lk-ic: 20px; }
+    .ui-a3-pic .lk-num { font-size: 20px; line-height: 1; }
+    #ui-a3-pic-snow-on { position: absolute; inset: 0; border-radius: 50%; background: var(--cp-accent); color: var(--lkv-on-dark); display: grid; place-items: center; opacity: 0; }
+    .ui-a3-ci { position: absolute; }
+    .ui-a3-hl { position: absolute; inset: -4px; border-radius: 19px; border: 2.5px solid var(--sage-500); box-shadow: 0 0 10px rgb(var(--lk-sage-line-rgb) / 0.5); opacity: 0; }
+    #ui-a3-trait { position: absolute; left: 0; top: 0; width: 390px; height: 420px; overflow: visible; }
+    .ui-a3-tr-u { fill: none; stroke: rgb(var(--lk-white-rgb) / 0.8); stroke-width: 7; stroke-linecap: round; }
+    .ui-a3-tr { fill: none; stroke: var(--sage-500); stroke-width: 3.5; stroke-linecap: round; }
+    #ui-a3-dots { position: absolute; left: 18px; top: 157px; display: flex; gap: 2px; padding: 0; }
+    #ui-a3-dots > i { width: 6px; height: 6px; border-radius: 50%; background: rgb(var(--lk-ink-rgb) / 0.22); box-shadow: 0 0 0 0.5px rgb(var(--lk-white-rgb) / 0.6); }
+    #ui-a3-dots > i.is-on { background: var(--cp-accent); }
+    /* ---------- 18,0 : grille ---------- */
+    #ui-a3-gcard { position: absolute; left: 37.5px; top: 48px; width: 315px; height: 372px; border-radius: var(--lk-r-card); }
+    #ui-a3-gwrap { position: absolute; left: 49.4px; top: 59px; width: 364px; height: 438px; transform: scale(0.8); transform-origin: 0 0; }
+    #ui-a3-g38 { width: 364px; }
+    #ui-a3-gclip { position: absolute; left: 37.5px; top: 48px; width: 315px; height: 372px; border-radius: var(--lk-r-card); overflow: hidden; }
+    #ui-a3-onde { position: absolute; left: 0; top: 0; width: 630px; height: 372px; opacity: 0;
+      background: linear-gradient(115deg, rgb(var(--lk-white-rgb) / 0) 30%, rgb(var(--lk-white-rgb) / 0.55) 48%, rgb(var(--lk-sage-rgb) / 0.35) 52%, rgb(var(--lk-white-rgb) / 0) 70%); }
+    .ui-a3-num { position: absolute; display: inline-flex; align-items: center; gap: 6px; height: 42px; padding: 0 16px; border-radius: var(--lk-r-full); color: var(--cp-ink); background: var(--lk-flat);
+      box-shadow: inset 0 1px 0 var(--cp-hi), 0 0 0 0.5px rgb(var(--lk-ink-rgb) / 0.14), 0 4px 12px rgb(var(--lk-ink-rgb) / 0.14); }
+    .ui-a3-num .lk-num { font-size: 24px; line-height: 1; }
+    .ui-a3-num .ui-a3-sl { font-family: var(--lk-font-brand); font-weight: 700; font-size: 22px; color: var(--cp-ink3); }
+    .ui-a3-num .ui-a3-u { font-family: var(--lk-font-ui); font-weight: 600; font-size: 19px; color: var(--cp-ink2); }
+    #ui-a3-c6 { left: 132px; top: 0; }
+    #ui-a3-c38 { left: 115px; top: 0; }
+    #ui-a3-mav { position: absolute; left: 37px; top: -1px; }
+    #ui-a3-mkm { left: 88px; top: 1px; height: 40px; }
+    #ui-a3-tentfly { position: absolute; left: 93.6px; top: 53.6px; }
+    .ui-a3-wb { position: absolute; left: 300px; top: -5px; }
+    /* ---------- 23,0 : étiquette → anneau ---------- */
+    #ui-a3-tagc { position: absolute; left: 169px; top: 500px; width: 52px; height: 52px; }
+    #ui-a3-ringw { position: absolute; left: 0; top: 0; }
+    #ui-a3-ringw > svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+    #ui-a3-ring { fill: none; stroke: var(--sage-500); }
   </style>
-  <div id="root" data-composition-id="ui-a3" data-width="1920" data-height="1080" data-layout-ignore>
-    <div id="ui-a3-box"></div>
-    <div id="ui-a3-tag">UI-A3 · PLACEHOLDER</div>
+
+  <div id="root" data-composition-id="ui-a3" data-width="1920" data-height="1080">
+    <div class="lk-col" id="ui-a3-col"><div class="lk-phone" id="ui-a3-phone">
+      <div id="ui-a3-box">
+
+        <!-- 13,00–14,00 · le Hub du groupe s'accroche, s'ouvre, puis la caméra fonce dans le cercle vide -->
+        <div class="clip ui-a3-abs" id="ui-a3-hub" data-start="0" data-duration="1" data-track-index="1">
+          <i id="ui-a3-hook"></i>
+          <div id="ui-a3-hub-zoom">
+            <div class="lk-card lk-glass" id="ui-a3-hub-card">
+              <svg id="ui-a3-map" viewBox="0 0 1000 679" aria-hidden="true">
+                <path id="ui-a3-isl-path" class="ui-a3-isl-fill" d="M903.8 38.4L865 59.7L848 97L898.9 121.6L878.3 177.7L925 167.6L929.9 191.1L903.8 228.1L932.5 192.9L990.2 225.2L979.5 265.3L954.3 274.7L994.1 279.5L951.7 292.5L988.6 292.5L988.6 313.1L998.4 298.3L992.5 333.8L951.7 317.5L933.8 328L980.4 348.2L949.8 349.7L974.2 361.6L957.9 370.7L969.3 378.6L930.2 399.6L908.3 377.6L929.9 410.1L910.3 408.7L906.7 430.8L923.4 419.9L905.4 463L890.4 457.2L870.5 493L843.8 492.3L821.3 464.4L828.1 490.9L774.3 518.7L730.9 570.1L701.6 592.2L689.5 578.5L686.2 595.1L685.9 566.9L682.6 592.9L633.4 595.1L617.7 612.8L618.4 596.6L595.6 619L610.9 620.1L595.6 651.9L574.7 662.8L581.9 649.4L563.9 646.5L576 664.6L545.3 673.7L394.3 647.2L363 616.5L366.3 600.5L383.2 607.1L373.1 583.9L359.1 611L341.5 598L356.5 599.5L349.3 578.8L337.2 596.6L304 558.5L287.3 582.1L167.3 590L166.3 531.4L183 554.2L226.4 538.6L226 515.8L257 508.6L236.5 499.5L252.4 475.7L282.1 469.1L221.1 482.2L242.7 465.9L226 463L232.2 441.6L257 418.8L275.6 427.5L259 417.4L274.3 410.1L226.7 428.2L215.3 451L190.2 406.9L213 390.9L193.7 404.7L193.1 373.2L170.6 385.5L89 373.9L63.9 394.2L43.4 358.7L115.8 351.1L124.3 330.9L129.8 352.9L165 318.9L177.4 339.5L180.7 324L245.9 328L251.1 290.7L227 310.6L179.7 299L257.7 238.2L223.4 230.9L207.1 242.5L195 229.9L220.5 207.4L186.6 226.6L180.7 199.5L170.6 222.3L161.4 200.2L163.7 227.7L152.6 202.7L58.1 248.7L0 226.6L21.5 198.4L66.5 220.5L41.1 195.8L66.5 204.5L40.4 162.9L88.7 203.8L113.5 189.7L90.7 180.3L122.3 167.6L73.4 169.4L61 147.7L120.4 154.6L65.9 118.4L71.4 104.6L105.7 123.4L78.9 95.9L103.7 99.9L85.1 89.8L97.8 77.1L137 97.7L134.1 128.1L145.8 110.4L155.9 139.7L168.3 109L171.2 156.7L181.3 126.3L191.1 153.8L195.7 99.9L141.6 70.6L196.7 61.9L165.7 57.6L175.1 41.3L126.9 50.7L143.8 21L191.1 21.4L210.4 63.3L252.8 81.1L260.3 116.2L271 99.9L290.6 119.1L265.8 129.6L293.2 134.7L277.6 170.5L290.6 176.6L268.1 186.8L250.2 170.5L283.1 198.7L276.9 214.7L291.6 206.3L277.6 239.6L301.4 241.4L312.5 299.7L328.1 206.3L350 186.4L366.9 229.5L386.8 192.9L374.4 101.4L402.8 92.7L460.5 179.2L461.2 108.2L496.7 105.7L494.8 86.9L517.6 77.5L572.7 149.1L586.8 196.9L566.9 81.8L600.5 88.3L633.4 139.7L627.9 122.4L645.8 129.6L669.9 73.5L688.8 96.7L719.5 99.9L711.4 85.4L725.7 78.2L735.2 89.8L724.4 12.3L771.7 5.8L800.4 36.2L801 70.6L829.7 88.7L871.2 38.4L903.8 38.4Z"/>
+                <!-- Route 1 : villes réelles (Reykjavik, Borgarnes, Blönduós, Akureyri, Mývatn, Egilsstaðir, Höfn, Vík, Selfoss), qa/tmp/ui-a3/route.mjs -->
+                <path id="ui-a3-route-u" class="ui-a3-route-u" pathLength="100" stroke-dasharray="100 100" d="M251.7 512.2C238.5 491.5 229.8 482.4 253.5 430.8C277.1 379.2 358.3 236.9 393.8 202.7C429.2 168.4 434.5 225.7 466.1 225.1C497.6 224.4 547.2 200.3 583.1 198.6C619 196.9 628.3 200.6 681.2 214.9C734.2 229.1 862.4 252.2 900.7 284.1C939 316 922.6 372 911 406.3C899.4 440.6 858.2 469.1 831 489.8C803.7 510.5 788.4 514.9 747.5 530.6C706.6 546.2 626.3 563.1 585.7 583.5C545.1 603.9 537.5 654.1 503.9 652.7C470.4 651.4 412.8 591.7 384.3 575.4C355.7 559.1 354.7 565.5 332.6 555C310.6 544.5 264.9 532.9 251.7 512.2"/>
+                <path id="ui-a3-route" class="ui-a3-route" pathLength="100" stroke-dasharray="100 100" d="M251.7 512.2C238.5 491.5 229.8 482.4 253.5 430.8C277.1 379.2 358.3 236.9 393.8 202.7C429.2 168.4 434.5 225.7 466.1 225.1C497.6 224.4 547.2 200.3 583.1 198.6C619 196.9 628.3 200.6 681.2 214.9C734.2 229.1 862.4 252.2 900.7 284.1C939 316 922.6 372 911 406.3C899.4 440.6 858.2 469.1 831 489.8C803.7 510.5 788.4 514.9 747.5 530.6C706.6 546.2 626.3 563.1 585.7 583.5C545.1 603.9 537.5 654.1 503.9 652.7C470.4 651.4 412.8 591.7 384.3 575.4C355.7 559.1 354.7 565.5 332.6 555C310.6 544.5 264.9 532.9 251.7 512.2"/>
+                <g id="ui-a3-rdot"><circle r="30" fill="rgb(255 255 255 / 0.95)"/><circle r="20" style="fill: var(--sage-700)"/></g>
+              </svg>
+              <div id="ui-a3-hub-avs">
+                <span class="lk-avatar" id="ui-a3-hav-l">L</span><span class="lk-avatar" id="ui-a3-hav-s">S</span><span class="lk-avatar" id="ui-a3-hav-i">I</span>
+                <span class="lk-avatar lk-avatar--empty" id="ui-a3-hav-e"><span class="lk-ping" id="ui-a3-hping"></span></span>
+              </div>
+              <div id="ui-a3-hub-rings">
+                <div class="lk-ring"><svg viewBox="0 0 100 100"><circle class="lk-ring__bg" cx="50" cy="50" r="44"/><circle class="lk-ring__fg" id="ui-a3-hr1" cx="50" cy="50" r="44" pathLength="100" transform="rotate(-90 50 50)"/></svg><div class="lk-ring__ctr"><span class="lk-ic lk-ic--s" data-ic="route"></span></div></div>
+                <div class="lk-ring"><svg viewBox="0 0 100 100"><circle class="lk-ring__bg" cx="50" cy="50" r="44"/><circle class="lk-ring__fg" id="ui-a3-hr2" cx="50" cy="50" r="44" pathLength="100" transform="rotate(-90 50 50)"/></svg><div class="lk-ring__ctr"><span class="lk-ic lk-ic--s" data-ic="backpack"></span></div></div>
+                <div class="lk-ring"><svg viewBox="0 0 100 100"><circle class="lk-ring__bg" cx="50" cy="50" r="44"/><circle class="lk-ring__fg" id="ui-a3-hr3" cx="50" cy="50" r="44" pathLength="100" transform="rotate(-90 50 50)"/></svg><div class="lk-ring__ctr"><span class="lk-ic lk-ic--s" data-ic="banknote"></span></div></div>
+              </div>
+            </div>
+            <div id="ui-a3-tabw"><div class="lk-tabbar" id="ui-a3-tab"><i class="lk-tabbar__lens"></i>
+              <span class="lk-tab is-active"><span class="lk-ic" data-ic="home"></span></span><span class="lk-tab"><span class="lk-ic" data-ic="compass"></span></span><span class="lk-tab"><span class="lk-ic" data-ic="users"></span></span><span class="lk-tab"><span class="lk-ic" data-ic="send"></span></span><span class="lk-tab"><span class="lk-ic" data-ic="user"></span></span>
+            </div></div>
+          </div>
+        </div>
+
+        <!-- 15,00–15,60 · sillage : la ligne sage suit la bouteille jusqu'au mini-globe (sous la bouteille) -->
+        <div class="clip ui-a3-abs" id="ui-a3-wakec" data-start="2" data-duration="0.75" data-track-index="2" style="left:0;top:0;width:390px;height:420px">
+          <svg id="ui-a3-wake" viewBox="0 0 390 420" aria-hidden="true"><path id="ui-a3-wk-u" class="ui-a3-wk-u" pathLength="100" stroke-dasharray="100 100" d="M195 210"/><path id="ui-a3-wk" class="ui-a3-wk" pathLength="100" stroke-dasharray="100 100" d="M195 210"/></svg>
+        </div>
+
+        <!-- 13,875–15,375 · la bouteille de verre (objet héros) -->
+        <div class="clip ui-a3-abs" id="ui-a3-btl" data-start="0.875" data-duration="1.5" data-track-index="3" style="left:0;top:0;width:390px;height:420px">
+          <div id="ui-a3-btl-fly"><div id="ui-a3-btl-go"><div id="ui-a3-btl-tilt">
+            <!-- moitié arrière des rides (derrière le verre) -->
+            <svg id="ui-a3-btl-under" viewBox="0 0 336 140" aria-hidden="true">
+              <g transform="rotate(16 168 70)">
+                <path id="ui-a3-rip-b1" d="M-10 92 A178 13 0 0 1 346 92" fill="none" style="stroke: rgb(var(--lk-white-rgb) / 0.5)" stroke-width="1.4"/>
+                <path id="ui-a3-rip-b2" d="M-30 92 A198 16 0 0 1 366 92" fill="none" style="stroke: rgb(var(--lk-white-rgb) / 0.35)" stroke-width="1.2"/>
+              </g>
+            </svg>
+            <div id="ui-a3-btl-refr"></div>
+            <svg id="ui-a3-btl-glass" viewBox="0 0 336 140" aria-hidden="true">
+              <defs>
+                <linearGradient id="ui-a3-gb-body" gradientUnits="userSpaceOnUse" x1="0" y1="14" x2="0" y2="126">
+                  <stop offset="0" style="stop-color: var(--lkv-on-dark); stop-opacity: 0.34"/>
+                  <stop offset="0.12" style="stop-color: var(--lkv-on-dark); stop-opacity: 0.08"/>
+                  <stop offset="0.42" style="stop-color: var(--sage-300); stop-opacity: 0.08"/>
+                  <stop offset="0.76" style="stop-color: var(--sage-500); stop-opacity: 0.12"/>
+                  <stop offset="0.9" style="stop-color: var(--lkv-on-dark); stop-opacity: 0.18"/>
+                  <stop offset="1" style="stop-color: var(--sage-700); stop-opacity: 0.34"/>
+                </linearGradient>
+              </defs>
+              <path d="M26 14L210 14C236 14 244 51 262 51L300 51C303 51 303 48 306 48L312 48C315 48 315 92 312 92L306 92C303 92 303 89 300 89L262 89C244 89 236 126 210 126L26 126C8 126 0 114 0 96L0 44C0 26 8 14 26 14Z" fill="url(#ui-a3-gb-body)"/>
+              <!-- paroi du fond (reflet intérieur) -->
+              <path d="M30 108 C80 112 160 112 206 106" fill="none" style="stroke: rgb(var(--lk-white-rgb) / 0.22)" stroke-width="2"/>
+              <!-- bouchon : partie dans le goulot (vue à travers le verre) -->
+              <rect x="286" y="54" width="22" height="32" rx="3" style="fill: var(--stone-300); fill-opacity: 0.55"/>
+            </svg>
+            <!-- papier roulé : van + L, S, I + un cercle vide -->
+            <div id="ui-a3-btl-paper"><span class="lk-ic" data-ic="van"></span><span class="lk-avatar">L</span><span class="lk-avatar">S</span><span class="lk-avatar">I</span><span class="lk-avatar lk-avatar--empty"></span></div>
+            <svg id="ui-a3-btl-front" viewBox="0 0 336 140" aria-hidden="true">
+              <defs>
+                <clipPath id="ui-a3-bclip"><path d="M26 14L210 14C236 14 244 51 262 51L300 51C303 51 303 48 306 48L312 48C315 48 315 92 312 92L306 92C303 92 303 89 300 89L262 89C244 89 236 126 210 126L26 126C8 126 0 114 0 96L0 44C0 26 8 14 26 14Z"/></clipPath>
+                <linearGradient id="ui-a3-g-spec" gradientUnits="userSpaceOnUse" x1="24" y1="0" x2="206" y2="0">
+                  <stop offset="0" style="stop-color: var(--lkv-on-dark); stop-opacity: 0"/>
+                  <stop offset="0.14" style="stop-color: var(--lkv-on-dark); stop-opacity: 0.92"/>
+                  <stop offset="0.7" style="stop-color: var(--lkv-on-dark); stop-opacity: 0.7"/>
+                  <stop offset="1" style="stop-color: var(--lkv-on-dark); stop-opacity: 0"/>
+                </linearGradient>
+                <linearGradient id="ui-a3-g-sweep" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0" style="stop-color: var(--lkv-on-dark); stop-opacity: 0"/>
+                  <stop offset="0.5" style="stop-color: var(--lkv-on-dark); stop-opacity: 0.62"/>
+                  <stop offset="1" style="stop-color: var(--lkv-on-dark); stop-opacity: 0"/>
+                </linearGradient>
+                <linearGradient id="ui-a3-g-sweepm" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0" style="stop-color: var(--lkv-on-dark); stop-opacity: 0"/>
+                  <stop offset="0.5" style="stop-color: var(--lkv-on-dark); stop-opacity: 1"/>
+                  <stop offset="1" style="stop-color: var(--lkv-on-dark); stop-opacity: 0"/>
+                </linearGradient>
+                <linearGradient id="ui-a3-g-cork" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" style="stop-color: var(--stone-200)"/>
+                  <stop offset="0.45" style="stop-color: var(--stone-300)"/>
+                  <stop offset="1" style="stop-color: var(--stone-700)"/>
+                </linearGradient>
+                <filter id="ui-a3-f-soft" x="-20%" y="-200%" width="140%" height="500%"><feGaussianBlur stdDeviation="1.1"/></filter>
+                <mask id="ui-a3-m-lk" maskUnits="userSpaceOnUse" x="-200" y="-100" width="740" height="340">
+                  <rect id="ui-a3-mask-band" x="-150" y="-60" width="110" height="260" fill="url(#ui-a3-g-sweepm)"/>
+                </mask>
+              </defs>
+              <!-- eau : la partie immergée est teintée, ligne d'eau horizontale (repère écran) -->
+              <g clip-path="url(#ui-a3-bclip)">
+                <g transform="rotate(16 168 70)">
+                  <rect x="-120" y="90" width="580" height="200" style="fill: var(--sky-600); fill-opacity: 0.26"/>
+                  <path d="M-120 90 L460 90" style="stroke: rgb(var(--lk-white-rgb) / 0.6)" stroke-width="1.2"/>
+                </g>
+                <!-- épaisseur du verre : bande sombre le long du bord intérieur -->
+                <path d="M26 14L210 14C236 14 244 51 262 51L300 51C303 51 303 48 306 48L312 48C315 48 315 92 312 92L306 92C303 92 303 89 300 89L262 89C244 89 236 126 210 126L26 126C8 126 0 114 0 96L0 44C0 26 8 14 26 14Z" fill="none" style="stroke: var(--sage-700); stroke-opacity: 0.26" stroke-width="11"/>
+              </g>
+              <!-- liseré de Fresnel -->
+              <path d="M26 14L210 14C236 14 244 51 262 51L300 51C303 51 303 48 306 48L312 48C315 48 315 92 312 92L306 92C303 92 303 89 300 89L262 89C244 89 236 126 210 126L26 126C8 126 0 114 0 96L0 44C0 26 8 14 26 14Z" fill="none" style="stroke: rgb(var(--lk-white-rgb) / 0.8)" stroke-width="1.4"/>
+              <!-- reflets : arête haute, épaule, goulot, base, caustique -->
+              <path d="M30 21 L204 21" fill="none" stroke="url(#ui-a3-g-spec)" stroke-width="5" stroke-linecap="round" filter="url(#ui-a3-f-soft)"/>
+              <path d="M40 29 L168 29" fill="none" style="stroke: rgb(var(--lk-white-rgb) / 0.32)" stroke-width="1.5" stroke-linecap="round"/>
+              <path d="M214 21 C232 23 242 44 258 55" fill="none" style="stroke: rgb(var(--lk-white-rgb) / 0.7)" stroke-width="3" stroke-linecap="round" filter="url(#ui-a3-f-soft)"/>
+              <path d="M266 57 L298 55" fill="none" style="stroke: rgb(var(--lk-white-rgb) / 0.75)" stroke-width="2.6" stroke-linecap="round"/>
+              <path d="M8 42 C4 60 4 84 9 100" fill="none" style="stroke: rgb(var(--lk-white-rgb) / 0.45)" stroke-width="3" stroke-linecap="round" filter="url(#ui-a3-f-soft)"/>
+              <path d="M34 120 L200 120" fill="none" style="stroke: rgb(var(--lk-white-rgb) / 0.4)" stroke-width="2.2" stroke-linecap="round" filter="url(#ui-a3-f-soft)"/>
+              <ellipse cx="226" cy="104" rx="10" ry="3" style="fill: rgb(var(--lk-white-rgb) / 0.55)" filter="url(#ui-a3-f-soft)"/>
+              <!-- « LKDV » moulé dans le verre : invisible sauf sous le reflet (masque mobile) -->
+              <g mask="url(#ui-a3-m-lk)">
+                <text class="ui-a3-lkdv" x="112.9" y="56.9" text-anchor="middle" style="fill: rgb(var(--lk-ink-rgb) / 0.42)">LKDV</text>
+                <text class="ui-a3-lkdv" x="111.4" y="55.4" text-anchor="middle" style="fill: rgb(var(--lk-white-rgb) / 0.98)">LKDV</text>
+                <text class="ui-a3-lkdv" x="112" y="56" text-anchor="middle" style="fill: rgb(var(--lk-white-rgb) / 0.5)">LKDV</text>
+              </g>
+              <!-- reflet qui balaie le verre -->
+              <g clip-path="url(#ui-a3-bclip)"><rect id="ui-a3-sweep" x="-150" y="-60" width="110" height="260" fill="url(#ui-a3-g-sweep)"/></g>
+              <!-- col et bouchon -->
+              <rect x="300" y="47" width="12" height="46" rx="3" style="fill: rgb(var(--lk-white-rgb) / 0.25); stroke: rgb(var(--lk-white-rgb) / 0.75)" stroke-width="1"/>
+              <rect x="309" y="53" width="26" height="34" rx="5" fill="url(#ui-a3-g-cork)"/>
+              <circle cx="318" cy="62" r="1.2" style="fill: var(--stone-700); fill-opacity: 0.5"/><circle cx="326" cy="72" r="1" style="fill: var(--stone-700); fill-opacity: 0.5"/><circle cx="315" cy="78" r="1.1" style="fill: var(--stone-700); fill-opacity: 0.45"/><circle cx="330" cy="60" r="0.9" style="fill: var(--stone-700); fill-opacity: 0.45"/>
+              <path d="M312 57 L332 57" style="stroke: rgb(var(--lk-white-rgb) / 0.5)" stroke-width="1.4" stroke-linecap="round"/>
+              <!-- moitié avant des rides -->
+              <g transform="rotate(16 168 70)">
+                <path id="ui-a3-rip-f1" d="M-10 92 A178 13 0 0 0 346 92" fill="none" style="stroke: rgb(var(--lk-white-rgb) / 0.55)" stroke-width="1.5"/>
+                <path id="ui-a3-rip-f2" d="M-30 92 A198 16 0 0 0 366 92" fill="none" style="stroke: rgb(var(--lk-white-rgb) / 0.35)" stroke-width="1.2"/>
+              </g>
+            </svg>
+          </div></div></div>
+        </div>
+
+        <!-- 15,00–16,00 · mini-globe de points ; la bulle revient -->
+        <div class="clip ui-a3-abs" id="ui-a3-globe" data-start="2" data-duration="1" data-track-index="4" style="left:0;top:0;width:390px;height:420px">
+          <div class="lk-glass" id="ui-a3-glb">
+            <svg viewBox="-46 -46 92 92" aria-hidden="true">
+              <ellipse class="ui-a3-mer" cx="0" cy="0" rx="44" ry="44"/><ellipse class="ui-a3-mer" cx="0" cy="0" rx="16" ry="44"/><ellipse class="ui-a3-mer" cx="0" cy="0" rx="32" ry="44"/>
+              <ellipse class="ui-a3-mer" cx="0" cy="0" rx="44" ry="9"/><path class="ui-a3-mer" d="M-38 -22 L38 -22 M-38 22 L38 22"/>
+              <g id="ui-a3-gdots"></g>
+            </svg>
+            <span class="lk-ping" id="ui-a3-gping"></span>
+          </div>
+          <i id="ui-a3-bub"></i>
+        </div>
+
+        <!-- 15,25–16,00 · l'équipe : L, S, I + le cercle vide que la bulle remplit (H) -->
+        <div class="clip ui-a3-abs" id="ui-a3-team" data-start="2.25" data-duration="0.75" data-track-index="5" style="left:0;top:0;width:390px;height:420px">
+          <div class="lk-flat" id="ui-a3-team-pill">
+            <span class="lk-avatar">L</span><span class="lk-avatar">S</span><span class="lk-avatar">I</span><span class="lk-avatar lk-avatar--empty"></span>
+            <span class="lk-avatar lk-avatar--on" id="ui-a3-team-h">H</span>
+          </div>
+        </div>
+
+        <!-- 16,00–18,00 · quatre colonnes de verre : Léa, Sami, Inès, Hugo -->
+        <div class="clip ui-a3-abs" id="ui-a3-cols" data-start="3" data-duration="2" data-track-index="6" style="left:0;top:0;width:390px;height:420px">
+          <div class="lk-glass ui-a3-colg" id="ui-a3-colg0" style="left:15px"></div>
+          <div class="lk-glass ui-a3-colg" id="ui-a3-colg1" style="left:107px"></div>
+          <div class="lk-glass ui-a3-colg" id="ui-a3-colg2" style="left:199px"></div>
+          <div class="lk-glass ui-a3-colg" id="ui-a3-colg3" style="left:291px"></div>
+          <span class="lk-avatar ui-a3-cav" id="ui-a3-cav0" style="left:35px">L</span>
+          <span class="lk-avatar ui-a3-cav" id="ui-a3-cav1" style="left:127px">S</span>
+          <span class="lk-avatar ui-a3-cav" id="ui-a3-cav2" style="left:219px">I</span>
+          <span class="lk-avatar ui-a3-cav" id="ui-a3-cav3" style="left:311px">H</span>
+          <div class="ui-a3-cpic" id="ui-a3-cpic0" style="left:40px"><span class="ui-a3-pic"><span class="lk-ic" data-ic="snowflake"></span><span id="ui-a3-pic-snow-on"><span class="lk-ic" data-ic="snowflake"></span></span></span></div>
+          <div class="ui-a3-cpic" id="ui-a3-cpic1" style="left:112px"><span class="ui-a3-pic"><span class="lk-ic" data-ic="camera"></span></span><span class="ui-a3-pic"><span class="lk-ic" data-ic="sunrise"></span></span></div>
+          <div class="ui-a3-cpic" id="ui-a3-cpic2" style="left:204px"><span class="ui-a3-pic"><span class="lk-ic" data-ic="leaf"></span></span><span class="ui-a3-pic"><b class="lk-num">1</b></span></div>
+          <div class="ui-a3-cpic" id="ui-a3-cpic3" style="left:316px"><span class="ui-a3-pic"><span class="lk-ic" data-ic="sneaker"></span></span></div>
+          <div id="ui-a3-citems"></div>
+          <svg id="ui-a3-trait" viewBox="0 0 390 420" aria-hidden="true">
+            <path id="ui-a3-tr-u" class="ui-a3-tr-u" pathLength="100" stroke-dasharray="100 100" d="M74 75 C103 75 103 325 86 325"/>
+            <path id="ui-a3-tr" class="ui-a3-tr" pathLength="100" stroke-dasharray="100 100" d="M74 75 C103 75 103 325 86 325"/>
+          </svg>
+          <span id="ui-a3-dots"><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i></i><i></i></span>
+        </div>
+
+        <!-- 18,00–22,00 · les colonnes deviennent la grille des 38 objets -->
+        <div class="clip ui-a3-abs" id="ui-a3-grid" data-start="5" data-duration="4" data-track-index="7" style="left:0;top:0;width:390px;height:420px">
+          <div class="lk-glass" id="ui-a3-gcard"></div>
+          <div id="ui-a3-gwrap"><div class="lk-grid38" id="ui-a3-g38"></div></div>
+          <div id="ui-a3-gclip"><i id="ui-a3-onde"></i></div>
+        </div>
+        <div class="clip ui-a3-abs" id="ui-a3-c6c" data-start="5.125" data-duration="0.75" data-track-index="8" style="left:0;top:0;width:390px;height:48px">
+          <span class="ui-a3-num" id="ui-a3-c6"><b class="lk-num">6</b><span class="ui-a3-sl">/</span><b class="lk-num">38</b></span>
+        </div>
+        <div class="clip ui-a3-abs" id="ui-a3-mhead" data-start="5.875" data-duration="1.125" data-track-index="9" style="left:0;top:0;width:390px;height:120px">
+          <span class="lk-avatar" id="ui-a3-mav">M</span>
+          <span class="ui-a3-num" id="ui-a3-mkm"><span class="lk-ic lk-ic--s" data-ic="handshake" style="color: var(--cp-good)"></span><b class="lk-num">2,1</b><span class="ui-a3-u">km</span></span>
+          <i class="lk-item is-on" id="ui-a3-tentfly"><span class="lk-ic" data-ic="tent"></span><b class="lk-item__lit"><span class="lk-ic" data-ic="tent"></span></b></i>
+        </div>
+        <div class="clip ui-a3-abs" id="ui-a3-wave" data-start="6" data-duration="1.875" data-track-index="10" style="left:0;top:0;width:390px;height:48px">
+          <span class="lk-prov lk-prov--pret lk-prov--l ui-a3-wb" id="ui-a3-wb-pret"><span class="lk-ic" data-ic="handshake"></span></span>
+          <span class="lk-prov lk-prov--occasion lk-prov--l ui-a3-wb" id="ui-a3-wb-occ"><span class="lk-ic" data-ic="recycle"></span></span>
+          <span class="lk-prov lk-prov--location lk-prov--l ui-a3-wb" id="ui-a3-wb-loc"><span class="lk-ic" data-ic="calendar"></span></span>
+          <span class="lk-prov lk-prov--achat lk-prov--l ui-a3-wb" id="ui-a3-wb-ach"><span class="lk-ic" data-ic="tag"></span></span>
+        </div>
+        <div class="clip ui-a3-abs" id="ui-a3-c38c" data-start="8" data-duration="1" data-track-index="11" style="left:0;top:0;width:390px;height:48px">
+          <span class="ui-a3-num" id="ui-a3-c38"><span class="lk-check"><span class="lk-ic" data-ic="check"></span></span><b class="lk-num">38</b><span class="ui-a3-sl">/</span><b class="lk-num">38</b></span>
+        </div>
+      </div>
+
+      <!-- 15,75–16,50 · îlot dynamique : « H » s'allume en sage -->
+      <div class="clip" id="ui-a3-islc" data-start="2.75" data-duration="0.75" data-track-index="12">
+        <div class="lk-island" id="ui-a3-isl">
+          <span class="ui-a3-isl-av"><span class="lk-avatar lk-avatar--ink lk-avatar--s">H</span><span class="lk-avatar lk-avatar--on lk-avatar--s" id="ui-a3-isl-on">H</span></span>
+          <span class="lk-ic lk-ic--l" data-ic="bottle"></span><span class="lk-island__sp"></span><span class="lk-ic" data-ic="users"></span><b class="lk-num">4</b>
+        </div>
+      </div>
+
+      <!-- 23,00 · l'étiquette « prêt » tourne dans le vent -->
+      <div class="clip" id="ui-a3-tagc" data-start="10" data-duration="0.5" data-track-index="13">
+        <span class="lk-prov lk-prov--pret lk-prov--l" id="ui-a3-tag"><span class="lk-ic" data-ic="handshake"></span></span>
+      </div>
+    </div></div>
+
+    <!-- 23,375–24,00 · l'étiquette devient l'anneau (pixels réels, raccord ui-a4 : voir l'en-tête) -->
+    <div class="clip" id="ui-a3-ringc" data-start="10" data-duration="1" data-track-index="14" style="position:absolute;left:0;top:0;width:100%;height:100%">
+      <div id="ui-a3-ringw"><svg id="ui-a3-ringsvg" aria-hidden="true"><circle id="ui-a3-ring"/></svg></div>
+    </div>
   </div>
+
   <script>
     (function () {
+      const root = document.querySelector('[data-composition-id="ui-a3"]');
+      const U = LKDV.ui;
+      const m = U.mountColumn(root, { el: document.getElementById("ui-a3-col") });
+      const F = LKDV.format(root), C = F.column, s = m.s;
+      const bandTop = (F.band.top - C.y) / s, bandBot = (F.band.bottom - C.y) / s;
+      const BOX_H = 420;
+      const boxTop = bandTop + Math.max(0, (bandBot - bandTop - BOX_H) / 2);
+      document.getElementById("ui-a3-box").style.top = boxTop + "px";
+      document.getElementById("ui-a3-islc").style.top = bandTop + 2 + "px";
+      const TAG_TOP = bandBot - 92;
+      document.getElementById("ui-a3-tagc").style.top = TAG_TOP + "px";
+      const T = function (film) { return film - 13; };
+      const SP = U.springEase;
       const tl = gsap.timeline({ paused: true });
-      tl.fromTo("#ui-a3-tag", { opacity: 0.4 }, { opacity: 1, duration: 11, ease: "none" }, 0);
+
+      /* ================= 13,00–14,00 · HUB ================= */
+      /* point d'accroche, puis la carte descend de ce point et s'ouvre (ressort fermé, zeta 0,72) */
+      U.springIn(tl, "#ui-a3-hook", T(13.0), { dur: 0.2, from: 0.2 });
+      tl.fromTo("#ui-a3-hook", { opacity: 1 }, { opacity: 0, duration: 0.12, ease: "power2.in", immediateRender: false }, T(13.375));
+      tl.fromTo("#ui-a3-hub-card", { y: -70, scaleX: 0.3, scaleY: 0.05, transformOrigin: "50% 0%" },
+        { y: 0, scaleX: 1, scaleY: 1, transformOrigin: "50% 0%", duration: 0.42, ease: SP(0.72, 0.42) }, T(13.0));
+      tl.fromTo("#ui-a3-hub-card", { opacity: 0 }, { opacity: 1, duration: 0.1, ease: "power2.out" }, T(13.0));
+      tl.fromTo("#ui-a3-isl-path", { opacity: 0 }, { opacity: 1, duration: 0.15, ease: "power2.out" }, T(13.125));
+      tl.fromTo(["#ui-a3-route-u", "#ui-a3-route"], { strokeDashoffset: 100 }, { strokeDashoffset: 0, duration: 0.4, ease: "power2.inOut" }, T(13.2));
+      /* point au tiers du parcours (mesuré une fois sur le tracé) */
+      const rp = document.getElementById("ui-a3-route");
+      const third = rp.getPointAtLength(rp.getTotalLength() / 3);
+      document.getElementById("ui-a3-rdot").setAttribute("transform", "translate(" + third.x.toFixed(1) + " " + third.y.toFixed(1) + ")");
+      tl.fromTo("#ui-a3-rdot", { scale: 0, svgOrigin: third.x + " " + third.y }, { scale: 1, svgOrigin: third.x + " " + third.y, duration: 0.25, ease: SP(0.6, 0.25) }, T(13.5));
+      ["#ui-a3-hav-l", "#ui-a3-hav-s", "#ui-a3-hav-i", "#ui-a3-hav-e"].forEach(function (id, i) { U.springIn(tl, id, T(13.25) + i * 0.0625, { dur: 0.25, from: 0.5 }); });
+      U.ping(tl, "#ui-a3-hping", T(13.5), 0.4, 1.9);
+      U.ringTo(tl, "#ui-a3-hr1", 0, 0.72, T(13.3), 0.4);
+      U.ringTo(tl, "#ui-a3-hr2", 0, 0.45, T(13.36), 0.4);
+      U.ringTo(tl, "#ui-a3-hr3", 0, 0.6, T(13.42), 0.4);
+      U.springIn(tl, "#ui-a3-tab", T(13.25), { dur: 0.3, y: 24 });
+      /* 13,75–14,00 : la caméra fonce dans le cercle vide ; il se pose sur l'embouchure de la bouteille */
+      const EMPTY = { x: 270, y: 250 };                       /* centre du cercle en pointillés (repère de la boîte) */
+      const BTL = { left: 27, top: 140, cx: 168, cy: 70, tilt: -16 };
+      const a = BTL.tilt * Math.PI / 180;
+      const MOUTH_LOCAL = { x: BTL.cx + 144 * Math.cos(a), y: BTL.cy + 144 * Math.sin(a) }; /* (312, 70) tourné de −16° autour du centre */
+      const MOUTH = { x: BTL.left + MOUTH_LOCAL.x, y: BTL.top + MOUTH_LOCAL.y };
+      const zo = EMPTY.x + "px " + EMPTY.y + "px";
+      tl.fromTo("#ui-a3-hub-zoom", { x: 0, y: 0, scale: 1, transformOrigin: zo },
+        { x: MOUTH.x - EMPTY.x, y: MOUTH.y - EMPTY.y, scale: 7, transformOrigin: zo, duration: 0.25, ease: "power3.in" }, T(13.75));
+      tl.fromTo(["#ui-a3-hub-card", "#ui-a3-tab"], { opacity: 1 }, { opacity: 0, duration: 0.09, ease: "power2.in", immediateRender: false }, T(13.9));
+
+      /* ================= 14,00–15,00 · LA BOUTEILLE ================= */
+      const mo = MOUTH_LOCAL.x.toFixed(1) + "px " + MOUTH_LOCAL.y.toFixed(1) + "px";
+      tl.fromTo("#ui-a3-btl-go", { scale: 1.9, transformOrigin: mo }, { scale: 1, transformOrigin: mo, duration: 0.45, ease: SP(0.78, 0.45) }, T(13.875));
+      tl.fromTo("#ui-a3-btl-go", { opacity: 0 }, { opacity: 1, duration: 0.1, ease: "power2.out" }, T(13.875));
+      /* elle flotte : houle lente (deux demi-périodes, finies) */
+      tl.fromTo("#ui-a3-btl-go", { y: 0, rotation: 0 }, { y: -4, rotation: 1.4, duration: 0.5, ease: "sine.inOut", immediateRender: false }, T(14.0));
+      tl.fromTo("#ui-a3-btl-go", { y: -4, rotation: 1.4 }, { y: 1, rotation: -0.8, duration: 0.5, ease: "sine.inOut", immediateRender: false }, T(14.5));
+      /* rides qui s'éloignent */
+      [["#ui-a3-rip-b1", "#ui-a3-rip-f1", 13.95], ["#ui-a3-rip-b2", "#ui-a3-rip-f2", 14.3]].forEach(function (r) {
+        tl.fromTo([r[0], r[1]], { scale: 0.8, opacity: 0.9, svgOrigin: "168 92" }, { scale: 1.22, opacity: 0, svgOrigin: "168 92", duration: 1.0, ease: "power1.out" }, T(r[2]));
+      });
+      /* 14,25–14,75 : un reflet balaie le verre et découvre « LKDV » moulé (seul moment où il se lit) */
+      tl.fromTo(["#ui-a3-sweep", "#ui-a3-mask-band"], { attr: { x: -150 } }, { attr: { x: 330 }, duration: 0.5, ease: "power1.inOut" }, T(14.25));
+
+      /* ================= 15,00–16,00 · DÉPART, MINI-GLOBE, BULLE, BALAYAGE ================= */
+      const P0 = { x: 195, y: 210 }, GLB = { x: 318, y: 64 };
+      const eIn = gsap.parseEase("power2.in"), eOut = gsap.parseEase("power2.out");
+      tl.fromTo("#ui-a3-btl-fly", { x: 0, transformOrigin: "168px 70px" }, { x: GLB.x - P0.x, transformOrigin: "168px 70px", duration: 0.35, ease: "power2.in" }, T(15.0));
+      tl.fromTo("#ui-a3-btl-fly", { y: 0 }, { y: GLB.y - P0.y, duration: 0.35, ease: "power2.out" }, T(15.0));
+      tl.fromTo("#ui-a3-btl-fly", { scale: 1, rotation: 0 }, { scale: 0.07, rotation: -24, duration: 0.35, ease: "power2.in" }, T(15.0));
+      /* sillage = le chemin réel du centre de la bouteille, dessiné à la même vitesse (ease d'abscisse curviligne) */
+      const N = 48, pts = [], cum = [0];
+      for (let i = 0; i <= N; i++) {
+        const p = i / N; pts.push([P0.x + (GLB.x - P0.x) * eIn(p), P0.y + (GLB.y - P0.y) * eOut(p)]);
+        if (i) cum.push(cum[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+      }
+      const wd = "M" + pts.map(function (q) { return q[0].toFixed(1) + " " + q[1].toFixed(1); }).join(" L");
+      document.getElementById("ui-a3-wk").setAttribute("d", wd); document.getElementById("ui-a3-wk-u").setAttribute("d", wd);
+      let ed = "M0,0"; for (let i = 1; i <= N; i++) ed += " L" + (i / N).toFixed(4) + "," + (cum[i] / cum[N]).toFixed(4);
+      const wakeEase = CustomEase.create("ui-a3-wake", ed);
+      tl.fromTo(["#ui-a3-wk-u", "#ui-a3-wk"], { strokeDashoffset: 100 }, { strokeDashoffset: 0, duration: 0.35, ease: wakeEase }, T(15.0));
+      tl.fromTo(["#ui-a3-wk-u", "#ui-a3-wk"], { strokeDashoffset: 0 }, { strokeDashoffset: -100, duration: 0.2, ease: "power2.in", immediateRender: false }, T(15.4));
+      /* mini-globe : des dizaines de points s'allument depuis le point d'arrivée */
+      U.springIn(tl, "#ui-a3-glb", T(15.0), { dur: 0.3, from: 0.6 });
+      const gd = document.getElementById("ui-a3-gdots"), NS = "http://www.w3.org/2000/svg", dots = [];
+      for (let i = 0; i < 64; i++) {
+        const lon = (LKDV.hash(i, 301) * 2 - 1) * Math.PI * 0.5, lat = Math.asin(LKDV.hash(i, 302) * 2 - 1) * 0.9;
+        const x = 42 * Math.cos(lat) * Math.sin(lon), y = -42 * Math.sin(lat);
+        const c = document.createElementNS(NS, "circle");
+        c.setAttribute("cx", x.toFixed(2)); c.setAttribute("cy", y.toFixed(2)); c.setAttribute("r", (1.5 + 0.9 * Math.cos(lon) * Math.cos(lat)).toFixed(2)); c.setAttribute("class", "ui-a3-gdot");
+        gd.appendChild(c); dots.push({ el: c, d: Math.hypot(x + 30, y - 30) });
+      }
+      dots.sort(function (p, q) { return p.d - q.d; });
+      tl.fromTo(dots.map(function (d) { return d.el; }), { opacity: 0 }, { opacity: 1, duration: 0.08, ease: "power2.out", stagger: 0.004 }, T(15.2));
+      U.ping(tl, "#ui-a3-gping", T(15.33), 0.4, 1.6);
+      /* équipe + la bulle qui revient remplir le cercle vide */
+      U.springIn(tl, "#ui-a3-team-pill", T(15.25), { dur: 0.25, y: 14 });
+      tl.fromTo("#ui-a3-bub", { x: GLB.x - 273, y: GLB.y - 370, scale: 0.5, opacity: 0 }, { x: 0, y: 0, scale: 1, opacity: 1, duration: 0.15, ease: "power2.inOut" }, T(15.5));
+      tl.fromTo("#ui-a3-bub", { scale: 1, opacity: 1 }, { scale: 1.8, opacity: 0, duration: 0.1, ease: "power2.out", immediateRender: false }, T(15.65));
+      U.springIn(tl, "#ui-a3-team-h", T(15.625), { dur: 0.25, from: 0.4 });
+      /* 15,75–16,00 : balayage filé vers la droite (étirement horizontal = flou de bougé, sans filtre sur le verre) */
+      tl.fromTo(["#ui-a3-glb", "#ui-a3-team-pill"], { x: 0, scaleX: 1 }, { x: 470, scaleX: 1.7, duration: 0.22, ease: "power3.in", immediateRender: false }, T(15.75));
+      tl.fromTo(["#ui-a3-glb", "#ui-a3-team-pill"], { opacity: 1 }, { opacity: 0, duration: 0.08, ease: "power2.in", immediateRender: false }, T(15.88));
+      /* îlot dynamique : arrive dans le sens du balayage, « H » s'allume en sage */
+      tl.fromTo("#ui-a3-isl", { x: -90, scaleX: 1.25, opacity: 0 }, { x: 0, scaleX: 1, opacity: 1, duration: 0.3, ease: SP(0.8, 0.3) }, T(15.75));
+      tl.fromTo("#ui-a3-isl-on", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.2, ease: SP(0.7, 0.2) }, T(15.875));
+      U.popOut(tl, "#ui-a3-isl", T(16.25));
+
+      /* ================= 16,00–18,00 · COLONNES ================= */
+      /* objets du kit par personne : ordre initial → ordre après réordonnancement (17,0). lit = déjà possédé. */
+      const COLS = [
+        { items: [["backpack", 1], ["compass", 1], ["shirt", 0, "location"], ["bed-double", 0, "pret"]], order: [3, 0, 1, 2] },
+        { items: [["backpack", 1], ["map", 1], ["droplet", 0, "occasion"], ["battery", 0, "achat"]], order: [3, 2, 0, 1] },
+        { items: [["backpack", 1], ["flame", 0, "pret"], ["shirt", 0, "location"]], order: [2, 1, 0] },
+        { items: [["backpack", 1], ["thermometer", 0, "pret"], ["sneaker", 0, "occasion"]], order: [2, 0, 1] },
+      ];
+      const COLX = function (c) { return 15 + c * 92; }, SLOTY = function (i) { return 100 + i * 66; };
+      const holder = document.getElementById("ui-a3-citems");
+      let html = "";
+      COLS.forEach(function (col, c) {
+        col.items.forEach(function (it, i) {
+          html += '<i class="lk-item ui-a3-ci' + (it[1] ? " is-on" : "") + '" id="ui-a3-ci' + c + "-" + i + '" style="left:' + (COLX(c) + 15) + "px;top:" + SLOTY(i) + 'px"><span class="lk-ic" data-ic="' + it[0] + '"></span><b class="lk-item__lit"><span class="lk-ic" data-ic="' + it[0] + '"></span></b>' + (c === 0 && i === 3 ? '<span class="ui-a3-hl" id="ui-a3-bag-hl"></span>' : "") + "</i>";
+        });
+      });
+      holder.innerHTML = html;
+      for (let c = 0; c < 4; c++) {
+        const t0 = T(16.0) + c * 0.0625;
+        U.springIn(tl, "#ui-a3-colg" + c, t0, { dur: 0.3, y: 36, from: 0.92 });
+        U.springIn(tl, "#ui-a3-cav" + c, t0 + 0.125, { dur: 0.25, from: 0.5 });
+        U.springIn(tl, "#ui-a3-cpic" + c, t0 + 0.25, { dur: 0.25, from: 0.6 });
+        COLS[c].items.forEach(function (it, i) { U.springIn(tl, "#ui-a3-ci" + c + "-" + i, T(16.5) + c * 0.05 + i * 0.04, { dur: 0.25, from: 0.6 }); });
+      }
+      /* 17,0 : le flocon de Léa s'allume, le trait sage part vers le sac de couchage, qui monte en tête */
+      tl.fromTo("#ui-a3-pic-snow-on", { opacity: 0 }, { opacity: 1, duration: 0.1, ease: "power2.out" }, T(17.0));
+      tl.fromTo(["#ui-a3-tr-u", "#ui-a3-tr"], { strokeDashoffset: 100 }, { strokeDashoffset: 0, duration: 0.15, ease: "power2.out" }, T(17.0));
+      tl.fromTo("#ui-a3-bag-hl", { opacity: 0 }, { opacity: 1, duration: 0.1, ease: "power2.out" }, T(17.1));
+      const RISE = 0.38, rEase = SP(0.8, RISE);
+      tl.fromTo(["#ui-a3-tr-u", "#ui-a3-tr"], { attr: { d: "M74 75 C103 75 103 325 86 325" } }, { attr: { d: "M74 75 C103 75 103 127 86 127" }, duration: RISE, ease: rEase }, T(17.15));
+      COLS.forEach(function (col, c) {
+        col.order.forEach(function (from, to) {
+          if (from === to) return;
+          const st = c === 0 ? (from === 3 ? T(17.15) : T(17.22)) : T(17.0) + c * 0.06 + to * 0.03;
+          tl.fromTo("#ui-a3-ci" + c + "-" + from, { y: 0 }, { y: (to - from) * 66, duration: RISE, ease: rEase, immediateRender: false }, st);
+        });
+      });
+      tl.fromTo(["#ui-a3-tr-u", "#ui-a3-tr"], { opacity: 1 }, { opacity: 0, duration: 0.15, ease: "power2.in", immediateRender: false }, T(17.8));
+      /* sous le sac : 10 points, 8 pleins (kit éprouvé) */
+      tl.fromTo("#ui-a3-dots > i", { opacity: 0, scale: 0.3 }, { opacity: 1, scale: 1, duration: 0.15, ease: SP(0.7, 0.15), stagger: 0.025 }, T(17.5));
+
+      /* ================= 18,00–22,00 · GRILLE DES 38 ================= */
+      /* 24 autres objets du groupe (tente de Marc en tête), provenance fixe */
+      const OTHERS = [["tent", "pret"], ["bed-double", "pret"], ["sneaker", "occasion"], ["shirt", "location"], ["bed-double", "pret"], ["battery", "achat"], ["flame", "pret"], ["sneaker", "occasion"],
+        ["droplet", "pret"], ["shirt", "location"], ["compass", "pret"], ["backpack", "occasion"], ["bed-double", "pret"], ["battery", "achat"], ["map", "pret"], ["watch", "location"],
+        ["sneaker", "occasion"], ["thermometer", "pret"], ["map", "achat"], ["satellite", "pret"], ["droplet", "occasion"], ["flame", "location"], ["backpack", "pret"], ["compass", "achat"]];
+      const KMAP = [0, 2, 3, 5];
+      const cells = new Array(38);
+      COLS.forEach(function (col, c) {
+        col.order.forEach(function (from, r) {
+          const it = col.items[from];
+          cells[r * 6 + KMAP[c]] = { ic: it[0], lit: !!it[1], kind: it[2] || null, from: { c: c, slot: r } };
+        });
+      });
+      let oi = 0;
+      for (let i = 0; i < 38; i++) if (!cells[i]) { cells[i] = { ic: OTHERS[oi][0], lit: false, kind: OTHERS[oi][1], from: null }; oi++; }
+      const g38 = document.getElementById("ui-a3-g38");
+      g38.innerHTML = cells.map(function (cl, i) {
+        return '<i class="lk-item' + (cl.lit ? " is-on" : "") + '" id="ui-a3-gi' + i + '"><span class="lk-ic" data-ic="' + cl.ic + '"></span><b class="lk-item__lit"><span class="lk-ic" data-ic="' + cl.ic + '"></span></b>' + (cl.kind ? U.provHTML(cl.kind) : "") + "</i>";
+      }).join("");
+      const gi = function (i) { return document.getElementById("ui-a3-gi" + i); };
+      const GX = 49.4, GY = 59, GS = 0.8;
+      /* la carte de verre naît de l'enveloppe des 4 colonnes (raccord de forme) */
+      tl.fromTo("#ui-a3-gcard", { scaleX: 360 / 315, scaleY: 334 / 372, y: (30 + 167) - (48 + 186), transformOrigin: "50% 50%" },
+        { scaleX: 1, scaleY: 1, y: 0, transformOrigin: "50% 50%", duration: 0.35, ease: SP(0.8, 0.35) }, T(18.0));
+      tl.fromTo("#ui-a3-gcard", { opacity: 1 }, { opacity: 1, duration: 0.01 }, T(18.0));
+      const others = [];
+      cells.forEach(function (cl, i) {
+        const r = Math.floor(i / 6), k = i % 6;
+        if (cl.from) {
+          const px = COLX(cl.from.c) + 15, py = SLOTY(cl.from.slot);
+          tl.fromTo(gi(i), { x: (px - GX) / GS - k * 62, y: (py - GY) / GS - r * 64, scale: 1 / GS, transformOrigin: "0px 0px" },
+            { x: 0, y: 0, scale: 1, transformOrigin: "0px 0px", duration: 0.4, ease: SP(0.82, 0.4) }, T(18.0) + r * 0.02);
+        } else others.push(i);
+      });
+      others.forEach(function (i, n) {
+        tl.fromTo(gi(i), { scale: 0.4, opacity: 0, transformOrigin: "50% 50%" }, { scale: 1, opacity: 1, transformOrigin: "50% 50%", duration: 0.25, ease: SP(0.75, 0.25) }, T(18.1) + n * 0.011);
+      });
+      /* « 6 / 38 » : sort avant 19,0 */
+      U.springIn(tl, "#ui-a3-c6", T(18.125), { dur: 0.25, from: 0.7 });
+      U.popOut(tl, "#ui-a3-c6", T(18.75));
+      /* 19,0 : vague SAGE — la tente arrive depuis l'avatar M (2,1 km) */
+      U.springIn(tl, "#ui-a3-mav", T(18.875), { dur: 0.25, from: 0.5 });
+      U.springIn(tl, "#ui-a3-mkm", T(18.95), { dur: 0.25, x: -16 });
+      const TENT = cells.findIndex(function (cl) { return cl.ic === "tent"; });
+      const tc = { x: GX + GS * ((TENT % 6) * 62 + 27), y: GY + GS * (Math.floor(TENT / 6) * 64 + 27) };
+      const mc = { x: 37 + 22, y: -1 + 22 };
+      tl.fromTo("#ui-a3-tentfly", { x: mc.x - tc.x, y: mc.y - tc.y, scale: 0.5, opacity: 0 }, { x: 0, y: 0, scale: GS, opacity: 1, duration: 0.22, ease: "power2.inOut" }, T(19.0));
+      tl.fromTo("#ui-a3-tentfly", { opacity: 1 }, { opacity: 0, duration: 0.05, immediateRender: false }, T(19.22));
+      const byKind = function (k) { return cells.map(function (cl, i) { return cl.kind === k && !cl.lit ? i : -1; }).filter(function (i) { return i >= 0 && i !== TENT; }); };
+      const sage = byKind("pret");
+      const waves = [sage.slice(0, 3), sage.slice(3, 7), sage.slice(7, 10), sage.slice(10)];
+      U.lightUp(tl, [gi(TENT)], T(19.2), { dur: 0.15 });
+      waves.forEach(function (w, n) { U.lightUp(tl, w.map(gi), T(19.0) + n * 0.25, { dur: 0.15, stagger: 0.03 }); });
+      U.springIn(tl, "#ui-a3-wb-pret", T(19.0), { dur: 0.25, from: 0.5 });
+      U.popOut(tl, "#ui-a3-mav", T(19.875)); U.popOut(tl, "#ui-a3-mkm", T(19.875));
+      /* 20,0 ambre · 20,25 bleu · 20,5 Stone · 20,75 libre */
+      [["occasion", "#ui-a3-wb-occ", 20.0], ["location", "#ui-a3-wb-loc", 20.25], ["achat", "#ui-a3-wb-ach", 20.5]].forEach(function (w) {
+        U.lightUp(tl, byKind(w[0]).map(gi), T(w[2]), { dur: 0.15, stagger: 0.025 });
+        U.springIn(tl, w[1], T(w[2]), { dur: 0.22, from: 0.5 });
+      });
+      U.popOut(tl, "#ui-a3-wb-pret", T(19.94), { dur: 0.06 });
+      U.popOut(tl, "#ui-a3-wb-occ", T(20.19), { dur: 0.06 });
+      U.popOut(tl, "#ui-a3-wb-loc", T(20.44), { dur: 0.06 });
+      U.popOut(tl, "#ui-a3-wb-ach", T(20.75));
+      /* 21,0 : grille entièrement allumée, onde de lumière en diagonale, « 38 / 38 » */
+      tl.fromTo("#ui-a3-onde", { x: -630, opacity: 1 }, { x: 315, opacity: 1, duration: 0.6, ease: "power1.inOut" }, T(21.0));
+      U.springIn(tl, "#ui-a3-c38", T(21.0), { dur: 0.28, from: 0.6 });
+      /* 21,75 : tout se disperse vers les bords */
+      U.popOut(tl, "#ui-a3-c38", T(21.75), { dur: 0.15 });
+      U.popOut(tl, "#ui-a3-gcard", T(21.75), { dur: 0.15, to: 1.08 });
+      cells.forEach(function (cl, i) {
+        const r = Math.floor(i / 6), k = i % 6, vx = k * 62 + 27 - 182, vy = r * 64 + 27 - 219, L = Math.hypot(vx, vy) || 1;
+        const push = 260 + 0.6 * L;
+        tl.fromTo(gi(i), { x: 0, y: 0 }, { x: vx / L * push, y: vy / L * push, duration: 0.22, ease: "power3.in", immediateRender: false }, T(21.75));
+        tl.fromTo(gi(i), { opacity: 1 }, { opacity: 0, duration: 0.1, ease: "power2.in", immediateRender: false }, T(21.85));
+      });
+
+      /* ================= 22,00–23,00 · RIEN (plan héros) ================= */
+
+      /* ================= 23,00–24,00 · ÉTIQUETTE → ANNEAU ================= */
+      const RING = { cx: C.x + C.w / 2, cy: F.H * 468 / 1080, r: 150 * C.scale, sw: 14 * C.scale };
+      const D = 2 * RING.r + RING.sw + 4;
+      const rw = document.getElementById("ui-a3-ringw"), rs = document.getElementById("ui-a3-ringsvg"), rc = document.getElementById("ui-a3-ring");
+      rw.style.left = (RING.cx - D / 2) + "px"; rw.style.top = (RING.cy - D / 2) + "px"; rw.style.width = D + "px"; rw.style.height = D + "px";
+      rs.setAttribute("viewBox", "0 0 " + D + " " + D);
+      rc.setAttribute("cx", D / 2); rc.setAttribute("cy", D / 2); rc.setAttribute("r", RING.r); rc.setAttribute("stroke-width", RING.sw);
+      const TAG = { x: C.x + 195 * s, y: C.y + (TAG_TOP + 26) * s };   /* centre réel de l'étiquette */
+      const LIFT = 24;                                                   /* montée logique pendant le premier quart de tour */
+      U.springIn(tl, "#ui-a3-tag", T(23.0), { dur: 0.25, from: 0.5 });
+      tl.fromTo("#ui-a3-tag", { rotation: 0, y: 0 }, { rotation: -12, y: -LIFT, duration: 0.375, ease: "power1.inOut", immediateRender: false }, T(23.0));
+      tl.fromTo("#ui-a3-tag", { rotationY: 0, transformPerspective: 400 }, { rotationY: 90, transformPerspective: 400, duration: 0.25, ease: "power2.in" }, T(23.125));
+      tl.set("#ui-a3-tag", { opacity: 0 }, T(23.375));
+      tl.set("#ui-a3-ringw", { opacity: 0 }, 0);
+      tl.set("#ui-a3-ringw", { opacity: 1 }, T(23.375));
+      const k0 = (26 * s) / RING.r, RDUR = 0.525;
+      tl.fromTo("#ui-a3-ringw", { x: TAG.x - RING.cx, y: TAG.y - LIFT * s - RING.cy }, { x: 0, y: 0, duration: RDUR, ease: "power2.inOut" }, T(23.375));
+      tl.fromTo("#ui-a3-ringw", { scale: k0 }, { scale: 1, duration: RDUR, ease: "power2.in" }, T(23.375));
+      tl.fromTo("#ui-a3-ringw", { rotationY: 90, rotation: -12, transformPerspective: 900 }, { rotationY: 360, rotation: 0, transformPerspective: 900, duration: RDUR, ease: "power2.out" }, T(23.375));
+      tl.set("#ui-a3-ringw", { rotationY: 0, rotation: 0, scale: 1, x: 0, y: 0 }, T(23.9));
+
+      tl.to({}, { duration: 11 }, 0);
       window.__timelines["ui-a3"] = tl;
     })();
   </script>

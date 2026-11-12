@@ -49,10 +49,11 @@
     "uniform sampler2D uDay,uNight,uCloud,uPatch,uMoonTex,uPatchCl;",
     "uniform vec4 uPatchBox; uniform float uPatchMix;",
     "uniform float uState,uT,uCity,uCloudAmt,uCloudShift,uAtmo,uAlpha,uBg,uStars,uSunGlow,uSunVis,uLavaGlow,uDust,uDetail,uSpec,uExpo,uImpact;",
-    "uniform vec3 uImpactP; uniform vec4 uMoon; uniform float uMoonA;",
+    "uniform vec3 uImpactP; uniform vec4 uMoon; uniform float uMoonA; uniform vec3 uE0,uN0; uniform float uBand, uOceanGrade;",
     "const float PI=3.14159265;",
     "vec2 llUV(vec3 p){ return vec2(atan(p.x,p.z)/(2.*PI)+.5, asin(clamp(p.y,-1.,1.))/PI+.5); }",
     "vec4 texLL(sampler2D s, vec2 uv){ vec2 dx=dFdx(uv), dy=dFdy(uv); dx.x-=floor(dx.x+.5); dy.x-=floor(dy.x+.5); return textureGrad(s,uv,dx,dy); }",
+    "float ocean0(vec3 dc){ return smoothstep(.02,.06,dc.b-max(dc.r,dc.g)*.85)*(1.-smoothstep(.25,.4,dc.r+dc.g)); }",
     "vec3 lin(vec3 c){ return c*c*(c*.2+.8); }", /* ≈ sRGB → linéaire, bon marché */
     "vec3 srgb(vec3 c){ c=max(c,0.); return sqrt(c)*1.04-c*0.04; }",
     "float sphere(vec3 ro, vec3 rd, vec3 c, float r, out float tn){ vec3 oc=ro-c; float b=dot(oc,rd), q=dot(oc,oc)-r*r, h=b*b-q; tn=-1.; if(h<0.) return -1.; h=sqrt(h); tn=-b-h; return h; }",
@@ -91,7 +92,7 @@
     /* Terre */
     "  if(hitE){ vec3 P=uCam+rd*tE; vec3 N=P; vec3 V=-rd; vec2 uv=llUV(N);",
     "    float ndl=dot(N,uSun); float day=smoothstep(-.12,.18,ndl); float lam=max(ndl,0.);",
-    "    vec3 surf; vec3 emit=vec3(0.); float ocean=0.; float cl=0.;",
+    "    vec3 surf; vec3 emit=vec3(0.); float ocean=0.; float cl=0.; float cl2=0.;",
     "#ifdef EVO",
     "    if(uState<3.999){",
     "      vec3 q=N*2.6; float sw=uT*.6; float s=uState;",
@@ -118,13 +119,16 @@
     "        vec2 pu=vec2((lon-uPatchBox.x)/(uPatchBox.z-uPatchBox.x),(lat-uPatchBox.y)/(uPatchBox.w-uPatchBox.y));",
     "        float e=min(min(pu.x,1.-pu.x)*7.,min(pu.y,1.-pu.y)*4.); float w=smoothstep(0.,1.,e)*uPatchMix;",
     "        if(w>0.) dc=mix(dc,texture(uPatch,pu).rgb,w); }",
-    "      surf=lin(dc);",
+    "      dc=mix(dc,dc*vec3(.75,1.05,1.0)+vec3(.0,.035,.045),ocean0(dc)*uOceanGrade); surf=lin(dc);",
     "      ocean=smoothstep(.02,.06,dc.b-max(dc.r,dc.g)*.85)*(1.-smoothstep(.25,.4,dc.r+dc.g));",
     "    }",
     /* nuages */
     "    if(uCloudAmt>0.){ vec2 cu=uv+vec2(uCloudShift,0.); vec4 cm=texLL(uCloud,cu); float cov=cm.r;",
-    "      if(uDetail>0.){ cov+=(fbm(N*900.+vec3(0.,0.,uT*.02),3)-.5)*.35*uDetail; }",
-    "      cov=cov*.62+cm.g*.55-.12; cl=smoothstep(1.-uCloudAmt,1.-uCloudAmt+.13,cov)*(.45+.55*smoothstep(.35,.75,cm.g)); }",
+    "      if(uBand>0.){ vec2 lp=vec2(dot(N,uE0),dot(N,uN0))*42.5; lp=mat2(.82,.57,-.57,.82)*lp+vec2(uT*.08,0.);",
+    "        float b=vn(vec3(lp.x*.32,lp.y*1.7,uT*.05))*.55+vn(vec3(lp.x*1.1,lp.y*2.8,4.))*.27+vn(vec3(lp*4.5,uT*.1))*.12+vn(vec3(lp*12.,2.))*.06;",
+    "        float fine=(vn(vec3(lp*28.,1.))-.5)*.16+(vn(vec3(lp*70.,5.))-.5)*.09; cov=mix(cov,b*1.3-.12+fine,uBand); cm.g=mix(cm.g,.25+b*.5+fine*2.,uBand); }",
+    "      if(uDetail>0.){ cov+=(fbm(N*900.+vec3(0.,0.,uT*.02),3)-.5)*.15*uDetail; }",
+    "      cov=cov*.62+cm.g*.55-.12; cl=smoothstep(1.-uCloudAmt,1.-uCloudAmt+.15,cov)*(.45+.55*smoothstep(.35,.75,cm.g)); cl2=smoothstep(1.-uCloudAmt+.05,1.-uCloudAmt+.35,cov); }",
     /* éclairage */
     "    vec3 lit=surf*(lam*1.25+.02)*day;",
     "    float term=smoothstep(-.1,.05,ndl)*(1.-smoothstep(.05,.35,ndl));",
@@ -134,7 +138,7 @@
     "    if(uCity>0.){ vec3 nc=texture(uNight,uv).rgb; float lum=dot(nc,vec3(.3,.55,.15));",
     "      float lights=smoothstep(.20,.75,lum)*1.6; float moon=lum*.10;",
     "      lit+=(vec3(1.,.72,.38)*lights+vec3(.25,.35,.55)*moon)*(1.-day)*uCity*(1.-cl*.8); }",
-    "    vec3 cc=vec3(1.)*(lam*1.15+.015)*day+vec3(1.,.5,.25)*term*.25+vec3(.03,.04,.06)*(1.-day);",
+    "    vec3 cc=vec3(1.)*(.62+.38*cl2)*(lam*1.15+.015)*day+vec3(1.,.5,.25)*term*.25+vec3(.03,.04,.06)*(1.-day);",
     "    lit=mix(lit,cc,cl*.88);",
     "    lit+=emit;",
     "    float fr=pow(1.-max(dot(N,V),0.),3.);",
@@ -350,10 +354,11 @@
     f1("uState", p.state == null ? 4 : p.state); f1("uT", p.t || 0); f1("uCity", p.city || 0); f1("uCloudAmt", p.cloud || 0); f1("uCloudShift", p.cloudShift || 0);
     f1("uAtmo", p.atmo == null ? 1 : p.atmo); f1("uAlpha", p.alpha == null ? 1 : p.alpha); f1("uBg", bg); f1("uStars", p.stars == null ? 1 : p.stars);
     f1("uSunGlow", p.sunGlow || 0); f1("uSunVis", p.sunVis == null ? 1 : p.sunVis); f1("uLavaGlow", p.lavaGlow || 0); f1("uDust", p.dust || 0); f1("uDetail", p.detail || 0);
-    f1("uSpec", p.spec == null ? 1 : p.spec); f1("uExpo", p.expo == null ? 1 : p.expo); f1("uImpact", p.impact || 0);
+    f1("uSpec", p.spec == null ? 1 : p.spec); f1("uExpo", p.expo == null ? 1 : p.expo); f1("uImpact", p.impact || 0); f1("uBand", p.band || 0); f1("uOceanGrade", p.oceanGrade || 0);
+    if (u.uE0) { var ib = p.bandAt || [E.ICELAND.lat, E.ICELAND.lon], ba = ib[0] * D2R, bb = ib[1] * D2R; gl.uniform3fv(u.uE0, [Math.cos(bb), 0, -Math.sin(bb)]); gl.uniform3fv(u.uN0, [-Math.sin(ba) * Math.sin(bb), Math.cos(ba), -Math.sin(ba) * Math.cos(bb)]); }
     if (u.uImpactP) gl.uniform3fv(u.uImpactP, p.impactP || [0, 0, 1]);
     if (u.uMoon) gl.uniform4fv(u.uMoon, p.moon || [0, 0, 0, 0]); f1("uMoonA", p.moonA || 0);
-    if (target) gl.disable(gl.BLEND); else { gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA); }
+    if (target && bg !== -1) gl.disable(gl.BLEND); else { gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA); }
     if (scis) { gl.enable(gl.SCISSOR_TEST); gl.scissor(scis[0], scis[1], scis[2], scis[3]); }
     C.quad();
     gl.disable(gl.SCISSOR_TEST); gl.enable(gl.BLEND);

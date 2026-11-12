@@ -19,7 +19,7 @@
     var A = G.mix(G.AURORA, {}, 0);
     var tilt = 0.55 * Math.max(T_NEB - t, 0);                       // la caméra bascule vers le haut : le ciel descend
     A.camY = tilt;
-    A.curtY = -0.62 + tilt * 0.9;
+    A.curtY = -0.80 + tilt * 0.75;
     A.drift = (t - T_LOOP) * 0.14;
     A.extra = 0.15 + 0.85 * sstep(57.9, 58.7, t);
     var k = sstep(T_OPAQUE, T_NEB, t);

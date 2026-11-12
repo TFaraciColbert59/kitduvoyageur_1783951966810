@@ -8,7 +8,7 @@
   "use strict";
   var LK = window.LKDV, CO = LK.cosmos, G = CO.gas;
   var T_WAVE = 0.75, T_SUN = 1.5, T_RACCORD = 2.0, T_END = 2.25;
-  var NP = 60000;                         // particules du disque
+  var NP = 40000;                         // grains du disque (60 000 visés : 40 000 pour tenir le budget SwiftShader)
   var K = 0.8;                            // rotation képlérienne adoucie : ω = K / (r^1.5 + 0.04)
   var GAPS = [0.34, 0.56, 0.80];          // sillons (orbites des futures planètes) ; 0.34 = proto-Terre
   var R_E = GAPS[0], A_E = 2.35;          // orbite et phase de la proto-Terre
@@ -111,7 +111,7 @@
     "  float h8 = h01(u, 18u), h9 = h01(u, 19u), h1 = h01(u, 11u);",
     "  float rad = (0.9 + 1.2*h8*h8)*s*clamp(1.6/max(a.z, 0.05), 0.6, 6.0);",
     "  vec2 dv = pa - pb; float len = length(dv); vec2 dir = len > 1e-3 ? dv/len : vec2(1.0, 0.0);",
-    "  len = min(len, 400.0*s);",
+    "  len = min(len, 140.0*s);",
     "  vec2 nrm = vec2(-dir.y, dir.x);",
     "  float ext = rad*2.5 + 1.0;",
     "  vec2 cv = vec2(cn==1||cn==2||cn==4 ? 1.0 : -1.0, cn==2||cn==4||cn==5 ? 1.0 : -1.0);",
@@ -164,6 +164,19 @@
     "  float a = clamp(dens*1.6*thick + lanes*0.5, 0.0, 1.0)*uA;",
     "  col = vec3(1.0) - exp(-col);",
     "  o = vec4(toSRGB(col)*uA, a);",
+    "}",
+  ].join("\n");
+
+  /* agrandissement bicubique (B-spline) d'une cible déjà en alpha prémultiplié */
+  var FS_UP = "#version 300 es\n" + G.GLSL + "\n" + [
+    "in vec2 vUv; out vec4 o; uniform sampler2D uT; uniform vec2 uView, uSrc;",
+    "void main(){",
+    "  vec2 st = gl_FragCoord.xy/uView*uSrc - 0.5; vec2 i = floor(st); vec2 f = st - i;",
+    "  vec2 w0 = (1.0/6.0)*(-f*f*f + 3.0*f*f - 3.0*f + 1.0), w1 = (1.0/6.0)*(3.0*f*f*f - 6.0*f*f + 4.0);",
+    "  vec2 w2 = (1.0/6.0)*(-3.0*f*f*f + 3.0*f*f + 3.0*f + 1.0), w3 = (1.0/6.0)*f*f*f;",
+    "  vec2 s0 = w0 + w1, s1 = w2 + w3; vec2 t0 = (i - 0.5 + w1/s0)/uSrc, t1 = (i + 1.5 + w3/s1)/uSrc;",
+    "  float kx = s0.x/(s0.x + s1.x), ky = s0.y/(s0.y + s1.y);",
+    "  o = mix(mix(texture(uT, vec2(t1.x, t1.y)), texture(uT, vec2(t0.x, t1.y)), kx), mix(texture(uT, vec2(t1.x, t0.y)), texture(uT, vec2(t0.x, t0.y)), kx), ky);",
     "}",
   ].join("\n");
 
@@ -235,9 +248,9 @@
     "}",
     "void main(){",
     "  vec4 acc = vec4(0.0);",
-    "  for (int k = 0; k < 8; k++) { float f = (float(k) + 0.5)/8.0; vec4 P = mix(uP0, uP1, f); vec4 s = planet(gl_FragCoord.xy, P);",
+    "  for (int k = 0; k < 6; k++) { float f = (float(k) + 0.5)/6.0; vec4 P = mix(uP0, uP1, f); vec4 s = planet(gl_FragCoord.xy, P);",
     "    acc += vec4(s.rgb*s.a, s.a); }",
-    "  acc /= 8.0;",
+    "  acc /= 6.0;",
     "  vec3 c = vec3(1.0) - exp(-acc.rgb/max(acc.a, 1e-4)*1.3);",
     "  o = vec4(toSRGB(c)*acc.a, acc.a);",
     "}",
@@ -268,6 +281,9 @@
         S.sun = C.program(C.VS_QUAD, FS_SUN);
         S.pl = C.program(C.VS_QUAD, FS_PL);
         S.vao = C.gl.createVertexArray();
+        S.up = C.program(C.VS_QUAD, FS_UP);
+        S.dt = C.target(Math.round(C.W * 0.5), Math.round(C.H * 0.5));
+        S.p.p.__n = "grains"; S.disk.p.__n = "disque"; S.sun.p.__n = "soleil"; S.pl.p.__n = "planetes"; S.up.p.__n = "agrandit";
       });
     },
     draw: function (C, t) {
@@ -299,16 +315,24 @@
       var tauv = tau(t), gap = sstep(1.5, 1.9, t);
 
       /* 2. gaz du disque */
-      var dA = sstep(1.05, 1.50, t) * (1 - 0.8 * sstep(1.70, 2.05, t));
+      var dA = sstep(1.05, 1.50, t) * (1 - sstep(1.72, 2.04, t));
       if (dA > 0) {
         var d = S.disk, u = d.u; gl.useProgram(d.p); G.bindNoise(d);
         gl.uniform2f(u.uView, C.W, C.H); gl.uniform1f(u.uMin, mn); gl.uniform1f(u.uF, cam.f);
         gl.uniform1f(u.uTau, tauv); gl.uniform1f(u.uK, K); gl.uniform1f(u.uA, dA);
         gl.uniform1f(u.uGap, gap); gl.uniform1f(u.uHot, sstep(1.3, 1.5, t) * (1 - sstep(1.75, 1.95, t)));
         gl.uniform3f(u.uGaps, GAPS[0], GAPS[1], GAPS[2]);
-        camUniforms(gl, u, cam); C.quad();
+        camUniforms(gl, u, cam);
+        C.bind(S.dt); gl.disable(gl.BLEND); gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.uniform2f(u.uView, S.dt.w, S.dt.h); gl.uniform1f(u.uMin, Math.min(S.dt.w, S.dt.h));
+        C.quad();
+        C.bind(null); gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+        gl.useProgram(S.up.p);
+        gl.activeTexture(gl.TEXTURE5); gl.bindTexture(gl.TEXTURE_2D, S.dt.tex); gl.uniform1i(S.up.u.uT, 5); gl.activeTexture(gl.TEXTURE0);
+        gl.uniform2f(S.up.u.uView, C.W, C.H); gl.uniform2f(S.up.u.uSrc, S.dt.w, S.dt.h);
+        C.quad();
       }
-      /* 3. grains du disque (60 000) */
+      /* 3. grains du disque */
       var pA = sstep(0.82, 1.10, t);
       if (pA > 0) {
         var p = S.p, up = p.u; gl.useProgram(p.p);
@@ -324,6 +348,8 @@
       var glow = sstep(1.05, 1.5, t) * (t < T_SUN ? 0.25 + 0.75 * sstep(1.3, 1.5, t) : 1.0);
       var spike = t < T_SUN ? 0 : (380 * Math.exp(-(t - T_SUN) / 0.35) + 140) * (1 - sstep(1.9, 2.15, t));
       var E = earthPos(t), ep = project(cam, E), eA = t < T_RACCORD ? sstep(1.55, 1.80, t) : 0;
+      var sunOn = sp[2] > 0.02 && glow > 0, earthOn = ep[2] > 0.02 && eA > 0;
+      if (sunOn || earthOn) {
       var s = S.sun, us = s.u; gl.useProgram(s.p);
       gl.uniform2f(us.uView, C.W, C.H); gl.uniform1f(us.uMin, mn);
       gl.uniform3f(us.uSun, sp[0] * mn + C.W / 2, sp[1] * mn + C.H / 2, sp[2] > 0.02 && glow > 0 ? 1 : 0);
@@ -331,6 +357,7 @@
       gl.uniform1f(us.uRot, 0.18 + 0.2 * (t - T_SUN));
       gl.uniform4f(us.uEarth, ep[0] * mn + C.W / 2, ep[1] * mn + C.H / 2, EARTH_R * cam.f / Math.max(ep[2], 1e-3) * mn, ep[2] > 0.02 ? eA : 0);
       C.quad();
+      }
       /* 5. Saturne et Jupiter, en flou de mouvement */
       var lx = sp[0], ly = sp[1];
       for (var kind = 1; kind >= 0; kind--) {
