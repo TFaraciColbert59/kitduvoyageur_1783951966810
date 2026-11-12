@@ -61,7 +61,15 @@ export function evaluateOffRoute(
   };
 }
 
-/** Libellé de la carte du haut quand on est hors trace. */
-export function offRouteLabel(distanceM: number): string {
+/**
+ * Libellé de la carte du haut quand on est hors trace.
+ *
+ * `offRouteM` (distance à la trace) est distinct de `distanceM` (distance
+ * parcourue). Une valeur absente ou non finie ne doit pas afficher « 0 m ».
+ */
+export function offRouteLabel(distanceM?: number | null): string {
+  if (typeof distanceM !== 'number' || !Number.isFinite(distanceM)) {
+    return 'Hors itinéraire';
+  }
   return `Hors itinéraire · ${Math.round(distanceM)} m`;
 }

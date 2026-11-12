@@ -87,15 +87,17 @@ export function useGpsTracker({ distanceToRouteM, onFix }: TrackerOptions = {}) 
     }));
 
     if (distanceToRouteM) {
+      // Une nouvelle borne (trou, rejet, pause manuelle, saut d'horloge) ne
+      // doit pas être comparée aux mesures de l'époque précédente. Le reset
+      // précède la mesure : même si la distance est indisponible (`null`,
+      // worker pas prêt, route non chargée), l'ancien buffer ne doit pas
+      // resservir et déclencher une alerte fictive au fix suivant.
+      if (metrics.discontinuity) {
+        samplesRef.current = [];
+        offRouteRef.current = { ...offRouteRef.current, outSinceS: 0 };
+      }
       const distance = distanceToRouteM(fix);
       if (distance !== null) {
-        // Une nouvelle borne (trou, rejet, pause manuelle, saut d'horloge) ne
-        // doit pas être comparée aux mesures de l'époque précédente : on vide
-        // le buffer sans annoncer un retour fictif si l'alerte était active.
-        if (metrics.discontinuity) {
-          samplesRef.current = [];
-          offRouteRef.current = { ...offRouteRef.current, outSinceS: 0 };
-        }
         // Le tracker expose un instant corrigé et monotone. `fix.t` peut avoir
         // reculé ou sauté ; l'utiliser ici fausserait `outSinceS` et pourrait
         // déclencher l'alerte immédiatement après un saut avant.
@@ -107,17 +109,29 @@ export function useGpsTracker({ distanceToRouteM, onFix }: TrackerOptions = {}) 
         const next = evaluateOffRoute(samplesRef.current, offRouteRef.current);
         const wasOff = offRouteRef.current.offRoute;
         offRouteRef.current = next;
+        useExplorerStore.setState((state) => ({
+          activity: state.activity
+            ? {
+                ...state.activity,
+                offRoute: next.offRoute,
+                // La bannière affiche la distance à la trace, jamais la
+                // distance parcourue de l'activité.
+                offRouteM: next.distanceM,
+              }
+            : undefined,
+          ...(next.offRoute !== wasOff
+            ? {
+                toast: {
+                  id: Date.now(),
+                  title: next.offRoute ? 'Hors itinéraire' : 'De retour sur la trace',
+                  sub: `${Math.round(next.distanceM)} m`,
+                  tone: next.offRoute ? 'warn' : 'good',
+                },
+              }
+            : {}),
+        }));
         if (next.offRoute !== wasOff) {
           haptic(next.offRoute ? 'off-route' : 'back-on-route');
-          useExplorerStore.setState((state) => ({
-            activity: state.activity ? { ...state.activity, offRoute: next.offRoute } : undefined,
-            toast: {
-              id: Date.now(),
-              title: next.offRoute ? 'Hors itinéraire' : 'De retour sur la trace',
-              sub: `${Math.round(next.distanceM)} m`,
-              tone: next.offRoute ? 'warn' : 'good',
-            },
-          }));
         }
       }
     }

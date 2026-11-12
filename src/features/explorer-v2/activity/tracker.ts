@@ -10,8 +10,10 @@
  *     sport quand celui-ci est plus lent (kayak, escalade) ;
  *   - un saut de plus de 100 m en moins de 2 s est rejeté (perte de fix) ;
  *   - une vitesse implicite supérieure au maximum plausible du sport est
- *     rejetée même si le trou dure plus de 2 s : la règle ne dépend donc pas
- *     de `maxFixGapS`.
+ *     rejetée même si le trou dure plus de 2 s et moins que `maxFixGapS`.
+ *   - au-delà de `maxFixGapS`, l'intervalle est une inconnue : la position
+ *     courante devient une nouvelle borne, sans distance ni durée, même quand
+ *     l'auto-pause est désactivée. Le tracé est toujours coupé.
  *
  * Auto-pause (S1.05)
  * ------------------
@@ -47,9 +49,10 @@
  * murale **prouvé** : distance incohérente avec la vitesse rapportée, ou écart
  * mesure/réception important alors que la réception a réellement pris du temps
  * (un lot de fixes livré en quelques millisecondes reste une rafale). Un `t`
- * qui recule est d'abord traité comme un fix périmé ; deux mesures consécutives
- * dans la nouvelle époque prouvent un saut d'horloge et rebasent le curseur
- * sans geler l'activité.
+ * qui recule est d'abord traité comme un fix périmé ; trois mesures consécutives
+ * et croissantes dans une époque plus ancienne prouvent un saut d'horloge et
+ * rebasent le curseur sans geler l'activité. Deux fixes périmés d'un buffer ne
+ * suffisent donc plus à faire reculer la carte.
  *
  * Seuils : base historique de `TrackingEngine` (0,5 km/h pendant 120 s) et
  * `MIN_MOVING_SPEED_MS` (0,3 m/s) pour le temps en mouvement. Les profils
@@ -91,8 +94,9 @@ export interface GpsFix {
 export interface AutoPauseConfig {
   /**
    * Active la détection. `false` coupe l'arrêt/reprise automatique ; les
-   * métriques gardent l'accumulation historique, hors fixes invraisemblables
-   * (la plausibilité GPS reste appliquée).
+   * métriques gardent l'accumulation historique sous `maxFixGapS`, hors fixes
+   * invraisemblables (la plausibilité GPS reste appliquée). Au-delà de
+   * `maxFixGapS`, le trou reste une nouvelle borne sans distance ni durée.
    */
   enabled: boolean;
   /** Vitesse à laquelle un fix est considéré comme arrêté (m/s). */
@@ -233,10 +237,12 @@ const DEFAULT_AUTO_PAUSE = profile(0.139, 120, MIN_MOVING_SPEED_MS, 5, 120, DEFA
 
 /**
  * Configuration inactive : détection coupée, seuils de plausibilité génériques.
- * L'accumulation des métriques reste celle de l'historique ; seuls les fixes
- * non finis ou invraisemblables sont rejetés. La règle « premier fix après un
- * rejet = nouvelle borne » continue de s'appliquer, même sur un trou long :
- * elle évite de compter un intervalle non prouvé.
+ * L'accumulation des métriques reste celle de l'historique sous `maxFixGapS` ;
+ * seuls les fixes non finis ou invraisemblables sont rejetés. Au-delà de
+ * `maxFixGapS`, le trou est une nouvelle borne sans distance ni durée. La
+ * règle « premier fix après un rejet = nouvelle borne » continue de
+ * s'appliquer, même sur un trou long : elle évite de compter un intervalle
+ * non prouvé.
  */
 export const AUTO_PAUSE_DISABLED: ResolvedAutoPauseConfig = {
   ...DEFAULT_AUTO_PAUSE,
@@ -346,8 +352,14 @@ export class ActivityTracker {
   /** Décalage appliqué à `t` après un saut d'horloge murale (ms). */
   private clockShiftMs = 0;
 
-  /** Premier `t` observé dans une époque plus ancienne (candidat saut). */
+  /** Dernier `t` observé dans une époque plus ancienne (candidat saut). */
   private backwardCandidateTMs: number | null = null;
+
+  /** Nombre de mesures consécutives dans cette époque basse. */
+  private backwardCandidateCount = 0;
+
+  /** Réception du premier fix de l'époque basse, pour écarter une rafale. */
+  private backwardCandidateReceivedAtMs: number | null = null;
 
   constructor(config: Partial<AutoPauseConfig> = AUTO_PAUSE_DISABLED) {
     this.config = normalizeConfig(config);
@@ -408,24 +420,43 @@ export class ActivityTracker {
     if (fix.t <= previous.t) {
       const backwardsMs = previous.t - fix.t;
       const candidate = this.backwardCandidateTMs;
-      if (
+      const continuesLowerEpoch =
         backwardsMs > BACKWARD_CLOCK_TOLERANCE_MS &&
         candidate !== null &&
-        fix.t > candidate
-      ) {
-        this.clockShiftMs = (this.lastEffectiveTMs ?? previous.t) - fix.t;
-        this.backwardCandidateTMs = null;
-        this.rejectedSinceLastFix = false;
-        this.continuityBroken = false;
-        this.startNewSegment(fix, true, ele);
-        return this.state;
+        fix.t > candidate;
+      if (continuesLowerEpoch) {
+        // Un seul fix périmé ne prouve rien ; deux non plus quand ils
+        // proviennent du même buffer et progressent seulement de quelques
+        // secondes. On attend une troisième mesure croissante dans l'époque
+        // basse avant de rebaser la carte.
+        this.backwardCandidateCount += 1;
+        this.backwardCandidateTMs = fix.t;
+        if (
+          this.backwardCandidateCount >= 3 &&
+          this.lowerEpochLooksCorroborated(fix)
+        ) {
+          this.clockShiftMs = (this.lastEffectiveTMs ?? previous.t) - fix.t;
+          this.backwardCandidateTMs = null;
+          this.backwardCandidateCount = 0;
+          this.rejectedSinceLastFix = false;
+          this.continuityBroken = false;
+          this.startNewSegment(fix, true, ele);
+          return this.state;
+        }
+        return this.rejectFix(false);
       }
       this.backwardCandidateTMs =
         backwardsMs > BACKWARD_CLOCK_TOLERANCE_MS ? fix.t : null;
+      this.backwardCandidateCount =
+        backwardsMs > BACKWARD_CLOCK_TOLERANCE_MS ? 1 : 0;
+      this.backwardCandidateReceivedAtMs =
+        backwardsMs > BACKWARD_CLOCK_TOLERANCE_MS ? finiteNumber(fix.receivedAt) : null;
       return this.rejectFix(false);
     }
 
     this.backwardCandidateTMs = null;
+    this.backwardCandidateCount = 0;
+    this.backwardCandidateReceivedAtMs = null;
 
     // Pause manuelle : le premier fix réellement plus récent devient la
     // nouvelle borne. Un fix périmé (`maximumAge`) a été rejeté juste avant et
@@ -438,14 +469,23 @@ export class ActivityTracker {
     }
     const distance = haversineM(previous, fix);
     const dtS = this.elapsedSeconds(previous, fix, distance, reportedSpeed);
+    // Le trou se mesure sur l'horloge de mesure, avant toute correction : un
+    // `receivedAt` qui compresse un intervalle réel de 5 min ne doit pas le
+    // faire passer sous `maxFixGapS` et relier deux points par une corde.
+    const measuredS = Math.max(0, (fix.t - previous.t) / 1000);
 
     // Perte de fix : saut impossible dans un laps de temps très court.
     if (dtS <= MAX_JUMP_WINDOW_S && distance > MAX_JUMP_M) {
       return this.rejectFix(true);
     }
 
-    const gap = dtS > this.config.maxFixGapS;
-    const speed = reportedSpeed ?? (dtS > 0 ? distance / dtS : 0);
+    const gap = measuredS > this.config.maxFixGapS;
+    // Une vitesse rapportée à 0 alors que la position avance ne doit pas
+    // fabriquer une pause : la vitesse déduite sert de garde-fou contre un
+    // `speed` figé. Les autres vitesses rapportées restent prioritaires.
+    const inferredSpeed = dtS > 0 ? distance / dtS : 0;
+    const speed =
+      reportedSpeed === null || reportedSpeed === 0 ? inferredSpeed : reportedSpeed;
     const effectiveT = (this.lastEffectiveTMs ?? previous.t) + dtS * 1000;
 
     // Le premier fix qui suit un rejet établit une nouvelle borne, sans
@@ -488,35 +528,35 @@ export class ActivityTracker {
       return this.rejectFix(true);
     }
 
-    if (this.config.enabled) {
-      // Interruption GPS : la ligne droite et le temps du trou ne sont pas du
-      // mouvement observé. La nouvelle borne est la position courante. Seule
-      // une vitesse explicitement rapportée par le GPS peut reprendre la
-      // détection ; la vitesse déduite du trou ne prouve aucun mouvement.
-      if (gap) {
-        this.metrics.lastFix = fix;
-        this.metrics.accepted = true;
-        this.metrics.discontinuity = true;
-        this.lastEffectiveTMs = effectiveT;
-        this.metrics.effectiveTMs = effectiveT;
-        // Le premier fix après le trou est une nouvelle borne : si son
-        // altitude manque, le D+ repart de zéro au lieu de traverser le trou.
-        this.smoothedEle = ele;
-        this.rejectedSinceLastFix = false;
-        this.stoppedS = 0;
-        this.resumingS = 0;
-        if (
-          this.autoPaused &&
-          reportedSpeed !== null &&
-          reportedSpeed >= this.config.resumeSpeedThresholdMs
-        ) {
-          // La continuité n'est pas mesurable après la coupure : un premier
-          // fix en mouvement suffit à reprendre, sinon on resterait pausé.
-          this.autoPaused = false;
-        }
-        return this.state;
+    // Interruption GPS : la ligne droite et le temps du trou ne sont pas du
+    // mouvement observé. La nouvelle borne est la position courante. La règle
+    // vaut aussi auto-pause désactivée : un trou de 5 km ne devient jamais du
+    // mouvement, seule la détection d'arrêt est coupée par le réglage.
+    if (gap) {
+      this.metrics.lastFix = fix;
+      this.metrics.accepted = true;
+      this.metrics.discontinuity = true;
+      this.lastEffectiveTMs = effectiveT;
+      this.metrics.effectiveTMs = effectiveT;
+      // Le premier fix après le trou est une nouvelle borne : si son altitude
+      // manque, le D+ repart de zéro au lieu de traverser le trou.
+      this.smoothedEle = ele;
+      this.rejectedSinceLastFix = false;
+      this.stoppedS = 0;
+      this.resumingS = 0;
+      if (
+        this.autoPaused &&
+        reportedSpeed !== null &&
+        reportedSpeed >= this.config.resumeSpeedThresholdMs
+      ) {
+        // La continuité n'est pas mesurable après la coupure : un premier
+        // fix en mouvement suffit à reprendre, sinon on resterait pausé.
+        this.autoPaused = false;
       }
+      return this.state;
+    }
 
+    if (this.config.enabled) {
       // Pause automatique : on garde les fixes pour détecter la reprise, mais
       // aucune métrique n'est accumulée pendant la pause.
       if (this.autoPaused) {
@@ -536,7 +576,6 @@ export class ActivityTracker {
       }
     }
 
-    const afterRejection = this.rejectedSinceLastFix;
     this.metrics.distanceM += distance;
     if (speed >= this.movementThresholdS()) this.metrics.movingS += dtS;
 
@@ -555,13 +594,26 @@ export class ActivityTracker {
     this.metrics.accepted = true;
     // Même désactivée, une coupure ne doit pas être reliée à l'écran. Les
     // métriques, elles, gardent le comportement historique.
-    this.metrics.discontinuity = gap || afterRejection;
+    this.metrics.discontinuity = gap;
     this.lastEffectiveTMs = effectiveT;
     this.metrics.effectiveTMs = effectiveT;
     this.rejectedSinceLastFix = false;
 
     this.updateAutoPause(dtS, speed);
     return this.state;
+  }
+
+  /**
+   * Trois fixes dans l'époque basse suffisent en général à identifier un vrai
+   * saut d'horloge. Quand les réceptions sont renseignées, on exige en plus
+   * qu'elles ne soient pas toutes tombées dans la même rafale : un buffer qui
+   * draine trois points périmés ne doit pas faire reculer la carte.
+   */
+  private lowerEpochLooksCorroborated(fix: GpsFix): boolean {
+    const received = finiteNumber(fix.receivedAt);
+    const firstReceived = this.backwardCandidateReceivedAtMs;
+    if (firstReceived === null || received === null) return true;
+    return received - firstReceived >= CLOCK_BURST_RECEIVED_S * 1000;
   }
 
   /**
@@ -617,18 +669,18 @@ export class ActivityTracker {
           sampleS - receivedS >= CLOCK_MIN_DIFF_S &&
           sampleS >= CLOCK_MIN_RATIO * Math.max(receivedS, 0.001);
         // À l'arrêt, la distance ne peut pas contredire l'horloge : un écart
-        // important et une réception lente suffisent à conclure au saut.
-        const stationaryJump = receivedTookTime && distanceM < 1 && measuredJump;
+        // important, une réception lente et quelques mètres de jitter
+        // suffisent à conclure au saut. Le seuil de 10 m couvre le GPS
+        // stationnaire sans avaler un vrai déplacement lent.
+        const stationaryJump = receivedTookTime && distanceM < 10 && measuredJump;
         // En mouvement sans vitesse rapportée, exiger un peu plus de recul de
         // réception évite de confondre un lot livré en 1 s avec un saut.
         const movingWithoutSpeedJump =
           reportedSpeed === null && receivedS >= CLOCK_MOVING_RECEIVED_S && measuredJump;
-        const massiveJump = receivedTookTime && sampleS > 300 && receivedS * 10 < sampleS;
         if (
           (distanceIncoherent && receivedTookTime) ||
           stationaryJump ||
-          movingWithoutSpeedJump ||
-          massiveJump
+          movingWithoutSpeedJump
         ) {
           const base = this.lastEffectiveTMs ?? previous.t;
           this.clockShiftMs = base + receivedS * 1000 - fix.t;
@@ -650,6 +702,8 @@ export class ActivityTracker {
     this.lastEffectiveTMs = fix.t + this.clockShiftMs;
     this.metrics.effectiveTMs = this.lastEffectiveTMs;
     this.backwardCandidateTMs = null;
+    this.backwardCandidateCount = 0;
+    this.backwardCandidateReceivedAtMs = null;
     this.smoothedEle = ele;
     this.resetAutoPause();
   }

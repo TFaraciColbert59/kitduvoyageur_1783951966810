@@ -36,8 +36,10 @@ function push(fix: GpsFix): void {
   act(() => target.__xpPushFix?.(fix));
 }
 
+let routeDistance: (fix: GpsFix) => number | null = () => 80;
+
 async function mountTracker(): Promise<void> {
-  renderHook(() => useGpsTracker({ distanceToRouteM: () => 80 }));
+  renderHook(() => useGpsTracker({ distanceToRouteM: (fix) => routeDistance(fix) }));
   await waitFor(() => {
     const target = window as Window & { __xpPushFix?: unknown };
     expect(typeof target.__xpPushFix).toBe('function');
@@ -45,6 +47,7 @@ async function mountTracker(): Promise<void> {
 }
 
 beforeEach(() => {
+  routeDistance = () => 80;
   window.localStorage.removeItem(AUTO_PAUSE_STORAGE_KEY);
   useExplorerStore.setState({
     activity: undefined,
@@ -81,6 +84,7 @@ describe('explorer-v2 · hors-trace et horloges', () => {
     // 16 s après la première mesure hors trace : l'alerte est légitime.
     push(at(45_000, 20, 1, 4_000));
     expect(useExplorerStore.getState().activity?.offRoute).toBe(true);
+    expect(useExplorerStore.getState().activity?.offRouteM).toBeCloseTo(80, 0);
   });
 
   it('repart d’un buffer neuf après un saut d’horloge arrière', async () => {
@@ -95,12 +99,17 @@ describe('explorer-v2 · hors-trace et horloges', () => {
     push(at(6_000, 10, 1));
     expect(useExplorerStore.getState().activity?.offRoute).toBe(false);
 
-    // Deuxième fix consécutif : l'horloge a reculé, nouvelle borne.
+    // Deuxième fix : le buffer peut encore tromper, on attend la troisième
+    // mesure croissante avant de rebaser.
     push(at(11_000, 15, 1));
     expect(useExplorerStore.getState().activity?.offRoute).toBe(false);
 
+    // Troisième fix : l'horloge a reculé, nouvelle borne.
+    push(at(16_000, 20, 1));
+    expect(useExplorerStore.getState().activity?.offRoute).toBe(false);
+
     // 15 s dans la nouvelle époque, pas 3 589 s négatives.
-    push(at(26_000, 20, 1));
+    push(at(31_000, 25, 1));
     expect(useExplorerStore.getState().activity?.offRoute).toBe(true);
   });
 
@@ -121,4 +130,27 @@ describe('explorer-v2 · hors-trace et horloges', () => {
     push(at(215_000, 1_010, 1));
     expect(useExplorerStore.getState().activity?.offRoute).toBe(true);
   });
+  it('vide le buffer même quand la distance est indisponible après un rejet', async () => {
+    useExplorerStore.getState().startActivity('rando');
+    await mountTracker();
+
+    push(at(0, 50, 1));
+    push(at(5_000, 60, 1));
+    expect(useExplorerStore.getState().activity?.offRoute).toBe(false);
+
+    // Rejet puis première mesure de la nouvelle époque sans distance à la
+    // trace (worker pas prêt). Le buffer doit être vidé quand même.
+    push({ ...at(6_000, 70, 1), acc: 120 });
+    routeDistance = () => null;
+    push(at(7_000, 80, 1));
+    expect(useExplorerStore.getState().activity?.offRoute).toBe(false);
+
+    // Si l'ancien buffer survivait, l'alerte se déclencherait ici (16 s depuis
+    // t=0). Le nouveau buffer ne compte que 9 s.
+    routeDistance = () => 80;
+    push(at(16_000, 80, 1));
+    expect(useExplorerStore.getState().activity?.offRoute).toBe(false);
+    expect(useExplorerStore.getState().activity?.offRouteM).toBeCloseTo(80, 0);
+  });
+
 });

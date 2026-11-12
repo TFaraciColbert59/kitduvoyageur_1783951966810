@@ -71,6 +71,95 @@ export function trackDistanceM(positions: readonly LngLat[]): number {
   return total;
 }
 
+export type RouteLine = readonly LngLat[];
+
+/**
+ * Extrait les lignes exploitables d'une géométrie GeoJSON `LineString` ou
+ * `MultiLineString` (ou d'une `Feature` qui la porte).
+ *
+ * Une coordonnée invalide coupe la ligne au lieu de relier deux points qui ne
+ * sont pas voisins : la distance à la trace ne doit jamais traverser un trou.
+ * Les lignes de moins de deux points sont ignorées.
+ */
+export function routeLines(geojson: unknown): RouteLine[] {
+  if (!geojson || typeof geojson !== 'object') return [];
+  const raw = geojson as { type?: unknown; coordinates?: unknown; geometry?: unknown };
+  const geometry =
+    raw.type === 'Feature' && raw.geometry && typeof raw.geometry === 'object'
+      ? (raw.geometry as { type?: unknown; coordinates?: unknown })
+      : raw;
+  if (geometry.type !== 'LineString' && geometry.type !== 'MultiLineString') return [];
+  if (!Array.isArray(geometry.coordinates)) return [];
+
+  const rawLines: unknown[] =
+    geometry.type === 'MultiLineString'
+      ? (geometry.coordinates as unknown[])
+      : [geometry.coordinates as unknown[]];
+
+  const lines: RouteLine[] = [];
+  for (const rawLine of rawLines) {
+    if (!Array.isArray(rawLine)) continue;
+    let current: LngLat[] = [];
+    const flush = () => {
+      if (current.length >= 2) lines.push(current);
+      current = [];
+    };
+    for (const coordinate of rawLine) {
+      if (isValidLngLat(coordinate)) current.push(coordinate);
+      else flush();
+    }
+    flush();
+  }
+  return lines;
+}
+
+/** Delta de longitude par le plus court chemin, en degrés. */
+function shortestLngDelta(from: number, to: number): number {
+  let delta = to - from;
+  while (delta > 180) delta -= 360;
+  while (delta < -180) delta += 360;
+  return delta;
+}
+
+/**
+ * Distance minimale (m) d'une position à une ou plusieurs lignes de trace.
+ *
+ * Projection locale équirectangulaire autour du point : l'erreur reste
+ * négligeable à l'échelle d'une alerte hors-trace (quelques dizaines de mètres)
+ * et le calcul reste linéaire en nombre de sommets, sans allocation par fix.
+ * Renvoie `null` si le point est invalide ou si aucune ligne n'est exploitable.
+ */
+export function distanceToRouteM(point: LngLat, lines: readonly RouteLine[]): number | null {
+  if (!isValidLngLat(point) || lines.length === 0) return null;
+
+  const lat0 = (point[1] * Math.PI) / 180;
+  const metresPerDegLat = (EARTH_RADIUS_M * Math.PI) / 180;
+  const metresPerDegLng = metresPerDegLat * Math.cos(lat0);
+  let best = Number.POSITIVE_INFINITY;
+
+  for (const line of lines) {
+    for (let index = 1; index < line.length; index += 1) {
+      const a = line[index - 1];
+      const b = line[index];
+      if (!isValidLngLat(a) || !isValidLngLat(b)) continue;
+
+      const ax = shortestLngDelta(point[0], a[0]) * metresPerDegLng;
+      const ay = (a[1] - point[1]) * metresPerDegLat;
+      const bx = shortestLngDelta(point[0], b[0]) * metresPerDegLng;
+      const by = (b[1] - point[1]) * metresPerDegLat;
+      const dx = bx - ax;
+      const dy = by - ay;
+      const lengthSq = dx * dx + dy * dy;
+      const t = lengthSq > 0 ? Math.max(0, Math.min(1, -(ax * dx + ay * dy) / lengthSq)) : 0;
+      const distance = Math.hypot(ax + t * dx, ay + t * dy);
+      if (distance < best) best = distance;
+      if (best === 0) return 0;
+    }
+  }
+
+  return Number.isFinite(best) ? best : null;
+}
+
 /**
  * Sous-échantillonne une trace trop dense (les géométries OSM sont bruitées).
  * Renvoie la trace d'origine telle quelle (même référence) si elle tient déjà.

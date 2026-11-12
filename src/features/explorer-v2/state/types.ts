@@ -121,6 +121,11 @@ export interface ActivityState {
    */
   autoPaused?: boolean;
   offRoute: boolean;
+  /**
+   * Distance courante à la trace quand le hors-trace est évalué. Distincte de
+   * `distanceM` (distance parcourue) : c'est elle que la bannière affiche.
+   */
+  offRouteM?: number;
   distanceM: number;
   elevGainM: number;
   movingS: number;

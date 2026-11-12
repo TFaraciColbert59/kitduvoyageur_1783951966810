@@ -18,12 +18,13 @@ import {
   pushTrackPoint,
   trackGeoJson,
 } from './activity/trackTrace';
-import type { ActivityMetrics } from './activity/tracker';
+import type { ActivityMetrics, GpsFix } from './activity/tracker';
 import { endLiveActivity, startLiveActivity, updateLiveActivity } from './native/liveActivity';
 import { performSosCall, planSosCall, sosSimulated } from './activity/sosCall';
 import { enqueue, flushQueue, listQueue } from './offline/queue';
 import { registerOfflineWorker } from './offline/zone';
 import { offRouteLabel } from './activity/offRoute';
+import { distanceToRouteM, routeLines } from './geo/track';
 import { XpIcon } from './ui/XpIcon';
 import { haptic } from './state/haptics';
 import {
@@ -348,8 +349,26 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
     state.selection ? state.center[0] : null,
   );
 
-  const pois = place?.pois ?? [];
-  const routes = place?.routes ?? [];
+  const pois = useMemo(() => place?.pois ?? [], [place]);
+  const routes = useMemo(() => place?.routes ?? [], [place]);
+
+  // Trace de l'itinéraire sélectionné : c'est elle qui alimente le hors-trace
+  // réel. Les lignes sont extraites une fois par route, pas à chaque fix.
+  const selectedRoute = useMemo(() => {
+    if (state.selection?.kind !== 'trail') return null;
+    return routes.find((route) => String(route.id) === state.selection?.id) ?? null;
+  }, [routes, state.selection]);
+  const selectedRouteLines = useMemo(
+    () => (selectedRoute ? routeLines(selectedRoute.geojson) : []),
+    [selectedRoute],
+  );
+  const distanceToRoute = useCallback(
+    (fix: GpsFix) =>
+      selectedRouteLines.length > 0
+        ? distanceToRouteM([fix.lng, fix.lat], selectedRouteLines)
+        : null,
+    [selectedRouteLines],
+  );
 
   const selectedPoi = useMemo(() => {
     if (!state.selection) return null;
@@ -425,7 +444,7 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
     [state],
   );
 
-  useGpsTracker({ onFix: onGpsFix });
+  useGpsTracker({ distanceToRouteM: distanceToRoute, onFix: onGpsFix });
 
   // Pause manuelle : aucun fix n'arrive pendant la pause. On marque la coupure
   // dès que l'état bascule pour que la reprise ouvre un segment distinct.
@@ -854,10 +873,10 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
           type="button"
           className="xp-offroute"
           onClick={() => state.setSheet('live', 'peek')}
-          aria-label={offRouteLabel(activity.distanceM)}
+          aria-label={offRouteLabel(activity.offRouteM)}
         >
           <XpIcon name="alert" size={15} />
-          <span>{offRouteLabel(activity.distanceM)}</span>
+          <span>{offRouteLabel(activity.offRouteM)}</span>
           <XpIcon name="nav" size={15} />
         </button>
       ) : null}

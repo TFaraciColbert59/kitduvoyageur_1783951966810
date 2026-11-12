@@ -96,7 +96,7 @@ afterEach(() => {
 });
 
 describe('explorer-v2 · raccordement du réglage de pause automatique', () => {
-  it('conserve le comportement historique quand le réglage est désactivé', async () => {
+  it('coupe un trou même quand le réglage est désactivé', async () => {
     useExplorerStore.setState({ autoPauseEnabled: false });
     createActivity('course');
     await mountTracker();
@@ -108,8 +108,9 @@ describe('explorer-v2 · raccordement du réglage de pause automatique', () => {
     const activity = useExplorerStore.getState().activity;
     expect(activity?.paused).toBe(false);
     expect(activity?.autoPaused).toBe(false);
-    // Le trou de 65 s est compté comme avant, sans nouvelle sémantique.
-    expect(activity?.distanceM).toBeGreaterThan(4_000);
+    // 65 s > maxFixGapS (60 s pour la course) : le téléport de 5 km ne devient
+    // jamais de la distance, même détection d'arrêt coupée.
+    expect(activity?.distanceM).toBeCloseTo(5, 1);
   });
 
   it('ne transforme pas une interruption GPS en mouvement continu', async () => {
@@ -149,8 +150,8 @@ describe('explorer-v2 · raccordement du réglage de pause automatique', () => {
 
     // Les fixes continuent d'arriver et dérivent : les métriques et la carte
     // restent gelées pendant la pause.
-    push(at(45_000, 50, 0, 1300));
-    push(at(50_000, 70, 0, 1300));
+    push(at(45_000, 11, 0, 1300));
+    push(at(50_000, 12, 0, 1300));
     expect(useExplorerStore.getState().center).toEqual(centerBeforeDrift);
     activity = useExplorerStore.getState().activity;
     expect(activity?.distanceM).toBe(frozen.distanceM);

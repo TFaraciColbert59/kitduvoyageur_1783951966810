@@ -6,6 +6,8 @@ import {
   resampleTrack,
   summarizeElevation,
   trackRevision,
+  routeLines,
+  distanceToRouteM,
 } from '@/features/explorer-v2/geo/track';
 
 /**
@@ -221,5 +223,63 @@ describe('geo/track · summarizeElevation', () => {
   it('ne prétend à aucun dénivelé quand aucune altitude n’est connue', () => {
     const summary = summarizeElevation([{ d: 0, ele: null }, { d: 10, ele: null }], 10);
     expect(summary).toEqual({ distance_m: 10, gain_m: 0, loss_m: 0, min_m: null, max_m: null });
+  });
+});
+
+
+describe('geo/track · distance à la trace sélectionnée', () => {
+  const route = {
+    type: 'LineString',
+    coordinates: [
+      [6.87, 45.92],
+      [6.88, 45.92],
+    ],
+  } as const;
+
+  it('extrait une LineString et une MultiLineString sans relier leurs lignes', () => {
+    expect(routeLines(route)).toHaveLength(1);
+    const multi = routeLines({
+      type: 'MultiLineString',
+      coordinates: [
+        [[6.87, 45.92], [6.88, 45.92]],
+        [[6.87, 45.94], [6.88, 45.94]],
+      ],
+    });
+    expect(multi).toHaveLength(2);
+    // Une coordonnée invalide coupe la ligne au lieu de créer une arête.
+    const broken = routeLines({
+      type: 'LineString',
+      coordinates: [
+        [6.87, 45.92],
+        [6.874, 45.92],
+        ['x', 45.92],
+        [6.878, 45.92],
+        [6.88, 45.92],
+      ],
+    });
+    expect(broken).toHaveLength(2);
+  });
+
+  it('mesure la distance perpendiculaire et les extrémités', () => {
+    const lines = routeLines(route);
+    const north = distanceToRouteM([6.875, 45.92 + 80 / 111320], lines);
+    expect(north).not.toBeNull();
+    expect(north ?? 0).toBeCloseTo(80, 0);
+
+    const west = distanceToRouteM([6.86, 45.92], lines);
+    expect(west).not.toBeNull();
+    // 0,01° de longitude à 45,92° vaut environ 778 m.
+    expect(west ?? 0).toBeGreaterThan(700);
+
+    expect(distanceToRouteM([6.875, 45.92], lines)).toBeCloseTo(0, 5);
+  });
+
+  it('refuse les géométries sans ligne exploitable', () => {
+    expect(routeLines(null)).toEqual([]);
+    expect(routeLines({ type: 'Point', coordinates: [6.87, 45.92] })).toEqual([]);
+    expect(distanceToRouteM([6.87, 45.92], [])).toBeNull();
+    expect(
+      distanceToRouteM([6.87, 45.92], routeLines({ type: 'LineString', coordinates: [] })),
+    ).toBeNull();
   });
 });

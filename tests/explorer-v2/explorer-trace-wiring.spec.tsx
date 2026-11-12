@@ -227,8 +227,8 @@ describe('explorer-v2 · tracé de bout en bout', () => {
     await waitFor(() => expect(coordinates()).toHaveLength(1));
 
     const centerDuringPause = useExplorerStore.getState().center;
-    push(at(45_000, 50, 0));
-    push(at(50_000, 70, 0));
+    push(at(45_000, 11, 0));
+    push(at(50_000, 12, 0));
     expect(useExplorerStore.getState().center).toEqual(centerDuringPause);
 
     // Reprise : le premier point valide ouvre un second segment.
@@ -245,9 +245,9 @@ describe('explorer-v2 · tracé de bout en bout', () => {
     expect(after).toHaveLength(2);
     expect(after?.[0]?.[1]).toBeCloseTo(latFor(71), 6);
     expect(after?.[1]?.[1]).toBeCloseTo(latFor(76), 6);
-    // La dérive de 50/70 m pendant la pause n'est jamais dessinée.
-    expect(after?.some(([, lat]) => Math.abs(lat - latFor(50)) < 1e-9)).toBe(false);
-    expect(after?.some(([, lat]) => Math.abs(lat - latFor(70)) < 1e-9)).toBe(false);
+    // La dérive de 11/12 m pendant la pause n'est jamais dessinée.
+    expect(after?.some(([, lat]) => Math.abs(lat - latFor(11)) < 1e-9)).toBe(false);
+    expect(after?.some(([, lat]) => Math.abs(lat - latFor(12)) < 1e-9)).toBe(false);
   });
 
   it('sépare le tracé après une pause manuelle et ignore les fixes tardifs', async () => {

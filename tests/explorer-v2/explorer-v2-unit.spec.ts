@@ -288,6 +288,9 @@ describe('explorer-v2 · hors itinéraire', () => {
 
   it('formate le libellé de la carte du haut', () => {
     expect(offRouteLabel(80)).toBe('Hors itinéraire · 80 m');
+    // Distance inconnue : pas de « 0 m » inventé.
+    expect(offRouteLabel()).toBe('Hors itinéraire');
+    expect(offRouteLabel(null)).toBe('Hors itinéraire');
   });
 });
 
