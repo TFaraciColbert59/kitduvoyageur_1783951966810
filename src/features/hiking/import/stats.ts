@@ -3,6 +3,7 @@ import type {
   NormalizedTrackPoint,
   TraceBounds,
   TraceMetric,
+  TraceSessionSummary,
 } from './model';
 
 export const METRIC_ORDER: readonly TraceMetric[] = [
@@ -58,6 +59,7 @@ export function computeAvailableMetrics(
   points: NormalizedTrackPoint[],
   laps: NormalizedTraceLap[],
   hasTime: boolean,
+  summary: TraceSessionSummary | null = null,
 ): TraceMetric[] {
   const available = new Set<TraceMetric>();
 
@@ -66,21 +68,34 @@ export function computeAvailableMetrics(
     available.add('position');
   }
   if (points.some((point) => point.altitudeM != null)) available.add('altitude');
-  if (points.some((point) => point.distanceM != null) || laps.some((lap) => lap.distanceM != null)) {
+  if (
+    points.some((point) => point.distanceM != null)
+    || laps.some((lap) => lap.distanceM != null)
+    || summary?.distanceM != null
+  ) {
     available.add('distance');
   }
-  if (points.some((point) => point.speedMps != null) || laps.some((lap) => lap.maxSpeedMps != null)) {
+  if (
+    points.some((point) => point.speedMps != null)
+    || laps.some((lap) => lap.maxSpeedMps != null || lap.averageSpeedMps != null)
+    || summary?.maxSpeedMps != null
+    || summary?.averageSpeedMps != null
+  ) {
     available.add('speed');
   }
   if (
     points.some((point) => point.heartRateBpm != null)
     || laps.some((lap) => lap.averageHeartRateBpm != null || lap.maxHeartRateBpm != null)
+    || summary?.averageHeartRateBpm != null
+    || summary?.maxHeartRateBpm != null
   ) {
     available.add('heartRate');
   }
   if (
     points.some((point) => point.cadenceRpm != null || point.runCadenceSpm != null)
     || laps.some((lap) => lap.averageCadenceRpm != null || lap.averageCadenceSpm != null)
+    || summary?.averageCadenceRpm != null
+    || summary?.averageCadenceSpm != null
   ) {
     available.add('cadence');
   }

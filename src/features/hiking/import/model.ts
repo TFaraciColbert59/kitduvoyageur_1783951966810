@@ -55,6 +55,8 @@ export type TraceImportErrorCode =
   | 'invalid-structure'
   | 'not-fit'
   | 'fit-integrity'
+  | 'not-activity'
+  | 'too-many-messages'
   | 'unsupported-feature';
 
 export type TraceImportIssueCode =
@@ -84,11 +86,16 @@ export interface TraceImportProvenance {
   format: TraceImportFormat;
   source: TraceImportSource;
   fileName: string | null;
+  /** Taille de la source binaire, ou longueur UTF-8 d'un texte TCX fourni en chaîne. */
   byteLength: number;
   /** Espace de noms de la racine, quand le format en déclare un. */
   schema: string | null;
   creator: string | null;
   productId: string | null;
+  /** Numéro de série déclaré par le fichier FIT, `null` pour TCX. */
+  serialNumber: string | null;
+  /** Date de création du fichier FIT (`file_id.timeCreated`), `null` sinon. */
+  fileCreatedAt: string | null;
   sport: string | null;
   /** Instant UTC du début, uniquement si la source portait un fuseau. */
   startedAt: string | null;
@@ -167,6 +174,8 @@ export interface NormalizedTraceLap {
   elapsedSeconds: number | null;
   distanceM: number | null;
   maxSpeedMps: number | null;
+  /** Vitesse moyenne du tour, quand la source la fournit (FIT `avgSpeed`). */
+  averageSpeedMps: number | null;
   caloriesKcal: number | null;
   averageHeartRateBpm: number | null;
   maxHeartRateBpm: number | null;
@@ -183,12 +192,35 @@ export interface NormalizedTraceLap {
   tracks: NormalizedTraceTrack[];
 }
 
+/**
+ * Résumé de session FIT, distinct des tours. Il conserve les totaux que les
+ * messages `lap` ne portent pas (calories, distance, vitesse moyenne, etc.)
+ * même quand des tours existent : sans lui, ces valeurs étaient perdues.
+ */
+export interface TraceSessionSummary {
+  startedAt: string | null;
+  elapsedSeconds: number | null;
+  distanceM: number | null;
+  maxSpeedMps: number | null;
+  averageSpeedMps: number | null;
+  caloriesKcal: number | null;
+  averageHeartRateBpm: number | null;
+  maxHeartRateBpm: number | null;
+  averageCadenceRpm: number | null;
+  averageCadenceSpm: number | null;
+  sport: string | null;
+  /** `activity.totalTimerTime`, conservé même s'il double la session. */
+  activityTimerSeconds: number | null;
+}
+
 export interface NormalizedTraceImport {
   status: TraceImportStatus;
   provenance: TraceImportProvenance;
   bounds: TraceBounds | null;
   points: NormalizedTrackPoint[];
   laps: NormalizedTraceLap[];
+  /** Résumé `session` FIT ; `null` pour TCX ou quand le message manque. */
+  summary: TraceSessionSummary | null;
   /** Métriques réellement présentes, dans un ordre stable. */
   availableMetrics: TraceMetric[];
   issues: TraceImportIssue[];
@@ -199,18 +231,26 @@ export interface TraceImportLimits {
   maxBytes: number;
   maxPoints: number;
   maxLaps: number;
+  /** Nombre maximal de messages FIT (définitions exclues), tous types confondus. */
+  maxMessages: number;
   maxDepth: number;
   maxIssues: number;
 }
 
 export interface TraceImportOptions extends Partial<TraceImportLimits> {
   fileName?: string;
+  /**
+   * Taille de la source binaire, quand le texte TCX a été décodé depuis des
+   * octets (UTF-8/UTF-16). Sans elle, TCX mesure la longueur UTF-8 du texte.
+   */
+  sourceByteLength?: number;
 }
 
 export const TRACE_IMPORT_LIMITS: Readonly<TraceImportLimits> = Object.freeze({
   maxBytes: 16 * 1024 * 1024,
   maxPoints: 100_000,
   maxLaps: 10_000,
+  maxMessages: 250_000,
   maxDepth: 64,
   maxIssues: 100,
 });
@@ -230,6 +270,7 @@ export function resolveTraceImportLimits(options: TraceImportOptions = {}): Trac
     maxBytes: positiveInteger(options.maxBytes, TRACE_IMPORT_LIMITS.maxBytes),
     maxPoints: positiveInteger(options.maxPoints, TRACE_IMPORT_LIMITS.maxPoints),
     maxLaps: positiveInteger(options.maxLaps, TRACE_IMPORT_LIMITS.maxLaps),
+    maxMessages: positiveInteger(options.maxMessages, TRACE_IMPORT_LIMITS.maxMessages),
     maxDepth: positiveInteger(options.maxDepth, TRACE_IMPORT_LIMITS.maxDepth),
     maxIssues: positiveInteger(options.maxIssues, TRACE_IMPORT_LIMITS.maxIssues),
   };

@@ -22,6 +22,19 @@ function fixture(name: string): string {
   return readFileSync(new URL(`./fixtures/${name}`, import.meta.url), 'utf8');
 }
 
+function encodeUtf16(text: string, littleEndian: boolean): Uint8Array {
+  const bytes = new Uint8Array(2 + text.length * 2);
+  bytes[0] = littleEndian ? 0xff : 0xfe;
+  bytes[1] = littleEndian ? 0xfe : 0xff;
+  for (let index = 0; index < text.length; index += 1) {
+    const code = text.charCodeAt(index);
+    const offset = 2 + index * 2;
+    bytes[offset] = littleEndian ? code & 0xff : code >> 8;
+    bytes[offset + 1] = littleEndian ? code >> 8 : code & 0xff;
+  }
+  return bytes;
+}
+
 function expectTraceError(run: () => unknown, code: TraceImportErrorCode): void {
   try {
     run();
@@ -64,6 +77,8 @@ describe('import TCX · fichier valide', () => {
       schema: 'http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2',
       creator: 'Garmin Connect',
       productId: '1234',
+      serialNumber: null,
+      fileCreatedAt: null,
       sport: 'Running',
       startedAt: '2026-08-09T08:00:00.000Z',
       endedAt: '2026-08-09T08:15:00.000Z',
@@ -102,10 +117,12 @@ describe('import TCX · fichier valide', () => {
       elapsedSeconds: 600,
       distanceM: 2000,
       maxSpeedMps: 4.5,
+      averageSpeedMps: null,
       caloriesKcal: 120,
       averageHeartRateBpm: 140,
       maxHeartRateBpm: 165,
-      averageCadenceRpm: 80,
+      averageCadenceRpm: null,
+      averageCadenceSpm: 80,
       intensity: 'Active',
       triggerMethod: 'Manual',
       firstPointIndex: 0,
@@ -116,6 +133,8 @@ describe('import TCX · fichier valide', () => {
       startedAt: '2026-08-09T08:10:00.000Z',
       elapsedSeconds: 300,
       distanceM: 1000,
+      averageCadenceRpm: null,
+      averageCadenceSpm: 84,
       firstPointIndex: 2,
       pointCount: 1,
     });
@@ -130,15 +149,15 @@ describe('import TCX · fichier valide', () => {
       distanceM: 0,
       speedMps: 3.2,
       heartRateBpm: 130,
-      cadenceRpm: 78,
-      runCadenceSpm: null,
+      cadenceRpm: null,
+      runCadenceSpm: 78,
       powerW: 210,
       temperatureC: null,
       lapIndex: 0,
       trackIndex: 0,
     });
     expect(trace.points[1]).toMatchObject({
-      cadenceRpm: 82,
+      cadenceRpm: null,
       runCadenceSpm: 170,
     });
     expect(trace.points[2]).toMatchObject({
@@ -146,8 +165,8 @@ describe('import TCX · fichier valide', () => {
       distanceM: 3000,
       speedMps: 3.8,
       heartRateBpm: 152,
-      cadenceRpm: 86,
-      runCadenceSpm: null,
+      cadenceRpm: null,
+      runCadenceSpm: 86,
       powerW: 230,
       lapIndex: 1,
     });
@@ -174,6 +193,38 @@ describe('import TCX · fichier valide', () => {
       'cadence',
       'power',
     ]);
+  });
+});
+
+describe('import TCX · cadence selon le sport', () => {
+  function cadenceXml(sport: string, cadence: number): string {
+    return `<TrainingCenterDatabase xmlns="${TCX_V2_NAMESPACE}"><Activities><Activity Sport="${sport}"><Id>2026-08-09T08:00:00.000Z</Id><Lap StartTime="2026-08-09T08:00:00.000Z"><TotalTimeSeconds>60</TotalTimeSeconds><Cadence>${cadence + 2}</Cadence><Track><Trackpoint><Time>2026-08-09T08:00:00.000Z</Time><DistanceMeters>10</DistanceMeters><Cadence>${cadence}</Cadence></Trackpoint></Track></Lap></Activity></Activities></TrainingCenterDatabase>`;
+  }
+
+  it('range la cadence d’une course dans runCadenceSpm, jamais dans cadenceRpm', () => {
+    const trace = parseTcx(cadenceXml('Running', 78));
+
+    expect(trace.points[0]).toMatchObject({ cadenceRpm: null, runCadenceSpm: 78 });
+    expect(trace.laps[0]).toMatchObject({ averageCadenceRpm: null, averageCadenceSpm: 80 });
+    expect(trace.issues).toEqual([]);
+  });
+
+  it('range la cadence d’un vélo dans cadenceRpm', () => {
+    const trace = parseTcx(cadenceXml('Biking', 90));
+
+    expect(trace.points[0]).toMatchObject({ cadenceRpm: 90, runCadenceSpm: null });
+    expect(trace.laps[0]).toMatchObject({ averageCadenceRpm: 92, averageCadenceSpm: null });
+    expect(trace.issues).toEqual([]);
+  });
+
+  it('signale une cadence générique dont le sport ne donne pas l’unité', () => {
+    const trace = parseTcx(cadenceXml('Other', 42));
+
+    expect(trace.points[0]).toMatchObject({ cadenceRpm: null, runCadenceSpm: null });
+    expect(trace.laps[0]).toMatchObject({ averageCadenceRpm: null, averageCadenceSpm: null });
+    expect(trace.issues).toEqual(expect.arrayContaining([
+      expect.objectContaining({ code: 'unsupported-feature' }),
+    ]));
   });
 });
 
@@ -374,7 +425,12 @@ describe('import TCX · namespaces enfants', () => {
     expect(trace.points).toHaveLength(1);
     expect(trace.points[0]).toMatchObject({ speedMps: null, powerW: null });
     expect(trace.availableMetrics).toEqual(['time']);
-    expect(trace.issues).toEqual([]);
+    expect(trace.issues).toEqual([
+      expect.objectContaining({ code: 'ignored-section' }),
+    ]);
+    expect(trace.provenance.ignoredSections).toEqual([
+      { name: 'Extensions', elementCount: 3 },
+    ]);
   });
 });
 
@@ -446,6 +502,28 @@ describe('import TCX · sections Courses et provenance', () => {
       'Workouts',
       'Folders',
     ]);
+  });
+
+  it('signale Notes, Training et les Extensions hors TPX', () => {
+    const xml = `<TrainingCenterDatabase xmlns="${TCX_V2_NAMESPACE}" xmlns:ext="urn:lkdv:test"><Activities><Activity Sport="Running"><Id>2026-08-09T08:00:00.000Z</Id><Notes>note libre</Notes><Training><Plan><Name>plan</Name></Plan></Training><Lap StartTime="2026-08-09T08:00:00.000Z"><TotalTimeSeconds>60</TotalTimeSeconds><Track><Trackpoint><Time>2026-08-09T08:00:00.000Z</Time><DistanceMeters>10</DistanceMeters><Extensions><ext:Custom>1</ext:Custom></Extensions></Trackpoint></Track></Lap></Activity></Activities></TrainingCenterDatabase>`;
+    const trace = parseTcx(xml);
+
+    expect(trace.points).toHaveLength(1);
+    expect(trace.provenance.ignoredSections.map((section) => section.name)).toEqual([
+      'Notes',
+      'Training',
+      'Extensions',
+    ]);
+    expect(trace.provenance.ignoredSections.find((section) => section.name === 'Extensions'))
+      .toMatchObject({ elementCount: 1 });
+    expect(trace.issues.filter((issue) => issue.code === 'ignored-section')).toHaveLength(3);
+  });
+
+  it('ne signale pas les Extensions qui ne contiennent que TPX', () => {
+    const trace = parseTcx(fixture('activity-valid.tcx'));
+
+    expect(trace.provenance.ignoredSections).toEqual([]);
+    expect(trace.issues).toEqual([]);
   });
 
   it('utilise Author de la racine seulement en l’absence de Creator d’Activity', () => {
@@ -585,6 +663,16 @@ describe('import TCX · horodatages sans fuseau', () => {
     expect(trace.laps[0].elapsedSeconds).toBeNull();
     expect(trace.issues.map((issue) => issue.code)).toContain('time-out-of-order');
   });
+
+  it('calcule endedAtLocal avec la fin des laps, sans inventer de fuseau', () => {
+    const xml = `<TrainingCenterDatabase xmlns="${TCX_V2_NAMESPACE}"><Activities><Activity Sport="Running"><Id>2026-08-09T08:00:00</Id><Lap StartTime="2026-08-09T08:00:00"><TotalTimeSeconds>600</TotalTimeSeconds></Lap><Lap StartTime="2026-08-09T08:10:00"><TotalTimeSeconds>300</TotalTimeSeconds></Lap></Activity></Activities></TrainingCenterDatabase>`;
+    const trace = parseTcx(xml);
+
+    expect(trace.provenance.startedAtLocal).toBe('2026-08-09T08:00:00');
+    expect(trace.provenance.endedAtLocal).toBe('2026-08-09T08:15:00');
+    expect(trace.provenance.endedAt).toBeNull();
+    expect(trace.provenance.timeBasis).toBe('local');
+  });
 });
 
 describe('import TCX · structure et multi-activités', () => {
@@ -635,6 +723,25 @@ describe('import TCX · structure et multi-activités', () => {
     expect(trace.laps[0]).toMatchObject({ elapsedSeconds: 60, pointCount: 0 });
     expect(trace.points).toEqual([]);
   });
+
+  it('calcule endedAt avec la fin des laps de résumé, sans trackpoint', () => {
+    const xml = `<TrainingCenterDatabase xmlns="${TCX_V2_NAMESPACE}"><Activities><Activity Sport="Running"><Id>2026-08-09T08:00:00.000Z</Id><Lap StartTime="2026-08-09T08:00:00.000Z"><TotalTimeSeconds>600</TotalTimeSeconds></Lap><Lap StartTime="2026-08-09T08:10:00.000Z"><TotalTimeSeconds>300</TotalTimeSeconds></Lap></Activity></Activities></TrainingCenterDatabase>`;
+    const trace = parseTcx(xml);
+
+    expect(trace.provenance.startedAt).toBe('2026-08-09T08:00:00.000Z');
+    expect(trace.provenance.endedAt).toBe('2026-08-09T08:15:00.000Z');
+    expect(trace.provenance.timeBasis).toBe('utc');
+    expect(trace.laps.map((lap) => lap.elapsedSeconds)).toEqual([600, 300]);
+    expect(trace.issues).toEqual([]);
+  });
+
+  it('prend la fin du lap quand le dernier point la précède', () => {
+    const xml = `<TrainingCenterDatabase xmlns="${TCX_V2_NAMESPACE}"><Activities><Activity Sport="Running"><Id>2026-08-09T08:00:00.000Z</Id><Lap StartTime="2026-08-09T08:00:00.000Z"><TotalTimeSeconds>600</TotalTimeSeconds><Track><Trackpoint><Time>2026-08-09T08:05:00.000Z</Time><DistanceMeters>100</DistanceMeters></Trackpoint></Track></Lap></Activity></Activities></TrainingCenterDatabase>`;
+    const trace = parseTcx(xml);
+
+    expect(trace.points[0].recordedAt).toBe('2026-08-09T08:05:00.000Z');
+    expect(trace.provenance.endedAt).toBe('2026-08-09T08:10:00.000Z');
+  });
 });
 
 describe('import TCX · activité sans GPS et points vides', () => {
@@ -666,7 +773,7 @@ describe('import TCX · activité sans GPS et points vides', () => {
       distanceM: 0,
       speedMps: 2.5,
       heartRateBpm: 120,
-      cadenceRpm: 80,
+      cadenceRpm: null,
       runCadenceSpm: 160,
       powerW: 180,
       temperatureC: 18,
@@ -854,14 +961,51 @@ describe('import FIT · décodage local', () => {
     return bytes;
   }
 
+  function hasFileIdDefinition(messages: number[][]): boolean {
+    return messages.some(
+      (message) => (message[0] & 0xc0) === 0x40 && message[3] === 0 && message[4] === 0,
+    );
+  }
+
+  function hasDefinition(messages: number[][], globalMessage: number): boolean {
+    return messages.some((message) => {
+      if ((message[0] & 0xc0) !== 0x40) return false;
+      const bigEndian = message[2] === 1;
+      const value = bigEndian
+        ? (message[3] << 8) | message[4]
+        : message[3] | (message[4] << 8);
+      return value === globalMessage;
+    });
+  }
+
   function buildFit(options: {
     messages: number[][];
     headerSize?: 12 | 14;
     truncateAt?: number;
     corruptCrc?: boolean;
     protocol?: number;
+    fileIdType?: number | null;
+    injectSession?: boolean;
   }): Uint8Array {
-    const dataBytes = options.messages.flat();
+    const fileIdType = options.fileIdType === undefined ? 4 : options.fileIdType;
+    let messages = options.messages;
+    if (fileIdType != null && !hasFileIdDefinition(messages)) {
+      const fileId: FitField[] = [{ num: 0, size: 1, type: 0x00, value: fileIdType }];
+      messages = [definition(15, 0, fileId), data(15, fileId), ...messages];
+    }
+    if (
+      options.injectSession !== false
+      && !hasDefinition(messages, 18)
+      && !hasDefinition(messages, 34)
+    ) {
+      const session: FitField[] = [
+        { num: 2, size: 4, type: 0x86, value: fitSeconds(START) },
+        { num: 7, size: 4, type: 0x86, value: 60000 },
+      ];
+      messages = [...messages, definition(14, 18, session), data(14, session)];
+    }
+
+    const dataBytes = messages.flat();
     const headerSize = options.headerSize ?? 12;
     const header: number[] = [
       headerSize,
@@ -1073,7 +1217,43 @@ describe('import FIT · décodage local', () => {
     ];
     expectTraceError(
       () => parseFit(buildFit({ messages: [definition(0, 0, fileId), data(0, fileId)] })),
-      'no-activity',
+      'not-activity',
+    );
+  });
+
+  it('refuse les file_id sport, workout et monitoring, ainsi que le file_id absent', () => {
+    for (const fileType of [3, 5, 12]) {
+      const fileId: FitField[] = [{ num: 0, size: 1, type: 0x00, value: fileType }];
+      expectTraceError(
+        () => parseFit(buildFit({ messages: [definition(0, 0, fileId), data(0, fileId)] })),
+        'not-activity',
+      );
+    }
+
+    const record: FitField[] = [
+      { num: 253, size: 4, type: 0x86, value: fitSeconds(START) },
+      { num: 3, size: 1, type: 0x02, value: 120 },
+    ];
+    expectTraceError(
+      () => parseFit(buildFit({
+        messages: [definition(0, 20, record), data(0, record)],
+        fileIdType: null,
+      })),
+      'not-activity',
+    );
+  });
+
+  it('refuse une activité complète sans message session ni activity', () => {
+    const record: FitField[] = [
+      { num: 253, size: 4, type: 0x86, value: fitSeconds(START) },
+      { num: 3, size: 1, type: 0x02, value: 120 },
+    ];
+    expectTraceError(
+      () => parseFit(buildFit({
+        messages: [definition(0, 20, record), data(0, record)],
+        injectSession: false,
+      })),
+      'not-activity',
     );
   });
 
@@ -1431,6 +1611,10 @@ describe('import FIT · décodage local', () => {
       () => parseFit(buildFit({ messages: activityMessages() }), { maxPoints: 1 }),
       'too-many-points',
     );
+    expectTraceError(
+      () => parseFit(buildFit({ messages: activityMessages() }), { maxMessages: 2 }),
+      'too-many-messages',
+    );
 
     const lap: FitField[] = [
       { num: 2, size: 4, type: 0x86, value: fitSeconds(START) },
@@ -1458,6 +1642,233 @@ describe('import FIT · décodage local', () => {
     );
     expect(trace.issues).toHaveLength(2);
     expect(trace.issues.at(-1)).toMatchObject({ code: 'issue-limit' });
+  });
+
+  it('ne rattache pas un point antérieur au premier lap au lap 0', () => {
+    const record: FitField[] = [
+      { num: 253, size: 4, type: 0x86, value: fitSeconds(START) },
+      { num: 3, size: 1, type: 0x02, value: 120 },
+    ];
+    const lap: FitField[] = [
+      { num: 2, size: 4, type: 0x86, value: fitSeconds('2026-08-09T08:10:00.000Z') },
+      { num: 7, size: 4, type: 0x86, value: 300000 },
+    ];
+    const trace = parseFit(buildFit({
+      messages: [
+        definition(0, 20, record),
+        data(0, record),
+        definition(1, 19, lap),
+        data(1, lap),
+      ],
+    }));
+
+    expect(trace.points[0].lapIndex).toBe(-1);
+    expect(trace.laps[0]).toMatchObject({ firstPointIndex: null, pointCount: 0, tracks: [] });
+    expect(trace.issues).toEqual([]);
+  });
+
+  it('marque lapIndex -1 quand un point n’a pas d’horodatage', () => {
+    const record: FitField[] = [{ num: 3, size: 1, type: 0x02, value: 120 }];
+    const lap: FitField[] = [
+      { num: 2, size: 4, type: 0x86, value: fitSeconds(START) },
+      { num: 7, size: 4, type: 0x86, value: 60000 },
+    ];
+    const trace = parseFit(buildFit({
+      messages: [
+        definition(0, 20, record),
+        data(0, record),
+        definition(1, 19, lap),
+        data(1, lap),
+      ],
+    }));
+
+    expect(trace.points[0].recordedAt).toBeNull();
+    expect(trace.points[0].lapIndex).toBe(-1);
+    expect(trace.laps[0].pointCount).toBe(0);
+  });
+
+  it('conserve le résumé session quand des laps existent', () => {
+    const record: FitField[] = [
+      { num: 253, size: 4, type: 0x86, value: fitSeconds(START) },
+      { num: 3, size: 1, type: 0x02, value: 120 },
+    ];
+    const lap: FitField[] = [
+      { num: 2, size: 4, type: 0x86, value: fitSeconds(START) },
+      { num: 7, size: 4, type: 0x86, value: 600000 },
+      { num: 9, size: 4, type: 0x86, value: 100000 },
+      { num: 13, size: 4, type: 0x86, value: 2400 },
+    ];
+    const session: FitField[] = [
+      { num: 2, size: 4, type: 0x86, value: fitSeconds(START) },
+      { num: 5, size: 1, type: 0x00, value: 1 },
+      { num: 7, size: 4, type: 0x86, value: 600000 },
+      { num: 9, size: 4, type: 0x86, value: 100000 },
+      { num: 11, size: 2, type: 0x84, value: 500 },
+      { num: 14, size: 4, type: 0x86, value: 3000 },
+      { num: 18, size: 1, type: 0x02, value: 82 },
+    ];
+    const activity: FitField[] = [
+      { num: 0, size: 4, type: 0x86, value: 600000 },
+    ];
+    const trace = parseFit(buildFit({
+      messages: [
+        definition(0, 20, record),
+        data(0, record),
+        definition(1, 19, lap),
+        data(1, lap),
+        definition(2, 18, session),
+        data(2, session),
+        definition(3, 34, activity),
+        data(3, activity),
+      ],
+    }));
+
+    expect(trace.summary).toEqual(expect.objectContaining({
+      elapsedSeconds: 600,
+      distanceM: 1000,
+      caloriesKcal: 500,
+      averageSpeedMps: 3,
+      averageCadenceSpm: 82,
+      averageCadenceRpm: null,
+      activityTimerSeconds: 600,
+    }));
+    expect(trace.laps[0]).toMatchObject({
+      caloriesKcal: null,
+      averageSpeedMps: 2.4,
+    });
+    expect(trace.issues).toEqual([]);
+  });
+
+  it('expose dans availableMetrics les mesures portées par le résumé session', () => {
+    const lap: FitField[] = [
+      { num: 2, size: 4, type: 0x86, value: fitSeconds(START) },
+      { num: 7, size: 4, type: 0x86, value: 600000 },
+    ];
+    const session: FitField[] = [
+      { num: 2, size: 4, type: 0x86, value: fitSeconds(START) },
+      { num: 5, size: 1, type: 0x00, value: 1 },
+      { num: 7, size: 4, type: 0x86, value: 600000 },
+      { num: 9, size: 4, type: 0x86, value: 100000 },
+      { num: 14, size: 4, type: 0x86, value: 3000 },
+      { num: 16, size: 1, type: 0x02, value: 140 },
+      { num: 18, size: 1, type: 0x02, value: 82 },
+    ];
+    const trace = parseFit(buildFit({
+      messages: [
+        definition(0, 19, lap),
+        data(0, lap),
+        definition(1, 18, session),
+        data(1, session),
+      ],
+    }));
+
+    expect(trace.laps[0]).toMatchObject({ distanceM: null, averageSpeedMps: null });
+    expect(trace.availableMetrics).toEqual([
+      'time',
+      'distance',
+      'speed',
+      'heartRate',
+      'cadence',
+    ]);
+    expect(trace.issues).toEqual([]);
+  });
+
+  it('normalise timeCreated/serialNumber et signale les champs décodés non consommés', () => {
+    const fileId: FitField[] = [
+      { num: 0, size: 1, type: 0x00, value: 4 },
+      { num: 3, size: 4, type: 0x86, value: 123456 },
+      { num: 4, size: 4, type: 0x86, value: fitSeconds(START) },
+      { num: 5, size: 2, type: 0x84, value: 7 },
+    ];
+    const device: FitField[] = [
+      { num: 253, size: 4, type: 0x86, value: fitSeconds(START) },
+      { num: 0, size: 1, type: 0x00, value: 0 },
+      { num: 1, size: 2, type: 0x84, value: 1 },
+      { num: 2, size: 2, type: 0x84, value: 1234 },
+      { num: 3, size: 2, type: 0x84, value: 2 },
+      { num: 27, size: 12, type: 0x07, value: 'Garmin Test' },
+    ];
+    const activity: FitField[] = [
+      { num: 253, size: 4, type: 0x86, value: fitSeconds('2026-08-09T08:01:00.000Z') },
+      { num: 0, size: 4, type: 0x86, value: 60000 },
+      { num: 1, size: 1, type: 0x02, value: 1 },
+      { num: 2, size: 1, type: 0x00, value: 0 },
+      { num: 3, size: 1, type: 0x00, value: 0 },
+      { num: 4, size: 1, type: 0x00, value: 0 },
+    ];
+    const record: FitField[] = [
+      { num: 253, size: 4, type: 0x86, value: fitSeconds(START) },
+      { num: 3, size: 1, type: 0x02, value: 120 },
+    ];
+    const trace = parseFit(buildFit({
+      messages: [
+        definition(0, 0, fileId),
+        data(0, fileId),
+        definition(1, 23, device),
+        data(1, device),
+        definition(2, 34, activity),
+        data(2, activity),
+        definition(3, 20, record),
+        data(3, record),
+      ],
+    }));
+
+    expect(trace.provenance.serialNumber).toBe('123456');
+    expect(trace.provenance.fileCreatedAt).toBe(START);
+    expect(trace.provenance.creator).toBe('Garmin Test');
+    const ignoredNames = trace.provenance.ignoredSections.map((section) => section.name);
+    expect(ignoredNames).toEqual(expect.arrayContaining([
+      'fit-field:0:5',
+      'fit-field:23:253',
+      'fit-field:23:0',
+      'fit-field:23:1',
+      'fit-field:23:2',
+      'fit-field:23:3',
+      'fit-field:34:1',
+      'fit-field:34:2',
+      'fit-field:34:3',
+      'fit-field:34:4',
+    ]));
+    expect(ignoredNames).not.toContain('fit-field:0:3');
+    expect(ignoredNames).not.toContain('fit-field:0:4');
+    expect(ignoredNames).not.toContain('fit-field:34:0');
+    expect(trace.issues).toEqual(expect.arrayContaining([
+      expect.objectContaining({ code: 'ignored-section' }),
+    ]));
+  });
+
+  it('rattache un point par lap sur un grand nombre de laps', () => {
+    const lapShape: FitField[] = [
+      { num: 2, size: 4, type: 0x86, value: 0 },
+      { num: 7, size: 4, type: 0x86, value: 60000 },
+    ];
+    const recordShape: FitField[] = [
+      { num: 253, size: 4, type: 0x86, value: 0 },
+      { num: 3, size: 1, type: 0x02, value: 120 },
+    ];
+    const messages: number[][] = [
+      definition(2, 20, recordShape),
+      definition(3, 19, lapShape),
+    ];
+
+    for (let index = 0; index < 500; index += 1) {
+      const lapTime = fitSeconds(START) + index * 60;
+      messages.push(data(3, [
+        { ...lapShape[0], value: lapTime },
+        lapShape[1],
+      ]));
+      messages.push(data(2, [
+        { ...recordShape[0], value: lapTime + 10 },
+        recordShape[1],
+      ]));
+    }
+
+    const trace = parseFit(buildFit({ messages }));
+
+    expect(trace.points).toHaveLength(500);
+    expect(trace.laps).toHaveLength(500);
+    expect(trace.points.every((point, index) => point.lapIndex === index)).toBe(true);
+    expect(trace.laps.every((lap) => lap.pointCount === 1)).toBe(true);
   });
 
   it('parse un FIT via le point d’entrée unique et détecte la signature', () => {
@@ -1505,6 +1916,19 @@ describe('import de trace · sélection du format et déduplication', () => {
 
     expect(trace.provenance.format).toBe('tcx');
     expect(trace.points).toHaveLength(3);
+  });
+
+  it('décode un TCX UTF-16 avec BOM, little et big endian', () => {
+    for (const littleEndian of [true, false]) {
+      const bytes = encodeUtf16(VALID, littleEndian);
+
+      expect(detectTraceFormat({ bytes, fileName: 'sortie.bin' })).toBe('tcx');
+      const trace = parseTraceFile({ bytes, fileName: littleEndian ? 'le.tcx' : 'be.tcx' });
+      expect(trace.provenance.format).toBe('tcx');
+      expect(trace.provenance.byteLength).toBe(bytes.length);
+      expect(trace.points).toHaveLength(3);
+      expect(trace.provenance.startedAt).toBe('2026-08-09T08:00:00.000Z');
+    }
   });
 
   it('refuse un format inconnu avec un code stable', () => {

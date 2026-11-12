@@ -55,7 +55,11 @@ export function parseTraceFile(
   }
   if (format === 'tcx') {
     if ('text' in input) return parseTcx(input.text, { ...options, fileName });
-    return parseTcx(decodeText(input.bytes), { ...options, fileName });
+    return parseTcx(decodeText(input.bytes), {
+      ...options,
+      fileName,
+      sourceByteLength: input.bytes.length,
+    });
   }
 
   throw new TraceImportError(
@@ -93,7 +97,46 @@ function looksLikeTcxBytes(bytes: Uint8Array): boolean {
 }
 
 function decodeText(bytes: Uint8Array): string {
-  if (typeof TextDecoder !== 'undefined') return new TextDecoder().decode(bytes);
+  // Un TCX peut être encodé en UTF-16 avec BOM (XML valide). Sans cette
+  // détection, le texte était décodé en UTF-8 puis refusé comme « invalid-xml »
+  // avec un message qui ne disait pas que l'encodage était en cause.
+  if (bytes.length >= 2 && bytes[0] === 0xff && bytes[1] === 0xfe) {
+    return decodeWithEncoding('utf-16le', bytes.subarray(2));
+  }
+  if (bytes.length >= 2 && bytes[0] === 0xfe && bytes[1] === 0xff) {
+    return decodeWithEncoding('utf-16be', bytes.subarray(2));
+  }
+  if (bytes.length >= 3 && bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf) {
+    return decodeWithEncoding('utf-8', bytes.subarray(3));
+  }
+  return decodeWithEncoding('utf-8', bytes);
+}
+
+function decodeWithEncoding(encoding: 'utf-8' | 'utf-16le' | 'utf-16be', bytes: Uint8Array): string {
+  if (typeof TextDecoder !== 'undefined') {
+    try {
+      return new TextDecoder(encoding).decode(bytes);
+    } catch {
+      // Certains moteurs n'exposent pas utf-16be : le repli manuel ci-dessous
+      // reste correct pour du XML BMP, cas normal d'un TCX.
+    }
+  }
+
+  if (encoding === 'utf-16be') {
+    let result = '';
+    for (let index = 0; index + 1 < bytes.length; index += 2) {
+      result += String.fromCharCode((bytes[index] << 8) | bytes[index + 1]);
+    }
+    return result;
+  }
+  if (encoding === 'utf-16le') {
+    let result = '';
+    for (let index = 0; index + 1 < bytes.length; index += 2) {
+      result += String.fromCharCode(bytes[index] | (bytes[index + 1] << 8));
+    }
+    return result;
+  }
+
   let result = '';
   for (const byte of bytes) result += String.fromCharCode(byte);
   return result;

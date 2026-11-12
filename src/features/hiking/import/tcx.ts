@@ -22,7 +22,27 @@ const ACTIVITY_EXTENSION_V2_NAMESPACE =
   'http://www.garmin.com/xmlschemas/ActivityExtension/v2';
 
 /** Sections TCX valides mais hors du périmètre « une activité » de cet import. */
-const IGNORED_SECTIONS = new Set(['Courses', 'Workouts', 'Folders']);
+const IGNORED_SECTIONS = new Set(['Courses', 'Workouts', 'Folders', 'Notes', 'Training']);
+
+/** Sports TCX dont `<Cadence>` est une cadence de course/marche (pas/min). */
+const RUNNING_SPORTS = new Set([
+  'running',
+  'trail_running',
+  'walking',
+  'hiking',
+  'mountaineering',
+  'snowshoeing',
+]);
+
+/** Sports TCX dont `<Cadence>` est une cadence vélo (tours/min). */
+const CYCLING_SPORTS = new Set([
+  'biking',
+  'cycling',
+  'e_biking',
+  'mountain_biking',
+  'road_biking',
+  'indoor_cycling',
+]);
 
 const DECIMAL_NUMBER = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/;
 
@@ -38,10 +58,17 @@ const DECIMAL_NUMBER = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/;
  *   `<MultiSportSession>` sont refusées explicitement (`multiple-activities`)
  *   au lieu d'être fusionnées silencieusement ;
  * - structure contrôlée `Activities > Activity > Lap > Track > Trackpoint` ;
- *   `Courses`, `Workouts` et `Folders` sont ignorés, signalés dans
- *   `provenance.ignoredSections` et par une alerte `ignored-section` ;
+ *   `Courses`, `Workouts`, `Folders`, `Notes`, `Training` et les `Extensions`
+ *   hors `TPX` sont ignorés, signalés dans `provenance.ignoredSections` et par
+ *   une alerte `ignored-section` ;
  * - plusieurs `<Track>` sont conservés dans un même `<Lap>` (segmentation XSD),
  *   avec `trackIndex` sur chaque point et `tracks` sur le tour ;
+ * - `<Cadence>` est rangée selon `Activity@Sport` : `runCadenceSpm` pour la
+ *   course/marche, `cadenceRpm` pour le vélo ; les autres sports sont signalés
+ *   au lieu de recevoir une unité fausse ;
+ * - la fin d'un lap (`StartTime + TotalTimeSeconds`) alimente `endedAt` /
+ *   `endedAtLocal`, même sans trackpoint ou quand le dernier point précède la
+ *   fin réelle du lap ;
  * - les activités sans `<Position>` restent lisibles et conservent leurs
  *   bornes d'altitude ;
  * - un `xsd:dateTime` sans fuseau reste une heure civile locale : il est
@@ -68,7 +95,11 @@ export function parseTcx(
   }
 
   const limits = resolveTraceImportLimits(options);
-  const byteLength = utf8ByteLength(xml);
+  const byteLength = typeof options.sourceByteLength === 'number'
+    && Number.isFinite(options.sourceByteLength)
+    && options.sourceByteLength >= 0
+    ? Math.floor(options.sourceByteLength)
+    : utf8ByteLength(xml);
   if (byteLength > limits.maxBytes) {
     throw new TraceImportError(
       'file-too-large',
@@ -84,6 +115,9 @@ export function parseTcx(
   const ignoredSections: TraceIgnoredSection[] = [];
   const instantTimestamps: string[] = [];
   const localTimestamps: string[] = [];
+  const lapEndInstants: string[] = [];
+  const lapEndLocals: string[] = [];
+  const extensionScopes: Array<{ depth: number; ignored: number }> = [];
 
   let issueLimitReported = false;
   let activitiesDepth: number | null = null;
@@ -108,6 +142,10 @@ export function parseTcx(
   let pointHeartRateDepth: number | null = null;
   let averageHeartRateDepth: number | null = null;
   let maximumHeartRateDepth: number | null = null;
+  let currentPointCadence: number | null = null;
+  let currentLapCadence: number | null = null;
+  let unmappedPointCadence = 0;
+  let unmappedLapCadence = 0;
   let tpxDepth: number | null = null;
   let tpxNamespace: string | null = null;
   let activityCreatorDepth: number | null = null;
@@ -169,6 +207,21 @@ export function parseTcx(
           ignoredSection = { name: localName, elementCount: 0 };
           ignoredSections.push(ignoredSection);
           return;
+        }
+
+        // Les extensions hors TPX (par exemple LX) ne sont pas interprétées :
+        // leur sous-arbre est compté pour être signalé, sans compter TPX ni
+        // ses enfants, qui sont lus.
+        if (tcx && localName === 'Extensions') {
+          extensionScopes.push({ depth, ignored: 0 });
+        } else if (extensionScopes.length > 0) {
+          const recognizedTpx = localName === 'TPX'
+            && pointDepth != null
+            && namespaceURI === ACTIVITY_EXTENSION_V2_NAMESPACE
+            && (isDirectChild(extensionsDepth, depth) || isDirectChild(pointDepth, depth));
+          if (!recognizedTpx && tpxDepth == null) {
+            extensionScopes[extensionScopes.length - 1].ignored += 1;
+          }
         }
 
         if (tcx && localName === 'TrainingCenterDatabase' && depth > 1) {
@@ -370,7 +423,7 @@ export function parseTcx(
           else if (localName === 'MaximumSpeed') currentLap.maxSpeedMps = readNonNegativeNumber(value, at);
           else if (localName === 'Calories') currentLap.caloriesKcal = readNonNegativeNumber(value, at);
           else if (localName === 'Intensity') currentLap.intensity = clean(value);
-          else if (localName === 'Cadence') currentLap.averageCadenceRpm = readNonNegativeNumber(value, at);
+          else if (localName === 'Cadence') currentLapCadence = readNonNegativeNumber(value, at);
           else if (localName === 'TriggerMethod') currentLap.triggerMethod = clean(value);
         }
 
@@ -384,7 +437,7 @@ export function parseTcx(
             }
           } else if (localName === 'AltitudeMeters') currentPoint.altitudeM = readNumber(value, at);
           else if (localName === 'DistanceMeters') currentPoint.distanceM = readNonNegativeNumber(value, at);
-          else if (localName === 'Cadence') currentPoint.cadenceRpm = readNonNegativeNumber(value, at);
+          else if (localName === 'Cadence') currentPointCadence = readNonNegativeNumber(value, at);
           else if (localName === 'Temperature') currentPoint.temperatureC = readNumber(value, at);
         }
 
@@ -432,6 +485,20 @@ export function parseTcx(
           else if (localName === 'Temperature') currentPoint.temperatureC = readNumber(value, at);
         }
 
+        if (tcx && localName === 'Extensions' && extensionScopes.length > 0) {
+          const scope = extensionScopes[extensionScopes.length - 1];
+          if (scope.depth === depth) {
+            extensionScopes.pop();
+            if (scope.ignored > 0) {
+              ignoredSections.push({ name: 'Extensions', elementCount: scope.ignored });
+              addIssue(
+                'ignored-section',
+                `Extensions TCX hors TPX ignorées (${scope.ignored} éléments non interprétés).`,
+                at,
+              );
+            }
+          }
+        }
         if (tcx && localName === 'Extensions' && extensionsDepth === depth) {
           extensionsDepth = null;
         }
@@ -549,8 +616,12 @@ export function parseTcx(
     }
   }
 
-  const hasInstantTime = instantTimestamps.length > 0;
-  const hasLocalTime = localTimestamps.length > 0;
+  const hasInstantTime = instantTimestamps.length > 0
+    || activityId?.instant != null
+    || laps.some((lap) => lap.startedAt != null);
+  const hasLocalTime = localTimestamps.length > 0
+    || activityId?.local != null
+    || laps.some((lap) => lap.startedAtLocal != null);
   if (hasLocalTime) {
     addIssue(
       'unqualified-time',
@@ -573,11 +644,24 @@ export function parseTcx(
       '$',
     );
   }
+  if (unmappedPointCadence > 0 || unmappedLapCadence > 0) {
+    addIssue(
+      'unsupported-feature',
+      `Cadence TCX non interprétée pour le sport « ${sport ?? 'inconnu'} » : unité non couverte (${unmappedPointCadence} points, ${unmappedLapCadence} tours).`,
+      '$',
+    );
+  }
 
-  const startedAt = activityId?.instant ?? earliestIso(instantTimestamps);
-  const startedAtLocal = activityId?.local ?? earliestLocal(localTimestamps);
-  const endedAt = latestIso(instantTimestamps);
-  const endedAtLocal = latestLocal(localTimestamps);
+  const startedAt = activityId?.instant
+    ?? earliestIso(instantTimestamps)
+    ?? laps[0]?.startedAt
+    ?? null;
+  const startedAtLocal = activityId?.local
+    ?? earliestLocal(localTimestamps)
+    ?? laps[0]?.startedAtLocal
+    ?? null;
+  const endedAt = latestIso([...instantTimestamps, ...lapEndInstants]);
+  const endedAtLocal = latestLocal([...localTimestamps, ...lapEndLocals]);
   const timeBasis: NormalizedTraceImport['provenance']['timeBasis'] =
     hasInstantTime && hasLocalTime
       ? 'mixed'
@@ -602,6 +686,8 @@ export function parseTcx(
       schema: rootNamespace,
       creator,
       productId,
+      serialNumber: null,
+      fileCreatedAt: null,
       sport,
       startedAt,
       endedAt,
@@ -614,6 +700,7 @@ export function parseTcx(
     bounds: computeBounds(points),
     points,
     laps,
+    summary: null,
     availableMetrics: computeAvailableMetrics(points, laps, hasInstantTime || hasLocalTime),
     issues,
   };
@@ -626,6 +713,7 @@ export function parseTcx(
       elapsedSeconds: null,
       distanceM: null,
       maxSpeedMps: null,
+      averageSpeedMps: null,
       caloriesKcal: null,
       averageHeartRateBpm: null,
       maxHeartRateBpm: null,
@@ -642,6 +730,8 @@ export function parseTcx(
   function finalizePoint(at: string): void {
     const point = currentPoint;
     if (point == null) return;
+
+    resolvePointCadence(point);
 
     // Une coordonnée orpheline (Position sans latitude ou sans longitude) ne
     // doit pas devenir un point au large. `validatePosition` a déjà traité le
@@ -733,6 +823,15 @@ export function parseTcx(
       }
     }
 
+    resolveLapCadence(lap);
+
+    // La fin d'un lap peut dépasser son dernier point : `TotalTimeSeconds` est
+    // la seule source qui donne cette fin. On la conserve pour `endedAt`.
+    const lapEndInstant = addSecondsToInstant(lap.startedAt, lap.elapsedSeconds);
+    if (lapEndInstant != null) lapEndInstants.push(lapEndInstant);
+    const lapEndLocal = addSecondsToCivil(lap.startedAtLocal, lap.elapsedSeconds);
+    if (lapEndLocal != null) lapEndLocals.push(lapEndLocal);
+
     if (isEmptyLap(lap)) {
       addIssue('empty-lap', 'Lap sans aucune mesure exploitable conservé comme tour vide.', at);
     }
@@ -745,6 +844,34 @@ export function parseTcx(
     }
 
     laps.push(lap);
+  }
+
+  function resolvePointCadence(point: NormalizedTrackPoint): void {
+    if (currentPointCadence == null) return;
+    const cadence = currentPointCadence;
+    currentPointCadence = null;
+
+    if (isRunningSport(sport)) {
+      point.runCadenceSpm ??= cadence;
+    } else if (isCyclingSport(sport)) {
+      point.cadenceRpm = cadence;
+    } else {
+      unmappedPointCadence += 1;
+    }
+  }
+
+  function resolveLapCadence(lap: NormalizedTraceLap): void {
+    if (currentLapCadence == null) return;
+    const cadence = currentLapCadence;
+    currentLapCadence = null;
+
+    if (isRunningSport(sport)) {
+      lap.averageCadenceSpm = cadence;
+    } else if (isCyclingSport(sport)) {
+      lap.averageCadenceRpm = cadence;
+    } else {
+      unmappedLapCadence += 1;
+    }
   }
 
   function validatePosition(point: NormalizedTrackPoint, at: string): void {
@@ -843,6 +970,7 @@ function isEmptyLap(lap: NormalizedTraceLap): boolean {
     && lap.elapsedSeconds == null
     && lap.distanceM == null
     && lap.maxSpeedMps == null
+    && lap.averageSpeedMps == null
     && lap.caloriesKcal == null
     && lap.averageHeartRateBpm == null
     && lap.maxHeartRateBpm == null
@@ -851,6 +979,42 @@ function isEmptyLap(lap: NormalizedTraceLap): boolean {
     && lap.intensity == null
     && lap.triggerMethod == null
   );
+}
+
+function isRunningSport(sport: string | null): boolean {
+  const normalized = sport?.trim().toLowerCase();
+  return normalized != null && RUNNING_SPORTS.has(normalized);
+}
+
+function isCyclingSport(sport: string | null): boolean {
+  const normalized = sport?.trim().toLowerCase();
+  return normalized != null && CYCLING_SPORTS.has(normalized);
+}
+
+/**
+ * Ajoute une durée à un instant UTC. Utilisé pour la fin d'un lap de résumé,
+ * quand le dernier point est antérieur à la fin réelle du lap.
+ */
+function addSecondsToInstant(instant: string | null, seconds: number | null): string | null {
+  if (instant == null || seconds == null) return null;
+  const start = Date.parse(instant);
+  if (!Number.isFinite(start)) return null;
+  return isoFromMilliseconds(start + seconds * 1000);
+}
+
+/**
+ * Ajoute une durée à une heure civile, sans lui inventer de fuseau. La clé
+ * civile est manipulée comme une date UTC, puis reformatée sans `Z`.
+ */
+function addSecondsToCivil(local: string | null, seconds: number | null): string | null {
+  if (local == null || seconds == null) return null;
+  const start = civilTimeKey(local);
+  if (start == null) return null;
+  const end = start + seconds * 1000;
+  if (!Number.isFinite(end) || Math.abs(end) > 8.64e15) return null;
+  const iso = new Date(end).toISOString();
+  const hasFraction = local.includes('.') || !Number.isInteger(seconds);
+  return hasFraction ? iso.slice(0, 23) : iso.slice(0, 19);
 }
 
 function isPointEmpty(point: NormalizedTrackPoint): boolean {

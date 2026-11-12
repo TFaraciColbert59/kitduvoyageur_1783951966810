@@ -6,6 +6,7 @@ import {
   type TraceImportIssueCode,
   type TraceImportOptions,
   type TraceIgnoredSection,
+  type TraceSessionSummary,
   type TraceTimeBasis,
   TraceImportError,
   resolveTraceImportLimits,
@@ -18,10 +19,12 @@ import { civilTimeKey } from './time';
  * Décodeur FIT local, sans dépendance et sans réseau.
  *
  * Il interprète `file_id` (0), `record` (20), `lap` (19), `session` (18),
- * `device_info` (23) et `activity` (34). Les champs non interprétés de ces
- * messages et les autres messages (par exemple `event`) sont lus puis signalés
- * dans `provenance.ignoredSections` : le fichier reste importable, mais aucune
- * donnée n'est abandonnée en silence.
+ * `device_info` (23) et `activity` (34). Seul `file_id.type = 4` (activité
+ * enregistrée) est accepté ; les parcours, sports, workouts, monitorings et
+ * fichiers sans `file_id` sont refusés (`not-activity`). Les champs non
+ * interprétés de ces messages et les autres messages (par exemple `event`)
+ * sont lus puis signalés dans `provenance.ignoredSections` : le fichier reste
+ * importable, mais aucune donnée n'est abandonnée en silence.
  *
  * Le décodage applique les échelles et décalages du profil FIT, convertit les
  * semicircles en degrés, les horodatages FIT en ISO 8601 UTC et respecte
@@ -378,6 +381,40 @@ const FIT_MESSAGE_SPECS: Readonly<Record<number, Readonly<Record<number, FitFiel
   },
 };
 
+const CONSUMED_FIT_FIELDS: Readonly<Record<number, ReadonlySet<number>>> = {
+  0: new Set([0, 1, 2, 3, 4]),
+  20: new Set([253, 0, 1, 2, 3, 4, 5, 6, 7, 13, 73, 78]),
+  19: new Set([2, 7, 8, 9, 11, 13, 14, 15, 16, 17, 20, 24, 25]),
+  18: new Set([2, 5, 7, 8, 9, 11, 14, 15, 16, 17, 18, 253]),
+  34: new Set([0, 253]),
+  23: new Set([27]),
+};
+
+/**
+ * Signale les champs présents dans le profil mais que la normalisation ne
+ * consomme pas. La détection de `readFitMessages` ne couvre que les champs
+ * absents du profil : sans cette passe, `serialNumber`, `device_info` ou
+ * `activity.event` disparaîtraient sans trace.
+ */
+function collectUnconsumedFitFields(
+  messages: FitMessage[],
+  unsupportedFields: Map<string, number>,
+): void {
+  for (const message of messages) {
+    const spec = FIT_MESSAGE_SPECS[message.globalMessage];
+    if (spec == null) continue;
+    const consumed = CONSUMED_FIT_FIELDS[message.globalMessage];
+    for (const rawFieldNumber of Object.keys(message.fields)) {
+      const fieldNumber = Number(rawFieldNumber);
+      if (spec[fieldNumber] == null) continue;
+      if (consumed?.has(fieldNumber)) continue;
+      if (message.fields[fieldNumber] == null) continue;
+      const key = `${message.globalMessage}:${fieldNumber}`;
+      unsupportedFields.set(key, (unsupportedFields.get(key) ?? 0) + 1);
+    }
+  }
+}
+
 export function parseFit(
   bytes: Uint8Array,
   options: TraceImportOptions = {},
@@ -442,11 +479,12 @@ export function parseFit(
     truncated = true;
   }
 
-  const parsed = readFitMessages(bytes, dataStart, dataEnd);
+  const parsed = readFitMessages(bytes, dataStart, dataEnd, limits.maxMessages);
   truncated ||= parsed.truncated;
 
   const messages = parsed.messages;
   const diagnostics = parsed.diagnostics;
+  collectUnconsumedFitFields(messages, diagnostics.unsupportedFields);
   if (messages.length === 0) {
     throw new TraceImportError(
       'no-activity',
@@ -456,12 +494,22 @@ export function parseFit(
     );
   }
 
-  const fileId = messages.find((message) => message.globalMessage === 0);
-  const fileType = numberField(fileId, 0);
-  if (fileType === 6) {
+  const fileIds = messages.filter((message) => message.globalMessage === 0);
+  if (fileIds.length > 1) {
     throw new TraceImportError(
-      'no-activity',
-      'FIT de parcours : cet import attend une activité enregistrée, pas un parcours.',
+      'invalid-structure',
+      'Le fichier FIT contient plusieurs messages file_id : la provenance serait ambiguë.',
+    );
+  }
+  const fileId = fileIds[0] ?? null;
+  const fileType = numberField(fileId, 0);
+  if (fileType !== 4) {
+    const label = fileType == null ? 'absent' : String(fileType);
+    throw new TraceImportError(
+      'not-activity',
+      fileType === 6
+        ? 'FIT de parcours : cet import attend une activité enregistrée (file_id.type = 4), pas un parcours.'
+        : `FIT non-activité (file_id.type = ${label}) : cet import attend une activité enregistrée (file_id.type = 4).`,
     );
   }
 
@@ -482,6 +530,12 @@ export function parseFit(
   }
 
   const session = sessions[0] ?? null;
+  if (!truncated && session == null && activityMessages.length === 0) {
+    throw new TraceImportError(
+      'not-activity',
+      'FIT d’activité sans message session ni activity : le fichier n’est pas une activité complète.',
+    );
+  }
   const lapMessages = messages.filter((message) => message.globalMessage === 19);
   if (lapMessages.length > limits.maxLaps) {
     throw new TraceImportError(
@@ -589,28 +643,67 @@ export function parseFit(
   }
 
   // Les laps FIT sont des résumés : on rattache chaque point au dernier lap
-  // dont le début précède son horodatage, sans fabriquer de lien entre deux
-  // enregistrements absents.
-  const lapStarts = lapMessages.map((lap, index) => ({
-    index,
-    start: timestampSeconds(lap, 2),
-  }));
+  // dont le début précède son horodatage. Les débuts sont triés une fois, avec
+  // le plus grand index de document atteint, puis chaque point fait une
+  // recherche binaire : O((points + laps) log laps), jamais O(points × laps).
+  const sortedLapStarts = lapMessages
+    .map((lap, index) => ({ index, start: timestampSeconds(lap, 2) }))
+    .filter((lap): lap is { index: number; start: number } => lap.start != null)
+    .sort((left, right) => left.start - right.start);
+  const indexedLapStarts: Array<{ start: number; maxIndex: number }> = [];
+  let maxLapIndex = -1;
+  for (const lap of sortedLapStarts) {
+    maxLapIndex = Math.max(maxLapIndex, lap.index);
+    indexedLapStarts.push({ start: lap.start, maxIndex: maxLapIndex });
+  }
 
-  if (lapStarts.length > 0) {
+  if (lapMessages.length > 0) {
     for (const point of points) {
-      const seconds = point.recordedAt == null ? null : Math.floor(Date.parse(point.recordedAt) / 1000) - FIT_EPOCH_SECONDS;
-      let selected = 0;
-      for (const lap of lapStarts) {
-        if (lap.start != null && seconds != null && lap.start <= seconds) selected = lap.index;
+      if (point.recordedAt == null) {
+        // Sans horodatage, aucun lap ne peut être choisi sans inventer.
+        point.lapIndex = -1;
+        continue;
       }
-      point.lapIndex = selected;
+      const seconds = Math.floor(Date.parse(point.recordedAt) / 1000) - FIT_EPOCH_SECONDS;
+      if (!Number.isFinite(seconds)) {
+        point.lapIndex = -1;
+        continue;
+      }
+
+      let low = 0;
+      let high = indexedLapStarts.length;
+      while (low < high) {
+        const middle = (low + high) >> 1;
+        if (indexedLapStarts[middle].start <= seconds) low = middle + 1;
+        else high = middle;
+      }
+      // `low === 0` : le point précède tous les laps. On ne le rattache pas
+      // artificiellement au lap 0, dont le début lui est postérieur.
+      point.lapIndex = low === 0 ? -1 : indexedLapStarts[low - 1].maxIndex;
     }
   }
+
+  const lapPointCounts = new Array<number>(lapMessages.length).fill(0);
+  const lapFirstPointIndexes = new Array<number | null>(lapMessages.length).fill(null);
+  points.forEach((point, pointIndex) => {
+    if (point.lapIndex < 0 || point.lapIndex >= lapMessages.length) return;
+    lapPointCounts[point.lapIndex] += 1;
+    if (lapFirstPointIndexes[point.lapIndex] == null) {
+      lapFirstPointIndexes[point.lapIndex] = pointIndex;
+    }
+  });
 
   const laps: NormalizedTraceLap[] = [];
   if (lapMessages.length > 0) {
     for (let index = 0; index < lapMessages.length; index += 1) {
-      laps.push(lapMessageToLap(lapMessages[index], index, points));
+      laps.push(
+        lapMessageToLap(
+          lapMessages[index],
+          index,
+          lapPointCounts[index],
+          lapFirstPointIndexes[index],
+        ),
+      );
     }
   } else {
     laps.push(sessionToLap(session, points));
@@ -641,6 +734,26 @@ export function parseFit(
     );
   }
 
+  // Le résumé de session est conservé même quand des laps existent : les
+  // totaux de session (calories, distance, vitesse moyenne, etc.) ne sont pas
+  // répétés dans chaque lap et disparaîtraient autrement.
+  const summary: TraceSessionSummary | null = session == null
+    ? null
+    : {
+        startedAt: timestampIsoField(session, 2),
+        elapsedSeconds: valueAsNumber(session, 7) ?? valueAsNumber(session, 8),
+        distanceM: valueAsNumber(session, 9),
+        maxSpeedMps: valueAsNumber(session, 15),
+        averageSpeedMps: valueAsNumber(session, 14),
+        caloriesKcal: valueAsNumber(session, 11),
+        averageHeartRateBpm: valueAsNumber(session, 16),
+        maxHeartRateBpm: valueAsNumber(session, 17),
+        averageCadenceRpm: valueAsNumber(session, 18),
+        averageCadenceSpm: null,
+        sport,
+        activityTimerSeconds: valueAsNumber(activity, 0),
+      };
+
   // La cadence FIT n'a pas la même unité selon le sport. On ne la range
   // jamais dans un champ dont l'unité ne correspond pas.
   if (sport != null && RUNNING_CADENCE_SPORTS.has(sport)) {
@@ -654,12 +767,18 @@ export function parseFit(
       lap.averageCadenceSpm = lap.averageCadenceRpm;
       lap.averageCadenceRpm = null;
     }
+    if (summary != null) {
+      summary.averageCadenceSpm = summary.averageCadenceRpm;
+      summary.averageCadenceRpm = null;
+    }
   } else if (sport == null || !CYCLING_CADENCE_SPORTS.has(sport)) {
     const hasCadence = points.some((point) => point.cadenceRpm != null)
-      || laps.some((lap) => lap.averageCadenceRpm != null);
+      || laps.some((lap) => lap.averageCadenceRpm != null)
+      || summary?.averageCadenceRpm != null;
     if (hasCadence) {
       for (const point of points) point.cadenceRpm = null;
       for (const lap of laps) lap.averageCadenceRpm = null;
+      if (summary != null) summary.averageCadenceRpm = null;
       addIssue(
         'unsupported-feature',
         `Cadence FIT du sport « ${sport ?? 'inconnu'} » non interprétée : unité non couverte.`,
@@ -694,6 +813,8 @@ export function parseFit(
       schema: 'fit',
       creator,
       productId: product == null ? null : String(product),
+      serialNumber: numberField(fileId, 3)?.toString() ?? null,
+      fileCreatedAt: timestampIsoField(fileId, 4),
       sport,
       startedAt,
       endedAt,
@@ -706,7 +827,8 @@ export function parseFit(
     bounds: computeBounds(points),
     points,
     laps,
-    availableMetrics: computeAvailableMetrics(points, laps, hasFitTime),
+    summary,
+    availableMetrics: computeAvailableMetrics(points, laps, hasFitTime, summary),
     issues,
   };
 }
@@ -715,6 +837,7 @@ function readFitMessages(
   bytes: Uint8Array,
   dataStart: number,
   dataEnd: number,
+  maxMessages: number,
 ): { messages: FitMessage[]; truncated: boolean; diagnostics: FitDiagnostics } {
   const definitions = new Map<number, FitDefinition>();
   const messages: FitMessage[] = [];
@@ -727,6 +850,7 @@ function readFitMessages(
   let offset = dataStart;
   let truncated = false;
   let lastTimestamp: number | null = null;
+  let messageCount = 0;
 
   while (offset < dataEnd) {
     const header = bytes[offset];
@@ -844,8 +968,20 @@ function readFitMessages(
     if (compressed && timestamp != null) fields[253] = timestamp;
     const messageTimestamp = asNumber(fields[253]);
     if (messageTimestamp != null) lastTimestamp = messageTimestamp;
-    messages.push({ globalMessage: definition.globalMessage, fields });
-    if (!SUPPORTED_FIT_MESSAGES.has(definition.globalMessage)) {
+
+    messageCount += 1;
+    if (messageCount > maxMessages) {
+      throw new TraceImportError(
+        'too-many-messages',
+        `Plus de ${maxMessages} messages FIT : lecture interrompue avant matérialisation complète.`,
+      );
+    }
+
+    if (SUPPORTED_FIT_MESSAGES.has(definition.globalMessage)) {
+      // Seuls les messages interprétés sont matérialisés : un fichier bourré
+      // de messages inconnus ne peut pas faire croître la mémoire sans borne.
+      messages.push({ globalMessage: definition.globalMessage, fields });
+    } else {
       diagnostics.unsupportedMessages.set(
         definition.globalMessage,
         (diagnostics.unsupportedMessages.get(definition.globalMessage) ?? 0) + 1,
@@ -1043,10 +1179,9 @@ function recordToPoint(record: FitMessage): NormalizedTrackPoint | null {
 function lapMessageToLap(
   message: FitMessage,
   index: number,
-  points: NormalizedTrackPoint[],
+  pointCount: number,
+  firstPointIndex: number | null,
 ): NormalizedTraceLap {
-  const firstPointIndex = points.findIndex((point) => point.lapIndex === index);
-  const pointCount = points.filter((point) => point.lapIndex === index).length;
   const startedAt = timestampIsoField(message, 2);
   const lap: NormalizedTraceLap = {
     index,
@@ -1055,6 +1190,7 @@ function lapMessageToLap(
     elapsedSeconds: valueAsNumber(message, 7) ?? valueAsNumber(message, 8),
     distanceM: valueAsNumber(message, 9),
     maxSpeedMps: valueAsNumber(message, 14),
+    averageSpeedMps: valueAsNumber(message, 13),
     caloriesKcal: valueAsNumber(message, 11),
     averageHeartRateBpm: valueAsNumber(message, 15),
     maxHeartRateBpm: valueAsNumber(message, 16),
@@ -1062,9 +1198,9 @@ function lapMessageToLap(
     averageCadenceSpm: null,
     intensity: textField(message, 20),
     triggerMethod: textField(message, 24),
-    firstPointIndex: firstPointIndex >= 0 ? firstPointIndex : null,
+    firstPointIndex,
     pointCount,
-    tracks: pointCount > 0 && firstPointIndex >= 0
+    tracks: pointCount > 0 && firstPointIndex != null
       ? [{ index: 0, firstPointIndex, pointCount }]
       : [],
   };
@@ -1086,6 +1222,7 @@ function sessionToLap(
     elapsedSeconds,
     distanceM: valueAsNumber(session, 9),
     maxSpeedMps: valueAsNumber(session, 15),
+    averageSpeedMps: valueAsNumber(session, 14),
     caloriesKcal: valueAsNumber(session, 11),
     averageHeartRateBpm: valueAsNumber(session, 16),
     maxHeartRateBpm: valueAsNumber(session, 17),
