@@ -1,0 +1,43 @@
+<template>
+  <link rel="stylesheet" href="lib/phone/phone.css" />
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; background: #0B1F17; }
+  </style>
+  <div id="root" data-composition-id="pl-strap" data-width="1920" data-height="1080" data-layout-allow-overflow>
+    <div id="pl-strap-cam" class="ph-cam">
+      <div id="pl-strap-screen" class="ph-screen" data-phone='{"corners":[[1183.136,524.434],[1249.407,517.127],[1258.681,663.276],[1190.736,670.653]],"radius":7.38,"blur":0.66,"ambient":{"rgb":[0.3974,0.4202,0.4246],"luminance":0.4157}}'>
+        <img id="pl-strap-s0" class="ph-layer" src="assets/screens/E03-compas-nous.png" alt="" style="opacity:1" />
+        <div class="ph-tint"></div>
+        <div class="ph-glare"></div>
+      </div>
+      <img id="pl-strap-plate" class="ph-plate" src="assets/plates/strap.keyed.png" alt="" />
+    </div>
+  </div>
+  <script src="lib/phone/phone.js"></script>
+  <script>
+    (function () {
+      var D = 1.5, CX = 1220.5, CY = 593.9;
+      var cam = document.getElementById('pl-strap-cam');
+      var scr = document.getElementById('pl-strap-screen');
+      var timing = { states: [] };
+      function ease(p) { return p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2; }
+      function pose(t) {
+        var p = ease(Math.max(0, Math.min(1, t / D)));
+        return { s: 1 + 0.07 * p, r: -1.4 * p, x: -26 * p, y: -10 * p };
+      }
+      function apply(t) {
+        var a = pose(t), b = pose(Math.max(0, t - 1 / 60));
+        cam.style.transformOrigin = CX + 'px ' + CY + 'px';
+        cam.style.transform = 'translate(' + a.x.toFixed(2) + 'px,' + a.y.toFixed(2) + 'px) rotate(' + a.r.toFixed(3) + 'deg) scale(' + a.s.toFixed(4) + ')';
+        var speed = Math.hypot(a.x - b.x, a.y - b.y, (a.s - b.s) * 900, (a.r - b.r) * 15) * 60;
+        window.LKDVPhone.render(scr, t, { x: a.x, y: a.y, speed: speed }, timing);
+      }
+      var st = { t: 0 };
+      var tl = gsap.timeline({ paused: true });
+      tl.fromTo(st, { t: 0 }, { t: D, duration: D, ease: 'none', onUpdate: function () { apply(st.t); } }, 0);
+      apply(0);
+      window.__timelines = window.__timelines || {};
+      window.__timelines['pl-strap'] = tl;
+    })();
+  </script>
+</template>
