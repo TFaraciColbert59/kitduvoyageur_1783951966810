@@ -17,7 +17,7 @@ import { performSosCall, planSosCall, sosSimulated } from './activity/sosCall';
 import { enqueue, flushQueue, listQueue } from './offline/queue';
 import { registerOfflineWorker } from './offline/zone';
 import { offRouteLabel } from './activity/offRoute';
-import { readFinishOutcome } from './activity/finishOutcome';
+import { readFinishOutcome, shouldKeepFinishInQueue } from './activity/finishOutcome';
 import { XpIcon } from './ui/XpIcon';
 import { haptic } from './state/haptics';
 import { useExplorerStore, useTransientStart } from './state/store';
@@ -211,43 +211,103 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
     void listQueue().then((items) => setOfflineQueue(items.length));
   }, []);
 
-  useEffect(() => {
-    if (!online) return;
-    void flushQueue(async (operation) => {
-      if (operation.kind === 'activity.finish') {
-        // Fin de sortie jouée hors ligne : rejouée avec sa clé d'idempotence
-        // (le serveur répond `duplicate` si elle a déjà été appliquée).
-        const { createClient } = await import('@/lib/supabase/client');
-        const { data } = await createClient().auth.getSession();
-        const token = data.session?.access_token;
-        if (!token) return false;
-        const res = await fetch('/api/explorer/v2/activity/finish', {
+  // Un seul flush à la fois : les déclencheurs (réseau, auth, focus) peuvent
+  // se chevaucher sans rejouer deux fois la même opération.
+  const flushInFlight = React.useRef(false);
+  const flushPending = useCallback(async () => {
+    if (flushInFlight.current) return;
+    flushInFlight.current = true;
+    try {
+      const result = await flushQueue(async (operation) => {
+        if (operation.kind === 'activity.finish') {
+          // Fin de sortie jouée hors ligne : rejouée avec sa clé d'idempotence
+          // (le serveur répond `duplicate` si elle a déjà été appliquée).
+          const { createClient } = await import('@/lib/supabase/client');
+          const { data } = await createClient().auth.getSession();
+          const token = data.session?.access_token;
+          // Session expirée : l'opération reste en file jusqu'à reconnexion.
+          if (!token) return false;
+          const res = await fetch('/api/explorer/v2/activity/finish', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify(operation.payload),
+          });
+          const payload = await res.json().catch(() => null);
+          const outcome = readFinishOutcome(res.status, payload);
+          // Seuls 400/409 sont définitifs. Un 401/403/404/5xx conserve le
+          // bilan : il sera rejoué après reconnexion ou correction serveur.
+          if (shouldKeepFinishInQueue(outcome)) return false;
+          // La file vient d'aboutir : l'écran Bilan ne doit plus afficher
+          // « Enregistrement impossible » pour cette séance.
+          const current = useExplorerStore.getState();
+          const queuedSession = operation.payload.sessionId;
+          if (typeof queuedSession === 'string' && current.summary?.sessionId === queuedSession) {
+            useExplorerStore.setState({ summarySaved: outcome.state });
+          }
+          return true;
+        }
+        if (operation.kind !== 'report-confirm') return false;
+        const res = await fetch('/api/explorer/v2/reports/confirm', {
           method: 'POST',
-          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(operation.payload),
         });
-        const payload = await res.json().catch(() => null);
-        const outcome = readFinishOutcome(res.status, payload);
-        // Une session expirée doit rester en file : elle sera rejouée après
-        // reconnexion. Les erreurs définitives (400/409) sont retirées.
-        if (outcome.state === 'unauthenticated') return false;
-        return !outcome.retryable;
-      }
-      if (operation.kind !== 'report-confirm') return false;
-      const res = await fetch('/api/explorer/v2/reports/confirm', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(operation.payload),
+        return res.ok;
       });
-      return res.ok;
-    }).then((result) => {
       if (result.sent > 0) {
-        state.showToast({ title: `${result.sent} opération(s) synchronisée(s)`, tone: 'good' });
+        useExplorerStore.getState().showToast({
+          title: `${result.sent} opération(s) synchronisée(s)`,
+          tone: 'good',
+        });
       }
-      void listQueue().then((items) => setOfflineQueue(items.length));
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [online]);
+      const items = await listQueue();
+      setOfflineQueue(items.length);
+    } finally {
+      flushInFlight.current = false;
+    }
+  }, []);
+
+  // File vidée au retour du réseau.
+  useEffect(() => {
+    if (!online) return;
+    void flushPending();
+  }, [online, flushPending]);
+
+  // …et après reconnexion, retour au premier plan ou focus. Sans cela, un
+  // bilan conservé sur 401 resterait en file alors que l'utilisateur est déjà
+  // revenu en ligne et authentifié.
+  useEffect(() => {
+    let cancelled = false;
+    let subscription: { unsubscribe: () => void } | undefined;
+
+    void import('@/lib/supabase/client')
+      .then(({ createClient }) => {
+        if (cancelled) return;
+        const { data } = createClient().auth.onAuthStateChange((event, session) => {
+          if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || session) {
+            void flushPending();
+          }
+        });
+        subscription = data.subscription;
+      })
+      .catch(() => undefined);
+
+    const onFocus = () => {
+      if (navigator.onLine) void flushPending();
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible' && navigator.onLine) void flushPending();
+    };
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisibility);
+
+    return () => {
+      cancelled = true;
+      subscription?.unsubscribe();
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, [flushPending]);
 
   useEffect(() => {
     if (typeof navigator === 'undefined' || !navigator.geolocation) return;
@@ -600,6 +660,22 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
       return;
     }
     let cancelled = false;
+    // Clé d'idempotence : la fin de sortie peut être rejouée (hors ligne,
+    // réseau instable). Le serveur répond `duplicate` sans réécrire.
+    const idempotencyKey = `activity.finish:${sessionId}`;
+    // Toute réponse non terminale (401, 403, 404, 408, 429, 5xx, réseau) est
+    // conservée dans la file. C'est la seule façon de ne pas perdre le bilan
+    // quand une session a expiré ou qu'une policy RLS manque temporairement.
+    const persistInQueue = async (savedState: typeof state.summarySaved) => {
+      await enqueue({
+        key: idempotencyKey,
+        kind: 'activity.finish',
+        payload: { sessionId, idempotencyKey },
+      }).catch(() => undefined);
+      const items = await listQueue().catch(() => []);
+      setOfflineQueue(items.length);
+      if (!cancelled) useExplorerStore.setState({ summarySaved: savedState });
+    };
     (async () => {
       try {
         const { createClient } = await import('@/lib/supabase/client');
@@ -607,12 +683,11 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
         const { data } = await supabase.auth.getSession();
         const token = data.session?.access_token;
         if (!token) {
-          if (!cancelled) useExplorerStore.setState({ summarySaved: 'unauthenticated' });
+          // Pas de jeton : la fin entre en file et sera rejouée après
+          // reconnexion, au lieu d'être perdue.
+          await persistInQueue('unauthenticated');
           return;
         }
-        // Clé d'idempotence : la fin de sortie peut être rejouée (hors ligne,
-        // réseau instable). Le serveur répond `duplicate` sans réécrire.
-        const idempotencyKey = `activity.finish:${sessionId}`;
         const res = await fetch('/api/explorer/v2/activity/finish', {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -620,26 +695,18 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
         });
         const payload = await res.json().catch(() => null);
         const outcome = readFinishOutcome(res.status, payload);
-        if (!outcome.retryable) {
-          // `already_finished` et `conflict` sont des états terminaux : ne pas
+        if (outcome.terminal) {
+          // `already_finished`, `saved` et `conflict` sont définitifs : ne pas
           // les transformer en « saved » ni les remettre en file.
           if (!cancelled) useExplorerStore.setState({ summarySaved: outcome.state });
           return;
         }
-        // Hors ligne ou serveur indisponible : la fin entre dans la file.
-        await enqueue({ key: idempotencyKey, kind: 'activity.finish', payload: { sessionId, idempotencyKey } });
-        const items = await listQueue();
-        setOfflineQueue(items.length);
-        if (!cancelled) useExplorerStore.setState({ summarySaved: outcome.state });
+        // Hors ligne, session expirée ou serveur indisponible : la fin entre
+        // dans la file avec son état réel pour l'écran Bilan.
+        await persistInQueue(outcome.state);
       } catch {
         // Échec réseau : même traitement que hors ligne.
-        const idempotencyKey = `activity.finish:${sessionId}`;
-        await enqueue({ key: idempotencyKey, kind: 'activity.finish', payload: { sessionId, idempotencyKey } }).catch(
-          () => undefined,
-        );
-        const items = await listQueue().catch(() => []);
-        setOfflineQueue(items.length);
-        if (!cancelled) useExplorerStore.setState({ summarySaved: 'failed' });
+        await persistInQueue('failed');
       }
     })();
     return () => {

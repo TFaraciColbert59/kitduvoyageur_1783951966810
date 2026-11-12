@@ -528,6 +528,28 @@ async function main() {
     );
     check('la ligne forgée n’existe pas', row.n === 0, row.n);
 
+    // Un autre utilisateur ne peut pas clore la séance de U1 : le contrôle
+    // `s.user_id <> v_user` de la RPC est exercé, pas seulement la table.
+    await db.query(`select set_config('request.jwt.claim.sub', $1, true)`, [U2]);
+    await db.query('savepoint cross_user_rpc');
+    let crossUserCode = null;
+    try {
+      await db.query(
+        `select public.finish_activity_session_idempotent($1, 'cross-user-key') as r`,
+        [S7]
+      );
+    } catch (error) {
+      crossUserCode = error.code;
+      await db.query('rollback to savepoint cross_user_rpc');
+    }
+    await db.query('release savepoint cross_user_rpc');
+    await db.query(`select set_config('request.jwt.claim.sub', $1, true)`, [U1]);
+    check(
+      'la RPC refuse la séance d’un autre utilisateur (42501)',
+      crossUserCode === '42501',
+      crossUserCode
+    );
+
     await db.query('reset role');
 
     row = await one(
@@ -637,10 +659,14 @@ async function main() {
       db,
       `select pg_get_functiondef('public.finish_activity_session(uuid)'::regprocedure) as def`
     );
+    const downInsert = row.def.slice(
+      row.def.indexOf('insert into public.hike_sessions ('),
+      row.def.indexOf('returning id into v_summary_id;')
+    );
     check(
       'le down restaure une fin sans nouveau lien',
-      !row.def.includes('h.activity_session_id'),
-      'activity_session_id absent du corps'
+      downInsert.length > 0 && !downInsert.includes('activity_session_id'),
+      'activity_session_id absent de l’insertion'
     );
 
     row = await one(
@@ -648,10 +674,11 @@ async function main() {
       `select pg_get_functiondef('public.finish_activity_session_idempotent(uuid,text)'::regprocedure) as def`
     );
     check(
-      'le down conserve la lecture de secours JSON',
+      'le down conserve la lecture de secours JSON et le lien durable',
       row.def.includes("result ->> 'sessionId'") &&
         row.def.includes('summary_not_owned') &&
-        row.def.includes("':finish-session:'")
+        row.def.includes("':finish-session:'") &&
+        row.def.includes('h.activity_session_id = p_session')
     );
 
     row = await one(
@@ -672,8 +699,57 @@ async function main() {
     );
     check('le down conserve l’index de secours historique', row.idx !== null, row.idx);
 
+    // Rejeu d'une fin directe liée AVANT le down : le résumé doit être
+    // retrouvé, pas remplacé par « already_finished / aucun résumé ».
+    await db.query('begin');
+    await db.query('set local role authenticated');
+    await db.query(`select set_config('request.jwt.claim.sub', $1, true)`, [U1]);
+    row = await one(
+      db,
+      `select public.finish_activity_session_idempotent($1, 'down-replay-s5') as r`,
+      [S5]
+    );
+    check(
+      'après down, le rejeu de la fin directe retrouve le résumé lié',
+      row.r.status === 'already_finished' && row.r.summaryId === direct.summary_id,
+      JSON.stringify(row.r)
+    );
+    row = await one(
+      db,
+      `select public.finish_activity_session($1) as summary_id`,
+      [S5]
+    );
+    check(
+      'après down, la RPC historique retrouve aussi le résumé lié',
+      row.summary_id === direct.summary_id,
+      String(row.summary_id)
+    );
+    await db.query('rollback');
+
+    row = await one(
+      db,
+      `select public.activity_finish_summary_owned($1, $2, $3) as owned`,
+      [U1, S6, direct.summary_id]
+    );
+    check(
+      'après down, un résumé lié à une autre séance est refusé',
+      row.owned === false,
+      String(row.owned)
+    );
+    row = await one(
+      db,
+      `select public.activity_finish_summary_owned($1, $2, $3) as owned`,
+      [U1, S6, SUMMARY6]
+    );
+    check(
+      'après down, un résumé historique sans lien reste accepté pour sa séance',
+      row.owned === true,
+      String(row.owned)
+    );
+
     // Le service doit rester disponible après le down, sous le même
-    // propriétaire non BYPASSRLS.
+    // propriétaire non BYPASSRLS. Cette écriture est COMMITÉE pour vérifier
+    // qu'un re-up ne la perd ni ne la duplique.
     await db.query('begin');
     await db.query(
       `insert into public.activity_sessions (id, user_id, sport, variant_id, status, started_at)
@@ -695,6 +771,16 @@ async function main() {
     const downSummary = row.r.summaryId;
     row = await one(
       db,
+      `select public.finish_activity_session_idempotent($1, 'down-service-key-2') as r`,
+      [S8]
+    );
+    check(
+      'après down, une autre clé retrouve le résumé non lié de la fenêtre de down',
+      row.r.status === 'duplicate' && row.r.summaryId === downSummary,
+      JSON.stringify(row.r)
+    );
+    row = await one(
+      db,
       `select activity_session_id from public.hike_sessions where id = $1`,
       [downSummary]
     );
@@ -703,11 +789,37 @@ async function main() {
       row.activity_session_id === null,
       String(row.activity_session_id)
     );
-    await db.query('rollback');
+    await db.query('commit');
+
+    const duringDown = await one(
+      db,
+      `select
+         (select count(*)::int from public.hike_sessions) as summaries,
+         (select count(*)::int from public.hike_sessions where activity_session_id is not null) as linked,
+         (select count(*)::int from public.offline_sync_operations) as registry`
+    );
+    check(
+      'une écriture faite pendant le down est bien persistée',
+      duringDown.summaries === before.summaries + 1 &&
+        duringDown.linked === before.linked &&
+        duringDown.registry === before.registry + 1,
+      JSON.stringify({ before, duringDown })
+    );
 
     // ── Re-up après down ─────────────────────────────────────────────────
     await db.query(up2);
     check('le re-up après down s’applique sans erreur', true);
+
+    row = await one(
+      db,
+      `select activity_session_id from public.hike_sessions where id = $1`,
+      [downSummary]
+    );
+    check(
+      'le re-up conserve la fin écrite pendant le down (sans la relier)',
+      row.activity_session_id === null,
+      String(row.activity_session_id)
+    );
 
     row = await one(
       db,
@@ -728,10 +840,10 @@ async function main() {
     );
     check(
       'le re-up ne duplique ni ne perd les données',
-      afterUp.summaries === before.summaries &&
-        afterUp.linked === before.linked &&
-        afterUp.registry === before.registry,
-      JSON.stringify({ before, afterUp })
+      afterUp.summaries === duringDown.summaries &&
+        afterUp.linked === duringDown.linked &&
+        afterUp.registry === duringDown.registry,
+      JSON.stringify({ duringDown, afterUp })
     );
 
     row = await one(
@@ -804,6 +916,32 @@ async function main() {
       negativeCode === '42501',
       negativeCode
     );
+
+    // ── Down sur un historique PROPRE : la branche VALIDATE doit s'exécuter ─
+    // Le premier down voyait la séance S4 hors taxonomie et sautait la
+    // validation des FK. On remet l'historique en état, puis on rejoue le down.
+    await db.query('reset role');
+    await db.query(
+      `update public.activity_sessions
+          set sport = 'rando', variant_id = 'rando-journee'
+        where id = $1`,
+      [S4]
+    );
+    await db.query(down);
+    row = await one(
+      db,
+      `select count(*)::int as n
+         from pg_constraint
+        where conname in ('activity_sessions_sport_fkey', 'activity_sessions_variant_pair_fkey')
+          and convalidated`,
+    );
+    check(
+      'le down valide les FK restaurées quand l’historique est propre',
+      row.n === 2,
+      row.n
+    );
+    await db.query(up2);
+    check('le re-up après un down propre s’applique sans erreur', true);
   } finally {
     await db.end();
     const cleanup = client('postgres');

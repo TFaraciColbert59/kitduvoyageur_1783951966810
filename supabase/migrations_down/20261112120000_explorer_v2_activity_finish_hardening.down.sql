@@ -12,8 +12,18 @@
 --     conservées : les retirer réintroduirait l'incident RLS que le up ferme
 --     (sous FORCE RLS, le propriétaire SECURITY DEFINER ne peut plus lire ni
 --     écrire la ligne `activity.finish`) ;
---   • la lecture de secours JSON, la validation du résumé et l'interdiction
---     d'insérer directement `activity.finish` restent en place.
+--   • la lecture de secours JSON, la validation du résumé (propriétaire ET
+--     séance) et l'interdiction d'insérer directement `activity.finish`
+--     restent en place ;
+--   • les résumés déjà liés restent retrouvés par la RPC : le down lit
+--     `hike_sessions.activity_session_id` même s'il n'en crée plus. Un rejeu
+--     ne répond donc pas « aucun résumé » alors que le bilan existe.
+--
+-- Si la policy RPC elle-même est la cause d'un incident (propriétaire
+-- `authenticated`, changement d'owner, catalogue incohérent), ce down ne la
+-- retire pas : la retirer réintroduirait l'incident RLS initial. Corriger le
+-- propriétaire (jamais `authenticated`) ou appliquer un correctif ciblé ; un
+-- retrait complet est un geste séparé, manuel et destructif.
 --
 -- Un retrait complet de la colonne est un geste séparé, manuel et destructif :
 -- il n'est pas dans ce fichier. Le proof local teste down → liens conservés →
@@ -21,8 +31,10 @@
 
 begin;
 
--- 1. Le résumé n'a plus de lien direct avec la séance. La fonction ne lit que
---    `hike_sessions.id` et `hike_sessions.user_id`, qui restent disponibles.
+-- 1. Le résumé n'a plus de lien direct avec la séance, mais la colonne de
+--    lien est conservée : la validation ci-dessous continue de vérifier que le
+--    résumé désigne bien cette séance (ou, pour l'historique sans lien, que son
+--    départ et son itinéraire correspondent).
 create or replace function public.activity_finish_summary_owned(
   p_user uuid,
   p_session uuid,
@@ -42,11 +54,25 @@ begin
     return false;
   end if;
 
+  -- La colonne de lien est CONSERVÉE par ce down : un résumé lié doit donc
+  -- toujours désigner cette séance. Un résumé historique sans lien (créé
+  -- pendant la fenêtre de down ou avant la colonne) est accepté si son départ
+  -- et son itinéraire correspondent à la séance.
   return exists (
     select 1
       from public.hike_sessions h
+      join public.activity_sessions s on s.id = p_session
      where h.id = p_summary::uuid
        and h.user_id = p_user
+       and s.user_id = p_user
+       and (
+         h.activity_session_id = p_session
+         or (
+           h.activity_session_id is null
+           and h.started_at = s.started_at
+           and h.route_id is not distinct from s.route_id
+         )
+       )
   );
 end;
 $$;
@@ -75,7 +101,14 @@ begin
     raise exception 'session d''un autre utilisateur' using errcode = '42501';
   end if;
   if s.status = 'finished' then
-    return null;
+    -- Un résumé lié avant le down doit rester retrouvable par la RPC
+    -- historique : on le relit sans créer ni réécrire de lien.
+    select h.id into v_summary_id
+      from public.hike_sessions h
+     where h.user_id = s.user_id
+       and h.activity_session_id = p_session
+     limit 1;
+    return v_summary_id;
   end if;
 
   update public.activity_sessions
@@ -130,9 +163,10 @@ $$;
 revoke all on function public.finish_activity_session(uuid) from public;
 grant execute on function public.finish_activity_session(uuid) to authenticated;
 
--- 3. Fin idempotente : on conserve les verrous, la lecture de secours JSON et
---    la validation du résumé. Seule la lecture par `hike_sessions.
---    activity_session_id` disparaît avec la colonne.
+-- 3. Fin idempotente : on conserve les verrous, la lecture de secours JSON,
+--    la validation du résumé et la lecture de `hike_sessions.
+--    activity_session_id` (la colonne est conservée). Une nouvelle fin ne crée
+--    plus de lien, mais un résumé déjà lié reste retrouvé après le down.
 create or replace function public.finish_activity_session_idempotent(
   p_session uuid,
   p_idempotency_key text
@@ -164,6 +198,15 @@ begin
     pg_catalog.hashtextextended(v_user::text || ':finish:' || p_idempotency_key, 0)
   );
 
+  -- Le lien séance ↔ résumé est conservé par le down : le relire permet de
+  -- retrouver un bilan créé avant le retour arrière, même sans ligne de
+  -- registre (fin directe). Aucun nouveau lien n'est écrit plus bas.
+  select h.id into v_summary
+    from public.hike_sessions h
+   where h.user_id = v_user
+     and h.activity_session_id = p_session
+   limit 1;
+
   select * into v_existing
     from public.offline_sync_operations
    where user_id = v_user and idempotency_key = p_idempotency_key;
@@ -182,6 +225,9 @@ begin
     v_summary_text := v_existing.result ->> 'summaryId';
 
     if v_summary_text is null then
+      if v_summary is not null then
+        return jsonb_build_object('status', 'duplicate', 'summaryId', v_summary);
+      end if;
       return jsonb_build_object(
         'status', 'already_finished',
         'reason', 'session_already_finished',
@@ -218,6 +264,9 @@ begin
     v_summary_text := v_existing.result ->> 'summaryId';
 
     if v_summary_text is null then
+      if v_summary is not null then
+        return jsonb_build_object('status', 'duplicate', 'summaryId', v_summary);
+      end if;
       return jsonb_build_object(
         'status', 'already_finished',
         'reason', 'session_already_finished',
@@ -256,6 +305,9 @@ begin
     v_summary_text := v_existing.result ->> 'summaryId';
 
     if v_summary_text is null then
+      if v_summary is not null then
+        return jsonb_build_object('status', 'duplicate', 'summaryId', v_summary);
+      end if;
       return jsonb_build_object(
         'status', 'already_finished',
         'reason', 'session_already_finished',
@@ -277,13 +329,29 @@ begin
     );
   end if;
 
-  v_summary := public.finish_activity_session(p_session);
-
-  if v_summary is null then
+  -- Fin directe rejouée après le down : le résumé lié existe, ne pas le perdre.
+  if v_summary is not null then
     return jsonb_build_object(
       'status', 'already_finished',
       'reason', 'session_already_finished',
-      'summaryId', null
+      'summaryId', v_summary
+    );
+  end if;
+
+  v_summary := public.finish_activity_session(p_session);
+
+  if v_summary is null then
+    -- Course possible avec une autre transaction : relire le lien conservé.
+    select h.id into v_summary
+      from public.hike_sessions h
+     where h.user_id = v_user
+       and h.activity_session_id = p_session
+     limit 1;
+
+    return jsonb_build_object(
+      'status', 'already_finished',
+      'reason', 'session_already_finished',
+      'summaryId', v_summary
     );
   end if;
 
@@ -318,6 +386,9 @@ begin
       v_summary_text := v_existing.result ->> 'summaryId';
 
       if v_summary_text is null then
+        if v_summary is not null then
+          return jsonb_build_object('status', 'duplicate', 'summaryId', v_summary);
+        end if;
         return jsonb_build_object(
           'status', 'already_finished',
           'reason', 'session_already_finished',
@@ -350,6 +421,9 @@ begin
       v_summary_text := v_existing.result ->> 'summaryId';
 
       if v_summary_text is null then
+        if v_summary is not null then
+          return jsonb_build_object('status', 'duplicate', 'summaryId', v_summary);
+        end if;
         return jsonb_build_object(
           'status', 'already_finished',
           'reason', 'session_already_finished',
@@ -387,6 +461,9 @@ begin
       v_summary_text := v_existing.result ->> 'summaryId';
 
       if v_summary_text is null then
+        if v_summary is not null then
+          return jsonb_build_object('status', 'duplicate', 'summaryId', v_summary);
+        end if;
         return jsonb_build_object(
           'status', 'already_finished',
           'reason', 'session_already_finished',
@@ -405,6 +482,20 @@ begin
       return jsonb_build_object(
         'status', 'duplicate',
         'summaryId', v_summary_text
+      );
+    end if;
+
+    select h.id into v_summary
+      from public.hike_sessions h
+     where h.user_id = v_user
+       and h.activity_session_id = p_session
+     limit 1;
+
+    if v_summary is not null then
+      return jsonb_build_object(
+        'status', 'already_finished',
+        'reason', 'session_already_finished',
+        'summaryId', v_summary
       );
     end if;
 

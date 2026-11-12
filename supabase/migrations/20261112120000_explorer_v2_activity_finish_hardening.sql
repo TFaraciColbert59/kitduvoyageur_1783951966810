@@ -157,12 +157,25 @@ begin
     return false;
   end if;
 
+  -- Un résumé lié doit désigner CETTE séance. Un résumé historique sans lien
+  -- (créé avant la colonne) n'est accepté que si sa séance d'origine est
+  -- cohérente : même départ, même itinéraire. On ne fait donc plus confiance
+  -- au seul `result.sessionId` d'une ligne de registre historique.
   return exists (
     select 1
       from public.hike_sessions h
+      join public.activity_sessions s on s.id = p_session
      where h.id = p_summary::uuid
        and h.user_id = p_user
-       and (h.activity_session_id is null or h.activity_session_id = p_session)
+       and s.user_id = p_user
+       and (
+         h.activity_session_id = p_session
+         or (
+           h.activity_session_id is null
+           and h.started_at = s.started_at
+           and h.route_id is not distinct from s.route_id
+         )
+       )
   );
 end;
 $$;
@@ -715,5 +728,31 @@ create policy "offline_sync_operations_insert_finish_rpc"
          'public.finish_activity_session_idempotent(uuid,text)'::regprocedure
     )
   );
+
+-- 9. Interdit explicitement le seul propriétaire qui rendrait la policy
+--    ci-dessus inutile : si la fonction appartenait à `authenticated`,
+--    `current_user` matcherait pour un client authentifié, qui pourrait alors
+--    écrire directement une ligne `activity.finish`. Un propriétaire
+--    `service_role` ou `postgres` reste accepté (le cas normal des migrations).
+do $$
+declare
+  v_owner text;
+begin
+  select r.rolname
+    into v_owner
+    from pg_catalog.pg_proc p
+    join pg_catalog.pg_roles r on r.oid = p.proowner
+   where p.oid =
+     'public.finish_activity_session_idempotent(uuid,text)'::regprocedure;
+
+  if v_owner is null then
+    raise exception 'propriétaire de la RPC introuvable';
+  end if;
+  if v_owner = 'authenticated' then
+    raise exception
+      'finish_activity_session_idempotent ne doit pas appartenir à authenticated'
+      using errcode = '42501';
+  end if;
+end $$;
 
 commit;

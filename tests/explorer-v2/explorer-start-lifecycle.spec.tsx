@@ -233,6 +233,27 @@ describe('explorer-v2 · bilan local', () => {
     expect(screen.getByText('Sortie non enregistrée')).toBeTruthy();
     expect(screen.getByText('Connecte-toi pour conserver tes sorties')).toBeTruthy();
   });
+
+  it('distingue une séance déjà close sans résumé retrouvé', () => {
+    useExplorerStore.setState({
+      summary: {
+        ...activity(),
+        sessionId: '00000000-0000-4000-8000-000000000000',
+        endedAt: Date.now(),
+      },
+      summarySaved: 'already_finished_without_summary',
+      sheet: 'summary',
+    });
+    const model = buildSheetModel(context());
+    render(<>{model.tabs[0].render()}</>);
+
+    expect(screen.getByText('Sortie déjà close')).toBeTruthy();
+    expect(
+      screen.getByText('Aucun résumé n’a été retrouvé pour cette séance.'),
+    ).toBeTruthy();
+    // Ne jamais annoncer « aucun doublon » quand aucun résumé n'est connu.
+    expect(screen.queryByText('Aucun doublon n’a été créé.')).toBeNull();
+  });
 });
 
 describe('explorer-v2 · direct et permission réelle', () => {

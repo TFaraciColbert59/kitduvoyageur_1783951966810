@@ -85,11 +85,29 @@ describe('migration additive · durcissement de la fin de séance', () => {
     expect(lower).toContain('for select to public');
     expect(lower).toContain('for insert to public');
     expect(lower).toContain("kind = 'activity.finish'");
+    // Sans cette clause, une policy « TO public » ouvrirait les lignes des
+    // autres utilisateurs : le test doit la verrouiller dans CHAQUE policy,
+    // pas seulement quelque part dans le fichier.
+    const selectPolicy = lower.slice(
+      lower.indexOf('create policy "offline_sync_operations_select_finish_rpc"'),
+      lower.indexOf('create policy "offline_sync_operations_insert_finish_rpc"')
+    );
+    const insertPolicy = lower.slice(
+      lower.indexOf('create policy "offline_sync_operations_insert_finish_rpc"'),
+      lower.indexOf('-- 9. interdit')
+    );
+    expect(selectPolicy).toContain('auth.uid() = user_id');
+    expect(insertPolicy).toContain('auth.uid() = user_id');
     expect(lower).toContain('current_user = (');
     expect(lower).toContain('pg_get_userbyid(p.proowner)');
     expect(lower).toContain(
       "'public.finish_activity_session_idempotent(uuid,text)'::regprocedure"
     );
+  });
+
+  it('interdit un propriétaire authenticated qui rendrait la policy inutile', () => {
+    expect(lower).toContain("if v_owner = 'authenticated' then");
+    expect(lower).toContain('ne doit pas appartenir à authenticated');
   });
 
   it('borne la clé d’idempotence en SQL comme dans la route', () => {
@@ -106,6 +124,34 @@ describe('migration additive · durcissement de la fin de séance', () => {
     expect(keyLock).toBeGreaterThan(-1);
     expect(sessionLock).toBeGreaterThan(keyLock);
     expect(finish).toBeGreaterThan(sessionLock);
+  });
+
+  it('valide le résumé d’une autre séance même après le down', () => {
+    // La colonne de lien est conservée par le down : la condition de séance
+    // doit l'être aussi, sinon un registre forgé réutilise le résumé d'une
+    // autre séance du même utilisateur.
+    expect(rollback).toContain('h.activity_session_id = p_session');
+    expect(rollback).toContain('h.started_at = s.started_at');
+    expect(rollback).toContain('h.route_id is not distinct from s.route_id');
+    expect(rollback).toContain("'reason', 'summary_not_owned'");
+  });
+
+  it('retrouve après le down un résumé lié, sans créer de nouveau lien', () => {
+    // La RPC idempotente du down doit relire `hike_sessions.activity_session_id`.
+    expect(rollback).toContain('h.activity_session_id = p_session');
+    expect(rollback).toContain("'status', 'duplicate', 'summaryid', v_summary");
+    // La fin directe rejouée retrouve le résumé existant au lieu de répondre
+    // « already_finished / aucun résumé ».
+    expect(rollback).toContain("'status', 'already_finished'");
+    expect(rollback).toContain("'summaryid', v_summary");
+    // Aucun nouveau lien n'est écrit : l'insertion du down ne contient pas la
+    // colonne `activity_session_id` (le comportement antérieur est restauré).
+    const insert = rollback.slice(
+      rollback.indexOf('insert into public.hike_sessions ('),
+      rollback.indexOf('returning id into v_summary_id;')
+    );
+    expect(insert.length).toBeGreaterThan(0);
+    expect(insert).not.toContain('activity_session_id');
   });
 
   it('a un down non destructif qui conserve le lien durable et la policy RPC', () => {

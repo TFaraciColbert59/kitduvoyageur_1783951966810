@@ -18,7 +18,7 @@
 -- ============================================================================
 BEGIN;
 SET LOCAL search_path = public;
-SELECT plan(29);
+SELECT plan(30);
 
 INSERT INTO auth.users (id, aud, role, email, encrypted_password, raw_app_meta_data, raw_user_meta_data, created_at, updated_at) VALUES
   ('a1f10000-0000-4000-8000-000000000001', 'authenticated', 'authenticated', 'finish_a@test.local', 'x', '{}', '{}', now(), now()),
@@ -397,6 +397,20 @@ SELECT throws_ok(
   '42501',
   NULL,
   '29. la policy du propriétaire n''ouvre pas l''insert direct au client'
+);
+
+-- ── Isolation croisée : U2 ne peut pas clore la séance de U1 ───────────────
+SET LOCAL "request.jwt.claim.sub" = 'a1f10000-0000-4000-8000-000000000002';
+SELECT throws_ok(
+  $$
+  SELECT public.finish_activity_session_idempotent(
+    'a1f20000-0000-4000-8000-000000000007',
+    'cross-user-key'
+  )
+  $$,
+  '42501',
+  NULL,
+  '30. la RPC refuse la séance d''un autre utilisateur'
 );
 
 SELECT * FROM finish();

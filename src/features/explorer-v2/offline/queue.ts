@@ -66,21 +66,35 @@ async function removeKey(key: string): Promise<void> {
   });
 }
 
+/** Support de stockage minimal : injectable pour tester le flush sans IndexedDB. */
+export interface QueueBackend {
+  list(): Promise<QueuedOperation[]>;
+  remove(key: string): Promise<void>;
+}
+
+const indexedDbBackend: QueueBackend = {
+  list: listQueue,
+  remove: removeKey,
+};
+
 /**
- * Synchronise la file. `send` renvoie true quand l'opération est acceptée ;
- * l'entrée est alors supprimée (idempotence garantie par la clé).
+ * Synchronise la file. `send` renvoie true quand la réponse est définitive et
+ * que l'opération peut être retirée (idempotence garantie par la clé). Un
+ * `false` — ou une exception — CONSERVE l'opération : c'est la règle qui
+ * empêche de perdre un bilan sur 401/403/404/5xx.
  */
 export async function flushQueue(
   send: (operation: QueuedOperation) => Promise<boolean>,
+  backend: QueueBackend = indexedDbBackend,
 ): Promise<{ sent: number; failed: number }> {
-  const operations = await listQueue();
+  const operations = await backend.list();
   let sent = 0;
   let failed = 0;
   for (const operation of operations) {
     try {
       const ok = await send(operation);
       if (ok) {
-        await removeKey(operation.key);
+        await backend.remove(operation.key);
         sent += 1;
       } else {
         failed += 1;
