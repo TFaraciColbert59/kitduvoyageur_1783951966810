@@ -1,169 +1,64 @@
-<!-- hf-skeleton generated id=p52 sha256=9261b5d9bf296da0 — carte provisoire générée par tools/timeline/build-skeleton.mjs depuis film/shots.json ; toute retouche hors de la zone hf-footage la soustrait au générateur -->
 <template>
   <style>
-    #root {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-      background: #0B1F17;
-      font-family: "Inter", sans-serif;
-      color: #FAF8F5;
-    }
-    .p52-card {
-      position: absolute;
-      inset: 0;
-      padding: 96px 120px 120px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-    .p52-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      font-family: "JetBrains Mono", monospace;
-      font-size: 34px;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-    }
-    .p52-mid {
-      display: flex;
-      align-items: flex-end;
-      gap: 72px;
-    }
-    .p52-num {
-      font-weight: 900;
-      font-size: 360px;
-      line-height: 0.8;
-      letter-spacing: -0.04em;
-    }
-    .p52-meta {
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-      padding-bottom: 8px;
-    }
-    .p52-source {
-      font-family: "JetBrains Mono", monospace;
-      font-weight: 700;
-      font-size: 64px;
-    }
-    .p52-frames {
-      font-family: "JetBrains Mono", monospace;
-      font-size: 36px;
-    }
-    .p52-star {
-      font-weight: 700;
-      font-size: 40px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-    }
-    .p52-intent {
-      max-width: 1600px;
-      font-size: 52px;
-      line-height: 1.2;
-      font-weight: 400;
-    }
-    .p52-track {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      height: 12px;
-      background: rgba(250, 248, 245, 0.18);
-    }
-    .p52-bar {
-      position: absolute;
-      inset: 0;
-      background: #FAF8F5;
-      transform-origin: 0 50%;
-    }
-    .p52-frame {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-    }
-    .p52-shot,
-    .p52-shot-inner {
-      position: absolute;
-      inset: 0;
-    }
-    .p52-shot {
-      opacity: 0;
-    }
-    .p52-shot-img {
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 1920px;
-      height: 1080px;
-      /* Remplit le 16:9 sans déformer, quel que soit le rapport de l'image : recadrage au centre. */
-      object-fit: cover;
-      object-position: 50% 50%;
-    }
+    #root { position: absolute; inset: 0; background: #0B1F17; overflow: hidden; }
+    #p52-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
   </style>
-  <div id="root" data-composition-id="p52" data-width="1920" data-height="1080" data-duration="1.75">
-    <!-- Carte provisoire : outil de travail, disparaît quand l'image du plan est là. -->
-    <div id="p52-card" class="p52-card" data-shot="p52" data-act="10">
-      <div id="p52-top" class="p52-top">
-        <span id="p52-act">Acte 10 · FINAL</span>
-        <span id="p52-range">3271–3376</span>
-      </div>
-      <div id="p52-mid" class="p52-mid">
-        <div id="p52-num" class="p52-num">P52</div>
-        <div id="p52-meta" class="p52-meta">
-          <div id="p52-source" class="p52-source">img05→04→03</div>
-          <div id="p52-frames" class="p52-frames">105 images · 1,75 s</div>
-        </div>
-      </div>
-      <div id="p52-intent" class="p52-intent">Ville, nuages, stratosphère</div>
-      <div id="p52-track" class="p52-track"><div id="p52-bar" class="p52-bar"></div></div>
-    </div>
-    <!-- Emplacement d'image plein cadre : assets/footage/img05.png, assets/footage/img04.png, assets/footage/img03.png.
-         Chaque calque : .p52-shot (opacité, séquence) > .p52-shot-inner (libre pour le mouvement) > img. -->
-    <div id="p52-frame" class="p52-frame" data-layout-allow-overflow>
-      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) -->
-      <div id="p52-shot-1" class="p52-shot" data-src="img05" data-seq="0" data-seq-count="3">
-        <div id="p52-shot-1-inner" class="p52-shot-inner">
-          <img id="p52-shot-1-img" class="p52-shot-img" src="assets/footage/img05.png" alt="" />
-        </div>
-      </div>
-      <div id="p52-shot-2" class="p52-shot" data-src="img04" data-seq="1" data-seq-count="3">
-        <div id="p52-shot-2-inner" class="p52-shot-inner">
-          <img id="p52-shot-2-img" class="p52-shot-img" src="assets/footage/img04.png" alt="" />
-        </div>
-      </div>
-      <div id="p52-shot-3" class="p52-shot" data-src="img03" data-seq="2" data-seq-count="3">
-        <div id="p52-shot-3-inner" class="p52-shot-inner">
-          <img id="p52-shot-3-img" class="p52-shot-img" src="assets/footage/img03.png" alt="" />
-        </div>
-      </div>
-    <!-- hf-footage:end -->
-    </div>
+  <!-- P52 : images 3271 à 3376 du film (105 images, 1,75 s). Remontée à l'envers et accélérée :
+       ville (img05) → nuage (img04) → stratosphère (img03), raccord vers l'orbite de P53.
+       Plaques réelles img05, img04, img03, puis img39 (raccord exact avec P53). -->
+  <div id="root" data-composition-id="p52" data-start="0" data-duration="1.75" data-width="1920" data-height="1080">
+    <canvas id="p52-canvas" width="1920" height="1080" data-layout-allow-overflow></canvas>
   </div>
+  <script src="lib/fx/core.js"></script>
+  <script src="lib/fx/transitions.js"></script>
   <script>
     (function () {
-      var D = 105 / 60;
-      var tl = gsap.timeline({ paused: true });
-      // Barre de progression : se remplit sur la durée du plan.
-      tl.fromTo("#p52-bar", { scaleX: 0 }, { scaleX: 1, duration: D, ease: "none" }, 0);
-      // Images présentes : chaque source occupe sa part égale du plan (ordre de la trame) ;
-      // la carte reste visible là où l'image manque.
-      var shots = Array.prototype.slice.call(document.querySelectorAll(".p52-shot"));
-      if (shots.length) {
-        var n = Number(shots[0].getAttribute("data-seq-count"));
-        var bySeq = {};
-        shots.forEach(function (el) { bySeq[el.getAttribute("data-seq")] = el; });
-        for (var k = 0; k < n; k++) {
-          var t = (k * D) / n;
-          var el = bySeq[String(k)];
-          shots.forEach(function (other) {
-            tl.set(other, { opacity: other === el ? 1 : 0 }, t);
-          });
-          tl.set("#p52-card", { opacity: el ? 0 : 1 }, t);
-        }
+      var FX = window.LKDVFX;
+      var TR = FX.Transitions;
+      var W = 1920, H = 1080, FRAMES = 105;
+      /* Plaques de Tony. img39 termine le plan à l'identique de la première image de P53 (même cadrage, échelle 1). */
+      var PLATES = { img05: "assets/footage/img05.png", img04: "assets/footage/img04.png", img03: "assets/footage/img03.png", img39: "assets/footage/img39.png" };
+      var cv = document.getElementById("p52-canvas");
+      var ctx = cv.getContext("2d");
+      var imgs = {};
+
+      // Zoom arrière géométrique (vitesse perçue constante dans l'étage), centré.
+      function zoomed(c, img, s0, s1, l, rot) {
+        var sc = s0 * Math.pow(s1 / s0, l);
+        c.save();
+        c.translate(W / 2, H / 2);
+        if (rot) c.rotate(rot);
+        c.scale(sc * (W / img.width), sc * (W / img.width));
+        c.drawImage(img, -img.width / 2, -img.height / 2);
+        c.restore();
       }
-      window.__timelines["p52"] = tl;
+
+      // u = p^1.8 : chaque étage occupe une plage de u ; les fondus se chevauchent, il n'y a aucun palier.
+      var stages = [
+        { from: 0, to: 0.3, draw: function (c, u, l) { zoomed(c, imgs.img05, 2.2, 1.0, l); } },
+        { from: 0.26, to: 0.58, fadeIn: 0.06, draw: function (c, u, l) { zoomed(c, imgs.img04, 2.6, 1.0, l); } },
+        { from: 0.54, to: 0.9, fadeIn: 0.06, draw: function (c, u, l) { zoomed(c, imgs.img03, 1.9, 1.06, l, (-4 + 4 * l) * Math.PI / 180); } },
+        { from: 0.88, to: 1, fadeIn: 0.12, draw: function (c, u, l) { zoomed(c, imgs.img39, 1.14, 1.0, FX.ease.outCubic(l)); } },
+      ];
+
+      var clock = FX.bindClock("p52", FRAMES, function (t, f) {
+        if (!imgs.img39) return;
+        var p = f / (FRAMES - 1);
+        // Flou radial proportionnel à la vitesse, éteint sur les 8 dernières images : la dernière image = P53 image 0.
+        var blur = 0.075 * (1 - FX.smooth(0.9, 1, p));
+        TR.ascent(ctx, stages, p, { accel: 1.8, blur: blur, samples: 9 });
+      });
+      window.__hf = window.__hf || {};
+      window.__hf.buildReady = window.__hf.buildReady || {};
+      window.__hf.buildReady["p52-plates"] = Promise.all(Object.keys(PLATES).map(function (k) {
+        return new Promise(function (res, rej) {
+          var im = new Image();
+          im.onload = function () { imgs[k] = im; res(); };
+          im.onerror = rej;
+          im.src = PLATES[k];
+        });
+      })).then(function () { clock.redraw(); });
+      window.__timelines["p52"] = clock.tl;
     })();
   </script>
 </template>
