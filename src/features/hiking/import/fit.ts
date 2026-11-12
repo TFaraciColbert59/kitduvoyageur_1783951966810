@@ -13,7 +13,7 @@ import {
 } from './model';
 import { sha256Hex } from './fingerprint';
 import { computeAvailableMetrics, computeBounds } from './stats';
-import { civilTimeKey } from './time';
+import { civilTimeKey, instantTimeKey } from './time';
 
 /**
  * Décodeur FIT local, sans dépendance et sans réseau.
@@ -356,6 +356,9 @@ const FIT_MESSAGE_SPECS: Readonly<Record<number, Readonly<Record<number, FitFiel
     16: { name: 'avgHeartRate' },
     17: { name: 'maxHeartRate' },
     18: { name: 'avgCadence' },
+    // Profil FIT `session` : le champ 20 est `max_power` (watts), comme pour
+    // un `lap`. Il est conservé même quand aucun message `lap` n'existe.
+    20: { name: 'maxPower' },
   },
   34: {
     253: { name: 'timestamp', kind: 'timestamp' },
@@ -386,7 +389,7 @@ const CONSUMED_FIT_FIELDS: Readonly<Record<number, ReadonlySet<number>>> = {
   0: new Set([0, 1, 2, 3, 4]),
   20: new Set([253, 0, 1, 2, 3, 4, 5, 6, 7, 13, 73, 78]),
   19: new Set([2, 7, 8, 9, 11, 13, 14, 15, 16, 17, 20, 23, 24, 25]),
-  18: new Set([2, 5, 7, 8, 9, 11, 14, 15, 16, 17, 18, 253]),
+  18: new Set([2, 5, 7, 8, 9, 11, 14, 15, 16, 17, 18, 20, 253]),
   34: new Set([0, 253]),
   23: new Set([27]),
 };
@@ -719,12 +722,28 @@ export function parseFit(
   }
 
   const activity = activityMessages[0] ?? null;
-  const firstRecordInstant = points.find((point) => point.recordedAt != null)?.recordedAt ?? null;
-  const lastRecordInstant = [...points].reverse().find((point) => point.recordedAt != null)?.recordedAt ?? null;
-  const startedAt = timestampIsoField(session, 2) ?? firstRecordInstant ?? laps[0]?.startedAt ?? null;
+  // `session.startTime` et `session.timestamp` restent les bornes officielles
+  // quand elles existent. En leur absence (fichier tronqué, session réduite),
+  // les bornes sont les min/max réels de la source disponible — points, puis
+  // débuts/fins de laps : l'ordre du document ne décide jamais du début ni de
+  // la fin d'une activité.
+  const pointInstants = points.map((point) => point.recordedAt);
+  const normalizedLapStarts = laps.map((lap) => lap.startedAt);
+  const lapEnds = laps.map((lap) => endFromLap(lap));
+  const firstPointInstant = earliestInstant(pointInstants);
+  const lastPointInstant = latestInstant(pointInstants);
+  const firstLapStart = earliestInstant(normalizedLapStarts);
+  const lastLapEnd = latestInstant(lapEnds);
+  const pointsOutOfOrder = hasOutOfOrderFits(points);
+  const boundsOutOfOrder = pointsOutOfOrder || lapStartsOutOfOrder;
+  const startedAt = timestampIsoField(session, 2)
+    ?? (boundsOutOfOrder
+      ? earliestInstant([...pointInstants, ...normalizedLapStarts])
+      : (firstPointInstant ?? firstLapStart));
   const endedAt = timestampIsoField(session, 253)
-    ?? lastRecordInstant
-    ?? endFromLap(laps[laps.length - 1])
+    ?? (boundsOutOfOrder
+      ? latestInstant([...pointInstants, ...lapEnds])
+      : (lastPointInstant ?? lastLapEnd))
     ?? timestampIsoField(activity, 253)
     ?? null;
   // Un fichier multisport contient plusieurs sports dans une seule session :
@@ -808,7 +827,7 @@ export function parseFit(
     || endedAt != null;
   const timeBasis: TraceTimeBasis = hasFitTime ? 'utc' : 'none';
 
-  if (hasOutOfOrderFits(points)) {
+  if (pointsOutOfOrder) {
     addIssue('time-out-of-order', 'Les horodatages FIT ne sont pas croissants.', '$');
   }
   if (lapStartsOutOfOrder) {
@@ -1245,13 +1264,35 @@ function sessionToLap(
     maxHeartRateBpm: valueAsNumber(session, 17),
     averageCadenceRpm: valueAsNumber(session, 18),
     averageCadenceSpm: null,
-    maxPowerW: null,
+    // Une session porte `max_power` (champ 20) même sans message `lap` : sans
+    // cette reprise, un FIT sans tours perdait la puissance maximale.
+    maxPowerW: valueAsNumber(session, 20),
     intensity: null,
     triggerMethod: null,
     firstPointIndex: points.length > 0 ? 0 : null,
     pointCount: points.length,
     tracks: points.length > 0 ? [{ index: 0, firstPointIndex: 0, pointCount: points.length }] : [],
   };
+}
+
+function earliestInstant(values: ReadonlyArray<string | null>): string | null {
+  let earliest = Number.POSITIVE_INFINITY;
+  for (const value of values) {
+    if (value == null) continue;
+    const timestamp = instantTimeKey(value);
+    if (timestamp != null && timestamp < earliest) earliest = timestamp;
+  }
+  return Number.isFinite(earliest) ? new Date(earliest).toISOString() : null;
+}
+
+function latestInstant(values: ReadonlyArray<string | null>): string | null {
+  let latest = Number.NEGATIVE_INFINITY;
+  for (const value of values) {
+    if (value == null) continue;
+    const timestamp = instantTimeKey(value);
+    if (timestamp != null && timestamp > latest) latest = timestamp;
+  }
+  return Number.isFinite(latest) ? new Date(latest).toISOString() : null;
 }
 
 function endFromLap(lap: NormalizedTraceLap | undefined): string | null {

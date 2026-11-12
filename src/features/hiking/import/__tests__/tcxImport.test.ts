@@ -1720,6 +1720,77 @@ describe('import FIT · décodage local', () => {
     ]));
   });
 
+  it('calcule les bornes de provenance en min/max quand les points sont désordonnés', () => {
+    const late: FitField[] = [
+      { num: 253, size: 4, type: 0x86, value: fitSeconds('2026-08-09T11:00:00.000Z') },
+      { num: 3, size: 1, type: 0x02, value: 145 },
+    ];
+    const early: FitField[] = [
+      { num: 253, size: 4, type: 0x86, value: fitSeconds('2026-08-09T06:00:00.000Z') },
+      { num: 3, size: 1, type: 0x02, value: 120 },
+    ];
+    const activity: FitField[] = [
+      { num: 253, size: 4, type: 0x86, value: fitSeconds('2026-08-09T11:05:00.000Z') },
+    ];
+    const trace = parseFit(buildFit({
+      messages: [
+        definition(0, 34, activity),
+        data(0, activity),
+        definition(1, 20, late),
+        data(1, late),
+        definition(2, 20, early),
+        data(2, early),
+      ],
+    }));
+
+    // L'ordre du document reste celui des points, mais les bornes sont réelles.
+    expect(trace.points.map((point) => point.recordedAt)).toEqual([
+      '2026-08-09T11:00:00.000Z',
+      '2026-08-09T06:00:00.000Z',
+    ]);
+    expect(trace.provenance.startedAt).toBe('2026-08-09T06:00:00.000Z');
+    expect(trace.provenance.endedAt).toBe('2026-08-09T11:00:00.000Z');
+    expect(trace.issues).toEqual(expect.arrayContaining([
+      expect.objectContaining({ code: 'time-out-of-order', path: '$' }),
+    ]));
+  });
+
+  it('calcule les bornes de provenance en min/max quand les laps sont désordonnés', () => {
+    const laterLap: FitField[] = [
+      { num: 2, size: 4, type: 0x86, value: fitSeconds('2026-08-09T10:00:00.000Z') },
+      { num: 7, size: 4, type: 0x86, value: 60000 },
+    ];
+    const earlierLap: FitField[] = [
+      { num: 2, size: 4, type: 0x86, value: fitSeconds('2026-08-09T08:00:00.000Z') },
+      { num: 7, size: 4, type: 0x86, value: 120000 },
+    ];
+    const activity: FitField[] = [
+      { num: 253, size: 4, type: 0x86, value: fitSeconds('2026-08-09T10:05:00.000Z') },
+    ];
+    const trace = parseFit(buildFit({
+      messages: [
+        definition(0, 34, activity),
+        data(0, activity),
+        definition(1, 19, laterLap),
+        data(1, laterLap),
+        definition(2, 19, earlierLap),
+        data(2, earlierLap),
+      ],
+    }));
+
+    expect(trace.laps.map((lap) => lap.startedAt)).toEqual([
+      '2026-08-09T10:00:00.000Z',
+      '2026-08-09T08:00:00.000Z',
+    ]);
+    expect(trace.provenance.startedAt).toBe('2026-08-09T08:00:00.000Z');
+    // La fin réelle est celle du lap qui finit le plus tard (10:00 + 60 s),
+    // pas celle du dernier lap du document (08:00 + 120 s).
+    expect(trace.provenance.endedAt).toBe('2026-08-09T10:01:00.000Z');
+    expect(trace.issues).toEqual(expect.arrayContaining([
+      expect.objectContaining({ code: 'time-out-of-order', path: 'lap' }),
+    ]));
+  });
+
   it('marque lapIndex -1 quand un point n’a pas d’horodatage', () => {
     const record: FitField[] = [{ num: 3, size: 1, type: 0x02, value: 120 }];
     const lap: FitField[] = [
@@ -1820,6 +1891,51 @@ describe('import FIT · décodage local', () => {
     expect(ignoredNames).not.toContain('fit-field:19:20');
     expect(ignoredNames).not.toContain('fit-field:19:23');
     expect(trace.availableMetrics).toContain('power');
+  });
+
+  it('reprend max_power de la session dans le lap synthétique sans lap', () => {
+    const session: FitField[] = [
+      { num: 2, size: 4, type: 0x86, value: fitSeconds(START) },
+      { num: 5, size: 1, type: 0x00, value: 2 },
+      { num: 7, size: 4, type: 0x86, value: 120000 },
+      { num: 20, size: 2, type: 0x84, value: 280 },
+    ];
+    const record: FitField[] = [
+      { num: 253, size: 4, type: 0x86, value: fitSeconds('2026-08-09T08:01:00.000Z') },
+      { num: 3, size: 1, type: 0x02, value: 140 },
+    ];
+    const trace = parseFit(buildFit({
+      messages: [
+        definition(0, 18, session),
+        data(0, session),
+        definition(1, 20, record),
+        data(1, record),
+      ],
+    }));
+
+    expect(trace.laps).toHaveLength(1);
+    expect(trace.laps[0]).toMatchObject({
+      maxPowerW: 280,
+      firstPointIndex: 0,
+      pointCount: 1,
+    });
+    expect(trace.availableMetrics).toContain('power');
+    const ignoredNames = trace.provenance.ignoredSections.map((section) => section.name);
+    expect(ignoredNames).not.toContain('fit-field:18:20');
+
+    // Même sans aucun point ni lap, la session suffit à porter la puissance.
+    const sessionOnly = parseFit(buildFit({
+      messages: [
+        definition(2, 18, session),
+        data(2, session),
+      ],
+    }));
+    expect(sessionOnly.laps[0]).toMatchObject({
+      maxPowerW: 280,
+      firstPointIndex: null,
+      pointCount: 0,
+    });
+    expect(sessionOnly.availableMetrics).toContain('power');
   });
 
   it('expose dans availableMetrics les mesures portées par le résumé session', () => {

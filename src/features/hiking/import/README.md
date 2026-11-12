@@ -33,7 +33,9 @@ Références de suivi : `A03`, `K6.02`, `S1.15`.
   jamais abandonnés en silence ; `file_id.timeCreated` / `serialNumber` et
   `activity.totalTimerTime` sont normalisés. Un `lap` expose `maxPowerW`
   (champ 20) et `intensity` (champ 23), sans confondre puissance et intensité.
-  Les champs développeur sont sautés et signalés. La cadence n'est rangée
+  Quand aucun message `lap` n'existe, le lap synthétique reprend
+  `session.max_power` (champ 20) : la puissance maximale de session n'est pas
+  perdue. Les champs développeur sont sautés et signalés. La cadence n'est rangée
   dans `cadenceRpm` que pour le vélo et dans `runCadenceSpm` que pour la
   course/marche ; les autres sports produisent une issue
   `unsupported-feature` au lieu d'une unité fausse.
@@ -66,6 +68,12 @@ Références de suivi : `A03`, `K6.02`, `S1.15`.
   dernier début réel et une issue `time-out-of-order` est ajoutée. Un point
   antérieur à tous les laps, ou sans horodatage, reçoit `lapIndex = -1` : aucun
   début de lap ne lui est inventé.
+- **Bornes FIT** : `session.startTime` et `session.timestamp` restent les
+  bornes officielles quand elles existent. En leur absence, `startedAt` et
+  `endedAt` sont les min/max réels des points horodatés, puis des débuts/fins
+  de laps quand aucun point n'est horodaté. Si des points ou des débuts de laps
+  ne sont pas croissants, les bornes portent sur l'ensemble des points et des
+  fins de laps, jamais sur le premier ou le dernier élément du document.
 - **Encodage TCX** : l'entrée `parseTraceFile({ bytes })` détecte les BOM
   UTF-8, UTF-16LE et UTF-16BE. Un TCX UTF-16 valide n'est plus refusé comme
   XML invalide.
@@ -116,6 +124,16 @@ Références de suivi : `A03`, `K6.02`, `S1.15`.
   situés après le CRC déclaré ne sont pas interprétés ni signalés.
 - FIT : un `record` sans horodatage, comme un point antérieur au premier lap,
   reçoit `lapIndex = -1` ; aucun lap n'est inventé pour le point.
+- FIT : quand des points horodatés existent, les bornes de repli privilégient
+  leurs min/max. Une fin de lap postérieure au dernier point n'est reprise que
+  si les points ou les débuts de laps sont désordonnés ; sinon les bornes
+  gardent la priorité historique « points, puis laps ».
+- FIT : `tracks` reste un segment contigu synthétique (`firstPointIndex`,
+  `pointCount`). Quand des points sont désordonnés, les points d'un même lap
+  peuvent être non contigus : un consommateur doit filtrer par `lapIndex`, pas
+  découper `tracks`.
+- FIT : `session.avg_power` (champ 19) n'est pas normalisé ; seul
+  `session.max_power` (champ 20) est repris dans le lap synthétique.
 - FIT : les valeurs 64 bits au-delà de 2^53 perdent leur précision en `number`.
   Aucun champ normalisé courant ne les utilise.
 - Les tests couvrent les variantes construites dans le dépôt, pas un panel de
@@ -145,7 +163,7 @@ Références de suivi : `A03`, `K6.02`, `S1.15`.
 |---|---|---|
 | **S1.15** — importer FIT et TCX valides/tronqués, contrôler tours, unités, provenance, erreurs, déduplication | **Partielle, mais les constats bloquants sont fermés** : `file_id.type = 4` exigé, dates de fin TCX calculées depuis les laps, messages FIT bornés, laps rattachés en `O((points + laps) log laps)`, résumé de session et champs FIT conservés ou signalés, cadence TCX sport-aware, `Notes`/`Training`/`Extensions` signalés, UTF-16 accepté. | L'unicité « deux imports identiques donnent un seul objet » n'est pas en base : `traceImportDedupeKey` reste une clé, sans contrainte de persistance. |
 | **K6.02** — fixtures et parcours mobile | **Non satisfaite** : les tests sont synthétiques et aucun parcours mobile n'est branché. | Fixtures Garmin/Suunto réelles anonymisées, sélecteur binaire natif, écran d'aperçu et recette mobile. |
-| **A03** — import FIT/TCX | **Brique locale seulement** : parseurs, modèle normalisé, limites, SHA-256 et 117 tests. | UI `Compte → Sorties → Importer`, persistance Supabase, stockage privé des originaux, export. |
+| **A03** — import FIT/TCX | **Brique locale seulement** : parseurs, modèle normalisé, limites, SHA-256 et 123 tests. | UI `Compte → Sorties → Importer`, persistance Supabase, stockage privé des originaux, export. |
 
 ## Vérification
 
