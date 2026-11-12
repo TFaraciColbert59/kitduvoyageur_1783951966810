@@ -47,12 +47,41 @@ describe('resolveTraceMasks — politique unique', () => {
     ]);
   });
 
-  it('masque tout pour une visibilité absente, amie ou inconnue', () => {
-    for (const visibility of [null, undefined, '', 'friends', 'followers', 'collective']) {
+  it('masque tout pour une visibilité absente ou inconnue', () => {
+    for (const visibility of [null, undefined, '', 'collective', 'amis']) {
       expect(resolveTraceMasks({ viewer: 'visitor', visibility })).toEqual([
         { kind: 'all' },
       ]);
     }
+  });
+
+  it('refuse friends/followers à un visiteur non abonné', () => {
+    for (const visibility of ['friends', 'followers']) {
+      expect(resolveTraceMasks({ viewer: 'visitor', visibility })).toEqual([
+        { kind: 'all' },
+      ]);
+      expect(
+        resolveTraceMasks({ viewer: 'follower', visibility })
+      ).toEqual([
+        { kind: 'start', meters: DEFAULT_SHARE_START_MASK_M },
+        { kind: 'end', meters: DEFAULT_SHARE_END_MASK_M },
+      ]);
+    }
+  });
+
+  it('accorde seulement des masques d’extrémités à un abonné vérifié', () => {
+    expect(
+      resolveTraceMasks({ viewer: 'follower', visibility: 'friends' })
+    ).toHaveLength(2);
+    expect(
+      resolveTraceMasks({ viewer: 'follower', visibility: 'public' })
+    ).toHaveLength(2);
+    expect(resolveTraceMasks({ viewer: 'follower', visibility: 'private' })).toEqual([
+      { kind: 'all' },
+    ]);
+    expect(resolveTraceMasks({ viewer: 'follower', visibility: null })).toEqual([
+      { kind: 'all' },
+    ]);
   });
 
   it('combine carnet et sortie avec la valeur la plus restrictive', () => {
@@ -64,7 +93,15 @@ describe('resolveTraceMasks — politique unique', () => {
       'private'
     );
     expect(mostRestrictiveTraceVisibility('public', null)).toBe('private');
-    expect(mostRestrictiveTraceVisibility('public', 'friends')).toBe('private');
+    expect(mostRestrictiveTraceVisibility('public', 'friends')).toBe('friends');
+    expect(mostRestrictiveTraceVisibility('friends', 'collective_anonymized')).toBe(
+      'friends'
+    );
+    expect(mostRestrictiveTraceVisibility('followers', 'friends')).toBe('friends');
+  });
+
+  it('échoue fermé sans aucune visibilité', () => {
+    expect(mostRestrictiveTraceVisibility()).toBe('private');
   });
 });
 

@@ -7,11 +7,13 @@
  * appliquée par le projecteur du domaine.
  *
  * Tant qu'aucune zone privée n'est persistée, la politique par défaut est
- * volontairement conservatrice : un visiteur reçoit une trace dont le début et
- * la fin sont retirés (500 m), et une trace explicitement privée est masquée
- * en totalité. Le propriétaire et les participants à la sortie gardent la
- * trace complète. Une erreur de projection ne rend jamais la trace brute :
- * l'appelant doit afficher l'état fermé.
+ * volontairement conservatrice : un visiteur non abonné reçoit une trace dont
+ * le début et la fin sont retirés (500 m) uniquement si la visibilité est
+ * publique ; `private`, `friends` non vérifié ou toute valeur inconnue masque
+ * tout. Un abonné vérifié de l'auteur reçoit les mêmes masques pour
+ * `friends`/`followers`. Le propriétaire et les participants à la sortie
+ * gardent la trace complète. Une erreur de projection ne rend jamais la trace
+ * brute : l'appelant doit afficher l'état fermé.
  */
 
 import {
@@ -23,11 +25,11 @@ import {
 import { haversineM } from '../../adventure-intelligence/domain/geo';
 import { parseTraceSegments } from '../map/geometry';
 
-export type TraceViewer = 'owner' | 'participant' | 'visitor';
+export type TraceViewer = 'owner' | 'participant' | 'follower' | 'visitor';
 
 export interface TraceAudience {
   viewer: TraceViewer;
-  /** `private`, `public`, `friends`, `collective_anonymized`… */
+  /** `private`, `public`, `friends`, `followers`, `collective_anonymized`… */
   visibility?: string | null;
 }
 
@@ -37,38 +39,73 @@ export const DEFAULT_SHARE_START_MASK_M = 500;
 export const DEFAULT_SHARE_END_MASK_M = 500;
 
 /**
- * Seules deux valeurs disent explicitement « partageable » : `public` pour un
- * carnet et `collective_anonymized` pour une sortie. Tout le reste — `private`,
- * `friends`, `null`, une valeur inconnue — est traité comme privé.
+ * Deux valeurs disent explicitement « partageable à tout visiteur » : `public`
+ * pour un carnet et `collective_anonymized` pour une sortie.
  */
 export function isShareableTraceVisibility(value: unknown): boolean {
   return value === 'public' || value === 'collective_anonymized';
 }
 
 /**
- * Visibilité effective d'une trace exposée à un visiteur : la plus restrictive
- * du carnet et de la sortie. Une seule valeur non explicitement partageable
- * suffit à tout masquer.
+ * Deux valeurs sont réservées aux personnes qui suivent réellement l'auteur :
+ * `friends` et `followers`. La visibilité seule ne prouve pas l'autorisation :
+ * l'appelant doit avoir vérifié la relation `user_follows` avant de présenter
+ * le lecteur comme `follower`.
+ */
+export function isFollowerTraceVisibility(value: unknown): boolean {
+  return value === 'friends' || value === 'followers';
+}
+
+/**
+ * Visibilité effective d'une trace exposée à un lecteur : la plus restrictive
+ * du carnet et de la sortie. Aucun argument — ou une seule valeur inconnue —
+ * vaut `private` : le défaut n'est jamais l'autorisation.
+ *
+ * `friends` n'est conservé que si toutes les sources sont soit publiques, soit
+ * réservées aux abonnés. Le résultat ne dit pas encore si *ce* lecteur suit
+ * l'auteur : `resolveTraceMasks` refuse `friends` à un simple visiteur.
  */
 export function mostRestrictiveTraceVisibility(
   ...values: Array<string | null | undefined>
-): 'public' | 'private' {
-  return values.every((value) => isShareableTraceVisibility(value)) ? 'public' : 'private';
+): 'public' | 'friends' | 'private' {
+  if (values.length === 0) return 'private';
+  if (values.every((value) => isShareableTraceVisibility(value))) return 'public';
+  if (
+    values.every(
+      (value) => isShareableTraceVisibility(value) || isFollowerTraceVisibility(value)
+    )
+  ) {
+    return 'friends';
+  }
+  return 'private';
 }
 
 /**
  * Source unique des masques. Un propriétaire ou un participant voit la trace
- * complète ; un visiteur voit début et fin masqués uniquement si la visibilité
- * est explicitement partageable. Toute autre valeur masque tout : le défaut
- * n'est jamais l'autorisation.
+ * complète. Un `follower` — rôle accordé uniquement après vérification de la
+ * relation réelle — voit début et fin masqués pour `friends`/`followers` ou
+ * pour une visibilité publique. Un simple visiteur ne voit début et fin
+ * masqués que si la visibilité est explicitement publique ; tout le reste
+ * masque l'intégralité de la trace.
  */
 export function resolveTraceMasks(audience: TraceAudience): TraceMask[] {
-  if (audience.viewer !== 'visitor') return [];
-  if (!isShareableTraceVisibility(audience.visibility)) return [{ kind: 'all' }];
-  return [
-    { kind: 'start', meters: DEFAULT_SHARE_START_MASK_M },
-    { kind: 'end', meters: DEFAULT_SHARE_END_MASK_M },
-  ];
+  if (audience.viewer === 'owner' || audience.viewer === 'participant') return [];
+  if (isShareableTraceVisibility(audience.visibility)) {
+    return [
+      { kind: 'start', meters: DEFAULT_SHARE_START_MASK_M },
+      { kind: 'end', meters: DEFAULT_SHARE_END_MASK_M },
+    ];
+  }
+  if (
+    audience.viewer === 'follower' &&
+    isFollowerTraceVisibility(audience.visibility)
+  ) {
+    return [
+      { kind: 'start', meters: DEFAULT_SHARE_START_MASK_M },
+      { kind: 'end', meters: DEFAULT_SHARE_END_MASK_M },
+    ];
+  }
+  return [{ kind: 'all' }];
 }
 
 export interface TraceSample {

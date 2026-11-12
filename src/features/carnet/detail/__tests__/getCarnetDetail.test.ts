@@ -5,6 +5,7 @@ const STATE = vi.hoisted(() => ({
   carnet: null as Record<string, unknown> | null,
   author: null as Record<string, unknown> | null,
   sessions: [] as Array<Record<string, unknown>>,
+  follows: false,
 }));
 
 vi.mock('@/lib/supabase/server', () => ({
@@ -29,6 +30,11 @@ vi.mock('@/lib/supabase/server', () => ({
                 })),
                 error: null,
               };
+        }
+        if (table === 'user_follows') {
+          return STATE.follows
+            ? { data: { follower_id: STATE.viewerId }, error: null }
+            : { data: null, error: null };
         }
         return { data: [], error: null, count: 0 };
       };
@@ -129,6 +135,7 @@ beforeEach(() => {
     trust_score: 90,
   };
   STATE.sessions = [session()];
+  STATE.follows = false;
 });
 
 describe('getCarnetDetail — visibilité effective des traces', () => {
@@ -149,6 +156,33 @@ describe('getCarnetDetail — visibilité effective des traces', () => {
     expect(detail?.trace).not.toBeNull();
     expect(detail?.traceMasked).toBe(true);
     expect(detail?.traceFullyMasked).toBe(false);
+  });
+
+  it('rend une trace raccourcie à un abonné vérifié d’un carnet friends', async () => {
+    STATE.viewerId = 'u2';
+    STATE.follows = true;
+    STATE.carnet = { ...STATE.carnet, visibility: 'friends' };
+    STATE.sessions = [session({ visibility: 'collective_anonymized' })];
+
+    const detail = await getCarnetDetail('c1');
+
+    expect(detail?.trace).not.toBeNull();
+    expect(detail?.traceMasked).toBe(true);
+    expect(detail?.traceFullyMasked).toBe(false);
+    expect(detail?.viewerRole).toBe('visitor');
+  });
+
+  it('masque tout à un lecteur non abonné, même si la fiche a pu être lue', async () => {
+    STATE.viewerId = 'u2';
+    STATE.follows = false;
+    STATE.carnet = { ...STATE.carnet, visibility: 'friends' };
+    STATE.sessions = [session({ visibility: 'collective_anonymized' })];
+
+    const detail = await getCarnetDetail('c1');
+
+    expect(detail?.trace).toBeNull();
+    expect(detail?.traceMasked).toBe(true);
+    expect(detail?.traceFullyMasked).toBe(true);
   });
 
   it('préserve la trace brute du propriétaire, même sur une sortie privée', async () => {

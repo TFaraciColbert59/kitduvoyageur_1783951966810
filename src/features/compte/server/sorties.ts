@@ -1,9 +1,15 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { TraceProjectionError } from '../domain/traceProjection';
-import { projectTraceSampleSegments, resolveTraceMasks } from './tracePrivacy';
+import {
+  isFollowerTraceVisibility,
+  projectTraceSampleSegments,
+  resolveTraceMasks,
+  type TraceViewer,
+} from './tracePrivacy';
 import {
   loadOutingWeather,
-  redactWeatherCoordinates,
+  parseStoredWeather,
+  weatherForViewer,
   type OutingWeather,
 } from './weather';
 
@@ -265,11 +271,23 @@ function displayHandle(profile: ProfileRow | undefined, fallbackId: string) {
   return profile?.handle?.trim() || fallbackId.slice(0, 8);
 }
 
-function storedWeather(raw: unknown): OutingWeather | null {
-  if (!raw || typeof raw !== 'object') return null;
-  const candidate = raw as Partial<OutingWeather>;
-  if (candidate.source !== 'open-meteo' || !Array.isArray(candidate.days)) return null;
-  return candidate as OutingWeather;
+/**
+ * Vérifie une relation de suivi réelle avant d'accorder le rôle `follower`.
+ * La visibilité `friends`/`followers` seule ne prouve jamais l'autorisation.
+ */
+async function viewerFollowsOwner(
+  supabase: SupabaseClient,
+  viewerId: string,
+  ownerId: string | null
+): Promise<boolean> {
+  if (!viewerId || !ownerId || viewerId === ownerId) return false;
+  const { data } = await supabase
+    .from('user_follows')
+    .select('follower_id')
+    .eq('follower_id', viewerId)
+    .eq('following_id', ownerId)
+    .maybeSingle();
+  return Boolean((data as { follower_id?: string | null } | null)?.follower_id);
 }
 
 function firstCoordinate(points: OutingPoint[]): { lat: number; lon: number } | null {
@@ -532,13 +550,27 @@ export async function loadOutingDetail(
 
   const rawSegments = parsePositionSegments(session.positions_timed, session.positions_geojson);
   const rawPoints = rawSegments.flat();
-  const visibility = normalizeVisibility(session.visibility);
-  const viewer =
-    canEdit || participantRows.some((row) => row.user_id === userId) ? 'participant' : 'visitor';
-  const isVisitor = viewer === 'visitor';
+  const rawVisibility = typeof session.visibility === 'string' ? session.visibility : null;
+  const visibility = normalizeVisibility(rawVisibility);
+  const isOwner = canEdit;
+  const isParticipant = participantRows.some((row) => row.user_id === userId);
+  /*
+   * Le rôle de lecture suit une autorisation réelle : propriétaire, participant
+   * inscrit, ou abonné vérifié pour une visibilité `friends`/`followers`.
+   * Un visiteur non abonné reste `visitor` même si la ligne prétend `friends`.
+   */
+  const viewer: TraceViewer = isOwner
+    ? 'owner'
+    : isParticipant
+      ? 'participant'
+      : isFollowerTraceVisibility(rawVisibility) &&
+          (await viewerFollowsOwner(supabase, userId, session.user_id))
+        ? 'follower'
+        : 'visitor';
+  const hasFullAccess = viewer === 'owner' || viewer === 'participant';
   const projection = projectTraceSampleSegments(
     rawSegments,
-    resolveTraceMasks({ viewer, visibility })
+    resolveTraceMasks({ viewer, visibility: rawVisibility })
   );
   const traceSegments: OutingPoint[][] = projection.segments.map((segment) =>
     segment.map((point) => ({
@@ -563,18 +595,28 @@ export async function loadOutingDetail(
    * point visible. Aucun appel tiers n'est fait pour un visiteur.
    */
   const coordinate = firstCoordinate(visiblePoints);
-  let weather = storedWeather(session.weather);
-  if (isVisitor) {
-    weather =
-      projection.fullyMasked || visiblePoints.length === 0 || !weather
-        ? null
-        : redactWeatherCoordinates(weather);
-  } else if (!weather && coordinate) {
-    weather = await loadOutingWeather(coordinate.lat, coordinate.lon, session.started_at);
+  const stored = parseStoredWeather(session.weather);
+  let weather = stored;
+  if (hasFullAccess) {
+    if (!weather && coordinate) {
+      weather = await loadOutingWeather(coordinate.lat, coordinate.lon, session.started_at);
+    }
+  } else {
+    const canSeeStoredWeather =
+      !projection.fullyMasked && visiblePoints.length > 0;
+    weather = canSeeStoredWeather
+      ? weatherForViewer(stored, viewer, rawVisibility)
+      : null;
   }
 
+  /*
+   * Notes : le propriétaire et les participants les lisent. Un visiteur ne les
+   * reçoit que pour une sortie explicitement `collective_anonymized` ; un
+   * abonné d'une sortie `friends`/`followers` n'y a pas droit — le partage de
+   * la trace ne vaut pas partage du carnet intime.
+   */
   const notes =
-    isVisitor && visibility === 'private' ? '' : text(session.notes);
+    hasFullAccess || rawVisibility === 'collective_anonymized' ? text(session.notes) : '';
 
   const maxAlt =
     session.max_altitude_m ??

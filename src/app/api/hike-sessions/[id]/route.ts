@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { isFollowerTraceVisibility, type TraceViewer } from '@/features/compte/server/tracePrivacy';
+import { parseStoredWeather, weatherForViewer } from '@/features/compte/server/weather';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -30,22 +32,49 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       visibility?: string | null;
     };
     const isOwner = Boolean(viewerId && ownerId && viewerId === ownerId);
+    const rawVisibility =
+      typeof safeSession.visibility === 'string' ? safeSession.visibility : null;
+
+    /*
+     * Rôle de lecture réel, jamais déduit de la seule valeur `visibility` :
+     * un participant inscrit garde la météo exacte ; un abonné n'est reconnu
+     * qu'après lecture de `user_follows`. Tout le reste est visiteur.
+     */
+    let viewer: TraceViewer = isOwner ? 'owner' : 'visitor';
+    if (!isOwner && viewerId) {
+      const { data: participant } = await supabase
+        .from('hike_session_participants')
+        .select('user_id')
+        .eq('session_id', id)
+        .eq('user_id', viewerId)
+        .maybeSingle();
+      if (participant) {
+        viewer = 'participant';
+      } else if (isFollowerTraceVisibility(rawVisibility) && ownerId) {
+        const { data: follow } = await supabase
+          .from('user_follows')
+          .select('follower_id')
+          .eq('follower_id', viewerId)
+          .eq('following_id', ownerId)
+          .maybeSingle();
+        if ((follow as { follower_id?: string | null } | null)?.follower_id) {
+          viewer = 'follower';
+        }
+      }
+    }
 
     if (!isOwner) {
       /*
        * La météo stockée porte le point exact utilisé pour l'interroger, donc
-       * souvent le vrai départ. Un visiteur n'en reçoit jamais les coordonnées,
-       * et une session `private` ne lui en livre aucune donnée.
+       * souvent le vrai départ. La politique centralisée `weatherForViewer`
+       * supprime les coordonnées pour un lecteur autorisé et supprime toute
+       * météo pour `private`, `null`, `friends` non suivi ou valeur inconnue.
        */
-      if (safeSession.visibility === 'private') {
-        safeSession.weather = null;
-      } else if (safeSession.weather && typeof safeSession.weather === 'object') {
-        safeSession.weather = {
-          ...(safeSession.weather as Record<string, unknown>),
-          latitude: null,
-          longitude: null,
-        };
-      }
+      safeSession.weather = weatherForViewer(
+        parseStoredWeather(safeSession.weather),
+        viewer,
+        rawVisibility
+      );
     }
 
     // `notes` n'est jamais sélectionné ; ceinture et bretelles si la colonne

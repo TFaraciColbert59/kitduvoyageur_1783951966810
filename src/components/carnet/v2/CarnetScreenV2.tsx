@@ -29,6 +29,7 @@ import { useCarnetComments } from '@/features/carnet/detail/useCarnetComments';
 import { useCarnetEngagement } from '@/features/carnet/detail/useCarnetEngagement';
 import { useCarnetLivePosition } from '@/features/carnet/detail/useCarnetLivePosition';
 import { elevationProfileGain } from '@/features/carnet/detail/elevationProfile';
+import { carnetTraceEmptyState } from '@/features/carnet/detail/traceEmptyState';
 import { createClient } from '@/lib/supabase/client';
 import { replyToCarnetStory } from '@/lib/stories/carnetReply';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
@@ -289,12 +290,40 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
   const mapTrace = useMemo(() => {
     if (activeDay <= 0) return detail.trace;
     const day = detail.days.find((entry) => (entry.dayNumber ?? entry.index) === activeDay);
-    if (!day || day.points.length < 2) return detail.trace;
-    return {
-      type: 'LineString' as const,
-      coordinates: day.points.map((point) => [point.lng, point.lat]),
-    };
+    if (!day) return detail.trace;
+
+    /*
+     * Le jour peut contenir plusieurs relevés (plusieurs sorties, ou plusieurs
+     * morceaux d'un MultiLineString). On les rend en MultiLineString : la carte
+     * ne relie jamais deux morceaux, même pour le propriétaire.
+     */
+    const segments = (day.segments ?? [])
+      .map((segment) =>
+        segment.filter(
+          (point) => Number.isFinite(point.lat) && Number.isFinite(point.lng),
+        ),
+      )
+      .filter((segment) => segment.length >= 2);
+    if (segments.length >= 2) {
+      return {
+        type: 'MultiLineString' as const,
+        coordinates: segments.map((segment) =>
+          segment.map((point) => [point.lng, point.lat]),
+        ),
+      };
+    }
+    if (segments.length === 1) {
+      return {
+        type: 'LineString' as const,
+        coordinates: segments[0].map((point) => [point.lng, point.lat]),
+      };
+    }
+    /* Ancien contrat ou jour sans morceaux : on garde la trace complète plutôt
+       que d'inventer un tracé à partir de points aplatis. */
+    return detail.trace;
   }, [activeDay, detail.days, detail.trace]);
+
+  const traceEmpty = useMemo(() => carnetTraceEmptyState(detail), [detail]);
 
   const mapMarkers = useMemo(() => {
     const list: Array<{
@@ -519,10 +548,12 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
         aria-hidden={overlayOpen ? true : undefined}
       >
         <CompteMap
-          authState={user ? 'owner' : 'guest'}
+          authState={detail.isOwner ? 'owner' : 'guest'}
           context={{ mode: 'overview' }}
           variant="carnet"
           trace={mapTrace}
+          emptyTitle={traceEmpty.title}
+          emptyHint={traceEmpty.hint}
           focus={mapFocus}
           activeDay={activeDay}
           livePosition={

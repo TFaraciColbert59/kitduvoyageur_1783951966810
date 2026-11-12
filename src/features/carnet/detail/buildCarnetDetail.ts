@@ -2,7 +2,11 @@ import { buildDays, buildSummary, toMomentItems } from './days';
 import { formatDateRange, formatElevation, formatKm, toNumber } from './format';
 import { buildCarnetPlace } from './place';
 import { pickElevationProfile } from './elevationProfile';
-import { projectTraceGeometry, resolveTraceMasks } from '@/features/compte/server/tracePrivacy';
+import {
+  projectTraceGeometry,
+  resolveTraceMasks,
+  type TraceViewer,
+} from '@/features/compte/server/tracePrivacy';
 import type {
   BuildCarnetDetailInput,
   CarnetEtapeDay,
@@ -143,6 +147,19 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
     input.viewerRole ??
     (input.viewerId && carnet.author_id === input.viewerId ? 'participant' : 'visitor');
   const isVisitor = viewerRole === 'visitor';
+  /*
+   * Le rôle de trace est distinct du rôle de fiche : un abonné autorisé reste
+   * un `visitor` pour les notes, le budget et les points de jour, mais obtient
+   * une trace début/fin masquée au lieu de rien. Le rôle `follower` n'est
+   * fourni par l'appelant qu'après vérification de `user_follows`.
+   */
+  const traceViewer: TraceViewer = isVisitor
+    ? input.traceViewer === 'follower'
+      ? 'follower'
+      : 'visitor'
+    : input.traceViewer ?? 'participant';
+  const needsTraceProjection =
+    traceViewer === 'follower' || traceViewer === 'visitor';
   const distanceKm = toNumber(hikeSession?.distance_km) ?? toNumber(carnet.distance_km);
   const elevationM = toNumber(hikeSession?.elevation_gain_m) ?? toNumber(carnet.denivele_m);
   const moments = toMomentItems(input.moments);
@@ -201,13 +218,13 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
   const rawTrace = input.trace ?? hikeSession?.positions_geojson ?? null;
   const traceVisibility = input.traceVisibility ?? carnet.visibility;
   const projectedTrace =
-    isVisitor && rawTrace !== null && rawTrace !== undefined
+    needsTraceProjection && rawTrace !== null && rawTrace !== undefined
       ? projectTraceGeometry(
           rawTrace,
-          resolveTraceMasks({ viewer: 'visitor', visibility: traceVisibility })
+          resolveTraceMasks({ viewer: traceViewer, visibility: traceVisibility })
         )
       : null;
-  const trace = isVisitor ? (projectedTrace?.geometry ?? null) : rawTrace;
+  const trace = needsTraceProjection ? (projectedTrace?.geometry ?? null) : rawTrace;
   const traceMasked = projectedTrace?.masked ?? false;
   const traceFullyMasked = projectedTrace?.fullyMasked ?? false;
   const traceError = projectedTrace?.error ?? null;
@@ -216,7 +233,9 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
    * Un visiteur ne les reçoit pas : ils contiennent les coordonnées brutes.
    * La carte retombe alors sur la trace projetée complète (aucun tracé inventé).
    */
-  const viewerDays = isVisitor ? days.map((day) => ({ ...day, points: [] })) : days;
+  const viewerDays = isVisitor
+    ? days.map((day) => ({ ...day, points: [], segments: [] }))
+    : days;
 
   const nights: CarnetNightItem[] =
     input.nights && input.nights.length > 0

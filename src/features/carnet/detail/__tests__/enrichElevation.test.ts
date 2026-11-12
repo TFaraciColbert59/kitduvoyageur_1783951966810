@@ -100,8 +100,15 @@ describe('enrichCarnetElevation', () => {
     expect(profile[0].distanceKm).toBe(0);
     /* ~0,78 km par morceau : le saut de ~13 km ne doit pas apparaître. */
     expect(profile[1].distanceKm).toBeLessThan(1);
-    expect(profile[2].distanceKm).toBeLessThan(1);
     expect(profile[3].distanceKm).toBeLessThan(2);
+    /* Distance cumulée monotone : le second morceau repart de la fin du
+       premier, sans revenir à zéro ni compter le vide qui les sépare. */
+    const distances = profile.map((point) => point.distanceKm);
+    expect(distances).toEqual([...distances].sort((a, b) => a - b));
+    expect(profile[2].distanceKm).toBe(profile[1].distanceKm);
+    expect(profile[3].distanceKm).toBeGreaterThan(profile[2].distanceKm);
+    expect(profile.map((point) => point.segmentIndex)).toEqual([0, 0, 1, 1]);
+    expect(profile[3].distanceKm).toBeLessThan(1.6);
   });
 
   it('demande les coordonnées de la trace au MNT, dans l’ordre', async () => {

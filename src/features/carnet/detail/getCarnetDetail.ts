@@ -3,7 +3,10 @@ import { createClient } from '@/lib/supabase/server';
 import { buildCarnetDetail } from './buildCarnetDetail';
 import { enrichCarnetElevation } from './enrichElevation';
 import { pickCarnetTraceSession } from './trace';
-import { mostRestrictiveTraceVisibility } from '@/features/compte/server/tracePrivacy';
+import {
+  isFollowerTraceVisibility,
+  mostRestrictiveTraceVisibility,
+} from '@/features/compte/server/tracePrivacy';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import type {
   AuthorRow,
@@ -299,6 +302,31 @@ export async function getCarnetDetail(id: string) {
   const isParticipant = isOwner || isCollab || isSessionParticipant;
   const viewerRole = isParticipant ? ('participant' as const) : ('visitor' as const);
 
+  /*
+   * `friends`/`followers` ne suffit jamais : on lit la relation réelle. Cette
+   * requête passe par la RLS (`user_follows_read`) et ne renvoie que ce que le
+   * lecteur peut voir. Un anonyme ou un non-abonné reste `visitor`, donc la
+   * trace est entièrement masquée.
+   */
+  const mayNeedFollower =
+    !isParticipant &&
+    (isFollowerTraceVisibility(carnet.visibility) ||
+      sessions.some((session) => isFollowerTraceVisibility(session.visibility)));
+  const followsAuthor =
+    mayNeedFollower &&
+    Boolean(viewerId && carnet.author_id && viewerId !== carnet.author_id) &&
+    Boolean(
+      (
+        await supabase
+          .from('user_follows')
+          .select('follower_id')
+          .eq('follower_id', viewerId as string)
+          .eq('following_id', carnet.author_id as string)
+          .maybeSingle()
+      ).data,
+    );
+  const traceViewer = isParticipant ? 'participant' : followsAuthor ? 'follower' : 'visitor';
+
   const momentRows = ((momentsResult.data ?? []) as MomentRow[]) ?? [];
   const momentIds = momentRows.map((m) => m.id);
 
@@ -549,6 +577,7 @@ export async function getCarnetDetail(id: string) {
       comments: commentsTotal.count ?? 0,
     },
     viewerRole,
+    traceViewer,
     nights,
     dayReactions,
     momentEngagement,

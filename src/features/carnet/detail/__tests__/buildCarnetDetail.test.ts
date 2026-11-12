@@ -384,6 +384,65 @@ describe('buildCarnetDetail — lieu réel', () => {
     expect(detail.traceError).toBeNull();
   });
 
+  it('donne une trace raccourcie à un abonné vérifié d’un carnet friends', () => {
+    const trace = {
+      type: 'LineString',
+      coordinates: [
+        [6.86, 45.83],
+        [6.87, 45.84],
+        [6.88, 45.85],
+      ],
+    };
+    const detail = buildCarnetDetail(
+      input({
+        viewerId: 'u2',
+        trace,
+        traceVisibility: 'friends',
+        traceViewer: 'follower',
+        sessions: [
+          {
+            id: 's1',
+            carnet_id: 'c1',
+            distance_km: null,
+            elevation_gain_m: null,
+            duration_seconds: 3600,
+            started_at: '2026-09-26T06:00:00Z',
+            positions_geojson: trace,
+          },
+        ],
+      }),
+    );
+
+    expect(detail.trace).not.toBeNull();
+    expect(detail.trace).not.toBe(trace);
+    expect(detail.traceMasked).toBe(true);
+    expect(detail.traceFullyMasked).toBe(false);
+    expect(detail.days[0].points).toEqual([]);
+    expect(detail.days[0].segments).toEqual([]);
+  });
+
+  it('masque tout pour un visiteur non abonné même si la visibilité dit friends', () => {
+    const trace = {
+      type: 'LineString',
+      coordinates: [
+        [6.86, 45.83],
+        [6.87, 45.84],
+      ],
+    };
+    const detail = buildCarnetDetail(
+      input({
+        viewerId: 'u2',
+        trace,
+        traceVisibility: 'friends',
+        traceViewer: 'visitor',
+      }),
+    );
+
+    expect(detail.trace).toBeNull();
+    expect(detail.traceMasked).toBe(true);
+    expect(detail.traceFullyMasked).toBe(true);
+  });
+
   it('conserve les frontières d’un MultiLineString pour un visiteur', () => {
     const trace = {
       type: 'MultiLineString',

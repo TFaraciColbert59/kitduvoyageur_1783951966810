@@ -1,4 +1,5 @@
 import type { TraceProjectionError } from '@/features/compte/domain/traceProjection';
+import type { TraceViewer } from '@/features/compte/server/tracePrivacy';
 
 /** Contrat de la fiche carnet. Une valeur absente est `null`, jamais inventée. */
 
@@ -190,6 +191,12 @@ export interface CarnetDay {
   moments: CarnetMomentItem[];
   /** Points GPS des sorties du jour, fusionnés et triés chronologiquement. */
   points: CarnetDayPoint[];
+  /**
+   * Morceaux continus du jour : une entrée par sortie/relevé, dans l'ordre.
+   * `points` reste la vue aplatie pour les statistiques ; la carte, elle, ne
+   * relie jamais deux morceaux.
+   */
+  segments?: CarnetDayPoint[][];
 }
 
 /** Totaux réels du carnet : somme des jours, jamais une valeur inventée. */
@@ -384,10 +391,16 @@ export interface CarnetBudget {
 
 /** Point d'un profil altimétrique réel (distance cumulée + altitude mesurée). */
 export interface ElevationPoint {
+  /** Distance cumulée, monotone sur l'ensemble des morceaux visibles. */
   distanceKm: number;
   elevationM: number;
   lat: number;
   lng: number;
+  /**
+   * Morceau d'origine du point. Deux valeurs différentes ne sont jamais
+   * reliées par une ligne : la coupure reste visible dans le profil.
+   */
+  segmentIndex?: number;
 }
 
 export interface CarnetDetail {
@@ -475,6 +488,12 @@ export interface BuildCarnetDetailInput {
    * sortie qui porte le tracé. Absente, la visibilité du carnet s'applique.
    */
   traceVisibility?: string | null;
+  /**
+   * Rôle du lecteur pour la trace. `follower` n'est fourni qu'après
+   * vérification de la relation `user_follows` ; sans lui, `friends` est
+   * traité comme privé.
+   */
+  traceViewer?: TraceViewer;
   etapes?: EtapeRow[];
   steps?: CarnetStepRow[];
   hebergements?: HebergementRow[];

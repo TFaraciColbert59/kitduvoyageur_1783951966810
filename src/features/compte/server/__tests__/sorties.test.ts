@@ -146,7 +146,13 @@ const WEATHER = {
   alerts: [],
 };
 
-function fakeSupabase(session: Record<string, unknown>) {
+function fakeSupabase(
+  session: Record<string, unknown>,
+  options: {
+    participants?: Array<{ user_id: string; role?: string | null }>;
+    follows?: boolean;
+  } = {},
+) {
   const builder = (result: { data: unknown; error: null }) => {
     const query = {
       select: () => query,
@@ -160,12 +166,19 @@ function fakeSupabase(session: Record<string, unknown>) {
     return query;
   };
   return {
-    from: (table: string) =>
-      builder(
-        table === 'hike_sessions'
-          ? { data: session, error: null }
-          : { data: [], error: null },
-      ),
+    from: (table: string) => {
+      if (table === 'hike_sessions') return builder({ data: session, error: null });
+      if (table === 'hike_session_participants') {
+        return builder({ data: options.participants ?? [], error: null });
+      }
+      if (table === 'user_follows') {
+        return builder({
+          data: options.follows ? { follower_id: 'viewer-1' } : null,
+          error: null,
+        });
+      }
+      return builder({ data: [], error: null });
+    },
     storage: {
       from: () => ({
         createSignedUrl: async () => ({ data: { signedUrl: null }, error: null }),
@@ -227,6 +240,53 @@ describe('loadOutingDetail — métadonnées servies', () => {
     expect(detail?.weather?.latitude).toBeNull();
     expect(detail?.weather?.longitude).toBeNull();
     expect(detail?.weather?.days).toHaveLength(1);
+    expect(detail?.notes).toBe('note privée');
+  });
+
+  it('rend une trace raccourcie et la météo expurgée à un abonné vérifié', async () => {
+    const detail = await loadOutingDetail(
+      fakeSupabase(outing({ visibility: 'friends' }), { follows: true }),
+      'viewer-1',
+      's1',
+    );
+
+    expect(detail?.traceMasked).toBe(true);
+    expect(detail?.traceFullyMasked).toBe(false);
+    expect(detail?.points).toEqual([]);
+    expect(detail?.weather?.latitude).toBeNull();
+    expect(detail?.weather?.longitude).toBeNull();
+    expect(detail?.weather?.days).toHaveLength(1);
+    /* Le partage de trace ne vaut pas partage du carnet intime. */
+    expect(detail?.notes).toBe('');
+  });
+
+  it('masque tout à un visiteur qui ne suit pas l’auteur', async () => {
+    const detail = await loadOutingDetail(
+      fakeSupabase(outing({ visibility: 'friends' }), { follows: false }),
+      'viewer-1',
+      's1',
+    );
+
+    expect(detail?.traceFullyMasked).toBe(true);
+    expect(detail?.traceSegments).toEqual([]);
+    expect(detail?.weather).toBeNull();
+    expect(detail?.notes).toBe('');
+  });
+
+  it('traite un participant inscrit comme le drawer, avec météo et notes exactes', async () => {
+    const detail = await loadOutingDetail(
+      fakeSupabase(outing(), {
+        participants: [{ user_id: 'viewer-1', role: 'guest' }],
+      }),
+      'viewer-1',
+      's1',
+    );
+
+    expect(detail?.canEdit).toBe(false);
+    expect(detail?.traceMasked).toBe(false);
+    expect(detail?.points).toHaveLength(5);
+    expect(detail?.weather?.latitude).toBe(45.8);
+    expect(detail?.weather?.longitude).toBe(6.8);
     expect(detail?.notes).toBe('note privée');
   });
 

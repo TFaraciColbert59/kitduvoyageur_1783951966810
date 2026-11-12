@@ -38,8 +38,10 @@ interface Coordinate {
 
 interface TrackPoint {
   point: Coordinate;
-  /** Distance cumulée depuis le début du morceau, jamais à travers un vide. */
+  /** Distance cumulée sur l'ensemble des morceaux, jamais à travers un vide. */
   distanceKm: number;
+  /** Morceau d'origine : deux index différents ne sont jamais reliés. */
+  segmentIndex: number;
 }
 
 interface CacheEntry {
@@ -113,11 +115,12 @@ function toProfile(points: TrackPoint[], raw: unknown): ElevationPoint[] {
     elevations.push(value);
   }
 
-  const profile: ElevationPoint[] = points.map(({ point, distanceKm }, index) => ({
+  const profile: ElevationPoint[] = points.map(({ point, distanceKm, segmentIndex }, index) => ({
     distanceKm: Math.round(distanceKm * 100) / 100,
     elevationM: elevations[index],
     lat: point.lat,
     lng: point.lng,
+    segmentIndex,
   }));
   return downsample(profile, MAX_PROFILE_POINTS);
 }
@@ -198,22 +201,33 @@ export function resetCarnetElevationCache(): void {
 export async function enrichCarnetElevation(detail: CarnetDetail): Promise<CarnetDetail> {
   if (detail.elevationProfile && detail.elevationProfile.length >= 2) return detail;
 
-  /* Chaque morceau garde sa propre distance cumulée : le saut entre deux
-     morceaux d'un MultiLineString n'est jamais compté comme un chemin. */
+  /*
+   * Distance cumulée monotone : chaque morceau repart de la distance acquise
+   * par les précédents, sans jamais compter le saut qui les sépare. Le
+   * `segmentIndex` conservé permet au profil de ne pas relier deux morceaux.
+   */
   const points: TrackPoint[] = [];
-  for (const segment of parseTraceSegments(detail.trace)) {
-    let distanceKm = 0;
+  let cumulativeKm = 0;
+  const segments = parseTraceSegments(detail.trace);
+  for (let segmentIndex = 0; segmentIndex < segments.length; segmentIndex += 1) {
+    const segment = segments[segmentIndex];
+    let segmentKm = 0;
     for (let index = 0; index < segment.length; index += 1) {
       if (index > 0) {
         const previous = segment[index - 1];
         const current = segment[index];
-        distanceKm += haversineDistanceKm(
+        segmentKm += haversineDistanceKm(
           [previous.lng, previous.lat],
           [current.lng, current.lat]
         );
       }
-      points.push({ point: { lat: segment[index].lat, lng: segment[index].lng }, distanceKm });
+      points.push({
+        point: { lat: segment[index].lat, lng: segment[index].lng },
+        distanceKm: cumulativeKm + segmentKm,
+        segmentIndex,
+      });
     }
+    cumulativeKm += segmentKm;
   }
   if (points.length < 2) return detail;
 

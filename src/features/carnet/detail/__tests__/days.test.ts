@@ -72,6 +72,9 @@ describe('buildDays — un jour par date réelle', () => {
     expect(days[0].index).toBe(2);
     expect(days[0].date).toBe('2026-04-25');
     expect(days[0].points).toHaveLength(4);
+    /* Les deux relevés restent deux morceaux : la carte ne les recoud pas. */
+    expect(days[0].segments).toHaveLength(2);
+    expect(days[0].segments?.map((segment) => segment.length)).toEqual([2, 2]);
     /* Tri chronologique : le relevé du matin d'abord, quel que soit l'ordre reçu. */
     expect(days[0].points.map((point) => point.at)).toEqual([
       '2026-04-25T06:00:00Z',

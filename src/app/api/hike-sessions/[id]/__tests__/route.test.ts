@@ -4,6 +4,8 @@ import { NextRequest } from 'next/server';
 const STATE = vi.hoisted(() => ({
   viewerId: null as string | null,
   session: null as Record<string, unknown> | null,
+  participant: false,
+  follows: false,
 }));
 
 vi.mock('@/lib/supabase/server', () => ({
@@ -13,13 +15,26 @@ vi.mock('@/lib/supabase/server', () => ({
         data: { user: STATE.viewerId ? { id: STATE.viewerId } : null },
       }),
     },
-    from: () => ({
-      select: () => ({
-        eq: () => ({
-          single: async () => ({ data: STATE.session, error: null }),
-        }),
-      }),
-    }),
+    from: (table: string) => {
+      const query = {
+        select: () => query,
+        eq: () => query,
+        single: async () => ({ data: STATE.session, error: null }),
+        maybeSingle: async () => {
+          if (table === 'hike_session_participants') {
+            return { data: STATE.participant ? { user_id: STATE.viewerId } : null, error: null };
+          }
+          if (table === 'user_follows') {
+            return {
+              data: STATE.follows ? { follower_id: STATE.viewerId } : null,
+              error: null,
+            };
+          }
+          return { data: null, error: null };
+        },
+      };
+      return query;
+    },
   }),
 }));
 
@@ -75,6 +90,8 @@ async function body(response: Response) {
 beforeEach(() => {
   STATE.viewerId = null;
   STATE.session = session();
+  STATE.participant = false;
+  STATE.follows = false;
 });
 
 describe('GET /api/hike-sessions/[id] — données servies', () => {
@@ -102,6 +119,69 @@ describe('GET /api/hike-sessions/[id] — données servies', () => {
     expect(weather.longitude).toBeNull();
     expect(weather.days).toHaveLength(1);
     expect(served.notes).toBeUndefined();
+  });
+
+  it('fail-closed sur une visibilité absente, friends/followers non suivi ou inconnue', async () => {
+    for (const visibility of [null, undefined, 'friends', 'followers', 'collective']) {
+      STATE.session = session({ visibility });
+      const response = await GET(new NextRequest('http://localhost/api/hike-sessions/s1'), {
+        params: Promise.resolve({ id: 's1' }),
+      });
+      const { session: served } = await body(response);
+      expect(served.weather).toBeNull();
+    }
+  });
+
+  it('sert les jours sans coordonnées à un abonné vérifié d’une sortie friends', async () => {
+    STATE.viewerId = 'viewer-1';
+    STATE.follows = true;
+    STATE.session = session({ visibility: 'friends' });
+    const response = await GET(new NextRequest('http://localhost/api/hike-sessions/s1'), {
+      params: Promise.resolve({ id: 's1' }),
+    });
+    const { session: served } = await body(response);
+    const weather = served.weather as typeof WEATHER;
+
+    expect(weather.latitude).toBeNull();
+    expect(weather.longitude).toBeNull();
+    expect(weather.days).toHaveLength(1);
+  });
+
+  it('refuse la météo friends à un visiteur qui ne suit pas l’auteur', async () => {
+    STATE.viewerId = 'viewer-1';
+    STATE.follows = false;
+    STATE.session = session({ visibility: 'friends' });
+    const response = await GET(new NextRequest('http://localhost/api/hike-sessions/s1'), {
+      params: Promise.resolve({ id: 's1' }),
+    });
+    const { session: served } = await body(response);
+    expect(served.weather).toBeNull();
+  });
+
+  it('sert les jours sans coordonnées à un visiteur d’une sortie publique', async () => {
+    STATE.session = session({ visibility: 'public' });
+    const response = await GET(new NextRequest('http://localhost/api/hike-sessions/s1'), {
+      params: Promise.resolve({ id: 's1' }),
+    });
+    const { session: served } = await body(response);
+    const weather = served.weather as typeof WEATHER;
+
+    expect(weather.latitude).toBeNull();
+    expect(weather.longitude).toBeNull();
+    expect(weather.days).toHaveLength(1);
+  });
+
+  it('préserve la météo exacte d’un participant inscrit', async () => {
+    STATE.viewerId = 'viewer-1';
+    STATE.participant = true;
+    const response = await GET(new NextRequest('http://localhost/api/hike-sessions/s1'), {
+      params: Promise.resolve({ id: 's1' }),
+    });
+    const { session: served } = await body(response);
+    const weather = served.weather as typeof WEATHER;
+
+    expect(weather.latitude).toBe(45.8);
+    expect(weather.longitude).toBe(6.8);
   });
 
   it('préserve la météo exacte et les notes pour le propriétaire', async () => {

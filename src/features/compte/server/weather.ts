@@ -10,6 +10,12 @@
  * chaque ouverture de sous-drawer.
  */
 
+import {
+  isFollowerTraceVisibility,
+  isShareableTraceVisibility,
+  type TraceViewer,
+} from './tracePrivacy';
+
 export type WeatherIcon = 'sun' | 'partly' | 'cloud' | 'rain' | 'snow' | 'storm' | 'fog';
 
 export interface OutingWeatherDay {
@@ -213,6 +219,43 @@ export async function loadOutingWeather(
  */
 export function redactWeatherCoordinates(weather: OutingWeather): OutingWeather {
   return { ...weather, latitude: null, longitude: null };
+}
+
+/**
+ * Lit une météo persistée sans jamais la fabriquer. Une ligne incomplète ou
+ * d'une autre source rend `null` : l'appelant affiche son état vide.
+ */
+export function parseStoredWeather(raw: unknown): OutingWeather | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const candidate = raw as Partial<OutingWeather>;
+  if (candidate.source !== 'open-meteo' || !Array.isArray(candidate.days)) return null;
+  return candidate as OutingWeather;
+}
+
+/**
+ * Politique météo unique, alignée sur celle de la trace.
+ *
+ * - propriétaire et participant : météo exacte, coordonnées comprises ;
+ * - visiteur d'une sortie publique/collective : jours et alertes, sans
+ *   coordonnées ;
+ * - abonné vérifié d'une sortie `friends`/`followers` : mêmes jours, sans
+ *   coordonnées ;
+ * - tout le reste (`private`, `null`, valeur inconnue, visiteur non abonné) :
+ *   aucune météo. Une valeur de visibilité non reconnue ne peut jamais ouvrir
+ *   la branche « jours disponibles ».
+ */
+export function weatherForViewer(
+  weather: OutingWeather | null,
+  viewer: TraceViewer,
+  visibility: string | null | undefined
+): OutingWeather | null {
+  if (!weather) return null;
+  if (viewer === 'owner' || viewer === 'participant') return weather;
+  if (isShareableTraceVisibility(visibility)) return redactWeatherCoordinates(weather);
+  if (viewer === 'follower' && isFollowerTraceVisibility(visibility)) {
+    return redactWeatherCoordinates(weather);
+  }
+  return null;
 }
 
 /** Réinitialise le cache (tests). */

@@ -33,6 +33,7 @@ import type {
   MapTrack,
   TrackPoint,
 } from '@/features/compte/map/types';
+import { carnetMapSummary } from '@/features/compte/map/a11y';
 import { CompteMapAttribution, CompteMapHud } from './CompteMapHud';
 import { CompteMapCallout } from './CompteMapCallout';
 import { CompteMapFallback } from './CompteMapFallback';
@@ -1088,12 +1089,16 @@ export function CompteMap({
   /* Fiche carnet : état vide seulement quand la base ne porte réellement
      aucune trace — jamais un « connecte-toi » qui n'a pas de sens ici. */
   const showCarnetEmpty = isCarnet && !fallback && !styleFailed && ready && tracePoints.length < 2;
+  const carnetEmptyTitle = emptyTitle ?? 'Aucun tracé enregistré pour ce carnet.';
+  const carnetEmptyHint = emptyHint ?? 'L’auteur n’a pas joint de trace GPS à ce carnet.';
+  /* Le libellé de la région ne doit pas dire « tes sorties » à un visiteur. */
+  const regionLabel = isCarnet ? 'Carte du carnet' : 'Carte de tes sorties';
 
   return (
     <div
       className="lkdv-map-root"
       role="region"
-      aria-label="Carte de tes sorties"
+      aria-label={regionLabel}
       data-zoom-band={zoomBand}
       data-map-mode={context.mode}
       data-map-outing={context.outingId ?? ''}
@@ -1109,9 +1114,7 @@ export function CompteMap({
       <div ref={containerRef} className="lkdv-map-canvas" />
       <p className="sr-only" aria-live="polite">
         {isCarnet
-          ? tracePoints.length >= 2
-            ? `Tracé du carnet : ${tracePoints.length} points géolocalisés.`
-            : 'Aucun tracé enregistré pour ce carnet.'
+          ? carnetMapSummary(tracePoints.length, carnetEmptyTitle, carnetEmptyHint)
           : data
             ? `Carte de tes sorties : ${data.stats.outings} sorties, ${data.stats.km} kilomètres, ${data.stats.massifs} massifs.`
             : 'Carte en chargement.'}
@@ -1145,11 +1148,7 @@ export function CompteMap({
       ) : null}
 
       {showCarnetEmpty ? (
-        <CompteMapState
-          kind="neutral"
-          title={emptyTitle ?? 'Aucun tracé enregistré pour ce carnet.'}
-          hint={emptyHint ?? 'L’auteur n’a pas joint de trace GPS à ce carnet.'}
-        />
+        <CompteMapState kind="neutral" title={carnetEmptyTitle} hint={carnetEmptyHint} />
       ) : null}
 
       {ready &&

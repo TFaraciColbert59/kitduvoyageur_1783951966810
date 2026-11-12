@@ -62,6 +62,7 @@ export function buildElevationProfile(samples: unknown, maxPoints = 120): Elevat
       elevationM: current.elevationM,
       lat: current.lat,
       lng: current.lng,
+      segmentIndex: 0,
     });
   }
   return downsample(points, Math.max(2, maxPoints));

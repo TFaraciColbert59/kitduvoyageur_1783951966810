@@ -3,6 +3,7 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
 import type { CarnetDetail } from '@/features/carnet/detail/types';
+import { carnetTraceEmptyState } from '@/features/carnet/detail/traceEmptyState';
 import type { CarnetPlaceFocus } from './CarnetCard';
 
 /** Carte du monde du Compte, telle quelle : MapLibre 3D, HUD, crédits Esri. */
@@ -32,18 +33,7 @@ export function CarnetMapCard({ detail, focus = null }: CarnetMapCardProps) {
      retard sur la session). */
   const authState = detail.isOwner ? 'owner' : 'guest';
 
-  const emptyTitle = detail.traceFullyMasked
-    ? 'Trace non partageable pour les visiteurs.'
-    : detail.traceError
-      ? 'Trace non disponible.'
-      : 'Aucun tracé enregistré pour ce carnet.';
-  const emptyHint = detail.traceFullyMasked
-    ? 'Cette sortie est privée : sa trace reste réservée à son propriétaire.'
-    : detail.traceError
-      ? detail.traceError === 'unpublishable_geometry'
-        ? 'La trace est trop courte ou trop proche des extrémités masquées pour être publiée.'
-        : 'La géométrie enregistrée n’a pas pu être publiée en sécurité.'
-      : 'L’auteur n’a pas joint de trace GPS : rien n’est dessiné plutôt qu’inventé.';
+  const { title: emptyTitle, hint: emptyHint } = carnetTraceEmptyState(detail);
 
   return (
     <section className="ckp-mapzone" aria-label={`Carte du monde — ${detail.title}`}>

@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import Icon from '@/components/ui/Icon';
 import { formatElevation, formatKm } from '@/features/carnet/detail/format';
 import type { CarnetDetail } from '@/features/carnet/detail/types';
+import { carnetTraceEmptyState } from '@/features/carnet/detail/traceEmptyState';
 import { extractTraceSegments } from '../traceGeometry';
 
 const CarnetTraceMap = dynamic(
@@ -25,24 +26,9 @@ export function CarnetParcoursPane({ detail, onDownloadGpx }: CarnetParcoursPane
   const elevation = formatElevation(detail.elevationM);
 
   /* Un état vide ne doit jamais affirmer « aucune trace » quand la trace
-     existe mais a été masquée, jugée trop courte ou refusée par le projecteur. */
-  const emptyState = detail.traceFullyMasked
-    ? {
-        title: 'Trace non partageable.',
-        body: 'Cette sortie est privée : sa trace n’est pas exposée aux visiteurs.',
-      }
-    : detail.traceError
-      ? {
-          title: 'Trace non disponible.',
-          body:
-            detail.traceError === 'unpublishable_geometry'
-              ? 'La trace est trop courte ou trop proche des extrémités masquées pour être publiée.'
-              : 'La géométrie enregistrée n’a pas pu être publiée en sécurité.',
-        }
-      : {
-          title: 'Aucune trace GPS.',
-          body: 'Ce carnet n’a pas de trace enregistrée.',
-        };
+     existe mais a été masquée, jugée trop courte ou refusée par le projecteur.
+     La V2 et la carte historique partagent exactement ces textes. */
+  const emptyState = carnetTraceEmptyState(detail);
 
   return (
     <div className="ckp-pane">
@@ -53,7 +39,7 @@ export function CarnetParcoursPane({ detail, onDownloadGpx }: CarnetParcoursPane
           <div className="ckp-empty" style={{ height: '100%', borderRadius: 18 }}>
             <Icon name="route" size={24} aria-hidden="true" />
             <b>{emptyState.title}</b>
-            <p>{emptyState.body}</p>
+            <p>{emptyState.hint}</p>
           </div>
         )}
       </div>

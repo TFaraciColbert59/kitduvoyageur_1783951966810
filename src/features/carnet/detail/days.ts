@@ -265,6 +265,11 @@ export function buildDays(input: {
       durationS: durationsByDay.get(index) ?? null,
       moments: momentsByDay.get(index) ?? [],
       points: merged.map((point) => ({ lat: point.lat, lng: point.lng, at: point.at })),
+      /* La carte du jour reçoit les morceaux séparés : `points` sert aux
+         statistiques, `segments` interdit de recoller deux relevés. */
+      segments: runs.map((run) =>
+        run.points.map((point) => ({ lat: point.lat, lng: point.lng, at: point.at })),
+      ),
     };
   });
 }
