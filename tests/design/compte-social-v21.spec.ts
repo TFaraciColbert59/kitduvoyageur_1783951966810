@@ -47,7 +47,10 @@ describe('Compte social réel — commentaires, partage, notifications', () => {
     expect(runtime).toContain('hydrateAccountReplace(data)');
     // Le bootstrap alimente aussi les notifications et le handle réel.
     expect(page).toContain('notifications: payload.notifications || []');
-    expect(page).toContain('if (payload.profile?.handle) setActiveHandle(payload.profile.handle)');
+    // Le handle n'est posé que si le profil a réellement été lu : un profil
+    // indisponible ne doit pas remplacer l'identité connue par un handle vide.
+    expect(page).toContain('if (!profileUnavailable && payload.profile?.handle) {');
+    expect(page).toContain('setActiveHandle(payload.profile.handle);');
   });
 
   it('les drawers et sorties ne retombent plus sur les mocks', () => {

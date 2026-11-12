@@ -347,3 +347,74 @@ describe('loadAccountBootstrap — lectures partielles des relations', () => {
     expect(payload.followStatesUnavailable).toBe(false);
   });
 });
+
+describe('loadAccountBootstrap — lectures partielles des collections', () => {
+  const baseRows = {
+    user_profiles: [{ id: OWNER, handle: 'owner', profile_visibility: 'public' }],
+    user_follows: [],
+    follow_requests: [],
+  };
+
+  it('signale chaque collection illisible sans la confondre avec un vide', async () => {
+    const payload = await bootstrapWith(baseRows, {
+      community_posts: { message: 'carnets indisponibles' },
+      hike_sessions: { message: 'sorties indisponibles' },
+      orders: { message: 'commandes indisponibles' },
+      notifications: { message: 'notifications indisponibles' },
+      club_members: { message: 'clubs indisponibles' },
+      materiel_kits: { message: 'kits indisponibles' },
+      post_stories: { message: 'stories indisponibles' },
+      product_ownership: { message: 'matériel indisponible' },
+      materiel_loans: { message: 'prêts indisponibles' },
+    });
+
+    expect(payload.carnetsUnavailable).toBe(true);
+    expect(payload.outingsUnavailable).toBe(true);
+    expect(payload.statsUnavailable).toBe(true);
+    expect(payload.ordersUnavailable).toBe(true);
+    expect(payload.notificationsUnavailable).toBe(true);
+    expect(payload.clubsUnavailable).toBe(true);
+    expect(payload.kitsUnavailable).toBe(true);
+    expect(payload.storiesUnavailable).toBe(true);
+    expect(payload.gearItemsUnavailable).toBe(true);
+    expect(payload.trustUnavailable).toBe(true);
+
+    // Les tableaux restent vides pour les mappeurs, mais l'indicateur interdit
+    // de les interpréter comme une lecture réussie.
+    expect(payload.carnets).toEqual([]);
+    expect(payload.outings).toEqual([]);
+    expect(payload.orders).toEqual([]);
+    expect(payload.notifications).toEqual([]);
+    expect(payload.clubs).toEqual([]);
+    expect(payload.kits).toEqual([]);
+    expect(payload.stories).toEqual([]);
+    expect(payload.gearItems).toEqual([]);
+    expect(payload.trust.active).toBe(0);
+  });
+
+  it('garde les indicateurs à false quand les lectures réussissent vides', async () => {
+    const payload = await bootstrapWith({
+      ...baseRows,
+      hike_sessions: [],
+      community_posts: [],
+      orders: [],
+      notifications: [],
+      club_members: [],
+      materiel_kits: [],
+      post_stories: [],
+      product_ownership: [],
+      materiel_loans: [],
+    });
+
+    expect(payload.carnetsUnavailable).toBe(false);
+    expect(payload.outingsUnavailable).toBe(false);
+    expect(payload.statsUnavailable).toBe(false);
+    expect(payload.ordersUnavailable).toBe(false);
+    expect(payload.notificationsUnavailable).toBe(false);
+    expect(payload.clubsUnavailable).toBe(false);
+    expect(payload.kitsUnavailable).toBe(false);
+    expect(payload.storiesUnavailable).toBe(false);
+    expect(payload.gearItemsUnavailable).toBe(false);
+    expect(payload.trustUnavailable).toBe(false);
+  });
+});

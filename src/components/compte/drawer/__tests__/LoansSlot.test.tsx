@@ -136,6 +136,23 @@ describe('LoansSlot — Confiance agrégée, sans historique rendu', () => {
     expect(screen.queryByText('0 %')).toBeNull();
     expect(screen.queryByText('0,0 / 5')).toBeNull();
   });
+
+  it('affiche « — » quand la lecture des prêts est indisponible', () => {
+    render(
+      <LoansSlot
+        lens="trust"
+        payload={{
+          trust: { verified: true, active: 0, onTimeRate: null, rating: null },
+          trustUnavailable: true,
+        }}
+      />
+    );
+
+    expect(screen.getByText('Vérification indisponible')).toBeTruthy();
+    expect(screen.getByText('Prêts actifs').parentElement?.textContent).toContain('—');
+    expect(screen.queryByText('0 %')).toBeNull();
+    expect(screen.queryByText('0,0 / 5')).toBeNull();
+  });
 });
 
 describe('LoansSlot — Je prête / J’emprunte', () => {

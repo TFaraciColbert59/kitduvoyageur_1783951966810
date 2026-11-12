@@ -23,6 +23,8 @@ export interface TrustSummary {
   onTimeRate: number | null;
   /** `null` quand le propriétaire n'a encore reçu aucune note. */
   rating: number | null;
+  /** Lecture des prêts en échec : ne pas afficher de faux zéro. */
+  unavailable?: boolean;
 }
 
 export interface LoansSlotProps {
@@ -106,6 +108,7 @@ export function readTrustPayload(payload: unknown): TrustSummary | null {
     // Une absence reste une absence : jamais un faux 0.
     onTimeRate: asNumber(row.onTimeRate),
     rating: asNumber(row.rating),
+    unavailable: root?.trustUnavailable === true,
   };
 }
 
@@ -130,6 +133,7 @@ function EmptyState({ label }: { label: string }) {
 function TrustCard({ trust }: { trust: TrustSummary | null }) {
   const titleId = useId();
   if (!trust) return <EmptyState label="Aucune donnée de confiance." />;
+  const unavailable = trust.unavailable === true;
 
   return (
     <article
@@ -157,22 +161,22 @@ function TrustCard({ trust }: { trust: TrustSummary | null }) {
             {trust.verified ? '✓' : '○'}
           </span>
           <span className="lkdv-trust-badge-txt">
-            {trust.verified ? 'Profil vérifié' : 'Profil non vérifié'}
+            {unavailable ? 'Vérification indisponible' : trust.verified ? 'Profil vérifié' : 'Profil non vérifié'}
           </span>
         </span>
       </header>
 
       <div className="lkdv-trust-grid" role="group" aria-label="Agrégats de confiance">
         <div className="lkdv-trust-stat">
-          <b>{trust.active}</b>
+          <b>{unavailable ? '—' : trust.active}</b>
           <span>Prêts actifs</span>
         </div>
         <div className="lkdv-trust-stat">
-          <b>{trust.onTimeRate === null ? 'Aucun retour' : `${trust.onTimeRate} %`}</b>
+          <b>{unavailable ? '—' : trust.onTimeRate === null ? 'Aucun retour' : `${trust.onTimeRate} %`}</b>
           <span>Taux de retour à temps</span>
         </div>
         <div className="lkdv-trust-stat">
-          <b>{trust.rating === null ? 'Pas encore noté' : `${formatRating(trust.rating)} / 5`}</b>
+          <b>{unavailable ? '—' : trust.rating === null ? 'Pas encore noté' : `${formatRating(trust.rating)} / 5`}</b>
           <span>Note moyenne</span>
         </div>
       </div>

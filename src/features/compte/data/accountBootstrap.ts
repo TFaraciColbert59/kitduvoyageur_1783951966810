@@ -1674,9 +1674,10 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
   const followerRows = followerRowsResult ?? [];
   const followingRows = followingRowsResult ?? [];
   const outgoingRequestRows = outgoingRequestRowsResult ?? [];
-  // Les listes/counters et les états de suivi ont des dépendances distinctes.
-  // Un échec de `user_follows` ne doit pas invalider une demande sortante
-  // lisible, et un échec de `follow_requests` ne doit pas vider les listes.
+  // Les listes/compteurs et les états de suivi ont des dépendances distinctes.
+  // Un échec de `follow_requests` ne doit pas vider les listes. En revanche,
+  // sans la lecture des suivis (`followingRowsResult`), une demande `pending`
+  // résiduelle ne peut pas être écartée : les états seront invalidés plus bas.
   // Chaque lecture de liste garde son propre indicateur : un échec des abonnés
   // ne doit pas jeter la liste des suivis (et inversement).
   const followersUnavailable = followerRowsResult === null;
@@ -1716,28 +1717,28 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
   const followers = followerIds.length;
 
   const [
-    postRows,
-    outings,
-    statsSessions,
-    orderRows,
-    notificationRows,
+    postRowsResult,
+    outingsResult,
+    statsSessionsResult,
+    orderRowsResult,
+    notificationRowsResult,
     followingProfiles,
     followerProfiles,
     outgoingRequestProfiles,
-    clubMembers,
-    kitRows,
-    storyRows,
+    clubMembersResult,
+    kitRowsResult,
+    storyRowsResult,
     badgeRows,
     userBadgeRows,
     challengeRows,
     userChallengeRows,
     progressionRows,
     userProgressionRows,
-    ownershipRows,
-    loanRows,
+    ownershipRowsResult,
+    loanRowsResult,
     highlightRows,
   ] = await Promise.all([
-    safeRows<PostRow>(
+    safeRowsOrNull<PostRow>(
       supabase
         .from('community_posts')
         .select(
@@ -1747,7 +1748,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
         .order('created_at', { ascending: false })
         .limit(24)
     ),
-    safeRows<HikeRow>(
+    safeRowsOrNull<HikeRow>(
       supabase
         .from('hike_sessions')
         .select('id,route_id,started_at,ended_at,distance_km,elevation_gain_m,positions_timed,kit_id,title,max_altitude_m,visibility')
@@ -1757,7 +1758,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
     ),
     // Agrégats Vitrine, Passeport et Cordée : toutes les sessions, sans
     // plafond de liste. La trace GPS est lue pour vérifier les tampons.
-    safeRows<StatsHikeRow>(
+    safeRowsOrNull<StatsHikeRow>(
       supabase
         .from('hike_sessions')
         .select(
@@ -1765,10 +1766,10 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
         )
         .eq('user_id', user.id)
     ),
-    safeRows<OrderRow>(
+    safeRowsOrNull<OrderRow>(
       supabase.from('orders').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(20)
     ),
-    safeRows<NotificationRow>(
+    safeRowsOrNull<NotificationRow>(
       supabase
         .from('notifications')
         .select('id,type,title,message,read,created_at,link')
@@ -1803,8 +1804,8 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
             .in('id', pendingFollowTargetIds)
         )
       : Promise.resolve([] as FollowProfileRow[]),
-    safeRows<ClubMemberRow>(supabase.from('club_members').select('club_id,role,status').eq('user_id', user.id)),
-    safeRows<KitRow>(
+    safeRowsOrNull<ClubMemberRow>(supabase.from('club_members').select('club_id,role,status').eq('user_id', user.id)),
+    safeRowsOrNull<KitRow>(
       supabase
         .from('materiel_kits')
         .select(
@@ -1815,7 +1816,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
         .order('updated_at', { ascending: false })
         .limit(24)
     ),
-    safeRows<StoryRow>(
+    safeRowsOrNull<StoryRow>(
       supabase
         .from('post_stories')
         .select('id,caption,media_type,created_at,storage_path,image_url')
@@ -1854,7 +1855,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
         .select('current_challenge_id,challenge_progress')
         .eq('user_id', user.id)
     ),
-    safeRows<OwnershipRow>(
+    safeRowsOrNull<OwnershipRow>(
       supabase
         .from('product_ownership')
         .select('id,name,brand,category,weight_g,price_cents,condition,photo_url,is_lent,description,quantity,purchase_date,maintenance_due_at,status,location,tags')
@@ -1862,7 +1863,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
         .order('created_at', { ascending: false })
         .limit(500)
     ),
-    safeRows<LoanRow>(
+    safeRowsOrNull<LoanRow>(
       supabase
         .from('materiel_loans')
         .select(
@@ -1880,6 +1881,30 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
         .order('position', { ascending: true })
     ),
   ]);
+
+  // `null` = lecture en échec ; les tableaux restent utilisables par les
+  // mappeurs, mais l'indicateur permet au client de conserver les données
+  // connues et à l'overlay d'afficher « — » au lieu d'un faux zéro.
+  const postRows = postRowsResult ?? [];
+  const outings = outingsResult ?? [];
+  const statsSessions = statsSessionsResult ?? [];
+  const orderRows = orderRowsResult ?? [];
+  const notificationRows = notificationRowsResult ?? [];
+  const clubMembers = clubMembersResult ?? [];
+  const kitRows = kitRowsResult ?? [];
+  const storyRows = storyRowsResult ?? [];
+  const ownershipRows = ownershipRowsResult ?? [];
+  const loanRows = loanRowsResult ?? [];
+  const carnetsUnavailable = postRowsResult === null;
+  const outingsUnavailable = outingsResult === null;
+  const statsUnavailable = statsSessionsResult === null;
+  const ordersUnavailable = orderRowsResult === null;
+  const notificationsUnavailable = notificationRowsResult === null;
+  const clubsUnavailable = clubMembersResult === null;
+  const kitsUnavailable = kitRowsResult === null;
+  const storiesUnavailable = storyRowsResult === null;
+  const gearItemsUnavailable = ownershipRowsResult === null;
+  const trustUnavailable = loanRowsResult === null;
 
   // Couverture réelle des sorties : première photo de `hike_session_photos`,
   // résolue en URL signée. Une sortie sans photo reste sans couverture.
@@ -2317,17 +2342,23 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
         ),
     profileUnavailable,
     carnets: mapPosts(postRows),
+    carnetsUnavailable,
     outings: mapOutings(outings, routes, coverBySession),
+    outingsUnavailable,
     stats: mapStats(statsSessions, routes, geoMassifs),
+    statsUnavailable,
     orders: orderRowsMapped.orders,
     bookings: orderRowsMapped.bookings,
+    ordersUnavailable,
     notifications: mapNotifications(notificationRows),
+    notificationsUnavailable,
     tribu: mapTribu(followingProfileRows),
     followers: mapTribu(followerProfileRows),
     following: mapTribu(followingProfileRows),
     // Demandes sortantes restaurées au chargement : le bouton réseau affiche
-    // « Demande envoyée » avant toute nouvelle action, même si les listes
-    // `user_follows` sont momentanément illisibles.
+    // « Demande envoyée » avant toute nouvelle action lorsque la lecture des
+    // suivis a réussi. Si `followingRowsResult` est illisible, l'état est
+    // invalidé ci-dessus (une demande pending peut être déjà satisfaite).
     followStates: followStatesUnavailable
       ? {}
       : mapOutgoingFollowStates(outgoingRequestRows, outgoingRequestProfiles ?? []),
@@ -2340,9 +2371,12 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
     badges: mapBadges(badgeRows, userBadgeRows),
     challenges: mapChallenges(challengeRows, challengeProgress, progressionRows, userProgressionRows[0] ?? null),
     kits: mapKits(kitRows, kitItemCounts, kitImages, kitProducts, kitOutings),
+    kitsUnavailable,
     gearItems: mapGearItems(ownershipRows, loanedToByItem),
+    gearItemsUnavailable,
     loans: mapLoans(loanRows, loanOwnershipById, profileById, user.id),
     trust: mapTrust(loanRows, user.id, Boolean(user.email_confirmed_at)),
+    trustUnavailable,
     // Passeport et lieux visités sur l'historique complet, pas sur la liste
     // d'affichage plafonnée à 24 sorties.
     stamps: mapStamps(statsSessions, routes, geoMassifs),
@@ -2356,12 +2390,14 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
       clubEventParticipantRows,
       activeMemberCounts
     ),
+    clubsUnavailable,
     companions: mapCompanions(companionRows, profileById),
     // Le bootstrap n'est servi qu'au propriétaire authentifié : il voit son
     // propre profil privé sans passer par une invitation. Une visibilité lue
     // sur un profil en échec serait un faux « public » : on l'omet.
     visibility: profileUnavailable ? null : mapVisibility(profile),
     stories: mapStories(storyRows),
+    storiesUnavailable,
     // Aucune table d'espèces ni de massifs personnels : on ne fabrique rien.
     species: [] as Array<Record<string, unknown>>,
     massifs: [] as Array<Record<string, unknown>>,

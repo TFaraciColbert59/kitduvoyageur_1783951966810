@@ -55,6 +55,14 @@ async function openSeal() {
   });
 }
 
+async function openTrust() {
+  render(<CompteOverlayHost />);
+  await waitFor(() => expect((window as any).__lkdvCompteOverlay).toBeTruthy());
+  await act(async () => {
+    (window as any).__lkdvCompteOverlay.openTrust();
+  });
+}
+
 describe('CompteOverlayHost — bootstrap privé', () => {
   it('traite un payload 200 d’erreur comme une erreur, sans cache, et permet de réessayer', async () => {
     await openSeal();
@@ -116,6 +124,8 @@ describe('CompteOverlayHost — bootstrap privé', () => {
   it.each([
     ['corps vide', {}],
     ['authentifié sans données', { authenticated: true }],
+    ['profil nul et stats vides', { authenticated: true, profile: null, stats: {} }],
+    ['profil vide et stats vides', { authenticated: true, profile: {}, stats: {} }],
   ])('refuse un payload 200 %s', async (_label, payload) => {
     answer = () => Promise.resolve(json(payload));
 
@@ -160,5 +170,73 @@ describe('CompteOverlayHost — bootstrap privé', () => {
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
     expect(await screen.findByText('Empreinte')).toBeTruthy();
+  });
+
+  it('affiche « — » pour les compteurs non sociaux indisponibles', async () => {
+    answer = () =>
+      Promise.resolve(
+        json({
+          ...SUCCESS_PAYLOAD,
+          gearItems: [],
+          kits: [],
+          gearItemsUnavailable: true,
+          kitsUnavailable: true,
+          statsUnavailable: true,
+        })
+      );
+
+    await openSeal();
+
+    expect(await screen.findByText('Empreinte')).toBeTruthy();
+    expect(screen.getByText('Matériel').parentElement?.textContent).toContain('—');
+    expect(screen.getByText('Kits').parentElement?.textContent).toContain('—');
+    expect(screen.getByText('Sorties').parentElement?.textContent).toContain('—');
+    expect(
+      screen.getByText('Certaines données de l’Empreinte sont momentanément indisponibles.')
+    ).toBeTruthy();
+  });
+
+  it('affiche « — » pour le score quand le profil est illisible', async () => {
+    answer = () =>
+      Promise.resolve(
+        json({
+          authenticated: true,
+          profile: null,
+          profileUnavailable: true,
+          stats: { outings: 0, km: 0, dplus: 0 },
+          gearItems: [],
+          kits: [],
+          followers: [],
+          species: [],
+          trust: { verified: true, active: 0, onTimeRate: null, rating: null },
+        })
+      );
+
+    await openTrust();
+
+    expect(await screen.findByText('Indice de confiance')).toBeTruthy();
+    const score = screen.getByText('/100').closest('b');
+    expect(score?.textContent).toContain('—');
+    expect(score?.textContent).not.toContain('0/100');
+    expect(screen.getByText('Indice momentanément indisponible.')).toBeTruthy();
+  });
+
+  it('affiche « — » pour les prêts quand leur lecture est indisponible', async () => {
+    answer = () =>
+      Promise.resolve(
+        json({
+          ...SUCCESS_PAYLOAD,
+          profile: { handle: 'owner', name: 'Propriétaire', trustScore: 82 },
+          trust: { verified: true, active: 3, onTimeRate: 90, rating: 4.5 },
+          trustUnavailable: true,
+        })
+      );
+
+    await openTrust();
+
+    expect(await screen.findByText('Indice de confiance')).toBeTruthy();
+    const score = screen.getByText('/100').closest('b');
+    expect(score?.textContent).toContain('—');
+    expect(screen.getByText('Prêts actifs').parentElement?.textContent).toContain('—');
   });
 });

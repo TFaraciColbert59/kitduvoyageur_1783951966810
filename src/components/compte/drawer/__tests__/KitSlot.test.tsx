@@ -56,4 +56,23 @@ describe('KitSlot — lentille Kits', () => {
     render(<KitSlot lens="inventory" gearItems={[]} />);
     expect(screen.getByText('Aucun matériel enregistré.')).toBeTruthy();
   });
+
+  it('distingue une lecture indisponible d’un inventaire vide', () => {
+    render(
+      <KitSlot
+        lens="inventory"
+        payload={{ gearItems: [], gearItemsUnavailable: true }}
+      />
+    );
+
+    expect(screen.getByText('Matériel momentanément indisponible.')).toBeTruthy();
+    expect(screen.queryByText('Aucun matériel enregistré.')).toBeNull();
+  });
+
+  it('distingue une lecture de kits indisponible d’une liste vide', () => {
+    render(<KitSlot lens="kits" payload={{ kits: [], kitsUnavailable: true }} />);
+
+    expect(screen.getByText('Kits momentanément indisponibles.')).toBeTruthy();
+    expect(screen.queryByText('Aucun kit enregistré.')).toBeNull();
+  });
 });

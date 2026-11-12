@@ -25,11 +25,21 @@ export interface BootstrapOverlayData {
   species?: unknown[];
   trust?: { verified?: boolean; active?: number; onTimeRate?: number | null; rating?: number | null };
   profile?: { trustScore?: number; name?: string; handle?: string; avatarUrl?: string } | null;
-  /** Lectures sociales partielles : ne jamais afficher un zéro trompeur. */
+  /** Lectures partielles : ne jamais afficher un zéro trompeur. */
   followersUnavailable?: boolean;
   followingUnavailable?: boolean;
   followListsUnavailable?: boolean;
   profileUnavailable?: boolean;
+  statsUnavailable?: boolean;
+  gearItemsUnavailable?: boolean;
+  kitsUnavailable?: boolean;
+  trustUnavailable?: boolean;
+  carnetsUnavailable?: boolean;
+  outingsUnavailable?: boolean;
+  ordersUnavailable?: boolean;
+  notificationsUnavailable?: boolean;
+  clubsUnavailable?: boolean;
+  storiesUnavailable?: boolean;
 }
 
 export function SavedPostsDrawer({ onClose, onOpenPost }: { onClose: () => void; onOpenPost: (id: string) => void }) {
@@ -102,18 +112,25 @@ export function GearDetailSheet({ item, onClose }: { item: GearRowData; onClose:
 
 export function TrustDetailSheet({ data, trustScore, onClose }: { data: BootstrapOverlayData; trustScore?: number; onClose: () => void }) {
   const trust = data.trust;
-  const score = trustScore ?? 0;
+  // Un profil ou des prêts illisibles ne valent pas zéro : on affiche « — »
+  // et on n'invente ni un score ni un nombre de prêts actifs.
+  const trustUnavailable =
+    data.trustUnavailable === true ||
+    data.profileUnavailable === true ||
+    data.profile == null ||
+    typeof trustScore !== 'number';
+  const score = trustUnavailable ? null : trustScore;
   return (
     <OverlaySheet title="Indice de confiance" subtitle="Agrégat de tes prêts, sans classement." onClose={onClose} nested>
       <div className="lkdv-trust-detail">
-        <div className="lkdv-trust-detail-score"><b>{score}<small>/100</small></b><span>{trust?.verified ? 'Profil vérifié' : 'Profil non vérifié'}</span></div>
-        <div className="lkdv-trust-detail-gauge"><i style={{ width: `${Math.max(0, Math.min(100, score))}%` }} /></div>
+        <div className="lkdv-trust-detail-score"><b>{score == null ? '—' : score}<small>/100</small></b><span>{trustUnavailable ? 'Vérification indisponible' : trust?.verified ? 'Profil vérifié' : 'Profil non vérifié'}</span></div>
+        <div className="lkdv-trust-detail-gauge"><i style={{ width: `${score == null ? 0 : Math.max(0, Math.min(100, score))}%` }} /></div>
         <div className="lkdv-trust-detail-grid">
-          <div><b>{trust?.active ?? 0}</b><span>Prêts actifs</span></div>
+          <div><b>{data.trustUnavailable ? '—' : trust?.active ?? 0}</b><span>Prêts actifs</span></div>
           <div><b>{trust?.onTimeRate == null ? '—' : `${trust.onTimeRate} %`}</b><span>Retours à temps</span></div>
           <div><b>{trust?.rating == null ? '—' : trust.rating.toFixed(1)}</b><span>Note moyenne</span></div>
         </div>
-        {trust?.onTimeRate == null ? <p className="lkdv-trust-detail-empty">Aucun retour noté pour le moment.</p> : null}
+        {trustUnavailable ? <p className="lkdv-trust-detail-empty">Indice momentanément indisponible.</p> : trust?.onTimeRate == null ? <p className="lkdv-trust-detail-empty">Aucun retour noté pour le moment.</p> : null}
       </div>
     </OverlaySheet>
   );
@@ -139,9 +156,16 @@ export function SealDrawer({ data, onClose }: { data: BootstrapOverlayData; onCl
   const followersCount = data.followers?.length ?? 0;
   const tribeValue = followersUnavailable ? 0 : followersCount;
   const tribeDisplay = followersUnavailable ? '—' : String(followersCount);
-  const values = [stats.outings ?? 0, stats.km ?? 0, stats.dplus ?? 0, data.gearItems?.length ?? 0, data.kits?.length ?? 0, data.species?.length ?? 0, tribeValue];
+  // Même règle pour les autres lectures : un échec n'est pas un zéro.
+  const statsUnavailable = data.statsUnavailable === true;
+  const gearUnavailable = data.gearItemsUnavailable === true;
+  const kitsUnavailable = data.kitsUnavailable === true;
+  const gearCount = data.gearItems?.length ?? 0;
+  const kitsCount = data.kits?.length ?? 0;
+  const values = [statsUnavailable ? 0 : stats.outings ?? 0, statsUnavailable ? 0 : stats.km ?? 0, statsUnavailable ? 0 : stats.dplus ?? 0, gearUnavailable ? 0 : gearCount, kitsUnavailable ? 0 : kitsCount, data.species?.length ?? 0, tribeValue];
   const labels = ['Sorties', 'Kilomètres', 'Dénivelé', 'Matériel', 'Kits', 'Espèces', 'Tribu'];
-  const displays = [String(stats.outings ?? 0), formatKm(stats.km ?? 0), formatElevation(stats.dplus ?? 0), String(data.gearItems?.length ?? 0), String(data.kits?.length ?? 0), String(data.species?.length ?? 0), tribeDisplay];
+  const displays = [statsUnavailable ? '—' : String(stats.outings ?? 0), statsUnavailable ? '—' : formatKm(stats.km ?? 0), statsUnavailable ? '—' : formatElevation(stats.dplus ?? 0), gearUnavailable ? '—' : String(gearCount), kitsUnavailable ? '—' : String(kitsCount), String(data.species?.length ?? 0), tribeDisplay];
+  const someUnavailable = statsUnavailable || gearUnavailable || kitsUnavailable;
   return (
     <OverlaySheet title="Empreinte" subtitle="100 % dérivé de tes sorties GPS vérifiées" onClose={onClose} className="lkdv-seal-drawer">
       <div className="lkdv-seal">
@@ -153,6 +177,9 @@ export function SealDrawer({ data, onClose }: { data: BootstrapOverlayData; onCl
         <div className="lkdv-seal-grid">{labels.map((label, i) => <div key={label}><span>{label}</span><b>{displays[i]}</b></div>)}</div>
         {followersUnavailable ? (
           <p className="lkdv-trust-detail-empty">Liste de la tribu momentanément indisponible.</p>
+        ) : null}
+        {someUnavailable ? (
+          <p className="lkdv-trust-detail-empty">Certaines données de l’Empreinte sont momentanément indisponibles.</p>
         ) : null}
       </div>
     </OverlaySheet>

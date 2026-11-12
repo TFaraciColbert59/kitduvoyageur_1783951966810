@@ -49,17 +49,24 @@ const OVERLAY_DATA_KEYS = [
   'trust',
 ] as const;
 
+function hasMeaningfulValue(value: unknown): boolean {
+  if (Array.isArray(value)) return value.length > 0;
+  if (!value || typeof value !== 'object') return false;
+  return Object.keys(value as Record<string, unknown>).length > 0;
+}
+
 /**
- * Un 200 JSON n'est pas forcément un bootstrap exploitable : `{}` ou
- * `{ authenticated: true }` ne portent aucune donnée et afficheraient des
- * zéros. On exige au moins un champ connu, sans erreur ni invité.
+ * Un 200 JSON n'est pas forcément un bootstrap exploitable : `{}`,
+ * `{ authenticated: true }` ou `{ profile: null, stats: {} }` ne portent
+ * aucune donnée et afficheraient des zéros. On exige au moins un champ connu
+ * réellement renseigné, sans erreur ni invité.
  */
 function isUsableBootstrap(payload: unknown): payload is BootstrapOverlayData {
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return false;
   const record = payload as Record<string, unknown>;
   if (record.error) return false;
   if (record.authenticated === false) return false;
-  return OVERLAY_DATA_KEYS.some((key) => key in record);
+  return OVERLAY_DATA_KEYS.some((key) => hasMeaningfulValue(record[key]));
 }
 
 export function CompteOverlayHost({ onChanged }: { onChanged?: () => void }) {

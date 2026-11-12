@@ -87,6 +87,12 @@ export function KitSlot({
   const gearList = Array.isArray(gearItems)
     ? gearItems
     : readRows<GearEntry>(records, 'gearItems');
+  // Une lecture en échec n'est pas un inventaire vide : on le dit sans
+  // transformer l'absence de données en « aucun matériel ».
+  const gearUnavailable =
+    !Array.isArray(gearItems) && records.gearItemsUnavailable === true;
+  const kitsUnavailable =
+    !Array.isArray(kits) && records.kitsUnavailable === true;
   const resolvedViewer = resolveKitViewer(viewer, records);
   const rootRef = useRef<HTMLDivElement>(null);
   const [availableHeight, setAvailableHeight] = useState(0);
@@ -118,7 +124,14 @@ export function KitSlot({
       />
 
       {inventoryLens ? (
-        gearList.length === 0 ? (
+        gearUnavailable ? (
+          <div className="lkdv-slot-state" data-state="error" role="status">
+            <span className="lkdv-slot-state-ico" aria-hidden="true">
+              ⚠
+            </span>
+            <p>Matériel momentanément indisponible.</p>
+          </div>
+        ) : gearList.length === 0 ? (
           <div className="lkdv-slot-state" data-state="empty">
             <span className="lkdv-slot-state-ico" aria-hidden="true">
               ○
@@ -147,6 +160,13 @@ export function KitSlot({
             ))}
           </div>
         )
+      ) : kitsUnavailable ? (
+        <div className="lkdv-slot-state" data-state="error" role="status">
+          <span className="lkdv-slot-state-ico" aria-hidden="true">
+            ⚠
+          </span>
+          <p>Kits momentanément indisponibles.</p>
+        </div>
       ) : kitList.length === 0 ? (
         <div className="lkdv-slot-state" data-state="empty">
           <span className="lkdv-slot-state-ico" aria-hidden="true">

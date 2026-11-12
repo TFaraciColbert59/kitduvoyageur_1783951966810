@@ -1237,4 +1237,117 @@ describe('Compte — pont de suivi runtime', () => {
     expect(runtimeState().S.profile.name).toBe('Propriétaire LKDV');
     expect(runtimeState().S.profile.handle).toBe('owner');
   });
+
+  it('ne reprend pas un handle de payload quand le profil est indisponible', async () => {
+    bootstrapAnswer = () =>
+      Promise.resolve(
+        okResponse({
+          ...BOOTSTRAP_PAYLOAD,
+          profile: { ...BOOTSTRAP_PAYLOAD.profile, handle: 'owner' },
+        })
+      );
+
+    await renderCompte();
+    await waitFor(() => expect(bootstrapCalls).toBe(1));
+    await waitFor(() => expect(runtimeState().S.profile.handle).toBe('owner'));
+
+    // Le serveur peut joindre un profil de secours à un payload marqué
+    // indisponible : le handle de ce profil ne doit pas remplacer l'identité
+    // déjà confirmée.
+    bootstrapAnswer = () =>
+      Promise.resolve(
+        okResponse({
+          authenticated: true,
+          profileUnavailable: true,
+          profile: { handle: 'fantome' },
+          stats: BOOTSTRAP_PAYLOAD.stats,
+          followers: [],
+          following: [],
+          tribu: [],
+          followStates: {},
+        })
+      );
+
+    await act(async () => {
+      window.dispatchEvent(new Event('lkdv:highlights-changed'));
+    });
+    await waitFor(() => expect(bootstrapCalls).toBe(2));
+
+    expect(runtimeState().S.profile.handle).toBe('owner');
+    expect(document.body.textContent).toContain('Connecté · @owner');
+  });
+
+  it('conserve les collections non sociales quand leurs lectures échouent', async () => {
+    bootstrapAnswer = () =>
+      Promise.resolve(
+        okResponse({
+          ...BOOTSTRAP_PAYLOAD,
+          profile: { ...BOOTSTRAP_PAYLOAD.profile, name: 'Collections disponibles' },
+          carnets: [{ id: 'c1', title: 'Carnet réel' }],
+          orders: [
+            {
+              id: 'o1',
+              order_number: 'LKDV-1',
+              total_eur: 42,
+              status: 'payee',
+              created_at: '2026-11-01T10:00:00Z',
+              items: [],
+            },
+          ],
+          clubs: [{ slug: 'club-alpin', name: 'Club Alpin', role: 'Membre', membersCount: 42 }],
+          kits: [{ id: 'k1', name: 'Kit réel' }],
+          notifications: [{ id: 'n1', title: 'Bienvenue' }],
+        })
+      );
+
+    await renderCompte();
+    await waitFor(() => expect(bootstrapCalls).toBe(1));
+    await waitFor(() => expect(runtimeState().CARNETS).toHaveLength(1));
+    expect(runtimeState().ORDERS).toHaveLength(1);
+    expect(runtimeState().CLUBS).toHaveLength(1);
+    expect(runtimeState().KITS_LINEAGE).toHaveLength(1);
+    expect(runtimeState().S.notifications).toHaveLength(1);
+
+    // Rafraîchissement partiel : les lectures échouent et le bootstrap le
+    // signale. Aucune collection connue ne doit être remplacée par un vide.
+    supabaseState.errors.carnets = { message: 'carnets indisponibles' };
+    supabaseState.errors.orders = { message: 'commandes indisponibles' };
+    supabaseState.errors.club_members = { message: 'clubs indisponibles' };
+    bootstrapAnswer = () =>
+      Promise.resolve(
+        okResponse({
+          ...BOOTSTRAP_PAYLOAD,
+          profile: { ...BOOTSTRAP_PAYLOAD.profile, name: 'Collections partielles' },
+          carnets: [],
+          outings: [],
+          orders: [],
+          bookings: [],
+          clubs: [],
+          kits: [],
+          stories: [],
+          notifications: [],
+          carnetsUnavailable: true,
+          outingsUnavailable: true,
+          ordersUnavailable: true,
+          notificationsUnavailable: true,
+          clubsUnavailable: true,
+          kitsUnavailable: true,
+          storiesUnavailable: true,
+        })
+      );
+
+    await act(async () => {
+      window.dispatchEvent(new Event('lkdv:highlights-changed'));
+    });
+    await waitFor(() => expect(bootstrapCalls).toBe(2));
+    await waitFor(() =>
+      expect(runtimeState().S.profile.name).toBe('Collections partielles')
+    );
+
+    expect(runtimeState().CARNETS).toHaveLength(1);
+    expect(runtimeState().ORDERS).toHaveLength(1);
+    expect(runtimeState().CLUBS).toHaveLength(1);
+    expect(runtimeState().KITS_LINEAGE).toHaveLength(1);
+    expect(runtimeState().S.notifications).toHaveLength(1);
+  });
 });

@@ -1221,6 +1221,19 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
 
       const hadBootstrap =
         bootstrapPayloadRef.current != null || followListsHydratedRef.current;
+      // Même distinction « vide » vs « illisible » que les listes sociales :
+      // après la première hydratation, une lecture en échec ne doit pas vider
+      // la collection connue avant que le bootstrap complet ne la remplace.
+      const carnetsReadable = carnetsRes.error == null;
+      const clubsReadable = clubsRes.error == null;
+      const gearReadable = gearRes.error == null;
+      const ordersReadable = ordersRes.error == null;
+      const loansReadable = loansRes.error == null;
+      const rewardsReadable = rewardRes.error == null;
+      const outingsReadable =
+        travelGroupsRes.error == null &&
+        tripsRes != null &&
+        Array.isArray(tripsRes.trips);
       const patch: Record<string, any> = {
         isGuest: false,
         // Un compteur n'est posé que si sa lecture a réussi : une erreur
@@ -1231,18 +1244,24 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
         ...(followingRes.error == null && typeof followingRes.count === 'number'
           ? { followingCount: followingRes.count }
           : {}),
-        carnets: hasUserCarnets ? carnetsRes.data : [],
-        clubs: userClubs,
-        gearItems: gearRes.data || [],
-        orders: ordersRes.data || [],
-        activeLoans: loansRes.data || [],
+        ...(carnetsReadable || !hadBootstrap
+          ? { carnets: hasUserCarnets ? carnetsRes.data : [] }
+          : {}),
+        ...(clubsReadable || !hadBootstrap ? { clubs: userClubs } : {}),
+        ...(gearReadable || !hadBootstrap
+          ? { gearItems: gearRes.data || [] }
+          : {}),
+        ...(ordersReadable || !hadBootstrap
+          ? { orders: ordersRes.data || [] }
+          : {}),
+        ...(loansReadable || !hadBootstrap
+          ? { activeLoans: loansRes.data || [] }
+          : {}),
         // Le bootstrap complet arrive ensuite ; on ne laisse jamais les
         // tableaux de démonstration visibles sur un compte connecté. Lors
         // d'une actualisation, les listes connues restent en place jusqu'au
         // prochain payload complet (ou sont conservées si celui-ci échoue).
-        kits: [],
-        species: [],
-        massifs: [],
+        ...(hadBootstrap ? {} : { kits: [], species: [], massifs: [] }),
         ...(hadBootstrap ? {} : { followers: [], following: [] }),
       };
 
@@ -1272,7 +1291,8 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
 
       // Store credit & rewards
       const creditEur = (rewardRes.data?.store_credit_cents ? rewardRes.data.store_credit_cents / 100 : 0) + Number(rewardRes.data?.available_cash || 0);
-      patch.storeCreditEur = creditEur;
+      if (rewardsReadable) patch.storeCreditEur = creditEur;
+      else if (!hadBootstrap) patch.storeCreditEur = 0;
 
       // Sorties réelles uniquement : aucun repli démo sur un compte connecté.
       const combinedOutings: any[] = [];
@@ -1282,7 +1302,8 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
       if (tripsRes && Array.isArray(tripsRes.trips)) {
         combinedOutings.push(...tripsRes.trips);
       }
-      patch.outings = combinedOutings;
+      if (outingsReadable) patch.outings = combinedOutings;
+      else if (!hadBootstrap) patch.outings = [];
 
       hydrate(patch);
       setSyncStatus('synced');
@@ -1356,6 +1377,16 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
         // Profil illisible : ne jamais poser le faux profil « Voyageur » ni
         // écraser un nom, un handle ou un avatar connus.
         const profileUnavailable = payload?.profileUnavailable === true;
+        // Les collections non sociales ont la même distinction « vide » vs
+        // « illisible » : on ne remplace pas une liste connue par un tableau
+        // vide issu d'un échec transitoire.
+        const carnetsUnavailable = payload?.carnetsUnavailable === true;
+        const outingsUnavailable = payload?.outingsUnavailable === true;
+        const ordersUnavailable = payload?.ordersUnavailable === true;
+        const notificationsUnavailable = payload?.notificationsUnavailable === true;
+        const clubsUnavailable = payload?.clubsUnavailable === true;
+        const kitsUnavailable = payload?.kitsUnavailable === true;
+        const storiesUnavailable = payload?.storiesUnavailable === true;
         const profileFromPayload =
           payload?.profile &&
           typeof payload.profile === 'object' &&
@@ -1390,11 +1421,15 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
                   profileVisibility: bootVisibility,
                   ...(bootSignatureIndex !== null ? { vis: bootSignatureIndex } : {}),
                 }),
-            carnets: payload.carnets || [],
-            outings: payload.outings || [],
-            orders: payload.orders || [],
-            bookings: payload.bookings || [],
-            clubs: payload.clubs || [],
+            ...(carnetsUnavailable ? {} : { carnets: payload.carnets || [] }),
+            ...(outingsUnavailable ? {} : { outings: payload.outings || [] }),
+            ...(ordersUnavailable
+              ? {}
+              : {
+                  orders: payload.orders || [],
+                  bookings: payload.bookings || [],
+                }),
+            ...(clubsUnavailable ? {} : { clubs: payload.clubs || [] }),
             ...(preserveFollowing
               ? {}
               : {
@@ -1408,12 +1443,14 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
                   followStates: payload.followStates,
                   followStatesPreserve: preservedFollowHandles,
                 }),
-            kits: payload.kits || [],
-            stories: payload.stories || [],
+            ...(kitsUnavailable ? {} : { kits: payload.kits || [] }),
+            ...(storiesUnavailable ? {} : { stories: payload.stories || [] }),
             highlights: payload.highlights || [],
             species: payload.species || [],
             massifs: payload.massifs || [],
-            notifications: payload.notifications || [],
+            ...(notificationsUnavailable
+              ? {}
+              : { notifications: payload.notifications || [] }),
             replace: true,
           });
           // Mémorise qu'une liste réelle a déjà été posée : un prochain
