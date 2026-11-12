@@ -92,6 +92,7 @@ describe('buildCarnetDetail — statistiques', () => {
     };
     const detail = buildCarnetDetail(
       input({
+        viewerId: 'u1',
         /* La sortie la plus récente n'a pas de trace : elle ne doit plus
            effacer le parcours d'une sortie plus ancienne (constat Vercors). */
         hikeSession: {
@@ -250,6 +251,7 @@ describe('buildCarnetDetail — jours dérivés et totaux', () => {
   it('expose les jours dérivés des sorties et un résumé qui en est la somme', () => {
     const detail = buildCarnetDetail(
       input({
+        viewerId: 'u1',
         sessions: [
           sortie('s2', '2026-09-27T06:00:00Z', [[6.9, 45.85], [6.91, 45.86]]),
           sortie('s1', '2026-09-26T06:00:00Z', [[6.86, 45.83], [6.87, 45.84]]),
@@ -310,6 +312,7 @@ describe('buildCarnetDetail — lieu réel', () => {
   it('ajoute la coordonnée du premier point réel de la trace', () => {
     const detail = buildCarnetDetail(
       input({
+        viewerId: 'u1',
         hikeSession: {
           id: 'h1',
           carnet_id: 'c1',
@@ -323,6 +326,40 @@ describe('buildCarnetDetail — lieu réel', () => {
     );
     expect(detail.place.lat).toBeCloseTo(45.83, 6);
     expect(detail.place.lng).toBeCloseTo(6.86, 6);
+  });
+
+  it('ne livre jamais la trace brute ni ses métadonnées à un visiteur', () => {
+    const trace = {
+      type: 'LineString',
+      coordinates: [
+        [6.86, 45.83],
+        [6.87, 45.84],
+      ],
+    };
+    const detail = buildCarnetDetail(
+      input({
+        viewerId: null,
+        trace,
+        sessions: [
+          {
+            id: 's1',
+            carnet_id: 'c1',
+            distance_km: null,
+            elevation_gain_m: null,
+            duration_seconds: 3600,
+            started_at: '2026-09-26T06:00:00Z',
+            positions_geojson: trace,
+          },
+        ],
+      }),
+    );
+
+    expect(detail.trace).not.toBe(trace);
+    expect(detail.trace).not.toBeNull();
+    expect(detail.days[0].points).toEqual([]);
+    expect(detail.elevationProfile).toEqual([]);
+    expect(detail.place.lat).not.toBeCloseTo(45.83, 6);
+    expect(detail.place.lng).not.toBeCloseTo(6.86, 6);
   });
 
   it('ne devine rien quand les colonnes sont vides et qu’il n’y a pas de trace', () => {

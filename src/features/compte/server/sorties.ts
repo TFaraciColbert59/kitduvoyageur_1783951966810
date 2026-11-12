@@ -1,4 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import type { TraceProjectionError } from '../domain/traceProjection';
+import { projectTraceSamples, resolveTraceMasks } from './tracePrivacy';
 import { loadOutingWeather, type OutingWeather } from './weather';
 
 /**
@@ -97,7 +99,17 @@ export interface OutingDetail {
   missingGear: number;
   kudos: OutingKudos;
   comments: OutingComment[];
+  /**
+   * Trace brute du propriétaire. Vide pour un visiteur : la seule source
+   * affichable/exportable est alors `traceSegments`, afin qu'un consommateur
+   * qui tracerait `points` d'un seul trait ne puisse pas recoller une coupure.
+   */
   points: OutingPoint[];
+  /** Morceaux visibles, jamais recollés à travers un masque. */
+  traceSegments: OutingPoint[][];
+  traceMasked: boolean;
+  traceFullyMasked: boolean;
+  traceError: TraceProjectionError;
   canEdit: boolean;
 }
 
@@ -480,8 +492,29 @@ export async function loadOutingDetail(
     };
   });
 
-  const points = parsePositions(session.positions_timed, session.positions_geojson);
-  const coordinate = firstCoordinate(points);
+  const rawPoints = parsePositions(session.positions_timed, session.positions_geojson);
+  const viewer =
+    canEdit || participantRows.some((row) => row.user_id === userId) ? 'participant' : 'visitor';
+  const projection = projectTraceSamples(
+    rawPoints,
+    resolveTraceMasks({ viewer, visibility: normalizeVisibility(session.visibility) })
+  );
+  const traceSegments: OutingPoint[][] = projection.segments.map((segment) =>
+    segment.map((point) => ({
+      lat: point.lat,
+      lng: point.lng,
+      elevationM: point.elevationM ?? null,
+      timestamp: point.timestamp ?? null,
+    }))
+  );
+  const visiblePoints = traceSegments.flat();
+  /*
+   * Pour un visiteur, `points` reste vide : un ancien consommateur qui ne
+   * connaît pas `traceSegments` ne doit pas pouvoir retracer la trace brute.
+   * Le propriétaire et les participants gardent leurs points d'origine.
+   */
+  const points = projection.masked ? [] : rawPoints;
+  const coordinate = firstCoordinate(visiblePoints);
   let weather = storedWeather(session.weather);
   if (!weather && coordinate) {
     weather = await loadOutingWeather(coordinate.lat, coordinate.lon, session.started_at);
@@ -489,7 +522,7 @@ export async function loadOutingDetail(
 
   const maxAlt =
     session.max_altitude_m ??
-    (points.reduce<number | null>((max, point) => {
+    (visiblePoints.reduce<number | null>((max, point) => {
       if (point.elevationM === null) return max;
       return max === null ? point.elevationM : Math.max(max, point.elevationM);
     }, null) ?? null);
@@ -514,7 +547,7 @@ export async function loadOutingDetail(
     durationS: session.duration_seconds,
     status: computeStatus(session),
     visibility: normalizeVisibility(session.visibility),
-    verified: points.length >= 2,
+    verified: traceSegments.some((segment) => segment.length >= 2),
     coverUrl: photos[0]?.url ?? null,
     notes: text(session.notes),
     weather,
@@ -530,6 +563,10 @@ export async function loadOutingDetail(
     },
     comments,
     points,
+    traceSegments,
+    traceMasked: projection.masked,
+    traceFullyMasked: projection.fullyMasked,
+    traceError: projection.error,
     canEdit,
   };
 }
@@ -802,19 +839,40 @@ function escapeXml(value: string): string {
     .replace(/'/g, '&apos;');
 }
 
+/**
+ * Morceaux réellement exportables. `traceSegments` est la source prioritaire :
+ * `points` n'est qu'un repli pour les anciens appels de test. Un morceau d'un
+ * seul point n'est pas une trace.
+ */
+export function outingTraceSegments(
+  detail: Pick<OutingDetail, 'traceSegments' | 'points'>
+): OutingPoint[][] {
+  const segments = Array.isArray(detail.traceSegments)
+    ? detail.traceSegments
+    : detail.traceSegments === undefined
+      ? [detail.points]
+      : [];
+  return segments.filter((segment) => segment.length >= 2);
+}
+
 /** GPX 1.1 généré depuis la trace réelle (aucun fichier stocké). */
 export function buildGpx(detail: OutingDetail): string {
-  const points = detail.points;
-  const track = points
-    .map((point) => {
-      const ele = point.elevationM !== null ? `<ele>${point.elevationM}</ele>` : '';
-      const time = point.timestamp ? `<time>${escapeXml(point.timestamp)}</time>` : '';
-      return `<trkpt lat="${point.lat}" lon="${point.lng}">${ele}${time}</trkpt>`;
+  const segments = outingTraceSegments(detail);
+  const track = segments
+    .map((segment) => {
+      const points = segment
+        .map((point) => {
+          const ele = point.elevationM !== null ? `<ele>${point.elevationM}</ele>` : '';
+          const time = point.timestamp ? `<time>${escapeXml(point.timestamp)}</time>` : '';
+          return `<trkpt lat="${point.lat}" lon="${point.lng}">${ele}${time}</trkpt>`;
+        })
+        .join('');
+      return `<trkseg>${points}</trkseg>`;
     })
     .join('');
   return `<?xml version="1.0" encoding="UTF-8"?>
 <gpx version="1.1" creator="Le Kit du Voyageur" xmlns="http://www.topografix.com/GPX/1/1">
   <metadata><name>${escapeXml(detail.title)}</name></metadata>
-  <trk><name>${escapeXml(detail.title)}</name><trkseg>${track}</trkseg></trk>
+  <trk><name>${escapeXml(detail.title)}</name>${track}</trk>
 </gpx>`;
 }

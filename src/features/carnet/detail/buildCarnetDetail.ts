@@ -2,6 +2,7 @@ import { buildDays, buildSummary, toMomentItems } from './days';
 import { formatDateRange, formatElevation, formatKm, toNumber } from './format';
 import { buildCarnetPlace } from './place';
 import { pickElevationProfile } from './elevationProfile';
+import { projectTraceGeometry, resolveTraceMasks } from '@/features/compte/server/tracePrivacy';
 import type {
   BuildCarnetDetailInput,
   CarnetEtapeDay,
@@ -138,6 +139,10 @@ function buildEtapes(input: BuildCarnetDetailInput): CarnetEtapeDay[] {
 
 export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
   const { carnet, hikeSession } = input;
+  const viewerRole: CarnetViewerRole =
+    input.viewerRole ??
+    (input.viewerId && carnet.author_id === input.viewerId ? 'participant' : 'visitor');
+  const isVisitor = viewerRole === 'visitor';
   const distanceKm = toNumber(hikeSession?.distance_km) ?? toNumber(carnet.distance_km);
   const elevationM = toNumber(hikeSession?.elevation_gain_m) ?? toNumber(carnet.denivele_m);
   const moments = toMomentItems(input.moments);
@@ -146,7 +151,13 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
   /* Jours dérivés : les moments nomment leur jour, les points GPS des sorties
      datent le leur. Aucune valeur n'est inventée quand une source manque. */
   const sessions = input.sessions ?? (hikeSession ? [hikeSession] : []);
-  const elevationProfile = pickElevationProfile(sessions);
+  /*
+   * Le profil construit depuis `positions_timed` contient les coordonnées
+   * brutes du départ et de l'arrivée : un visiteur ne le reçoit pas. Le profil
+   * de la fiche est ensuite reconstruit depuis la trace déjà projetée
+   * (`enrichCarnetElevation`), donc uniquement sur les points visibles.
+   */
+  const elevationProfile = isVisitor ? [] : pickElevationProfile(sessions);
   const builtDays = buildDays({
     moments: input.moments,
     sessions,
@@ -181,8 +192,22 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
   }, null);
 
   /* La trace affichée est celle de la sortie la plus récente qui en porte une
-     (`pickCarnetTrace`), pas forcément celle qui donne les statistiques. */
-  const trace = input.trace ?? hikeSession?.positions_geojson ?? null;
+     (`pickCarnetTrace`), pas forcément celle qui donne les statistiques. Pour
+     un visiteur, elle passe par la politique unique de partage : début et fin
+     masqués, ou trace nulle si la projection échoue. */
+  const rawTrace = input.trace ?? hikeSession?.positions_geojson ?? null;
+  const trace = isVisitor
+    ? projectTraceGeometry(
+        rawTrace,
+        resolveTraceMasks({ viewer: 'visitor', visibility: carnet.visibility })
+      ).geometry
+    : rawTrace;
+  /*
+   * Les points de jour servent au cadrage de la carte quand un jour est actif.
+   * Un visiteur ne les reçoit pas : ils contiennent les coordonnées brutes.
+   * La carte retombe alors sur la trace projetée complète (aucun tracé inventé).
+   */
+  const viewerDays = isVisitor ? days.map((day) => ({ ...day, points: [] })) : days;
 
   const nights: CarnetNightItem[] =
     input.nights && input.nights.length > 0
@@ -203,9 +228,6 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
           mapRefugeId: null,
         }));
 
-  const viewerRole: CarnetViewerRole =
-    input.viewerRole ??
-    (input.viewerId && carnet.author_id === input.viewerId ? 'participant' : 'visitor');
   const budget = viewerRole === 'visitor' ? null : (input.budget ?? null);
 
   const kitVerdicts: Record<string, CarnetKitVerdictItem> = { ...(input.kitVerdicts ?? {}) };
@@ -254,7 +276,7 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
     })),
     moments,
     photoMoments: moments.filter((m) => Boolean(m.imageUrl)),
-    days,
+    days: viewerDays,
     etapes,
     summary,
     kit: {

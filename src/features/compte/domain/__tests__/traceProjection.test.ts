@@ -47,6 +47,24 @@ function expectNoPointInside(zone: PrivacyZone, segments: TracePoint[][]): void 
   }
 }
 
+/** Échantillonne chaque segment publié, pas seulement ses sommets. */
+function expectNoSegmentInside(zone: PrivacyZone, segments: TracePoint[][]): void {
+  for (const segment of segments) {
+    for (let index = 0; index < segment.length - 1; index += 1) {
+      const a = segment[index];
+      const b = segment[index + 1];
+      for (let step = 0; step <= 20; step += 1) {
+        const t = step / 20;
+        const point = {
+          lng: a.lng + (b.lng - a.lng) * t,
+          lat: a.lat + (b.lat - a.lat) * t,
+        };
+        expect(strictlyInside(zone, point)).toBe(false);
+      }
+    }
+  }
+}
+
 function expectClosedError(
   result: TraceProjection,
   error: Exclude<TraceProjection['error'], null>
@@ -226,7 +244,29 @@ describe('projectShareableTrace — zone géographique', () => {
     expect(distanceM(circle.center, before.at(-1)!)).toBeCloseTo(200, 0);
     expect(distanceM(circle.center, after[0])).toBeCloseTo(200, 0);
     expectNoPointInside(circle, result.segments);
+    expectNoSegmentInside(circle, result.segments);
     expectReducedPrecision(result.segments);
+  });
+
+  it('ne laisse aucun segment traverser une zone frôlée près d’une extrémité', () => {
+    // Les deux sommets sont dehors (445 m et 667 m du centre pour un rayon de
+    // 350 m), mais la corde traverse le cercle : elle doit être coupée.
+    const nearEnd: PrivacyZone = {
+      kind: 'circle',
+      center: { lng: 0.004, lat: 0 },
+      radiusM: 350,
+    };
+    const result = projectShareableTrace(
+      [
+        { lng: 0, lat: 0 },
+        { lng: 0.01, lat: 0 },
+      ],
+      [{ kind: 'zone', zone: nearEnd }]
+    );
+
+    expect(result.error).toBeNull();
+    expect(result.segments).toHaveLength(2);
+    expectNoSegmentInside(nearEnd, result.segments);
   });
 
   it('découpe une polyligne qui traverse une boîte géographique', () => {
@@ -350,15 +390,75 @@ describe('projectShareableTrace — masques cumulés', () => {
 });
 
 describe('projectShareableTrace — segments longs', () => {
-  it('refuse un segment de 1 000 km dont les deux sommets sont pourtant sûrs', () => {
-    // Cas de revue : 60° / ±9°, longueur ≈ 1 000 km, arc ~34 km au nord de la
-    // corde interpolée en lng/lat. La validation pointwise le laissait passer.
+  it('densifie un segment de 1 000 km le long de la polyligne source', () => {
+    // Cas de revue : 60° / ±9°, longueur ≈ 1 000 km. Il n'est plus refusé en
+    // bloc : il est découpé en sous-segments de 2 km, puis chacun est contrôlé.
     const result = projectShareableTrace([
       { lng: -9, lat: 60 },
       { lng: 9, lat: 60 },
     ]);
 
+    expect(result.error).toBeNull();
+    expect(result.segments).toHaveLength(1);
+    expect(result.segments[0].length).toBeGreaterThan(2);
+    expect(result.segments[0][0]).toEqual({ lng: -9, lat: 60 });
+    expect(result.segments[0][result.segments[0].length - 1]).toEqual({ lng: 9, lat: 60 });
+  });
+
+  it('ne rejette pas une trace déjà dense sans segment long', () => {
+    // Le plafond borne les points ajoutés par la découpe, pas la taille de la
+    // trace d'origine : 25 000 points espacés de ~11 m restent valides.
+    const dense = Array.from({ length: 25_000 }, (_, index) => ({
+      lng: index * 0.0001,
+      lat: 45,
+    }));
+    const result = projectShareableTrace(dense);
+
+    expect(result.error).toBeNull();
+    expect(result.segments).toHaveLength(1);
+    expect(result.segments[0]).toHaveLength(25_000);
+  });
+
+  it('coupe un segment long qui traverse une zone, sans le refuser', () => {
+    const zone: PrivacyZone = {
+      kind: 'circle',
+      center: { lng: 0, lat: 0 },
+      radiusM: 1_000,
+    };
+    const result = projectShareableTrace(
+      [
+        { lng: -0.05, lat: 0 },
+        { lng: 0.05, lat: 0 },
+      ],
+      [{ kind: 'zone', zone }]
+    );
+
+    expect(result.error).toBeNull();
+    expect(result.segments).toHaveLength(2);
+    expectNoPointInside(zone, result.segments);
+  });
+
+  it('refuse au-delà du plafond de découpe (segment de 1 770 km à 84°)', () => {
+    // 84° / 179,9° : la polyligne fait ~1 770 km, soit plus de 512 découpes.
+    const result = projectShareableTrace([
+      { lng: 0, lat: 84 },
+      { lng: 179.9, lat: 84 },
+    ]);
+
     expectClosedError(result, 'unsafe_geometry');
+  });
+
+  it('densifie un long segment qui traverse l’équateur', () => {
+    // Le minimum de |lat| des extrémités ne majore pas la longueur quand le
+    // segment passe par l'équateur, où cos(lat) vaut 1.
+    const result = projectShareableTrace([
+      { lng: -4, lat: -2 },
+      { lng: 4, lat: 2 },
+    ]);
+
+    expect(result.error).toBeNull();
+    expect(result.segments).toHaveLength(1);
+    expect(result.segments[0].length).toBeGreaterThan(2);
   });
 
   it('refuse un segment dont l’arc sort de la bande de latitude malgré des sommets à 85°', () => {
@@ -367,15 +467,6 @@ describe('projectShareableTrace — segments longs', () => {
     const result = projectShareableTrace([
       { lng: 0, lat: 84.9999999 },
       { lng: 0.2, lat: 84.9999999 },
-    ]);
-
-    expectClosedError(result, 'unsafe_geometry');
-  });
-
-  it('refuse le cas 84° / 179,9° de la revue, dont l’arc monte à ~90°', () => {
-    const result = projectShareableTrace([
-      { lng: 0, lat: 84 },
-      { lng: 179.9, lat: 84 },
     ]);
 
     expectClosedError(result, 'unsafe_geometry');
@@ -392,14 +483,16 @@ describe('projectShareableTrace — segments longs', () => {
     expect(result.segments).toHaveLength(1);
   });
 
-  it('refuse un segment juste au-dessus de 2 km', () => {
-    // 0,036° de longitude à 60° ≈ 2 002 m.
+  it('densifie un segment juste au-dessus de 2 km au lieu de refuser la trace', () => {
+    // 0,036° de longitude à 60° ≈ 2 002 m : deux sous-segments de ~1 001 m.
     const result = projectShareableTrace([
       { lng: 0, lat: 60 },
       { lng: 0.036, lat: 60 },
     ]);
 
-    expectClosedError(result, 'unsafe_geometry');
+    expect(result.error).toBeNull();
+    expect(result.segments).toHaveLength(1);
+    expect(result.segments[0].length).toBeGreaterThanOrEqual(3);
   });
 
   it('accepte un segment de 1,94 km à 84,9° sans le confondre avec la limite polaire', () => {
@@ -535,8 +628,8 @@ describe('projectShareableTrace — hors domaine de calcul sûr', () => {
   it('conserve masked quand la géométrie est refusée mais qu’un masque a été fourni', () => {
     const result = projectShareableTrace(
       [
-        { lng: -9, lat: 60 },
-        { lng: 9, lat: 60 },
+        { lng: 0, lat: 84 },
+        { lng: 179.9, lat: 84 },
       ],
       [{ kind: 'start', meters: 100 }]
     );

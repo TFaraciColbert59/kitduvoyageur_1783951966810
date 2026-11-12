@@ -10,8 +10,33 @@ import {
   CloudSun,
   Sun,
 } from 'lucide-react';
-import type { OutingPoint } from '@/features/compte/server/sorties';
+import type { OutingDetail, OutingPoint } from '@/features/compte/server/sorties';
 import type { WeatherIcon } from '@/features/compte/server/weather';
+
+/** Morceaux visibles d'une sortie ; `points` n'est qu'un repli de compatibilité. */
+export function visibleTraceSegments(
+  detail: Pick<OutingDetail, 'traceSegments' | 'points'>
+): OutingPoint[][] {
+  const segments = Array.isArray(detail.traceSegments)
+    ? detail.traceSegments
+    : detail.traceSegments === undefined
+      ? [detail.points]
+      : [];
+  return segments.filter((segment) => segment.length >= 2);
+}
+
+/** Points visibles aplatis, pour les statistiques (jamais pour recoller un tracé). */
+export function visibleTracePoints(
+  detail: Pick<OutingDetail, 'traceSegments' | 'points'>
+): OutingPoint[] {
+  return visibleTraceSegments(detail).flat();
+}
+
+export function hasVisibleTrace(
+  detail: Pick<OutingDetail, 'traceSegments' | 'points'>
+): boolean {
+  return visibleTraceSegments(detail).length > 0;
+}
 
 export function formatDate(value: string | null): string {
   if (!value) return 'Date non renseignée';
@@ -96,8 +121,17 @@ function downsample(points: OutingPoint[], max = 180): OutingPoint[] {
   return sampled;
 }
 
-export function TraceMap({ points, className }: { points: OutingPoint[]; className?: string }) {
-  const sampled = downsample(points);
+export function TraceMap({
+  segments,
+  className,
+}: {
+  segments: OutingPoint[][];
+  className?: string;
+}) {
+  const prepared = segments
+    .map((segment) => downsample(segment))
+    .filter((segment) => segment.length >= 2);
+  const sampled = prepared.flat();
   if (sampled.length < 2) {
     return <div className={`lkdv-sortie-trace-empty ${className ?? ''}`}>Aucune trace GPS</div>;
   }
@@ -117,14 +151,19 @@ export function TraceMap({ points, className }: { points: OutingPoint[]; classNa
     const y = offsetY + (maxLat - point.lat) * scale;
     return [x, y] as const;
   };
-  const path = sampled
-    .map((point, index) => {
-      const [x, y] = project(point);
-      return `${index === 0 ? 'M' : 'L'}${x.toFixed(2)} ${y.toFixed(2)}`;
-    })
-    .join(' ');
-  const [startX, startY] = project(sampled[0]);
-  const [endX, endY] = project(sampled[sampled.length - 1]);
+  /* Un chemin SVG par morceau : aucune commande ne relie la fin d'un morceau
+     au début du suivant, donc une zone masquée reste un trou visible. */
+  const paths = prepared.map((segment) =>
+    segment
+      .map((point, index) => {
+        const [x, y] = project(point);
+        return `${index === 0 ? 'M' : 'L'}${x.toFixed(2)} ${y.toFixed(2)}`;
+      })
+      .join(' ')
+  );
+  const [startX, startY] = project(prepared[0][0]);
+  const lastSegment = prepared[prepared.length - 1];
+  const [endX, endY] = project(lastSegment[lastSegment.length - 1]);
 
   return (
     <svg
@@ -140,8 +179,12 @@ export function TraceMap({ points, className }: { points: OutingPoint[]; classNa
           <stop offset="100%" stopColor="#5B8F6A" />
         </linearGradient>
       </defs>
-      <path d={path} fill="none" stroke="rgba(23,64,44,.16)" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" />
-      <path d={path} fill="none" stroke="url(#lkdv-trace-stroke)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      {paths.map((path, index) => (
+        <React.Fragment key={`trace-${index}`}>
+          <path d={path} fill="none" stroke="rgba(23,64,44,.16)" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" />
+          <path d={path} fill="none" stroke="url(#lkdv-trace-stroke)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </React.Fragment>
+      ))}
       <circle cx={startX} cy={startY} r="2.6" fill="#17402C" />
       <circle cx={startX} cy={startY} r="1.1" fill="#fff" />
       <circle cx={endX} cy={endY} r="2.6" fill="#fff" stroke="#17402C" strokeWidth="1.2" />
@@ -149,22 +192,29 @@ export function TraceMap({ points, className }: { points: OutingPoint[]; classNa
   );
 }
 
-export function ElevationProfile({ points }: { points: OutingPoint[] }) {
-  const sampled = downsample(points, 140).filter((point) => point.elevationM !== null);
-  if (sampled.length < 3) {
+export function ElevationProfile({ segments }: { segments: OutingPoint[][] }) {
+  const prepared = segments
+    .map((segment) => downsample(segment, 140).filter((point) => point.elevationM !== null))
+    .filter((segment) => segment.length >= 2);
+  const all = prepared.flat();
+  if (all.length < 3) {
     return <div className="lkdv-sortie-trace-empty">Profil altimétrique indisponible</div>;
   }
-  const elevations = sampled.map((point) => point.elevationM as number);
+  const elevations = all.map((point) => point.elevationM as number);
   const min = Math.min(...elevations);
   const max = Math.max(...elevations);
   const span = Math.max(max - min, 1);
-  const coords = sampled.map((point, index) => {
-    const x = (index / (sampled.length - 1)) * 100;
-    const y = 34 - (((point.elevationM as number) - min) / span) * 30;
-    return [x, y] as const;
-  });
-  const line = coords.map(([x, y], index) => `${index === 0 ? 'M' : 'L'}${x.toFixed(2)} ${y.toFixed(2)}`).join(' ');
-  const area = `${line} L100 36 L0 36 Z`;
+  const indexByPoint = new Map(all.map((point, index) => [point, index] as const));
+  const lines = prepared.map((segment) =>
+    segment
+      .map((point) => {
+        const x = ((indexByPoint.get(point) ?? 0) / (all.length - 1)) * 100;
+        const y = 34 - (((point.elevationM as number) - min) / span) * 30;
+        return [x, y] as const;
+      })
+      .map(([x, y], index) => `${index === 0 ? 'M' : 'L'}${x.toFixed(2)} ${y.toFixed(2)}`)
+      .join(' ')
+  );
 
   return (
     <div className="lkdv-sortie-elevation">
@@ -175,8 +225,18 @@ export function ElevationProfile({ points }: { points: OutingPoint[] }) {
             <stop offset="100%" stopColor="rgba(91,143,106,.04)" />
           </linearGradient>
         </defs>
-        <path d={area} fill="url(#lkdv-elev-fill)" />
-        <path d={line} fill="none" stroke="#3D7A52" strokeWidth="1.1" strokeLinejoin="round" />
+        {lines.map((line, index) => {
+          const segment = prepared[index];
+          const firstX = ((indexByPoint.get(segment[0]) ?? 0) / (all.length - 1)) * 100;
+          const lastX =
+            ((indexByPoint.get(segment[segment.length - 1]) ?? 0) / (all.length - 1)) * 100;
+          return (
+            <React.Fragment key={`elev-${index}`}>
+              <path d={`${line} L${lastX.toFixed(2)} 36 L${firstX.toFixed(2)} 36 Z`} fill="url(#lkdv-elev-fill)" />
+              <path d={line} fill="none" stroke="#3D7A52" strokeWidth="1.1" strokeLinejoin="round" />
+            </React.Fragment>
+          );
+        })}
       </svg>
       <div className="lkdv-sortie-elevation-labels">
         <span>{Math.round(min)} m</span>

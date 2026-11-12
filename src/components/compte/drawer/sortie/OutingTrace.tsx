@@ -5,7 +5,16 @@ import { Download, MapPin, Wind } from 'lucide-react';
 import { ActionPill } from '@/components/ui/ActionPill';
 import type { OutingDetail, OutingPoint } from '@/features/compte/server/sorties';
 import type { OutingWeather } from '@/features/compte/server/weather';
-import { ElevationProfile, TraceMap, formatDuration, formatNumber, weatherIcon } from './shared';
+import {
+  ElevationProfile,
+  TraceMap,
+  formatDuration,
+  formatNumber,
+  hasVisibleTrace,
+  visibleTracePoints,
+  visibleTraceSegments,
+  weatherIcon,
+} from './shared';
 
 export interface OutingTraceProps {
   detail: OutingDetail;
@@ -89,13 +98,15 @@ function WeatherBlock({ weather }: { weather: OutingWeather | null }) {
 }
 
 export function OutingTrace({ detail, onExport }: OutingTraceProps) {
-  const altitude = altitudeRange(detail.points);
-  const moving = movingSeconds(detail.points);
+  const segments = visibleTraceSegments(detail);
+  const points = visibleTracePoints(detail);
+  const altitude = altitudeRange(points);
+  const moving = movingSeconds(points);
   const slope = detail.km > 0 ? (detail.dplus / (detail.km * 1000)) * 100 : null;
   const pace =
     detail.durationS && detail.km > 0 ? detail.durationS / 60 / detail.km : null;
 
-  if (detail.points.length < 2) {
+  if (!hasVisibleTrace(detail)) {
     return (
       <div className="lkdv-sortie-pane">
         <div className="lkdv-sortie-state">
@@ -118,10 +129,10 @@ export function OutingTrace({ detail, onExport }: OutingTraceProps) {
       <section className="lkdv-sortie-section">
         <header>
           <b>Trace enregistrée</b>
-          <span>{detail.points.length} points</span>
+          <span>{points.length} points</span>
         </header>
         <div className="lkdv-sortie-map-wrap">
-          <TraceMap points={detail.points} />
+          <TraceMap segments={segments} />
           <div className="lkdv-sortie-map-legend" aria-hidden="true">
             <span><i className="start" /> Départ</span>
             <span><i className="end" /> Arrivée</span>
@@ -161,7 +172,7 @@ export function OutingTrace({ detail, onExport }: OutingTraceProps) {
           <b>Relief</b>
           <span>{altitude ? `de ${Math.round(altitude.min)} à ${Math.round(altitude.max)} m` : '—'}</span>
         </header>
-        <ElevationProfile points={detail.points} />
+        <ElevationProfile segments={segments} />
       </section>
 
       <WeatherBlock weather={detail.weather} />

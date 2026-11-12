@@ -21,6 +21,12 @@ export function extractCoords(trace: unknown): TracePoint[] {
     (trace as { coordinates?: unknown })?.coordinates ??
     trace;
   if (!Array.isArray(raw)) return [];
+  /* MultiLineString : chaque ligne est une suite réelle ; on aplatit pour le
+     premier point de `buildCarnetPlace` et pour les bornes, jamais pour
+     recoller le tracé affiché (la carte garde ses morceaux séparés). */
+  if (raw.length > 0 && Array.isArray(raw[0]) && Array.isArray((raw[0] as unknown[])[0])) {
+    return raw.flatMap((line) => extractCoords(line));
+  }
   return raw
     .map((point: unknown) => {
       if (Array.isArray(point)) return [toNumber(point[1]), toNumber(point[0])] as TracePoint;
@@ -41,6 +47,26 @@ export interface TraceBounds {
   maxLat: number;
   minLng: number;
   maxLng: number;
+}
+
+/**
+ * Morceaux `[lat, lng]` d'une trace, sans jamais recoller un `MultiLineString`.
+ * `extractCoords` aplatit pour le lieu et les bornes ; cette variante conserve
+ * la séparation nécessaire à la carte et au GPX.
+ */
+export function extractTraceSegments(trace: unknown): TracePoint[][] {
+  const raw =
+    (trace as { geometry?: { coordinates?: unknown } })?.geometry?.coordinates ??
+    (trace as { coordinates?: unknown })?.coordinates ??
+    trace;
+  if (!Array.isArray(raw) || raw.length === 0) return [];
+  if (Array.isArray(raw[0]) && Array.isArray((raw[0] as unknown[])[0])) {
+    return raw
+      .map((line) => extractCoords(line))
+      .filter((segment) => segment.length > 0);
+  }
+  const line = extractCoords(raw);
+  return line.length > 0 ? [line] : [];
 }
 
 export function boundsOf(coords: TracePoint[]): TraceBounds | null {

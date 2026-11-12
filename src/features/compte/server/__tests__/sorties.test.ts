@@ -3,6 +3,7 @@ import {
   buildGpx,
   computeStatus,
   normalizeVisibility,
+  outingTraceSegments,
   parsePositions,
   type OutingDetail,
 } from '../sorties';
@@ -83,5 +84,40 @@ describe('sorties — GPX', () => {
     expect(gpx).toContain('Traversée &amp; crêtes');
     expect(gpx).toContain('<trkpt lat="45.1" lon="5.2"><ele>1200</ele><time>2026-09-12T06:00:00Z</time></trkpt>');
     expect(gpx.trim().endsWith('</gpx>')).toBe(true);
+  });
+
+  it('exporte un <trkseg> par morceau, sans recoller une zone masquée', () => {
+    const detail = {
+      title: 'Deux morceaux',
+      points: [],
+      traceSegments: [
+        [
+          { lat: 45.1, lng: 5.2, elevationM: 1200, timestamp: '2026-09-12T06:00:00Z' },
+          { lat: 45.11, lng: 5.21, elevationM: 1210, timestamp: '2026-09-12T06:05:00Z' },
+        ],
+        [
+          { lat: 45.12, lng: 5.22, elevationM: 1220, timestamp: '2026-09-12T06:10:00Z' },
+          { lat: 45.13, lng: 5.23, elevationM: 1230, timestamp: '2026-09-12T06:15:00Z' },
+        ],
+      ],
+    } as unknown as OutingDetail;
+
+    const gpx = buildGpx(detail);
+    expect(gpx.match(/<trkseg>/g)).toHaveLength(2);
+    expect(gpx.match(/<\/trkseg>/g)).toHaveLength(2);
+    expect(gpx).toContain('lat="45.11" lon="5.21"');
+    expect(gpx).toContain('lat="45.12" lon="5.22"');
+    expect(outingTraceSegments(detail)).toHaveLength(2);
+  });
+
+  it('ne fabrique aucun <trkseg> quand tout est masqué', () => {
+    const detail = {
+      title: 'Trace masquée',
+      points: [],
+      traceSegments: [],
+    } as unknown as OutingDetail;
+
+    expect(outingTraceSegments(detail)).toEqual([]);
+    expect(buildGpx(detail)).not.toContain('<trkseg>');
   });
 });

@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { boundsOf, extractCoords, haversineKm, projectToViewBox, traceCenter, traceLengthKm } from '../traceGeometry';
+import {
+  boundsOf,
+  extractCoords,
+  extractTraceSegments,
+  haversineKm,
+  projectToViewBox,
+  traceCenter,
+  traceLengthKm,
+} from '../traceGeometry';
 
 const LINE = {
   type: 'LineString',
@@ -24,6 +32,34 @@ describe('traceGeometry — mini tracé et recentrage', () => {
   it('ignore les points non finis et les traces absentes', () => {
     expect(extractCoords(null)).toEqual([]);
     expect(extractCoords({ coordinates: [[null, 1], 'x'] })).toEqual([]);
+  });
+
+  it('conserve les morceaux d’un MultiLineString pour la carte et le GPX', () => {
+    const segments = extractTraceSegments({
+      type: 'MultiLineString',
+      coordinates: [
+        [
+          [6.86, 45.83],
+          [6.87, 45.84],
+        ],
+        [
+          [6.9, 45.9],
+          [6.91, 45.91],
+        ],
+      ],
+    });
+    expect(segments).toEqual([
+      [
+        [45.83, 6.86],
+        [45.84, 6.87],
+      ],
+      [
+        [45.9, 6.9],
+        [45.91, 6.91],
+      ],
+    ]);
+    expect(extractTraceSegments(null)).toEqual([]);
+    expect(extractTraceSegments(LINE)).toHaveLength(1);
   });
 
   it('projette la trace dans un viewBox 66 sans sortir du cadre', () => {

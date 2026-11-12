@@ -4,7 +4,15 @@ import React, { useEffect, useState } from 'react';
 import { Check, Download, Pencil, Share2, ShieldCheck, Trash2, X } from 'lucide-react';
 import { ActionPill } from '@/components/ui/ActionPill';
 import type { OutingDetail, OutingVisibility } from '@/features/compte/server/sorties';
-import { ElevationProfile, TraceMap, formatDate, formatDuration, formatNumber } from './shared';
+import {
+  ElevationProfile,
+  TraceMap,
+  formatDate,
+  formatDuration,
+  formatNumber,
+  hasVisibleTrace,
+  visibleTraceSegments,
+} from './shared';
 
 export interface OutingSummaryProps {
   detail: OutingDetail;
@@ -39,6 +47,8 @@ export function OutingSummary({ detail, saving, onSave, onShare, onExport, onDel
   const companions = detail.participants.filter((person) => !person.isOwner);
   const showCover = Boolean(detail.coverUrl) && !coverFailed;
   const context = companions.map((person) => person.name).slice(0, 3).join(', ');
+  const segments = visibleTraceSegments(detail);
+  const hasTrace = hasVisibleTrace(detail);
 
   return (
     <div className="lkdv-sortie-summary">
@@ -52,7 +62,7 @@ export function OutingSummary({ detail, saving, onSave, onShare, onExport, onDel
             onError={() => setCoverFailed(true)}
           />
         ) : (
-          <TraceMap points={detail.points} className="lkdv-sortie-hero-map" />
+          <TraceMap segments={segments} className="lkdv-sortie-hero-map" />
         )}
         <div className="lkdv-sortie-hero-scrim" aria-hidden="true" />
         {!editing ? (
@@ -60,10 +70,10 @@ export function OutingSummary({ detail, saving, onSave, onShare, onExport, onDel
             <ActionPill tone="primary" label="Partager" icon={<Share2 />} onClick={onShare} />
             {detail.canEdit ? <ActionPill label="Modifier" icon={<Pencil />} onClick={() => setEditing(true)} /> : null}
             <ActionPill
-              label={detail.points.length < 2 ? 'Aucune trace GPS rattachée' : 'Télécharger le GPX'}
+              label={!hasTrace ? 'Aucune trace GPS rattachée' : 'Télécharger le GPX'}
               icon={<Download />}
               onClick={onExport}
-              disabled={detail.points.length < 2}
+              disabled={!hasTrace}
             />
           </div>
         ) : null}
@@ -153,7 +163,7 @@ export function OutingSummary({ detail, saving, onSave, onShare, onExport, onDel
           <b>Profil altimétrique</b>
           <span>{detail.maxAlt ? `${formatNumber(detail.maxAlt)} m au plus haut` : 'Altitudes non renseignées'}</span>
         </header>
-        <ElevationProfile points={detail.points} />
+        <ElevationProfile segments={segments} />
       </section>
 
       <section className="lkdv-sortie-section">

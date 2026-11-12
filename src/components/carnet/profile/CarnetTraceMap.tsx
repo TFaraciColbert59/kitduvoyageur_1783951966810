@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import 'leaflet/dist/leaflet.css';
 import { leafletTiles } from '@/components/map/engine/leafletTiles';
-import { extractCoords } from './traceGeometry';
+import { extractTraceSegments } from './traceGeometry';
 
 export interface CarnetTraceMapProps {
   trace: unknown;
@@ -38,7 +38,8 @@ export function CarnetTraceMap({ trace, className = '' }: CarnetTraceMapProps) {
 
     void import('leaflet').then((L) => {
       if (!mounted) return;
-      const coords = extractCoords(trace);
+      const segments = extractTraceSegments(trace).filter((segment) => segment.length >= 2);
+      const coords = segments.flat();
       const map = L.map(container, {
         center: coords[0] ?? [45.9, 6.9],
         zoom: coords.length > 0 ? 10 : 4,
@@ -53,14 +54,23 @@ export function CarnetTraceMap({ trace, className = '' }: CarnetTraceMapProps) {
       const tiles = leafletTiles('osm');
       L.tileLayer(tiles.url, { ...tiles.options, keepBuffer: 4 }).addTo(map);
 
-      if (coords.length > 0) {
-        const halo = L.polyline(coords, {
-          color: '#ffffff',
-          weight: 7,
-          opacity: 0.9,
-          lineCap: 'round',
-        }).addTo(map);
-        L.polyline(coords, { color: '#17402C', weight: 4.5, opacity: 1, lineCap: 'round' }).addTo(map);
+      if (segments.length > 0) {
+        /* Un tracé par morceau : Leaflet ne relie jamais la fin d'un morceau
+           au début du suivant, donc une zone masquée reste un trou. */
+        for (const segment of segments) {
+          L.polyline(segment, {
+            color: '#ffffff',
+            weight: 7,
+            opacity: 0.9,
+            lineCap: 'round',
+          }).addTo(map);
+          L.polyline(segment, {
+            color: '#17402C',
+            weight: 4.5,
+            opacity: 1,
+            lineCap: 'round',
+          }).addTo(map);
+        }
         L.circleMarker(coords[0], {
           radius: 6,
           color: '#fff',
@@ -76,7 +86,10 @@ export function CarnetTraceMap({ trace, className = '' }: CarnetTraceMapProps) {
           weight: 2,
         }).addTo(map);
         try {
-          map.fitBounds(halo.getBounds(), { padding: [26, 26] });
+          map.fitBounds(
+            L.latLngBounds(coords.map(([lat, lng]) => [lat, lng] as [number, number])),
+            { padding: [26, 26] }
+          );
         } catch {
           /* bounds dégénérés : la vue initiale suffit */
         }

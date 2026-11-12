@@ -13,21 +13,22 @@
  * lecture de base et aucune donnée réelle n'est nécessaire.
  *
  * Défense en profondeur : une trace ou une zone hors du domaine de calcul sûr
- * (pôle, antiméridien, zone trop grande, segment trop long) échoue fermée. Les
- * zones et les masques début/fin sont élargis de 50 m, les points publiés sont
- * arrondis à 5 décimales, puis chaque morceau est vérifié avant publication :
- * il doit rester assez long et hors des zones élargies, segment par segment.
- * Une coupure n'est jamais recollée.
+ * (pôle, antiméridien, zone trop grande, segment au-delà des bornes de découpe)
+ * échoue fermée. Les zones et les masques début/fin sont élargis de 50 m, les
+ * points publiés sont arrondis à 5 décimales, puis chaque morceau est vérifié
+ * avant publication : il doit rester assez long et hors des zones élargies,
+ * segment par segment. Une coupure n'est jamais recollée.
  *
  * Domaine géométrique couvert : chaque segment de la trace mesure au plus
  * `MAX_SAFE_SEGMENT_M` (2 km) et son arc orthodromique reste dans
  * `|lat| <= MAX_SAFE_ABS_LAT` (85°) sans traverser l'antiméridien. Sur un
  * segment de 2 km, l'écart entre l'arc géodésique et la corde interpolée en
  * lng/lat reste inférieur à ~2 m, très en dessous de la marge de 50 m. Un
- * segment plus long est refusé (`unsafe_geometry`) au lieu d'être projeté avec
- * une hypothèse locale fausse. Les cercles privés sont intersectés sur la
- * sphère (et non par projection locale), donc la taille de la zone n'introduit
- * pas d'erreur supplémentaire.
+ * segment plus long est d'abord découpé le long de la polyligne source, puis
+ * chaque sous-segment est contrôlé ; au-delà de 512 découpes ou 20 000 points
+ * ajoutés, la trace échoue fermée (`unsafe_geometry`). Les cercles privés sont
+ * intersectés sur la sphère (et non par projection locale), donc la taille de
+ * la zone n'introduit pas d'erreur supplémentaire.
  *
  * En cas d'entrée douteuse, le projecteur échoue fermé : il ne rend aucune
  * géométrie plutôt que de risquer de divulguer une portion masquée.
@@ -95,10 +96,17 @@ const MAX_SAFE_ANTIMERIDIAN_SPAN_DEG = 180;
 const MAX_SAFE_ZONE_RADIUS_M = 100_000;
 /**
  * Longueur maximale d'un segment pour que l'arc géodésique reste à moins de
- * ~2 m de la corde interpolée en lng/lat, même à 85° de latitude. Au-delà, la
- * géométrie n'est pas couverte par la projection locale : elle échoue fermée.
+ * ~2 m de la corde interpolée en lng/lat, même à 85° de latitude. Un segment
+ * plus long est découpé le long de la polyligne source avant la projection :
+ * la géométrie rendue reste celle des coordonnées d'origine, et chaque
+ * sous-segment reste dans le domaine de calcul sûr. Au-delà des bornes de
+ * découpe ci-dessous, la trace échoue fermée.
  */
 const MAX_SAFE_SEGMENT_M = 2_000;
+/** Au-delà de 512 découpes (environ 1 000 km), la trace échoue fermée. */
+const MAX_SEGMENT_SPLITS = 512;
+/** Plafond de points ajoutés par la densification, pour borner le travail. */
+const MAX_DENSIFIED_POINTS = 20_000;
 
 /** Marge volontairement perdue autour d'une zone privée (mètres). */
 const ZONE_SAFETY_MARGIN_M = 50;
@@ -258,6 +266,62 @@ function readPoints(value: unknown): TracePoint[] | null {
   }
 
   return points.length >= 2 ? points : null;
+}
+
+/**
+ * Découpe les segments plus longs que `MAX_SAFE_SEGMENT_M` le long de la
+ * polyligne source (interpolation lng/lat). C'est la géométrie réellement
+ * affichée et exportée : on ne remplace pas un trou GPS par un arc
+ * orthodromique différent. Chaque sous-segment reste dans le domaine sûr, et
+ * les masques sont appliqués après découpe, donc une zone traversée reste
+ * coupée.
+ *
+ * Rend `null` si un segment traverse l'antiméridien ou dépasse les bornes de
+ * découpe : mieux vaut échouer fermé que produire une trace non couverte.
+ */
+function densifyLongSegments(points: TracePoint[]): TracePoint[] | null {
+  const out: TracePoint[] = [points[0]];
+  let added = 0;
+  for (let index = 0; index < points.length - 1; index += 1) {
+    const a = points[index];
+    const b = points[index + 1];
+    const length = haversineM(a, b);
+    if (Number.isFinite(length) && length > MAX_SAFE_SEGMENT_M) {
+      if (Math.abs(b.lng - a.lng) >= MAX_SAFE_ANTIMERIDIAN_SPAN_DEG) return null;
+      /*
+       * Longueur maximale de la polyligne interpolée en lng/lat, majorée par
+       * la métrique au plus petit |lat| (où cos(lat) est le plus grand). Le
+       * grand cercle sous-estime cette longueur aux hautes latitudes : s'y
+       * fier produirait des sous-segments encore > 2 km, refusés par le
+       * contrôle de sûreté que la découpe est censée satisfaire. Si le segment
+       * traverse l'équateur, cos(lat) y vaut 1 : le minimum des deux extrémités
+       * ne majore plus la longueur, il faut prendre la métrique de l'équateur.
+       */
+      const latSpan = Math.abs(b.lat - a.lat) * DEG_TO_RAD;
+      const lngSpan = Math.abs(b.lng - a.lng) * DEG_TO_RAD;
+      const minAbsLat = a.lat * b.lat <= 0 ? 0 : Math.min(Math.abs(a.lat), Math.abs(b.lat));
+      const pathUpperM =
+        EARTH_RADIUS_M * Math.hypot(latSpan, Math.cos(minAbsLat * DEG_TO_RAD) * lngSpan);
+      const steps = Math.ceil(pathUpperM / (MAX_SAFE_SEGMENT_M * 0.999));
+      if (!Number.isFinite(steps) || steps < 2 || steps > MAX_SEGMENT_SPLITS) return null;
+      for (let step = 1; step < steps; step += 1) {
+        const t = step / steps;
+        out.push({
+          lng: a.lng + (b.lng - a.lng) * t,
+          lat: a.lat + (b.lat - a.lat) * t,
+        });
+      }
+      added += steps - 1;
+    }
+    out.push(b);
+    /*
+     * Le plafond borne les points **ajoutés** par la découpe, pas la longueur
+     * d'une trace déjà dense : une trace de 30 000 points sans trou GPS reste
+     * valide, seules les découpes excessives échouent fermées.
+     */
+    if (added > MAX_DENSIFIED_POINTS) return null;
+  }
+  return out;
 }
 
 type Vec3 = readonly [x: number, y: number, z: number];
@@ -712,7 +776,8 @@ function projectShareableTraceInternal(
   if (!parsedPoints) {
     return emptyProjection(inputPointCount, 'invalid_points', masked);
   }
-  if (!isSafeGeometry(parsedPoints)) {
+  const densifiedPoints = densifyLongSegments(parsedPoints);
+  if (!densifiedPoints || !isSafeGeometry(densifiedPoints)) {
     return emptyProjection(inputPointCount, 'unsafe_geometry', masked);
   }
 
@@ -721,7 +786,7 @@ function projectShareableTraceInternal(
     return emptyProjection(inputPointCount, parsedMasks.error, masked);
   }
 
-  const cumulative = cumulativeDistancesM(parsedPoints);
+  const cumulative = cumulativeDistancesM(densifiedPoints);
   const totalDistance = cumulative[cumulative.length - 1] ?? 0;
   if (!Number.isFinite(totalDistance) || totalDistance <= EPSILON) {
     return emptyProjection(inputPointCount, 'unsafe_geometry', masked);
@@ -729,9 +794,9 @@ function projectShareableTraceInternal(
 
   const pieces: Piece[] = [];
 
-  for (let index = 0; index < parsedPoints.length - 1; index += 1) {
-    const a = parsedPoints[index];
-    const b = parsedPoints[index + 1];
+  for (let index = 0; index < densifiedPoints.length - 1; index += 1) {
+    const a = densifiedPoints[index];
+    const b = densifiedPoints[index + 1];
     const startDistance = cumulative[index];
     const segmentLength = cumulative[index + 1] - startDistance;
     if (segmentLength <= EPSILON) continue;

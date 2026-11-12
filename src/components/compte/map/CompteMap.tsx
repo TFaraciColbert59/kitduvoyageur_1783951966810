@@ -23,7 +23,7 @@ import { filterTracksForMode, mapModeConfig } from '@/features/compte/map/modes'
 import { resolveMapZoomConfig, type MapZoomBand } from '@/features/compte/map/zoomHierarchy';
 import {
   boundsOf as boundsOfPoints,
-  parsePositions,
+  parseTraceSegments,
   simplifyTrack,
 } from '@/features/compte/map/geometry';
 import type {
@@ -141,23 +141,20 @@ function pointsCollection(rows: Array<{ id: string; position: TrackPoint; import
   };
 }
 
-/** Tracé d'un carnet public : une seule ligne, même matière que les traces du compte. */
-function carnetTraceCollection(points: TrackPoint[]) {
+/** Tracé d'un carnet public : un Feature par morceau, jamais recollé. */
+function carnetTraceCollection(segments: TrackPoint[][]) {
   return {
     type: 'FeatureCollection' as const,
-    features:
-      points.length >= 2
-        ? [
-            {
-              type: 'Feature' as const,
-              properties: { id: 'carnet-trace' },
-              geometry: {
-                type: 'LineString' as const,
-                coordinates: points.map((point) => [point.lng, point.lat]),
-              },
-            },
-          ]
-        : [],
+    features: segments
+      .filter((segment) => segment.length >= 2)
+      .map((segment, index) => ({
+        type: 'Feature' as const,
+        properties: { id: `carnet-trace-${index}` },
+        geometry: {
+          type: 'LineString' as const,
+          coordinates: segment.map((point) => [point.lng, point.lat]),
+        },
+      })),
   };
 }
 
@@ -329,12 +326,20 @@ export function CompteMap({
     }
   }, [map, ready, tileMode]);
 
-  /* Fiche carnet : la carte ne montre que le tracé du carnet. */
+  /* Fiche carnet : la carte ne montre que le tracé du carnet. Un
+     MultiLineString reste une liste de morceaux ; on ne l'aplatit jamais en
+     une seule ligne, sinon une zone masquée serait recollée à l'écran. */
   const isCarnet = variant === 'carnet';
-  const tracePoints = useMemo(
-    () => (isCarnet ? simplifyTrack(parsePositions(trace)) : []),
+  const traceSegments = useMemo(
+    () =>
+      isCarnet
+        ? parseTraceSegments(trace)
+            .map((segment) => simplifyTrack(segment, 120))
+            .filter((segment) => segment.length >= 2)
+        : [],
     [isCarnet, trace]
   );
+  const tracePoints = useMemo(() => traceSegments.flat(), [traceSegments]);
   const traceBounds = useMemo(
     () => (tracePoints.length >= 2 ? boundsOfPoints(tracePoints) : null),
     [tracePoints]
@@ -686,7 +691,7 @@ export function CompteMap({
     ensureSource(
       map,
       'compte-carnet-trace',
-      carnetTraceCollection(tracePoints) as ReturnType<typeof tracksCollection>
+      carnetTraceCollection(traceSegments) as ReturnType<typeof tracksCollection>
     );
     ensureLayer(map, 'compte-carnet-trace-casing', () => {
       map.addLayer({
@@ -728,7 +733,7 @@ export function CompteMap({
     ]) {
       if (map.getLayer(layer)) map.setLayoutProperty(layer, 'visibility', visible);
     }
-  }, [map, ready, isCarnet, tracePoints]);
+  }, [map, ready, isCarnet, traceSegments, tracePoints.length]);
 
   /* Cadrage du tracé du carnet : le parcours remplit la bande carte, en 3D
      (même inclinaison que la carte d'une sortie du Compte). */
