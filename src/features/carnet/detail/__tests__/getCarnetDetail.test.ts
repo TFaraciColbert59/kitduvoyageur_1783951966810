@@ -10,6 +10,8 @@ const STATE = vi.hoisted(() => ({
   sessions: [] as Array<Record<string, unknown>>,
   participants: [] as Array<Record<string, unknown>>,
   follows: false,
+  /** Propriétaire réellement suivi quand `follows` est vrai. */
+  followingId: 'u1',
   serviceEnabled: true,
   serviceCalls: 0,
 }));
@@ -41,9 +43,14 @@ vi.mock('@/lib/supabase/server', () => ({
           return { data: STATE.participants, error: null };
         }
         if (table === 'user_follows') {
-          return STATE.follows
-            ? { data: { follower_id: STATE.viewerId }, error: null }
-            : { data: null, error: null };
+          const rows = STATE.follows
+            ? [{ following_id: STATE.followingId }]
+            : [];
+          return single
+            ? rows.length > 0
+              ? { data: { follower_id: STATE.viewerId }, error: null }
+              : { data: null, error: null }
+            : { data: rows, error: null };
         }
         return { data: [], error: null, count: 0 };
       };
@@ -193,6 +200,7 @@ beforeEach(() => {
   STATE.rlsSessions = [];
   STATE.participants = [];
   STATE.follows = false;
+  STATE.followingId = 'u1';
   STATE.serviceEnabled = true;
   STATE.serviceCalls = 0;
 });
@@ -309,7 +317,7 @@ describe('getCarnetDetail — visibilité effective des traces', () => {
     expect(detail?.elevationM).toBe(600);
   });
 
-  it('ne donne pas la trace d’une autre sortie au participant d’une sortie', async () => {
+  it('choisit la trace autorisée du participant, pas la sortie privée plus récente', async () => {
     STATE.viewerId = 'u3';
     STATE.sessions = [
       session({ id: 's2', started_at: '2026-09-27T06:00:00Z' }),
@@ -326,14 +334,88 @@ describe('getCarnetDetail — visibilité effective des traces', () => {
 
     const detail = await getCarnetDetail('c1');
 
-    /* La trace exposée est celle de s2 ; u3 n'y a pas participé. */
-    expect(detail?.trace).toBeNull();
-    expect(detail?.traceMasked).toBe(true);
-    expect(detail?.traceFullyMasked).toBe(true);
+    /* s2 est privée et n'appartient pas au participant : elle ne décide plus
+       du masque. La trace autorisée de s1 reste visible (F5). */
+    expect(detail?.trace).toEqual(TRACE);
+    expect(detail?.traceMasked).toBe(false);
+    expect(detail?.traceFullyMasked).toBe(false);
     expect(detail?.viewerRole).toBe('visitor');
     /* Seule la sortie s1, autorisée, alimente les jours. */
     expect(detail?.days.map((day) => day.date)).toEqual(['2026-09-26']);
     expect(detail?.days[0].points).toHaveLength(2);
+  });
+
+  it('préfère la trace brute du lecteur à une sortie partageable plus récente', async () => {
+    STATE.viewerId = 'u3';
+    STATE.sessions = [
+      session({
+        id: 's2',
+        user_id: 'u1',
+        visibility: 'collective_anonymized',
+        started_at: '2026-09-27T06:00:00Z',
+      }),
+      session({
+        id: 's1',
+        user_id: 'u3',
+        visibility: 'private',
+        started_at: '2026-09-26T06:00:00Z',
+      }),
+    ];
+
+    const detail = await getCarnetDetail('c1');
+
+    /* s2 est partageable et plus récente, mais la trace brute de u3 (s1) est
+       prioritaire : elle n'est pas remplacée par celle d'un tiers. */
+    expect(detail?.trace).toEqual(TRACE);
+    expect(detail?.traceMasked).toBe(false);
+    expect(detail?.traceFullyMasked).toBe(false);
+  });
+
+  it('ne déduit pas le rôle follower du seul rôle éditeur du carnet', async () => {
+    STATE.viewerId = 'u3';
+    STATE.carnet = { ...STATE.carnet, author_id: 'u3', visibility: 'friends' };
+    STATE.sessions = [
+      session({
+        id: 's1',
+        user_id: 'u2',
+        visibility: 'collective_anonymized',
+        started_at: '2026-09-26T06:00:00Z',
+      }),
+    ];
+    STATE.follows = false;
+
+    const detail = await getCarnetDetail('c1');
+
+    /* u3 est auteur du carnet mais ne suit pas u2, propriétaire de la trace :
+       aucune relation vérifiée, donc aucune trace (F6). */
+    expect(detail?.viewerRole).toBe('participant');
+    expect(detail?.trace).toBeNull();
+    expect(detail?.traceMasked).toBe(true);
+    expect(detail?.traceFullyMasked).toBe(true);
+  });
+
+  it('accorde follower à l’éditeur qui suit réellement le propriétaire de la trace', async () => {
+    STATE.viewerId = 'u3';
+    STATE.carnet = { ...STATE.carnet, author_id: 'u3', visibility: 'friends' };
+    STATE.sessions = [
+      session({
+        id: 's1',
+        user_id: 'u2',
+        visibility: 'collective_anonymized',
+        started_at: '2026-09-26T06:00:00Z',
+      }),
+    ];
+    STATE.follows = true;
+    STATE.followingId = 'u2';
+
+    const detail = await getCarnetDetail('c1');
+
+    /* La relation est vérifiée avec u2, propriétaire de la sortie — pas avec
+       l'auteur du carnet. */
+    expect(detail?.viewerRole).toBe('participant');
+    expect(detail?.trace).not.toBeNull();
+    expect(detail?.traceMasked).toBe(true);
+    expect(detail?.traceFullyMasked).toBe(false);
   });
 
   it('lit les sorties avec le client service_role quand la RLS les cache', async () => {

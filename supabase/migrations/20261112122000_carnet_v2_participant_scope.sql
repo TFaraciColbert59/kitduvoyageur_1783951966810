@@ -13,6 +13,11 @@
 -- politique de partage). Les ÉCRITURES et la lecture des positions exactes
 -- d'autrui sont, elles, réservées à l'éditeur (auteur ou collaborateur
 -- owner/contributor).
+--
+-- Cette migration ferme aussi les policies historiques qui rendaient ce
+-- contrôle illusoire : auto-promotion dans `carnet_collaborators`, écriture de
+-- moments par tout authentifié, et lectures publiques `USING (true)` des
+-- moments et du kit.
 
 create or replace function public.is_carnet_editor(p_carnet uuid)
 returns boolean
@@ -67,6 +72,137 @@ grant execute on function public.is_carnet_participant(uuid) to authenticated, a
 
 comment on function public.is_carnet_participant(uuid) is
   'Lecture du carnet : éditeur ou participant inscrit à une sortie liée. Ne confère aucun droit d''écriture ni de lecture des positions exactes d''autrui.';
+
+-- ---------------------------------------------------------------------------
+-- 1. Collaborateurs : l'auteur du carnet est le seul à distribuer les rôles.
+--
+-- `carnet_collab_manage` (historique) autorisait tout utilisateur authentifié
+-- à insérer ou modifier SA ligne avec n'importe quel `carnet_id` et n'importe
+-- quel rôle. Un tiers devenait donc `contributor`/`owner` de n'importe quel
+-- carnet, ce qui rendait `is_carnet_editor` inopérant et ouvrait les positions
+-- live exactes. On retire cette policy et les deux lectures publiques
+-- historiques, puis on réserve INSERT/UPDATE/DELETE à l'auteur du carnet.
+-- `carnet_collaborators_read_scoped` reste l'unique policy de lecture.
+-- ---------------------------------------------------------------------------
+drop policy if exists carnet_collab_manage on public.carnet_collaborators;
+drop policy if exists carnet_collab_read on public.carnet_collaborators;
+drop policy if exists "Public read carnet_collaborators" on public.carnet_collaborators;
+
+-- Le baseline de production porte `carnet_collaborators_read_scoped`, mais
+-- aucune migration ne la crée. On la (re)crée ici pour qu'une base reconstruite
+-- depuis les migrations ne se retrouve pas sans aucune lecture après la
+-- suppression des deux policies publiques ci-dessus.
+drop policy if exists carnet_collaborators_read_scoped on public.carnet_collaborators;
+create policy carnet_collaborators_read_scoped on public.carnet_collaborators
+  for select
+  using (
+    exists (
+      select 1 from public.carnets c
+      where c.id = carnet_collaborators.carnet_id
+        and (
+          c.visibility = 'public'
+          or c.author_id = (select auth.uid())
+        )
+    )
+    or user_id = (select auth.uid())
+  );
+
+drop policy if exists carnet_collaborators_author_insert on public.carnet_collaborators;
+create policy carnet_collaborators_author_insert on public.carnet_collaborators
+  for insert to authenticated
+  with check (
+    exists (
+      select 1 from public.carnets c
+      where c.id = carnet_id and c.author_id = (select auth.uid())
+    )
+  );
+
+drop policy if exists carnet_collaborators_author_update on public.carnet_collaborators;
+create policy carnet_collaborators_author_update on public.carnet_collaborators
+  for update to authenticated
+  using (
+    exists (
+      select 1 from public.carnets c
+      where c.id = carnet_id and c.author_id = (select auth.uid())
+    )
+  )
+  with check (
+    exists (
+      select 1 from public.carnets c
+      where c.id = carnet_id and c.author_id = (select auth.uid())
+    )
+  );
+
+drop policy if exists carnet_collaborators_author_delete on public.carnet_collaborators;
+create policy carnet_collaborators_author_delete on public.carnet_collaborators
+  for delete to authenticated
+  using (
+    exists (
+      select 1 from public.carnets c
+      where c.id = carnet_id and c.author_id = (select auth.uid())
+    )
+  );
+
+comment on policy carnet_collaborators_author_insert on public.carnet_collaborators is
+  'Seul l''auteur du carnet invite un collaborateur. Un tiers ne peut pas s''auto-insérer.';
+comment on policy carnet_collaborators_author_update on public.carnet_collaborators is
+  'Seul l''auteur du carnet change un rôle. Un collaborateur ne peut pas se promouvoir.';
+comment on policy carnet_collaborators_author_delete on public.carnet_collaborators is
+  'Seul l''auteur du carnet retire un collaborateur.';
+
+-- ---------------------------------------------------------------------------
+-- 2. Retirer les policies de lecture historiques `USING (true)`.
+--
+-- `20260728160000_fix_permissive_rls_policies.sql` a recréé
+-- `public_read_carnet_moments` et `public_read_carnet_kit_items`, que
+-- `20260911550000_phase8_rls_hardening.sql` n'a pas supprimées (elle ne visait
+-- que les variantes `seed_*`). Sur une base reconstruite depuis les migrations,
+-- `anon` pouvait donc lire tous les moments et tout le kit, y compris privés.
+-- Les policies scopées `carnet_moments_read_scoped` et
+-- `carnet_kit_items_read_scoped` restent l'autorité de lecture.
+--
+-- `auth_manage_carnet_moments` autorisait par ailleurs tout utilisateur
+-- authentifié à écrire un moment dont il est l'auteur, sans contrôle du carnet.
+-- Elle se cumulait avec `carnet_moments_editor_manage` et vidait ce dernier de
+-- son sens. On la retire : seul l'éditeur du carnet écrit un moment.
+-- ---------------------------------------------------------------------------
+drop policy if exists public_read_carnet_moments on public.carnet_moments;
+drop policy if exists public_read_carnet_kit_items on public.carnet_kit_items;
+drop policy if exists seed_public_read_carnet_moments on public.carnet_moments;
+drop policy if exists seed_public_read_carnet_kit_items on public.carnet_kit_items;
+drop policy if exists auth_manage_carnet_moments on public.carnet_moments;
+
+-- Même raison que pour les collaborateurs : `carnet_moments_read_scoped` et
+-- `carnet_kit_items_read_scoped` ne vivent que dans le baseline, pas dans la
+-- chaîne de migrations. On les (re)crée pour qu'un replay complet garde une
+-- lecture scopée des carnets publics et de l'auteur.
+drop policy if exists carnet_moments_read_scoped on public.carnet_moments;
+create policy carnet_moments_read_scoped on public.carnet_moments
+  for select
+  using (
+    exists (
+      select 1 from public.carnets c
+      where c.id = carnet_moments.carnet_id
+        and (
+          c.visibility = 'public'
+          or c.author_id = (select auth.uid())
+        )
+    )
+  );
+
+drop policy if exists carnet_kit_items_read_scoped on public.carnet_kit_items;
+create policy carnet_kit_items_read_scoped on public.carnet_kit_items
+  for select
+  using (
+    exists (
+      select 1 from public.carnets c
+      where c.id = carnet_kit_items.carnet_id
+        and (
+          c.visibility = 'public'
+          or c.author_id = (select auth.uid())
+        )
+    )
+  );
 
 -- Écritures du kit : l'éditeur seulement (l'ancienne policy s'appelait
 -- `carnet_kit_items_participant_manage` et laissait passer tout participant).

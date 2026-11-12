@@ -104,6 +104,7 @@ describe('buildCarnetDetail — statistiques', () => {
           started_at: '2026-09-27T05:00:00Z',
           positions_geojson: null,
         },
+        rawSessionIds: ['recent'],
         trace,
       }),
     );
@@ -115,6 +116,35 @@ describe('buildCarnetDetail — statistiques', () => {
   it('ne rend aucune trace quand la base n’en porte aucune', () => {
     const detail = buildCarnetDetail(input({ trace: null }));
     expect(detail.trace).toBeNull();
+  });
+
+  it('fail-closed sans rawSessionIds : aucune sortie ne fournit trace ni statistiques', () => {
+    const detail = buildCarnetDetail(
+      input({
+        viewerId: 'u1',
+        hikeSession: {
+          id: 'h1',
+          carnet_id: 'c1',
+          distance_km: 999,
+          elevation_gain_m: 9999,
+          duration_seconds: 3600,
+          started_at: '2026-09-26T06:00:00Z',
+          positions_geojson: {
+            type: 'LineString',
+            coordinates: [
+              [6.86, 45.83],
+              [6.87, 45.84],
+            ],
+          },
+        },
+      }),
+    );
+
+    expect(detail.trace).toBeNull();
+    expect(detail.distanceKm).toBe(106.4);
+    expect(detail.elevationM).toBe(2002);
+    expect(detail.days).toEqual([]);
+    expect(detail.elevationProfile).toEqual([]);
   });
 
   it('préfère la trace GPS aux colonnes du carnet', () => {
@@ -129,6 +159,7 @@ describe('buildCarnetDetail — statistiques', () => {
           started_at: '2026-09-26T06:00:00Z',
           positions_geojson: { type: 'LineString', coordinates: [] },
         },
+        rawSessionIds: ['h1'],
       }),
     );
     expect(detail.distanceKm).toBe(118.2);
@@ -256,6 +287,7 @@ describe('buildCarnetDetail — jours dérivés et totaux', () => {
           sortie('s2', '2026-09-27T06:00:00Z', [[6.9, 45.85], [6.91, 45.86]]),
           sortie('s1', '2026-09-26T06:00:00Z', [[6.86, 45.83], [6.87, 45.84]]),
         ],
+        rawSessionIds: ['s2', 's1'],
       }),
     );
 
@@ -273,7 +305,11 @@ describe('buildCarnetDetail — jours dérivés et totaux', () => {
 
   it('retombe sur la sortie la plus récente quand aucune liste n’est fournie', () => {
     const detail = buildCarnetDetail(
-      input({ hikeSession: sortie('s1', '2026-09-26T06:00:00Z', [[6.86, 45.83], [6.87, 45.84]]) }),
+      input({
+        viewerId: 'u1',
+        hikeSession: sortie('s1', '2026-09-26T06:00:00Z', [[6.86, 45.83], [6.87, 45.84]]),
+        rawSessionIds: ['s1'],
+      }),
     );
     expect(detail.days.map((day) => day.index)).toEqual([1]);
     /* La trace de la fiche reste celle de la sortie : elle n'est pas remplacée. */
@@ -423,6 +459,7 @@ describe('buildCarnetDetail — lieu réel', () => {
           started_at: '2026-09-26T08:00:00Z',
           positions_geojson: { type: 'LineString', coordinates: [[6.86, 45.83], [6.87, 45.84]] },
         },
+        rawSessionIds: ['h1'],
       }),
     );
     expect(detail.place.lat).toBeCloseTo(45.83, 6);

@@ -172,23 +172,15 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
    * statistiques et le profil altimétrique. Une sortie privée d'autrui est
    * entièrement écartée ; une sortie explicitement partageable mais non
    * autorisée ne fournit que ses métadonnées agrégées (date, durée), jamais ses
-   * coordonnées. Sans `rawSessionIds` explicite, on retombe sur l'ancien
-   * comportement du builder pur : toutes les sorties pour un non-visiteur,
-   * aucune pour un visiteur.
+   * coordonnées.
+   *
+   * `rawSessionIds` est fail-closed : absent, il vaut liste vide. Un futur
+   * appelant qui oublierait la liste ne rouvre donc pas les points GPS, les
+   * statistiques ni le profil d'une sortie d'autrui (F8).
    */
-  const hasExplicitRawSessionIds = input.rawSessionIds !== undefined;
   const rawSessionIds = new Set(input.rawSessionIds ?? []);
   const isRawSession = (session: HikeSessionRow) => rawSessionIds.has(session.id);
-  /*
-   * Sans liste explicite, le builder pur garde son comportement historique
-   * (toutes les sorties pour la fiche, aucune pour un visiteur). Dès que
-   * `getCarnetDetail` fournit `rawSessionIds`, la règle par sortie s'applique.
-   */
-  const statsSession = hasExplicitRawSessionIds
-    ? hikeSession && isRawSession(hikeSession)
-      ? hikeSession
-      : null
-    : hikeSession;
+  const statsSession = hikeSession && isRawSession(hikeSession) ? hikeSession : null;
   const distanceKm = toNumber(statsSession?.distance_km) ?? toNumber(carnet.distance_km);
   const elevationM = toNumber(statsSession?.elevation_gain_m) ?? toNumber(carnet.denivele_m);
   const rawSessions = sessions.filter(isRawSession);
@@ -202,20 +194,14 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
       positions_geojson: null,
       positions_timed: null,
     }));
-  const daySessions = hasExplicitRawSessionIds
-    ? [...rawSessions, ...metadataOnlySessions]
-    : sessions;
+  const daySessions = [...rawSessions, ...metadataOnlySessions];
   /*
    * Le profil construit depuis `positions_timed` contient les coordonnées
    * brutes du départ et de l'arrivée : il ne peut venir que d'une sortie
    * explicitement autorisée. Pour les autres lecteurs, `enrichCarnetElevation`
    * le reconstruit ensuite depuis la trace déjà projetée.
    */
-  const elevationProfile = hasExplicitRawSessionIds
-    ? pickElevationProfile(rawSessions)
-    : isVisitor
-      ? []
-      : pickElevationProfile(sessions);
+  const elevationProfile = pickElevationProfile(rawSessions);
   const builtDays = buildDays({
     moments: input.moments,
     sessions: daySessions,
@@ -256,8 +242,7 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
      fin sont masqués — ou toute la trace si elle n'est pas explicitement
      partageable. La projection est calculée une seule fois pour exposer aussi
      son état (masquée, totalement masquée, erreur). */
-  const canUseHikeSessionTrace =
-    !hasExplicitRawSessionIds || (hikeSession ? rawSessionIds.has(hikeSession.id) : false);
+  const canUseHikeSessionTrace = hikeSession ? rawSessionIds.has(hikeSession.id) : false;
   const rawTrace =
     input.trace ?? (canUseHikeSessionTrace ? (hikeSession?.positions_geojson ?? null) : null);
   const traceVisibility = input.traceVisibility ?? carnet.visibility;
@@ -269,20 +254,16 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
         )
       : null;
   const trace = needsTraceProjection ? (projectedTrace?.geometry ?? null) : rawTrace;
-  const traceMasked = projectedTrace?.masked ?? false;
-  const traceFullyMasked = projectedTrace?.fullyMasked ?? false;
+  const traceWithheld = input.traceWithheld === true;
+  const traceMasked = projectedTrace?.masked ?? traceWithheld;
+  const traceFullyMasked = projectedTrace?.fullyMasked ?? traceWithheld;
   const traceError = projectedTrace?.error ?? null;
   /*
-   * Avec `rawSessionIds`, les points de jour sont déjà filtrés par
-   * `daySessions` : une sortie non autorisée n'a livré ni point ni segment.
-   * Plus de masquage global par `isVisitor`, qui privait aussi le participant
-   * de sa propre trace. Sans liste explicite, on conserve le masquage
-   * historique du builder pur.
+   * Les points de jour sont déjà filtrés par `daySessions` : une sortie non
+   * autorisée n'a livré ni point ni segment. Plus de masquage global par
+   * `isVisitor`, qui privait aussi le participant de sa propre trace.
    */
-  const viewerDays =
-    !hasExplicitRawSessionIds && isVisitor
-      ? days.map((day) => ({ ...day, points: [], segments: [] }))
-      : days;
+  const viewerDays = days;
 
   const nights: CarnetNightItem[] =
     input.nights && input.nights.length > 0

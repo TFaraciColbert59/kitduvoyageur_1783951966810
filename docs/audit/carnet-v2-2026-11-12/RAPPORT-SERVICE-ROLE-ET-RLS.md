@@ -2,6 +2,11 @@
 
 Date : 2026-11-12 · Worktree : `lkdv-p01-trace` · Base : `191d29e`
 
+> **Mise à jour — revue de `eff7db1`.** Les constats F1 à F6 et F8 sont traités
+> dans `RAPPORT-PRIVACY-CRITIQUE-EFF7DB1.md`. En particulier, `rawSessionIds`
+> n'est plus optionnel avec un repli historique : il est fail-closed (absent =
+> liste vide), et les migrations `121210`/`121220` ont été durcies.
+
 Périmètre : les constats de sécurité de la revue
 `work/lkdv-p01-trace-rls-review.jsonl` — fuite des coordonnées et métadonnées
 privées dans `days`/`segments`/`elevationProfile`, droits RLS trop larges du
@@ -53,8 +58,8 @@ durée, distance) de la sortie privée fuyaient aussi dans `summary`/`stats`.
     sortie autorisée, repli sur les colonnes du carnet ;
   - le masquage global `isVisitor` des jours est supprimé : il privait aussi le
     participant de sa propre trace. Le filtrage est désormais par sortie.
-- Sans `rawSessionIds`, le builder pur garde son comportement historique ; c'est
-  `getCarnetDetail`, seul chemin de production, qui fournit toujours la liste.
+- `rawSessionIds` est désormais fail-closed : absent, il vaut liste vide. Aucun
+  appelant ne peut rouvrir les points, statistiques ou le profil par omission.
 
 ### Effet produit assumé
 

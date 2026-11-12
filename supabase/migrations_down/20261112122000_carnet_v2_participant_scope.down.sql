@@ -1,10 +1,47 @@
 -- Rollback de 20261112122000_carnet_v2_participant_scope.sql
 --
 -- AVERTISSEMENT : ce down RESTAURE les droits élargis du participant de
--- sortie (écriture moments/kit/nuits, lecture de toutes les positions live).
+-- sortie (écriture moments/kit/nuits, lecture de toutes les positions live)
+-- ET les policies historiques permissives : auto-promotion dans
+-- `carnet_collaborators`, écriture de moments par tout authentifié, lectures
+-- publiques `USING (true)` des moments et du kit. Ce n'est pas un rollback
+-- neutre : il rouvre les failles F1, F2 et F4 de la revue de `eff7db1`.
 -- À n'exécuter qu'avec le revert applicatif et une décision produit explicite.
 -- L'état restauré est celui du dépôt avant cette migration, pas forcément
 -- celui de la production.
+
+-- 0. Restaurer les policies permissives historiques (rouvre F1/F2/F4).
+drop policy if exists carnet_collaborators_author_insert on public.carnet_collaborators;
+drop policy if exists carnet_collaborators_author_update on public.carnet_collaborators;
+drop policy if exists carnet_collaborators_author_delete on public.carnet_collaborators;
+
+drop policy if exists carnet_collab_manage on public.carnet_collaborators;
+create policy carnet_collab_manage on public.carnet_collaborators
+  for all to authenticated
+  using (user_id = (select auth.uid()))
+  with check (user_id = (select auth.uid()));
+
+drop policy if exists carnet_collab_read on public.carnet_collaborators;
+create policy carnet_collab_read on public.carnet_collaborators
+  for select to public using (true);
+
+drop policy if exists "Public read carnet_collaborators" on public.carnet_collaborators;
+create policy "Public read carnet_collaborators" on public.carnet_collaborators
+  for select using (true);
+
+drop policy if exists auth_manage_carnet_moments on public.carnet_moments;
+create policy auth_manage_carnet_moments on public.carnet_moments
+  for all to authenticated
+  using ((select auth.uid()) = auteur_id)
+  with check ((select auth.uid()) = auteur_id);
+
+drop policy if exists public_read_carnet_moments on public.carnet_moments;
+create policy public_read_carnet_moments on public.carnet_moments
+  for select to public using (true);
+
+drop policy if exists public_read_carnet_kit_items on public.carnet_kit_items;
+create policy public_read_carnet_kit_items on public.carnet_kit_items
+  for select to public using (true);
 
 -- 1. Restaurer les policies d'écriture historiques.
 drop policy if exists carnet_kit_items_editor_manage on public.carnet_kit_items;

@@ -5,7 +5,7 @@ import { buildCarnetDetail } from './buildCarnetDetail';
 import { enrichCarnetElevation } from './enrichElevation';
 import { pickCarnetTraceSession } from './trace';
 import {
-  isFollowerTraceVisibility,
+  isShareableTraceVisibility,
   mostRestrictiveTraceVisibility,
 } from '@/features/compte/server/tracePrivacy';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
@@ -342,66 +342,99 @@ export async function getCarnetDetail(id: string) {
     )
     .map((session) => session.id);
   const statsSession = sessions.find((session) => rawSessionIds.includes(session.id)) ?? null;
+  const rawSessionIdSet = new Set(rawSessionIds);
 
   /*
-   * La trace se juge par session, pas par carnet : le participant de la sortie
-   * qui porte le tracé garde sa trace complète ; le participant d'une autre
-   * sortie ne devient pas participant de tout le carnet.
+   * Visibilité effective d'une sortie : la plus restrictive du carnet et de la
+   * sortie. Un carnet `friends` ne rend jamais une sortie `private` lisible ;
+   * une sortie `collective_anonymized` dans un carnet `public` reste publique.
    */
-  const traceSession = pickCarnetTraceSession(sessions);
-  const isSessionOwner = Boolean(
-    viewerId && traceSession?.user_id && traceSession.user_id === viewerId,
+  const effectiveSessionVisibility = (session: HikeSessionRow) =>
+    mostRestrictiveTraceVisibility(carnet.visibility, session.visibility);
+
+  /*
+   * La trace se juge par session, pas par carnet. On ne choisit la sortie
+   * porteuse que parmi celles que le lecteur peut réellement voir :
+   *  - sortie brute autorisée (propriétaire ou participant inscrit) ;
+   *  - sortie explicitement partageable (`public`, `collective_anonymized`) ;
+   *  - sortie `friends`/`followers` dont le propriétaire est réellement suivi.
+   *
+   * Sans ce filtre, une sortie privée d'autrui, plus récente, décidait du
+   * masque et effaçait la trace autorisée d'un participant (F5).
+   */
+  const followerOwnerIds = [
+    ...new Set(
+      sessions
+        .filter((session) => {
+          if (!session.user_id || session.user_id === viewerId) return false;
+          if (rawSessionIdSet.has(session.id)) return false;
+          return effectiveSessionVisibility(session) === 'friends';
+        })
+        .map((session) => session.user_id as string),
+    ),
+  ];
+  const followedOwnerIds = new Set<string>();
+  if (viewerId && followerOwnerIds.length > 0) {
+    /*
+     * `friends`/`followers` ne suffit jamais : on lit la relation réelle.
+     * `user_follows_read` est publique ; on ne garde que les propriétaires de
+     * sorties réellement suivis par le lecteur. Un anonyme ou un non-abonné
+     * reste `visitor`.
+     */
+    const { data: followRows } = await supabase
+      .from('user_follows')
+      .select('following_id')
+      .eq('follower_id', viewerId)
+      .in('following_id', followerOwnerIds);
+    for (const row of (followRows ?? []) as Array<{ following_id?: string | null }>) {
+      if (row.following_id) followedOwnerIds.add(row.following_id);
+    }
+  }
+
+  const anyTraceSession = pickCarnetTraceSession(sessions);
+  /*
+   * Priorité à la trace brute du lecteur : un participant qui a sa propre
+   * trace ne la voit pas remplacée par une sortie partageable plus récente
+   * appartenant à quelqu'un d'autre. Sans trace brute autorisée, on retombe
+   * sur les sorties explicitement partageables ou suivies.
+   */
+  const rawTraceSession = pickCarnetTraceSession(
+    sessions.filter((session) => rawSessionIdSet.has(session.id)),
   );
-  const isTraceSessionParticipant =
-    isSessionOwner ||
-    Boolean(
-      viewerId &&
-        traceSession &&
-        sessionParticipantRows.some(
-          (row) => row.session_id === traceSession.id && row.user_id === viewerId,
-        ),
+  const sharedTraceCandidates = sessions.filter((session) => {
+    if (rawSessionIdSet.has(session.id)) return false;
+    const visibility = effectiveSessionVisibility(session);
+    if (isShareableTraceVisibility(visibility)) return true;
+    return (
+      visibility === 'friends' &&
+      Boolean(session.user_id && followedOwnerIds.has(session.user_id))
     );
-
-  /*
-   * `friends`/`followers` ne suffit jamais : on lit la relation réelle. Cette
-   * requête passe par la RLS (`user_follows_read`) et ne renvoie que ce que le
-   * lecteur peut voir. Un anonyme ou un non-abonné reste `visitor`, donc la
-   * trace est entièrement masquée.
-   */
-  const mayNeedFollower =
-    !isCarnetParticipant &&
-    (isFollowerTraceVisibility(carnet.visibility) ||
-      sessions.some((session) => isFollowerTraceVisibility(session.visibility)));
-  const followsAuthor =
-    mayNeedFollower &&
-    Boolean(viewerId && carnet.author_id && viewerId !== carnet.author_id) &&
-    Boolean(
-      (
-        await supabase
-          .from('user_follows')
-          .select('follower_id')
-          .eq('follower_id', viewerId as string)
-          .eq('following_id', carnet.author_id as string)
-          .maybeSingle()
-      ).data,
-    );
+  });
+  const traceSession = rawTraceSession ?? pickCarnetTraceSession(sharedTraceCandidates);
+  const traceWithheld = Boolean(anyTraceSession && !traceSession);
   const traceVisibility = mostRestrictiveTraceVisibility(
     carnet.visibility,
     traceSession?.visibility,
   );
+  const isTraceSessionParticipant = Boolean(
+    traceSession && rawSessionIdSet.has(traceSession.id),
+  );
+  const followsTraceOwner = Boolean(
+    traceSession?.user_id && followedOwnerIds.has(traceSession.user_id),
+  );
   /*
    * Seul le propriétaire de la sortie ou un participant inscrit voit la trace
    * complète. Un auteur/collaborateur de carnet qui n'a pas participé à cette
-   * sortie reçoit les masques début/fin (ou tout masqué si la sortie est
-   * privée) : le carnet ne vaut pas droit sur la trace brute d'autrui.
+   * sortie ne devient pas `follower` du seul fait de son rôle : il lui faut une
+   * relation réelle avec le propriétaire de la sortie, comme la route
+   * `GET /api/hike-sessions/[id]`. Sinon il reste `visitor` (tout masqué pour
+   * `friends`, extrémités masquées pour une sortie publique).
    */
   const traceViewer = isTraceSessionParticipant
     ? ('participant' as const)
-    : isCarnetParticipant && traceVisibility !== 'private'
+    : traceVisibility === 'friends' && followsTraceOwner
       ? ('follower' as const)
-      : followsAuthor
-        ? ('follower' as const)
-        : ('visitor' as const);
+      : ('visitor' as const);
 
   const momentRows = ((momentsResult.data ?? []) as MomentRow[]) ?? [];
   const momentIds = momentRows.map((m) => m.id);
@@ -633,6 +666,7 @@ export async function getCarnetDetail(id: string) {
     rawSessionIds,
     trace: traceSession?.positions_geojson ?? null,
     traceVisibility,
+    traceWithheld,
     etapes: (etapesResult.data as unknown as EtapeRow[]) ?? [],
     hebergements: (hebergementsResult.data as unknown as HebergementRow[]) ?? [],
     moments: momentRows,

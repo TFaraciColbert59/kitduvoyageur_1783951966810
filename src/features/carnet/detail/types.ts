@@ -490,9 +490,9 @@ export interface BuildCarnetDetailInput {
    * liste est entièrement écartée ; une sortie partageable n'apporte que ses
    * métadonnées agrégées (date, durée).
    *
-   * Sans cette liste, le builder pur conserve son ancien comportement : toutes
-   * les sorties pour un non-visiteur, aucune pour un visiteur. `getCarnetDetail`
-   * la fournit toujours.
+   * Fail-closed : absente, elle vaut liste vide. Aucun point GPS, aucune
+   * statistique et aucun profil de sortie ne sont alors exposés. `getCarnetDetail`
+   * la fournit toujours après vérification par sortie (F8).
    */
   rawSessionIds?: string[];
   /**
@@ -505,6 +505,13 @@ export interface BuildCarnetDetailInput {
    * sortie qui porte le tracé. Absente, la visibilité du carnet s'applique.
    */
   traceVisibility?: string | null;
+  /**
+   * Vrai quand une trace existe mais qu'aucune sortie autorisée ne peut la
+   * porter (par exemple une sortie privée d'autrui). La fiche affiche alors
+   * « trace non partageable » plutôt que « aucun tracé », sans dessiner de
+   * coordonnées.
+   */
+  traceWithheld?: boolean;
   /**
    * Rôle du lecteur pour la trace. `follower` n'est fourni qu'après
    * vérification de la relation `user_follows` ; sans lui, `friends` est

@@ -32,3 +32,26 @@ create policy hike_sessions_select_shared_carnet on public.hike_sessions
     and public.can_view_carnet(carnet_id)
     and visibility in ('public', 'collective_anonymized')
   );
+
+-- Restaure la policy `FOR ALL` historique. Elle ne recrée pas de cycle ici :
+-- la policy `hike_sessions_select_owner_or_participant` qui interrogeait
+-- `hike_session_participants` a été supprimée plus haut. Si un down partiel
+-- laissait cette policy en place, PostgreSQL refuserait les lectures (42P17).
+drop policy if exists hike_participants_owner_insert on public.hike_session_participants;
+drop policy if exists hike_participants_owner_update on public.hike_session_participants;
+drop policy if exists hike_participants_owner_delete on public.hike_session_participants;
+drop policy if exists hike_participants_owner_write on public.hike_session_participants;
+create policy hike_participants_owner_write on public.hike_session_participants
+  for all
+  using (
+    exists (
+      select 1 from public.hike_sessions s
+      where s.id = session_id and s.user_id = auth.uid()
+    )
+  )
+  with check (
+    exists (
+      select 1 from public.hike_sessions s
+      where s.id = session_id and s.user_id = auth.uid()
+    )
+  );
