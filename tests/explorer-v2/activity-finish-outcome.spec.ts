@@ -21,7 +21,13 @@ describe('explorer-v2 · lecture de la réponse de fin', () => {
       summaryId: SUMMARY_ID,
     });
     expect(readFinishOutcome(200, { status: 'already_finished', summaryId: null })).toEqual({
-      state: 'already_finished',
+      state: 'already_finished_without_summary',
+      retryable: false,
+      summaryId: null,
+    });
+    // Une séance close sans résumé reste distincte d'une sortie enregistrée.
+    expect(readFinishOutcome(200, { status: 'already_finished' })).toEqual({
+      state: 'already_finished_without_summary',
       retryable: false,
       summaryId: null,
     });
@@ -47,6 +53,17 @@ describe('explorer-v2 · lecture de la réponse de fin', () => {
 
   it('retente un serveur indisponible ou une réponse illisible', () => {
     expect(readFinishOutcome(503, { error: 'indisponible' })).toEqual({
+      state: 'failed',
+      retryable: true,
+      summaryId: null,
+    });
+    // Timeout et limite de débit sont transitoires, pas définitifs.
+    expect(readFinishOutcome(408, { error: 'timeout' })).toEqual({
+      state: 'failed',
+      retryable: true,
+      summaryId: null,
+    });
+    expect(readFinishOutcome(429, { error: 'trop de requêtes' })).toEqual({
       state: 'failed',
       retryable: true,
       summaryId: null,

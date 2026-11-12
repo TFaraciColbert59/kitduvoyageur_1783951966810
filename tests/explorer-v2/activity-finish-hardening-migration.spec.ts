@@ -77,6 +77,26 @@ describe('migration additive · durcissement de la fin de séance', () => {
     expect(lower).not.toMatch(/grant\s+(insert|update|delete|all)[^;]*offline_sync_operations/);
   });
 
+  it('autorise la RPC SECURITY DEFINER à écrire sous FORCE RLS', () => {
+    // Sans cette policy, un propriétaire non BYPASSRLS est refusé par
+    // `kind <> 'activity.finish'` : c'est l'incident RLS de la revue.
+    expect(lower).toContain('create policy "offline_sync_operations_select_finish_rpc"');
+    expect(lower).toContain('create policy "offline_sync_operations_insert_finish_rpc"');
+    expect(lower).toContain('for select to public');
+    expect(lower).toContain('for insert to public');
+    expect(lower).toContain("kind = 'activity.finish'");
+    expect(lower).toContain('current_user = (');
+    expect(lower).toContain('pg_get_userbyid(p.proowner)');
+    expect(lower).toContain(
+      "'public.finish_activity_session_idempotent(uuid,text)'::regprocedure"
+    );
+  });
+
+  it('borne la clé d’idempotence en SQL comme dans la route', () => {
+    const idempotent = functionBody(lower, 'finish_activity_session_idempotent');
+    expect(idempotent).toContain('length(p_idempotency_key) > 400');
+  });
+
   it('garde le verrou de clé et de séance avant toute relecture', () => {
     const idempotent = functionBody(lower, 'finish_activity_session_idempotent');
     const keyLock = idempotent.indexOf("':finish:'");
@@ -88,20 +108,23 @@ describe('migration additive · durcissement de la fin de séance', () => {
     expect(finish).toBeGreaterThan(sessionLock);
   });
 
-  it('a un down ordonné qui restaure les fonctions avant de retirer la colonne', () => {
+  it('a un down non destructif qui conserve le lien durable et la policy RPC', () => {
     const restoreFinish = rollback.indexOf('create or replace function public.finish_activity_session');
     const restoreIdempotent = rollback.indexOf(
       'create or replace function public.finish_activity_session_idempotent'
     );
-    const dropIndex = rollback.indexOf('drop index if exists public.hike_sessions_activity_session_idx');
-    const dropColumn = rollback.indexOf('drop column if exists activity_session_id');
 
     expect(restoreFinish).toBeGreaterThan(-1);
     expect(restoreIdempotent).toBeGreaterThan(restoreFinish);
-    expect(dropIndex).toBeGreaterThan(restoreIdempotent);
-    expect(dropColumn).toBeGreaterThan(dropIndex);
     expect(rollback).not.toMatch(/drop\s+table/);
     expect(rollback).not.toMatch(/delete\s+from/);
+    expect(rollback).not.toMatch(/drop\s+column/);
+    expect(rollback).not.toContain(
+      'drop index if exists public.hike_sessions_activity_session_idx'
+    );
+    expect(rollback).not.toContain(
+      'drop constraint if exists hike_sessions_activity_session_fkey'
+    );
     // Le down conserve les correctifs indépendants du lien durable.
     expect(rollback).not.toContain(
       'drop index if exists public.offline_sync_activity_finish_legacy_session_idx'
@@ -109,6 +132,13 @@ describe('migration additive · durcissement de la fin de séance', () => {
     expect(rollback).toContain('summary_not_owned');
     expect(rollback).not.toContain(
       'drop policy if exists "offline_sync_operations_insert_own"'
+    );
+    // Les policies RPC sont conservées : les retirer réintroduirait l'incident RLS.
+    expect(rollback).not.toContain(
+      'drop policy if exists "offline_sync_operations_select_finish_rpc"'
+    );
+    expect(rollback).not.toContain(
+      'drop policy if exists "offline_sync_operations_insert_finish_rpc"'
     );
     // Le retour arrière restaure le garde de compatibilité de la migration
     // précédente, tout en gardant les correctifs indépendants.

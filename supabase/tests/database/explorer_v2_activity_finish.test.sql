@@ -18,7 +18,7 @@
 -- ============================================================================
 BEGIN;
 SET LOCAL search_path = public;
-SELECT plan(26);
+SELECT plan(29);
 
 INSERT INTO auth.users (id, aud, role, email, encrypted_password, raw_app_meta_data, raw_user_meta_data, created_at, updated_at) VALUES
   ('a1f10000-0000-4000-8000-000000000001', 'authenticated', 'authenticated', 'finish_a@test.local', 'x', '{}', '{}', now(), now()),
@@ -326,6 +326,77 @@ SELECT ok(
     'a1f30000-0000-4000-8000-000000000006'
   ),
   '26. le résumé d''un autre utilisateur est refusé'
+);
+
+-- ── RLS réelle : la RPC écrit sous un propriétaire non BYPASSRLS ───────────
+-- Les tests précédents tournent en superuser : ils ne peuvent pas voir que
+-- FORCE RLS s'applique aussi au propriétaire SECURITY DEFINER. On transfère
+-- ici les tables et les fonctions à un rôle NOSUPERUSER NOBYPASSRLS, comme un
+-- propriétaire de migration Supabase qui ne serait pas service_role.
+RESET ROLE;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'lkdv_finish_owner') THEN
+    CREATE ROLE lkdv_finish_owner NOLOGIN NOSUPERUSER NOBYPASSRLS;
+  END IF;
+END $$;
+
+GRANT USAGE ON SCHEMA auth, public TO lkdv_finish_owner;
+GRANT EXECUTE ON FUNCTION auth.uid() TO lkdv_finish_owner;
+
+ALTER TABLE public.activity_sessions OWNER TO lkdv_finish_owner;
+ALTER TABLE public.activity_points OWNER TO lkdv_finish_owner;
+ALTER TABLE public.hike_sessions OWNER TO lkdv_finish_owner;
+ALTER TABLE public.offline_sync_operations OWNER TO lkdv_finish_owner;
+
+ALTER FUNCTION public.finish_activity_session(uuid) OWNER TO lkdv_finish_owner;
+ALTER FUNCTION public.finish_activity_session_idempotent(uuid,text) OWNER TO lkdv_finish_owner;
+ALTER FUNCTION public.activity_finish_summary_owned(uuid,uuid,text) OWNER TO lkdv_finish_owner;
+
+INSERT INTO public.activity_sessions (id, user_id, sport, variant_id, status, started_at) VALUES
+  ('a1f20000-0000-4000-8000-000000000008', 'a1f10000-0000-4000-8000-000000000001', 'rando', 'rando-journee', 'live', now() - interval '1 hour');
+
+SET LOCAL ROLE authenticated;
+SET LOCAL "request.jwt.claim.sub" = 'a1f10000-0000-4000-8000-000000000001';
+
+SELECT is(
+  public.finish_activity_session_idempotent(
+    'a1f20000-0000-4000-8000-000000000008',
+    'rls-owner-key'
+  ) ->> 'status',
+  'applied',
+  '27. la RPC écrit sous un propriétaire non BYPASSRLS (FORCE RLS)'
+);
+
+SELECT is(
+  (
+    SELECT activity_session_id
+      FROM public.offline_sync_operations
+     WHERE user_id = 'a1f10000-0000-4000-8000-000000000001'
+       AND idempotency_key = 'rls-owner-key'
+  ),
+  'a1f20000-0000-4000-8000-000000000008'::uuid,
+  '28. la ligne acquittée sous propriétaire non BYPASSRLS est liée à la séance'
+);
+
+SELECT throws_ok(
+  $$
+  INSERT INTO public.offline_sync_operations (
+    user_id, idempotency_key, store, kind, status, result, activity_session_id
+  ) VALUES (
+    'a1f10000-0000-4000-8000-000000000001',
+    'forged-owner-key',
+    'explorer',
+    'activity.finish',
+    'applied',
+    '{"summaryId":"a1f30000-0000-4000-8000-000000000006","sessionId":"a1f20000-0000-4000-8000-000000000008"}'::jsonb,
+    'a1f20000-0000-4000-8000-000000000008'
+  )
+  $$,
+  '42501',
+  NULL,
+  '29. la policy du propriétaire n''ouvre pas l''insert direct au client'
 );
 
 SELECT * FROM finish();

@@ -1818,14 +1818,18 @@ function ActivityTabs(ctx: SheetContext, kind: string): SheetTab[] {
                   icon={
                     state.summarySaved === 'saved' || state.summarySaved === 'already_finished'
                       ? 'check'
-                      : state.summarySaved === 'local'
+                      : state.summarySaved === 'local' ||
+                          state.summarySaved === 'pending' ||
+                          state.summarySaved === 'already_finished_without_summary'
                         ? 'info'
                         : 'alert'
                   }
                   tone={
                     state.summarySaved === 'saved' || state.summarySaved === 'already_finished'
                       ? 'good'
-                      : state.summarySaved === 'local'
+                      : state.summarySaved === 'local' ||
+                          state.summarySaved === 'pending' ||
+                          state.summarySaved === 'already_finished_without_summary'
                         ? 'muted'
                         : 'warn'
                   }
@@ -1834,28 +1838,32 @@ function ActivityTabs(ctx: SheetContext, kind: string): SheetTab[] {
                       ? 'Sortie enregistrée'
                       : state.summarySaved === 'already_finished'
                         ? 'Sortie déjà enregistrée'
-                        : state.summarySaved === 'pending'
-                          ? 'Enregistrement en cours…'
-                          : state.summarySaved === 'local'
-                            ? 'Sortie locale'
-                            : state.summarySaved === 'unauthenticated'
-                              ? 'Sortie non enregistrée'
-                              : state.summarySaved === 'conflict'
-                                ? 'Enregistrement en conflit'
-                                : 'Enregistrement impossible'
+                        : state.summarySaved === 'already_finished_without_summary'
+                          ? 'Sortie déjà close'
+                          : state.summarySaved === 'pending'
+                            ? 'Enregistrement en cours…'
+                            : state.summarySaved === 'local'
+                              ? 'Sortie locale'
+                              : state.summarySaved === 'unauthenticated'
+                                ? 'Sortie non enregistrée'
+                                : state.summarySaved === 'conflict'
+                                  ? 'Enregistrement en conflit'
+                                  : 'Enregistrement impossible'
                   }
                   sub={
                     state.summarySaved === 'already_finished'
                       ? 'Aucun doublon n’a été créé.'
-                      : state.summarySaved === 'local'
-                        ? 'Aucune séance serveur n’est créée dans cette tranche.'
-                        : state.summarySaved === 'unauthenticated'
-                          ? 'Connecte-toi pour conserver tes sorties'
-                          : state.summarySaved === 'conflict'
-                            ? 'Vérifie ton compte avant de réessayer.'
-                            : state.summarySaved === 'failed'
-                              ? 'Réessaie depuis ton compte'
-                              : undefined
+                      : state.summarySaved === 'already_finished_without_summary'
+                        ? 'Aucun résumé n’a été retrouvé pour cette séance.'
+                        : state.summarySaved === 'local'
+                          ? 'Aucune séance serveur n’est créée dans cette tranche.'
+                          : state.summarySaved === 'unauthenticated'
+                            ? 'Connecte-toi pour conserver tes sorties'
+                            : state.summarySaved === 'conflict'
+                              ? 'Vérifie ton compte avant de réessayer.'
+                              : state.summarySaved === 'failed'
+                                ? 'Réessaie depuis ton compte'
+                                : undefined
                   }
                 />
               </XpRows>

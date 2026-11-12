@@ -7,8 +7,13 @@
  *
  * Ce script ne contacte aucune base distante : il crée une base jetable sur un
  * cluster local, applique les deux migrations, exécute les assertions, applique
- * le down, puis supprime la base. Il est volontairement reproductible (le
- * harnais temporaire de la revue précédente avait été supprimé).
+ * le down sur une base PEUPLÉE, vérifie que le lien et les données survivent,
+ * rejoue le up, puis supprime la base.
+ *
+ * Le propriétaire des tables et des fonctions est volontairement transféré à un
+ * rôle NOLOGIN NOSUPERUSER NOBYPASSRLS, hors `authenticated`/`service_role` :
+ * c'est le cas où FORCE RLS s'applique au SECURITY DEFINER. Un harnais
+ * superuser ne peut pas voir ce défaut.
  *
  * Usage :
  *   LKDV_PG_SOCKET=/tmp/lkdv-a01-pg LKDV_PG_PORT=55418 \
@@ -16,7 +21,8 @@
  *
  * Le cluster doit avoir été initialisé avec un rôle superutilisateur et
  * `listen_addresses = ''` (aucun TCP). Le script crée les rôles Supabase
- * `anon`, `authenticated` et `service_role` dans cette base jetable.
+ * `anon`, `authenticated` et `service_role`, ainsi que `lkdv_fn_owner`, dans ce
+ * cluster local jetable.
  */
 
 const fs = require('node:fs');
@@ -38,6 +44,9 @@ const S4 = 'a1f20000-0000-4000-8000-000000000004';
 const S5 = 'a1f20000-0000-4000-8000-000000000005';
 const S6 = 'a1f20000-0000-4000-8000-000000000006';
 const S7 = 'a1f20000-0000-4000-8000-000000000007';
+const S8 = 'a1f20000-0000-4000-8000-000000000008';
+const S9 = 'a1f20000-0000-4000-8000-000000000009';
+const S10 = 'a1f20000-0000-4000-8000-000000000010';
 const SUMMARY6 = 'a1f30000-0000-4000-8000-000000000006';
 
 const failures = [];
@@ -80,7 +89,14 @@ create schema auth;
 
 create table auth.users (
   id uuid primary key,
-  email text
+  aud text,
+  role text,
+  email text,
+  encrypted_password text,
+  raw_app_meta_data jsonb,
+  raw_user_meta_data jsonb,
+  created_at timestamptz,
+  updated_at timestamptz
 );
 
 create or replace function auth.uid()
@@ -255,6 +271,54 @@ async function main() {
     await db.query(up1);
     await db.query(up2);
     check('les deux migrations s’appliquent sans erreur', true);
+
+    // Le propriétaire réel des tables et des fonctions n'est ni superuser ni
+    // BYPASSRLS dans ce scénario : FORCE RLS s'applique donc à la RPC
+    // SECURITY DEFINER. C'est le cas que le harnais superuser ne voyait pas.
+    await db.query(`
+      do $$
+      begin
+        if not exists (select 1 from pg_roles where rolname = 'lkdv_fn_owner') then
+          create role lkdv_fn_owner nologin nosuperuser nobypassrls;
+        end if;
+      end $$;
+      grant usage on schema auth, public to lkdv_fn_owner;
+      grant execute on function auth.uid() to lkdv_fn_owner;
+      alter table public.activity_sessions owner to lkdv_fn_owner;
+      alter table public.activity_points owner to lkdv_fn_owner;
+      alter table public.hike_sessions owner to lkdv_fn_owner;
+      alter table public.offline_sync_operations owner to lkdv_fn_owner;
+      alter function public.finish_activity_session(uuid) owner to lkdv_fn_owner;
+      alter function public.finish_activity_session_idempotent(uuid,text) owner to lkdv_fn_owner;
+      alter function public.activity_finish_summary_owned(uuid,uuid,text) owner to lkdv_fn_owner;
+    `);
+
+    let owner = await one(
+      db,
+      `select rolsuper, rolbypassrls,
+              pg_has_role('lkdv_fn_owner', 'authenticated', 'member') as auth_member,
+              pg_has_role('lkdv_fn_owner', 'service_role', 'member') as service_member
+         from pg_roles where rolname = 'lkdv_fn_owner'`
+    );
+    check(
+      'le propriétaire de la RPC est non superuser, non BYPASSRLS, hors rôles API',
+      owner.rolsuper === false &&
+        owner.rolbypassrls === false &&
+        owner.auth_member === false &&
+        owner.service_member === false,
+      JSON.stringify(owner)
+    );
+
+    owner = await one(
+      db,
+      `select count(*)::int as n from pg_policies
+        where schemaname = 'public' and tablename = 'offline_sync_operations'
+          and policyname in (
+            'offline_sync_operations_select_finish_rpc',
+            'offline_sync_operations_insert_finish_rpc'
+          )`
+    );
+    check('les policies de lecture et d’écriture de la RPC existent', owner.n === 2, owner.n);
 
     await db.query('begin');
     await db.query(
@@ -480,10 +544,36 @@ async function main() {
     );
     check('le résumé d’un autre utilisateur est refusé', row.owned === false);
 
-    await db.query('rollback');
+    // ── Rollback sur base peuplée ─────────────────────────────────────────
+    // Les données sont validées : le down doit être testé avec des liens et
+    // un registre réels, pas sur une base vide.
+    await db.query('commit');
+
+    const before = await one(
+      db,
+      `select
+         (select count(*)::int from public.hike_sessions) as summaries,
+         (select count(*)::int from public.hike_sessions where activity_session_id is not null) as linked,
+         (select count(*)::int from public.offline_sync_operations) as registry`
+    );
+    check(
+      'la base est peuplée avant le down',
+      before.summaries > 0 && before.linked > 0 && before.registry > 0,
+      JSON.stringify(before)
+    );
+
+    row = await one(
+      db,
+      `select activity_session_id from public.hike_sessions where activity_session_id = $1`,
+      [S5]
+    );
+    check(
+      'le lien de la fin directe existe avant le down',
+      row !== undefined && row.activity_session_id === S5
+    );
 
     await db.query(down);
-    check('le down s’applique sans erreur', true);
+    check('le down s’applique sur une base peuplée', true);
 
     row = await one(
       db,
@@ -491,26 +581,66 @@ async function main() {
         where table_schema = 'public' and table_name = 'hike_sessions'
           and column_name = 'activity_session_id'`
     );
-    check('le down retire la colonne de lien durable', row.n === 0, row.n);
+    check('le down CONSERVE la colonne de lien durable', row.n === 1, row.n);
 
     row = await one(db, `select to_regclass('public.hike_sessions_activity_session_idx') as idx`);
-    check('le down retire l’index unique de lien durable', row.idx === null, row.idx);
+    check('le down conserve l’index unique de lien durable', row.idx !== null, row.idx);
 
     row = await one(
       db,
       `select count(*)::int as n from pg_constraint
         where conname = 'hike_sessions_activity_session_fkey'`
     );
-    check('le down retire la FK de lien durable', row.n === 0, row.n);
+    check('le down conserve la FK de lien durable', row.n === 1, row.n);
+
+    const after = await one(
+      db,
+      `select
+         (select count(*)::int from public.hike_sessions) as summaries,
+         (select count(*)::int from public.hike_sessions where activity_session_id is not null) as linked,
+         (select count(*)::int from public.offline_sync_operations) as registry`
+    );
+    check(
+      'le down ne perd ni résumé, ni lien, ni ligne de registre',
+      after.summaries === before.summaries &&
+        after.linked === before.linked &&
+        after.registry === before.registry,
+      JSON.stringify({ before, after })
+    );
+
+    row = await one(
+      db,
+      `select activity_session_id from public.hike_sessions where activity_session_id = $1`,
+      [S5]
+    );
+    check(
+      'le lien séance ↔ résumé survit au down',
+      row !== undefined && row.activity_session_id === S5
+    );
+
+    row = await one(
+      db,
+      `select count(*)::int as n from pg_policies
+        where schemaname = 'public' and tablename = 'offline_sync_operations'
+          and policyname in (
+            'offline_sync_operations_select_finish_rpc',
+            'offline_sync_operations_insert_finish_rpc'
+          )`
+    );
+    check(
+      'le down conserve les policies RPC (pas de retour de l’incident)',
+      row.n === 2,
+      row.n
+    );
 
     row = await one(
       db,
       `select pg_get_functiondef('public.finish_activity_session(uuid)'::regprocedure) as def`
     );
     check(
-      'le down restaure une fin sans colonne de lien',
-      !row.def.includes('activity_session_id'),
-      'activity_session_id absent'
+      'le down restaure une fin sans nouveau lien',
+      !row.def.includes('h.activity_session_id'),
+      'activity_session_id absent du corps'
     );
 
     row = await one(
@@ -542,40 +672,138 @@ async function main() {
     );
     check('le down conserve l’index de secours historique', row.idx !== null, row.idx);
 
-    // Après le down, la lecture de secours JSON doit encore fonctionner.
+    // Le service doit rester disponible après le down, sous le même
+    // propriétaire non BYPASSRLS.
     await db.query('begin');
-    await db.query(`insert into auth.users (id, email) values ($1, 'down@test.local')`, [U1]);
     await db.query(
       `insert into public.activity_sessions (id, user_id, sport, variant_id, status, started_at)
-       values ($1, $2, 'rando', 'rando-journee', 'finished', now() - interval '2 hours')`,
-      [S6, U1]
-    );
-    await db.query(
-      `insert into public.hike_sessions
-         (id, user_id, started_at, ended_at, distance_km, duration_seconds)
-       values ($1, $2, now() - interval '2 hours', now() - interval '1 hour', 1.2, 3600)`,
-      [SUMMARY6, U1]
-    );
-    await db.query(
-      `insert into public.offline_sync_operations
-         (user_id, idempotency_key, store, kind, status, result, activity_session_id)
-       values ($1, 'down-historical-key', 'explorer', 'activity.finish', 'applied',
-               jsonb_build_object('summaryId', $2::text, 'sessionId', $3::text), null)`,
-      [U1, SUMMARY6, S6]
+       values ($1, $2, 'rando', 'rando-journee', 'live', now() - interval '1 hour')`,
+      [S8, U1]
     );
     await db.query('set local role authenticated');
     await db.query(`select set_config('request.jwt.claim.sub', $1, true)`, [U1]);
     row = await one(
       db,
-      `select public.finish_activity_session_idempotent($1, 'down-other-key') as r`,
-      [S6]
+      `select public.finish_activity_session_idempotent($1, 'down-service-key') as r`,
+      [S8]
     );
     check(
-      'après down, une autre clé retrouve encore le résumé historique',
-      row.r.status === 'duplicate' && row.r.summaryId === SUMMARY6,
+      'après down, la RPC fonctionne encore sous propriétaire non BYPASSRLS',
+      row.r.status === 'applied',
       JSON.stringify(row.r)
     );
+    const downSummary = row.r.summaryId;
+    row = await one(
+      db,
+      `select activity_session_id from public.hike_sessions where id = $1`,
+      [downSummary]
+    );
+    check(
+      'après down, la nouvelle fin ne crée pas de lien (comportement antérieur)',
+      row.activity_session_id === null,
+      String(row.activity_session_id)
+    );
     await db.query('rollback');
+
+    // ── Re-up après down ─────────────────────────────────────────────────
+    await db.query(up2);
+    check('le re-up après down s’applique sans erreur', true);
+
+    row = await one(
+      db,
+      `select activity_session_id from public.hike_sessions where activity_session_id = $1`,
+      [S5]
+    );
+    check(
+      'le re-up retrouve le lien conservé',
+      row !== undefined && row.activity_session_id === S5
+    );
+
+    const afterUp = await one(
+      db,
+      `select
+         (select count(*)::int from public.hike_sessions) as summaries,
+         (select count(*)::int from public.hike_sessions where activity_session_id is not null) as linked,
+         (select count(*)::int from public.offline_sync_operations) as registry`
+    );
+    check(
+      'le re-up ne duplique ni ne perd les données',
+      afterUp.summaries === before.summaries &&
+        afterUp.linked === before.linked &&
+        afterUp.registry === before.registry,
+      JSON.stringify({ before, afterUp })
+    );
+
+    row = await one(
+      db,
+      `select count(*)::int as n from pg_policies
+        where schemaname = 'public' and tablename = 'offline_sync_operations'
+          and policyname in (
+            'offline_sync_operations_select_finish_rpc',
+            'offline_sync_operations_insert_finish_rpc'
+          )`
+    );
+    check('le re-up réinstalle les policies RPC', row.n === 2, row.n);
+
+    await db.query('begin');
+    await db.query(
+      `insert into public.activity_sessions (id, user_id, sport, variant_id, status, started_at)
+       values ($1, $2, 'rando', 'rando-journee', 'live', now() - interval '1 hour')`,
+      [S9, U1]
+    );
+    await db.query('set local role authenticated');
+    await db.query(`select set_config('request.jwt.claim.sub', $1, true)`, [U1]);
+    row = await one(
+      db,
+      `select public.finish_activity_session_idempotent($1, 'reup-service-key') as r`,
+      [S9]
+    );
+    check(
+      'après re-up, la RPC relie à nouveau la séance',
+      row.r.status === 'applied',
+      JSON.stringify(row.r)
+    );
+    const reupSummary = row.r.summaryId;
+    row = await one(
+      db,
+      `select activity_session_id from public.hike_sessions where id = $1`,
+      [reupSummary]
+    );
+    check(
+      'après re-up, le nouveau résumé est lié à la séance',
+      row.activity_session_id === S9,
+      String(row.activity_session_id)
+    );
+    await db.query('rollback');
+
+    // ── Contrôle négatif : sans les policies, la RPC échoue bien ──────────
+    // Garantit que le harnais détecte la régression d'origine et ne passe pas
+    // par accident grâce à un rôle privilégié.
+    await db.query('begin');
+    await db.query('drop policy if exists "offline_sync_operations_select_finish_rpc" on public.offline_sync_operations');
+    await db.query('drop policy if exists "offline_sync_operations_insert_finish_rpc" on public.offline_sync_operations');
+    await db.query(
+      `insert into public.activity_sessions (id, user_id, sport, variant_id, status, started_at)
+       values ($1, $2, 'rando', 'rando-journee', 'live', now() - interval '1 hour')`,
+      [S10, U1]
+    );
+    await db.query('set local role authenticated');
+    await db.query(`select set_config('request.jwt.claim.sub', $1, true)`, [U1]);
+    let negativeCode = null;
+    try {
+      await db.query(
+        `select public.finish_activity_session_idempotent($1, 'negative-control-key') as r`,
+        [S10]
+      );
+    } catch (error) {
+      negativeCode = error.code;
+    }
+    await db.query('rollback');
+    check(
+      'contrôle négatif : sans les policies, la RPC est refusée (42501)',
+      negativeCode === '42501',
+      negativeCode
+    );
   } finally {
     await db.end();
     const cleanup = client('postgres');

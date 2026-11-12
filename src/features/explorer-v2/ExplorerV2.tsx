@@ -226,9 +226,12 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
           body: JSON.stringify(operation.payload),
         });
-        // 400/409 sont définitifs : les retirer évite une boucle de rejeu.
-        if (res.status === 400 || res.status === 409) return true;
-        return res.ok;
+        const payload = await res.json().catch(() => null);
+        const outcome = readFinishOutcome(res.status, payload);
+        // Une session expirée doit rester en file : elle sera rejouée après
+        // reconnexion. Les erreurs définitives (400/409) sont retirées.
+        if (outcome.state === 'unauthenticated') return false;
+        return !outcome.retryable;
       }
       if (operation.kind !== 'report-confirm') return false;
       const res = await fetch('/api/explorer/v2/reports/confirm', {

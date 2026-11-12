@@ -1,22 +1,23 @@
 -- Rollback de 20261112120000_explorer_v2_activity_finish_hardening.
 --
--- ROLLBACK DE SÉCURITÉ, PAS BYTE-FOR-BYTE.
+-- ROLLBACK DE SÉCURITÉ NON DESTRUCTIF, PAS BYTE-FOR-BYTE.
 --
--- Retire le lien durable `hike_sessions.activity_session_id` (colonne, index,
--- FK), mais conserve les correctifs qui ne dépendent pas de cette colonne :
---   • la lecture de secours des lignes de registre historiques
---     (`activity_session_id` NULL, `result.sessionId`) et son index ;
---   • la validation du résumé (`activity_finish_summary_owned`), sans le
---     contrôle de séance qui nécessite la colonne retirée ;
---   • l'interdiction d'insérer directement `activity.finish` dans le registre.
+-- Ce down restaure le comportement antérieur des fonctions (une nouvelle fin
+-- ne crée plus de lien séance ↔ résumé), mais il NE SUPPRIME PAS le lien
+-- durable déjà écrit :
+--   • `hike_sessions.activity_session_id`, son index unique et sa FK restent
+--     en place, avec toutes les valeurs existantes ;
+--   • un re-up après down retrouve donc les liens, sans backfill ni perte ;
+--   • les policies `offline_sync_operations_{select,insert}_finish_rpc` sont
+--     conservées : les retirer réintroduirait l'incident RLS que le up ferme
+--     (sous FORCE RLS, le propriétaire SECURITY DEFINER ne peut plus lire ni
+--     écrire la ligne `activity.finish`) ;
+--   • la lecture de secours JSON, la validation du résumé et l'interdiction
+--     d'insérer directement `activity.finish` restent en place.
 --
--- Ainsi un rollback ne réintroduit ni le `duplicate` avec un résumé nul, ni la
--- confiance aveugle dans un `summaryId` fourni par le client. Les données
--- historiques ne sont ni supprimées ni réécrites : seule la colonne ajoutée
--- par cette migration disparaît.
---
--- Ordre impératif : restaurer les fonctions avant de retirer la colonne
--- qu'elles référencent, puis supprimer les index et la contrainte.
+-- Un retrait complet de la colonne est un geste séparé, manuel et destructif :
+-- il n'est pas dans ce fichier. Le proof local teste down → liens conservés →
+-- re-up → liens toujours présents, sur une base peuplée.
 
 begin;
 
@@ -153,7 +154,9 @@ begin
   if p_session is null then
     raise exception 'séance invalide' using errcode = '22023';
   end if;
-  if p_idempotency_key is null or length(p_idempotency_key) < 8 then
+  if p_idempotency_key is null
+     or length(p_idempotency_key) < 8
+     or length(p_idempotency_key) > 400 then
     raise exception 'clé d''idempotence invalide' using errcode = '22023';
   end if;
 
@@ -440,15 +443,42 @@ alter table public.activity_sessions
   on delete restrict
   not valid;
 
--- 5. Retirer le lien durable, dans l'ordre des dépendances. La politique
---    d'insertion du registre et l'index de secours sont conservés : ils ne
---    dépendent pas de la colonne retirée.
-drop index if exists public.hike_sessions_activity_session_idx;
+-- Valide les FK restaurées seulement si l'historique le permet. Sans ce bloc,
+-- le down laisserait des contraintes NOT VALID alors que l'état antérieur
+-- pouvait les avoir validées.
+do $$
+begin
+  if not exists (
+    select 1
+      from public.activity_sessions s
+     where not exists (
+       select 1 from public.explorer_sport_map m where m.sport = s.sport
+     )
+  ) then
+    alter table public.activity_sessions
+      validate constraint activity_sessions_sport_fkey;
+  end if;
 
-alter table public.hike_sessions
-  drop constraint if exists hike_sessions_activity_session_fkey;
+  if not exists (
+    select 1
+      from public.activity_sessions s
+     where s.variant_id is not null
+       and not exists (
+         select 1
+           from public.explorer_sport_variants v
+          where v.sport = s.sport
+            and v.variant_id = s.variant_id
+       )
+  ) then
+    alter table public.activity_sessions
+      validate constraint activity_sessions_variant_pair_fkey;
+  end if;
+end $$;
 
-alter table public.hike_sessions
-  drop column if exists activity_session_id;
+-- 5. Le lien durable est CONSERVÉ : colonne, index unique, FK et valeurs.
+--    Un down destructif perdrait l'association séance ↔ résumé sans pouvoir la
+--    reconstruire au re-up. La policy RPC de l'étape 8 du up est également
+--    conservée : c'est elle qui empêche le retour de l'incident RLS.
+--    Rien n'est supprimé ici ; le rollback est volontairement non destructif.
 
 commit;

@@ -1,16 +1,20 @@
 /**
  * Lecture de la réponse de `/api/explorer/v2/activity/finish`.
  *
- * Le serveur distingue désormais `saved`, `duplicate`, `already_finished` et
+ * Le serveur distingue `saved`, `duplicate`, `already_finished` et
  * `conflict`. L'écran Bilan doit refléter ces états sans transformer une fin
  * déjà constatée en « Sortie enregistrée », et sans remettre en file une
- * erreur définitive (400/409).
+ * erreur définitive (400/403/409). Un `already_finished` sans `summaryId`
+ * devient `already_finished_without_summary` : la séance est close, mais
+ * aucun bilan n'est connu. Les 408/429 restent rejouables.
  */
 
 export type SummarySavedState =
   | 'pending'
   | 'saved'
   | 'already_finished'
+  /** Séance close côté serveur, mais aucun résumé n'a pu être retrouvé. */
+  | 'already_finished_without_summary'
   | 'local'
   | 'unauthenticated'
   | 'conflict'
@@ -39,6 +43,10 @@ export function readFinishOutcome(httpStatus: number, payload: unknown): FinishO
   if (httpStatus === 409) {
     return { state: 'conflict', retryable: false, summaryId: null };
   }
+  // 408 et 429 sont transitoires : le bilan doit rester rejouable.
+  if (httpStatus === 408 || httpStatus === 429) {
+    return { state: 'failed', retryable: true, summaryId: null };
+  }
   if (httpStatus >= 400 && httpStatus < 500) {
     return { state: 'failed', retryable: false, summaryId: null };
   }
@@ -64,7 +72,13 @@ export function readFinishOutcome(httpStatus: number, payload: unknown): FinishO
     if (summaryId === 'invalid') {
       return { state: 'failed', retryable: true, summaryId: null };
     }
-    return { state: 'already_finished', retryable: false, summaryId };
+    // Séance close sans résumé retrouvé : ne jamais annoncer « enregistrée »
+    // ni « aucun doublon » (il n'y a peut-être aucun bilan à montrer).
+    return {
+      state: summaryId === null ? 'already_finished_without_summary' : 'already_finished',
+      retryable: false,
+      summaryId,
+    };
   }
 
   return { state: 'failed', retryable: true, summaryId: null };

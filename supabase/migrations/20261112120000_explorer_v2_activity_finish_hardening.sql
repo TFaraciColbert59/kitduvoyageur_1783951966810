@@ -298,7 +298,9 @@ begin
   if p_session is null then
     raise exception 'séance invalide' using errcode = '22023';
   end if;
-  if p_idempotency_key is null or length(p_idempotency_key) < 8 then
+  if p_idempotency_key is null
+     or length(p_idempotency_key) < 8
+     or length(p_idempotency_key) > 400 then
     raise exception 'clé d''idempotence invalide' using errcode = '22023';
   end if;
 
@@ -665,5 +667,53 @@ create policy "offline_sync_operations_insert_own"
   on public.offline_sync_operations
   for insert to authenticated
   with check (auth.uid() = user_id and kind <> 'activity.finish');
+
+-- 8. La RPC SECURITY DEFINER doit pouvoir LIRE et ÉCRIRE ses propres lignes
+--    d'acquittement alors que `offline_sync_operations` est en FORCE ROW LEVEL
+--    SECURITY. Sous FORCE RLS, le propriétaire de la fonction est soumis aux
+--    policies : les policies `TO authenticated` ne s'appliquent pas à un
+--    propriétaire qui n'est pas membre de `authenticated`, et la policy
+--    d'insertion `kind <> 'activity.finish'` refuse la ligne de fin.
+--
+--    Ces policies sont volontairement `TO public` : elles doivent s'appliquer
+--    au rôle propriétaire quel qu'il soit. Leur condition vérifie que
+--    l'opération est faite par le propriétaire courant de la RPC, jamais par un
+--    client. `current_user` vaut le propriétaire à l'intérieur du SECURITY
+--    DEFINER et redevient `authenticated` (ou `anon`) pour un accès direct.
+--    Le nom du propriétaire est lu dans le catalogue : un changement de
+--    propriétaire (migration rejouée par un autre rôle) reste couvert.
+--    La lecture reste bornée aux lignes de l'appelant (`auth.uid()`).
+drop policy if exists "offline_sync_operations_select_finish_rpc"
+  on public.offline_sync_operations;
+
+drop policy if exists "offline_sync_operations_insert_finish_rpc"
+  on public.offline_sync_operations;
+
+create policy "offline_sync_operations_select_finish_rpc"
+  on public.offline_sync_operations
+  for select to public
+  using (
+    auth.uid() = user_id
+    and current_user = (
+      select pg_catalog.pg_get_userbyid(p.proowner)
+        from pg_catalog.pg_proc p
+       where p.oid =
+         'public.finish_activity_session_idempotent(uuid,text)'::regprocedure
+    )
+  );
+
+create policy "offline_sync_operations_insert_finish_rpc"
+  on public.offline_sync_operations
+  for insert to public
+  with check (
+    kind = 'activity.finish'
+    and auth.uid() = user_id
+    and current_user = (
+      select pg_catalog.pg_get_userbyid(p.proowner)
+        from pg_catalog.pg_proc p
+       where p.oid =
+         'public.finish_activity_session_idempotent(uuid,text)'::regprocedure
+    )
+  );
 
 commit;
