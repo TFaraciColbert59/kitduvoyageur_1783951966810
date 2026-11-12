@@ -2,6 +2,8 @@
  * Explorer v2 — types de la machine d'état (02_ARCHITECTURE.md §3).
  */
 
+import type { SummarySavedState } from '../activity/finishOutcome';
+
 export type Level = 0 | 1 | 2 | 3;
 
 export type Detent = 'peek' | 'low' | 'mid' | 'full';
@@ -142,7 +144,7 @@ export interface ExplorerState {
   /** Dernière sortie terminée, affichée dans l'écran Bilan. */
   summary?: (ActivityState & { endedAt: number }) | null;
   /** Résultat de l'enregistrement du bilan. */
-  summarySaved?: 'pending' | 'saved' | 'local' | 'unauthenticated' | 'failed';
+  summarySaved?: SummarySavedState;
   camera: CameraIntent;
   profile: Profile;
   easyMode: boolean;

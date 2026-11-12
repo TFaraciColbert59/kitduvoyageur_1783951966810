@@ -138,13 +138,59 @@ describe('POST /api/explorer/v2/activity/finish', () => {
     expect(JSON.parse(String(init.body))).toEqual({ p_session: SESSION_ID });
   });
 
+  it('ne prétend pas avoir sauvegardé quand la RPC historique renvoie null', async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse(null));
+
+    const res = await POST(request({ sessionId: SESSION_ID }));
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ status: 'already_finished', summaryId: null });
+  });
+
   it('répond 503 sur réponse idempotente malformée, sans prétendre avoir sauvegardé', async () => {
-    for (const payload of [null, 'applied', [], 42, {}, { status: 'inconnu' }]) {
+    for (const payload of [
+      null,
+      'applied',
+      [],
+      42,
+      {},
+      { status: 'inconnu' },
+      { status: 'applied' },
+      { status: 'applied', summaryId: null },
+      { status: 'applied', summaryId: 'pas-un-uuid' },
+      { status: 'duplicate', summaryId: null },
+      { status: 'already_finished', summaryId: 'pas-un-uuid' },
+    ]) {
       fetchMock.mockResolvedValueOnce(jsonResponse(payload));
       const res = await POST(request({ sessionId: SESSION_ID, idempotencyKey: KEY }));
       expect(res.status, JSON.stringify(payload)).toBe(503);
       expect(await res.json()).toEqual({ error: 'réponse indisponible' });
     }
+  });
+
+  it('conserve le résumé retrouvé avec already_finished', async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse({ status: 'already_finished', summaryId: SUMMARY_ID })
+    );
+
+    const res = await POST(request({ sessionId: SESSION_ID, idempotencyKey: KEY }));
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ status: 'already_finished', summaryId: SUMMARY_ID });
+  });
+
+  it('mappe un conflit de résumé sur un code distinct', async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse({ status: 'conflict', reason: 'summary_not_owned' })
+    );
+
+    const res = await POST(request({ sessionId: SESSION_ID, idempotencyKey: KEY }));
+
+    expect(res.status).toBe(409);
+    expect(await res.json()).toEqual({
+      error: 'le résumé lié à cette clé n’appartient pas à cette séance',
+      code: 'summary_conflict',
+    });
   });
 
   it('répond 503 sur réponse illisible, erreur réseau ou configuration absente', async () => {

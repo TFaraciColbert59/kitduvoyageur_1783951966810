@@ -17,6 +17,7 @@ import { performSosCall, planSosCall, sosSimulated } from './activity/sosCall';
 import { enqueue, flushQueue, listQueue } from './offline/queue';
 import { registerOfflineWorker } from './offline/zone';
 import { offRouteLabel } from './activity/offRoute';
+import { readFinishOutcome } from './activity/finishOutcome';
 import { XpIcon } from './ui/XpIcon';
 import { haptic } from './state/haptics';
 import { useExplorerStore, useTransientStart } from './state/store';
@@ -225,6 +226,8 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
           body: JSON.stringify(operation.payload),
         });
+        // 400/409 sont définitifs : les retirer évite une boucle de rejeu.
+        if (res.status === 400 || res.status === 409) return true;
         return res.ok;
       }
       if (operation.kind !== 'report-confirm') return false;
@@ -612,15 +615,19 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({ sessionId, idempotencyKey }),
         });
-        if (res.ok) {
-          if (!cancelled) useExplorerStore.setState({ summarySaved: 'saved' });
+        const payload = await res.json().catch(() => null);
+        const outcome = readFinishOutcome(res.status, payload);
+        if (!outcome.retryable) {
+          // `already_finished` et `conflict` sont des états terminaux : ne pas
+          // les transformer en « saved » ni les remettre en file.
+          if (!cancelled) useExplorerStore.setState({ summarySaved: outcome.state });
           return;
         }
-        // Hors ligne : la fin de sortie entre dans la file d'écritures.
+        // Hors ligne ou serveur indisponible : la fin entre dans la file.
         await enqueue({ key: idempotencyKey, kind: 'activity.finish', payload: { sessionId, idempotencyKey } });
         const items = await listQueue();
         setOfflineQueue(items.length);
-        if (!cancelled) useExplorerStore.setState({ summarySaved: 'failed' });
+        if (!cancelled) useExplorerStore.setState({ summarySaved: outcome.state });
       } catch {
         // Échec réseau : même traitement que hors ligne.
         const idempotencyKey = `activity.finish:${sessionId}`;

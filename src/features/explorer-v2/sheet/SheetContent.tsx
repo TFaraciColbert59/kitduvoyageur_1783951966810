@@ -1816,14 +1816,14 @@ function ActivityTabs(ctx: SheetContext, kind: string): SheetTab[] {
                 />
                 <XpRow
                   icon={
-                    state.summarySaved === 'saved'
+                    state.summarySaved === 'saved' || state.summarySaved === 'already_finished'
                       ? 'check'
                       : state.summarySaved === 'local'
                         ? 'info'
                         : 'alert'
                   }
                   tone={
-                    state.summarySaved === 'saved'
+                    state.summarySaved === 'saved' || state.summarySaved === 'already_finished'
                       ? 'good'
                       : state.summarySaved === 'local'
                         ? 'muted'
@@ -1832,22 +1832,30 @@ function ActivityTabs(ctx: SheetContext, kind: string): SheetTab[] {
                   title={
                     state.summarySaved === 'saved'
                       ? 'Sortie enregistrée'
-                      : state.summarySaved === 'pending'
-                        ? 'Enregistrement en cours…'
-                        : state.summarySaved === 'local'
-                          ? 'Sortie locale'
-                          : state.summarySaved === 'unauthenticated'
-                            ? 'Sortie non enregistrée'
-                            : 'Enregistrement impossible'
+                      : state.summarySaved === 'already_finished'
+                        ? 'Sortie déjà enregistrée'
+                        : state.summarySaved === 'pending'
+                          ? 'Enregistrement en cours…'
+                          : state.summarySaved === 'local'
+                            ? 'Sortie locale'
+                            : state.summarySaved === 'unauthenticated'
+                              ? 'Sortie non enregistrée'
+                              : state.summarySaved === 'conflict'
+                                ? 'Enregistrement en conflit'
+                                : 'Enregistrement impossible'
                   }
                   sub={
-                    state.summarySaved === 'local'
-                      ? 'Aucune séance serveur n’est créée dans cette tranche.'
-                      : state.summarySaved === 'unauthenticated'
-                        ? 'Connecte-toi pour conserver tes sorties'
-                        : state.summarySaved === 'failed'
-                          ? 'Réessaie depuis ton compte'
-                          : undefined
+                    state.summarySaved === 'already_finished'
+                      ? 'Aucun doublon n’a été créé.'
+                      : state.summarySaved === 'local'
+                        ? 'Aucune séance serveur n’est créée dans cette tranche.'
+                        : state.summarySaved === 'unauthenticated'
+                          ? 'Connecte-toi pour conserver tes sorties'
+                          : state.summarySaved === 'conflict'
+                            ? 'Vérifie ton compte avant de réessayer.'
+                            : state.summarySaved === 'failed'
+                              ? 'Réessaie depuis ton compte'
+                              : undefined
                   }
                 />
               </XpRows>
