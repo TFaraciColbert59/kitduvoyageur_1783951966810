@@ -146,6 +146,22 @@ describe('explorer-v2 · hors-trace et horloges', () => {
     expect(activity?.offRouteM).toBeCloseTo(80, 0);
   });
 
+  it('garde le point de départ au-delà de 60 s quand le sport tolère 120 s', async () => {
+    useExplorerStore.getState().startActivity('rando');
+    await mountTracker();
+
+    // La rando accepte 120 s entre deux fixes (maxFixGapS). Avec une fenêtre
+    // fixe de 60 s, le point de départ était élagué à 61 s : l'alerte ne
+    // pouvait jamais partir malgré 61 s hors trace.
+    routeDistance = () => 80;
+    push(at(0, 0, 1));
+    push(at(61_000, 5, 1));
+
+    const activity = useExplorerStore.getState().activity;
+    expect(activity?.offRoute).toBe(true);
+    expect(activity?.offRouteM).toBeCloseTo(80, 0);
+  });
+
   it('vide le buffer même quand la distance est indisponible après un rejet', async () => {
     useExplorerStore.getState().startActivity('rando');
     await mountTracker();

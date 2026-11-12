@@ -127,22 +127,62 @@ function shortestLngDelta(from: number, to: number): number {
 }
 
 /**
- * Distance minimale (m) d'une position à une ou plusieurs lignes de trace.
+ * Point de la trace le plus proche d'une position, avec le cap de retour.
  *
- * Projection locale équirectangulaire autour du point : l'erreur reste
- * négligeable à l'échelle d'une alerte hors-trace (quelques dizaines de mètres)
- * et le calcul reste linéaire en nombre de sommets, sans allocation par fix.
- * Renvoie `null` si le point est invalide ou si aucune ligne n'est exploitable.
+ * `bearingDeg` est le cap initial (0° = nord, 90° = est) du point de mesure
+ * vers ce point de projection. Il sert à orienter la flèche de retour du
+ * bandeau hors-trace : une icône fixe suggérerait une direction fausse.
  */
-export function distanceToRouteM(point: LngLat, lines: readonly RouteLine[]): number | null {
+export interface RouteProjection {
+  /** Distance minimale à la trace, en mètres. */
+  distanceM: number;
+  /** Point de la trace le plus proche, ordre GeoJSON [lng, lat]. */
+  nearest: [number, number];
+  /** Cap de retour vers la trace, en degrés (0–360). */
+  bearingDeg: number;
+}
+
+/**
+ * Cap initial de `from` vers `to`, en degrés (0 = nord, 90 = est).
+ *
+ * Formule du cap orthodromique : exacte à l'échelle d'un retour de quelques
+ * dizaines de mètres, et stable près des pôles. `NaN` si une coordonnée est
+ * invalide ; `0` quand les deux points sont confondus (aucune direction).
+ */
+export function bearingDegrees(from: LngLat, to: LngLat): number {
+  if (!isValidLngLat(from) || !isValidLngLat(to)) return Number.NaN;
+  const lat1 = (from[1] * Math.PI) / 180;
+  const lat2 = (to[1] * Math.PI) / 180;
+  const dLng = ((to[0] - from[0]) * Math.PI) / 180;
+  const y = Math.sin(dLng) * Math.cos(lat2);
+  const x =
+    Math.cos(lat1) * Math.sin(lat2) -
+    Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
+  if (y === 0 && x === 0) return 0;
+  return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
+}
+
+/**
+ * Projette la position sur la ligne la plus proche et renvoie le point
+ * d'atterrissage. Projection locale équirectangulaire autour du point :
+ * l'erreur reste négligeable à l'échelle d'une alerte hors-trace (quelques
+ * dizaines de mètres) et le calcul reste linéaire en nombre de sommets.
+ */
+function projectOnRoute(
+  point: LngLat,
+  lines: readonly RouteLine[],
+): Omit<RouteProjection, 'bearingDeg'> | null {
   if (!isValidLngLat(point) || lines.length === 0) return null;
 
   const lat0 = (point[1] * Math.PI) / 180;
   const metresPerDegLat = (EARTH_RADIUS_M * Math.PI) / 180;
   const metresPerDegLng = metresPerDegLat * Math.cos(lat0);
   let best = Number.POSITIVE_INFINITY;
+  let bestA: LngLat | null = null;
+  let bestB: LngLat | null = null;
+  let bestT = 0;
 
-  for (const line of lines) {
+  outer: for (const line of lines) {
     for (let index = 1; index < line.length; index += 1) {
       const a = line[index - 1];
       const b = line[index];
@@ -157,12 +197,47 @@ export function distanceToRouteM(point: LngLat, lines: readonly RouteLine[]): nu
       const lengthSq = dx * dx + dy * dy;
       const t = lengthSq > 0 ? Math.max(0, Math.min(1, -(ax * dx + ay * dy) / lengthSq)) : 0;
       const distance = Math.hypot(ax + t * dx, ay + t * dy);
-      if (distance < best) best = distance;
-      if (best === 0) return 0;
+      if (distance < best) {
+        best = distance;
+        bestA = a;
+        bestB = b;
+        bestT = t;
+      }
+      if (best === 0) break outer;
     }
   }
 
-  return Number.isFinite(best) ? best : null;
+  if (!bestA || !bestB || !Number.isFinite(best)) return null;
+  const nearest: [number, number] = [
+    interpolateLng(bestA[0], bestB[0], bestT),
+    bestA[1] + (bestB[1] - bestA[1]) * bestT,
+  ];
+  return { distanceM: best, nearest };
+}
+
+/**
+ * Distance minimale (m) d'une position à une ou plusieurs lignes de trace.
+ *
+ * Renvoie `null` si le point est invalide ou si aucune ligne n'est exploitable.
+ */
+export function distanceToRouteM(point: LngLat, lines: readonly RouteLine[]): number | null {
+  return projectOnRoute(point, lines)?.distanceM ?? null;
+}
+
+/**
+ * Projection complète (distance, point le plus proche, cap de retour) pour la
+ * flèche hors-trace. Même calcul que `distanceToRouteM`, sans double scan.
+ */
+export function nearestPointOnRouteM(
+  point: LngLat,
+  lines: readonly RouteLine[],
+): RouteProjection | null {
+  const projection = projectOnRoute(point, lines);
+  if (!projection) return null;
+  return {
+    ...projection,
+    bearingDeg: bearingDegrees(point, projection.nearest),
+  };
 }
 
 /**

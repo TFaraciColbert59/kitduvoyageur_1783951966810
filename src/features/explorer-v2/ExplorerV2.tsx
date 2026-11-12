@@ -23,8 +23,8 @@ import { endLiveActivity, startLiveActivity, updateLiveActivity } from './native
 import { performSosCall, planSosCall, sosSimulated } from './activity/sosCall';
 import { enqueue, flushQueue, listQueue } from './offline/queue';
 import { registerOfflineWorker } from './offline/zone';
-import { offRouteLabel } from './activity/offRoute';
-import { distanceToRouteM, routeLines } from './geo/track';
+import { bearingLabel, offRouteLabel } from './activity/offRoute';
+import { nearestPointOnRouteM, routeLines } from './geo/track';
 import { fetchRouteGeometry } from './data/routeGeometry';
 import { XpIcon } from './ui/XpIcon';
 import { haptic } from './state/haptics';
@@ -62,7 +62,7 @@ import {
   type RegionGroup,
   type SheetContext,
 } from './sheet/context';
-import type { PoiKind } from './state/types';
+import type { PoiKind, TrailRouteSnapshot } from './state/types';
 import '@/styles/explorer-v2.css';
 
 const MapStage = dynamic(() => import('./map/MapStage'), {
@@ -353,65 +353,171 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
   const pois = useMemo(() => place?.pois ?? [], [place]);
   const routes = useMemo(() => place?.routes ?? [], [place]);
 
-  // Charge la géométrie COMPLÈTE de l'itinéraire armé, une seule fois. La
-  // version renvoyée par `explorer_routes` est simplifiée pour l'affichage et
-  // peut s'écarter de plus de 40 m : elle ne doit jamais servir au hors-trace.
-  // Le chargement survit au démarrage (qui vide `selection`) tant que
-  // `trailRoute` porte le même identifiant ; il est annulé à l'arrêt.
-  const trailRouteId = state.trailRoute?.id;
-  const trailRouteStatus = state.trailRoute?.status;
-  const routesRef = React.useRef(routes);
-  routesRef.current = routes;
-  useEffect(() => {
-    if (!trailRouteId || trailRouteStatus !== 'loading') return;
-    let cancelled = false;
-    const publish = (geojson: unknown | null) => {
-      if (cancelled) return;
-      const current = useExplorerStore.getState().trailRoute;
-      if (!current || current.id !== trailRouteId) return;
-      const ready = geojson !== null && routeLines(geojson).length > 0;
-      useExplorerStore.getState().setTrailRoute({
-        id: trailRouteId,
-        name: current.name,
-        geojson: ready ? geojson : null,
-        status: ready ? 'ready' : 'unavailable',
-      });
-    };
-    // Route de démonstration : aucun identifiant réel à interroger, et une
-    // géométrie homonyme en base serait un autre sentier. On dit l'indisponible.
-    const display = routesRef.current.find((route) => String(route.id) === trailRouteId);
-    // Sans entrée d'affichage connue (route de secours locale ou fenêtre
-    // rechargée), l'identifiant ne désigne aucun sentier vérifiable : on
-    // n'interroge pas un homonyme de la base, on dit l'indisponible.
-    if (!display || display.unavailable) {
-      publish(null);
-      return;
-    }
-    void fetchRouteGeometry(trailRouteId)
-      .then(publish)
-      .catch(() => publish(null));
-    return () => {
-      cancelled = true;
-    };
-  }, [trailRouteId, trailRouteStatus]);
-
   // Hors-trace : la séance porte sa propre copie de l'itinéraire, figée au
   // départ. On ignore `state.selection` et la géométrie simplifiée
   // d'affichage : seules les lignes réelles chargées via `get_route_geojson`
   // alimentent la mesure. Les lignes sont extraites une fois, pas par fix.
   const activityRoute = state.activity?.route ?? null;
+  const trailRouteId = state.trailRoute?.id;
+  const trailRouteStatus = state.trailRoute?.status;
+  const activityRouteId = activityRoute?.id;
+  const activityRouteStatus = activityRoute?.status;
+  const routesRef = React.useRef(routes);
+  routesRef.current = routes;
+  // Signature stable de la liste d'affichage : elle ne change que si un
+  // identifiant, un nom ou le drapeau « démonstration » change. Cela évite de
+  // relancer une requête quand le tableau est recréé à l'identique.
+  const routeDisplayKey = useMemo(
+    () =>
+      routes
+        .map((route) => `${route.id}:${route.unavailable ? '1' : '0'}:${route.name ?? ''}`)
+        .join('|'),
+    [routes],
+  );
+
+  /**
+   * Publie la géométrie sur toutes les copies qui portent l'identifiant. Une
+   * copie de séance survit ainsi à `clearSelection()` ou au choix d'un autre
+   * itinéraire : le snapshot `loading` ne peut plus rester bloqué.
+   */
+  const publishRouteGeometry = useCallback(
+    (id: string, geojson: unknown | null, displayName: string | null, force = false) => {
+      const ready = geojson !== null && routeLines(geojson).length > 0;
+      const current = useExplorerStore.getState();
+      const name =
+        current.activity?.route?.id === id
+          ? current.activity.route.name
+          : current.trailRoute?.id === id
+            ? current.trailRoute.name
+            : null;
+      const snapshot: TrailRouteSnapshot = {
+        id,
+        name: name ?? displayName ?? null,
+        geojson: ready ? geojson : null,
+        status: ready ? 'ready' : 'unavailable',
+      };
+      current.setRouteGeometry(snapshot, { force });
+    },
+    [],
+  );
+
+  // Route armée (avant le départ) : le chargement est indépendant de la
+  // sélection d'écran. Si la même route est déjà figée dans une séance, c'est
+  // l'effet de la séance qui la charge, pour éviter une requête en double.
+  useEffect(() => {
+    if (!trailRouteId) return;
+    const display = routesRef.current.find((route) => String(route.id) === trailRouteId);
+    // Route de démonstration : son identifiant ne désigne aucun sentier réel.
+    // Le drapeau peut arriver après la géométrie (la liste de lieux se charge
+    // en parallèle) : on repasse alors le snapshot en « indisponible ».
+    if (display?.unavailable) {
+      if (trailRouteStatus !== 'unavailable') {
+        publishRouteGeometry(trailRouteId, null, display.name, true);
+      }
+      return;
+    }
+    if (trailRouteStatus !== 'loading') return;
+    if (activityRouteId === trailRouteId && activityRouteStatus === 'loading') return;
+    const controller = new AbortController();
+    let cancelled = false;
+    void fetchRouteGeometry(trailRouteId, { signal: controller.signal })
+      .then((geojson) => {
+        if (!cancelled) publishRouteGeometry(trailRouteId, geojson, display?.name ?? null);
+      })
+      .catch(() => {
+        if (!cancelled && !controller.signal.aborted) {
+          publishRouteGeometry(trailRouteId, null, display?.name ?? null);
+        }
+      });
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [
+    trailRouteId,
+    trailRouteStatus,
+    activityRouteId,
+    activityRouteStatus,
+    routeDisplayKey,
+    publishRouteGeometry,
+  ]);
+
+  // Copie figée de la séance : elle a son propre chargement. C'est ce qui
+  // empêche `clearSelection()` ou un autre `select()` de laisser la séance en
+  // `loading` pour toujours.
+  useEffect(() => {
+    if (!activityRouteId) return;
+    const display = routesRef.current.find((route) => String(route.id) === activityRouteId);
+    if (display?.unavailable) {
+      if (activityRouteStatus !== 'unavailable') {
+        publishRouteGeometry(activityRouteId, null, display.name, true);
+      }
+      return;
+    }
+    if (activityRouteStatus !== 'loading') return;
+    const controller = new AbortController();
+    let cancelled = false;
+    void fetchRouteGeometry(activityRouteId, { signal: controller.signal })
+      .then((geojson) => {
+        if (!cancelled) publishRouteGeometry(activityRouteId, geojson, display?.name ?? null);
+      })
+      .catch(() => {
+        if (!cancelled && !controller.signal.aborted) {
+          publishRouteGeometry(activityRouteId, null, display?.name ?? null);
+        }
+      });
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [activityRouteId, activityRouteStatus, routeDisplayKey, publishRouteGeometry]);
+
   const activityRouteLines = useMemo(
     () =>
       activityRoute?.status === 'ready' ? routeLines(activityRoute.geojson) : [],
     [activityRoute],
   );
   const distanceToRoute = useCallback(
-    (fix: GpsFix) =>
-      activityRouteLines.length > 0
-        ? distanceToRouteM([fix.lng, fix.lat], activityRouteLines)
-        : null,
+    (fix: GpsFix) => {
+      if (activityRouteLines.length === 0) return null;
+      const projection = nearestPointOnRouteM([fix.lng, fix.lat], activityRouteLines);
+      if (!projection) return null;
+      return {
+        distanceM: projection.distanceM,
+        bearingDeg: projection.bearingDeg,
+      };
+    },
     [activityRouteLines],
   );
+
+  /**
+   * La carte doit dessiner la même trace que celle mesurée. `explorer_routes`
+   * simplifie à ~89 m, alors que le hors-trace alerte à 40 m : on substitue la
+   * géométrie complète de l'itinéraire actif (ou on l'ajoute s'il n'est pas
+   * dans la fenêtre de lieux). Les autres itinéraires gardent leur version
+   * d'affichage, plus légère.
+   */
+  const mapRoutes = useMemo(() => {
+    const active =
+      activityRoute?.status === 'ready'
+        ? activityRoute
+        : state.trailRoute?.status === 'ready'
+          ? state.trailRoute
+          : null;
+    if (!active?.geojson) return routes;
+    const id = Number(active.id);
+    if (!Number.isSafeInteger(id)) return routes;
+    const existing = routes.find((route) => String(route.id) === active.id);
+    const full = {
+      id,
+      name: active.name ?? existing?.name ?? null,
+      network: existing?.network ?? null,
+      geojson: active.geojson,
+    };
+    return existing
+      ? routes.map((route) => (String(route.id) === active.id ? { ...route, ...full } : route))
+      : [...routes, full];
+  }, [routes, activityRoute, state.trailRoute]);
 
   const selectedPoi = useMemo(() => {
     if (!state.selection) return null;
@@ -730,6 +836,7 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
   }, [state.summary, state.summarySaved]);
 
   const activity = state.activity;
+  const offRouteDirection = bearingLabel(activity?.offRouteBearing);
 
   // Suivi : à chaque nouvelle position pendant l'activité, la caméra recadre
   // (04_CARTE §3, P2-11). Le geste utilisateur interrompt le suivi (MapLibre).
@@ -795,7 +902,7 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
         theme={theme}
         countries={countriesGeo ?? null}
         regions={regionsGeo ?? null}
-        routes={routes}
+        routes={mapRoutes}
         pins={state.sheet === 'live' || state.sheet === 'welcome' ? [] : pins}
         selectedId={state.selection?.id ?? null}
         reducedMotion={reducedMotion}
@@ -916,16 +1023,32 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
           type="button"
           className="xp-offroute"
           onClick={() => state.setSheet('live', 'peek')}
-          aria-label={offRouteLabel(activity.offRouteM)}
+          aria-label={
+            offRouteDirection
+              ? `${offRouteLabel(activity.offRouteM)} · retour vers ${offRouteDirection}`
+              : offRouteLabel(activity.offRouteM)
+          }
         >
           <XpIcon name="alert" size={15} />
           <span>{offRouteLabel(activity.offRouteM)}</span>
-          <XpIcon name="nav" size={15} />
+          {typeof activity.offRouteBearing === 'number' &&
+          Number.isFinite(activity.offRouteBearing) ? (
+            <span
+              className="xp-offroute__arrow"
+              style={{ transform: `rotate(${activity.offRouteBearing}deg)` }}
+              aria-hidden="true"
+              data-bearing={Math.round(activity.offRouteBearing)}
+            >
+              <XpIcon name="nav" size={15} />
+            </span>
+          ) : null}
         </button>
       ) : null}
 
       {/* Une trace demandée mais inexploitable ne doit jamais laisser croire
-          que le hors-trace surveille : l'état est dit, pas silencieux. */}
+          que le hors-trace surveille : l'état est dit, pas silencieux. Un
+          rechargement est proposé sauf pour une route de démonstration, dont
+          l'identifiant ne désigne aucun sentier réel. */}
       {activityRoute?.status === 'unavailable' && !activity?.offRoute ? (
         <div
           className="xp-offroute xp-offroute--unavailable"
@@ -934,6 +1057,17 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
         >
           <XpIcon name="alert" size={15} />
           <span>Hors-trace indisponible</span>
+          {routes.some(
+            (route) => String(route.id) === activityRoute.id && route.unavailable,
+          ) ? null : (
+            <button
+              type="button"
+              className="xp-offroute__retry"
+              onClick={() => state.retryRouteGeometry(activityRoute.id)}
+            >
+              Réessayer
+            </button>
+          )}
         </div>
       ) : null}
 

@@ -85,3 +85,37 @@ describe('offRoute · fenêtre temporelle', () => {
     expect(state.offRoute).toBe(true);
   });
 });
+
+
+describe('offRoute · incertitude GPS et bornes', () => {
+  it('retire la précision du fix avant de conclure au hors-trace', () => {
+    // 45 m mesurés avec ±10 m : l'écart prouvé est 35 m, sous le seuil de 40.
+    const uncertain = evaluateOffRoute([
+      { t: 0, distanceM: 45, accuracyM: 10 },
+      { t: 20_000, distanceM: 45, accuracyM: 10 },
+    ]);
+    expect(uncertain.offRoute).toBe(false);
+    expect(uncertain.distanceM).toBe(45);
+
+    // 55 m avec la même incertitude : 45 m prouvés, l'alerte est légitime.
+    const proven = evaluateOffRoute([
+      { t: 0, distanceM: 55, accuracyM: 10 },
+      { t: 20_000, distanceM: 55, accuracyM: 10 },
+    ]);
+    expect(proven.offRoute).toBe(true);
+  });
+
+  it('exige un retour strictement sous 25 m', () => {
+    const armed = evaluateOffRoute([
+      { t: 0, distanceM: 80 },
+      { t: 20_000, distanceM: 80 },
+    ]);
+    expect(armed.offRoute).toBe(true);
+
+    const atLimit = evaluateOffRoute([{ t: 21_000, distanceM: 25 }], armed);
+    expect(atLimit.offRoute).toBe(true);
+
+    const justUnder = evaluateOffRoute([{ t: 22_000, distanceM: 24.999 }], armed);
+    expect(justUnder.offRoute).toBe(false);
+  });
+});

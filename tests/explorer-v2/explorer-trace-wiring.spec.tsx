@@ -60,6 +60,7 @@ vi.mock('@/features/explorer-v2/offline/zone', () => ({
   registerOfflineWorker: async () => undefined,
 }));
 vi.mock('@/features/explorer-v2/activity/offRoute', () => ({
+  bearingLabel: () => null,
   offRouteLabel: () => '',
   evaluateOffRoute: () => ({ offRoute: false, distanceM: 0, outSinceS: 0 }),
 }));

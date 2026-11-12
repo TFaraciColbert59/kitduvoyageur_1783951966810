@@ -1089,3 +1089,30 @@ describe('explorer-v2 · auto-pause', () => {
   });
 
 });
+
+
+describe('explorer-v2 · vitesse GPS zéro en mouvement lent', () => {
+  it('déduit 0,3 m/s et ne gèle plus la séance', () => {
+    const tracker = new ActivityTracker(AUTO_PAUSE_BY_SPORT.rando);
+    let state = tracker.addFix(at(0, 0, 0));
+    // 0,3 m/s : 3 m toutes les 10 s. Avec l'ancienne fenêtre de 20 s, 8 m
+    // n'étaient jamais atteints et la vitesse restait à 0 pour toujours.
+    for (let t = 10; t <= 130; t += 10) {
+      state = tracker.addFix(at(t * 1000, t * 0.3, 0));
+    }
+    expect(state.distanceM).toBeCloseTo(39, 0);
+    expect(state.movingS).toBeGreaterThan(80);
+    expect(state.autoPaused).toBe(false);
+  });
+
+  it('ne prend pas une dérive de 12 m à ±20 m pour un mouvement', () => {
+    const tracker = new ActivityTracker(AUTO_PAUSE_BY_SPORT.rando);
+    let state = tracker.addFix(at(0, 0, 0, 20));
+    for (let t = 10; t <= 30; t += 10) {
+      state = tracker.addFix(at(t * 1000, t * 0.4, 0, 20));
+    }
+    // 12 m de déplacement net, mais l'incertitude impose 40 m de preuve.
+    expect(state.movingS).toBe(0);
+    expect(state.autoPaused).toBe(false);
+  });
+});

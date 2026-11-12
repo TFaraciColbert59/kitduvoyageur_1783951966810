@@ -52,6 +52,15 @@ interface ExplorerActions {
    * remplace jamais l'identifiant choisi au départ.
    */
   setTrailRoute: (route?: TrailRouteSnapshot) => void;
+  /**
+   * Publie une géométrie chargée sur **toutes** les copies qui portent encore
+   * cet identifiant : la route armée et/ou la copie figée de la séance. Une
+   * copie déjà `ready` n'est jamais remplacée. Ne ressuscite pas une route
+   * effacée : si aucun snapshot ne correspond, l'action ne fait rien.
+   */
+  setRouteGeometry: (route: TrailRouteSnapshot, options?: { force?: boolean }) => void;
+  /** Remet en `loading` une copie `unavailable` pour tenter un nouveau chargement. */
+  retryRouteGeometry: (routeId: string) => void;
   stopActivity: () => void;
   setTheme: (theme: 'light' | 'dark') => void;
   toggleNorthUp: () => void;
@@ -341,6 +350,35 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
           ? { ...state.activity, route }
           : state.activity;
       return { trailRoute: route, activity };
+    }),
+
+  setRouteGeometry: (route, options = {}) =>
+    set((state) => {
+      const canReplace = (snapshot: TrailRouteSnapshot | undefined) =>
+        snapshot?.id === route.id && (options.force === true || snapshot.status !== 'ready');
+      const trailRoute = canReplace(state.trailRoute) ? route : state.trailRoute;
+      const replaceActivity =
+        state.activity !== undefined &&
+        state.activity.route !== undefined &&
+        canReplace(state.activity.route);
+      const activity = replaceActivity && state.activity
+        ? { ...state.activity, route }
+        : state.activity;
+      return { trailRoute, activity };
+    }),
+
+  retryRouteGeometry: (routeId) =>
+    set((state) => {
+      const trailRoute =
+        state.trailRoute?.id === routeId && state.trailRoute.status !== 'ready'
+          ? { ...state.trailRoute, status: 'loading' as const }
+          : state.trailRoute;
+      const currentRoute = state.activity?.route;
+      const activity =
+        state.activity && currentRoute?.id === routeId && currentRoute.status !== 'ready'
+          ? { ...state.activity, route: { ...currentRoute, status: 'loading' as const } }
+          : state.activity;
+      return { trailRoute, activity };
     }),
 
   stopActivity: () => {

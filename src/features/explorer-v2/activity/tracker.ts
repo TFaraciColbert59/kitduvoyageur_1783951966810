@@ -179,10 +179,23 @@ const ELE_SMOOTHING = 0.25;
  * d'arrêt valide : on ne le remplace par la vitesse déduite que si la position
  * a réellement progressé (déplacement net suffisant) sur une durée assez
  * longue pour ne pas confondre le jitter stationnaire avec de la marche.
+ *
+ * 90 s, et non 20 s : à 0,3 m/s (le seuil de reprise de la randonnée), 8 m
+ * exigent 26,7 s. L'ancien plafond de 20 s rendait la preuve mathématiquement
+ * impossible entre 0,3 et 0,4 m/s et gelait la distance d'un marcheur lent dont
+ * le GPS rapporte `speed: 0`. La fenêtre couvre aussi les sports plus lents
+ * (kayak 0,25 m/s, escalade 0,2 m/s) et une précision moyenne.
  */
-const ZERO_SPEED_WINDOW_MS = 20_000;
+const ZERO_SPEED_WINDOW_MS = 90_000;
 const ZERO_SPEED_MIN_SPAN_S = 10;
 const ZERO_SPEED_MIN_DISPLACEMENT_M = 8;
+/**
+ * Le bruit d'un GPS à 20 m de précision peut déplacer le point de 20 m sans
+ * mouvement réel. On exige donc `max(8 m, 2 × précision)` de déplacement net,
+ * plafonné à 60 m (précision maximale acceptée : 30 m).
+ */
+const ZERO_SPEED_ACCURACY_FACTOR = 2;
+const ZERO_SPEED_MAX_DISPLACEMENT_M = 60;
 
 function finiteOr(value: number | undefined, fallback: number): number {
   return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
@@ -600,7 +613,7 @@ export class ActivityTracker {
     }
 
     this.metrics.distanceM += distance;
-    if (speed >= this.movementThresholdS()) this.metrics.movingS += dtS;
+    if (this.atOrAbove(speed, this.movementThresholdS())) this.metrics.movingS += dtS;
 
     if (ele !== null) {
       const smoothed =
@@ -732,6 +745,16 @@ export class ActivityTracker {
   }
 
   /**
+   * Comparaison de vitesse avec 1 % de tolérance. Une trace à 0,3 m/s
+   * convertie en degrés peut mesurer 0,2997 m/s : sans cette marge, la preuve
+   * `speed: 0` resterait sous le seuil de reprise et le mouvement lent serait
+   * encore ignoré.
+   */
+  private atOrAbove(speed: number, threshold: number): boolean {
+    return speed + Math.max(1e-9, threshold * 0.01) >= threshold;
+  }
+
+  /**
    * Seuil qui alimente `movingS`. Quand l'auto-pause est active, un sport lent
    * (kayak 0,25 m/s, escalade 0,2 m/s) compte son mouvement à son propre seuil
    * de reprise : la distance ne s'accumule jamais sans durée. Désactivée, on
@@ -757,7 +780,12 @@ export class ActivityTracker {
     fix: GpsFix,
     effectiveT: number,
   ): number {
-    if (reportedSpeed === null) return inferredSpeed;
+    if (reportedSpeed === null) {
+      // Une vitesse inconnue ne prouve ni l'arrêt ni le mouvement : la fenêtre
+      // de preuve repart de zéro au lieu de réutiliser un point d'avant elle.
+      this.zeroSpeedWindow = [];
+      return inferredSpeed;
+    }
     if (reportedSpeed > 0) {
       this.zeroSpeedWindow = [];
       return reportedSpeed;
@@ -773,9 +801,19 @@ export class ActivityTracker {
     if (spanS >= ZERO_SPEED_MIN_SPAN_S) {
       const displacement = haversineM(first.fix, fix);
       const sustainedSpeed = displacement / spanS;
+      const accuracy = Math.max(
+        finiteNumber(first.fix.acc) ?? 0,
+        finiteNumber(fix.acc) ?? 0,
+      );
+      const required = Math.min(
+        ZERO_SPEED_MAX_DISPLACEMENT_M,
+        Math.max(ZERO_SPEED_MIN_DISPLACEMENT_M, accuracy * ZERO_SPEED_ACCURACY_FACTOR),
+      );
       if (
-        displacement >= ZERO_SPEED_MIN_DISPLACEMENT_M &&
-        sustainedSpeed >= this.config.resumeSpeedThresholdMs
+        // La distance haversine peut rendre 9,999 999 m pour 10 m exactement :
+        // sans cette tolérance, la preuve échouerait au premier palier.
+        displacement + 0.05 >= required &&
+        this.atOrAbove(sustainedSpeed, this.config.resumeSpeedThresholdMs)
       ) {
         return sustainedSpeed;
       }
@@ -812,7 +850,7 @@ export class ActivityTracker {
     }
 
     // En pause : il faut un mouvement continu au-dessus du seuil de reprise.
-    if (speed >= this.config.resumeSpeedThresholdMs) {
+    if (this.atOrAbove(speed, this.config.resumeSpeedThresholdMs)) {
       this.resumingS += dtS;
       if (this.resumingS >= this.config.resumeDurationS) {
         this.autoPaused = false;

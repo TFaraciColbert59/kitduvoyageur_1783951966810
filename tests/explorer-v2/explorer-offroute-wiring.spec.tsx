@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 /**
@@ -284,6 +284,107 @@ describe('explorer-v2 · hors-trace branché sur le composant', () => {
     expect(activity?.offRoute).toBe(false);
     expect(activity?.offRouteM).toBeLessThan(1);
     expect(screen.queryByRole('button', { name: /Hors itinéraire/ })).toBeNull();
+
+    // La carte doit dessiner la même géométrie que celle mesurée : la version
+    // d'affichage est décalée de 550 m, donc incohérente avec l'alerte à 40 m.
+    await waitFor(() => {
+      const drawn = (
+        mapProbe.props?.routes as
+          | Array<{ id: number; geojson: unknown }>
+          | undefined
+      )?.find((route) => route.id === 1);
+      expect(drawn?.geojson).toEqual(ROUTE.geojson);
+    });
+  });
+
+  it('oriente la flèche de retour vers le point le plus proche de la trace', async () => {
+    await mount();
+
+    // 111 m au nord d'une trace est-ouest : le retour se fait vers le sud.
+    const north = (t: number): GpsFix => ({
+      ...onRoute(t),
+      lat: 45.9219,
+    });
+    push(north(0));
+    push(north(5_000));
+    push(north(20_000));
+
+    const activity = useExplorerStore.getState().activity;
+    expect(activity?.offRoute).toBe(true);
+    expect(activity?.offRouteBearing ?? 0).toBeCloseTo(180, 0);
+
+    const banner = screen.getByRole('button', { name: /Hors itinéraire/ });
+    expect(banner.getAttribute('aria-label')).toContain('sud');
+    const arrow = banner.querySelector('.xp-offroute__arrow') as HTMLElement | null;
+    expect(arrow).not.toBeNull();
+    expect(arrow?.getAttribute('data-bearing')).toBe('180');
+    expect(arrow?.style.transform).toContain('rotate(180');
+  });
+
+  it('termine le chargement de la séance même après clearSelection', async () => {
+    let resolveRequest: (response: Response) => void = () => undefined;
+    const pending = new Promise<Response>((resolve) => {
+      resolveRequest = resolve;
+    });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((input: RequestInfo | URL) => {
+        if (String(input).includes('/geometry')) return pending;
+        return Promise.resolve(new Response('{}', { status: 404 }));
+      }),
+    );
+
+    useExplorerStore.setState({
+      level: 3,
+      geo: 'FR',
+      placeId: 'chamonix',
+      center: [LNG0, LAT0],
+      zoom: 12,
+      selection: { kind: 'trail', id: '1' },
+    });
+    useExplorerStore.getState().startActivity('course');
+    render(<ExplorerV2 />);
+    await waitFor(() => {
+      const target = window as Window & { __xpPushFix?: unknown };
+      expect(typeof target.__xpPushFix).toBe('function');
+    });
+    await waitFor(() =>
+      expect(useExplorerStore.getState().activity?.route?.status).toBe('loading'),
+    );
+
+    // La sélection d'écran disparaît pendant la requête. La copie figée de la
+    // séance doit continuer son chargement, sinon elle reste `loading` à vie.
+    act(() => useExplorerStore.getState().clearSelection());
+    expect(useExplorerStore.getState().activity?.route?.status).toBe('loading');
+
+    await act(async () => {
+      resolveRequest(
+        new Response(JSON.stringify({ geojson: ROUTE.geojson }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+      await pending;
+    });
+    await waitFor(() =>
+      expect(useExplorerStore.getState().activity?.route?.status).toBe('ready'),
+    );
+  });
+
+  it('propose de réessayer une géométrie indisponible', async () => {
+    routeProbe.geometryStatus = 503;
+    await mount('unavailable');
+
+    const retry = screen.getByRole('button', { name: 'Réessayer' });
+    routeProbe.geometryStatus = 200;
+    await act(async () => {
+      fireEvent.click(retry);
+    });
+
+    await waitFor(() =>
+      expect(useExplorerStore.getState().activity?.route?.status).toBe('ready'),
+    );
+    expect(screen.queryByRole('button', { name: 'Réessayer' })).toBeNull();
   });
 
   it('affiche un état indisponible quand la géométrie réelle manque', async () => {

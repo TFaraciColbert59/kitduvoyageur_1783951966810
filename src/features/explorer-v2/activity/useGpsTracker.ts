@@ -1,11 +1,18 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { ActivityTracker, autoPauseConfigForSport, type GpsFix } from './tracker';
+import {
+  ActivityTracker,
+  autoPauseConfigForSport,
+  type GpsFix,
+} from './tracker';
 import { haptic } from '../state/haptics';
 import {
+  OFF_ROUTE_SECONDS,
+  OFF_ROUTE_WINDOW_MS,
   evaluateOffRoute,
   pruneOffRouteSamples,
+  type OffRouteSample,
   type OffRouteState,
 } from './offRoute';
 import { useExplorerStore } from '../state/store';
@@ -19,9 +26,23 @@ import { gpsSimulationEnabled } from './gpsSimulation';
  * - hors-trace évalué dès qu'un itinéraire est sélectionné ;
  * - en recette, `window.__xpPushFix` permet de rejouer un GPX sans GPS.
  */
+/**
+ * Mesure de retour à la trace. Le nombre seul reste accepté pour les appels
+ * historiques ; l'objet ajoute le cap de retour (flèche du bandeau).
+ */
+export interface RouteDistanceMeasurement {
+  distanceM: number;
+  /** Cap du point de mesure vers la trace, 0 = nord, 90 = est. */
+  bearingDeg?: number | null;
+}
+
+export type RouteDistanceProvider = (
+  fix: GpsFix,
+) => number | RouteDistanceMeasurement | null;
+
 export interface TrackerOptions {
-  /** Distance à la trace courante, fournie par l'appelant (worker ou RPC). */
-  distanceToRouteM?: (fix: GpsFix) => number | null;
+  /** Distance (et cap) à la trace courante, fournie par l'appelant. */
+  distanceToRouteM?: RouteDistanceProvider;
   onFix?: (fix: GpsFix, metrics: ReturnType<ActivityTracker['addFix']>) => void;
 }
 
@@ -47,7 +68,7 @@ export function useGpsTracker({ distanceToRouteM, onFix }: TrackerOptions = {}) 
   const trackerConfigRef = useRef<string>('');
   const manualPausedRef = useRef<boolean | null>(null);
   const offRouteRef = useRef<OffRouteState>({ offRoute: false, distanceM: 0, outSinceS: 0 });
-  const samplesRef = useRef<Array<{ t: number; distanceM: number }>>([]);
+  const samplesRef = useRef<OffRouteSample[]>([]);
 
   const handleFix = useRef<(fix: GpsFix) => void>(() => undefined);
   const lastFixTimeRef = useRef<number>(Date.now());
@@ -100,7 +121,16 @@ export function useGpsTracker({ distanceToRouteM, onFix }: TrackerOptions = {}) 
         samplesRef.current = [];
         offRouteRef.current = { ...offRouteRef.current, outSinceS: 0 };
       }
-      const distance = distanceToRouteM(fix);
+      const measurement = distanceToRouteM(fix);
+      const distance =
+        typeof measurement === 'number' ? measurement : measurement?.distanceM ?? null;
+      const bearing =
+        typeof measurement === 'object' &&
+        measurement !== null &&
+        typeof measurement.bearingDeg === 'number' &&
+        Number.isFinite(measurement.bearingDeg)
+          ? measurement.bearingDeg
+          : null;
       if (distance !== null) {
         // Le tracker expose un instant corrigé et monotone. `fix.t` peut avoir
         // reculé ou sauté ; l'utiliser ici fausserait `outSinceS` et pourrait
@@ -108,10 +138,19 @@ export function useGpsTracker({ distanceToRouteM, onFix }: TrackerOptions = {}) 
         samplesRef.current.push({
           t: metrics.effectiveTMs ?? fix.t,
           distanceM: distance,
+          accuracyM: fix.acc,
         });
-        // Fenêtre de 60 s, indépendante de la fréquence : à 4 Hz, 40 fixes ne
-        // couvrent que 9,75 s et empêcheraient l'alerte de 15 s de partir.
-        samplesRef.current = pruneOffRouteSamples(samplesRef.current);
+        // Fenêtre temporelle, indépendante de la fréquence : à 4 Hz, 40 fixes
+        // ne couvrent que 9,75 s et empêcheraient l'alerte de 15 s de partir.
+        // Elle couvre aussi le trou GPS toléré par le sport : avec 60 s pour
+        // une rando qui accepte 120 s entre deux fixes, le point de départ
+        // était élagué et l'alerte ne pouvait jamais partir (61–120 s).
+        const maxGapS = autoPauseConfigForSport(current.sport).maxFixGapS;
+        const windowMs = Math.max(
+          OFF_ROUTE_WINDOW_MS,
+          (maxGapS + OFF_ROUTE_SECONDS) * 1000,
+        );
+        samplesRef.current = pruneOffRouteSamples(samplesRef.current, windowMs);
         const next = evaluateOffRoute(samplesRef.current, offRouteRef.current);
         const wasOff = offRouteRef.current.offRoute;
         offRouteRef.current = next;
@@ -123,6 +162,9 @@ export function useGpsTracker({ distanceToRouteM, onFix }: TrackerOptions = {}) 
                 // La bannière affiche la distance à la trace, jamais la
                 // distance parcourue de l'activité.
                 offRouteM: next.distanceM,
+                // Cap de retour : une flèche fixe suggérerait une fausse
+                // direction. Absent si le point de projection est confondu.
+                offRouteBearing: bearing,
               }
             : undefined,
           ...(next.offRoute !== wasOff

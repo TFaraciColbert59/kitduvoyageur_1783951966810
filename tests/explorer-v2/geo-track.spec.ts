@@ -8,6 +8,8 @@ import {
   trackRevision,
   routeLines,
   distanceToRouteM,
+  nearestPointOnRouteM,
+  bearingDegrees,
 } from '@/features/explorer-v2/geo/track';
 
 /**
@@ -294,5 +296,55 @@ describe('geo/track · distance à la trace sélectionnée', () => {
     expect(lines).toHaveLength(1);
     expect(lines[0][0]).toEqual([6.87, 45.92, 1200]);
     expect(distanceToRouteM([6.875, 45.92 + 80 / 111320], lines) ?? 0).toBeCloseTo(80, 0);
+  });
+});
+
+
+describe('geo/track · flèche de retour hors-trace', () => {
+  const route = {
+    type: 'LineString',
+    coordinates: [
+      [6.87, 45.92],
+      [6.88, 45.92],
+    ],
+  };
+  const lines = routeLines(route);
+
+  it('renvoie le point le plus proche et un cap nord/sud', () => {
+    const north = nearestPointOnRouteM([6.875, 45.9209], lines);
+    expect(north).not.toBeNull();
+    expect(north?.nearest[0]).toBeCloseTo(6.875, 5);
+    expect(north?.nearest[1]).toBeCloseTo(45.92, 5);
+    expect(north?.distanceM ?? 0).toBeCloseTo(100, 0);
+    // Le point est au nord de la trace : il faut revenir vers le sud.
+    expect(north?.bearingDeg ?? 0).toBeCloseTo(180, 0);
+
+    const south = nearestPointOnRouteM([6.875, 45.9191], lines);
+    expect(south?.bearingDeg ?? 0).toBeCloseTo(0, 0);
+  });
+
+  it('oriente le retour vers l’est et l’ouest aux extrémités', () => {
+    const west = nearestPointOnRouteM([6.86, 45.92], lines);
+    expect(west?.nearest[0]).toBeCloseTo(6.87, 5);
+    expect(west?.bearingDeg ?? 0).toBeGreaterThan(80);
+    expect(west?.bearingDeg ?? 0).toBeLessThan(100);
+
+    const east = nearestPointOnRouteM([6.89, 45.92], lines);
+    expect(east?.nearest[0]).toBeCloseTo(6.88, 5);
+    expect(east?.bearingDeg ?? 0).toBeGreaterThan(260);
+    expect(east?.bearingDeg ?? 0).toBeLessThan(280);
+  });
+
+  it('calcule un cap orthodromique stable et refuse l’invalide', () => {
+    expect(bearingDegrees([2.35, 48.85], [2.35, 48.86])).toBeCloseTo(0, 1);
+    expect(bearingDegrees([2.35, 48.85], [2.35, 48.84])).toBeCloseTo(180, 1);
+    expect(bearingDegrees([2.35, 48.85], [2.36, 48.85])).toBeGreaterThan(80);
+    expect(bearingDegrees([2.35, 48.85], [2.36, 48.85])).toBeLessThan(100);
+    expect(Number.isNaN(bearingDegrees([200, 0], [0, 0]))).toBe(true);
+  });
+
+  it('retourne null sans ligne ou avec un point invalide', () => {
+    expect(nearestPointOnRouteM([6.87, 45.92], [])).toBeNull();
+    expect(nearestPointOnRouteM([200, 45.92], lines)).toBeNull();
   });
 });
