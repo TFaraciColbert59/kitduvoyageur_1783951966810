@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { requireUser } from '@/lib/api/requireUser';
 import { fail, ok } from '@/lib/api/respond';
+import { invalidateUserCache } from '@/lib/perf/userMemo';
 import {
   loadFollowRequests,
   readReseauError,
@@ -50,6 +51,9 @@ export async function POST(request: Request) {
   try {
     // La RPC vérifie elle-même que auth.uid() est la cible de la demande.
     await respondFollowRequest(auth.supabase, parsed.data.requestId, parsed.data.action);
+    // Accepter/refuser modifie les demandes entrantes, les abonnés et l'état
+    // de suivi : aucun cache du compte acteur ne doit survivre à la mutation.
+    invalidateUserCache(auth.user.id);
     return ok({ status: parsed.data.action });
   } catch (error) {
     return requestFailure(error);

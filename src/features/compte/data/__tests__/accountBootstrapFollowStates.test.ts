@@ -57,20 +57,62 @@ describe('mapOutgoingFollowStates — demandes sortantes au chargement', () => {
 
 type Row = Record<string, unknown>;
 
-/** Faux client PostgREST : renvoie les lignes de la table, sans réseau. */
-function fakeBootstrapClient(rows: Record<string, Row[]>) {
+/**
+ * Faux client PostgREST : applique réellement `eq`, `in`, `neq`, `gt` et
+ * `limit`, et permet de simuler l'échec d'une table. Sans ce filtrage, un
+ * mauvais scoping `requester_id`/`status` passerait inaperçu.
+ */
+function fakeBootstrapClient(
+  rows: Record<string, Row[]>,
+  errors: Record<string, unknown> = {}
+) {
   const query = (table: string) => {
-    const builder: Record<string, unknown> = {};
-    for (const method of ['select', 'eq', 'in', 'or', 'order', 'gt']) {
-      builder[method] = () => builder;
-    }
-    const result = () => ({ data: rows[table] ?? [], error: null });
-    builder.limit = () => Promise.resolve(result());
-    builder.maybeSingle = () =>
-      Promise.resolve({
-        data: (rows[table] ?? [])[0] ?? null,
-        error: null,
-      });
+    const filters: Array<(row: Row) => boolean> = [];
+    let max = Number.POSITIVE_INFINITY;
+    const builder = {} as {
+      [method: string]: (...args: any[]) => unknown;
+    };
+    builder.select = () => builder;
+    builder.eq = (column: string, value: unknown) => {
+      filters.push((row) => row[column] === value);
+      return builder;
+    };
+    builder.in = (column: string, values: unknown[]) => {
+      const allowed = new Set(values);
+      filters.push((row) => allowed.has(row[column]));
+      return builder;
+    };
+    builder.neq = (column: string, value: unknown) => {
+      filters.push((row) => row[column] !== value);
+      return builder;
+    };
+    builder.gt = (column: string, value: unknown) => {
+      filters.push((row) => Number(row[column]) > Number(value));
+      return builder;
+    };
+    builder.gte = (column: string, value: unknown) => {
+      filters.push((row) => Number(row[column]) >= Number(value));
+      return builder;
+    };
+    builder.or = () => builder;
+    builder.order = () => builder;
+    builder.limit = (value: number) => {
+      max = value;
+      return builder;
+    };
+    const result = () => {
+      if (errors[table]) return { data: null, error: errors[table] };
+      const filtered = (rows[table] ?? [])
+        .filter((row) => filters.every((filter) => filter(row)))
+        .slice(0, max);
+      return { data: filtered, error: null };
+    };
+    builder.maybeSingle = () => {
+      if (errors[table]) {
+        return Promise.resolve({ data: null, error: errors[table] });
+      }
+      return Promise.resolve({ data: result().data?.[0] ?? null, error: null });
+    };
     builder.then = (onFulfilled: unknown, onRejected: unknown) =>
       Promise.resolve(result()).then(onFulfilled as never, onRejected as never);
     return builder;
@@ -83,9 +125,12 @@ function fakeBootstrapClient(rows: Record<string, Row[]>) {
   };
 }
 
-async function bootstrapWith(rows: Record<string, Row[]>) {
+async function bootstrapWith(
+  rows: Record<string, Row[]>,
+  errors: Record<string, unknown> = {}
+) {
   const payload = await loadAccountBootstrap(
-    fakeBootstrapClient(rows) as unknown as Parameters<typeof loadAccountBootstrap>[0]
+    fakeBootstrapClient(rows, errors) as unknown as Parameters<typeof loadAccountBootstrap>[0]
   );
   if (!payload.authenticated) throw new Error('bootstrap_non_authentifie');
   return payload;
@@ -127,8 +172,49 @@ describe('loadAccountBootstrap — hydratation des demandes sortantes', () => {
     });
 
     expect(payload.followStates).toEqual({});
+    expect(payload.followStatesUnavailable).toBe(false);
     expect(payload.following).toEqual([
       expect.objectContaining({ id: TARGET, ps: 'alice' }),
     ]);
+  });
+
+  it('ne lit que les demandes pending du compte courant', async () => {
+    const payload = await bootstrapWith({
+      ...baseRows,
+      follow_requests: [
+        { requester_id: OWNER, target_id: TARGET, status: 'pending' },
+        { requester_id: OTHER, target_id: OTHER, status: 'pending' },
+        { requester_id: OWNER, target_id: TARGET, status: 'accepted' },
+      ],
+      public_profiles: [
+        { id: TARGET, handle: 'alice', full_name: 'Alice' },
+        { id: OTHER, handle: 'bob', full_name: 'Bob' },
+      ],
+    });
+
+    expect(payload.followStates).toEqual({ alice: 'requested' });
+    expect(payload.followStatesUnavailable).toBe(false);
+  });
+
+  it('signale un échec de lecture des demandes sans inventer « aucun état »', async () => {
+    const payload = await bootstrapWith(
+      {
+        ...baseRows,
+        public_profiles: [{ id: TARGET, handle: 'alice', full_name: 'Alice' }],
+      },
+      { follow_requests: { message: 'relation indisponible' } }
+    );
+
+    expect(payload.followStates).toEqual({});
+    expect(payload.followStatesUnavailable).toBe(true);
+  });
+
+  it('signale un échec de lecture des profils cibles', async () => {
+    const payload = await bootstrapWith(baseRows, {
+      public_profiles: { message: 'vue temporairement indisponible' },
+    });
+
+    expect(payload.followStates).toEqual({});
+    expect(payload.followStatesUnavailable).toBe(true);
   });
 });

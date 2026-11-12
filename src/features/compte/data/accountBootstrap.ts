@@ -1615,7 +1615,8 @@ async function safeRowsOrNull<T>(
     const { data, error } = await query;
     if (error) {
       // Jamais de bruit en production : une table optionnelle absente ou une
-      // RLS refusée doit rester un état vide silencieux côté client.
+      // RLS refusée reste un échec silencieux côté logs, mais l'appelant reçoit
+      // `null` et peut décider d'un état explicite (jamais un faux « vide »).
       if (process.env.NODE_ENV !== 'production') {
         console.warn('[compte] lecture bootstrap ignorée', error);
       }
@@ -1642,15 +1643,20 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
   const user = authData?.user;
   if (!user) return { authenticated: false as const };
 
-  const [profileRes, followerRows, followingRows, outgoingRequestRows] = await Promise.all([
+  const [
+    profileRes,
+    followerRowsResult,
+    followingRowsResult,
+    outgoingRequestRowsResult,
+  ] = await Promise.all([
     supabase.from('user_profiles').select('*').eq('id', user.id).maybeSingle(),
-    safeRows<{ follower_id?: string | null }>(
+    safeRowsOrNull<{ follower_id?: string | null }>(
       supabase.from('user_follows').select('follower_id').eq('following_id', user.id)
     ),
-    safeRows<{ following_id?: string | null }>(
+    safeRowsOrNull<{ following_id?: string | null }>(
       supabase.from('user_follows').select('following_id').eq('follower_id', user.id)
     ),
-    safeRows<OutgoingFollowRequestRow>(
+    safeRowsOrNull<OutgoingFollowRequestRow>(
       supabase
         .from('follow_requests')
         .select('target_id, status')
@@ -1658,6 +1664,17 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
         .eq('status', 'pending')
     ),
   ]);
+
+  // `null` = lecture en échec, `[]` = lecture réussie mais vide. Les états de
+  // suivi ne doivent jamais confondre les deux : un échec ne doit pas faire
+  // croire que l'utilisateur ne suit personne.
+  const followerRows = followerRowsResult ?? [];
+  const followingRows = followingRowsResult ?? [];
+  const outgoingRequestRows = outgoingRequestRowsResult ?? [];
+  const followRelationsUnavailable =
+    followerRowsResult === null ||
+    followingRowsResult === null ||
+    outgoingRequestRowsResult === null;
 
   const profile = (profileRes.data ?? null) as AccountProfileRow | null;
   const followerIds = [
@@ -1770,7 +1787,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
     // les règles de visibilité (public, soi, ou privé avec invitation
     // acceptée). Une cible privée non invitée reste donc sans handle.
     pendingFollowTargetIds.length
-      ? safeRows<FollowProfileRow>(
+      ? safeRowsOrNull<FollowProfileRow>(
           supabase
             .from('public_profiles')
             .select('id,handle')
@@ -2169,6 +2186,13 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
       : Promise.resolve([] as StoryRow[]),
   ]);
 
+  // Une lecture de suivi en échec ne doit jamais être présentée comme
+  // « aucun état » : le client reçoit un indicateur explicite et conserve ses
+  // états connus au lieu d'afficher « Suivre » à tort.
+  const followStatesUnavailable =
+    followRelationsUnavailable ||
+    (pendingFollowTargetIds.length > 0 && outgoingRequestProfiles === null);
+
   const profileById = new Map<string, CompanionProfileRow>();
   for (const row of [...followingProfiles, ...followerProfiles, ...relationProfiles]) {
     profileById.set(row.id, row);
@@ -2271,7 +2295,10 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
     following: mapTribu(followingProfiles),
     // Demandes sortantes restaurées au chargement : le bouton réseau affiche
     // « Demande envoyée » avant toute nouvelle action.
-    followStates: mapOutgoingFollowStates(outgoingRequestRows, outgoingRequestProfiles),
+    followStates: followStatesUnavailable
+      ? {}
+      : mapOutgoingFollowStates(outgoingRequestRows, outgoingRequestProfiles ?? []),
+    followStatesUnavailable,
     reposts: mapReposts(repostRows, repostSources, profileById),
     badges: mapBadges(badgeRows, userBadgeRows),
     challenges: mapChallenges(challengeRows, challengeProgress, progressionRows, userProgressionRows[0] ?? null),

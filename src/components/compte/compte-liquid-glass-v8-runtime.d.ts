@@ -120,7 +120,16 @@ declare global {
       followStates?: Record<string, FollowVisualState>;
       followPending?: Record<string, FollowVisualState>;
     } | null;
-    /** Applique un patch de suivi venu de l'hôte via le vrai hydrate. */
-    __lkdvApplyFollowStates?: (states: Record<string, unknown>) => boolean;
+    /**
+     * Applique des états de suivi. `replace` réconcilie le payload complet
+     * (les handles absents sont retirés) ; `preserve` protège les handles
+     * dont une mutation locale est plus récente que la lecture.
+     */
+    __lkdvApplyFollowStates?: (
+      states: Record<string, unknown>,
+      options?: { replace?: boolean; preserve?: string[] }
+    ) => boolean;
+    /** Signale un bootstrap partiel sans effacer les états connus. */
+    __lkdvShowFollowUnavailable?: () => void;
   }
 }

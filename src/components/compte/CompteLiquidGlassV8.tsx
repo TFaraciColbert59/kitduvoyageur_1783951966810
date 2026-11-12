@@ -453,6 +453,17 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
   const [activeHandle, setActiveHandle] = useState<string>('tony_frc');
   const bootstrapPayloadRef = useRef<unknown>(null);
   const bootstrapPhaseRef = useRef<BootstrapPhase>('idle');
+  /**
+   * Compteur monotone des mutations de suivi initiées par cet onglet.
+   *
+   * Un bootstrap parti avant une action peut revenir après elle : sans cette
+   * séquence, son snapshot périmé réécrirait l'état confirmé (par exemple
+   * `requested` après une annulation). Chaque handle touché depuis le départ
+   * du fetch est préservé lors de l'hydratation.
+   */
+  const followMutationSeqRef = useRef(0);
+  const followMutationByHandleRef = useRef<Map<string, number>>(new Map());
+  const followInFlightRef = useRef<Set<string>>(new Set());
   const [bootstrapPhase, setBootstrapPhase] = useState<BootstrapPhase>('idle');
   const lastSlotMountRef = useRef<PendingSlotMount | null>(null);
   const [drawerMount, setDrawerMount] = useState<{ root: HTMLElement | null; kind: string; props: any } | null>(null);
@@ -531,6 +542,9 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
     };
     bootstrapPayloadRef.current = null;
     bootstrapPhaseRef.current = 'idle';
+    followMutationSeqRef.current = 0;
+    followMutationByHandleRef.current = new Map();
+    followInFlightRef.current = new Set();
     accountVisibilityRef.current = null;
     signatureVisibilityRef.current = null;
     lastSlotMountRef.current = null;
@@ -640,7 +654,12 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
       restored?: boolean;
       message?: string;
     };
-    const followInFlight = new Set<string>();
+    const followInFlight = followInFlightRef.current;
+    const markFollowMutation = (targetHandle: string) => {
+      const sequence = ++followMutationSeqRef.current;
+      followMutationByHandleRef.current.set(targetHandle, sequence);
+      return sequence;
+    };
     const applyFollowState = (targetHandle: string, state: FollowState): boolean => {
       const hydrate = (window as any).__lkdvHydrateCompte;
       if (typeof hydrate !== 'function') return false;
@@ -679,6 +698,10 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
       }
 
       followInFlight.add(targetHandle);
+      // Toute action démarrée après le départ d'un bootstrap rend le snapshot
+      // de ce bootstrap périmé pour ce handle, qu'elle réussisse ou échoue :
+      // le rollback local est plus récent que la lecture en vol.
+      markFollowMutation(targetHandle);
       const followed =
         typeof contract.followed === 'boolean' ? contract.followed : undefined;
       const previous = confirmedFollowState(targetHandle, followed);
@@ -904,7 +927,8 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
     return () => {
       ++runtimeEpochRef.current;
       ++requestEpochRef.current;
-      for (const key of ['__lkdvCompteMapOpenOuting', '__lkdvScanLookup', '__lkdvNavigateProfile', '__lkdvOnAction', '__lkdvOnMutate', '__lkdvHydrateCompte', '__lkdvGetState', '__lkdvCompteAct', '__lkdvOpenSlot', '__lkdvSetSlot', '__lkdvSetProfileVisibility', '__lkdvSetSignatureVisibility']) delete (window as any)[key];
+      followInFlightRef.current.clear();
+      for (const key of ['__lkdvCompteMapOpenOuting', '__lkdvScanLookup', '__lkdvNavigateProfile', '__lkdvOnAction', '__lkdvOnMutate', '__lkdvHydrateCompte', '__lkdvGetState', '__lkdvCompteAct', '__lkdvOpenSlot', '__lkdvSetSlot', '__lkdvSetProfileVisibility', '__lkdvSetSignatureVisibility', '__lkdvShowFollowUnavailable']) delete (window as any)[key];
       delete (window as any).__lkdvMountSlot;
       delete (window as any).__lkdvUnmountSlot;
       delete (window as any).__lkdvMountDrawer;
@@ -978,6 +1002,12 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
     const generation = getMyTripsSessionGeneration();
     const epoch = ++requestEpochRef.current;
     const runtimeEpoch = runtimeEpochRef.current;
+    // Toute mutation de suivi qui démarre après ce point rend le snapshot du
+    // bootstrap périmé pour les handles concernés.
+    const followSeqAtStart = followMutationSeqRef.current;
+    // Une action déjà en vol au départ du fetch n'a pas encore de numéro plus
+    // grand que `followSeqAtStart` : on la protège aussi par son handle.
+    const followInFlightAtStart = new Set(followInFlightRef.current);
     const isCurrent = () => requestEpochRef.current === epoch && runtimeEpochRef.current === runtimeEpoch
       && identityRef.current === owner && (owner === null || isMyTripsSessionCurrent(owner, generation));
     if (!isCurrent()) return;
@@ -1251,7 +1281,11 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
       // C'est aussi lui qui confirme le rôle : tant qu'il n'a pas répondu,
       // l'hôte ne peut pas afficher les entrées propriétaire.
       try {
-        const bootRes = await fetch('/api/compte/bootstrap');
+        const bootRes = await fetch('/api/compte/bootstrap', {
+          cache: 'no-store',
+          credentials: 'same-origin',
+          headers: { accept: 'application/json' },
+        });
         if (!isCurrent()) return;
         if (!bootRes.ok) throw new Error(`bootstrap_http_${bootRes.status}`);
         const payload = await bootRes.json();
@@ -1268,6 +1302,18 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
         const bootSignatureIndex = signatureVisibilityIndex(payload?.visibility?.signature);
         const bootSignature = signatureVisibilityForValue(bootSignatureIndex);
         if (bootSignature) signatureVisibilityRef.current = bootSignature;
+        // Un bootstrap parti avant une action de suivi ne doit pas ressusciter
+        // l'état d'avant pour les handles touchés depuis. Les listes
+        // followers/following sont également un snapshot : on les conserve si
+        // une mutation les a rendues périmées.
+        const followStatesUnavailable = payload?.followStatesUnavailable === true;
+        const preservedFollowHandles = [...followMutationByHandleRef.current.entries()]
+          .filter(
+            ([handle, sequence]) =>
+              sequence > followSeqAtStart || followInFlightAtStart.has(handle)
+          )
+          .map(([handle]) => handle);
+        const followMutatedDuringFetch = preservedFollowHandles.length > 0;
         if (payload?.authenticated) {
           hydrate({
             ...payload.profile,
@@ -1278,10 +1324,19 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
             orders: payload.orders || [],
             bookings: payload.bookings || [],
             clubs: payload.clubs || [],
-            tribu: payload.tribu || [],
-            followers: payload.followers || [],
-            following: payload.following || [],
-            followStates: payload.followStates || {},
+            ...(followMutatedDuringFetch
+              ? {}
+              : {
+                  tribu: payload.tribu || [],
+                  followers: payload.followers || [],
+                  following: payload.following || [],
+                }),
+            ...(followStatesUnavailable
+              ? {}
+              : {
+                  followStates: payload.followStates || {},
+                  followStatesPreserve: preservedFollowHandles,
+                }),
             kits: payload.kits || [],
             stories: payload.stories || [],
             highlights: payload.highlights || [],
@@ -1290,6 +1345,9 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
             notifications: payload.notifications || [],
             replace: true,
           });
+          if (followStatesUnavailable) {
+            (window as any).__lkdvShowFollowUnavailable?.();
+          }
           if (payload.profile?.handle) setActiveHandle(payload.profile.handle);
         }
         setBootstrapPhaseState('ready');

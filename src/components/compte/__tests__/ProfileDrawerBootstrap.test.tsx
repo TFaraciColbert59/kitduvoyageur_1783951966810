@@ -163,6 +163,7 @@ function okResponse(json: unknown) {
 
 let bootstrapCalls = 0;
 let bootstrapAnswer: () => Promise<unknown>;
+let bootstrapInits: RequestInit[] = [];
 let followCalls: Array<{ url: string; init?: RequestInit }> = [];
 let followAnswer: () => Promise<unknown>;
 
@@ -190,6 +191,7 @@ beforeEach(() => {
   localStorage.clear();
   supabaseState.rows = {};
   bootstrapCalls = 0;
+  bootstrapInits = [];
   followCalls = [];
   bootstrapAnswer = () => new Promise(() => {});
   followAnswer = () => Promise.resolve(okResponse({ status: 'following' }));
@@ -197,6 +199,7 @@ beforeEach(() => {
     const url = String(input);
     if (url.includes('/api/compte/bootstrap')) {
       bootstrapCalls += 1;
+      bootstrapInits.push(init ?? {});
       return bootstrapAnswer();
     }
     if (url.includes('/api/compte/reseau/follow')) {
@@ -308,6 +311,15 @@ describe('Compte — bootstrap du drawer Profil', () => {
     await waitFor(() => expect(bootstrapCalls).toBe(2));
     // L'état d'erreur reste honnête après un nouvel échec.
     expect(await screen.findByRole('alert')).toBeTruthy();
+  });
+
+  it('demande le bootstrap sans cache navigateur', async () => {
+    bootstrapAnswer = () => Promise.resolve(okResponse(BOOTSTRAP_PAYLOAD));
+
+    await renderCompte();
+    await waitFor(() => expect(bootstrapCalls).toBe(1));
+
+    expect(bootstrapInits[0]).toMatchObject({ cache: 'no-store' });
   });
 
   it("ne suit pas le deep link ?tab=clubs avant la résolution du bootstrap", async () => {
@@ -836,5 +848,90 @@ describe('Compte — pont de suivi runtime', () => {
     });
     expect(followCalls).toHaveLength(0);
     expect(runtimeState().followStates.alice).toBe('none');
+  });
+
+  it('ne laisse pas un bootstrap parti avant l’action écraser l’état confirmé', async () => {
+    const boot = deferredBootstrap();
+    bootstrapAnswer = () => boot.promise;
+    followAnswer = () => Promise.resolve(okResponse({ status: 'requested' }));
+
+    await renderCompte();
+    await waitFor(() => expect(bootstrapCalls).toBe(1));
+
+    let result: any;
+    await act(async () => {
+      result = await (window as any).__lkdvOnAction(
+        'toggleFollowUser',
+        { handle: 'alice', followed: true },
+        runtimeState().S
+      );
+    });
+    expect(result).toMatchObject({ ok: true, state: 'requested' });
+    expect(runtimeState().followStates.alice).toBe('requested');
+
+    // Snapshot parti avant la demande : il ne connaît pas encore `requested`.
+    await act(async () => {
+      boot.resolve(
+        okResponse({
+          ...BOOTSTRAP_PAYLOAD,
+          profile: { ...BOOTSTRAP_PAYLOAD.profile, name: 'Snapshot différé' },
+          followers: [],
+          following: [],
+          tribu: [],
+          followStates: {},
+        })
+      );
+    });
+
+    await waitFor(() => expect(bootstrapCalls).toBe(1));
+    // Le reste du bootstrap est bien appliqué : seul l'état de suivi local,
+    // plus récent que le snapshot, est préservé.
+    expect(runtimeState().S.profile.name).toBe('Snapshot différé');
+    expect(runtimeState().followStates.alice).toBe('requested');
+    expect(followButtonLabel(runtimeState().followStates.alice)).toBe('Demande envoyée');
+    expect(runtimeState().followPending.alice).toBeUndefined();
+  });
+
+  it('remplace les états sur un payload complet : {} efface requested', async () => {
+    await renderCompte();
+    await act(async () => {
+      (window as any).__lkdvHydrateCompte({ followStates: { alice: 'requested' } });
+    });
+    expect(runtimeState().followStates.alice).toBe('requested');
+
+    await act(async () => {
+      (window as any).__lkdvHydrateCompte({ replace: true, followStates: {} });
+    });
+
+    expect(runtimeState().followStates.alice).toBeUndefined();
+    expect(followButtonLabel(runtimeState().followStates.alice)).toBe('Suivre');
+  });
+
+  it('conserve les états connus et le signale quand la lecture est partielle', async () => {
+    const boot = deferredBootstrap();
+    bootstrapAnswer = () => boot.promise;
+
+    await renderCompte();
+    await waitFor(() => expect(bootstrapCalls).toBe(1));
+    await act(async () => {
+      (window as any).__lkdvHydrateCompte({ followStates: { alice: 'requested' } });
+    });
+
+    await act(async () => {
+      boot.resolve(
+        okResponse({
+          ...BOOTSTRAP_PAYLOAD,
+          followStates: {},
+          followStatesUnavailable: true,
+        })
+      );
+    });
+
+    await waitFor(() =>
+      expect(document.getElementById('island')?.textContent).toContain(
+        'État de suivi indisponible'
+      )
+    );
+    expect(runtimeState().followStates.alice).toBe('requested');
   });
 });

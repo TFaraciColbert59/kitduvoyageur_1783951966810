@@ -835,7 +835,29 @@ let whatIf = function(a, v) {
 let isT = null;
 let island = function(t, sub, undoable) {
   if (!isCurrent()) return;
-  $("isn").innerHTML = `<div class="t"><b>${t}</b>${sub ? `<span>${sub}</span>` : ""}</div>${undoable ? `<button data-a="undo" aria-label="Annuler">Annuler</button>` : ""}`;
+  const host = $("isn");
+  if (!host) return;
+  // Frontière texte : les messages peuvent venir d'une API ou d'un handle.
+  // Aucun n'est interprété comme du HTML.
+  const title = document.createElement("div");
+  title.className = "t";
+  const strong = document.createElement("b");
+  strong.textContent = String(t ?? "");
+  title.appendChild(strong);
+  if (sub) {
+    const detail = document.createElement("span");
+    detail.textContent = String(sub);
+    title.appendChild(detail);
+  }
+  const nodes = [title];
+  if (undoable) {
+    const undo = document.createElement("button");
+    undo.dataset.a = "undo";
+    undo.setAttribute("aria-label", "Annuler");
+    undo.textContent = "Annuler";
+    nodes.push(undo);
+  }
+  host.replaceChildren(...nodes);
   $("island").dataset.s = "note";
   let sr = $("live-status");
   if (!sr && $("phone")) {
@@ -5535,25 +5557,69 @@ window.__lkdvGetFollowState = () => isCurrent() ? ({
 }) : null;
 
 /**
- * Applique un patch `followStates` venu de l'hôte. Le vrai hydrate remplace
- * la bascule optimiste et efface le pending ; un état inconnu est ignoré.
+ * Applique des états de suivi venus de l'hôte.
+ *
+ * Sans option, c'est un patch : chaque entrée confirme un handle et efface sa
+ * bascule optimiste. Avec `{ replace: true }`, le payload est complet : les
+ * handles absents sont retirés pour qu'un `{ alice: 'requested' }` suivi d'un
+ * `{}` revienne bien à « Suivre ». `preserve` protège les handles dont une
+ * mutation locale est plus récente que la lecture (course hydratation/action).
  */
-window.__lkdvApplyFollowStates = (followStates) => {
+window.__lkdvApplyFollowStates = (followStates, options) => {
   if (!isCurrent() || !followStates || typeof followStates !== 'object') return false;
+  const opts = options && typeof options === 'object' ? options : {};
+  const replace = opts.replace === true;
+  const preserve = new Set(
+    (Array.isArray(opts.preserve) ? opts.preserve : [])
+      .map(followHandle)
+      .filter(Boolean)
+  );
   X.followStates = X.followStates || {};
   X.followPending = X.followPending || {};
   X.followedUsers = X.followedUsers || {};
-  let changed = false;
+
+  const previous = replace ? { ...X.followStates } : null;
+  const next = replace ? {} : X.followStates;
+  let changed = replace;
   for (const [rawHandle, rawState] of Object.entries(followStates)) {
     const handle = followHandle(rawHandle);
     const state = normalizeFollowState(rawState);
     if (!handle || !state) continue;
-    X.followStates[handle] = state;
+    // Une action partie après le fetch est plus récente que ce snapshot.
+    if (replace && preserve.has(handle)) continue;
+    if (next[handle] !== state) changed = true;
+    next[handle] = state;
     X.followedUsers[handle] = state !== 'none';
     delete X.followPending[handle];
-    changed = true;
+  }
+  if (replace) {
+    for (const handle of preserve) {
+      if (previous[handle] !== undefined) next[handle] = previous[handle];
+    }
+    // Une bascule encore en vol ne doit pas perdre son état confirmé de repli.
+    for (const handle of Object.keys(X.followPending)) {
+      if (previous[handle] !== undefined) next[handle] = previous[handle];
+    }
+    // Un handle absent du payload complet n'a plus d'état confirmé : sans ce
+    // nettoyage, `followedUsers` le repeindrait en « Abonné ».
+    for (const handle of Object.keys(X.followedUsers)) {
+      if (next[handle] === undefined && X.followPending[handle] === undefined) {
+        delete X.followedUsers[handle];
+      }
+    }
+    X.followStates = next;
   }
   return changed;
+};
+
+/** Signale un bootstrap partiel : les états connus restent affichés. */
+window.__lkdvShowFollowUnavailable = () => {
+  if (!isCurrent()) return;
+  island(
+    'État de suivi indisponible',
+    'Les boutons gardent leur dernier état connu. Réessaie dans un instant.',
+    false
+  );
 };
 /* ---------- Montage ---------- */
 bindIgSwipe();
@@ -5599,7 +5665,10 @@ window.__lkdvHydrateCompte = (data) => {
   // Le vrai hydrate remplace la bascule optimiste ; un échec réapplique ici
   // l'état confirmé précédent, jamais un `undefined` silencieux.
   if (data.followStates && typeof data.followStates === 'object') {
-    window.__lkdvApplyFollowStates?.(data.followStates);
+    window.__lkdvApplyFollowStates?.(data.followStates, {
+      replace: data.replace === true,
+      preserve: data.followStatesPreserve,
+    });
   }
   if (data.replace === true) {
     hydrateAccountReplace(data);
