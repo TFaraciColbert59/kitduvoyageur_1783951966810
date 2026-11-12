@@ -3,6 +3,7 @@ import { formatDateRange, formatElevation, formatKm, toNumber } from './format';
 import { buildCarnetPlace } from './place';
 import { pickElevationProfile } from './elevationProfile';
 import {
+  isShareableTraceVisibility,
   projectTraceGeometry,
   resolveTraceMasks,
   type TraceViewer,
@@ -17,13 +18,14 @@ import type {
   CarnetStatItem,
   CarnetViewerRole,
   CarnetKitVerdictItem,
+  HikeSessionRow,
   KitVerdictType,
 } from './types';
 
 const UNTITLED = 'Carnet sans titre';
 
 function buildAuthor(input: BuildCarnetDetailInput) {
-  const { author, carnet } = input;
+  const { author } = input;
   if (!author) return null;
   return {
     id: author.id,
@@ -157,8 +159,6 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
   const traceViewer: TraceViewer = input.traceViewer ?? (isVisitor ? 'visitor' : 'participant');
   const needsTraceProjection =
     traceViewer === 'follower' || traceViewer === 'visitor';
-  const distanceKm = toNumber(hikeSession?.distance_km) ?? toNumber(carnet.distance_km);
-  const elevationM = toNumber(hikeSession?.elevation_gain_m) ?? toNumber(carnet.denivele_m);
   const moments = toMomentItems(input.moments);
   const etapes = buildEtapes(input);
 
@@ -166,15 +166,59 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
      datent le leur. Aucune valeur n'est inventée quand une source manque. */
   const sessions = input.sessions ?? (hikeSession ? [hikeSession] : []);
   /*
-   * Le profil construit depuis `positions_timed` contient les coordonnées
-   * brutes du départ et de l'arrivée : un visiteur ne le reçoit pas. Le profil
-   * de la fiche est ensuite reconstruit depuis la trace déjà projetée
-   * (`enrichCarnetElevation`), donc uniquement sur les points visibles.
+   * Autorisation PAR SORTIE. Le client `service_role` lit toutes les lignes du
+   * carnet après contrôle d'accès, mais seules celles dont le lecteur est
+   * propriétaire ou participant inscrit peuvent alimenter les points GPS, les
+   * statistiques et le profil altimétrique. Une sortie privée d'autrui est
+   * entièrement écartée ; une sortie explicitement partageable mais non
+   * autorisée ne fournit que ses métadonnées agrégées (date, durée), jamais ses
+   * coordonnées. Sans `rawSessionIds` explicite, on retombe sur l'ancien
+   * comportement du builder pur : toutes les sorties pour un non-visiteur,
+   * aucune pour un visiteur.
    */
-  const elevationProfile = isVisitor ? [] : pickElevationProfile(sessions);
+  const hasExplicitRawSessionIds = input.rawSessionIds !== undefined;
+  const rawSessionIds = new Set(input.rawSessionIds ?? []);
+  const isRawSession = (session: HikeSessionRow) => rawSessionIds.has(session.id);
+  /*
+   * Sans liste explicite, le builder pur garde son comportement historique
+   * (toutes les sorties pour la fiche, aucune pour un visiteur). Dès que
+   * `getCarnetDetail` fournit `rawSessionIds`, la règle par sortie s'applique.
+   */
+  const statsSession = hasExplicitRawSessionIds
+    ? hikeSession && isRawSession(hikeSession)
+      ? hikeSession
+      : null
+    : hikeSession;
+  const distanceKm = toNumber(statsSession?.distance_km) ?? toNumber(carnet.distance_km);
+  const elevationM = toNumber(statsSession?.elevation_gain_m) ?? toNumber(carnet.denivele_m);
+  const rawSessions = sessions.filter(isRawSession);
+  const metadataOnlySessions = sessions
+    .filter(
+      (session) =>
+        !isRawSession(session) && isShareableTraceVisibility(session.visibility),
+    )
+    .map((session) => ({
+      ...session,
+      positions_geojson: null,
+      positions_timed: null,
+    }));
+  const daySessions = hasExplicitRawSessionIds
+    ? [...rawSessions, ...metadataOnlySessions]
+    : sessions;
+  /*
+   * Le profil construit depuis `positions_timed` contient les coordonnées
+   * brutes du départ et de l'arrivée : il ne peut venir que d'une sortie
+   * explicitement autorisée. Pour les autres lecteurs, `enrichCarnetElevation`
+   * le reconstruit ensuite depuis la trace déjà projetée.
+   */
+  const elevationProfile = hasExplicitRawSessionIds
+    ? pickElevationProfile(rawSessions)
+    : isVisitor
+      ? []
+      : pickElevationProfile(sessions);
   const builtDays = buildDays({
     moments: input.moments,
-    sessions,
+    sessions: daySessions,
     startDate: carnet.start_date ?? null,
   });
   /* Une sortie GPS datée hors du séjour (seed de démo, sortie rattachée après
@@ -212,7 +256,10 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
      fin sont masqués — ou toute la trace si elle n'est pas explicitement
      partageable. La projection est calculée une seule fois pour exposer aussi
      son état (masquée, totalement masquée, erreur). */
-  const rawTrace = input.trace ?? hikeSession?.positions_geojson ?? null;
+  const canUseHikeSessionTrace =
+    !hasExplicitRawSessionIds || (hikeSession ? rawSessionIds.has(hikeSession.id) : false);
+  const rawTrace =
+    input.trace ?? (canUseHikeSessionTrace ? (hikeSession?.positions_geojson ?? null) : null);
   const traceVisibility = input.traceVisibility ?? carnet.visibility;
   const projectedTrace =
     needsTraceProjection && rawTrace !== null && rawTrace !== undefined
@@ -226,13 +273,16 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
   const traceFullyMasked = projectedTrace?.fullyMasked ?? false;
   const traceError = projectedTrace?.error ?? null;
   /*
-   * Les points de jour servent au cadrage de la carte quand un jour est actif.
-   * Un visiteur ne les reçoit pas : ils contiennent les coordonnées brutes.
-   * La carte retombe alors sur la trace projetée complète (aucun tracé inventé).
+   * Avec `rawSessionIds`, les points de jour sont déjà filtrés par
+   * `daySessions` : une sortie non autorisée n'a livré ni point ni segment.
+   * Plus de masquage global par `isVisitor`, qui privait aussi le participant
+   * de sa propre trace. Sans liste explicite, on conserve le masquage
+   * historique du builder pur.
    */
-  const viewerDays = isVisitor
-    ? days.map((day) => ({ ...day, points: [], segments: [] }))
-    : days;
+  const viewerDays =
+    !hasExplicitRawSessionIds && isVisitor
+      ? days.map((day) => ({ ...day, points: [], segments: [] }))
+      : days;
 
   const nights: CarnetNightItem[] =
     input.nights && input.nights.length > 0

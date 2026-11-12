@@ -4,9 +4,14 @@ const STATE = vi.hoisted(() => ({
   viewerId: null as string | null,
   carnet: null as Record<string, unknown> | null,
   author: null as Record<string, unknown> | null,
+  /** Lignes réellement renvoyées par la RLS du client utilisateur. */
+  rlsSessions: [] as Array<Record<string, unknown>>,
+  /** Lignes lues par le client service_role après contrôle du carnet. */
   sessions: [] as Array<Record<string, unknown>>,
   participants: [] as Array<Record<string, unknown>>,
   follows: false,
+  serviceEnabled: true,
+  serviceCalls: 0,
 }));
 
 vi.mock('@/lib/supabase/server', () => ({
@@ -23,9 +28,9 @@ vi.mock('@/lib/supabase/server', () => ({
         }
         if (table === 'hike_sessions') {
           return selected.includes('positions_geojson')
-            ? { data: STATE.sessions, error: null }
+            ? { data: STATE.rlsSessions, error: null }
             : {
-                data: STATE.sessions.map((row) => ({
+                data: STATE.rlsSessions.map((row) => ({
                   id: row.id,
                   started_at: row.started_at,
                 })),
@@ -80,11 +85,49 @@ vi.mock('../enrichElevation', () => ({
   enrichCarnetElevation: async (detail: unknown) => detail,
 }));
 
-/* En test, le client service-role n'est pas configuré : la fiche retombe sur
-   le client utilisateur, qui sert les mêmes lignes mockées. Le chemin réel
-   (service_role après contrôle du carnet) est décrit par la migration. */
+/*
+ * Le chemin réel : la RLS du client utilisateur cache les sorties d'autrui
+ * (`STATE.rlsSessions`), puis le client service_role les relit après contrôle
+ * du carnet. Les tests peuvent couper la clé (`serviceEnabled = false`) pour
+ * vérifier que la fiche se dégrade sans ouvrir.
+ */
 vi.mock('@/lib/api/serviceClient', () => ({
-  createServiceClient: () => null,
+  createServiceClient: () => {
+    if (!STATE.serviceEnabled) return null;
+    STATE.serviceCalls += 1;
+    return {
+      from: (table: string) => {
+        let selected = '';
+        const query = {
+          select: (columns: string) => {
+            selected = columns;
+            return query;
+          },
+          eq: () => query,
+          order: () => query,
+          limit: () => query,
+          then: (
+            resolve: (value: unknown) => unknown,
+            reject?: (reason: unknown) => unknown,
+          ) =>
+            Promise.resolve(
+              table === 'hike_sessions'
+                ? selected.includes('positions_geojson')
+                  ? { data: STATE.sessions, error: null }
+                  : {
+                      data: STATE.sessions.map((row) => ({
+                        id: row.id,
+                        started_at: row.started_at,
+                      })),
+                      error: null,
+                    }
+                : { data: [], error: null },
+            ).then(resolve, reject),
+        };
+        return query;
+      },
+    };
+  },
 }));
 
 import { getCarnetDetail } from '../getCarnetDetail';
@@ -147,8 +190,11 @@ beforeEach(() => {
     trust_score: 90,
   };
   STATE.sessions = [session()];
+  STATE.rlsSessions = [];
   STATE.participants = [];
   STATE.follows = false;
+  STATE.serviceEnabled = true;
+  STATE.serviceCalls = 0;
 });
 
 describe('getCarnetDetail — visibilité effective des traces', () => {
@@ -230,13 +276,37 @@ describe('getCarnetDetail — visibilité effective des traces', () => {
 
   it('ne donne pas à l’auteur du carnet la trace privée d’une sortie d’autrui', async () => {
     STATE.viewerId = 'u1';
-    STATE.sessions = [session({ id: 's1', user_id: 'u2' })];
+    STATE.sessions = [
+      session({
+        id: 's1',
+        user_id: 'u2',
+        distance_km: 42,
+        elevation_gain_m: 9999,
+        duration_seconds: 7200,
+        positions_timed: [
+          { lat: 45.83, lng: 6.86, timestamp: '2026-09-26T06:00:00Z', elevationM: 1200 },
+          { lat: 45.84, lng: 6.87, timestamp: '2026-09-26T06:30:00Z', elevationM: 1300 },
+        ],
+      }),
+    ];
 
     const detail = await getCarnetDetail('c1');
 
     expect(detail?.trace).toBeNull();
     expect(detail?.traceMasked).toBe(true);
     expect(detail?.traceFullyMasked).toBe(true);
+    /* Ni points, ni segments, ni profil : la sortie privée est écartée. */
+    expect(detail?.days).toEqual([]);
+    expect(detail?.elevationProfile).toEqual([]);
+    expect(detail?.summary).toEqual({
+      distanceKm: null,
+      elevationM: null,
+      days: 0,
+      moments: 0,
+    });
+    /* Les statistiques retombent sur le carnet, pas sur la sortie d'autrui. */
+    expect(detail?.distanceKm).toBe(5);
+    expect(detail?.elevationM).toBe(600);
   });
 
   it('ne donne pas la trace d’une autre sortie au participant d’une sortie', async () => {
@@ -261,5 +331,105 @@ describe('getCarnetDetail — visibilité effective des traces', () => {
     expect(detail?.traceMasked).toBe(true);
     expect(detail?.traceFullyMasked).toBe(true);
     expect(detail?.viewerRole).toBe('visitor');
+    /* Seule la sortie s1, autorisée, alimente les jours. */
+    expect(detail?.days.map((day) => day.date)).toEqual(['2026-09-26']);
+    expect(detail?.days[0].points).toHaveLength(2);
+  });
+
+  it('lit les sorties avec le client service_role quand la RLS les cache', async () => {
+    STATE.viewerId = 'u1';
+    STATE.rlsSessions = [];
+    STATE.sessions = [session()];
+
+    const detail = await getCarnetDetail('c1');
+
+    expect(STATE.serviceCalls).toBeGreaterThan(0);
+    expect(detail?.trace).toEqual(TRACE);
+    expect(detail?.days[0].points).toHaveLength(2);
+  });
+
+  it('sans clé service, retombe sur la RLS sans ouvrir la fiche', async () => {
+    STATE.viewerId = null;
+    STATE.serviceEnabled = false;
+    STATE.rlsSessions = [];
+
+    const detail = await getCarnetDetail('c1');
+
+    expect(detail).not.toBeNull();
+    expect(STATE.serviceCalls).toBe(0);
+    expect(detail?.trace).toBeNull();
+    expect(detail?.days).toEqual([]);
+    expect(detail?.elevationProfile).toEqual([]);
+  });
+
+  it('n’appelle pas service_role quand le carnet est refusé', async () => {
+    STATE.carnet = null;
+
+    const detail = await getCarnetDetail('c1');
+
+    expect(detail).toBeNull();
+    expect(STATE.serviceCalls).toBe(0);
+  });
+
+  it('donne les points et le profil au participant de la sortie, sans les autres', async () => {
+    STATE.viewerId = 'u3';
+    STATE.sessions = [
+      session({
+        user_id: 'u2',
+        positions_timed: [
+          { lat: 45.83, lng: 6.86, timestamp: '2026-09-26T06:00:00Z', elevationM: 1200 },
+          { lat: 45.84, lng: 6.87, timestamp: '2026-09-26T06:30:00Z', elevationM: 1300 },
+        ],
+      }),
+    ];
+    STATE.participants = [
+      {
+        session_id: 's1',
+        user_id: 'u3',
+        role: 'guest',
+        created_at: '2026-09-26T06:00:00Z',
+      },
+    ];
+
+    const detail = await getCarnetDetail('c1');
+
+    expect(detail?.trace).toEqual(TRACE);
+    expect(detail?.days[0].points).toHaveLength(2);
+    expect(detail?.elevationProfile?.map((point) => point.elevationM)).toEqual([1200, 1300]);
+  });
+
+  it('n’expose ni points ni métadonnées d’une sortie privée d’autrui', async () => {
+    STATE.viewerId = 'u1';
+    STATE.sessions = [
+      session({
+        id: 's-private',
+        user_id: 'u2',
+        started_at: '2026-09-26T06:00:00Z',
+        distance_km: 42,
+        elevation_gain_m: 9999,
+        duration_seconds: 7200,
+        positions_timed: [
+          { lat: 45.83, lng: 6.86, timestamp: '2026-09-26T06:00:00Z', elevationM: 1200 },
+          { lat: 45.84, lng: 6.87, timestamp: '2026-09-26T06:30:00Z', elevationM: 1300 },
+        ],
+      }),
+      session({
+        id: 's-mine',
+        user_id: 'u1',
+        started_at: '2026-09-27T06:00:00Z',
+        distance_km: 7,
+        elevation_gain_m: 300,
+        duration_seconds: 3600,
+      }),
+    ];
+
+    const detail = await getCarnetDetail('c1');
+
+    /* La date, la distance et la durée de s-private ne fuient nulle part. */
+    expect(detail?.days.map((day) => day.date)).toEqual(['2026-09-27']);
+    expect(detail?.summary.distanceKm).toBeGreaterThan(0);
+    expect(detail?.summary.distanceKm).toBeLessThan(42);
+    expect(detail?.distanceKm).toBe(7);
+    expect(detail?.elevationProfile).toEqual([]);
   });
 });

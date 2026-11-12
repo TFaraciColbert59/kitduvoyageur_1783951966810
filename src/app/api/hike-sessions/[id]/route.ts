@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/api/serviceClient';
 import { createClient } from '@/lib/supabase/server';
-import { isFollowerTraceVisibility, type TraceViewer } from '@/features/compte/server/tracePrivacy';
+import {
+  isFollowerTraceVisibility,
+  isShareableTraceVisibility,
+  type TraceViewer,
+} from '@/features/compte/server/tracePrivacy';
 import { parseStoredWeather, weatherForViewer } from '@/features/compte/server/weather';
 
 export const runtime = 'nodejs';
@@ -74,22 +78,26 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     }
 
     /*
-     * Autorisation de la route : propriétaire, participant, sortie publique,
-     * abonné vérifié, ou sortie collective d'un carnet que le lecteur peut
-     * voir. Une sortie privée d'un carnet public n'est jamais servie ici :
-     * c'est le trou que la policy historique laissait ouvert.
+     * Autorisation de la route : propriétaire, participant inscrit, ou sortie
+     * explicitement partageable rattachée à un carnet que le lecteur peut voir.
+     * `public` et `friends` ne sont plus des passe-droits autonomes : même
+     * hérités, ils passent par `can_view_carnet`. Une sortie privée d'un carnet
+     * public, ou une sortie partageable sans carnet, n'est jamais servie ici.
      */
     const carnetId = typeof safeSession.carnet_id === 'string' ? safeSession.carnet_id : null;
-    const canReadSharedCarnet =
-      rawVisibility === 'collective_anonymized' &&
-      Boolean(carnetId) &&
-      (await supabase.rpc('can_view_carnet', { p_carnet: carnetId })).data === true;
+    const wantsCarnetShare =
+      isShareableTraceVisibility(rawVisibility) || isFollowerTraceVisibility(rawVisibility);
+    const canViewSharedCarnet =
+      carnetId && wantsCarnetShare
+        ? (await supabase.rpc('can_view_carnet', { p_carnet: carnetId })).data === true
+        : false;
     const canRead =
       isOwner ||
       isParticipant ||
-      rawVisibility === 'public' ||
-      (isFollowerTraceVisibility(rawVisibility) && viewer === 'follower') ||
-      canReadSharedCarnet;
+      (isShareableTraceVisibility(rawVisibility) && canViewSharedCarnet) ||
+      (isFollowerTraceVisibility(rawVisibility) &&
+        viewer === 'follower' &&
+        canViewSharedCarnet);
     if (!canRead) {
       return NextResponse.json({ error: 'Session non trouvée' }, { status: 404 });
     }

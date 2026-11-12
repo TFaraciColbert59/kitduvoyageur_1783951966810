@@ -279,6 +279,107 @@ describe('buildCarnetDetail — jours dérivés et totaux', () => {
     /* La trace de la fiche reste celle de la sortie : elle n'est pas remplacée. */
     expect(detail.trace).not.toBeNull();
   });
+
+  it('ne retient que les sorties autorisées pour les points, le profil et les stats', () => {
+    const privateSession = {
+      ...sortie('s-private', '2026-09-26T06:00:00Z', [[6.86, 45.83], [6.87, 45.84]]),
+      user_id: 'u2',
+      visibility: 'private',
+      distance_km: 42,
+      elevation_gain_m: 9999,
+      positions_timed: [
+        { lat: 45.83, lng: 6.86, timestamp: '2026-09-26T06:00:00Z', elevationM: 1200 },
+        { lat: 45.84, lng: 6.87, timestamp: '2026-09-26T06:30:00Z', elevationM: 1300 },
+      ],
+    };
+    const mine = {
+      ...sortie('s-mine', '2026-09-27T06:00:00Z', [[6.9, 45.85], [6.91, 45.86]]),
+      user_id: 'u1',
+      distance_km: 7,
+      elevation_gain_m: 300,
+    };
+    const detail = buildCarnetDetail(
+      input({
+        viewerId: 'u1',
+        viewerRole: 'participant',
+        rawSessionIds: ['s-mine'],
+        /* La sortie fournie pour les stats est privée : elle est refusée. */
+        hikeSession: privateSession,
+        sessions: [privateSession, mine],
+      }),
+    );
+
+    expect(detail.days.map((day) => day.date)).toEqual(['2026-09-27']);
+    expect(detail.days[0].points).toHaveLength(2);
+    expect(detail.elevationProfile).toEqual([]);
+    /* Repli sur les colonnes du carnet, pas sur la sortie privée. */
+    expect(detail.distanceKm).toBe(106.4);
+    expect(detail.elevationM).toBe(2002);
+  });
+
+  it('conserve les points et le profil du participant à la sortie autorisée', () => {
+    const trace = {
+      type: 'LineString',
+      coordinates: [
+        [6.86, 45.83],
+        [6.87, 45.84],
+      ],
+    };
+    const detail = buildCarnetDetail(
+      input({
+        viewerId: 'u3',
+        viewerRole: 'visitor',
+        traceViewer: 'participant',
+        trace,
+        rawSessionIds: ['s1'],
+        sessions: [
+          {
+            ...sortie('s1', '2026-09-26T06:00:00Z', [[6.86, 45.83], [6.87, 45.84]]),
+            user_id: 'u2',
+            positions_geojson: trace,
+            positions_timed: [
+              { lat: 45.83, lng: 6.86, timestamp: '2026-09-26T06:00:00Z', elevationM: 1200 },
+              { lat: 45.84, lng: 6.87, timestamp: '2026-09-26T06:30:00Z', elevationM: 1300 },
+            ],
+          },
+        ],
+      }),
+    );
+
+    expect(detail.trace).toBe(trace);
+    expect(detail.days[0].points).toHaveLength(2);
+    expect(detail.elevationProfile?.map((point) => point.elevationM)).toEqual([1200, 1300]);
+  });
+
+  it('écarte entièrement une sortie privée non autorisée', () => {
+    const detail = buildCarnetDetail(
+      input({
+        viewerId: 'u1',
+        viewerRole: 'participant',
+        rawSessionIds: [],
+        sessions: [
+          {
+            ...sortie('s-private', '2026-09-26T06:00:00Z', [[6.86, 45.83], [6.87, 45.84]]),
+            user_id: 'u2',
+            visibility: 'private',
+            distance_km: 42,
+            elevation_gain_m: 9999,
+            positions_timed: [
+              { lat: 45.83, lng: 6.86, timestamp: '2026-09-26T06:00:00Z', elevationM: 1200 },
+              { lat: 45.84, lng: 6.87, timestamp: '2026-09-26T06:30:00Z', elevationM: 1300 },
+            ],
+          },
+        ],
+      }),
+    );
+
+    expect(detail.days).toEqual([]);
+    expect(detail.summary.distanceKm).toBeNull();
+    expect(detail.elevationProfile).toEqual([]);
+    /* Le builder retombe sur les colonnes du carnet, jamais sur s-private. */
+    expect(detail.distanceKm).toBe(106.4);
+    expect(detail.elevationM).toBe(2002);
+  });
 });
 
 describe('buildCarnetDetail — compteurs réels', () => {
@@ -328,7 +429,7 @@ describe('buildCarnetDetail — lieu réel', () => {
     expect(detail.place.lng).toBeCloseTo(6.86, 6);
   });
 
-  it('ne livre jamais la trace brute ni ses métadonnées à un visiteur', () => {
+  it('ne livre jamais les coordonnées brutes d’une sortie partageable à un visiteur', () => {
     const trace = {
       type: 'LineString',
       coordinates: [
@@ -344,6 +445,7 @@ describe('buildCarnetDetail — lieu réel', () => {
           {
             id: 's1',
             carnet_id: 'c1',
+            visibility: 'collective_anonymized',
             distance_km: null,
             elevation_gain_m: null,
             duration_seconds: 3600,
@@ -403,6 +505,7 @@ describe('buildCarnetDetail — lieu réel', () => {
           {
             id: 's1',
             carnet_id: 'c1',
+            visibility: 'collective_anonymized',
             distance_km: null,
             elevation_gain_m: null,
             duration_seconds: 3600,

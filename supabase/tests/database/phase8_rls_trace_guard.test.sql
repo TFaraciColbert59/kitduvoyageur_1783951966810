@@ -1,7 +1,7 @@
 -- ============================================================================
 -- Carnet v2 — les lignes brutes de hike_sessions restent privées
 -- ============================================================================
--- Ce test protège la correction 20261112120000 : la lecture directe de
+-- Ce test protège la correction 20261112121000 : la lecture directe de
 -- `hike_sessions` est réservée au propriétaire et aux participants inscrits.
 -- Le partage masqué (carnet public/amis) passe par la fiche, pas par PostgREST.
 --
@@ -16,7 +16,7 @@ GRANT SELECT ON
 TO authenticated, anon;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO authenticated, anon;
 
-SELECT plan(7);
+SELECT plan(8);
 
 -- Fixtures : A propriétaire, B participant, C abonné, D tiers.
 INSERT INTO auth.users (id, aud, role, email, encrypted_password, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
@@ -124,6 +124,19 @@ SELECT ok(
                          'hike_sessions_select_shared_carnet')
   ),
   '7. la policy historique de lecture par carnet public a disparu'
+);
+
+-- 8. Une seule policy SELECT subsiste : une policy permissive ajoutée sous un
+-- autre nom rouvrirait la table sans faire échouer les assertions précédentes.
+SELECT is(
+  (
+    SELECT count(*)::int FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'hike_sessions'
+      AND cmd = 'SELECT'
+  ),
+  1,
+  '8. une seule policy SELECT brute subsiste sur hike_sessions'
 );
 
 SELECT * FROM finish();

@@ -3,10 +3,15 @@ import { NextRequest } from 'next/server';
 
 const STATE = vi.hoisted(() => ({
   viewerId: null as string | null,
+  /** Ligne lue par le client service_role. */
   session: null as Record<string, unknown> | null,
+  /** Ligne que la RLS du client utilisateur laisserait passer. */
+  rlsSession: null as Record<string, unknown> | null,
   participant: false,
   follows: false,
   carnetVisible: true,
+  serviceEnabled: true,
+  serviceCalls: 0,
 }));
 
 vi.mock('@/lib/supabase/server', () => ({
@@ -21,7 +26,7 @@ vi.mock('@/lib/supabase/server', () => ({
       const query = {
         select: () => query,
         eq: () => query,
-        single: async () => ({ data: STATE.session, error: null }),
+        single: async () => ({ data: STATE.rlsSession, error: null }),
         maybeSingle: async () => {
           if (table === 'hike_session_participants') {
             return { data: STATE.participant ? { user_id: STATE.viewerId } : null, error: null };
@@ -38,6 +43,28 @@ vi.mock('@/lib/supabase/server', () => ({
       return query;
     },
   }),
+}));
+
+/*
+ * Chemin réel : la RLS cache la ligne (`rlsSession = null`), puis le client
+ * service_role la relit et la route vérifie elle-même l'autorisation. Couper
+ * `serviceEnabled` simule l'absence de clé et doit fermer, pas ouvrir.
+ */
+vi.mock('@/lib/api/serviceClient', () => ({
+  createServiceClient: () => {
+    if (!STATE.serviceEnabled) return null;
+    STATE.serviceCalls += 1;
+    return {
+      from: () => {
+        const query = {
+          select: () => query,
+          eq: () => query,
+          single: async () => ({ data: STATE.session, error: null }),
+        };
+        return query;
+      },
+    };
+  },
 }));
 
 import { GET } from '../route';
@@ -92,13 +119,56 @@ async function body(response: Response) {
 beforeEach(() => {
   STATE.viewerId = null;
   STATE.session = session();
+  STATE.rlsSession = null;
   STATE.participant = false;
   STATE.follows = false;
   STATE.carnetVisible = true;
+  STATE.serviceEnabled = true;
+  STATE.serviceCalls = 0;
 });
 
 describe('GET /api/hike-sessions/[id] — données servies', () => {
   it('refuse une sortie privée à un visiteur, même sur un carnet public', async () => {
+    const response = await GET(new NextRequest('http://localhost/api/hike-sessions/s1'), {
+      params: Promise.resolve({ id: 's1' }),
+    });
+
+    expect(response.status).toBe(404);
+    const payload = (await response.json()) as Record<string, unknown>;
+    /* Le refus ne recopie ni la ligne, ni la météo, ni le carnet. */
+    expect(payload).toEqual({ error: 'Session non trouvée' });
+    expect(JSON.stringify(payload)).not.toContain('weather');
+    expect(JSON.stringify(payload)).not.toContain('owner-1');
+  });
+
+  it('sans clé service, la RLS ferme au lieu d’ouvrir', async () => {
+    STATE.serviceEnabled = false;
+    STATE.session = session({ visibility: 'collective_anonymized' });
+
+    const response = await GET(new NextRequest('http://localhost/api/hike-sessions/s1'), {
+      params: Promise.resolve({ id: 's1' }),
+    });
+
+    expect(STATE.serviceCalls).toBe(0);
+    expect(response.status).toBe(404);
+  });
+
+  it('sans clé service, le propriétaire garde sa fiche par la RLS', async () => {
+    STATE.serviceEnabled = false;
+    STATE.viewerId = 'owner-1';
+    STATE.rlsSession = session();
+
+    const response = await GET(new NextRequest('http://localhost/api/hike-sessions/s1'), {
+      params: Promise.resolve({ id: 's1' }),
+    });
+
+    expect(STATE.serviceCalls).toBe(0);
+    expect(response.status).toBe(200);
+  });
+
+  it('n’ouvre pas une sortie publique héritée sans carnet visible', async () => {
+    STATE.session = session({ visibility: 'public', carnet_id: null });
+
     const response = await GET(new NextRequest('http://localhost/api/hike-sessions/s1'), {
       params: Promise.resolve({ id: 's1' }),
     });
@@ -112,6 +182,7 @@ describe('GET /api/hike-sessions/[id] — données servies', () => {
       params: Promise.resolve({ id: 's1' }),
     });
     expect(response.status).toBe(200);
+    expect(STATE.serviceCalls).toBeGreaterThan(0);
     const { session: served } = await body(response);
     const weather = served.weather as typeof WEATHER;
 
@@ -165,7 +236,7 @@ describe('GET /api/hike-sessions/[id] — données servies', () => {
     expect(response.status).toBe(404);
   });
 
-  it('sert les jours sans coordonnées à un visiteur d’une sortie publique', async () => {
+  it('sert une valeur héritée `public`, mais seulement avec un carnet visible', async () => {
     STATE.session = session({ visibility: 'public' });
     const response = await GET(new NextRequest('http://localhost/api/hike-sessions/s1'), {
       params: Promise.resolve({ id: 's1' }),

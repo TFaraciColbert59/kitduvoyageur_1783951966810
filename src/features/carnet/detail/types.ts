@@ -471,14 +471,30 @@ export interface CarnetDetail {
 export interface BuildCarnetDetailInput {
   carnet: CarnetRow;
   author: AuthorRow | null;
-  /** Sortie la plus récente : elle porte les statistiques affichées. */
+  /**
+   * Sortie autorisée la plus récente : elle porte les statistiques affichées.
+   * `null` quand le lecteur n'est propriétaire ou participant d'aucune sortie :
+   * les statistiques retombent alors sur les colonnes du carnet.
+   */
   hikeSession: HikeSessionRow | null;
   /**
    * Toutes les sorties du carnet (les plus récentes d'abord), dans la limite
-   * lue par `getCarnetDetail`. Sert exclusivement à `buildDays` : chaque sortie
-   * date son bloc de points GPS. Absente, `hikeSession` en tient lieu.
+   * lue par `getCarnetDetail`. Chaque sortie date son bloc de points GPS.
+   * Absente, `hikeSession` en tient lieu.
    */
   sessions?: HikeSessionRow[];
+  /**
+   * Identifiants des sorties dont le lecteur est propriétaire ou participant
+   * inscrit. Seules celles-là peuvent alimenter `points`, `segments`,
+   * `elevationProfile` et les statistiques. Une sortie privée absente de cette
+   * liste est entièrement écartée ; une sortie partageable n'apporte que ses
+   * métadonnées agrégées (date, durée).
+   *
+   * Sans cette liste, le builder pur conserve son ancien comportement : toutes
+   * les sorties pour un non-visiteur, aucune pour un visiteur. `getCarnetDetail`
+   * la fournit toujours.
+   */
+  rawSessionIds?: string[];
   /**
    * Trace réelle à dessiner, choisie parmi toutes les sorties du carnet
    * (`pickCarnetTrace`). Absente, on retombe sur la trace de `hikeSession`.

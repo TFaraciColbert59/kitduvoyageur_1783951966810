@@ -22,7 +22,6 @@ import type {
   HebergementRow,
   HikeSessionRow,
   KitItemRow,
-  KitVerdictType,
   MomentRow,
 } from './types';
 
@@ -94,10 +93,14 @@ const CARNET_COLUMNS_BASE = [
  * du lecteur avec le client serveur (cookies) — la RLS voit donc la session :
  * un carnet privé reste lisible par son propriétaire.
  *
- * La trace vient des `hike_sessions` liées au carnet : la policy
- * `hike_sessions_select_owner_or_public_carnet` autorise déjà la lecture
- * anonyme des sorties d'un carnet public (vérifié à la clé anon), donc aucune
- * policy supplémentaire et aucun client à privilèges élevés ne sont nécessaires.
+ * Depuis `20261112121000_carnet_v2_trace_raw_guard`, la table `hike_sessions`
+ * n'est plus lisible par le partage : seuls le propriétaire et les participants
+ * inscrits voient la ligne brute. La fiche, elle, doit aussi projeter une trace
+ * masquée pour un visiteur ou un abonné. Elle lit donc les sorties avec le
+ * client `service_role`, APRÈS avoir vérifié l'accès au carnet avec la RLS, puis
+ * n'autorise les points/le profil/les statistiques que sortie par sortie
+ * (`rawSessionIds`). Sans clé service, on retombe sur le client utilisateur :
+ * le partage se dégrade, il ne s'ouvre pas.
  *
  * Retourne `null` si le carnet n'existe pas ou n'est pas lisible : la route
  * traduit cela en `notFound()`.
@@ -317,6 +320,28 @@ export async function getCarnetDetail(id: string) {
    */
   const isCarnetParticipant = isOwner || isCollab;
   const viewerRole = isCarnetParticipant ? ('participant' as const) : ('visitor' as const);
+
+  /*
+   * Autorisation PAR SORTIE. Le client service_role a lu toutes les lignes du
+   * carnet, mais seules les sorties dont le lecteur est propriétaire ou
+   * participant inscrit peuvent fournir des points GPS, un profil ou des
+   * statistiques. Les `hike_session_participants` lues ci-dessus passent par la
+   * RLS (`can_view_hike_session`) : un participant d'une sortie privée voit sa
+   * ligne, pas celles des autres.
+   */
+  const participantSessionIds = new Set(
+    sessionParticipantRows
+      .filter((row) => viewerId && row.user_id === viewerId)
+      .map((row) => row.session_id),
+  );
+  const rawSessionIds = sessions
+    .filter(
+      (session) =>
+        Boolean(viewerId) &&
+        (session.user_id === viewerId || participantSessionIds.has(session.id)),
+    )
+    .map((session) => session.id);
+  const statsSession = sessions.find((session) => rawSessionIds.includes(session.id)) ?? null;
 
   /*
    * La trace se juge par session, pas par carnet : le participant de la sortie
@@ -597,10 +622,15 @@ export async function getCarnetDetail(id: string) {
   const detail = buildCarnetDetail({
     carnet,
     author: (authorResult.data as unknown as AuthorRow) ?? null,
-    hikeSession: sessions[0] ?? null,
+    /* Statistiques : la sortie autorisée la plus récente, jamais une sortie
+       privée d'autrui. Sans sortie autorisée, le builder retombe sur les
+       colonnes du carnet. */
+    hikeSession: statsSession,
     /* Toutes les sorties datent leurs propres points : c'est la matière de
-       `buildDays` (un carnet de sept jours peut compter sept sorties). */
+       `buildDays` (un carnet de sept jours peut compter sept sorties). Le
+       builder n'en garde les points que pour `rawSessionIds`. */
     sessions,
+    rawSessionIds,
     trace: traceSession?.positions_geojson ?? null,
     traceVisibility,
     etapes: (etapesResult.data as unknown as EtapeRow[]) ?? [],
