@@ -53,7 +53,36 @@ export async function POST(request: Request) {
     }
     const payload = await res.json();
     if (idempotent) {
-      const result = payload as { status?: string; summaryId?: string };
+      if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+        return NextResponse.json({ error: 'réponse indisponible' }, { status: 503 });
+      }
+      const result = payload as {
+        status?: string;
+        summaryId?: string | null;
+      };
+      if (
+        result.status !== 'applied' &&
+        result.status !== 'duplicate' &&
+        result.status !== 'already_finished' &&
+        result.status !== 'conflict'
+      ) {
+        return NextResponse.json({ error: 'réponse indisponible' }, { status: 503 });
+      }
+      if (result.status === 'conflict') {
+        return NextResponse.json(
+          {
+            error: 'clé d’idempotence déjà liée à une autre séance',
+            code: 'idempotency_conflict',
+          },
+          { status: 409 }
+        );
+      }
+      if (result.status === 'already_finished') {
+        return NextResponse.json({
+          status: 'already_finished',
+          summaryId: null,
+        });
+      }
       return NextResponse.json({
         status: result.status === 'duplicate' ? 'duplicate' : 'saved',
         summaryId: result.summaryId ?? null,

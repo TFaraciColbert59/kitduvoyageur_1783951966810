@@ -19,10 +19,21 @@
 -- nouvelle route ne casse plus les identifiants que l'ancienne route accepte.
 --
 -- État de cette révision : migration locale sur une branche non intégrée,
--- aucun remote configuré et version absente du baseline ; aucune preuve
--- d'application distante n'est supposée. Si une application est constatée
--- ailleurs, ne pas rejouer ce fichier modifié : livrer une migration de suivi
--- additive avec son down.
+-- version absente du baseline ; aucune preuve d'application distante n'est supposée.
+-- Si une application est constatée ailleurs, ne pas rejouer ce fichier modifié :
+-- reprendre les sections 4 bis et 7 dans une migration de suivi additive avec
+-- son down.
+--
+-- Révision de revue :
+--   • la clé d'idempotence de fin est liée à `p_session` (colonne dédiée et
+--     index unique partiel) ; une clé réutilisée pour une autre séance est un
+--     conflit explicite, jamais un `duplicate` trompeur ;
+--   • aucun enregistrement `applied` n'est écrit sans résumé : une séance déjà
+--     close sans résumé connu répond `already_finished` ;
+--   • les fins concurrentes d'une même séance sont sérialisées même lorsque
+--     les clés diffèrent, et une seconde clé relit le résumé de la première ;
+--   • le down est un rollback de sécurité documenté, pas un retour
+--     byte-for-byte (voir son en-tête).
 --
 -- Verrous : l'ajout des FK et de l'index prend un verrou de table. Sur une
 -- table volumineuse, prévoir une fenêtre de maintenance ; la migration reste
@@ -188,6 +199,24 @@ comment on column public.activity_sessions.client_session_id is
   'S1.02/K6.15 — identifiant de séance stable fourni par le client, clé d''idempotence bornée à (user_id, client_session_id).';
 comment on column public.activity_sessions.variant_id is
   'S1.02 — variante de sport choisie (ex. rando-journee), additive ; nul pour les séances antérieures ou les appels sans variante.';
+
+-- 4 bis. Registre de fin : lier la clé d'idempotence à la séance qu'elle a
+--       réellement close. La colonne est additive et nulle pour l'historique
+--       et pour les autres opérations hors-ligne ; elle ne change aucun grant.
+alter table public.offline_sync_operations
+  add column if not exists activity_session_id uuid;
+
+comment on column public.offline_sync_operations.activity_session_id is
+  'S1.02/K6.15 — séance close par une opération activity.finish ; NULL pour les autres opérations et l''historique.';
+
+-- Une seule fin acquittée par séance, même si deux clés différentes ont été
+-- utilisées. L'index est partiel : les opérations hors-ligne non liées à une
+-- séance et les lignes historiques restent hors index.
+create unique index if not exists offline_sync_activity_finish_session_idx
+  on public.offline_sync_operations (user_id, activity_session_id)
+  where kind = 'activity.finish'
+    and status = 'applied'
+    and activity_session_id is not null;
 
 -- 5. RPC de démarrage idempotent.
 --    - `security definer` : la fonction écrit dans `activity_sessions` avec
@@ -441,10 +470,17 @@ $$;
 revoke all on function public.finish_activity_session(uuid) from public;
 grant execute on function public.finish_activity_session(uuid) to authenticated;
 
--- 7. Fin idempotente : le verrou de clé est pris avant la lecture et avant
---    l'appel à `finish_activity_session`. Deux rejeux concurrents de la même
---    clé sont donc sérialisés ; le second lit la ligne acquittée et répond
---    `duplicate` sans produire de second résumé.
+-- 7. Fin idempotente : la clé est liée à la séance et les fins concurrentes
+--    d'une même séance sont sérialisées, même lorsqu'elles utilisent des clés
+--    différentes.
+--    - verrou de clé : deux rejeux de la même clé ne se croisent pas ;
+--    - une ligne de registre existante est comparée à `p_session` : une clé
+--      réutilisée pour une autre séance est un `conflict`, jamais un
+--      `duplicate` du résumé d'autrui ;
+--    - verrou de séance : deux clés différentes pour la même séance ne
+--      produisent pas deux résumés ; la seconde relit le résumé de la première ;
+--    - aucun `applied` sans résumé : une séance déjà close sans résumé connu
+--      répond `already_finished`, sans écrire dans le registre.
 create or replace function public.finish_activity_session_idempotent(
   p_session uuid,
   p_idempotency_key text
@@ -475,6 +511,55 @@ begin
    where user_id = v_user and idempotency_key = p_idempotency_key;
 
   if found then
+    -- L'historique de 20261107/5ce8ef2 porte `kind = activity.finish`,
+    -- `status = applied` et `result.sessionId`. Une ligne d'une autre
+    -- opération ou d'une autre séance ne doit jamais servir de preuve.
+    if v_existing.kind is distinct from 'activity.finish'
+       or v_existing.status is distinct from 'applied'
+       or (v_existing.result ->> 'sessionId') is distinct from p_session::text then
+      return jsonb_build_object(
+        'status', 'conflict',
+        'reason', 'idempotency_key_reused',
+        'summaryId', null
+      );
+    end if;
+
+    if (v_existing.result ->> 'summaryId') is null then
+      return jsonb_build_object(
+        'status', 'already_finished',
+        'reason', 'session_already_finished',
+        'summaryId', null
+      );
+    end if;
+
+    return jsonb_build_object(
+      'status', 'duplicate',
+      'summaryId', v_existing.result ->> 'summaryId'
+    );
+  end if;
+
+  -- Deux clés différentes pour la même séance sont sérialisées ici : la
+  -- seconde voit la ligne `applied` de la première et renvoie son résumé.
+  perform pg_catalog.pg_advisory_xact_lock(
+    pg_catalog.hashtextextended(v_user::text || ':finish-session:' || p_session::text, 0)
+  );
+
+  select * into v_existing
+    from public.offline_sync_operations
+   where user_id = v_user
+     and activity_session_id = p_session
+     and kind = 'activity.finish'
+     and status = 'applied';
+
+  if found then
+    if (v_existing.result ->> 'summaryId') is null then
+      return jsonb_build_object(
+        'status', 'already_finished',
+        'reason', 'session_already_finished',
+        'summaryId', null
+      );
+    end if;
+
     return jsonb_build_object(
       'status', 'duplicate',
       'summaryId', v_existing.result ->> 'summaryId'
@@ -483,28 +568,93 @@ begin
 
   v_summary := public.finish_activity_session(p_session);
 
-  insert into public.offline_sync_operations (user_id, idempotency_key, store, kind, status, result)
+  -- La séance était déjà close (autre appareil, ancien client sans clé, ligne
+  -- historique) : on ne prétend pas avoir appliqué une fin, et on n'écrit pas
+  -- un `applied` sans résumé.
+  if v_summary is null then
+    return jsonb_build_object(
+      'status', 'already_finished',
+      'reason', 'session_already_finished',
+      'summaryId', null
+    );
+  end if;
+
+  insert into public.offline_sync_operations (
+    user_id,
+    idempotency_key,
+    store,
+    kind,
+    status,
+    result,
+    activity_session_id
+  )
   values (
     v_user,
     p_idempotency_key,
     'explorer',
     'activity.finish',
     'applied',
-    jsonb_build_object('summaryId', v_summary, 'sessionId', p_session)
+    jsonb_build_object('summaryId', v_summary, 'sessionId', p_session),
+    p_session
   )
-  on conflict (user_id, idempotency_key) do nothing;
+  on conflict do nothing;
 
-  -- Une autre voie a acquitté la même clé entre-temps : relire la ligne
-  -- gagnante plutôt que de renvoyer un résumé qui n'est pas celui du registre.
+  -- Une autre voie a acquitté la même clé, ou la même séance avec une autre
+  -- clé, entre-temps : relire la ligne gagnante plutôt que de renvoyer un
+  -- résumé qui n'est pas celui du registre.
   if not found then
     select * into v_existing
       from public.offline_sync_operations
      where user_id = v_user and idempotency_key = p_idempotency_key;
 
-    return jsonb_build_object(
-      'status', 'duplicate',
-      'summaryId', v_existing.result ->> 'summaryId'
-    );
+    if found then
+      if v_existing.kind is distinct from 'activity.finish'
+         or v_existing.status is distinct from 'applied'
+         or (v_existing.result ->> 'sessionId') is distinct from p_session::text then
+        return jsonb_build_object(
+          'status', 'conflict',
+          'reason', 'idempotency_key_reused',
+          'summaryId', null
+        );
+      end if;
+
+      if (v_existing.result ->> 'summaryId') is null then
+        return jsonb_build_object(
+          'status', 'already_finished',
+          'reason', 'session_already_finished',
+          'summaryId', null
+        );
+      end if;
+
+      return jsonb_build_object(
+        'status', 'duplicate',
+        'summaryId', v_existing.result ->> 'summaryId'
+      );
+    end if;
+
+    select * into v_existing
+      from public.offline_sync_operations
+     where user_id = v_user
+       and activity_session_id = p_session
+       and kind = 'activity.finish'
+       and status = 'applied';
+
+    if found then
+      if (v_existing.result ->> 'summaryId') is null then
+        return jsonb_build_object(
+          'status', 'already_finished',
+          'reason', 'session_already_finished',
+          'summaryId', null
+        );
+      end if;
+
+      return jsonb_build_object(
+        'status', 'duplicate',
+        'summaryId', v_existing.result ->> 'summaryId'
+      );
+    end if;
+
+    raise exception 'fin de séance concurrente introuvable' using errcode = '40001';
   end if;
 
   return jsonb_build_object('status', 'applied', 'summaryId', v_summary);

@@ -213,6 +213,88 @@ describe('migration additive · démarrage persistant (S1.02, K6.15)', () => {
     expect(lower).toContain('if not found then\n    select * into v_existing');
   });
 
+  it('lie la clé d’idempotence à la séance et refuse une clé réutilisée', () => {
+    expect(lower).toContain('add column if not exists activity_session_id uuid');
+    expect(lower).toContain(
+      'create unique index if not exists offline_sync_activity_finish_session_idx'
+    );
+    expect(lower).toContain('on public.offline_sync_operations (user_id, activity_session_id)');
+    expect(lower).toContain("where kind = 'activity.finish'");
+    expect(lower).toContain("and status = 'applied'");
+    expect(lower).toContain('and activity_session_id is not null');
+    // La ligne existante est comparée à la séance demandée avant tout
+    // `duplicate` : le résumé d'une autre séance ne fuit pas.
+    expect(lower).toContain(
+      "(v_existing.result ->> 'sessionid') is distinct from p_session::text"
+    );
+    expect(lower).toContain("'idempotency_key_reused'");
+    expect(lower).toContain("'status', 'conflict'");
+  });
+
+  it('n’écrit jamais un applied sans résumé et répond already_finished', () => {
+    const start = lower.indexOf(
+      'create or replace function public.finish_activity_session_idempotent'
+    );
+    const end = lower.indexOf(
+      'revoke all on function public.finish_activity_session_idempotent'
+    );
+    const idempotent = lower.slice(start, end);
+    const nullCheck = idempotent.indexOf('if v_summary is null then');
+    const insert = idempotent.indexOf('insert into public.offline_sync_operations');
+
+    expect(start).toBeGreaterThan(-1);
+    expect(end).toBeGreaterThan(start);
+    expect(nullCheck).toBeGreaterThan(-1);
+    expect(insert).toBeGreaterThan(nullCheck);
+    expect(idempotent).toContain("'status', 'already_finished'");
+    expect(idempotent).toContain("'reason', 'session_already_finished'");
+    // Aucun `applied` n'est construit avant le test de nullité du résumé.
+    expect(idempotent.slice(0, nullCheck)).not.toContain("'status', 'applied'");
+  });
+
+  it('sérialise deux clés différentes pour la même séance', () => {
+    const idempotent = lower.slice(
+      lower.indexOf('create or replace function public.finish_activity_session_idempotent'),
+      lower.indexOf('revoke all on function public.finish_activity_session_idempotent')
+    );
+    const keyLock = idempotent.indexOf("':finish:'");
+    const sessionLock = idempotent.indexOf("':finish-session:'");
+    const call = idempotent.indexOf('v_summary := public.finish_activity_session(p_session)');
+
+    expect(keyLock).toBeGreaterThan(-1);
+    expect(sessionLock).toBeGreaterThan(keyLock);
+    expect(call).toBeGreaterThan(sessionLock);
+    // La seconde clé relit la ligne gagnante par séance, pas seulement par clé.
+    expect(idempotent).toContain('and activity_session_id = p_session');
+  });
+
+  it('n’ajoute qu’une colonne nullable au registre hors-ligne, sans changer ses droits', () => {
+    expect(lower).toContain('add column if not exists activity_session_id uuid');
+    expect(lower).not.toMatch(
+      /(?:grant|revoke)\s+[^;]*\bon\s+(?:table\s+)?public\.offline_sync_operations/
+    );
+  });
+
+  it('ferme une séance historique hors référentiel sans toucher à ses clés de FK', () => {
+    const finish = lower.slice(
+      lower.indexOf('create or replace function public.finish_activity_session(p_session uuid)'),
+      lower.indexOf('revoke all on function public.finish_activity_session(uuid)')
+    );
+    const update = finish.slice(
+      finish.indexOf('update public.activity_sessions'),
+      finish.indexOf('select jsonb_build_object')
+    );
+
+    expect(update).toContain("set status = 'finished'");
+    expect(update).not.toContain('sport =');
+    expect(update).not.toContain('variant_id =');
+    expect(update).not.toContain('route_id =');
+    // Les FK restent NOT VALID pour les lignes historiques, mais les nouvelles
+    // écritures sont contrôlées.
+    expect(lower).toContain('not valid');
+    expect(lower).toContain('raise warning');
+  });
+
   it('a un rollback ordonné qui restaure finish avant de retirer la colonne', () => {
     const restoreFinish = rollback.indexOf(
       'create or replace function public.finish_activity_session'
@@ -232,6 +314,8 @@ describe('migration additive · démarrage persistant (S1.02, K6.15)', () => {
     expect(rollback).toContain('drop index if exists public.activity_sessions_user_client_idx');
     expect(rollback).toContain('drop column if exists client_session_id');
     expect(rollback).toContain('drop column if exists variant_id');
+    expect(rollback).toContain('drop index if exists public.offline_sync_activity_finish_session_idx');
+    expect(rollback).toContain('drop column if exists activity_session_id');
     expect(rollback).toContain('activity_sessions_sport_fkey');
     expect(rollback).toContain('activity_sessions_sport_variant_idx');
     expect(rollback).not.toMatch(/delete\s+from/);
@@ -244,5 +328,19 @@ describe('migration additive · démarrage persistant (S1.02, K6.15)', () => {
     expect(rollback).toContain('if v_user is null or s.user_id <> v_user');
     expect(rollback).toContain('and status <> \'finished\'');
     expect(rollback).toContain('set search_path = public, pg_temp');
+  });
+
+  it('documente un rollback de sécurité et garde la fin idempotente sans colonne retirée', () => {
+    expect(rollback).toContain('rollback de sécurité, pas byte-for-byte');
+    const idempotent = rollback.slice(
+      rollback.indexOf('create or replace function public.finish_activity_session_idempotent'),
+      rollback.indexOf('revoke all on function public.finish_activity_session_idempotent')
+    );
+
+    expect(idempotent).toContain("(result ->> 'sessionid') = p_session::text");
+    expect(idempotent).not.toMatch(/activity_session_id\s*=/);
+    expect(idempotent).toContain("'status', 'already_finished'");
+    expect(idempotent).toContain("'status', 'conflict'");
+    expect(idempotent).toContain("':finish-session:'");
   });
 });
