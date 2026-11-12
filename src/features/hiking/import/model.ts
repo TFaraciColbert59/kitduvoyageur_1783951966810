@@ -1,6 +1,6 @@
 /**
- * Modèle normalisé d'import de trace, partagé par le lecteur TCX et le futur
- * adaptateur FIT.
+ * Modèle normalisé d'import de trace, partagé par le lecteur TCX et le
+ * décodeur FIT.
  *
  * Unités, sans exception :
  * - distance : mètres ;
@@ -12,8 +12,12 @@
  * - cadence course : pas par minute ;
  * - puissance : watts ;
  * - température : degrés Celsius ;
- * - horodatages : ISO 8601 UTC (`Date#toISOString`) ; un `xsd:dateTime` sans
- *   fuseau est interprété comme UTC, jamais dans le fuseau de la machine.
+ * - horodatages : un `xsd:dateTime` avec fuseau devient un instant ISO 8601 UTC
+ *   (`Date#toISOString`) ; un `xsd:dateTime` sans fuseau reste une heure civile
+ *   locale, conservée telle quelle dans `recordedAtLocal` / `startedAtLocal`.
+ *   Aucun instant UTC n'est inventé pour une date sans fuseau. Une durée de
+ *   tour déduite d'un écart d'heures civiles reste nominale : aucune
+ *   transition d'heure d'été n'est connaissable sans fuseau.
  *
  * Les champs absents valent `null` : un consommateur ne peut pas confondre une
  * mesure manquante avec un zéro.
@@ -49,15 +53,23 @@ export type TraceImportErrorCode =
   | 'no-activity'
   | 'multiple-activities'
   | 'invalid-structure'
-  | 'fit-decoder-unavailable';
+  | 'not-fit'
+  | 'fit-integrity'
+  | 'unsupported-feature';
 
 export type TraceImportIssueCode =
   | 'invalid-coordinate'
   | 'invalid-number'
   | 'invalid-time'
+  | 'invalid-time-offset'
+  | 'unqualified-time'
+  | 'mixed-time-zones'
+  | 'time-out-of-order'
   | 'missing-position'
   | 'empty-point'
   | 'empty-lap'
+  | 'ignored-section'
+  | 'unsupported-feature'
   | 'truncated'
   | 'issue-limit';
 
@@ -78,8 +90,28 @@ export interface TraceImportProvenance {
   creator: string | null;
   productId: string | null;
   sport: string | null;
+  /** Instant UTC du début, uniquement si la source portait un fuseau. */
   startedAt: string | null;
+  /** Instant UTC de la fin, uniquement si la source portait un fuseau. */
   endedAt: string | null;
+  /** Heure civile de début, sans conversion, quand la source n'avait pas de fuseau. */
+  startedAtLocal: string | null;
+  /** Heure civile de fin, sans conversion, quand la source n'avait pas de fuseau. */
+  endedAtLocal: string | null;
+  /** Convention temporelle effective du fichier. */
+  timeBasis: TraceTimeBasis;
+  /** Sections, messages ou champs valides mais non pris en charge, avec leur poids. */
+  ignoredSections: TraceIgnoredSection[];
+  /** Empreinte SHA-256 du contenu original, pour la déduplication. */
+  fingerprint: string;
+}
+
+export type TraceTimeBasis = 'utc' | 'local' | 'mixed' | 'none';
+
+export interface TraceIgnoredSection {
+  name: string;
+  /** Nombre d'éléments ou d'occurrences ignorés. */
+  elementCount: number;
 }
 
 /**
@@ -98,7 +130,12 @@ export interface TraceBounds {
 }
 
 export interface NormalizedTrackPoint {
+  /** Instant UTC, `null` si la source n'avait pas de fuseau. */
   recordedAt: string | null;
+  /** Heure civile source, sans fuseau, `null` si un instant a été fourni. */
+  recordedAtLocal: string | null;
+  /** Fuseau source (`Z` ou `+02:00`), `null` quand il est absent. */
+  timeOffset: string | null;
   latitudeDeg: number | null;
   longitudeDeg: number | null;
   altitudeM: number | null;
@@ -111,23 +148,39 @@ export interface NormalizedTrackPoint {
   temperatureC: number | null;
   /** Index du tour qui contient ce point. */
   lapIndex: number;
+  /** Index du `Track` (segment) qui contient ce point dans son tour. */
+  trackIndex: number;
+}
+
+export interface NormalizedTraceTrack {
+  index: number;
+  firstPointIndex: number | null;
+  pointCount: number;
 }
 
 export interface NormalizedTraceLap {
   index: number;
+  /** Instant UTC de début, `null` si la source n'avait pas de fuseau. */
   startedAt: string | null;
+  /** Heure civile de début, sans conversion, en l'absence de fuseau. */
+  startedAtLocal: string | null;
   elapsedSeconds: number | null;
   distanceM: number | null;
   maxSpeedMps: number | null;
   caloriesKcal: number | null;
   averageHeartRateBpm: number | null;
   maxHeartRateBpm: number | null;
+  /** Cadence vélo moyenne du tour, en tours par minute. */
   averageCadenceRpm: number | null;
+  /** Cadence course/marche moyenne du tour, en pas par minute. */
+  averageCadenceSpm: number | null;
   intensity: string | null;
   triggerMethod: string | null;
   /** Index du premier point du tour dans `points`, `null` si aucun point complet. */
   firstPointIndex: number | null;
   pointCount: number;
+  /** Segments `Track` du tour, dans l'ordre du document. */
+  tracks: NormalizedTraceTrack[];
 }
 
 export interface NormalizedTraceImport {
