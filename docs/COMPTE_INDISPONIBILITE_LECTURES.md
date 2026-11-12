@@ -55,6 +55,9 @@ détail de confiance, réessai après un premier bootstrap en échec).
 
 ## Limites restantes (documentées, non corrigées ici)
 
+> Les limites de lectures secondaires ci-dessous sont fermées par la vague
+> S6.19 décrite en fin de document.
+
 - **Enrichissements non couverts par un drapeau** : les lectures
   `badgeRows`, `challengeRows`, `highlightRows`, les items/images/produits de
   kits, les photos de sortie et les albums `story_highlights` restent lus avec
@@ -100,3 +103,76 @@ détail de confiance, réessai après un premier bootstrap en échec).
 
 Le test de réessai a été vérifié en rouge sans `directHydratedRef` (les carnets
 reviennent à `[]`), puis en vert avec le correctif.
+
+---
+
+# S6.19 — lectures secondaires (12 novembre 2026)
+
+Cette vague ferme les limites listées ci-dessus sans modifier la base ni le
+contrat des données existantes.
+
+## Comportements livrés
+
+- **Badges** : `badgesUnavailable` couvre le catalogue `badges` et les
+  obtentions `user_badges`. La lentille Trophées affiche « Badges
+  momentanément indisponibles. » au lieu de « Aucun badge pour le moment. ».
+- **Défis** : `challengesUnavailable` couvre `challenges`, `user_challenges`,
+  `progression_challenges` et `user_progression`. La lentille Défis affiche
+  « Défis momentanément indisponibles. » au lieu d’un faux « Aucun défi ».
+- **Albums À la une** : `highlightsUnavailable` protège la liste
+  `story_highlights` (« Albums momentanément indisponibles. ») et
+  `highlightContentUnavailable` signale seulement le contenu partiel
+  (`story_highlight_items`, stories archivées) sans masquer les albums lisibles.
+- **Photos de sortie** : `outingPhotosUnavailable` couvre
+  `hike_session_photos` dans le bootstrap ; la timeline affiche une note
+  « Photos de sortie momentanément indisponibles. » sans cacher les sorties.
+  Le drawer Sortie reçoit `photosUnavailable` et montre « Photos
+  momentanément indisponibles. » avec « Réessayer » au lieu de « Aucune photo ».
+- **Contenu des kits** : `kitContentUnavailable` couvre
+  `materiel_kit_items` et `kitVisualsUnavailable` couvre les visuels
+  (`kit_items`, `product_ownership`). Les cartes restent affichées ; le nombre
+  de pièces devient `—`, la composition affiche « Composition momentanément
+  indisponible. » et une note explique la lecture partielle.
+- **Flux déjà définis raccordés** : `outings[].coverImage` est maintenant lu
+  comme couverture de carte (sans gonfler le nombre de photos) et
+  `highlights[].coverImage` comme repli de couverture d’album. Aucun visuel
+  n’est fabriqué.
+- **Préservation** : le runtime ne remplace plus `highlights` par `[]` quand
+  `highlightsUnavailable` est vrai ; les albums connus restent affichés.
+
+## Fichiers touchés
+
+`accountBootstrap.ts`, `sorties.ts`, `CompteLiquidGlassV8.tsx`,
+`VitrineSlot.tsx`, `CommunitySlot.tsx`, `MemoriesSlot.tsx`, `KitSlot.tsx`,
+`KitCard.tsx`, `OutingCard.tsx`, `memoriesModel.ts`, `SortieDrawer.tsx`,
+`OutingPhotos.tsx`, `DrawerShell.tsx`, `DetailDrawers.tsx` et ce rapport.
+
+Aucune migration, aucune modification RLS, aucun fichier de la branche
+confidentialité.
+
+## Vérifications
+
+Conformément à la consigne de Tony, aucune suite de tests ni build global n’a
+été lancé dans cette vague.
+
+```bash
+./node_modules/.bin/tsc --noEmit -p .
+# exit 0
+
+./node_modules/.bin/eslint <fichiers modifiés>
+# 0 erreur (avertissements préexistants uniquement)
+```
+
+## Vérifications futures (à la charge de Tony)
+
+- Rejouer les tests de slots : badges indisponibles, défis indisponibles,
+  albums indisponibles, contenu d’album partiel, contenu de kit indisponible,
+  photos de sortie indisponibles.
+- Ajouter un test de mapping bootstrap vérifiant chaque nouveau drapeau quand
+  la table correspondante renvoie une erreur.
+- Vérifier le drawer Sortie avec `hike_session_photos` en erreur (message +
+  « Réessayer »), puis avec des photos réelles (aucune régression).
+- Vérifier visuellement la timeline avec `outingPhotosUnavailable` et une
+  couverture `coverImage` réelle.
+- E2E mobile : ouvrir le profil, parcourir Vitrine > Trophées, Communauté >
+  Défis, Souvenirs > Souvenirs, Kit > Kits et Sortie > Photos.

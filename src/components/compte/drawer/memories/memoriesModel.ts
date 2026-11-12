@@ -90,6 +90,11 @@ export function normalizeOuting(value: unknown, index: number): OutingCardData |
 
   const startedAt = asText(row.startedAt) || asText(row.started_at);
   const parts = parisDateParts(startedAt);
+  // Le bootstrap expose la couverture résolue dans `coverImage` et ne fournit
+  // pas la liste complète des photos : la couverture reste distincte du
+  // nombre de photos, pour ne pas afficher « 1 photo » quand il y en a cinq.
+  const photos = asPhotos(row.photos);
+  const coverImage = asText(row.coverImage) || asText(row.cover_image);
 
   return {
     id: asText(row.id) || `outing_${index}`,
@@ -100,7 +105,8 @@ export function normalizeOuting(value: unknown, index: number): OutingCardData |
     km: asPositiveNumber(row.km ?? row.distance_km),
     dplus: asPositiveNumber(row.dplus ?? row.elevation_gain_m),
     proven: row.proven === true,
-    photos: asPhotos(row.photos),
+    photos,
+    cover: coverImage || photos[0] || null,
     status: asText(row.status),
     year: parts.year,
     monthLabel: parts.monthLabel,
@@ -133,7 +139,9 @@ export function normalizeHighlight(value: unknown, index: number): HighlightCard
     title,
     items: Math.max(0, Math.round(asOptionalNumber(row.items) ?? 0)),
     coverStoryId: asText(row.coverStoryId) || asText(row.cover_story_id) || null,
-    cover: asText(row.cover),
+    // `mapHighlights` expose `coverImage` (URL signée ou image réelle) ; les
+    // fixtures historiques portent `cover`. Les deux sont lues, sans repli inventé.
+    cover: asText(row.cover) || asText(row.coverImage) || asText(row.cover_image),
     position: asOptionalNumber(row.position) ?? 0,
   };
 }

@@ -14,6 +14,8 @@ export interface OutingCardData {
   dplus: number | null;
   proven: boolean;
   photos: string[];
+  /** Couverture résolue par le bootstrap (`coverImage`), distincte du compte. */
+  cover?: string | null;
   status: string;
   year: number | null;
   /** Section mensuelle lisible (« Juillet 2026 »), calculée depuis startedAt. */
@@ -30,7 +32,7 @@ function photoCountLabel(count: number): string {
  * couverture n'apparaît que si le bootstrap fournit une photo réelle.
  */
 export function OutingCard({ outing }: { outing: OutingCardData }) {
-  const cover = outing.photos[0];
+  const cover = outing.cover || outing.photos[0];
   const hasMeta = Boolean(outing.mass || outing.date);
   const metrics = [
     outing.km !== null ? `${formatNumber(outing.km)} km` : null,

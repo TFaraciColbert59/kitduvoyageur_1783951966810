@@ -67,6 +67,17 @@ export function MemoriesSlot({
   const stampsUnavailable =
     !Array.isArray(stampsProp) &&
     (source.statsUnavailable === true || source.statsDependenciesUnavailable === true);
+  // Les albums (`story_highlights`) et leur contenu (`story_highlight_items`,
+  // stories archivées) sont deux lectures distinctes : la liste peut être
+  // lisible alors que les couvertures/compteurs manquent.
+  const highlightsUnavailable =
+    !Array.isArray(highlightsProp) && source.highlightsUnavailable === true;
+  const highlightContentUnavailable =
+    !Array.isArray(highlightsProp) && source.highlightContentUnavailable === true;
+  // La couverture des sorties dépend de `hike_session_photos` : un échec ne
+  // doit pas faire croire que les sorties n'ont aucune photo.
+  const outingPhotosUnavailable =
+    !Array.isArray(outingsProp) && source.outingPhotosUnavailable === true;
 
   const [selectedYear, setSelectedYear] = useState<number | 'all'>('all');
 
@@ -164,6 +175,16 @@ export function MemoriesSlot({
     );
   }
 
+  if (activeLens === 'souvenirs' && highlightsUnavailable) {
+    return (
+      <SlotUnavailable
+        label="Albums momentanément indisponibles."
+        slot="souvenirs"
+        lens={activeLens}
+      />
+    );
+  }
+
   let content: React.ReactNode = null;
 
   if (!empty && activeLens === 'passport') {
@@ -182,6 +203,14 @@ export function MemoriesSlot({
   } else if (!empty && activeLens === 'souvenirs') {
     content = (
       <div className="space-y-2">
+        {highlightContentUnavailable ? (
+          <p
+            role="note"
+            className="rounded-[var(--lkv-radius-sm)] bg-[color:var(--card-tint-strong)] px-3 py-2 text-[length:var(--lkv-text-caption-2,12px)] text-[color:var(--label2)]"
+          >
+            Le contenu des albums est momentanément indisponible.
+          </p>
+        ) : null}
         {error ? (
           <p
             role="alert"
@@ -205,6 +234,14 @@ export function MemoriesSlot({
   } else if (!empty) {
     content = (
       <div className="space-y-3">
+        {outingPhotosUnavailable ? (
+          <p
+            role="note"
+            className="rounded-[var(--lkv-radius-sm)] bg-[color:var(--card-tint-strong)] px-3 py-2 text-[length:var(--lkv-text-caption-2,12px)] text-[color:var(--label2)]"
+          >
+            Photos de sortie momentanément indisponibles.
+          </p>
+        ) : null}
         <YearFilter years={years} active={activeYear} onChange={setSelectedYear} />
         <p role="status" aria-live="polite" className="sr-only">
           {outingsCountLabel(visibleOutings.length)}

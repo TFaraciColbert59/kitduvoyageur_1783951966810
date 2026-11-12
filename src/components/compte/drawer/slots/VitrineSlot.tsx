@@ -922,6 +922,15 @@ export function VitrineSlot({
   const statsUnavailable =
     !statsProp &&
     (data.statsUnavailable === true || data.statsDependenciesUnavailable === true);
+  // Le catalogue de badges et les obtentions sont deux lectures : si l'une
+  // échoue, la liste vide ne doit pas devenir « Aucun badge ».
+  const badgesUnavailable =
+    !badgesProp && data.badgesUnavailable === true;
+  // Les republications dérivent de `community_posts` : le flag existant
+  // `carnetsUnavailable` couvre aussi cette lecture.
+  const repostsUnavailable =
+    !repostsProp &&
+    (data.repostsUnavailable === true || data.carnetsUnavailable === true);
   const stamps = readStamps(data.stamps);
   // Identité stable du payload hôte, utilisée pour survivre à un remontage.
   const payloadKey = isRecord(payload) ? payload : null;
@@ -979,6 +988,15 @@ export function VitrineSlot({
   }
 
   if (normalizedLens === 'repost') {
+    if (repostsUnavailable) {
+      return (
+        <SlotUnavailable
+          label="Republications momentanément indisponibles."
+          slot="vitrine"
+          lens={normalizedLens}
+        />
+      );
+    }
     const reposts = readReposts(repostsProp ?? data.reposts);
     if (reposts.length === 0) {
       return (
@@ -993,6 +1011,15 @@ export function VitrineSlot({
   }
 
   if (normalizedLens === 'badges') {
+    if (badgesUnavailable) {
+      return (
+        <SlotUnavailable
+          label="Badges momentanément indisponibles."
+          slot="vitrine"
+          lens={normalizedLens}
+        />
+      );
+    }
     const badges = readBadges(badgesProp ?? data.badges);
     if (badges.length === 0) {
       return <EmptyVitrine lens="badges" label="Aucun badge pour le moment." />;

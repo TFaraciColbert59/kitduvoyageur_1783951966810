@@ -40,10 +40,16 @@ export function DrawerSkeleton() {
   );
 }
 
-export function DrawerError({ onRetry }: { onRetry?: () => void }) {
+export function DrawerError({
+  onRetry,
+  label = 'Impossible de charger ce contenu.',
+}: {
+  onRetry?: () => void;
+  label?: string;
+}) {
   return (
     <div className="lkdv-drawer-state" data-state="error" role="alert">
-      <p>Impossible de charger ce contenu.</p>
+      <p>{label}</p>
       {onRetry ? (
         <button type="button" className="lkdv-drawer-retry" onClick={onRetry}>
           Réessayer

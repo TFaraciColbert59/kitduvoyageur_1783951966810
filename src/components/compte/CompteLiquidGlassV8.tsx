@@ -1401,6 +1401,7 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
         const clubsUnavailable = payload?.clubsUnavailable === true;
         const kitsUnavailable = payload?.kitsUnavailable === true;
         const storiesUnavailable = payload?.storiesUnavailable === true;
+        const highlightsUnavailable = payload?.highlightsUnavailable === true;
         const profileFromPayload =
           payload?.profile &&
           typeof payload.profile === 'object' &&
@@ -1459,7 +1460,7 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
                 }),
             ...(kitsUnavailable ? {} : { kits: payload.kits || [] }),
             ...(storiesUnavailable ? {} : { stories: payload.stories || [] }),
-            highlights: payload.highlights || [],
+            ...(highlightsUnavailable ? {} : { highlights: payload.highlights || [] }),
             species: payload.species || [],
             massifs: payload.massifs || [],
             ...(notificationsUnavailable

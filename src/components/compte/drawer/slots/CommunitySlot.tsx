@@ -413,6 +413,11 @@ export function CommunitySlot({
   // « Aucun club ». Une prop directe reste prioritaire (écran/test ciblé).
   const clubsUnavailable =
     !Array.isArray(clubs) && asRecord(payload)?.clubsUnavailable === true;
+  // Les défis dépendent de `challenges`, `user_challenges` et de la
+  // progression : un échec de l'une de ces lectures ne doit pas devenir
+  // « Aucun défi en cours ».
+  const challengesUnavailable =
+    !Array.isArray(challenges) && asRecord(payload)?.challengesUnavailable === true;
   // `data-state` reflète ce qui est réellement rendu après filtrage :
   // un défi terminé reste visible (section repliée), un défi inactif non.
   const visibleChallenges = challengeItems.filter((challenge) => challenge.active !== false);
@@ -422,6 +427,16 @@ export function CommunitySlot({
       : resolvedLens === 'clubs'
         ? clubItems.length === 0
         : companionItems.length === 0;
+
+  if (resolvedLens === 'challenges' && challengesUnavailable) {
+    return (
+      <SlotUnavailable
+        label="Défis momentanément indisponibles."
+        slot="communaute"
+        lens={resolvedLens}
+      />
+    );
+  }
 
   if (resolvedLens === 'clubs' && clubsUnavailable) {
     return (

@@ -1728,15 +1728,15 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
     clubMembersResult,
     kitRowsResult,
     storyRowsResult,
-    badgeRows,
-    userBadgeRows,
-    challengeRows,
-    userChallengeRows,
-    progressionRows,
-    userProgressionRows,
+    badgeRowsResult,
+    userBadgeRowsResult,
+    challengeRowsResult,
+    userChallengeRowsResult,
+    progressionRowsResult,
+    userProgressionRowsResult,
     ownershipRowsResult,
     loanRowsResult,
-    highlightRows,
+    highlightRowsResult,
   ] = await Promise.all([
     safeRowsOrNull<PostRow>(
       supabase
@@ -1825,31 +1825,31 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
         .order('created_at', { ascending: false })
         .limit(12)
     ),
-    safeRows<BadgeRow>(
+    safeRowsOrNull<BadgeRow>(
       supabase
         .from('badges')
         .select('id,name,description,rarity,points_reward,requirement_type,requirement_value,active')
     ),
-    safeRows<UserBadgeRow>(
+    safeRowsOrNull<UserBadgeRow>(
       supabase.from('user_badges').select('badge_id,earned_at').eq('user_id', user.id)
     ),
-    safeRows<ChallengeRow>(
+    safeRowsOrNull<ChallengeRow>(
       supabase
         .from('challenges')
         .select('id,title,category,difficulty,xp,total,deadline,active')
     ),
-    safeRows<UserChallengeRow>(
+    safeRowsOrNull<UserChallengeRow>(
       supabase
         .from('user_challenges')
         .select('challenge_id,progress,completed,completed_at')
         .eq('user_id', user.id)
     ),
-    safeRows<ProgressionChallengeRow>(
+    safeRowsOrNull<ProgressionChallengeRow>(
       supabase
         .from('progression_challenges')
         .select('id,title,skill,points_reward,difficulty,target_progress')
     ),
-    safeRows<UserProgressionRow>(
+    safeRowsOrNull<UserProgressionRow>(
       supabase
         .from('user_progression')
         .select('current_challenge_id,challenge_progress')
@@ -1873,7 +1873,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
         .order('loaned_at', { ascending: false })
         .limit(100)
     ),
-    safeRows<StoryHighlightRow>(
+    safeRowsOrNull<StoryHighlightRow>(
       supabase
         .from('story_highlights')
         .select('id,title,cover_story_id,position')
@@ -1895,6 +1895,13 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
   const storyRows = storyRowsResult ?? [];
   const ownershipRows = ownershipRowsResult ?? [];
   const loanRows = loanRowsResult ?? [];
+  const badgeRows = badgeRowsResult ?? [];
+  const userBadgeRows = userBadgeRowsResult ?? [];
+  const challengeRows = challengeRowsResult ?? [];
+  const userChallengeRows = userChallengeRowsResult ?? [];
+  const progressionRows = progressionRowsResult ?? [];
+  const userProgressionRows = userProgressionRowsResult ?? [];
+  const highlightRows = highlightRowsResult ?? [];
   const carnetsUnavailable = postRowsResult === null;
   const outingsUnavailable = outingsResult === null;
   const statsUnavailable = statsSessionsResult === null;
@@ -1905,12 +1912,24 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
   const storiesUnavailable = storyRowsResult === null;
   const gearItemsUnavailable = ownershipRowsResult === null;
   const trustUnavailable = loanRowsResult === null;
+  // Les badges, défis et albums sont des lectures secondaires : un échec ne
+  // doit pas être présenté comme une collection vide. On distingue le
+  // catalogue de badges des obtentions, et la liste des albums de leur contenu.
+  const badgesUnavailable =
+    badgeRowsResult === null || userBadgeRowsResult === null;
+  const challengesUnavailable =
+    challengeRowsResult === null ||
+    userChallengeRowsResult === null ||
+    progressionRowsResult === null ||
+    userProgressionRowsResult === null;
+  const highlightsUnavailable = highlightRowsResult === null;
 
   // Couverture réelle des sorties : première photo de `hike_session_photos`,
-  // résolue en URL signée. Une sortie sans photo reste sans couverture.
+  // résolue en URL signée. Une sortie sans photo reste sans couverture ; un
+  // échec de lecture est signalé pour ne pas le confondre avec une absence.
   const outingIds = outings.map((row) => row.id).filter(Boolean);
-  const outingPhotoRows = outingIds.length
-    ? await safeRows<{ session_id: string; storage_path: string; position: number | null }>(
+  const outingPhotoRowsResult = outingIds.length
+    ? await safeRowsOrNull<{ session_id: string; storage_path: string; position: number | null }>(
         supabase
           .from('hike_session_photos')
           .select('session_id,storage_path,position')
@@ -1918,6 +1937,8 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
           .order('position', { ascending: true })
       )
     : [];
+  const outingPhotosUnavailable = outingPhotoRowsResult === null;
+  const outingPhotoRows = outingPhotoRowsResult ?? [];
   const coverBySession = new Map<string, string>();
   const paths = [...new Set(outingPhotoRows.map((row) => row.storage_path).filter(Boolean))];
   if (paths.length > 0) {
@@ -1963,7 +1984,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
     ),
   ];
 
-  const [routesResult, clubs, clubEvents, clubTopics, clubRecommendedKitLinks, kitItems, catalogItems, highlightItems, repostSources, companionCandidates, loanOwnershipRows, clubActiveMemberRows] =
+  const [routesResult, clubs, clubEvents, clubTopics, clubRecommendedKitLinks, kitItemsResult, catalogItemsResult, highlightItemsResult, repostSources, companionCandidates, loanOwnershipRows, clubActiveMemberRows] =
     await Promise.all([
       routeIds.length
         ? safeRowsOrNull<RouteRow>(
@@ -2011,7 +2032,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
           )
         : Promise.resolve([] as ClubRecommendedKitLinkRow[]),
       kitIds.length
-        ? safeRows<KitItemImageRow>(
+        ? safeRowsOrNull<KitItemImageRow>(
             supabase
               .from('materiel_kit_items')
               .select('id,kit_id,name,category,weight_g,quantity,condition,priority,is_vital,product_ownership_id,created_at')
@@ -2019,9 +2040,9 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
               .order('created_at', { ascending: true })
           )
         : Promise.resolve([] as KitItemImageRow[]),
-      safeRows<CatalogKitItemRow>(supabase.from('kit_items').select('nom,image').limit(500)),
+      safeRowsOrNull<CatalogKitItemRow>(supabase.from('kit_items').select('nom,image').limit(500)),
       highlightIds.length
-        ? safeRows<StoryHighlightItemRow>(
+        ? safeRowsOrNull<StoryHighlightItemRow>(
             supabase.from('story_highlight_items').select('highlight_id,story_id,position').in('highlight_id', highlightIds)
           )
         : Promise.resolve([] as StoryHighlightItemRow[]),
@@ -2070,6 +2091,15 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
 
   const routes = routesResult ?? [];
   const routesUnavailable = routesResult === null;
+  const kitItems = kitItemsResult ?? [];
+  const catalogItems = catalogItemsResult ?? [];
+  const highlightItems = highlightItemsResult ?? [];
+  // Les cartes de kits restent lisibles même si leur composition ou leurs
+  // visuels manquent : on signale la lecture partielle sans masquer les kits.
+  const kitContentUnavailable = kitRows.length > 0 && kitItemsResult === null;
+  const kitVisualsUnavailable =
+    kitRows.length > 0 &&
+    (catalogItemsResult === null || ownershipRowsResult === null);
 
   const recommendedKitIds = [
     ...new Set(
@@ -2164,7 +2194,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
     clubEventParticipantRows,
     recommendedCatalogKits,
     recommendedMaterialKits,
-    highlightStories,
+    highlightStoriesResult,
   ] = await Promise.all([
     relationIds.length
       ? safeRows<FollowProfileRow>(
@@ -2216,7 +2246,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
     // Stories archivées rattachées aux albums « À la une » (évite la troncature
     // du plafond de 12 stories actives du flux).
     highlightStoryIds.length
-      ? safeRows<StoryRow>(
+      ? safeRowsOrNull<StoryRow>(
           supabase
             .from('post_stories')
             .select('id,caption,media_type,created_at,storage_path,image_url')
@@ -2225,6 +2255,13 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
       : Promise.resolve([] as StoryRow[]),
   ]);
 
+  const highlightStories = highlightStoriesResult ?? [];
+  // La liste des albums peut être lue alors que leur contenu (items/stories
+  // archivées) manque : on garde les albums et on signale le contenu partiel.
+  const highlightContentUnavailable =
+    highlightRowsResult !== null &&
+    highlightIds.length > 0 &&
+    (highlightItemsResult === null || highlightStoriesResult === null);
   const geoMassifs = geoMassifsResult ?? [];
   // `mapStats` et `mapStamps` dépendent de `hiking_routes` et `geo_massifs`.
   // Sans cet indicateur, un échec de ces lectures laisserait les compteurs
@@ -2357,6 +2394,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
     carnetsUnavailable,
     outings: mapOutings(outings, routes, coverBySession),
     outingsUnavailable,
+    outingPhotosUnavailable,
     stats: mapStats(statsSessions, routes, geoMassifs),
     statsUnavailable,
     statsDependenciesUnavailable,
@@ -2382,9 +2420,13 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
     followListsUnavailable: followListsUnavailableWithProfiles,
     reposts: mapReposts(repostRows, repostSources, profileById),
     badges: mapBadges(badgeRows, userBadgeRows),
+    badgesUnavailable,
     challenges: mapChallenges(challengeRows, challengeProgress, progressionRows, userProgressionRows[0] ?? null),
+    challengesUnavailable,
     kits: mapKits(kitRows, kitItemCounts, kitImages, kitProducts, kitOutings),
     kitsUnavailable,
+    kitContentUnavailable,
+    kitVisualsUnavailable,
     gearItems: mapGearItems(ownershipRows, loanedToByItem),
     gearItemsUnavailable,
     loans: mapLoans(loanRows, loanOwnershipById, profileById, user.id),
@@ -2394,6 +2436,8 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
     // d'affichage plafonnée à 24 sorties.
     stamps: mapStamps(statsSessions, routes, geoMassifs),
     highlights: mapHighlights(highlightRows, highlightItemCounts, highlightItemsByHighlight, storyById),
+    highlightsUnavailable,
+    highlightContentUnavailable,
     clubs: mapClubs(
       clubMembers,
       clubs,

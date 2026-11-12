@@ -40,6 +40,13 @@ export interface BootstrapOverlayData {
   notificationsUnavailable?: boolean;
   clubsUnavailable?: boolean;
   storiesUnavailable?: boolean;
+  badgesUnavailable?: boolean;
+  challengesUnavailable?: boolean;
+  highlightsUnavailable?: boolean;
+  highlightContentUnavailable?: boolean;
+  kitContentUnavailable?: boolean;
+  kitVisualsUnavailable?: boolean;
+  outingPhotosUnavailable?: boolean;
 }
 
 export function SavedPostsDrawer({ onClose, onOpenPost }: { onClose: () => void; onOpenPost: (id: string) => void }) {

@@ -204,6 +204,8 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
                 canEdit={detail.canEdit}
                 uploading={uploading}
                 onUpload={uploadPhoto}
+                unavailable={detail.photosUnavailable}
+                onRetry={invalidate}
                 onDelete={(photoId) =>
                   run(
                     () =>
@@ -308,7 +310,7 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
           );
         },
       })),
-    [busy, deleteOuting, detail, exportGpx, outingId, run, share, uploadPhoto, uploading]
+    [busy, deleteOuting, detail, exportGpx, invalidate, outingId, run, share, uploadPhoto, uploading]
   );
 
   if (authLoading) {
