@@ -68,6 +68,32 @@ describe('Souvenirs — timeline', () => {
     render(<MemoriesSlot lens="timeline" payload={{ outings: [] }} />);
     expect(screen.getByText('Aucun carnet publié')).toBeTruthy();
   });
+
+  it('distingue une lecture de sorties indisponible d’un carnet vide', () => {
+    render(
+      <MemoriesSlot
+        lens="timeline"
+        payload={{ outings: [], outingsUnavailable: true }}
+      />
+    );
+
+    expect(screen.getByText('Sorties momentanément indisponibles.')).toBeTruthy();
+    expect(screen.queryByText('Aucun carnet publié')).toBeNull();
+    expect(screen.getByTestId('slot-content').getAttribute('data-state')).toBe('error');
+  });
+
+  it('garde les sorties directes prioritaires sur un flag d’indisponibilité', () => {
+    render(
+      <MemoriesSlot
+        lens="timeline"
+        outings={OUTINGS}
+        payload={{ outingsUnavailable: true }}
+      />
+    );
+
+    expect(screen.getByText('Lac Blanc')).toBeTruthy();
+    expect(screen.queryByText('Sorties momentanément indisponibles.')).toBeNull();
+  });
 });
 
 describe('Souvenirs — passeport', () => {
@@ -89,6 +115,19 @@ describe('Souvenirs — passeport', () => {
   it('affiche un état vide honnête sans lieu validé', () => {
     render(<MemoriesSlot lens="passport" payload={{ stamps: [] }} />);
     expect(screen.getByText('Aucun lieu validé.')).toBeTruthy();
+  });
+
+  it('distingue un passeport illisible d’un passeport vide', () => {
+    render(
+      <MemoriesSlot
+        lens="passport"
+        payload={{ stamps: [], statsDependenciesUnavailable: true }}
+      />
+    );
+
+    expect(screen.getByText('Passeport momentanément indisponible.')).toBeTruthy();
+    expect(screen.queryByText('Aucun lieu validé.')).toBeNull();
+    expect(screen.getByTestId('slot-content').getAttribute('data-state')).toBe('error');
   });
 });
 

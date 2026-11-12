@@ -107,6 +107,7 @@ export function KitSlot({
     observer?.observe(host);
     return () => observer?.disconnect();
   }, []);
+  const unavailable = inventoryLens ? gearUnavailable : kitsUnavailable;
   const empty = inventoryLens ? gearList.length === 0 : kitList.length === 0;
 
   return (
@@ -117,7 +118,7 @@ export function KitSlot({
       data-slot="kit"
       data-lens={inventoryLens ? 'inventory' : 'kits'}
       data-viewer={resolvedViewer}
-      data-state={empty ? 'empty' : 'ready'}
+      data-state={unavailable ? 'error' : empty ? 'empty' : 'ready'}
     >
       <style
         dangerouslySetInnerHTML={{ __html: KIT_SLOT_CSS + KIT_CARD_CSS + GEAR_ROW_CSS }}

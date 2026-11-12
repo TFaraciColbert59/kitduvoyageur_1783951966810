@@ -1963,10 +1963,12 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
     ),
   ];
 
-  const [routes, clubs, clubEvents, clubTopics, clubRecommendedKitLinks, kitItems, catalogItems, highlightItems, repostSources, companionCandidates, loanOwnershipRows, clubActiveMemberRows] =
+  const [routesResult, clubs, clubEvents, clubTopics, clubRecommendedKitLinks, kitItems, catalogItems, highlightItems, repostSources, companionCandidates, loanOwnershipRows, clubActiveMemberRows] =
     await Promise.all([
       routeIds.length
-        ? safeRows<RouteRow>(supabase.from('hiking_routes').select('id,name,region').in('id', routeIds))
+        ? safeRowsOrNull<RouteRow>(
+            supabase.from('hiking_routes').select('id,name,region').in('id', routeIds)
+          )
         : Promise.resolve([] as RouteRow[]),
       clubIds.length
         ? safeRows<ClubRow>(
@@ -2066,6 +2068,9 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
         : Promise.resolve([] as Array<{ club_id: string }>),
     ]);
 
+  const routes = routesResult ?? [];
+  const routesUnavailable = routesResult === null;
+
   const recommendedKitIds = [
     ...new Set(
       clubRecommendedKitLinks
@@ -2155,7 +2160,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
 
   const [
     relationProfiles,
-    geoMassifs,
+    geoMassifsResult,
     clubEventParticipantRows,
     recommendedCatalogKits,
     recommendedMaterialKits,
@@ -2170,7 +2175,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
         )
       : Promise.resolve([] as FollowProfileRow[]),
     regionKeys.length
-      ? safeRows<GeoMassifRow>(
+      ? safeRowsOrNull<GeoMassifRow>(
           supabase
             .from('geo_massifs')
             .select('geoname_id,name,name_plain,country_code')
@@ -2219,6 +2224,13 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
         )
       : Promise.resolve([] as StoryRow[]),
   ]);
+
+  const geoMassifs = geoMassifsResult ?? [];
+  // `mapStats` et `mapStamps` dépendent de `hiking_routes` et `geo_massifs`.
+  // Sans cet indicateur, un échec de ces lectures laisserait les compteurs
+  // massifs/pays à zéro et le passeport vide, avec `statsUnavailable = false`.
+  const statsDependenciesUnavailable =
+    routesUnavailable || geoMassifsResult === null;
 
   // Une lecture de suivi en échec ne doit jamais être présentée comme
   // « aucun état » : le client reçoit un indicateur explicite et conserve ses
@@ -2347,6 +2359,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
     outingsUnavailable,
     stats: mapStats(statsSessions, routes, geoMassifs),
     statsUnavailable,
+    statsDependenciesUnavailable,
     orders: orderRowsMapped.orders,
     bookings: orderRowsMapped.bookings,
     ordersUnavailable,

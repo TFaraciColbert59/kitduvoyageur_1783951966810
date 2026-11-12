@@ -11,6 +11,7 @@ import {
   type Companion,
   type CommunityPerson,
 } from '../cards/CompanionRow';
+import { SlotUnavailable } from './SlotUnavailable';
 
 export type CommunityLens = 'challenges' | 'clubs' | 'cordee';
 
@@ -408,6 +409,10 @@ export function CommunitySlot({
   const companionItems = listFromPayload(companions, payload, 'companions');
   const followerItems = listFromPayload(followers, payload, 'followers');
   const followingItems = listFromPayload(following, payload, 'following');
+  // `clubsUnavailable` couvre `club_members` : un échec ne doit pas devenir
+  // « Aucun club ». Une prop directe reste prioritaire (écran/test ciblé).
+  const clubsUnavailable =
+    !Array.isArray(clubs) && asRecord(payload)?.clubsUnavailable === true;
   // `data-state` reflète ce qui est réellement rendu après filtrage :
   // un défi terminé reste visible (section repliée), un défi inactif non.
   const visibleChallenges = challengeItems.filter((challenge) => challenge.active !== false);
@@ -417,6 +422,16 @@ export function CommunitySlot({
       : resolvedLens === 'clubs'
         ? clubItems.length === 0
         : companionItems.length === 0;
+
+  if (resolvedLens === 'clubs' && clubsUnavailable) {
+    return (
+      <SlotUnavailable
+        label="Clubs momentanément indisponibles."
+        slot="communaute"
+        lens={resolvedLens}
+      />
+    );
+  }
 
   return (
     <div

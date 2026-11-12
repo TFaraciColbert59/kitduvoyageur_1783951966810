@@ -67,6 +67,7 @@ describe('KitSlot — lentille Kits', () => {
 
     expect(screen.getByText('Matériel momentanément indisponible.')).toBeTruthy();
     expect(screen.queryByText('Aucun matériel enregistré.')).toBeNull();
+    expect(screen.getByTestId('slot-content').getAttribute('data-state')).toBe('error');
   });
 
   it('distingue une lecture de kits indisponible d’une liste vide', () => {
@@ -74,5 +75,6 @@ describe('KitSlot — lentille Kits', () => {
 
     expect(screen.getByText('Kits momentanément indisponibles.')).toBeTruthy();
     expect(screen.queryByText('Aucun kit enregistré.')).toBeNull();
+    expect(screen.getByTestId('slot-content').getAttribute('data-state')).toBe('error');
   });
 });

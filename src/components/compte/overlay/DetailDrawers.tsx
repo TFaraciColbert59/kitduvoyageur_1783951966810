@@ -126,9 +126,9 @@ export function TrustDetailSheet({ data, trustScore, onClose }: { data: Bootstra
         <div className="lkdv-trust-detail-score"><b>{score == null ? '—' : score}<small>/100</small></b><span>{trustUnavailable ? 'Vérification indisponible' : trust?.verified ? 'Profil vérifié' : 'Profil non vérifié'}</span></div>
         <div className="lkdv-trust-detail-gauge"><i style={{ width: `${score == null ? 0 : Math.max(0, Math.min(100, score))}%` }} /></div>
         <div className="lkdv-trust-detail-grid">
-          <div><b>{data.trustUnavailable ? '—' : trust?.active ?? 0}</b><span>Prêts actifs</span></div>
-          <div><b>{trust?.onTimeRate == null ? '—' : `${trust.onTimeRate} %`}</b><span>Retours à temps</span></div>
-          <div><b>{trust?.rating == null ? '—' : trust.rating.toFixed(1)}</b><span>Note moyenne</span></div>
+          <div><b>{trustUnavailable ? '—' : trust?.active ?? 0}</b><span>Prêts actifs</span></div>
+          <div><b>{trustUnavailable || trust?.onTimeRate == null ? '—' : `${trust.onTimeRate} %`}</b><span>Retours à temps</span></div>
+          <div><b>{trustUnavailable || trust?.rating == null ? '—' : trust.rating.toFixed(1)}</b><span>Note moyenne</span></div>
         </div>
         {trustUnavailable ? <p className="lkdv-trust-detail-empty">Indice momentanément indisponible.</p> : trust?.onTimeRate == null ? <p className="lkdv-trust-detail-empty">Aucun retour noté pour le moment.</p> : null}
       </div>

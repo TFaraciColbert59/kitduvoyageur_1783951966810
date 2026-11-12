@@ -8,6 +8,7 @@ import { OutingCard, type OutingCardData } from '../cards/OutingCard';
 import { StampTile } from '../cards/StampTile';
 import { EmptyState } from '../memories/EmptyState';
 import { SlotEmpty } from './SlotEmpty';
+import { SlotUnavailable } from './SlotUnavailable';
 import { YearFilter } from '../memories/YearFilter';
 import { useHighlightViewer } from '../memories/useHighlightViewer';
 import {
@@ -59,6 +60,13 @@ export function MemoriesSlot({
 }: MemoriesSlotProps) {
   const activeLens: MemoriesLens = lens === 'passport' || lens === 'souvenirs' ? lens : 'timeline';
   const source = asRecord(payload);
+  // Un échec de lecture n'est pas un carnet vide. Les listes directes restent
+  // prioritaires : un test ou un écran ciblé peut fournir ses propres données.
+  const outingsUnavailable =
+    !Array.isArray(outingsProp) && source.outingsUnavailable === true;
+  const stampsUnavailable =
+    !Array.isArray(stampsProp) &&
+    (source.statsUnavailable === true || source.statsDependenciesUnavailable === true);
 
   const [selectedYear, setSelectedYear] = useState<number | 'all'>('all');
 
@@ -133,6 +141,28 @@ export function MemoriesSlot({
     // Restaure le focus sur la carte qui a ouvert la visionneuse.
     triggerRef.current?.focus();
   }, [close]);
+
+  // Tous les hooks sont appelés avant ces retours : le nombre de hooks reste
+  // stable entre un payload lisible et un payload indisponible.
+  if (activeLens === 'timeline' && outingsUnavailable) {
+    return (
+      <SlotUnavailable
+        label="Sorties momentanément indisponibles."
+        slot="souvenirs"
+        lens={activeLens}
+      />
+    );
+  }
+
+  if (activeLens === 'passport' && stampsUnavailable) {
+    return (
+      <SlotUnavailable
+        label="Passeport momentanément indisponible."
+        slot="souvenirs"
+        lens={activeLens}
+      />
+    );
+  }
 
   let content: React.ReactNode = null;
 

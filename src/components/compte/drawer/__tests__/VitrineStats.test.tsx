@@ -98,6 +98,37 @@ describe('Vitrine — Stats', () => {
     expect(screen.queryAllByTestId('vitrine-month-bar')).toHaveLength(0);
   });
 
+  it('distingue une lecture de stats indisponible d’une vitrine vide', () => {
+    render(
+      <VitrineSlot
+        lens="stats"
+        payload={{
+          stats: { km: 0, dplus: 0, outings: 0, nights: 0, massifs: 0, countries: 0 },
+          statsUnavailable: true,
+        }}
+      />
+    );
+
+    expect(screen.getByText('Statistiques momentanément indisponibles.')).toBeTruthy();
+    expect(screen.queryByText('Aucune sortie publiée')).toBeNull();
+    expect(screen.getByTestId('slot-content').getAttribute('data-state')).toBe('error');
+  });
+
+  it('signale aussi une dépendance de stats illisible', () => {
+    render(
+      <VitrineSlot
+        lens="stats"
+        payload={{
+          stats: { km: 12, dplus: 400, outings: 1, massifs: 0, countries: 0 },
+          statsDependenciesUnavailable: true,
+        }}
+      />
+    );
+
+    expect(screen.getByText('Statistiques momentanément indisponibles.')).toBeTruthy();
+    expect(screen.queryByText('12 km')).toBeNull();
+  });
+
   it('lit payload.stats, le contrat de l’hôte', () => {
     render(<VitrineSlot lens="stats" payload={{ stats: STATS }} />);
     expect(screen.getByText('351 km')).toBeTruthy();

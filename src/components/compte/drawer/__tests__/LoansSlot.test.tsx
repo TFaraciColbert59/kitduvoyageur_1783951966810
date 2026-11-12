@@ -152,6 +152,10 @@ describe('LoansSlot — Confiance agrégée, sans historique rendu', () => {
     expect(screen.getByText('Prêts actifs').parentElement?.textContent).toContain('—');
     expect(screen.queryByText('0 %')).toBeNull();
     expect(screen.queryByText('0,0 / 5')).toBeNull();
+    // L'icône et la classe « vérifié » ne doivent pas contredire le texte.
+    const badge = screen.getByText('Vérification indisponible').closest('.lkdv-trust-badge');
+    expect(badge?.className).not.toContain('is-on');
+    expect(badge?.textContent).not.toContain('✓');
   });
 });
 
@@ -186,6 +190,33 @@ describe('LoansSlot — Je prête / J’emprunte', () => {
 
     expect(screen.getByText('Aucun prêt en cours.')).toBeTruthy();
     expect(screen.queryByTestId(/loan-card/)).toBeNull();
+  });
+
+  it('distingue une lecture de prêts indisponible d’une liste vide', () => {
+    render(
+      <LoansSlot
+        lens="lend"
+        payload={{ loans: [], trustUnavailable: true }}
+      />
+    );
+
+    expect(screen.getByText('Prêts momentanément indisponibles.')).toBeTruthy();
+    expect(screen.queryByText('Aucun prêt en cours.')).toBeNull();
+    expect(screen.queryByRole('group', { name: 'Résumé des prêts' })).toBeNull();
+    expect(screen.getByTestId('slot-content').getAttribute('data-state')).toBe('error');
+  });
+
+  it('garde les prêts directs prioritaires sur le flag de confiance', () => {
+    render(
+      <LoansSlot
+        lens="lend"
+        loans={LOANS}
+        payload={{ loans: [], trustUnavailable: true }}
+      />
+    );
+
+    expect(screen.getByText('Sac 45 L')).toBeTruthy();
+    expect(screen.queryByText('Prêts momentanément indisponibles.')).toBeNull();
   });
 
   it('« Membre » pour un visiteur, le prénom réel pour le propriétaire', () => {

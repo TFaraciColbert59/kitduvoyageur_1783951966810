@@ -1350,4 +1350,93 @@ describe('Compte — pont de suivi runtime', () => {
     expect(runtimeState().KITS_LINEAGE).toHaveLength(1);
     expect(runtimeState().S.notifications).toHaveLength(1);
   });
+
+  it('conserve les collections après un premier bootstrap en échec puis « Réessayer »', async () => {
+    // Les lectures directes réussissent au premier montage : les collections
+    // sont réellement affichées avant que le bootstrap complet ne réponde 500.
+    supabaseState.rows.carnets = [
+      {
+        id: 'c-direct',
+        author_id: 'owner-1',
+        title: 'Carnet direct',
+        visibility: 'public',
+        created_at: '2026-11-01T10:00:00Z',
+      },
+    ];
+    supabaseState.rows.orders = [
+      {
+        id: 'o-direct',
+        user_id: 'owner-1',
+        order_number: 'LKDV-DIRECT',
+        total_eur: 42,
+        status: 'payee',
+        created_at: '2026-11-01T10:00:00Z',
+        items: [],
+      },
+    ];
+    supabaseState.rows.club_members = [
+      {
+        user_id: 'owner-1',
+        role: 'Membre',
+        club: {
+          id: 'club-direct',
+          slug: 'club-direct',
+          name: 'Club Direct',
+          members_count: 42,
+        },
+      },
+    ];
+    bootstrapAnswer = () =>
+      Promise.resolve({ ok: false, status: 500, json: async () => ({}) });
+
+    await renderCompte();
+    await waitFor(() => expect(bootstrapCalls).toBe(1));
+    await waitFor(() => expect(runtimeState().CARNETS).toHaveLength(1));
+    expect(runtimeState().ORDERS).toHaveLength(1);
+    expect(runtimeState().CLUBS).toHaveLength(1);
+
+    // Le bootstrap a échoué : le drawer propose « Réessayer ». Au retry, les
+    // lectures directes échouent à leur tour ; les collections déjà connues
+    // ne doivent pas repasser par la branche « premier chargement ».
+    await openDrawer();
+    const retry = await screen.findByRole('button', { name: 'Réessayer' });
+    supabaseState.errors.carnets = { message: 'carnets indisponibles' };
+    supabaseState.errors.orders = { message: 'commandes indisponibles' };
+    supabaseState.errors.club_members = { message: 'clubs indisponibles' };
+    bootstrapAnswer = () =>
+      Promise.resolve(
+        okResponse({
+          authenticated: true,
+          profile: { handle: 'owner', name: 'Après réessai' },
+          stats: { km: 0, dplus: 0, outings: 0, nights: 0, massifs: 0, countries: 0 },
+          carnets: [],
+          outings: [],
+          orders: [],
+          bookings: [],
+          clubs: [],
+          kits: [],
+          stories: [],
+          notifications: [],
+          followers: [],
+          following: [],
+          tribu: [],
+          followStates: {},
+          carnetsUnavailable: true,
+          outingsUnavailable: true,
+          ordersUnavailable: true,
+          notificationsUnavailable: true,
+          clubsUnavailable: true,
+          kitsUnavailable: true,
+          storiesUnavailable: true,
+        })
+      );
+
+    fireEvent.click(retry);
+    await waitFor(() => expect(bootstrapCalls).toBe(2));
+    await waitFor(() => expect(runtimeState().S.profile.name).toBe('Après réessai'));
+
+    expect(runtimeState().CARNETS).toHaveLength(1);
+    expect(runtimeState().ORDERS).toHaveLength(1);
+    expect(runtimeState().CLUBS).toHaveLength(1);
+  });
 });

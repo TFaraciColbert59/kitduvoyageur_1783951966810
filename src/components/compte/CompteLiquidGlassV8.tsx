@@ -459,6 +459,13 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
    * d'avoir reçu de nouvelles données.
    */
   const followListsHydratedRef = useRef(false);
+  /**
+   * Vrai dès qu'une hydratation directe (hors bootstrap complet) a réussi au
+   * moins une fois. Sans ce marqueur, un premier bootstrap en échec suivi d'un
+   * « Réessayer » repassait par la branche « premier chargement » et écrivait
+   * `[]` dans les collections déjà affichées.
+   */
+  const directHydratedRef = useRef(false);
   const bootstrapPhaseRef = useRef<BootstrapPhase>('idle');
   /**
    * Compteur monotone des mutations de suivi initiées par cet onglet.
@@ -550,6 +557,7 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
     bootstrapPayloadRef.current = null;
     bootstrapPhaseRef.current = 'idle';
     followListsHydratedRef.current = false;
+    directHydratedRef.current = false;
     followMutationSeqRef.current = 0;
     followMutationByHandleRef.current = new Map();
     followInFlightRef.current = new Set();
@@ -1220,7 +1228,9 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
         .filter((c: any) => c.name);
 
       const hadBootstrap =
-        bootstrapPayloadRef.current != null || followListsHydratedRef.current;
+        bootstrapPayloadRef.current != null ||
+        followListsHydratedRef.current ||
+        directHydratedRef.current;
       // Même distinction « vide » vs « illisible » que les listes sociales :
       // après la première hydratation, une lecture en échec ne doit pas vider
       // la collection connue avant que le bootstrap complet ne la remplace.
@@ -1306,6 +1316,10 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
       else if (!hadBootstrap) patch.outings = [];
 
       hydrate(patch);
+      // La première hydratation directe a eu lieu : même si le bootstrap
+      // complet échoue ensuite, un « Réessayer » ne doit plus traiter les
+      // collections comme un premier chargement à initialiser à `[]`.
+      directHydratedRef.current = true;
       setSyncStatus('synced');
 
       // Bootstrap complet : remplace les tableaux de démonstration par les

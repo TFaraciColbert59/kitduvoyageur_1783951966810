@@ -237,6 +237,12 @@ describe('CompteOverlayHost — bootstrap privé', () => {
     expect(await screen.findByText('Indice de confiance')).toBeTruthy();
     const score = screen.getByText('/100').closest('b');
     expect(score?.textContent).toContain('—');
+    // Les trois agrégats suivent le même flag : aucun 3, 90 % ou 4.5 ne doit
+    // subsister dans un écran marqué « Vérification indisponible ».
     expect(screen.getByText('Prêts actifs').parentElement?.textContent).toContain('—');
+    expect(screen.getByText('Retours à temps').parentElement?.textContent).toContain('—');
+    expect(screen.getByText('Note moyenne').parentElement?.textContent).toContain('—');
+    expect(screen.queryByText('90 %')).toBeNull();
+    expect(screen.queryByText('4.5')).toBeNull();
   });
 });

@@ -392,6 +392,78 @@ describe('loadAccountBootstrap — lectures partielles des collections', () => {
     expect(payload.trust.active).toBe(0);
   });
 
+  it('signale une lecture hiking_routes illisible pour la Vitrine et le Passeport', async () => {
+    const payload = await bootstrapWith(
+      {
+        ...baseRows,
+        hike_sessions: [
+          {
+            id: 'h1',
+            user_id: OWNER,
+            route_id: 7,
+            started_at: '2026-10-01T08:00:00Z',
+            ended_at: '2026-10-01T12:00:00Z',
+            distance_km: 10,
+            elevation_gain_m: 500,
+          },
+        ],
+      },
+      { hiking_routes: { message: 'itinéraires indisponibles' } }
+    );
+
+    // Les sessions sont lisibles (km/dénivelé réels) mais les massifs/pays et
+    // le passeport dépendent des itinéraires : le slot doit le signaler.
+    expect(payload.statsUnavailable).toBe(false);
+    expect(payload.statsDependenciesUnavailable).toBe(true);
+  });
+
+  it('signale une lecture geo_massifs illisible', async () => {
+    const payload = await bootstrapWith(
+      {
+        ...baseRows,
+        hike_sessions: [
+          {
+            id: 'h1',
+            user_id: OWNER,
+            route_id: 7,
+            started_at: '2026-10-01T08:00:00Z',
+            ended_at: '2026-10-01T12:00:00Z',
+            distance_km: 10,
+            elevation_gain_m: 500,
+          },
+        ],
+        hiking_routes: [{ id: 7, name: 'Traversée', region: 'Vercors' }],
+      },
+      { geo_massifs: { message: 'massifs indisponibles' } }
+    );
+
+    expect(payload.statsDependenciesUnavailable).toBe(true);
+  });
+
+  it('garde les dépendances saines quand itinéraires et massifs sont lisibles', async () => {
+    const payload = await bootstrapWith({
+      ...baseRows,
+      hike_sessions: [
+        {
+          id: 'h1',
+          user_id: OWNER,
+          route_id: 7,
+          started_at: '2026-10-01T08:00:00Z',
+          ended_at: '2026-10-01T12:00:00Z',
+          distance_km: 10,
+          elevation_gain_m: 500,
+        },
+      ],
+      hiking_routes: [{ id: 7, name: 'Traversée', region: 'Vercors' }],
+      geo_massifs: [
+        { geoname_id: 1, name: 'Vercors', name_plain: 'vercors', country_code: 'FR' },
+      ],
+    });
+
+    expect(payload.statsUnavailable).toBe(false);
+    expect(payload.statsDependenciesUnavailable).toBe(false);
+  });
+
   it('garde les indicateurs à false quand les lectures réussissent vides', async () => {
     const payload = await bootstrapWith({
       ...baseRows,

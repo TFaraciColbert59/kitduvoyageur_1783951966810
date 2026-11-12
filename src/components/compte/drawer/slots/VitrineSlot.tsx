@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { StatTile } from '../cards/StatTile';
 import { formatElevation } from '@/lib/format/metrics';
 import { SlotEmpty } from './SlotEmpty';
+import { SlotUnavailable } from './SlotUnavailable';
 import { BadgeTile, type BadgeItem } from '../cards/BadgeTile';
 import { RepostCard, type RepostItem } from '../cards/RepostCard';
 
@@ -915,6 +916,12 @@ export function VitrineSlot({
     lens === 'repost' || lens === 'badges' ? lens : 'stats';
   const data = asRecord(payload);
   const stats = readStats(statsProp ?? data.stats);
+  // Une lecture `hike_sessions` en échec produit un objet de zéros : ce n'est
+  // pas une vitrine vide. Les dépendances (`hiking_routes`, `geo_massifs`)
+  // doivent aussi être signalées, sinon les compteurs massifs/pays mentent.
+  const statsUnavailable =
+    !statsProp &&
+    (data.statsUnavailable === true || data.statsDependenciesUnavailable === true);
   const stamps = readStamps(data.stamps);
   // Identité stable du payload hôte, utilisée pour survivre à un remontage.
   const payloadKey = isRecord(payload) ? payload : null;
@@ -938,6 +945,16 @@ export function VitrineSlot({
     stamps.length > 0 ||
     allReposts.length > 0 ||
     allBadges.some((badge) => badge.earned);
+
+  if (normalizedLens === 'stats' && statsUnavailable) {
+    return (
+      <SlotUnavailable
+        label="Statistiques momentanément indisponibles."
+        slot="vitrine"
+        lens={normalizedLens}
+      />
+    );
+  }
 
   if (normalizedLens === 'stats' && !hasActivity) {
     return (
