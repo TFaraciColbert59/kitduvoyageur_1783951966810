@@ -11,6 +11,7 @@ import {
   formatDuration,
   formatNumber,
   hasVisibleTrace,
+  traceUnavailableState,
   visibleTraceSegments,
 } from './shared';
 
@@ -49,6 +50,7 @@ export function OutingSummary({ detail, saving, onSave, onShare, onExport, onDel
   const context = companions.map((person) => person.name).slice(0, 3).join(', ');
   const segments = visibleTraceSegments(detail);
   const hasTrace = hasVisibleTrace(detail);
+  const traceState = traceUnavailableState(detail);
 
   return (
     <div className="lkdv-sortie-summary">
@@ -70,7 +72,7 @@ export function OutingSummary({ detail, saving, onSave, onShare, onExport, onDel
             <ActionPill tone="primary" label="Partager" icon={<Share2 />} onClick={onShare} />
             {detail.canEdit ? <ActionPill label="Modifier" icon={<Pencil />} onClick={() => setEditing(true)} /> : null}
             <ActionPill
-              label={!hasTrace ? 'Aucune trace GPS rattachée' : 'Télécharger le GPX'}
+              label={!hasTrace ? traceState.title : 'Télécharger le GPX'}
               icon={<Download />}
               onClick={onExport}
               disabled={!hasTrace}

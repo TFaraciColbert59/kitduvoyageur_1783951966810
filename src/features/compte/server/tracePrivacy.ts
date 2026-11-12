@@ -20,7 +20,8 @@ import {
   type TracePoint,
   type TraceProjectionError,
 } from '../domain/traceProjection';
-import { parsePositions } from '../map/geometry';
+import { haversineM } from '../../adventure-intelligence/domain/geo';
+import { parseTraceSegments } from '../map/geometry';
 
 export type TraceViewer = 'owner' | 'participant' | 'visitor';
 
@@ -36,13 +37,34 @@ export const DEFAULT_SHARE_START_MASK_M = 500;
 export const DEFAULT_SHARE_END_MASK_M = 500;
 
 /**
+ * Seules deux valeurs disent explicitement « partageable » : `public` pour un
+ * carnet et `collective_anonymized` pour une sortie. Tout le reste — `private`,
+ * `friends`, `null`, une valeur inconnue — est traité comme privé.
+ */
+export function isShareableTraceVisibility(value: unknown): boolean {
+  return value === 'public' || value === 'collective_anonymized';
+}
+
+/**
+ * Visibilité effective d'une trace exposée à un visiteur : la plus restrictive
+ * du carnet et de la sortie. Une seule valeur non explicitement partageable
+ * suffit à tout masquer.
+ */
+export function mostRestrictiveTraceVisibility(
+  ...values: Array<string | null | undefined>
+): 'public' | 'private' {
+  return values.every((value) => isShareableTraceVisibility(value)) ? 'public' : 'private';
+}
+
+/**
  * Source unique des masques. Un propriétaire ou un participant voit la trace
- * complète ; un visiteur voit début et fin masqués. Une visibilité `private`
- * lue par un visiteur est une incohérence d'autorisation : on masque tout.
+ * complète ; un visiteur voit début et fin masqués uniquement si la visibilité
+ * est explicitement partageable. Toute autre valeur masque tout : le défaut
+ * n'est jamais l'autorisation.
  */
 export function resolveTraceMasks(audience: TraceAudience): TraceMask[] {
   if (audience.viewer !== 'visitor') return [];
-  if (audience.visibility === 'private') return [{ kind: 'all' }];
+  if (!isShareableTraceVisibility(audience.visibility)) return [{ kind: 'all' }];
   return [
     { kind: 'start', meters: DEFAULT_SHARE_START_MASK_M },
     { kind: 'end', meters: DEFAULT_SHARE_END_MASK_M },
@@ -65,7 +87,12 @@ export interface ProjectedTraceSamples {
   visiblePointCount: number;
 }
 
-const METADATA_MATCH_DEG = 3e-5;
+/**
+ * Tolérance de réattachement des métadonnées : un demi-pas de quantification
+ * (0,55 m). Un point de coupe interpolé ne peut donc pas hériter de l'altitude
+ * ou de l'heure d'un point situé dans la zone masquée voisine.
+ */
+const METADATA_MATCH_DEG = 0.55e-5;
 const QUANTIZED_KEY_DECIMALS = 5;
 
 function quantizedKey(lng: number, lat: number): string {
@@ -91,23 +118,15 @@ function buildMetadataIndex(points: readonly TraceSample[]): Map<string, TraceSa
  * sans altitude ni heure, plutôt que d'hériter d'une valeur voisine fausse.
  */
 function attachMetadata(point: TracePoint, index: Map<string, TraceSample[]>): TraceSample {
-  const centerX = Math.round(point.lng * 10 ** QUANTIZED_KEY_DECIMALS);
-  const centerY = Math.round(point.lat * 10 ** QUANTIZED_KEY_DECIMALS);
   let best: TraceSample | null = null;
   let bestDistance = Number.POSITIVE_INFINITY;
 
-  for (let dx = -1; dx <= 1; dx += 1) {
-    for (let dy = -1; dy <= 1; dy += 1) {
-      const list = index.get(`${centerX + dx}:${centerY + dy}`);
-      if (!list) continue;
-      for (const candidate of list) {
-        const distance =
-          (candidate.lng - point.lng) ** 2 + (candidate.lat - point.lat) ** 2;
-        if (distance < bestDistance) {
-          best = candidate;
-          bestDistance = distance;
-        }
-      }
+  const list = index.get(quantizedKey(point.lng, point.lat));
+  for (const candidate of list ?? []) {
+    const distance = (candidate.lng - point.lng) ** 2 + (candidate.lat - point.lat) ** 2;
+    if (distance < bestDistance) {
+      best = candidate;
+      bestDistance = distance;
     }
   }
 
@@ -117,40 +136,146 @@ function attachMetadata(point: TracePoint, index: Map<string, TraceSample[]>): T
   return { lng: point.lng, lat: point.lat, elevationM: null, timestamp: null };
 }
 
+/** Longueur réelle d'un morceau, sans jamais franchir la frontière du suivant. */
+function segmentLengthM(points: readonly TracePoint[]): number {
+  let total = 0;
+  for (let index = 1; index < points.length; index += 1) {
+    total += haversineM(points[index - 1], points[index]);
+  }
+  return total;
+}
+
+interface ProjectedSegments {
+  segments: TracePoint[][];
+  masked: boolean;
+  fullyMasked: boolean;
+  error: TraceProjectionError;
+}
+
 /**
- * Projette des points porteurs de métadonnées (altitude, heure) sans jamais
- * rendre la trace brute en cas d'erreur. Sans masque, la trace est rendue
- * telle quelle : le propriétaire garde exactement ses coordonnées.
+ * Applique des masques à plusieurs morceaux en conservant leurs frontières.
+ *
+ * Les masques début/fin sont mesurés sur la trace entière, puis convertis en
+ * décalages locaux par morceau : le début du premier morceau et la fin du
+ * dernier sont coupés, jamais chaque morceau séparément. Les zones s'appliquent
+ * à tous les morceaux. Deux morceaux ne sont jamais fusionnés, même si leurs
+ * extrémités se touchent après quantification.
  */
-export function projectTraceSamples(
-  points: readonly TraceSample[],
+function projectSegmentsWithMasks(
+  segments: readonly TracePoint[][],
+  masks: readonly TraceMask[]
+): ProjectedSegments {
+  const masked = masks.length > 0;
+  const valid = segments.filter((segment) => segment.length >= 2);
+
+  if (masks.length === 0) {
+    if (valid.length === 0) {
+      return { segments: [], masked, fullyMasked: false, error: 'invalid_points' };
+    }
+    return {
+      segments: valid.map((segment) => segment.map((point) => ({ ...point }))),
+      masked,
+      fullyMasked: false,
+      error: null,
+    };
+  }
+
+  if (masks.some((mask) => mask.kind === 'all')) {
+    return { segments: [], masked, fullyMasked: true, error: null };
+  }
+
+  if (valid.length === 0) {
+    return { segments: [], masked, fullyMasked: false, error: 'invalid_points' };
+  }
+
+  const zoneMasks = masks.filter(
+    (mask): mask is Extract<TraceMask, { kind: 'zone' }> => mask.kind === 'zone'
+  );
+  const startMeters = Math.max(
+    0,
+    ...masks
+      .filter((mask): mask is Extract<TraceMask, { kind: 'start' }> => mask.kind === 'start')
+      .map((mask) => mask.meters)
+  );
+  const endMeters = Math.max(
+    0,
+    ...masks
+      .filter((mask): mask is Extract<TraceMask, { kind: 'end' }> => mask.kind === 'end')
+      .map((mask) => mask.meters)
+  );
+
+  const lengths = valid.map(segmentLengthM);
+  const total = lengths.reduce((sum, length) => sum + length, 0);
+  if (!Number.isFinite(total) || total <= 0) {
+    return { segments: [], masked, fullyMasked: false, error: 'unsafe_geometry' };
+  }
+
+  const visibleStart = Math.min(startMeters, total);
+  const visibleEnd = total - Math.min(endMeters, total);
+  const visible: TracePoint[][] = [];
+  let hasUnpublishable = false;
+  let cursor = 0;
+
+  for (let index = 0; index < valid.length; index += 1) {
+    const segment = valid[index];
+    const length = lengths[index];
+    const segmentStart = cursor;
+    const segmentEnd = cursor + length;
+    cursor = segmentEnd;
+
+    const localStart = Math.min(length, Math.max(0, visibleStart - segmentStart));
+    const localEnd = Math.min(length, Math.max(0, segmentEnd - visibleEnd));
+    if (localStart + localEnd >= length) continue;
+
+    const segmentMasks: TraceMask[] = [...zoneMasks];
+    if (localStart > 0) segmentMasks.push({ kind: 'start', meters: localStart });
+    if (localEnd > 0) segmentMasks.push({ kind: 'end', meters: localEnd });
+
+    const projection = projectShareableTrace(segment, segmentMasks);
+    if (projection.error) {
+      if (projection.error === 'unpublishable_geometry') {
+        hasUnpublishable = true;
+        continue;
+      }
+      return {
+        segments: [],
+        masked,
+        fullyMasked: false,
+        error: projection.error,
+      };
+    }
+    visible.push(...projection.segments);
+  }
+
+  if (visible.length > 0) {
+    return { segments: visible, masked, fullyMasked: false, error: null };
+  }
+  if (hasUnpublishable) {
+    return { segments: [], masked, fullyMasked: false, error: 'unpublishable_geometry' };
+  }
+  return { segments: [], masked, fullyMasked: true, error: null };
+}
+
+/**
+ * Projette des morceaux de points porteurs de métadonnées (altitude, heure)
+ * sans jamais recoller une frontière ni rendre la trace brute en cas d'erreur.
+ * Sans masque, le propriétaire garde exactement ses coordonnées.
+ */
+export function projectTraceSampleSegments(
+  segments: readonly (readonly TraceSample[])[],
   masks: readonly TraceMask[]
 ): ProjectedTraceSamples {
+  const inputPointCount = segments.reduce((sum, segment) => sum + segment.length, 0);
+  const geometrySegments = segments.map((segment) =>
+    segment.map((point) => ({ lng: point.lng, lat: point.lat }))
+  );
+  const projection = projectSegmentsWithMasks(geometrySegments, masks);
   const base = {
-    inputPointCount: points.length,
+    inputPointCount,
     visiblePointCount: 0,
     masked: masks.length > 0,
   };
 
-  if (masks.length === 0) {
-    if (points.length < 2) {
-      return {
-        ...base,
-        segments: [],
-        fullyMasked: false,
-        error: 'invalid_points',
-      };
-    }
-    return {
-      ...base,
-      segments: [points.map((point) => ({ ...point }))],
-      fullyMasked: false,
-      error: null,
-      visiblePointCount: points.length,
-    };
-  }
-
-  const projection = projectShareableTrace(points, masks);
   if (projection.error) {
     return {
       ...base,
@@ -158,23 +283,34 @@ export function projectTraceSamples(
       segments: [],
       fullyMasked: projection.fullyMasked,
       error: projection.error,
-      visiblePointCount: 0,
     };
   }
 
-  const metadata = buildMetadataIndex(points);
-  const segments = projection.segments.map((segment) =>
+  const metadata = buildMetadataIndex(segments.flat());
+  const projected = projection.segments.map((segment) =>
     segment.map((point) => attachMetadata(point, metadata))
   );
 
   return {
     ...base,
     masked: projection.masked,
-    segments,
+    segments: projected,
     fullyMasked: projection.fullyMasked,
     error: null,
-    visiblePointCount: projection.visiblePointCount,
+    visiblePointCount: projected.reduce((sum, segment) => sum + segment.length, 0),
   };
+}
+
+/**
+ * Projette des points porteurs de métadonnées en un seul morceau. Variante
+ * historique de `projectTraceSampleSegments`, conservée pour les appelants qui
+ * ne disposent que d'une polyligne.
+ */
+export function projectTraceSamples(
+  points: readonly TraceSample[],
+  masks: readonly TraceMask[]
+): ProjectedTraceSamples {
+  return projectTraceSampleSegments([points], masks);
 }
 
 export type TraceGeometry =
@@ -193,36 +329,27 @@ export interface ProjectedTraceGeometry {
 }
 
 /**
- * Projette une géométrie GeoJSON (LineString en pratique) pour une fiche
- * partagée. Sans masque, l'objet d'origine est rendu inchangé afin de ne pas
- * modifier le comportement du propriétaire. Avec masque, la sortie est une
- * LineString si un seul morceau subsiste, une MultiLineString sinon : deux
- * morceaux ne sont jamais recollés.
+ * Projette une géométrie GeoJSON (LineString ou MultiLineString) pour une
+ * fiche partagée. Sans masque, l'objet d'origine est rendu inchangé afin de ne
+ * pas modifier le comportement du propriétaire. Avec masque, les morceaux
+ * d'origine sont projetés séparément : la sortie est une LineString si un seul
+ * morceau subsiste, une MultiLineString sinon. Deux morceaux ne sont jamais
+ * recollés.
  */
 export function projectTraceGeometry(
   trace: unknown,
   masks: readonly TraceMask[]
 ): ProjectedTraceGeometry {
-  const points = parsePositions(trace);
+  const parsedSegments = parseTraceSegments(trace);
+  const inputPointCount = parsedSegments.reduce((sum, segment) => sum + segment.length, 0);
   const base = {
-    inputPointCount: points.length,
+    inputPointCount,
     visiblePointCount: 0,
     masked: masks.length > 0,
   };
 
-  if (masks.length === 0) {
-    return {
-      ...base,
-      geometry: points.length >= 2 ? trace : null,
-      segments: points.length >= 2 ? [points] : [],
-      fullyMasked: false,
-      error: points.length >= 2 ? null : 'invalid_points',
-      visiblePointCount: points.length >= 2 ? points.length : 0,
-    };
-  }
-
-  const projection = projectShareableTrace(points, masks);
-  if (projection.error || projection.segments.length === 0) {
+  const projection = projectSegmentsWithMasks(parsedSegments, masks);
+  if (projection.error) {
     return {
       ...base,
       masked: projection.masked,
@@ -230,6 +357,32 @@ export function projectTraceGeometry(
       segments: [],
       fullyMasked: projection.fullyMasked,
       error: projection.error,
+    };
+  }
+
+  if (masks.length === 0) {
+    const visiblePointCount = projection.segments.reduce(
+      (sum, segment) => sum + segment.length,
+      0
+    );
+    return {
+      ...base,
+      geometry: trace,
+      segments: projection.segments,
+      fullyMasked: false,
+      error: null,
+      visiblePointCount,
+    };
+  }
+
+  if (projection.segments.length === 0) {
+    return {
+      ...base,
+      masked: projection.masked,
+      geometry: null,
+      segments: [],
+      fullyMasked: projection.fullyMasked,
+      error: null,
       visiblePointCount: 0,
     };
   }
@@ -249,6 +402,9 @@ export function projectTraceGeometry(
     segments: projection.segments,
     fullyMasked: projection.fullyMasked,
     error: null,
-    visiblePointCount: projection.visiblePointCount,
+    visiblePointCount: projection.segments.reduce(
+      (sum, segment) => sum + segment.length,
+      0
+    ),
   };
 }

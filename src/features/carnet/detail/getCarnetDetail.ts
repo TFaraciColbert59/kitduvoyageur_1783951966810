@@ -2,7 +2,8 @@ import 'server-only';
 import { createClient } from '@/lib/supabase/server';
 import { buildCarnetDetail } from './buildCarnetDetail';
 import { enrichCarnetElevation } from './enrichElevation';
-import { pickCarnetTrace } from './trace';
+import { pickCarnetTraceSession } from './trace';
+import { mostRestrictiveTraceVisibility } from '@/features/compte/server/tracePrivacy';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import type {
   AuthorRow,
@@ -177,7 +178,7 @@ export async function getCarnetDetail(id: string) {
       supabase
         .from('hike_sessions')
         .select(
-          'id, carnet_id, distance_km, elevation_gain_m, duration_seconds, started_at, positions_geojson, positions_timed',
+          'id, carnet_id, visibility, distance_km, elevation_gain_m, duration_seconds, started_at, positions_geojson, positions_timed',
         )
         .eq('carnet_id', carnet.id)
         .order('started_at', { ascending: false })
@@ -514,6 +515,15 @@ export async function getCarnetDetail(id: string) {
       }
     : null;
 
+  /* La trace vient d'une sortie précise : sa visibilité forme, avec celle du
+     carnet, la politique effective. La plus restrictive gagne — une sortie
+     `private` dans un carnet public reste donc entièrement masquée. */
+  const traceSession = pickCarnetTraceSession(sessions);
+  const traceVisibility = mostRestrictiveTraceVisibility(
+    carnet.visibility,
+    traceSession?.visibility
+  );
+
   const detail = buildCarnetDetail({
     carnet,
     author: (authorResult.data as unknown as AuthorRow) ?? null,
@@ -521,7 +531,8 @@ export async function getCarnetDetail(id: string) {
     /* Toutes les sorties datent leurs propres points : c'est la matière de
        `buildDays` (un carnet de sept jours peut compter sept sorties). */
     sessions,
-    trace: pickCarnetTrace(sessions),
+    trace: traceSession?.positions_geojson ?? null,
+    traceVisibility,
     etapes: (etapesResult.data as unknown as EtapeRow[]) ?? [],
     hebergements: (hebergementsResult.data as unknown as HebergementRow[]) ?? [],
     moments: momentRows,

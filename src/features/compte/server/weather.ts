@@ -26,8 +26,10 @@ export interface OutingWeatherDay {
 export interface OutingWeather {
   source: 'open-meteo';
   fetchedAt: string;
-  latitude: number;
-  longitude: number;
+  /** `null` quand la météo est servie à un visiteur : aucune coordonnée exacte. */
+  latitude: number | null;
+  /** `null` quand la météo est servie à un visiteur : aucune coordonnée exacte. */
+  longitude: number | null;
   days: OutingWeatherDay[];
   alerts: string[];
 }
@@ -202,6 +204,15 @@ export async function loadOutingWeather(
     cache.set(key, { expires: Date.now() + 5 * 60 * 1000, value: null });
     return null;
   }
+}
+
+/**
+ * Météo affichable par un visiteur : les jours et alertes restent, les
+ * coordonnées exactes du point de départ disparaissent. Le cache interne garde
+ * la valeur complète ; seule la réponse sortante est expurgée.
+ */
+export function redactWeatherCoordinates(weather: OutingWeather): OutingWeather {
+  return { ...weather, latitude: null, longitude: null };
 }
 
 /** Réinitialise le cache (tests). */

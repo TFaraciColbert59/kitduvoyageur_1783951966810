@@ -1,3 +1,5 @@
+import type { TraceProjectionError } from '@/features/compte/domain/traceProjection';
+
 /** Contrat de la fiche carnet. Une valeur absente est `null`, jamais inventée. */
 
 export interface CarnetRow {
@@ -31,6 +33,8 @@ export interface CarnetRow {
 export interface HikeSessionRow {
   id: string;
   carnet_id: string | null;
+  /** `private` ou `collective_anonymized` (contrainte réelle de la table). */
+  visibility?: string | null;
   distance_km: number | string | null;
   elevation_gain_m: number | string | null;
   duration_seconds: number | null;
@@ -424,6 +428,12 @@ export interface CarnetDetail {
   summary: CarnetSummary;
   kit: CarnetKit;
   trace: unknown | null;
+  /** Vrai quand la trace affichée a subi un masque (visiteur). */
+  traceMasked?: boolean;
+  /** Vrai quand les masques ont retiré la totalité de la trace. */
+  traceFullyMasked?: boolean;
+  /** Erreur de projection ; `null` quand la trace est publiable. */
+  traceError?: TraceProjectionError;
   /**
    * Profil altimétrique réel (`positions_timed[].elevationM`), vide quand
    * aucune mesure d'altitude n'existe. Jamais interpolé, jamais simulé.
@@ -460,6 +470,11 @@ export interface BuildCarnetDetailInput {
    * (`pickCarnetTrace`). Absente, on retombe sur la trace de `hikeSession`.
    */
   trace?: unknown | null;
+  /**
+   * Visibilité effective de la trace : la plus restrictive du carnet et de la
+   * sortie qui porte le tracé. Absente, la visibilité du carnet s'applique.
+   */
+  traceVisibility?: string | null;
   etapes?: EtapeRow[];
   steps?: CarnetStepRow[];
   hebergements?: HebergementRow[];

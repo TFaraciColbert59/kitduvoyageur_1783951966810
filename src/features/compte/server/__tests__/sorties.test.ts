@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import {
   buildGpx,
   computeStatus,
+  loadOutingDetail,
   normalizeVisibility,
   outingTraceSegments,
+  parsePositionSegments,
   parsePositions,
   type OutingDetail,
 } from '../sorties';
@@ -119,5 +122,171 @@ describe('sorties — GPX', () => {
 
     expect(outingTraceSegments(detail)).toEqual([]);
     expect(buildGpx(detail)).not.toContain('<trkseg>');
+  });
+});
+
+
+const WEATHER = {
+  source: 'open-meteo' as const,
+  fetchedAt: '2026-11-01T10:00:00.000Z',
+  latitude: 45.8,
+  longitude: 6.8,
+  days: [
+    {
+      date: '2026-11-01',
+      code: 0,
+      label: 'Ciel dégagé',
+      icon: 'sun' as const,
+      tMax: 12,
+      tMin: 4,
+      precipMm: 0,
+      windKmh: 5,
+    },
+  ],
+  alerts: [],
+};
+
+function fakeSupabase(session: Record<string, unknown>) {
+  const builder = (result: { data: unknown; error: null }) => {
+    const query = {
+      select: () => query,
+      eq: () => query,
+      order: () => query,
+      in: () => query,
+      maybeSingle: async () => result,
+      then: (resolve: (value: unknown) => unknown, reject?: (reason: unknown) => unknown) =>
+        Promise.resolve(result).then(resolve, reject),
+    };
+    return query;
+  };
+  return {
+    from: (table: string) =>
+      builder(
+        table === 'hike_sessions'
+          ? { data: session, error: null }
+          : { data: [], error: null },
+      ),
+    storage: {
+      from: () => ({
+        createSignedUrl: async () => ({ data: { signedUrl: null }, error: null }),
+      }),
+    },
+  } as unknown as SupabaseClient;
+}
+
+function outing(overrides: Record<string, unknown> = {}) {
+  return {
+    id: 's1',
+    user_id: 'owner-1',
+    route_id: null,
+    title: 'Crêtes',
+    started_at: '2026-11-01T08:00:00Z',
+    ended_at: '2026-11-01T12:00:00Z',
+    distance_km: 5,
+    duration_seconds: 14400,
+    elevation_gain_m: 600,
+    max_altitude_m: 1800,
+    positions_timed: [
+      { lat: 45.8, lng: 6.8, elevationM: 1000, timestamp: '2026-11-01T08:00:00Z' },
+      { lat: 45.81, lng: 6.8, elevationM: 1100, timestamp: '2026-11-01T08:10:00Z' },
+      { lat: 45.82, lng: 6.8, elevationM: 1200, timestamp: '2026-11-01T08:20:00Z' },
+      { lat: 45.83, lng: 6.8, elevationM: 1300, timestamp: '2026-11-01T08:30:00Z' },
+      { lat: 45.84, lng: 6.8, elevationM: 1400, timestamp: '2026-11-01T08:40:00Z' },
+    ],
+    positions_geojson: null,
+    visibility: 'private',
+    kit_id: null,
+    weather: WEATHER,
+    notes: 'note privée',
+    ...overrides,
+  };
+}
+
+describe('loadOutingDetail — métadonnées servies', () => {
+  it('ne sert ni météo ni notes privées à un visiteur d’une sortie privée', async () => {
+    const detail = await loadOutingDetail(fakeSupabase(outing()), 'viewer-1', 's1');
+
+    expect(detail).not.toBeNull();
+    expect(detail?.traceFullyMasked).toBe(true);
+    expect(detail?.traceSegments).toEqual([]);
+    expect(detail?.points).toEqual([]);
+    expect(detail?.weather).toBeNull();
+    expect(detail?.notes).toBe('');
+  });
+
+  it('expurge les coordonnées météo d’une sortie partageable', async () => {
+    const detail = await loadOutingDetail(
+      fakeSupabase(outing({ visibility: 'collective_anonymized' })),
+      'viewer-1',
+      's1',
+    );
+
+    expect(detail?.traceFullyMasked).toBe(false);
+    expect(detail?.traceMasked).toBe(true);
+    expect(detail?.traceSegments).toHaveLength(1);
+    expect(detail?.weather?.latitude).toBeNull();
+    expect(detail?.weather?.longitude).toBeNull();
+    expect(detail?.weather?.days).toHaveLength(1);
+    expect(detail?.notes).toBe('note privée');
+  });
+
+  it('préserve la trace, la météo et les notes du propriétaire', async () => {
+    const detail = await loadOutingDetail(fakeSupabase(outing()), 'owner-1', 's1');
+
+    expect(detail?.canEdit).toBe(true);
+    expect(detail?.traceMasked).toBe(false);
+    expect(detail?.traceSegments).toHaveLength(1);
+    expect(detail?.points).toHaveLength(5);
+    expect(detail?.weather?.latitude).toBe(45.8);
+    expect(detail?.weather?.longitude).toBe(6.8);
+    expect(detail?.notes).toBe('note privée');
+  });
+
+  it('conserve les frontières d’un MultiLineString pour le propriétaire', async () => {
+    const detail = await loadOutingDetail(
+      fakeSupabase(
+        outing({
+          positions_timed: null,
+          positions_geojson: {
+            type: 'MultiLineString',
+            coordinates: [
+              [
+                [6.8, 45.8],
+                [6.81, 45.81],
+              ],
+              [
+                [6.9, 45.9],
+                [6.91, 45.91],
+              ],
+            ],
+          },
+        }),
+      ),
+      'owner-1',
+      's1',
+    );
+
+    expect(detail?.traceSegments).toHaveLength(2);
+    expect(detail?.points).toHaveLength(4);
+    expect(detail?.traceSegments[0].at(-1)).not.toEqual(detail?.traceSegments[1][0]);
+  });
+});
+
+describe('parsePositionSegments', () => {
+  it('garde deux morceaux distincts plutôt que de les recoller', () => {
+    const segments = parsePositionSegments(null, {
+      type: 'MultiLineString',
+      coordinates: [
+        [
+          [6.8, 45.8],
+          [6.81, 45.81],
+        ],
+        [
+          [6.9, 45.9],
+          [6.91, 45.91],
+        ],
+      ],
+    });
+    expect(segments).toHaveLength(2);
   });
 });

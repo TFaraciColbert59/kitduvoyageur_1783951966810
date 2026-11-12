@@ -38,6 +38,42 @@ export function hasVisibleTrace(
   return visibleTraceSegments(detail).length > 0;
 }
 
+/**
+ * Libellé honnête quand aucune trace n'est dessinable. Une trace totalement
+ * masquée ou refusée n'est pas « absente » : le message ne doit pas affirmer
+ * que la sortie n'en a jamais eu.
+ */
+export function traceUnavailableState(
+  detail: Pick<OutingDetail, 'traceMasked' | 'traceFullyMasked' | 'traceError'>
+): { title: string; body: string } {
+  if (detail.traceFullyMasked) {
+    return {
+      title: 'Trace non partageable',
+      body:
+        'Cette sortie est privée : sa trace reste réservée à son propriétaire. Le résumé et le matériel restent consultables.',
+    };
+  }
+  if (detail.traceError === 'unpublishable_geometry') {
+    return {
+      title: 'Trace trop courte pour être partagée',
+      body:
+        'Les extrémités masquées ne laissent pas assez de trace publiable. Aucune portion n’est inventée pour compenser.',
+    };
+  }
+  if (detail.traceError) {
+    return {
+      title: 'Trace non disponible',
+      body:
+        'La géométrie enregistrée n’a pas pu être publiée en sécurité. Aucune donnée brute n’est affichée à la place.',
+    };
+  }
+  return {
+    title: 'Aucune trace GPS rattachée',
+    body:
+      'Cette sortie a bien été enregistrée, mais aucune trace n’est disponible. Tu peux toujours consulter le résumé et le matériel.',
+  };
+}
+
 export function formatDate(value: string | null): string {
   if (!value) return 'Date non renseignée';
   const date = new Date(value);

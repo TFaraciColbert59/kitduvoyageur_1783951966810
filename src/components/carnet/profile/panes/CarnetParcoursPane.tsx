@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import Icon from '@/components/ui/Icon';
 import { formatElevation, formatKm } from '@/features/carnet/detail/format';
 import type { CarnetDetail } from '@/features/carnet/detail/types';
+import { extractTraceSegments } from '../traceGeometry';
 
 const CarnetTraceMap = dynamic(
   () => import('../CarnetTraceMap').then((mod) => mod.CarnetTraceMap),
@@ -17,11 +18,31 @@ export interface CarnetParcoursPaneProps {
 }
 
 export function CarnetParcoursPane({ detail, onDownloadGpx }: CarnetParcoursPaneProps) {
-  const hasTrace =
-    Array.isArray((detail.trace as any)?.coordinates) ||
-    Array.isArray((detail.trace as any)?.geometry?.coordinates);
+  const hasTrace = extractTraceSegments(detail.trace).some(
+    (segment) => segment.length >= 2
+  );
   const km = formatKm(detail.distanceKm);
   const elevation = formatElevation(detail.elevationM);
+
+  /* Un état vide ne doit jamais affirmer « aucune trace » quand la trace
+     existe mais a été masquée, jugée trop courte ou refusée par le projecteur. */
+  const emptyState = detail.traceFullyMasked
+    ? {
+        title: 'Trace non partageable.',
+        body: 'Cette sortie est privée : sa trace n’est pas exposée aux visiteurs.',
+      }
+    : detail.traceError
+      ? {
+          title: 'Trace non disponible.',
+          body:
+            detail.traceError === 'unpublishable_geometry'
+              ? 'La trace est trop courte ou trop proche des extrémités masquées pour être publiée.'
+              : 'La géométrie enregistrée n’a pas pu être publiée en sécurité.',
+        }
+      : {
+          title: 'Aucune trace GPS.',
+          body: 'Ce carnet n’a pas de trace enregistrée.',
+        };
 
   return (
     <div className="ckp-pane">
@@ -31,8 +52,8 @@ export function CarnetParcoursPane({ detail, onDownloadGpx }: CarnetParcoursPane
         ) : (
           <div className="ckp-empty" style={{ height: '100%', borderRadius: 18 }}>
             <Icon name="route" size={24} aria-hidden="true" />
-            <b>Aucune trace GPS.</b>
-            <p>Ce carnet n’a pas de trace enregistrée.</p>
+            <b>{emptyState.title}</b>
+            <p>{emptyState.body}</p>
           </div>
         )}
       </div>

@@ -362,6 +362,80 @@ describe('buildCarnetDetail — lieu réel', () => {
     expect(detail.place.lng).not.toBeCloseTo(6.86, 6);
   });
 
+  it('applique la visibilité la plus restrictive : sortie privée dans carnet public', () => {
+    const trace = {
+      type: 'LineString',
+      coordinates: [
+        [6.86, 45.83],
+        [6.87, 45.84],
+      ],
+    };
+    const detail = buildCarnetDetail(
+      input({
+        viewerId: null,
+        trace,
+        traceVisibility: 'private',
+      }),
+    );
+
+    expect(detail.trace).toBeNull();
+    expect(detail.traceMasked).toBe(true);
+    expect(detail.traceFullyMasked).toBe(true);
+    expect(detail.traceError).toBeNull();
+  });
+
+  it('conserve les frontières d’un MultiLineString pour un visiteur', () => {
+    const trace = {
+      type: 'MultiLineString',
+      coordinates: [
+        [
+          [6.86, 45.83],
+          [6.87, 45.83],
+          [6.88, 45.83],
+        ],
+        [
+          [6.96, 45.93],
+          [6.97, 45.93],
+          [6.98, 45.93],
+        ],
+      ],
+    };
+    const detail = buildCarnetDetail(
+      input({ viewerId: null, trace, traceVisibility: 'public' }),
+    );
+    const geometry = detail.trace as { type: string; coordinates: number[][][] };
+
+    expect(geometry.type).toBe('MultiLineString');
+    expect(geometry.coordinates).toHaveLength(2);
+    expect(detail.traceMasked).toBe(true);
+    expect(detail.traceFullyMasked).toBe(false);
+    expect(detail.traceError).toBeNull();
+  });
+
+  it('préserve la trace brute et les drapeaux neutres pour le propriétaire', () => {
+    const trace = {
+      type: 'MultiLineString',
+      coordinates: [
+        [
+          [6.86, 45.83],
+          [6.87, 45.84],
+        ],
+        [
+          [6.96, 45.93],
+          [6.97, 45.94],
+        ],
+      ],
+    };
+    const detail = buildCarnetDetail(
+      input({ viewerId: 'u1', trace, traceVisibility: 'private' }),
+    );
+
+    expect(detail.trace).toBe(trace);
+    expect(detail.traceMasked).toBe(false);
+    expect(detail.traceFullyMasked).toBe(false);
+    expect(detail.traceError).toBeNull();
+  });
+
   it('ne devine rien quand les colonnes sont vides et qu’il n’y a pas de trace', () => {
     const detail = buildCarnetDetail(
       input({

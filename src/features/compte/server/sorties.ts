@@ -1,7 +1,11 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { TraceProjectionError } from '../domain/traceProjection';
-import { projectTraceSamples, resolveTraceMasks } from './tracePrivacy';
-import { loadOutingWeather, type OutingWeather } from './weather';
+import { projectTraceSampleSegments, resolveTraceMasks } from './tracePrivacy';
+import {
+  loadOutingWeather,
+  redactWeatherCoordinates,
+  type OutingWeather,
+} from './weather';
 
 /**
  * Drawer Sortie — lecture et écriture des données réelles.
@@ -170,12 +174,58 @@ export function computeStatus(row: Pick<SessionRow, 'started_at' | 'ended_at'>, 
   return 'done';
 }
 
+function pointFromCoordinate(coordinate: unknown): OutingPoint | null {
+  if (!Array.isArray(coordinate) || coordinate.length < 2) return null;
+  const lng = numericOrNull(coordinate[0]);
+  const lat = numericOrNull(coordinate[1]);
+  if (lat === null || lng === null) return null;
+  if (Math.abs(lat) > 90 || Math.abs(lng) > 180) return null;
+  return {
+    lat,
+    lng,
+    elevationM: coordinate.length > 2 ? numericOrNull(coordinate[2]) : null,
+    timestamp: null,
+  };
+}
+
+function geojsonSegments(value: unknown): OutingPoint[][] {
+  if (!value || typeof value !== 'object') return [];
+  const geometry = value as {
+    type?: unknown;
+    coordinates?: unknown;
+    geometry?: unknown;
+  };
+  if (geometry.type === 'Feature') return geojsonSegments(geometry.geometry);
+
+  if (geometry.type === 'LineString' && Array.isArray(geometry.coordinates)) {
+    const points = geometry.coordinates
+      .map(pointFromCoordinate)
+      .filter((point): point is OutingPoint => point !== null);
+    return points.length > 0 ? [points] : [];
+  }
+
+  if (geometry.type === 'MultiLineString' && Array.isArray(geometry.coordinates)) {
+    return geometry.coordinates
+      .map((line) => {
+        if (!Array.isArray(line)) return [];
+        return line
+          .map(pointFromCoordinate)
+          .filter((point): point is OutingPoint => point !== null);
+      })
+      .filter((segment) => segment.length > 0);
+  }
+
+  return [];
+}
+
 /**
  * Deux formats coexistent en base : `positions_timed` (échantillons horodatés
- * `{lat,lng,timestamp,elevationM}`) et `positions_geojson` (LineString).
+ * `{lat,lng,timestamp,elevationM}`) et `positions_geojson` (LineString ou
+ * MultiLineString). Les morceaux d'un MultiLineString restent séparés : une
+ * frontière n'est jamais recollée.
  */
-export function parsePositions(timed: unknown, geojson: unknown): OutingPoint[] {
-  const points: OutingPoint[] = [];
+export function parsePositionSegments(timed: unknown, geojson: unknown): OutingPoint[][] {
+  const timedPoints: OutingPoint[] = [];
 
   if (Array.isArray(timed)) {
     for (const sample of timed) {
@@ -185,7 +235,7 @@ export function parsePositions(timed: unknown, geojson: unknown): OutingPoint[] 
       const lng = numericOrNull(row.lng ?? row.lon ?? row.longitude);
       if (lat === null || lng === null) continue;
       if (Math.abs(lat) > 90 || Math.abs(lng) > 180) continue;
-      points.push({
+      timedPoints.push({
         lat,
         lng,
         elevationM: numericOrNull(row.elevationM ?? row.altitude ?? row.ele),
@@ -194,25 +244,13 @@ export function parsePositions(timed: unknown, geojson: unknown): OutingPoint[] 
     }
   }
 
-  if (points.length === 0 && geojson && typeof geojson === 'object') {
-    const geometry = geojson as { type?: unknown; coordinates?: unknown };
-    if (geometry.type === 'LineString' && Array.isArray(geometry.coordinates)) {
-      for (const coordinate of geometry.coordinates) {
-        if (!Array.isArray(coordinate) || coordinate.length < 2) continue;
-        const lng = numericOrNull(coordinate[0]);
-        const lat = numericOrNull(coordinate[1]);
-        if (lat === null || lng === null) continue;
-        points.push({
-          lat,
-          lng,
-          elevationM: coordinate.length > 2 ? numericOrNull(coordinate[2]) : null,
-          timestamp: null,
-        });
-      }
-    }
-  }
+  if (timedPoints.length > 0) return [timedPoints];
+  return geojsonSegments(geojson);
+}
 
-  return points;
+/** Points aplatis, pour les consommateurs qui ne dessinent pas de morceaux. */
+export function parsePositions(timed: unknown, geojson: unknown): OutingPoint[] {
+  return parsePositionSegments(timed, geojson).flat();
 }
 
 function displayName(profile: ProfileRow | undefined, fallbackId: string) {
@@ -492,12 +530,15 @@ export async function loadOutingDetail(
     };
   });
 
-  const rawPoints = parsePositions(session.positions_timed, session.positions_geojson);
+  const rawSegments = parsePositionSegments(session.positions_timed, session.positions_geojson);
+  const rawPoints = rawSegments.flat();
+  const visibility = normalizeVisibility(session.visibility);
   const viewer =
     canEdit || participantRows.some((row) => row.user_id === userId) ? 'participant' : 'visitor';
-  const projection = projectTraceSamples(
-    rawPoints,
-    resolveTraceMasks({ viewer, visibility: normalizeVisibility(session.visibility) })
+  const isVisitor = viewer === 'visitor';
+  const projection = projectTraceSampleSegments(
+    rawSegments,
+    resolveTraceMasks({ viewer, visibility })
   );
   const traceSegments: OutingPoint[][] = projection.segments.map((segment) =>
     segment.map((point) => ({
@@ -514,11 +555,26 @@ export async function loadOutingDetail(
    * Le propriétaire et les participants gardent leurs points d'origine.
    */
   const points = projection.masked ? [] : rawPoints;
+
+  /*
+   * Météo : le propriétaire garde les coordonnées exactes. Un visiteur ne les
+   * reçoit jamais, même quand la météo vient du cache stocké — et ne reçoit
+   * aucune météo quand la trace est totalement masquée ou ne laisse aucun
+   * point visible. Aucun appel tiers n'est fait pour un visiteur.
+   */
   const coordinate = firstCoordinate(visiblePoints);
   let weather = storedWeather(session.weather);
-  if (!weather && coordinate) {
+  if (isVisitor) {
+    weather =
+      projection.fullyMasked || visiblePoints.length === 0 || !weather
+        ? null
+        : redactWeatherCoordinates(weather);
+  } else if (!weather && coordinate) {
     weather = await loadOutingWeather(coordinate.lat, coordinate.lon, session.started_at);
   }
+
+  const notes =
+    isVisitor && visibility === 'private' ? '' : text(session.notes);
 
   const maxAlt =
     session.max_altitude_m ??
@@ -546,10 +602,10 @@ export async function loadOutingDetail(
     maxAlt,
     durationS: session.duration_seconds,
     status: computeStatus(session),
-    visibility: normalizeVisibility(session.visibility),
+    visibility,
     verified: traceSegments.some((segment) => segment.length >= 2),
     coverUrl: photos[0]?.url ?? null,
-    notes: text(session.notes),
+    notes,
     weather,
     photos,
     participants,

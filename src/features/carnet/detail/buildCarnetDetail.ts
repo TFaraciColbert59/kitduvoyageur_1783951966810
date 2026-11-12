@@ -193,15 +193,24 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
 
   /* La trace affichée est celle de la sortie la plus récente qui en porte une
      (`pickCarnetTrace`), pas forcément celle qui donne les statistiques. Pour
-     un visiteur, elle passe par la politique unique de partage : début et fin
-     masqués, ou trace nulle si la projection échoue. */
+     un visiteur, elle passe par la politique unique de partage : la visibilité
+     effective est la plus restrictive du carnet et de la sortie, puis début et
+     fin sont masqués — ou toute la trace si elle n'est pas explicitement
+     partageable. La projection est calculée une seule fois pour exposer aussi
+     son état (masquée, totalement masquée, erreur). */
   const rawTrace = input.trace ?? hikeSession?.positions_geojson ?? null;
-  const trace = isVisitor
-    ? projectTraceGeometry(
-        rawTrace,
-        resolveTraceMasks({ viewer: 'visitor', visibility: carnet.visibility })
-      ).geometry
-    : rawTrace;
+  const traceVisibility = input.traceVisibility ?? carnet.visibility;
+  const projectedTrace =
+    isVisitor && rawTrace !== null && rawTrace !== undefined
+      ? projectTraceGeometry(
+          rawTrace,
+          resolveTraceMasks({ viewer: 'visitor', visibility: traceVisibility })
+        )
+      : null;
+  const trace = isVisitor ? (projectedTrace?.geometry ?? null) : rawTrace;
+  const traceMasked = projectedTrace?.masked ?? false;
+  const traceFullyMasked = projectedTrace?.fullyMasked ?? false;
+  const traceError = projectedTrace?.error ?? null;
   /*
    * Les points de jour servent au cadrage de la carte quand un jour est actif.
    * Un visiteur ne les reçoit pas : ils contiennent les coordonnées brutes.
@@ -293,6 +302,9 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
       })),
     },
     trace,
+    traceMasked,
+    traceFullyMasked,
+    traceError,
     elevationProfile,
     place: buildCarnetPlace(carnet, trace),
     distanceKm,

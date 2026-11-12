@@ -75,6 +75,35 @@ describe('enrichCarnetElevation', () => {
     expect(profile[2]).toMatchObject({ lat: 45.9372, lng: 6.8971 });
   });
 
+  it('ne compte pas le saut entre deux morceaux dans la distance du profil', async () => {
+    answerWith([1000, 1100, 1200, 1300]);
+    const detail = await enrichCarnetElevation(
+      detailWith({
+        trace: {
+          type: 'MultiLineString',
+          coordinates: [
+            [
+              [6.8, 45.8],
+              [6.81, 45.8],
+            ],
+            [
+              [6.9, 45.9],
+              [6.91, 45.9],
+            ],
+          ],
+        },
+      }),
+    );
+    const profile = detail.elevationProfile ?? [];
+
+    expect(profile).toHaveLength(4);
+    expect(profile[0].distanceKm).toBe(0);
+    /* ~0,78 km par morceau : le saut de ~13 km ne doit pas apparaître. */
+    expect(profile[1].distanceKm).toBeLessThan(1);
+    expect(profile[2].distanceKm).toBeLessThan(1);
+    expect(profile[3].distanceKm).toBeLessThan(2);
+  });
+
   it('demande les coordonnées de la trace au MNT, dans l’ordre', async () => {
     answerWith([1200, 1300, 1250]);
 

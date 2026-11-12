@@ -11,6 +11,7 @@ import {
   formatDuration,
   formatNumber,
   hasVisibleTrace,
+  traceUnavailableState,
   visibleTracePoints,
   visibleTraceSegments,
   weatherIcon,
@@ -107,17 +108,15 @@ export function OutingTrace({ detail, onExport }: OutingTraceProps) {
     detail.durationS && detail.km > 0 ? detail.durationS / 60 / detail.km : null;
 
   if (!hasVisibleTrace(detail)) {
+    const state = traceUnavailableState(detail);
     return (
       <div className="lkdv-sortie-pane">
         <div className="lkdv-sortie-state">
           <span aria-hidden="true">
             <MapPin size={22} />
           </span>
-          <b>Aucune trace GPS rattachée</b>
-          <p>
-            Cette sortie a bien été enregistrée, mais aucune trace n’est disponible. Tu peux
-            toujours consulter le résumé et le matériel.
-          </p>
+          <b>{state.title}</b>
+          <p>{state.body}</p>
         </div>
         <WeatherBlock weather={detail.weather} />
       </div>

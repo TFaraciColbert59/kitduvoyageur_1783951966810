@@ -32,6 +32,19 @@ export function CarnetMapCard({ detail, focus = null }: CarnetMapCardProps) {
      retard sur la session). */
   const authState = detail.isOwner ? 'owner' : 'guest';
 
+  const emptyTitle = detail.traceFullyMasked
+    ? 'Trace non partageable pour les visiteurs.'
+    : detail.traceError
+      ? 'Trace non disponible.'
+      : 'Aucun tracé enregistré pour ce carnet.';
+  const emptyHint = detail.traceFullyMasked
+    ? 'Cette sortie est privée : sa trace reste réservée à son propriétaire.'
+    : detail.traceError
+      ? detail.traceError === 'unpublishable_geometry'
+        ? 'La trace est trop courte ou trop proche des extrémités masquées pour être publiée.'
+        : 'La géométrie enregistrée n’a pas pu être publiée en sécurité.'
+      : 'L’auteur n’a pas joint de trace GPS : rien n’est dessiné plutôt qu’inventé.';
+
   return (
     <section className="ckp-mapzone" aria-label={`Carte du monde — ${detail.title}`}>
       <div className="ckp-mapzone-canvas">
@@ -41,8 +54,8 @@ export function CarnetMapCard({ detail, focus = null }: CarnetMapCardProps) {
           focus={focus}
           variant="carnet"
           trace={detail.trace}
-          emptyTitle="Aucun tracé enregistré pour ce carnet."
-          emptyHint="L’auteur n’a pas joint de trace GPS : rien n’est dessiné plutôt qu’inventé."
+          emptyTitle={emptyTitle}
+          emptyHint={emptyHint}
         />
       </div>
       <span className="ckp-mapzone-badge">GLOBE 3D</span>

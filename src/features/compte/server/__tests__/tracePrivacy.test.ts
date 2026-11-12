@@ -3,6 +3,7 @@ import type { PrivacyZone } from '../../domain/traceProjection';
 import {
   DEFAULT_SHARE_END_MASK_M,
   DEFAULT_SHARE_START_MASK_M,
+  mostRestrictiveTraceVisibility,
   projectTraceGeometry,
   projectTraceSamples,
   resolveTraceMasks,
@@ -44,6 +45,26 @@ describe('resolveTraceMasks — politique unique', () => {
     expect(resolveTraceMasks({ viewer: 'visitor', visibility: 'private' })).toEqual([
       { kind: 'all' },
     ]);
+  });
+
+  it('masque tout pour une visibilité absente, amie ou inconnue', () => {
+    for (const visibility of [null, undefined, '', 'friends', 'followers', 'collective']) {
+      expect(resolveTraceMasks({ viewer: 'visitor', visibility })).toEqual([
+        { kind: 'all' },
+      ]);
+    }
+  });
+
+  it('combine carnet et sortie avec la valeur la plus restrictive', () => {
+    expect(mostRestrictiveTraceVisibility('public', 'collective_anonymized')).toBe(
+      'public'
+    );
+    expect(mostRestrictiveTraceVisibility('public', 'private')).toBe('private');
+    expect(mostRestrictiveTraceVisibility('private', 'collective_anonymized')).toBe(
+      'private'
+    );
+    expect(mostRestrictiveTraceVisibility('public', null)).toBe('private');
+    expect(mostRestrictiveTraceVisibility('public', 'friends')).toBe('private');
   });
 });
 
@@ -167,6 +188,44 @@ describe('projectTraceGeometry — fiche partagée', () => {
     expect(projected.geometry).toBeNull();
     expect(projected.masked).toBe(true);
     expect(projected.fullyMasked).toBe(true);
+  });
+
+  it('conserve les frontières d’un MultiLineString sans recoller le vide', () => {
+    const trace = {
+      type: 'MultiLineString',
+      coordinates: [
+        [
+          [0, 0],
+          [0.005, 0],
+          [0.01, 0],
+          [0.015, 0],
+        ],
+        [
+          [0.03, 0.02],
+          [0.035, 0.02],
+          [0.04, 0.02],
+          [0.045, 0.02],
+        ],
+      ],
+    };
+    const projected = projectTraceGeometry(
+      trace,
+      resolveTraceMasks({ viewer: 'visitor', visibility: 'public' })
+    );
+
+    expect(projected.error).toBeNull();
+    expect(projected.masked).toBe(true);
+    const geometry = projected.geometry as {
+      type: string;
+      coordinates: number[][][];
+    };
+    expect(geometry.type).toBe('MultiLineString');
+    expect(geometry.coordinates).toHaveLength(2);
+    /* Aucun point interpolé ne relie la fin du premier morceau au début du
+       second : leurs coordonnées restent dans leur propre voisinage. */
+    expect(geometry.coordinates[0].at(-1)?.[0]).toBeLessThan(0.02);
+    expect(geometry.coordinates[1][0][0]).toBeGreaterThan(0.02);
+    expect(geometry.coordinates[0].at(-1)).not.toEqual(geometry.coordinates[1][0]);
   });
 
   it('rend null sur une géométrie refusée', () => {

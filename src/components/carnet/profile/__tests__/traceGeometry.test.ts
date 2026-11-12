@@ -5,6 +5,7 @@ import {
   extractTraceSegments,
   haversineKm,
   projectToViewBox,
+  projectTraceSegmentsToViewBox,
   traceCenter,
   traceLengthKm,
 } from '../traceGeometry';
@@ -84,6 +85,35 @@ describe('traceGeometry — mini tracé et recentrage', () => {
     expect(projectToViewBox([[45.9, 6.9]], 66, 9)).toBe('33.00,33.00');
   });
 
+  it('rend un tracé distinct par morceau, sans relier les frontières', () => {
+    const paths = projectTraceSegmentsToViewBox(
+      [
+        [
+          [45.83, 6.86],
+          [45.84, 6.87],
+        ],
+        [
+          [45.93, 6.96],
+          [45.94, 6.97],
+        ],
+      ],
+      66,
+      9
+    );
+    expect(paths).toHaveLength(2);
+    const first = paths[0].split(' ').map((pair) => pair.split(',').map(Number));
+    const second = paths[1].split(' ').map((pair) => pair.split(',').map(Number));
+    expect(first).toHaveLength(2);
+    expect(second).toHaveLength(2);
+    expect(first[1]).not.toEqual(second[0]);
+    for (const [x, y] of [...first, ...second]) {
+      expect(x).toBeGreaterThanOrEqual(0);
+      expect(x).toBeLessThanOrEqual(66);
+      expect(y).toBeGreaterThanOrEqual(0);
+      expect(y).toBeLessThanOrEqual(66);
+    }
+  });
+
   it('donne le centre réel du parcours', () => {
     const center = traceCenter(extractCoords(LINE));
     expect(center?.lat).toBeCloseTo(45.835, 6);
@@ -95,6 +125,26 @@ describe('traceGeometry — longueur réelle de la trace', () => {
   it('mesure la distance entre deux points réels', () => {
     /* 0,01° de latitude ≈ 1,11 km. */
     expect(haversineKm([45.83, 6.86], [45.84, 6.86])).toBeCloseTo(1.112, 2);
+  });
+
+  it('ignore le saut entre deux morceaux d’un MultiLineString', () => {
+    const multi = {
+      type: 'MultiLineString',
+      coordinates: [
+        [
+          [6.86, 45.83],
+          [6.87, 45.83],
+        ],
+        [
+          [6.96, 45.93],
+          [6.97, 45.93],
+        ],
+      ],
+    };
+    const length = traceLengthKm(multi) as number;
+    /* Chaque morceau vaut ~0,78 km ; le saut de ~13 km ne compte pas. */
+    expect(length).toBeGreaterThan(1.4);
+    expect(length).toBeLessThan(1.8);
   });
 
   it('cumule les segments de la trace, jamais une valeur inventée', () => {
