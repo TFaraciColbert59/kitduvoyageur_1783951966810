@@ -23,7 +23,7 @@ import { endLiveActivity, startLiveActivity, updateLiveActivity } from './native
 import { performSosCall, planSosCall, sosSimulated } from './activity/sosCall';
 import { enqueue, flushQueue, listQueue } from './offline/queue';
 import { registerOfflineWorker } from './offline/zone';
-import { bearingLabel, offRouteLabel } from './activity/offRoute';
+import { bearingLabel, offRouteLabel, screenBearingDeg } from './activity/offRoute';
 import { nearestPointOnRouteM, routeLines } from './geo/track';
 import { fetchRouteGeometry } from './data/routeGeometry';
 import { XpIcon } from './ui/XpIcon';
@@ -62,7 +62,7 @@ import {
   type RegionGroup,
   type SheetContext,
 } from './sheet/context';
-import type { PoiKind, TrailRouteSnapshot } from './state/types';
+import type { PoiKind, Sport, SportSelection, TrailRouteSnapshot } from './state/types';
 import '@/styles/explorer-v2.css';
 
 const MapStage = dynamic(() => import('./map/MapStage'), {
@@ -362,8 +362,76 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
   const trailRouteStatus = state.trailRoute?.status;
   const activityRouteId = activityRoute?.id;
   const activityRouteStatus = activityRoute?.status;
+  const activityRouteIsDemo = activityRoute
+    ? routes.some(
+        (route) => String(route.id) === activityRoute.id && route.unavailable === true,
+      )
+    : false;
   const routesRef = React.useRef(routes);
   routesRef.current = routes;
+
+  /**
+   * Une route de démonstration n'a aucun tracé réel : démarrer une séance avec
+   * elle afficherait un hors-trace impossible et un parcours inventé. On la
+   * retire au départ et on bascule en suivi libre, en le disant. Les routes
+   * réelles dont la géométrie manque (404, réseau) gardent leur snapshot et
+   * leur bandeau « indisponible ».
+   */
+  const requestStartSafe = useCallback(
+    (sport: Sport, selection?: SportSelection) => {
+      const current = useExplorerStore.getState();
+      const route = current.trailRoute;
+      if (route && current.selection?.kind === 'trail') {
+        const display = routesRef.current.find(
+          (candidate) => String(candidate.id) === route.id,
+        );
+        if (display?.unavailable) {
+          useExplorerStore.setState({ selection: undefined, trailRoute: undefined });
+          current.showToast({
+            title: 'Suivi libre',
+            sub: 'Trace de démonstration ignorée',
+            tone: 'neutral',
+          });
+        }
+      }
+      requestStart(sport, selection);
+    },
+    [requestStart],
+  );
+
+  /**
+   * Une géométrie qui devient indisponible en cours de séance ne doit jamais
+   * laisser une alerte, une distance ou un cap calculés sur l'ancienne trace.
+   * Sans cette remise à zéro, une route de démonstration signalée après le
+   * chargement pourrait afficher « hors itinéraire » avec une flèche figée
+   * alors que plus aucune mesure n'est possible.
+   */
+  React.useEffect(() => {
+    if (activityRouteStatus !== 'unavailable') return;
+    useExplorerStore.setState((store) => {
+      const current = store.activity;
+      if (!current) return {};
+      const hadAlert =
+        current.offRoute ||
+        current.offRouteM !== undefined ||
+        (current.offRouteBearing !== undefined && current.offRouteBearing !== null);
+      if (!hadAlert && store.toast?.title !== 'Hors itinéraire') return {};
+      return {
+        ...(hadAlert
+          ? {
+              activity: {
+                ...current,
+                offRoute: false,
+                offRouteM: undefined,
+                offRouteBearing: undefined,
+              },
+            }
+          : {}),
+        // Le toast d'alerte ne doit pas survivre à la perte de la géométrie.
+        ...(store.toast?.title === 'Hors itinéraire' ? { toast: undefined } : {}),
+      };
+    });
+  }, [activityRouteStatus]);
   // Signature stable de la liste d'affichage : elle ne change que si un
   // identifiant, un nom ou le drapeau « démonstration » change. Cela évite de
   // relancer une requête quand le tableau est recréé à l'identique.
@@ -668,12 +736,13 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
       trips: (tripsData ?? []) as TripItem[],
       selectedPoi,
       me,
-      // Brouillon local : aucune couche ne peut perdre la variante.
-      onStartSport: requestStart,
+      // Brouillon local : aucune couche ne peut perdre la variante. Une trace
+      // de démonstration est retirée ici avant d'armer le compte à rebours.
+      onStartSport: requestStartSafe,
       onConfirmReport,
       locale: 'fr-FR',
     }),
-    [state, countries, country, regionsGeo, regionGroups, place, pois, routes, weather, unitsForCountry, reportsData, carnetsData, tripsData, selectedPoi, me, requestStart, onConfirmReport],
+    [state, countries, country, regionsGeo, regionGroups, place, pois, routes, weather, unitsForCountry, reportsData, carnetsData, tripsData, selectedPoi, me, requestStartSafe, onConfirmReport],
   );
 
   const model = useMemo(() => buildSheetModel(ctx), [ctx]);
@@ -838,6 +907,49 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
   const activity = state.activity;
   const offRouteDirection = bearingLabel(activity?.offRouteBearing);
 
+  // Cap réel de la carte, tenu dans une référence et non dans le store : une
+  // rotation MapLibre émet un événement par image, et un rendu complet de
+  // l'Explorer à chaque image serait inutile. Seule la transformation CSS de
+  // la flèche est réécrite pendant le geste.
+  const mapBearingRef = React.useRef(0);
+  const offRouteBearingRef = React.useRef<number | null>(null);
+  const offRouteArrowRef = React.useRef<HTMLSpanElement | null>(null);
+  offRouteBearingRef.current =
+    typeof activity?.offRouteBearing === 'number' &&
+    Number.isFinite(activity.offRouteBearing)
+      ? activity.offRouteBearing
+      : null;
+
+  const applyArrowRotation = React.useCallback(() => {
+    const arrow = offRouteArrowRef.current;
+    const screenBearing = screenBearingDeg(
+      offRouteBearingRef.current,
+      mapBearingRef.current,
+    );
+    if (!arrow || screenBearing === null) return;
+    arrow.style.transform = `rotate(${screenBearing}deg)`;
+    arrow.dataset.screenBearing = String(Math.round(screenBearing));
+  }, []);
+
+  React.useEffect(() => {
+    if (!activity?.offRoute) return;
+    applyArrowRotation();
+  }, [activity?.offRoute, activity?.offRouteBearing, applyArrowRotation]);
+
+  const onMapBearingChange = React.useCallback(
+    (bearingDeg: number) => {
+      if (!Number.isFinite(bearingDeg)) return;
+      mapBearingRef.current = ((bearingDeg % 360) + 360) % 360;
+      applyArrowRotation();
+    },
+    [applyArrowRotation],
+  );
+
+  const offRouteScreenBearing = screenBearingDeg(
+    activity?.offRouteBearing,
+    mapBearingRef.current,
+  );
+
   // Suivi : à chaque nouvelle position pendant l'activité, la caméra recadre
   // (04_CARTE §3, P2-11). Le geste utilisateur interrompt le suivi (MapLibre).
   useEffect(() => {
@@ -912,6 +1024,7 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
         onRegionClick={onRegionClick}
         onPinClick={onPinClick}
         onMoveEnd={(center, zoom) => state.setCenter(center, zoom)}
+        onBearingChange={onMapBearingChange}
         sheetHeightPx={sheetHeight}
         cameraIntent={state.camera}
         longPressHandlers={longPress}
@@ -1018,7 +1131,7 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
         />
       ) : null}
 
-      {activity?.offRoute ? (
+      {activity?.offRoute && activityRouteStatus !== 'unavailable' ? (
         <button
           type="button"
           className="xp-offroute"
@@ -1032,17 +1145,36 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
           <XpIcon name="alert" size={15} />
           <span>{offRouteLabel(activity.offRouteM)}</span>
           {typeof activity.offRouteBearing === 'number' &&
-          Number.isFinite(activity.offRouteBearing) ? (
+          Number.isFinite(activity.offRouteBearing) &&
+          offRouteScreenBearing !== null ? (
             <span
+              ref={offRouteArrowRef}
               className="xp-offroute__arrow"
-              style={{ transform: `rotate(${activity.offRouteBearing}deg)` }}
+              style={{ transform: `rotate(${offRouteScreenBearing}deg)` }}
               aria-hidden="true"
               data-bearing={Math.round(activity.offRouteBearing)}
+              data-screen-bearing={Math.round(offRouteScreenBearing)}
             >
               <XpIcon name="nav" size={15} />
             </span>
           ) : null}
         </button>
+      ) : null}
+
+      {/* Trace demandée mais encore en cours de chargement : l'utilisateur
+          doit savoir que le hors-trace n'est pas encore armé, sans confondre
+          cette attente avec une alerte ou une panne définitive. */}
+      {activityRoute?.status === 'loading' &&
+      !activityRouteIsDemo &&
+      !activity?.offRoute ? (
+        <div
+          className="xp-offroute xp-offroute--pending"
+          role="status"
+          aria-label="Hors-trace en préparation"
+        >
+          <XpIcon name="alert" size={15} />
+          <span>Hors-trace en préparation</span>
+        </div>
       ) : null}
 
       {/* Une trace demandée mais inexploitable ne doit jamais laisser croire
@@ -1053,13 +1185,19 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
         <div
           className="xp-offroute xp-offroute--unavailable"
           role="status"
-          aria-label="Hors-trace indisponible : trace non chargée"
+          aria-label={
+            activityRouteIsDemo
+              ? 'Hors-trace indisponible : itinéraire de démonstration'
+              : 'Hors-trace indisponible : trace non chargée'
+          }
         >
           <XpIcon name="alert" size={15} />
-          <span>Hors-trace indisponible</span>
-          {routes.some(
-            (route) => String(route.id) === activityRoute.id && route.unavailable,
-          ) ? null : (
+          <span>
+            {activityRouteIsDemo
+              ? 'Trace de démonstration · hors-trace indisponible'
+              : 'Hors-trace indisponible'}
+          </span>
+          {activityRouteIsDemo ? null : (
             <button
               type="button"
               className="xp-offroute__retry"

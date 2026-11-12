@@ -60,6 +60,7 @@ function monotonicNow(): number {
 
 export function useGpsTracker({ distanceToRouteM, onFix }: TrackerOptions = {}) {
   const activity = useExplorerStore((state) => state.activity);
+  const routeStatus = useExplorerStore((state) => state.activity?.route?.status);
   const autoPauseEnabled = useExplorerStore((state) => state.autoPauseEnabled) ?? false;
   const permission = useExplorerStore((state) => state.locationPermission);
   const scene = useExplorerStore((state) => state.scene);
@@ -334,4 +335,15 @@ export function useGpsTracker({ distanceToRouteM, onFix }: TrackerOptions = {}) 
       offRouteRef.current = { offRoute: false, distanceM: 0, outSinceS: 0 };
     }
   }, [activity]);
+
+  // Aucune mesure fiable sans géométrie exploitable. On vide le buffer interne
+  // dès que la trace est en chargement ou indisponible : un « Réessayer »
+  // réussi ne doit pas réutiliser des points d'une autre époque ni réarmer une
+  // alerte sur une distance qui n'a plus été mesurée. L'écran remet aussi
+  // l'état visible à zéro quand la séance passe en `unavailable`.
+  useEffect(() => {
+    if (routeStatus === 'ready') return;
+    samplesRef.current = [];
+    offRouteRef.current = { offRoute: false, distanceM: 0, outSinceS: 0 };
+  }, [routeStatus]);
 }

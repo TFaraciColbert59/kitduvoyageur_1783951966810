@@ -55,6 +55,7 @@ vi.mock('@/features/explorer-v2/offline/zone', () => ({
 vi.mock('@/features/explorer-v2/activity/offRoute', () => ({
   bearingLabel: () => null,
   offRouteLabel: () => '',
+  screenBearingDeg: () => null,
 }));
 vi.mock('@/features/explorer-v2/ui/XpIcon', () => ({ XpIcon: () => null }));
 vi.mock('@/features/explorer-v2/state/haptics', () => ({

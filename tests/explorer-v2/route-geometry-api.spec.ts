@@ -39,8 +39,13 @@ describe('API géométrie réelle · /api/explorer/v2/routes/[id]/geometry', () 
     expect(rpcMock).toHaveBeenCalledWith(
       'get_route_geojson',
       { p_route_id: 42 },
-      86_400,
+      3_600,
     );
+    // Une trace corrigée ne doit pas rester servie huit jours : le hors-trace
+    // alerte à 40 m, une géométrie périmée peut dépasser ce seuil.
+    expect(response.headers.get('cache-control')).toContain('s-maxage=3600');
+    expect(response.headers.get('cache-control')).toContain('max-age=0');
+    expect(response.headers.get('cache-control')).not.toContain('604800');
   });
 
   it('décode une géométrie renvoyée en chaîne JSON', async () => {

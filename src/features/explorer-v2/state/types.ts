@@ -151,8 +151,10 @@ export interface ActivityState {
    */
   offRouteM?: number;
   /**
-   * Cap de retour vers la trace, en degrés (0 = nord, 90 = est). Il oriente
-   * la flèche du bandeau hors-trace ; absent tant qu'aucune mesure n'existe.
+   * Cap **monde** de retour vers la trace, en degrés (0 = nord, 90 = est).
+   * Il oriente la flèche du bandeau hors-trace après soustraction de la
+   * rotation réelle de la carte (`screenBearingDeg`) ; absent tant qu'aucune
+   * mesure n'existe.
    */
   offRouteBearing?: number | null;
   distanceM: number;

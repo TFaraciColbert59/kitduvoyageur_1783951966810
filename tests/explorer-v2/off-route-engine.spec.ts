@@ -4,6 +4,7 @@ import {
   OFF_ROUTE_WINDOW_MS,
   evaluateOffRoute,
   pruneOffRouteSamples,
+  screenBearingDeg,
 } from '@/features/explorer-v2/activity/offRoute';
 
 /**
@@ -117,5 +118,40 @@ describe('offRoute · incertitude GPS et bornes', () => {
 
     const justUnder = evaluateOffRoute([{ t: 22_000, distanceM: 24.999 }], armed);
     expect(justUnder.offRoute).toBe(false);
+  });
+});
+
+describe('offRoute · flèche écran et rotation de la carte', () => {
+  it('garde le cap monde quand la carte est orientée au nord', () => {
+    expect(screenBearingDeg(180, 0)).toBe(180);
+    expect(screenBearingDeg(180)).toBe(180);
+  });
+
+  it('soustrait la rotation réelle de la carte', () => {
+    // Carte orientée à 90° (est en haut) : un retour vers le sud apparaît à
+    // 90° sur l'écran (vers la droite).
+    expect(screenBearingDeg(180, 90)).toBe(90);
+    // Carte orientée à 350° : le retour vers le nord-est (10°) apparaît à 20°.
+    expect(screenBearingDeg(10, 350)).toBe(20);
+    // Et l'inverse.
+    expect(screenBearingDeg(350, 10)).toBe(340);
+  });
+
+  it('ramène toujours l’angle écran dans [0, 360)', () => {
+    expect(screenBearingDeg(0, 90)).toBe(270);
+    expect(screenBearingDeg(720, -90)).toBe(90);
+    expect(screenBearingDeg(-10, 0)).toBe(350);
+  });
+
+  it('ignore une rotation de carte absente ou invalide', () => {
+    expect(screenBearingDeg(180, Number.NaN)).toBe(180);
+    expect(screenBearingDeg(180, null)).toBe(180);
+  });
+
+  it('ne dessine aucune flèche sans cap de retour exploitable', () => {
+    expect(screenBearingDeg(null, 90)).toBeNull();
+    expect(screenBearingDeg(undefined)).toBeNull();
+    expect(screenBearingDeg(Number.NaN, 0)).toBeNull();
+    expect(screenBearingDeg(Number.POSITIVE_INFINITY, 0)).toBeNull();
   });
 });

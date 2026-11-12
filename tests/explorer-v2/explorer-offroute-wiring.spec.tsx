@@ -321,6 +321,78 @@ describe('explorer-v2 · hors-trace branché sur le composant', () => {
     expect(arrow?.style.transform).toContain('rotate(180');
   });
 
+  it('tourne la flèche selon la rotation réelle de la carte', async () => {
+    await mount();
+
+    const north = (t: number): GpsFix => ({
+      ...onRoute(t),
+      lat: 45.9219,
+    });
+    push(north(0));
+    push(north(5_000));
+    push(north(20_000));
+
+    const banner = screen.getByRole('button', { name: /Hors itinéraire/ });
+    const arrow = banner.querySelector('.xp-offroute__arrow') as HTMLElement | null;
+    const onBearingChange = mapProbe.props?.onBearingChange as
+      | ((bearing: number) => void)
+      | undefined;
+    expect(typeof onBearingChange).toBe('function');
+    expect(arrow?.getAttribute('data-screen-bearing')).toBe('180');
+
+    // La carte tourne de 90° : le retour vers le sud doit être dessiné à 90°
+    // à l'écran, et non rester au cap monde de 180°.
+    act(() => onBearingChange?.(90));
+    expect(arrow?.style.transform).toContain('rotate(90');
+    expect(arrow?.getAttribute('data-screen-bearing')).toBe('90');
+    // Le libellé accessible reste géographique, indépendant de la rotation.
+    expect(banner.getAttribute('aria-label')).toContain('sud');
+
+    // Carte à 180° : le sud est en haut de l'écran.
+    act(() => onBearingChange?.(180));
+    expect(arrow?.style.transform).toContain('rotate(0');
+    expect(arrow?.getAttribute('data-screen-bearing')).toBe('0');
+
+    // Carte à 270° : le sud apparaît à 270°.
+    act(() => onBearingChange?.(270));
+    expect(arrow?.style.transform).toContain('rotate(270');
+    expect(arrow?.getAttribute('data-screen-bearing')).toBe('270');
+  });
+
+  it('coupe l’alerte quand la géométrie devient indisponible', async () => {
+    await mount();
+
+    const north = (t: number): GpsFix => ({
+      ...onRoute(t),
+      lat: 45.9219,
+    });
+    push(north(0));
+    push(north(5_000));
+    push(north(20_000));
+    expect(useExplorerStore.getState().activity?.offRoute).toBe(true);
+
+    act(() => {
+      useExplorerStore.getState().setRouteGeometry(
+        { id: '1', name: 'Trace de test', geojson: null, status: 'unavailable' },
+        { force: true },
+      );
+    });
+
+    await waitFor(() => {
+      const current = useExplorerStore.getState().activity;
+      expect(current?.offRoute).toBe(false);
+      expect(current?.offRouteM).toBeUndefined();
+      expect(current?.offRouteBearing).toBeUndefined();
+    });
+    expect(useExplorerStore.getState().toast).toBeUndefined();
+    expect(screen.queryByRole('button', { name: /Hors itinéraire/ })).toBeNull();
+    await waitFor(() =>
+      expect(
+        screen.getByRole('status', { name: /Hors-trace indisponible/ }),
+      ).toBeTruthy(),
+    );
+  });
+
   it('termine le chargement de la séance même après clearSelection', async () => {
     let resolveRequest: (response: Response) => void = () => undefined;
     const pending = new Promise<Response>((resolve) => {
@@ -351,6 +423,9 @@ describe('explorer-v2 · hors-trace branché sur le composant', () => {
     await waitFor(() =>
       expect(useExplorerStore.getState().activity?.route?.status).toBe('loading'),
     );
+    expect(
+      screen.getByRole('status', { name: 'Hors-trace en préparation' }),
+    ).toBeTruthy();
 
     // La sélection d'écran disparaît pendant la requête. La copie figée de la
     // séance doit continuer son chargement, sinon elle reste `loading` à vie.
@@ -406,6 +481,26 @@ describe('explorer-v2 · hors-trace branché sur le composant', () => {
     ).toBeTruthy();
   });
 
+  it('garde la trace d’affichage quand la géométrie réelle manque', async () => {
+    // La mesure hors-trace est coupée (pas de géométrie réelle), mais le
+    // parcours reste lisible sur la carte : l'utilisateur ne perd pas son
+    // itinéraire, il perd seulement l'alerte automatique.
+    routeProbe.geometryStatus = 404;
+    await mount('unavailable');
+
+    await waitFor(() => {
+      const drawn = (
+        mapProbe.props?.routes as
+          | Array<{ id: number; geojson: unknown }>
+          | undefined
+      )?.find((route) => route.id === 1);
+      expect(drawn?.geojson).toEqual(ROUTE.geojson);
+    });
+    expect(
+      screen.getByRole('status', { name: /Hors-trace indisponible/ }),
+    ).toBeTruthy();
+  });
+
   it('ne confond pas une route de démonstration avec un identifiant homonyme', async () => {
     // Même si la base possède un tracé d'id 1, la route affichée est une route
     // de secours sans géométrie : on ne doit pas lui substituer ce tracé.
@@ -419,8 +514,8 @@ describe('explorer-v2 · hors-trace branché sur le composant', () => {
     expect(
       fetchMock.mock.calls.some(([input]) => String(input).includes('/geometry')),
     ).toBe(false);
-    expect(
-      screen.getByRole('status', { name: /Hors-trace indisponible/ }),
-    ).toBeTruthy();
+    const state = screen.getByRole('status', { name: /Hors-trace indisponible/ });
+    expect(state.textContent).toContain('démonstration');
+    expect(screen.queryByRole('button', { name: 'Réessayer' })).toBeNull();
   });
 });

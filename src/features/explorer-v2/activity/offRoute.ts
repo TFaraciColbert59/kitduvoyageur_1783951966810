@@ -145,3 +145,29 @@ export function bearingLabel(bearingDeg?: number | null): string | null {
   const normalized = ((bearingDeg % 360) + 360) % 360;
   return CARDINALS[Math.round(normalized / 45) % 8];
 }
+
+/**
+ * Angle **écran** de la flèche de retour.
+ *
+ * `returnBearingDeg` est un cap monde (0 = nord géographique). MapLibre expose
+ * le cap réel de la carte (`map.getBearing()`) : direction monde affichée en
+ * haut. Quand l'utilisateur tourne la carte, une flèche dessinée avec le seul
+ * cap monde désignerait la mauvaise direction à l'écran. On soustrait donc le
+ * cap réel de la carte, et non le seul réglage « nord en haut ».
+ *
+ * Une rotation absente ou invalide vaut 0 (carte supposée au nord) ; un cap de
+ * retour absent renvoie `null`, pour que l'appelant n'affiche aucune flèche.
+ */
+export function screenBearingDeg(
+  returnBearingDeg?: number | null,
+  mapBearingDeg?: number | null,
+): number | null {
+  if (typeof returnBearingDeg !== 'number' || !Number.isFinite(returnBearingDeg)) {
+    return null;
+  }
+  const mapBearing =
+    typeof mapBearingDeg === 'number' && Number.isFinite(mapBearingDeg)
+      ? mapBearingDeg
+      : 0;
+  return ((returnBearingDeg - mapBearing) % 360 + 360) % 360;
+}
