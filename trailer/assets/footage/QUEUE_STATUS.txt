@@ -1,0 +1,7 @@
+File des plans au sol LKDV — mis à jour 2026-11-12 16:04:40 UTC
+PID lanceur : 1510
+Plan en cours : 02_iceland_route1_lupines  ·  étape : gen
+Faits : 0 / 28
+Temps restant estimé : 9.9 h  ·  fin estimée : 2026-11-13 02:00 UTC
+Moyennes mesurées : génération 21.7 min par image 1024x576, agrandissement 40 s, profondeur 15 s
+Démarré : 2026-11-12 16:04

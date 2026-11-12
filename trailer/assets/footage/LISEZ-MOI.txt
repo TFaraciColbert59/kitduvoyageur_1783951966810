@@ -1,11 +1,19 @@
-Dépose ici les 21 images générées avec ChatGPT (version 3 du prompt), avec exactement ces noms :
+Plans au sol du trailer LKDV : GÉNÉRÉS LOCALEMENT PAR IA (FLUX.1 schnell, Apache-2.0), sans banque d'images.
+Personnes fictives. Outillage, commandes et reprise : tools/gen/README.md. Droits : assets/CREDITS.md, section « Plans au sol générés ».
 
-01_cloud_sea_balloons.png      02_iceland_route1_lupines.png   03_van_door_friends.png
-04_harbour_handover.png        05_landmannalaugar_colors.png   06_hot_river_steam.png
-07_beach_campfire_midnight.png 08_k2_concordia_solo.png        09_lyon_dawn_runner.png
-10_burgundy_autumn_peloton.png 11_sahara_dune_ridge.png        12_amazon_river_dawn.png
-13_uyuni_mirror_jump.png       14_baikal_ice_turquoise.png     15_raja_ampat_lagoon.png
-16_antelope_canyon_beam.png    17_nepal_prayer_flags.png       18_atacama_bivouac_milkyway.png
-19_night_train_alps.png        20_accessible_trail_autumn.png  21_norway_aurora_final.png
+Contenu :
+  <nom>.png          plan final agrandi, 3072 x 1728 (pages 08b : 1536 x 1024)
+  raw/<nom>.png      sortie brute du générateur, 1024 x 576 (pages 08b : 768 x 512) ; raw/old/ = versions remplacées
+  depth/<nom>.png    carte de profondeur, PNG 16 bits gris, BLANC = PRÈS, même taille que le plan final
+  plates.json        manifeste : graine, prompt, dimensions, emploi dans le film, point focal « focus » [x, y] en fractions
+  plates.log         journal de la file (une ligne JSON par étape, avec la durée)
+  QUEUE_STATUS.txt   état de la file en cours (plan, faits / total, fin estimée)
 
-Le prompt est dans assets/PROMPT_CHATGPT_IMAGES.txt.
+Noms (ordre de la file) :
+02_iceland_route1_lupines  03_van_door_friends  08_k2_concordia_solo  21_norway_aurora_final  04_harbour_handover
+07_beach_campfire_midnight  22_ocean_dusk  09_lyon_dawn_runner  23_rhone_aerial_dawn  10_burgundy_autumn_peloton
+01_cloud_sea_balloons  05_landmannalaugar_colors  06_hot_river_steam  19_night_train_alps  20_accessible_trail_autumn
+11_sahara_dune_ridge  12_amazon_river_dawn  13_uyuni_mirror_jump  14_baikal_ice_turquoise  15_raja_ampat_lagoon
+16_antelope_canyon_beam  17_nepal_prayer_flags  18_atacama_bivouac_milkyway  08b_page_1 … 08b_page_5
+
+Plans 11 à 18 : sujet tenu dans une bande verticale centrale (mosaïque de 8 bandes à 0:41).

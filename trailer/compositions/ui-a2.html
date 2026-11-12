@@ -11,15 +11,25 @@
     #root { position: absolute; inset: 0; }
     .ui-a2-at { position: absolute; }
     .ui-a2-fill { position: absolute; inset: 0; transform-origin: 50% 50%; }
-    /* réticule (lk-reticle) : coins 1 px blanc 60 %, liseré d'encre pour rester lisible sur les nuages */
+    /* réticule (lk-reticle) : coins fins (1,5 unité = 2,3 px réels), blanc 80 % + liseré d'encre (écart à la bible : 1 px blanc 60 % ne se lisait pas sur la Terre) */
     #ui-a2-ret { left: 0; top: 0; --lk-ret-w: 100%; --lk-ret-h: 100%; --lk-ret-arm: 30px; width: 100%; height: 100%;
-      filter: drop-shadow(0 0 1.5px rgb(var(--lk-ink-rgb) / 0.55)); }
+      filter: drop-shadow(0 0 1px rgb(var(--lk-ink-rgb) / 0.7)) drop-shadow(0 0 3px rgb(var(--lk-ink-rgb) / 0.35)); }
+    /* coins, bande et règle partagent une couleur (currentColor) : blanc sur la Terre, encre sur le voile blanc (10,75 → 11,0) */
+    #ui-a2-ret, #ui-a2-tape-w, #ui-a2-head-w { color: rgb(var(--lk-white-rgb) / 0.8); }
+    #ui-a2-ret .lk-reticle__c--tl { border-left-width: 1.5px; border-top-width: 1.5px; } #ui-a2-ret .lk-reticle__c--tr { border-right-width: 1.5px; border-top-width: 1.5px; }
+    #ui-a2-ret .lk-reticle__c--bl { border-left-width: 1.5px; border-bottom-width: 1.5px; } #ui-a2-ret .lk-reticle__c--br { border-right-width: 1.5px; border-bottom-width: 1.5px; }
     /* bande graduée de l'altimètre (défile selon le log de l'altitude) */
     #ui-a2-tape-c { overflow: hidden; -webkit-mask: linear-gradient(transparent, black 22%, black 78%, transparent); mask: linear-gradient(transparent, black 22%, black 78%, transparent); }
     #ui-a2-tape { position: absolute; left: 0; top: 0; width: 100%; height: 420px;
       background:
-        repeating-linear-gradient(180deg, rgb(var(--lk-white-rgb) / 0.7) 0 1px, transparent 1px 40px) 0 0 / 16px 100% no-repeat,
-        repeating-linear-gradient(180deg, rgb(var(--lk-white-rgb) / 0.5) 0 1px, transparent 1px 10px) 0 0 / 8px 100% no-repeat; }
+        repeating-linear-gradient(180deg, currentColor 0 1px, transparent 1px 40px) 0 0 / 16px 100% no-repeat,
+        repeating-linear-gradient(180deg, color-mix(in srgb, currentColor 65%, transparent) 0 1px, transparent 1px 10px) 0 0 / 8px 100% no-repeat; }
+    /* règle de cap sous le réticule (défile lentement : la caméra dérive) */
+    #ui-a2-head-c { overflow: hidden; -webkit-mask: linear-gradient(90deg, transparent, black 25%, black 75%, transparent); mask: linear-gradient(90deg, transparent, black 25%, black 75%, transparent); }
+    #ui-a2-head { position: absolute; left: 0; top: 0; width: 300px; height: 100%;
+      background:
+        repeating-linear-gradient(90deg, currentColor 0 1px, transparent 1px 40px) 0 0 / 100% 10px no-repeat,
+        repeating-linear-gradient(90deg, color-mix(in srgb, currentColor 65%, transparent) 0 1px, transparent 1px 10px) 0 0 / 100% 5px no-repeat; }
     #ui-a2-tape-idx { position: absolute; left: -2px; top: 50%; width: 22px; height: 2px; margin-top: -1px; border-radius: 1px; background: var(--lkv-sage-500);
       box-shadow: 0 0 6px rgb(var(--lk-sage-rgb) / 0.9); }
     /* altimètre : chiffres seuls, Plex Mono tabulaires, sur verre */
@@ -52,7 +62,7 @@
     .ui-a2-dust { position: absolute; left: 0; top: 0; border-radius: var(--lk-r-full); background: var(--lkv-sage-500); box-shadow: 0 0 5px rgb(var(--lk-sage-rgb) / 0.95); }
   </style>
   <div id="root" data-composition-id="ui-a2" data-width="1920" data-height="1080">
-    <div class="lk-col" id="ui-a2-col"><div class="lk-phone" id="ui-a2-phone">
+    <div class="lk-col lk-outdoor" id="ui-a2-col"><div class="lk-phone" id="ui-a2-phone">
 
       <!-- réticule orbital (6,00 → 11,56) -->
       <div class="ui-a2-at clip" id="ui-a2-ret-c" data-start="0" data-duration="5.5625" data-track-index="2">
@@ -63,6 +73,10 @@
       <!-- bande graduée (6,00 → 11,56) -->
       <div class="ui-a2-at clip" id="ui-a2-tape-c" data-start="0" data-duration="5.5625" data-track-index="3">
         <div class="ui-a2-fill" id="ui-a2-tape-w"><i id="ui-a2-tape"></i><i id="ui-a2-tape-idx"></i></div>
+      </div>
+      <!-- règle de cap (6,00 → 11,56) -->
+      <div class="ui-a2-at clip" id="ui-a2-head-c" data-start="0" data-duration="5.5625" data-track-index="13">
+        <div class="ui-a2-fill" id="ui-a2-head-w"><i id="ui-a2-head"></i></div>
       </div>
       <!-- altimètre (6,125 → 11,56) -->
       <div class="ui-a2-at clip" id="ui-a2-alt-c" data-start="0" data-duration="5.5625" data-track-index="4">
@@ -119,10 +133,11 @@
       const RS = 200, RET_L = CX - RS / 2, RET_T = CY - RS / 2;
       place("ui-a2-ret-c", RET_L, RET_T, RS, RS);
       place("ui-a2-tape-c", RET_L - 34, RET_T, 18, RS);
+      place("ui-a2-head-c", CX - 70, RET_T + RS + 8, 140, 10);
       const ALT_W = 92, ALT_H = 40, ALT_T = RET_T - 12 - ALT_H;
       place("ui-a2-alt-c", CX - ALT_W / 2, ALT_T, ALT_W, ALT_H);
       /* détails : sous le réticule en 16:9 ; au-dessus de l'altimètre en 9:16 (bande utile 61–480) */
-      const DET_H = 52, DET_T = f.vertical ? ALT_T - 12 - DET_H : RET_T + RS + 24;
+      const DET_H = 52, DET_T = f.vertical ? ALT_T - 12 - DET_H : RET_T + RS + 32;
       [["d1", 196], ["d2", 272], ["d3", 262], ["d4", 262]].forEach(function (d) { place("ui-a2-" + d[0] + "-c", CX - d[1] / 2, DET_T, d[1], DET_H); });
       /* pile : capsule de 4 cases (52 + 6) à droite de la colonne, centrée sur le centre du cadre */
       const PILE_W = 64, PILE_H = 12 + 4 * 52 + 3 * 6, PILE_L = 390 - 8 - PILE_W, PILE_T = CY - PILE_H / 2;
@@ -149,6 +164,11 @@
         tl.fromTo("#ui-a2-ret-pulse", { scale: 1.07 }, { scale: 1, duration: 0.25, ease: U.springEase(0.7, 0.25), immediateRender: i === 0 ? false : false }, T(b));
       });
 
+      /* ---- 10,75 → 11,0 : sous le voile de nuages blanc, l'instrument passe du blanc à l'encre (jeton --lkv-ink-700, lu à la construction) ---- */
+      const inkCol = getComputedStyle(root).getPropertyValue("--lkv-ink-700").trim();
+      const whiteCol = "rgba(" + getComputedStyle(root).getPropertyValue("--lk-white-rgb").trim().split(/\s+/).join(",") + ",0.8)";
+      tl.fromTo(["#ui-a2-ret", "#ui-a2-tape-w", "#ui-a2-head-w"], { color: whiteCol }, { color: inkCol, duration: 0.25, ease: "power1.inOut", immediateRender: false }, T(10.75));
+
       /* ---- altimètre : valeur = LKDV.altitude(temps du film) ; bande graduée = log de l'altitude (vitesse constante) ---- */
       const altEl = document.getElementById("ui-a2-alt-n");
       function fmtAlt(v) { return v >= 9.95 ? String(Math.round(v)) : (Math.round(v * 10) / 10).toFixed(1).replace(".", ","); }
@@ -160,6 +180,8 @@
       const travel = DECADE * Math.log10(408 / 1.5);
       tl.fromTo("#ui-a2-tape", { y: -10 }, { y: -10 - travel, duration: 5.5, ease: "none", immediateRender: true }, T(6.0));
       U.springIn(tl, "#ui-a2-tape-w", T(6.0), { dur: 0.25, from: 0.7, origin: "50% 50%" });
+      tl.fromTo("#ui-a2-head", { x: -20 }, { x: -20 - 110, duration: 5.5, ease: "none", immediateRender: true }, T(6.0));
+      U.springIn(tl, "#ui-a2-head-w", T(6.0), { dur: 0.25, from: 0.7, origin: "50% 50%" });
       U.springIn(tl, "#ui-a2-alt", T(6.125), { dur: 0.25, from: 0.8, y: 8 });
 
       /* ---- une brique par seconde : détail (entrée ressort, lu en < 0,4 s, sortie à +0,75) + picto coché dans la pile ---- */
@@ -199,7 +221,7 @@
       tl.fromTo("#ui-a2-ret-pulse", { scale: 1 }, { scale: 0.62, duration: 0.25, ease: U.springEase(0.8, 0.25), immediateRender: false }, T(11.0));
 
       /* ---- 11,50 : réticule, chiffres et coche se dissolvent en particules (0,25 s) ---- */
-      tl.fromTo(["#ui-a2-ret-zoom", "#ui-a2-tape-w"], { opacity: 1 }, { opacity: 0, duration: 0.05, ease: "none", immediateRender: false }, T(11.5));
+      tl.fromTo(["#ui-a2-ret-zoom", "#ui-a2-tape-w", "#ui-a2-head-w"], { opacity: 1 }, { opacity: 0, duration: 0.05, ease: "none", immediateRender: false }, T(11.5));
       tl.fromTo("#ui-a2-alt", { opacity: 1, scale: 1 }, { opacity: 0, scale: 1.08, duration: 0.05, ease: "none", immediateRender: false }, T(11.5));
       tl.fromTo("#ui-a2-check", { opacity: 1, scale: 1 }, { opacity: 0, scale: 1.1, duration: 0.05, ease: "none", immediateRender: false }, T(11.5));
       /* sources : 16 sur les coins (réticule à 0,9 × 0,62), 8 sur l'altimètre, 16 sur la coche */
@@ -215,9 +237,10 @@
         const d = 4 + h3 * 5; /* diamètre 4–9 unités (6–14 px réels en 16:9) */
         el.style.width = d + "px"; el.style.height = d + "px"; el.style.left = (x0 - d / 2) + "px"; el.style.top = (y0 - d / 2) + "px";
         const ang = Math.atan2(y0 - CY, x0 - CX) + (h4 - 0.5) * 1.4, dist = 30 + h2 * 70;
-        const delay = h4 * 0.04;
-        tl.fromTo(el, { x: 0, y: 0, scale: 1, opacity: 1 },
-          { x: Math.cos(ang) * dist, y: Math.sin(ang) * dist - 8, scale: 0.25, opacity: 0, duration: 0.2, ease: "power2.out", immediateRender: true }, T(11.5) + delay);
+        const delay = h4 * 0.02;
+        tl.fromTo(el, { x: 0, y: 0, scale: 1 },
+          { x: Math.cos(ang) * dist, y: Math.sin(ang) * dist - 8, scale: 0.35, duration: 0.22, ease: "power2.out", immediateRender: true }, T(11.5) + delay);
+        tl.fromTo(el, { opacity: 1 }, { opacity: 0, duration: 0.22, ease: "power1.in", immediateRender: true }, T(11.5) + delay);
       });
 
       /* durée de l'hôte (6 s) : de 11,75 à 12,0 plus rien */

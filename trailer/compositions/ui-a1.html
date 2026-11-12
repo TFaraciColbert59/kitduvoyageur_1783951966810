@@ -1,7 +1,7 @@
 <template>
   <!-- UI-A1 · hôte 3,5 → 6,25 s (temps local = temps du film − 3,5 ; écrit T(film) dans le script).
        4,00 barre de saisie IA (ressort 250 ms) · 4,25–4,95 frappe à 40 car./s · 5,000/5,125/5,250/5,375 chaque mot devient un picto de verre
-       · 5,50 envoi (bouton enfoncé, Spinner 5,5–6,0) · 5,75–6,00 la barre tombe hors du cadre, les 4 pictos convergent
+       · 5,4375–5,50 la pilule se resserre sur le bouton d'envoi · 5,50 envoi (bouton enfoncé, Spinner 5,5–6,0) · 5,75–6,00 la barre tombe hors du cadre, les 4 pictos convergent
        · 6,00 UN point sage (rayon 7 px réels) au centre exact du cadre · 6,125 il disparaît (le calque WebGL repart de là).
        Tout vit dans la colonne sûre (LKDV.ui.mountColumn) ; fond transparent. Composants lk-* (docs/UI-LIB.md).
        Ajouts locaux : picto « île + épingle » (tracé de assets/geo/iceland-path.json simplifié à 147 points, Douglas-Peucker 15/1000),
@@ -10,7 +10,7 @@
     #root { position: absolute; inset: 0; }
     .ui-a1-at { position: absolute; }
     /* frappe : chaque mot dans son span (le picto naît de la boîte du mot) */
-    #ui-a1-ask .lk-ask__txt { font-size: 18px; letter-spacing: -0.015em; }
+    #ui-a1-ask .lk-ask__txt { font-size: 20px; letter-spacing: -0.015em; overflow: visible; }
     .ui-a1-w { display: inline-block; transform-origin: 50% 50%; }
     #ui-a1-send { position: relative; }
     #ui-a1-send-ic, #ui-a1-spin { position: absolute; left: 50%; top: 50%; }
@@ -83,8 +83,8 @@
       function build() {
         /* centres des mots dans la barre (mesure canvas, sans mise en page) : le picto naît de la boîte de son mot */
         const ctx = document.createElement("canvas").getContext("2d");
-        ctx.font = '500 18px "LKDV Inter"';
-        try { ctx.letterSpacing = "-0.27px"; } catch (e) {}
+        ctx.font = '500 20px "LKDV Inter"';
+        try { ctx.letterSpacing = "-0.3px"; } catch (e) {}
         let wx = BAR_X + 8 + 44 + 10; /* padding gauche + avatar + gap (lk-ask) */
         const wc = words.map(function (w) { const ww = ctx.measureText(w).width; const c = wx + ww / 2; wx += ww; return c; });
 
@@ -104,10 +104,15 @@
         /* 5,000 / 5,125 / 5,250 / 5,375 : le mot se resserre en une pastille ; le picto jaillit de sa place vers sa case (raccord de forme) */
         pills.forEach(function (p, i) {
           const at = T(5.0 + 0.125 * i), w = "#ui-a1-w" + (i + 1);
-          tl.fromTo(w, { scaleX: 1, scaleY: 1, opacity: 1 }, { scaleX: 0.12, scaleY: 0.7, opacity: 0, duration: 0.1, ease: "power3.in", immediateRender: false }, at);
+          /* le mot monte vers sa case en se resserrant, net (aucun flou) ; il s'efface quand la pastille l'a recouvert */
+          tl.fromTo(w, { x: 0, y: 0, scale: 1 }, { x: (p.cx - wc[i]) * 0.4, y: (ROW_C - BAR_C) * 0.55, scale: 0.45, duration: 0.09, ease: "power2.in", immediateRender: false }, at);
+          tl.fromTo(w, { opacity: 1 }, { opacity: 0, duration: 0.05, ease: "none", immediateRender: false }, at + 0.04);
           U.springIn(tl, "#ui-a1-" + p.id, at, { dur: 0.25, zeta: 0.72, from: 0.4, x: wc[i] - p.cx, y: BAR_C - ROW_C });
         });
 
+        /* 5,4375 → 5,50 : les mots sont partis ; la pilule se resserre sur son bouton d'envoi (pas de bande de verre vide) */
+        const pillClip = function (l) { return "inset(0px 0px 0px " + l + "px round 30px)"; };
+        tl.fromTo("#ui-a1-ask", { clipPath: pillClip(0) }, { clipPath: pillClip(BAR_W - BAR_H), duration: 0.0625, ease: "power2.inOut", immediateRender: false }, T(5.4375));
         /* 5,50 : le bouton d'envoi s'enfonce ; la flèche cède au Spinner officiel, qui tourne 5,5 → 6,0 */
         U.press(tl, "#ui-a1-send", T(5.5));
         tl.fromTo("#ui-a1-send-ic", { opacity: 1 }, { opacity: 0, duration: 0.05, ease: "none", immediateRender: false }, T(5.5) + 0.03);
@@ -131,7 +136,7 @@
         window.__timelines["ui-a1"] = tl;
       }
       /* mesure après chargement de la police ; la timeline est enregistrée à la fin de build */
-      (document.fonts && document.fonts.load ? document.fonts.load('500 18px "LKDV Inter"') : Promise.resolve()).then(build, build);
+      (document.fonts && document.fonts.load ? document.fonts.load('500 20px "LKDV Inter"') : Promise.resolve()).then(build, build);
     })();
   </script>
 </template>
