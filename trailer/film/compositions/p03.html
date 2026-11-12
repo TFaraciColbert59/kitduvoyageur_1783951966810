@@ -1,126 +1,16 @@
-<!-- hf-skeleton generated id=p03 sha256=aa092a656297bf3a — carte provisoire générée par tools/timeline/build-skeleton.mjs depuis film/shots.json ; toute retouche hors de la zone hf-footage la soustrait au générateur -->
+<!-- P03 (images 166–220, 54 images) — cosmos-vfx. Chute dans la stratosphère : poussée qui accélère vers le centre,
+     vibration fine à graine, flou radial vers le centre ; à partir de l’image 198 du film, on entre dans le nuage
+     (TR.cloudPass, progression continue avec P04 : p = (F − 198) / 52), blanchiment fort sur la coupe. -->
 <template>
   <style>
-    #root {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-      background: #2E4A63;
-      font-family: "Inter", sans-serif;
-      color: #FAF8F5;
-    }
-    .p03-card {
-      position: absolute;
-      inset: 0;
-      padding: 96px 120px 120px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-    .p03-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      font-family: "JetBrains Mono", monospace;
-      font-size: 34px;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-    }
-    .p03-mid {
-      display: flex;
-      align-items: flex-end;
-      gap: 72px;
-    }
-    .p03-num {
-      font-weight: 900;
-      font-size: 360px;
-      line-height: 0.8;
-      letter-spacing: -0.04em;
-    }
-    .p03-meta {
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-      padding-bottom: 8px;
-    }
-    .p03-source {
-      font-family: "JetBrains Mono", monospace;
-      font-weight: 700;
-      font-size: 64px;
-    }
-    .p03-frames {
-      font-family: "JetBrains Mono", monospace;
-      font-size: 36px;
-    }
-    .p03-star {
-      font-weight: 700;
-      font-size: 40px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-    }
-    .p03-intent {
-      max-width: 1600px;
-      font-size: 52px;
-      line-height: 1.2;
-      font-weight: 400;
-    }
-    .p03-track {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      height: 12px;
-      background: rgba(250, 248, 245, 0.18);
-    }
-    .p03-bar {
-      position: absolute;
-      inset: 0;
-      background: #FAF8F5;
-      transform-origin: 0 50%;
-    }
-    .p03-frame {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-    }
-    .p03-shot,
-    .p03-shot-inner {
-      position: absolute;
-      inset: 0;
-    }
-    .p03-shot {
-      opacity: 0;
-    }
-    .p03-shot-img {
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 1920px;
-      height: 1080px;
-      /* Remplit le 16:9 sans déformer, quel que soit le rapport de l'image : recadrage au centre. */
-      object-fit: cover;
-      object-position: 50% 50%;
-    }
+    #root { position: absolute; inset: 0; overflow: hidden; background: #0B1F17; }
+    .p03-frame { position: absolute; inset: 0; overflow: hidden; }
+    .p03-shot, .p03-shot-inner { position: absolute; inset: 0; }
+    .p03-shot { opacity: 0; }
+    .p03-shot-img { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
+    #p03-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
   </style>
   <div id="root" data-composition-id="p03" data-width="1920" data-height="1080" data-duration="0.9">
-    <!-- Carte provisoire : outil de travail, disparaît quand l'image du plan est là. -->
-    <div id="p03-card" class="p03-card" data-shot="p03" data-act="2">
-      <div id="p03-top" class="p03-top">
-        <span id="p03-act">Acte 2 · DESCENTE</span>
-        <span id="p03-range">166–220</span>
-      </div>
-      <div id="p03-mid" class="p03-mid">
-        <div id="p03-num" class="p03-num">P03</div>
-        <div id="p03-meta" class="p03-meta">
-          <div id="p03-source" class="p03-source">img03</div>
-          <div id="p03-frames" class="p03-frames">54 images · 0,90 s</div>
-        </div>
-      </div>
-      <div id="p03-intent" class="p03-intent">Stratosphère, mer de nuages</div>
-      <div id="p03-track" class="p03-track"><div id="p03-bar" class="p03-bar"></div></div>
-    </div>
-    <!-- Emplacement d'image plein cadre : assets/footage/img03.png.
-         Chaque calque : .p03-shot (opacité, séquence) > .p03-shot-inner (libre pour le mouvement) > img. -->
     <div id="p03-frame" class="p03-frame" data-layout-allow-overflow>
       <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) -->
       <div id="p03-shot-1" class="p03-shot" data-src="img03" data-seq="0" data-seq-count="1">
@@ -130,30 +20,38 @@
       </div>
     <!-- hf-footage:end -->
     </div>
+    <canvas id="p03-canvas" width="1920" height="1080" data-layout-allow-overflow></canvas>
   </div>
+  <script src="lib/fx/core.js"></script>
+  <script src="lib/fx/plates.js"></script>
+  <script src="lib/fx/transitions.js"></script>
   <script>
     (function () {
-      var D = 54 / 60;
-      var tl = gsap.timeline({ paused: true });
-      // Barre de progression : se remplit sur la durée du plan.
-      tl.fromTo("#p03-bar", { scaleX: 0 }, { scaleX: 1, duration: D, ease: "none" }, 0);
-      // Images présentes : chaque source occupe sa part égale du plan (ordre de la trame) ;
-      // la carte reste visible là où l'image manque.
-      var shots = Array.prototype.slice.call(document.querySelectorAll(".p03-shot"));
-      if (shots.length) {
-        var n = Number(shots[0].getAttribute("data-seq-count"));
-        var bySeq = {};
-        shots.forEach(function (el) { bySeq[el.getAttribute("data-seq")] = el; });
-        for (var k = 0; k < n; k++) {
-          var t = (k * D) / n;
-          var el = bySeq[String(k)];
-          shots.forEach(function (other) {
-            tl.set(other, { opacity: other === el ? 1 : 0 }, t);
-          });
-          tl.set("#p03-card", { opacity: el ? 0 : 1 }, t);
-        }
-      }
-      window.__timelines["p03"] = tl;
+      var FX = window.LKDVFX, TR = FX.Transitions;
+      var N = 54, F0 = 166, W = 1920, H = 1080;
+      var O = [960, 600]; // la mer de nuages sous la caméra
+      var img = document.getElementById("p03-shot-1-img");
+      var ctx = document.getElementById("p03-canvas").getContext("2d");
+      var buf = FX.canvas(W, H), bx = buf.getContext("2d");
+      var clouds = FX.Plates.shared("clouds", 404);
+      var clock = FX.bindClock("p03", N, function (t, f) {
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.fillStyle = "#0B1F17";
+        ctx.fillRect(0, 0, W, H);
+        if (!img.complete || !img.naturalWidth) return;
+        var u = f / (N - 1);
+        var s = 1.1 + 0.6 * u + 0.25 * u * u;
+        // Vibration fine à graine (dans la plaque, donc sans découvrir les bords : marge ≥ 10 % d'échelle).
+        var sh = 1.5 + 4 * u;
+        var sx = (FX.hash2(F0 + f, 1, 31) - 0.5) * 2 * sh, sy = (FX.hash2(F0 + f, 2, 31) - 0.5) * 2 * sh;
+        bx.setTransform(s, 0, 0, s, O[0] - O[0] * s + sx, O[1] - O[1] * s + sy);
+        bx.drawImage(img, 0, 0, W, H);
+        TR.radialBlur(ctx, buf, { amount: 0.05 + 0.07 * u * u, origin: [960, 540], samples: 10 });
+        var p = FX.clamp((F0 + f - 198) / 52, 0, 1);
+        if (p > 0) TR.cloudPass(ctx, p, { clouds: clouds, hole: true, origin: [960, 560], density: 1.25 });
+      });
+      img.addEventListener("load", function () { clock.redraw(); });
+      window.__timelines["p03"] = clock.tl;
     })();
   </script>
 </template>

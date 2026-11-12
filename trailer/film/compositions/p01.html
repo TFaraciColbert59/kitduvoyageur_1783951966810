@@ -1,126 +1,17 @@
-<!-- hf-skeleton generated id=p01 sha256=fda46b99c88468a9 — carte provisoire générée par tools/timeline/build-skeleton.mjs depuis film/shots.json ; toute retouche hors de la zone hf-footage la soustrait au générateur -->
+<!-- P01 (images 0–89) — cosmos-vfx. Orbite : poussée 1,08 → 1,156 et roulis 0 → 8° (inOutSine), IDENTIQUES à p01-halo.html
+     pour que le halo du logo reste collé au limbe. Le soleil perce le limbe (voile + éclat d'objectif qui montent),
+     sortie par un flash solaire (2 images avant la coupe, reprises par P02). Tout est fonction de l'image locale. -->
 <template>
   <style>
-    #root {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-      background: #14233F;
-      font-family: "Inter", sans-serif;
-      color: #FAF8F5;
-    }
-    .p01-card {
-      position: absolute;
-      inset: 0;
-      padding: 96px 120px 120px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-    .p01-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      font-family: "JetBrains Mono", monospace;
-      font-size: 34px;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-    }
-    .p01-mid {
-      display: flex;
-      align-items: flex-end;
-      gap: 72px;
-    }
-    .p01-num {
-      font-weight: 900;
-      font-size: 360px;
-      line-height: 0.8;
-      letter-spacing: -0.04em;
-    }
-    .p01-meta {
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-      padding-bottom: 8px;
-    }
-    .p01-source {
-      font-family: "JetBrains Mono", monospace;
-      font-weight: 700;
-      font-size: 64px;
-    }
-    .p01-frames {
-      font-family: "JetBrains Mono", monospace;
-      font-size: 36px;
-    }
-    .p01-star {
-      font-weight: 700;
-      font-size: 40px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-    }
-    .p01-intent {
-      max-width: 1600px;
-      font-size: 52px;
-      line-height: 1.2;
-      font-weight: 400;
-    }
-    .p01-track {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      height: 12px;
-      background: rgba(250, 248, 245, 0.18);
-    }
-    .p01-bar {
-      position: absolute;
-      inset: 0;
-      background: #FAF8F5;
-      transform-origin: 0 50%;
-    }
-    .p01-frame {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-    }
-    .p01-shot,
-    .p01-shot-inner {
-      position: absolute;
-      inset: 0;
-    }
-    .p01-shot {
-      opacity: 0;
-    }
-    .p01-shot-img {
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 1920px;
-      height: 1080px;
-      /* Remplit le 16:9 sans déformer, quel que soit le rapport de l'image : recadrage au centre. */
-      object-fit: cover;
-      object-position: 50% 50%;
-    }
+    #root { position: absolute; inset: 0; overflow: hidden; background: #0B1F17; }
+    .p01-frame { position: absolute; inset: 0; overflow: hidden; }
+    .p01-shot, .p01-shot-inner { position: absolute; inset: 0; }
+    /* La plaque sert de source au canevas : elle reste invisible. */
+    .p01-shot { opacity: 0; }
+    .p01-shot-img { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
+    #p01-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
   </style>
   <div id="root" data-composition-id="p01" data-width="1920" data-height="1080" data-duration="1.4833333333333334">
-    <!-- Carte provisoire : outil de travail, disparaît quand l'image du plan est là. -->
-    <div id="p01-card" class="p01-card" data-shot="p01" data-act="1">
-      <div id="p01-top" class="p01-top">
-        <span id="p01-act">Acte 1 · ESPACE</span>
-        <span id="p01-range">0–89</span>
-      </div>
-      <div id="p01-mid" class="p01-mid">
-        <div id="p01-num" class="p01-num">P01</div>
-        <div id="p01-meta" class="p01-meta">
-          <div id="p01-source" class="p01-source">img01</div>
-          <div id="p01-frames" class="p01-frames">89 images · 1,48 s</div>
-        </div>
-      </div>
-      <div id="p01-intent" class="p01-intent">La Terre surgit, le soleil perce le limbe, logo fondu dans le halo</div>
-      <div id="p01-track" class="p01-track"><div id="p01-bar" class="p01-bar"></div></div>
-    </div>
-    <!-- Emplacement d'image plein cadre : assets/footage/img01.png.
-         Chaque calque : .p01-shot (opacité, séquence) > .p01-shot-inner (libre pour le mouvement) > img. -->
     <div id="p01-frame" class="p01-frame" data-layout-allow-overflow>
       <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) -->
       <div id="p01-shot-1" class="p01-shot" data-src="img01" data-seq="0" data-seq-count="1">
@@ -130,30 +21,59 @@
       </div>
     <!-- hf-footage:end -->
     </div>
+    <canvas id="p01-canvas" width="1920" height="1080" data-layout-allow-overflow></canvas>
   </div>
+  <script src="lib/fx/core.js"></script>
+  <script src="lib/fx/transitions.js"></script>
   <script>
     (function () {
-      var D = 89 / 60;
-      var tl = gsap.timeline({ paused: true });
-      // Barre de progression : se remplit sur la durée du plan.
-      tl.fromTo("#p01-bar", { scaleX: 0 }, { scaleX: 1, duration: D, ease: "none" }, 0);
-      // Images présentes : chaque source occupe sa part égale du plan (ordre de la trame) ;
-      // la carte reste visible là où l'image manque.
-      var shots = Array.prototype.slice.call(document.querySelectorAll(".p01-shot"));
-      if (shots.length) {
-        var n = Number(shots[0].getAttribute("data-seq-count"));
-        var bySeq = {};
-        shots.forEach(function (el) { bySeq[el.getAttribute("data-seq")] = el; });
-        for (var k = 0; k < n; k++) {
-          var t = (k * D) / n;
-          var el = bySeq[String(k)];
-          shots.forEach(function (other) {
-            tl.set(other, { opacity: other === el ? 1 : 0 }, t);
-          });
-          tl.set("#p01-card", { opacity: el ? 0 : 1 }, t);
-        }
+      var FX = window.LKDVFX, TR = FX.Transitions;
+      var N = 89;
+      /* Même mouvement que p01-halo.html (MOTION) : ne pas modifier l'un sans l'autre. */
+      var MOTION = { push: [1.08, 1.156], roll: [0, 8], origin: [960, 540] };
+      var SUN = [1750, 182]; // soleil sur le limbe d'img01 (repère de l'image)
+      var img = document.getElementById("p01-shot-1-img");
+      var ctx = document.getElementById("p01-canvas").getContext("2d");
+      function xf(f) {
+        var u = FX.ease.inOutSine(f / 88);
+        return { k: FX.lerp(MOTION.push[0], MOTION.push[1], u), r: (FX.lerp(MOTION.roll[0], MOTION.roll[1], u) * Math.PI) / 180 };
       }
-      window.__timelines["p01"] = tl;
+      function toScreen(p, m) {
+        var dx = (p[0] - MOTION.origin[0]) * m.k, dy = (p[1] - MOTION.origin[1]) * m.k;
+        var c = Math.cos(m.r), s = Math.sin(m.r);
+        return [MOTION.origin[0] + dx * c - dy * s, MOTION.origin[1] + dx * s + dy * c];
+      }
+      var clock = FX.bindClock("p01", N, function (t, f) {
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.fillStyle = "#0B1F17";
+        ctx.fillRect(0, 0, 1920, 1080);
+        if (!img.complete || !img.naturalWidth) return;
+        var m = xf(f);
+        ctx.save();
+        ctx.translate(MOTION.origin[0], MOTION.origin[1]);
+        ctx.rotate(m.r);
+        ctx.scale(m.k, m.k);
+        ctx.translate(-MOTION.origin[0], -MOTION.origin[1]);
+        ctx.drawImage(img, 0, 0, 1920, 1080);
+        ctx.restore();
+        var sun = toScreen(SUN, m);
+        // Le soleil perce : noyau crème qui grossit sur le limbe.
+        var rise = FX.smooth(6, 72, f);
+        ctx.save();
+        ctx.globalCompositeOperation = "lighter";
+        var g = ctx.createRadialGradient(sun[0], sun[1], 0, sun[0], sun[1], 40 + 220 * rise);
+        g.addColorStop(0, "rgba(250,248,245," + (0.25 + 0.6 * rise).toFixed(3) + ")");
+        g.addColorStop(0.25, "rgba(255,226,180," + (0.12 + 0.3 * rise).toFixed(3) + ")");
+        g.addColorStop(1, "rgba(255,210,150,0)");
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, 1920, 1080);
+        ctx.restore();
+        TR.lensFlare(ctx, { sun: sun, intensity: 0.2 + 0.8 * rise });
+        // Flash solaire de sortie (coupe P01→P02) : mêmes réglages dans p02.html.
+        TR.solarFlash(ctx, f, { cut: N, pre: 2, post: 2, origin: [1786, 352] });
+      });
+      img.addEventListener("load", function () { clock.redraw(); });
+      window.__timelines["p01"] = clock.tl;
     })();
   </script>
 </template>
