@@ -218,3 +218,54 @@ describe('loadAccountBootstrap — hydratation des demandes sortantes', () => {
     expect(payload.followStatesUnavailable).toBe(true);
   });
 });
+
+describe('loadAccountBootstrap — lectures partielles des relations', () => {
+  const relationBaseRows = {
+    user_profiles: [{ id: OWNER, handle: 'owner', profile_visibility: 'public' }],
+    user_follows: [],
+    follow_requests: [{ requester_id: OWNER, target_id: TARGET, status: 'pending' }],
+  };
+
+  it('conserve les demandes sortantes quand user_follows échoue', async () => {
+    const payload = await bootstrapWith(
+      {
+        ...relationBaseRows,
+        public_profiles: [{ id: TARGET, handle: 'alice', full_name: 'Alice' }],
+      },
+      { user_follows: { message: 'relations indisponibles' } }
+    );
+
+    // Les états ne dépendent que des demandes sortantes et des profils cibles :
+    // un échec des listes ne doit pas les faire disparaître.
+    expect(payload.followStates).toEqual({ alice: 'requested' });
+    expect(payload.followStatesUnavailable).toBe(false);
+    expect(payload.followListsUnavailable).toBe(true);
+
+    // Les compteurs dont la lecture a échoué sont omis, jamais remis à zéro.
+    expect(payload.profile).not.toHaveProperty('followersCount');
+    expect(payload.profile).not.toHaveProperty('followersLabel');
+    expect(payload.profile).not.toHaveProperty('followingCount');
+    expect(payload.tribu).toEqual([]);
+    expect(payload.followers).toEqual([]);
+    expect(payload.following).toEqual([]);
+  });
+
+  it('signale un échec des profils de listes sans invalider les états', async () => {
+    const payload = await bootstrapWith(
+      {
+        user_profiles: relationBaseRows.user_profiles,
+        user_follows: [{ follower_id: TARGET, following_id: OWNER }],
+        follow_requests: [],
+      },
+      { public_profiles: { message: 'vue temporairement indisponible' } }
+    );
+
+    // Les compteurs viennent de `user_follows`, qui a répondu : ils restent
+    // exacts. Seules les fiches des listes sont indisponibles.
+    expect(payload.profile.followersCount).toBe(1);
+    expect(payload.profile.followingCount).toBe(0);
+    expect(payload.followers).toEqual([]);
+    expect(payload.followListsUnavailable).toBe(true);
+    expect(payload.followStatesUnavailable).toBe(false);
+  });
+});

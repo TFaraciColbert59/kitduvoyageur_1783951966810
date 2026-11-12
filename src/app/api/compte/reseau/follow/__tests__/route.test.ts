@@ -28,11 +28,11 @@ function request(body: unknown, method = 'POST') {
   });
 }
 
-function bootstrapCacheKey() {
-  return userCacheKey(OWNER, 'bootstrap');
+function mapCacheKey() {
+  return userCacheKey(OWNER, 'map');
 }
 
-describe('/api/compte/reseau/follow — cache du bootstrap', () => {
+describe('/api/compte/reseau/follow — invalidation du cache acteur', () => {
   beforeEach(() => {
     mocks.requireUser.mockReset();
     mocks.followUser.mockReset();
@@ -48,23 +48,23 @@ describe('/api/compte/reseau/follow — cache du bootstrap', () => {
     mocks.unfollowUser.mockResolvedValue('unfollowed');
   });
 
-  it('invalide le bootstrap en cache après une demande sortante', async () => {
-    setCached(bootstrapCacheKey(), { authenticated: true, followStates: {} }, 15_000);
+  it('invalide le cache acteur après une demande sortante', async () => {
+    setCached(mapCacheKey(), { points: [] }, 30_000);
 
     const response = await POST(request({ userId: TARGET }));
 
     expect(response.status).toBe(200);
     expect(mocks.followUser).toHaveBeenCalledWith({}, TARGET);
-    expect(getCached(bootstrapCacheKey())).toBeNull();
+    expect(getCached(mapCacheKey())).toBeNull();
   });
 
-  it('invalide le bootstrap en cache après un retrait de suivi', async () => {
-    setCached(bootstrapCacheKey(), { authenticated: true, followStates: {} }, 15_000);
+  it('invalide le cache acteur après un retrait de suivi', async () => {
+    setCached(mapCacheKey(), { points: [] }, 30_000);
 
     const response = await DELETE(request({ userId: TARGET }, 'DELETE'));
 
     expect(response.status).toBe(200);
     expect(mocks.unfollowUser).toHaveBeenCalledWith({}, TARGET);
-    expect(getCached(bootstrapCacheKey())).toBeNull();
+    expect(getCached(mapCacheKey())).toBeNull();
   });
 });

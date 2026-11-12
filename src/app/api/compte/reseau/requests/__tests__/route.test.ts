@@ -39,17 +39,17 @@ describe('/api/compte/reseau/requests — invalidation après réponse', () => {
     });
     mocks.respondFollowRequest.mockResolvedValue(undefined);
     mocks.readReseauError.mockImplementation((_error: unknown, fallback: string) => fallback);
-    setCached(userCacheKey(ACTOR, 'bootstrap'), { authenticated: true }, 15_000);
     setCached(userCacheKey(ACTOR, 'map'), { points: [] }, 30_000);
+    setCached(userCacheKey(ACTOR, 'notifications'), [], 15_000);
   });
 
-  it('invalide le cache du compte après une acceptation', async () => {
+  it('invalide le cache acteur après une acceptation', async () => {
     const response = await POST(request({ requestId: REQUEST_ID, action: 'accept' }));
 
     expect(response.status).toBe(200);
     expect(mocks.respondFollowRequest).toHaveBeenCalledWith({}, REQUEST_ID, 'accept');
-    expect(getCached(userCacheKey(ACTOR, 'bootstrap'))).toBeNull();
     expect(getCached(userCacheKey(ACTOR, 'map'))).toBeNull();
+    expect(getCached(userCacheKey(ACTOR, 'notifications'))).toBeNull();
   });
 
   it('invalide aussi après un refus', async () => {
@@ -57,7 +57,8 @@ describe('/api/compte/reseau/requests — invalidation après réponse', () => {
 
     expect(response.status).toBe(200);
     expect(mocks.respondFollowRequest).toHaveBeenCalledWith({}, REQUEST_ID, 'decline');
-    expect(getCached(userCacheKey(ACTOR, 'bootstrap'))).toBeNull();
+    expect(getCached(userCacheKey(ACTOR, 'map'))).toBeNull();
+    expect(getCached(userCacheKey(ACTOR, 'notifications'))).toBeNull();
   });
 
   it('ne vide pas le cache quand la mutation échoue', async () => {
@@ -67,6 +68,7 @@ describe('/api/compte/reseau/requests — invalidation après réponse', () => {
     const response = await POST(request({ requestId: REQUEST_ID, action: 'accept' }));
 
     expect(response.status).toBe(409);
-    expect(getCached(userCacheKey(ACTOR, 'bootstrap'))).not.toBeNull();
+    expect(getCached(userCacheKey(ACTOR, 'map'))).not.toBeNull();
+    expect(getCached(userCacheKey(ACTOR, 'notifications'))).not.toBeNull();
   });
 });

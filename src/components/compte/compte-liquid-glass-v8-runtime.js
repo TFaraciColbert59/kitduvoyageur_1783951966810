@@ -5612,14 +5612,27 @@ window.__lkdvApplyFollowStates = (followStates, options) => {
   return changed;
 };
 
-/** Signale un bootstrap partiel : les états connus restent affichés. */
-window.__lkdvShowFollowUnavailable = () => {
+/**
+ * Signale un bootstrap social partiel : les états, compteurs et listes connus
+ * restent affichés. `scope` distingue un échec des états (`states`), des
+ * listes (`lists`) ou des deux (`all`).
+ */
+window.__lkdvShowFollowUnavailable = (scope) => {
   if (!isCurrent()) return;
-  island(
-    'État de suivi indisponible',
-    'Les boutons gardent leur dernier état connu. Réessaie dans un instant.',
-    false
-  );
+  const kind = scope === 'lists' || scope === 'all' ? scope : 'states';
+  const title =
+    kind === 'lists'
+      ? 'Listes d’abonnés indisponibles'
+      : kind === 'all'
+        ? 'Données sociales partielles'
+        : 'État de suivi indisponible';
+  const detail =
+    kind === 'lists'
+      ? 'Les compteurs et listes connus sont conservés. Réessaie dans un instant.'
+      : kind === 'all'
+        ? 'Les états, compteurs et listes connus sont conservés. Réessaie dans un instant.'
+        : 'Les boutons gardent leur dernier état connu. Réessaie dans un instant.';
+  island(title, detail, false);
 };
 /* ---------- Montage ---------- */
 bindIgSwipe();

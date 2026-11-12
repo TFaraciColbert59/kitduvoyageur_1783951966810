@@ -51,6 +51,8 @@ describe('/api/compte/bootstrap — cache du payload privé', () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get('cache-control')).toBe('no-store, max-age=0');
+    expect(response.headers.get('pragma')).toBe('no-cache');
+    expect(response.headers.get('vary')).toBe('Cookie');
     await expect(response.json()).resolves.toEqual({
       authenticated: false,
       error: 'bootstrap_unavailable',

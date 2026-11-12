@@ -129,7 +129,10 @@ declare global {
       states: Record<string, unknown>,
       options?: { replace?: boolean; preserve?: string[] }
     ) => boolean;
-    /** Signale un bootstrap partiel sans effacer les états connus. */
-    __lkdvShowFollowUnavailable?: () => void;
+    /**
+     * Signale un bootstrap social partiel sans effacer les états connus.
+     * `states` (défaut) : boutons ; `lists` : compteurs/listes ; `all` : les deux.
+     */
+    __lkdvShowFollowUnavailable?: (scope?: 'states' | 'lists' | 'all') => void;
   }
 }

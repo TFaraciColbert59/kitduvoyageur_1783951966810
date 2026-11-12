@@ -2,6 +2,8 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
+import { RotateCcw } from 'lucide-react';
+import { ActionPill } from '@/components/ui/ActionPill';
 import type { BootstrapOverlayData } from './DetailDrawers';
 
 const PostDrawer = dynamic(() => import('./PostDrawer').then((mod) => mod.PostDrawer), { ssr: false });
@@ -89,9 +91,32 @@ export function CompteOverlayHost({ onChanged }: { onChanged?: () => void }) {
   useEffect(() => {
     if (!needsBootstrap || bootstrap || bootstrapError) return;
     let cancelled = false;
-    fetch('/api/compte/bootstrap')
-      .then((response) => (response.ok ? response.json() : Promise.reject(new Error('bootstrap'))))
-      .then((payload) => { if (!cancelled) setBootstrap(payload as BootstrapOverlayData); })
+    fetch('/api/compte/bootstrap', {
+      cache: 'no-store',
+      credentials: 'same-origin',
+      headers: { accept: 'application/json' },
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error(`bootstrap_http_${response.status}`);
+        return response.json();
+      })
+      .then((payload) => {
+        if (cancelled) return;
+        // La route répond 200 avec un payload d'erreur explicite : un simple
+        // `response.ok` ne suffit pas. On refuse aussi un corps vide pour ne
+        // jamais afficher des zéros à la place d'une panne.
+        if (
+          !payload ||
+          typeof payload !== 'object' ||
+          Array.isArray(payload) ||
+          payload.error ||
+          payload.authenticated === false
+        ) {
+          setBootstrapError(true);
+          return;
+        }
+        setBootstrap(payload as BootstrapOverlayData);
+      })
       .catch(() => { if (!cancelled) setBootstrapError(true); });
     return () => { cancelled = true; };
   }, [bootstrap, bootstrapError, needsBootstrap]);
@@ -112,7 +137,20 @@ export function CompteOverlayHost({ onChanged }: { onChanged?: () => void }) {
     return (
       <div className="lkdv-compte-overlay">
         <div className="lkdv-overlay-scrim" />
-        <div className="lkdv-overlay-sheet"><div className="lkdv-overlay-empty"><p>{bootstrapError ? 'Impossible de charger les données.' : 'Chargement…'}</p></div></div>
+        <div className="lkdv-overlay-sheet">
+          <div className="lkdv-overlay-empty" role={bootstrapError ? 'alert' : undefined}>
+            <p>{bootstrapError ? 'Impossible de charger les données.' : 'Chargement…'}</p>
+            {bootstrapError ? (
+              <ActionPill
+                label="Réessayer"
+                text="Réessayer"
+                tone="primary"
+                icon={<RotateCcw size={15} aria-hidden="true" />}
+                onClick={() => setBootstrapError(false)}
+              />
+            ) : null}
+          </div>
+        </div>
       </div>
     );
   }

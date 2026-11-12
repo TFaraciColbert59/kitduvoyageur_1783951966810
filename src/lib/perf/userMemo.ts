@@ -1,7 +1,7 @@
 /**
  * Petit cache mémoire serveur, strictement par utilisateur.
- * Objectif : éviter de recalculer le bootstrap, la carte et l'activité quand
- * la page et un overlay les demandent à quelques secondes d'intervalle.
+ * Objectif : éviter de recalculer la carte et les notifications quand la page
+ * et un overlay les demandent à quelques secondes d'intervalle.
  * TTL court et taille bornée ; aucune donnée n'est partagée entre utilisateurs.
  */
 interface Entry {

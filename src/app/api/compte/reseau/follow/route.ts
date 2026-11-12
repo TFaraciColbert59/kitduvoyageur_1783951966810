@@ -46,8 +46,8 @@ export async function POST(request: Request) {
   try {
     // L'acteur est celui du JWT côté RPC : la route ne transmet que la cible.
     const status = await followUser(auth.supabase, parsed.data.userId);
-    // Le bootstrap met en cache 15 s : sans invalidation, un rechargement
-    // immédiat pourrait encore afficher « Suivre » avant la demande envoyée.
+    // Les vues acteur mises en cache ne doivent pas resservir un état
+    // antérieur après la mutation.
     invalidateUserCache(auth.user.id);
     return ok(status);
   } catch (error) {

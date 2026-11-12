@@ -543,17 +543,20 @@ function indexMassifsByKey(massifs: GeoMassifRow[]): Map<string, GeoMassifRow> {
 
 export function mapProfile(
   profile: AccountProfileRow | null,
-  followers: number,
-  following: number
+  followers: number | null,
+  following: number | null
 ) {
   const name = profile?.full_name?.trim() || profile?.handle || 'Voyageur';
   const handle = profile?.handle || profile?.id?.slice(0, 8) || 'voyageur';
   return {
     handle,
     name,
-    followersCount: followers,
-    followingCount: following,
-    followersLabel: followers.toLocaleString('fr-FR'),
+    // Un compteur dont la lecture a échoué est omis, jamais ramené à zéro :
+    // l'hydratation remplace ne touche que les champs numériques présents.
+    ...(typeof followers === 'number'
+      ? { followersCount: followers, followersLabel: followers.toLocaleString('fr-FR') }
+      : {}),
+    ...(typeof following === 'number' ? { followingCount: following } : {}),
     bioLine: [profile?.location, profile?.bio].filter(Boolean).join(' · '),
     avatarUrl: profile?.avatar_url || null,
     isGuest: false,
@@ -1671,10 +1674,11 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
   const followerRows = followerRowsResult ?? [];
   const followingRows = followingRowsResult ?? [];
   const outgoingRequestRows = outgoingRequestRowsResult ?? [];
-  const followRelationsUnavailable =
-    followerRowsResult === null ||
-    followingRowsResult === null ||
-    outgoingRequestRowsResult === null;
+  // Les listes/counters et les états de suivi ont des dépendances distinctes.
+  // Un échec de `user_follows` ne doit pas invalider une demande sortante
+  // lisible, et un échec de `follow_requests` ne doit pas vider les listes.
+  const followListsUnavailable =
+    followerRowsResult === null || followingRowsResult === null;
 
   const profile = (profileRes.data ?? null) as AccountProfileRow | null;
   const followerIds = [
@@ -1768,7 +1772,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
         .limit(20)
     ),
     followingIds.length
-      ? safeRows<FollowProfileRow>(
+      ? safeRowsOrNull<FollowProfileRow>(
           supabase
             .from('public_profiles')
             .select('id,handle,full_name,avatar_url,trust_score,location')
@@ -1776,7 +1780,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
         )
       : Promise.resolve([] as FollowProfileRow[]),
     followerIds.length
-      ? safeRows<FollowProfileRow>(
+      ? safeRowsOrNull<FollowProfileRow>(
           supabase
             .from('public_profiles')
             .select('id,handle,full_name,avatar_url,trust_score,location')
@@ -2188,13 +2192,19 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
 
   // Une lecture de suivi en échec ne doit jamais être présentée comme
   // « aucun état » : le client reçoit un indicateur explicite et conserve ses
-  // états connus au lieu d'afficher « Suivre » à tort.
+  // états connus au lieu d'afficher « Suivre » à tort. Seules les lectures
+  // dont dépendent réellement les états (demandes sortantes + profils cibles)
+  // les invalident ; les listes gardent leur propre indicateur.
   const followStatesUnavailable =
-    followRelationsUnavailable ||
+    outgoingRequestRowsResult === null ||
     (pendingFollowTargetIds.length > 0 && outgoingRequestProfiles === null);
+  const followListsUnavailableWithProfiles =
+    followListsUnavailable || followingProfiles === null || followerProfiles === null;
+  const followingProfileRows = followingProfiles ?? [];
+  const followerProfileRows = followerProfiles ?? [];
 
   const profileById = new Map<string, CompanionProfileRow>();
-  for (const row of [...followingProfiles, ...followerProfiles, ...relationProfiles]) {
+  for (const row of [...followingProfileRows, ...followerProfileRows, ...relationProfiles]) {
     profileById.set(row.id, row);
   }
   // Le profil courant n'appartient à aucune des listes ci-dessus : il reste
@@ -2283,22 +2293,28 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
 
   return {
     authenticated: true as const,
-    profile: mapProfile(profile, followers, followingIds.length),
+    profile: mapProfile(
+      profile,
+      followerRowsResult === null ? null : followers,
+      followingRowsResult === null ? null : followingIds.length
+    ),
     carnets: mapPosts(postRows),
     outings: mapOutings(outings, routes, coverBySession),
     stats: mapStats(statsSessions, routes, geoMassifs),
     orders: orderRowsMapped.orders,
     bookings: orderRowsMapped.bookings,
     notifications: mapNotifications(notificationRows),
-    tribu: mapTribu(followingProfiles),
-    followers: mapTribu(followerProfiles),
-    following: mapTribu(followingProfiles),
+    tribu: mapTribu(followingProfileRows),
+    followers: mapTribu(followerProfileRows),
+    following: mapTribu(followingProfileRows),
     // Demandes sortantes restaurées au chargement : le bouton réseau affiche
-    // « Demande envoyée » avant toute nouvelle action.
+    // « Demande envoyée » avant toute nouvelle action, même si les listes
+    // `user_follows` sont momentanément illisibles.
     followStates: followStatesUnavailable
       ? {}
       : mapOutgoingFollowStates(outgoingRequestRows, outgoingRequestProfiles ?? []),
     followStatesUnavailable,
+    followListsUnavailable: followListsUnavailableWithProfiles,
     reposts: mapReposts(repostRows, repostSources, profileById),
     badges: mapBadges(badgeRows, userBadgeRows),
     challenges: mapChallenges(challengeRows, challengeProgress, progressionRows, userProgressionRows[0] ?? null),

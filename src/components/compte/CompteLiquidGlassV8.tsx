@@ -1002,12 +1002,6 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
     const generation = getMyTripsSessionGeneration();
     const epoch = ++requestEpochRef.current;
     const runtimeEpoch = runtimeEpochRef.current;
-    // Toute mutation de suivi qui démarre après ce point rend le snapshot du
-    // bootstrap périmé pour les handles concernés.
-    const followSeqAtStart = followMutationSeqRef.current;
-    // Une action déjà en vol au départ du fetch n'a pas encore de numéro plus
-    // grand que `followSeqAtStart` : on la protège aussi par son handle.
-    const followInFlightAtStart = new Set(followInFlightRef.current);
     const isCurrent = () => requestEpochRef.current === epoch && runtimeEpochRef.current === runtimeEpoch
       && identityRef.current === owner && (owner === null || isMyTripsSessionCurrent(owner, generation));
     if (!isCurrent()) return;
@@ -1217,22 +1211,30 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
         }))
         .filter((c: any) => c.name);
 
+      const hadBootstrap = bootstrapPayloadRef.current != null;
       const patch: Record<string, any> = {
         isGuest: false,
-        followersCount: followersRes.count ?? 0,
-        followingCount: followingRes.count ?? 0,
+        // Un compteur n'est posé que si sa lecture a réussi : une erreur
+        // transitoire ne doit pas remplacer un compte connu par zéro.
+        ...(followersRes.error == null && typeof followersRes.count === 'number'
+          ? { followersCount: followersRes.count }
+          : {}),
+        ...(followingRes.error == null && typeof followingRes.count === 'number'
+          ? { followingCount: followingRes.count }
+          : {}),
         carnets: hasUserCarnets ? carnetsRes.data : [],
         clubs: userClubs,
         gearItems: gearRes.data || [],
         orders: ordersRes.data || [],
         activeLoans: loansRes.data || [],
         // Le bootstrap complet arrive ensuite ; on ne laisse jamais les
-        // tableaux de démonstration visibles sur un compte connecté.
+        // tableaux de démonstration visibles sur un compte connecté. Lors
+        // d'une actualisation, les listes connues restent en place jusqu'au
+        // prochain payload complet (ou sont conservées si celui-ci échoue).
         kits: [],
         species: [],
         massifs: [],
-        followers: [],
-        following: [],
+        ...(hadBootstrap ? {} : { followers: [], following: [] }),
       };
 
       if (profileRes.data) {
@@ -1281,6 +1283,11 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
       // C'est aussi lui qui confirme le rôle : tant qu'il n'a pas répondu,
       // l'hôte ne peut pas afficher les entrées propriétaire.
       try {
+        // La fenêtre de préservation court à partir du départ réel du fetch :
+        // une mutation terminée avant ce point est déjà dans le snapshot
+        // serveur et ne doit pas masquer une valeur plus récente.
+        const followSeqAtFetch = followMutationSeqRef.current;
+        const followInFlightAtFetch = new Set(followInFlightRef.current);
         const bootRes = await fetch('/api/compte/bootstrap', {
           cache: 'no-store',
           credentials: 'same-origin',
@@ -1307,13 +1314,22 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
         // followers/following sont également un snapshot : on les conserve si
         // une mutation les a rendues périmées.
         const followStatesUnavailable = payload?.followStatesUnavailable === true;
+        const followListsUnavailable = payload?.followListsUnavailable === true;
         const preservedFollowHandles = [...followMutationByHandleRef.current.entries()]
           .filter(
             ([handle, sequence]) =>
-              sequence > followSeqAtStart || followInFlightAtStart.has(handle)
+              sequence > followSeqAtFetch || followInFlightAtFetch.has(handle)
           )
           .map(([handle]) => handle);
         const followMutatedDuringFetch = preservedFollowHandles.length > 0;
+        const preserveFollowLists = followMutatedDuringFetch || followListsUnavailable;
+        // Compatibilité ascendante : un payload sans champ `followStates`
+        // n'est pas un payload complet. On ne doit donc pas l'interpréter
+        // comme `{}` et effacer les états déjà connus.
+        const hasFollowStatesPayload =
+          payload?.followStates !== null &&
+          typeof payload?.followStates === 'object' &&
+          !Array.isArray(payload.followStates);
         if (payload?.authenticated) {
           hydrate({
             ...payload.profile,
@@ -1324,17 +1340,17 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
             orders: payload.orders || [],
             bookings: payload.bookings || [],
             clubs: payload.clubs || [],
-            ...(followMutatedDuringFetch
+            ...(preserveFollowLists
               ? {}
               : {
                   tribu: payload.tribu || [],
                   followers: payload.followers || [],
                   following: payload.following || [],
                 }),
-            ...(followStatesUnavailable
+            ...(followStatesUnavailable || !hasFollowStatesPayload
               ? {}
               : {
-                  followStates: payload.followStates || {},
+                  followStates: payload.followStates,
                   followStatesPreserve: preservedFollowHandles,
                 }),
             kits: payload.kits || [],
@@ -1345,8 +1361,16 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
             notifications: payload.notifications || [],
             replace: true,
           });
-          if (followStatesUnavailable) {
-            (window as any).__lkdvShowFollowUnavailable?.();
+          const followUnavailableScope: 'states' | 'lists' | 'all' | null =
+            followStatesUnavailable && followListsUnavailable
+              ? 'all'
+              : followListsUnavailable
+                ? 'lists'
+                : followStatesUnavailable
+                  ? 'states'
+                  : null;
+          if (followUnavailableScope) {
+            (window as any).__lkdvShowFollowUnavailable?.(followUnavailableScope);
           }
           if (payload.profile?.handle) setActiveHandle(payload.profile.handle);
         }

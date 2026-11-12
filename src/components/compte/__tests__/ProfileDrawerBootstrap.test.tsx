@@ -934,4 +934,80 @@ describe('Compte — pont de suivi runtime', () => {
     );
     expect(runtimeState().followStates.alice).toBe('requested');
   });
+
+  it('conserve l’état connu quand le payload ne porte pas followStates', async () => {
+    const boot = deferredBootstrap();
+    bootstrapAnswer = () => boot.promise;
+
+    await renderCompte();
+    await waitFor(() => expect(bootstrapCalls).toBe(1));
+    await act(async () => {
+      (window as any).__lkdvHydrateCompte({ followStates: { alice: 'requested' } });
+    });
+
+    // Ancienne instance serveur ou payload partiel : l'absence du champ ne
+    // doit pas être interprétée comme un ensemble vide.
+    await act(async () => {
+      boot.resolve(
+        okResponse({
+          ...BOOTSTRAP_PAYLOAD,
+          profile: { ...BOOTSTRAP_PAYLOAD.profile, name: 'Payload sans états' },
+          followers: [],
+          following: [],
+          tribu: [],
+        })
+      );
+    });
+
+    await waitFor(() => expect(runtimeState().S.profile.name).toBe('Payload sans états'));
+    expect(runtimeState().followStates.alice).toBe('requested');
+    expect(followButtonLabel(runtimeState().followStates.alice)).toBe('Demande envoyée');
+  });
+
+  it('conserve les compteurs quand les relations sont indisponibles', async () => {
+    const boot = deferredBootstrap();
+    bootstrapAnswer = () => boot.promise;
+
+    await renderCompte();
+    await waitFor(() => expect(bootstrapCalls).toBe(1));
+    await act(async () => {
+      (window as any).__lkdvHydrateCompte({
+        followersCount: 7,
+        followingCount: 4,
+        followers: [{ id: 'f1', n: 'Alice', ps: 'alice', i: 'A' }],
+        following: [{ id: 'f2', n: 'Bruno', ps: 'bruno', i: 'B' }],
+        followStates: { alice: 'requested' },
+      });
+    });
+
+    await act(async () => {
+      boot.resolve(
+        okResponse({
+          ...BOOTSTRAP_PAYLOAD,
+          profile: { ...BOOTSTRAP_PAYLOAD.profile, name: 'Relations indisponibles' },
+          followers: [],
+          following: [],
+          tribu: [],
+          followListsUnavailable: true,
+          // Les états restent une lecture distincte : ils doivent s'appliquer
+          // même quand seules les listes sont indisponibles.
+          followStates: { alice: 'following' },
+        })
+      );
+    });
+
+    await waitFor(() =>
+      expect(runtimeState().S.profile.name).toBe('Relations indisponibles')
+    );
+    // Les compteurs et listes connus ne sont pas remplacés par des zéros.
+    expect(runtimeState().S.profile.followersCount).toBe(7);
+    expect(runtimeState().S.profile.followingCount).toBe(4);
+    expect(runtimeState().followStates.alice).toBe('following');
+
+    // Le tiroir Réseau lit ses propres données ; la preuve ici porte sur les
+    // compteurs du profil et sur l'avertissement de lecture partielle.
+    expect(document.getElementById('island')?.textContent).toContain(
+      'Listes d’abonnés indisponibles'
+    );
+  });
 });
