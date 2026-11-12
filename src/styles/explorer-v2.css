@@ -1215,6 +1215,14 @@ body[data-explorer-sheet-open='true'] nav[aria-label="Navigation principale"]:no
   animation: xpToast 0.4s ease both;
 }
 
+/* Trace demandée mais inexploitable : information neutre, pas une alerte. */
+.xp-offroute--unavailable {
+  background: rgba(23, 64, 44, 0.9);
+  box-shadow: 0 8px 22px rgba(11, 31, 23, 0.28), inset 0 1px 0 rgba(250, 248, 245, 0.22);
+  color: #faf8f5;
+  font-weight: 600;
+}
+
 /* ── Compte à rebours de départ ───────────────────────────────────────── */
 .xp-countdown {
   position: absolute;

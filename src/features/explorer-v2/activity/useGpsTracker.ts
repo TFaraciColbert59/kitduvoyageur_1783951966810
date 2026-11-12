@@ -3,7 +3,11 @@
 import { useEffect, useRef } from 'react';
 import { ActivityTracker, autoPauseConfigForSport, type GpsFix } from './tracker';
 import { haptic } from '../state/haptics';
-import { evaluateOffRoute, type OffRouteState } from './offRoute';
+import {
+  evaluateOffRoute,
+  pruneOffRouteSamples,
+  type OffRouteState,
+} from './offRoute';
 import { useExplorerStore } from '../state/store';
 import { gpsSimulationEnabled } from './gpsSimulation';
 
@@ -105,7 +109,9 @@ export function useGpsTracker({ distanceToRouteM, onFix }: TrackerOptions = {}) 
           t: metrics.effectiveTMs ?? fix.t,
           distanceM: distance,
         });
-        if (samplesRef.current.length > 40) samplesRef.current.shift();
+        // Fenêtre de 60 s, indépendante de la fréquence : à 4 Hz, 40 fixes ne
+        // couvrent que 9,75 s et empêcheraient l'alerte de 15 s de partir.
+        samplesRef.current = pruneOffRouteSamples(samplesRef.current);
         const next = evaluateOffRoute(samplesRef.current, offRouteRef.current);
         const wasOff = offRouteRef.current.offRoute;
         offRouteRef.current = next;

@@ -12,6 +12,17 @@ const mapProbe = vi.hoisted(() => ({
   props: null as Record<string, unknown> | null,
 }));
 
+/**
+ * Double de la réponse `explorer_routes` (géométrie simplifiée d'affichage) et
+ * de `get_route_geojson` (géométrie réelle). Les deux peuvent diverger : c'est
+ * précisément ce que le hors-trace doit distinguer.
+ */
+const routeProbe = vi.hoisted(() => ({
+  display: null as unknown,
+  full: null as unknown,
+  geometryStatus: 200,
+}));
+
 vi.mock('next/dynamic', () => ({
   default: () => (props: Record<string, unknown>) => {
     mapProbe.props = props;
@@ -85,7 +96,12 @@ vi.mock('@/features/explorer-v2/data/hooks', () => ({
   useCountryDetails: () => ({ data: null }),
   useOnline: () => true,
   usePlace: () => ({
-    data: { place: null, pois: [], routes: [ROUTE], window: { dLat: 0, dLng: 0 } },
+    data: {
+      place: null,
+      pois: [],
+      routes: [routeProbe.display ?? ROUTE],
+      window: { dLat: 0, dLng: 0 },
+    },
   }),
   useReducedMotion: () => false,
   useRegionsGeo: () => ({ data: null }),
@@ -133,7 +149,21 @@ function push(fix: GpsFix): void {
   act(() => target.__xpPushFix?.(fix));
 }
 
-async function mount(): Promise<void> {
+/** Point situé exactement sur la trace réelle de test (45,9209 N). */
+function onRoute(t: number, speedMs = 1): GpsFix {
+  return {
+    t,
+    lat: 45.9209,
+    lng: LNG0,
+    ele: 1200,
+    acc: 5,
+    speed: speedMs,
+  };
+}
+
+async function mount(
+  expectedStatus: 'ready' | 'unavailable' = 'ready',
+): Promise<void> {
   useExplorerStore.setState({
     level: 3,
     geo: 'FR',
@@ -149,11 +179,36 @@ async function mount(): Promise<void> {
     expect(typeof target.__xpPushFix).toBe('function');
   });
   await waitFor(() => expect(mapProbe.props).not.toBeNull());
+  await waitFor(() =>
+    expect(useExplorerStore.getState().activity?.route?.status).toBe(expectedStatus),
+  );
 }
 
 beforeEach(() => {
   window.localStorage.removeItem(AUTO_PAUSE_STORAGE_KEY);
   mapProbe.props = null;
+  routeProbe.display = null;
+  routeProbe.full = null;
+  routeProbe.geometryStatus = 200;
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('/geometry')) {
+        if (routeProbe.geometryStatus !== 200) {
+          return new Response('{}', { status: routeProbe.geometryStatus });
+        }
+        return new Response(
+          JSON.stringify({ geojson: routeProbe.full ?? ROUTE.geojson }),
+          {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          },
+        );
+      }
+      return new Response('{}', { status: 404 });
+    }),
+  );
   useExplorerStore.setState({
     activity: undefined,
     summary: undefined,
@@ -165,13 +220,17 @@ beforeEach(() => {
     detent: 'peek',
     camera: { type: 'none' },
     selection: undefined,
+    trailRoute: undefined,
     center: [LNG0, LAT0],
     zoom: 11,
     toast: undefined,
   });
 });
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
 
 describe('explorer-v2 · hors-trace branché sur le composant', () => {
   it('affiche la distance à la trace, pas la distance parcourue', async () => {
@@ -198,5 +257,69 @@ describe('explorer-v2 · hors-trace branché sur le composant', () => {
     push({ t: 30_000, lat: 45.9209, lng: 6.87, ele: 1200, acc: 5, speed: 1 });
     expect(useExplorerStore.getState().activity?.offRoute).toBe(false);
     expect(screen.queryByRole('button', { name: /Hors itinéraire/ })).toBeNull();
+  });
+
+  it('mesure sur la géométrie réelle, pas sur la trace simplifiée d’affichage', async () => {
+    // La version d'affichage est décalée de ~550 m ; la version complète passe
+    // exactement sous les pas. Une mesure sur l'affichage déclencherait une
+    // fausse alerte, ce que la fiche interdit.
+    routeProbe.display = {
+      ...ROUTE,
+      geojson: {
+        type: 'LineString',
+        coordinates: [
+          [6.86, 45.9259],
+          [6.88, 45.9259],
+        ],
+      },
+    };
+    await mount();
+
+    push(onRoute(0));
+    push(onRoute(5_000));
+    push(onRoute(10_000));
+    push(onRoute(20_000));
+
+    const activity = useExplorerStore.getState().activity;
+    expect(activity?.offRoute).toBe(false);
+    expect(activity?.offRouteM).toBeLessThan(1);
+    expect(screen.queryByRole('button', { name: /Hors itinéraire/ })).toBeNull();
+  });
+
+  it('affiche un état indisponible quand la géométrie réelle manque', async () => {
+    routeProbe.display = { ...ROUTE, geojson: null };
+    routeProbe.geometryStatus = 404;
+    await mount('unavailable');
+
+    // Des fixes très loin de la trace ne doivent produire ni alerte ni valeur
+    // trompeuse : le hors-trace est explicitement désactivé.
+    push(at(0, 5_000));
+    push(at(5_000, 5_100));
+    push(at(20_000, 5_200));
+
+    const activity = useExplorerStore.getState().activity;
+    expect(activity?.offRoute).toBe(false);
+    expect(activity?.offRouteM).toBeUndefined();
+    expect(
+      screen.getByRole('status', { name: /Hors-trace indisponible/ }),
+    ).toBeTruthy();
+  });
+
+  it('ne confond pas une route de démonstration avec un identifiant homonyme', async () => {
+    // Même si la base possède un tracé d'id 1, la route affichée est une route
+    // de secours sans géométrie : on ne doit pas lui substituer ce tracé.
+    routeProbe.display = { ...ROUTE, geojson: null, unavailable: true };
+    routeProbe.full = ROUTE.geojson;
+    await mount('unavailable');
+
+    const fetchMock = globalThis.fetch as unknown as {
+      mock: { calls: Array<[RequestInfo | URL, ...unknown[]]> };
+    };
+    expect(
+      fetchMock.mock.calls.some(([input]) => String(input).includes('/geometry')),
+    ).toBe(false);
+    expect(
+      screen.getByRole('status', { name: /Hors-trace indisponible/ }),
+    ).toBeTruthy();
   });
 });

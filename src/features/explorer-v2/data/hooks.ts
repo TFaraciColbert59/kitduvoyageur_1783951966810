@@ -48,7 +48,18 @@ export interface RouteItem {
   distance_km: number | null;
   network: string | null;
   ref: string | null;
-  geojson: unknown;
+  /**
+   * Géométrie d'affichage simplifiée. `null` pour les routes de secours sans
+   * tracé : le hors-trace doit alors afficher un état indisponible, jamais
+   * mesurer une distance sur une géométrie absente.
+   */
+  geojson: unknown | null;
+  /**
+   * Route de démonstration servie quand la base ne renvoie aucun itinéraire.
+   * Son identifiant ne désigne aucun tracé réel : le hors-trace doit rester
+   * indisponible au lieu d'aller chercher une géométrie homonyme.
+   */
+  unavailable?: boolean;
 }
 
 export interface PlaceResponse {

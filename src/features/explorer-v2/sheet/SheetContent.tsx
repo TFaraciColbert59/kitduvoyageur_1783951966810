@@ -472,6 +472,7 @@ function RoutesTab({ ctx }: { ctx: SheetContext }) {
       distance_km: 170.0,
       network: 'iwn',
       ref: 'TMB',
+      unavailable: true,
     },
     {
       id: 102,
@@ -479,6 +480,7 @@ function RoutesTab({ ctx }: { ctx: SheetContext }) {
       distance_km: 9.1,
       network: 'nwn',
       ref: 'GR®',
+      unavailable: true,
     },
     {
       id: 103,
@@ -486,6 +488,7 @@ function RoutesTab({ ctx }: { ctx: SheetContext }) {
       distance_km: 8.8,
       network: 'rwn',
       ref: 'PR',
+      unavailable: true,
     },
     {
       id: 104,
@@ -493,6 +496,7 @@ function RoutesTab({ ctx }: { ctx: SheetContext }) {
       distance_km: 16.0,
       network: 'nwn',
       ref: 'GRP',
+      unavailable: true,
     },
   ];
 

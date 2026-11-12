@@ -12,6 +12,33 @@ export const OFF_ROUTE_M = 40;
 export const OFF_ROUTE_SECONDS = 15;
 export const BACK_ON_ROUTE_M = 25;
 
+/**
+ * Fenêtre d'historique du hors-trace, en millisecondes.
+ *
+ * Elle est **temporelle**, pas un nombre d'échantillons : à 4 Hz, 40 fixes ne
+ * couvrent que 9,75 s et ne peuvent jamais atteindre les 15 s requises. 60 s
+ * laissent deux fois la marge nécessaire, quelle que soit la fréquence GPS.
+ */
+export const OFF_ROUTE_WINDOW_MS = 60_000;
+
+/**
+ * Élague l'historique par temps autour du dernier point. Le tri est garanti
+ * par l'appelant (instants effectifs monotones du tracker).
+ */
+export function pruneOffRouteSamples<T extends { t: number }>(
+  samples: T[],
+  windowMs: number = OFF_ROUTE_WINDOW_MS,
+): T[] {
+  if (samples.length === 0) return samples;
+  const latest = samples[samples.length - 1].t;
+  const oldest = latest - Math.max(0, windowMs);
+  let firstKept = 0;
+  while (firstKept < samples.length - 1 && samples[firstKept].t < oldest) {
+    firstKept += 1;
+  }
+  return firstKept > 0 ? samples.slice(firstKept) : samples;
+}
+
 export interface OffRouteSample {
   /** Horodatage en millisecondes. */
   t: number;
@@ -55,7 +82,9 @@ export function evaluateOffRoute(
   }
   const outSinceS = (last.t - startedAt) / 1000;
   return {
-    offRoute: outSinceS >= OFF_ROUTE_SECONDS,
+    // La fiche exige « plus de 15 s » : à 15 s exactement, l'alerte n'est pas
+    // encore levée.
+    offRoute: outSinceS > OFF_ROUTE_SECONDS,
     distanceM: distance,
     outSinceS,
   };

@@ -174,6 +174,15 @@ const CLOCK_MIN_DIFF_S = 10;
 /** Plafond générique quand le sport n'est pas connu (54 km/h). */
 export const DEFAULT_MAX_PLAUSIBLE_SPEED_MS = 15;
 const ELE_SMOOTHING = 0.25;
+/**
+ * Fenêtre de preuve pour un `speed` GPS rapporté à 0. Un zéro est une mesure
+ * d'arrêt valide : on ne le remplace par la vitesse déduite que si la position
+ * a réellement progressé (déplacement net suffisant) sur une durée assez
+ * longue pour ne pas confondre le jitter stationnaire avec de la marche.
+ */
+const ZERO_SPEED_WINDOW_MS = 20_000;
+const ZERO_SPEED_MIN_SPAN_S = 10;
+const ZERO_SPEED_MIN_DISPLACEMENT_M = 8;
 
 function finiteOr(value: number | undefined, fallback: number): number {
   return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
@@ -361,6 +370,9 @@ export class ActivityTracker {
   /** Réception du premier fix de l'époque basse, pour écarter une rafale. */
   private backwardCandidateReceivedAtMs: number | null = null;
 
+  /** Fenêtre des fixes à `speed: 0`, pour distinguer arrêt et vitesse figée. */
+  private zeroSpeedWindow: Array<{ t: number; fix: GpsFix }> = [];
+
   constructor(config: Partial<AutoPauseConfig> = AUTO_PAUSE_DISABLED) {
     this.config = normalizeConfig(config);
   }
@@ -409,6 +421,11 @@ export class ActivityTracker {
       this.startNewSegment(fix, false, ele);
       this.continuityBroken = false;
       this.rejectedSinceLastFix = false;
+      // Le premier fix à `speed: 0` est la borne de la fenêtre : sans lui, un
+      // déplacement réel dès le départ perdrait son premier intervalle.
+      if (reportedSpeed === 0) {
+        this.zeroSpeedWindow = [{ t: this.lastEffectiveTMs ?? fix.t, fix }];
+      }
       return this.state;
     }
 
@@ -480,13 +497,17 @@ export class ActivityTracker {
     }
 
     const gap = measuredS > this.config.maxFixGapS;
-    // Une vitesse rapportée à 0 alors que la position avance ne doit pas
-    // fabriquer une pause : la vitesse déduite sert de garde-fou contre un
-    // `speed` figé. Les autres vitesses rapportées restent prioritaires.
+    // `speed: 0` est une mesure d'arrêt : il n'est remplacé par la vitesse
+    // déduite que si un déplacement net prouve que le GPS est figé. Sans cela,
+    // le jitter stationnaire faisait croire à un mouvement et l'auto-pause ne
+    // s'accumulait jamais.
     const inferredSpeed = dtS > 0 ? distance / dtS : 0;
-    const speed =
-      reportedSpeed === null || reportedSpeed === 0 ? inferredSpeed : reportedSpeed;
     const effectiveT = (this.lastEffectiveTMs ?? previous.t) + dtS * 1000;
+    // Un saut d'horloge compresse ou étire le temps : la fenêtre `speed: 0`
+    // ne doit pas traverser la correction, sinon 5 m de jitter étalés sur
+    // 30 s deviendraient 2,5 m/s. Elle repart de la nouvelle borne.
+    if (Math.abs(dtS - measuredS) > 1e-6) this.zeroSpeedWindow = [];
+    const speed = this.resolveSpeed(reportedSpeed, inferredSpeed, fix, effectiveT);
 
     // Le premier fix qui suit un rejet établit une nouvelle borne, sans
     // comparer sa distance à l'ancienne : après une perte de fix, la position
@@ -507,6 +528,7 @@ export class ActivityTracker {
       this.rejectedSinceLastFix = false;
       this.stoppedS = 0;
       this.resumingS = 0;
+      this.zeroSpeedWindow = [];
       // Même règle que la branche « trou » : après une coupure, une vitesse
       // explicitement rapportée suffit à lever une pause automatique, sinon on
       // resterait pausé jusqu'à la prochaine série.
@@ -544,6 +566,7 @@ export class ActivityTracker {
       this.rejectedSinceLastFix = false;
       this.stoppedS = 0;
       this.resumingS = 0;
+      this.zeroSpeedWindow = [];
       if (
         this.autoPaused &&
         reportedSpeed !== null &&
@@ -720,10 +743,51 @@ export class ActivityTracker {
       : MIN_MOVING_SPEED_MS;
   }
 
+  /**
+   * Vitesse retenue pour les métriques et l'auto-pause.
+   *
+   * - vitesse rapportée > 0 : prioritaire ;
+   * - vitesse absente : vitesse déduite, comportement historique ;
+   * - vitesse rapportée = 0 : arrêt, sauf preuve d'un `speed` figé (déplacement
+   *   net ≥ 8 m sur ≥ 10 s, soit un mouvement soutenu hors du bruit GPS).
+   */
+  private resolveSpeed(
+    reportedSpeed: number | null,
+    inferredSpeed: number,
+    fix: GpsFix,
+    effectiveT: number,
+  ): number {
+    if (reportedSpeed === null) return inferredSpeed;
+    if (reportedSpeed > 0) {
+      this.zeroSpeedWindow = [];
+      return reportedSpeed;
+    }
+
+    const window = this.zeroSpeedWindow;
+    window.push({ t: effectiveT, fix });
+    while (window.length > 1 && effectiveT - window[0].t > ZERO_SPEED_WINDOW_MS) {
+      window.shift();
+    }
+    const first = window[0];
+    const spanS = (effectiveT - first.t) / 1000;
+    if (spanS >= ZERO_SPEED_MIN_SPAN_S) {
+      const displacement = haversineM(first.fix, fix);
+      const sustainedSpeed = displacement / spanS;
+      if (
+        displacement >= ZERO_SPEED_MIN_DISPLACEMENT_M &&
+        sustainedSpeed >= this.config.resumeSpeedThresholdMs
+      ) {
+        return sustainedSpeed;
+      }
+    }
+    return 0;
+  }
+
   private resetAutoPause(): void {
     this.autoPaused = false;
     this.stoppedS = 0;
     this.resumingS = 0;
+    this.zeroSpeedWindow = [];
   }
 
   private updateAutoPause(dtS: number, rawSpeed: number): void {

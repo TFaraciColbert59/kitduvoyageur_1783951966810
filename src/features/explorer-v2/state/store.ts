@@ -15,6 +15,7 @@ import type {
   Sport,
   SportSelection,
   ToastMessage,
+  TrailRouteSnapshot,
 } from './types';
 import { LEVEL_ZOOM, SCENES, type SceneName } from './scenes';
 
@@ -45,6 +46,12 @@ interface ExplorerActions {
   dismissToast: () => void;
   startActivity: (sport: Sport, sessionId?: string | null, selection?: SportSelection) => void;
   updateActivity: (patch: Partial<ActivityState>) => void;
+  /**
+   * Publie la géométrie réelle chargée pour l'itinéraire armé. Si une séance
+   * porte déjà cet itinéraire, sa copie figée reçoit la même géométrie : on ne
+   * remplace jamais l'identifiant choisi au départ.
+   */
+  setTrailRoute: (route?: TrailRouteSnapshot) => void;
   stopActivity: () => void;
   setTheme: (theme: 'light' | 'dark') => void;
   toggleNorthUp: () => void;
@@ -117,14 +124,30 @@ function emit(event: string, detail?: Record<string, unknown>) {
   w.__explorerEvents.push({ event, detail: detail ?? null, t: Date.now() });
 }
 
+/**
+ * Copie figée de l'itinéraire armé. Si la sélection vient d'être posée et que
+ * la géométrie n'est pas encore publiée, on conserve l'identifiant avec
+ * `loading` : le chargement pourra aboutir, mais la route ne changera plus.
+ */
+function routeSnapshotFor(
+  selection: Selection | undefined,
+  trailRoute: TrailRouteSnapshot | undefined,
+): TrailRouteSnapshot | undefined {
+  if (selection?.kind !== 'trail') return undefined;
+  if (trailRoute?.id === selection.id) return trailRoute;
+  return { id: selection.id, name: null, geojson: null, status: 'loading' };
+}
+
 function activityStarted(
   sport: Sport,
   sessionId: string | null,
   selection?: SportSelection,
+  route?: TrailRouteSnapshot,
 ): ActivityState {
   return {
     sport,
     ...(selection ? { selection } : {}),
+    ...(route ? { route } : {}),
     sessionId,
     startedAt: Date.now(),
     paused: false,
@@ -227,6 +250,12 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
     const center = get().center;
     set({
       selection,
+      // Armer un nouvel itinéraire remplace toute géométrie précédente. La
+      // séance en cours, elle, garde sa propre copie dans `activity.route`.
+      trailRoute:
+        selection.kind === 'trail'
+          ? { id: selection.id, name: null, geojson: null, status: 'loading' }
+          : undefined,
       sheet,
       detent,
       tab: 0,
@@ -239,7 +268,13 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
     emit('select', { kind: selection.kind, id: selection.id, sheet });
   },
 
-  clearSelection: () => set({ selection: undefined, sheet: 'level', detent: 'peek' }),
+  clearSelection: () =>
+    set({
+      selection: undefined,
+      trailRoute: undefined,
+      sheet: 'level',
+      detent: 'peek',
+    }),
 
   setSheet: (sheet, detent) => {
     set({ sheet, detent: detent ?? get().detent });
@@ -274,9 +309,14 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
   dismissToast: () => set({ toast: undefined }),
 
   startActivity: (sport, sessionId = null, selection) => {
-    const activity = activityStarted(sport, sessionId, selection);
+    const route = routeSnapshotFor(get().selection, get().trailRoute);
+    const activity = activityStarted(sport, sessionId, selection, route);
     set({
       activity,
+      // Une nouvelle séance ne peut plus hériter de la sélection précédente :
+      // le hors-trace lit exclusivement `activity.route`, figé ci-dessus.
+      selection: undefined,
+      trailRoute: route,
       sheet: 'live',
       detent: 'peek',
       camera: { type: 'follow' },
@@ -285,17 +325,33 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
       sport,
       sessionId,
       variantId: selection?.variantId ?? null,
+      routeId: route?.id ?? null,
     });
   },
 
   updateActivity: (patch) =>
     set((state) => (state.activity ? { activity: { ...state.activity, ...patch } } : {})),
 
+  setTrailRoute: (route) =>
+    set((state) => {
+      const activity =
+        route &&
+        state.activity?.route?.id === route.id &&
+        state.activity.route.status !== 'ready'
+          ? { ...state.activity, route }
+          : state.activity;
+      return { trailRoute: route, activity };
+    }),
+
   stopActivity: () => {
     const current = get().activity;
     set({
       activity: undefined,
       summary: current ? { ...current, endedAt: Date.now() } : null,
+      // La séance terminée garde sa copie dans `summary`; la suivante repart
+      // sans itinéraire tant que l'utilisateur n'en a pas choisi un.
+      selection: undefined,
+      trailRoute: undefined,
       // Sans UUID serveur, le bilan est local : ne jamais suggérer un problème
       // de connexion à un utilisateur authentifié.
       summarySaved: current?.sessionId ? 'pending' : 'local',

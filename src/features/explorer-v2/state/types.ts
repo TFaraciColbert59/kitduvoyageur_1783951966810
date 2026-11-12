@@ -107,10 +107,34 @@ export interface PendingStart {
   selection?: SportSelection;
 }
 
+/**
+ * État de la géométrie réelle d'un itinéraire, figée au démarrage de la
+ * séance. `loading` couvre la requête `get_route_geojson` ; `unavailable`
+ * signifie qu'aucune trace exploitable n'existe (route de secours sans
+ * géométrie, 404, réseau coupé). Le hors-trace est alors explicitement
+ * désactivé, jamais silencieusement mort.
+ */
+export type TrailGeometryStatus = 'loading' | 'ready' | 'unavailable';
+
+export interface TrailRouteSnapshot {
+  /** Identifiant de l'itinéraire choisi ; jamais remplacé en cours de séance. */
+  id: string;
+  name: string | null;
+  /** Géométrie **complète** (`get_route_geojson`), jamais la version simplifiée. */
+  geojson: unknown | null;
+  status: TrailGeometryStatus;
+}
+
 export interface ActivityState {
   sport: Sport;
   /** Variante choisie ; absente pour les scènes et les anciens appels. */
   selection?: SportSelection;
+  /**
+   * Itinéraire figé à la séance. Absent = aucune trace choisie (suivi libre) ;
+   * présent avec `status: 'unavailable'` = hors-trace demandé mais impossible.
+   * Les anciennes entrées, qui n'ont pas ce champ, restent valides.
+   */
+  route?: TrailRouteSnapshot;
   sessionId: string | null;
   startedAt: number;
   /** Pause manuelle : le suivi GPS est suspendu. */
@@ -149,6 +173,11 @@ export interface ExplorerState {
   tab: number;
   mini: number;
   selection?: Selection;
+  /**
+   * Itinéraire armé pour le prochain départ. Sa géométrie réelle est chargée
+   * une fois ; `startActivity` en fait une copie figée dans `activity.route`.
+   */
+  trailRoute?: TrailRouteSnapshot;
   activity?: ActivityState;
   /** Dernière sortie terminée, affichée dans l'écran Bilan. */
   summary?: (ActivityState & { endedAt: number }) | null;

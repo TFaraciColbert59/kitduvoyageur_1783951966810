@@ -25,6 +25,7 @@ import { enqueue, flushQueue, listQueue } from './offline/queue';
 import { registerOfflineWorker } from './offline/zone';
 import { offRouteLabel } from './activity/offRoute';
 import { distanceToRouteM, routeLines } from './geo/track';
+import { fetchRouteGeometry } from './data/routeGeometry';
 import { XpIcon } from './ui/XpIcon';
 import { haptic } from './state/haptics';
 import {
@@ -352,22 +353,64 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
   const pois = useMemo(() => place?.pois ?? [], [place]);
   const routes = useMemo(() => place?.routes ?? [], [place]);
 
-  // Trace de l'itinéraire sélectionné : c'est elle qui alimente le hors-trace
-  // réel. Les lignes sont extraites une fois par route, pas à chaque fix.
-  const selectedRoute = useMemo(() => {
-    if (state.selection?.kind !== 'trail') return null;
-    return routes.find((route) => String(route.id) === state.selection?.id) ?? null;
-  }, [routes, state.selection]);
-  const selectedRouteLines = useMemo(
-    () => (selectedRoute ? routeLines(selectedRoute.geojson) : []),
-    [selectedRoute],
+  // Charge la géométrie COMPLÈTE de l'itinéraire armé, une seule fois. La
+  // version renvoyée par `explorer_routes` est simplifiée pour l'affichage et
+  // peut s'écarter de plus de 40 m : elle ne doit jamais servir au hors-trace.
+  // Le chargement survit au démarrage (qui vide `selection`) tant que
+  // `trailRoute` porte le même identifiant ; il est annulé à l'arrêt.
+  const trailRouteId = state.trailRoute?.id;
+  const trailRouteStatus = state.trailRoute?.status;
+  const routesRef = React.useRef(routes);
+  routesRef.current = routes;
+  useEffect(() => {
+    if (!trailRouteId || trailRouteStatus !== 'loading') return;
+    let cancelled = false;
+    const publish = (geojson: unknown | null) => {
+      if (cancelled) return;
+      const current = useExplorerStore.getState().trailRoute;
+      if (!current || current.id !== trailRouteId) return;
+      const ready = geojson !== null && routeLines(geojson).length > 0;
+      useExplorerStore.getState().setTrailRoute({
+        id: trailRouteId,
+        name: current.name,
+        geojson: ready ? geojson : null,
+        status: ready ? 'ready' : 'unavailable',
+      });
+    };
+    // Route de démonstration : aucun identifiant réel à interroger, et une
+    // géométrie homonyme en base serait un autre sentier. On dit l'indisponible.
+    const display = routesRef.current.find((route) => String(route.id) === trailRouteId);
+    // Sans entrée d'affichage connue (route de secours locale ou fenêtre
+    // rechargée), l'identifiant ne désigne aucun sentier vérifiable : on
+    // n'interroge pas un homonyme de la base, on dit l'indisponible.
+    if (!display || display.unavailable) {
+      publish(null);
+      return;
+    }
+    void fetchRouteGeometry(trailRouteId)
+      .then(publish)
+      .catch(() => publish(null));
+    return () => {
+      cancelled = true;
+    };
+  }, [trailRouteId, trailRouteStatus]);
+
+  // Hors-trace : la séance porte sa propre copie de l'itinéraire, figée au
+  // départ. On ignore `state.selection` et la géométrie simplifiée
+  // d'affichage : seules les lignes réelles chargées via `get_route_geojson`
+  // alimentent la mesure. Les lignes sont extraites une fois, pas par fix.
+  const activityRoute = state.activity?.route ?? null;
+  const activityRouteLines = useMemo(
+    () =>
+      activityRoute?.status === 'ready' ? routeLines(activityRoute.geojson) : [],
+    [activityRoute],
   );
   const distanceToRoute = useCallback(
     (fix: GpsFix) =>
-      selectedRouteLines.length > 0
-        ? distanceToRouteM([fix.lng, fix.lat], selectedRouteLines)
+      activityRouteLines.length > 0
+        ? distanceToRouteM([fix.lng, fix.lat], activityRouteLines)
         : null,
-    [selectedRouteLines],
+    [activityRouteLines],
   );
 
   const selectedPoi = useMemo(() => {
@@ -879,6 +922,19 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
           <span>{offRouteLabel(activity.offRouteM)}</span>
           <XpIcon name="nav" size={15} />
         </button>
+      ) : null}
+
+      {/* Une trace demandée mais inexploitable ne doit jamais laisser croire
+          que le hors-trace surveille : l'état est dit, pas silencieux. */}
+      {activityRoute?.status === 'unavailable' && !activity?.offRoute ? (
+        <div
+          className="xp-offroute xp-offroute--unavailable"
+          role="status"
+          aria-label="Hors-trace indisponible : trace non chargée"
+        >
+          <XpIcon name="alert" size={15} />
+          <span>Hors-trace indisponible</span>
+        </div>
       ) : null}
 
       {sheetOpen ? (

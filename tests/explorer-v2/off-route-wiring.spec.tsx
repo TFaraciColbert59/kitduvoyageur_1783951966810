@@ -108,8 +108,9 @@ describe('explorer-v2 · hors-trace et horloges', () => {
     push(at(16_000, 20, 1));
     expect(useExplorerStore.getState().activity?.offRoute).toBe(false);
 
-    // 15 s dans la nouvelle époque, pas 3 589 s négatives.
-    push(at(31_000, 25, 1));
+    // Plus de 15 s dans la nouvelle époque, pas 3 589 s négatives (la fiche
+    // exige strictement « plus de 15 s »).
+    push(at(31_001, 25, 1));
     expect(useExplorerStore.getState().activity?.offRoute).toBe(true);
   });
 
@@ -127,9 +128,24 @@ describe('explorer-v2 · hors-trace et horloges', () => {
     push(at(200_000, 1_005, 1));
     expect(useExplorerStore.getState().activity?.offRoute).toBe(false);
 
-    push(at(215_000, 1_010, 1));
+    push(at(215_001, 1_010, 1));
     expect(useExplorerStore.getState().activity?.offRoute).toBe(true);
   });
+  it('déclenche à 4 Hz : la fenêtre est temporelle, pas bornée à 40 fixes', async () => {
+    useExplorerStore.getState().startActivity('rando');
+    await mountTracker();
+
+    // 80 fixes à 250 ms = 20 s hors trace. Avec un buffer de 40 échantillons,
+    // seuls 9,75 s auraient été conservés et l'alerte n'aurait jamais pu partir.
+    for (let index = 0; index <= 80; index += 1) {
+      push(at(index * 250, 80, 1));
+    }
+
+    const activity = useExplorerStore.getState().activity;
+    expect(activity?.offRoute).toBe(true);
+    expect(activity?.offRouteM).toBeCloseTo(80, 0);
+  });
+
   it('vide le buffer même quand la distance est indisponible après un rejet', async () => {
     useExplorerStore.getState().startActivity('rando');
     await mountTracker();

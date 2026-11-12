@@ -282,4 +282,17 @@ describe('geo/track · distance à la trace sélectionnée', () => {
       distanceToRouteM([6.87, 45.92], routeLines({ type: 'LineString', coordinates: [] })),
     ).toBeNull();
   });
+
+  it('accepte une géométrie 3D (GPX avec altitude) en ignorant l’altitude', () => {
+    const lines = routeLines({
+      type: 'LineString',
+      coordinates: [
+        [6.87, 45.92, 1200],
+        [6.88, 45.92, 1210],
+      ],
+    });
+    expect(lines).toHaveLength(1);
+    expect(lines[0][0]).toEqual([6.87, 45.92, 1200]);
+    expect(distanceToRouteM([6.875, 45.92 + 80 / 111320], lines) ?? 0).toBeCloseTo(80, 0);
+  });
 });

@@ -1055,6 +1055,20 @@ describe('explorer-v2 · auto-pause', () => {
     expect(state.autoPaused).toBe(false);
   });
 
+  it('traite speed 0 comme un arrêt malgré le jitter stationnaire', () => {
+    const tracker = new ActivityTracker(AUTO_PAUSE_BY_SPORT.rando);
+    // 200 s à 1 Hz, position alternée de 3 m : le GPS rapporte explicitement
+    // l'arrêt. La vitesse déduite ne doit pas transformer ce jitter en marche.
+    let state = tracker.addFix(at(0, 0, 0));
+    for (let t = 1; t <= 200; t += 1) {
+      state = tracker.addFix(at(t * 1000, t % 2 === 0 ? 3 : 0, 0));
+    }
+    expect(state.autoPaused).toBe(true);
+    expect(state.movingS).toBe(0);
+    // Sans la correction, le jitter produisait ~595 m de distance fantôme.
+    expect(state.distanceM).toBeLessThan(400);
+  });
+
   it('corrige un saut stationnaire avec quelques mètres de jitter', () => {
     const tracker = new ActivityTracker(AUTO_PAUSE_BY_SPORT.rando);
     const fix = (t: number, distanceM: number, receivedAt: number): GpsFix => ({
@@ -1068,8 +1082,10 @@ describe('explorer-v2 · auto-pause', () => {
     }
     // Chaque saut de 30 s est reçu en 2 s ; 5 m de jitter ne doivent pas
     // fabriquer 30 s d'arrêt ni déclencher la pause (seuil rando 120 s).
+    // `speed: 0` reste une mesure d'arrêt : le jitter ne crée pas de durée en
+    // mouvement. Seule la correction d'horloge est vérifiée ici.
     expect(state.autoPaused).toBe(false);
-    expect(state.movingS).toBeGreaterThan(0);
+    expect(state.movingS).toBe(0);
   });
 
 });

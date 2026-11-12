@@ -25,9 +25,13 @@ export const DEFAULT_STEP_M = 60;
  */
 export const MAX_RESAMPLED_POINTS = 20_000;
 
-/** Vrai si la valeur est une paire [lng, lat] finie et dans les bornes légales. */
+/**
+ * Vrai si la valeur commence par une paire [lng, lat] finie et dans les bornes
+ * légales. Les géométries GeoJSON 3D (`[lng, lat, ele]`, GPX avec altitude)
+ * sont acceptées : seule l'altitude est ignorée par les calculs planimétriques.
+ */
 export function isValidLngLat(value: unknown): value is LngLat {
-  if (!Array.isArray(value) || value.length !== 2) return false;
+  if (!Array.isArray(value) || value.length < 2) return false;
   const [lng, lat] = value;
   return (
     typeof lng === 'number' &&
@@ -105,6 +109,7 @@ export function routeLines(geojson: unknown): RouteLine[] {
       current = [];
     };
     for (const coordinate of rawLine) {
+      // `coordinate` peut porter une altitude : `LngLat` ne lit que [0] et [1].
       if (isValidLngLat(coordinate)) current.push(coordinate);
       else flush();
     }
