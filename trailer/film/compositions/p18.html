@@ -1,126 +1,18 @@
-<!-- hf-skeleton generated id=p18 sha256=19e0a36cde96a36a — carte provisoire générée par tools/timeline/build-skeleton.mjs depuis film/shots.json ; toute retouche hors de la zone hf-footage la soustrait au générateur -->
+<!-- P18 (images 1060–1139, 79 images) — landscape-director. img44, le colis : Léa sort le LKDV ONE du carton.
+     Entrée sur l'impact de P17 (sonnette) : la poussée continue en freinant (S 1,10 → 1,18, outExpo, 8 i) avec une
+     secousse qui retombe en ~10 i. Légère contre-plongée simulée : la caméra se relève en poussant (cy 600 → 520,
+     l'image descend) vers le sac au centre (badge ≈ 980, 496). Sortie : poussée qui accélère (inCubic, 18 dernières
+     images, S → 1,62) vers le lit de P19. Écusson du sac intact. Caméra : window.__lkdvCam.p18(f) → { S, cx, cy, rot }. -->
 <template>
   <style>
-    #root {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-      background: #17402C;
-      font-family: "Inter", sans-serif;
-      color: #FAF8F5;
-    }
-    .p18-card {
-      position: absolute;
-      inset: 0;
-      padding: 96px 120px 120px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-    .p18-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      font-family: "JetBrains Mono", monospace;
-      font-size: 34px;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-    }
-    .p18-mid {
-      display: flex;
-      align-items: flex-end;
-      gap: 72px;
-    }
-    .p18-num {
-      font-weight: 900;
-      font-size: 360px;
-      line-height: 0.8;
-      letter-spacing: -0.04em;
-    }
-    .p18-meta {
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-      padding-bottom: 8px;
-    }
-    .p18-source {
-      font-family: "JetBrains Mono", monospace;
-      font-weight: 700;
-      font-size: 64px;
-    }
-    .p18-frames {
-      font-family: "JetBrains Mono", monospace;
-      font-size: 36px;
-    }
-    .p18-star {
-      font-weight: 700;
-      font-size: 40px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-    }
-    .p18-intent {
-      max-width: 1600px;
-      font-size: 52px;
-      line-height: 1.2;
-      font-weight: 400;
-    }
-    .p18-track {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      height: 12px;
-      background: rgba(250, 248, 245, 0.18);
-    }
-    .p18-bar {
-      position: absolute;
-      inset: 0;
-      background: #FAF8F5;
-      transform-origin: 0 50%;
-    }
-    .p18-frame {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-    }
-    .p18-shot,
-    .p18-shot-inner {
-      position: absolute;
-      inset: 0;
-    }
-    .p18-shot {
-      opacity: 0;
-    }
-    .p18-shot-img {
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 1920px;
-      height: 1080px;
-      /* Remplit le 16:9 sans déformer, quel que soit le rapport de l'image : recadrage au centre. */
-      object-fit: cover;
-      object-position: 50% 50%;
-    }
+    #root { position: absolute; inset: 0; overflow: hidden; background: #0B1F17; }
+    .p18-frame { position: absolute; inset: 0; overflow: hidden; }
+    .p18-shot, .p18-shot-inner { position: absolute; inset: 0; }
+    .p18-shot { opacity: 0; }
+    .p18-shot-img { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
+    #p18-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
   </style>
   <div id="root" data-composition-id="p18" data-width="1920" data-height="1080" data-duration="1.3166666666666667">
-    <!-- Carte provisoire : outil de travail, disparaît quand l'image du plan est là. -->
-    <div id="p18-card" class="p18-card" data-shot="p18" data-act="4">
-      <div id="p18-top" class="p18-top">
-        <span id="p18-act">Acte 4 · DÉCISION</span>
-        <span id="p18-range">1060–1139</span>
-      </div>
-      <div id="p18-mid" class="p18-mid">
-        <div id="p18-num" class="p18-num">P18</div>
-        <div id="p18-meta" class="p18-meta">
-          <div id="p18-source" class="p18-source">img44</div>
-          <div id="p18-frames" class="p18-frames">79 images · 1,32 s</div>
-        </div>
-      </div>
-      <div id="p18-intent" class="p18-intent">Le colis : elle sort le LKDV ONE 45 du carton</div>
-      <div id="p18-track" class="p18-track"><div id="p18-bar" class="p18-bar"></div></div>
-    </div>
-    <!-- Emplacement d'image plein cadre : assets/footage/img44.png.
-         Chaque calque : .p18-shot (opacité, séquence) > .p18-shot-inner (libre pour le mouvement) > img. -->
     <div id="p18-frame" class="p18-frame" data-layout-allow-overflow>
       <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) -->
       <div id="p18-shot-1" class="p18-shot" data-src="img44" data-seq="0" data-seq-count="1">
@@ -130,30 +22,66 @@
       </div>
     <!-- hf-footage:end -->
     </div>
+    <canvas id="p18-canvas" width="1920" height="1080" data-layout-allow-overflow></canvas>
   </div>
+  <script src="lib/fx/core.js"></script>
   <script>
     (function () {
-      var D = 79 / 60;
-      var tl = gsap.timeline({ paused: true });
-      // Barre de progression : se remplit sur la durée du plan.
-      tl.fromTo("#p18-bar", { scaleX: 0 }, { scaleX: 1, duration: D, ease: "none" }, 0);
-      // Images présentes : chaque source occupe sa part égale du plan (ordre de la trame) ;
-      // la carte reste visible là où l'image manque.
-      var shots = Array.prototype.slice.call(document.querySelectorAll(".p18-shot"));
-      if (shots.length) {
-        var n = Number(shots[0].getAttribute("data-seq-count"));
-        var bySeq = {};
-        shots.forEach(function (el) { bySeq[el.getAttribute("data-seq")] = el; });
-        for (var k = 0; k < n; k++) {
-          var t = (k * D) / n;
-          var el = bySeq[String(k)];
-          shots.forEach(function (other) {
-            tl.set(other, { opacity: other === el ? 1 : 0 }, t);
-          });
-          tl.set("#p18-card", { opacity: el ? 0 : 1 }, t);
-        }
+      var FX = window.LKDVFX;
+      var W = 1920, H = 1080, INK = "#0B1F17";
+      var img = document.getElementById("p18-shot-1-img");
+      var ctx = document.getElementById("p18-canvas").getContext("2d");
+      function hand(f, amp, seed) {
+        return (FX.noise2(f * 0.09, 1.7, seed) - 0.5) * amp + (FX.noise2(f * 0.45, 5.3, seed + 7) - 0.5) * amp * 0.3;
       }
-      window.__timelines["p18"] = tl;
+      function fit(c) {
+        var a = Math.abs(c.rot || 0), co = Math.cos(a), si = Math.sin(a);
+        var hx = (W / 2 * co + H / 2 * si) / c.S + 2, hy = (W / 2 * si + H / 2 * co) / c.S + 2;
+        c.cx = FX.clamp(c.cx, hx, W - hx);
+        c.cy = FX.clamp(c.cy, hy, H - hy);
+        return c;
+      }
+      function drawCam(c2, c, alpha) {
+        c2.globalAlpha = alpha;
+        c2.setTransform(1, 0, 0, 1, 0, 0);
+        c2.translate(W / 2, H / 2);
+        if (c.rot) c2.rotate(c.rot);
+        c2.scale(c.S, c.S);
+        c2.translate(-c.cx, -c.cy);
+        c2.drawImage(img, 0, 0, W, H);
+      }
+      function shoot(camAt, f, shutter) {
+        var a = camAt(f), b = camAt(f - shutter);
+        var d = Math.abs(a.S - b.S) * 1100 + (Math.abs(a.cx - b.cx) + Math.abs(a.cy - b.cy)) * a.S + Math.abs((a.rot || 0) - (b.rot || 0)) * 1100;
+        var n = FX.clamp(Math.ceil(d / 1.2), 1, 12);
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = INK;
+        ctx.fillRect(0, 0, W, H);
+        for (var i = 0; i < n; i++) drawCam(ctx, n === 1 ? a : camAt(f - (shutter * i) / (n - 1)), 1 / (i + 1));
+        ctx.globalAlpha = 1;
+      }
+
+      var N = 79;
+      function camAt(f) {
+        var a = FX.ease.outExpo(FX.clamp(f / 8, 0, 1));
+        var g = FX.ease.inOutSine(FX.clamp(f / (N - 1), 0, 1));
+        var z = FX.ease.inCubic(FX.clamp((f - 60) / (N - 1 - 60), 0, 1));
+        var sh = Math.pow(1 - FX.clamp(f / 10, 0, 1), 2);
+        var S = 1.10 + 0.08 * a + 0.12 * g + 0.32 * z;
+        var cx = 1060 + (1000 - 1060) * g + hand(f, 7, 181) + (FX.noise2(f * 1.7, 3.3, 183) - 0.5) * 24 * sh;
+        var cy = 600 + (520 - 600) * g + hand(f, 6, 185) + (FX.noise2(f * 1.7, 7.7, 187) - 0.5) * 20 * sh;
+        var rot = (Math.PI / 180) * ((FX.noise2(f * 1.3, 4.4, 189) - 0.5) * 1.4 * sh + 0.5 * (1 - g));
+        return fit({ S: S, cx: cx, cy: cy, rot: rot });
+      }
+      window.__lkdvCam = window.__lkdvCam || {};
+      window.__lkdvCam.p18 = camAt;
+      var clock = FX.bindClock("p18", N, function (t, f) {
+        if (!img.complete || !img.naturalWidth) { ctx.fillStyle = INK; ctx.fillRect(0, 0, W, H); return; }
+        shoot(camAt, f, 0.5);
+      });
+      img.addEventListener("load", function () { clock.redraw(); });
+      window.__timelines["p18"] = clock.tl;
     })();
   </script>
 </template>

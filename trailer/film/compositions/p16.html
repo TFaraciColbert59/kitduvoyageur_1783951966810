@@ -1,126 +1,21 @@
-<!-- hf-skeleton generated id=p16 sha256=9265ae278e315069 — carte provisoire générée par tools/timeline/build-skeleton.mjs depuis film/shots.json ; toute retouche hors de la zone hf-footage la soustrait au générateur -->
+<!-- P16 (images 928–1034, 106 images) — landscape-director. img42, plongée sur Léa allongée.
+     Entrée : raccord sur la chute de P15 — la caméra continue de descendre (l'image monte) en freinant (outCubic, 40 i)
+     et le roulis de −2° se redresse (outExpo, 12 i) ; Léa sourit, cadrée large (S 1,12 → 1,18).
+     Dès l'image 38 : descente franche vers le téléphone posé sur le drap (inOutCubic pour la position, inCubic pour
+     l'échelle) jusqu'à S 3,2 centré sur l'écran : l'écran vert (img42 : 908–1011 × 813–1010, 197 px) occupe ≈ 58 %
+     de la hauteur du cadre à la fin. Sortie au plus rapide de la poussée (vers le pouce de P17). Écran VERT intact.
+     Caméra exposée : window.__lkdvCam.p16(f) → { S, cx, cy, rot } (img42 → écran : rotation rot de
+     (S·(x − cx), S·(y − cy)) puis + (960, 540)). -->
 <template>
   <style>
-    #root {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-      background: #17402C;
-      font-family: "Inter", sans-serif;
-      color: #FAF8F5;
-    }
-    .p16-card {
-      position: absolute;
-      inset: 0;
-      padding: 96px 120px 120px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-    .p16-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      font-family: "JetBrains Mono", monospace;
-      font-size: 34px;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-    }
-    .p16-mid {
-      display: flex;
-      align-items: flex-end;
-      gap: 72px;
-    }
-    .p16-num {
-      font-weight: 900;
-      font-size: 360px;
-      line-height: 0.8;
-      letter-spacing: -0.04em;
-    }
-    .p16-meta {
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-      padding-bottom: 8px;
-    }
-    .p16-source {
-      font-family: "JetBrains Mono", monospace;
-      font-weight: 700;
-      font-size: 64px;
-    }
-    .p16-frames {
-      font-family: "JetBrains Mono", monospace;
-      font-size: 36px;
-    }
-    .p16-star {
-      font-weight: 700;
-      font-size: 40px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-    }
-    .p16-intent {
-      max-width: 1600px;
-      font-size: 52px;
-      line-height: 1.2;
-      font-weight: 400;
-    }
-    .p16-track {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      height: 12px;
-      background: rgba(250, 248, 245, 0.18);
-    }
-    .p16-bar {
-      position: absolute;
-      inset: 0;
-      background: #FAF8F5;
-      transform-origin: 0 50%;
-    }
-    .p16-frame {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-    }
-    .p16-shot,
-    .p16-shot-inner {
-      position: absolute;
-      inset: 0;
-    }
-    .p16-shot {
-      opacity: 0;
-    }
-    .p16-shot-img {
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 1920px;
-      height: 1080px;
-      /* Remplit le 16:9 sans déformer, quel que soit le rapport de l'image : recadrage au centre. */
-      object-fit: cover;
-      object-position: 50% 50%;
-    }
+    #root { position: absolute; inset: 0; overflow: hidden; background: #0B1F17; }
+    .p16-frame { position: absolute; inset: 0; overflow: hidden; }
+    .p16-shot, .p16-shot-inner { position: absolute; inset: 0; }
+    .p16-shot { opacity: 0; }
+    .p16-shot-img { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
+    #p16-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
   </style>
   <div id="root" data-composition-id="p16" data-width="1920" data-height="1080" data-duration="1.7666666666666666">
-    <!-- Carte provisoire : outil de travail, disparaît quand l'image du plan est là. -->
-    <div id="p16-card" class="p16-card" data-shot="p16" data-act="4">
-      <div id="p16-top" class="p16-top">
-        <span id="p16-act">Acte 4 · DÉCISION</span>
-        <span id="p16-range">928–1034</span>
-      </div>
-      <div id="p16-mid" class="p16-mid">
-        <div id="p16-num" class="p16-num">P16</div>
-        <div id="p16-meta" class="p16-meta">
-          <div id="p16-source" class="p16-source">img42 + E5</div>
-          <div id="p16-frames" class="p16-frames">106 images · 1,77 s</div>
-        </div>
-      </div>
-      <div id="p16-intent" class="p16-intent">Kit Studio : le sac tourne, « Prêté par Sami », « À louer », « Occasion »… le total fond. Elle sourit</div>
-      <div id="p16-track" class="p16-track"><div id="p16-bar" class="p16-bar"></div></div>
-    </div>
-    <!-- Emplacement d'image plein cadre : assets/footage/img42.png.
-         Chaque calque : .p16-shot (opacité, séquence) > .p16-shot-inner (libre pour le mouvement) > img. -->
     <div id="p16-frame" class="p16-frame" data-layout-allow-overflow>
       <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) -->
       <div id="p16-shot-1" class="p16-shot" data-src="img42" data-seq="0" data-seq-count="1">
@@ -130,30 +25,68 @@
       </div>
     <!-- hf-footage:end -->
     </div>
+    <canvas id="p16-canvas" width="1920" height="1080" data-layout-allow-overflow></canvas>
   </div>
+  <script src="lib/fx/core.js"></script>
   <script>
     (function () {
-      var D = 106 / 60;
-      var tl = gsap.timeline({ paused: true });
-      // Barre de progression : se remplit sur la durée du plan.
-      tl.fromTo("#p16-bar", { scaleX: 0 }, { scaleX: 1, duration: D, ease: "none" }, 0);
-      // Images présentes : chaque source occupe sa part égale du plan (ordre de la trame) ;
-      // la carte reste visible là où l'image manque.
-      var shots = Array.prototype.slice.call(document.querySelectorAll(".p16-shot"));
-      if (shots.length) {
-        var n = Number(shots[0].getAttribute("data-seq-count"));
-        var bySeq = {};
-        shots.forEach(function (el) { bySeq[el.getAttribute("data-seq")] = el; });
-        for (var k = 0; k < n; k++) {
-          var t = (k * D) / n;
-          var el = bySeq[String(k)];
-          shots.forEach(function (other) {
-            tl.set(other, { opacity: other === el ? 1 : 0 }, t);
-          });
-          tl.set("#p16-card", { opacity: el ? 0 : 1 }, t);
-        }
+      var FX = window.LKDVFX;
+      var W = 1920, H = 1080, INK = "#0B1F17";
+      var img = document.getElementById("p16-shot-1-img");
+      var ctx = document.getElementById("p16-canvas").getContext("2d");
+      function hand(f, amp, seed) {
+        return (FX.noise2(f * 0.09, 1.7, seed) - 0.5) * amp + (FX.noise2(f * 0.45, 5.3, seed + 7) - 0.5) * amp * 0.3;
       }
-      window.__timelines["p16"] = tl;
+      function fit(c) {
+        var a = Math.abs(c.rot || 0), co = Math.cos(a), si = Math.sin(a);
+        var hx = (W / 2 * co + H / 2 * si) / c.S + 2, hy = (W / 2 * si + H / 2 * co) / c.S + 2;
+        c.cx = FX.clamp(c.cx, hx, W - hx);
+        c.cy = FX.clamp(c.cy, hy, H - hy);
+        return c;
+      }
+      function drawCam(c2, c, alpha) {
+        c2.globalAlpha = alpha;
+        c2.setTransform(1, 0, 0, 1, 0, 0);
+        c2.translate(W / 2, H / 2);
+        if (c.rot) c2.rotate(c.rot);
+        c2.scale(c.S, c.S);
+        c2.translate(-c.cx, -c.cy);
+        c2.drawImage(img, 0, 0, W, H);
+      }
+      function shoot(camAt, f, shutter) {
+        var a = camAt(f), b = camAt(f - shutter);
+        var d = Math.abs(a.S - b.S) * 1100 + (Math.abs(a.cx - b.cx) + Math.abs(a.cy - b.cy)) * a.S + Math.abs((a.rot || 0) - (b.rot || 0)) * 1100;
+        var n = FX.clamp(Math.ceil(d / 1.2), 1, 12);
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = INK;
+        ctx.fillRect(0, 0, W, H);
+        for (var i = 0; i < n; i++) drawCam(ctx, n === 1 ? a : camAt(f - (shutter * i) / (n - 1)), 1 / (i + 1));
+        ctx.globalAlpha = 1;
+      }
+
+      var N = 106;
+      function camAt(f) {
+        var a = FX.ease.outCubic(FX.clamp(f / 40, 0, 1));
+        var r = FX.ease.outExpo(FX.clamp(f / 12, 0, 1));
+        var p = FX.clamp((f - 38) / (N - 1 - 38), 0, 1);
+        var zs = FX.ease.inCubic(p), zp = FX.ease.inOutCubic(FX.clamp((f - 38) / 58, 0, 1));
+        var S0 = 1.12 + 0.06 * a;
+        var S = S0 + (3.2 - S0) * zs;
+        var cx0 = 1012 + hand(f, 7, 161), cy0 = 470 + 75 * a + hand(f, 6, 163);
+        var cx = cx0 + (960 - cx0) * zp + hand(f, 2, 167) * (1 - zp);
+        var cy = cy0 + (911 - cy0) * zp;
+        var rot = -(Math.PI / 180) * 2 * (1 - r);
+        return fit({ S: S, cx: cx, cy: cy, rot: rot });
+      }
+      window.__lkdvCam = window.__lkdvCam || {};
+      window.__lkdvCam.p16 = camAt;
+      var clock = FX.bindClock("p16", N, function (t, f) {
+        if (!img.complete || !img.naturalWidth) { ctx.fillStyle = INK; ctx.fillRect(0, 0, W, H); return; }
+        shoot(camAt, f, 0.55);
+      });
+      img.addEventListener("load", function () { clock.redraw(); });
+      window.__timelines["p16"] = clock.tl;
     })();
   </script>
 </template>

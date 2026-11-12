@@ -1,126 +1,18 @@
-<!-- hf-skeleton generated id=p19 sha256=2aad2935632a6c66 — carte provisoire générée par tools/timeline/build-skeleton.mjs depuis film/shots.json ; toute retouche hors de la zone hf-footage la soustrait au générateur -->
+<!-- P19 (images 1139–1191, 52 images) — landscape-director. img12, vue de dessus du matériel étalé.
+     Entrée : poussée rapide qui prolonge celle de P18 (S 1,10 → 1,45, outCubic, 20 i) vers le sac au centre.
+     Roulis léger 0 → +3° (inOutSine). Sortie : nouvelle accélération (inCubic, dès l'image 18, S → 2,45) vers la sangle
+     et la boucle du sac (≈ 936, 590), au plus rapide à la coupe 1191 (clac de la boucle, P20).
+     Caméra : window.__lkdvCam.p19(f) → { S, cx, cy, rot }. -->
 <template>
   <style>
-    #root {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-      background: #17402C;
-      font-family: "Inter", sans-serif;
-      color: #FAF8F5;
-    }
-    .p19-card {
-      position: absolute;
-      inset: 0;
-      padding: 96px 120px 120px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-    .p19-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      font-family: "JetBrains Mono", monospace;
-      font-size: 34px;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-    }
-    .p19-mid {
-      display: flex;
-      align-items: flex-end;
-      gap: 72px;
-    }
-    .p19-num {
-      font-weight: 900;
-      font-size: 360px;
-      line-height: 0.8;
-      letter-spacing: -0.04em;
-    }
-    .p19-meta {
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-      padding-bottom: 8px;
-    }
-    .p19-source {
-      font-family: "JetBrains Mono", monospace;
-      font-weight: 700;
-      font-size: 64px;
-    }
-    .p19-frames {
-      font-family: "JetBrains Mono", monospace;
-      font-size: 36px;
-    }
-    .p19-star {
-      font-weight: 700;
-      font-size: 40px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-    }
-    .p19-intent {
-      max-width: 1600px;
-      font-size: 52px;
-      line-height: 1.2;
-      font-weight: 400;
-    }
-    .p19-track {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      height: 12px;
-      background: rgba(250, 248, 245, 0.18);
-    }
-    .p19-bar {
-      position: absolute;
-      inset: 0;
-      background: #FAF8F5;
-      transform-origin: 0 50%;
-    }
-    .p19-frame {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-    }
-    .p19-shot,
-    .p19-shot-inner {
-      position: absolute;
-      inset: 0;
-    }
-    .p19-shot {
-      opacity: 0;
-    }
-    .p19-shot-img {
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 1920px;
-      height: 1080px;
-      /* Remplit le 16:9 sans déformer, quel que soit le rapport de l'image : recadrage au centre. */
-      object-fit: cover;
-      object-position: 50% 50%;
-    }
+    #root { position: absolute; inset: 0; overflow: hidden; background: #0B1F17; }
+    .p19-frame { position: absolute; inset: 0; overflow: hidden; }
+    .p19-shot, .p19-shot-inner { position: absolute; inset: 0; }
+    .p19-shot { opacity: 0; }
+    .p19-shot-img { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
+    #p19-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
   </style>
   <div id="root" data-composition-id="p19" data-width="1920" data-height="1080" data-duration="0.8666666666666667">
-    <!-- Carte provisoire : outil de travail, disparaît quand l'image du plan est là. -->
-    <div id="p19-card" class="p19-card" data-shot="p19" data-act="4">
-      <div id="p19-top" class="p19-top">
-        <span id="p19-act">Acte 4 · DÉCISION</span>
-        <span id="p19-range">1139–1191</span>
-      </div>
-      <div id="p19-mid" class="p19-mid">
-        <div id="p19-num" class="p19-num">P19</div>
-        <div id="p19-meta" class="p19-meta">
-          <div id="p19-source" class="p19-source">img12</div>
-          <div id="p19-frames" class="p19-frames">52 images · 0,87 s</div>
-        </div>
-      </div>
-      <div id="p19-intent" class="p19-intent">Tout le matériel étalé, elle remplit le sac</div>
-      <div id="p19-track" class="p19-track"><div id="p19-bar" class="p19-bar"></div></div>
-    </div>
-    <!-- Emplacement d'image plein cadre : assets/footage/img12.png.
-         Chaque calque : .p19-shot (opacité, séquence) > .p19-shot-inner (libre pour le mouvement) > img. -->
     <div id="p19-frame" class="p19-frame" data-layout-allow-overflow>
       <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) -->
       <div id="p19-shot-1" class="p19-shot" data-src="img12" data-seq="0" data-seq-count="1">
@@ -130,30 +22,65 @@
       </div>
     <!-- hf-footage:end -->
     </div>
+    <canvas id="p19-canvas" width="1920" height="1080" data-layout-allow-overflow></canvas>
   </div>
+  <script src="lib/fx/core.js"></script>
   <script>
     (function () {
-      var D = 52 / 60;
-      var tl = gsap.timeline({ paused: true });
-      // Barre de progression : se remplit sur la durée du plan.
-      tl.fromTo("#p19-bar", { scaleX: 0 }, { scaleX: 1, duration: D, ease: "none" }, 0);
-      // Images présentes : chaque source occupe sa part égale du plan (ordre de la trame) ;
-      // la carte reste visible là où l'image manque.
-      var shots = Array.prototype.slice.call(document.querySelectorAll(".p19-shot"));
-      if (shots.length) {
-        var n = Number(shots[0].getAttribute("data-seq-count"));
-        var bySeq = {};
-        shots.forEach(function (el) { bySeq[el.getAttribute("data-seq")] = el; });
-        for (var k = 0; k < n; k++) {
-          var t = (k * D) / n;
-          var el = bySeq[String(k)];
-          shots.forEach(function (other) {
-            tl.set(other, { opacity: other === el ? 1 : 0 }, t);
-          });
-          tl.set("#p19-card", { opacity: el ? 0 : 1 }, t);
-        }
+      var FX = window.LKDVFX;
+      var W = 1920, H = 1080, INK = "#0B1F17";
+      var img = document.getElementById("p19-shot-1-img");
+      var ctx = document.getElementById("p19-canvas").getContext("2d");
+      function hand(f, amp, seed) {
+        return (FX.noise2(f * 0.09, 1.7, seed) - 0.5) * amp + (FX.noise2(f * 0.45, 5.3, seed + 7) - 0.5) * amp * 0.3;
       }
-      window.__timelines["p19"] = tl;
+      function fit(c) {
+        var a = Math.abs(c.rot || 0), co = Math.cos(a), si = Math.sin(a);
+        var hx = (W / 2 * co + H / 2 * si) / c.S + 2, hy = (W / 2 * si + H / 2 * co) / c.S + 2;
+        c.cx = FX.clamp(c.cx, hx, W - hx);
+        c.cy = FX.clamp(c.cy, hy, H - hy);
+        return c;
+      }
+      function drawCam(c2, c, alpha) {
+        c2.globalAlpha = alpha;
+        c2.setTransform(1, 0, 0, 1, 0, 0);
+        c2.translate(W / 2, H / 2);
+        if (c.rot) c2.rotate(c.rot);
+        c2.scale(c.S, c.S);
+        c2.translate(-c.cx, -c.cy);
+        c2.drawImage(img, 0, 0, W, H);
+      }
+      function shoot(camAt, f, shutter) {
+        var a = camAt(f), b = camAt(f - shutter);
+        var d = Math.abs(a.S - b.S) * 1100 + (Math.abs(a.cx - b.cx) + Math.abs(a.cy - b.cy)) * a.S + Math.abs((a.rot || 0) - (b.rot || 0)) * 1100;
+        var n = FX.clamp(Math.ceil(d / 1.2), 1, 12);
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = INK;
+        ctx.fillRect(0, 0, W, H);
+        for (var i = 0; i < n; i++) drawCam(ctx, n === 1 ? a : camAt(f - (shutter * i) / (n - 1)), 1 / (i + 1));
+        ctx.globalAlpha = 1;
+      }
+
+      var N = 52;
+      function camAt(f) {
+        var a = FX.ease.outCubic(FX.clamp(f / 20, 0, 1));
+        var z = FX.ease.inCubic(FX.clamp((f - 18) / (N - 1 - 18), 0, 1));
+        var g = FX.ease.inOutSine(FX.clamp(f / (N - 1), 0, 1));
+        var S = 1.10 + 0.35 * a + 1.0 * z;
+        var cx = 975 + (940 - 975) * a + (936 - 940) * z + hand(f, 6, 191);
+        var cy = 520 + (560 - 520) * a + (590 - 560) * z + hand(f, 5, 193);
+        var rot = (Math.PI / 180) * 3 * g;
+        return fit({ S: S, cx: cx, cy: cy, rot: rot });
+      }
+      window.__lkdvCam = window.__lkdvCam || {};
+      window.__lkdvCam.p19 = camAt;
+      var clock = FX.bindClock("p19", N, function (t, f) {
+        if (!img.complete || !img.naturalWidth) { ctx.fillStyle = INK; ctx.fillRect(0, 0, W, H); return; }
+        shoot(camAt, f, 0.55);
+      });
+      img.addEventListener("load", function () { clock.redraw(); });
+      window.__timelines["p19"] = clock.tl;
     })();
   </script>
 </template>
