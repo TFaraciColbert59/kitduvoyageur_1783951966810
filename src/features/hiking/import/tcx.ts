@@ -118,6 +118,22 @@ export function parseTcx(
   const lapEndInstants: string[] = [];
   const lapEndLocals: string[] = [];
   const extensionScopes: Array<{ depth: number; ignored: number }> = [];
+  const ignoredSectionByName = new Map<string, TraceIgnoredSection>();
+
+  // Une section est nommée, jamais répétée : `Extensions` peut apparaître à
+  // chaque trackpoint. Agréger par nom conserve le volume exact tout en
+  // bornant la provenance au nombre de noms de sections connus.
+  const recordIgnoredSection = (name: string, elementCount: number): TraceIgnoredSection => {
+    const existing = ignoredSectionByName.get(name);
+    if (existing != null) {
+      existing.elementCount += elementCount;
+      return existing;
+    }
+    const section = { name, elementCount };
+    ignoredSectionByName.set(name, section);
+    ignoredSections.push(section);
+    return section;
+  };
 
   let issueLimitReported = false;
   let activitiesDepth: number | null = null;
@@ -204,8 +220,7 @@ export function parseTcx(
         }
         if (tcx && depth > 1 && IGNORED_SECTIONS.has(localName)) {
           ignoredSectionDepth = depth;
-          ignoredSection = { name: localName, elementCount: 0 };
-          ignoredSections.push(ignoredSection);
+          ignoredSection = recordIgnoredSection(localName, 0);
           return;
         }
 
@@ -490,7 +505,7 @@ export function parseTcx(
           if (scope.depth === depth) {
             extensionScopes.pop();
             if (scope.ignored > 0) {
-              ignoredSections.push({ name: 'Extensions', elementCount: scope.ignored });
+              recordIgnoredSection('Extensions', scope.ignored);
               addIssue(
                 'ignored-section',
                 `Extensions TCX hors TPX ignorées (${scope.ignored} éléments non interprétés).`,
@@ -719,6 +734,7 @@ export function parseTcx(
       maxHeartRateBpm: null,
       averageCadenceRpm: null,
       averageCadenceSpm: null,
+      maxPowerW: null,
       intensity: null,
       triggerMethod: null,
       firstPointIndex: null,

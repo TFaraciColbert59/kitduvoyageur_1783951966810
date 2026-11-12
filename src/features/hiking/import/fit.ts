@@ -337,7 +337,8 @@ const FIT_MESSAGE_SPECS: Readonly<Record<number, Readonly<Record<number, FitFiel
     15: { name: 'avgHeartRate' },
     16: { name: 'maxHeartRate' },
     17: { name: 'avgCadence' },
-    20: { name: 'intensity', kind: 'enum', enumMap: INTENSITY_NAMES },
+    20: { name: 'maxPower' },
+    23: { name: 'intensity', kind: 'enum', enumMap: INTENSITY_NAMES },
     24: { name: 'lapTrigger', kind: 'enum', enumMap: LAP_TRIGGER_NAMES },
     25: { name: 'sport', kind: 'enum', enumMap: SPORT_NAMES },
   },
@@ -384,7 +385,7 @@ const FIT_MESSAGE_SPECS: Readonly<Record<number, Readonly<Record<number, FitFiel
 const CONSUMED_FIT_FIELDS: Readonly<Record<number, ReadonlySet<number>>> = {
   0: new Set([0, 1, 2, 3, 4]),
   20: new Set([253, 0, 1, 2, 3, 4, 5, 6, 7, 13, 73, 78]),
-  19: new Set([2, 7, 8, 9, 11, 13, 14, 15, 16, 17, 20, 24, 25]),
+  19: new Set([2, 7, 8, 9, 11, 13, 14, 15, 16, 17, 20, 23, 24, 25]),
   18: new Set([2, 5, 7, 8, 9, 11, 14, 15, 16, 17, 18, 253]),
   34: new Set([0, 253]),
   23: new Set([27]),
@@ -644,17 +645,25 @@ export function parseFit(
 
   // Les laps FIT sont des résumés : on rattache chaque point au dernier lap
   // dont le début précède son horodatage. Les débuts sont triés une fois, avec
-  // le plus grand index de document atteint, puis chaque point fait une
-  // recherche binaire : O((points + laps) log laps), jamais O(points × laps).
-  const sortedLapStarts = lapMessages
+  // l'index de document comme second critère (à début égal, le dernier lap du
+  // document gagne), puis chaque point fait une recherche binaire :
+  // O((points + laps) log laps), jamais O(points × laps). Un fichier dont les
+  // débuts de laps ne sont pas croissants reste lisible : le point est rattaché
+  // au dernier début réel, et la non-monotonie est signalée.
+  const lapStarts = lapMessages
     .map((lap, index) => ({ index, start: timestampSeconds(lap, 2) }))
-    .filter((lap): lap is { index: number; start: number } => lap.start != null)
-    .sort((left, right) => left.start - right.start);
-  const indexedLapStarts: Array<{ start: number; maxIndex: number }> = [];
-  let maxLapIndex = -1;
-  for (const lap of sortedLapStarts) {
-    maxLapIndex = Math.max(maxLapIndex, lap.index);
-    indexedLapStarts.push({ start: lap.start, maxIndex: maxLapIndex });
+    .filter((lap): lap is { index: number; start: number } => lap.start != null);
+  const sortedLapStarts = [...lapStarts].sort(
+    (left, right) => left.start - right.start || left.index - right.index,
+  );
+  let lapStartsOutOfOrder = false;
+  let previousLapStart: number | null = null;
+  for (const lap of lapStarts) {
+    if (previousLapStart != null && lap.start < previousLapStart) {
+      lapStartsOutOfOrder = true;
+      break;
+    }
+    previousLapStart = lap.start;
   }
 
   if (lapMessages.length > 0) {
@@ -671,15 +680,15 @@ export function parseFit(
       }
 
       let low = 0;
-      let high = indexedLapStarts.length;
+      let high = sortedLapStarts.length;
       while (low < high) {
         const middle = (low + high) >> 1;
-        if (indexedLapStarts[middle].start <= seconds) low = middle + 1;
+        if (sortedLapStarts[middle].start <= seconds) low = middle + 1;
         else high = middle;
       }
       // `low === 0` : le point précède tous les laps. On ne le rattache pas
       // artificiellement au lap 0, dont le début lui est postérieur.
-      point.lapIndex = low === 0 ? -1 : indexedLapStarts[low - 1].maxIndex;
+      point.lapIndex = low === 0 ? -1 : sortedLapStarts[low - 1].index;
     }
   }
 
@@ -801,6 +810,13 @@ export function parseFit(
 
   if (hasOutOfOrderFits(points)) {
     addIssue('time-out-of-order', 'Les horodatages FIT ne sont pas croissants.', '$');
+  }
+  if (lapStartsOutOfOrder) {
+    addIssue(
+      'time-out-of-order',
+      'Les débuts de laps FIT ne sont pas croissants : chaque point est rattaché au dernier début réel.',
+      'lap',
+    );
   }
 
   return {
@@ -1196,7 +1212,8 @@ function lapMessageToLap(
     maxHeartRateBpm: valueAsNumber(message, 16),
     averageCadenceRpm: valueAsNumber(message, 17),
     averageCadenceSpm: null,
-    intensity: textField(message, 20),
+    maxPowerW: valueAsNumber(message, 20),
+    intensity: textField(message, 23),
     triggerMethod: textField(message, 24),
     firstPointIndex,
     pointCount,
@@ -1228,6 +1245,7 @@ function sessionToLap(
     maxHeartRateBpm: valueAsNumber(session, 17),
     averageCadenceRpm: valueAsNumber(session, 18),
     averageCadenceSpm: null,
+    maxPowerW: null,
     intensity: null,
     triggerMethod: null,
     firstPointIndex: points.length > 0 ? 0 : null,

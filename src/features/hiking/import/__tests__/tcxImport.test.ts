@@ -519,6 +519,22 @@ describe('import TCX · sections Courses et provenance', () => {
     expect(trace.issues.filter((issue) => issue.code === 'ignored-section')).toHaveLength(3);
   });
 
+  it('agrège 1 000 Extensions en une seule section de provenance', () => {
+    const trackpoints = Array.from({ length: 1000 }, (_, index) => {
+      const time = new Date(Date.UTC(2026, 7, 9, 8, 0, index)).toISOString();
+      return `<Trackpoint><Time>${time}</Time><Extensions><ext:Custom>1</ext:Custom></Extensions></Trackpoint>`;
+    }).join('');
+    const xml = `<TrainingCenterDatabase xmlns="${TCX_V2_NAMESPACE}" xmlns:ext="urn:lkdv:test"><Activities><Activity Sport="Running"><Id>2026-08-09T08:00:00.000Z</Id><Lap StartTime="2026-08-09T08:00:00.000Z"><TotalTimeSeconds>1000</TotalTimeSeconds><Track>${trackpoints}</Track></Lap></Activity></Activities></TrainingCenterDatabase>`;
+    const trace = parseTcx(xml);
+
+    expect(trace.points).toHaveLength(1000);
+    expect(trace.provenance.ignoredSections).toEqual([
+      { name: 'Extensions', elementCount: 1000 },
+    ]);
+    expect(trace.issues).toHaveLength(100);
+    expect(trace.issues.at(-1)).toMatchObject({ code: 'issue-limit' });
+  });
+
   it('ne signale pas les Extensions qui ne contiennent que TPX', () => {
     const trace = parseTcx(fixture('activity-valid.tcx'));
 
@@ -1667,6 +1683,43 @@ describe('import FIT · décodage local', () => {
     expect(trace.issues).toEqual([]);
   });
 
+  it('rattache un point au dernier début de lap même quand les laps sont désordonnés', () => {
+    const record: FitField[] = [
+      { num: 253, size: 4, type: 0x86, value: fitSeconds('2026-08-09T08:00:06.000Z') },
+      { num: 3, size: 1, type: 0x02, value: 120 },
+    ];
+    const later: FitField[] = [
+      { num: 253, size: 4, type: 0x86, value: fitSeconds('2026-08-09T08:00:11.000Z') },
+      { num: 3, size: 1, type: 0x02, value: 130 },
+    ];
+    const lapZero: FitField[] = [
+      { num: 2, size: 4, type: 0x86, value: fitSeconds('2026-08-09T08:00:10.000Z') },
+      { num: 7, size: 4, type: 0x86, value: 60000 },
+    ];
+    const lapOne: FitField[] = [
+      { num: 2, size: 4, type: 0x86, value: fitSeconds('2026-08-09T08:00:05.000Z') },
+      { num: 7, size: 4, type: 0x86, value: 60000 },
+    ];
+    const trace = parseFit(buildFit({
+      messages: [
+        definition(0, 20, record),
+        data(0, record),
+        data(0, later),
+        definition(1, 19, lapZero),
+        data(1, lapZero),
+        definition(2, 19, lapOne),
+        data(2, lapOne),
+      ],
+    }));
+
+    expect(trace.points.map((point) => point.lapIndex)).toEqual([1, 0]);
+    expect(trace.laps[0]).toMatchObject({ firstPointIndex: 1, pointCount: 1 });
+    expect(trace.laps[1]).toMatchObject({ firstPointIndex: 0, pointCount: 1 });
+    expect(trace.issues).toEqual(expect.arrayContaining([
+      expect.objectContaining({ code: 'time-out-of-order', path: 'lap' }),
+    ]));
+  });
+
   it('marque lapIndex -1 quand un point n’a pas d’horodatage', () => {
     const record: FitField[] = [{ num: 3, size: 1, type: 0x02, value: 120 }];
     const lap: FitField[] = [
@@ -1737,6 +1790,36 @@ describe('import FIT · décodage local', () => {
       averageSpeedMps: 2.4,
     });
     expect(trace.issues).toEqual([]);
+  });
+
+  it('lit max_power au champ 20 et intensity au champ 23', () => {
+    const record: FitField[] = [
+      { num: 253, size: 4, type: 0x86, value: fitSeconds(START) },
+      { num: 3, size: 1, type: 0x02, value: 120 },
+    ];
+    const lap: FitField[] = [
+      { num: 2, size: 4, type: 0x86, value: fitSeconds(START) },
+      { num: 7, size: 4, type: 0x86, value: 120000 },
+      { num: 20, size: 2, type: 0x84, value: 250 },
+      { num: 23, size: 1, type: 0x00, value: 3 },
+    ];
+    const trace = parseFit(buildFit({
+      messages: [
+        definition(0, 20, record),
+        data(0, record),
+        definition(1, 19, lap),
+        data(1, lap),
+      ],
+    }));
+
+    expect(trace.laps[0]).toMatchObject({
+      maxPowerW: 250,
+      intensity: 'cooldown',
+    });
+    const ignoredNames = trace.provenance.ignoredSections.map((section) => section.name);
+    expect(ignoredNames).not.toContain('fit-field:19:20');
+    expect(ignoredNames).not.toContain('fit-field:19:23');
+    expect(trace.availableMetrics).toContain('power');
   });
 
   it('expose dans availableMetrics les mesures portées par le résumé session', () => {

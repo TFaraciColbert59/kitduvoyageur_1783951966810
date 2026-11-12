@@ -183,6 +183,8 @@ export interface NormalizedTraceLap {
   averageCadenceRpm: number | null;
   /** Cadence course/marche moyenne du tour, en pas par minute. */
   averageCadenceSpm: number | null;
+  /** Puissance maximale du tour, en watts (`lap.maxPower` FIT). */
+  maxPowerW: number | null;
   intensity: string | null;
   triggerMethod: string | null;
   /** Index du premier point du tour dans `points`, `null` si aucun point complet. */

@@ -16,9 +16,11 @@ Références de suivi : `A03`, `K6.02`, `S1.15`.
   issue `unsupported-feature` au lieu d'une unité fausse. `Courses`,
   `Workouts`, `Folders`, `Notes`, `Training` et les `Extensions` hors `TPX`
   sont ignorés mais **signalés** (`provenance.ignoredSections` + issue
-  `ignored-section`). La fin d'un lap (`StartTime + TotalTimeSeconds`) entre
-  dans `endedAt` / `endedAtLocal`, même sans trackpoint ou quand le dernier
-  point précède la fin réelle.
+  `ignored-section`). Les `Extensions` hors `TPX` sont en outre agrégées par
+  nom avec leur `elementCount` global, pour que la provenance reste bornée.
+  La fin d'un lap (`StartTime + TotalTimeSeconds`) entre dans `endedAt` /
+  `endedAtLocal`, même sans trackpoint ou quand le dernier point précède la
+  fin réelle.
 - **FIT** : décodage binaire local des messages `file_id` (0), `session` (18),
   `lap` (19), `record` (20), `device_info` (23) et `activity` (34). Échelles,
   décalages, semicircles, little/big endian, en-tête 12 ou 14 octets, CRC
@@ -29,10 +31,12 @@ Références de suivi : `A03`, `K6.02`, `S1.15`.
   ses `record`/`lap` complets. Les autres messages et les champs
   non interprétés sont **signalés** dans `ignoredSections` et par une issue,
   jamais abandonnés en silence ; `file_id.timeCreated` / `serialNumber` et
-  `activity.totalTimerTime` sont normalisés. Les champs développeur sont sautés
-  et signalés. La cadence n'est rangée dans `cadenceRpm` que pour le vélo et
-  dans `runCadenceSpm` que pour la course/marche ; les autres sports produisent
-  une issue `unsupported-feature` au lieu d'une unité fausse.
+  `activity.totalTimerTime` sont normalisés. Un `lap` expose `maxPowerW`
+  (champ 20) et `intensity` (champ 23), sans confondre puissance et intensité.
+  Les champs développeur sont sautés et signalés. La cadence n'est rangée
+  dans `cadenceRpm` que pour le vélo et dans `runCadenceSpm` que pour la
+  course/marche ; les autres sports produisent une issue
+  `unsupported-feature` au lieu d'une unité fausse.
 - **Résumé FIT** : `NormalizedTraceImport.summary` conserve les totaux de la
   session (durée, distance, calories, vitesses, FC, cadence, sport,
   `activity.totalTimerTime`) même quand des laps existent.
@@ -58,8 +62,10 @@ Références de suivi : `A03`, `K6.02`, `S1.15`.
 - **Rattachement FIT** : les débuts de laps sont triés une fois et chaque point
   fait une recherche binaire (`O((points + laps) log laps)`), au lieu d'un
   parcours de tous les laps par point puis d'un nouveau parcours des points par
-  lap. Un point antérieur à tous les laps, ou sans horodatage, reçoit
-  `lapIndex = -1` : aucun début de lap ne lui est inventé.
+  lap. Si des débuts de laps ne sont pas croissants, chaque point suit le
+  dernier début réel et une issue `time-out-of-order` est ajoutée. Un point
+  antérieur à tous les laps, ou sans horodatage, reçoit `lapIndex = -1` : aucun
+  début de lap ne lui est inventé.
 - **Encodage TCX** : l'entrée `parseTraceFile({ bytes })` détecte les BOM
   UTF-8, UTF-16LE et UTF-16BE. Un TCX UTF-16 valide n'est plus refusé comme
   XML invalide.

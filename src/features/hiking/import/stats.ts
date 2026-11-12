@@ -99,7 +99,12 @@ export function computeAvailableMetrics(
   ) {
     available.add('cadence');
   }
-  if (points.some((point) => point.powerW != null)) available.add('power');
+  if (
+    points.some((point) => point.powerW != null)
+    || laps.some((lap) => lap.maxPowerW != null)
+  ) {
+    available.add('power');
+  }
   if (points.some((point) => point.temperatureC != null)) available.add('temperature');
 
   return METRIC_ORDER.filter((metric) => available.has(metric));
