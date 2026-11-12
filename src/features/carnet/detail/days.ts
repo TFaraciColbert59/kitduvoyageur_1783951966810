@@ -19,7 +19,7 @@
  * la fin d'un relevé et le début d'un autre n'est pas un segment parcouru.
  */
 
-import { parsePositions } from '@/features/compte/map/geometry';
+import { parseTraceSegments } from '@/features/compte/map/geometry';
 import { haversineDistanceKm } from '@/features/explorer-osm/domain/geometry';
 import type {
   CarnetDay,
@@ -87,22 +87,31 @@ function timedPoints(value: unknown): TimedPoint[] {
  * Géométrie seule (`positions_geojson`) : les coordonnées sont réelles, l'heure
  * ne l'est pas — on date chaque point du début réel de la sortie. Sans
  * `started_at`, les points ne peuvent être placés sur un jour et sont écartés.
+ *
+ * `parseTraceSegments` et non `parsePositions` : une `MultiLineString` garde
+ * ses frontières. Deux morceaux séparés (zone masquée, coupure GPS) ne doivent
+ * jamais être recousus par la carte du jour.
  */
-function geometryPoints(session: HikeSessionRow): TimedPoint[] {
+function geometryPointSegments(session: HikeSessionRow): TimedPoint[][] {
   const at = asText(session.started_at);
   if (!at) return [];
-  return parsePositions(session.positions_geojson).map((point) => ({
-    lat: point.lat,
-    lng: point.lng,
-    at,
-    elevationM: null,
-  }));
+  return parseTraceSegments(session.positions_geojson)
+    .map((segment) =>
+      segment.map((point) => ({
+        lat: point.lat,
+        lng: point.lng,
+        at,
+        elevationM: null,
+      })),
+    )
+    .filter((segment) => segment.length > 0);
 }
 
-/** Points d'une sortie, horodatés quand le relevé le permet. */
-function sessionPoints(session: HikeSessionRow): TimedPoint[] {
+/** Morceaux d'une sortie, horodatés quand le relevé le permet. */
+function sessionPointSegments(session: HikeSessionRow): TimedPoint[][] {
   const timed = timedPoints(session.positions_timed);
-  return timed.length > 0 ? timed : geometryPoints(session);
+  if (timed.length > 0) return [timed];
+  return geometryPointSegments(session);
 }
 
 /**
@@ -184,16 +193,19 @@ export function buildDays(input: {
 }): CarnetDay[] {
   const startDayStamp = input.startDate ? dayStamp(input.startDate) : null;
 
-  /* Tous les points du carnet, sortie par sortie : l'ordre interne d'un relevé
-     est conservé, c'est lui qui donne les segments. */
-  const sessions = input.sessions.map((session) => ({ session, points: sessionPoints(session) }));
+  /* Tous les morceaux du carnet, sortie par sortie : une `MultiLineString`
+     garde ses frontières, et deux sorties ne sont jamais recousues. */
+  const sessions = input.sessions.map((session) => ({
+    session,
+    segments: sessionPointSegments(session),
+  }));
 
   /* Sans date de départ, les dates réelles des points numérotent les jours. */
   const dateRanks = new Map<string, number>();
   if (startDayStamp === null) {
     const dates = new Set<string>();
-    for (const { points } of sessions) {
-      for (const point of points) {
+    for (const { segments } of sessions) {
+      for (const point of segments.flat()) {
         const stamp = dayStamp(point.at);
         if (stamp !== null) dates.add(isoDate(stamp));
       }
@@ -205,20 +217,29 @@ export function buildDays(input: {
   const durationsByDay = new Map<number, number>();
   const momentsByDay = new Map<number, CarnetMomentItem[]>();
 
-  for (const { session, points } of sessions) {
+  for (const { session, segments } of sessions) {
+    const points = segments.flat();
     /* Une sortie peut chevaucher minuit : ses points sont répartis par heure,
-       mais son relevé n'est jamais recousu à celui d'une autre sortie. */
-    const runs = new Map<number, TimedPoint[]>();
-    for (const point of points) {
-      const index = dayIndexOf(point.at, startDayStamp, dateRanks);
-      if (index === null) continue;
-      const run = runs.get(index) ?? [];
-      run.push(point);
-      runs.set(index, run);
+       morceau par morceau. Le morceau n'est jamais recousu à un autre. */
+    const runsBySegmentAndDay = new Map<number, TimedPoint[][]>();
+    for (const segment of segments) {
+      const segmentRuns = new Map<number, TimedPoint[]>();
+      for (const point of segment) {
+        const index = dayIndexOf(point.at, startDayStamp, dateRanks);
+        if (index === null) continue;
+        const run = segmentRuns.get(index) ?? [];
+        run.push(point);
+        segmentRuns.set(index, run);
+      }
+      for (const [index, run] of segmentRuns) {
+        const list = runsBySegmentAndDay.get(index) ?? [];
+        list.push(run);
+        runsBySegmentAndDay.set(index, list);
+      }
     }
-    for (const [index, run] of runs) {
+    for (const [index, dayRuns] of runsBySegmentAndDay) {
       const list = runsByDay.get(index) ?? [];
-      list.push({ sessionId: session.id, points: run });
+      for (const run of dayRuns) list.push({ sessionId: session.id, points: run });
       runsByDay.set(index, list);
     }
 

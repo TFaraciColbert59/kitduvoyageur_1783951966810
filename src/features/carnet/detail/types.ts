@@ -33,6 +33,7 @@ export interface CarnetRow {
 
 export interface HikeSessionRow {
   id: string;
+  user_id?: string | null;
   carnet_id: string | null;
   /** `private` ou `collective_anonymized` (contrainte réelle de la table). */
   visibility?: string | null;

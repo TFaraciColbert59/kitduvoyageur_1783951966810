@@ -148,16 +148,13 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
     (input.viewerId && carnet.author_id === input.viewerId ? 'participant' : 'visitor');
   const isVisitor = viewerRole === 'visitor';
   /*
-   * Le rôle de trace est distinct du rôle de fiche : un abonné autorisé reste
-   * un `visitor` pour les notes, le budget et les points de jour, mais obtient
-   * une trace début/fin masquée au lieu de rien. Le rôle `follower` n'est
-   * fourni par l'appelant qu'après vérification de `user_follows`.
+   * Le rôle de trace est distinct du rôle de fiche : un participant à la sortie
+   * qui porte le tracé garde sa trace complète sans devenir participant du
+   * carnet (jours, budget). L'appelant fournit `traceViewer` après vérification
+   * réelle de la relation ou de la participation ; sans lui, on retombe sur le
+   * rôle de fiche.
    */
-  const traceViewer: TraceViewer = isVisitor
-    ? input.traceViewer === 'follower'
-      ? 'follower'
-      : 'visitor'
-    : input.traceViewer ?? 'participant';
+  const traceViewer: TraceViewer = input.traceViewer ?? (isVisitor ? 'visitor' : 'participant');
   const needsTraceProjection =
     traceViewer === 'follower' || traceViewer === 'visitor';
   const distanceKm = toNumber(hikeSession?.distance_km) ?? toNumber(carnet.distance_km);

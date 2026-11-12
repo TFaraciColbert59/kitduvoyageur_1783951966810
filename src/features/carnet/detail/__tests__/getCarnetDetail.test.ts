@@ -5,6 +5,7 @@ const STATE = vi.hoisted(() => ({
   carnet: null as Record<string, unknown> | null,
   author: null as Record<string, unknown> | null,
   sessions: [] as Array<Record<string, unknown>>,
+  participants: [] as Array<Record<string, unknown>>,
   follows: false,
 }));
 
@@ -30,6 +31,9 @@ vi.mock('@/lib/supabase/server', () => ({
                 })),
                 error: null,
               };
+        }
+        if (table === 'hike_session_participants') {
+          return { data: STATE.participants, error: null };
         }
         if (table === 'user_follows') {
           return STATE.follows
@@ -76,6 +80,13 @@ vi.mock('../enrichElevation', () => ({
   enrichCarnetElevation: async (detail: unknown) => detail,
 }));
 
+/* En test, le client service-role n'est pas configuré : la fiche retombe sur
+   le client utilisateur, qui sert les mêmes lignes mockées. Le chemin réel
+   (service_role après contrôle du carnet) est décrit par la migration. */
+vi.mock('@/lib/api/serviceClient', () => ({
+  createServiceClient: () => null,
+}));
+
 import { getCarnetDetail } from '../getCarnetDetail';
 
 const TRACE = {
@@ -89,6 +100,7 @@ const TRACE = {
 function session(overrides: Record<string, unknown> = {}) {
   return {
     id: 's1',
+    user_id: 'u1',
     carnet_id: 'c1',
     visibility: 'private',
     distance_km: 5,
@@ -135,6 +147,7 @@ beforeEach(() => {
     trust_score: 90,
   };
   STATE.sessions = [session()];
+  STATE.participants = [];
   STATE.follows = false;
 });
 
@@ -192,5 +205,61 @@ describe('getCarnetDetail — visibilité effective des traces', () => {
     expect(detail?.trace).toEqual(TRACE);
     expect(detail?.traceMasked).toBe(false);
     expect(detail?.traceFullyMasked).toBe(false);
+  });
+
+  it('donne la trace complète au participant de la sortie, sans le rôle carnet', async () => {
+    STATE.viewerId = 'u3';
+    STATE.sessions = [session({ id: 's1' })];
+    STATE.participants = [
+      {
+        session_id: 's1',
+        user_id: 'u3',
+        role: 'guest',
+        created_at: '2026-09-26T06:00:00Z',
+      },
+    ];
+
+    const detail = await getCarnetDetail('c1');
+
+    expect(detail?.trace).toEqual(TRACE);
+    expect(detail?.traceMasked).toBe(false);
+    /* La participation vaut pour la sortie, pas pour tout le carnet. */
+    expect(detail?.viewerRole).toBe('visitor');
+    expect(detail?.budget).toBeNull();
+  });
+
+  it('ne donne pas à l’auteur du carnet la trace privée d’une sortie d’autrui', async () => {
+    STATE.viewerId = 'u1';
+    STATE.sessions = [session({ id: 's1', user_id: 'u2' })];
+
+    const detail = await getCarnetDetail('c1');
+
+    expect(detail?.trace).toBeNull();
+    expect(detail?.traceMasked).toBe(true);
+    expect(detail?.traceFullyMasked).toBe(true);
+  });
+
+  it('ne donne pas la trace d’une autre sortie au participant d’une sortie', async () => {
+    STATE.viewerId = 'u3';
+    STATE.sessions = [
+      session({ id: 's2', started_at: '2026-09-27T06:00:00Z' }),
+      session({ id: 's1', started_at: '2026-09-26T06:00:00Z' }),
+    ];
+    STATE.participants = [
+      {
+        session_id: 's1',
+        user_id: 'u3',
+        role: 'guest',
+        created_at: '2026-09-26T06:00:00Z',
+      },
+    ];
+
+    const detail = await getCarnetDetail('c1');
+
+    /* La trace exposée est celle de s2 ; u3 n'y a pas participé. */
+    expect(detail?.trace).toBeNull();
+    expect(detail?.traceMasked).toBe(true);
+    expect(detail?.traceFullyMasked).toBe(true);
+    expect(detail?.viewerRole).toBe('visitor');
   });
 });

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createServiceClient } from '@/lib/api/serviceClient';
 import { createClient } from '@/lib/supabase/server';
 import { isFollowerTraceVisibility, type TraceViewer } from '@/features/compte/server/tracePrivacy';
 import { parseStoredWeather, weatherForViewer } from '@/features/compte/server/weather';
@@ -13,7 +14,14 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const { data: authData } = await supabase.auth.getUser();
     const viewerId = authData?.user?.id ?? null;
 
-    const { data: session, error } = await supabase
+    /*
+     * La table brute est réservée au propriétaire et aux participants. Cette
+     * route ne sert que des métadonnées sûres : elle lit donc la ligne avec le
+     * client serveur, puis vérifie elle-même l'autorisation avant de répondre.
+     * Sans clé service, on retombe sur la RLS utilisateur (fail-closed).
+     */
+    const sessionClient = createServiceClient() ?? supabase;
+    const { data: session, error } = await sessionClient
       .from('hike_sessions')
       // Jamais `*` : ni positions GPS, ni notes privées dans la réponse.
       .select(
@@ -41,6 +49,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
      * qu'après lecture de `user_follows`. Tout le reste est visiteur.
      */
     let viewer: TraceViewer = isOwner ? 'owner' : 'visitor';
+    let isParticipant = false;
     if (!isOwner && viewerId) {
       const { data: participant } = await supabase
         .from('hike_session_participants')
@@ -49,6 +58,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         .eq('user_id', viewerId)
         .maybeSingle();
       if (participant) {
+        isParticipant = true;
         viewer = 'participant';
       } else if (isFollowerTraceVisibility(rawVisibility) && ownerId) {
         const { data: follow } = await supabase
@@ -61,6 +71,27 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
           viewer = 'follower';
         }
       }
+    }
+
+    /*
+     * Autorisation de la route : propriétaire, participant, sortie publique,
+     * abonné vérifié, ou sortie collective d'un carnet que le lecteur peut
+     * voir. Une sortie privée d'un carnet public n'est jamais servie ici :
+     * c'est le trou que la policy historique laissait ouvert.
+     */
+    const carnetId = typeof safeSession.carnet_id === 'string' ? safeSession.carnet_id : null;
+    const canReadSharedCarnet =
+      rawVisibility === 'collective_anonymized' &&
+      Boolean(carnetId) &&
+      (await supabase.rpc('can_view_carnet', { p_carnet: carnetId })).data === true;
+    const canRead =
+      isOwner ||
+      isParticipant ||
+      rawVisibility === 'public' ||
+      (isFollowerTraceVisibility(rawVisibility) && viewer === 'follower') ||
+      canReadSharedCarnet;
+    if (!canRead) {
+      return NextResponse.json({ error: 'Session non trouvée' }, { status: 404 });
     }
 
     if (!isOwner) {

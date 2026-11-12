@@ -6,6 +6,7 @@ const STATE = vi.hoisted(() => ({
   session: null as Record<string, unknown> | null,
   participant: false,
   follows: false,
+  carnetVisible: true,
 }));
 
 vi.mock('@/lib/supabase/server', () => ({
@@ -15,6 +16,7 @@ vi.mock('@/lib/supabase/server', () => ({
         data: { user: STATE.viewerId ? { id: STATE.viewerId } : null },
       }),
     },
+    rpc: async () => ({ data: STATE.carnetVisible, error: null }),
     from: (table: string) => {
       const query = {
         select: () => query,
@@ -92,19 +94,16 @@ beforeEach(() => {
   STATE.session = session();
   STATE.participant = false;
   STATE.follows = false;
+  STATE.carnetVisible = true;
 });
 
 describe('GET /api/hike-sessions/[id] — données servies', () => {
-  it('ne livre ni coordonnées météo ni notes privées à un visiteur', async () => {
+  it('refuse une sortie privée à un visiteur, même sur un carnet public', async () => {
     const response = await GET(new NextRequest('http://localhost/api/hike-sessions/s1'), {
       params: Promise.resolve({ id: 's1' }),
     });
-    expect(response.status).toBe(200);
-    const { session: served } = await body(response);
 
-    expect(served.weather).toBeNull();
-    expect(served.notes).toBeUndefined();
-    expect(served.user_id).toBeUndefined();
+    expect(response.status).toBe(404);
   });
 
   it('expurge les coordonnées d’une météo partageable, sans perdre les jours', async () => {
@@ -112,6 +111,7 @@ describe('GET /api/hike-sessions/[id] — données servies', () => {
     const response = await GET(new NextRequest('http://localhost/api/hike-sessions/s1'), {
       params: Promise.resolve({ id: 's1' }),
     });
+    expect(response.status).toBe(200);
     const { session: served } = await body(response);
     const weather = served.weather as typeof WEATHER;
 
@@ -121,14 +121,22 @@ describe('GET /api/hike-sessions/[id] — données servies', () => {
     expect(served.notes).toBeUndefined();
   });
 
+  it('refuse une sortie collective si le carnet n’est pas visible', async () => {
+    STATE.carnetVisible = false;
+    STATE.session = session({ visibility: 'collective_anonymized' });
+    const response = await GET(new NextRequest('http://localhost/api/hike-sessions/s1'), {
+      params: Promise.resolve({ id: 's1' }),
+    });
+    expect(response.status).toBe(404);
+  });
+
   it('fail-closed sur une visibilité absente, friends/followers non suivi ou inconnue', async () => {
     for (const visibility of [null, undefined, 'friends', 'followers', 'collective']) {
       STATE.session = session({ visibility });
       const response = await GET(new NextRequest('http://localhost/api/hike-sessions/s1'), {
         params: Promise.resolve({ id: 's1' }),
       });
-      const { session: served } = await body(response);
-      expect(served.weather).toBeNull();
+      expect(response.status).toBe(404);
     }
   });
 
@@ -147,15 +155,14 @@ describe('GET /api/hike-sessions/[id] — données servies', () => {
     expect(weather.days).toHaveLength(1);
   });
 
-  it('refuse la météo friends à un visiteur qui ne suit pas l’auteur', async () => {
+  it('refuse la sortie friends à un visiteur qui ne suit pas l’auteur', async () => {
     STATE.viewerId = 'viewer-1';
     STATE.follows = false;
     STATE.session = session({ visibility: 'friends' });
     const response = await GET(new NextRequest('http://localhost/api/hike-sessions/s1'), {
       params: Promise.resolve({ id: 's1' }),
     });
-    const { session: served } = await body(response);
-    expect(served.weather).toBeNull();
+    expect(response.status).toBe(404);
   });
 
   it('sert les jours sans coordonnées à un visiteur d’une sortie publique', async () => {

@@ -22,6 +22,10 @@ function line(coordinates: Array<[number, number]>) {
   return { type: 'LineString', coordinates };
 }
 
+function multiLine(coordinates: Array<Array<[number, number]>>) {
+  return { type: 'MultiLineString', coordinates };
+}
+
 function timed(points: Array<{ lat: number; lng: number; timestamp: string; elevationM?: number }>) {
   return points;
 }
@@ -87,6 +91,40 @@ describe('buildDays — un jour par date réelle', () => {
     expect(days[0].distanceKm).toBeCloseTo(expected, 9);
     const ponte = expected + haversineDistanceKm(matin[1], apresMidi[0]);
     expect(days[0].distanceKm).toBeLessThan(ponte);
+  });
+
+  it('garde les frontières d’une MultiLineString dans un même relevé', () => {
+    const premier: Array<[number, number]> = [
+      [6.86, 45.83],
+      [6.87, 45.84],
+    ];
+    const second: Array<[number, number]> = [
+      [6.95, 45.9],
+      [6.96, 45.91],
+    ];
+
+    const days = buildDays({
+      moments: [],
+      startDate: START,
+      sessions: [
+        session({
+          id: 'multi',
+          started_at: '2026-04-25T06:00:00Z',
+          positions_geojson: multiLine([premier, second]),
+        }),
+      ],
+    });
+
+    expect(days).toHaveLength(1);
+    /* Une seule sortie, mais deux morceaux : la carte ne recoud pas le vide. */
+    expect(days[0].segments).toHaveLength(2);
+    expect(days[0].segments?.map((segment) => segment.length)).toEqual([2, 2]);
+    expect(days[0].points).toHaveLength(4);
+    const expected = runKm(premier) + runKm(second);
+    expect(days[0].distanceKm).toBeCloseTo(expected, 9);
+    expect(days[0].distanceKm).toBeLessThan(
+      expected + haversineDistanceKm(premier[1], second[0]),
+    );
   });
 
   it('somme les durées des sorties du jour, et rien si aucune ne la donne', () => {

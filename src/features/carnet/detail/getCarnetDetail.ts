@@ -1,4 +1,5 @@
 import 'server-only';
+import { createServiceClient } from '@/lib/api/serviceClient';
 import { createClient } from '@/lib/supabase/server';
 import { buildCarnetDetail } from './buildCarnetDetail';
 import { enrichCarnetElevation } from './enrichElevation';
@@ -130,6 +131,17 @@ export async function getCarnetDetail(id: string) {
   }
   const carnet = carnetData as unknown as CarnetRow;
 
+  /*
+   * Les sorties sont lues avec le client serveur : la RLS de `hike_sessions`
+   * ne rend les lignes brutes qu'au propriétaire et aux participants, alors
+   * que la fiche doit aussi projeter une trace masquée pour un abonné ou un
+   * visiteur. L'accès au carnet a déjà été vérifié ci-dessus par la RLS ;
+   * `buildCarnetDetail` applique ensuite `tracePrivacy` avant de rendre quoi
+   * que ce soit. Sans clé service, on retombe sur le client utilisateur : le
+   * partage se dégrade, il ne s'ouvre pas.
+   */
+  const sessionClient = createServiceClient() ?? supabase;
+
   /* Tout ce qui ne dépend que du carnet part dans le même `Promise.all` :
      auteur, sorties, étapes, hébergements, moments, kit, collaborateurs,
      identifiants de sorties, j'aime et favori du lecteur. Une seule vague de
@@ -178,10 +190,10 @@ export async function getCarnetDetail(id: string) {
         .maybeSingle(),
       /* Toutes les sorties du carnet : la plus récente porte les statistiques,
          la plus récente *avec une trace* porte le parcours 3D. */
-      supabase
+      sessionClient
         .from('hike_sessions')
         .select(
-          'id, carnet_id, visibility, distance_km, elevation_gain_m, duration_seconds, started_at, positions_geojson, positions_timed',
+          'id, user_id, carnet_id, visibility, distance_km, elevation_gain_m, duration_seconds, started_at, positions_geojson, positions_timed',
         )
         .eq('carnet_id', carnet.id)
         .order('started_at', { ascending: false })
@@ -249,7 +261,7 @@ export async function getCarnetDetail(id: string) {
         .order('created_at', { ascending: true }),
       /* Toutes les sorties du carnet, sans la limite de 10 de `hikeResult` :
          les présents d'une sortie ancienne comptent aussi. */
-      supabase
+      sessionClient
         .from('hike_sessions')
         .select('id, started_at')
         .eq('carnet_id', carnet.id)
@@ -298,9 +310,32 @@ export async function getCarnetDetail(id: string) {
   const isCollab = collabRows.some(
     (row) => row.user_id === viewerId && (row.role === 'owner' || row.role === 'contributor'),
   );
-  const isSessionParticipant = sessionParticipantRows.some((row) => row.user_id === viewerId);
-  const isParticipant = isOwner || isCollab || isSessionParticipant;
-  const viewerRole = isParticipant ? ('participant' as const) : ('visitor' as const);
+  /*
+   * Le rôle de fiche (jours, budget, carnet) reste réservé à l'auteur et aux
+   * collaborateurs. Un participant à une seule sortie ne doit pas voir les
+   * autres jours, le budget ni les traces des autres sorties.
+   */
+  const isCarnetParticipant = isOwner || isCollab;
+  const viewerRole = isCarnetParticipant ? ('participant' as const) : ('visitor' as const);
+
+  /*
+   * La trace se juge par session, pas par carnet : le participant de la sortie
+   * qui porte le tracé garde sa trace complète ; le participant d'une autre
+   * sortie ne devient pas participant de tout le carnet.
+   */
+  const traceSession = pickCarnetTraceSession(sessions);
+  const isSessionOwner = Boolean(
+    viewerId && traceSession?.user_id && traceSession.user_id === viewerId,
+  );
+  const isTraceSessionParticipant =
+    isSessionOwner ||
+    Boolean(
+      viewerId &&
+        traceSession &&
+        sessionParticipantRows.some(
+          (row) => row.session_id === traceSession.id && row.user_id === viewerId,
+        ),
+    );
 
   /*
    * `friends`/`followers` ne suffit jamais : on lit la relation réelle. Cette
@@ -309,7 +344,7 @@ export async function getCarnetDetail(id: string) {
    * trace est entièrement masquée.
    */
   const mayNeedFollower =
-    !isParticipant &&
+    !isCarnetParticipant &&
     (isFollowerTraceVisibility(carnet.visibility) ||
       sessions.some((session) => isFollowerTraceVisibility(session.visibility)));
   const followsAuthor =
@@ -325,7 +360,23 @@ export async function getCarnetDetail(id: string) {
           .maybeSingle()
       ).data,
     );
-  const traceViewer = isParticipant ? 'participant' : followsAuthor ? 'follower' : 'visitor';
+  const traceVisibility = mostRestrictiveTraceVisibility(
+    carnet.visibility,
+    traceSession?.visibility,
+  );
+  /*
+   * Seul le propriétaire de la sortie ou un participant inscrit voit la trace
+   * complète. Un auteur/collaborateur de carnet qui n'a pas participé à cette
+   * sortie reçoit les masques début/fin (ou tout masqué si la sortie est
+   * privée) : le carnet ne vaut pas droit sur la trace brute d'autrui.
+   */
+  const traceViewer = isTraceSessionParticipant
+    ? ('participant' as const)
+    : isCarnetParticipant && traceVisibility !== 'private'
+      ? ('follower' as const)
+      : followsAuthor
+        ? ('follower' as const)
+        : ('visitor' as const);
 
   const momentRows = ((momentsResult.data ?? []) as MomentRow[]) ?? [];
   const momentIds = momentRows.map((m) => m.id);
@@ -359,7 +410,7 @@ export async function getCarnetDetail(id: string) {
     momentIds.length > 0 && viewerId
       ? supabase.from('carnet_moment_saves').select('moment_id').eq('user_id', viewerId).in('moment_id', momentIds)
       : Promise.resolve({ data: [] }),
-    isParticipant
+    isCarnetParticipant
       ? supabase
           .from('carnet_live_positions')
           .select('lat, lng, accuracy_m, recorded_at, user_id')
@@ -368,10 +419,10 @@ export async function getCarnetDetail(id: string) {
           .limit(1)
           .maybeSingle()
       : Promise.resolve({ data: null }),
-    !isParticipant && carnet.live_sharing
+    !isCarnetParticipant && carnet.live_sharing
       ? supabase.rpc('carnet_public_position', { p_carnet: carnet.id }).maybeSingle()
       : Promise.resolve({ data: null }),
-    isParticipant && carnet.trip_id
+    isCarnetParticipant && carnet.trip_id
       ? supabase
           .from('trip_expenses')
           .select('id, label, amount_cents, currency, category, paid_by_user_id, date')
@@ -491,7 +542,7 @@ export async function getCarnetDetail(id: string) {
     paid_by_user_id: string | null;
     date: string | null;
   }>;
-  if (isParticipant && budgetRows.length > 0) {
+  if (isCarnetParticipant && budgetRows.length > 0) {
     const totalCents = budgetRows.reduce((sum, item) => sum + (item.amount_cents ?? 0), 0);
     const participantCount = Math.max(1, participants.length);
     budget = {
@@ -542,15 +593,6 @@ export async function getCarnetDetail(id: string) {
         recordedAt: publicZoneData.recorded_at,
       }
     : null;
-
-  /* La trace vient d'une sortie précise : sa visibilité forme, avec celle du
-     carnet, la politique effective. La plus restrictive gagne — une sortie
-     `private` dans un carnet public reste donc entièrement masquée. */
-  const traceSession = pickCarnetTraceSession(sessions);
-  const traceVisibility = mostRestrictiveTraceVisibility(
-    carnet.visibility,
-    traceSession?.visibility
-  );
 
   const detail = buildCarnetDetail({
     carnet,
