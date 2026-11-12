@@ -1,126 +1,20 @@
-<!-- hf-skeleton generated id=p14 sha256=e77d534d00a812d2 — carte provisoire générée par tools/timeline/build-skeleton.mjs depuis film/shots.json ; toute retouche hors de la zone hf-footage la soustrait au générateur -->
+<!-- P14 (images 823–876, 53 images) — landscape-director. Triptyque img11 (Sami | Inès | Tom, bandes 0–640, 640–1280,
+     1280–1920, séparateurs sombres d'origine). Volets qui S'OUVRENT : chaque bande s'ouvre depuis son axe vertical
+     (outExpo, ~7 images) sur les demi-temps de la musique (temps = 26,3 images ; temps entiers à P14 + 1,7 et + 28,0,
+     drop 1 à l'image 325) : Sami à 0, Inès à 14,85, Tom à 28,0. Micro-mouvement propre à chaque bande (Sami : poussée ;
+     Inès : montée lente ; Tom : poussée + remontée vers le poing), toujours à l'intérieur de sa bande source (aucune bande
+     ne déborde sur sa voisine, aucun bord découvert). Volets qui se REFERMENT en sortie (inExpo, décalés de 2 images,
+     à partir de 41,15 = demi-temps), fond encre. -->
 <template>
   <style>
-    #root {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-      background: #17402C;
-      font-family: "Inter", sans-serif;
-      color: #FAF8F5;
-    }
-    .p14-card {
-      position: absolute;
-      inset: 0;
-      padding: 96px 120px 120px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-    .p14-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      font-family: "JetBrains Mono", monospace;
-      font-size: 34px;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-    }
-    .p14-mid {
-      display: flex;
-      align-items: flex-end;
-      gap: 72px;
-    }
-    .p14-num {
-      font-weight: 900;
-      font-size: 360px;
-      line-height: 0.8;
-      letter-spacing: -0.04em;
-    }
-    .p14-meta {
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-      padding-bottom: 8px;
-    }
-    .p14-source {
-      font-family: "JetBrains Mono", monospace;
-      font-weight: 700;
-      font-size: 64px;
-    }
-    .p14-frames {
-      font-family: "JetBrains Mono", monospace;
-      font-size: 36px;
-    }
-    .p14-star {
-      font-weight: 700;
-      font-size: 40px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-    }
-    .p14-intent {
-      max-width: 1600px;
-      font-size: 52px;
-      line-height: 1.2;
-      font-weight: 400;
-    }
-    .p14-track {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      height: 12px;
-      background: rgba(250, 248, 245, 0.18);
-    }
-    .p14-bar {
-      position: absolute;
-      inset: 0;
-      background: #FAF8F5;
-      transform-origin: 0 50%;
-    }
-    .p14-frame {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-    }
-    .p14-shot,
-    .p14-shot-inner {
-      position: absolute;
-      inset: 0;
-    }
-    .p14-shot {
-      opacity: 0;
-    }
-    .p14-shot-img {
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 1920px;
-      height: 1080px;
-      /* Remplit le 16:9 sans déformer, quel que soit le rapport de l'image : recadrage au centre. */
-      object-fit: cover;
-      object-position: 50% 50%;
-    }
+    #root { position: absolute; inset: 0; overflow: hidden; background: #0B1F17; }
+    .p14-frame { position: absolute; inset: 0; overflow: hidden; }
+    .p14-shot, .p14-shot-inner { position: absolute; inset: 0; }
+    .p14-shot { opacity: 0; }
+    .p14-shot-img { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
+    #p14-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
   </style>
   <div id="root" data-composition-id="p14" data-width="1920" data-height="1080" data-duration="0.8833333333333333">
-    <!-- Carte provisoire : outil de travail, disparaît quand l'image du plan est là. -->
-    <div id="p14-card" class="p14-card" data-shot="p14" data-act="4">
-      <div id="p14-top" class="p14-top">
-        <span id="p14-act">Acte 4 · DÉCISION</span>
-        <span id="p14-range">823–876</span>
-      </div>
-      <div id="p14-mid" class="p14-mid">
-        <div id="p14-num" class="p14-num">P14</div>
-        <div id="p14-meta" class="p14-meta">
-          <div id="p14-source" class="p14-source">img11</div>
-          <div id="p14-frames" class="p14-frames">53 images · 0,88 s</div>
-        </div>
-      </div>
-      <div id="p14-intent" class="p14-intent">Sami, Inès et Tom disent oui</div>
-      <div id="p14-track" class="p14-track"><div id="p14-bar" class="p14-bar"></div></div>
-    </div>
-    <!-- Emplacement d'image plein cadre : assets/footage/img11.png.
-         Chaque calque : .p14-shot (opacité, séquence) > .p14-shot-inner (libre pour le mouvement) > img. -->
     <div id="p14-frame" class="p14-frame" data-layout-allow-overflow>
       <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) -->
       <div id="p14-shot-1" class="p14-shot" data-src="img11" data-seq="0" data-seq-count="1">
@@ -130,30 +24,73 @@
       </div>
     <!-- hf-footage:end -->
     </div>
+    <canvas id="p14-canvas" width="1920" height="1080" data-layout-allow-overflow></canvas>
   </div>
+  <script src="lib/fx/core.js"></script>
   <script>
     (function () {
-      var D = 53 / 60;
-      var tl = gsap.timeline({ paused: true });
-      // Barre de progression : se remplit sur la durée du plan.
-      tl.fromTo("#p14-bar", { scaleX: 0 }, { scaleX: 1, duration: D, ease: "none" }, 0);
-      // Images présentes : chaque source occupe sa part égale du plan (ordre de la trame) ;
-      // la carte reste visible là où l'image manque.
-      var shots = Array.prototype.slice.call(document.querySelectorAll(".p14-shot"));
-      if (shots.length) {
-        var n = Number(shots[0].getAttribute("data-seq-count"));
-        var bySeq = {};
-        shots.forEach(function (el) { bySeq[el.getAttribute("data-seq")] = el; });
-        for (var k = 0; k < n; k++) {
-          var t = (k * D) / n;
-          var el = bySeq[String(k)];
-          shots.forEach(function (other) {
-            tl.set(other, { opacity: other === el ? 1 : 0 }, t);
-          });
-          tl.set("#p14-card", { opacity: el ? 0 : 1 }, t);
-        }
+      var FX = window.LKDVFX;
+      var W = 1920, H = 1080, INK = "#0B1F17";
+      var img = document.getElementById("p14-shot-1-img");
+      var ctx = document.getElementById("p14-canvas").getContext("2d");
+      function hand(f, amp, seed) {
+        // Tremblement de main : bruit lent + frisson rapide, à graine (fonction du temps).
+        return (FX.noise2(f * 0.09, 1.7, seed) - 0.5) * amp + (FX.noise2(f * 0.45, 5.3, seed + 7) - 0.5) * amp * 0.3;
       }
-      window.__timelines["p14"] = tl;
+
+      var N = 53;
+      var OPEN = [-2.5, 14.85, 28.0], CLOSE = [41.15, 43.15, 45.15], OPEN_LEN = 7, CLOSE_LEN = 7.8;
+      var GAP = 4;
+      function band(i, f) {
+        var o = FX.ease.outExpo(FX.clamp((f - OPEN[i]) / OPEN_LEN, 0, 1));
+        var c = FX.ease.inExpo(FX.clamp((f - CLOSE[i]) / CLOSE_LEN, 0, 1));
+        var open = o * (1 - c);
+        var age = Math.max(f - OPEN[i], 0) / 26.3;
+        var bx = 640 * i, S, ox = 0, oy = 0;
+        var landing = 0.10 * (1 - o); // la bande arrive un peu grande et se pose
+        if (i === 0) { S = 1.07 + 0.05 * age + landing; ox = -4 * age; oy = -6 * age; }
+        else if (i === 1) { S = 1.08 + 0.02 * age + landing; oy = -22 * age; }
+        else { S = 1.07 + 0.045 * age + landing; ox = 3 * age; oy = -16 * age; }
+        ox += hand(f, 3, 161 + i * 4);
+        oy += hand(f, 3, 163 + i * 4);
+        // Bridage : la source vue reste dans la bande [bx, bx + 640] et dans l'image.
+        var hw = 320 / S, hh = 540 / S;
+        var cx = FX.clamp(bx + 320 + ox, bx + hw + 1, bx + 640 - hw - 1);
+        var cy = FX.clamp(540 + oy, hh + 1, H - hh - 1);
+        return { open: open, S: S, cx: cx, cy: cy, bx: bx };
+      }
+      var clock = FX.bindClock("p14", N, function (t, f) {
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = INK;
+        ctx.fillRect(0, 0, W, H);
+        if (!img.complete || !img.naturalWidth) return;
+        for (var i = 0; i < 3; i++) {
+          var b = band(i, f);
+          if (b.open <= 0.001) continue;
+          var half = (320 - GAP / 2) * b.open;
+          var mid = b.bx + 320;
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(mid - half, 0, half * 2, H);
+          ctx.clip();
+          ctx.setTransform(b.S, 0, 0, b.S, mid - b.S * b.cx, 540 - b.S * b.cy);
+          ctx.drawImage(img, 0, 0, W, H);
+          ctx.restore();
+          // Lèvres des volets : liseré crème à peine marqué pendant le mouvement.
+          var moving = Math.min(b.open, 1 - b.open) * 2;
+          if (moving > 0.02) {
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.globalAlpha = 0.35 * moving;
+            ctx.fillStyle = "#FAF8F5";
+            ctx.fillRect(mid - half - 1, 0, 2, H);
+            ctx.fillRect(mid + half - 1, 0, 2, H);
+            ctx.globalAlpha = 1;
+          }
+        }
+      });
+      img.addEventListener("load", function () { clock.redraw(); });
+      window.__timelines["p14"] = clock.tl;
     })();
   </script>
 </template>

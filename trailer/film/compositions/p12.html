@@ -1,126 +1,20 @@
-<!-- hf-skeleton generated id=p12 sha256=c3f6af70c77f53be — carte provisoire générée par tools/timeline/build-skeleton.mjs depuis film/shots.json ; toute retouche hors de la zone hf-footage la soustrait au générateur -->
+<!-- P12 (images 692–745, 53 images) — landscape-director. Gros plan du téléphone (img40), glissé latéral : l'élan de la
+     sortie de P11 (caméra vers la gauche, image qui glisse à droite) se freine en ~9 images (cx 1150 → 1080), puis la
+     caméra continue de dériver lentement à gauche ; sortie « la capsule avance » : poussée inCubic sur l'écran
+     (S 1,32 → 1,70) au plus rapide à la coupe, dans le sens de la poussée de P13. Écran VERT intact (E2, ui-builder).
+     Caméra exposée : window.__lkdvCam.p12(f) → { S, cx, cy } (img40 → écran : x' = 960 + S·(x − cx), y' = 540 + S·(y − cy)),
+     f peut être fractionnaire (flou de mouvement = moyenne de la caméra sur f − 0,5 … f). Écran vert d'img40 (g > r+60 et
+     g > b+60) : boîte 983–1168 × 271–676 (haut 986–1168 à y 291, milieu 985–1168 à y 473, bas 983–1168 à y 656). -->
 <template>
   <style>
-    #root {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-      background: #17402C;
-      font-family: "Inter", sans-serif;
-      color: #FAF8F5;
-    }
-    .p12-card {
-      position: absolute;
-      inset: 0;
-      padding: 96px 120px 120px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-    .p12-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      font-family: "JetBrains Mono", monospace;
-      font-size: 34px;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-    }
-    .p12-mid {
-      display: flex;
-      align-items: flex-end;
-      gap: 72px;
-    }
-    .p12-num {
-      font-weight: 900;
-      font-size: 360px;
-      line-height: 0.8;
-      letter-spacing: -0.04em;
-    }
-    .p12-meta {
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-      padding-bottom: 8px;
-    }
-    .p12-source {
-      font-family: "JetBrains Mono", monospace;
-      font-weight: 700;
-      font-size: 64px;
-    }
-    .p12-frames {
-      font-family: "JetBrains Mono", monospace;
-      font-size: 36px;
-    }
-    .p12-star {
-      font-weight: 700;
-      font-size: 40px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-    }
-    .p12-intent {
-      max-width: 1600px;
-      font-size: 52px;
-      line-height: 1.2;
-      font-weight: 400;
-    }
-    .p12-track {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      height: 12px;
-      background: rgba(250, 248, 245, 0.18);
-    }
-    .p12-bar {
-      position: absolute;
-      inset: 0;
-      background: #FAF8F5;
-      transform-origin: 0 50%;
-    }
-    .p12-frame {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-    }
-    .p12-shot,
-    .p12-shot-inner {
-      position: absolute;
-      inset: 0;
-    }
-    .p12-shot {
-      opacity: 0;
-    }
-    .p12-shot-img {
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 1920px;
-      height: 1080px;
-      /* Remplit le 16:9 sans déformer, quel que soit le rapport de l'image : recadrage au centre. */
-      object-fit: cover;
-      object-position: 50% 50%;
-    }
+    #root { position: absolute; inset: 0; overflow: hidden; background: #0B1F17; }
+    .p12-frame { position: absolute; inset: 0; overflow: hidden; }
+    .p12-shot, .p12-shot-inner { position: absolute; inset: 0; }
+    .p12-shot { opacity: 0; }
+    .p12-shot-img { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
+    #p12-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
   </style>
   <div id="root" data-composition-id="p12" data-width="1920" data-height="1080" data-duration="0.8833333333333333">
-    <!-- Carte provisoire : outil de travail, disparaît quand l'image du plan est là. -->
-    <div id="p12-card" class="p12-card" data-shot="p12" data-act="4">
-      <div id="p12-top" class="p12-top">
-        <span id="p12-act">Acte 4 · DÉCISION</span>
-        <span id="p12-range">692–745</span>
-      </div>
-      <div id="p12-mid" class="p12-mid">
-        <div id="p12-num" class="p12-num">P12</div>
-        <div id="p12-meta" class="p12-meta">
-          <div id="p12-source" class="p12-source">img40 + E2</div>
-          <div id="p12-frames" class="p12-frames">53 images · 0,88 s</div>
-        </div>
-      </div>
-      <div id="p12-intent" class="p12-intent">Compas : « Où », Dolomites</div>
-      <div id="p12-track" class="p12-track"><div id="p12-bar" class="p12-bar"></div></div>
-    </div>
-    <!-- Emplacement d'image plein cadre : assets/footage/img40.png.
-         Chaque calque : .p12-shot (opacité, séquence) > .p12-shot-inner (libre pour le mouvement) > img. -->
     <div id="p12-frame" class="p12-frame" data-layout-allow-overflow>
       <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) -->
       <div id="p12-shot-1" class="p12-shot" data-src="img40" data-seq="0" data-seq-count="1">
@@ -130,30 +24,72 @@
       </div>
     <!-- hf-footage:end -->
     </div>
+    <canvas id="p12-canvas" width="1920" height="1080" data-layout-allow-overflow></canvas>
   </div>
+  <script src="lib/fx/core.js"></script>
   <script>
     (function () {
-      var D = 53 / 60;
-      var tl = gsap.timeline({ paused: true });
-      // Barre de progression : se remplit sur la durée du plan.
-      tl.fromTo("#p12-bar", { scaleX: 0 }, { scaleX: 1, duration: D, ease: "none" }, 0);
-      // Images présentes : chaque source occupe sa part égale du plan (ordre de la trame) ;
-      // la carte reste visible là où l'image manque.
-      var shots = Array.prototype.slice.call(document.querySelectorAll(".p12-shot"));
-      if (shots.length) {
-        var n = Number(shots[0].getAttribute("data-seq-count"));
-        var bySeq = {};
-        shots.forEach(function (el) { bySeq[el.getAttribute("data-seq")] = el; });
-        for (var k = 0; k < n; k++) {
-          var t = (k * D) / n;
-          var el = bySeq[String(k)];
-          shots.forEach(function (other) {
-            tl.set(other, { opacity: other === el ? 1 : 0 }, t);
-          });
-          tl.set("#p12-card", { opacity: el ? 0 : 1 }, t);
-        }
+      var FX = window.LKDVFX;
+      var W = 1920, H = 1080, INK = "#0B1F17";
+      var img = document.getElementById("p12-shot-1-img");
+      var ctx = document.getElementById("p12-canvas").getContext("2d");
+      function hand(f, amp, seed) {
+        // Tremblement de main : bruit lent + frisson rapide, à graine (fonction du temps).
+        return (FX.noise2(f * 0.09, 1.7, seed) - 0.5) * amp + (FX.noise2(f * 0.45, 5.3, seed + 7) - 0.5) * amp * 0.3;
       }
-      window.__timelines["p12"] = tl;
+      function fit(c) {
+        // L'image ne découvre jamais ses bords : centre bridé selon l'échelle et le roulis.
+        var a = Math.abs(c.rot || 0), co = Math.cos(a), si = Math.sin(a);
+        var hx = (W / 2 * co + H / 2 * si) / c.S + 2, hy = (W / 2 * si + H / 2 * co) / c.S + 2;
+        c.cx = FX.clamp(c.cx, hx, W - hx);
+        c.cy = FX.clamp(c.cy, hy, H - hy);
+        return c;
+      }
+      function drawCam(c2, c, alpha) {
+        c2.globalAlpha = alpha;
+        c2.setTransform(1, 0, 0, 1, 0, 0);
+        c2.translate(W / 2, H / 2);
+        if (c.rot) c2.rotate(c.rot);
+        c2.scale(c.S, c.S);
+        c2.translate(-c.cx, -c.cy);
+        c2.drawImage(img, 0, 0, W, H);
+      }
+      function shoot(camAt, f, shutter) {
+        // Flou de mouvement réel : moyenne de la caméra sur l'obturation (180° par défaut), échantillons selon la vitesse.
+        shutter = shutter == null ? 0.5 : shutter;
+        var a = camAt(f), b = camAt(f - shutter);
+        var d = Math.abs(a.S - b.S) * 1100 + (Math.abs(a.cx - b.cx) + Math.abs(a.cy - b.cy)) * a.S + Math.abs((a.rot || 0) - (b.rot || 0)) * 1100;
+        var n = FX.clamp(Math.ceil(d / 1.2), 1, 12);
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = INK;
+        ctx.fillRect(0, 0, W, H);
+        for (var i = 0; i < n; i++) drawCam(ctx, n === 1 ? a : camAt(f - (shutter * i) / (n - 1)), 1 / (i + 1));
+        ctx.globalAlpha = 1;
+      }
+
+      var N = 53;
+      function camAt(f) {
+        var u = f / (N - 1);
+        var brake = Math.exp(-Math.max(f, -3) / 4.5);
+        var push = FX.ease.inCubic(FX.clamp((f - 34) / (N - 1 - 34), 0, 1));
+        var S = 1.32 + 0.04 * u + (1.70 - 1.36) * push;
+        var cx = 1090 - 40 * u + 75 * brake;
+        var cy = 478 + 6 * brake;
+        cx = cx + (1076 - cx) * push;
+        cy = cy + (474 - cy) * push;
+        cx += hand(f, 5, 131);
+        cy += hand(f, 4, 133);
+        return fit({ S: S, cx: cx, cy: cy, rot: 0 });
+      }
+      window.__lkdvCam = window.__lkdvCam || {};
+      window.__lkdvCam.p12 = camAt;
+      var clock = FX.bindClock("p12", N, function (t, f) {
+        if (!img.complete || !img.naturalWidth) { ctx.fillStyle = INK; ctx.fillRect(0, 0, W, H); return; }
+        shoot(camAt, f, 0.5);
+      });
+      img.addEventListener("load", function () { clock.redraw(); });
+      window.__timelines["p12"] = clock.tl;
     })();
   </script>
 </template>
