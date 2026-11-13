@@ -7,6 +7,7 @@ import { AUTO_PAUSE_BY_SPORT } from '../activity/tracker';
 import {
   MILE_DISTANCE_M,
   activeSplit,
+  fastestSplit,
   splitPaceSecondsPerKm,
   splitPaceSecondsPerMile,
   splitSpeedKmh,
@@ -1828,7 +1829,7 @@ function splitDetail(
   return parts.join(' · ');
 }
 
-/** Tours : splits kilométriques et tours manuels réels, sans allure globale. */
+/** Tours : splits kilométriques, miles et tours manuels réels, sans allure globale. */
 function LiveLapsTab({ ctx }: { ctx: SheetContext }) {
   const activity = ctx.state.activity;
   if (!activity) {
@@ -1857,9 +1858,11 @@ function LiveLapsTab({ ctx }: { ctx: SheetContext }) {
   const rhythm = rhythmMetric(activity.sport, activity.selection);
   const currentSplit = activeSplit(scaleSplits);
   const completedSplits = scaleSplits.filter((split) => split.completed);
+  const fastest = fastestSplit(completedSplits);
   const laps = activity.laps ?? [];
   const currentLap = activeSplit(laps);
   const completedLaps = laps.filter((split) => split.completed);
+  const fastestLap = fastestSplit(completedLaps);
   const measured = activity.distanceM > 0;
   const splitWord = units === 'imperial' ? 'Mile' : 'Km';
   const splitSection = units === 'imperial' ? 'Miles' : 'Kilomètres';
@@ -1898,7 +1901,11 @@ function LiveLapsTab({ ctx }: { ctx: SheetContext }) {
             icon="route"
             title={`${splitWord} ${split.index}`}
             sub={splitDetail(split, rhythm, false, units)}
-            badge={{ label: 'ok', tone: 'good' }}
+            badge={
+              fastest?.index === split.index
+                ? { label: 'plus rapide', tone: 'good' }
+                : { label: 'ok', tone: 'good' }
+            }
           />
         ))}
       </XpRows>
@@ -1931,7 +1938,11 @@ function LiveLapsTab({ ctx }: { ctx: SheetContext }) {
             icon="repeat"
             title={`Tour ${split.index}`}
             sub={splitDetail(split, rhythm, true, units)}
-            badge={{ label: 'ok', tone: 'good' }}
+            badge={
+              fastestLap?.index === split.index
+                ? { label: 'plus rapide', tone: 'good' }
+                : { label: 'ok', tone: 'good' }
+            }
           />
         ))}
         {currentLap && completedLaps.length > 0 ? (

@@ -177,6 +177,30 @@ export function activeSplit(
   return last.completed ? null : last;
 }
 
+/**
+ * Segment **terminé** le plus rapide, ou `null` si aucun segment n'a assez de
+ * données. Le critère est l'allure (temps en mouvement par distance) : le
+ * segment qui a demandé le moins de secondes par kilomètre est le plus rapide,
+ * y compris pour les découpes impériales (le facteur d'échelle est constant).
+ * Les segments sans temps mesuré ou sans distance sont ignorés, jamais classés.
+ */
+export function fastestSplit(
+  splits: readonly ActivitySplit[] | undefined,
+): ActivitySplit | null {
+  let fastest: ActivitySplit | null = null;
+  let fastestPace = Number.POSITIVE_INFINITY;
+  for (const split of splits ?? []) {
+    if (!split.completed) continue;
+    const pace = splitPaceSecondsPerKm(split);
+    if (pace === null) continue;
+    if (pace < fastestPace) {
+      fastestPace = pace;
+      fastest = split;
+    }
+  }
+  return fastest;
+}
+
 /** Allure du segment (s/km), ou `null` sans distance ou sans temps mesuré. */
 export function splitPaceSecondsPerKm(split: ActivitySplit): number | null {
   if (!(split.distanceM > 0) || !(split.movingS > 0)) return null;
