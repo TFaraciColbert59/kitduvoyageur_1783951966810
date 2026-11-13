@@ -66,11 +66,22 @@
         }
         mask = m;
       }
+      /* Corrections-2 : P09 NAÎT du rond de la pupille de P08. Images 0–7 : zoom arrière depuis la photo
+       * (écran tenu serré, S 3,4 → 1,30) dans un rond qui s'ouvre (rayon 110 px = reflet bombé de P08 à la coupe
+       * → plein cadre), puis tape (8–15) et poussée (16–51) comme avant ; dernière image inchangée (= entrée de P10). */
+      var INTRO = 8, TAPLEN = 8;
+      function introAt(f) { return f < INTRO ? FX.ease.inOutCubic(f / INTRO) : 1; }
       function camAt(f) {
-        var tap = f < TAP ? Math.sin(Math.PI * f / TAP) : 0;
-        var v = FX.ramp(TAP, N - 1, f);
+        var tf = f - INTRO;
+        var tap = tf >= 0 && tf < TAPLEN ? Math.sin(Math.PI * tf / TAPLEN) : 0;
+        var v = FX.ramp(INTRO + TAPLEN, N - 1, f);
         var S = 1.30 * Math.exp(Math.log(9 / 1.30) * FX.ease.inCubic(v)) * (1 + 0.035 * tap);
         var cx = SCX, cy = FX.lerp(505, SCY, FX.ease.inQuad(v));
+        if (f < INTRO) {
+          var p = introAt(f);
+          S = Math.exp(FX.lerp(Math.log(3.4), Math.log(1.30), p));
+          cy = FX.lerp(SCY, 505, p);
+        }
         var sh = 4 * tap;
         cx += (FX.hash2(f, 1, 91) - 0.5) * 2 * sh;
         cy += (FX.hash2(f, 2, 92) - 0.5) * 2 * sh;
@@ -102,6 +113,7 @@
           var px = 960 + c.S * (SCX - c.cx), py = 540 + c.S * (SCY - c.cy);
           var lw = Math.min(1920 * FX.lerp(1, 1.08, c.v), Math.max(1093 * c.S, 1920 * 0.6));
           if (1093 * c.S >= 1920) lw = 1920 * FX.lerp(1, 1.08, c.v);
+          if (f < INTRO) lw = Math.max(lw, 640 * c.S * 16 / 9); // intro serrée : la photo couvre tout l'écran vert
           var lh = lw * 9 / 16;
           sx.drawImage(lake, px - lw / 2, py - lh / 2, lw, lh);
           sx.globalCompositeOperation = "source-over";
@@ -111,7 +123,17 @@
           // Dernière image : plein cadre exact, raccord avec la première image de P10 (img09 à 1,08).
           bx.drawImage(lake, W / 2 - W * 0.54, H / 2 - H * 0.54, W * 1.08, H * 1.08);
         }
-        var amount = 0.10 * Math.pow(c.v, 1.5) * (f === N - 1 ? 0.5 : 1);
+        if (f < INTRO) {
+          // Rond de la pupille qui s'ouvre : hors du rond, l'encre (pupille) à bord doux.
+          var p = introAt(f);
+          var R = FX.lerp(110, 1250, p), ccx = 960, ccy = FX.lerp(535, 540, p);
+          var gI = bx.createRadialGradient(ccx, ccy, R * 0.82, ccx, ccy, R * 1.12);
+          gI.addColorStop(0, "rgba(11,31,23,0)");
+          gI.addColorStop(1, "rgba(11,31,23,1)");
+          bx.fillStyle = gI;
+          bx.fillRect(0, 0, W, H);
+        }
+        var amount = 0.10 * Math.pow(c.v, 1.5) * (f === N - 1 ? 0.5 : 1) + (f < INTRO ? 0.05 * (1 - introAt(f)) : 0);
         FX.zoomBlur(ctx, buf, 960, 540, amount, 10, W, H);
       });
       img.addEventListener("load", function () { mask = null; clock.redraw(); });

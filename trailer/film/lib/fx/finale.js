@@ -87,7 +87,7 @@
         var rev = buf.rev[n];
         if (rev <= 0) continue;
         var e = buf.e[n];
-        var a = (0.85 - 0.6 * e) * sim.P.bright[n] * Math.min(1, rev * 3);
+        var a = (0.85 - 0.66 * e) * sim.P.bright[n] * Math.min(1, rev * 3); // corrections-2 : fils lisibles, pas de bande pleine
         paths[Math.min(NB - 1, Math.floor(a * NB))].push(n);
         if (e > 0.02 && e < 0.98) heads.push(n); // pointes crème sur les tracés en mouvement
         else if (e <= 0.02 && rev < 1) heads.push(n); // et sur ceux qui s'allument

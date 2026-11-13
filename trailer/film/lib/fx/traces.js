@@ -138,18 +138,23 @@
 
   /* Rassemblement final : jusqu'à F 88 la forme cible est tournée, élargie et tressée (illisible) ;
    * elle se referme sur le vrai dessin pendant les 16 dernières images de P53, et n'est exacte qu'à NET_FRAME. */
+  /* Corrections-2 : le tressage reste OUVERT (chaque tracé tourné et élargi à sa façon, rosace illisible)
+   * jusqu'à F 98 (image 3474) ; fermeture sur les 6 dernières images de P53 (F 98 → 103), où la forme
+   * atteint la boîte EXACTE du logo de P54 (même centre, même échelle) : aucun saut à 3480.
+   * Le trait reste sauge, flou (softBlur) et légèrement tressé à F 103 : le logo net n'apparaît qu'à NET_FRAME. */
+  var CLOSE_FROM = 98;
   function gather(F) {
     if (F >= NET_FRAME) return 1;
-    return FX.ease.inOutCubic(FX.ramp(88, NET_FRAME - 1, F)) * 0.94;
+    return FX.ease.inOutCubic(FX.ramp(CLOSE_FROM, NET_FRAME - 1, F));
   }
   function braidAmp(F) {
     if (F >= NET_FRAME) return 0;
-    return FX.lerp(2.4, 0.4, gather(F) / 0.94);
+    return FX.lerp(2.4, 0.25, gather(F));
   }
   function softBlur(F) {
     if (F >= NET_FRAME) return 0;
-    if (F < 88) return 0.4 + 0.8 * FX.smooth(26, 60, F);
-    return 1.2 + 2.8 * FX.ramp(88, 100, F);
+    if (F < CLOSE_FROM) return 0.4 + 0.8 * FX.smooth(26, 60, F);
+    return 1.2 + 2.3 * FX.ramp(CLOSE_FROM, NET_FRAME - 1, F);
   }
 
   /* Positions à l'image F (coordonnées écran avant recul). */
@@ -182,9 +187,12 @@
           ty = oy + (pa[1] + pa[3] * off) * s;
         }
         // Forme cible tournée et élargie autour du centre du logo tant qu'elle n'est pas rassemblée.
+        // Rotation et élargissement propres à chaque tracé (rosace ouverte), ramenés à zéro par g.
+        var thn = th + (P.phase[n] - 0.5) * 2.2 * (1 - g), scn = sc + (P.freq[n] - 1.6) * 0.35 * (1 - g);
+        var ctn = Math.cos(thn), stn = Math.sin(thn);
         var rx = tx - PLACE.cx, ry = ty - PLACE.cy;
-        tx = PLACE.cx + (rx * ct - ry * st) * sc;
-        ty = PLACE.cy + (rx * st + ry * ct) * sc;
+        tx = PLACE.cx + (rx * ctn - ry * stn) * scn;
+        ty = PLACE.cy + (rx * stn + ry * ctn) * scn;
         var e = ease(FX.ramp(c0 + lag * u, c0 + lag * u + dur, F));
         var vx = tx - gx, vy = ty - gy;
         var sw = Math.sin(Math.PI * e) * P.swirl[n];

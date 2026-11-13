@@ -32,6 +32,41 @@
       var img = document.getElementById("p08-shot-1-img");
       var ctx = document.getElementById("p08-canvas").getContext("2d");
       var buf = FX.canvas(W, H), bx = buf.getContext("2d");
+      /* Corrections-2 : le reflet est la photo du lac (img09), bombée (miroir convexe de la cornée), bords doux,
+       * ~2,1× l'ancien reflet. Précalculée une fois au chargement (fonction pure, sans aléatoire). */
+      var RW = 224, RH = 168; // taille du reflet à l'écran avant poussée (ancien : ~100 × 77)
+      var lake = new Image();
+      var refl = null;
+      function prepRefl() {
+        if (refl || !lake.complete || !lake.naturalWidth) return;
+        var src = FX.canvas(RW * 2, RH * 2), sx = src.getContext("2d");
+        // Recadrage centré sur l'aiguille et le lac (même cadrage que la photo plein cadre de P09/P10).
+        var cw = lake.naturalHeight * RW / RH; // recadrage 4:3 sans déformation
+        sx.drawImage(lake, (lake.naturalWidth - cw) / 2, 0, cw, lake.naturalHeight, 0, 0, RW * 2, RH * 2);
+        var out = FX.canvas(RW * 2, RH * 2), ox = out.getContext("2d");
+        try {
+          var s = sx.getImageData(0, 0, RW * 2, RH * 2), o = ox.createImageData(RW * 2, RH * 2);
+          var w = RW * 2, h = RH * 2, sd = s.data, od = o.data;
+          for (var y = 0; y < h; y++) for (var x = 0; x < w; x++) {
+            var nx = (x + 0.5) / w * 2 - 1, ny = (y + 0.5) / h * 2 - 1, r = Math.sqrt(nx * nx + ny * ny);
+            var j = (y * w + x) * 4;
+            if (r >= 1) { od[j + 3] = 0; continue; }
+            var k = 0.62 + 0.38 * r * r; // centre grossi, bords comprimés
+            var px = Math.min(w - 1, Math.max(0, Math.round((nx * k + 1) / 2 * w)));
+            var py = Math.min(h - 1, Math.max(0, Math.round((ny * k + 1) / 2 * h)));
+            var i = (py * w + px) * 4;
+            var a = FX.smooth(1, 0.62, r); // bords doux
+            od[j] = sd[i]; od[j + 1] = sd[i + 1]; od[j + 2] = sd[i + 2]; od[j + 3] = Math.round(255 * a);
+          }
+          ox.putImageData(o, 0, 0);
+        } catch (e) {
+          ox.save();
+          ox.beginPath(); ox.ellipse(RW, RH, RW, RH, 0, 0, Math.PI * 2); ox.clip();
+          ox.drawImage(src, 0, 0);
+          ox.restore();
+        }
+        refl = out;
+      }
       var clock = FX.bindClock("p08", N, function (t, f) {
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.fillStyle = "#0B1F17";
@@ -47,11 +82,17 @@
         cy = FX.clamp(cy, H / 2 / S, H - H / 2 / S);
         bx.setTransform(S, 0, 0, S, W / 2 - S * cx, H / 2 - S * cy);
         bx.drawImage(img, 0, 0, W, H);
-        // Reflet turquoise : halo additif centré sur l'écran reflété, qui gonfle vers la coupe.
+        // Reflet : la photo du lac bombée, posée sur la pupille (couvre l'ancien reflet), puis un halo doux.
+        prepRefl();
+        if (refl) {
+          bx.globalAlpha = 0.92;
+          bx.drawImage(refl, PX - RW / 2, PY - RH / 2 - 4, RW, RH);
+          bx.globalAlpha = 1;
+        }
         var glow = 0.25 + 0.55 * FX.ease.inQuad(u);
-        var r = 70 + 50 * u;
+        var r = 90 + 60 * u;
         var g = bx.createRadialGradient(PX, PY, 4, PX, PY, r);
-        g.addColorStop(0, "rgba(90,220,225," + (0.55 * glow).toFixed(3) + ")");
+        g.addColorStop(0, "rgba(90,220,225," + (0.22 * glow).toFixed(3) + ")");
         g.addColorStop(1, "rgba(90,220,225,0)");
         bx.globalCompositeOperation = "lighter";
         bx.fillStyle = g;
@@ -62,6 +103,13 @@
         FX.zoomBlur(ctx, buf, sx, sy, 0.06 * hit + 0.02 * u * u, 8, W, H);
       });
       img.addEventListener("load", function () { clock.redraw(); });
+      window.__hf = window.__hf || {};
+      window.__hf.buildReady = window.__hf.buildReady || {};
+      window.__hf.buildReady["p08-lake"] = new Promise(function (resolve) {
+        lake.onload = function () { refl = null; prepRefl(); clock.redraw(); resolve(); };
+        lake.onerror = function () { resolve(); };
+        lake.src = "assets/footage/img09.png";
+      });
       window.__timelines["p08"] = clock.tl;
     })();
   </script>
