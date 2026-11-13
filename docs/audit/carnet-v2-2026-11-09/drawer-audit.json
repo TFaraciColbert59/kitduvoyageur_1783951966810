@@ -1,0 +1,112 @@
+{
+  "Fil de bord": {
+    "lenses": [
+      {
+        "label": "Moments",
+        "sel": "true"
+      },
+      {
+        "label": "Médias",
+        "sel": "false"
+      },
+      {
+        "label": "Rencontres",
+        "sel": "false"
+      },
+      {
+        "label": "Nature",
+        "sel": "false"
+      }
+    ],
+    "defaultText": "Chamonix-Mont-Blanc 06:59 On a trouvé un abri de berger, juste assez grand pour deux duvets. Chamonix-Mont-Blanc 09:05 Café au réchaud, vue sur la vallée, rien d'autre à faire. Chamonix-Mont-Blanc 15:40 La dernière montée était interminable, la vue valait tout. Chamonix-Mont-Blanc 08:42 On a croisé trois randonneurs et un troupeau, c'est tout. Chamonix-Mont-Blanc 17:17 Le refuge était complet, on a dormi sous la tente derrière. Aucune rencontre répertoriée. Aucune observation nature consignée."
+  },
+  "Fil de bord/Moments": "Chamonix-Mont-Blanc 06:59 On a trouvé un abri de berger, juste assez grand pour deux duvets. Chamonix-Mont-Blanc 09:05 Café au réchaud, vue sur la vallée, rien d'autre à faire. Chamonix-Mont-Blanc 15:40 La dernière montée était interminable, la vue valait tout. Chamonix-Mont-Blanc 08:42 On a croisé trois randonneurs et un troupeau, c'est tout. Chamonix-Mont-Blanc 17:17 Le refuge était complet, on a dormi sous la tente derrière. Aucune rencontre répertoriée. Aucune observation nature consignée.",
+  "Fil de bord/Médias": "Chamonix-Mont-Blanc 06:59 On a trouvé un abri de berger, juste assez grand pour deux duvets. Chamonix-Mont-Blanc 09:05 Café au réchaud, vue sur la vallée, rien d'autre à faire. Chamonix-Mont-Blanc 15:40 La dernière montée était interminable, la vue valait tout. Chamonix-Mont-Blanc 08:42 On a croisé trois randonneurs et un troupeau, c'est tout. Chamonix-Mont-Blanc 17:17 Le refuge était complet, on a dormi sous la tente derrière. Aucune rencontre répertoriée. Aucune observation nature consignée.",
+  "Fil de bord/Rencontres": "Chamonix-Mont-Blanc 06:59 On a trouvé un abri de berger, juste assez grand pour deux duvets. Chamonix-Mont-Blanc 09:05 Café au réchaud, vue sur la vallée, rien d'autre à faire. Chamonix-Mont-Blanc 15:40 La dernière montée était interminable, la vue valait tout. Chamonix-Mont-Blanc 08:42 On a croisé trois randonneurs et un troupeau, c'est tout. Chamonix-Mont-Blanc 17:17 Le refuge était complet, on a dormi sous la tente derrière. Aucune rencontre répertoriée. Aucune observation nature consignée.",
+  "Fil de bord/Nature": "Chamonix-Mont-Blanc 06:59 On a trouvé un abri de berger, juste assez grand pour deux duvets. Chamonix-Mont-Blanc 09:05 Café au réchaud, vue sur la vallée, rien d'autre à faire. Chamonix-Mont-Blanc 15:40 La dernière montée était interminable, la vue valait tout. Chamonix-Mont-Blanc 08:42 On a croisé trois randonneurs et un troupeau, c'est tout. Chamonix-Mont-Blanc 17:17 Le refuge était complet, on a dormi sous la tente derrière. Aucune rencontre répertoriée. Aucune observation nature consignée.",
+  "Route": {
+    "lenses": [
+      {
+        "label": "Étapes",
+        "sel": "true"
+      },
+      {
+        "label": "Altitude",
+        "sel": "false"
+      },
+      {
+        "label": "Nuits",
+        "sel": "false"
+      },
+      {
+        "label": "Météo",
+        "sel": "false"
+      }
+    ],
+    "defaultText": "JOUR 1 JOUR 2 JOUR 3 JOUR 4 JOUR 5 Profil d’altitude du tracé Dénivelé du tracé : +129 m JOUR 1 Météo stable, ensoleillée avec brume d’altitude. JOUR 2 Météo stable, ensoleillée avec brume d’altitude. JOUR 3 Météo stable, ensoleillée avec brume d’altitude. JOUR 4 Météo stable, ensoleillée avec brume d’altitude. JOUR 5 Météo stable, ensoleillée avec brume d’altitude."
+  },
+  "Route/Étapes": "JOUR 1 JOUR 2 JOUR 3 JOUR 4 JOUR 5 Profil d’altitude du tracé Dénivelé du tracé : +129 m JOUR 1 Météo stable, ensoleillée avec brume d’altitude. JOUR 2 Météo stable, ensoleillée avec brume d’altitude. JOUR 3 Météo stable, ensoleillée avec brume d’altitude. JOUR 4 Météo stable, ensoleillée avec brume d’altitude. JOUR 5 Météo stable, ensoleillée avec brume d’altitude.",
+  "Route/Altitude": "JOUR 1 JOUR 2 JOUR 3 JOUR 4 JOUR 5 Profil d’altitude du tracé Dénivelé du tracé : +129 m JOUR 1 Météo stable, ensoleillée avec brume d’altitude. JOUR 2 Météo stable, ensoleillée avec brume d’altitude. JOUR 3 Météo stable, ensoleillée avec brume d’altitude. JOUR 4 Météo stable, ensoleillée avec brume d’altitude. JOUR 5 Météo stable, ensoleillée avec brume d’altitude.",
+  "Route/Nuits": "JOUR 1 JOUR 2 JOUR 3 JOUR 4 JOUR 5 Profil d’altitude du tracé Dénivelé du tracé : +129 m JOUR 1 Météo stable, ensoleillée avec brume d’altitude. JOUR 2 Météo stable, ensoleillée avec brume d’altitude. JOUR 3 Météo stable, ensoleillée avec brume d’altitude. JOUR 4 Météo stable, ensoleillée avec brume d’altitude. JOUR 5 Météo stable, ensoleillée avec brume d’altitude.",
+  "Route/Météo": "JOUR 1 JOUR 2 JOUR 3 JOUR 4 JOUR 5 Profil d’altitude du tracé Dénivelé du tracé : +129 m JOUR 1 Météo stable, ensoleillée avec brume d’altitude. JOUR 2 Météo stable, ensoleillée avec brume d’altitude. JOUR 3 Météo stable, ensoleillée avec brume d’altitude. JOUR 4 Météo stable, ensoleillée avec brume d’altitude. JOUR 5 Météo stable, ensoleillée avec brume d’altitude.",
+  "Sac": {
+    "lenses": [
+      {
+        "label": "Kit",
+        "sel": "true"
+      },
+      {
+        "label": "Verdicts",
+        "sel": "false"
+      },
+      {
+        "label": "Poids",
+        "sel": "false"
+      }
+    ],
+    "defaultText": "Poids total du sac 2.7 kg Sac à dos 40 L 479 g Réchaud 974 g Frontale 1215 g Reprendre le kit Tous Essentiel Utile Jamais servi Défaillant Manquait Aucun verdict pour ce carnet. Les verdicts se remplissent depuis le terrain, après les sorties. Répartition du poids du sac 2.67 kg au total Anneau de répartition catégorielle"
+  },
+  "Sac/Kit": "Poids total du sac 2.7 kg Sac à dos 40 L 479 g Réchaud 974 g Frontale 1215 g Reprendre le kit Tous Essentiel Utile Jamais servi Défaillant Manquait Aucun verdict pour ce carnet. Les verdicts se remplissent depuis le terrain, après les sorties. Répartition du poids du sac 2.67 kg au total Anneau de répartition catégorielle",
+  "Sac/Verdicts": "Poids total du sac 2.7 kg Sac à dos 40 L 479 g Réchaud 974 g Frontale 1215 g Reprendre le kit Tous Essentiel Utile Jamais servi Défaillant Manquait Aucun verdict pour ce carnet. Les verdicts se remplissent depuis le terrain, après les sorties. Répartition du poids du sac 2.67 kg au total Anneau de répartition catégorielle",
+  "Sac/Poids": "Poids total du sac 2.7 kg Sac à dos 40 L 479 g Réchaud 974 g Frontale 1215 g Reprendre le kit Tous Essentiel Utile Jamais servi Défaillant Manquait Aucun verdict pour ce carnet. Les verdicts se remplissent depuis le terrain, après les sorties. Répartition du poids du sac 2.67 kg au total Anneau de répartition catégorielle",
+  "Chiffres": {
+    "lenses": [
+      {
+        "label": "Distance",
+        "sel": "true"
+      },
+      {
+        "label": "Dénivelé",
+        "sel": "false"
+      },
+      {
+        "label": "Durée",
+        "sel": "false"
+      }
+    ],
+    "defaultText": "Distance totale 17 km Moyenne journalière : 3.4 km/j Dénivelé positif +1420 m Moyenne journalière : +284 m/j Durée d’expédition 5 journées de marche"
+  },
+  "Chiffres/Distance": "Distance totale 17 km Moyenne journalière : 3.4 km/j Dénivelé positif +1420 m Moyenne journalière : +284 m/j Durée d’expédition 5 journées de marche",
+  "Chiffres/Dénivelé": "Distance totale 17 km Moyenne journalière : 3.4 km/j Dénivelé positif +1420 m Moyenne journalière : +284 m/j Durée d’expédition 5 journées de marche",
+  "Chiffres/Durée": "Distance totale 17 km Moyenne journalière : 3.4 km/j Dénivelé positif +1420 m Moyenne journalière : +284 m/j Durée d’expédition 5 journées de marche",
+  "Équipage": {
+    "lenses": [
+      {
+        "label": "Participants",
+        "sel": "true"
+      },
+      {
+        "label": "Réactions",
+        "sel": "false"
+      },
+      {
+        "label": "Suivre",
+        "sel": "false"
+      }
+    ],
+    "defaultText": "Léa Fontaine author Marie Dupont collaborator Thomas Martin collaborator Sophie Bernard participant Jean-Luc Perrin participant Benjamin Nkosi participant Jour 1 1 mention J’aime Aimé Commentaires Suivi du carnet Abonnez-vous aux notifications pour suivre l’aventure pas à pas. Suivre cette expédition"
+  },
+  "Équipage/Participants": "Léa Fontaine author Marie Dupont collaborator Thomas Martin collaborator Sophie Bernard participant Jean-Luc Perrin participant Benjamin Nkosi participant Jour 1 1 mention J’aime Aimé Commentaires Suivi du carnet Abonnez-vous aux notifications pour suivre l’aventure pas à pas. Suivre cette expédition",
+  "Équipage/Réactions": "Léa Fontaine author Marie Dupont collaborator Thomas Martin collaborator Sophie Bernard participant Jean-Luc Perrin participant Benjamin Nkosi participant Jour 1 1 mention J’aime Aimé Commentaires Suivi du carnet Abonnez-vous aux notifications pour suivre l’aventure pas à pas. Suivre cette expédition",
+  "Équipage/Suivre": "Léa Fontaine author Marie Dupont collaborator Thomas Martin collaborator Sophie Bernard participant Jean-Luc Perrin participant Benjamin Nkosi participant Jour 1 1 mention J’aime Aimé Commentaires Suivi du carnet Abonnez-vous aux notifications pour suivre l’aventure pas à pas. Suivre cette expédition"
+}
