@@ -110,6 +110,7 @@ export function XpRow({
   onClick,
   trailing,
   ariaLabel,
+  ariaExpanded,
 }: {
   icon?: string;
   image?: string;
@@ -120,6 +121,8 @@ export function XpRow({
   onClick?: () => void;
   trailing?: React.ReactNode;
   ariaLabel?: string;
+  /** État d'un panneau que cette ligne ouvre ou referme. */
+  ariaExpanded?: boolean;
 }) {
   const content = (
     <>
@@ -160,7 +163,13 @@ export function XpRow({
     return <div className="xp-row">{content}</div>;
   }
   return (
-    <button type="button" className="xp-row" onClick={onClick} aria-label={ariaLabel ?? title}>
+    <button
+      type="button"
+      className="xp-row"
+      onClick={onClick}
+      aria-label={ariaLabel ?? title}
+      aria-expanded={ariaExpanded}
+    >
       {content}
     </button>
   );

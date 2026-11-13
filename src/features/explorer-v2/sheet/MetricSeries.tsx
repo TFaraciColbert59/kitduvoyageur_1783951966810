@@ -1,5 +1,6 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import { XpEmpty, XpEyebrow, XpRow, XpRows } from './blocks';
 import type { MetricSeries, Sport } from '../state/types';
 import {
@@ -121,6 +122,7 @@ export function MetricSeriesPanel({
   showUnavailable = true,
   emptyTitle = 'Aucune mesure disponible',
   emptyHint = 'Aucun point GPS ou capteur n’a fourni de valeur pour cette séance.',
+  children,
 }: {
   series: MetricSeries[];
   units: MetricUnits;
@@ -128,6 +130,8 @@ export function MetricSeriesPanel({
   showUnavailable?: boolean;
   emptyTitle?: string;
   emptyHint?: string;
+  /** Contenu inséré entre les séries reçues et les absences de capteurs. */
+  children?: ReactNode;
 }) {
   const available = series.filter(hasMetricValues);
   const availableKeys = new Set(available.map((item) => item.key));
@@ -164,6 +168,8 @@ export function MetricSeriesPanel({
       ) : (
         <XpEmpty title={emptyTitle} hint={emptyHint} />
       )}
+
+      {children}
 
       {unavailable.length > 0 ? (
         <>

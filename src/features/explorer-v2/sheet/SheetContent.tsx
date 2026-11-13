@@ -16,6 +16,7 @@ import { useExplorerStore } from '../state/store';
 import { countTiles, downloadZone, purgeZone, readZone } from '../offline/zone';
 import { ElevationProfile } from './ElevationProfile';
 import { MetricSeriesPanel } from './MetricSeries';
+import { SlopeAdjustedPacePanel } from './SlopeAdjustedPace';
 import {
   XpAvatars,
   XpCard,
@@ -2184,7 +2185,9 @@ function ActivityTabs(ctx: SheetContext, kind: string): SheetTab[] {
               sport={bilan.sport}
               emptyTitle="Aucune série mesurée"
               emptyHint="Cette sortie ne contient aucun point GPS ou capteur exploitable. Aucune moyenne ni aucun pic n’est inventé."
-            />
+            >
+              <SlopeAdjustedPacePanel sport={bilan.sport} />
+            </MetricSeriesPanel>
           );
         },
       },
