@@ -134,7 +134,7 @@ export const ON_SITE_NOTE = 'Tu es déjà au départ : aucun trajet à prévoir.
 export const CAR_FREE_NO_LEG_PREFIX = 'Sans voiture :';
 /** `fromHome` : la distance depuis le domicile ne se range pas sur le voyage (elle en déduirait la commune). */
 const carFreeNoLegNote = (straightKm: number, fromHome = false) =>
-  `${CAR_FREE_NO_LEG_PREFIX} le trajet d’approche${fromHome ? '' : ` (environ ${Math.round(straightKm)} km à vol d’oiseau)`} n’est pas chiffré, aucune ligne de train ou de bus n’est évaluée sur ce trajet ; cherche-la dans Résa · Trajets.`;
+  `${CAR_FREE_NO_LEG_PREFIX} le trajet d’approche${fromHome ? '' : ` (environ ${Math.round(straightKm)} km à vol d’oiseau)`} n’est pas chiffré, aucune ligne de train ou de bus n’est évaluée sur ce trajet ; cherche-la dans « À prévoir ».`;
 /** Aucun vol possible (même aéroport aux deux bouts) et la route est longue, ou introuvable. */
 export const SAME_AIRPORT_NOTE =
   'Trajet d’approche à vérifier : aéroport identique au départ et à l’arrivée, route longue ou non calculée.';

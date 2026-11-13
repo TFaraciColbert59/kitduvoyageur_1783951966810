@@ -387,7 +387,7 @@ describe('sans voiture : le trajet d’approche', () => {
     expect(leg.notes).toHaveLength(1);
     expect(leg.notes[0].startsWith(CAR_FREE_NO_LEG_PREFIX)).toBe(true);
     expect(leg.notes[0]).toMatch(/pas chiffré/);
-    expect(leg.notes[0]).toMatch(/Résa · Trajets/);
+    expect(leg.notes[0]).toMatch(/« À prévoir »/);
     expect(calls).toEqual([]);
   });
 

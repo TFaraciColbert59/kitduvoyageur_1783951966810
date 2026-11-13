@@ -42,6 +42,7 @@ export async function runOps(
 ): Promise<ActionResult & { done: number }> {
   const { tripId, slug } = ctl.data.model;
   let done = 0;
+  let note: string | undefined;
   for (const op of ops) {
     let res: ActionResult;
     switch (op.op) {
@@ -119,8 +120,9 @@ export async function runOps(
       };
     }
     done += 1;
+    if (res.note) note = res.note;
   }
-  return { success: true, done };
+  return { success: true, done, ...(note ? { note } : {}) };
 }
 
 /**

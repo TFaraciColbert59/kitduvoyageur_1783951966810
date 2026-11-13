@@ -56,6 +56,8 @@ export const compasServerIt: Shape<typeof compasServerFr> = {
     dates: {
       invalidDate: 'Data non valida',
       endBeforeStart: 'La fine deve essere successiva all’inizio.',
+      tooLong: 'Un viaggio dura al massimo 60 giorni: accorcia le date.',
+      splitPartial: 'Il percorso è suddiviso solo sui primi {covered} di {days} giorni: i giorni successivi conservano le tappe, senza distanza.',
       invalid: 'Date non valide',
       saveFailed: 'Non è stato possibile salvare le date.',
     },

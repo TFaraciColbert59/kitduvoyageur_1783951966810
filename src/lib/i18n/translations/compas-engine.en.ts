@@ -352,7 +352,7 @@ export const compasEngineEn: Shape<typeof compasEngineFr> = {
       homeOrigin: 'Trip priced from your home (your traveller profile): write “from Lyon” in your request to start elsewhere.',
       dayTripMax: 'More than {hours} h of travel each way for a single day: plan a night on site or choose somewhere closer.',
       dayTrip: '{time} of travel each way for a single day: plan a night on site or choose somewhere closer.',
-      carFreeNoLeg: 'Without a car: the approach{around} is not priced, and no train or bus line is assessed on this leg; look for it in Booking · Journeys.',
+      carFreeNoLeg: 'Without a car: the approach{around} is not priced, and no train or bus line is assessed on this leg; look for it under “To plan”.',
       carFreeAround: ' (about {distance} as the crow flies)',
     },
   },

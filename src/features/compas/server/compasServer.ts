@@ -221,6 +221,15 @@ export async function resplitSteps(supabase: Supa, tripId: string, routeId: numb
       });
     }
   }
+  // La fonction SQL plafonne le découpage à 30 jours : au-delà, les jours restants gardent leurs
+  // étapes (jamais supprimées) mais plus de distance, qui ne serait plus celle du découpage.
+  const covered = Math.min(days, stages.length);
+  for (const r of rows.filter((r) => r.day_number > covered && r.day_number <= days)) {
+    await supabase
+      .from('trip_steps')
+      .update({ distance_km: null, elevation_gain_m: null, elevation_loss_m: null, updated_at: now })
+      .eq('id', r.id);
+  }
   for (const r of rows.filter((r) => r.day_number > days)) {
     const generated = r.source === 'compas' || r.source === 'demo';
     if (generated && !r.accommodation_name) {
@@ -238,7 +247,7 @@ export async function resplitSteps(supabase: Supa, tripId: string, routeId: numb
         .eq('id', r.id);
     }
   }
-  return { kept };
+  return { kept, covered, requested: days, truncated: covered < days };
 }
 
 

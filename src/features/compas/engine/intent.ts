@@ -22,9 +22,11 @@ import {
   vagueSpan,
 } from './intentWords';
 import { samePlaceName } from './places';
+import { MAX_TRIP_DAYS as TRIP_CONTEXT_MAX_DAYS } from './tripContext';
 import { profileFor } from './activityProfile';
 import { trailRefIn } from './geoTrails';
 import type { Locale } from '@/lib/i18n/locale';
+import { engineT } from './engineI18n';
 import {
   ACTIVITY_EN,
   DEST_LEAD_EN,
@@ -108,6 +110,11 @@ const currencyCode = z.string().regex(/^[A-Z]{3}$/);
 
 export const intentActionSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('set_dates'), start: isoDate, end: isoDate.nullable() }),
+  /**
+   * Une date dite mais qui ne peut pas être retenue (« 30 février », « en 2020 ») : posée par les règles
+   * seulement, toujours refusée, pour que l'écran dise qu'elle a été ignorée au lieu de la perdre en silence.
+   */
+  z.object({ type: z.literal('invalid_dates'), said: z.string().trim().min(1).max(60), why: z.enum(['impossible', 'past']) }),
   z.object({
     type: z.literal('set_duration'),
     days: z.number().int().min(1).max(60).nullable(),
@@ -211,9 +218,12 @@ export interface IntentContext {
   wishes: string[];
   /** Taille du groupe rangée sur le voyage (`party_size`) ; absente ou null : pas encore dite. */
   partySize?: number | null;
+  /** Langue de la personne, pour les libellés qui se traduisent ; absente : français. */
+  locale?: Locale;
 }
 
-export const MAX_TRIP_DAYS = 30;
+/** Une seule durée maximale (celle de `tripContext`) : phrase, écran, dates et durée enregistrées. */
+export const MAX_TRIP_DAYS = TRIP_CONTEXT_MAX_DAYS;
 
 type BudgetAction = Extract<CompasIntentAction, { type: 'set_budget' }>;
 
@@ -360,7 +370,11 @@ function resolveDayMonth(
   for (const y of year ? [y0] : [y0, y0 + 1]) {
     const iso = `${y}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     const d = new Date(`${iso}T12:00:00Z`);
-    if (d.getUTCDate() !== day) return null;
+    // Jour inexistant cette année (« 29 février » en 2027) : l'année suivante peut l'avoir (2028).
+    if (d.getUTCDate() !== day) {
+      if (year) return null;
+      continue;
+    }
     if (year || iso >= today) return iso;
   }
   return null;
@@ -409,8 +423,14 @@ function dateGrounded(text: string, iso: string, end = false): boolean {
 
 /* ---------- Lecteur de règles (sans IA) ---------- */
 
+/** Segment de moyen de venir qui suit un lieu : « en train », « par le train », « en avion », « by plane », « by car »… */
+const TRAVEL_MODE_TAIL =
+  /\s+(?:(?:en|par le|par|via le|via)\s+(?:train|tgv|avion|voiture|bus|autocar)|by\s+(?:train|rail|plane|air|car|bus|coach))\b.*$/iu;
+
 function clean(fragment: string, max = 40): string {
   return fragment
+    // Le moyen de venir n'est pas le lieu : « Porto par le train », « Lisbon by train ».
+    .replace(TRAVEL_MODE_TAIL, '')
     .replace(/\s+(et|puis|mais|avec|pour|en|le|la|les|du|de|des|a|au|aux)\s*$/i, '')
     .replace(/\s+/g, ' ')
     .trim()
@@ -1165,6 +1185,18 @@ function parseRulesCore(
     if (wd) start = nextWeekday(today, WEEKDAYS.indexOf(wd[1]), true);
     else if (wdEn) start = nextWeekday(today, EN_WEEKDAYS.indexOf(wdEn[1]), true);
   }
+  /* Une date dite en toutes lettres mais impossible (« 30 février », « 31 avril ») : aucune date n'est lue
+     (`start` reste nul) ; elle est annoncée refusée plutôt que perdue en silence. */
+  let invalidDate: Extract<CompasIntentAction, { type: 'invalid_dates' }> | null = null;
+  if (start == null && !iso[0] && !slashRange) {
+    const said = enRange ?? enDayRange ?? range ?? single ?? enSingle;
+    if (said)
+      invalidDate = {
+        type: 'invalid_dates',
+        said: (plain.length === src.length ? src.slice(said.index, (said.index ?? 0) + said[0].length) : said[0]).trim().replace(/^(?:from|du)\s+/i, ''),
+        why: 'impossible',
+      };
+  }
   // Un mois seul : « en janvier », « début mai », « fin août 2027 ». Le départ
   // se pose au début (au 15 pour « mi », au 22 pour « fin ») ; un « week-end »
   // dans ce mois tombe sur son premier samedi. Ce mois-ci : à partir d'aujourd'hui.
@@ -1331,6 +1363,13 @@ function parseRulesCore(
   // Une sortie de quelques heures sans jour dit : aujourd'hui (proposé, décochable).
   if (!start && out.some((a) => a.type === 'set_duration' && a.days == null && a.hours != null)) start = today;
   if (start) out.unshift({ type: 'set_dates', start, end });
+  if (invalidDate) out.unshift(invalidDate);
+  else if (!start) {
+    // Une année seule, déjà passée (« en 2020 ») : aucune date n'en sort, mais elle est dite.
+    const year = /\b(?:en|in|pour|for|durant|pendant|d['’]ici)\s+((?:19|20)\d{2})\b(?!\s*(?:€|eur|euros?|\$|usd|km|kg|m\b|jours?|nuits?|days?|nights?|pers))/.exec(plain);
+    if (year && Number(year[1]) < Number(today.slice(0, 4)))
+      out.unshift({ type: 'invalid_dates', said: year[0].trim(), why: 'past' });
+  }
 
   /* Distance visée (« trail de 20 km ») */
   const km = /\b(\d{1,3}(?:[.,]\d)?)\s*(?:km|kilometres?)\b/.exec(plain);
@@ -1733,13 +1772,16 @@ function parseRulesCore(
      Mots séparés par des espaces seulement (le trait d'union est une lettre du mot) : sinon 2^n découpages
      quand la durée manque (« Ab-Ab-… x », relecture de la PR #108). */
   if (!out.some((a) => a.type === 'set_destination')) {
+    // Le lieu en tête suivi d'une date dite (« Rome du 1er au 5 janvier », « Rome le 20 décembre ») : seulement
+    // quand une date a été lue, et avec « du / le / au / from / on » devant le jour.
+    const dateLead = out.some((a) => a.type === 'set_dates') ? `|(?:du|le|au|from|on|the)\\s+\\d{1,2}(?:er|st|nd|rd|th)?\\b` : '';
     const lead = new RegExp(
-      `^(\\p{Lu}[\\p{L}'’-]+(?:(?:\\s+|\\s+(?:de la|de l['’]|du|des|del|della|de|di|d['’])\\s*|\\s+et\\s+)\\p{Lu}[\\p{L}'’-]+)*)\\s+(?:[\\p{L}'’-]+\\s+){0,4}?(?=${NUM}\\s*(?:jours?|j\\b|nuits?|semaines?|days?|nights?|weeks?)|week[- ]?end|weekend)`,
+      `^(\\p{Lu}[\\p{L}'’-]+(?:(?:\\s+|\\s+(?:de la|de l['’]|du|des|del|della|de|di|d['’])\\s*|\\s+et\\s+)\\p{Lu}[\\p{L}'’-]+)*)\\s+(?:[\\p{L}'’-]+\\s+){0,4}?(?=${NUM}\\s*(?:jours?|j\\b|nuits?|semaines?|days?|nights?|weeks?)|week[- ]?end|weekend|(?:en|par le|by)\\s+(?:train|tgv|avion|voiture|bus|autocar|plane|air|car|coach)\\b${dateLead})`,
       'u'
     ).exec(src.trim());
     // « Corse GR20 nord » : le code du sentier n'est pas le nom du lieu.
     const name = lead ? clean(lead[1].replace(/\s+(?:GR|HRP|GTA|TMB)$/u, ''), 50) : '';
-    if (name.length >= 3 && !notPlace(name) && !notAPlace(name, en) && !ACTIVITY_LEAD.test(plainOf(name).split(' ')[0]) && !SENTENCE_OPENER.test(plainOf(name)))
+    if (name.length >= 3 && !notPlace(name) && !notAPlace(name, en) && !ACTIVITY_LEAD.test(plainOf(name).split(' ')[0]) && !SENTENCE_OPENER.test(plainOf(name)) && !/^(?:week[- ]?ends?|trips?|tours?|holidays?|vacations?|getaways?|breaks?|city[- ]?breaks?|city[- ]?trips?|road[- ]?trips?)$/.test(plainOf(name)))
       out.push({ type: 'set_destination', place: name });
   }
 
@@ -2055,6 +2097,9 @@ export function groundingIssue(action: CompasIntentAction, text: string): string
       return saysCarFree(plain) || saysTravelMode(text, plain).has('bus') ? null : 'Sans voiture absent de ta phrase';
     case 'set_transport_mode':
       return saysTravelMode(text, plain).has(action.mode) ? null : 'Moyen de transport absent de ta phrase';
+    case 'invalid_dates':
+      // Lue par les règles seulement : une date « ignorée » venue du modèle n'a rien à dire.
+      return 'Date ignorée absente de ta phrase';
     case 'set_nights':
       return /\b(dehors|belle etoile|bivouac|bivouaquer|tente|camping|camper|refuges?|hotels?|gites?|chambres?|auberges?|hebergements?|airbnb|tent|hut|hostel)/.test(plain)
         ? null
@@ -2078,7 +2123,7 @@ const NIGHTS_LABEL: Record<CompasNights, string> = {
   mixte: 'mixtes',
 };
 
-export function actionLabel(action: CompasIntentAction, currency = 'EUR'): string {
+export function actionLabel(action: CompasIntentAction, currency = 'EUR', locale: Locale = 'fr'): string {
   switch (action.type) {
     case 'set_dates':
       return action.end && action.end !== action.start
@@ -2135,11 +2180,17 @@ export function actionLabel(action: CompasIntentAction, currency = 'EUR'): strin
     case 'set_car_free':
       return 'Sans voiture : train, bus, vélo ou à pied';
     case 'set_transport_mode':
-      return `Pour venir : ${TRANSPORT_MODE_LABEL[action.mode]}`;
+      return `Pour venir : ${engineT(locale)(TRANSPORT_MODE_KEY[action.mode])}`;
+    case 'invalid_dates':
+      return `Date ignorée : « ${action.said} »`;
   }
 }
 
-const TRANSPORT_MODE_LABEL = { train: 'en train', flight: 'en avion', car: 'en voiture' } as const;
+const TRANSPORT_MODE_KEY = {
+  train: 'compas.understood.modeTrain',
+  flight: 'compas.understood.modeFlight',
+  car: 'compas.understood.modeCar',
+} as const;
 const LEVEL_LABEL = { debut: 'débutant', regulier: 'régulier', aguerri: 'aguerri' } as const;
 const TERRAIN_LABEL = {
   sentier: 'sentiers',
@@ -2429,6 +2480,12 @@ export function validateActions(
               reason = `Plus de ${MAX_TRIP_DAYS} jours`;
             break;
           }
+          case 'invalid_dates':
+            reason =
+              a.why === 'past'
+                ? `Date ignorée : « ${a.said} » est passée`
+                : `Date ignorée : « ${a.said} » n’existe pas`;
+            break;
           case 'set_duration':
             if (a.days != null && a.days > MAX_TRIP_DAYS) reason = `Plus de ${MAX_TRIP_DAYS} jours`;
             else if (a.days == null && a.hours == null) reason = 'Durée illisible';
@@ -2461,7 +2518,7 @@ export function validateActions(
       return {
         id: `${i}-${a.type}`,
         action: a,
-        label: actionLabel(a, ctx.currency),
+        label: actionLabel(a, ctx.currency, ctx.locale),
         ok: reason == null,
         reason,
         source: x.source,

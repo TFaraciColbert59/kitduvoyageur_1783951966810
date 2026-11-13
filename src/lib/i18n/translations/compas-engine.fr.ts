@@ -356,7 +356,7 @@ export const compasEngineFr = {
       homeOrigin: 'Trajet chiffré depuis ton domicile (ton profil voyageur) : écris « depuis Lyon » dans ta demande pour partir d’ailleurs.',
       dayTripMax: 'Plus de {hours} h de trajet aller pour une seule journée : prévois une nuit sur place ou choisis plus près.',
       dayTrip: '{time} de trajet aller pour une seule journée : prévois une nuit sur place ou choisis plus près.',
-      carFreeNoLeg: 'Sans voiture : le trajet d’approche{around} n’est pas chiffré, aucune ligne de train ou de bus n’est évaluée sur ce trajet ; cherche-la dans Résa · Trajets.',
+      carFreeNoLeg: 'Sans voiture : le trajet d’approche{around} n’est pas chiffré, aucune ligne de train ou de bus n’est évaluée sur ce trajet ; cherche-la dans « À prévoir ».',
       carFreeAround: ' (environ {distance} à vol d’oiseau)',
     },
   },

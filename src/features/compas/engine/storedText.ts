@@ -117,7 +117,7 @@ export function localizeStoredNote(
   if ((m = /^(\d{1,2}) h (\d{2})( de trajet aller pour une seule journée : )/.exec(note)) && note.endsWith(tail))
     return t('compas.engine.notes.dayTrip', { time: `${m[1]} h ${m[2]}` });
   if (note.startsWith(`${CAR_FREE_NO_LEG_PREFIX} le trajet d’approche`)) { // i18n-ok : gabarit rangé en base
-    const near = /^Sans voiture : le trajet d’approche(?: \(environ (\d{1,6}) km à vol d’oiseau\))? n’est pas chiffré, aucune ligne de train ou de bus n’est évaluée sur ce trajet ; cherche-la dans Résa · Trajets\.$/.exec(note); // i18n-ok : gabarit rangé en base
+    const near = /^Sans voiture : le trajet d’approche(?: \(environ (\d{1,6}) km à vol d’oiseau\))? n’est pas chiffré, aucune ligne de train ou de bus n’est évaluée sur ce trajet ; cherche-la dans (?:« À prévoir »|Résa · Trajets)\.$/.exec(note); // i18n-ok : gabarit rangé en base (l'ancien texte « Résa · Trajets » reste lu)
     if (near)
       return t('compas.engine.notes.carFreeNoLeg', {
         around: near[1] ? t('compas.engine.notes.carFreeAround', { distance: km(Number(near[1]), locale, units) }) : '',

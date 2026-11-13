@@ -195,7 +195,7 @@ export function understandRequest(
     lines.push({
       key: 'deplacements',
       label: t('compas.understood.transport'),
-      value: mode.mode === 'train' ? 'en train' : mode.mode === 'flight' ? 'en avion' : 'en voiture', // i18n-ok: valeur technique
+      value: t(mode.mode === 'train' ? 'compas.understood.modeTrain' : mode.mode === 'flight' ? 'compas.understood.modeFlight' : 'compas.understood.modeCar'),
       state: 'compris',
     });
 

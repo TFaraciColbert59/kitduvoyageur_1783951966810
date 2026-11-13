@@ -352,7 +352,7 @@ export const compasEngineIt: Shape<typeof compasEngineFr> = {
       homeOrigin: 'Tragitto calcolato da casa sua (il suo profilo viaggiatore): scriva «da Lione» nella sua richiesta per partire da un altro posto.',
       dayTripMax: 'Più di {hours} h di viaggio all’andata per una sola giornata: preveda una notte sul posto o scelga più vicino.',
       dayTrip: '{time} di viaggio all’andata per una sola giornata: preveda una notte sul posto o scelga più vicino.',
-      carFreeNoLeg: 'Senza auto: il tragitto di avvicinamento{around} non è calcolato, su questo tratto non viene valutata alcuna linea di treno o autobus; la cerchi in Prenotazioni · Tragitti.',
+      carFreeNoLeg: 'Senza auto: il tragitto di avvicinamento{around} non è calcolato, su questo tratto non viene valutata alcuna linea di treno o autobus; la cerchi in «Da prevedere».',
       carFreeAround: ' (circa {distance} in linea d’aria)',
     },
   },

@@ -352,7 +352,7 @@ export const compasEngineEs: Shape<typeof compasEngineFr> = {
       homeOrigin: 'Trayecto calculado desde su domicilio (su perfil de viajero): escriba «desde Lyon» en su solicitud para salir de otro sitio.',
       dayTripMax: 'Más de {hours} h de trayecto de ida para un solo día: prevea una noche en el lugar o elija algo más cerca.',
       dayTrip: '{time} de trayecto de ida para un solo día: prevea una noche en el lugar o elija algo más cerca.',
-      carFreeNoLeg: 'Sin coche: el trayecto de aproximación{around} no está calculado, no se evalúa ninguna línea de tren ni de autobús en este trayecto; búsquela en Reservas · Trayectos.',
+      carFreeNoLeg: 'Sin coche: el trayecto de aproximación{around} no está calculado, no se evalúa ninguna línea de tren ni de autobús en este trayecto; búsquela en «Por prever».',
       carFreeAround: ' (unos {distance} en línea recta)',
     },
   },

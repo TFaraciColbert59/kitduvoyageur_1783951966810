@@ -305,6 +305,8 @@ export function useCompasController(
           startTransition(() => router.refresh());
           return false;
         }
+        // Réserve dite par l'écriture (ex. découpage limité à 30 jours) : sous le titre de l'annonce.
+        if (res.note) notify(success, undefined, undefined, res.note);
         if (undo) {
           const doUndo = () =>
             void runRef.current?.(t('compas.screen.undone', { action: success }), undo);
@@ -677,6 +679,7 @@ export function useCompasController(
           const done = await runOps(ctl, ops);
           if (stopped.current) return;
           if (!done.success) return prepFail(done.error ?? t('compas.screen.requestFailed'));
+          if (done.note) notify(done.note);
         }
         // Le lieu de départ n'arrête pas la préparation : introuvable ou refusé, elle continue
         // sans lui (trajet à préciser), et l'échec est dit.

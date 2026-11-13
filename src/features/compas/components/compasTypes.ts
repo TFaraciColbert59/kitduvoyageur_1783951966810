@@ -111,7 +111,8 @@ export interface FlowHint {
   resa?: ResaCat;
 }
 
-export type ActionResult = { success: boolean; error?: string };
+/** `note` : une réserve dite après une écriture réussie (ex. parcours découpé sur 30 jours seulement). */
+export type ActionResult = { success: boolean; error?: string; note?: string };
 
 /** Contrôleur partagé par les cartes et les tiroirs. */
 export interface CompasCtl {

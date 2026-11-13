@@ -352,7 +352,7 @@ export const compasEngineDe: Shape<typeof compasEngineFr> = {
       homeOrigin: 'Anreise ab Ihrem Wohnort berechnet (Ihr Reiseprofil): Schreiben Sie „ab Lyon“ in Ihre Anfrage, um woanders zu starten.',
       dayTripMax: 'Mehr als {hours} Std. Hinfahrt für nur einen Tag: Planen Sie eine Übernachtung vor Ort ein oder wählen Sie etwas Näheres.',
       dayTrip: '{time} Hinfahrt für nur einen Tag: Planen Sie eine Übernachtung vor Ort ein oder wählen Sie etwas Näheres.',
-      carFreeNoLeg: 'Ohne Auto: die Anreise{around} ist nicht berechnet, auf dieser Strecke wird keine Zug- oder Buslinie bewertet; suchen Sie sie unter Buchung · Fahrten.',
+      carFreeNoLeg: 'Ohne Auto: die Anreise{around} ist nicht berechnet, auf dieser Strecke wird keine Zug- oder Buslinie bewertet; suchen Sie sie unter „Zu planen“.',
       carFreeAround: ' (etwa {distance} Luftlinie)',
     },
   },

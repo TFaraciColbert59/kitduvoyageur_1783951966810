@@ -15,6 +15,7 @@ import { withoutAutofillFlag } from './autofillState';
 import { lookupBase, lookupDestination } from './placeLookup';
 import { placeSearchLimitError, resolvePlaceOutcome } from './placeSearch';
 import { canonicalPlaceName } from '../engine/countryNames';
+import { MAX_TRIP_DAYS } from '../engine/tripContext';
 import { trailDestination } from './trailDestination';
 import { isDeparturePlace, samePlaceName, type CompasPlace } from '../engine/places';
 import { getTripById } from '@/lib/queries-trips';
@@ -599,11 +600,18 @@ const datesSchema = z
     durationHours: z.number().min(0.25).max(23.99).nullable(),
     resplit: z.boolean().default(false),
   })
-  .refine((v) => v.endDate >= v.startDate, { message: 'compas.server.dates.endBeforeStart' });
+  .refine((v) => v.endDate >= v.startDate, { message: 'compas.server.dates.endBeforeStart' })
+  // Même plafond que la phrase et l'écran (`tripContext`) : jamais tronqué en silence.
+  .refine(
+    (v) =>
+      Math.round((Date.parse(`${v.endDate}T12:00:00Z`) - Date.parse(`${v.startDate}T12:00:00Z`)) / 86_400_000) + 1 <=
+      MAX_TRIP_DAYS,
+    { message: 'compas.server.dates.tooLong' }
+  );
 
 export async function compasSetDatesAction(
   input: z.input<typeof datesSchema>
-): Promise<CompasActionResult & { kept?: number }> {
+): Promise<CompasActionResult & { kept?: number; note?: string }> {
   const parsed = datesSchema.safeParse(input);
   if (!parsed.success)
     return issueError(parsed.error.issues[0]?.message, 'compas.server.dates.invalid');
@@ -629,16 +637,20 @@ export async function compasSetDatesAction(
       return actionError('compas.server.dates.saveFailed');
 
     let kept = 0;
+    let note: string | null = null;
     const routeId = Number((metadata as { route_id?: unknown }).route_id);
     if (resplit && Number.isFinite(routeId) && routeId > 0) {
       const days =
         Math.round(
           (Date.parse(`${endDate}T12:00:00Z`) - Date.parse(`${startDate}T12:00:00Z`)) / 86_400_000
         ) + 1;
-      kept = (await resplitSteps(auth.supabase, tripId, routeId, days)).kept;
+      const split = await resplitSteps(auth.supabase, tripId, routeId, days);
+      kept = split.kept;
+      if (split.truncated)
+        note = await serverText('compas.server.dates.splitPartial', { covered: split.covered, days: split.requested });
     }
     revalidateTrip(tripSlug);
-    return { success: true, kept };
+    return { success: true, kept, ...(note ? { note } : {}) };
   } catch (err) {
     await reportServerError('compas.compasSetDatesAction', err);
     return actionError('compas.server.common.serverError');
@@ -1038,7 +1050,7 @@ export async function compasSetDepartureTimeAction(
 const spanSchema = z.object({
   tripId: uuid,
   tripSlug: slug,
-  days: z.number().int().min(1).max(60).nullable(),
+  days: z.number().int().min(1).max(MAX_TRIP_DAYS).nullable(),
 });
 
 /** Durée voulue quand la date de départ n'est pas encore choisie (« 20 jours »). */
@@ -1839,6 +1851,7 @@ export async function compasInterpretAction(
       wishes: prefs?.wishes ?? [],
       // Le groupe rangé sur le voyage : un montant « par personne » se multiplie par lui (ou par celui de la phrase).
       partySize: trip.party_size ?? null,
+      locale: ruleLocale,
     };
     // L'activité lue par l'IA quand la phrase n'en dit pas (« dans le Jura de Gex à Pontarlier » + IA
     // « randonnée ») : la lecture est refaite avec elle, comme avec celle du voyage.

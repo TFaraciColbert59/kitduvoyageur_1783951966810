@@ -58,6 +58,8 @@ export const compasServerFr = {
     dates: {
       invalidDate: 'Date invalide',
       endBeforeStart: 'La fin doit suivre le début.',
+      tooLong: 'Un voyage dure 60 jours au plus : raccourcis les dates.',
+      splitPartial: 'Le parcours n’est découpé que sur les {covered} premiers des {days} jours : les jours suivants gardent leurs étapes, sans distance.',
       invalid: 'Dates invalides',
       saveFailed: 'Impossible d’enregistrer les dates.',
     },
