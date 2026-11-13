@@ -17,12 +17,18 @@ import {
 } from './offRoute';
 import { useExplorerStore } from '../state/store';
 import { gpsSimulationEnabled } from './gpsSimulation';
+import {
+  appendMetricInputs,
+  mergeMetricSeries,
+  rebuildMetricSeriesFromFixes,
+} from './metrics';
 
 /**
  * Suivi GPS d'une activité (04_CARTE §4, P2-11).
  *
  * - `watchPosition` réel quand la permission est accordée ;
  * - métriques calculées par `ActivityTracker` (précision, sauts, altitude) ;
+ * - séries GPS reconstruites depuis les points restaurés par A01 ;
  * - hors-trace évalué dès qu'un itinéraire est sélectionné ;
  * - en recette, `window.__xpPushFix` permet de rejouer un GPX sans GPS.
  */
@@ -40,6 +46,11 @@ export type RouteDistanceProvider = (
   fix: GpsFix,
 ) => number | RouteDistanceMeasurement | null;
 
+/**
+ * Séance locale restaurée depuis la persistance A01. `fixes` ne contient que
+ * les points que le tracker avait réellement acceptés : le rejeu ne fabrique
+ * ni point ni mesure.
+ */
 export interface RestoredTrackerState {
   clientSessionId: string;
   /** Points réellement acceptés avant le rechargement, dans l'ordre. */
@@ -89,6 +100,23 @@ export function useGpsTracker({
   const manualPausedRef = useRef<boolean | null>(null);
   const offRouteRef = useRef<OffRouteState>({ offRoute: false, distanceM: 0, outSinceS: 0 });
   const samplesRef = useRef<OffRouteSample[]>([]);
+  /**
+   * Dernier fix accepté, pour dériver une vitesse d'intervalle **seulement**
+   * quand le GPS ne rapporte pas de vitesse. La référence est bornée à la
+   * séance : un nouveau départ ne peut pas hériter du fix précédent.
+   */
+  const previousMetricFixRef = useRef<{
+    sessionId: string | null;
+    startedAt: number;
+    t: number;
+    distanceM: number;
+  } | null>(null);
+  /**
+   * Séance dont les points ont déjà été rejoués. Une nouvelle identité de
+   * l'objet `restored` ne doit pas remettre le tracker à zéro après des fixes
+   * vivants ; un remontage du hook réinitialise la référence.
+   */
+  const restoredClientRef = useRef<string | null>(null);
 
   const handleFix = useRef<(fix: GpsFix) => void>(() => undefined);
   const lastFixTimeRef = useRef<number>(Date.now());
@@ -115,6 +143,57 @@ export function useGpsTracker({
     // périmé (`maximumAge`) ou aberrant ne doit pas laisser de trace visuelle.
     if (!metrics.accepted) return;
 
+    const effectiveT = metrics.effectiveTMs ?? fix.t;
+    const previousMetricFix = previousMetricFixRef.current;
+    const sameActivity =
+      previousMetricFix !== null &&
+      previousMetricFix.sessionId === current.sessionId &&
+      previousMetricFix.startedAt === current.startedAt;
+    const elapsedS =
+      previousMetricFix !== null && sameActivity && effectiveT > previousMetricFix.t
+        ? (effectiveT - previousMetricFix.t) / 1000
+        : 0;
+    const reportedSpeed =
+      typeof fix.speed === 'number' && Number.isFinite(fix.speed) && fix.speed >= 0
+        ? fix.speed
+        : null;
+    // La vitesse déduite ne traverse jamais une nouvelle borne (trou GPS,
+    // rejet, reprise) : elle serait une corde droite inventée. Elle n'est
+    // calculée que si le tracker a réellement ajouté de la distance.
+    const derivedSpeed =
+      reportedSpeed === null &&
+      previousMetricFix !== null &&
+      sameActivity &&
+      !metrics.discontinuity &&
+      elapsedS > 0 &&
+      metrics.distanceM > previousMetricFix.distanceM
+        ? (metrics.distanceM - previousMetricFix.distanceM) / elapsedS
+        : null;
+    let metricSeries = current.metricSeries ?? [];
+    if (typeof fix.ele === 'number' && Number.isFinite(fix.ele)) {
+      metricSeries = appendMetricInputs(metricSeries, {
+        t: effectiveT,
+        elevationM: fix.ele,
+        source: 'gps',
+        quality: 'measured',
+      });
+    }
+    if (reportedSpeed !== null || derivedSpeed !== null) {
+      const derived = reportedSpeed === null;
+      metricSeries = appendMetricInputs(metricSeries, {
+        t: effectiveT,
+        speedMs: reportedSpeed ?? derivedSpeed,
+        source: derived ? 'derived' : 'gps',
+        quality: derived ? 'derived' : 'measured',
+      });
+    }
+    previousMetricFixRef.current = {
+      sessionId: current.sessionId,
+      startedAt: current.startedAt,
+      t: effectiveT,
+      distanceM: metrics.distanceM,
+    };
+
     useExplorerStore.setState((state) => ({
       activity: state.activity
         ? {
@@ -126,6 +205,7 @@ export function useGpsTracker({
             splits: metrics.splits,
             mileSplits: metrics.mileSplits,
             laps: metrics.laps,
+            metricSeries,
           }
         : undefined,
       // Pause automatique : la capture continue pour détecter la reprise, mais
@@ -263,20 +343,35 @@ export function useGpsTracker({
     const current = useExplorerStore.getState();
     const live = current.activity;
     if (!live || live.clientSessionId !== activeClientSessionId) return;
+    if (restoredClientRef.current === activeClientSessionId) return;
+    restoredClientRef.current = activeClientSessionId;
     const enabled = current.autoPauseEnabled ?? false;
     trackerConfigRef.current = `${live.sport}:${enabled ? 'on' : 'off'}`;
     const tracker = new ActivityTracker(autoPauseConfigForSport(live.sport, enabled));
     for (const fix of restored.fixes) tracker.addFix(fix);
     trackerRef.current = tracker;
 
+    // Les séries GPS sont une projection des points déjà conservés : les
+    // reconstruire évite un second stockage, une nouvelle version de base et
+    // toute valeur de santé inventée. Les séries d'une autre source, si elles
+    // existent un jour, sont conservées telles quelles.
+    if (restored.fixes.length === 0) return;
+    const metrics = tracker.state;
+    const rebuilt = rebuildMetricSeriesFromFixes(restored.fixes, live.sport, enabled);
+    previousMetricFixRef.current = rebuilt.last
+      ? {
+          sessionId: live.sessionId,
+          startedAt: live.startedAt,
+          t: rebuilt.last.t,
+          distanceM: rebuilt.last.distanceM,
+        }
+      : null;
     // Les splits et les tours sont reconstruits par le rejeu, mais vivaient
     // seulement dans le tracker : sans republication, l'interface les croyait
     // absents jusqu'au prochain fix. Les métriques rejouées font aussi foi sur
     // la fiche : si une écriture locale de point avait échoué, conserver le
     // cumul de la fiche puis repartir du dernier point rejoué compterait deux
     // fois le segment perdu.
-    if (restored.fixes.length === 0) return;
-    const metrics = tracker.state;
     useExplorerStore.setState((state) => {
       const activityNow = state.activity;
       if (!activityNow || activityNow.clientSessionId !== activeClientSessionId) return {};
@@ -290,6 +385,7 @@ export function useGpsTracker({
           splits: metrics.splits,
           mileSplits: metrics.mileSplits,
           laps: metrics.laps,
+          metricSeries: mergeMetricSeries(activityNow.metricSeries ?? [], rebuilt.series),
         },
       };
     });

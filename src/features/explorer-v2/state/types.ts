@@ -118,6 +118,95 @@ export interface ActivitySplit {
 }
 
 /**
+ * Provenance d'une mesure de série. `mixed` n'est jamais produit par un
+ * capteur : il signale qu'une même série a reçu des valeurs de plusieurs
+ * sources et ne doit donc pas être présentée comme homogène.
+ */
+export type MetricSource = 'gps' | 'sensor' | 'import' | 'derived' | 'mixed';
+
+/**
+ * Qualité d'une mesure de série. Aucune valeur `estimated` n'est fabriquée par
+ * LKDV : elle ne peut venir que d'une source qui la déclare comme telle.
+ */
+export type MetricQuality = 'measured' | 'derived' | 'estimated';
+
+/**
+ * Provenance admise pour une puissance. Les watts ne viennent que d'un
+ * capteur (BLE, HealthKit/Health Connect) ou d'un import (FIT/TCX). Le GPS ne
+ * mesure pas de puissance et LKDV n'en calcule ni n'en déduit aucune.
+ */
+export type PowerMetricSource = Extract<MetricSource, 'sensor' | 'import'>;
+
+/**
+ * Qualité admise pour une puissance. Une valeur fournie par la source est
+ * soit mesurée, soit estimée par cette source ; `derived` est interdit pour
+ * la puissance, car il désignerait un calcul LKDV.
+ */
+export type PowerMetricQuality = Extract<MetricQuality, 'measured' | 'estimated'>;
+
+/** Métriques pouvant être représentées dans une série temporelle. */
+export type MetricKey =
+  | 'elevation'
+  | 'speed'
+  | 'pace'
+  | 'heartRate'
+  | 'cadence'
+  | 'strokeRate'
+  | 'power'
+  | 'temperature'
+  | 'calories'
+  | 'steps';
+
+/** Un point daté d'une série. `value` est toujours dans l'unité canonique. */
+export interface MetricSample {
+  /** Instant de mesure, sur l'échelle corrigée du tracker quand elle existe. */
+  t: number;
+  value: number;
+  source: MetricSource;
+  quality: MetricQuality;
+}
+
+/**
+ * Agrégats calculés sur **toutes** les valeurs reçues, y compris celles qui ne
+ * sont pas conservées dans `samples` (échantillonnage d'affichage). Ils ne
+ * remplacent jamais une mesure absente : `count` vaut 0 pour une série vide.
+ */
+export interface MetricSeriesStats {
+  count: number;
+  sum: number;
+  min: number;
+  max: number;
+  first: number;
+  last: number;
+  firstT: number;
+  lastT: number;
+  /**
+   * Somme pondérée par le temps écoulé depuis l’échantillon précédent, et
+   * durée réellement couverte. Un trou supérieur au plafond du moteur n’est
+   * pas ponté : la moyenne retombe alors sur la moyenne simple des valeurs.
+   */
+  weightedSum: number;
+  weightedDurationS: number;
+}
+
+/**
+ * Série temporelle d'une métrique réellement fournie par une source. Les
+ * valeurs absentes ne sont ni interpolées ni remplacées par zéro : elles ne
+ * produisent simplement aucun point.
+ */
+export interface MetricSeries {
+  key: MetricKey;
+  label: string;
+  /** Unité canonique de `samples`/`stats` (m, m/s, s/km, bpm, spm, W, °C, kcal, pas). */
+  unit: string;
+  /** Échantillons destinés à l'affichage, éventuellement décimés. */
+  samples: MetricSample[];
+  stats: MetricSeriesStats;
+  source: MetricSource;
+  quality: MetricQuality;
+}
+
+/**
  * Variante locale choisie dans le drawer (S1.02). Elle conserve le `sport`
  * historique pour le tracker et la persistance ; les champs de variante sont
  * un enrichissement en mémoire, pas un nouveau contrat serveur.
@@ -173,8 +262,9 @@ export interface ActivityState {
   /**
    * Identité stable générée avant le premier point (S1.02/K6.15). Elle survit
    * au rechargement et permet au serveur de retrouver la même séance sans en
-   * créer une seconde. Absente pour les scènes de recette et les anciens
-   * appels directs `startActivity(sport, sessionId)`.
+   * créer une seconde et de raccorder les séries de mesures aux points déjà
+   * conservés. Absente pour les scènes de recette et les anciens appels
+   * directs `startActivity(sport, sessionId)`.
    */
   clientSessionId?: string | null;
   startedAt: number;
@@ -211,6 +301,12 @@ export interface ActivityState {
   mileSplits?: ActivitySplit[];
   /** Tours manuels mesurés (même contrat que `splits`). */
   laps?: ActivitySplit[];
+  /**
+   * Séries de mesures réellement produites pendant la séance. Absent sur les
+   * scènes et les bilans antérieurs : l'interface n'affiche alors aucune
+   * valeur, jamais un zéro de remplissage.
+   */
+  metricSeries?: MetricSeries[];
 }
 
 /**

@@ -29,6 +29,8 @@ import { countTiles, downloadZone, purgeZone, readZone } from '../offline/zone';
 import { ElevationProfile } from './ElevationProfile';
 import { StrengthPanel } from './StrengthPanel';
 import { ZoneSettingsEntry, ZoneSettingsPanel } from './ZoneSettingsPanel';
+import { MetricSeriesPanel } from './MetricSeries';
+import { SlopeAdjustedPacePanel } from './SlopeAdjustedPace';
 import {
   XpAvatars,
   XpCard,
@@ -2652,15 +2654,27 @@ function ActivityTabs(ctx: SheetContext, kind: string): SheetTab[] {
         render: () => <LiveLapsTab ctx={ctx} />,
       },
       {
-        id: 'coeur',
-        label: 'Cœur',
+        id: 'mesures',
+        label: 'Mesures',
         icon: 'heart',
-        render: () => (
-          <XpEmpty
-            title="Cardio indisponible"
-            hint="Aucune ceinture cardio n’est connectée : LKDV n’invente pas de fréquence cardiaque."
-          />
-        ),
+        render: () => {
+          const activity = ctx.state.activity;
+          if (!activity) {
+            return (
+              <XpEmpty
+                title="Aucune mesure"
+                hint="Démarre une activité pour voir les séries réellement reçues."
+              />
+            );
+          }
+          return (
+            <MetricSeriesPanel
+              series={activity.metricSeries ?? []}
+              units={ctx.units}
+              sport={activity.sport}
+            />
+          );
+        },
       },
       {
         id: 'securite',
@@ -2781,6 +2795,33 @@ function ActivityTabs(ctx: SheetContext, kind: string): SheetTab[] {
                 />
               </XpRows>
             </>
+          );
+        },
+      },
+      {
+        id: 'statistiques',
+        label: 'Statistiques',
+        icon: 'gauge',
+        render: () => {
+          const bilan = state.summary;
+          if (!bilan) {
+            return (
+              <XpEmpty
+                title="Aucune série à afficher"
+                hint="Termine une activité pour voir les mesures réellement reçues."
+              />
+            );
+          }
+          return (
+            <MetricSeriesPanel
+              series={bilan.metricSeries ?? []}
+              units={ctx.units}
+              sport={bilan.sport}
+              emptyTitle="Aucune série mesurée"
+              emptyHint="Cette sortie ne contient aucun point GPS ou capteur exploitable. Aucune moyenne ni aucun pic n’est inventé."
+            >
+              <SlopeAdjustedPacePanel sport={bilan.sport} />
+            </MetricSeriesPanel>
           );
         },
       },

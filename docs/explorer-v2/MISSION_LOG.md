@@ -754,3 +754,200 @@ Les points **non** cochés sont listés dans `ETAT_DES_POINTS.md` avec leur bloc
 - Aucun test, build, lint ou `tsc` exécuté : reportés à la fin (mission).
 - Détail, dépendances et checklist : `docs/explorer-v2/C01-K3.10.md`.
 - Statut : partiel et honnête (import réel et recette à faire).
+### [S1.05] Horloges, plausibilité GPS et préférences de pause · 2026-11-12
+- Fichiers : `activity/tracker.ts`, `activity/useGpsTracker.ts`,
+  `activity/offRoute.ts`, `geo/track.ts`, `ExplorerV2.tsx`, `state/types.ts`,
+  `state/scenes.ts`, `state/store.ts`,
+  `tests/explorer-v2/{tracker,auto-pause-wiring,explorer-trace-wiring,off-route-wiring,explorer-offroute-wiring,geo-track}.spec.*`,
+  `docs/explorer-v2/S1.05-PAUSE-AUTOMATIQUE.md`
+- Preuve : `node_modules/.bin/vitest run tests/explorer-v2` → **21 fichiers,
+  232 tests verts**. `tracker.spec.ts` seul : 52 tests verts.
+- Corrections : hors-trace réellement branché sur l'itinéraire sélectionné
+  (`geo/track.ts` : lignes GeoJSON + distance point-à-trace), `activity.offRouteM`
+  stocké et affiché à la place de la distance parcourue ; buffer hors-trace vidé
+  avant la mesure, y compris quand `distanceToRouteM` renvoie `null` ; trou réel
+  mesuré sur `t` avant correction (301 s reçu en 20 s → nouvelle borne, 0 m /
+  0 s, tracé coupé) ; un trou > `maxFixGapS` ne compte plus de distance même
+  auto-pause OFF ; saut arrière confirmé par trois mesures croissantes, deux
+  fixes périmés ne font plus reculer la carte ; `speed: 0` corrigé par la
+  vitesse déduite ; seuil stationnaire rétabli à 10 m pour le jitter ; ordre
+  des fixes, rafales < 1 s, plausibilité par sport, rejet + trou, préférence
+  OFF et seuils kayak/escalade conservés.
+- Limites : pas de preuve appareil/GPX réel ; la fiche source S1.05 n'est pas
+  versionnée, le contrat vérifié est consigné dans le dépôt. La distinction
+  rafale/saut reste heuristique : un lot étalé sur ≥ 1 s avec un rapport ≥ 3
+  peut être pris pour un saut, et un saut livré en < 2 s est traité comme une
+  rafale. Un saut avant avec vitesse dont la distance attendue est < 20 m n'est
+  pas corrigé. Un buffer de trois points périmés croissants pourrait encore
+  être confondu avec un saut d'horloge.
+- Statut : OK pour les tests ciblés et le typage (`tsc --noEmit`, code 0).
+
+
+### [S1.05 / P7-17] Reprise des constats de la revue hors-trace · 2026-11-12
+- Fichiers : `activity/offRoute.ts`, `activity/useGpsTracker.ts`,
+  `activity/tracker.ts`, `state/{types,store}.ts`, `ExplorerV2.tsx`,
+  `geo/track.ts`, `data/{hooks,routeGeometry}.ts`,
+  `app/api/explorer/v2/routes/[id]/geometry/route.ts`,
+  `app/api/explorer/v2/place/route.ts`, `sheet/SheetContent.tsx`,
+  `styles/explorer-v2.css`, `docs/explorer-v2/S1.05-PAUSE-AUTOMATIQUE.md`,
+  `tests/explorer-v2/{off-route-engine,off-route-wiring,explorer-offroute-wiring,
+  tracker,geo-track,explorer-v2-unit}.spec.*`.
+- Preuve : `node_modules/.bin/vitest run tests/explorer-v2` → **23 fichiers,
+  251 tests verts** ; `npx tsc --noEmit -p .` → code 0, aucune sortie.
+- Corrections :
+  - géométrie **réelle** du sentier (`get_route_geojson`, route API dédiée)
+    pour la distance hors-trace ; la géométrie simplifiée d'affichage ne sert
+    plus qu'à la carte ;
+  - itinéraire **figé à la séance** (`activity.route` : id, nom, géométrie),
+    sélection consommée au départ et `trailRoute` effacé à l'arrêt ; plus
+    d'héritage entre deux sorties ni de changement de trace en cours d'alerte ;
+  - buffer hors-trace élagué sur **60 s**, indépendant de la fréquence GPS ;
+    seuil de fiche strictement **> 15 s** ;
+  - `speed: 0` traité comme **arrêt** ; la vitesse déduite ne prend le relais
+    qu'après un déplacement net ≥ 8 m sur ≥ 10 s (GPS figé), ce qui rétablit
+    l'auto-pause sur le jitter stationnaire sans geler une vraie marche ;
+  - état **« Hors-trace indisponible »** visible pour une route de démonstration
+    sans géométrie, un 404 ou un réseau coupé ; les routes de secours sont
+    marquées `unavailable` pour ne jamais interroger un identifiant homonyme ;
+  - géométrie 3D `[lng, lat, ele]` acceptée (altitude ignorée).
+- Limites : pas de preuve appareil/GPX réel ; la direction de retour (flèche
+  orientée) reste hors de cette passe ; l'API de géométrie n'est pas exercée
+  contre Supabase dans cette session (double local uniquement).
+- Statut : OK pour les tests ciblés et le typage, sans build global.
+
+### [K5.09 / S2.05] Splits kilométriques, miles et tours · 2026-11-13
+- Fiches : K5.09 « Temps intermédiaires par kilomètre ou mile », S2.05
+  « Temps par kilomètre, tours et intervalles ». Contrat et limites consignés
+  dans `docs/explorer-v2/S2.05-SPLITS.md`.
+- Fichiers : `activity/splits.ts` (nouveau), `activity/tracker.ts`,
+  `activity/useGpsTracker.ts`, `state/{types,store}.ts`, `sheet/context.ts`,
+  `sheet/SheetContent.tsx`, `ExplorerV2.tsx`.
+- Correction : l’onglet `Tours` ne recopie plus l’allure globale. Chaque
+  intervalle GPS accepté alimente une découpe km et une découpe mile ; les
+  seuils sont fermés au prorata de la distance réellement mesurée. Les pauses
+  manuelles/automatiques et les trous GPS n’ajoutent ni distance ni temps. Les
+  tours manuels sont fermés depuis l’onglet (`Nouveau tour`, minimum 1 m) et
+  restent indépendants des splits. L’unité suit `ctx.units` (km/km/h ou
+  mi/mph). Aucune mesure cardio, puissance ou cadence n’est inventée.
+- Limites : pas d’intervalles travail/récupération automatiques (aucun seuil
+  source) ; pas de bouton Tour dans la pastille basse (l’action est dans
+  l’onglet) ; pas de persistance serveur (aucune migration) ; les scènes sans
+  historique GPS affichent « Découpe indisponible ».
+- Statut : modifications livrées sans test, build, lint ni `tsc`, conformément
+  à la consigne ; contrôles reportés.
+
+### [A04 / S2.06-S2.07] Séries de métriques, énergie et pas · 2026-11-13
+- Fiches : `S2.06` « Fréquence cardiaque, cadence et température »,
+  `S2.07` « Calories et compteur de pas » (lot A04). Contrat, provenance et
+  limites consignés dans `docs/explorer-v2/S2.06-S2.07-METRIQUES.md`.
+- Fichiers : `activity/metrics.ts` (nouveau), `sheet/MetricSeries.tsx`
+  (nouveau), `activity/useGpsTracker.ts`, `state/{types,store}.ts`,
+  `sheet/SheetContent.tsx`.
+- Livré : séries typées (`MetricSeries`) alimentées uniquement par les points
+  GPS acceptés (altitude, vitesse) et par la vitesse d’intervalle quand elle
+  est réellement calculable ; allure dérivée ; moyenne, pic, nombre de mesures
+  et qualité dans l’onglet `Mesures` du direct et l’onglet `Statistiques` du
+  bilan. Les capteurs cardio, cadence, puissance, température, calories et pas
+  restent absents et sont affichés comme tels, jamais comme zéro.
+- Limites : aucun import FIT/TCX, HealthKit/Health Connect ni BLE ; aucune
+  migration ; sur 8321e66 les séries ne survivent pas à un rechargement, faute
+  de persistance locale A01. La reconstruction depuis les points de 4e0a25c
+  est décrite dans la section « Conservation et restauration ». L’historique
+  A02 n’est pas raccordé ; aucune interface Compte modifiée.
+- Dépendances : A01 (séance/reprise GPS), A02 (historique/fiche), branche
+  d’intégration `codex/lkdv-integration-2026-11-11`. Aucun changement de
+  schéma Supabase.
+- Preuve : aucun test, build, lint ni `tsc` lancé, conformément à la consigne ;
+  contrôles reportés.
+- Statut : livré, contrôles reportés.
+
+### [A04 / S2.06-S2.07] Conservation par rejeu des points · 2026-11-13
+- Décision : ne pas créer de second stockage de séries, de migration Supabase
+  ni de version IndexedDB concurrente. Les séries GPS sont une projection des
+  points déjà acceptés et conservés par A01.
+- Fichiers : `activity/metrics.ts` (`rebuildMetricSeriesFromFixes`,
+  `rebuildMetricSeriesFromPoints`, `mergeMetricSeries`),
+  `activity/useGpsTracker.ts` (`restored`, republication de `metricSeries`),
+  `state/types.ts` (`ActivityState.clientSessionId?`), `state/store.ts`
+  (4ᵉ argument optionnel de `startActivity`),
+  `docs/explorer-v2/S2.06-S2.07-METRIQUES.md`.
+- Livré : le rejeu d’une séance restaurée reconstruit altitude, vitesse et
+  allure avec les mêmes règles que le direct, conserve les autres séries et
+  repart du dernier point rejoué pour ne pas compter deux fois un segment.
+  Aucune valeur cardio, énergie ou pas n’est créée.
+- Contrat : à 8321e66, aucun `clientSessionId` ni magasin local n’existe, donc
+  la reconstruction est prête mais **inactive**. Sur 4e0a25c, les points
+  `t/lat/lng/ele/acc/speed` existent déjà : la restauration active passe par
+  l’option `restored` du hook ; le bilan doit joindre les séries reconstruites
+  depuis `readSessionPoints`.
+- Limites : rejeu avec le réglage de pause courant ; `receivedAt` non persisté
+  par A01 ; bilan restituable seulement tant que les points A01 existent ;
+  aucune série de capteur.
+- Preuve : aucun test, build, lint ni `tsc` lancé, conformément à la consigne ;
+  contrôles reportés.
+- Statut : raccordement préparé et documenté, non actif sur cette base.
+
+### [A04 / S2.08] Puissance mesurée et estimée · 2026-11-13
+- Fiche : `S2.08` « Puissance mesurée et estimée » (lot A04). Contrat,
+  provenance et dépendances consignés dans
+  `docs/explorer-v2/S2.08-PUISSANCE.md`.
+- Fichiers : `state/types.ts` (`PowerMetricSource`, `PowerMetricQuality`),
+  `activity/metrics.ts` (`PowerMetricInput`, `readPowerProvenance`,
+  `powerMetricInput`, `appendPowerMetric`, validation dans
+  `appendMetricInputs`, libellés de provenance),
+  `sheet/MetricSeries.tsx` (badge `mesurée`/`estimée` sur la puissance),
+  `docs/explorer-v2/S2.08-PUISSANCE.md`.
+- Livré : les watts ne sont acceptés que depuis `sensor` ou `import`, avec
+  `measured` ou `estimated` explicite. Le type `MetricInput` interdit
+  `powerW` sur l’entrée générique ; le moteur ignore toute provenance absente,
+  `gps`, `derived` ou `mixed`. Aucun défaut `sensor`/`measured` n’est appliqué
+  à la puissance et aucun calcul vitesse/poids/cardio/pente n’existe. Les
+  surfaces `Mesures` et `Statistiques` affichent la puissance si une série
+  réelle existe, avec provenance lisible ; sinon l’absence reste explicite.
+- Dépendances : A03 `codex/lkdv-a03-trace-import` fournit déjà
+  `NormalizedTrackPoint.powerW` et `maxPowerW` mais n’est pas fusionnée dans
+  `be6a314` ; l’adaptateur et la règle d’horodatage sont documentés. Aucun
+  connecteur BLE/HealthKit/Health Connect n’existe. A01/A02 restent
+  nécessaires pour conserver les séries après rechargement ; aucune migration
+  Supabase, aucun changement de version IndexedDB, aucun stockage local
+  concurrent.
+- Limites : aucune puissance persistée hors séance/bilan immédiat ; pas de
+  parseur import dans cette base ; pas de preuve appareil ni de test.
+- Preuve : aucun test, suite, build, lint ni `tsc` lancé, conformément à la
+  consigne ; contrôles reportés.
+- Statut : contrat livré, surfaces existantes conditionnées à une donnée
+  réelle ; dépendances import/capteurs documentées.
+
+### [A04 / S2.09] Allure ajustée à la pente · 2026-11-13
+- Fiche : `S2.09` « Allure ajustée à la pente (GAP) » (lot A04). Décision,
+  méthodes examinées, contrainte de données et limites consignées dans
+  `docs/explorer-v2/S2.09-ALLURE-PENTE.md`.
+- Décision : **aucune valeur ajustée n’est calculée**. Le dépôt ne contient ni
+  méthode de conversion d’une allure de course vers une allure équivalente sur
+  plat, ni paramètres validés, ni pente par segment mesurée. Tobler et
+  Naismith sont des modèles de marche/randonnée ; le résolveur A3
+  (`resolvePace`) est un prédicteur d’allure de randonnée à paramètres
+  heuristiques, sans validation pour la course et sans pente par segment ; le
+  `coefficient_pente` du plan d’architecture n’a ni formule ni paramètres ; le
+  GAP de Strava est propriétaire et aucune équivalence n’est revendiquée.
+- Fichiers : `activity/slopeAdjustedPace.ts` (nouveau),
+  `sheet/SlopeAdjustedPace.tsx` (nouveau), `sheet/MetricSeries.tsx`
+  (emplacement du sous-panneau), `sheet/blocks.tsx` (`aria-expanded` sur
+  `XpRow`), `sheet/SheetContent.tsx` (raccordement dans `Statistiques`),
+  `docs/explorer-v2/S2.09-ALLURE-PENTE.md`,
+  `docs/explorer-v2/DECISIONS.md` (décision 16).
+- Livré : `readSlopeAdjustedPace(sport)` retourne `null` hors course/trail et
+  un contrat `unavailable` pour la course, avec `method: null`,
+  `parameters: null`, `wouldBeQuality: 'estimated'` et
+  `proprietaryEquivalent: false`. L’onglet `Statistiques` du bilan affiche
+  `Allure ajustée à la pente`, badge `indisponible`, ouverte sur action
+  explicite ; le détail sépare mesuré, calculé, absent et estimé, et le
+  retour referme le détail sans changer d’onglet. Aucun nombre n’est produit.
+- Limites : le drawer actuel n’a qu’un seul niveau d’onglets ; le sous-drawer
+  de la fiche est rendu par un sous-panneau en place, avec le même contrat de
+  retour. Aucune pente par segment, aucun D− par segment ; A02 (historique)
+  n’est pas raccordé, la surface exercée est le bilan de séance. Aucune
+  migration, aucun import, aucun appel réseau.
+- Preuve : aucun test, suite, build, lint ni `tsc` lancé, conformément à la
+  consigne ; contrôles reportés.
+- Statut : indisponibilité exposée et documentée, aucun calcul inventé.
