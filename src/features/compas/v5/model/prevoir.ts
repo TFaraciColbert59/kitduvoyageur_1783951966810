@@ -11,8 +11,12 @@ import { normalizeName } from '../../engine/kitApply';
 import { formatNumber } from '@/lib/i18n/format';
 import type { Locale } from '@/lib/i18n/locale';
 import { addDaysIso, stayDeepLink, transportDeepLink } from '../../engine/deepLinks';
+import { isNamedTrail } from '../../engine/intent';
+import type { EngineT } from '../../engine/engineI18n';
+import { resaPlan, resaRank, type ResaApproach, type ResaLine } from '../../engine/resaPlan';
 import { notedStay } from '../../engine/stayProposal';
 import type { CompasData, CompasPoint, CompasShopProduct } from '../../server/getCompasData';
+import { extraKey, isResaBooked, isResaSkipped, type ResaStatus } from '../engine/resaStatus';
 import { buyStage, itemState, restorablePurchaseState, shopProductFor, type BuyStage } from './sac';
 import { splitStepTitle } from './trip';
 import type { V5Extras, V5Photo, V5PriceHint, V5StayKind, V5StayOption, V5TransportOption } from '../types';
@@ -256,6 +260,71 @@ export function selectedTransport(views: readonly TransportView[], chosenId: Tra
   return fallback ? { view: fallback, proposed: true } : null;
 }
 
+const APPROACH_OF: Record<TransportView['id'], ResaApproach> = {
+  car: 'car',
+  train: 'train',
+  flight: 'flight',
+  bus: 'bus',
+  carpool: 'carpool',
+  foot: 'foot',
+};
+
+/**
+ * Le reste du plan « À prévoir » (assurance, transfert, location, forfait, refuges, visa…) pour CE voyage : le moteur
+ * `resaPlan` lit les réglages du modèle (jours, groupe, dates, activité : jamais recalculés ici), le trajet retenu ou
+ * proposé, ce que le serveur sait de la personne qui regarde (`readerTravel`) et l'aéroport lu avec les extras.
+ */
+export function resaLinesFor(args: {
+  data: CompasData;
+  extras: V5Extras;
+  /** Trajet retenu (ou proposé par défaut) ; sans lui, le moyen de venir dit dans la demande, s'il y en a un. */
+  transport: TransportSelection | null;
+  people: number;
+  t: EngineT;
+  /** Aujourd'hui (ISO), pour ne pas afficher une date limite déjà passée. */
+  today: string;
+}): ResaLine[] {
+  const { data, extras, transport } = args;
+  const { model } = data;
+  const said = model.preferences.transportMode;
+  const approach: ResaApproach | null = transport ? APPROACH_OF[transport.view.id] : said === 'flight' || said === 'train' || said === 'car' ? said : null;
+  const namedTrail = [data.route.name, model.destination].find((n): n is string => !!n && isNamedTrail(n)) ?? null;
+  return resaPlan({
+    activity: model.activity,
+    destinationCountry: data.countryCode,
+    originCountry: data.originSaid?.countryCode ?? null,
+    abroad: data.readerTravel?.abroad ?? null,
+    start: model.dates.start,
+    end: model.dates.end,
+    days: model.dates.days,
+    party: args.people,
+    maxAltitudeM: data.elevation?.maxM ?? null,
+    approach,
+    nationality: data.readerTravel?.nationality ?? null,
+    entry: data.readerTravel?.entry ?? null,
+    namedTrail,
+    base: model.destination,
+    hub: extras.hub?.name ?? null,
+    nights: model.preferences.nights,
+    technicalLevel: data.danger.axes.technique.level,
+    carFree: model.preferences.carFree === true,
+    today: args.today,
+    t: args.t,
+  });
+}
+
+/** Aucun lieu de départ connu : ni dit dans la demande, ni de trajet d'approche calculé (donc pas de domicile ou de position). */
+export function originMissing(data: CompasData, extras: V5Extras, transport: TransportSelection | null): boolean {
+  return (
+    extras.fetchedAt !== '' &&
+    !extras.unavailable.includes('transport') &&
+    data.autofill === 'done' &&
+    !data.originName &&
+    !data.originSaid &&
+    transport == null
+  );
+}
+
 export interface ReservationContext {
   /** Nombre de voyageurs (celui du modèle, jamais recalculé ici). */
   people: number;
@@ -268,14 +337,21 @@ export interface ReservationContext {
   end: string | null;
   /** Mot de réservation de la langue, pour les recherches web. */
   keyword?: string;
+  /** Le reste du plan (`engine/resaPlan.ts` : assurance, transfert, location, forfait, refuges…), déjà dans l'ordre. */
+  lines?: readonly ResaLine[];
+  /** Aucun lieu de départ connu : le plan s'ouvre sur « D'où pars-tu ? ». */
+  askOrigin?: boolean;
 }
 
 export interface ReservationStep {
-  /** `transport`, ou `night:<premier jour>` : la clé du premier élément de la ligne. */
+  /** `transport`, `night:<premier jour>`, `extra:<ligne>` ou `origin` : la clé du premier élément de la ligne. */
   key: string;
-  /** Clés de statut de tous les éléments de la ligne (`night:<jour>` pour chaque nuit, `transport`). */
+  /** Clés de statut de tous les éléments de la ligne (`night:<jour>` pour chaque nuit, `transport`, `extra:<ligne>` ; aucune pour `origin`). */
   keys: string[];
-  kind: 'night' | 'transport';
+  /** `extra` : une ligne du plan complet ; `origin` : la question du lieu de départ (rien à réserver). */
+  kind: 'night' | 'transport' | 'extra' | 'origin';
+  /** La ligne du plan complet quand `kind` vaut `extra`, sinon null. */
+  extra: ResaLine | null;
   /** Premier jour de la ligne (nuits) ; null pour le trajet. */
   day: number | null;
   /** Nombre de nuits de la ligne (0 pour le trajet). */
@@ -328,6 +404,7 @@ export function reservationSteps(cards: readonly NightCard[], transport: Transpo
       key: 'transport',
       keys: ['transport'],
       kind: 'transport',
+      extra: null,
       day: null,
       nights: 0,
       checkIn: null,
@@ -374,6 +451,7 @@ export function reservationSteps(cards: readonly NightCard[], transport: Transpo
       key: `night:${first.card.day}`,
       keys: group.map((s) => `night:${s.card.day}`),
       kind: 'night',
+      extra: null,
       day: first.card.day,
       nights: group.length,
       checkIn: dated ? first.card.date : null,
@@ -387,7 +465,92 @@ export function reservationSteps(cards: readonly NightCard[], transport: Transpo
       pending: group.flatMap((s) => (!s.card.chosen && s.view ? [{ day: s.card.day, option: s.view.option }] : [])),
     });
   }
-  return steps;
+
+  for (const line of ctx.lines ?? []) {
+    const url = safeUrl(line.url);
+    steps.push({
+      key: extraKey(line.key),
+      keys: [extraKey(line.key)],
+      kind: 'extra',
+      extra: line,
+      day: null,
+      nights: 0,
+      checkIn: null,
+      checkOut: null,
+      label: line.title,
+      place: ctx.destination,
+      proposed: false,
+      url,
+      partner: null,
+      direct: url != null,
+      pending: [],
+    });
+  }
+
+  if (ctx.askOrigin)
+    steps.push({
+      key: 'origin',
+      keys: [],
+      kind: 'origin',
+      extra: null,
+      day: null,
+      nights: 0,
+      checkIn: null,
+      checkOut: null,
+      label: '',
+      place: null,
+      proposed: false,
+      url: null,
+      partner: null,
+      direct: false,
+      pending: [],
+    });
+
+  // Dans l'ordre où l'on s'en occupe : la question du départ, les papiers, l'assurance, le trajet, le transfert,
+  // la location, les nuits, puis forfait, permis, guide et activités. Tri stable : les nuits restent par jour.
+  return steps.map((s, i) => ({ s, i, r: stepRank(s) })).sort((a, b) => a.r - b.r || a.i - b.i).map((x) => x.s);
+}
+
+/** Rang d'une ligne dans le plan : voir `reservationSteps`. */
+const RANK_ORIGIN = 0;
+const RANK_TRANSPORT = 25;
+const RANK_NIGHT = 44;
+
+function stepRank(step: ReservationStep): number {
+  if (step.kind === 'origin') return RANK_ORIGIN;
+  if (step.kind === 'transport') return RANK_TRANSPORT;
+  if (step.kind === 'night') return RANK_NIGHT;
+  return step.extra ? resaRank(step.extra.key) : 99;
+}
+
+export interface PlanProgress {
+  /** Les lignes affichées : tout, sauf les lignes notées « pas besoin ». */
+  visible: ReservationStep[];
+  /** Les lignes masquées (« pas besoin »). */
+  hidden: ReservationStep[];
+  /** À réserver : lignes affichées pas encore faites (la question du départ n'en est pas une). */
+  todo: number;
+  /** Faites : lignes notées réservées. */
+  done: number;
+}
+
+/** Compteur « N à réserver · M faits » et lignes masquées, d'après les statuts rangés sur le voyage. */
+export function planProgress(steps: readonly ReservationStep[], resa: Readonly<Record<string, ResaStatus>>): PlanProgress {
+  const visible: ReservationStep[] = [];
+  const hidden: ReservationStep[] = [];
+  let todo = 0;
+  let done = 0;
+  for (const step of steps) {
+    if (step.kind === 'extra' && isResaSkipped(resa, step.key)) {
+      hidden.push(step);
+      continue;
+    }
+    visible.push(step);
+    if (step.kind === 'origin') continue;
+    if (step.keys.length > 0 && step.keys.every((k) => isResaBooked(resa, k))) done += 1;
+    else todo += 1;
+  }
+  return { visible, hidden, todo, done };
 }
 
 /** Le lien est-il sûr à ouvrir ? https, ou le relais d'affiliation du site (`/go/<slug>`) ; rien d'autre de relatif. */

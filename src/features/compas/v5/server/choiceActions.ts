@@ -79,6 +79,18 @@ const staySchema = z.object({
 const STEP_ATTEMPTS = 3;
 
 /**
+ * Le même élément du plan de réservation passe de « réservé » à « à faire » : ce qui a été réservé n'est plus ce
+ * que la personne a maintenant choisi. Appliqué à une copie du JSON ; rend le même objet quand rien ne change
+ * (seul « réservé » repasse à « à faire » : « pas besoin » et « à faire » restent tels quels).
+ */
+function demoteBooked(meta: Record<string, unknown>, key: string, at: string): Record<string, unknown> {
+  const c = compasMeta(meta);
+  const current = isObject(c.resa) ? c.resa[key] : undefined;
+  if (!isObject(current) || current.status !== 'booked') return meta;
+  return { ...meta, compas: { ...c, resa: { ...(c.resa as Record<string, unknown>), [key]: { status: 'todo', at } } } };
+}
+
+/**
  * Retient (ou efface) la nuit d'un jour : le nom va dans `accommodation_name` de la dernière étape du jour,
  * le détail du choix dans `metadata.compas.stay`, fusionné avec le reste du JSON de l'étape.
  */
@@ -134,7 +146,12 @@ export async function compasV5SetStayAction(input: z.input<typeof staySchema>): 
       if (step.updated_at) query = query.eq('updated_at', step.updated_at);
       const { data: won, error } = await query.select('id');
       if (error) return actionError('compas.server.lodging.saveFailed');
-      if (won?.length) return { success: true };
+      if (won?.length) {
+        // Une autre nuit (ou plus de nuit) que celle qui était réservée : la réservation n'est plus celle-là.
+        const at = new Date().toISOString();
+        const { error: resaError } = await updateTripMetadata(supabase, tripId, (meta) => demoteBooked(meta, `night:${day}`, at));
+        return resaError ? actionError('compas.server.lodging.saveFailed') : { success: true };
+      }
       // 0 ligne : une autre écriture est passée entre la lecture et la nôtre (ou les droits manquent) : on relit.
     }
     return actionError('compas.server.lodging.saveFailed');
@@ -152,11 +169,12 @@ const resaSchema = z
   .object({
     tripId: uuid,
     tripSlug: slug,
-    /** `night:<jour>` ou `transport`. */
+    /** `night:<jour>`, `transport` ou `extra:<ligne>`. */
     key: resaKey.optional(),
     /** Plusieurs éléments d'un coup (nuits consécutives regroupées sur une ligne) : une seule écriture. */
     keys: z.array(resaKey).min(1).max(60).optional(),
-    status: z.enum(['booked', 'todo']),
+    /** `skipped` : « Pas besoin », la ligne est masquée (lignes `extra:<clé>` du plan). */
+    status: z.enum(['booked', 'todo', 'skipped']),
   })
   .refine((v) => (v.key === undefined) !== (v.keys === undefined), { message: 'compas.server.common.invalidRequest' });
 
@@ -293,10 +311,14 @@ export async function compasV5SetTransportAction(input: z.input<typeof transport
 
     // 3. Le choix, fusionné dans les métadonnées du voyage (le reste du JSON est intact).
     const record = { id: transport.id, amountEur: transport.amountEur, perPerson: transport.perPerson, source: transport.source };
+    const at = new Date().toISOString();
     const { error: metaError } = await updateTripMetadata(supabase, tripId, (meta) => {
       const c = compasMeta(meta);
       if (stable(c.transport) === stable(record)) return meta;
-      return { ...meta, compas: { ...c, transport: record } };
+      const next = { ...meta, compas: { ...c, transport: record } };
+      // Un autre mode de trajet que celui qui était réservé : la réservation n'est plus celle-là.
+      const before = isObject(c.transport) ? c.transport.id : undefined;
+      return before !== undefined && before !== record.id ? demoteBooked(next, 'transport', at) : next;
     });
     if (metaError) {
       // Le choix n'est pas rangé : la ligne créée à l'instant est retirée, le budget reste comme il était.

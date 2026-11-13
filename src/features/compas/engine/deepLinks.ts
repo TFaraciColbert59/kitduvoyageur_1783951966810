@@ -145,3 +145,26 @@ export function transportDeepLink(input: {
       return null;
   }
 }
+
+/** Recherche d'activités à réserver sur un lieu (GetYourGuide) : sans lieu, rien. Aucun identifiant d'affiliation. */
+export function activitiesSearchUrl(place: string | null | undefined): string | null {
+  const q = clean(place);
+  return q ? `https://www.getyourguide.com/s/?q=${enc(q)}` : null;
+}
+
+/** Location de voiture : aucun format profond fiable (dates, agence) n'est connu, donc la page d'accueil, sans paramètre. */
+export function carRentalUrl(): string {
+  return 'https://www.rentalcars.com/';
+}
+
+/**
+ * Recherche web d'un objet à réserver sur un lieu (« location vélo Chamonix »). Sans lieu, l'objet seul ;
+ * sans objet, rien. Aucun mot n'est ajouté : l'objet porte déjà l'intention.
+ */
+export function objectSearchUrl(object: string | null | undefined, place: string | null | undefined): string | null {
+  const what = clean(object);
+  if (!what) return null;
+  const where = clean(place);
+  const words = where && !plain(what).includes(plain(where)) ? `${what} ${where}` : what;
+  return `https://duckduckgo.com/?q=${enc(words)}`;
+}

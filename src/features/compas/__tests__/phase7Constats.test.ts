@@ -7,7 +7,7 @@ import { canonicalCountryName, canonicalPlaceName, splitPlaceCountry } from '../
 import { looseRank, parseGeoapify, plausibleLooseMatch, resemblesQuery, subPlaceQueries, type CompasPlace } from '../engine/places';
 import { createFakeDb, type FakeDb } from '../v5/__tests__/fakeDb';
 import { makeData, makeInput } from '../v5/__tests__/fixtures';
-import { isResaBooked, mergeResa, parseResa } from '../v5/engine/resaStatus';
+import { isResaBooked, isResaSkipped, mergeResa, parseResa } from '../v5/engine/resaStatus';
 import { nightCards, reservationSteps, safeUrl, selectedTransport, transportViews, type ReservationContext } from '../v5/model/prevoir';
 import { EMPTY_EXTRAS, type V5Extras, type V5StayOption, type V5TransportOption } from '../v5/types';
 import { compasV5SetResaStatusAction } from '../v5/server/choiceActions';
@@ -473,6 +473,29 @@ describe('Audit Résa 13/11', () => {
       await compasV5SetResaStatusAction({ tripId: TRIP, tripSlug: SLUG, key: 'night:1', status: 'todo' });
       expect(meta().compas.resa?.['night:1']).toMatchObject({ status: 'todo' });
       expect(meta().compas.resa?.['night:2']).toMatchObject({ status: 'booked' });
+    });
+
+    it('lignes du plan complet : `extra:<ligne>` réservé ou « pas besoin » (skipped), relus par parseResa', async () => {
+      await compasV5SetResaStatusAction({ tripId: TRIP, tripSlug: SLUG, key: 'extra:insurance', status: 'booked' });
+      await compasV5SetResaStatusAction({ tripId: TRIP, tripSlug: SLUG, keys: ['extra:rental-car', 'extra:lift-pass'], status: 'skipped' });
+      const resa = parseResa(meta().compas.resa);
+      expect(isResaBooked(resa, 'extra:insurance')).toBe(true);
+      expect(resa['extra:rental-car']?.status).toBe('skipped');
+      expect(resa['extra:lift-pass']?.status).toBe('skipped');
+      expect(isResaSkipped(resa, 'extra:rental-car')).toBe(true);
+      expect(isResaSkipped(resa, 'extra:insurance')).toBe(false);
+      // « Pas besoin » n'est pas « réservé » ; le reste du JSON est intact.
+      expect(isResaBooked(resa, 'extra:rental-car')).toBe(false);
+      expect(meta().compas.prefs).toEqual({ pace: 'tranquille' });
+      // Annuler « pas besoin » : retour à « à faire ».
+      await compasV5SetResaStatusAction({ tripId: TRIP, tripSlug: SLUG, key: 'extra:rental-car', status: 'todo' });
+      expect(meta().compas.resa?.['extra:rental-car']).toMatchObject({ status: 'todo' });
+    });
+
+    it('refuse une clé `extra:` mal formée (casse, espace, trop longue, injection) sans rien écrire', async () => {
+      for (const key of ['extra:', 'extra:Insurance', 'extra:a b', 'extra:1abc', `extra:${'a'.repeat(41)}`, 'extra:__proto__', 'extra:a/b', 'extras:insurance'])
+        expect((await compasV5SetResaStatusAction({ tripId: TRIP, tripSlug: SLUG, key, status: 'skipped' } as never)).success, key).toBe(false);
+      expect(resaDb.db.log).toHaveLength(0);
     });
 
     it('rejouer le même statut n’écrit rien', async () => {

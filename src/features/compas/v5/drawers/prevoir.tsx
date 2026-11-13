@@ -8,6 +8,7 @@ import { AffiliateDisclosure } from '@/features/affiliation/components/Affiliate
 import { addToCart, getCart, removeFromCart, updateQuantity } from '@/lib/cart';
 import { countText } from '../../components/compasTypes';
 import { dayMonthIn, moneyIn } from '../../components/sheetsI18n';
+import { BEFORE_DEPARTURE } from '../../engine/resaPlan';
 import { compasPickShopProductAction, compasSetStayAction } from '../../server/compasActions';
 import { useV5, type V5Api } from '../context';
 import { isResaBooked, nightKey, TRANSPORT_KEY, type ResaStatus } from '../engine/resaStatus';
@@ -20,7 +21,10 @@ import {
   liveBookings,
   nearestRouteShop,
   nightCards,
+  originMissing,
+  planProgress,
   reservationSteps,
+  resaLinesFor,
   safeUrl,
   sandboxProviders,
   selectedTransport,
@@ -33,7 +37,7 @@ import {
 } from '../model/prevoir';
 import { itemIcon } from '../model/sac';
 import { stayIcon, transportIcon, V5Icon } from '../ui/icons';
-import { Cap, Chip, Credit, Grp, MBtn, PBtn, Pic } from '../ui/primitives';
+import { Cap, Chip, Credit, Grp, MBtn, Pic } from '../ui/primitives';
 import type { V5DrawerDef } from './types';
 import './sac-prevoir.css';
 
@@ -82,7 +86,6 @@ function BookTab() {
   const persisted = (extras as Partial<V5ExtrasPayload>).choices?.transport?.id ?? null;
   const [picked, setTransportChoice] = useState<TransportView['id'] | null | undefined>(undefined);
   const transportChoice = picked === undefined ? persisted : picked;
-  const [panelOpen, setPanelOpen] = useState(false);
 
   const cards = useMemo(() => nightCards(model, extras), [model, extras]);
   const transports = useMemo(() => transportViews(extras.transport, people), [extras.transport, people]);
@@ -91,6 +94,10 @@ function BookTab() {
   const selection = useMemo(() => selectedTransport(transports, transportChoice), [transports, transportChoice]);
   const totals = useMemo(() => bookingTotals(cards, chosenTransport, people), [cards, chosenTransport, people]);
   const searchWord = t('compas.v5.prevoir.searchWord');
+  // Tout ce qu'il faut réserver pour CE type de voyage, au-delà du trajet et des nuits (`engine/resaPlan.ts`).
+  const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const lines = useMemo(() => resaLinesFor({ data, extras, transport: selection, people, t, today }), [data, extras, selection, people, t, today]);
+  const askOrigin = canEdit && originMissing(data, extras, selection);
   const steps = useMemo(
     () =>
       reservationSteps(cards, selection, {
@@ -100,9 +107,12 @@ function BookTab() {
         start: model.dates.start,
         end: model.dates.end,
         keyword: searchWord,
+        lines,
+        askOrigin,
       }),
-    [cards, selection, people, data.originName, model.destination, model.dates.start, model.dates.end, searchWord]
+    [cards, selection, people, data.originName, model.destination, model.dates.start, model.dates.end, searchWord, lines, askOrigin]
   );
+  const progress = useMemo(() => planProgress(steps, api.resa), [steps, api.resa]);
   const sandbox = sandboxProviders(data.providers);
   const saved = liveBookings(data.bookings);
   const pending = extras.fetchedAt === '';
@@ -151,6 +161,26 @@ function BookTab() {
       });
   };
 
+  /**
+   * Un geste sur des lignes du plan complet (« Pas besoin », « Tout remettre ») : l'affichage suit tout de suite,
+   * revient à l'état d'avant si l'écriture échoue, et l'annonce propose « Annuler » (retour à `undoTo`).
+   */
+  const setStatus = (keys: string[], to: ResaStatus, undoTo: ResaStatus, message: string) => {
+    const patchOf = (s: ResaStatus | null) => Object.fromEntries(keys.map((k) => [k, s]));
+    const previous = Object.fromEntries(keys.map((k) => [k, api.resa[k] ?? null])) as Record<string, ResaStatus | null>;
+    const write = (s: ResaStatus) => compasV5SetResaStatusAction({ tripId: model.tripId, tripSlug: model.slug, keys, status: s });
+    api.setResa(patchOf(to));
+    void ctl
+      .run(message, () => write(to), async () => {
+        const res = await write(undoTo);
+        if (res.success) api.setResa(patchOf(undoTo));
+        return res;
+      })
+      .then((ok) => {
+        if (!ok) api.setResa(previous);
+      });
+  };
+
   return (
     <>
       {pending && cards.length > 0 && <p className="banner info" role="status">{t('compas.v5.prevoir.extrasPending')}</p>}
@@ -161,7 +191,143 @@ function BookTab() {
           {t('compas.v5.prevoir.sandbox', { provider: PROVIDER_NAME[p] })}
         </p>
       ))}
-      {hasPartner && <AffiliateDisclosure compact />}
+      {(hasPartner || steps.some((s) => s.partner || s.url?.startsWith('/go/'))) && <AffiliateDisclosure compact />}
+
+      {/* Le plan complet, ouvert d'office et en tête : tout ce qu'il faut réserver, dans l'ordre où l'on s'en occupe. */}
+      <section id="v5-book-panel" aria-label={t('compas.v5.prevoir.bookPanel')} style={{ display: 'contents' }}>
+        <Cap right={countText(t, locale, progress.done, 'compas.v5.resa.counterOne', 'compas.v5.resa.counterOther', { todo: progress.todo })}>
+          {t('compas.v5.resa.planCap')}
+        </Cap>
+        {progress.visible.length === 0 ? (
+          <p className="v5-src">{t('compas.v5.prevoir.bookAllNone')}</p>
+        ) : (
+          <Grp>
+            <ol className="steps">
+              {progress.visible.map((step, index) => {
+                if (step.kind === 'origin')
+                  return (
+                    <li key={step.key} className="next" data-key={step.key}>
+                      <span className="t">
+                        <b>{t('compas.v5.resa.originTitle')}</b>
+                        <small className="why">{t('compas.v5.resa.originWhy')}</small>
+                      </span>
+                      <span className="end">
+                        <MBtn primary disabled={ctl.busy} onClick={() => api.openSay(t('compas.v5.resa.originPrefill'))}>
+                          {t('compas.v5.resa.originAction')}
+                        </MBtn>
+                      </span>
+                    </li>
+                  );
+                const done = isBooked(step.keys);
+                const next = !done && progress.visible.findIndex((s) => s.kind !== 'origin' && !isBooked(s.keys)) === index;
+                const url = safeUrl(step.url);
+                const extra = step.extra;
+                const where =
+                  step.kind === 'transport'
+                    ? t('compas.v5.prevoir.transportCap')
+                    : extra
+                      ? extra.when === BEFORE_DEPARTURE
+                        ? t('compas.v5.resa.whenBefore')
+                        : t('compas.v5.resa.whenOn', { date: dayMonthIn(locale, extra.when) })
+                      : step.nights > 1
+                        ? t('compas.v5.prevoir.nightsWhen', { day: step.day ?? 0, count: step.nights })
+                        : t('compas.v5.prevoir.nightWhen', { day: step.day ?? 0 });
+                const name = step.label || where;
+                const dates = step.checkIn && step.checkOut ? t('compas.v5.prevoir.stayDates', { from: dayMonthIn(locale, step.checkIn), to: dayMonthIn(locale, step.checkOut) }) : null;
+                const state = step.proposed ? t('compas.v5.prevoir.stateProposed') : t('compas.v5.prevoir.stateChosen');
+                const openLabel = step.direct ? t('compas.v5.prevoir.searchLink') : t('compas.v5.prevoir.bookOpen');
+                const transport = step.kind === 'transport' && step.proposed ? selection?.view : undefined;
+                const price = extra
+                  ? extra.price
+                    ? `${t(extra.price.per === 'person' ? 'compas.v5.resa.pricePerPerson' : 'compas.v5.resa.priceGroup', { price: moneyIn(locale, extra.price.amount, extra.price.currency) })} · ${extra.price.basis}`
+                    : t('compas.v5.resa.priceSite')
+                  : null;
+                return (
+                  <li key={step.key} className={next ? 'next' : undefined} data-key={step.key}>
+                    <span className="t">
+                      <b>{name}</b>
+                      {extra && <small className="why">{extra.why}</small>}
+                      <small className={extra ? 'meta' : undefined}>
+                        {t('compas.v5.prevoir.bookStep', { n: index + 1, total: progress.visible.length })} · {where}
+                        {extra?.bookBy ? ` · ${t('compas.v5.resa.bookBy', { date: dayMonthIn(locale, extra.bookBy) })}` : ''}
+                        {dates ? ` · ${dates}` : ''}
+                        {step.partner ? ` · ${step.partner}` : ''}
+                        {done || extra ? '' : ` · ${state}`}
+                      </small>
+                      {price && <small className="meta">{price}</small>}
+                      {!url && <small>{t('compas.v5.prevoir.bookNoLink')}</small>}
+                    </span>
+                    <span className="end">
+                      {url && (
+                        <a
+                          className="v5-link"
+                          href={url}
+                          target="_blank"
+                          rel={linkRel(step.partner, url)}
+                          aria-label={t('compas.v5.prevoir.linkLabel', { action: openLabel, name })}
+                        >
+                          {openLabel}
+                          <V5Icon name="external" size="xs" />
+                        </a>
+                      )}
+                      {done ? (
+                        <>
+                          <span className="v5-okc">{t('compas.v5.prevoir.stateBooked')}</span>
+                          {canEdit && (
+                            <MBtn disabled={ctl.busy} aria-label={t('compas.v5.prevoir.unbookLabel', { label: name })} onClick={() => markResa({ keys: step.keys, label: name }, false)}>
+                              {t('compas.v5.prevoir.unbook')}
+                            </MBtn>
+                          )}
+                        </>
+                      ) : (
+                        canEdit && (
+                          <>
+                            <MBtn
+                              disabled={ctl.busy}
+                              aria-label={t('compas.v5.prevoir.iBookedLabel', { label: name })}
+                              onClick={() => markResa({ keys: step.keys, label: name, pending: step.pending, transport }, true)}
+                            >
+                              {t('compas.v5.prevoir.iBooked')}
+                            </MBtn>
+                            {extra && (
+                              <MBtn
+                                disabled={ctl.busy}
+                                aria-label={t('compas.v5.resa.skipLabel', { label: name })}
+                                onClick={() => setStatus(step.keys, 'skipped', 'todo', t('compas.v5.resa.skippedMsg', { label: name }))}
+                              >
+                                {t('compas.v5.resa.skip')}
+                              </MBtn>
+                            )}
+                          </>
+                        )
+                      )}
+                    </span>
+                  </li>
+                );
+              })}
+            </ol>
+          </Grp>
+        )}
+        {progress.hidden.length > 0 && (
+          <div className="v5-line info">
+            <span>{countText(t, locale, progress.hidden.length, 'compas.v5.resa.hiddenOne', 'compas.v5.resa.hiddenOther')}</span>
+            {canEdit && (
+              <MBtn
+                disabled={ctl.busy}
+                aria-label={t('compas.v5.resa.unhideLabel')}
+                onClick={() => setStatus(progress.hidden.flatMap((s) => s.keys), 'todo', 'skipped', t('compas.v5.resa.unhiddenMsg'))}
+              >
+                {t('compas.v5.resa.unhide')}
+              </MBtn>
+            )}
+          </div>
+        )}
+        {progress.visible.length > 0 && <p className="v5-src">{t('compas.v5.prevoir.bookNote')}</p>}
+        {progress.visible.some((s) => s.direct) && <p className="v5-src">{t('compas.v5.prevoir.searchNote')}</p>}
+        {progress.visible.length > 0 && progress.todo === 0 && progress.done > 0 && (
+          <p className="v5-line good" role="status">{t('compas.v5.prevoir.bookAllDone')}</p>
+        )}
+      </section>
 
       {cards.length === 0 && <p className="v5-note">{t('compas.v5.prevoir.noNights')}</p>}
       {cards.map((card) => (
@@ -231,96 +397,6 @@ function BookTab() {
         )}
       </Grp>
 
-      <PBtn
-        tone="dark"
-        aria-expanded={panelOpen}
-        aria-controls="v5-book-panel"
-        disabled={steps.length === 0}
-        onClick={() => setPanelOpen((v) => !v)}
-      >
-        {totals.total != null && totals.currency
-          ? t('compas.v5.prevoir.bookAllAmount', { amount: moneyIn(locale, totals.total, totals.currency) })
-          : t('compas.v5.prevoir.bookAll')}
-      </PBtn>
-      {steps.length === 0 && <p className="v5-src">{t('compas.v5.prevoir.bookAllNone')}</p>}
-      {panelOpen && steps.length > 0 && (
-        <section id="v5-book-panel" aria-label={t('compas.v5.prevoir.bookPanel')} style={{ display: 'contents' }}>
-          <Cap>{t('compas.v5.prevoir.bookPanel')}</Cap>
-          {steps.some((s) => s.partner || s.url?.startsWith('/go/')) && <AffiliateDisclosure compact />}
-          <Grp>
-            <ol className="steps">
-              {steps.map((step, index) => {
-                const done = isBooked(step.keys);
-                const next = !done && steps.findIndex((s) => !isBooked(s.keys)) === index;
-                const url = safeUrl(step.url);
-                const where =
-                  step.kind === 'transport'
-                    ? t('compas.v5.prevoir.transportCap')
-                    : step.nights > 1
-                      ? t('compas.v5.prevoir.nightsWhen', { day: step.day ?? 0, count: step.nights })
-                      : t('compas.v5.prevoir.nightWhen', { day: step.day ?? 0 });
-                const name = step.label || where;
-                const dates = step.checkIn && step.checkOut ? t('compas.v5.prevoir.stayDates', { from: dayMonthIn(locale, step.checkIn), to: dayMonthIn(locale, step.checkOut) }) : null;
-                const state = step.proposed ? t('compas.v5.prevoir.stateProposed') : t('compas.v5.prevoir.stateChosen');
-                const openLabel = step.direct ? t('compas.v5.prevoir.searchLink') : t('compas.v5.prevoir.bookOpen');
-                const transport = step.kind === 'transport' && step.proposed ? selection?.view : undefined;
-                return (
-                  <li key={step.key} className={next ? 'next' : undefined} data-key={step.key}>
-                    <span className="t">
-                      <b>{name}</b>
-                      <small>
-                        {t('compas.v5.prevoir.bookStep', { n: index + 1, total: steps.length })} · {where}
-                        {dates ? ` · ${dates}` : ''}
-                        {step.partner ? ` · ${step.partner}` : ''}
-                        {done ? '' : ` · ${state}`}
-                      </small>
-                      {!url && <small>{t('compas.v5.prevoir.bookNoLink')}</small>}
-                    </span>
-                    <span className="end">
-                      {url && (
-                        <a
-                          className="v5-link"
-                          href={url}
-                          target="_blank"
-                          rel={linkRel(step.partner, url)}
-                          aria-label={t('compas.v5.prevoir.linkLabel', { action: openLabel, name })}
-                        >
-                          {openLabel}
-                          <V5Icon name="external" size="xs" />
-                        </a>
-                      )}
-                      {done ? (
-                        <>
-                          <span className="v5-okc">{t('compas.v5.prevoir.stateBooked')}</span>
-                          {canEdit && (
-                            <MBtn disabled={ctl.busy} aria-label={t('compas.v5.prevoir.unbookLabel', { label: name })} onClick={() => markResa({ keys: step.keys, label: name }, false)}>
-                              {t('compas.v5.prevoir.unbook')}
-                            </MBtn>
-                          )}
-                        </>
-                      ) : (
-                        canEdit && (
-                          <MBtn
-                            disabled={ctl.busy}
-                            aria-label={t('compas.v5.prevoir.iBookedLabel', { label: name })}
-                            onClick={() => markResa({ keys: step.keys, label: name, pending: step.pending, transport }, true)}
-                          >
-                            {t('compas.v5.prevoir.iBooked')}
-                          </MBtn>
-                        )
-                      )}
-                    </span>
-                  </li>
-                );
-              })}
-            </ol>
-          </Grp>
-          <p className="v5-src">{t('compas.v5.prevoir.bookNote')}</p>
-          {steps.some((s) => s.direct) && <p className="v5-src">{t('compas.v5.prevoir.searchNote')}</p>}
-          {steps.every((s) => isBooked(s.keys)) &&<p className="v5-line good" role="status">{t('compas.v5.prevoir.bookAllDone')}</p>}
-        </section>
-      )}
-
       {saved.length > 0 && (
         <>
           <Cap right={saved.length}>{t('compas.v5.prevoir.savedCap')}</Cap>
@@ -369,11 +445,25 @@ function NightCardView({ card, booked, onBooked }: { card: NightCard; booked: bo
   const when = card.date ? t('compas.v5.prevoir.nightWhenDate', { day: card.day, date: dayMonthIn(locale, card.date) }) : t('compas.v5.prevoir.nightWhen', { day: card.day });
   const listed = card.options.filter((o) => !o.manual);
 
+  const key = nightKey(card.day);
+  const writeResa = (status: ResaStatus) => compasV5SetResaStatusAction({ tripId: model.tripId, tripSlug: model.slug, key, status });
   const write = (option: StayView['option'] | null) => compasV5SetStayAction({ tripId: model.tripId, tripSlug: model.slug, day: card.day, option });
+  // Une nuit déjà réservée dont l'hébergement change : la réservation n'est plus celle-là, la nuit repasse à « à faire »
+  // (le serveur l'écrit avec le choix) ; annuler le changement rétablit aussi « réservé ».
+  const demoted = (ok: boolean) => {
+    if (ok && booked) api.setResa({ [key]: 'todo' });
+  };
+  const undoTo = (option: StayView['option'] | null) => async () => {
+    const res = await write(option);
+    if (res.success && booked) {
+      const back = await writeResa('booked');
+      if (back.success) api.setResa({ [key]: 'booked' });
+    }
+    return res;
+  };
   const choose = (view: StayView) =>
-    void ctl.run(t('compas.v5.prevoir.nightChosenMsg', { day: card.day, name: view.name }), () => write(view.option), () => write(chosen?.option ?? null));
-  const remove = () =>
-    void ctl.run(t('compas.v5.prevoir.nightRemovedMsg', { day: card.day }), () => write(null), () => write(chosen?.option ?? null));
+    void ctl.run(t('compas.v5.prevoir.nightChosenMsg', { day: card.day, name: view.name }), () => write(view.option), undoTo(chosen?.option ?? null)).then(demoted);
+  const remove = () => void ctl.run(t('compas.v5.prevoir.nightRemovedMsg', { day: card.day }), () => write(null), undoTo(chosen?.option ?? null)).then(demoted);
   const note = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const name = manual.trim();
@@ -382,10 +472,25 @@ function NightCardView({ card, booked, onBooked }: { card: NightCard; booked: bo
     void ctl
       .run(
         t('compas.v5.prevoir.nightChosenMsg', { day: card.day, name }),
-        () => compasSetStayAction({ tripId: model.tripId, tripSlug: model.slug, day: card.day, name }),
-        () => compasSetStayAction({ tripId: model.tripId, tripSlug: model.slug, day: card.day, name: previous })
+        async () => {
+          const res = await compasSetStayAction({ tripId: model.tripId, tripSlug: model.slug, day: card.day, name });
+          // Cette action-là ne touche pas au statut : on le repasse à « à faire » ici si la nuit était réservée.
+          if (res.success && booked) return writeResa('todo');
+          return res;
+        },
+        async () => {
+          const res = await compasSetStayAction({ tripId: model.tripId, tripSlug: model.slug, day: card.day, name: previous });
+          if (res.success && booked) {
+            const back = await writeResa('booked');
+            if (back.success) api.setResa({ [key]: 'booked' });
+          }
+          return res;
+        }
       )
-      .then((ok) => ok && setManual(''));
+      .then((ok) => {
+        demoted(ok);
+        if (ok) setManual('');
+      });
   };
 
   const detail = shown
@@ -536,12 +641,24 @@ function TransportCardView({
         previous
           ? async () => {
               const res = await write(previous);
-              if (res.success) onChoose(previous.id);
+              if (res.success) {
+                onChoose(previous.id);
+                // Annuler le changement : le trajet d'avant revient, avec sa réservation si elle était faite.
+                if (booked) {
+                  const back = await compasV5SetResaStatusAction({ tripId: api.data.model.tripId, tripSlug: api.data.model.slug, key: TRANSPORT_KEY, status: 'booked' });
+                  if (back.success) api.setResa({ [TRANSPORT_KEY]: 'booked' });
+                }
+              }
               return res;
             }
           : undefined
       )
-      .then((ok) => ok && onChoose(view.id));
+      .then((ok) => {
+        if (!ok) return;
+        onChoose(view.id);
+        // Un autre mode de trajet que celui qui était réservé : la réservation n'est plus celle-là (le serveur l'a repassée à « à faire »).
+        if (booked && previous && previous.id !== view.id) api.setResa({ [TRANSPORT_KEY]: 'todo' });
+      });
   };
   const priceOf = (v: TransportView) =>
     v.amountEur == null ? t('compas.v5.prevoir.priceNone') : v.perPerson ? t('compas.v5.prevoir.transportEach', { price: moneyIn(locale, v.amountEur) }) : t('compas.v5.prevoir.transportTotal', { price: moneyIn(locale, v.amountEur) });

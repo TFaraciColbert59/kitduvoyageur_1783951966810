@@ -10,6 +10,7 @@ import {
   nearestRouteShop,
   nightCards,
   nightDays,
+  planProgress,
   reservationSteps,
   safeUrl,
   sandboxProviders,
@@ -17,6 +18,7 @@ import {
   transportCost,
   transportViews,
 } from '../model/prevoir';
+import { BEFORE_DEPARTURE, type ResaLine } from '../../engine/resaPlan';
 import { EMPTY_EXTRAS, type V5Extras, type V5StayOption, type V5TransportOption } from '../types';
 import { makeData, makeInput } from './fixtures';
 import { buildCompasModel } from '../../engine/compasModel';
@@ -169,6 +171,45 @@ describe('« Tout réserver » : le plan complet', () => {
       ['night:1', true, 1],
       ['night:2', true, 1],
     ]);
+  });
+  it('plan unique et ordonné : question du départ, papiers, assurance, trajet, transfert, location, nuits, forfait, activités', () => {
+    const data = makeData();
+    const cards = nightCards(data.model, extras({ 1: [gite], 2: [refuge] })).map((c) => ({ ...c, chosen: null }));
+    const line = (key: string, kind: ResaLine['kind']): ResaLine => ({ key, kind, title: key, why: 'pourquoi', when: BEFORE_DEPARTURE, url: 'https://a.example/' });
+    // Les lignes arrivent dans l'ordre du moteur ; le modèle les range avec le trajet et les nuits à leur place.
+    const lines = [line('activities', 'activity'), line('lift-pass', 'pass'), line('rental-gear', 'rental'), line('transfer', 'transfer'), line('insurance', 'insurance'), line('visa', 'visa')];
+    const steps = reservationSteps(cards, selectedTransport(transportViews([train], 4), 'train'), { ...ctx, lines, askOrigin: true });
+    expect(steps.map((s) => s.key)).toEqual([
+      'origin',
+      'extra:visa',
+      'extra:insurance',
+      'transport',
+      'extra:transfer',
+      'extra:rental-gear',
+      'night:1',
+      'night:2',
+      'extra:lift-pass',
+      'extra:activities',
+    ]);
+    // Chaque ligne du plan porte ses clés de statut ; la question du départ n'en a aucune.
+    expect(steps.find((s) => s.key === 'origin')).toMatchObject({ kind: 'origin', keys: [], url: null });
+    expect(steps.find((s) => s.key === 'extra:insurance')).toMatchObject({ kind: 'extra', keys: ['extra:insurance'], direct: true, proposed: false });
+  });
+  it('un lien non https d’une ligne du plan n’est jamais proposé', () => {
+    const cards = nightCards(makeData().model, extras({}));
+    const bad: ResaLine = { key: 'insurance', kind: 'insurance', title: 't', why: 'w', when: BEFORE_DEPARTURE, url: 'javascript:alert(1)' };
+    expect(reservationSteps(cards, null, { ...ctx, lines: [bad] }).find((s) => s.key === 'extra:insurance')).toMatchObject({ url: null, direct: false });
+  });
+  it('compteur : « à réserver » et « faits », les lignes « pas besoin » sont masquées, la question du départ n’est pas comptée', () => {
+    const cards = nightCards(makeData().model, extras({ 1: [gite], 2: [refuge] })).map((c) => ({ ...c, chosen: null }));
+    const l = (key: string): ResaLine => ({ key, kind: 'rental', title: key, why: 'w', when: BEFORE_DEPARTURE, url: null });
+    const steps = reservationSteps(cards, null, { ...ctx, lines: [l('rental-gear'), l('lift-pass')], askOrigin: true });
+    expect(planProgress(steps, {})).toMatchObject({ todo: 4, done: 0, hidden: [] });
+    const p = planProgress(steps, { 'night:1': 'booked', 'extra:lift-pass': 'skipped', 'extra:rental-gear': 'booked', 'night:2': 'skipped' });
+    expect([p.todo, p.done, p.hidden.map((s) => s.key)]).toEqual([1, 2, ['extra:lift-pass']]);
+    // Une nuit « pas besoin » (valeur étrangère) ne se masque pas : seules les lignes du plan le peuvent.
+    expect(p.visible.map((s) => s.key)).toContain('night:2');
+    expect(p.visible.map((s) => s.key)).toContain('origin');
   });
   it('seul le https, ou le relais /go/<slug>, est ouvrable', () => {
     expect(safeUrl('https://a.example')).toBe('https://a.example');

@@ -1,0 +1,489 @@
+{
+  "resa": {
+    "visaTitle": {
+      "fr": "Visa ou autorisation d’entrée",
+      "en": "Entry visa or authorisation",
+      "es": "Visado o autorización de entrada",
+      "de": "Visum oder Einreisegenehmigung",
+      "it": "Visto o autorizzazione d’ingresso"
+    },
+    "visaWhyEvisa": {
+      "fr": "Un e-visa se demande en ligne avant le départ.",
+      "en": "An e-visa is requested online before you leave.",
+      "es": "El visado electrónico se solicita en línea antes de salir.",
+      "de": "Ein E-Visum wird vor der Abreise online beantragt.",
+      "it": "L’e-visto si richiede online prima della partenza."
+    },
+    "visaWhyAuthorisation": {
+      "fr": "Une autorisation électronique (ETA, ESTA…) s’obtient en ligne avant le départ.",
+      "en": "An electronic authorisation (ETA, ESTA…) is obtained online before you leave.",
+      "es": "La autorización electrónica (ETA, ESTA…) se obtiene en línea antes de salir.",
+      "de": "Die elektronische Genehmigung (ETA, ESTA …) wird vor der Abreise online eingeholt.",
+      "it": "L’autorizzazione elettronica (ETA, ESTA…) si ottiene online prima della partenza."
+    },
+    "visaWhyEmbassy": {
+      "fr": "Le visa se demande avant le départ, à l’ambassade ou au consulat.",
+      "en": "The visa is requested before you leave, at the embassy or consulate.",
+      "es": "El visado se solicita antes de salir, en la embajada o el consulado.",
+      "de": "Das Visum wird vor der Abreise bei der Botschaft oder dem Konsulat beantragt.",
+      "it": "Il visto si richiede prima della partenza, all’ambasciata o al consolato."
+    },
+    "visaWhyArrival": {
+      "fr": "Le visa s’obtient à l’arrivée : prévois un passeport valide et les frais.",
+      "en": "The visa is issued on arrival: bring a valid passport and the fee.",
+      "es": "El visado se obtiene a la llegada: lleve un pasaporte válido y la tasa.",
+      "de": "Das Visum erhalten Sie bei der Ankunft: Halten Sie einen gültigen Pass und die Gebühr bereit.",
+      "it": "Il visto si ottiene all’arrivo: porti un passaporto valido e la tassa."
+    },
+    "visaWhyPermit": {
+      "fr": "Un permis d’entrée spécifique est à obtenir avant le départ.",
+      "en": "A specific entry permit has to be obtained before you leave.",
+      "es": "Hay que obtener un permiso de entrada específico antes de salir.",
+      "de": "Eine besondere Einreiseerlaubnis muss vor der Abreise eingeholt werden.",
+      "it": "Un permesso d’ingresso specifico va ottenuto prima della partenza."
+    },
+    "insuranceTitle": {
+      "fr": "Assurance voyage et rapatriement",
+      "en": "Travel and repatriation insurance",
+      "es": "Seguro de viaje y repatriación",
+      "de": "Reise- und Rücktransportversicherung",
+      "it": "Assicurazione di viaggio e rimpatrio"
+    },
+    "insuranceWhy": {
+      "fr": "Le voyage passe une frontière : soins et rapatriement ne sont pas couverts d’office.",
+      "en": "The trip crosses a border: care and repatriation are not covered by default.",
+      "es": "El viaje cruza una frontera: la atención médica y la repatriación no están cubiertas de oficio.",
+      "de": "Die Reise überquert eine Grenze: Behandlung und Rücktransport sind nicht automatisch gedeckt.",
+      "it": "Il viaggio attraversa una frontiera: cure e rimpatrio non sono coperti d’ufficio."
+    },
+    "insuranceWhyAltitude": {
+      "fr": "Le voyage passe une frontière et monte haut : vérifie que l’altitude et le rapatriement sont couverts.",
+      "en": "The trip crosses a border and goes high: check that altitude and repatriation are covered.",
+      "es": "El viaje cruza una frontera y sube alto: compruebe que la altitud y la repatriación estén cubiertas.",
+      "de": "Die Reise überquert eine Grenze und führt hoch hinaus: Prüfen Sie, ob Höhe und Rücktransport gedeckt sind.",
+      "it": "Il viaggio attraversa una frontiera e sale in quota: verifichi che altitudine e rimpatrio siano coperti."
+    },
+    "hubAirport": {
+      "fr": "l’aéroport",
+      "en": "the airport",
+      "es": "el aeropuerto",
+      "de": "dem Flughafen",
+      "it": "l’aeroporto"
+    },
+    "hubStation": {
+      "fr": "la gare",
+      "en": "the station",
+      "es": "la estación",
+      "de": "dem Bahnhof",
+      "it": "la stazione"
+    },
+    "transferTitle": {
+      "fr": "Rejoindre {base} depuis {hub}",
+      "en": "Get to {base} from {hub}",
+      "es": "Llegar a {base} desde {hub}",
+      "de": "Von {hub} nach {base}",
+      "it": "Raggiungere {base} da {hub}"
+    },
+    "transferTitleNoBase": {
+      "fr": "Rejoindre ton lieu de séjour depuis {hub}",
+      "en": "Get to where you are staying from {hub}",
+      "es": "Llegar a su alojamiento desde {hub}",
+      "de": "Von {hub} zur Unterkunft",
+      "it": "Raggiungere l’alloggio da {hub}"
+    },
+    "transferWhy": {
+      "fr": "Navette, bus, train ou taxi : repère l’horaire avant d’atterrir ou d’arriver, surtout le soir.",
+      "en": "Shuttle, bus, train or taxi: check the timetable before you land or arrive, especially in the evening.",
+      "es": "Lanzadera, autobús, tren o taxi: consulte el horario antes de aterrizar o llegar, sobre todo por la noche.",
+      "de": "Shuttle, Bus, Zug oder Taxi: Prüfen Sie den Fahrplan vor der Landung oder Ankunft, besonders abends.",
+      "it": "Navetta, autobus, treno o taxi: controlli l’orario prima di atterrare o arrivare, soprattutto di sera."
+    },
+    "rentalCarTitle": {
+      "fr": "Louer une voiture",
+      "en": "Rent a car",
+      "es": "Alquilar un coche",
+      "de": "Ein Auto mieten",
+      "it": "Noleggiare un’auto"
+    },
+    "rentalCarWhy": {
+      "fr": "Pour aller d’étape en étape pendant tout le séjour : prends-la à l’arrivée, rends-la au départ.",
+      "en": "To get from stage to stage throughout the stay: pick it up on arrival, return it when you leave.",
+      "es": "Para ir de etapa en etapa durante toda la estancia: recójalo a la llegada y devuélvalo al salir.",
+      "de": "Um während des gesamten Aufenthalts von Etappe zu Etappe zu kommen: bei der Ankunft abholen, bei der Abreise zurückgeben.",
+      "it": "Per spostarsi di tappa in tappa durante tutto il soggiorno: la ritiri all’arrivo e la riconsegni alla partenza."
+    },
+    "rentalGearSkiTitle": {
+      "fr": "Louer le matériel de ski",
+      "en": "Rent ski equipment",
+      "es": "Alquilar el material de esquí",
+      "de": "Skiausrüstung mieten",
+      "it": "Noleggiare l’attrezzatura da sci"
+    },
+    "rentalGearSkiWhy": {
+      "fr": "Skis, chaussures, bâtons : louer sur place évite de tout transporter.",
+      "en": "Skis, boots, poles: renting on site saves carrying everything.",
+      "es": "Esquís, botas, bastones: alquilar en destino evita cargar con todo.",
+      "de": "Ski, Schuhe, Stöcke: Mieten vor Ort erspart das Schleppen.",
+      "it": "Sci, scarponi, bastoncini: noleggiare sul posto evita di portare tutto."
+    },
+    "rentalGearClimbTitle": {
+      "fr": "Louer le matériel d’escalade ou de via ferrata",
+      "en": "Rent climbing or via ferrata equipment",
+      "es": "Alquilar el material de escalada o de vía ferrata",
+      "de": "Kletter- oder Klettersteigausrüstung mieten",
+      "it": "Noleggiare l’attrezzatura da arrampicata o da via ferrata"
+    },
+    "rentalGearClimbWhy": {
+      "fr": "Baudrier, casque, longes : louer sur place évite d’acheter pour une seule sortie.",
+      "en": "Harness, helmet, lanyards: renting on site avoids buying for a single outing.",
+      "es": "Arnés, casco, disipador: alquilar en destino evita comprar para una sola salida.",
+      "de": "Gurt, Helm, Klettersteigset: Mieten vor Ort erspart den Kauf für eine einzige Tour.",
+      "it": "Imbracatura, casco, longe: noleggiare sul posto evita di comprare per una sola uscita."
+    },
+    "rentalGearAlpineTitle": {
+      "fr": "Louer le matériel d’alpinisme",
+      "en": "Rent mountaineering equipment",
+      "es": "Alquilar el material de alpinismo",
+      "de": "Bergsteigerausrüstung mieten",
+      "it": "Noleggiare l’attrezzatura da alpinismo"
+    },
+    "rentalGearAlpineWhy": {
+      "fr": "Crampons, piolet, baudrier, casque : louer sur place évite de tout transporter ni d’acheter pour une course.",
+      "en": "Crampons, ice axe, harness, helmet: renting on site avoids carrying everything or buying for one climb.",
+      "es": "Crampones, piolet, arnés, casco: alquilar en destino evita cargar con todo o comprar para una sola ascensión.",
+      "de": "Steigeisen, Eispickel, Gurt, Helm: Mieten vor Ort erspart das Tragen und den Kauf für eine einzige Tour.",
+      "it": "Ramponi, piccozza, imbracatura, casco: noleggiare sul posto evita di portare tutto o di comprare per una sola salita."
+    },
+    "rentalBikeTitle": {
+      "fr": "Louer un vélo",
+      "en": "Rent a bike",
+      "es": "Alquilar una bicicleta",
+      "de": "Ein Fahrrad mieten",
+      "it": "Noleggiare una bicicletta"
+    },
+    "rentalBikeWhy": {
+      "fr": "Tu arrives sans voiture : un vélo de location t’évite de transporter le tien.",
+      "en": "You arrive without a car: a rental bike saves bringing your own.",
+      "es": "Llega sin coche: una bicicleta de alquiler le evita transportar la suya.",
+      "de": "Sie reisen ohne Auto an: Ein Leihfahrrad erspart den Transport des eigenen.",
+      "it": "Arriva senza auto: una bicicletta a noleggio evita di portare la propria."
+    },
+    "rentalBoatTitle": {
+      "fr": "Louer un kayak ou une embarcation",
+      "en": "Rent a kayak or boat",
+      "es": "Alquilar un kayak o una embarcación",
+      "de": "Ein Kajak oder Boot mieten",
+      "it": "Noleggiare un kayak o un’imbarcazione"
+    },
+    "rentalBoatWhy": {
+      "fr": "Embarcation, pagaies et gilets : réserve-les à l’avance, surtout en saison.",
+      "en": "Boat, paddles and life jackets: book them ahead, especially in season.",
+      "es": "Embarcación, remos y chalecos: resérvelos con antelación, sobre todo en temporada.",
+      "de": "Boot, Paddel und Westen: Buchen Sie sie rechtzeitig, besonders in der Saison.",
+      "it": "Imbarcazione, pagaie e giubbotti: li prenoti in anticipo, soprattutto in stagione."
+    },
+    "liftPassTitle": {
+      "fr": "Forfait de remontées mécaniques",
+      "en": "Lift pass",
+      "es": "Forfait de remontes mecánicos",
+      "de": "Skipass für die Lifte",
+      "it": "Skipass per gli impianti di risalita"
+    },
+    "liftPassWhy": {
+      "fr": "Il se prend en ligne ou au guichet de la station : vérifie la durée et le domaine couverts.",
+      "en": "It is bought online or at the resort ticket office: check the duration and the area covered.",
+      "es": "Se compra en línea o en la taquilla de la estación: compruebe la duración y el dominio cubierto.",
+      "de": "Er wird online oder an der Kasse des Skigebiets gekauft: Prüfen Sie Dauer und Gebiet.",
+      "it": "Si acquista online o alla biglietteria della stazione: verifichi la durata e il comprensorio coperto."
+    },
+    "refugesTitle": {
+      "fr": "Réserver les refuges à l’avance",
+      "en": "Book the huts in advance",
+      "es": "Reservar los refugios con antelación",
+      "de": "Hütten rechtzeitig reservieren",
+      "it": "Prenotare i rifugi in anticipo"
+    },
+    "refugesWhy": {
+      "fr": "Les places partent tôt en haute saison : réserve dès l’ouverture des réservations.",
+      "en": "Places go early in high season: book as soon as reservations open.",
+      "es": "Las plazas se agotan pronto en temporada alta: reserve en cuanto se abran las reservas.",
+      "de": "Die Plätze sind in der Hochsaison früh weg: Reservieren Sie, sobald die Buchung öffnet.",
+      "it": "I posti finiscono presto in alta stagione: prenoti non appena si aprono le prenotazioni."
+    },
+    "guideTitle": {
+      "fr": "Un guide est conseillé",
+      "en": "A guide is recommended",
+      "es": "Se recomienda un guía",
+      "de": "Ein Bergführer wird empfohlen",
+      "it": "Si consiglia una guida"
+    },
+    "guideWhy": {
+      "fr": "Le terrain demande de l’engagement : un guide diplômé connaît les conditions du jour et réduit le risque.",
+      "en": "The terrain is committing: a qualified guide knows the day’s conditions and lowers the risk.",
+      "es": "El terreno exige compromiso: un guía titulado conoce las condiciones del día y reduce el riesgo.",
+      "de": "Das Gelände ist anspruchsvoll: Ein ausgebildeter Bergführer kennt die Tagesbedingungen und senkt das Risiko.",
+      "it": "Il terreno è impegnativo: una guida abilitata conosce le condizioni del giorno e riduce il rischio."
+    },
+    "permitTitle": {
+      "fr": "Vérifier s’il faut un permis d’accès",
+      "en": "Check whether an access permit is needed",
+      "es": "Comprobar si hace falta un permiso de acceso",
+      "de": "Prüfen, ob eine Zugangsgenehmigung nötig ist",
+      "it": "Verificare se serve un permesso d’accesso"
+    },
+    "permitWhy": {
+      "fr": "Beaucoup de parcs et de treks hors d’Europe exigent un permis, parfois à prendre à l’avance. Le Compas n’a pas cette donnée pour ce lieu.",
+      "en": "Many parks and treks outside Europe require a permit, sometimes to be taken in advance. Compas has no data on it for this place.",
+      "es": "Muchos parques y rutas fuera de Europa exigen un permiso, a veces con antelación. Compas no tiene este dato para este lugar.",
+      "de": "Viele Parks und Treks außerhalb Europas verlangen eine Genehmigung, manchmal im Voraus. Compas hat diese Angabe für diesen Ort nicht.",
+      "it": "Molti parchi e trekking fuori dall’Europa richiedono un permesso, a volte da ottenere in anticipo. Compas non ha questo dato per questo luogo."
+    },
+    "activitiesTitle": {
+      "fr": "Activités sur place",
+      "en": "Things to do on site",
+      "es": "Actividades en el destino",
+      "de": "Aktivitäten vor Ort",
+      "it": "Attività in loco"
+    },
+    "activitiesWhy": {
+      "fr": "Visites guidées, excursions et billets d’entrée se réservent mieux à l’avance, surtout en saison.",
+      "en": "Guided tours, excursions and entry tickets are best booked ahead, especially in season.",
+      "es": "Las visitas guiadas, excursiones y entradas se reservan mejor con antelación, sobre todo en temporada.",
+      "de": "Führungen, Ausflüge und Eintrittskarten bucht man besser im Voraus, besonders in der Saison.",
+      "it": "Visite guidate, escursioni e biglietti d’ingresso si prenotano meglio in anticipo, soprattutto in stagione."
+    },
+    "q": {
+      "bike": {
+        "fr": "location vélo",
+        "en": "bike rental",
+        "es": "alquiler de bicicletas",
+        "de": "Fahrradverleih",
+        "it": "noleggio biciclette"
+      },
+      "boat": {
+        "fr": "location kayak",
+        "en": "kayak rental",
+        "es": "alquiler de kayak",
+        "de": "Kajakverleih",
+        "it": "noleggio kayak"
+      },
+      "liftPass": {
+        "fr": "forfait remontées mécaniques",
+        "en": "lift pass",
+        "es": "forfait remontes mecánicos",
+        "de": "Skipass Lifte",
+        "it": "skipass impianti"
+      },
+      "gearSki": {
+        "fr": "location matériel ski",
+        "en": "ski rental",
+        "es": "alquiler de material de esquí",
+        "de": "Skiverleih",
+        "it": "noleggio sci"
+      },
+      "gearClimb": {
+        "fr": "location matériel escalade",
+        "en": "climbing gear rental",
+        "es": "alquiler de material de escalada",
+        "de": "Kletterausrüstung leihen",
+        "it": "noleggio attrezzatura arrampicata"
+      },
+      "gearAlpine": {
+        "fr": "location matériel alpinisme",
+        "en": "mountaineering gear rental",
+        "es": "alquiler de material de alpinismo",
+        "de": "Bergsteigerausrüstung leihen",
+        "it": "noleggio attrezzatura alpinismo"
+      },
+      "permit": {
+        "fr": "permis d’accès randonnée",
+        "en": "hiking access permit",
+        "es": "permiso de acceso senderismo",
+        "de": "Zugangsgenehmigung Wandern",
+        "it": "permesso d’accesso escursionismo"
+      },
+      "guide": {
+        "fr": "guide de haute montagne",
+        "en": "mountain guide",
+        "es": "guía de alta montaña",
+        "de": "Bergführer",
+        "it": "guida alpina"
+      },
+      "insurance": {
+        "fr": "assurance voyage rapatriement",
+        "en": "travel insurance repatriation",
+        "es": "seguro de viaje repatriación",
+        "de": "Reiseversicherung Rücktransport",
+        "it": "assicurazione viaggio rimpatrio"
+      },
+      "visa": {
+        "fr": "visa entrée",
+        "en": "entry visa",
+        "es": "visado de entrada",
+        "de": "Einreisevisum",
+        "it": "visto d’ingresso"
+      },
+      "refuges": {
+        "fr": "réserver refuges",
+        "en": "book mountain huts",
+        "es": "reservar refugios",
+        "de": "Hütten reservieren",
+        "it": "prenotare rifugi"
+      }
+    },
+    "counterOne": {
+      "fr": "{todo} à réserver · {count} fait",
+      "en": "{todo} to book · {count} done",
+      "es": "{todo} por reservar · {count} hecha",
+      "de": "{todo} zu buchen · {count} erledigt",
+      "it": "{todo} da prenotare · {count} fatta"
+    },
+    "counterOther": {
+      "fr": "{todo} à réserver · {count} faits",
+      "en": "{todo} to book · {count} done",
+      "es": "{todo} por reservar · {count} hechas",
+      "de": "{todo} zu buchen · {count} erledigt",
+      "it": "{todo} da prenotare · {count} fatte"
+    },
+    "planCap": {
+      "fr": "À prévoir pour ton voyage",
+      "en": "To arrange for your trip",
+      "es": "Por organizar para su viaje",
+      "de": "Für Ihre Reise zu organisieren",
+      "it": "Da organizzare per il viaggio"
+    },
+    "whenBefore": {
+      "fr": "Avant le départ",
+      "en": "Before you leave",
+      "es": "Antes de salir",
+      "de": "Vor der Abreise",
+      "it": "Prima della partenza"
+    },
+    "whenOn": {
+      "fr": "Pour le {date}",
+      "en": "For {date}",
+      "es": "Para el {date}",
+      "de": "Für den {date}",
+      "it": "Per il {date}"
+    },
+    "bookBy": {
+      "fr": "à réserver avant le {date}",
+      "en": "book before {date}",
+      "es": "reservar antes del {date}",
+      "de": "buchen bis zum {date}",
+      "it": "prenotare entro il {date}"
+    },
+    "priceSite": {
+      "fr": "Prix sur le site",
+      "en": "Price on the site",
+      "es": "Precio en el sitio",
+      "de": "Preis auf der Website",
+      "it": "Prezzo sul sito"
+    },
+    "pricePerPerson": {
+      "fr": "{price} par personne",
+      "en": "{price} per person",
+      "es": "{price} por persona",
+      "de": "{price} pro Person",
+      "it": "{price} a persona"
+    },
+    "priceGroup": {
+      "fr": "{price} pour le groupe",
+      "en": "{price} for the group",
+      "es": "{price} para el grupo",
+      "de": "{price} für die Gruppe",
+      "it": "{price} per il gruppo"
+    },
+    "skip": {
+      "fr": "Pas besoin",
+      "en": "Not needed",
+      "es": "No hace falta",
+      "de": "Nicht nötig",
+      "it": "Non serve"
+    },
+    "skipLabel": {
+      "fr": "Pas besoin : {label}",
+      "en": "Not needed: {label}",
+      "es": "No hace falta: {label}",
+      "de": "Nicht nötig: {label}",
+      "it": "Non serve: {label}"
+    },
+    "skippedMsg": {
+      "fr": "Masqué : {label}",
+      "en": "Hidden: {label}",
+      "es": "Oculto: {label}",
+      "de": "Ausgeblendet: {label}",
+      "it": "Nascosto: {label}"
+    },
+    "unskippedMsg": {
+      "fr": "À réserver de nouveau : {label}",
+      "en": "To book again: {label}",
+      "es": "De nuevo por reservar: {label}",
+      "de": "Wieder zu buchen: {label}",
+      "it": "Di nuovo da prenotare: {label}"
+    },
+    "hiddenOne": {
+      "fr": "{count} ligne masquée",
+      "en": "{count} line hidden",
+      "es": "{count} línea oculta",
+      "de": "{count} Zeile ausgeblendet",
+      "it": "{count} riga nascosta"
+    },
+    "hiddenOther": {
+      "fr": "{count} lignes masquées",
+      "en": "{count} lines hidden",
+      "es": "{count} líneas ocultas",
+      "de": "{count} Zeilen ausgeblendet",
+      "it": "{count} righe nascoste"
+    },
+    "unhide": {
+      "fr": "Tout remettre",
+      "en": "Show them again",
+      "es": "Volver a mostrarlas",
+      "de": "Wieder einblenden",
+      "it": "Mostrale di nuovo"
+    },
+    "unhideLabel": {
+      "fr": "Remettre toutes les lignes masquées dans la liste",
+      "en": "Put every hidden line back in the list",
+      "es": "Volver a poner en la lista todas las líneas ocultas",
+      "de": "Alle ausgeblendeten Zeilen wieder in die Liste aufnehmen",
+      "it": "Rimettere nell’elenco tutte le righe nascoste"
+    },
+    "unhiddenMsg": {
+      "fr": "Lignes masquées remises à réserver",
+      "en": "Hidden lines are back to be booked",
+      "es": "Líneas ocultas de nuevo por reservar",
+      "de": "Ausgeblendete Zeilen wieder zu buchen",
+      "it": "Righe nascoste di nuovo da prenotare"
+    },
+    "originTitle": {
+      "fr": "D’où pars-tu ?",
+      "en": "Where are you leaving from?",
+      "es": "¿Desde dónde sale?",
+      "de": "Wo reisen Sie ab?",
+      "it": "Da dove parte?"
+    },
+    "originWhy": {
+      "fr": "Sans lieu de départ, le trajet n’est ni chiffré ni proposé à la réservation.",
+      "en": "Without a starting point, the journey is neither priced nor offered for booking.",
+      "es": "Sin lugar de salida, el trayecto no se calcula ni se ofrece para reservar.",
+      "de": "Ohne Abreiseort wird die Anreise weder berechnet noch zur Buchung angeboten.",
+      "it": "Senza un luogo di partenza, il tragitto non viene calcolato né proposto per la prenotazione."
+    },
+    "originAction": {
+      "fr": "Dire d’où je pars",
+      "en": "Say where I leave from",
+      "es": "Decir desde dónde salgo",
+      "de": "Abreiseort angeben",
+      "it": "Dire da dove parto"
+    },
+    "originPrefill": {
+      "fr": "Depuis ",
+      "en": "From ",
+      "es": "Desde ",
+      "de": "Von ",
+      "it": "Da "
+    }
+  }
+}

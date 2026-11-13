@@ -180,6 +180,8 @@ export function makeApi(
     closeSpace: vi.fn(),
     setTab: vi.fn(),
     announce: vi.fn(),
+    openSay: vi.fn(),
+    sayRequest: null,
     resa: {},
     setResa: vi.fn(),
     prefs: { outdoor: false, setOutdoor: vi.fn(), undoS: 15, setUndoS: vi.fn(), offlineSavedAt: null },

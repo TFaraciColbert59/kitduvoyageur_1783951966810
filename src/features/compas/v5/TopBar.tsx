@@ -11,7 +11,7 @@ import { V5Icon } from './ui/icons';
  */
 export function TopBar({ onRoute }: { onRoute: (query: string) => void }) {
   const api = useV5();
-  const { data, ctl, t, solo, people, openSpace, canEdit } = api;
+  const { data, ctl, t, solo, people, openSpace, canEdit, sayRequest } = api;
   const [say, setSay] = useState(false);
   const [text, setText] = useState('');
   const input = useRef<HTMLInputElement>(null);
@@ -20,6 +20,13 @@ export function TopBar({ onRoute }: { onRoute: (query: string) => void }) {
   useEffect(() => {
     if (say) input.current?.focus();
   }, [say]);
+
+  // Un tiroir (« D'où pars-tu ? ») demande « Dis-le », avec un début de phrase : même barre, même parcours.
+  useEffect(() => {
+    if (!sayRequest || !canEdit) return;
+    setSay(true);
+    setText(sayRequest.text);
+  }, [sayRequest, canEdit]);
 
   const names = data.model.crew.loads.map((m) => m.name).filter(Boolean).slice(0, 3);
   const label = solo ? t('compas.v5.top.pillSolo') : t('compas.v5.top.pillGroup', { count: people });

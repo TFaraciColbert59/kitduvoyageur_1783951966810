@@ -343,3 +343,63 @@ describe('compasV5SetTransportAction', () => {
     });
   });
 });
+
+describe('changer de nuit ou de trajet après « J’ai réservé » : le statut de cette clé repasse à « à faire »', () => {
+  const resaOf = () => (h.db.tables.trips[0].metadata as { compas: { resa?: Record<string, { status: string }> } }).compas.resa ?? {};
+  const book = (resa: Record<string, string>) => {
+    const meta = h.db.tables.trips[0].metadata as { compas: Record<string, unknown> };
+    meta.compas.resa = Object.fromEntries(Object.entries(resa).map(([k, status]) => [k, { status, at: '2026-11-01T10:00:00.000Z' }]));
+  };
+  const train = { id: 'train', amountEur: 60, perPerson: true, source: 'barème' } as const;
+  const car = { id: 'car', amountEur: 70, perPerson: false, source: 'barème' } as const;
+  const gite: V5StayOption = { ...refuge, id: 'noted:Gîte du Pré', name: 'Gîte du Pré', kind: 'hebergement', price: null };
+
+  it('nuit réservée puis autre hébergement : « à faire » ; les autres nuits et lignes ne bougent pas', async () => {
+    await compasV5SetStayAction({ tripId: TRIP, tripSlug: SLUG, day: 1, option: refuge });
+    book({ 'night:1': 'booked', 'night:2': 'booked', transport: 'booked', 'extra:insurance': 'skipped' });
+    expect(await compasV5SetStayAction({ tripId: TRIP, tripSlug: SLUG, day: 1, option: gite })).toEqual({ success: true });
+    expect(resaOf()['night:1']).toMatchObject({ status: 'todo' });
+    expect(resaOf()['night:2']).toMatchObject({ status: 'booked' });
+    expect(resaOf().transport).toMatchObject({ status: 'booked' });
+    expect(resaOf()['extra:insurance']).toMatchObject({ status: 'skipped' });
+  });
+
+  it('nuit réservée puis retirée : « à faire » aussi', async () => {
+    await compasV5SetStayAction({ tripId: TRIP, tripSlug: SLUG, day: 1, option: refuge });
+    book({ 'night:1': 'booked' });
+    await compasV5SetStayAction({ tripId: TRIP, tripSlug: SLUG, day: 1, option: null });
+    expect(resaOf()['night:1']).toMatchObject({ status: 'todo' });
+  });
+
+  it('le même hébergement rejoué : toujours « réservé », aucune écriture', async () => {
+    await compasV5SetStayAction({ tripId: TRIP, tripSlug: SLUG, day: 1, option: refuge });
+    book({ 'night:1': 'booked' });
+    const before = writes('trips').length;
+    await compasV5SetStayAction({ tripId: TRIP, tripSlug: SLUG, day: 1, option: refuge });
+    expect(resaOf()['night:1']).toMatchObject({ status: 'booked' });
+    expect(writes('trips')).toHaveLength(before);
+  });
+
+  it('nuit seulement « à faire » : le choix ne crée aucune entrée de statut', async () => {
+    await compasV5SetStayAction({ tripId: TRIP, tripSlug: SLUG, day: 2, option: refuge });
+    expect(resaOf()['night:2']).toBeUndefined();
+    expect(writes('trips')).toHaveLength(0);
+  });
+
+  it('trajet réservé puis autre mode : « à faire » ; même mode rejoué : toujours « réservé »', async () => {
+    await compasV5SetTransportAction({ tripId: TRIP, tripSlug: SLUG, transport: train });
+    book({ transport: 'booked', 'night:1': 'booked' });
+    await compasV5SetTransportAction({ tripId: TRIP, tripSlug: SLUG, transport: train });
+    expect(resaOf().transport).toMatchObject({ status: 'booked' });
+    expect(await compasV5SetTransportAction({ tripId: TRIP, tripSlug: SLUG, transport: car })).toEqual({ success: true });
+    expect(resaOf().transport).toMatchObject({ status: 'todo' });
+    expect(resaOf()['night:1']).toMatchObject({ status: 'booked' });
+    expect((h.db.tables.trips[0].metadata as { compas: { transport: { id: string } } }).compas.transport.id).toBe('car');
+  });
+
+  it('premier choix de trajet (aucun avant) : rien à défaire', async () => {
+    book({ transport: 'booked' });
+    await compasV5SetTransportAction({ tripId: TRIP, tripSlug: SLUG, transport: train });
+    expect(resaOf().transport).toMatchObject({ status: 'booked' });
+  });
+});

@@ -377,6 +377,13 @@
   font-size: 12px;
   color: var(--v5-label2);
 }
+.v5-sp .steps .t small.why,
+.v5-sp .steps .t small.meta {
+  display: block;
+}
+.v5-sp .steps .t small.why {
+  margin: 2px 0;
+}
 .v5-sp .steps .end {
   display: flex;
   flex-wrap: wrap;

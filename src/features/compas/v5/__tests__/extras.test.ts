@@ -153,6 +153,8 @@ describe('loadV5Extras', () => {
     expect(extras.unavailable).toEqual([]);
     expect(extras.partial).toBe(false);
     expect(Date.parse(extras.fetchedAt)).not.toBeNaN();
+    // L'aéroport du premier lieu placé vient d'OurAirports (rien n'est deviné) : « Rejoindre … depuis l'aéroport ».
+    expect(extras.hub).toMatchObject({ iata: expect.stringMatching(/^[A-Z]{3}$/), name: expect.stringMatching(/\S/) });
   });
 
   it('une nuit notée sans lieu retrouvé garde l’illustration : jamais la photo de l’arrivée', async () => {

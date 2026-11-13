@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
+  activitiesSearchUrl,
   addDaysIso,
   bookingSearchUrl,
+  carRentalUrl,
   flightSearchUrl,
   mapsDirectionsUrl,
+  objectSearchUrl,
   safeWebsite,
   stayDeepLink,
   transportDeepLink,
@@ -107,5 +110,23 @@ describe('transport', () => {
       expect(url).toMatch(/^https:\/\/(www\.booking\.com|www\.google\.com)\//);
       expect(url).not.toMatch(/aid=|affiliate|partner|key=|token|label=/i);
     }
+  });
+});
+
+describe('activitiesSearchUrl / carRentalUrl / objectSearchUrl (plan « À prévoir » complet)', () => {
+  it('activités : recherche GetYourGuide sur le lieu, encodée ; sans lieu, rien', () => {
+    expect(activitiesSearchUrl('Lisbonne')).toBe('https://www.getyourguide.com/s/?q=Lisbonne');
+    expect(activitiesSearchUrl('Saint-Jean & co')).toBe('https://www.getyourguide.com/s/?q=Saint-Jean%20%26%20co');
+    expect(activitiesSearchUrl('  ')).toBeNull();
+    expect(activitiesSearchUrl(null)).toBeNull();
+  });
+  it('location de voiture : page d’accueil sans paramètre (aucun format profond fiable), jamais d’affiliation', () => {
+    expect(carRentalUrl()).toBe('https://www.rentalcars.com/');
+  });
+  it('objet + lieu : recherche web préremplie, le lieu n’est pas répété s’il est déjà dans l’objet', () => {
+    expect(objectSearchUrl('location vélo', 'Chamonix')).toBe('https://duckduckgo.com/?q=location%20v%C3%A9lo%20Chamonix');
+    expect(objectSearchUrl('location vélo Chamonix', 'Chamonix')).toBe('https://duckduckgo.com/?q=location%20v%C3%A9lo%20Chamonix');
+    expect(objectSearchUrl('forfait ski', null)).toBe('https://duckduckgo.com/?q=forfait%20ski');
+    expect(objectSearchUrl('', 'Chamonix')).toBeNull();
   });
 });

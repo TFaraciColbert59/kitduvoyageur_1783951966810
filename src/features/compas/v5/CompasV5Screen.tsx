@@ -126,6 +126,13 @@ export function CompasV5Screen({ data: rawData, initialStep }: { data: CompasDat
 
   const announce = useCallback((message: string, sub?: string, tone?: 'bad') => ctl.notify(message, tone, sub), [ctl]);
 
+  // « D'où pars-tu ? » (tiroir « À prévoir ») rouvre « Dis-le » : le parcours existant du lieu de départ.
+  const [sayRequest, setSayRequest] = useState<{ n: number; text: string } | null>(null);
+  const openSay = useCallback((prefill = '') => {
+    setSpace(null);
+    setSayRequest((prev) => ({ n: (prev?.n ?? 0) + 1, text: prefill }));
+  }, []);
+
   const api: V5Api = {
     data,
     extras,
@@ -142,6 +149,8 @@ export function CompasV5Screen({ data: rawData, initialStep }: { data: CompasDat
     closeSpace,
     setTab: setTabState,
     announce,
+    openSay,
+    sayRequest,
     resa,
     setResa,
     prefs: {

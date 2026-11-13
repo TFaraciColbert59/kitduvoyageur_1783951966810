@@ -70,6 +70,11 @@ export interface V5Extras {
   /** Par numéro de jour : photo géolocalisée du lieu d'arrivée, ou null. */
   dayPhotos: Record<number, V5Photo | null>;
   transport: V5TransportOption[];
+  /**
+   * Aéroport desservi le plus proche du premier lieu placé (OurAirports), pour « Rejoindre … depuis l'aéroport » ;
+   * absent ou null : aucun aéroport à moins de 300 km, ou lecture plus ancienne. Jamais un nom deviné.
+   */
+  hub?: { iata: string; name: string } | null;
   /** Instant de la lecture (ISO). */
   fetchedAt: string;
   /** Sources qui n'ont pas répondu : l'écran le dit, jamais de valeur comblée. */

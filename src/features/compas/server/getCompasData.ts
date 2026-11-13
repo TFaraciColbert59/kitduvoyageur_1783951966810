@@ -17,6 +17,7 @@ import { readTraveller } from './traveller';
 import { entryRequirement } from './entryRequirements';
 import { abroadForReader, notesForReader, type AbroadFrom, type PapersFacts } from '../engine/papers';
 import { readerFormalities, type ReaderFormalities } from '../engine/formalities';
+import { entryFor, type EntryRequirement } from '../engine/entry';
 import { withoutStoredFormalities } from '../engine/storedFormalities';
 import type { TravellerContext } from '../engine/traveller';
 
@@ -205,6 +206,12 @@ export interface CompasData {
    * Null ou absent : rien à chiffrer pour elle.
    */
   formalities?: ReaderFormalities | null;
+  /**
+   * Ce que « À prévoir » sait de la personne qui regarde pour les papiers et l'assurance : sa nationalité, si le
+   * voyage passe une frontière POUR ELLE (`abroadForReader`) et ce que la table passeport × destination dit
+   * de son entrée. Calculé à l'affichage avec SON profil, jamais rangé ni montré à un autre membre.
+   */
+  readerTravel?: { nationality: string | null; abroad: boolean | null; entry: EntryRequirement | null } | null;
   /**
    * Interrupteur de l'IA du site (`AI_MODE`, plan 1.7) à l'affichage : faux ou absent, l'écran ne
    * parle pas d'IA (ni mention, ni bouton « Expliquer avec l'IA »). PLAN-100 5.3.
@@ -793,6 +800,7 @@ async function getCompasDataUntraced(): Promise<CompasData | null> {
       partySizeOf(num(trip.party_size), members.length),
       viewerId
     ),
+    readerTravel: readerTravelOf(trip.metadata, traveller, trip.destination_country_code, viewerId),
     ...compasPlan(trip.metadata),
     autofillStale: autofillStale(trip),
     context: resolveProjectContext({
@@ -944,6 +952,25 @@ function readerFormalitiesOf(
     reader,
     find: entryRequirement,
   });
+}
+
+/**
+ * Nationalité, « à l'étranger » et exigence d'entrée de CE lecteur, pour le plan « À prévoir » (visa, assurance).
+ * Même vie privée que ses formalités : rien n'est rangé sur le voyage, l'exigence ne se lit que pour une
+ * nationalité connue qui passe une frontière (`entryFor`). Sans pays de destination : null.
+ */
+function readerTravelOf(
+  metadata: unknown,
+  reader: TravellerContext,
+  destinationCode: string | null | undefined,
+  viewerId: string | null
+): NonNullable<CompasData['readerTravel']> | null {
+  const compas =
+    metadata && typeof metadata === 'object' ? ((metadata as Record<string, unknown>).compas as Record<string, unknown> | null) : null;
+  const facts = papersFacts(compas && typeof compas === 'object' ? compas : null, destinationCode);
+  if (!facts) return null;
+  const abroad = abroadForReader(facts, viewerId);
+  return { nationality: reader.nationality, abroad, entry: entryFor(entryRequirement, reader.nationality, facts.countryCode, abroad) };
 }
 
 /**

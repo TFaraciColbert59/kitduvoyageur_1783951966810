@@ -4,6 +4,7 @@ import type { RoutePoi } from '../../engine/routePois';
 import { coordKey } from '../../server/sharedCache';
 import { compasMeta, type CompasTripRow, type Supa } from '../../server/compasServer';
 import { originOf } from '../../engine/tripContext';
+import { nearestAirport } from '../../server/airports';
 import { lookupStagePois, readCachedStagePois } from '../../server/stagePoiLookup';
 import { dayArrivals, stayChoicesFromRows, type ArrivalSource, type DayArrival, type V5ExtrasPayload } from '../engine/dayArrivals';
 import { parseResa } from '../engine/resaStatus';
@@ -226,10 +227,15 @@ export async function loadV5Extras(args: {
     nights[day] = withPhotos;
   }
 
+  // L'aéroport du premier lieu placé : seulement une lecture en mémoire (OurAirports), jamais un nom deviné.
+  const first = arrivals[0];
+  const airport = first ? nearestAirport(first.lat, first.lon, { country: countryCode, preferLarge: true }) : null;
+
   return {
     nights,
     dayPhotos,
     transport: transportList,
+    hub: airport ? { iata: airport.iata, name: airport.name } : null,
     fetchedAt: new Date().toISOString(),
     unavailable: [...unavailable],
     choices: { transport: parseTransportChoice(compasMeta(meta).transport), stays: staysChosen, resa: parseResa(compasMeta(meta).resa) },

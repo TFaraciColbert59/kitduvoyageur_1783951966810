@@ -32,6 +32,13 @@ export interface V5Api {
   setTab: (tab: number) => void;
   /** Annonce dans l'îlot, sans écriture. */
   announce: (message: string, sub?: string, tone?: 'bad') => void;
+  /**
+   * Ouvre « Dis-le » (la barre haute), éventuellement avec un début de phrase (« Depuis »), après avoir fermé le
+   * tiroir : c'est le parcours existant pour dire d'où l'on part, il n'y en a pas un second.
+   */
+  openSay: (prefill?: string) => void;
+  /** Dernière demande d'ouverture de « Dis-le » (numérotée : la même phrase redemandée se rouvre) ; null : aucune. */
+  sayRequest: { n: number; text: string } | null;
   /** « J'ai réservé » par élément (`night:<jour>`, `transport`) : ce qui est rangé sur le voyage, plus les gestes de cet écran. */
   resa: Record<string, ResaStatus>;
   /** Met à jour l'affichage sans attendre le serveur (`null` : retire l'entrée) ; l'écriture, elle, passe par `compasV5SetResaStatusAction`. */

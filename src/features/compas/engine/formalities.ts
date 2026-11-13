@@ -61,6 +61,27 @@ export function readerFormalities(input: {
   };
 }
 
+/**
+ * Pour le plan « À prévoir » (`engine/resaPlan.ts`) : le montant des formalités d'entrée de CE lecteur, au barème
+ * d'un ressortissant français, ou null (autre nationalité ou inconnue, déjà dans le pays, rien à payer).
+ * Les calculs qui lisent le profil restent ici (verrou `scripts/verify/traveller_privacy.mjs`).
+ */
+export function readerEntryFee(input: {
+  countryCode: string | null | undefined;
+  abroad: boolean | null;
+  nationality: string | null | undefined;
+  entry: EntryRequirement | null;
+}): { eur: number; basis: string } | null {
+  if (!abroadCosts(input.abroad, { nationality: input.nationality ?? null }, input.entry).formalities) return null;
+  const fee = entryFees(input.countryCode);
+  return fee ? { eur: fee.eur, basis: formalitiesBasis(input.entry?.verified) } : null;
+}
+
+/** Pour le plan « À prévoir » : l'assurance voyage n'est affirmée que si l'on SAIT que le voyage passe une frontière. */
+export function readerNeedsInsurance(abroad: boolean | null): boolean {
+  return abroadCosts(abroad, { nationality: null }, null).insurance;
+}
+
 // La dépense « Formalités » d'une préparation d'avant ce verrou (reconnue, retirée de l'affichage) :
 // module à part, sans dépendance, que la lecture des voyages de `lib/` importe aussi.
 export { isStoredFormalities, withoutStoredFormalities } from './storedFormalities';

@@ -2,11 +2,13 @@
  * Compas v5 : « J'ai réservé » rangé par élément (fonctions pures).
  *
  * Le statut vit dans `trips.metadata.compas.resa[<clé>] = { status, at }`. Clés stables : `night:<jour>`
- * pour la nuit d'un jour, `transport` pour le trajet d'approche. Lecture défensive : une valeur illisible
- * est ignorée, jamais devinée ; un élément sans entrée est « à faire ».
+ * pour la nuit d'un jour, `transport` pour le trajet d'approche, `extra:<ligne>` pour les autres lignes du
+ * plan (`engine/resaPlan.ts` : assurance, location, forfait…). Lecture défensive : une valeur illisible
+ * est ignorée, jamais devinée ; un élément sans entrée est « à faire ». `skipped` : « Pas besoin », la
+ * ligne est masquée.
  */
 
-export type ResaStatus = 'booked' | 'todo';
+export type ResaStatus = 'booked' | 'todo' | 'skipped';
 
 export interface ResaRecord {
   status: ResaStatus;
@@ -14,11 +16,14 @@ export interface ResaRecord {
   at: string;
 }
 
-/** `night:1` à `night:60`, ou `transport`. */
-export const RESA_KEY = /^(?:night:(?:[1-9]|[1-5]\d|60)|transport)$/;
+/** `night:1` à `night:60`, `transport`, ou `extra:<ligne>` (minuscules, chiffres, tirets, 40 caractères au plus). */
+export const RESA_KEY = /^(?:night:(?:[1-9]|[1-5]\d|60)|transport|extra:[a-z][a-z0-9-]{0,39})$/;
 
 export const nightKey = (day: number): string => `night:${day}`;
 export const TRANSPORT_KEY = 'transport';
+export const extraKey = (line: string): string => `extra:${line}`;
+
+const STATUSES: readonly ResaStatus[] = ['booked', 'todo', 'skipped'];
 
 export const isResaKey = (key: unknown): key is string => typeof key === 'string' && RESA_KEY.test(key);
 
@@ -29,8 +34,8 @@ export function parseResa(raw: unknown): Record<string, ResaRecord> {
   for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
     if (!isResaKey(key) || !value || typeof value !== 'object' || Array.isArray(value)) continue;
     const v = value as Record<string, unknown>;
-    if (v.status !== 'booked' && v.status !== 'todo') continue;
-    out[key] = { status: v.status, at: typeof v.at === 'string' ? v.at.slice(0, 40) : '' };
+    if (typeof v.status !== 'string' || !STATUSES.includes(v.status as ResaStatus)) continue;
+    out[key] = { status: v.status as ResaStatus, at: typeof v.at === 'string' ? v.at.slice(0, 40) : '' };
   }
   return out;
 }
@@ -41,6 +46,9 @@ const statusOf = (v: ResaStatus | ResaRecord | undefined): ResaStatus | null => 
 
 /** Cet élément est-il noté comme réservé ? */
 export const isResaBooked = (resa: Statuses | null | undefined, key: string): boolean => statusOf(resa?.[key]) === 'booked';
+
+/** Cet élément est-il noté « pas besoin » (ligne masquée) ? */
+export const isResaSkipped = (resa: Statuses | null | undefined, key: string): boolean => statusOf(resa?.[key]) === 'skipped';
 
 /**
  * Statuts rangés + gestes faits sur cet écran (mise à jour optimiste) : `null` retire l'entrée, un statut la remplace.
