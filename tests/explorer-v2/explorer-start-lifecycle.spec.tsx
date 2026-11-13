@@ -236,6 +236,21 @@ describe('explorer-v2 · bilan local', () => {
 });
 
 describe('explorer-v2 · direct et permission réelle', () => {
+  it('signale la pause automatique sans la confondre avec la pause manuelle', () => {
+    useExplorerStore.getState().startActivity('rando');
+    useExplorerStore.getState().updateActivity({ autoPaused: true });
+
+    const automatic = render(<LiveDirectTab ctx={context()} />);
+    expect(screen.getByText('Pause automatique')).toBeTruthy();
+    expect(screen.queryByText('Pause manuelle')).toBeNull();
+    automatic.unmount();
+
+    useExplorerStore.getState().updateActivity({ paused: true, autoPaused: false });
+    render(<LiveDirectTab ctx={context()} />);
+    expect(screen.getByText('Pause manuelle')).toBeTruthy();
+    expect(screen.queryByText('Pause automatique')).toBeNull();
+  });
+
   it('affiche « Vitesse » et son unité pour Gravel, pas « Allure »', () => {
     const chosen = selection('velo', 'velo-gravel');
     useExplorerStore.getState().startActivity('velo', null, chosen);

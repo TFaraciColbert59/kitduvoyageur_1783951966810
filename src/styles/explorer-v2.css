@@ -1215,6 +1215,47 @@ body[data-explorer-sheet-open='true'] nav[aria-label="Navigation principale"]:no
   animation: xpToast 0.4s ease both;
 }
 
+/* Trace en préparation ou inexploitable : information neutre, pas une alerte. */
+.xp-offroute--unavailable,
+.xp-offroute--pending {
+  background: rgba(23, 64, 44, 0.9);
+  box-shadow: 0 8px 22px rgba(11, 31, 23, 0.28), inset 0 1px 0 rgba(250, 248, 245, 0.22);
+  color: #faf8f5;
+  font-weight: 600;
+}
+
+/* Flèche de retour : cap monde compensé par la rotation réelle de la carte. */
+.xp-offroute__arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  transform-origin: 50% 50%;
+  transition: transform 0.2s var(--ease-glass, ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .xp-offroute__arrow {
+    transition: none;
+  }
+}
+
+.xp-offroute__retry {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid rgba(250, 248, 245, 0.35);
+  border-radius: 10px;
+  background: rgba(250, 248, 245, 0.14);
+  color: #faf8f5;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.xp-offroute__retry:active {
+  background: rgba(250, 248, 245, 0.24);
+}
+
 /* ── Compte à rebours de départ ───────────────────────────────────────── */
 .xp-countdown {
   position: absolute;

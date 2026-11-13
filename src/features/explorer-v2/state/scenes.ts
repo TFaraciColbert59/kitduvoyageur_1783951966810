@@ -285,6 +285,7 @@ export const SCENES: Record<SceneName, ExplorerState> = {
       startedAt: Date.now() - 90 * 60 * 1000,
       paused: false,
       offRoute: true,
+      offRouteM: 80,
       distanceM: 12400,
       elevGainM: 820,
       movingS: 5400,

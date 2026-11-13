@@ -109,6 +109,7 @@ export async function GET(request: Request) {
             network: 'iwn',
             ref: 'TMB',
             geojson: null,
+            unavailable: true,
           },
           {
             id: 102,
@@ -117,6 +118,7 @@ export async function GET(request: Request) {
             network: 'nwn',
             ref: 'GR®',
             geojson: null,
+            unavailable: true,
           },
           {
             id: 103,
@@ -125,6 +127,7 @@ export async function GET(request: Request) {
             network: 'rwn',
             ref: 'PR',
             geojson: null,
+            unavailable: true,
           },
           {
             id: 104,
@@ -133,6 +136,7 @@ export async function GET(request: Request) {
             network: 'nwn',
             ref: 'GRP',
             geojson: null,
+            unavailable: true,
           },
         ];
 

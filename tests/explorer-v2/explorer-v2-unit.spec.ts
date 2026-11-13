@@ -80,6 +80,42 @@ describe('explorer-v2 · machine d’état', () => {
     expect(useExplorerStore.getState().sheet).toBe('summary');
   });
 
+  it('fige l’itinéraire à la séance et ne l’hérite jamais de la précédente', () => {
+    const routeA = {
+      id: '7',
+      name: 'Boucle A',
+      geojson: { type: 'LineString', coordinates: [[6.87, 45.92], [6.88, 45.92]] },
+      status: 'ready' as const,
+    };
+    useExplorerStore.setState({
+      selection: { kind: 'trail', id: '7' },
+      trailRoute: routeA,
+    });
+    useExplorerStore.getState().startActivity('rando');
+
+    const started = useExplorerStore.getState();
+    expect(started.activity?.route).toEqual(routeA);
+    // La sélection d'écran est consommée : elle ne peut plus changer la
+    // mesure en cours de route.
+    expect(started.selection).toBeUndefined();
+
+    // Changer la sélection pendant la séance ne change pas la copie figée.
+    useExplorerStore.getState().select({ kind: 'trail', id: '8' }, 'trail');
+    useExplorerStore.getState().setTrailRoute({
+      id: '8',
+      name: 'Boucle B',
+      geojson: { type: 'LineString', coordinates: [[0, 0], [0, 1]] },
+      status: 'ready',
+    });
+    expect(useExplorerStore.getState().activity?.route?.id).toBe('7');
+
+    // Une nouvelle séance sans sélection ne reprend pas l'ancienne trace.
+    useExplorerStore.getState().stopActivity();
+    expect(useExplorerStore.getState().trailRoute).toBeUndefined();
+    useExplorerStore.getState().startActivity('rando');
+    expect(useExplorerStore.getState().activity?.route).toBeUndefined();
+  });
+
   it('journalise les événements pour l’inventaire de clics', () => {
     const target = globalThis as unknown as {
       window?: { __explorerEvents?: Array<{ event: string }> };
@@ -268,8 +304,9 @@ describe('explorer-v2 · hors itinéraire', () => {
     expect(evaluateOffRoute(samples).offRoute).toBe(false);
   });
 
-  it('déclenche après 15 s continus hors trace', () => {
-    const samples = [at(0, 10), at(5, 45), at(20, 80)];
+  it('déclenche après plus de 15 s continus hors trace', () => {
+    // La fiche exige « plus de 15 s » : à 15 s pile, l'alerte reste éteinte.
+    const samples = [at(0, 10), at(5, 45), at(20.001, 80)];
     const state = evaluateOffRoute(samples);
     expect(state.offRoute).toBe(true);
     expect(state.distanceM).toBe(80);
@@ -288,6 +325,9 @@ describe('explorer-v2 · hors itinéraire', () => {
 
   it('formate le libellé de la carte du haut', () => {
     expect(offRouteLabel(80)).toBe('Hors itinéraire · 80 m');
+    // Distance inconnue : pas de « 0 m » inventé.
+    expect(offRouteLabel()).toBe('Hors itinéraire');
+    expect(offRouteLabel(null)).toBe('Hors itinéraire');
   });
 });
 

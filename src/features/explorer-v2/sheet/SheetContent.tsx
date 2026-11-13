@@ -3,6 +3,16 @@
 import React from 'react';
 import { XpIcon } from '../ui/XpIcon';
 import { useNaturalSearch, geometryCenter } from '../data/hooks';
+import { AUTO_PAUSE_BY_SPORT } from '../activity/tracker';
+import {
+  MILE_DISTANCE_M,
+  activeSplit,
+  fastestSplit,
+  splitPaceSecondsPerKm,
+  splitPaceSecondsPerMile,
+  splitSpeedKmh,
+} from '../activity/splits';
+import { useExplorerStore } from '../state/store';
 import { countTiles, downloadZone, purgeZone, readZone } from '../offline/zone';
 import { ElevationProfile } from './ElevationProfile';
 import {
@@ -32,7 +42,7 @@ import {
   relativeDay,
   type SheetContext,
 } from './context';
-import type { Sport } from '../state/types';
+import type { ActivitySplit, Sport } from '../state/types';
 import {
   SPORT_FAMILIES,
   availabilityLabel,
@@ -125,6 +135,93 @@ function StartLimitNote() {
  * Choix en deux temps : famille de sport existante, puis variante.
  * Une variante indisponible n’a aucun handler de clic et porte le motif exact.
  */
+function autoPauseDurationLabel(seconds: number): string {
+  if (seconds < 60) return `${Math.round(seconds)} s`;
+  return `${Math.round(seconds / 60)} min`;
+}
+
+/**
+ * Réglage de préparation : la pause automatique à l'arrêt, propre au sport.
+ * Désactivée, seule la détection d'arrêt est coupée ; les seuils GPS du sport
+ * (plausibilité, coupure de tracé) restent actifs.
+ */
+function AutoPauseSetting({ sport }: { sport?: Sport | null }) {
+  const enabled = useExplorerStore((state) => state.autoPauseEnabled) ?? false;
+  const setEnabled = useExplorerStore((state) => state.setAutoPauseEnabled);
+  const config = sport ? AUTO_PAUSE_BY_SPORT[sport] : null;
+  const sub = !enabled
+    ? 'Désactivée · pas d’arrêt automatique, seuils GPS du sport conservés.'
+    : config
+      ? `Activée · pause après ${autoPauseDurationLabel(config.durationS)} d’arrêt, reprise au mouvement.`
+      : 'Activée · chaque sport a son seuil d’arrêt et de reprise.';
+  return (
+    <>
+      <XpEyebrow>Préparation</XpEyebrow>
+      <XpRows>
+        <XpRow
+          icon="pause"
+          title="Pause automatique"
+          sub={sub}
+          trailing={
+            <button
+              type="button"
+              role="switch"
+              aria-checked={enabled}
+              aria-label="Pause automatique à l’arrêt"
+              onClick={() => setEnabled(!enabled)}
+              style={{
+                flex: 'none',
+                width: 52,
+                height: 44,
+                padding: 0,
+                border: 'none',
+                background: 'transparent',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                WebkitTapHighlightColor: 'transparent',
+              }}
+            >
+              {/* Le switch visuel garde 46 × 28 ; la cible tactile est le bouton
+                  de 52 × 44, conforme à la règle des 44 px. */}
+              <span
+                aria-hidden="true"
+                style={{
+                  width: 46,
+                  height: 28,
+                  padding: 3,
+                  boxSizing: 'border-box',
+                  borderRadius: 999,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: enabled ? 'flex-end' : 'flex-start',
+                  background: enabled ? 'var(--xp-inkbtn)' : 'var(--xp-thumb)',
+                  boxShadow: enabled
+                    ? 'var(--xp-inkbtn-shadow)'
+                    : 'inset 0 1px 2px rgba(23,43,36,0.18)',
+                  transition: 'background 160ms ease',
+                }}
+              >
+                <span
+                  aria-hidden="true"
+                  style={{
+                    width: 22,
+                    height: 22,
+                    borderRadius: 999,
+                    background: '#fff',
+                    boxShadow: '0 1px 3px rgba(23,43,36,0.25)',
+                  }}
+                />
+              </span>
+            </button>
+          }
+        />
+      </XpRows>
+    </>
+  );
+}
+
 export function SportPicker({ ctx }: { ctx: SheetContext }) {
   const startContext = useSportStartContext(ctx);
   const [sport, setSport] = React.useState<Sport | null>(null);
@@ -173,6 +270,7 @@ export function SportPicker({ ctx }: { ctx: SheetContext }) {
             );
           })}
         </XpRows>
+        <AutoPauseSetting sport={null} />
         <StartLimitNote />
       </>
     );
@@ -228,6 +326,7 @@ export function SportPicker({ ctx }: { ctx: SheetContext }) {
           );
         })}
       </XpRows>
+      <AutoPauseSetting sport={sport} />
       {variant && availability ? (
         <>
           <p
@@ -293,6 +392,7 @@ function RecommendedSports({ ctx }: { ctx: SheetContext }) {
           );
         })}
       </XpRows>
+      <AutoPauseSetting sport={null} />
       <StartLimitNote />
     </>
   );
@@ -380,6 +480,7 @@ function RoutesTab({ ctx }: { ctx: SheetContext }) {
       distance_km: 170.0,
       network: 'iwn',
       ref: 'TMB',
+      unavailable: true,
     },
     {
       id: 102,
@@ -387,6 +488,7 @@ function RoutesTab({ ctx }: { ctx: SheetContext }) {
       distance_km: 9.1,
       network: 'nwn',
       ref: 'GR®',
+      unavailable: true,
     },
     {
       id: 103,
@@ -394,6 +496,7 @@ function RoutesTab({ ctx }: { ctx: SheetContext }) {
       distance_km: 8.8,
       network: 'rwn',
       ref: 'PR',
+      unavailable: true,
     },
     {
       id: 104,
@@ -401,6 +504,7 @@ function RoutesTab({ ctx }: { ctx: SheetContext }) {
       distance_km: 16.0,
       network: 'nwn',
       ref: 'GRP',
+      unavailable: true,
     },
   ];
 
@@ -1625,6 +1729,20 @@ export function LiveDirectTab({ ctx }: { ctx: SheetContext }) {
           hint="Aucun point GPS n’est enregistré. Autorise la position pour reprendre une trace."
         />
       ) : null}
+      {activity.paused || activity.autoPaused ? (
+        <XpRows>
+          <XpRow
+            icon="pause"
+            title={activity.paused ? 'Pause manuelle' : 'Pause automatique'}
+            sub={
+              activity.paused
+                ? 'Le suivi est suspendu · appuie sur Reprendre pour continuer.'
+                : 'Arrêt détecté · les métriques sont gelées et la reprise est automatique.'
+            }
+            badge={{ label: activity.paused ? 'pausé' : 'auto', tone: 'warn' }}
+          />
+        </XpRows>
+      ) : null}
       <div className="xp-chrono" aria-live="off">
         {elapsed}
       </div>
@@ -1652,31 +1770,210 @@ export function LiveDirectTab({ ctx }: { ctx: SheetContext }) {
   );
 }
 
-/** Tours : découpe réelle de la sortie si des points existent, sinon état vide. */
-function LiveLapsTab({ ctx, elapsedS }: { ctx: SheetContext; elapsedS: number }) {
+/** Durée d’un segment : 5'04", ou 1 h 02'03" au-delà d’une heure. */
+function formatSplitTime(seconds: number): string {
+  if (!Number.isFinite(seconds) || seconds <= 0) return '—';
+  const total = Math.max(0, Math.round(seconds));
+  if (total >= 3600) {
+    const h = Math.floor(total / 3600);
+    const m = Math.floor((total % 3600) / 60);
+    const s = total % 60;
+    return `${h} h ${String(m).padStart(2, '0')}'${String(s).padStart(2, '0')}"`;
+  }
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return `${m}'${String(s).padStart(2, '0')}"`;
+}
+
+/** Allure ou vitesse propre au segment, jamais l’allure globale de la sortie. */
+function splitRhythmValue(
+  split: ActivitySplit,
+  rhythm: 'pace' | 'speed',
+  units: 'metric' | 'imperial',
+): string | null {
+  if (rhythm === 'pace') {
+    const pace =
+      units === 'imperial'
+        ? splitPaceSecondsPerMile(split)
+        : splitPaceSecondsPerKm(split);
+    return pace === null ? null : `${formatPace(pace)}/${units === 'imperial' ? 'mi' : 'km'}`;
+  }
+  const speed = splitSpeedKmh(split);
+  if (speed === null) return null;
+  return units === 'imperial'
+    ? `${(speed / (MILE_DISTANCE_M / 1000)).toFixed(1).replace('.', ',')} mph`
+    : `${speed.toFixed(1).replace('.', ',')} km/h`;
+}
+
+/**
+ * Détail d’un split : durée mesurée, distance du segment et rythme propre.
+ * Un split terminé n’affiche pas la distance (elle vaut 1 km ou 1 mile) ;
+ * un rythme de type vitesse reste utile pour le vélo, le kayak et le ski.
+ */
+function splitDetail(
+  split: ActivitySplit,
+  rhythm: 'pace' | 'speed',
+  withDistance: boolean,
+  units: 'metric' | 'imperial',
+): string {
+  const parts = [formatSplitTime(split.movingS)];
+  if (withDistance) {
+    parts.push(
+      units === 'imperial'
+        ? formatImperialDistance(split.distanceM / 1000)
+        : formatDistance(split.distanceM / 1000),
+    );
+  }
+  const rhythmValue = splitRhythmValue(split, rhythm, units);
+  if (rhythmValue && (withDistance || rhythm === 'speed')) parts.push(rhythmValue);
+  return parts.join(' · ');
+}
+
+/** Tours : splits kilométriques, miles et tours manuels réels, sans allure globale. */
+function LiveLapsTab({ ctx }: { ctx: SheetContext }) {
   const activity = ctx.state.activity;
   if (!activity) {
     return <XpEmpty title="Aucun tour" hint="Démarre une activité pour enregistrer des tours." />;
   }
-  const km = activity.distanceM / 1000;
-  const laps = Math.floor(km);
-  if (laps < 1) {
-    return <XpEmpty title="Pas encore de tour" hint="Le premier kilomètre n’est pas terminé." />;
+  if (ctx.state.locationPermission === 'denied') {
+    return (
+      <XpEmpty
+        title="Position refusée"
+        hint="Aucun point GPS n’est enregistré : les splits ne peuvent pas être calculés."
+      />
+    );
   }
-  const pace = activity.movingS > 0 ? activity.movingS / km : 0;
+
+  const units = ctx.units;
+  const scaleSplits = units === 'imperial' ? activity.mileSplits : activity.splits;
+  if (!scaleSplits) {
+    return (
+      <XpEmpty
+        title="Découpe indisponible"
+        hint="Cette séance n’a pas de points GPS exploitables : aucun split n’est inventé."
+      />
+    );
+  }
+
+  const rhythm = rhythmMetric(activity.sport, activity.selection);
+  const currentSplit = activeSplit(scaleSplits);
+  const completedSplits = scaleSplits.filter((split) => split.completed);
+  const fastest = fastestSplit(completedSplits);
+  const laps = activity.laps ?? [];
+  const currentLap = activeSplit(laps);
+  const completedLaps = laps.filter((split) => split.completed);
+  const fastestLap = fastestSplit(completedLaps);
+  const measured = activity.distanceM > 0;
+  const splitWord = units === 'imperial' ? 'Mile' : 'Km';
+  const splitSection = units === 'imperial' ? 'Miles' : 'Kilomètres';
+
+  if (!measured && completedSplits.length === 0) {
+    return (
+      <XpEmpty
+        title="Pas encore de tour"
+        hint={`Le premier ${units === 'imperial' ? 'mile' : 'kilomètre'} n’est pas terminé.`}
+      />
+    );
+  }
+
+  const canLap =
+    !!ctx.onMarkLap &&
+    !activity.paused &&
+    currentLap !== null &&
+    currentLap.distanceM >= 1;
+  const onMarkLap = ctx.onMarkLap;
+
   return (
-    <XpRows>
-      {Array.from({ length: Math.min(laps, 12) }, (_, index) => (
+    <>
+      <XpEyebrow>{splitSection}</XpEyebrow>
+      <XpRows>
+        {currentSplit ? (
+          <XpRow
+            icon="route"
+            title={`${splitWord} ${currentSplit.index}`}
+            sub={splitDetail(currentSplit, rhythm, true, units)}
+            badge={{ label: 'en cours', tone: 'warn' }}
+          />
+        ) : null}
+        {completedSplits.map((split) => (
+          <XpRow
+            key={`${split.kind}-${split.index}`}
+            icon="route"
+            title={`${splitWord} ${split.index}`}
+            sub={splitDetail(split, rhythm, false, units)}
+            badge={
+              fastest?.index === split.index
+                ? { label: 'plus rapide', tone: 'good' }
+                : { label: 'ok', tone: 'good' }
+            }
+          />
+        ))}
+      </XpRows>
+
+      <XpEyebrow>Tours manuels</XpEyebrow>
+      <XpRows>
+        {onMarkLap ? (
+          canLap ? (
+            <XpRow
+              icon="repeat"
+              title="Nouveau tour"
+              sub="Clôt le tour en cours et en commence un autre."
+              onClick={onMarkLap}
+            />
+          ) : (
+            <XpRow
+              icon="repeat"
+              title="Nouveau tour"
+              sub={
+                activity.paused
+                  ? 'Indisponible pendant une pause manuelle.'
+                  : 'Disponible après quelques mètres mesurés.'
+              }
+            />
+          )
+        ) : null}
+        {completedLaps.map((split) => (
+          <XpRow
+            key={`lap-${split.index}`}
+            icon="repeat"
+            title={`Tour ${split.index}`}
+            sub={splitDetail(split, rhythm, true, units)}
+            badge={
+              fastestLap?.index === split.index
+                ? { label: 'plus rapide', tone: 'good' }
+                : { label: 'ok', tone: 'good' }
+            }
+          />
+        ))}
+        {currentLap && completedLaps.length > 0 ? (
+          <XpRow
+            icon="repeat"
+            title={`Tour ${currentLap.index}`}
+            sub={splitDetail(currentLap, rhythm, true, units)}
+            badge={{ label: 'en cours', tone: 'warn' }}
+          />
+        ) : null}
+      </XpRows>
+
+      <XpEyebrow>Total</XpEyebrow>
+      <XpRows>
         <XpRow
-          key={`lap-${index + 1}`}
-          icon="repeat"
-          title={`Km ${index + 1}`}
-          sub={`${formatDuration(pace)} · allure moyenne`}
-          badge={{ label: index === laps - 1 ? 'en cours' : 'ok', tone: index === laps - 1 ? 'warn' : 'good' }}
+          icon="clock"
+          title="Temps en mouvement"
+          sub={formatDuration(activity.movingS)}
         />
-      ))}
-      <XpRow icon="clock" title="Temps total" sub={formatDuration(elapsedS)} />
-    </XpRows>
+        <XpRow
+          icon="route"
+          title="Distance mesurée"
+          sub={
+            units === 'imperial'
+              ? formatImperialDistance(activity.distanceM / 1000)
+              : formatDistance(activity.distanceM / 1000)
+          }
+        />
+        <XpRow icon="pause" title="Pauses" sub="Exclues des splits et des tours." />
+      </XpRows>
+    </>
   );
 }
 
@@ -1723,8 +2020,6 @@ function ActivityTabs(ctx: SheetContext, kind: string): SheetTab[] {
     ];
   }
   if (kind === 'live') {
-    const activity = state.activity;
-    const elapsed = activity ? Math.max(0, Math.floor((Date.now() - activity.startedAt) / 1000)) : 0;
     return [
       {
         id: 'direct',
@@ -1736,7 +2031,7 @@ function ActivityTabs(ctx: SheetContext, kind: string): SheetTab[] {
         id: 'tours',
         label: 'Tours',
         icon: 'repeat',
-        render: () => <LiveLapsTab ctx={ctx} elapsedS={elapsed} />,
+        render: () => <LiveLapsTab ctx={ctx} />,
       },
       {
         id: 'coeur',

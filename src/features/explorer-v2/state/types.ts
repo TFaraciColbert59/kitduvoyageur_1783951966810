@@ -88,6 +88,22 @@ export type SportMetricKey =
   | 'laps';
 
 /**
+ * Split kilométrique ou tour manuel, mesuré à partir des intervalles GPS
+ * réellement acceptés. `movingS` exclut les pauses et les trous GPS.
+ */
+export interface ActivitySplit {
+  kind: 'km' | 'mi' | 'lap';
+  /** Rang 1-based dans sa découpe (km 1, tour 1…). */
+  index: number;
+  /** Distance mesurée affectée au segment (m). */
+  distanceM: number;
+  /** Temps en mouvement affecté au segment (s). */
+  movingS: number;
+  /** Vrai quand le segment est fermé (seuil km atteint ou tour clôturé). */
+  completed: boolean;
+}
+
+/**
  * Variante locale choisie dans le drawer (S1.02). Elle conserve le `sport`
  * historique pour le tracker et la persistance ; les champs de variante sont
  * un enrichissement en mémoire, pas un nouveau contrat serveur.
@@ -107,17 +123,69 @@ export interface PendingStart {
   selection?: SportSelection;
 }
 
+/**
+ * État de la géométrie réelle d'un itinéraire, figée au démarrage de la
+ * séance. `loading` couvre la requête `get_route_geojson` ; `unavailable`
+ * signifie qu'aucune trace exploitable n'existe (route de secours sans
+ * géométrie, 404, réseau coupé). Le hors-trace est alors explicitement
+ * désactivé, jamais silencieusement mort.
+ */
+export type TrailGeometryStatus = 'loading' | 'ready' | 'unavailable';
+
+export interface TrailRouteSnapshot {
+  /** Identifiant de l'itinéraire choisi ; jamais remplacé en cours de séance. */
+  id: string;
+  name: string | null;
+  /** Géométrie **complète** (`get_route_geojson`), jamais la version simplifiée. */
+  geojson: unknown | null;
+  status: TrailGeometryStatus;
+}
+
 export interface ActivityState {
   sport: Sport;
   /** Variante choisie ; absente pour les scènes et les anciens appels. */
   selection?: SportSelection;
+  /**
+   * Itinéraire figé à la séance. Absent = aucune trace choisie (suivi libre) ;
+   * présent avec `status: 'unavailable'` = hors-trace demandé mais impossible.
+   * Les anciennes entrées, qui n'ont pas ce champ, restent valides.
+   */
+  route?: TrailRouteSnapshot;
   sessionId: string | null;
   startedAt: number;
+  /** Pause manuelle : le suivi GPS est suspendu. */
   paused: boolean;
+  /**
+   * Pause automatique à l'arrêt, distincte de `paused`. Les fixes continuent
+   * d'arriver pour détecter la reprise ; aucune métrique n'est accumulée.
+   */
+  autoPaused?: boolean;
   offRoute: boolean;
+  /**
+   * Distance courante à la trace quand le hors-trace est évalué. Distincte de
+   * `distanceM` (distance parcourue) : c'est elle que la bannière affiche.
+   */
+  offRouteM?: number;
+  /**
+   * Cap **monde** de retour vers la trace, en degrés (0 = nord, 90 = est).
+   * Il oriente la flèche du bandeau hors-trace après soustraction de la
+   * rotation réelle de la carte (`screenBearingDeg`) ; absent tant qu'aucune
+   * mesure n'existe.
+   */
+  offRouteBearing?: number | null;
   distanceM: number;
   elevGainM: number;
   movingS: number;
+  /**
+   * Splits kilométriques mesurés. Absent sur les scènes et les séances
+   * antérieures à l'ajout : l'interface affiche alors explicitement que la
+   * découpe n'est pas disponible, sans recalculer une allure globale.
+   */
+  splits?: ActivitySplit[];
+  /** Splits par mile, tenus en parallèle pour les unités impériales. */
+  mileSplits?: ActivitySplit[];
+  /** Tours manuels mesurés (même contrat que `splits`). */
+  laps?: ActivitySplit[];
 }
 
 export interface ToastMessage {
@@ -138,6 +206,11 @@ export interface ExplorerState {
   tab: number;
   mini: number;
   selection?: Selection;
+  /**
+   * Itinéraire armé pour le prochain départ. Sa géométrie réelle est chargée
+   * une fois ; `startActivity` en fait une copie figée dans `activity.route`.
+   */
+  trailRoute?: TrailRouteSnapshot;
   activity?: ActivityState;
   /** Dernière sortie terminée, affichée dans l'écran Bilan. */
   summary?: (ActivityState & { endedAt: number }) | null;
@@ -147,6 +220,8 @@ export interface ExplorerState {
   profile: Profile;
   easyMode: boolean;
   theme: 'light' | 'dark';
+  /** Réglage de préparation : pause automatique à l'arrêt, désactivable. */
+  autoPauseEnabled?: boolean;
   online: boolean;
   locationPermission: 'granted' | 'denied' | 'prompt';
   orbitPaused: boolean;

@@ -6,6 +6,10 @@ import {
   resampleTrack,
   summarizeElevation,
   trackRevision,
+  routeLines,
+  distanceToRouteM,
+  nearestPointOnRouteM,
+  bearingDegrees,
 } from '@/features/explorer-v2/geo/track';
 
 /**
@@ -221,5 +225,126 @@ describe('geo/track · summarizeElevation', () => {
   it('ne prétend à aucun dénivelé quand aucune altitude n’est connue', () => {
     const summary = summarizeElevation([{ d: 0, ele: null }, { d: 10, ele: null }], 10);
     expect(summary).toEqual({ distance_m: 10, gain_m: 0, loss_m: 0, min_m: null, max_m: null });
+  });
+});
+
+
+describe('geo/track · distance à la trace sélectionnée', () => {
+  const route = {
+    type: 'LineString',
+    coordinates: [
+      [6.87, 45.92],
+      [6.88, 45.92],
+    ],
+  } as const;
+
+  it('extrait une LineString et une MultiLineString sans relier leurs lignes', () => {
+    expect(routeLines(route)).toHaveLength(1);
+    const multi = routeLines({
+      type: 'MultiLineString',
+      coordinates: [
+        [[6.87, 45.92], [6.88, 45.92]],
+        [[6.87, 45.94], [6.88, 45.94]],
+      ],
+    });
+    expect(multi).toHaveLength(2);
+    // Une coordonnée invalide coupe la ligne au lieu de créer une arête.
+    const broken = routeLines({
+      type: 'LineString',
+      coordinates: [
+        [6.87, 45.92],
+        [6.874, 45.92],
+        ['x', 45.92],
+        [6.878, 45.92],
+        [6.88, 45.92],
+      ],
+    });
+    expect(broken).toHaveLength(2);
+  });
+
+  it('mesure la distance perpendiculaire et les extrémités', () => {
+    const lines = routeLines(route);
+    const north = distanceToRouteM([6.875, 45.92 + 80 / 111320], lines);
+    expect(north).not.toBeNull();
+    expect(north ?? 0).toBeCloseTo(80, 0);
+
+    const west = distanceToRouteM([6.86, 45.92], lines);
+    expect(west).not.toBeNull();
+    // 0,01° de longitude à 45,92° vaut environ 778 m.
+    expect(west ?? 0).toBeGreaterThan(700);
+
+    expect(distanceToRouteM([6.875, 45.92], lines)).toBeCloseTo(0, 5);
+  });
+
+  it('refuse les géométries sans ligne exploitable', () => {
+    expect(routeLines(null)).toEqual([]);
+    expect(routeLines({ type: 'Point', coordinates: [6.87, 45.92] })).toEqual([]);
+    expect(distanceToRouteM([6.87, 45.92], [])).toBeNull();
+    expect(
+      distanceToRouteM([6.87, 45.92], routeLines({ type: 'LineString', coordinates: [] })),
+    ).toBeNull();
+  });
+
+  it('accepte une géométrie 3D (GPX avec altitude) en ignorant l’altitude', () => {
+    const lines = routeLines({
+      type: 'LineString',
+      coordinates: [
+        [6.87, 45.92, 1200],
+        [6.88, 45.92, 1210],
+      ],
+    });
+    expect(lines).toHaveLength(1);
+    expect(lines[0][0]).toEqual([6.87, 45.92, 1200]);
+    expect(distanceToRouteM([6.875, 45.92 + 80 / 111320], lines) ?? 0).toBeCloseTo(80, 0);
+  });
+});
+
+
+describe('geo/track · flèche de retour hors-trace', () => {
+  const route = {
+    type: 'LineString',
+    coordinates: [
+      [6.87, 45.92],
+      [6.88, 45.92],
+    ],
+  };
+  const lines = routeLines(route);
+
+  it('renvoie le point le plus proche et un cap nord/sud', () => {
+    const north = nearestPointOnRouteM([6.875, 45.9209], lines);
+    expect(north).not.toBeNull();
+    expect(north?.nearest[0]).toBeCloseTo(6.875, 5);
+    expect(north?.nearest[1]).toBeCloseTo(45.92, 5);
+    expect(north?.distanceM ?? 0).toBeCloseTo(100, 0);
+    // Le point est au nord de la trace : il faut revenir vers le sud.
+    expect(north?.bearingDeg ?? 0).toBeCloseTo(180, 0);
+
+    const south = nearestPointOnRouteM([6.875, 45.9191], lines);
+    expect(south?.bearingDeg ?? 0).toBeCloseTo(0, 0);
+  });
+
+  it('oriente le retour vers l’est et l’ouest aux extrémités', () => {
+    const west = nearestPointOnRouteM([6.86, 45.92], lines);
+    expect(west?.nearest[0]).toBeCloseTo(6.87, 5);
+    expect(west?.bearingDeg ?? 0).toBeGreaterThan(80);
+    expect(west?.bearingDeg ?? 0).toBeLessThan(100);
+
+    const east = nearestPointOnRouteM([6.89, 45.92], lines);
+    expect(east?.nearest[0]).toBeCloseTo(6.88, 5);
+    expect(east?.bearingDeg ?? 0).toBeGreaterThan(260);
+    expect(east?.bearingDeg ?? 0).toBeLessThan(280);
+  });
+
+  it('calcule un cap orthodromique stable et refuse l’invalide', () => {
+    expect(bearingDegrees([2.35, 48.85], [2.35, 48.86])).toBeCloseTo(0, 1);
+    expect(bearingDegrees([2.35, 48.85], [2.35, 48.84])).toBeCloseTo(180, 1);
+    expect(bearingDegrees([2.35, 48.85], [2.36, 48.85])).toBeGreaterThan(80);
+    expect(bearingDegrees([2.35, 48.85], [2.36, 48.85])).toBeLessThan(100);
+    expect(Number.isNaN(bearingDegrees([200, 0], [0, 0]))).toBe(true);
+  });
+
+  it('retourne null sans ligne ou avec un point invalide', () => {
+    expect(nearestPointOnRouteM([6.87, 45.92], [])).toBeNull();
+    expect(nearestPointOnRouteM([200, 45.92], lines)).toBeNull();
   });
 });

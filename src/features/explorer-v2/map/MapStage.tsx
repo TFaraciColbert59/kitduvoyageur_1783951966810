@@ -55,6 +55,13 @@ export interface MapStageProps {
   onRegionClick?: (group: string, center: [number, number]) => void;
   onPinClick?: (pin: MapPin) => void;
   onMoveEnd?: (center: [number, number], zoom: number) => void;
+  /**
+   * Cap **réel** de la carte : direction monde affichée en haut (0 = nord,
+   * 90 = est). Émis pendant une rotation et à la fin d'un mouvement : la
+   * flèche hors-trace doit être compensée même quand l'utilisateur tourne la
+   * carte à la main.
+   */
+  onBearingChange?: (bearingDeg: number) => void;
   onReady?: () => void;
   me?: { lat: number; lng: number } | null;
   /** Hauteur du tiroir en pixels : aucun repère ne doit apparaître dessous. */
@@ -108,6 +115,7 @@ export default function MapStage({
   onRegionClick,
   onPinClick,
   onMoveEnd,
+  onBearingChange,
   onReady,
   me,
   sheetHeightPx = 176,
@@ -127,6 +135,10 @@ export default function MapStage({
   // En suivi (ou en vue d'ensemble), la caméra applique un padding : le centre
   // rendu par la carte n'est pas celui de l'état. On n'écrase donc pas l'état.
   const suppressMoveEnd = useRef(false);
+  // Le callback peut changer à chaque rendu du parent ; la carte est créée une
+  // seule fois, on garde donc toujours la dernière version dans une référence.
+  const onBearingChangeRef = useRef(onBearingChange);
+  onBearingChangeRef.current = onBearingChange;
 
   // ── création de la carte (une seule fois) ──────────────────────────────
   useEffect(() => {
@@ -384,7 +396,17 @@ export default function MapStage({
       map.on('click', 'xp-regions-fill', handleRegion as never);
     });
 
+    const reportBearing = () => {
+      const bearing = map.getBearing();
+      if (Number.isFinite(bearing)) onBearingChangeRef.current?.(bearing);
+    };
+    // `rotate` couvre le geste et les `easeTo` de la boussole ; `moveend`
+    // rattrape une rotation terminée sans dernier événement intermédiaire.
+    map.on('rotate', reportBearing);
+    reportBearing();
+
     map.on('moveend', () => {
+      reportBearing();
       if (suppressMoveEnd.current) return;
       const c = map.getCenter();
       const z = map.getZoom();
@@ -395,6 +417,7 @@ export default function MapStage({
     return () => {
       if (startupTimer) window.clearTimeout(startupTimer);
       if (orbitRef.current) window.clearInterval(orbitRef.current);
+      map.off('rotate', reportBearing);
       map.remove();
       mapRef.current = null;
       setReady(false);
@@ -599,7 +622,15 @@ export default function MapStage({
       window.setTimeout(() => {
         suppressMoveEnd.current = false;
       }, 2500);
-      const geometry = activityTrack?.features?.[0]?.geometry ?? null;
+      // Le tracé peut être découpé aux pauses : l'emprise doit couvrir tous les
+      // segments, pas seulement le premier.
+      const geometry = activityTrack
+        ? {
+            coordinates: activityTrack.features
+              .map((feature) => feature.geometry?.coordinates)
+              .filter(Boolean),
+          }
+        : null;
       const bounds = cameraIntent.bounds ?? boundsOfTrack(geometry);
       overviewOf(map, bounds, overviewPadding(container.clientWidth, sheetHeightPx), reducedMotion);
       return;

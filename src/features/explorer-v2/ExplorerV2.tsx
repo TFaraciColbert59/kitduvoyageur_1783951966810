@@ -12,14 +12,27 @@ import { ActivityPill } from './chrome/BottomBar';
 import { SosButton } from './chrome/SosButton';
 import { Countdown, useLongPress } from './activity/Countdown';
 import { useGpsTracker } from './activity/useGpsTracker';
+import {
+  createTrackTrace,
+  interruptTrack,
+  pushTrackPoint,
+  trackGeoJson,
+} from './activity/trackTrace';
+import type { ActivityMetrics, GpsFix } from './activity/tracker';
 import { endLiveActivity, startLiveActivity, updateLiveActivity } from './native/liveActivity';
 import { performSosCall, planSosCall, sosSimulated } from './activity/sosCall';
 import { enqueue, flushQueue, listQueue } from './offline/queue';
 import { registerOfflineWorker } from './offline/zone';
-import { offRouteLabel } from './activity/offRoute';
+import { bearingLabel, offRouteLabel, screenBearingDeg } from './activity/offRoute';
+import { nearestPointOnRouteM, routeLines } from './geo/track';
+import { fetchRouteGeometry } from './data/routeGeometry';
 import { XpIcon } from './ui/XpIcon';
 import { haptic } from './state/haptics';
-import { useExplorerStore, useTransientStart } from './state/store';
+import {
+  hydrateAutoPausePreference,
+  useExplorerStore,
+  useTransientStart,
+} from './state/store';
 import { isSceneName, sceneEnabled, SCENES } from './state/scenes';
 import type { GeoCollection } from './data/hooks';
 import {
@@ -49,7 +62,7 @@ import {
   type RegionGroup,
   type SheetContext,
 } from './sheet/context';
-import type { PoiKind } from './state/types';
+import type { PoiKind, Sport, SportSelection, TrailRouteSnapshot } from './state/types';
 import '@/styles/explorer-v2.css';
 
 const MapStage = dynamic(() => import('./map/MapStage'), {
@@ -204,6 +217,12 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
     useExplorerStore.setState({ online });
   }, [online]);
 
+  // Réglage local de préparation : hydraté après le montage pour ne pas
+  // opposer le rendu serveur (défaut activé) au stockage du navigateur.
+  useEffect(() => {
+    hydrateAutoPausePreference();
+  }, []);
+
   // Service worker de zone + file d'écritures hors ligne.
   useEffect(() => {
     void registerOfflineWorker();
@@ -331,8 +350,242 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
     state.selection ? state.center[0] : null,
   );
 
-  const pois = place?.pois ?? [];
-  const routes = place?.routes ?? [];
+  const pois = useMemo(() => place?.pois ?? [], [place]);
+  const routes = useMemo(() => place?.routes ?? [], [place]);
+
+  // Hors-trace : la séance porte sa propre copie de l'itinéraire, figée au
+  // départ. On ignore `state.selection` et la géométrie simplifiée
+  // d'affichage : seules les lignes réelles chargées via `get_route_geojson`
+  // alimentent la mesure. Les lignes sont extraites une fois, pas par fix.
+  const activityRoute = state.activity?.route ?? null;
+  const trailRouteId = state.trailRoute?.id;
+  const trailRouteStatus = state.trailRoute?.status;
+  const activityRouteId = activityRoute?.id;
+  const activityRouteStatus = activityRoute?.status;
+  const activityRouteIsDemo = activityRoute
+    ? routes.some(
+        (route) => String(route.id) === activityRoute.id && route.unavailable === true,
+      )
+    : false;
+  const routesRef = React.useRef(routes);
+  routesRef.current = routes;
+
+  /**
+   * Une route de démonstration n'a aucun tracé réel : démarrer une séance avec
+   * elle afficherait un hors-trace impossible et un parcours inventé. On la
+   * retire au départ et on bascule en suivi libre, en le disant. Les routes
+   * réelles dont la géométrie manque (404, réseau) gardent leur snapshot et
+   * leur bandeau « indisponible ».
+   */
+  const requestStartSafe = useCallback(
+    (sport: Sport, selection?: SportSelection) => {
+      const current = useExplorerStore.getState();
+      const route = current.trailRoute;
+      if (route && current.selection?.kind === 'trail') {
+        const display = routesRef.current.find(
+          (candidate) => String(candidate.id) === route.id,
+        );
+        if (display?.unavailable) {
+          useExplorerStore.setState({ selection: undefined, trailRoute: undefined });
+          current.showToast({
+            title: 'Suivi libre',
+            sub: 'Trace de démonstration ignorée',
+            tone: 'neutral',
+          });
+        }
+      }
+      requestStart(sport, selection);
+    },
+    [requestStart],
+  );
+
+  /**
+   * Une géométrie qui devient indisponible en cours de séance ne doit jamais
+   * laisser une alerte, une distance ou un cap calculés sur l'ancienne trace.
+   * Sans cette remise à zéro, une route de démonstration signalée après le
+   * chargement pourrait afficher « hors itinéraire » avec une flèche figée
+   * alors que plus aucune mesure n'est possible.
+   */
+  React.useEffect(() => {
+    if (activityRouteStatus !== 'unavailable') return;
+    useExplorerStore.setState((store) => {
+      const current = store.activity;
+      if (!current) return {};
+      const hadAlert =
+        current.offRoute ||
+        current.offRouteM !== undefined ||
+        (current.offRouteBearing !== undefined && current.offRouteBearing !== null);
+      if (!hadAlert && store.toast?.title !== 'Hors itinéraire') return {};
+      return {
+        ...(hadAlert
+          ? {
+              activity: {
+                ...current,
+                offRoute: false,
+                offRouteM: undefined,
+                offRouteBearing: undefined,
+              },
+            }
+          : {}),
+        // Le toast d'alerte ne doit pas survivre à la perte de la géométrie.
+        ...(store.toast?.title === 'Hors itinéraire' ? { toast: undefined } : {}),
+      };
+    });
+  }, [activityRouteStatus]);
+  // Signature stable de la liste d'affichage : elle ne change que si un
+  // identifiant, un nom ou le drapeau « démonstration » change. Cela évite de
+  // relancer une requête quand le tableau est recréé à l'identique.
+  const routeDisplayKey = useMemo(
+    () =>
+      routes
+        .map((route) => `${route.id}:${route.unavailable ? '1' : '0'}:${route.name ?? ''}`)
+        .join('|'),
+    [routes],
+  );
+
+  /**
+   * Publie la géométrie sur toutes les copies qui portent l'identifiant. Une
+   * copie de séance survit ainsi à `clearSelection()` ou au choix d'un autre
+   * itinéraire : le snapshot `loading` ne peut plus rester bloqué.
+   */
+  const publishRouteGeometry = useCallback(
+    (id: string, geojson: unknown | null, displayName: string | null, force = false) => {
+      const ready = geojson !== null && routeLines(geojson).length > 0;
+      const current = useExplorerStore.getState();
+      const name =
+        current.activity?.route?.id === id
+          ? current.activity.route.name
+          : current.trailRoute?.id === id
+            ? current.trailRoute.name
+            : null;
+      const snapshot: TrailRouteSnapshot = {
+        id,
+        name: name ?? displayName ?? null,
+        geojson: ready ? geojson : null,
+        status: ready ? 'ready' : 'unavailable',
+      };
+      current.setRouteGeometry(snapshot, { force });
+    },
+    [],
+  );
+
+  // Route armée (avant le départ) : le chargement est indépendant de la
+  // sélection d'écran. Si la même route est déjà figée dans une séance, c'est
+  // l'effet de la séance qui la charge, pour éviter une requête en double.
+  useEffect(() => {
+    if (!trailRouteId) return;
+    const display = routesRef.current.find((route) => String(route.id) === trailRouteId);
+    // Route de démonstration : son identifiant ne désigne aucun sentier réel.
+    // Le drapeau peut arriver après la géométrie (la liste de lieux se charge
+    // en parallèle) : on repasse alors le snapshot en « indisponible ».
+    if (display?.unavailable) {
+      if (trailRouteStatus !== 'unavailable') {
+        publishRouteGeometry(trailRouteId, null, display.name, true);
+      }
+      return;
+    }
+    if (trailRouteStatus !== 'loading') return;
+    if (activityRouteId === trailRouteId && activityRouteStatus === 'loading') return;
+    const controller = new AbortController();
+    let cancelled = false;
+    void fetchRouteGeometry(trailRouteId, { signal: controller.signal })
+      .then((geojson) => {
+        if (!cancelled) publishRouteGeometry(trailRouteId, geojson, display?.name ?? null);
+      })
+      .catch(() => {
+        if (!cancelled && !controller.signal.aborted) {
+          publishRouteGeometry(trailRouteId, null, display?.name ?? null);
+        }
+      });
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [
+    trailRouteId,
+    trailRouteStatus,
+    activityRouteId,
+    activityRouteStatus,
+    routeDisplayKey,
+    publishRouteGeometry,
+  ]);
+
+  // Copie figée de la séance : elle a son propre chargement. C'est ce qui
+  // empêche `clearSelection()` ou un autre `select()` de laisser la séance en
+  // `loading` pour toujours.
+  useEffect(() => {
+    if (!activityRouteId) return;
+    const display = routesRef.current.find((route) => String(route.id) === activityRouteId);
+    if (display?.unavailable) {
+      if (activityRouteStatus !== 'unavailable') {
+        publishRouteGeometry(activityRouteId, null, display.name, true);
+      }
+      return;
+    }
+    if (activityRouteStatus !== 'loading') return;
+    const controller = new AbortController();
+    let cancelled = false;
+    void fetchRouteGeometry(activityRouteId, { signal: controller.signal })
+      .then((geojson) => {
+        if (!cancelled) publishRouteGeometry(activityRouteId, geojson, display?.name ?? null);
+      })
+      .catch(() => {
+        if (!cancelled && !controller.signal.aborted) {
+          publishRouteGeometry(activityRouteId, null, display?.name ?? null);
+        }
+      });
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [activityRouteId, activityRouteStatus, routeDisplayKey, publishRouteGeometry]);
+
+  const activityRouteLines = useMemo(
+    () =>
+      activityRoute?.status === 'ready' ? routeLines(activityRoute.geojson) : [],
+    [activityRoute],
+  );
+  const distanceToRoute = useCallback(
+    (fix: GpsFix) => {
+      if (activityRouteLines.length === 0) return null;
+      const projection = nearestPointOnRouteM([fix.lng, fix.lat], activityRouteLines);
+      if (!projection) return null;
+      return {
+        distanceM: projection.distanceM,
+        bearingDeg: projection.bearingDeg,
+      };
+    },
+    [activityRouteLines],
+  );
+
+  /**
+   * La carte doit dessiner la même trace que celle mesurée. `explorer_routes`
+   * simplifie à ~89 m, alors que le hors-trace alerte à 40 m : on substitue la
+   * géométrie complète de l'itinéraire actif (ou on l'ajoute s'il n'est pas
+   * dans la fenêtre de lieux). Les autres itinéraires gardent leur version
+   * d'affichage, plus légère.
+   */
+  const mapRoutes = useMemo(() => {
+    const active =
+      activityRoute?.status === 'ready'
+        ? activityRoute
+        : state.trailRoute?.status === 'ready'
+          ? state.trailRoute
+          : null;
+    if (!active?.geojson) return routes;
+    const id = Number(active.id);
+    if (!Number.isSafeInteger(id)) return routes;
+    const existing = routes.find((route) => String(route.id) === active.id);
+    const full = {
+      id,
+      name: active.name ?? existing?.name ?? null,
+      network: existing?.network ?? null,
+      geojson: active.geojson,
+    };
+    return existing
+      ? routes.map((route) => (String(route.id) === active.id ? { ...route, ...full } : route))
+      : [...routes, full];
+  }, [routes, activityRoute, state.trailRoute]);
 
   const selectedPoi = useMemo(() => {
     if (!state.selection) return null;
@@ -383,39 +636,52 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
 
   // ── démarrage d'activité (compte à rebours 3·2·1) ─────────────────────
   // Suivi GPS de l'activité en cours (métriques, tracé, hors-trace, caméra).
-  const [trackPoints, setTrackPoints] = useState<Array<[number, number]>>([]);
+  const [trackTrace, setTrackTrace] = useState(createTrackTrace);
 
-  const onGpsFix = useCallback((fix: { lat: number; lng: number }) => {
-    setMe({ lat: fix.lat, lng: fix.lng });
-    setTrackPoints((prev) => [...prev, [fix.lng, fix.lat]]);
-    state.setCenter([fix.lng, fix.lat], state.zoom);
-  }, [state]);
+  const onGpsFix = useCallback(
+    (fix: { lat: number; lng: number }, metrics: ActivityMetrics) => {
+      // Défense en profondeur : le hook ne remonte déjà pas les fixes rejetés.
+      if (!metrics.accepted) return;
+      // Pause automatique : la capture continue pour détecter la reprise, mais
+      // le tracé et la carte restent figés. Le premier point après la reprise
+      // ouvre un nouveau segment, sans corde droite à travers la pause.
+      if (metrics.autoPaused) {
+        setTrackTrace(interruptTrack);
+        return;
+      }
+      setMe({ lat: fix.lat, lng: fix.lng });
+      setTrackTrace((prev) => {
+        // Trou GPS, rejet précédent ou pause manuelle : la nouvelle borne ne
+        // doit pas être reliée au dernier point par une corde droite.
+        const base = metrics.discontinuity ? interruptTrack(prev) : prev;
+        return pushTrackPoint(base, [fix.lng, fix.lat]);
+      });
+      state.setCenter([fix.lng, fix.lat], state.zoom);
+    },
+    [state],
+  );
 
-  useGpsTracker({ onFix: onGpsFix });
+  const { markLap } = useGpsTracker({ distanceToRouteM: distanceToRoute, onFix: onGpsFix });
+
+  // Pause manuelle : aucun fix n'arrive pendant la pause. On marque la coupure
+  // dès que l'état bascule pour que la reprise ouvre un segment distinct.
+  useEffect(() => {
+    if (state.activity?.paused) setTrackTrace(interruptTrack);
+  }, [state.activity?.paused]);
 
   // Réinitialise le tracé au début d'une nouvelle activité
   useEffect(() => {
     if (!state.activity && state.sheet !== 'summary') {
-      if (trackPoints.length > 0) setTrackPoints([]);
+      setTrackTrace((prev) =>
+        prev.segments.length > 0 || prev.current.length > 0 ? createTrackTrace() : prev,
+      );
     }
-  }, [state.activity, state.sheet, trackPoints.length]);
+  }, [state.activity, state.sheet]);
 
-  const activityTrack = useMemo<GeoCollection | null>(() => {
-    if (trackPoints.length < 2) return null;
-    return {
-      type: 'FeatureCollection',
-      features: [
-        {
-          type: 'Feature',
-          properties: {},
-          geometry: {
-            type: 'LineString',
-            coordinates: trackPoints,
-          },
-        },
-      ],
-    };
-  }, [trackPoints]);
+  const activityTrack = useMemo<GeoCollection | null>(
+    () => trackGeoJson(trackTrace),
+    [trackTrace],
+  );
 
   // Live Activity iOS (P7-20) : démarrage, mise à jour toutes les 5 s, fin.
   const liveActivityRef = React.useRef<{ started: boolean; lastPush: number }>({ started: false, lastPush: 0 });
@@ -470,12 +736,14 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
       trips: (tripsData ?? []) as TripItem[],
       selectedPoi,
       me,
-      // Brouillon local : aucune couche ne peut perdre la variante.
-      onStartSport: requestStart,
+      // Brouillon local : aucune couche ne peut perdre la variante. Une trace
+      // de démonstration est retirée ici avant d'armer le compte à rebours.
+      onStartSport: requestStartSafe,
       onConfirmReport,
+      onMarkLap: markLap,
       locale: 'fr-FR',
     }),
-    [state, countries, country, regionsGeo, regionGroups, place, pois, routes, weather, unitsForCountry, reportsData, carnetsData, tripsData, selectedPoi, me, requestStart, onConfirmReport],
+    [state, countries, country, regionsGeo, regionGroups, place, pois, routes, weather, unitsForCountry, reportsData, carnetsData, tripsData, selectedPoi, me, requestStartSafe, onConfirmReport, markLap],
   );
 
   const model = useMemo(() => buildSheetModel(ctx), [ctx]);
@@ -638,6 +906,50 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
   }, [state.summary, state.summarySaved]);
 
   const activity = state.activity;
+  const offRouteDirection = bearingLabel(activity?.offRouteBearing);
+
+  // Cap réel de la carte, tenu dans une référence et non dans le store : une
+  // rotation MapLibre émet un événement par image, et un rendu complet de
+  // l'Explorer à chaque image serait inutile. Seule la transformation CSS de
+  // la flèche est réécrite pendant le geste.
+  const mapBearingRef = React.useRef(0);
+  const offRouteBearingRef = React.useRef<number | null>(null);
+  const offRouteArrowRef = React.useRef<HTMLSpanElement | null>(null);
+  offRouteBearingRef.current =
+    typeof activity?.offRouteBearing === 'number' &&
+    Number.isFinite(activity.offRouteBearing)
+      ? activity.offRouteBearing
+      : null;
+
+  const applyArrowRotation = React.useCallback(() => {
+    const arrow = offRouteArrowRef.current;
+    const screenBearing = screenBearingDeg(
+      offRouteBearingRef.current,
+      mapBearingRef.current,
+    );
+    if (!arrow || screenBearing === null) return;
+    arrow.style.transform = `rotate(${screenBearing}deg)`;
+    arrow.dataset.screenBearing = String(Math.round(screenBearing));
+  }, []);
+
+  React.useEffect(() => {
+    if (!activity?.offRoute) return;
+    applyArrowRotation();
+  }, [activity?.offRoute, activity?.offRouteBearing, applyArrowRotation]);
+
+  const onMapBearingChange = React.useCallback(
+    (bearingDeg: number) => {
+      if (!Number.isFinite(bearingDeg)) return;
+      mapBearingRef.current = ((bearingDeg % 360) + 360) % 360;
+      applyArrowRotation();
+    },
+    [applyArrowRotation],
+  );
+
+  const offRouteScreenBearing = screenBearingDeg(
+    activity?.offRouteBearing,
+    mapBearingRef.current,
+  );
 
   // Suivi : à chaque nouvelle position pendant l'activité, la caméra recadre
   // (04_CARTE §3, P2-11). Le geste utilisateur interrompt le suivi (MapLibre).
@@ -703,7 +1015,7 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
         theme={theme}
         countries={countriesGeo ?? null}
         regions={regionsGeo ?? null}
-        routes={routes}
+        routes={mapRoutes}
         pins={state.sheet === 'live' || state.sheet === 'welcome' ? [] : pins}
         selectedId={state.selection?.id ?? null}
         reducedMotion={reducedMotion}
@@ -713,6 +1025,7 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
         onRegionClick={onRegionClick}
         onPinClick={onPinClick}
         onMoveEnd={(center, zoom) => state.setCenter(center, zoom)}
+        onBearingChange={onMapBearingChange}
         sheetHeightPx={sheetHeight}
         cameraIntent={state.camera}
         longPressHandlers={longPress}
@@ -819,17 +1132,82 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
         />
       ) : null}
 
-      {activity?.offRoute ? (
+      {activity?.offRoute && activityRouteStatus !== 'unavailable' ? (
         <button
           type="button"
           className="xp-offroute"
           onClick={() => state.setSheet('live', 'peek')}
-          aria-label={offRouteLabel(activity.distanceM)}
+          aria-label={
+            offRouteDirection
+              ? `${offRouteLabel(activity.offRouteM)} · retour vers ${offRouteDirection}`
+              : offRouteLabel(activity.offRouteM)
+          }
         >
           <XpIcon name="alert" size={15} />
-          <span>{offRouteLabel(activity.distanceM)}</span>
-          <XpIcon name="nav" size={15} />
+          <span>{offRouteLabel(activity.offRouteM)}</span>
+          {typeof activity.offRouteBearing === 'number' &&
+          Number.isFinite(activity.offRouteBearing) &&
+          offRouteScreenBearing !== null ? (
+            <span
+              ref={offRouteArrowRef}
+              className="xp-offroute__arrow"
+              style={{ transform: `rotate(${offRouteScreenBearing}deg)` }}
+              aria-hidden="true"
+              data-bearing={Math.round(activity.offRouteBearing)}
+              data-screen-bearing={Math.round(offRouteScreenBearing)}
+            >
+              <XpIcon name="nav" size={15} />
+            </span>
+          ) : null}
         </button>
+      ) : null}
+
+      {/* Trace demandée mais encore en cours de chargement : l'utilisateur
+          doit savoir que le hors-trace n'est pas encore armé, sans confondre
+          cette attente avec une alerte ou une panne définitive. */}
+      {activityRoute?.status === 'loading' &&
+      !activityRouteIsDemo &&
+      !activity?.offRoute ? (
+        <div
+          className="xp-offroute xp-offroute--pending"
+          role="status"
+          aria-label="Hors-trace en préparation"
+        >
+          <XpIcon name="alert" size={15} />
+          <span>Hors-trace en préparation</span>
+        </div>
+      ) : null}
+
+      {/* Une trace demandée mais inexploitable ne doit jamais laisser croire
+          que le hors-trace surveille : l'état est dit, pas silencieux. Un
+          rechargement est proposé sauf pour une route de démonstration, dont
+          l'identifiant ne désigne aucun sentier réel. */}
+      {activityRoute?.status === 'unavailable' && !activity?.offRoute ? (
+        <div
+          className="xp-offroute xp-offroute--unavailable"
+          role="status"
+          aria-label={
+            activityRouteIsDemo
+              ? 'Hors-trace indisponible : itinéraire de démonstration'
+              : 'Hors-trace indisponible : trace non chargée'
+          }
+        >
+          <XpIcon name="alert" size={15} />
+          <span>
+            {activityRouteIsDemo
+              ? 'Trace de démonstration · hors-trace indisponible'
+              : 'Hors-trace indisponible'}
+          </span>
+          {activityRouteIsDemo ? null : (
+            <button
+              type="button"
+              className="xp-offroute__retry"
+              onClick={() => state.retryRouteGeometry(activityRoute.id)}
+            >
+              Réessayer
+            </button>
+          )}
+        </div>
       ) : null}
 
       {sheetOpen ? (
@@ -878,15 +1256,41 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
       ) : null}
 
       {activity && state.sheet === 'live' ? (
-        <ActivityPill
-          sportLabel={activity.selection?.variantLabel ?? SPORT_META[activity.sport].label}
-          elapsed={elapsed}
-          distanceLabel={formatDistance(activity.distanceM / 1000)}
-          paused={activity.paused}
-          onPause={() => state.updateActivity({ paused: !activity.paused })}
-          onFlag={() => state.showToast({ title: 'Repère posé', sub: 'Ajouté à ta sortie' })}
-          onStop={() => state.stopActivity()}
-        />
+        <>
+          <ActivityPill
+            sportLabel={activity.selection?.variantLabel ?? SPORT_META[activity.sport].label}
+            elapsed={elapsed}
+            distanceLabel={formatDistance(activity.distanceM / 1000)}
+            paused={activity.paused}
+            onPause={() =>
+              state.updateActivity({ paused: !activity.paused, autoPaused: false })
+            }
+            onFlag={() => state.showToast({ title: 'Repère posé', sub: 'Ajouté à ta sortie' })}
+            onStop={() => state.stopActivity()}
+          />
+          {activity.autoPaused && !activity.paused ? (
+            <span
+              role="status"
+              style={{
+                position: 'absolute',
+                left: 20,
+                bottom: 'calc(var(--safe-bottom) + 66px + var(--cookie-banner-h, 0px))',
+                zIndex: 9,
+                padding: '4px 9px',
+                borderRadius: 999,
+                background: 'var(--xp-inkbtn)',
+                boxShadow: 'var(--xp-inkbtn-shadow)',
+                color: '#fff',
+                fontSize: 10.5,
+                fontWeight: 700,
+                letterSpacing: '0.04em',
+                textTransform: 'uppercase',
+              }}
+            >
+              Pause auto
+            </span>
+          ) : null}
+        </>
       ) : null}
 
       {/* Attributions (P10-09) : obligatoires pour OSM, OpenFreeMap, AWS Terrain,

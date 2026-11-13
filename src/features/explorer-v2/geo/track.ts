@@ -25,9 +25,13 @@ export const DEFAULT_STEP_M = 60;
  */
 export const MAX_RESAMPLED_POINTS = 20_000;
 
-/** Vrai si la valeur est une paire [lng, lat] finie et dans les bornes légales. */
+/**
+ * Vrai si la valeur commence par une paire [lng, lat] finie et dans les bornes
+ * légales. Les géométries GeoJSON 3D (`[lng, lat, ele]`, GPX avec altitude)
+ * sont acceptées : seule l'altitude est ignorée par les calculs planimétriques.
+ */
 export function isValidLngLat(value: unknown): value is LngLat {
-  if (!Array.isArray(value) || value.length !== 2) return false;
+  if (!Array.isArray(value) || value.length < 2) return false;
   const [lng, lat] = value;
   return (
     typeof lng === 'number' &&
@@ -69,6 +73,171 @@ export function trackDistanceM(positions: readonly LngLat[]): number {
     previous = position;
   }
   return total;
+}
+
+export type RouteLine = readonly LngLat[];
+
+/**
+ * Extrait les lignes exploitables d'une géométrie GeoJSON `LineString` ou
+ * `MultiLineString` (ou d'une `Feature` qui la porte).
+ *
+ * Une coordonnée invalide coupe la ligne au lieu de relier deux points qui ne
+ * sont pas voisins : la distance à la trace ne doit jamais traverser un trou.
+ * Les lignes de moins de deux points sont ignorées.
+ */
+export function routeLines(geojson: unknown): RouteLine[] {
+  if (!geojson || typeof geojson !== 'object') return [];
+  const raw = geojson as { type?: unknown; coordinates?: unknown; geometry?: unknown };
+  const geometry =
+    raw.type === 'Feature' && raw.geometry && typeof raw.geometry === 'object'
+      ? (raw.geometry as { type?: unknown; coordinates?: unknown })
+      : raw;
+  if (geometry.type !== 'LineString' && geometry.type !== 'MultiLineString') return [];
+  if (!Array.isArray(geometry.coordinates)) return [];
+
+  const rawLines: unknown[] =
+    geometry.type === 'MultiLineString'
+      ? (geometry.coordinates as unknown[])
+      : [geometry.coordinates as unknown[]];
+
+  const lines: RouteLine[] = [];
+  for (const rawLine of rawLines) {
+    if (!Array.isArray(rawLine)) continue;
+    let current: LngLat[] = [];
+    const flush = () => {
+      if (current.length >= 2) lines.push(current);
+      current = [];
+    };
+    for (const coordinate of rawLine) {
+      // `coordinate` peut porter une altitude : `LngLat` ne lit que [0] et [1].
+      if (isValidLngLat(coordinate)) current.push(coordinate);
+      else flush();
+    }
+    flush();
+  }
+  return lines;
+}
+
+/** Delta de longitude par le plus court chemin, en degrés. */
+function shortestLngDelta(from: number, to: number): number {
+  let delta = to - from;
+  while (delta > 180) delta -= 360;
+  while (delta < -180) delta += 360;
+  return delta;
+}
+
+/**
+ * Point de la trace le plus proche d'une position, avec le cap de retour.
+ *
+ * `bearingDeg` est le cap initial (0° = nord, 90° = est) du point de mesure
+ * vers ce point de projection. Il sert à orienter la flèche de retour du
+ * bandeau hors-trace : une icône fixe suggérerait une direction fausse.
+ */
+export interface RouteProjection {
+  /** Distance minimale à la trace, en mètres. */
+  distanceM: number;
+  /** Point de la trace le plus proche, ordre GeoJSON [lng, lat]. */
+  nearest: [number, number];
+  /** Cap de retour vers la trace, en degrés (0–360). */
+  bearingDeg: number;
+}
+
+/**
+ * Cap initial de `from` vers `to`, en degrés (0 = nord, 90 = est).
+ *
+ * Formule du cap orthodromique : exacte à l'échelle d'un retour de quelques
+ * dizaines de mètres, et stable près des pôles. `NaN` si une coordonnée est
+ * invalide ; `0` quand les deux points sont confondus (aucune direction).
+ */
+export function bearingDegrees(from: LngLat, to: LngLat): number {
+  if (!isValidLngLat(from) || !isValidLngLat(to)) return Number.NaN;
+  const lat1 = (from[1] * Math.PI) / 180;
+  const lat2 = (to[1] * Math.PI) / 180;
+  const dLng = ((to[0] - from[0]) * Math.PI) / 180;
+  const y = Math.sin(dLng) * Math.cos(lat2);
+  const x =
+    Math.cos(lat1) * Math.sin(lat2) -
+    Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
+  if (y === 0 && x === 0) return 0;
+  return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
+}
+
+/**
+ * Projette la position sur la ligne la plus proche et renvoie le point
+ * d'atterrissage. Projection locale équirectangulaire autour du point :
+ * l'erreur reste négligeable à l'échelle d'une alerte hors-trace (quelques
+ * dizaines de mètres) et le calcul reste linéaire en nombre de sommets.
+ */
+function projectOnRoute(
+  point: LngLat,
+  lines: readonly RouteLine[],
+): Omit<RouteProjection, 'bearingDeg'> | null {
+  if (!isValidLngLat(point) || lines.length === 0) return null;
+
+  const lat0 = (point[1] * Math.PI) / 180;
+  const metresPerDegLat = (EARTH_RADIUS_M * Math.PI) / 180;
+  const metresPerDegLng = metresPerDegLat * Math.cos(lat0);
+  let best = Number.POSITIVE_INFINITY;
+  let bestA: LngLat | null = null;
+  let bestB: LngLat | null = null;
+  let bestT = 0;
+
+  outer: for (const line of lines) {
+    for (let index = 1; index < line.length; index += 1) {
+      const a = line[index - 1];
+      const b = line[index];
+      if (!isValidLngLat(a) || !isValidLngLat(b)) continue;
+
+      const ax = shortestLngDelta(point[0], a[0]) * metresPerDegLng;
+      const ay = (a[1] - point[1]) * metresPerDegLat;
+      const bx = shortestLngDelta(point[0], b[0]) * metresPerDegLng;
+      const by = (b[1] - point[1]) * metresPerDegLat;
+      const dx = bx - ax;
+      const dy = by - ay;
+      const lengthSq = dx * dx + dy * dy;
+      const t = lengthSq > 0 ? Math.max(0, Math.min(1, -(ax * dx + ay * dy) / lengthSq)) : 0;
+      const distance = Math.hypot(ax + t * dx, ay + t * dy);
+      if (distance < best) {
+        best = distance;
+        bestA = a;
+        bestB = b;
+        bestT = t;
+      }
+      if (best === 0) break outer;
+    }
+  }
+
+  if (!bestA || !bestB || !Number.isFinite(best)) return null;
+  const nearest: [number, number] = [
+    interpolateLng(bestA[0], bestB[0], bestT),
+    bestA[1] + (bestB[1] - bestA[1]) * bestT,
+  ];
+  return { distanceM: best, nearest };
+}
+
+/**
+ * Distance minimale (m) d'une position à une ou plusieurs lignes de trace.
+ *
+ * Renvoie `null` si le point est invalide ou si aucune ligne n'est exploitable.
+ */
+export function distanceToRouteM(point: LngLat, lines: readonly RouteLine[]): number | null {
+  return projectOnRoute(point, lines)?.distanceM ?? null;
+}
+
+/**
+ * Projection complète (distance, point le plus proche, cap de retour) pour la
+ * flèche hors-trace. Même calcul que `distanceToRouteM`, sans double scan.
+ */
+export function nearestPointOnRouteM(
+  point: LngLat,
+  lines: readonly RouteLine[],
+): RouteProjection | null {
+  const projection = projectOnRoute(point, lines);
+  if (!projection) return null;
+  return {
+    ...projection,
+    bearingDeg: bearingDegrees(point, projection.nearest),
+  };
 }
 
 /**
