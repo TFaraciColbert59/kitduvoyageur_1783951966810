@@ -40,6 +40,10 @@ interface ExplorerActions {
   select: (selection: Selection, sheet: SheetKind, detent?: Detent) => void;
   clearSelection: () => void;
   setSheet: (sheet: SheetKind, detent?: Detent) => void;
+  /** Ouvre le menu commun des couches en mémorisant le tiroir parent (K3.12). */
+  openLayers: () => void;
+  /** Revient au tiroir parent, avec sa hauteur et son onglet (K3.12). */
+  closeLayers: () => void;
   setDetent: (detent: Detent) => void;
   setTab: (tab: number) => void;
   setMini: (mini: number) => void;
@@ -121,9 +125,12 @@ const initialState: ExplorerState = {
     routes: true,
     water: true,
     refuges: true,
+    summits: true,
+    access: true,
     dangers: true,
     snow: true,
     slope: false,
+    distanceMarkers: true,
   },
 };
 
@@ -188,7 +195,7 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
   hydrateFromScene: (sceneName) => {
     const preset = SCENES[sceneName];
     if (!preset) return;
-    set({ ...(preset as Partial<ExplorerStore>), scene: sceneName });
+    set({ ...(preset as Partial<ExplorerStore>), scene: sceneName, sheetParent: undefined });
     emit('scene', { scene: sceneName });
   },
 
@@ -215,6 +222,7 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
       center,
       zoom: LEVEL_ZOOM[1],
       sheet: 'level',
+      sheetParent: undefined,
       detent: 'peek',
       tab: 0,
       camera: { type: 'level', level: 1, center },
@@ -231,6 +239,7 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
       center,
       zoom: LEVEL_ZOOM[2],
       sheet: 'level',
+      sheetParent: undefined,
       detent: 'low',
       tab: 0,
       camera: { type: 'level', level: 2, center },
@@ -246,6 +255,7 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
       center,
       zoom: LEVEL_ZOOM[3],
       sheet: 'level',
+      sheetParent: undefined,
       detent: 'peek',
       tab: 0,
       camera: { type: 'level', level: 3, center },
@@ -262,6 +272,7 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
       placeId: next < 3 ? undefined : get().placeId,
       selection: undefined,
       sheet: 'level',
+      sheetParent: undefined,
       detent: next === 0 ? 'peek' : 'low',
       tab: 0,
       camera: { type: 'level', level: next, center: get().center },
@@ -280,6 +291,7 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
           ? { id: selection.id, name: null, geojson: null, status: 'loading' }
           : undefined,
       sheet,
+      sheetParent: undefined,
       detent,
       tab: 0,
       reveal: true,
@@ -296,12 +308,57 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
       selection: undefined,
       trailRoute: undefined,
       sheet: 'level',
+      sheetParent: undefined,
       detent: 'peek',
     }),
 
   setSheet: (sheet, detent) => {
-    set({ sheet, detent: detent ?? get().detent });
+    set({
+      sheet,
+      detent: detent ?? get().detent,
+      // Toute navigation explicite invalide le parent du sous-tiroir : seul
+      // `openLayers()` en pose un, et `closeLayers()` le consomme.
+      sheetParent: undefined,
+    });
     emit('sheet', { sheet, detent: detent ?? null });
+  },
+
+  openLayers: () => {
+    const current = get();
+    // Un second appui sur « Calques » ne doit pas remplacer le parent mémorisé
+    // par le tiroir Calques lui-même ; il le ramène seulement à mi-hauteur.
+    if (current.sheet === 'layers') {
+      if (current.detent !== 'mid' && current.detent !== 'full') set({ detent: 'mid' });
+      return;
+    }
+    set({
+      sheetParent: {
+        sheet: current.sheet,
+        detent: current.detent,
+        tab: current.tab,
+      },
+      sheet: 'layers',
+      detent: 'mid',
+      tab: 0,
+    });
+    emit('sheet', { sheet: 'layers', detent: 'mid', parent: current.sheet });
+  },
+
+  closeLayers: () => {
+    const current = get();
+    const parent = current.sheetParent;
+    if (parent) {
+      set({
+        sheet: parent.sheet,
+        detent: parent.detent,
+        tab: parent.tab,
+        sheetParent: undefined,
+      });
+      emit('sheet', { sheet: parent.sheet, detent: parent.detent, parent: null });
+      return;
+    }
+    set({ sheet: 'level', detent: 'peek', tab: 0, sheetParent: undefined });
+    emit('sheet', { sheet: 'level', detent: 'peek', parent: null });
   },
 
   setDetent: (detent) => {
@@ -341,6 +398,7 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
       selection: undefined,
       trailRoute: route,
       sheet: 'live',
+      sheetParent: undefined,
       detent: 'peek',
       camera: { type: 'follow' },
     });
@@ -414,6 +472,7 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
       summarySaved:
         (current?.sessionId || current?.clientSessionId) ? 'pending' : 'local',
       sheet: 'summary',
+      sheetParent: undefined,
       detent: 'full',
       camera: { type: 'overview' },
     });
@@ -439,7 +498,9 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
     set((state) => ({
       layerVisibility: {
         ...state.layerVisibility,
-        [layerId]: !state.layerVisibility?.[layerId],
+        // Une clé absente est visible par défaut (sauf `slope`, déclaré false) :
+        // le premier appui la masque, au lieu de l'activer une seconde fois.
+        [layerId]: state.layerVisibility?.[layerId] === false,
       },
     })),
 

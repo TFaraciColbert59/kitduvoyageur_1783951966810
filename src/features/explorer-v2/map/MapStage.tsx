@@ -8,6 +8,7 @@ import type { CameraIntent, Level, MapBaseStyle, PoiKind } from '../state/types'
 import { clusterPins, selectVisiblePins, type PinCluster } from './hierarchy';
 import { slopeGradientExpression, type SlopeLayer } from './slope';
 import type { NationalTopoSource } from './nationalTopo';
+import type { DistanceMarker } from './distanceMarkers';
 import {
   boundsOfTrack,
   cinematicStartupZoom,
@@ -78,11 +79,21 @@ export interface MapStageProps {
   nationalTopo?: NationalTopoSource | null;
   /** Pente réelle de l'itinéraire sélectionné (DEM, fiche K3.04). */
   slopeLayer?: SlopeLayer | null;
+  /** Marqueurs de distance dérivés de la géométrie réelle (fiche K3.12). */
+  distanceMarkers?: DistanceMarker[] | null;
   /** Calques de données : sentiers, eau, refuges, etc. */
   layerVisibility?: Record<string, boolean>;
 }
 
 const TERRAIN_SOURCE = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
+
+/**
+ * Écart minimal entre deux étiquettes de distance à l'écran. Sans cette
+ * décimation, un kilomètre à faible zoom ferait moins de 10 px et les libellés
+ * se superposeraient ; les marqueurs restent dans l'ordre de la trace.
+ */
+const DISTANCE_LABEL_GAP_X = 38;
+const DISTANCE_LABEL_GAP_Y = 20;
 
 const EMPTY: GeoCollection = { type: 'FeatureCollection', features: [] };
 
@@ -130,6 +141,7 @@ export default function MapStage({
   mapBaseStyle = 'relief',
   nationalTopo = null,
   slopeLayer = null,
+  distanceMarkers = null,
   layerVisibility,
 }: MapStageProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -138,6 +150,9 @@ export default function MapStage({
   const nationalSource = nationalTopo?.status === 'verified' ? nationalTopo : null;
   const mapRef = useRef<MapLibreMap | null>(null);
   const [overlay, setOverlay] = useState<Array<{ pin: MapPin; x: number; y: number }>>([]);
+  const [distanceScreen, setDistanceScreen] = useState<
+    Array<{ marker: DistanceMarker; x: number; y: number }>
+  >([]);
   const [clusters, setClusters] = useState<PinCluster[]>([]);
   const [meScreen, setMeScreen] = useState<{ x: number; y: number } | null>(null);
   const [ready, setReady] = useState(false);
@@ -155,6 +170,7 @@ export default function MapStage({
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
     setReady(false);
+    setDistanceScreen([]);
     setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
 
     let map: MapLibreMap;
@@ -809,6 +825,11 @@ export default function MapStage({
       if (!container) return;
       const cWidth = container.clientWidth || 390;
       const cHeight = container.clientHeight || 844;
+      const sheetTop = cHeight - sheetHeightPx;
+      // Bande haute occupée par la capsule et les boutons ronds : aucun repère
+      // ni pastille ne doit s'y trouver (04_CARTE §1).
+      const chrome = document.querySelector('.xp-chrome') as HTMLElement | null;
+      const chromeBottom = chrome?.getBoundingClientRect().bottom ?? 96;
 
       for (const pin of pins) {
         if (!pin || !Number.isFinite(pin.lon) || !Number.isFinite(pin.lat)) continue;
@@ -822,11 +843,6 @@ export default function MapStage({
           continue;
         }
       }
-      const sheetTop = cHeight - sheetHeightPx;
-      // Bande haute occupée par la capsule et les boutons ronds : aucun repère
-      // ni pastille ne doit s'y trouver (04_CARTE §1).
-      const chrome = document.querySelector('.xp-chrome') as HTMLElement | null;
-      const chromeBottom = chrome?.getBoundingClientRect().bottom ?? 96;
       // Agrégation (04_CARTE §1) : au-delà de 6 repères dans 100×100 px, la
       // cellule devient une pastille chiffrée qui zoome au toucher.
       const clustered = clusterPins(
@@ -875,6 +891,43 @@ export default function MapStage({
           );
         return same ? current : kept;
       });
+      // Marqueurs de distance (K3.12) : de simples étiquettes, jamais des
+      // contrôles. Aucune ne doit apparaître sous le tiroir ni sous le chrome.
+      if (distanceMarkers && distanceMarkers.length > 0) {
+        const markerScreen: Array<{ marker: DistanceMarker; x: number; y: number }> = [];
+        for (const marker of distanceMarkers) {
+          if (!marker || !Number.isFinite(marker.lng) || !Number.isFinite(marker.lat)) continue;
+          try {
+            const point = map.project([marker.lng, marker.lat]);
+            if (!point || !Number.isFinite(point.x) || !Number.isFinite(point.y)) continue;
+            if (point.x < -40 || point.x > cWidth + 40) continue;
+            if (point.y < chromeBottom + 12 || point.y > sheetTop - 8) continue;
+            const tooClose = markerScreen.some(
+              (placed) =>
+                Math.abs(placed.x - point.x) < DISTANCE_LABEL_GAP_X &&
+                Math.abs(placed.y - point.y) < DISTANCE_LABEL_GAP_Y,
+            );
+            if (tooClose) continue;
+            markerScreen.push({ marker, x: point.x, y: point.y });
+          } catch {
+            continue;
+          }
+        }
+        setDistanceScreen((current) => {
+          const same =
+            current.length === markerScreen.length &&
+            current.every(
+              (entry, index) =>
+                entry.marker.id === markerScreen[index]?.marker.id &&
+                entry.marker.label === markerScreen[index]?.marker.label &&
+                Math.abs(entry.x - (markerScreen[index]?.x ?? 0)) < 0.5 &&
+                Math.abs(entry.y - (markerScreen[index]?.y ?? 0)) < 0.5,
+            );
+          return same ? current : markerScreen;
+        });
+      } else {
+        setDistanceScreen((current) => (current.length === 0 ? current : []));
+      }
       if (me && Number.isFinite(me.lng) && Number.isFinite(me.lat)) {
         try {
           const point = map.project([me.lng, me.lat]);
@@ -904,7 +957,7 @@ export default function MapStage({
       map.off('zoom', schedule);
       map.off('render', schedule);
     };
-  }, [level, me, pins, ready, sheetHeightPx]);
+  }, [distanceMarkers, level, me, pins, ready, sheetHeightPx]);
 
   return (
     <div
@@ -922,6 +975,17 @@ export default function MapStage({
         </div>
       ) : null}
       <div className="xp-map-overlay" aria-hidden={false}>
+        {distanceScreen.map(({ marker, x, y }) => (
+          <span
+            key={marker.id}
+            className="xp-km-marker"
+            data-distance-m={Math.round(marker.distanceM)}
+            style={{ left: x, top: y }}
+            aria-hidden="true"
+          >
+            <span>{marker.label}</span>
+          </span>
+        ))}
         {meScreen ? (
           <>
             <span className="xp-me-halo" style={{ left: meScreen.x, top: meScreen.y }} aria-hidden="true" />

@@ -1058,6 +1058,34 @@ body[data-explorer-sheet-open='true'] nav[aria-label="Navigation principale"]:no
 .xp-map-overlay > * {
   pointer-events: auto;
 }
+/* Marqueurs de distance (K3.12) : étiquettes informatives, non interactives,
+   placées sur la géométrie réelle et masquées sous le tiroir par projection. */
+.xp-km-marker {
+  position: absolute;
+  z-index: 1;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  animation: xpIn 0.3s ease both;
+}
+.xp-km-marker > span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 19px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--xp-block);
+  -webkit-backdrop-filter: var(--xp-blur);
+  backdrop-filter: var(--xp-blur);
+  box-shadow: var(--xp-block-shadow);
+  color: var(--xp-ink);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
 .xp-pin {
   position: absolute;
   transform: translate(-50%, -50%);

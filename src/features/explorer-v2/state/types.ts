@@ -227,6 +227,16 @@ export interface ExplorerState {
   detent: Detent;
   tab: number;
   mini: number;
+  /**
+   * Tiroir parent d'un sous-tiroir (K3.12). Il n'est posé que par
+   * `openLayers()` : le retour du menu commun restaure le tiroir, sa hauteur
+   * et son onglet, sans perdre la sélection courante.
+   */
+  sheetParent?: {
+    sheet: SheetKind;
+    detent: Detent;
+    tab: number;
+  };
   selection?: Selection;
   /**
    * Itinéraire armé pour le prochain départ. Sa géométrie réelle est chargée

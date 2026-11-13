@@ -677,3 +677,26 @@ Les points **non** cochés sont listés dans `ETAT_DES_POINTS.md` avec leur bloc
 - Détail : `docs/explorer-v2/C01-K3.04-K3.05.md`.
 - Statut : partiel et honnête (dépendances externes documentées).
 
+### [C01 · K3.12] Marqueurs de distance et menu commun des éléments visibles · 2026-11-13
+- Fiche : `fiches/Komoot/K3.12.md` (chantier C01, dépendance P01), lue dans le
+  bundle de mission. Base : `ead56c2`.
+- Livré :
+  - `map/distanceMarkers.ts` : marqueurs dérivés de la géométrie complète,
+    interpolation haversine, 1 km / 1 mi selon l’unité du pays, plafond 400,
+    aucun marqueur dans un trou de `MultiLineString` ;
+  - `MapStage` : overlay DOM des marqueurs, masqués sous le tiroir et le chrome,
+    non interactifs ;
+  - menu commun **Éléments visibles** dans le tiroir Calques : distance,
+    itinéraires, eau, refuges/bivouacs, sommets/belvédères, accès, dangers ;
+    neige explicitement indisponible ;
+  - entrée **Éléments visibles** dans l’onglet Trace ; `openLayers()` /
+    `closeLayers()` restaurent le tiroir parent, sa hauteur et son onglet ;
+  - les interrupteurs de POI filtrent réellement les épingles de la carte.
+- Données : aucune nouvelle source, aucun stockage, aucune migration ; la
+  distance vient de `get_route_geojson`, les POI de `explorer_pois`.
+- Limites documentées : pas de sous-kilomètre, `MultiLineString` discontinu
+  non compté au raccord, plafond d’affichage, écart possible avec
+  `distance_km`, neige indisponible (blocage 14), tests reportés.
+- Aucun test, build, lint ou `tsc` exécuté : reportés à la fin (mission).
+- Détail et conflits de fusion : `docs/explorer-v2/C01-K3.12.md`.
+- Statut : partiel et honnête (recette tactile et tests à faire).

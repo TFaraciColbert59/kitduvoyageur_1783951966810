@@ -29,6 +29,10 @@ import { nearestPointOnRouteM, routeLines } from './geo/track';
 import { fetchRouteGeometry } from './data/routeGeometry';
 import { useRouteSlope } from './data/useRouteSlope';
 import { verifiedNationalTopoFor } from './map/nationalTopo';
+import {
+  buildDistanceMarkers,
+  distanceMarkerIntervalLabel,
+} from './map/distanceMarkers';
 import { shouldKeepFinishInQueue } from './activity/finishOutcome';
 import {
   activityFromRecord,
@@ -766,6 +770,35 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
     [country?.iso_a2, state.geo],
   );
 
+  /**
+   * Marqueurs de distance (K3.12) : dérivés de la géométrie **complète** de
+   * l'itinéraire actif, avec l'unité réellement affichée pour le pays. Le
+   * calcul reste fait même quand la couche est masquée : le tiroir peut
+   * annoncer un nombre réel sans relancer la construction.
+   */
+  const allDistanceMarkers = useMemo(
+    () =>
+      slopeRoute?.status === 'ready' && slopeRoute.geojson
+        ? buildDistanceMarkers(slopeRoute.geojson, unitsForCountry)
+        : [],
+    [slopeRoute, unitsForCountry],
+  );
+  const distanceMarkers = useMemo(
+    () =>
+      state.layerVisibility?.distanceMarkers === false ||
+      state.layerVisibility?.routes === false ||
+      state.sheet === 'live' ||
+      state.sheet === 'welcome'
+        ? []
+        : allDistanceMarkers,
+    [
+      allDistanceMarkers,
+      state.layerVisibility?.distanceMarkers,
+      state.layerVisibility?.routes,
+      state.sheet,
+    ],
+  );
+
   const selectedPoi = useMemo(() => {
     if (!state.selection) return null;
     const byId = pois.find((poi) => poi.id === state.selection?.id);
@@ -1242,6 +1275,12 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
           routeName: slopeRoute?.name ?? null,
           hasRoute: slopeRoute?.status === 'ready' && Boolean(slopeRoute?.geojson),
         },
+        distance: {
+          hasRoute: slopeRoute?.status === 'ready' && Boolean(slopeRoute?.geojson),
+          status: slopeRoute?.status ?? null,
+          count: allDistanceMarkers.length,
+          intervalLabel: distanceMarkerIntervalLabel(unitsForCountry),
+        },
       },
       // Brouillon local : aucune couche ne peut perdre la variante. Une trace
       // de démonstration est retirée ici avant d'armer le compte à rebours.
@@ -1250,7 +1289,7 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
       onMarkLap: markLap,
       locale: 'fr-FR',
     }),
-    [state, countries, country, regionsGeo, regionGroups, place, pois, routes, weather, unitsForCountry, reportsData, carnetsData, tripsData, selectedPoi, me, slope.state, slope.summary, slopeRoute, requestStartSafe, onConfirmReport, markLap],
+    [state, countries, country, regionsGeo, regionGroups, place, pois, routes, weather, unitsForCountry, reportsData, carnetsData, tripsData, selectedPoi, me, slope.state, slope.summary, slopeRoute, allDistanceMarkers, requestStartSafe, onConfirmReport, markLap],
   );
 
   const model = useMemo(() => buildSheetModel(ctx), [ctx]);
@@ -1282,8 +1321,43 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
     // nommés (bornés à 60) et c'est `selectVisiblePins` + `clusterPins` qui
     // décident : priorité, puis distance, 6 max par cellule de 100 px, le reste
     // en pastille chiffrée. Filtrer ici par type empêcherait toute agrégation.
+    // Le menu commun des couches (K3.12) agit avant cette étape : un type masqué
+    // ne produit ni épingle ni pastille. Le repère ouvert reste visible pour ne
+    // pas fermer le contexte que l'utilisateur vient d'ouvrir.
+    const layers = state.layerVisibility;
+    const shows = (key: string) => layers?.[key] !== false;
+    const visibleForLayer = (kind: string): boolean => {
+      switch (kind) {
+        case 'water':
+          return shows('water');
+        case 'refuge':
+        case 'bivouac':
+          return shows('refuges');
+        case 'summit':
+        case 'viewpoint':
+          return shows('summits');
+        case 'access':
+          return shows('access');
+        case 'danger':
+          return shows('dangers');
+        case 'trail':
+          return shows('routes');
+        case 'friend':
+          return shows('friends');
+        default:
+          return true;
+      }
+    };
     return (pois ?? [])
-      .filter((poi) => poi && poi.name && poi.name.trim().length > 1 && Number.isFinite(poi.lat) && Number.isFinite(poi.lon))
+      .filter(
+        (poi) =>
+          poi &&
+          poi.name &&
+          poi.name.trim().length > 1 &&
+          Number.isFinite(poi.lat) &&
+          Number.isFinite(poi.lon) &&
+          (poi.id === state.selection?.id || visibleForLayer(poi.kind)),
+      )
       .map((poi) => ({ poi, km: distanceKm(center, [poi.lon, poi.lat]) }))
       .sort((a, b) => a.km - b.km)
       .slice(0, 60)
@@ -1297,7 +1371,7 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
         distanceKm: km,
         tone: (poi.kind === 'water' ? 'water' : poi.kind === 'bivouac' ? 'warn' : 'ink') as MapPin['tone'],
       }));
-  }, [countries, pois, state.level, state.center]);
+  }, [countries, pois, state.level, state.center, state.layerVisibility, state.selection?.id]);
 
   // ── actions ────────────────────────────────────────────────────────────
   const onCountryClick = useCallback(
@@ -1583,6 +1657,7 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
         mapBaseStyle={state.mapBaseStyle}
         nationalTopo={nationalTopo}
         slopeLayer={slope.layer}
+        distanceMarkers={distanceMarkers}
         layerVisibility={state.layerVisibility}
       />
 
@@ -1604,7 +1679,7 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
         onBack={state.level > 0 ? state.goUp : undefined}
         onLayers={() => {
           setSheetOpen(true);
-          state.setSheet('layers', 'mid');
+          state.openLayers();
         }}
         offline={!online}
         offlinePending={offlineQueue}

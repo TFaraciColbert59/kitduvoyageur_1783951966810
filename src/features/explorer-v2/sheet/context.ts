@@ -56,6 +56,16 @@ export interface SheetContext {
       routeName: string | null;
       hasRoute: boolean;
     };
+    /** Marqueurs de distance dérivés de la géométrie réelle (K3.12). */
+    distance: {
+      hasRoute: boolean;
+      /** État de la géométrie de l'itinéraire actif, sans le confondre avec un tracé absent. */
+      status: 'loading' | 'ready' | 'unavailable' | null;
+      /** Nombre de marqueurs réellement constructibles, plafond compris. */
+      count: number;
+      /** Intervalle localisé : « 1 km » ou « 1 mi ». */
+      intervalLabel: string;
+    };
   };
   /**
    * Démarrage avec compte à rebours (le parent décide de l'animation).
