@@ -114,6 +114,23 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
   }, [variant]);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const dockRef = useRef<HTMLDivElement>(null);
+
+  // Dans un post, le pied (bandeaux + barre d'envoi) flotte par-dessus la liste,
+  // qui occupe toute la hauteur. Sa hauteur réelle (un bandeau « Répondre à »
+  // peut s'y ajouter) est publiée en variable CSS : la liste s'en sert pour que
+  // le dernier commentaire remonte entièrement au-dessus de la barre.
+  useEffect(() => {
+    if (variant !== 'panel' || !isOpen) return;
+    const dock = dockRef.current;
+    const panel = panelRef.current;
+    if (!dock || !panel) return;
+    const publish = () => panel.style.setProperty('--post-dock-h', `${Math.ceil(dock.getBoundingClientRect().height)}px`);
+    publish();
+    const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(publish) : null;
+    observer?.observe(dock);
+    return () => observer?.disconnect();
+  }, [variant, isOpen]);
 
   const { dragProps, handleProps, y } = useDragDismiss({
     onDismiss: () => {
@@ -538,8 +555,11 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
           )}
         </div>
 
+        {/* Pied : bandeaux + barre d'envoi (flottant par-dessus la liste dans un post) */}
+        <div ref={dockRef} className="freedom-comments-dock">
         {/* Replying Banner */}
         {replyingTo && (
+
           <div className="flex items-center justify-between border-t border-black/5 bg-[#E8F0E6]/85 px-4 py-1.5 text-xs text-[#172B24]">
             <div className="flex items-center gap-1.5 truncate">
               <CornerDownRight size={13} className="text-[#17402C] shrink-0" />
@@ -658,6 +678,7 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
               <Send size={18} />
             </button>
           </form>
+        </div>
         </div>
     </>
   );

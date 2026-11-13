@@ -148,12 +148,14 @@ describe('PostGlassPanel — gestes', () => {
       expect(onClose).toHaveBeenCalledTimes(1);
     });
 
-    it('le mauvais sens ne fait rien (commentaires : balayage à droite)', () => {
+    /* Au doigt, les deux sens ramènent à la photo (onSwipeLeft et onSwipeRight ferment
+       tous deux le panneau) : l'ancien test attendait l'inverse et était rouge sur main. */
+    it('au doigt, l’autre sens ramène aussi à la photo (commentaires : balayage à droite)', () => {
       const onClose = vi.fn();
       const { container } = render(<PostGlassPanel side="comments" onClose={onClose}><div>contenu</div></PostGlassPanel>);
       swipe(container.querySelector('.lkdv-post-panel-slot > div') as Element, [100, 200], [300, 200]);
       finishExit();
-      expect(onClose).not.toHaveBeenCalled();
+      expect(onClose).toHaveBeenCalledTimes(1);
     });
 
     it('vers le bas ne ferme plus : la fermeture est exclusivement par balayage à gauche', () => {
@@ -167,8 +169,40 @@ describe('PostGlassPanel — gestes', () => {
     });
   });
 
-  it('le contenu du panneau commence sous la pastille de l\'auteur (premier commentaire jamais masqué)', () => {
+  it('partage : le panneau commence sous la pastille de l\'auteur', () => {
     const css = readFileSync(join(process.cwd(), 'src/components/social-kit/social-kit.css'), 'utf8');
-    expect(css).toMatch(/\.lkdv-feed-post \.lkdv-post-panel-slot \.lkdv-post-panel\s*\{[^}]*padding-top:\s*var\(--post-panel-top, 64px\)/);
+    expect(css).toMatch(/\.lkdv-post-panel-slot\[data-side="share"\] \.lkdv-post-panel\s*\{[^}]*padding-top:\s*var\(--post-panel-top, 64px\)/);
+  });
+
+  describe('commentaires : corps plein cadre sous la pastille, barre de verre flottante', () => {
+    const css = readFileSync(join(process.cwd(), 'src/features/posts/ui/post-system.css'), 'utf8');
+    const block = (selector: RegExp) => css.match(new RegExp(selector.source + '\\s*\\{([^}]*)\\}'))?.[1] ?? '';
+
+    it('le corps défile sur toute la hauteur (inset 0) avec marge haute = pastille et marge basse = barre', () => {
+      const body = block(/\.lkdv-post-panel :is\(\.lkdv-post-panel-body, \.freedom-drawer-content\)/);
+      expect(body).toMatch(/position:\s*absolute/);
+      expect(body).toMatch(/inset:\s*0/);
+      expect(body).toMatch(/padding-top:\s*var\(--post-panel-top, 64px\)/);
+      expect(body).toMatch(/padding-bottom:\s*calc\(var\(--post-dock-h, 48px\) \+ var\(--post-dock-bottom\) \+ 12px\)/);
+      expect(body).toMatch(/scroll-padding-bottom:/);
+    });
+
+    it('le pied est posé par-dessus (absolute, bas, sans border-top) et la capsule est en verre', () => {
+      const dock = block(/\.lkdv-post-panel :is\(\.freedom-comments-dock, \.lkdv-post-panel-foot, \.lkdv-comments-gate\)/);
+      expect(dock).toMatch(/position:\s*absolute/);
+      expect(dock).toMatch(/bottom:\s*var\(--post-dock-bottom\)/);
+      expect(dock).toMatch(/border:\s*0/);
+      const capsule = block(/\.lkdv-post-panel :is\(\.freedom-comments-composer, \.lkdv-comments-composer\)/);
+      expect(capsule).toMatch(/border-radius:\s*9999px/);
+      expect(capsule).toMatch(/backdrop-filter:\s*var\(--post-dock-glass-blur\)/);
+      expect(css).toMatch(/--bar-glass-bg,/);
+      expect(css).toMatch(/prefers-reduced-transparency: reduce/);
+    });
+
+    it('le style des réponses de story n\'est pas touché (sélecteurs limités au panneau de post)', () => {
+      const added = css.slice(css.lastIndexOf('/*', css.indexOf("Commentaires d'un post"))).replace(/\/\*[\s\S]*?\*\//g, '');
+      expect(added).not.toMatch(/story/);
+      expect(added).not.toMatch(/^\.lkdv-comments-composer/m);
+    });
   });
 });

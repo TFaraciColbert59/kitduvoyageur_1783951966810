@@ -28,11 +28,10 @@
   --post-header-gap: 8px;
 }
 
-/* Panneau commentaires / partage : verre exact de la carte Compte. */
-.lkdv-post-panel-slot {
-  top: var(--post-panel-top, 64px);
-}
-
+/* Panneau commentaires / partage : verre exact de la carte Compte.
+   Le panneau occupe toute la carte (top 0) ; la place de la pastille auteur est
+   réservée en `padding-top` du contenu (`--post-panel-top`, mesuré par
+   PostGlassPanel), pour que le contenu puisse défiler dessous. */
 .lkdv-post-panel-slot .lkdv-post-panel {
   background: var(--post-glass-bg);
   -webkit-backdrop-filter: var(--post-glass-blur);
@@ -90,4 +89,181 @@ body:has(.lkdv-feed-shell) .lkv-app-background {
 }
 .lkdv-post-panel .lkdv-post-panel-body {
   text-shadow: 0 1px 0 rgba(255,255,255,.18);
+}
+
+/* ============================================================
+   Commentaires d'un post : barre d'envoi de verre flottante
+   (fil Communauté, post du Compte, post partagé en messagerie,
+   carnet, club — tout ce qui ouvre `PostGlassPanel` côté « comments »).
+
+   - le corps défile sur TOUTE la hauteur du panneau (inset 0) : il passe sous la
+     pastille auteur en haut et sous la barre d'envoi en bas ;
+   - au repos, `padding-top` = `--post-panel-top` (bas de la pastille + 8 px,
+     mesuré par PostGlassPanel) : le premier commentaire démarre juste dessous ;
+   - `padding-bottom` = hauteur du pied (`--post-dock-h`) + sa distance au bord
+     + 12 px : le dernier commentaire remonte entièrement au-dessus de la barre ;
+   - la barre est une capsule de verre (même matériau que la barre basse et les
+     pastilles du Compte : `--bar-glass-*` de `.lkdv-account-glass`, repris à
+     l'identique en repli hors de ce contexte).
+   Tout est limité au panneau de post : le composeur de réponse de story
+   (`.lkdv-story-composer-wrap`) n'est pas touché.
+   ============================================================ */
+.lkdv-post-panel-slot[data-side="comments"] {
+  --post-dock-gap: 10px;
+  --post-dock-safe: 0px;
+  /* Au-dessus du clavier quand `--kb-inset` est publié par le post (visualViewport). */
+  --post-dock-bottom: calc(var(--post-dock-gap) + var(--post-dock-safe) + var(--kb-inset, 0px));
+  --post-dock-h: 48px;
+  --post-dock-glass-bg: var(
+    --bar-glass-bg,
+    linear-gradient(180deg, rgba(255, 255, 255, 0.485), rgba(255, 255, 255, 0.325) 55%, rgba(255, 255, 255, 0.405))
+  );
+  --post-dock-glass-blur: var(--bar-glass-blur, blur(7.2px) saturate(1.9) brightness(1.07));
+  --post-dock-glass-shadow: var(
+    --bar-glass-shadow,
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.45),
+    inset 1px 0 1px rgba(255, 255, 255, 0.28),
+    inset -1px 0 1px rgba(255, 255, 255, 0.28),
+    inset 0 0 12px rgba(255, 255, 255, 0.14),
+    0 0 0 0.5px rgba(23, 43, 36, 0.14),
+    0 8px 22px rgba(23, 43, 36, 0.12)
+  );
+}
+
+/* `--post-dock-safe` : à régler à `env(safe-area-inset-bottom, 0px)` dans un contexte où la carte
+   du post touche le bas de l'écran. Fil, Compte (carte 541 px) et messagerie sont au milieu de
+   l'écran : 0 (sinon la barre serait remontée de 34 px sur iPhone sans raison). */
+
+/* Corps défilant plein cadre. */
+.lkdv-post-panel-slot[data-side="comments"] .lkdv-post-panel :is(.lkdv-post-panel-body, .freedom-drawer-content) {
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-top: var(--post-panel-top, 64px);
+  padding-bottom: calc(var(--post-dock-h, 48px) + var(--post-dock-bottom) + 12px);
+  scroll-padding-top: var(--post-panel-top, 64px);
+  scroll-padding-bottom: calc(var(--post-dock-h, 48px) + var(--post-dock-bottom) + 12px);
+}
+
+/* Pied : conteneur transparent posé par-dessus, en bas (bandeaux + capsule). */
+.lkdv-post-panel-slot[data-side="comments"] .lkdv-post-panel :is(.freedom-comments-dock, .lkdv-post-panel-foot, .lkdv-comments-gate) {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: var(--post-dock-bottom);
+  z-index: 3;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/* Capsule de verre : champ pilule + bouton d'envoi rond. */
+.lkdv-post-panel-slot[data-side="comments"] .lkdv-post-panel :is(.freedom-comments-composer, .lkdv-comments-composer) {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 48px;
+  margin: 0;
+  padding: 2px 6px 2px 4px;
+  border: 0;
+  border-radius: 9999px;
+  background: var(--post-dock-glass-bg);
+  -webkit-backdrop-filter: var(--post-dock-glass-blur);
+  backdrop-filter: var(--post-dock-glass-blur);
+  box-shadow: var(--post-dock-glass-shadow);
+  transition: none;
+}
+.lkdv-post-panel-slot[data-side="comments"] .lkdv-post-panel .freedom-composer-form {
+  flex: 1 1 auto;
+  width: 100%;
+  gap: 4px;
+}
+
+/* Champ : pilule de 36 px visible dans une zone tactile de 44 px (bordure transparente). */
+.lkdv-post-panel-slot[data-side="comments"] .lkdv-post-panel :is(.freedom-composer-input, .lkdv-comments-composer input) {
+  box-sizing: border-box;
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 0;
+  height: 44px;
+  padding: 0 10px;
+  border: 4px solid transparent;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.6);
+  background-clip: padding-box;
+  box-shadow: inset 0 1px 2px rgba(23, 43, 36, 0.05);
+  color: #172B24;
+  font-size: 16px; /* 16 px minimum : pas de zoom à la prise de focus sur iOS */
+  text-overflow: ellipsis;
+}
+.lkdv-post-panel-slot[data-side="comments"] .lkdv-post-panel :is(.freedom-composer-input, .lkdv-comments-composer input):focus {
+  border-color: transparent;
+  box-shadow: inset 0 0 0 1.5px #17402C;
+}
+.lkdv-post-panel-slot[data-side="comments"] .lkdv-post-panel :is(.freedom-composer-input, .lkdv-comments-composer input)::placeholder {
+  color: #56665d;
+  opacity: 1;
+}
+
+/* Boutons ronds de 34 px, zone tactile étendue à 44 px. */
+.lkdv-post-panel-slot[data-side="comments"] .lkdv-post-panel :is(.freedom-composer-btn, .lkdv-comments-send) {
+  position: relative;
+  flex: none;
+  width: 34px;
+  height: 34px;
+}
+.lkdv-post-panel-slot[data-side="comments"] .lkdv-post-panel :is(.freedom-composer-btn, .lkdv-comments-send)::after {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
+}
+/* Envoi : rond forest ; grisé tant que le champ est vide. */
+.lkdv-post-panel-slot[data-side="comments"] .lkdv-post-panel :is(.freedom-composer-btn.is-send, .lkdv-comments-send) {
+  border: 0;
+  background: #17402C;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(23, 64, 44, 0.28);
+}
+.lkdv-post-panel-slot[data-side="comments"] .lkdv-post-panel :is(.freedom-composer-btn.is-send, .lkdv-comments-send):disabled {
+  opacity: 0.4;
+}
+
+/* Bandeaux (« Répondre à… », pièce jointe) : pastilles de verre au-dessus de la capsule. */
+.lkdv-post-panel-slot[data-side="comments"] .lkdv-post-panel .freedom-comments-dock > :not(.freedom-comments-composer) {
+  margin: 0 8px;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 20px;
+  background: var(--post-dock-glass-bg);
+  -webkit-backdrop-filter: var(--post-dock-glass-blur);
+  backdrop-filter: var(--post-dock-glass-blur);
+  box-shadow: var(--post-dock-glass-shadow);
+  color: #172B24;
+}
+
+/* Repli lisible : transparence réduite ou pas de backdrop-filter. */
+@media (prefers-reduced-transparency: reduce) {
+  .lkdv-post-panel-slot[data-side="comments"] {
+    --post-dock-glass-bg: rgba(252, 251, 248, 0.96);
+    --post-dock-glass-blur: none;
+  }
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .lkdv-post-panel-slot[data-side="comments"] {
+    --post-dock-glass-bg: rgba(252, 251, 248, 0.96);
+    --post-dock-glass-blur: none;
+  }
 }

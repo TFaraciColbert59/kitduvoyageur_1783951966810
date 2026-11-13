@@ -581,10 +581,10 @@
   flex: 1 1 auto;
   min-height: 0;
 }
-.freedom-comments-panel .freedom-comments-composer {
-  padding-bottom: calc(12px + var(--kb-inset, 0px));
-  border-radius: 0 0 inherit inherit;
-  transition: padding-bottom 0.22s ease;
+/* Pied (bandeaux + barre d'envoi) : bloc simple dans la feuille plein écran ;
+   dans un post il flotte par-dessus la liste (voir post-system.css). */
+.freedom-comments-dock {
+  flex: none;
 }
 
 /* Tiroir des pièces jointes ouvert depuis un post : il couvre la carte du post
@@ -610,11 +610,8 @@
   border-radius: inherit !important;
 }
 
-/* Composer dans un post : le champ se rétrécit, le bouton d'envoi reste visible. */
-.freedom-comments-panel .freedom-comments-composer {
-  padding-left: 10px;
-  padding-right: 10px;
-}
+/* Composer dans un post : le champ se rétrécit, le bouton d'envoi reste visible
+   (la capsule de verre et ses mesures sont dans post-system.css). */
 .freedom-comments-panel .freedom-composer-form {
   gap: 6px;
   min-width: 0;

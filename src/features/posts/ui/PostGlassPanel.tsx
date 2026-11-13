@@ -177,7 +177,6 @@ export function PostGlassPanel({
       data-leaving={leaving ? 'true' : undefined}
       data-armed={armed ? 'true' : 'false'}
       tabIndex={-1}
-      style={{ top: 'var(--post-panel-top, 64px)' }}
       onClickCapture={(event) => {
         // Un balayage qui démarre sur un bouton ne doit pas le déclencher au relâchement.
         if (swipedRef.current) {
