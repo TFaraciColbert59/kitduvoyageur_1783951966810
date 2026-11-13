@@ -80,10 +80,11 @@ interface ExplorerActions {
   setAutoPauseEnabled: (enabled: boolean) => void;
   /**
    * Écrit le carnet musculation dans le store et, si possible, dans le
-   * stockage local. `false` signifie que seule la mémoire est à jour.
+   * stockage local **avant** toute synchronisation. `false` signifie que seule
+   * la mémoire est à jour.
    */
   storeStrengthLog: (log: StrengthLog) => boolean;
-  /** Efface le brouillon local et l’état mémoire. */
+  /** Efface le brouillon local et l’état mémoire (la suppression serveur est demandée par l’écran). */
   clearStrengthLog: () => void;
 }
 

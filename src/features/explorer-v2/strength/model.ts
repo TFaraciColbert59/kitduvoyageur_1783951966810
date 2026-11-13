@@ -19,12 +19,15 @@ import type {
 
 export const STRENGTH_LOG_VERSION = 1 as const;
 
+/** Identifiant client stable, partagé par le stockage local et le contrat serveur. */
+export const STRENGTH_CLIENT_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
+
 /** Conversion exacte, utilisée uniquement pour afficher un volume en kg. */
 export const LB_TO_KG = 0.453_592_37;
 
-const MAX_EXERCISE_NAME_LENGTH = 80;
-const MAX_REPS = 999;
-const MAX_LOAD = 10_000;
+export const MAX_STRENGTH_EXERCISE_NAME = 80;
+export const MAX_STRENGTH_REPS = 999;
+export const MAX_STRENGTH_LOAD = 10_000;
 
 export interface StrengthSetInput {
   reps: number;
@@ -64,17 +67,17 @@ export function createStrengthLog(now = Date.now()): StrengthLog {
 
 function cleanExerciseName(name: string): string | null {
   const clean = name.trim().replace(/\s+/g, ' ');
-  if (!clean || clean.length > MAX_EXERCISE_NAME_LENGTH) return null;
+  if (!clean || clean.length > MAX_STRENGTH_EXERCISE_NAME) return null;
   return clean;
 }
 
 function cleanSetInput(input: StrengthSetInput): StrengthSetInput | null {
-  if (!Number.isInteger(input.reps) || input.reps < 1 || input.reps > MAX_REPS) {
+  if (!Number.isInteger(input.reps) || input.reps < 1 || input.reps > MAX_STRENGTH_REPS) {
     return null;
   }
   if (
     input.load !== null &&
-    (!Number.isFinite(input.load) || input.load < 0 || input.load > MAX_LOAD)
+    (!Number.isFinite(input.load) || input.load < 0 || input.load > MAX_STRENGTH_LOAD)
   ) {
     return null;
   }

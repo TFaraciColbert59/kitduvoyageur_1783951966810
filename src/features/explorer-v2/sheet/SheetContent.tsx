@@ -138,7 +138,7 @@ function StrengthEntry({ ctx }: { ctx: SheetContext }) {
     <XpRow
       icon="dumbbell"
       title="Musculation"
-      sub="Exercices, séries, répétitions, charges · brouillon local"
+      sub="Exercices, séries, répétitions, charges · carnet privé"
       badge={{ label: 'Saisie', tone: 'muted' }}
       onClick={() => ctx.state.setSheet('strength', 'full')}
     />
@@ -2360,7 +2360,7 @@ export function buildSheetModel(ctx: SheetContext): SheetModel {
   if (kind === 'strength') {
     return {
       title: 'Musculation',
-      subtitle: 'Carnet local · exercices, séries, répétitions, charges',
+      subtitle: 'Carnet privé · exercices, séries, répétitions, charges',
       tabs: [
         {
           id: 'carnet',

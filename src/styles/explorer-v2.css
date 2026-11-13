@@ -1464,7 +1464,7 @@ body[data-explorer-sheet-open='true'] nav[aria-label="Navigation principale"]:no
   line-height: 1.45;
 }
 .xp-strength-note strong {
-  color: var(--xp-warn);
+  color: var(--xp-txt);
   font-size: 12px;
   font-weight: 700;
 }
@@ -1570,6 +1570,32 @@ body[data-explorer-sheet-open='true'] nav[aria-label="Navigation principale"]:no
   font-size: 10.5px;
   line-height: 1.5;
   color: var(--xp-mut);
+}
+.xp-strength-sync {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: var(--xp-block);
+  box-shadow: var(--xp-block-shadow);
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--xp-mut2);
+}
+.xp-strength-sync[data-tone='good'] {
+  color: var(--xp-good);
+}
+.xp-strength-sync[data-tone='warn'] {
+  color: var(--xp-warn);
+}
+.xp-strength-sync .xp-chip {
+  flex: none;
+  min-height: 44px;
+  padding: 6px 9px;
+  font-size: 11px;
 }
 .xp-strength-status {
   margin: 0 2px 8px;

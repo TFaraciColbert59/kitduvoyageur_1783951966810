@@ -227,8 +227,10 @@ export interface StrengthExercise {
 }
 
 /**
- * Brouillon de carnet musculation. Il vit dans le store Explorer et dans le
- * stockage local ; aucun contrat serveur de séries n’existe encore.
+ * Carnet de musculation. Il vit dans le store Explorer et dans le stockage
+ * local, puis se synchronise avec le contrat privé `strength_logs` quand
+ * l’utilisateur est connecté. Le brouillon local reste la source de vérité de
+ * l’appareil en cas de coupure réseau.
  */
 export interface StrengthLog {
   version: 1;

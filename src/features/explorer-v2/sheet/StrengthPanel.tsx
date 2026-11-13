@@ -1,12 +1,13 @@
 'use client';
 
 /**
- * Carnet musculation — première tranche (S2.32).
+ * Carnet musculation — S2.32.
  *
  * Saisie manuelle uniquement : exercice nommé par l’utilisateur, puis séries
  * avec répétitions et charge. Aucun catalogue d’exercices, aucune estimation
- * de charge, aucune lecture de capture. Le brouillon est local ; il n’est pas
- * une sortie enregistrée tant qu’aucun contrat serveur de séries n’existe.
+ * de charge, aucune lecture de capture. Le brouillon est écrit localement
+ * d’abord, puis synchronisé avec le compte quand l’utilisateur est connecté.
+ * Hors ligne, il reste sur l’appareil et sera repoussé plus tard.
  */
 
 import React from 'react';
@@ -17,13 +18,29 @@ import type {
   StrengthLog,
   StrengthSet,
 } from '../state/types';
-import { readStrengthDraft } from '../strength/storage';
+import {
+  enqueueStrengthDeletion,
+  hasPendingStrengthDeletion,
+  readStrengthDraft,
+  removeStrengthDeletion,
+} from '../strength/storage';
+import {
+  deleteRemoteStrengthLog,
+  fetchRemoteStrengthLog,
+  flushStrengthDeletions,
+  queueStrengthPush,
+  waitForStrengthWrites,
+  type StrengthSyncReason,
+} from '../strength/sync';
 import {
   addStrengthExercise,
   addStrengthSet,
   createStrengthLog,
   formatStrengthLoad,
   formatStrengthVolume,
+  MAX_STRENGTH_EXERCISE_NAME,
+  MAX_STRENGTH_LOAD,
+  MAX_STRENGTH_REPS,
   removeStrengthExercise,
   removeStrengthSet,
   strengthExerciseTotals,
@@ -34,8 +51,21 @@ import {
 } from '../strength/model';
 import { XpChips, XpEmpty, XpEyebrow, XpMetrics, XpRow, XpRows } from './blocks';
 
-const MAX_REPS = 999;
-const MAX_LOAD = 10_000;
+type SyncState =
+  | 'idle'
+  | 'syncing'
+  | 'synced'
+  | 'local'
+  | 'unauthenticated'
+  | 'offline'
+  | 'delete-pending'
+  | 'error';
+
+function syncStateForReason(reason: StrengthSyncReason): SyncState {
+  if (reason === 'unauthenticated') return 'unauthenticated';
+  if (reason === 'rejected' || reason === 'invalid' || reason === 'conflict') return 'error';
+  return 'offline';
+}
 
 function cleanName(value: string): string {
   return value.trim().replace(/\s+/g, ' ');
@@ -47,6 +77,7 @@ export function StrengthPanel() {
   const clearStrengthLog = useExplorerStore((state) => state.clearStrengthLog);
 
   const hydratedRef = React.useRef(false);
+  const mountedRef = React.useRef(true);
   const [name, setName] = React.useState('');
   const [nameError, setNameError] = React.useState<string | null>(null);
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
@@ -58,14 +89,104 @@ export function StrengthPanel() {
   const [status, setStatus] = React.useState<string | null>(null);
   const [persistFailed, setPersistFailed] = React.useState(false);
   const [confirmClear, setConfirmClear] = React.useState(false);
+  const [syncState, setSyncState] = React.useState<SyncState>('idle');
+
+  const push = React.useCallback(async (next: StrengthLog) => {
+    if (hasPendingStrengthDeletion(next.id)) {
+      setSyncState('delete-pending');
+      return;
+    }
+    setSyncState('syncing');
+    let result: Awaited<ReturnType<typeof queueStrengthPush>>;
+    try {
+      result = await queueStrengthPush(next);
+    } catch {
+      if (mountedRef.current) setSyncState('offline');
+      return;
+    }
+    if (!mountedRef.current) return;
+    if (result.ok) {
+      setSyncState(hasPendingStrengthDeletion() ? 'delete-pending' : 'synced');
+      return;
+    }
+    setSyncState(
+      hasPendingStrengthDeletion() ? 'delete-pending' : syncStateForReason(result.reason),
+    );
+  }, []);
+
+  const retrySync = React.useCallback(async () => {
+    if (!mountedRef.current) return;
+    setSyncState('syncing');
+
+    const current = useExplorerStore.getState().strength;
+    if (current) {
+      if (hasPendingStrengthDeletion(current.id)) {
+        clearStrengthLog();
+        await waitForStrengthWrites();
+        if (!mountedRef.current) return;
+        const flushed = await flushStrengthDeletions();
+        if (!mountedRef.current) return;
+        setSyncState(flushed.pending > 0 ? 'delete-pending' : 'local');
+        return;
+      }
+      await push(current);
+      return;
+    }
+
+    await waitForStrengthWrites();
+    if (!mountedRef.current) return;
+    const flushed = await flushStrengthDeletions();
+    if (!mountedRef.current) return;
+    if (flushed.pending > 0) {
+      setSyncState('delete-pending');
+      return;
+    }
+
+    const remote = await fetchRemoteStrengthLog();
+    if (!mountedRef.current) return;
+    if (!remote.ok) {
+      setSyncState(syncStateForReason(remote.reason));
+      return;
+    }
+    if (!remote.log) {
+      setSyncState('local');
+      return;
+    }
+    if (hasPendingStrengthDeletion(remote.log.id)) {
+      setSyncState('delete-pending');
+      return;
+    }
+
+    const persisted = storeStrengthLog(remote.log);
+    setPersistFailed(!persisted);
+    setSyncState('synced');
+  }, [clearStrengthLog, push, storeStrengthLog]);
+
+  React.useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   React.useEffect(() => {
     if (hydratedRef.current) return;
     hydratedRef.current = true;
-    if (useExplorerStore.getState().strength) return;
-    const stored = readStrengthDraft();
-    if (stored) useExplorerStore.setState({ strength: stored });
-  }, []);
+    const current = useExplorerStore.getState().strength;
+    if (!current) {
+      const stored = readStrengthDraft();
+      if (stored) useExplorerStore.setState({ strength: stored });
+    }
+    void retrySync();
+  }, [retrySync]);
+
+  React.useEffect(() => {
+    const handleOnline = () => {
+      void retrySync();
+    };
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, [retrySync]);
 
   const selectedExercise =
     log?.exercises.find((exercise) => exercise.id === selectedId) ??
@@ -92,6 +213,7 @@ export function StrengthPanel() {
     const persisted = storeStrengthLog(next);
     setPersistFailed(!persisted);
     setStatus(message);
+    void push(next);
   };
 
   const handleAddExercise = (event: React.FormEvent<HTMLFormElement>) => {
@@ -101,8 +223,10 @@ export function StrengthPanel() {
       setNameError('Nomme l’exercice réellement effectué.');
       return;
     }
-    if (clean.length > 80) {
-      setNameError('Le nom de l’exercice est limité à 80 caractères.');
+    if (clean.length > MAX_STRENGTH_EXERCISE_NAME) {
+      setNameError(
+        `Le nom de l’exercice est limité à ${MAX_STRENGTH_EXERCISE_NAME} caractères.`,
+      );
       return;
     }
     const base = log ?? createStrengthLog();
@@ -111,7 +235,7 @@ export function StrengthPanel() {
       setNameError('Ce nom d’exercice n’est pas valide.');
       return;
     }
-    commit(result.log, 'Exercice ajouté au brouillon local.');
+    commit(result.log, 'Exercice ajouté au carnet.');
     setSelectedId(result.exercise.id);
     setName('');
     setNameError(null);
@@ -120,15 +244,17 @@ export function StrengthPanel() {
 
   const readSetInput = (): StrengthSetInput | null => {
     const repsValue = Number(reps.trim());
-    if (!Number.isInteger(repsValue) || repsValue < 1 || repsValue > MAX_REPS) {
-      setSetError(`Renseigne un nombre entier de répétitions entre 1 et ${MAX_REPS}.`);
+    if (!Number.isInteger(repsValue) || repsValue < 1 || repsValue > MAX_STRENGTH_REPS) {
+      setSetError(
+        `Renseigne un nombre entier de répétitions entre 1 et ${MAX_STRENGTH_REPS}.`,
+      );
       return null;
     }
     const rawLoad = load.trim().replace(',', '.');
     const loadValue = rawLoad === '' ? null : Number(rawLoad);
     if (
       loadValue !== null &&
-      (!Number.isFinite(loadValue) || loadValue < 0 || loadValue > MAX_LOAD)
+      (!Number.isFinite(loadValue) || loadValue < 0 || loadValue > MAX_STRENGTH_LOAD)
     ) {
       setSetError('Renseigne une charge valide, ou laisse le champ vide.');
       return null;
@@ -148,7 +274,7 @@ export function StrengthPanel() {
     if (editingSetId) {
       const next = updateStrengthSet(log, selectedExercise.id, editingSetId, input);
       if (next === log) {
-        setSetError('Cette série n’existe plus dans le brouillon.');
+        setSetError('Cette série n’existe plus dans le carnet.');
         return;
       }
       commit(next, 'Série modifiée. Le volume est recalculé.');
@@ -185,30 +311,145 @@ export function StrengthPanel() {
     const next = removeStrengthExercise(log, exercise.id);
     if (next === log) return;
     if (selectedExercise?.id === exercise.id) resetSetForm();
-    commit(next, 'Exercice et séries supprimés du brouillon local.');
+    commit(next, 'Exercice et séries supprimés.');
   };
 
-  const handleClear = () => {
-    clearStrengthLog();
+  const handleClear = async () => {
+    const current = log;
     setConfirmClear(false);
+
+    if (!current) {
+      clearStrengthLog();
+      setSelectedId(null);
+      resetSetForm();
+      setPersistFailed(false);
+      setSyncState('local');
+      setStatus('Carnet effacé de cet appareil.');
+      return;
+    }
+
+    const queued = enqueueStrengthDeletion(current.id);
+
+    // File locale indisponible : ne pas effacer le brouillon avant d’avoir la
+    // preuve que le serveur a bien supprimé le carnet. Sinon un « Réessayer »
+    // pourrait le restaurer depuis le compte.
+    if (!queued) {
+      setSyncState('syncing');
+      // Une synchronisation déjà partie ne doit pas recréer le carnet après
+      // l’effacement : on la laisse finir avant de supprimer côté serveur.
+      await waitForStrengthWrites();
+      const result = await deleteRemoteStrengthLog(current.id);
+      if (result.ok) {
+        removeStrengthDeletion(current.id);
+        clearStrengthLog();
+        if (!mountedRef.current) return;
+        setSelectedId(null);
+        resetSetForm();
+        setPersistFailed(false);
+        setSyncState('local');
+        setStatus('Carnet effacé de cet appareil et de ton compte.');
+        return;
+      }
+      if (!mountedRef.current) return;
+      setSyncState(
+        result.reason === 'unauthenticated' ? 'unauthenticated' : 'error',
+      );
+      setStatus(
+        'Suppression du compte impossible et file locale indisponible : le carnet reste sur cet appareil. Réessaie après connexion.',
+      );
+      return;
+    }
+
+    // La tombe est écrite : le brouillon local peut être effacé sans risque de
+    // résurrection, même si le serveur n’est pas joignable maintenant.
+    clearStrengthLog();
     setSelectedId(null);
     resetSetForm();
     setPersistFailed(false);
-    setStatus('Brouillon local effacé.');
+    setSyncState('syncing');
+
+    // Même règle : une écriture déjà en vol se termine avant la suppression,
+    // puis la tombe locale empêche toute recréation ultérieure.
+    await waitForStrengthWrites();
+    const result = await deleteRemoteStrengthLog(current.id);
+
+    if (result.ok) {
+      removeStrengthDeletion(current.id);
+      if (!mountedRef.current) return;
+      setSyncState('local');
+      setStatus('Carnet effacé de cet appareil et de ton compte.');
+      return;
+    }
+
+    if (!mountedRef.current) return;
+    setSyncState('delete-pending');
+    setStatus(
+      'Carnet effacé de cet appareil. La suppression du compte sera rejouée à la prochaine connexion.',
+    );
   };
 
   const totals = strengthLogTotals(log);
   const selectedTotals = selectedExercise ? strengthExerciseTotals(selectedExercise) : null;
 
+  const syncLabel =
+    syncState === 'syncing'
+      ? 'Enregistrement…'
+      : syncState === 'synced'
+        ? 'Enregistré sur ton compte'
+        : syncState === 'unauthenticated'
+          ? 'Sur cet appareil · connecte-toi pour l’enregistrer sur ton compte'
+          : syncState === 'delete-pending'
+            ? 'Effacement du compte en attente · vérifie ta connexion'
+            : syncState === 'error'
+              ? 'Synchronisation refusée · réessaie'
+              : syncState === 'offline'
+                ? 'Sur cet appareil · serveur indisponible'
+                : syncState === 'local'
+                  ? 'Sur cet appareil'
+                  : null;
+  const syncTone =
+    syncState === 'synced'
+      ? 'good'
+      : syncState === 'delete-pending' || syncState === 'error'
+        ? 'warn'
+        : 'neutral';
+  const syncRetryable =
+    syncState === 'offline' ||
+    syncState === 'error' ||
+    syncState === 'delete-pending' ||
+    syncState === 'unauthenticated';
+  const showSync =
+    Boolean(log) ||
+    syncState === 'syncing' ||
+    syncState === 'delete-pending' ||
+    syncState === 'error';
+
   return (
     <div className="xp-strength">
       <div className="xp-strength-note" role="note">
-        <strong>Brouillon local, pas une sortie enregistrée.</strong>
+        <strong>Carnet privé, conservé d’abord sur cet appareil.</strong>
         <span>
-          Le schéma actuel ne contient aucune table de séries. Ces exercices restent sur cet
-          appareil et n’apparaissent pas dans une sortie du carnet.
+          Connecté, il est synchronisé avec ton compte. Hors ligne, le brouillon reste ici et
+          sera renvoyé à la prochaine connexion. Aucun import partenaire n’est simulé.
         </span>
       </div>
+
+      {showSync && syncLabel ? (
+        <div className="xp-strength-sync" data-tone={syncTone}>
+          <span role="status">{syncLabel}</span>
+          {syncRetryable ? (
+            <button
+              type="button"
+              className="xp-chip"
+              onClick={() => {
+                void retrySync();
+              }}
+            >
+              Réessayer
+            </button>
+          ) : null}
+        </div>
+      ) : null}
 
       {persistFailed ? (
         <p className="xp-strength-warn" role="alert">
@@ -245,7 +486,7 @@ export function StrengthPanel() {
               if (nameError) setNameError(null);
             }}
             placeholder="Ex. développé couché"
-            maxLength={80}
+            maxLength={MAX_STRENGTH_EXERCISE_NAME}
             autoComplete="off"
             aria-invalid={nameError ? true : undefined}
             aria-describedby={nameError ? 'xp-strength-name-error' : undefined}
@@ -420,19 +661,20 @@ export function StrengthPanel() {
         <XpRow
           icon="cam"
           title="Import partenaire ou capture"
-          sub="Hors de cette tranche : aucune capture n’est lue, aucune série n’est créée sans saisie."
+          sub="Hors de cette tranche : aucun fichier n’est lu, aucune série n’est créée sans saisie et aucun import n’est simulé."
           badge={{ label: 'À venir', tone: 'muted' }}
         />
       </XpRows>
 
-      {log && log.exercises.length > 0 ? (
+      {log ? (
         <div className="xp-strength-clear">
           {confirmClear ? (
             <>
               <p className="xp-strength-clear-text">
-                Effacer tous les exercices et séries de ce brouillon local ?
+                Effacer ce carnet ? La suppression s’applique aussi au compte quand il est
+                connecté.
               </p>
-              <button type="button" className="xp-primary" onClick={handleClear}>
+              <button type="button" className="xp-primary" onClick={() => void handleClear()}>
                 Confirmer l’effacement
               </button>
               <button
@@ -449,7 +691,7 @@ export function StrengthPanel() {
               className="xp-secondary"
               onClick={() => setConfirmClear(true)}
             >
-              Effacer le brouillon
+              Effacer le carnet
             </button>
           )}
         </div>
@@ -458,7 +700,8 @@ export function StrengthPanel() {
       <p className="xp-strength-footnote">
         Chaque ligne correspond à une saisie réelle. Une charge laissée vide reste « poids du
         corps » et n’entre pas dans le volume. Les valeurs en livres sont converties en kg
-        uniquement pour le volume affiché.
+        uniquement pour le volume affiché. Le brouillon local est conservé avant la
+        synchronisation ; un effacement demandé hors ligne est rejoué à la reconnexion.
       </p>
 
       {status ? (
