@@ -16,6 +16,8 @@ import type {
 import type { ExplorerStore } from '../state/store';
 import type { Sport, SportSelection } from '../state/types';
 import type { SearchViewport } from '../searchArea';
+import type { RouteSlopeState } from '../data/useRouteSlope';
+import type { SlopeSummary } from '../map/slope';
 import { SPORT_FAMILIES } from './sportSelection';
 
 export interface CountryEntry {
@@ -49,6 +51,25 @@ export interface SheetContext {
   me: { lat: number; lng: number } | null;
   /** Emprise visible courante, pour référencer la dernière recherche. */
   mapViewport: SearchViewport | null;
+  /** État réel de la couche pente (DEM) pour l'itinéraire armé. */
+  terrain: {
+    slope: {
+      state: RouteSlopeState;
+      summary: SlopeSummary | null;
+      routeName: string | null;
+      hasRoute: boolean;
+    };
+    /** Marqueurs de distance dérivés de la géométrie réelle (K3.12). */
+    distance: {
+      hasRoute: boolean;
+      /** État de la géométrie de l'itinéraire actif, sans le confondre avec un tracé absent. */
+      status: 'loading' | 'ready' | 'unavailable' | null;
+      /** Nombre de marqueurs réellement constructibles, plafond compris. */
+      count: number;
+      /** Intervalle localisé : « 1 km » ou « 1 mi ». */
+      intervalLabel: string;
+    };
+  };
   /**
    * Démarrage avec compte à rebours (le parent décide de l'animation).
    * `selection` porte la variante jusqu’au démarrage ; `sport` reste

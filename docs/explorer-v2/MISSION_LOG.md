@@ -690,3 +690,67 @@ Les points **non** cochés sont listés dans `ETAT_DES_POINTS.md` avec leur bloc
   absents ; aucune génération de boucle. Détail et conflits dans la fiche R03-K1.02.
 - Vérification : aucun test, build, lint ni `tsc` exécuté dans cette passe (consigne de lot).
 
+### [C01 · K3.04 / K3.05] Couches pente, surface et fonds nationaux · 2026-11-13
+- Fiches : `fiches/Komoot/K3.04.md` et `K3.05.md` (chantier C01, dépendance P01).
+- Livré :
+  - pente réelle de l’itinéraire sélectionné depuis le DEM AWS existant
+    (`POST /api/explorer/v2/profile`), dégradé MapLibre avec `lineMetrics` ;
+  - surface : API de couverture en lecture seule (`trail_segments` vide →
+    ligne informative désactivée, aucune couche inventée) ;
+  - hors-route : état réel du dispositif 40 m / 15 s / 25 m exposé dans le
+    tiroir Calques, sans duplication ;
+  - fonds nationaux : registre `nationalTopo.ts`, IGN France `unverified`,
+    aucune tuile chargée ; `MapStage` sait afficher une source `verified`.
+- Données : `trail_segments` = 0 ligne (AUDIT_VERIFIE), `TOPO_NATIONALE` =
+  `non_confirme` (registre C01). Décisions 16 à 18, blocages 12 et 13.
+- Aucun test, build, lint ou `tsc` exécuté : reportés à la fin (mission).
+- Détail : `docs/explorer-v2/C01-K3.04-K3.05.md`.
+- Statut : partiel et honnête (dépendances externes documentées).
+
+### [C01 · K3.12] Marqueurs de distance et menu commun des éléments visibles · 2026-11-13
+- Fiche : `fiches/Komoot/K3.12.md` (chantier C01, dépendance P01), lue dans le
+  bundle de mission. Base : `ead56c2`.
+- Livré :
+  - `map/distanceMarkers.ts` : marqueurs dérivés de la géométrie complète,
+    interpolation haversine, 1 km / 1 mi selon l’unité du pays, plafond 400,
+    aucun marqueur dans un trou de `MultiLineString` ;
+  - `MapStage` : overlay DOM des marqueurs, masqués sous le tiroir et le chrome,
+    non interactifs ;
+  - menu commun **Éléments visibles** dans le tiroir Calques : distance,
+    itinéraires, eau, refuges/bivouacs, sommets/belvédères, accès, dangers ;
+    neige explicitement indisponible ;
+  - entrée **Éléments visibles** dans l’onglet Trace ; `openLayers()` /
+    `closeLayers()` restaurent le tiroir parent, sa hauteur et son onglet ;
+  - les interrupteurs de POI filtrent réellement les épingles de la carte.
+- Données : aucune nouvelle source, aucun stockage, aucune migration ; la
+  distance vient de `get_route_geojson`, les POI de `explorer_pois`.
+- Limites documentées : pas de sous-kilomètre, `MultiLineString` discontinu
+  non compté au raccord, plafond d’affichage, écart possible avec
+  `distance_km`, neige indisponible (blocage 14), tests reportés.
+- Aucun test, build, lint ou `tsc` exécuté : reportés à la fin (mission).
+- Détail et conflits de fusion : `docs/explorer-v2/C01-K3.12.md`.
+- Statut : partiel et honnête (recette tactile et tests à faire).
+
+### [C01 · K3.10] POI vélo, réparation et recharge · 2026-11-13
+- Fiche : `fiches/Komoot/K3.10.md` (chantier C01, dépendance P01), lue dans le
+  bundle de mission. Base : `12735c1`.
+- Constat : `geo_pois` ne contient aucune des trois familles ; la contrainte
+  `geo_pois_subtype_check` (13 valeurs) les refuse, `buildGeoPoisQuery` ne
+  demande ni `shop=bicycle`, ni `amenity=bicycle_repair_station`, ni
+  `amenity=charging_station`, et `explorer_pois` mappe tout sous-type inconnu
+  vers `access`. La licence OSM ODbL est compatible, mais la donnée n'est pas
+  importée : aucune catégorie n'est activée.
+- Livré : trois lignes informatives désactivées dans **Éléments visibles**
+  (« Services et locations vélo », « Réparation vélo », « Recharge VAE »),
+  badge « Indisponible », source et licence explicites ; note sous la section.
+  Icônes `wrench` et `bolt` ajoutées au set existant. Aucune épingle, aucun
+  filtre actif, aucun nouvel écran, aucune migration.
+- Données : décision fondée sur le schéma, l'import et les audits versionnés
+  (`AUDIT_VERIFIE.md`, `20261101_explorer_v2_data.sql`,
+  `scripts/geo/import_geo_pois.ts`) ; aucun appel réseau, aucune lecture
+  Supabase dans cette tranche.
+- Limites : pas de détail au toucher sans POI réel ; pas de compteur ; la
+  recharge devra exiger `bicycle=yes` pour ne pas confondre une borne auto.
+- Aucun test, build, lint ou `tsc` exécuté : reportés à la fin (mission).
+- Détail, dépendances et checklist : `docs/explorer-v2/C01-K3.10.md`.
+- Statut : partiel et honnête (import réel et recette à faire).

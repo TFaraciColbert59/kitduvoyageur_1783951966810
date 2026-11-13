@@ -7,6 +7,7 @@ import {
   geometryCenter,
   useNaturalSearch,
   useRouteSuggestions,
+  useTerrainCoverage,
 } from '../data/hooks';
 import { SUGGESTION_RADIUS_KM } from '../routeSuggestions';
 import { isSearchableViewport } from '../searchArea';
@@ -20,6 +21,10 @@ import {
   splitSpeedKmh,
 } from '../activity/splits';
 import { useExplorerStore } from '../state/store';
+import {
+  nationalTopoSourcesFor,
+  verifiedNationalTopoFor,
+} from '../map/nationalTopo';
 import { countTiles, downloadZone, purgeZone, readZone } from '../offline/zone';
 import { ElevationProfile } from './ElevationProfile';
 import {
@@ -1091,15 +1096,124 @@ function PoiTabs(ctx: SheetContext, kind: string): SheetTab[] {
 
 function LayersTab({ ctx }: { ctx: SheetContext }) {
   const { state } = ctx;
+  const coverage = useTerrainCoverage();
   const currentBase = state.mapBaseStyle ?? 'relief';
   const layers = state.layerVisibility ?? {
     routes: true,
     water: true,
     refuges: true,
+    summits: true,
+    access: true,
     dangers: true,
     snow: true,
     slope: false,
+    distanceMarkers: true,
   };
+  const iso = (state.geo || ctx.country?.iso_a2 || '').trim().toUpperCase();
+  const nationalSources = nationalTopoSourcesFor(iso);
+  const nationalVerified = verifiedNationalTopoFor(iso);
+  const slope = ctx.terrain?.slope ?? {
+    state: 'idle' as const,
+    summary: null,
+    routeName: null,
+    hasRoute: false,
+  };
+  const slopeOn = layers.slope === true;
+  const slopeBadge = !slope.hasRoute
+    ? { label: 'Masqué', tone: 'muted' as const }
+    : slopeOn && slope.state === 'loading'
+      ? { label: 'Calcul…', tone: 'warn' as const }
+      : slopeOn && slope.state === 'ready'
+        ? { label: 'Actif', tone: 'good' as const }
+        : slopeOn && (slope.state === 'error' || slope.state === 'empty')
+          ? { label: 'Indisponible', tone: 'warn' as const }
+          : { label: 'Masqué', tone: 'muted' as const };
+  const slopeSub = !slope.hasRoute
+    ? 'Sélectionne un itinéraire sur la carte'
+    : slope.state === 'loading'
+      ? 'Calcul du relief réel…'
+      : slope.state === 'ready' && slope.summary
+        ? `D+ ${slope.summary.gainM} m · ${slope.summary.minM}–${slope.summary.maxM} m · AWS Terrain`
+        : slope.state === 'empty'
+          ? 'Relief indisponible pour ce tracé'
+          : slope.state === 'error'
+            ? 'Relief indisponible pour le moment'
+            : 'Relief réel · AWS Terrain Tiles';
+
+  const surfaceState = coverage.isPending
+    ? 'loading'
+    : coverage.isError
+      ? 'error'
+      : coverage.data?.surface.available
+        ? 'available'
+        : 'empty';
+  const surfaceBadge =
+    surfaceState === 'available'
+      ? { label: 'À venir', tone: 'warn' as const }
+      : surfaceState === 'loading'
+        ? { label: 'Vérification', tone: 'muted' as const }
+        : { label: 'Indisponible', tone: 'muted' as const };
+  const surfaceSub =
+    surfaceState === 'loading'
+      ? 'Vérification des données de surface…'
+      : surfaceState === 'error'
+        ? 'Vérification impossible pour le moment'
+        : surfaceState === 'available'
+          ? 'Segments OSM disponibles · couche non activée dans cette version'
+          : 'Aucun segment de surface importé (trail_segments)';
+
+  // Marqueurs de distance (K3.12) : uniquement dérivés de la géométrie réelle
+  // de l'itinéraire actif. Le compte et l'intervalle viennent du parent, jamais
+  // d'une estimation stockée.
+  const distance = ctx.terrain?.distance ?? {
+    hasRoute: false,
+    status: null,
+    count: 0,
+    intervalLabel: ctx.units === 'imperial' ? '1 mi' : '1 km',
+  };
+  const routesVisible = layers.routes !== false;
+  const distanceOn = layers.distanceMarkers !== false && routesVisible;
+  const distanceBadge =
+    distance.status === 'loading'
+      ? { label: 'Chargement', tone: 'warn' as const }
+      : distance.status === 'unavailable'
+        ? { label: 'Indisponible', tone: 'warn' as const }
+        : !distance.hasRoute
+          ? { label: 'Masqué', tone: 'muted' as const }
+          : distance.count === 0
+            ? { label: 'Aucun', tone: 'muted' as const }
+            : distanceOn
+              ? { label: 'Actif', tone: 'good' as const }
+              : { label: 'Masqué', tone: 'muted' as const };
+  const distanceSub =
+    distance.status === 'loading'
+      ? 'Chargement de la géométrie réelle…'
+      : distance.status === 'unavailable'
+        ? 'Géométrie indisponible pour ce tracé'
+        : !distance.hasRoute
+          ? 'Sélectionne un itinéraire sur la carte'
+          : !routesVisible
+            ? 'Sentiers masqués · réaffiche-les d’abord'
+            : distance.count === 0
+              ? `Tracé plus court que ${distance.intervalLabel}`
+              : `${distance.count} repères · tous les ${distance.intervalLabel}`;
+
+  const countOf = (...kinds: string[]) =>
+    ctx.pois.filter((poi) => kinds.includes(poi.kind)).length;
+  const waterCount = countOf('water');
+  const refugeCount = countOf('refuge', 'bivouac');
+  const summitCount = countOf('summit', 'viewpoint');
+  const accessCount = countOf('access');
+  const dangerCount = countOf('danger');
+  const layerBadge = (key: string, count: number) =>
+    count === 0
+      ? { label: 'Aucun', tone: 'muted' as const }
+      : layers[key] !== false
+        ? { label: 'Actif', tone: 'good' as const }
+        : { label: 'Masqué', tone: 'muted' as const };
+
+  const activityRouteReady = state.activity?.route?.status === 'ready';
+  const offRoute = state.activity?.offRoute === true;
 
   return (
     <>
@@ -1129,72 +1243,235 @@ function LayersTab({ ctx }: { ctx: SheetContext }) {
         >
           Plan
         </button>
+        {nationalVerified ? (
+          <button
+            type="button"
+            className="xp-chip"
+            aria-pressed={currentBase === 'national'}
+            onClick={() => state.setMapBaseStyle('national')}
+          >
+            {nationalVerified.label}
+          </button>
+        ) : null}
       </div>
 
-      <XpEyebrow>Données affichées</XpEyebrow>
+      <XpEyebrow>Fonds nationaux officiels</XpEyebrow>
+      {!iso ? (
+        <XpEmpty
+          title="Choisis un pays"
+          hint="Les fonds nationaux sont propres à chaque pays. Ouvre un pays pour voir les sources officielles déclarées."
+        />
+      ) : nationalSources.length === 0 ? (
+        <XpEmpty
+          title="Aucun fond national déclaré"
+          hint={`Aucune source officielle n’est déclarée pour ${ctx.country?.name ?? iso}. Les fonds Relief 3D, Satellite et Plan restent disponibles.`}
+        />
+      ) : (
+        <XpRows>
+          {nationalSources.map((source) => {
+            const verified = nationalVerified?.id === source.id;
+            return (
+              <XpRow
+                key={source.id}
+                icon="map"
+                title={source.label}
+                sub={
+                  verified
+                    ? `${source.provider} · ${source.licence}`
+                    : `${source.provider} · ${source.licence} · ${source.note}`
+                }
+                badge={{
+                  label: verified ? 'Disponible' : 'À confirmer',
+                  tone: verified ? 'good' : 'muted',
+                }}
+                disabled={!verified}
+                onClick={verified ? () => state.setMapBaseStyle('national') : undefined}
+              />
+            );
+          })}
+        </XpRows>
+      )}
+      {nationalSources.some((source) => source.status !== 'verified') ? (
+        <p className="xp-layer-note">
+          Aucune tuile nationale n’est chargée tant que l’accès et la couverture ne sont pas
+          confirmés.
+        </p>
+      ) : null}
+
+      <XpEyebrow>Éléments visibles</XpEyebrow>
       <XpRows>
         <XpRow
+          icon="flag"
+          title="Marqueurs de distance"
+          sub={distanceSub}
+          badge={distanceBadge}
+          disabled={
+            distance.status !== 'ready' || distance.count === 0 || !routesVisible
+          }
+          onClick={
+            distance.status === 'ready' && distance.count > 0 && routesVisible
+              ? () => state.toggleLayer('distanceMarkers')
+              : undefined
+          }
+        />
+        <XpRow
           icon="route"
-          title="Sentiers et traces"
-          sub={`GR®, PR, itinéraires · ${ctx.routes.length} disponibles`}
-          badge={{
-            label: layers.routes !== false ? 'Actif' : 'Masqué',
-            tone: layers.routes !== false ? 'good' : 'muted',
-          }}
-          onClick={() => state.toggleLayer('routes')}
+          title="Itinéraires et sentiers"
+          sub={
+            ctx.routes.length > 0
+              ? `GR®, PR, itinéraires · ${ctx.routes.length} disponibles`
+              : 'Aucun itinéraire dans cette zone'
+          }
+          badge={layerBadge('routes', ctx.routes.length)}
+          disabled={ctx.routes.length === 0}
+          onClick={ctx.routes.length > 0 ? () => state.toggleLayer('routes') : undefined}
         />
         <XpRow
           icon="drop"
           title="Points d’eau"
-          sub={`Sources et fontaines · ${ctx.pois.filter((p) => p.kind === 'water').length} repères`}
-          badge={{
-            label: layers.water !== false ? 'Actif' : 'Masqué',
-            tone: layers.water !== false ? 'good' : 'muted',
-          }}
-          onClick={() => state.toggleLayer('water')}
+          sub={
+            waterCount > 0
+              ? `Sources et fontaines · ${waterCount} repères`
+              : 'Aucun point d’eau répertorié ici'
+          }
+          badge={layerBadge('water', waterCount)}
+          disabled={waterCount === 0}
+          onClick={waterCount > 0 ? () => state.toggleLayer('water') : undefined}
         />
         <XpRow
           icon="house"
-          title="Refuges et abris"
-          sub={`Gardiennage et règles · ${ctx.pois.filter((p) => p.kind === 'refuge' || p.kind === 'bivouac').length} spots`}
-          badge={{
-            label: layers.refuges !== false ? 'Actif' : 'Masqué',
-            tone: layers.refuges !== false ? 'good' : 'muted',
-          }}
-          onClick={() => state.toggleLayer('refuges')}
+          title="Refuges, abris et bivouacs"
+          sub={
+            refugeCount > 0
+              ? `Gardiennage et règles · ${refugeCount} spots`
+              : 'Aucun refuge ni bivouac répertorié ici'
+          }
+          badge={layerBadge('refuges', refugeCount)}
+          disabled={refugeCount === 0}
+          onClick={refugeCount > 0 ? () => state.toggleLayer('refuges') : undefined}
+        />
+        <XpRow
+          icon="mtn"
+          title="Sommets et belvédères"
+          sub={
+            summitCount > 0
+              ? `Point de vue et altitude · ${summitCount} repères`
+              : 'Aucun sommet ni belvédère répertorié ici'
+          }
+          badge={layerBadge('summits', summitCount)}
+          disabled={summitCount === 0}
+          onClick={summitCount > 0 ? () => state.toggleLayer('summits') : undefined}
+        />
+        <XpRow
+          icon="pin"
+          title="Accès et départs"
+          sub={
+            accessCount > 0
+              ? `Parkings, gares et têtes de sentier · ${accessCount} repères`
+              : 'Aucun accès répertorié ici'
+          }
+          badge={layerBadge('access', accessCount)}
+          disabled={accessCount === 0}
+          onClick={accessCount > 0 ? () => state.toggleLayer('access') : undefined}
         />
         <XpRow
           icon="alert"
           tone="bad"
           title="Dangers signalés"
-          sub={`Névés, éboulements, crues · ${ctx.pois.filter((p) => p.kind === 'danger').length} alertes`}
-          badge={{
-            label: layers.dangers !== false ? 'Actif' : 'Masqué',
-            tone: layers.dangers !== false ? 'good' : 'muted',
-          }}
-          onClick={() => state.toggleLayer('dangers')}
+          sub={
+            dangerCount > 0
+              ? `Névés, éboulements, crues · ${dangerCount} alertes`
+              : 'Aucun danger signalé ici'
+          }
+          badge={layerBadge('dangers', dangerCount)}
+          disabled={dangerCount === 0}
+          onClick={dangerCount > 0 ? () => state.toggleLayer('dangers') : undefined}
+        />
+        {/* K3.10 — catégories vélo. OpenStreetMap (ODbL) porte ces objets,
+            mais aucune ligne n'est importée : `geo_pois` n'accepte pas ces
+            sous-types et l'import ne les demande pas. Lignes informatives
+            désactivées : aucune disponibilité n'est inventée. */}
+        <XpRow
+          icon="bike"
+          title="Services et locations vélo"
+          sub="Aucune boutique ou location vélo importée · OSM (ODbL) à brancher"
+          badge={{ label: 'Indisponible', tone: 'muted' }}
+          disabled
+        />
+        <XpRow
+          icon="wrench"
+          title="Réparation vélo"
+          sub="Aucun atelier ni borne de réparation importé · OSM (ODbL) à brancher"
+          badge={{ label: 'Indisponible', tone: 'muted' }}
+          disabled
+        />
+        <XpRow
+          icon="bolt"
+          title="Recharge VAE"
+          sub="Aucune borne de recharge vélo importée · OSM (ODbL) à brancher"
+          badge={{ label: 'Indisponible', tone: 'muted' }}
+          disabled
         />
         <XpRow
           icon="cloud"
           title="Neige et avalanche"
-          sub="Limite pluie-neige et risques signalés"
-          badge={{
-            label: layers.snow !== false ? 'Actif' : 'Masqué',
-            tone: layers.snow !== false ? 'good' : 'muted',
-          }}
-          onClick={() => state.toggleLayer('snow')}
-        />
-        <XpRow
-          icon="target"
-          title="Pentes > 30°"
-          sub="Zones sensibles aux avalanches"
-          badge={{
-            label: layers.slope ? 'Actif' : 'Masqué',
-            tone: layers.slope ? 'good' : 'muted',
-          }}
-          onClick={() => state.toggleLayer('slope')}
+          sub="Aucune couche neige importée dans cette version"
+          badge={{ label: 'Indisponible', tone: 'muted' }}
+          disabled
         />
       </XpRows>
+      <p className="xp-layer-note">
+        Les marqueurs de distance sont calculés sur le tracé réel de l’itinéraire
+        sélectionné, tous les {distance.intervalLabel}. Aucune distance n’est stockée
+        ni estimée sur un tracé absent ; les repères masqués ne sont plus dessinés.
+        Tracés et repères : © OpenStreetMap contributors (ODbL), sans date de levé
+        individuelle dans le schéma actuel.
+      </p>
+      <p className="xp-layer-note">
+        Catégories vélo : la source OSM (ODbL) le permettrait, mais aucune ligne
+        « vélo », « réparation » ou « recharge » n’est importée dans{' '}
+        <code>geo_pois</code>. Les trois lignes restent donc informatives et
+        désactivées : aucune épingle n’est créée sans donnée réelle.
+      </p>
+
+      <XpEyebrow>Couches terrain</XpEyebrow>
+      <XpRows>
+        <XpRow
+          icon="mtn"
+          title="Pente de l’itinéraire"
+          sub={slopeSub}
+          badge={slopeBadge}
+          disabled={!slope.hasRoute}
+          onClick={slope.hasRoute ? () => state.toggleLayer('slope') : undefined}
+        />
+        <XpRow
+          icon="layers"
+          title="Surface du sol"
+          sub={surfaceSub}
+          badge={surfaceBadge}
+          disabled
+        />
+        <XpRow
+          icon="route"
+          title="Hors-route"
+          sub={
+            activityRouteReady
+              ? offRoute
+                ? `Écart signalé · ${Math.round(state.activity?.offRouteM ?? 0)} m`
+                : 'Seuil 40 m / 15 s · retour sous 25 m'
+              : 'Actif pendant une sortie avec itinéraire'
+          }
+          badge={{
+            label: offRoute ? 'Écart' : activityRouteReady ? 'En veille' : 'Inactif',
+            tone: offRoute ? 'bad' : 'muted',
+          }}
+          disabled
+        />
+      </XpRows>
+      <p className="xp-layer-note">
+        Marche, vélo de route, gravel et VTT partagent ces couches. La pente suit
+        l’itinéraire sélectionné ; aucune surface par sport n’est affichée sans données importées.
+      </p>
 
       <XpEyebrow>Zone hors ligne</XpEyebrow>
       <XpRows>
@@ -1267,6 +1544,15 @@ function ToolsTabs(ctx: SheetContext, kind: string): SheetTab[] {
                   { label: 'Réseau', value: route.ref ?? route.network ?? 'GR®' },
                 ]}
               />
+              <XpEyebrow>Couches et affichage</XpEyebrow>
+              <XpRows>
+                <XpRow
+                  icon="layers"
+                  title="Éléments visibles"
+                  sub={`Fond, repères et marqueurs de distance (${ctx.units === 'imperial' ? 'mi' : 'km'})`}
+                  onClick={() => ctx.state.openLayers()}
+                />
+              </XpRows>
               <XpEyebrow>Points d’eau et abris sur la trace</XpEyebrow>
               {nearbyWater.length > 0 || nearbyRefuges.length > 0 ? (
                 <XpRows>
@@ -2613,7 +2899,7 @@ export function buildSheetModel(ctx: SheetContext): SheetModel {
       trail: ['Itinéraire', 'Trace enregistrée'],
       depart: ['Créer un départ', 'Invite d’autres membres'],
       search: ['Recherche', 'Pays, repères, itinéraires'],
-      layers: ['Calques', 'Ce que la carte affiche'],
+      layers: ['Calques', 'Éléments visibles de la carte'],
       offline: ['Hors ligne', 'Zone téléchargeable'],
     };
     const [title, subtitle] = titles[kind];
@@ -2627,7 +2913,10 @@ export function buildSheetModel(ctx: SheetContext): SheetModel {
           ? { items: [{ id: 'carte', label: 'Carte', icon: 'map' }, { id: 'survol', label: 'Survol 3D', icon: 'play' }], value: state.mini, onChange: (index: number) => state.setMini(index === 1 ? 1 : 0) }
           : null,
       actions: null,
-      onBack: () => state.patch({ sheet: 'level', detent: 'peek' }),
+      onBack:
+        kind === 'layers'
+          ? () => state.closeLayers()
+          : () => state.patch({ sheet: 'level', detent: 'peek' }),
     };
   }
 

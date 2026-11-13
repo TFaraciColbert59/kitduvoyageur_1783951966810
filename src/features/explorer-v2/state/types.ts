@@ -69,6 +69,15 @@ export type CameraIntent =
 
 export type Profile = 'solo' | 'famille' | 'enfants' | 'senior' | 'pmr' | 'sportif' | null;
 
+/**
+ * Fonds de carte proposés par l'Explorer.
+ *
+ * `national` n'est sélectionnable que si un fond officiel du pays a passé le
+ * statut `verified` du registre `map/nationalTopo.ts` ; sinon le tiroir ne
+ * l'expose pas.
+ */
+export type MapBaseStyle = 'relief' | 'satellite' | 'plan' | 'national';
+
 export type SportEnvironment = 'outdoor' | 'indoor';
 
 /**
@@ -235,6 +244,16 @@ export interface ExplorerState {
   detent: Detent;
   tab: number;
   mini: number;
+  /**
+   * Tiroir parent d'un sous-tiroir (K3.12). Il n'est posé que par
+   * `openLayers()` : le retour du menu commun restaure le tiroir, sa hauteur
+   * et son onglet, sans perdre la sélection courante.
+   */
+  sheetParent?: {
+    sheet: SheetKind;
+    detent: Detent;
+    tab: number;
+  };
   selection?: Selection;
   /**
    * Itinéraire armé pour le prochain départ. Sa géométrie réelle est chargée
@@ -294,8 +313,8 @@ export interface ExplorerState {
    * jamais persistés et ne contiennent aucune donnée privée.
    */
   searchRoutes?: SearchRoute[];
-  /** Fond de carte : relief 3D, satellite ou plan vectoriel. */
-  mapBaseStyle?: 'relief' | 'satellite' | 'plan';
+  /** Fond de carte : relief 3D, satellite, plan vectoriel ou fond national vérifié. */
+  mapBaseStyle?: MapBaseStyle;
   /** Visibilité des calques de données. */
   layerVisibility?: Record<string, boolean>;
   /** Scène de test/parité (?scene=), désactivée en production. */
