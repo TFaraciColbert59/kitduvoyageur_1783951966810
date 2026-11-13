@@ -661,7 +661,7 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
     [state],
   );
 
-  useGpsTracker({ distanceToRouteM: distanceToRoute, onFix: onGpsFix });
+  const { markLap } = useGpsTracker({ distanceToRouteM: distanceToRoute, onFix: onGpsFix });
 
   // Pause manuelle : aucun fix n'arrive pendant la pause. On marque la coupure
   // dès que l'état bascule pour que la reprise ouvre un segment distinct.
@@ -740,9 +740,10 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
       // de démonstration est retirée ici avant d'armer le compte à rebours.
       onStartSport: requestStartSafe,
       onConfirmReport,
+      onMarkLap: markLap,
       locale: 'fr-FR',
     }),
-    [state, countries, country, regionsGeo, regionGroups, place, pois, routes, weather, unitsForCountry, reportsData, carnetsData, tripsData, selectedPoi, me, requestStartSafe, onConfirmReport],
+    [state, countries, country, regionsGeo, regionGroups, place, pois, routes, weather, unitsForCountry, reportsData, carnetsData, tripsData, selectedPoi, me, requestStartSafe, onConfirmReport, markLap],
   );
 
   const model = useMemo(() => buildSheetModel(ctx), [ctx]);

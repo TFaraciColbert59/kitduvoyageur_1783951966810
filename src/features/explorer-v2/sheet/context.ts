@@ -54,6 +54,8 @@ export interface SheetContext {
   onStartSport?: (sport: Sport, selection?: SportSelection) => void;
   /** Confirmer un signalement (« présent » / « disparu »). */
   onConfirmReport?: (reportId: string, verdict: 'present' | 'gone') => void;
+  /** Clore le tour manuel courant (onglet Tours, séance active). */
+  onMarkLap?: () => void;
   locale: string;
 }
 

@@ -71,7 +71,14 @@
  * sur le web (l'import de `Sport` est un type, effacé au build).
  */
 
-import type { Sport } from '../state/types';
+import type { ActivitySplit, Sport } from '../state/types';
+import {
+  addSplitInterval,
+  cloneSplits,
+  closeLap,
+  createSplitsState,
+  MIN_LAP_DISTANCE_M,
+} from './splits';
 
 export interface GpsFix {
   t: number;
@@ -150,6 +157,16 @@ export interface ActivityMetrics {
    * tracé doit alors être coupé avant d'ajouter ce point.
    */
   discontinuity: boolean;
+  /**
+   * Splits kilométriques réels. Chaque intervalle accepté est affecté au
+   * segment courant ; un seuil franchi ferme le split et en ouvre un suivant.
+   * Les pauses et les trous GPS n'ajoutent ni distance ni temps.
+   */
+  splits: ActivitySplit[];
+  /** Même découpe par mile, calculée en parallèle pour les unités impériales. */
+  mileSplits: ActivitySplit[];
+  /** Tours manuels réels, indépendants des splits kilométriques. */
+  laps: ActivitySplit[];
 }
 
 export const MAX_ACCURACY_M = 30;
@@ -340,8 +357,9 @@ function isValidFix(fix: GpsFix): boolean {
   );
 }
 
-export class ActivityTracker {
-  private metrics: Omit<ActivityMetrics, 'autoPaused'> = {
+function initialMetrics(): Omit<ActivityMetrics, 'autoPaused'> {
+  const splits = createSplitsState();
+  return {
     distanceM: 0,
     elevGainM: 0,
     movingS: 0,
@@ -350,7 +368,14 @@ export class ActivityTracker {
     rejected: 0,
     accepted: false,
     discontinuity: false,
+    splits: splits.km,
+    mileSplits: splits.mi,
+    laps: splits.laps,
   };
+}
+
+export class ActivityTracker {
+  private metrics: Omit<ActivityMetrics, 'autoPaused'> = initialMetrics();
 
   private smoothedEle: number | null = null;
 
@@ -391,7 +416,30 @@ export class ActivityTracker {
   }
 
   get state(): ActivityMetrics {
-    return { ...this.metrics, autoPaused: this.autoPaused };
+    return {
+      ...this.metrics,
+      autoPaused: this.autoPaused,
+      splits: cloneSplits(this.metrics.splits),
+      mileSplits: cloneSplits(this.metrics.mileSplits),
+      laps: cloneSplits(this.metrics.laps),
+    };
+  }
+
+  /**
+   * Ferme le tour manuel courant. Sans distance mesurée, ne crée aucun tour
+   * vide. Les splits kilométriques et impériaux ne sont pas remis à zéro :
+   * les découpes restent indépendantes.
+   */
+  markLap(): ActivityMetrics {
+    const before = this.metrics.laps[this.metrics.laps.length - 1];
+    if (!before || before.distanceM < MIN_LAP_DISTANCE_M) return this.state;
+    const next = closeLap({
+      km: this.metrics.splits,
+      mi: this.metrics.mileSplits,
+      laps: this.metrics.laps,
+    });
+    this.metrics.laps = next.laps;
+    return this.state;
   }
 
   /**
@@ -612,8 +660,27 @@ export class ActivityTracker {
       }
     }
 
+    const moving = this.atOrAbove(speed, this.movementThresholdS());
     this.metrics.distanceM += distance;
-    if (this.atOrAbove(speed, this.movementThresholdS())) this.metrics.movingS += dtS;
+    if (moving) this.metrics.movingS += dtS;
+
+    // Seuls les intervalles qui viennent d'être ajoutés aux métriques entrent
+    // dans les splits. Un intervalle non « en mouvement » avance la distance
+    // mais pas la durée : le split reste cohérent avec `movingS`.
+    if (distance > 0) {
+      const next = addSplitInterval(
+        {
+          km: this.metrics.splits,
+          mi: this.metrics.mileSplits,
+          laps: this.metrics.laps,
+        },
+        distance,
+        moving ? dtS : 0,
+      );
+      this.metrics.splits = next.km;
+      this.metrics.mileSplits = next.mi;
+      this.metrics.laps = next.laps;
+    }
 
     if (ele !== null) {
       const smoothed =

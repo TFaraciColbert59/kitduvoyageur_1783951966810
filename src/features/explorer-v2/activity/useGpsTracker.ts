@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import {
   ActivityTracker,
   autoPauseConfigForSport,
@@ -46,6 +46,12 @@ export interface TrackerOptions {
   onFix?: (fix: GpsFix, metrics: ReturnType<ActivityTracker['addFix']>) => void;
 }
 
+/** Actions exposées par le suivi GPS à l'interface d'activité. */
+export interface GpsTrackerHandle {
+  /** Clôt le tour manuel courant si au moins 1 m a été mesuré. */
+  markLap: () => void;
+}
+
 /**
  * Horloge monotone de réception. Elle sert de preuve pour corriger un saut de
  * l'horloge murale, jamais de référence directe pour les durées : le tracker
@@ -58,7 +64,7 @@ function monotonicNow(): number {
   return Date.now();
 }
 
-export function useGpsTracker({ distanceToRouteM, onFix }: TrackerOptions = {}) {
+export function useGpsTracker({ distanceToRouteM, onFix }: TrackerOptions = {}): GpsTrackerHandle {
   const activity = useExplorerStore((state) => state.activity);
   const routeStatus = useExplorerStore((state) => state.activity?.route?.status);
   const autoPauseEnabled = useExplorerStore((state) => state.autoPauseEnabled) ?? false;
@@ -104,6 +110,9 @@ export function useGpsTracker({ distanceToRouteM, onFix }: TrackerOptions = {}) 
             elevGainM: metrics.elevGainM,
             movingS: metrics.movingS,
             autoPaused: metrics.autoPaused,
+            splits: metrics.splits,
+            mileSplits: metrics.mileSplits,
+            laps: metrics.laps,
           }
         : undefined,
       // Pause automatique : la capture continue pour détecter la reprise, mais
@@ -187,6 +196,37 @@ export function useGpsTracker({ distanceToRouteM, onFix }: TrackerOptions = {}) 
 
     onFix?.(fix, metrics);
   };
+
+  /**
+   * Tour manuel : ferme le segment courant et publie la nouvelle liste. Un
+   * appui sans distance mesurée est un no-op (pas de tour vide). La pause
+   * manuelle est respectée : on ne clôt pas un tour dont le suivi est suspendu.
+   */
+  const markLap = useCallback(() => {
+    const current = useExplorerStore.getState().activity;
+    if (!current || current.paused) return;
+    const beforeCount = trackerRef.current.state.laps.length;
+    const metrics = trackerRef.current.markLap();
+    if (metrics.laps.length <= beforeCount) return;
+    const closed = metrics.laps[metrics.laps.length - 2];
+    useExplorerStore.setState((state) =>
+      state.activity
+        ? {
+            activity: {
+              ...state.activity,
+              splits: metrics.splits,
+              mileSplits: metrics.mileSplits,
+              laps: metrics.laps,
+            },
+          }
+        : {},
+    );
+    useExplorerStore.getState().showToast({
+      title: 'Tour enregistré',
+      sub: closed ? `${Math.round(closed.distanceM)} m` : undefined,
+      tone: 'good',
+    });
+  }, []);
 
   // Hook de recette : rejoue une position sans GPS physique.
   useEffect(() => {
@@ -346,4 +386,6 @@ export function useGpsTracker({ distanceToRouteM, onFix }: TrackerOptions = {}) 
     samplesRef.current = [];
     offRouteRef.current = { offRoute: false, distanceM: 0, outSinceS: 0 };
   }, [routeStatus]);
+
+  return { markLap };
 }

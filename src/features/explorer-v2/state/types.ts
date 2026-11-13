@@ -88,6 +88,22 @@ export type SportMetricKey =
   | 'laps';
 
 /**
+ * Split kilométrique ou tour manuel, mesuré à partir des intervalles GPS
+ * réellement acceptés. `movingS` exclut les pauses et les trous GPS.
+ */
+export interface ActivitySplit {
+  kind: 'km' | 'mi' | 'lap';
+  /** Rang 1-based dans sa découpe (km 1, tour 1…). */
+  index: number;
+  /** Distance mesurée affectée au segment (m). */
+  distanceM: number;
+  /** Temps en mouvement affecté au segment (s). */
+  movingS: number;
+  /** Vrai quand le segment est fermé (seuil km atteint ou tour clôturé). */
+  completed: boolean;
+}
+
+/**
  * Variante locale choisie dans le drawer (S1.02). Elle conserve le `sport`
  * historique pour le tracker et la persistance ; les champs de variante sont
  * un enrichissement en mémoire, pas un nouveau contrat serveur.
@@ -160,6 +176,16 @@ export interface ActivityState {
   distanceM: number;
   elevGainM: number;
   movingS: number;
+  /**
+   * Splits kilométriques mesurés. Absent sur les scènes et les séances
+   * antérieures à l'ajout : l'interface affiche alors explicitement que la
+   * découpe n'est pas disponible, sans recalculer une allure globale.
+   */
+  splits?: ActivitySplit[];
+  /** Splits par mile, tenus en parallèle pour les unités impériales. */
+  mileSplits?: ActivitySplit[];
+  /** Tours manuels mesurés (même contrat que `splits`). */
+  laps?: ActivitySplit[];
 }
 
 export interface ToastMessage {

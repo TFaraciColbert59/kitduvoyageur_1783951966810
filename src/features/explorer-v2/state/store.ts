@@ -18,6 +18,7 @@ import type {
   TrailRouteSnapshot,
 } from './types';
 import { LEVEL_ZOOM, SCENES, type SceneName } from './scenes';
+import { createSplitsState } from '../activity/splits';
 
 export const DETENT_RATIO: Record<Detent, number> = {
   peek: 0,
@@ -153,6 +154,7 @@ function activityStarted(
   selection?: SportSelection,
   route?: TrailRouteSnapshot,
 ): ActivityState {
+  const splits = createSplitsState();
   return {
     sport,
     ...(selection ? { selection } : {}),
@@ -165,6 +167,9 @@ function activityStarted(
     distanceM: 0,
     elevGainM: 0,
     movingS: 0,
+    splits: splits.km,
+    mileSplits: splits.mi,
+    laps: splits.laps,
   };
 }
 
