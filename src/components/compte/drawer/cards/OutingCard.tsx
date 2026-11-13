@@ -1,6 +1,11 @@
 'use client';
 
 import React from 'react';
+import {
+  normalizeStoredOutingVisibility,
+  outingVisibilityLabel,
+  type StoredOutingVisibility,
+} from '@/features/compte/domain/outingAudience';
 import { formatNumber } from '../memories/memoriesModel';
 
 /** Une sortie du bootstrap, déjà normalisée pour l'affichage. */
@@ -17,6 +22,8 @@ export interface OutingCardData {
   /** Couverture résolue par le bootstrap (`coverImage`), distincte du compte. */
   cover?: string | null;
   status: string;
+  /** Audience réellement stockée ; une valeur inconnue est privée, jamais publique. */
+  visibility: StoredOutingVisibility;
   year: number | null;
   /** Section mensuelle lisible (« Juillet 2026 »), calculée depuis startedAt. */
   monthLabel: string;
@@ -31,25 +38,50 @@ function photoCountLabel(count: number): string {
  * date, pastille GPS et nombre de photos. Aucune donnée n'est inventée : la
  * couverture n'apparaît que si le bootstrap fournit une photo réelle.
  */
-export function OutingCard({ outing }: { outing: OutingCardData }) {
+export interface OutingCardProps {
+  outing: OutingCardData;
+  /** Mode sélection de l'historique : la carte entière devient une case à cocher. */
+  selectable?: boolean;
+  selected?: boolean;
+  onToggle?: (id: string) => void;
+}
+
+export function OutingCard({
+  outing,
+  selectable = false,
+  selected = false,
+  onToggle,
+}: OutingCardProps) {
   const cover = outing.cover || outing.photos[0];
+  const visibility = normalizeStoredOutingVisibility(outing.visibility);
   const hasMeta = Boolean(outing.mass || outing.date);
   const metrics = [
     outing.km !== null ? `${formatNumber(outing.km)} km` : null,
     outing.dplus !== null ? `${formatNumber(outing.dplus)} m D+` : null,
   ].filter((metric): metric is string => metric !== null);
+  const selectionLabel = [
+    outing.title,
+    ...metrics,
+    outing.mass,
+    outing.date,
+    outingVisibilityLabel(visibility),
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
   return (
     <li
       data-testid="outing-card"
       data-cover={cover ? 'true' : undefined}
+      data-selected={selectable ? (selected ? 'true' : 'false') : undefined}
       className={
         cover
           ? 'relative flex aspect-[16/9] items-end overflow-hidden rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--lkv-surface-muted,rgba(236,244,233,.9))]'
-          : 'flex h-[68px] min-h-[68px] items-center gap-2.5 overflow-hidden rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-2 backdrop-blur-[var(--blur-md)]'
+          : 'relative flex h-[68px] min-h-[68px] items-center gap-2.5 overflow-hidden rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-2 backdrop-blur-[var(--blur-md)]'
       }
     >
       <div
+        aria-hidden={selectable ? true : undefined}
         className={
           cover
             ? 'absolute inset-0'
@@ -85,6 +117,7 @@ export function OutingCard({ outing }: { outing: OutingCardData }) {
 
       {/* Avec une photo : elle occupe toute la carte, le texte passe sur du verre. */}
       <div
+        aria-hidden={selectable ? true : undefined}
         className={
           cover
             ? 'relative m-1.5 flex min-w-0 flex-1 items-center gap-2 rounded-[var(--lkv-radius-sm)] border border-white/60 bg-white/60 px-2.5 py-1.5 backdrop-blur-[14px] backdrop-saturate-150'
@@ -131,8 +164,41 @@ export function OutingCard({ outing }: { outing: OutingCardData }) {
               {photoCountLabel(outing.photos.length)}
             </span>
           ) : null}
+          {selectable ? (
+            <span className="rounded-full bg-[color:var(--card-tint-strong)] px-1.5 py-0.5 font-mono text-[9px] font-semibold text-[color:var(--label2)]">
+              {outingVisibilityLabel(visibility)}
+            </span>
+          ) : null}
         </div>
       </div>
+
+      {selectable ? (
+        <button
+          type="button"
+          role="checkbox"
+          aria-checked={selected}
+          aria-label={`${selected ? 'Retirer de la sélection' : 'Sélectionner'} ${selectionLabel}`}
+          onClick={() => onToggle?.(outing.id)}
+          className="absolute inset-0 z-10 rounded-[var(--lkv-radius-md)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--lkv-primary)]"
+        >
+          <span
+            aria-hidden="true"
+            className={`absolute right-2 top-2 grid h-6 w-6 place-items-center rounded-full border text-[12px] font-bold ${
+              selected
+                ? 'border-[color:var(--lkv-primary)] bg-[color:var(--lkv-primary)] text-white'
+                : 'border-white/70 bg-white/80 text-transparent'
+            }`}
+          >
+            ✓
+          </span>
+          {selected ? (
+            <span
+              aria-hidden="true"
+              className="absolute inset-0 rounded-[var(--lkv-radius-md)] ring-2 ring-[color:var(--lkv-primary)]"
+            />
+          ) : null}
+        </button>
+      ) : null}
     </li>
   );
 }

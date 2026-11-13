@@ -18,6 +18,10 @@ import type {
   Viewer,
   Visibility,
 } from './drawer/ProfileDrawerHost';
+import type {
+  BulkAudienceResult,
+  BulkOutingItem,
+} from './drawer/sortie/OutingBulkAudienceSheet';
 import { DRAWER_V2_CSS, type SlotContentState } from './drawer/SlotShell';
 import { useCompteMapContext } from './map/useCompteMapContext';
 
@@ -92,6 +96,13 @@ const CompteDrawer = dynamic(
 );
 const FirstRunJourney = dynamic(
   () => import('./onboarding/FirstRunJourney').then((mod) => mod.FirstRunJourney),
+  { ssr: false }
+);
+const OutingBulkAudienceSheet = dynamic(
+  () =>
+    import('./drawer/sortie/OutingBulkAudienceSheet').then(
+      (mod) => mod.OutingBulkAudienceSheet
+    ),
   { ssr: false }
 );
 
@@ -491,6 +502,7 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
   const [slotMount, setSlotMount] = useState<SlotMountSnapshot | null>(null);
   const [mapRoot, setMapRoot] = useState<HTMLElement | null>(null);
   const [mapVisible, setMapVisible] = useState(false);
+  const [bulkOutings, setBulkOutings] = useState<BulkOutingItem[] | null>(null);
   const mapContext = useCompteMapContext();
 
   useEffect(() => {
@@ -1700,6 +1712,31 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
     return () => window.removeEventListener('lkdv:highlights-changed', onHighlightsChanged);
   }, [syncSupabaseProfile]);
 
+  // Un changement d'identité ne doit pas laisser la feuille de lot ouverte
+  // avec les titres du compte précédent.
+  useEffect(() => {
+    setBulkOutings(null);
+  }, [user?.id]);
+
+  // L'historique runtime ouvre le lot React ; une écriture réussie relit le
+  // bootstrap pour que le carrousel et les cartes ne gardent pas l'ancienne
+  // audience. Aucune écriture n'est faite par le runtime lui-même.
+  useEffect(() => {
+    const onOpenBulk = (event: Event) => {
+      if (!user) return;
+      const detail = (event as CustomEvent<{ items?: BulkOutingItem[] }>).detail;
+      const items = Array.isArray(detail?.items) ? detail.items : [];
+      if (items.length > 0) setBulkOutings(items);
+    };
+    const onOutingsChanged = () => { void syncSupabaseProfile(); };
+    window.addEventListener('lkdv:open-outing-bulk', onOpenBulk);
+    window.addEventListener('lkdv:outings-changed', onOutingsChanged);
+    return () => {
+      window.removeEventListener('lkdv:open-outing-bulk', onOpenBulk);
+      window.removeEventListener('lkdv:outings-changed', onOutingsChanged);
+    };
+  }, [user, syncSupabaseProfile]);
+
   useEffect(() => {
     retryBootstrapRef.current = () => {
       void syncSupabaseProfile();
@@ -1869,6 +1906,17 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
                 }
               : undefined
           }
+        />
+      ) : null}
+      {bulkOutings ? (
+        <OutingBulkAudienceSheet
+          items={bulkOutings}
+          onClose={() => setBulkOutings(null)}
+          onApplied={(result: BulkAudienceResult) => {
+            if (result.updated.length > 0 && typeof window !== 'undefined') {
+              window.dispatchEvent(new Event('lkdv:outings-changed'));
+            }
+          }}
         />
       ) : null}
     </div>

@@ -3387,7 +3387,12 @@ renderIgTabContent = function (D) {
     if (!list.length) {
       return '<div class="ig-voyages-tab" role="region" aria-label="Sorties faites et voyages réalisés"><div style="padding:28px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;"><b style="font:600 14px var(--sf);color:var(--label);">Aucune sortie enregistrée</b><p style="font:400 12px/1.4 var(--sf);color:var(--label2);max-width:240px;margin:0 auto;">Vos traces GPS et vos sorties apparaîtront ici dès votre première randonnée enregistrée.</p><a href="/compas" class="mbtn p" style="text-decoration:none;height:30px;padding:0 14px;font-size:12px;">Planifier un voyage</a></div></div>';
     }
+    const canManage = !(S.profile && (S.profile.isDemo || S.profile.isGuest));
+    const bulkBar = canManage
+      ? '<div style="display:flex;justify-content:flex-end;padding:0 16px 4px"><button class="mbtn soft" data-a="openOutingBulk" style="height:44px;padding:0 16px;font-size:12.5px">Gérer la visibilité</button></div>'
+      : '';
     return '<div class="ig-voyages-tab" role="region" aria-label="Sorties faites et voyages réalisés">' +
+      bulkBar +
       '<div class="voyages-carousel">' +
         list.map((o, idx) => {
           const photo = o.coverImage || '';
@@ -5086,6 +5091,33 @@ var EXA = {
     requestAnimationFrame(() => flyToOuting(o));
     haptic(10);
   },
+  openOutingBulk: () => {
+    /* Le lot est orchestré par l'hôte React avec le PATCH propriétaire
+       existant. Le runtime ne simule aucune écriture et ne fournit que les
+       identifiants réels et l'audience déjà lue. */
+    if (S.profile && (S.profile.isDemo || S.profile.isGuest)) {
+      island('Compte de démonstration', 'Connecte un compte réel pour changer une audience.', false);
+      return;
+    }
+    const items = [];
+    const seen = new Set();
+    for (const o of OUTINGS) {
+      const id = o.realId || o.id;
+      if (!id || seen.has(id)) continue;
+      seen.add(id);
+      items.push({
+        id,
+        title: o.title || 'Sortie',
+        visibility: o.visibility === 'collective_anonymized' ? 'collective_anonymized' : 'private',
+      });
+    }
+    if (!items.length) {
+      island('Aucune sortie', 'Aucune audience ne peut être modifiée.', false);
+      return;
+    }
+    window.dispatchEvent(new CustomEvent('lkdv:open-outing-bulk', { detail: { items } }));
+    haptic(8);
+  },
   save_full_profile: () => {
     const nameEl = $('ep_name'), handleEl = $('ep_handle'), bioEl = $('ep_bio');
     if (nameEl && nameEl.value) S.profile.name = nameEl.value.trim();
@@ -5485,6 +5517,7 @@ window.__lkdvHydrateCompte = function (data) {
           dplus: Number(o.dplus) || 1200,
           maxAlt: 2400,
           status: o.status === 'planned' ? 'planned' : 'done',
+          visibility: o.visibility === 'collective_anonymized' ? 'collective_anonymized' : 'private',
           x: 200,
           y: 140
         });
@@ -5781,6 +5814,7 @@ window.__lkdvHydrateCompte = (data) => {
         dplus: Number(o.dplus || o.elevation_gain_m) || 0,
         maxAlt: o.max_altitude || 2000,
         status: o.status === 'completed' || o.status === 'done' ? 'done' : 'planned',
+        visibility: o.visibility === 'collective_anonymized' ? 'collective_anonymized' : 'private',
         x: 200,
         y: 140
       });

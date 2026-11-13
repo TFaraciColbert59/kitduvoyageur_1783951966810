@@ -3,6 +3,7 @@ import {
   signatureVisibilityForValue,
   type SignatureVisibility,
 } from './accountVisibility';
+import { normalizeStoredOutingVisibility } from '../domain/outingAudience';
 
 /**
  * Mapping pur des données Supabase vers les formes attendues par le runtime
@@ -794,6 +795,7 @@ export function mapOutings(
       dplus: Number(row.elevation_gain_m ?? 0),
       maxAlt: row.max_altitude_m ?? null,
       status: done ? 'done' : 'upcoming',
+      visibility: normalizeStoredOutingVisibility(row.visibility),
       ready: done ? 100 : 0,
       proven: Boolean(row.positions_timed),
       comp: [] as string[],

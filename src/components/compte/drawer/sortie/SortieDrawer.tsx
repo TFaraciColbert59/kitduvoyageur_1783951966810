@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Backpack,
@@ -22,6 +22,8 @@ import { OutingPhotos } from './OutingPhotos';
 import { OutingGear } from './OutingGear';
 import { OutingParticipants } from './OutingParticipants';
 import { OutingComments } from './OutingComments';
+import { OutingAudienceSheet } from './OutingAudienceSheet';
+import { updateOutingVisibility } from '@/features/compte/client/outingVisibility';
 
 async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, {
@@ -52,7 +54,12 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
   const [tab, setTab] = useState(0);
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [audienceOpen, setAudienceOpen] = useState(false);
   const [toast, setToast] = useState<Toast>(null);
+
+  useEffect(() => {
+    setAudienceOpen(false);
+  }, [outingId]);
 
   const query = useQuery({
     queryKey: ['sortie', outingId],
@@ -88,25 +95,13 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
     [invalidate, notify]
   );
 
-  const share = useCallback(async () => {
+  const openAudience = useCallback(() => {
     if (!detail) return;
-    const url = window.location.href.split('?')[0];
-    const payload = {
-      title: detail.title,
-      text: `${detail.title} · ${detail.km} km · +${detail.dplus} m`,
-      url,
-    };
-    try {
-      if (navigator.share) {
-        await navigator.share(payload);
-        notify('Partage ouvert');
-      } else {
-        await navigator.clipboard.writeText(url);
-        notify('Lien copié');
-      }
-    } catch {
-      // Annulation du partage natif : pas d'erreur visible.
+    if (!detail.canEdit) {
+      notify('Seul le propriétaire peut changer l’audience de cette sortie.', 'error');
+      return;
     }
+    setAudienceOpen(true);
   }, [detail, notify]);
 
   const exportGpx = useCallback(() => {
@@ -190,7 +185,7 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
                     'Sortie mise à jour'
                   )
                 }
-                onShare={share}
+                onShare={openAudience}
                 onExport={exportGpx}
                 onDelete={deleteOuting}
               />
@@ -310,7 +305,7 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
           );
         },
       })),
-    [busy, deleteOuting, detail, exportGpx, invalidate, outingId, run, share, uploadPhoto, uploading]
+    [busy, deleteOuting, detail, exportGpx, invalidate, openAudience, outingId, run, uploadPhoto, uploading]
   );
 
   if (authLoading) {
@@ -364,6 +359,29 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
           {toast.text}
         </div>
       ) : null}
+      <OutingAudienceSheet
+        open={audienceOpen}
+        title={detail.title}
+        summary={[detail.date, detail.massif, `${detail.km} km`, `+${detail.dplus} m`]
+          .filter(Boolean)
+          .join(' · ')}
+        current={detail.visibility}
+        onClose={() => setAudienceOpen(false)}
+        onApply={(next) => {
+          if (!detail.canEdit) {
+            throw new Error('Seul le propriétaire peut changer l’audience de cette sortie.');
+          }
+          return updateOutingVisibility(outingId, next);
+        }}
+        onApplied={() => {
+          setAudienceOpen(false);
+          invalidate();
+          notify('Audience de la sortie enregistrée');
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new Event('lkdv:outings-changed'));
+          }
+        }}
+      />
       <style dangerouslySetInnerHTML={{ __html: SORTIE_CSS }} />
     </div>
   );

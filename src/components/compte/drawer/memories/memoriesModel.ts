@@ -1,4 +1,5 @@
 import type { OutingCardData } from '../cards/OutingCard';
+import { normalizeStoredOutingVisibility } from '@/features/compte/domain/outingAudience';
 import type { StampTileData } from '../cards/StampTile';
 import type { HighlightCardData } from '../cards/HighlightCard';
 
@@ -108,6 +109,7 @@ export function normalizeOuting(value: unknown, index: number): OutingCardData |
     photos,
     cover: coverImage || photos[0] || null,
     status: asText(row.status),
+    visibility: normalizeStoredOutingVisibility(row.visibility),
     year: parts.year,
     monthLabel: parts.monthLabel,
   };
