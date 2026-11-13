@@ -7,6 +7,22 @@ import {
   resolveCorrelationId,
 } from '@/lib/observability/correlation';
 import { createStructuredLogger } from '@/lib/observability/logger';
+import {
+  boundedImportFileName,
+  resolveTraceImportIdentity,
+  validateTraceImportPayload,
+} from '@/features/hiking/import/importContract';
+import {
+  normalizeTraceImportLaps,
+  type TraceImportLapPayload,
+} from '@/features/hiking/import/lapContract';
+import {
+  normalizeTraceImportSamples,
+  normalizeTraceImportSummary,
+  type TraceImportSamplePayload,
+  type TraceImportSummaryPayload,
+} from '@/features/hiking/import/seriesContract';
+import { TRACE_IMPORT_MAX_PAYLOAD_SAMPLES } from '@/features/hiking/import/series';
 
 const logger = createStructuredLogger({ service: 'api.hike-sessions' });
 
@@ -53,6 +69,66 @@ interface SaveHikeSessionBody {
   /** A10 (10.3) — échantillons horodatés, source unique de temps du traitement. */
   positionsTimed?: TimedSample[];
   poiEvents: PoiEvent[];
+  /**
+   * Champs additifs utilisés par l'import FIT/TCX. Absents des appels
+   * historiques : la route conserve alors exactement son comportement.
+   */
+  title?: string | null;
+  notes?: string | null;
+  maxAltitudeM?: number | null;
+  /**
+   * Contrat d'import : le format source et l'empreinte du fichier original.
+   * Quand l'empreinte est présente, la route passe par `record_trace_import`
+   * et ne déduplique plus sur `started_at`.
+   */
+  source?: string | null;
+  sourceFingerprint?: string | null;
+  sourceFileName?: string | null;
+  sourceByteLength?: number | null;
+  /**
+   * Tours source lus dans le fichier. Absents d'un client antérieur : la
+   * route écrit alors la sortie sans tour, sans en inventer. Présents, ils
+   * sont validés, bornés puis écrits dans la même transaction que la sortie
+   * et sa provenance.
+   */
+  laps?: unknown;
+  /**
+   * Résumé `session` FIT et mesures de point réellement lues dans le fichier.
+   * Absents d'un client antérieur : la route écrit alors la sortie sans
+   * métrique de série, sans en inventer. Présents, ils sont validés, bornés
+   * puis écrits dans la même transaction que la sortie et sa provenance.
+   */
+  summary?: unknown;
+  samples?: unknown;
+  /**
+   * `false` pour un import : la sortie ne crée pas de carnet automatique.
+   * Sans ce champ, le comportement historique (carnet auto) reste actif.
+   */
+  createCarnet?: boolean;
+}
+
+/** Texte borné, jamais une valeur inventée quand la source est absente. */
+function boundedText(value: unknown, maxLength: number): string | null {
+  if (typeof value !== 'string') return null;
+  const text = value.trim();
+  return text ? text.slice(0, maxLength) : null;
+}
+
+function boundedInteger(value: unknown, min: number, max: number): number | null {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return null;
+  return Math.max(min, Math.min(max, Math.round(value)));
+}
+
+/**
+ * Le titre est rendu par le runtime du Compte dans du HTML (cartes Sorties).
+ * On retire les délimiteurs de balise et les caractères de contrôle à
+ * l'écriture : un nom de fichier importé ne peut pas devenir du balisage.
+ */
+function boundedTitle(value: unknown): string | null {
+  const text = boundedText(value, 120);
+  if (!text) return null;
+  const cleaned = text.replace(/[<>]/g, '').replace(/[\u0000-\u001f\u007f]/g, '').trim();
+  return cleaned ? cleaned.slice(0, 120) : null;
 }
 
 /** Reconstruit les échantillons horodatés depuis les positions brutes si besoin. */
@@ -166,12 +242,57 @@ export async function POST(req: NextRequest) {
       header: readCorrelationId(req),
       body: body.correlationId,
     }).correlationId;
-    const tripId = await resolveTripId(
-      supabase,
-      userId,
-      sanitizeTripId(body.tripId),
-      body.routeId
-    );
+
+    const importIdentity = resolveTraceImportIdentity(body);
+    if (importIdentity.kind === 'invalid') {
+      return NextResponse.json({ error: importIdentity.message }, { status: 400 });
+    }
+    let laps: TraceImportLapPayload[] = [];
+    let summary: TraceImportSummaryPayload | null = null;
+    let samples: TraceImportSamplePayload[] = [];
+    if (importIdentity.kind === 'import') {
+      const importError = validateTraceImportPayload(body);
+      if (importError) {
+        return NextResponse.json({ error: importError }, { status: 400 });
+      }
+      const normalizedLaps = normalizeTraceImportLaps(body.laps);
+      if (!normalizedLaps.ok) {
+        return NextResponse.json({ error: normalizedLaps.message }, { status: 400 });
+      }
+      laps = normalizedLaps.laps;
+
+      const normalizedSamples = normalizeTraceImportSamples(body.samples);
+      if (!normalizedSamples.ok) {
+        return NextResponse.json({ error: normalizedSamples.message }, { status: 400 });
+      }
+      samples = normalizedSamples.samples;
+
+      const normalizedSummary = normalizeTraceImportSummary(body.summary);
+      if (!normalizedSummary.ok) {
+        return NextResponse.json({ error: normalizedSummary.message }, { status: 400 });
+      }
+      summary = normalizedSummary.summary;
+    } else if (
+      (body.laps !== undefined && body.laps !== null)
+      || (body.summary !== undefined && body.summary !== null)
+      || (body.samples !== undefined && body.samples !== null)
+    ) {
+      return NextResponse.json(
+        { error: 'Les tours et métriques du fichier ne concernent qu’un import de trace.' },
+        { status: 400 }
+      );
+    }
+
+    // Un import reste volontairement sans voyage : la RPC ne lie ni carnet ni
+    // trip, et la route n'a pas à résoudre un plan qui n'a pas été demandé.
+    const tripId = importIdentity.kind === 'import'
+      ? null
+      : await resolveTripId(
+          supabase,
+          userId,
+          sanitizeTripId(body.tripId),
+          body.routeId
+        );
 
     if (!body.startedAt || !body.endedAt || body.distanceKm == null || body.durationSeconds == null) {
       return NextResponse.json({ error: 'Données de session incomplètes' }, { status: 400 });
@@ -194,7 +315,156 @@ export async function POST(req: NextRequest) {
       ? timedCandidates
       : deriveTimedPositions(simplified);
 
-    // 1. Check idempotency (prevent duplicate session creation)
+    // Import FIT/TCX/GPX : la clé est (propriétaire, empreinte SHA-256), jamais
+    // l'heure de départ. Deux fichiers différents démarrant à la même seconde
+    // restent deux sorties ; un rejeu du même contenu retourne l'existante.
+    if (importIdentity.kind === 'import') {
+      // La RPC à tours est une nouvelle fonction : l'ancienne reste intacte
+      // pour les clients et les imports sans tour. Si le code précède la
+      // migration et qu'il y a des tours, la route refuse explicitement (503)
+      // au lieu de les perdre silencieusement.
+      const withLaps = laps.length > 0;
+      const withMetrics = summary !== null || samples.length > 0;
+      const rpcName = withMetrics
+        ? 'record_trace_import_with_metrics'
+        : withLaps
+          ? 'record_trace_import_with_laps'
+          : 'record_trace_import';
+      const rpcArgs: Record<string, unknown> = {
+        p_started_at: body.startedAt,
+        p_ended_at: body.endedAt,
+        p_distance_km: body.distanceKm,
+        p_duration_seconds: Math.max(1, Math.round(body.durationSeconds)),
+        p_elevation_gain_m: body.elevationGainM ?? null,
+        p_max_altitude_m: boundedInteger(body.maxAltitudeM, -500, 9000),
+        p_positions_geojson: positionsGeojson,
+        p_positions_timed: positionsTimed.length >= 2 ? positionsTimed : null,
+        p_poi_events: [],
+        p_title: boundedTitle(body.title),
+        p_notes: boundedText(body.notes, 2000),
+        p_source: importIdentity.source,
+        p_source_fingerprint: importIdentity.fingerprint,
+        p_source_file_name: boundedImportFileName(body.sourceFileName),
+        p_source_byte_length:
+          typeof body.sourceByteLength === 'number' && Number.isFinite(body.sourceByteLength)
+            ? Math.round(body.sourceByteLength)
+            : null,
+        p_correlation_id: correlationId,
+      };
+      if (withLaps || withMetrics) rpcArgs.p_laps = laps;
+      if (withMetrics) {
+        rpcArgs.p_summary = summary;
+        rpcArgs.p_samples = samples;
+      }
+
+      const { data: importResult, error: importRpcError } = await supabase.rpc(
+        rpcName,
+        rpcArgs
+      );
+
+      if (importRpcError) {
+        const code = importRpcError.code ?? '';
+        if (code === '28000') {
+          return NextResponse.json({ error: 'Authentification requise' }, { status: 401 });
+        }
+        if (code === '22023') {
+          return NextResponse.json({ error: importRpcError.message }, { status: 400 });
+        }
+        if (code === '22007' || code === '22008' || code === '22P02' || code === '23514') {
+          return NextResponse.json({ error: 'Import ou tours invalides.' }, { status: 400 });
+        }
+        if (code === '23505') {
+          return NextResponse.json(
+            { error: 'Un import identique est déjà en cours. Réessaie.' },
+            { status: 409 }
+          );
+        }
+        if (code === 'PGRST202' || code === '42883') {
+          return NextResponse.json(
+            {
+              error: withMetrics
+                ? 'La persistance des métriques d’import n’est pas encore disponible.'
+                : withLaps
+                  ? 'La persistance des tours n’est pas encore disponible.'
+                  : 'La persistance des imports n’est pas encore disponible.',
+            },
+            { status: 503 }
+          );
+        }
+        // Pas de details/hint : une violation d'unicité peut y recopier
+        // l'empreinte. Le code et le message suffisent au diagnostic.
+        console.error(
+          '[hike-sessions] import RPC error:',
+          importRpcError.code,
+          importRpcError.message
+        );
+        return NextResponse.json(
+          { error: 'Erreur lors de la sauvegarde de l’import.' },
+          { status: 500 }
+        );
+      }
+
+      const result = importResult as {
+        session_id?: string | null;
+        carnet_id?: string | null;
+        existing?: boolean;
+        lap_count?: number | string | null;
+        sample_count?: number | string | null;
+        summary_stored?: boolean | null;
+      } | null;
+      if (!result?.session_id) {
+        return NextResponse.json(
+          { error: 'Erreur lors de la sauvegarde de l’import.' },
+          { status: 500 }
+        );
+      }
+
+      const rawLapCount =
+        typeof result.lap_count === 'number'
+          ? result.lap_count
+          : Number(result.lap_count ?? 0);
+      const lapCount =
+        Number.isFinite(rawLapCount) && rawLapCount >= 0
+          ? Math.min(Math.round(rawLapCount), 10_000)
+          : 0;
+      const rawSampleCount =
+        typeof result.sample_count === 'number'
+          ? result.sample_count
+          : Number(result.sample_count ?? 0);
+      const sampleCount =
+        Number.isFinite(rawSampleCount) && rawSampleCount >= 0
+          ? Math.min(Math.round(rawSampleCount), TRACE_IMPORT_MAX_PAYLOAD_SAMPLES)
+          : 0;
+
+      logger.info('hike_sessions.imported', {
+        correlation_id: correlationId,
+        latency_ms: Date.now() - startedAt,
+        status: 200,
+        session_id: result.session_id,
+        import_source: importIdentity.source,
+        import_existing: result.existing === true,
+        import_lap_count: lapCount,
+        import_sample_count: sampleCount,
+        import_summary_stored: result.summary_stored === true,
+      });
+
+      return NextResponse.json(
+        {
+          sessionId: result.session_id,
+          carnetId: result.carnet_id ?? null,
+          existing: result.existing === true,
+          lapCount,
+          sampleCount,
+          summaryStored: result.summary_stored === true,
+        },
+        { headers: correlationResponseHeaders(correlationId) }
+      );
+    }
+
+    // 1. Idempotence historique, hors import : ce contrôle porte sur
+    //    (user_id, started_at). Il ne s'applique jamais au contrat d'import
+    //    ci-dessus, qui déduplique par (propriétaire, empreinte) et distingue
+    //    donc deux fichiers différents démarrant à la même seconde.
     let query = supabase
       .from('hike_sessions')
       .select('id, carnet_id')
@@ -210,13 +480,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         sessionId: existingSession.id,
         carnetId: existingSession.carnet_id || null,
+        existing: true,
       });
     }
 
     // 2. Automatic Carnet Creation if carnetId is not provided
     let carnetId = body.carnetId || null;
 
-    if (!carnetId) {
+    if (!carnetId && body.createCarnet !== false) {
       let title = `Randonnée du ${new Date(body.startedAt).toLocaleDateString('fr-FR')}`;
       if (body.routeId) {
         const { data: rData } = await supabase
@@ -269,6 +540,10 @@ export async function POST(req: NextRequest) {
         positions_geojson: positionsGeojson,
         positions_timed: positionsTimed.length >= 2 ? positionsTimed : null,
         poi_events: body.poiEvents || [],
+        title: boundedTitle(body.title),
+        notes: boundedText(body.notes, 2000),
+        max_altitude_m: boundedInteger(body.maxAltitudeM, -500, 9000),
+        visibility: 'private',
         correlation_id: correlationId,
       })
       .select('id')
@@ -307,7 +582,7 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json(
-      { sessionId, carnetId },
+      { sessionId, carnetId, existing: false },
       { headers: correlationResponseHeaders(correlationId) }
     );
   } catch (err) {

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<t:TrainingCenterDatabase
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:t="http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2">
+  <t:Activities>
+    <t:Activity Sport="Cycling">
+      <t:Id>2026-08-11T06:30:00.000Z</t:Id>
+      <t:Lap StartTime="2026-08-11T06:30:00.000Z">
+        <t:TotalTimeSeconds>60</t:TotalTimeSeconds>
+        <t:DistanceMeters>400</t:DistanceMeters>
+        <t:Track>
+          <t:Trackpoint>
+            <t:Time>2026-08-11T06:30:00.000Z</t:Time>
+            <t:Position>
+              <t:LatitudeDegrees>44.1000</t:LatitudeDegrees>
+              <t:LongitudeDegrees>7.1000</t:LongitudeDegrees>
+            </t:Position>
+            <t:AltitudeMeters>800</t:AltitudeMeters>
+            <t:DistanceMeters>0</t:DistanceMeters>
+            <t:HeartRateBpm>
+              <t:Value>110</t:Value>
+            </t:HeartRateBpm>
+          </t:Trackpoint>
+        </t:Track>
+      </t:Lap>
+    </t:Activity>
+  </t:Activities>
+</t:TrainingCenterDatabase>

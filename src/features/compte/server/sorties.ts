@@ -24,6 +24,8 @@ import {
   weatherForViewer,
   type OutingWeather,
 } from './weather';
+import { TRACE_IMPORT_LIMITS } from '@/features/hiking/import/model';
+import { TRACE_IMPORT_MAX_PAYLOAD_SAMPLES } from '@/features/hiking/import/series';
 
 /**
  * Drawer Sortie — lecture et écriture des données réelles.
@@ -42,6 +44,96 @@ export interface OutingPoint {
   lng: number;
   elevationM: number | null;
   timestamp: string | null;
+}
+
+export type OutingImportSource = 'fit' | 'tcx' | 'gpx';
+
+/**
+ * Provenance réellement persistée par `trace_imports` pour un import de trace.
+ * Les champs de l'aperçu local (sport, créateur, produit, série, fuseaux,
+ * sections ignorées) ne sont volontairement pas repris : ils ne sont pas
+ * stockés et ne peuvent donc pas être restitués après rechargement.
+ */
+export interface OutingImportProvenance {
+  source: OutingImportSource;
+  fingerprint: string;
+  fileName: string | null;
+  byteLength: number | null;
+  importedAt: string;
+}
+
+/**
+ * Tour source réellement persisté dans `trace_import_laps`.
+ *
+ * `origin` conserve la distinction du fichier : `device` pour un lap déclaré
+ * par l'appareil (FIT `lap` ou TCX `Lap`), `synthetic` pour le tour unique
+ * reconstruit depuis le message FIT `session`. Ce n'est jamais un split
+ * calculé : les km/mile et tours manuels Explorer restent dans `ActivitySplit`.
+ */
+export interface OutingImportLap {
+  index: number;
+  origin: 'device' | 'synthetic';
+  startedAt: string | null;
+  elapsedSeconds: number | null;
+  distanceM: number | null;
+  averageSpeedMps: number | null;
+  maxSpeedMps: number | null;
+  caloriesKcal: number | null;
+  averageHeartRateBpm: number | null;
+  maxHeartRateBpm: number | null;
+  averageCadenceRpm: number | null;
+  averageCadenceSpm: number | null;
+  averagePowerW: number | null;
+  maxPowerW: number | null;
+  intensity: string | null;
+  triggerMethod: string | null;
+  pointCount: number;
+  trackCount: number;
+}
+
+/**
+ * Résumé `session` FIT réellement conservé dans `trace_import_summaries`.
+ * `origin` vaut `fit_session` : ces valeurs viennent du message `session` du
+ * fichier, jamais d'une moyenne calculée à partir des points.
+ */
+export interface OutingImportSummary {
+  origin: 'fit_session';
+  startedAt: string | null;
+  elapsedSeconds: number | null;
+  distanceM: number | null;
+  averageSpeedMps: number | null;
+  maxSpeedMps: number | null;
+  caloriesKcal: number | null;
+  averageHeartRateBpm: number | null;
+  maxHeartRateBpm: number | null;
+  averageCadenceRpm: number | null;
+  averageCadenceSpm: number | null;
+  averagePowerW: number | null;
+  maxPowerW: number | null;
+  activityTimerSeconds: number | null;
+}
+
+/**
+ * Mesure de point conservée dans `trace_import_samples`.
+ *
+ * `origin` vaut `device` : la valeur est recopiée du fichier, jamais dérivée.
+ * Les champs absents restent `null` ; `0` est une mesure réelle et n'est jamais
+ * confondu avec une absence. Aucune coordonnée n'est dupliquée ici : la trace
+ * reste dans `hike_sessions`.
+ */
+export interface OutingImportSample {
+  index: number;
+  origin: 'device';
+  recordedAt: string | null;
+  lapIndex: number | null;
+  distanceM: number | null;
+  altitudeM: number | null;
+  speedMps: number | null;
+  heartRateBpm: number | null;
+  cadenceRpm: number | null;
+  cadenceSpm: number | null;
+  powerW: number | null;
+  temperatureC: number | null;
 }
 
 export interface OutingPhoto {
@@ -158,7 +250,105 @@ export interface OutingDetail {
   traceFullyMasked: boolean;
   traceError: TraceProjectionError;
   canEdit: boolean;
+  /**
+   * Provenance privée d'un import FIT/TCX/GPX. `null` pour une sortie GPS,
+   * pour un lecteur non propriétaire, ou si le registre n'est pas disponible :
+   * le détail de la sortie reste alors entièrement lisible.
+   */
+  provenance: OutingImportProvenance | null;
+  /**
+   * Tours source d'un import FIT/TCX, dans l'ordre du fichier.
+   *
+   * - `null` : registre indisponible, lecteur non propriétaire, ou import
+   *   dont la provenance n'est pas lisible ; aucun tour n'est exposé.
+   * - `[]` : registre présent mais aucun tour conservé (import antérieur à la
+   *   persistance des tours, ou fichier sans tour).
+   *
+   * Les splits calculés ne sont jamais mélangés à ce tableau.
+   */
+  laps: OutingImportLap[] | null;
+  /**
+   * Résumé `session` FIT conservé pour cet import.
+   *
+   * - `null` : registre indisponible, lecteur non propriétaire, import sans
+   *   résumé (TCX, FIT sans `session`) ou import antérieur à cette passe.
+   * - objet : valeurs réellement lues dans le message `session`, `null` par
+   *   champ absent.
+   */
+  summary: OutingImportSummary | null;
+  /**
+   * Mesures de point conservées pour cet import.
+   *
+   * - `null` : registre indisponible, lecteur non propriétaire ou provenance
+   *   illisible ; aucune mesure n'est exposée.
+   * - `[]` : registre présent mais aucune mesure conservée (import antérieur,
+   *   ou fichier sans FC/cadence/puissance/température/distance de point).
+   *
+   * Les coordonnées ne sont jamais dupliquées dans ce tableau.
+   */
+  samples: OutingImportSample[] | null;
 }
+
+type TraceImportRow = {
+  source: string | null;
+  source_fingerprint: string | null;
+  source_file_name: string | null;
+  source_byte_length: number | string | null;
+  imported_at: string | null;
+};
+
+type TraceImportLapRow = {
+  lap_index: number | string | null;
+  lap_origin: string | null;
+  started_at: string | null;
+  elapsed_seconds: number | string | null;
+  distance_m: number | string | null;
+  average_speed_mps: number | string | null;
+  max_speed_mps: number | string | null;
+  calories_kcal: number | string | null;
+  average_heart_rate_bpm: number | string | null;
+  max_heart_rate_bpm: number | string | null;
+  average_cadence_rpm: number | string | null;
+  average_cadence_spm: number | string | null;
+  average_power_w: number | string | null;
+  max_power_w: number | string | null;
+  intensity: string | null;
+  trigger_method: string | null;
+  point_count: number | string | null;
+  track_count: number | string | null;
+};
+
+type TraceImportSummaryRow = {
+  summary_origin: string | null;
+  started_at: string | null;
+  elapsed_seconds: number | string | null;
+  distance_m: number | string | null;
+  average_speed_mps: number | string | null;
+  max_speed_mps: number | string | null;
+  calories_kcal: number | string | null;
+  average_heart_rate_bpm: number | string | null;
+  max_heart_rate_bpm: number | string | null;
+  average_cadence_rpm: number | string | null;
+  average_cadence_spm: number | string | null;
+  average_power_w: number | string | null;
+  max_power_w: number | string | null;
+  activity_timer_seconds: number | string | null;
+};
+
+type TraceImportSampleRow = {
+  sample_index: number | string | null;
+  sample_origin: string | null;
+  recorded_at: string | null;
+  lap_index: number | string | null;
+  distance_m: number | string | null;
+  altitude_m: number | string | null;
+  speed_mps: number | string | null;
+  heart_rate_bpm: number | string | null;
+  cadence_rpm: number | string | null;
+  cadence_spm: number | string | null;
+  power_w: number | string | null;
+  temperature_c: number | string | null;
+};
 
 type SessionRow = {
   id: string;
@@ -197,6 +387,366 @@ function numericOrNull(value: unknown): number | null {
 
 function text(value: unknown): string {
   return typeof value === 'string' ? value : '';
+}
+
+/**
+ * Validation stricte d'une ligne `trace_imports`. Une valeur inattendue ne
+ * devient jamais une provenance approximative : on préfère ne rien afficher.
+ */
+export function parseImportProvenance(
+  row: Partial<TraceImportRow> | null | undefined
+): OutingImportProvenance | null {
+  if (!row) return null;
+  const source =
+    typeof row.source === 'string' ? row.source.trim().toLowerCase() : '';
+  if (source !== 'fit' && source !== 'tcx' && source !== 'gpx') return null;
+
+  const fingerprint =
+    typeof row.source_fingerprint === 'string'
+      ? row.source_fingerprint.trim().toLowerCase()
+      : '';
+  if (!/^sha256:[0-9a-f]{64}$/.test(fingerprint)) return null;
+
+  const importedAt = typeof row.imported_at === 'string' ? row.imported_at.trim() : '';
+  if (!importedAt) return null;
+
+  const fileName =
+    typeof row.source_file_name === 'string' ? row.source_file_name.trim() : '';
+  const rawBytes = row.source_byte_length;
+  let bytes = NaN;
+  if (typeof rawBytes === 'number') {
+    bytes = rawBytes;
+  } else if (typeof rawBytes === 'string' && rawBytes.trim() !== '') {
+    bytes = Number(rawBytes);
+  }
+
+  return {
+    source,
+    fingerprint,
+    fileName: fileName ? fileName.slice(0, 255) : null,
+    byteLength:
+      Number.isFinite(bytes) && bytes > 0 ? Math.min(Math.round(bytes), 16_777_216) : null,
+    importedAt,
+  };
+}
+
+/**
+ * Lit la provenance d'un import pour **son propriétaire uniquement**.
+ *
+ * - `owner_id` et `session_id` sont filtrés ensemble ; la RLS de
+ *   `trace_imports` ne laisse de toute façon lire que `auth.uid()`.
+ * - Une table absente (code déployé avant la migration) ou une lecture
+ *   refusée retourne `null`, jamais une erreur : le détail de la sortie ne
+ *   doit pas dépendre du registre de provenance.
+ * - Le nom de fichier n'est jamais journalisé ici.
+ */
+async function readImportProvenance(
+  supabase: SupabaseClient,
+  userId: string,
+  sessionId: string
+): Promise<OutingImportProvenance | null> {
+  try {
+    const { data, error } = await supabase
+      .from('trace_imports')
+      .select(
+        'source,source_fingerprint,source_file_name,source_byte_length,imported_at'
+      )
+      .eq('owner_id', userId)
+      .eq('session_id', sessionId)
+      .maybeSingle();
+    if (error) return null;
+    return parseImportProvenance(data as TraceImportRow | null);
+  } catch {
+    return null;
+  }
+}
+
+function isImportLapOrigin(value: string): value is OutingImportLap['origin'] {
+  return value === 'device' || value === 'synthetic';
+}
+
+/**
+ * Validation stricte d'une ligne `trace_import_laps`. Une ligne inattendue est
+ * ignorée : on ne fabrique jamais un tour approximatif à partir d'un index ou
+ * d'une valeur manquante.
+ */
+export function parseImportLap(
+  row: Partial<TraceImportLapRow> | null | undefined
+): OutingImportLap | null {
+  if (!row) return null;
+
+  const index = numericOrNull(row.lap_index);
+  if (index === null || !Number.isInteger(index) || index < 0 || index > 9_999) {
+    return null;
+  }
+
+  const origin =
+    typeof row.lap_origin === 'string' ? row.lap_origin.trim().toLowerCase() : '';
+  if (!isImportLapOrigin(origin)) return null;
+
+  const startedAt =
+    typeof row.started_at === 'string' && row.started_at.trim() !== ''
+      ? row.started_at
+      : null;
+  if (startedAt !== null && !Number.isFinite(Date.parse(startedAt))) return null;
+
+  const pointCount = numericOrNull(row.point_count);
+  const trackCount = numericOrNull(row.track_count);
+  if (
+    pointCount === null
+    || !Number.isInteger(pointCount)
+    || pointCount < 0
+    || trackCount === null
+    || !Number.isInteger(trackCount)
+    || trackCount < 0
+  ) {
+    return null;
+  }
+
+  return {
+    index,
+    origin,
+    startedAt,
+    elapsedSeconds: numericOrNull(row.elapsed_seconds),
+    distanceM: numericOrNull(row.distance_m),
+    averageSpeedMps: numericOrNull(row.average_speed_mps),
+    maxSpeedMps: numericOrNull(row.max_speed_mps),
+    caloriesKcal: numericOrNull(row.calories_kcal),
+    averageHeartRateBpm: numericOrNull(row.average_heart_rate_bpm),
+    maxHeartRateBpm: numericOrNull(row.max_heart_rate_bpm),
+    averageCadenceRpm: numericOrNull(row.average_cadence_rpm),
+    averageCadenceSpm: numericOrNull(row.average_cadence_spm),
+    averagePowerW: numericOrNull(row.average_power_w),
+    maxPowerW: numericOrNull(row.max_power_w),
+    intensity:
+      typeof row.intensity === 'string' && row.intensity.trim() !== ''
+        ? row.intensity.slice(0, 64)
+        : null,
+    triggerMethod:
+      typeof row.trigger_method === 'string' && row.trigger_method.trim() !== ''
+        ? row.trigger_method.slice(0, 64)
+        : null,
+    pointCount,
+    trackCount,
+  };
+}
+
+const IMPORT_LAP_PAGE_SIZE = 1_000;
+const IMPORT_LAP_MAX = TRACE_IMPORT_LIMITS.maxLaps;
+const IMPORT_SAMPLE_PAGE_SIZE = 1_000;
+const IMPORT_SAMPLE_MAX = TRACE_IMPORT_MAX_PAYLOAD_SAMPLES;
+const IMPORT_LAP_INDEX_MAX = 9_999;
+
+/**
+ * Lit les tours d'un import pour **son propriétaire uniquement**.
+ *
+ * `owner_id` et `session_id` sont filtrés ensemble ; la RLS de
+ * `trace_import_laps` ne laisse de toute façon lire que `auth.uid()`. La
+ * lecture est paginée car PostgREST plafonne une réponse (1 000 lignes par
+ * défaut) alors qu'un fichier peut porter 10 000 tours. Une table absente
+ * (code déployé avant la migration), une erreur ou un refus retourne `null` :
+ * le détail de la sortie reste lisible sans tours.
+ */
+async function readImportLaps(
+  supabase: SupabaseClient,
+  userId: string,
+  sessionId: string
+): Promise<OutingImportLap[] | null> {
+  try {
+    const laps: OutingImportLap[] = [];
+    for (let offset = 0; offset < IMPORT_LAP_MAX; offset += IMPORT_LAP_PAGE_SIZE) {
+      const { data, error } = await supabase
+        .from('trace_import_laps')
+        // `*` garde la lecture compatible avec une base où la migration des
+        // métriques (colonne `average_power_w`) n'est pas encore appliquée :
+        // les tours existants restent lisibles au lieu de disparaître.
+        .select('*')
+        .eq('owner_id', userId)
+        .eq('session_id', sessionId)
+        .order('lap_index', { ascending: true })
+        .range(offset, offset + IMPORT_LAP_PAGE_SIZE - 1);
+
+      if (error) return null;
+      const batch = Array.isArray(data) ? (data as TraceImportLapRow[]) : [];
+      for (const row of batch) {
+        const lap = parseImportLap(row);
+        if (lap) laps.push(lap);
+      }
+      if (batch.length < IMPORT_LAP_PAGE_SIZE) break;
+    }
+    return laps;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Validation stricte d'une ligne `trace_import_summaries`. Un résumé
+ * inattendu est ignoré : on ne fabrique jamais une valeur à partir d'une ligne
+ * incomplète. `0` reste une mesure valide.
+ */
+export function parseImportSummary(
+  row: Partial<TraceImportSummaryRow> | null | undefined
+): OutingImportSummary | null {
+  if (!row) return null;
+  const origin =
+    typeof row.summary_origin === 'string' ? row.summary_origin.trim() : '';
+  if (origin !== 'fit_session') return null;
+
+  const startedAt =
+    typeof row.started_at === 'string' && row.started_at.trim() !== ''
+      ? row.started_at
+      : null;
+  if (startedAt !== null && !Number.isFinite(Date.parse(startedAt))) return null;
+
+  const summary: OutingImportSummary = {
+    origin: 'fit_session',
+    startedAt,
+    elapsedSeconds: numericOrNull(row.elapsed_seconds),
+    distanceM: numericOrNull(row.distance_m),
+    averageSpeedMps: numericOrNull(row.average_speed_mps),
+    maxSpeedMps: numericOrNull(row.max_speed_mps),
+    caloriesKcal: numericOrNull(row.calories_kcal),
+    averageHeartRateBpm: numericOrNull(row.average_heart_rate_bpm),
+    maxHeartRateBpm: numericOrNull(row.max_heart_rate_bpm),
+    averageCadenceRpm: numericOrNull(row.average_cadence_rpm),
+    averageCadenceSpm: numericOrNull(row.average_cadence_spm),
+    averagePowerW: numericOrNull(row.average_power_w),
+    maxPowerW: numericOrNull(row.max_power_w),
+    activityTimerSeconds: numericOrNull(row.activity_timer_seconds),
+  };
+
+  const hasMetric = [
+    summary.elapsedSeconds,
+    summary.distanceM,
+    summary.averageSpeedMps,
+    summary.maxSpeedMps,
+    summary.caloriesKcal,
+    summary.averageHeartRateBpm,
+    summary.maxHeartRateBpm,
+    summary.averageCadenceRpm,
+    summary.averageCadenceSpm,
+    summary.averagePowerW,
+    summary.maxPowerW,
+    summary.activityTimerSeconds,
+  ].some((value) => value !== null);
+  return hasMetric ? summary : null;
+}
+
+/**
+ * Validation stricte d'une ligne `trace_import_samples`. Une ligne inattendue
+ * est ignorée : aucune mesure approximative n'est exposée.
+ */
+export function parseImportSample(
+  row: Partial<TraceImportSampleRow> | null | undefined
+): OutingImportSample | null {
+  if (!row) return null;
+
+  const index = numericOrNull(row.sample_index);
+  if (index === null || !Number.isInteger(index) || index < 0 || index > IMPORT_SAMPLE_MAX - 1) {
+    return null;
+  }
+
+  const origin =
+    typeof row.sample_origin === 'string' ? row.sample_origin.trim().toLowerCase() : '';
+  if (origin !== 'device') return null;
+
+  const recordedAt =
+    typeof row.recorded_at === 'string' && row.recorded_at.trim() !== ''
+      ? row.recorded_at
+      : null;
+  if (recordedAt !== null && !Number.isFinite(Date.parse(recordedAt))) return null;
+
+  const lapIndexRaw = numericOrNull(row.lap_index);
+  const lapIndex =
+    lapIndexRaw !== null
+    && Number.isInteger(lapIndexRaw)
+    && lapIndexRaw >= 0
+    && lapIndexRaw <= IMPORT_LAP_INDEX_MAX
+      ? lapIndexRaw
+      : null;
+
+  return {
+    index,
+    origin: 'device',
+    recordedAt,
+    lapIndex,
+    distanceM: numericOrNull(row.distance_m),
+    altitudeM: numericOrNull(row.altitude_m),
+    speedMps: numericOrNull(row.speed_mps),
+    heartRateBpm: numericOrNull(row.heart_rate_bpm),
+    cadenceRpm: numericOrNull(row.cadence_rpm),
+    cadenceSpm: numericOrNull(row.cadence_spm),
+    powerW: numericOrNull(row.power_w),
+    temperatureC: numericOrNull(row.temperature_c),
+  };
+}
+
+/**
+ * Lit le résumé FIT d'un import pour **son propriétaire uniquement**. Une table
+ * absente, une erreur ou un refus retourne `null` : le détail reste lisible.
+ */
+async function readImportSummary(
+  supabase: SupabaseClient,
+  userId: string,
+  sessionId: string
+): Promise<OutingImportSummary | null> {
+  try {
+    const { data, error } = await supabase
+      .from('trace_import_summaries')
+      .select(
+        'summary_origin,started_at,elapsed_seconds,distance_m,average_speed_mps,'
+        + 'max_speed_mps,calories_kcal,average_heart_rate_bpm,max_heart_rate_bpm,'
+        + 'average_cadence_rpm,average_cadence_spm,average_power_w,max_power_w,'
+        + 'activity_timer_seconds'
+      )
+      .eq('owner_id', userId)
+      .eq('session_id', sessionId)
+      .maybeSingle();
+    if (error) return null;
+    return parseImportSummary(data as TraceImportSummaryRow | null);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Lit les mesures de point d'un import pour **son propriétaire uniquement**.
+ * La lecture est paginée (plafond PostgREST) jusqu'à 10 000 mesures. Une table
+ * absente, une erreur ou un refus retourne `null` ; `[]` signifie que la table
+ * est lisible mais ne contient aucune mesure.
+ */
+async function readImportSamples(
+  supabase: SupabaseClient,
+  userId: string,
+  sessionId: string
+): Promise<OutingImportSample[] | null> {
+  try {
+    const samples: OutingImportSample[] = [];
+    for (let offset = 0; offset < IMPORT_SAMPLE_MAX; offset += IMPORT_SAMPLE_PAGE_SIZE) {
+      const { data, error } = await supabase
+        .from('trace_import_samples')
+        .select(
+          'sample_index,sample_origin,recorded_at,lap_index,distance_m,altitude_m,'
+          + 'speed_mps,heart_rate_bpm,cadence_rpm,cadence_spm,power_w,temperature_c'
+        )
+        .eq('owner_id', userId)
+        .eq('session_id', sessionId)
+        .order('sample_index', { ascending: true })
+        .range(offset, offset + IMPORT_SAMPLE_PAGE_SIZE - 1);
+
+      if (error) return null;
+      const batch = Array.isArray(data) ? (data as TraceImportSampleRow[]) : [];
+      for (const row of batch) {
+        const sample = parseImportSample(row);
+        if (sample) samples.push(sample);
+      }
+      if (batch.length < IMPORT_SAMPLE_PAGE_SIZE) break;
+    }
+    return samples;
+  } catch {
+    return null;
+  }
 }
 
 export function normalizeVisibility(value: unknown): OutingVisibility {
@@ -378,7 +928,10 @@ export async function loadOutingDetail(
   const { data: sessionData, error: sessionError } = sessionResult;
   if (sessionError || !sessionData) return null;
   const session = sessionData as SessionRow;
-  const canEdit = session.user_id === userId;
+  // La provenance est privée au propriétaire, même si un futur rôle de
+  // collaboration élargit un jour `canEdit`.
+  const isProvenanceOwner = session.user_id === userId;
+  const canEdit = isProvenanceOwner;
 
   // Le sport vient de la séance multi-sport liée. L'historique sans lien est
   // une randonnée : on ne devine pas un autre sport.
@@ -393,7 +946,18 @@ export async function loadOutingDetail(
     if (typeof declared === 'string' && declared.trim()) sport = declared.trim().toLowerCase();
   }
 
-  const [routeRes, photoRes, participantRes, gearRes, kudosRes, commentRes] = await Promise.all([
+  const [
+    routeRes,
+    photoRes,
+    participantRes,
+    gearRes,
+    kudosRes,
+    commentRes,
+    provenance,
+    laps,
+    summary,
+    samples,
+  ] = await Promise.all([
     session.route_id
       ? supabase.from('hiking_routes').select('id,name,region').eq('id', session.route_id).maybeSingle()
       : Promise.resolve({ data: null, error: null }),
@@ -421,6 +985,21 @@ export async function loadOutingDetail(
       .select('id,user_id,body,created_at')
       .eq('session_id', session.id)
       .order('created_at', { ascending: true }),
+    // La provenance et les tours ne sont lus que pour le propriétaire. Un
+    // participant ne reçoit jamais le nom du fichier, l'empreinte, la taille
+    // source, les tours ni les mesures cardio.
+    isProvenanceOwner
+      ? readImportProvenance(supabase, userId, session.id)
+      : Promise.resolve(null),
+    isProvenanceOwner
+      ? readImportLaps(supabase, userId, session.id)
+      : Promise.resolve(null),
+    isProvenanceOwner
+      ? readImportSummary(supabase, userId, session.id)
+      : Promise.resolve(null),
+    isProvenanceOwner
+      ? readImportSamples(supabase, userId, session.id)
+      : Promise.resolve(null),
   ]);
 
   const route = routeRes.data as { name?: string | null; region?: string | null } | null;
@@ -833,6 +1412,14 @@ export async function loadOutingDetail(
     traceFullyMasked: projection.fullyMasked,
     traceError: projection.error,
     canEdit,
+    provenance,
+    // Les tours n'ont de sens que pour un import dont la provenance est lue.
+    // Une sortie GPS expose `null`, jamais un tableau vide ambigu.
+    laps: provenance ? laps : null,
+    // Le résumé et les séries sont privés au propriétaire, comme la provenance
+    // et les tours. Un participant reçoit `null`, jamais les mesures cardio.
+    summary: provenance ? summary : null,
+    samples: provenance ? samples : null,
   };
 }
 

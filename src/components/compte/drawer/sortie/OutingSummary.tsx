@@ -1,11 +1,27 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Check, Download, Eye, Pencil, Share2, ShieldCheck, Trash2, X } from 'lucide-react';
+import {
+  Check,
+  Download,
+  Eye,
+  Fingerprint,
+  Pencil,
+  Share2,
+  ShieldCheck,
+  Trash2,
+  X,
+} from 'lucide-react';
 import { ActionPill } from '@/components/ui/ActionPill';
-import type { OutingDetail, OutingVisibility } from '@/features/compte/server/sorties';
+import type {
+  OutingDetail,
+  OutingImportProvenance,
+  OutingVisibility,
+} from '@/features/compte/server/sorties';
 import type { OutingMetricKey } from '@/features/compte/domain/metricVisibility';
 import { OutingMetricSettings } from './OutingMetricSettings';
+import { OutingLaps } from './OutingLaps';
+import { OutingMetrics } from './OutingMetrics';
 import {
   ElevationProfile,
   TraceMap,
@@ -35,6 +51,29 @@ const STATUS_LABEL: Record<OutingDetail['status'], string> = {
   ongoing: 'En cours',
   done: 'Terminée',
 };
+
+const IMPORT_SOURCE_LABEL: Record<OutingImportProvenance['source'], string> = {
+  fit: 'FIT',
+  tcx: 'TCX',
+  gpx: 'GPX',
+};
+
+function formatSourceBytes(bytes: number | null): string {
+  if (bytes === null || !Number.isFinite(bytes) || bytes <= 0) return '—';
+  if (bytes >= 1024 * 1024) return `${formatNumber(bytes / (1024 * 1024))} Mo`;
+  if (bytes >= 1024) return `${Math.round(bytes / 1024)} ko`;
+  return `${bytes} o`;
+}
+
+function formatImportDate(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '—';
+  return new Intl.DateTimeFormat('fr-FR', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(date);
+}
 
 export function OutingSummary({
   detail,
@@ -73,6 +112,10 @@ export function OutingSummary({
   const traceState = traceUnavailableState(detail);
   const metricsHidden = detail.metricsMasked && !detail.canEdit;
   const maxAltitudeM = detail.maxAlt;
+  // Double garde : le serveur ne renvoie la provenance qu'au propriétaire, et
+  // l'interface ne l'affiche pas si un rôle de lecture non propriétaire arrive
+  // un jour à la recevoir.
+  const provenance = detail.canEdit ? detail.provenance : null;
 
   return (
     <div className="lkdv-sortie-summary">
@@ -106,6 +149,12 @@ export function OutingSummary({
             {detail.verified ? (
               <span className="lkdv-sortie-badge proof">
                 <ShieldCheck size={12} aria-hidden="true" /> Empreinte vérifiée
+              </span>
+            ) : null}
+            {provenance ? (
+              <span className="lkdv-sortie-badge">
+                <Fingerprint size={12} aria-hidden="true" /> Import{' '}
+                {IMPORT_SOURCE_LABEL[provenance.source]}
               </span>
             ) : null}
             <span className={`lkdv-sortie-badge state ${detail.status}`}>{STATUS_LABEL[detail.status]}</span>
@@ -248,6 +297,81 @@ export function OutingSummary({
           <span>{detail.verified ? 'Trace GPS présente' : 'Sans trace GPS'}</span>
         </header>
       </section>
+
+      {provenance ? (
+        <section className="lkdv-sortie-section" data-testid="outing-provenance">
+          <header>
+            <b>Provenance de l’import</b>
+            <span>Import privé</span>
+          </header>
+          <div className="lkdv-sortie-grid">
+            <div>
+              <small>Format</small>
+              <b>{IMPORT_SOURCE_LABEL[provenance.source]}</b>
+            </div>
+            <div>
+              <small>Taille source</small>
+              <b>{formatSourceBytes(provenance.byteLength)}</b>
+            </div>
+            <div>
+              <small>Importé le</small>
+              <b>{formatImportDate(provenance.importedAt)}</b>
+            </div>
+          </div>
+          <p
+            className="lkdv-sortie-proof"
+            style={{ overflowWrap: 'anywhere' }}
+            title={provenance.fileName ?? undefined}
+          >
+            {provenance.fileName
+              ? `Fichier : ${provenance.fileName}`
+              : 'Nom du fichier non renseigné.'}
+          </p>
+          <p className="lkdv-sortie-proof">
+            Empreinte du fichier :{' '}
+            <span
+              style={{
+                fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+                overflowWrap: 'anywhere',
+              }}
+            >
+              {provenance.fingerprint.slice(0, 22)}…
+            </span>
+          </p>
+        </section>
+      ) : null}
+
+      {provenance && (provenance.source === 'fit' || provenance.source === 'tcx') ? (
+        detail.laps == null ? (
+          <section className="lkdv-sortie-section" data-testid="outing-laps-unavailable">
+            <header>
+              <b>Tours du fichier</b>
+              <span>Indisponibles</span>
+            </header>
+            <p className="lkdv-sortie-proof">
+              La persistance des tours n’est pas encore disponible ou la lecture a échoué.
+              La sortie reste entièrement lisible ; aucun tour n’est inventé.
+            </p>
+          </section>
+        ) : detail.laps.length === 0 ? (
+          <section className="lkdv-sortie-section" data-testid="outing-laps-empty">
+            <header>
+              <b>Tours du fichier</b>
+              <span>Aucun tour conservé</span>
+            </header>
+            <p className="lkdv-sortie-proof">
+              Aucun tour n’est enregistré pour cet import. Les imports antérieurs à la
+              persistance des tours ne peuvent pas être complétés rétroactivement.
+            </p>
+          </section>
+        ) : (
+          <OutingLaps laps={detail.laps} />
+        )
+      ) : null}
+
+      {provenance && (provenance.source === 'fit' || provenance.source === 'tcx') ? (
+        <OutingMetrics summary={detail.summary ?? null} samples={detail.samples ?? null} />
+      ) : null}
 
       {detail.canEdit ? (
         <section className="lkdv-sortie-danger">

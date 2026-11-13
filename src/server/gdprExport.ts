@@ -8,11 +8,18 @@
  * authentification ; l'identifiant vient toujours de la session, jamais du
  * corps de requête.
  *
- * Aucune donnée de santé n'est présente dans ce schéma (décision AIPD a14).
+ * Les tours importés peuvent porter fréquence cardiaque, cadence et puissance
+ * (`trace_import_laps`) : mesures d'activité privées, sans connecteur santé,
+ * propriétaire seul, incluses dans l'export et l'effacement. Toute
+ * réutilisation à finalité de santé exigerait une AIPD dédiée.
  */
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-/** Version du schéma d'export — incrémenter à toute évolution de forme. */
+/**
+ * Version du schéma d'export — incrémenter à toute évolution incompatible de
+ * forme. L'ajout d'une table additive (A03 `trace_imports`) ne casse pas les
+ * consommateurs et ne change donc pas la version.
+ */
 export const GDPR_EXPORT_SCHEMA_VERSION = 'a14-v2';
 
 /** Une table du domaine et la colonne qui identifie le sujet. */
@@ -37,6 +44,14 @@ export const GDPR_USER_TABLES: readonly GdprUserTable[] = [
   { table: 'user_performance_profiles', userColumn: 'user_id' },
   { table: 'user_performance_profile_versions', userColumn: 'user_id' },
   { table: 'hike_sessions', userColumn: 'user_id' },
+  // A03/S1.15 — provenance privée des imports FIT/TCX/GPX, propriétaire seul.
+  { table: 'trace_imports', userColumn: 'owner_id' },
+  // A03/S2.05 — tours source privés, mesures cardio/cadence/puissance incluses.
+  { table: 'trace_import_laps', userColumn: 'owner_id' },
+  // A03/S1.15 — résumé FIT privé (calories, FC, cadence, puissance).
+  { table: 'trace_import_summaries', userColumn: 'owner_id' },
+  // A03/S1.15 — séries de mesures privées (FC, cadence, puissance, température).
+  { table: 'trace_import_samples', userColumn: 'owner_id' },
   { table: 'session_segment_passages', userColumn: 'user_id' },
   { table: 'terrain_reports', userColumn: 'reporter_id' },
   { table: 'terrain_report_confirmations', userColumn: 'user_id' },
@@ -70,7 +85,16 @@ export const GDPR_USER_TABLES: readonly GdprUserTable[] = [
  * l'export plante et, pire, la suppression de compte échoue au recomptage APRÈS
  * avoir supprimé l'utilisateur.
  */
-export const GDPR_OPTIONAL_TABLES: ReadonlySet<string> = new Set(['user_traveller']);
+export const GDPR_OPTIONAL_TABLES: ReadonlySet<string> = new Set([
+  'user_traveller',
+  // A03/S1.15 — le code peut précéder la migration locale des imports.
+  'trace_imports',
+  // A03/S2.05 — table additive des tours, absente avant la migration.
+  'trace_import_laps',
+  // A03/S1.15 — tables additives des métriques, absentes avant la migration.
+  'trace_import_summaries',
+  'trace_import_samples',
+]);
 
 /**
  * Relation absente : Postgres 42P01, PostgREST PGRST205. Le message ne sert que s'il
