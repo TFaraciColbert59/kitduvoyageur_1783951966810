@@ -1,6 +1,6 @@
 # Écrans E1–E13 du trailer : où ils sont dans l'app, ce qui est capturé
 
-Aperçu : `https://kitduvoyageur-1783951966810-4iswur70z.vercel.app` (jeton par la variable `VERCEL_SHARE`, jamais écrit). Captures 430×932 à ×3 = **1290×2796**, iPhone, thème clair, `fr-FR`, géolocalisation simulée (Sorapis). Scripts : `trailer/tools/capture/` (`lib.mjs`, `probe.mjs`, `demo-probe.mjs`, `kit-studio.mjs`, `compas.mjs`, `steps.mjs`).
+Aperçu (13/11) : `https://kitduvoyageur-17839519668-git-491ef3-tonyfaracip-3325s-projects.vercel.app` (l'ancien `…-4iswur70z…` a disparu) (jeton par la variable `VERCEL_SHARE`, jamais écrit). Captures 430×932 à ×3 = **1290×2796**, iPhone, thème clair, `fr-FR`, géolocalisation simulée (Sorapis). Scripts : `trailer/tools/capture/` (`lib.mjs`, `probe.mjs`, `demo-probe.mjs`, `kit-studio.mjs`, `compas.mjs`, `steps.mjs`).
 
 **Accès constaté sur l'aperçu (11/11)** : toutes les pages de l'app exigent une session (`src/middleware.ts`, `APP_ROUTES`) sauf `/explorer` ; `/kit-studio` renvoie vers `/connexion` côté client. L'essai anonyme est éteint ; seul le bouton « Connexion démo » (compte partagé `compas_demo_7e7b` / « Camille Démo », identifiants côté serveur) ouvre l'app. Les fonds de carte `tiles.openfreemap.org` sont refusés par le proxy de cette machine : l'Explorer affiche un globe vide ici (ce n'est pas un défaut de l'app).
 
@@ -23,3 +23,23 @@ Aperçu : `https://kitduvoyageur-1783951966810-4iswur70z.vercel.app` (jeton par 
 Libellés de la trame qui **n'existent pas** dans Kit Studio : « Prêté par Sami » (existe seulement dans le tiroir des clubs : « Prêté par **{nom}** (@pseudo) · catégorie », `components/clubs/drawer/ClubDrawerHost.tsx`), « Occasion » (absent de Kit Studio ; existe dans la création de publication communauté). Kit Studio dit « En prêt », « À louer », « À acheter ». Ailleurs : « Prêté à {nom} » (`GearRow.tsx`), « Prêté » (`OutingGear.tsx`, `KitCard.tsx`).
 
 Écriture en base faite : **1 brouillon Compas** (« Mixte · Dolomitenblick », 4 personnes) dans le compte démo partagé. Aucune autre écriture, aucun compte créé.
+
+## Écritures faites dans le compte démo « Camille Démo » (13/11/2026, par l'interface uniquement) — à retirer ensuite
+1. **18:26–18:29 UTC** : trois essais du formulaire « Créer · Carnet » (`/communaute` → « Créer dans l'application » → onglet Carnet) **non envoyés**. La photo du moment est téléversée dès qu'on la choisit (« elle est téléversée maintenant… pas à l'envoi ») : **2 copies orphelines de la photo du lac** (img09 en JPEG) dans le stockage du compte démo, sans carnet rattaché.
+2. **18:30 UTC** : carnet **« Dolomites · Lago di Sorapis »** créé par « Créer le carnet » : destination « Lago di Sorapis, Dolomites », 14–16/07/2026 (3 jours), 4 voyageurs, visibilité **Public**, récit « Le sentier 215 depuis Passo Tre Croci, puis le lac. », jour 1 « Passo Tre Croci → Lago di Sorapis », 1 moment Photo (lieu « Lago di Sorapis », « Arrivée au lac. », photo du lac = couverture).
+   **Visibilité** : « Public » = « Visible par toute la communauté ». Si l'aperçu partage la base de production (projet Supabase unique), ce carnet est visible de **tous les utilisateurs de l'app en production**.
+3. Carnet créé : `/carnets/0740a421-b41a-46bf-8372-3e9210fd9a03`. Il apparaît dans `/communaute` → recherche → onglet carnets en tête, sous l'étiquette **« CARNET DE LA SEMAINE »** : il est donc **mis en avant pour tous les utilisateurs** tant qu'il reste public. À retirer (ou repasser en « Privé ») après le tournage.
+4. Aucune sortie enregistrée, aucun retour terrain, aucun verdict écrit : l'activité Explorer de E7/E8/E10 n'a été ni terminée ni sauvegardée (Explorer public, sans connexion).
+
+## Mise à jour du 13/11 (prévaut sur le tableau ci-dessus pour E1, E7–E13)
+| Écran | Fichier | Remarque |
+|---|---|---|
+| E1 | `E01a-carnet-sorapis.png`, `E01b-carnet-jour1-photo.png` | page du carnet du trailer ; **pas de défilement** (fiche fixe, « zéro défilement de page ») : E01a = vue Résumé, E01b = jour 1 avec la photo du lac. Pas de visionneuse plein écran trouvée (toucher la photo ouvre le tiroir). Carte du bas centrée sur la France, « Aucun tracé enregistré pour ce carnet. » |
+| E7 | `E07-explorer-depart.png` | Explorer, Randonnée, « Suivi en cours », 0 m |
+| E8 | `E08-explorer-trace-6k4.png` | 6,4 km · 4,0 km/h · 1 h 36 · D+ 172 m, trace visible |
+| E9 | `E09-carnet-moment-photo.png` | formulaire Carnet, étape Jours, moment « Photo » avec la photo du lac, « Remplacer la photo », « Ajouter un moment » |
+| E10 | `E10-explorer-en-course.png` | 2,1 km · 3,5 km/h ; caméra 3D enfoncée dans le relief (défaut réel) |
+| E11 | `E11x-carnet-verdicts-vide.png` (**provisoire**) | onglet Sac → verdicts : « Tous · Essentiel · Utile · Jamais servi · Défaillant · Manquait », mais « Aucun verdict pour ce carnet. » : un verdict exige une sortie réelle liée au kit (non faite) |
+| E12 | `E12-carnet-partage-public.png` | étape Partage : « Aperçu de la fiche », « Public · 4 voyageurs », bouton **« Créer le carnet »** (pas de bouton « Publier ») |
+| E13 | `E13-communaute-carnets-semaine.png` | onglet carnets de la communauté : « CARNET DE LA SEMAINE » = notre carnet ; « Carnet · instantané publié » n'existe que sur des publications portant `snapshot_payload` (fils de club, `PostAttachments.tsx`), sans parcours de création trouvé |
+| E4 | — | non retenté (budget) |

@@ -13,7 +13,7 @@ function loadPlaywright() {
 }
 export const { chromium } = loadPlaywright();
 
-export const BASE = (process.env.LKDV_BASE_URL || 'https://kitduvoyageur-1783951966810-4iswur70z.vercel.app').replace(/\/+$/, '');
+export const BASE = (process.env.LKDV_BASE_URL || 'https://kitduvoyageur-17839519668-git-491ef3-tonyfaracip-3325s-projects.vercel.app').replace(/\/+$/, '');
 export const W = 430, H = 932, DPR = 3;
 
 export function mask(s) {
