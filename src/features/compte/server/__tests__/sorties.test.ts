@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { SHARED_SUMMARY_METRICS } from '../../domain/metricVisibility';
 import {
   buildGpx,
   computeStatus,
@@ -111,6 +112,25 @@ describe('sorties — GPX', () => {
     expect(gpx).toContain('lat="45.11" lon="5.21"');
     expect(gpx).toContain('lat="45.12" lon="5.22"');
     expect(outingTraceSegments(detail)).toHaveLength(2);
+  });
+
+  it('n’écrit ni heure ni altitude masquées dans le GPX', () => {
+    const detail = {
+      title: 'Métriques masquées',
+      points: [],
+      metricVisibility: { ...SHARED_SUMMARY_METRICS, movingTime: false },
+      traceSegments: [
+        [
+          { lat: 45.1, lng: 5.2, elevationM: 1200, timestamp: '2026-09-12T06:00:00Z' },
+          { lat: 45.11, lng: 5.21, elevationM: 1210, timestamp: '2026-09-12T06:05:00Z' },
+        ],
+      ],
+    } as unknown as OutingDetail;
+
+    const gpx = buildGpx(detail);
+    /* L'altitude reste autorisée par le socle, l'heure est masquée. */
+    expect(gpx).toContain('<ele>1200</ele>');
+    expect(gpx).not.toContain('<time>');
   });
 
   it('ne fabrique aucun <trkseg> quand tout est masqué', () => {
@@ -225,6 +245,15 @@ describe('loadOutingDetail — métadonnées servies', () => {
     expect(detail?.points).toEqual([]);
     expect(detail?.weather).toBeNull();
     expect(detail?.notes).toBe('');
+    /* S6.15 — aucune métrique d’effort ne sort d’une sortie privée. */
+    expect(detail?.km).toBeNull();
+    expect(detail?.dplus).toBeNull();
+    expect(detail?.maxAlt).toBeNull();
+    expect(detail?.durationS).toBeNull();
+    expect(detail?.paceMinPerKm).toBeNull();
+    expect(detail?.movingTimeS).toBeNull();
+    expect(detail?.metricVisibility.pace).toBe(false);
+    expect(detail?.metricsMasked).toBe(true);
   });
 
   it('expurge les coordonnées météo d’une sortie partageable', async () => {
@@ -241,6 +270,42 @@ describe('loadOutingDetail — métadonnées servies', () => {
     expect(detail?.weather?.longitude).toBeNull();
     expect(detail?.weather?.days).toHaveLength(1);
     expect(detail?.notes).toBe('note privée');
+    /*
+     * S6.15 — le socle agrégé reste publié, mais l’allure, le temps en
+     * mouvement et les heures de trace sont retirés faute de choix explicite.
+     */
+    expect(detail?.km).toBe(5);
+    expect(detail?.dplus).toBe(600);
+    expect(detail?.maxAlt).toBe(1800);
+    expect(detail?.durationS).toBe(14400);
+    expect(detail?.paceMinPerKm).toBeNull();
+    expect(detail?.movingTimeS).toBeNull();
+    expect(detail?.metricVisibility.pace).toBe(false);
+    expect(detail?.metricVisibility.distance).toBe(true);
+    expect(detail?.metricsMasked).toBe(true);
+    expect(detail?.traceSegments.flat().every((point) => point.timestamp === null)).toBe(true);
+    expect(detail?.traceSegments.flat().some((point) => point.elevationM !== null)).toBe(true);
+  });
+
+  it('applique une politique persistée stricte sans élargir les autres métriques', async () => {
+    const detail = await loadOutingDetail(
+      fakeSupabase(outing({ visibility: 'collective_anonymized' })),
+      'viewer-1',
+      's1',
+      { metricPolicy: { pace: true } },
+    );
+
+    /* La politique remplace le socle : seule l'allure est autorisée. */
+    expect(detail?.paceMinPerKm).toBe(48);
+    expect(detail?.km).toBeNull();
+    expect(detail?.dplus).toBeNull();
+    expect(detail?.durationS).toBeNull();
+    expect(detail?.startedAt).toBeNull();
+    expect(detail?.endedAt).toBeNull();
+    expect(detail?.metricVisibility.pace).toBe(true);
+    expect(detail?.metricVisibility.distance).toBe(false);
+    expect(detail?.traceSegments.flat().every((point) => point.timestamp === null)).toBe(true);
+    expect(detail?.traceSegments.flat().every((point) => point.elevationM === null)).toBe(true);
   });
 
   it('rend une trace raccourcie et la météo expurgée à un abonné vérifié', async () => {
@@ -300,6 +365,14 @@ describe('loadOutingDetail — métadonnées servies', () => {
     expect(detail?.weather?.latitude).toBe(45.8);
     expect(detail?.weather?.longitude).toBe(6.8);
     expect(detail?.notes).toBe('note privée');
+    /* S6.15 — le propriétaire garde toutes les métriques, y compris l’allure. */
+    expect(detail?.km).toBe(5);
+    expect(detail?.dplus).toBe(600);
+    expect(detail?.durationS).toBe(14400);
+    expect(detail?.paceMinPerKm).toBe(48);
+    expect(detail?.metricVisibility.pace).toBe(true);
+    expect(detail?.metricsMasked).toBe(false);
+    expect(detail?.traceSegments.flat().every((point) => point.timestamp !== null)).toBe(true);
   });
 
   it('conserve les frontières d’un MultiLineString pour le propriétaire', async () => {

@@ -11,6 +11,8 @@ import {
   formatDuration,
   formatNumber,
   hasVisibleTrace,
+  metricDisplay,
+  outingMetricVisible,
   traceUnavailableState,
   visibleTraceSegments,
 } from './shared';
@@ -51,6 +53,8 @@ export function OutingSummary({ detail, saving, onSave, onShare, onExport, onDel
   const segments = visibleTraceSegments(detail);
   const hasTrace = hasVisibleTrace(detail);
   const traceState = traceUnavailableState(detail);
+  const metricsHidden = detail.metricsMasked && !detail.canEdit;
+  const maxAltitudeM = detail.maxAlt;
 
   return (
     <div className="lkdv-sortie-summary">
@@ -100,21 +104,26 @@ export function OutingSummary({ detail, saving, onSave, onShare, onExport, onDel
       <div className="lkdv-sortie-tiles">
         <div>
           <small>Distance</small>
-          <b>{formatNumber(detail.km)} km</b>
+          <b>{metricDisplay(detail, 'distance', detail.km, (value) => `${formatNumber(value)} km`)}</b>
         </div>
         <div>
           <small>Dénivelé</small>
-          <b>+{formatNumber(detail.dplus)} m</b>
+          <b>{metricDisplay(detail, 'elevationGain', detail.dplus, (value) => `+${formatNumber(value)} m`)}</b>
         </div>
         <div>
           <small>Alt. max</small>
-          <b>{detail.maxAlt ? `${formatNumber(detail.maxAlt)} m` : '—'}</b>
+          <b>{metricDisplay(detail, 'maxAltitude', detail.maxAlt, (value) => `${formatNumber(value)} m`)}</b>
         </div>
         <div>
           <small>Durée</small>
-          <b>{formatDuration(detail.durationS)}</b>
+          <b>{metricDisplay(detail, 'duration', detail.durationS, (value) => formatDuration(value))}</b>
         </div>
       </div>
+      {metricsHidden ? (
+        <p className="lkdv-sortie-notes">
+          Certaines métriques d’effort ne sont pas partagées par le propriétaire.
+        </p>
+      ) : null}
 
       {editing ? (
         <form
@@ -163,9 +172,21 @@ export function OutingSummary({ detail, saving, onSave, onShare, onExport, onDel
       <section className="lkdv-sortie-section">
         <header>
           <b>Profil altimétrique</b>
-          <span>{detail.maxAlt ? `${formatNumber(detail.maxAlt)} m au plus haut` : 'Altitudes non renseignées'}</span>
+          <span>
+            {!outingMetricVisible(detail, 'elevation')
+              ? 'Non partagé'
+              : outingMetricVisible(detail, 'maxAltitude') &&
+                  typeof maxAltitudeM === 'number' &&
+                  Number.isFinite(maxAltitudeM)
+                ? `${formatNumber(maxAltitudeM)} m au plus haut`
+                : 'Profil partagé'}
+          </span>
         </header>
-        <ElevationProfile segments={segments} />
+        {outingMetricVisible(detail, 'elevation') ? (
+          <ElevationProfile segments={segments} />
+        ) : (
+          <div className="lkdv-sortie-trace-empty">Profil altimétrique non partagé</div>
+        )}
       </section>
 
       <section className="lkdv-sortie-section">

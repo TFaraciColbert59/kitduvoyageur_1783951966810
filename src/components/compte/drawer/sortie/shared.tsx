@@ -11,6 +11,10 @@ import {
   Sun,
 } from 'lucide-react';
 import type { OutingDetail, OutingPoint } from '@/features/compte/server/sorties';
+import {
+  isOutingMetricVisible,
+  type OutingMetricKey,
+} from '@/features/compte/domain/metricVisibility';
 import type { WeatherIcon } from '@/features/compte/server/weather';
 
 /** Morceaux visibles d'une sortie ; `points` n'est qu'un repli de compatibilité. */
@@ -96,6 +100,56 @@ export function formatDuration(seconds: number | null): string {
 
 export function formatNumber(value: number): string {
   return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 1 }).format(value);
+}
+
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value);
+}
+
+/** Vrai seulement si le serveur a explicitement autorisé cette métrique. */
+export function outingMetricVisible(
+  detail: Pick<OutingDetail, 'metricVisibility'>,
+  key: OutingMetricKey
+): boolean {
+  return isOutingMetricVisible(detail.metricVisibility, key);
+}
+
+/** Libellé honnête : « masqué » n'est pas « zéro » ni « non renseigné ». */
+export function metricDisplay(
+  detail: Pick<OutingDetail, 'metricVisibility'>,
+  key: OutingMetricKey,
+  value: number | null,
+  formatter: (value: number) => string
+): string {
+  if (!outingMetricVisible(detail, key)) return 'Masqué';
+  if (!isFiniteNumber(value)) return '—';
+  return formatter(value);
+}
+
+/**
+ * Texte de partage : uniquement les métriques que le serveur a rendues
+ * visibles. Une métrique masquée ne doit jamais être réintroduite par le
+ * client au moment de partager.
+ */
+export function shareableOutingText(detail: OutingDetail): string {
+  const parts = [detail.title];
+  const distanceKm = detail.km;
+  const elevationGainM = detail.dplus;
+  const maxAltitudeM = detail.maxAlt;
+  const durationS = detail.durationS;
+  if (outingMetricVisible(detail, 'distance') && isFiniteNumber(distanceKm)) {
+    parts.push(`${formatNumber(distanceKm)} km`);
+  }
+  if (outingMetricVisible(detail, 'elevationGain') && isFiniteNumber(elevationGainM)) {
+    parts.push(`+${formatNumber(elevationGainM)} m`);
+  }
+  if (outingMetricVisible(detail, 'maxAltitude') && isFiniteNumber(maxAltitudeM)) {
+    parts.push(`${formatNumber(maxAltitudeM)} m alt. max`);
+  }
+  if (outingMetricVisible(detail, 'duration') && isFiniteNumber(durationS)) {
+    parts.push(formatDuration(durationS));
+  }
+  return parts.join(' · ');
 }
 
 export function formatWeight(grams: number | null): string {

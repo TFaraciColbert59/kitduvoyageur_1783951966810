@@ -22,6 +22,7 @@ import { OutingPhotos } from './OutingPhotos';
 import { OutingGear } from './OutingGear';
 import { OutingParticipants } from './OutingParticipants';
 import { OutingComments } from './OutingComments';
+import { shareableOutingText } from './shared';
 
 async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, {
@@ -93,7 +94,8 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
     const url = window.location.href.split('?')[0];
     const payload = {
       title: detail.title,
-      text: `${detail.title} · ${detail.km} km · +${detail.dplus} m`,
+      /* Le texte ne reprend que les métriques rendues visibles par le serveur. */
+      text: shareableOutingText(detail),
       url,
     };
     try {

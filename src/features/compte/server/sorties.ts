@@ -1,6 +1,15 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { TraceProjectionError } from '../domain/traceProjection';
 import {
+  averagePaceMinPerKm,
+  movingTimeSeconds,
+  observedMaxAltitudeM,
+  projectOutingMetrics,
+  projectTraceMetrics,
+  resolveOutingMetricVisibility,
+  type OutingMetricVisibility,
+} from '../domain/metricVisibility';
+import {
   isFollowerTraceVisibility,
   projectTraceSampleSegments,
   resolveTraceMasks,
@@ -92,10 +101,21 @@ export interface OutingDetail {
   endedAt: string | null;
   massif: string | null;
   routeName: string | null;
-  km: number;
-  dplus: number;
+  /** Métriques projetées : `null` signifie masquée ou réellement absente. */
+  km: number | null;
+  dplus: number | null;
   maxAlt: number | null;
   durationS: number | null;
+  /** Allure calculée côté serveur, jamais recalculée par le client. */
+  paceMinPerKm: number | null;
+  movingTimeS: number | null;
+  heartRateBpm: number | null;
+  powerW: number | null;
+  cadenceRpm: number | null;
+  caloriesKcal: number | null;
+  /** Politique appliquée ; permet à l'UI de ne rien dériver d'une métrique masquée. */
+  metricVisibility: OutingMetricVisibility;
+  metricsMasked: boolean;
   status: OutingStatus;
   visibility: OutingVisibility;
   verified: boolean;
@@ -150,11 +170,6 @@ type ProfileRow = {
 };
 
 const PROFILE_COLUMNS = 'id, full_name, handle, avatar_url';
-
-function numeric(value: unknown): number {
-  const n = typeof value === 'number' ? value : Number(value);
-  return Number.isFinite(n) ? n : 0;
-}
 
 function numericOrNull(value: unknown): number | null {
   if (value === null || value === undefined || value === '') return null;
@@ -310,7 +325,15 @@ async function signedPhotoUrl(
 export async function loadOutingDetail(
   supabase: SupabaseClient,
   userId: string,
-  outingId: string
+  outingId: string,
+  options?: {
+    /**
+     * Politique déjà lue dans un stockage de confiance (propriétaire de la
+     * ligne). Ne jamais lui passer une valeur de requête brute : la résolution
+     * reste fail-closed, mais l'autorisation de la lire appartient à l'appelant.
+     */
+    metricPolicy?: unknown;
+  }
 ): Promise<OutingDetail | null> {
   const { data: sessionData, error: sessionError } = await supabase
     .from('hike_sessions')
@@ -568,11 +591,32 @@ export async function loadOutingDetail(
         ? 'follower'
         : 'visitor';
   const hasFullAccess = viewer === 'owner' || viewer === 'participant';
+  /*
+   * S6.15 — politique de métriques résolue avant toute projection. Le rôle
+   * `viewer` vient d'une autorisation réelle ; la politique par défaut est
+   * fail-closed et ne publie le socle agrégé que pour un partage explicite.
+   * Aucune politique persistée n'est encore branchée : le point d'extension
+   * `policy` est prêt, la migration reste à coordonner.
+   */
+  const metricVisibility = resolveOutingMetricVisibility({
+    viewer,
+    visibility: rawVisibility,
+    policy: options?.metricPolicy,
+  });
   const projection = projectTraceSampleSegments(
     rawSegments,
     resolveTraceMasks({ viewer, visibility: rawVisibility })
   );
-  const traceSegments: OutingPoint[][] = projection.segments.map((segment) =>
+  /*
+   * Les métadonnées de trace sont retirées quand une métrique masquée
+   * permettrait de les déduire (altitude, heure). Les coordonnées, elles, sont
+   * déjà projetées par `tracePrivacy` : les deux masquages sont indépendants.
+   */
+  const traceMetricProjection = projectTraceMetrics(
+    projection.segments,
+    metricVisibility
+  );
+  const traceSegments: OutingPoint[][] = traceMetricProjection.segments.map((segment) =>
     segment.map((point) => ({
       lat: point.lat,
       lng: point.lng,
@@ -584,9 +628,12 @@ export async function loadOutingDetail(
   /*
    * Pour un visiteur, `points` reste vide : un ancien consommateur qui ne
    * connaît pas `traceSegments` ne doit pas pouvoir retracer la trace brute.
-   * Le propriétaire et les participants gardent leurs points d'origine.
+   * Le propriétaire et les participants gardent leurs points d'origine, avec
+   * les mêmes métadonnées projetées.
    */
-  const points = projection.masked ? [] : rawPoints;
+  const projectedRawPoints =
+    projectTraceMetrics([rawPoints], metricVisibility).segments[0] ?? [];
+  const points = projection.masked ? [] : projectedRawPoints;
 
   /*
    * Météo : le propriétaire garde les coordonnées exactes. Un visiteur ne les
@@ -618,12 +665,31 @@ export async function loadOutingDetail(
   const notes =
     hasFullAccess || rawVisibility === 'collective_anonymized' ? text(session.notes) : '';
 
-  const maxAlt =
-    session.max_altitude_m ??
-    (visiblePoints.reduce<number | null>((max, point) => {
-      if (point.elevationM === null) return max;
-      return max === null ? point.elevationM : Math.max(max, point.elevationM);
-    }, null) ?? null);
+  /*
+   * Valeurs sources calculées avant masquage : la politique décide ensuite de
+   * ce qui sort. L'allure et le temps en mouvement ne sont jamais recalculés
+   * côté client, sinon une métrique masquée pourrait être redérivée.
+   */
+  const rawDistanceKm = numericOrNull(session.distance_km);
+  const rawDurationS = session.duration_seconds;
+  const rawMaxAltitudeM =
+    session.max_altitude_m ?? observedMaxAltitudeM(rawPoints);
+  const projectedMetrics = projectOutingMetrics(
+    {
+      distanceKm: rawDistanceKm,
+      elevationGainM: numericOrNull(session.elevation_gain_m),
+      maxAltitudeM: rawMaxAltitudeM,
+      durationS: rawDurationS,
+      paceMinPerKm: averagePaceMinPerKm(rawDurationS, rawDistanceKm),
+      movingTimeS: movingTimeSeconds(rawPoints),
+      /* Aucune source FC/puissance/cadence/calories dans le schéma actuel. */
+      heartRateBpm: null,
+      powerW: null,
+      cadenceRpm: null,
+      caloriesKcal: null,
+    },
+    metricVisibility
+  );
 
   const dateLabel = session.started_at ? session.started_at.slice(0, 10) : null;
   const title =
@@ -635,14 +701,22 @@ export async function loadOutingDetail(
     id: session.id,
     title,
     date: dateLabel,
-    startedAt: session.started_at,
-    endedAt: session.ended_at,
+    startedAt: metricVisibility.duration ? session.started_at : null,
+    endedAt: metricVisibility.duration ? session.ended_at : null,
     massif: route?.region?.trim() || route?.name?.trim() || null,
     routeName: route?.name?.trim() || null,
-    km: numeric(session.distance_km),
-    dplus: numeric(session.elevation_gain_m),
-    maxAlt,
-    durationS: session.duration_seconds,
+    km: projectedMetrics.distanceKm,
+    dplus: projectedMetrics.elevationGainM,
+    maxAlt: projectedMetrics.maxAltitudeM,
+    durationS: projectedMetrics.durationS,
+    paceMinPerKm: projectedMetrics.paceMinPerKm,
+    movingTimeS: projectedMetrics.movingTimeS,
+    heartRateBpm: projectedMetrics.heartRateBpm,
+    powerW: projectedMetrics.powerW,
+    cadenceRpm: projectedMetrics.cadenceRpm,
+    caloriesKcal: projectedMetrics.caloriesKcal,
+    metricVisibility,
+    metricsMasked: projectedMetrics.masked,
     status: computeStatus(session),
     visibility,
     verified: traceSegments.some((segment) => segment.length >= 2),
@@ -955,7 +1029,16 @@ export function outingTraceSegments(
 
 /** GPX 1.1 généré depuis la trace réelle (aucun fichier stocké). */
 export function buildGpx(detail: OutingDetail): string {
-  const segments = outingTraceSegments(detail);
+  const rawSegments = outingTraceSegments(detail);
+  /*
+   * Défense en profondeur : le DTO est déjà projeté par `loadOutingDetail`,
+   * mais un appel direct ne doit pas réintroduire une altitude ou une heure
+   * masquée. Sans politique (anciens appels de test), le sérialiseur reste
+   * compatible et ne projette rien.
+   */
+  const segments = detail.metricVisibility
+    ? projectTraceMetrics(rawSegments, detail.metricVisibility).segments
+    : rawSegments;
   const track = segments
     .map((segment) => {
       const points = segment
