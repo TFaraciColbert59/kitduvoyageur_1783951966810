@@ -12,6 +12,10 @@ import DayPlateau from './navigation/DayPlateau';
 import { useNavigationPlateau } from './navigation/useNavigationPlateau';
 import { hasDayFocusPlateau, useDayFocusStore } from './dayFocusStore';
 import { zIndex } from '@/lib/ui/zIndex';
+// Chargé ici, tôt, pour son écouteur : le marqueur « story ouverte » doit connaître les
+// demandes de masquage émises AVANT la première story (les visionneuses sont chargées en
+// différé), sinon il rendrait la barre native sous un tiroir encore ouvert.
+import '@/components/communaute/storyOpenMarker';
 
 export const NATIVE_TABBAR_ENABLED = true;
 
