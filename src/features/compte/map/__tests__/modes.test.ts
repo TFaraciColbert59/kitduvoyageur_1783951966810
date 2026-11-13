@@ -46,8 +46,15 @@ describe('mapModeConfig', () => {
 });
 
 describe('resolveSheetMode', () => {
-  it('mappe les cinq slots du profil', () => {
-    for (const slot of ['vitrine', 'kit', 'prets', 'souvenirs', 'communaute'] as const) {
+  it('mappe les six slots du profil', () => {
+    for (const slot of [
+      'vitrine',
+      'kit',
+      'prets',
+      'souvenirs',
+      'communaute',
+      'entrainement',
+    ] as const) {
       expect(
         resolveSheetMode({ kind: 'step', step: 0, slot, detent: 'card', outingId: null })
       ).toBe(slot);

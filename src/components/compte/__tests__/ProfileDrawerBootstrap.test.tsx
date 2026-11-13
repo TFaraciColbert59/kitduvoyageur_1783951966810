@@ -140,6 +140,12 @@ function deferredBootstrap() {
 }
 
 beforeEach(() => {
+  // Un test précédent peut laisser une entrée runtime d'une autre identité :
+  // on repart d'un window vierge avant de monter le compte.
+  delete (window as any).__lkdvMountSlot;
+  delete (window as any).__lkdvUnmountSlot;
+  delete (window as any).__lkdvOpenSlot;
+  delete (window as any).__lkdvCompteAct;
   mocks.auth.user = { id: 'owner-1', email: 'owner@lkdv.test' };
   mocks.auth.loading = false;
   mocks.router.push.mockClear();
@@ -197,6 +203,11 @@ function shell() {
   return document.querySelector('.lkdv-slot-shell') as HTMLElement | null;
 }
 
+/* Le drawer Profil porte désormais six slots : le premier montage dépasse
+   parfois la seconde par défaut de Testing Library sur une machine chargée ; 10 s couvre
+   le montage complet du runtime sous charge. */
+const SHELL_WAIT = { timeout: 10000 };
+
 function ownerEntries() {
   return {
     invitations: screen.queryByRole('button', { name: 'Gérer les invitations' }),
@@ -212,7 +223,7 @@ describe('Compte — bootstrap du drawer Profil', () => {
     await openDrawer();
 
     await waitFor(() => expect(bootstrapCalls).toBe(1));
-    await waitFor(() => expect(shell()).not.toBeNull());
+    await waitFor(() => expect(shell()).not.toBeNull(), SHELL_WAIT);
 
     expect(shell()?.getAttribute('data-viewer')).toBe('visitor');
     expect(shell()?.getAttribute('data-state')).toBe('loading');
@@ -227,13 +238,13 @@ describe('Compte — bootstrap du drawer Profil', () => {
     await renderCompte();
     await openDrawer();
     await waitFor(() => expect(bootstrapCalls).toBe(1));
-    await waitFor(() => expect(shell()?.getAttribute('data-viewer')).toBe('visitor'));
+    await waitFor(() => expect(shell()?.getAttribute('data-viewer')).toBe('visitor'), SHELL_WAIT);
 
     await act(async () => {
       boot.resolve(okResponse(BOOTSTRAP_PAYLOAD));
     });
 
-    await waitFor(() => expect(shell()?.getAttribute('data-viewer')).toBe('owner'));
+    await waitFor(() => expect(shell()?.getAttribute('data-viewer')).toBe('owner'), SHELL_WAIT);
     expect(shell()?.getAttribute('data-state')).toBe('ready');
     expect(ownerEntries().invitations).toBeNull();
 
@@ -247,7 +258,7 @@ describe('Compte — bootstrap du drawer Profil', () => {
     await renderCompte();
     await openDrawer();
 
-    const alert = await screen.findByRole('alert');
+    const alert = await screen.findByRole('alert', {}, SHELL_WAIT);
     expect(alert.textContent).toContain('Impossible de charger ce profil.');
     expect(alert.textContent).not.toBe('');
 
@@ -257,7 +268,7 @@ describe('Compte — bootstrap du drawer Profil', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Réessayer' }));
     await waitFor(() => expect(bootstrapCalls).toBe(2));
     // L'état d'erreur reste honnête après un nouvel échec.
-    expect(await screen.findByRole('alert')).toBeTruthy();
+    expect(await screen.findByRole('alert', {}, SHELL_WAIT)).toBeTruthy();
   });
 
   it("ne suit pas le deep link ?tab=clubs avant la résolution du bootstrap", async () => {
@@ -275,7 +286,7 @@ describe('Compte — bootstrap du drawer Profil', () => {
       boot.resolve(okResponse(BOOTSTRAP_PAYLOAD));
     });
 
-    await waitFor(() => expect(shell()?.getAttribute('data-slot')).toBe('communaute'));
+    await waitFor(() => expect(shell()?.getAttribute('data-slot')).toBe('communaute'), SHELL_WAIT);
     expect(shell()?.getAttribute('data-viewer')).toBe('owner');
   });
 });
@@ -391,6 +402,7 @@ describe('Compte — isolation entre identités', () => {
     const oldUnmount = (window as any).__lkdvUnmountSlot;
     await switchAccount(view, 'owner-2');
     await openDrawer();
+    await waitFor(() => expect(shell()).not.toBeNull(), SHELL_WAIT);
     const portal = shell();
     expect(portal).not.toBeNull();
     await act(async () => oldUnmount());

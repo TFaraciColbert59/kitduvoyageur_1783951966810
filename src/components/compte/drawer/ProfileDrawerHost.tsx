@@ -18,6 +18,7 @@ import { LoansSlot } from './slots/LoansSlot';
 import { MemoriesSlot } from './slots/MemoriesSlot';
 import { CommunitySlot } from './slots/CommunitySlot';
 import { VitrineSlot } from './slots/VitrineSlot';
+const WorkoutsDrawer = React.lazy(() => import('./workouts/WorkoutsDrawer'));
 
 export type { SlotId, Viewer, Visibility } from './SlotShell';
 
@@ -129,6 +130,13 @@ const SLOT_META: Record<SlotId, SlotMeta> = {
       { id: 'clubs', label: 'Clubs', icon: LENS_ICONS.clubs },
     ],
   },
+  entrainement: {
+    title: 'Entraînement',
+    subtitle: 'Plans, séances guidées et récupération',
+    // Une seule lentille : les sections Course / Vélo / Séances / Récupération
+    // sont portées par l'onglet interne, pour ne pas monter deux fois le lecteur.
+    lenses: [{ id: 'entrainement', label: 'Entraînement', icon: LENS_ICONS.stats }],
+  },
 };
 
 /**
@@ -163,6 +171,20 @@ function renderSlotContent(
       return <MemoriesSlot lens={lens.id} payload={payload} />;
     case 'communaute':
       return <CommunitySlot lens={lens.id} payload={payload} />;
+    case 'entrainement':
+      return (
+        <React.Suspense
+          fallback={
+            <div className="lkdv-slot-skeleton" data-state="loading" aria-busy="true">
+              <span className="lkdv-slot-skel lkdv-slot-skel-lg" />
+              <span className="lkdv-slot-skel" />
+              <span className="lkdv-slot-skel lkdv-slot-skel-sm" />
+            </div>
+          }
+        >
+          <WorkoutsDrawer payload={payload} viewer={viewer} />
+        </React.Suspense>
+      );
     default:
       return <VitrineSlot lens={lens.id} payload={payload} viewer={viewer} />;
   }
@@ -215,7 +237,14 @@ export function ProfileDrawerHost({
 
   const handleSlotChange = useCallback(
     (slotId: SlotId) => {
-      const order: SlotId[] = ['vitrine', 'kit', 'prets', 'souvenirs', 'communaute'];
+      const order: SlotId[] = [
+        'vitrine',
+        'kit',
+        'prets',
+        'souvenirs',
+        'communaute',
+        'entrainement',
+      ];
       const dir: 1 | -1 = order.indexOf(slotId) >= order.indexOf(displaySlot) ? 1 : -1;
 
       setSlideDir(dir);
