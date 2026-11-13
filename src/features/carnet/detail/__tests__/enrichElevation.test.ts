@@ -198,6 +198,36 @@ describe('enrichCarnetElevation', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it('S6.15 : ne reconstruit pas le profil via Open-Meteo si elevationWithheld ou si la politique masque une métrique altimétrique', async () => {
+    answerWith([1200, 1300, 1250]);
+
+    const withheld = await enrichCarnetElevation(
+      detailWith({ elevationWithheld: true }),
+    );
+    expect(withheld.elevationProfile).toEqual([]);
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    const maskedPolicy = await enrichCarnetElevation(
+      detailWith({
+        metricVisibility: {
+          distance: true,
+          elevation: true,
+          elevationGain: false,
+          maxAltitude: true,
+          duration: true,
+          pace: false,
+          movingTime: false,
+          heartRate: false,
+          power: false,
+          cadence: false,
+          calories: false,
+        },
+      }),
+    );
+    expect(maskedPolicy.elevationProfile).toEqual([]);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('réponse qui ne couvre pas les points demandés : profil refusé', async () => {
     answerWith([1200, 1300]);
 

@@ -256,7 +256,7 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
     key: 'distance' | 'elevationGain',
     read: (session: HikeSessionRow) => unknown
   ): number | null => {
-    if (!sessionsComplete) return null;
+    if (!sessionsComplete || !carnetMetricVisibility[key]) return null;
     /*
      * Sans map de politiques, un appel historique propriétaire ne peut agréger
      * que ses sorties brutes : les autres lignes n'ont pas été autorisées par
@@ -314,14 +314,20 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
        * Fail-closed : une sortie absente de la map ne retombe plus sur le
        * socle agrégé. Seul `getCarnetDetail`, qui a vérifié chaque rôle, peut
        * fournir une politique ; un appel incomplet ferme la métrique.
+       * De plus, si le carnet entier ferme `distance`, `elevationGain` ou
+       * `duration` par intersection, aucune sortie non brute ne peut alimenter
+       * `summary` avec un sous-total partiel.
        */
       const visibility = sessionMetricVisibility(session);
+      const allowDistance = carnetMetricVisibility.distance && visibility.distance;
+      const allowElevation = carnetMetricVisibility.elevationGain && visibility.elevationGain;
+      const allowDuration = carnetMetricVisibility.duration && visibility.duration;
       return {
         ...session,
-        distance_km: visibility.distance ? session.distance_km : null,
-        elevation_gain_m: visibility.elevationGain ? session.elevation_gain_m : null,
-        duration_seconds: visibility.duration ? session.duration_seconds : null,
-        started_at: visibility.duration ? session.started_at : null,
+        distance_km: allowDistance ? session.distance_km : null,
+        elevation_gain_m: allowElevation ? session.elevation_gain_m : null,
+        duration_seconds: allowDuration ? session.duration_seconds : null,
+        started_at: allowDuration ? session.started_at : null,
         positions_geojson: null,
         positions_timed: null,
       };

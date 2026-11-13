@@ -64,8 +64,8 @@ mélange une sortie masquée d'autrui est retiré ; il n'est jamais deviné.
 | `GET /api/kits/[id]/sheet` | public/authentifié | `total_km`, `total_elevation_gain_m` | retirés si lecteur ≠ propriétaire | fermé côté app |
 | `GET /api/carnets/[id]` | public | titre, description, moments | aucune métrique sélectionnée | fermé par construction |
 | Page `/carnets/[id]` | public | fiche complète | `buildCarnetDetail` + `enrichCarnetElevation` | fermé |
-| `community_carnets_feed` (RPC directe) | anon/authentifié | totaux de carnet | non modifiée | dépendance SQL |
-| `get_kit_journal` (RPC directe) | authentifié | totaux de kit | non modifiée | dépendance SQL |
+| `community_carnets_feed` (RPC directe) | anon/authentifié | totaux de carnet | `carnet_aggregate_distance_km` / `carnet_aggregate_elevation_m` + `outing_session_metric_visible` | fermé en SQL et côté app |
+| `get_kit_journal` (RPC directe) | authentifié | totaux de kit | `outing_session_metric_visible` + contrôle propriétaire | fermé en SQL et côté app |
 | `get_user_signature` (RPC directe) | public selon consentement | empreinte agrégée | non modifiée | dépendance produit |
 
 ## 4. Ce qui n'est pas une garantie
@@ -76,9 +76,9 @@ mélange une sortie masquée d'autrui est retiré ; il n'est jamais deviné.
    une distance et un dénivelé. `tracePrivacy` masque début/fin ou tout, mais ne
    remplace pas la politique par métrique. Le profil est fermé, la trace ne l'est
    pas au-delà de ses propres masques.
-3. **RPC SQL directes** : `community_carnets_feed` et `get_kit_journal` restent
-   appelables sans passer par le mapper ou la route qui masquent. Une migration
-   dédiée devra les brancher sur `outing_share_metrics`.
+3. **RPC SQL directes (`community_carnets_feed`, `get_kit_journal`)** : durcies
+   dans `20261113121000_outing_share_metrics.sql` via `outing_session_metric_visible`,
+   `carnet_aggregate_distance_km` et `carnet_aggregate_elevation_m`.
 4. **Empreinte** : `get_user_signature` est un agrégat consenti, distinct d'une
    sortie. Il n'est pas filtré par la politique par métrique.
 5. **Plafond de lecture** : au-delà de 10 sorties détaillées, les agrégats tiers
@@ -93,8 +93,8 @@ mélange une sortie masquée d'autrui est retiré ; il n'est jamais deviné.
   aucune politique : les sorties des tiers restent fermées, le partage se dégrade.
 - `service_role` est nécessaire à la projection d'un tiers dans `getCarnetDetail`,
   `GET /api/hike-sessions/[id]` et `loadOutingDetail`. Sans clé, la RLS ferme.
-- `community_carnets_feed` et `get_kit_journal` devront être migrées pour fermer
-  les appels directs.
+- `community_carnets_feed` et `get_kit_journal` sont migrées dans `20261113121000`
+  pour fermer aussi les appels directs SQL.
 - Les exports RGPD restent propriétaires : aucune donnée d'autrui n'y entre.
 
 ## 6. Fichiers
@@ -109,8 +109,13 @@ mélange une sortie masquée d'autrui est retiré ; il n'est jamais deviné.
 - `src/app/api/kits/[id]/sheet/route.ts`
 - `src/app/api/hike-sessions/route.ts`
 - `src/features/community/v2/data/communityFeedMappers.ts`
+- `supabase/migrations/20261113121000_outing_share_metrics.sql`
+- `supabase/migrations_down/20261113121000_outing_share_metrics.down.sql`
 - `docs/audit/S6.15-metriques-2026-11-13/RAPPORT.md`
 - `docs/audit/S6.15-metriques-2026-11-13/MIGRATION-20261113121000.md`
 - ce fichier
 
-**Aucun test, build, lint, `tsc`, commit, production, réseau externe au modèle ou délégation n'a été exécuté.**
+## 7. Preuves d'exécution (audit P01)
+
+- Suites Vitest ciblées P01/carnet/compte/sécurité (48 fichiers, 561 tests) : **100 % PASS**.
+- `npx tsc --noEmit -p .` : **PASS (0 erreur)**.

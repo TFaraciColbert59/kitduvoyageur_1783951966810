@@ -1,4 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import {
+  NO_OUTING_METRICS,
+  SHARED_SUMMARY_METRICS,
+} from '@/features/compte/domain/metricVisibility';
 import { buildCarnetDetail } from '../buildCarnetDetail';
 import type { BuildCarnetDetailInput, CarnetRow } from '../types';
 
@@ -490,12 +494,15 @@ describe('buildCarnetDetail — lieu réel', () => {
             positions_geojson: trace,
           },
         ],
+        metricVisibilities: {
+          s1: SHARED_SUMMARY_METRICS,
+        },
       }),
     );
 
     expect(detail.trace).not.toBe(trace);
     expect(detail.trace).not.toBeNull();
-    expect(detail.days[0].points).toEqual([]);
+    expect(detail.days).toEqual([]);
     expect(detail.elevationProfile).toEqual([]);
     expect(detail.place.lat).not.toBeCloseTo(45.83, 6);
     expect(detail.place.lng).not.toBeCloseTo(6.86, 6);
@@ -550,6 +557,9 @@ describe('buildCarnetDetail — lieu réel', () => {
             positions_geojson: trace,
           },
         ],
+        metricVisibilities: {
+          s1: SHARED_SUMMARY_METRICS,
+        },
       }),
     );
 
@@ -557,8 +567,96 @@ describe('buildCarnetDetail — lieu réel', () => {
     expect(detail.trace).not.toBe(trace);
     expect(detail.traceMasked).toBe(true);
     expect(detail.traceFullyMasked).toBe(false);
-    expect(detail.days[0].points).toEqual([]);
-    expect(detail.days[0].segments).toEqual([]);
+    expect(detail.days).toEqual([]);
+  });
+
+  it('S6.15 : masque les agrégats et le profil dès qu’une sortie du carnet masque la métrique ou que la liste est incomplète', () => {
+    const detailMaskedDistance = buildCarnetDetail(
+      input({
+        viewerId: null,
+        etapes: [
+          {
+            id: 'e1',
+            jour_numero: 1,
+            ordre: 1,
+            date_etape: '2026-09-26',
+            lieu_depart: 'Chamonix',
+            lieu_arrivee: 'Les Houches',
+            recit: null,
+            distance_km: 10,
+            denivele_m: 500,
+            duree_texte: '4h · 10 km',
+            meteo: null,
+            temperature_c: null,
+          },
+        ],
+        sessions: [
+          {
+            id: 's1',
+            carnet_id: 'c1',
+            visibility: 'collective_anonymized',
+            distance_km: 10,
+            elevation_gain_m: 500,
+            duration_seconds: 3600,
+            started_at: '2026-09-26T06:00:00Z',
+            positions_geojson: null,
+          },
+          {
+            id: 's2',
+            carnet_id: 'c1',
+            visibility: 'collective_anonymized',
+            distance_km: 20,
+            elevation_gain_m: 900,
+            duration_seconds: 7200,
+            started_at: '2026-09-27T06:00:00Z',
+            positions_geojson: null,
+          },
+        ],
+        metricVisibilities: {
+          s1: SHARED_SUMMARY_METRICS,
+          s2: { ...SHARED_SUMMARY_METRICS, distance: false },
+        },
+      }),
+    );
+
+    expect(detailMaskedDistance.distanceKm).toBeNull();
+    expect(detailMaskedDistance.summary.distanceKm).toBeNull();
+    expect(detailMaskedDistance.stats.find((s) => s.key === 'distance')).toBeUndefined();
+    expect(detailMaskedDistance.etapes[0].distanceKm).toBeNull();
+    expect(detailMaskedDistance.etapes[0].durationText).toBeNull();
+    expect(detailMaskedDistance.elevationM).toBe(1400);
+    expect(detailMaskedDistance.stats.find((s) => s.key === 'elevation')?.value).toBe('1\u202f400 m');
+    expect(detailMaskedDistance.elevationProfile).toEqual([]);
+    expect(detailMaskedDistance.elevationWithheld).toBe(true);
+
+    const detailIncomplete = buildCarnetDetail(
+      input({
+        viewerId: null,
+        sessionsComplete: false,
+        sessions: [
+          {
+            id: 's1',
+            carnet_id: 'c1',
+            visibility: 'collective_anonymized',
+            distance_km: 10,
+            elevation_gain_m: 500,
+            duration_seconds: 3600,
+            started_at: '2026-09-26T06:00:00Z',
+            positions_geojson: null,
+          },
+        ],
+        metricVisibilities: {
+          s1: SHARED_SUMMARY_METRICS,
+        },
+      }),
+    );
+
+    expect(detailIncomplete.metricVisibility).toEqual(NO_OUTING_METRICS);
+    expect(detailIncomplete.distanceKm).toBeNull();
+    expect(detailIncomplete.elevationM).toBeNull();
+    expect(detailIncomplete.summary.distanceKm).toBeNull();
+    expect(detailIncomplete.summary.elevationM).toBeNull();
+    expect(detailIncomplete.elevationWithheld).toBe(true);
   });
 
   it('masque tout pour un visiteur non abonné même si la visibilité dit friends', () => {

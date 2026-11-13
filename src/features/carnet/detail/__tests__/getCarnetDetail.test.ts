@@ -8,6 +8,8 @@ const STATE = vi.hoisted(() => ({
   rlsSessions: [] as Array<Record<string, unknown>>,
   /** Lignes lues par le client service_role après contrôle du carnet. */
   sessions: [] as Array<Record<string, unknown>>,
+  /** Politiques persistées dans `outing_share_metrics`. */
+  metricPolicies: [] as Array<{ session_id: string; visibility: Record<string, unknown> }>,
   participants: [] as Array<Record<string, unknown>>,
   follows: false,
   /** Propriétaire réellement suivi quand `follows` est vrai. */
@@ -111,6 +113,7 @@ vi.mock('@/lib/api/serviceClient', () => ({
             return query;
           },
           eq: () => query,
+          in: () => query,
           order: () => query,
           limit: () => query,
           then: (
@@ -128,7 +131,9 @@ vi.mock('@/lib/api/serviceClient', () => ({
                       })),
                       error: null,
                     }
-                : { data: [], error: null },
+                : table === 'outing_share_metrics'
+                  ? { data: STATE.metricPolicies, error: null }
+                  : { data: [], error: null },
             ).then(resolve, reject),
         };
         return query;
@@ -198,6 +203,7 @@ beforeEach(() => {
   };
   STATE.sessions = [session()];
   STATE.rlsSessions = [];
+  STATE.metricPolicies = [];
   STATE.participants = [];
   STATE.follows = false;
   STATE.followingId = 'u1';
@@ -519,5 +525,40 @@ describe('getCarnetDetail — visibilité effective des traces', () => {
     expect(detail?.summary.distanceKm).toBeLessThan(42);
     expect(detail?.distanceKm).toBe(7);
     expect(detail?.elevationProfile).toEqual([]);
+  });
+
+  it('S6.15 : applique les politiques outing_share_metrics par sortie et masque l’agrégat si une sortie le ferme', async () => {
+    STATE.viewerId = null;
+    STATE.sessions = [
+      session({
+        id: 's1',
+        user_id: 'u1',
+        visibility: 'collective_anonymized',
+        distance_km: 12,
+        elevation_gain_m: 600,
+        duration_seconds: 3600,
+        started_at: '2026-09-26T06:00:00Z',
+      }),
+    ];
+    STATE.metricPolicies = [
+      {
+        session_id: 's1',
+        visibility: {
+          distance: false,
+          elevation: true,
+          elevationGain: true,
+          maxAltitude: true,
+          duration: true,
+        },
+      },
+    ];
+
+    const detail = await getCarnetDetail('c1');
+
+    expect(detail?.distanceKm).toBeNull();
+    expect(detail?.summary.distanceKm).toBeNull();
+    expect(detail?.elevationM).toBe(600);
+    expect(detail?.elevationWithheld).toBe(true);
+    expect(detail?.metricsMasked).toBe(true);
   });
 });
