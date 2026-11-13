@@ -10,6 +10,8 @@
     .p51-shot { opacity: 0; }
     .p51-shot-img { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
     #p51-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .p51-ph-src { position: absolute; left: 0; top: 0; width: 2px; height: 2px; overflow: hidden; opacity: 0; pointer-events: none; }
+    .p51-ph-src img { position: absolute; left: 0; top: 0; width: 2px; height: 2px; }
   </style>
   <div id="root" data-composition-id="p51" data-width="1920" data-height="1080" data-duration="1.3166666666666667">
     <div id="p51-frame" class="p51-frame" data-layout-allow-overflow>
@@ -22,13 +24,22 @@
     <!-- hf-footage:end -->
     </div>
     <canvas id="p51-canvas" width="1920" height="1080" data-layout-allow-overflow></canvas>
+    <!-- ui-builder : sources de l'incrustation (plaque percée + captures réelles), lues par le canvas -->
+    <div id="p51-ph-src" class="p51-ph-src" aria-hidden="true">
+        <img id="p51-ph-plate" src="assets/phone/img38.plate.png" alt="" />
+        <img id="p51-ph-s0" src="assets/phone/screens/E13-communaute-carnets-semaine.png" alt="" />
+    </div>
   </div>
   <script src="lib/fx/core.js"></script>
+  <script src="lib/phone/phone.js"></script>
   <script>
     (function () {
       var FX = window.LKDVFX;
       var W = 1920, H = 1080, INK = "#0B1F17";
       var img = document.getElementById("p51-shot-1-img");
+      // ui-builder : écran incrusté dans l'image source (suit la caméra du plan au pixel, flou de mouvement compris)
+      var PH = window.LKDVPhone.compositor({ base: img, plate: document.getElementById("p51-ph-plate"), meta: {"box":[515,485,170,299],"corners":[[521.698,496.847],[597.655,494.913],[676.908,764.136],[602.926,775.112]],"radius":12.6,"blur":0.68,"ambient":{"rgb":[0.211,0.1907,0.216],"luminance":0.1969}}, states: [{ img: document.getElementById("p51-ph-s0") }], cam: function (f) { return camAt(f); }, level: 0.8, tint: 0.35 });
+      var SRC = img;
       var ctx = document.getElementById("p51-canvas").getContext("2d");
       function hand(f, amp, seed) {
         return (FX.noise2(f * 0.09, 1.7, seed) - 0.5) * amp + (FX.noise2(f * 0.45, 5.3, seed + 7) - 0.5) * amp * 0.3;
@@ -47,7 +58,7 @@
         if (c.rot) c2.rotate(c.rot);
         c2.scale(c.S, c.S);
         c2.translate(-c.cx, -c.cy);
-        c2.drawImage(img, 0, 0, W, H);
+        c2.drawImage(SRC, 0, 0, W, H);
       }
       function shoot(camAt, f, shutter) {
         var a = camAt(f), b = camAt(f - shutter);
@@ -78,9 +89,11 @@
       window.__lkdvCam.p51 = camAt;
       var clock = FX.bindClock("p51", N, function (t, f) {
         if (!img.complete || !img.naturalWidth) { ctx.fillStyle = INK; ctx.fillRect(0, 0, W, H); return; }
+        SRC = PH.frame(f);
         shoot(camAt, f, 0.6 + 3.2 * FX.ease.inCubic(FX.clamp((f - (N - 18)) / 17, 0, 1)));
       });
       img.addEventListener("load", function () { clock.redraw(); });
+      Array.prototype.forEach.call(document.querySelectorAll("#p51-ph-src img"), function (n) { n.addEventListener("load", function () { clock.redraw(); }); });
       window.__timelines["p51"] = clock.tl;
     })();
   </script>

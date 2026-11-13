@@ -13,6 +13,8 @@
     .p12-shot { opacity: 0; }
     .p12-shot-img { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
     #p12-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .p12-ph-src { position: absolute; left: 0; top: 0; width: 2px; height: 2px; overflow: hidden; opacity: 0; pointer-events: none; }
+    .p12-ph-src img { position: absolute; left: 0; top: 0; width: 2px; height: 2px; }
   </style>
   <div id="root" data-composition-id="p12" data-width="1920" data-height="1080" data-duration="0.8833333333333333">
     <div id="p12-frame" class="p12-frame" data-layout-allow-overflow>
@@ -25,13 +27,25 @@
     <!-- hf-footage:end -->
     </div>
     <canvas id="p12-canvas" width="1920" height="1080" data-layout-allow-overflow></canvas>
+    <!-- ui-builder : sources de l'incrustation (plaque percée + captures réelles), lues par le canvas -->
+    <div id="p12-ph-src" class="p12-ph-src" aria-hidden="true">
+        <img id="p12-ph-plate" src="assets/phone/img40.plate.png" alt="" />
+        <img id="p12-ph-s0" src="assets/phone/screens/E02a-compas-ou-vide.png" alt="" />
+        <img id="p12-ph-s1" src="assets/phone/screens/E02b-compas-ou-saisi.png" alt="" />
+        <img id="p12-ph-s2" src="assets/phone/screens/E02c-compas-preparation.png" alt="" />
+        <img id="p12-ph-s3" src="assets/phone/screens/E02d-compas-prepare.png" alt="" />
+    </div>
   </div>
   <script src="lib/fx/core.js"></script>
+  <script src="lib/phone/phone.js"></script>
   <script>
     (function () {
       var FX = window.LKDVFX;
       var W = 1920, H = 1080, INK = "#0B1F17";
       var img = document.getElementById("p12-shot-1-img");
+      // ui-builder : écran incrusté dans l'image source (suit la caméra du plan au pixel, flou de mouvement compris)
+      var PH = window.LKDVPhone.compositor({ base: img, plate: document.getElementById("p12-ph-plate"), meta: {"box":[974,262,205,424],"corners":[[986.857,271.871],[1168.828,272],[1168.821,675.808],[983.425,677.045]],"radius":21.04,"blur":0.69,"ambient":{"rgb":[0.3848,0.2872,0.2226],"luminance":0.3033}}, states: [{ img: document.getElementById("p12-ph-s0") }, { img: document.getElementById("p12-ph-s1"), from: 10, to: 15 }, { img: document.getElementById("p12-ph-s2"), from: 23, to: 28 }, { img: document.getElementById("p12-ph-s3"), from: 35, to: 40 }], cam: function (f) { return camAt(f); } });
+      var SRC = img;
       var ctx = document.getElementById("p12-canvas").getContext("2d");
       function hand(f, amp, seed) {
         // Tremblement de main : bruit lent + frisson rapide, à graine (fonction du temps).
@@ -52,7 +66,7 @@
         if (c.rot) c2.rotate(c.rot);
         c2.scale(c.S, c.S);
         c2.translate(-c.cx, -c.cy);
-        c2.drawImage(img, 0, 0, W, H);
+        c2.drawImage(SRC, 0, 0, W, H);
       }
       function shoot(camAt, f, shutter) {
         // Flou de mouvement réel : moyenne de la caméra sur l'obturation (180° par défaut), échantillons selon la vitesse.
@@ -86,9 +100,11 @@
       window.__lkdvCam.p12 = camAt;
       var clock = FX.bindClock("p12", N, function (t, f) {
         if (!img.complete || !img.naturalWidth) { ctx.fillStyle = INK; ctx.fillRect(0, 0, W, H); return; }
+        SRC = PH.frame(f);
         shoot(camAt, f, 0.5);
       });
       img.addEventListener("load", function () { clock.redraw(); });
+      Array.prototype.forEach.call(document.querySelectorAll("#p12-ph-src img"), function (n) { n.addEventListener("load", function () { clock.redraw(); }); });
       window.__timelines["p12"] = clock.tl;
     })();
   </script>

@@ -12,6 +12,8 @@
     .p07-shot { opacity: 0; }
     .p07-shot-img { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
     #p07-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .p07-ph-src { position: absolute; left: 0; top: 0; width: 2px; height: 2px; overflow: hidden; opacity: 0; pointer-events: none; }
+    .p07-ph-src img { position: absolute; left: 0; top: 0; width: 2px; height: 2px; }
   </style>
   <div id="root" data-composition-id="p07" data-width="1920" data-height="1080" data-duration="1.3166666666666667">
     <div id="p07-frame" class="p07-frame" data-layout-allow-overflow>
@@ -24,13 +26,23 @@
     <!-- hf-footage:end -->
     </div>
     <canvas id="p07-canvas" width="1920" height="1080" data-layout-allow-overflow></canvas>
+    <!-- ui-builder : sources de l'incrustation (plaque percée + captures réelles), lues par le canvas -->
+    <div id="p07-ph-src" class="p07-ph-src" aria-hidden="true">
+        <img id="p07-ph-plate" src="assets/phone/img07.plate.png" alt="" />
+        <img id="p07-ph-s0" src="assets/phone/screens/E01a-carnet-sorapis.png" alt="" />
+        <img id="p07-ph-s1" src="assets/phone/screens/E01b-carnet-jour1-photo.png" alt="" />
+    </div>
   </div>
   <script src="lib/fx/core.js"></script>
+  <script src="lib/phone/phone.js"></script>
   <script>
     (function () {
       var FX = window.LKDVFX;
       var N = 79, W = 1920, H = 1080;
       var img = document.getElementById("p07-shot-1-img");
+      // ui-builder : écran incrusté dans l'image source (suit la caméra du plan au pixel, flou de mouvement compris)
+      var PH = window.LKDVPhone.compositor({ base: img, plate: document.getElementById("p07-ph-plate"), meta: {"box":[780,169,337,636],"corners":[[786.586,191.054],[1067.819,176.244],[1112.59,778.356],[836.848,798.753]],"radius":41.28,"blur":0.7,"ambient":{"rgb":[0.3577,0.2867,0.238],"luminance":0.2982}}, states: [{ img: document.getElementById("p07-ph-s0") }, { img: document.getElementById("p07-ph-s1"), from: 46, to: 56 }], cam: function (f) { return camAt(f); } });
+      var SRC = img;
       var ctx = document.getElementById("p07-canvas").getContext("2d");
       var buf = FX.canvas(W, H), bx = buf.getContext("2d");
       function camAt(f) {
@@ -53,12 +65,13 @@
         if (!img.complete || !img.naturalWidth) return;
         var c = camAt(f);
         bx.setTransform(c.S, 0, 0, c.S, W / 2 - c.S * c.cx, H / 2 - c.S * c.cy);
-        bx.drawImage(img, 0, 0, W, H);
+        bx.drawImage(PH.frame(f), 0, 0, W, H);
         bx.setTransform(1, 0, 0, 1, 0, 0);
         // Flou de mouvement à l'entrée : la vitesse de la poussée de P06 retombe.
         FX.zoomBlur(ctx, buf, 960, 540, 0.045 * Math.exp(-f / 5), 8, W, H);
       });
       img.addEventListener("load", function () { clock.redraw(); });
+      Array.prototype.forEach.call(document.querySelectorAll("#p07-ph-src img"), function (n) { n.addEventListener("load", function () { clock.redraw(); }); });
       window.__timelines["p07"] = clock.tl;
     })();
   </script>
