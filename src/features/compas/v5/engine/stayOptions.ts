@@ -9,6 +9,7 @@
 
 import type { CompasNights } from '../../engine/compasModel';
 import { COSTS_VERSION, lodgingPerNight, priceLevel, refugePerNight } from '../../engine/costs';
+import { safeWebsite } from '../../engine/deepLinks';
 import { matchKey } from '../../engine/nameKey';
 import { distanceKm } from '../../engine/places';
 import { poiLabel, type RoutePoi, type RoutePoiCategory } from '../../engine/routePois';
@@ -135,7 +136,8 @@ export function rankStayOptions(input: StayRankInput): V5StayOption[] {
         price,
         photo: null,
         source: sourceOf(price, false),
-        url: null,
+        // Le site du lieu quand OpenStreetMap le donne (déjà lu avec le lieu) ; jamais cherché à part.
+        url: safeWebsite(poi.website),
         partner: null,
       },
     });

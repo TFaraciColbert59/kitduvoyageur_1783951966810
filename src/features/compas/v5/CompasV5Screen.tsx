@@ -12,6 +12,8 @@ import { useCompasController } from '../components/useCompasController';
 import type { StepFlow } from '../components/compasTypes';
 import { V5Context, type V5Api } from './context';
 import { Island } from './Island';
+import type { V5ExtrasPayload } from './engine/dayArrivals';
+import { isResaBooked, mergeResa, nightKey, type ResaStatus } from './engine/resaStatus';
 import { selectDays } from './model/trip';
 import { compasV5ExtrasAction } from './server/extrasAction';
 import { TopBar } from './TopBar';
@@ -56,8 +58,12 @@ export function CompasV5Screen({ data: rawData, initialStep }: { data: CompasDat
   const [view, setView] = useState<'grid' | 'fil'>('grid');
   const [mapBig, setMapBig] = useState(false);
   const [extras, setExtras] = useState<V5Extras>(EMPTY_EXTRAS);
+  // « J'ai réservé » : ce qui est rangé sur le voyage (relu avec les extras, donc au rechargement) + les gestes de cet écran.
+  const [resaLocal, setResaLocal] = useState<Record<string, ResaStatus | null>>({});
+  const resa = useMemo(() => mergeResa((extras as Partial<V5ExtrasPayload>).choices?.resa, resaLocal), [extras, resaLocal]);
+  const setResa = useCallback((patch: Record<string, ResaStatus | null>) => setResaLocal((prev) => ({ ...prev, ...patch })), []);
 
-  const c = useCompasController(rawData, { onOpen: () => setMapBig(false) });
+  const c =useCompasController(rawData, { onOpen: () => setMapBig(false) });
   const { data, model, t, locale, ctl, stack, setStack, toast, setToast, prep, setPrep } = c;
   const canEdit = data.canEdit;
 
@@ -136,6 +142,8 @@ export function CompasV5Screen({ data: rawData, initialStep }: { data: CompasDat
     closeSpace,
     setTab: setTabState,
     announce,
+    resa,
+    setResa,
     prefs: {
       outdoor: c.display.outdoor,
       setOutdoor: (next) => c.updateDisplay({ ...c.display, outdoor: next }),
@@ -182,11 +190,12 @@ export function CompasV5Screen({ data: rawData, initialStep }: { data: CompasDat
             day: d.day,
             chosen,
             alternatives: options.filter((o) => o.id !== chosen?.id),
-            booked: Boolean(noted) && model.bookings.confirmed > 0,
+            // Réservée seulement si la personne l'a dit pour CETTE nuit (statut rangé), jamais parce qu'une réservation quelconque du voyage est confirmée.
+            booked: Boolean(noted) && isResaBooked(resa, nightKey(d.day)),
             priceLabel: hint,
           };
         }),
-    [days, extras.nights, model.bookings.confirmed, t]
+    [days, extras.nights, resa, t]
   );
 
   const pickAlternative = useCallback(

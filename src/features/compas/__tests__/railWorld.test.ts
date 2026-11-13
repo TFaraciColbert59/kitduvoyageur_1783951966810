@@ -64,7 +64,8 @@ describe('l’Europe entière, par règles de réseau et de distance', () => {
     expect(t.eurRoundTrip).toBe(2 * Math.max(Math.round((30 + 21) / 2), Math.round(t.railKm * ((0.13 + 0.13 * 0.7) / 2))));
     expect(t.priceSource).toBe('estimation');
     expect(t.basis).toContain('estimation');
-    expect(t.basis).toContain('Résa · Trajets');
+    expect(t.basis).toContain('« À prévoir »');
+    expect(t.basis).not.toMatch(/Résa ·|vrais? (prix|horaires)/);
   });
 
   it('Cracovie → Varsovie (260 km) : le barème de la Pologne seule', () => {

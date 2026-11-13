@@ -11,6 +11,7 @@ import { makeApi, makeData, makeInput, TRIP, WithApi } from './fixtures';
 const choices = vi.hoisted(() => ({
   compasV5SetStayAction: vi.fn(async (_input: unknown) => ({ success: true })),
   compasV5SetTransportAction: vi.fn(async (_input: unknown) => ({ success: true })),
+  compasV5SetResaStatusAction: vi.fn(async (_input: unknown) => ({ success: true })),
 }));
 const server = vi.hoisted(() => ({
   compasSetStayAction: vi.fn(async (_input: unknown) => ({ success: true })),
@@ -103,7 +104,8 @@ describe('À réserver · extras vides ou indisponibles', () => {
     expect(screen.getByText(/n’ont pas encore été lus/)).toBeTruthy();
     expect(screen.getByText('Aucune nuit trouvée près de l’arrivée du jour 1.')).toBeTruthy();
     expect(screen.getByText('Aucun trajet proposé pour ce voyage.')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Tout réserver' }).hasAttribute('disabled')).toBe(true);
+    // Rien n'est choisi, mais le plan liste déjà chaque nuit : le bouton n'est plus grisé.
+    expect(screen.getByRole('button', { name: 'Tout réserver' }).hasAttribute('disabled')).toBe(false);
     expect(screen.getByText('Rien n’est encore choisi : le total apparaît dès qu’une nuit ou un trajet l’est.')).toBeTruthy();
 
     expect(screen.getAllByRole('form', { name: 'Noter une nuit toi-même' })).toHaveLength(2);
@@ -308,14 +310,15 @@ describe('À réserver · total et « Tout réserver »', () => {
     const panel = screen.getByRole('region', { name: 'Réservations à ouvrir, une par une' });
     expect(within(panel).getAllByRole('listitem')).toHaveLength(3);
     const links = within(panel).getAllByRole('link');
-    expect(links.map((a) => a.getAttribute('href'))).toEqual(['https://gites.example/royans', 'https://refuges.example/moliere', 'https://sncf.example/horaires']);
+    // Le trajet d'abord, puis les nuits par jour.
+    expect(links.map((a) => a.getAttribute('href'))).toEqual(['https://sncf.example/horaires', 'https://gites.example/royans', 'https://refuges.example/moliere']);
     for (const a of links) {
       expect(a.getAttribute('target')).toBe('_blank');
       expect(a.getAttribute('rel')).toContain('noopener');
     }
     // Le lien du partenaire SNCF Connect est balisé ; les sites officiels non.
-    expect(links[2].getAttribute('rel')).toBe('sponsored nofollow noopener');
-    expect(links[0].getAttribute('rel')).toBe('noopener noreferrer');
+    expect(links[0].getAttribute('rel')).toBe('sponsored nofollow noopener');
+    expect(links[1].getAttribute('rel')).toBe('noopener noreferrer');
     expect(within(panel).getByText(/SNCF Connect/)).toBeTruthy();
     expect(screen.getByText(/Le Compas ne réserve ni ne paie rien/)).toBeTruthy();
     // Les clics n'ont rien confirmé : toutes les étapes restent « à confirmer ».
@@ -324,23 +327,98 @@ describe('À réserver · total et « Tout réserver »', () => {
     open.mockRestore();
   });
 
-  it('« J’ai réservé » note la nuit par compasSetStayAction et passe l’étape à « Réservation faite »', async () => {
+  it('« J’ai réservé » range le statut de CETTE nuit (compasV5SetResaStatusAction) et passe la ligne à « Réservation faite »', async () => {
+    const { api } = mount({}, { extras: extrasOf() });
+    fireEvent.click(screen.getByRole('button', { name: /Tout réserver/ }));
+    const panel = screen.getByRole('region', { name: 'Réservations à ouvrir, une par une' });
+    // La nuit du jour 1 est déjà notée (choisie) : seul le statut s'écrit, jamais le choix.
+    fireEvent.click(within(panel).getByRole('button', { name: 'J’ai réservé : Gîte du Royans' }));
+    await waitFor(() => expect(choices.compasV5SetResaStatusAction).toHaveBeenCalledWith({ tripId: TRIP, tripSlug: SLUG, keys: ['night:1'], status: 'booked' }));
+    expect(choices.compasV5SetStayAction).not.toHaveBeenCalled();
+    expect(server.compasSetStayAction).not.toHaveBeenCalled();
+    expect(runCall(api)[0]).toBe('Réservation faite : Gîte du Royans');
+    await waitFor(() => expect(within(panel).getByText('Réservation faite')).toBeTruthy());
+    // Une seule ligne est réservée : les autres restent à faire.
+    expect(within(panel).getAllByRole('button', { name: /^J’ai réservé/ }).length).toBeGreaterThan(0);
+    expect(screen.queryByText('Tout est noté comme réservé.')).toBeNull();
+    // Annuler remet « à faire » côté serveur et à l'écran.
+    await runCall(api)[2]!();
+    expect(choices.compasV5SetResaStatusAction).toHaveBeenLastCalledWith({ tripId: TRIP, tripSlug: SLUG, keys: ['night:1'], status: 'todo' });
+  });
+
+  it('« J’ai réservé » relu au rechargement : seule la nuit rangée comme réservée l’est, pas toutes celles du voyage', () => {
+    const bookings = [{ id: 'b1', vertical: 'hotel', provider: 'routestack', status: 'confirmed', amountEur: 120 }];
+    mount({ resa: { 'night:2': 'booked' } }, { data: makeData({ bookings }, { bookings }), extras: extrasOf() });
+    fireEvent.click(screen.getByRole('button', { name: /Tout réserver/ }));
+    const panel = screen.getByRole('region', { name: 'Réservations à ouvrir, une par une' });
+    const items = within(panel).getAllByRole('listitem');
+    const night = (n: number) => items.find((li) => li.getAttribute('data-key') === `night:${n}`)!;
+    expect(within(night(2)).getByText('Réservation faite')).toBeTruthy();
+    expect(within(night(1)).queryByText('Réservation faite')).toBeNull();
+    expect(within(night(2)).getByRole('button', { name: 'Remettre à réserver : Refuge de la Molière' })).toBeTruthy();
+    expect((document.querySelector('[data-day="2"] .v5-okc') as HTMLElement).textContent).toBe('Réservation faite');
+    expect((document.querySelector('[data-day="1"] .v5-okc') as HTMLElement).textContent).not.toBe('Réservation faite');
+  });
+
+  it('écriture refusée : l’affichage optimiste est annulé et l’erreur annoncée par le contrôleur', async () => {
+    choices.compasV5SetResaStatusAction.mockResolvedValueOnce({ success: false, error: 'Droits insuffisants' } as never);
     const { api } = mount({}, { extras: extrasOf() });
     fireEvent.click(screen.getByRole('button', { name: /Tout réserver/ }));
     const panel = screen.getByRole('region', { name: 'Réservations à ouvrir, une par une' });
     fireEvent.click(within(panel).getByRole('button', { name: 'J’ai réservé : Gîte du Royans' }));
-    await waitFor(() => expect(server.compasSetStayAction).toHaveBeenCalledWith({ tripId: TRIP, tripSlug: SLUG, day: 1, name: 'Gîte du Royans' }));
-    expect(runCall(api)[0]).toBe('Réservation faite : Gîte du Royans');
-    await waitFor(() => expect(within(panel).getByText('Réservation faite')).toBeTruthy());
-    expect(screen.getByText('Tout est noté comme réservé.')).toBeTruthy();
+    await waitFor(() => expect(api.setResa).toHaveBeenCalledTimes(2));
+    expect((api.setResa as Mock).mock.calls[0][0]).toEqual({ 'night:1': 'booked' });
+    expect((api.setResa as Mock).mock.calls[1][0]).toEqual({ 'night:1': null });
+    await waitFor(() => expect(within(panel).queryByText('Réservation faite')).toBeNull());
   });
 
-  it('un choix sans lien est listé sans lien, avec la conduite à tenir', () => {
-    mount({}, { extras: extrasOf({ nights: { 1: [camping] } }), data: makeData({ steps: makeInput().steps.map((s) => (s.dayNumber === 1 ? { ...s, accommodationName: 'Camping des Écouges' } : s)) }) });
+  it('sans aucun choix : le plan liste le trajet puis toutes les nuits, « Proposée », avec un lien de recherche prérempli', () => {
+    mount({}, { data: noNotedStay(), extras: extrasOf({ nights: { 1: [gite, chambre], 2: [{ ...refuge, url: null }] } }) });
     fireEvent.click(screen.getByRole('button', { name: /Tout réserver/ }));
     const panel = screen.getByRole('region', { name: 'Réservations à ouvrir, une par une' });
-    expect(within(panel).queryAllByRole('link')).toEqual([]);
-    expect(within(panel).getByText(/Pas de lien : à réserver directement/)).toBeTruthy();
+    const items = within(panel).getAllByRole('listitem');
+    expect(items.map((li) => li.getAttribute('data-key'))).toEqual(['transport', 'night:1', 'night:2']);
+    // Rien n'est écrit : le défaut est annoncé, distinct d'un choix.
+    expect(items.every((li) => within(li).queryByText(/Proposée/))).toBe(true);
+    expect(within(panel).queryByText(/Ton choix/)).toBeNull();
+    expect(choices.compasV5SetStayAction).not.toHaveBeenCalled();
+    expect(choices.compasV5SetResaStatusAction).not.toHaveBeenCalled();
+    // Voiture : itinéraire prérempli ; refuge sans site : recherche web ; liens directs sans mention d'affiliation.
+    const hrefs = within(panel).getAllByRole('link').map((a) => a.getAttribute('href'));
+    expect(hrefs[0]).toBe('https://www.google.com/maps/dir/?api=1&destination=Vercors&travelmode=driving');
+    expect(hrefs[2]).toMatch(/^https:\/\/duckduckgo\.com\/\?q=Refuge/);
+    for (const a of within(panel).getAllByRole('link', { name: /Rechercher/ })) expect(a.getAttribute('rel')).toBe('noopener noreferrer');
+  });
+
+  it('« J’ai réservé » sur une nuit seulement proposée la retient d’abord comme choix, puis range le statut', async () => {
+    mount({}, { data: noNotedStay(), extras: extrasOf({ nights: { 1: [gite, chambre], 2: [refuge] } }) });
+    fireEvent.click(screen.getByRole('button', { name: /Tout réserver/ }));
+    const panel = screen.getByRole('region', { name: 'Réservations à ouvrir, une par une' });
+    fireEvent.click(within(panel).getByRole('button', { name: 'J’ai réservé : Gîte du Royans' }));
+    await waitFor(() => expect(choices.compasV5SetResaStatusAction).toHaveBeenCalledWith({ tripId: TRIP, tripSlug: SLUG, keys: ['night:1'], status: 'booked' }));
+    expect(choices.compasV5SetStayAction).toHaveBeenCalledWith({ tripId: TRIP, tripSlug: SLUG, day: 1, option: gite });
+  });
+
+  it('un choix sans lien propre reçoit une recherche prérempliée ; un bivouac, rien à réserver', () => {
+    const bivouac = stay({ id: 'noted:Bivouac du Pas', name: 'Bivouac du Pas', kind: 'bivouac' });
+    mount({}, { extras: extrasOf({ nights: { 1: [bivouac], 2: [camping] }, transport: [] }), data: makeData({ steps: makeInput().steps.map((s) => (s.dayNumber === 1 ? { ...s, accommodationName: 'Bivouac du Pas' } : s)) }) });
+    fireEvent.click(screen.getByRole('button', { name: /Tout réserver/ }));
+    const panel = screen.getByRole('region', { name: 'Réservations à ouvrir, une par une' });
+    const items = within(panel).getAllByRole('listitem');
+    expect(within(items[0]).queryAllByRole('link')).toEqual([]);
+    expect(within(items[0]).getByText(/Pas de lien : à réserver directement/)).toBeTruthy();
+    expect(within(items[1]).getByRole('link', { name: /Rechercher : Camping des Écouges/ })).toBeTruthy();
+  });
+
+  it('un lien interne /go/<slug> (affiliation) est ouvrable, balisé sponsored, avec la mention', () => {
+    const carpool: V5TransportOption = { id: 'carpool', label: 'Covoiturage', detail: null, amountEur: null, perPerson: false, source: 'lien partenaire, sans tarif', url: '/go/blablacar', partner: 'BlaBlaCar' };
+    mount({ resa: {} }, { data: noNotedStay(), extras: extrasOf({ nights: {}, transport: [carpool], ...({ choices: { transport: { id: 'carpool', amountEur: null, perPerson: false, source: 'x' }, stays: {}, resa: {} } } as Partial<V5Extras>) }) });
+    fireEvent.click(screen.getByRole('button', { name: /Tout réserver/ }));
+    const panel = screen.getByRole('region', { name: 'Réservations à ouvrir, une par une' });
+    const link = within(panel).getByRole('link', { name: /Ouvrir : Covoiturage/ });
+    expect(link.getAttribute('href')).toBe('/go/blablacar');
+    expect(link.getAttribute('rel')).toBe('sponsored nofollow noopener');
+    expect(document.querySelector('.cp-aff')).not.toBeNull();
   });
 
   it('un lien non https n’est jamais proposé', () => {

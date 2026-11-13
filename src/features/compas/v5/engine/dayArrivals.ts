@@ -7,6 +7,7 @@
  */
 
 import { notedStay } from '../../engine/stayProposal';
+import type { ResaRecord } from './resaStatus';
 import type { TransportChoice } from './transportOptions';
 import type { V5Extras } from '../types';
 
@@ -77,6 +78,8 @@ export interface V5ExtrasPayload extends V5Extras {
     transport: TransportChoice | null;
     /** Par numéro de jour : identifiant de la nuit retenue (`osm:…` ou `noted:…`). */
     stays: Record<number, string>;
+    /** « J'ai réservé » par élément (`night:<jour>`, `transport`), tel que rangé sur le voyage. */
+    resa: Record<string, ResaRecord>;
   };
   /**
    * Vrai quand le temps ou le nombre de requêtes autorisées a arrêté la lecture avant la fin : la

@@ -51,7 +51,7 @@ export function carFreeStages<T extends { move: string }>(stages: readonly T[]):
 /** Dit une fois ce que la conversion a fait (rien à dire sans déplacement en voiture). */
 export function carFreeStagesNote(converted: number): string | null {
   if (converted <= 0) return null;
-  return `Sans voiture : ${converted} déplacement${converted > 1 ? 's' : ''} entre étapes compté${converted > 1 ? 's' : ''} en bus (estimation du barème, pas un horaire) ; vérifie les lignes dans Résa · Trajets.`;
+  return `Sans voiture : ${converted} déplacement${converted > 1 ? 's' : ''} entre étapes compté${converted > 1 ? 's' : ''} en bus (estimation du barème, pas un horaire) ; vérifie les lignes avec la recherche d’« À prévoir ».`;
 }
 
 export interface TransitPoint {
@@ -82,7 +82,7 @@ export function transitSignal(input: { pois: readonly TransitPoint[] | null; com
       : 'une gare, une gare routière ou un embarcadère est lu sur la carte';
     return {
       status: 'reperes',
-      text: `Transports en commun : ${what} à moins de ${RADIUS} d’une étape. Horaires et prix dans Résa · Trajets.`,
+      text: `Transports en commun : ${what} à moins de ${RADIUS} d’une étape. Horaires et prix à vérifier auprès des exploitants ; « À prévoir » prépare la recherche.`,
     };
   }
   if (!input.complete)

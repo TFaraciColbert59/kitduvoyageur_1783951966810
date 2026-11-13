@@ -2884,7 +2884,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
             title: `${hebergementNights} nuit(s) en hébergement`,
             amount: lodgingPerNight(lvl.level) * hebergementNights * party,
             source: 'estimation',
-            basis: `${lvl.basis} · chambre partagée à deux · vrais prix dans Résa · Nuits`,
+            basis: `${lvl.basis} · chambre partagée à deux · estimation, la recherche se prépare dans « À prévoir »`,
           }
         : null,
       flight
@@ -2893,7 +2893,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
             title: `Vol aller-retour × ${party}`,
             amount: flight.eur * party,
             source: 'estimation',
-            basis: `${flight.basis} · ${transport?.basis ?? 'vol'} · vrai prix dans Résa · Vols`,
+            basis: `${flight.basis} · ${transport?.basis ?? 'vol'} · estimation, la recherche se prépare dans « À prévoir »`,
           }
         : null,
       trainNeeded
@@ -2933,7 +2933,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
             title: `Location de voiture · ${days} jour(s)`,
             amount: carRentalPerDay(lvl.level) * days * rentalCars,
             source: 'estimation',
-            basis: `${lvl.basis} · catégorie économique · à comparer dans Résa · Trajets`,
+            basis: `${lvl.basis} · catégorie économique · estimation, la recherche se prépare dans « À prévoir »`,
           }
         : null,
       localMoves.length

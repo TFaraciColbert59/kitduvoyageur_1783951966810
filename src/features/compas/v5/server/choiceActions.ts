@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { reportServerError } from '@/lib/observability/appErrors';
 import { compasMeta, requireEditor, tripPartySize, updateTripMetadata } from '../../server/compasServer';
 import { actionError, serverText } from '../../server/serverText';
+import { isResaKey } from '../engine/resaStatus';
 import { approachLineKind, type ApproachLineKind } from '../engine/transportOptions';
 
 /**
@@ -139,6 +140,58 @@ export async function compasV5SetStayAction(input: z.input<typeof staySchema>): 
     return actionError('compas.server.lodging.saveFailed');
   } catch (err) {
     await reportServerError('compas.compasV5SetStayAction', err);
+    return actionError('compas.server.common.serverError');
+  }
+}
+
+/* ---------- « J'ai réservé » : un statut par élément ---------- */
+
+const resaKey = z.string().refine(isResaKey, 'compas.server.common.invalidRequest');
+
+const resaSchema = z
+  .object({
+    tripId: uuid,
+    tripSlug: slug,
+    /** `night:<jour>` ou `transport`. */
+    key: resaKey.optional(),
+    /** Plusieurs éléments d'un coup (nuits consécutives regroupées sur une ligne) : une seule écriture. */
+    keys: z.array(resaKey).min(1).max(60).optional(),
+    status: z.enum(['booked', 'todo']),
+  })
+  .refine((v) => (v.key === undefined) !== (v.keys === undefined), { message: 'compas.server.common.invalidRequest' });
+
+/**
+ * Note qu'un élément du plan de réservation est réservé (ou à faire) : `trips.metadata.compas.resa[<clé>]`
+ * = `{ status, at }`. Le reste du JSON est fusionné, jamais écrasé ; rejouer le même statut n'écrit rien
+ * (l'instant d'origine reste). Aucune réservation n'est faite ici : la personne dit seulement qu'elle l'a faite.
+ */
+export async function compasV5SetResaStatusAction(input: z.input<typeof resaSchema>): Promise<CompasV5ChoiceResult> {
+  const parsed = resaSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: await serverText('compas.server.common.invalidRequest') };
+  const { tripId, status } = parsed.data;
+  const keys = [...new Set(parsed.data.keys ?? (parsed.data.key ? [parsed.data.key] : []))];
+  try {
+    const auth = await requireEditor(tripId);
+    if ('error' in auth) return { success: false, error: auth.error ?? (await serverText('compas.server.common.accessDenied')) };
+    const { supabase } = auth;
+    const at = new Date().toISOString();
+    const { error } = await updateTripMetadata(supabase, tripId, (meta) => {
+      const c = compasMeta(meta);
+      const resa = isObject(c.resa) ? { ...c.resa } : {};
+      let changed = false;
+      for (const key of keys) {
+        const current = resa[key];
+        if (isObject(current) && current.status === status) continue;
+        resa[key] = { status, at };
+        changed = true;
+      }
+      if (!changed) return meta;
+      return { ...meta, compas: { ...c, resa } };
+    });
+    if (error) return actionError('compas.server.common.serverError');
+    return { success: true };
+  } catch (err) {
+    await reportServerError('compas.compasV5SetResaStatusAction', err);
     return actionError('compas.server.common.serverError');
   }
 }

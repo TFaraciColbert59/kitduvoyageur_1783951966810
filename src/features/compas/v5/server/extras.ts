@@ -6,6 +6,7 @@ import { compasMeta, type CompasTripRow, type Supa } from '../../server/compasSe
 import { originOf } from '../../engine/tripContext';
 import { lookupStagePois, readCachedStagePois } from '../../server/stagePoiLookup';
 import { dayArrivals, stayChoicesFromRows, type ArrivalSource, type DayArrival, type V5ExtrasPayload } from '../engine/dayArrivals';
+import { parseResa } from '../engine/resaStatus';
 import { rankStayOptions } from '../engine/stayOptions';
 import {
   parseTransportChoice,
@@ -231,7 +232,7 @@ export async function loadV5Extras(args: {
     transport: transportList,
     fetchedAt: new Date().toISOString(),
     unavailable: [...unavailable],
-    choices: { transport: parseTransportChoice(compasMeta(meta).transport), stays: staysChosen },
+    choices: { transport: parseTransportChoice(compasMeta(meta).transport), stays: staysChosen, resa: parseResa(compasMeta(meta).resa) },
     partial,
   };
 }

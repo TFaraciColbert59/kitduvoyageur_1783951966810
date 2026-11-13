@@ -3,7 +3,7 @@
  *
  * Même voyage → même budget, au centime près. Chaque montant porte sa base
  * (« barème Compas 2026-10 · indice de prix du pays : Pérou 45 (France = 100) »). Ce sont des
- * ordres de grandeur pour préparer, jamais un devis : Résa donne les vrais prix.
+ * ordres de grandeur pour préparer, jamais un devis : les vrais prix se lisent chez le vendeur (« À prévoir » ouvre la recherche).
  *
  * Référence : prix moyens d'un voyageur en France en 2026 (repas mi-marché
  * mi-restaurant, nuit en hôtel simple ou gîte partagé à deux), multipliés par
@@ -170,7 +170,7 @@ export function carRentalPerDay(level: number): number {
 
 /**
  * Vol aller-retour par personne, par tranche de distance à vol d'oiseau
- * (classe économique, réservé 1 à 3 mois avant). Résa · Vols donne le vrai prix.
+ * (classe économique, réservé 1 à 3 mois avant). Le vrai prix se lit chez la compagnie (« À prévoir » ouvre la recherche).
  */
 export function flightRoundTrip(km: number): { eur: number; basis: string } {
   const bands: Array<[number, number, string]> = [

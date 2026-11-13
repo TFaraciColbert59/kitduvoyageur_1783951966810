@@ -451,11 +451,67 @@
       "it": "Prenotare tutto · {amount}"
     },
     "bookAllNone": {
-      "fr": "Choisis d’abord une nuit ou un trajet.",
-      "en": "Choose a night or a journey first.",
-      "es": "Elija primero una noche o un trayecto.",
-      "de": "Wählen Sie zuerst eine Nacht oder eine Fahrt.",
-      "it": "Scelga prima una notte o un tragitto."
+      "fr": "Rien à réserver pour l’instant : ce voyage n’a ni nuit ni trajet à prévoir.",
+      "en": "Nothing to book for now: this trip has no night or journey to plan.",
+      "es": "Nada que reservar por ahora: este viaje no tiene noche ni trayecto que prever.",
+      "de": "Vorerst nichts zu buchen: Diese Reise hat weder Nacht noch Fahrt zu planen.",
+      "it": "Niente da prenotare per ora: questo viaggio non ha notti né tragitti da prevedere."
+    },
+    "nightsWhen": {
+      "fr": "{count} nuits à partir du jour {day}",
+      "en": "{count} nights from day {day}",
+      "es": "{count} noches a partir del día {day}",
+      "de": "{count} Nächte ab Tag {day}",
+      "it": "{count} notti dal giorno {day}"
+    },
+    "stayDates": {
+      "fr": "arrivée {from} · départ {to}",
+      "en": "arrive {from} · leave {to}",
+      "es": "llegada {from} · salida {to}",
+      "de": "Anreise {from} · Abreise {to}",
+      "it": "arrivo {from} · partenza {to}"
+    },
+    "searchLink": {
+      "fr": "Rechercher",
+      "en": "Search",
+      "es": "Buscar",
+      "de": "Suchen",
+      "it": "Cerca"
+    },
+    "searchWord": {
+      "fr": "réservation",
+      "en": "booking",
+      "es": "reserva",
+      "de": "Buchung",
+      "it": "prenotazione"
+    },
+    "searchNote": {
+      "fr": "« Rechercher » ouvre la recherche d’un site public déjà remplie (lieu, dates, voyageurs quand ils sont connus). Aucun prix n’est affiché ici : il se lit sur ce site.",
+      "en": "“Search” opens a public site’s search already filled in (place, dates, travellers when known). No price is shown here: read it on that site.",
+      "es": "«Buscar» abre la búsqueda de un sitio público ya rellenada (lugar, fechas, viajeros cuando se conocen). Aquí no se muestra ningún precio: se lee en ese sitio.",
+      "de": "„Suchen“ öffnet die bereits ausgefüllte Suche einer öffentlichen Website (Ort, Daten, Reisende, sofern bekannt). Hier wird kein Preis angezeigt: Er ist auf dieser Website zu lesen.",
+      "it": "«Cerca» apre la ricerca di un sito pubblico già compilata (luogo, date, viaggiatori quando noti). Qui non è mostrato alcun prezzo: si legge su quel sito."
+    },
+    "unbook": {
+      "fr": "Pas réservé",
+      "en": "Not booked",
+      "es": "No reservado",
+      "de": "Nicht gebucht",
+      "it": "Non prenotato"
+    },
+    "unbookLabel": {
+      "fr": "Remettre à réserver : {label}",
+      "en": "Mark as still to book: {label}",
+      "es": "Volver a poner por reservar: {label}",
+      "de": "Wieder als zu buchen markieren: {label}",
+      "it": "Rimetti da prenotare: {label}"
+    },
+    "unbookedMsg": {
+      "fr": "À réserver de nouveau : {label}",
+      "en": "Back to book: {label}",
+      "es": "De nuevo por reservar: {label}",
+      "de": "Wieder zu buchen: {label}",
+      "it": "Di nuovo da prenotare: {label}"
     },
     "bookPanel": {
       "fr": "Réservations à ouvrir, une par une",

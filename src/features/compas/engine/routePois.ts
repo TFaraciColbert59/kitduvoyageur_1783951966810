@@ -32,6 +32,11 @@ export interface RoutePoi {
   lon: number;
   distanceM: number;
   elevationM: number | null;
+  /**
+   * Site web du lieu (tag OSM `website` ou `contact:website`), https seulement, quand la réponse Overpass
+   * déjà lue le portait. Absent sinon : jamais cherché à part.
+   */
+  website?: string;
 }
 
 export const ROUTE_POI_LABEL: Record<RoutePoiCategory, string> = {

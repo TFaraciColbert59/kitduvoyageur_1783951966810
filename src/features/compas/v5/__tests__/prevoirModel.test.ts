@@ -13,6 +13,7 @@ import {
   reservationSteps,
   safeUrl,
   sandboxProviders,
+  selectedTransport,
   transportCost,
   transportViews,
 } from '../model/prevoir';
@@ -148,20 +149,30 @@ describe('bookingTotals', () => {
   });
 });
 
-describe('« Tout réserver » : les liens, un par un', () => {
-  it('ne liste que les choix, dans l’ordre du voyage, avec leur lien et leur partenaire', () => {
+describe('« Tout réserver » : le plan complet', () => {
+  const ctx = { people: 4, origin: 'Lyon', destination: 'Vercors', start: '2026-11-03', end: '2026-11-05' };
+  it('le trajet d’abord, puis chaque nuit, avec leur lien et leur partenaire (les liens de l’option priment)', () => {
     const data = makeData();
     const cards = nightCards(data.model, extras({ 1: [gite], 2: [refuge] })).map((c) => ({ ...c, chosen: c.options[0] ?? null }));
-    const steps = reservationSteps(cards, transportViews([train], 4)[0]);
-    expect(steps.map((s) => [s.key, s.url, s.partner])).toEqual([
-      ['night:1', 'https://gites.example/royans', null],
-      ['night:2', 'https://refuges.example/moliere', 'Refuges.info'],
-      ['transport:train', 'https://sncf.example', 'SNCF'],
+    const steps = reservationSteps(cards, selectedTransport(transportViews([train], 4), 'train'), ctx);
+    expect(steps.map((s) => [s.key, s.url, s.partner, s.proposed])).toEqual([
+      ['transport', 'https://sncf.example', 'SNCF', false],
+      ['night:1', 'https://gites.example/royans', null, false],
+      ['night:2', 'https://refuges.example/moliere', 'Refuges.info', false],
     ]);
-    expect(reservationSteps(cards.map((c) => ({ ...c, chosen: null })), null)).toEqual([]);
   });
-  it('seul le https est ouvrable', () => {
+  it('sans aucun choix, les nuits sont quand même listées (sélection par défaut annoncée)', () => {
+    const data = makeData();
+    const cards = nightCards(data.model, extras({ 1: [gite], 2: [refuge] })).map((c) => ({ ...c, chosen: null, proposed: true }));
+    const steps = reservationSteps(cards, null, ctx);
+    expect(steps.map((s) => [s.key, s.proposed, s.pending.length])).toEqual([
+      ['night:1', true, 1],
+      ['night:2', true, 1],
+    ]);
+  });
+  it('seul le https, ou le relais /go/<slug>, est ouvrable', () => {
     expect(safeUrl('https://a.example')).toBe('https://a.example');
+    expect(safeUrl('/go/blablacar')).toBe('/go/blablacar');
     expect(safeUrl('http://a.example')).toBeNull();
     expect(safeUrl('javascript:alert(1)')).toBeNull();
     expect(safeUrl(null)).toBeNull();

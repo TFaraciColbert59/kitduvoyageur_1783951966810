@@ -6,7 +6,7 @@
  * est la réponse là où un réseau de voyageurs relie les deux bouts : Europe,
  * Turquie, Caucase, Japon, Corée, Chine, Inde, et les corridors d'Amérique du Nord. Ordres de
  * grandeur pour préparer (barème du Compas), jamais un horaire ni un prix réels :
- * Résa · Trajets les donne.
+ * « À prévoir » ouvre la recherche des vrais horaires, chez les exploitants.
  *
  * Les règles, dans l'ordre :
  * 1. un pays absent de la table n'a pas de train compté (réseau mal connu, ou
@@ -555,15 +555,15 @@ export function trainOutlook(input: TrainInput): TrainOutlook {
   const notice = corridor
     ? `Amérique du Nord : les trains de voyageurs ne roulent que sur quelques corridors. ${
         input.homeDeparture ? 'Un corridor' : `Celui-ci (corridor ${corridor.name}, ${corridor.operator})`
-      } dessert les deux villes à moins de ${CORRIDOR_RADIUS_KM} km d’une gare ; fréquences et prix dans Résa · Trajets.`
+      } dessert les deux villes à moins de ${CORRIDOR_RADIUS_KM} km d’une gare ; fréquences et prix à vérifier auprès des exploitants ; « À prévoir » prépare la recherche.`
     : null;
   return {
     trip: {
       railKm,
       minutesOneWay,
       eurRoundTrip,
-      basis: `barème Compas ${RAIL_SCALE_DATE} · train aller-retour, environ ${railKm} km de voie et ${String(h).replace('.', ',')} h · ${net.label} · ${RAIL_SCALE_NOTE} · vrais horaires et prix dans Résa · Trajets`,
-      basisWithoutMeasures: `barème Compas ${RAIL_SCALE_DATE} · train aller-retour · ${net.label} · ${RAIL_SCALE_NOTE} · vrais horaires et prix dans Résa · Trajets`,
+      basis: `barème Compas ${RAIL_SCALE_DATE} · train aller-retour, environ ${railKm} km de voie et ${String(h).replace('.', ',')} h · ${net.label} · ${RAIL_SCALE_NOTE} · estimation, la recherche se prépare dans « À prévoir »`,
+      basisWithoutMeasures: `barème Compas ${RAIL_SCALE_DATE} · train aller-retour · ${net.label} · ${RAIL_SCALE_NOTE} · estimation, la recherche se prépare dans « À prévoir »`,
       network: net.id,
       priceSource: 'estimation',
       preferred: net.preferred,

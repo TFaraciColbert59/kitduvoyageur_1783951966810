@@ -4,6 +4,7 @@ import { createContext, useContext } from 'react';
 import type { Locale } from '@/lib/i18n/locale';
 import type { CompasData } from '../server/getCompasData';
 import type { CompasCtl, CompasT } from '../components/compasTypes';
+import type { ResaStatus } from './engine/resaStatus';
 import type { V5Extras, V5Space } from './types';
 
 /**
@@ -31,6 +32,10 @@ export interface V5Api {
   setTab: (tab: number) => void;
   /** Annonce dans l'îlot, sans écriture. */
   announce: (message: string, sub?: string, tone?: 'bad') => void;
+  /** « J'ai réservé » par élément (`night:<jour>`, `transport`) : ce qui est rangé sur le voyage, plus les gestes de cet écran. */
+  resa: Record<string, ResaStatus>;
+  /** Met à jour l'affichage sans attendre le serveur (`null` : retire l'entrée) ; l'écriture, elle, passe par `compasV5SetResaStatusAction`. */
+  setResa: (patch: Record<string, ResaStatus | null>) => void;
   /** Préférences d'affichage de la personne (appareil) et état du mode hors ligne. */
   prefs: V5Prefs;
 }

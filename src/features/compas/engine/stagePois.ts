@@ -7,6 +7,7 @@
  * catégorie pour nom, jamais un nom inventé.
  */
 
+import { safeWebsite } from './deepLinks';
 import { distanceKm } from './places';
 import type { RoutePoi, RoutePoiCategory } from './routePois';
 
@@ -138,6 +139,8 @@ export function parseOverpass(
     });
     const rawName = typeof tags.name === 'string' ? tags.name.trim() : '';
     const ele = num(tags.ele);
+    // Le site du lieu, déjà dans la réponse (`out center tags`) : https seulement, jamais un appel de plus.
+    const website = safeWebsite(typeof tags.website === 'string' ? tags.website : typeof tags['contact:website'] === 'string' ? (tags['contact:website'] as string) : null);
     found.push({
       id,
       name: rawName ? rawName.slice(0, 80) : null,
@@ -146,6 +149,7 @@ export function parseOverpass(
       lon,
       distanceM: Math.round(best * 1000),
       elevationM: ele != null ? Math.round(ele) : null,
+      ...(website ? { website } : {}),
       place,
     });
   }

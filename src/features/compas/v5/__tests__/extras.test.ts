@@ -125,7 +125,13 @@ describe('loadV5Extras', () => {
         expenses: [{ title: 'Train aller-retour × 4', amount: 240, metadata: { basis: 'barème Compas 2026-10 · train' } }],
         steps: [{ day_number: 2, order_index: 0, metadata: { compas: { stay: { id: `osm:${refuge.id}` } } } }],
       }),
-      trip: trip({ compas: { origin: { name: 'Lyon', lat: 45.76, lon: 4.83, countryCode: 'FR' } } }),
+      trip: trip({
+        compas: {
+          origin: { name: 'Lyon', lat: 45.76, lon: 4.83, countryCode: 'FR' },
+          // « J'ai réservé » est relu avec les extras (par élément) ; une valeur illisible est ignorée.
+          resa: { 'night:2': { status: 'booked', at: '2026-11-01T10:00:00.000Z' }, 'night:99': { status: 'booked', at: 'x' }, transport: 'booked' },
+        },
+      }),
       data,
     });
 
@@ -139,7 +145,11 @@ describe('loadV5Extras', () => {
     expect(extras.transport.map((t) => t.id)).toEqual(['train', 'carpool', 'foot']);
     expect(extras.transport[0]).toMatchObject({ amountEur: 60, perPerson: true });
     expect(extras.transport[0].detail).toContain('Lyon');
-    expect(extras.choices).toEqual({ transport: null, stays: { 2: `osm:${refuge.id}` } });
+    expect(extras.choices).toEqual({
+      transport: null,
+      stays: { 2: `osm:${refuge.id}` },
+      resa: { 'night:2': { status: 'booked', at: '2026-11-01T10:00:00.000Z' } },
+    });
     expect(extras.unavailable).toEqual([]);
     expect(extras.partial).toBe(false);
     expect(Date.parse(extras.fetchedAt)).not.toBeNaN();

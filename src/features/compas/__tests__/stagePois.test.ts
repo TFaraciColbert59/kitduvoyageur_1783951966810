@@ -77,6 +77,26 @@ describe('Points autour des étapes (OpenStreetMap)', () => {
     expect(pois[0].distanceM).toBeLessThan(pois[2].distanceM);
   });
 
+  it('le site web du lieu (website ou contact:website) est gardé quand la réponse le porte, en https seulement', () => {
+    const pois = parseOverpass(
+      {
+        elements: [
+          { type: 'node', id: 1, lat: 45.9, lon: 6.13, tags: { tourism: 'alpine_hut', name: 'A', website: 'https://a.example/refuge' } },
+          { type: 'node', id: 2, lat: 45.9, lon: 6.1301, tags: { tourism: 'alpine_hut', name: 'B', 'contact:website': 'https://b.example' } },
+          { type: 'node', id: 3, lat: 45.9, lon: 6.1302, tags: { tourism: 'alpine_hut', name: 'C', website: 'http://c.example' } },
+          { type: 'node', id: 4, lat: 45.9, lon: 6.1303, tags: { tourism: 'alpine_hut', name: 'D', website: 'javascript:alert(1)' } },
+        ],
+      },
+      [annecy]
+    );
+    expect(pois.map((p) => [p.name, p.website ?? null])).toEqual([
+      ['A', 'https://a.example/refuge'],
+      ['B', 'https://b.example'],
+      ['C', null],
+      ['D', null],
+    ]);
+  });
+
   it('au plus 6 par catégorie et par étape ; doublons (même nom, < 60 m) retirés', () => {
     const elements = Array.from({ length: 10 }, (_, i) => ({
       type: 'node',

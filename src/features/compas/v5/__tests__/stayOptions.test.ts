@@ -15,6 +15,24 @@ function poi(p: Partial<RoutePoi> & { category: RoutePoi['category']; metres: nu
 
 const base = { arrival: ARRIVAL, noted: null, party: 4, nights: null, countryCode: 'FR' } as const;
 
+describe('rankStayOptions · site du lieu', () => {
+  it('le site web OpenStreetMap déjà lu devient le lien de l’option (https seulement)', () => {
+    const out = rankStayOptions({
+      ...base,
+      pois: [
+        poi({ category: 'refuge', name: 'Refuge avec site', metres: 300, website: 'https://refuge.example' }),
+        poi({ category: 'refuge', name: 'Refuge sans https', metres: 400, website: 'http://refuge.example' }),
+        poi({ category: 'refuge', name: 'Refuge sans site', metres: 500 }),
+      ],
+    });
+    expect(out.map((o) => [o.name, o.url])).toEqual([
+      ['Refuge avec site', 'https://refuge.example'],
+      ['Refuge sans https', null],
+      ['Refuge sans site', null],
+    ]);
+  });
+});
+
 describe('rankStayOptions', () => {
   it('rend un tableau vide sans arrivée ou sans lieu', () => {
     expect(rankStayOptions({ ...base, arrival: null, pois: [] })).toEqual([]);

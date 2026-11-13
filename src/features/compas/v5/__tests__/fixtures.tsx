@@ -6,6 +6,7 @@ import type { CompasData } from '../../server/getCompasData';
 import type { CompasCtl } from '../../components/compasTypes';
 import { FR_T } from '../../components/compasTypes';
 import { V5Context, type V5Api } from '../context';
+import { mergeResa, type ResaStatus } from '../engine/resaStatus';
 import { EMPTY_EXTRAS, type V5Extras, type V5Space } from '../types';
 
 /**
@@ -179,6 +180,8 @@ export function makeApi(
     closeSpace: vi.fn(),
     setTab: vi.fn(),
     announce: vi.fn(),
+    resa: {},
+    setResa: vi.fn(),
     prefs: { outdoor: false, setOutdoor: vi.fn(), undoS: 15, setUndoS: vi.fn(), offlineSavedAt: null },
     ...overrides,
     ctl,
@@ -187,7 +190,20 @@ export function makeApi(
 
 /** Enveloppe de rendu : `render(<WithApi api={api}><Body /></WithApi>)`. */
 export function WithApi({ api, children }: { api: V5Api; children: ReactNode }) {
-  return <V5Context.Provider value={api}>{children}</V5Context.Provider>;
+  // Comme l'écran : « J'ai réservé » suit tout de suite (mise à jour optimiste), l'espion `setResa` voit chaque geste.
+  const [overlay, setOverlay] = React.useState<Record<string, ResaStatus | null>>({});
+  const value = React.useMemo<V5Api>(
+    () => ({
+      ...api,
+      resa: mergeResa(api.resa, overlay),
+      setResa: (patch) => {
+        api.setResa(patch);
+        setOverlay((prev) => ({ ...prev, ...patch }));
+      },
+    }),
+    [api, overlay]
+  );
+  return <V5Context.Provider value={value}>{children}</V5Context.Provider>;
 }
 
 export type { V5Space };

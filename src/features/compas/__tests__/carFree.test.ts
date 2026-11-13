@@ -317,7 +317,8 @@ describe('« transports en commun » seulement quand la zone en montre', () => {
     expect(s.status).toBe('reperes');
     expect(s.text).toMatch(/^Transports en commun : /);
     expect(s.text).toContain('Gare de Die');
-    expect(s.text).toContain('Résa · Trajets');
+    expect(s.text).toContain('« À prévoir »');
+    expect(s.text).not.toMatch(/Résa ·|vrais? prix/);
   });
 
   it('un point sans nom garde sa catégorie, jamais un nom inventé', () => {

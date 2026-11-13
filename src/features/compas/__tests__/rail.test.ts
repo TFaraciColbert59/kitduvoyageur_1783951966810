@@ -6,7 +6,8 @@ describe('trainTrip — le train plutôt que l’avion en Europe de l’Ouest', 
     const t = trainTrip({ fromCountry: 'FR', toCountry: 'FR', straightKm: 500, roadKm: 640, days: 3 })!;
     expect(t).toMatchObject({ railKm: 625, eurRoundTrip: 2 * 81 });
     expect(t.minutesOneWay).toBe(Math.round((625 / 110) * 60 + 30));
-    expect(t.basis).toContain('Résa · Trajets');
+    expect(t.basis).toContain('« À prévoir »');
+    expect(t.basis).not.toMatch(/Résa ·|vrais? (prix|horaires)/);
   });
 
   it('Annecy → Bruges : pays reliés', () => {

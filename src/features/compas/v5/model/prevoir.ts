@@ -10,9 +10,11 @@ import type { CompasBookingInput, CompasDayPlan, CompasKitLine, CompasModel } fr
 import { normalizeName } from '../../engine/kitApply';
 import { formatNumber } from '@/lib/i18n/format';
 import type { Locale } from '@/lib/i18n/locale';
+import { addDaysIso, stayDeepLink, transportDeepLink } from '../../engine/deepLinks';
 import { notedStay } from '../../engine/stayProposal';
 import type { CompasData, CompasPoint, CompasShopProduct } from '../../server/getCompasData';
 import { buyStage, itemState, restorablePurchaseState, shopProductFor, type BuyStage } from './sac';
+import { splitStepTitle } from './trip';
 import type { V5Extras, V5Photo, V5PriceHint, V5StayKind, V5StayOption, V5TransportOption } from '../types';
 
 /* ---------- Nuits ---------- */
@@ -47,6 +49,10 @@ export interface NightCard {
   /** Ce que la grande carte montre : la nuit choisie, sinon la mieux placée. */
   shown: StayView | null;
   state: NightState;
+  /** Lieu de l'étape du jour (arrivée), pour les liens de recherche ; null s'il n'est pas dit. */
+  place: string | null;
+  /** La nuit montrée est la sélection par défaut (la mieux classée), pas un choix écrit : rien n'est écrit en base. */
+  proposed: boolean;
 }
 
 const sameName = (a: string, b: string) => {
@@ -107,8 +113,24 @@ export function nightCards(model: CompasModel, extras: V5Extras): NightCard[] {
       options.unshift(chosen);
     }
     const shown = chosen ?? options[0] ?? null;
-    return { day: plan.day, date: plan.date, noted, options, chosen, shown, state: chosen ? 'to-confirm' : 'to-choose' };
+    return {
+      day: plan.day,
+      date: plan.date,
+      noted,
+      options,
+      chosen,
+      shown,
+      state: chosen ? 'to-confirm' : 'to-choose',
+      place: placeOfDay(plan.title),
+      proposed: !chosen && shown != null,
+    };
   });
+}
+
+/** Le lieu d'arrivée d'un jour : « A → B » donne B, « Jour 2 · B » donne B ; null si le titre n'en dit rien. */
+function placeOfDay(title: string): string | null {
+  const tail = splitStepTitle(title).split(/\s*(?:→|->|=>)\s*/u).pop()?.trim() ?? '';
+  return tail || null;
 }
 
 /* ---------- Trajet ---------- */
@@ -211,32 +233,166 @@ export function bookingTotals(cards: readonly NightCard[], transport: TransportV
   };
 }
 
-/* ---------- « Tout réserver » : les liens, un par un ---------- */
+/* ---------- « Tout réserver » : le plan complet, dans l'ordre du voyage ---------- */
+
+/** Le trajet d'approche pris en compte : celui que la personne a choisi, sinon la sélection par défaut (annoncée). */
+export interface TransportSelection {
+  view: TransportView;
+  /** Sélection par défaut : rien n'est écrit en base tant que la personne n'a pas agi. */
+  proposed: boolean;
+}
+
+const PRICED_APPROACH = new Set<TransportView['id']>(['car', 'train', 'flight', 'bus']);
+
+/**
+ * Le choix écrit s'il existe ; sinon l'option chiffrée par la préparation (voiture, train, avion), la
+ * première dans l'ordre où le serveur les rend. Sans option chiffrée : aucune sélection (covoiturage et
+ * « à pied » ne sont jamais choisis à la place de la personne).
+ */
+export function selectedTransport(views: readonly TransportView[], chosenId: TransportView['id'] | null): TransportSelection | null {
+  const chosen = chosenId ? views.find((v) => v.id === chosenId) : null;
+  if (chosen) return { view: chosen, proposed: false };
+  const fallback = views.find((v) => PRICED_APPROACH.has(v.id) && v.costEur != null);
+  return fallback ? { view: fallback, proposed: true } : null;
+}
+
+export interface ReservationContext {
+  /** Nombre de voyageurs (celui du modèle, jamais recalculé ici). */
+  people: number;
+  /** Lieu de départ dit, ou null. */
+  origin: string | null;
+  /** Destination du voyage, ou null. */
+  destination: string | null;
+  /** Dates du voyage (ISO) : départ et retour. */
+  start: string | null;
+  end: string | null;
+  /** Mot de réservation de la langue, pour les recherches web. */
+  keyword?: string;
+}
 
 export interface ReservationStep {
+  /** `transport`, ou `night:<premier jour>` : la clé du premier élément de la ligne. */
   key: string;
+  /** Clés de statut de tous les éléments de la ligne (`night:<jour>` pour chaque nuit, `transport`). */
+  keys: string[];
   kind: 'night' | 'transport';
+  /** Premier jour de la ligne (nuits) ; null pour le trajet. */
   day: number | null;
-  /** Nom de la nuit ou du trajet. */
+  /** Nombre de nuits de la ligne (0 pour le trajet). */
+  nights: number;
+  /** Arrivée = première nuit ; départ = dernière nuit + 1 (ISO, null quand les dates ne sont pas connues). */
+  checkIn: string | null;
+  checkOut: string | null;
+  /** Nom de la nuit ou du trajet ; lieu de l'étape quand aucune nuit n'est connue ; vide sinon. */
   label: string;
+  /** Lieu de l'étape. */
+  place: string | null;
+  /** Aucun choix écrit : c'est la sélection par défaut, annoncée « Proposé ». */
+  proposed: boolean;
+  /** Lien ouvert par la personne : celui de l'option (partenaire ou site du lieu), sinon une recherche prérempliée. */
   url: string | null;
   partner: string | null;
+  /** Lien de recherche direct (sans affiliation). */
+  direct: boolean;
+  /** Nuits à écrire comme choix si la ligne est notée réservée alors qu'elle n'est que proposée. */
+  pending: Array<{ day: number; option: StayView['option'] }>;
+}
+
+interface NightSlot {
+  card: NightCard;
+  view: StayView | null;
+}
+
+/** Même hébergement (même lieu OSM ou même nom) ; sans hébergement connu, même lieu d'étape. */
+function sameLodging(a: NightSlot, b: NightSlot): boolean {
+  if (a.view && b.view) return a.view.id === b.view.id || sameName(a.view.name, b.view.name);
+  if (a.view || b.view) return false;
+  return a.card.place != null && b.card.place != null && sameName(a.card.place, b.card.place);
 }
 
 /**
- * Les réservations à ouvrir, dans l'ordre du voyage : les nuits choisies, puis le trajet choisi. Aucune n'est
- * inventée : un choix sans lien est listé sans lien (« à réserver chez l'hébergeur »). Rien ne s'ouvre seul.
+ * Tout ce qu'il y a à réserver, dans l'ordre du voyage : d'abord le trajet d'approche, puis chaque nuit par
+ * ordre de jour. Une nuit sans choix écrit prend la première option proposée (la mieux classée) comme
+ * sélection par défaut annoncée (`proposed`) ; une nuit sans option est listée quand même, avec une
+ * recherche sur le lieu de l'étape. Les nuits consécutives au même hébergement forment une seule ligne.
+ * Aucune n'est inventée et rien ne s'ouvre seul.
  */
-export function reservationSteps(cards: readonly NightCard[], transport: TransportView | null): ReservationStep[] {
-  const steps: ReservationStep[] = cards
-    .filter((c) => c.chosen)
-    .map((c) => ({ key: `night:${c.day}`, kind: 'night' as const, day: c.day, label: (c.chosen as StayView).name, url: (c.chosen as StayView).url, partner: (c.chosen as StayView).partner }));
-  if (transport) steps.push({ key: `transport:${transport.id}`, kind: 'transport', day: null, label: transport.label, url: transport.url, partner: transport.partner });
+export function reservationSteps(cards: readonly NightCard[], transport: TransportSelection | null, ctx: ReservationContext): ReservationStep[] {
+  const steps: ReservationStep[] = [];
+
+  if (transport && transport.view.id !== 'foot') {
+    const { view } = transport;
+    const own = safeUrl(view.url);
+    const url = own ?? transportDeepLink({ mode: view.id, origin: ctx.origin, destination: ctx.destination, depart: ctx.start, back: ctx.end });
+    steps.push({
+      key: 'transport',
+      keys: ['transport'],
+      kind: 'transport',
+      day: null,
+      nights: 0,
+      checkIn: null,
+      checkOut: null,
+      label: view.label,
+      place: ctx.destination,
+      proposed: transport.proposed,
+      url,
+      partner: own ? view.partner : null,
+      direct: !own && url != null,
+      pending: [],
+    });
+  }
+
+  const groups: NightSlot[][] = [];
+  for (const card of cards) {
+    const slot: NightSlot = { card, view: card.chosen ?? card.shown };
+    const group = groups[groups.length - 1];
+    const prev = group?.[group.length - 1];
+    if (group && prev && card.day === prev.card.day + 1 && sameLodging(prev, slot)) group.push(slot);
+    else groups.push([slot]);
+  }
+
+  for (const group of groups) {
+    const first = group[0];
+    const last = group[group.length - 1];
+    const { view } = first;
+    const checkOut = addDaysIso(last.card.date, 1);
+    const dated = first.card.date != null && checkOut != null;
+    const own = view ? safeUrl(view.url) : null;
+    const deep = own
+      ? null
+      : stayDeepLink({
+          kind: view?.kind ?? 'hebergement',
+          name: view?.name ?? first.card.place ?? '',
+          place: first.card.place,
+          website: null,
+          checkIn: dated ? first.card.date : null,
+          checkOut: dated ? checkOut : null,
+          adults: ctx.people,
+          keyword: ctx.keyword,
+        });
+    steps.push({
+      key: `night:${first.card.day}`,
+      keys: group.map((s) => `night:${s.card.day}`),
+      kind: 'night',
+      day: first.card.day,
+      nights: group.length,
+      checkIn: dated ? first.card.date : null,
+      checkOut: dated ? checkOut : null,
+      label: view?.name ?? first.card.place ?? '',
+      place: first.card.place,
+      proposed: group.some((s) => !s.card.chosen),
+      url: own ?? deep,
+      partner: own ? (view?.partner ?? null) : null,
+      direct: !own && deep != null,
+      pending: group.flatMap((s) => (!s.card.chosen && s.view ? [{ day: s.card.day, option: s.view.option }] : [])),
+    });
+  }
   return steps;
 }
 
-/** Le lien est-il sûr à ouvrir ? Seul le https passe. */
-export const safeUrl = (url: string | null): string | null => (url && /^https:\/\//i.test(url) ? url : null);
+/** Le lien est-il sûr à ouvrir ? https, ou le relais d'affiliation du site (`/go/<slug>`) ; rien d'autre de relatif. */
+export const safeUrl = (url: string | null): string | null =>
+  url && (/^https:\/\//i.test(url) || /^\/go\/[\w-]+(?:[?#]|$)/.test(url)) ? url : null;
 
 /** Réservations réelles déjà enregistrées pour le voyage (celles qui ne sont ni annulées, ni expirées, ni échouées). */
 export function liveBookings(bookings: readonly CompasBookingInput[]): CompasBookingInput[] {

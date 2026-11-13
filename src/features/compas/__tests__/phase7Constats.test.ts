@@ -1,10 +1,32 @@
 import { readFileSync } from 'node:fs';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { knownRegion } from '../engine/knownRegions';
 import { parseIntentRules } from '../engine/intent';
 import { understandRequest } from '../engine/request';
 import { canonicalCountryName, canonicalPlaceName, splitPlaceCountry } from '../engine/countryNames';
 import { looseRank, parseGeoapify, plausibleLooseMatch, resemblesQuery, subPlaceQueries, type CompasPlace } from '../engine/places';
+import { createFakeDb, type FakeDb } from '../v5/__tests__/fakeDb';
+import { makeData, makeInput } from '../v5/__tests__/fixtures';
+import { isResaBooked, mergeResa, parseResa } from '../v5/engine/resaStatus';
+import { nightCards, reservationSteps, safeUrl, selectedTransport, transportViews, type ReservationContext } from '../v5/model/prevoir';
+import { EMPTY_EXTRAS, type V5Extras, type V5StayOption, type V5TransportOption } from '../v5/types';
+import { compasV5SetResaStatusAction } from '../v5/server/choiceActions';
+
+const resaDb = vi.hoisted(() => ({ db: null as unknown as FakeDb, denied: false }));
+vi.mock('server-only', () => ({}));
+vi.mock('@/lib/observability/appErrors', () => ({ reportServerError: vi.fn(async () => undefined) }));
+vi.mock('../server/compasServer', async (orig) => {
+  const real = await orig<typeof import('../server/compasServer')>();
+  return {
+    ...real,
+    requireEditor: vi.fn(async (tripId: string) => {
+      if (resaDb.denied) return { error: 'Seuls les organisateurs et éditeurs peuvent modifier le kit.' };
+      const trip = resaDb.db.tables.trips.find((t) => t.id === tripId);
+      if (!trip) return { error: 'Voyage introuvable ou non autorisé.' };
+      return { supabase: resaDb.db.client, userId: 'u1', trip, anonymous: false };
+    }),
+  };
+});
 
 // Constats de la phase 7 (docs/compas/phase7/CONSTATS.md) : chaque test rejoue la phrase du jeu qui a révélé le défaut.
 const TODAY = '2026-10-19';
@@ -376,5 +398,184 @@ describe('C-023 · jeux def2 : régions que la carte range sur un homonyme', () 
   it('« Highlands écossais » (et non la Rivière des Écossais du Québec) et « Himalaya indien Ladakh » (et non un hôtel)', () => {
     expect(knownRegion('Highlands écossais', null)).toMatchObject({ countryCode: 'GB', name: 'Highlands écossais' });
     expect(knownRegion('Himalaya indien Ladakh', null)).toMatchObject({ countryCode: 'IN', name: 'Ladakh' });
+  });
+});
+
+describe('Audit Résa 13/11', () => {
+  const TRIP = '11111111-1111-4111-8111-111111111111';
+  const SLUG = 'vercors-novembre';
+  const stay = (p: Partial<V5StayOption> & { id: string; name: string }): V5StayOption => ({
+    kind: 'hebergement',
+    lat: 45,
+    lon: 5.4,
+    distanceM: 300,
+    elevationM: null,
+    price: null,
+    photo: null,
+    source: 'OpenStreetMap',
+    url: null,
+    partner: null,
+    ...p,
+  });
+  const gite = stay({ id: 'osm:1', name: 'Gîte du Royans', url: 'https://gites.example/royans' });
+  const chambre = stay({ id: 'osm:4', name: 'Chambre Les Coulmes' });
+  const refuge = stay({ id: 'osm:2', name: 'Refuge de la Molière', kind: 'refuge' });
+  const camping = stay({ id: 'osm:3', name: 'Camping des Écouges', kind: 'camping' });
+  const car: V5TransportOption = { id: 'car', label: 'Voiture', detail: null, amountEur: 64, perPerson: false, source: 'barème', url: null, partner: null };
+  const train: V5TransportOption = { id: 'train', label: 'Train', detail: null, amountEur: 19, perPerson: true, source: 'SNCF', url: null, partner: null };
+  const carpool: V5TransportOption = { id: 'carpool', label: 'Covoiturage', detail: null, amountEur: null, perPerson: false, source: 'aucun tarif', url: '/go/blablacar', partner: 'BlaBlaCar' };
+  const foot: V5TransportOption = { id: 'foot', label: 'À pied', detail: null, amountEur: 0, perPerson: false, source: 'ton choix', url: null, partner: null };
+  const extrasOf = (nights: V5Extras['nights'], transport: V5TransportOption[] = []): V5Extras => ({ ...EMPTY_EXTRAS, fetchedAt: '2026-10-22T10:00:00Z', nights, transport });
+  const unnoted = () => makeData({ steps: makeInput().steps.map((s) => ({ ...s, accommodationName: null })) });
+  const ctx: ReservationContext = { people: 4, origin: 'Lyon', destination: 'Vercors', start: '2026-11-03', end: '2026-11-05' };
+  const plan = (data: ReturnType<typeof makeData>, extras: V5Extras, chosenTransport: V5TransportOption['id'] | null = null) => {
+    const cards = nightCards(data.model, extras);
+    return reservationSteps(cards, selectedTransport(transportViews(extras.transport, 4), chosenTransport), ctx);
+  };
+
+  describe('1 · les liens internes /go/<slug> sont ouvrables', () => {
+    it('safeUrl accepte https et le relais d’affiliation du site, rien d’autre de relatif', () => {
+      expect(safeUrl('https://a.example/x')).toBe('https://a.example/x');
+      expect(safeUrl('/go/blablacar-fr')).toBe('/go/blablacar-fr');
+      expect(safeUrl('/go/')).toBeNull();
+      expect(safeUrl('/gone/x')).toBeNull();
+      expect(safeUrl('//evil.example/go/x')).toBeNull();
+      expect(safeUrl('/go/../admin')).toBeNull();
+      expect(safeUrl('/compte')).toBeNull();
+      expect(safeUrl('http://a.example')).toBeNull();
+      expect(safeUrl('javascript:alert(1)')).toBeNull();
+    });
+  });
+
+  describe('2 · « J’ai réservé » est écrit, par élément', () => {
+    beforeEach(() => {
+      resaDb.denied = false;
+      resaDb.db = createFakeDb({
+        trips: [{ id: TRIP, user_id: 'u1', updated_at: '2026-10-22T09:00:00.000Z', metadata: { route_id: 12, compas: { prefs: { pace: 'tranquille' }, transport: { id: 'car', amountEur: 64, perPerson: false, source: 'x' } } } }],
+      });
+    });
+    const meta = () => resaDb.db.tables.trips[0].metadata as { route_id: number; compas: Record<string, unknown> & { resa?: Record<string, { status: string; at: string }> } };
+
+    it('range le statut sous trips.metadata.compas.resa sans toucher au reste du JSON', async () => {
+      const res = await compasV5SetResaStatusAction({ tripId: TRIP, tripSlug: SLUG, key: 'night:2', status: 'booked' });
+      expect(res).toEqual({ success: true });
+      expect(meta().route_id).toBe(12);
+      expect(meta().compas.prefs).toEqual({ pace: 'tranquille' });
+      expect(meta().compas.transport).toMatchObject({ id: 'car' });
+      expect(meta().compas.resa?.['night:2']).toMatchObject({ status: 'booked' });
+      expect(Number.isNaN(Date.parse(meta().compas.resa?.['night:2'].at ?? ''))).toBe(false);
+    });
+
+    it('plusieurs éléments d’un coup (nuits regroupées) et le trajet, chacun sous sa clé ; « à faire » les défait', async () => {
+      await compasV5SetResaStatusAction({ tripId: TRIP, tripSlug: SLUG, keys: ['night:1', 'night:2'], status: 'booked' });
+      await compasV5SetResaStatusAction({ tripId: TRIP, tripSlug: SLUG, key: 'transport', status: 'booked' });
+      expect(Object.keys(meta().compas.resa ?? {}).sort()).toEqual(['night:1', 'night:2', 'transport']);
+      await compasV5SetResaStatusAction({ tripId: TRIP, tripSlug: SLUG, key: 'night:1', status: 'todo' });
+      expect(meta().compas.resa?.['night:1']).toMatchObject({ status: 'todo' });
+      expect(meta().compas.resa?.['night:2']).toMatchObject({ status: 'booked' });
+    });
+
+    it('rejouer le même statut n’écrit rien', async () => {
+      await compasV5SetResaStatusAction({ tripId: TRIP, tripSlug: SLUG, key: 'night:1', status: 'booked' });
+      const writes = resaDb.db.log.filter((l) => l.table === 'trips').length;
+      expect(await compasV5SetResaStatusAction({ tripId: TRIP, tripSlug: SLUG, key: 'night:1', status: 'booked' })).toEqual({ success: true });
+      expect(resaDb.db.log.filter((l) => l.table === 'trips')).toHaveLength(writes);
+    });
+
+    it('refuse une clé ou un statut inconnu, un lecteur, une écriture refusée', async () => {
+      for (const key of ['night:0', 'night:61', 'night:x', 'transport:car', '__proto__', '']) {
+        expect((await compasV5SetResaStatusAction({ tripId: TRIP, tripSlug: SLUG, key, status: 'booked' } as never)).success).toBe(false);
+      }
+      expect((await compasV5SetResaStatusAction({ tripId: TRIP, tripSlug: SLUG, key: 'night:1', status: 'paid' } as never)).success).toBe(false);
+      expect(resaDb.db.log).toHaveLength(0);
+      resaDb.denied = true;
+      expect((await compasV5SetResaStatusAction({ tripId: TRIP, tripSlug: SLUG, key: 'night:1', status: 'booked' })).success).toBe(false);
+      resaDb.denied = false;
+      resaDb.db.failWrites.add('trips');
+      expect((await compasV5SetResaStatusAction({ tripId: TRIP, tripSlug: SLUG, key: 'night:1', status: 'booked' })).success).toBe(false);
+      expect(meta().compas.resa).toBeUndefined();
+    });
+
+    it('relu au rechargement : le statut vient de la base, pas d’une réservation quelconque du voyage', async () => {
+      await compasV5SetResaStatusAction({ tripId: TRIP, tripSlug: SLUG, key: 'night:2', status: 'booked' });
+      const resa = parseResa(meta().compas.resa);
+      expect(isResaBooked(resa, 'night:2')).toBe(true);
+      expect(isResaBooked(resa, 'night:1')).toBe(false);
+      expect(isResaBooked(resa, 'transport')).toBe(false);
+      // Valeurs illisibles : ignorées, jamais devinées.
+      expect(parseResa({ 'night:1': { status: 'paid', at: 'x' }, 'night:99': { status: 'booked', at: 'x' }, transport: 'booked', 'night:3': { status: 'booked', at: '2026-11-01T10:00:00.000Z' } })).toEqual({
+        'night:3': { status: 'booked', at: '2026-11-01T10:00:00.000Z' },
+      });
+      // Mise à jour optimiste côté client, puis retour arrière.
+      expect(mergeResa({ 'night:2': 'booked' }, { 'night:1': 'booked', 'night:2': null })).toEqual({ 'night:1': 'booked' });
+    });
+
+    it('l’écran ne déduit plus « réservé » d’une réservation confirmée quelconque', () => {
+      const screen = readFileSync(new URL('../v5/CompasV5Screen.tsx', import.meta.url), 'utf8');
+      expect(screen).not.toContain('bookings.confirmed > 0');
+      expect(screen).toContain('isResaBooked(resa, nightKey(d.day))');
+      const drawer = readFileSync(new URL('../v5/drawers/prevoir.tsx', import.meta.url), 'utf8');
+      expect(drawer).not.toContain('useState<ReadonlySet<string>>');
+      expect(drawer).toContain('compasV5SetResaStatusAction');
+    });
+  });
+
+  describe('3 · le plan de réservation liste tout, dans l’ordre', () => {
+    it('sans aucun choix ni option : toutes les nuits, chacune avec un lien de recherche sur son lieu et ses dates', () => {
+      const steps = plan(unnoted(), EMPTY_EXTRAS);
+      expect(steps.map((s) => s.key)).toEqual(['night:1', 'night:2']);
+      expect(steps.every((s) => s.proposed)).toBe(true);
+      expect(steps[0].url).toBe('https://www.booking.com/searchresults.html?ss=Rencurel&checkin=2026-11-03&checkout=2026-11-04&group_adults=4');
+      expect(steps[1].url).toBe('https://www.booking.com/searchresults.html?ss=Corren%C3%A7on-en-Vercors&checkin=2026-11-04&checkout=2026-11-05&group_adults=4');
+    });
+
+    it('le trajet d’approche d’abord, puis chaque nuit par jour ; la mieux classée est la sélection par défaut annoncée', () => {
+      const steps = plan(unnoted(), extrasOf({ 1: [gite, chambre], 2: [refuge, camping] }, [car, train, carpool, foot]));
+      expect(steps.map((s) => [s.key, s.kind, s.label, s.proposed])).toEqual([
+        ['transport', 'transport', 'Voiture', true],
+        ['night:1', 'night', 'Gîte du Royans', true],
+        ['night:2', 'night', 'Refuge de la Molière', true],
+      ]);
+      // Le lien du lieu (site officiel) garde la priorité sur une recherche.
+      expect(steps[1].url).toBe('https://gites.example/royans');
+      expect(steps[1].direct).toBe(false);
+      // Refuge sans site connu : recherche web ; voiture : itinéraire en voiture.
+      expect(steps[2].url).toBe('https://duckduckgo.com/?q=Refuge%20de%20la%20Moli%C3%A8re%20Corren%C3%A7on-en-Vercors%20r%C3%A9servation');
+      expect(steps[2].direct).toBe(true);
+      expect(steps[0].url).toBe('https://www.google.com/maps/dir/?api=1&origin=Lyon&destination=Vercors&travelmode=driving');
+    });
+
+    it('un choix écrit n’est plus « proposé » ; le trajet choisi remplace celui par défaut', () => {
+      const noted = makeData({ steps: makeInput().steps.map((s) => (s.dayNumber === 1 ? { ...s, accommodationName: 'Chambre Les Coulmes' } : s)) });
+      const steps = plan(noted, extrasOf({ 1: [gite, chambre], 2: [refuge] }, [car, train]), 'train');
+      expect(steps.map((s) => [s.key, s.label, s.proposed])).toEqual([
+        ['transport', 'Train', false],
+        ['night:1', 'Chambre Les Coulmes', false],
+        ['night:2', 'Refuge de la Molière', true],
+      ]);
+      expect(steps[0].url).toBe('https://www.google.com/maps/dir/?api=1&origin=Lyon&destination=Vercors&travelmode=transit');
+    });
+
+    it('un lien affilié /go/… garde la priorité sur la recherche', () => {
+      const steps = plan(unnoted(), extrasOf({}, [carpool]), 'carpool');
+      expect(steps[0]).toMatchObject({ key: 'transport', url: '/go/blablacar', partner: 'BlaBlaCar', direct: false });
+    });
+
+    it('« à pied » ne se réserve pas : aucune ligne de trajet', () => {
+      expect(plan(unnoted(), extrasOf({}, [car, foot]), 'foot').map((s) => s.key)).toEqual(['night:1', 'night:2']);
+    });
+
+    it('les nuits consécutives au même lieu forment une seule ligne : arrivée = première nuit, départ = dernière nuit + 1', () => {
+      const steps = plan(unnoted(), extrasOf({ 1: [gite], 2: [gite] }));
+      expect(steps).toHaveLength(1);
+      expect(steps[0]).toMatchObject({ key: 'night:1', keys: ['night:1', 'night:2'], nights: 2, checkIn: '2026-11-03', checkOut: '2026-11-05' });
+      // Deux lieux différents : deux lignes.
+      expect(plan(unnoted(), extrasOf({ 1: [gite], 2: [refuge] }))).toHaveLength(2);
+    });
+
+    it('un voyage d’un jour et sans trajet n’a rien à réserver', () => {
+      const base = makeInput();
+      expect(plan(makeData({ steps: [base.steps[0]] }), EMPTY_EXTRAS)).toEqual([]);
+    });
   });
 });

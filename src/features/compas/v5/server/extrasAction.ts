@@ -34,7 +34,7 @@ const NOTHING_READ: Omit<V5ExtrasPayload, 'fetchedAt'> = {
   dayPhotos: {},
   transport: [],
   unavailable: ['lodging', 'photos', 'transport'],
-  choices: { transport: null, stays: {} },
+  choices: { transport: null, stays: {}, resa: {} },
   partial: false,
 };
 
