@@ -1,127 +1,16 @@
-<!-- hf-skeleton generated id=p43 sha256=80d37eb57215406b — carte provisoire générée par tools/timeline/build-skeleton.mjs depuis film/shots.json ; toute retouche hors de la zone hf-footage la soustrait au générateur -->
+<!-- P43 ★ (images 2640–2718, 78 images) — landscape-director. img48, Passo Giau : Clara minuscule (≈ 930, 675) dans les lacets, Ra Gusela au couchant, sommets dans le cadre.
+     Entrée sur la bascule vers le haut de P42 : cy 560 → 515 (outCubic, 10 images) ; élévation du drone S 1,08 → 1,04, dérive droite cx +50.
+     Sortie (elle surgit face caméra, P44) : poussée rapide vers Clara (S +0,5, cx → 930, cy → 675, inCubic sur 9 images). -->
 <template>
   <style>
-    #root {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-      background: #646A1E;
-      font-family: "Inter", sans-serif;
-      color: #FAF8F5;
-    }
-    .p43-card {
-      position: absolute;
-      inset: 0;
-      padding: 96px 120px 120px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-    .p43-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      font-family: "JetBrains Mono", monospace;
-      font-size: 34px;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-    }
-    .p43-mid {
-      display: flex;
-      align-items: flex-end;
-      gap: 72px;
-    }
-    .p43-num {
-      font-weight: 900;
-      font-size: 360px;
-      line-height: 0.8;
-      letter-spacing: -0.04em;
-    }
-    .p43-meta {
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-      padding-bottom: 8px;
-    }
-    .p43-source {
-      font-family: "JetBrains Mono", monospace;
-      font-weight: 700;
-      font-size: 64px;
-    }
-    .p43-frames {
-      font-family: "JetBrains Mono", monospace;
-      font-size: 36px;
-    }
-    .p43-star {
-      font-weight: 700;
-      font-size: 40px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-    }
-    .p43-intent {
-      max-width: 1600px;
-      font-size: 52px;
-      line-height: 1.2;
-      font-weight: 400;
-    }
-    .p43-track {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      height: 12px;
-      background: rgba(250, 248, 245, 0.18);
-    }
-    .p43-bar {
-      position: absolute;
-      inset: 0;
-      background: #FAF8F5;
-      transform-origin: 0 50%;
-    }
-    .p43-frame {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-    }
-    .p43-shot,
-    .p43-shot-inner {
-      position: absolute;
-      inset: 0;
-    }
-    .p43-shot {
-      opacity: 0;
-    }
-    .p43-shot-img {
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 1920px;
-      height: 1080px;
-      /* Remplit le 16:9 sans déformer, quel que soit le rapport de l'image : recadrage au centre. */
-      object-fit: cover;
-      object-position: 50% 50%;
-    }
+    #root { position: absolute; inset: 0; overflow: hidden; background: #0B1F17; }
+    .p43-frame { position: absolute; inset: 0; overflow: hidden; }
+    .p43-shot, .p43-shot-inner { position: absolute; inset: 0; }
+    .p43-shot { opacity: 0; }
+    .p43-shot-img { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
+    #p43-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
   </style>
   <div id="root" data-composition-id="p43" data-width="1920" data-height="1080" data-duration="1.3">
-    <!-- Carte provisoire : outil de travail, disparaît quand l'image du plan est là. -->
-    <div id="p43-card" class="p43-card" data-shot="p43" data-act="8">
-      <div id="p43-top" class="p43-top">
-        <span id="p43-act">Acte 8 · CYCLISTE</span>
-        <span id="p43-range">2640–2718</span>
-      </div>
-      <div id="p43-mid" class="p43-mid">
-        <div id="p43-num" class="p43-num">P43</div>
-        <div id="p43-meta" class="p43-meta">
-          <div id="p43-source" class="p43-source">img48</div>
-          <div id="p43-frames" class="p43-frames">78 images · 1,30 s</div>
-          <div id="p43-star" class="p43-star">★ plan d'échelle</div>
-        </div>
-      </div>
-      <div id="p43-intent" class="p43-intent">★ Passo Giau : Clara minuscule dans les lacets, Ra Gusela au soleil couchant</div>
-      <div id="p43-track" class="p43-track"><div id="p43-bar" class="p43-bar"></div></div>
-    </div>
-    <!-- Emplacement d'image plein cadre : assets/footage/img48.png.
-         Chaque calque : .p43-shot (opacité, séquence) > .p43-shot-inner (libre pour le mouvement) > img. -->
     <div id="p43-frame" class="p43-frame" data-layout-allow-overflow>
       <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) -->
       <div id="p43-shot-1" class="p43-shot" data-src="img48" data-seq="0" data-seq-count="1">
@@ -131,30 +20,64 @@
       </div>
     <!-- hf-footage:end -->
     </div>
+    <canvas id="p43-canvas" width="1920" height="1080" data-layout-allow-overflow></canvas>
   </div>
+  <script src="lib/fx/core.js"></script>
   <script>
     (function () {
-      var D = 78 / 60;
-      var tl = gsap.timeline({ paused: true });
-      // Barre de progression : se remplit sur la durée du plan.
-      tl.fromTo("#p43-bar", { scaleX: 0 }, { scaleX: 1, duration: D, ease: "none" }, 0);
-      // Images présentes : chaque source occupe sa part égale du plan (ordre de la trame) ;
-      // la carte reste visible là où l'image manque.
-      var shots = Array.prototype.slice.call(document.querySelectorAll(".p43-shot"));
-      if (shots.length) {
-        var n = Number(shots[0].getAttribute("data-seq-count"));
-        var bySeq = {};
-        shots.forEach(function (el) { bySeq[el.getAttribute("data-seq")] = el; });
-        for (var k = 0; k < n; k++) {
-          var t = (k * D) / n;
-          var el = bySeq[String(k)];
-          shots.forEach(function (other) {
-            tl.set(other, { opacity: other === el ? 1 : 0 }, t);
-          });
-          tl.set("#p43-card", { opacity: el ? 0 : 1 }, t);
-        }
+      var FX = window.LKDVFX;
+      var W = 1920, H = 1080, INK = "#0B1F17";
+      var img = document.getElementById("p43-shot-1-img");
+      var ctx = document.getElementById("p43-canvas").getContext("2d");
+      function hand(f, amp, seed) {
+        return (FX.noise2(f * 0.09, 1.7, seed) - 0.5) * amp + (FX.noise2(f * 0.45, 5.3, seed + 7) - 0.5) * amp * 0.3;
       }
-      window.__timelines["p43"] = tl;
+      function fit(c) {
+        var a = Math.abs(c.rot || 0), co = Math.cos(a), si = Math.sin(a);
+        var hx = (W / 2 * co + H / 2 * si) / c.S + 2, hy = (W / 2 * si + H / 2 * co) / c.S + 2;
+        c.cx = FX.clamp(c.cx, hx, W - hx);
+        c.cy = FX.clamp(c.cy, hy, H - hy);
+        return c;
+      }
+      function drawCam(c2, c, alpha) {
+        c2.globalAlpha = alpha;
+        c2.setTransform(1, 0, 0, 1, 0, 0);
+        c2.translate(W / 2, H / 2);
+        if (c.rot) c2.rotate(c.rot);
+        c2.scale(c.S, c.S);
+        c2.translate(-c.cx, -c.cy);
+        c2.drawImage(img, 0, 0, W, H);
+      }
+      function shoot(camAt, f, shutter) {
+        var a = camAt(f), b = camAt(f - shutter);
+        var d = Math.abs(a.S - b.S) * 1100 + (Math.abs(a.cx - b.cx) + Math.abs(a.cy - b.cy)) * a.S + Math.abs((a.rot || 0) - (b.rot || 0)) * 1100;
+        var n = FX.clamp(Math.ceil(d / 1.2), 1, 12);
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = INK;
+        ctx.fillRect(0, 0, W, H);
+        for (var i = 0; i < n; i++) drawCam(ctx, n === 1 ? a : camAt(f - (shutter * i) / (n - 1)), 1 / (i + 1));
+        ctx.globalAlpha = 1;
+      }
+
+      var N = 78;
+      function camAt(f) {
+        var a = FX.ease.outCubic(FX.clamp(f / 10, 0, 1));
+        var k = FX.clamp(f / N, 0, 1);
+        var ex = FX.ease.inCubic(FX.clamp((f - (N - 9)) / 9, 0, 1));
+        var D = Math.PI / 180;
+        var S = 1.08 - 0.04 * FX.ease.inOutCubic(k) + 0.5 * ex;
+        var cx = 940 + 50 * FX.ease.inOutSine(k) - 60 * ex + hand(f, 3, 431);
+        var cy = 515 + 45 * (1 - a) + 160 * ex + hand(f, 2, 433);
+        var rot = D * (0.4 * (1 - a) - 0.3 * ex);
+        return fit({ S: S, cx: cx, cy: cy, rot: rot });
+      }
+      var clock = FX.bindClock("p43", N, function (t, f) {
+        if (!img.complete || !img.naturalWidth) { ctx.fillStyle = INK; ctx.fillRect(0, 0, W, H); return; }
+        shoot(camAt, f, 0.6 + 1.1 * Math.pow(1 - FX.clamp(f / 4, 0, 1), 2) + 1.1 * FX.ease.inCubic(FX.clamp((f - (N - 4)) / 4, 0, 1)));
+      });
+      img.addEventListener("load", function () { clock.redraw(); });
+      window.__timelines["p43"] = clock.tl;
     })();
   </script>
 </template>
