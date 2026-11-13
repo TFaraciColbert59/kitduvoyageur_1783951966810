@@ -1,126 +1,17 @@
-<!-- hf-skeleton generated id=p49 sha256=3a8397db2253905b — carte provisoire générée par tools/timeline/build-skeleton.mjs depuis film/shots.json ; toute retouche hors de la zone hf-footage la soustrait au générateur -->
+<!-- P49 (images 3060–3113, 53 images) — landscape-director. img37 (même image que P48), très gros plan : elle publie ; écran VERT laissé intact (E12, ui-builder).
+     Début de la MONTÉE : la caméra de P48 continue (même fonction, g = 79 + f) et accélère vers le téléphone : S 1,18 → 1,66 (u^2,2), cx 1100 → 1190.
+     Sortie (« le drone s'élève ») : bascule vers le haut sur les 16 dernières images (cy 540 → 495, inCubic), flou croissant. Téléphone entier jusqu'au bout.
+     Caméra : window.__lkdvCam.p49(f) → { S, cx, cy, rot }. -->
 <template>
   <style>
-    #root {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-      background: #8A3E1A;
-      font-family: "Inter", sans-serif;
-      color: #FAF8F5;
-    }
-    .p49-card {
-      position: absolute;
-      inset: 0;
-      padding: 96px 120px 120px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-    .p49-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      font-family: "JetBrains Mono", monospace;
-      font-size: 34px;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-    }
-    .p49-mid {
-      display: flex;
-      align-items: flex-end;
-      gap: 72px;
-    }
-    .p49-num {
-      font-weight: 900;
-      font-size: 360px;
-      line-height: 0.8;
-      letter-spacing: -0.04em;
-    }
-    .p49-meta {
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-      padding-bottom: 8px;
-    }
-    .p49-source {
-      font-family: "JetBrains Mono", monospace;
-      font-weight: 700;
-      font-size: 64px;
-    }
-    .p49-frames {
-      font-family: "JetBrains Mono", monospace;
-      font-size: 36px;
-    }
-    .p49-star {
-      font-weight: 700;
-      font-size: 40px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-    }
-    .p49-intent {
-      max-width: 1600px;
-      font-size: 52px;
-      line-height: 1.2;
-      font-weight: 400;
-    }
-    .p49-track {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      height: 12px;
-      background: rgba(250, 248, 245, 0.18);
-    }
-    .p49-bar {
-      position: absolute;
-      inset: 0;
-      background: #FAF8F5;
-      transform-origin: 0 50%;
-    }
-    .p49-frame {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-    }
-    .p49-shot,
-    .p49-shot-inner {
-      position: absolute;
-      inset: 0;
-    }
-    .p49-shot {
-      opacity: 0;
-    }
-    .p49-shot-img {
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 1920px;
-      height: 1080px;
-      /* Remplit le 16:9 sans déformer, quel que soit le rapport de l'image : recadrage au centre. */
-      object-fit: cover;
-      object-position: 50% 50%;
-    }
+    #root { position: absolute; inset: 0; overflow: hidden; background: #0B1F17; }
+    .p49-frame { position: absolute; inset: 0; overflow: hidden; }
+    .p49-shot, .p49-shot-inner { position: absolute; inset: 0; }
+    .p49-shot { opacity: 0; }
+    .p49-shot-img { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
+    #p49-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
   </style>
   <div id="root" data-composition-id="p49" data-width="1920" data-height="1080" data-duration="0.8833333333333333">
-    <!-- Carte provisoire : outil de travail, disparaît quand l'image du plan est là. -->
-    <div id="p49-card" class="p49-card" data-shot="p49" data-act="9">
-      <div id="p49-top" class="p49-top">
-        <span id="p49-act">Acte 9 · BIVOUAC</span>
-        <span id="p49-range">3060–3113</span>
-      </div>
-      <div id="p49-mid" class="p49-mid">
-        <div id="p49-num" class="p49-num">P49</div>
-        <div id="p49-meta" class="p49-meta">
-          <div id="p49-source" class="p49-source">img37 + E12</div>
-          <div id="p49-frames" class="p49-frames">53 images · 0,88 s</div>
-        </div>
-      </div>
-      <div id="p49-intent" class="p49-intent">Elle publie</div>
-      <div id="p49-track" class="p49-track"><div id="p49-bar" class="p49-bar"></div></div>
-    </div>
-    <!-- Emplacement d'image plein cadre : assets/footage/img37.png.
-         Chaque calque : .p49-shot (opacité, séquence) > .p49-shot-inner (libre pour le mouvement) > img. -->
     <div id="p49-frame" class="p49-frame" data-layout-allow-overflow>
       <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) -->
       <div id="p49-shot-1" class="p49-shot" data-src="img37" data-seq="0" data-seq-count="1">
@@ -130,30 +21,71 @@
       </div>
     <!-- hf-footage:end -->
     </div>
+    <canvas id="p49-canvas" width="1920" height="1080" data-layout-allow-overflow></canvas>
   </div>
+  <script src="lib/fx/core.js"></script>
   <script>
     (function () {
-      var D = 53 / 60;
-      var tl = gsap.timeline({ paused: true });
-      // Barre de progression : se remplit sur la durée du plan.
-      tl.fromTo("#p49-bar", { scaleX: 0 }, { scaleX: 1, duration: D, ease: "none" }, 0);
-      // Images présentes : chaque source occupe sa part égale du plan (ordre de la trame) ;
-      // la carte reste visible là où l'image manque.
-      var shots = Array.prototype.slice.call(document.querySelectorAll(".p49-shot"));
-      if (shots.length) {
-        var n = Number(shots[0].getAttribute("data-seq-count"));
-        var bySeq = {};
-        shots.forEach(function (el) { bySeq[el.getAttribute("data-seq")] = el; });
-        for (var k = 0; k < n; k++) {
-          var t = (k * D) / n;
-          var el = bySeq[String(k)];
-          shots.forEach(function (other) {
-            tl.set(other, { opacity: other === el ? 1 : 0 }, t);
-          });
-          tl.set("#p49-card", { opacity: el ? 0 : 1 }, t);
-        }
+      var FX = window.LKDVFX;
+      var W = 1920, H = 1080, INK = "#0B1F17";
+      var img = document.getElementById("p49-shot-1-img");
+      var ctx = document.getElementById("p49-canvas").getContext("2d");
+      function hand(f, amp, seed) {
+        return (FX.noise2(f * 0.09, 1.7, seed) - 0.5) * amp + (FX.noise2(f * 0.45, 5.3, seed + 7) - 0.5) * amp * 0.3;
       }
-      window.__timelines["p49"] = tl;
+      function fit(c) {
+        var a = Math.abs(c.rot || 0), co = Math.cos(a), si = Math.sin(a);
+        var hx = (W / 2 * co + H / 2 * si) / c.S + 2, hy = (W / 2 * si + H / 2 * co) / c.S + 2;
+        c.cx = FX.clamp(c.cx, hx, W - hx);
+        c.cy = FX.clamp(c.cy, hy, H - hy);
+        return c;
+      }
+      function drawCam(c2, c, alpha) {
+        c2.globalAlpha = alpha;
+        c2.setTransform(1, 0, 0, 1, 0, 0);
+        c2.translate(W / 2, H / 2);
+        if (c.rot) c2.rotate(c.rot);
+        c2.scale(c.S, c.S);
+        c2.translate(-c.cx, -c.cy);
+        c2.drawImage(img, 0, 0, W, H);
+      }
+      function shoot(camAt, f, shutter) {
+        var a = camAt(f), b = camAt(f - shutter);
+        var d = Math.abs(a.S - b.S) * 1100 + (Math.abs(a.cx - b.cx) + Math.abs(a.cy - b.cy)) * a.S + Math.abs((a.rot || 0) - (b.rot || 0)) * 1100;
+        var n = FX.clamp(Math.ceil(d / 1.2), 1, 12);
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = INK;
+        ctx.fillRect(0, 0, W, H);
+        for (var i = 0; i < n; i++) drawCam(ctx, n === 1 ? a : camAt(f - (shutter * i) / (n - 1)), 1 / (i + 1));
+        ctx.globalAlpha = 1;
+      }
+
+      var N = 53;
+      var D = Math.PI / 180;
+      // Caméra commune P48/P49 : g = image depuis 2981 (0–78 = P48, 79–131 = P49).
+      function leaCam(g) {
+        var k = FX.clamp(g / 78, 0, 1);
+        var e = 0.5 - 0.5 * Math.cos(Math.PI * k);
+        var u = FX.clamp((g - 78) / 53, 0, 1);
+        var acc = Math.pow(u, 2.2);
+        var up = FX.ease.inCubic(FX.clamp((u - 0.7) / 0.3, 0, 1));
+        var calm = 1 - u;
+        var S = 1.10 + 0.08 * k + 0.001 * Math.max(0, g - 78) + 0.43 * acc;
+        var cx = 1000 + 100 * e + 90 * acc + hand(g, 3, 481) * calm;
+        var cy = 540 - 45 * up + hand(g, 2, 483) * calm;
+        var rot = D * hand(g, 0.25, 485) * calm;
+        return fit({ S: S, cx: cx, cy: cy, rot: rot });
+      }
+      function camAt(f) { return leaCam(79 + f); }
+      window.__lkdvCam = window.__lkdvCam || {};
+      window.__lkdvCam.p49 = camAt;
+      var clock = FX.bindClock("p49", N, function (t, f) {
+        if (!img.complete || !img.naturalWidth) { ctx.fillStyle = INK; ctx.fillRect(0, 0, W, H); return; }
+        shoot(camAt, f, 0.6 + 1.8 * Math.pow(FX.clamp(f / (N - 1), 0, 1), 2.2));
+      });
+      img.addEventListener("load", function () { clock.redraw(); });
+      window.__timelines["p49"] = clock.tl;
     })();
   </script>
 </template>

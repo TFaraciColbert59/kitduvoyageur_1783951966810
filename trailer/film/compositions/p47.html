@@ -1,126 +1,16 @@
-<!-- hf-skeleton generated id=p47 sha256=12e06d2c9967f290 — carte provisoire générée par tools/timeline/build-skeleton.mjs depuis film/shots.json ; toute retouche hors de la zone hf-footage la soustrait au générateur -->
+<!-- P47 (images 2930–2981, 51 images) — landscape-director. img36, gros plan autour du feu, rotation lente.
+     Entrée : prolonge la poussée lente de P46 vers le feu (S 1,10 → 1,18, sans à-coup). Roulis lent −1,4° → +1,0° (inOutSine), dérive vers la gauche (cx 960 → 920).
+     Sortie (« Léa sort son téléphone ») : mouvement posé, peu de flou. -->
 <template>
   <style>
-    #root {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-      background: #8A3E1A;
-      font-family: "Inter", sans-serif;
-      color: #FAF8F5;
-    }
-    .p47-card {
-      position: absolute;
-      inset: 0;
-      padding: 96px 120px 120px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-    .p47-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      font-family: "JetBrains Mono", monospace;
-      font-size: 34px;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-    }
-    .p47-mid {
-      display: flex;
-      align-items: flex-end;
-      gap: 72px;
-    }
-    .p47-num {
-      font-weight: 900;
-      font-size: 360px;
-      line-height: 0.8;
-      letter-spacing: -0.04em;
-    }
-    .p47-meta {
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-      padding-bottom: 8px;
-    }
-    .p47-source {
-      font-family: "JetBrains Mono", monospace;
-      font-weight: 700;
-      font-size: 64px;
-    }
-    .p47-frames {
-      font-family: "JetBrains Mono", monospace;
-      font-size: 36px;
-    }
-    .p47-star {
-      font-weight: 700;
-      font-size: 40px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-    }
-    .p47-intent {
-      max-width: 1600px;
-      font-size: 52px;
-      line-height: 1.2;
-      font-weight: 400;
-    }
-    .p47-track {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      height: 12px;
-      background: rgba(250, 248, 245, 0.18);
-    }
-    .p47-bar {
-      position: absolute;
-      inset: 0;
-      background: #FAF8F5;
-      transform-origin: 0 50%;
-    }
-    .p47-frame {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-    }
-    .p47-shot,
-    .p47-shot-inner {
-      position: absolute;
-      inset: 0;
-    }
-    .p47-shot {
-      opacity: 0;
-    }
-    .p47-shot-img {
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 1920px;
-      height: 1080px;
-      /* Remplit le 16:9 sans déformer, quel que soit le rapport de l'image : recadrage au centre. */
-      object-fit: cover;
-      object-position: 50% 50%;
-    }
+    #root { position: absolute; inset: 0; overflow: hidden; background: #0B1F17; }
+    .p47-frame { position: absolute; inset: 0; overflow: hidden; }
+    .p47-shot, .p47-shot-inner { position: absolute; inset: 0; }
+    .p47-shot { opacity: 0; }
+    .p47-shot-img { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
+    #p47-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
   </style>
   <div id="root" data-composition-id="p47" data-width="1920" data-height="1080" data-duration="0.85">
-    <!-- Carte provisoire : outil de travail, disparaît quand l'image du plan est là. -->
-    <div id="p47-card" class="p47-card" data-shot="p47" data-act="9">
-      <div id="p47-top" class="p47-top">
-        <span id="p47-act">Acte 9 · BIVOUAC</span>
-        <span id="p47-range">2930–2981</span>
-      </div>
-      <div id="p47-mid" class="p47-mid">
-        <div id="p47-num" class="p47-num">P47</div>
-        <div id="p47-meta" class="p47-meta">
-          <div id="p47-source" class="p47-source">img36</div>
-          <div id="p47-frames" class="p47-frames">51 images · 0,85 s</div>
-        </div>
-      </div>
-      <div id="p47-intent" class="p47-intent">Rires autour du feu</div>
-      <div id="p47-track" class="p47-track"><div id="p47-bar" class="p47-bar"></div></div>
-    </div>
-    <!-- Emplacement d'image plein cadre : assets/footage/img36.png.
-         Chaque calque : .p47-shot (opacité, séquence) > .p47-shot-inner (libre pour le mouvement) > img. -->
     <div id="p47-frame" class="p47-frame" data-layout-allow-overflow>
       <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) -->
       <div id="p47-shot-1" class="p47-shot" data-src="img36" data-seq="0" data-seq-count="1">
@@ -130,30 +20,63 @@
       </div>
     <!-- hf-footage:end -->
     </div>
+    <canvas id="p47-canvas" width="1920" height="1080" data-layout-allow-overflow></canvas>
   </div>
+  <script src="lib/fx/core.js"></script>
   <script>
     (function () {
-      var D = 51 / 60;
-      var tl = gsap.timeline({ paused: true });
-      // Barre de progression : se remplit sur la durée du plan.
-      tl.fromTo("#p47-bar", { scaleX: 0 }, { scaleX: 1, duration: D, ease: "none" }, 0);
-      // Images présentes : chaque source occupe sa part égale du plan (ordre de la trame) ;
-      // la carte reste visible là où l'image manque.
-      var shots = Array.prototype.slice.call(document.querySelectorAll(".p47-shot"));
-      if (shots.length) {
-        var n = Number(shots[0].getAttribute("data-seq-count"));
-        var bySeq = {};
-        shots.forEach(function (el) { bySeq[el.getAttribute("data-seq")] = el; });
-        for (var k = 0; k < n; k++) {
-          var t = (k * D) / n;
-          var el = bySeq[String(k)];
-          shots.forEach(function (other) {
-            tl.set(other, { opacity: other === el ? 1 : 0 }, t);
-          });
-          tl.set("#p47-card", { opacity: el ? 0 : 1 }, t);
-        }
+      var FX = window.LKDVFX;
+      var W = 1920, H = 1080, INK = "#0B1F17";
+      var img = document.getElementById("p47-shot-1-img");
+      var ctx = document.getElementById("p47-canvas").getContext("2d");
+      function hand(f, amp, seed) {
+        return (FX.noise2(f * 0.09, 1.7, seed) - 0.5) * amp + (FX.noise2(f * 0.45, 5.3, seed + 7) - 0.5) * amp * 0.3;
       }
-      window.__timelines["p47"] = tl;
+      function fit(c) {
+        var a = Math.abs(c.rot || 0), co = Math.cos(a), si = Math.sin(a);
+        var hx = (W / 2 * co + H / 2 * si) / c.S + 2, hy = (W / 2 * si + H / 2 * co) / c.S + 2;
+        c.cx = FX.clamp(c.cx, hx, W - hx);
+        c.cy = FX.clamp(c.cy, hy, H - hy);
+        return c;
+      }
+      function drawCam(c2, c, alpha) {
+        c2.globalAlpha = alpha;
+        c2.setTransform(1, 0, 0, 1, 0, 0);
+        c2.translate(W / 2, H / 2);
+        if (c.rot) c2.rotate(c.rot);
+        c2.scale(c.S, c.S);
+        c2.translate(-c.cx, -c.cy);
+        c2.drawImage(img, 0, 0, W, H);
+      }
+      function shoot(camAt, f, shutter) {
+        var a = camAt(f), b = camAt(f - shutter);
+        var d = Math.abs(a.S - b.S) * 1100 + (Math.abs(a.cx - b.cx) + Math.abs(a.cy - b.cy)) * a.S + Math.abs((a.rot || 0) - (b.rot || 0)) * 1100;
+        var n = FX.clamp(Math.ceil(d / 1.2), 1, 12);
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = INK;
+        ctx.fillRect(0, 0, W, H);
+        for (var i = 0; i < n; i++) drawCam(ctx, n === 1 ? a : camAt(f - (shutter * i) / (n - 1)), 1 / (i + 1));
+        ctx.globalAlpha = 1;
+      }
+
+      var N = 51;
+      var D = Math.PI / 180;
+      function camAt(f) {
+        var k = FX.clamp(f / (N - 1), 0, 1);
+        var e = 0.5 - 0.5 * Math.cos(Math.PI * k);
+        var S = 1.10 + 0.08 * k;
+        var cx = 960 - 40 * e + hand(f, 3, 471);
+        var cy = 545 + hand(f, 2, 473);
+        var rot = D * (-1.4 + 2.4 * e + hand(f, 0.2, 475));
+        return fit({ S: S, cx: cx, cy: cy, rot: rot });
+      }
+      var clock = FX.bindClock("p47", N, function (t, f) {
+        if (!img.complete || !img.naturalWidth) { ctx.fillStyle = INK; ctx.fillRect(0, 0, W, H); return; }
+        shoot(camAt, f, 0.6);
+      });
+      img.addEventListener("load", function () { clock.redraw(); });
+      window.__timelines["p47"] = clock.tl;
     })();
   </script>
 </template>
