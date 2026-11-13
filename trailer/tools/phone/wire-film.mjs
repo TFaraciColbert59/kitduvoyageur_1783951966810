@@ -15,6 +15,7 @@ export const PLANS = {
   p07: { src: 'img07', states: [['E01a-carnet-sorapis'], ['E01b-carnet-jour1-photo', 46, 56]], direct: 'bx.drawImage(img, 0, 0, W, H);' },
   p12: { src: 'img40', states: [['E02a-compas-ou-vide'], ['E02b-compas-ou-saisi', 10, 15], ['E02c-compas-preparation', 23, 28], ['E02d-compas-prepare', 35, 40]] },
   p13: { src: 'img41', states: [['E03-compas-nous']] },
+  p15: { src: 'img41', states: [['E04-compas-cortina-carte']] },
   p16: { src: 'img42', states: [['E05a-kit-studio-contenu'], ['E05b-kit-studio-bilan', 50, 62]] },
   p17: { src: 'img43', states: [['E06-kit-studio-commander']] },
   p25: { src: 'img18', states: [['E07-explorer-depart']] },

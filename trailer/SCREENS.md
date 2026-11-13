@@ -23,6 +23,7 @@ Aperçu (13/11) : `https://kitduvoyageur-17839519668-git-491ef3-tonyfaracip-3325
 Libellés de la trame qui **n'existent pas** dans Kit Studio : « Prêté par Sami » (existe seulement dans le tiroir des clubs : « Prêté par **{nom}** (@pseudo) · catégorie », `components/clubs/drawer/ClubDrawerHost.tsx`), « Occasion » (absent de Kit Studio ; existe dans la création de publication communauté). Kit Studio dit « En prêt », « À louer », « À acheter ». Ailleurs : « Prêté à {nom} » (`GearRow.tsx`), « Prêté » (`OutingGear.tsx`, `KitCard.tsx`).
 
 Écriture en base faite : **1 brouillon Compas** (« Mixte · Dolomitenblick », 4 personnes) dans le compte démo partagé. Aucune autre écriture, aucun compte créé.
+Écriture E4 (13/11/2026, 23:03 UTC) : **1 brouillon Compas** « Mixte · Cortina d'Ampezzo » (4 personnes, 5–8 juin), par l'interface, dans le compte démo partagé. Rien supprimé, modifié ni publié.
 
 ## Écritures faites dans le compte démo « Camille Démo » (13/11/2026, par l'interface uniquement) — à retirer ensuite
 1. **18:26–18:29 UTC** : trois essais du formulaire « Créer · Carnet » (`/communaute` → « Créer dans l'application » → onglet Carnet) **non envoyés**. La photo du moment est téléversée dès qu'on la choisit (« elle est téléversée maintenant… pas à l'envoi ») : **2 copies orphelines de la photo du lac** (img09 en JPEG) dans le stockage du compte démo, sans carnet rattaché.
@@ -42,4 +43,4 @@ Libellés de la trame qui **n'existent pas** dans Kit Studio : « Prêté par Sa
 | E11 | `E11x-carnet-verdicts-vide.png` (**provisoire**) | onglet Sac → verdicts : « Tous · Essentiel · Utile · Jamais servi · Défaillant · Manquait », mais « Aucun verdict pour ce carnet. » : un verdict exige une sortie réelle liée au kit (non faite) |
 | E12 | `E12-carnet-partage-public.png` | étape Partage : « Aperçu de la fiche », « Public · 4 voyageurs », bouton **« Créer le carnet »** (pas de bouton « Publier ») |
 | E13 | `E13-communaute-carnets-semaine.png` | onglet carnets de la communauté : « CARNET DE LA SEMAINE » = notre carnet ; « Carnet · instantané publié » n'existe que sur des publications portant `snapshot_payload` (fils de club, `PostAttachments.tsx`), sans parcours de création trouvé |
-| E4 | — | non retenté (budget) |
+| E4 | `E04-compas-cortina-carte.png` | `/compas?etape=ou`, phrase « Cortina d'Ampezzo, 4 jours à 4 » : « Mixte · Cortina d'Ampezzo », « Cortina d'Ampezzo · 5–8 juin · 4 personnes », « 4 jours · – km · 235,75 € par pers. », « À régler avant de partir · 3 points », « Jour 1…3 non renseigné », carte topo réelle de Cortina (Plan / Relief / Satellite) avec 4 marqueurs de jour groupés « 4 », tous sur Cortina : étapes sans tracé (« – km ») |
