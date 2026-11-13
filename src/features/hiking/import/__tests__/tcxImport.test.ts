@@ -2152,12 +2152,12 @@ describe('import de trace · sélection du format et déduplication', () => {
     expect(first.provenance.fingerprint).not.toBe(changed.provenance.fingerprint);
   });
 
-  it('scope la clé de déduplication au propriétaire et à la source', () => {
+  it('scope la clé de déduplication au propriétaire et à l’empreinte', () => {
     const trace = parseTcx(VALID);
     const keyA = traceImportDedupeKey(trace, 'user-a');
     const keyB = traceImportDedupeKey(trace, 'user-b');
 
-    expect(keyA).toContain(trace.provenance.fingerprint);
+    expect(keyA).toBe(`user-a:${trace.provenance.fingerprint}`);
     expect(keyA).not.toBe(keyB);
   });
 });

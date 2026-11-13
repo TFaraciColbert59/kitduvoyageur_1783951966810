@@ -71,12 +71,16 @@ export function parseTraceFile(
 /**
  * Clé de déduplication à portée propriétaire. L'empreinte seule ne suffit pas :
  * deux fichiers identiques importés par deux comptes restent deux objets.
+ *
+ * Le format source n'entre volontairement pas dans la clé : la base déduplique
+ * sur `(owner_id, source_fingerprint)`. Deux lectures du même contenu ne
+ * doivent pas créer deux objets, même si l'une annonce FIT et l'autre TCX.
  */
 export function traceImportDedupeKey(
   trace: NormalizedTraceImport,
   ownerId: string,
 ): string {
-  return `${ownerId}:${trace.provenance.source}:${trace.provenance.fingerprint}`;
+  return `${ownerId}:${trace.provenance.fingerprint}`;
 }
 
 function hasFitMagic(bytes: Uint8Array): boolean {

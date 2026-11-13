@@ -7,6 +7,11 @@ import {
   resolveCorrelationId,
 } from '@/lib/observability/correlation';
 import { createStructuredLogger } from '@/lib/observability/logger';
+import {
+  boundedImportFileName,
+  resolveTraceImportIdentity,
+  validateTraceImportPayload,
+} from '@/features/hiking/import/importContract';
 
 const logger = createStructuredLogger({ service: 'api.hike-sessions' });
 
@@ -60,6 +65,15 @@ interface SaveHikeSessionBody {
   title?: string | null;
   notes?: string | null;
   maxAltitudeM?: number | null;
+  /**
+   * Contrat d'import : le format source et l'empreinte du fichier original.
+   * Quand l'empreinte est présente, la route passe par `record_trace_import`
+   * et ne déduplique plus sur `started_at`.
+   */
+  source?: string | null;
+  sourceFingerprint?: string | null;
+  sourceFileName?: string | null;
+  sourceByteLength?: number | null;
   /**
    * `false` pour un import : la sortie ne crée pas de carnet automatique.
    * Sans ce champ, le comportement historique (carnet auto) reste actif.
@@ -202,12 +216,28 @@ export async function POST(req: NextRequest) {
       header: readCorrelationId(req),
       body: body.correlationId,
     }).correlationId;
-    const tripId = await resolveTripId(
-      supabase,
-      userId,
-      sanitizeTripId(body.tripId),
-      body.routeId
-    );
+
+    const importIdentity = resolveTraceImportIdentity(body);
+    if (importIdentity.kind === 'invalid') {
+      return NextResponse.json({ error: importIdentity.message }, { status: 400 });
+    }
+    if (importIdentity.kind === 'import') {
+      const importError = validateTraceImportPayload(body);
+      if (importError) {
+        return NextResponse.json({ error: importError }, { status: 400 });
+      }
+    }
+
+    // Un import reste volontairement sans voyage : la RPC ne lie ni carnet ni
+    // trip, et la route n'a pas à résoudre un plan qui n'a pas été demandé.
+    const tripId = importIdentity.kind === 'import'
+      ? null
+      : await resolveTripId(
+          supabase,
+          userId,
+          sanitizeTripId(body.tripId),
+          body.routeId
+        );
 
     if (!body.startedAt || !body.endedAt || body.distanceKm == null || body.durationSeconds == null) {
       return NextResponse.json({ error: 'Données de session incomplètes' }, { status: 400 });
@@ -230,12 +260,106 @@ export async function POST(req: NextRequest) {
       ? timedCandidates
       : deriveTimedPositions(simplified);
 
-    // 1. Check idempotency (prevent duplicate session creation).
-    //    Limite assumée : ce contrôle porte sur (user_id, started_at), pas sur
-    //    l'empreinte du fichier. Un import FIT/TCX identique est donc dédupliqué
-    //    tant que son départ est identique, mais deux fichiers différents
-    //    démarrant à la même seconde resteraient confondus. La vraie unicité
-    //    (user_id, source, source_fingerprint) exige une migration dédiée.
+    // Import FIT/TCX/GPX : la clé est (propriétaire, empreinte SHA-256), jamais
+    // l'heure de départ. Deux fichiers différents démarrant à la même seconde
+    // restent deux sorties ; un rejeu du même contenu retourne l'existante.
+    if (importIdentity.kind === 'import') {
+      const { data: importResult, error: importRpcError } = await supabase.rpc(
+        'record_trace_import',
+        {
+          p_started_at: body.startedAt,
+          p_ended_at: body.endedAt,
+          p_distance_km: body.distanceKm,
+          p_duration_seconds: Math.max(1, Math.round(body.durationSeconds)),
+          p_elevation_gain_m: body.elevationGainM ?? null,
+          p_max_altitude_m: boundedInteger(body.maxAltitudeM, -500, 9000),
+          p_positions_geojson: positionsGeojson,
+          p_positions_timed: positionsTimed.length >= 2 ? positionsTimed : null,
+          p_poi_events: [],
+          p_title: boundedTitle(body.title),
+          p_notes: boundedText(body.notes, 2000),
+          p_source: importIdentity.source,
+          p_source_fingerprint: importIdentity.fingerprint,
+          p_source_file_name: boundedImportFileName(body.sourceFileName),
+          p_source_byte_length:
+            typeof body.sourceByteLength === 'number' && Number.isFinite(body.sourceByteLength)
+              ? Math.round(body.sourceByteLength)
+              : null,
+          p_correlation_id: correlationId,
+        }
+      );
+
+      if (importRpcError) {
+        const code = importRpcError.code ?? '';
+        if (code === '28000') {
+          return NextResponse.json({ error: 'Authentification requise' }, { status: 401 });
+        }
+        if (code === '22023') {
+          return NextResponse.json({ error: importRpcError.message }, { status: 400 });
+        }
+        if (code === '23514') {
+          return NextResponse.json({ error: 'Import invalide.' }, { status: 400 });
+        }
+        if (code === '23505') {
+          return NextResponse.json(
+            { error: 'Un import identique est déjà en cours. Réessaie.' },
+            { status: 409 }
+          );
+        }
+        if (code === 'PGRST202' || code === '42883') {
+          return NextResponse.json(
+            { error: 'La persistance des imports n’est pas encore disponible.' },
+            { status: 503 }
+          );
+        }
+        // Pas de details/hint : une violation d'unicité peut y recopier
+        // l'empreinte. Le code et le message suffisent au diagnostic.
+        console.error(
+          '[hike-sessions] import RPC error:',
+          importRpcError.code,
+          importRpcError.message
+        );
+        return NextResponse.json(
+          { error: 'Erreur lors de la sauvegarde de l’import.' },
+          { status: 500 }
+        );
+      }
+
+      const result = importResult as {
+        session_id?: string | null;
+        carnet_id?: string | null;
+        existing?: boolean;
+      } | null;
+      if (!result?.session_id) {
+        return NextResponse.json(
+          { error: 'Erreur lors de la sauvegarde de l’import.' },
+          { status: 500 }
+        );
+      }
+
+      logger.info('hike_sessions.imported', {
+        correlation_id: correlationId,
+        latency_ms: Date.now() - startedAt,
+        status: 200,
+        session_id: result.session_id,
+        import_source: importIdentity.source,
+        import_existing: result.existing === true,
+      });
+
+      return NextResponse.json(
+        {
+          sessionId: result.session_id,
+          carnetId: result.carnet_id ?? null,
+          existing: result.existing === true,
+        },
+        { headers: correlationResponseHeaders(correlationId) }
+      );
+    }
+
+    // 1. Idempotence historique, hors import : ce contrôle porte sur
+    //    (user_id, started_at). Il ne s'applique jamais au contrat d'import
+    //    ci-dessus, qui déduplique par (propriétaire, empreinte) et distingue
+    //    donc deux fichiers différents démarrant à la même seconde.
     let query = supabase
       .from('hike_sessions')
       .select('id, carnet_id')

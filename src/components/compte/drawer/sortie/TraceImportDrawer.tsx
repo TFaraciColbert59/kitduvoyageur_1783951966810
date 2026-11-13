@@ -459,10 +459,10 @@ export function TraceImportDrawer() {
             <Check size={18} />
           </span>
           <div>
-            <b>{saved.existing ? 'Sortie déjà présente' : 'Sortie enregistrée'}</b>
+            <b>{saved.existing ? 'Fichier déjà importé' : 'Sortie enregistrée'}</b>
             <p>
               {saved.existing
-                ? 'Une sortie avec ce départ existe déjà : aucun doublon n’a été créé.'
+                ? 'Ce fichier a déjà été importé : la sortie existante est conservée, aucun doublon n’a été créé.'
                 : `${saved.title} rejoint tes sorties privées.`}
             </p>
           </div>

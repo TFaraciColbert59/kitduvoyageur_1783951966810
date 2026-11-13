@@ -43,6 +43,14 @@ export interface HikeSessionImportPayload {
   durationSeconds: number;
   elevationGainM: number | null;
   maxAltitudeM: number | null;
+  /** Format source détecté, jamais déduit du seul nom de fichier. */
+  source: 'fit' | 'tcx';
+  /** SHA-256 du contenu original, clé de déduplication côté base. */
+  sourceFingerprint: string;
+  /** Nom du fichier d'origine, borné côté API ; peut être absent. */
+  sourceFileName: string | null;
+  /** Taille du fichier d'origine, pour la provenance et les bornes serveur. */
+  sourceByteLength: number;
   positions: Array<{
     latitude: number;
     longitude: number;
@@ -72,6 +80,12 @@ const toRad = (degrees: number) => (degrees * Math.PI) / 180;
  * trace complète.
  */
 const MAX_PAYLOAD_POINTS = 15_000;
+
+/**
+ * Plafond public de la projection vers l'API existante. La route le réutilise
+ * pour refuser un corps qui ne viendrait pas de `buildHikeSessionImportPayload`.
+ */
+export const TRACE_IMPORT_MAX_PAYLOAD_POINTS = MAX_PAYLOAD_POINTS;
 
 function samplePoints<T>(items: T[], max: number): T[] {
   if (items.length <= max) return items;
@@ -349,6 +363,10 @@ export function buildHikeSessionImportPayload(
     durationSeconds: Math.max(1, Math.round(preview.durationSeconds)),
     elevationGainM: preview.elevationGainM,
     maxAltitudeM: preview.maxAltitudeM !== null ? Math.round(preview.maxAltitudeM) : null,
+    source: trace.provenance.format,
+    sourceFingerprint: trace.provenance.fingerprint,
+    sourceFileName: trace.provenance.fileName,
+    sourceByteLength: trace.provenance.byteLength,
     positions,
     positionsTimed,
     poiEvents: [],

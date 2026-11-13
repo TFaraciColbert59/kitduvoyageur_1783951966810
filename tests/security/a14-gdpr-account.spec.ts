@@ -91,6 +91,7 @@ describe('A14 — RGPD export/suppression (TEST-A14-GDPR)', () => {
       'user_performance_profiles',
       'user_performance_profile_versions',
       'hike_sessions',
+      'trace_imports',
       'session_segment_passages',
       'terrain_reports',
       'terrain_report_confirmations',

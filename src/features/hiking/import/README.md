@@ -4,8 +4,13 @@ Brique locale de lecture des activités TCX et FIT, branchée sur le parcours
 `Compte → Sorties → Importer FIT/TCX`. Le parseur ne fait aucun réseau et ne
 dépend d'aucun décodeur externe ; le drawer React ne téléverse jamais le
 fichier original. La seule écriture possible est la projection de la trace
-dérivée vers le mécanisme existant `hike_sessions`, sous les gardes décrites
-plus bas.
+dérivée vers `hike_sessions`, sous les gardes décrites plus bas.
+
+La persistance et la déduplication sont documentées en détail dans
+[`docs/import/A03-S1.15-persistance.md`](../../../../docs/import/A03-S1.15-persistance.md) :
+registre privé `trace_imports`, clé `(propriétaire, empreinte SHA-256)`, RPC
+transactionnelle `record_trace_import`, points de synchronisation avec les
+branches Explorer/Carnet et limites de sécurité.
 
 Références de suivi : `A03`, `K6.02`, `S1.15`.
 
@@ -57,13 +62,18 @@ Références de suivi : `A03`, `K6.02`, `S1.15`.
   durée déduite de deux heures civiles est nominale : aucune transition
   d'heure d'été n'est connaissable sans fuseau.
 - **Déduplication** : `provenance.fingerprint` (SHA-256 du contenu original) et
-  `traceImportDedupeKey(trace, ownerId)`, qui ajoute le propriétaire et la
-  source. La clé est un outil : elle ne crée pas l'unicité à elle seule.
+  `traceImportDedupeKey(trace, ownerId)`, qui ajoute le propriétaire. Le format
+  source n'entre pas dans la clé : la base déduplique sur
+  `(owner_id, source_fingerprint)` dans `public.trace_imports`. La clé client est
+  un outil de lecture ; l'unicité réelle est portée par la contrainte SQL et la
+  RPC `record_trace_import`.
 - **Limites** : `maxBytes` 16 Mio, `maxPoints` 100 000, `maxLaps` 10 000,
   `maxMessages` 250 000, `maxDepth` 64, `maxIssues` 100. `maxMessages` est
   vérifié pendant la lecture FIT, avant matérialisation ; seuls les messages
   interprétés sont conservés. `maxIssues` réserve la dernière entrée à
-  `issue-limit` : la liste ne dépasse jamais la borne.
+  `issue-limit` : la liste ne dépasse jamais la borne. La projection réseau est
+  plafonnée à 15 000 points géolocalisés (`TRACE_IMPORT_MAX_PAYLOAD_POINTS`),
+  vérifiée par la route et la RPC, en plus de la taille source.
 - **Rattachement FIT** : les débuts de laps sont triés une fois et chaque point
   fait une recherche binaire (`O((points + laps) log laps)`), au lieu d'un
   parcours de tous les laps par point puis d'un nouveau parcours des points par
@@ -94,19 +104,17 @@ Références de suivi : `A03`, `K6.02`, `S1.15`.
 
 ## Non couvert, volontairement
 
-- Le stockage privé des originaux, l'unicité en base par empreinte, la reprise
-  et l'export ne sont pas livrés ici. Le critère « deux imports identiques
-  donnent un seul objet » n'est satisfait que par le contrôle historique de
-  `POST /api/hike-sessions` sur `(user_id, started_at)`, qui n'est **pas** une
-  unicité d'empreinte : il ne distingue pas deux fichiers différents démarrant
-  à la même seconde. La vraie contrainte reste à créer.
-- L'écriture actuelle ne conserve ni le format source, ni l'empreinte, ni le
-  nom du fichier d'origine. Une sortie importée est donc indiscernable d'une
-  sortie GPS après rechargement ; `notes` n'est pas détourné pour stocker la
-  provenance.
+- Le stockage privé des originaux, la reprise et l'export dédié ne sont pas
+  livrés ici. L'unicité par empreinte, elle, est livrée : voir
+  `docs/import/A03-S1.15-persistance.md` et la migration
+  `20261112123000_trace_import_dedupe.sql`.
+- La provenance (format, empreinte, nom, taille) est persistée dans
+  `public.trace_imports`, mais l'écran Sorties ne l'affiche pas encore après
+  rechargement. `notes` n'est pas détourné pour stocker la provenance.
 - Aucun aperçu de l'original n'est conservé : seule la trace dérivée peut
-  rejoindre `hike_sessions`.
+  rejoindre `hike_sessions`. Le fichier original ne quitte jamais l'appareil.
 - GPX reste lu par `GPXEngine` ; `parseTraceFile` ne reconnaît que TCX et FIT.
+  Le registre `trace_imports` accepte déjà `gpx` pour un branchement ultérieur.
 - FIT multisport, plusieurs messages `activity`, plusieurs `file_id`, TCX v1 et
   `MultiSportSession` sont refusés explicitement, pas convertis. Les types de
   fichier FIT autres que `4` (parcours, sport, workout, monitoring…) sont
@@ -153,6 +161,18 @@ Références de suivi : `A03`, `K6.02`, `S1.15`.
   `session.max_power` (champ 20) est repris dans le lap synthétique.
 - FIT : les valeurs 64 bits au-delà de 2^53 perdent leur précision en `number`.
   Aucun champ normalisé courant ne les utilise.
+- Déduplication : l'empreinte est déclarée par le client, car le fichier original
+  ne quitte pas l'appareil. La portée propriétaire empêche tout impact sur un
+  autre compte ; un utilisateur peut au pire se bloquer lui-même en associant une
+  fausse empreinte à une sortie. Voir la section « Limite assumée » du document
+  de persistance.
+- Provenance : le nom de fichier peut contenir des données personnelles. Il est
+  stocké dans `trace_imports`, lisible par le seul propriétaire, nettoyé et borné
+  à 255 caractères ; il n'est jamais journalisé ni renvoyé par une réponse
+  publique.
+- Suppression : supprimer la sortie ou le compte supprime la provenance par
+  cascade. Il n'existe pas de reprise ni d'export dédié de `trace_imports` dans
+  l'interface.
 - Les tests couvrent les variantes construites dans le dépôt, pas un panel de
   fichiers Garmin/Suunto réels ; il n'y a pas de mesure de couverture de
   lignes ni de banc de performance dans cette brique.
@@ -167,54 +187,67 @@ Références de suivi : `A03`, `K6.02`, `S1.15`.
 3. L'enregistrement est refusé dans l'interface tant que la trace est tronquée,
    sans fuseau UTC, sans bornes ou sans durée/distance réelles. Le refus est
    affiché avec sa raison, et `buildHikeSessionImportPayload` retourne `null`.
-4. Si la trace est enregistrable, le drawer envoie uniquement :
+4. Si la trace est enregistrable, le drawer envoie :
    `title`, `startedAt`, `endedAt`, `distanceKm`, `durationSeconds`,
    `elevationGainM`, `maxAltitudeM`, `positions`, `positionsTimed`,
-   `poiEvents: []`, `createCarnet: false`. La projection est échantillonnée à
+   `poiEvents: []`, `createCarnet: false`, `source`, `sourceFingerprint`,
+   `sourceFileName`, `sourceByteLength`. La projection est échantillonnée à
    **15 000 points géolocalisés maximum** (extrémités conservées) pour rester
    sous la limite de charge de la plateforme ; les métriques de l'aperçu, elles,
    portent sur la trace complète.
-5. La route existante écrit dans `hike_sessions` (`private`, titre, altitude max,
-   `positions_geojson`, `positions_timed`) et répond `existing: true` quand une
-   sortie du même propriétaire commence déjà au même instant. Aucun carnet
-   automatique n'est créé pour un import.
-6. L'aperçu reste local : aucune requête réseau n'est faite avant le geste
+5. La route reconnaît le contrat d'import à la présence conjointe de `source` et
+   `sourceFingerprint`. Elle appelle alors la RPC `record_trace_import`, qui
+   réserve `(propriétaire, empreinte)`, écrit la sortie `hike_sessions`
+   (`private`, titre, altitude max, `positions_geojson`, `positions_timed`,
+   `carnet_id NULL`) et la provenance `trace_imports` dans une seule transaction.
+   Elle répond `existing: true` uniquement quand **la même empreinte** a déjà été
+   importée par ce propriétaire. Aucun carnet automatique, aucun moment, aucun
+   voyage ne sont créés pour un import.
+6. Le contrôle historique `(user_id, started_at)` reste actif pour les appels GPS
+   qui ne portent pas le contrat d'import. Il n'est jamais appliqué à un import :
+   deux fichiers différents démarrant à la même seconde restent deux sorties.
+7. L'aperçu reste local : aucune requête réseau n'est faite avant le geste
    explicite « Enregistrer dans mes sorties ».
 
-### Besoins de base pour l'intégration ultérieure (aucune migration créée ici)
+### Persistance et déduplication livrées
 
-Pour satisfaire S1.15 sans ambiguïté, une migration unique et relue devra
-ajouter, sur `public.hike_sessions` (ou une table `trace_imports` dédiée) :
+Migration additive `20261112123000_trace_import_dedupe.sql` (rollback
+`supabase/migrations_down/20261112123000_trace_import_dedupe.down.sql`).
 
-| Besoin | Proposition | Raison |
-|---|---|---|
-| Source | `source text not null default 'gps'` avec `check (source in ('gps','fit','tcx','gpx'))` | Distinguer un import d'un enregistrement GPS sans toucher aux lignes existantes. |
-| Empreinte | `source_fingerprint text` (SHA-256 du fichier original) | Déduplication fondée sur le contenu, pas sur l'heure de départ. |
-| Nom d'origine | `source_file_name text` | Retrouver le fichier sans exposer son contenu. |
-| Unicité | index unique partiel `(user_id, source_fingerprint)` `where source_fingerprint is not null` | « Deux imports identiques donnent un seul objet », par propriétaire. |
-| Import | `imported_at timestamptz` et éventuellement `import_metadata jsonb` | Tracer l'import sans polluer `notes`, et permettre une reprise. |
-| RPC | upsert transactionnel `import_trace_session(...)` avec `ON CONFLICT` | Éviter la course entre deux onglets et rendre la déduplication atomique. |
+| Objet | Rôle |
+|---|---|
+| `public.trace_imports` | Registre privé de provenance : `owner_id`, `session_id`, `source`, `source_fingerprint`, `source_file_name`, `source_byte_length`, `correlation_id`, `imported_at`. |
+| `unique (owner_id, source_fingerprint)` | Clé de déduplication : un contenu identique ne crée qu'une sortie par propriétaire. Le format n'entre pas dans la clé. |
+| `unique (session_id)` | Une sortie ne peut être reliée qu'à une provenance. |
+| `record_trace_import(...)` | RPC `SECURITY DEFINER`, propriétaire = `auth.uid()`, transaction unique : lecture de la provenance, insertion de la sortie et de la provenance, ou retour de l'existante. |
+| RLS `trace_imports` | Lecture propriétaire seule ; aucune policy d'écriture ; `authenticated` n'a que `SELECT` ; `anon` aucun accès. |
 
-Le contrôle actuel `started_at` de la route reste un garde-fou historique : il
-ne doit pas être présenté comme l'unicité d'empreinte. Tant que la migration
-n'existe pas, l'interface dit « déjà présente » quand ce contrôle répond, et
-documente la limite.
+Le détail de l'algorithme, du modèle de menace et des points de synchronisation
+avec les branches Explorer/Carnet est dans
+[`docs/import/A03-S1.15-persistance.md`](../../../../docs/import/A03-S1.15-persistance.md).
 
 ### Dépendances de confidentialité
 
 - Le fichier original contient des coordonnées précises, parfois FC, cadence,
   puissance et numéro de série : il relève de données personnelles sensibles.
-  S'il est conservé, ce doit être dans un bucket **privé**, avec RLS
-  propriétaire, URL signée courte, aucune URL publique et suppression/export
-  RGPD. Le parcours actuel ne le téléverse pas, ce qui évite d'ouvrir ce stockage
-  avant la migration.
-- `hike_sessions` est privé par défaut (`visibility = 'private'`). La policy de
-  lecture autorise aussi les sessions liées à un carnet public : un import ne
-  crée donc **aucun carnet** et ne doit jamais être rattaché à un carnet public
-  sans geste explicite.
+  **Il n'est pas conservé** : seuls la trace dérivée, l'empreinte, le nom et la
+  taille rejoignent la base. Si un stockage d'originaux est ouvert un jour, ce
+  devra être un bucket **privé**, avec RLS propriétaire, URL signée courte,
+  aucune URL publique et suppression/export RGPD.
+- `trace_imports` est propriétaire seul : RLS `owner_id = auth.uid()`, aucune
+  policy d'écriture, `authenticated` n'a que `SELECT`, `anon` aucun accès. Le
+  nom de fichier, l'empreinte et la taille ne sont donc jamais exposés par un
+  carnet public ou une policy de session partagée.
+- `hike_sessions` est privé par défaut (`visibility = 'private'`). Un import crée
+  `carnet_id = NULL` et ne crée **aucun** carnet, moment ou voyage. La policy de
+  lecture historique peut exposer les lignes liées à un carnet public ; la
+  branche `codex/lkdv-p01-trace` (`20261112121000`) resserre ce point. Quelle que
+  soit son application, la provenance d'import reste dans `trace_imports`, hors
+  de cette lecture.
 - Les chaînes de provenance (`creator`, `productId`, `sport`, `intensity`,
   `triggerMethod`, nom de fichier) restent contrôlées par le fichier. Elles sont
-  rendues comme du texte React, tronquées, jamais injectées en HTML.
+  rendues comme du texte React, tronquées, jamais injectées en HTML. Le titre,
+  les notes et le nom de fichier sont en plus nettoyés et bornés à l'écriture.
 - Aucun appel réseau tiers n'est fait par le parseur ni par le drawer en dehors
   de l'API interne d'enregistrement.
 
@@ -234,23 +267,43 @@ documente la limite.
   conservés mais que la fin annoncée manque.
 - `availableMetrics` ne liste que les métriques réellement présentes dans les
   points, les laps ou le résumé `session` FIT.
+- `importContract.ts` expose le contrat d'entrée de la route :
+  `resolveTraceImportIdentity`, `validateTraceImportPayload` et
+  `boundedImportFileName`. Il est pur, sans Next ni Supabase, et ne remplace pas
+  la validation finale de la RPC.
 
 ## Confrontation aux fiches
 
 | Fiche | État après cette passe | Ce qui reste hors de la brique |
 |---|---|---|
-| **S1.15** — importer FIT et TCX valides/tronqués, contrôler tours, unités, provenance, erreurs, déduplication | **Partielle, constats bloquants fermés côté lecture ; parcours et écriture ajoutés** : `file_id.type = 4` exigé, dates de fin TCX calculées depuis les laps, messages FIT bornés, laps rattachés en `O((points + laps) log laps)`, résumé de session et champs FIT conservés ou signalés, cadence TCX sport-aware, `Notes`/`Training`/`Extensions` signalés, UTF-16 accepté, aperçu UI et refus explicites. | L'unicité par empreinte n'est pas en base : le contrôle actuel porte sur `(user_id, started_at)`, pas sur `(user_id, source, fingerprint)`. Le stockage des originaux et la reprise restent ouverts. |
-| **K6.02** — fixtures et parcours mobile | **Parcours mobile branché** : `Compte → Sorties → Importer FIT/TCX`, sélecteur, glisser-déposer, aperçu et erreurs. | Fixtures Garmin/Suunto réelles anonymisées et recette mobile sur appareil ; aucune suite n'a été exécutée dans cette passe. |
-| **A03** — import FIT/TCX | **Parcours utilisable** : parseurs, modèle normalisé, limites, SHA-256, aperçu et enregistrement privé via le mécanisme existant. | Migration `source`/`fingerprint`/unicité, bucket privé des originaux, export, fixtures producteurs et validation en recette. |
+| **S1.15** — importer FIT et TCX valides/tronqués, contrôler tours, unités, provenance, erreurs, déduplication | **Déduplication par empreinte livrée** : `file_id.type = 4` exigé, dates de fin TCX calculées depuis les laps, messages FIT bornés, laps rattachés en `O((points + laps) log laps)`, résumé de session et champs FIT conservés ou signalés, cadence TCX sport-aware, `Notes`/`Training`/`Extensions` signalés, UTF-16 accepté, aperçu UI, refus explicites, registre `trace_imports` et RPC atomique `(owner_id, source_fingerprint)`. | Le stockage des originaux, l'export dédié et la reprise restent ouverts. La vérification serveur de l'empreinte est impossible sans téléverser l'original (limite assumée). |
+| **K6.02** — fixtures et parcours mobile | **Parcours mobile branché** : `Compte → Sorties → Importer FIT/TCX`, sélecteur, glisser-déposer, aperçu, erreurs et message de déduplication par fichier. | Fixtures Garmin/Suunto réelles anonymisées et recette mobile sur appareil ; aucune suite n'a été exécutée dans cette passe. |
+| **A03** — import FIT/TCX | **Flux complété côté persistance** : parseurs, modèle normalisé, limites, SHA-256, aperçu, enregistrement privé, registre de provenance owner-only, déduplication atomique et rollback. | Bucket privé des originaux, export, affichage de la provenance après rechargement, fixtures producteurs et validation en recette. |
 
 ## Vérification
 
+Commandes prévues, **non exécutées dans cette passe** :
+
 ```bash
-node_modules/.bin/vitest run src/features/hiking/import
+node_modules/.bin/vitest run src/features/hiking/import tests/security/a14-gdpr-account.spec.ts
 node_modules/.bin/tsc -p <tsconfig ciblé sur src/features/hiking/import>
-node_modules/.bin/eslint src/features/hiking/import
+node_modules/.bin/eslint src/features/hiking/import src/app/api/hike-sessions
+# migration locale, sur une copie :
+psql "$SUPABASE_DB_URL" -f supabase/migrations/20261112123000_trace_import_dedupe.sql
+psql "$SUPABASE_DB_URL" -f supabase/migrations_down/20261112123000_trace_import_dedupe.down.sql
 ```
 
-Passe A03 « interface » : ces commandes n'ont **pas** été exécutées, à la
-demande de Tony (tests et revues reportés). Seuls des contrôles de syntaxe
-locaux ont été faits ; le rapport de fin liste les points à vérifier.
+Contrôles manuels à faire en fin de chantier :
+
+- deux fichiers différents avec le même `started_at` créent deux `hike_sessions` ;
+- deux imports du même fichier retournent le même `session_id` et une seule ligne
+  `trace_imports` ;
+- le même fichier importé par deux comptes crée deux lignes ;
+- un import ne crée ni carnet ni moment et reste `visibility = 'private'` ;
+- `anon` ne peut pas lire `trace_imports` ; un autre utilisateur authentifié ne
+  voit pas la ligne du propriétaire ;
+- l'export et la suppression RGPD comptent `trace_imports` sans erreur.
+
+Passe A03 « persistance » : ces commandes n'ont **pas** été exécutées, à la
+demande de Tony (tests, suites, build et revue reportés). Seuls des contrôles de
+lecture du diff ont été faits ; le rapport de fin liste les points à vérifier.
