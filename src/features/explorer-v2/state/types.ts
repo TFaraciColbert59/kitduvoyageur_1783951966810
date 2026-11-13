@@ -268,6 +268,17 @@ export interface ExplorerState {
   /** Dernière demande saisie : conservée en fermant le tiroir pour pouvoir la relancer. */
   searchQuery?: string;
   /**
+   * Sport explicitement choisi pour les suggestions « autour de moi ».
+   * `null` = aucun sport choisi : aucune suggestion n'est déduite à sa place.
+   */
+  searchSport?: Sport | null;
+  /**
+   * Parcours réels de la dernière requête « autour de moi », tenus à part des
+   * résultats de recherche textuelle (`searchRoutes`). Ils ne sont jamais
+   * persistés et ne contiennent aucune donnée privée.
+   */
+  routeSuggestions?: SearchRoute[];
+  /**
    * Emprise explicitement demandée par « Rechercher dans cette zone ».
    * `null` = recherche autour du centre courant, comportement historique.
    */

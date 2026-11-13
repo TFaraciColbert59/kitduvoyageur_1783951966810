@@ -76,6 +76,7 @@ import {
   useReportsNear,
   type CountryFeatureProperties,
   type CarnetItem,
+  type RouteItem,
   type TripItem,
 } from './data/hooks';
 import {
@@ -434,23 +435,39 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
     };
   }, [flushPending]);
 
-  useEffect(() => {
+  /**
+   * Demande la position, au montage puis sur geste explicite. Le repli de
+   * `me` sur le centre de la carte ne vaut **jamais** position autorisée : les
+   * suggestions « autour de moi » exigent `locationPermission === 'granted'`.
+   */
+  const requestPosition = useCallback(() => {
     if (typeof navigator === 'undefined' || !navigator.geolocation) return;
-    if (state.locationPermission === 'denied') return;
+    const store = useExplorerStore.getState();
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const next = { lat: position.coords.latitude, lng: position.coords.longitude };
         setMe(next);
-        state.patch({ locationPermission: 'granted', center: [next.lng, next.lat] });
+        useExplorerStore
+          .getState()
+          .patch({ locationPermission: 'granted', center: [next.lng, next.lat] });
       },
       (error) => {
         if (error.code === 1 /* PERMISSION_DENIED */) {
-          state.patch({ locationPermission: 'denied' });
+          useExplorerStore.getState().patch({ locationPermission: 'denied' });
         }
-        setMe((current) => current ?? { lat: state.center[1], lng: state.center[0] });
+        setMe(
+          (current) => current ?? { lat: store.center[1], lng: store.center[0] },
+        );
       },
       { enableHighAccuracy: false, timeout: 5000, maximumAge: 300_000 },
     );
+  }, []);
+
+  useEffect(() => {
+    if (state.locationPermission === 'denied') return;
+    requestPosition();
+    // La demande initiale ne doit pas être rejouée à chaque rendu ; le bouton
+    // du tiroir appelle `requestPosition` pour une nouvelle tentative.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -524,27 +541,42 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
 
   const pois = useMemo(() => place?.pois ?? [], [place]);
   const searchRoutes = state.searchRoutes;
+  // Les suggestions « autour de moi » restent séparées de la recherche
+  // textuelle. Dès qu'une vraie demande est saisie, elles quittent la liste de
+  // parcours pour ne pas mélanger deux intentions (près de moi / dans l'emprise).
+  const queryActive = (state.searchQuery ?? '').trim().length >= 2;
+  const suggestions = state.routeSuggestions;
+  const selectionUsesSuggestion =
+    state.selection?.kind === 'trail' &&
+    (suggestions ?? []).some((route) => String(route.id) === state.selection?.id);
+  const routeSuggestions = !queryActive || selectionUsesSuggestion ? suggestions : undefined;
   /**
-   * Les parcours trouvés par la recherche complètent la fenêtre du lieu sans
-   * la remplacer. Aucune géométrie n'est inventée : `geojson` reste `null`
-   * jusqu'au chargement réel de `get_route_geojson` au moment d'armer la trace.
+   * Les parcours trouvés par la recherche ou par « autour de moi » complètent
+   * la fenêtre du lieu sans la remplacer. Aucune géométrie n'est inventée :
+   * `geojson` reste `null` jusqu'au chargement réel de `get_route_geojson` au
+   * moment d'armer la trace.
    */
   const routes = useMemo(() => {
     const base = place?.routes ?? [];
-    if (!searchRoutes || searchRoutes.length === 0) return base;
     const known = new Set(base.map((route) => String(route.id)));
-    const additions = searchRoutes
-      .filter((route) => !known.has(String(route.id)))
-      .map((route) => ({
-        id: route.id,
-        name: route.name,
-        distance_km: route.distance_km,
-        network: route.network,
-        ref: route.ref,
-        geojson: null,
-      }));
+    const additions: RouteItem[] = [];
+    for (const list of [searchRoutes ?? [], routeSuggestions ?? []]) {
+      for (const route of list) {
+        const id = String(route.id);
+        if (known.has(id)) continue;
+        known.add(id);
+        additions.push({
+          id: route.id,
+          name: route.name,
+          distance_km: route.distance_km,
+          network: route.network,
+          ref: route.ref,
+          geojson: null,
+        });
+      }
+    }
     return additions.length > 0 ? [...base, ...additions] : base;
-  }, [place, searchRoutes]);
+  }, [place, searchRoutes, routeSuggestions]);
 
   // Hors-trace : la séance porte sa propre copie de l'itinéraire, figée au
   // départ. On ignore `state.selection` et la géométrie simplifiée
@@ -1255,9 +1287,10 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
       onStartSport: requestStartSafe,
       onConfirmReport,
       onMarkLap: markLap,
+      onRequestLocation: requestPosition,
       locale: 'fr-FR',
     }),
-    [state, countries, country, regionsGeo, regionGroups, place, pois, routes, weather, unitsForCountry, reportsData, carnetsData, tripsData, selectedPoi, me, mapViewport, requestStartSafe, onConfirmReport, markLap],
+    [state, countries, country, regionsGeo, regionGroups, place, pois, routes, weather, unitsForCountry, reportsData, carnetsData, tripsData, selectedPoi, me, mapViewport, requestStartSafe, onConfirmReport, markLap, requestPosition],
   );
 
   const model = useMemo(() => buildSheetModel(ctx), [ctx]);

@@ -2,7 +2,13 @@
 
 import React from 'react';
 import { XpIcon } from '../ui/XpIcon';
-import { ExplorerSearchError, useNaturalSearch, geometryCenter } from '../data/hooks';
+import {
+  ExplorerSearchError,
+  geometryCenter,
+  useNaturalSearch,
+  useRouteSuggestions,
+} from '../data/hooks';
+import { SUGGESTION_RADIUS_KM } from '../routeSuggestions';
 import { isSearchableViewport } from '../searchArea';
 import { AUTO_PAUSE_BY_SPORT } from '../activity/tracker';
 import {
@@ -1540,6 +1546,172 @@ function DepartForm({ ctx }: { ctx: SheetContext }) {
   );
 }
 
+function RouteSuggestions({ ctx }: { ctx: SheetContext }) {
+  const sport = ctx.state.searchSport ?? null;
+  const me = ctx.me;
+  const position =
+    ctx.state.locationPermission === 'granted' &&
+    me !== null &&
+    Number.isFinite(me.lat) &&
+    Number.isFinite(me.lng)
+      ? me
+      : null;
+  const { data, isFetching, isError, error, refetch } = useRouteSuggestions(
+    position?.lat ?? null,
+    position?.lng ?? null,
+    sport,
+    position !== null && sport !== null && ctx.state.online,
+  );
+  const searchError = error instanceof ExplorerSearchError ? error : null;
+  const unknownSport = searchError?.reason === 'sport-inconnu';
+  const patch = ctx.state.patch;
+  const suggestedRoutes = data?.routes;
+  const selectedSuggestionKept =
+    ctx.state.selection?.kind === 'trail' &&
+    (ctx.state.routeSuggestions ?? []).some(
+      (route) => String(route.id) === ctx.state.selection?.id,
+    );
+
+  // Les suggestions vivent à part de `searchRoutes` : une recherche textuelle
+  // ne doit jamais écraser les parcours trouvés autour de la position, et
+  // inversement. Elles restent en mémoire de session, jamais persistées. Une
+  // suggestion déjà ouverte n'est pas effacée pendant un rechargement.
+  React.useEffect(() => {
+    if (suggestedRoutes) {
+      patch({ routeSuggestions: suggestedRoutes });
+      return;
+    }
+    if (!selectedSuggestionKept) patch({ routeSuggestions: [] });
+  }, [suggestedRoutes, selectedSuggestionKept, patch]);
+
+  const label = sport && SPORT_META[sport] ? SPORT_META[sport].label : 'ce sport';
+
+  return (
+    <>
+      <XpEyebrow>Autour de moi</XpEyebrow>
+      <XpChips
+        items={SPORT_FAMILIES.map((family) => ({ id: family.sport, label: family.label }))}
+        value={sport ?? ''}
+        onChange={(id) => patch({ searchSport: id as Sport })}
+        ariaLabel="Sport des suggestions autour de moi"
+      />
+      {position === null ? (
+        <XpEmpty
+          title={
+            ctx.state.locationPermission === 'denied'
+              ? 'Position refusée'
+              : 'Position non disponible'
+          }
+          hint="Les suggestions autour de toi ne s’affichent qu’avec une position autorisée. La carte et la recherche textuelle restent utilisables sans position."
+          action={
+            ctx.onRequestLocation ? (
+              <button
+                type="button"
+                className="xp-secondary"
+                onClick={() => ctx.onRequestLocation?.()}
+              >
+                Demander la position
+              </button>
+            ) : undefined
+          }
+        />
+      ) : sport === null ? (
+        <XpEmpty
+          title="Choisis un sport"
+          hint="Aucun sport n’est déduit de la carte ni de la position : choisis-le pour voir les parcours qui le concernent."
+        />
+      ) : !ctx.state.online ? (
+        <XpEmpty
+          title="Suggestions indisponibles hors ligne"
+          hint="Les parcours autour de toi viennent de la base. Reviens en ligne pour les charger ; la recherche textuelle en cache reste consultable."
+        />
+      ) : isError ? (
+        <XpEmpty
+          title={unknownSport ? 'Sport inconnu' : 'Suggestions temporairement indisponibles'}
+          hint={
+            unknownSport
+              ? 'Ce sport ne fait pas partie de la taxonomie de l’Explorer. Aucun autre sport n’est choisi à sa place.'
+              : 'La base n’a pas répondu. Aucun résultat vide n’est affiché à la place d’une panne.'
+          }
+          action={
+            unknownSport ? undefined : (
+              <button type="button" className="xp-secondary" onClick={() => void refetch()}>
+                Réessayer
+              </button>
+            )
+          }
+        />
+      ) : isFetching && !data ? (
+        <XpEmpty
+          title={`Recherche autour de toi · ${label}`}
+          hint={`Classement des parcours réels dans un rayon de ${SUGGESTION_RADIUS_KM} km.`}
+        />
+      ) : !data ? (
+        <XpEmpty
+          title="Suggestions en préparation"
+          hint="La position et le sport sont prêts ; la requête n’a pas encore répondu."
+        />
+      ) : !data.supported ? (
+        <XpEmpty
+          title={`Aucun catalogue de parcours ${label.toLowerCase()}`}
+          hint="Le catalogue disponible ne contient que des itinéraires de randonnée. Aucun parcours d’un autre sport n’est proposé, et la difficulté n’est pas déduite."
+        />
+      ) : data.routes.length === 0 ? (
+        <XpEmpty
+          title={`Aucun parcours à moins de ${data.radiusKm} km`}
+          hint="Aucun itinéraire de randonnée du catalogue ne passe dans ce rayon autour de ta position. La recherche textuelle reste disponible."
+        />
+      ) : (
+        <>
+          <p style={{ margin: 0, fontSize: 11.5, color: 'var(--xp-mut)' }}>
+            {data.routes.length > 1 ? 'Itinéraires réels' : 'Itinéraire réel'} de randonnée ·
+            tracé à moins de {data.radiusKm} km · difficulté non renseignée
+          </p>
+          <XpRows>
+            {data.routes.map((route) => {
+              const length =
+                route.distance_km != null
+                  ? `${route.distance_km.toFixed(1).replace('.', ',')} km`
+                  : null;
+              const network =
+                route.network === 'iwn'
+                  ? 'GR® international'
+                  : route.network === 'nwn'
+                    ? 'GR®'
+                    : route.network === 'rwn'
+                      ? 'PR'
+                      : route.network === 'lwn'
+                        ? 'Sentier local'
+                        : null;
+              const distance =
+                route.distanceKm != null
+                  ? `tracé à ${formatDistance(route.distanceKm)}`
+                  : 'distance au tracé inconnue';
+              return (
+                <XpRow
+                  key={`suggestion-${route.id}`}
+                  icon="route"
+                  title={route.name || `Itinéraire ${route.ref || route.id}`}
+                  sub={[length, route.ref || network, distance].filter(Boolean).join(' · ')}
+                  onClick={() =>
+                    ctx.state.select({ kind: 'trail', id: String(route.id) }, 'trail', 'mid')
+                  }
+                />
+              );
+            })}
+          </XpRows>
+          {data.truncated ? (
+            <XpEmpty
+              title="Suggestions tronquées"
+              hint="La lecture est bornée à 60 parcours ; le classement ne porte que sur cette sélection."
+            />
+          ) : null}
+        </>
+      )}
+    </>
+  );
+}
+
 function SearchTab({ ctx }: { ctx: SheetContext }) {
   // La demande vit dans le store : fermer le tiroir puis déplacer la carte ne
   // doit pas perdre la recherche que « Rechercher dans cette zone » relance.
@@ -1611,10 +1783,13 @@ function SearchTab({ ctx }: { ctx: SheetContext }) {
         }}
       />
       {query.trim().length < 2 ? (
-        <XpEmpty
-          title="Cherche un lieu"
-          hint="Tape deux lettres, ou une phrase : « un point d’eau à moins de 2 heures »."
-        />
+        <>
+          <RouteSuggestions ctx={ctx} />
+          <p style={{ margin: 0, padding: '0 4px', fontSize: 11.5, color: 'var(--xp-mut)' }}>
+            Tape deux lettres pour chercher un lieu, un parcours ou un repère dans toute la
+            zone disponible.
+          </p>
+        </>
       ) : areaUnavailable ? (
         <XpEmpty
           title="Zoome pour chercher dans cette zone"
@@ -2318,7 +2493,13 @@ function StateTabs(ctx: SheetContext): SheetTab[] {
               icon="loc"
               title="Autoriser ma position"
               sub="Pour ouvrir la carte sur ton quartier"
-              onClick={() => state.patch({ locationPermission: 'granted', sheet: 'level', detent: 'peek' })}
+              onClick={() => {
+                // Le bouton ne fabrique jamais une permission « accordée » :
+                // il demande la position réelle, et seul le callback du
+                // navigateur patche `locationPermission`.
+                ctx.onRequestLocation?.();
+                state.patch({ sheet: 'level', detent: 'peek' });
+              }}
             />
             <XpRow icon="chevr" title="Plus tard" onClick={() => state.patch({ sheet: 'level', detent: 'peek' })} />
           </XpRows>

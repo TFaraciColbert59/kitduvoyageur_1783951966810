@@ -672,3 +672,21 @@ Les points **non** cochés sont listés dans `ETAT_DES_POINTS.md` avec leur bloc
   lieu écrit ; difficulté/eau absentes du catalogue. Détail dans la fiche R03-K1.01.
 - Vérification : aucun test, build, lint ni `tsc` exécuté dans cette passe (consigne de lot).
 
+### [R03-K1.02] Suggestions de parcours autour de moi · 2026-11-13
+- Fiche : `LKDV_Lancement_Autonome 2/fiches/Komoot/K1.02.md` ; départ `adf61f4`.
+- Fichiers : `src/app/api/explorer/v2/suggestions/route.ts`,
+  `src/features/explorer-v2/routeSuggestions.ts`,
+  `src/features/explorer-v2/{ExplorerV2.tsx,data/hooks.ts,state/types.ts,state/store.ts,sheet/SheetContent.tsx,sheet/context.ts}`,
+  `docs/explorer-v2/R03-K1.02-SUGGESTIONS-AUTOUR-DE-MOI.md`.
+- Décision : suggestions séparées de la recherche textuelle (ni `q`, ni emprise visible),
+  position autorisée uniquement, sport explicitement choisi. `explorer_routes` (anon, RLS
+  OSM) reste la seule source ; fenêtre de 15 km, six résultats, distance au sommet le plus
+  proche du tracé simplifié. Aucun index, aucune migration, aucun résultat de démonstration.
+- Position : le bouton « Autoriser ma position » ne fabrique plus une permission accordée ;
+  il demande la position réelle. Le repli de `me` sur le centre de la carte n'est jamais
+  traité comme une localisation pour les suggestions.
+- Limites : seul le catalogue `rando` existe (`hiking_routes`) ; les autres sports reçoivent
+  « pas de catalogue », sans recyclage ni déduction. Difficulté, durée, dénivelé et boucles
+  absents ; aucune génération de boucle. Détail et conflits dans la fiche R03-K1.02.
+- Vérification : aucun test, build, lint ni `tsc` exécuté dans cette passe (consigne de lot).
+

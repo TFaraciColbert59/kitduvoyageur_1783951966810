@@ -7,7 +7,7 @@ import {
   viewportQueryParams,
   type SearchViewport,
 } from '../searchArea';
-import type { SearchRoute } from '../state/types';
+import type { SearchRoute, Sport } from '../state/types';
 
 export type Position = [number, number];
 
@@ -375,6 +375,82 @@ async function fetchSearchJson(url: string): Promise<SearchResponse> {
     throw new ExplorerSearchError('Réponse de recherche illisible', 502);
   }
   return payload as SearchResponse;
+}
+
+/** Réponse du contrat « autour de moi » (position + sport choisi). */
+export interface RouteSuggestionResponse {
+  sport: Sport;
+  /** Faux quand le catalogue ne couvre pas ce sport ; `routes` est alors vide. */
+  supported: boolean;
+  reason?: 'sport-sans-catalogue';
+  radiusKm: number;
+  position: { lat: number; lng: number };
+  routes: SearchRoute[];
+  /** Vrai quand la borne de la RPC a pu tronquer les candidats. */
+  truncated: boolean;
+}
+
+async function fetchSuggestionJson(url: string): Promise<RouteSuggestionResponse> {
+  const res = await fetch(url, { headers: { Accept: 'application/json' } });
+  const payload = (await res.json().catch(() => null)) as
+    | { error?: unknown; reason?: unknown }
+    | RouteSuggestionResponse
+    | null;
+  if (!res.ok) {
+    const record =
+      payload && typeof payload === 'object' ? (payload as Record<string, unknown>) : null;
+    const reason = typeof record?.reason === 'string' ? record.reason : undefined;
+    const message =
+      typeof record?.error === 'string' ? record.error : `${url} → ${res.status}`;
+    throw new ExplorerSearchError(message, res.status, reason);
+  }
+  if (
+    !payload ||
+    typeof payload !== 'object' ||
+    !Array.isArray((payload as RouteSuggestionResponse).routes)
+  ) {
+    throw new ExplorerSearchError('Réponse de suggestions illisible', 502);
+  }
+  return payload as RouteSuggestionResponse;
+}
+
+/**
+ * Parcours réels autour de la position, pour le sport explicitement choisi.
+ *
+ * Le hook n'est actif qu'avec une position autorisée et un sport. Il ne
+ * remplace ni la recherche textuelle ni son emprise : son cache et ses
+ * résultats sont séparés.
+ */
+export function useRouteSuggestions(
+  lat: number | null,
+  lng: number | null,
+  sport: Sport | null,
+  enabled = true,
+) {
+  const hasPosition =
+    lat !== null && lng !== null && Number.isFinite(lat) && Number.isFinite(lng);
+  const params = new URLSearchParams();
+  if (hasPosition && lat !== null && lng !== null) {
+    // Trois décimales (~100 m) suffisent pour un rayon de 15 km et évitent de
+    // promener une position précise dans l'URL et les journaux serveur.
+    params.set('lat', lat.toFixed(3));
+    params.set('lng', lng.toFixed(3));
+  }
+  if (sport) params.set('sport', sport);
+
+  return useQuery({
+    queryKey: [
+      'xp',
+      'route-suggestions',
+      hasPosition ? `${lat?.toFixed(3)}:${lng?.toFixed(3)}` : 'sans-position',
+      sport ?? 'sans-sport',
+    ],
+    enabled: enabled && hasPosition && sport !== null,
+    queryFn: () =>
+      fetchSuggestionJson(`/api/explorer/v2/suggestions?${params.toString()}`),
+    staleTime: 60 * 1000,
+    retry: 1,
+  });
 }
 
 /**
