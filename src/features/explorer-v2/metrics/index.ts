@@ -4,3 +4,4 @@
  * les réglages ou un futur adaptateur de séance.
  */
 export * from './activityMetrics';
+export * from './zoneConfiguration';
