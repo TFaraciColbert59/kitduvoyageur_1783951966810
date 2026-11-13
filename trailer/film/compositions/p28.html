@@ -1,5 +1,5 @@
 <!-- P28 (images 1717–1769, 52 images) — landscape-director. img20, contre-plongée, la main tendue.
-     Entrée sur le piqué de P27 (S 1,25 → 1,33 en outCubic, cy qui descend encore de 60 px), poussée courte vers les mains (≈ 864, 557), S → 1,55.
+     Entrée sur le piqué de P27 (S 1,20 → 1,26 en outCubic, cy qui descend encore de 20 px), poussée courte vers les mains (≈ 864, 600), S → 1,34 (têtes entières, img20 v2).
      Sortie : panoramique vers la droite sur l'épaule de Léa (cx +330, inCubic sur 12 images), au plus rapide à la coupe 1769. -->
 <template>
   <style>
@@ -65,9 +65,11 @@
         var a = FX.ease.outCubic(FX.clamp(f / 12, 0, 1));
         var p = FX.ease.inOutCubic(FX.clamp(f / 40, 0, 1));
         var ex = FX.ease.inCubic(FX.clamp((f - (N - 12)) / 12, 0, 1));
-        var S = 1.25 + 0.08 * a + 0.22 * p;
+        // img20 (v2, lever de soleil) : la tête de l'homme touche le haut de l'image ; poussée plafonnée à S 1,34
+        // et cadre haut (cy ≈ 405–450) pour garder sa tête entière et les mains jointes (≈ 860, 600) dans le tiers bas.
+        var S = 1.20 + 0.06 * a + 0.08 * p;
         var cx = 820 + 44 * p + 330 * ex + hand(f, 4, 281);
-        var cy = 480 + 60 * a + 20 * p + 40 * ex + hand(f, 3, 283);
+        var cy = 440 + 20 * a - 45 * p + 40 * ex + hand(f, 3, 283);
         var rot = (Math.PI / 180) * (-1.0 * (1 - a) + 0.6 * p - 1.2 * ex);
         return fit({ S: S, cx: cx, cy: cy, rot: rot });
       }

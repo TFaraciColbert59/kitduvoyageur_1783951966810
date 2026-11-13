@@ -1,6 +1,6 @@
 <!-- P17 (images 1034–1060, 26 images, un temps) — landscape-director. img43, très gros plan du pouce sur l'écran.
-     Entrée : la poussée de P16 continue en freinant (S 1,10 → 1,22, outExpo, 9 i) vers la pulpe du pouce.
-     Appui à l'image 17 : coup de zoom inExpo (S → 1,52 à la coupe) et secousse brève à graine qui monte jusqu'à la coupe :
+     Entrée : la poussée de P16 continue en freinant (S 1,08 → 1,18, outExpo, 9 i) vers la pulpe du pouce.
+     Appui à l'image 17 : coup de zoom inExpo (S → 1,45 à la coupe, pouce et bas d'écran au centre) et secousse brève à graine qui monte jusqu'à la coupe :
      IMPACT sur la coupe 1060 (sonnette de P18). Écran VERT intact. Caméra : window.__lkdvCam.p17(f) → { S, cx, cy, rot }. -->
 <template>
   <style>
@@ -66,9 +66,10 @@
         var a = FX.ease.outExpo(FX.clamp(f / 9, 0, 1));
         var k = FX.ease.inExpo(FX.clamp((f - 17) / (N - 1 - 17), 0, 1));
         var sh = FX.clamp((f - 17) / 4, 0, 1);
-        var S = 1.10 + 0.12 * a + 0.30 * k;
-        var cx = 1010 + (980 - 1010) * a + hand(f, 5, 171) + (FX.noise2(f * 1.7, 2.1, 173) - 0.5) * 26 * sh;
-        var cy = 640 + (700 - 640) * a + hand(f, 4, 175) + (FX.noise2(f * 1.7, 6.3, 177) - 0.5) * 22 * sh;
+        // img43 (v2) : écran vert x 390–1545, y 0–880 ; pulpe du pouce vers (1000, 650). Le cadre garde les deux coins du bas.
+        var S = 1.08 + 0.10 * a + 0.27 * k;
+        var cx = 1010 + (988 - 1010) * a + hand(f, 5, 171) + (FX.noise2(f * 1.7, 2.1, 173) - 0.5) * 22 * sh;
+        var cy = 540 + (610 - 540) * a + 50 * k + hand(f, 4, 175) + (FX.noise2(f * 1.7, 6.3, 177) - 0.5) * 18 * sh;
         var rot = (Math.PI / 180) * (FX.noise2(f * 1.3, 9.1, 179) - 0.5) * 1.6 * sh;
         return fit({ S: S, cx: cx, cy: cy, rot: rot });
       }
