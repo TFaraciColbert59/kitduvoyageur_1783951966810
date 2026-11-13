@@ -1,126 +1,18 @@
-<!-- hf-skeleton generated id=p24 sha256=406a65f61562e2fe — carte provisoire générée par tools/timeline/build-skeleton.mjs depuis film/shots.json ; toute retouche hors de la zone hf-footage la soustrait au générateur -->
+<!-- P24 (images 1402–1454, 52 images) — landscape-director. img17, ras du sol, premiers pas sur le sentier.
+     Léger avancé bas (S 1,15 → 1,28, cy 640 → 610, pas de marche : rebond à graine), la poussière de la chaussure au centre ;
+     sortie : montée vers la bretelle du sac (cy → 400, S → 1,40, inCubic sur les 16 dernières images),
+     au plus rapide à la coupe 1454 ; P25 reprend la montée.
+     Caméra : window.__lkdvCam.p24(f) → { S, cx, cy, rot }. -->
 <template>
   <style>
-    #root {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-      background: #4A6B45;
-      font-family: "Inter", sans-serif;
-      color: #FAF8F5;
-    }
-    .p24-card {
-      position: absolute;
-      inset: 0;
-      padding: 96px 120px 120px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-    .p24-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      font-family: "JetBrains Mono", monospace;
-      font-size: 34px;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-    }
-    .p24-mid {
-      display: flex;
-      align-items: flex-end;
-      gap: 72px;
-    }
-    .p24-num {
-      font-weight: 900;
-      font-size: 360px;
-      line-height: 0.8;
-      letter-spacing: -0.04em;
-    }
-    .p24-meta {
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-      padding-bottom: 8px;
-    }
-    .p24-source {
-      font-family: "JetBrains Mono", monospace;
-      font-weight: 700;
-      font-size: 64px;
-    }
-    .p24-frames {
-      font-family: "JetBrains Mono", monospace;
-      font-size: 36px;
-    }
-    .p24-star {
-      font-weight: 700;
-      font-size: 40px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-    }
-    .p24-intent {
-      max-width: 1600px;
-      font-size: 52px;
-      line-height: 1.2;
-      font-weight: 400;
-    }
-    .p24-track {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      height: 12px;
-      background: rgba(250, 248, 245, 0.18);
-    }
-    .p24-bar {
-      position: absolute;
-      inset: 0;
-      background: #FAF8F5;
-      transform-origin: 0 50%;
-    }
-    .p24-frame {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-    }
-    .p24-shot,
-    .p24-shot-inner {
-      position: absolute;
-      inset: 0;
-    }
-    .p24-shot {
-      opacity: 0;
-    }
-    .p24-shot-img {
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 1920px;
-      height: 1080px;
-      /* Remplit le 16:9 sans déformer, quel que soit le rapport de l'image : recadrage au centre. */
-      object-fit: cover;
-      object-position: 50% 50%;
-    }
+    #root { position: absolute; inset: 0; overflow: hidden; background: #0B1F17; }
+    .p24-frame { position: absolute; inset: 0; overflow: hidden; }
+    .p24-shot, .p24-shot-inner { position: absolute; inset: 0; }
+    .p24-shot { opacity: 0; }
+    .p24-shot-img { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
+    #p24-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
   </style>
   <div id="root" data-composition-id="p24" data-width="1920" data-height="1080" data-duration="0.8666666666666667">
-    <!-- Carte provisoire : outil de travail, disparaît quand l'image du plan est là. -->
-    <div id="p24-card" class="p24-card" data-shot="p24" data-act="5">
-      <div id="p24-top" class="p24-top">
-        <span id="p24-act">Acte 5 · DÉPART</span>
-        <span id="p24-range">1402–1454</span>
-      </div>
-      <div id="p24-mid" class="p24-mid">
-        <div id="p24-num" class="p24-num">P24</div>
-        <div id="p24-meta" class="p24-meta">
-          <div id="p24-source" class="p24-source">img17</div>
-          <div id="p24-frames" class="p24-frames">52 images · 0,87 s</div>
-        </div>
-      </div>
-      <div id="p24-intent" class="p24-intent">Premiers pas sur le sentier</div>
-      <div id="p24-track" class="p24-track"><div id="p24-bar" class="p24-bar"></div></div>
-    </div>
-    <!-- Emplacement d'image plein cadre : assets/footage/img17.png.
-         Chaque calque : .p24-shot (opacité, séquence) > .p24-shot-inner (libre pour le mouvement) > img. -->
     <div id="p24-frame" class="p24-frame" data-layout-allow-overflow>
       <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) -->
       <div id="p24-shot-1" class="p24-shot" data-src="img17" data-seq="0" data-seq-count="1">
@@ -130,30 +22,65 @@
       </div>
     <!-- hf-footage:end -->
     </div>
+    <canvas id="p24-canvas" width="1920" height="1080" data-layout-allow-overflow></canvas>
   </div>
+  <script src="lib/fx/core.js"></script>
   <script>
     (function () {
-      var D = 52 / 60;
-      var tl = gsap.timeline({ paused: true });
-      // Barre de progression : se remplit sur la durée du plan.
-      tl.fromTo("#p24-bar", { scaleX: 0 }, { scaleX: 1, duration: D, ease: "none" }, 0);
-      // Images présentes : chaque source occupe sa part égale du plan (ordre de la trame) ;
-      // la carte reste visible là où l'image manque.
-      var shots = Array.prototype.slice.call(document.querySelectorAll(".p24-shot"));
-      if (shots.length) {
-        var n = Number(shots[0].getAttribute("data-seq-count"));
-        var bySeq = {};
-        shots.forEach(function (el) { bySeq[el.getAttribute("data-seq")] = el; });
-        for (var k = 0; k < n; k++) {
-          var t = (k * D) / n;
-          var el = bySeq[String(k)];
-          shots.forEach(function (other) {
-            tl.set(other, { opacity: other === el ? 1 : 0 }, t);
-          });
-          tl.set("#p24-card", { opacity: el ? 0 : 1 }, t);
-        }
+      var FX = window.LKDVFX;
+      var W = 1920, H = 1080, INK = "#0B1F17";
+      var img = document.getElementById("p24-shot-1-img");
+      var ctx = document.getElementById("p24-canvas").getContext("2d");
+      function hand(f, amp, seed) {
+        return (FX.noise2(f * 0.09, 1.7, seed) - 0.5) * amp + (FX.noise2(f * 0.45, 5.3, seed + 7) - 0.5) * amp * 0.3;
       }
-      window.__timelines["p24"] = tl;
+      function fit(c) {
+        var a = Math.abs(c.rot || 0), co = Math.cos(a), si = Math.sin(a);
+        var hx = (W / 2 * co + H / 2 * si) / c.S + 2, hy = (W / 2 * si + H / 2 * co) / c.S + 2;
+        c.cx = FX.clamp(c.cx, hx, W - hx);
+        c.cy = FX.clamp(c.cy, hy, H - hy);
+        return c;
+      }
+      function drawCam(c2, c, alpha) {
+        c2.globalAlpha = alpha;
+        c2.setTransform(1, 0, 0, 1, 0, 0);
+        c2.translate(W / 2, H / 2);
+        if (c.rot) c2.rotate(c.rot);
+        c2.scale(c.S, c.S);
+        c2.translate(-c.cx, -c.cy);
+        c2.drawImage(img, 0, 0, W, H);
+      }
+      function shoot(camAt, f, shutter) {
+        var a = camAt(f), b = camAt(f - shutter);
+        var d = Math.abs(a.S - b.S) * 1100 + (Math.abs(a.cx - b.cx) + Math.abs(a.cy - b.cy)) * a.S + Math.abs((a.rot || 0) - (b.rot || 0)) * 1100;
+        var n = FX.clamp(Math.ceil(d / 1.2), 1, 12);
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = INK;
+        ctx.fillRect(0, 0, W, H);
+        for (var i = 0; i < n; i++) drawCam(ctx, n === 1 ? a : camAt(f - (shutter * i) / (n - 1)), 1 / (i + 1));
+        ctx.globalAlpha = 1;
+      }
+
+      var N = 52;
+      function camAt(f) {
+        var u = FX.ease.inOutSine(f / (N - 1));
+        var up = FX.ease.inCubic(FX.clamp((f - (N - 17)) / 16, 0, 1));
+        var S = 1.15 + 0.13 * u + 0.12 * up;
+        var step = Math.abs(Math.sin(f * 0.21)) * 5;
+        var cx = 1000 + (1060 - 1000) * u + hand(f, 5, 241);
+        var cy = 640 + (610 - 640) * u - step + (400 - 610) * up + hand(f, 4, 243);
+        var rot = (Math.PI / 180) * (0.8 * Math.sin(f * 0.105) - 1.0 * up);
+        return fit({ S: S, cx: cx, cy: cy, rot: rot });
+      }
+      window.__lkdvCam = window.__lkdvCam || {};
+      window.__lkdvCam.p24 = camAt;
+      var clock = FX.bindClock("p24", N, function (t, f) {
+        if (!img.complete || !img.naturalWidth) { ctx.fillStyle = INK; ctx.fillRect(0, 0, W, H); return; }
+        shoot(camAt, f, 0.6);
+      });
+      img.addEventListener("load", function () { clock.redraw(); });
+      window.__timelines["p24"] = clock.tl;
     })();
   </script>
 </template>
