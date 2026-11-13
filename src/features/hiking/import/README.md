@@ -12,7 +12,11 @@ registre privé `trace_imports`, clé `(propriétaire, empreinte SHA-256)`, RPC
 transactionnelle `record_trace_import`, points de synchronisation avec les
 branches Explorer/Carnet et limites de sécurité.
 
-Les tours FIT/TCX et leur absence de persistance sont audités dans
+Les tours FIT/TCX sont persistés dans `public.trace_import_laps` et relus pour
+le propriétaire ; le contrat, les bornes, la compatibilité et le volet RGPD
+sont documentés dans
+[`docs/import/A03-S2.05-persistance.md`](../../../../docs/import/A03-S2.05-persistance.md).
+L’audit initial des contrats et des conflits reste dans
 [`docs/import/A03-S2.05-tours.md`](../../../../docs/import/A03-S2.05-tours.md).
 
 Références de suivi : `A03`, `K6.02`, `S1.15`, `S2.05`.
@@ -109,10 +113,12 @@ Références de suivi : `A03`, `K6.02`, `S1.15`, `S2.05`.
   empreinte et date d'import. « Voir la sortie » ouvre directement ce drawer
   depuis l'écran d'import ; aucun nouveau drawer n'est créé.
 - **Tours** : les tours FIT/TCX déjà extraits sont affichés dans l'aperçu
-  local (50 au plus, métriques réellement présentes, libellés d'intensité et
-  de déclenchement). Ils ne sont pas envoyés à l'API et ne sont pas conservés
-  après enregistrement : le détail d'une sortie importée l'indique
-  explicitement. Voir `docs/import/A03-S2.05-tours.md`.
+  local (50 au plus, métriques réellement présentes, libellés d'intensité, de
+  déclenchement et d'origine). Ils sont envoyés à l'API dans `laps[]` et
+  écrits dans `public.trace_import_laps` avec la sortie et sa provenance, puis
+  relus après rechargement pour le propriétaire. Un FIT sans message `lap`
+  reste marqué `synthetic` (« Tour reconstruit ») ; un TCX ou un FIT avec
+  `lap` reste `device`. Voir `docs/import/A03-S2.05-persistance.md`.
 
 ## Non couvert, volontairement
 
@@ -125,11 +131,12 @@ Références de suivi : `A03`, `K6.02`, `S1.15`, `S2.05`.
   Sortie existant, pour le propriétaire uniquement. Les champs d'aperçu non
   persistés (sport, créateur, produit, série, fuseaux, sections ignorées) ne
   sont pas inventés. `notes` n'est pas détourné pour stocker la provenance.
-- Les tours ne sont **pas** persistés : aucun champ de `hike_sessions`, de
-  `trace_imports`, de la RPC ou de `OutingDetail` ne les accepte. Ils restent
-  visibles dans l'aperçu local avant enregistrement ; le détail rechargé ne
-  les restitue pas et le dit. Aucune migration n'est créée dans cette passe :
-  voir `docs/import/A03-S2.05-tours.md`.
+- Les tours sont persistés, mais **aucun backfill** n'est possible pour les
+  imports antérieurs : leurs tours n'ont jamais été stockés. Un réimport du
+  même contenu retourne la sortie existante sans compléter ses tours. Les
+  splits km/mile calculés et les tours manuels Explorer ne sont ni stockés dans
+  `trace_import_laps` ni fusionnés avec les tours source : voir
+  `docs/import/A03-S2.05-persistance.md`.
 - Aucun aperçu de l'original n'est conservé : seule la trace dérivée peut
   rejoindre `hike_sessions`. Le fichier original ne quitte jamais l'appareil.
 - GPX reste lu par `GPXEngine` ; `parseTraceFile` ne reconnaît que TCX et FIT.
@@ -289,8 +296,10 @@ avec les branches Explorer/Carnet est dans
   par un trou. `lapIndex = -1` signifie « aucun lap connu » (point sans
   horodatage ou antérieur au premier lap), jamais « lap 0 ».
 - `TraceImportPreview.laps` est un résumé **local** borné à 50 tours, destiné
-  à l'aperçu ; il ne fait pas partie de `HikeSessionImportPayload` et ne doit
-  pas être envoyé à l'API. Le détail rechargé ne le relit pas.
+  à l'aperçu. `HikeSessionImportPayload.laps` est le tableau **complet** des
+  tours source, borné à 10 000 et validé par `lapContract.ts` ; c'est lui qui
+  part à l'API. Le détail rechargé relit la table `trace_import_laps`, jamais
+  l'aperçu local.
 - `summary` est le résumé `session` FIT ; il vaut `null` pour TCX ou quand le
   message `session` manque. Il ne remplace pas les laps : il conserve les
   totaux de session que les laps ne répètent pas.
@@ -304,6 +313,10 @@ avec les branches Explorer/Carnet est dans
   `resolveTraceImportIdentity`, `validateTraceImportPayload` et
   `boundedImportFileName`. Il est pur, sans Next ni Supabase, et ne remplace pas
   la validation finale de la RPC.
+- `lapContract.ts` expose `TraceImportLapPayload`,
+  `buildTraceImportLapPayloads`, `normalizeTraceImportLaps` et les bornes des
+  tours. Il refuse `computed` / `manual` : les splits calculés ne passent jamais
+  par le contrat des tours source.
 
 ## Confrontation aux fiches
 
@@ -311,8 +324,8 @@ avec les branches Explorer/Carnet est dans
 |---|---|---|
 | **S1.15** — importer FIT et TCX valides/tronqués, contrôler tours, unités, provenance, erreurs, déduplication | **Déduplication par empreinte livrée** : `file_id.type = 4` exigé, dates de fin TCX calculées depuis les laps, messages FIT bornés, laps rattachés en `O((points + laps) log laps)`, résumé de session et champs FIT conservés ou signalés, cadence TCX sport-aware, `Notes`/`Training`/`Extensions` signalés, UTF-16 accepté, aperçu UI, refus explicites, registre `trace_imports` et RPC atomique `(owner_id, source_fingerprint)`. | Le stockage des originaux, l'export dédié et la reprise restent ouverts. La vérification serveur de l'empreinte est impossible sans téléverser l'original (limite assumée). |
 | **K6.02** — fixtures et parcours mobile | **Parcours mobile branché** : `Compte → Sorties → Importer FIT/TCX`, sélecteur, glisser-déposer, aperçu, erreurs et message de déduplication par fichier. | Fixtures Garmin/Suunto réelles anonymisées et recette mobile sur appareil ; aucune suite n'a été exécutée dans cette passe. |
-| **A03** — import FIT/TCX | **Flux complété côté persistance et restitution** : parseurs, modèle normalisé, limites, SHA-256, aperçu, enregistrement privé, registre de provenance owner-only, déduplication atomique, provenance relue après rechargement dans le drawer Sortie et raccordement « Voir la sortie ». Les tours sont affichés dans l'aperçu local. | Bucket privé des originaux, export dédié, fixtures producteurs et validation en recette. Persistance des tours non livrée (voir S2.05). |
-| **S2.05** — tours de montre | **Lecture locale livrée** : tours FIT/TCX résumés dans l'aperçu, sans valeur dérivée ni tour inventé. | Persistance et restitution dans le détail non livrées : contrats absents, audit et conflits documentés dans `docs/import/A03-S2.05-tours.md`. |
+| **A03** — import FIT/TCX | **Flux complété côté persistance et restitution** : parseurs, modèle normalisé, limites, SHA-256, aperçu, enregistrement privé, registre de provenance owner-only, déduplication atomique, provenance et tours relus après rechargement dans le drawer Sortie, raccordement « Voir la sortie ». | Bucket privé des originaux, export dédié, fixtures producteurs et validation en recette. Aucun backfill des imports antérieurs. |
+| **S2.05** — tours de montre | **Persistance et restitution livrées localement** : `origin` device/synthetic, `trace_import_laps`, RPC versionnée, RLS propriétaire, lecture paginée et rendu borné. Les splits calculés restent séparés. | Aucun backfill, aucune conversion `ActivitySplit`, aucun stockage de points par tour. Recette et vérifications reportées ; voir `docs/import/A03-S2.05-persistance.md`. |
 
 ## Vérification
 

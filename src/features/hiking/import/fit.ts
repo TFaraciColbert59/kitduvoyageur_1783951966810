@@ -1220,6 +1220,7 @@ function lapMessageToLap(
   const startedAt = timestampIsoField(message, 2);
   const lap: NormalizedTraceLap = {
     index,
+    origin: 'device',
     startedAt,
     startedAtLocal: null,
     elapsedSeconds: valueAsNumber(message, 7) ?? valueAsNumber(message, 8),
@@ -1253,6 +1254,7 @@ function sessionToLap(
   const startedAt = timestampIsoField(session, 2);
   return {
     index: 0,
+    origin: 'synthetic',
     startedAt,
     startedAtLocal: null,
     elapsedSeconds,

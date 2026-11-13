@@ -165,8 +165,22 @@ export interface NormalizedTraceTrack {
   pointCount: number;
 }
 
+/**
+ * Provenance d'un tour lu dans un fichier :
+ * - `device` : lap réellement déclaré par l'appareil (message FIT `lap` ou
+ *   élément TCX `Lap`) ;
+ * - `synthetic` : tour unique reconstruit depuis le message FIT `session`
+ *   quand le fichier ne porte aucun message `lap`. Ce n'est pas un tour
+ *   déclenché sur la montre.
+ *
+ * Aucune autre valeur n'est admise : un split calculé (km/mile) n'est jamais
+ * un tour source et ne doit pas être rangé ici.
+ */
+export type TraceImportLapOrigin = 'device' | 'synthetic';
+
 export interface NormalizedTraceLap {
   index: number;
+  origin: TraceImportLapOrigin;
   /** Instant UTC de début, `null` si la source n'avait pas de fuseau. */
   startedAt: string | null;
   /** Heure civile de début, sans conversion, en l'absence de fuseau. */

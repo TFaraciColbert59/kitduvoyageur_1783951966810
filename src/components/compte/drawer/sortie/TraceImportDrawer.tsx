@@ -24,6 +24,7 @@ import {
   parseTraceFile,
   traceLapsHaveMetrics,
   lapIntensityLabel,
+  lapOriginLabel,
   lapTriggerLabel,
   type NormalizedTraceImport,
   type TraceImportErrorCode,
@@ -47,6 +48,7 @@ interface SavedState {
   sessionId: string;
   existing: boolean;
   title: string;
+  lapCount: number;
 }
 
 const ERROR_LABELS: Record<TraceImportErrorCode, string> = {
@@ -141,6 +143,7 @@ function formatLapStart(lap: TraceImportLapSummary): string | null {
       return new Intl.DateTimeFormat('fr-FR', {
         hour: '2-digit',
         minute: '2-digit',
+        timeZone: 'UTC',
       }).format(date);
     }
   }
@@ -371,6 +374,7 @@ export function TraceImportDrawer() {
         sessionId?: string | null;
         existing?: boolean;
         isGuest?: boolean;
+        lapCount?: number | null;
         error?: string;
       } | null;
 
@@ -387,10 +391,19 @@ export function TraceImportDrawer() {
         return;
       }
 
+      // Le serveur est la seule source de vérité : un ancien serveur qui ne
+      // renvoie pas `lapCount` n'a pas conservé les tours, même si le payload
+      // en contenait. On n'affiche donc jamais un nombre non confirmé.
+      const rawLapCount =
+        typeof data?.lapCount === 'number' ? data.lapCount : 0;
       const savedState: SavedState = {
         sessionId,
         existing: data?.existing === true,
         title: payload.title,
+        lapCount:
+          Number.isFinite(rawLapCount) && rawLapCount >= 0
+            ? Math.min(Math.round(rawLapCount), 10_000)
+            : 0,
       };
       setSaved(savedState);
       setPhase('saved');
@@ -547,11 +560,17 @@ export function TraceImportDrawer() {
                 ? 'Ce fichier a déjà été importé : la sortie existante est conservée, aucun doublon n’a été créé.'
                 : `${saved.title} rejoint tes sorties privées.`}
             </p>
-            {trace && trace.laps.length > 0 ? (
+            {saved.lapCount > 0 ? (
               <p>
-                {trace.laps.length} tour{trace.laps.length > 1 ? 's' : ''} lu
-                {trace.laps.length > 1 ? 's' : ''} dans le fichier · non conservé
-                {trace.laps.length > 1 ? 's' : ''} après enregistrement.
+                {saved.lapCount} tour{saved.lapCount > 1 ? 's' : ''} source{' '}
+                {saved.existing ? 'déjà conservé' : 'conservé'}
+                {saved.lapCount > 1 ? 's' : ''} avec la sortie.
+              </p>
+            ) : trace && trace.laps.length > 0 ? (
+              <p>
+                {saved.existing
+                  ? 'La sortie existante n’avait aucun tour enregistré : la réimportation ne les ajoute pas.'
+                  : 'Aucun tour n’a été conservé.'}
               </p>
             ) : null}
           </div>
@@ -675,8 +694,8 @@ export function TraceImportDrawer() {
                 data-testid="trace-import-laps"
               >
                 <summary>
-                  Tours lus dans le fichier ({preview.lapCount}) · non conservés après
-                  enregistrement
+                  Tours lus dans le fichier ({preview.lapCount}) ·{' '}
+                  {preview.saveable ? 'conservés avec la sortie' : 'aperçu seul'}
                 </summary>
                 <ul>
                   {preview.laps.map((lap) => {
@@ -687,7 +706,7 @@ export function TraceImportDrawer() {
                     return (
                       <li key={lap.index}>
                         <b>
-                          Tour {lap.index + 1}
+                          Tour {lap.index + 1} · {lapOriginLabel(lap.origin)}
                           {trigger ? ` · ${trigger}` : ''}
                           {intensity ? ` · ${intensity}` : ''}
                         </b>
@@ -697,7 +716,7 @@ export function TraceImportDrawer() {
                             : 'Aucune métrique de tour dans le fichier.'}
                         </span>
                         <small>
-                          {start ? `Départ ${start} · ` : ''}
+                          {start ? `Départ ${start}${lap.startedAt ? ' UTC' : ''} · ` : ''}
                           {lap.pointCount} point{lap.pointCount > 1 ? 's' : ''}
                           {lap.trackCount > 1
                             ? ` · ${lap.trackCount} segments`
@@ -716,9 +735,11 @@ export function TraceImportDrawer() {
                   </p>
                 ) : null}
                 <p>
-                  Ces tours sont lus dans le fichier mais aucun contrat persistant ne les
-                  stocke : la sortie importée et son détail ne peuvent pas les restituer
-                  après enregistrement.
+                  {preview.saveable
+                    ? 'Ces tours source seront enregistrés tels quels avec la sortie, puis relus dans son détail.'
+                    : 'L’enregistrement est désactivé : ces tours ne seront pas conservés.'}{' '}
+                  Les splits km/mile calculés dans l’Explorer ne sont pas concernés et ne
+                  sont jamais fusionnés avec ces tours.
                 </p>
               </details>
             ) : null}

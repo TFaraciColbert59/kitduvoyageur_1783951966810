@@ -12,6 +12,10 @@ import {
   resolveTraceImportIdentity,
   validateTraceImportPayload,
 } from '@/features/hiking/import/importContract';
+import {
+  normalizeTraceImportLaps,
+  type TraceImportLapPayload,
+} from '@/features/hiking/import/lapContract';
 
 const logger = createStructuredLogger({ service: 'api.hike-sessions' });
 
@@ -74,6 +78,13 @@ interface SaveHikeSessionBody {
   sourceFingerprint?: string | null;
   sourceFileName?: string | null;
   sourceByteLength?: number | null;
+  /**
+   * Tours source lus dans le fichier. Absents d'un client antérieur : la
+   * route écrit alors la sortie sans tour, sans en inventer. Présents, ils
+   * sont validés, bornés puis écrits dans la même transaction que la sortie
+   * et sa provenance.
+   */
+  laps?: unknown;
   /**
    * `false` pour un import : la sortie ne crée pas de carnet automatique.
    * Sans ce champ, le comportement historique (carnet auto) reste actif.
@@ -221,11 +232,22 @@ export async function POST(req: NextRequest) {
     if (importIdentity.kind === 'invalid') {
       return NextResponse.json({ error: importIdentity.message }, { status: 400 });
     }
+    let laps: TraceImportLapPayload[] = [];
     if (importIdentity.kind === 'import') {
       const importError = validateTraceImportPayload(body);
       if (importError) {
         return NextResponse.json({ error: importError }, { status: 400 });
       }
+      const normalizedLaps = normalizeTraceImportLaps(body.laps);
+      if (!normalizedLaps.ok) {
+        return NextResponse.json({ error: normalizedLaps.message }, { status: 400 });
+      }
+      laps = normalizedLaps.laps;
+    } else if (body.laps !== undefined && body.laps !== null) {
+      return NextResponse.json(
+        { error: 'Les tours du fichier ne concernent qu’un import de trace.' },
+        { status: 400 }
+      );
     }
 
     // Un import reste volontairement sans voyage : la RPC ne lie ni carnet ni
@@ -264,29 +286,40 @@ export async function POST(req: NextRequest) {
     // l'heure de départ. Deux fichiers différents démarrant à la même seconde
     // restent deux sorties ; un rejeu du même contenu retourne l'existante.
     if (importIdentity.kind === 'import') {
+      // La RPC à tours est une nouvelle fonction : l'ancienne reste intacte
+      // pour les clients et les imports sans tour. Si le code précède la
+      // migration et qu'il y a des tours, la route refuse explicitement (503)
+      // au lieu de les perdre silencieusement.
+      const withLaps = laps.length > 0;
+      const rpcName = withLaps
+        ? 'record_trace_import_with_laps'
+        : 'record_trace_import';
+      const rpcArgs: Record<string, unknown> = {
+        p_started_at: body.startedAt,
+        p_ended_at: body.endedAt,
+        p_distance_km: body.distanceKm,
+        p_duration_seconds: Math.max(1, Math.round(body.durationSeconds)),
+        p_elevation_gain_m: body.elevationGainM ?? null,
+        p_max_altitude_m: boundedInteger(body.maxAltitudeM, -500, 9000),
+        p_positions_geojson: positionsGeojson,
+        p_positions_timed: positionsTimed.length >= 2 ? positionsTimed : null,
+        p_poi_events: [],
+        p_title: boundedTitle(body.title),
+        p_notes: boundedText(body.notes, 2000),
+        p_source: importIdentity.source,
+        p_source_fingerprint: importIdentity.fingerprint,
+        p_source_file_name: boundedImportFileName(body.sourceFileName),
+        p_source_byte_length:
+          typeof body.sourceByteLength === 'number' && Number.isFinite(body.sourceByteLength)
+            ? Math.round(body.sourceByteLength)
+            : null,
+        p_correlation_id: correlationId,
+      };
+      if (withLaps) rpcArgs.p_laps = laps;
+
       const { data: importResult, error: importRpcError } = await supabase.rpc(
-        'record_trace_import',
-        {
-          p_started_at: body.startedAt,
-          p_ended_at: body.endedAt,
-          p_distance_km: body.distanceKm,
-          p_duration_seconds: Math.max(1, Math.round(body.durationSeconds)),
-          p_elevation_gain_m: body.elevationGainM ?? null,
-          p_max_altitude_m: boundedInteger(body.maxAltitudeM, -500, 9000),
-          p_positions_geojson: positionsGeojson,
-          p_positions_timed: positionsTimed.length >= 2 ? positionsTimed : null,
-          p_poi_events: [],
-          p_title: boundedTitle(body.title),
-          p_notes: boundedText(body.notes, 2000),
-          p_source: importIdentity.source,
-          p_source_fingerprint: importIdentity.fingerprint,
-          p_source_file_name: boundedImportFileName(body.sourceFileName),
-          p_source_byte_length:
-            typeof body.sourceByteLength === 'number' && Number.isFinite(body.sourceByteLength)
-              ? Math.round(body.sourceByteLength)
-              : null,
-          p_correlation_id: correlationId,
-        }
+        rpcName,
+        rpcArgs
       );
 
       if (importRpcError) {
@@ -297,8 +330,8 @@ export async function POST(req: NextRequest) {
         if (code === '22023') {
           return NextResponse.json({ error: importRpcError.message }, { status: 400 });
         }
-        if (code === '23514') {
-          return NextResponse.json({ error: 'Import invalide.' }, { status: 400 });
+        if (code === '22007' || code === '22008' || code === '22P02' || code === '23514') {
+          return NextResponse.json({ error: 'Import ou tours invalides.' }, { status: 400 });
         }
         if (code === '23505') {
           return NextResponse.json(
@@ -308,7 +341,11 @@ export async function POST(req: NextRequest) {
         }
         if (code === 'PGRST202' || code === '42883') {
           return NextResponse.json(
-            { error: 'La persistance des imports n’est pas encore disponible.' },
+            {
+              error: withLaps
+                ? 'La persistance des tours n’est pas encore disponible.'
+                : 'La persistance des imports n’est pas encore disponible.',
+            },
             { status: 503 }
           );
         }
@@ -329,6 +366,7 @@ export async function POST(req: NextRequest) {
         session_id?: string | null;
         carnet_id?: string | null;
         existing?: boolean;
+        lap_count?: number | string | null;
       } | null;
       if (!result?.session_id) {
         return NextResponse.json(
@@ -337,6 +375,15 @@ export async function POST(req: NextRequest) {
         );
       }
 
+      const rawLapCount =
+        typeof result.lap_count === 'number'
+          ? result.lap_count
+          : Number(result.lap_count ?? 0);
+      const lapCount =
+        Number.isFinite(rawLapCount) && rawLapCount >= 0
+          ? Math.min(Math.round(rawLapCount), 10_000)
+          : 0;
+
       logger.info('hike_sessions.imported', {
         correlation_id: correlationId,
         latency_ms: Date.now() - startedAt,
@@ -344,6 +391,7 @@ export async function POST(req: NextRequest) {
         session_id: result.session_id,
         import_source: importIdentity.source,
         import_existing: result.existing === true,
+        import_lap_count: lapCount,
       });
 
       return NextResponse.json(
@@ -351,6 +399,7 @@ export async function POST(req: NextRequest) {
           sessionId: result.session_id,
           carnetId: result.carnet_id ?? null,
           existing: result.existing === true,
+          lapCount,
         },
         { headers: correlationResponseHeaders(correlationId) }
       );

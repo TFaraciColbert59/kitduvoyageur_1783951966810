@@ -1,20 +1,25 @@
 /**
- * Lecture locale des tours FIT/TCX déjà extraits par les parseurs.
+ * Lecture des tours FIT/TCX déjà extraits par les parseurs.
  *
- * Ce module ne persiste rien et ne dérive aucune valeur : il recopie les
- * champs réellement présents dans le tour (`null` reste `null`). Il sert à
- * l'aperçu avant enregistrement, pas au détail d'une sortie rechargée : aucun
- * contrat de `hike_sessions` ou `trace_imports` ne stocke aujourd'hui les
- * tours.
+ * Ce module ne dérive aucune valeur : il recopie les champs réellement
+ * présents dans le tour (`null` reste `null`). Il sert à l'aperçu avant
+ * enregistrement et au rendu du détail rechargé, à partir de la table
+ * `trace_import_laps`. Les splits calculés (km/mile, tours manuels Explorer)
+ * ne passent jamais par ce module : ce sont des objets différents.
  */
 
-import type { NormalizedTraceImport, NormalizedTraceLap } from './model';
+import type {
+  NormalizedTraceImport,
+  NormalizedTraceLap,
+  TraceImportLapOrigin,
+} from './model';
 
 /** Nombre maximal de tours détaillés dans l'aperçu (le fichier peut en contenir 10 000). */
 export const TRACE_IMPORT_PREVIEW_LAP_LIMIT = 50;
 
 export interface TraceImportLapSummary {
   index: number;
+  origin: TraceImportLapOrigin;
   startedAt: string | null;
   startedAtLocal: string | null;
   elapsedSeconds: number | null;
@@ -58,6 +63,7 @@ const INTENSITY_LABELS: Readonly<Record<string, string>> = {
 function lapSummary(lap: NormalizedTraceLap): TraceImportLapSummary {
   return {
     index: lap.index,
+    origin: lap.origin,
     startedAt: lap.startedAt,
     startedAtLocal: lap.startedAtLocal,
     elapsedSeconds: lap.elapsedSeconds,
@@ -120,4 +126,9 @@ export function lapTriggerLabel(value: string | null): string | null {
 export function lapIntensityLabel(value: string | null): string | null {
   if (value === null) return null;
   return INTENSITY_LABELS[value] ?? value;
+}
+
+/** Libellé honnête : un tour synthétique n'a pas été déclenché sur la montre. */
+export function lapOriginLabel(value: TraceImportLapOrigin): string {
+  return value === 'synthetic' ? 'Tour reconstruit' : 'Tour de l’appareil';
 }

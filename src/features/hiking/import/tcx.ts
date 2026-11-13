@@ -723,6 +723,7 @@ export function parseTcx(
   function createLap(index: number, startTime: ParsedTraceTime | null): NormalizedTraceLap {
     return {
       index,
+      origin: 'device',
       startedAt: startTime?.instant ?? null,
       startedAtLocal: startTime?.local ?? null,
       elapsedSeconds: null,

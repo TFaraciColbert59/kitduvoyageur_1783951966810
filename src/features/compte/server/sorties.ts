@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { TRACE_IMPORT_LIMITS } from '@/features/hiking/import/model';
 import { loadOutingWeather, type OutingWeather } from './weather';
 
 /**
@@ -34,6 +35,34 @@ export interface OutingImportProvenance {
   fileName: string | null;
   byteLength: number | null;
   importedAt: string;
+}
+
+/**
+ * Tour source réellement persisté dans `trace_import_laps`.
+ *
+ * `origin` conserve la distinction du fichier : `device` pour un lap déclaré
+ * par l'appareil (FIT `lap` ou TCX `Lap`), `synthetic` pour le tour unique
+ * reconstruit depuis le message FIT `session`. Ce n'est jamais un split
+ * calculé : les km/mile et tours manuels Explorer restent dans `ActivitySplit`.
+ */
+export interface OutingImportLap {
+  index: number;
+  origin: 'device' | 'synthetic';
+  startedAt: string | null;
+  elapsedSeconds: number | null;
+  distanceM: number | null;
+  averageSpeedMps: number | null;
+  maxSpeedMps: number | null;
+  caloriesKcal: number | null;
+  averageHeartRateBpm: number | null;
+  maxHeartRateBpm: number | null;
+  averageCadenceRpm: number | null;
+  averageCadenceSpm: number | null;
+  maxPowerW: number | null;
+  intensity: string | null;
+  triggerMethod: string | null;
+  pointCount: number;
+  trackCount: number;
 }
 
 export interface OutingPhoto {
@@ -121,6 +150,17 @@ export interface OutingDetail {
    * le détail de la sortie reste alors entièrement lisible.
    */
   provenance: OutingImportProvenance | null;
+  /**
+   * Tours source d'un import FIT/TCX, dans l'ordre du fichier.
+   *
+   * - `null` : registre indisponible, lecteur non propriétaire, ou import
+   *   dont la provenance n'est pas lisible ; aucun tour n'est exposé.
+   * - `[]` : registre présent mais aucun tour conservé (import antérieur à la
+   *   persistance des tours, ou fichier sans tour).
+   *
+   * Les splits calculés ne sont jamais mélangés à ce tableau.
+   */
+  laps: OutingImportLap[] | null;
 }
 
 type TraceImportRow = {
@@ -129,6 +169,26 @@ type TraceImportRow = {
   source_file_name: string | null;
   source_byte_length: number | string | null;
   imported_at: string | null;
+};
+
+type TraceImportLapRow = {
+  lap_index: number | string | null;
+  lap_origin: string | null;
+  started_at: string | null;
+  elapsed_seconds: number | string | null;
+  distance_m: number | string | null;
+  average_speed_mps: number | string | null;
+  max_speed_mps: number | string | null;
+  calories_kcal: number | string | null;
+  average_heart_rate_bpm: number | string | null;
+  max_heart_rate_bpm: number | string | null;
+  average_cadence_rpm: number | string | null;
+  average_cadence_spm: number | string | null;
+  max_power_w: number | string | null;
+  intensity: string | null;
+  trigger_method: string | null;
+  point_count: number | string | null;
+  track_count: number | string | null;
 };
 
 type SessionRow = {
@@ -241,6 +301,123 @@ async function readImportProvenance(
       .maybeSingle();
     if (error) return null;
     return parseImportProvenance(data as TraceImportRow | null);
+  } catch {
+    return null;
+  }
+}
+
+function isImportLapOrigin(value: string): value is OutingImportLap['origin'] {
+  return value === 'device' || value === 'synthetic';
+}
+
+/**
+ * Validation stricte d'une ligne `trace_import_laps`. Une ligne inattendue est
+ * ignorée : on ne fabrique jamais un tour approximatif à partir d'un index ou
+ * d'une valeur manquante.
+ */
+export function parseImportLap(
+  row: Partial<TraceImportLapRow> | null | undefined
+): OutingImportLap | null {
+  if (!row) return null;
+
+  const index = numericOrNull(row.lap_index);
+  if (index === null || !Number.isInteger(index) || index < 0 || index > 9_999) {
+    return null;
+  }
+
+  const origin =
+    typeof row.lap_origin === 'string' ? row.lap_origin.trim().toLowerCase() : '';
+  if (!isImportLapOrigin(origin)) return null;
+
+  const startedAt =
+    typeof row.started_at === 'string' && row.started_at.trim() !== ''
+      ? row.started_at
+      : null;
+  if (startedAt !== null && !Number.isFinite(Date.parse(startedAt))) return null;
+
+  const pointCount = numericOrNull(row.point_count);
+  const trackCount = numericOrNull(row.track_count);
+  if (
+    pointCount === null
+    || !Number.isInteger(pointCount)
+    || pointCount < 0
+    || trackCount === null
+    || !Number.isInteger(trackCount)
+    || trackCount < 0
+  ) {
+    return null;
+  }
+
+  return {
+    index,
+    origin,
+    startedAt,
+    elapsedSeconds: numericOrNull(row.elapsed_seconds),
+    distanceM: numericOrNull(row.distance_m),
+    averageSpeedMps: numericOrNull(row.average_speed_mps),
+    maxSpeedMps: numericOrNull(row.max_speed_mps),
+    caloriesKcal: numericOrNull(row.calories_kcal),
+    averageHeartRateBpm: numericOrNull(row.average_heart_rate_bpm),
+    maxHeartRateBpm: numericOrNull(row.max_heart_rate_bpm),
+    averageCadenceRpm: numericOrNull(row.average_cadence_rpm),
+    averageCadenceSpm: numericOrNull(row.average_cadence_spm),
+    maxPowerW: numericOrNull(row.max_power_w),
+    intensity:
+      typeof row.intensity === 'string' && row.intensity.trim() !== ''
+        ? row.intensity.slice(0, 64)
+        : null,
+    triggerMethod:
+      typeof row.trigger_method === 'string' && row.trigger_method.trim() !== ''
+        ? row.trigger_method.slice(0, 64)
+        : null,
+    pointCount,
+    trackCount,
+  };
+}
+
+const IMPORT_LAP_PAGE_SIZE = 1_000;
+const IMPORT_LAP_MAX = TRACE_IMPORT_LIMITS.maxLaps;
+
+/**
+ * Lit les tours d'un import pour **son propriétaire uniquement**.
+ *
+ * `owner_id` et `session_id` sont filtrés ensemble ; la RLS de
+ * `trace_import_laps` ne laisse de toute façon lire que `auth.uid()`. La
+ * lecture est paginée car PostgREST plafonne une réponse (1 000 lignes par
+ * défaut) alors qu'un fichier peut porter 10 000 tours. Une table absente
+ * (code déployé avant la migration), une erreur ou un refus retourne `null` :
+ * le détail de la sortie reste lisible sans tours.
+ */
+async function readImportLaps(
+  supabase: SupabaseClient,
+  userId: string,
+  sessionId: string
+): Promise<OutingImportLap[] | null> {
+  try {
+    const laps: OutingImportLap[] = [];
+    for (let offset = 0; offset < IMPORT_LAP_MAX; offset += IMPORT_LAP_PAGE_SIZE) {
+      const { data, error } = await supabase
+        .from('trace_import_laps')
+        .select(
+          'lap_index,lap_origin,started_at,elapsed_seconds,distance_m,'
+          + 'average_speed_mps,max_speed_mps,calories_kcal,average_heart_rate_bpm,'
+          + 'max_heart_rate_bpm,average_cadence_rpm,average_cadence_spm,max_power_w,'
+          + 'intensity,trigger_method,point_count,track_count'
+        )
+        .eq('owner_id', userId)
+        .eq('session_id', sessionId)
+        .order('lap_index', { ascending: true })
+        .range(offset, offset + IMPORT_LAP_PAGE_SIZE - 1);
+
+      if (error) return null;
+      const batch = Array.isArray(data) ? (data as TraceImportLapRow[]) : [];
+      for (const row of batch) {
+        const lap = parseImportLap(row);
+        if (lap) laps.push(lap);
+      }
+      if (batch.length < IMPORT_LAP_PAGE_SIZE) break;
+    }
+    return laps;
   } catch {
     return null;
   }
@@ -369,6 +546,7 @@ export async function loadOutingDetail(
     kudosRes,
     commentRes,
     provenance,
+    laps,
   ] = await Promise.all([
     session.route_id
       ? supabase.from('hiking_routes').select('id,name,region').eq('id', session.route_id).maybeSingle()
@@ -397,10 +575,14 @@ export async function loadOutingDetail(
       .select('id,user_id,body,created_at')
       .eq('session_id', session.id)
       .order('created_at', { ascending: true }),
-    // La provenance n'est lue que pour le propriétaire. Un participant ne
-    // reçoit jamais le nom du fichier, l'empreinte ou la taille source.
+    // La provenance et les tours ne sont lus que pour le propriétaire. Un
+    // participant ne reçoit jamais le nom du fichier, l'empreinte, la taille
+    // source, les tours ni les mesures cardio.
     isProvenanceOwner
       ? readImportProvenance(supabase, userId, session.id)
+      : Promise.resolve(null),
+    isProvenanceOwner
+      ? readImportLaps(supabase, userId, session.id)
       : Promise.resolve(null),
   ]);
 
@@ -650,6 +832,9 @@ export async function loadOutingDetail(
     points,
     canEdit,
     provenance,
+    // Les tours n'ont de sens que pour un import dont la provenance est lue.
+    // Une sortie GPS expose `null`, jamais un tableau vide ambigu.
+    laps: provenance ? laps : null,
   };
 }
 

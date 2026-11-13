@@ -14,6 +14,10 @@ import type {
   TraceTimeBasis,
 } from './model';
 import { buildTraceImportLapSummaries, type TraceImportLapSummary } from './laps';
+import {
+  buildTraceImportLapPayloads,
+  type TraceImportLapPayload,
+} from './lapContract';
 
 export interface TraceImportPreview {
   /** Nom proposé pour la sortie, dérivé du nom de fichier réel. */
@@ -29,8 +33,9 @@ export interface TraceImportPreview {
   positionedPointCount: number;
   lapCount: number;
   /**
-   * Tours réellement lus dans le fichier, bornés pour l'aperçu. Ils ne sont
-   * pas persistés : le détail d'une sortie rechargée ne peut pas les relire.
+   * Tours réellement lus dans le fichier, bornés pour l'aperçu. Ils sont
+   * persistés avec la sortie dans `trace_import_laps` et relus après
+   * rechargement pour le propriétaire.
    */
   laps: TraceImportLapSummary[];
   timeBasis: TraceTimeBasis;
@@ -74,11 +79,11 @@ export interface HikeSessionImportPayload {
   /** Un import ne crée pas de carnet : la sortie reste un objet privé. */
   createCarnet: false;
   /**
-   * Les tours ne figurent volontairement pas dans ce contrat : aucune colonne
-   * de `hike_sessions`, de `trace_imports` ni aucun paramètre de la RPC ne les
-   * accepte. Les ajouter ici sans persistance ferait croire au serveur qu'ils
-   * sont conservés.
+   * Tours source lus dans le fichier, dans l'ordre du document. Ils sont
+   * écrits dans `trace_import_laps` par la même transaction que la sortie et
+   * sa provenance. Aucun split calculé n'entre dans ce tableau.
    */
+  laps: TraceImportLapPayload[];
 }
 
 const EARTH_KM = 6371.0088;
@@ -384,5 +389,6 @@ export function buildHikeSessionImportPayload(
     positionsTimed,
     poiEvents: [],
     createCarnet: false,
+    laps: buildTraceImportLapPayloads(trace),
   };
 }

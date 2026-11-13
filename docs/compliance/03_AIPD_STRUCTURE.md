@@ -18,6 +18,7 @@ juridique enregistrée ».
 | Attribution/commissions kit (parents, descendants) | traçabilité de personnes/œuvres | À ÉVALUER |
 | Télémétrie produit (`hub_telemetry`) | suivi d'usage | À ÉVALUER |
 | Publication de carnets (snapshots) | diffusion publique de contenus, lieux, personnes | À ÉVALUER |
+| Tours FIT/TCX avec FC, cadence et puissance (`trace_import_laps`) | mesures physiologiques importées d'un appareil, potentiellement sensibles ; stockage privé, jamais partagé | À ÉVALUER |
 
 ## 2. Grille minimale par traitement (à remplir)
 
@@ -37,6 +38,10 @@ juridique enregistrée ».
 - Seuil collectif `distinct_user_count >= 5` (migrations A1).
 - Consentements par finalité (`has_active_consent`) et export/effacement (A14).
 - Aucune donnée personnelle dans `stripe_events`.
+- Tours source FIT/TCX (`trace_import_laps`) : RLS propriétaire seule, aucune
+  policy publique, aucune coordonnée dupliquée, suppression en cascade avec la
+  sortie et le compte, export/effacement A14. Les splits calculés restent dans
+  un contrat séparé et ne sont pas joints à ces tours.
 
 ## 4. Zones d'incertitude déclarées
 

@@ -18,6 +18,7 @@ import type {
   OutingVisibility,
 } from '@/features/compte/server/sorties';
 import { ElevationProfile, TraceMap, formatDate, formatDuration, formatNumber } from './shared';
+import { OutingLaps } from './OutingLaps';
 
 export interface OutingSummaryProps {
   detail: OutingDetail;
@@ -249,14 +250,35 @@ export function OutingSummary({ detail, saving, onSave, onShare, onExport, onDel
               {provenance.fingerprint.slice(0, 22)}…
             </span>
           </p>
-          {provenance.source === 'fit' || provenance.source === 'tcx' ? (
-            <p className="lkdv-sortie-proof" data-testid="outing-laps-unavailable">
-              Tours du fichier non restitués : le contrat de persistance actuel ne stocke
-              aucun tour lu dans un fichier FIT/TCX. Ce détail ne peut donc pas les afficher
-              après rechargement.
-            </p>
-          ) : null}
         </section>
+      ) : null}
+
+      {provenance && (provenance.source === 'fit' || provenance.source === 'tcx') ? (
+        detail.laps == null ? (
+          <section className="lkdv-sortie-section" data-testid="outing-laps-unavailable">
+            <header>
+              <b>Tours du fichier</b>
+              <span>Indisponibles</span>
+            </header>
+            <p className="lkdv-sortie-proof">
+              La persistance des tours n’est pas encore disponible ou la lecture a échoué.
+              La sortie reste entièrement lisible ; aucun tour n’est inventé.
+            </p>
+          </section>
+        ) : detail.laps.length === 0 ? (
+          <section className="lkdv-sortie-section" data-testid="outing-laps-empty">
+            <header>
+              <b>Tours du fichier</b>
+              <span>Aucun tour conservé</span>
+            </header>
+            <p className="lkdv-sortie-proof">
+              Aucun tour n’est enregistré pour cet import. Les imports antérieurs à la
+              persistance des tours ne peuvent pas être complétés rétroactivement.
+            </p>
+          </section>
+        ) : (
+          <OutingLaps laps={detail.laps} />
+        )
       ) : null}
 
       {detail.canEdit ? (

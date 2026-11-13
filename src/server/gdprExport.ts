@@ -8,7 +8,10 @@
  * authentification ; l'identifiant vient toujours de la session, jamais du
  * corps de requête.
  *
- * Aucune donnée de santé n'est présente dans ce schéma (décision AIPD a14).
+ * Les tours importés peuvent porter fréquence cardiaque, cadence et puissance
+ * (`trace_import_laps`) : mesures d'activité privées, sans connecteur santé,
+ * propriétaire seul, incluses dans l'export et l'effacement. Toute
+ * réutilisation à finalité de santé exigerait une AIPD dédiée.
  */
 import type { SupabaseClient } from '@supabase/supabase-js';
 
@@ -43,6 +46,8 @@ export const GDPR_USER_TABLES: readonly GdprUserTable[] = [
   { table: 'hike_sessions', userColumn: 'user_id' },
   // A03/S1.15 — provenance privée des imports FIT/TCX/GPX, propriétaire seul.
   { table: 'trace_imports', userColumn: 'owner_id' },
+  // A03/S2.05 — tours source privés, mesures cardio/cadence/puissance incluses.
+  { table: 'trace_import_laps', userColumn: 'owner_id' },
   { table: 'session_segment_passages', userColumn: 'user_id' },
   { table: 'terrain_reports', userColumn: 'reporter_id' },
   { table: 'terrain_report_confirmations', userColumn: 'user_id' },
@@ -80,6 +85,8 @@ export const GDPR_OPTIONAL_TABLES: ReadonlySet<string> = new Set([
   'user_traveller',
   // A03/S1.15 — le code peut précéder la migration locale des imports.
   'trace_imports',
+  // A03/S2.05 — table additive des tours, absente avant la migration.
+  'trace_import_laps',
 ]);
 
 /**

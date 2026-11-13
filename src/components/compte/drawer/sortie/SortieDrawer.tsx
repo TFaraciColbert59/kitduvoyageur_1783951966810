@@ -564,7 +564,17 @@ export const SORTIE_CSS = `
 .lkdv-sortie-gear{gap:6px!important;}
 .lkdv-sortie-gear-name{font-size:12px!important;}
 .lkdv-sortie-gear-weight{font-variant-numeric:tabular-nums!important;}
-/* 19. Toast au-dessus de la barre basse. */
+/* 19. Tours source lisibles, distincts des splits calculés. */
+.lkdv-sortie-laps{list-style:none!important;margin:0!important;padding:0!important;display:flex!important;flex-direction:column!important;gap:5px!important;}
+.lkdv-sortie-laps li{display:flex!important;flex-direction:column!important;gap:3px!important;padding:8px 9px!important;border-radius:13px!important;background:rgba(255,255,255,.5)!important;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.06)!important;}
+.lkdv-sortie-lap-head{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:8px!important;}
+.lkdv-sortie-lap-head b{font:600 12px var(--sf)!important;color:var(--label)!important;}
+.lkdv-sortie-lap-origin{font:600 9px var(--sf)!important;color:var(--label2)!important;text-transform:uppercase!important;letter-spacing:.04em!important;padding:2px 6px!important;border-radius:999px!important;background:rgba(23,64,44,.08)!important;white-space:nowrap!important;}
+.lkdv-sortie-lap-origin.synthetic{background:rgba(185,138,46,.14)!important;color:#7d5c14!important;}
+.lkdv-sortie-lap-metrics{font:500 11.5px/1.4 var(--sf)!important;color:var(--label2)!important;font-variant-numeric:tabular-nums!important;}
+.lkdv-sortie-laps small{font:500 10px/1.35 var(--sf)!important;color:var(--label3)!important;}
+.lkdv-sortie-laps code{font:500 10.5px ui-monospace,SFMono-Regular,Menlo,monospace!important;color:var(--label2)!important;}
+/* 20. Toast au-dessus de la barre basse. */
 .lkdv-sortie-toast{bottom:calc(76px + env(safe-area-inset-bottom,0px))!important;box-shadow:0 10px 28px rgba(0,0,0,.28)!important;}
 /* Harmonisation : photo visible à 100 %, titre sur verre, actions en pilules sur l'image. */
 .lkdv-sortie-hero{min-height:236px!important;}

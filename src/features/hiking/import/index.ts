@@ -6,4 +6,5 @@ export * from './fingerprint';
 export * from './traceImport';
 export * from './preview';
 export * from './laps';
+export * from './lapContract';
 export * from './importContract';
