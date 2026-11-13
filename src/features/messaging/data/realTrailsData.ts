@@ -1,9 +1,17 @@
 // src/features/messaging/data/realTrailsData.ts
 //
-// Tracés GPX réels et connexion BDD pour le partage d'itinéraires dans le chat.
+// Randonnées partageables dans le chat : randonnées enregistrées par la personne
+// (table `saved_trails`), catalogue schématique et résolution de leur tracé.
+//
+// Règle de vérité : le tracé d'une randonnée est celui de CETTE randonnée ou
+// rien. Ordre de résolution : géométrie portée par l'élément (`trail_data`),
+// sinon géométrie réelle de `hiking_routes` (RPC `get_route_geojson`, par id de
+// route), sinon aucun tracé (l'aperçu dit « Tracé indisponible »). Jamais de
+// repli sur le tracé d'une autre randonnée.
 
 import { createClient } from '@/lib/supabase/client';
-import type { TraceLineString } from '../components/TraceMap';
+import { simplifyLngLat, toLineString, type TraceLineString } from '@/lib/geo/traceCoordinates';
+import type { TrailMessageMeta } from '../types/messaging.types';
 
 export interface SharedTrailItem {
   id: string;
@@ -11,11 +19,24 @@ export interface SharedTrailItem {
   distance_km: number | null;
   elevation_gain_m: number | null;
   region: string | null;
-  geojson: TraceLineString;
+  /** Tracé connu de l'élément ; `null` : à résoudre via `routeId`, sinon indisponible. */
+  geojson: TraceLineString | null;
+  /** Identifiant `hiking_routes.id` (ADR-016) quand l'élément en porte un. */
+  routeId?: number | null;
   isSaved?: boolean;
+  /** Tracé schématique du catalogue, pas un relevé GPS : l'interface le dit. */
+  indicative?: boolean;
 }
 
-/** Tracés GPS authentiques relevés sur le terrain (coordonnées [lng, lat] réelles). */
+/** Points au plus du tracé joint à un message (version simplifiée). */
+export const MESSAGE_TRACE_MAX_POINTS = 200;
+
+/**
+ * Catalogue de la messagerie. ATTENTION : ces tracés sont SCHÉMATIQUES (9 à 14
+ * points reliés par des droites, coordonnées [lng, lat] à 4 décimales), pas des
+ * relevés GPS ; ils ne correspondent à aucune ligne de `hiking_routes`. Ils sont
+ * donc marqués `indicative` et annoncés comme tels.
+ */
 export const REAL_CATALOG_TRAILS: SharedTrailItem[] = [
   {
     id: 'trail-gr20-bavella',
@@ -23,6 +44,7 @@ export const REAL_CATALOG_TRAILS: SharedTrailItem[] = [
     distance_km: 11.8,
     elevation_gain_m: 920,
     region: 'Corse (Zonza)',
+    indicative: true,
     geojson: {
       type: 'LineString',
       coordinates: [
@@ -49,6 +71,7 @@ export const REAL_CATALOG_TRAILS: SharedTrailItem[] = [
     distance_km: 14.2,
     elevation_gain_m: 1350,
     region: 'Haute-Savoie (Mont-Blanc)',
+    indicative: true,
     geojson: {
       type: 'LineString',
       coordinates: [
@@ -74,6 +97,7 @@ export const REAL_CATALOG_TRAILS: SharedTrailItem[] = [
     distance_km: 18.5,
     elevation_gain_m: 1180,
     region: 'Pyrénées (Hautes-Pyrénées)',
+    indicative: true,
     geojson: {
       type: 'LineString',
       coordinates: [
@@ -98,6 +122,7 @@ export const REAL_CATALOG_TRAILS: SharedTrailItem[] = [
     distance_km: 22.4,
     elevation_gain_m: 1480,
     region: 'Savoie (Pralognan)',
+    indicative: true,
     geojson: {
       type: 'LineString',
       coordinates: [
@@ -122,6 +147,7 @@ export const REAL_CATALOG_TRAILS: SharedTrailItem[] = [
     distance_km: 16.0,
     elevation_gain_m: 1050,
     region: 'Isère (Vercors)',
+    indicative: true,
     geojson: {
       type: 'LineString',
       coordinates: [
@@ -140,79 +166,72 @@ export const REAL_CATALOG_TRAILS: SharedTrailItem[] = [
   },
 ];
 
-export const FALLBACK_SAVED_TRAILS: SharedTrailItem[] = [
-  {
-    id: 'saved-bavella-cretestour',
-    name: 'Mon repérage — Bavella Sud & Asinao',
-    distance_km: 12.4,
-    elevation_gain_m: 880,
-    region: 'Corse · Enregistré le 12 oct.',
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/** Nombre fini ou `null` : `null`, `''` et le texte ne deviennent jamais 0. */
+function numberOrNull(value: unknown): number | null {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
+/** Identifiant `hiking_routes.id` : entier positif (nombre ou chaîne de chiffres), sinon `null`. */
+export function parseRouteId(...candidates: unknown[]): number | null {
+  for (const candidate of candidates) {
+    if (typeof candidate === 'number' && Number.isSafeInteger(candidate) && candidate > 0) return candidate;
+    if (typeof candidate === 'string' && /^\d{1,15}$/.test(candidate.trim())) {
+      const parsed = Number(candidate.trim());
+      if (Number.isSafeInteger(parsed) && parsed > 0) return parsed;
+    }
+  }
+  return null;
+}
+
+/** Tracé porté par `trail_data` (GeoJSON, `geometry` en chaîne, tableau de points…), `null` s'il n'y en a pas. */
+export function trailLineFromData(data: unknown): TraceLineString | null {
+  if (!isRecord(data)) return toLineString(data);
+  for (const candidate of [data.geojson, data.geometry, data.geom, data.coordinates, data.trace, data.line]) {
+    const line = toLineString(candidate);
+    if (line) return line;
+  }
+  return null;
+}
+
+/** Ligne de `saved_trails` → élément partageable. Aucune valeur n'est inventée. */
+export function savedTrailFromRow(row: {
+  id: string;
+  trail_id?: unknown;
+  trail_name?: unknown;
+  trail_data?: unknown;
+}): SharedTrailItem {
+  const data = isRecord(row.trail_data) ? row.trail_data : {};
+  const name =
+    (typeof row.trail_name === 'string' && row.trail_name.trim()) ||
+    (typeof data.name === 'string' && data.name.trim()) ||
+    'Randonnée enregistrée';
+  return {
+    id: row.id,
+    name,
+    distance_km: numberOrNull(data.distance_km ?? data.distance),
+    elevation_gain_m: numberOrNull(data.elevation_gain_m ?? data.elevation_gain),
+    region: typeof data.region === 'string' && data.region.trim() ? data.region.trim() : null,
     isSaved: true,
-    geojson: {
-      type: 'LineString',
-      coordinates: [
-        [9.225, 41.796],
-        [9.229, 41.799],
-        [9.234, 41.803],
-        [9.238, 41.807],
-        [9.241, 41.811],
-        [9.237, 41.815],
-        [9.232, 41.810],
-        [9.226, 41.802],
-        [9.225, 41.796],
-      ],
-    },
-  },
-  {
-    id: 'saved-chamonix-balcon',
-    name: 'Sortie carnet — Grand Balcon Nord',
-    distance_km: 9.6,
-    elevation_gain_m: 620,
-    region: 'Haute-Savoie · Enregistré le 28 sept.',
-    isSaved: true,
-    geojson: {
-      type: 'LineString',
-      coordinates: [
-        [6.885, 45.918],
-        [6.895, 45.915],
-        [6.905, 45.912],
-        [6.915, 45.916],
-        [6.925, 45.922],
-        [6.918, 45.928],
-        [6.904, 45.922],
-        [6.885, 45.918],
-      ],
-    },
-  },
-  {
-    id: 'saved-cirque-roland',
-    name: 'Trace carnet — Brèche de Roland & Taillon',
-    distance_km: 15.1,
-    elevation_gain_m: 1120,
-    region: 'Pyrénées · Enregistré le 14 août',
-    isSaved: true,
-    geojson: {
-      type: 'LineString',
-      coordinates: [
-        [-0.012, 42.728],
-        [-0.009, 42.719],
-        [-0.004, 42.709],
-        [0.002, 42.701],
-        [0.006, 42.694],
-        [-0.003, 42.690],
-        [-0.011, 42.698],
-        [-0.016, 42.712],
-        [-0.012, 42.728],
-      ],
-    },
-  },
-];
+    geojson: trailLineFromData(data),
+    routeId: parseRouteId(data.route_id, data.hiking_route_id, data.routeId, row.trail_id),
+  };
+}
 
 /**
- * Récupère les randonnées enregistrées par l'utilisateur connecté depuis Supabase.
+ * Randonnées enregistrées par la personne. Sans ligne ou en cas d'erreur la
+ * liste est vide : aucune randonnée n'est fabriquée à sa place.
  */
 export async function fetchUserSavedTrails(userId: string): Promise<SharedTrailItem[]> {
-  if (!userId) return FALLBACK_SAVED_TRAILS;
+  if (!userId) return [];
   try {
     const supabase = createClient();
     const { data: savedRows, error } = await supabase
@@ -220,54 +239,81 @@ export async function fetchUserSavedTrails(userId: string): Promise<SharedTrailI
       .select('id, trail_id, trail_name, trail_data, created_at')
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
-
-    if (!error && Array.isArray(savedRows) && savedRows.length > 0) {
-      const items: SharedTrailItem[] = savedRows.map((row: any) => {
-        const d = row.trail_data || {};
-        const coords = d.geojson?.coordinates || d.coordinates || REAL_CATALOG_TRAILS[0].geojson.coordinates;
-        return {
-          id: row.id,
-          name: row.trail_name || d.name || 'Randonnée enregistrée',
-          distance_km: d.distance_km ?? 12.5,
-          elevation_gain_m: d.elevation_gain_m ?? 850,
-          region: d.region || 'Enregistré dans mon carnet',
-          isSaved: true,
-          geojson: {
-            type: 'LineString',
-            coordinates: coords,
-          },
-        };
-      });
-      return items;
-    }
+    if (error || !Array.isArray(savedRows)) return [];
+    return savedRows.map((row) => savedTrailFromRow(row));
   } catch {
-    // Mode hors-ligne / erreur BDD
+    return [];
   }
-  return FALLBACK_SAVED_TRAILS;
 }
 
-/** Résout les coordonnées GPS réelles pour un nom ou identifiant de randonnée. */
-export function resolveTrailCoordinates(identifier: string): TraceLineString {
-  const norm = (identifier || '').toLowerCase();
-  for (const t of [...REAL_CATALOG_TRAILS, ...FALLBACK_SAVED_TRAILS]) {
-    if (norm.includes(t.id.toLowerCase()) || norm.includes(t.name.toLowerCase())) {
-      return t.geojson;
+/** Géométrie réelle d'une route (`hiking_routes.geom`) via la RPC en lecture seule `get_route_geojson`. */
+export async function fetchRouteGeometry(routeId: number): Promise<unknown> {
+  const supabase = createClient();
+  const { data, error } = await supabase.rpc('get_route_geojson', { p_route_id: routeId });
+  if (error) throw error;
+  return data;
+}
+
+export type RouteGeometryFetcher = (routeId: number) => Promise<unknown>;
+
+export interface ResolvedTrailGeometry {
+  geojson: TraceLineString | null;
+  source: 'item' | 'hiking_routes' | null;
+}
+
+/**
+ * Tracé d'une randonnée : celui de l'élément, sinon celui de `hiking_routes`
+ * (par id de route), sinon `null`. Jamais le tracé d'une autre randonnée.
+ */
+export async function resolveTrailGeometry(
+  item: { geojson?: unknown; routeId?: number | null },
+  fetchRoute: RouteGeometryFetcher = fetchRouteGeometry,
+): Promise<ResolvedTrailGeometry> {
+  const own = toLineString(item.geojson);
+  if (own) return { geojson: own, source: 'item' };
+  if (item.routeId != null) {
+    try {
+      const line = toLineString(await fetchRoute(item.routeId));
+      if (line) return { geojson: line, source: 'hiking_routes' };
+    } catch {
+      /* lecture impossible : pas de tracé, jamais un tracé de remplacement */
     }
   }
-  if (norm.includes('bavella') || norm.includes('corse') || norm.includes('gr20')) {
-    return REAL_CATALOG_TRAILS[0].geojson;
-  }
-  if (norm.includes('chamonix') || norm.includes('blanc')) {
-    return REAL_CATALOG_TRAILS[1].geojson;
-  }
-  if (norm.includes('gavarnie') || norm.includes('pyrén')) {
-    return REAL_CATALOG_TRAILS[2].geojson;
-  }
-  if (norm.includes('vanoise')) {
-    return REAL_CATALOG_TRAILS[3].geojson;
-  }
-  if (norm.includes('vercors')) {
-    return REAL_CATALOG_TRAILS[4].geojson;
-  }
-  return REAL_CATALOG_TRAILS[0].geojson;
+  return { geojson: null, source: null };
+}
+
+/** Version légère du tracé jointe à un message (≤ 200 points), `null` sans tracé. */
+export function toMessageLine(line: TraceLineString | null): TraceLineString | null {
+  if (!line || line.coordinates.length < 2) return null;
+  return { type: 'LineString', coordinates: simplifyLngLat(line.coordinates, MESSAGE_TRACE_MAX_POINTS) };
+}
+
+/** Une randonnée du catalogue schématique (par id) : tracé indicatif. */
+export function isIndicativeTrailId(id: unknown): boolean {
+  return typeof id === 'string' && REAL_CATALOG_TRAILS.some((trail) => trail.id === id);
+}
+
+/**
+ * Tracé schématique du catalogue pour un identifiant EXACT du catalogue
+ * (messages envoyés avant que le tracé soit joint), sinon `null`.
+ * Aucune correspondance par nom : jamais le tracé d'une autre randonnée.
+ */
+export function catalogLineForId(id: unknown): TraceLineString | null {
+  if (typeof id !== 'string') return null;
+  return REAL_CATALOG_TRAILS.find((trail) => trail.id === id)?.geojson ?? null;
+}
+
+/** Métadonnées du message « randonnée » : tracé simplifié joint seulement s'il est connu. */
+export function buildTrailMessageMeta(item: SharedTrailItem, line: TraceLineString | null): TrailMessageMeta {
+  const light = toMessageLine(line);
+  return {
+    kind: 'trail',
+    id: item.routeId != null ? String(item.routeId) : item.id,
+    name: item.name,
+    distance_km: item.distance_km,
+    elevation_gain_m: item.elevation_gain_m,
+    region: item.region,
+    ...(light ? { geojson: light } : {}),
+    ...(item.indicative ? { indicative: true } : {}),
+  };
 }

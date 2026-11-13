@@ -112,21 +112,110 @@ describe('GPXEngine · exportGPX', () => {
 });
 
 describe('GPXEngine · extractCoordinates', () => {
-  it('lit trkpt, rtept et wpt dans l’ordre du document, en [lng, lat]', () => {
-    const xml = `<gpx>
-      <wpt lat="45.1" lon="6.1"/>
-      <rte><rtept lat="45.2" lon="6.2"/></rte>
-      <trk><trkseg><trkpt lat="45.3" lon="6.3"/></trkseg></trk>
-    </gpx>`;
+  it('lit les trkpt dans l’ordre du document, en [lng, lat]', () => {
+    const xml = `<gpx><trk><trkseg>
+      <trkpt lat="45.3" lon="6.3"/>
+      <trkpt lat="45.4" lon="6.4"><ele>1200</ele></trkpt>
+    </trkseg></trk></gpx>`;
     expect(GPXEngine.extractCoordinates(xml)).toEqual([
-      [6.1, 45.1],
-      [6.2, 45.2],
       [6.3, 45.3],
+      [6.4, 45.4],
     ]);
   });
 
-  it('ignore les attributs manquants ou non numériques', () => {
-    const xml = '<gpx><trkpt lat="abc" lon="6.1"/><trkpt lat="45.2"/><trkpt lat="45.3" lon="6.3"/></gpx>';
+  it('lit lon avant lat (ordre des attributs libre)', () => {
+    const xml = '<gpx><trk><trkseg><trkpt lon="6.3" lat="45.3"/><trkpt lon="6.4" lat="45.4"/></trkseg></trk></gpx>';
+    expect(GPXEngine.extractCoordinates(xml)).toEqual([
+      [6.3, 45.3],
+      [6.4, 45.4],
+    ]);
+  });
+
+  it('accepte les guillemets simples, les espaces autour du = et un autre attribut entre les deux', () => {
+    const xml = "<gpx><trkpt lon = '6.3' fix='3d' lat='-45.3'/><trkpt  lat = \"45.4\"\n  lon=\"-6.4\" /></gpx>";
+    expect(GPXEngine.extractCoordinates(xml)).toEqual([
+      [6.3, -45.3],
+      [-6.4, 45.4],
+    ]);
+  });
+
+  it('accepte les exposants, les signes + et un préfixe d’espace de noms', () => {
+    const xml = '<g:gpx><g:trkpt lat="4.5e1" lon="+6.5"/></g:gpx>';
+    expect(GPXEngine.extractCoordinates(xml)).toEqual([[6.5, 45]]);
+  });
+
+  it('ne mêle jamais les wpt (points d’intérêt) au tracé quand une trace existe', () => {
+    const xml = `<gpx>
+      <wpt lat="45.9237" lon="6.8694"><name>Aiguille du Midi</name></wpt>
+      <trk><trkseg><trkpt lat="45.97" lon="6.89"/><trkpt lat="45.98" lon="6.9"/></trkseg></trk>
+      <wpt lat="45.8326" lon="6.8652"/>
+    </gpx>`;
+    expect(GPXEngine.extractCoordinates(xml)).toEqual([
+      [6.89, 45.97],
+      [6.9, 45.98],
+    ]);
+  });
+
+  it('retombe sur les rtept sans trkpt, sans les wpt', () => {
+    const xml = `<gpx><wpt lat="45.1" lon="6.1"/>
+      <rte><rtept lat="45.2" lon="6.2"/><rtept lat="45.3" lon="6.3"/></rte></gpx>`;
+    expect(GPXEngine.extractCoordinates(xml)).toEqual([
+      [6.2, 45.2],
+      [6.3, 45.3],
+    ]);
+    expect(GPXEngine.extractTrack(xml).kind).toBe('route');
+  });
+
+  it('rend un tableau vide pour un fichier sans trace (wpt seuls, vide, texte)', () => {
+    expect(GPXEngine.extractCoordinates('<gpx><wpt lat="45.1" lon="6.1"/></gpx>')).toEqual([]);
+    expect(GPXEngine.extractCoordinates('<gpx></gpx>')).toEqual([]);
+    expect(GPXEngine.extractCoordinates('')).toEqual([]);
+    expect(GPXEngine.extractCoordinates('pas du XML')).toEqual([]);
+    expect(GPXEngine.extractTrack('<gpx/>').kind).toBeNull();
+  });
+
+  it('n’invente aucun point : attribut absent, vide, non numérique ou hors bornes', () => {
+    const xml = `<gpx>
+      <trkpt lat="abc" lon="6.1"/>
+      <trkpt lat="45.2"/>
+      <trkpt lon="6.2"/>
+      <trkpt lat="" lon=""/>
+      <trkpt lat="95" lon="6.1"/>
+      <trkpt lat="45.1" lon="190"/>
+      <trkpt lat="45.3" lon="6.3"/>
+    </gpx>`;
     expect(GPXEngine.extractCoordinates(xml)).toEqual([[6.3, 45.3]]);
+  });
+
+  it('respecte la limite de points', () => {
+    const xml = `<gpx>${Array.from({ length: 10 }, (_, i) => `<trkpt lat="45.${i}" lon="6.${i}"/>`).join('')}</gpx>`;
+    expect(GPXEngine.extractCoordinates(xml, 4)).toHaveLength(4);
+    expect(GPXEngine.extractCoordinates(xml, 0)).toEqual([]);
+  });
+});
+
+describe('GPXEngine · extractTrack et dénivelé', () => {
+  it('aligne les altitudes sur les points (null quand absente)', () => {
+    const xml = `<gpx><trk><trkseg>
+      <trkpt lat="45.1" lon="6.1"><ele>1000.5</ele></trkpt>
+      <trkpt lat="45.2" lon="6.2"/>
+      <trkpt lat="45.3" lon="6.3"><time>2026-01-01T00:00:00Z</time></trkpt>
+      <trkpt lon="6.4" lat="45.4"><ele>1100</ele></trkpt>
+    </trkseg></trk></gpx>`;
+    const track = GPXEngine.extractTrack(xml);
+    expect(track.kind).toBe('track');
+    expect(track.coordinates).toHaveLength(4);
+    expect(track.elevations).toEqual([1000.5, null, null, 1100]);
+  });
+
+  it('ne lit pas l’altitude du point suivant pour un trkpt auto-fermant', () => {
+    const xml = '<gpx><trkpt lat="45.1" lon="6.1"/><trkpt lat="45.2" lon="6.2"><ele>900</ele></trkpt></gpx>';
+    expect(GPXEngine.extractTrack(xml).elevations).toEqual([null, 900]);
+  });
+
+  it('cumule le dénivelé positif en ignorant le bruit sous le seuil', () => {
+    expect(GPXEngine.elevationGain([1000, 1001, 1000, 1002, 1100, 1090, 1150])).toBe(160);
+    expect(GPXEngine.elevationGain([1000, null])).toBeNull();
+    expect(GPXEngine.elevationGain([])).toBeNull();
   });
 });

@@ -5,6 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, Skeleton } from '@/components/ui';
 import { GPXEngine, ParsedGPXData } from '@/features/hiking/gpx/GPXEngine';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { TraceThumb } from './TraceThumb';
 
 interface GPXPreviewCardProps {
   gpxUrl?: string;
@@ -109,31 +110,11 @@ export const GPXPreviewCard: React.FC<GPXPreviewCardProps> = ({
     };
   }, [gpxData]);
 
-  // Generate SVG polyline path for route preview
-  const svgPath = React.useMemo(() => {
-    if (!gpxData || gpxData.positions.length < 2) return '';
-    const lats = gpxData.positions.map((p) => p.latitude);
-    const lons = gpxData.positions.map((p) => p.longitude);
-
-    const minLat = Math.min(...lats);
-    const maxLat = Math.max(...lats);
-    const minLon = Math.min(...lons);
-    const maxLon = Math.max(...lons);
-
-    const width = 240;
-    const height = 90;
-
-    const latSpan = maxLat - minLat || 0.0001;
-    const lonSpan = maxLon - minLon || 0.0001;
-
-    const points = gpxData.positions.map((p) => {
-      const x = ((p.longitude - minLon) / lonSpan) * (width - 20) + 10;
-      const y = height - (((p.latitude - minLat) / latSpan) * (height - 20) + 10);
-      return `${x.toFixed(1)},${y.toFixed(1)}`;
-    });
-
-    return points.join(' ');
-  }, [gpxData]);
+  // Tracé réel pour la vignette SVG (projection corrigée par cos(latitude), voir TraceThumb).
+  const trace = React.useMemo(
+    () => (gpxData ? gpxData.positions.map((p) => [p.longitude, p.latitude] as [number, number]) : []),
+    [gpxData],
+  );
 
   return (
     <Card
@@ -193,16 +174,7 @@ export const GPXPreviewCard: React.FC<GPXPreviewCardProps> = ({
         <div className="space-y-[var(--space-2)]">
           {/* SVG Map Path Preview */}
           <div className="relative flex h-24 w-full items-center justify-center overflow-hidden rounded-[var(--lkv-radius-sm)] border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn p-[var(--space-1)]">
-            <svg viewBox="0 0 240 90" className="size-full">
-              <polyline
-                fill="none"
-                stroke="var(--lkv-secondary)"
-                strokeWidth="3"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                points={svgPath}
-              />
-            </svg>
+            <TraceThumb geojson={trace} width={240} height={90} pad={10} />
             <div className="absolute bottom-1 right-2 font-mono text-[length:var(--lkv-text-caption-2)] font-semibold opacity-60">
               LKDV GPS Preview
             </div>

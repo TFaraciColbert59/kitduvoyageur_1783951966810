@@ -2,7 +2,10 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { toLineString } from '@/lib/geo/traceCoordinates';
 import type { TrailMessageMeta } from '../types/messaging.types';
+import { catalogLineForId } from '../data/realTrailsData';
+import { TraceThumb } from './TraceThumb';
 
 interface TrailCardProps {
   meta: TrailMessageMeta;
@@ -24,6 +27,8 @@ export const TrailCard: React.FC<TrailCardProps> = ({ meta, isMine }) => {
   const title = meta.name || 'Randonnée LKDV';
   const km = formatKm(meta.distance_km);
   const deniv = formatDeniv(meta.elevation_gain_m);
+  // Tracé joint au message (version simplifiée) : pas de requête, pas de tracé de remplacement.
+  const line = toLineString(meta.geojson ?? meta.coordinates) ?? catalogLineForId(meta.id);
 
   return (
     <Link
@@ -39,6 +44,11 @@ export const TrailCard: React.FC<TrailCardProps> = ({ meta, isMine }) => {
       >
         🥾 Randonnée
       </span>
+      {line ? (
+        <span className="block h-[96px] w-full overflow-hidden rounded-[var(--lkv-radius-sm)]">
+          <TraceThumb geojson={line} width={216} height={96} pad={12} />
+        </span>
+      ) : null}
       <p
         className={`text-[length:var(--lkv-text-caption)] font-bold leading-snug ${
           isMine ? 'text-[color:var(--lkv-text-inverted)]' : 'text-[color:var(--lkv-text-primary)]'

@@ -11,8 +11,15 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { AccountDrawerHost } from '@/design/account/AccountDrawerHost';
 import { useResolvedAttachmentUrl } from '@/features/messaging/hooks/useAttachmentUrl';
 import { TraceMap, type TraceLineString } from './TraceMap';
-import type { Message } from '../types/messaging.types';
+import { TraceOverlay } from './TraceOverlay';
+import type { Message, TrailMessageMeta } from '../types/messaging.types';
 import { GPXEngine } from '@/features/hiking/gpx/GPXEngine';
+import { lngLatLengthKm, toLineString } from '@/lib/geo/traceCoordinates';
+import { catalogLineForId, isIndicativeTrailId, parseRouteId, resolveTrailGeometry } from '../data/realTrailsData';
+
+/** Même cadrage que l'aperçu avant envoi : pastilles en haut, attribution en bas. */
+const DRAWER_TRACE_PADDING = { top: 64, right: 32, bottom: 40, left: 32 } as const;
+const DRAWER_TRACE_HEIGHT = 340;
 
 export interface AttachmentDrawerProps {
   message: Message | null;
@@ -40,13 +47,11 @@ function AttachmentGpx({ content }: { content: string }) {
     };
   }, [url]);
 
-  const geojson = useMemo<TraceLineString | null>(() => {
-    if (!xml) return null;
-    const coords = GPXEngine.extractCoordinates(xml);
-    return coords.length > 1 ? { type: 'LineString', coordinates: coords } : null;
-  }, [xml]);
-
-  const points = geojson?.coordinates.length ?? 0;
+  const track = useMemo(() => (xml ? GPXEngine.extractTrack(xml) : null), [xml]);
+  const geojson = useMemo<TraceLineString | null>(
+    () => (track && track.coordinates.length > 1 ? { type: 'LineString', coordinates: track.coordinates } : null),
+    [track],
+  );
 
   if (failed) return <p className="mattach-note">Le fichier n'a pas pu être chargé.</p>;
   if (!xml) return <div className="mattach-skeleton" aria-hidden="true" />;
@@ -54,14 +59,69 @@ function AttachmentGpx({ content }: { content: string }) {
 
   return (
     <>
-      <TraceMap geojson={geojson} height={280} />
+      <div style={{ position: 'relative' }}>
+        <TraceMap geojson={geojson} height={DRAWER_TRACE_HEIGHT} padding={DRAWER_TRACE_PADDING} />
+        <TraceOverlay
+          distanceKm={lngLatLengthKm(geojson.coordinates)}
+          elevationGainM={track ? GPXEngine.elevationGain(track.elevations) : null}
+        />
+      </div>
       <div className="mattach-meta">
-        <span>{points} points</span>
+        <span>{geojson.coordinates.length} points</span>
         <a className="mattach-link" href={url ?? '#'} download>
           Télécharger le GPX
         </a>
       </div>
     </>
+  );
+}
+
+/**
+ * Randonnée partagée : le tracé joint au message, sinon celui de
+ * `hiking_routes` quand l'identifiant du message est une route connue, sinon
+ * « Tracé indisponible » (jamais le tracé d'une autre randonnée).
+ */
+function AttachmentTrail({ meta }: { meta: TrailMessageMeta }) {
+  // Tracé joint au message ; à défaut, le tracé schématique du catalogue pour un id exact du catalogue.
+  const carried = useMemo(
+    () => toLineString(meta.geojson ?? meta.coordinates) ?? catalogLineForId(meta.id),
+    [meta.geojson, meta.coordinates, meta.id],
+  );
+  const routeId = useMemo(() => parseRouteId(meta.id), [meta.id]);
+  const [resolved, setResolved] = useState<TraceLineString | null>(null);
+  const [looking, setLooking] = useState(() => !carried && routeId != null);
+
+  useEffect(() => {
+    if (carried || routeId == null) {
+      setLooking(false);
+      return undefined;
+    }
+    let cancelled = false;
+    setLooking(true);
+    void resolveTrailGeometry({ routeId }).then(({ geojson }) => {
+      if (cancelled) return;
+      setResolved(geojson);
+      setLooking(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [carried, routeId]);
+
+  const line = carried ?? resolved;
+  const indicative = meta.indicative === true || isIndicativeTrailId(meta.id);
+  const distanceKm = meta.distance_km ?? (line ? lngLatLengthKm(line.coordinates) : null);
+
+  if (looking) return <div className="mattach-skeleton" aria-hidden="true" />;
+  return (
+    <div style={{ position: 'relative' }}>
+      <TraceMap geojson={line} height={DRAWER_TRACE_HEIGHT} padding={DRAWER_TRACE_PADDING} />
+      <TraceOverlay
+        distanceKm={distanceKm}
+        elevationGainM={meta.elevation_gain_m}
+        indicative={indicative && Boolean(line)}
+      />
+    </div>
   );
 }
 
@@ -95,8 +155,7 @@ function AttachmentSummary({ message }: { message: Message }) {
     if (typeof meta.items_count === 'number') rows.push({ label: 'Éléments', value: String(meta.items_count) });
   }
   if (message.message_type === 'trail') {
-    if (typeof meta.distance_km === 'number') rows.push({ label: 'Distance', value: `${meta.distance_km.toFixed(1)} km` });
-    if (typeof meta.elevation_gain_m === 'number') rows.push({ label: 'Dénivelé', value: `+${Math.round(meta.elevation_gain_m)} m` });
+    // Distance et dénivelé sont déjà dans la pastille de la carte.
     if (typeof meta.region === 'string') rows.push({ label: 'Région', value: meta.region });
   }
   if (message.message_type === 'product') {
@@ -155,6 +214,9 @@ export function AttachmentDrawer({ message, onClose }: AttachmentDrawerProps) {
       <div className="mattach-scroll">
         <h3 className="mattach-title">{headingFor(message)}</h3>
         {isGpx ? <AttachmentGpx content={message.content} /> : null}
+        {message.message_type === 'trail' && message.metadata ? (
+          <AttachmentTrail meta={message.metadata as unknown as TrailMessageMeta} />
+        ) : null}
         {isMedia ? <AttachmentMedia message={message} /> : null}
         {!isGpx && !isMedia ? <AttachmentSummary message={message} /> : null}
         {message.content && !isGpx && !isMedia && message.message_type === 'text' ? (

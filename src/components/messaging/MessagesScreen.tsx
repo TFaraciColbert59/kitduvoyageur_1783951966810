@@ -38,8 +38,10 @@ import { useResolvedAttachmentUrl } from '@/features/messaging/hooks/useAttachme
 import { SharedPostEmbed } from '@/features/messaging/components/SharedPostEmbed';
 import { AttachmentDrawer } from '@/features/messaging/components/AttachmentDrawer';
 import { GpxThumb } from '@/features/messaging/components/GpxThumb';
-import { TraceMap } from '@/features/messaging/components/TraceMap';
-import { resolveTrailCoordinates } from '@/features/messaging/data/realTrailsData';
+import { TraceThumb } from '@/features/messaging/components/TraceThumb';
+import { catalogLineForId, parseRouteId } from '@/features/messaging/data/realTrailsData';
+import { formatTraceStats } from '@/features/messaging/lib/traceFormat';
+import { lngLatLengthKm, toLineString } from '@/lib/geo/traceCoordinates';
 import { AudioPlayerBubble } from '@/features/messaging/components/AudioPlayerBubble';
 import { useKeyboardInset } from '@/features/messaging/hooks/useKeyboardInset';
 import { parseMessageDeepLink, resolveHandleToUserId } from '@/features/messaging/lib/deepLinks';
@@ -635,28 +637,53 @@ function MessageThread({
                       </span>
                     ) : message.message_type === 'trail' || message.message_type === 'gpx' ? (
                       (() => {
-                        const trailGeojson =
-                          (message.metadata?.geojson as any) ??
-                          (Array.isArray(message.metadata?.coordinates) && (message.metadata.coordinates as any[]).length > 1
-                            ? { type: 'LineString' as const, coordinates: message.metadata.coordinates as [number, number][] }
-                            : null) ??
-                          resolveTrailCoordinates(
-                            (message.metadata?.name as string) ||
-                            (message.metadata?.id as string) ||
-                            message.content
-                          );
+                        // Tracé joint au message uniquement : aucune requête par bulle, aucun tracé de remplacement.
+                        const meta = message.metadata ?? {};
+                        const carried = toLineString(meta.geojson ?? meta.coordinates) ?? (message.message_type === 'trail' ? catalogLineForId(meta.id) : null);
+                        const isTrail = message.message_type === 'trail';
+                        const label = isTrail ? message.content : (meta.file_name as string) || 'Tracé GPX';
+                        const stats = formatTraceStats({
+                          distanceKm:
+                            typeof meta.distance_km === 'number'
+                              ? meta.distance_km
+                              : carried
+                                ? lngLatLengthKm(carried.coordinates)
+                                : null,
+                          elevationGainM: typeof meta.elevation_gain_m === 'number' ? meta.elevation_gain_m : null,
+                        });
+                        const open = (event: React.SyntheticEvent) => {
+                          event.stopPropagation();
+                          onOpenAttachment?.(message);
+                        };
                         return (
                           <div
                             className="mbub-map"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              onOpenAttachment?.(message);
+                            role="button"
+                            tabIndex={0}
+                            aria-label={`Ouvrir le tracé ${label}`}
+                            onClick={open}
+                            onKeyDown={(event) => {
+                              if (event.key === 'Enter' || event.key === ' ') {
+                                event.preventDefault();
+                                open(event);
+                              }
                             }}
                           >
-                            <TraceMap
-                              geojson={trailGeojson}
-                              height={160}
-                            />
+                            {carried || isTrail ? (
+                              <TraceThumb
+                                geojson={carried}
+                                width={250}
+                                height={160}
+                                reserveBottom={40}
+                                emptyLabel={
+                                  parseRouteId(meta.id) != null
+                                    ? 'Ouvrir pour voir le tracé'
+                                    : 'Tracé indisponible pour cette randonnée'
+                                }
+                              />
+                            ) : (
+                              <GpxThumb content={message.content} width={250} height={160} reserveBottom={40} />
+                            )}
                             <div
                               style={{
                                 position: 'absolute',
@@ -667,16 +694,18 @@ function MessageThread({
                                 background: 'linear-gradient(180deg, transparent, rgba(23, 43, 36, 0.92))',
                                 color: '#fff',
                                 display: 'flex',
-                                alignItems: 'center',
+                                alignItems: 'flex-end',
                                 justifyContent: 'space-between',
+                                gap: 8,
                                 pointerEvents: 'none',
                                 zIndex: 10,
                               }}
                             >
-                              <b style={{ fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '75%' }}>
-                                {message.message_type === 'trail' ? message.content : (message.metadata?.file_name as string) || 'Tracé GPX'}
-                              </b>
-                              <span style={{ fontSize: 10, fontWeight: 600, background: 'rgba(255,255,255,0.25)', padding: '2px 8px', borderRadius: 999 }}>Voir</span>
+                              <span style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                                <b style={{ fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</b>
+                                {stats ? <small style={{ fontSize: 10, opacity: 0.85 }}>{stats}</small> : null}
+                              </span>
+                              <span style={{ fontSize: 10, fontWeight: 600, background: 'rgba(255,255,255,0.25)', padding: '2px 8px', borderRadius: 999, flexShrink: 0 }}>Voir</span>
                             </div>
                           </div>
                         );
@@ -1848,8 +1877,8 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                     file_name: file.name,
                     file_size: file.size,
                     url,
+                    // Version simplifiée (≤ 200 points) : la bulle se dessine sans télécharger le fichier.
                     geojson: geojson ?? null,
-                    coordinates: geojson?.coordinates ?? null,
                   });
                   await refreshConversations();
                   setShareMenuOpen(false);

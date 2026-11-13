@@ -5,35 +5,18 @@
  * point réel, ces fonctions rendent `''` ou `null`.
  */
 
+import { extractLngLat } from '@/lib/geo/traceCoordinates';
+
 export type TracePoint = [number, number];
 
-/** Un `null` ou une chaîne vide ne devient jamais 0 : ce serait un lieu inventé. */
-function toNumber(value: unknown): number {
-  if (value === null || value === undefined || value === '') return Number.NaN;
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : Number.NaN;
-}
-
-/** Points `[lat, lng]` réels de la trace, quel que soit le format stocké. */
+/**
+ * Points `[lat, lng]` réels de la trace, quel que soit le format stocké.
+ * La lecture est partagée avec la messagerie (`@/lib/geo/traceCoordinates`) :
+ * LineString, MultiLineString, Feature, FeatureCollection, chaîne JSON,
+ * tableaux et `{ lat, lng }` ; aucun point n'est fabriqué.
+ */
 export function extractCoords(trace: unknown): TracePoint[] {
-  const raw =
-    (trace as { geometry?: { coordinates?: unknown } })?.geometry?.coordinates ??
-    (trace as { coordinates?: unknown })?.coordinates ??
-    trace;
-  if (!Array.isArray(raw)) return [];
-  return raw
-    .map((point: unknown) => {
-      if (Array.isArray(point)) return [toNumber(point[1]), toNumber(point[0])] as TracePoint;
-      if (point && typeof point === 'object') {
-        const { lat, lng } = point as { lat?: unknown; lng?: unknown };
-        return [toNumber(lat), toNumber(lng)] as TracePoint;
-      }
-      return null;
-    })
-    .filter(
-      (point): point is TracePoint =>
-        point !== null && Number.isFinite(point[0]) && Number.isFinite(point[1]),
-    );
+  return extractLngLat(trace).map(([lng, lat]) => [lat, lng] as TracePoint);
 }
 
 export interface TraceBounds {

@@ -31,8 +31,12 @@ export interface TrailMessageMeta {
   distance_km?: number | null;
   elevation_gain_m?: number | null;
   region?: string | null;
+  /** Version simplifiée du tracé (≤ 200 points), absente quand il est inconnu. */
   geojson?: { type: 'LineString'; coordinates: [number, number][] };
+  /** Ancien format (doublon de `geojson`) : lu mais plus écrit. */
   coordinates?: [number, number][];
+  /** Tracé schématique du catalogue (quelques points reliés par des droites), pas un relevé GPS. */
+  indicative?: boolean;
 }
 
 /** Payload des messages lignée de kit (message_type = 'kit', chantier lignées). */
