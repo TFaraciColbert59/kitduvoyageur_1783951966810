@@ -25,6 +25,16 @@ import type { RouteLeg, TravelMode } from './engine/routing';
 import type { RouteProvider } from './engine/provenance';
 import { GEOAPIFY_DAILY_CREDITS, takeApiCredits } from '@/lib/apiCredits';
 import { appUserAgent, SITE_CONTACT_HOST } from '@/lib/userAgent';
+import {
+  MAX_ROUTE_WAYPOINTS,
+  isRouteSport,
+  routingProfileForSport,
+  type RouteSport,
+  type RouteSportProfile,
+} from './routeProfiles';
+
+export { ROUTE_SPORTS } from './routeProfiles';
+export type { RouteSport } from './routeProfiles';
 
 /**
  * Geoapify Routing : un appel pour tout le trajet, un troncon par paire de
@@ -120,8 +130,46 @@ export const VALHALLA_COSTING: Readonly<Record<TravelMode, string>> = {
   voiture: 'auto',
 };
 
+/** Le mode de cache accepte aussi les profils sportifs (même colonne texte). */
+export type RouteCacheMode = TravelMode | RouteSport;
+
+export function isRouteCacheMode(value: unknown): value is RouteCacheMode {
+  return isTravelMode(value) || isRouteSport(value);
+}
+
 /** Au-dela, les routeurs refusent la requete : on refuse aussi, proprement. */
-export const MAX_ROUTE_POINTS = 12;
+export const MAX_ROUTE_POINTS = MAX_ROUTE_WAYPOINTS;
+
+/**
+ * Le profil réellement envoyé aux fournisseurs. Le mode historique n'a ni
+ * option ni repli sur refus : son comportement reste celui d'avant K2.03.
+ */
+interface AttemptProfile {
+  readonly key: RouteCacheMode;
+  readonly geoapifyMode: string;
+  readonly valhallaCosting: string;
+  readonly valhallaOptions?: Readonly<Record<string, unknown>>;
+  readonly fallbackOnRefusal: boolean;
+}
+
+function profileForMode(mode: TravelMode): AttemptProfile {
+  return {
+    key: mode,
+    geoapifyMode: GEOAPIFY_MODE[mode],
+    valhallaCosting: VALHALLA_COSTING[mode],
+    fallbackOnRefusal: false,
+  };
+}
+
+function profileForSport(profile: RouteSportProfile): AttemptProfile {
+  return {
+    key: profile.id,
+    geoapifyMode: profile.geoapifyMode,
+    valhallaCosting: profile.valhallaCosting,
+    valhallaOptions: profile.valhallaOptions,
+    fallbackOnRefusal: profile.fallbackOnRefusal,
+  };
+}
 
 const TIMEOUT_MS = 8000;
 const CACHE_TTL_MS = 60 * 60 * 1000;
@@ -283,7 +331,7 @@ async function readRouteCacheRemote(
 async function writeRouteCacheRemote(
   endpoint: string,
   key: string,
-  mode: TravelMode,
+  mode: RouteCacheMode,
   value: RouteAttempt,
   signature: string
 ): Promise<void> {
@@ -364,7 +412,7 @@ async function readRouteCache(
 async function writeRouteCache(
   endpoint: string | null,
   key: string,
-  mode: TravelMode,
+  mode: RouteCacheMode,
   value: RouteAttempt,
   sign?: (key: string) => string
 ): Promise<void> {
@@ -787,18 +835,31 @@ function geoapifyKey(env: Record<string, string | undefined> = process.env): str
  * par `|` ; le mode est nomme (jamais un defaut) et les unites explicites.
  * Elle porte la cle : jamais journalisee.
  */
+/**
+ * L URL Geoapify du trajet entier pour un mode Geoapify explicite. Le mode
+ * n'est jamais un defaut : l'appelant doit l'avoir choisi (profil sportif ou
+ * mode historique).
+ */
+function geoapifyUrlForMode(
+  points: readonly RoutePoint[],
+  geoapifyMode: string,
+  key: string
+): string {
+  const params = new URLSearchParams({
+    waypoints: points.map((p) => `${round6(p.lat)},${round6(p.lon)}`).join('|'),
+    mode: geoapifyMode,
+    units: 'metric',
+    apiKey: key,
+  });
+  return `${GEOAPIFY_ROUTING_URL}?${params.toString()}`;
+}
+
 export function geoapifyRouteUrl(
   points: readonly RoutePoint[],
   mode: TravelMode,
   key: string
 ): string {
-  const params = new URLSearchParams({
-    waypoints: points.map((p) => `${round6(p.lat)},${round6(p.lon)}`).join('|'),
-    mode: GEOAPIFY_MODE[mode],
-    units: 'metric',
-    apiKey: key,
-  });
-  return `${GEOAPIFY_ROUTING_URL}?${params.toString()}`;
+  return geoapifyUrlForMode(points, GEOAPIFY_MODE[mode], key);
 }
 
 /** Prend `credits` credits Geoapify pour un trajet ; false = pas de Geoapify. */
@@ -848,51 +909,46 @@ async function callProvider(
  * un trajet de 8,275 km s'afficherait 5,1 miles. L'instance publique ignore
  * par ailleurs `shape_format`, d'ou le besoin de decoder la polyligne.
  */
-function valhallaUrl(key: string, mode: TravelMode): string {
+function valhallaUrl(key: string, profile: AttemptProfile): string {
   const locations = key.split(';').map((pair) => {
     const [lonText, latText] = pair.split(',');
     return { lon: Number(lonText), lat: Number(latText) };
   });
-  const body = JSON.stringify({
+  const body: Record<string, unknown> = {
     locations,
-    costing: VALHALLA_COSTING[mode],
+    costing: profile.valhallaCosting,
     directions_options: { units: 'kilometers' },
-  });
-  return `${VALHALLA_URL}?json=${encodeURIComponent(body)}`;
+  };
+  if (profile.valhallaOptions && Object.keys(profile.valhallaOptions).length > 0) {
+    // Options du costing seul : ne jamais envoyer un profil à un autre costing.
+    body.costing_options = { [profile.valhallaCosting]: profile.valhallaOptions };
+  }
+  return `${VALHALLA_URL}?json=${encodeURIComponent(JSON.stringify(body))}`;
 }
 
 /**
- * Trace reelle, sur le reseau du mode demande, avec la RAISON d un eventuel refus.
+ * Le moteur commun aux modes historiques et aux profils sportifs.
  *
- * `legs: null` ne dit rien par lui-meme : un sommet hors reseau et une panne
- * du fournisseur se ressemblent. `reason` les separe, et c est ce qui permet
- * a l appelant d ECARTER un lieu irrattrapable a pied au lieu de l abandonner
- * pour une panne passagere.
- *
- * Ordre, plan 1.5 : cache (memoire puis base) → Geoapify (cle et credits du
- * jour) → Valhalla FOSSGIS. Valhalla ne repond QUE sur une panne de Geoapify
- * (ou sans cle, ou credits epuises) : `off_network` est une mesure, et une
- * mesure ne se remplace pas par une seconde opinion sur les memes donnees
- * OpenStreetMap. Le mode ne se negocie jamais : `pieton` sur un graphe routier
- * afficherait des kilometres exacts pour un trajet que personne ne fera.
+ * Le cache, le debit et les fournisseurs sont les mêmes ; seuls le mode
+ * Geoapify, le costing Valhalla et la politique de repli changent. Le profil
+ * entre dans la cle de cache : un trace VTT ne peut jamais etre servi sous une
+ * cle route.
  */
-export async function routeAttempt(
+async function routeAttemptWithProfile(
   points: readonly RoutePoint[],
-  mode: TravelMode,
+  profile: AttemptProfile,
   signal?: AbortSignal,
   cacheBaseUrl?: string,
-  /** Signature serveur d'une clé de cache (`signRouteCacheKey`) : sans elle, rien n'est écrit en base. */
   signCacheKey?: (key: string) => string
 ): Promise<RouteAttempt> {
-  // Un mode inconnu et une liste de points inexploitable sont des REFUS de
-  // l appelant, pas une panne du fournisseur : ils se distinguent, parce
-  // qu ils se corrigent chez l appelant.
-  if (!isTravelMode(mode)) return { legs: null, reason: 'mode_expected' };
+  // Une liste de points inexploitable est un REFUS de l appelant, pas une
+  // panne du fournisseur : elle se distingue, parce qu elle se corrige chez
+  // l appelant.
   if (points.length < 2 || points.length > MAX_ROUTE_POINTS) {
     return { legs: null, reason: 'points_expected' };
   }
   const key = points.map((p) => coord([p.lon, p.lat])).join(';');
-  const cacheKey = `route:${mode}:${key}`;
+  const cacheKey = `route:${profile.key}:${key}`;
   // Memoire PUIS base, toutes deux avant le debit et avant le reseau. Une
   // reponse deja connue ne coute rien, quel que soit l endroit ou elle a ete
   // mesuree — et c est ce qui survit au redeploiement.
@@ -906,29 +962,74 @@ export async function routeAttempt(
   const fromGeoapify =
     apiKey && (await geoapifyAllowed(geoapifyRouteCredits(points)))
       ? normalizeGeoapifyRouteDetailed(
-          await callProvider(geoapifyRouteUrl(points, mode, apiKey), signal, {
+          await callProvider(geoapifyUrlForMode(points, profile.geoapifyMode, apiKey), signal, {
             'User-Agent': USER_AGENT,
           }),
           points
         )
       : null;
-  const attempt =
-    fromGeoapify && (fromGeoapify.legs !== null || fromGeoapify.reason === 'off_network')
-      ? fromGeoapify
-      : normalizeValhallaRouteDetailed(
-          await callProvider(valhallaUrl(key, mode), signal, {
-            'User-Agent': USER_AGENT,
-            'X-Client-Id': CLIENT_ID,
-          }),
-          points
-        );
+  // Un mode historique garde la regle d avant : `off_network` est une mesure
+  // et ne se remplace pas par une seconde opinion. Un profil specialise, lui,
+  // peut etre absent du graphe Geoapify : son refus n est pas une mesure du
+  // sport, donc Valhalla recoit le profil complet.
+  const keepGeoapify =
+    fromGeoapify !== null &&
+    (fromGeoapify.legs !== null ||
+      (!profile.fallbackOnRefusal && fromGeoapify.reason === 'off_network'));
+  const attempt = keepGeoapify
+    ? (fromGeoapify as RouteAttempt)
+    : normalizeValhallaRouteDetailed(
+        await callProvider(valhallaUrl(key, profile), signal, {
+          'User-Agent': USER_AGENT,
+          'X-Client-Id': CLIENT_ID,
+        }),
+        points
+      );
   // Seule une trace REUSSIE est memorisee — cote memoire ET cote base. Un
   // echec ne doit pas etre fige : une panne de cinq minutes finirait par etre
   // servie comme une reponse mesuree pendant toute la duree du TTL.
   if (attempt.legs) {
-    await writeRouteCache(cacheEndpoint(cacheBaseUrl), cacheKey, mode, attempt, signCacheKey);
+    await writeRouteCache(cacheEndpoint(cacheBaseUrl), cacheKey, profile.key, attempt, signCacheKey);
   }
   return attempt;
+}
+
+/**
+ * Trace reelle sur le reseau du mode historique demande, avec la RAISON d un
+ * eventuel refus. Signature et comportement inchanges depuis P0.22.
+ */
+export async function routeAttempt(
+  points: readonly RoutePoint[],
+  mode: TravelMode,
+  signal?: AbortSignal,
+  cacheBaseUrl?: string,
+  /** Signature serveur d'une clé de cache (`signRouteCacheKey`) : sans elle, rien n'est écrit en base. */
+  signCacheKey?: (key: string) => string
+): Promise<RouteAttempt> {
+  if (!isTravelMode(mode)) return { legs: null, reason: 'mode_expected' };
+  return routeAttemptWithProfile(points, profileForMode(mode), signal, cacheBaseUrl, signCacheKey);
+}
+
+/**
+ * Trace reelle pour un profil sportif (marche, route, gravel, VTT, enduro).
+ * Le sport inconnu est refuse : aucun profil par defaut ne doit produire des
+ * kilometres plausibles pour une pratique qui n a pas ete demandee.
+ */
+export async function routeAttemptForSport(
+  points: readonly RoutePoint[],
+  sport: RouteSport,
+  signal?: AbortSignal,
+  cacheBaseUrl?: string,
+  signCacheKey?: (key: string) => string
+): Promise<RouteAttempt> {
+  if (!isRouteSport(sport)) return { legs: null, reason: 'mode_expected' };
+  return routeAttemptWithProfile(
+    points,
+    profileForSport(routingProfileForSport(sport)),
+    signal,
+    cacheBaseUrl,
+    signCacheKey
+  );
 }
 
 /**

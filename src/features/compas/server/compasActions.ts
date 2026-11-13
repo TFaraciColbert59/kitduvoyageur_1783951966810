@@ -53,6 +53,7 @@ import { planKitApply, type MyKit } from '../engine/kitApply';
 import { precisionActions } from '../engine/request';
 import { simplifyOffers, stayDates, type CompasStayOffer } from '../engine/stays';
 import { readCompasMeta } from '../engine/meta';
+import { MAX_ROUTE_WAYPOINTS } from '@/features/adventure-prep/routeProfiles';
 import { coarsePosition } from '../engine/privacy';
 import { travellerToday } from '../engine/zone';
 import { getEurRate } from './rates';
@@ -1649,7 +1650,14 @@ export async function compasApplyRouteAction(
       .eq('id', routeId)
       .maybeSingle();
     if (!exists) return actionError('compas.server.routes.notFound');
-    const write = () => updateTripMetadata(auth.supabase, tripId, (meta) => ({ ...meta, route_id: routeId }));
+    // Un parcours du catalogue remplace le brouillon local : sans cela, la
+    // géométrie éditée continuerait de s'afficher après le choix d'un parcours.
+    const write = () =>
+      updateTripMetadata(auth.supabase, tripId, (meta) => {
+        const compas = compasMeta(meta);
+        delete compas.routeDraft;
+        return { ...meta, route_id: routeId, compas };
+      });
     let { error } = await write();
     // Un compte ne peut avoir qu'une aventure par parcours (index unique
     // historique du flux « sentier »). Si le parcours est tenu par un de SES
@@ -1674,6 +1682,81 @@ export async function compasApplyRouteAction(
     return { success: true, kept };
   } catch (err) {
     await reportServerError('compas.compasApplyRouteAction', err);
+    return actionError('compas.server.common.serverError');
+  }
+}
+
+/* ---------- Éditeur de tracé (R01 · K2.09) ---------- */
+
+const routeCoordinate = z.tuple([
+  z.number().min(-180).max(180),
+  z.number().min(-90).max(90),
+]);
+
+const routeEditorPointSchema = z.object({
+  id: z.string().min(1).max(40),
+  lat: z.number().min(-90).max(90),
+  lon: z.number().min(-180).max(180),
+  kind: z.enum(['start', 'via', 'end']),
+});
+
+const routeDraftSchema = z.object({
+  id: z.string().min(1).max(80),
+  version: z.number().int().min(1).max(10_000),
+  sport: z.enum(['marche', 'route', 'gravel', 'vtt', 'enduro']),
+  engine: z.string().min(1).max(80),
+  savedAt: z.string().min(1).max(40),
+  points: z.array(routeEditorPointSchema).min(2).max(MAX_ROUTE_WAYPOINTS),
+  geometry: z.object({
+    type: z.literal('LineString'),
+    coordinates: z.array(routeCoordinate).min(2).max(20_000),
+  }),
+  distanceKm: z.number().min(0).max(1_000_000).nullable(),
+  durationMin: z.number().min(0).max(10_000_000).nullable(),
+  provider: z.string().max(40).nullable(),
+  warnings: z.array(z.string().max(200)).max(10),
+});
+
+const saveRouteDraftSchema = z.object({
+  tripId: uuid,
+  tripSlug: slug,
+  draft: routeDraftSchema,
+});
+
+/**
+ * Enregistre la révision éditée dans `trips.metadata.compas.routeDraft`.
+ *
+ * Aucune migration : le contrat vit dans les métadonnées existantes du
+ * voyage, déjà soumises à `can_edit_trip`. Les séances et le parcours du
+ * catalogue ne sont pas modifiés ; choisir un parcours du catalogue efface
+ * ce brouillon (voir `compasApplyRouteAction`).
+ */
+export async function compasSaveRouteDraftAction(
+  input: z.input<typeof saveRouteDraftSchema>
+): Promise<CompasActionResult & { version?: number }> {
+  const parsed = saveRouteDraftSchema.safeParse(input);
+  if (!parsed.success) return actionError('compas.server.routes.invalid');
+  const { tripId, tripSlug, draft } = parsed.data;
+  try {
+    const auth = await requireEditor(tripId);
+    if ('error' in auth) {
+      return {
+        success: false,
+        error: auth.error ?? (await serverText('compas.server.common.accessDenied')),
+      };
+    }
+    const result = await updateTripMetadata(auth.supabase, tripId, (meta) => {
+      const compas = compasMeta(meta);
+      return { ...meta, compas: { ...compas, routeDraft: draft } };
+    });
+    if (result.error) {
+      console.error('[compas] compasSaveRouteDraftAction', result.error.code, result.error.message);
+      return actionError('compas.server.routes.applyFailed');
+    }
+    revalidateTrip(tripSlug);
+    return { success: true, version: draft.version };
+  } catch (err) {
+    await reportServerError('compas.compasSaveRouteDraftAction', err);
     return actionError('compas.server.common.serverError');
   }
 }

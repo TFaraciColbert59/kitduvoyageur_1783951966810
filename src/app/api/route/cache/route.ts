@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServiceSupabase } from '@/lib/ai/serviceClient';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
 import { clientIpFromHeaders } from '@/lib/rate-limit';
-import { isTravelMode, MAX_ROUTE_POINTS } from '@/features/adventure-prep/routingService';
+import { isRouteCacheMode, MAX_ROUTE_POINTS } from '@/features/adventure-prep/routingService';
 import { ROUTE_CACHE_SIGNATURE_HEADER, verifyRouteCacheSignature } from '@/lib/routeCacheSignature';
 
 export const runtime = 'nodejs';
@@ -50,7 +50,7 @@ const RATE_LIMIT = {
 const POINT = String.raw`-?\d{1,3}(?:\.\d{1,6})?,-?\d{1,2}(?:\.\d{1,6})?`;
 
 /**
- * La cle du service : `route:<mode>:<lon,lat>;<lon,lat>…`. Rien d'autre.
+ * La cle du service : `route:<mode ou sport>:<lon,lat>;<lon,lat>…`. Rien d'autre.
  *
  * Le PREMIER point est CAPTURE (`(…)`) : c est lui que `readKey` recompte
  * pour borner le nombre de points. Sans ce groupe, la destruction
@@ -68,7 +68,7 @@ function readKey(raw: string | null): { key: string; mode: string } | null {
   // Le nombre de points est borne comme la mesure elle-meme, sinon une cle
   // geodesicement absurde s'ecrirait en base pour rien.
   if (points.split(';').length > MAX_ROUTE_POINTS) return null;
-  if (!isTravelMode(mode)) return null;
+  if (!isRouteCacheMode(mode)) return null;
   return { key: raw, mode };
 }
 
@@ -250,7 +250,7 @@ export async function POST(request: NextRequest) {
   }
   // Le mode de la cle et celui du corps doivent etre le MEME : sinon on
   // ecrirait un trace pieton sous une cle voiture.
-  if (!isTravelMode(mode)) {
+  if (!isRouteCacheMode(mode)) {
     return NextResponse.json(
       { status: 'invalid', reason: 'mode_expected' },
       { status: 400, headers: { 'Cache-Control': 'no-store' } },

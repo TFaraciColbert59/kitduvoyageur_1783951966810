@@ -9,7 +9,10 @@ import {
   isTravelMode,
   MAX_ROUTE_POINTS,
   routeAttempt,
+  routeAttemptForSport,
 } from '@/features/adventure-prep/routingService';
+import { isRouteSport, type RouteSport } from '@/features/adventure-prep/routeProfiles';
+import type { TravelMode } from '@/features/adventure-prep/types';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
 import { clientIpFromHeaders } from '@/lib/rate-limit';
 import { signRouteCacheKey } from '@/lib/routeCacheSignature';
@@ -35,8 +38,9 @@ interface RoutePoint {
 
 /**
  * `points` = suite de `lon,lat` separees par des points-virgules. `mode` =
- * `pieton` | `velo` | `voiture`. La liste blanche de cles interdit toute
- * derivation d'URL cote fournisseur.
+ * `pieton` | `velo` | `voiture` ; `sport` = `marche` | `route` | `gravel` |
+ * `vtt` | `enduro`. Les deux sont exclusifs. La liste blanche de cles interdit
+ * toute derivation d'URL cote fournisseur.
  */
 function readPoints(raw: string | null): RoutePoint[] | null {
   if (!raw) return null;
@@ -59,7 +63,9 @@ export async function GET(request: NextRequest) {
   if (limited) return limited;
 
   const params = request.nextUrl.searchParams;
-  const unknownKeys = [...params.keys()].filter((key) => key !== 'points' && key !== 'mode');
+  const unknownKeys = [...params.keys()].filter(
+    (key) => key !== 'points' && key !== 'mode' && key !== 'sport'
+  );
   if (unknownKeys.length > 0) {
     return NextResponse.json(
       { status: 'invalid', legs: [], reason: 'unknown_parameter' },
@@ -78,7 +84,21 @@ export async function GET(request: NextRequest) {
   // defaut silencieux qui affichait des kilometres de voiture pour une
   // randonnee. On refuse, et l'appelant garde son « a verifier ».
   const mode = params.get('mode');
-  if (!isTravelMode(mode)) {
+  const sport = params.get('sport');
+  if (mode != null && sport != null) {
+    return NextResponse.json(
+      { status: 'invalid', legs: [], reason: 'mode_or_sport_expected' },
+      { status: 400 },
+    );
+  }
+  if (sport != null) {
+    if (!isRouteSport(sport)) {
+      return NextResponse.json(
+        { status: 'invalid', legs: [], reason: 'sport_expected' },
+        { status: 400 },
+      );
+    }
+  } else if (!isTravelMode(mode)) {
     return NextResponse.json(
       { status: 'invalid', legs: [], reason: 'mode_expected' },
       { status: 400 },
@@ -88,7 +108,10 @@ export async function GET(request: NextRequest) {
   // L origine de la requete donne au cache persistant une URL ABSOLUE : cote
   // serveur, etch('/api/...') serait une URL invalide. Sans elle, le cache
   // resterait muet et l on retomberait sur la seule memoire.
-  const attempt = await routeAttempt(points, mode, request.signal, request.nextUrl.origin, signRouteCacheKey);
+  const attempt =
+    sport != null
+      ? await routeAttemptForSport(points, sport as RouteSport, request.signal, request.nextUrl.origin, signRouteCacheKey)
+      : await routeAttempt(points, mode as TravelMode, request.signal, request.nextUrl.origin, signRouteCacheKey);
   if (!attempt.legs) {
     // Panne, reponse malformee, ou LIEU HORS RESEAU : « indisponible », jamais
     // « 0 km ». La raison est公开发 : sans elle, un sommet a 4 000 m et une

@@ -15,6 +15,8 @@ export interface HubRoutePoint {
   visited?: boolean;
   stepId?: string | null;
   color: string;
+  /** Poignée déplaçable (éditeur de parcours) ; les autres points restent des repères. */
+  draggable?: boolean;
 }
 
 export interface HubRouteMapProps {
@@ -27,6 +29,8 @@ export interface HubRouteMapProps {
   emptyLabel?: string;
   /** Clic sur la carte (mode interactif) — utilisé pour poser un POI. */
   onMapClick?: (lat: number, lon: number) => void;
+  /** Poignée relâchée : son identifiant et sa nouvelle position. */
+  onPointMove?: (id: string, lat: number, lon: number) => void;
 }
 
 export default function HubRouteMap({
@@ -38,10 +42,12 @@ export default function HubRouteMap({
   className,
   emptyLabel = 'Trace non géolocalisée',
   onMapClick,
+  onPointMove,
 }: HubRouteMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
   const onMapClickRef = useRef(onMapClick);
+  const onPointMoveRef = useRef(onPointMove);
   const [visible, setVisible] = useState(false);
   const [ready, setReady] = useState(false);
 
@@ -49,13 +55,17 @@ export default function HubRouteMap({
     onMapClickRef.current = onMapClick;
   }, [onMapClick]);
 
+  useEffect(() => {
+    onPointMoveRef.current = onPointMove;
+  }, [onPointMove]);
+
   const hasRoute = routeCoords.length >= 1 || highlightCoords.length >= 1;
   const geoKey = useMemo(
     () =>
       JSON.stringify([
         routeCoords,
         highlightCoords,
-        points.map((p) => [p.lat, p.lon, p.color, p.label]),
+        points.map((p) => [p.lat, p.lon, p.color, p.label, p.id ?? '', p.draggable ? 1 : 0]),
       ]),
     [routeCoords, highlightCoords, points],
   );
@@ -190,7 +200,31 @@ export default function HubRouteMap({
         }
       }
 
-      for (const p of points) {
+      for (const [index, p] of points.entries()) {
+        const pointId = p.id?.trim() || `hub-point-${index}`;
+        if (interactive && p.draggable) {
+          // Cible tactile de 44 px : la poignée visible reste petite, la zone
+          // de saisie respecte la taille minimale. Couleurs par tokens LKDV.
+          const handle = L.marker([p.lat, p.lon], {
+            draggable: true,
+            keyboard: true,
+            title: p.label,
+            alt: p.label,
+            zIndexOffset: 1000,
+            icon: L.divIcon({
+              className: 'lkdv-route-handle',
+              html: '<span style="display:grid;place-items:center;width:44px;height:44px;"><span style="width:18px;height:18px;border-radius:999px;background:var(--lkv-surface-paper,#FFFFFF);border:3px solid var(--lkv-forest-900,#17402C);box-shadow:0 1px 4px rgba(11,31,23,.35);"></span></span>',
+              iconSize: [44, 44],
+              iconAnchor: [22, 22],
+            }),
+          }).addTo(map);
+          handle.bindTooltip(p.label, { direction: 'top', offset: [0, -18] });
+          handle.on('dragend', () => {
+            const position = handle.getLatLng();
+            onPointMoveRef.current?.(pointId, position.lat, position.lng);
+          });
+          continue;
+        }
         const marker = L.circleMarker([p.lat, p.lon], {
           radius: 5.5,
           color: '#FFFFFF',

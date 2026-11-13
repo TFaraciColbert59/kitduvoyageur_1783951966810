@@ -692,6 +692,17 @@
      les tiroirs du Compas (constat D-32). */
   z-index: 0;
 }
+/* Poignées de l'éditeur de parcours : le fond blanc par défaut de Leaflet est
+   retiré, la cible tactile de 44 px reste portée par le HTML du marqueur. */
+.lkdv-route-handle {
+  background: transparent;
+  border: 0;
+}
+.lkdv-route-handle:focus-visible {
+  outline: 3px solid var(--lkv-sage-500, #5B7F55);
+  outline-offset: 2px;
+  border-radius: 999px;
+}
 /* Les pastilles de lieux de la carte du hub sont en verre fumé sombre et
    héritent leur couleur : sous l'encre sombre du Compas, elles devenaient
    illisibles. Elles gardent ici l'encre claire prévue pour leur fond. */

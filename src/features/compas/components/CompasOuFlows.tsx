@@ -34,6 +34,7 @@ import {
 import { applyCurrent, inverseOps, runOps } from './compasApply';
 import { PassageSection } from './CompasPassage';
 import { Chip, PagedList, Segments } from './CompasPrimitives';
+import { RouteEditor } from './RouteEditor';
 import GeoapifyCredit from './GeoapifyCredit';
 import { compasNearbyActivitiesAction } from '../server/resaActions';
 import type { CompasStayOffer } from '../engine/stays';
@@ -186,6 +187,7 @@ export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint })
   const [mode, setMode] = useState<RouteMode>(() =>
     hint?.query ? 'cherche' : data.itinerary.length ? 'etapes' : 'autour'
   );
+  const [editing, setEditing] = useState(false);
   // « Autour » part de la position GPS de l'appareil ; à défaut, du départ du voyage.
   const [here, setHere] = useState<{ lat: number; lon: number; gps: boolean } | null>(
     data.origin ? { ...data.origin, gps: false } : null
@@ -284,7 +286,13 @@ export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint })
     if (query.trim().length >= 3) void load('cherche', query);
   };
 
+  if (editing) return <RouteEditor ctl={ctl} onBack={() => setEditing(false)} />;
+
   if (picked) return <RouteConfirm ctl={ctl} route={picked} onBack={() => setPicked(null)} />;
+
+  const canEditRoute =
+    data.canEdit &&
+    (data.routeDraft != null || m.route.coords.length >= 2 || data.routeGeojson != null);
 
   const modes: Array<{ id: RouteMode; label: string }> = [
     {
@@ -302,15 +310,42 @@ export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint })
       <div className="cp-sumline">
         <span>
           <b>{data.route.name ?? (data.itinerary.length ? t('compas.ouRoute.freeRoute') : t('compas.ouRoute.noRoute'))}</b>
-          {m.route.stepsCount > 0 && (
+          {data.routeDraft ? (
             <>
               {' '}
-              · {f.km(m.route.distanceKm)} · D+ {f.meters(m.route.elevationGainM)}
+              · {f.km(data.routeDraft.distanceKm)}
+              {data.routeDraft.durationMin != null && <> · {f.duration(data.routeDraft.durationMin)}</>}
             </>
+          ) : (
+            m.route.stepsCount > 0 && (
+              <>
+                {' '}
+                · {f.km(m.route.distanceKm)} · D+ {f.meters(m.route.elevationGainM)}
+              </>
+            )
           )}
         </span>
         {data.route.id != null && <Chip icon="map-pin">{t('compas.ouRoute.catalogue')}</Chip>}
       </div>
+
+      {canEditRoute && (
+        <button type="button" className="cp-row" onClick={() => setEditing(true)}>
+          <span className="cp-thumb" aria-hidden="true">
+            <Icon name="route" size={18} />
+          </span>
+          <span className="cp-row__t">
+            <b>
+              {data.routeDraft
+                ? t('compas.routeEditor.reopen', { version: data.routeDraft.version })
+                : t('compas.routeEditor.open')}
+            </b>
+            <span>{t('compas.routeEditor.sportLabel')}</span>
+          </span>
+          <span className="cp-row__end">
+            <Icon name="chevron-right" size={16} aria-hidden="true" />
+          </span>
+        </button>
+      )}
 
       <form className="cp-searchrow" onSubmit={onSearch} role="search">
         <label className="cp-field">
