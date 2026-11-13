@@ -9,6 +9,8 @@ film/renders/
 film/node_modules/
 qa/*.wav
 qa/tmp/
+qa/.*.hf-transaction-*/
+qa/work-*/
 */.hyperframes/
 */renders/
 grade-lab/samples/
