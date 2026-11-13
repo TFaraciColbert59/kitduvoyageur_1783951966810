@@ -4,8 +4,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { XpIcon } from '../ui/XpIcon';
 import type { Detent } from '../state/types';
 import {
-  DRAG_SLOP_PX,
   clampDragHeight,
+  decideAxis,
   lowHeight,
   resolveSheetRelease,
   velocityFromSamples,
@@ -38,7 +38,12 @@ export interface ExplorerSheetProps {
   labelledBy?: string;
   /** Capsule d'onglets ancrée en bas de la feuille (écran Monde). */
   tabsBottom?: boolean;
-  onClose?: () => void;
+  /** Appelé quand la sortie est terminée. `restoreFocus` : le focus était dans la feuille ou la sortie vient du clavier. */
+  onClose?: (info?: { restoreFocus: boolean }) => void;
+  /** Appelé dès le début de la sortie (la pilule et la barre d'onglets peuvent réapparaître). */
+  onClosing?: () => void;
+  /** Change de valeur pour annuler une sortie en cours (la feuille remonte au cran courant). */
+  cancelCloseSignal?: number;
 }
 
 /** Durée de l'animation de sortie (ms) ; doit suivre `.xp-sheet[data-closing]` dans explorer-v2.css. */
@@ -77,6 +82,8 @@ export function ExplorerSheet({
   labelledBy,
   tabsBottom = false,
   onClose,
+  onClosing,
+  cancelCloseSignal,
 }: ExplorerSheetProps) {
   const [viewport, setViewport] = useState(844);
   const [dragHeight, setDragHeight] = useState<number | null>(null);
@@ -84,7 +91,9 @@ export function ExplorerSheet({
   const [closeFrom, setCloseFrom] = useState<number | null>(null);
   const sectionRef = useRef<HTMLElement | null>(null);
   const dragRef = useRef<{
+    startX: number;
     startY: number;
+    axis: 'pending' | 'vertical' | 'horizontal';
     startHeight: number;
     startDetent: Detent;
     lastY: number;
@@ -114,27 +123,47 @@ export function ExplorerSheet({
   const lowH = lowHeight(heights);
 
   // Les écouteurs natifs (tactile sur le contenu) lisent toujours les dernières valeurs.
-  const latest = useRef({ heights, detent, height, onClose, onDetent, onHaptic });
-  latest.current = { heights, detent, height, onClose, onDetent, onHaptic };
+  const latest = useRef({ heights, detent, height, onClose, onClosing, onDetent, onHaptic });
+  latest.current = { heights, detent, height, onClose, onClosing, onDetent, onHaptic };
 
+  const closingRef = useRef(false);
+  const keyboardCloseRef = useRef(false);
   const startClose = useCallback((fromHeight: number) => {
+    if (closingRef.current) return;
+    closingRef.current = true;
     setDragHeight(null);
-    setCloseFrom((current) => (current === null ? Math.max(1, Math.round(fromHeight)) : current));
+    setCloseFrom(Math.max(1, Math.round(fromHeight)));
+    latest.current.onClosing?.();
   }, []);
+
+  // Annulation de la sortie (tap sur la pilule pendant la glissade) : la feuille remonte.
+  useEffect(() => {
+    closingRef.current = false;
+    keyboardCloseRef.current = false;
+    setCloseFrom(null);
+  }, [cancelCloseSignal]);
 
   // Sortie : la feuille glisse vers le bas (transform), puis `onClose`.
   useEffect(() => {
     if (closeFrom === null) return undefined;
     const reduced =
       typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches === true;
-    const timer = window.setTimeout(() => latest.current.onClose?.(), reduced ? 0 : CLOSE_ANIMATION_MS);
+    const timer = window.setTimeout(() => {
+      const section = sectionRef.current;
+      const restoreFocus =
+        keyboardCloseRef.current ||
+        (section !== null && document.activeElement instanceof Node && section.contains(document.activeElement));
+      latest.current.onClose?.({ restoreFocus });
+    }, reduced ? 0 : CLOSE_ANIMATION_MS);
     return () => window.clearTimeout(timer);
   }, [closeFrom]);
 
-  const beginDrag = useCallback((y: number, t: number) => {
+  const beginDrag = useCallback((x: number, y: number, t: number) => {
     const { height: current, detent: startDetent } = latest.current;
     dragRef.current = {
+      startX: x,
       startY: y,
+      axis: 'pending',
       startHeight: current,
       startDetent,
       lastY: y,
@@ -146,12 +175,14 @@ export function ExplorerSheet({
   }, []);
 
   /** Renvoie vrai quand le geste est (devenu) un glissement. */
-  const moveDrag = useCallback((y: number, t: number): boolean => {
+  const moveDrag = useCallback((x: number, y: number, t: number): boolean => {
     const drag = dragRef.current;
     if (!drag) return false;
     const dy = y - drag.startY;
     if (!drag.active) {
-      if (Math.abs(dy) < DRAG_SLOP_PX) return false;
+      // Axe verrouillé au premier franchissement du seuil : un geste horizontal n'est pas pour la feuille.
+      if (drag.axis === 'pending') drag.axis = decideAxis(x - drag.startX, dy);
+      if (drag.axis !== 'vertical') return false;
       drag.active = true;
     }
     drag.samples.push({ y, t });
@@ -169,7 +200,7 @@ export function ExplorerSheet({
       const drag = dragRef.current;
       if (!drag) return 'none';
       dragRef.current = null;
-      if (!drag.active) return 'tap';
+      if (!drag.active) return drag.axis === 'horizontal' ? 'none' : 'tap';
       const { heights: h, onClose: close, onDetent: setDetent } = latest.current;
       // Un doigt arrêté avant de lâcher ne lance pas la feuille.
       const samples = [...drag.samples, { y: drag.lastY, t: Math.max(t, drag.samples[drag.samples.length - 1].t) }];
@@ -202,7 +233,7 @@ export function ExplorerSheet({
       if (event.button !== 0 && event.pointerType === 'mouse') return;
       const onHandle = event.target instanceof Element && event.target.closest('.xp-sheet-handle') !== null;
       if (!onHandle && isInteractive(event.target)) return;
-      beginDrag(event.clientY, event.timeStamp);
+      beginDrag(event.clientX, event.clientY, event.timeStamp);
     },
     [beginDrag, closeFrom],
   );
@@ -211,7 +242,7 @@ export function ExplorerSheet({
     (event: React.PointerEvent<HTMLElement>) => {
       const drag = dragRef.current;
       if (!drag) return;
-      if (moveDrag(event.clientY, event.timeStamp) && !drag.captured) {
+      if (moveDrag(event.clientX, event.clientY, event.timeStamp) && !drag.captured) {
         drag.captured = true;
         try {
           event.currentTarget.setPointerCapture(event.pointerId);
@@ -252,6 +283,7 @@ export function ExplorerSheet({
     if (!section) return undefined;
     let scroller: HTMLElement | null = null;
     let armed = false;
+    let startX = 0;
     let startY = 0;
     let dragging = false;
 
@@ -261,28 +293,34 @@ export function ExplorerSheet({
       const target = event.target instanceof Element ? event.target : null;
       scroller = target?.closest<HTMLElement>('.xp-sheet-scroll') ?? null;
       if (!scroller || event.touches.length !== 1) return;
-      if (target && target.closest('[data-no-sheet-drag]')) return;
       armed = scroller.scrollTop <= 0;
+      startX = event.touches[0].clientX;
       startY = event.touches[0].clientY;
     };
     const onMove = (event: TouchEvent) => {
       if (!scroller || event.touches.length !== 1) return;
+      const x = event.touches[0].clientX;
       const y = event.touches[0].clientY;
       if (!dragging) {
         if (!armed) return;
         const dy = y - startY;
-        if (dy < -DRAG_SLOP_PX || scroller.scrollTop > 0) {
+        const axis = decideAxis(x - startX, dy);
+        if (axis === 'pending') return;
+        // Horizontal (carrousel) ou vers le haut ou contenu défilé : le contenu garde le geste.
+        if (axis === 'horizontal' || dy < 0 || scroller.scrollTop > 0) {
           armed = false;
           return;
         }
-        if (dy < DRAG_SLOP_PX) return;
         dragging = true;
-        beginDrag(y, event.timeStamp);
-        if (dragRef.current) dragRef.current.active = true;
+        beginDrag(x, y, event.timeStamp);
+        if (dragRef.current) {
+          dragRef.current.axis = 'vertical';
+          dragRef.current.active = true;
+        }
         return;
       }
       if (event.cancelable) event.preventDefault();
-      moveDrag(y, event.timeStamp);
+      moveDrag(x, y, event.timeStamp);
     };
     const onEnd = (event: TouchEvent) => {
       armed = false;
@@ -307,6 +345,7 @@ export function ExplorerSheet({
     (event: React.KeyboardEvent<HTMLElement>) => {
       if (event.key !== 'Escape' || event.defaultPrevented || !onClose) return;
       event.preventDefault();
+      keyboardCloseRef.current = true;
       startClose(latest.current.height);
     },
     [onClose, startClose],

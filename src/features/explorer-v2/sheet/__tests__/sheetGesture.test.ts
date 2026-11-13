@@ -3,6 +3,7 @@ import {
   CLOSE_DISTANCE_PX,
   clampDragHeight,
   closeDistance,
+  decideAxis,
   resolveSheetRelease,
   velocityFromSamples,
   type SheetHeights,
@@ -99,5 +100,23 @@ describe('resolveSheetRelease', () => {
   it('ne ferme jamais sans onClose', () => {
     expect(resolveSheetRelease({ height: 100, velocity: 2, heights, current: 'peek', canClose: false })).toBe('peek');
     expect(resolveSheetRelease({ height: 100, velocity: 0, heights, current: 'full', canClose: false })).toBe('peek');
+  });
+});
+
+describe('decideAxis (verrouillage d\'axe)', () => {
+  it('reste en attente sous le seuil', () => {
+    expect(decideAxis(3, 4)).toBe('pending');
+    expect(decideAxis(0, 0)).toBe('pending');
+  });
+  it('est vertical si |dy| > |dx| au franchissement du seuil', () => {
+    expect(decideAxis(1, 8)).toBe('vertical');
+    expect(decideAxis(-3, -9)).toBe('vertical');
+  });
+  it('est horizontal pour un balayage de carrousel, même avec une dérive verticale', () => {
+    expect(decideAxis(14, 3)).toBe('horizontal');
+    expect(decideAxis(-200, 14)).toBe('horizontal');
+  });
+  it('une diagonale parfaite appartient au contenu horizontal', () => {
+    expect(decideAxis(8, 8)).toBe('horizontal');
   });
 });

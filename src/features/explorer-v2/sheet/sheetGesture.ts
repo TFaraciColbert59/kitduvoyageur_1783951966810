@@ -23,6 +23,20 @@ export const SWITCH_RATIO = 0.2;
 /** Mouvement (px) avant qu'un appui devienne un glissement. */
 export const DRAG_SLOP_PX = 6;
 
+export type GestureAxis = 'pending' | 'vertical' | 'horizontal';
+
+/**
+ * Verrouillage d'axe : décidé une fois pour toutes dès que le doigt a parcouru `slop` px.
+ * Vertical seulement si |dy| > |dx| ; sinon le geste appartient au défileur horizontal
+ * (carrousel, rangée de puces) et la feuille l'ignore jusqu'au relâchement.
+ */
+export function decideAxis(dx: number, dy: number, slop = DRAG_SLOP_PX): GestureAxis {
+  const ax = Math.abs(dx);
+  const ay = Math.abs(dy);
+  if (Math.max(ax, ay) < slop) return 'pending';
+  return ay > ax ? 'vertical' : 'horizontal';
+}
+
 export interface SheetSample {
   y: number;
   t: number;

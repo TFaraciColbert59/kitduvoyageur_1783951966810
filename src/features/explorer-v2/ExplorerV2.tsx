@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import './map/prefetchMapStage';
@@ -138,6 +138,15 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
   const online = useOnline();
   const [me, setMe] = useState<{ lat: number; lng: number } | null>(null);
   const [sheetOpen, setSheetOpen] = useState(Boolean(initialScene));
+  // Sortie de la feuille en cours (glissade de 320 ms) : pilule et barre d'onglets reviennent tout de suite.
+  const [sheetClosing, setSheetClosing] = useState(false);
+  const [reopenSignal, setReopenSignal] = useState(0);
+  const pillRef = useRef<HTMLButtonElement | null>(null);
+  const restoreFocusRef = useRef(false);
+  // Vrai dès qu'un tap sur la pilule a demandé la réouverture pendant la sortie : le `onClose`
+  // déjà en file (minuterie échue avant le rendu) est alors ignoré, sans état bloqué.
+  const reopenRequestedRef = useRef(false);
+  const chromeHidden = sheetOpen && !sheetClosing;
   const [sheetHeight, setSheetHeight] = useState(176);
   const [pendingSport, setPendingSport] = useState<Sport | null>(null);
   const [offlineQueue, setOfflineQueue] = useState(0);
@@ -150,7 +159,7 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    if (sheetOpen) {
+    if (chromeHidden) {
       document.documentElement.dataset.explorerSheetOpen = 'true';
       window.dispatchEvent(new CustomEvent('lkdv-toggle-bottom-bar', { detail: { hide: true } }));
     } else {
@@ -161,6 +170,14 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
       delete document.documentElement.dataset.explorerSheetOpen;
       window.dispatchEvent(new CustomEvent('lkdv-toggle-bottom-bar', { detail: { hide: false } }));
     };
+  }, [chromeHidden]);
+
+  // Fermeture au clavier (ou focus dans la feuille) : le focus revient à la pilule, `inert` déjà retiré.
+  useEffect(() => {
+    if (sheetOpen || !restoreFocusRef.current) return undefined;
+    restoreFocusRef.current = false;
+    const frame = requestAnimationFrame(() => pillRef.current?.focus({ preventScroll: true }));
+    return () => cancelAnimationFrame(frame);
   }, [sheetOpen]);
 
   const theme = state.theme ?? systemTheme;
@@ -848,7 +865,20 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
             haptic('sheet-open');
             state.setDetent(detent);
           }}
-          onClose={() => setSheetOpen(false)}
+          onClose={(info) => {
+            if (reopenRequestedRef.current) {
+              reopenRequestedRef.current = false;
+              return;
+            }
+            restoreFocusRef.current = Boolean(info?.restoreFocus);
+            setSheetClosing(false);
+            setSheetOpen(false);
+          }}
+          onClosing={() => {
+            reopenRequestedRef.current = false;
+            setSheetClosing(true);
+          }}
+          cancelCloseSignal={reopenSignal}
           onHaptic={(event) => haptic(event)}
           actions={model.actions}
           onBack={model.onBack}
@@ -862,14 +892,28 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
       {!activity ? (
         <button
           type="button"
+          ref={pillRef}
           className="xp-sheet-pill-launcher"
-          data-hidden={sheetOpen ? 'true' : 'false'}
-          inert={sheetOpen}
+          data-hidden={chromeHidden ? 'true' : 'false'}
+          inert={chromeHidden}
           aria-label="Ouvrir le menu Explorer"
-          onClick={() => {
+          onClick={(event) => {
             haptic('sheet-open');
-            setSheetOpen(true);
+            // Tap pendant la sortie : on annule la glissade, la feuille remonte au cran peek.
+            if (sheetOpen) {
+              reopenRequestedRef.current = true;
+              setSheetClosing(false);
+              setReopenSignal((n) => n + 1);
+            } else {
+              setSheetOpen(true);
+            }
             state.setSheet('level', 'peek');
+            // Activation au clavier : le focus passe dans la feuille (la pilule devient inerte).
+            if (event.detail === 0) {
+              requestAnimationFrame(() =>
+                document.querySelector<HTMLElement>('.xp-sheet-handle')?.focus({ preventScroll: true }),
+              );
+            }
           }}
         >
           <span className="xp-pill-dots" aria-hidden="true">

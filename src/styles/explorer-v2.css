@@ -67,7 +67,7 @@
   --xp-sheet-blur: blur(25.2px) saturate(1.8) brightness(1.05);
   /* Très léger voile sous le texte : garde la lisibilité sur une carte satellite sombre
      sans revenir à un fond opaque (la carte reste lisible au travers). */
-  --xp-sheet-veil: linear-gradient(rgba(250, 251, 249, 0.3), rgba(250, 251, 249, 0.3));
+  --xp-sheet-veil: linear-gradient(rgba(250, 251, 249, 0), rgba(250, 251, 249, 0));
   --xp-sheet-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.4),
     0 0 0 0.5px rgba(23, 43, 36, 0.1), 0 -8px 22px rgba(23, 43, 36, 0.1);
@@ -319,15 +319,18 @@ body:has(.xp-root[data-theme]) .lkv-app-background {
   flex-direction: column;
   border-radius: 30px 30px 0 0;
   background: var(--xp-sheet-veil), var(--xp-sheet-bg);
-  /* Texte secondaire un cran plus sombre dans le verre (contraste sur satellite). */
-  --xp-mut: var(--xp-mut2);
+  /* Contraste AA sur satellite sombre par l'ENCRE (pas par un voile laiteux) : texte
+     secondaire et libellés de section plus sombres, pastilles vers forest. */
+  --xp-mut: #2f3d35;
   -webkit-backdrop-filter: var(--xp-sheet-blur);
   backdrop-filter: var(--xp-sheet-blur);
   box-shadow: var(--xp-sheet-shadow);
   z-index: 5;
   touch-action: none;
   overflow: hidden;
-  transition: height 0.34s var(--motion-ease-standard);
+  transition:
+    height 0.34s var(--motion-ease-standard),
+    transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
   will-change: height;
 }
 .xp-sheet[data-dragging='true'] {
@@ -338,6 +341,9 @@ body:has(.xp-root[data-theme]) .lkv-app-background {
   transform: translateY(100%);
   pointer-events: none;
   transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.xp-root[data-theme='dark'] .xp-sheet {
+  --xp-mut: var(--xp-mut2);
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .xp-sheet {
@@ -390,6 +396,8 @@ body:has(.xp-root[data-theme]) .lkv-app-background {
 }
 .xp-sheet-title {
   margin: 0;
+  /* Encre la plus sombre de la palette : ≥ 7:1 même sur satellite sombre, sans voile. */
+  color: #0b1f17;
   font-size: 19px;
   line-height: 24px;
   font-weight: 800;
@@ -749,6 +757,19 @@ body:has(.xp-root[data-theme]) .lkv-app-background {
 .xp-badge[data-tone='muted'] {
   background: rgba(86, 102, 93, 0.12);
   color: var(--xp-mut);
+}
+/* Dans le verre (clair) : textes de pastille vers forest pour tenir 4,5:1 sur satellite. */
+.xp-root:not([data-theme='dark']) .xp-sheet .xp-badge {
+  color: #17402c;
+}
+.xp-root:not([data-theme='dark']) .xp-sheet .xp-badge[data-tone='warn'] {
+  color: #5e4410;
+}
+.xp-root:not([data-theme='dark']) .xp-sheet .xp-badge[data-tone='bad'] {
+  color: #7a2f27;
+}
+.xp-root:not([data-theme='dark']) .xp-sheet .xp-badge[data-tone='muted'] {
+  color: #2f3d35;
 }
 
 .xp-metrics {
