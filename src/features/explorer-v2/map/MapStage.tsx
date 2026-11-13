@@ -25,6 +25,7 @@ import {
   traceStyleForRoute,
 } from './traceStyles';
 import { OPENFREEMAP_STYLE_URL } from '@/components/map/engine/standardBase';
+import type { SearchViewport } from '../searchArea';
 
 export interface MapPin {
   id: string;
@@ -55,6 +56,8 @@ export interface MapStageProps {
   onRegionClick?: (group: string, center: [number, number]) => void;
   onPinClick?: (pin: MapPin) => void;
   onMoveEnd?: (center: [number, number], zoom: number) => void;
+  /** Emprise réellement visible, émise à la fin de chaque mouvement de caméra. */
+  onViewportChange?: (viewport: SearchViewport) => void;
   /**
    * Cap **réel** de la carte : direction monde affichée en haut (0 = nord,
    * 90 = est). Émis pendant une rotation et à la fin d'un mouvement : la
@@ -115,6 +118,7 @@ export default function MapStage({
   onRegionClick,
   onPinClick,
   onMoveEnd,
+  onViewportChange,
   onBearingChange,
   onReady,
   me,
@@ -139,6 +143,8 @@ export default function MapStage({
   // seule fois, on garde donc toujours la dernière version dans une référence.
   const onBearingChangeRef = useRef(onBearingChange);
   onBearingChangeRef.current = onBearingChange;
+  const onViewportChangeRef = useRef(onViewportChange);
+  onViewportChangeRef.current = onViewportChange;
 
   // ── création de la carte (une seule fois) ──────────────────────────────
   useEffect(() => {
@@ -173,6 +179,20 @@ export default function MapStage({
     ) {
       (window as unknown as { __xpMap?: MapLibreMap }).__xpMap = map;
     }
+
+    // Emprise visible : la carte est la seule source de vérité pour
+    // « Rechercher dans cette zone ». Aucun calcul d'écran parallèle.
+    const reportViewport = () => {
+      const bounds = map.getBounds();
+      if (!bounds) return;
+      onViewportChangeRef.current?.({
+        minLat: bounds.getSouth(),
+        maxLat: bounds.getNorth(),
+        minLng: bounds.getWest(),
+        maxLng: bounds.getEast(),
+        zoom: map.getZoom(),
+      });
+    };
 
     // Premiers pixels : premier rendu GL une fois le style chargé (fond de carte peint).
     let styleLoaded = false;
@@ -364,6 +384,7 @@ export default function MapStage({
       }
 
       setReady(true);
+      reportViewport();
       onReady?.();
       markMap('map:interactive');
 
@@ -407,6 +428,7 @@ export default function MapStage({
 
     map.on('moveend', () => {
       reportBearing();
+      reportViewport();
       if (suppressMoveEnd.current) return;
       const c = map.getCenter();
       const z = map.getZoom();

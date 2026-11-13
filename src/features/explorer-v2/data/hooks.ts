@@ -2,6 +2,12 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
+import {
+  isSearchableViewport,
+  viewportQueryParams,
+  type SearchViewport,
+} from '../searchArea';
+import type { SearchRoute, Sport } from '../state/types';
 
 export type Position = [number, number];
 
@@ -55,9 +61,9 @@ export interface RouteItem {
    */
   geojson: unknown | null;
   /**
-   * Route de démonstration servie quand la base ne renvoie aucun itinéraire.
-   * Son identifiant ne désigne aucun tracé réel : le hors-trace doit rester
-   * indisponible au lieu d'aller chercher une géométrie homonyme.
+   * Route sans géométrie exploitable. Le hors-trace doit rester indisponible
+   * au lieu d'aller chercher une géométrie homonyme ; aucun nom de
+   * démonstration n'est créé pour combler une zone vide.
    */
   unavailable?: boolean;
 }
@@ -323,16 +329,174 @@ export interface SearchFilters {
   text: string;
 }
 
-/** Recherche en langage naturel (règles déterministes, résultats BDD). */
-export function useNaturalSearch(query: string, lat: number | null, lng: number | null) {
+export interface SearchResponse {
+  filters: SearchFilters;
+  results: SearchResultItem[];
+  /** Parcours réels du catalogue OSM, dans la même emprise que les repères. */
+  routes?: SearchRoute[];
+  /** Emprise réellement interrogée ; `null` pour l'ancien mode « autour du centre ». */
+  zone: SearchViewport | null;
+  /** Vrai quand la borne de la RPC a tronqué la liste avant l'affichage. */
+  truncated: boolean;
+  /** Vrai quand le catalogue de parcours a été tronqué par sa borne. */
+  routesTruncated?: boolean;
+  /** Vrai quand la RPC de parcours a échoué : les repères restent affichés. */
+  routesUnavailable?: boolean;
+}
+
+/** Erreur HTTP de recherche, avec le motif explicite renvoyé par l'API. */
+export class ExplorerSearchError extends Error {
+  status: number;
+  reason?: string;
+
+  constructor(message: string, status: number, reason?: string) {
+    super(message);
+    this.name = 'ExplorerSearchError';
+    this.status = status;
+    this.reason = reason;
+  }
+}
+
+async function fetchSearchJson(url: string): Promise<SearchResponse> {
+  const res = await fetch(url, { headers: { Accept: 'application/json' } });
+  const payload = (await res.json().catch(() => null)) as
+    | { error?: unknown; reason?: unknown }
+    | SearchResponse
+    | null;
+  if (!res.ok) {
+    const record =
+      payload && typeof payload === 'object' ? (payload as Record<string, unknown>) : null;
+    const reason = typeof record?.reason === 'string' ? record.reason : undefined;
+    const message =
+      typeof record?.error === 'string' ? record.error : `${url} → ${res.status}`;
+    throw new ExplorerSearchError(message, res.status, reason);
+  }
+  if (!payload || typeof payload !== 'object' || !Array.isArray((payload as SearchResponse).results)) {
+    throw new ExplorerSearchError('Réponse de recherche illisible', 502);
+  }
+  return payload as SearchResponse;
+}
+
+/** Réponse du contrat « autour de moi » (position + sport choisi). */
+export interface RouteSuggestionResponse {
+  sport: Sport;
+  /** Faux quand le catalogue ne couvre pas ce sport ; `routes` est alors vide. */
+  supported: boolean;
+  reason?: 'sport-sans-catalogue';
+  radiusKm: number;
+  position: { lat: number; lng: number };
+  routes: SearchRoute[];
+  /** Vrai quand la borne de la RPC a pu tronquer les candidats. */
+  truncated: boolean;
+}
+
+async function fetchSuggestionJson(url: string): Promise<RouteSuggestionResponse> {
+  const res = await fetch(url, { headers: { Accept: 'application/json' } });
+  const payload = (await res.json().catch(() => null)) as
+    | { error?: unknown; reason?: unknown }
+    | RouteSuggestionResponse
+    | null;
+  if (!res.ok) {
+    const record =
+      payload && typeof payload === 'object' ? (payload as Record<string, unknown>) : null;
+    const reason = typeof record?.reason === 'string' ? record.reason : undefined;
+    const message =
+      typeof record?.error === 'string' ? record.error : `${url} → ${res.status}`;
+    throw new ExplorerSearchError(message, res.status, reason);
+  }
+  if (
+    !payload ||
+    typeof payload !== 'object' ||
+    !Array.isArray((payload as RouteSuggestionResponse).routes)
+  ) {
+    throw new ExplorerSearchError('Réponse de suggestions illisible', 502);
+  }
+  return payload as RouteSuggestionResponse;
+}
+
+/**
+ * Parcours réels autour de la position, pour le sport explicitement choisi.
+ *
+ * Le hook n'est actif qu'avec une position autorisée et un sport. Il ne
+ * remplace ni la recherche textuelle ni son emprise : son cache et ses
+ * résultats sont séparés.
+ */
+export function useRouteSuggestions(
+  lat: number | null,
+  lng: number | null,
+  sport: Sport | null,
+  enabled = true,
+) {
+  const hasPosition =
+    lat !== null && lng !== null && Number.isFinite(lat) && Number.isFinite(lng);
+  const params = new URLSearchParams();
+  if (hasPosition && lat !== null && lng !== null) {
+    // Trois décimales (~100 m) suffisent pour un rayon de 15 km et évitent de
+    // promener une position précise dans l'URL et les journaux serveur.
+    params.set('lat', lat.toFixed(3));
+    params.set('lng', lng.toFixed(3));
+  }
+  if (sport) params.set('sport', sport);
+
   return useQuery({
-    queryKey: ['xp', 'search', query, lat?.toFixed(2), lng?.toFixed(2)],
-    enabled: query.trim().length >= 2 && lat !== null && lng !== null,
+    queryKey: [
+      'xp',
+      'route-suggestions',
+      hasPosition ? `${lat?.toFixed(3)}:${lng?.toFixed(3)}` : 'sans-position',
+      sport ?? 'sans-sport',
+    ],
+    enabled: enabled && hasPosition && sport !== null,
     queryFn: () =>
-      fetchJson<{ filters: SearchFilters; results: SearchResultItem[] }>(
-        `/api/explorer/v2/search?q=${encodeURIComponent(query)}&lat=${lat}&lng=${lng}`,
-      ),
+      fetchSuggestionJson(`/api/explorer/v2/suggestions?${params.toString()}`),
     staleTime: 60 * 1000,
+    retry: 1,
+  });
+}
+
+/**
+ * Recherche en langage naturel (règles déterministes, résultats BDD).
+ *
+ * Sans `viewport`, le moteur conserve son comportement historique : une
+ * fenêtre autour du centre. Avec une emprise visible valide, la même requête
+ * et les mêmes filtres sont appliqués à cette emprise.
+ */
+export function useNaturalSearch(
+  query: string,
+  lat: number | null,
+  lng: number | null,
+  viewport: SearchViewport | null = null,
+) {
+  const area = viewport && isSearchableViewport(viewport) ? viewport : null;
+  const blockedByViewport = viewport !== null && area === null;
+  const hasCenter = Number.isFinite(lat) && Number.isFinite(lng);
+  const params = new URLSearchParams({ q: query });
+  if (lat !== null && Number.isFinite(lat)) params.set('lat', String(lat));
+  if (lng !== null && Number.isFinite(lng)) params.set('lng', String(lng));
+  if (area) {
+    for (const part of viewportQueryParams(area).split('&')) {
+      const [key, value] = part.split('=');
+      if (key && value !== undefined) params.set(key, value);
+    }
+  }
+
+  return useQuery({
+    queryKey: [
+      'xp',
+      'search',
+      query,
+      area
+        ? viewportQueryParams(area)
+        : blockedByViewport
+          ? 'blocked-viewport'
+          : `${lat?.toFixed(2)}:${lng?.toFixed(2)}`,
+    ],
+    enabled:
+      query.trim().length >= 2 &&
+      hasCenter &&
+      !blockedByViewport,
+    queryFn: () => fetchSearchJson(`/api/explorer/v2/search?${params.toString()}`),
+    staleTime: 60 * 1000,
+    retry: 1,
   });
 }
 

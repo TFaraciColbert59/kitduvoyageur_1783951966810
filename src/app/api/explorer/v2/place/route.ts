@@ -99,52 +99,14 @@ export async function GET(request: Request) {
     ]);
 
     const placeData = Array.isArray(place) ? (place[0] ?? null) : (place ?? null);
-    const effectiveRoutes = Array.isArray(routes) && routes.length > 0
-      ? routes
-      : [
-          {
-            id: 101,
-            name: 'Tour du Mont-Blanc (GR® TMB)',
-            distance_km: 170.0,
-            network: 'iwn',
-            ref: 'TMB',
-            geojson: null,
-            unavailable: true,
-          },
-          {
-            id: 102,
-            name: 'Sentier des Gardes · Aiguilles Rouges',
-            distance_km: 9.1,
-            network: 'nwn',
-            ref: 'GR®',
-            geojson: null,
-            unavailable: true,
-          },
-          {
-            id: 103,
-            name: 'Lac Blanc par les Chéserys',
-            distance_km: 8.8,
-            network: 'rwn',
-            ref: 'PR',
-            geojson: null,
-            unavailable: true,
-          },
-          {
-            id: 104,
-            name: 'Traversée du Beaufortain',
-            distance_km: 24.5,
-            network: 'nwn',
-            ref: 'GRP',
-            geojson: null,
-            unavailable: true,
-          },
-        ];
 
     return NextResponse.json(
       {
         place: placeData,
         pois,
-        routes: effectiveRoutes,
+        // Aucun itinéraire de démonstration : une zone sans tracé réel rend
+        // une liste vide, jamais des noms qui ne désignent aucune géométrie.
+        routes,
         window: { dLat, dLng },
       },
       { headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=3600' } },

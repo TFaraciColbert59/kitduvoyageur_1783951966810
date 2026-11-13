@@ -2,7 +2,14 @@
 
 import React from 'react';
 import { XpIcon } from '../ui/XpIcon';
-import { useNaturalSearch, geometryCenter } from '../data/hooks';
+import {
+  ExplorerSearchError,
+  geometryCenter,
+  useNaturalSearch,
+  useRouteSuggestions,
+} from '../data/hooks';
+import { SUGGESTION_RADIUS_KM } from '../routeSuggestions';
+import { isSearchableViewport } from '../searchArea';
 import { AUTO_PAUSE_BY_SPORT } from '../activity/tracker';
 import {
   MILE_DISTANCE_M,
@@ -473,40 +480,17 @@ function EmptyAmis() {
 }
 
 function RoutesTab({ ctx }: { ctx: SheetContext }) {
-  const routesToDisplay = ctx.routes.length > 0 ? ctx.routes : [
-    {
-      id: 101,
-      name: 'Tour du Mont-Blanc (GR® TMB)',
-      distance_km: 170.0,
-      network: 'iwn',
-      ref: 'TMB',
-      unavailable: true,
-    },
-    {
-      id: 102,
-      name: 'Sentier des Gardes · Aiguilles Rouges',
-      distance_km: 9.1,
-      network: 'nwn',
-      ref: 'GR®',
-      unavailable: true,
-    },
-    {
-      id: 103,
-      name: 'Lac Blanc par les Chéserys',
-      distance_km: 8.8,
-      network: 'rwn',
-      ref: 'PR',
-      unavailable: true,
-    },
-    {
-      id: 104,
-      name: 'Crêtes du Grand Veymont · Vercors',
-      distance_km: 16.0,
-      network: 'nwn',
-      ref: 'GRP',
-      unavailable: true,
-    },
-  ];
+  // Aucune liste de démonstration : les parcours viennent du catalogue OSM
+  // (`explorer_routes`) ou de la recherche, jamais d'un identifiant inventé.
+  if (ctx.routes.length === 0) {
+    return (
+      <XpEmpty
+        title="Aucun parcours dans cette zone"
+        hint="Le catalogue OSM ne contient aucun tracé ici. Déplace la carte ou lance une recherche."
+      />
+    );
+  }
+  const routesToDisplay = ctx.routes;
 
   return (
     <XpRows>
@@ -1562,29 +1546,232 @@ function DepartForm({ ctx }: { ctx: SheetContext }) {
   );
 }
 
+function RouteSuggestions({ ctx }: { ctx: SheetContext }) {
+  const sport = ctx.state.searchSport ?? null;
+  const me = ctx.me;
+  const position =
+    ctx.state.locationPermission === 'granted' &&
+    me !== null &&
+    Number.isFinite(me.lat) &&
+    Number.isFinite(me.lng)
+      ? me
+      : null;
+  const { data, isFetching, isError, error, refetch } = useRouteSuggestions(
+    position?.lat ?? null,
+    position?.lng ?? null,
+    sport,
+    position !== null && sport !== null && ctx.state.online,
+  );
+  const searchError = error instanceof ExplorerSearchError ? error : null;
+  const unknownSport = searchError?.reason === 'sport-inconnu';
+  const patch = ctx.state.patch;
+  const suggestedRoutes = data?.routes;
+  const selectedSuggestionKept =
+    ctx.state.selection?.kind === 'trail' &&
+    (ctx.state.routeSuggestions ?? []).some(
+      (route) => String(route.id) === ctx.state.selection?.id,
+    );
+
+  // Les suggestions vivent à part de `searchRoutes` : une recherche textuelle
+  // ne doit jamais écraser les parcours trouvés autour de la position, et
+  // inversement. Elles restent en mémoire de session, jamais persistées. Une
+  // suggestion déjà ouverte n'est pas effacée pendant un rechargement.
+  React.useEffect(() => {
+    if (suggestedRoutes) {
+      patch({ routeSuggestions: suggestedRoutes });
+      return;
+    }
+    if (!selectedSuggestionKept) patch({ routeSuggestions: [] });
+  }, [suggestedRoutes, selectedSuggestionKept, patch]);
+
+  const label = sport && SPORT_META[sport] ? SPORT_META[sport].label : 'ce sport';
+
+  return (
+    <>
+      <XpEyebrow>Autour de moi</XpEyebrow>
+      <XpChips
+        items={SPORT_FAMILIES.map((family) => ({ id: family.sport, label: family.label }))}
+        value={sport ?? ''}
+        onChange={(id) => patch({ searchSport: id as Sport })}
+        ariaLabel="Sport des suggestions autour de moi"
+      />
+      {position === null ? (
+        <XpEmpty
+          title={
+            ctx.state.locationPermission === 'denied'
+              ? 'Position refusée'
+              : 'Position non disponible'
+          }
+          hint="Les suggestions autour de toi ne s’affichent qu’avec une position autorisée. La carte et la recherche textuelle restent utilisables sans position."
+          action={
+            ctx.onRequestLocation ? (
+              <button
+                type="button"
+                className="xp-secondary"
+                onClick={() => ctx.onRequestLocation?.()}
+              >
+                Demander la position
+              </button>
+            ) : undefined
+          }
+        />
+      ) : sport === null ? (
+        <XpEmpty
+          title="Choisis un sport"
+          hint="Aucun sport n’est déduit de la carte ni de la position : choisis-le pour voir les parcours qui le concernent."
+        />
+      ) : !ctx.state.online ? (
+        <XpEmpty
+          title="Suggestions indisponibles hors ligne"
+          hint="Les parcours autour de toi viennent de la base. Reviens en ligne pour les charger ; la recherche textuelle en cache reste consultable."
+        />
+      ) : isError ? (
+        <XpEmpty
+          title={unknownSport ? 'Sport inconnu' : 'Suggestions temporairement indisponibles'}
+          hint={
+            unknownSport
+              ? 'Ce sport ne fait pas partie de la taxonomie de l’Explorer. Aucun autre sport n’est choisi à sa place.'
+              : 'La base n’a pas répondu. Aucun résultat vide n’est affiché à la place d’une panne.'
+          }
+          action={
+            unknownSport ? undefined : (
+              <button type="button" className="xp-secondary" onClick={() => void refetch()}>
+                Réessayer
+              </button>
+            )
+          }
+        />
+      ) : isFetching && !data ? (
+        <XpEmpty
+          title={`Recherche autour de toi · ${label}`}
+          hint={`Classement des parcours réels dans un rayon de ${SUGGESTION_RADIUS_KM} km.`}
+        />
+      ) : !data ? (
+        <XpEmpty
+          title="Suggestions en préparation"
+          hint="La position et le sport sont prêts ; la requête n’a pas encore répondu."
+        />
+      ) : !data.supported ? (
+        <XpEmpty
+          title={`Aucun catalogue de parcours ${label.toLowerCase()}`}
+          hint="Le catalogue disponible ne contient que des itinéraires de randonnée. Aucun parcours d’un autre sport n’est proposé, et la difficulté n’est pas déduite."
+        />
+      ) : data.routes.length === 0 ? (
+        <XpEmpty
+          title={`Aucun parcours à moins de ${data.radiusKm} km`}
+          hint="Aucun itinéraire de randonnée du catalogue ne passe dans ce rayon autour de ta position. La recherche textuelle reste disponible."
+        />
+      ) : (
+        <>
+          <p style={{ margin: 0, fontSize: 11.5, color: 'var(--xp-mut)' }}>
+            {data.routes.length > 1 ? 'Itinéraires réels' : 'Itinéraire réel'} de randonnée ·
+            tracé à moins de {data.radiusKm} km · difficulté non renseignée
+          </p>
+          <XpRows>
+            {data.routes.map((route) => {
+              const length =
+                route.distance_km != null
+                  ? `${route.distance_km.toFixed(1).replace('.', ',')} km`
+                  : null;
+              const network =
+                route.network === 'iwn'
+                  ? 'GR® international'
+                  : route.network === 'nwn'
+                    ? 'GR®'
+                    : route.network === 'rwn'
+                      ? 'PR'
+                      : route.network === 'lwn'
+                        ? 'Sentier local'
+                        : null;
+              const distance =
+                route.distanceKm != null
+                  ? `tracé à ${formatDistance(route.distanceKm)}`
+                  : 'distance au tracé inconnue';
+              return (
+                <XpRow
+                  key={`suggestion-${route.id}`}
+                  icon="route"
+                  title={route.name || `Itinéraire ${route.ref || route.id}`}
+                  sub={[length, route.ref || network, distance].filter(Boolean).join(' · ')}
+                  onClick={() =>
+                    ctx.state.select({ kind: 'trail', id: String(route.id) }, 'trail', 'mid')
+                  }
+                />
+              );
+            })}
+          </XpRows>
+          {data.truncated ? (
+            <XpEmpty
+              title="Suggestions tronquées"
+              hint="La lecture est bornée à 60 parcours ; le classement ne porte que sur cette sélection."
+            />
+          ) : null}
+        </>
+      )}
+    </>
+  );
+}
+
 function SearchTab({ ctx }: { ctx: SheetContext }) {
-  const [query, setQuery] = React.useState('');
-  const { data, isFetching } = useNaturalSearch(
+  // La demande vit dans le store : fermer le tiroir puis déplacer la carte ne
+  // doit pas perdre la recherche que « Rechercher dans cette zone » relance.
+  const query = ctx.state.searchQuery ?? '';
+  const requestedViewport = ctx.state.searchViewport ?? null;
+  const areaUnavailable = requestedViewport !== null && !isSearchableViewport(requestedViewport);
+  const { data, isFetching, isError, error, refetch } = useNaturalSearch(
     query,
     ctx.state.center[1],
     ctx.state.center[0],
+    requestedViewport,
   );
+  const patch = ctx.state.patch;
+  const mapViewport = ctx.mapViewport;
+
+  // Les résultats affichés correspondent à cette emprise. Une recherche
+  // explicite porte sa propre emprise (`data.zone`) ; une recherche autour du
+  // centre retient l'emprise visible au moment de la réponse.
+  React.useEffect(() => {
+    if (!data) return;
+    const reference = data.zone ?? mapViewport;
+    if (!reference) return;
+    patch({ searchReferenceViewport: reference });
+  }, [data, mapViewport, patch]);
+
+  // Les parcours trouvés sont mémorisés avec les résultats : ouvrir une fiche
+  // puis revenir ne doit pas perdre la recherche ni la trace sélectionnée.
+  // Aucun parcours n'est conservé quand la réponse change ou disparaît.
+  React.useEffect(() => {
+    patch({ searchRoutes: data?.routes ?? [] });
+  }, [data?.routes, patch]);
+
   const results = React.useMemo(() => {
     const q = query.trim().toLowerCase();
     return {
       countries: q.length < 2 ? [] : ctx.countries.filter((country) => country.name.toLowerCase().includes(q)).slice(0, 4),
       pois: data?.results ?? [],
+      routes: data?.routes ?? [],
     };
   }, [ctx.countries, data, query]);
+
+  const searchError = error instanceof ExplorerSearchError ? error : null;
+  const zoneTooLarge = searchError?.reason === 'zone-too-large';
+  const unavailableWhileOffline = !ctx.state.online && !data;
+  const hasCenter =
+    Number.isFinite(ctx.state.center[1]) && Number.isFinite(ctx.state.center[0]);
+  const noResults =
+    results.countries.length === 0 &&
+    results.pois.length === 0 &&
+    results.routes.length === 0 &&
+    !data?.routesUnavailable;
 
   return (
     <>
       <input
         className="xp-searchinput"
         value={query}
-        onChange={(event) => setQuery(event.target.value)}
-        placeholder="Pays, sommet, refuge, eau…"
-        aria-label="Rechercher un lieu"
+        onChange={(event) => patch({ searchQuery: event.target.value })}
+        placeholder="Pays, parcours, sommet, refuge, eau…"
+        aria-label="Rechercher un lieu ou un parcours"
         style={{
           width: '100%',
           height: 38,
@@ -1596,14 +1783,63 @@ function SearchTab({ ctx }: { ctx: SheetContext }) {
         }}
       />
       {query.trim().length < 2 ? (
+        <>
+          <RouteSuggestions ctx={ctx} />
+          <p style={{ margin: 0, padding: '0 4px', fontSize: 11.5, color: 'var(--xp-mut)' }}>
+            Tape deux lettres pour chercher un lieu, un parcours ou un repère dans toute la
+            zone disponible.
+          </p>
+        </>
+      ) : areaUnavailable ? (
         <XpEmpty
-          title="Cherche un lieu"
-          hint="Tape deux lettres, ou une phrase : « un point d’eau à moins de 2 heures »."
+          title="Zoome pour chercher dans cette zone"
+          hint="La recherche dans l’emprise visible demande une carte plus précise (zoom 12 minimum)."
+        />
+      ) : !hasCenter ? (
+        <XpEmpty
+          title="Recherche sans position"
+          hint="Déplace la carte pour choisir une zone, puis relance la recherche."
+        />
+      ) : unavailableWhileOffline ? (
+        <XpEmpty
+          title="Recherche indisponible hors ligne"
+          hint="La recherche interroge la base. Reviens en ligne pour la relancer ; les derniers résultats restent consultables."
         />
       ) : isFetching ? (
         <XpEmpty title="Recherche…" hint="Analyse de la demande et interrogation de la base." />
-      ) : results.countries.length === 0 && results.pois.length === 0 ? (
-        <XpEmpty title="Aucun résultat" hint="Aucun pays ni repère ne correspond dans les données disponibles." />
+      ) : isError && !data ? (
+        <XpEmpty
+          title={
+            zoneTooLarge
+              ? 'Zoome pour chercher dans cette zone'
+              : !ctx.state.online
+                ? 'Recherche indisponible hors ligne'
+                : 'Recherche temporairement indisponible'
+          }
+          hint={
+            zoneTooLarge
+              ? 'L’emprise demandée est trop vaste pour être interrogée sans un déplacement plus précis.'
+              : 'La base n’a pas répondu. Aucun résultat vide n’est affiché à la place d’une panne.'
+          }
+          action={
+            zoneTooLarge || !ctx.state.online ? undefined : (
+              <button type="button" className="xp-secondary" onClick={() => void refetch()}>
+                Réessayer
+              </button>
+            )
+          }
+        />
+      ) : !data ? (
+        <XpEmpty title="Recherche…" hint="Préparation de la requête." />
+      ) : noResults ? (
+        <XpEmpty
+          title={requestedViewport ? 'Aucun résultat dans cette zone' : 'Aucun résultat'}
+          hint={
+            requestedViewport
+              ? 'Aucun pays, repère ni parcours ne correspond dans l’emprise visible. Déplace la carte ou corrige la demande.'
+              : 'Aucun pays, repère ni parcours ne correspond dans les données disponibles.'
+          }
+        />
       ) : (
         <>
           {results.countries.length > 0 ? (
@@ -1628,6 +1864,11 @@ function SearchTab({ ctx }: { ctx: SheetContext }) {
             <>
               <XpEyebrow>Filtres compris</XpEyebrow>
               <div className="xp-chiprow" aria-label="Filtres extraits de la demande">
+                {data.zone ? (
+                  <span className="xp-chip" aria-pressed="true">
+                    Emprise visible
+                  </span>
+                ) : null}
                 <span className="xp-chip" aria-pressed="true">
                   {data.filters.kinds.map((kind) => POI_LABEL[kind] ?? kind).join(' · ')}
                 </span>
@@ -1658,6 +1899,55 @@ function SearchTab({ ctx }: { ctx: SheetContext }) {
                 ))}
               </XpRows>
             </>
+          ) : null}
+          {results.routes.length > 0 ? (
+            <>
+              <XpEyebrow>Parcours</XpEyebrow>
+              <XpRows>
+                {results.routes.map((route) => {
+                  const length =
+                    route.distance_km != null
+                      ? `${route.distance_km.toFixed(1).replace('.', ',')} km`
+                      : null;
+                  const network =
+                    route.network === 'iwn'
+                      ? 'GR® international'
+                      : route.network === 'nwn'
+                        ? 'GR®'
+                        : route.network === 'rwn'
+                          ? 'PR'
+                          : 'Sentier balisé';
+                  const distance =
+                    route.distanceKm != null ? `à ${formatDistance(route.distanceKm)}` : null;
+                  return (
+                    <XpRow
+                      key={`route-${route.id}`}
+                      icon="route"
+                      title={route.name || `Itinéraire ${route.ref ?? route.id}`}
+                      sub={[length, route.ref ?? network, distance].filter(Boolean).join(' · ')}
+                      badge={
+                        route.matched ? { label: 'Nom cité', tone: 'good' } : undefined
+                      }
+                      onClick={() =>
+                        ctx.state.select({ kind: 'trail', id: String(route.id) }, 'trail', 'mid')
+                      }
+                    />
+                  );
+                })}
+              </XpRows>
+            </>
+          ) : null}
+          {data.routesUnavailable ? (
+            <XpEmpty
+              title="Parcours indisponibles"
+              hint="Le catalogue de parcours n’a pas répondu ; les repères restent affichés."
+            />
+          ) : null}
+          {data.truncated || data.routesTruncated ? (
+            <XpEmpty
+              title="Une partie des résultats est affichée"
+              hint="Zoome pour affiner l’emprise et voir les repères et parcours suivants."
+            />
           ) : null}
         </>
       )}
@@ -2203,7 +2493,13 @@ function StateTabs(ctx: SheetContext): SheetTab[] {
               icon="loc"
               title="Autoriser ma position"
               sub="Pour ouvrir la carte sur ton quartier"
-              onClick={() => state.patch({ locationPermission: 'granted', sheet: 'level', detent: 'peek' })}
+              onClick={() => {
+                // Le bouton ne fabrique jamais une permission « accordée » :
+                // il demande la position réelle, et seul le callback du
+                // navigateur patche `locationPermission`.
+                ctx.onRequestLocation?.();
+                state.patch({ sheet: 'level', detent: 'peek' });
+              }}
             />
             <XpRow icon="chevr" title="Plus tard" onClick={() => state.patch({ sheet: 'level', detent: 'peek' })} />
           </XpRows>

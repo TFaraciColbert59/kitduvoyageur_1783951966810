@@ -3,6 +3,7 @@
  */
 
 import type { SummarySavedState } from '../activity/finishOutcome';
+import type { SearchViewport } from '../searchArea';
 
 export type Level = 0 | 1 | 2 | 3;
 
@@ -208,6 +209,22 @@ export interface ToastMessage {
   id: number;
 }
 
+/**
+ * Parcours réel renvoyé par la recherche. Le catalogue reste `hiking_routes`
+ * (lecture publique OSM) ; la recherche ne crée ni identifiant ni tracé.
+ */
+export interface SearchRoute {
+  id: number;
+  name: string | null;
+  ref: string | null;
+  network: string | null;
+  distance_km: number | null;
+  /** Distance du centre de l'emprise au centre du tracé ; `null` si inconnue. */
+  distanceKm: number | null;
+  /** Vrai quand la demande cite un mot du nom ou de la référence. */
+  matched: boolean;
+}
+
 export interface ExplorerState {
   level: Level;
   /** ISO2 du pays courant ; '' = pays de l'utilisateur (aucun pays ouvert). */
@@ -248,6 +265,35 @@ export interface ExplorerState {
   /** Centre courant de la carte, tenu à jour pour les requêtes de données. */
   center: [number, number];
   zoom: number;
+  /** Dernière demande saisie : conservée en fermant le tiroir pour pouvoir la relancer. */
+  searchQuery?: string;
+  /**
+   * Sport explicitement choisi pour les suggestions « autour de moi ».
+   * `null` = aucun sport choisi : aucune suggestion n'est déduite à sa place.
+   */
+  searchSport?: Sport | null;
+  /**
+   * Parcours réels de la dernière requête « autour de moi », tenus à part des
+   * résultats de recherche textuelle (`searchRoutes`). Ils ne sont jamais
+   * persistés et ne contiennent aucune donnée privée.
+   */
+  routeSuggestions?: SearchRoute[];
+  /**
+   * Emprise explicitement demandée par « Rechercher dans cette zone ».
+   * `null` = recherche autour du centre courant, comportement historique.
+   */
+  searchViewport?: SearchViewport | null;
+  /**
+   * Emprise visible au moment où les résultats affichés ont été obtenus.
+   * Elle ne sert qu'à décider si la carte a bougé depuis cette recherche.
+   */
+  searchReferenceViewport?: SearchViewport | null;
+  /**
+   * Parcours réels de la dernière recherche. Ils complètent, sans les
+   * remplacer, les itinéraires déjà chargés pour le lieu courant ; ils ne sont
+   * jamais persistés et ne contiennent aucune donnée privée.
+   */
+  searchRoutes?: SearchRoute[];
   /** Fond de carte : relief 3D, satellite ou plan vectoriel. */
   mapBaseStyle?: 'relief' | 'satellite' | 'plan';
   /** Visibilité des calques de données. */
