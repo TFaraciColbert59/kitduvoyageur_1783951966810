@@ -3,6 +3,7 @@ import {
   signatureVisibilityForValue,
   type SignatureVisibility,
 } from './accountVisibility';
+import type { ProgressionSession } from '../progression/engine';
 
 /**
  * Mapping pur des données Supabase vers les formes attendues par le runtime
@@ -230,12 +231,15 @@ export type HikeRow = {
   started_at?: string | null;
   ended_at?: string | null;
   distance_km?: number | string | null;
+  duration_seconds?: number | null;
   elevation_gain_m?: number | string | null;
   positions_timed?: unknown;
   kit_id?: string | null;
   title?: string | null;
   max_altitude_m?: number | null;
   visibility?: string | null;
+  activity_session_id?: string | null;
+  variant_id?: string | null;
 };
 
 /**
@@ -249,9 +253,11 @@ export type StatsHikeRow = Pick<
   | 'started_at'
   | 'ended_at'
   | 'distance_km'
+  | 'duration_seconds'
   | 'elevation_gain_m'
   | 'positions_timed'
   | 'kit_id'
+  | 'title'
 >;
 
 export type RouteRow = {
@@ -1270,6 +1276,160 @@ export function mapStats(rows: StatsHikeRow[], routes: RouteRow[], massifs: GeoM
   };
 }
 
+/**
+ * Séances compactes pour le calendrier et les cumuls S2.17/S2.18.
+ *
+ * On conserve `null` pour une métrique absente : la vue affiche alors
+ * « indisponible » au lieu d'un zéro inventé. Le sport vient de
+ * `activity_sessions` (ou de la variante, quand le lien manque) ; sans preuve,
+ * il reste `null` et la séance est regroupée sous « Sport non renseigné ».
+ */
+export function mapProgressionSessions(
+  rows: StatsHikeRow[],
+  routes: RouteRow[],
+  sportBySession: Map<string, string> = new Map()
+): ProgressionSession[] {
+  const routeById = new Map(routes.map((route) => [route.id, route]));
+  return rows
+    .map((row) => {
+      const route = row.route_id ? routeById.get(row.route_id) : undefined;
+      return {
+        id: row.id,
+        title: row.title?.trim() || route?.name?.trim() || 'Sortie enregistrée',
+        startedAt: row.started_at ?? null,
+        endedAt: row.ended_at ?? null,
+        km: firstNumber(row.distance_km),
+        dplus: firstNumber(row.elevation_gain_m),
+        durationS: firstNumber(row.duration_seconds),
+        sport: sportBySession.get(row.id) ?? null,
+        massif: route?.region?.trim() || route?.name?.trim() || null,
+      };
+    })
+    .sort((left, right) => (right.startedAt ?? '').localeCompare(left.startedAt ?? ''));
+}
+
+type SportLinkRow = {
+  id: string;
+  activity_session_id?: string | null;
+  variant_id?: string | null;
+};
+
+/** Fuseau du profil voyageur ; `null` si absent, illisible ou indisponible. */
+async function readProfileTimeZone(
+  supabase: SupabaseLike,
+  userId: string
+): Promise<string | null> {
+  try {
+    const { data } = await supabase
+      .from('user_traveller')
+      .select('time_zone')
+      .eq('user_id', userId)
+      .maybeSingle();
+    const value = (data as { time_zone?: string | null } | null)?.time_zone;
+    return typeof value === 'string' && value.trim() ? value.trim() : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Sport par séance, sans migration et sans supposer une colonne présente.
+ *
+ * 1. `hike_sessions.activity_session_id` → `activity_sessions.sport` quand le
+ *    lien de fin de séance existe (migration de contrat déjà livrée) ;
+ * 2. repli sur `hike_sessions.variant_id` → `explorer_sport_variants.sport`
+ *    pour les séances liées à une variante mais sans lien de séance ;
+ * 3. sinon `null` : l'UI dira « Sport non renseigné », jamais un sport deviné.
+ *
+ * Une colonne absente sur une base plus ancienne fait échouer la lecture
+ * optionnelle : le résultat est alors vide, sans casser le bootstrap.
+ */
+async function loadSportBySession(
+  supabase: SupabaseLike,
+  userId: string
+): Promise<Map<string, string>> {
+  let links = await safeRowsOrNull<SportLinkRow>(
+    supabase
+      .from('hike_sessions')
+      .select('id,activity_session_id,variant_id')
+      .eq('user_id', userId)
+  );
+  if (!links) {
+    // Base plus ancienne : la colonne de lien de séance peut manquer alors que
+    // `variant_id` existe déjà. On retente sans elle, sans bloquer le Compte.
+    links = await safeRowsOrNull<SportLinkRow>(
+      supabase.from('hike_sessions').select('id,variant_id').eq('user_id', userId)
+    );
+  }
+  if (!links || links.length === 0) return new Map();
+
+  const sportBySession = new Map<string, string>();
+  const activityIds = [
+    ...new Set(
+      links
+        .map((link) => link.activity_session_id)
+        .filter((id): id is string => typeof id === 'string' && id.length > 0)
+    ),
+  ];
+  if (activityIds.length > 0) {
+    // Découpage des `in` : un compte très actif peut dépasser la longueur
+    // d'URL acceptée par PostgREST si tous les identifiants partent d'un coup.
+    const sportByActivity = new Map<string, string>();
+    for (let index = 0; index < activityIds.length; index += 200) {
+      const batch = activityIds.slice(index, index + 200);
+      const activities = await safeRowsOrNull<{ id: string; sport?: string | null }>(
+        supabase.from('activity_sessions').select('id,sport').in('id', batch)
+      );
+      for (const activity of activities ?? []) {
+        if (typeof activity.sport === 'string' && activity.sport) {
+          sportByActivity.set(activity.id, activity.sport);
+        }
+      }
+    }
+    // La clé finale reste `hike_sessions.id` : l'identifiant d'activité n'est
+    // qu'un maillon de lecture, jamais celui exposé à l'UI des sorties.
+    for (const link of links) {
+      const sport = link.activity_session_id
+        ? sportByActivity.get(link.activity_session_id)
+        : undefined;
+      if (sport) sportBySession.set(link.id, sport);
+    }
+  }
+
+  const unresolved = links.filter((link) => link.id && !sportBySession.has(link.id));
+  const variantIds = [
+    ...new Set(
+      unresolved
+        .map((link) => link.variant_id)
+        .filter((id): id is string => typeof id === 'string' && id.length > 0)
+    ),
+  ];
+  if (variantIds.length > 0) {
+    const sportsByVariant = new Map<string, Set<string>>();
+    for (let index = 0; index < variantIds.length; index += 200) {
+      const batch = variantIds.slice(index, index + 200);
+      const variants = await safeRowsOrNull<{ sport: string; variant_id: string }>(
+        supabase.from('explorer_sport_variants').select('sport,variant_id').in('variant_id', batch)
+      );
+      for (const variant of variants ?? []) {
+        const sports = sportsByVariant.get(variant.variant_id) ?? new Set<string>();
+        sports.add(variant.sport);
+        sportsByVariant.set(variant.variant_id, sports);
+      }
+    }
+    for (const link of unresolved) {
+      const sports = link.variant_id ? sportsByVariant.get(link.variant_id) : undefined;
+      // Une variante portée par plusieurs sports est ambiguë : on ne choisit
+      // pas à la place de la donnée, le sport reste inconnu.
+      if (sports && sports.size === 1) {
+        sportBySession.set(link.id, [...sports][0]);
+      }
+    }
+  }
+
+  return sportBySession;
+}
+
 export function mapGearItems(
   rows: OwnershipRow[],
   loanedToByItem: Map<string, string> = new Map()
@@ -1609,7 +1769,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
   const user = authData?.user;
   if (!user) return { authenticated: false as const };
 
-  const [profileRes, followerRows, followingRows] = await Promise.all([
+  const [profileRes, followerRows, followingRows, profileTimeZone] = await Promise.all([
     supabase.from('user_profiles').select('*').eq('id', user.id).maybeSingle(),
     safeRows<{ follower_id?: string | null }>(
       supabase.from('user_follows').select('follower_id').eq('following_id', user.id)
@@ -1617,9 +1777,16 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
     safeRows<{ following_id?: string | null }>(
       supabase.from('user_follows').select('following_id').eq('follower_id', user.id)
     ),
+    // Fuseau choisi par la personne (`user_traveller`, RLS propriétaire) :
+    // sert au découpage civil du calendrier et des périodes. Absent : l'UI
+    // retombe sur le fuseau du navigateur, puis UTC, en le disant.
+    readProfileTimeZone(supabase, user.id),
   ]);
 
   const profile = (profileRes.data ?? null) as AccountProfileRow | null;
+  const sportBySessionPromise = loadSportBySession(supabase, user.id).catch(
+    () => new Map<string, string>()
+  );
   const followerIds = [
     ...new Set(
       followerRows
@@ -1676,12 +1843,13 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
         .limit(24)
     ),
     // Agrégats Vitrine, Passeport et Cordée : toutes les sessions, sans
-    // plafond de liste. La trace GPS est lue pour vérifier les tampons.
+    // plafond de liste. La trace GPS est lue pour vérifier les tampons ;
+    // `duration_seconds` et `title` alimentent le calendrier S2.17/S2.18.
     safeRows<StatsHikeRow>(
       supabase
         .from('hike_sessions')
         .select(
-          'id,route_id,started_at,ended_at,distance_km,elevation_gain_m,positions_timed'
+          'id,route_id,started_at,ended_at,distance_km,duration_seconds,elevation_gain_m,positions_timed,title'
         )
         .eq('user_id', user.id)
     ),
@@ -2191,12 +2359,19 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
   }
 
   const orderRowsMapped = mapOrders(orderRows);
+  const sportBySession = await sportBySessionPromise;
 
   return {
     authenticated: true as const,
     profile: mapProfile(profile, followers, followingIds.length),
     carnets: mapPosts(postRows),
     outings: mapOutings(outings, routes, coverBySession),
+    // S2.17/S2.18 : séances compactes du propriétaire, tous sports et toutes
+    // périodes. Le bootstrap n'est servi qu'à la personne connectée ; aucune
+    // coordonnée n'y entre.
+    progressionSessions: mapProgressionSessions(statsSessions, routes, sportBySession),
+    /** Fuseau du profil voyageur ; `null` = repli navigateur/UTC côté UI. */
+    timeZone: profileTimeZone,
     stats: mapStats(statsSessions, routes, geoMassifs),
     orders: orderRowsMapped.orders,
     bookings: orderRowsMapped.bookings,

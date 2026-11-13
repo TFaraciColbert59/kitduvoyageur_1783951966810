@@ -1879,7 +1879,7 @@ let renderSheet = function() {
     }
     return;
   }
-  const REACT_DRAWERS = { account_drawer: "compte", followers_sheet: "reseau", outing_drawer: "sortie", story_edit_drawer: "highlight" };
+  const REACT_DRAWERS = { account_drawer: "compte", followers_sheet: "reseau", outing_drawer: "sortie", progression_drawer: "progression", story_edit_drawer: "highlight" };
   if (REACT_DRAWERS[sh.k]) {
     const kind = REACT_DRAWERS[sh.k];
     if (typeof window.__lkdvUnmountSlot === "function") {
@@ -1890,7 +1890,7 @@ let renderSheet = function() {
     }
     const label = kind === "reseau"
       ? (drawerHintMode === "following" ? "Abonnements" : "Abonnés")
-      : kind === "sortie" ? "Sortie" : kind === "highlight" ? "Story à la une" : "Compte & Activité";
+      : kind === "sortie" ? "Sortie" : kind === "progression" ? "Calendrier & statistiques" : kind === "highlight" ? "Story à la une" : "Compte & Activité";
     const back = S.stk.length ? `<button class="lg gbtn sm sh-back" data-a="close" aria-label="Retour">${ic(IC.chevL, "s")}</button>` : "";
     $("sheet").setAttribute("aria-label", label);
     $("sheet").innerHTML = `<div class="grab" data-drag>
@@ -1913,9 +1913,11 @@ let renderSheet = function() {
       ? { tab: drawerHintMode || "followers" }
       : kind === "sortie"
         ? { outingId: sh.outingId || (sh.extra && sh.extra.outingId) || "" }
-        : kind === "highlight"
-          ? { hlId: sh.hlId || (sh.extra && sh.extra.hlId) || "", hlTitle: sh.hlTitle || (sh.extra && sh.extra.hlTitle) || "" }
-          : { tab: drawerHintTab || 0 };
+        : kind === "progression"
+          ? { view: sh.view || (sh.extra && sh.extra.view) || "calendar" }
+          : kind === "highlight"
+            ? { hlId: sh.hlId || (sh.extra && sh.extra.hlId) || "", hlTitle: sh.hlTitle || (sh.extra && sh.extra.hlTitle) || "" }
+            : { tab: drawerHintTab || 0 };
     if (root && typeof window.__lkdvMountDrawer === "function") {
       try { window.__lkdvMountDrawer(root, kind, props); } catch (err) {
         console.warn("[CompteLiquidGlassV8] drawer mount failed:", err);
@@ -3296,8 +3298,14 @@ renderIgTabContent = function (D) {
   // TAB 1: Voyages (Sorties faites en défilement horizontal)
   if (S.igTab === 1) {
     const list = OUTINGS;
+    const progressionActions = S.profile && S.profile.isDemo !== true && S.profile.isGuest !== true
+      ? '<div style="display:flex!important;gap:6px!important;flex-wrap:wrap!important;padding:10px 2px 2px!important;" role="group" aria-label="Progression des sorties">' +
+          '<button type="button" class="mbtn p" style="height:38px!important;padding:0 14px!important;" data-a="openProgression" data-v="calendar" aria-label="Ouvrir le calendrier et la synthèse hebdomadaire">Calendrier</button>' +
+          '<button type="button" class="mbtn soft" style="height:38px!important;padding:0 14px!important;" data-a="openProgression" data-v="stats" aria-label="Ouvrir les statistiques cumulées par sport et période">Statistiques</button>' +
+        '</div>'
+      : '';
     if (!list.length) {
-      return '<div class="ig-voyages-tab" role="region" aria-label="Sorties faites et voyages réalisés"><div style="padding:28px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;"><b style="font:600 14px var(--sf);color:var(--label);">Aucune sortie enregistrée</b><p style="font:400 12px/1.4 var(--sf);color:var(--label2);max-width:240px;margin:0 auto;">Vos traces GPS et vos sorties apparaîtront ici dès votre première randonnée enregistrée.</p><a href="/compas" class="mbtn p" style="text-decoration:none;height:30px;padding:0 14px;font-size:12px;">Planifier un voyage</a></div></div>';
+      return '<div class="ig-voyages-tab" role="region" aria-label="Sorties faites et voyages réalisés"><div style="padding:28px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;"><b style="font:600 14px var(--sf);color:var(--label);">Aucune sortie enregistrée</b><p style="font:400 12px/1.4 var(--sf);color:var(--label2);max-width:240px;margin:0 auto;">Vos traces GPS et vos sorties apparaîtront ici dès votre première randonnée enregistrée.</p><a href="/compas" class="mbtn p" style="text-decoration:none;height:30px;padding:0 14px;font-size:12px;">Planifier un voyage</a></div>' + progressionActions + '</div>';
     }
     return '<div class="ig-voyages-tab" role="region" aria-label="Sorties faites et voyages réalisés">' +
       '<div class="voyages-carousel">' +
@@ -3326,6 +3334,7 @@ renderIgTabContent = function (D) {
           '</button>';
         }).join('') +
       '</div>' +
+      progressionActions +
     '</div>';
   }
 
@@ -4930,6 +4939,25 @@ var EXA = {
     if (!o) { island('Sortie introuvable', 'Cette sortie n’est plus accessible.', false); return; }
     openSheet('outing_drawer', 0, 'card', { outingId: o.realId || o.id });
     requestAnimationFrame(() => flyToOuting(o));
+    haptic(10);
+  },
+  openProgression: v => {
+    openSheet('progression_drawer', 0, 'large', { view: v === 'stats' ? 'stats' : 'calendar' });
+    haptic(8);
+  },
+  setProgressionView: v => {
+    if (S.sh && S.sh.k === 'progression_drawer') {
+      S.sh.view = v === 'stats' ? 'stats' : 'calendar';
+    }
+  },
+  openProgressionOuting: v => {
+    if (!v) { island('Sortie introuvable', 'Cette sortie n’est plus accessible.', false); return; }
+    /* L’identifiant vient du bootstrap complet : la séance peut être plus
+       ancienne que les 24 cartes du carrousel. On ouvre donc par identifiant,
+       sans exiger sa présence dans `OUTINGS`. */
+    const o = OUTINGS.find(x => x.id === v || x.realId === v);
+    pushSheet({ k: 'outing_drawer', outingId: v });
+    if (o) requestAnimationFrame(() => flyToOuting(o));
     haptic(10);
   },
   save_full_profile: () => {

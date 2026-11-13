@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { requestCarnetPublicationAward } from '@/lib/progression-award-requests';
+import type { ProgressionSession } from '@/features/compte/progression/engine';
 // Invoque /api/voyages/mine via le client cache
 import { fetchMyTripsCached, getMyTripsSessionGeneration, isMyTripsSessionCurrent } from '@/features/trips/client/fetchMyTrips';
 import { initCompteLiquidGlassRuntime } from './compte-liquid-glass-v8-runtime';
@@ -79,6 +80,10 @@ const ReseauDrawer = dynamic(
 );
 const SortieDrawer = dynamic(
   () => import('./drawer/sortie/SortieDrawer').then((mod) => mod.SortieDrawer),
+  { ssr: false }
+);
+const ProgressionDrawer = dynamic(
+  () => import('./drawer/progression/ProgressionDrawer').then((mod) => mod.ProgressionDrawer),
   { ssr: false }
 );
 const HighlightEditDrawer = dynamic(
@@ -1373,6 +1378,22 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
   // Tant que le vrai profil n'est pas chargé, la carte reste un verre vide qui
   // scintille : la maquette par défaut du runtime ne s'affiche jamais.
   const booting = authLoading || Boolean(user && (bootstrapPhase === 'idle' || bootstrapPhase === 'loading'));
+  const bootPayload = bootstrapPayloadRef.current as {
+    progressionSessions?: ProgressionSession[];
+    timeZone?: string | null;
+  } | null;
+  const rawProgressionSessions = bootPayload?.progressionSessions;
+  const progressionSessions: ProgressionSession[] = Array.isArray(rawProgressionSessions)
+    ? rawProgressionSessions
+    : [];
+  const progressionState =
+    !user
+      ? 'error'
+      : bootstrapPhase === 'error'
+        ? 'error'
+        : bootstrapPhase === 'ready'
+          ? 'ready'
+          : 'loading';
 
   return (
     <div className="lkdv-compte-v8" data-theme="light" data-boot={booting ? 'loading' : 'ready'}>
@@ -1497,6 +1518,20 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
           <ReseauDrawer initialTab={drawerMount.props?.tab === 'followers' ? 1 : 0} />
         ) : drawerMount.kind === 'sortie' ? (
           <SortieDrawer outingId={String(drawerMount.props?.outingId || '')} />
+        ) : drawerMount.kind === 'progression' ? (
+          <ProgressionDrawer
+            initialView={drawerMount.props?.view === 'stats' ? 'stats' : 'calendar'}
+            sessions={progressionSessions}
+            timeZone={bootPayload?.timeZone ?? null}
+            state={progressionState}
+            onRetry={() => retryBootstrapRef.current()}
+            accountKey={user?.id ?? 'anonymous'}
+            onViewChange={(next) => {
+              if (typeof window !== 'undefined') {
+                (window as any).__lkdvCompteAct?.('setProgressionView', next);
+              }
+            }}
+          />
         ) : drawerMount.kind === 'highlight' ? (
           <HighlightEditDrawer hlId={String(drawerMount.props?.hlId || '')} hlTitle={String(drawerMount.props?.hlTitle || '')} />
         ) : drawerMount.kind === 'compte' ? (
