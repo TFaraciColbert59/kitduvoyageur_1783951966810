@@ -32,7 +32,7 @@ vi.mock('@/features/explorer-v2/activity/Countdown', () => ({
   useLongPress: () => ({}),
 }));
 vi.mock('@/features/explorer-v2/activity/useGpsTracker', () => ({
-  useGpsTracker: () => undefined,
+  useGpsTracker: () => ({ markLap: () => undefined }),
 }));
 vi.mock('@/features/explorer-v2/native/liveActivity', () => ({
   startLiveActivity: async () => undefined,

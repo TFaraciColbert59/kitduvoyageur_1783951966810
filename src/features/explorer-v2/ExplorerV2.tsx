@@ -36,9 +36,12 @@ import {
   readActiveSession,
   readLatestFinishedSession,
   readSessionPoints,
+  readSessionRoute,
   recordFromActivity,
   saveActiveSession,
   saveFinishedSession,
+  saveSessionRoute,
+  type LocalSessionPoint,
   type LocalSessionRecord,
 } from './activity/localSession';
 import {
@@ -107,12 +110,25 @@ const POINT_SYNC_INTERVAL_MS = 5000;
 
 /**
  * Reconstruit le tracé d'une séance restaurée à partir des points persistés.
- * Les coupures de pause ne sont pas stockées : la trace restaurée est continue,
- * alors que le tracker, lui, rejoue les fixes et retrouve ses métriques.
+ * `breakBefore` restitue les coupures de pause et de trou GPS ; `drawn: false`
+ * écarte les points capturés pendant une pause automatique, que le tracker
+ * rejoue mais que la carte ne doit pas afficher. Les anciens points n'ont ni
+ * l'un ni l'autre : leur tracé reste continu, faute d'information persistée.
  */
-function traceFromPoints(points: ReadonlyArray<readonly [number, number]>): TrackTrace {
+function traceFromSessionPoints(points: ReadonlyArray<LocalSessionPoint>): TrackTrace {
   let trace = createTrackTrace();
-  for (const point of points) trace = pushTrackPoint(trace, [point[0], point[1]]);
+  for (const point of points) {
+    if (point.drawn === false) continue;
+    if (point.breakBefore === true) {
+      trace = interruptTrack(trace);
+    } else {
+      const last = trace.current[trace.current.length - 1];
+      // Même déduplication que le direct : un point identique n'ajoute rien,
+      // sauf s'il ouvre justement un nouveau segment.
+      if (last && last[0] === point.lng && last[1] === point.lat) continue;
+    }
+    trace = pushTrackPoint(trace, [point.lng, point.lat]);
+  }
   return trace;
 }
 
@@ -195,6 +211,9 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
   // Séance restaurée : les points déjà acceptés rejouent les métriques du
   // tracker, sans en inventer aucun.
   const [restoredTracker, setRestoredTracker] = useState<RestoredTrackerState | null>(null);
+  // Miroir de `trackTrace.interrupted` pour le point suivant : il permet de
+  // persister la coupure avec le point qui ouvre le nouveau segment.
+  const traceBreakRef = React.useRef(false);
   const restoreDoneRef = React.useRef(false);
   const pointSeqRef = React.useRef(0);
   const pointsSinceSyncRef = React.useRef(0);
@@ -717,6 +736,14 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
     [activityRouteLines],
   );
 
+  // Copie locale de l'itinéraire figé : écrite seulement quand le snapshot
+  // change (départ, géométrie chargée, indisponibilité), jamais par point.
+  useEffect(() => {
+    const clientSessionId = state.activity?.clientSessionId;
+    if (!clientSessionId || !activityRoute) return;
+    void saveSessionRoute(clientSessionId, activityRoute);
+  }, [state.activity?.clientSessionId, activityRoute]);
+
   /**
    * La carte doit dessiner la même trace que celle mesurée. `explorer_routes`
    * simplifie à ~89 m, alors que le hors-trace alerte à 40 m : on substitue la
@@ -834,15 +861,19 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
       // Pause automatique : la capture continue pour détecter la reprise, mais
       // le tracé et la carte restent figés. Le point est tout de même persisté
       // localement pour que la séance restaurée rejoue exactement les mêmes
-      // fixes ; il n'entre ni dans la distance ni dans la durée.
+      // fixes ; il n'entre ni dans la distance ni dans la durée, et il est
+      // marqué comme non dessiné pour ne pas réapparaître au rechargement.
+      const startsNewSegment = metrics.discontinuity || traceBreakRef.current;
       if (metrics.autoPaused) {
+        traceBreakRef.current = true;
         setTrackTrace(interruptTrack);
       } else {
+        traceBreakRef.current = false;
         setMe({ lat: fix.lat, lng: fix.lng });
         setTrackTrace((prev) => {
           // Trou GPS, rejet précédent ou pause manuelle : la nouvelle borne ne
           // doit pas être reliée au dernier point par une corde droite.
-          const base = metrics.discontinuity ? interruptTrack(prev) : prev;
+          const base = startsNewSegment ? interruptTrack(prev) : prev;
           // Un même point reçu deux fois n'ajoute rien au tracé (la séance
           // locale le dédupliquait déjà) ; après une coupure, il ouvre bien un
           // nouveau segment.
@@ -896,6 +927,8 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
         ele: fix.ele ?? null,
         acc: fix.acc ?? null,
         speed: fix.speed ?? null,
+        drawn: !metrics.autoPaused,
+        ...(metrics.autoPaused ? {} : { breakBefore: startsNewSegment }),
       });
       if (pointsSinceSyncRef.current >= POINT_SYNC_EVERY) {
         pointsSinceSyncRef.current = 0;
@@ -912,9 +945,12 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
   });
 
   // Pause manuelle : aucun fix n'arrive pendant la pause. On marque la coupure
-  // dès que l'état bascule pour que la reprise ouvre un segment distinct.
+  // dès que l'état bascule pour que la reprise ouvre un segment distinct, et
+  // on la persiste avec le premier point qui suit la reprise.
   useEffect(() => {
-    if (state.activity?.paused) setTrackTrace(interruptTrack);
+    if (!state.activity?.paused) return;
+    traceBreakRef.current = true;
+    setTrackTrace(interruptTrack);
   }, [state.activity?.paused]);
 
   // Reprise au montage : une séance locale encore ouverte retrouve son
@@ -933,13 +969,19 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
         const active = await readActiveSession();
         if (cancelled) return;
         if (active) {
-          const points = await readSessionPoints(active.clientSessionId);
+          const [points, route] = await Promise.all([
+            readSessionPoints(active.clientSessionId),
+            readSessionRoute(active.clientSessionId),
+          ]);
           if (cancelled) return;
           localSessionRef.current = active;
           pointSeqRef.current = active.lastPointSeq;
-          setTrackTrace(
-            traceFromPoints(points.map((point) => [point.lng, point.lat] as [number, number])),
-          );
+          // Une séance restaurée pendant une pause automatique se termine sur
+          // des points non dessinés : le prochain point doit ouvrir un segment,
+          // même si le réglage de pause a changé entre-temps.
+          traceBreakRef.current =
+            points.length > 0 && points[points.length - 1].drawn === false;
+          setTrackTrace(traceFromSessionPoints(points));
           setRestoredTracker({
             clientSessionId: active.clientSessionId,
             fixes: points.map((point) => ({
@@ -955,6 +997,10 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
             activity: {
               sport: active.sport,
               ...(active.selection ? { selection: active.selection } : {}),
+              // La copie locale de l'itinéraire rétablit le hors-trace même
+              // hors ligne ; une ancienne séance sans copie reste en suivi
+              // libre, exactement comme avant.
+              ...(route ? { route } : {}),
               sessionId: active.serverSessionId,
               clientSessionId: active.clientSessionId,
               startedAt: active.startedAt,
@@ -974,14 +1020,16 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
         const latest = await readLatestFinishedSession();
         if (cancelled || !latest || latest.endedAt === null) return;
         if (Date.now() - latest.endedAt > SUMMARY_RESTORE_TTL_MS) return;
-        const summary = activityFromRecord(latest);
-        if (!summary) return;
-        const points = await readSessionPoints(latest.clientSessionId);
+        const [points, route] = await Promise.all([
+          readSessionPoints(latest.clientSessionId),
+          readSessionRoute(latest.clientSessionId),
+        ]);
         if (cancelled) return;
+        const summary = activityFromRecord(latest, route);
+        if (!summary) return;
         localSessionRef.current = latest;
-        setTrackTrace(
-          traceFromPoints(points.map((point) => [point.lng, point.lat] as [number, number])),
-        );
+        traceBreakRef.current = false;
+        setTrackTrace(traceFromSessionPoints(points));
         useExplorerStore.setState({
           summary,
           summarySaved: latest.summarySaved ?? 'pending',
@@ -1151,6 +1199,7 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
   // Réinitialise le tracé au début d'une nouvelle activité
   useEffect(() => {
     if (!state.activity && state.sheet !== 'summary') {
+      traceBreakRef.current = false;
       setTrackTrace((prev) =>
         prev.segments.length > 0 || prev.current.length > 0 ? createTrackTrace() : prev,
       );

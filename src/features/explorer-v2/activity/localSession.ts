@@ -10,19 +10,27 @@
  *
  *   • une fiche de séance (identité stable, métriques, curseurs) ;
  *   • chaque point GPS réellement accepté par le tracker, avec une séquence
- *     monotone ; c'est cette séquence qui rend le renvoi idempotent côté SQL.
+ *     monotone ; c'est cette séquence qui rend le renvoi idempotent côté SQL ;
+ *   • la copie figée de l'itinéraire, dans un magasin séparé, pour que le
+ *     hors-trace survive à un rechargement même hors ligne.
  *
  * Aucun point n'est fabriqué ici : `appendSessionPoint` n'est appelé que pour
  * un fix que `ActivityTracker` a accepté. IndexedDB indisponible ⇒ aucune
  * promesse de persistance n'est faite, les fonctions renvoient `null`.
  */
 
-import type { ActivityState, Sport, SportSelection } from '../state/types';
+import type {
+  ActivityState,
+  Sport,
+  SportSelection,
+  TrailRouteSnapshot,
+} from '../state/types';
 import type { SummarySavedState } from './finishOutcome';
 import {
   SESSIONS_STORE,
   SESSION_META_STORE,
   SESSION_POINTS_STORE,
+  SESSION_ROUTES_STORE,
   openExplorerDb,
   transactionDone,
 } from '../offline/db';
@@ -65,6 +73,28 @@ export interface LocalSessionPoint {
   ele?: number | null;
   acc?: number | null;
   speed?: number | null;
+  /**
+   * Faux pour un point reçu pendant une pause automatique : le tracker le
+   * rejoue pour retrouver ses métriques, mais il ne doit pas être dessiné.
+   * Absent sur les anciens points, qui restent dessinés.
+   */
+  drawn?: boolean;
+  /**
+   * Vrai quand ce point ouvre un nouveau segment de tracé (pause manuelle,
+   * pause automatique, trou GPS ou premier point après un rejet). Absent sur
+   * les anciens points : leur tracé reste continu, faute d'information.
+   */
+  breakBefore?: boolean;
+}
+
+/** Version locale de la copie d'itinéraire, indépendante de la fiche. */
+export const LOCAL_SESSION_ROUTE_VERSION = 1;
+
+interface StoredSessionRoute {
+  version: typeof LOCAL_SESSION_ROUTE_VERSION;
+  clientSessionId: string;
+  route: TrailRouteSnapshot;
+  updatedAt: number;
 }
 
 interface MetaRecord {
@@ -191,13 +221,44 @@ export function parseLocalSessionRecord(value: unknown): LocalSessionRecord | nu
   };
 }
 
+/**
+ * Lecture défensive de la copie d'itinéraire. Le GeoJSON reste opaque : il est
+ * relu par `routeLines`, qui sait déjà ignorer une géométrie inexploitable.
+ * Une copie d'une version inconnue est ignorée, jamais convertie à l'aveugle.
+ */
+function parseSessionRoute(value: unknown): TrailRouteSnapshot | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const stored = value as Record<string, unknown>;
+  if (stored.version !== LOCAL_SESSION_ROUTE_VERSION) return null;
+  if (!isUuid(stored.clientSessionId)) return null;
+  const route = stored.route;
+  if (!route || typeof route !== 'object' || Array.isArray(route)) return null;
+  const snapshot = route as Record<string, unknown>;
+  if (typeof snapshot.id !== 'string' || snapshot.id.length === 0) return null;
+  const status = snapshot.status;
+  if (status !== 'loading' && status !== 'ready' && status !== 'unavailable') {
+    return null;
+  }
+  if (snapshot.name !== null && typeof snapshot.name !== 'string') return null;
+  const geojson = snapshot.geojson;
+  if (geojson !== null && typeof geojson !== 'object') return null;
+  return {
+    id: snapshot.id,
+    name: (snapshot.name as string | null) ?? null,
+    geojson: (geojson as unknown | null) ?? null,
+    status,
+  };
+}
+
 export function activityFromRecord(
   record: LocalSessionRecord,
+  route?: TrailRouteSnapshot | null,
 ): (ActivityState & { endedAt: number }) | null {
   if (record.endedAt === null) return null;
   return {
     sport: record.sport,
     ...(record.selection ? { selection: record.selection } : {}),
+    ...(route ? { route } : {}),
     sessionId: record.serverSessionId,
     clientSessionId: record.clientSessionId,
     startedAt: record.startedAt,
@@ -303,6 +364,63 @@ export async function readLatestFinishedSession(): Promise<LocalSessionRecord | 
 
 export function readLocalSession(clientSessionId: string): Promise<LocalSessionRecord | null> {
   return readRecord(clientSessionId);
+}
+
+/**
+ * Conserve la copie figée de l'itinéraire hors de la fiche de séance : elle
+ * n'est réécrite que lorsque la géométrie change (jamais à chaque point), et
+ * reste disponible hors ligne pour le hors-trace après rechargement.
+ */
+export function saveSessionRoute(
+  clientSessionId: string,
+  route: TrailRouteSnapshot,
+): Promise<void> {
+  if (!isUuid(clientSessionId) || !route.id) return Promise.resolve();
+  return serial(async () => {
+    const db = await openExplorerDb();
+    if (!db) return;
+    try {
+      const stored: StoredSessionRoute = {
+        version: LOCAL_SESSION_ROUTE_VERSION,
+        clientSessionId,
+        route,
+        updatedAt: Date.now(),
+      };
+      const tx = db.transaction(SESSION_ROUTES_STORE, 'readwrite');
+      tx.objectStore(SESSION_ROUTES_STORE).put(stored);
+      await transactionDone(tx);
+    } catch {
+      // IndexedDB indisponible : le hors-trace reste en mémoire pour la séance.
+    }
+  });
+}
+
+export async function readSessionRoute(
+  clientSessionId: string,
+): Promise<TrailRouteSnapshot | null> {
+  if (!isUuid(clientSessionId)) return null;
+  const db = await openExplorerDb();
+  if (!db) return null;
+  return new Promise((resolve) => {
+    try {
+      const tx = db.transaction(SESSION_ROUTES_STORE, 'readonly');
+      const request = tx.objectStore(SESSION_ROUTES_STORE).get(clientSessionId);
+      request.onsuccess = () => {
+        const stored = request.result as { clientSessionId?: unknown } | undefined;
+        // Une clé et un contenu qui ne concordent pas ne doivent pas faire
+        // hériter une séance de l'itinéraire d'une autre.
+        if (!stored || stored.clientSessionId !== clientSessionId) {
+          resolve(null);
+          return;
+        }
+        resolve(parseSessionRoute(stored));
+      };
+      request.onerror = () => resolve(null);
+      tx.onabort = () => resolve(null);
+    } catch {
+      resolve(null);
+    }
+  });
 }
 
 /** Écrit la fiche active et le pointeur correspondant. */
@@ -476,12 +594,13 @@ export function forgetFinishedSession(clientSessionId: string): Promise<void> {
     try {
       const latestId = await readMeta(LATEST_SESSION_KEY);
       const tx = db.transaction(
-        [SESSIONS_STORE, SESSION_POINTS_STORE, SESSION_META_STORE],
+        [SESSIONS_STORE, SESSION_POINTS_STORE, SESSION_ROUTES_STORE, SESSION_META_STORE],
         'readwrite',
       );
       tx.objectStore(SESSIONS_STORE).delete(clientSessionId);
       const range = IDBKeyRange.bound(`${clientSessionId}:`, `${clientSessionId}:\uffff`);
       tx.objectStore(SESSION_POINTS_STORE).delete(range);
+      tx.objectStore(SESSION_ROUTES_STORE).delete(clientSessionId);
       if (latestId === clientSessionId) {
         tx.objectStore(SESSION_META_STORE).delete(LATEST_SESSION_KEY);
       }

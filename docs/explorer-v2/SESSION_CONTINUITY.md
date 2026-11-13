@@ -101,6 +101,33 @@ comportement local des tests et des scènes. La fusion doit conserver l'option
 `restored` et le filtre `metrics.lastFix === fix` dans le hook GPS. Aucun
 capteur, aucune permission et aucun point ne sont simulés par cette tranche.
 
+## Reprise du tracé, du hors-trace et des splits
+
+L'intégration GPS/séances (commit `03b9537`) a ajouté trois éléments additifs :
+
+1. **Itinéraire restauré.** La copie figée de l'itinéraire est écrite dans le
+   magasin IndexedDB `session_routes` (base v3), séparément de la fiche de
+   séance et des points. Elle n'est réécrite qu'au départ, au chargement de la
+   géométrie ou en cas d'indisponibilité, jamais à chaque point. Une séance
+   restaurée retrouve donc son hors-trace même hors ligne.
+2. **Coupures de tracé.** Chaque point accepté porte, quand c'est utile,
+   `breakBefore` (pause manuelle, reprise après pause automatique, trou GPS,
+   reprise après rejet) et `drawn: false` (point capturé pendant une pause
+   automatique, rejoué par le tracker mais non dessiné). Le tracé restauré ne
+   relie plus deux points séparés par une pause par une corde droite.
+3. **Métriques du premier rendu.** Le tracker rejoue les points avec le profil
+   de pause du sport **avant** le rejeu, puis republie distance, D+, durée en
+   mouvement, splits, splits impériaux et tours. L'interface n'affiche plus
+   « découpe non disponible » en attendant le premier fix. Republier les
+   métriques rejouées évite aussi de conserver un cumul de fiche supérieur aux
+   points réellement persistés, puis de recompter le segment perdu au fix
+   suivant.
+
+Les anciennes fiches restent lisibles : `LocalSessionRecord` garde sa version 1
+et la copie d'itinéraire est optionnelle. Les anciens points, sans
+`breakBefore`/`drawn`, restent dessinés en un seul segment : on ne fabrique pas
+une coupure qui n'a pas été persistée.
+
 ## Limites honnêtes
 
 - Aucune preuve sur iOS/Android réels : verrouillage, mode avion, arrêt du
@@ -116,5 +143,32 @@ capteur, aucune permission et aucun point ne sont simulés par cette tranche.
   par cette tranche.
 - IndexedDB indisponible ⇒ pas de persistance locale ; l'écran ne prétend pas
   le contraire.
+- Les points écrits avant l'intégration n'ont pas `breakBefore`/`drawn` : leur
+  tracé restauré reste continu, et les points de pause automatique déjà
+  enregistrés ne peuvent pas être distingués après coup.
+- Une séance ouverte avant l'ajout de `session_routes`, ou dont l'écriture de
+  la copie d'itinéraire n'avait pas encore abouti avant un rechargement, reste
+  en suivi libre après restauration : aucune géométrie n'est inventée.
+- La base IndexedDB passe de la version 2 à la version 3. La migration est
+  additive et conserve les séances, mais un onglet resté sur un ancien bundle
+  ne peut plus ouvrir une base plus récente (`VersionError`) : sa persistance
+  locale s'arrête jusqu'au rechargement de l'application, sans effacer les
+  données.
+- Les points de pause automatique sont persistés et synchronisés pour que le
+  rejeu soit exact ; ils ne sont ni dessinés ni comptés, mais ils augmentent le
+  volume local et réseau. Un futur filtre pourra les exclure de l'envoi si leur
+  seule utilité est la reprise locale.
+- Le bilan restauré porte désormais sa route, mais la carte du bilan ne
+  l'utilise pas encore : le hors-trace n'a de sens que pendant la séance.
+- Le rejeu utilise les horodatages de mesure persistés, pas l'horodatage
+  monotone de réception (`receivedAt`) : une correction de saut d'horloge
+  appliquée en direct peut donc ne pas être reproduite à l'identique.
+- Un rejet GPS survenu juste avant le rechargement n'est pas persisté : seuls
+  les points acceptés le sont. Si le point suivant reste sous les seuils de
+  plausibilité, le rejeu peut donc le relier au dernier point accepté.
+- Si le réglage de pause automatique a changé entre la séance et le
+  rechargement, le rejeu utilise le réglage courant. Les points et la trace
+  restent exacts, mais l'état `autoPaused` reconstruit peut différer jusqu'au
+  prochain fix.
 - Aucun test, `tsc`, build ni lint n'a été exécuté, conformément à la consigne.
   Les contrôles sont reportés à la fin.

@@ -83,6 +83,7 @@ export function useGpsTracker({
   const permission = useExplorerStore((state) => state.locationPermission);
   const scene = useExplorerStore((state) => state.scene);
   const running = !!activity && !activity.paused;
+  const activeClientSessionId = activity?.clientSessionId;
   const trackerRef = useRef(new ActivityTracker());
   const trackerConfigRef = useRef<string>('');
   const manualPausedRef = useRef<boolean | null>(null);
@@ -253,14 +254,46 @@ export function useGpsTracker({
 
   // Reprise d'une séance locale : rejoue uniquement les points déjà acceptés
   // avant le rechargement, pour que la distance, le D+ et l'ordre repartent de
-  // la même base. Aucun point n'est ajouté ici.
+  // la même base. Aucun point n'est ajouté ici. Le tracker est créé avec le
+  // profil de pause du sport avant le rejeu : appliquer la configuration après
+  // coup aurait remis `autoPaused` à zéro et faussé le premier rendu.
   useEffect(() => {
-    if (!activity) return;
-    if (!restored || restored.clientSessionId !== activity.clientSessionId) return;
-    const tracker = new ActivityTracker();
+    if (!activeClientSessionId) return;
+    if (!restored || restored.clientSessionId !== activeClientSessionId) return;
+    const current = useExplorerStore.getState();
+    const live = current.activity;
+    if (!live || live.clientSessionId !== activeClientSessionId) return;
+    const enabled = current.autoPauseEnabled ?? false;
+    trackerConfigRef.current = `${live.sport}:${enabled ? 'on' : 'off'}`;
+    const tracker = new ActivityTracker(autoPauseConfigForSport(live.sport, enabled));
     for (const fix of restored.fixes) tracker.addFix(fix);
     trackerRef.current = tracker;
-  }, [activity?.clientSessionId, restored]);
+
+    // Les splits et les tours sont reconstruits par le rejeu, mais vivaient
+    // seulement dans le tracker : sans republication, l'interface les croyait
+    // absents jusqu'au prochain fix. Les métriques rejouées font aussi foi sur
+    // la fiche : si une écriture locale de point avait échoué, conserver le
+    // cumul de la fiche puis repartir du dernier point rejoué compterait deux
+    // fois le segment perdu.
+    if (restored.fixes.length === 0) return;
+    const metrics = tracker.state;
+    useExplorerStore.setState((state) => {
+      const activityNow = state.activity;
+      if (!activityNow || activityNow.clientSessionId !== activeClientSessionId) return {};
+      return {
+        activity: {
+          ...activityNow,
+          distanceM: metrics.distanceM,
+          elevGainM: metrics.elevGainM,
+          movingS: metrics.movingS,
+          autoPaused: metrics.autoPaused,
+          splits: metrics.splits,
+          mileSplits: metrics.mileSplits,
+          laps: metrics.laps,
+        },
+      };
+    });
+  }, [activeClientSessionId, restored]);
 
   // Permission réelle : le store peut être resté à « prompt » alors que le
   // navigateur a déjà refusé. Les scènes de recette gardent leur état simulé.
@@ -302,11 +335,14 @@ export function useGpsTracker({
   // historique quand le réglage de préparation est désactivé.
   useEffect(() => {
     if (!activity) return;
-    const key = `${activity.sport}:${autoPauseEnabled ? 'on' : 'off'}`;
+    // Lire le store, pas seulement la valeur du rendu : le rejeu de restauration
+    // a pu fixer sa configuration entre le rendu et cet effet.
+    const enabled = useExplorerStore.getState().autoPauseEnabled ?? false;
+    const key = `${activity.sport}:${enabled ? 'on' : 'off'}`;
     if (trackerConfigRef.current === key) return;
     trackerConfigRef.current = key;
-    trackerRef.current.setConfig(autoPauseConfigForSport(activity.sport, autoPauseEnabled));
-    if (!autoPauseEnabled && activity.autoPaused) {
+    trackerRef.current.setConfig(autoPauseConfigForSport(activity.sport, enabled));
+    if (!enabled && activity.autoPaused) {
       useExplorerStore.setState((state) =>
         state.activity ? { activity: { ...state.activity, autoPaused: false } } : {},
       );
