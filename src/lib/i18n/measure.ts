@@ -12,6 +12,7 @@ import type { Locale } from './locale';
 import { intlTag, measurePrefsFor, type MeasurePrefs, type UnitSystem } from './region';
 
 const KM_PER_MI = 1.609344;
+const KMH_PER_MPH = 1.609344;
 /** 1 ft = 0,3048 m exactement (accord international de 1959). */
 const M_PER_FT = 0.3048;
 const G_PER_LB = 453.59237;
@@ -63,6 +64,34 @@ export function formatElevationIn(m: number | null | undefined, tag: Locale | st
   return prefsOf(tag, opts).elevation === 'ft'
     ? `${num(tag, Math.round(m / M_PER_FT), 0)} ft`
     : `${num(tag, Math.round(m), 0)} m`;
+}
+
+/**
+ * Dénivelé compact pour les tuiles de profil : « 20,2 k m » ou « 66,3 k ft ».
+ * Même arrondi que `lib/format/metrics` en métrique, mais l'unité suit la
+ * préférence réelle. Une valeur absente donne « — ».
+ */
+export function formatElevationCompactIn(
+  m: number | null | undefined,
+  tag: Locale | string,
+  opts?: MeasureOptions
+): string {
+  if (absent(m)) return '—';
+  const prefs = prefsOf(tag, opts);
+  const value = prefs.elevation === 'ft' ? m / M_PER_FT : m;
+  const abs = Math.abs(value);
+  const compact = abs < 1000
+    ? num(tag, Math.round(value), 0)
+    : `${num(tag, Math.round((value / 1000) * 10) / 10, 1)} k`;
+  return `${compact} ${prefs.elevation}`;
+}
+
+/** Vitesse (fournie en km/h) : « 4,8 km/h » ou « 3 mph ». Zéro est une mesure valide. */
+export function formatSpeedIn(kmh: number | null | undefined, tag: Locale | string, opts?: MeasureOptions): string {
+  if (absent(kmh) || kmh < 0) return '—';
+  return prefsOf(tag, opts).distance === 'mi'
+    ? `${num(tag, kmh / KMH_PER_MPH, 1)} mph`
+    : `${num(tag, kmh, 1)} km/h`;
 }
 
 /** Poids (fourni en g) : « 850 g », « 1,2 kg » ; « 1.9 lb », « 6 oz » sous la livre. */

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import type { MapCarnet, MapMassif, MapPoi, MapTrack } from '@/features/compte/map/types';
+import { useMeasureFormat, type MeasureFormat } from '@/lib/i18n/useMeasureFormat';
 
 type Base = { onOpen: (id: string) => void; onClose: () => void };
 
@@ -25,9 +26,7 @@ type Props =
   | (Base & { kind: 'carnet'; data: Pick<MapCarnet, 'id' | 'title' | 'outingId'> })
   | (Base & { kind: 'poi'; data: Pick<MapPoi, 'id' | 'label' | 'outingId'> });
 
-const NUMBER = new Intl.NumberFormat('fr-FR');
-
-function meta(props: Props): string {
+function meta(props: Props, fmt: MeasureFormat): string {
   if (props.kind === 'outing') {
     const row = props.data;
     const extras = [
@@ -36,8 +35,8 @@ function meta(props: Props): string {
     ]
       .filter(Boolean)
       .join(' · ');
-    return `${NUMBER.format(row.km)} km · +${NUMBER.format(row.dplus)} m${
-      row.maxAlt ? ` · ${NUMBER.format(row.maxAlt)} m` : ''
+    return `${fmt.distance(row.km)} · +${fmt.elevation(row.dplus)}${
+      row.maxAlt ? ` · ${fmt.elevation(row.maxAlt)}` : ''
     }${extras ? ` · ${extras}` : ''}`;
   }
   if (props.kind === 'massif') return `${props.data.outings} sortie(s)`;
@@ -46,6 +45,7 @@ function meta(props: Props): string {
 }
 
 export function CompteMapCallout(props: Props) {
+  const fmt = useMeasureFormat();
   const title =
     props.kind === 'outing'
       ? props.data.title
@@ -94,7 +94,7 @@ export function CompteMapCallout(props: Props) {
       ) : null}
       <p>
         {date ? `${date} · ` : ''}
-        {meta(props)}
+        {meta(props, fmt)}
       </p>
       <button
         type="button"

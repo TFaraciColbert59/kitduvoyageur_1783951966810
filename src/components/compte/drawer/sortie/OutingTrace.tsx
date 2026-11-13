@@ -6,6 +6,7 @@ import { ActionPill } from '@/components/ui/ActionPill';
 import type { OutingDetail, OutingPoint } from '@/features/compte/server/sorties';
 import type { OutingWeather } from '@/features/compte/server/weather';
 import { ElevationProfile, TraceMap, formatDuration, formatNumber, weatherIcon } from './shared';
+import { useMeasureFormat } from '@/lib/i18n/useMeasureFormat';
 
 export interface OutingTraceProps {
   detail: OutingDetail;
@@ -36,6 +37,7 @@ function movingSeconds(points: OutingPoint[]): number | null {
 }
 
 function WeatherBlock({ weather }: { weather: OutingWeather | null }) {
+  const fmt = useMeasureFormat();
   if (!weather || weather.days.length === 0) {
     return (
       <section className="lkdv-sortie-section">
@@ -64,13 +66,13 @@ function WeatherBlock({ weather }: { weather: OutingWeather | null }) {
             </span>
             <span className="lkdv-sortie-weather-ico">{weatherIcon(day.icon, 20)}</span>
             <b>
-              {day.tMax !== null ? `${Math.round(day.tMax)}°` : '—'}
-              {day.tMin !== null ? <small>{Math.round(day.tMin)}°</small> : null}
+              {day.tMax !== null ? fmt.temperature(day.tMax).replace(/ °[CF]$/, '°') : '—'}
+              {day.tMin !== null ? <small>{fmt.temperature(day.tMin).replace(/ °[CF]$/, '°')}</small> : null}
             </b>
             <span className="lkdv-sortie-weather-label">{day.label}</span>
             <span className="lkdv-sortie-weather-meta">
               {day.precipMm !== null ? `${day.precipMm.toFixed(1)} mm` : '—'}
-              {day.windKmh !== null ? ` · ${Math.round(day.windKmh)} km/h` : ''}
+              {day.windKmh !== null ? ` · ${fmt.speed(day.windKmh)}` : ''}
             </span>
           </div>
         ))}
@@ -89,6 +91,7 @@ function WeatherBlock({ weather }: { weather: OutingWeather | null }) {
 }
 
 export function OutingTrace({ detail, onExport }: OutingTraceProps) {
+  const fmt = useMeasureFormat();
   const altitude = altitudeRange(detail.points);
   const moving = movingSeconds(detail.points);
   const slope = detail.km > 0 ? (detail.dplus / (detail.km * 1000)) * 100 : null;
@@ -132,11 +135,11 @@ export function OutingTrace({ detail, onExport }: OutingTraceProps) {
       <div className="lkdv-sortie-grid">
         <div>
           <small>Altitude min.</small>
-          <b>{altitude ? `${formatNumber(altitude.min)} m` : '—'}</b>
+          <b>{altitude ? fmt.elevation(altitude.min) : '—'}</b>
         </div>
         <div>
           <small>Altitude max.</small>
-          <b>{altitude ? `${formatNumber(altitude.max)} m` : '—'}</b>
+          <b>{altitude ? fmt.elevation(altitude.max) : '—'}</b>
         </div>
         <div>
           <small>Pente moyenne</small>
@@ -152,16 +155,16 @@ export function OutingTrace({ detail, onExport }: OutingTraceProps) {
         </div>
         <div>
           <small>Allure moyenne</small>
-          <b>{pace !== null ? `${formatNumber(pace)} min/km` : '—'}</b>
+          <b>{pace !== null ? fmt.pace(pace * 60) : '—'}</b>
         </div>
       </div>
 
       <section className="lkdv-sortie-section">
         <header>
           <b>Relief</b>
-          <span>{altitude ? `de ${Math.round(altitude.min)} à ${Math.round(altitude.max)} m` : '—'}</span>
+          <span>{altitude ? `de ${fmt.elevation(altitude.min)} à ${fmt.elevation(altitude.max)}` : '—'}</span>
         </header>
-        <ElevationProfile points={detail.points} />
+        <ElevationProfile points={detail.points} units={fmt.prefs} locale={fmt.locale} />
       </section>
 
       <WeatherBlock weather={detail.weather} />

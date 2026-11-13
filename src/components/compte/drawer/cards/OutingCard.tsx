@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { formatNumber } from '../memories/memoriesModel';
+import { useMeasureFormat } from '@/lib/i18n/useMeasureFormat';
 
 /** Une sortie du bootstrap, déjà normalisée pour l'affichage. */
 export interface OutingCardData {
@@ -30,11 +30,12 @@ function photoCountLabel(count: number): string {
  * couverture n'apparaît que si le bootstrap fournit une photo réelle.
  */
 export function OutingCard({ outing }: { outing: OutingCardData }) {
+  const fmt = useMeasureFormat();
   const cover = outing.photos[0];
   const hasMeta = Boolean(outing.mass || outing.date);
   const metrics = [
-    outing.km !== null ? `${formatNumber(outing.km)} km` : null,
-    outing.dplus !== null ? `${formatNumber(outing.dplus)} m D+` : null,
+    outing.km !== null ? fmt.distance(outing.km) : null,
+    outing.dplus !== null ? `${fmt.elevation(outing.dplus)} D+` : null,
   ].filter((metric): metric is string => metric !== null);
 
   return (

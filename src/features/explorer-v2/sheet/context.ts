@@ -1,5 +1,6 @@
 'use client';
 
+import { formatSpeedIn, formatTemperatureIn } from '@/lib/i18n/measure';
 import type {
   CarnetItem,
   CountryDetails,
@@ -136,6 +137,41 @@ export function formatDistance(km: number): string {
 export function formatElevation(meters: number | null | undefined): string | null {
   if (meters === null || meters === undefined) return null;
   return `${new Intl.NumberFormat('fr-FR').format(Math.round(meters))} m`;
+}
+
+/**
+ * Distance de carte dans les unités de la personne. En métrique, la sortie
+ * historique de l'Explorer est conservée telle quelle ; en impérial, les miles
+ * (ou pieds sous 0,2 mi) restent la seule conversion.
+ */
+export function formatDistanceFor(km: number, units: 'metric' | 'imperial'): string {
+  return units === 'imperial' ? formatImperialDistance(km) : formatDistance(km);
+}
+
+/** Altitude/dénivelé de carte dans les unités de la personne. */
+export function formatElevationFor(
+  meters: number | null | undefined,
+  units: 'metric' | 'imperial',
+): string | null {
+  return units === 'imperial' ? formatImperialElevation(meters) : formatElevation(meters);
+}
+
+/** Vent de la feuille météo, dans les unités de la personne. */
+export function formatSpeedFor(
+  kmh: number | null | undefined,
+  units: 'metric' | 'imperial',
+  locale = 'fr-FR',
+): string {
+  return formatSpeedIn(kmh, locale, { system: units });
+}
+
+/** Température de la feuille météo, dans les unités de la personne. */
+export function formatTemperatureFor(
+  celsius: number | null | undefined,
+  units: 'metric' | 'imperial',
+  locale = 'fr-FR',
+): string {
+  return formatTemperatureIn(celsius, locale, { system: units });
 }
 
 export function formatDuration(seconds: number): string {

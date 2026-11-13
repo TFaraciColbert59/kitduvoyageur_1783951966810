@@ -1,6 +1,7 @@
 ﻿'use client';
 
 import React, { useState } from 'react';
+import { useMeasureFormat } from '@/lib/i18n/useMeasureFormat';
 
 interface DesktopRightPanelProps {
   averageSpeedKmH?: number;
@@ -33,6 +34,7 @@ export default function DesktopRightPanel({
   weatherCondition = 'Chargement…',
   routeName,
 }: DesktopRightPanelProps) {
+  const fmt = useMeasureFormat();
   const [inputText, setInputText] = useState('');
   const [chatMessages, setChatMessages] = useState<Array<{ sender: 'ai' | 'user'; text: string }>>([
     {
@@ -73,8 +75,8 @@ export default function DesktopRightPanel({
 
     let reply = [
       routeName ? `Randonnée « ${routeName} »` : 'Randonnée en cours',
-      distanceKm != null ? `${distanceKm.toFixed(1)} km parcourus` : 'aucune distance enregistrée',
-      elevationGainM != null ? `+${Math.round(elevationGainM)} m` : null,
+      distanceKm != null ? `${fmt.distance(distanceKm)} parcourus` : 'aucune distance enregistrée',
+      elevationGainM != null ? `+${fmt.elevation(elevationGainM)}` : null,
       weatherCondition ? `météo : ${weatherCondition}` : null,
     ].filter(Boolean).join(' · ') + '.';
     if (text.toLowerCase().includes('eau')) {
@@ -107,8 +109,8 @@ export default function DesktopRightPanel({
               Allure moyenne
             </div>
             <div className="text-2xl font-medium tracking-tight mt-1.5 leading-none">
-              {averageSpeedKmH.toFixed(1)}
-              <em className="font-serif italic font-normal text-base text-[color:var(--lkv-forest-100)] ml-0.5">km/h</em>
+              {fmt.speedValue(averageSpeedKmH)}
+              <em className="font-serif italic font-normal text-base text-[color:var(--lkv-forest-100)] ml-0.5">{fmt.speedUnit}</em>
             </div>
             <div className="font-mono text-[9px] text-[color:var(--lkv-forest-100)]/70 tracking-wide mt-1.5">
               RYTHME EN DIRECT
@@ -134,8 +136,8 @@ export default function DesktopRightPanel({
               Vitesse actuelle
             </div>
             <div className="text-xl font-medium tracking-tight text-[color:var(--lkv-text-primary)] mt-1.5 leading-none">
-              {currentSpeedKmH.toFixed(1)}
-              <em className="font-serif italic font-normal text-xs text-[color:var(--lkv-text-primary)] ml-0.5">km/h</em>
+              {fmt.speedValue(currentSpeedKmH)}
+              <em className="font-serif italic font-normal text-xs text-[color:var(--lkv-text-primary)] ml-0.5">{fmt.speedUnit}</em>
             </div>
             <div className="font-mono text-[9px] text-[color:var(--lkv-text-muted)] tracking-wide mt-1.5">
               VITESSE DU MOMENT
@@ -148,8 +150,8 @@ export default function DesktopRightPanel({
               D+ · dénivelé
             </div>
             <div className="text-xl font-medium tracking-tight text-[color:var(--lkv-text-primary)] mt-1.5 leading-none">
-              +{elevationGainM != null ? Math.round(elevationGainM) : '—'}
-              <em className="font-serif italic font-normal text-xs text-[color:var(--lkv-text-primary)] ml-0.5">m</em>
+              +{fmt.elevationValue(elevationGainM)}
+              <em className="font-serif italic font-normal text-xs text-[color:var(--lkv-text-primary)] ml-0.5">{fmt.elevationUnit}</em>
             </div>
             <div className="font-mono text-[9px] text-[color:var(--lkv-text-muted)] tracking-wide mt-1.5">
               DÉNIVELÉ CUMULÉ
@@ -162,8 +164,8 @@ export default function DesktopRightPanel({
               D− · dénivelé
             </div>
             <div className="text-xl font-medium tracking-tight text-[color:var(--lkv-text-primary)] mt-1.5 leading-none">
-              −{elevationLossM != null ? Math.round(elevationLossM) : '—'}
-              <em className="font-serif italic font-normal text-xs text-[color:var(--lkv-text-primary)] ml-0.5">m</em>
+              −{fmt.elevationValue(elevationLossM)}
+              <em className="font-serif italic font-normal text-xs text-[color:var(--lkv-text-primary)] ml-0.5">{fmt.elevationUnit}</em>
             </div>
             <div className="font-mono text-[9px] text-[color:var(--lkv-text-muted)] tracking-wide mt-1.5">
               DÉNIVELÉ NÉGATIF
@@ -191,7 +193,7 @@ export default function DesktopRightPanel({
               Prêt à <em className="font-serif italic text-[color:var(--lkv-text-primary)] font-normal">répondre</em>
             </div>
             <div className="font-mono text-[9px] text-[color:var(--lkv-text-muted)] tracking-wider mt-0.5 truncate">
-              EN DIRECT · {distanceKm != null ? `${distanceKm.toFixed(1)} KM` : 'GPS EN RECHERCHE'} · {(weatherCondition || '').toUpperCase()}
+              EN DIRECT · {distanceKm != null ? fmt.distance(distanceKm).toUpperCase() : 'GPS EN RECHERCHE'} · {(weatherCondition || '').toUpperCase()}
             </div>
           </div>
         </div>
@@ -216,7 +218,7 @@ export default function DesktopRightPanel({
                       <svg className="w-2.5 h-2.5 fill-none stroke-current stroke-[2]" viewBox="0 0 24 24">
                         <path d="M4 21l16-8L4 5v6l10 2-10 2z" />
                       </svg>
-                      {remainingDistanceKm.toFixed(1)} km
+                      {fmt.distance(remainingDistanceKm)}
                     </span>
                   )}
                   {elevationGainM != null && elevationGainM > 0 && (
@@ -224,7 +226,7 @@ export default function DesktopRightPanel({
                       <svg className="w-2.5 h-2.5 fill-none stroke-current stroke-[2]" viewBox="0 0 24 24">
                         <path d="M4 20l6-12 4 6 4-2 2 8" />
                       </svg>
-                      +{Math.round(elevationGainM)} m
+                      +{fmt.elevation(elevationGainM)}
                     </span>
                   )}
                   {weatherCondition && (

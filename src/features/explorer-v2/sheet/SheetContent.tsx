@@ -28,16 +28,16 @@ import {
 } from './blocks';
 import type { SheetTab } from './ExplorerSheet';
 import {
-  formatImperialDistance,
-  formatImperialElevation,
+  formatDistanceFor,
+  formatElevationFor,
+  formatSpeedFor,
+  formatTemperatureFor,
   POI_ICON,
   POI_LABEL,
   POI_TONE,
   SPORT_META,
   distanceKm,
   findRegionAt,
-  formatDistance,
-  formatElevation,
   formatDuration,
   relativeDay,
   type SheetContext,
@@ -417,7 +417,7 @@ function CarnetsTab({ ctx, where }: { ctx: SheetContext; where: string }) {
           title={carnet.title}
           sub={[
             carnet.destination,
-            carnet.distance_km ? `${carnet.distance_km.toFixed(1).replace('.', ',')} km` : null,
+            carnet.distance_km ? formatDistanceFor(carnet.distance_km, ctx.units) : null,
             carnet.nb_nuits ? `${carnet.nb_nuits} nuit(s)` : null,
           ]
             .filter(Boolean)
@@ -516,7 +516,7 @@ function RoutesTab({ ctx }: { ctx: SheetContext }) {
           icon="route"
           title={route.name || `Itinéraire ${route.ref ?? route.id}`}
           sub={[
-            route.distance_km ? `${route.distance_km.toFixed(1).replace('.', ',')} km` : null,
+            route.distance_km ? formatDistanceFor(route.distance_km, ctx.units) : null,
             route.network === 'iwn' ? 'GR® international' : route.network === 'nwn' ? 'GR®' : route.network === 'rwn' ? 'PR' : 'Sentier balisé',
           ]
             .filter(Boolean)
@@ -555,7 +555,7 @@ function PoiSummaryTab({ ctx }: { ctx: SheetContext }) {
                 icon={POI_ICON[kind] ?? 'pin'}
                 tone={POI_TONE[kind] ?? 'ink'}
                 title={poi.name}
-                sub={[formatElevation(poi.ele_m), poi.potable ? 'potable' : null]
+                sub={[formatElevationFor(poi.ele_m, ctx.units), poi.potable ? 'potable' : null]
                   .filter(Boolean)
                   .join(' · ')}
                 onClick={() => ctx.state.select({ kind: kind as never, id: poi.id }, kind as never, 'mid')}
@@ -634,7 +634,7 @@ function LevelTabs(ctx: SheetContext): SheetTab[] {
                 <XpCard
                   key={country.iso}
                   title={country.name}
-                  sub={formatDistance(km)}
+                  sub={formatDistanceFor(km, ctx.units)}
                   initial={country.iso}
                   onClick={() =>
                     state.openCountry(country.iso, country.center as [number, number], country.name)
@@ -950,7 +950,7 @@ function PoiTabs(ctx: SheetContext, kind: string): SheetTab[] {
           items={[
             { label: 'Latitude', value: poi.lat.toFixed(4) },
             { label: 'Longitude', value: poi.lon.toFixed(4) },
-            ...(poi.ele_m !== null ? [{ label: 'Altitude', value: formatElevation(poi.ele_m) as string }] : []),
+            ...(poi.ele_m !== null ? [{ label: 'Altitude', value: formatElevationFor(poi.ele_m, ctx.units) as string }] : []),
           ]}
         />
       ) : (
@@ -971,14 +971,16 @@ function PoiTabs(ctx: SheetContext, kind: string): SheetTab[] {
                 key={hour.time}
                 icon="cloud"
                 title={
-                  hour.temperature_c !== null ? `${Math.round(hour.temperature_c)} °C` : 'Température inconnue'
+                  hour.temperature_c !== null
+                    ? formatTemperatureFor(hour.temperature_c, ctx.units, ctx.locale)
+                    : 'Température inconnue'
                 }
                 sub={new Date(hour.time).toLocaleString('fr-FR', {
                   weekday: 'short',
                   hour: '2-digit',
                   minute: '2-digit',
                 })}
-                badge={hour.wind_ms !== null ? { label: `${Math.round(hour.wind_ms * 3.6)} km/h`, tone: 'muted' } : undefined}
+                badge={hour.wind_ms !== null ? { label: formatSpeedFor(hour.wind_ms * 3.6, ctx.units, ctx.locale), tone: 'muted' } : undefined}
               />
             ))}
           </XpRows>
@@ -997,9 +999,9 @@ function PoiTabs(ctx: SheetContext, kind: string): SheetTab[] {
         <>
           <XpMetrics
             items={[
-              ...(poi.ele_m !== null ? [{ label: 'Altitude', value: formatElevation(poi.ele_m) as string }] : []),
+              ...(poi.ele_m !== null ? [{ label: 'Altitude', value: formatElevationFor(poi.ele_m, ctx.units) as string }] : []),
               ...(poi.capacity !== null ? [{ label: 'Places', value: String(poi.capacity) }] : []),
-              { label: 'Distance', value: formatDistance(distanceKm(ctx.state.center, [poi.lon, poi.lat])) },
+              { label: 'Distance', value: formatDistanceFor(distanceKm(ctx.state.center, [poi.lon, poi.lat]), ctx.units) },
             ]}
           />
           <XpEyebrow>Repère</XpEyebrow>
@@ -1027,7 +1029,7 @@ function PoiTabs(ctx: SheetContext, kind: string): SheetTab[] {
               icon="drop"
               tone="water"
               title={poi.potable === false ? 'Eau non potable' : poi.potable ? 'Eau potable' : 'Qualité non renseignée'}
-              sub={poi.ele_m !== null ? formatElevation(poi.ele_m) : undefined}
+              sub={poi.ele_m !== null ? formatElevationFor(poi.ele_m, ctx.units) ?? undefined : undefined}
             />
           </XpRows>
           <XpEyebrow>Derniers signalements</XpEyebrow>
@@ -1042,7 +1044,7 @@ function PoiTabs(ctx: SheetContext, kind: string): SheetTab[] {
                   tone={report.category === 'water' ? 'water' : 'warn'}
                   title={report.description ?? CATEGORY_LABEL[report.category] ?? report.category}
                   sub={`${relativeDay(report.created_at)} · ${report.present_count} présent · ${report.gone_count} disparu`}
-                  badge={{ label: `${Math.round(report.distance_m)} m`, tone: 'muted' }}
+                  badge={{ label: formatDistanceFor(report.distance_m / 1000, ctx.units), tone: 'muted' }}
                 />
               ))}
             </XpRows>
@@ -1273,11 +1275,11 @@ function ToolsTabs(ctx: SheetContext, kind: string): SheetTab[] {
               {positions.length > 1 ? <ElevationProfile positions={positions} /> : null}
               <XpMetrics
                 items={[
-                  { label: 'Distance', value: route.distance_km ? `${route.distance_km.toFixed(1).replace('.', ',')} km` : '—' },
+                  { label: 'Distance', value: route.distance_km ? formatDistanceFor(route.distance_km, ctx.units) : '—' },
                   {
                     label: 'D+',
                     value: (route as { dplus_m?: number }).dplus_m
-                      ? `${Math.round((route as { dplus_m?: number }).dplus_m!)} m`
+                      ? formatElevationFor((route as { dplus_m?: number }).dplus_m, ctx.units) ?? '—'
                       : '≈ 850 m',
                   },
                   { label: 'Réseau', value: route.ref ?? route.network ?? 'GR®' },
@@ -1292,7 +1294,7 @@ function ToolsTabs(ctx: SheetContext, kind: string): SheetTab[] {
                       icon="drop"
                       tone="water"
                       title={poi.name}
-                      sub={[formatElevation(poi.ele_m), poi.potable ? 'potable' : 'eau de source'].filter(Boolean).join(' · ')}
+                      sub={[formatElevationFor(poi.ele_m, ctx.units), poi.potable ? 'potable' : 'eau de source'].filter(Boolean).join(' · ')}
                       onClick={() => ctx.state.select({ kind: 'water', id: poi.id }, 'water', 'mid')}
                     />
                   ))}
@@ -1301,7 +1303,7 @@ function ToolsTabs(ctx: SheetContext, kind: string): SheetTab[] {
                       key={poi.id}
                       icon="house"
                       title={poi.name}
-                      sub={[formatElevation(poi.ele_m), poi.capacity ? `${poi.capacity} places` : 'refuge gardé'].filter(Boolean).join(' · ')}
+                      sub={[formatElevationFor(poi.ele_m, ctx.units), poi.capacity ? `${poi.capacity} places` : 'refuge gardé'].filter(Boolean).join(' · ')}
                       onClick={() => ctx.state.select({ kind: 'refuge', id: poi.id }, 'refuge', 'mid')}
                     />
                   ))}
@@ -1632,7 +1634,7 @@ function SearchTab({ ctx }: { ctx: SheetContext }) {
                   {data.filters.kinds.map((kind) => POI_LABEL[kind] ?? kind).join(' · ')}
                 </span>
                 {data.filters.maxDistanceKm ? (
-                  <span className="xp-chip">{data.filters.maxDistanceKm} km max</span>
+                  <span className="xp-chip">{formatDistanceFor(data.filters.maxDistanceKm ?? 0, ctx.units)} max</span>
                 ) : null}
                 {data.filters.easy ? <span className="xp-chip">facile</span> : null}
                 {data.filters.family ? <span className="xp-chip">famille</span> : null}
@@ -1649,10 +1651,8 @@ function SearchTab({ ctx }: { ctx: SheetContext }) {
                     icon={POI_ICON[poi.kind] ?? 'pin'}
                     tone={POI_TONE[poi.kind] ?? 'ink'}
                     title={poi.name}
-                    sub={`${POI_LABEL[poi.kind] ?? poi.kind} · ${
-                      ctx.units === 'imperial' ? formatImperialDistance(poi.distanceKm) : formatDistance(poi.distanceKm)
-                    }`}
-                    badge={poi.ele_m ? { label: formatElevation(poi.ele_m) ?? '', tone: 'muted' } : undefined}
+                    sub={`${POI_LABEL[poi.kind] ?? poi.kind} · ${formatDistanceFor(poi.distanceKm, ctx.units)}`}
+                    badge={poi.ele_m ? { label: formatElevationFor(poi.ele_m, ctx.units) ?? '', tone: 'muted' } : undefined}
                     onClick={() => ctx.state.select({ kind: poi.kind as never, id: poi.id }, poi.kind as never, 'mid')}
                   />
                 ))}
@@ -1709,16 +1709,20 @@ export function LiveDirectTab({ ctx }: { ctx: SheetContext }) {
     ? '—'
     : rhythm === 'pace'
       ? paceSeconds !== null
-        ? `${formatPace(paceSeconds)}/km`
+        ? ctx.units === 'imperial'
+          ? `${formatPace(paceSeconds * 1.609344)}/mi`
+          : `${formatPace(paceSeconds)}/km`
         : '—'
       : speed !== null
-        ? `${speed.toFixed(1).replace('.', ',')} km/h`
+        ? ctx.units === 'imperial'
+          ? `${(speed / 1.609344).toFixed(1).replace('.', ',')} mph`
+          : `${speed.toFixed(1).replace('.', ',')} km/h`
         : '—';
   const metrics = [
-    { label: 'Distance', value: gpsDenied ? '—' : formatDistance(activity.distanceM / 1000) },
+    { label: 'Distance', value: gpsDenied ? '—' : formatDistanceFor(activity.distanceM / 1000, ctx.units) },
     { label: rhythmLabel, value: rhythmValue },
     { label: 'Temps', value: formatDuration(activity.movingS) },
-    { label: 'D+', value: gpsDenied ? '—' : `${Math.round(activity.elevGainM)} m` },
+    { label: 'D+', value: gpsDenied ? '—' : formatElevationFor(activity.elevGainM, ctx.units) ?? '—' },
   ];
   const next = ctx.pois[0];
   return (
@@ -1753,11 +1757,7 @@ export function LiveDirectTab({ ctx }: { ctx: SheetContext }) {
           <XpRow
             icon={POI_ICON[next.kind] ?? 'pin'}
             title={next.name}
-            sub={`${
-              ctx.units === 'imperial'
-                ? formatImperialDistance(distanceKm(ctx.state.center, [next.lon, next.lat]))
-                : formatDistance(distanceKm(ctx.state.center, [next.lon, next.lat]))
-            } · ${POI_LABEL[next.kind] ?? next.kind}`}
+            sub={`${formatDistanceFor(distanceKm(ctx.state.center, [next.lon, next.lat]), ctx.units)} · ${POI_LABEL[next.kind] ?? next.kind}`}
           />
         </XpRows>
       ) : (
@@ -1818,11 +1818,7 @@ function splitDetail(
 ): string {
   const parts = [formatSplitTime(split.movingS)];
   if (withDistance) {
-    parts.push(
-      units === 'imperial'
-        ? formatImperialDistance(split.distanceM / 1000)
-        : formatDistance(split.distanceM / 1000),
-    );
+    parts.push(formatDistanceFor(split.distanceM / 1000, units));
   }
   const rhythmValue = splitRhythmValue(split, rhythm, units);
   if (rhythmValue && (withDistance || rhythm === 'speed')) parts.push(rhythmValue);
@@ -1965,11 +1961,7 @@ function LiveLapsTab({ ctx }: { ctx: SheetContext }) {
         <XpRow
           icon="route"
           title="Distance mesurée"
-          sub={
-            units === 'imperial'
-              ? formatImperialDistance(activity.distanceM / 1000)
-              : formatDistance(activity.distanceM / 1000)
-          }
+          sub={formatDistanceFor(activity.distanceM / 1000, units)}
         />
         <XpRow icon="pause" title="Pauses" sub="Exclues des splits et des tours." />
       </XpRows>
@@ -2088,8 +2080,8 @@ function ActivityTabs(ctx: SheetContext, kind: string): SheetTab[] {
             <>
               <XpMetrics
                 items={[
-                  { label: 'Distance', value: formatDistance(summary.distanceM / 1000) },
-                  { label: 'D+', value: `${Math.round(summary.elevGainM)} m` },
+                  { label: 'Distance', value: formatDistanceFor(summary.distanceM / 1000, ctx.units) },
+                  { label: 'D+', value: formatElevationFor(summary.elevGainM, ctx.units) ?? '—' },
                   { label: 'Durée', value: formatDuration(durationS) },
                 ]}
               />
@@ -2248,7 +2240,7 @@ export function buildSheetModel(ctx: SheetContext): SheetModel {
       const realPlaceName = ctx.place?.place?.placeName ?? ctx.place?.place?.regionName;
       title = state.placeId ?? realPlaceName ?? region?.name ?? ctx.country?.name ?? 'Secteur';
       const ele = ctx.place?.place?.elevationM;
-      const eleStr = ele != null ? `${ele} m` : null;
+      const eleStr = ele != null ? formatElevationFor(ele, ctx.units) : null;
       const counts = ctx.place?.place?.counts;
       const totalWater = counts?.water ?? ctx.pois.filter((p) => p.kind === 'water').length;
       const totalRefuges = counts?.refuges ?? ctx.pois.filter((p) => p.kind === 'refuge').length;
@@ -2295,8 +2287,8 @@ export function buildSheetModel(ctx: SheetContext): SheetModel {
       subtitle: poi
         ? [
             kindLabel,
-            formatElevation(poi.ele_m),
-            formatDistance(distanceKm(state.center, [poi.lon, poi.lat])),
+            formatElevationFor(poi.ele_m, ctx.units),
+            formatDistanceFor(distanceKm(state.center, [poi.lon, poi.lat]), ctx.units),
           ]
             .filter(Boolean)
             .join(' · ')
@@ -2324,7 +2316,9 @@ export function buildSheetModel(ctx: SheetContext): SheetModel {
     const route = ctx.routes.find((item) => String(item.id) === state.selection?.id);
     return {
       title: kind === 'trail' && route?.name ? route.name : title,
-      subtitle: kind === 'trail' && route ? `${route.distance_km ?? '—'} km${route.ref ? ` · ${route.ref}` : ''}` : subtitle,
+      subtitle: kind === 'trail' && route
+        ? `${route.distance_km != null ? formatDistanceFor(route.distance_km, ctx.units) : '—'}${route.ref ? ` · ${route.ref}` : ''}`
+        : subtitle,
       tabs: ToolsTabs(ctx, kind),
       mini:
         kind === 'trail'

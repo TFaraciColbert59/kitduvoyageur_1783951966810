@@ -56,6 +56,7 @@ import {
   useTransientStart,
 } from './state/store';
 import { readUnitSystem, subscribeUnitSystem } from '@/lib/i18n/unitSetting';
+import { useTranslation } from '@/lib/i18n/context';
 import { isSceneName, sceneEnabled, SCENES } from './state/scenes';
 import type { GeoCollection } from './data/hooks';
 import {
@@ -100,6 +101,26 @@ const MapStage = dynamic(() => import('./map/MapStage'), {
 });
 
 const BOTTOM_BAR_SPACE = 64;
+const serverNull = () => null;
+
+/** Distance de carte : métrique historique, miles/pieds quand le réglage l'exige. */
+function mapDistanceLabel(km: number, units: 'metric' | 'imperial'): string {
+  if (units === 'metric') return formatDistance(km);
+  const miles = km * 0.621371;
+  if (miles < 0.2) return `${Math.round(miles * 5280)} ft`;
+  return `${miles.toFixed(1).replace('.', ',')} mi`;
+}
+
+/** Altitude de repère : même conversion que la feuille, sans dépendre de son mock. */
+function mapElevationLabel(
+  meters: number | null | undefined,
+  units: 'metric' | 'imperial',
+): string | null {
+  if (meters == null || !Number.isFinite(meters)) return null;
+  return units === 'imperial'
+    ? `${new Intl.NumberFormat('en-US').format(Math.round(meters * 3.28084))} ft`
+    : `${new Intl.NumberFormat('fr-FR').format(Math.round(meters))} m`;
+}
 /** Un bilan local reste restituable pendant 24 h après sa clôture. */
 const SUMMARY_RESTORE_TTL_MS = 24 * 60 * 60 * 1000;
 /** Au-delà, on pousse les points sans attendre la fin de séance. */
@@ -225,10 +246,15 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
   }, [sheetOpen]);
 
   const theme = state.theme ?? systemTheme;
+  const { locale } = useTranslation();
   // Unités : réglage utilisateur prioritaire, sinon pays (US, Liberia, Myanmar).
+  // Le réglage explicite est lu par `useSyncExternalStore` : un changement dans
+  // la carte « Langue et unités » s'applique sans rechargement, et un choix
+  // « métrique » l'emporte même dans un pays impérial.
   const imperialCountries = new Set(['US', 'LR', 'MM']);
+  const explicitUnits = React.useSyncExternalStore(subscribeUnitSystem, readUnitSystem, serverNull);
   const unitsForCountry: 'metric' | 'imperial' =
-    state.units === 'imperial' || imperialCountries.has(state.geo) ? 'imperial' : 'metric';
+    explicitUnits ?? (imperialCountries.has(state.geo) ? 'imperial' : 'metric');
 
   // Scène de recette : validée côté serveur (sceneEnabled) puis appliquée de façon synchrone
   // côté client au premier rendu.
@@ -269,17 +295,6 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
   // opposer le rendu serveur (défaut activé) au stockage du navigateur.
   useEffect(() => {
     hydrateAutoPausePreference();
-  }, []);
-
-  // S6.21 : les unités du compte (carte « Langue et unités ») pilotent aussi
-  // l'Explorer. Sans réglage explicite, les conventions du pays restent seules
-  // applicables ; un changement dans le compte s'applique sans rechargement.
-  useEffect(() => {
-    const apply = () => {
-      useExplorerStore.getState().setUnits(readUnitSystem() ?? 'metric');
-    };
-    apply();
-    return subscribeUnitSystem(apply);
   }, []);
 
   // Service worker de zone + file d'écritures hors ligne.
@@ -1232,9 +1247,9 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
       onStartSport: requestStartSafe,
       onConfirmReport,
       onMarkLap: markLap,
-      locale: 'fr-FR',
+      locale,
     }),
-    [state, countries, country, regionsGeo, regionGroups, place, pois, routes, weather, unitsForCountry, reportsData, carnetsData, tripsData, selectedPoi, me, requestStartSafe, onConfirmReport, markLap],
+    [state, countries, country, regionsGeo, regionGroups, place, pois, routes, weather, unitsForCountry, reportsData, carnetsData, tripsData, selectedPoi, me, requestStartSafe, onConfirmReport, markLap, locale],
   );
 
   const model = useMemo(() => buildSheetModel(ctx), [ctx]);
@@ -1275,13 +1290,13 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
         id: poi.id,
         kind: poi.kind,
         name: poi.name,
-        sub: poi.ele_m ? `${poi.ele_m} m` : undefined,
+        sub: poi.ele_m ? mapElevationLabel(poi.ele_m, unitsForCountry) ?? undefined : undefined,
         lat: poi.lat,
         lon: poi.lon,
         distanceKm: km,
         tone: (poi.kind === 'water' ? 'water' : poi.kind === 'bivouac' ? 'warn' : 'ink') as MapPin['tone'],
       }));
-  }, [countries, pois, state.level, state.center]);
+  }, [countries, pois, state.level, state.center, unitsForCountry]);
 
   // ── actions ────────────────────────────────────────────────────────────
   const onCountryClick = useCallback(
@@ -1794,7 +1809,7 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
           <ActivityPill
             sportLabel={activity.selection?.variantLabel ?? SPORT_META[activity.sport].label}
             elapsed={elapsed}
-            distanceLabel={formatDistance(activity.distanceM / 1000)}
+            distanceLabel={mapDistanceLabel(activity.distanceM / 1000, unitsForCountry)}
             paused={activity.paused}
             onPause={() =>
               state.updateActivity({ paused: !activity.paused, autoPaused: false })

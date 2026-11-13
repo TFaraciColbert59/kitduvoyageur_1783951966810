@@ -12,6 +12,7 @@ import {
 } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { createMapStyle } from '@/components/map/engine/createMapStyle';
+import { useMeasureFormat } from '@/lib/i18n/useMeasureFormat';
 import { prefersReducedMotion } from '@/components/map/engine/camera';
 import {
   cameraForScale,
@@ -287,6 +288,7 @@ export function CompteMap({
   publicZone = null,
   markers = [],
 }: CompteMapProps) {
+  const fmt = useMeasureFormat();
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
@@ -1108,7 +1110,7 @@ export function CompteMap({
             ? `Tracé du carnet : ${tracePoints.length} points géolocalisés.`
             : 'Aucun tracé enregistré pour ce carnet.'
           : data
-            ? `Carte de tes sorties : ${data.stats.outings} sorties, ${data.stats.km} kilomètres, ${data.stats.massifs} massifs.`
+            ? `Carte de tes sorties : ${data.stats.outings} sorties, ${fmt.distance(data.stats.km)}, ${data.stats.massifs} massifs.`
             : 'Carte en chargement.'}
       </p>
 

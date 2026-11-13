@@ -12,6 +12,8 @@ import {
 } from 'lucide-react';
 import type { OutingPoint } from '@/features/compte/server/sorties';
 import type { WeatherIcon } from '@/features/compte/server/weather';
+import { formatElevationIn } from '@/lib/i18n/measure';
+import type { MeasurePrefs } from '@/lib/i18n/region';
 
 export function formatDate(value: string | null): string {
   if (!value) return 'Date non renseignée';
@@ -149,7 +151,15 @@ export function TraceMap({ points, className }: { points: OutingPoint[]; classNa
   );
 }
 
-export function ElevationProfile({ points }: { points: OutingPoint[] }) {
+export function ElevationProfile({
+  points,
+  units,
+  locale = 'fr-FR',
+}: {
+  points: OutingPoint[];
+  units?: MeasurePrefs;
+  locale?: string;
+}) {
   const sampled = downsample(points, 140).filter((point) => point.elevationM !== null);
   if (sampled.length < 3) {
     return <div className="lkdv-sortie-trace-empty">Profil altimétrique indisponible</div>;
@@ -168,7 +178,7 @@ export function ElevationProfile({ points }: { points: OutingPoint[] }) {
 
   return (
     <div className="lkdv-sortie-elevation">
-      <svg viewBox="0 0 100 36" role="img" aria-label={`Profil altimétrique de ${Math.round(min)} à ${Math.round(max)} mètres`} preserveAspectRatio="none">
+      <svg viewBox="0 0 100 36" role="img" aria-label={`Profil altimétrique de ${formatElevationIn(min, locale, { prefs: units })} à ${formatElevationIn(max, locale, { prefs: units })}`} preserveAspectRatio="none">
         <defs>
           <linearGradient id="lkdv-elev-fill" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="rgba(91,143,106,.42)" />
@@ -179,8 +189,8 @@ export function ElevationProfile({ points }: { points: OutingPoint[] }) {
         <path d={line} fill="none" stroke="#3D7A52" strokeWidth="1.1" strokeLinejoin="round" />
       </svg>
       <div className="lkdv-sortie-elevation-labels">
-        <span>{Math.round(min)} m</span>
-        <span>{Math.round(max)} m</span>
+        <span>{formatElevationIn(min, locale, { prefs: units })}</span>
+        <span>{formatElevationIn(max, locale, { prefs: units })}</span>
       </div>
     </div>
   );

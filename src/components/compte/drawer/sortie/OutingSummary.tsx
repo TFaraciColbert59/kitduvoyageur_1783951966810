@@ -4,7 +4,8 @@ import React, { useEffect, useState } from 'react';
 import { Check, Download, Pencil, Share2, ShieldCheck, Trash2, X } from 'lucide-react';
 import { ActionPill } from '@/components/ui/ActionPill';
 import type { OutingDetail, OutingVisibility } from '@/features/compte/server/sorties';
-import { ElevationProfile, TraceMap, formatDate, formatDuration, formatNumber } from './shared';
+import { ElevationProfile, TraceMap, formatDate, formatDuration } from './shared';
+import { useMeasureFormat } from '@/lib/i18n/useMeasureFormat';
 
 export interface OutingSummaryProps {
   detail: OutingDetail;
@@ -22,6 +23,7 @@ const STATUS_LABEL: Record<OutingDetail['status'], string> = {
 };
 
 export function OutingSummary({ detail, saving, onSave, onShare, onExport, onDelete }: OutingSummaryProps) {
+  const fmt = useMeasureFormat();
   const [editing, setEditing] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [title, setTitle] = useState(detail.title);
@@ -88,15 +90,15 @@ export function OutingSummary({ detail, saving, onSave, onShare, onExport, onDel
       <div className="lkdv-sortie-tiles">
         <div>
           <small>Distance</small>
-          <b>{formatNumber(detail.km)} km</b>
+          <b>{fmt.distance(detail.km)}</b>
         </div>
         <div>
           <small>Dénivelé</small>
-          <b>+{formatNumber(detail.dplus)} m</b>
+          <b>+{fmt.elevation(detail.dplus)}</b>
         </div>
         <div>
           <small>Alt. max</small>
-          <b>{detail.maxAlt ? `${formatNumber(detail.maxAlt)} m` : '—'}</b>
+          <b>{detail.maxAlt ? fmt.elevation(detail.maxAlt) : '—'}</b>
         </div>
         <div>
           <small>Durée</small>
@@ -151,9 +153,9 @@ export function OutingSummary({ detail, saving, onSave, onShare, onExport, onDel
       <section className="lkdv-sortie-section">
         <header>
           <b>Profil altimétrique</b>
-          <span>{detail.maxAlt ? `${formatNumber(detail.maxAlt)} m au plus haut` : 'Altitudes non renseignées'}</span>
+          <span>{detail.maxAlt ? `${fmt.elevation(detail.maxAlt)} au plus haut` : 'Altitudes non renseignées'}</span>
         </header>
-        <ElevationProfile points={detail.points} />
+        <ElevationProfile points={detail.points} units={fmt.prefs} locale={fmt.locale} />
       </section>
 
       <section className="lkdv-sortie-section">

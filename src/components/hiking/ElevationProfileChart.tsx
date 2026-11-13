@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
+import { formatDistanceIn, formatElevationIn } from '@/lib/i18n/measure';
+import type { MeasurePrefs } from '@/lib/i18n/region';
 
 interface Point {
   distanceKm: number;
@@ -13,6 +15,10 @@ interface ElevationProfileChartProps {
   totalElevationGainM?: number;
   totalElevationLossM?: number;
   currentProgressKm?: number;
+  /** Unités résolues de la personne ; absent, la région de `locale` décide. */
+  units?: MeasurePrefs;
+  /** Locale d'affichage des nombres ; défaut français. */
+  locale?: string;
 }
 
 export default function ElevationProfileChart({
@@ -21,6 +27,8 @@ export default function ElevationProfileChart({
   totalElevationGainM = 680,
   totalElevationLossM = 640,
   currentProgressKm = 3.2,
+  units,
+  locale = 'fr-FR',
 }: ElevationProfileChartProps) {
   const [hoverPoint, setHoverPoint] = useState<Point | null>(null);
 
@@ -97,15 +105,16 @@ export default function ElevationProfileChart({
             <span>📈 Profil d'Altitudes</span>
           </h4>
           <p className="text-[10px] font-mono text-[color:var(--lkv-text-secondary)]">
-            Point d'orgue : {maxElev}m · Altitude min : {minElev}m
+            Point d'orgue : {formatElevationIn(maxElev, locale, { prefs: units })} · Altitude min :{' '}
+            {formatElevationIn(minElev, locale, { prefs: units })}
           </p>
         </div>
         <div className="flex items-center gap-2 text-[10px] font-mono font-bold">
           <span className="bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)] px-2 py-0.5 rounded-full">
-            ▲ +{totalElevationGainM}m
+            ▲ +{formatElevationIn(totalElevationGainM, locale, { prefs: units })}
           </span>
           <span className="bg-sand-500/10 text-sand-800 px-2 py-0.5 rounded-full">
-            ▼ -{totalElevationLossM}m
+            ▼ -{formatElevationIn(totalElevationLossM, locale, { prefs: units })}
           </span>
         </div>
       </div>
@@ -115,7 +124,8 @@ export default function ElevationProfileChart({
         {/* Hover Readout Tooltip */}
         {hoverPoint ? (
           <div className="absolute top-0 left-1/2 -translate-x-1/2 bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)] text-[10px] font-mono px-2.5 py-1 rounded-full  border border-white/20 z-10 transition-all">
-            📍 {hoverPoint.distanceKm.toFixed(1)} km · ⛰️ {hoverPoint.elevationM} m
+            📍 {formatDistanceIn(hoverPoint.distanceKm, locale, { prefs: units })} · ⛰️{' '}
+            {formatElevationIn(hoverPoint.elevationM, locale, { prefs: units })}
           </div>
         ) : (
           <div className="absolute top-0 left-1/2 -translate-x-1/2 text-[color:var(--lkv-text-secondary)] text-[9px] font-mono opacity-60">
@@ -160,11 +170,11 @@ export default function ElevationProfileChart({
           )}
 
           {/* Axis Labels */}
-          <text x={padding.left - 5} y={padding.top + 4} textAnchor="end" className="text-[8px] font-mono fill-[color:var(--lkv-text-secondary)]">{maxElev}m</text>
-          <text x={padding.left - 5} y={padding.top + graphH} textAnchor="end" className="text-[8px] font-mono fill-[color:var(--lkv-text-secondary)]">{minElev}m</text>
+          <text x={padding.left - 5} y={padding.top + 4} textAnchor="end" className="text-[8px] font-mono fill-[color:var(--lkv-text-secondary)]">{formatElevationIn(maxElev, locale, { prefs: units })}</text>
+          <text x={padding.left - 5} y={padding.top + graphH} textAnchor="end" className="text-[8px] font-mono fill-[color:var(--lkv-text-secondary)]">{formatElevationIn(minElev, locale, { prefs: units })}</text>
 
-          <text x={padding.left} y={svgHeight - 5} textAnchor="start" className="text-[8px] font-mono fill-[color:var(--lkv-text-secondary)]">0km</text>
-          <text x={svgWidth - padding.right} y={svgHeight - 5} textAnchor="end" className="text-[8px] font-mono fill-[color:var(--lkv-text-secondary)]">{totalDistanceKm}km</text>
+          <text x={padding.left} y={svgHeight - 5} textAnchor="start" className="text-[8px] font-mono fill-[color:var(--lkv-text-secondary)]">{`0 ${units?.distance ?? 'km'}`}</text>
+          <text x={svgWidth - padding.right} y={svgHeight - 5} textAnchor="end" className="text-[8px] font-mono fill-[color:var(--lkv-text-secondary)]">{formatDistanceIn(totalDistanceKm, locale, { prefs: units })}</text>
         </svg>
       </div>
     </div>

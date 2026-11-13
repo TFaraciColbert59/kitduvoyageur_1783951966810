@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useMeasureFormat } from '@/lib/i18n/useMeasureFormat';
 
 interface StatsSheetProps {
   isOpen: boolean;
@@ -25,13 +26,6 @@ function formatDuration(seconds: number | null | undefined): string {
   return `${m}m`;
 }
 
-function formatPace(paceMinPerKm: number | null | undefined): string {
-  if (paceMinPerKm == null || paceMinPerKm <= 0 || !Number.isFinite(paceMinPerKm)) return '—';
-  const mins = Math.floor(paceMinPerKm);
-  const secs = Math.round((paceMinPerKm - mins) * 60);
-  return `${mins}'${String(secs).padStart(2, '0')}"`;
-}
-
 import ElevationProfileChart from '@/components/hiking/ElevationProfileChart';
 
 export default function StatsSheet({
@@ -47,6 +41,7 @@ export default function StatsSheet({
   averageSpeedKmH = null,
   paceMinPerKm = null,
 }: StatsSheetProps) {
+  const fmt = useMeasureFormat();
   if (!isOpen) return null;
 
   const hasRoute = routeTotalKm != null && routeTotalKm > 0;
@@ -87,6 +82,8 @@ export default function StatsSheet({
           totalElevationGainM={elevationGainM || 650}
           totalElevationLossM={elevationLossM || 620}
           currentProgressKm={distanceKm || 0}
+          units={fmt.prefs}
+          locale={fmt.locale}
         />
 
         {/* 4 Stat Cells Grid */}
@@ -97,9 +94,9 @@ export default function StatsSheet({
               Distance
             </div>
             <div className="text-2xl font-medium tracking-tight mt-1">
-              {distanceKm != null ? `${distanceKm.toFixed(1)}` : '—'}{' '}
+              {fmt.distanceValue(distanceKm)}{' '}
               <em className="font-serif italic font-normal text-sm text-[color:var(--lkv-text-primary)]">
-                {hasRoute ? `/ ${Number(routeTotalKm).toFixed(1)} km` : 'km'}
+                {hasRoute ? `/ ${fmt.distance(routeTotalKm)}` : fmt.distanceUnit}
               </em>
             </div>
             {hasRoute && progressPercent != null && (
@@ -126,14 +123,14 @@ export default function StatsSheet({
               Allure moyenne
             </div>
             <div className="text-2xl font-medium tracking-tight mt-1">
-              {formatPace(paceMinPerKm)}{' '}
-              <em className="font-serif italic font-normal text-sm text-[color:var(--lkv-text-primary)]">/km</em>
+              {fmt.paceValue(paceMinPerKm != null ? paceMinPerKm * 60 : null)}{' '}
+              <em className="font-serif italic font-normal text-sm text-[color:var(--lkv-text-primary)]">/{fmt.distanceUnit}</em>
             </div>
             <div className="text-[10px] font-mono text-[color:var(--lkv-primary-hover)] mt-1">
               {averageSpeedKmH != null && averageSpeedKmH > 0
-                ? `Vitesse : ${averageSpeedKmH.toFixed(1)} km/h`
+                ? `Vitesse : ${fmt.speed(averageSpeedKmH)}`
                 : currentSpeedKmH != null && currentSpeedKmH > 0
-                ? `Vitesse actuelle : ${currentSpeedKmH.toFixed(1)} km/h`
+                ? `Vitesse actuelle : ${fmt.speed(currentSpeedKmH)}`
                 : 'Vitesse : —'}
             </div>
           </div>
@@ -144,11 +141,11 @@ export default function StatsSheet({
               Dénivelé +
             </div>
             <div className="text-2xl font-medium tracking-tight mt-1">
-              +{elevationGainM != null ? Math.round(elevationGainM) : '—'}{' '}
-              <em className="font-serif italic font-normal text-sm text-[color:var(--lkv-forest-100)]">m</em>
+              +{fmt.elevationValue(elevationGainM)}{' '}
+              <em className="font-serif italic font-normal text-sm text-[color:var(--lkv-forest-100)]">{fmt.elevationUnit}</em>
             </div>
             <div className="text-[10px] font-mono text-[color:var(--lkv-forest-100)]/70 mt-1">
-              {elevationLossM != null ? `D- : -${Math.round(elevationLossM)} m` : 'D- : —'}
+              {elevationLossM != null ? `D- : -${fmt.elevation(elevationLossM)}` : 'D- : —'}
             </div>
           </div>
         </div>
@@ -160,7 +157,7 @@ export default function StatsSheet({
               Vitesse <em className="font-serif italic text-[color:var(--lkv-forest-100)]">instantanée</em>
             </div>
             <div className="font-mono text-[10px] text-[color:var(--lkv-forest-100)] tracking-wider">
-              {currentSpeedKmH != null && currentSpeedKmH > 0 ? `${currentSpeedKmH.toFixed(1)} km/h` : '—'}
+              {currentSpeedKmH != null && currentSpeedKmH > 0 ? fmt.speed(currentSpeedKmH) : '—'}
             </div>
           </div>
         </div>

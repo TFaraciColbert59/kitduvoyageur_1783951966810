@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { StatTile } from '../cards/StatTile';
-import { formatElevation } from '@/lib/format/metrics';
+import { useMeasureFormat } from '@/lib/i18n/useMeasureFormat';
 import { SlotEmpty } from './SlotEmpty';
 import { BadgeTile, type BadgeItem } from '../cards/BadgeTile';
 import { RepostCard, type RepostItem } from '../cards/RepostCard';
@@ -87,7 +87,6 @@ const MONTHS_LONG = [
 
 const MONTHS_SHORT = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'] as const;
 
-const NUMBER_FORMAT = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 1 });
 const INTEGER_FORMAT = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -108,20 +107,8 @@ function asOptionalNumber(value: unknown): number | undefined {
   return Number.isFinite(parsed) ? parsed : undefined;
 }
 
-function formatNumber(value: number): string {
-  return NUMBER_FORMAT.format(asFiniteNumber(value));
-}
-
 function formatInteger(value: number): string {
   return INTEGER_FORMAT.format(Math.round(asFiniteNumber(value)));
-}
-
-function formatKm(value: number): string {
-  return `${formatNumber(value)} km`;
-}
-
-function formatMeters(value: number): string {
-  return formatElevation(value);
 }
 
 /** Affiche un tiret cadratin quand la donnée n'existe pas, jamais un faux 0. */
@@ -605,6 +592,7 @@ function StatsLens({
   visibility: 'public' | 'prive';
   payloadKey?: object | null;
 }) {
+  const fmt = useMeasureFormat();
   const yearMonths = MONTHS_LONG.map((_, index) => asFiniteNumber(stats.yearMonths?.[index]));
   const maxMonth = Math.max(0, ...yearMonths);
   const hasYearData = maxMonth > 0;
@@ -621,11 +609,11 @@ function StatsLens({
 
       <section className="lkdv-vitrine-card lkdv-vitrine-hero" aria-label="Statistiques clés">
         <div className="lkdv-vitrine-metric">
-          <b>{formatOptional(stats.km, formatKm)}</b>
+          <b>{stats.km === undefined ? '—' : fmt.distance(stats.km)}</b>
           <span>Distance</span>
         </div>
         <div className="lkdv-vitrine-metric">
-          <b>{formatOptional(stats.dplus, formatMeters)}</b>
+          <b>{stats.dplus === undefined ? '—' : fmt.elevationCompact(stats.dplus)}</b>
           <span>Dénivelé</span>
         </div>
         <div className="lkdv-vitrine-metric">
@@ -678,7 +666,7 @@ function StatsLens({
             const height = hasYearData
               ? Math.max(4, Math.round((value / maxMonth) * 100))
               : 4;
-            const label = `${MONTHS_LONG[index]} : ${formatNumber(value)} km`;
+            const label = `${MONTHS_LONG[index]} : ${fmt.distance(value)}`;
             return (
               <div className="lkdv-vitrine-month" key={MONTHS_LONG[index]}>
                 <div
@@ -709,7 +697,7 @@ function StatsLens({
           ) : null}
           <div>
             <span>Plus longue sortie</span>
-            <b>{formatOptional(stats.longestOuting, formatKm)}</b>
+            <b>{stats.longestOuting === undefined ? '—' : fmt.distance(stats.longestOuting)}</b>
           </div>
         </div>
       </section>
