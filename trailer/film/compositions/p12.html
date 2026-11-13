@@ -74,7 +74,7 @@
         var brake = Math.exp(-Math.max(f, -3) / 4.5);
         var push = FX.ease.inCubic(FX.clamp((f - 34) / (N - 1 - 34), 0, 1));
         var S = 1.32 + 0.04 * u + (1.70 - 1.36) * push;
-        var cx = 1090 - 40 * u + 75 * brake;
+        var cx = 1035 - 40 * u + 75 * brake; // CORRECTIONS-1 : cadre décalé (−55 px image ≈ 73 px écran) pour dégager le visage de Léa au bord gauche
         var cy = 478 + 6 * brake;
         cx = cx + (1076 - cx) * push;
         cy = cy + (474 - cy) * push;

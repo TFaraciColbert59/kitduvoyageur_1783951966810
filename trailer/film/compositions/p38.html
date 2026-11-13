@@ -64,16 +64,19 @@
       function camAt(f) {
         var a = FX.ease.outCubic(FX.clamp(f / 12, 0, 1));
         var p = FX.ease.inOutCubic(FX.clamp((f - 8) / 64, 0, 1));
-        var ex = FX.ease.inCubic(FX.clamp((f - (N - 9)) / 9, 0, 1));
-        var S = 1.55 - 0.45 * p + 0.18 * ex;
-        var cx = 1070 - 70 * p + 120 * ex + hand(f, 3, 381);
-        var cy = 560 + 140 * a - 115 * p + hand(f, 2, 383);
+        // CORRECTIONS-1 : drone qui recule depuis plus près (S 2,20 → 1,10) : Malik (≈ 17,5 px de haut dans
+        // la source, en 1080, 925) mesure ≈ 38 px à l'entrée, ≈ 29 px au milieu, ≈ 19 px à la fin ; le sommet
+        // se découvre en fin de recul. Sortie sur 5 images, amplitude moitié.
+        var ex = 0.5 * FX.ease.inCubic(FX.clamp((f - (N - 5)) / 5, 0, 1));
+        var S = 2.20 - 1.10 * p + 0.18 * ex;
+        var cx = 1075 - 75 * p + 120 * ex + hand(f, 3, 381);
+        var cy = 700 + 100 * a - 215 * p + hand(f, 2, 383);
         var rot = (Math.PI / 180) * (-0.8 * (1 - a) + 0.6 * ex);
         return fit({ S: S, cx: cx, cy: cy, rot: rot });
       }
       var clock = FX.bindClock("p38", N, function (t, f) {
         if (!img.complete || !img.naturalWidth) { ctx.fillStyle = INK; ctx.fillRect(0, 0, W, H); return; }
-        shoot(camAt, f, 0.6 + 1.4 * Math.pow(1 - FX.clamp(f / 8, 0, 1), 2) + 1.4 * FX.ease.inCubic(FX.clamp((f - (N - 9)) / 9, 0, 1)));
+        shoot(camAt, f, (f < 2 ? 0.6 - 0.24 * f : 0.12 + 0.23 * FX.clamp((f - 2) / 12, 0, 1)) + 0.6 * FX.ease.inCubic(FX.clamp((f - (N - 4)) / 4, 0, 1)));
       });
       img.addEventListener("load", function () { clock.redraw(); });
       window.__timelines["p38"] = clock.tl;

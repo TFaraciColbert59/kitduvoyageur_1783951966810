@@ -39,7 +39,10 @@
       }
 
       var N = 53;
-      var OPEN = [-2.5, 14.85, 28.0], CLOSE = [41.15, 43.15, 45.15], OPEN_LEN = 7, CLOSE_LEN = 7.8;
+      // Correction 1 (REVIEW P0) : les trois volets sont pleins dès la première image (cascade de 4 images
+      // amorcée avant le plan, dans la fermeture des volets de P13 côté encre) et ne se referment que sur les
+      // 8 dernières images (45 → 53). Encre ≤ 15 % du cadre hors de ces 8 images.
+      var OPEN = [-6, -5, -4], CLOSE = [45, 45.8, 46.6], OPEN_LEN = 4, CLOSE_LEN = 6.3;
       var GAP = 4;
       function band(i, f) {
         var o = FX.ease.outExpo(FX.clamp((f - OPEN[i]) / OPEN_LEN, 0, 1));

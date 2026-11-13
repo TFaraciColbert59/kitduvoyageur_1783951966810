@@ -64,7 +64,7 @@
       function camAt(f) {
         var a = FX.ease.outCubic(FX.clamp(f / 10, 0, 1));
         var k = FX.clamp(f / N, 0, 1);
-        var ex = FX.ease.inCubic(FX.clamp((f - (N - 9)) / 9, 0, 1));
+        var ex = 0.5 * FX.ease.inCubic(FX.clamp((f - (N - 5)) / 5, 0, 1)); // CORRECTIONS-1 : sortie sur 5 images (filé visible ≤ 4), amplitude moitié
         var S = 1.30 + 0.06 * a + 0.02 * k + 0.20 * ex;
         var cx = 760 + 140 * a + 12 * k + hand(f, 3, 371);
         var cy = 470 + 260 * ex + hand(f, 2, 373);
@@ -73,7 +73,7 @@
       }
       var clock = FX.bindClock("p37", N, function (t, f) {
         if (!img.complete || !img.naturalWidth) { ctx.fillStyle = INK; ctx.fillRect(0, 0, W, H); return; }
-        shoot(camAt, f, 0.6 + 1.4 * Math.pow(1 - FX.clamp(f / 8, 0, 1), 2) + 1.8 * FX.ease.inCubic(FX.clamp((f - (N - 9)) / 9, 0, 1)));
+        shoot(camAt, f, 0.6 + 1.4 * Math.pow(1 - FX.clamp(f / 8, 0, 1), 2) + 0.6 * FX.ease.inCubic(FX.clamp((f - (N - 4)) / 4, 0, 1)));
       });
       img.addEventListener("load", function () { clock.redraw(); });
       window.__timelines["p37"] = clock.tl;

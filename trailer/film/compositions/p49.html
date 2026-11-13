@@ -1,5 +1,5 @@
 <!-- P49 (images 3060–3113, 53 images) — landscape-director. img37 (même image que P48), très gros plan : elle publie ; écran VERT laissé intact (E12, ui-builder).
-     Début de la MONTÉE : la caméra de P48 continue (même fonction, g = 79 + f) et accélère vers le téléphone : S 1,18 → 1,66 (u^2,2), cx 1100 → 1190.
+     Début de la MONTÉE : coupe franche en plan serré (CORRECTIONS-1) : S 1,62 → 1,90 (u^2,2) centré sur le téléphone (cx ≈ 1180).
      Sortie (« le drone s'élève ») : bascule vers le haut sur les 16 dernières images (cy 540 → 495, inCubic), flou croissant. Téléphone entier jusqu'au bout.
      Caméra : window.__lkdvCam.p49(f) → { S, cx, cy, rot }. -->
 <template>
@@ -77,7 +77,22 @@
         var rot = D * hand(g, 0.25, 485) * calm;
         return fit({ S: S, cx: cx, cy: cy, rot: rot });
       }
-      function camAt(f) { return leaCam(79 + f); }
+      // CORRECTIONS-1 : coupe 3060 rendue visible. P49 ne continue plus la caméra de P48 (S 1,18, cx 1100) :
+      // elle OUVRE en coup de poing serré sur le téléphone (S 1,62, centré sur l'appareil ≈ 1185, 535), même
+      // direction (poussée vers l'écran), puis la poussée accélère jusqu'à S 1,90 ; bascule vers le haut sur
+      // les 16 dernières images. Téléphone (≈ x 1050–1320, y 300–770 dans l'image) entier jusqu'au bout.
+      function camAt(f) {
+        var u = FX.clamp(f / (N - 1), 0, 1);
+        var acc = Math.pow(u, 2.2);
+        var up = FX.ease.inCubic(FX.clamp((u - 0.7) / 0.3, 0, 1));
+        var calm = 1 - u;
+        var g = 79 + f;
+        var S = 1.62 + 0.06 * u + 0.22 * acc;
+        var cx = 1180 + 12 * u + hand(g, 3, 481) * calm;
+        var cy = 538 - 28 * up + hand(g, 2, 483) * calm;
+        var rot = D * hand(g, 0.25, 485) * calm;
+        return fit({ S: S, cx: cx, cy: cy, rot: rot });
+      }
       window.__lkdvCam = window.__lkdvCam || {};
       window.__lkdvCam.p49 = camAt;
       var clock = FX.bindClock("p49", N, function (t, f) {

@@ -1,0 +1,22 @@
+# CORRECTIONS-1 — landscape-director (2026-11-13)
+
+Suite de `qa/REVIEW.md`. Une ligne par correction, écrite dès qu'elle est vérifiée.
+
+1. **P14 — fait.** `p14.html` : volets ouverts avant l'image 823 (cascade 4 images, amorcée à -6/-5/-4), fermeture sur 45→53 seulement. Encre (±14 de (11,31,23)) mesurée sur snapshots : 823 = 6,9 % · 836 = 7,0 % · 849 = 6,9 % · 866 = 6,9 % · 875 (fermeture) = 42,8 %. Trois visages ensemble de 823 à 867. Preuve : `qa/snapshots/corrections-1/p14-823-836-849-866-875.jpg`.
+2. **Flous de coupe — fait (intensité : partiel).** `p33/p35/p37/p39/p40/p43/p44.html` : mouvement de sortie ramené de 9 à 5 images (inCubic, même direction, amplitude moitié), surplus d'obturateur de sortie sur 4 images et 0,6 au lieu de 1,8/1,1. Netteté (laplacien moyen 480×270) aux images fin-6 / fin-4 / fin-2 / fin-1 : P33 16,0/15,0/4,9/3,5 · P35 23,5/24,1/11,8/7,5 · P37 17,1/16,8/7,6/5,1 · P39 19,3/19,1/10,4/7,1 · P40 16,9/16,4/7,2/5,0 · P43 19,9/19,3/10,3/7,3 · P44 10,4/10,2/4,8/3,2 → 3 images floues au plus avant chaque coupe (avant : 9). P38 entrée : 20,4 (2297) / 16,3 (2299), nette dès la 1re image. Reste faible : la dernière image de chaque plan reste très filée (vitesse de coupe gardée pour le raccord). P44 : sortie à S +0,125 au lieu de +0,25, mains entières sur fin-2 (`flous-4`). P39 : pieds du coureur dans le cadre jusqu'à fin-2. Preuves : `qa/snapshots/corrections-1/flous-1…5-*.jpg`.
+3. **P38 ★ — fait.** `p38.html` : drone qui recule depuis S 2,20 (au lieu de 1,55) jusqu'à 1,10 ; entrée en plongée gardée (cy 700 → 800), flou d'entrée sur 2 images. Malik mesuré sur le snapshot 2337 (zoom ×3) : ≈ 29 px de haut, en (1027, 922). Sommet : rogné au milieu du plan, entier en fin de recul (39,62 s, `flous-3`). Preuve : `qa/snapshots/corrections-1/p38-2337-malik-zoom3.jpg`.
+4. **P45 — fait.** `p45.html` : dérive linéaire continue jusqu'à la coupe (S +0,045, cx +30, cy −24 sur le plan) et tremblé gardé à 35 %. Écart moyen entre images voisines (480×270) : 2843→2845 2,25 · 2845→2846 1,13 · 2846→2847 1,14 (avant : < 0,15 sur 2829–2847). Nuages : pas de défilement séparé du ciel (pas de masque), la poussée seule porte « le ciel accélère ». Preuve : `p45-2826-2848-et-p05.jpg`.
+5. **P49 — fait.** `p49.html` : P49 ouvre en plan serré sur le téléphone (S 1,62 → 1,90, cx ≈ 1180) au lieu de continuer la caméra de P48 (S 1,18). Écart 3059→3060 : 36,5/255 (avant 0,7) ; vert mesuré 918–1192 × 276–789 à 3059, 773–1149 × 181–886 à 3060, 721–1158 × 168–981 à 3112 : téléphone entier. `window.__lkdvCam.p49 = camAt`, la fonction dessinée (exacte). Vert non touché. Preuves : `p48-p49-coupe-3060-a.jpg`, `-b.jpg`.
+6. **P05 — partiel.** `p05.html` : flou radial de P04 (0,08) prolongé et décroissant sur 272–274 (`p04-p05-raccord-271-274.jpg`). Saut de fin (genoux en très gros plan à 323 → pièce entière à 324) supprimé : la texture vue dans la vitre contient img06 entière à l'échelle du plan suivant ; écart 323→324 : 23,0 (avant 37,8). Faible : de 314 à 322 la pièce se lit comme une photo aux bords fondus dans un halo crème, moins naturelle que la vue par la fenêtre d'origine (`p05-300-325-sortie.jpg`). Fichier de cosmos-vfx : à relire par lui.
+7. **P02 / P12 — fait.** `p02.html` : flash `post` 2 → 5, luminance moyenne 89 = 243 · 90 = 234 · 91 = 211 · 92 = 176 · 93 = 142 · 95 = 100 (blanc fondu sur 5 images, `p01-p02-flash-88-95.jpg`). `p12.html` : cx −55 px image (≈ 73 px écran), poussée finale toujours centrée sur le téléphone ; visage moins coupé mais encore en amorce (`p12-692-718-743.jpg`).
+
+## Contrôles (après la dernière retouche, `p05.html`)
+- `npx hyperframes lint` (film/) : `0 errors, 0 warnings` (56 fichiers).
+- `npx hyperframes check --json` (film/) : `ok: true` ; lint, runtime, layout, motion, contrast, craft, audio : 0 erreur, 0 avertissement.
+- `node tools/timeline/compare-timeline.mjs` : `{"rows":54,"shots":54,"duration":60,"mismatches":0,"maxAbsFrameOffset":0}` ✓.
+
+## Ce qui reste faible
+- Flous : la dernière image de chaque plan reste très filée (laplacien 3–7) ; seul le nombre d'images floues a baissé (≤ 3). P39 sort avec un roulis de +1° au lieu de +2° (amplitude moitié) alors que P40 entre à +2° : léger écart d'angle à la coupe 2429.
+- P38 : sommet rogné jusqu'au milieu du plan (choix de la taille de Malik), piste non éclaircie (étalonnage reporté).
+- P05 : le cœur aux bords fondus dans un halo crème (314–322) fait « photo dans le cadre ».
+- Non vérifié : fluidité en mouvement (images fixes seulement), 9:16.
