@@ -15,8 +15,15 @@
  *
  * Aucun capteur cardio, cadence, puissance, température, podomètre ou énergie
  * n'est branché dans l'Explorer aujourd'hui. Les champs correspondants de
- * `MetricInput` sont le point d'entrée des futurs imports FIT/TCX ou des
- * connecteurs santé ; ils ne sont alimentés par aucun code actuel.
+ * `MetricInputBase` (et `PowerMetricInput` pour les watts) sont le point
+ * d'entrée des futurs imports FIT/TCX ou des connecteurs santé ; ils ne sont
+ * alimentés par aucun code actuel.
+ *
+ * La puissance a un contrat plus strict que les autres champs : elle n'est
+ * acceptée que si l'appelant déclare explicitement une provenance `sensor` ou
+ * `import` **et** une qualité `measured` ou `estimated`. Aucun défaut
+ * `sensor`/`measured` n'est appliqué, et aucune puissance n'est calculée à
+ * partir de la vitesse, du poids, de la fréquence cardiaque ou de la pente.
  */
 
 import type {
@@ -26,6 +33,8 @@ import type {
   MetricSeries,
   MetricSeriesStats,
   MetricSource,
+  PowerMetricQuality,
+  PowerMetricSource,
   Sport,
 } from '../state/types';
 import { ActivityTracker, autoPauseConfigForSport, type GpsFix } from './tracker';
@@ -73,10 +82,13 @@ export const DISPLAY_SAMPLE_INTERVAL_MS = 5_000;
 export const MAX_WEIGHT_INTERVAL_S = 60;
 
 /**
- * Entrée normalisée d'une source. Un connecteur fournit les champs qu'il
- * connaît ; les autres restent `null`/absents et ne créent aucune série.
+ * Champs communs d'une entrée normalisée. Un connecteur fournit les champs
+ * qu'il connaît ; les autres restent `null`/absents et ne créent aucune série.
+ *
+ * `powerW` est volontairement absent : la puissance a son propre contrat
+ * (`PowerMetricInput`), qui exige une provenance explicite.
  */
-export interface MetricInput {
+export interface MetricInputBase {
   /** Instant de mesure (ms), idéalement l'échelle corrigée du tracker. */
   t: number;
   elevationM?: number | null;
@@ -84,7 +96,7 @@ export interface MetricInput {
   heartRateBpm?: number | null;
   cadenceSpm?: number | null;
   strokeRateSpm?: number | null;
-  powerW?: number | null;
+  powerW?: never;
   temperatureC?: number | null;
   /**
    * Énergie **cumulée** estimée par la source depuis le départ (kcal), jamais
@@ -98,6 +110,31 @@ export interface MetricInput {
   source?: MetricSource;
   /** Qualité commune ; absente, la qualité par défaut de la métrique s'applique. */
   quality?: MetricQuality;
+}
+
+/**
+ * Entrée de puissance. `source` et `quality` sont obligatoires et limitées aux
+ * valeurs admises : un capteur ou un import, avec une mesure ou une estimation
+ * déclarée par la source. Le type empêche à la compilation de passer des watts
+ * sans provenance ; le moteur vérifie la même règle à l'exécution pour les
+ * appelants JavaScript.
+ */
+export interface PowerMetricInput extends Omit<MetricInputBase, 'powerW'> {
+  powerW: number;
+  source: PowerMetricSource;
+  quality: PowerMetricQuality;
+}
+
+/**
+ * Entrée normalisée d'une source. Une entrée de puissance doit satisfaire
+ * `PowerMetricInput` ; les autres métriques gardent leurs champs optionnels.
+ */
+export type MetricInput = MetricInputBase | PowerMetricInput;
+
+/** Provenance explicite d'une puissance, après validation runtime. */
+export interface PowerProvenance {
+  source: PowerMetricSource;
+  quality: PowerMetricQuality;
 }
 
 export interface MetricSeriesSummary {
@@ -125,6 +162,64 @@ export interface MetricUnavailableGroup {
 
 function finite(value: number | null | undefined): number | null {
   return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
+/**
+ * Valide la provenance d'une puissance. Retourne `null` plutôt qu'une valeur
+ * par défaut : une provenance absente, `gps`, `derived` ou `mixed` ne doit
+ * jamais devenir `sensor`/`measured` par accident.
+ */
+export function readPowerProvenance(
+  source: MetricSource | null | undefined,
+  quality: MetricQuality | null | undefined,
+): PowerProvenance | null {
+  if (
+    (source === 'sensor' || source === 'import') &&
+    (quality === 'measured' || quality === 'estimated')
+  ) {
+    return { source, quality };
+  }
+  return null;
+}
+
+/**
+ * Construit une entrée de puissance pour un adaptateur capteur ou import.
+ * `null` est une lacune, pas un zéro : aucune entrée n'est produite si la
+ * valeur, l'instant ou la provenance n'est pas explicite.
+ */
+export function powerMetricInput(
+  t: number,
+  powerW: number | null | undefined,
+  source: PowerMetricSource | null | undefined,
+  quality: PowerMetricQuality | null | undefined,
+): PowerMetricInput | null {
+  const value = finite(powerW);
+  const provenance = readPowerProvenance(source, quality);
+  if (value === null || !Number.isFinite(t) || provenance === null) return null;
+  return {
+    t,
+    powerW: value,
+    source: provenance.source,
+    quality: provenance.quality,
+  };
+}
+
+/**
+ * Point d'entrée unique d'un adaptateur puissance (capteur BLE, HealthKit,
+ * import FIT/TCX). Aucune valeur n'est déduite : seuls les watts réellement
+ * fournis et explicitement qualifiés sont ajoutés.
+ */
+export function appendPowerMetric(
+  series: MetricSeries[],
+  t: number,
+  powerW: number | null | undefined,
+  source: PowerMetricSource | null | undefined,
+  quality: PowerMetricQuality | null | undefined,
+): MetricSeries[] {
+  const provenance = readPowerProvenance(source, quality);
+  if (provenance === null) return series;
+  const input = powerMetricInput(t, powerW, provenance.source, provenance.quality);
+  return input ? appendMetricInputs(series, input) : series;
 }
 
 function emptyStats(): MetricSeriesStats {
@@ -245,11 +340,19 @@ export function appendMetricInputs(series: MetricSeries[], input: MetricInput): 
   if (!Number.isFinite(input.t)) return series;
   let next = series.slice();
 
-  const add = (key: MetricKey, rawValue: number | null | undefined) => {
+  const add = (
+    key: MetricKey,
+    rawValue: number | null | undefined,
+    explicitProvenance?: PowerProvenance,
+  ) => {
     const value = finite(rawValue);
     if (value === null) return;
-    const source = input.source ?? defaultSource(key);
-    const quality = input.quality ?? defaultQuality(key, source);
+    // La puissance ne passe jamais par les défauts `sensor`/`measured` :
+    // `explicitProvenance` est fourni uniquement après validation.
+    const source =
+      explicitProvenance?.source ?? input.source ?? defaultSource(key);
+    const quality =
+      explicitProvenance?.quality ?? input.quality ?? defaultQuality(key, source);
     const index = next.findIndex((candidate) => candidate.key === key);
     if (index === -1) {
       const created = createSeries(key, source, quality);
@@ -278,7 +381,23 @@ export function appendMetricInputs(series: MetricSeries[], input: MetricInput): 
   add('heartRate', input.heartRateBpm);
   add('cadence', input.cadenceSpm);
   add('strokeRate', input.strokeRateSpm);
-  add('power', input.powerW);
+
+  // Les watts n'entrent que par `PowerMetricInput` (ou `appendPowerMetric`).
+  // Sans provenance `sensor`/`import` et sans qualité `measured`/`estimated`,
+  // l'échantillon est ignoré : aucun calcul, aucune source simulée.
+  const powerProvenance = readPowerProvenance(input.source, input.quality);
+  if (powerProvenance !== null) {
+    const power = powerMetricInput(
+      input.t,
+      input.powerW,
+      powerProvenance.source,
+      powerProvenance.quality,
+    );
+    if (power !== null) {
+      add('power', power.powerW, power);
+    }
+  }
+
   add('temperature', input.temperatureC);
   add('calories', input.caloriesKcal);
   add('steps', input.steps);
@@ -508,15 +627,50 @@ export function formatMetricValue(
   }
 }
 
-/** Libellé honnête de la qualité et de la provenance d'une série. */
+/**
+ * Libellé honnête de la qualité et de la provenance d'une série. Une
+ * estimation garde sa provenance : « estimé · import » n'est pas la même
+ * chose qu'une mesure importée, et « sources mixtes » signale qu'une même
+ * série a reçu plusieurs origines.
+ */
 export function metricQualityLabel(quality: MetricQuality, source: MetricSource): string {
-  if (quality === 'estimated') return 'estimé';
-  if (quality === 'derived') return 'calculé';
-  if (source === 'import') return 'importé';
+  const origin =
+    source === 'import'
+      ? 'import'
+      : source === 'sensor'
+        ? 'capteur'
+        : source === 'gps'
+          ? 'GPS'
+          : source === 'mixed'
+            ? 'sources mixtes'
+            : null;
+  if (quality === 'estimated') {
+    return origin ? `estimé · ${origin}` : 'estimé';
+  }
+  if (quality === 'derived' || source === 'derived') return 'calculé';
+  if (source === 'import') return 'mesuré · import';
   if (source === 'gps') return 'mesuré GPS';
   if (source === 'sensor') return 'mesuré capteur';
   if (source === 'mixed') return 'sources mixtes';
   return 'mesuré';
+}
+
+/**
+ * Libellé de provenance d'une puissance. Il est accordé au féminin
+ * (« puissance mesurée / estimée ») et garde la source, pour que
+ * « estimée · import » ne puisse pas être confondu avec une mesure.
+ */
+export function powerQualityLabel(quality: MetricQuality, source: MetricSource): string {
+  if (quality === 'estimated') {
+    if (source === 'import') return 'estimée · import';
+    if (source === 'sensor') return 'estimée · capteur';
+    return 'estimée';
+  }
+  if (quality === 'derived' || source === 'derived') return 'calculée';
+  if (source === 'import') return 'mesurée · import';
+  if (source === 'sensor') return 'mesurée capteur';
+  if (source === 'mixed') return 'sources mixtes';
+  return 'mesurée';
 }
 
 export const METRIC_UNAVAILABLE_REASONS: Partial<Record<MetricKey, string>> = {
@@ -524,7 +678,8 @@ export const METRIC_UNAVAILABLE_REASONS: Partial<Record<MetricKey, string>> = {
     'Aucune ceinture cardio connectée (BLE, HealthKit/Health Connect ou import FIT/TCX).',
   cadence: 'Aucun capteur de cadence connecté.',
   strokeRate: 'Aucun capteur de cadence de pagaie connecté.',
-  power: 'Aucun capteur de puissance connecté.',
+  power:
+    'Aucun capteur de puissance ni import FIT/TCX avec watts fourni ; LKDV ne calcule ni ne déduit aucune puissance.',
   temperature: 'Aucun capteur de température connecté.',
   calories:
     'Aucune source d’énergie connectée ; LKDV ne déduit pas de calories de la durée, de la distance ou du poids.',

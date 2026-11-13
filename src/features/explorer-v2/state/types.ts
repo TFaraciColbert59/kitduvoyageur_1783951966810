@@ -116,6 +116,20 @@ export type MetricSource = 'gps' | 'sensor' | 'import' | 'derived' | 'mixed';
  */
 export type MetricQuality = 'measured' | 'derived' | 'estimated';
 
+/**
+ * Provenance admise pour une puissance. Les watts ne viennent que d'un
+ * capteur (BLE, HealthKit/Health Connect) ou d'un import (FIT/TCX). Le GPS ne
+ * mesure pas de puissance et LKDV n'en calcule ni n'en déduit aucune.
+ */
+export type PowerMetricSource = Extract<MetricSource, 'sensor' | 'import'>;
+
+/**
+ * Qualité admise pour une puissance. Une valeur fournie par la source est
+ * soit mesurée, soit estimée par cette source ; `derived` est interdit pour
+ * la puissance, car il désignerait un calcul LKDV.
+ */
+export type PowerMetricQuality = Extract<MetricQuality, 'measured' | 'estimated'>;
+
 /** Métriques pouvant être représentées dans une série temporelle. */
 export type MetricKey =
   | 'elevation'

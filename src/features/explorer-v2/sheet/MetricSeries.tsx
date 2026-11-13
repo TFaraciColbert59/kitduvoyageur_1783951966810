@@ -8,6 +8,7 @@ import {
   groupUnavailableMetrics,
   hasMetricValues,
   metricQualityLabel,
+  powerQualityLabel,
   summarizeMetricSeries,
   unavailableMetricEntries,
   unavailableMetricsForSport,
@@ -67,7 +68,22 @@ function MetricSeriesRow({ series, units }: { series: MetricSeries; units: Metri
   );
   const peakLabel = series.key === 'pace' ? 'meilleure' : 'pic';
   const countLabel = `${summary.count} mesure${summary.count > 1 ? 's' : ''}`;
-  const quality = metricQualityLabel(series.quality, series.source);
+  const quality =
+    series.key === 'power'
+      ? powerQualityLabel(series.quality, series.source)
+      : metricQualityLabel(series.quality, series.source);
+  // La puissance porte toujours une mention lisible : « mesurée » ou
+  // « estimée ». Le détail de la provenance reste dans la ligne du dessous.
+  const powerBadge =
+    series.key === 'power'
+      ? series.quality === 'estimated'
+        ? { label: 'estimée', tone: 'warn' as const }
+        : series.quality === 'derived'
+          ? { label: 'calculée', tone: 'warn' as const }
+          : series.source === 'mixed'
+            ? { label: 'mixte', tone: 'warn' as const }
+            : { label: 'mesurée', tone: 'good' as const }
+      : undefined;
   return (
     <XpRow
       icon={METRIC_DEFINITIONS[series.key].icon}
@@ -85,6 +101,7 @@ function MetricSeriesRow({ series, units }: { series: MetricSeries; units: Metri
             ? `${peakLabel} ${peakValue} · ${countLabel} · ${quality}`
             : `${countLabel} · ${quality}`
       }
+      badge={powerBadge}
       trailing={<Sparkline samples={series.samples} />}
     />
   );
