@@ -54,6 +54,7 @@ export type SheetKind =
   | 'live'
   | 'sos'
   | 'summary'
+  | 'zoneSettings'
   | 'easy';
 
 export type Selection = { kind: PoiKind; id: string };

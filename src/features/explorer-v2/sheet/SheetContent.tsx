@@ -28,6 +28,7 @@ import {
 import { countTiles, downloadZone, purgeZone, readZone } from '../offline/zone';
 import { ElevationProfile } from './ElevationProfile';
 import { StrengthPanel } from './StrengthPanel';
+import { ZoneSettingsEntry, ZoneSettingsPanel } from './ZoneSettingsPanel';
 import {
   XpAvatars,
   XpCard,
@@ -2610,9 +2611,28 @@ function ActivityTabs(ctx: SheetContext, kind: string): SheetTab[] {
         label: isReco ? 'Recommandé' : isCatalog ? 'Catalogue' : 'Itinéraires',
         icon: isReco ? 'star' : isCatalog ? 'run' : 'map',
         render: () => {
-          if (isReco) return <RecommendedSports ctx={ctx} />;
-          if (isRoutes) return <RoutesTab ctx={ctx} />;
-          return <SportPicker ctx={ctx} />;
+          if (isReco) {
+            return (
+              <>
+                <RecommendedSports ctx={ctx} />
+                <ZoneSettingsEntry />
+              </>
+            );
+          }
+          if (isRoutes) {
+            return (
+              <>
+                <RoutesTab ctx={ctx} />
+                <ZoneSettingsEntry />
+              </>
+            );
+          }
+          return (
+            <>
+              <SportPicker ctx={ctx} />
+              <ZoneSettingsEntry />
+            </>
+          );
         },
       },
     ];
@@ -2957,6 +2977,27 @@ export function buildSheetModel(ctx: SheetContext): SheetModel {
       mini: null,
       actions: null,
       onBack: () => state.setSheet('start', 'low'),
+    };
+  }
+
+  if (kind === 'zoneSettings') {
+    return {
+      title: 'Zones et seuils',
+      subtitle: 'Réglages sportifs privés · aucune valeur par défaut',
+      tabs: [
+        {
+          id: 'zones',
+          label: 'Réglages',
+          icon: 'gauge',
+          render: () => <ZoneSettingsPanel displayUnits={ctx.units} />,
+        },
+      ],
+      mini: null,
+      actions: null,
+      onBack: () => {
+        state.setTab(0);
+        state.setSheet('start', 'low');
+      },
     };
   }
 
