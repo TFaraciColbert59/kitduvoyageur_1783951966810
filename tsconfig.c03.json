@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "src/features/highlights/**/*.ts",
+    "src/features/highlights/**/*.tsx",
+    "src/components/highlights/**/*.ts",
+    "src/components/highlights/**/*.tsx"
+  ],
+  "exclude": ["node_modules"]
+}
