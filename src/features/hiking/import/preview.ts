@@ -13,6 +13,7 @@ import type {
   TraceMetric,
   TraceTimeBasis,
 } from './model';
+import { buildTraceImportLapSummaries, type TraceImportLapSummary } from './laps';
 
 export interface TraceImportPreview {
   /** Nom proposé pour la sortie, dérivé du nom de fichier réel. */
@@ -27,6 +28,11 @@ export interface TraceImportPreview {
   pointCount: number;
   positionedPointCount: number;
   lapCount: number;
+  /**
+   * Tours réellement lus dans le fichier, bornés pour l'aperçu. Ils ne sont
+   * pas persistés : le détail d'une sortie rechargée ne peut pas les relire.
+   */
+  laps: TraceImportLapSummary[];
   timeBasis: TraceTimeBasis;
   availableMetrics: TraceMetric[];
   /** `false` tant qu'une donnée manquante empêche une écriture honnête. */
@@ -67,6 +73,12 @@ export interface HikeSessionImportPayload {
   poiEvents: [];
   /** Un import ne crée pas de carnet : la sortie reste un objet privé. */
   createCarnet: false;
+  /**
+   * Les tours ne figurent volontairement pas dans ce contrat : aucune colonne
+   * de `hike_sessions`, de `trace_imports` ni aucun paramètre de la RPC ne les
+   * accepte. Les ajouter ici sans persistance ferait croire au serveur qu'ils
+   * sont conservés.
+   */
 }
 
 const EARTH_KM = 6371.0088;
@@ -301,6 +313,7 @@ export function buildTraceImportPreview(trace: NormalizedTraceImport): TraceImpo
     pointCount: trace.points.length,
     positionedPointCount,
     lapCount: trace.laps.length,
+    laps: buildTraceImportLapSummaries(trace),
     timeBasis: trace.provenance.timeBasis,
     availableMetrics: trace.availableMetrics,
     saveable: blockers.length === 0,

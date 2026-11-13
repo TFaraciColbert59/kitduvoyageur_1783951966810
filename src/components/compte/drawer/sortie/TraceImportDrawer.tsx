@@ -22,9 +22,13 @@ import {
   buildHikeSessionImportPayload,
   buildTraceImportPreview,
   parseTraceFile,
+  traceLapsHaveMetrics,
+  lapIntensityLabel,
+  lapTriggerLabel,
   type NormalizedTraceImport,
   type TraceImportErrorCode,
   type TraceImportIssueCode,
+  type TraceImportLapSummary,
   type TraceImportPreview,
 } from '@/features/hiking/import';
 import { DrawerAuthRequired } from '../shell/DrawerAuthRequired';
@@ -126,6 +130,63 @@ function formatFileDate(trace: NormalizedTraceImport): string {
     .replace('T', ' ')
     .replace(/\.\d+$/, '')
     .slice(0, 19);
+}
+
+function formatLapStart(lap: TraceImportLapSummary): string | null {
+  const raw = lap.startedAt ?? lap.startedAtLocal;
+  if (!raw) return null;
+  if (lap.startedAt) {
+    const date = new Date(raw);
+    if (!Number.isNaN(date.getTime())) {
+      return new Intl.DateTimeFormat('fr-FR', {
+        hour: '2-digit',
+        minute: '2-digit',
+      }).format(date);
+    }
+  }
+  const local = raw.replace('T', ' ').slice(11, 16);
+  return local || null;
+}
+
+function formatLapDuration(seconds: number | null): string {
+  if (seconds === null || !Number.isFinite(seconds) || seconds < 0) return '—';
+  const total = Math.round(seconds);
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  const rest = total % 60;
+  if (hours > 0) return `${hours} h ${String(minutes).padStart(2, '0')} min`;
+  if (minutes > 0) return `${minutes} min ${String(rest).padStart(2, '0')} s`;
+  return `${rest} s`;
+}
+
+/** Métriques réellement présentes dans le tour, sans valeur inventée. */
+function lapMetrics(lap: TraceImportLapSummary): string[] {
+  const parts: string[] = [];
+  if (lap.distanceM !== null) parts.push(`${formatNumber(lap.distanceM / 1000)} km`);
+  if (lap.elapsedSeconds !== null) parts.push(formatLapDuration(lap.elapsedSeconds));
+  if (lap.averageSpeedMps !== null) {
+    parts.push(`moy. ${formatNumber(lap.averageSpeedMps * 3.6)} km/h`);
+  }
+  if (lap.maxSpeedMps !== null) {
+    parts.push(`max ${formatNumber(lap.maxSpeedMps * 3.6)} km/h`);
+  }
+  if (lap.averageHeartRateBpm !== null || lap.maxHeartRateBpm !== null) {
+    const average = lap.averageHeartRateBpm !== null
+      ? `${formatNumber(lap.averageHeartRateBpm)} bpm`
+      : null;
+    const max = lap.maxHeartRateBpm !== null
+      ? `max ${formatNumber(lap.maxHeartRateBpm)} bpm`
+      : null;
+    parts.push([average, max].filter(Boolean).join(' / '));
+  }
+  if (lap.averageCadenceRpm !== null) {
+    parts.push(`${formatNumber(lap.averageCadenceRpm)} tr/min`);
+  } else if (lap.averageCadenceSpm !== null) {
+    parts.push(`${formatNumber(lap.averageCadenceSpm)} pas/min`);
+  }
+  if (lap.maxPowerW !== null) parts.push(`max ${formatNumber(lap.maxPowerW)} W`);
+  if (lap.caloriesKcal !== null) parts.push(`${formatNumber(lap.caloriesKcal)} kcal`);
+  return parts;
 }
 
 function timeBasisLabel(basis: NormalizedTraceImport['provenance']['timeBasis']): string {
@@ -486,6 +547,13 @@ export function TraceImportDrawer() {
                 ? 'Ce fichier a déjà été importé : la sortie existante est conservée, aucun doublon n’a été créé.'
                 : `${saved.title} rejoint tes sorties privées.`}
             </p>
+            {trace && trace.laps.length > 0 ? (
+              <p>
+                {trace.laps.length} tour{trace.laps.length > 1 ? 's' : ''} lu
+                {trace.laps.length > 1 ? 's' : ''} dans le fichier · non conservé
+                {trace.laps.length > 1 ? 's' : ''} après enregistrement.
+              </p>
+            ) : null}
           </div>
           <div className="lkdv-trace-import-actions">
             <ActionPill
@@ -600,6 +668,60 @@ export function TraceImportDrawer() {
                 {preview.lapCount} tour{preview.lapCount > 1 ? 's' : ''}
               </span>
             </div>
+
+            {preview.lapCount > 0 && traceLapsHaveMetrics(preview.laps) ? (
+              <details
+                className="lkdv-trace-import-details lkdv-trace-import-laps"
+                data-testid="trace-import-laps"
+              >
+                <summary>
+                  Tours lus dans le fichier ({preview.lapCount}) · non conservés après
+                  enregistrement
+                </summary>
+                <ul>
+                  {preview.laps.map((lap) => {
+                    const start = formatLapStart(lap);
+                    const trigger = lapTriggerLabel(lap.triggerMethod);
+                    const intensity = lapIntensityLabel(lap.intensity);
+                    const metrics = lapMetrics(lap);
+                    return (
+                      <li key={lap.index}>
+                        <b>
+                          Tour {lap.index + 1}
+                          {trigger ? ` · ${trigger}` : ''}
+                          {intensity ? ` · ${intensity}` : ''}
+                        </b>
+                        <span>
+                          {metrics.length > 0
+                            ? metrics.join(' · ')
+                            : 'Aucune métrique de tour dans le fichier.'}
+                        </span>
+                        <small>
+                          {start ? `Départ ${start} · ` : ''}
+                          {lap.pointCount} point{lap.pointCount > 1 ? 's' : ''}
+                          {lap.trackCount > 1
+                            ? ` · ${lap.trackCount} segments`
+                            : ''}
+                        </small>
+                      </li>
+                    );
+                  })}
+                </ul>
+                {preview.lapCount > preview.laps.length ? (
+                  <p>
+                    Et {preview.lapCount - preview.laps.length} autre
+                    {preview.lapCount - preview.laps.length > 1 ? 's' : ''} tour
+                    {preview.lapCount - preview.laps.length > 1 ? 's' : ''}, non affiché
+                    {preview.lapCount - preview.laps.length > 1 ? 's' : ''}.
+                  </p>
+                ) : null}
+                <p>
+                  Ces tours sont lus dans le fichier mais aucun contrat persistant ne les
+                  stocke : la sortie importée et son détail ne peuvent pas les restituer
+                  après enregistrement.
+                </p>
+              </details>
+            ) : null}
 
             {preview.availableMetrics.length > 0 ? (
               <ul className="lkdv-trace-import-chips" aria-label="Métriques présentes">
@@ -758,6 +880,8 @@ export const TRACE_IMPORT_CSS = `
 .lkdv-trace-import-details li{display:flex!important;flex-direction:column!important;gap:0!important;font:500 10px/1.3 var(--sf)!important;color:var(--label2)!important;}
 .lkdv-trace-import-details li b{font:600 10px/1.3 var(--sf)!important;color:var(--label)!important;overflow-wrap:anywhere!important;}
 .lkdv-trace-import-details li small{font:500 9px/1.3 var(--sf)!important;color:var(--label3)!important;overflow-wrap:anywhere!important;}
+.lkdv-trace-import-laps li span{overflow-wrap:anywhere!important;}
+.lkdv-trace-import-laps summary{overflow-wrap:anywhere!important;}
 .lkdv-trace-import-details p{margin:7px 0 0!important;font:500 9.5px/1.3 var(--sf)!important;color:var(--label3)!important;}
 .lkdv-trace-import-blockers{display:flex!important;flex-direction:column!important;gap:3px!important;padding:9px 11px!important;border-radius:14px!important;background:rgba(185,138,46,.1)!important;box-shadow:inset 0 0 0 .5px rgba(185,138,46,.2)!important;color:#7d5c14!important;}
 .lkdv-trace-import-blockers b{font:650 10.5px var(--sf)!important;}

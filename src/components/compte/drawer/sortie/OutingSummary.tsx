@@ -249,6 +249,13 @@ export function OutingSummary({ detail, saving, onSave, onShare, onExport, onDel
               {provenance.fingerprint.slice(0, 22)}…
             </span>
           </p>
+          {provenance.source === 'fit' || provenance.source === 'tcx' ? (
+            <p className="lkdv-sortie-proof" data-testid="outing-laps-unavailable">
+              Tours du fichier non restitués : le contrat de persistance actuel ne stocke
+              aucun tour lu dans un fichier FIT/TCX. Ce détail ne peut donc pas les afficher
+              après rechargement.
+            </p>
+          ) : null}
         </section>
       ) : null}
 
