@@ -1924,7 +1924,7 @@ let renderSheet = function() {
     }
     return;
   }
-  const REACT_DRAWERS = { account_drawer: "compte", followers_sheet: "reseau", outing_drawer: "sortie", trace_import_drawer: "trace-import", story_edit_drawer: "highlight" };
+  const REACT_DRAWERS = { account_drawer: "compte", followers_sheet: "reseau", outing_drawer: "sortie", trace_import_drawer: "trace-import", progression_drawer: "progression", story_edit_drawer: "highlight" };
   if (REACT_DRAWERS[sh.k]) {
     const kind = REACT_DRAWERS[sh.k];
     if (typeof window.__lkdvUnmountSlot === "function") {
@@ -1935,7 +1935,7 @@ let renderSheet = function() {
     }
     const label = kind === "reseau"
       ? (drawerHintMode === "following" ? "Abonnements" : "Abonnés")
-      : kind === "sortie" ? "Sortie" : kind === "trace-import" ? "Importer une trace" : kind === "highlight" ? "Story à la une" : "Compte & Activité";
+      : kind === "sortie" ? "Sortie" : kind === "trace-import" ? "Importer une trace" : kind === "progression" ? "Progression · calendrier, statistiques, objectifs et vélo" : kind === "highlight" ? "Story à la une" : "Compte & Activité";
     const back = S.stk.length ? `<button class="lg gbtn sm sh-back" data-a="close" aria-label="Retour">${ic(IC.chevL, "s")}</button>` : "";
     $("sheet").setAttribute("aria-label", label);
     $("sheet").innerHTML = `<div class="grab" data-drag>
@@ -1960,6 +1960,8 @@ let renderSheet = function() {
         ? { outingId: sh.outingId || (sh.extra && sh.extra.outingId) || "" }
         : kind === "trace-import"
           ? {}
+          : kind === "progression"
+            ? { view: sh.view || (sh.extra && sh.extra.view) || "calendar" }
           : kind === "highlight"
             ? { hlId: sh.hlId || (sh.extra && sh.extra.hlId) || "", hlTitle: sh.hlTitle || (sh.extra && sh.extra.hlTitle) || "" }
             : { tab: drawerHintTab || 0 };
@@ -3399,11 +3401,19 @@ renderIgTabContent = function (D) {
         '<b style="font:650 16px/1.15 var(--sf);letter-spacing:-.02em;color:var(--label);">Sorties</b>' +
         '<span style="font:500 10.5px/1.3 var(--sf);color:var(--label2);">' + list.length + ' sortie' + (list.length > 1 ? 's' : '') + ' · FIT ou TCX acceptés</span>' +
       '</div>' + importButton + '</div>';
+    const progressionActions = S.profile && S.profile.isDemo !== true && S.profile.isGuest !== true
+      ? '<div style="display:flex!important;gap:6px!important;flex-wrap:wrap!important;padding:10px 2px 2px!important;" role="group" aria-label="Progression des sorties">' +
+          '<button type="button" class="mbtn p" style="height:38px!important;padding:0 14px!important;" data-a="openProgression" data-v="calendar" aria-label="Ouvrir le calendrier et la synthèse hebdomadaire">Calendrier</button>' +
+          '<button type="button" class="mbtn soft" style="height:38px!important;padding:0 14px!important;" data-a="openProgression" data-v="stats" aria-label="Ouvrir les statistiques cumulées par sport et période">Statistiques</button>' +
+          '<button type="button" class="mbtn soft" style="height:38px!important;padding:0 14px!important;" data-a="openProgression" data-v="goals" aria-label="Créer ou modifier des objectifs privés par période et par sport">Objectifs</button>' +
+          '<button type="button" class="mbtn soft" style="height:38px!important;padding:0 14px!important;" data-a="openProgression" data-v="bike" aria-label="Ouvrir les meilleurs efforts vélo par métrique">Vélo</button>' +
+        '</div>'
+      : '';
     if (!list.length) {
       return '<div class="ig-voyages-tab" role="region" aria-label="Sorties faites et voyages réalisés">' + sortiesHeader +
         '<div style="padding:22px 16px 26px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;"><b style="font:600 14px var(--sf);color:var(--label);">Aucune sortie enregistrée</b><p style="font:400 12px/1.4 var(--sf);color:var(--label2);max-width:260px;margin:0 auto;">Importe une trace FIT ou TCX, ou enregistre ta première randonnée GPS : elle apparaîtra ici.</p><div style="display:flex;flex-wrap:wrap;justify-content:center;gap:7px;">' +
           (canImport ? '<button class="mbtn p" data-a="openTraceImport" style="height:32px;padding:0 14px;font-size:12px;">Importer FIT/TCX</button>' : '') +
-          '<a href="/compas" class="mbtn soft" style="text-decoration:none;height:32px;padding:0 14px;font-size:12px;justify-content:center;">Planifier un voyage</a></div></div></div>';
+          '<a href="/compas" class="mbtn soft" style="text-decoration:none;height:32px;padding:0 14px;font-size:12px;justify-content:center;">Planifier un voyage</a></div></div>' + progressionActions + '</div>';
     }
     const canManage = !(S.profile && (S.profile.isDemo || S.profile.isGuest));
     const bulkBar = canManage
@@ -3442,6 +3452,7 @@ renderIgTabContent = function (D) {
           '</button>';
         }).join('') +
       '</div>' +
+      progressionActions +
     '</div>';
   }
 
@@ -5145,6 +5156,27 @@ var EXA = {
   openTraceImport: () => {
     pushSheet({ k: 'trace_import_drawer', det: 'large' });
     haptic(8);
+  },
+  openProgression: v => {
+    openSheet('progression_drawer', 0, 'large', {
+      view: v === 'stats' ? 'stats' : v === 'goals' ? 'goals' : v === 'bike' ? 'bike' : 'calendar'
+    });
+    haptic(8);
+  },
+  setProgressionView: v => {
+    if (S.sh && S.sh.k === 'progression_drawer') {
+      S.sh.view = v === 'stats' ? 'stats' : v === 'goals' ? 'goals' : v === 'bike' ? 'bike' : 'calendar';
+    }
+  },
+  openProgressionOuting: v => {
+    if (!v) { island('Sortie introuvable', 'Cette sortie n’est plus accessible.', false); return; }
+    /* L’identifiant vient du bootstrap complet : la séance peut être plus
+       ancienne que les 24 cartes du carrousel. On ouvre donc par identifiant,
+       sans exiger sa présence dans `OUTINGS`. */
+    const o = OUTINGS.find(x => x.id === v || x.realId === v);
+    pushSheet({ k: 'outing_drawer', outingId: v });
+    if (o) requestAnimationFrame(() => flyToOuting(o));
+    haptic(10);
   },
   save_full_profile: () => {
     const nameEl = $('ep_name'), handleEl = $('ep_handle'), bioEl = $('ep_bio');

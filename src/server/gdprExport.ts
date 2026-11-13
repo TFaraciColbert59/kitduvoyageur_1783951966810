@@ -71,6 +71,7 @@ export const GDPR_USER_TABLES: readonly GdprUserTable[] = [
   { table: 'user_season_progress', userColumn: 'user_id' },
   { table: 'progression_outbox', userColumn: 'user_id' },
   { table: 'progression_decisions', userColumn: 'user_id' },
+  { table: 'progression_goals', userColumn: 'user_id' },
   { table: 'progression_legacy_snapshot', userColumn: 'user_id' },
   { table: 'progression_legacy_mapping', userColumn: 'user_id' },
   { table: 'progression_leaderboard_agg', userColumn: 'user_id' },
@@ -100,6 +101,9 @@ export const GDPR_OPTIONAL_TABLES: ReadonlySet<string> = new Set([
   'trace_import_summaries',
   'trace_import_samples',
   'strength_logs',
+  // Table additive A05/S2.19 : le code peut être déployé avant l'application
+  // de la migration. Absente, elle est vide ; présente, elle est exportée.
+  'progression_goals',
 ]);
 
 /**

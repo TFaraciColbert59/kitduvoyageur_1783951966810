@@ -10,6 +10,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { followErrorMessage, loadFollowState, setFollow, type FollowState } from '@/features/compte/client/followClient';
 import { requestCarnetPublicationAward } from '@/lib/progression-award-requests';
+import type { ProgressionSession } from '@/features/compte/progression/engine';
+import type { ProgressionGoal } from '@/features/compte/progression/goals';
 // Invoque /api/voyages/mine via le client cache
 import { fetchMyTripsCached, getMyTripsSessionGeneration, isMyTripsSessionCurrent } from '@/features/trips/client/fetchMyTrips';
 import { initCompteLiquidGlassRuntime } from './compte-liquid-glass-v8-runtime';
@@ -88,6 +90,10 @@ const SortieDrawer = dynamic(
 );
 const TraceImportDrawer = dynamic(
   () => import('./drawer/sortie/TraceImportDrawer').then((mod) => mod.TraceImportDrawer),
+  { ssr: false }
+);
+const ProgressionDrawer = dynamic(
+  () => import('./drawer/progression/ProgressionDrawer').then((mod) => mod.ProgressionDrawer),
   { ssr: false }
 );
 const HighlightEditDrawer = dynamic(
@@ -1743,6 +1749,14 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
     };
   }, [user, syncSupabaseProfile]);
 
+  // Un objectif S2.19 vient d'être créé, modifié ou supprimé : le bootstrap
+  // est relu pour que le drawer et une réouverture voient la même ligne.
+  useEffect(() => {
+    const onGoalsChanged = () => { void syncSupabaseProfile(); };
+    window.addEventListener('lkdv:progression-goals-changed', onGoalsChanged);
+    return () => window.removeEventListener('lkdv:progression-goals-changed', onGoalsChanged);
+  }, [syncSupabaseProfile]);
+
   useEffect(() => {
     retryBootstrapRef.current = () => {
       void syncSupabaseProfile();
@@ -1756,6 +1770,27 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
   // Tant que le vrai profil n'est pas chargé, la carte reste un verre vide qui
   // scintille : la maquette par défaut du runtime ne s'affiche jamais.
   const booting = authLoading || Boolean(user && (bootstrapPhase === 'idle' || bootstrapPhase === 'loading'));
+  const bootPayload = bootstrapPayloadRef.current as {
+    progressionSessions?: ProgressionSession[];
+    progressionGoals?: ProgressionGoal[];
+    timeZone?: string | null;
+  } | null;
+  const rawProgressionSessions = bootPayload?.progressionSessions;
+  const progressionSessions: ProgressionSession[] = Array.isArray(rawProgressionSessions)
+    ? rawProgressionSessions
+    : [];
+  const rawProgressionGoals = bootPayload?.progressionGoals;
+  const progressionGoals: ProgressionGoal[] = Array.isArray(rawProgressionGoals)
+    ? rawProgressionGoals
+    : [];
+  const progressionState =
+    !user
+      ? 'error'
+      : bootstrapPhase === 'error'
+        ? 'error'
+        : bootstrapPhase === 'ready'
+          ? 'ready'
+          : 'loading';
 
   return (
     <div className="lkdv-compte-v8" data-theme="light" data-boot={booting ? 'loading' : 'ready'}>
@@ -1882,6 +1917,29 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
           <SortieDrawer outingId={String(drawerMount.props?.outingId || '')} />
         ) : drawerMount.kind === 'trace-import' ? (
           <TraceImportDrawer />
+        ) : drawerMount.kind === 'progression' ? (
+          <ProgressionDrawer
+            initialView={
+              drawerMount.props?.view === 'stats'
+                ? 'stats'
+                : drawerMount.props?.view === 'goals'
+                  ? 'goals'
+                  : drawerMount.props?.view === 'bike'
+                    ? 'bike'
+                    : 'calendar'
+            }
+            sessions={progressionSessions}
+            goals={progressionGoals}
+            timeZone={bootPayload?.timeZone ?? null}
+            state={progressionState}
+            onRetry={() => retryBootstrapRef.current()}
+            accountKey={user?.id ?? 'anonymous'}
+            onViewChange={(next) => {
+              if (typeof window !== 'undefined') {
+                (window as any).__lkdvCompteAct?.('setProgressionView', next);
+              }
+            }}
+          />
         ) : drawerMount.kind === 'highlight' ? (
           <HighlightEditDrawer hlId={String(drawerMount.props?.hlId || '')} hlTitle={String(drawerMount.props?.hlTitle || '')} />
         ) : drawerMount.kind === 'compte' ? (
