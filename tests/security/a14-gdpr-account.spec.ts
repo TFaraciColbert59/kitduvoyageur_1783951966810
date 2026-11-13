@@ -103,6 +103,7 @@ describe('A14 — RGPD export/suppression (TEST-A14-GDPR)', () => {
       'user_season_progress',
       'progression_outbox',
       'progression_decisions',
+      'progression_goals',
       'progression_legacy_snapshot',
       'progression_legacy_mapping',
       'progression_leaderboard_agg',

@@ -9,11 +9,18 @@ import {
   Clock3,
   Lock,
   MapPin,
+  Pencil,
+  Plus,
+  Save,
   Search,
+  Target,
+  Trash2,
+  X,
 } from 'lucide-react';
 import { DrawerShell, type DrawerTab } from '../shell/DrawerShell';
 import {
   PROGRESSION_PERIODS,
+  SPORT_LABELS,
   buildMonthCalendar,
   buildMonthlyProgression,
   buildPeriodStats,
@@ -34,18 +41,82 @@ import {
   type ProgressionPeriod,
   type ProgressionSession,
 } from '@/features/compte/progression/engine';
+import {
+  GOAL_METRICS,
+  GOAL_PERIODS,
+  computeGoalProgress,
+  formatGoalTarget,
+  formatGoalValue,
+  goalMetricOption,
+  goalPeriodOption,
+  goalSportLabel,
+  goalTargetInput,
+  parseGoalTargetInput,
+  sortProgressionGoals,
+  suggestedGoalTarget,
+  type GoalMetric,
+  type GoalPeriod,
+  type ProgressionGoal,
+} from '@/features/compte/progression/goals';
 
 export interface ProgressionDrawerProps {
-  initialView?: 'calendar' | 'stats';
+  initialView?: 'calendar' | 'stats' | 'goals';
   sessions?: ProgressionSession[];
+  /** Objectifs privés S2.19, lus depuis le bootstrap authentifié. */
+  goals?: ProgressionGoal[];
   /** Fuseau du profil voyageur (`user_traveller.time_zone`), ou null. */
   timeZone?: string | null;
   state?: 'loading' | 'error' | 'ready';
   onRetry?: () => void;
   /** Signale le changement d’onglet au runtime pour le restaurer au retour. */
-  onViewChange?: (view: 'calendar' | 'stats') => void;
+  onViewChange?: (view: 'calendar' | 'stats' | 'goals') => void;
   /** Identité propriétaire : le cache d’interface ne traverse pas les comptes. */
   accountKey?: string;
+}
+
+const EMPTY_GOALS: ProgressionGoal[] = [];
+
+interface GoalFormState {
+  id: string | null;
+  period: GoalPeriod;
+  sport: string;
+  metric: GoalMetric;
+  target: string;
+}
+
+function newGoalForm(period: GoalPeriod = 'week'): GoalFormState {
+  return {
+    id: null,
+    period,
+    sport: '',
+    metric: 'distance_km',
+    target: suggestedGoalTarget(period, 'distance_km'),
+  };
+}
+
+function goalFormFor(goal: ProgressionGoal): GoalFormState {
+  return {
+    id: goal.id,
+    period: goal.period,
+    sport: goal.sport ?? '',
+    metric: goal.metric,
+    target: goalTargetInput(goal),
+  };
+}
+
+function sameGoals(left: readonly ProgressionGoal[], right: readonly ProgressionGoal[]): boolean {
+  if (left.length !== right.length) return false;
+  return left.every((goal, index) => {
+    const other = right[index];
+    return (
+      other !== undefined &&
+      goal.id === other.id &&
+      goal.period === other.period &&
+      goal.sport === other.sport &&
+      goal.metric === other.metric &&
+      goal.target === other.target
+    );
+  });
 }
 
 interface ProgressionUiCache {
@@ -170,6 +241,7 @@ function MetricCard({
 export function ProgressionDrawer({
   initialView = 'calendar',
   sessions = [],
+  goals: initialGoals = EMPTY_GOALS,
   timeZone = null,
   state = 'ready',
   onRetry,
@@ -181,7 +253,14 @@ export function ProgressionDrawer({
   const [now] = useState(() => new Date());
   const today = useMemo(() => todayKey(zone, now), [zone, now]);
   const cachedUi = progressionUiCache?.key === accountKey ? progressionUiCache.state : null;
-  const [view, setView] = useState(initialView === 'stats' ? 1 : 0);
+  const [view, setView] = useState(
+    initialView === 'goals' ? 2 : initialView === 'stats' ? 1 : 0
+  );
+  const [goals, setGoals] = useState<ProgressionGoal[]>(() => sortProgressionGoals(initialGoals));
+  const [goalForm, setGoalForm] = useState<GoalFormState | null>(null);
+  const [goalSaving, setGoalSaving] = useState(false);
+  const [goalError, setGoalError] = useState<string | null>(null);
+  const [goalDeleteId, setGoalDeleteId] = useState<string | null>(null);
   const [monthKey, setMonthKey] = useState(
     () => cachedUi?.monthKey ?? monthKeyOf(today)
   );
@@ -195,8 +274,23 @@ export function ProgressionDrawer({
   const [chartMetric, setChartMetric] = useState<'km' | 'dplus'>('km');
 
   useEffect(() => {
-    setView(initialView === 'stats' ? 1 : 0);
+    setView(initialView === 'goals' ? 2 : initialView === 'stats' ? 1 : 0);
   }, [initialView]);
+
+  useEffect(() => {
+    setGoals((current) => {
+      const next = sortProgressionGoals(initialGoals);
+      // Une prop vide recréée à chaque rendu ne doit pas provoquer de boucle :
+      // on ne remplace l'état que si le contenu a réellement changé.
+      return sameGoals(current, next) ? current : next;
+    });
+  }, [initialGoals]);
+
+  useEffect(() => {
+    setGoalForm(null);
+    setGoalError(null);
+    setGoalDeleteId(null);
+  }, [accountKey]);
 
   useEffect(() => {
     progressionUiCache = { key: accountKey, state: { monthKey, selectedDay, query, period } };
@@ -204,7 +298,7 @@ export function ProgressionDrawer({
 
   const changeView = (index: number) => {
     setView(index);
-    onViewChange?.(index === 1 ? 'stats' : 'calendar');
+    onViewChange?.(index === 1 ? 'stats' : index === 2 ? 'goals' : 'calendar');
   };
 
   const calendar = useMemo(
@@ -289,6 +383,151 @@ export function ProgressionDrawer({
     period === 'all'
       ? 'Tout l’historique'
       : `${shortDateLabel(periodStats.range.startKey)} – ${shortDateLabel(periodStats.range.endKey)}`;
+
+  const goalProgress = useMemo(
+    () =>
+      sortProgressionGoals(goals).map((goal) =>
+        computeGoalProgress(goal, sessions, zone, now)
+      ),
+    [goals, sessions, zone, now]
+  );
+  const goalGroups = useMemo(
+    () =>
+      GOAL_PERIODS.map((option) => ({
+        option,
+        items: goalProgress.filter((progress) => progress.goal.period === option.id),
+      })),
+    [goalProgress]
+  );
+  const availableSports = useMemo(() => {
+    const sports = new Set<string>(Object.keys(SPORT_LABELS));
+    for (const session of sessions) {
+      if (session.sport) sports.add(session.sport);
+    }
+    if (goalForm?.sport) sports.add(goalForm.sport);
+    return [...sports].sort((left, right) => sportLabel(left).localeCompare(sportLabel(right), 'fr'));
+  }, [sessions, goalForm?.sport]);
+
+  const openCreateGoal = (period: GoalPeriod = 'week') => {
+    setGoalError(null);
+    setGoalDeleteId(null);
+    setGoalForm(newGoalForm(period));
+  };
+
+  const openEditGoal = (goal: ProgressionGoal) => {
+    setGoalError(null);
+    setGoalDeleteId(null);
+    setGoalForm(goalFormFor(goal));
+  };
+
+  const patchGoalForm = (patch: Partial<GoalFormState>) => {
+    setGoalForm((current) => (current ? { ...current, ...patch } : current));
+  };
+
+  const changeGoalPeriod = (nextPeriod: GoalPeriod) => {
+    setGoalForm((current) =>
+      current
+        ? {
+            ...current,
+            period: nextPeriod,
+            target: current.id
+              ? current.target
+              : suggestedGoalTarget(nextPeriod, current.metric),
+          }
+        : current
+    );
+  };
+
+  const changeGoalMetric = (nextMetric: GoalMetric) => {
+    setGoalForm((current) =>
+      current
+        ? {
+            ...current,
+            metric: nextMetric,
+            // La cible est stockée dans l'unité de la grandeur : changer de
+            // grandeur sans changer d'unité produirait un nombre faux.
+            target: suggestedGoalTarget(current.period, nextMetric),
+          }
+        : current
+    );
+  };
+
+  const saveGoal = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const form = goalForm;
+    if (!form || goalSaving) return;
+    const target = parseGoalTargetInput(form.metric, form.target);
+    if (target === null) {
+      setGoalError(
+        form.metric === 'sessions'
+          ? 'Saisis un nombre entier de séances strictement positif.'
+          : 'Saisis une cible strictement positive.'
+      );
+      return;
+    }
+    setGoalSaving(true);
+    setGoalError(null);
+    try {
+      const response = await fetch('/api/compte/progression/goals', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          ...(form.id ? { id: form.id } : {}),
+          period: form.period,
+          sport: form.sport || null,
+          metric: form.metric,
+          target,
+        }),
+      });
+      const payload = (await response.json().catch(() => null)) as
+        | { goal?: ProgressionGoal; error?: string }
+        | null;
+      if (!response.ok || !payload?.goal) {
+        setGoalError(payload?.error || 'L’objectif n’a pas pu être enregistré.');
+        return;
+      }
+      const saved = payload.goal;
+      setGoals((current) =>
+        sortProgressionGoals([...current.filter((goal) => goal.id !== saved.id), saved])
+      );
+      setGoalForm(null);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('lkdv:progression-goals-changed'));
+      }
+    } catch {
+      setGoalError('Réseau indisponible : l’objectif n’a pas été enregistré.');
+    } finally {
+      setGoalSaving(false);
+    }
+  };
+
+  const removeGoal = async (goal: ProgressionGoal) => {
+    if (goalSaving) return;
+    setGoalSaving(true);
+    setGoalError(null);
+    try {
+      const response = await fetch(
+        `/api/compte/progression/goals?id=${encodeURIComponent(goal.id)}`,
+        { method: 'DELETE' }
+      );
+      const payload = (await response.json().catch(() => null)) as
+        | { deleted?: boolean; error?: string }
+        | null;
+      if (!response.ok || !payload?.deleted) {
+        setGoalError(payload?.error || 'L’objectif n’a pas pu être supprimé.');
+        return;
+      }
+      setGoals((current) => current.filter((item) => item.id !== goal.id));
+      setGoalDeleteId(null);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('lkdv:progression-goals-changed'));
+      }
+    } catch {
+      setGoalError('Réseau indisponible : l’objectif n’a pas été supprimé.');
+    } finally {
+      setGoalSaving(false);
+    }
+  };
 
   const goToMonth = (delta: number) => {
     const next = shiftMonthKey(monthKey, delta);
@@ -688,6 +927,293 @@ export function ProgressionDrawer({
         </div>
       ),
     },
+    {
+      id: 'goals',
+      label: 'Objectifs',
+      icon: <Target size={18} aria-hidden="true" />,
+      render: () => (
+        <div className="lkdv-prog-pane" role="region" aria-label="Objectifs personnels">
+          <p className="lkdv-prog-note">
+            <Lock size={13} aria-hidden="true" />
+            <span>
+              Objectifs privés, calculés sur tes seules sorties terminées. {timeZoneNote}
+            </span>
+          </p>
+
+          <section className="lkdv-prog-card" aria-label="Créer ou modifier un objectif">
+            <div className="lkdv-prog-card-head">
+              <div>
+                <small>Objectifs privés</small>
+                <b>{goalForm?.id ? 'Modifier un objectif' : 'Créer un objectif'}</b>
+              </div>
+              {goalForm?.id ? <span className="lkdv-prog-chip">Modification</span> : null}
+            </div>
+
+            {goalError ? (
+              <p className="lkdv-prog-goal-error" role="alert">{goalError}</p>
+            ) : null}
+
+            {goalForm ? (
+              <form className="lkdv-prog-goal-form" onSubmit={saveGoal}>
+                <div className="lkdv-prog-goal-fields">
+                  <label className="lkdv-prog-goal-field" htmlFor="goal-period">
+                    <span>Période</span>
+                    <select
+                      id="goal-period"
+                      value={goalForm.period}
+                      onChange={(event) => changeGoalPeriod(event.target.value as GoalPeriod)}
+                    >
+                      {GOAL_PERIODS.map((option) => (
+                        <option key={option.id} value={option.id}>{option.label}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="lkdv-prog-goal-field" htmlFor="goal-sport">
+                    <span>Sport</span>
+                    <select
+                      id="goal-sport"
+                      value={goalForm.sport}
+                      onChange={(event) => patchGoalForm({ sport: event.target.value })}
+                    >
+                      <option value="">Tous sports</option>
+                      {availableSports.map((sport) => (
+                        <option key={sport} value={sport}>{sportLabel(sport)}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="lkdv-prog-goal-field" htmlFor="goal-metric">
+                    <span>Grandeur</span>
+                    <select
+                      id="goal-metric"
+                      value={goalForm.metric}
+                      onChange={(event) => changeGoalMetric(event.target.value as GoalMetric)}
+                    >
+                      {GOAL_METRICS.map((option) => (
+                        <option key={option.id} value={option.id}>{option.label}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="lkdv-prog-goal-field" htmlFor="goal-target">
+                    <span>Cible</span>
+                    <span className="lkdv-prog-goal-input">
+                      <input
+                        id="goal-target"
+                        type="number"
+                        inputMode="decimal"
+                        min={goalForm.metric === 'sessions' ? 1 : 0.1}
+                        step={goalMetricOption(goalForm.metric).step}
+                        value={goalForm.target}
+                        onChange={(event) => patchGoalForm({ target: event.target.value })}
+                      />
+                      <span aria-hidden="true">{goalMetricOption(goalForm.metric).inputUnit}</span>
+                    </span>
+                  </label>
+                </div>
+                <p className="lkdv-prog-legend">
+                  {goalForm.metric === 'duration_s'
+                    ? 'Durée saisie en heures ; elle est enregistrée en secondes.'
+                    : 'Seules les valeurs réellement enregistrées par tes séances sont comptées.'}
+                </p>
+                <div className="lkdv-prog-goal-form-actions">
+                  <button type="submit" className="lkdv-prog-goal-save" disabled={goalSaving}>
+                    <Save size={14} aria-hidden="true" />
+                    {goalSaving ? 'Enregistrement…' : goalForm.id ? 'Enregistrer' : 'Créer'}
+                  </button>
+                  <button
+                    type="button"
+                    className="lkdv-prog-goal-cancel"
+                    onClick={() => {
+                      setGoalForm(null);
+                      setGoalError(null);
+                    }}
+                    disabled={goalSaving}
+                  >
+                    <X size={14} aria-hidden="true" />
+                    Annuler
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <button
+                type="button"
+                className="lkdv-prog-goal-new"
+                onClick={() => openCreateGoal()}
+              >
+                <Plus size={15} aria-hidden="true" />
+                Créer un objectif
+              </button>
+            )}
+          </section>
+
+          {goalProgress.length === 0 && !goalForm ? (
+            <p className="lkdv-prog-empty">
+              Aucun objectif privé pour l’instant. Choisis une période, un sport
+              facultatif et une grandeur réellement mesurée.
+            </p>
+          ) : null}
+
+          {goalGroups.map(({ option, items }) =>
+            items.length > 0 ? (
+              <section
+                key={option.id}
+                className="lkdv-prog-card"
+                aria-label={`Objectifs · ${option.label}`}
+              >
+                <div className="lkdv-prog-card-head">
+                  <div>
+                    <small>{option.label}</small>
+                    <b>Objectifs de la période</b>
+                  </div>
+                  <span className="lkdv-prog-chip">{items.length}</span>
+                </div>
+                <div className="lkdv-prog-goals">
+                  {items.map((progress) => {
+                    const { goal } = progress;
+                    const metricOption = goalMetricOption(goal.metric);
+                    const status = progress.atGoal
+                      ? 'Atteint'
+                      : progress.available
+                        ? 'En cours'
+                        : 'Sans mesure';
+                    const statusClass = progress.atGoal
+                      ? 'is-done'
+                      : progress.available
+                        ? 'is-progress'
+                        : 'is-missing';
+                    return (
+                      <article className="lkdv-prog-goal" key={goal.id}>
+                        <div className="lkdv-prog-goal-head">
+                          <div>
+                            <small>
+                              {goalPeriodOption(goal.period).label} · {goalSportLabel(goal)}
+                            </small>
+                            <b>{metricOption.label}</b>
+                          </div>
+                          <span className={`lkdv-prog-goal-state ${statusClass}`}>{status}</span>
+                        </div>
+                        <div className="lkdv-prog-goal-values">
+                          <b>
+                            {formatGoalValue(
+                              progress.available ? progress.value : null,
+                              goal.metric,
+                              progress.available
+                            )}
+                          </b>
+                          <span>/ {formatGoalTarget(goal.target, goal.metric)}</span>
+                          {progress.available ? (
+                            <em>{Math.round(progress.ratio * 100)} %</em>
+                          ) : null}
+                        </div>
+                        <div
+                          className="lkdv-prog-goal-track"
+                          role={progress.available ? 'progressbar' : undefined}
+                          aria-valuemin={progress.available ? 0 : undefined}
+                          aria-valuemax={progress.available ? goal.target : undefined}
+                          aria-valuenow={
+                            progress.available ? Math.min(progress.value, goal.target) : undefined
+                          }
+                          aria-label={
+                            progress.available
+                              ? `${metricOption.label}, ${formatGoalValue(progress.value, goal.metric, true)} sur ${formatGoalTarget(goal.target, goal.metric)}`
+                              : undefined
+                          }
+                          aria-hidden={progress.available ? undefined : true}
+                        >
+                          <span style={{ transform: `scaleX(${progress.ratio})` }} />
+                        </div>
+                        <p className="lkdv-prog-goal-note">
+                          {!progress.available
+                            ? 'Aucune mesure sur cette période : la cible reste affichée, sans zéro inventé.'
+                            : progress.atGoal
+                              ? 'Objectif atteint sur cette période. Aucun bonus, aucune série.'
+                              : `Encore ${formatGoalValue(progress.remaining, goal.metric, true)} pour atteindre la cible.`}
+                        </p>
+                        {progress.missingSessions > 0 ? (
+                          <p className="lkdv-prog-legend">
+                            {progress.missingSessions} séance(s) sans valeur pour cette grandeur.
+                          </p>
+                        ) : null}
+                        {progress.unknownSportSessions > 0 ? (
+                          <p className="lkdv-prog-legend">
+                            {progress.unknownSportSessions} séance(s) sans sport connu, exclue(s)
+                            de cet objectif de sport.
+                          </p>
+                        ) : null}
+                        <div className="lkdv-prog-goal-actions">
+                          <button
+                            type="button"
+                            className="lkdv-prog-goal-action"
+                            onClick={() => openEditGoal(goal)}
+                            disabled={goalSaving}
+                          >
+                            <Pencil size={12} aria-hidden="true" />
+                            Modifier
+                          </button>
+                          {goalDeleteId === goal.id ? (
+                            <>
+                              <button
+                                type="button"
+                                className="lkdv-prog-goal-action is-danger"
+                                onClick={() => removeGoal(goal)}
+                                disabled={goalSaving}
+                              >
+                                <Trash2 size={12} aria-hidden="true" />
+                                Confirmer
+                              </button>
+                              <button
+                                type="button"
+                                className="lkdv-prog-goal-action"
+                                onClick={() => setGoalDeleteId(null)}
+                                disabled={goalSaving}
+                              >
+                                <X size={12} aria-hidden="true" />
+                                Annuler
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              type="button"
+                              className="lkdv-prog-goal-action is-danger"
+                              onClick={() => setGoalDeleteId(goal.id)}
+                              disabled={goalSaving}
+                            >
+                              <Trash2 size={12} aria-hidden="true" />
+                              Supprimer
+                            </button>
+                          )}
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              </section>
+            ) : null
+          )}
+
+          <section className="lkdv-prog-card" aria-label="Limites de mesure des objectifs">
+            <div className="lkdv-prog-card-head">
+              <div>
+                <small>Mesures disponibles</small>
+                <b>Ce qui est réellement compté</b>
+              </div>
+            </div>
+            <p className="lkdv-prog-legend">
+              Distance, dénivelé positif, temps enregistré et nombre de séances,
+              issus de tes sorties terminées. Une valeur absente reste « — ».
+            </p>
+            <p className="lkdv-prog-legend">
+              Puissance et segments indisponibles : aucune mesure de puissance
+              n’est collectée et les passages de segment ne sont pas exposés ici.
+              Aucun objectif n’est proposé pour ces grandeurs.
+            </p>
+            <p className="lkdv-prog-legend">
+              Aucun XP, aucune série, aucune pénalité : un objectif manqué ne
+              retire rien et la pause reste libre.
+            </p>
+          </section>
+        </div>
+      ),
+    },
   ];
 
   return (
@@ -775,5 +1301,39 @@ export const PROGRESSION_DRAWER_CSS = `
 .lkdv-prog-chart-bar[data-missing="true"]{background:transparent!important;}
 .lkdv-prog-chart-col small{font:500 8px var(--sf)!important;color:var(--label2)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;max-width:100%!important;}
 .lkdv-prog-sr{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important;}
-@media (prefers-reduced-motion:reduce){.lkdv-prog-iconbtn,.lkdv-prog-day,.lkdv-prog-session{transition:none!important;}}
+.lkdv-prog-goal-form{display:flex!important;flex-direction:column!important;gap:8px!important;}
+.lkdv-prog-goal-fields{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important;}
+.lkdv-prog-goal-field{display:flex!important;flex-direction:column!important;gap:4px!important;min-width:0!important;font:600 10px var(--sf)!important;color:var(--label2)!important;text-transform:uppercase!important;letter-spacing:.04em!important;}
+.lkdv-prog-goal-field select,.lkdv-prog-goal-field input{width:100%!important;height:44px!important;border:0!important;border-radius:12px!important;background:var(--fill2)!important;color:var(--label)!important;font:500 13px var(--sf)!important;padding:0 10px!important;}
+.lkdv-prog-goal-field select{text-transform:none!important;letter-spacing:0!important;appearance:none!important;}
+.lkdv-prog-goal-field select:focus-visible,.lkdv-prog-goal-field input:focus-visible,.lkdv-prog-goal-new:focus-visible,.lkdv-prog-goal-save:focus-visible,.lkdv-prog-goal-cancel:focus-visible,.lkdv-prog-goal-action:focus-visible{outline:2px solid #17402C!important;outline-offset:2px!important;}
+.lkdv-prog-goal-input{display:flex!important;align-items:center!important;gap:6px!important;height:44px!important;padding:0 10px!important;border-radius:12px!important;background:var(--fill2)!important;}
+.lkdv-prog-goal-input input{height:42px!important;padding:0!important;background:transparent!important;font-variant-numeric:tabular-nums!important;}
+.lkdv-prog-goal-input > span{flex:none!important;font:600 10px var(--sf)!important;color:var(--label2)!important;text-transform:none!important;letter-spacing:0!important;}
+.lkdv-prog-goal-form-actions{display:flex!important;gap:6px!important;flex-wrap:wrap!important;}
+.lkdv-prog-goal-new,.lkdv-prog-goal-save,.lkdv-prog-goal-cancel,.lkdv-prog-goal-action{display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:5px!important;min-height:44px!important;padding:0 14px!important;border:0!important;border-radius:999px!important;font:600 12px var(--sf)!important;cursor:pointer!important;}
+.lkdv-prog-goal-new,.lkdv-prog-goal-save{width:100%!important;background:var(--tint)!important;color:#fff!important;}
+.lkdv-prog-goal-cancel,.lkdv-prog-goal-action{background:var(--fill)!important;color:var(--label)!important;}
+.lkdv-prog-goal-action.is-danger{background:var(--warn-bg)!important;color:var(--warn)!important;}
+.lkdv-prog-goal-new:active,.lkdv-prog-goal-save:active,.lkdv-prog-goal-cancel:active,.lkdv-prog-goal-action:active{transform:scale(.98)!important;}
+.lkdv-prog-goal-new:disabled,.lkdv-prog-goal-save:disabled,.lkdv-prog-goal-cancel:disabled,.lkdv-prog-goal-action:disabled{opacity:.55!important;cursor:default!important;}
+.lkdv-prog-goal-error{margin:0!important;padding:8px 10px!important;border-radius:12px!important;background:var(--warn-bg)!important;color:var(--warn)!important;font:500 11.5px/1.4 var(--sf)!important;}
+.lkdv-prog-goals{display:flex!important;flex-direction:column!important;gap:7px!important;}
+.lkdv-prog-goal{display:flex!important;flex-direction:column!important;gap:7px!important;padding:10px!important;border-radius:14px!important;background:var(--fill2)!important;}
+.lkdv-prog-goal-head{display:flex!important;align-items:flex-start!important;justify-content:space-between!important;gap:8px!important;}
+.lkdv-prog-goal-head small{display:block!important;font:600 9.5px var(--sf)!important;color:var(--label2)!important;text-transform:uppercase!important;letter-spacing:.04em!important;}
+.lkdv-prog-goal-head b{display:block!important;margin-top:2px!important;font:650 13px/1.25 var(--sf)!important;color:var(--label)!important;}
+.lkdv-prog-goal-state{flex:none!important;display:inline-flex!important;align-items:center!important;height:22px!important;padding:0 8px!important;border-radius:999px!important;font:600 10px var(--sf)!important;background:var(--fill)!important;color:var(--label2)!important;}
+.lkdv-prog-goal-state.is-done{background:var(--mint)!important;color:var(--tint)!important;}
+.lkdv-prog-goal-state.is-progress{background:var(--warn-bg)!important;color:var(--warn)!important;}
+.lkdv-prog-goal-values{display:flex!important;align-items:baseline!important;gap:5px!important;flex-wrap:wrap!important;font-variant-numeric:tabular-nums!important;}
+.lkdv-prog-goal-values b{font:700 18px/1 var(--sf)!important;color:var(--label)!important;}
+.lkdv-prog-goal-values span{font:500 11.5px var(--sf)!important;color:var(--label2)!important;}
+.lkdv-prog-goal-values em{font:600 10.5px var(--sf)!important;color:var(--tint)!important;font-style:normal!important;}
+.lkdv-prog-goal-track{display:block!important;height:7px!important;border-radius:999px!important;background:var(--fill)!important;overflow:hidden!important;}
+.lkdv-prog-goal-track > span{display:block!important;height:100%!important;border-radius:inherit!important;background:linear-gradient(90deg,var(--accent),var(--tint))!important;transform-origin:left center!important;transition:transform .22s ease!important;}
+.lkdv-prog-goal-note{margin:0!important;font:500 11px/1.4 var(--sf)!important;color:var(--label2)!important;}
+.lkdv-prog-goal-actions{display:flex!important;gap:5px!important;flex-wrap:wrap!important;}
+.lkdv-prog-goal-actions .lkdv-prog-goal-action{padding:0 11px!important;font-size:11px!important;}
+@media (prefers-reduced-motion:reduce){.lkdv-prog-iconbtn,.lkdv-prog-day,.lkdv-prog-session,.lkdv-prog-goal-track > span,.lkdv-prog-goal-new,.lkdv-prog-goal-save,.lkdv-prog-goal-cancel,.lkdv-prog-goal-action{transition:none!important;}}
 `;

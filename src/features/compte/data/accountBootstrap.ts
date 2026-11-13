@@ -4,6 +4,10 @@ import {
   type SignatureVisibility,
 } from './accountVisibility';
 import type { ProgressionSession } from '../progression/engine';
+import {
+  mapProgressionGoalRows,
+  type ProgressionGoalRow,
+} from '../progression/goals';
 
 /**
  * Mapping pur des données Supabase vers les formes attendues par le runtime
@@ -1787,6 +1791,17 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
   const sportBySessionPromise = loadSportBySession(supabase, user.id).catch(
     () => new Map<string, string>()
   );
+  // S2.19 : objectifs privés du propriétaire. La lecture est tolérante pour
+  // qu'une base antérieure à la migration additive reste utilisable ; une
+  // ligne illisible est ignorée plutôt que convertie en objectif par défaut.
+  const progressionGoalRowsPromise = safeRows<ProgressionGoalRow>(
+    supabase
+      .from('progression_goals')
+      .select('id,period,sport,metric,target,created_at,updated_at')
+      .eq('user_id', user.id)
+      .order('period', { ascending: true })
+      .order('created_at', { ascending: true })
+  );
   const followerIds = [
     ...new Set(
       followerRows
@@ -2359,7 +2374,10 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
   }
 
   const orderRowsMapped = mapOrders(orderRows);
-  const sportBySession = await sportBySessionPromise;
+  const [sportBySession, progressionGoalRows] = await Promise.all([
+    sportBySessionPromise,
+    progressionGoalRowsPromise,
+  ]);
 
   return {
     authenticated: true as const,
@@ -2370,6 +2388,9 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
     // périodes. Le bootstrap n'est servi qu'à la personne connectée ; aucune
     // coordonnée n'y entre.
     progressionSessions: mapProgressionSessions(statsSessions, routes, sportBySession),
+    // Objectifs privés S2.19 : uniquement les lignes de la personne connectée,
+    // sans coordonnée ni mesure d'un autre voyageur.
+    progressionGoals: mapProgressionGoalRows(progressionGoalRows),
     /** Fuseau du profil voyageur ; `null` = repli navigateur/UTC côté UI. */
     timeZone: profileTimeZone,
     stats: mapStats(statsSessions, routes, geoMassifs),

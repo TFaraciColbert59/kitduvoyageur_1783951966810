@@ -51,6 +51,7 @@ export const GDPR_USER_TABLES: readonly GdprUserTable[] = [
   { table: 'user_season_progress', userColumn: 'user_id' },
   { table: 'progression_outbox', userColumn: 'user_id' },
   { table: 'progression_decisions', userColumn: 'user_id' },
+  { table: 'progression_goals', userColumn: 'user_id' },
   { table: 'progression_legacy_snapshot', userColumn: 'user_id' },
   { table: 'progression_legacy_mapping', userColumn: 'user_id' },
   { table: 'progression_leaderboard_agg', userColumn: 'user_id' },
@@ -70,7 +71,12 @@ export const GDPR_USER_TABLES: readonly GdprUserTable[] = [
  * l'export plante et, pire, la suppression de compte échoue au recomptage APRÈS
  * avoir supprimé l'utilisateur.
  */
-export const GDPR_OPTIONAL_TABLES: ReadonlySet<string> = new Set(['user_traveller']);
+export const GDPR_OPTIONAL_TABLES: ReadonlySet<string> = new Set([
+  'user_traveller',
+  // Table additive A05/S2.19 : le code peut être déployé avant l'application
+  // de la migration. Absente, elle est vide ; présente, elle est exportée.
+  'progression_goals',
+]);
 
 /**
  * Relation absente : Postgres 42P01, PostgREST PGRST205. Le message ne sert que s'il

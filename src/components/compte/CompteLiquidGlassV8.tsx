@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { requestCarnetPublicationAward } from '@/lib/progression-award-requests';
 import type { ProgressionSession } from '@/features/compte/progression/engine';
+import type { ProgressionGoal } from '@/features/compte/progression/goals';
 // Invoque /api/voyages/mine via le client cache
 import { fetchMyTripsCached, getMyTripsSessionGeneration, isMyTripsSessionCurrent } from '@/features/trips/client/fetchMyTrips';
 import { initCompteLiquidGlassRuntime } from './compte-liquid-glass-v8-runtime';
@@ -1365,6 +1366,14 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
     return () => window.removeEventListener('lkdv:highlights-changed', onHighlightsChanged);
   }, [syncSupabaseProfile]);
 
+  // Un objectif S2.19 vient d'être créé, modifié ou supprimé : le bootstrap
+  // est relu pour que le drawer et une réouverture voient la même ligne.
+  useEffect(() => {
+    const onGoalsChanged = () => { void syncSupabaseProfile(); };
+    window.addEventListener('lkdv:progression-goals-changed', onGoalsChanged);
+    return () => window.removeEventListener('lkdv:progression-goals-changed', onGoalsChanged);
+  }, [syncSupabaseProfile]);
+
   useEffect(() => {
     retryBootstrapRef.current = () => {
       void syncSupabaseProfile();
@@ -1380,11 +1389,16 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
   const booting = authLoading || Boolean(user && (bootstrapPhase === 'idle' || bootstrapPhase === 'loading'));
   const bootPayload = bootstrapPayloadRef.current as {
     progressionSessions?: ProgressionSession[];
+    progressionGoals?: ProgressionGoal[];
     timeZone?: string | null;
   } | null;
   const rawProgressionSessions = bootPayload?.progressionSessions;
   const progressionSessions: ProgressionSession[] = Array.isArray(rawProgressionSessions)
     ? rawProgressionSessions
+    : [];
+  const rawProgressionGoals = bootPayload?.progressionGoals;
+  const progressionGoals: ProgressionGoal[] = Array.isArray(rawProgressionGoals)
+    ? rawProgressionGoals
     : [];
   const progressionState =
     !user
@@ -1520,8 +1534,15 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
           <SortieDrawer outingId={String(drawerMount.props?.outingId || '')} />
         ) : drawerMount.kind === 'progression' ? (
           <ProgressionDrawer
-            initialView={drawerMount.props?.view === 'stats' ? 'stats' : 'calendar'}
+            initialView={
+              drawerMount.props?.view === 'stats'
+                ? 'stats'
+                : drawerMount.props?.view === 'goals'
+                  ? 'goals'
+                  : 'calendar'
+            }
             sessions={progressionSessions}
+            goals={progressionGoals}
             timeZone={bootPayload?.timeZone ?? null}
             state={progressionState}
             onRetry={() => retryBootstrapRef.current()}

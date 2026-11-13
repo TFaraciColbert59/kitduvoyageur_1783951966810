@@ -1890,7 +1890,7 @@ let renderSheet = function() {
     }
     const label = kind === "reseau"
       ? (drawerHintMode === "following" ? "Abonnements" : "Abonnés")
-      : kind === "sortie" ? "Sortie" : kind === "progression" ? "Calendrier & statistiques" : kind === "highlight" ? "Story à la une" : "Compte & Activité";
+      : kind === "sortie" ? "Sortie" : kind === "progression" ? "Progression · calendrier, statistiques et objectifs" : kind === "highlight" ? "Story à la une" : "Compte & Activité";
     const back = S.stk.length ? `<button class="lg gbtn sm sh-back" data-a="close" aria-label="Retour">${ic(IC.chevL, "s")}</button>` : "";
     $("sheet").setAttribute("aria-label", label);
     $("sheet").innerHTML = `<div class="grab" data-drag>
@@ -3302,6 +3302,7 @@ renderIgTabContent = function (D) {
       ? '<div style="display:flex!important;gap:6px!important;flex-wrap:wrap!important;padding:10px 2px 2px!important;" role="group" aria-label="Progression des sorties">' +
           '<button type="button" class="mbtn p" style="height:38px!important;padding:0 14px!important;" data-a="openProgression" data-v="calendar" aria-label="Ouvrir le calendrier et la synthèse hebdomadaire">Calendrier</button>' +
           '<button type="button" class="mbtn soft" style="height:38px!important;padding:0 14px!important;" data-a="openProgression" data-v="stats" aria-label="Ouvrir les statistiques cumulées par sport et période">Statistiques</button>' +
+          '<button type="button" class="mbtn soft" style="height:38px!important;padding:0 14px!important;" data-a="openProgression" data-v="goals" aria-label="Créer ou modifier des objectifs privés par période et par sport">Objectifs</button>' +
         '</div>'
       : '';
     if (!list.length) {
@@ -4942,12 +4943,14 @@ var EXA = {
     haptic(10);
   },
   openProgression: v => {
-    openSheet('progression_drawer', 0, 'large', { view: v === 'stats' ? 'stats' : 'calendar' });
+    openSheet('progression_drawer', 0, 'large', {
+      view: v === 'stats' ? 'stats' : v === 'goals' ? 'goals' : 'calendar'
+    });
     haptic(8);
   },
   setProgressionView: v => {
     if (S.sh && S.sh.k === 'progression_drawer') {
-      S.sh.view = v === 'stats' ? 'stats' : 'calendar';
+      S.sh.view = v === 'stats' ? 'stats' : v === 'goals' ? 'goals' : 'calendar';
     }
   },
   openProgressionOuting: v => {
