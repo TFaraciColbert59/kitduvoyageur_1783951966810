@@ -1,4 +1,5 @@
 /* eslint-disable */
+import { acquireStoryOpen } from '../communaute/storyOpenMarker';
 
 /**
  * Résout l'action `setvis` vers l'index exact de `S.vis`.
@@ -194,6 +195,8 @@ export function initCompteLiquidGlassRuntime(rootContainer, account = {}) {
   // The host div is reused; keep DOM reads attached to this account's tree.
   const accountRoot = rootContainer.querySelector('.stage') || rootContainer;
   let disposed = false;
+  /* Marqueur « story ouverte » (storyOpenMarker) : libéré à la fermeture ou au démontage. */
+  let storyMarkerRelease = null;
   let exportedActions = null;
   let interactionState = null;
   const isCurrent = () => !disposed && (!account.isCurrent || account.isCurrent());
@@ -2875,7 +2878,7 @@ window.__QR={"n":37,"rows":["1111111011101010010100110111001111111","10000010010
 
 /* ================= Compte — 50 améliorations : couche d'extension (override des fonctions du générateur) ================= */
 (() => {
-const X = { filter: 'all', feed: false, visitor: false, ligSub: 0, cmp: null, prof: 'km', story: null, vault: 0, scan: 0, seen: {}, hov: false, mon: null, evt: null, acct: 'me', hold: 0 };
+const X = { filter: 'all', feed: false, visitor: false, ligSub: 0, cmp: null, prof: 'km', story: null, vault: 0, scan: 0, seen: {}, hov: false, mon: null, evt: null, acct: 'me', hold: 0, storyMenu: false };
 // Interaction state stays inside the owning runtime.
 interactionState = X;
 {
@@ -3108,11 +3111,14 @@ function renderStory() {
   el.innerHTML = `<div class="st-bar">${st.slides.map((_, j) => `<i class="${j < i ? 'done' : j === i ? 'cur' : ''}"><b></b></i>`).join('')}</div>
   <div class="st-head">
     <div class="lkdv-post-author st-author"><img class="lkdv-post-author-av" src="${esc(storyAvatar)}" alt=""><span class="lkdv-post-author-txt"><span class="lkdv-post-author-line"><b>${esc(storyName)}</b></span><span class="lkdv-post-author-meta">il y a 2 j</span></span></div>
-    <div class="lkdv-story-options st-options">
-      <button type="button" class="st-options-btn" data-a="stoptions" aria-label="Options de la story" aria-expanded="false"><span class="st-dots" aria-hidden="true">•••</span><span class="st-close-x" aria-hidden="true">×</span></button>
-      <div class="lkdv-story-options-rail st-options-rail" role="menu" aria-label="Options de la story">
-        <button type="button" role="menuitem" data-a="stviews" aria-label="Voir les vues"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 12s4-7 10.5-7 10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12Z"/><circle cx="12" cy="12" r="3"/></svg></button>
-        <button type="button" role="menuitem" data-a="stclose" aria-label="Fermer la story"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    <div class="lkdv-story-menu" data-st-menu>
+      <button type="button" class="lkdv-story-menu-trigger" data-a="stoptions" aria-label="Options de la story" aria-haspopup="menu" aria-expanded="${X.storyMenu ? 'true' : 'false'}" aria-controls="st-menu-panel">
+        <span class="lkdv-story-menu-glyph" data-glyph="ellipsis" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg></span>
+        <span class="lkdv-story-menu-glyph" data-glyph="close" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></span>
+      </button>
+      <div id="st-menu-panel" class="lkdv-story-menu-panel" role="menu" aria-label="Options de la story" aria-orientation="vertical" data-open="${X.storyMenu ? 'true' : 'false'}">
+        <button type="button" role="menuitem" tabindex="-1" class="lkdv-story-menu-item" data-a="stviews"><span>Voir les vues</span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 12s4-7 10.5-7 10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        <button type="button" role="menuitem" tabindex="-1" class="lkdv-story-menu-item" data-a="stclose"><span>Fermer la story</span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
       </div>
     </div>
   </div>
@@ -3121,7 +3127,7 @@ function renderStory() {
   <button class="st-zone l" data-a="stprev" aria-label="Précédent"></button><button class="st-zone r" data-a="stnext" aria-label="Suivant"></button>
   ${engage}
   ${viewersPanel}`;
-  el.classList.add('on'); el.classList.remove('hold');
+  el.classList.add('on'); el.classList.toggle('hold', Boolean(X.storyMenu));
 }
 async function loadStoryEngagement() {
   const s = X.story; if (!s) return;
@@ -3136,7 +3142,8 @@ async function loadStoryEngagement() {
 }
 function openStory(id) {
   if (!isCurrent()) return;
-  X.viewersOpen = false; X.storyClosing = false; X.storyDragMoved = false;
+  X.viewersOpen = false; X.storyClosing = false; X.storyDragMoved = false; X.storyMenu = false;
+  if (!storyMarkerRelease) storyMarkerRelease = acquireStoryOpen();
   X.story = { id, i: 0 }; X.seen[id] = 1; closeVisMenu(true); S.popv = false;
   const el = $('story');
   if (el) { el.classList.remove('closing', 'dragging'); el.style.transform = ''; el.style.opacity = ''; }
@@ -3155,15 +3162,38 @@ function dismissStory(distance = 0) {
   haptic(8);
   setTimeout(() => {
     if (X.story !== storyRef) return;
-    X.story = null; X.storyClosing = false;
+    X.story = null; X.storyClosing = false; X.storyMenu = false;
     $('phone')?.classList.remove('story-open');
     document.body.classList.remove('story-open');
+    if (storyMarkerRelease) { storyMarkerRelease(); storyMarkerRelease = null; }
     el.classList.remove('on', 'closing', 'dragging');
     el.style.transform = ''; el.style.opacity = '';
     renderStory();
   }, 300);
 }
 function closeStory() { dismissStory(0); }
+/* Menu d'options de la story : même panneau de verre que StoriesViewer (.lkdv-story-menu*). */
+function focusStoryMenuItem(which) {
+  requestAnimationFrame(() => {
+    const items = Array.from(document.querySelectorAll('#story .lkdv-story-menu-item'));
+    if (!items.length) return;
+    const idx = items.indexOf(document.activeElement);
+    const t = which === 'first' ? 0 : which === 'last' ? items.length - 1 : which === 'next' ? (idx + 1) % items.length : (idx - 1 + items.length) % items.length;
+    items[t].focus();
+  });
+}
+function setStoryMenu(open, focus) {
+  X.storyMenu = Boolean(open);
+  const el = $('story'); if (!el) return;
+  const trigger = el.querySelector('.lkdv-story-menu-trigger');
+  const panel = el.querySelector('.lkdv-story-menu-panel');
+  if (trigger) trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+  if (panel) panel.setAttribute('data-open', open ? 'true' : 'false');
+  /* La story attend tant que le menu est ouvert (animation CSS en pause). */
+  el.classList.toggle('hold', Boolean(open));
+  if (open && focus === 'first') focusStoryMenuItem('first');
+  if (!open && focus === 'trigger' && trigger) trigger.focus();
+}
 
 /* ---------- Tuiles / grille (11-15, 21) ---------- */
 const tileMedia = t => t.coverImage
@@ -5028,14 +5058,14 @@ var EXA = {
   visfollow: () => { island('Maquette visiteur', 'Le bouton Suivre est inactif dans la prévisualisation', false); notifyHostAction('visfollow'); },
   vismsg: () => { island('Maquette visiteur', 'La messagerie du Hub est inactive dans la prévisualisation', false); notifyHostAction('vismsg'); },
   openHighlight: v => { if (v === 'hl5') openSheet('newhl', 0, 'large'); else openStory(v); },
-  stclose: () => closeStory(),
-  stoptions: () => { const box = document.querySelector('.st-options'); const btn = document.querySelector('.st-options-btn'); const on = box ? box.classList.toggle('on') : false; if (btn) btn.setAttribute('aria-expanded', on ? 'true' : 'false'); haptic(6); },
-  stviews: () => { X.viewersOpen = true; const panel = document.querySelector('.st-viewers'); if (panel) panel.classList.add('on'); haptic(6); },
+  stclose: () => { if (X.storyMenu) setStoryMenu(false); closeStory(); },
+  stoptions: () => { const kb = X.storyMenuKb; X.storyMenuKb = false; setStoryMenu(!X.storyMenu, kb ? 'first' : null); haptic(6); },
+  stviews: () => { if (X.storyMenu) setStoryMenu(false); X.viewersOpen = true; const panel = document.querySelector('.st-viewers'); if (panel) panel.classList.add('on'); haptic(6); },
   stviewclose: () => { X.viewersOpen = false; const panel = document.querySelector('.st-viewers'); if (panel) panel.classList.remove('on'); },
   stlike: async () => { const s = X.story; if (!s) return; const st = storyFor(s.id); const slide = st.slides[s.i]; const storyId = slide && slide.storyId; if (!storyId) return; const liked = Boolean(X.storyEng && X.storyEng.liked); try { const res = await fetch(`/api/stories/${storyId}/engagement`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: liked ? 'unlike' : 'like' }) }); if (res.ok) { const data = await res.json(); X.storyEng = { ...(X.storyEng || {}), liked: data.liked, likeCount: data.likeCount }; haptic(10); renderStory(); } } catch (_) {} },
   stcomment: async () => { const s = X.story; if (!s) return; const st = storyFor(s.id); const slide = st.slides[s.i]; const storyId = slide && slide.storyId; const input = $('st-comment-input'); const content = input ? input.value.trim() : ''; if (!storyId || !content) return; try { const res = await fetch(`/api/stories/${storyId}/engagement`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'comment', content }) }); if (res.ok) { if (input) input.value = ''; haptic(8); void loadStoryEngagement(); } } catch (_) {} },
-  stprev: () => { if (X.storyDragMoved) { X.storyDragMoved = false; return; } if (X.hold > 250) return; const s = X.story; if (!s) return; if (s.i > 0) { s.i--; renderStory(); void loadStoryEngagement(); } else { s.i = 0; renderStory(); void loadStoryEngagement(); } },
-  stnext: () => { if (X.storyDragMoved) { X.storyDragMoved = false; return; } if (X.hold > 250) return; const s = X.story; if (!s) return; if (s.i >= storyFor(s.id).slides.length - 1) { closeStory(); return; } s.i++; renderStory(); void loadStoryEngagement(); },
+  stprev: () => { if (X.menuTap) return; if (X.storyDragMoved) { X.storyDragMoved = false; return; } if (X.hold > 250) return; const s = X.story; if (!s) return; if (s.i > 0) { s.i--; renderStory(); void loadStoryEngagement(); } else { s.i = 0; renderStory(); void loadStoryEngagement(); } },
+  stnext: () => { if (X.menuTap) return; if (X.storyDragMoved) { X.storyDragMoved = false; return; } if (X.hold > 250) return; const s = X.story; if (!s) return; if (s.i >= storyFor(s.id).slides.length - 1) { closeStory(); return; } s.i++; renderStory(); void loadStoryEngagement(); },
   stgear: () => { island('Kit dupliqué dans ton Compas', 'Auto-fork neutre : aucune propagation ni part créateur', false); notifyHostAction('stgear', S.invs); },
   sppin: v => { doMut('sppin', v); renderStory(); },
   viewtoggle: () => { X.feed = !X.feed; refresh(false); },
@@ -5107,7 +5137,13 @@ const storyEl = $('story'); if (storyEl) {
   let pointerStart = null;
   storyEl.addEventListener('pointerdown', e => {
     if (!X.story || X.storyClosing) return;
-    if (e.target.closest('.st-head, .st-options, .st-options-rail, .st-viewers, .st-viewcount, .st-x, input, button:not(.st-zone)')) return;
+    /* Tap à l'extérieur du menu : il se ferme, sans navigation (le clic qui suit est ignoré). */
+    if (X.storyMenu && !e.target.closest('.lkdv-story-menu')) {
+      setStoryMenu(false);
+      X.menuTap = true; setTimeout(() => { X.menuTap = false; }, 350);
+      return;
+    }
+    if (e.target.closest('.st-head, .lkdv-story-menu, .st-viewers, .st-viewcount, .st-x, input, button:not(.st-zone)')) return;
     pointerStart = { x: e.clientX, y: e.clientY, dy: 0, id: e.pointerId };
     storyEl.classList.add('dragging');
     try { storyEl.setPointerCapture(e.pointerId); } catch (_) {}
@@ -5138,7 +5174,22 @@ const storyEl = $('story'); if (storyEl) {
 }
 if (window.DeviceOrientationEvent) window.addEventListener('deviceorientation', e => { if (e.gamma != null) phone.style.setProperty('--la', (140 + e.gamma * 1.6).toFixed(0) + 'deg'); });
 
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && X.story) { e.stopImmediatePropagation(); closeStory(); } }, true);
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && X.story) {
+    e.stopImmediatePropagation();
+    if (X.storyMenu) setStoryMenu(false, 'trigger'); else closeStory();
+    return;
+  }
+  const inStory = X.story && e.target.closest && e.target.closest('#story');
+  if (!inStory) return;
+  if (e.target.closest('.lkdv-story-menu-trigger') && (e.key === 'Enter' || e.key === ' ')) X.storyMenuKb = true;
+  if (e.target.closest('.lkdv-story-menu-trigger') && e.key === 'ArrowDown' && !X.storyMenu) { e.preventDefault(); setStoryMenu(true, 'first'); return; }
+  if (X.storyMenu && e.target.closest('.lkdv-story-menu-panel')) {
+    const m = { ArrowDown: 'next', ArrowUp: 'prev', Home: 'first', End: 'last' }[e.key];
+    if (m) { e.preventDefault(); focusStoryMenuItem(m); }
+    else if (e.key === 'Tab') setStoryMenu(false);
+  }
+}, true);
 
 function persistLocalState() {
   if (!window.__LKDV_NEXT_PROD) return;
@@ -5647,6 +5698,7 @@ if (typeof refresh === 'function') refresh(true);
 
   return () => {
     disposed = true;
+    if (storyMarkerRelease) { storyMarkerRelease(); storyMarkerRelease = null; document.body.classList.remove('story-open'); }
     if (window.EXA === exportedActions) delete window.EXA;
     for (const id of timers) window.clearTimeout(id);
     timers.clear();

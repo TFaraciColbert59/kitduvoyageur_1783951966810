@@ -152,11 +152,26 @@
   }
 }
 
-/* Aucune barre de navigation globale par-dessus une story plein écran. */
-body:has(.story.on) .lkdv-floating-tabbar {
+/* Aucune barre basse sur une story, quelle qu'elle soit : règle UNIQUE.
+   Feuille chargée par le layout racine => valable sur toutes les routes.
+   Marqueur posé tant qu'une visionneuse est montée, tous modes (lecture et
+   composition) : `storyOpenMarker.ts` (StoriesViewer). `body.story-open` :
+   visionneuse héritée du Compte. Ni `:has()` ni `aria-label` : une barre montée
+   après l'ouverture est masquée aussi. */
+html[data-story-open='true'] :is(.lkdv-floating-tabbar, #lkdv-tabbar-glass, .lkdv-tabbar, .tb, .account-bottom-bar, [data-account-bottom-bar], .xp-bottombar, nav[aria-label="Navigation principale"]),
+body[data-story-open='true'] :is(.lkdv-floating-tabbar, #lkdv-tabbar-glass, .lkdv-tabbar, .tb, .account-bottom-bar, [data-account-bottom-bar], .xp-bottombar, nav[aria-label="Navigation principale"]),
+body.story-open :is(.lkdv-floating-tabbar, #lkdv-tabbar-glass, .lkdv-tabbar, .tb, .account-bottom-bar, [data-account-bottom-bar], .xp-bottombar, nav[aria-label="Navigation principale"]) {
   display: none !important;
-  visibility: hidden !important;
-  pointer-events: none !important;
+}
+
+/* La visionneuse passe au-dessus de tout le chrome (barre = --z-nav, 1250) ;
+   ses feuilles annexes (vues, alertes, toasts) restent au-dessus d'elle. */
+html[data-story-open='true'] {
+  --z-story-viewer: 1300;
+  --z-modal: 1310;
+  --z-sheet: 1320;
+  --z-alert: 1400;
+  --z-toast: 1410;
 }
 
 /* Le bandeau cookies ne doit pas recouvrir le compteur de vues d'une story ni le studio 3D. */
@@ -168,8 +183,7 @@ body:has([data-testid="kit-studio-view"]) [aria-label="Gestion des cookies"] {
 /* Barre unique, montée une fois à la racine : elle ne disparaît que lorsqu'un
    tiroir (feuille communauté, formulaire, story) s'ouvre par-dessus. */
 body:has(.lkdv-drawer-layer) .lkdv-floating-tabbar,
-body:has(.lkdv-form-layer) .lkdv-floating-tabbar,
-body:has([role="dialog"][aria-label^="Story de"]) .lkdv-floating-tabbar {
+body:has(.lkdv-form-layer) .lkdv-floating-tabbar {
   visibility: hidden;
   pointer-events: none;
 }

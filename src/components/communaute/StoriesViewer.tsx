@@ -12,6 +12,7 @@ import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
 import { PostReplyComposer } from '@/features/posts/ui/PostReplyComposer';
+import { acquireStoryOpen } from './storyOpenMarker';
 
 export interface StoryOverlay {
   type: 'text';
@@ -151,25 +152,12 @@ export default function StoriesViewer({
   const dragRef = useRef({ active: false, startX: 0, startY: 0, startT: 0 });
   const viewerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  useEffect(() => {
-    if (composeRef.current) return;
-    document.body.dataset.storyOpen = 'true';
-    const nodes = Array.from(document.querySelectorAll<HTMLElement>(
-      '.tb, nav[aria-label="Navigation principale"], .account-bottom-bar, [data-account-bottom-bar]'
-    ));
-    const previous = nodes.map((node) => node.style.display);
-    nodes.forEach((node) => {
-      node.style.display = 'none';
-      node.setAttribute('aria-hidden', 'true');
-    });
-    return () => {
-      delete document.body.dataset.storyOpen;
-      nodes.forEach((node, index) => {
-        node.style.display = previous[index] ?? '';
-        node.removeAttribute('aria-hidden');
-      });
-    };
-  }, []);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  /* Aucune barre basse sur une story, tous modes (lecture et composition) :
+     marqueur global compté, une seule règle CSS (floating-liquid-tabbar.css). */
+  useEffect(() => acquireStoryOpen(), []);
 
   const progressRef = useRef(0);
   const advancingRef = useRef(false);
@@ -181,7 +169,8 @@ export default function StoriesViewer({
   const slide = user?.slides[slideIndex];
   const isVideo = slide?.mediaType === 'video';
   const liked = Boolean(slide?.storyId && likedStoryIds?.has(slide.storyId));
-  const paused = holding || pinned || hiddenTab || mediaError || needsTap || replyFocused;
+  // Menu d'options ouvert : la story attend (reprise à la fermeture).
+  const paused = holding || pinned || hiddenTab || mediaError || needsTap || replyFocused || optionsOpen;
   const canReply = Boolean(onReply && user.id !== myUserId);
 
   const next = useCallback(() => {
@@ -216,11 +205,15 @@ export default function StoriesViewer({
     const onKey = (e: KeyboardEvent) => {
       if (isTyping(e)) return;
       if (e.key === 'Escape') {
-        if (optionsOpen) setOptionsOpen(false);
-        else onClose();
+        if (optionsOpen) {
+          setOptionsOpen(false);
+          triggerRef.current?.focus();
+        } else onClose();
       } else if (e.key === 'ArrowRight') next();
       else if (e.key === 'ArrowLeft') prev();
       else if (e.key === ' ') {
+        // Espace sur un bouton (déclencheur, ligne du menu) l'active : pas de pause.
+        if ((e.target as HTMLElement | null)?.closest('button, [role="menuitem"]')) return;
         e.preventDefault();
         setPinned((p) => !p);
       }
@@ -346,10 +339,13 @@ export default function StoriesViewer({
 
   const handleTabTrap = (event: React.KeyboardEvent) => {
     if (event.key !== 'Tab') return;
-    const focusables = viewerRef.current?.querySelectorAll<HTMLElement>(
-      'button, [href], [tabindex]:not([tabindex="-1"])'
-    );
-    if (!focusables || focusables.length === 0) return;
+    // Le menu fermé reste dans le DOM (animation) : ses lignes ne se focalisent pas.
+    const focusables = Array.from(
+      viewerRef.current?.querySelectorAll<HTMLElement>(
+        'button, [href], [tabindex]:not([tabindex="-1"])'
+      ) ?? []
+    ).filter((el) => !el.closest('[data-open="false"]'));
+    if (focusables.length === 0) return;
     const first = focusables[0];
     const last = focusables[focusables.length - 1];
     if (event.shiftKey && document.activeElement === first) {
@@ -433,6 +429,12 @@ export default function StoriesViewer({
 
   /* ---------- Gestes pointeur ---------- */
   const onPointerDown = (e: React.PointerEvent) => {
+    // Tap à l'extérieur du menu d'options : il se ferme, sans navigation ni pause.
+    if (optionsOpen) {
+      dragRef.current.active = false;
+      setOptionsOpen(false);
+      return;
+    }
     dragRef.current = { active: true, startX: e.clientX, startY: e.clientY, startT: Date.now() };
     setHolding(true);
     setGesture(true);
@@ -506,6 +508,46 @@ export default function StoriesViewer({
     try { await navigator.clipboard.writeText(url); } catch { /* copie refusée */ }
   };
 
+  /* ---------- Menu d'options (clavier, focus) ---------- */
+  const menuId = `story-options-${slide.storyId ?? `${userIndex}-${slideIndex}`}`;
+
+  const closeMenu = () => setOptionsOpen(false);
+
+  const focusMenuItem = (which: 'first' | 'last' | 'next' | 'prev') => {
+    // Après le rendu : le panneau doit être visible pour recevoir le focus.
+    window.requestAnimationFrame(() => {
+      const items = Array.from(
+        menuRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? []
+      );
+      if (items.length === 0) return;
+      const index = items.indexOf(document.activeElement as HTMLElement);
+      const target =
+        which === 'first' ? 0
+        : which === 'last' ? items.length - 1
+        : which === 'next' ? (index + 1) % items.length
+        : (index - 1 + items.length) % items.length;
+      items[target]?.focus();
+    });
+  };
+
+  const onMenuKeyDown = (event: React.KeyboardEvent) => {
+    const map: Record<string, 'first' | 'last' | 'next' | 'prev'> = {
+      ArrowDown: 'next',
+      ArrowUp: 'prev',
+      Home: 'first',
+      End: 'last',
+    };
+    const which = map[event.key];
+    if (which) {
+      event.preventDefault();
+      event.stopPropagation();
+      focusMenuItem(which);
+    } else if (event.key === 'Tab') {
+      // Sortie du menu au clavier : il se referme, le focus suit l'ordre normal.
+      setOptionsOpen(false);
+    }
+  };
+
   const viewer = (
     <div
       ref={viewerRef}
@@ -515,7 +557,7 @@ export default function StoriesViewer({
       tabIndex={-1}
       onKeyDown={handleTabTrap}
       data-gesture={gesture ? 'true' : undefined}
-      className="lkdv-story-viewer fixed inset-0 z-[var(--z-modal)] touch-none select-none bg-black"
+      className="lkdv-story-viewer fixed inset-0 z-[var(--z-story-viewer,1300)] touch-none select-none bg-black"
       style={{ opacity: dragOpacity }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
@@ -673,54 +715,92 @@ export default function StoriesViewer({
           )}
         </div>
 
-        <div className="lkdv-story-options lkdv-account-glass">
+        {/* Menu d'options : déclencheur rond de verre + un seul panneau de verre
+            ancré dessous (menu contextuel iOS). Styles : bloc `.lkdv-story-menu*`
+            de community-feed.css. */}
+        <div
+          className="lkdv-story-menu"
+          onPointerDown={(event) => event.stopPropagation()}
+        >
           <button
+            ref={triggerRef}
             type="button"
-            className="pmi-more-pill"
+            className="lkdv-story-menu-trigger"
             aria-label="Options de la story"
+            aria-haspopup="menu"
             aria-expanded={optionsOpen}
-            aria-controls={`story-options-${slide.storyId ?? `${userIndex}-${slideIndex}`}`}
-            onPointerDown={(event) => event.stopPropagation()}
+            aria-controls={menuId}
             onClick={(event) => {
               event.stopPropagation();
+              const byKeyboard = event.detail === 0;
               setOptionsOpen((open) => !open);
+              if (byKeyboard && !optionsOpen) focusMenuItem('first');
+            }}
+            onKeyDown={(event) => {
+              if (event.key === 'ArrowDown' && !optionsOpen) {
+                event.preventDefault();
+                setOptionsOpen(true);
+                focusMenuItem('first');
+              }
             }}
           >
-            {optionsOpen ? <Icon name="x" size={18} aria-hidden="true" /> : (
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <span className="lkdv-story-menu-glyph" data-glyph="ellipsis" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                 <circle cx="5" cy="12" r="1.9" />
                 <circle cx="12" cy="12" r="1.9" />
                 <circle cx="19" cy="12" r="1.9" />
               </svg>
-            )}
+            </span>
+            <span className="lkdv-story-menu-glyph" data-glyph="close" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                <path d="M6 6l12 12M18 6 6 18" />
+              </svg>
+            </span>
           </button>
           <div
-            id={`story-options-${slide.storyId ?? `${userIndex}-${slideIndex}`}`}
-            className="lkdv-story-options-rail"
+            ref={menuRef}
+            id={menuId}
+            className="lkdv-story-menu-panel"
             role="menu"
             aria-label="Options de la story"
-            hidden={!optionsOpen}
+            aria-orientation="vertical"
+            data-open={optionsOpen ? 'true' : 'false'}
+            onKeyDown={onMenuKeyDown}
           >
             {user.id === myUserId && slide.storyId && onShowViews ? (
-              <button type="button" role="menuitem" aria-label="Voir les vues" title="Voir les vues" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); onShowViews(slide); setOptionsOpen(false); }}>
-                <Icon name="bookmark" size={18} aria-hidden="true" />
+              <button type="button" role="menuitem" tabIndex={-1} className="lkdv-story-menu-item" onClick={(e) => { e.stopPropagation(); onShowViews(slide); closeMenu(); }}>
+                <span>Voir les vues</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M1.5 12s4-7 10.5-7 10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12Z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
               </button>
             ) : null}
-            <button type="button" role="menuitem" aria-label="Copier le lien" title="Copier le lien" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); void copyStory(); setOptionsOpen(false); }}>
+            <button type="button" role="menuitem" tabIndex={-1} className="lkdv-story-menu-item" onClick={(e) => { e.stopPropagation(); void copyStory(); closeMenu(); }}>
+              <span>Copier le lien</span>
               <Icon name="link" size={18} aria-hidden="true" />
             </button>
-            <button type="button" role="menuitem" aria-label="Partager" title="Partager" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); void shareStory(); setOptionsOpen(false); }}>
+            <button type="button" role="menuitem" tabIndex={-1} className="lkdv-story-menu-item" onClick={(e) => { e.stopPropagation(); void shareStory(); closeMenu(); }}>
+              <span>Partager</span>
               <Icon name="share2" size={18} aria-hidden="true" />
             </button>
             {user.id !== myUserId && onReport ? (
-              <button type="button" role="menuitem" aria-label="Signaler" title="Signaler" className="is-danger" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); onReport(user, slide); setOptionsOpen(false); }}>
-                <Icon name="flag" size={18} aria-hidden="true" />
-              </button>
+              <>
+                <div role="separator" className="lkdv-story-menu-sep" />
+                <button type="button" role="menuitem" tabIndex={-1} className="lkdv-story-menu-item is-danger" onClick={(e) => { e.stopPropagation(); onReport(user, slide); closeMenu(); }}>
+                  <span>Signaler</span>
+                  <Icon name="flag" size={18} aria-hidden="true" />
+                </button>
+              </>
             ) : null}
             {user.id === myUserId && slide.storyId && onDelete ? (
-              <button type="button" role="menuitem" aria-label="Retirer ma story" title="Retirer ma story" className="is-danger" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); onDelete(slide); setOptionsOpen(false); }}>
-                <Icon name="trash2" size={18} aria-hidden="true" />
-              </button>
+              <>
+                <div role="separator" className="lkdv-story-menu-sep" />
+                <button type="button" role="menuitem" tabIndex={-1} className="lkdv-story-menu-item is-danger" onClick={(e) => { e.stopPropagation(); onDelete(slide); closeMenu(); }}>
+                  <span>Retirer ma story</span>
+                  <Icon name="trash2" size={18} aria-hidden="true" />
+                </button>
+              </>
             ) : null}
           </div>
         </div>

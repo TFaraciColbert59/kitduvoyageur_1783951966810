@@ -1257,21 +1257,10 @@ button.mb:active{background:var(--fill2)}
 .st-bar { top: max(12px, env(safe-area-inset-top, 0px)) !important; left: 16px !important; right: 16px !important; gap: 4px !important; }
 .st-bar i { height: 3px !important; }
 .st-head { position: absolute !important; top: max(32px, calc(env(safe-area-inset-top, 0px) + 24px)) !important; left: 16px !important; right: 16px !important; display: flex !important; align-items: flex-start !important; justify-content: space-between !important; gap: 10px !important; z-index: 6 !important; text-shadow: none !important; }
-.st-head .lkdv-post-author { display: inline-flex !important; align-items: center !important; gap: 8px !important; max-width: min(100%, 300px) !important; min-height: 44px !important; padding: 4px 10px 4px 4px !important; border-radius: 999px !important; background: linear-gradient(180deg, rgba(255,255,255,.485), rgba(255,255,255,.325) 55%, rgba(255,255,255,.405)) !important; -webkit-backdrop-filter: blur(7.2px) saturate(1.9) brightness(1.07) !important; backdrop-filter: blur(7.2px) saturate(1.9) brightness(1.07) !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 0 0 .5px rgba(23,43,36,.08), 0 2px 8px rgba(23,43,36,.08) !important; color: #17402c !important; }
+.st-head .lkdv-post-author { display: inline-flex !important; align-items: center !important; gap: 8px !important; max-width: min(100%, 300px) !important; min-height: 44px !important; padding: 4px 10px 4px 4px !important; border-radius: 999px !important; background: linear-gradient(180deg, rgba(255,255,255,.88), rgba(255,255,255,.76)) !important; -webkit-backdrop-filter: blur(16px) saturate(1.8) brightness(1.05) !important; backdrop-filter: blur(16px) saturate(1.8) brightness(1.05) !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 0 0 .5px rgba(23,43,36,.10), 0 2px 8px rgba(23,43,36,.12) !important; color: #172B24 !important; }
 .st-head .lkdv-post-author-av { width: 32px !important; height: 32px !important; border-radius: 50% !important; object-fit: cover !important; box-shadow: 0 0 0 1.5px rgba(255,255,255,.95) !important; flex: none !important; }
-.st-head .lkdv-post-author-line b { font: 700 12.5px/1.1 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif !important; }
-.st-head .lkdv-post-author-meta { font: 500 10px/1.25 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif !important; color: #56665d !important; }
-.st-options { position: relative !important; flex: none !important; }
-.st-options-btn { position: static !important; width: 38px !important; height: 38px !important; display: grid !important; place-items: center !important; border: .5px solid rgba(255,255,255,.82) !important; border-radius: 999px !important; background: linear-gradient(180deg, rgba(255,255,255,.74), rgba(255,255,255,.46) 55%, rgba(255,255,255,.6)) !important; -webkit-backdrop-filter: blur(18px) saturate(1.8) !important; backdrop-filter: blur(18px) saturate(1.8) !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 0 0 .5px rgba(23,43,36,.14), 0 6px 18px rgba(10,20,14,.16) !important; color: #17402c !important; cursor: pointer !important; }
-.st-options-btn .st-dots { font: 700 14px/1 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif; letter-spacing: 1px; }
-.st-options-btn .st-close-x { display: none; font: 700 18px/1 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif; }
-.st-options.on .st-options-btn .st-dots { display: none; }
-.st-options.on .st-options-btn .st-close-x { display: block; }
-.st-options-rail { position: absolute !important; top: 44px !important; right: 0 !important; z-index: 40 !important; display: none !important; flex-direction: column !important; align-items: flex-end !important; gap: 8px !important; }
-.st-options.on .st-options-rail { display: flex !important; }
-.st-options-rail button { width: 38px !important; height: 38px !important; display: grid !important; place-items: center !important; padding: 0 !important; border: .5px solid rgba(255,255,255,.82) !important; border-radius: 999px !important; background: linear-gradient(180deg, rgba(255,255,255,.74), rgba(255,255,255,.46) 55%, rgba(255,255,255,.6)) !important; -webkit-backdrop-filter: blur(18px) saturate(1.8) !important; backdrop-filter: blur(18px) saturate(1.8) !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 0 0 .5px rgba(23,43,36,.14), 0 6px 18px rgba(10,20,14,.16) !important; color: #17402c !important; font: 700 16px/1 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif !important; cursor: pointer !important; }
-.st-options-rail button:last-child { color: #a33227 !important; }
-.st-options-rail button:active { transform: scale(.92) !important; }
+.st-head .lkdv-post-author-line b { font: 700 12.5px/1.1 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif !important; color: #172B24 !important; }
+.st-head .lkdv-post-author-meta { font: 500 11px/1.25 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif !important; color: #56665d !important; text-shadow: none !important; }
 
 /* Dock bas de story : composer + like, même verre que la Communauté. */
 .st-engage { left: 16px !important; right: 16px !important; bottom: max(16px, env(safe-area-inset-bottom, 0px)) !important; gap: 8px !important; z-index: 8 !important; }
@@ -1281,8 +1270,11 @@ button.mb:active{background:var(--fill2)}
 .st-comment input { color: #17402c !important; font: 400 12px/1 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif !important; }
 .st-comment input::placeholder { color: #56665d !important; }
 .st-comment button { background: #17402c !important; color: #fff !important; }
-.st-head .st-options { position: relative !important; top: auto !important; right: auto !important; margin: 0 !important; flex: none !important; align-self: flex-start !important; }
-.st-head .st-options-btn { width: 38px !important; height: 38px !important; margin: 0 !important; }
+/* Menu d'options : même panneau de verre que StoriesViewer (.lkdv-story-menu*, community-feed.css) ; ici, simple enfant du HUD. */
+.st-head .lkdv-story-menu { position: relative !important; top: auto !important; right: auto !important; margin: 0 !important; flex: none !important; align-self: flex-start !important; }
+/* `.phone button { color: inherit }` (0,1,1) l'emporte sur `.lkdv-story-menu-item` : on rétablit l'encre. */
+.story .lkdv-story-menu-trigger, .story .lkdv-story-menu-item { color: #172B24; }
+.story .lkdv-story-menu-item.is-danger { color: #A33227; }
 
 /* Story : barre basse de composition masquée, légende visible et compteur de vues */
 .st-engage { display: none !important; }
@@ -1331,8 +1323,6 @@ button.mb:active{background:var(--fill2)}
 
 /* Alignement pixel du HUD sur le viewer Communauté. */
 .st-head { left: 22px !important; }
-.st-head .st-options-btn { width: 44px !important; height: 44px !important; }
-.st-head .st-options-btn .st-dots { font-size: 15px !important; letter-spacing: .5px !important; }
 
 /* Liste des vues : cartes de profil lisibles et cliquables. */
 .st-viewers-sheet { max-height: 76% !important; padding: 12px 12px calc(18px + env(safe-area-inset-bottom, 0px)) !important; border-radius: 28px 28px 0 0 !important; background: linear-gradient(180deg, rgba(255,255,255,.9), rgba(245,250,241,.78)) !important; -webkit-backdrop-filter: blur(32px) saturate(1.8) !important; backdrop-filter: blur(32px) saturate(1.8) !important; box-shadow: 0 -14px 40px rgba(10,20,14,.28), inset 0 1px 0 rgba(255,255,255,.95) !important; }

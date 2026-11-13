@@ -974,14 +974,122 @@ body:has(.lkdv-feed-shell) .lkv-app-background { display: none !important; }
 .lkdv-search-empty button { min-height: 32px; padding: 0 12px; border: 0; border-radius: 999px; background: rgba(23,64,44,.1); color: var(--feed-ink); font: 700 10.5px/1 var(--font-sans, -apple-system, system-ui, sans-serif); cursor: pointer; }
 
 /* ===== Story : options, cœur, composer partagé ===== */
-.lkdv-story-options {
+/* Menu d'options des DEUX visionneuses (StoriesViewer React et visionneuse héritée
+   du Compte, compte-liquid-glass-v8-runtime.js) : bloc `.lkdv-story-menu*` ci-dessous.
+   Les anciens `.lkdv-story-options*` (rail de ronds) sont supprimés. */
+
+/* Pastille auteur d'une story : verre assez opaque, nom en encre, sous-ligne en muted
+   (la visionneuse héritée du Compte porte la même valeur dans compte-v8.css). */
+.lkdv-story-viewer .lkdv-post-author {
+  background: linear-gradient(180deg, rgba(255, 255, 255, .88), rgba(255, 255, 255, .76));
+  -webkit-backdrop-filter: blur(16px) saturate(1.8) brightness(1.05);
+  backdrop-filter: blur(16px) saturate(1.8) brightness(1.05);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .95), 0 0 0 .5px rgba(23, 43, 36, .10), 0 2px 8px rgba(23, 43, 36, .12);
+  color: #172B24;
+}
+.lkdv-story-viewer .lkdv-post-author-line b { color: #172B24; }
+.lkdv-story-viewer .lkdv-post-author-meta { color: #56665d; font-size: 11px; }
+
+/* ===== Story : menu d'options (menu contextuel Liquid Glass iOS 27) =====
+   Déclencheur rond de verre (matière du `.gbtn`, 38 px, zone tactile 44 px) +
+   un seul panneau de verre ancré dessous, aligné à droite. Animation :
+   transform + opacity seulement, origine haut droite. */
+.lkdv-story-menu {
   position: absolute;
-  top: max(var(--space-8), calc(var(--safe-top) + var(--space-6)));
+  /* centré sur la pastille auteur (44 px) : (44 - 38) / 2 */
+  top: calc(max(var(--space-8), calc(var(--safe-top) + var(--space-6))) + 3px);
   right: var(--space-4);
   z-index: var(--z-sticky);
 }
-.lkdv-story-options .pmi-more-pill { position: static; }
-.lkdv-story-options .pmi-options-menu { top: 44px; right: 0; }
+.lkdv-story-menu-trigger {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .5);
+  -webkit-backdrop-filter: blur(4px) saturate(1.9) brightness(1.07);
+  backdrop-filter: blur(4px) saturate(1.9) brightness(1.07);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), 0 2px 8px rgba(23, 43, 36, .08);
+  color: #172B24;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform 160ms cubic-bezier(.32, .72, 0, 1);
+}
+.lkdv-story-menu-trigger::after { content: ''; position: absolute; inset: -3px; border-radius: 50%; }
+.lkdv-story-menu-trigger:active { transform: scale(.94); }
+.lkdv-story-menu-trigger:focus-visible { outline: 2px solid #17402C; outline-offset: 2px; }
+.lkdv-story-menu-glyph {
+  grid-area: 1 / 1;
+  display: grid;
+  place-items: center;
+  transition: opacity 180ms cubic-bezier(.32, .72, 0, 1), transform 220ms cubic-bezier(.32, .72, 0, 1);
+}
+.lkdv-story-menu-glyph[data-glyph='close'] { opacity: 0; transform: rotate(-60deg) scale(.6); }
+.lkdv-story-menu-trigger[aria-expanded='true'] .lkdv-story-menu-glyph[data-glyph='ellipsis'] { opacity: 0; transform: rotate(60deg) scale(.6); }
+.lkdv-story-menu-trigger[aria-expanded='true'] .lkdv-story-menu-glyph[data-glyph='close'] { opacity: 1; transform: none; }
+
+.lkdv-story-menu-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 220px;
+  max-width: calc(100vw - 32px);
+  padding: 4px 0;
+  border-radius: 18px;
+  overflow: hidden;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .72), rgba(255, 255, 255, .58));
+  -webkit-backdrop-filter: blur(25.2px) saturate(1.8) brightness(1.05);
+  backdrop-filter: blur(25.2px) saturate(1.8) brightness(1.05);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .95), 0 0 0 .5px rgba(23, 43, 36, .10), 0 12px 32px rgba(23, 43, 36, .22);
+  transform-origin: top right;
+  transform: scale(.86);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    transform 220ms cubic-bezier(.32, .72, 0, 1),
+    opacity 220ms cubic-bezier(.32, .72, 0, 1),
+    visibility 0s linear 220ms;
+}
+.lkdv-story-menu-panel[data-open='true'] {
+  transform: none;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition-delay: 0s;
+}
+.lkdv-story-menu-item {
+  width: 100%;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 16px;
+  border: 0;
+  background: transparent;
+  color: #172B24;
+  font: 500 15px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif);
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.lkdv-story-menu-item > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lkdv-story-menu-item svg, .lkdv-story-menu-item img { flex: none; }
+.lkdv-story-menu-item + .lkdv-story-menu-item { border-top: .5px solid rgba(23, 43, 36, .10); }
+.lkdv-story-menu-item:active, .lkdv-story-menu-item:focus-visible { background: rgba(23, 43, 36, .08); outline: none; }
+.lkdv-story-menu-item.is-danger { color: #A33227; }
+.lkdv-story-menu-sep { height: 6px; margin: 2px 0; background: rgba(23, 43, 36, .08); }
+@media (prefers-reduced-motion: reduce) {
+  .lkdv-story-menu-panel { transform: none; transition: opacity 160ms linear, visibility 0s linear 160ms; }
+  .lkdv-story-menu-panel[data-open='true'] { transition-delay: 0s; }
+  .lkdv-story-menu-trigger, .lkdv-story-menu-glyph { transition: opacity 160ms linear; }
+  .lkdv-story-menu-glyph[data-glyph='close'], .lkdv-story-menu-trigger[aria-expanded='true'] .lkdv-story-menu-glyph[data-glyph='ellipsis'] { transform: none; }
+}
 .lkdv-story-composer-wrap {
   position: absolute;
   left: var(--space-4);
@@ -1302,9 +1410,9 @@ body:has(.lkdv-drawer-layer) .lkdv-feed-shell .tb { z-index: 95; }
 
 /* Panneaux : la carte s’étend de 541 à 794, comme la sheet Compte. */
 .lkdv-feed-post .lkdv-post-panel-slot {
-  top: 0 !important;
-  bottom: 0 !important;
-  height: 100% !important;
+  top: 0;
+  bottom: 0;
+  height: 100%;
   border-radius: 28px;
   overflow: hidden;
 }
@@ -1348,8 +1456,6 @@ body:has(.lkdv-drawer-layer) .lkdv-feed-shell .tb { z-index: 95; }
 }
 .lkdv-feed-panel-surface { position: relative; height: 100%; min-height: 0; overflow: hidden; border-radius: 28px; background: #fcfbf8; }
 .lkdv-feed-panel-surface > .lkdv-post-panel { position: absolute; inset: 0; }
-.lkdv-feed-panel-surface > .lkdv-post-panel { top: 70px !important; }
-.lkdv-feed-panel-surface > .lkdv-post-panel { height: calc(100% - 70px) !important; bottom: 0 !important; }
 
 /* Passe finale : carte 406×541, panneaux translucides sur l'image. */
 .lkdv-feed-post { aspect-ratio: 406 / 541; border-radius: 24px; }
@@ -1371,19 +1477,15 @@ body:has(.lkdv-drawer-layer) .lkdv-feed-shell .tb { z-index: 95; }
   backdrop-filter: blur(10px) saturate(1.5);
 }
 .lkdv-feed-panel-surface > .lkdv-post-panel {
-  top: 54px !important;
-  height: calc(100% - 54px) !important;
   background: transparent !important;
   box-shadow: none !important;
 }
 .lkdv-feed-post .lkdv-post-panel-body { background: rgba(255,255,255,.55); }
 
-/* Panneaux jusqu'en haut, header masqué, hauteur inchangée. */
+/* Panneaux jusqu'en haut (inset 0), header masqué, hauteur inchangée. La place de la
+   pastille auteur est réservée par le contenu (voir post-system.css), pas par le panneau. */
 .lkdv-feed-post:has(.lkdv-post-panel) .lkdv-feed-post-close { display: grid; }
 .lkdv-feed-panel-surface > .lkdv-post-panel {
-  top: 0 !important;
-  height: 100% !important;
-  padding-top: 54px;
   box-sizing: border-box;
 }
 .lkdv-feed-options-rail { top: 58px; }
@@ -1417,35 +1519,8 @@ body:has(.lkdv-drawer-layer) .lkdv-feed-shell .tb { z-index: 95; }
 .lkdv-feed-post-top .lkdv-post-author-meta { font-size: 10.5px; }
 .lkdv-feed-options-rail { top: 58px; }
 
-/* ===== Stories : pas de bottom bar, options en rail, like en pillule ===== */
-body:has([role="dialog"][aria-label^="Story de"]) .tb { display: none !important; }
-.lkdv-story-options-rail {
-  position: absolute;
-  top: 44px;
-  right: 0;
-  z-index: 40;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 8px;
-}
-.lkdv-story-options-rail button {
-  width: 38px;
-  height: 38px;
-  display: grid;
-  place-items: center;
-  padding: 0;
-  border: .5px solid rgba(255,255,255,.82);
-  border-radius: 999px;
-  background: linear-gradient(180deg, rgba(255,255,255,.74), rgba(255,255,255,.46) 55%, rgba(255,255,255,.6));
-  -webkit-backdrop-filter: blur(18px) saturate(1.8);
-  backdrop-filter: blur(18px) saturate(1.8);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 0 0 .5px rgba(23,43,36,.14), 0 6px 18px rgba(10,20,14,.16);
-  color: #17402C;
-  cursor: pointer;
-}
-.lkdv-story-options-rail button.is-danger { color: #A33227; }
-.lkdv-story-options-rail button:active { transform: scale(.92); }
+/* ===== Stories : like en pillule (la barre du bas est masquée par la règle
+   globale `data-story-open`, floating-liquid-tabbar.css) ===== */
 .lkdv-story-like {
   width: auto;
   min-width: 54px;
@@ -1478,11 +1553,6 @@ body:has([role="dialog"][aria-label^="Story de"]) .tb { display: none !important
   transform: translateX(-50%);
 }
 
-/* Aucune bottom bar pendant une story. */
-body[data-story-open="true"] .tb,
-body[data-story-open="true"] .account-bottom-bar,
-body[data-story-open="true"] nav[aria-label="Navigation principale"] { display: none !important; }
-.lkdv-story-options-rail[hidden] { display: none !important; }
 
 /* Dock story : message en verre pleine largeur + like à droite. */
 .lkdv-story-dock {
@@ -1577,9 +1647,6 @@ body[data-story-open="true"] nav[aria-label="Navigation principale"] { display: 
   background: rgba(255,255,255,.96) !important;
 }
 .lkdv-story-composer-wrap .lkdv-comments-composer input::placeholder { color: #56665D !important; }
-.lkdv-story-options { top: max(var(--space-8), calc(var(--safe-top) + var(--space-6))) !important; }
-.lkdv-story-options .pmi-more-pill { width: 44px !important; height: 44px !important; }
-.lkdv-story-options + * { }
 .lkdv-post-author.lkdv-account-glass { min-height: 44px !important; height: 44px !important; }
 
 /* Drawer création : surface lisible, formulaire scrollable, footer fixe. */
@@ -1675,8 +1742,7 @@ body[data-story-open="true"] nav[aria-label="Navigation principale"] { display: 
 
 /* Bottom bar Communauté : visible au repos, retirée à l'ouverture d'un drawer. */
 body:has(.lkdv-drawer-layer) .lkdv-feed-shell .tb,
-body:has(.lkdv-form-layer) .lkdv-feed-shell .tb,
-body:has([role="dialog"][aria-label^="Story de"]) .lkdv-feed-shell .tb {
+body:has(.lkdv-form-layer) .lkdv-feed-shell .tb {
   opacity: 0 !important;
   visibility: hidden !important;
   pointer-events: none !important;
