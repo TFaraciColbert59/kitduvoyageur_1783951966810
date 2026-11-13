@@ -14,12 +14,14 @@ import type {
   SheetKind,
   Sport,
   SportSelection,
+  StrengthLog,
   ToastMessage,
   TrailRouteSnapshot,
 } from './types';
 import { LEVEL_ZOOM, SCENES, type SceneName } from './scenes';
 import { createSplitsState } from '../activity/splits';
 import { newClientSessionId } from '../activity/localSession';
+import { clearStrengthDraft, writeStrengthDraft } from '../strength/storage';
 
 export const DETENT_RATIO: Record<Detent, number> = {
   peek: 0,
@@ -76,6 +78,13 @@ interface ExplorerActions {
   toggleLayer: (layerId: string) => void;
   /** Réglage local de préparation : active ou coupe la pause automatique. */
   setAutoPauseEnabled: (enabled: boolean) => void;
+  /**
+   * Écrit le carnet musculation dans le store et, si possible, dans le
+   * stockage local. `false` signifie que seule la mémoire est à jour.
+   */
+  storeStrengthLog: (log: StrengthLog) => boolean;
+  /** Efface le brouillon local et l’état mémoire. */
+  clearStrengthLog: () => void;
 }
 
 export type ExplorerStore = ExplorerState & ExplorerActions;
@@ -455,6 +464,23 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
       autoPausePersistenceFailed = true;
     }
     emit('auto-pause-setting', { enabled });
+  },
+
+  storeStrengthLog: (log) => {
+    set({ strength: log });
+    const persisted = writeStrengthDraft(log);
+    emit('strength-draft', {
+      exercises: log.exercises.length,
+      sets: log.exercises.reduce((total, exercise) => total + exercise.sets.length, 0),
+      persisted,
+    });
+    return persisted;
+  },
+
+  clearStrengthLog: () => {
+    set({ strength: undefined });
+    clearStrengthDraft();
+    emit('strength-clear', {});
   },
 }));
 

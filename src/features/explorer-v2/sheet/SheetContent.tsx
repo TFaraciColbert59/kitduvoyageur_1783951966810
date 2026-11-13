@@ -15,6 +15,7 @@ import {
 import { useExplorerStore } from '../state/store';
 import { countTiles, downloadZone, purgeZone, readZone } from '../offline/zone';
 import { ElevationProfile } from './ElevationProfile';
+import { StrengthPanel } from './StrengthPanel';
 import {
   XpAvatars,
   XpCard,
@@ -128,6 +129,19 @@ function StartLimitNote() {
       Le suivi démarre même hors ligne. La séance et ses points restent sur cet appareil, puis sont
       synchronisés avec ton compte dès que la connexion le permet.
     </p>
+  );
+}
+
+/** Entrée unique du carnet musculation, dans les deux onglets de départ. */
+function StrengthEntry({ ctx }: { ctx: SheetContext }) {
+  return (
+    <XpRow
+      icon="dumbbell"
+      title="Musculation"
+      sub="Exercices, séries, répétitions, charges · brouillon local"
+      badge={{ label: 'Saisie', tone: 'muted' }}
+      onClick={() => ctx.state.setSheet('strength', 'full')}
+    />
   );
 }
 
@@ -270,6 +284,10 @@ export function SportPicker({ ctx }: { ctx: SheetContext }) {
             );
           })}
         </XpRows>
+        <XpEyebrow>Carnet hors GPS</XpEyebrow>
+        <XpRows>
+          <StrengthEntry ctx={ctx} />
+        </XpRows>
         <AutoPauseSetting sport={null} />
         <StartLimitNote />
       </>
@@ -391,6 +409,10 @@ function RecommendedSports({ ctx }: { ctx: SheetContext }) {
             />
           );
         })}
+      </XpRows>
+      <XpEyebrow>Carnet hors GPS</XpEyebrow>
+      <XpRows>
+        <StrengthEntry ctx={ctx} />
       </XpRows>
       <AutoPauseSetting sport={null} />
       <StartLimitNote />
@@ -2332,6 +2354,24 @@ export function buildSheetModel(ctx: SheetContext): SheetModel {
           : null,
       actions: null,
       onBack: () => state.patch({ sheet: 'level', detent: 'peek' }),
+    };
+  }
+
+  if (kind === 'strength') {
+    return {
+      title: 'Musculation',
+      subtitle: 'Carnet local · exercices, séries, répétitions, charges',
+      tabs: [
+        {
+          id: 'carnet',
+          label: 'Carnet',
+          icon: 'dumbbell',
+          render: () => <StrengthPanel />,
+        },
+      ],
+      mini: null,
+      actions: null,
+      onBack: () => state.setSheet('start', 'low'),
     };
   }
 

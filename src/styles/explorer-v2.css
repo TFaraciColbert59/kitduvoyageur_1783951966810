@@ -1446,6 +1446,141 @@ body[data-explorer-sheet-open='true'] nav[aria-label="Navigation principale"]:no
   font-weight: 650;
 }
 
+/* ── Carnet musculation (S2.32) ───────────────────────────────────────── */
+.xp-strength {
+  display: grid;
+  gap: 2px;
+}
+.xp-strength-note {
+  display: grid;
+  gap: 3px;
+  margin: 2px 0 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(185, 138, 46, 0.12);
+  box-shadow: inset 0 0 0 0.5px rgba(185, 138, 46, 0.28);
+  color: var(--xp-mut2);
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+.xp-strength-note strong {
+  color: var(--xp-warn);
+  font-size: 12px;
+  font-weight: 700;
+}
+.xp-strength-warn {
+  margin: 0 0 10px;
+  padding: 9px 11px;
+  border-radius: 12px;
+  background: rgba(168, 68, 58, 0.12);
+  box-shadow: inset 0 0 0 0.5px rgba(168, 68, 58, 0.3);
+  color: var(--xp-bad);
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+.xp-strength-error {
+  margin: 0;
+  color: var(--xp-bad);
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+.xp-strength-sets {
+  display: grid;
+  gap: 6px;
+  margin: 2px 0 10px;
+}
+.xp-strength-set {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 10px;
+  border-radius: 14px;
+  background: var(--xp-block);
+  box-shadow: var(--xp-block-shadow);
+}
+.xp-strength-set-main {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+.xp-strength-set-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--xp-mut);
+}
+.xp-strength-set-value {
+  font-size: 13.5px;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  color: var(--xp-txt);
+}
+.xp-strength-set-sub {
+  font-size: 10.5px;
+  color: var(--xp-mut);
+}
+.xp-strength-set-actions {
+  display: flex;
+  flex: none;
+  gap: 4px;
+}
+.xp-strength-set-actions .xp-chip {
+  min-height: 44px;
+  padding: 6px 9px;
+  font-size: 11px;
+}
+.xp-strength-setform {
+  margin-bottom: 8px;
+}
+.xp-strength-setform-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.xp-strength-unit {
+  display: grid;
+  gap: 4px;
+}
+.xp-strength-unit-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--xp-mut);
+}
+.xp-strength-unit .xp-chiprow {
+  margin: 0;
+}
+.xp-strength-remove-exercise {
+  margin-top: 2px;
+}
+.xp-strength-clear {
+  display: grid;
+  gap: 0;
+  margin: 10px 0 8px;
+}
+.xp-strength-clear-text {
+  margin: 0 0 8px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--xp-mut2);
+}
+.xp-strength-footnote {
+  margin: 10px 2px 6px;
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: var(--xp-mut);
+}
+.xp-strength-status {
+  margin: 0 2px 8px;
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--xp-good);
+}
+.xp-root[data-theme='dark'] .xp-strength-set {
+  background: var(--xp-block);
+}
+
 /* Pastille « hors ligne » avec le nombre d'écritures en attente. */
 .xp-offline-chip {
   flex: none;
