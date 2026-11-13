@@ -238,6 +238,12 @@ export interface StrengthLog {
   startedAt: number;
   updatedAt: number;
   exercises: StrengthExercise[];
+  /**
+   * Séance `activity_sessions` du même propriétaire, ou `null`/absente.
+   * Le lien n'est proposé que pour une séance déjà enregistrée sur le compte ;
+   * le serveur revérifie le propriétaire avant de l'accepter.
+   */
+  activitySessionId?: string | null;
 }
 
 export interface ToastMessage {
@@ -266,7 +272,7 @@ export interface ExplorerState {
   activity?: ActivityState;
   /** Dernière sortie terminée, affichée dans l'écran Bilan. */
   summary?: (ActivityState & { endedAt: number }) | null;
-  /** Carnet musculation local, sans contrat serveur de séries (S2.32). */
+  /** Carnet musculation privé, local puis synchronisé avec le compte (S2.32). */
   strength?: StrengthLog;
   /** Résultat de l'enregistrement du bilan. */
   summarySaved?: SummarySavedState;

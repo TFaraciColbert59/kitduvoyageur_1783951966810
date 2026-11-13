@@ -22,6 +22,14 @@ export const STRENGTH_LOG_VERSION = 1 as const;
 /** Identifiant client stable, partagé par le stockage local et le contrat serveur. */
 export const STRENGTH_CLIENT_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
 
+/** UUID d'une séance `activity_sessions` ; jamais un identifiant local. */
+export const STRENGTH_ACTIVITY_SESSION_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function isStrengthActivitySessionId(value: unknown): value is string {
+  return typeof value === 'string' && STRENGTH_ACTIVITY_SESSION_PATTERN.test(value);
+}
+
 /** Conversion exacte, utilisée uniquement pour afficher un volume en kg. */
 export const LB_TO_KG = 0.453_592_37;
 

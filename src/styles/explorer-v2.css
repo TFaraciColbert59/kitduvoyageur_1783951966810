@@ -1603,6 +1603,71 @@ body[data-explorer-sheet-open='true'] nav[aria-label="Navigation principale"]:no
   line-height: 1.4;
   color: var(--xp-good);
 }
+.xp-strength-legacy {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: var(--xp-block);
+  box-shadow: inset 2px 0 0 var(--xp-ink), var(--xp-block-shadow);
+  color: var(--xp-mut2);
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+.xp-strength-legacy strong {
+  color: var(--xp-txt);
+  font-size: 12px;
+  font-weight: 700;
+}
+.xp-strength-legacy-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.xp-strength-legacy-actions .xp-primary,
+.xp-strength-legacy-actions .xp-secondary {
+  flex: 1 1 150px;
+  min-height: 44px;
+}
+.xp-strength-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: var(--xp-block);
+  box-shadow: var(--xp-block-shadow);
+  color: var(--xp-mut2);
+  font-size: 11px;
+  line-height: 1.4;
+}
+.xp-strength-link .xp-chip {
+  flex: none;
+  min-height: 44px;
+  padding: 6px 9px;
+  font-size: 11px;
+}
+.xp-strength-export {
+  display: grid;
+  gap: 8px;
+  margin: 2px 0 10px;
+}
+.xp-strength-export-text {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--xp-mut);
+}
+.xp-strength-export .xp-secondary {
+  min-height: 44px;
+}
+.xp-primary:disabled,
+.xp-secondary:disabled {
+  opacity: 0.55;
+}
 .xp-root[data-theme='dark'] .xp-strength-set {
   background: var(--xp-block);
 }

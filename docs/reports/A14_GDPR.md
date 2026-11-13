@@ -5,12 +5,13 @@ test) — aucun PII réel, aucun export commité, aucune donnée envoyée à un 
 
 ## 1. Export (portabilité, art. 20) — livré et exécuté
 
-- Module : `src/server/gdprExport.ts` (`buildGdprExport`, version de schéma `a14-v2` (v2 : table user_traveller, profil voyageur)).
+- Module : `src/server/gdprExport.ts` (`buildGdprExport`, version de schéma `a14-v3` (v3 : carnet de musculation privé, `strength[]` + `strength_logs`)).
 - Route : `GET /api/account/export` — **auth requise** (401), service requis (503),
   identité issue **exclusivement de la session**, réponse `application/json`
   téléchargeable (`Content-Disposition: attachment`), `Cache-Control: no-store`.
-- Contenu : profil, consentements, et les 18 tables du domaine ci-dessous, plus
-  les `adventure_plans` avec versions/décisions/runs enfants.
+- Contenu : profil, consentements, et les tables du domaine ci-dessous, plus
+  les `adventure_plans` avec versions/décisions/runs enfants, et les carnets de
+  musculation avec exercices/séries (`strength[]`).
 - Tests mockés : `tests/security/a14-gdpr-account.spec.ts` —
   TEST-A14-GDPR-EXPORT-01 (registre verrouillé), -02 (bundle complet),
   -03 (401), -04 (200 téléchargeable).
@@ -21,7 +22,7 @@ test) — aucun PII réel, aucun export commité, aucune donnée envoyée à un 
 Export réel (extrait anonyme, aucune valeur personnelle) :
 
 ```text
-GET /api/account/export → 200, schemaVersion=a14-v2
+GET /api/account/export → 200, schemaVersion=a14-v3
 profile.id=<uuid jetable>, consents=1, counts={terrain_reports:1, hike_sessions:1,
 performance_observations:1, adventure_plans:1, ...}, plans[0].versions=1, decisions=1, engineRuns=1
 ```
@@ -60,6 +61,7 @@ performance_observations=0, saved_adventures=0, adventure_plans=0, plan_versions
 | Performance personnelle (profil appris) | `user_performance_profiles`, `user_performance_profile_versions`, `performance_observations` | consentement `personal_performance` | jusqu'au retrait du consentement (purge idempotente `consent.revoked`) ou suppression du compte |
 | Prédictions (ETA/difficulté/fatigue) | `route_predictions`, `segment_predictions` | consentement `personal_performance` | idem (liées au profil/plan) |
 | Sorties terrain (traces privées) | `hike_sessions`, `session_segment_passages` | consentement `live_location` / exécution | jusqu'à suppression du compte ; visibilité par défaut `private` |
+| Carnet de musculation privé | `strength_logs`, `strength_exercises`, `strength_sets` | exécution du contrat / consentement implicite à la saisie | jusqu'à suppression du compte (CASCADE) ou effacement explicite du carnet |
 | Plans d'aventure | `adventure_plans`, `adventure_plan_versions`, `adventure_plan_decisions` | exécution du contrat | jusqu'à suppression du compte (CASCADE) |
 | Télémétrie moteurs (corrélation) | `adventure_engine_runs` | intérêt légitime (fiabilité/sécurité) | métadonnées techniques, plan détaché (`SET NULL`) ; pas d'identité directe |
 | Demandes de génération | `adventure_generation_requests` | exécution / anti-abus | jusqu'à suppression du compte (CASCADE) |

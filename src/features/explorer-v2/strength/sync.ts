@@ -12,11 +12,17 @@
  * sera repoussé au prochain montage, au retour de la connexion ou après une
  * nouvelle saisie. Les suppressions demandées hors ligne sont conservées dans
  * une file locale pour ne jamais ressusciter un carnet effacé.
+ *
+ * Depuis la fin de S2.32, chaque écriture est liée au propriétaire local du
+ * brouillon. Un brouillon non rattaché n’est jamais poussé automatiquement
+ * vers le compte qui se connecte : il faut le geste explicite de récupération
+ * dans l’écran. Une écriture partie avant un changement de compte ne peut pas
+ * atterrir sur le nouveau compte : l’identité de session est revérifiée.
  */
 
-import { defaultAccessToken } from '../activity/sessionSync';
 import type { StrengthLog } from '../state/types';
 import {
+  getStrengthStorageOwner,
   readStrengthDeletions,
   removeStrengthDeletion,
   parseStrengthLog,
@@ -33,7 +39,14 @@ export type StrengthSyncReason =
 
 export interface StrengthSyncDeps {
   getToken?: () => Promise<string | null>;
+  /** Identité correspondant au jeton injecté ; absente en production (déduite de la session). */
+  getUserId?: () => Promise<string | null>;
   fetchImpl?: typeof fetch;
+}
+
+interface StrengthIdentity {
+  token: string;
+  userId: string | null;
 }
 
 export type StrengthPushResult =
@@ -52,9 +65,44 @@ function resolveFetch(deps: StrengthSyncDeps): typeof fetch {
   return deps.fetchImpl ?? fetch;
 }
 
-async function resolveToken(deps: StrengthSyncDeps): Promise<string | null> {
-  if (deps.getToken) return deps.getToken();
-  return defaultAccessToken();
+async function defaultAuthIdentity(): Promise<StrengthIdentity | null> {
+  try {
+    const { createClient } = await import('@/lib/supabase/client');
+    const { data } = await createClient().auth.getSession();
+    const token = data.session?.access_token;
+    const userId = data.session?.user?.id;
+    if (!token || !userId) return null;
+    return { token, userId };
+  } catch {
+    return null;
+  }
+}
+
+async function resolveIdentity(deps: StrengthSyncDeps): Promise<StrengthIdentity | null> {
+  if (deps.getToken) {
+    const token = await deps.getToken();
+    if (!token) return null;
+    const userId = deps.getUserId ? await deps.getUserId() : null;
+    return { token, userId };
+  }
+  return defaultAuthIdentity();
+}
+
+/**
+ * Refuse une écriture si le propriétaire local et la session ne concordent pas.
+ * En production, un brouillon sans propriétaire (ancienne clé non récupérée)
+ * n’est jamais poussé : il doit d’abord être rattaché explicitement.
+ */
+function ownerRejection(
+  ownerId: string | null,
+  identity: StrengthIdentity,
+  usesInjectedIdentity: boolean,
+): StrengthSyncReason | null {
+  if (!usesInjectedIdentity && ownerId === null) return 'unauthenticated';
+  if (ownerId !== null && identity.userId !== null && identity.userId !== ownerId) {
+    return 'conflict';
+  }
+  return null;
 }
 
 function reasonForStatus(status: number): StrengthSyncReason {
@@ -84,9 +132,10 @@ let writeChain: Promise<unknown> = Promise.resolve();
 export function queueStrengthPush(
   log: StrengthLog,
   deps: StrengthSyncDeps = {},
+  ownerId: string | null = getStrengthStorageOwner(),
 ): Promise<StrengthPushResult> {
   const snapshot = cloneStrengthLog(log);
-  const run = writeChain.then(() => pushStrengthLog(snapshot, deps));
+  const run = writeChain.then(() => pushStrengthLog(snapshot, deps, ownerId));
   writeChain = run.catch(() => undefined);
   return run;
 }
@@ -94,7 +143,8 @@ export function queueStrengthPush(
 /**
  * Attend les écritures déjà programmées. Utilisé avant une suppression :
  * une synchronisation partie juste avant l’effacement ne doit pas recréer le
- * carnet après la suppression.
+ * carnet après la suppression. Également utilisé avant de changer de compte
+ * pour ne pas mélanger deux propriétaires.
  */
 export async function waitForStrengthWrites(): Promise<void> {
   let current = writeChain;
@@ -108,13 +158,17 @@ export async function waitForStrengthWrites(): Promise<void> {
 export async function pushStrengthLog(
   log: StrengthLog,
   deps: StrengthSyncDeps = {},
+  ownerId: string | null = getStrengthStorageOwner(),
 ): Promise<StrengthPushResult> {
-  const token = await resolveToken(deps);
-  if (!token) return { ok: false, reason: 'unauthenticated' };
+  const usesInjectedIdentity = Boolean(deps.getToken);
+  const identity = await resolveIdentity(deps);
+  if (!identity) return { ok: false, reason: 'unauthenticated' };
+  const rejected = ownerRejection(ownerId, identity, usesInjectedIdentity);
+  if (rejected) return { ok: false, reason: rejected };
 
   // Un carnet dont la suppression est encore en file ne doit jamais être
   // recréé par une synchronisation tardive.
-  const pendingDeletions = readStrengthDeletions();
+  const pendingDeletions = readStrengthDeletions(ownerId);
   if (pendingDeletions.some((item) => item.id === log.id)) {
     return { ok: false, reason: 'conflict' };
   }
@@ -123,17 +177,25 @@ export async function pushStrengthLog(
   // elle est rejouée avant l’écriture du brouillon courant. Un échec ne bloque
   // pas la sauvegarde du carnet, il laisse seulement la suppression en file.
   if (pendingDeletions.length > 0) {
-    await flushStrengthDeletions(deps);
+    await flushStrengthDeletions(deps, ownerId);
   }
+
+  // Le lien de séance est un champ de premier niveau du contrat serveur ; il
+  // ne fait pas partie de `p_log`. On le retire donc du carnet transmis.
+  const { activitySessionId, ...logWithoutSession } = log;
+  const body: { log: Omit<StrengthLog, 'activitySessionId'>; activitySessionId?: string } = {
+    log: logWithoutSession,
+  };
+  if (activitySessionId) body.activitySessionId = activitySessionId;
 
   try {
     const response = await resolveFetch(deps)(ENDPOINT, {
       method: 'PUT',
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${identity.token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ log }),
+      body: JSON.stringify(body),
       signal: AbortSignal.timeout(12_000),
     });
 
@@ -165,15 +227,19 @@ export async function pushStrengthLog(
 export async function fetchRemoteStrengthLog(
   logId?: string,
   deps: StrengthSyncDeps = {},
+  ownerId: string | null = getStrengthStorageOwner(),
 ): Promise<StrengthReadResult> {
-  const token = await resolveToken(deps);
-  if (!token) return { ok: false, reason: 'unauthenticated' };
+  const usesInjectedIdentity = Boolean(deps.getToken);
+  const identity = await resolveIdentity(deps);
+  if (!identity) return { ok: false, reason: 'unauthenticated' };
+  const rejected = ownerRejection(ownerId, identity, usesInjectedIdentity);
+  if (rejected) return { ok: false, reason: rejected };
 
   const url = logId ? `${ENDPOINT}?logId=${encodeURIComponent(logId)}` : ENDPOINT;
   try {
     const response = await resolveFetch(deps)(url, {
       method: 'GET',
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Authorization: `Bearer ${identity.token}` },
       signal: AbortSignal.timeout(12_000),
     });
     if (!response.ok) return { ok: false, reason: reasonForStatus(response.status) };
@@ -196,16 +262,20 @@ export async function fetchRemoteStrengthLog(
 export async function deleteRemoteStrengthLog(
   logId: string,
   deps: StrengthSyncDeps = {},
+  ownerId: string | null = getStrengthStorageOwner(),
 ): Promise<StrengthDeleteResult> {
-  const token = await resolveToken(deps);
-  if (!token) return { ok: false, reason: 'unauthenticated' };
+  const usesInjectedIdentity = Boolean(deps.getToken);
+  const identity = await resolveIdentity(deps);
+  if (!identity) return { ok: false, reason: 'unauthenticated' };
+  const rejected = ownerRejection(ownerId, identity, usesInjectedIdentity);
+  if (rejected) return { ok: false, reason: rejected };
 
   try {
     const response = await resolveFetch(deps)(
       `${ENDPOINT}?logId=${encodeURIComponent(logId)}`,
       {
         method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${identity.token}` },
         signal: AbortSignal.timeout(12_000),
       },
     );
@@ -228,27 +298,29 @@ export interface StrengthFlushResult {
 }
 
 /**
- * Rejoue les suppressions en attente. Une suppression acquittée est retirée
- * de la file ; un échec la laisse en place pour la prochaine occasion.
+ * Rejoue les suppressions en attente du propriétaire courant. Une suppression
+ * acquittée est retirée de la file ; un échec la laisse en place pour la
+ * prochaine occasion.
  */
 export async function flushStrengthDeletions(
   deps: StrengthSyncDeps = {},
+  ownerId: string | null = getStrengthStorageOwner(),
 ): Promise<StrengthFlushResult> {
-  const pending = readStrengthDeletions();
+  const pending = readStrengthDeletions(ownerId);
   if (pending.length === 0) return { ok: true, pending: 0 };
 
   let lastReason: StrengthSyncReason | undefined;
   for (const item of pending) {
-    const result = await deleteRemoteStrengthLog(item.id, deps);
+    const result = await deleteRemoteStrengthLog(item.id, deps, ownerId);
     if (result.ok) {
-      removeStrengthDeletion(item.id);
+      removeStrengthDeletion(item.id, ownerId);
       continue;
     }
     lastReason = result.reason;
     if (result.reason === 'unauthenticated') break;
   }
 
-  const remaining = readStrengthDeletions();
+  const remaining = readStrengthDeletions(ownerId);
   return {
     ok: remaining.length === 0,
     pending: remaining.length,

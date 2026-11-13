@@ -19,11 +19,18 @@ import type {
   StrengthSet,
 } from '../state/types';
 import {
+  adoptLegacyStrengthState,
+  claimLegacyStrengthDeletions,
+  clearStrengthDraft,
   enqueueStrengthDeletion,
+  getStrengthStorageOwner,
   hasPendingStrengthDeletion,
+  readLegacyStrengthDraft,
   readStrengthDraft,
   removeStrengthDeletion,
+  setStrengthStorageOwner,
 } from '../strength/storage';
+import { buildStrengthExport, strengthExportFileName } from '../strength/export';
 import {
   deleteRemoteStrengthLog,
   fetchRemoteStrengthLog,
@@ -43,6 +50,7 @@ import {
   MAX_STRENGTH_REPS,
   removeStrengthExercise,
   removeStrengthSet,
+  isStrengthActivitySessionId,
   strengthExerciseTotals,
   strengthLogTotals,
   strengthSetVolumeKg,
@@ -50,6 +58,7 @@ import {
   type StrengthSetInput,
 } from '../strength/model';
 import { XpChips, XpEmpty, XpEyebrow, XpMetrics, XpRow, XpRows } from './blocks';
+import { SPORT_META } from './context';
 
 type SyncState =
   | 'idle'
@@ -76,8 +85,11 @@ export function StrengthPanel() {
   const storeStrengthLog = useExplorerStore((state) => state.storeStrengthLog);
   const clearStrengthLog = useExplorerStore((state) => state.clearStrengthLog);
 
-  const hydratedRef = React.useRef(false);
+  const activity = useExplorerStore((state) => state.activity ?? null);
   const mountedRef = React.useRef(true);
+  const ownerRef = React.useRef<string | null | undefined>(undefined);
+  const requestedOwnerRef = React.useRef<string | null | undefined>(undefined);
+  const ownerSwitchRef = React.useRef<Promise<void>>(Promise.resolve());
   const [name, setName] = React.useState('');
   const [nameError, setNameError] = React.useState<string | null>(null);
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
@@ -90,60 +102,73 @@ export function StrengthPanel() {
   const [persistFailed, setPersistFailed] = React.useState(false);
   const [confirmClear, setConfirmClear] = React.useState(false);
   const [syncState, setSyncState] = React.useState<SyncState>('idle');
+  const [legacyDraft, setLegacyDraft] = React.useState<StrengthLog | null>(null);
 
-  const push = React.useCallback(async (next: StrengthLog) => {
-    if (hasPendingStrengthDeletion(next.id)) {
-      setSyncState('delete-pending');
-      return;
-    }
-    setSyncState('syncing');
-    let result: Awaited<ReturnType<typeof queueStrengthPush>>;
-    try {
-      result = await queueStrengthPush(next);
-    } catch {
-      if (mountedRef.current) setSyncState('offline');
-      return;
-    }
-    if (!mountedRef.current) return;
-    if (result.ok) {
-      setSyncState(hasPendingStrengthDeletion() ? 'delete-pending' : 'synced');
-      return;
-    }
-    setSyncState(
-      hasPendingStrengthDeletion() ? 'delete-pending' : syncStateForReason(result.reason),
-    );
-  }, []);
+  const push = React.useCallback(
+    async (next: StrengthLog, ownerId: string | null = getStrengthStorageOwner()) => {
+      if (hasPendingStrengthDeletion(next.id, ownerId)) {
+        setSyncState('delete-pending');
+        return;
+      }
+      setSyncState('syncing');
+      let result: Awaited<ReturnType<typeof queueStrengthPush>>;
+      try {
+        result = await queueStrengthPush(next, {}, ownerId);
+      } catch {
+        if (mountedRef.current && getStrengthStorageOwner() === ownerId) {
+          setSyncState('offline');
+        }
+        return;
+      }
+      if (!mountedRef.current || getStrengthStorageOwner() !== ownerId) return;
+      if (result.ok) {
+        setSyncState(
+          hasPendingStrengthDeletion(undefined, ownerId) ? 'delete-pending' : 'synced',
+        );
+        return;
+      }
+      setSyncState(
+        hasPendingStrengthDeletion(undefined, ownerId)
+          ? 'delete-pending'
+          : syncStateForReason(result.reason),
+      );
+    },
+    [],
+  );
 
   const retrySync = React.useCallback(async () => {
     if (!mountedRef.current) return;
+    const ownerAtStart = getStrengthStorageOwner();
+    const stillOwner = () =>
+      mountedRef.current && getStrengthStorageOwner() === ownerAtStart;
     setSyncState('syncing');
 
     const current = useExplorerStore.getState().strength;
     if (current) {
-      if (hasPendingStrengthDeletion(current.id)) {
+      if (hasPendingStrengthDeletion(current.id, ownerAtStart)) {
         clearStrengthLog();
         await waitForStrengthWrites();
-        if (!mountedRef.current) return;
-        const flushed = await flushStrengthDeletions();
-        if (!mountedRef.current) return;
+        if (!stillOwner()) return;
+        const flushed = await flushStrengthDeletions({}, ownerAtStart);
+        if (!stillOwner()) return;
         setSyncState(flushed.pending > 0 ? 'delete-pending' : 'local');
         return;
       }
-      await push(current);
+      await push(current, ownerAtStart);
       return;
     }
 
     await waitForStrengthWrites();
-    if (!mountedRef.current) return;
-    const flushed = await flushStrengthDeletions();
-    if (!mountedRef.current) return;
+    if (!stillOwner()) return;
+    const flushed = await flushStrengthDeletions({}, ownerAtStart);
+    if (!stillOwner()) return;
     if (flushed.pending > 0) {
       setSyncState('delete-pending');
       return;
     }
 
-    const remote = await fetchRemoteStrengthLog();
-    if (!mountedRef.current) return;
+    const remote = await fetchRemoteStrengthLog(undefined, {}, ownerAtStart);
+    if (!stillOwner()) return;
     if (!remote.ok) {
       setSyncState(syncStateForReason(remote.reason));
       return;
@@ -152,7 +177,7 @@ export function StrengthPanel() {
       setSyncState('local');
       return;
     }
-    if (hasPendingStrengthDeletion(remote.log.id)) {
+    if (hasPendingStrengthDeletion(remote.log.id, ownerAtStart)) {
       setSyncState('delete-pending');
       return;
     }
@@ -169,16 +194,126 @@ export function StrengthPanel() {
     };
   }, []);
 
+  /**
+   * Rattache le brouillon au compte courant avant toute lecture ou écriture.
+   * Une déconnexion ne supprime rien : elle détache seulement l’état mémoire.
+   * Le brouillon du compte précédent reste sous sa clé et ne peut pas être
+   * poussé par le compte suivant.
+   */
   React.useEffect(() => {
-    if (hydratedRef.current) return;
-    hydratedRef.current = true;
-    const current = useExplorerStore.getState().strength;
-    if (!current) {
-      const stored = readStrengthDraft();
-      if (stored) useExplorerStore.setState({ strength: stored });
+    let cancelled = false;
+    let subscription: { unsubscribe: () => void } | undefined;
+
+    const applyOwner = (session: { user?: { id?: string } } | null) => {
+      const nextOwner = session?.user?.id ?? null;
+      // Les événements d’authentification peuvent arriver en rafale : une
+      // seule bascule est appliquée, et toujours après les écritures en vol.
+      requestedOwnerRef.current = nextOwner;
+      ownerSwitchRef.current = ownerSwitchRef.current
+        .then(async () => {
+          if (cancelled || requestedOwnerRef.current !== nextOwner) return;
+          if (ownerRef.current === nextOwner) return;
+
+          await waitForStrengthWrites();
+          if (cancelled || requestedOwnerRef.current !== nextOwner) return;
+
+          useExplorerStore.setState({ strength: undefined });
+          setLegacyDraft(null);
+          setStrengthStorageOwner(nextOwner);
+          ownerRef.current = nextOwner;
+
+          if (nextOwner) {
+            // Migration douce de l’ancienne file globale, une seule fois.
+            claimLegacyStrengthDeletions(nextOwner);
+          }
+
+          const stored = readStrengthDraft();
+          if (stored) {
+            useExplorerStore.setState({ strength: stored });
+            await retrySync();
+            return;
+          }
+
+          if (nextOwner) {
+            const legacy = readLegacyStrengthDraft();
+            if (legacy) {
+              // Ne pas restaurer le carnet distant tant que ce brouillon local
+              // n’a pas été explicitement récupéré ou laissé de côté.
+              setLegacyDraft(legacy);
+              setSyncState('local');
+              return;
+            }
+          }
+
+          await retrySync();
+        })
+        .catch(() => undefined);
+    };
+
+    void import('@/lib/supabase/client')
+      .then(({ createClient }) => {
+        if (cancelled) return;
+        const client = createClient();
+        void client.auth.getSession().then(({ data }) => {
+          void applyOwner(data.session);
+        });
+        const { data } = client.auth.onAuthStateChange((_event, session) => {
+          void applyOwner(session);
+        });
+        subscription = data.subscription;
+      })
+      .catch(() => {
+        void applyOwner(null);
+      });
+
+    return () => {
+      cancelled = true;
+      subscription?.unsubscribe();
+    };
+  }, [retrySync]);
+
+  const handleAdoptLegacy = React.useCallback(() => {
+    const owner = getStrengthStorageOwner();
+    if (!owner || !legacyDraft) return;
+    const adopted = adoptLegacyStrengthState(owner);
+    if (!adopted) {
+      setStatus('La récupération a échoué : le brouillon reste sur cet appareil.');
+      return;
     }
+    useExplorerStore.setState({ strength: adopted });
+    setLegacyDraft(null);
+    setStatus('Brouillon récupéré pour ce compte.');
+    void push(adopted);
+  }, [legacyDraft, push]);
+
+  const handleDismissLegacy = React.useCallback(() => {
+    setLegacyDraft(null);
+    setStatus('Brouillon laissé sur cet appareil ; il reste disponible à la prochaine ouverture.');
     void retrySync();
   }, [retrySync]);
+
+  const handleExport = React.useCallback(() => {
+    const current = useExplorerStore.getState().strength ?? legacyDraft;
+    if (!current) return;
+    try {
+      const bundle = buildStrengthExport(current);
+      const blob = new Blob([JSON.stringify(bundle, null, 2)], {
+        type: 'application/json',
+      });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = strengthExportFileName();
+      anchor.rel = 'noopener';
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 0);
+      setStatus('Carnet exporté sur cet appareil.');
+    } catch {
+      setStatus('Export impossible sur cet appareil.');
+    }
+  }, [legacyDraft]);
 
   React.useEffect(() => {
     const handleOnline = () => {
@@ -216,8 +351,34 @@ export function StrengthPanel() {
     void push(next);
   };
 
+  const activeSessionId = isStrengthActivitySessionId(activity?.sessionId)
+    ? activity.sessionId
+    : null;
+  const linkedSessionId = log?.activitySessionId ?? null;
+  const sessionLabel = activity ? SPORT_META[activity.sport]?.label ?? activity.sport : null;
+
+  /**
+   * Le contrat serveur vérifie déjà que `activity_sessions.user_id` est le
+   * propriétaire du carnet. L’écran ne propose donc que la séance réellement
+   * en cours dans le store, jamais une séance choisie par identifiant libre.
+   * Un envoi vers null ne détache pas : le serveur conserve le lien existant.
+   */
+  const handleAttachSession = () => {
+    if (!log || !activeSessionId) return;
+    commit(
+      { ...log, activitySessionId: activeSessionId, updatedAt: Date.now() },
+      'Carnet rattaché à la séance en cours.',
+    );
+  };
+
   const handleAddExercise = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (legacyDraft) {
+      setNameError(
+        'Récupère ou laisse le brouillon non rattaché avant de créer un nouveau carnet.',
+      );
+      return;
+    }
     const clean = cleanName(name);
     if (!clean) {
       setNameError('Nomme l’exercice réellement effectué.');
@@ -316,10 +477,19 @@ export function StrengthPanel() {
 
   const handleClear = async () => {
     const current = log;
+    const ownerAtStart = getStrengthStorageOwner();
+    const stillOwner = () =>
+      mountedRef.current && getStrengthStorageOwner() === ownerAtStart;
+    const clearOwnedDraft = () => {
+      clearStrengthDraft(ownerAtStart);
+      if (getStrengthStorageOwner() === ownerAtStart) {
+        useExplorerStore.setState({ strength: undefined });
+      }
+    };
     setConfirmClear(false);
 
     if (!current) {
-      clearStrengthLog();
+      clearOwnedDraft();
       setSelectedId(null);
       resetSetForm();
       setPersistFailed(false);
@@ -328,7 +498,7 @@ export function StrengthPanel() {
       return;
     }
 
-    const queued = enqueueStrengthDeletion(current.id);
+    const queued = enqueueStrengthDeletion(current.id, Date.now(), ownerAtStart);
 
     // File locale indisponible : ne pas effacer le brouillon avant d’avoir la
     // preuve que le serveur a bien supprimé le carnet. Sinon un « Réessayer »
@@ -338,11 +508,12 @@ export function StrengthPanel() {
       // Une synchronisation déjà partie ne doit pas recréer le carnet après
       // l’effacement : on la laisse finir avant de supprimer côté serveur.
       await waitForStrengthWrites();
-      const result = await deleteRemoteStrengthLog(current.id);
+      if (!stillOwner()) return;
+      const result = await deleteRemoteStrengthLog(current.id, {}, ownerAtStart);
       if (result.ok) {
-        removeStrengthDeletion(current.id);
-        clearStrengthLog();
-        if (!mountedRef.current) return;
+        removeStrengthDeletion(current.id, ownerAtStart);
+        clearOwnedDraft();
+        if (!stillOwner()) return;
         setSelectedId(null);
         resetSetForm();
         setPersistFailed(false);
@@ -350,7 +521,7 @@ export function StrengthPanel() {
         setStatus('Carnet effacé de cet appareil et de ton compte.');
         return;
       }
-      if (!mountedRef.current) return;
+      if (!stillOwner()) return;
       setSyncState(
         result.reason === 'unauthenticated' ? 'unauthenticated' : 'error',
       );
@@ -362,7 +533,7 @@ export function StrengthPanel() {
 
     // La tombe est écrite : le brouillon local peut être effacé sans risque de
     // résurrection, même si le serveur n’est pas joignable maintenant.
-    clearStrengthLog();
+    clearOwnedDraft();
     setSelectedId(null);
     resetSetForm();
     setPersistFailed(false);
@@ -371,17 +542,18 @@ export function StrengthPanel() {
     // Même règle : une écriture déjà en vol se termine avant la suppression,
     // puis la tombe locale empêche toute recréation ultérieure.
     await waitForStrengthWrites();
-    const result = await deleteRemoteStrengthLog(current.id);
+    if (!stillOwner()) return;
+    const result = await deleteRemoteStrengthLog(current.id, {}, ownerAtStart);
 
     if (result.ok) {
-      removeStrengthDeletion(current.id);
-      if (!mountedRef.current) return;
+      removeStrengthDeletion(current.id, ownerAtStart);
+      if (!stillOwner()) return;
       setSyncState('local');
       setStatus('Carnet effacé de cet appareil et de ton compte.');
       return;
     }
 
-    if (!mountedRef.current) return;
+    if (!stillOwner()) return;
     setSyncState('delete-pending');
     setStatus(
       'Carnet effacé de cet appareil. La suppression du compte sera rejouée à la prochaine connexion.',
@@ -389,6 +561,7 @@ export function StrengthPanel() {
   };
 
   const totals = strengthLogTotals(log);
+  const legacyTotals = legacyDraft ? strengthLogTotals(legacyDraft) : null;
   const selectedTotals = selectedExercise ? strengthExerciseTotals(selectedExercise) : null;
 
   const syncLabel =
@@ -430,7 +603,9 @@ export function StrengthPanel() {
         <strong>Carnet privé, conservé d’abord sur cet appareil.</strong>
         <span>
           Connecté, il est synchronisé avec ton compte. Hors ligne, le brouillon reste ici et
-          sera renvoyé à la prochaine connexion. Aucun import partenaire n’est simulé.
+          sera renvoyé à la prochaine connexion. Il est rattaché au compte : une déconnexion ne
+          l’efface pas et un autre compte sur cet appareil ne le voit pas. Aucun import
+          partenaire n’est simulé.
         </span>
       </div>
 
@@ -456,6 +631,51 @@ export function StrengthPanel() {
           Stockage local indisponible : ce brouillon reste en mémoire et sera perdu au
           rechargement.
         </p>
+      ) : null}
+
+      {legacyDraft && legacyTotals ? (
+        <div className="xp-strength-legacy" role="note">
+          <strong>Brouillon non rattaché sur cet appareil</strong>
+          <span>
+            {legacyTotals.exercises} exercice{legacyTotals.exercises > 1 ? 's' : ''} ·{' '}
+            {legacyTotals.sets} série{legacyTotals.sets > 1 ? 's' : ''}. Il n’a pas été envoyé à
+            ce compte. La récupération le rattache à ce compte et remplacera le carnet distant
+            à la prochaine synchronisation.
+          </span>
+          <div className="xp-strength-legacy-actions">
+            <button type="button" className="xp-primary" onClick={handleAdoptLegacy}>
+              Récupérer pour ce compte
+            </button>
+            <button type="button" className="xp-secondary" onClick={handleDismissLegacy}>
+              Laisser sur l’appareil
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {log && (activeSessionId || linkedSessionId) ? (
+        <div className="xp-strength-link" role="note">
+          {activeSessionId && linkedSessionId === activeSessionId ? (
+            <span>
+              Rattaché à la séance en cours{sessionLabel ? ` · ${sessionLabel}` : ''}.
+            </span>
+          ) : (
+            <>
+              <span>
+                {linkedSessionId
+                  ? 'Rattaché à une séance enregistrée.'
+                  : `Une séance${sessionLabel ? ` ${sessionLabel}` : ''} est en cours.`}
+              </span>
+              {activeSessionId ? (
+                <button type="button" className="xp-chip" onClick={handleAttachSession}>
+                  {linkedSessionId
+                    ? 'Rattacher à la séance en cours'
+                    : 'Rattacher à cette séance'}
+                </button>
+              ) : null}
+            </>
+          )}
+        </div>
       ) : null}
 
       {log ? (
@@ -497,7 +717,7 @@ export function StrengthPanel() {
             {nameError}
           </p>
         ) : null}
-        <button type="submit" className="xp-primary">
+        <button type="submit" className="xp-primary" disabled={Boolean(legacyDraft)}>
           Ajouter l’exercice
         </button>
       </form>
@@ -666,6 +886,22 @@ export function StrengthPanel() {
         />
       </XpRows>
 
+      <XpEyebrow>Export local</XpEyebrow>
+      <div className="xp-strength-export">
+        <p className="xp-strength-export-text">
+          Télécharge le carnet complet (exercices, séries, charges) sans réseau. L’export RGPD
+          du compte inclut aussi les carnets déjà synchronisés.
+        </p>
+        <button
+          type="button"
+          className="xp-secondary"
+          onClick={handleExport}
+          disabled={!log && !legacyDraft}
+        >
+          Télécharger le carnet
+        </button>
+      </div>
+
       {log ? (
         <div className="xp-strength-clear">
           {confirmClear ? (
@@ -701,7 +937,8 @@ export function StrengthPanel() {
         Chaque ligne correspond à une saisie réelle. Une charge laissée vide reste « poids du
         corps » et n’entre pas dans le volume. Les valeurs en livres sont converties en kg
         uniquement pour le volume affiché. Le brouillon local est conservé avant la
-        synchronisation ; un effacement demandé hors ligne est rejoué à la reconnexion.
+        synchronisation, rattaché au compte et jamais effacé par une simple déconnexion ; un
+        effacement demandé hors ligne est rejoué à la reconnexion.
       </p>
 
       {status ? (
