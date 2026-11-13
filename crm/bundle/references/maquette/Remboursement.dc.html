@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>LKDV Control — Valider un remboursement</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;family=IBM+Plex+Mono:wght@500;600&amp;display=swap">
+<style>
+body{margin:0;background:#F5F7F3;color:#172B24;font-family:Inter,-apple-system,'SF Pro Text',system-ui,sans-serif;font-size:14px;line-height:1.45}
+.brand{font-family:Manrope,system-ui,sans-serif}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+.card{background:rgba(255,255,255,.88);border:1px solid rgba(23,43,36,.10);border-radius:18px;box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 8px 24px rgba(11,31,23,.06)}
+.chip{display:inline-flex;align-items:center;gap:5px;min-height:22px;padding:0 9px;border-radius:999px;font-size:11.5px;font-weight:600;white-space:nowrap}
+.c-sage{background:#D8E5D5;color:#2D482A}.c-warn{background:#FBF1DC;color:#765014}.c-danger{background:#FDE8E6;color:#7E2D25}.c-info{background:#DDE7EE;color:#172B24}.c-stone{background:#EDF1EA;color:#46584D}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 16px;border-radius:14px;border:0;font:600 14px Inter,system-ui,sans-serif;cursor:pointer;text-decoration:none}
+.btn-pg{background:#D3EBD9;color:#17402C;box-shadow:inset 0 0 0 1px rgba(34,97,72,.28)}
+.btn-soft{background:rgba(255,255,255,.92);color:#172B24;box-shadow:inset 0 0 0 1px rgba(23,43,36,.16)}
+.btn-bad{background:#FDE8E6;color:#7E2D25;box-shadow:inset 0 0 0 1px rgba(168,68,58,.28)}
+.kbd{display:inline-flex;min-width:18px;height:20px;padding:0 6px;align-items:center;justify-content:center;border-radius:6px;background:rgba(23,43,36,.07);color:#46584D;font:600 11px 'IBM Plex Mono',monospace}
+.label{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#56665D}
+.muted{color:#56665D}
+.nav a{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:40px;padding:0 12px;border-radius:12px;color:#172B24;text-decoration:none;font-weight:500}
+.nav a.on{background:#D3EBD9;color:#17402C;font-weight:600}
+.nav .n{font:600 12px Inter,sans-serif;color:#56665D}
+.line{display:flex;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:.5px solid rgba(23,43,36,.10)}
+.step{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600}
+.step .b{width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px}
+a{color:#226148}a:hover{color:#17402C}
+</style>
+</helmet>
+<div style="min-height: 1040px; display: flex; flex-direction: column">
+
+<header style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 14px 24px; background: rgba(255,255,255,.72); border-bottom: 1px solid rgba(23,43,36,.10)">
+<div style="display: flex; align-items: center; gap: 10px; min-width: 200px">
+<svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><circle cx="14" cy="14" r="12.5" fill="#17402C"></circle><path d="M14 6l3 8-3 8-3-8z" fill="#D3EBD9"></path></svg>
+<span class="brand" style="font-weight: 800; font-size: 17px; color: #17402C">LKDV Control</span>
+</div>
+<a href="Commande.dc.html" class="btn btn-soft" style="flex: 1 1 360px; max-width: 560px; justify-content: space-between; font-weight: 500; color: #56665D"><span>Chercher un membre, une commande… ou agir</span><span class="kbd">⌘K</span></a>
+<div style="display: flex; align-items: center; gap: 10px; margin-left: auto">
+<span class="chip c-warn">Mode solo</span>
+<span style="width: 36px; height: 36px; border-radius: 50%; background: #17402C; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px">TF</span>
+</div>
+</header>
+
+<div style="display: flex; flex-wrap: wrap; flex: 1; align-items: stretch">
+<nav class="nav" aria-label="Navigation principale" style="flex: 1 1 232px; max-width: 260px; padding: 20px 14px; display: flex; flex-direction: column; gap: 2px; border-right: 1px solid rgba(23,43,36,.08)">
+<a href="Main.dc.html"><span>À traiter</span><span class="n">34</span></a>
+<span class="label" style="padding: 18px 12px 6px">Pôles</span>
+<a href="Moderation.dc.html"><span>Confiance</span><span class="n">14</span></a>
+<a href="Membre.dc.html"><span>Membres</span><span class="n">3</span></a>
+<a href="Remboursement.dc.html" class="on"><span>Commerce</span><span class="n" style="color: #17402C">2</span></a>
+<a href="Main.dc.html"><span>Contenus</span><span class="n">21</span></a>
+<a href="Main.dc.html"><span>Produit et IA</span><span class="n">0</span></a>
+<a href="Main.dc.html"><span>Croissance</span><span class="n">0</span></a>
+<a href="Main.dc.html"><span>Technique</span><span class="n">1</span></a>
+<span class="label" style="padding: 18px 12px 6px">Pilotage</span>
+<a href="Agents.dc.html"><span>Équipe et agents IA</span><span class="n">6</span></a>
+<a href="Journal.dc.html"><span>Journal d'audit</span></a>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; padding: 24px 28px; display: flex; flex-direction: column; gap: 18px; max-width: 860px">
+<span class="muted" style="font-size: 13px"><a href="Main.dc.html">À traiter</a> › Commerce › À valider</span>
+<h1 class="brand" style="margin: 0; font-size: 26px; font-weight: 800; color: #17402C">Valider un remboursement de 89,90 €</h1>
+
+<ol aria-label="Étapes" style="list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 12px; align-items: center">
+<li class="step"><span class="b" style="background: #D8E5D5; color: #2D482A">✓</span>Préparé</li>
+<li aria-hidden="true" style="width: 32px; height: 1px; background: rgba(23,43,36,.2)"></li>
+<li class="step" aria-current="step"><span class="b" style="background: #17402C; color: #fff">2</span>À valider</li>
+<li aria-hidden="true" style="width: 32px; height: 1px; background: rgba(23,43,36,.2)"></li>
+<li class="step muted"><span class="b" style="background: #EDF1EA; color: #46584D">3</span>Exécuté sur Stripe</li>
+</ol>
+
+<div style="display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border-radius: 14px; background: #FBF1DC; color: #765014">
+<svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true" style="flex: none; margin-top: 1px"><circle cx="10" cy="10" r="8.5" fill="none" stroke="#765014" stroke-width="1.5"></circle><path d="M10 6v5M10 14v.5" stroke="#765014" stroke-width="1.8" stroke-linecap="round"></path></svg>
+<span style="font-size: 13.5px"><strong>Mode solo :</strong> vous êtes seul dans l'équipe, vous validez donc vous-même. Le journal marquera cette ligne « validé seul ». Dès qu'un deuxième compte sera actif, une autre personne devra valider.</span>
+</div>
+
+<section class="card" style="padding: 8px 20px 4px" aria-label="Récapitulatif">
+<div class="line"><span class="muted">Commande</span><strong class="mono">LKDV-10482</strong></div>
+<div class="line"><span class="muted">Membre</span><span><a href="Membre.dc.html">@claire.vercors</a> · 3 commandes</span></div>
+<div class="line"><span class="muted">Paiement d'origine</span><span class="mono">pi_3Q••••••8Fh2 · carte Visa •• 4417</span></div>
+<div class="line"><span class="muted">Payé</span><strong>129,80 €</strong></div>
+<div class="line"><span class="muted">Déjà remboursé</span><span>0,00 €</span></div>
+<div class="line"><span class="muted">Encore remboursable</span><strong>129,80 €</strong></div>
+<div class="line" style="background: #F0F5EE; margin: 0 -20px; padding: 14px 20px"><span><strong>Montant demandé</strong></span><strong class="brand" style="font-size: 20px; color: #17402C">89,90 €</strong></div>
+<div class="line"><span class="muted">Motif</span><span>Produit défectueux · réchaud ultra-léger, valve qui fuit</span></div>
+<div class="line"><span class="muted">Pièces</span><span>2 photos du membre · échange de 4 messages</span></div>
+<div class="line" style="border-bottom: 0"><span class="muted">Préparé par</span><span><span class="chip c-stone">Agent IA</span> Remboursements · aujourd'hui 21:42</span></div>
+</section>
+
+<section class="card" style="padding: 20px; display: flex; flex-direction: column; gap: 14px" aria-label="Validation">
+<label style="display: flex; flex-direction: column; gap: 6px; max-width: 320px"><span style="font-weight: 600">Tapez le montant pour confirmer</span>
+<input type="text" inputmode="decimal" value="89,90" style="min-height: 48px; padding: 0 14px; border-radius: 12px; border: 1.5px solid #226148; background: #fff; font: 600 18px 'IBM Plex Mono', monospace"></label>
+<p class="muted" style="margin: 0; font-size: 12.5px">La validation est liée à ces valeurs exactes. Si le montant ou le paiement change, elle est annulée et une nouvelle demande est nécessaire. Le remboursement est irréversible.</p>
+<div style="display: flex; flex-wrap: wrap; gap: 10px">
+<button class="btn btn-pg">Valider et rembourser 89,90 €</button>
+<button class="btn btn-soft">Renvoyer à l'agent avec une question</button>
+<button class="btn btn-bad">Refuser</button>
+</div>
+</section>
+</main>
+
+<aside aria-label="Contexte" style="flex: 1 1 300px; max-width: 360px; padding: 24px 20px; display: flex; flex-direction: column; gap: 14px; border-left: 1px solid rgba(23,43,36,.08); background: rgba(255,255,255,.45)">
+<span class="label">Contexte de la commande</span>
+<div class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 8px">
+<span class="label">Articles</span>
+<span style="display: flex; justify-content: space-between; font-size: 13px"><span>Réchaud ultra-léger</span><span>89,90 €</span></span>
+<span style="display: flex; justify-content: space-between; font-size: 13px"><span>Cartouche gaz 230 g ×2</span><span>39,90 €</span></span>
+</div>
+<div class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 8px">
+<span class="label">Risque</span>
+<span style="font-size: 13px">Premier remboursement de ce membre</span>
+<span style="font-size: 13px">Aucun litige bancaire en cours</span>
+<span class="chip c-sage" style="align-self: flex-start">Risque faible</span>
+</div>
+<div class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 8px">
+<span class="label">Ce qui se passera</span>
+<span style="font-size: 13px">1. Remboursement Stripe sur la carte d'origine</span>
+<span style="font-size: 13px">2. Message au membre avec le délai bancaire</span>
+<span style="font-size: 13px">3. Ligne au journal d'audit</span>
+</div>
+</aside>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1040}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,147 @@
+{
+  "note": "Différences voulues entre la maquette (bundle/etat/preuves/reference/maquette) et les captures de l'application. Une différence sans justification écrite bloque la parité visuelle (couche 6).",
+  "globales": [
+    {
+      "id": "G1",
+      "difference": "Les captures montrent des contenus de test « [TEST CRM] » et des comptes is_demo, jamais les contenus de la maquette.",
+      "justification": "07_VERIFICATION § 2 : les preuves ne contiennent aucune donnée réelle ; la maquette est un jeu fictif figé."
+    },
+    {
+      "id": "G2",
+      "difference": "Les métriques vivantes (compte à rebours, temps réel, compteurs) diffèrent d'une capture à l'autre.",
+      "justification": "Ce sont des états réels et non des valeurs figées ; le contrôle porte sur le gabarit, la densité et les tons, pas sur les chiffres."
+    },
+    {
+      "id": "G3",
+      "difference": "Polices système (SF Pro sur macOS, Inter ailleurs) au lieu du rendu exact de la maquette HTML.",
+      "justification": "05_UI_UX_DESIGN § 1 : les polices sont celles du système LKDV ; la substitution est prévue par le design."
+    },
+    {
+      "id": "G4",
+      "difference": "Bandeau hors-ligne, bannière de session et chip « mode solo » peuvent apparaître selon l'état du poste.",
+      "justification": "États prévus par 05_UI_UX_DESIGN § 6 et EX-ROLE-07 ; leur présence dépend de la session, pas d'un écart de design."
+    },
+    {
+      "id": "G5",
+      "difference": "Les suggestions IA sont absentes quand la brique NVIDIA est éteinte.",
+      "justification": "Garde-fou § 4 : une brique dont le secret manque reste désactivée derrière un indicateur ; l'écran ne doit pas inventer de suggestion."
+    },
+    {
+      "id": "G6",
+      "difference": "Les images de contenus sont grisées et floutées jusqu'à action explicite.",
+      "justification": "05_UI_UX_DESIGN § 8 contrôle 25 (bien-être) — la maquette montre l'état « net au survol », pas l'état par défaut."
+    }
+  ],
+  "ecrans": {
+    "a-traiter": [
+      {
+        "id": "S01",
+        "difference": "Le groupe « Contributions » peut être absent quand aucune contribution n'est en attente.",
+        "justification": "05_UI_UX_DESIGN § 6 : un groupe sans élément n'affiche pas de titre vide ; l'état vide est testé séparément."
+      }
+    ],
+    "cas-moderation": [
+      {
+        "id": "S02",
+        "difference": "Le bandeau « décision déjà prise » remplace la carte d'actions sur un cas traité.",
+        "justification": "Contrôle 24 et idempotence : un cas déjà décidé ne propose plus les mêmes actions."
+      }
+    ],
+    "membre-360": [
+      {
+        "id": "S03",
+        "difference": "E-mail et téléphone masqués (« to•••@… ») au lieu d'être visibles.",
+        "justification": "Contrôle 21 : données personnelles masquées par défaut, dévoilement motivé et journalisé."
+      },
+      {
+        "id": "S04",
+        "difference": "Les champs absents affichent « non renseigné » au lieu d'une valeur de la maquette.",
+        "justification": "Prompt maître § 2.4 : aucune donnée inventée dans le produit."
+      }
+    ],
+    "commande": [
+      {
+        "id": "S05",
+        "difference": "Les montants et numéros de commande viennent des commandes Stripe de test.",
+        "justification": "Garde-fou § 1.6 : aucun paiement réel ; les montants sont ceux du mode test."
+      }
+    ],
+    "valider-demande": [
+      {
+        "id": "S06",
+        "difference": "En mode solo, l'étape « second humain » affiche la mention d'auto-validation au lieu de l'attente.",
+        "justification": "EX-ROLE-07 : le super admin seul valide en deux temps, avec mention explicite de sa responsabilité."
+      }
+    ],
+    "equipe-agents": [
+      {
+        "id": "S07",
+        "difference": "Les agents affichent leur état réel (actif, en pause, arrêté) et leur budget consommé du jour.",
+        "justification": "Loi 9 (le coût est une ressource) : les chiffres sont mesurés, jamais décoratifs."
+      }
+    ],
+    "journal": [
+      {
+        "id": "S08",
+        "difference": "Les lignes du journal sont horodatées à l'exécution et portent des pastilles « validé seul » / « accès sensible ».",
+        "justification": "Loi 3 (tout est audité) : le journal montre l'état réel des actions, pas un exemple figé."
+      }
+    ],
+    "sos": [
+      {
+        "id": "S09",
+        "difference": "La carte de position peut être absente si la géolocalisation n'est pas autorisée ; le 112 reste toujours visible.",
+        "justification": "Contrôle 37 : les urgences doivent rester utilisables sur téléphone même sans position."
+      }
+    ],
+    "pole-confiance": [
+      {
+        "id": "S10",
+        "difference": "Le pôle Confiance réutilise le gabarit Main avec la file filtrée sur son pôle : seules les lignes du pôle apparaissent, et les onglets « File », « Rechercher », « Réglages du pôle » remplacent le contenu de la maquette.",
+        "justification": "05_UI_UX_DESIGN § 3 : chaque pôle est une vue filtrée du gabarit Main ; la maquette ne montre qu'un seul pôle à titre d'exemple."
+      }
+    ],
+    "pole-membres": [
+      {
+        "id": "S11",
+        "difference": "Le pôle Membres réutilise le gabarit Main avec la file filtrée sur son pôle : seules les lignes du pôle apparaissent, et les onglets « File », « Rechercher », « Réglages du pôle » remplacent le contenu de la maquette.",
+        "justification": "05_UI_UX_DESIGN § 3 : chaque pôle est une vue filtrée du gabarit Main ; la maquette ne montre qu'un seul pôle à titre d'exemple."
+      }
+    ],
+    "pole-commerce": [
+      {
+        "id": "S12",
+        "difference": "Le pôle Commerce réutilise le gabarit Main avec la file filtrée sur son pôle : seules les lignes du pôle apparaissent, et les onglets « File », « Rechercher », « Réglages du pôle » remplacent le contenu de la maquette.",
+        "justification": "05_UI_UX_DESIGN § 3 : chaque pôle est une vue filtrée du gabarit Main ; la maquette ne montre qu'un seul pôle à titre d'exemple."
+      }
+    ],
+    "pole-contenus": [
+      {
+        "id": "S13",
+        "difference": "Le pôle Contenus réutilise le gabarit Main avec la file filtrée sur son pôle : seules les lignes du pôle apparaissent, et les onglets « File », « Rechercher », « Réglages du pôle » remplacent le contenu de la maquette.",
+        "justification": "05_UI_UX_DESIGN § 3 : chaque pôle est une vue filtrée du gabarit Main ; la maquette ne montre qu'un seul pôle à titre d'exemple."
+      }
+    ],
+    "pole-produit-ia": [
+      {
+        "id": "S14",
+        "difference": "Le pôle Produit et IA réutilise le gabarit Main avec la file filtrée sur son pôle : seules les lignes du pôle apparaissent, et les onglets « File », « Rechercher », « Réglages du pôle » remplacent le contenu de la maquette.",
+        "justification": "05_UI_UX_DESIGN § 3 : chaque pôle est une vue filtrée du gabarit Main ; la maquette ne montre qu'un seul pôle à titre d'exemple."
+      }
+    ],
+    "pole-croissance": [
+      {
+        "id": "S15",
+        "difference": "Le pôle Croissance réutilise le gabarit Main avec la file filtrée sur son pôle : seules les lignes du pôle apparaissent, et les onglets « File », « Rechercher », « Réglages du pôle » remplacent le contenu de la maquette.",
+        "justification": "05_UI_UX_DESIGN § 3 : chaque pôle est une vue filtrée du gabarit Main ; la maquette ne montre qu'un seul pôle à titre d'exemple."
+      }
+    ],
+    "pole-technique": [
+      {
+        "id": "S16",
+        "difference": "Le pôle Technique réutilise le gabarit Main avec la file filtrée sur son pôle : seules les lignes du pôle apparaissent, et les onglets « File », « Rechercher », « Réglages du pôle » remplacent le contenu de la maquette.",
+        "justification": "05_UI_UX_DESIGN § 3 : chaque pôle est une vue filtrée du gabarit Main ; la maquette ne montre qu'un seul pôle à titre d'exemple."
+      }
+    ]
+  }
+}

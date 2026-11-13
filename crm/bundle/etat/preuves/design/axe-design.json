@@ -1,0 +1,80 @@
+{
+  "at": "2026-11-09T20:13:24.096Z",
+  "results": [
+    {
+      "name": "main",
+      "url": "/",
+      "violations": []
+    },
+    {
+      "name": "cas",
+      "url": "/cas/post_report/d1000000-0000-4000-8000-000000000002",
+      "violations": []
+    },
+    {
+      "name": "membre",
+      "url": "/membres/d1200000-0000-4000-8000-000000000001",
+      "violations": []
+    },
+    {
+      "name": "valider",
+      "url": "/valider/d1300000-0000-4000-8000-000000000001",
+      "violations": []
+    },
+    {
+      "name": "equipe",
+      "url": "/equipe",
+      "violations": []
+    },
+    {
+      "name": "journal",
+      "url": "/journal",
+      "violations": []
+    },
+    {
+      "name": "commande",
+      "url": "/commandes/d1400000-0000-4000-8000-000000000001",
+      "violations": []
+    },
+    {
+      "name": "catalogue",
+      "url": "/catalogue",
+      "violations": []
+    },
+    {
+      "name": "pole",
+      "url": "/pole/CONF",
+      "violations": []
+    },
+    {
+      "name": "technique",
+      "url": "/technique",
+      "violations": []
+    },
+    {
+      "name": "entrainement",
+      "url": "/entrainement",
+      "violations": []
+    },
+    {
+      "name": "connexion",
+      "url": "/connexion",
+      "violations": []
+    },
+    {
+      "name": "mfa",
+      "url": "/double-authentification",
+      "violations": []
+    },
+    {
+      "name": "acces-refuse",
+      "url": "/acces-refuse",
+      "violations": []
+    },
+    {
+      "name": "sos-mobile",
+      "url": "/sos/...",
+      "violations": []
+    }
+  ]
+}
