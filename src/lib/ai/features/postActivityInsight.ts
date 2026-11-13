@@ -19,7 +19,7 @@ export { ACTIVITY_INSIGHT_SYSTEM_PROMPT };
 
 export async function fallbackResponse(_req: AIRequest): Promise<AIResponse> {
   return {
-    text: '',
+    text: 'Synthèse IA indisponible — vue déterministe conservée.',
     model: 'fallback-deterministe',
     degraded: true,
     cached: false,

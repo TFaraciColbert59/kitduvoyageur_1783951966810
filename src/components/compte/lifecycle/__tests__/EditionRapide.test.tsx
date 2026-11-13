@@ -21,7 +21,7 @@ function pendingRecord() {
 describe('A02 — édition rapide après synchronisation', () => {
   it('envoie uniquement les champs modifiés du contrat', async () => {
     const record = pendingRecord();
-    const onSubmit = vi.fn(async () => ({ ok: true as const }));
+    const onSubmit = vi.fn(async (_arg: unknown) => ({ ok: true as const }));
     render(<EditionRapide record={record} onSubmit={onSubmit} onDismiss={vi.fn()} />);
 
     const title = screen.getByLabelText('Titre de la séance') as HTMLInputElement;
@@ -40,7 +40,7 @@ describe('A02 — édition rapide après synchronisation', () => {
 
   it('refuse un titre vide sans appeler le serveur', async () => {
     const record = pendingRecord();
-    const onSubmit = vi.fn(async () => ({ ok: true as const }));
+    const onSubmit = vi.fn(async (_arg: unknown) => ({ ok: true as const }));
     render(<EditionRapide record={record} onSubmit={onSubmit} onDismiss={vi.fn()} />);
 
     fireEvent.change(screen.getByLabelText('Titre de la séance'), {

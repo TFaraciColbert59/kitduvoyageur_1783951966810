@@ -32,6 +32,7 @@ const FILE_DEFAULTS = {
   [`${C}CompasPrimitives.tsx`]: { etape: 'commun', ecran: 'primitives' },
   [`${C}CompasRisks.tsx`]: { etape: 'verdict', ecran: 'verdict › risques' },
   [`${C}CompasRuler.tsx`]: { etape: 'ou', ecran: 'tiroir ou › durée' },
+  [`${C}RouteEditor.tsx`]: { etape: 'ou', ecran: 'tiroir ou › éditeur de tracé' },
   [`${C}CompasScreen.tsx`]: { etape: 'commun', ecran: 'écran du Compas' },
   [`${C}CompasSheet.tsx`]: { etape: 'commun', ecran: 'tiroir (poignée, en-tête)' },
   [`${C}CompasStart.tsx`]: { etape: 'depart', ecran: 'Compas vide' },

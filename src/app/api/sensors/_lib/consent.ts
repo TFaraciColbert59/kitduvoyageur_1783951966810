@@ -172,8 +172,8 @@ export const consentMutationSchema = z.discriminatedUnion('action', [
   }),
   z.object({
     action: z.literal('replace'),
-    state: healthConsentStateSchema,
     ...mutationBase,
+    state: healthConsentStateSchema,
   }),
 ]);
 

@@ -18,6 +18,8 @@ const ALL_SAME = [
   'auth.confirmationBodySuffix',
   'compas.activities.bikepacking',
   'compas.activities.bushcraft',
+  'compas.routeEditor.gravel',
+  'compas.routeEditor.enduro',
 ] as const;
 
 export const COMPAS_SAME_AS_FR: Record<NewLocale, readonly string[]> = {
@@ -109,6 +111,9 @@ export const COMPAS_SAME_AS_EN: Record<NewLocale, readonly string[]> = {
     'compas.flowTabs.equipe',
     'compas.flowTabs.etats',
     'compas.engine.scale.expedition',
+    'compas.routeEditor.mtb',
+    'compas.routeEditor.start',
+    'compas.routeEditor.version',
   ],
   it: [
     ...ALL_SAME,
@@ -130,5 +135,6 @@ export const COMPAS_SAME_AS_EN: Record<NewLocale, readonly string[]> = {
     'compas.screen.prepBudget',
     'compas.cards.pct',
     'compas.server.stays.partner',
+    'compas.routeEditor.mtb',
   ],
 };

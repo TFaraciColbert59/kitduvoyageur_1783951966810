@@ -9,6 +9,7 @@ import {
   mapProgressionGoalRows,
   type ProgressionGoalRow,
 } from '../progression/goals';
+import { readTravellerTimeZone } from '@/features/compas/server/traveller';
 
 /**
  * Mapping pur des données Supabase vers les formes attendues par le runtime
@@ -1361,17 +1362,7 @@ async function readProfileTimeZone(
   supabase: SupabaseLike,
   userId: string
 ): Promise<string | null> {
-  try {
-    const { data } = await supabase
-      .from('user_traveller')
-      .select('time_zone')
-      .eq('user_id', userId)
-      .maybeSingle();
-    const value = (data as { time_zone?: string | null } | null)?.time_zone;
-    return typeof value === 'string' && value.trim() ? value.trim() : null;
-  } catch {
-    return null;
-  }
+  return readTravellerTimeZone(supabase as Parameters<typeof readTravellerTimeZone>[0], userId);
 }
 
 /**
@@ -1833,7 +1824,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
         .eq('requester_id', user.id)
         .eq('status', 'pending')
     ),
-    // Fuseau choisi par la personne (`user_traveller`, RLS propriétaire) :
+    // Fuseau choisi par la personne (RLS propriétaire) :
     // sert au découpage civil du calendrier et des périodes. Absent : l'UI
     // retombe sur le fuseau du navigateur, puis UTC, en le disant.
     readProfileTimeZone(supabase, user.id),

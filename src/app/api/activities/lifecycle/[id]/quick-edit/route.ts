@@ -32,7 +32,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   try {
     const service = createSupabaseLifecycleService(auth.supabase);
-    const outcome = await service.quickEdit(auth.user.id, id.data, body.data);
+    const outcome = await service.quickEdit(
+      auth.user.id,
+      id.data,
+      body.data as Parameters<typeof service.quickEdit>[2]
+    );
     if (outcome.ok === false) return rejected(outcome.code, outcome.error);
     return ok({ record: outcome.record });
   } catch (error) {

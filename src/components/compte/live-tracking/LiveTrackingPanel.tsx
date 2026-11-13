@@ -579,7 +579,7 @@ export function LiveTrackingPanel({
                     : notification.event === 'live_share_started'
                       ? 'Partage démarré'
                       : 'Partage arrêté'}{' '}
-                  · {formatDateTime(new Date(notification.sentAtMs).toISOString())}
+                  · {formatDate(new Date(notification.sentAtMs).toISOString())}
                 </li>
               ))}
           </ul>

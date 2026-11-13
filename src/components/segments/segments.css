@@ -227,7 +227,7 @@
 
 .lkdv-seg-card-wrap {
   border-radius: var(--lkv-radius-md);
-  transition: transform 160ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 160ms var(--ease-glass);
 }
 
 .lkdv-seg-card-wrap.is-selected {
@@ -240,7 +240,7 @@
   border: 1px solid var(--lkv-border-subtle);
   border-radius: var(--lkv-radius-md);
   background: var(--lkv-surface-paper);
-  transition: transform 160ms cubic-bezier(0.16, 1, 0.3, 1), border-color 160ms ease;
+  transition: transform 160ms var(--ease-glass), border-color 160ms ease;
 }
 
 .lkdv-seg-card:hover {

@@ -11,7 +11,7 @@ const noopRevert = vi.fn(async () => ({ ok: true as const }));
 describe('A02 — correction distance, dénivelé et pics GPS', () => {
   it('prévisualise une distance manuelle et transmet la valeur en mètres', async () => {
     const record = makeRecord();
-    const onCorrect = vi.fn(async () => ({ ok: true as const }));
+    const onCorrect = vi.fn(async (_arg: unknown) => ({ ok: true as const }));
     render(
       <CorrectionDistanceDenivele
         record={record}

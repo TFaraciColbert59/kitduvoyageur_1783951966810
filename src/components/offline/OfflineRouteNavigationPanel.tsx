@@ -55,7 +55,10 @@ function profileTotals(points: OfflineRouteNavigationData['elevationProfile']): 
   let ascentM = 0;
   let descentM = 0;
   for (let index = 1; index < points.length; index += 1) {
-    const delta = points[index].ele - points[index - 1].ele;
+    const currEle = points[index].ele;
+    const prevEle = points[index - 1].ele;
+    if (currEle === null || prevEle === null) continue;
+    const delta = currEle - prevEle;
     if (delta > 0) ascentM += delta;
     else descentM += Math.abs(delta);
   }

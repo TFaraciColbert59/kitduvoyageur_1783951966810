@@ -72,7 +72,10 @@ function renderShell(viewer: 'owner' | 'visitor', onOpenSettings?: () => void) {
       title="Vitrine"
       subtitle="Ta trace publique"
       icon={<span aria-hidden="true">◆</span>}
-      lenses={[{ id: 'stats', label: 'Stats' }]}
+      lenses={[
+        { id: 'stats', label: 'Stats' },
+        { id: 'traces', label: 'Traces' },
+      ]}
       activeLensIndex={0}
       onLensChange={() => {}}
       onOpenSettings={onOpenSettings}

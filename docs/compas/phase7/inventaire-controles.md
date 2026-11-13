@@ -3,13 +3,13 @@
 > Généré par `node scripts/compas/inventory-controls.mjs` — ne pas modifier à la main.
 > Source de vérité lisible par machine : `inventaire-controles.json`.
 
-**303 contrôles** dans 35 fichiers (plus 1 bouton(s) générique(s) de primitive, comptés à chaque usage).
+**320 contrôles** dans 36 fichiers (plus 1 bouton(s) générique(s) de primitive, comptés à chaque usage).
 
 | Étape | Contrôles |
 |---|---:|
 | Départ (Compas vide, choix du voyage) | 38 |
 | Commun (capsule, tiroirs, carte, affichage) | 50 |
-| Où | 66 |
+| Où | 83 |
 | Nous | 44 |
 | Résa | 22 |
 | Verdict | 13 |
@@ -89,16 +89,16 @@
 | Fermer l’encart | bouton | carte | `src/features/compas/components/CompasMap.tsx:265` |
 | Page précédente | bouton · désactivé parfois | primitives | `src/features/compas/components/CompasPrimitives.tsx:90` |
 | Page suivante | bouton · désactivé parfois | primitives | `src/features/compas/components/CompasPrimitives.tsx:101` |
-| Étapes du Compas | geste (glisser) | écran du Compas | `src/features/compas/components/CompasScreen.tsx:906` |
-| … | bouton | écran du Compas | `src/features/compas/components/CompasScreen.tsx:978` |
-| Affichage : plein soleil et transparence du verre | bouton | écran du Compas | `src/features/compas/components/CompasScreen.tsx:986` |
-| Réduire la carte | bouton | écran du Compas | `src/features/compas/components/CompasScreen.tsx:1006` |
-| Mode plein soleil | interrupteur | écran du Compas | `src/features/compas/components/CompasScreen.tsx:1070` |
-| Transparence du verreTransparentOpaque | curseur · désactivé parfois | écran du Compas | `src/features/compas/components/CompasScreen.tsx:1081` |
-| Durée de « Annuler » et des erreurs | liste | écran du Compas | `src/features/compas/components/CompasScreen.tsx:1096` |
-| voir la version hors ligne | lien | écran du Compas | `src/features/compas/components/CompasScreen.tsx:1112` |
-| … | zone cliquable | écran du Compas | `src/features/compas/components/CompasScreen.tsx:1168` |
-| Annuler | bouton · désactivé parfois | écran du Compas | `src/features/compas/components/CompasScreen.tsx:1191` |
+| Étapes du Compas | geste (glisser) | écran du Compas | `src/features/compas/components/CompasScreen.tsx:191` |
+| … | bouton | écran du Compas | `src/features/compas/components/CompasScreen.tsx:263` |
+| Affichage : plein soleil et transparence du verre | bouton | écran du Compas | `src/features/compas/components/CompasScreen.tsx:271` |
+| Réduire la carte | bouton | écran du Compas | `src/features/compas/components/CompasScreen.tsx:291` |
+| Mode plein soleil | interrupteur | écran du Compas | `src/features/compas/components/CompasScreen.tsx:355` |
+| Transparence du verreTransparentOpaque | curseur · désactivé parfois | écran du Compas | `src/features/compas/components/CompasScreen.tsx:366` |
+| Durée de « Annuler » et des erreurs | liste | écran du Compas | `src/features/compas/components/CompasScreen.tsx:381` |
+| voir la version hors ligne | lien | écran du Compas | `src/features/compas/components/CompasScreen.tsx:397` |
+| … | zone cliquable | écran du Compas | `src/features/compas/components/CompasScreen.tsx:453` |
+| Annuler | bouton · désactivé parfois | écran du Compas | `src/features/compas/components/CompasScreen.tsx:476` |
 | Fermer le tiroir | bouton | tiroir (poignée, en-tête) | `src/features/compas/components/CompasSheet.tsx:90` |
 | Réduire le tiroir | bouton | tiroir (poignée, en-tête) | `src/features/compas/components/CompasSheet.tsx:106` |
 | Réduire le tiroir | geste (glisser) | tiroir (poignée, en-tête) | `src/features/compas/components/CompasSheet.tsx:106` |
@@ -113,7 +113,7 @@
 | Garder mon voyage | lien | note d’essai | `src/features/compas/components/TrialNote.tsx:16` |
 | …… | bouton | carte | `src/features/hub/components/mobile/HubGlobeMap.tsx:263` |
 
-## Où — 66
+## Où — 83
 
 | Nom accessible | Type | Écran | Source |
 |---|---|---|---|
@@ -121,52 +121,53 @@
 | Effacer le départ | bouton · désactivé parfois | carte où | `src/features/compas/components/CompasCards.tsx:450` |
 | Annuler la préparation | bouton · désactivé parfois | carte où | `src/features/compas/components/CompasCards.tsx:492` |
 | Tout préparer pour moi | bouton · désactivé parfois | carte où | `src/features/compas/components/CompasCards.tsx:508` |
-| Randonnée | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:141` |
-| Trek | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:141` |
-| Trail | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:141` |
-| Course à pied | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:141` |
-| Bivouac | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:141` |
-| Vélo | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:141` |
-| Alpinisme | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:141` |
-| Escalade | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:141` |
-| Ski | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:141` |
-| Eau | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:141` |
-| Road trip | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:141` |
-| Van | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:141` |
-| Culturel | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:141` |
-| City trip | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:141` |
-| Plage | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:141` |
-| Bushcraft | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:141` |
-| Mixte | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:141` |
-| Chercher un parcours | champ | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:318` |
-| Chercher | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:326` |
-| … | bouton | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:338` |
-| … | bouton | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:349` |
-| … | lien | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:454` |
-| ……fait ×… | bouton | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:470` |
-| Un jour de moins | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:573` |
-| Un jour de plus | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:583` |
-| Retour | bouton | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:596` |
-| Choisir ce parcours | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:601` |
-| Départ | champ | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:738` |
-| Unité de durée | liste | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:749` |
-| Nombre de jours | champ | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:758` |
-| Nombre d’heures | champ | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:772` |
-| Enregistrer | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:797` |
-| J… | bouton | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:868` |
-| … | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:908` |
-| [button] | onglet | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:1144` |
-| … | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:1162` |
-| Voir le groupe | bouton | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:1209` |
-| … | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:1287` |
-| … | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:1315` |
-| Sans voiture | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:1341` |
-| Libre | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:1365` |
-| Sans limite | champ · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:1394` |
-| Retirer … | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:1440` |
-| … | bouton | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:1461` |
-| Ajouter : … | champ | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:1477` |
-| Ajouter à … | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:1484` |
+| Randonnée | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:142` |
+| Trek | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:142` |
+| Trail | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:142` |
+| Course à pied | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:142` |
+| Bivouac | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:142` |
+| Vélo | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:142` |
+| Alpinisme | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:142` |
+| Escalade | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:142` |
+| Ski | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:142` |
+| Eau | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:142` |
+| Road trip | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:142` |
+| Van | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:142` |
+| Culturel | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:142` |
+| City trip | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:142` |
+| Plage | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:142` |
+| Bushcraft | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:142` |
+| Mixte | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:142` |
+| Reprendre le tracé · révision …Calcul adapté au sport | bouton | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:338` |
+| Chercher un parcours | champ | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:359` |
+| Chercher | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:367` |
+| … | bouton | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:379` |
+| … | bouton | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:390` |
+| … | lien | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:495` |
+| ……fait ×… | bouton | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:511` |
+| Un jour de moins | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:614` |
+| Un jour de plus | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:624` |
+| Retour | bouton | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:637` |
+| Choisir ce parcours | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:642` |
+| Départ | champ | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:779` |
+| Unité de durée | liste | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:790` |
+| Nombre de jours | champ | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:799` |
+| Nombre d’heures | champ | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:813` |
+| Enregistrer | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:838` |
+| J… | bouton | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:909` |
+| … | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:949` |
+| [button] | onglet | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:1185` |
+| … | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:1203` |
+| Voir le groupe | bouton | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:1250` |
+| … | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:1328` |
+| … | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:1356` |
+| Sans voiture | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:1382` |
+| Libre | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:1406` |
+| Sans limite | champ · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:1435` |
+| Retirer … | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:1481` |
+| … | bouton | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:1502` |
+| Ajouter : … | champ | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:1518` |
+| Ajouter à … | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:1525` |
 | Voir mon aventure | bouton | préparation | `src/features/compas/components/CompasPrep.tsx:109` |
 | Préciser ma demande | bouton | préparation | `src/features/compas/components/CompasPrep.tsx:116` |
 | Reprendre | bouton | préparation | `src/features/compas/components/CompasPrep.tsx:119` |
@@ -175,7 +176,7 @@
 | Appliquer : … | bouton · désactivé parfois | tiroir ou › durée | `src/features/compas/components/CompasRuler.tsx:145` |
 | Durée de la sortie | zone cliquable | tiroir ou › durée | `src/features/compas/components/CompasRuler.tsx:163` |
 | Durée de la sortie | geste (glisser) | tiroir ou › durée | `src/features/compas/components/CompasRuler.tsx:163` |
-| Où | bouton | écran du Compas | `src/features/compas/components/CompasScreen.tsx:957` |
+| Où | bouton | écran du Compas | `src/features/compas/components/CompasScreen.tsx:242` |
 | Activité | onglet | tiroir ou › Activité | `src/features/compas/components/CompasSheets.tsx:1141` |
 | Parcours | onglet | tiroir ou › Parcours | `src/features/compas/components/CompasSheets.tsx:1141` |
 | Quand | onglet | tiroir ou › Quand | `src/features/compas/components/CompasSheets.tsx:1141` |
@@ -183,6 +184,22 @@
 | Sac | onglet | tiroir ou › Sac | `src/features/compas/components/CompasSheets.tsx:1141` |
 | Sur place | onglet | tiroir ou › Sur place | `src/features/compas/components/CompasSheets.tsx:1141` |
 | Tout (…) | onglet | tiroir où › sur place | `src/features/compas/components/CompasSheets.tsx:3313` |
+| … | bouton · désactivé parfois | tiroir ou › éditeur de tracé | `src/features/compas/components/RouteEditor.tsx:735` |
+| Annuler | bouton · désactivé parfois | tiroir ou › éditeur de tracé | `src/features/compas/components/RouteEditor.tsx:780` |
+| Rétablir | bouton · désactivé parfois | tiroir ou › éditeur de tracé | `src/features/compas/components/RouteEditor.tsx:789` |
+| Recalculer | bouton · désactivé parfois | tiroir ou › éditeur de tracé | `src/features/compas/components/RouteEditor.tsx:798` |
+| Point …1… | bouton | tiroir ou › éditeur de tracé | `src/features/compas/components/RouteEditor.tsx:826` |
+| Point …1 → point …2Manuel hors réseau | bouton | tiroir ou › éditeur de tracé | `src/features/compas/components/RouteEditor.tsx:859` |
+| Modifier le tracé manuel | bouton · désactivé parfois | tiroir ou › éditeur de tracé | `src/features/compas/components/RouteEditor.tsx:876` |
+| Annuler le tracé | bouton | tiroir ou › éditeur de tracé | `src/features/compas/components/RouteEditor.tsx:914` |
+| Terminer le tracé manuel | bouton · désactivé parfois | tiroir ou › éditeur de tracé | `src/features/compas/components/RouteEditor.tsx:917` |
+| Revenir au calcul | bouton · désactivé parfois | tiroir ou › éditeur de tracé | `src/features/compas/components/RouteEditor.tsx:927` |
+| Ajouter un point | bouton · désactivé parfois | tiroir ou › éditeur de tracé | `src/features/compas/components/RouteEditor.tsx:940` |
+| Supprimer ce point | bouton · désactivé parfois | tiroir ou › éditeur de tracé | `src/features/compas/components/RouteEditor.tsx:950` |
+| Retour | bouton | tiroir ou › éditeur de tracé | `src/features/compas/components/RouteEditor.tsx:975` |
+| Enregistrer le tracé | bouton · désactivé parfois | tiroir ou › éditeur de tracé | `src/features/compas/components/RouteEditor.tsx:979` |
+| Continuer l’édition | bouton | tiroir ou › éditeur de tracé | `src/features/compas/components/RouteEditor.tsx:1007` |
+| Abandonner | bouton | tiroir ou › éditeur de tracé | `src/features/compas/components/RouteEditor.tsx:1014` |
 
 ## Nous — 44
 
@@ -197,7 +214,7 @@
 | Si tu pars à (heure de départ de chaque jour) | champ | tiroir nous › passage | `src/features/compas/components/CompasPassage.tsx:101` |
 | Enregistrer cette heure | bouton · désactivé parfois | tiroir nous › passage | `src/features/compas/components/CompasPassage.tsx:122` |
 | Effacer l’heure enregistrée (…) | bouton · désactivé parfois | tiroir nous › passage | `src/features/compas/components/CompasPassage.tsx:132` |
-| Nous | bouton | écran du Compas | `src/features/compas/components/CompasScreen.tsx:957` |
+| Nous | bouton | écran du Compas | `src/features/compas/components/CompasScreen.tsx:242` |
 | Équipe | onglet | tiroir nous › Équipe | `src/features/compas/components/CompasSheets.tsx:1141` |
 | Qui | onglet | tiroir nous › Qui | `src/features/compas/components/CompasSheets.tsx:1141` |
 | Budget | onglet | tiroir nous › Budget | `src/features/compas/components/CompasSheets.tsx:1141` |
@@ -239,7 +256,7 @@
 |---|---|---|---|
 | … | bouton · désactivé parfois | carte résa | `src/features/compas/components/CompasCards.tsx:732` |
 | Jour …… | bouton | carte résa | `src/features/compas/components/CompasCards.tsx:759` |
-| Résa | bouton | écran du Compas | `src/features/compas/components/CompasScreen.tsx:957` |
+| Résa | bouton | écran du Compas | `src/features/compas/components/CompasScreen.tsx:242` |
 | Nuits | onglet | tiroir resa › Nuits | `src/features/compas/components/CompasSheets.tsx:1141` |
 | Réservations | onglet | tiroir resa › Réservations | `src/features/compas/components/CompasSheets.tsx:1141` |
 | Offres | onglet | tiroir resa › Offres | `src/features/compas/components/CompasSheets.tsx:1141` |
@@ -265,7 +282,7 @@
 | Nom accessible | Type | Écran | Source |
 |---|---|---|---|
 | … autre signal | bouton | carte verdict | `src/features/compas/components/CompasCards.tsx:942` |
-| Verdict | bouton | écran du Compas | `src/features/compas/components/CompasScreen.tsx:957` |
+| Verdict | bouton | écran du Compas | `src/features/compas/components/CompasScreen.tsx:242` |
 | Risques | onglet | tiroir verdict › Risques | `src/features/compas/components/CompasSheets.tsx:1141` |
 | Météo | onglet | tiroir verdict › Météo | `src/features/compas/components/CompasSheets.tsx:1141` |
 | Veille | onglet | tiroir verdict › Veille | `src/features/compas/components/CompasSheets.tsx:1141` |
@@ -294,7 +311,7 @@
 | … | bouton | carte kit | `src/features/compas/components/CompasCards.tsx:1103` |
 | Réessayer | bouton | fiche objet › historique | `src/features/compas/components/CompasItemHistory.tsx:81` |
 | Voir mes commandes | lien | fiche objet › historique | `src/features/compas/components/CompasItemHistory.tsx:118` |
-| Kit | bouton | écran du Compas | `src/features/compas/components/CompasScreen.tsx:957` |
+| Kit | bouton | écran du Compas | `src/features/compas/components/CompasScreen.tsx:242` |
 | Fiche | onglet | fiche objet | `src/features/compas/components/CompasSheets.tsx:198` |
 | Historique | onglet | fiche objet | `src/features/compas/components/CompasSheets.tsx:199` |
 | Déballer | bouton | fiche objet | `src/features/compas/components/CompasSheets.tsx:283` |

@@ -315,7 +315,7 @@
   border: 1px solid var(--life-line-strong);
   background: var(--life-panel);
   box-shadow: var(--life-shadow);
-  animation: lkv-life-rise 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  animation: lkv-life-rise 220ms var(--ease-glass);
   overflow: hidden;
 }
 

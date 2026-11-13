@@ -239,9 +239,9 @@ describe('explorer-v2 · tracé de bout en bout', () => {
     await waitFor(() => expect(coordinates()).toHaveLength(2));
 
     const [before, after] = coordinates();
-    // Les fixes stationnaires 15..25 s sont encore dessinés avant que la
-    // temporisation de 20 s ne déclenche la pause au fix de 30 s.
-    expect(before).toHaveLength(6);
+    // Les fixes stationnaires identiques 15..25 s sont dédupliqués sur la polyligne
+    // avant que la temporisation de 20 s ne déclenche la pause au fix de 30 s.
+    expect(before).toHaveLength(3);
     expect(before?.[0]?.[1]).toBeCloseTo(latFor(0), 6);
     expect(before?.[before.length - 1]?.[1]).toBeCloseTo(latFor(10), 6);
     expect(after).toHaveLength(2);

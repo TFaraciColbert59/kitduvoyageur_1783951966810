@@ -295,3 +295,5 @@ export interface PersonalHeatmapLayer {
   activityCount: number;
   geojson: HeatmapGeoJsonCollection<Omit<PersonalHeatmapCell, 'cellBounds'>>;
 }
+
+export type { PersonalHeatmapComparison } from './personalHeatmap';

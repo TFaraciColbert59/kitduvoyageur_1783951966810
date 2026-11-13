@@ -75,7 +75,7 @@ export interface ProgressionDrawerProps {
   sessions?: ProgressionSession[];
   /** Objectifs privés S2.19, lus depuis le bootstrap authentifié. */
   goals?: ProgressionGoal[];
-  /** Fuseau du profil voyageur (`user_traveller.time_zone`), ou null. */
+  /** Fuseau du profil voyageur (`time_zone`), ou null. */
   timeZone?: string | null;
   state?: 'loading' | 'error' | 'ready';
   onRetry?: () => void;
@@ -198,9 +198,7 @@ function openSession(id: string): void {
   };
   if (typeof runtime.__lkdvCompteAct === 'function') {
     runtime.__lkdvCompteAct('openProgressionOuting', id);
-    return;
   }
-  runtime.__lkdvCompteAct?.('openOutingDrawer', id);
 }
 
 function statusLabel(session: ProgressionSession): string {

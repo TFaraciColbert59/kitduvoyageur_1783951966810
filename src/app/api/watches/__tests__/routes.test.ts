@@ -224,7 +224,7 @@ describe('D03 — routes API montres', () => {
         status: 401,
         headers: { 'content-type': 'application/json' },
       }) as never,
-    });
+    } as never);
     const response = await statusGET(
       new Request('http://localhost/api/watches/status'),
     );

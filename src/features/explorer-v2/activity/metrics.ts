@@ -244,7 +244,7 @@ function defaultSource(key: MetricKey): MetricSource {
 }
 
 function defaultQuality(key: MetricKey, source: MetricSource): MetricQuality {
-  if (source === 'estimated') return 'estimated';
+  if ((source as string) === 'estimated') return 'estimated';
   if (source === 'derived' || key === 'pace') return 'derived';
   if (key === 'calories') return 'estimated';
   return 'measured';

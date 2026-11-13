@@ -92,7 +92,7 @@ export function PlanningDrawer({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="g1 relative flex max-h-[92dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-[28px] border border-[color:var(--glass-rim)] bg-[color:var(--lkv-surface-elevated)] shadow-[var(--elevation-3)] sm:max-h-[86dvh] sm:rounded-[28px]"
+        className="g1 relative flex max-h-[92dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-3xl border border-[color:var(--glass-rim)] bg-[color:var(--lkv-surface-elevated)] shadow-2xl sm:max-h-[86dvh] sm:rounded-3xl"
       >
         <header className="flex items-start gap-[var(--space-2)] border-b border-[color:var(--lkv-border-subtle)] px-[var(--space-4)] py-[var(--space-3)]">
           {onBack && (

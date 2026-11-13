@@ -201,7 +201,7 @@ export const compasStepsEn: StringRecord<typeof compasStepsFr> = {
     noGeometry: 'Route not geolocated: place at least two points.',
     notGiven: 'not given',
     legsLabel: 'Route legs',
-    leg: 'Point {from} → point {to}',
+    leg: 'Waypoint {from} → waypoint {to}',
     legRouted: 'Calculated',
     legManual: 'Manual off-network',
     traceManual: 'Draw by hand',

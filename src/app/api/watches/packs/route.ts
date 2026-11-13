@@ -44,10 +44,13 @@ export async function POST(request: Request) {
     );
   }
 
-  const isEnvelope = 'manifest' in parsed.data;
-  const manifest = isEnvelope ? parsed.data.manifest : parsed.data;
-  const totalChunks = isEnvelope
-    ? (parsed.data.totalChunks ?? Math.max(1, manifest.resources.length))
+  const envelope = parsed.data as {
+    manifest?: Parameters<typeof stageWatchPack>[1];
+    totalChunks?: number;
+  };
+  const manifest = envelope.manifest ?? (parsed.data as Parameters<typeof stageWatchPack>[1]);
+  const totalChunks = envelope.manifest
+    ? (envelope.totalChunks ?? Math.max(1, manifest.resources.length))
     : Math.max(1, manifest.resources.length);
 
   try {

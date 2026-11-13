@@ -11,7 +11,7 @@ const noopRestore = vi.fn(async () => ({ ok: true as const }));
 describe('A02 — recadrage et fractionnement avec aperçu', () => {
   it('affiche l’aperçu avant/après et applique les bornes exactes', async () => {
     const record = makeRecord();
-    const onApplyCrop = vi.fn(async () => ({ ok: true as const }));
+    const onApplyCrop = vi.fn(async (_arg: unknown) => ({ ok: true as const }));
     render(
       <RecadrageFractionnement
         record={record}
@@ -40,7 +40,7 @@ describe('A02 — recadrage et fractionnement avec aperçu', () => {
 
   it('fractionne avec aperçu des tronçons et titres facultatifs', async () => {
     const record = makeRecord();
-    const onApplySplit = vi.fn(async () => ({ ok: true as const }));
+    const onApplySplit = vi.fn(async (_arg: unknown) => ({ ok: true as const }));
     render(
       <RecadrageFractionnement
         record={record}

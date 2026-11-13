@@ -219,7 +219,7 @@ export function getWatchSession(userId: string, watchSessionId: string) {
 
 export function stageWatchPack(
   userId: string,
-  manifest: WatchOfflinePackManifestInput,
+  manifest: WatchOfflinePackManifest | WatchOfflinePackManifestInput,
   totalChunks = Math.max(1, manifest.resources.length),
   nowUtcMs = Date.now(),
 ): WatchPackListResult['packs'][number] {
@@ -235,7 +235,7 @@ export function stageWatchPack(
 
 export function ingestWatchPackChunk(
   userId: string,
-  chunk: WatchOfflinePackChunkInput,
+  chunk: WatchOfflinePackChunk | WatchOfflinePackChunkInput,
   nowUtcMs = Date.now(),
 ): { ack: { packId: string; routeRevision: number; ackedChunkIndex: number }; pack: ReturnType<typeof stageWatchPack> } {
   const state = getUserWatchState(userId);

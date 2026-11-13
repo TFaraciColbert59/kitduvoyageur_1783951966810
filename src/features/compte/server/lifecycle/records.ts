@@ -275,8 +275,8 @@ export async function loadSourceHistory(
       .limit(limit),
   ]);
 
-  const hikeRows = hikeRes.error ? [] : ((hikeRes.data ?? []) as HikeRow[]);
-  const activityRows = activityRes.error ? [] : ((activityRes.data ?? []) as ActivityRow[]);
+  const hikeRows = hikeRes.error ? [] : ((hikeRes.data ?? []) as unknown as HikeRow[]);
+  const activityRows = activityRes.error ? [] : ((activityRes.data ?? []) as unknown as ActivityRow[]);
   const activityIds = new Set(activityRows.map((row) => row.id));
 
   const routes = await loadRouteMap(supabase, [
@@ -304,7 +304,7 @@ async function loadHikeRecord(
     .eq('user_id', userId)
     .maybeSingle();
   if (error || !data) return null;
-  const row = data as HikeRow;
+  const row = data as unknown as HikeRow;
   const routes = await loadRouteMap(supabase, row.route_id !== null ? [row.route_id] : []);
   return normalizeHikeRow(row, routes, nowMs);
 }
@@ -322,7 +322,7 @@ async function loadExplorerRecord(
     .eq('user_id', userId)
     .maybeSingle();
   if (error || !data) return null;
-  const row = data as ActivityRow;
+  const row = data as unknown as ActivityRow;
   const [routes, points] = await Promise.all([
     loadRouteMap(supabase, row.route_id !== null ? [row.route_id] : []),
     loadActivityPoints(supabase, row.id),

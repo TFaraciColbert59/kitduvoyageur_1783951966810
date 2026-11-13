@@ -661,7 +661,7 @@ export function TraceImportDrawer() {
             </div>
 
             {mapPoints.length >= 2 ? (
-              <TraceMap points={mapPoints} className="lkdv-trace-import-map" />
+              <TraceMap segments={[mapPoints]} className="lkdv-trace-import-map" />
             ) : (
               <div className="lkdv-trace-import-no-map">
                 <MapPin size={16} aria-hidden="true" /> Aucune coordonnée GPS exploitable

@@ -70,7 +70,7 @@ function mockApi(overrides: Partial<LiveTrackingApi> = {}): LiveTrackingApi {
     addContact: vi.fn(async () => ({}) as never),
     setContactConsent: vi.fn(async () => ({}) as never),
     removeContact: vi.fn(async () => undefined),
-    fetchGuestView: vi.fn(async () => ({ ok: false, reason: 'invalid_token' as const })),
+    fetchGuestView: vi.fn(async () => ({ ok: false as const, reason: 'invalid_token' as const })),
     broadcast: vi.fn(async () => ({
       notifiedContactIds: [],
       skippedUnconsentedIds: [],

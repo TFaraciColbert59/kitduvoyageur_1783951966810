@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { Flag, Heart, MessageCircle, Send } from 'lucide-react';
+import { Flag, MessageCircle, Send } from 'lucide-react';
+import LikeIcon from '@/components/social-kit/LikeIcon';
 import AppImage from '@/components/ui/AppImage';
 import type { SportActivityCardVM } from '@/features/community/g01/activityProjection';
 import type { VideoPreferences } from '@/features/community/g01/videoPlayback';
@@ -131,7 +132,7 @@ export function SportActivityCard({
           aria-pressed={item.likedByMe}
           aria-label={item.canLike ? `Aimer la sortie (${item.likesCount})` : 'Like indisponible'}
         >
-          <Heart size={18} aria-hidden="true" fill={item.likedByMe ? 'currentColor' : 'none'} />
+          <LikeIcon size={18} active={item.likedByMe} />
           <span aria-hidden="true">{formatEngagementCount(item.likesCount)}</span>
         </button>
         <button

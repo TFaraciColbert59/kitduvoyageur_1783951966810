@@ -736,7 +736,7 @@ async function readImportSamples(
         .range(offset, offset + IMPORT_SAMPLE_PAGE_SIZE - 1);
 
       if (error) return null;
-      const batch = Array.isArray(data) ? (data as TraceImportSampleRow[]) : [];
+      const batch = Array.isArray(data) ? (data as unknown as TraceImportSampleRow[]) : [];
       for (const row of batch) {
         const sample = parseImportSample(row);
         if (sample) samples.push(sample);

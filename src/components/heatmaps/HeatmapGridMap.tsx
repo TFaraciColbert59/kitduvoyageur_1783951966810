@@ -183,7 +183,7 @@ export default function HeatmapGridMap({
           >
             <span
               aria-hidden="true"
-              className="h-2.5 w-2.5 rounded-[3px]"
+              className="h-2.5 w-2.5 rounded-sm"
               style={{ background: bandColor(band) }}
             />
             {bandLabel(band)}

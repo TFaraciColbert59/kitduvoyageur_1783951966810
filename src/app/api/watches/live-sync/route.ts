@@ -70,7 +70,7 @@ export async function POST(request: Request) {
             metrics: parsed.data.metrics,
             pois: parsed.data.pois,
             nextManeuver: parsed.data.nextManeuver,
-            nowUtcMs: parsed.data.nowUtcMs,
+            nowUtcMs: parsed.data.nowUtcMs ?? undefined,
           }),
         });
       case 'set_layout':
@@ -82,7 +82,7 @@ export async function POST(request: Request) {
             parsed.data.sessionId,
             parsed.data.toSource,
             parsed.data.lastAcceptedSeq,
-            parsed.data.nowUtcMs,
+            parsed.data.nowUtcMs ?? undefined,
           ),
         });
       case 'apply_frame': {

@@ -50,9 +50,14 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const { expectedRevision, ...patch } = body.data;
   try {
     const service = createSupabaseLifecycleService(auth.supabase);
-    const outcome = await service.editMetadata(auth.user.id, id.data, patch, {
-      expectedRevision,
-    });
+    const outcome = await service.editMetadata(
+      auth.user.id,
+      id.data,
+      patch as Parameters<typeof service.editMetadata>[2],
+      {
+        expectedRevision,
+      }
+    );
     if (outcome.ok === false) return rejected(outcome.code, outcome.error);
     return ok({
       record: outcome.record,

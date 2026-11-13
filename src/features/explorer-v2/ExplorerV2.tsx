@@ -1180,7 +1180,9 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
         const known =
           localSessionRef.current?.clientSessionId === activity.clientSessionId
             ? localSessionRef.current
-            : await loadSessionForSync(activity.clientSessionId);
+            : activity.clientSessionId
+              ? await loadSessionForSync(activity.clientSessionId)
+              : null;
         if (cancelled) return;
         const next = {
           ...recordFromActivity(activity, known),
@@ -1579,7 +1581,16 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
 
     let cancelled = false;
     const idempotencyKey = `activity.finish:${clientSessionId ?? sessionId}`;
-    const persistInQueue = async (savedState: NonNullable<typeof state.summarySaved>) => {
+    const persistInQueue = async (
+      savedState:
+        | 'pending'
+        | 'saved'
+        | 'failed'
+        | 'conflict'
+        | 'unauthenticated'
+        | 'already_finished'
+        | 'already_finished_without_summary'
+    ) => {
       await enqueue({
         key: idempotencyKey,
         kind: 'activity.finish',

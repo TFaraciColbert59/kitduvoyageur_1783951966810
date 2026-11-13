@@ -212,6 +212,9 @@
   "src/features/compas/components/CompasOuFlows.tsx::ActiviteFlow::button::ACTIVITY_ORDER:mixed": {
     "scenario": "@etape:ou retouches de l’aventure › chaque tuile d’activité devient l’activité de l’aventure ; « Randonnée » la rétablit"
   },
+  "src/features/compas/components/CompasOuFlows.tsx::ParcoursFlow::button::compas.routeEditor.reopen": {
+    "en_attente": "lot Où"
+  },
   "src/features/compas/components/CompasOuFlows.tsx::ParcoursFlow::input::compas.ouRoute.searchLabel": {
     "scenario": "@etape:ou lecture et navigation › « Parcours » : sources, recherche, fiche d’un parcours et retour"
   },
@@ -889,6 +892,54 @@
   },
   "src/features/compas/components/OfficialAlertTexts.tsx::OfficialAlertTexts::summary::anonyme": {
     "raison_non_testable": "N’existe que si une alerte officielle est en cours sur la zone."
+  },
+  "src/features/compas/components/RouteEditor.tsx::RouteEditor::button::cls:cp-pill": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/RouteEditor.tsx::RouteEditor::button::compas.routeEditor.undo": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/RouteEditor.tsx::RouteEditor::button::compas.routeEditor.redo": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/RouteEditor.tsx::RouteEditor::button::compas.routeEditor.recalc": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/RouteEditor.tsx::RouteEditor::button::compas.routeEditor.point": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/RouteEditor.tsx::RouteEditor::button::compas.routeEditor.leg": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/RouteEditor.tsx::RouteEditor::button::compas.routeEditor.editManual": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/RouteEditor.tsx::RouteEditor::button::compas.routeEditor.manualCancel": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/RouteEditor.tsx::RouteEditor::button::compas.routeEditor.manualDone": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/RouteEditor.tsx::RouteEditor::button::compas.routeEditor.manualRemove": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/RouteEditor.tsx::RouteEditor::button::compas.routeEditor.addPoint": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/RouteEditor.tsx::RouteEditor::button::compas.routeEditor.removePoint": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/RouteEditor.tsx::RouteEditor::button::compas.ouRoute.back": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/RouteEditor.tsx::RouteEditor::button::compas.routeEditor.save": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/RouteEditor.tsx::RouteEditor::button::compas.routeEditor.keepEditing": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/RouteEditor.tsx::RouteEditor::button::compas.routeEditor.discard": {
+    "en_attente": "lot Où"
   },
   "src/features/compas/components/TrialNote.tsx::TrialNote::a::compas.trial.keep": {
     "raison_non_testable": "Rendu seulement si NEXT_PUBLIC_KEEP_TRIAL=on ; éteint sur l’aperçu."

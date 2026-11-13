@@ -504,7 +504,7 @@
 .cp-route-leg__main {
   flex: 1 1 11rem;
   min-width: 0;
-  min-height: 44px;
+  min-height: 2.75rem;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -519,13 +519,13 @@
 }
 .cp-route-leg__action {
   flex: none;
-  min-height: 44px;
+  min-height: 2.75rem;
   margin-left: auto;
 }
 .cp-route-leg__state {
   display: inline-flex;
   align-items: center;
-  min-height: 24px;
+  min-height: 1.5rem;
   padding: 2px 8px;
   border-radius: 999px;
   font-size: 0.6875rem;
@@ -549,7 +549,7 @@
   background: var(--lkv-warning-subtle);
 }
 .cp-route-manual .cp-btn {
-  min-height: 44px;
+  min-height: 2.75rem;
 }
 .cp-pager {
   flex: none;

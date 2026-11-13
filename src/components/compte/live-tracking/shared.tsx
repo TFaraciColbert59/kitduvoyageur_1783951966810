@@ -16,7 +16,7 @@ export function PanelCard({
   return (
     <section
       aria-labelledby={labelledBy}
-      className={`g1 rounded-[22px] border border-[color:var(--glass-rim)] p-5 shadow-[var(--glass-shadow)] ${className}`}
+      className={`g1 rounded-2xl border border-[color:var(--glass-rim)] p-5 shadow-md ${className}`}
     >
       {children}
     </section>

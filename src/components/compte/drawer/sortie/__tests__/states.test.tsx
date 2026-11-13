@@ -21,6 +21,7 @@ function detail(overrides: Partial<OutingDetail> = {}): OutingDetail {
     endedAt: '2026-11-01T12:00:00Z',
     massif: null,
     routeName: null,
+    sport: null,
     km: 5,
     dplus: 600,
     maxAlt: 1800,
@@ -42,6 +43,7 @@ function detail(overrides: Partial<OutingDetail> = {}): OutingDetail {
     notes: '',
     weather: null,
     photos: [],
+    photosUnavailable: false,
     participants: [],
     gear: [],
     kit: null,
@@ -54,6 +56,10 @@ function detail(overrides: Partial<OutingDetail> = {}): OutingDetail {
     traceFullyMasked: false,
     traceError: null,
     canEdit: false,
+    provenance: null,
+    laps: null,
+    summary: null,
+    samples: null,
     ...overrides,
   };
 }

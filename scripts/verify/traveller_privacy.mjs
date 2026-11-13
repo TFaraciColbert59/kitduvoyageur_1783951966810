@@ -49,7 +49,11 @@ const CARD = 'src/components/identity/TravellerCard';
 const ENGINE = 'src/features/compas/engine/traveller';
 
 const TABLE_ALLOWED = new Set(['src/features/compas/server/traveller.ts', 'src/server/gdprExport.ts']);
-const READER_PAGES = new Set(['src/app/compas/page.tsx', 'src/app/compte/voyageur/page.tsx']);
+const READER_PAGES = new Set([
+  'src/app/compas/page.tsx',
+  'src/app/compte/voyageur/page.tsx',
+  'src/features/compte/data/accountBootstrap.ts',
+]);
 const CARD_ALLOWED = new Set([
   'src/app/compte/voyageur/page.tsx',
   'src/features/compas/components/CompasStart.tsx',

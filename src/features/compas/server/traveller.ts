@@ -51,6 +51,21 @@ export async function readTraveller(supabase: Reader, userId: string | null): Pr
   return (await readTravellerState(supabase, userId)).traveller;
 }
 
+/** Lit uniquement le fuseau horaire du profil voyageur (aucun champ personnel exposé). */
+export async function readTravellerTimeZone(supabase: Reader, userId: string): Promise<string | null> {
+  try {
+    const { data } = await (supabase as Supa)
+      .from('user_traveller')
+      .select('time_zone')
+      .eq('user_id', userId)
+      .maybeSingle();
+    const tz = (data as { time_zone?: unknown } | null)?.time_zone;
+    return typeof tz === 'string' && tz.trim().length > 0 ? tz.trim() : null;
+  } catch {
+    return null;
+  }
+}
+
 /** Remplace tout le profil de la personne ; le domicile est déjà retrouvé et arrondi. */
 export async function writeTraveller(
   supabase: Supa,

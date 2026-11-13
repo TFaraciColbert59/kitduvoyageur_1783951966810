@@ -67,8 +67,15 @@ const PREFERENCES = {
   revision: 1,
 };
 
-function authOk() {
-  return { ok: true as const, supabase: {}, user: { id: 'user-1' } };
+function authOk(): Awaited<ReturnType<typeof requireUser>> {
+  return {
+    ok: true as const,
+    supabase: {} as unknown as Extract<
+      Awaited<ReturnType<typeof requireUser>>,
+      { ok: true }
+    >['supabase'],
+    user: { id: 'user-1' },
+  };
 }
 
 beforeEach(() => {

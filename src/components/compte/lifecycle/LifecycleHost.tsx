@@ -358,7 +358,10 @@ export function LifecycleHost({ userId: _userId, api }: LifecycleHostProps) {
               busy={busy}
               onApplyCrop={async (bounds) => {
                 const outcome = await mutate(
-                  () => client.crop(record.id, bounds),
+                  async () => {
+                    const res = await client.crop(record.id, bounds);
+                    return { record: res.record ?? record };
+                  },
                   'Recadrage appliqué. La trace d’origine reste conservée.'
                 );
                 if (outcome.ok) closeSubDrawer();

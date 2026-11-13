@@ -22,6 +22,8 @@ import {
   type TraceImportSummaryPayload,
 } from './series';
 
+export type { TraceImportSamplePayload, TraceImportSummaryPayload };
+
 export type TraceImportSummaryValidation =
   | { ok: true; summary: TraceImportSummaryPayload | null }
   | { ok: false; message: string };
