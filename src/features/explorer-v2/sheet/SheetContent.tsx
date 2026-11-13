@@ -2,7 +2,8 @@
 
 import React from 'react';
 import { XpIcon } from '../ui/XpIcon';
-import { useNaturalSearch, geometryCenter } from '../data/hooks';
+import { ExplorerSearchError, useNaturalSearch, geometryCenter } from '../data/hooks';
+import { isSearchableViewport } from '../searchArea';
 import { AUTO_PAUSE_BY_SPORT } from '../activity/tracker';
 import {
   MILE_DISTANCE_M,
@@ -1563,12 +1564,30 @@ function DepartForm({ ctx }: { ctx: SheetContext }) {
 }
 
 function SearchTab({ ctx }: { ctx: SheetContext }) {
-  const [query, setQuery] = React.useState('');
-  const { data, isFetching } = useNaturalSearch(
+  // La demande vit dans le store : fermer le tiroir puis déplacer la carte ne
+  // doit pas perdre la recherche que « Rechercher dans cette zone » relance.
+  const query = ctx.state.searchQuery ?? '';
+  const requestedViewport = ctx.state.searchViewport ?? null;
+  const areaUnavailable = requestedViewport !== null && !isSearchableViewport(requestedViewport);
+  const { data, isFetching, isError, error, refetch } = useNaturalSearch(
     query,
     ctx.state.center[1],
     ctx.state.center[0],
+    requestedViewport,
   );
+  const patch = ctx.state.patch;
+  const mapViewport = ctx.mapViewport;
+
+  // Les résultats affichés correspondent à cette emprise. Une recherche
+  // explicite porte sa propre emprise (`data.zone`) ; une recherche autour du
+  // centre retient l'emprise visible au moment de la réponse.
+  React.useEffect(() => {
+    if (!data) return;
+    const reference = data.zone ?? mapViewport;
+    if (!reference) return;
+    patch({ searchReferenceViewport: reference });
+  }, [data, mapViewport, patch]);
+
   const results = React.useMemo(() => {
     const q = query.trim().toLowerCase();
     return {
@@ -1577,12 +1596,19 @@ function SearchTab({ ctx }: { ctx: SheetContext }) {
     };
   }, [ctx.countries, data, query]);
 
+  const searchError = error instanceof ExplorerSearchError ? error : null;
+  const zoneTooLarge = searchError?.reason === 'zone-too-large';
+  const unavailableWhileOffline = !ctx.state.online && !data;
+  const hasCenter =
+    Number.isFinite(ctx.state.center[1]) && Number.isFinite(ctx.state.center[0]);
+  const noResults = results.countries.length === 0 && results.pois.length === 0;
+
   return (
     <>
       <input
         className="xp-searchinput"
         value={query}
-        onChange={(event) => setQuery(event.target.value)}
+        onChange={(event) => patch({ searchQuery: event.target.value })}
         placeholder="Pays, sommet, refuge, eau…"
         aria-label="Rechercher un lieu"
         style={{
@@ -1600,10 +1626,56 @@ function SearchTab({ ctx }: { ctx: SheetContext }) {
           title="Cherche un lieu"
           hint="Tape deux lettres, ou une phrase : « un point d’eau à moins de 2 heures »."
         />
+      ) : areaUnavailable ? (
+        <XpEmpty
+          title="Zoome pour chercher dans cette zone"
+          hint="La recherche dans l’emprise visible demande une carte plus précise (zoom 12 minimum)."
+        />
+      ) : !hasCenter ? (
+        <XpEmpty
+          title="Recherche sans position"
+          hint="Déplace la carte pour choisir une zone, puis relance la recherche."
+        />
+      ) : unavailableWhileOffline ? (
+        <XpEmpty
+          title="Recherche indisponible hors ligne"
+          hint="La recherche interroge la base. Reviens en ligne pour la relancer ; les derniers résultats restent consultables."
+        />
       ) : isFetching ? (
         <XpEmpty title="Recherche…" hint="Analyse de la demande et interrogation de la base." />
-      ) : results.countries.length === 0 && results.pois.length === 0 ? (
-        <XpEmpty title="Aucun résultat" hint="Aucun pays ni repère ne correspond dans les données disponibles." />
+      ) : isError && !data ? (
+        <XpEmpty
+          title={
+            zoneTooLarge
+              ? 'Zoome pour chercher dans cette zone'
+              : !ctx.state.online
+                ? 'Recherche indisponible hors ligne'
+                : 'Recherche temporairement indisponible'
+          }
+          hint={
+            zoneTooLarge
+              ? 'L’emprise demandée est trop vaste pour être interrogée sans un déplacement plus précis.'
+              : 'La base n’a pas répondu. Aucun résultat vide n’est affiché à la place d’une panne.'
+          }
+          action={
+            zoneTooLarge || !ctx.state.online ? undefined : (
+              <button type="button" className="xp-secondary" onClick={() => void refetch()}>
+                Réessayer
+              </button>
+            )
+          }
+        />
+      ) : !data ? (
+        <XpEmpty title="Recherche…" hint="Préparation de la requête." />
+      ) : noResults ? (
+        <XpEmpty
+          title={requestedViewport ? 'Aucun résultat dans cette zone' : 'Aucun résultat'}
+          hint={
+            requestedViewport
+              ? 'Aucun pays ni repère ne correspond dans l’emprise visible. Déplace la carte ou corrige la demande.'
+              : 'Aucun pays ni repère ne correspond dans les données disponibles.'
+          }
+        />
       ) : (
         <>
           {results.countries.length > 0 ? (
@@ -1628,6 +1700,11 @@ function SearchTab({ ctx }: { ctx: SheetContext }) {
             <>
               <XpEyebrow>Filtres compris</XpEyebrow>
               <div className="xp-chiprow" aria-label="Filtres extraits de la demande">
+                {data.zone ? (
+                  <span className="xp-chip" aria-pressed="true">
+                    Emprise visible
+                  </span>
+                ) : null}
                 <span className="xp-chip" aria-pressed="true">
                   {data.filters.kinds.map((kind) => POI_LABEL[kind] ?? kind).join(' · ')}
                 </span>
@@ -1658,6 +1735,12 @@ function SearchTab({ ctx }: { ctx: SheetContext }) {
                 ))}
               </XpRows>
             </>
+          ) : null}
+          {data.truncated ? (
+            <XpEmpty
+              title="Une partie des résultats est affichée"
+              hint="Zoome pour affiner l’emprise et voir les repères suivants."
+            />
           ) : null}
         </>
       )}

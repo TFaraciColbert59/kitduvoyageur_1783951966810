@@ -950,6 +950,36 @@ body:has(.xp-root[data-theme]) .lkv-app-background {
   background-color: #17402C;
 }
 
+/* Action contextuelle après déplacement : relance la recherche déjà saisie
+   sur l'emprise visible. Elle se place au-dessus de la pilule du tiroir et
+   reste hors de la zone de la barre basse / du pouce. */
+.xp-search-area {
+  position: absolute;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 100px + var(--cookie-banner-h, 0px));
+  transform: translateX(-50%);
+  z-index: 10;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: var(--xp-bar);
+  -webkit-backdrop-filter: var(--xp-blur);
+  backdrop-filter: var(--xp-blur);
+  box-shadow: var(--xp-bar-shadow);
+  color: var(--xp-ink);
+  font-size: 12.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
+}
+.xp-search-area:active {
+  transform: translateX(-50%) scale(0.96);
+}
+
 /* ── 3.3 Synchronisation masquage bottom bar globale ───────────────────── */
 html[data-explorer-sheet-open='true'] .lkdv-floating-tabbar,
 body[data-explorer-sheet-open='true'] .lkdv-floating-tabbar,

@@ -115,6 +115,9 @@ const initialState: ExplorerState = {
   background: false,
   center: [2.35, 48.85],
   zoom: 1.6,
+  searchQuery: '',
+  searchViewport: null,
+  searchReferenceViewport: null,
   mapBaseStyle: 'relief',
   layerVisibility: {
     routes: true,

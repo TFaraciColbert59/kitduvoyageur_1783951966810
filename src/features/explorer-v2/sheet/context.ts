@@ -15,6 +15,7 @@ import type {
 } from '../data/hooks';
 import type { ExplorerStore } from '../state/store';
 import type { Sport, SportSelection } from '../state/types';
+import type { SearchViewport } from '../searchArea';
 import { SPORT_FAMILIES } from './sportSelection';
 
 export interface CountryEntry {
@@ -46,6 +47,8 @@ export interface SheetContext {
   trips: TripItem[];
   selectedPoi: PoiItem | null;
   me: { lat: number; lng: number } | null;
+  /** Emprise visible courante, pour référencer la dernière recherche. */
+  mapViewport: SearchViewport | null;
   /**
    * Démarrage avec compte à rebours (le parent décide de l'animation).
    * `selection` porte la variante jusqu’au démarrage ; `sport` reste

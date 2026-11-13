@@ -56,6 +56,11 @@ import {
   useTransientStart,
 } from './state/store';
 import { isSceneName, sceneEnabled, SCENES } from './state/scenes';
+import {
+  isSearchableViewport,
+  viewportMoved,
+  type SearchViewport,
+} from './searchArea';
 import type { GeoCollection } from './data/hooks';
 import {
   geometryCenter,
@@ -192,6 +197,14 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
   const [sheetOpen, setSheetOpen] = useState(Boolean(initialScene));
   const [sheetHeight, setSheetHeight] = useState(176);
   const [offlineQueue, setOfflineQueue] = useState(0);
+  // Emprise visible courante, tenue à part du store : mise à jour uniquement
+  // à la fin d'un geste, sans re-render pendant le déplacement de la carte.
+  const [mapViewport, setMapViewport] = useState<SearchViewport | null>(null);
+  const mapViewportRef = React.useRef<SearchViewport | null>(null);
+  const onMapViewportChange = useCallback((next: SearchViewport) => {
+    mapViewportRef.current = next;
+    setMapViewport(next);
+  }, []);
   // Séance restaurée : les points déjà acceptés rejouent les métriques du
   // tracker, sans en inventer aucun.
   const [restoredTracker, setRestoredTracker] = useState<RestoredTrackerState | null>(null);
@@ -1215,6 +1228,7 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
       trips: (tripsData ?? []) as TripItem[],
       selectedPoi,
       me,
+      mapViewport,
       // Brouillon local : aucune couche ne peut perdre la variante. Une trace
       // de démonstration est retirée ici avant d'armer le compte à rebours.
       onStartSport: requestStartSafe,
@@ -1222,7 +1236,7 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
       onMarkLap: markLap,
       locale: 'fr-FR',
     }),
-    [state, countries, country, regionsGeo, regionGroups, place, pois, routes, weather, unitsForCountry, reportsData, carnetsData, tripsData, selectedPoi, me, requestStartSafe, onConfirmReport, markLap],
+    [state, countries, country, regionsGeo, regionGroups, place, pois, routes, weather, unitsForCountry, reportsData, carnetsData, tripsData, selectedPoi, me, mapViewport, requestStartSafe, onConfirmReport, markLap],
   );
 
   const model = useMemo(() => buildSheetModel(ctx), [ctx]);
@@ -1314,6 +1328,20 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
     },
     [state],
   );
+
+  /**
+   * Relance la recherche déjà saisie sur l'emprise visible. L'emprise est
+   * figée au moment du geste : un déplacement de carte pendant l'ouverture du
+   * tiroir ne change pas silencieusement le périmètre demandé.
+   */
+  const searchVisibleArea = useCallback(() => {
+    const current = mapViewportRef.current;
+    if (!current || !isSearchableViewport(current)) return;
+    haptic('sheet-open');
+    setSheetOpen(true);
+    state.patch({ searchViewport: current });
+    state.setSheet('search', 'full');
+  }, [state]);
 
   // Hauteur réelle du tiroir : aucun repère ne doit se dessiner dessous
   // (04_CARTE §1), y compris pendant un glissement.
@@ -1514,6 +1542,18 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
         ? 'Monde'
         : (country?.name ?? model.title);
 
+  // L'action n'est proposée que lorsque la carte est assez précise, qu'une
+  // demande existe déjà, que le réseau est là et que le tiroir est fermé.
+  // Elle disparaît dès que l'emprise visible est celle des derniers résultats.
+  const canSearchVisibleArea =
+    online &&
+    !sheetOpen &&
+    !activity &&
+    !pendingStart &&
+    (state.searchQuery ?? '').trim().length >= 2 &&
+    isSearchableViewport(mapViewport) &&
+    viewportMoved(mapViewport, state.searchReferenceViewport ?? null);
+
   return (
     <div
       className="xp-root"
@@ -1521,6 +1561,7 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
       data-level={state.level}
       data-scene={state.scene ?? ''}
       data-sheet-open={sheetOpen ? 'true' : 'false'}
+      data-search-area={canSearchVisibleArea ? 'ready' : 'hidden'}
       data-countries={countries.length}
       data-reduced-motion={reducedMotion ? 'true' : 'false'}
       data-units={unitsForCountry}
@@ -1548,6 +1589,7 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
         onPinClick={onPinClick}
         onMoveEnd={(center, zoom) => state.setCenter(center, zoom)}
         onBearingChange={onMapBearingChange}
+        onViewportChange={onMapViewportChange}
         sheetHeightPx={sheetHeight}
         cameraIntent={state.camera}
         longPressHandlers={longPress}
@@ -1569,6 +1611,9 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
         current={current}
         onSearch={() => {
           setSheetOpen(true);
+          // Recherche ouverte par la capsule : elle repart du centre courant,
+          // pas de la dernière emprise explicitement demandée.
+          state.patch({ searchViewport: null });
           state.setSheet('search', 'full');
         }}
         onBack={state.level > 0 ? state.goUp : undefined}
@@ -1730,6 +1775,18 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
             </button>
           )}
         </div>
+      ) : null}
+
+      {canSearchVisibleArea ? (
+        <button
+          type="button"
+          className="xp-search-area"
+          onClick={searchVisibleArea}
+          aria-label="Rechercher dans la zone visible"
+        >
+          <XpIcon name="search" size={15} />
+          <span>Rechercher dans cette zone</span>
+        </button>
       ) : null}
 
       {sheetOpen ? (

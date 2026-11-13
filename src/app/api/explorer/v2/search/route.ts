@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { rpc } from '@/lib/explorer-v2/pgrest';
+import {
+  isSearchableViewport,
+  viewportCenter,
+  type SearchViewport,
+} from '@/features/explorer-v2/searchArea';
 
 export const revalidate = 60;
 
@@ -8,6 +13,11 @@ const querySchema = z.object({
   q: z.string().min(2).max(120),
   lat: z.coerce.number().min(-90).max(90).optional(),
   lng: z.coerce.number().min(-180).max(180).optional(),
+  minLat: z.coerce.number().min(-90).max(90).optional(),
+  maxLat: z.coerce.number().min(-90).max(90).optional(),
+  minLng: z.coerce.number().min(-180).max(180).optional(),
+  maxLng: z.coerce.number().min(-180).max(180).optional(),
+  zoom: z.coerce.number().min(0).max(22).optional(),
 });
 
 /**
@@ -59,19 +69,71 @@ export async function GET(request: Request) {
     q: params.get('q'),
     lat: params.get('lat') ?? undefined,
     lng: params.get('lng') ?? undefined,
+    minLat: params.get('minLat') ?? undefined,
+    maxLat: params.get('maxLat') ?? undefined,
+    minLng: params.get('minLng') ?? undefined,
+    maxLng: params.get('maxLng') ?? undefined,
+    zoom: params.get('zoom') ?? undefined,
   });
   if (!parsed.success) return NextResponse.json({ error: 'requête invalide' }, { status: 400 });
 
+  const { lat, lng, minLat, maxLat, minLng, maxLng, zoom } = parsed.data;
+  const bboxProvided =
+    minLat !== undefined || maxLat !== undefined || minLng !== undefined || maxLng !== undefined;
+  if (
+    bboxProvided &&
+    (minLat === undefined || maxLat === undefined || minLng === undefined || maxLng === undefined)
+  ) {
+    return NextResponse.json(
+      { error: 'emprise incomplète', reason: 'invalid-bounds' },
+      { status: 400 },
+    );
+  }
+  const viewport: SearchViewport | null = bboxProvided
+    ? {
+        minLat: minLat as number,
+        maxLat: maxLat as number,
+        minLng: minLng as number,
+        maxLng: maxLng as number,
+        zoom: zoom ?? 0,
+      }
+    : null;
+  if (viewport && !(viewport.minLat < viewport.maxLat && viewport.minLng < viewport.maxLng)) {
+    return NextResponse.json(
+      { error: 'emprise invalide', reason: 'invalid-bounds' },
+      { status: 400 },
+    );
+  }
+  // Le client exige un zoom de ville et borne l'emprise à 2° de côté, plus
+  // strictement que la limite de 6° des RPC. Refuser explicitement évite de
+  // présenter une limite comme un résultat vide.
+  if (viewport && !isSearchableViewport(viewport)) {
+    return NextResponse.json(
+      { error: 'emprise trop vaste', reason: 'zone-too-large' },
+      { status: 422 },
+    );
+  }
+
   const filters = parseQuery(parsed.data.q);
-  const lat = parsed.data.lat;
-  const lng = parsed.data.lng;
+  const center = viewport
+    ? { lat: viewportCenter(viewport)[1], lng: viewportCenter(viewport)[0] }
+    : lat !== undefined && lng !== undefined
+      ? { lat, lng }
+      : null;
 
   try {
-    if (lat === undefined || lng === undefined) {
-      return NextResponse.json({ filters, results: [] });
+    if (!center) {
+      return NextResponse.json({ filters, results: [], zone: viewport, truncated: false });
     }
     const dLat = 0.09;
     const dLng = 0.14;
+    const searchWindow = viewport ?? {
+      minLat: center.lat - dLat,
+      maxLat: center.lat + dLat,
+      minLng: center.lng - dLng,
+      maxLng: center.lng + dLng,
+      zoom: parsed.data.zoom ?? 12,
+    };
     const pois = await rpc<
       Array<{
         id: string;
@@ -86,10 +148,10 @@ export async function GET(request: Request) {
     >(
       'explorer_pois',
       {
-        p_min_lat: lat - dLat,
-        p_min_lng: lng - dLng,
-        p_max_lat: lat + dLat,
-        p_max_lng: lng + dLng,
+        p_min_lat: searchWindow.minLat,
+        p_min_lng: searchWindow.minLng,
+        p_max_lat: searchWindow.maxLat,
+        p_max_lng: searchWindow.maxLng,
         p_kinds: filters.kinds,
         p_limit: 80,
       },
@@ -97,13 +159,14 @@ export async function GET(request: Request) {
     );
 
     const text = filters.text.toLowerCase();
-    const results = pois
+    const filtered = pois
       .map((poi) => ({
         ...poi,
-        distanceKm: haversine(lat, lng, poi.lat, poi.lon),
+        distanceKm: haversine(center.lat, center.lng, poi.lat, poi.lon),
       }))
       .filter((poi) => (filters.maxDistanceKm ? poi.distanceKm <= filters.maxDistanceKm : true))
-      .sort((a, b) => a.distanceKm - b.distanceKm)
+      .sort((a, b) => a.distanceKm - b.distanceKm);
+    const results = filtered
       .slice(0, 20)
       .map((poi) => ({
         ...poi,
@@ -111,7 +174,12 @@ export async function GET(request: Request) {
         matched: poi.name.toLowerCase().includes(text),
       }));
 
-    return NextResponse.json({ filters, results });
+    return NextResponse.json({
+      filters,
+      results,
+      zone: viewport,
+      truncated: pois.length >= 80 && filtered.length > 20,
+    });
   } catch (error) {
     console.error('[explorer-v2] search', error);
     return NextResponse.json({ error: 'indisponible' }, { status: 503 });

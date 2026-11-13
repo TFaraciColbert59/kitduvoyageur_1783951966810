@@ -3,6 +3,7 @@
  */
 
 import type { SummarySavedState } from '../activity/finishOutcome';
+import type { SearchViewport } from '../searchArea';
 
 export type Level = 0 | 1 | 2 | 3;
 
@@ -248,6 +249,18 @@ export interface ExplorerState {
   /** Centre courant de la carte, tenu à jour pour les requêtes de données. */
   center: [number, number];
   zoom: number;
+  /** Dernière demande saisie : conservée en fermant le tiroir pour pouvoir la relancer. */
+  searchQuery?: string;
+  /**
+   * Emprise explicitement demandée par « Rechercher dans cette zone ».
+   * `null` = recherche autour du centre courant, comportement historique.
+   */
+  searchViewport?: SearchViewport | null;
+  /**
+   * Emprise visible au moment où les résultats affichés ont été obtenus.
+   * Elle ne sert qu'à décider si la carte a bougé depuis cette recherche.
+   */
+  searchReferenceViewport?: SearchViewport | null;
   /** Fond de carte : relief 3D, satellite ou plan vectoriel. */
   mapBaseStyle?: 'relief' | 'satellite' | 'plan';
   /** Visibilité des calques de données. */
