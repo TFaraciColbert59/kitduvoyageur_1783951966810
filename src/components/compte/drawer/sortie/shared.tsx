@@ -128,25 +128,28 @@ export function metricDisplay(
 
 /**
  * Texte de partage : uniquement les métriques que le serveur a rendues
- * visibles. Une métrique masquée ne doit jamais être réintroduite par le
- * client au moment de partager.
+ * visibles À UN TIERS. Le propriétaire voit toutes ses métriques dans le
+ * drawer, mais son choix de partage (`shareMetricVisibility`) peut en masquer
+ * certaines : le texte ne doit jamais réintroduire une valeur masquée.
  */
 export function shareableOutingText(detail: OutingDetail): string {
   const parts = [detail.title];
+  const shareVisibility = detail.shareMetricVisibility ?? detail.metricVisibility;
+  const visible = (key: OutingMetricKey) => isOutingMetricVisible(shareVisibility, key);
   const distanceKm = detail.km;
   const elevationGainM = detail.dplus;
   const maxAltitudeM = detail.maxAlt;
   const durationS = detail.durationS;
-  if (outingMetricVisible(detail, 'distance') && isFiniteNumber(distanceKm)) {
+  if (visible('distance') && isFiniteNumber(distanceKm)) {
     parts.push(`${formatNumber(distanceKm)} km`);
   }
-  if (outingMetricVisible(detail, 'elevationGain') && isFiniteNumber(elevationGainM)) {
+  if (visible('elevationGain') && isFiniteNumber(elevationGainM)) {
     parts.push(`+${formatNumber(elevationGainM)} m`);
   }
-  if (outingMetricVisible(detail, 'maxAltitude') && isFiniteNumber(maxAltitudeM)) {
+  if (visible('maxAltitude') && isFiniteNumber(maxAltitudeM)) {
     parts.push(`${formatNumber(maxAltitudeM)} m alt. max`);
   }
-  if (outingMetricVisible(detail, 'duration') && isFiniteNumber(durationS)) {
+  if (visible('duration') && isFiniteNumber(durationS)) {
     parts.push(formatDuration(durationS));
   }
   return parts.join(' · ');

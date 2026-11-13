@@ -8,6 +8,7 @@ import {
   resolveTraceMasks,
   type TraceViewer,
 } from '@/features/compte/server/tracePrivacy';
+import { SHARED_SUMMARY_METRICS } from '@/features/compte/domain/metricVisibility';
 import type {
   BuildCarnetDetailInput,
   CarnetEtapeDay,
@@ -184,16 +185,31 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
   const distanceKm = toNumber(statsSession?.distance_km) ?? toNumber(carnet.distance_km);
   const elevationM = toNumber(statsSession?.elevation_gain_m) ?? toNumber(carnet.denivele_m);
   const rawSessions = sessions.filter(isRawSession);
+  /*
+   * Une sortie partageable mais non brute ne fournit que ses métadonnées
+   * agrégées. La politique par métrique décide lesquelles : sans elle, le socle
+   * agrégé par défaut s'applique, jamais une valeur supplémentaire. Retirer
+   * `started_at` avec la durée empêche de recalculer celle-ci ou de replacer la
+   * sortie dans un jour par simple lecture.
+   */
   const metadataOnlySessions = sessions
     .filter(
       (session) =>
         !isRawSession(session) && isShareableTraceVisibility(session.visibility),
     )
-    .map((session) => ({
-      ...session,
-      positions_geojson: null,
-      positions_timed: null,
-    }));
+    .map((session) => {
+      const visibility =
+        input.metricVisibilities?.[session.id] ?? SHARED_SUMMARY_METRICS;
+      return {
+        ...session,
+        distance_km: visibility.distance ? session.distance_km : null,
+        elevation_gain_m: visibility.elevationGain ? session.elevation_gain_m : null,
+        duration_seconds: visibility.duration ? session.duration_seconds : null,
+        started_at: visibility.duration ? session.started_at : null,
+        positions_geojson: null,
+        positions_timed: null,
+      };
+    });
   const daySessions = [...rawSessions, ...metadataOnlySessions];
   /*
    * Le profil construit depuis `positions_timed` contient les coordonnées

@@ -1,4 +1,5 @@
 import type { TraceProjectionError } from '@/features/compte/domain/traceProjection';
+import type { OutingMetricVisibility } from '@/features/compte/domain/metricVisibility';
 import type { TraceViewer } from '@/features/compte/server/tracePrivacy';
 
 /** Contrat de la fiche carnet. Une valeur absente est `null`, jamais inventée. */
@@ -495,6 +496,14 @@ export interface BuildCarnetDetailInput {
    * la fournit toujours après vérification par sortie (F8).
    */
   rawSessionIds?: string[];
+  /**
+   * Politique de visibilité par métrique, résolue par `getCarnetDetail` pour
+   * chaque sortie du carnet. Une sortie absente de la map retombe sur le socle
+   * agrégé par défaut, jamais sur une autorisation inventée. Sert à retirer
+   * distance, dénivelé, durée et horodatage des sorties non brutes avant
+   * `buildDays`.
+   */
+  metricVisibilities?: Record<string, OutingMetricVisibility>;
   /**
    * Trace réelle à dessiner, choisie parmi toutes les sorties du carnet
    * (`pickCarnetTrace`). Absente, on retombe sur la trace de `hikeSession`.

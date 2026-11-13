@@ -8,6 +8,10 @@ import {
   isShareableTraceVisibility,
   mostRestrictiveTraceVisibility,
 } from '@/features/compte/server/tracePrivacy';
+import {
+  resolveOutingMetricVisibility,
+  type OutingMetricVisibility,
+} from '@/features/compte/domain/metricVisibility';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import type {
   AuthorRow,
@@ -296,18 +300,32 @@ export async function getCarnetDetail(id: string) {
   /* Cette lecture dépend des identifiants de sorties : elle ne peut pas partir
      dans le même `Promise.all`. Un refus RLS (rôle anonyme sans le `EXECUTE` de
      `can_view_hike_session`) rend `data: null` : on lit `[]`, sans erreur. */
-  const sessionParticipantsResult =
+  const [sessionParticipantsResult, metricPolicyResult] = await Promise.all([
     sessionIds.length > 0
-      ? await supabase
+      ? supabase
           .from('hike_session_participants')
           .select('session_id, user_id, role, created_at')
           .in('session_id', sessionIds)
-      : { data: [] as SessionParticipantRow[] };
+      : Promise.resolve({ data: [] as SessionParticipantRow[] }),
+    sessionIds.length > 0
+      ? sessionClient
+          .from('outing_share_metrics')
+          .select('session_id, visibility')
+          .in('session_id', sessionIds)
+      : Promise.resolve({ data: [] as Array<{ session_id: string; visibility: unknown }> }),
+  ]);
 
   const collabRows = ((collabResult.data ?? []) as CollaboratorRow[]).filter((row) => row.user_id);
   const sessionParticipantRows = ((sessionParticipantsResult.data ?? []) as SessionParticipantRow[]).filter(
     (row) => row.user_id,
   );
+  const metricPolicies = new Map<string, unknown>();
+  for (const row of (metricPolicyResult.data ?? []) as Array<{
+    session_id?: string | null;
+    visibility?: unknown;
+  }>) {
+    if (row.session_id) metricPolicies.set(row.session_id, row.visibility);
+  }
 
   const isOwner = Boolean(viewerId && carnet.author_id && viewerId === carnet.author_id);
   const isCollab = collabRows.some(
@@ -389,6 +407,30 @@ export async function getCarnetDetail(id: string) {
     for (const row of (followRows ?? []) as Array<{ following_id?: string | null }>) {
       if (row.following_id) followedOwnerIds.add(row.following_id);
     }
+  }
+
+  /*
+   * S6.15 — politique par métrique de chaque sortie, pour les métadonnées
+   * agrégées que `buildDays` dérive (durée, date, distance, dénivelé). Le
+   * propriétaire et le participant voient tout ; un abonné n'est reconnu
+   * qu'après la lecture réelle de `user_follows` ci-dessus. Une sortie sans
+   * politique persistée retombe sur le socle agrégé de sa visibilité.
+   */
+  const metricVisibilities: Record<string, OutingMetricVisibility> = {};
+  for (const session of sessions) {
+    const viewer = rawSessionIdSet.has(session.id)
+      ? viewerId && session.user_id === viewerId
+        ? ('owner' as const)
+        : ('participant' as const)
+      : effectiveSessionVisibility(session) === 'friends' &&
+          Boolean(session.user_id && followedOwnerIds.has(session.user_id))
+        ? ('follower' as const)
+        : ('visitor' as const);
+    metricVisibilities[session.id] = resolveOutingMetricVisibility({
+      viewer,
+      visibility: effectiveSessionVisibility(session),
+      policy: metricPolicies.get(session.id),
+    });
   }
 
   const anyTraceSession = pickCarnetTraceSession(sessions);
@@ -664,6 +706,7 @@ export async function getCarnetDetail(id: string) {
        builder n'en garde les points que pour `rawSessionIds`. */
     sessions,
     rawSessionIds,
+    metricVisibilities,
     trace: traceSession?.positions_geojson ?? null,
     traceVisibility,
     traceWithheld,

@@ -55,11 +55,15 @@ vi.mock('@/lib/api/serviceClient', () => ({
     if (!STATE.serviceEnabled) return null;
     STATE.serviceCalls += 1;
     return {
-      from: () => {
+      from: (table: string) => {
         const query = {
           select: () => query,
           eq: () => query,
-          single: async () => ({ data: STATE.session, error: null }),
+          single: async () => ({
+            data: table === 'hike_sessions' ? STATE.session : null,
+            error: null,
+          }),
+          maybeSingle: async () => ({ data: null, error: null }),
         };
         return query;
       },

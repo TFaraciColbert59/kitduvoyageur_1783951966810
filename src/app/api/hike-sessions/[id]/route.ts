@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/api/serviceClient';
 import { createClient } from '@/lib/supabase/server';
 import {
+  projectOutingMetrics,
+  resolveOutingMetricVisibility,
+} from '@/features/compte/domain/metricVisibility';
+import {
   isFollowerTraceVisibility,
   isShareableTraceVisibility,
   type TraceViewer,
@@ -10,6 +14,12 @@ import { parseStoredWeather, weatherForViewer } from '@/features/compte/server/w
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+function numberOrNull(value: unknown): number | null {
+  if (value === null || value === undefined || value === '') return null;
+  const parsed = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -102,6 +112,34 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       return NextResponse.json({ error: 'Session non trouvée' }, { status: 404 });
     }
 
+    /*
+     * S6.15 — la politique par métrique s'applique aux métadonnées agrégées de
+     * cette route. Le propriétaire et le participant voient tout ; un visiteur
+     * ou un abonné vérifié reçoit soit sa politique persistée, soit le socle
+     * agrégé déjà publié par la visibilité. Sans clé service, la lecture RLS ne
+     * rend aucune politique à un tiers : on retombe sur le socle, jamais sur
+     * une autorisation inventée.
+     */
+    let metricPolicy: unknown;
+    if (
+      !isOwner &&
+      !isParticipant &&
+      (isShareableTraceVisibility(rawVisibility) ||
+        (viewer === 'follower' && isFollowerTraceVisibility(rawVisibility)))
+    ) {
+      const { data: metricRow } = await sessionClient
+        .from('outing_share_metrics')
+        .select('visibility')
+        .eq('session_id', id)
+        .maybeSingle();
+      metricPolicy = (metricRow as { visibility?: unknown } | null)?.visibility;
+    }
+    const metricVisibility = resolveOutingMetricVisibility({
+      viewer,
+      visibility: rawVisibility,
+      policy: metricPolicy,
+    });
+
     if (!isOwner) {
       /*
        * La météo stockée porte le point exact utilisé pour l'interroger, donc
@@ -119,6 +157,38 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     // `notes` n'est jamais sélectionné ; ceinture et bretelles si la colonne
     // revenait un jour dans le select.
     delete safeSession.notes;
+
+    /*
+     * Projection finale : une métrique non autorisée devient `null`, jamais 0.
+     * Les horodatages de début/fin sont retirés avec la durée, sinon la durée
+     * resterait dérivable malgré le masque.
+     */
+    const projectedMetrics = projectOutingMetrics(
+      {
+        distanceKm: numberOrNull(safeSession.distance_km),
+        elevationGainM: numberOrNull(safeSession.elevation_gain_m),
+        maxAltitudeM: numberOrNull(safeSession.max_altitude_m),
+        durationS: numberOrNull(safeSession.duration_seconds),
+        paceMinPerKm: null,
+        movingTimeS: null,
+        heartRateBpm: null,
+        powerW: null,
+        cadenceRpm: null,
+        caloriesKcal: null,
+      },
+      metricVisibility
+    );
+    safeSession.distance_km = projectedMetrics.distanceKm;
+    safeSession.elevation_gain_m = projectedMetrics.elevationGainM;
+    safeSession.max_altitude_m = projectedMetrics.maxAltitudeM;
+    safeSession.duration_seconds = projectedMetrics.durationS;
+    if (!metricVisibility.duration) {
+      safeSession.started_at = null;
+      safeSession.ended_at = null;
+    }
+    /* La politique appliquée est exposée : le client ne dérive rien lui-même. */
+    safeSession.metric_visibility = metricVisibility;
+    safeSession.metrics_masked = projectedMetrics.masked;
 
     return NextResponse.json({ session: safeSession });
   } catch (err) {

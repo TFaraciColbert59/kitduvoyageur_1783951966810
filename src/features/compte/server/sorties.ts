@@ -1,14 +1,17 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { TraceProjectionError } from '../domain/traceProjection';
 import {
+  SHARED_SUMMARY_METRICS,
   averagePaceMinPerKm,
   movingTimeSeconds,
   observedMaxAltitudeM,
+  parseMetricVisibility,
   projectOutingMetrics,
   projectTraceMetrics,
   resolveOutingMetricVisibility,
   type OutingMetricVisibility,
 } from '../domain/metricVisibility';
+import { readOutingMetricPolicy } from './outingShareMetrics';
 import {
   isFollowerTraceVisibility,
   projectTraceSampleSegments,
@@ -115,6 +118,14 @@ export interface OutingDetail {
   caloriesKcal: number | null;
   /** Politique appliquée ; permet à l'UI de ne rien dériver d'une métrique masquée. */
   metricVisibility: OutingMetricVisibility;
+  /**
+   * Choix de partage effectif : ce qu'un tiers verrait si la sortie était
+   * partagée. Pour le propriétaire, c'est sa politique persistée (ou le socle
+   * agrégé par défaut) ; pour un tiers, c'est la politique déjà projetée.
+   */
+  shareMetricVisibility: OutingMetricVisibility;
+  /** Vrai si le propriétaire a enregistré une ligne de choix explicite. */
+  shareMetricsConfigured: boolean;
   metricsMasked: boolean;
   status: OutingStatus;
   visibility: OutingVisibility;
@@ -328,9 +339,11 @@ export async function loadOutingDetail(
   outingId: string,
   options?: {
     /**
-     * Politique déjà lue dans un stockage de confiance (propriétaire de la
-     * ligne). Ne jamais lui passer une valeur de requête brute : la résolution
-     * reste fail-closed, mais l'autorisation de la lire appartient à l'appelant.
+     * Politique déjà lue dans un stockage de confiance, pour un appelant qui
+     * l'a chargée lui-même. Le chemin de production lit désormais
+     * `outing_share_metrics` automatiquement (propriétaire) ou via
+     * `service_role` après vérification du rôle (tiers). Cette option sert de
+     * surcharge explicite (tests, futur aperçu signé), jamais d'entrée brute.
      */
     metricPolicy?: unknown;
   }
@@ -593,16 +606,38 @@ export async function loadOutingDetail(
   const hasFullAccess = viewer === 'owner' || viewer === 'participant';
   /*
    * S6.15 — politique de métriques résolue avant toute projection. Le rôle
-   * `viewer` vient d'une autorisation réelle ; la politique par défaut est
-   * fail-closed et ne publie le socle agrégé que pour un partage explicite.
-   * Aucune politique persistée n'est encore branchée : le point d'extension
-   * `policy` est prêt, la migration reste à coordonner.
+   * `viewer` vient d'une autorisation réelle ; la politique persistée est lue
+   * dans `outing_share_metrics` (propriétaire avec sa session, tiers avec le
+   * client service après autorisation). Sans ligne, le socle agrégé déjà publié
+   * par un partage explicite s'applique ; sans partage explicite, rien.
    */
+  const metricPolicyRead = await readOutingMetricPolicy(
+    supabase,
+    session.id,
+    viewer,
+    rawVisibility
+  );
+  const persistedPolicy =
+    options?.metricPolicy !== undefined
+      ? options.metricPolicy
+      : metricPolicyRead.visibility;
   const metricVisibility = resolveOutingMetricVisibility({
     viewer,
     visibility: rawVisibility,
-    policy: options?.metricPolicy,
+    policy: persistedPolicy,
   });
+  /*
+   * Le propriétaire voit toutes les métriques, mais l'interface de réglage a
+   * besoin de ses choix réels. Une ligne absente signifie « socle par défaut »,
+   * jamais « tout autoriser ».
+   */
+  const shareMetricVisibility = isOwner
+    ? options?.metricPolicy !== undefined
+      ? parseMetricVisibility(options.metricPolicy)
+      : metricPolicyRead.configured
+        ? parseMetricVisibility(metricPolicyRead.visibility)
+        : SHARED_SUMMARY_METRICS
+    : metricVisibility;
   const projection = projectTraceSampleSegments(
     rawSegments,
     resolveTraceMasks({ viewer, visibility: rawVisibility })
@@ -716,6 +751,8 @@ export async function loadOutingDetail(
     cadenceRpm: projectedMetrics.cadenceRpm,
     caloriesKcal: projectedMetrics.caloriesKcal,
     metricVisibility,
+    shareMetricVisibility,
+    shareMetricsConfigured: metricPolicyRead.configured,
     metricsMasked: projectedMetrics.masked,
     status: computeStatus(session),
     visibility,

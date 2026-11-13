@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Check, Download, Pencil, Share2, ShieldCheck, Trash2, X } from 'lucide-react';
+import { Check, Download, Eye, Pencil, Share2, ShieldCheck, Trash2, X } from 'lucide-react';
 import { ActionPill } from '@/components/ui/ActionPill';
 import type { OutingDetail, OutingVisibility } from '@/features/compte/server/sorties';
+import type { OutingMetricKey } from '@/features/compte/domain/metricVisibility';
+import { OutingMetricSettings } from './OutingMetricSettings';
 import {
   ElevationProfile,
   TraceMap,
@@ -21,6 +23,8 @@ export interface OutingSummaryProps {
   detail: OutingDetail;
   saving: boolean;
   onSave: (patch: { title: string; notes: string; visibility: OutingVisibility }) => void;
+  onSaveMetrics: (keys: OutingMetricKey[]) => void;
+  onResetMetrics: () => void;
   onShare: () => void;
   onExport: () => void;
   onDelete: () => void;
@@ -32,8 +36,18 @@ const STATUS_LABEL: Record<OutingDetail['status'], string> = {
   done: 'Terminée',
 };
 
-export function OutingSummary({ detail, saving, onSave, onShare, onExport, onDelete }: OutingSummaryProps) {
+export function OutingSummary({
+  detail,
+  saving,
+  onSave,
+  onSaveMetrics,
+  onResetMetrics,
+  onShare,
+  onExport,
+  onDelete,
+}: OutingSummaryProps) {
   const [editing, setEditing] = useState(false);
+  const [metricsOpen, setMetricsOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [title, setTitle] = useState(detail.title);
   const [notes, setNotes] = useState(detail.notes);
@@ -46,6 +60,10 @@ export function OutingSummary({ detail, saving, onSave, onShare, onExport, onDel
     setVisibility(detail.visibility);
     setEditing(false);
   }, [detail.id, detail.title, detail.notes, detail.visibility]);
+
+  useEffect(() => {
+    setMetricsOpen(false);
+  }, [detail.id]);
 
   const companions = detail.participants.filter((person) => !person.isOwner);
   const showCover = Boolean(detail.coverUrl) && !coverFailed;
@@ -123,6 +141,41 @@ export function OutingSummary({ detail, saving, onSave, onShare, onExport, onDel
         <p className="lkdv-sortie-notes">
           Certaines métriques d’effort ne sont pas partagées par le propriétaire.
         </p>
+      ) : null}
+
+      {detail.canEdit ? (
+        <section className="lkdv-sortie-section">
+          <header>
+            <b>Métriques partagées</b>
+            <span>
+              {detail.shareMetricsConfigured ? 'Réglage enregistré' : 'Socle par défaut'}
+            </span>
+          </header>
+          {metricsOpen ? (
+            <OutingMetricSettings
+              detail={detail}
+              saving={saving}
+              onSave={onSaveMetrics}
+              onReset={onResetMetrics}
+              onClose={() => setMetricsOpen(false)}
+            />
+          ) : (
+            <>
+              <p className="lkdv-sortie-proof">
+                Choisis, métrique par métrique, ce que les personnes avec qui tu
+                partages cette sortie peuvent voir.
+              </p>
+              <div className="lkdv-apill-row">
+                <ActionPill
+                  label="Choisir les métriques partagées"
+                  icon={<Eye />}
+                  text="Choisir"
+                  onClick={() => setMetricsOpen(true)}
+                />
+              </div>
+            </>
+          )}
+        </section>
       ) : null}
 
       {editing ? (

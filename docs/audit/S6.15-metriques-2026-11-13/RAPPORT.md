@@ -88,13 +88,13 @@
 
 ### Non couverts, à coordonner
 
-- `GET /api/hike-sessions/[id]` : renvoie encore les colonnes agrégées (`distance_km`, `duration_seconds`, `elevation_gain_m`, `max_altitude_m`) aux lecteurs autorisés d'un carnet partagé. Ces valeurs correspondent au socle agrégé par défaut, donc aucun écart avec la politique actuelle ; en revanche, une politique persistée devra y être branchée pour que le masquage soit complet. Ce fichier n'a pas été modifié pour ne pas toucher un chemin actif de l'Explorer.
-- `getCarnetDetail` / `buildCarnetDetail` : les statistiques de carnet viennent des colonnes du carnet ou d'une sortie brute autorisée ; aucune métrique d'une sortie d'autrui n'est exposée. À revoir si une politique persistée doit aussi masquer les agrégats du carnet.
+- `GET /api/hike-sessions/[id]` : **branché dans l'addendum `20261113121000`** (projection des agrégats, retrait des horodatages, `metric_visibility`, `metrics_masked`). Le §5 initial décrivait l'état avant migration.
+- `getCarnetDetail` / `buildCarnetDetail` : **branchés dans l'addendum `20261113121000`** pour les métadonnées par sortie (distance, dénivelé, durée, horodatage). Les colonnes agrégées du carnet (`carnets.distance_km`, `denivele_m`) restent une limite distincte, documentée.
 - Aucun aperçu public de sortie n'existe aujourd'hui : `Partager` partage l'URL du drawer, pas une page publique. La sélection de métriques persistée n'a donc pas de surface de destination à brancher avant la migration.
 
-## 6. Migration à coordonner (non créée, non appliquée)
+## 6. Migration (proposition historique, remplacée par l'addendum §10)
 
-La fiche demande de choisir les métriques affichées. Sans stockage serveur, un choix local serait un droit simulé : il ne changerait pas ce que reçoit un tiers. La migration suivante est donc **proposée**, pas écrite dans `supabase/migrations`.
+La fiche demande de choisir les métriques affichées. Sans stockage serveur, un choix local serait un droit simulé : il ne changerait pas ce que reçoit un tiers. La migration ci-dessous était **proposée** ; elle est désormais écrite en version `20261113121000` (voir §10 et `MIGRATION-20261113121000.md`). Ce §6 garde la trace de la conception initiale.
 
 ### Contrat proposé
 
@@ -122,8 +122,8 @@ La validation des clés et des booléens reste applicative : `zod` strict à l'�
 
 ### Version et retour arrière
 
-- Nouvelle version, sans réutiliser les timestamps existants : `20261113090000_outing_share_metrics.sql`.
-- Rollback : `supabase/migrations_down/20261113090000_outing_share_metrics.down.sql` (`drop table`).
+- Version retenue dans l'addendum : `20261113121000_outing_share_metrics.sql` ; `20261113090000` n'est pas utilisée.
+- Rollback : `supabase/migrations_down/20261113121000_outing_share_metrics.down.sql` (refus si des choix réels existent).
 - Avant production : inventaire des lecteurs/écrivains (`loadOutingDetail`, `buildGpx`, `/api/hike-sessions/[id]`, `getCarnetDetail`), validation sur copie, advisors, test propriétaire / participant / tiers / invité.
 - Invalidation : `SortieDrawer` invalide déjà `['sortie', id]` ; le GPX est `Cache-Control: no-store`. Si un cache d'aperçu ou un lien signé est ajouté, il devra être purgé à chaque changement de politique.
 
@@ -151,10 +151,10 @@ Les fixtures sont synthétiques : aucun réseau, aucune base, aucune donnée ré
 
 1. **Aucune preuve d'exécution** : le code et les tests sont écrits, pas rejoués. Le prochain passage doit fournir la sortie Vitest et `tsc`.
 2. **Aucune source FC / puissance / cadence / calories** : les champs existent au contrat et restent `null`. Une preuve appareil exigerait un connecteur réel, hors de cette tranche.
-3. **Pas de sélection persistée** : le sous-drawer de choix n'est pas livré ; il dépend de la migration ci-dessus. Le serveur applique le socle fail-closed et l'UI ne peut pas élargir ce que le serveur refuse.
+3. **Sélection persistée** : livrée dans l'addendum `20261113121000` ; l'interface propriétaire est `OutingMetricSettings`, et le serveur projette la politique relue. Aucune exécution n'a été faite.
 4. **Pas de page publique de partage** : le lien du drawer reste la surface existante. La révocation d'un lien public ne peut pas être testée ici.
 5. **Inférence d'allure** : voir §3.3 ; à trancher avant de promettre une confidentialité absolue sur l'allure.
-6. **`/api/hike-sessions/[id]`** : non modifié pour éviter un fichier actif de l'Explorer ; à brancher avec la politique persistée.
+6. **`/api/hike-sessions/[id]`** : branché dans l'addendum `20261113121000` ; la projection des agrégats et le retrait des horodatages y sont décrits.
 7. **Aucun commit, aucune production, aucun réseau externe, aucune délégation** : conformément à la consigne.
 
 ## 9. Fichiers touchés
@@ -168,6 +168,34 @@ Les fixtures sont synthétiques : aucun réseau, aucune base, aucune donnée ré
 - `src/components/compte/drawer/sortie/SortieDrawer.tsx`
 - `src/components/compte/drawer/sortie/shared.tsx`
 - `src/components/compte/drawer/sortie/__tests__/states.test.tsx`
+- `src/features/compte/server/outingShareMetrics.ts` (addendum)
+- `src/components/compte/drawer/sortie/OutingMetricSettings.tsx` (addendum)
+- `src/app/api/compte/sorties/[id]/metrics/route.ts` (addendum)
+- `src/app/api/hike-sessions/[id]/route.ts` (addendum)
+- `src/features/carnet/detail/getCarnetDetail.ts` (addendum)
+- `src/features/carnet/detail/buildCarnetDetail.ts` (addendum)
+- `src/features/carnet/detail/types.ts` (addendum)
+- `supabase/migrations/20261113121000_outing_share_metrics.sql` (addendum)
+- `supabase/migrations_down/20261113121000_outing_share_metrics.down.sql` (addendum)
+- `docs/audit/S6.15-metriques-2026-11-13/MIGRATION-20261113121000.md` (addendum)
 - `docs/audit/S6.15-metriques-2026-11-13/RAPPORT.md` (ce rapport)
 
 Aucun fichier de `src/features/explorer-v2`, `src/components/explorer` ou `src/app/explorer` n'a été ouvert en écriture.
+
+## 10. Addendum — migration `20261113121000` et réglage propriétaire
+
+Cette section remplace le statut « migration non créée » du §6. La version retenue est `20261113121000_outing_share_metrics` ; `20261113090000` n'est pas utilisée, conformément à la réservation existante.
+
+- Migration additive : `supabase/migrations/20261113121000_outing_share_metrics.sql`.
+- Rollback : `supabase/migrations_down/20261113121000_outing_share_metrics.down.sql` (refus si des choix réels existent).
+- Stockage : table `public.outing_share_metrics`, une ligne par sortie, `visibility jsonb` fermé aux onze clés connues, booléens stricts vérifiés par la base.
+- RLS : lecture/écriture propriétaire uniquement ; `service_role` pour la projection d'un tiers après contrôle du rôle ; aucun `anon`.
+- Trigger : cohérence `hike_sessions.user_id = outing_share_metrics.user_id`, interdiction de déplacer une politique.
+- Branchements : `loadOutingDetail`, GPX, `GET /api/hike-sessions/[id]`, `getCarnetDetail` (métadonnées par sortie), nouvelle route `PUT`/`DELETE /api/compte/sorties/[id]/metrics`, section propriétaire du drawer.
+- UI : `OutingMetricSettings` affiche les onze clés, l'état réel de chaque valeur ou « Aucune donnée enregistrée ». Aucune valeur de démonstration, aucun zéro inventé, aucune donnée FC/puissance/cadence/calories fabriquée.
+- Synchronisation : invalidation `['sortie', id]` après écriture, `Cache-Control: no-store` sur le GPX, pas de cache de politique ; `staleTime` de 20 s sur le détail.
+- RGPD : booléens seulement, cascade sur la sortie et le compte, aucun processeur externe, aucun accès anonyme, limite d'inférence distance + durée documentée.
+
+Le détail complet (schéma, RLS, synchronisation, RGPD, limites et commandes de vérification) est dans `MIGRATION-20261113121000.md`.
+
+**Aucun test, build, lint, `tsc`, commit, déploiement, réseau externe ou délégation n'a été exécuté pour cet addendum.**

@@ -32,6 +32,8 @@ function detail(overrides: Partial<OutingDetail> = {}): OutingDetail {
     cadenceRpm: null,
     caloriesKcal: null,
     metricVisibility: ALL_OUTING_METRICS,
+    shareMetricVisibility: SHARED_SUMMARY_METRICS,
+    shareMetricsConfigured: false,
     metricsMasked: false,
     status: 'done',
     visibility: 'private',

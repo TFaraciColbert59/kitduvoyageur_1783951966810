@@ -14,6 +14,7 @@ import {
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import type { OutingDetail } from '@/features/compte/server/sorties';
+import type { OutingMetricKey } from '@/features/compte/domain/metricVisibility';
 import { DrawerError, DrawerShell, DrawerSkeleton, type DrawerTab } from '../shell/DrawerShell';
 import { DrawerAuthRequired } from '../shell/DrawerAuthRequired';
 import { OutingSummary } from './OutingSummary';
@@ -111,6 +112,31 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
     }
   }, [detail, notify]);
 
+  const saveMetrics = useCallback(
+    (keys: OutingMetricKey[]) =>
+      run(
+        () =>
+          requestJson(`/api/compte/sorties/${outingId}/metrics`, {
+            method: 'PUT',
+            body: JSON.stringify({ visibility: keys }),
+          }),
+        'Métriques partagées mises à jour'
+      ),
+    [outingId, run]
+  );
+
+  const resetMetrics = useCallback(
+    () =>
+      run(
+        () =>
+          requestJson(`/api/compte/sorties/${outingId}/metrics`, {
+            method: 'DELETE',
+          }),
+        'Réglage de partage réinitialisé'
+      ),
+    [outingId, run]
+  );
+
   const exportGpx = useCallback(() => {
     if (!outingId) return;
     const link = document.createElement('a');
@@ -192,6 +218,8 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
                     'Sortie mise à jour'
                   )
                 }
+                onSaveMetrics={saveMetrics}
+                onResetMetrics={resetMetrics}
                 onShare={share}
                 onExport={exportGpx}
                 onDelete={deleteOuting}
@@ -310,7 +338,7 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
           );
         },
       })),
-    [busy, deleteOuting, detail, exportGpx, outingId, run, share, uploadPhoto, uploading]
+    [busy, deleteOuting, detail, exportGpx, outingId, resetMetrics, run, saveMetrics, share, uploadPhoto, uploading]
   );
 
   if (authLoading) {
@@ -602,6 +630,27 @@ export const SORTIE_CSS = `
 
 .lkdv-sortie-person-link{display:flex!important;align-items:center!important;gap:9px!important;min-width:0!important;flex:1!important;color:inherit!important;text-decoration:none!important;}
 .lkdv-sortie-person-link:active{opacity:.7!important;}
+
+/* S6.15 — réglage propriétaire des métriques partagées. */
+.lkdv-sortie-metrics{display:flex!important;flex-direction:column!important;gap:9px!important;}
+.lkdv-sortie-metrics-note,.lkdv-sortie-metrics-warning{margin:0!important;font:400 11.5px/1.5 var(--sf)!important;color:var(--label2)!important;}
+.lkdv-sortie-metrics-warning{padding:8px 10px!important;border-radius:12px!important;background:rgba(232,192,104,.16)!important;color:#7d5c14!important;}
+.lkdv-sortie-metrics-list{display:flex!important;flex-direction:column!important;gap:5px!important;margin:0!important;padding:0!important;border:0!important;min-width:0!important;}
+.lkdv-sortie-metrics-legend{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important;}
+.lkdv-sortie-metric-row{display:grid!important;grid-template-columns:22px minmax(0,1fr) auto!important;align-items:center!important;gap:9px!important;min-height:48px!important;padding:7px 10px!important;border-radius:14px!important;background:rgba(255,255,255,.48)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 0 0 .5px rgba(23,43,36,.07)!important;cursor:pointer!important;}
+.lkdv-sortie-metric-row.on{background:rgba(91,127,85,.09)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 0 0 .5px rgba(23,64,44,.14)!important;}
+.lkdv-sortie-metric-check{width:20px!important;height:20px!important;margin:0!important;accent-color:#17402C!important;cursor:pointer!important;}
+.lkdv-sortie-metric-copy{display:flex!important;flex-direction:column!important;gap:1px!important;min-width:0!important;}
+.lkdv-sortie-metric-copy b{font:600 12px/1.3 var(--sf)!important;color:var(--label)!important;}
+.lkdv-sortie-metric-copy small{font:400 10.5px/1.35 var(--sf)!important;color:var(--label3)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+.lkdv-sortie-metric-state{font:600 9.5px/1 var(--sf)!important;letter-spacing:.04em!important;text-transform:uppercase!important;padding:4px 7px!important;border-radius:999px!important;white-space:nowrap!important;}
+.lkdv-sortie-metric-state.on{background:rgba(23,64,44,.1)!important;color:#17402C!important;}
+.lkdv-sortie-metric-state.off{background:rgba(23,43,36,.06)!important;color:var(--label3)!important;}
+.lkdv-sortie-metrics-actions{display:flex!important;align-items:center!important;justify-content:flex-end!important;flex-wrap:wrap!important;gap:6px!important;}
+.lkdv-sortie-metrics-confirm{display:flex!important;flex-direction:column!important;gap:7px!important;padding:9px 10px!important;border-radius:14px!important;background:rgba(179,58,44,.06)!important;box-shadow:inset 0 0 0 .5px rgba(179,58,44,.18)!important;}
+.lkdv-sortie-metrics-confirm p{margin:0!important;font:400 11px/1.45 var(--sf)!important;color:#7d2a20!important;}
+.lkdv-sortie-metric-row:focus-within{outline:2px solid #17402c!important;outline-offset:2px!important;}
+@media (max-width:370px){.lkdv-sortie-metric-row{grid-template-columns:22px minmax(0,1fr)!important;}.lkdv-sortie-metric-state{grid-column:2!important;justify-self:start!important;}}
 
 `;
 
