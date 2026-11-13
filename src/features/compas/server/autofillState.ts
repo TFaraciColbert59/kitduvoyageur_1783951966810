@@ -69,6 +69,29 @@ export function withoutPending(c: Record<string, unknown>): Record<string, unkno
   return rest;
 }
 
+/**
+ * Dates ou enveloppe posées par la PERSONNE : elles lui appartiennent désormais. Le drapeau
+ * `datesSet` / `budgetSet` (« posé par le préremplissage ») est effacé dans la même écriture des
+ * métadonnées, sans quoi « Annuler la préparation » ou la réadaptation (changement de groupe)
+ * remettait à vide ce qu'elle venait de saisir. Efface aussi la copie de la préparation en attente
+ * (`datesSet`) ; rend `c` lui-même quand il n'y a rien à retirer.
+ */
+export function withoutAutofillFlag(
+  c: Record<string, unknown>,
+  flag: 'datesSet' | 'budgetSet'
+): Record<string, unknown> {
+  let next = c;
+  for (const slot of ['autofill', 'autofill_pending'] as const) {
+    const run = c[slot];
+    if (!run || typeof run !== 'object' || Array.isArray(run) || !(flag in run)) continue;
+    const { [flag]: _gone, ...rest } = run as Record<string, unknown>;
+    void _gone;
+    if (next === c) next = { ...c };
+    next[slot] = rest;
+  }
+  return next;
+}
+
 /** Les prises de phase sont rendues dès que la phase a écrit son résultat. */
 export function withoutClaim(c: Record<string, unknown>): Record<string, unknown> {
   const { autofill_claim: _claim, ...rest } = c;

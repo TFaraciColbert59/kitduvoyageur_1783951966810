@@ -6,7 +6,7 @@ import { reportServerError } from '@/lib/observability/appErrors';
 import { coarsePosition } from '../engine/privacy';
 import { isHomePlace, samePlaceName } from '../engine/places';
 import { cleanTravellerFields, isCountryCode, travellerView, type TravellerHome, type TravellerView } from '../engine/traveller';
-import { placeSearchLimitError, resolvePlaceByName } from './placeSearch';
+import { placeSearchLimitError, resolvePlaceOutcome } from './placeSearch';
 import { markTravellerAsked, readTravellerState, writeTraveller } from './traveller';
 import { serverText } from './serverText';
 
@@ -55,7 +55,8 @@ export async function saveTravellerAction(input: z.input<typeof travellerSchema>
       else {
         const limitError = await placeSearchLimitError(user.id);
         if (limitError) return { success: false, error: limitError };
-        const found = await resolvePlaceByName(fields.home);
+        const { place: found, unavailable } = await resolvePlaceOutcome(fields.home);
+        if (!found && unavailable) return { success: false, error: await serverText('compas.server.placeSearch.unavailable') };
         if (!found) return { success: false, error: await serverText('compas.server.place.notFound', { place: fields.home }) };
         if (!isHomePlace(found))
           return { success: false, error: await serverText('compas.server.traveller.notTown', { place: fields.home }) };

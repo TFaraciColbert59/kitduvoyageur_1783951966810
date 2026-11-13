@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useMemo, useState, useTransition } from 'react';
+import { useEffect, useMemo, useState, useTransition } from 'react';
 import TravellerCard from '@/components/identity/TravellerCard';
 import { useTranslation } from '@/lib/i18n/context';
 import { AiNotice } from '../components/AiNotice';
@@ -18,6 +18,30 @@ const IDEAS: Array<{ key: 'ideaVercors' | 'ideaSolo' | 'ideaGr20'; icon: V5IconN
   { key: 'ideaSolo', icon: 'person' },
   { key: 'ideaGr20', icon: 'peak' },
 ];
+
+/**
+ * Clé de `sessionStorage` où la phrase d'un visiteur non connecté attend sa connexion : jamais dans
+ * l'URL (`?next=` ne porte que `/compas`). Lue puis effacée au retour sur le Compas.
+ */
+export const START_PHRASE_KEY = 'compas.start.phrase';
+
+/** `sessionStorage` peut être absent ou refusé (navigation privée, quota) : jamais une erreur. */
+function keepPhrase(phrase: string): void {
+  try {
+    window.sessionStorage.setItem(START_PHRASE_KEY, phrase);
+  } catch {
+    /* tant pis : la phrase sera à retaper */
+  }
+}
+function takePhrase(): string | null {
+  try {
+    const phrase = window.sessionStorage.getItem(START_PHRASE_KEY);
+    if (phrase !== null) window.sessionStorage.removeItem(START_PHRASE_KEY);
+    return phrase && phrase.trim() ? phrase.slice(0, 240) : null;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Le Compas avant toute aventure : une seule question, « Où veux-tu aller ? ». Une phrase suffit ; le voyage est créé
@@ -42,22 +66,34 @@ export function V5Start({
   const today = useMemo(() => browserToday(), []);
   const ready = text.trim().length >= 2;
 
+  // Retour de la connexion : la phrase gardée avant le départ revient dans le champ (une seule fois).
+  useEffect(() => {
+    const kept = takePhrase();
+    if (kept) setText((current) => current || kept);
+  }, []);
+
   const go = () => {
     if (!ready || pending) return;
     if (!signedIn) {
+      keepPhrase(text.trim());
       router.push(`/connexion?next=${encodeURIComponent('/compas')}`);
       return;
     }
     setError(null);
     startTransition(async () => {
-      const understood = understandRequest(text, today, {}, locale);
-      const res = await compasCreateTripAction({ activity: understood.activity, say: understood.say.slice(0, 280) });
-      if (!res.success) {
-        setError(res.error ?? t('compas.v5.start.createError'));
-        return;
+      try {
+        const understood = understandRequest(text, today, {}, locale);
+        const res = await compasCreateTripAction({ activity: understood.activity, say: understood.say.slice(0, 280) });
+        if (!res.success) {
+          setError(res.error ?? t('compas.v5.start.createError'));
+          return;
+        }
+        router.replace('/compas');
+        router.refresh();
+      } catch {
+        // Réseau coupé, action rejetée : un message ici, la phrase reste dans le champ (pas d'écran d'erreur).
+        setError(t('compas.v5.start.createError'));
       }
-      router.replace('/compas');
-      router.refresh();
     });
   };
 

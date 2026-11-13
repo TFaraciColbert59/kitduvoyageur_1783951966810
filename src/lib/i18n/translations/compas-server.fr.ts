@@ -167,6 +167,7 @@ export const compasServerFr = {
     create: {
       signIn: 'Connecte-toi pour créer une aventure.',
       tooMany: 'Trop de créations d’affilée : patiente une minute.',
+      unavailable: 'Création momentanément indisponible : réessaie dans quelques minutes.',
       failed: 'L’aventure n’a pas pu être créée. Réessaie.',
       openFailed: 'Aventure créée mais impossible de l’ouvrir : ouvre-la depuis le Hub.',
     },
@@ -358,6 +359,7 @@ export const compasServerFr = {
       undo: {
         running: 'Une préparation est en cours : attends sa fin ou arrête-la, puis annule.',
         nothing: 'Rien à annuler.',
+        failed: 'L’annulation n’a pas pu être menée à son terme : rien n’est perdu, réessaie.',
       },
       refresh: {
         tooMany: 'Beaucoup de changements d’affilée : patiente quelques minutes.',

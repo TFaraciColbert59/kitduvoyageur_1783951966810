@@ -11,8 +11,9 @@ import {
   updateTripMetadata,
   type Supa,
 } from './compasServer';
+import { withoutAutofillFlag } from './autofillState';
 import { lookupBase, lookupDestination } from './placeLookup';
-import { placeSearchLimitError, resolvePlaceByName } from './placeSearch';
+import { placeSearchLimitError, resolvePlaceOutcome } from './placeSearch';
 import { canonicalPlaceName } from '../engine/countryNames';
 import { trailDestination } from './trailDestination';
 import { isDeparturePlace, samePlaceName, type CompasPlace } from '../engine/places';
@@ -556,17 +557,23 @@ export async function compasSetBudgetAction(
   try {
     const auth = await requireEditor(parsed.data.tripId);
     if ('error' in auth) return { success: false, error: auth.error ?? (await serverText('compas.server.common.accessDenied')) };
-    const { data, error } = await auth.supabase
-      .from('trips')
-      .update({
-        estimated_budget:
-          parsed.data.amount == null ? null : Math.round(parsed.data.amount * 100) / 100,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', parsed.data.tripId)
-      .select('id');
-    if (error || !data?.length)
-      return actionError('compas.server.envelope.saveFailed');
+    // L'enveloppe saisie appartient à la personne : le drapeau « posée par le préremplissage »
+    // tombe dans la même écriture, sinon « Annuler » ou la réadaptation la remettait à vide.
+    const { error } = await updateTripMetadata(
+      auth.supabase,
+      parsed.data.tripId,
+      (meta) => {
+        if (meta.compas === undefined) return meta;
+        return { ...meta, compas: withoutAutofillFlag(compasMeta(meta), 'budgetSet') };
+      },
+      {
+        columns: {
+          estimated_budget:
+            parsed.data.amount == null ? null : Math.round(parsed.data.amount * 100) / 100,
+        },
+      }
+    );
+    if (error) return actionError('compas.server.envelope.saveFailed');
     revalidateTrip(parsed.data.tripSlug);
     return { success: true };
   } catch (err) {
@@ -612,7 +619,9 @@ export async function compasSetDatesAction(
         const c = compasMeta(meta);
         if (durationHours != null) c.duration_h = durationHours;
         else delete c.duration_h;
-        return { ...meta, compas: c };
+        // Dates choisies par la personne : plus « posées par le préremplissage » (l'annulation
+        // et la réadaptation ne les retirent plus).
+        return { ...meta, compas: withoutAutofillFlag(c, 'datesSet') };
       },
       { columns: { start_date: startDate, end_date: endDate } }
     );
@@ -796,8 +805,8 @@ async function resolveDestination(
   query: string,
   userId: string,
   opts: { ai?: boolean } = {}
-): Promise<CompasPlace | null> {
-  return resolvePlaceByName(query, opts.ai === false ? undefined : (q) => baseFromSpecialist(q, userId));
+): Promise<{ place: CompasPlace | null; unavailable: boolean }> {
+  return resolvePlaceOutcome(query, opts.ai === false ? undefined : (q) => baseFromSpecialist(q, userId));
 }
 
 /**
@@ -855,7 +864,10 @@ export async function compasSetDestinationAction(
     const wanted = parsed.data.place
       ? (trailRegion(parsed.data.place) ?? canonicalPlaceName(parsed.data.place) ?? parsed.data.place)
       : null;
-    const place = trail ?? (wanted ? await resolveDestination(wanted, auth.userId) : null);
+    const resolved = trail ? null : wanted ? await resolveDestination(wanted, auth.userId) : null;
+    const place = trail ?? resolved?.place ?? null;
+    // Cartes en panne : « réessaie », pas « introuvable » (le lieu existe peut-être).
+    if (parsed.data.place && !place && resolved?.unavailable) return actionError('compas.server.placeSearch.unavailable');
     if (parsed.data.place && !place)
       return actionError('compas.server.place.notFound', { place: parsed.data.place });
     // Titre encore générique (« Trek · nouvelle aventure ») : il prend le nom du lieu.
@@ -952,7 +964,9 @@ export async function compasSetOriginAction(
       const limitError = await placeSearchLimitError(auth.userId);
       if (limitError) return { success: false, error: limitError };
     }
-    const searched = wanted ? await resolveDestination(wanted, auth.userId, { ai: false }) : null;
+    const resolvedOrigin = wanted ? await resolveDestination(wanted, auth.userId, { ai: false }) : null;
+    const searched = resolvedOrigin?.place ?? null;
+    if (wanted && !searched && resolvedOrigin?.unavailable) return actionError('compas.server.placeSearch.unavailable');
     if (wanted && !searched) return actionError('compas.server.place.notFound', { place: wanted });
     // Seul un lieu habité, une région ou un pays est un départ : « depuis le camping » (ou un
     // sommet, un lac, un hôtel) trouvé sur la carte est refusé, jamais écrit ni pris pour ancre.
@@ -2027,8 +2041,9 @@ export async function compasCreateTripAction(
       windowMs: 60_000,
       failMode: 'closed',
     });
+    // 429 : la limite est atteinte ; 503 (compteur en panne, `failMode: 'closed'`) : pas la faute de la personne.
     if (limited)
-      return actionError('compas.server.create.tooMany');
+      return actionError(limited.status === 429 ? 'compas.server.create.tooMany' : 'compas.server.create.unavailable');
 
     const label = CREATE_LABEL[parsed.data.activity];
     const suffix = crypto.randomUUID().replace(/-/g, '').slice(0, 8);

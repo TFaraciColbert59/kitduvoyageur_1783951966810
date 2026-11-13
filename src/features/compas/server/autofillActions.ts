@@ -1163,6 +1163,8 @@ async function countryStages(opts: {
 function readAnchor(meta: Record<string, unknown>): Anchor | null {
   const a = compasMeta(meta).anchor as Record<string, unknown> | undefined;
   if (!a || typeof a !== 'object') return null;
+  // `Number(null)` vaut 0 : une ancre `{ lat: null, lon: null }` serait posée au large de l'Afrique (0, 0).
+  if (a.lat == null || a.lon == null) return null;
   const lat = Number(a.lat);
   const lon = Number(a.lon);
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
@@ -3097,16 +3099,30 @@ export async function compasUndoAutofillAction(
         }
       | undefined;
     if (!run?.runId) return { success: false, error: await serverText('compas.server.autofill.undo.nothing') };
-    if (run.itemIds?.length) await supabase.from('trip_items').delete().eq('trip_id', tripId).in('id', run.itemIds);
+    // Chaque suppression est lue : une refusée (droits, coupure) ne doit pas passer pour faite. La
+    // trace (liste des ids) n'est réécrite qu'après un succès complet ; sinon elle est gardée telle
+    // quelle et « Annuler » peut être relancé (supprimer deux fois les mêmes ids est sans effet).
+    const undoFailures: string[] = [];
+    const checked = (what: string, result: { error: { code?: string; message: string } | null }) => {
+      if (result.error) {
+        console.error('[compas] annulation :', what, result.error.code, result.error.message);
+        undoFailures.push(what);
+      }
+    };
+    if (run.itemIds?.length) checked('trip_items', await supabase.from('trip_items').delete().eq('trip_id', tripId).in('id', run.itemIds));
     if (run.expenseIds?.length)
-      await supabase.from('trip_expenses').delete().eq('trip_id', tripId).in('id', run.expenseIds);
+      checked('trip_expenses', await supabase.from('trip_expenses').delete().eq('trip_id', tripId).in('id', run.expenseIds));
     for (const s of run.stays ?? [])
-      await supabase
-        .from('trip_steps')
-        .update({ accommodation_name: null, updated_at: new Date().toISOString() })
-        .eq('id', s.stepId)
-        .eq('accommodation_name', s.name);
-    if (run.stepIds?.length) await supabase.from('trip_steps').delete().eq('trip_id', tripId).in('id', run.stepIds);
+      checked(
+        'trip_steps.accommodation_name',
+        await supabase
+          .from('trip_steps')
+          .update({ accommodation_name: null, updated_at: new Date().toISOString() })
+          .eq('id', s.stepId)
+          .eq('accommodation_name', s.name)
+      );
+    if (run.stepIds?.length) checked('trip_steps', await supabase.from('trip_steps').delete().eq('trip_id', tripId).in('id', run.stepIds));
+    if (undoFailures.length) return { success: false, error: await serverText('compas.server.autofill.undo.failed') };
     const { error: undoError } = await updateTripMetadata(
       supabase,
       tripId,
@@ -3127,7 +3143,11 @@ export async function compasUndoAutofillAction(
         },
       }
     );
-    if (undoError) console.error('[compas] annulation : métadonnées non écrites', undoError.code, undoError.message);
+    if (undoError) {
+      // Lignes retirées mais trace non réécrite : les ids restent, « Annuler » se relance sans dégât.
+      console.error('[compas] annulation : métadonnées non écrites', undoError.code, undoError.message);
+      return { success: false, error: await serverText('compas.server.autofill.undo.failed') };
+    }
     // L'annulation retire les étapes : sans elle, une aventure retrouvée par défaut (« le voyage
     // le plus récent qui a un parcours géolocalisé ») disparaissait et /compas proposait « Quelle
     // aventure préparer ? ». L'aventure active est donc posée explicitement : elle reste ouverte,

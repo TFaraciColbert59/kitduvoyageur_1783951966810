@@ -161,6 +161,7 @@ export const compasServerDe: Shape<typeof compasServerFr> = {
     create: {
       signIn: 'Melden Sie sich an, um ein Abenteuer zu erstellen.',
       tooMany: 'Zu viele Abenteuer hintereinander erstellt: Warten Sie eine Minute.',
+      unavailable: 'Das Erstellen ist vorübergehend nicht verfügbar: Versuchen Sie es in einigen Minuten erneut.',
       failed: 'Das Abenteuer konnte nicht erstellt werden. Bitte versuchen Sie es erneut.',
       openFailed: 'Abenteuer erstellt, konnte aber nicht geöffnet werden: Öffnen Sie es im Hub.',
     },
@@ -345,6 +346,7 @@ export const compasServerDe: Shape<typeof compasServerFr> = {
       undo: {
         running: 'Eine Vorbereitung läuft: Warten Sie, bis sie fertig ist, oder halten Sie sie an, und machen Sie dann rückgängig.',
         nothing: 'Nichts rückgängig zu machen.',
+        failed: 'Das Rückgängigmachen konnte nicht abgeschlossen werden: Es geht nichts verloren, versuchen Sie es erneut.',
       },
       refresh: {
         tooMany: 'Viele Änderungen hintereinander: Warten Sie einige Minuten.',

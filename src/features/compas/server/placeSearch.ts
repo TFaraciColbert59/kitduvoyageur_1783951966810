@@ -1,6 +1,7 @@
 import 'server-only';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
 import { lookupDestination, lookupLoose, lookupNatural } from './placeLookup';
+import { withLookupHealth } from './lookupHealth';
 import { referentialPlaceSearch } from './geoPlaces';
 import { isCountryOrRegion, leadingProperName, subPlaceQueries, type CompasPlace } from '../engine/places';
 import { splitPlaceCountry } from '../engine/countryNames';
@@ -45,6 +46,27 @@ export async function placeSearchLimitError(userId: string): Promise<string | nu
  * ville de base inventée serait un faux départ.
  */
 export async function resolvePlaceByName(
+  query: string,
+  specialist?: (query: string) => Promise<CompasPlace | null>
+): Promise<CompasPlace | null> {
+  return (await resolvePlaceOutcome(query, specialist)).place;
+}
+
+/**
+ * Comme `resolvePlaceByName`, mais dit aussi si l'absence de lieu vient d'une PANNE des cartes
+ * (aucun service n'a répondu) plutôt que d'un nom que la carte ne connaît pas : l'appelant
+ * affiche alors « service indisponible, réessaie » au lieu de « introuvable ». Un lieu trouvé
+ * n'est jamais une panne.
+ */
+export async function resolvePlaceOutcome(
+  query: string,
+  specialist?: (query: string) => Promise<CompasPlace | null>
+): Promise<{ place: CompasPlace | null; unavailable: boolean }> {
+  const { value, unavailable } = await withLookupHealth(() => resolvePlaceChain(query, specialist));
+  return { place: value, unavailable: value == null && unavailable };
+}
+
+async function resolvePlaceChain(
   query: string,
   specialist?: (query: string) => Promise<CompasPlace | null>
 ): Promise<CompasPlace | null> {

@@ -33,12 +33,14 @@ export async function listCompasTrips(): Promise<CompasTripChoice[]> {
   } = await supabase.auth.getUser();
   if (!user) return [];
 
-  const [{ data: owned }, { data: shared }] = await Promise.all([
+  const [{ data: owned, error: ownedError }, { data: shared, error: sharedError }] = await Promise.all([
     supabase
       .from('trips')
       .select('id, slug, title, start_date, end_date')
       .eq('user_id', user.id)
-      .order('start_date', { ascending: false, nullsFirst: false })
+      // Dernière modification d'abord : un brouillon sans date, créé à l'instant, ne passe pas
+      // derrière vingt voyages datés (`start_date` nul triait en dernier et sortait des 20).
+      .order('updated_at', { ascending: false })
       .limit(20),
     supabase
       .from('trip_collaborators')
@@ -47,6 +49,11 @@ export async function listCompasTrips(): Promise<CompasTripChoice[]> {
       .neq('role', 'owner')
       .limit(20),
   ]);
+
+  // Un hoquet de la base n'est pas « aucun voyage » : il remontait en liste vide, donc en Compas
+  // vide proposé à quelqu'un qui a des voyages. L'erreur est propagée (`app/compas/error.tsx`).
+  const failure = ownedError ?? sharedError;
+  if (failure) throw new Error(`Lecture de tes voyages impossible : ${failure.message}`);
 
   const out: CompasTripChoice[] = [];
   const seen = new Set<string>();

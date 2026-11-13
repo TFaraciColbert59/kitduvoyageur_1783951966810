@@ -30,8 +30,9 @@ function tripPoint(trip: unknown): { at: { lat: number; lon: number } | null; br
     string,
     unknown
   > | null;
-  const lat = Number(anchor?.lat);
-  const lon = Number(anchor?.lon);
+  // `Number(null)` vaut 0 : sans cette garde, une ancre sans coordonnées devenait le point (0, 0).
+  const lat = anchor?.lat != null ? Number(anchor.lat) : NaN;
+  const lon = anchor?.lon != null ? Number(anchor.lon) : NaN;
   if (anchor && Number.isFinite(lat) && Number.isFinite(lon))
     return { at: { lat, lon }, broad: anchor.kind === 'country' };
   const steps = Array.isArray(t.steps) ? (t.steps as Array<Record<string, unknown>>) : [];

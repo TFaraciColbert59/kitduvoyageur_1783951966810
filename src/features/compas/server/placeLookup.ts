@@ -4,6 +4,7 @@ import { parseIslandContour, type IslandContour } from '../engine/islands';
 import { aliasMatches, distanceKm, homonymsFarApart, nameCore, parseNominatim, parsePhoton, isNotablePlace, pickCommune, pickDestination, pickLoose, pickNatural, isNonLatinRegion, looseChoice, subPlaceQueries, type CompasPlace } from '../engine/places';
 import { canonicalCountryName } from '../engine/countryNames';
 import { cached, coordKey } from './sharedCache';
+import { noteAnswered, noteFailed } from './lookupHealth';
 import { geoapifyReverse, geoapifySearch } from './geoapify';
 import { nominatimJson } from './locationIq';
 import { geoRiversEnabled, referentialRiver } from './geoRivers';
@@ -142,12 +143,15 @@ async function search(
   const key = near ? `v4:near:${coordKey(near.lat, near.lon, 1)}:${limit}:${queryKey(query)}` : `v4:${limit}:${queryKey(query)}`;
   const lang = await mapLang();
   let fallback: CompasPlace[] | null = null;
+  let hit = true;
   const fromPhoton = await cached('place', languageCacheKey(key, lang), PLACE_TTL_S, async () => {
+    hit = false;
     const photon = await fetchJson(
       `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=${limit}&lang=${photonLang(lang)}${bias}${NOISE}`,
       { Accept: 'application/json' }
     );
     if (photon != null) {
+      noteAnswered();
       // Une liste vide n'est jamais gardée (null) : la carte a pu mal répondre, on réessaiera.
       const list = parsePhoton(photon);
       return list.length ? list : null;
@@ -155,9 +159,14 @@ async function search(
     // Photon muet : Nominatim, puis Geoapify (offre gratuite) en dernier secours. Servi, jamais gardé.
     let list = near ? null : await nominatim(query, Math.min(limit, 8), lang);
     if (list == null) list = await geoapifySearch(query, limit, lang);
+    // Tous les services muets (null) : une panne, pas un « rien trouvé » (liste vide).
+    if (list == null) noteFailed();
+    else noteAnswered();
     fallback = list && list.length ? list : null;
     return null;
   });
+  // Servie par le cache partagé : une réponse réelle, pas une panne.
+  if (hit && fromPhoton != null) noteAnswered();
   return fromPhoton ?? fallback;
 }
 
@@ -472,6 +481,8 @@ export async function lookupNatural(name: string, countryCode: string | null, ri
     const payload = await fetchJson(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=10&lang=${photonLang(lang)}${NATURAL_TAGS}`, {
       Accept: 'application/json',
     });
+    if (payload == null) noteFailed();
+    else noteAnswered();
     const list = payload == null ? null : parsePhoton(payload);
     return list && list.length ? list : null;
   });

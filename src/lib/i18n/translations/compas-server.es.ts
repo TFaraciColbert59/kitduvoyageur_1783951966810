@@ -161,6 +161,7 @@ export const compasServerEs: Shape<typeof compasServerFr> = {
     create: {
       signIn: 'Inicie sesión para crear una aventura.',
       tooMany: 'Demasiadas aventuras creadas seguidas: espere un minuto.',
+      unavailable: 'La creación no está disponible temporalmente: vuelva a intentarlo dentro de unos minutos.',
       failed: 'No hemos podido crear la aventura. Vuelva a intentarlo.',
       openFailed: 'Aventura creada, pero no se ha podido abrir: ábrala desde el Hub.',
     },
@@ -345,6 +346,7 @@ export const compasServerEs: Shape<typeof compasServerFr> = {
       undo: {
         running: 'Hay una preparación en curso: espere a que termine o deténgala y después deshaga.',
         nothing: 'Nada que deshacer.',
+        failed: 'No se ha podido completar la anulación: no se pierde nada, vuelva a intentarlo.',
       },
       refresh: {
         tooMany: 'Muchos cambios seguidos: espere unos minutos.',
