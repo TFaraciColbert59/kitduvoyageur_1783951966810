@@ -217,7 +217,7 @@ export default function PublicMobileProfileView({
               <IconButton
                 variant="glass"
                 size="sm"
-                aria-label="Signaler ou bloquer ce profil"
+                aria-label="Sécurité du profil : signaler, bloquer ou mettre en sourdine"
                 onClick={() => {
                   triggerHaptic('light');
                   onReport();

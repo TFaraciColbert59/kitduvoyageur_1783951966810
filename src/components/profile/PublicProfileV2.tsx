@@ -194,7 +194,7 @@ export function PublicProfileV2({
                 <Share2 size={17} aria-hidden="true" />
               </button>
               {!owner && onReport ? (
-                <button type="button" className="lkdv-public-icon" onClick={onReport} aria-label="Signaler le profil">
+                <button type="button" className="lkdv-public-icon" onClick={onReport} aria-label="Sécurité du profil : signaler, bloquer ou mettre en sourdine">
                   <Flag size={16} aria-hidden="true" />
                 </button>
               ) : (

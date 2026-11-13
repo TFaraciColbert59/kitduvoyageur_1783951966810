@@ -1,4 +1,9 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { findReportCategory } from '@/features/compte/domain/reportCategories';
+import {
+  resolveRelationship,
+  type RelationshipPolicy,
+} from '@/features/compte/domain/relationshipPolicy';
 
 export type ReseauKind = 'followers' | 'following';
 export type ReseauRelation = 'follows_you' | 'mutual' | 'you_follow';
@@ -14,6 +19,12 @@ export interface ReseauUser {
   lastActivityAt: string | null;
   followedAt: string | null;
   closeFriend: boolean;
+  /** Blocage ou sourdine réellement observés, pour les écrans de sécurité. */
+  blocked?: boolean;
+  muted?: boolean;
+  canFollow?: boolean;
+  canMessage?: boolean;
+  canReport?: boolean;
 }
 
 export interface ReseauPayload {
@@ -61,12 +72,21 @@ export type ReseauErrorCode =
   | 'blocked'
   | 'target_not_found'
   | 'follow_request_closed'
+  | 'follow_request_cooldown'
   | 'request_not_found'
   | 'request_not_pending'
   | 'invalid_action'
+  | 'invalid_category'
+  | 'conversation_not_found'
   | 'follow_failed'
   | 'unfollow_failed'
-  | 'respond_failed';
+  | 'respond_failed'
+  | 'block_failed'
+  | 'unblock_failed'
+  | 'report_failed'
+  | 'mute_failed'
+  | 'unmute_failed'
+  | 'state_failed';
 
 // Vocabulaire fermé : une erreur PostgreSQL inconnue ne doit jamais remonter
 // telle quelle jusqu'au client HTTP.
@@ -76,12 +96,21 @@ const RESEAU_ERROR_CODES = new Set<ReseauErrorCode>([
   'blocked',
   'target_not_found',
   'follow_request_closed',
+  'follow_request_cooldown',
   'request_not_found',
   'request_not_pending',
   'invalid_action',
+  'invalid_category',
+  'conversation_not_found',
   'follow_failed',
   'unfollow_failed',
   'respond_failed',
+  'block_failed',
+  'unblock_failed',
+  'report_failed',
+  'mute_failed',
+  'unmute_failed',
+  'state_failed',
 ]);
 
 function errorMessage(error: unknown): string {
@@ -107,6 +136,75 @@ function readRpcStatus<T extends string>(
     return data as T;
   }
   throw new Error(fallback);
+}
+
+interface BlockRelations {
+  /** Cibles que le lecteur a bloquées. */
+  blockedByViewer: Set<string>;
+  /** Comptes qui ont bloqué le lecteur. */
+  blockedByTarget: Set<string>;
+}
+
+/**
+ * Lit les deux orientations de `user_blocks`. La policy
+ * `user_blocks_select_own` expose au lecteur les lignes dont il est bloqueur
+ * **ou** bloqué ; deux requêtes filtrées suffisent, sans service_role.
+ */
+async function loadBlockRelations(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<BlockRelations> {
+  const [outgoing, incoming] = await Promise.all([
+    supabase.from('user_blocks').select('blocked_id').eq('blocker_id', userId),
+    supabase.from('user_blocks').select('blocker_id').eq('blocked_id', userId),
+  ]);
+  if (outgoing.error) throw outgoing.error;
+  if (incoming.error) throw incoming.error;
+  return {
+    blockedByViewer: new Set(
+      ((outgoing.data ?? []) as Array<{ blocked_id?: string | null }>)
+        .map((row) => row.blocked_id)
+        .filter((id): id is string => Boolean(id))
+    ),
+    blockedByTarget: new Set(
+      ((incoming.data ?? []) as Array<{ blocker_id?: string | null }>)
+        .map((row) => row.blocker_id)
+        .filter((id): id is string => Boolean(id))
+    ),
+  };
+}
+
+/** Clé de paire des conversations directes, identique au SQL LEAST/GREATEST. */
+function directPairKey(userId: string, targetId: string): string {
+  return [userId, targetId].sort().join(':');
+}
+
+interface DirectConversationState {
+  id: string;
+  muted: boolean;
+}
+
+async function findDirectConversation(
+  supabase: SupabaseClient,
+  userId: string,
+  targetId: string
+): Promise<DirectConversationState | null> {
+  const { data: conversation, error } = await supabase
+    .from('conversations')
+    .select('id')
+    .eq('type', 'direct')
+    .eq('direct_pair_key', directPairKey(userId, targetId))
+    .maybeSingle();
+  if (error) throw error;
+  if (!conversation?.id) return null;
+  const { data: membership, error: membershipError } = await supabase
+    .from('conversation_members')
+    .select('is_muted')
+    .eq('conversation_id', conversation.id)
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (membershipError) throw membershipError;
+  return { id: conversation.id, muted: membership?.is_muted === true };
 }
 
 export async function loadReseau(
@@ -138,13 +236,22 @@ export async function loadReseau(
   const ids = Array.from(kind === 'followers' ? followerIds : followingIds) as string[];
   if (ids.length === 0) return { users: [], total: 0, mutuals: 0 };
 
+  // Un blocage, dans un sens ou l'autre, retire le compte des listes : il ne
+  // suffit pas de refuser un nouveau suivi, l'écran ne doit plus l'exposer.
+  const blockRelations = await loadBlockRelations(supabase, userId);
+  const visibleIds = ids.filter(
+    (id) =>
+      !blockRelations.blockedByViewer.has(id) && !blockRelations.blockedByTarget.has(id)
+  );
+  if (visibleIds.length === 0) return { users: [], total: 0, mutuals: 0 };
+
   const [{ data: profiles }, { data: closeRows }, { data: activityRows }] = await Promise.all([
-    supabase.from('public_profiles').select(PROFILE_COLUMNS).in('id', ids),
-    supabase.from('story_close_friends').select('friend_id').eq('owner_id', userId).in('friend_id', ids),
+    supabase.from('public_profiles').select(PROFILE_COLUMNS).in('id', visibleIds),
+    supabase.from('story_close_friends').select('friend_id').eq('owner_id', userId).in('friend_id', visibleIds),
     supabase
       .from('hike_sessions')
       .select('user_id, started_at')
-      .in('user_id', ids)
+      .in('user_id', visibleIds)
       .order('started_at', { ascending: false })
       .limit(200),
   ]);
@@ -162,7 +269,7 @@ export async function loadReseau(
   }
 
   let mutuals = 0;
-  const users = ids.map((id) => {
+  const users = visibleIds.map((id) => {
     const row = profileById.get(id);
     const isMutual =
       kind === 'followers' ? followingIds.has(id) : followerIds.has(id);
@@ -175,6 +282,12 @@ export async function loadReseau(
         : isMutual
           ? 'mutual'
           : 'you_follow';
+    const followState = kind === 'following' || isMutual ? 'following' : 'none';
+    const policy = resolveRelationship({
+      viewerId: userId,
+      targetId: id,
+      followState,
+    });
     return {
       id,
       name: displayName(row, id),
@@ -186,6 +299,11 @@ export async function loadReseau(
       lastActivityAt: lastActivity.get(id) ?? null,
       followedAt: followedAtByUser.get(id) ?? null,
       closeFriend: closeFriends.has(id),
+      blocked: policy.blocked,
+      muted: policy.muted,
+      canFollow: policy.canFollow,
+      canMessage: policy.canMessage,
+      canReport: policy.canReport,
     } satisfies ReseauUser;
   });
 
@@ -240,6 +358,259 @@ export async function respondFollowRequest(
   if (status !== expected) throw new Error('respond_failed');
 }
 
+export interface ModerationState {
+  blockedByViewer: boolean;
+  blockedByTarget: boolean;
+  mutedConversation: boolean;
+  policy: RelationshipPolicy;
+}
+
+/**
+ * Lit l'état de sécurité réel entre le lecteur et une cible.
+ *
+ * Aucune valeur n'est supposée : un échec de lecture lève `state_failed`
+ * plutôt que de présenter « non bloqué » ou « non muet » à tort. La politique
+ * pure traduit ensuite ces faits en actions autorisées.
+ */
+export async function loadModerationState(
+  supabase: SupabaseClient,
+  userId: string,
+  targetId: string
+): Promise<ModerationState> {
+  try {
+    const [outgoingBlock, incomingBlock, direct, follow, request] =
+      await Promise.all([
+        supabase
+          .from('user_blocks')
+          .select('id')
+          .eq('blocker_id', userId)
+          .eq('blocked_id', targetId)
+          .maybeSingle(),
+        supabase
+          .from('user_blocks')
+          .select('id')
+          .eq('blocker_id', targetId)
+          .eq('blocked_id', userId)
+          .maybeSingle(),
+        findDirectConversation(supabase, userId, targetId),
+        supabase
+          .from('user_follows')
+          .select('following_id')
+          .eq('follower_id', userId)
+          .eq('following_id', targetId)
+          .maybeSingle(),
+        supabase
+          .from('follow_requests')
+          .select('status, created_at, responded_at')
+          .eq('requester_id', userId)
+          .eq('target_id', targetId)
+          .maybeSingle(),
+      ]);
+
+    if (
+      outgoingBlock.error ||
+      incomingBlock.error ||
+      follow.error ||
+      request.error
+    ) {
+      throw new Error('state_failed');
+    }
+
+    const followState =
+      follow.data
+        ? ('following' as const)
+        : request.data?.status === 'pending'
+          ? ('requested' as const)
+          : ('none' as const);
+    const policy = resolveRelationship({
+      viewerId: userId,
+      targetId,
+      blockedByViewer: Boolean(outgoingBlock.data),
+      blockedByTarget: Boolean(incomingBlock.data),
+      mutedConversation: direct?.muted === true,
+      followState,
+      lastFollowRequestAt:
+        (request.data?.responded_at as string | null | undefined) ??
+        (request.data?.created_at as string | null | undefined) ??
+        null,
+      lastFollowRequestStatus:
+        (request.data?.status as 'pending' | 'accepted' | 'declined' | null | undefined) ?? null,
+    });
+
+    return {
+      blockedByViewer: policy.blockedByViewer,
+      blockedByTarget: policy.blockedByTarget,
+      mutedConversation: policy.mutedConversation,
+      policy,
+    };
+  } catch {
+    throw new Error('state_failed');
+  }
+}
+
+/**
+ * Bloque une cible et retire le suivi que le lecteur avait initié.
+ *
+ * Le blocage est la garantie principale : même si le nettoyage du suivi est
+ * refusé par une policy (l'autre orientation appartient à la cible), les
+ * lectures réseau filtrent déjà la relation bloquée. Aucun `service_role`
+ * n'est utilisé.
+ */
+export async function blockUser(
+  supabase: SupabaseClient,
+  userId: string,
+  targetId: string,
+  groupId?: string | null
+): Promise<{ blocked: true }> {
+  if (!targetId) throw new Error('target_not_found');
+  if (targetId === userId) throw new Error('self');
+  const { error } = await supabase
+    .from('user_blocks')
+    .insert({ blocker_id: userId, blocked_id: targetId });
+  // Un double clic ou un blocage déjà posé est un succès idempotent.
+  if (error && error.code === '23503') throw new Error('target_not_found');
+  if (error && error.code !== '23505') throw new Error('block_failed');
+
+  await Promise.all([
+    supabase
+      .from('user_follows')
+      .delete()
+      .eq('follower_id', userId)
+      .eq('following_id', targetId),
+    supabase
+      .from('follow_requests')
+      .delete()
+      .eq('requester_id', userId)
+      .eq('target_id', targetId)
+      .in('status', ['pending', 'accepted']),
+  ]);
+
+  // Le contexte de groupe reste facultatif : la policy `group_members` ne
+  // laisse cette suppression qu'à un gestionnaire du groupe. Un refus ne doit
+  // pas annuler le blocage déjà enregistré.
+  if (groupId) {
+    await supabase
+      .from('group_members')
+      .delete()
+      .eq('group_id', groupId)
+      .eq('user_id', targetId);
+  }
+
+  return { blocked: true };
+}
+
+export async function unblockUser(
+  supabase: SupabaseClient,
+  userId: string,
+  targetId: string
+): Promise<{ blocked: false }> {
+  if (!targetId) throw new Error('target_not_found');
+  const { error } = await supabase
+    .from('user_blocks')
+    .delete()
+    .eq('blocker_id', userId)
+    .eq('blocked_id', targetId);
+  if (error) throw new Error('unblock_failed');
+  return { blocked: false };
+}
+
+/**
+ * Enregistre un signalement de profil dans `group_reports` (seule table de
+ * signalement disposant de `reported_user_id` aujourd'hui). Le motif est
+ * résolu côté serveur : le client n'envoie qu'un identifiant fermé.
+ *
+ * L'auto-suspension qui vivait dans le composant client a été retirée : une
+ * décision de modération ne s'écrit pas depuis le navigateur du signalant.
+ */
+export async function reportUser(
+  supabase: SupabaseClient,
+  userId: string,
+  targetId: string,
+  categoryId: unknown,
+  details?: string | null,
+  groupId?: string | null
+): Promise<{ reported: true; duplicate: boolean }> {
+  if (!targetId) throw new Error('target_not_found');
+  if (targetId === userId) throw new Error('self');
+  const category = findReportCategory(categoryId);
+  if (!category) throw new Error('invalid_category');
+
+  const { data: existing, error: existingError } = await supabase
+    .from('group_reports')
+    .select('id')
+    .eq('reporter_id', userId)
+    .eq('reported_user_id', targetId)
+    .eq('status', 'pending')
+    .limit(1)
+    .maybeSingle();
+  if (existingError) throw new Error('report_failed');
+  if (existing) return { reported: true, duplicate: true };
+
+  const reason = String(details ?? '').trim().slice(0, 2000);
+  const { error } = await supabase.from('group_reports').insert({
+    reporter_id: userId,
+    reported_user_id: targetId,
+    group_id: groupId ?? null,
+    category: category.label,
+    reason: reason || null,
+    severity: category.severity,
+    status: 'pending',
+  });
+  if (error) {
+    if (error.code === '23503') {
+      throw new Error(groupId ? 'report_failed' : 'target_not_found');
+    }
+    throw new Error('report_failed');
+  }
+  return { reported: true, duplicate: false };
+}
+
+/**
+ * Sourdine réelle disponible sans nouvelle table : coupe les notifications de
+ * la conversation directe existante (`conversation_members.is_muted`).
+ *
+ * Elle ne masque ni les stories ni les publications du fil. `story_hidden_users`
+ * a la direction inverse (l'auteur masque un visiteur) et une policy
+ * `owner_id = auth.uid()` : un lecteur ne peut pas s'en servir pour masquer un
+ * auteur. Une vraie sourdine de contenu exigerait une table dédiée ; elle est
+ * documentée comme dépendance.
+ */
+export async function muteUser(
+  supabase: SupabaseClient,
+  userId: string,
+  targetId: string
+): Promise<{ conversationMuted: true }> {
+  if (!targetId) throw new Error('target_not_found');
+  if (targetId === userId) throw new Error('self');
+  const direct = await findDirectConversation(supabase, userId, targetId);
+  if (!direct) throw new Error('conversation_not_found');
+  const { error } = await supabase
+    .from('conversation_members')
+    .update({ is_muted: true, mute_until: null })
+    .eq('conversation_id', direct.id)
+    .eq('user_id', userId);
+  if (error) throw new Error('mute_failed');
+  return { conversationMuted: true };
+}
+
+export async function unmuteUser(
+  supabase: SupabaseClient,
+  userId: string,
+  targetId: string
+): Promise<{ conversationMuted: false }> {
+  if (!targetId) throw new Error('target_not_found');
+  const direct = await findDirectConversation(supabase, userId, targetId);
+  if (direct) {
+    const { error } = await supabase
+      .from('conversation_members')
+      .update({ is_muted: false, mute_until: null })
+      .eq('conversation_id', direct.id)
+      .eq('user_id', userId);
+    if (error) throw new Error('unmute_failed');
+  }
+  return { conversationMuted: false };
+}
+
 export async function toggleCordee(
   supabase: SupabaseClient,
   userId: string,
@@ -255,6 +626,13 @@ export async function toggleCordee(
       .eq('friend_id', friendId);
     if (error) throw error;
     return;
+  }
+  const blockRelations = await loadBlockRelations(supabase, userId);
+  if (
+    blockRelations.blockedByViewer.has(friendId) ||
+    blockRelations.blockedByTarget.has(friendId)
+  ) {
+    throw new Error('blocked');
   }
   // La cordée est un cercle proche : 30 personnes maximum.
   const { count } = await supabase
@@ -285,9 +663,18 @@ export async function loadFollowRequests(
     .eq('status', 'pending')
     .order('created_at', { ascending: false });
 
-  const ids = Array.from(
-    new Set(((requests ?? []) as Array<{ requester_id?: string | null }>).map((r) => r.requester_id).filter(Boolean))
-  ) as string[];
+  const blockRelations = await loadBlockRelations(supabase, userId);
+  const visibleRequests = ((requests ?? []) as Array<{
+    id: string;
+    requester_id: string;
+    created_at: string;
+  }>).filter(
+    (request) =>
+      !blockRelations.blockedByViewer.has(request.requester_id) &&
+      !blockRelations.blockedByTarget.has(request.requester_id)
+  );
+
+  const ids = Array.from(new Set(visibleRequests.map((request) => request.requester_id)));
   if (ids.length === 0) return [];
 
   const { data: profiles } = await supabase
@@ -296,8 +683,13 @@ export async function loadFollowRequests(
     .in('id', ids);
   const byId = new Map<string, ProfileRow>(((profiles ?? []) as ProfileRow[]).map((row) => [row.id, row]));
 
-  return ((requests ?? []) as Array<{ id: string; requester_id: string; created_at: string }>).map((request) => {
+  return visibleRequests.map((request) => {
     const row = byId.get(request.requester_id);
+    const policy = resolveRelationship({
+      viewerId: userId,
+      targetId: request.requester_id,
+      followState: 'none',
+    });
     return {
       id: request.id,
       createdAt: request.created_at,
@@ -312,6 +704,11 @@ export async function loadFollowRequests(
         lastActivityAt: null,
         followedAt: request.created_at,
         closeFriend: false,
+        blocked: policy.blocked,
+        muted: policy.muted,
+        canFollow: policy.canFollow,
+        canMessage: policy.canMessage,
+        canReport: policy.canReport,
       },
     };
   });
@@ -330,14 +727,26 @@ export async function loadCordee(
   ) as string[];
   if (ids.length === 0) return [];
 
+  const blockRelations = await loadBlockRelations(supabase, userId);
+  const visibleIds = ids.filter(
+    (id) =>
+      !blockRelations.blockedByViewer.has(id) && !blockRelations.blockedByTarget.has(id)
+  );
+  if (visibleIds.length === 0) return [];
+
   const { data: profiles } = await supabase
     .from('public_profiles')
     .select(PROFILE_COLUMNS)
-    .in('id', ids);
+    .in('id', visibleIds);
   const byId = new Map<string, ProfileRow>(((profiles ?? []) as ProfileRow[]).map((row) => [row.id, row]));
 
-  return ids.map((id) => {
+  return visibleIds.map((id) => {
     const row = byId.get(id);
+    const policy = resolveRelationship({
+      viewerId: userId,
+      targetId: id,
+      followState: 'following',
+    });
     return {
       id,
       name: displayName(row, id),
@@ -349,6 +758,11 @@ export async function loadCordee(
       lastActivityAt: null,
       followedAt: null,
       closeFriend: true,
+      blocked: policy.blocked,
+      muted: policy.muted,
+      canFollow: policy.canFollow,
+      canMessage: policy.canMessage,
+      canReport: policy.canReport,
     } satisfies ReseauUser;
   });
 }
