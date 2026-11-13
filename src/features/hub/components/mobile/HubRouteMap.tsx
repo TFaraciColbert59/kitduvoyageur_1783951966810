@@ -5,6 +5,16 @@ import { MapPinOff } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import { leafletTiles } from '@/components/map/engine/leafletTiles';
 
+/** `--lkv-warning` : même jeton que l'état « hors réseau » du Compas. */
+function manualTraceColor(): string {
+  const fallback = '#C89A3B';
+  if (typeof window === 'undefined') return fallback;
+  const value = getComputedStyle(document.documentElement)
+    .getPropertyValue('--lkv-warning')
+    .trim();
+  return value || fallback;
+}
+
 export interface HubRoutePoint {
   id?: string;
   lat: number;
@@ -15,11 +25,22 @@ export interface HubRoutePoint {
   visited?: boolean;
   stepId?: string | null;
   color: string;
+  /** Poignée déplaçable (éditeur de parcours) ; les autres points restent des repères. */
+  draggable?: boolean;
+}
+
+/** Un tronçon dessiné à la main : jamais confondu avec une ligne routée. */
+export interface HubRouteManualSegment {
+  /** Coordonnées `[lat, lon]`, comme `routeCoords`. */
+  coordinates: Array<[number, number]>;
+  label?: string;
 }
 
 export interface HubRouteMapProps {
   routeCoords: Array<[number, number]>;
   highlightCoords?: Array<[number, number]>;
+  /** Tracés manuels hors réseau, dessinés en pointillés par-dessus la carte. */
+  manualSegments?: HubRouteManualSegment[];
   points?: HubRoutePoint[];
   interactive?: boolean;
   reserveBottom?: number;
@@ -27,21 +48,26 @@ export interface HubRouteMapProps {
   emptyLabel?: string;
   /** Clic sur la carte (mode interactif) — utilisé pour poser un POI. */
   onMapClick?: (lat: number, lon: number) => void;
+  /** Poignée relâchée : son identifiant et sa nouvelle position. */
+  onPointMove?: (id: string, lat: number, lon: number) => void;
 }
 
 export default function HubRouteMap({
   routeCoords,
   highlightCoords = [],
+  manualSegments = [],
   points = [],
   interactive = false,
   reserveBottom = 0,
   className,
   emptyLabel = 'Trace non géolocalisée',
   onMapClick,
+  onPointMove,
 }: HubRouteMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
   const onMapClickRef = useRef(onMapClick);
+  const onPointMoveRef = useRef(onPointMove);
   const [visible, setVisible] = useState(false);
   const [ready, setReady] = useState(false);
 
@@ -49,15 +75,23 @@ export default function HubRouteMap({
     onMapClickRef.current = onMapClick;
   }, [onMapClick]);
 
-  const hasRoute = routeCoords.length >= 1 || highlightCoords.length >= 1;
+  useEffect(() => {
+    onPointMoveRef.current = onPointMove;
+  }, [onPointMove]);
+
+  const hasRoute =
+    routeCoords.length >= 1 ||
+    highlightCoords.length >= 1 ||
+    manualSegments.some((segment) => segment.coordinates.length >= 2);
   const geoKey = useMemo(
     () =>
       JSON.stringify([
         routeCoords,
         highlightCoords,
-        points.map((p) => [p.lat, p.lon, p.color, p.label]),
+        manualSegments.map((segment) => segment.coordinates),
+        points.map((p) => [p.lat, p.lon, p.color, p.label, p.id ?? '', p.draggable ? 1 : 0]),
       ]),
-    [routeCoords, highlightCoords, points],
+    [routeCoords, highlightCoords, manualSegments, points],
   );
 
   useEffect(() => {
@@ -171,6 +205,29 @@ export default function HubRouteMap({
         }).addTo(map);
       }
 
+      // Tracé manuel hors réseau : pointillés ambre, jamais confondus avec la
+      // ligne routée pleine. Aucun de ces points ne vient d'un routeur.
+      const manualColor = manualTraceColor();
+      for (const segment of manualSegments) {
+        if (segment.coordinates.length < 2) continue;
+        L.polyline(segment.coordinates, {
+          color: '#FFFFFF',
+          weight: 7,
+          opacity: 0.9,
+          lineCap: 'round',
+          lineJoin: 'round',
+          dashArray: '8 6',
+        }).addTo(map);
+        L.polyline(segment.coordinates, {
+          color: manualColor,
+          weight: 4.5,
+          opacity: 1,
+          lineCap: 'round',
+          lineJoin: 'round',
+          dashArray: '8 6',
+        }).addTo(map);
+      }
+
       if (active.length >= 1) {
         L.circleMarker(active[0], {
           radius: 6,
@@ -190,7 +247,31 @@ export default function HubRouteMap({
         }
       }
 
-      for (const p of points) {
+      for (const [index, p] of points.entries()) {
+        const pointId = p.id?.trim() || `hub-point-${index}`;
+        if (interactive && p.draggable) {
+          // Cible tactile de 44 px : la poignée visible reste petite, la zone
+          // de saisie respecte la taille minimale. Couleurs par tokens LKDV.
+          const handle = L.marker([p.lat, p.lon], {
+            draggable: true,
+            keyboard: true,
+            title: p.label,
+            alt: p.label,
+            zIndexOffset: 1000,
+            icon: L.divIcon({
+              className: 'lkdv-route-handle',
+              html: '<span style="display:grid;place-items:center;width:44px;height:44px;"><span style="width:18px;height:18px;border-radius:999px;background:var(--lkv-surface-paper,#FFFFFF);border:3px solid var(--lkv-forest-900,#17402C);box-shadow:0 1px 4px rgba(11,31,23,.35);"></span></span>',
+              iconSize: [44, 44],
+              iconAnchor: [22, 22],
+            }),
+          }).addTo(map);
+          handle.bindTooltip(p.label, { direction: 'top', offset: [0, -18] });
+          handle.on('dragend', () => {
+            const position = handle.getLatLng();
+            onPointMoveRef.current?.(pointId, position.lat, position.lng);
+          });
+          continue;
+        }
         const marker = L.circleMarker([p.lat, p.lon], {
           radius: 5.5,
           color: '#FFFFFF',
@@ -201,7 +282,13 @@ export default function HubRouteMap({
         if (interactive) marker.bindTooltip(p.label, { direction: 'top', offset: [0, -6] });
       }
 
-      const fitCoords = highlight.length >= 2 ? highlight : routeCoords;
+      const fitCoords =
+        highlight.length >= 2
+          ? highlight
+          : [
+              ...routeCoords,
+              ...manualSegments.flatMap((segment) => segment.coordinates),
+            ];
       const fit = () => {
         if (fitCoords.length >= 2) {
           const bounds = L.latLngBounds(fitCoords.map((c) => L.latLng(c[0], c[1])));

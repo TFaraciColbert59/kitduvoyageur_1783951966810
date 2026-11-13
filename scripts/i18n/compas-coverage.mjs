@@ -31,6 +31,7 @@ export const COMPAS_I18N_FILES = [
   'src/features/compas/components/AiNotice.tsx',
   'src/features/compas/components/GeoapifyCredit.tsx',
   'src/features/compas/components/CompasOuFlows.tsx',
+  'src/features/compas/components/RouteEditor.tsx',
   'src/features/compas/engine/request.ts',
   'src/features/compas/engine/compasI18n.ts',
   'src/features/compas/components/CompasScreen.tsx',
