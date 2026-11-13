@@ -1,6 +1,7 @@
 import 'server-only';
 import { parseTraceSegments } from '@/features/compte/map/geometry';
 import { haversineDistanceKm } from '@/features/explorer-osm/domain/geometry';
+import { canExposeElevationProfile } from '@/features/compte/domain/metricVisibility';
 import { appUserAgent } from '@/lib/userAgent';
 import type { CarnetDetail, ElevationPoint } from './types';
 
@@ -199,6 +200,23 @@ export function resetCarnetElevationCache(): void {
  *   vide, fiche rendue telle quelle, aucune exception.
  */
 export async function enrichCarnetElevation(detail: CarnetDetail): Promise<CarnetDetail> {
+  /*
+   * S6.15 — le profil est une métrique à part entière. Quand la politique du
+   * carnet ferme `elevation`, `elevationGain`, `maxAltitude` ou `distance`, le
+   * builder a déjà vidé `elevationProfile` et posé `elevationWithheld`. Sans
+   * ce garde-fou, la reconstruction depuis `detail.trace` réintroduirait
+   * exactement l'altitude masquée (et sa distance cumulée).
+   *
+   * La seconde vérification couvre un appelant qui aurait oublié le drapeau :
+   * la politique reste l'autorité, jamais la présence de la trace.
+   */
+  if (detail.elevationWithheld === true) return detail;
+  if (
+    detail.metricVisibility &&
+    !canExposeElevationProfile(detail.metricVisibility)
+  ) {
+    return detail;
+  }
   if (detail.elevationProfile && detail.elevationProfile.length >= 2) return detail;
 
   /*

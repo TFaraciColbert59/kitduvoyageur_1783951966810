@@ -454,6 +454,19 @@ export interface CarnetDetail {
    * aucune mesure d'altitude n'existe. Jamais interpolé, jamais simulé.
    */
   elevationProfile?: ElevationPoint[];
+  /**
+   * Vrai quand un profil pourrait exister mais que la politique par métrique
+   * interdit de le publier. `enrichCarnetElevation` ne doit alors jamais le
+   * reconstruire depuis la trace.
+   */
+  elevationWithheld?: boolean;
+  /**
+   * Politique effective du carnet pour ce lecteur : intersection fail-closed
+   * des politiques de ses sorties, ou toutes les clés pour le propriétaire.
+   */
+  metricVisibility?: OutingMetricVisibility;
+  /** Vrai dès qu'au moins une métrique de carnet est fermée. */
+  metricsMasked?: boolean;
   /** Lieu réel de la fiche : pays · région · lieu, plus la coordonnée de départ. */
   place: CarnetPlace;
   distanceKm: number | null;
@@ -498,12 +511,18 @@ export interface BuildCarnetDetailInput {
   rawSessionIds?: string[];
   /**
    * Politique de visibilité par métrique, résolue par `getCarnetDetail` pour
-   * chaque sortie du carnet. Une sortie absente de la map retombe sur le socle
-   * agrégé par défaut, jamais sur une autorisation inventée. Sert à retirer
-   * distance, dénivelé, durée et horodatage des sorties non brutes avant
-   * `buildDays`.
+   * chaque sortie du carnet. Une sortie absente de la map est fail-closed :
+   * elle ne reçoit aucune métrique, jamais le socle agrégé par défaut. Sert à
+   * retirer distance, dénivelé, durée et horodatage des sorties non brutes
+   * avant `buildDays`, puis à fermer les agrégats du carnet.
    */
   metricVisibilities?: Record<string, OutingMetricVisibility>;
+  /**
+   * Vrai quand `sessions` contient bien toutes les sorties du carnet. Faux, la
+   * visibilité des agrégats est fermée pour un tiers : un total calculé sur une
+   * liste partielle pourrait omettre une sortie masquée. Défaut : vrai.
+   */
+  sessionsComplete?: boolean;
   /**
    * Trace réelle à dessiner, choisie parmi toutes les sorties du carnet
    * (`pickCarnetTrace`). Absente, on retombe sur la trace de `hikeSession`.

@@ -199,3 +199,46 @@ Cette section remplace le statut « migration non créée » du §6. La version 
 Le détail complet (schéma, RLS, synchronisation, RGPD, limites et commandes de vérification) est dans `MIGRATION-20261113121000.md`.
 
 **Aucun test, build, lint, `tsc`, commit, déploiement, réseau externe ou délégation n'a été exécuté pour cet addendum.**
+
+## 11. Correctif des limites admises (S6.15-bis)
+
+Cette section remplace les limites 3, 4 et 5 du §8.
+
+### 11.1 Agrégats de carnet
+
+- `buildCarnetDetail` calcule désormais `metricVisibility` par **intersection fail-closed** des politiques de toutes les sorties lues. Une seule sortie qui ferme `distance`, `elevationGain`, `duration` ou `elevation` ferme la métrique du carnet ; un total ne peut donc pas divulguer une valeur masquée.
+- `distanceKm` et `elevationM` ne retombent plus sur `carnets.distance_km` / `denivele_m` dès qu'une sortie existe. Ils sont reconstruits depuis les seules sorties autorisées (`rawSessionIds` pour le propriétaire, politiques résolues pour un tiers). Les colonnes du carnet ne servent que pour un carnet sans aucune sortie (saisie manuelle) ou pour l'ancien appel propriétaire sans map de politiques.
+- `etapes[].distanceKm`, `etapes[].elevationM` et le texte libre `duree_texte` sont fermés avec la même politique. `summary`, `stats` et les jours ne peuvent pas reconstruire un total masqué.
+- Une liste de sorties incomplète (`sessionsComplete = false`, plafond de 10) ferme les agrégats pour un tiers : mieux vaut un total absent qu'un total qui ignore une sortie masquée.
+- Le propriétaire conserve ses valeurs de sortie brutes et son profil. Un total de carnet qui mélangerait une sortie masquée d'autrui est retiré, jamais deviné.
+
+### 11.2 Profil altimétrique
+
+- `elevationProfile` n'est publié que si `distance`, `elevation`, `elevationGain` et `maxAltitude` sont tous vrais (`canExposeElevationProfile`). Le profil porte en effet une altitude, un dénivelé, une altitude maximale et une distance cumulée.
+- `elevationWithheld` est posé quand le profil est fermé. `enrichCarnetElevation` refuse alors de le reconstruire depuis `detail.trace`, même si la trace est partageable. Une seconde vérification se fonde sur `metricVisibility`, pas sur la présence de la trace.
+- L'UI de la lentille altitude distingue « profil masqué » de « aucune mesure ».
+
+### 11.3 Listes, exports et surfaces tierces
+
+| Surface | Verdict |
+| --- | --- |
+| `GET /api/compte/sorties/[id]` et `/gpx` | DTO projeté, GPX re-projeté, altitudes/heures masquées retirées. |
+| `GET /api/hike-sessions/[id]` | Agrégats projetés, horodatages retirés avec la durée, politique exposée. |
+| `GET /api/hike-sessions` | Strictement propriétaire (`user_id = auth.uid()`), aucun tiers, même avec `?carnetId=`. |
+| `/api/account/export`, `/api/user/export` | Strictement propriétaires : aucune surface tierce, aucun masquage nécessaire. |
+| Liste Explorer (`/api/explorer/v2/content`) | Ne sert plus `distance_km` / `denivele_m` d'un carnet public : fail-closed, faute de politiques lisibles en anon. |
+| Flux communautaire (`community_carnets_feed`) | Le mapper public force les deux totaux à `null` ; la RPC directe reste une dépendance SQL documentée. |
+| Fiche kit (`GET /api/kits/[id]/sheet`) | `total_km` / `total_elevation_gain_m` retirés pour tout lecteur autre que le propriétaire ; `get_kit_journal` direct reste une dépendance SQL. |
+| Empreinte (`get_user_signature`) | Agrégat consenti distinct d'une sortie ; non branché sur la politique par métrique, documenté comme dépendance. |
+
+### 11.4 Limites et dépendances restantes
+
+1. **RPC SQL directes** : `community_carnets_feed` et `get_kit_journal` calculent encore leurs totaux sans `outing_share_metrics` ; l'application les masque, mais un appel direct à la RPC les exposerait. Une migration dédiée est nécessaire (voir `MIGRATION-20261113121000.md` §9).
+2. **Inférence** : si `distance` et `duration` sont tous deux visibles, l'allure reste calculable, même avec `pace = false`. Les coordonnées d'une trace partagée permettent aussi de recalculer une distance. La politique ferme les valeurs publiées, pas les inférences géométriques.
+3. **Plafond de lecture** : le carnet lit au plus 10 sorties détaillées ; au-delà, les agrégats tiers sont fermés plutôt que partiels.
+4. **Texte libre** : `duree_texte` est retiré si `distance`, `elevationGain` ou `duration` est fermé, faute de pouvoir l'analyser de façon fiable.
+5. **Aucune exécution** : ni test, ni suite, ni build, ni lint, ni `tsc` n'ont été lancés. Les tests existants qui affirmaient l'ancien repli sur les colonnes du carnet devront être mis à jour avec la nouvelle garantie.
+
+Le détail de la matrice et des dépendances est dans `CORRECTIONS-LIMITES.md`.
+
+**Aucun commit, production, réseau externe au modèle ou délégation n'a été exécuté.**

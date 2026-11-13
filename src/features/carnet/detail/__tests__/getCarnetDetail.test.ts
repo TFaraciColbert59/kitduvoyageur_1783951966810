@@ -312,9 +312,15 @@ describe('getCarnetDetail — visibilité effective des traces', () => {
       days: 0,
       moments: 0,
     });
-    /* Les statistiques retombent sur le carnet, pas sur la sortie d'autrui. */
-    expect(detail?.distanceKm).toBe(5);
-    expect(detail?.elevationM).toBe(600);
+    /*
+     * S6.15-bis — la colonne agrégée du carnet peut contenir la sortie privée
+     * d'autrui. Dès qu'une sortie existe et que sa politique est inconnue ou
+     * fermée, le total est retiré : il ne retombe plus sur `carnets.distance_km`.
+     */
+    expect(detail?.distanceKm).toBeNull();
+    expect(detail?.elevationM).toBeNull();
+    expect(detail?.metricVisibility?.distance).toBe(false);
+    expect(detail?.metricsMasked).toBe(true);
   });
 
   it('choisit la trace autorisée du participant, pas la sortie privée plus récente', async () => {

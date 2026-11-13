@@ -97,6 +97,43 @@ export const SHARED_SUMMARY_METRICS: OutingMetricVisibility = Object.freeze({
 });
 
 /**
+ * Intersection fail-closed de plusieurs politiques. Une clé n'est visible que
+ * si toutes les politiques fournies la déclarent `true`. Aucune politique, une
+ * politique absente ou mal typée ferme la clé.
+ *
+ * Sert aux agrégats d'un carnet : un total ne doit jamais divulguer une
+ * métrique qu'une seule de ses sorties masque. Le propriétaire conserve `ALL`
+ * sur ses propres sorties ; un agrégat qui mélange une sortie masquée d'autrui
+ * se ferme aussi pour lui.
+ */
+export function intersectMetricVisibility(
+  values: readonly unknown[]
+): OutingMetricVisibility {
+  if (values.length === 0) return NO_OUTING_METRICS;
+  const parsed = values.map(parseMetricVisibility);
+  const intersection = {} as Record<OutingMetricKey, boolean>;
+  for (const key of OUTING_METRIC_KEYS) {
+    intersection[key] = parsed.every((visibility) => visibility[key]);
+  }
+  return Object.freeze(intersection);
+}
+
+/**
+ * Vrai seulement si le profil altimétrique ne peut divulguer aucune métrique
+ * masquée : il porte à la fois l'altitude, le dénivelé, l'altitude maximale et
+ * une distance cumulée. Une seule de ces clés fermée interdit le profil.
+ */
+export function canExposeElevationProfile(visibility: unknown): boolean {
+  const safe = parseMetricVisibility(visibility);
+  return (
+    safe.distance &&
+    safe.elevation &&
+    safe.elevationGain &&
+    safe.maxAltitude
+  );
+}
+
+/**
  * Lit une politique comme une liste fermée de booléens stricts. Toute clé
  * absente, toute valeur non booléenne et toute clé inconnue sont refusées.
  */

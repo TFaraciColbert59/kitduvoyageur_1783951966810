@@ -705,6 +705,13 @@ export async function getCarnetDetail(id: string) {
        `buildDays` (un carnet de sept jours peut compter sept sorties). Le
        builder n'en garde les points que pour `rawSessionIds`. */
     sessions,
+    /*
+     * `hikeResult` est plafonné à 10 alors que `sessionIdResult` liste toutes
+     * les sorties. Une liste partielle ne permet pas de garantir qu'aucune
+     * sortie masquée n'entre dans le total : le builder ferme alors les
+     * agrégats pour un tiers. Le propriétaire garde ses valeurs.
+     */
+    sessionsComplete: sessionIds.length <= sessions.length,
     rawSessionIds,
     metricVisibilities,
     trace: traceSession?.positions_geojson ?? null,
