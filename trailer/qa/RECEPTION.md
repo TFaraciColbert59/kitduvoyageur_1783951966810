@@ -1,6 +1,6 @@
 # Réception des images — trailer LKDV
 
-Généré par `node tools/reception/check-footage.mjs` le 2026-11-11 23:16 (heure locale), dossier `assets/footage`. Ce fichier est réécrit à chaque passage ; l'outil ne modifie jamais les images.
+Généré par `node tools/reception/check-footage.mjs` le 2026-11-13 18:03 (heure locale), dossier `assets/footage`. Ce fichier est réécrit à chaque passage ; l'outil ne modifie jamais les images.
 
 - Images du film : **51 reçues / 50 obligatoires** (+ img21, plan de réserve facultatif ; 51 prompts au total).
 - Fiches personnages : **7 / 7**.
@@ -32,7 +32,7 @@ Lecture d'une ligne : « DÉFAUT » bloque la réception ; « alerte » est à v
 - **img41** (P13, P15 · téléphone) — OK [1920×1080, 2,3 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K ; couleurs non évaluées : veste vert forêt (tenue de ville)
 - **img11** (P14) — OK [1920×1080, 2,8 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K
 - **img42** (P16 · téléphone) — DÉFAUT : motif dans l'écran (icône, reflet ou contenu) : 0.46 % de sa surface → « L'écran du téléphone doit être un vert chroma uni pur #00FF00, mat, sans reflet ni icône, avec les quatre coins arrondis nets et visibles, sans lueur verte sur la peau. » [1920×1080, 3,2 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K ; couleurs non évaluées : veste vert forêt (tenue de ville)
-- **img43** (P17 · téléphone) — OK [1920×1080, 2,2 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K ; 2 coins visibles sur 4 (deux suffisent pour img43) ; couleurs non évaluées : veste vert forêt (tenue de ville)
+- **img43** (P17 · téléphone) — OK [1920×1080, 1,3 Mo, RVB, profil « sRGB »] — notes : ×2,00 pour la 4K ; 2 coins visibles sur 4 (deux suffisent pour img43) ; couleurs non évaluées : veste vert forêt (tenue de ville)
 - **img44** (P18) — OK [1920×1080, 2,7 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K ; couleurs non évaluées : veste vert forêt (tenue de ville)
 - **img12** (P19) — OK [1920×1080, 2,9 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K ; couleurs non évaluées : veste vert forêt (tenue de ville)
 - **img13** (P20) — OK [1920×1080, 3,1 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K
@@ -43,7 +43,7 @@ Lecture d'une ligne : « DÉFAUT » bloque la réception ; « alerte » est à v
 - **img18** (P25 · téléphone) — OK [1920×1080, 2,7 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K
 - **img45** (P26) — OK [1920×1080, 3,1 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K
 - **img19** (P27) — OK [1920×1080, 3,0 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K
-- **img20** (P28) — OK [1920×1080, 2,9 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K
+- **img20** (P28) — OK [1920×1080, 2,6 Mo, RVB, profil « sRGB »] — notes : ×2,00 pour la 4K
 - **img46** (P29 · téléphone) — OK [1920×1080, 2,7 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K
 - **img21** (facultative) — OK [1920×1080, 2,3 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K
 - **img22** (P31 · téléphone) — OK [1920×1080, 3,2 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K
@@ -64,7 +64,7 @@ Lecture d'une ligne : « DÉFAUT » bloque la réception ; « alerte » est à v
 - **img35a** (P46) — OK [1920×1080, 2,6 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K ; couleurs non évaluées : veste vert forêt (silhouettes), veste beige sable (silhouettes), veste vert sauge clair (silhouettes), veste bleu encre (silhouettes)
 - **img35b** (P46) — OK [1920×1080, 2,6 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K
 - **img36** (P47) — OK [1920×1080, 2,7 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K ; couleurs non évaluées : veste vert sauge clair (doudoune crème la nuit)
-- **img37** (P48, P49 · téléphone) — OK [1920×1080, 2,5 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K
+- **img37** (P48, P49 · téléphone) — OK [1920×1080, 2,0 Mo, RVB, profil « sRGB »] — notes : ×2,00 pour la 4K
 - **img49** (P50) — OK [1920×1080, 2,5 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K
 - **img38** (P51 · téléphone) — OK [1920×1080, 2,9 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K ; couleurs non évaluées : veste en jean délavée (couleur introuvable dans la fiche F7)
 - **img39** (P53) — OK [1920×1080, 2,8 Mo, RVB, sans profil (sRGB supposé)] — notes : ×2,00 pour la 4K
