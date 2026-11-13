@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 
-export type ApiErrorCode = 'unauthorized' | 'forbidden' | 'not_found' | 'conflict' | 'server';
+export type ApiErrorCode = 'unauthorized' | 'forbidden' | 'not_found' | 'bad_request' | 'conflict' | 'server';
 
 const STATUS: Record<ApiErrorCode, number> = {
   unauthorized: 401,
   forbidden: 403,
   not_found: 404,
+  bad_request: 400,
   conflict: 409,
   server: 500,
 };
