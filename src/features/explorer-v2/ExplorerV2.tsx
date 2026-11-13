@@ -55,6 +55,7 @@ import {
   useExplorerStore,
   useTransientStart,
 } from './state/store';
+import { readUnitSystem, subscribeUnitSystem } from '@/lib/i18n/unitSetting';
 import { isSceneName, sceneEnabled, SCENES } from './state/scenes';
 import type { GeoCollection } from './data/hooks';
 import {
@@ -268,6 +269,17 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
   // opposer le rendu serveur (défaut activé) au stockage du navigateur.
   useEffect(() => {
     hydrateAutoPausePreference();
+  }, []);
+
+  // S6.21 : les unités du compte (carte « Langue et unités ») pilotent aussi
+  // l'Explorer. Sans réglage explicite, les conventions du pays restent seules
+  // applicables ; un changement dans le compte s'applique sans rechargement.
+  useEffect(() => {
+    const apply = () => {
+      useExplorerStore.getState().setUnits(readUnitSystem() ?? 'metric');
+    };
+    apply();
+    return subscribeUnitSystem(apply);
   }, []);
 
   // Service worker de zone + file d'écritures hors ligne.

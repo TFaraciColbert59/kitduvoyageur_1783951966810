@@ -5,11 +5,10 @@ import { useTranslation } from '@/lib/i18n/context';
 import type { IsoWeekday, MeasurePrefs } from '@/lib/i18n/region';
 import {
   readFirstDay,
-  readUnitSystem,
   subscribeUnitSystem,
-  unitPrefsFor,
   weekStartForLocale,
 } from '@/lib/i18n/unitSetting';
+import { useMeasurePrefs } from '@/lib/i18n/useMeasurePrefs';
 import { compasFormat, type CompasFormat } from '../engine/compasI18n';
 
 /*
@@ -27,10 +26,7 @@ const browserLanguage = () => (typeof navigator === 'undefined' ? null : navigat
 const serverNull = () => null;
 
 export function useCompasUnits(): MeasurePrefs {
-  const { locale } = useTranslation();
-  const system = useSyncExternalStore(subscribeUnitSystem, readUnitSystem, serverNull);
-  const browserTag = useSyncExternalStore(noSubscribe, browserLanguage, serverNull);
-  return useMemo(() => unitPrefsFor(locale, system, browserTag), [locale, system, browserTag]);
+  return useMeasurePrefs();
 }
 
 /** Premier jour de la semaine de la personne (calendriers) : sa région, pas sa nationalité. */

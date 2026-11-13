@@ -4,11 +4,12 @@ import React, { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Bell,
+  ChevronRight,
   Eye,
   KeyRound,
+  Languages,
   Lock,
   LogOut,
-  Monitor,
   Play,
   Ruler,
   ShieldCheck,
@@ -18,7 +19,12 @@ import type { NotificationPrefs, ProfileSettings } from '@/features/compte/serve
 import { ActionPill } from '@/components/ui/ActionPill';
 import { DrawerError, DrawerSkeleton } from '../shell/DrawerShell';
 import { createClient } from '@/lib/supabase/client';
+import { useLocale } from '@/lib/i18n/context';
+import type { UnitSystem } from '@/lib/i18n/region';
+import { readUnitSystem, subscribeUnitSystem } from '@/lib/i18n/unitSetting';
 import { fetchJson } from './shared';
+import { LanguageUnitsSheet, LOCALE_LABELS } from './LanguageUnitsSheet';
+import { NotificationPreferencesSheet } from './NotificationPreferencesSheet';
 
 const PREF_LABELS: Array<{ key: keyof NotificationPrefs; label: string }> = [
   { key: 'social', label: 'Social' },
@@ -29,11 +35,13 @@ const PREF_LABELS: Array<{ key: keyof NotificationPrefs; label: string }> = [
 
 export function SettingsPane() {
   const queryClient = useQueryClient();
+  const { locale } = useLocale();
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [securityBusy, setSecurityBusy] = useState(false);
   const [confirmSignOut, setConfirmSignOut] = useState(false);
-  const [units, setUnits] = useState<'metric' | 'imperial'>('metric');
+  const [units, setUnits] = useState<UnitSystem | null>(null);
+  const [openSheet, setOpenSheet] = useState<'notifications' | 'language' | null>(null);
 
   const query = useQuery({
     queryKey: ['compte', 'profile'],
@@ -42,11 +50,9 @@ export function SettingsPane() {
   });
 
   useEffect(() => {
-    try {
-      setUnits(localStorage.getItem('lkdv_units') === 'imperial' ? 'imperial' : 'metric');
-    } catch {
-      setUnits('metric');
-    }
+    const sync = () => setUnits(readUnitSystem());
+    sync();
+    return subscribeUnitSystem(sync);
   }, []);
 
   const patch = async (body: Record<string, unknown>, success: string) => {
@@ -72,16 +78,12 @@ export function SettingsPane() {
 
   const profile = query.data;
   const notificationsCount = PREF_LABELS.filter((item) => profile.notificationPrefs[item.key]).length;
-
-
-  const changeUnits = (next: 'metric' | 'imperial') => {
-    setUnits(next);
-    try {
-      localStorage.setItem('lkdv_units', next);
-    } catch {
-      /* ignore */
-    }
-  };
+  const unitsSummary =
+    units === null
+      ? 'Automatiques selon la région'
+      : units === 'metric'
+        ? 'Kilomètres, mètres et kilos'
+        : 'Miles, pieds et livres';
 
 
   const sendPasswordReset = async () => {
@@ -163,50 +165,43 @@ export function SettingsPane() {
             <b>Notifications</b>
             <small>{notificationsCount} catégorie{notificationsCount > 1 ? 's' : ''} active{notificationsCount > 1 ? 's' : ''}</small>
           </div>
+          <ActionPill
+            className="lkdv-compte-setting-pill"
+            label="Gérer les catégories et canaux de notification"
+            text="Gérer"
+            icon={<ChevronRight />}
+            onClick={() => setOpenSheet('notifications')}
+            disabled={busy}
+          />
         </div>
-        <div className="lkdv-compte-prefs">
-          {PREF_LABELS.map((item) => {
-            const checked = profile.notificationPrefs[item.key];
-            return (
-              <button
-                key={item.key}
-                type="button"
-                className={`lkdv-compte-pref ${checked ? 'on' : ''}`}
-                aria-pressed={checked}
-                disabled={busy}
-                onClick={() =>
-                  void patch(
-                    { notificationPrefs: { [item.key]: !checked } },
-                    `Notifications ${item.label.toLowerCase()} ${checked ? 'désactivées' : 'activées'}`
-                  )
-                }
-              >
-                <i aria-hidden="true" /> {item.label}
-              </button>
-            );
-          })}
-        </div>
+        <p className="lkdv-compte-note">
+          Catégories, puis canaux par type (application, email, push). Les types sans
+          producteur réel ne sont pas affichés.
+        </p>
       </section>
 
       <section className="lkdv-compte-setting-card">
         <div className="lkdv-compte-setting-head">
           <span className="lkdv-compte-setting-ico" aria-hidden="true">
-            <Ruler size={17} />
+            <Languages size={17} />
           </span>
           <div>
-            <b>Unités</b>
-            <small>{units === 'metric' ? 'Kilomètres et mètres' : 'Miles et pieds'}</small>
+            <b>Langue et unités</b>
+            <small>{LOCALE_LABELS[locale]} · {unitsSummary}</small>
           </div>
-
+          <ActionPill
+            className="lkdv-compte-setting-pill"
+            label="Modifier la langue et les unités"
+            text="Modifier"
+            icon={<Ruler />}
+            onClick={() => setOpenSheet('language')}
+            disabled={busy}
+          />
         </div>
-        <div className="lkdv-compte-segment" role="group" aria-label="Unités">
-          <button type="button" className={units === 'metric' ? 'on' : ''} onClick={() => changeUnits('metric')}>
-            <Ruler size={13} aria-hidden="true" /> Métrique
-          </button>
-          <button type="button" className={units === 'imperial' ? 'on' : ''} onClick={() => changeUnits('imperial')}>
-            <Monitor size={13} aria-hidden="true" /> Impérial
-          </button>
-        </div>
+        <p className="lkdv-compte-note">
+          Distance, allure, altitude et poids. Les valeurs stockées restent métriques : seul
+          l’affichage change.
+        </p>
       </section>
 
       <section className="lkdv-compte-setting-card">
@@ -258,6 +253,13 @@ export function SettingsPane() {
           />
         </div>
       </section>
+
+      {openSheet === 'notifications' ? (
+        <NotificationPreferencesSheet onClose={() => setOpenSheet(null)} />
+      ) : null}
+      {openSheet === 'language' ? (
+        <LanguageUnitsSheet onClose={() => setOpenSheet(null)} />
+      ) : null}
     </div>
   );
 }

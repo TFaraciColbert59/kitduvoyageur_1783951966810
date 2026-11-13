@@ -1,12 +1,12 @@
 /**
  * unitSetting.ts — Le réglage d'unités de la personne (PLAN-100 6.3).
  *
- * Il n'est PAS stocké côté serveur : la carte « Paramètres » du compte
+ * Il n'est PAS stocké côté serveur : la carte « Langue et unités » du compte
  * (réglages du Compte) l'écrit dans ce navigateur, clé
  * `user_account_settings_v1`, champ `unitSystem` (`'metric'` | `'imperial'`). Ce module
  * le relit sans jamais lever d'exception (navigation privée, stockage bloqué, JSON abîmé) :
  * illisible ou absent, il n'y a pas de réglage explicite et la région de la langue décide
- * (`measurePrefsFor`).
+ * (`measurePrefsFor`). `null` (option « Automatique ») retire explicitement le champ.
  *
  * Même onglet : la carte de réglages émet `UNIT_SETTING_EVENT` après l'enregistrement.
  * Autre onglet : l'événement `storage` du navigateur.
@@ -23,6 +23,64 @@ import {
 
 export const ACCOUNT_SETTINGS_KEY = 'user_account_settings_v1';
 export const UNIT_SETTING_EVENT = 'lkdv:unit-setting';
+
+/** Ancienne clé locale écrite par la première carte Paramètres. */
+const LEGACY_UNIT_STORAGE_KEY = 'lkdv_units';
+
+export interface AccountSettings {
+  language?: Locale;
+  unitSystem?: UnitSystem;
+  firstDayOfWeek?: IsoWeekday;
+  [key: string]: unknown;
+}
+
+/** Enregistrement de réglages du navigateur, ou `null` (absent, bloqué, JSON abîmé). */
+export function readAccountSettings(): AccountSettings | null {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) return null;
+    const raw = window.localStorage.getItem(ACCOUNT_SETTINGS_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as unknown;
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? (parsed as AccountSettings)
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Fusionne un réglage dans l'enregistrement local sans écraser les autres
+ * champs (langue, premier jour de semaine, futurs réglages). `null` retire la
+ * clé : c'est la façon de revenir aux conventions de région.
+ */
+export function writeAccountSettings(patch: {
+  language?: Locale;
+  unitSystem?: UnitSystem | null;
+  firstDayOfWeek?: IsoWeekday;
+}): void {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    const current = readAccountSettings() ?? {};
+    const next: AccountSettings = { ...current };
+    if (patch.language !== undefined) next.language = patch.language;
+    if (patch.firstDayOfWeek !== undefined) next.firstDayOfWeek = patch.firstDayOfWeek;
+    if (patch.unitSystem === null) delete next.unitSystem;
+    else if (patch.unitSystem !== undefined) next.unitSystem = patch.unitSystem;
+    window.localStorage.setItem(ACCOUNT_SETTINGS_KEY, JSON.stringify(next));
+    // La clé historique ne doit pas ressusciter un choix que la personne vient
+    // de remplacer (notamment « Automatique »).
+    if (patch.unitSystem !== undefined) {
+      window.localStorage.removeItem(LEGACY_UNIT_STORAGE_KEY);
+    }
+  } catch {
+    // stockage bloqué : le cookie reste le miroir serveur
+  }
+  if (patch.unitSystem !== undefined && typeof window !== 'undefined') {
+    window.dispatchEvent(new Event(UNIT_SETTING_EVENT));
+  }
+}
+
 
 /**
  * Miroir du réglage dans un cookie (`lkdv_units` : `metric` ou `imperial`), écrit par la carte
@@ -45,6 +103,29 @@ export function writeUnitCookie(system: UnitSystem): void {
     // cookies bloqués : le réglage reste lisible dans le navigateur
   }
 }
+
+/** Retire le cookie d'unités : le serveur retombe sur la région de la langue. */
+export function clearUnitCookie(): void {
+  try {
+    if (typeof document === 'undefined') return;
+    document.cookie = `${UNIT_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax`;
+  } catch {
+    // cookies bloqués : rien à retirer
+  }
+}
+
+/**
+ * Applique le réglage d'unités de la carte « Langue et unités » : enregistrement
+ * local (source de l'interface), cookie miroir pour le serveur, puis événement
+ * pour que Compas, Explorer et les autres surfaces se mettent à jour sans
+ * rechargement. `null` revient aux conventions de la région.
+ */
+export function writeUnitSystem(system: UnitSystem | null): void {
+  writeAccountSettings({ unitSystem: system });
+  if (system === null) clearUnitCookie();
+  else writeUnitCookie(system);
+}
+
 
 /** Le système d'unités d'un enregistrement de réglages (JSON), ou `null`. */
 export function parseUnitSystem(raw: string | null | undefined): UnitSystem | null {
@@ -82,11 +163,16 @@ export function readFirstDay(): IsoWeekday | null {
 export function readUnitSystem(): UnitSystem | null {
   try {
     if (typeof window === 'undefined' || !window.localStorage) return null;
-    return parseUnitSystem(window.localStorage.getItem(ACCOUNT_SETTINGS_KEY));
+    const fromSettings = parseUnitSystem(window.localStorage.getItem(ACCOUNT_SETTINGS_KEY));
+    if (fromSettings) return fromSettings;
+    // Reprise des navigateurs qui ont connu l'ancienne clé, sans migration.
+    const legacy = window.localStorage.getItem(LEGACY_UNIT_STORAGE_KEY);
+    return legacy === 'metric' || legacy === 'imperial' ? legacy : null;
   } catch {
     return null;
   }
 }
+
 
 /** Écoute les changements du réglage (cet onglet et les autres). */
 export function subscribeUnitSystem(onChange: () => void): () => void {

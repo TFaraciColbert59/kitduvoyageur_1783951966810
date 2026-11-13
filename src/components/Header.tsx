@@ -88,16 +88,18 @@ export default function Header() {
     const supabase = createClient();
 
     const fetchUnread = async () => {
-      const { count } = await supabase
-        .from('notifications')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id)
-        .eq('read', false)
-        .not('type', 'in', '("new_message","group_message","digest")');
-      setUnreadCount(count || 0);
+      // Le compteur suit les mêmes exclusions que le drawer (messages privés,
+      // digest et types coupés dans les réglages de notifications).
+      const response = await fetch('/api/compte/compte/notifications?unread=1', {
+        cache: 'no-store',
+      }).catch(() => null);
+      if (!response?.ok) return;
+      const payload = (await response.json().catch(() => null)) as { unread?: unknown } | null;
+      setUnreadCount(typeof payload?.unread === 'number' ? payload.unread : 0);
     };
 
     fetchUnread();
+    window.addEventListener('lkdv:notifications-changed', fetchUnread);
 
     const channelName = `notifications-header-${user.id}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
     const channel = supabase
@@ -117,6 +119,7 @@ export default function Header() {
       .subscribe();
 
     return () => {
+      window.removeEventListener('lkdv:notifications-changed', fetchUnread);
       supabase.removeChannel(channel);
     };
   }, [user, isDesktop]);

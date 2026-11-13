@@ -3,6 +3,7 @@ import { requireUser } from '@/lib/api/requireUser';
 import { fail, ok } from '@/lib/api/respond';
 import {
   loadNotifications,
+  loadUnreadNotificationCount,
   markAllNotificationsRead,
   markNotificationsRead,
 } from '@/features/compte/server/compte';
@@ -18,10 +19,14 @@ const Patch = z
   })
   .strict();
 
-export async function GET() {
+export async function GET(request: Request) {
   const auth = await requireUser();
   if (!auth.ok) return auth.response;
   try {
+    const unreadOnly = new URL(request.url).searchParams.get('unread') === '1';
+    if (unreadOnly) {
+      return ok({ unread: await loadUnreadNotificationCount(auth.supabase, auth.user.id) });
+    }
     const cacheKey = userCacheKey(auth.user.id, 'notifications');
     const cached = getCached<Record<string, unknown>>(cacheKey);
     const payload = cached ?? (await loadNotifications(auth.supabase, auth.user.id));

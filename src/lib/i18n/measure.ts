@@ -38,6 +38,25 @@ export function formatDistanceIn(km: number | null | undefined, tag: Locale | st
   return prefsOf(tag, opts).distance === 'mi' ? `${num(tag, km / KM_PER_MI, 1)} mi` : `${num(tag, km, 1)} km`;
 }
 
+/**
+ * Allure (fournie en secondes par kilomètre) : « 8'20"/km » ou « 13'25"/mi ».
+ * L'allure est dérivée de la distance : changer d'unité ne modifie jamais la
+ * durée ni la distance stockées.
+ */
+export function formatPaceIn(
+  secondsPerKm: number | null | undefined,
+  tag: Locale | string,
+  opts?: MeasureOptions
+): string {
+  if (absent(secondsPerKm) || secondsPerKm <= 0) return '—';
+  const unit = prefsOf(tag, opts).distance;
+  const seconds = unit === 'mi' ? secondsPerKm * KM_PER_MI : secondsPerKm;
+  const total = Math.round(seconds);
+  const minutes = Math.floor(total / 60);
+  const rest = total % 60;
+  return `${minutes}'${String(rest).padStart(2, '0')}"/${unit}`;
+}
+
 /** Altitude ou dénivelé (fourni en m) : « 1 200 m » ou « 3,937 ft ». */
 export function formatElevationIn(m: number | null | undefined, tag: Locale | string, opts?: MeasureOptions): string {
   if (absent(m)) return '—';

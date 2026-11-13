@@ -1,4 +1,12 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import {
+  NOTIFICATION_TYPES,
+  NOTIFICATION_TYPE_BY_ID,
+  computeLegacyCategories,
+  defaultNotificationPreference,
+  notificationTypesForLegacyGroup,
+  type LegacyNotificationGroup,
+} from '../notificationCatalog';
 
 /**
  * Drawer Compte — commandes, notifications, réglages, profil, partage.
@@ -294,16 +302,42 @@ export async function loadOrders(supabase: SupabaseClient, userId: string): Prom
   });
 }
 
+/**
+ * Liste PostgREST des types exclus de l'activité : messages privés, digest et
+ * types dont la personne a coupé le canal « application ». Le filtre est
+ * partagé par la liste et le compteur du badge pour qu'ils ne divergent pas.
+ */
+async function notificationExclusionList(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<string> {
+  const preferences = await loadNotificationPreferences(supabase, userId).catch(() => null);
+  const disabled = (preferences?.preferences ?? [])
+    .filter((preference) => !preference.inApp)
+    .map((preference) => preference.type.replace(/"/g, ''));
+  const excluded = ['new_message', 'group_message', 'digest', ...new Set(disabled)];
+  return `(${excluded.map((type) => `"${type}"`).join(',')})`;
+}
+
 export async function loadNotifications(
   supabase: SupabaseClient,
   userId: string
 ): Promise<{ notifications: NotificationItem[]; unread: number }> {
+  /**
+   * `notify_activity()` insère directement les notifications des commandes,
+   * prêts, défis et trophées sans consulter `notification_preferences`. Le
+   * filtre de lecture ci-dessous rend tout de même le réglage « application »
+   * effectif pour ces types : la ligne existe, mais elle n'est pas affichée
+   * quand la personne l'a coupée. Aucun service externe n'est simulé.
+   */
+  const excludedList = await notificationExclusionList(supabase, userId);
+
   const filtered = () =>
     supabase
       .from('notifications')
       .select('id,type,title,message,read,read_at,created_at,link,"group",actor_id,related_type,related_id,group_count')
       .eq('user_id', userId)
-      .not('type', 'in', '("new_message","group_message","digest")');
+      .not('type', 'in', excludedList);
 
   const [{ data }, { count }] = await Promise.all([
     filtered().order('created_at', { ascending: false }).limit(80),
@@ -312,7 +346,7 @@ export async function loadNotifications(
       .select('id', { count: 'exact', head: true })
       .eq('user_id', userId)
       .eq('read', false)
-      .not('type', 'in', '("new_message","group_message","digest")'),
+      .not('type', 'in', excludedList),
   ]);
 
   const rows = (data ?? []) as Array<Record<string, unknown>>;
@@ -427,6 +461,21 @@ export async function loadNotifications(
   });
 
   return { notifications, unread: count ?? notifications.filter((item) => item.unread).length };
+}
+
+/** Compteur de badge, avec les mêmes exclusions que la liste d'activité. */
+export async function loadUnreadNotificationCount(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<number> {
+  const excludedList = await notificationExclusionList(supabase, userId);
+  const { count } = await supabase
+    .from('notifications')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .eq('read', false)
+    .not('type', 'in', excludedList);
+  return count ?? 0;
 }
 
 export async function markNotificationsRead(
@@ -552,6 +601,164 @@ export async function updateProfileSettings(
     throw error;
   }
   return loadProfileSettings(supabase, userId, '');
+}
+
+export interface NotificationPreference {
+  type: string;
+  inApp: boolean;
+  email: boolean;
+  push: boolean;
+}
+
+export interface NotificationPreferencesPayload {
+  preferences: NotificationPreference[];
+  categories: Record<LegacyNotificationGroup, boolean>;
+}
+
+export interface NotificationPreferencePatch {
+  type: string;
+  inApp?: boolean;
+  email?: boolean;
+  push?: boolean;
+}
+
+/**
+ * Préférences fines de notification (fiche O01 S6.20).
+ *
+ * Lit `notification_preferences` par `notification_type` — la table déjà
+ * consommée par `notify()` — et complète les types absents avec les valeurs par
+ * défaut de la fonction SQL. Aucune ligne n'est inventée en base tant que la
+ * personne n'a rien changé.
+ */
+export async function loadNotificationPreferences(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<NotificationPreferencesPayload> {
+  const { data, error } = await supabase
+    .from('notification_preferences')
+    .select('notification_type,in_app_enabled,email_enabled,push_enabled')
+    .eq('user_id', userId);
+  if (error) throw error;
+
+  const rows = new Map<string, Record<string, unknown>>(
+    ((data ?? []) as Array<Record<string, unknown>>).map(
+      (row): [string, Record<string, unknown>] => [text(row.notification_type), row]
+    )
+  );
+
+  const preferences = NOTIFICATION_TYPES.map((definition) => {
+    const row = rows.get(definition.type);
+    const fallback = defaultNotificationPreference(definition);
+    return {
+      type: definition.type,
+      inApp: row ? row.in_app_enabled !== false : fallback.inApp,
+      // `notify()` force l'email à false pour ces types : on n'affiche jamais
+      // un réglage qui serait ignoré. Les types in-app seulement ne promettent
+      // ni email ni push.
+      email: definition.inAppOnly
+        ? false
+        : definition.emailLocked
+          ? false
+          : row
+            ? row.email_enabled !== false
+            : fallback.email,
+      push: definition.inAppOnly ? false : row ? row.push_enabled !== false : fallback.push,
+    };
+  });
+
+  return { preferences, categories: computeLegacyCategories(preferences) };
+}
+
+/**
+ * Écrit les préférences fines et tient `user_profiles.notification_prefs` à jour
+ * pour les anciens lecteurs. Les catégories historiques sont recalculées :
+ * une catégorie reste active tant qu'au moins un de ses types est actif dans
+ * l'application, ce qui évite de déclarer « tout coupé » après un seul type.
+ */
+export async function saveNotificationPreferences(
+  supabase: SupabaseClient,
+  userId: string,
+  patch: {
+    preferences?: NotificationPreferencePatch[];
+    categories?: Partial<Record<LegacyNotificationGroup, boolean>>;
+  }
+): Promise<NotificationPreferencesPayload> {
+  const current = await loadNotificationPreferences(supabase, userId);
+  const byType = new Map<string, NotificationPreference>(
+    current.preferences.map((preference): [string, NotificationPreference] => [
+      preference.type,
+      preference,
+    ])
+  );
+
+  const apply = (type: string, change: Partial<Omit<NotificationPreference, 'type'>>) => {
+    const definition = NOTIFICATION_TYPE_BY_ID.get(type);
+    if (!definition) throw new Error('unknown_notification_type');
+    const previous = byType.get(type) ?? {
+      type,
+      ...defaultNotificationPreference(definition),
+    };
+    byType.set(type, {
+      ...previous,
+      ...change,
+      // Ni le verrou email ni l'absence de livraison ne sont contournés par l'API.
+      email: definition.emailLocked || definition.inAppOnly ? false : change.email ?? previous.email,
+      push: definition.inAppOnly ? false : change.push ?? previous.push,
+    });
+  };
+
+  for (const preference of patch.preferences ?? []) {
+    apply(preference.type, {
+      ...(typeof preference.inApp === 'boolean' ? { inApp: preference.inApp } : {}),
+      ...(typeof preference.email === 'boolean' ? { email: preference.email } : {}),
+      ...(typeof preference.push === 'boolean' ? { push: preference.push } : {}),
+    });
+  }
+
+  for (const [group, enabled] of Object.entries(patch.categories ?? {}) as Array<
+    [LegacyNotificationGroup, boolean | undefined]
+  >) {
+    if (typeof enabled !== 'boolean') continue;
+    for (const definition of notificationTypesForLegacyGroup(group)) {
+      apply(definition.type, { inApp: enabled, email: enabled, push: enabled });
+    }
+  }
+
+  const changed = NOTIFICATION_TYPES.map((definition) => byType.get(definition.type)!);
+
+  // N'écrit que les types du catalogue : une préférence d'un type inconnu ne
+  // peut pas être injectée par l'API.
+  const { error } = await supabase.from('notification_preferences').upsert(
+    changed.map((preference) => ({
+      user_id: userId,
+      notification_type: preference.type,
+      in_app_enabled: preference.inApp,
+      email_enabled: preference.email,
+      push_enabled: preference.push,
+      updated_at: new Date().toISOString(),
+    })),
+    { onConflict: 'user_id,notification_type' }
+  );
+  if (error) throw error;
+
+  // Compatibilité : même règle que l'ancienne carte, sans toucher à quietHours.
+  const { data: profileRow } = await supabase
+    .from('user_profiles')
+    .select('notification_prefs')
+    .eq('id', userId)
+    .maybeSingle();
+  const legacy = parsePrefs(profileRow?.notification_prefs);
+  const categories = computeLegacyCategories(changed);
+  const { error: legacyError } = await supabase
+    .from('user_profiles')
+    .update({
+      notification_prefs: { ...legacy, ...categories },
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', userId);
+  if (legacyError) throw legacyError;
+
+  return { preferences: changed, categories };
 }
 
 export async function loadShareStats(
