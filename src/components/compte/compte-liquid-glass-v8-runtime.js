@@ -68,6 +68,26 @@ export function canUndoMutation(key, changed) {
   return Boolean(changed) && key !== 'profilevis';
 }
 
+/**
+ * Normalise l'état de suivi échangé avec l'hôte.
+ *
+ * Le pont reçoit `{ handle, followed }` du runtime et renvoie un état exact
+ * (`following`, `requested` ou `none`) : une demande envoyée à un profil privé
+ * n'est jamais confondue avec un abonnement actif.
+ */
+export function normalizeFollowState(value) {
+  return value === 'following' || value === 'requested' || value === 'none'
+    ? value
+    : null;
+}
+
+/** Libellé visible d'un état de suivi, y compris la demande en attente. */
+export function followButtonLabel(state) {
+  if (state === 'requested') return 'Demande envoyée';
+  if (state === 'following') return 'Abonné(e)';
+  return 'Suivre';
+}
+
 /* Nationalités proposées par le runtime : la valeur reçue doit être l'une de
    ces chaînes exactes, sans normalisation silencieuse. */
 const NATIONALITY_VALUES = Object.freeze([
@@ -818,7 +838,29 @@ let whatIf = function(a, v) {
 let isT = null;
 let island = function(t, sub, undoable) {
   if (!isCurrent()) return;
-  $("isn").innerHTML = `<div class="t"><b>${t}</b>${sub ? `<span>${sub}</span>` : ""}</div>${undoable ? `<button data-a="undo" aria-label="Annuler">Annuler</button>` : ""}`;
+  const host = $("isn");
+  if (!host) return;
+  // Frontière texte : les messages peuvent venir d'une API ou d'un handle.
+  // Aucun n'est interprété comme du HTML.
+  const title = document.createElement("div");
+  title.className = "t";
+  const strong = document.createElement("b");
+  strong.textContent = String(t ?? "");
+  title.appendChild(strong);
+  if (sub) {
+    const detail = document.createElement("span");
+    detail.textContent = String(sub);
+    title.appendChild(detail);
+  }
+  const nodes = [title];
+  if (undoable) {
+    const undo = document.createElement("button");
+    undo.dataset.a = "undo";
+    undo.setAttribute("aria-label", "Annuler");
+    undo.textContent = "Annuler";
+    nodes.push(undo);
+  }
+  host.replaceChildren(...nodes);
   $("island").dataset.s = "note";
   let sr = $("live-status");
   if (!sr && $("phone")) {
@@ -2878,9 +2920,55 @@ window.__QR={"n":37,"rows":["1111111011101010010100110111001111111","10000010010
 
 /* ================= Compte — 50 améliorations : couche d'extension (override des fonctions du générateur) ================= */
 (() => {
-const X = { filter: 'all', feed: false, visitor: false, ligSub: 0, cmp: null, prof: 'km', story: null, vault: 0, scan: 0, seen: {}, hov: false, mon: null, evt: null, acct: 'me', hold: 0 };
+const X = { filter: 'all', feed: false, visitor: false, ligSub: 0, cmp: null, prof: 'km', story: null, vault: 0, scan: 0, seen: {}, hov: false, mon: null, evt: null, acct: 'me', hold: 0, followStates: {}, followPending: {} };
 // Interaction state stays inside the owning runtime.
 interactionState = X;
+
+/** Handle normalisé pour les cartes d'état de suivi. */
+function followHandle(handle) {
+  return String(handle || '').replace(/^@/, '').trim();
+}
+
+/**
+ * État affiché d'un bouton de suivi.
+ *
+ * La bascule optimiste vit dans `followPending` ; `followStates` ne contient
+ * que l'état confirmé par le pont. Une demande (`requested`) reste donc
+ * visible jusqu'à la réponse serveur, puis après elle.
+ */
+function followStateFor(handle, fallback) {
+  const key = followHandle(handle);
+  if (!key) return fallback;
+  if (X.followPending && X.followPending[key] !== undefined) return X.followPending[key];
+  if (X.followStates && X.followStates[key] !== undefined) return X.followStates[key];
+  if (X.followedUsers && X.followedUsers[key] !== undefined) {
+    return X.followedUsers[key] ? 'following' : 'none';
+  }
+  return fallback;
+}
+
+function followIsOn(state) {
+  return state === 'following' || state === 'requested';
+}
+
+function followClass(state, activeClass, idleClass) {
+  return followIsOn(state) ? activeClass : idleClass;
+}
+
+function followBusy(handle) {
+  const key = followHandle(handle);
+  return Boolean(key && X.followPending && X.followPending[key] !== undefined);
+}
+
+/**
+ * Rend l'échec du pont visible (îlot + région live), sans jamais laisser la
+ * bascule optimiste en place. Le message serveur est borné par la route.
+ */
+function showFollowError(message) {
+  const text = String(message || 'Impossible de mettre à jour cet abonnement.').trim();
+  island('Suivi impossible', text, false);
+}
+
 {
   const st = document.createElement('div'); st.className = 'story'; st.id = 'story'; st.setAttribute('role', 'dialog'); st.setAttribute('aria-label', 'Story à la une'); phone.appendChild(st);
   const sh = document.createElement('div'); sh.className = 'sunshade'; sh.setAttribute('aria-hidden', 'true'); $('map').insertBefore(sh, $('mgrab'));
@@ -3302,7 +3390,12 @@ renderIgTabContent = function (D) {
     if (!list.length) {
       return '<div class="ig-voyages-tab" role="region" aria-label="Sorties faites et voyages réalisés"><div style="padding:28px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;"><b style="font:600 14px var(--sf);color:var(--label);">Aucune sortie enregistrée</b><p style="font:400 12px/1.4 var(--sf);color:var(--label2);max-width:240px;margin:0 auto;">Vos traces GPS et vos sorties apparaîtront ici dès votre première randonnée enregistrée.</p><a href="/compas" class="mbtn p" style="text-decoration:none;height:30px;padding:0 14px;font-size:12px;">Planifier un voyage</a></div></div>';
     }
+    const canManage = !(S.profile && (S.profile.isDemo || S.profile.isGuest));
+    const bulkBar = canManage
+      ? '<div style="display:flex;justify-content:flex-end;padding:0 16px 4px"><button class="mbtn soft" data-a="openOutingBulk" style="height:44px;padding:0 16px;font-size:12.5px">Gérer la visibilité</button></div>'
+      : '';
     return '<div class="ig-voyages-tab" role="region" aria-label="Sorties faites et voyages réalisés">' +
+      bulkBar +
       '<div class="voyages-carousel">' +
         list.map((o, idx) => {
           const photo = o.coverImage || '';
@@ -3356,6 +3449,8 @@ renderIgTabContent = function (D) {
       '</div>' +
       (currentList.length ? '<div class="reseau-list">' +
         currentList.map(u => {
+          const follow = followStateFor(u.h, u.followed ? 'following' : 'none');
+          const pending = followBusy(u.h);
           return '<div class="reseau-user-row">' +
             '<div class="reseau-av-wrap" data-a="openUserProfile" data-v="' + u.h + '" style="cursor:pointer">' +
               (u.img ? '<img src="' + u.img + '" alt="' + u.n + '" class="reseau-av" loading="lazy" />' : '<span class="reseau-av" style="display:grid;place-items:center;background:#DDEBD8;color:#17402C;font:700 12px var(--sf)">' + u.i + '</span>') +
@@ -3365,8 +3460,8 @@ renderIgTabContent = function (D) {
               '<div class="reseau-name-row"><b>' + u.n + '</b><span class="reseau-handle">@' + u.h + '</span></div>' +
               '<div class="reseau-sub">' + u.sub + '</div>' +
             '</div>' +
-            '<button class="reseau-btn ' + (u.followed ? 'active' : 'primary') + '" data-a="toggleFollowUser" data-v="' + u.h + '">' +
-              (u.followed ? 'Abonné(e)' : 'Suivre') +
+            '<button class="reseau-btn ' + followClass(follow, 'active', 'primary') + '" data-a="toggleFollowUser" data-v="' + u.h + '" aria-busy="' + pending + '"' + (pending ? ' disabled' : '') + '>' +
+              followButtonLabel(follow) +
             '</button>' +
           '</div>';
         }).join('') +
@@ -3841,7 +3936,10 @@ const EXK = {
               <button class="${isFollowers ? 'active' : ''}" data-a="toggleFollowersSheet" data-v="followers" role="tab" aria-selected="${isFollowers}" aria-label="Abonnés (${fCount})" title="Abonnés (${fCount})">${ic(IC.people, 's')}</button>
             </div>`,
             currentList.length ? `<div class="reseau-list">
-              ${currentList.map(u => `
+              ${currentList.map(u => {
+                const follow = followStateFor(u.h, u.followed ? 'following' : 'none');
+                const pending = followBusy(u.h);
+                return `
                 <div class="reseau-user-row">
                   <div class="reseau-av-wrap" data-a="openUserProfile" data-v="${u.h}" style="cursor:pointer">
                     ${u.img ? `<img src="${u.img}" alt="${u.n}" class="reseau-av" loading="lazy" />` : `<span class="reseau-av" style="display:grid;place-items:center;background:#DDEBD8;color:#17402C;font:700 12px var(--sf)">${u.i}</span>`}
@@ -3854,11 +3952,12 @@ const EXK = {
                     </div>
                     <div class="reseau-sub">${u.sub}</div>
                   </div>
-                  <button class="reseau-btn ${u.followed ? 'active' : 'primary'}" data-a="toggleFollowUser" data-v="${u.h}">
-                    ${u.followed ? 'Abonné(e)' : 'Suivre'}
+                  <button class="reseau-btn ${followClass(follow, 'active', 'primary')}" data-a="toggleFollowUser" data-v="${u.h}" aria-busy="${pending}" ${pending ? 'disabled' : ''}>
+                    ${followButtonLabel(follow)}
                   </button>
                 </div>
-              `).join('')}
+              `;
+              }).join('')}
             </div>` : `<div style="padding:28px 16px;text-align:center;color:var(--label2);font:400 12px/1.4 var(--sf);">${isFollowers ? 'Aucun abonné pour le moment.' : 'Aucun abonnement pour le moment.'}</div>`
           ]
         })
@@ -3887,7 +3986,9 @@ const EXK = {
       outings: null,
       km: null
     };
-    const isUserFollowed = (X.followedUsers && X.followedUsers[user.handle] !== undefined) ? X.followedUsers[user.handle] : user.following;
+    const follow = followStateFor(user.handle, user.following ? 'following' : 'none');
+    const followPending = followBusy(user.handle);
+    const isUserFollowed = followIsOn(follow);
 
     return {
       title: '@' + user.handle,
@@ -3910,8 +4011,8 @@ const EXK = {
                 <span>Massif : <b>${user.massif}</b></span>
               </div>
               <div style="display:flex;gap:8px;width:100%">
-                <button class="mbtn ${isUserFollowed ? 'soft' : 'p'}" style="flex:1;height:36px;justify-content:center" data-a="toggleFollowUser" data-v="${user.handle}">
-                  ${isUserFollowed ? 'Abonné(e)' : 'Suivre ce randonneur'}
+                <button class="mbtn ${isUserFollowed ? 'soft' : 'p'}" style="flex:1;height:36px;justify-content:center" data-a="toggleFollowUser" data-v="${user.handle}" aria-busy="${followPending}" ${followPending ? 'disabled' : ''}>
+                  ${followButtonLabel(follow)}
                 </button>
                 <button class="mbtn soft" style="height:36px;padding:0 14px" data-a="openUserProfile" data-v="${user.handle}">
                   Profil complet
@@ -4222,7 +4323,7 @@ function applyAccountBootstrap(data) {
 const notifyHostAction = (a, v) => {
   if (!isCurrent()) return;
   if (typeof window.__lkdvOnAction === 'function') {
-    try { window.__lkdvOnAction(a, v, S); } catch (_) {}
+    try { return window.__lkdvOnAction(a, v, S); } catch (_) {}
   }
 };
 /* ---------- Point 3 : Modal Post Instagram (100 % Réplique Native Liquid Glass) ---------- */
@@ -4780,24 +4881,82 @@ var EXA = {
     haptic(6);
   },
   toggleFollowUser: v => {
+    const handle = followHandle(v);
+    if (!handle || followBusy(handle)) return;
     X.followedUsers = X.followedUsers || {};
+    X.followStates = X.followStates || {};
+    X.followPending = X.followPending || {};
     let current;
-    if (X.followedUsers[v] !== undefined) {
-      current = X.followedUsers[v];
+    if (X.followStates[handle] !== undefined) {
+      current = followIsOn(X.followStates[handle]);
+    } else if (X.followedUsers[handle] !== undefined) {
+      current = X.followedUsers[handle];
     } else {
-      const btn = document.querySelector(`[data-a="toggleFollowUser"][data-v="${v}"]`);
+      const btn = document.querySelector(`[data-a="toggleFollowUser"][data-v="${handle}"]`);
       current = btn ? btn.classList.contains('active') : true;
     }
-    X.followedUsers[v] = !current;
-    const isNowFollowed = X.followedUsers[v];
+    const nextState = current ? 'none' : 'following';
+    const isNowFollowed = nextState !== 'none';
+    // Bascule optimiste locale : le pont confirmera `requested` pour un profil
+    // privé, et `none` en cas d'échec (rollback par le vrai hydrate).
+    X.followPending[handle] = nextState;
+    X.followedUsers[handle] = isNowFollowed;
     island(
-      isNowFollowed ? `Abonné(e) à @${v}` : `Désabonné(e) de @${v}`,
+      isNowFollowed ? `Abonné(e) à @${handle}` : `Désabonné(e) de @${handle}`,
       isNowFollowed ? 'Tu verras ses sorties et carnets alpins' : 'Mise à jour immédiate',
       false
     );
     haptic(10);
     renderSheet();
-    notifyHostAction('toggleFollowUser', { handle: v, followed: isNowFollowed });
+    const outcome = notifyHostAction('toggleFollowUser', { handle, followed: isNowFollowed });
+    // Le pont peut confirmer `requested`, restaurer l'état précédent via le
+    // vrai hydrate, ou échouer sans hydrate. Dans ce dernier cas, le retour
+    // explicite porte `state` : on l'applique, sinon on rend la main au
+    // fallback confirmé (jamais un bouton bloqué sur « Envoi »).
+    if (outcome && typeof outcome.then === 'function') {
+      outcome
+        .then((result) => {
+          if (!isCurrent()) return;
+          // Une requête déjà en vol garde sa bascule : ce doublon ne doit pas
+          // réarmer le bouton avant la réponse de la première.
+          if (result && result.code === 'in_flight') return;
+          if (result && result.state) {
+            const applied = window.__lkdvApplyFollowStates?.({ [handle]: result.state });
+            if (!applied) {
+              const state = normalizeFollowState(result.state);
+              if (state) {
+                X.followStates[handle] = state;
+                X.followedUsers[handle] = state !== 'none';
+              }
+              delete X.followPending[handle];
+            }
+            if (result.ok === false) showFollowError(result.message);
+            renderSheet();
+            return;
+          }
+          if (!result || result.restored === false) {
+            delete X.followPending[handle];
+            delete X.followedUsers[handle];
+          }
+          if (!result || result.ok === false) showFollowError(result && result.message);
+          renderSheet();
+        })
+        .catch(() => {
+          if (!isCurrent()) return;
+          delete X.followPending[handle];
+          delete X.followedUsers[handle];
+          showFollowError('Le suivi est momentanément indisponible.');
+          renderSheet();
+        });
+    } else {
+      // Pont absent (ou action jetée avant de rendre sa promesse) : aucune
+      // réponse ne viendra. On rend la main au fallback confirmé au lieu de
+      // laisser le bouton bloqué sur « Envoi ».
+      delete X.followPending[handle];
+      delete X.followedUsers[handle];
+      showFollowError('Le suivi est momentanément indisponible.');
+      renderSheet();
+    }
   },
   openUserProfile: v => {
     const cleanHandle = String(v || '').replace(/^@/, '').trim();
@@ -4934,6 +5093,33 @@ var EXA = {
     openSheet('outing_drawer', 0, 'card', { outingId: o.realId || o.id });
     requestAnimationFrame(() => flyToOuting(o));
     haptic(10);
+  },
+  openOutingBulk: () => {
+    /* Le lot est orchestré par l'hôte React avec le PATCH propriétaire
+       existant. Le runtime ne simule aucune écriture et ne fournit que les
+       identifiants réels et l'audience déjà lue. */
+    if (S.profile && (S.profile.isDemo || S.profile.isGuest)) {
+      island('Compte de démonstration', 'Connecte un compte réel pour changer une audience.', false);
+      return;
+    }
+    const items = [];
+    const seen = new Set();
+    for (const o of OUTINGS) {
+      const id = o.realId || o.id;
+      if (!id || seen.has(id)) continue;
+      seen.add(id);
+      items.push({
+        id,
+        title: o.title || 'Sortie',
+        visibility: o.visibility === 'collective_anonymized' ? 'collective_anonymized' : 'private',
+      });
+    }
+    if (!items.length) {
+      island('Aucune sortie', 'Aucune audience ne peut être modifiée.', false);
+      return;
+    }
+    window.dispatchEvent(new CustomEvent('lkdv:open-outing-bulk', { detail: { items } }));
+    haptic(8);
   },
   save_full_profile: () => {
     const nameEl = $('ep_name'), handleEl = $('ep_handle'), bioEl = $('ep_bio');
@@ -5334,6 +5520,7 @@ window.__lkdvHydrateCompte = function (data) {
           dplus: Number(o.dplus) || 1200,
           maxAlt: 2400,
           status: o.status === 'planned' ? 'planned' : 'done',
+          visibility: o.visibility === 'collective_anonymized' ? 'collective_anonymized' : 'private',
           x: 200,
           y: 140
         });
@@ -5399,10 +5586,106 @@ window.__lkdvHydrateCompte = function (data) {
 
   refresh(true);
 };
+/** États de suivi confirmés et bascules en cours, lus par le pont hôte. */
+window.__lkdvGetFollowState = () => isCurrent() ? ({
+  followStates: X.followStates,
+  followPending: X.followPending,
+}) : null;
+
+/**
+ * Applique des états de suivi venus de l'hôte.
+ *
+ * Sans option, c'est un patch : chaque entrée confirme un handle et efface sa
+ * bascule optimiste. Avec `{ replace: true }`, le payload est complet : les
+ * handles absents sont retirés pour qu'un `{ alice: 'requested' }` suivi d'un
+ * `{}` revienne bien à « Suivre ». `preserve` protège les handles dont une
+ * mutation locale est plus récente que la lecture (course hydratation/action).
+ */
+window.__lkdvApplyFollowStates = (followStates, options) => {
+  if (!isCurrent() || !followStates || typeof followStates !== 'object') return false;
+  const opts = options && typeof options === 'object' ? options : {};
+  const replace = opts.replace === true;
+  const preserve = new Set(
+    (Array.isArray(opts.preserve) ? opts.preserve : [])
+      .map(followHandle)
+      .filter(Boolean)
+  );
+  X.followStates = X.followStates || {};
+  X.followPending = X.followPending || {};
+  X.followedUsers = X.followedUsers || {};
+
+  const previous = replace ? { ...X.followStates } : null;
+  const next = replace ? {} : X.followStates;
+  let changed = replace;
+  for (const [rawHandle, rawState] of Object.entries(followStates)) {
+    const handle = followHandle(rawHandle);
+    const state = normalizeFollowState(rawState);
+    if (!handle || !state) continue;
+    // Une action partie après le fetch est plus récente que ce snapshot.
+    if (replace && preserve.has(handle)) continue;
+    if (next[handle] !== state) changed = true;
+    next[handle] = state;
+    X.followedUsers[handle] = state !== 'none';
+    delete X.followPending[handle];
+  }
+  if (replace) {
+    for (const handle of preserve) {
+      if (previous[handle] !== undefined) next[handle] = previous[handle];
+    }
+    // Une bascule encore en vol ne doit pas perdre son état confirmé de repli.
+    for (const handle of Object.keys(X.followPending)) {
+      if (previous[handle] !== undefined) next[handle] = previous[handle];
+    }
+    // Un handle absent du payload complet n'a plus d'état confirmé : sans ce
+    // nettoyage, `followedUsers` le repeindrait en « Abonné ».
+    for (const handle of Object.keys(X.followedUsers)) {
+      if (next[handle] === undefined && X.followPending[handle] === undefined) {
+        delete X.followedUsers[handle];
+      }
+    }
+    X.followStates = next;
+  }
+  return changed;
+};
+
+/**
+ * Signale un bootstrap social partiel : les états, compteurs et listes connus
+ * restent affichés. `scope` distingue un échec des états (`states`), des
+ * abonnés (`followers`), des suivis (`following`) ou des deux (`lists`/`all`).
+ */
+window.__lkdvShowFollowUnavailable = (scope) => {
+  if (!isCurrent()) return;
+  const kind =
+    scope === 'lists' || scope === 'all' || scope === 'followers' || scope === 'following'
+      ? scope
+      : 'states';
+  const title =
+    kind === 'lists'
+      ? 'Listes d’abonnés indisponibles'
+      : kind === 'followers'
+        ? 'Liste des abonnés indisponible'
+        : kind === 'following'
+          ? 'Liste des suivis indisponible'
+          : kind === 'all'
+            ? 'Données sociales partielles'
+            : 'État de suivi indisponible';
+  const detail =
+    kind === 'lists'
+      ? 'Les compteurs et listes connus sont conservés. Réessaie dans un instant.'
+      : kind === 'followers'
+        ? 'La liste des abonnés connue est conservée. Réessaie dans un instant.'
+        : kind === 'following'
+          ? 'La liste des suivis connue est conservée. Réessaie dans un instant.'
+          : kind === 'all'
+            ? 'Les états, compteurs et listes connus sont conservés. Réessaie dans un instant.'
+            : 'Les boutons gardent leur dernier état connu. Réessaie dans un instant.';
+  island(title, detail, false);
+};
 /* ---------- Montage ---------- */
 bindIgSwipe();
 refresh(true);
 })();
+
 
 
 
@@ -5416,6 +5699,13 @@ window.__lkdvGetState = () => isCurrent() ? ({
   ORDERS,
   ORDERS_BOOKINGS,
   KITS_LINEAGE,
+  // Listes sociales réellement hydratées : permet de prouver leur conservation
+  // alors que les compteurs seuls ne suffisent pas.
+  followers: FOLLOWERS,
+  following: FOLLOWING,
+  tribu: TRIBU,
+  followStates: window.__lkdvGetFollowState?.()?.followStates,
+  followPending: window.__lkdvGetFollowState?.()?.followPending,
 }) : null;
 
 window.__lkdvCompteAct = (actionName, val, meta) => {
@@ -5436,6 +5726,15 @@ const hydrateAccountReplace = window.__lkdvHydrateCompte;
 window.__lkdvHydrateCompte = (data) => {
   if (!isCurrent()) return;
   if (!data || typeof data !== 'object') return;
+  // États de suivi confirmés par le pont : `following`, `requested` ou `none`.
+  // Le vrai hydrate remplace la bascule optimiste ; un échec réapplique ici
+  // l'état confirmé précédent, jamais un `undefined` silencieux.
+  if (data.followStates && typeof data.followStates === 'object') {
+    window.__lkdvApplyFollowStates?.(data.followStates, {
+      replace: data.replace === true,
+      preserve: data.followStatesPreserve,
+    });
+  }
   if (data.replace === true) {
     hydrateAccountReplace(data);
     return;
@@ -5518,6 +5817,7 @@ window.__lkdvHydrateCompte = (data) => {
         dplus: Number(o.dplus || o.elevation_gain_m) || 0,
         maxAlt: o.max_altitude || 2000,
         status: o.status === 'completed' || o.status === 'done' ? 'done' : 'planned',
+        visibility: o.visibility === 'collective_anonymized' ? 'collective_anonymized' : 'private',
         x: 200,
         y: 140
       });

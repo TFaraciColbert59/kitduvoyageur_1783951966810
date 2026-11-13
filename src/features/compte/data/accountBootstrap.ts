@@ -3,6 +3,7 @@ import {
   signatureVisibilityForValue,
   type SignatureVisibility,
 } from './accountVisibility';
+import { normalizeStoredOutingVisibility } from '../domain/outingAudience';
 
 /**
  * Mapping pur des données Supabase vers les formes attendues par le runtime
@@ -288,6 +289,12 @@ export type FollowProfileRow = {
   location?: string | null;
 };
 
+/** Demande de suivi sortante du compte courant (jamais un identifiant exposé). */
+export type OutgoingFollowRequestRow = {
+  target_id?: string | null;
+  status?: string | null;
+};
+
 export type StoryRow = {
   id: string;
   caption?: string | null;
@@ -537,17 +544,20 @@ function indexMassifsByKey(massifs: GeoMassifRow[]): Map<string, GeoMassifRow> {
 
 export function mapProfile(
   profile: AccountProfileRow | null,
-  followers: number,
-  following: number
+  followers: number | null,
+  following: number | null
 ) {
   const name = profile?.full_name?.trim() || profile?.handle || 'Voyageur';
   const handle = profile?.handle || profile?.id?.slice(0, 8) || 'voyageur';
   return {
     handle,
     name,
-    followersCount: followers,
-    followingCount: following,
-    followersLabel: followers.toLocaleString('fr-FR'),
+    // Un compteur dont la lecture a échoué est omis, jamais ramené à zéro :
+    // l'hydratation remplace ne touche que les champs numériques présents.
+    ...(typeof followers === 'number'
+      ? { followersCount: followers, followersLabel: followers.toLocaleString('fr-FR') }
+      : {}),
+    ...(typeof following === 'number' ? { followingCount: following } : {}),
     bioLine: [profile?.location, profile?.bio].filter(Boolean).join(' · '),
     avatarUrl: profile?.avatar_url || null,
     isGuest: false,
@@ -785,6 +795,7 @@ export function mapOutings(
       dplus: Number(row.elevation_gain_m ?? 0),
       maxAlt: row.max_altitude_m ?? null,
       status: done ? 'done' : 'upcoming',
+      visibility: normalizeStoredOutingVisibility(row.visibility),
       ready: done ? 100 : 0,
       proven: Boolean(row.positions_timed),
       comp: [] as string[],
@@ -845,6 +856,33 @@ export function mapTribu(rows: FollowProfileRow[]) {
     online: 0,
     avatar: row.avatar_url || null,
   }));
+}
+
+/**
+ * États `requested` à hydrater au chargement du Compte.
+ *
+ * Seules les cibles réellement visibles (`public_profiles` : public, soi-même
+ * ou privé avec invitation acceptée) ont un handle : un profil privé non
+ * invité ne produit donc jamais d'état, même si une demande existe en base.
+ * L'appelant retire au préalable les cibles déjà suivies : un suivi réel prime
+ * toujours sur une demande `pending` résiduelle.
+ */
+export function mapOutgoingFollowStates(
+  requests: readonly OutgoingFollowRequestRow[],
+  profiles: readonly FollowProfileRow[]
+): Record<string, 'requested'> {
+  const handleById = new Map<string, string>();
+  for (const row of profiles) {
+    const handle = row.handle?.replace(/^@/, '').trim();
+    if (row.id && handle) handleById.set(row.id, handle);
+  }
+  const states: Record<string, 'requested'> = {};
+  for (const row of requests) {
+    if (row.status !== 'pending' || !row.target_id) continue;
+    const handle = handleById.get(row.target_id);
+    if (handle) states[handle] = 'requested';
+  }
+  return states;
 }
 
 export function mapStories(rows: StoryRow[]) {
@@ -1582,7 +1620,8 @@ async function safeRowsOrNull<T>(
     const { data, error } = await query;
     if (error) {
       // Jamais de bruit en production : une table optionnelle absente ou une
-      // RLS refusée doit rester un état vide silencieux côté client.
+      // RLS refusée reste un échec silencieux côté logs, mais l'appelant reçoit
+      // `null` et peut décider d'un état explicite (jamais un faux « vide »).
       if (process.env.NODE_ENV !== 'production') {
         console.warn('[compte] lecture bootstrap ignorée', error);
       }
@@ -1609,17 +1648,47 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
   const user = authData?.user;
   if (!user) return { authenticated: false as const };
 
-  const [profileRes, followerRows, followingRows] = await Promise.all([
+  const [
+    profileRes,
+    followerRowsResult,
+    followingRowsResult,
+    outgoingRequestRowsResult,
+  ] = await Promise.all([
     supabase.from('user_profiles').select('*').eq('id', user.id).maybeSingle(),
-    safeRows<{ follower_id?: string | null }>(
+    safeRowsOrNull<{ follower_id?: string | null }>(
       supabase.from('user_follows').select('follower_id').eq('following_id', user.id)
     ),
-    safeRows<{ following_id?: string | null }>(
+    safeRowsOrNull<{ following_id?: string | null }>(
       supabase.from('user_follows').select('following_id').eq('follower_id', user.id)
+    ),
+    safeRowsOrNull<OutgoingFollowRequestRow>(
+      supabase
+        .from('follow_requests')
+        .select('target_id, status')
+        .eq('requester_id', user.id)
+        .eq('status', 'pending')
     ),
   ]);
 
+  // `null` = lecture en échec, `[]` = lecture réussie mais vide. Les états de
+  // suivi ne doivent jamais confondre les deux : un échec ne doit pas faire
+  // croire que l'utilisateur ne suit personne.
+  const followerRows = followerRowsResult ?? [];
+  const followingRows = followingRowsResult ?? [];
+  const outgoingRequestRows = outgoingRequestRowsResult ?? [];
+  // Les listes/compteurs et les états de suivi ont des dépendances distinctes.
+  // Un échec de `follow_requests` ne doit pas vider les listes. En revanche,
+  // sans la lecture des suivis (`followingRowsResult`), une demande `pending`
+  // résiduelle ne peut pas être écartée : les états seront invalidés plus bas.
+  // Chaque lecture de liste garde son propre indicateur : un échec des abonnés
+  // ne doit pas jeter la liste des suivis (et inversement).
+  const followersUnavailable = followerRowsResult === null;
+  const followingUnavailable = followingRowsResult === null;
+
   const profile = (profileRes.data ?? null) as AccountProfileRow | null;
+  // Un échec de `user_profiles` ne doit jamais devenir un faux profil
+  // « Voyageur » : le client conservera l'identité connue.
+  const profileUnavailable = profileRes.error != null;
   const followerIds = [
     ...new Set(
       followerRows
@@ -1634,30 +1703,44 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
         .filter((id): id is string => typeof id === 'string' && id.length > 0)
     ),
   ];
+  // Les demandes sortantes déjà satisfaites par un suivi réel ne doivent pas
+  // repeindre le bouton en « Demande envoyée » (propagation en cours).
+  const pendingFollowTargetIds = [
+    ...new Set(
+      outgoingRequestRows
+        .filter((row) => row.status === 'pending')
+        .map((row) => row.target_id)
+        .filter(
+          (id): id is string =>
+            typeof id === 'string' && id.length > 0 && !followingIds.includes(id)
+        )
+    ),
+  ];
   const followers = followerIds.length;
 
   const [
-    postRows,
-    outings,
-    statsSessions,
-    orderRows,
-    notificationRows,
+    postRowsResult,
+    outingsResult,
+    statsSessionsResult,
+    orderRowsResult,
+    notificationRowsResult,
     followingProfiles,
     followerProfiles,
-    clubMembers,
-    kitRows,
-    storyRows,
-    badgeRows,
-    userBadgeRows,
-    challengeRows,
-    userChallengeRows,
-    progressionRows,
-    userProgressionRows,
-    ownershipRows,
-    loanRows,
-    highlightRows,
+    outgoingRequestProfiles,
+    clubMembersResult,
+    kitRowsResult,
+    storyRowsResult,
+    badgeRowsResult,
+    userBadgeRowsResult,
+    challengeRowsResult,
+    userChallengeRowsResult,
+    progressionRowsResult,
+    userProgressionRowsResult,
+    ownershipRowsResult,
+    loanRowsResult,
+    highlightRowsResult,
   ] = await Promise.all([
-    safeRows<PostRow>(
+    safeRowsOrNull<PostRow>(
       supabase
         .from('community_posts')
         .select(
@@ -1667,7 +1750,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
         .order('created_at', { ascending: false })
         .limit(24)
     ),
-    safeRows<HikeRow>(
+    safeRowsOrNull<HikeRow>(
       supabase
         .from('hike_sessions')
         .select('id,route_id,started_at,ended_at,distance_km,elevation_gain_m,positions_timed,kit_id,title,max_altitude_m,visibility')
@@ -1677,7 +1760,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
     ),
     // Agrégats Vitrine, Passeport et Cordée : toutes les sessions, sans
     // plafond de liste. La trace GPS est lue pour vérifier les tampons.
-    safeRows<StatsHikeRow>(
+    safeRowsOrNull<StatsHikeRow>(
       supabase
         .from('hike_sessions')
         .select(
@@ -1685,10 +1768,10 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
         )
         .eq('user_id', user.id)
     ),
-    safeRows<OrderRow>(
+    safeRowsOrNull<OrderRow>(
       supabase.from('orders').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(20)
     ),
-    safeRows<NotificationRow>(
+    safeRowsOrNull<NotificationRow>(
       supabase
         .from('notifications')
         .select('id,type,title,message,read,created_at,link')
@@ -1697,7 +1780,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
         .limit(20)
     ),
     followingIds.length
-      ? safeRows<FollowProfileRow>(
+      ? safeRowsOrNull<FollowProfileRow>(
           supabase
             .from('public_profiles')
             .select('id,handle,full_name,avatar_url,trust_score,location')
@@ -1705,15 +1788,26 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
         )
       : Promise.resolve([] as FollowProfileRow[]),
     followerIds.length
-      ? safeRows<FollowProfileRow>(
+      ? safeRowsOrNull<FollowProfileRow>(
           supabase
             .from('public_profiles')
             .select('id,handle,full_name,avatar_url,trust_score,location')
             .in('id', followerIds)
         )
       : Promise.resolve([] as FollowProfileRow[]),
-    safeRows<ClubMemberRow>(supabase.from('club_members').select('club_id,role,status').eq('user_id', user.id)),
-    safeRows<KitRow>(
+    // Cibles des demandes sortantes : la vue `public_profiles` applique déjà
+    // les règles de visibilité (public, soi, ou privé avec invitation
+    // acceptée). Une cible privée non invitée reste donc sans handle.
+    pendingFollowTargetIds.length
+      ? safeRowsOrNull<FollowProfileRow>(
+          supabase
+            .from('public_profiles')
+            .select('id,handle')
+            .in('id', pendingFollowTargetIds)
+        )
+      : Promise.resolve([] as FollowProfileRow[]),
+    safeRowsOrNull<ClubMemberRow>(supabase.from('club_members').select('club_id,role,status').eq('user_id', user.id)),
+    safeRowsOrNull<KitRow>(
       supabase
         .from('materiel_kits')
         .select(
@@ -1724,7 +1818,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
         .order('updated_at', { ascending: false })
         .limit(24)
     ),
-    safeRows<StoryRow>(
+    safeRowsOrNull<StoryRow>(
       supabase
         .from('post_stories')
         .select('id,caption,media_type,created_at,storage_path,image_url')
@@ -1733,37 +1827,37 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
         .order('created_at', { ascending: false })
         .limit(12)
     ),
-    safeRows<BadgeRow>(
+    safeRowsOrNull<BadgeRow>(
       supabase
         .from('badges')
         .select('id,name,description,rarity,points_reward,requirement_type,requirement_value,active')
     ),
-    safeRows<UserBadgeRow>(
+    safeRowsOrNull<UserBadgeRow>(
       supabase.from('user_badges').select('badge_id,earned_at').eq('user_id', user.id)
     ),
-    safeRows<ChallengeRow>(
+    safeRowsOrNull<ChallengeRow>(
       supabase
         .from('challenges')
         .select('id,title,category,difficulty,xp,total,deadline,active')
     ),
-    safeRows<UserChallengeRow>(
+    safeRowsOrNull<UserChallengeRow>(
       supabase
         .from('user_challenges')
         .select('challenge_id,progress,completed,completed_at')
         .eq('user_id', user.id)
     ),
-    safeRows<ProgressionChallengeRow>(
+    safeRowsOrNull<ProgressionChallengeRow>(
       supabase
         .from('progression_challenges')
         .select('id,title,skill,points_reward,difficulty,target_progress')
     ),
-    safeRows<UserProgressionRow>(
+    safeRowsOrNull<UserProgressionRow>(
       supabase
         .from('user_progression')
         .select('current_challenge_id,challenge_progress')
         .eq('user_id', user.id)
     ),
-    safeRows<OwnershipRow>(
+    safeRowsOrNull<OwnershipRow>(
       supabase
         .from('product_ownership')
         .select('id,name,brand,category,weight_g,price_cents,condition,photo_url,is_lent,description,quantity,purchase_date,maintenance_due_at,status,location,tags')
@@ -1771,7 +1865,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
         .order('created_at', { ascending: false })
         .limit(500)
     ),
-    safeRows<LoanRow>(
+    safeRowsOrNull<LoanRow>(
       supabase
         .from('materiel_loans')
         .select(
@@ -1781,7 +1875,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
         .order('loaned_at', { ascending: false })
         .limit(100)
     ),
-    safeRows<StoryHighlightRow>(
+    safeRowsOrNull<StoryHighlightRow>(
       supabase
         .from('story_highlights')
         .select('id,title,cover_story_id,position')
@@ -1790,11 +1884,54 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
     ),
   ]);
 
+  // `null` = lecture en échec ; les tableaux restent utilisables par les
+  // mappeurs, mais l'indicateur permet au client de conserver les données
+  // connues et à l'overlay d'afficher « — » au lieu d'un faux zéro.
+  const postRows = postRowsResult ?? [];
+  const outings = outingsResult ?? [];
+  const statsSessions = statsSessionsResult ?? [];
+  const orderRows = orderRowsResult ?? [];
+  const notificationRows = notificationRowsResult ?? [];
+  const clubMembers = clubMembersResult ?? [];
+  const kitRows = kitRowsResult ?? [];
+  const storyRows = storyRowsResult ?? [];
+  const ownershipRows = ownershipRowsResult ?? [];
+  const loanRows = loanRowsResult ?? [];
+  const badgeRows = badgeRowsResult ?? [];
+  const userBadgeRows = userBadgeRowsResult ?? [];
+  const challengeRows = challengeRowsResult ?? [];
+  const userChallengeRows = userChallengeRowsResult ?? [];
+  const progressionRows = progressionRowsResult ?? [];
+  const userProgressionRows = userProgressionRowsResult ?? [];
+  const highlightRows = highlightRowsResult ?? [];
+  const carnetsUnavailable = postRowsResult === null;
+  const outingsUnavailable = outingsResult === null;
+  const statsUnavailable = statsSessionsResult === null;
+  const ordersUnavailable = orderRowsResult === null;
+  const notificationsUnavailable = notificationRowsResult === null;
+  const clubsUnavailable = clubMembersResult === null;
+  const kitsUnavailable = kitRowsResult === null;
+  const storiesUnavailable = storyRowsResult === null;
+  const gearItemsUnavailable = ownershipRowsResult === null;
+  const trustUnavailable = loanRowsResult === null;
+  // Les badges, défis et albums sont des lectures secondaires : un échec ne
+  // doit pas être présenté comme une collection vide. On distingue le
+  // catalogue de badges des obtentions, et la liste des albums de leur contenu.
+  const badgesUnavailable =
+    badgeRowsResult === null || userBadgeRowsResult === null;
+  const challengesUnavailable =
+    challengeRowsResult === null ||
+    userChallengeRowsResult === null ||
+    progressionRowsResult === null ||
+    userProgressionRowsResult === null;
+  const highlightsUnavailable = highlightRowsResult === null;
+
   // Couverture réelle des sorties : première photo de `hike_session_photos`,
-  // résolue en URL signée. Une sortie sans photo reste sans couverture.
+  // résolue en URL signée. Une sortie sans photo reste sans couverture ; un
+  // échec de lecture est signalé pour ne pas le confondre avec une absence.
   const outingIds = outings.map((row) => row.id).filter(Boolean);
-  const outingPhotoRows = outingIds.length
-    ? await safeRows<{ session_id: string; storage_path: string; position: number | null }>(
+  const outingPhotoRowsResult = outingIds.length
+    ? await safeRowsOrNull<{ session_id: string; storage_path: string; position: number | null }>(
         supabase
           .from('hike_session_photos')
           .select('session_id,storage_path,position')
@@ -1802,6 +1939,8 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
           .order('position', { ascending: true })
       )
     : [];
+  const outingPhotosUnavailable = outingPhotoRowsResult === null;
+  const outingPhotoRows = outingPhotoRowsResult ?? [];
   const coverBySession = new Map<string, string>();
   const paths = [...new Set(outingPhotoRows.map((row) => row.storage_path).filter(Boolean))];
   if (paths.length > 0) {
@@ -1847,10 +1986,12 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
     ),
   ];
 
-  const [routes, clubs, clubEvents, clubTopics, clubRecommendedKitLinks, kitItems, catalogItems, highlightItems, repostSources, companionCandidates, loanOwnershipRows, clubActiveMemberRows] =
+  const [routesResult, clubs, clubEvents, clubTopics, clubRecommendedKitLinks, kitItemsResult, catalogItemsResult, highlightItemsResult, repostSources, companionCandidates, loanOwnershipRows, clubActiveMemberRows] =
     await Promise.all([
       routeIds.length
-        ? safeRows<RouteRow>(supabase.from('hiking_routes').select('id,name,region').in('id', routeIds))
+        ? safeRowsOrNull<RouteRow>(
+            supabase.from('hiking_routes').select('id,name,region').in('id', routeIds)
+          )
         : Promise.resolve([] as RouteRow[]),
       clubIds.length
         ? safeRows<ClubRow>(
@@ -1893,7 +2034,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
           )
         : Promise.resolve([] as ClubRecommendedKitLinkRow[]),
       kitIds.length
-        ? safeRows<KitItemImageRow>(
+        ? safeRowsOrNull<KitItemImageRow>(
             supabase
               .from('materiel_kit_items')
               .select('id,kit_id,name,category,weight_g,quantity,condition,priority,is_vital,product_ownership_id,created_at')
@@ -1901,9 +2042,9 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
               .order('created_at', { ascending: true })
           )
         : Promise.resolve([] as KitItemImageRow[]),
-      safeRows<CatalogKitItemRow>(supabase.from('kit_items').select('nom,image').limit(500)),
+      safeRowsOrNull<CatalogKitItemRow>(supabase.from('kit_items').select('nom,image').limit(500)),
       highlightIds.length
-        ? safeRows<StoryHighlightItemRow>(
+        ? safeRowsOrNull<StoryHighlightItemRow>(
             supabase.from('story_highlight_items').select('highlight_id,story_id,position').in('highlight_id', highlightIds)
           )
         : Promise.resolve([] as StoryHighlightItemRow[]),
@@ -1949,6 +2090,18 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
           )
         : Promise.resolve([] as Array<{ club_id: string }>),
     ]);
+
+  const routes = routesResult ?? [];
+  const routesUnavailable = routesResult === null;
+  const kitItems = kitItemsResult ?? [];
+  const catalogItems = catalogItemsResult ?? [];
+  const highlightItems = highlightItemsResult ?? [];
+  // Les cartes de kits restent lisibles même si leur composition ou leurs
+  // visuels manquent : on signale la lecture partielle sans masquer les kits.
+  const kitContentUnavailable = kitRows.length > 0 && kitItemsResult === null;
+  const kitVisualsUnavailable =
+    kitRows.length > 0 &&
+    (catalogItemsResult === null || ownershipRowsResult === null);
 
   const recommendedKitIds = [
     ...new Set(
@@ -2039,11 +2192,11 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
 
   const [
     relationProfiles,
-    geoMassifs,
+    geoMassifsResult,
     clubEventParticipantRows,
     recommendedCatalogKits,
     recommendedMaterialKits,
-    highlightStories,
+    highlightStoriesResult,
   ] = await Promise.all([
     relationIds.length
       ? safeRows<FollowProfileRow>(
@@ -2054,7 +2207,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
         )
       : Promise.resolve([] as FollowProfileRow[]),
     regionKeys.length
-      ? safeRows<GeoMassifRow>(
+      ? safeRowsOrNull<GeoMassifRow>(
           supabase
             .from('geo_massifs')
             .select('geoname_id,name,name_plain,country_code')
@@ -2095,7 +2248,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
     // Stories archivées rattachées aux albums « À la une » (évite la troncature
     // du plafond de 12 stories actives du flux).
     highlightStoryIds.length
-      ? safeRows<StoryRow>(
+      ? safeRowsOrNull<StoryRow>(
           supabase
             .from('post_stories')
             .select('id,caption,media_type,created_at,storage_path,image_url')
@@ -2104,8 +2257,43 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
       : Promise.resolve([] as StoryRow[]),
   ]);
 
+  const highlightStories = highlightStoriesResult ?? [];
+  // La liste des albums peut être lue alors que leur contenu (items/stories
+  // archivées) manque : on garde les albums et on signale le contenu partiel.
+  const highlightContentUnavailable =
+    highlightRowsResult !== null &&
+    highlightIds.length > 0 &&
+    (highlightItemsResult === null || highlightStoriesResult === null);
+  const geoMassifs = geoMassifsResult ?? [];
+  // `mapStats` et `mapStamps` dépendent de `hiking_routes` et `geo_massifs`.
+  // Sans cet indicateur, un échec de ces lectures laisserait les compteurs
+  // massifs/pays à zéro et le passeport vide, avec `statsUnavailable = false`.
+  const statsDependenciesUnavailable =
+    routesUnavailable || geoMassifsResult === null;
+
+  // Une lecture de suivi en échec ne doit jamais être présentée comme
+  // « aucun état » : le client reçoit un indicateur explicite et conserve ses
+  // états connus au lieu d'afficher « Suivre » à tort. Seules les lectures
+  // dont dépendent réellement les états (suivis + demandes sortantes + profils
+  // cibles) les invalident ; les listes gardent leurs propres indicateurs.
+  // `followingRowsResult` est indispensable : sans les suivis réels, une
+  // demande `pending` résiduelle ne peut pas être écartée et serait affichée
+  // « Demande envoyée » à la place de « Abonné ».
+  const followStatesUnavailable =
+    followingRowsResult === null ||
+    outgoingRequestRowsResult === null ||
+    (pendingFollowTargetIds.length > 0 && outgoingRequestProfiles === null);
+  const followersUnavailableWithProfiles =
+    followersUnavailable || followerProfiles === null;
+  const followingUnavailableWithProfiles =
+    followingUnavailable || followingProfiles === null;
+  const followListsUnavailableWithProfiles =
+    followersUnavailableWithProfiles || followingUnavailableWithProfiles;
+  const followingProfileRows = followingProfiles ?? [];
+  const followerProfileRows = followerProfiles ?? [];
+
   const profileById = new Map<string, CompanionProfileRow>();
-  for (const row of [...followingProfiles, ...followerProfiles, ...relationProfiles]) {
+  for (const row of [...followingProfileRows, ...followerProfileRows, ...relationProfiles]) {
     profileById.set(row.id, row);
   }
   // Le profil courant n'appartient à aucune des listes ci-dessus : il reste
@@ -2194,27 +2382,64 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
 
   return {
     authenticated: true as const,
-    profile: mapProfile(profile, followers, followingIds.length),
+    // `null` = identité illisible, à distinguer d'un compte sans ligne
+    // `user_profiles` (nouveau compte) qui garde le profil par défaut.
+    profile: profileUnavailable
+      ? null
+      : mapProfile(
+          profile,
+          followerRowsResult === null ? null : followers,
+          followingRowsResult === null ? null : followingIds.length
+        ),
+    profileUnavailable,
     carnets: mapPosts(postRows),
+    carnetsUnavailable,
     outings: mapOutings(outings, routes, coverBySession),
+    outingsUnavailable,
+    outingPhotosUnavailable,
     stats: mapStats(statsSessions, routes, geoMassifs),
+    statsUnavailable,
+    statsDependenciesUnavailable,
     orders: orderRowsMapped.orders,
     bookings: orderRowsMapped.bookings,
+    ordersUnavailable,
     notifications: mapNotifications(notificationRows),
-    tribu: mapTribu(followingProfiles),
-    followers: mapTribu(followerProfiles),
-    following: mapTribu(followingProfiles),
+    notificationsUnavailable,
+    tribu: mapTribu(followingProfileRows),
+    followers: mapTribu(followerProfileRows),
+    following: mapTribu(followingProfileRows),
+    // Demandes sortantes restaurées au chargement : le bouton réseau affiche
+    // « Demande envoyée » avant toute nouvelle action lorsque la lecture des
+    // suivis a réussi. Si `followingRowsResult` est illisible, l'état est
+    // invalidé ci-dessus (une demande pending peut être déjà satisfaite).
+    followStates: followStatesUnavailable
+      ? {}
+      : mapOutgoingFollowStates(outgoingRequestRows, outgoingRequestProfiles ?? []),
+    followStatesUnavailable,
+    followersUnavailable: followersUnavailableWithProfiles,
+    followingUnavailable: followingUnavailableWithProfiles,
+    // Conservé pour les anciens clients : vrai si au moins une liste manque.
+    followListsUnavailable: followListsUnavailableWithProfiles,
     reposts: mapReposts(repostRows, repostSources, profileById),
     badges: mapBadges(badgeRows, userBadgeRows),
+    badgesUnavailable,
     challenges: mapChallenges(challengeRows, challengeProgress, progressionRows, userProgressionRows[0] ?? null),
+    challengesUnavailable,
     kits: mapKits(kitRows, kitItemCounts, kitImages, kitProducts, kitOutings),
+    kitsUnavailable,
+    kitContentUnavailable,
+    kitVisualsUnavailable,
     gearItems: mapGearItems(ownershipRows, loanedToByItem),
+    gearItemsUnavailable,
     loans: mapLoans(loanRows, loanOwnershipById, profileById, user.id),
     trust: mapTrust(loanRows, user.id, Boolean(user.email_confirmed_at)),
+    trustUnavailable,
     // Passeport et lieux visités sur l'historique complet, pas sur la liste
     // d'affichage plafonnée à 24 sorties.
     stamps: mapStamps(statsSessions, routes, geoMassifs),
     highlights: mapHighlights(highlightRows, highlightItemCounts, highlightItemsByHighlight, storyById),
+    highlightsUnavailable,
+    highlightContentUnavailable,
     clubs: mapClubs(
       clubMembers,
       clubs,
@@ -2224,11 +2449,14 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
       clubEventParticipantRows,
       activeMemberCounts
     ),
+    clubsUnavailable,
     companions: mapCompanions(companionRows, profileById),
     // Le bootstrap n'est servi qu'au propriétaire authentifié : il voit son
-    // propre profil privé sans passer par une invitation.
-    visibility: mapVisibility(profile),
+    // propre profil privé sans passer par une invitation. Une visibilité lue
+    // sur un profil en échec serait un faux « public » : on l'omet.
+    visibility: profileUnavailable ? null : mapVisibility(profile),
     stories: mapStories(storyRows),
+    storiesUnavailable,
     // Aucune table d'espèces ni de massifs personnels : on ne fabrique rien.
     species: [] as Array<Record<string, unknown>>,
     massifs: [] as Array<Record<string, unknown>>,

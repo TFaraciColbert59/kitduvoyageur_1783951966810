@@ -35,6 +35,7 @@ export async function POST(request: Request) {
       return fail('conflict', 'Ta cordée est limitée à 30 personnes.');
     }
     if (message === 'self') return fail('conflict', 'Tu ne peux pas t’ajouter toi-même.');
+    if (message === 'blocked') return fail('conflict', 'Ce profil est bloqué.');
     return fail('server', 'Impossible de modifier la cordée.');
   }
 }

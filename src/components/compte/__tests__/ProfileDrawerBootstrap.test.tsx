@@ -39,6 +39,16 @@ const mocks = vi.hoisted(() => ({
   },
 }));
 
+/**
+ * Fixtures de lecture Supabase : seules `public_profiles`, `user_follows` et
+ * `follow_requests` portent des lignes. Toutes les autres tables répondent
+ * vide, comme le bootstrap du host l'attend.
+ */
+const supabaseState = vi.hoisted(() => ({
+  rows: {} as Record<string, Array<Record<string, unknown>>>,
+  errors: {} as Record<string, unknown>,
+}));
+
 vi.mock('next/navigation', () => ({
   useRouter: () => mocks.router,
   useSearchParams: () => new URLSearchParams(),
@@ -76,26 +86,59 @@ vi.mock('@/contexts/AuthContext', () => ({
   }),
 }));
 
-/** Requête Supabase vide, résolue : le host ne lit que `.data` / `.count`. */
-function emptyQuery(result: unknown) {
+/**
+ * Requête Supabase générique : filtres `.eq`, puis `limit` / `maybeSingle`.
+ * Les lignes viennent de `supabaseState.rows[table]`, ce qui permet de
+ * prouver la lecture de l'état de suivi sans simuler PostgREST.
+ */
+function tableQuery(table: string) {
+  const filters: Array<[string, unknown]> = [];
+  const matching = () =>
+    (supabaseState.rows[table] ?? []).filter((row) =>
+      filters.every(([column, value]) => row[column] === value)
+    );
+  const result = () => {
+    if (supabaseState.errors[table]) {
+      return { data: null, error: supabaseState.errors[table], count: null };
+    }
+    const rows = matching();
+    return { data: rows, error: null, count: rows.length };
+  };
   const query: Record<string, unknown> = {};
-  for (const method of ['select', 'eq', 'order', 'limit']) {
-    query[method] = () => query;
+  for (const method of ['select', 'eq', 'order']) {
+    query[method] = (...args: unknown[]) => {
+      if (method === 'eq') filters.push([String(args[0]), args[1]]);
+      return query;
+    };
   }
-  query.maybeSingle = () => Promise.resolve(result);
-  query.single = () => Promise.resolve(result);
+  query.limit = () => Promise.resolve(result());
+  query.maybeSingle = () =>
+    supabaseState.errors[table]
+      ? Promise.resolve({ data: null, error: supabaseState.errors[table] })
+      : Promise.resolve({ data: matching()[0] ?? null, error: null });
+  query.single = () =>
+    supabaseState.errors[table]
+      ? Promise.resolve({ data: null, error: supabaseState.errors[table] })
+      : Promise.resolve({ data: matching()[0] ?? null, error: null });
   query.then = (onFulfilled: any, onRejected: any) =>
-    Promise.resolve(result).then(onFulfilled, onRejected);
+    Promise.resolve(result()).then(onFulfilled, onRejected);
   return query;
 }
 
 vi.mock('@/lib/supabase/client', () => ({
   createClient: () => ({
-    from: () => emptyQuery({ data: null, error: null, count: 0 }),
+    from: (table: string) => tableQuery(table),
+    auth: {
+      getUser: async () => ({
+        data: { user: mocks.auth.user ? { id: mocks.auth.user.id } : null },
+        error: null,
+      }),
+    },
   }),
 }));
 
 import { setMyTripsAuthUser } from '@/features/trips/client/fetchMyTrips';
+import { followButtonLabel } from '../compte-liquid-glass-v8-runtime';
 import { CompteLiquidGlassV8 } from '../CompteLiquidGlassV8';
 
 const BOOTSTRAP_PAYLOAD = {
@@ -130,8 +173,19 @@ function okResponse(json: unknown) {
 
 let bootstrapCalls = 0;
 let bootstrapAnswer: () => Promise<unknown>;
+let bootstrapInits: RequestInit[] = [];
+let followCalls: Array<{ url: string; init?: RequestInit }> = [];
+let followAnswer: () => Promise<unknown>;
 
 function deferredBootstrap() {
+  let resolve!: (value: unknown) => void;
+  const promise = new Promise<unknown>((r) => {
+    resolve = r;
+  });
+  return { promise, resolve };
+}
+
+function deferredFollow() {
   let resolve!: (value: unknown) => void;
   const promise = new Promise<unknown>((r) => {
     resolve = r;
@@ -151,13 +205,23 @@ beforeEach(() => {
   mocks.router.push.mockClear();
   setMyTripsAuthUser('owner-1', true);
   localStorage.clear();
+  supabaseState.rows = {};
+  supabaseState.errors = {};
   bootstrapCalls = 0;
+  bootstrapInits = [];
+  followCalls = [];
   bootstrapAnswer = () => new Promise(() => {});
-  vi.stubGlobal('fetch', (input: unknown) => {
+  followAnswer = () => Promise.resolve(okResponse({ status: 'following' }));
+  vi.stubGlobal('fetch', (input: unknown, init?: RequestInit) => {
     const url = String(input);
     if (url.includes('/api/compte/bootstrap')) {
       bootstrapCalls += 1;
+      bootstrapInits.push(init ?? {});
       return bootstrapAnswer();
+    }
+    if (url.includes('/api/compte/reseau/follow')) {
+      followCalls.push({ url, init });
+      return followAnswer();
     }
     return Promise.resolve({ ok: false, status: 404, json: async () => null });
   });
@@ -269,6 +333,15 @@ describe('Compte — bootstrap du drawer Profil', () => {
     await waitFor(() => expect(bootstrapCalls).toBe(2));
     // L'état d'erreur reste honnête après un nouvel échec.
     expect(await screen.findByRole('alert', {}, SHELL_WAIT)).toBeTruthy();
+  });
+
+  it('demande le bootstrap sans cache navigateur', async () => {
+    bootstrapAnswer = () => Promise.resolve(okResponse(BOOTSTRAP_PAYLOAD));
+
+    await renderCompte();
+    await waitFor(() => expect(bootstrapCalls).toBe(1));
+
+    expect(bootstrapInits[0]).toMatchObject({ cache: 'no-store' });
   });
 
   it("ne suit pas le deep link ?tab=clubs avant la résolution du bootstrap", async () => {
@@ -514,5 +587,868 @@ describe('Compte — isolation entre identités', () => {
     expect(mocks.router.push).not.toHaveBeenCalledWith('/connexion');
     await switchAccount(view, null);
     expect(mocks.router.push).toHaveBeenCalledWith('/connexion');
+  });
+});
+
+describe('Compte — pont de suivi runtime', () => {
+  const runtimeState = () => (window as any).__lkdvGetState?.();
+
+  beforeEach(() => {
+    supabaseState.rows.public_profiles = [{ id: 'target-1', handle: 'alice' }];
+    supabaseState.rows.user_follows = [];
+    supabaseState.rows.follow_requests = [
+      { requester_id: 'owner-1', target_id: 'target-1', status: 'pending' },
+    ];
+  });
+
+  it('le runtime envoie bien { handle, followed } au pont puis à l’API', async () => {
+    await renderCompte();
+    await act(async () => {
+      (window as any).__lkdvHydrateCompte({ followStates: { alice: 'none' } });
+    });
+
+    act(() => {
+      (window as any).EXA.toggleFollowUser('alice');
+    });
+
+    await waitFor(() => expect(followCalls).toHaveLength(1));
+    expect(followCalls[0].init?.method).toBe('POST');
+    expect(JSON.parse(String(followCalls[0].init?.body))).toEqual({ userId: 'target-1' });
+    await waitFor(() => expect(runtimeState().followStates.alice).toBe('following'));
+    expect(runtimeState().followPending.alice).toBeUndefined();
+  });
+
+  it('consomme { handle, followed } et appelle l’API avec la cible résolue', async () => {
+    await renderCompte();
+    let result: any;
+    await act(async () => {
+      result = await (window as any).__lkdvOnAction(
+        'toggleFollowUser',
+        { handle: 'alice', followed: true },
+        runtimeState().S
+      );
+    });
+
+    expect(followCalls).toHaveLength(1);
+    expect(followCalls[0].init?.method).toBe('POST');
+    expect(JSON.parse(String(followCalls[0].init?.body))).toEqual({ userId: 'target-1' });
+    expect(result).toMatchObject({ ok: true, status: 'following', state: 'following' });
+    expect(runtimeState().followStates.alice).toBe('following');
+  });
+
+  it('rend la demande visible quand l’API répond requested', async () => {
+    followAnswer = () => Promise.resolve(okResponse({ status: 'requested' }));
+    await renderCompte();
+    let result: any;
+    await act(async () => {
+      result = await (window as any).__lkdvOnAction(
+        'toggleFollowUser',
+        { handle: 'alice', followed: true },
+        runtimeState().S
+      );
+    });
+
+    expect(result).toMatchObject({ ok: true, status: 'requested', state: 'requested' });
+    expect(runtimeState().followStates.alice).toBe('requested');
+    expect(followButtonLabel(runtimeState().followStates.alice)).toBe('Demande envoyée');
+  });
+
+  it('restaure l’état confirmé avec hydrate après un échec de l’API', async () => {
+    await renderCompte();
+    await act(async () => {
+      (window as any).__lkdvHydrateCompte({
+        followStates: { alice: 'requested' },
+      });
+    });
+    followAnswer = () =>
+      Promise.resolve({
+        ok: false,
+        status: 500,
+        json: async () => ({ error: 'follow_failed' }),
+      });
+
+    let result: any;
+    await act(async () => {
+      result = await (window as any).__lkdvOnAction(
+        'toggleFollowUser',
+        { handle: 'alice', followed: false },
+        runtimeState().S
+      );
+    });
+
+    expect(followCalls[0].init?.method).toBe('DELETE');
+    expect(result).toMatchObject({
+      ok: false,
+      code: 'follow_failed',
+      state: 'requested',
+      restored: true,
+    });
+    expect(runtimeState().followStates.alice).toBe('requested');
+    expect(runtimeState().followPending.alice).toBeUndefined();
+  });
+
+  it('retourne un échec explicite quand le vrai hydrate est absent', async () => {
+    await renderCompte();
+    delete (window as any).__lkdvHydrateCompte;
+    followAnswer = () =>
+      Promise.resolve({
+        ok: false,
+        status: 500,
+        json: async () => ({ error: 'follow_failed' }),
+      });
+
+    let result: any;
+    await act(async () => {
+      result = await (window as any).__lkdvOnAction(
+        'toggleFollowUser',
+        { handle: 'alice', followed: true },
+        runtimeState().S
+      );
+    });
+
+    expect(result).toMatchObject({
+      ok: false,
+      code: 'follow_failed',
+      restored: false,
+    });
+  });
+
+  it('désactive les doubles clics pendant la requête', async () => {
+    const pending = deferredFollow();
+    followAnswer = () => pending.promise;
+    await renderCompte();
+
+    let first!: Promise<unknown>;
+    act(() => {
+      first = (window as any).__lkdvOnAction(
+        'toggleFollowUser',
+        { handle: 'alice', followed: true },
+        runtimeState().S
+      );
+    });
+    const second = await (window as any).__lkdvOnAction(
+      'toggleFollowUser',
+      { handle: 'alice', followed: true },
+      runtimeState().S
+    );
+
+    expect(second).toMatchObject({ ok: false, code: 'in_flight', restored: false });
+    await act(async () => pending.resolve(okResponse({ status: 'following' })));
+    await act(async () => {
+      await first;
+    });
+    expect(followCalls).toHaveLength(1);
+  });
+
+  it('applique le retour explicite du pont quand le vrai hydrate manque', async () => {
+    await renderCompte();
+    delete (window as any).__lkdvHydrateCompte;
+    followAnswer = () =>
+      Promise.resolve({
+        ok: false,
+        status: 500,
+        json: async () => ({ error: 'follow_failed' }),
+      });
+
+    act(() => {
+      (window as any).EXA.toggleFollowUser('alice');
+    });
+
+    await waitFor(() => {
+      expect(runtimeState().followStates.alice).toBe('requested');
+      expect(runtimeState().followPending.alice).toBeUndefined();
+    });
+  });
+
+  it('hydrate une demande sortante au chargement, avant toute action', async () => {
+    bootstrapAnswer = () =>
+      Promise.resolve(
+        okResponse({
+          ...BOOTSTRAP_PAYLOAD,
+          followers: [
+            {
+              id: 'target-1',
+              n: 'Alice',
+              ps: 'alice',
+              i: 'A',
+              sub: 'Voyageuse',
+              img: '',
+            },
+          ],
+          followStates: { alice: 'requested' },
+        })
+      );
+
+    await renderCompte();
+    await waitFor(() => expect(bootstrapCalls).toBe(1));
+    await waitFor(() => expect(runtimeState().followStates.alice).toBe('requested'));
+    expect(runtimeState().followPending.alice).toBeUndefined();
+    expect(followCalls).toHaveLength(0);
+
+    await act(async () => {
+      (window as any).__lkdvCompteAct('igtab', 2);
+      (window as any).__lkdvCompteAct('toggleReseau', 'followers');
+    });
+    expect(document.body.textContent).toContain('Demande envoyée');
+  });
+
+  it('affiche le message d’erreur du pont et restaure le fallback', async () => {
+    // Aucune demande pending : le rollback doit retomber sur l'état confirmé
+    // d'avant la bascule, pas sur une demande supposée.
+    supabaseState.rows.follow_requests = [];
+    await renderCompte();
+    await act(async () => {
+      (window as any).__lkdvHydrateCompte({ followStates: { alice: 'none' } });
+    });
+    followAnswer = () =>
+      Promise.resolve({
+        ok: false,
+        status: 409,
+        json: async () => ({
+          error: 'Cette demande de suivi est déjà close.',
+          code: 'follow_request_closed',
+        }),
+      });
+
+    act(() => {
+      (window as any).EXA.toggleFollowUser('alice');
+    });
+
+    await waitFor(() =>
+      expect(document.getElementById('island')?.textContent).toContain(
+        'Cette demande de suivi est déjà close.'
+      )
+    );
+    expect(document.getElementById('island')?.textContent).toContain('Suivi impossible');
+    expect(followCalls).toHaveLength(1);
+    expect(runtimeState().followStates.alice).toBe('none');
+    expect(runtimeState().followPending.alice).toBeUndefined();
+    expect(document.getElementById('live-status')?.textContent).toContain(
+      'Cette demande de suivi est déjà close.'
+    );
+  });
+
+  it('nettoie la bascule quand le pont hôte est absent', async () => {
+    await renderCompte();
+    await act(async () => {
+      (window as any).__lkdvHydrateCompte({ followStates: { alice: 'none' } });
+    });
+    delete (window as any).__lkdvOnAction;
+
+    act(() => {
+      (window as any).EXA.toggleFollowUser('alice');
+    });
+
+    await waitFor(() => expect(runtimeState().followPending.alice).toBeUndefined());
+    expect(runtimeState().followStates.alice).toBe('none');
+    expect(followCalls).toHaveLength(0);
+    expect(document.getElementById('island')?.textContent).toContain(
+      'Le suivi est momentanément indisponible.'
+    );
+  });
+
+  it('refuse une cible privée absente de la vue publique sans appeler l’API', async () => {
+    // `public_profiles` n'expose pas un profil privé sans invitation acceptée :
+    // le pont doit s'arrêter avant toute mutation.
+    supabaseState.rows.public_profiles = [];
+    await renderCompte();
+
+    let result: any;
+    await act(async () => {
+      result = await (window as any).__lkdvOnAction(
+        'toggleFollowUser',
+        { handle: 'alice', followed: true },
+        runtimeState().S
+      );
+    });
+
+    expect(result).toMatchObject({
+      ok: false,
+      code: 'target_not_found',
+      state: 'none',
+      restored: true,
+      message: 'Ce profil n’est plus disponible.',
+    });
+    expect(followCalls).toHaveLength(0);
+    expect(runtimeState().followStates.alice).toBe('none');
+  });
+
+  it('ne laisse pas un bootstrap parti avant l’action écraser l’état confirmé', async () => {
+    const boot = deferredBootstrap();
+    bootstrapAnswer = () => boot.promise;
+    followAnswer = () => Promise.resolve(okResponse({ status: 'requested' }));
+
+    await renderCompte();
+    await waitFor(() => expect(bootstrapCalls).toBe(1));
+
+    let result: any;
+    await act(async () => {
+      result = await (window as any).__lkdvOnAction(
+        'toggleFollowUser',
+        { handle: 'alice', followed: true },
+        runtimeState().S
+      );
+    });
+    expect(result).toMatchObject({ ok: true, state: 'requested' });
+    expect(runtimeState().followStates.alice).toBe('requested');
+
+    // Snapshot parti avant la demande : il ne connaît pas encore `requested`.
+    await act(async () => {
+      boot.resolve(
+        okResponse({
+          ...BOOTSTRAP_PAYLOAD,
+          profile: { ...BOOTSTRAP_PAYLOAD.profile, name: 'Snapshot différé' },
+          followers: [],
+          following: [],
+          tribu: [],
+          followStates: {},
+        })
+      );
+    });
+
+    await waitFor(() => expect(bootstrapCalls).toBe(1));
+    // Le reste du bootstrap est bien appliqué : seul l'état de suivi local,
+    // plus récent que le snapshot, est préservé.
+    expect(runtimeState().S.profile.name).toBe('Snapshot différé');
+    expect(runtimeState().followStates.alice).toBe('requested');
+    expect(followButtonLabel(runtimeState().followStates.alice)).toBe('Demande envoyée');
+    expect(runtimeState().followPending.alice).toBeUndefined();
+  });
+
+  it('remplace les états sur un payload complet : {} efface requested', async () => {
+    await renderCompte();
+    await act(async () => {
+      (window as any).__lkdvHydrateCompte({ followStates: { alice: 'requested' } });
+    });
+    expect(runtimeState().followStates.alice).toBe('requested');
+
+    await act(async () => {
+      (window as any).__lkdvHydrateCompte({ replace: true, followStates: {} });
+    });
+
+    expect(runtimeState().followStates.alice).toBeUndefined();
+    expect(followButtonLabel(runtimeState().followStates.alice)).toBe('Suivre');
+  });
+
+  it('conserve les états connus et le signale quand la lecture est partielle', async () => {
+    const boot = deferredBootstrap();
+    bootstrapAnswer = () => boot.promise;
+
+    await renderCompte();
+    await waitFor(() => expect(bootstrapCalls).toBe(1));
+    await act(async () => {
+      (window as any).__lkdvHydrateCompte({ followStates: { alice: 'requested' } });
+    });
+
+    await act(async () => {
+      boot.resolve(
+        okResponse({
+          ...BOOTSTRAP_PAYLOAD,
+          followStates: {},
+          followStatesUnavailable: true,
+        })
+      );
+    });
+
+    await waitFor(() =>
+      expect(document.getElementById('island')?.textContent).toContain(
+        'État de suivi indisponible'
+      )
+    );
+    expect(runtimeState().followStates.alice).toBe('requested');
+  });
+
+  it('conserve l’état connu quand le payload ne porte pas followStates', async () => {
+    const boot = deferredBootstrap();
+    bootstrapAnswer = () => boot.promise;
+
+    await renderCompte();
+    await waitFor(() => expect(bootstrapCalls).toBe(1));
+    await act(async () => {
+      (window as any).__lkdvHydrateCompte({ followStates: { alice: 'requested' } });
+    });
+
+    // Ancienne instance serveur ou payload partiel : l'absence du champ ne
+    // doit pas être interprétée comme un ensemble vide.
+    await act(async () => {
+      boot.resolve(
+        okResponse({
+          ...BOOTSTRAP_PAYLOAD,
+          profile: { ...BOOTSTRAP_PAYLOAD.profile, name: 'Payload sans états' },
+          followers: [],
+          following: [],
+          tribu: [],
+        })
+      );
+    });
+
+    await waitFor(() => expect(runtimeState().S.profile.name).toBe('Payload sans états'));
+    expect(runtimeState().followStates.alice).toBe('requested');
+    expect(followButtonLabel(runtimeState().followStates.alice)).toBe('Demande envoyée');
+  });
+
+  it('conserve compteurs et listes quand les relations deviennent indisponibles', async () => {
+    // Premier bootstrap réussi : les compteurs et les deux listes sont posés.
+    bootstrapAnswer = () =>
+      Promise.resolve(
+        okResponse({
+          ...BOOTSTRAP_PAYLOAD,
+          profile: {
+            ...BOOTSTRAP_PAYLOAD.profile,
+            name: 'Relations disponibles',
+            followersCount: 7,
+            followingCount: 4,
+          },
+          followers: [{ id: 'f1', handle: 'alice', full_name: 'Alice' }],
+          following: [{ id: 'f2', handle: 'bruno', full_name: 'Bruno' }],
+          tribu: [{ id: 'f2', handle: 'bruno', full_name: 'Bruno' }],
+          followStates: { alice: 'requested' },
+        })
+      );
+
+    await renderCompte();
+    await waitFor(() => expect(bootstrapCalls).toBe(1));
+    await waitFor(() => expect(runtimeState().followers).toHaveLength(1));
+    expect(runtimeState().following).toHaveLength(1);
+
+    // Rafraîchissement partiel : seules les listes échouent, les états restent
+    // une lecture distincte et doivent continuer à s'appliquer.
+    supabaseState.errors.user_follows = { message: 'relations indisponibles' };
+    bootstrapAnswer = () =>
+      Promise.resolve(
+        okResponse({
+          ...BOOTSTRAP_PAYLOAD,
+          profile: { ...BOOTSTRAP_PAYLOAD.profile, name: 'Relations indisponibles' },
+          followers: [],
+          following: [],
+          tribu: [],
+          followListsUnavailable: true,
+          followStates: { alice: 'following' },
+        })
+      );
+
+    await act(async () => {
+      window.dispatchEvent(new Event('lkdv:highlights-changed'));
+    });
+    await waitFor(() => expect(bootstrapCalls).toBe(2));
+    await waitFor(() =>
+      expect(runtimeState().S.profile.name).toBe('Relations indisponibles')
+    );
+
+    // Les compteurs et les listes connus ne sont pas remplacés par des zéros.
+    expect(runtimeState().S.profile.followersCount).toBe(7);
+    expect(runtimeState().S.profile.followingCount).toBe(4);
+    expect(runtimeState().followers).toHaveLength(1);
+    expect(runtimeState().following).toHaveLength(1);
+    expect(runtimeState().followStates.alice).toBe('following');
+
+    expect(document.getElementById('island')?.textContent).toContain(
+      'Listes d’abonnés indisponibles'
+    );
+  });
+
+  it('applique indépendamment la liste encore lisible lors d’un bootstrap partiel', async () => {
+    bootstrapAnswer = () =>
+      Promise.resolve(
+        okResponse({
+          ...BOOTSTRAP_PAYLOAD,
+          profile: {
+            ...BOOTSTRAP_PAYLOAD.profile,
+            followersCount: 7,
+            followingCount: 4,
+          },
+          followers: [{ id: 'f1', handle: 'alice', full_name: 'Alice' }],
+          following: [{ id: 'f2', handle: 'bruno', full_name: 'Bruno' }],
+          tribu: [{ id: 'f2', handle: 'bruno', full_name: 'Bruno' }],
+        })
+      );
+
+    await renderCompte();
+    await waitFor(() => expect(bootstrapCalls).toBe(1));
+    await waitFor(() => expect(runtimeState().followers).toHaveLength(1));
+
+    // Abonnés KO, suivis OK : la moitié valide doit être appliquée, l'autre
+    // moitié conservée. Un indicateur global unique jetterait les deux.
+    supabaseState.errors.user_follows = { message: 'compteurs indisponibles' };
+    bootstrapAnswer = () =>
+      Promise.resolve(
+        okResponse({
+          ...BOOTSTRAP_PAYLOAD,
+          profile: { ...BOOTSTRAP_PAYLOAD.profile, followingCount: 1 },
+          followers: [],
+          following: [{ id: 'f3', handle: 'chloe', full_name: 'Chloé' }],
+          tribu: [{ id: 'f3', handle: 'chloe', full_name: 'Chloé' }],
+          followersUnavailable: true,
+          followingUnavailable: false,
+          followListsUnavailable: true,
+        })
+      );
+
+    await act(async () => {
+      window.dispatchEvent(new Event('lkdv:highlights-changed'));
+    });
+    await waitFor(() => expect(bootstrapCalls).toBe(2));
+
+    await waitFor(() =>
+      expect(runtimeState().following.map((entry: any) => entry.id)).toEqual(['f3'])
+    );
+    expect(runtimeState().followers.map((entry: any) => entry.id)).toEqual(['f1']);
+    expect(runtimeState().S.profile.followersCount).toBe(7);
+    expect(runtimeState().S.profile.followingCount).toBe(1);
+  });
+
+  it('préserve listes et compteurs après un échec puis « Réessayer »', async () => {
+    bootstrapAnswer = () =>
+      Promise.resolve(
+        okResponse({
+          ...BOOTSTRAP_PAYLOAD,
+          profile: {
+            ...BOOTSTRAP_PAYLOAD.profile,
+            followersCount: 7,
+            followingCount: 4,
+          },
+          followers: [{ id: 'f1', handle: 'alice', full_name: 'Alice' }],
+          following: [{ id: 'f2', handle: 'bruno', full_name: 'Bruno' }],
+          tribu: [{ id: 'f2', handle: 'bruno', full_name: 'Bruno' }],
+        })
+      );
+
+    await renderCompte();
+    await waitFor(() => expect(bootstrapCalls).toBe(1));
+    await waitFor(() => expect(runtimeState().followers).toHaveLength(1));
+
+    // Deuxième synchronisation en échec : le ref de payload est remis à null.
+    supabaseState.errors.user_follows = { message: 'relations indisponibles' };
+    bootstrapAnswer = () =>
+      Promise.resolve({ ok: false, status: 500, json: async () => ({}) });
+    await act(async () => {
+      window.dispatchEvent(new Event('lkdv:highlights-changed'));
+    });
+    await waitFor(() => expect(bootstrapCalls).toBe(2));
+
+    // « Réessayer » depuis le drawer en erreur, puis succès partiel : les
+    // listes connues ne doivent pas avoir été vidées avant la nouvelle lecture.
+    await openDrawer();
+    const retry = await screen.findByRole('button', { name: 'Réessayer' });
+    bootstrapAnswer = () =>
+      Promise.resolve(
+        okResponse({
+          ...BOOTSTRAP_PAYLOAD,
+          profile: { ...BOOTSTRAP_PAYLOAD.profile, name: 'Après réessai' },
+          followers: [],
+          following: [],
+          tribu: [],
+          followListsUnavailable: true,
+        })
+      );
+    fireEvent.click(retry);
+    await waitFor(() => expect(bootstrapCalls).toBe(3));
+    await waitFor(() => expect(runtimeState().S.profile.name).toBe('Après réessai'));
+
+    expect(runtimeState().S.profile.followersCount).toBe(7);
+    expect(runtimeState().S.profile.followingCount).toBe(4);
+    expect(runtimeState().followers).toHaveLength(1);
+    expect(runtimeState().following).toHaveLength(1);
+  });
+
+  it('ignore les zéros d’un ancien payload social partiel', async () => {
+    bootstrapAnswer = () =>
+      Promise.resolve(
+        okResponse({
+          ...BOOTSTRAP_PAYLOAD,
+          profile: {
+            ...BOOTSTRAP_PAYLOAD.profile,
+            followersCount: 7,
+            followingCount: 4,
+          },
+          followers: [{ id: 'f1', handle: 'alice', full_name: 'Alice' }],
+          following: [{ id: 'f2', handle: 'bruno', full_name: 'Bruno' }],
+          tribu: [{ id: 'f2', handle: 'bruno', full_name: 'Bruno' }],
+        })
+      );
+
+    await renderCompte();
+    await waitFor(() => expect(bootstrapCalls).toBe(1));
+    await waitFor(() => expect(runtimeState().following).toHaveLength(1));
+
+    // Ancienne instance serveur : pas de `followListsUnavailable`, mais un
+    // échec d'états et des compteurs/listes à zéro. Ces zéros ne doivent pas
+    // écraser un état connu plus fiable.
+    supabaseState.errors.user_follows = { message: 'relations indisponibles' };
+    bootstrapAnswer = () =>
+      Promise.resolve(
+        okResponse({
+          ...BOOTSTRAP_PAYLOAD,
+          profile: {
+            ...BOOTSTRAP_PAYLOAD.profile,
+            followersCount: 0,
+            followingCount: 0,
+          },
+          followers: [],
+          following: [],
+          tribu: [],
+          followStates: {},
+          followStatesUnavailable: true,
+        })
+      );
+
+    await act(async () => {
+      window.dispatchEvent(new Event('lkdv:highlights-changed'));
+    });
+    await waitFor(() => expect(bootstrapCalls).toBe(2));
+    await waitFor(() =>
+      expect(document.getElementById('island')?.textContent).toContain(
+        'État de suivi indisponible'
+      )
+    );
+
+    expect(runtimeState().S.profile.followersCount).toBe(7);
+    expect(runtimeState().S.profile.followingCount).toBe(4);
+    expect(runtimeState().followers).toHaveLength(1);
+    expect(runtimeState().following).toHaveLength(1);
+  });
+
+  it('préserve le profil connu quand sa lecture est indisponible', async () => {
+    bootstrapAnswer = () =>
+      Promise.resolve(
+        okResponse({
+          ...BOOTSTRAP_PAYLOAD,
+          profile: {
+            ...BOOTSTRAP_PAYLOAD.profile,
+            name: 'Propriétaire LKDV',
+            handle: 'owner',
+          },
+        })
+      );
+
+    await renderCompte();
+    await waitFor(() => expect(bootstrapCalls).toBe(1));
+    await waitFor(() => expect(runtimeState().S.profile.name).toBe('Propriétaire LKDV'));
+    expect(runtimeState().S.profile.handle).toBe('owner');
+
+    // Profil illisible : ni « Voyageur » ni handle générique ne doivent
+    // remplacer l'identité déjà connue.
+    bootstrapAnswer = () =>
+      Promise.resolve(
+        okResponse({
+          authenticated: true,
+          profileUnavailable: true,
+          stats: BOOTSTRAP_PAYLOAD.stats,
+          followers: [],
+          following: [],
+          tribu: [],
+          followStates: {},
+        })
+      );
+
+    await act(async () => {
+      window.dispatchEvent(new Event('lkdv:highlights-changed'));
+    });
+    await waitFor(() => expect(bootstrapCalls).toBe(2));
+
+    expect(runtimeState().S.profile.name).toBe('Propriétaire LKDV');
+    expect(runtimeState().S.profile.handle).toBe('owner');
+  });
+
+  it('ne reprend pas un handle de payload quand le profil est indisponible', async () => {
+    bootstrapAnswer = () =>
+      Promise.resolve(
+        okResponse({
+          ...BOOTSTRAP_PAYLOAD,
+          profile: { ...BOOTSTRAP_PAYLOAD.profile, handle: 'owner' },
+        })
+      );
+
+    await renderCompte();
+    await waitFor(() => expect(bootstrapCalls).toBe(1));
+    await waitFor(() => expect(runtimeState().S.profile.handle).toBe('owner'));
+
+    // Le serveur peut joindre un profil de secours à un payload marqué
+    // indisponible : le handle de ce profil ne doit pas remplacer l'identité
+    // déjà confirmée.
+    bootstrapAnswer = () =>
+      Promise.resolve(
+        okResponse({
+          authenticated: true,
+          profileUnavailable: true,
+          profile: { handle: 'fantome' },
+          stats: BOOTSTRAP_PAYLOAD.stats,
+          followers: [],
+          following: [],
+          tribu: [],
+          followStates: {},
+        })
+      );
+
+    await act(async () => {
+      window.dispatchEvent(new Event('lkdv:highlights-changed'));
+    });
+    await waitFor(() => expect(bootstrapCalls).toBe(2));
+
+    expect(runtimeState().S.profile.handle).toBe('owner');
+    expect(document.body.textContent).toContain('Connecté · @owner');
+  });
+
+  it('conserve les collections non sociales quand leurs lectures échouent', async () => {
+    bootstrapAnswer = () =>
+      Promise.resolve(
+        okResponse({
+          ...BOOTSTRAP_PAYLOAD,
+          profile: { ...BOOTSTRAP_PAYLOAD.profile, name: 'Collections disponibles' },
+          carnets: [{ id: 'c1', title: 'Carnet réel' }],
+          orders: [
+            {
+              id: 'o1',
+              order_number: 'LKDV-1',
+              total_eur: 42,
+              status: 'payee',
+              created_at: '2026-11-01T10:00:00Z',
+              items: [],
+            },
+          ],
+          clubs: [{ slug: 'club-alpin', name: 'Club Alpin', role: 'Membre', membersCount: 42 }],
+          kits: [{ id: 'k1', name: 'Kit réel' }],
+          notifications: [{ id: 'n1', title: 'Bienvenue' }],
+        })
+      );
+
+    await renderCompte();
+    await waitFor(() => expect(bootstrapCalls).toBe(1));
+    await waitFor(() => expect(runtimeState().CARNETS).toHaveLength(1));
+    expect(runtimeState().ORDERS).toHaveLength(1);
+    expect(runtimeState().CLUBS).toHaveLength(1);
+    expect(runtimeState().KITS_LINEAGE).toHaveLength(1);
+    expect(runtimeState().S.notifications).toHaveLength(1);
+
+    // Rafraîchissement partiel : les lectures échouent et le bootstrap le
+    // signale. Aucune collection connue ne doit être remplacée par un vide.
+    supabaseState.errors.carnets = { message: 'carnets indisponibles' };
+    supabaseState.errors.orders = { message: 'commandes indisponibles' };
+    supabaseState.errors.club_members = { message: 'clubs indisponibles' };
+    bootstrapAnswer = () =>
+      Promise.resolve(
+        okResponse({
+          ...BOOTSTRAP_PAYLOAD,
+          profile: { ...BOOTSTRAP_PAYLOAD.profile, name: 'Collections partielles' },
+          carnets: [],
+          outings: [],
+          orders: [],
+          bookings: [],
+          clubs: [],
+          kits: [],
+          stories: [],
+          notifications: [],
+          carnetsUnavailable: true,
+          outingsUnavailable: true,
+          ordersUnavailable: true,
+          notificationsUnavailable: true,
+          clubsUnavailable: true,
+          kitsUnavailable: true,
+          storiesUnavailable: true,
+        })
+      );
+
+    await act(async () => {
+      window.dispatchEvent(new Event('lkdv:highlights-changed'));
+    });
+    await waitFor(() => expect(bootstrapCalls).toBe(2));
+    await waitFor(() =>
+      expect(runtimeState().S.profile.name).toBe('Collections partielles')
+    );
+
+    expect(runtimeState().CARNETS).toHaveLength(1);
+    expect(runtimeState().ORDERS).toHaveLength(1);
+    expect(runtimeState().CLUBS).toHaveLength(1);
+    expect(runtimeState().KITS_LINEAGE).toHaveLength(1);
+    expect(runtimeState().S.notifications).toHaveLength(1);
+  });
+
+  it('conserve les collections après un premier bootstrap en échec puis « Réessayer »', async () => {
+    // Les lectures directes réussissent au premier montage : les collections
+    // sont réellement affichées avant que le bootstrap complet ne réponde 500.
+    supabaseState.rows.carnets = [
+      {
+        id: 'c-direct',
+        author_id: 'owner-1',
+        title: 'Carnet direct',
+        visibility: 'public',
+        created_at: '2026-11-01T10:00:00Z',
+      },
+    ];
+    supabaseState.rows.orders = [
+      {
+        id: 'o-direct',
+        user_id: 'owner-1',
+        order_number: 'LKDV-DIRECT',
+        total_eur: 42,
+        status: 'payee',
+        created_at: '2026-11-01T10:00:00Z',
+        items: [],
+      },
+    ];
+    supabaseState.rows.club_members = [
+      {
+        user_id: 'owner-1',
+        role: 'Membre',
+        club: {
+          id: 'club-direct',
+          slug: 'club-direct',
+          name: 'Club Direct',
+          members_count: 42,
+        },
+      },
+    ];
+    bootstrapAnswer = () =>
+      Promise.resolve({ ok: false, status: 500, json: async () => ({}) });
+
+    await renderCompte();
+    await waitFor(() => expect(bootstrapCalls).toBe(1));
+    await waitFor(() => expect(runtimeState().CARNETS).toHaveLength(1));
+    expect(runtimeState().ORDERS).toHaveLength(1);
+    expect(runtimeState().CLUBS).toHaveLength(1);
+
+    // Le bootstrap a échoué : le drawer propose « Réessayer ». Au retry, les
+    // lectures directes échouent à leur tour ; les collections déjà connues
+    // ne doivent pas repasser par la branche « premier chargement ».
+    await openDrawer();
+    const retry = await screen.findByRole('button', { name: 'Réessayer' });
+    supabaseState.errors.carnets = { message: 'carnets indisponibles' };
+    supabaseState.errors.orders = { message: 'commandes indisponibles' };
+    supabaseState.errors.club_members = { message: 'clubs indisponibles' };
+    bootstrapAnswer = () =>
+      Promise.resolve(
+        okResponse({
+          authenticated: true,
+          profile: { handle: 'owner', name: 'Après réessai' },
+          stats: { km: 0, dplus: 0, outings: 0, nights: 0, massifs: 0, countries: 0 },
+          carnets: [],
+          outings: [],
+          orders: [],
+          bookings: [],
+          clubs: [],
+          kits: [],
+          stories: [],
+          notifications: [],
+          followers: [],
+          following: [],
+          tribu: [],
+          followStates: {},
+          carnetsUnavailable: true,
+          outingsUnavailable: true,
+          ordersUnavailable: true,
+          notificationsUnavailable: true,
+          clubsUnavailable: true,
+          kitsUnavailable: true,
+          storiesUnavailable: true,
+        })
+      );
+
+    fireEvent.click(retry);
+    await waitFor(() => expect(bootstrapCalls).toBe(2));
+    await waitFor(() => expect(runtimeState().S.profile.name).toBe('Après réessai'));
+
+    expect(runtimeState().CARNETS).toHaveLength(1);
+    expect(runtimeState().ORDERS).toHaveLength(1);
+    expect(runtimeState().CLUBS).toHaveLength(1);
   });
 });

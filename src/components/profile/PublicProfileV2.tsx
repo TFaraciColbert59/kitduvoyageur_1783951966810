@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -17,6 +17,7 @@ import { ProfileDrawerHost } from '@/components/compte/drawer/ProfileDrawerHost'
 import { DRAWER_V2_CSS } from '@/components/compte/drawer/SlotShell';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
+import { followErrorMessage, loadFollowState, setFollow } from '@/features/compte/client/followClient';
 import type {
   CompteActiviteItem,
   CompteBadgeItem,
@@ -58,8 +59,10 @@ export function PublicProfileV2({
   const { user } = useAuth();
   const owner = Boolean(user?.id && user.id === profile.id);
   const [following, setFollowing] = useState(false);
+  const [requested, setRequested] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const readEpochRef = useRef(0);
 
   const name = `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Voyageur';
   const handle =
@@ -91,17 +94,20 @@ export function PublicProfileV2({
 
   useEffect(() => {
     let active = true;
+    const epoch = ++readEpochRef.current;
     setFollowing(false);
+    setRequested(false);
+    setBusy(false);
     if (!user?.id || owner) return () => { active = false; };
-    void createClient()
-      .from('user_follows')
-      .select('id')
-      .eq('follower_id', user.id)
-      .eq('following_id', profile.id)
-      .limit(1)
-      .maybeSingle()
-      .then(({ data, error }) => {
-        if (active && !error) setFollowing(Boolean(data));
+    void loadFollowState(createClient(), user.id, profile.id)
+      .then((state) => {
+        if (!active || epoch !== readEpochRef.current) return;
+        setFollowing(state === 'following');
+        setRequested(state === 'requested');
+      })
+      .catch(() => {
+        // Une lecture en échec laisse l'état neutre ; elle n'écrase jamais une
+        // mutation partie entre-temps.
       });
     return () => {
       active = false;
@@ -115,32 +121,40 @@ export function PublicProfileV2({
       return;
     }
     if (owner) return;
+    const epoch = ++readEpochRef.current;
     setBusy(true);
     setMessage(null);
-    const next = !following;
-    setFollowing(next);
-    const supabase = createClient();
-    const { error } = next
-      ? await supabase
-          .from('user_follows')
-          .upsert(
-            { follower_id: user.id, following_id: profile.id },
-            { onConflict: 'follower_id,following_id', ignoreDuplicates: true }
-          )
-      : await supabase
-          .from('user_follows')
-          .delete()
-          .eq('follower_id', user.id)
-          .eq('following_id', profile.id);
-    if (error) {
-      setFollowing(!next);
-      setMessage('Abonnement non enregistré. Réessaie.');
-    } else {
-      setMessage(next ? 'Tu suis ce voyageur.' : 'Tu ne suis plus ce voyageur.');
+    const wasFollowing = following;
+    const wasRequested = requested;
+    const action = following || requested ? 'unfollow' : 'follow';
+    // Bascule optimiste : l'UI répond au geste, puis revient à l'état exact
+    // décidé par l'API (following, requested ou unfollowed).
+    setFollowing(action === 'follow');
+    setRequested(false);
+    try {
+      const status = await setFollow(profile.id, action);
+      if (epoch !== readEpochRef.current) return;
+      setFollowing(status === 'following');
+      setRequested(status === 'requested');
+      setMessage(
+        status === 'following'
+          ? 'Tu suis ce voyageur.'
+          : status === 'requested'
+            ? 'Demande de suivi envoyée.'
+            : wasRequested
+              ? 'Demande de suivi annulée.'
+              : 'Tu ne suis plus ce voyageur.'
+      );
       window.setTimeout(() => setMessage(null), 2400);
+    } catch (error) {
+      if (epoch !== readEpochRef.current) return;
+      setFollowing(wasFollowing);
+      setRequested(wasRequested);
+      setMessage(followErrorMessage(error, 'Abonnement non enregistré. Réessaie.'));
+    } finally {
+      if (epoch === readEpochRef.current) setBusy(false);
     }
-    setBusy(false);
-  }, [busy, following, owner, profile.id, router, user?.id]);
+  }, [busy, following, owner, profile.id, requested, router, user?.id]);
 
   const share = useCallback(async () => {
     if (onShare) {
@@ -180,7 +194,7 @@ export function PublicProfileV2({
                 <Share2 size={17} aria-hidden="true" />
               </button>
               {!owner && onReport ? (
-                <button type="button" className="lkdv-public-icon" onClick={onReport} aria-label="Signaler le profil">
+                <button type="button" className="lkdv-public-icon" onClick={onReport} aria-label="Sécurité du profil : signaler, bloquer ou mettre en sourdine">
                   <Flag size={16} aria-hidden="true" />
                 </button>
               ) : (
@@ -225,12 +239,14 @@ export function PublicProfileV2({
             ) : (
               <button
                 type="button"
-                className={`lkdv-public-follow ${following ? 'on' : ''}`}
+                className={`lkdv-public-follow ${following || requested ? 'on' : ''}`}
                 onClick={() => void toggleFollow()}
                 disabled={busy}
+                aria-pressed={following || requested}
+                title={requested ? 'Annuler la demande de suivi' : undefined}
               >
-                {following ? <UserCheck size={15} aria-hidden="true" /> : <UserPlus size={15} aria-hidden="true" />}
-                {following ? 'Abonné' : 'Suivre'}
+                {following || requested ? <UserCheck size={15} aria-hidden="true" /> : <UserPlus size={15} aria-hidden="true" />}
+                {requested ? 'Demande envoyée' : following ? 'Abonné' : 'Suivre'}
               </button>
             )}
             {!owner ? (

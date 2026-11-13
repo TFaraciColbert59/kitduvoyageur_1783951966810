@@ -4,7 +4,7 @@ import React, { useRef, useState } from 'react';
 import { Camera, ImagePlus, Trash2, X } from 'lucide-react';
 import { ActionPill } from '@/components/ui/ActionPill';
 import type { OutingPhoto } from '@/features/compte/server/sorties';
-import { DrawerEmpty } from '../shell/DrawerShell';
+import { DrawerEmpty, DrawerError } from '../shell/DrawerShell';
 
 export interface OutingPhotosProps {
   photos: OutingPhoto[];
@@ -12,9 +12,20 @@ export interface OutingPhotosProps {
   uploading: boolean;
   onUpload: (file: File) => void;
   onDelete: (photoId: string) => void;
+  /** `hike_session_photos` illisible : ce n'est pas « aucune photo ». */
+  unavailable?: boolean;
+  onRetry?: () => void;
 }
 
-export function OutingPhotos({ photos, canEdit, uploading, onUpload, onDelete }: OutingPhotosProps) {
+export function OutingPhotos({
+  photos,
+  canEdit,
+  uploading,
+  onUpload,
+  onDelete,
+  unavailable = false,
+  onRetry,
+}: OutingPhotosProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [active, setActive] = useState<OutingPhoto | null>(null);
 
@@ -49,7 +60,12 @@ export function OutingPhotos({ photos, canEdit, uploading, onUpload, onDelete }:
         ) : null}
       </div>
 
-      {photos.length === 0 ? (
+      {unavailable && photos.length === 0 ? (
+        <DrawerError
+          onRetry={onRetry}
+          label="Photos momentanément indisponibles."
+        />
+      ) : photos.length === 0 ? (
         <DrawerEmpty
           title="Aucune photo pour cette sortie"
           action={

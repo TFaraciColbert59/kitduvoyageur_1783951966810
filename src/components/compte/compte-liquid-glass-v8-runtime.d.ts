@@ -21,6 +21,15 @@ export declare function applyProfileVis(current: unknown, value: unknown): 'publ
  */
 export declare function canUndoMutation(key: string, changed: boolean): boolean;
 
+/** État de suivi accepté par le pont : `following`, `requested` ou `none`. */
+export type FollowVisualState = 'following' | 'requested' | 'none';
+
+/** Normalise un état de suivi reçu de l'hôte ; null si inconnu. */
+export declare function normalizeFollowState(value: unknown): FollowVisualState | null;
+
+/** Libellé visible d'un état de suivi, y compris « Demande envoyée ». */
+export declare function followButtonLabel(state: unknown): string;
+
 /** Résout une nationalité exacte ; null pour vide, inconnue ou non-chaîne. */
 export declare function resolveNationality(value: unknown): string | null;
 
@@ -106,5 +115,24 @@ declare global {
     __lkdvCompteMapOpenOuting?: (id: string) => void;
     /** Actions runtime existantes (mapbig, openOutingDrawer…). */
     __lkdvCompteAct?: (action: string, value?: unknown) => void;
+    /** États de suivi confirmés et bascules en cours, lus par le pont hôte. */
+    __lkdvGetFollowState?: () => {
+      followStates?: Record<string, FollowVisualState>;
+      followPending?: Record<string, FollowVisualState>;
+    } | null;
+    /**
+     * Applique des états de suivi. `replace` réconcilie le payload complet
+     * (les handles absents sont retirés) ; `preserve` protège les handles
+     * dont une mutation locale est plus récente que la lecture.
+     */
+    __lkdvApplyFollowStates?: (
+      states: Record<string, unknown>,
+      options?: { replace?: boolean; preserve?: string[] }
+    ) => boolean;
+    /**
+     * Signale un bootstrap social partiel sans effacer les états connus.
+     * `states` (défaut) : boutons ; `lists` : compteurs/listes ; `all` : les deux.
+     */
+    __lkdvShowFollowUnavailable?: (scope?: 'states' | 'lists' | 'all') => void;
   }
 }

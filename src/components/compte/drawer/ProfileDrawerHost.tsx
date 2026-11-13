@@ -168,7 +168,7 @@ function renderSlotContent(
     case 'prets':
       return <LoansSlot lens={lens.id} payload={payload} viewer={viewer} />;
     case 'souvenirs':
-      return <MemoriesSlot lens={lens.id} payload={payload} />;
+      return <MemoriesSlot lens={lens.id} payload={payload} viewer={viewer} />;
     case 'communaute':
       return <CommunitySlot lens={lens.id} payload={payload} />;
     case 'entrainement':

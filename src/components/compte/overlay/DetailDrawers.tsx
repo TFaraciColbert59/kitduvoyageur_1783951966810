@@ -1,9 +1,10 @@
 'use client';
 
 import { LikeIcon } from '@/components/social-kit';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Award, BadgeCheck, Compass, Lock, UserCheck, UserPlus } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { followErrorMessage, loadFollowState, setFollow } from '@/features/compte/client/followClient';
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchSavedPosts } from '@/features/community/posts/queries';
 import type { SavedPost } from '@/features/community/posts/types';
@@ -20,9 +21,33 @@ export interface BootstrapOverlayData {
   gearItems?: GearRowData[];
   kits?: Array<{ id: string; name?: string }>;
   followers?: unknown[];
+  following?: unknown[];
+  tribu?: unknown[];
   species?: unknown[];
   trust?: { verified?: boolean; active?: number; onTimeRate?: number | null; rating?: number | null };
-  profile?: { trustScore?: number; name?: string; handle?: string; avatarUrl?: string };
+  profile?: { trustScore?: number; name?: string; handle?: string; avatarUrl?: string } | null;
+  /** Lectures partielles : ne jamais afficher un zéro trompeur. */
+  followersUnavailable?: boolean;
+  followingUnavailable?: boolean;
+  followListsUnavailable?: boolean;
+  profileUnavailable?: boolean;
+  statsUnavailable?: boolean;
+  gearItemsUnavailable?: boolean;
+  kitsUnavailable?: boolean;
+  trustUnavailable?: boolean;
+  carnetsUnavailable?: boolean;
+  outingsUnavailable?: boolean;
+  ordersUnavailable?: boolean;
+  notificationsUnavailable?: boolean;
+  clubsUnavailable?: boolean;
+  storiesUnavailable?: boolean;
+  badgesUnavailable?: boolean;
+  challengesUnavailable?: boolean;
+  highlightsUnavailable?: boolean;
+  highlightContentUnavailable?: boolean;
+  kitContentUnavailable?: boolean;
+  kitVisualsUnavailable?: boolean;
+  outingPhotosUnavailable?: boolean;
 }
 
 export function SavedPostsDrawer({ onClose, onOpenPost }: { onClose: () => void; onOpenPost: (id: string) => void }) {
@@ -100,18 +125,25 @@ export function GearDetailSheet({ item, onClose }: { item: GearRowData; onClose:
 
 export function TrustDetailSheet({ data, trustScore, onClose }: { data: BootstrapOverlayData; trustScore?: number; onClose: () => void }) {
   const trust = data.trust;
-  const score = trustScore ?? 0;
+  // Un profil ou des prêts illisibles ne valent pas zéro : on affiche « — »
+  // et on n'invente ni un score ni un nombre de prêts actifs.
+  const trustUnavailable =
+    data.trustUnavailable === true ||
+    data.profileUnavailable === true ||
+    data.profile == null ||
+    typeof trustScore !== 'number';
+  const score = trustUnavailable ? null : trustScore;
   return (
     <OverlaySheet title="Indice de confiance" subtitle="Agrégat de tes prêts, sans classement." onClose={onClose} nested>
       <div className="lkdv-trust-detail">
-        <div className="lkdv-trust-detail-score"><b>{score}<small>/100</small></b><span>{trust?.verified ? 'Profil vérifié' : 'Profil non vérifié'}</span></div>
-        <div className="lkdv-trust-detail-gauge"><i style={{ width: `${Math.max(0, Math.min(100, score))}%` }} /></div>
+        <div className="lkdv-trust-detail-score"><b>{score == null ? '—' : score}<small>/100</small></b><span>{trustUnavailable ? 'Vérification indisponible' : trust?.verified ? 'Profil vérifié' : 'Profil non vérifié'}</span></div>
+        <div className="lkdv-trust-detail-gauge"><i style={{ width: `${score == null ? 0 : Math.max(0, Math.min(100, score))}%` }} /></div>
         <div className="lkdv-trust-detail-grid">
-          <div><b>{trust?.active ?? 0}</b><span>Prêts actifs</span></div>
-          <div><b>{trust?.onTimeRate == null ? '—' : `${trust.onTimeRate} %`}</b><span>Retours à temps</span></div>
-          <div><b>{trust?.rating == null ? '—' : trust.rating.toFixed(1)}</b><span>Note moyenne</span></div>
+          <div><b>{trustUnavailable ? '—' : trust?.active ?? 0}</b><span>Prêts actifs</span></div>
+          <div><b>{trustUnavailable || trust?.onTimeRate == null ? '—' : `${trust.onTimeRate} %`}</b><span>Retours à temps</span></div>
+          <div><b>{trustUnavailable || trust?.rating == null ? '—' : trust.rating.toFixed(1)}</b><span>Note moyenne</span></div>
         </div>
-        {trust?.onTimeRate == null ? <p className="lkdv-trust-detail-empty">Aucun retour noté pour le moment.</p> : null}
+        {trustUnavailable ? <p className="lkdv-trust-detail-empty">Indice momentanément indisponible.</p> : trust?.onTimeRate == null ? <p className="lkdv-trust-detail-empty">Aucun retour noté pour le moment.</p> : null}
       </div>
     </OverlaySheet>
   );
@@ -129,9 +161,24 @@ function radar(values: number[]): string {
 
 export function SealDrawer({ data, onClose }: { data: BootstrapOverlayData; onClose: () => void }) {
   const stats = data.stats ?? {};
-  const values = [stats.outings ?? 0, stats.km ?? 0, stats.dplus ?? 0, data.gearItems?.length ?? 0, data.kits?.length ?? 0, data.species?.length ?? 0, data.followers?.length ?? 0];
+  // Une liste illisible n'est pas une liste vide : afficher « — » plutôt que
+  // « 0 », qui laisserait croire à une tribu réellement vide.
+  const followersUnavailable =
+    data.followersUnavailable === true ||
+    (data.followersUnavailable === undefined && data.followListsUnavailable === true);
+  const followersCount = data.followers?.length ?? 0;
+  const tribeValue = followersUnavailable ? 0 : followersCount;
+  const tribeDisplay = followersUnavailable ? '—' : String(followersCount);
+  // Même règle pour les autres lectures : un échec n'est pas un zéro.
+  const statsUnavailable = data.statsUnavailable === true;
+  const gearUnavailable = data.gearItemsUnavailable === true;
+  const kitsUnavailable = data.kitsUnavailable === true;
+  const gearCount = data.gearItems?.length ?? 0;
+  const kitsCount = data.kits?.length ?? 0;
+  const values = [statsUnavailable ? 0 : stats.outings ?? 0, statsUnavailable ? 0 : stats.km ?? 0, statsUnavailable ? 0 : stats.dplus ?? 0, gearUnavailable ? 0 : gearCount, kitsUnavailable ? 0 : kitsCount, data.species?.length ?? 0, tribeValue];
   const labels = ['Sorties', 'Kilomètres', 'Dénivelé', 'Matériel', 'Kits', 'Espèces', 'Tribu'];
-  const displays = [String(stats.outings ?? 0), formatKm(stats.km ?? 0), formatElevation(stats.dplus ?? 0), String(data.gearItems?.length ?? 0), String(data.kits?.length ?? 0), String(data.species?.length ?? 0), String(data.followers?.length ?? 0)];
+  const displays = [statsUnavailable ? '—' : String(stats.outings ?? 0), statsUnavailable ? '—' : formatKm(stats.km ?? 0), statsUnavailable ? '—' : formatElevation(stats.dplus ?? 0), gearUnavailable ? '—' : String(gearCount), kitsUnavailable ? '—' : String(kitsCount), String(data.species?.length ?? 0), tribeDisplay];
+  const someUnavailable = statsUnavailable || gearUnavailable || kitsUnavailable;
   return (
     <OverlaySheet title="Empreinte" subtitle="100 % dérivé de tes sorties GPS vérifiées" onClose={onClose} className="lkdv-seal-drawer">
       <div className="lkdv-seal">
@@ -141,6 +188,12 @@ export function SealDrawer({ data, onClose }: { data: BootstrapOverlayData; onCl
           <polygon points={radar(values)} fill="rgba(23,64,44,.16)" stroke="#17402c" strokeWidth="2" /><circle cx="80" cy="80" r="4" fill="#17402c" />
         </svg></div>
         <div className="lkdv-seal-grid">{labels.map((label, i) => <div key={label}><span>{label}</span><b>{displays[i]}</b></div>)}</div>
+        {followersUnavailable ? (
+          <p className="lkdv-trust-detail-empty">Liste de la tribu momentanément indisponible.</p>
+        ) : null}
+        {someUnavailable ? (
+          <p className="lkdv-trust-detail-empty">Certaines données de l’Empreinte sont momentanément indisponibles.</p>
+        ) : null}
       </div>
     </OverlaySheet>
   );
@@ -148,30 +201,75 @@ export function SealDrawer({ data, onClose }: { data: BootstrapOverlayData; onCl
 
 export function ProfilePreviewDrawer({ userId, onClose }: { userId: string; onClose: () => void }) {
   const { user } = useAuth();
+  const viewerId = user?.id;
   const [profile, setProfile] = useState<{ id: string; full_name?: string; handle?: string; avatar_url?: string; bio?: string; location?: string; trust_score?: number } | null>(null);
   const [following, setFollowing] = useState(false);
+  const [requested, setRequested] = useState(false);
+  const [followBusy, setFollowBusy] = useState(false);
+  const [followError, setFollowError] = useState('');
   const [loading, setLoading] = useState(true);
+  const readEpochRef = useRef(0);
+  const followBusyRef = useRef(false);
   useEffect(() => {
     let cancelled = false;
+    const epoch = ++readEpochRef.current;
     const supabase = createClient();
+    followBusyRef.current = false;
+    setFollowing(false);
+    setRequested(false);
+    setFollowBusy(false);
+    setFollowError('');
+    setLoading(true);
     void (async () => {
       const { data } = await supabase.from('public_profiles').select('id,full_name,handle,avatar_url,bio,location,trust_score').eq('id', userId).maybeSingle();
       if (cancelled) return;
       setProfile(data ?? null);
-      if (data && user && user.id !== data.id) {
-        const { data: follow } = await supabase.from('user_follows').select('follower_id').eq('follower_id', user.id).eq('following_id', data.id).maybeSingle();
-        if (!cancelled) setFollowing(Boolean(follow));
+      if (data && viewerId && viewerId !== data.id) {
+        try {
+          const state = await loadFollowState(supabase, viewerId, data.id);
+          if (cancelled || epoch !== readEpochRef.current) return;
+          setFollowing(state === 'following');
+          setRequested(state === 'requested');
+        } catch {
+          // La lecture en échec laisse le bouton neutre, sans écraser une
+          // mutation qui aurait démarré pendant la requête.
+        }
       }
       if (!cancelled) setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, [userId, user]);
+  }, [userId, viewerId]);
   const toggle = async () => {
-    if (!user || !profile || user.id === profile.id) return;
-    const supabase = createClient();
-    if (following) await supabase.from('user_follows').delete().eq('follower_id', user.id).eq('following_id', profile.id);
-    else await supabase.from('user_follows').insert({ follower_id: user.id, following_id: profile.id });
-    setFollowing((v) => !v);
+    if (followBusyRef.current || !user || !profile || user.id === profile.id) return;
+    followBusyRef.current = true;
+    const epoch = ++readEpochRef.current;
+    const wasFollowing = following;
+    const wasRequested = requested;
+    const action = following || requested ? 'unfollow' : 'follow';
+    setFollowBusy(true);
+    setFollowError('');
+    setFollowing(action === 'follow');
+    setRequested(false);
+    try {
+      const status = await setFollow(profile.id, action);
+      if (epoch !== readEpochRef.current) return;
+      setFollowing(status === 'following');
+      setRequested(status === 'requested');
+    } catch (error) {
+      if (epoch !== readEpochRef.current) return;
+      setFollowing(wasFollowing);
+      setRequested(wasRequested);
+      setFollowError(
+        followErrorMessage(error, 'L’abonnement n’a pas été enregistré. Réessayez.')
+      );
+    } finally {
+      // Une réponse périmée ne doit pas réarmer le verrou d'une requête plus
+      // récente : seule la requête courante rend la main au bouton.
+      if (epoch === readEpochRef.current) {
+        followBusyRef.current = false;
+        setFollowBusy(false);
+      }
+    }
   };
   return (
     <OverlaySheet title="Profil" subtitle={profile?.handle ? `@${profile.handle}` : undefined} onClose={onClose} nested>
@@ -185,13 +283,20 @@ export function ProfilePreviewDrawer({ userId, onClose }: { userId: string; onCl
           {user?.id !== profile.id ? (
             <div className="lkdv-apill-row is-start lkdv-profile-preview-actions">
               <ActionPill
-                tone={following ? 'glass' : 'primary'}
-                label={following ? 'Abonné' : 'Suivre'}
-                aria-pressed={following}
-                icon={following ? <UserCheck /> : <UserPlus />}
+                tone={following || requested ? 'glass' : 'primary'}
+                label={requested ? 'Demande envoyée' : following ? 'Abonné' : 'Suivre'}
+                text={requested ? 'Demande envoyée' : following ? 'Abonné' : 'Suivre'}
+                aria-pressed={following || requested}
+                icon={following || requested ? <UserCheck /> : <UserPlus />}
+                busy={followBusy}
                 onClick={() => void toggle()}
               />
             </div>
+          ) : null}
+          {followError ? (
+            <p className="lkdv-profile-preview-bio" role="alert" style={{ color: 'var(--lkv-danger)' }}>
+              {followError}
+            </p>
           ) : null}
         </div>
       )}

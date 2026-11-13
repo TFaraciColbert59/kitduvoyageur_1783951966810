@@ -8,6 +8,7 @@ import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
+import { followErrorMessage, loadFollowState, setFollow, type FollowState } from '@/features/compte/client/followClient';
 import { requestCarnetPublicationAward } from '@/lib/progression-award-requests';
 // Invoque /api/voyages/mine via le client cache
 import { fetchMyTripsCached, getMyTripsSessionGeneration, isMyTripsSessionCurrent } from '@/features/trips/client/fetchMyTrips';
@@ -17,6 +18,10 @@ import type {
   Viewer,
   Visibility,
 } from './drawer/ProfileDrawerHost';
+import type {
+  BulkAudienceResult,
+  BulkOutingItem,
+} from './drawer/sortie/OutingBulkAudienceSheet';
 import { DRAWER_V2_CSS, type SlotContentState } from './drawer/SlotShell';
 import { useCompteMapContext } from './map/useCompteMapContext';
 
@@ -91,6 +96,13 @@ const CompteDrawer = dynamic(
 );
 const FirstRunJourney = dynamic(
   () => import('./onboarding/FirstRunJourney').then((mod) => mod.FirstRunJourney),
+  { ssr: false }
+);
+const OutingBulkAudienceSheet = dynamic(
+  () =>
+    import('./drawer/sortie/OutingBulkAudienceSheet').then(
+      (mod) => mod.OutingBulkAudienceSheet
+    ),
   { ssr: false }
 );
 
@@ -451,7 +463,32 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'synced'>('idle');
   const [activeHandle, setActiveHandle] = useState<string>('tony_frc');
   const bootstrapPayloadRef = useRef<unknown>(null);
+  /**
+   * Vrai dès qu'un bootstrap a réellement hydraté au moins une liste sociale.
+   * Indépendant de `bootstrapPayloadRef` (remis à `null` sur échec) : après un
+   * échec puis « Réessayer », on ne doit pas vider les listes connues avant
+   * d'avoir reçu de nouvelles données.
+   */
+  const followListsHydratedRef = useRef(false);
+  /**
+   * Vrai dès qu'une hydratation directe (hors bootstrap complet) a réussi au
+   * moins une fois. Sans ce marqueur, un premier bootstrap en échec suivi d'un
+   * « Réessayer » repassait par la branche « premier chargement » et écrivait
+   * `[]` dans les collections déjà affichées.
+   */
+  const directHydratedRef = useRef(false);
   const bootstrapPhaseRef = useRef<BootstrapPhase>('idle');
+  /**
+   * Compteur monotone des mutations de suivi initiées par cet onglet.
+   *
+   * Un bootstrap parti avant une action peut revenir après elle : sans cette
+   * séquence, son snapshot périmé réécrirait l'état confirmé (par exemple
+   * `requested` après une annulation). Chaque handle touché depuis le départ
+   * du fetch est préservé lors de l'hydratation.
+   */
+  const followMutationSeqRef = useRef(0);
+  const followMutationByHandleRef = useRef<Map<string, number>>(new Map());
+  const followInFlightRef = useRef<Set<string>>(new Set());
   const [bootstrapPhase, setBootstrapPhase] = useState<BootstrapPhase>('idle');
   const lastSlotMountRef = useRef<PendingSlotMount | null>(null);
   const [drawerMount, setDrawerMount] = useState<{ root: HTMLElement | null; kind: string; props: any } | null>(null);
@@ -465,6 +502,7 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
   const [slotMount, setSlotMount] = useState<SlotMountSnapshot | null>(null);
   const [mapRoot, setMapRoot] = useState<HTMLElement | null>(null);
   const [mapVisible, setMapVisible] = useState(false);
+  const [bulkOutings, setBulkOutings] = useState<BulkOutingItem[] | null>(null);
   const mapContext = useCompteMapContext();
 
   useEffect(() => {
@@ -530,6 +568,11 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
     };
     bootstrapPayloadRef.current = null;
     bootstrapPhaseRef.current = 'idle';
+    followListsHydratedRef.current = false;
+    directHydratedRef.current = false;
+    followMutationSeqRef.current = 0;
+    followMutationByHandleRef.current = new Map();
+    followInFlightRef.current = new Set();
     accountVisibilityRef.current = null;
     signatureVisibilityRef.current = null;
     lastSlotMountRef.current = null;
@@ -624,6 +667,172 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
       const clean = String(userHandle || '').replace(/^@/, '').trim();
       if (clean) {
         router.push(`/profil/${encodeURIComponent(clean)}`);
+      }
+    };
+
+    // Pont de suivi : le runtime envoie `{ handle, followed }`, pas un handle
+    // nu. On résout la cible, l'API décide `following` / `requested`, puis le
+    // vrai hydrate replace la bascule optimiste. Un échec restaure l'état
+    // confirmé (relu sous RLS) et le retour reste explicite.
+    type FollowBridgeResult = {
+      ok: boolean;
+      code?: 'invalid_target' | 'in_flight' | 'stale' | 'target_not_found' | 'follow_failed';
+      status?: 'following' | 'requested' | 'unfollowed';
+      state?: FollowState;
+      restored?: boolean;
+      message?: string;
+    };
+    const followInFlight = followInFlightRef.current;
+    const markFollowMutation = (targetHandle: string) => {
+      const sequence = ++followMutationSeqRef.current;
+      followMutationByHandleRef.current.set(targetHandle, sequence);
+      return sequence;
+    };
+    const applyFollowState = (targetHandle: string, state: FollowState): boolean => {
+      const hydrate = (window as any).__lkdvHydrateCompte;
+      if (typeof hydrate !== 'function') return false;
+      try {
+        hydrate({ followStates: { [targetHandle]: state } });
+        return true;
+      } catch (_) {
+        return false;
+      }
+    };
+    const confirmedFollowState = (
+      targetHandle: string,
+      followed: boolean | undefined
+    ): FollowState => {
+      const known = (window as any).__lkdvGetState?.()?.followStates?.[targetHandle];
+      if (known === 'following' || known === 'requested' || known === 'none') return known;
+      if (followed === false) return 'following';
+      return 'none';
+    };
+    const applyFollowAction = async (val: unknown): Promise<FollowBridgeResult> => {
+      const contract =
+        val && typeof val === 'object'
+          ? (val as { handle?: unknown; followed?: unknown })
+          : { handle: val, followed: undefined };
+      const targetHandle = String(contract.handle ?? '').replace(/^@/, '').trim();
+      if (!targetHandle) {
+        return {
+          ok: false,
+          code: 'invalid_target',
+          restored: false,
+          message: 'Profil inconnu.',
+        };
+      }
+      if (followInFlight.has(targetHandle)) {
+        return { ok: false, code: 'in_flight', restored: false };
+      }
+
+      followInFlight.add(targetHandle);
+      // Toute action démarrée après le départ d'un bootstrap rend le snapshot
+      // de ce bootstrap périmé pour ce handle, qu'elle réussisse ou échoue :
+      // le rollback local est plus récent que la lecture en vol.
+      markFollowMutation(targetHandle);
+      const followed =
+        typeof contract.followed === 'boolean' ? contract.followed : undefined;
+      const previous = confirmedFollowState(targetHandle, followed);
+      try {
+        const supabase = createClient();
+        const { data: auth } = await supabase.auth.getUser();
+        const me = auth?.user;
+        if (!isCurrent() || !me || me.id !== owner) {
+          return {
+            ok: false,
+            code: 'stale',
+            restored: false,
+            message: 'Session expirée. Reconnecte-toi pour continuer.',
+          };
+        }
+
+        const { data: target, error: targetError } = await supabase
+          .from('public_profiles')
+          .select('id')
+          .eq('handle', targetHandle)
+          .maybeSingle();
+        if (!isCurrent()) {
+          return {
+            ok: false,
+            code: 'stale',
+            restored: false,
+            message: 'Session expirée. Reconnecte-toi pour continuer.',
+          };
+        }
+        if (targetError) {
+          const restored = applyFollowState(targetHandle, previous);
+          return {
+            ok: false,
+            code: 'target_not_found',
+            state: previous,
+            restored,
+            message: 'Impossible de vérifier ce profil pour le moment.',
+          };
+        }
+        if (!target?.id || target.id === me.id) {
+          const restored = applyFollowState(targetHandle, previous);
+          return {
+            ok: false,
+            code: 'target_not_found',
+            state: previous,
+            restored,
+            message:
+              target?.id === me.id
+                ? 'Impossible de se suivre soi-même.'
+                : 'Ce profil n’est plus disponible.',
+          };
+        }
+
+        let action: 'follow' | 'unfollow';
+        if (followed !== undefined) {
+          action = followed ? 'follow' : 'unfollow';
+        } else {
+          const current = await loadFollowState(supabase, me.id, target.id);
+          if (!isCurrent()) return { ok: false, code: 'stale', restored: false };
+          action = current === 'none' ? 'follow' : 'unfollow';
+        }
+
+        try {
+          const status = await setFollow(target.id, action);
+          if (!isCurrent()) return { ok: false, code: 'stale', restored: false };
+          const state: FollowState =
+            status === 'following'
+              ? 'following'
+              : status === 'requested'
+                ? 'requested'
+                : 'none';
+          const restored = applyFollowState(targetHandle, state);
+          return { ok: true, status, state, restored };
+        } catch (error) {
+          // La mutation a pu échouer avant ou après l'écriture : on relit
+          // l'état réel sous RLS. Si cette lecture échoue aussi, on réapplique
+          // l'état confirmé d'avant la bascule.
+          let restoredState = previous;
+          try {
+            restoredState = await loadFollowState(supabase, me.id, target.id);
+          } catch (_) {}
+          if (!isCurrent()) return { ok: false, code: 'stale', restored: false };
+          const restored = applyFollowState(targetHandle, restoredState);
+          return {
+            ok: false,
+            code: 'follow_failed',
+            state: restoredState,
+            restored,
+            message: followErrorMessage(error),
+          };
+        }
+      } catch (error) {
+        if (!isCurrent()) return { ok: false, code: 'stale', restored: false };
+        const restored = applyFollowState(targetHandle, previous);
+        return {
+          ok: false,
+          code: 'follow_failed',
+          state: previous,
+          restored,
+          message: followErrorMessage(error),
+        };
+      } finally {
+        followInFlight.delete(targetHandle);
       }
     };
 
@@ -733,32 +942,8 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
             body: JSON.stringify({ sourceHandle: handle }),
           }).catch(() => {});
         } catch (_) {}
-      } else if (action === 'toggleFollowUser' && typeof val === 'string') {
-        try {
-          const supabase = createClient();
-          const { data: auth } = await supabase.auth.getUser();
-          const me = auth?.user;
-          if (!isCurrent() || !me || me.id !== owner) return;
-          const clean = val.replace(/^@/, '').trim();
-          const { data: target } = await supabase
-            .from('public_profiles')
-            .select('id')
-            .eq('handle', clean)
-            .maybeSingle();
-          if (!isCurrent() || !target?.id || target.id === me.id) return;
-          const { data: existing } = await supabase
-            .from('user_follows')
-            .select('id')
-            .eq('follower_id', me.id)
-            .eq('following_id', target.id)
-            .maybeSingle();
-          if (!isCurrent()) return;
-          if (existing?.id) {
-            await supabase.from('user_follows').delete().eq('id', existing.id);
-          } else {
-            await supabase.from('user_follows').insert({ follower_id: me.id, following_id: target.id });
-          }
-        } catch (_) {}
+      } else if (action === 'toggleFollowUser') {
+        return applyFollowAction(val);
       } else if (action === 'signout') {
         try {
           pendingLogoutRef.current = owner;
@@ -770,7 +955,8 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
     return () => {
       ++runtimeEpochRef.current;
       ++requestEpochRef.current;
-      for (const key of ['__lkdvCompteMapOpenOuting', '__lkdvScanLookup', '__lkdvNavigateProfile', '__lkdvOnAction', '__lkdvOnMutate', '__lkdvHydrateCompte', '__lkdvGetState', '__lkdvCompteAct', '__lkdvOpenSlot', '__lkdvSetSlot', '__lkdvSetProfileVisibility', '__lkdvSetSignatureVisibility']) delete (window as any)[key];
+      followInFlightRef.current.clear();
+      for (const key of ['__lkdvCompteMapOpenOuting', '__lkdvScanLookup', '__lkdvNavigateProfile', '__lkdvOnAction', '__lkdvOnMutate', '__lkdvHydrateCompte', '__lkdvGetState', '__lkdvCompteAct', '__lkdvOpenSlot', '__lkdvSetSlot', '__lkdvSetProfileVisibility', '__lkdvSetSignatureVisibility', '__lkdvShowFollowUnavailable']) delete (window as any)[key];
       delete (window as any).__lkdvMountSlot;
       delete (window as any).__lkdvUnmountSlot;
       delete (window as any).__lkdvMountDrawer;
@@ -1055,22 +1241,52 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
         }))
         .filter((c: any) => c.name);
 
+      const hadBootstrap =
+        bootstrapPayloadRef.current != null ||
+        followListsHydratedRef.current ||
+        directHydratedRef.current;
+      // Même distinction « vide » vs « illisible » que les listes sociales :
+      // après la première hydratation, une lecture en échec ne doit pas vider
+      // la collection connue avant que le bootstrap complet ne la remplace.
+      const carnetsReadable = carnetsRes.error == null;
+      const clubsReadable = clubsRes.error == null;
+      const gearReadable = gearRes.error == null;
+      const ordersReadable = ordersRes.error == null;
+      const loansReadable = loansRes.error == null;
+      const rewardsReadable = rewardRes.error == null;
+      const outingsReadable =
+        travelGroupsRes.error == null &&
+        tripsRes != null &&
+        Array.isArray(tripsRes.trips);
       const patch: Record<string, any> = {
         isGuest: false,
-        followersCount: followersRes.count ?? 0,
-        followingCount: followingRes.count ?? 0,
-        carnets: hasUserCarnets ? carnetsRes.data : [],
-        clubs: userClubs,
-        gearItems: gearRes.data || [],
-        orders: ordersRes.data || [],
-        activeLoans: loansRes.data || [],
+        // Un compteur n'est posé que si sa lecture a réussi : une erreur
+        // transitoire ne doit pas remplacer un compte connu par zéro.
+        ...(followersRes.error == null && typeof followersRes.count === 'number'
+          ? { followersCount: followersRes.count }
+          : {}),
+        ...(followingRes.error == null && typeof followingRes.count === 'number'
+          ? { followingCount: followingRes.count }
+          : {}),
+        ...(carnetsReadable || !hadBootstrap
+          ? { carnets: hasUserCarnets ? carnetsRes.data : [] }
+          : {}),
+        ...(clubsReadable || !hadBootstrap ? { clubs: userClubs } : {}),
+        ...(gearReadable || !hadBootstrap
+          ? { gearItems: gearRes.data || [] }
+          : {}),
+        ...(ordersReadable || !hadBootstrap
+          ? { orders: ordersRes.data || [] }
+          : {}),
+        ...(loansReadable || !hadBootstrap
+          ? { activeLoans: loansRes.data || [] }
+          : {}),
         // Le bootstrap complet arrive ensuite ; on ne laisse jamais les
-        // tableaux de démonstration visibles sur un compte connecté.
-        kits: [],
-        species: [],
-        massifs: [],
-        followers: [],
-        following: [],
+        // tableaux de démonstration visibles sur un compte connecté. Lors
+        // d'une actualisation, les listes connues restent en place jusqu'au
+        // prochain payload complet (ou sont conservées si celui-ci échoue).
+        ...(hadBootstrap ? {} : { kits: [], species: [], massifs: [] }),
+        ...(hadBootstrap ? {} : { followers: [], following: [] }),
       };
 
       if (profileRes.data) {
@@ -1099,7 +1315,8 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
 
       // Store credit & rewards
       const creditEur = (rewardRes.data?.store_credit_cents ? rewardRes.data.store_credit_cents / 100 : 0) + Number(rewardRes.data?.available_cash || 0);
-      patch.storeCreditEur = creditEur;
+      if (rewardsReadable) patch.storeCreditEur = creditEur;
+      else if (!hadBootstrap) patch.storeCreditEur = 0;
 
       // Sorties réelles uniquement : aucun repli démo sur un compte connecté.
       const combinedOutings: any[] = [];
@@ -1109,9 +1326,14 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
       if (tripsRes && Array.isArray(tripsRes.trips)) {
         combinedOutings.push(...tripsRes.trips);
       }
-      patch.outings = combinedOutings;
+      if (outingsReadable) patch.outings = combinedOutings;
+      else if (!hadBootstrap) patch.outings = [];
 
       hydrate(patch);
+      // La première hydratation directe a eu lieu : même si le bootstrap
+      // complet échoue ensuite, un « Réessayer » ne doit plus traiter les
+      // collections comme un premier chargement à initialiser à `[]`.
+      directHydratedRef.current = true;
       setSyncStatus('synced');
 
       // Bootstrap complet : remplace les tableaux de démonstration par les
@@ -1119,7 +1341,16 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
       // C'est aussi lui qui confirme le rôle : tant qu'il n'a pas répondu,
       // l'hôte ne peut pas afficher les entrées propriétaire.
       try {
-        const bootRes = await fetch('/api/compte/bootstrap');
+        // La fenêtre de préservation court à partir du départ réel du fetch :
+        // une mutation terminée avant ce point est déjà dans le snapshot
+        // serveur et ne doit pas masquer une valeur plus récente.
+        const followSeqAtFetch = followMutationSeqRef.current;
+        const followInFlightAtFetch = new Set(followInFlightRef.current);
+        const bootRes = await fetch('/api/compte/bootstrap', {
+          cache: 'no-store',
+          credentials: 'same-origin',
+          headers: { accept: 'application/json' },
+        });
         if (!isCurrent()) return;
         if (!bootRes.ok) throw new Error(`bootstrap_http_${bootRes.status}`);
         const payload = await bootRes.json();
@@ -1136,28 +1367,149 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
         const bootSignatureIndex = signatureVisibilityIndex(payload?.visibility?.signature);
         const bootSignature = signatureVisibilityForValue(bootSignatureIndex);
         if (bootSignature) signatureVisibilityRef.current = bootSignature;
+        // Un bootstrap parti avant une action de suivi ne doit pas ressusciter
+        // l'état d'avant pour les handles touchés depuis. Les listes
+        // followers/following sont également un snapshot : on les conserve si
+        // une mutation les a rendues périmées.
+        const followStatesUnavailable = payload?.followStatesUnavailable === true;
+        const legacyListsUnavailable = payload?.followListsUnavailable === true;
+        const hasPerListAvailability =
+          typeof payload?.followersUnavailable === 'boolean' ||
+          typeof payload?.followingUnavailable === 'boolean';
+        // Ancienne instance serveur : elle ne sait signaler qu'un échec global
+        // via `followStatesUnavailable` et peut renvoyer des compteurs/listes à
+        // zéro alors que la lecture a échoué. On ne remplace rien dans ce cas.
+        const legacyPartialPayload =
+          !hasPerListAvailability &&
+          payload?.followListsUnavailable === undefined &&
+          followStatesUnavailable;
+        const followersUnavailable =
+          payload?.followersUnavailable === true ||
+          (payload?.followersUnavailable === undefined && legacyListsUnavailable);
+        const followingUnavailable =
+          payload?.followingUnavailable === true ||
+          (payload?.followingUnavailable === undefined && legacyListsUnavailable);
+        const preservedFollowHandles = [...followMutationByHandleRef.current.entries()]
+          .filter(
+            ([handle, sequence]) =>
+              sequence > followSeqAtFetch || followInFlightAtFetch.has(handle)
+          )
+          .map(([handle]) => handle);
+        const followMutatedDuringFetch = preservedFollowHandles.length > 0;
+        // Chaque liste est indépendante : un échec des abonnés ne jette pas la
+        // liste des suivis, et inversement.
+        const preserveFollowers =
+          followMutatedDuringFetch || followersUnavailable || legacyPartialPayload;
+        const preserveFollowing =
+          followMutatedDuringFetch || followingUnavailable || legacyPartialPayload;
+        // Profil illisible : ne jamais poser le faux profil « Voyageur » ni
+        // écraser un nom, un handle ou un avatar connus.
+        const profileUnavailable = payload?.profileUnavailable === true;
+        // Les collections non sociales ont la même distinction « vide » vs
+        // « illisible » : on ne remplace pas une liste connue par un tableau
+        // vide issu d'un échec transitoire.
+        const carnetsUnavailable = payload?.carnetsUnavailable === true;
+        const outingsUnavailable = payload?.outingsUnavailable === true;
+        const ordersUnavailable = payload?.ordersUnavailable === true;
+        const notificationsUnavailable = payload?.notificationsUnavailable === true;
+        const clubsUnavailable = payload?.clubsUnavailable === true;
+        const kitsUnavailable = payload?.kitsUnavailable === true;
+        const storiesUnavailable = payload?.storiesUnavailable === true;
+        const highlightsUnavailable = payload?.highlightsUnavailable === true;
+        const profileFromPayload =
+          payload?.profile &&
+          typeof payload.profile === 'object' &&
+          !Array.isArray(payload.profile)
+            ? { ...payload.profile }
+            : {};
+        // Un compteur du snapshot peut être antérieur à une mutation terminée
+        // pendant le fetch, ou absent d'un ancien payload partiel : on ne
+        // l'applique pas, le compteur local plus récent reste affiché.
+        if (followMutatedDuringFetch || legacyPartialPayload) {
+          delete profileFromPayload.followersCount;
+          delete profileFromPayload.followersLabel;
+          delete profileFromPayload.followingCount;
+        }
+        // Compatibilité ascendante : un payload sans champ `followStates`
+        // n'est pas un payload complet. On ne doit donc pas l'interpréter
+        // comme `{}` et effacer les états déjà connus.
+        const hasFollowStatesPayload =
+          payload?.followStates !== null &&
+          typeof payload?.followStates === 'object' &&
+          !Array.isArray(payload.followStates);
         if (payload?.authenticated) {
+          const appliesFollowing =
+            !preserveFollowing && Array.isArray(payload.following);
+          const appliesFollowers =
+            !preserveFollowers && Array.isArray(payload.followers);
           hydrate({
-            ...payload.profile,
-            profileVisibility: bootVisibility,
-            ...(bootSignatureIndex !== null ? { vis: bootSignatureIndex } : {}),
-            carnets: payload.carnets || [],
-            outings: payload.outings || [],
-            orders: payload.orders || [],
-            bookings: payload.bookings || [],
-            clubs: payload.clubs || [],
-            tribu: payload.tribu || [],
-            followers: payload.followers || [],
-            following: payload.following || [],
-            kits: payload.kits || [],
-            stories: payload.stories || [],
-            highlights: payload.highlights || [],
+            ...(profileUnavailable ? {} : profileFromPayload),
+            ...(profileUnavailable
+              ? {}
+              : {
+                  profileVisibility: bootVisibility,
+                  ...(bootSignatureIndex !== null ? { vis: bootSignatureIndex } : {}),
+                }),
+            ...(carnetsUnavailable ? {} : { carnets: payload.carnets || [] }),
+            ...(outingsUnavailable ? {} : { outings: payload.outings || [] }),
+            ...(ordersUnavailable
+              ? {}
+              : {
+                  orders: payload.orders || [],
+                  bookings: payload.bookings || [],
+                }),
+            ...(clubsUnavailable ? {} : { clubs: payload.clubs || [] }),
+            ...(preserveFollowing
+              ? {}
+              : {
+                  tribu: payload.tribu || [],
+                  following: payload.following || [],
+                }),
+            ...(preserveFollowers ? {} : { followers: payload.followers || [] }),
+            ...(followStatesUnavailable || !hasFollowStatesPayload
+              ? {}
+              : {
+                  followStates: payload.followStates,
+                  followStatesPreserve: preservedFollowHandles,
+                }),
+            ...(kitsUnavailable ? {} : { kits: payload.kits || [] }),
+            ...(storiesUnavailable ? {} : { stories: payload.stories || [] }),
+            ...(highlightsUnavailable ? {} : { highlights: payload.highlights || [] }),
             species: payload.species || [],
             massifs: payload.massifs || [],
-            notifications: payload.notifications || [],
+            ...(notificationsUnavailable
+              ? {}
+              : { notifications: payload.notifications || [] }),
             replace: true,
           });
-          if (payload.profile?.handle) setActiveHandle(payload.profile.handle);
+          // Mémorise qu'une liste réelle a déjà été posée : un prochain
+          // « Réessayer » après échec ne doit pas repartir des tableaux vides.
+          if (appliesFollowing || appliesFollowers) {
+            followListsHydratedRef.current = true;
+          }
+          const followUnavailableScope:
+            | 'states'
+            | 'lists'
+            | 'followers'
+            | 'following'
+            | 'all'
+            | null = followStatesUnavailable
+            ? followersUnavailable || followingUnavailable
+              ? 'all'
+              : 'states'
+            : followersUnavailable && followingUnavailable
+              ? 'lists'
+              : followersUnavailable
+                ? 'followers'
+                : followingUnavailable
+                  ? 'following'
+                  : null;
+          if (followUnavailableScope) {
+            (window as any).__lkdvShowFollowUnavailable?.(followUnavailableScope);
+          }
+          if (!profileUnavailable && payload.profile?.handle) {
+            setActiveHandle(payload.profile.handle);
+          }
         }
         setBootstrapPhaseState('ready');
       } catch (_) {
@@ -1362,6 +1714,31 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
     return () => window.removeEventListener('lkdv:highlights-changed', onHighlightsChanged);
   }, [syncSupabaseProfile]);
 
+  // Un changement d'identité ne doit pas laisser la feuille de lot ouverte
+  // avec les titres du compte précédent.
+  useEffect(() => {
+    setBulkOutings(null);
+  }, [user?.id]);
+
+  // L'historique runtime ouvre le lot React ; une écriture réussie relit le
+  // bootstrap pour que le carrousel et les cartes ne gardent pas l'ancienne
+  // audience. Aucune écriture n'est faite par le runtime lui-même.
+  useEffect(() => {
+    const onOpenBulk = (event: Event) => {
+      if (!user) return;
+      const detail = (event as CustomEvent<{ items?: BulkOutingItem[] }>).detail;
+      const items = Array.isArray(detail?.items) ? detail.items : [];
+      if (items.length > 0) setBulkOutings(items);
+    };
+    const onOutingsChanged = () => { void syncSupabaseProfile(); };
+    window.addEventListener('lkdv:open-outing-bulk', onOpenBulk);
+    window.addEventListener('lkdv:outings-changed', onOutingsChanged);
+    return () => {
+      window.removeEventListener('lkdv:open-outing-bulk', onOpenBulk);
+      window.removeEventListener('lkdv:outings-changed', onOutingsChanged);
+    };
+  }, [user, syncSupabaseProfile]);
+
   useEffect(() => {
     retryBootstrapRef.current = () => {
       void syncSupabaseProfile();
@@ -1531,6 +1908,17 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
                 }
               : undefined
           }
+        />
+      ) : null}
+      {bulkOutings ? (
+        <OutingBulkAudienceSheet
+          items={bulkOutings}
+          onClose={() => setBulkOutings(null)}
+          onApplied={(result: BulkAudienceResult) => {
+            if (result.updated.length > 0 && typeof window !== 'undefined') {
+              window.dispatchEvent(new Event('lkdv:outings-changed'));
+            }
+          }}
         />
       ) : null}
     </div>

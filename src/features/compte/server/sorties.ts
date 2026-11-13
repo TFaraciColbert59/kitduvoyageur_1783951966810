@@ -138,6 +138,8 @@ export interface OutingDetail {
   notes: string;
   weather: OutingWeather | null;
   photos: OutingPhoto[];
+  /** `hike_session_photos` illisible : ne pas présenter la sortie sans photo. */
+  photosUnavailable: boolean;
   participants: OutingParticipant[];
   gear: OutingGearItem[];
   kit: OutingKit | null;
@@ -440,6 +442,10 @@ export async function loadOutingDetail(
       position: Number(row.position ?? 0),
     });
   }
+  // Une lecture en échec ou des lignes sans URL signable ne sont pas une
+  // sortie réellement sans photo : le drawer doit pouvoir le dire.
+  const photosUnavailable =
+    photoRes.error != null || (photoRows.length > 0 && photos.length === 0);
 
   const participantRows = (participantRes.data ?? []) as Array<{
     user_id: string;
@@ -810,6 +816,7 @@ export async function loadOutingDetail(
     notes,
     weather,
     photos,
+    photosUnavailable,
     participants,
     gear,
     kit,

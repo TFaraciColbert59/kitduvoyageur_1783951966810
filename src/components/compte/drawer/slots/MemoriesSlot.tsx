@@ -5,9 +5,16 @@ import Link from 'next/link';
 import StoriesViewer from '@/components/communaute/StoriesViewer';
 import { HighlightCard, type HighlightCardData } from '../cards/HighlightCard';
 import { OutingCard, type OutingCardData } from '../cards/OutingCard';
+import {
+  OutingBulkAudienceSheet,
+  type BulkAudienceResult,
+  type BulkOutingItem,
+} from '../sortie/OutingBulkAudienceSheet';
+import type { StoredOutingVisibility } from '@/features/compte/domain/outingAudience';
 import { StampTile } from '../cards/StampTile';
 import { EmptyState } from '../memories/EmptyState';
 import { SlotEmpty } from './SlotEmpty';
+import { SlotUnavailable } from './SlotUnavailable';
 import { YearFilter } from '../memories/YearFilter';
 import { useHighlightViewer } from '../memories/useHighlightViewer';
 import {
@@ -40,6 +47,8 @@ export interface MemoriesSlotProps {
   stories?: unknown;
   /** Override hôte/tests de la visionneuse À la une. */
   onOpenHighlight?: (highlight: HighlightCardData) => void;
+  /** Rôle explicite fourni par l'hôte ; `payload.viewer` reste le repli. */
+  viewer?: 'owner' | 'visitor';
   [key: string]: unknown;
 }
 
@@ -56,11 +65,52 @@ export function MemoriesSlot({
   stamps: stampsProp,
   highlights: highlightsProp,
   onOpenHighlight,
+  viewer,
 }: MemoriesSlotProps) {
   const activeLens: MemoriesLens = lens === 'passport' || lens === 'souvenirs' ? lens : 'timeline';
   const source = asRecord(payload);
+  // Un échec de lecture n'est pas un carnet vide. Les listes directes restent
+  // prioritaires : un test ou un écran ciblé peut fournir ses propres données.
+  const outingsUnavailable =
+    !Array.isArray(outingsProp) && source.outingsUnavailable === true;
+  const stampsUnavailable =
+    !Array.isArray(stampsProp) &&
+    (source.statsUnavailable === true || source.statsDependenciesUnavailable === true);
+  // Les albums (`story_highlights`) et leur contenu (`story_highlight_items`,
+  // stories archivées) sont deux lectures distinctes : la liste peut être
+  // lisible alors que les couvertures/compteurs manquent.
+  const highlightsUnavailable =
+    !Array.isArray(highlightsProp) && source.highlightsUnavailable === true;
+  const highlightContentUnavailable =
+    !Array.isArray(highlightsProp) && source.highlightContentUnavailable === true;
+  // La couverture des sorties dépend de `hike_session_photos` : un échec ne
+  // doit pas faire croire que les sorties n'ont aucune photo.
+  const outingPhotosUnavailable =
+    !Array.isArray(outingsProp) && source.outingPhotosUnavailable === true;
+
+  // Même inférence stricte que la Vitrine : un visiteur authentifié sur un
+  // profil public n'est pas propriétaire. Les actions de lot ne s'affichent
+  // que si l'hôte a explicitement fourni le rôle.
+  const declaredViewer =
+    viewer ??
+    (source.viewer === 'owner' || source.viewer === 'visitor'
+      ? source.viewer
+      : undefined);
+  const profileVisibility =
+    asRecord(source.visibility).profile === 'prive' ? 'prive' : 'public';
+  const owner = declaredViewer
+    ? declaredViewer === 'owner'
+    : source.authenticated === true && profileVisibility !== 'prive';
 
   const [selectedYear, setSelectedYear] = useState<number | 'all'>('all');
+  const [visibilityOverrides, setVisibilityOverrides] = useState<
+    Record<string, StoredOutingVisibility>
+  >({});
+  const [selecting, setSelecting] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(() => new Set());
+  const [bulkItems, setBulkItems] = useState<BulkOutingItem[] | null>(null);
+  const [bulkNotice, setBulkNotice] = useState<string | null>(null);
+  const manageButtonRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -73,10 +123,42 @@ export function MemoriesSlot({
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const { slides, openingId, error, open, close } = useHighlightViewer({ onOpenHighlight });
 
-  const outings = asRows(source.outings ?? outingsProp)
+  const normalizedOutings = asRows(source.outings ?? outingsProp)
     .map(normalizeOuting)
     .filter((outing): outing is OutingCardData => outing !== null)
     .sort((a, b) => timeValue(b) - timeValue(a) || a.title.localeCompare(b.title));
+  // Les écritures réussies sont appliquées localement sans attendre un nouveau
+  // bootstrap ; le payload reste la source de vérité au prochain chargement.
+  const outings = normalizedOutings.map((outing) => ({
+    ...outing,
+    visibility: visibilityOverrides[outing.id] ?? outing.visibility,
+  }));
+
+  useEffect(() => {
+    if (activeLens === 'timeline') return;
+    setSelecting(false);
+    setSelected(new Set());
+  }, [activeLens]);
+
+  // Un visiteur ne doit jamais hériter d'un mode sélection ou d'une feuille de
+  // lot ouverte par le propriétaire précédent.
+  useEffect(() => {
+    if (owner) return;
+    setSelecting(false);
+    setSelected(new Set());
+    setBulkItems(null);
+    setBulkNotice(null);
+  }, [owner]);
+
+  const outingIdsKey = outings.map((outing) => outing.id).join('|');
+  useEffect(() => {
+    if (!selecting) return;
+    setSelected((current) => {
+      const known = new Set(outingIdsKey ? outingIdsKey.split('|') : []);
+      const next = new Set([...current].filter((id) => known.has(id)));
+      return next.size === current.size ? current : next;
+    });
+  }, [outingIdsKey, selecting]);
   const stamps = asRows(source.stamps ?? stampsProp)
     .map(normalizeStamp)
     .filter((stamp) => stamp !== null);
@@ -98,6 +180,75 @@ export function MemoriesSlot({
   const activeYear = selectedYear !== 'all' && years.includes(selectedYear) ? selectedYear : 'all';
   const visibleOutings =
     activeYear === 'all' ? outings : outings.filter((outing) => outing.year === activeYear);
+
+  const toggleSelecting = () => {
+    setSelecting((current) => !current);
+    setSelected(new Set());
+    setBulkNotice(null);
+  };
+  const toggleSelected = (id: string) => {
+    setSelected((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+  const allVisibleSelected =
+    visibleOutings.length > 0 &&
+    visibleOutings.every((outing) => selected.has(outing.id));
+  const toggleSelectAll = () => {
+    setSelected(
+      allVisibleSelected
+        ? new Set()
+        : new Set(visibleOutings.map((outing) => outing.id))
+    );
+  };
+  const selectedOutings = outings.filter((outing) => selected.has(outing.id));
+  const openBulkAudience = () => {
+    if (selectedOutings.length === 0) return;
+    setBulkItems(
+      selectedOutings.map((outing) => ({
+        id: outing.id,
+        title: outing.title,
+        visibility: outing.visibility,
+      }))
+    );
+  };
+  const applyBulkResult = (result: BulkAudienceResult) => {
+    setVisibilityOverrides((current) => {
+      const next = { ...current };
+      for (const entry of result.updated) next[entry.id] = entry.visibility;
+      return next;
+    });
+    if (result.updated.length > 0 && typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('lkdv:outings-changed'));
+    }
+    if (result.failedIds.length > 0) {
+      setSelected(new Set(result.failedIds));
+      setBulkNotice(
+        `${result.updated.length} sortie${
+          result.updated.length > 1 ? 's' : ''
+        } modifiée${result.updated.length > 1 ? 's' : ''}, ${
+          result.failedIds.length
+        } échec${result.failedIds.length > 1 ? 's' : ''}. Les sorties en échec restent sélectionnées.`
+      );
+      return;
+    }
+    setSelecting(false);
+    setSelected(new Set());
+    setBulkItems(null);
+    setBulkNotice(
+      `${result.updated.length} sortie${
+        result.updated.length > 1 ? 's' : ''
+      } modifiée${result.updated.length > 1 ? 's' : ''} : l’audience est à jour.`
+    );
+    // Le bouton collant qui a ouvert la feuille disparaît avec la sélection :
+    // le focus revient au déclencheur stable de la Timeline.
+    if (typeof window !== 'undefined') {
+      window.setTimeout(() => manageButtonRef.current?.focus(), 0);
+    }
+  };
 
   const groups: Array<[string, OutingCardData[]]> = [];
   for (const outing of visibleOutings) {
@@ -134,6 +285,38 @@ export function MemoriesSlot({
     triggerRef.current?.focus();
   }, [close]);
 
+  // Tous les hooks sont appelés avant ces retours : le nombre de hooks reste
+  // stable entre un payload lisible et un payload indisponible.
+  if (activeLens === 'timeline' && outingsUnavailable) {
+    return (
+      <SlotUnavailable
+        label="Sorties momentanément indisponibles."
+        slot="souvenirs"
+        lens={activeLens}
+      />
+    );
+  }
+
+  if (activeLens === 'passport' && stampsUnavailable) {
+    return (
+      <SlotUnavailable
+        label="Passeport momentanément indisponible."
+        slot="souvenirs"
+        lens={activeLens}
+      />
+    );
+  }
+
+  if (activeLens === 'souvenirs' && highlightsUnavailable) {
+    return (
+      <SlotUnavailable
+        label="Albums momentanément indisponibles."
+        slot="souvenirs"
+        lens={activeLens}
+      />
+    );
+  }
+
   let content: React.ReactNode = null;
 
   if (!empty && activeLens === 'passport') {
@@ -152,6 +335,14 @@ export function MemoriesSlot({
   } else if (!empty && activeLens === 'souvenirs') {
     content = (
       <div className="space-y-2">
+        {highlightContentUnavailable ? (
+          <p
+            role="note"
+            className="rounded-[var(--lkv-radius-sm)] bg-[color:var(--card-tint-strong)] px-3 py-2 text-[length:var(--lkv-text-caption-2,12px)] text-[color:var(--label2)]"
+          >
+            Le contenu des albums est momentanément indisponible.
+          </p>
+        ) : null}
         {error ? (
           <p
             role="alert"
@@ -175,7 +366,64 @@ export function MemoriesSlot({
   } else if (!empty) {
     content = (
       <div className="space-y-3">
-        <YearFilter years={years} active={activeYear} onChange={setSelectedYear} />
+        {outingPhotosUnavailable ? (
+          <p
+            role="note"
+            className="rounded-[var(--lkv-radius-sm)] bg-[color:var(--card-tint-strong)] px-3 py-2 text-[length:var(--lkv-text-caption-2,12px)] text-[color:var(--label2)]"
+          >
+            Photos de sortie momentanément indisponibles.
+          </p>
+        ) : null}
+
+        {owner && outings.length > 0 ? (
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <button
+              ref={manageButtonRef}
+              type="button"
+              aria-pressed={selecting}
+              onClick={toggleSelecting}
+              className="min-h-[44px] rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] px-3 text-[12px] font-semibold text-[color:var(--label)]"
+            >
+              {selecting ? 'Terminer' : 'Gérer la visibilité'}
+            </button>
+            {selecting ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={toggleSelectAll}
+                  className="min-h-[44px] rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] px-3 text-[11.5px] font-semibold text-[color:var(--label2)]"
+                >
+                  {allVisibleSelected ? 'Tout désélectionner' : 'Tout sélectionner'}
+                </button>
+                <span
+                  role="status"
+                  aria-live="polite"
+                  className="text-[11.5px] font-semibold text-[color:var(--label2)]"
+                >
+                  {selected.size} sélectionnée{selected.size > 1 ? 's' : ''}
+                </span>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+
+        {bulkNotice ? (
+          <p
+            role={bulkNotice.includes('échec') ? 'alert' : 'status'}
+            className="rounded-[var(--lkv-radius-sm)] bg-[color:var(--card-tint-strong)] px-3 py-2 text-[11.5px] leading-snug text-[color:var(--label2)]"
+          >
+            {bulkNotice}
+          </p>
+        ) : null}
+
+        <YearFilter
+          years={years}
+          active={activeYear}
+          onChange={(year) => {
+            setSelectedYear(year);
+            setSelected(new Set());
+          }}
+        />
         <p role="status" aria-live="polite" className="sr-only">
           {outingsCountLabel(visibleOutings.length)}
         </p>
@@ -187,12 +435,31 @@ export function MemoriesSlot({
               </h3>
               <ul aria-label={`Sorties de ${label}`} className="space-y-2">
                 {group.map((outing) => (
-                  <OutingCard key={outing.id} outing={outing} />
+                  <OutingCard
+                    key={outing.id}
+                    outing={outing}
+                    selectable={selecting}
+                    selected={selected.has(outing.id)}
+                    onToggle={toggleSelected}
+                  />
                 ))}
               </ul>
             </section>
           ))}
         </div>
+
+        {selecting && selected.size > 0 ? (
+          <div className="sticky bottom-0 z-20 rounded-[var(--lkv-radius-md)] bg-[color:var(--card-tint-strong)] p-2 backdrop-blur-[var(--blur-md)]">
+            <button
+              type="button"
+              onClick={openBulkAudience}
+              className="min-h-[44px] w-full rounded-full bg-[color:var(--lkv-primary)] px-3 text-[12.5px] font-semibold text-white"
+            >
+              Changer la visibilité de {selected.size} sortie
+              {selected.size > 1 ? 's' : ''}
+            </button>
+          </div>
+        ) : null}
       </div>
     );
   }
@@ -239,6 +506,15 @@ export function MemoriesSlot({
           ]}
           startUser={0}
           onClose={closeViewer}
+        />
+      ) : null}
+      {bulkItems ? (
+        <OutingBulkAudienceSheet
+          items={bulkItems}
+          initialIds={bulkItems.map((item) => item.id)}
+          fixedSelection
+          onClose={() => setBulkItems(null)}
+          onApplied={applyBulkResult}
         />
       ) : null}
     </div>
