@@ -1539,7 +1539,9 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
                 ? 'stats'
                 : drawerMount.props?.view === 'goals'
                   ? 'goals'
-                  : 'calendar'
+                  : drawerMount.props?.view === 'bike'
+                    ? 'bike'
+                    : 'calendar'
             }
             sessions={progressionSessions}
             goals={progressionGoals}

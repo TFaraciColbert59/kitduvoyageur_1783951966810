@@ -3,12 +3,15 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   BarChart3,
+  Bike,
   CalendarDays,
   ChevronLeft,
   ChevronRight,
   Clock3,
+  Gauge,
   Lock,
   MapPin,
+  Mountain,
   Pencil,
   Plus,
   Save,
@@ -16,6 +19,7 @@ import {
   Target,
   Trash2,
   X,
+  Zap,
 } from 'lucide-react';
 import { DrawerShell, type DrawerTab } from '../shell/DrawerShell';
 import {
@@ -58,9 +62,16 @@ import {
   type GoalPeriod,
   type ProgressionGoal,
 } from '@/features/compte/progression/goals';
+import {
+  buildBestEfforts,
+  formatBestEffortValue,
+  type BestEffortRecord,
+} from '@/features/compte/progression/bestEfforts';
+
+export type ProgressionView = 'calendar' | 'stats' | 'goals' | 'bike';
 
 export interface ProgressionDrawerProps {
-  initialView?: 'calendar' | 'stats' | 'goals';
+  initialView?: ProgressionView;
   sessions?: ProgressionSession[];
   /** Objectifs privés S2.19, lus depuis le bootstrap authentifié. */
   goals?: ProgressionGoal[];
@@ -69,7 +80,7 @@ export interface ProgressionDrawerProps {
   state?: 'loading' | 'error' | 'ready';
   onRetry?: () => void;
   /** Signale le changement d’onglet au runtime pour le restaurer au retour. */
-  onViewChange?: (view: 'calendar' | 'stats' | 'goals') => void;
+  onViewChange?: (view: ProgressionView) => void;
   /** Identité propriétaire : le cache d’interface ne traverse pas les comptes. */
   accountKey?: string;
 }
@@ -124,6 +135,18 @@ interface ProgressionUiCache {
   selectedDay: string;
   query: string;
   period: ProgressionPeriod;
+  bikePeriod: ProgressionPeriod;
+}
+
+const PROGRESSION_VIEWS: readonly ProgressionView[] = ['calendar', 'stats', 'goals', 'bike'];
+
+function viewIndex(view: ProgressionView): number {
+  const index = PROGRESSION_VIEWS.indexOf(view);
+  return index >= 0 ? index : 0;
+}
+
+function viewFromIndex(index: number): ProgressionView {
+  return PROGRESSION_VIEWS[index] ?? 'calendar';
 }
 
 /**
@@ -238,6 +261,101 @@ function MetricCard({
   );
 }
 
+function BestEffortCard({ record }: { record: BestEffortRecord }) {
+  const best = record.best;
+  const others = record.top.slice(1);
+  const icon =
+    record.id === 'distance' ? (
+      <MapPin size={16} aria-hidden="true" />
+    ) : record.id === 'elevation' ? (
+      <Mountain size={16} aria-hidden="true" />
+    ) : record.id === 'speed' ? (
+      <Gauge size={16} aria-hidden="true" />
+    ) : (
+      <Zap size={16} aria-hidden="true" />
+    );
+  const valueText = record.value === null ? '—' : formatBestEffortValue(record.id, record.value);
+  const valueHint =
+    record.value === null
+      ? record.provenance === 'unavailable'
+        ? 'non mesurée'
+        : 'indisponible'
+      : null;
+
+  return (
+    <article className="lkdv-prog-effort" data-provenance={record.provenance}>
+      <div className="lkdv-prog-effort-head">
+        <span className="lkdv-prog-effort-ico" aria-hidden="true">{icon}</span>
+        <div className="lkdv-prog-effort-title">
+          <small>{record.label}</small>
+          <b>{record.shortLabel}</b>
+        </div>
+        <span className={`lkdv-prog-effort-prov is-${record.provenance}`}>
+          {record.provenanceLabel}
+        </span>
+      </div>
+
+      <div className="lkdv-prog-effort-value">
+        <b>{valueText}</b>
+        {valueHint ? <span>{valueHint}</span> : null}
+      </div>
+
+      {best ? (
+        <button
+          type="button"
+          className="lkdv-prog-effort-best"
+          onClick={() => openSession(best.sessionId)}
+          aria-label={`Ouvrir ${best.title}, ${formatBestEffortValue(record.id, best.value)}${best.achievedDate ? `, ${longDateLabel(best.achievedDate)}` : ''}`}
+        >
+          <b>{best.title}</b>
+          <small>
+            {best.achievedDate ? longDateLabel(best.achievedDate) : 'Date non renseignée'}
+            {best.massif ? ` · ${best.massif}` : ''}
+          </small>
+        </button>
+      ) : (
+        <p className="lkdv-prog-effort-reason">{record.reason}</p>
+      )}
+
+      {others.length > 0 ? (
+        <>
+          <p className="lkdv-prog-effort-subtitle">Autres efforts</p>
+          <ol className="lkdv-prog-effort-top">
+            {others.map((candidate, index) => (
+              <li key={candidate.sessionId}>
+                <button
+                  type="button"
+                  onClick={() => openSession(candidate.sessionId)}
+                  aria-label={`Ouvrir ${candidate.title}, ${formatBestEffortValue(record.id, candidate.value)}${candidate.achievedDate ? `, ${longDateLabel(candidate.achievedDate)}` : ''}`}
+                >
+                  <span className="lkdv-prog-effort-rank" aria-hidden="true">{index + 2}</span>
+                  <span className="lkdv-prog-effort-name">
+                    {candidate.title}
+                    <small>
+                      {candidate.achievedDate ? shortDateLabel(candidate.achievedDate) : 'Date non renseignée'}
+                      {candidate.massif ? ` · ${candidate.massif}` : ''}
+                    </small>
+                  </span>
+                  <span className="lkdv-prog-effort-point">
+                    {formatBestEffortValue(record.id, candidate.value)}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ol>
+        </>
+      ) : null}
+
+      <p className="lkdv-prog-legend">
+        {record.caveat}
+        {record.present > 0 && record.missing > 0
+          ? ` ${record.missing} séance(s) sans valeur sur ${record.present + record.missing}.`
+          : null}
+      </p>
+    </article>
+  );
+}
+
 export function ProgressionDrawer({
   initialView = 'calendar',
   sessions = [],
@@ -253,9 +371,7 @@ export function ProgressionDrawer({
   const [now] = useState(() => new Date());
   const today = useMemo(() => todayKey(zone, now), [zone, now]);
   const cachedUi = progressionUiCache?.key === accountKey ? progressionUiCache.state : null;
-  const [view, setView] = useState(
-    initialView === 'goals' ? 2 : initialView === 'stats' ? 1 : 0
-  );
+  const [view, setView] = useState(() => viewIndex(initialView));
   const [goals, setGoals] = useState<ProgressionGoal[]>(() => sortProgressionGoals(initialGoals));
   const [goalForm, setGoalForm] = useState<GoalFormState | null>(null);
   const [goalSaving, setGoalSaving] = useState(false);
@@ -271,10 +387,13 @@ export function ProgressionDrawer({
   const [period, setPeriod] = useState<ProgressionPeriod>(
     () => cachedUi?.period ?? '30d'
   );
+  const [bikePeriod, setBikePeriod] = useState<ProgressionPeriod>(
+    () => cachedUi?.bikePeriod ?? 'all'
+  );
   const [chartMetric, setChartMetric] = useState<'km' | 'dplus'>('km');
 
   useEffect(() => {
-    setView(initialView === 'goals' ? 2 : initialView === 'stats' ? 1 : 0);
+    setView(viewIndex(initialView));
   }, [initialView]);
 
   useEffect(() => {
@@ -293,12 +412,15 @@ export function ProgressionDrawer({
   }, [accountKey]);
 
   useEffect(() => {
-    progressionUiCache = { key: accountKey, state: { monthKey, selectedDay, query, period } };
-  }, [accountKey, monthKey, selectedDay, query, period]);
+    progressionUiCache = {
+      key: accountKey,
+      state: { monthKey, selectedDay, query, period, bikePeriod },
+    };
+  }, [accountKey, monthKey, selectedDay, query, period, bikePeriod]);
 
   const changeView = (index: number) => {
     setView(index);
-    onViewChange?.(index === 1 ? 'stats' : index === 2 ? 'goals' : 'calendar');
+    onViewChange?.(viewFromIndex(index));
   };
 
   const calendar = useMemo(
@@ -328,6 +450,14 @@ export function ProgressionDrawer({
     () => buildMonthlyProgression(sessions, zone, now, 12),
     [sessions, zone, now]
   );
+  // S2.23 : records de séance vélo uniquement. Le moteur ne reçoit que les
+  // mesures réelles du bootstrap ; il ne produit ni puissance ni effort de
+  // segment. Le calcul est refait à chaque changement de période.
+  const bikeEfforts = useMemo(
+    () => buildBestEfforts(sessions, bikePeriod, zone, now),
+    [sessions, bikePeriod, zone, now]
+  );
+  const bikeRecordCount = bikeEfforts.records.filter((record) => record.value !== null).length;
 
   const maxChartValue = Math.max(
     1,
@@ -1214,6 +1344,108 @@ export function ProgressionDrawer({
         </div>
       ),
     },
+    {
+      id: 'bike',
+      label: 'Vélo',
+      icon: <Bike size={18} aria-hidden="true" />,
+      render: () => (
+        <div className="lkdv-prog-pane" role="region" aria-label="Meilleurs efforts vélo">
+          <p className="lkdv-prog-note">
+            <Lock size={13} aria-hidden="true" />
+            <span>
+              Meilleurs efforts privés, calculés sur tes seules séances vélo terminées. {timeZoneNote}
+            </span>
+          </p>
+
+          <div className="lkdv-prog-periods" role="group" aria-label="Période des meilleurs efforts vélo">
+            {PROGRESSION_PERIODS.map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                className="lkdv-prog-period"
+                aria-pressed={bikePeriod === option.id}
+                onClick={() => setBikePeriod(option.id)}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+
+          <section className="lkdv-prog-card" aria-label="Périmètre des meilleurs efforts vélo">
+            <div className="lkdv-prog-card-head">
+              <div>
+                <small>{bikeEfforts.range.label}</small>
+                <b>Progression vélo</b>
+              </div>
+              <span className="lkdv-prog-chip">{bikeEfforts.cyclingDone} séance(s)</span>
+            </div>
+            <p className="lkdv-prog-empty">
+              {bikeEfforts.cyclingDone === 0
+                ? 'Aucune séance vélo terminée sur cette période. Aucun record n’est inventé.'
+                : `${bikeRecordCount} métrique(s) avec une mesure exploitable sur ${bikeEfforts.records.length}. Les records sont des maximums de séance, pas des efforts sur une distance normalisée.`}
+            </p>
+            {bikeEfforts.excludedUnknownSport > 0 ? (
+              <p className="lkdv-prog-legend">
+                {bikeEfforts.excludedUnknownSport} séance(s) sans sport connu : jamais attribuées au vélo.
+              </p>
+            ) : null}
+            {bikeEfforts.excludedOtherSport > 0 ? (
+              <p className="lkdv-prog-legend">
+                {bikeEfforts.excludedOtherSport} séance(s) d’un autre sport exclue(s) de cette vue.
+              </p>
+            ) : null}
+            {bikeEfforts.excludedNotDone > 0 ? (
+              <p className="lkdv-prog-legend">
+                {bikeEfforts.excludedNotDone} séance(s) vélo non terminée(s) exclue(s).
+              </p>
+            ) : null}
+          </section>
+
+          {bikeEfforts.cyclingDone > 0 ? (
+            <div className="lkdv-prog-efforts">
+              {bikeEfforts.records.map((record) => (
+                <BestEffortCard key={record.id} record={record} />
+              ))}
+            </div>
+          ) : null}
+
+          <section className="lkdv-prog-card" aria-label="Méthode et limites des meilleurs efforts vélo">
+            <div className="lkdv-prog-card-head">
+              <div>
+                <small>Méthode</small>
+                <b>Ce qui est calculé, ce qui manque</b>
+              </div>
+            </div>
+            <p className="lkdv-prog-legend">
+              Unités canoniques : km, m et km/h. Les valeurs ne sont pas converties
+              dans le calcul ; l’affichage garde l’unité de la mesure.
+            </p>
+            <p className="lkdv-prog-legend">
+              Distance et dénivelé positif : mesures enregistrées par la séance.
+              Vitesse : distance ÷ durée enregistrée, en km/h. C’est une moyenne
+              sur la durée de la séance, sans recalcul du temps en mouvement, et
+              non une vitesse maximale.
+            </p>
+            <p className="lkdv-prog-legend">
+              Puissance : aucune mesure, aucun capteur et aucune estimation. La
+              carte reste « — » et n’est jamais remplie par un calcul de vitesse
+              ou de dénivelé.
+            </p>
+            <p className="lkdv-prog-legend">
+              Pas de meilleur effort sur 5, 10 ou 20 km, pas de segment et pas de
+              splits : le bootstrap ne transporte ni flux GPS ni découpage
+              kilométrique. Aucun record n’est écrit en base ni attribué en badge ;
+              il est recalculé à chaque lecture, donc une correction de séance le
+              retire à la lecture suivante.
+            </p>
+            <p className="lkdv-prog-legend">
+              Seules les séances terminées dont le sport est exactement « velo »
+              sont éligibles. Un sport absent ou inconnu n’est jamais attribué au vélo.
+            </p>
+          </section>
+        </div>
+      ),
+    },
   ];
 
   return (
@@ -1264,6 +1496,34 @@ export const PROGRESSION_DRAWER_CSS = `
 .lkdv-prog-metric small{font:600 9px/1.2 var(--sf)!important;color:var(--label2)!important;text-transform:uppercase!important;letter-spacing:.04em!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
 .lkdv-prog-metric b{font:650 12.5px/1.2 var(--sf)!important;color:var(--label)!important;font-variant-numeric:tabular-nums!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
 .lkdv-prog-metric em{font:600 8.5px var(--sf)!important;color:var(--warn)!important;font-style:normal!important;}
+.lkdv-prog-efforts{display:flex!important;flex-direction:column!important;gap:8px!important;}
+.lkdv-prog-effort{display:flex!important;flex-direction:column!important;gap:7px!important;padding:11px!important;border-radius:16px!important;background:rgba(255,255,255,.55)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 0 0 .5px rgba(23,43,36,.08)!important;}
+.lkdv-prog-effort-head{display:flex!important;align-items:flex-start!important;gap:7px!important;}
+.lkdv-prog-effort-ico{flex:none!important;display:grid!important;place-items:center!important;width:28px!important;height:28px!important;border-radius:9px!important;background:var(--mint)!important;color:var(--tint)!important;}
+.lkdv-prog-effort-title{flex:1!important;min-width:0!important;}
+.lkdv-prog-effort-title small{display:block!important;font:600 9px var(--sf)!important;color:var(--label2)!important;text-transform:uppercase!important;letter-spacing:.05em!important;}
+.lkdv-prog-effort-title b{display:block!important;margin-top:2px!important;font:650 13px/1.2 var(--sf)!important;color:var(--label)!important;}
+.lkdv-prog-effort-prov{flex:none!important;display:inline-flex!important;align-items:center!important;height:20px!important;padding:0 7px!important;border-radius:999px!important;font:600 9px var(--sf)!important;white-space:nowrap!important;}
+.lkdv-prog-effort-prov.is-measured{background:var(--mint)!important;color:var(--tint)!important;}
+.lkdv-prog-effort-prov.is-calculated{background:var(--warn-bg)!important;color:var(--warn)!important;}
+.lkdv-prog-effort-prov.is-unavailable{background:var(--fill)!important;color:var(--label2)!important;}
+.lkdv-prog-effort-value{display:flex!important;align-items:baseline!important;gap:6px!important;min-width:0!important;font-variant-numeric:tabular-nums!important;}
+.lkdv-prog-effort-value b{font:700 23px/1 var(--sf)!important;color:var(--label)!important;letter-spacing:-.02em!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+.lkdv-prog-effort-value span{font:600 9.5px var(--sf)!important;color:var(--label2)!important;text-transform:uppercase!important;letter-spacing:.04em!important;}
+.lkdv-prog-effort-best{display:flex!important;flex-direction:column!important;gap:2px!important;width:100%!important;padding:8px 9px!important;border:0!important;border-radius:12px!important;background:var(--fill2)!important;color:var(--label)!important;text-align:left!important;cursor:pointer!important;}
+.lkdv-prog-effort-best:active{transform:scale(.99)!important;}
+.lkdv-prog-effort-best b{font:600 12px/1.25 var(--sf)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+.lkdv-prog-effort-best small{font:400 10px/1.3 var(--sf)!important;color:var(--label2)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+.lkdv-prog-effort-reason{margin:0!important;font:500 11px/1.4 var(--sf)!important;color:var(--label2)!important;}
+.lkdv-prog-effort-subtitle{margin:1px 0 0!important;font:600 9px var(--sf)!important;color:var(--label3)!important;text-transform:uppercase!important;letter-spacing:.05em!important;}
+.lkdv-prog-effort-top{list-style:none!important;display:flex!important;flex-direction:column!important;gap:3px!important;margin:0!important;padding:0!important;}
+.lkdv-prog-effort-top button{display:grid!important;grid-template-columns:16px minmax(0,1fr) auto!important;align-items:center!important;gap:1px 6px!important;width:100%!important;padding:5px 7px!important;border:0!important;border-radius:10px!important;background:transparent!important;color:var(--label)!important;text-align:left!important;cursor:pointer!important;}
+.lkdv-prog-effort-top button:active{background:var(--fill2)!important;}
+.lkdv-prog-effort-rank{display:grid!important;place-items:center!important;width:16px!important;height:16px!important;border-radius:999px!important;background:var(--fill)!important;color:var(--label2)!important;font:600 8.5px var(--sf)!important;}
+.lkdv-prog-effort-name{display:flex!important;flex-direction:column!important;gap:1px!important;min-width:0!important;font:500 10.5px/1.25 var(--sf)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+.lkdv-prog-effort-name small{font:400 9px/1.2 var(--sf)!important;color:var(--label3)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+.lkdv-prog-effort-point{font:650 10px var(--sf)!important;color:var(--label)!important;font-variant-numeric:tabular-nums!important;white-space:nowrap!important;}
+.lkdv-prog-effort-best:focus-visible,.lkdv-prog-effort-top button:focus-visible{outline:2px solid #17402C!important;outline-offset:2px!important;}
 .lkdv-prog-empty{margin:0!important;font:400 11.5px/1.45 var(--sf)!important;color:var(--label2)!important;}
 .lkdv-prog-compare{margin:0!important;font:500 11.5px/1.4 var(--sf)!important;color:var(--label2)!important;}
 .lkdv-prog-list{display:flex!important;flex-direction:column!important;gap:5px!important;}
@@ -1335,5 +1595,5 @@ export const PROGRESSION_DRAWER_CSS = `
 .lkdv-prog-goal-note{margin:0!important;font:500 11px/1.4 var(--sf)!important;color:var(--label2)!important;}
 .lkdv-prog-goal-actions{display:flex!important;gap:5px!important;flex-wrap:wrap!important;}
 .lkdv-prog-goal-actions .lkdv-prog-goal-action{padding:0 11px!important;font-size:11px!important;}
-@media (prefers-reduced-motion:reduce){.lkdv-prog-iconbtn,.lkdv-prog-day,.lkdv-prog-session,.lkdv-prog-goal-track > span,.lkdv-prog-goal-new,.lkdv-prog-goal-save,.lkdv-prog-goal-cancel,.lkdv-prog-goal-action{transition:none!important;}}
+@media (prefers-reduced-motion:reduce){.lkdv-prog-iconbtn,.lkdv-prog-day,.lkdv-prog-session,.lkdv-prog-goal-track > span,.lkdv-prog-goal-new,.lkdv-prog-goal-save,.lkdv-prog-goal-cancel,.lkdv-prog-goal-action,.lkdv-prog-effort-best,.lkdv-prog-effort-top button{transition:none!important;}}
 `;
