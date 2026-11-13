@@ -314,18 +314,18 @@ begin
 
   if jsonb_typeof(p_log->'startedAt') is distinct from 'number'
      or jsonb_typeof(p_log->'updatedAt') is distinct from 'number'
-     or case
-          when jsonb_typeof(p_log->'startedAt') = 'number' then
-            (p_log->>'startedAt')::numeric < 946684800000
-            or (p_log->>'startedAt')::numeric > 4102444800000
-          else false
-        end
-     or case
-          when jsonb_typeof(p_log->'updatedAt') = 'number' then
-            (p_log->>'updatedAt')::numeric < 946684800000
-            or (p_log->>'updatedAt')::numeric > 4102444800000
-          else false
-        end then
+     or (case
+           when jsonb_typeof(p_log->'startedAt') = 'number' then
+             (p_log->>'startedAt')::numeric < 946684800000
+             or (p_log->>'startedAt')::numeric > 4102444800000
+           else false
+         end)
+     or (case
+           when jsonb_typeof(p_log->'updatedAt') = 'number' then
+             (p_log->>'updatedAt')::numeric < 946684800000
+             or (p_log->>'updatedAt')::numeric > 4102444800000
+           else false
+         end) then
     raise exception 'horodatage de carnet invalide' using errcode = '22023';
   end if;
   v_started_at := to_timestamp((p_log->>'startedAt')::double precision / 1000.0);

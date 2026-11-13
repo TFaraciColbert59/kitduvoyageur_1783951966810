@@ -66,7 +66,7 @@ import {
   mapProfileRuntimeVisibility,
   persistSignatureVisibility,
   signatureVisibilityIndex,
-} from '@/features/compte/data/accountBootstrap';
+} from '@/features/compte/data/accountSignatureVisibility';
 import {
   SIGNATURE_VISIBILITY_EVENT,
   type SignatureVisibilityEventDetail,

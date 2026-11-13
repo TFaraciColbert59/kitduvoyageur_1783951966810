@@ -24,7 +24,7 @@ begin;
 
 -- ── 1. Lien stable entre une séance et un objet d'inventaire ────────────────
 alter table public.hike_session_gear
-  add column if not exists gear_item_id uuid references public.gear_items(id) on delete set null,
+  add column if not exists gear_item_id uuid references public.product_ownership(id) on delete set null,
   add column if not exists sport text;
 
 create index if not exists hike_session_gear_gear_item_idx
@@ -61,7 +61,7 @@ update public.hike_session_gear g
 
 -- ── 2. Réglages de kilométrage et de seuil ──────────────────────────────────
 create table if not exists public.gear_mileage_settings (
-  gear_item_id      uuid primary key references public.gear_items(id) on delete cascade,
+  gear_item_id      uuid primary key references public.product_ownership(id) on delete cascade,
   user_id           uuid not null references auth.users(id) on delete cascade,
   threshold_km      numeric(10,1),
   threshold_version integer not null default 1,
@@ -90,7 +90,7 @@ create policy gear_mileage_settings_owner on public.gear_mileage_settings
 -- ── 3. Historique d'alertes : une seule par couple (objet, version) ─────────
 create table if not exists public.gear_alert_history (
   id                uuid primary key default gen_random_uuid(),
-  gear_item_id      uuid not null references public.gear_items(id) on delete cascade,
+  gear_item_id      uuid not null references public.product_ownership(id) on delete cascade,
   user_id           uuid not null references auth.users(id) on delete cascade,
   threshold_km      numeric(10,1) not null,
   threshold_version integer not null,
@@ -98,6 +98,15 @@ create table if not exists public.gear_alert_history (
   constraint gear_alert_history_threshold_positive check (threshold_km > 0),
   constraint gear_alert_history_unique_version unique (gear_item_id, threshold_version)
 );
+
+alter table public.gear_alert_history
+  add column if not exists threshold_km numeric(10,1),
+  add column if not exists threshold_version integer,
+  add column if not exists triggered_at timestamptz not null default now();
+
+create unique index if not exists gear_alert_history_unique_version_idx
+  on public.gear_alert_history (gear_item_id, threshold_version)
+  where threshold_version is not null;
 
 create index if not exists gear_alert_history_user_idx
   on public.gear_alert_history (user_id, triggered_at desc);
@@ -114,7 +123,7 @@ create policy gear_alert_history_owner on public.gear_alert_history
 create table if not exists public.gear_components (
   id               uuid primary key default gen_random_uuid(),
   user_id          uuid not null references auth.users(id) on delete cascade,
-  gear_item_id     uuid not null references public.gear_items(id) on delete cascade,
+  gear_item_id     uuid not null references public.product_ownership(id) on delete cascade,
   name             text not null,
   kind             text not null default 'autre'
     check (kind in ('chaine','pneus','plaquettes','plateau','cassette','derailleur','roue','autre')),
@@ -150,7 +159,7 @@ create table if not exists public.gear_sport_defaults (
   user_id      uuid not null references auth.users(id) on delete cascade,
   sport        text not null,
   kind         text not null check (kind in ('bike','shoe','component','other')),
-  gear_item_id uuid not null references public.gear_items(id) on delete cascade,
+  gear_item_id uuid not null references public.product_ownership(id) on delete cascade,
   priority     integer not null default 0,
   created_at   timestamptz not null default now(),
   constraint gear_sport_defaults_unique unique (user_id, sport, kind, gear_item_id)
