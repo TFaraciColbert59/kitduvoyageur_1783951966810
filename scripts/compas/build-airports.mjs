@@ -84,6 +84,9 @@ export function buildAirports(text) {
   const iService = col('scheduled_service');
   const iIata = col('iata_code');
   const out = [];
+  // Classés « large » par OurAirports mais desservis surtout en intérieur : rang 'M', pour que
+  // l'aéroport international (Katmandou) passe avant eux (`preferLarge`, engine/airports.ts).
+  const DOMESTIC_HUBS = new Set(['PHH', 'BWA']);
   for (const r of rows) {
     const type = r[iType];
     if (type !== 'large_airport' && type !== 'medium_airport') continue;
@@ -99,7 +102,7 @@ export function buildAirports(text) {
       round3(lat),
       round3(lon),
       (r[iCountry] ?? '').trim().toUpperCase(),
-      type === 'large_airport' ? 'L' : 'M',
+      type === 'large_airport' && !DOMESTIC_HUBS.has(iata) ? 'L' : 'M',
     ]);
   }
   return out.sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : a[1] < b[1] ? -1 : a[1] > b[1] ? 1 : 0));

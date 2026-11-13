@@ -80,6 +80,8 @@ export interface CompasPreferences {
   targetKm?: number | null;
   /** Sans voiture (personnelle ou de location) : train, bus, vélo ou à pied ; `true` ou absent. */
   carFree?: boolean | null;
+  /** Moyen de venir dit (« en train », « en avion », « en voiture ») ; absent = le calcul habituel. */
+  transportMode?: 'train' | 'flight' | 'car' | null;
 }
 
 export interface CompasStepInput {
@@ -456,7 +458,7 @@ export function buildCompasModel(input: CompasInput): CompasModel {
     // Personnalisations du projet : présentes seulement si elles sont choisies
     // (un champ absent laisse le profil, puis un défaut, décider).
     ...Object.fromEntries(
-      (['level', 'autonomy', 'priority', 'terrain', 'maxPackKg', 'outdoorNights', 'targetKm', 'carFree'] as const)
+      (['level', 'autonomy', 'priority', 'terrain', 'maxPackKg', 'outdoorNights', 'targetKm', 'carFree', 'transportMode'] as const)
         .filter((k) => trip.preferences?.[k] != null)
         .map((k) => [k, trip.preferences?.[k]])
     ),

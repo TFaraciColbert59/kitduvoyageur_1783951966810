@@ -190,6 +190,15 @@ export function understandRequest(
   if (first(actions, 'set_car_free'))
     lines.push({ key: 'deplacements', label: t('compas.understood.transport'), value: t('compas.understood.carFree'), state: 'compris' });
 
+  const mode = first(actions, 'set_transport_mode');
+  if (mode && !first(actions, 'set_car_free'))
+    lines.push({
+      key: 'deplacements',
+      label: t('compas.understood.transport'),
+      value: mode.mode === 'train' ? 'en train' : mode.mode === 'flight' ? 'en avion' : 'en voiture', // i18n-ok: valeur technique
+      state: 'compris',
+    });
+
   const budget = first(actions, 'set_budget');
   if (budget) {
     // Tel que dit (« 2 000 $ ») : la conversion se fait à l'application, au taux du jour.

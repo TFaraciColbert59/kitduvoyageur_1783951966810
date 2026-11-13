@@ -113,7 +113,18 @@ export interface TravelLegInput {
    * sinon rien n'est chiffré et la note le dit.
    */
   carFree?: boolean;
+  /**
+   * Moyen de venir dit dans la demande (« en train », « en avion », « en voiture »). Retenu quand il
+   * est réalisable (train : une ligne calculable ; avion : deux aéroports distincts ; voiture : on
+   * n'y renonce pas pour le train ou l'avion) ; sinon le calcul habituel reste, avec une note.
+   */
+  preferredMode?: 'train' | 'flight' | 'car' | null;
 }
+
+export const TRAIN_UNAVAILABLE_NOTE =
+  'Train demandé : aucune liaison ferroviaire n’est calculable sur ce trajet, le trajet habituel est chiffré à la place.';
+export const FLIGHT_UNAVAILABLE_NOTE =
+  'Avion demandé : aucun vol d’un aéroport à l’autre n’est calculable sur ce trajet (même aéroport ou aucun aéroport proche), le trajet habituel est chiffré à la place.';
 
 export const UNKNOWN_ORIGIN_NOTE =
   'Point de départ inconnu : écris « depuis Lyon » dans ta demande ou partage ta position pour chiffrer le trajet.';
@@ -453,7 +464,22 @@ async function chooseLeg(input: TravelLegInput, deps: TravelDeps): Promise<Trave
     if (sameAirport && minutes > maxDriveMinutes(days)) leg.notes.push(SAME_AIRPORT_NOTE);
   };
 
-  if (mode === 'avion') {
+  // Moyen dit dans la demande (« en train », « en avion ») : retenu quand il est réalisable ; sinon le
+  // calcul habituel reste, et la note le dit. « En voiture » (`wantCar`) écarte train et avion pour la route.
+  const wantCar = input.preferredMode === 'car' && !input.carFree;
+  if (input.preferredMode === 'train') {
+    if (byTrain(straight, true)) {
+      const car = await road();
+      const rail = 'km' in car ? byTrain(car.km) : null;
+      if (rail) return takeTrain(rail);
+    }
+    leg.notes.push(TRAIN_UNAVAILABLE_NOTE);
+  } else if (input.preferredMode === 'flight') {
+    if (fly('vol demandé')) return leg;
+    leg.notes.push(FLIGHT_UNAVAILABLE_NOTE);
+  }
+
+  if (mode === 'avion' && !wantCar) {
     // Trop loin pour la route vu la durée : le train si le rail s'y prête (route
     // mesurée pour écarter une île), sinon l'avion.
     if (byTrain(straight, true)) {
@@ -486,9 +512,9 @@ async function chooseLeg(input: TravelLegInput, deps: TravelDeps): Promise<Trave
   if ('km' in car) {
     const walkKm = car.end ? await deps.walkKm(car.end, target) : 0;
     const limit = maxDriveMinutes(days);
-    const tooLong = car.minutes > limit;
+    const tooLong = car.minutes > limit && !wantCar;
     // Japon, Corée, Chine, Inde : le train passe avant la voiture dès qu'il est aussi rapide.
-    const rail = byTrain(car.km, tooLong);
+    const rail = wantCar ? null : byTrain(car.km, tooLong);
     if (rail && (tooLong || (rail.preferred && rail.minutesOneWay <= car.minutes))) return takeTrain(rail);
     if (tooLong) {
       // Route trop longue pour la durée du voyage, rail hors de portée : l'avion.

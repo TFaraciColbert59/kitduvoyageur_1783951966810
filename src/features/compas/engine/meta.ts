@@ -24,7 +24,8 @@ const NIGHTS = new Set<CompasNights>(['bivouac', 'refuge', 'hebergement', 'mixte
 const LEVELS = new Set<CompasLevel>(['debut', 'regulier', 'aguerri']);
 const AUTONOMIES = new Set<CompasAutonomy>(['journee', 'bivouac_1_2', 'itinerance_longue']);
 const PRIORITIES = new Set<CompasPriority>(['legerete', 'confort', 'budget', 'securite']);
-const TERRAINS = new Set<CompasTerrain>(['sentier', 'montagne', 'hors_sentier', 'itinerance', 'urbain_transit']);
+const TRANSPORT_MODES = new Set<NonNullable<CompasPreferences['transportMode']>>(['train', 'flight', 'car']);
+const TERRAINS =new Set<CompasTerrain>(['sentier', 'montagne', 'hors_sentier', 'itinerance', 'urbain_transit']);
 
 function oneOf<T extends string>(set: Set<T>, value: unknown): T | null {
   return set.has(value as T) ? (value as T) : null;
@@ -76,6 +77,7 @@ export function readCompasMeta(metadata: unknown): {
           outdoorNights: bounded(p.outdoorNights, 0, 60),
           targetKm: bounded(p.targetKm, 1, 300),
           carFree: p.carFree === true ? true : null,
+          transportMode: oneOf(TRANSPORT_MODES, p.transportMode),
         }
       : null,
   };

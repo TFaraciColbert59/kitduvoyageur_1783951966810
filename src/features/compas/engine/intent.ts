@@ -176,6 +176,8 @@ export const intentActionSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('set_max_pack'), kg: z.number().min(1).max(40) }),
   /** « sans voiture » : ni voiture personnelle ni de location, train, bus, vélo ou à pied. */
   z.object({ type: z.literal('set_car_free') }),
+  /** « en train », « en avion », « en voiture » : le moyen de venir dit (« en bus » = sans voiture). */
+  z.object({ type: z.literal('set_transport_mode'), mode: z.enum(['train', 'flight', 'car']) }),
   z.object({ type: z.literal('set_distance'), km: z.number().min(1).max(300) }),
   z.object({ type: z.literal('set_level'), level: z.enum(['debut', 'regulier', 'aguerri']) }),
   z.object({
@@ -900,6 +902,35 @@ function saysCarFree(plain: string): boolean {
   return spans.length > 0 && !drivesOwnCar(plain, spans);
 }
 
+/**
+ * Le moyen de venir, dit dans la phrase (texte « plain ») : « en train », « by plane », « en bus »…
+ * Pas « en train de planifier » (être en train de) ; pas une négation (« pas en avion », « sans
+ * avion »). `car` : « en voiture », « avec ma voiture » (hors « sans voiture »).
+ */
+const TRAVEL_MODE_SOURCES: Array<['train' | 'flight' | 'bus', string]> = [
+  ['train', `\\b(?:en|par le|via le)\\s+(?:train|tgv)\\b(?!\\s*(?:de\\b|d'))|\\bby\\s+(?:train|rail)\\b|\\b(?:on|via|take)\\s+the\\s+train\\b`],
+  ['flight', `\\b(?:en|par)\\s+avion\\b|\\bby\\s+(?:plane|air)\\b|\\bflights?\\s+(?:to|from)\\b`],
+  ['bus', `\\b(?:en)\\s+(?:bus|autocar|flixbus)\\b|\\bby\\s+(?:bus|coach)\\b`],
+];
+
+function saysTravelMode(src: string, plain: string): Set<'train' | 'flight' | 'bus' | 'car'> {
+  const modes = new Set<'train' | 'flight' | 'bus' | 'car'>();
+  for (const [mode, source] of TRAVEL_MODE_SOURCES) {
+    for (const m of plain.matchAll(new RegExp(source, 'g'))) {
+      const at = m.index ?? 0;
+      const clauseStart =
+        Math.max(plain.lastIndexOf(',', at), plain.lastIndexOf(';', at), plain.lastIndexOf(':', at), plain.lastIndexOf('.', at)) + 1;
+      const before = plain.slice(Math.max(clauseStart, at - 40), at);
+      if (/\b(?:pas|sans|jamais|ni|aucun|aucune|not|never|no|without)\b/.test(before)) continue;
+      modes.add(mode);
+    }
+  }
+  // « vol Paris Lisbonne » : un vol dit sans « en avion » (« vol libre » n'en est pas un : lieu en majuscule).
+  if (/\bvols?\s+(?:de\s+|depuis\s+)?\p{Lu}/u.test(src)) modes.add('flight');
+  if (drivesOwnCar(plain, carFreeSpans(plain))) modes.add('car');
+  return modes;
+}
+
 /** Dormir dehors, dit dans la phrase (texte « plain »). */
 const SLEEP_OUTSIDE = /\b(bivouac|bivouaquer|bivouaque|sous (?:la )?tente|camper|camping(?![- ]car)|dormir dehors|belle etoile)\b/;
 
@@ -1418,11 +1449,11 @@ function parseRulesCore(
     [/\b(velo|velos|bikepacking|cyclo|cyclotourisme|vtt|gravel|cycling|biking|bike)\b/, 'cycling'],
     [/\b(kayak|kayaking|canoe|canoes|canoeing|paddle|paddling|packraft|rafting|voile|voilier|sailing|plongee|diving|snorkeling|surf|surfing)\b/, 'water'],
     [/\b(van|vanlife|camping[- ]car|fourgon|fourgonnette)\b/, 'vanlife'],
-    [/\b(city ?trip|citytrip)\b/, 'citytrip'],
+    [/\bcity[ -]?trip\b/, 'citytrip'],
     [/\b(plage|plages|farniente|bord de mer|baignade|beach)\b/, 'beach'],
     [/\b(rando+s?|randon+ee?s?|hiking|hike|marche nordique|marche a pied|a pied|balades?|promenades?)\b|(?<!\b(?:au|du|le|un|des) )\bmarcher?\b/, 'hiking'],
     [/\btreks?\b|\btrekking\b|\bgr ?\d{1,3}\b|\bhrp\b|\btmb\b|\btraversee\b|\btour (?:du|des|de la|de l') ?\S|\bchemin de l'inca\b|\binca trail\b|\bcompostelle\b|\b[a-z]+ way\b|\bkilimandjaro\b/, 'trekking'],
-    [/\broad ?trip\b/, 'roadtrip'],
+    [/\broad[ -]?trip\b/, 'roadtrip'],
     [/\bbushcraft\b/, 'bushcraft'],
     [/\b(culturel|culturelle|musees?)\b/, 'cultural'],
     // En dernier : « rando avec bivouac » reste une rando, « bivouac 1 nuit » est un bivouac.
@@ -1454,6 +1485,19 @@ function parseRulesCore(
   /* Sans voiture : un réglage à part, pas une chose « à éviter » */
   const noCar = carFreeSpans(plain);
   if (noCar.length && !drivesOwnCar(plain, noCar)) out.push({ type: 'set_car_free' });
+  /* Moyen de venir dit : « en train », « en avion », « en voiture ». « En bus » = transports en commun,
+     donc sans voiture (aucun barème bus). Deux moyens différents dits : rien n'est deviné. */
+  {
+    const modes = saysTravelMode(src, plain);
+    if (modes.has('bus')) {
+      if (!out.some((a) => a.type === 'set_car_free')) out.push({ type: 'set_car_free' });
+      modes.delete('bus');
+    }
+    if (modes.size === 1) {
+      const mode = [...modes][0] as 'train' | 'flight' | 'car';
+      out.push({ type: 'set_transport_mode', mode });
+    }
+  }
 
   /* Éviter, envies */
   for (const m of plain.matchAll(
@@ -1602,7 +1646,7 @@ function parseRulesCore(
 
   /* Anglais, le lieu en tête : « Iceland road trip », « Corsica trek » (jamais « Ski trip »). */
   if (en && !out.some((a) => a.type === 'set_destination')) {
-    const lead = /^(\p{Lu}[\p{L}'’-]+(?:\s+\p{Lu}[\p{L}'’-]+)*)\s+(?:road trip|trip|trek|hike|holiday|vacation|getaway|tour|adventure)\b/u.exec(src.trim());
+    const lead = /^(\p{Lu}[\p{L}'’-]+(?:\s+\p{Lu}[\p{L}'’-]+)*)\s+(?:road[ -]trip|trip|trek|hike|holiday|vacation|getaway|tour|adventure)\b/u.exec(src.trim());
     const name = lead ? clean(lead[1], 50) : '';
     if (
       name.length >= 3 &&
@@ -1616,7 +1660,7 @@ function parseRulesCore(
   /* Sans préposition, juste après le genre de voyage : « road trip Norvège
      fjords », « city trip Tokyo et Kyoto » (nom propre seulement). */
   if (!out.some((a) => a.type === 'set_destination')) {
-    const kind = /\b(?:road ?trip|city ?trip|van|voyage|sejour|vacances|week[- ]?end|trek|rando|randonnee)\s+/.exec(plain);
+    const kind = /\b(?:road[ -]?trip|city[ -]?trip|van|voyage|sejour|vacances|week[- ]?end|trek|rando|randonnee)\s+/.exec(plain);
     if (kind) {
       const at = (kind.index ?? 0) + kind[0].length;
       const bare = /^(\p{Lu}[\p{L}'’-]+(?:\s+\p{Lu}[\p{L}'’-]+)*)/u.exec(src.slice(at, at + 50));
@@ -2008,7 +2052,9 @@ export function groundingIssue(action: CompasIntentAction, text: string): string
     case 'set_terrain':
       return /\b(montagne|altitude|sommet|hors[- ]sentier|sentier|mountain|vtt|mtb)/.test(plain) ? null : 'Terrain absent de ta phrase';
     case 'set_car_free':
-      return saysCarFree(plain) ? null : 'Sans voiture absent de ta phrase';
+      return saysCarFree(plain) || saysTravelMode(text, plain).has('bus') ? null : 'Sans voiture absent de ta phrase';
+    case 'set_transport_mode':
+      return saysTravelMode(text, plain).has(action.mode) ? null : 'Moyen de transport absent de ta phrase';
     case 'set_nights':
       return /\b(dehors|belle etoile|bivouac|bivouaquer|tente|camping|camper|refuges?|hotels?|gites?|chambres?|auberges?|hebergements?|airbnb|tent|hut|hostel)/.test(plain)
         ? null
@@ -2088,9 +2134,12 @@ export function actionLabel(action: CompasIntentAction, currency = 'EUR'): strin
       return `Terrain : ${TERRAIN_LABEL[action.terrain]}`;
     case 'set_car_free':
       return 'Sans voiture : train, bus, vélo ou à pied';
+    case 'set_transport_mode':
+      return `Pour venir : ${TRANSPORT_MODE_LABEL[action.mode]}`;
   }
 }
 
+const TRANSPORT_MODE_LABEL = { train: 'en train', flight: 'en avion', car: 'en voiture' } as const;
 const LEVEL_LABEL = { debut: 'débutant', regulier: 'régulier', aguerri: 'aguerri' } as const;
 const TERRAIN_LABEL = {
   sentier: 'sentiers',
@@ -2126,7 +2175,7 @@ function walksOrRides(actions: readonly CompasIntentAction[], fallback: CompasAc
 
 /** Un autre moyen que la marche ou le vélo, dit dans la phrase (texte simplifié). */
 const OTHER_MEANS =
-  /\b(?:train|tgv|ter|trains|voiture|bus|autocar|avion|bateau|ferry|croisiere|road ?trip|roadtrip|voyage|van|camping[- ]car|moto|by (?:train|car|bus|plane)|flight|drive)\b/;
+  /\b(?:train|tgv|ter|trains|voiture|bus|autocar|avion|bateau|ferry|croisiere|road[ -]?trip|voyage|van|camping[- ]car|moto|by (?:train|car|bus|plane)|flight|drive)\b/;
 
 /**
  * L'activité du VOYAGE (bouton du Compas vide, création rapide du Hub, ou « hiking », valeur par défaut de
@@ -2578,6 +2627,10 @@ export function planApplication(actions: CompasIntentAction[], current: ApplyCur
         break;
       case 'set_car_free':
         prefs.carFree = true;
+        prefsChanged = true;
+        break;
+      case 'set_transport_mode':
+        prefs.transportMode = a.mode;
         prefsChanged = true;
         break;
       default:

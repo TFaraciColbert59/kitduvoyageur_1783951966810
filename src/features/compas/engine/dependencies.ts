@@ -41,6 +41,8 @@ export interface ProjectBasis {
   origin: string | null;
   /** « oui » quand le voyage se fait sans voiture, null sinon. */
   carFree: string | null;
+  /** Moyen de venir dit (« train », « flight », « car »), null sinon. */
+  transportMode: string | null;
 }
 
 /** Pour chaque réglage, les parties écrites qui en dépendent. */
@@ -63,6 +65,8 @@ const DEPENDS: Record<keyof ProjectBasis, AutofillPart[]> = {
   origin: ['transport', 'budget'],
   // Sans voiture : les déplacements entre étapes passent en bus, le trajet d'approche et le budget suivent.
   carFree: ['steps', 'transport', 'budget'],
+  // Le moyen de venir dit change le trajet d'approche, donc le budget.
+  transportMode: ['transport', 'budget'],
 };
 
 /** Refaire l'itinéraire refait aussi ce qui s'y accroche (nuits sur les étapes, départ). */
@@ -93,6 +97,7 @@ export function projectBasis(input: {
     terrain?: string | null;
     targetKm?: number | null;
     carFree?: boolean | null;
+    transportMode?: string | null;
   } | null;
   /** Lieu de départ dit (`metadata.compas.origin`), s'il y en a un. */
   origin?: { name: string; lat: number; lon: number } | null;
@@ -118,6 +123,7 @@ export function projectBasis(input: {
     terrain: p.terrain ?? null,
     targetKm: p.targetKm ?? null,
     carFree: p.carFree === true ? 'oui' : null,
+    transportMode: p.transportMode ?? null,
     origin: input.origin
       ? `${input.origin.name}@${input.origin.lat.toFixed(2)},${input.origin.lon.toFixed(2)}`
       : null,

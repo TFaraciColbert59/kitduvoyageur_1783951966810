@@ -49,7 +49,17 @@ export interface NearestAirportOpts {
    * (Santa Teresa Gallura reste Figari).
    */
   country?: string | null;
+  /**
+   * Pour un vol (franchit une frontière, ou trop loin pour la route) : si le plus proche est de rang
+   * moyen (domestique : Reykjavik RKV, Stockholm-Bromma BMA, Poprad TAT), un aéroport de rang 'L' à
+   * `LARGE_AIRPORT_PREFERRED_KM` (150 km) ou moins l'emporte (KEF, ARN, KRK). Sans tel aéroport,
+   * le choix reste celui du plus proche. Faux par défaut.
+   */
+  preferLarge?: boolean;
 }
+
+/** Rayon (km) dans lequel un aéroport de rang 'L' est préféré au plus proche de rang inférieur. */
+export const LARGE_AIRPORT_PREFERRED_KM = 150;
 
 /**
  * Aéroport retenu pour un lieu : parmi ceux à moins de `maxKm` (300 km), le
@@ -72,6 +82,7 @@ export function nearestAirportIn(
   // Un degré de latitude ≈ 111 km : ce qui en est plus loin ne peut pas être dans le rayon.
   const latSpan = maxKm / 111 + 0.1;
   let best: { row: AirportRow; km: number; score: number } | null = null;
+  let bestLarge: { row: AirportRow; km: number; score: number } | null = null;
   for (const row of rows) {
     if (Math.abs(row[2] - lat) > latSpan) continue;
     const km = distanceKm({ lat, lon }, { lat: row[2], lon: row[3] });
@@ -79,8 +90,11 @@ export function nearestAirportIn(
     const foreign = country !== null && row[4].toUpperCase() !== country;
     const score = km * (row[5] === 'L' ? 1 : MEDIUM_AIRPORT_FACTOR) * (foreign ? FOREIGN_AIRPORT_FACTOR : 1);
     if (!best || score < best.score) best = { row, km, score };
+    if (row[5] === 'L' && km <= LARGE_AIRPORT_PREFERRED_KM && (!bestLarge || score < bestLarge.score))
+      bestLarge = { row, km, score };
   }
   if (!best) return null;
+  if (opts.preferLarge && best.row[5] !== 'L' && bestLarge) best = bestLarge;
   const [iata, name, aLat, aLon, aCountry] = best.row;
   return { iata, name, km: Math.round(best.km), country: aCountry, lat: aLat, lon: aLon };
 }

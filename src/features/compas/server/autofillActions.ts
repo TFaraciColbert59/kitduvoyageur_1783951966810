@@ -2502,6 +2502,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
         party,
         transport: ctx.modules.transport,
         carFree: carFree.on,
+        preferredMode: compas.preferences?.transportMode ?? null,
       },
       {
         carRoute: async (a, b) => {
@@ -2522,7 +2523,8 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
           const walk = await routeAttempt([end, to], 'pieton');
           return walk.legs?.reduce((t, l) => t + l.distanceKm, 0) ?? haversineKm(end, to);
         },
-        airport: (p, country) => nearestAirport(p.lat, p.lon, { country }),
+        // Un vol : le grand aéroport à 150 km ou moins passe avant le domestique le plus proche (KEF, ARN, KRK).
+        airport: (p, country) => nearestAirport(p.lat, p.lon, { country, preferLarge: true }),
       }
     );
     notes.push(...travelLeg.notes);
