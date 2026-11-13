@@ -68,6 +68,15 @@ export type CameraIntent =
 
 export type Profile = 'solo' | 'famille' | 'enfants' | 'senior' | 'pmr' | 'sportif' | null;
 
+/**
+ * Fonds de carte proposés par l'Explorer.
+ *
+ * `national` n'est sélectionnable que si un fond officiel du pays a passé le
+ * statut `verified` du registre `map/nationalTopo.ts` ; sinon le tiroir ne
+ * l'expose pas.
+ */
+export type MapBaseStyle = 'relief' | 'satellite' | 'plan' | 'national';
+
 export type SportEnvironment = 'outdoor' | 'indoor';
 
 /**
@@ -248,8 +257,8 @@ export interface ExplorerState {
   /** Centre courant de la carte, tenu à jour pour les requêtes de données. */
   center: [number, number];
   zoom: number;
-  /** Fond de carte : relief 3D, satellite ou plan vectoriel. */
-  mapBaseStyle?: 'relief' | 'satellite' | 'plan';
+  /** Fond de carte : relief 3D, satellite, plan vectoriel ou fond national vérifié. */
+  mapBaseStyle?: MapBaseStyle;
   /** Visibilité des calques de données. */
   layerVisibility?: Record<string, boolean>;
   /** Scène de test/parité (?scene=), désactivée en production. */

@@ -8,6 +8,7 @@ import type {
   Detent,
   ExplorerState,
   Level,
+  MapBaseStyle,
   PendingStart,
   PoiKind,
   Selection,
@@ -72,7 +73,7 @@ interface ExplorerActions {
   setTheme: (theme: 'light' | 'dark') => void;
   toggleNorthUp: () => void;
   setUnits: (units: 'metric' | 'imperial') => void;
-  setMapBaseStyle: (style: 'relief' | 'satellite' | 'plan') => void;
+  setMapBaseStyle: (style: MapBaseStyle) => void;
   toggleLayer: (layerId: string) => void;
   /** Réglage local de préparation : active ou coupe la pause automatique. */
   setAutoPauseEnabled: (enabled: boolean) => void;

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { XpIcon } from '../ui/XpIcon';
-import { useNaturalSearch, geometryCenter } from '../data/hooks';
+import { useNaturalSearch, geometryCenter, useTerrainCoverage } from '../data/hooks';
 import { AUTO_PAUSE_BY_SPORT } from '../activity/tracker';
 import {
   MILE_DISTANCE_M,
@@ -13,6 +13,10 @@ import {
   splitSpeedKmh,
 } from '../activity/splits';
 import { useExplorerStore } from '../state/store';
+import {
+  nationalTopoSourcesFor,
+  verifiedNationalTopoFor,
+} from '../map/nationalTopo';
 import { countTiles, downloadZone, purgeZone, readZone } from '../offline/zone';
 import { ElevationProfile } from './ElevationProfile';
 import {
@@ -1107,6 +1111,7 @@ function PoiTabs(ctx: SheetContext, kind: string): SheetTab[] {
 
 function LayersTab({ ctx }: { ctx: SheetContext }) {
   const { state } = ctx;
+  const coverage = useTerrainCoverage();
   const currentBase = state.mapBaseStyle ?? 'relief';
   const layers = state.layerVisibility ?? {
     routes: true,
@@ -1116,6 +1121,61 @@ function LayersTab({ ctx }: { ctx: SheetContext }) {
     snow: true,
     slope: false,
   };
+  const iso = (state.geo || ctx.country?.iso_a2 || '').trim().toUpperCase();
+  const nationalSources = nationalTopoSourcesFor(iso);
+  const nationalVerified = verifiedNationalTopoFor(iso);
+  const slope = ctx.terrain?.slope ?? {
+    state: 'idle' as const,
+    summary: null,
+    routeName: null,
+    hasRoute: false,
+  };
+  const slopeOn = layers.slope === true;
+  const slopeBadge = !slope.hasRoute
+    ? { label: 'Masqué', tone: 'muted' as const }
+    : slopeOn && slope.state === 'loading'
+      ? { label: 'Calcul…', tone: 'warn' as const }
+      : slopeOn && slope.state === 'ready'
+        ? { label: 'Actif', tone: 'good' as const }
+        : slopeOn && (slope.state === 'error' || slope.state === 'empty')
+          ? { label: 'Indisponible', tone: 'warn' as const }
+          : { label: 'Masqué', tone: 'muted' as const };
+  const slopeSub = !slope.hasRoute
+    ? 'Sélectionne un itinéraire sur la carte'
+    : slope.state === 'loading'
+      ? 'Calcul du relief réel…'
+      : slope.state === 'ready' && slope.summary
+        ? `D+ ${slope.summary.gainM} m · ${slope.summary.minM}–${slope.summary.maxM} m · AWS Terrain`
+        : slope.state === 'empty'
+          ? 'Relief indisponible pour ce tracé'
+          : slope.state === 'error'
+            ? 'Relief indisponible pour le moment'
+            : 'Relief réel · AWS Terrain Tiles';
+
+  const surfaceState = coverage.isPending
+    ? 'loading'
+    : coverage.isError
+      ? 'error'
+      : coverage.data?.surface.available
+        ? 'available'
+        : 'empty';
+  const surfaceBadge =
+    surfaceState === 'available'
+      ? { label: 'À venir', tone: 'warn' as const }
+      : surfaceState === 'loading'
+        ? { label: 'Vérification', tone: 'muted' as const }
+        : { label: 'Indisponible', tone: 'muted' as const };
+  const surfaceSub =
+    surfaceState === 'loading'
+      ? 'Vérification des données de surface…'
+      : surfaceState === 'error'
+        ? 'Vérification impossible pour le moment'
+        : surfaceState === 'available'
+          ? 'Segments OSM disponibles · couche non activée dans cette version'
+          : 'Aucun segment de surface importé (trail_segments)';
+
+  const activityRouteReady = state.activity?.route?.status === 'ready';
+  const offRoute = state.activity?.offRoute === true;
 
   return (
     <>
@@ -1145,7 +1205,60 @@ function LayersTab({ ctx }: { ctx: SheetContext }) {
         >
           Plan
         </button>
+        {nationalVerified ? (
+          <button
+            type="button"
+            className="xp-chip"
+            aria-pressed={currentBase === 'national'}
+            onClick={() => state.setMapBaseStyle('national')}
+          >
+            {nationalVerified.label}
+          </button>
+        ) : null}
       </div>
+
+      <XpEyebrow>Fonds nationaux officiels</XpEyebrow>
+      {!iso ? (
+        <XpEmpty
+          title="Choisis un pays"
+          hint="Les fonds nationaux sont propres à chaque pays. Ouvre un pays pour voir les sources officielles déclarées."
+        />
+      ) : nationalSources.length === 0 ? (
+        <XpEmpty
+          title="Aucun fond national déclaré"
+          hint={`Aucune source officielle n’est déclarée pour ${ctx.country?.name ?? iso}. Les fonds Relief 3D, Satellite et Plan restent disponibles.`}
+        />
+      ) : (
+        <XpRows>
+          {nationalSources.map((source) => {
+            const verified = nationalVerified?.id === source.id;
+            return (
+              <XpRow
+                key={source.id}
+                icon="map"
+                title={source.label}
+                sub={
+                  verified
+                    ? `${source.provider} · ${source.licence}`
+                    : `${source.provider} · ${source.licence} · ${source.note}`
+                }
+                badge={{
+                  label: verified ? 'Disponible' : 'À confirmer',
+                  tone: verified ? 'good' : 'muted',
+                }}
+                disabled={!verified}
+                onClick={verified ? () => state.setMapBaseStyle('national') : undefined}
+              />
+            );
+          })}
+        </XpRows>
+      )}
+      {nationalSources.some((source) => source.status !== 'verified') ? (
+        <p className="xp-layer-note">
+          Aucune tuile nationale n’est chargée tant que l’accès et la couverture ne sont pas
+          confirmés.
+        </p>
+      ) : null}
 
       <XpEyebrow>Données affichées</XpEyebrow>
       <XpRows>
@@ -1200,17 +1313,46 @@ function LayersTab({ ctx }: { ctx: SheetContext }) {
           }}
           onClick={() => state.toggleLayer('snow')}
         />
+      </XpRows>
+
+      <XpEyebrow>Couches terrain</XpEyebrow>
+      <XpRows>
         <XpRow
-          icon="target"
-          title="Pentes > 30°"
-          sub="Zones sensibles aux avalanches"
+          icon="mtn"
+          title="Pente de l’itinéraire"
+          sub={slopeSub}
+          badge={slopeBadge}
+          disabled={!slope.hasRoute}
+          onClick={slope.hasRoute ? () => state.toggleLayer('slope') : undefined}
+        />
+        <XpRow
+          icon="layers"
+          title="Surface du sol"
+          sub={surfaceSub}
+          badge={surfaceBadge}
+          disabled
+        />
+        <XpRow
+          icon="route"
+          title="Hors-route"
+          sub={
+            activityRouteReady
+              ? offRoute
+                ? `Écart signalé · ${Math.round(state.activity?.offRouteM ?? 0)} m`
+                : 'Seuil 40 m / 15 s · retour sous 25 m'
+              : 'Actif pendant une sortie avec itinéraire'
+          }
           badge={{
-            label: layers.slope ? 'Actif' : 'Masqué',
-            tone: layers.slope ? 'good' : 'muted',
+            label: offRoute ? 'Écart' : activityRouteReady ? 'En veille' : 'Inactif',
+            tone: offRoute ? 'bad' : 'muted',
           }}
-          onClick={() => state.toggleLayer('slope')}
+          disabled
         />
       </XpRows>
+      <p className="xp-layer-note">
+        Marche, vélo de route, gravel et VTT partagent ces couches. La pente suit
+        l’itinéraire sélectionné ; aucune surface par sport n’est affichée sans données importées.
+      </p>
 
       <XpEyebrow>Zone hors ligne</XpEyebrow>
       <XpRows>

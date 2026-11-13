@@ -4,8 +4,10 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Map as MapLibreMap, setWorkerUrl, type GeoJSONSource } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import type { GeoCollection } from '../data/hooks';
-import type { CameraIntent, Level, PoiKind } from '../state/types';
+import type { CameraIntent, Level, MapBaseStyle, PoiKind } from '../state/types';
 import { clusterPins, selectVisiblePins, type PinCluster } from './hierarchy';
+import { slopeGradientExpression, type SlopeLayer } from './slope';
+import type { NationalTopoSource } from './nationalTopo';
 import {
   boundsOfTrack,
   cinematicStartupZoom,
@@ -70,8 +72,12 @@ export interface MapStageProps {
   cameraIntent?: CameraIntent | null;
   /** Appui long sur la carte (départ d'activité). */
   longPressHandlers?: Record<string, unknown>;
-  /** Fond de carte : relief 3D, satellite ou plan vectoriel. */
-  mapBaseStyle?: 'relief' | 'satellite' | 'plan';
+  /** Fond de carte : relief 3D, satellite, plan vectoriel ou fond national. */
+  mapBaseStyle?: MapBaseStyle;
+  /** Source nationale officielle déjà validée pour le pays courant. */
+  nationalTopo?: NationalTopoSource | null;
+  /** Pente réelle de l'itinéraire sélectionné (DEM, fiche K3.04). */
+  slopeLayer?: SlopeLayer | null;
   /** Calques de données : sentiers, eau, refuges, etc. */
   layerVisibility?: Record<string, boolean>;
 }
@@ -122,9 +128,14 @@ export default function MapStage({
   cameraIntent = null,
   longPressHandlers,
   mapBaseStyle = 'relief',
+  nationalTopo = null,
+  slopeLayer = null,
   layerVisibility,
 }: MapStageProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  // Double garde : même si un appelant transmet une source non vérifiée, elle
+  // n'est jamais chargée. Le registre reste la source de vérité.
+  const nationalSource = nationalTopo?.status === 'verified' ? nationalTopo : null;
   const mapRef = useRef<MapLibreMap | null>(null);
   const [overlay, setOverlay] = useState<Array<{ pin: MapPin; x: number; y: number }>>([]);
   const [clusters, setClusters] = useState<PinCluster[]>([]);
@@ -226,6 +237,15 @@ export default function MapStage({
         if (!map.getSource('xp-track')) {
           map.addSource('xp-track', { type: 'geojson', data: EMPTY as never });
         }
+        if (!map.getSource('xp-slope')) {
+          // `lineMetrics` est obligatoire pour `line-gradient` : sans lui,
+          // MapLibre ignore le dégradé de pente (K3.04).
+          map.addSource('xp-slope', {
+            type: 'geojson',
+            data: EMPTY as never,
+            lineMetrics: true,
+          });
+        }
         if (!map.getSource('xp-terrain')) {
           map.addSource('xp-terrain', {
             type: 'raster-dem',
@@ -308,6 +328,23 @@ export default function MapStage({
               'line-width': TRACE_WIDTH_EXPRESSION as never,
               'line-opacity': 0.95,
               'line-dasharray': TRACE_DASH_EXPRESSION as never,
+            },
+          });
+        }
+        if (!map.getLayer('xp-slope-line')) {
+          map.addLayer({
+            id: 'xp-slope-line',
+            type: 'line',
+            source: 'xp-slope',
+            layout: {
+              visibility: 'none',
+              'line-cap': 'round',
+              'line-join': 'round',
+            },
+            paint: {
+              'line-color': '#7FA27A',
+              'line-width': 4.8,
+              'line-opacity': 0.96,
             },
           });
         }
@@ -498,6 +535,67 @@ export default function MapStage({
     }
   }, [theme, ready]);
 
+  // ── fond national officiel (K3.05) ────────────────────────────────────
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+
+    // Une source non vérifiée n'arrive jamais ici : l'appelant ne transmet que
+    // `verifiedNationalTopoFor(...)`. Sans source, aucune tuile n'est chargée.
+    if (!nationalSource) {
+      if (map.getLayer('xp-national-topo-layer')) {
+        try {
+          map.removeLayer('xp-national-topo-layer');
+        } catch {
+          /* déjà retirée */
+        }
+      }
+      if (map.getSource('xp-national-topo')) {
+        try {
+          map.removeSource('xp-national-topo');
+        } catch {
+          /* déjà retirée */
+        }
+      }
+      return;
+    }
+
+    if (!map.getSource('xp-national-topo')) {
+      try {
+        map.addSource('xp-national-topo', {
+          type: 'raster',
+          tiles: nationalSource.tiles,
+          tileSize: nationalSource.tileSize,
+          maxzoom: nationalSource.maxzoom,
+          attribution: nationalSource.attribution,
+        });
+      } catch {
+        /* style non prêt ou source déjà retirée : aucun fond national affiché */
+        return;
+      }
+    }
+    if (!map.getLayer('xp-national-topo-layer')) {
+      // Sous les étiquettes du fond vectoriel et sous les aplats pays.
+      const firstSymbol = map
+        .getStyle()
+        .layers?.find((layer) => layer.type === 'symbol')?.id;
+      try {
+        map.addLayer(
+          {
+            id: 'xp-national-topo-layer',
+            type: 'raster',
+            source: 'xp-national-topo',
+            layout: { visibility: 'none' },
+            paint: { 'raster-opacity': 0.94, 'raster-fade-duration': 200 },
+          },
+          firstSymbol,
+        );
+      } catch {
+        /* couche impossible à insérer : on ne casse pas la carte */
+      }
+    }
+  }, [nationalSource, ready]);
+
   // ── projection, fond et relief selon le niveau et le style ─────────────
   useEffect(() => {
     const map = mapRef.current;
@@ -517,11 +615,23 @@ export default function MapStage({
       /* aucune couche d'étiquettes */
     }
 
-    const isSat = mapBaseStyle === 'satellite';
-    const isRelief = mapBaseStyle === 'relief' || !mapBaseStyle;
+    const isNational = mapBaseStyle === 'national' && Boolean(nationalSource);
+    const isSat = mapBaseStyle === 'satellite' && !isNational;
+    // « national » sans source validée retombe sur le relief : on ne laisse
+    // jamais la carte sans relief à cause d'un fond qui n'existe pas.
+    const isRelief =
+      (mapBaseStyle === 'relief' || !mapBaseStyle || (mapBaseStyle === 'national' && !isNational)) &&
+      !isNational;
 
     if (map.getLayer('xp-satellite-layer')) {
       map.setLayoutProperty('xp-satellite-layer', 'visibility', isSat ? 'visible' : 'none');
+    }
+    if (map.getLayer('xp-national-topo-layer')) {
+      map.setLayoutProperty(
+        'xp-national-topo-layer',
+        'visibility',
+        isNational ? 'visible' : 'none',
+      );
     }
 
     const updateTerrainAndHillshade = () => {
@@ -550,7 +660,7 @@ export default function MapStage({
     return () => {
       map.off('zoom', updateTerrainAndHillshade);
     };
-  }, [level, mapBaseStyle, ready]);
+  }, [level, mapBaseStyle, nationalSource, ready]);
 
   // ── calques de données interactifs ─────────────────────────────────────
   useEffect(() => {
@@ -562,6 +672,40 @@ export default function MapStage({
       map.setLayoutProperty('xp-routes-casing', 'visibility', showRoutes ? 'visible' : 'none');
     }
   }, [layerVisibility, ready]);
+
+  // ── pente réelle de l'itinéraire sélectionné (K3.04) ────────────────────
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    const source = map.getSource('xp-slope') as GeoJSONSource | undefined;
+    const show = layerVisibility?.slope === true && !!slopeLayer && slopeLayer.stops.length >= 2;
+    if (source) {
+      source.setData(
+        show && slopeLayer
+          ? ({
+              type: 'Feature',
+              properties: { routeId: slopeLayer.id },
+              geometry: slopeLayer.geojson as never,
+            } as never)
+          : (EMPTY as never),
+      );
+    }
+    if (map.getLayer('xp-slope-line')) {
+      if (show && slopeLayer) {
+        const gradient = slopeGradientExpression(slopeLayer.stops);
+        if (gradient) {
+          try {
+            map.setPaintProperty('xp-slope-line', 'line-gradient', gradient as never);
+          } catch {
+            /* lineMetrics absent : la couche reste masquée */
+            map.setLayoutProperty('xp-slope-line', 'visibility', 'none');
+            return;
+          }
+        }
+      }
+      map.setLayoutProperty('xp-slope-line', 'visibility', show ? 'visible' : 'none');
+    }
+  }, [layerVisibility, ready, slopeLayer]);
 
   // ── orbite de sommet (pause au toucher, reprise après 6 s) ────────────
   useEffect(() => {

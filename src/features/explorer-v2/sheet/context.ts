@@ -15,6 +15,8 @@ import type {
 } from '../data/hooks';
 import type { ExplorerStore } from '../state/store';
 import type { Sport, SportSelection } from '../state/types';
+import type { RouteSlopeState } from '../data/useRouteSlope';
+import type { SlopeSummary } from '../map/slope';
 import { SPORT_FAMILIES } from './sportSelection';
 
 export interface CountryEntry {
@@ -46,6 +48,15 @@ export interface SheetContext {
   trips: TripItem[];
   selectedPoi: PoiItem | null;
   me: { lat: number; lng: number } | null;
+  /** État réel de la couche pente (DEM) pour l'itinéraire armé. */
+  terrain: {
+    slope: {
+      state: RouteSlopeState;
+      summary: SlopeSummary | null;
+      routeName: string | null;
+      hasRoute: boolean;
+    };
+  };
   /**
    * Démarrage avec compte à rebours (le parent décide de l'animation).
    * `selection` porte la variante jusqu’au démarrage ; `sport` reste

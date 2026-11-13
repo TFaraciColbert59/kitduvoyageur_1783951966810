@@ -651,6 +651,15 @@ body:has(.xp-root[data-theme]) .lkv-app-background {
   box-shadow: var(--xp-block-shadow);
   text-align: left;
 }
+.xp-row[aria-disabled='true'] {
+  opacity: 0.66;
+}
+.xp-layer-note {
+  margin: 2px 2px 0;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--xp-mut);
+}
 .xp-row-ico {
   flex: none;
   display: grid;

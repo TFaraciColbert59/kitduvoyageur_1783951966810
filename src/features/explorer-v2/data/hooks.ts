@@ -225,6 +225,37 @@ export function usePlace(lat: number, lng: number, zoom: number, enabled = true)
   });
 }
 
+export interface TerrainCoverage {
+  surface: {
+    available: boolean;
+    table: string;
+    source: string;
+    licence: string;
+  };
+  routes: {
+    available: boolean;
+    table: string;
+    source: string;
+    licence: string;
+  };
+}
+
+/**
+ * Présence réelle des données de terrain (surface, itinéraires).
+ *
+ * Sert au tiroir Calques pour distinguer « couche disponible mais masquée »
+ * de « aucune donnée importée ». Aucun contenu n'est déduit de ce comptage.
+ */
+export function useTerrainCoverage(enabled = true) {
+  return useQuery({
+    queryKey: ['xp', 'terrain-coverage'],
+    enabled,
+    queryFn: () => fetchJson<TerrainCoverage>('/api/explorer/v2/terrain/coverage'),
+    staleTime: 10 * 60 * 1000,
+    retry: 1,
+  });
+}
+
 export function useWeather(lat: number | null, lng: number | null) {
   return useQuery({
     queryKey: ['xp', 'weather', lat?.toFixed(2), lng?.toFixed(2)],

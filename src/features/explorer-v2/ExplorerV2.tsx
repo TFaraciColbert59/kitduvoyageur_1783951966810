@@ -27,6 +27,8 @@ import { registerOfflineWorker } from './offline/zone';
 import { bearingLabel, offRouteLabel, screenBearingDeg } from './activity/offRoute';
 import { nearestPointOnRouteM, routeLines } from './geo/track';
 import { fetchRouteGeometry } from './data/routeGeometry';
+import { useRouteSlope } from './data/useRouteSlope';
+import { verifiedNationalTopoFor } from './map/nationalTopo';
 import { shouldKeepFinishInQueue } from './activity/finishOutcome';
 import {
   activityFromRecord,
@@ -746,6 +748,24 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
       : [...routes, full];
   }, [routes, activityRoute, state.trailRoute]);
 
+  /**
+   * Pente réelle : l'itinéraire armé (ou celui de la séance) est le seul à
+   * pouvoir être coloré. La couche reste vide tant que l'utilisateur ne l'a
+   * pas demandée ; le service DEM existant fait le calcul.
+   */
+  const slopeRoute = useMemo(() => {
+    const active = state.activity?.route;
+    // Une séance fige son itinéraire : même indisponible, il ne doit pas être
+    // remplacé par une autre route sélectionnée après le départ.
+    if (active) return active;
+    return state.trailRoute ?? null;
+  }, [state.activity?.route, state.trailRoute]);
+  const slope = useRouteSlope(slopeRoute, state.layerVisibility?.slope === true);
+  const nationalTopo = useMemo(
+    () => verifiedNationalTopoFor(state.geo || country?.iso_a2 || ''),
+    [country?.iso_a2, state.geo],
+  );
+
   const selectedPoi = useMemo(() => {
     if (!state.selection) return null;
     const byId = pois.find((poi) => poi.id === state.selection?.id);
@@ -1215,6 +1235,14 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
       trips: (tripsData ?? []) as TripItem[],
       selectedPoi,
       me,
+      terrain: {
+        slope: {
+          state: slope.state,
+          summary: slope.summary,
+          routeName: slopeRoute?.name ?? null,
+          hasRoute: slopeRoute?.status === 'ready' && Boolean(slopeRoute?.geojson),
+        },
+      },
       // Brouillon local : aucune couche ne peut perdre la variante. Une trace
       // de démonstration est retirée ici avant d'armer le compte à rebours.
       onStartSport: requestStartSafe,
@@ -1222,7 +1250,7 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
       onMarkLap: markLap,
       locale: 'fr-FR',
     }),
-    [state, countries, country, regionsGeo, regionGroups, place, pois, routes, weather, unitsForCountry, reportsData, carnetsData, tripsData, selectedPoi, me, requestStartSafe, onConfirmReport, markLap],
+    [state, countries, country, regionsGeo, regionGroups, place, pois, routes, weather, unitsForCountry, reportsData, carnetsData, tripsData, selectedPoi, me, slope.state, slope.summary, slopeRoute, requestStartSafe, onConfirmReport, markLap],
   );
 
   const model = useMemo(() => buildSheetModel(ctx), [ctx]);
@@ -1553,6 +1581,8 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
         longPressHandlers={longPress}
         activityTrack={activityTrack}
         mapBaseStyle={state.mapBaseStyle}
+        nationalTopo={nationalTopo}
+        slopeLayer={slope.layer}
         layerVisibility={state.layerVisibility}
       />
 

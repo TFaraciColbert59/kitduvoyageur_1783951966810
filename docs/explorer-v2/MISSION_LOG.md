@@ -660,3 +660,20 @@ Les points **non** cochés sont listés dans `ETAT_DES_POINTS.md` avec leur bloc
   First Load JS `/explorer` = 151 Ko (budget ≤ 170 Ko respecté, marge de 19 Ko).
 - Statut : OK
 
+### [C01 · K3.04 / K3.05] Couches pente, surface et fonds nationaux · 2026-11-13
+- Fiches : `fiches/Komoot/K3.04.md` et `K3.05.md` (chantier C01, dépendance P01).
+- Livré :
+  - pente réelle de l’itinéraire sélectionné depuis le DEM AWS existant
+    (`POST /api/explorer/v2/profile`), dégradé MapLibre avec `lineMetrics` ;
+  - surface : API de couverture en lecture seule (`trail_segments` vide →
+    ligne informative désactivée, aucune couche inventée) ;
+  - hors-route : état réel du dispositif 40 m / 15 s / 25 m exposé dans le
+    tiroir Calques, sans duplication ;
+  - fonds nationaux : registre `nationalTopo.ts`, IGN France `unverified`,
+    aucune tuile chargée ; `MapStage` sait afficher une source `verified`.
+- Données : `trail_segments` = 0 ligne (AUDIT_VERIFIE), `TOPO_NATIONALE` =
+  `non_confirme` (registre C01). Décisions 16 à 18, blocages 12 et 13.
+- Aucun test, build, lint ou `tsc` exécuté : reportés à la fin (mission).
+- Détail : `docs/explorer-v2/C01-K3.04-K3.05.md`.
+- Statut : partiel et honnête (dépendances externes documentées).
+
