@@ -165,54 +165,17 @@ function AutoPauseSetting({ sport }: { sport?: Sport | null }) {
           trailing={
             <button
               type="button"
+              className="xp-switch"
               role="switch"
               aria-checked={enabled}
               aria-label="Pause automatique à l’arrêt"
               onClick={() => setEnabled(!enabled)}
-              style={{
-                flex: 'none',
-                width: 52,
-                height: 44,
-                padding: 0,
-                border: 'none',
-                background: 'transparent',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                WebkitTapHighlightColor: 'transparent',
-              }}
             >
-              {/* Le switch visuel garde 46 × 28 ; la cible tactile est le bouton
-                  de 52 × 44, conforme à la règle des 44 px. */}
-              <span
-                aria-hidden="true"
-                style={{
-                  width: 46,
-                  height: 28,
-                  padding: 3,
-                  boxSizing: 'border-box',
-                  borderRadius: 999,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: enabled ? 'flex-end' : 'flex-start',
-                  background: enabled ? 'var(--xp-inkbtn)' : 'var(--xp-thumb)',
-                  boxShadow: enabled
-                    ? 'var(--xp-inkbtn-shadow)'
-                    : 'inset 0 1px 2px rgba(23,43,36,0.18)',
-                  transition: 'background 160ms ease',
-                }}
-              >
-                <span
-                  aria-hidden="true"
-                  style={{
-                    width: 22,
-                    height: 22,
-                    borderRadius: 999,
-                    background: '#fff',
-                    boxShadow: '0 1px 3px rgba(23,43,36,0.25)',
-                  }}
-                />
+              {/* Gabarit iOS : piste 51 × 31, bouton 51 × 44 pour la cible
+                  tactile. Le déplacement du curseur est une transformation
+                  (aucune propriété de layout animée). */}
+              <span className="xp-switch-track" aria-hidden="true">
+                <span className="xp-switch-knob" />
               </span>
             </button>
           }
@@ -1583,19 +1546,15 @@ function SearchTab({ ctx }: { ctx: SheetContext }) {
     <>
       <input
         className="xp-searchinput"
+        type="search"
         value={query}
         onChange={(event) => setQuery(event.target.value)}
         placeholder="Pays, sommet, refuge, eau…"
         aria-label="Rechercher un lieu"
-        style={{
-          width: '100%',
-          height: 38,
-          borderRadius: 12,
-          border: '0.5px solid rgba(23,43,36,.16)',
-          padding: '0 12px',
-          background: 'rgba(255,255,255,.7)',
-          fontSize: 13,
-        }}
+        autoComplete="off"
+        autoCapitalize="none"
+        spellCheck={false}
+        enterKeyHint="search"
       />
       {query.trim().length < 2 ? (
         <XpEmpty

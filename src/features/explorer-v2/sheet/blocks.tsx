@@ -54,7 +54,12 @@ export function XpCard({
   const isCountryCode = Boolean(initial && initial.trim().length === 2 && /^[A-Za-z]{2}$/.test(initial.trim()));
   const content = (
     <>
-      <span className="xp-card-thumb" data-tone={tone} aria-hidden="true" style={isCountryCode ? { background: 'rgba(255, 255, 255, 0.85)', fontSize: 20 } : undefined}>
+      <span
+        className="xp-card-thumb"
+        data-tone={tone}
+        data-country={isCountryCode ? 'true' : undefined}
+        aria-hidden="true"
+      >
         {icon ? (
           <XpIcon name={icon} size={17} />
         ) : isCountryCode ? (
@@ -125,19 +130,7 @@ export function XpRow({
     <>
       {image ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={image}
-          alt=""
-          style={{
-            width: 36,
-            height: 36,
-            borderRadius: 10,
-            objectFit: 'cover',
-            flexShrink: 0,
-            border: '0.5px solid rgba(255, 255, 255, 0.9)',
-            boxShadow: '0 2px 8px rgba(23, 43, 36, 0.12)',
-          }}
-        />
+        <img className="xp-row-image" src={image} alt="" />
       ) : icon ? (
         <span className="xp-row-ico" data-tone={tone} aria-hidden="true">
           <XpIcon name={icon} size={15} />

@@ -18,9 +18,54 @@
   --xp-good: #3d7a52;
   /* Fond des pastilles de cluster : jeton manquant (var() sans repli auparavant). */
   --xp-paper: #ffffff;
+  /* Contrôles — gabarits iOS, déclinés clair/sombre sans nouvelle palette. */
+  --xp-field-bg: #ffffff;
+  --xp-field-border: rgba(23, 43, 36, 0.16);
+  --xp-primary-bg: linear-gradient(180deg, #24563c, #17402c);
+  --xp-primary-fg: #ffffff;
+  --xp-primary-shadow: var(--xp-inkbtn-shadow);
+  --xp-switch-off: rgba(120, 120, 128, 0.28);
+  --xp-switch-on: #17402c;
+  --xp-switch-knob: #ffffff;
+  --xp-seg-bg: rgba(255, 255, 255, 0.65);
+  --xp-seg-border: rgba(255, 255, 255, 0.8);
+  --xp-seg-lens: linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.26));
+  --xp-seg-lens-shadow:
+    inset 0 1px 0 #fff, inset 0 -1px 1px rgba(255, 255, 255, 0.5),
+    0 0 0 0.5px rgba(23, 43, 36, 0.07), 0 2px 8px rgba(23, 43, 36, 0.08);
+  --xp-mini-bg: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.72),
+    rgba(255, 255, 255, 0.42) 55%,
+    rgba(255, 255, 255, 0.52)
+  );
+  --xp-mini-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.45),
+    0 0 0 0.5px rgba(23, 43, 36, 0.14), 0 8px 22px rgba(23, 43, 36, 0.12);
+  --xp-pin-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.72));
+  --xp-me-fill: #ffffff;
+  --xp-halo: rgba(23, 64, 44, 0.16);
+  --xp-pill-bg: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.82),
+    rgba(255, 255, 255, 0.55) 55%,
+    rgba(255, 255, 255, 0.72)
+  );
+  --xp-pill-border: rgba(255, 255, 255, 0.85);
+  --xp-pill-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 0 0 0.5px rgba(23, 43, 36, 0.12),
+    0 4px 16px rgba(10, 20, 14, 0.14);
+  --xp-pill-fg: #17402c;
+  --xp-globe-hi: #e4eeea;
+  --xp-globe-mid: #c8d8cd;
+  --xp-globe-lo: #b6c9bb;
+  --xp-globe-shadow: 0 24px 60px rgba(23, 64, 44, 0.18), inset -18px -12px 40px rgba(23, 64, 44, 0.16);
   --xp-font:
     -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', Inter, system-ui,
     'Segoe UI', Roboto, sans-serif;
+
+  /* Les contrôles natifs (date, select, barres de défilement) suivent le thème. */
+  color-scheme: light;
 
   --xp-bar: linear-gradient(
     180deg,
@@ -68,6 +113,9 @@
     rgba(243, 246, 242, 0.94)
   );
   --xp-map-bg: #e9eee7;
+  --xp-sheet-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.75), 0 -1px 0 rgba(23, 43, 36, 0.06),
+    0 -18px 44px rgba(23, 43, 36, 0.14);
 
   position: fixed;
   inset: 0;
@@ -83,6 +131,8 @@
 }
 
 .xp-root[data-theme='dark'] {
+  color-scheme: dark;
+
   --xp-mut: #b9c6bd;
   --xp-mut2: #d3dcd6;
   --xp-txt: #eef2ee;
@@ -109,6 +159,41 @@
     rgba(20, 26, 23, 0.97)
   );
   --xp-map-bg: #141a17;
+  --xp-paper: #121815;
+  --xp-field-bg: rgba(44, 55, 49, 0.7);
+  --xp-field-border: rgba(255, 255, 255, 0.16);
+  --xp-primary-bg: linear-gradient(180deg, #9ad4b1, #7fc49a);
+  --xp-primary-fg: #08150f;
+  --xp-primary-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 0 0 0.5px rgba(127, 196, 154, 0.35),
+    0 6px 18px rgba(0, 0, 0, 0.35);
+  --xp-switch-off: rgba(120, 120, 128, 0.36);
+  --xp-switch-on: #7fc49a;
+  --xp-switch-knob: #f2f2f7;
+  --xp-seg-bg: rgba(44, 55, 49, 0.72);
+  --xp-seg-border: rgba(255, 255, 255, 0.12);
+  --xp-seg-lens: linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.08));
+  --xp-seg-lens-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 2px 8px rgba(0, 0, 0, 0.28);
+  --xp-mini-bg: linear-gradient(180deg, rgba(44, 55, 49, 0.9), rgba(36, 45, 40, 0.82));
+  --xp-mini-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 0 0 0.5px rgba(255, 255, 255, 0.12),
+    0 8px 22px rgba(0, 0, 0, 0.36);
+  --xp-pin-bg: linear-gradient(180deg, rgba(38, 48, 43, 0.94), rgba(30, 38, 34, 0.86));
+  --xp-me-fill: #101614;
+  --xp-halo: rgba(127, 196, 154, 0.24);
+  --xp-pill-bg: linear-gradient(180deg, rgba(44, 55, 49, 0.92), rgba(36, 45, 40, 0.84));
+  --xp-pill-border: rgba(255, 255, 255, 0.14);
+  --xp-pill-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 0 0 0.5px rgba(255, 255, 255, 0.1),
+    0 4px 16px rgba(0, 0, 0, 0.4);
+  --xp-pill-fg: #dcefe2;
+  --xp-globe-hi: #2b3a31;
+  --xp-globe-mid: #1c2822;
+  --xp-globe-lo: #141a17;
+  --xp-globe-shadow: 0 24px 60px rgba(0, 0, 0, 0.32), inset -18px -12px 40px rgba(0, 0, 0, 0.28);
+  --xp-sheet-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 -1px 0 rgba(0, 0, 0, 0.4),
+    0 -18px 44px rgba(0, 0, 0, 0.5);
 }
 
 .xp-root *,
@@ -208,9 +293,13 @@ body:has(.xp-root[data-theme]) .lkv-app-background {
   width: 62%;
   aspect-ratio: 1;
   border-radius: 50%;
-  background: radial-gradient(circle at 42% 34%, #e4eeea, #c8d8cd 70%, #b6c9bb 100%);
-  box-shadow: 0 24px 60px rgba(23, 64, 44, 0.18), inset -18px -12px 40px rgba(23, 64, 44, 0.16);
+  background: radial-gradient(circle at 42% 34%, var(--xp-globe-hi), var(--xp-globe-mid) 70%, var(--xp-globe-lo) 100%);
+  box-shadow: var(--xp-globe-shadow);
   opacity: 0.85;
+}
+.xp-root[data-theme='dark'] .xp-map-globe-skeleton {
+  background: radial-gradient(120% 70% at 50% 38%, rgba(20, 26, 23, 0.1), rgba(20, 26, 23, 0.9) 70%),
+    var(--xp-map-bg);
 }
 
 /* ── Chrome haut ───────────────────────────────────────────────────────── */
@@ -313,10 +402,7 @@ body:has(.xp-root[data-theme]) .lkv-app-background {
   background: var(--xp-sheet-bg);
   -webkit-backdrop-filter: blur(22px) saturate(1.6);
   backdrop-filter: blur(22px) saturate(1.6);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.75),
-    0 -1px 0 rgba(23, 43, 36, 0.06),
-    0 -18px 44px rgba(23, 43, 36, 0.14);
+  box-shadow: var(--xp-sheet-shadow);
   z-index: 5;
   touch-action: none;
   overflow: hidden;
@@ -436,16 +522,14 @@ body:has(.xp-root[data-theme]) .lkv-app-background {
   margin: 0 0 8px;
   padding: 2px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.65);
-  border: 0.5px solid rgba(255, 255, 255, 0.8);
+  background: var(--xp-seg-bg);
+  border: 0.5px solid var(--xp-seg-border);
   -webkit-backdrop-filter: blur(28px) saturate(180%);
   backdrop-filter: blur(28px) saturate(180%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 4px 14px rgba(23, 43, 36, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 4px 14px rgba(23, 43, 36, 0.08);
   overflow: hidden;
 }
 .xp-root[data-theme='dark'] .xp-tabs {
-  background: rgba(44, 55, 49, 0.72);
-  border-color: rgba(255, 255, 255, 0.12);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 4px 14px rgba(0, 0, 0, 0.3);
 }
 .xp-tabs-bottom {
@@ -458,21 +542,12 @@ body:has(.xp-root[data-theme]) .lkv-app-background {
   left: 3px;
   width: calc((100% - 6px) / var(--n, 2));
   border-radius: 999px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.26));
-  box-shadow:
-    inset 0 1px 0 #fff, inset 0 -1px 1px rgba(255, 255, 255, 0.5), 0 0 0 0.5px rgba(23, 43, 36, 0.07),
-    0 2px 8px rgba(23, 43, 36, 0.08);
+  background: var(--xp-seg-lens);
+  box-shadow: var(--xp-seg-lens-shadow);
   transform: translateX(calc(var(--i, 0) * 100%));
-  transition: transform 0.38s var(--motion-ease-standard);
+  transition: transform 0.34s var(--motion-ease-standard);
   pointer-events: none;
   z-index: 1;
-}
-.xp-root[data-theme='dark'] .xp-tabs-bottom {
-  margin: 6px 0 0;
-}
-.xp-tab-lens {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.08));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 2px 8px rgba(0, 0, 0, 0.28);
 }
 .xp-tab {
   position: relative;
@@ -491,6 +566,25 @@ body:has(.xp-root[data-theme]) .lkv-app-background {
 }
 .xp-tab[aria-selected='true'] {
   color: var(--xp-ink);
+}
+.xp-tab,
+.xp-chip,
+.xp-icon-btn,
+.xp-round-ink,
+.xp-round-glass,
+.xp-card,
+.xp-row {
+  transition: transform 0.12s ease, opacity 0.12s ease, background-color 0.2s ease;
+}
+.xp-tab:active,
+.xp-chip:active,
+.xp-icon-btn:active,
+.xp-round-ink:active,
+.xp-round-glass:active,
+.xp-card:active,
+.xp-row:active {
+  transform: scale(0.98);
+  opacity: 0.78;
 }
 .xp-tab .xp-tab-label {
   display: none;
@@ -518,15 +612,8 @@ body:has(.xp-root[data-theme]) .lkv-app-background {
   height: 30px;
   padding: 2.5px;
   border-radius: 999px;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.72),
-    rgba(255, 255, 255, 0.42) 55%,
-    rgba(255, 255, 255, 0.52)
-  );
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.45),
-    0 0 0 0.5px rgba(23, 43, 36, 0.14), 0 8px 22px rgba(23, 43, 36, 0.12);
+  background: var(--xp-mini-bg);
+  box-shadow: var(--xp-mini-shadow);
 }
 .xp-mini-thumb {
   position: absolute;
@@ -611,6 +698,23 @@ body:has(.xp-root[data-theme]) .lkv-app-background {
   color: #fff;
   font-size: 13px;
   font-weight: 800;
+}
+.xp-card-thumb[data-country='true'] {
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--xp-ink);
+  font-size: 20px;
+}
+.xp-root[data-theme='dark'] .xp-card-thumb[data-country='true'] {
+  background: rgba(255, 255, 255, 0.12);
+}
+.xp-row-image {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 0.5px solid var(--xp-field-border);
+  box-shadow: 0 2px 8px rgba(23, 43, 36, 0.12);
 }
 .xp-card-text {
   display: block;
@@ -925,13 +1029,13 @@ body:has(.xp-root[data-theme]) .lkv-app-background {
   width: 54px;
   height: 28px;
   padding: 0 12px;
-  border: 0.5px solid rgba(255, 255, 255, 0.85);
+  border: 0.5px solid var(--xp-pill-border);
   border-radius: 9999px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.55) 55%, rgba(255, 255, 255, 0.72));
+  background: var(--xp-pill-bg);
   -webkit-backdrop-filter: blur(24px) saturate(1.8);
   backdrop-filter: blur(24px) saturate(1.8);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 0 0 0.5px rgba(23, 43, 36, 0.12), 0 4px 16px rgba(10, 20, 14, 0.14);
-  color: #17402C;
+  box-shadow: var(--xp-pill-shadow);
+  color: var(--xp-pill-fg);
   cursor: pointer;
   transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
 }
@@ -947,7 +1051,7 @@ body:has(.xp-root[data-theme]) .lkv-app-background {
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background-color: #17402C;
+  background-color: currentColor;
 }
 
 /* ── 3.3 Synchronisation masquage bottom bar globale ───────────────────── */
@@ -1057,7 +1161,7 @@ body[data-explorer-sheet-open='true'] nav[aria-label="Navigation principale"]:no
   gap: 6px;
   padding: 3px 10px 3px 3px;
   border-radius: 999px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.72));
+  background: var(--xp-pin-bg);
   -webkit-backdrop-filter: var(--xp-blur);
   backdrop-filter: var(--xp-blur);
   box-shadow: var(--xp-bar-shadow);
@@ -1104,7 +1208,7 @@ body[data-explorer-sheet-open='true'] nav[aria-label="Navigation principale"]:no
   width: 14px;
   height: 14px;
   border-radius: 999px;
-  background: #fff;
+  background: var(--xp-me-fill);
   border: 2.4px solid var(--xp-ink);
   box-shadow: 0 1px 6px rgba(23, 64, 44, 0.35);
 }
@@ -1114,7 +1218,7 @@ body[data-explorer-sheet-open='true'] nav[aria-label="Navigation principale"]:no
   width: 46px;
   height: 46px;
   border-radius: 999px;
-  background: rgba(23, 64, 44, 0.16);
+  background: var(--xp-halo);
   animation: xpRing 2.2s ease-out infinite;
   pointer-events: none;
 }
@@ -1401,34 +1505,63 @@ body[data-explorer-sheet-open='true'] nav[aria-label="Navigation principale"]:no
 .xp-form label {
   display: grid;
   gap: 4px;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--xp-mut);
 }
-.xp-form input {
-  height: 38px;
-  padding: 0 10px;
-  border-radius: 12px;
-  border: 0.5px solid rgba(23, 43, 36, 0.16);
-  background: rgba(255, 255, 255, 0.8);
-  font-size: 13px;
+
+/* Champs natifs iOS : 44 px de haut, 16 px de texte (pas de zoom au focus),
+   fond de champ système et anneau de focus visible. Les mêmes règles servent
+   la recherche du drawer et le formulaire de départ. */
+.xp-searchinput,
+.xp-form input,
+.xp-form select,
+.xp-form textarea {
+  width: 100%;
+  min-height: var(--lkv-touch-min, 44px);
+  padding: 0 12px;
+  border: 0.5px solid var(--xp-field-border);
+  border-radius: var(--lkv-radius-sm, 14px);
+  background: var(--xp-field-bg);
   color: var(--xp-txt);
+  font: inherit;
+  /* iOS zoome automatiquement sous 16 px : les champs restent à 16 px. */
+  font-size: 16px;
+  line-height: 1.2;
 }
-.xp-root[data-theme='dark'] .xp-form input {
-  background: rgba(44, 55, 49, 0.7);
-  border-color: rgba(255, 255, 255, 0.16);
-  color: var(--xp-txt);
+.xp-form textarea {
+  min-height: 88px;
+  padding: 10px 12px;
+  resize: vertical;
 }
+.xp-searchinput::placeholder,
+.xp-form input::placeholder,
+.xp-form textarea::placeholder {
+  color: var(--xp-mut);
+}
+.xp-searchinput:focus-visible,
+.xp-form input:focus-visible,
+.xp-form select:focus-visible,
+.xp-form textarea:focus-visible {
+  outline: 2px solid var(--xp-ink);
+  outline-offset: 1px;
+}
+
 .xp-primary {
   width: 100%;
-  height: 44px;
+  height: 50px;
   margin-bottom: 10px;
   border-radius: 14px;
-  background: var(--xp-inkbtn);
-  box-shadow: var(--xp-inkbtn-shadow);
-  color: #fff;
-  font-size: 13.5px;
-  font-weight: 700;
+  background: var(--xp-primary-bg);
+  box-shadow: var(--xp-primary-shadow);
+  color: var(--xp-primary-fg);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  transition: transform 0.12s ease, opacity 0.2s ease;
+}
+.xp-primary:active:not(:disabled) {
+  transform: scale(0.985);
 }
 .xp-primary:disabled {
   opacity: 0.5;
@@ -1436,14 +1569,64 @@ body[data-explorer-sheet-open='true'] nav[aria-label="Navigation principale"]:no
 
 .xp-secondary {
   width: 100%;
-  height: 40px;
+  height: 44px;
   margin-bottom: 10px;
   border-radius: 14px;
   background: var(--xp-thumb);
   box-shadow: var(--xp-thumb-shadow);
   color: var(--xp-mut2);
-  font-size: 12.5px;
-  font-weight: 650;
+  font-size: 15px;
+  font-weight: 600;
+  transition: transform 0.12s ease;
+}
+.xp-secondary:active:not(:disabled) {
+  transform: scale(0.985);
+}
+
+/* Interrupteur natif iOS : bouton 51 × 44 (cible), piste 51 × 31,
+   curseur 27 px déplacé par transform. La piste ne change que sa couleur. */
+.xp-switch {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 51px;
+  height: 44px;
+  padding: 0;
+  background: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.xp-switch-track {
+  position: relative;
+  display: block;
+  width: 51px;
+  height: 31px;
+  border-radius: 999px;
+  background: var(--xp-switch-off);
+  transition: background-color 0.2s ease;
+}
+.xp-switch-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 27px;
+  height: 27px;
+  border-radius: 999px;
+  background: var(--xp-switch-knob);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.18), 0 0 0 0.5px rgba(0, 0, 0, 0.04);
+  transform: translateX(0);
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.xp-switch[aria-checked='true'] .xp-switch-track {
+  background: var(--xp-switch-on);
+}
+.xp-switch[aria-checked='true'] .xp-switch-knob {
+  transform: translateX(20px);
+}
+.xp-switch:focus-visible {
+  outline: 2px solid var(--xp-ink);
+  outline-offset: 2px;
+  border-radius: 999px;
 }
 
 /* Pastille « hors ligne » avec le nombre d'écritures en attente. */

@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 
 export type Position = [number, number];
 
@@ -363,14 +363,30 @@ export function useReducedMotion(): boolean {
   return reduced;
 }
 
+const THEME_QUERY = '(prefers-color-scheme: dark)';
+
+function subscribeSystemTheme(onChange: () => void): () => void {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+    return () => {};
+  }
+  const media = window.matchMedia(THEME_QUERY);
+  media.addEventListener('change', onChange);
+  return () => media.removeEventListener('change', onChange);
+}
+
+function readSystemTheme(): 'light' | 'dark' {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+    return 'light';
+  }
+  return window.matchMedia(THEME_QUERY).matches ? 'dark' : 'light';
+}
+
+/**
+ * Thème système, lu comme un store externe : le rendu serveur reste `light`
+ * (pas de divergence d'hydratation), puis la valeur réelle de l'appareil est
+ * appliquée sans attendre un effet. L'Explorer suit ainsi le réglage du
+ * téléphone, y compris quand il change pendant la session.
+ */
 export function useSystemTheme(): 'light' | 'dark' {
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    const update = () => setTheme(mq.matches ? 'dark' : 'light');
-    update();
-    mq.addEventListener('change', update);
-    return () => mq.removeEventListener('change', update);
-  }, []);
-  return theme;
+  return useSyncExternalStore(subscribeSystemTheme, readSystemTheme, () => 'light');
 }

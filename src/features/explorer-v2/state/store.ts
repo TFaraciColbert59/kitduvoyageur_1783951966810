@@ -69,7 +69,7 @@ interface ExplorerActions {
   /** Remet en `loading` une copie `unavailable` pour tenter un nouveau chargement. */
   retryRouteGeometry: (routeId: string) => void;
   stopActivity: () => void;
-  setTheme: (theme: 'light' | 'dark') => void;
+  setTheme: (theme: 'light' | 'dark' | null) => void;
   toggleNorthUp: () => void;
   setUnits: (units: 'metric' | 'imperial') => void;
   setMapBaseStyle: (style: 'relief' | 'satellite' | 'plan') => void;
@@ -101,7 +101,9 @@ const initialState: ExplorerState = {
   camera: { type: 'none' },
   profile: null,
   easyMode: false,
-  theme: 'light',
+  /* Aucune préférence locale : l'Explorer suit le thème système (fiche K7.11,
+     « Selon système »). Une scène de recette peut encore figer `light`/`dark`. */
+  theme: null,
   // S1.05 : décision produit retenue, détection active par défaut et
   // désactivable depuis le drawer de préparation. OFF seulement après un choix
   // explicite de l'utilisateur (la fiche exige la désactivabilité, pas le ON).

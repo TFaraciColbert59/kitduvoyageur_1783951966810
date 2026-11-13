@@ -232,7 +232,11 @@ export interface ExplorerState {
   camera: CameraIntent;
   profile: Profile;
   easyMode: boolean;
-  theme: 'light' | 'dark';
+  /**
+   * Thème de l'Explorer. `null` = suivre le réglage système (défaut) ;
+   * une scène de recette peut le figer explicitement.
+   */
+  theme: 'light' | 'dark' | null;
   /** Réglage de préparation : pause automatique à l'arrêt, désactivable. */
   autoPauseEnabled?: boolean;
   online: boolean;
