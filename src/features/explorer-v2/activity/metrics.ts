@@ -28,6 +28,7 @@ import type {
   MetricSource,
   Sport,
 } from '../state/types';
+import { ActivityTracker, autoPauseConfigForSport, type GpsFix } from './tracker';
 
 export interface MetricDefinition {
   label: string;
@@ -291,6 +292,142 @@ export function buildMetricSeries(inputs: ReadonlyArray<MetricInput>): MetricSer
   let series: MetricSeries[] = [];
   for (const input of inputs) series = appendMetricInputs(series, input);
   return series;
+}
+
+export interface RebuiltMetricSeries {
+  series: MetricSeries[];
+  /**
+   * Dernier point réellement accepté pendant le rejeu. Le suivi vivant doit
+   * repartir de cette borne pour dériver sa première vitesse d'intervalle sans
+   * compter deux fois le segment déjà persisté.
+   */
+  last: { t: number; distanceM: number } | null;
+}
+
+/**
+ * Forme minimale d'un point conservé par A01 (`LocalSessionPoint`). Le type
+ * reste structurel pour que `metrics.ts` ne dépende pas du magasin local.
+ */
+export interface PersistedActivityPoint {
+  t: number;
+  lat: number;
+  lng: number;
+  ele?: number | null;
+  acc?: number | null;
+  speed?: number | null;
+}
+
+/** Convertit des points persistés en fixes relus par le tracker. */
+export function metricFixesFromPoints(
+  points: ReadonlyArray<PersistedActivityPoint>,
+): GpsFix[] {
+  return points.map((point) => ({
+    t: point.t,
+    lat: point.lat,
+    lng: point.lng,
+    ele: point.ele ?? null,
+    acc: point.acc ?? null,
+    speed: point.speed ?? null,
+  }));
+}
+
+/**
+ * Reconstruit les séries **GPS** d'une séance à partir des points déjà
+ * acceptés et conservés par la persistance de séance (A01). Aucune valeur
+ * n'est inventée : le rejeu applique exactement la même règle que le direct
+ * (altitude mesurée, vitesse rapportée, sinon vitesse d'intervalle dérivée
+ * uniquement quand le tracker a réellement ajouté de la distance et que la
+ * continuité est prouvée).
+ *
+ * C'est la raison pour laquelle les séries GPS n'ont pas besoin d'un nouveau
+ * magasin ni d'une migration : `session_points` (et, après synchro,
+ * `activity_points`) portent déjà `t`, `ele` et `speed`. Les séries de capteurs
+ * (cardio, cadence, puissance, température, énergie, pas) ne sont pas
+ * reconstruites ici : aucune source ne les fournit aujourd'hui et aucune
+ * valeur de santé n'est fabriquée.
+ *
+ * Le rejeu utilise le profil de pause courant, comme le tracker restauré. Un
+ * changement de réglage entre la séance et le rechargement peut donc modifier
+ * la borne de reprise ; les valeurs déjà mesurées, elles, ne sont pas
+ * réécrites.
+ */
+export function rebuildMetricSeriesFromFixes(
+  fixes: ReadonlyArray<GpsFix>,
+  sport: Sport,
+  autoPauseEnabled = false,
+): RebuiltMetricSeries {
+  const tracker = new ActivityTracker(autoPauseConfigForSport(sport, autoPauseEnabled));
+  let series: MetricSeries[] = [];
+  let last: RebuiltMetricSeries['last'] = null;
+
+  for (const fix of fixes) {
+    const metrics = tracker.addFix(fix);
+    if (!metrics.accepted) continue;
+
+    const effectiveT = metrics.effectiveTMs ?? fix.t;
+    const reportedSpeed =
+      typeof fix.speed === 'number' && Number.isFinite(fix.speed) && fix.speed >= 0
+        ? fix.speed
+        : null;
+    const derivedSpeed =
+      reportedSpeed === null &&
+      last !== null &&
+      !metrics.discontinuity &&
+      effectiveT > last.t &&
+      metrics.distanceM > last.distanceM
+        ? (metrics.distanceM - last.distanceM) / ((effectiveT - last.t) / 1000)
+        : null;
+
+    if (typeof fix.ele === 'number' && Number.isFinite(fix.ele)) {
+      series = appendMetricInputs(series, {
+        t: effectiveT,
+        elevationM: fix.ele,
+        source: 'gps',
+        quality: 'measured',
+      });
+    }
+    if (reportedSpeed !== null || derivedSpeed !== null) {
+      const derived = reportedSpeed === null;
+      series = appendMetricInputs(series, {
+        t: effectiveT,
+        speedMs: reportedSpeed ?? derivedSpeed,
+        source: derived ? 'derived' : 'gps',
+        quality: derived ? 'derived' : 'measured',
+      });
+    }
+
+    last = { t: effectiveT, distanceM: metrics.distanceM };
+  }
+
+  return { series, last };
+}
+
+/**
+ * Même reconstruction depuis les points conservés par la persistance locale
+ * (`readSessionPoints`) : utile pour restituer un bilan sans réécrire ni
+ * dupliquer ses séries.
+ */
+export function rebuildMetricSeriesFromPoints(
+  points: ReadonlyArray<PersistedActivityPoint>,
+  sport: Sport,
+  autoPauseEnabled = false,
+): RebuiltMetricSeries {
+  return rebuildMetricSeriesFromFixes(metricFixesFromPoints(points), sport, autoPauseEnabled);
+}
+
+/**
+ * Remplace uniquement les séries reconstruites et conserve les autres
+ * (capteurs ou import), sans changer leur ordre d'affichage.
+ */
+export function mergeMetricSeries(
+  existing: ReadonlyArray<MetricSeries>,
+  replacement: ReadonlyArray<MetricSeries>,
+): MetricSeries[] {
+  const replaced = new Set(replacement.map((item) => item.key));
+  return [
+    ...existing.filter((item) => !replaced.has(item.key)),
+    ...replacement,
+  ].sort((left, right) => METRIC_ORDER.indexOf(left.key) - METRIC_ORDER.indexOf(right.key));
 }
 
 /** Vrai quand la série contient au moins une valeur réellement reçue. */

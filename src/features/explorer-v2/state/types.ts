@@ -227,6 +227,14 @@ export interface ActivityState {
    */
   route?: TrailRouteSnapshot;
   sessionId: string | null;
+  /**
+   * Identité stable générée avant le premier point par la persistance de
+   * séance (A01). Elle survit au rechargement et permet de raccorder les
+   * séries de mesures aux points déjà conservés. Absente pour les scènes de
+   * recette et les appels directs `startActivity(sport, sessionId)` : aucune
+   * reprise locale n'est alors possible, et l'interface ne la simule pas.
+   */
+  clientSessionId?: string | null;
   startedAt: number;
   /** Pause manuelle : le suivi GPS est suspendu. */
   paused: boolean;

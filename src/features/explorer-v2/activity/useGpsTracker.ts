@@ -17,13 +17,18 @@ import {
 } from './offRoute';
 import { useExplorerStore } from '../state/store';
 import { gpsSimulationEnabled } from './gpsSimulation';
-import { appendMetricInputs } from './metrics';
+import {
+  appendMetricInputs,
+  mergeMetricSeries,
+  rebuildMetricSeriesFromFixes,
+} from './metrics';
 
 /**
  * Suivi GPS d'une activité (04_CARTE §4, P2-11).
  *
  * - `watchPosition` réel quand la permission est accordée ;
  * - métriques calculées par `ActivityTracker` (précision, sauts, altitude) ;
+ * - séries GPS reconstruites depuis les points restaurés par A01 ;
  * - hors-trace évalué dès qu'un itinéraire est sélectionné ;
  * - en recette, `window.__xpPushFix` permet de rejouer un GPX sans GPS.
  */
@@ -41,10 +46,23 @@ export type RouteDistanceProvider = (
   fix: GpsFix,
 ) => number | RouteDistanceMeasurement | null;
 
+/**
+ * Séance locale restaurée depuis la persistance A01. `fixes` ne contient que
+ * les points que le tracker avait réellement acceptés : le rejeu ne fabrique
+ * ni point ni mesure.
+ */
+export interface RestoredTrackerState {
+  clientSessionId: string;
+  /** Points réellement acceptés avant le rechargement, dans l'ordre. */
+  fixes: GpsFix[];
+}
+
 export interface TrackerOptions {
   /** Distance (et cap) à la trace courante, fournie par l'appelant. */
   distanceToRouteM?: RouteDistanceProvider;
   onFix?: (fix: GpsFix, metrics: ReturnType<ActivityTracker['addFix']>) => void;
+  /** Séance restaurée depuis IndexedDB : le tracker repart de ses points. */
+  restored?: RestoredTrackerState | null;
 }
 
 /** Actions exposées par le suivi GPS à l'interface d'activité. */
@@ -65,13 +83,18 @@ function monotonicNow(): number {
   return Date.now();
 }
 
-export function useGpsTracker({ distanceToRouteM, onFix }: TrackerOptions = {}): GpsTrackerHandle {
+export function useGpsTracker({
+  distanceToRouteM,
+  onFix,
+  restored,
+}: TrackerOptions = {}): GpsTrackerHandle {
   const activity = useExplorerStore((state) => state.activity);
   const routeStatus = useExplorerStore((state) => state.activity?.route?.status);
   const autoPauseEnabled = useExplorerStore((state) => state.autoPauseEnabled) ?? false;
   const permission = useExplorerStore((state) => state.locationPermission);
   const scene = useExplorerStore((state) => state.scene);
   const running = !!activity && !activity.paused;
+  const activeClientSessionId = activity?.clientSessionId;
   const trackerRef = useRef(new ActivityTracker());
   const trackerConfigRef = useRef<string>('');
   const manualPausedRef = useRef<boolean | null>(null);
@@ -88,6 +111,12 @@ export function useGpsTracker({ distanceToRouteM, onFix }: TrackerOptions = {}):
     t: number;
     distanceM: number;
   } | null>(null);
+  /**
+   * Séance dont les points ont déjà été rejoués. Une nouvelle identité de
+   * l'objet `restored` ne doit pas remettre le tracker à zéro après des fixes
+   * vivants ; un remontage du hook réinitialise la référence.
+   */
+  const restoredClientRef = useRef<string | null>(null);
 
   const handleFix = useRef<(fix: GpsFix) => void>(() => undefined);
   const lastFixTimeRef = useRef<number>(Date.now());
@@ -302,6 +331,66 @@ export function useGpsTracker({ distanceToRouteM, onFix }: TrackerOptions = {}):
       delete target.__xpPushFix;
     };
   }, []);
+
+  // Reprise d'une séance locale : rejoue uniquement les points déjà acceptés
+  // avant le rechargement, pour que la distance, le D+ et l'ordre repartent de
+  // la même base. Aucun point n'est ajouté ici. Le tracker est créé avec le
+  // profil de pause du sport avant le rejeu : appliquer la configuration après
+  // coup aurait remis `autoPaused` à zéro et faussé le premier rendu.
+  useEffect(() => {
+    if (!activeClientSessionId) return;
+    if (!restored || restored.clientSessionId !== activeClientSessionId) return;
+    const current = useExplorerStore.getState();
+    const live = current.activity;
+    if (!live || live.clientSessionId !== activeClientSessionId) return;
+    if (restoredClientRef.current === activeClientSessionId) return;
+    restoredClientRef.current = activeClientSessionId;
+    const enabled = current.autoPauseEnabled ?? false;
+    trackerConfigRef.current = `${live.sport}:${enabled ? 'on' : 'off'}`;
+    const tracker = new ActivityTracker(autoPauseConfigForSport(live.sport, enabled));
+    for (const fix of restored.fixes) tracker.addFix(fix);
+    trackerRef.current = tracker;
+
+    // Les séries GPS sont une projection des points déjà conservés : les
+    // reconstruire évite un second stockage, une nouvelle version de base et
+    // toute valeur de santé inventée. Les séries d'une autre source, si elles
+    // existent un jour, sont conservées telles quelles.
+    if (restored.fixes.length === 0) return;
+    const metrics = tracker.state;
+    const rebuilt = rebuildMetricSeriesFromFixes(restored.fixes, live.sport, enabled);
+    previousMetricFixRef.current = rebuilt.last
+      ? {
+          sessionId: live.sessionId,
+          startedAt: live.startedAt,
+          t: rebuilt.last.t,
+          distanceM: rebuilt.last.distanceM,
+        }
+      : null;
+
+    // Les splits et les tours sont reconstruits par le rejeu, mais vivaient
+    // seulement dans le tracker : sans republication, l'interface les croyait
+    // absents jusqu'au prochain fix. Les métriques rejouées font aussi foi sur
+    // la fiche : si une écriture locale de point avait échoué, conserver le
+    // cumul de la fiche puis repartir du dernier point rejoué compterait deux
+    // fois le segment perdu.
+    useExplorerStore.setState((state) => {
+      const activityNow = state.activity;
+      if (!activityNow || activityNow.clientSessionId !== activeClientSessionId) return {};
+      return {
+        activity: {
+          ...activityNow,
+          distanceM: metrics.distanceM,
+          elevGainM: metrics.elevGainM,
+          movingS: metrics.movingS,
+          autoPaused: metrics.autoPaused,
+          splits: metrics.splits,
+          mileSplits: metrics.mileSplits,
+          laps: metrics.laps,
+          metricSeries: mergeMetricSeries(activityNow.metricSeries ?? [], rebuilt.series),
+        },
+      };
+    });
+  }, [activeClientSessionId, restored]);
 
   // Permission réelle : le store peut être resté à « prompt » alors que le
   // navigateur a déjà refusé. Les scènes de recette gardent leur état simulé.

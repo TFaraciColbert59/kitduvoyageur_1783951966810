@@ -45,7 +45,12 @@ interface ExplorerActions {
   setCamera: (camera: CameraIntent) => void;
   showToast: (toast: Omit<ToastMessage, 'id'>) => void;
   dismissToast: () => void;
-  startActivity: (sport: Sport, sessionId?: string | null, selection?: SportSelection) => void;
+  startActivity: (
+    sport: Sport,
+    sessionId?: string | null,
+    selection?: SportSelection,
+    clientSessionId?: string | null,
+  ) => void;
   updateActivity: (patch: Partial<ActivityState>) => void;
   /**
    * Publie la géométrie réelle chargée pour l'itinéraire armé. Si une séance
@@ -153,6 +158,7 @@ function activityStarted(
   sessionId: string | null,
   selection?: SportSelection,
   route?: TrailRouteSnapshot,
+  clientSessionId?: string | null,
 ): ActivityState {
   const splits = createSplitsState();
   return {
@@ -160,6 +166,7 @@ function activityStarted(
     ...(selection ? { selection } : {}),
     ...(route ? { route } : {}),
     sessionId,
+    ...(clientSessionId ? { clientSessionId } : {}),
     startedAt: Date.now(),
     paused: false,
     autoPaused: false,
@@ -323,9 +330,9 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
 
   dismissToast: () => set({ toast: undefined }),
 
-  startActivity: (sport, sessionId = null, selection) => {
+  startActivity: (sport, sessionId = null, selection, clientSessionId) => {
     const route = routeSnapshotFor(get().selection, get().trailRoute);
-    const activity = activityStarted(sport, sessionId, selection, route);
+    const activity = activityStarted(sport, sessionId, selection, route, clientSessionId);
     set({
       activity,
       // Une nouvelle séance ne peut plus hériter de la sélection précédente :
@@ -340,6 +347,7 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
     emit('activity-start', {
       sport,
       sessionId,
+      clientSessionId: clientSessionId ?? null,
       variantId: selection?.variantId ?? null,
       routeId: route?.id ?? null,
     });
