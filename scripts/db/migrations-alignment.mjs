@@ -17,7 +17,9 @@
  * Formats d'export acceptés, une ligne par migration : `version`, `version,nom`,
  * `version;nom`, `version<TAB>nom`, `version|nom` (une ligne d'en-tête ou des
  * guillemets sont ignorés). Avec `--strict`, le code de sortie vaut 1 dès qu'un
- * écart existe (aucun effet sur la base dans tous les cas).
+ * écart existe (aucun effet sur la base dans tous les cas). Une version
+ * dupliquée dans le dépôt ou dans l'export est refusée (code 2) : la Map de
+ * comparaison l'écraserait silencieusement.
  *
  * Catégories :
  *   - `aligned`          : version présente des deux côtés ;
@@ -116,6 +118,23 @@ function listVersions(dir) {
     .filter(Boolean);
 }
 
+/**
+ * Une version ne peut apparaître qu'une fois : `schema_migrations.version` est
+ * une clé primaire. Les Maps ci-dessus écraseraient silencieusement un doublon
+ * (deux branches qui choisissent le même préfixe), d'où ce contrôle explicite.
+ */
+export function findDuplicateVersions(list) {
+  const byVersion = new Map();
+  for (const item of list) {
+    const files = byVersion.get(item.version) ?? [];
+    files.push(item.file ?? item.name ?? item.version);
+    byVersion.set(item.version, files);
+  }
+  return [...byVersion.entries()]
+    .filter(([, files]) => files.length > 1)
+    .map(([version, files]) => ({ version, files }));
+}
+
 function main(argv) {
   const exportPath = argv.find((a) => !a.startsWith('--'));
   const strict = argv.includes('--strict');
@@ -132,6 +151,18 @@ function main(argv) {
   const registry = readFileSync(exportPath, 'utf8').split(/\r?\n/).map(parseRegistryLine).filter(Boolean);
   if (registry.length === 0) {
     console.error(`Aucune version lue dans ${exportPath} : export vide ou format inconnu.`);
+    return 2;
+  }
+  const repoDuplicates = findDuplicateVersions(repo);
+  const registryDuplicates = findDuplicateVersions(registry);
+  if (repoDuplicates.length > 0 || registryDuplicates.length > 0) {
+    for (const duplicate of repoDuplicates) {
+      console.error(`Version dupliquée dans le dépôt : ${duplicate.version} → ${duplicate.files.join(', ')}`);
+    }
+    for (const duplicate of registryDuplicates) {
+      console.error(`Version dupliquée dans le registre : ${duplicate.version} → ${duplicate.files.join(', ')}`);
+    }
+    console.error('Une version de migration doit être unique : rien n’a été modifié.');
     return 2;
   }
   const hasNames = registry.some((r) => r.name);

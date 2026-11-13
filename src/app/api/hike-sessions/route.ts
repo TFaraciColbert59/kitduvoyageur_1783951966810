@@ -341,6 +341,13 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const carnetId = searchParams.get('carnetId');
 
+    /*
+     * S6.15 — surface strictement propriétaire. `user_id = auth.uid()` reste
+     * le seul filtre : même avec `?carnetId=` fourni par un tiers, la RLS et ce
+     * filtre ne rendent que les sorties du lecteur. Aucune projection par
+     * métrique n'est nécessaire ici, mais aucune ligne d'autrui ne doit être
+     * ajoutée à cette requête (la liste n'est pas une surface de partage).
+     */
     let query = supabase
       .from('hike_sessions')
       .select('id, route_id, kit_id, carnet_id, started_at, ended_at, distance_km, duration_seconds, elevation_gain_m, poi_events, narratives, created_at')

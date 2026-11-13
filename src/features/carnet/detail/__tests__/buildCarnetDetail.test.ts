@@ -1,4 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import {
+  NO_OUTING_METRICS,
+  SHARED_SUMMARY_METRICS,
+} from '@/features/compte/domain/metricVisibility';
 import { buildCarnetDetail } from '../buildCarnetDetail';
 import type { BuildCarnetDetailInput, CarnetRow } from '../types';
 
@@ -92,6 +96,7 @@ describe('buildCarnetDetail — statistiques', () => {
     };
     const detail = buildCarnetDetail(
       input({
+        viewerId: 'u1',
         /* La sortie la plus récente n'a pas de trace : elle ne doit plus
            effacer le parcours d'une sortie plus ancienne (constat Vercors). */
         hikeSession: {
@@ -103,6 +108,7 @@ describe('buildCarnetDetail — statistiques', () => {
           started_at: '2026-09-27T05:00:00Z',
           positions_geojson: null,
         },
+        rawSessionIds: ['recent'],
         trace,
       }),
     );
@@ -114,6 +120,35 @@ describe('buildCarnetDetail — statistiques', () => {
   it('ne rend aucune trace quand la base n’en porte aucune', () => {
     const detail = buildCarnetDetail(input({ trace: null }));
     expect(detail.trace).toBeNull();
+  });
+
+  it('fail-closed sans rawSessionIds : aucune sortie ne fournit trace ni statistiques', () => {
+    const detail = buildCarnetDetail(
+      input({
+        viewerId: 'u1',
+        hikeSession: {
+          id: 'h1',
+          carnet_id: 'c1',
+          distance_km: 999,
+          elevation_gain_m: 9999,
+          duration_seconds: 3600,
+          started_at: '2026-09-26T06:00:00Z',
+          positions_geojson: {
+            type: 'LineString',
+            coordinates: [
+              [6.86, 45.83],
+              [6.87, 45.84],
+            ],
+          },
+        },
+      }),
+    );
+
+    expect(detail.trace).toBeNull();
+    expect(detail.distanceKm).toBe(106.4);
+    expect(detail.elevationM).toBe(2002);
+    expect(detail.days).toEqual([]);
+    expect(detail.elevationProfile).toEqual([]);
   });
 
   it('préfère la trace GPS aux colonnes du carnet', () => {
@@ -128,6 +163,7 @@ describe('buildCarnetDetail — statistiques', () => {
           started_at: '2026-09-26T06:00:00Z',
           positions_geojson: { type: 'LineString', coordinates: [] },
         },
+        rawSessionIds: ['h1'],
       }),
     );
     expect(detail.distanceKm).toBe(118.2);
@@ -250,10 +286,12 @@ describe('buildCarnetDetail — jours dérivés et totaux', () => {
   it('expose les jours dérivés des sorties et un résumé qui en est la somme', () => {
     const detail = buildCarnetDetail(
       input({
+        viewerId: 'u1',
         sessions: [
           sortie('s2', '2026-09-27T06:00:00Z', [[6.9, 45.85], [6.91, 45.86]]),
           sortie('s1', '2026-09-26T06:00:00Z', [[6.86, 45.83], [6.87, 45.84]]),
         ],
+        rawSessionIds: ['s2', 's1'],
       }),
     );
 
@@ -271,11 +309,116 @@ describe('buildCarnetDetail — jours dérivés et totaux', () => {
 
   it('retombe sur la sortie la plus récente quand aucune liste n’est fournie', () => {
     const detail = buildCarnetDetail(
-      input({ hikeSession: sortie('s1', '2026-09-26T06:00:00Z', [[6.86, 45.83], [6.87, 45.84]]) }),
+      input({
+        viewerId: 'u1',
+        hikeSession: sortie('s1', '2026-09-26T06:00:00Z', [[6.86, 45.83], [6.87, 45.84]]),
+        rawSessionIds: ['s1'],
+      }),
     );
     expect(detail.days.map((day) => day.index)).toEqual([1]);
     /* La trace de la fiche reste celle de la sortie : elle n'est pas remplacée. */
     expect(detail.trace).not.toBeNull();
+  });
+
+  it('ne retient que les sorties autorisées pour les points, le profil et les stats', () => {
+    const privateSession = {
+      ...sortie('s-private', '2026-09-26T06:00:00Z', [[6.86, 45.83], [6.87, 45.84]]),
+      user_id: 'u2',
+      visibility: 'private',
+      distance_km: 42,
+      elevation_gain_m: 9999,
+      positions_timed: [
+        { lat: 45.83, lng: 6.86, timestamp: '2026-09-26T06:00:00Z', elevationM: 1200 },
+        { lat: 45.84, lng: 6.87, timestamp: '2026-09-26T06:30:00Z', elevationM: 1300 },
+      ],
+    };
+    const mine = {
+      ...sortie('s-mine', '2026-09-27T06:00:00Z', [[6.9, 45.85], [6.91, 45.86]]),
+      user_id: 'u1',
+      distance_km: 7,
+      elevation_gain_m: 300,
+    };
+    const detail = buildCarnetDetail(
+      input({
+        viewerId: 'u1',
+        viewerRole: 'participant',
+        rawSessionIds: ['s-mine'],
+        /* La sortie fournie pour les stats est privée : elle est refusée. */
+        hikeSession: privateSession,
+        sessions: [privateSession, mine],
+      }),
+    );
+
+    expect(detail.days.map((day) => day.date)).toEqual(['2026-09-27']);
+    expect(detail.days[0].points).toHaveLength(2);
+    expect(detail.elevationProfile).toEqual([]);
+    /* Repli sur les colonnes du carnet, pas sur la sortie privée. */
+    expect(detail.distanceKm).toBe(106.4);
+    expect(detail.elevationM).toBe(2002);
+  });
+
+  it('conserve les points et le profil du participant à la sortie autorisée', () => {
+    const trace = {
+      type: 'LineString',
+      coordinates: [
+        [6.86, 45.83],
+        [6.87, 45.84],
+      ],
+    };
+    const detail = buildCarnetDetail(
+      input({
+        viewerId: 'u3',
+        viewerRole: 'visitor',
+        traceViewer: 'participant',
+        trace,
+        rawSessionIds: ['s1'],
+        sessions: [
+          {
+            ...sortie('s1', '2026-09-26T06:00:00Z', [[6.86, 45.83], [6.87, 45.84]]),
+            user_id: 'u2',
+            positions_geojson: trace,
+            positions_timed: [
+              { lat: 45.83, lng: 6.86, timestamp: '2026-09-26T06:00:00Z', elevationM: 1200 },
+              { lat: 45.84, lng: 6.87, timestamp: '2026-09-26T06:30:00Z', elevationM: 1300 },
+            ],
+          },
+        ],
+      }),
+    );
+
+    expect(detail.trace).toBe(trace);
+    expect(detail.days[0].points).toHaveLength(2);
+    expect(detail.elevationProfile?.map((point) => point.elevationM)).toEqual([1200, 1300]);
+  });
+
+  it('écarte entièrement une sortie privée non autorisée', () => {
+    const detail = buildCarnetDetail(
+      input({
+        viewerId: 'u1',
+        viewerRole: 'participant',
+        rawSessionIds: [],
+        sessions: [
+          {
+            ...sortie('s-private', '2026-09-26T06:00:00Z', [[6.86, 45.83], [6.87, 45.84]]),
+            user_id: 'u2',
+            visibility: 'private',
+            distance_km: 42,
+            elevation_gain_m: 9999,
+            positions_timed: [
+              { lat: 45.83, lng: 6.86, timestamp: '2026-09-26T06:00:00Z', elevationM: 1200 },
+              { lat: 45.84, lng: 6.87, timestamp: '2026-09-26T06:30:00Z', elevationM: 1300 },
+            ],
+          },
+        ],
+      }),
+    );
+
+    expect(detail.days).toEqual([]);
+    expect(detail.summary.distanceKm).toBeNull();
+    expect(detail.elevationProfile).toEqual([]);
+    /* Le builder retombe sur les colonnes du carnet, jamais sur s-private. */
+    expect(detail.distanceKm).toBe(106.4);
+    expect(detail.elevationM).toBe(2002);
   });
 });
 
@@ -310,6 +453,7 @@ describe('buildCarnetDetail — lieu réel', () => {
   it('ajoute la coordonnée du premier point réel de la trace', () => {
     const detail = buildCarnetDetail(
       input({
+        viewerId: 'u1',
         hikeSession: {
           id: 'h1',
           carnet_id: 'c1',
@@ -319,10 +463,274 @@ describe('buildCarnetDetail — lieu réel', () => {
           started_at: '2026-09-26T08:00:00Z',
           positions_geojson: { type: 'LineString', coordinates: [[6.86, 45.83], [6.87, 45.84]] },
         },
+        rawSessionIds: ['h1'],
       }),
     );
     expect(detail.place.lat).toBeCloseTo(45.83, 6);
     expect(detail.place.lng).toBeCloseTo(6.86, 6);
+  });
+
+  it('ne livre jamais les coordonnées brutes d’une sortie partageable à un visiteur', () => {
+    const trace = {
+      type: 'LineString',
+      coordinates: [
+        [6.86, 45.83],
+        [6.87, 45.84],
+      ],
+    };
+    const detail = buildCarnetDetail(
+      input({
+        viewerId: null,
+        trace,
+        sessions: [
+          {
+            id: 's1',
+            carnet_id: 'c1',
+            visibility: 'collective_anonymized',
+            distance_km: null,
+            elevation_gain_m: null,
+            duration_seconds: 3600,
+            started_at: '2026-09-26T06:00:00Z',
+            positions_geojson: trace,
+          },
+        ],
+        metricVisibilities: {
+          s1: SHARED_SUMMARY_METRICS,
+        },
+      }),
+    );
+
+    expect(detail.trace).not.toBe(trace);
+    expect(detail.trace).not.toBeNull();
+    expect(detail.days).toEqual([]);
+    expect(detail.elevationProfile).toEqual([]);
+    expect(detail.place.lat).not.toBeCloseTo(45.83, 6);
+    expect(detail.place.lng).not.toBeCloseTo(6.86, 6);
+  });
+
+  it('applique la visibilité la plus restrictive : sortie privée dans carnet public', () => {
+    const trace = {
+      type: 'LineString',
+      coordinates: [
+        [6.86, 45.83],
+        [6.87, 45.84],
+      ],
+    };
+    const detail = buildCarnetDetail(
+      input({
+        viewerId: null,
+        trace,
+        traceVisibility: 'private',
+      }),
+    );
+
+    expect(detail.trace).toBeNull();
+    expect(detail.traceMasked).toBe(true);
+    expect(detail.traceFullyMasked).toBe(true);
+    expect(detail.traceError).toBeNull();
+  });
+
+  it('donne une trace raccourcie à un abonné vérifié d’un carnet friends', () => {
+    const trace = {
+      type: 'LineString',
+      coordinates: [
+        [6.86, 45.83],
+        [6.87, 45.84],
+        [6.88, 45.85],
+      ],
+    };
+    const detail = buildCarnetDetail(
+      input({
+        viewerId: 'u2',
+        trace,
+        traceVisibility: 'friends',
+        traceViewer: 'follower',
+        sessions: [
+          {
+            id: 's1',
+            carnet_id: 'c1',
+            visibility: 'collective_anonymized',
+            distance_km: null,
+            elevation_gain_m: null,
+            duration_seconds: 3600,
+            started_at: '2026-09-26T06:00:00Z',
+            positions_geojson: trace,
+          },
+        ],
+        metricVisibilities: {
+          s1: SHARED_SUMMARY_METRICS,
+        },
+      }),
+    );
+
+    expect(detail.trace).not.toBeNull();
+    expect(detail.trace).not.toBe(trace);
+    expect(detail.traceMasked).toBe(true);
+    expect(detail.traceFullyMasked).toBe(false);
+    expect(detail.days).toEqual([]);
+  });
+
+  it('S6.15 : masque les agrégats et le profil dès qu’une sortie du carnet masque la métrique ou que la liste est incomplète', () => {
+    const detailMaskedDistance = buildCarnetDetail(
+      input({
+        viewerId: null,
+        etapes: [
+          {
+            id: 'e1',
+            jour_numero: 1,
+            ordre: 1,
+            date_etape: '2026-09-26',
+            lieu_depart: 'Chamonix',
+            lieu_arrivee: 'Les Houches',
+            recit: null,
+            distance_km: 10,
+            denivele_m: 500,
+            duree_texte: '4h · 10 km',
+            meteo: null,
+            temperature_c: null,
+          },
+        ],
+        sessions: [
+          {
+            id: 's1',
+            carnet_id: 'c1',
+            visibility: 'collective_anonymized',
+            distance_km: 10,
+            elevation_gain_m: 500,
+            duration_seconds: 3600,
+            started_at: '2026-09-26T06:00:00Z',
+            positions_geojson: null,
+          },
+          {
+            id: 's2',
+            carnet_id: 'c1',
+            visibility: 'collective_anonymized',
+            distance_km: 20,
+            elevation_gain_m: 900,
+            duration_seconds: 7200,
+            started_at: '2026-09-27T06:00:00Z',
+            positions_geojson: null,
+          },
+        ],
+        metricVisibilities: {
+          s1: SHARED_SUMMARY_METRICS,
+          s2: { ...SHARED_SUMMARY_METRICS, distance: false },
+        },
+      }),
+    );
+
+    expect(detailMaskedDistance.distanceKm).toBeNull();
+    expect(detailMaskedDistance.summary.distanceKm).toBeNull();
+    expect(detailMaskedDistance.stats.find((s) => s.key === 'distance')).toBeUndefined();
+    expect(detailMaskedDistance.etapes[0].distanceKm).toBeNull();
+    expect(detailMaskedDistance.etapes[0].durationText).toBeNull();
+    expect(detailMaskedDistance.elevationM).toBe(1400);
+    expect(detailMaskedDistance.stats.find((s) => s.key === 'elevation')?.value).toBe('1\u202f400 m');
+    expect(detailMaskedDistance.elevationProfile).toEqual([]);
+    expect(detailMaskedDistance.elevationWithheld).toBe(true);
+
+    const detailIncomplete = buildCarnetDetail(
+      input({
+        viewerId: null,
+        sessionsComplete: false,
+        sessions: [
+          {
+            id: 's1',
+            carnet_id: 'c1',
+            visibility: 'collective_anonymized',
+            distance_km: 10,
+            elevation_gain_m: 500,
+            duration_seconds: 3600,
+            started_at: '2026-09-26T06:00:00Z',
+            positions_geojson: null,
+          },
+        ],
+        metricVisibilities: {
+          s1: SHARED_SUMMARY_METRICS,
+        },
+      }),
+    );
+
+    expect(detailIncomplete.metricVisibility).toEqual(NO_OUTING_METRICS);
+    expect(detailIncomplete.distanceKm).toBeNull();
+    expect(detailIncomplete.elevationM).toBeNull();
+    expect(detailIncomplete.summary.distanceKm).toBeNull();
+    expect(detailIncomplete.summary.elevationM).toBeNull();
+    expect(detailIncomplete.elevationWithheld).toBe(true);
+  });
+
+  it('masque tout pour un visiteur non abonné même si la visibilité dit friends', () => {
+    const trace = {
+      type: 'LineString',
+      coordinates: [
+        [6.86, 45.83],
+        [6.87, 45.84],
+      ],
+    };
+    const detail = buildCarnetDetail(
+      input({
+        viewerId: 'u2',
+        trace,
+        traceVisibility: 'friends',
+        traceViewer: 'visitor',
+      }),
+    );
+
+    expect(detail.trace).toBeNull();
+    expect(detail.traceMasked).toBe(true);
+    expect(detail.traceFullyMasked).toBe(true);
+  });
+
+  it('conserve les frontières d’un MultiLineString pour un visiteur', () => {
+    const trace = {
+      type: 'MultiLineString',
+      coordinates: [
+        [
+          [6.86, 45.83],
+          [6.87, 45.83],
+          [6.88, 45.83],
+        ],
+        [
+          [6.96, 45.93],
+          [6.97, 45.93],
+          [6.98, 45.93],
+        ],
+      ],
+    };
+    const detail = buildCarnetDetail(
+      input({ viewerId: null, trace, traceVisibility: 'public' }),
+    );
+    const geometry = detail.trace as { type: string; coordinates: number[][][] };
+
+    expect(geometry.type).toBe('MultiLineString');
+    expect(geometry.coordinates).toHaveLength(2);
+    expect(detail.traceMasked).toBe(true);
+    expect(detail.traceFullyMasked).toBe(false);
+    expect(detail.traceError).toBeNull();
+  });
+
+  it('préserve la trace brute et les drapeaux neutres pour le propriétaire', () => {
+    const trace = {
+      type: 'MultiLineString',
+      coordinates: [
+        [
+          [6.86, 45.83],
+          [6.87, 45.84],
+        ],
+        [
+          [6.96, 45.93],
+          [6.97, 45.94],
+        ],
+      ],
+    };
+    const detail = buildCarnetDetail(
+      input({ viewerId: 'u1', trace, traceVisibility: 'private' }),
+    );
+
+    expect(detail.trace).toBe(trace);
+    expect(detail.traceMasked).toBe(false);
+    expect(detail.traceFullyMasked).toBe(false);
+    expect(detail.traceError).toBeNull();
   });
 
   it('ne devine rien quand les colonnes sont vides et qu’il n’y a pas de trace', () => {

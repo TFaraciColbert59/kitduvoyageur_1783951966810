@@ -45,6 +45,25 @@ describe('CarnetMapCard — carte 3D du carnet', () => {
     expect(String(MAP_PROPS.current?.emptyHint)).toContain('trace GPS');
   });
 
+  it('n’affirme pas l’absence de trace quand elle est masquée ou refusée', () => {
+    render(
+      <CarnetMapCard
+        detail={detail({ trace: null, traceMasked: true, traceFullyMasked: true })}
+      />,
+    );
+    expect(MAP_PROPS.current?.emptyTitle).toBe('Trace non partageable pour les visiteurs.');
+    expect(String(MAP_PROPS.current?.emptyHint)).toContain('privée');
+
+    cleanup();
+    render(
+      <CarnetMapCard
+        detail={detail({ trace: null, traceMasked: true, traceError: 'unpublishable_geometry' })}
+      />,
+    );
+    expect(MAP_PROPS.current?.emptyTitle).toBe('Trace non disponible.');
+    expect(String(MAP_PROPS.current?.emptyHint)).toContain('trop courte');
+  });
+
   it('donne l’état du propriétaire calculé côté serveur, jamais celui du client', () => {
     render(<CarnetMapCard detail={detail({ isOwner: true })} />);
     expect(MAP_PROPS.current?.authState).toBe('owner');

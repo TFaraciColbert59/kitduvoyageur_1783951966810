@@ -50,12 +50,12 @@ SELECT ok(
   EXISTS (
     SELECT 1 FROM pg_policies
     WHERE schemaname = 'public' AND tablename = 'hike_sessions'
-      AND policyname IN ('hike_sessions_select_owner_or_public_carnet',
+      AND policyname IN ('hike_sessions_select_owner_or_participant',
                          'hike_sessions_insert_owner', 'hike_sessions_update_owner',
                          'hike_sessions_delete_owner')
     HAVING count(*) = 4
   ),
-  '4. RLS-02. hike_sessions : 4 politiques propriétaire/public-carnet en place'
+  '4. RLS-02. hike_sessions : 4 politiques propriétaire/participant en place'
 );
 SELECT ok(
   NOT EXISTS (
@@ -210,13 +210,13 @@ SELECT is(
 );
 SELECT is(
   (SELECT count(*)::int FROM public.hike_sessions),
-  1,
-  '13. RLS-13. B ne voit QUE la session liée au carnet public (pas la privée)'
+  0,
+  '13. RLS-13. B ne voit aucune session brute d''autrui'
 );
 SELECT is(
-  (SELECT id FROM public.hike_sessions LIMIT 1),
-  'f8a80000-0000-4000-8000-0000000000d2'::uuid,
-  '14. RLS-13. La session visible est bien celle du carnet public'
+  (SELECT count(*)::int FROM public.hike_sessions WHERE visibility = 'private'),
+  0,
+  '14. RLS-13. La sortie privée du carnet public n''est plus lisible'
 );
 SELECT is_empty(
   'SELECT * FROM public.carnet_moments WHERE carnet_id = ''f8a80000-0000-4000-8000-0000000000c1''',

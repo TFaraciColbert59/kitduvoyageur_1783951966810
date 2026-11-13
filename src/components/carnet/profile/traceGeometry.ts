@@ -21,6 +21,12 @@ export function extractCoords(trace: unknown): TracePoint[] {
     (trace as { coordinates?: unknown })?.coordinates ??
     trace;
   if (!Array.isArray(raw)) return [];
+  /* MultiLineString : chaque ligne est une suite réelle ; on aplatit pour le
+     premier point de `buildCarnetPlace` et pour les bornes, jamais pour
+     recoller le tracé affiché (la carte garde ses morceaux séparés). */
+  if (raw.length > 0 && Array.isArray(raw[0]) && Array.isArray((raw[0] as unknown[])[0])) {
+    return raw.flatMap((line) => extractCoords(line));
+  }
   return raw
     .map((point: unknown) => {
       if (Array.isArray(point)) return [toNumber(point[1]), toNumber(point[0])] as TracePoint;
@@ -43,6 +49,26 @@ export interface TraceBounds {
   maxLng: number;
 }
 
+/**
+ * Morceaux `[lat, lng]` d'une trace, sans jamais recoller un `MultiLineString`.
+ * `extractCoords` aplatit pour le lieu et les bornes ; cette variante conserve
+ * la séparation nécessaire à la carte et au GPX.
+ */
+export function extractTraceSegments(trace: unknown): TracePoint[][] {
+  const raw =
+    (trace as { geometry?: { coordinates?: unknown } })?.geometry?.coordinates ??
+    (trace as { coordinates?: unknown })?.coordinates ??
+    trace;
+  if (!Array.isArray(raw) || raw.length === 0) return [];
+  if (Array.isArray(raw[0]) && Array.isArray((raw[0] as unknown[])[0])) {
+    return raw
+      .map((line) => extractCoords(line))
+      .filter((segment) => segment.length > 0);
+  }
+  const line = extractCoords(raw);
+  return line.length > 0 ? [line] : [];
+}
+
 export function boundsOf(coords: TracePoint[]): TraceBounds | null {
   if (coords.length === 0) return null;
   let minLat = Infinity;
@@ -59,13 +85,19 @@ export function boundsOf(coords: TracePoint[]): TraceBounds | null {
 }
 
 /**
- * Projette la trace dans un carré `size` (viewBox), avec `pad` de marge,
- * en conservant les proportions (longitude corrigée par le cos de la latitude
- * moyenne). Rend `''` si la trace n'a pas de point.
+ * Projette des morceaux dans un carré `size` (viewBox), avec `pad` de marge.
+ * Tous les morceaux partagent les mêmes bornes et la même échelle : ils
+ * restent à leur place relative, et chaque morceau rend sa propre chaîne de
+ * points. Aucune commande ne relie la fin d'un morceau au début du suivant.
  */
-export function projectToViewBox(coords: TracePoint[], size = 66, pad = 9): string {
-  const bounds = boundsOf(coords);
-  if (!bounds) return '';
+export function projectTraceSegmentsToViewBox(
+  segments: TracePoint[][],
+  size = 66,
+  pad = 9,
+): string[] {
+  const all = segments.flat();
+  const bounds = boundsOf(all);
+  if (!bounds) return [];
   const { minLat, maxLat, minLng, maxLng } = bounds;
   const midLat = (minLat + maxLat) / 2;
   const cos = Math.cos((midLat * Math.PI) / 180) || 1;
@@ -79,13 +111,23 @@ export function projectToViewBox(coords: TracePoint[], size = 66, pad = 9): stri
       : Math.min(inner / Math.max(spanX, 1e-9), inner / Math.max(spanY, 1e-9));
   const offsetX = (size - spanX * scale) / 2;
   const offsetY = (size - spanY * scale) / 2;
-  return coords
-    .map(([lat, lng]) => {
-      const x = offsetX + (lng - minLng) * cos * scale;
-      const y = offsetY + (maxLat - lat) * scale;
-      return `${x.toFixed(2)},${y.toFixed(2)}`;
-    })
-    .join(' ');
+
+  return segments
+    .map((segment) =>
+      segment
+        .map(([lat, lng]) => {
+          const x = offsetX + (lng - minLng) * cos * scale;
+          const y = offsetY + (maxLat - lat) * scale;
+          return `${x.toFixed(2)},${y.toFixed(2)}`;
+        })
+        .join(' '),
+    )
+    .filter((points) => points.length > 0);
+}
+
+/** Variante mono-morceau, conservée pour les appelants existants. */
+export function projectToViewBox(coords: TracePoint[], size = 66, pad = 9): string {
+  return projectTraceSegmentsToViewBox([coords], size, pad)[0] ?? '';
 }
 
 const EARTH_RADIUS_KM = 6371.0088;
@@ -102,15 +144,23 @@ export function haversineKm(a: TracePoint, b: TracePoint): number {
   return 2 * EARTH_RADIUS_KM * Math.asin(Math.min(1, Math.sqrt(h)));
 }
 
-/** Longueur cumulée de la trace réelle en km, `null` sous deux points. */
+/**
+ * Longueur cumulée de la trace réelle en km, `null` sous deux points. La
+ * distance est sommée **à l'intérieur** de chaque morceau : le saut entre la
+ * fin d'un morceau et le début du suivant n'est jamais compté.
+ */
 export function traceLengthKm(trace: unknown): number | null {
-  const coords = extractCoords(trace);
-  if (coords.length < 2) return null;
+  const segments = extractTraceSegments(trace);
   let total = 0;
-  for (let index = 1; index < coords.length; index += 1) {
-    total += haversineKm(coords[index - 1], coords[index]);
+  let measured = false;
+  for (const coords of segments) {
+    if (coords.length < 2) continue;
+    measured = true;
+    for (let index = 1; index < coords.length; index += 1) {
+      total += haversineKm(coords[index - 1], coords[index]);
+    }
   }
-  return total > 0 ? total : null;
+  return measured && total > 0 ? total : null;
 }
 
 export interface TraceCenter {

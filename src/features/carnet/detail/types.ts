@@ -1,3 +1,7 @@
+import type { TraceProjectionError } from '@/features/compte/domain/traceProjection';
+import type { OutingMetricVisibility } from '@/features/compte/domain/metricVisibility';
+import type { TraceViewer } from '@/features/compte/server/tracePrivacy';
+
 /** Contrat de la fiche carnet. Une valeur absente est `null`, jamais inventée. */
 
 export interface CarnetRow {
@@ -30,7 +34,10 @@ export interface CarnetRow {
 
 export interface HikeSessionRow {
   id: string;
+  user_id?: string | null;
   carnet_id: string | null;
+  /** `private` ou `collective_anonymized` (contrainte réelle de la table). */
+  visibility?: string | null;
   distance_km: number | string | null;
   elevation_gain_m: number | string | null;
   duration_seconds: number | null;
@@ -186,6 +193,12 @@ export interface CarnetDay {
   moments: CarnetMomentItem[];
   /** Points GPS des sorties du jour, fusionnés et triés chronologiquement. */
   points: CarnetDayPoint[];
+  /**
+   * Morceaux continus du jour : une entrée par sortie/relevé, dans l'ordre.
+   * `points` reste la vue aplatie pour les statistiques ; la carte, elle, ne
+   * relie jamais deux morceaux.
+   */
+  segments?: CarnetDayPoint[][];
 }
 
 /** Totaux réels du carnet : somme des jours, jamais une valeur inventée. */
@@ -380,10 +393,16 @@ export interface CarnetBudget {
 
 /** Point d'un profil altimétrique réel (distance cumulée + altitude mesurée). */
 export interface ElevationPoint {
+  /** Distance cumulée, monotone sur l'ensemble des morceaux visibles. */
   distanceKm: number;
   elevationM: number;
   lat: number;
   lng: number;
+  /**
+   * Morceau d'origine du point. Deux valeurs différentes ne sont jamais
+   * reliées par une ligne : la coupure reste visible dans le profil.
+   */
+  segmentIndex?: number;
 }
 
 export interface CarnetDetail {
@@ -424,11 +443,30 @@ export interface CarnetDetail {
   summary: CarnetSummary;
   kit: CarnetKit;
   trace: unknown | null;
+  /** Vrai quand la trace affichée a subi un masque (visiteur). */
+  traceMasked?: boolean;
+  /** Vrai quand les masques ont retiré la totalité de la trace. */
+  traceFullyMasked?: boolean;
+  /** Erreur de projection ; `null` quand la trace est publiable. */
+  traceError?: TraceProjectionError;
   /**
    * Profil altimétrique réel (`positions_timed[].elevationM`), vide quand
    * aucune mesure d'altitude n'existe. Jamais interpolé, jamais simulé.
    */
   elevationProfile?: ElevationPoint[];
+  /**
+   * Vrai quand un profil pourrait exister mais que la politique par métrique
+   * interdit de le publier. `enrichCarnetElevation` ne doit alors jamais le
+   * reconstruire depuis la trace.
+   */
+  elevationWithheld?: boolean;
+  /**
+   * Politique effective du carnet pour ce lecteur : intersection fail-closed
+   * des politiques de ses sorties, ou toutes les clés pour le propriétaire.
+   */
+  metricVisibility?: OutingMetricVisibility;
+  /** Vrai dès qu'au moins une métrique de carnet est fermée. */
+  metricsMasked?: boolean;
   /** Lieu réel de la fiche : pays · région · lieu, plus la coordonnée de départ. */
   place: CarnetPlace;
   distanceKm: number | null;
@@ -447,19 +485,67 @@ export interface CarnetDetail {
 export interface BuildCarnetDetailInput {
   carnet: CarnetRow;
   author: AuthorRow | null;
-  /** Sortie la plus récente : elle porte les statistiques affichées. */
+  /**
+   * Sortie autorisée la plus récente : elle porte les statistiques affichées.
+   * `null` quand le lecteur n'est propriétaire ou participant d'aucune sortie :
+   * les statistiques retombent alors sur les colonnes du carnet.
+   */
   hikeSession: HikeSessionRow | null;
   /**
    * Toutes les sorties du carnet (les plus récentes d'abord), dans la limite
-   * lue par `getCarnetDetail`. Sert exclusivement à `buildDays` : chaque sortie
-   * date son bloc de points GPS. Absente, `hikeSession` en tient lieu.
+   * lue par `getCarnetDetail`. Chaque sortie date son bloc de points GPS.
+   * Absente, `hikeSession` en tient lieu.
    */
   sessions?: HikeSessionRow[];
+  /**
+   * Identifiants des sorties dont le lecteur est propriétaire ou participant
+   * inscrit. Seules celles-là peuvent alimenter `points`, `segments`,
+   * `elevationProfile` et les statistiques. Une sortie privée absente de cette
+   * liste est entièrement écartée ; une sortie partageable n'apporte que ses
+   * métadonnées agrégées (date, durée).
+   *
+   * Fail-closed : absente, elle vaut liste vide. Aucun point GPS, aucune
+   * statistique et aucun profil de sortie ne sont alors exposés. `getCarnetDetail`
+   * la fournit toujours après vérification par sortie (F8).
+   */
+  rawSessionIds?: string[];
+  /**
+   * Politique de visibilité par métrique, résolue par `getCarnetDetail` pour
+   * chaque sortie du carnet. Une sortie absente de la map est fail-closed :
+   * elle ne reçoit aucune métrique, jamais le socle agrégé par défaut. Sert à
+   * retirer distance, dénivelé, durée et horodatage des sorties non brutes
+   * avant `buildDays`, puis à fermer les agrégats du carnet.
+   */
+  metricVisibilities?: Record<string, OutingMetricVisibility>;
+  /**
+   * Vrai quand `sessions` contient bien toutes les sorties du carnet. Faux, la
+   * visibilité des agrégats est fermée pour un tiers : un total calculé sur une
+   * liste partielle pourrait omettre une sortie masquée. Défaut : vrai.
+   */
+  sessionsComplete?: boolean;
   /**
    * Trace réelle à dessiner, choisie parmi toutes les sorties du carnet
    * (`pickCarnetTrace`). Absente, on retombe sur la trace de `hikeSession`.
    */
   trace?: unknown | null;
+  /**
+   * Visibilité effective de la trace : la plus restrictive du carnet et de la
+   * sortie qui porte le tracé. Absente, la visibilité du carnet s'applique.
+   */
+  traceVisibility?: string | null;
+  /**
+   * Vrai quand une trace existe mais qu'aucune sortie autorisée ne peut la
+   * porter (par exemple une sortie privée d'autrui). La fiche affiche alors
+   * « trace non partageable » plutôt que « aucun tracé », sans dessiner de
+   * coordonnées.
+   */
+  traceWithheld?: boolean;
+  /**
+   * Rôle du lecteur pour la trace. `follower` n'est fourni qu'après
+   * vérification de la relation `user_follows` ; sans lui, `friends` est
+   * traité comme privé.
+   */
+  traceViewer?: TraceViewer;
   etapes?: EtapeRow[];
   steps?: CarnetStepRow[];
   hebergements?: HebergementRow[];

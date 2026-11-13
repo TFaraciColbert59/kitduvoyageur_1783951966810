@@ -14,11 +14,17 @@ import type { HikeSessionRow } from './types';
  * Aucune coordonnée n'est inventée : sans session porteuse, on rend `null` et
  * la carte affiche un état vide honnête.
  */
-export function pickCarnetTrace(sessions: HikeSessionRow[]): unknown | null {
+export function pickCarnetTraceSession(
+  sessions: HikeSessionRow[]
+): HikeSessionRow | null {
   for (const session of sessions) {
     const positions = session?.positions_geojson;
     if (!positions) continue;
-    if (parsePositions(positions).length >= 2) return positions;
+    if (parsePositions(positions).length >= 2) return session;
   }
   return null;
+}
+
+export function pickCarnetTrace(sessions: HikeSessionRow[]): unknown | null {
+  return pickCarnetTraceSession(sessions)?.positions_geojson ?? null;
 }

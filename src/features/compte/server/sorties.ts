@@ -1,5 +1,29 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { loadOutingWeather, type OutingWeather } from './weather';
+import type { TraceProjectionError } from '../domain/traceProjection';
+import {
+  SHARED_SUMMARY_METRICS,
+  averagePaceMinPerKm,
+  movingTimeSeconds,
+  observedMaxAltitudeM,
+  parseMetricVisibility,
+  projectOutingMetrics,
+  projectTraceMetrics,
+  resolveOutingMetricVisibility,
+  type OutingMetricVisibility,
+} from '../domain/metricVisibility';
+import { readOutingMetricPolicy } from './outingShareMetrics';
+import {
+  isFollowerTraceVisibility,
+  projectTraceSampleSegments,
+  resolveTraceMasks,
+  type TraceViewer,
+} from './tracePrivacy';
+import {
+  loadOutingWeather,
+  parseStoredWeather,
+  weatherForViewer,
+  type OutingWeather,
+} from './weather';
 
 /**
  * Drawer Sortie — lecture et écriture des données réelles.
@@ -84,10 +108,29 @@ export interface OutingDetail {
   routeName: string | null;
   /** Sport de la séance (`rando` pour l'historique sans séance multi-sport). */
   sport: string | null;
-  km: number;
-  dplus: number;
+  /** Métriques projetées : `null` signifie masquée ou réellement absente. */
+  km: number | null;
+  dplus: number | null;
   maxAlt: number | null;
   durationS: number | null;
+  /** Allure calculée côté serveur, jamais recalculée par le client. */
+  paceMinPerKm: number | null;
+  movingTimeS: number | null;
+  heartRateBpm: number | null;
+  powerW: number | null;
+  cadenceRpm: number | null;
+  caloriesKcal: number | null;
+  /** Politique appliquée ; permet à l'UI de ne rien dériver d'une métrique masquée. */
+  metricVisibility: OutingMetricVisibility;
+  /**
+   * Choix de partage effectif : ce qu'un tiers verrait si la sortie était
+   * partagée. Pour le propriétaire, c'est sa politique persistée (ou le socle
+   * agrégé par défaut) ; pour un tiers, c'est la politique déjà projetée.
+   */
+  shareMetricVisibility: OutingMetricVisibility;
+  /** Vrai si le propriétaire a enregistré une ligne de choix explicite. */
+  shareMetricsConfigured: boolean;
+  metricsMasked: boolean;
   status: OutingStatus;
   visibility: OutingVisibility;
   verified: boolean;
@@ -101,7 +144,17 @@ export interface OutingDetail {
   missingGear: number;
   kudos: OutingKudos;
   comments: OutingComment[];
+  /**
+   * Trace brute du propriétaire. Vide pour un visiteur : la seule source
+   * affichable/exportable est alors `traceSegments`, afin qu'un consommateur
+   * qui tracerait `points` d'un seul trait ne puisse pas recoller une coupure.
+   */
   points: OutingPoint[];
+  /** Morceaux visibles, jamais recollés à travers un masque. */
+  traceSegments: OutingPoint[][];
+  traceMasked: boolean;
+  traceFullyMasked: boolean;
+  traceError: TraceProjectionError;
   canEdit: boolean;
 }
 
@@ -134,11 +187,6 @@ type ProfileRow = {
 
 const PROFILE_COLUMNS = 'id, full_name, handle, avatar_url';
 
-function numeric(value: unknown): number {
-  const n = typeof value === 'number' ? value : Number(value);
-  return Number.isFinite(n) ? n : 0;
-}
-
 function numericOrNull(value: unknown): number | null {
   if (value === null || value === undefined || value === '') return null;
   const n = typeof value === 'number' ? value : Number(value);
@@ -163,12 +211,58 @@ export function computeStatus(row: Pick<SessionRow, 'started_at' | 'ended_at'>, 
   return 'done';
 }
 
+function pointFromCoordinate(coordinate: unknown): OutingPoint | null {
+  if (!Array.isArray(coordinate) || coordinate.length < 2) return null;
+  const lng = numericOrNull(coordinate[0]);
+  const lat = numericOrNull(coordinate[1]);
+  if (lat === null || lng === null) return null;
+  if (Math.abs(lat) > 90 || Math.abs(lng) > 180) return null;
+  return {
+    lat,
+    lng,
+    elevationM: coordinate.length > 2 ? numericOrNull(coordinate[2]) : null,
+    timestamp: null,
+  };
+}
+
+function geojsonSegments(value: unknown): OutingPoint[][] {
+  if (!value || typeof value !== 'object') return [];
+  const geometry = value as {
+    type?: unknown;
+    coordinates?: unknown;
+    geometry?: unknown;
+  };
+  if (geometry.type === 'Feature') return geojsonSegments(geometry.geometry);
+
+  if (geometry.type === 'LineString' && Array.isArray(geometry.coordinates)) {
+    const points = geometry.coordinates
+      .map(pointFromCoordinate)
+      .filter((point): point is OutingPoint => point !== null);
+    return points.length > 0 ? [points] : [];
+  }
+
+  if (geometry.type === 'MultiLineString' && Array.isArray(geometry.coordinates)) {
+    return geometry.coordinates
+      .map((line) => {
+        if (!Array.isArray(line)) return [];
+        return line
+          .map(pointFromCoordinate)
+          .filter((point): point is OutingPoint => point !== null);
+      })
+      .filter((segment) => segment.length > 0);
+  }
+
+  return [];
+}
+
 /**
  * Deux formats coexistent en base : `positions_timed` (échantillons horodatés
- * `{lat,lng,timestamp,elevationM}`) et `positions_geojson` (LineString).
+ * `{lat,lng,timestamp,elevationM}`) et `positions_geojson` (LineString ou
+ * MultiLineString). Les morceaux d'un MultiLineString restent séparés : une
+ * frontière n'est jamais recollée.
  */
-export function parsePositions(timed: unknown, geojson: unknown): OutingPoint[] {
-  const points: OutingPoint[] = [];
+export function parsePositionSegments(timed: unknown, geojson: unknown): OutingPoint[][] {
+  const timedPoints: OutingPoint[] = [];
 
   if (Array.isArray(timed)) {
     for (const sample of timed) {
@@ -178,7 +272,7 @@ export function parsePositions(timed: unknown, geojson: unknown): OutingPoint[] 
       const lng = numericOrNull(row.lng ?? row.lon ?? row.longitude);
       if (lat === null || lng === null) continue;
       if (Math.abs(lat) > 90 || Math.abs(lng) > 180) continue;
-      points.push({
+      timedPoints.push({
         lat,
         lng,
         elevationM: numericOrNull(row.elevationM ?? row.altitude ?? row.ele),
@@ -187,25 +281,13 @@ export function parsePositions(timed: unknown, geojson: unknown): OutingPoint[] 
     }
   }
 
-  if (points.length === 0 && geojson && typeof geojson === 'object') {
-    const geometry = geojson as { type?: unknown; coordinates?: unknown };
-    if (geometry.type === 'LineString' && Array.isArray(geometry.coordinates)) {
-      for (const coordinate of geometry.coordinates) {
-        if (!Array.isArray(coordinate) || coordinate.length < 2) continue;
-        const lng = numericOrNull(coordinate[0]);
-        const lat = numericOrNull(coordinate[1]);
-        if (lat === null || lng === null) continue;
-        points.push({
-          lat,
-          lng,
-          elevationM: coordinate.length > 2 ? numericOrNull(coordinate[2]) : null,
-          timestamp: null,
-        });
-      }
-    }
-  }
+  if (timedPoints.length > 0) return [timedPoints];
+  return geojsonSegments(geojson);
+}
 
-  return points;
+/** Points aplatis, pour les consommateurs qui ne dessinent pas de morceaux. */
+export function parsePositions(timed: unknown, geojson: unknown): OutingPoint[] {
+  return parsePositionSegments(timed, geojson).flat();
 }
 
 function displayName(profile: ProfileRow | undefined, fallbackId: string) {
@@ -220,11 +302,23 @@ function displayHandle(profile: ProfileRow | undefined, fallbackId: string) {
   return profile?.handle?.trim() || fallbackId.slice(0, 8);
 }
 
-function storedWeather(raw: unknown): OutingWeather | null {
-  if (!raw || typeof raw !== 'object') return null;
-  const candidate = raw as Partial<OutingWeather>;
-  if (candidate.source !== 'open-meteo' || !Array.isArray(candidate.days)) return null;
-  return candidate as OutingWeather;
+/**
+ * Vérifie une relation de suivi réelle avant d'accorder le rôle `follower`.
+ * La visibilité `friends`/`followers` seule ne prouve jamais l'autorisation.
+ */
+async function viewerFollowsOwner(
+  supabase: SupabaseClient,
+  viewerId: string,
+  ownerId: string | null
+): Promise<boolean> {
+  if (!viewerId || !ownerId || viewerId === ownerId) return false;
+  const { data } = await supabase
+    .from('user_follows')
+    .select('follower_id')
+    .eq('follower_id', viewerId)
+    .eq('following_id', ownerId)
+    .maybeSingle();
+  return Boolean((data as { follower_id?: string | null } | null)?.follower_id);
 }
 
 function firstCoordinate(points: OutingPoint[]): { lat: number; lon: number } | null {
@@ -247,7 +341,17 @@ async function signedPhotoUrl(
 export async function loadOutingDetail(
   supabase: SupabaseClient,
   userId: string,
-  outingId: string
+  outingId: string,
+  options?: {
+    /**
+     * Politique déjà lue dans un stockage de confiance, pour un appelant qui
+     * l'a chargée lui-même. Le chemin de production lit désormais
+     * `outing_share_metrics` automatiquement (propriétaire) ou via
+     * `service_role` après vérification du rôle (tiers). Cette option sert de
+     * surcharge explicite (tests, futur aperçu signé), jamais d'entrée brute.
+     */
+    metricPolicy?: unknown;
+  }
 ): Promise<OutingDetail | null> {
   let sessionResult = await supabase
     .from('hike_sessions')
@@ -528,19 +632,147 @@ export async function loadOutingDetail(
     };
   });
 
-  const points = parsePositions(session.positions_timed, session.positions_geojson);
-  const coordinate = firstCoordinate(points);
-  let weather = storedWeather(session.weather);
-  if (!weather && coordinate) {
-    weather = await loadOutingWeather(coordinate.lat, coordinate.lon, session.started_at);
+  const rawSegments = parsePositionSegments(session.positions_timed, session.positions_geojson);
+  const rawPoints = rawSegments.flat();
+  const rawVisibility = typeof session.visibility === 'string' ? session.visibility : null;
+  const visibility = normalizeVisibility(rawVisibility);
+  const isOwner = canEdit;
+  const isParticipant = participantRows.some((row) => row.user_id === userId);
+  /*
+   * Le rôle de lecture suit une autorisation réelle : propriétaire, participant
+   * inscrit, ou abonné vérifié pour une visibilité `friends`/`followers`.
+   * Un visiteur non abonné reste `visitor` même si la ligne prétend `friends`.
+   */
+  const viewer: TraceViewer = isOwner
+    ? 'owner'
+    : isParticipant
+      ? 'participant'
+      : isFollowerTraceVisibility(rawVisibility) &&
+          (await viewerFollowsOwner(supabase, userId, session.user_id))
+        ? 'follower'
+        : 'visitor';
+  const hasFullAccess = viewer === 'owner' || viewer === 'participant';
+  /*
+   * S6.15 — politique de métriques résolue avant toute projection. Le rôle
+   * `viewer` vient d'une autorisation réelle ; la politique persistée est lue
+   * dans `outing_share_metrics` (propriétaire avec sa session, tiers avec le
+   * client service après autorisation). Sans ligne, le socle agrégé déjà publié
+   * par un partage explicite s'applique ; sans partage explicite, rien.
+   */
+  const metricPolicyRead = await readOutingMetricPolicy(
+    supabase,
+    session.id,
+    viewer,
+    rawVisibility
+  );
+  const persistedPolicy =
+    options?.metricPolicy !== undefined
+      ? options.metricPolicy
+      : metricPolicyRead.visibility;
+  const metricVisibility = resolveOutingMetricVisibility({
+    viewer,
+    visibility: rawVisibility,
+    policy: persistedPolicy,
+  });
+  /*
+   * Le propriétaire voit toutes les métriques, mais l'interface de réglage a
+   * besoin de ses choix réels. Une ligne absente signifie « socle par défaut »,
+   * jamais « tout autoriser ».
+   */
+  const shareMetricVisibility = isOwner
+    ? options?.metricPolicy !== undefined
+      ? parseMetricVisibility(options.metricPolicy)
+      : metricPolicyRead.configured
+        ? parseMetricVisibility(metricPolicyRead.visibility)
+        : SHARED_SUMMARY_METRICS
+    : metricVisibility;
+  const projection = projectTraceSampleSegments(
+    rawSegments,
+    resolveTraceMasks({ viewer, visibility: rawVisibility })
+  );
+  /*
+   * Les métadonnées de trace sont retirées quand une métrique masquée
+   * permettrait de les déduire (altitude, heure). Les coordonnées, elles, sont
+   * déjà projetées par `tracePrivacy` : les deux masquages sont indépendants.
+   */
+  const traceMetricProjection = projectTraceMetrics(
+    projection.segments,
+    metricVisibility
+  );
+  const traceSegments: OutingPoint[][] = traceMetricProjection.segments.map((segment) =>
+    segment.map((point) => ({
+      lat: point.lat,
+      lng: point.lng,
+      elevationM: point.elevationM ?? null,
+      timestamp: point.timestamp ?? null,
+    }))
+  );
+  const visiblePoints = traceSegments.flat();
+  /*
+   * Pour un visiteur, `points` reste vide : un ancien consommateur qui ne
+   * connaît pas `traceSegments` ne doit pas pouvoir retracer la trace brute.
+   * Le propriétaire et les participants gardent leurs points d'origine, avec
+   * les mêmes métadonnées projetées.
+   */
+  const projectedRawPoints =
+    projectTraceMetrics([rawPoints], metricVisibility).segments[0] ?? [];
+  const points = projection.masked ? [] : projectedRawPoints;
+
+  /*
+   * Météo : le propriétaire garde les coordonnées exactes. Un visiteur ne les
+   * reçoit jamais, même quand la météo vient du cache stocké — et ne reçoit
+   * aucune météo quand la trace est totalement masquée ou ne laisse aucun
+   * point visible. Aucun appel tiers n'est fait pour un visiteur.
+   */
+  const coordinate = firstCoordinate(visiblePoints);
+  const stored = parseStoredWeather(session.weather);
+  let weather = stored;
+  if (hasFullAccess) {
+    if (!weather && coordinate) {
+      weather = await loadOutingWeather(coordinate.lat, coordinate.lon, session.started_at);
+    }
+  } else {
+    const canSeeStoredWeather =
+      !projection.fullyMasked && visiblePoints.length > 0;
+    weather = canSeeStoredWeather
+      ? weatherForViewer(stored, viewer, rawVisibility)
+      : null;
   }
 
-  const maxAlt =
-    session.max_altitude_m ??
-    (points.reduce<number | null>((max, point) => {
-      if (point.elevationM === null) return max;
-      return max === null ? point.elevationM : Math.max(max, point.elevationM);
-    }, null) ?? null);
+  /*
+   * Notes : le propriétaire et les participants les lisent. Un visiteur ne les
+   * reçoit que pour une sortie explicitement `collective_anonymized` ; un
+   * abonné d'une sortie `friends`/`followers` n'y a pas droit — le partage de
+   * la trace ne vaut pas partage du carnet intime.
+   */
+  const notes =
+    hasFullAccess || rawVisibility === 'collective_anonymized' ? text(session.notes) : '';
+
+  /*
+   * Valeurs sources calculées avant masquage : la politique décide ensuite de
+   * ce qui sort. L'allure et le temps en mouvement ne sont jamais recalculés
+   * côté client, sinon une métrique masquée pourrait être redérivée.
+   */
+  const rawDistanceKm = numericOrNull(session.distance_km);
+  const rawDurationS = session.duration_seconds;
+  const rawMaxAltitudeM =
+    session.max_altitude_m ?? observedMaxAltitudeM(rawPoints);
+  const projectedMetrics = projectOutingMetrics(
+    {
+      distanceKm: rawDistanceKm,
+      elevationGainM: numericOrNull(session.elevation_gain_m),
+      maxAltitudeM: rawMaxAltitudeM,
+      durationS: rawDurationS,
+      paceMinPerKm: averagePaceMinPerKm(rawDurationS, rawDistanceKm),
+      movingTimeS: movingTimeSeconds(rawPoints),
+      /* Aucune source FC/puissance/cadence/calories dans le schéma actuel. */
+      heartRateBpm: null,
+      powerW: null,
+      cadenceRpm: null,
+      caloriesKcal: null,
+    },
+    metricVisibility
+  );
 
   const dateLabel = session.started_at ? session.started_at.slice(0, 10) : null;
   const title =
@@ -552,20 +784,30 @@ export async function loadOutingDetail(
     id: session.id,
     title,
     date: dateLabel,
-    startedAt: session.started_at,
-    endedAt: session.ended_at,
+    startedAt: metricVisibility.duration ? session.started_at : null,
+    endedAt: metricVisibility.duration ? session.ended_at : null,
     massif: route?.region?.trim() || route?.name?.trim() || null,
     routeName: route?.name?.trim() || null,
     sport,
-    km: numeric(session.distance_km),
-    dplus: numeric(session.elevation_gain_m),
-    maxAlt,
-    durationS: session.duration_seconds,
+    km: projectedMetrics.distanceKm,
+    dplus: projectedMetrics.elevationGainM,
+    maxAlt: projectedMetrics.maxAltitudeM,
+    durationS: projectedMetrics.durationS,
+    paceMinPerKm: projectedMetrics.paceMinPerKm,
+    movingTimeS: projectedMetrics.movingTimeS,
+    heartRateBpm: projectedMetrics.heartRateBpm,
+    powerW: projectedMetrics.powerW,
+    cadenceRpm: projectedMetrics.cadenceRpm,
+    caloriesKcal: projectedMetrics.caloriesKcal,
+    metricVisibility,
+    shareMetricVisibility,
+    shareMetricsConfigured: metricPolicyRead.configured,
+    metricsMasked: projectedMetrics.masked,
     status: computeStatus(session),
-    visibility: normalizeVisibility(session.visibility),
-    verified: points.length >= 2,
+    visibility,
+    verified: traceSegments.some((segment) => segment.length >= 2),
     coverUrl: photos[0]?.url ?? null,
-    notes: text(session.notes),
+    notes,
     weather,
     photos,
     participants,
@@ -579,6 +821,10 @@ export async function loadOutingDetail(
     },
     comments,
     points,
+    traceSegments,
+    traceMasked: projection.masked,
+    traceFullyMasked: projection.fullyMasked,
+    traceError: projection.error,
     canEdit,
   };
 }
@@ -881,19 +1127,49 @@ function escapeXml(value: string): string {
     .replace(/'/g, '&apos;');
 }
 
+/**
+ * Morceaux réellement exportables. `traceSegments` est la source prioritaire :
+ * `points` n'est qu'un repli pour les anciens appels de test. Un morceau d'un
+ * seul point n'est pas une trace.
+ */
+export function outingTraceSegments(
+  detail: Pick<OutingDetail, 'traceSegments' | 'points'>
+): OutingPoint[][] {
+  const segments = Array.isArray(detail.traceSegments)
+    ? detail.traceSegments
+    : detail.traceSegments === undefined
+      ? [detail.points]
+      : [];
+  return segments.filter((segment) => segment.length >= 2);
+}
+
 /** GPX 1.1 généré depuis la trace réelle (aucun fichier stocké). */
 export function buildGpx(detail: OutingDetail): string {
-  const points = detail.points;
-  const track = points
-    .map((point) => {
-      const ele = point.elevationM !== null ? `<ele>${point.elevationM}</ele>` : '';
-      const time = point.timestamp ? `<time>${escapeXml(point.timestamp)}</time>` : '';
-      return `<trkpt lat="${point.lat}" lon="${point.lng}">${ele}${time}</trkpt>`;
+  const rawSegments = outingTraceSegments(detail);
+  /*
+   * Défense en profondeur : le DTO est déjà projeté par `loadOutingDetail`,
+   * mais un appel direct ne doit pas réintroduire une altitude ou une heure
+   * masquée. Sans politique (anciens appels de test), le sérialiseur reste
+   * compatible et ne projette rien.
+   */
+  const segments = detail.metricVisibility
+    ? projectTraceMetrics(rawSegments, detail.metricVisibility).segments
+    : rawSegments;
+  const track = segments
+    .map((segment) => {
+      const points = segment
+        .map((point) => {
+          const ele = point.elevationM !== null ? `<ele>${point.elevationM}</ele>` : '';
+          const time = point.timestamp ? `<time>${escapeXml(point.timestamp)}</time>` : '';
+          return `<trkpt lat="${point.lat}" lon="${point.lng}">${ele}${time}</trkpt>`;
+        })
+        .join('');
+      return `<trkseg>${points}</trkseg>`;
     })
     .join('');
   return `<?xml version="1.0" encoding="UTF-8"?>
 <gpx version="1.1" creator="Le Kit du Voyageur" xmlns="http://www.topografix.com/GPX/1/1">
   <metadata><name>${escapeXml(detail.title)}</name></metadata>
-  <trk><name>${escapeXml(detail.title)}</name><trkseg>${track}</trkseg></trk>
+  <trk><name>${escapeXml(detail.title)}</name>${track}</trk>
 </gpx>`;
 }

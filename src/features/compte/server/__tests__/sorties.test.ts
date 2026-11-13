@@ -1,8 +1,13 @@
 import { describe, expect, it } from 'vitest';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import { SHARED_SUMMARY_METRICS } from '../../domain/metricVisibility';
 import {
   buildGpx,
   computeStatus,
+  loadOutingDetail,
   normalizeVisibility,
+  outingTraceSegments,
+  parsePositionSegments,
   parsePositions,
   type OutingDetail,
 } from '../sorties';
@@ -83,5 +88,338 @@ describe('sorties — GPX', () => {
     expect(gpx).toContain('Traversée &amp; crêtes');
     expect(gpx).toContain('<trkpt lat="45.1" lon="5.2"><ele>1200</ele><time>2026-09-12T06:00:00Z</time></trkpt>');
     expect(gpx.trim().endsWith('</gpx>')).toBe(true);
+  });
+
+  it('exporte un <trkseg> par morceau, sans recoller une zone masquée', () => {
+    const detail = {
+      title: 'Deux morceaux',
+      points: [],
+      traceSegments: [
+        [
+          { lat: 45.1, lng: 5.2, elevationM: 1200, timestamp: '2026-09-12T06:00:00Z' },
+          { lat: 45.11, lng: 5.21, elevationM: 1210, timestamp: '2026-09-12T06:05:00Z' },
+        ],
+        [
+          { lat: 45.12, lng: 5.22, elevationM: 1220, timestamp: '2026-09-12T06:10:00Z' },
+          { lat: 45.13, lng: 5.23, elevationM: 1230, timestamp: '2026-09-12T06:15:00Z' },
+        ],
+      ],
+    } as unknown as OutingDetail;
+
+    const gpx = buildGpx(detail);
+    expect(gpx.match(/<trkseg>/g)).toHaveLength(2);
+    expect(gpx.match(/<\/trkseg>/g)).toHaveLength(2);
+    expect(gpx).toContain('lat="45.11" lon="5.21"');
+    expect(gpx).toContain('lat="45.12" lon="5.22"');
+    expect(outingTraceSegments(detail)).toHaveLength(2);
+  });
+
+  it('n’écrit ni heure ni altitude masquées dans le GPX', () => {
+    const detail = {
+      title: 'Métriques masquées',
+      points: [],
+      metricVisibility: { ...SHARED_SUMMARY_METRICS, movingTime: false },
+      traceSegments: [
+        [
+          { lat: 45.1, lng: 5.2, elevationM: 1200, timestamp: '2026-09-12T06:00:00Z' },
+          { lat: 45.11, lng: 5.21, elevationM: 1210, timestamp: '2026-09-12T06:05:00Z' },
+        ],
+      ],
+    } as unknown as OutingDetail;
+
+    const gpx = buildGpx(detail);
+    /* L'altitude reste autorisée par le socle, l'heure est masquée. */
+    expect(gpx).toContain('<ele>1200</ele>');
+    expect(gpx).not.toContain('<time>');
+  });
+
+  it('ne fabrique aucun <trkseg> quand tout est masqué', () => {
+    const detail = {
+      title: 'Trace masquée',
+      points: [],
+      traceSegments: [],
+    } as unknown as OutingDetail;
+
+    expect(outingTraceSegments(detail)).toEqual([]);
+    expect(buildGpx(detail)).not.toContain('<trkseg>');
+  });
+});
+
+
+const WEATHER = {
+  source: 'open-meteo' as const,
+  fetchedAt: '2026-11-01T10:00:00.000Z',
+  latitude: 45.8,
+  longitude: 6.8,
+  days: [
+    {
+      date: '2026-11-01',
+      code: 0,
+      label: 'Ciel dégagé',
+      icon: 'sun' as const,
+      tMax: 12,
+      tMin: 4,
+      precipMm: 0,
+      windKmh: 5,
+    },
+  ],
+  alerts: [],
+};
+
+function fakeSupabase(
+  session: Record<string, unknown>,
+  options: {
+    participants?: Array<{ user_id: string; role?: string | null }>;
+    follows?: boolean;
+  } = {},
+) {
+  const builder = (result: { data: unknown; error: null }) => {
+    const query = {
+      select: () => query,
+      eq: () => query,
+      order: () => query,
+      in: () => query,
+      maybeSingle: async () => result,
+      then: (resolve: (value: unknown) => unknown, reject?: (reason: unknown) => unknown) =>
+        Promise.resolve(result).then(resolve, reject),
+    };
+    return query;
+  };
+  return {
+    from: (table: string) => {
+      if (table === 'hike_sessions') return builder({ data: session, error: null });
+      if (table === 'hike_session_participants') {
+        return builder({ data: options.participants ?? [], error: null });
+      }
+      if (table === 'user_follows') {
+        return builder({
+          data: options.follows ? { follower_id: 'viewer-1' } : null,
+          error: null,
+        });
+      }
+      return builder({ data: [], error: null });
+    },
+    storage: {
+      from: () => ({
+        createSignedUrl: async () => ({ data: { signedUrl: null }, error: null }),
+      }),
+    },
+  } as unknown as SupabaseClient;
+}
+
+function outing(overrides: Record<string, unknown> = {}) {
+  return {
+    id: 's1',
+    user_id: 'owner-1',
+    route_id: null,
+    title: 'Crêtes',
+    started_at: '2026-11-01T08:00:00Z',
+    ended_at: '2026-11-01T12:00:00Z',
+    distance_km: 5,
+    duration_seconds: 14400,
+    elevation_gain_m: 600,
+    max_altitude_m: 1800,
+    positions_timed: [
+      { lat: 45.8, lng: 6.8, elevationM: 1000, timestamp: '2026-11-01T08:00:00Z' },
+      { lat: 45.81, lng: 6.8, elevationM: 1100, timestamp: '2026-11-01T08:10:00Z' },
+      { lat: 45.82, lng: 6.8, elevationM: 1200, timestamp: '2026-11-01T08:20:00Z' },
+      { lat: 45.83, lng: 6.8, elevationM: 1300, timestamp: '2026-11-01T08:30:00Z' },
+      { lat: 45.84, lng: 6.8, elevationM: 1400, timestamp: '2026-11-01T08:40:00Z' },
+    ],
+    positions_geojson: null,
+    visibility: 'private',
+    kit_id: null,
+    weather: WEATHER,
+    notes: 'note privée',
+    ...overrides,
+  };
+}
+
+describe('loadOutingDetail — métadonnées servies', () => {
+  it('ne sert ni météo ni notes privées à un visiteur d’une sortie privée', async () => {
+    const detail = await loadOutingDetail(fakeSupabase(outing()), 'viewer-1', 's1');
+
+    expect(detail).not.toBeNull();
+    expect(detail?.traceFullyMasked).toBe(true);
+    expect(detail?.traceSegments).toEqual([]);
+    expect(detail?.points).toEqual([]);
+    expect(detail?.weather).toBeNull();
+    expect(detail?.notes).toBe('');
+    /* S6.15 — aucune métrique d’effort ne sort d’une sortie privée. */
+    expect(detail?.km).toBeNull();
+    expect(detail?.dplus).toBeNull();
+    expect(detail?.maxAlt).toBeNull();
+    expect(detail?.durationS).toBeNull();
+    expect(detail?.paceMinPerKm).toBeNull();
+    expect(detail?.movingTimeS).toBeNull();
+    expect(detail?.metricVisibility.pace).toBe(false);
+    expect(detail?.metricsMasked).toBe(true);
+  });
+
+  it('expurge les coordonnées météo d’une sortie partageable', async () => {
+    const detail = await loadOutingDetail(
+      fakeSupabase(outing({ visibility: 'collective_anonymized' })),
+      'viewer-1',
+      's1',
+    );
+
+    expect(detail?.traceFullyMasked).toBe(false);
+    expect(detail?.traceMasked).toBe(true);
+    expect(detail?.traceSegments).toHaveLength(1);
+    expect(detail?.weather?.latitude).toBeNull();
+    expect(detail?.weather?.longitude).toBeNull();
+    expect(detail?.weather?.days).toHaveLength(1);
+    expect(detail?.notes).toBe('note privée');
+    /*
+     * S6.15 — le socle agrégé reste publié, mais l’allure, le temps en
+     * mouvement et les heures de trace sont retirés faute de choix explicite.
+     */
+    expect(detail?.km).toBe(5);
+    expect(detail?.dplus).toBe(600);
+    expect(detail?.maxAlt).toBe(1800);
+    expect(detail?.durationS).toBe(14400);
+    expect(detail?.paceMinPerKm).toBeNull();
+    expect(detail?.movingTimeS).toBeNull();
+    expect(detail?.metricVisibility.pace).toBe(false);
+    expect(detail?.metricVisibility.distance).toBe(true);
+    expect(detail?.metricsMasked).toBe(true);
+    expect(detail?.traceSegments.flat().every((point) => point.timestamp === null)).toBe(true);
+    expect(detail?.traceSegments.flat().some((point) => point.elevationM !== null)).toBe(true);
+  });
+
+  it('applique une politique persistée stricte sans élargir les autres métriques', async () => {
+    const detail = await loadOutingDetail(
+      fakeSupabase(outing({ visibility: 'collective_anonymized' })),
+      'viewer-1',
+      's1',
+      { metricPolicy: { pace: true } },
+    );
+
+    /* La politique remplace le socle : seule l'allure est autorisée. */
+    expect(detail?.paceMinPerKm).toBe(48);
+    expect(detail?.km).toBeNull();
+    expect(detail?.dplus).toBeNull();
+    expect(detail?.durationS).toBeNull();
+    expect(detail?.startedAt).toBeNull();
+    expect(detail?.endedAt).toBeNull();
+    expect(detail?.metricVisibility.pace).toBe(true);
+    expect(detail?.metricVisibility.distance).toBe(false);
+    expect(detail?.traceSegments.flat().every((point) => point.timestamp === null)).toBe(true);
+    expect(detail?.traceSegments.flat().every((point) => point.elevationM === null)).toBe(true);
+  });
+
+  it('rend une trace raccourcie et la météo expurgée à un abonné vérifié', async () => {
+    const detail = await loadOutingDetail(
+      fakeSupabase(outing({ visibility: 'friends' }), { follows: true }),
+      'viewer-1',
+      's1',
+    );
+
+    expect(detail?.traceMasked).toBe(true);
+    expect(detail?.traceFullyMasked).toBe(false);
+    expect(detail?.points).toEqual([]);
+    expect(detail?.weather?.latitude).toBeNull();
+    expect(detail?.weather?.longitude).toBeNull();
+    expect(detail?.weather?.days).toHaveLength(1);
+    /* Le partage de trace ne vaut pas partage du carnet intime. */
+    expect(detail?.notes).toBe('');
+  });
+
+  it('masque tout à un visiteur qui ne suit pas l’auteur', async () => {
+    const detail = await loadOutingDetail(
+      fakeSupabase(outing({ visibility: 'friends' }), { follows: false }),
+      'viewer-1',
+      's1',
+    );
+
+    expect(detail?.traceFullyMasked).toBe(true);
+    expect(detail?.traceSegments).toEqual([]);
+    expect(detail?.weather).toBeNull();
+    expect(detail?.notes).toBe('');
+  });
+
+  it('traite un participant inscrit comme le drawer, avec météo et notes exactes', async () => {
+    const detail = await loadOutingDetail(
+      fakeSupabase(outing(), {
+        participants: [{ user_id: 'viewer-1', role: 'guest' }],
+      }),
+      'viewer-1',
+      's1',
+    );
+
+    expect(detail?.canEdit).toBe(false);
+    expect(detail?.traceMasked).toBe(false);
+    expect(detail?.points).toHaveLength(5);
+    expect(detail?.weather?.latitude).toBe(45.8);
+    expect(detail?.weather?.longitude).toBe(6.8);
+    expect(detail?.notes).toBe('note privée');
+  });
+
+  it('préserve la trace, la météo et les notes du propriétaire', async () => {
+    const detail = await loadOutingDetail(fakeSupabase(outing()), 'owner-1', 's1');
+
+    expect(detail?.canEdit).toBe(true);
+    expect(detail?.traceMasked).toBe(false);
+    expect(detail?.traceSegments).toHaveLength(1);
+    expect(detail?.points).toHaveLength(5);
+    expect(detail?.weather?.latitude).toBe(45.8);
+    expect(detail?.weather?.longitude).toBe(6.8);
+    expect(detail?.notes).toBe('note privée');
+    /* S6.15 — le propriétaire garde toutes les métriques, y compris l’allure. */
+    expect(detail?.km).toBe(5);
+    expect(detail?.dplus).toBe(600);
+    expect(detail?.durationS).toBe(14400);
+    expect(detail?.paceMinPerKm).toBe(48);
+    expect(detail?.metricVisibility.pace).toBe(true);
+    expect(detail?.metricsMasked).toBe(false);
+    expect(detail?.traceSegments.flat().every((point) => point.timestamp !== null)).toBe(true);
+  });
+
+  it('conserve les frontières d’un MultiLineString pour le propriétaire', async () => {
+    const detail = await loadOutingDetail(
+      fakeSupabase(
+        outing({
+          positions_timed: null,
+          positions_geojson: {
+            type: 'MultiLineString',
+            coordinates: [
+              [
+                [6.8, 45.8],
+                [6.81, 45.81],
+              ],
+              [
+                [6.9, 45.9],
+                [6.91, 45.91],
+              ],
+            ],
+          },
+        }),
+      ),
+      'owner-1',
+      's1',
+    );
+
+    expect(detail?.traceSegments).toHaveLength(2);
+    expect(detail?.points).toHaveLength(4);
+    expect(detail?.traceSegments[0].at(-1)).not.toEqual(detail?.traceSegments[1][0]);
+  });
+});
+
+describe('parsePositionSegments', () => {
+  it('garde deux morceaux distincts plutôt que de les recoller', () => {
+    const segments = parsePositionSegments(null, {
+      type: 'MultiLineString',
+      coordinates: [
+        [
+          [6.8, 45.8],
+          [6.81, 45.81],
+        ],
+        [
+          [6.9, 45.9],
+          [6.91, 45.91],
+        ],
+      ],
+    });
+    expect(segments).toHaveLength(2);
   });
 });

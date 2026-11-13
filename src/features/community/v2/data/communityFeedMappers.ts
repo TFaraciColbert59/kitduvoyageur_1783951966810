@@ -308,8 +308,15 @@ export function mapCarnetRow(row: CarnetFeedRow, extras?: CarnetExtras | null): 
     coverImage: nonEmptyText(row.cover_image),
     coverAlt: null,
     days,
-    distanceKm: toNumber(row.route_distance_km),
-    elevationGainM: toNumber(row.elevation_gain_m),
+    /*
+     * S6.15 — le flux public agrège `carnets.distance_km` / `denivele_m` sans
+     * connaître les politiques par sortie. Un carnet peut donc contenir une
+     * sortie qui masque sa distance ou son dénivelé. Fail-closed côté client :
+     * ces totaux ne sont pas affichés dans la liste. La fiche du carnet, elle,
+     * les projette via `buildCarnetDetail` et sa politique.
+     */
+    distanceKm: null,
+    elevationGainM: null,
     author,
     likesCount: toNumber(row.likes_count) ?? 0,
     commentsCount: toNumber(row.comments_count) ?? 0,

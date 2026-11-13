@@ -75,6 +75,42 @@ describe('enrichCarnetElevation', () => {
     expect(profile[2]).toMatchObject({ lat: 45.9372, lng: 6.8971 });
   });
 
+  it('ne compte pas le saut entre deux morceaux dans la distance du profil', async () => {
+    answerWith([1000, 1100, 1200, 1300]);
+    const detail = await enrichCarnetElevation(
+      detailWith({
+        trace: {
+          type: 'MultiLineString',
+          coordinates: [
+            [
+              [6.8, 45.8],
+              [6.81, 45.8],
+            ],
+            [
+              [6.9, 45.9],
+              [6.91, 45.9],
+            ],
+          ],
+        },
+      }),
+    );
+    const profile = detail.elevationProfile ?? [];
+
+    expect(profile).toHaveLength(4);
+    expect(profile[0].distanceKm).toBe(0);
+    /* ~0,78 km par morceau : le saut de ~13 km ne doit pas apparaître. */
+    expect(profile[1].distanceKm).toBeLessThan(1);
+    expect(profile[3].distanceKm).toBeLessThan(2);
+    /* Distance cumulée monotone : le second morceau repart de la fin du
+       premier, sans revenir à zéro ni compter le vide qui les sépare. */
+    const distances = profile.map((point) => point.distanceKm);
+    expect(distances).toEqual([...distances].sort((a, b) => a - b));
+    expect(profile[2].distanceKm).toBe(profile[1].distanceKm);
+    expect(profile[3].distanceKm).toBeGreaterThan(profile[2].distanceKm);
+    expect(profile.map((point) => point.segmentIndex)).toEqual([0, 0, 1, 1]);
+    expect(profile[3].distanceKm).toBeLessThan(1.6);
+  });
+
   it('demande les coordonnées de la trace au MNT, dans l’ordre', async () => {
     answerWith([1200, 1300, 1250]);
 
@@ -159,6 +195,36 @@ describe('enrichCarnetElevation', () => {
     const detail = detailWith({ elevationProfile: existing });
 
     expect(await enrichCarnetElevation(detail)).toBe(detail);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('S6.15 : ne reconstruit pas le profil via Open-Meteo si elevationWithheld ou si la politique masque une métrique altimétrique', async () => {
+    answerWith([1200, 1300, 1250]);
+
+    const withheld = await enrichCarnetElevation(
+      detailWith({ elevationWithheld: true }),
+    );
+    expect(withheld.elevationProfile).toEqual([]);
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    const maskedPolicy = await enrichCarnetElevation(
+      detailWith({
+        metricVisibility: {
+          distance: true,
+          elevation: true,
+          elevationGain: false,
+          maxAltitude: true,
+          duration: true,
+          pace: false,
+          movingTime: false,
+          heartRate: false,
+          power: false,
+          cadence: false,
+          calories: false,
+        },
+      }),
+    );
+    expect(maskedPolicy.elevationProfile).toEqual([]);
     expect(fetchMock).not.toHaveBeenCalled();
   });
 

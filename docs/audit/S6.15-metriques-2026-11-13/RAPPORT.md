@@ -1,0 +1,244 @@
+# S6.15 — Masquage par métrique des sorties
+
+**Chantier** : P01 · Confidentialité et règles de publication
+**Fiche source** : `LKDV_Lancement_Autonome 2/fiches/Strava/S6.15.md` (révision de référence `571142e`), lue en lecture seule.
+**Registre** : `S6.15` — `ecart_cible`, complexité 5/5, priorité P0.
+**Date** : 2026-11-13.
+**Portée tenue** : projection serveur des métriques d'effort d'une sortie, métadonnées de trace comprises, sur la fiche du drawer et l'export GPX. Aucune métrique n'est inventée, aucun droit n'est simulé, aucune migration n'est appliquée.
+
+## 1. Ce que la fiche demande
+
+- Rendre la visibilité **indépendante** des données d'effort publiées : fréquence cardiaque, allure, puissance et autres statistiques.
+- Emplacement : fiche sortie → Partager → choisir les métriques affichées, en drawer ou sous-drawer.
+- Vérifier la matrice propriétaire / invité / tiers, la révocation et l'effet sur les exports et aperçus.
+- Fournir des fixtures de traces masquées et documenter les dépendances de persistance.
+
+## 2. Contrat existant constaté
+
+| Élément | Constat | Conséquence |
+| --- | --- | --- |
+| Visibilité de sortie | `hike_sessions.visibility` n'accepte que `private` et `collective_anonymized` (`20260911131000_a1_private_activity_observations.sql:30-36`). | Un partage explicite existe déjà ; il ne porte que sur la trace et le socle agrégé. |
+| Rôles de lecture | `owner`, `participant` inscrit, `follower` vérifié par `user_follows`, sinon `visitor` (`src/features/compte/server/sorties.ts`). | La politique de métriques réutilise ces rôles, sans déduire un droit de la seule visibilité. |
+| Trace partagée | `tracePrivacy` masque début/fin ou tout ; `loadOutingDetail` vide `points` pour un tiers (`loadOutingDetail`). | Le masquage géométrique est déjà centralisé ; S6.15 ajoute le masquage des valeurs. |
+| Métriques exposées | `km`, `dplus`, `maxAlt`, `durationS` étaient toujours servis ; l'allure et le temps en mouvement étaient recalculés **côté client** (`OutingTrace.tsx`). | Une métrique masquée restait dérivable dans le navigateur. |
+| FC / puissance / cadence / calories | Aucune colonne ni aucun champ dans `hike_sessions` / `SessionRow`. | Les champs sont ajoutés au contrat avec `null` ; aucune valeur n'est fabriquée. |
+| Politique persistée | Aucune colonne ni table de choix par métrique. | Le choix du propriétaire exige une migration ; elle n'est pas appliquée ici. |
+| Export | `buildGpx` sérialise `traceSegments` (`buildGpx`) ; le GPX ne porte que `<ele>` et `<time>`. | Retirer ces métadonnées des segments suffit à fermer l'export. |
+
+## 3. Décision de conception
+
+### 3.1 Une politique pure, fail-closed
+
+`src/features/compte/domain/metricVisibility.ts` définit :
+
+- une liste fermée de clés `distance`, `elevation`, `elevationGain`, `maxAltitude`, `duration`, `pace`, `movingTime`, `heartRate`, `power`, `cadence`, `calories` ;
+- `parseMetricVisibility()` qui n'accorde que `=== true` ; toute clé absente, valeur « truthy », tableau ou objet inconnu retombe à `false` ;
+- `resolveOutingMetricVisibility()` :
+  - `owner` et `participant` : toutes les métriques ;
+  - `visitor` sur `private` ou visibilité inconnue : **aucune** ;
+  - `visitor` sur `public` / `collective_anonymized`, ou `follower` vérifié sur `friends` / `followers` : socle agrégé déjà publié, soit distance, profil, dénivelé, altitude max et durée ; allure, temps en mouvement et données biométriques restent masqués ;
+  - une politique persistée fournie remplace le socle ; partielle, elle ferme tout ce qu'elle ne déclare pas.
+- `projectOutingMetrics()` : toute métrique masquée devient `null`, jamais `0` ; `NaN` et `Infinity` ne sortent jamais.
+- `projectTraceMetrics()` : retire `elevationM` si le profil, le dénivelé ou l'altitude max est masqué ; retire `timestamp` si la durée, l'allure ou le temps en mouvement est masqué ; ferme aussi d'éventuels champs FC/puissance/cadence/calories.
+- `movingTimeSeconds()` et `averagePaceMinPerKm()` sont calculés **côté serveur** ; le client ne les redérive plus.
+
+### 3.2 Pourquoi le socle agrégé reste visible
+
+`collective_anonymized` et `public` sont des actes de partage explicites déjà présents dans le contrat. Refuser ces valeurs aurait cassé une fiche partagée existante sans nouvel accord du propriétaire. La politique ferme donc les métriques que le contrat ne publiait pas explicitement (allure, temps en mouvement, biométrie) et laisse le socle agrégé. Ce n'est pas un droit simulé : c'est la portée déjà autorisée par la visibilité existante.
+
+### 3.3 Couplages assumés
+
+- **Altimétrie** : si `maxAltitude` est masquée, le profil et le dénivelé sont retirés des points, sinon l'altitude max serait dérivable. Inversement, masquer le profil retire les altitudes même si `dplus` reste visible.
+- **Temps** : si `movingTime` est masquée, les horodatages de trace sont retirés, sinon le temps en mouvement et l'allure seraient dérivables. Le GPX d'un tiers n'a donc plus de `<time>`.
+- **Allure** : elle est calculée serveur, puis `null` si masquée. Le client ne refait jamais `durée / distance`.
+- **Limite d'inférence** : si `distance` et `duration` sont toutes deux visibles, une allure moyenne reste mathématiquement calculable par un consommateur déterminé, même si `pace` est `false`. L'API ne la publie pas et l'UI ne l'affiche pas. Supprimer cette inférence exigerait de masquer aussi `distance` ou `duration` ; ce choix n'a pas été pris ici pour ne pas casser la visibilité indépendante demandée par la fiche. C'est documenté comme limite, pas comme garantie.
+
+## 4. Implémentation livrée
+
+### 4.1 Domaine
+
+- `src/features/compte/domain/metricVisibility.ts` (nouveau) : contrats, résolution, projection scalaire et projection des métadonnées de trace.
+- `src/features/compte/domain/__tests__/metricVisibility.test.ts` (nouveau) : défauts, rôles, politiques partielles, valeurs non finies, métadonnées, calculs.
+
+### 4.2 Serveur
+
+- `src/features/compte/server/sorties.ts` :
+  - `OutingDetail` expose `km`, `dplus`, `maxAlt`, `durationS` **nullables**, `paceMinPerKm`, `movingTimeS`, `heartRateBpm`, `powerW`, `cadenceRpm`, `caloriesKcal`, `metricVisibility`, `metricsMasked` ;
+  - `loadOutingDetail()` résout la politique après vérification réelle du rôle, projette les scalaires et les métadonnées de trace ;
+  - `loadOutingDetail(..., { metricPolicy })` accepte une politique **déjà lue dans un stockage de confiance** ; le chemin de production n'en passe pas encore, la migration reste la condition du choix utilisateur ;
+  - `startedAt` / `endedAt` sont retirés si la durée est masquée, pour ne pas laisser calculer la durée ;
+  - `points` et `traceSegments` sont projetés avant de sortir ; l'export GPX hérite donc des `<ele>` / `<time>` autorisés, et `buildGpx` re-projette par défense en profondeur.
+- `src/features/compte/server/__tests__/sorties.test.ts` : assertions propriétaire, visiteur privé, visiteur d'une sortie partageable, politique stricte et GPX masqué.
+
+### 4.3 Surface Sortie
+
+- `src/components/compte/drawer/sortie/OutingSummary.tsx` : tuiles null-safe, « Masqué » pour une métrique fermée, note discrète, profil altimétrique conditionnel.
+- `src/components/compte/drawer/sortie/OutingTrace.tsx` : plus aucun recalcul d'allure ou de temps en mouvement ; altitudes, pente, durée et allure respectent `metricVisibility` ; lignes FC/puissance/cadence/calories rendues uniquement si une valeur réelle et visible existe.
+- `src/components/compte/drawer/sortie/shared.tsx` : helpers `outingMetricVisible`, `metricDisplay`, `shareableOutingText`.
+- `src/components/compte/drawer/sortie/SortieDrawer.tsx` : le texte de partage n'inclut que les métriques visibles ; l'URL reste servie par la projection serveur.
+- `src/components/compte/drawer/sortie/__tests__/states.test.tsx` : fixture à jour, absence d'allure masquée, texte de partage filtré.
+
+## 5. Chemins couverts et non couverts
+
+### Couverts
+
+- `GET /api/compte/sorties/[id]` → `loadOutingDetail` : DTO projeté.
+- `GET /api/compte/sorties/[id]/gpx` → `loadOutingDetail` puis `buildGpx` : pas d'altitude ni d'heure masquées.
+- Drawer Sortie : résumé, trace, profil, texte de partage.
+
+### Non couverts, à coordonner
+
+- `GET /api/hike-sessions/[id]` : **branché dans l'addendum `20261113121000`** (projection des agrégats, retrait des horodatages, `metric_visibility`, `metrics_masked`). Le §5 initial décrivait l'état avant migration.
+- `getCarnetDetail` / `buildCarnetDetail` : **branchés dans l'addendum `20261113121000`** pour les métadonnées par sortie (distance, dénivelé, durée, horodatage). Les colonnes agrégées du carnet (`carnets.distance_km`, `denivele_m`) restent une limite distincte, documentée.
+- Aucun aperçu public de sortie n'existe aujourd'hui : `Partager` partage l'URL du drawer, pas une page publique. La sélection de métriques persistée n'a donc pas de surface de destination à brancher avant la migration.
+
+## 6. Migration (proposition historique, remplacée par l'addendum §10)
+
+La fiche demande de choisir les métriques affichées. Sans stockage serveur, un choix local serait un droit simulé : il ne changerait pas ce que reçoit un tiers. La migration ci-dessous était **proposée** ; elle est désormais écrite en version `20261113121000` (voir §10 et `MIGRATION-20261113121000.md`). Ce §6 garde la trace de la conception initiale.
+
+### Contrat proposé
+
+Table dédiée plutôt que nouvelle colonne sur `hike_sessions` :
+
+```sql
+create table public.outing_share_metrics (
+  session_id uuid primary key references public.hike_sessions(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  visibility jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now(),
+  constraint outing_share_metrics_object check (jsonb_typeof(visibility) = 'object')
+);
+```
+
+La validation des clés et des booléens reste applicative : `zod` strict à l'écriture, puis `parseMetricVisibility()` à la lecture. Une contrainte `jsonb` ne doit pas être présentée comme équivalente à cette liste fermée. L'important est que la lecture soit **service_role uniquement** après autorisation, et l'écriture **propriétaire uniquement**.
+
+### RLS et grants
+
+- `select` : propriétaire de la session uniquement (le partage passe par `service_role` après contrôle).
+- `insert` / `update` / `delete` : `auth.uid() = user_id` **et** existence d'une ligne `hike_sessions` avec `user_id = auth.uid()`.
+- `grant select, insert, update, delete on public.outing_share_metrics to authenticated;`
+- Aucun `select` à `anon`.
+- Vérifier `can_view_carnet`, `hike_sessions_select_owner_or_participant` et les policies de carnet avant d'étendre quoi que ce soit.
+
+### Version et retour arrière
+
+- Version retenue dans l'addendum : `20261113121000_outing_share_metrics.sql` ; `20261113090000` n'est pas utilisée.
+- Rollback : `supabase/migrations_down/20261113121000_outing_share_metrics.down.sql` (refus si des choix réels existent).
+- Avant production : inventaire des lecteurs/écrivains (`loadOutingDetail`, `buildGpx`, `/api/hike-sessions/[id]`, `getCarnetDetail`), validation sur copie, advisors, test propriétaire / participant / tiers / invité.
+- Invalidation : `SortieDrawer` invalide déjà `['sortie', id]` ; le GPX est `Cache-Control: no-store`. Si un cache d'aperçu ou un lien signé est ajouté, il devra être purgé à chaque changement de politique.
+
+### Branchement futur
+
+1. Lire la politique dans `loadOutingDetail` avec le client `service_role` **après** la vérification de rôle, puis la passer à `resolveOutingMetricVisibility({ viewer, visibility, policy })`.
+2. Faire de même dans `/api/hike-sessions/[id]` si cette route doit servir une politique différente du socle.
+3. Ajouter le sous-drawer « Partager » : cases à cocher pour les clés connues, défaut fermé, aperçu des valeurs réellement visibles, écriture `zod` stricte, invalidation des caches.
+4. Tester propriétaire, abonné, invité, tiers bloqué, politique partielle, révocation.
+
+## 7. Tests écrits, non exécutés
+
+Conformément à la consigne, **aucun test, aucune suite, aucun build, aucun lint et aucun `tsc` n'a été exécuté**. Les commandes à lancer à la fin sont :
+
+```bash
+npx vitest run src/features/compte/domain/__tests__/metricVisibility.test.ts
+npx vitest run src/features/compte/server/__tests__/sorties.test.ts
+npx vitest run src/components/compte/drawer/sortie/__tests__/states.test.tsx
+npx tsc --noEmit -p .
+```
+
+Les fixtures sont synthétiques : aucun réseau, aucune base, aucune donnée réelle.
+
+## 8. Limites et preuves manquantes
+
+1. **Aucune preuve d'exécution** : le code et les tests sont écrits, pas rejoués. Le prochain passage doit fournir la sortie Vitest et `tsc`.
+2. **Aucune source FC / puissance / cadence / calories** : les champs existent au contrat et restent `null`. Une preuve appareil exigerait un connecteur réel, hors de cette tranche.
+3. **Sélection persistée** : livrée dans l'addendum `20261113121000` ; l'interface propriétaire est `OutingMetricSettings`, et le serveur projette la politique relue. Aucune exécution n'a été faite.
+4. **Pas de page publique de partage** : le lien du drawer reste la surface existante. La révocation d'un lien public ne peut pas être testée ici.
+5. **Inférence d'allure** : voir §3.3 ; à trancher avant de promettre une confidentialité absolue sur l'allure.
+6. **`/api/hike-sessions/[id]`** : branché dans l'addendum `20261113121000` ; la projection des agrégats et le retrait des horodatages y sont décrits.
+7. **Aucun commit, aucune production, aucun réseau externe, aucune délégation** : conformément à la consigne.
+
+## 9. Fichiers touchés
+
+- `src/features/compte/domain/metricVisibility.ts` (nouveau)
+- `src/features/compte/domain/__tests__/metricVisibility.test.ts` (nouveau)
+- `src/features/compte/server/sorties.ts`
+- `src/features/compte/server/__tests__/sorties.test.ts`
+- `src/components/compte/drawer/sortie/OutingSummary.tsx`
+- `src/components/compte/drawer/sortie/OutingTrace.tsx`
+- `src/components/compte/drawer/sortie/SortieDrawer.tsx`
+- `src/components/compte/drawer/sortie/shared.tsx`
+- `src/components/compte/drawer/sortie/__tests__/states.test.tsx`
+- `src/features/compte/server/outingShareMetrics.ts` (addendum)
+- `src/components/compte/drawer/sortie/OutingMetricSettings.tsx` (addendum)
+- `src/app/api/compte/sorties/[id]/metrics/route.ts` (addendum)
+- `src/app/api/hike-sessions/[id]/route.ts` (addendum)
+- `src/features/carnet/detail/getCarnetDetail.ts` (addendum)
+- `src/features/carnet/detail/buildCarnetDetail.ts` (addendum)
+- `src/features/carnet/detail/types.ts` (addendum)
+- `supabase/migrations/20261113121000_outing_share_metrics.sql` (addendum)
+- `supabase/migrations_down/20261113121000_outing_share_metrics.down.sql` (addendum)
+- `docs/audit/S6.15-metriques-2026-11-13/MIGRATION-20261113121000.md` (addendum)
+- `docs/audit/S6.15-metriques-2026-11-13/RAPPORT.md` (ce rapport)
+
+Aucun fichier de `src/features/explorer-v2`, `src/components/explorer` ou `src/app/explorer` n'a été ouvert en écriture.
+
+## 10. Addendum — migration `20261113121000` et réglage propriétaire
+
+Cette section remplace le statut « migration non créée » du §6. La version retenue est `20261113121000_outing_share_metrics` ; `20261113090000` n'est pas utilisée, conformément à la réservation existante.
+
+- Migration additive : `supabase/migrations/20261113121000_outing_share_metrics.sql`.
+- Rollback : `supabase/migrations_down/20261113121000_outing_share_metrics.down.sql` (refus si des choix réels existent).
+- Stockage : table `public.outing_share_metrics`, une ligne par sortie, `visibility jsonb` fermé aux onze clés connues, booléens stricts vérifiés par la base.
+- RLS : lecture/écriture propriétaire uniquement ; `service_role` pour la projection d'un tiers après contrôle du rôle ; aucun `anon`.
+- Trigger : cohérence `hike_sessions.user_id = outing_share_metrics.user_id`, interdiction de déplacer une politique.
+- Branchements : `loadOutingDetail`, GPX, `GET /api/hike-sessions/[id]`, `getCarnetDetail` (métadonnées par sortie), nouvelle route `PUT`/`DELETE /api/compte/sorties/[id]/metrics`, section propriétaire du drawer.
+- UI : `OutingMetricSettings` affiche les onze clés, l'état réel de chaque valeur ou « Aucune donnée enregistrée ». Aucune valeur de démonstration, aucun zéro inventé, aucune donnée FC/puissance/cadence/calories fabriquée.
+- Synchronisation : invalidation `['sortie', id]` après écriture, `Cache-Control: no-store` sur le GPX, pas de cache de politique ; `staleTime` de 20 s sur le détail.
+- RGPD : booléens seulement, cascade sur la sortie et le compte, aucun processeur externe, aucun accès anonyme, limite d'inférence distance + durée documentée.
+
+Le détail complet (schéma, RLS, synchronisation, RGPD, limites et commandes de vérification) est dans `MIGRATION-20261113121000.md`.
+
+**Aucun test, build, lint, `tsc`, commit, déploiement, réseau externe ou délégation n'a été exécuté pour cet addendum.**
+
+## 11. Correctif des limites admises (S6.15-bis)
+
+Cette section remplace les limites 3, 4 et 5 du §8.
+
+### 11.1 Agrégats de carnet
+
+- `buildCarnetDetail` calcule désormais `metricVisibility` par **intersection fail-closed** des politiques de toutes les sorties lues. Une seule sortie qui ferme `distance`, `elevationGain`, `duration` ou `elevation` ferme la métrique du carnet ; un total ne peut donc pas divulguer une valeur masquée.
+- `distanceKm` et `elevationM` ne retombent plus sur `carnets.distance_km` / `denivele_m` dès qu'une sortie existe. Ils sont reconstruits depuis les seules sorties autorisées (`rawSessionIds` pour le propriétaire, politiques résolues pour un tiers). Les colonnes du carnet ne servent que pour un carnet sans aucune sortie (saisie manuelle) ou pour l'ancien appel propriétaire sans map de politiques.
+- `etapes[].distanceKm`, `etapes[].elevationM` et le texte libre `duree_texte` sont fermés avec la même politique. `summary`, `stats` et les jours ne peuvent pas reconstruire un total masqué.
+- Une liste de sorties incomplète (`sessionsComplete = false`, plafond de 10) ferme les agrégats pour un tiers : mieux vaut un total absent qu'un total qui ignore une sortie masquée.
+- Le propriétaire conserve ses valeurs de sortie brutes et son profil. Un total de carnet qui mélangerait une sortie masquée d'autrui est retiré, jamais deviné.
+
+### 11.2 Profil altimétrique
+
+- `elevationProfile` n'est publié que si `distance`, `elevation`, `elevationGain` et `maxAltitude` sont tous vrais (`canExposeElevationProfile`). Le profil porte en effet une altitude, un dénivelé, une altitude maximale et une distance cumulée.
+- `elevationWithheld` est posé quand le profil est fermé. `enrichCarnetElevation` refuse alors de le reconstruire depuis `detail.trace`, même si la trace est partageable. Une seconde vérification se fonde sur `metricVisibility`, pas sur la présence de la trace.
+- L'UI de la lentille altitude distingue « profil masqué » de « aucune mesure ».
+
+### 11.3 Listes, exports et surfaces tierces
+
+| Surface | Verdict |
+| --- | --- |
+| `GET /api/compte/sorties/[id]` et `/gpx` | DTO projeté, GPX re-projeté, altitudes/heures masquées retirées. |
+| `GET /api/hike-sessions/[id]` | Agrégats projetés, horodatages retirés avec la durée, politique exposée. |
+| `GET /api/hike-sessions` | Strictement propriétaire (`user_id = auth.uid()`), aucun tiers, même avec `?carnetId=`. |
+| `/api/account/export`, `/api/user/export` | Strictement propriétaires : aucune surface tierce, aucun masquage nécessaire. |
+| Liste Explorer (`/api/explorer/v2/content`) | Ne sert plus `distance_km` / `denivele_m` d'un carnet public : fail-closed, faute de politiques lisibles en anon. |
+| Flux communautaire (`community_carnets_feed`) | Le mapper public force les deux totaux à `null` ; la RPC directe reste une dépendance SQL documentée. |
+| Fiche kit (`GET /api/kits/[id]/sheet`) | `total_km` / `total_elevation_gain_m` retirés pour tout lecteur autre que le propriétaire ; `get_kit_journal` direct reste une dépendance SQL. |
+| Empreinte (`get_user_signature`) | Agrégat consenti distinct d'une sortie ; non branché sur la politique par métrique, documenté comme dépendance. |
+
+### 11.4 Limites et dépendances restantes
+
+1. **RPC SQL directes** : `community_carnets_feed` et `get_kit_journal` calculent encore leurs totaux sans `outing_share_metrics` ; l'application les masque, mais un appel direct à la RPC les exposerait. Une migration dédiée est nécessaire (voir `MIGRATION-20261113121000.md` §9).
+2. **Inférence** : si `distance` et `duration` sont tous deux visibles, l'allure reste calculable, même avec `pace = false`. Les coordonnées d'une trace partagée permettent aussi de recalculer une distance. La politique ferme les valeurs publiées, pas les inférences géométriques.
+3. **Plafond de lecture** : le carnet lit au plus 10 sorties détaillées ; au-delà, les agrégats tiers sont fermés plutôt que partiels.
+4. **Texte libre** : `duree_texte` est retiré si `distance`, `elevationGain` ou `duration` est fermé, faute de pouvoir l'analyser de façon fiable.
+5. **Aucune exécution** : ni test, ni suite, ni build, ni lint, ni `tsc` n'ont été lancés. Les tests existants qui affirmaient l'ancien repli sur les colonnes du carnet devront être mis à jour avec la nouvelle garantie.
+
+Le détail de la matrice et des dépendances est dans `CORRECTIONS-LIMITES.md`.
+
+**Aucun commit, production, réseau externe au modèle ou délégation n'a été exécuté.**

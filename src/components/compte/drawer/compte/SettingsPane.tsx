@@ -6,6 +6,7 @@ import {
   Bell,
   Eye,
   KeyRound,
+  Link2,
   Lock,
   LogOut,
   Monitor,
@@ -18,6 +19,7 @@ import type { NotificationPrefs, ProfileSettings } from '@/features/compte/serve
 import { ActionPill } from '@/components/ui/ActionPill';
 import { DrawerError, DrawerSkeleton } from '../shell/DrawerShell';
 import { createClient } from '@/lib/supabase/client';
+import { ConsentSettingsSheet } from './ConsentSettingsSheet';
 import { fetchJson } from './shared';
 
 const PREF_LABELS: Array<{ key: keyof NotificationPrefs; label: string }> = [
@@ -34,6 +36,7 @@ export function SettingsPane() {
   const [securityBusy, setSecurityBusy] = useState(false);
   const [confirmSignOut, setConfirmSignOut] = useState(false);
   const [units, setUnits] = useState<'metric' | 'imperial'>('metric');
+  const [consentOpen, setConsentOpen] = useState(false);
 
   const query = useQuery({
     queryKey: ['compte', 'profile'],
@@ -157,6 +160,25 @@ export function SettingsPane() {
       <section className="lkdv-compte-setting-card">
         <div className="lkdv-compte-setting-head">
           <span className="lkdv-compte-setting-ico" aria-hidden="true">
+            <Link2 size={17} />
+          </span>
+          <div>
+            <b>Appareils et services</b>
+            <small>Consentements par usage, santé et révocation</small>
+          </div>
+          <ActionPill
+            className="lkdv-compte-setting-pill"
+            label="Gérer les consentements"
+            text="Gérer"
+            icon={<ShieldCheck />}
+            onClick={() => setConsentOpen(true)}
+          />
+        </div>
+      </section>
+
+      <section className="lkdv-compte-setting-card">
+        <div className="lkdv-compte-setting-head">
+          <span className="lkdv-compte-setting-ico" aria-hidden="true">
             <Bell size={17} />
           </span>
           <div>
@@ -258,6 +280,8 @@ export function SettingsPane() {
           />
         </div>
       </section>
+
+      {consentOpen ? <ConsentSettingsSheet onClose={() => setConsentOpen(false)} /> : null}
     </div>
   );
 }

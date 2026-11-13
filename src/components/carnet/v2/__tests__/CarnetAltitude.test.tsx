@@ -34,6 +34,24 @@ describe('CarnetAltitude', () => {
     expect(slider.getAttribute('aria-valuetext')).toContain('1450 mètres');
   });
 
+  it('dessine un chemin par morceau, sans relier deux segments', () => {
+    const segmented: ElevationPoint[] = [
+      { distanceKm: 0, elevationM: 1200, lat: 45.9, lng: 6.9, segmentIndex: 0 },
+      { distanceKm: 0.8, elevationM: 1300, lat: 45.91, lng: 6.91, segmentIndex: 0 },
+      { distanceKm: 0.8, elevationM: 1250, lat: 45.95, lng: 6.95, segmentIndex: 1 },
+      { distanceKm: 1.6, elevationM: 1400, lat: 45.96, lng: 6.96, segmentIndex: 1 },
+    ];
+    const { container } = render(<CarnetAltitude points={segmented} />);
+
+    const lines = container.querySelectorAll('path[data-altitude-line]');
+    expect(lines).toHaveLength(2);
+    expect(lines[0].getAttribute('data-altitude-line')).toBe('0');
+    expect(lines[1].getAttribute('data-altitude-line')).toBe('1');
+    /* Le second chemin démarre à x=50 %, pas à 0 : la distance est cumulée. */
+    const second = lines[1].getAttribute('d') ?? '';
+    expect(second.startsWith('M50.00,')).toBe(true);
+  });
+
   it('reste une image non interactive sans le drapeau', () => {
     render(<CarnetAltitude points={points} />);
     const image = screen.getByRole('img', { name: /Profil d’altitude/ });

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { requireUser } from '@/lib/api/requireUser';
 import { fail } from '@/lib/api/respond';
-import { buildGpx, loadOutingDetail } from '@/features/compte/server/sorties';
+import { buildGpx, loadOutingDetail, outingTraceSegments } from '@/features/compte/server/sorties';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -16,7 +16,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   try {
     const detail = await loadOutingDetail(auth.supabase, auth.user.id, parsed.data);
     if (!detail) return fail('not_found', 'Sortie introuvable.');
-    if (detail.points.length < 2) {
+    if (outingTraceSegments(detail).length === 0) {
       return fail('not_found', 'Aucune trace GPS rattachée à cette sortie.');
     }
     const filename = `${detail.title.replace(/[^a-z0-9-_]+/gi, '-').slice(0, 60) || 'sortie'}.gpx`;

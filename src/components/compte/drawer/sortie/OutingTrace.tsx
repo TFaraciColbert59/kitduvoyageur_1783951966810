@@ -5,7 +5,19 @@ import { Download, MapPin, Wind } from 'lucide-react';
 import { ActionPill } from '@/components/ui/ActionPill';
 import type { OutingDetail, OutingPoint } from '@/features/compte/server/sorties';
 import type { OutingWeather } from '@/features/compte/server/weather';
-import { ElevationProfile, TraceMap, formatDuration, formatNumber, weatherIcon } from './shared';
+import {
+  ElevationProfile,
+  TraceMap,
+  formatDuration,
+  formatNumber,
+  hasVisibleTrace,
+  metricDisplay,
+  outingMetricVisible,
+  traceUnavailableState,
+  visibleTracePoints,
+  visibleTraceSegments,
+  weatherIcon,
+} from './shared';
 
 export interface OutingTraceProps {
   detail: OutingDetail;
@@ -15,24 +27,9 @@ export interface OutingTraceProps {
 function altitudeRange(points: OutingPoint[]) {
   const values = points
     .map((point) => point.elevationM)
-    .filter((value): value is number => value !== null);
+    .filter((value): value is number => typeof value === 'number' && Number.isFinite(value));
   if (values.length === 0) return null;
   return { min: Math.min(...values), max: Math.max(...values) };
-}
-
-/** Temps en mouvement : on retire les pauses de plus de 10 minutes. */
-function movingSeconds(points: OutingPoint[]): number | null {
-  const timed = points.filter((point) => point.timestamp);
-  if (timed.length < 2) return null;
-  let total = 0;
-  for (let index = 1; index < timed.length; index += 1) {
-    const previous = Date.parse(timed[index - 1].timestamp as string);
-    const current = Date.parse(timed[index].timestamp as string);
-    if (!Number.isFinite(previous) || !Number.isFinite(current)) continue;
-    const delta = (current - previous) / 1000;
-    if (delta > 0 && delta < 600) total += delta;
-  }
-  return total > 0 ? Math.round(total) : null;
 }
 
 function WeatherBlock({ weather }: { weather: OutingWeather | null }) {
@@ -89,24 +86,44 @@ function WeatherBlock({ weather }: { weather: OutingWeather | null }) {
 }
 
 export function OutingTrace({ detail, onExport }: OutingTraceProps) {
-  const altitude = altitudeRange(detail.points);
-  const moving = movingSeconds(detail.points);
-  const slope = detail.km > 0 ? (detail.dplus / (detail.km * 1000)) * 100 : null;
-  const pace =
-    detail.durationS && detail.km > 0 ? detail.durationS / 60 / detail.km : null;
+  const segments = visibleTraceSegments(detail);
+  const points = visibleTracePoints(detail);
+  const altitude = outingMetricVisible(detail, 'elevation') ? altitudeRange(points) : null;
+  const slope =
+    outingMetricVisible(detail, 'elevationGain') &&
+    outingMetricVisible(detail, 'distance') &&
+    typeof detail.km === 'number' &&
+    Number.isFinite(detail.km) &&
+    typeof detail.dplus === 'number' &&
+    Number.isFinite(detail.dplus) &&
+    detail.km > 0
+      ? (detail.dplus / (detail.km * 1000)) * 100
+      : null;
+  /* Jamais de recalcul client : le serveur seul décide de l'allure publiable. */
+  const effortRows: Array<{ label: string; value: string }> = [];
+  if (outingMetricVisible(detail, 'heartRate') && typeof detail.heartRateBpm === 'number' && Number.isFinite(detail.heartRateBpm)) {
+    effortRows.push({ label: 'FC moyenne', value: `${formatNumber(detail.heartRateBpm)} bpm` });
+  }
+  if (outingMetricVisible(detail, 'power') && typeof detail.powerW === 'number' && Number.isFinite(detail.powerW)) {
+    effortRows.push({ label: 'Puissance', value: `${formatNumber(detail.powerW)} W` });
+  }
+  if (outingMetricVisible(detail, 'cadence') && typeof detail.cadenceRpm === 'number' && Number.isFinite(detail.cadenceRpm)) {
+    effortRows.push({ label: 'Cadence', value: `${formatNumber(detail.cadenceRpm)} rpm` });
+  }
+  if (outingMetricVisible(detail, 'calories') && typeof detail.caloriesKcal === 'number' && Number.isFinite(detail.caloriesKcal)) {
+    effortRows.push({ label: 'Calories', value: `${formatNumber(detail.caloriesKcal)} kcal` });
+  }
 
-  if (detail.points.length < 2) {
+  if (!hasVisibleTrace(detail)) {
+    const state = traceUnavailableState(detail);
     return (
       <div className="lkdv-sortie-pane">
         <div className="lkdv-sortie-state">
           <span aria-hidden="true">
             <MapPin size={22} />
           </span>
-          <b>Aucune trace GPS rattachée</b>
-          <p>
-            Cette sortie a bien été enregistrée, mais aucune trace n’est disponible. Tu peux
-            toujours consulter le résumé et le matériel.
-          </p>
+          <b>{state.title}</b>
+          <p>{state.body}</p>
         </div>
         <WeatherBlock weather={detail.weather} />
       </div>
@@ -118,10 +135,10 @@ export function OutingTrace({ detail, onExport }: OutingTraceProps) {
       <section className="lkdv-sortie-section">
         <header>
           <b>Trace enregistrée</b>
-          <span>{detail.points.length} points</span>
+          <span>{points.length} points</span>
         </header>
         <div className="lkdv-sortie-map-wrap">
-          <TraceMap points={detail.points} />
+          <TraceMap segments={segments} />
           <div className="lkdv-sortie-map-legend" aria-hidden="true">
             <span><i className="start" /> Départ</span>
             <span><i className="end" /> Arrivée</span>
@@ -132,36 +149,88 @@ export function OutingTrace({ detail, onExport }: OutingTraceProps) {
       <div className="lkdv-sortie-grid">
         <div>
           <small>Altitude min.</small>
-          <b>{altitude ? `${formatNumber(altitude.min)} m` : '—'}</b>
+          <b>
+            {!outingMetricVisible(detail, 'elevation')
+              ? 'Masqué'
+              : altitude
+                ? `${formatNumber(altitude.min)} m`
+                : '—'}
+          </b>
         </div>
         <div>
           <small>Altitude max.</small>
-          <b>{altitude ? `${formatNumber(altitude.max)} m` : '—'}</b>
+          <b>
+            {!outingMetricVisible(detail, 'elevation')
+              ? 'Masqué'
+              : altitude
+                ? `${formatNumber(altitude.max)} m`
+                : '—'}
+          </b>
         </div>
         <div>
           <small>Pente moyenne</small>
-          <b>{slope !== null ? `${formatNumber(slope)} %` : '—'}</b>
+          <b>
+            {!outingMetricVisible(detail, 'elevationGain') ||
+            !outingMetricVisible(detail, 'distance')
+              ? 'Masqué'
+              : slope !== null
+                ? `${formatNumber(slope)} %`
+                : '—'}
+          </b>
         </div>
         <div>
           <small>Temps en mouvement</small>
-          <b>{formatDuration(moving)}</b>
+          <b>
+            {metricDisplay(detail, 'movingTime', detail.movingTimeS, (value) =>
+              formatDuration(value)
+            )}
+          </b>
         </div>
         <div>
           <small>Durée totale</small>
-          <b>{formatDuration(detail.durationS)}</b>
+          <b>
+            {metricDisplay(detail, 'duration', detail.durationS, (value) =>
+              formatDuration(value)
+            )}
+          </b>
         </div>
         <div>
           <small>Allure moyenne</small>
-          <b>{pace !== null ? `${formatNumber(pace)} min/km` : '—'}</b>
+          <b>
+            {metricDisplay(detail, 'pace', detail.paceMinPerKm, (value) =>
+              `${formatNumber(value)} min/km`
+            )}
+          </b>
         </div>
       </div>
+
+      {effortRows.length > 0 ? (
+        <div className="lkdv-sortie-grid">
+          {effortRows.map((row) => (
+            <div key={row.label}>
+              <small>{row.label}</small>
+              <b>{row.value}</b>
+            </div>
+          ))}
+        </div>
+      ) : null}
 
       <section className="lkdv-sortie-section">
         <header>
           <b>Relief</b>
-          <span>{altitude ? `de ${Math.round(altitude.min)} à ${Math.round(altitude.max)} m` : '—'}</span>
+          <span>
+            {!outingMetricVisible(detail, 'elevation')
+              ? 'Non partagé'
+              : altitude
+                ? `de ${Math.round(altitude.min)} à ${Math.round(altitude.max)} m`
+                : '—'}
+          </span>
         </header>
-        <ElevationProfile points={detail.points} />
+        {outingMetricVisible(detail, 'elevation') ? (
+          <ElevationProfile segments={segments} />
+        ) : (
+          <div className="lkdv-sortie-trace-empty">Profil altimétrique non partagé</div>
+        )}
       </section>
 
       <WeatherBlock weather={detail.weather} />

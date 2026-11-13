@@ -1,15 +1,30 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Check, Download, Pencil, Share2, ShieldCheck, Trash2, X } from 'lucide-react';
+import { Check, Download, Eye, Pencil, Share2, ShieldCheck, Trash2, X } from 'lucide-react';
 import { ActionPill } from '@/components/ui/ActionPill';
 import type { OutingDetail, OutingVisibility } from '@/features/compte/server/sorties';
-import { ElevationProfile, TraceMap, formatDate, formatDuration, formatNumber } from './shared';
+import type { OutingMetricKey } from '@/features/compte/domain/metricVisibility';
+import { OutingMetricSettings } from './OutingMetricSettings';
+import {
+  ElevationProfile,
+  TraceMap,
+  formatDate,
+  formatDuration,
+  formatNumber,
+  hasVisibleTrace,
+  metricDisplay,
+  outingMetricVisible,
+  traceUnavailableState,
+  visibleTraceSegments,
+} from './shared';
 
 export interface OutingSummaryProps {
   detail: OutingDetail;
   saving: boolean;
   onSave: (patch: { title: string; notes: string; visibility: OutingVisibility }) => void;
+  onSaveMetrics: (keys: OutingMetricKey[]) => void;
+  onResetMetrics: () => void;
   onShare: () => void;
   onExport: () => void;
   onDelete: () => void;
@@ -21,8 +36,18 @@ const STATUS_LABEL: Record<OutingDetail['status'], string> = {
   done: 'Terminée',
 };
 
-export function OutingSummary({ detail, saving, onSave, onShare, onExport, onDelete }: OutingSummaryProps) {
+export function OutingSummary({
+  detail,
+  saving,
+  onSave,
+  onSaveMetrics,
+  onResetMetrics,
+  onShare,
+  onExport,
+  onDelete,
+}: OutingSummaryProps) {
   const [editing, setEditing] = useState(false);
+  const [metricsOpen, setMetricsOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [title, setTitle] = useState(detail.title);
   const [notes, setNotes] = useState(detail.notes);
@@ -36,9 +61,18 @@ export function OutingSummary({ detail, saving, onSave, onShare, onExport, onDel
     setEditing(false);
   }, [detail.id, detail.title, detail.notes, detail.visibility]);
 
+  useEffect(() => {
+    setMetricsOpen(false);
+  }, [detail.id]);
+
   const companions = detail.participants.filter((person) => !person.isOwner);
   const showCover = Boolean(detail.coverUrl) && !coverFailed;
   const context = companions.map((person) => person.name).slice(0, 3).join(', ');
+  const segments = visibleTraceSegments(detail);
+  const hasTrace = hasVisibleTrace(detail);
+  const traceState = traceUnavailableState(detail);
+  const metricsHidden = detail.metricsMasked && !detail.canEdit;
+  const maxAltitudeM = detail.maxAlt;
 
   return (
     <div className="lkdv-sortie-summary">
@@ -52,7 +86,7 @@ export function OutingSummary({ detail, saving, onSave, onShare, onExport, onDel
             onError={() => setCoverFailed(true)}
           />
         ) : (
-          <TraceMap points={detail.points} className="lkdv-sortie-hero-map" />
+          <TraceMap segments={segments} className="lkdv-sortie-hero-map" />
         )}
         <div className="lkdv-sortie-hero-scrim" aria-hidden="true" />
         {!editing ? (
@@ -60,10 +94,10 @@ export function OutingSummary({ detail, saving, onSave, onShare, onExport, onDel
             <ActionPill tone="primary" label="Partager" icon={<Share2 />} onClick={onShare} />
             {detail.canEdit ? <ActionPill label="Modifier" icon={<Pencil />} onClick={() => setEditing(true)} /> : null}
             <ActionPill
-              label={detail.points.length < 2 ? 'Aucune trace GPS rattachée' : 'Télécharger le GPX'}
+              label={!hasTrace ? traceState.title : 'Télécharger le GPX'}
               icon={<Download />}
               onClick={onExport}
-              disabled={detail.points.length < 2}
+              disabled={!hasTrace}
             />
           </div>
         ) : null}
@@ -88,21 +122,61 @@ export function OutingSummary({ detail, saving, onSave, onShare, onExport, onDel
       <div className="lkdv-sortie-tiles">
         <div>
           <small>Distance</small>
-          <b>{formatNumber(detail.km)} km</b>
+          <b>{metricDisplay(detail, 'distance', detail.km, (value) => `${formatNumber(value)} km`)}</b>
         </div>
         <div>
           <small>Dénivelé</small>
-          <b>+{formatNumber(detail.dplus)} m</b>
+          <b>{metricDisplay(detail, 'elevationGain', detail.dplus, (value) => `+${formatNumber(value)} m`)}</b>
         </div>
         <div>
           <small>Alt. max</small>
-          <b>{detail.maxAlt ? `${formatNumber(detail.maxAlt)} m` : '—'}</b>
+          <b>{metricDisplay(detail, 'maxAltitude', detail.maxAlt, (value) => `${formatNumber(value)} m`)}</b>
         </div>
         <div>
           <small>Durée</small>
-          <b>{formatDuration(detail.durationS)}</b>
+          <b>{metricDisplay(detail, 'duration', detail.durationS, (value) => formatDuration(value))}</b>
         </div>
       </div>
+      {metricsHidden ? (
+        <p className="lkdv-sortie-notes">
+          Certaines métriques d’effort ne sont pas partagées par le propriétaire.
+        </p>
+      ) : null}
+
+      {detail.canEdit ? (
+        <section className="lkdv-sortie-section">
+          <header>
+            <b>Métriques partagées</b>
+            <span>
+              {detail.shareMetricsConfigured ? 'Réglage enregistré' : 'Socle par défaut'}
+            </span>
+          </header>
+          {metricsOpen ? (
+            <OutingMetricSettings
+              detail={detail}
+              saving={saving}
+              onSave={onSaveMetrics}
+              onReset={onResetMetrics}
+              onClose={() => setMetricsOpen(false)}
+            />
+          ) : (
+            <>
+              <p className="lkdv-sortie-proof">
+                Choisis, métrique par métrique, ce que les personnes avec qui tu
+                partages cette sortie peuvent voir.
+              </p>
+              <div className="lkdv-apill-row">
+                <ActionPill
+                  label="Choisir les métriques partagées"
+                  icon={<Eye />}
+                  text="Choisir"
+                  onClick={() => setMetricsOpen(true)}
+                />
+              </div>
+            </>
+          )}
+        </section>
+      ) : null}
 
       {editing ? (
         <form
@@ -151,9 +225,21 @@ export function OutingSummary({ detail, saving, onSave, onShare, onExport, onDel
       <section className="lkdv-sortie-section">
         <header>
           <b>Profil altimétrique</b>
-          <span>{detail.maxAlt ? `${formatNumber(detail.maxAlt)} m au plus haut` : 'Altitudes non renseignées'}</span>
+          <span>
+            {!outingMetricVisible(detail, 'elevation')
+              ? 'Non partagé'
+              : outingMetricVisible(detail, 'maxAltitude') &&
+                  typeof maxAltitudeM === 'number' &&
+                  Number.isFinite(maxAltitudeM)
+                ? `${formatNumber(maxAltitudeM)} m au plus haut`
+                : 'Profil partagé'}
+          </span>
         </header>
-        <ElevationProfile points={detail.points} />
+        {outingMetricVisible(detail, 'elevation') ? (
+          <ElevationProfile segments={segments} />
+        ) : (
+          <div className="lkdv-sortie-trace-empty">Profil altimétrique non partagé</div>
+        )}
       </section>
 
       <section className="lkdv-sortie-section">
