@@ -9,9 +9,11 @@ import {
   blockUser,
   loadModerationState,
   moderationErrorMessage,
+  muteContentUser,
   muteUser,
   reportUser,
   unblockUser,
+  unmuteContentUser,
   unmuteUser,
   type ModerationState,
 } from '@/features/compte/client/moderationClient';
@@ -23,7 +25,18 @@ export interface ReportTarget {
   groupName?: string;
 }
 
-export type SafetyAction = 'report' | 'block' | 'unblock' | 'mute' | 'unmute';
+export type SafetyAction =
+  | 'report'
+  | 'block'
+  | 'unblock'
+  | 'mute_content'
+  | 'unmute_content'
+  | 'mute_conversation'
+  | 'unmute_conversation'
+  // Alias historiques de la sourdine de conversation, conservés pour les
+  // appelants qui écoutaient déjà `mute`/`unmute`.
+  | 'mute'
+  | 'unmute';
 type SafetyTab = 'report' | 'block' | 'mute';
 
 interface Props {
@@ -33,9 +46,10 @@ interface Props {
 }
 
 /**
- * Feuille de sécurité d'un profil : signaler, bloquer/débloquer et mettre en
- * sourdine. Les trois mutations passent par les routes réseau ; le composant
- * ne décide ni d'une suspension, ni d'un droit, et n'écrit plus directement
+ * Feuille de sécurité d'un profil : signaler, bloquer/débloquer, masquer les
+ * contenus (fil et stories) et couper les notifications de la conversation
+ * directe. Les mutations passent par les routes réseau ; le composant ne
+ * décide ni d'une suspension, ni d'un droit, et n'écrit jamais directement
  * dans les tables de modération.
  */
 export default function ReportBlockModal({ target, onClose, onSuccess }: Props) {
@@ -155,7 +169,45 @@ export default function ReportBlockModal({ target, onClose, onSuccess }: Props) 
     }
   };
 
-  const handleMute = async () => {
+  const handleContentMute = async () => {
+    if (!requireUser()) return;
+    const alreadyMuted = state?.mutedContent === true;
+    setLoading(true);
+    try {
+      if (alreadyMuted) {
+        await unmuteContentUser(target.userId);
+        setState((current) =>
+          current ? { ...current, mutedContent: false } : current
+        );
+        finish(
+          `Les publications et les stories de ${target.userName} sont de nouveau visibles.`,
+          'unmute_content'
+        );
+      } else {
+        const result = await muteContentUser(target.userId);
+        setState((current) =>
+          current
+            ? {
+                ...current,
+                mutedContent: result.contentMuted,
+              }
+            : current
+        );
+        finish(
+          `Les publications et les stories de ${target.userName} sont masquées. Le suivi est conservé.`,
+          'mute_content'
+        );
+      }
+    } catch (error) {
+      lkvAlert(
+        moderationErrorMessage(error, 'La sourdine de contenu n’a pas pu être enregistrée.')
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleConversationMute = async () => {
     if (!requireUser()) return;
     const alreadyMuted = state?.mutedConversation === true;
     setLoading(true);
@@ -165,7 +217,10 @@ export default function ReportBlockModal({ target, onClose, onSuccess }: Props) 
         setState((current) =>
           current ? { ...current, mutedConversation: false } : current
         );
-        finish(`La sourdine de ${target.userName} a été levée.`, 'unmute');
+        finish(
+          `Les notifications de la conversation directe avec ${target.userName} sont rétablies.`,
+          'unmute_conversation'
+        );
       } else {
         const result = await muteUser(target.userId);
         setState((current) =>
@@ -177,19 +232,33 @@ export default function ReportBlockModal({ target, onClose, onSuccess }: Props) 
             : current
         );
         finish(
-          `Sourdine activée : les notifications de votre conversation directe avec ${target.userName} sont coupées.`,
-          'mute'
+          `Les notifications de la conversation directe avec ${target.userName} sont coupées.`,
+          'mute_conversation'
         );
       }
     } catch (error) {
-      lkvAlert(moderationErrorMessage(error, 'La sourdine n’a pas pu être enregistrée.'));
+      lkvAlert(
+        moderationErrorMessage(
+          error,
+          'La sourdine de conversation n’a pas pu être enregistrée.'
+        )
+      );
     } finally {
       setLoading(false);
     }
   };
 
   const blocked = state?.blockedByViewer === true;
-  const muted = state?.mutedConversation === true;
+  const blockedEitherWay =
+    state?.blockedByViewer === true || state?.blockedByTarget === true;
+  const mutedContent = state?.mutedContent === true;
+  const mutedConversation = state?.mutedConversation === true;
+  const anyMuted = mutedContent || mutedConversation;
+  // Sans état lisible, on laisse le serveur décider. Avec un état connu, la
+  // sourdine de contenu n'est proposée que pour un compte réellement suivi.
+  const contentMuteUnavailable =
+    state != null && !mutedContent && !state.policy.canMuteContent;
+  const conversationUnavailable = state?.hasDirectConversation === false;
 
   return (
     <Modal
@@ -248,7 +317,7 @@ export default function ReportBlockModal({ target, onClose, onSuccess }: Props) 
                   activeTab === 'mute' ? 'bg-white/15 text-white' : 'text-white/60 hover:text-white'
                 }`}
               >
-                <span>🔕</span> {muted ? 'Réactiver' : 'Sourdine'}
+                <span>🔕</span> {anyMuted ? 'Réactiver' : 'Sourdine'}
               </button>
             </div>
 
@@ -363,38 +432,89 @@ export default function ReportBlockModal({ target, onClose, onSuccess }: Props) 
             ) : (
               <div className="space-y-4">
                 <div className="p-4 rounded-xl bg-white/10 border border-white/15 text-xs text-white/80 space-y-2">
-                  <p className="font-bold text-white">Sourdine de conversation :</p>
-                  <ul className="list-disc pl-4 space-y-1 text-white/70">
-                    <li>Les notifications de votre conversation directe avec {target.userName} sont coupées.</li>
-                    <li>Le suivi et le signalement restent disponibles ; aucune relation n’est supprimée.</li>
-                    <li>S’il n’existe aucune conversation directe, l’action est refusée.</li>
-                  </ul>
-                  <p className="text-white/50">
-                    Les stories et les publications du fil ne sont pas masquées : aucune
-                    préférence par utilisateur n’existe en base pour ces contenus. Une
-                    sourdine de contenu demande une migration dédiée.
+                  <p className="font-bold text-white">Sourdine de contenu :</p>
+                  <p className="text-white/70">
+                    Masque les publications de fil et les stories de {target.userName}.
+                    Le suivi est conservé, aucune relation n’est supprimée, et la personne
+                    n’est pas notifiée.
                   </p>
-                </div>
-
-                <div className="pt-2 flex gap-3">
+                  <p className="text-white/50">
+                    Cette préférence reste privée : seul votre compte peut la lire. Elle ne
+                    remplace pas le blocage et ne coupe pas les notifications de la
+                    conversation directe.
+                  </p>
+                  {contentMuteUnavailable && !blockedEitherWay ? (
+                    <p className="text-white/60">
+                      La sourdine de contenu est proposée pour les comptes que vous suivez.
+                      Suivez ce compte pour masquer ses publications et ses stories sans
+                      perdre le suivi.
+                    </p>
+                  ) : null}
+                  {blockedEitherWay ? (
+                    <p className="text-white/60">
+                      {state?.blockedByViewer
+                        ? 'Vous avez bloqué ce profil : ses contenus sont déjà masqués. Débloquez-le pour régler séparément la sourdine de contenu.'
+                        : 'Ce profil vous a bloqué : ses contenus sont déjà masqués. La sourdine de contenu ne peut pas être posée tant que ce blocage existe.'}
+                    </p>
+                  ) : null}
                   <button
                     type="button"
-                    onClick={onClose}
-                    className="flex-1 py-2.5 bg-white/10 hover:bg-white/15 text-white rounded-xl text-xs font-semibold"
-                  >
-                    Annuler
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleMute}
-                    disabled={loading || stateLoading}
-                    className="flex-1 py-2.5 bg-white/15 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-colors disabled:opacity-50"
+                    onClick={handleContentMute}
+                    disabled={loading || stateLoading || contentMuteUnavailable}
+                    className="w-full py-2.5 bg-white/15 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-colors disabled:opacity-50"
                   >
                     {loading
                       ? 'Enregistrement...'
-                      : muted
-                        ? 'Lever la sourdine'
-                        : 'Mettre en sourdine'}
+                      : mutedContent
+                        ? 'Réafficher ses contenus'
+                        : 'Masquer ses contenus'}
+                  </button>
+                </div>
+
+                <div className="p-4 rounded-xl bg-white/10 border border-white/15 text-xs text-white/80 space-y-2">
+                  <p className="font-bold text-white">Sourdine de conversation :</p>
+                  <p className="text-white/70">
+                    Coupe uniquement les notifications de la conversation directe avec{' '}
+                    {target.userName}. Aucune publication ni story n’est masquée par ce
+                    réglage.
+                  </p>
+                  {conversationUnavailable ? (
+                    <p className="text-white/60">
+                      Aucune conversation directe n’existe encore : il n’y a pas de
+                      notification à couper. La sourdine de contenu reste réglable pour un
+                      compte suivi.
+                    </p>
+                  ) : (
+                    <p className="text-white/50">
+                      Le suivi et le signalement restent disponibles ; la conversation
+                      n’est pas supprimée.
+                    </p>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleConversationMute}
+                    disabled={
+                      loading ||
+                      stateLoading ||
+                      (!mutedConversation && conversationUnavailable)
+                    }
+                    className="w-full py-2.5 bg-white/15 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-colors disabled:opacity-50"
+                  >
+                    {loading
+                      ? 'Enregistrement...'
+                      : mutedConversation
+                        ? 'Rétablir les notifications'
+                        : 'Couper les notifications'}
+                  </button>
+                </div>
+
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="w-full py-2.5 bg-white/10 hover:bg-white/15 text-white rounded-xl text-xs font-semibold"
+                  >
+                    Fermer
                   </button>
                 </div>
               </div>

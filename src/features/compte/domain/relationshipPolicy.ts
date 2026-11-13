@@ -10,6 +10,12 @@
  * Précédence : un blocage neutralise le suivi et la messagerie ; la sourdine
  * ne bloque ni le suivi ni le signalement. Un refus de demande de suivi garde
  * un délai de retenue avant de pouvoir être redemandé.
+ *
+ * Deux sourdines distinctes coexistent :
+ *   - la sourdine de contenu masque les publications de fil et les stories ;
+ *   - la sourdine de conversation coupe les notifications d'une conversation
+ *     directe.
+ * Aucune des deux ne remplace le blocage, et aucune ne supprime le suivi.
  */
 
 export type RelationshipFollowState = 'none' | 'following' | 'requested';
@@ -27,6 +33,10 @@ export type RelationshipAction =
   | 'unblock'
   | 'mute'
   | 'unmute'
+  | 'mute_content'
+  | 'unmute_content'
+  | 'mute_conversation'
+  | 'unmute_conversation'
   | 'report'
   | 'message';
 
@@ -39,6 +49,10 @@ export interface RelationshipFacts {
   blockedByTarget?: boolean;
   /** Ligne `conversation_members.is_muted` pour une conversation directe. */
   mutedConversation?: boolean;
+  /** Ligne `user_content_mutes` : le lecteur masque les contenus de la cible. */
+  mutedContent?: boolean;
+  /** Une conversation directe existe-t-elle ? Faux si l'action est impossible. */
+  hasDirectConversation?: boolean;
   followState?: RelationshipFollowState;
   /** Dernière demande de suivi, utilisée pour la retenue après un refus. */
   lastFollowRequestAt?: string | null;
@@ -50,16 +64,26 @@ export interface RelationshipPolicy {
   blocked: boolean;
   blockedByViewer: boolean;
   blockedByTarget: boolean;
+  /** Vrai si au moins une des deux sourdines est active. */
   muted: boolean;
+  mutedContent: boolean;
   mutedConversation: boolean;
+  /** État de suivi observé, exposé pour l'UI de sourdine de contenu. */
+  followState: RelationshipFollowState;
   canFollow: boolean;
   canUnfollow: boolean;
   canMessage: boolean;
   canReport: boolean;
   canBlock: boolean;
   canUnblock: boolean;
+  /** Alias historique de `canMuteConversation`. */
   canMute: boolean;
+  /** Alias historique de `canUnmuteConversation`. */
   canUnmute: boolean;
+  canMuteContent: boolean;
+  canUnmuteContent: boolean;
+  canMuteConversation: boolean;
+  canUnmuteConversation: boolean;
   followAction: 'follow' | 'unfollow' | 'none';
   denial: RelationshipDenial | null;
   /** Fin ISO de la retenue, si elle est active ; sinon `null`. */
@@ -116,7 +140,10 @@ export function readFollowCooldown(
  * Résout les actions autorisées à partir des faits observés.
  *
  * - `blocked` est symétrique : la cible m'a bloqué ou je l'ai bloquée.
- * - `muted` ne bloque que les contenus concernés (stories, conversation).
+ * - `mutedContent` ne masque que les publications de fil et les stories ;
+ *   `mutedConversation` ne coupe que les notifications de la conversation
+ *   directe. Les deux sont indépendantes et ne bloquent ni le suivi ni le
+ *   signalement.
  * - `canReport` reste vrai hors de son propre profil, y compris après un
  *   blocage : un abus déjà survenu doit rester signalable à la modération.
  */
@@ -130,8 +157,11 @@ export function resolveRelationship(
   const blockedByViewer = facts.blockedByViewer === true;
   const blockedByTarget = facts.blockedByTarget === true;
   const blocked = blockedByViewer || blockedByTarget;
+  const mutedContent = facts.mutedContent === true;
   const mutedConversation = facts.mutedConversation === true;
-  const muted = mutedConversation;
+  const muted = mutedContent || mutedConversation;
+  // Une conversation absente ne rend pas la sourdine de contenu indisponible.
+  const hasDirectConversation = facts.hasDirectConversation !== false;
   const followState = facts.followState ?? 'none';
   const authenticated = Boolean(viewerId);
 
@@ -156,6 +186,15 @@ export function resolveRelationship(
     followState === 'none' &&
     !cooldown.active;
   const canMessage = authenticated && !isSelf && !blocked;
+  // La sourdine de contenu sert à rester abonné : elle n'est posable que si le
+  // suivi est réellement actif. La révocation reste possible après un
+  // désabonnement, pour ne pas laisser une préférence impossible à retirer.
+  const canMuteContent =
+    authenticated && !isSelf && !blocked && followState === 'following' && !mutedContent;
+  const canUnmuteContent = authenticated && mutedContent;
+  const canMuteConversation =
+    authenticated && !isSelf && !blocked && hasDirectConversation && !mutedConversation;
+  const canUnmuteConversation = authenticated && mutedConversation;
 
   return {
     isSelf,
@@ -163,7 +202,9 @@ export function resolveRelationship(
     blockedByViewer,
     blockedByTarget,
     muted,
+    mutedContent,
     mutedConversation,
+    followState,
     canFollow,
     canUnfollow,
     canMessage,
@@ -172,8 +213,12 @@ export function resolveRelationship(
     canReport: authenticated && !isSelf,
     canBlock: authenticated && !isSelf && !blockedByViewer,
     canUnblock: authenticated && blockedByViewer,
-    canMute: authenticated && !isSelf && !blocked && !muted,
-    canUnmute: authenticated && muted,
+    canMute: canMuteConversation,
+    canUnmute: canUnmuteConversation,
+    canMuteContent,
+    canUnmuteContent,
+    canMuteConversation,
+    canUnmuteConversation,
     followAction: canUnfollow ? 'unfollow' : canFollow ? 'follow' : 'none',
     denial,
     cooldownEndsAt: cooldown.endsAt,
@@ -195,9 +240,17 @@ export function canPerformRelationshipAction(
     case 'unblock':
       return policy.canUnblock;
     case 'mute':
-      return policy.canMute;
+      return policy.canMuteConversation;
     case 'unmute':
-      return policy.canUnmute;
+      return policy.canUnmuteConversation;
+    case 'mute_content':
+      return policy.canMuteContent;
+    case 'unmute_content':
+      return policy.canUnmuteContent;
+    case 'mute_conversation':
+      return policy.canMuteConversation;
+    case 'unmute_conversation':
+      return policy.canUnmuteConversation;
     case 'report':
       return policy.canReport;
     case 'message':

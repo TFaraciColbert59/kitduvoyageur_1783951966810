@@ -246,6 +246,13 @@ export default function PublicProfilePage() {
             report: 'Merci, ton signalement a été transmis.',
             block: 'Ce profil est bloqué. Il n’apparaît plus dans ton réseau.',
             unblock: 'Ce profil est débloqué.',
+            mute_content:
+              'Ses publications et ses stories sont masquées. Le suivi est conservé.',
+            unmute_content: 'Ses publications et ses stories sont de nouveau visibles.',
+            mute_conversation:
+              'Notifications de la conversation directe coupées.',
+            unmute_conversation:
+              'Notifications de la conversation directe rétablies.',
             mute: 'Sourdine activée : notifications de la conversation directe coupées.',
             unmute: 'Sourdine de conversation levée.',
           };

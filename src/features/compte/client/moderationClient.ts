@@ -3,7 +3,8 @@
  *
  * Toutes les mutations passent par les routes `/api/compte/reseau/*` : l'acteur
  * vient du JWT, le client n'écrit jamais directement dans `user_blocks`,
- * `group_reports`, `story_hidden_users` ou `conversation_members`.
+ * `group_reports`, `user_content_mutes`, `story_hidden_users` ou
+ * `conversation_members`.
  */
 
 import type { RelationshipPolicy } from '@/features/compte/domain/relationshipPolicy';
@@ -11,7 +12,11 @@ import type { RelationshipPolicy } from '@/features/compte/domain/relationshipPo
 export interface ModerationState {
   blockedByViewer: boolean;
   blockedByTarget: boolean;
+  /** Sourdine de contenu : publications de fil et stories. */
+  mutedContent: boolean;
+  /** Sourdine de conversation : notifications de la conversation directe. */
   mutedConversation: boolean;
+  hasDirectConversation: boolean;
   policy: RelationshipPolicy;
 }
 
@@ -26,6 +31,10 @@ export interface ReportResult {
 
 export interface MuteResult {
   conversationMuted: true;
+}
+
+export interface ContentMuteResult {
+  contentMuted: true;
 }
 
 type ApiPayload = {
@@ -125,6 +134,24 @@ export async function muteUser(targetId: string): Promise<MuteResult> {
 
 export async function unmuteUser(targetId: string): Promise<{ conversationMuted: false }> {
   return request<{ conversationMuted: false }>('/api/compte/reseau/mute', {
+    method: 'DELETE',
+    body: withUser(targetId),
+  });
+}
+
+/** Masque les publications de fil et les stories de la cible (sans blocage). */
+export async function muteContentUser(targetId: string): Promise<ContentMuteResult> {
+  return request<ContentMuteResult>('/api/compte/reseau/content-mute', {
+    method: 'POST',
+    body: withUser(targetId),
+  });
+}
+
+/** Révoque la sourdine de contenu ; les contenus redeviennent visibles. */
+export async function unmuteContentUser(
+  targetId: string
+): Promise<{ contentMuted: false }> {
+  return request<{ contentMuted: false }>('/api/compte/reseau/content-mute', {
     method: 'DELETE',
     body: withUser(targetId),
   });

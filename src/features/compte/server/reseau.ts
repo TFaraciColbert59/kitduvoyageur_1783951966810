@@ -86,6 +86,8 @@ export type ReseauErrorCode =
   | 'report_failed'
   | 'mute_failed'
   | 'unmute_failed'
+  | 'content_mute_failed'
+  | 'content_unmute_failed'
   | 'state_failed';
 
 // Vocabulaire fermé : une erreur PostgreSQL inconnue ne doit jamais remonter
@@ -110,6 +112,8 @@ const RESEAU_ERROR_CODES = new Set<ReseauErrorCode>([
   'report_failed',
   'mute_failed',
   'unmute_failed',
+  'content_mute_failed',
+  'content_unmute_failed',
   'state_failed',
 ]);
 
@@ -361,7 +365,12 @@ export async function respondFollowRequest(
 export interface ModerationState {
   blockedByViewer: boolean;
   blockedByTarget: boolean;
+  /** Sourdine de contenu : publications de fil et stories masquées. */
+  mutedContent: boolean;
+  /** Sourdine de conversation : notifications de la conversation directe. */
   mutedConversation: boolean;
+  /** Faux lorsqu'aucune conversation directe n'existe encore. */
+  hasDirectConversation: boolean;
   policy: RelationshipPolicy;
 }
 
@@ -371,6 +380,9 @@ export interface ModerationState {
  * Aucune valeur n'est supposée : un échec de lecture lève `state_failed`
  * plutôt que de présenter « non bloqué » ou « non muet » à tort. La politique
  * pure traduit ensuite ces faits en actions autorisées.
+ *
+ * Les deux sourdines sont lues séparément : `user_content_mutes` pour les
+ * contenus, `conversation_members.is_muted` pour la conversation directe.
  */
 export async function loadModerationState(
   supabase: SupabaseClient,
@@ -378,7 +390,7 @@ export async function loadModerationState(
   targetId: string
 ): Promise<ModerationState> {
   try {
-    const [outgoingBlock, incomingBlock, direct, follow, request] =
+    const [outgoingBlock, incomingBlock, direct, follow, request, contentMute] =
       await Promise.all([
         supabase
           .from('user_blocks')
@@ -405,13 +417,22 @@ export async function loadModerationState(
           .eq('requester_id', userId)
           .eq('target_id', targetId)
           .maybeSingle(),
+        // La RLS de `user_content_mutes` ne laisse lire que les lignes du
+        // lecteur : cette requête ne peut pas révéler la sourdine d'autrui.
+        supabase
+          .from('user_content_mutes')
+          .select('muted_id')
+          .eq('muter_id', userId)
+          .eq('muted_id', targetId)
+          .maybeSingle(),
       ]);
 
     if (
       outgoingBlock.error ||
       incomingBlock.error ||
       follow.error ||
-      request.error
+      request.error ||
+      contentMute.error
     ) {
       throw new Error('state_failed');
     }
@@ -427,7 +448,9 @@ export async function loadModerationState(
       targetId,
       blockedByViewer: Boolean(outgoingBlock.data),
       blockedByTarget: Boolean(incomingBlock.data),
+      mutedContent: Boolean(contentMute.data),
       mutedConversation: direct?.muted === true,
+      hasDirectConversation: Boolean(direct),
       followState,
       lastFollowRequestAt:
         (request.data?.responded_at as string | null | undefined) ??
@@ -440,7 +463,9 @@ export async function loadModerationState(
     return {
       blockedByViewer: policy.blockedByViewer,
       blockedByTarget: policy.blockedByTarget,
+      mutedContent: policy.mutedContent,
       mutedConversation: policy.mutedConversation,
+      hasDirectConversation: Boolean(direct),
       policy,
     };
   } catch {
@@ -566,14 +591,14 @@ export async function reportUser(
 }
 
 /**
- * Sourdine réelle disponible sans nouvelle table : coupe les notifications de
- * la conversation directe existante (`conversation_members.is_muted`).
+ * Sourdine de conversation : coupe les notifications de la conversation
+ * directe existante (`conversation_members.is_muted`).
  *
- * Elle ne masque ni les stories ni les publications du fil. `story_hidden_users`
- * a la direction inverse (l'auteur masque un visiteur) et une policy
- * `owner_id = auth.uid()` : un lecteur ne peut pas s'en servir pour masquer un
- * auteur. Une vraie sourdine de contenu exigerait une table dédiée ; elle est
- * documentée comme dépendance.
+ * Elle est distincte de la sourdine de contenu (`user_content_mutes`, voir
+ * `muteContentUser`) : elle ne masque ni les stories ni les publications du
+ * fil. `story_hidden_users` a la direction inverse (l'auteur masque un
+ * visiteur) et une policy `owner_id = auth.uid()` : un lecteur ne peut pas
+ * s'en servir pour masquer un auteur.
  */
 export async function muteUser(
   supabase: SupabaseClient,
@@ -609,6 +634,49 @@ export async function unmuteUser(
     if (error) throw new Error('unmute_failed');
   }
   return { conversationMuted: false };
+}
+
+/**
+ * Sourdine de contenu privée : masque les publications de fil et les stories
+ * de la cible pour le lecteur, sans blocage, sans retrait du suivi et sans
+ * toucher à la sourdine de conversation.
+ *
+ * L'écriture est idempotente (clé primaire `muter_id, muted_id`) et passe par
+ * la RLS own-only de `user_content_mutes`. La cible ne reçoit aucune
+ * notification : la table n'a aucune policy de lecture pour elle.
+ */
+export async function muteContentUser(
+  supabase: SupabaseClient,
+  userId: string,
+  targetId: string
+): Promise<{ contentMuted: true }> {
+  if (!targetId) throw new Error('target_not_found');
+  if (targetId === userId) throw new Error('self');
+  const { error } = await supabase
+    .from('user_content_mutes')
+    .insert({ muter_id: userId, muted_id: targetId });
+  if (error) {
+    if (error.code === '23503') throw new Error('target_not_found');
+    // Un double clic ou une sourdine déjà posée est un succès idempotent.
+    if (error.code !== '23505') throw new Error('content_mute_failed');
+  }
+  return { contentMuted: true };
+}
+
+/** Révoque la sourdine de contenu : les contenus redeviennent visibles. */
+export async function unmuteContentUser(
+  supabase: SupabaseClient,
+  userId: string,
+  targetId: string
+): Promise<{ contentMuted: false }> {
+  if (!targetId) throw new Error('target_not_found');
+  const { error } = await supabase
+    .from('user_content_mutes')
+    .delete()
+    .eq('muter_id', userId)
+    .eq('muted_id', targetId);
+  if (error) throw new Error('content_unmute_failed');
+  return { contentMuted: false };
 }
 
 export async function toggleCordee(
