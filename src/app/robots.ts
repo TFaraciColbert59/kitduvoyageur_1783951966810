@@ -20,6 +20,7 @@ const ALLOW = [
   '/mentions-legales',
   '/politique-confidentialite',
   '/cookies',
+  '/accessibilite',
 ];
 
 /** Routes privées ou sans valeur SEO. */

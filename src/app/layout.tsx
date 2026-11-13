@@ -40,6 +40,7 @@ import PageTransition from '@/components/ui/PageTransition';
 import { ConditionalCursor } from '@/components/ui/CustomCursor';
 import PrefetchRoutes from '@/components/PrefetchRoutes';
 import NativeAppBootstrap from '@/components/NativeAppBootstrap';
+import { AccessibilityRuntime, SkipToContentLink } from '@/components/accessibility';
 import PresenceTracker from '@/components/system/PresenceTracker';
 import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration';
 import WebVitalsReporter from '@/components/WebVitalsReporter';
@@ -301,6 +302,8 @@ export default async function RootLayout({
                   <ErrorBoundaryWrapper>
                     <ReactQueryProvider>
                       <NativeAppBootstrap />
+                      {/* O02 — préférences d'accessibilité persistées, appliquées à chaque page. */}
+                      <AccessibilityRuntime />
                       {/* F-028 — présence réelle (canal privé lkdv-online) */}
                       <PresenceTracker />
                       {/* Service worker web (production) — jamais enregistré dans
@@ -312,13 +315,8 @@ export default async function RootLayout({
                       <Suspense fallback={null}>
                         <GoogleAnalytics />
                       </Suspense>
-                      {/* Skip navigation for accessibility */}
-                      <a
-                        href="#main-content"
-                        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[var(--z-emergency)] focus:px-4 focus:py-2 focus:bg-[color:var(--btn-tint)] focus:text-white focus:rounded-lg focus:font-semibold focus:text-sm"
-                      >
-                        Aller au contenu principal
-                      </a>
+                      {/* Skip navigation for accessibility — place le focus sur <main>. */}
+                      <SkipToContentLink targetId="main-content" />
 
                       {/* Mobile navigation — hidden on desktop (md+) */}
                       <MobileNavWrapper />
