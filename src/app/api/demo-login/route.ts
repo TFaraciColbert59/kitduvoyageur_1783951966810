@@ -2,6 +2,7 @@ import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { createClient as createAdminClient } from '@supabase/supabase-js';
+import { safeNextPath } from '@/lib/supabase/safeNext';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -10,19 +11,19 @@ type PendingCookie = { name: string; value: string; options?: Record<string, unk
 
 async function demoSession(): Promise<
   | { ok: true; pending: PendingCookie[] }
-  | { ok: false; error: string; status: number }
+  | { ok: false; error: string; code: 'disabled' | 'unavailable' | 'failed'; status: number }
 > {
   // Même interrupteur que la route sœur `auth/demo` : sans lui, un simple GET
   // connectait n'importe qui au compte de démonstration (login CSRF).
   if (process.env.DEMO_AUTO_LOGIN !== 'true') {
-    return { ok: false, error: 'Compte de démonstration désactivé.', status: 403 };
+    return { ok: false, error: 'Compte de démonstration désactivé.', code: 'disabled', status: 403 };
   }
   const email = process.env.DEMO_LOGIN_EMAIL?.trim();
   const password = process.env.DEMO_LOGIN_PASSWORD;
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!email || !password || !url || !anonKey) {
-    return { ok: false, error: 'Compte de démonstration indisponible.', status: 503 };
+    return { ok: false, error: 'Compte de démonstration indisponible.', code: 'unavailable', status: 503 };
   }
 
   const cookieStore = await cookies();
@@ -57,7 +58,7 @@ async function demoSession(): Promise<
     }
     console.error('[demo-login] secours lien de connexion :', linkError?.message ?? 'jeton absent ou refusé');
   }
-  return { ok: false, error: 'Connexion démo impossible pour le moment.', status: 401 };
+  return { ok: false, error: 'Connexion démo impossible pour le moment.', code: 'failed', status: 401 };
 }
 
 function applyCookies(response: NextResponse, pending: PendingCookie[]) {
@@ -77,10 +78,11 @@ export async function GET(request: NextRequest) {
   const session = await demoSession();
   if (!session.ok) {
     const target = new URL('/connexion', request.url);
-    target.searchParams.set('demo', session.error);
+    // Code court, jamais de texte libre : l'écran de connexion le traduit en message fixe.
+    target.searchParams.set('demo', session.code);
     return NextResponse.redirect(target, { status: 303 });
   }
-  return applyCookies(NextResponse.redirect(new URL('/compte', request.url), { status: 303 }), session.pending);
+  return applyCookies(NextResponse.redirect(new URL(safeNextPath(request.nextUrl.searchParams.get('next'), '/compte'), request.url), { status: 303 }), session.pending);
 }
 
 export async function POST() {

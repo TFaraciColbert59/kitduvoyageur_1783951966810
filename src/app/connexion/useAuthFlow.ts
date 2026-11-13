@@ -13,6 +13,13 @@ import { safeNextPath } from '@/lib/supabase/safeNext';
 
 export type AuthMode = 'connexion' | 'inscription';
 
+const DEMO_MESSAGES: Record<string, string> = {
+  disabled: 'Le compte démo est désactivé pour le moment.',
+  unavailable: 'Le compte démo est momentanément indisponible.',
+  failed: "La connexion au compte démo n'a pas abouti. Réessayez dans un instant.",
+};
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 /**
  * Logique unique de la page /connexion (connexion, inscription, mot de passe
  * oublié). Partagée par la vue ordinateur et la vue mobile : seul le rendu diffère.
@@ -22,14 +29,17 @@ export function useAuthFlow() {
   // identifiants propres à chaque rendu gardent chaque label sur son champ.
   const uid = useId();
   const searchParams = useSearchParams();
-  const initialMode = (searchParams?.get('mode') as AuthMode) || 'connexion';
+  const initialMode: AuthMode = searchParams?.get('mode') === 'inscription' ? 'inscription' : 'connexion';
   const requestedNext = searchParams?.get('next');
   // Garde unique et testée : refuse `//`, le backslash et les caractères de
   // contrôle (une garde locale laissait passer `/\evil.com` → open redirect).
   const nextPath = requestedNext ? safeNextPath(requestedNext, '') || null : null;
   // Motif d'échec renvoyé par /api/demo-login (`?demo=<motif>`), affiché tel quel (texte).
-  const demoError = (searchParams?.get('demo') ?? '').slice(0, 200);
+  // Jamais de texte libre venu de l'URL : un code connu → message fixe, sinon message générique.
+  const demoCode = searchParams?.get('demo');
+  const demoError = demoCode ? (DEMO_MESSAGES[demoCode] ?? DEMO_MESSAGES.failed) : '';
   const [mode, setMode] = useState<AuthMode>(initialMode);
+  const [errorField, setErrorField] = useState<'name' | 'email' | 'password' | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -85,9 +95,18 @@ export function useAuthFlow() {
     e.preventDefault();
     setError('');
     setConfirmationSent(false);
-    if (!email || !password) { setError(t('auth.errorMissingFields')); return; }
-    if (mode === 'inscription' && !name) { setError(t('auth.errorFirstName')); return; }
-    if (password.length < 8) { setError(t('auth.errorPasswordLength')); return; }
+    const fail = (field: 'name' | 'email' | 'password', msg: string) => {
+      setError(msg);
+      setErrorField(field);
+      // Le champ fautif reçoit le focus (id construit comme dans les vues).
+      document.getElementById(`${uid}-${field}`)?.focus();
+    };
+    setErrorField(null);
+    if (!email.trim()) { fail('email', t('auth.errorMissingFields')); return; }
+    if (!password) { fail('password', t('auth.errorMissingFields')); return; }
+    if (mode === 'inscription' && !name) { fail('name', t('auth.errorFirstName')); return; }
+    if (!EMAIL_RE.test(email.trim())) { fail('email', 'Saisissez une adresse e-mail valide (nom@exemple.fr).'); return; }
+    if (password.length < 8) { fail('password', t('auth.errorPasswordLength')); return; }
     setLoading(true);
     try {
       if (mode === 'connexion') {
@@ -122,6 +141,7 @@ export function useAuthFlow() {
   const switchMode = (next: AuthMode) => {
     setMode(next);
     setError('');
+    setErrorField(null);
     setConfirmationSent(false);
     setForgotPasswordOpen(false);
   };
@@ -129,7 +149,7 @@ export function useAuthFlow() {
   return {
     uid, t, mode, switchMode, setMode, email, setEmail, password, setPassword, name, setName,
     showPassword, setShowPassword, forgotPasswordOpen, setForgotPasswordOpen, resetSent,
-    loading, error, setError, confirmationSent, setConfirmationSent, demoError,
+    loading, error, errorField, setError, confirmationSent, setConfirmationSent, demoError,
     handleSubmit, handleResetPassword,
   };
 }

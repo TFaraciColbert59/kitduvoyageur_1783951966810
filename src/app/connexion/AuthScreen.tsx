@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { hcaptchaSiteKey } from '@/lib/captcha/hcaptcha';
 import { useAuthFlow, type AuthMode } from './useAuthFlow';
 import './auth-screen.css';
@@ -15,7 +16,11 @@ const TABS: AuthMode[] = ['connexion', 'inscription'];
  */
 export default function AuthScreen() {
   const f = useAuthFlow();
-  const { uid, t, mode, email, password, name, showPassword, loading, error, demoError } = f;
+  const { uid, t, mode, email, password, name, showPassword, loading, error, errorField, demoError } = f;
+  const searchParams = useSearchParams();
+  // `next` suit le bouton démo ; la route le valide (safeNextPath) avant de rediriger.
+  const rawNext = searchParams?.get('next');
+  const demoHref = rawNext ? `/api/demo-login?next=${encodeURIComponent(rawNext)}` : '/api/demo-login';
   const [demoLoading, setDemoLoading] = useState(false);
 
   // Retour arrière (cache de navigation) après un clic démo : on ré-arme le bouton.
@@ -25,7 +30,22 @@ export default function AuthScreen() {
     return () => window.removeEventListener('pageshow', reset);
   }, []);
 
+  const onTabKey = (e: React.KeyboardEvent, current: AuthMode) => {
+    const i = TABS.indexOf(current);
+    let next: AuthMode | null = null;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next = TABS[(i + 1) % TABS.length];
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') next = TABS[(i - 1 + TABS.length) % TABS.length];
+    else if (e.key === 'Home') next = TABS[0];
+    else if (e.key === 'End') next = TABS[TABS.length - 1];
+    if (!next) return;
+    e.preventDefault();
+    f.switchMode(next);
+    document.getElementById(`${uid}-tab-${next}`)?.focus();
+  };
+
   const errId = `${uid}-err`;
+  const describe = (field: 'name' | 'email' | 'password') => (error && (!errorField || errorField === field) ? errId : undefined);
+  const invalid = (field: 'name' | 'email' | 'password') => (errorField === field ? true : undefined);
   const demoErrId = `${uid}-demo-err`;
   const isSignup = mode === 'inscription';
   const showForm = !f.confirmationSent && !f.forgotPasswordOpen;
@@ -58,6 +78,7 @@ export default function AuthScreen() {
                 tabIndex={mode === m ? 0 : -1}
                 className="lkdv-auth-tab"
                 onClick={() => f.switchMode(m)}
+                onKeyDown={(e) => onTabKey(e, m)}
               >
                 {t(m === 'connexion' ? 'auth.signIn' : 'auth.signUp')}
               </button>
@@ -77,7 +98,7 @@ export default function AuthScreen() {
               </button>
             </div>
           ) : f.forgotPasswordOpen ? (
-            <form onSubmit={f.handleResetPassword} className="lkdv-auth-form">
+            <form onSubmit={f.handleResetPassword} className="lkdv-auth-form" noValidate>
               <p className="lkdv-auth-h2">{t('auth.forgotPassword')}</p>
               <p className="lkdv-auth-hint">{t('auth.forgotPasswordHint')}</p>
               {f.resetSent ? (
@@ -113,7 +134,7 @@ export default function AuthScreen() {
               </button>
             </form>
           ) : (
-            <form method="post" onSubmit={f.handleSubmit} className="lkdv-auth-form">
+            <form method="post" onSubmit={f.handleSubmit} className="lkdv-auth-form" noValidate>
               {isSignup && (
                 <div className="lkdv-auth-field">
                   <label htmlFor={`${uid}-name`}>{t('auth.name')}</label>
@@ -124,7 +145,8 @@ export default function AuthScreen() {
                     value={name}
                     onChange={(e) => f.setName(e.target.value)}
                     placeholder={t('auth.namePlaceholder')}
-                    aria-describedby={error ? errId : undefined}
+                    aria-describedby={describe('name')}
+                    aria-invalid={invalid('name')}
                   />
                 </div>
               )}
@@ -141,7 +163,8 @@ export default function AuthScreen() {
                   value={email}
                   onChange={(e) => f.setEmail(e.target.value)}
                   placeholder={t('auth.emailPlaceholder')}
-                  aria-describedby={error ? errId : undefined}
+                  aria-describedby={describe('email')}
+                  aria-invalid={invalid('email')}
                 />
               </div>
               <div className="lkdv-auth-field">
@@ -155,7 +178,8 @@ export default function AuthScreen() {
                     value={password}
                     onChange={(e) => f.setPassword(e.target.value)}
                     placeholder={isSignup ? t('auth.passwordMinPlaceholder') : t('auth.passwordPlaceholder')}
-                    aria-describedby={error ? errId : undefined}
+                    aria-describedby={describe('password')}
+                    aria-invalid={invalid('password')}
                   />
                   <button
                     type="button"
@@ -209,7 +233,7 @@ export default function AuthScreen() {
               La route ne lit pas `next` : on ne l'invente pas.
             */}
             <a
-              href="/api/demo-login"
+              href={demoHref}
               className="lkdv-auth-demo"
               aria-busy={demoLoading}
               aria-describedby={demoError ? demoErrId : undefined}
@@ -235,9 +259,9 @@ export default function AuthScreen() {
             <nav className="lkdv-auth-foot" aria-label="Autres accès">
               <Link href="/explorer" className="lkdv-auth-link">Continuer sans compte</Link>
               <p className="lkdv-auth-legal">
-                <Link href="/cgu">CGU</Link>
+                <Link href="/cgu" className="lkdv-auth-legal-a">CGU</Link>
                 {' · '}
-                <Link href="/politique-confidentialite">Confidentialité</Link>
+                <Link href="/politique-confidentialite" className="lkdv-auth-legal-a">Confidentialité</Link>
               </p>
             </nav>
           </>

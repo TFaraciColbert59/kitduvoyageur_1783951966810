@@ -5,7 +5,8 @@
   z-index: 60;
   display: flex;
   box-sizing: border-box;
-  padding: calc(12px + env(safe-area-inset-top)) calc(12px + env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left));
+  /* Réserve la hauteur du bandeau cookies (publiée par CookieConsentBanner, bande totale depuis le bas) */
+  padding: calc(12px + env(safe-area-inset-top)) calc(12px + env(safe-area-inset-right)) max(calc(12px + env(safe-area-inset-bottom)), calc(var(--cookie-banner-h, 0px) + 12px)) calc(12px + env(safe-area-inset-left));
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior: contain;
@@ -14,7 +15,7 @@
   color: #172b24;
   --lkdv-auth-forest: #17402c;
   --lkdv-auth-ink: #172b24;
-  --lkdv-auth-muted: #46584d;
+  --lkdv-auth-muted: #172b24;
   --lkdv-auth-sage: #5b7f55;
   --lkdv-auth-danger: #9a2d1f;
   font-family: inherit;
@@ -27,7 +28,10 @@
   margin: auto; /* centré si ça tient, sinon la carte défile dans le conteneur */
   padding: 22px 18px 18px;
   border-radius: 24px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.486), rgba(255, 255, 255, 0.384));
+  /* Verre Compte + voile blanc translucide pour garder un fond homogène derrière les textes secondaires */
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.5)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.486), rgba(255, 255, 255, 0.384));
   -webkit-backdrop-filter: blur(25.2px) saturate(1.8) brightness(1.05);
   backdrop-filter: blur(25.2px) saturate(1.8) brightness(1.05);
   box-shadow:
@@ -281,6 +285,7 @@
   line-height: 1.5;
   color: var(--lkdv-auth-muted);
 }
+.lkdv-auth-legal-a,
 .lkdv-auth-legal a {
   color: inherit;
   text-decoration: underline;
@@ -357,3 +362,12 @@
   .lkdv-auth-demo:active { transform: none; }
   .lkdv-auth-spin { animation-duration: 2.4s; }
 }
+
+/* Mentions : texte 12px, zone tactile >= 44px sans gonfler la carte (marges négatives). */
+.lkdv-auth-legal .lkdv-auth-legal-a {
+  display: inline-block;
+  padding: 15px 6px;
+  margin: -15px -2px;
+  font-size: 12px;
+}
+.lkdv-auth-legal { color: var(--lkdv-auth-ink); }
