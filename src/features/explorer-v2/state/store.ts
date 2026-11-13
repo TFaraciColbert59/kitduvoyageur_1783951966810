@@ -17,6 +17,7 @@ import type {
   ToastMessage,
 } from './types';
 import { LEVEL_ZOOM, SCENES, type SceneName } from './scenes';
+import { newClientSessionId } from '../activity/localSession';
 
 export const DETENT_RATIO: Record<Detent, number> = {
   peek: 0,
@@ -43,7 +44,12 @@ interface ExplorerActions {
   setCamera: (camera: CameraIntent) => void;
   showToast: (toast: Omit<ToastMessage, 'id'>) => void;
   dismissToast: () => void;
-  startActivity: (sport: Sport, sessionId?: string | null, selection?: SportSelection) => void;
+  startActivity: (
+    sport: Sport,
+    sessionId?: string | null,
+    selection?: SportSelection,
+    clientSessionId?: string | null,
+  ) => void;
   updateActivity: (patch: Partial<ActivityState>) => void;
   stopActivity: () => void;
   setTheme: (theme: 'light' | 'dark') => void;
@@ -104,11 +110,13 @@ function activityStarted(
   sport: Sport,
   sessionId: string | null,
   selection?: SportSelection,
+  clientSessionId?: string | null,
 ): ActivityState {
   return {
     sport,
     ...(selection ? { selection } : {}),
     sessionId,
+    ...(clientSessionId ? { clientSessionId } : {}),
     startedAt: Date.now(),
     paused: false,
     offRoute: false,
@@ -255,8 +263,8 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
 
   dismissToast: () => set({ toast: undefined }),
 
-  startActivity: (sport, sessionId = null, selection) => {
-    const activity = activityStarted(sport, sessionId, selection);
+  startActivity: (sport, sessionId = null, selection, clientSessionId) => {
+    const activity = activityStarted(sport, sessionId, selection, clientSessionId);
     set({
       activity,
       sheet: 'live',
@@ -266,6 +274,7 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
     emit('activity-start', {
       sport,
       sessionId,
+      clientSessionId: clientSessionId ?? null,
       variantId: selection?.variantId ?? null,
     });
   },
@@ -278,9 +287,11 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
     set({
       activity: undefined,
       summary: current ? { ...current, endedAt: Date.now() } : null,
-      // Sans UUID serveur, le bilan est local : ne jamais suggérer un problème
-      // de connexion à un utilisateur authentifié.
-      summarySaved: current?.sessionId ? 'pending' : 'local',
+      // Une séance identifiée localement (clientSessionId) peut encore être
+      // créée puis close côté serveur : elle reste « en attente », pas
+      // « locale ». Les scènes et les anciens appels sans identité stable
+      // gardent le bilan strictement local.
+      summarySaved: current?.sessionId || current?.clientSessionId ? 'pending' : 'local',
       sheet: 'summary',
       detent: 'full',
       camera: { type: 'overview' },
@@ -347,7 +358,11 @@ export function useTransientStart(): TransientStart {
     if (!current) return;
     pendingRef.current = null;
     setPendingStart(null);
-    useExplorerStore.getState().startActivity(current.sport, null, current.selection);
+    // L'identité est fixée avant le premier point : un rechargement ou une
+    // reprise réseau retrouve la même séance au lieu d'en créer une seconde.
+    useExplorerStore
+      .getState()
+      .startActivity(current.sport, null, current.selection, newClientSessionId());
   }, []);
 
   useEffect(

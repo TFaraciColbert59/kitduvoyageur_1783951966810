@@ -196,7 +196,7 @@ describe('explorer-v2 · bilan local', () => {
 
     expect(screen.getByText('Sortie locale')).toBeTruthy();
     expect(
-      screen.getByText('Aucune séance serveur n’est créée dans cette tranche.'),
+      screen.getByText('Cette séance n’a pas d’identité serveur ; elle n’est pas synchronisée.'),
     ).toBeTruthy();
     expect(screen.queryByText('Connecte-toi pour conserver tes sorties')).toBeNull();
   });
@@ -212,7 +212,7 @@ describe('explorer-v2 · bilan local', () => {
 
     expect(screen.getByText('Sortie locale')).toBeTruthy();
     expect(
-      screen.getByText('Aucune séance serveur n’est créée dans cette tranche.'),
+      screen.getByText('Cette séance n’a pas d’identité serveur ; elle n’est pas synchronisée.'),
     ).toBeTruthy();
     expect(screen.queryByText('Connecte-toi pour conserver tes sorties')).toBeNull();
   });

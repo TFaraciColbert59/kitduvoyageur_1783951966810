@@ -15,13 +15,21 @@ import { gpsSimulationEnabled } from './gpsSimulation';
  * - hors-trace évalué dès qu'un itinéraire est sélectionné ;
  * - en recette, `window.__xpPushFix` permet de rejouer un GPX sans GPS.
  */
+export interface RestoredTrackerState {
+  clientSessionId: string;
+  /** Points réellement acceptés avant le rechargement, dans l'ordre. */
+  fixes: GpsFix[];
+}
+
 export interface TrackerOptions {
   /** Distance à la trace courante, fournie par l'appelant (worker ou RPC). */
   distanceToRouteM?: (fix: GpsFix) => number | null;
   onFix?: (fix: GpsFix, metrics: ReturnType<ActivityTracker['addFix']>) => void;
+  /** Séance restaurée depuis IndexedDB : le tracker repart de ses points. */
+  restored?: RestoredTrackerState | null;
 }
 
-export function useGpsTracker({ distanceToRouteM, onFix }: TrackerOptions = {}) {
+export function useGpsTracker({ distanceToRouteM, onFix, restored }: TrackerOptions = {}) {
   const activity = useExplorerStore((state) => state.activity);
   const permission = useExplorerStore((state) => state.locationPermission);
   const scene = useExplorerStore((state) => state.scene);
@@ -84,6 +92,17 @@ export function useGpsTracker({ distanceToRouteM, onFix }: TrackerOptions = {}) 
       delete target.__xpPushFix;
     };
   }, []);
+
+  // Reprise d'une séance locale : rejoue uniquement les points déjà acceptés
+  // avant le rechargement, pour que la distance, le D+ et l'ordre repartent de
+  // la même base. Aucun point n'est ajouté ici.
+  useEffect(() => {
+    if (!activity) return;
+    if (!restored || restored.clientSessionId !== activity.clientSessionId) return;
+    const tracker = new ActivityTracker();
+    for (const fix of restored.fixes) tracker.addFix(fix);
+    trackerRef.current = tracker;
+  }, [activity?.clientSessionId, restored]);
 
   // Permission réelle : le store peut être resté à « prompt » alors que le
   // navigateur a déjà refusé. Les scènes de recette gardent leur état simulé.

@@ -9,6 +9,7 @@
  */
 
 import { EXPLORER_SW_PATH, EXPLORER_SW_SCOPE } from '@/lib/pwa/serviceWorkerScopes';
+import { ZONES_STORE, openExplorerDb } from './db';
 
 export interface ZoneBounds {
   west: number;
@@ -25,20 +26,12 @@ export interface ZoneProgress {
 
 const ZONE_CACHE = 'xp-zone-v1';
 const MAX_ZONE_TILES = 400;
-const DB_NAME = 'lkdv-explorer-v2';
-const STORE = 'zones';
+const STORE = ZONES_STORE;
 
 function openDb(): Promise<IDBDatabase | null> {
-  return new Promise((resolve) => {
-    if (typeof indexedDB === 'undefined') return resolve(null);
-    const request = indexedDB.open(DB_NAME, 1);
-    request.onupgradeneeded = () => {
-      const db = request.result;
-      if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE);
-    };
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => resolve(null);
-  });
+  // La base est partagée avec la file hors ligne et les séances : ouvrir une
+  // version inférieure après la montée en version 2 ferait échouer la zone.
+  return openExplorerDb();
 }
 
 async function putZone(key: string, value: unknown): Promise<void> {

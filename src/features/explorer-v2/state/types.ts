@@ -113,7 +113,18 @@ export interface ActivityState {
   sport: Sport;
   /** Variante choisie ; absente pour les scènes et les anciens appels. */
   selection?: SportSelection;
+  /**
+   * Identifiant serveur, renseigné après le démarrage persistant. Il reste
+   * `null` hors ligne tant que la séance n'a pas été créée côté serveur.
+   */
   sessionId: string | null;
+  /**
+   * Identité stable générée avant le premier point (S1.02/K6.15). Elle survit
+   * au rechargement et permet au serveur de retrouver la même séance sans en
+   * créer une seconde. Absente pour les scènes de recette et les anciens
+   * appels directs `startActivity(sport, sessionId)`.
+   */
+  clientSessionId?: string | null;
   startedAt: number;
   paused: boolean;
   offRoute: boolean;

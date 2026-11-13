@@ -8,8 +8,9 @@
  * doublon, et la synchronisation se fait au retour du réseau.
  */
 
-const DB_NAME = 'lkdv-explorer-v2';
-const STORE = 'outbox';
+import { OUTBOX_STORE, openExplorerDb } from './db';
+
+const STORE = OUTBOX_STORE;
 
 export interface QueuedOperation {
   key: string;
@@ -20,17 +21,7 @@ export interface QueuedOperation {
 }
 
 function openDb(): Promise<IDBDatabase | null> {
-  return new Promise((resolve) => {
-    if (typeof indexedDB === 'undefined') return resolve(null);
-    const request = indexedDB.open(DB_NAME, 1);
-    request.onupgradeneeded = () => {
-      const db = request.result;
-      if (!db.objectStoreNames.contains('zones')) db.createObjectStore('zones');
-      if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE, { keyPath: 'key' });
-    };
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => resolve(null);
-  });
+  return openExplorerDb();
 }
 
 export async function enqueue(operation: Omit<QueuedOperation, 'createdAt' | 'attempts'>): Promise<void> {

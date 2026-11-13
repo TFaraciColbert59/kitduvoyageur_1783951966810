@@ -101,9 +101,9 @@ function startVariant(
 }
 
 /**
- * Limite honnête de cette tranche : le suivi local démarre, mais l’API de
- * création de séance n’existe pas encore dans le dépôt. Aucun identifiant
- * serveur ne doit être inventé côté client.
+ * État réel du départ : la séance est toujours conservée sur l'appareil, et
+ * synchronisée si l'utilisateur est connecté. Ne jamais annoncer une création
+ * serveur qui n'a pas encore eu lieu hors ligne.
  */
 function StartLimitNote() {
   return (
@@ -115,8 +115,8 @@ function StartLimitNote() {
         color: 'var(--xp-mut)',
       }}
     >
-      Le suivi démarre localement. La création de séance serveur n’est pas branchée : aucun
-      identifiant n’est envoyé et le bilan ne sera pas enregistré.
+      Le suivi démarre même hors ligne. La séance et ses points restent sur cet appareil, puis sont
+      synchronisés avec ton compte dès que la connexion le permet.
     </p>
   );
 }
@@ -1856,7 +1856,7 @@ function ActivityTabs(ctx: SheetContext, kind: string): SheetTab[] {
                       : state.summarySaved === 'already_finished_without_summary'
                         ? 'Aucun résumé n’a été retrouvé pour cette séance.'
                         : state.summarySaved === 'local'
-                          ? 'Aucune séance serveur n’est créée dans cette tranche.'
+                          ? 'Cette séance n’a pas d’identité serveur ; elle n’est pas synchronisée.'
                           : state.summarySaved === 'unauthenticated'
                             ? 'Connecte-toi pour conserver tes sorties'
                             : state.summarySaved === 'conflict'
