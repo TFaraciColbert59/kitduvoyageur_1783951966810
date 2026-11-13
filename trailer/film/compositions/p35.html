@@ -1,126 +1,16 @@
-<!-- hf-skeleton generated id=p35 sha256=4602f3dbc63bcab6 — carte provisoire générée par tools/timeline/build-skeleton.mjs depuis film/shots.json ; toute retouche hors de la zone hf-footage la soustrait au générateur -->
+<!-- P35 (images 2114–2192, 78 images) — landscape-director. img26, FPV, descente technique derrière Malik.
+     Entrée sur la poussée de P34 : la poussée continue en s'amortissant (S 1,25 → 1,37, outCubic 10 images), puis FPV (poussée continue, foulées en cy, balancement de roulis ±1,2°).
+     Sortie : filé droit vers le bras (cx +260, S +0,20, roulis +2°, inCubic sur 9 images), au plus rapide à la coupe 2192. -->
 <template>
   <style>
-    #root {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-      background: #4B4A44;
-      font-family: "Inter", sans-serif;
-      color: #FAF8F5;
-    }
-    .p35-card {
-      position: absolute;
-      inset: 0;
-      padding: 96px 120px 120px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-    .p35-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      font-family: "JetBrains Mono", monospace;
-      font-size: 34px;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-    }
-    .p35-mid {
-      display: flex;
-      align-items: flex-end;
-      gap: 72px;
-    }
-    .p35-num {
-      font-weight: 900;
-      font-size: 360px;
-      line-height: 0.8;
-      letter-spacing: -0.04em;
-    }
-    .p35-meta {
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-      padding-bottom: 8px;
-    }
-    .p35-source {
-      font-family: "JetBrains Mono", monospace;
-      font-weight: 700;
-      font-size: 64px;
-    }
-    .p35-frames {
-      font-family: "JetBrains Mono", monospace;
-      font-size: 36px;
-    }
-    .p35-star {
-      font-weight: 700;
-      font-size: 40px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-    }
-    .p35-intent {
-      max-width: 1600px;
-      font-size: 52px;
-      line-height: 1.2;
-      font-weight: 400;
-    }
-    .p35-track {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      height: 12px;
-      background: rgba(250, 248, 245, 0.18);
-    }
-    .p35-bar {
-      position: absolute;
-      inset: 0;
-      background: #FAF8F5;
-      transform-origin: 0 50%;
-    }
-    .p35-frame {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-    }
-    .p35-shot,
-    .p35-shot-inner {
-      position: absolute;
-      inset: 0;
-    }
-    .p35-shot {
-      opacity: 0;
-    }
-    .p35-shot-img {
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 1920px;
-      height: 1080px;
-      /* Remplit le 16:9 sans déformer, quel que soit le rapport de l'image : recadrage au centre. */
-      object-fit: cover;
-      object-position: 50% 50%;
-    }
+    #root { position: absolute; inset: 0; overflow: hidden; background: #0B1F17; }
+    .p35-frame { position: absolute; inset: 0; overflow: hidden; }
+    .p35-shot, .p35-shot-inner { position: absolute; inset: 0; }
+    .p35-shot { opacity: 0; }
+    .p35-shot-img { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
+    #p35-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
   </style>
   <div id="root" data-composition-id="p35" data-width="1920" data-height="1080" data-duration="1.3">
-    <!-- Carte provisoire : outil de travail, disparaît quand l'image du plan est là. -->
-    <div id="p35-card" class="p35-card" data-shot="p35" data-act="7">
-      <div id="p35-top" class="p35-top">
-        <span id="p35-act">Acte 7 · COUREUR</span>
-        <span id="p35-range">2114–2192</span>
-      </div>
-      <div id="p35-mid" class="p35-mid">
-        <div id="p35-num" class="p35-num">P35</div>
-        <div id="p35-meta" class="p35-meta">
-          <div id="p35-source" class="p35-source">img26</div>
-          <div id="p35-frames" class="p35-frames">78 images · 1,30 s</div>
-        </div>
-      </div>
-      <div id="p35-intent" class="p35-intent">Descente technique</div>
-      <div id="p35-track" class="p35-track"><div id="p35-bar" class="p35-bar"></div></div>
-    </div>
-    <!-- Emplacement d'image plein cadre : assets/footage/img26.png.
-         Chaque calque : .p35-shot (opacité, séquence) > .p35-shot-inner (libre pour le mouvement) > img. -->
     <div id="p35-frame" class="p35-frame" data-layout-allow-overflow>
       <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) -->
       <div id="p35-shot-1" class="p35-shot" data-src="img26" data-seq="0" data-seq-count="1">
@@ -130,30 +20,63 @@
       </div>
     <!-- hf-footage:end -->
     </div>
+    <canvas id="p35-canvas" width="1920" height="1080" data-layout-allow-overflow></canvas>
   </div>
+  <script src="lib/fx/core.js"></script>
   <script>
     (function () {
-      var D = 78 / 60;
-      var tl = gsap.timeline({ paused: true });
-      // Barre de progression : se remplit sur la durée du plan.
-      tl.fromTo("#p35-bar", { scaleX: 0 }, { scaleX: 1, duration: D, ease: "none" }, 0);
-      // Images présentes : chaque source occupe sa part égale du plan (ordre de la trame) ;
-      // la carte reste visible là où l'image manque.
-      var shots = Array.prototype.slice.call(document.querySelectorAll(".p35-shot"));
-      if (shots.length) {
-        var n = Number(shots[0].getAttribute("data-seq-count"));
-        var bySeq = {};
-        shots.forEach(function (el) { bySeq[el.getAttribute("data-seq")] = el; });
-        for (var k = 0; k < n; k++) {
-          var t = (k * D) / n;
-          var el = bySeq[String(k)];
-          shots.forEach(function (other) {
-            tl.set(other, { opacity: other === el ? 1 : 0 }, t);
-          });
-          tl.set("#p35-card", { opacity: el ? 0 : 1 }, t);
-        }
+      var FX = window.LKDVFX;
+      var W = 1920, H = 1080, INK = "#0B1F17";
+      var img = document.getElementById("p35-shot-1-img");
+      var ctx = document.getElementById("p35-canvas").getContext("2d");
+      function hand(f, amp, seed) {
+        return (FX.noise2(f * 0.09, 1.7, seed) - 0.5) * amp + (FX.noise2(f * 0.45, 5.3, seed + 7) - 0.5) * amp * 0.3;
       }
-      window.__timelines["p35"] = tl;
+      function fit(c) {
+        var a = Math.abs(c.rot || 0), co = Math.cos(a), si = Math.sin(a);
+        var hx = (W / 2 * co + H / 2 * si) / c.S + 2, hy = (W / 2 * si + H / 2 * co) / c.S + 2;
+        c.cx = FX.clamp(c.cx, hx, W - hx);
+        c.cy = FX.clamp(c.cy, hy, H - hy);
+        return c;
+      }
+      function drawCam(c2, c, alpha) {
+        c2.globalAlpha = alpha;
+        c2.setTransform(1, 0, 0, 1, 0, 0);
+        c2.translate(W / 2, H / 2);
+        if (c.rot) c2.rotate(c.rot);
+        c2.scale(c.S, c.S);
+        c2.translate(-c.cx, -c.cy);
+        c2.drawImage(img, 0, 0, W, H);
+      }
+      function shoot(camAt, f, shutter) {
+        var a = camAt(f), b = camAt(f - shutter);
+        var d = Math.abs(a.S - b.S) * 1100 + (Math.abs(a.cx - b.cx) + Math.abs(a.cy - b.cy)) * a.S + Math.abs((a.rot || 0) - (b.rot || 0)) * 1100;
+        var n = FX.clamp(Math.ceil(d / 1.2), 1, 12);
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = INK;
+        ctx.fillRect(0, 0, W, H);
+        for (var i = 0; i < n; i++) drawCam(ctx, n === 1 ? a : camAt(f - (shutter * i) / (n - 1)), 1 / (i + 1));
+        ctx.globalAlpha = 1;
+      }
+
+      var N = 78;
+      function camAt(f) {
+        var a = FX.ease.outCubic(FX.clamp(f / 10, 0, 1));
+        var k = FX.clamp(f / N, 0, 1);
+        var ex = FX.ease.inCubic(FX.clamp((f - (N - 9)) / 9, 0, 1));
+        var S = 1.25 + 0.12 * a + 0.10 * k + 0.20 * ex;
+        var cx = 960 + 30 * k + 260 * ex + hand(f, 6, 351);
+        var cy = 490 + 9 * Math.sin(f * 0.52) + hand(f, 5, 353);
+        var rot = (Math.PI / 180) * (1.2 * Math.sin(f * 0.21) * (1 - ex) + 2.0 * ex);
+        return fit({ S: S, cx: cx, cy: cy, rot: rot });
+      }
+      var clock = FX.bindClock("p35", N, function (t, f) {
+        if (!img.complete || !img.naturalWidth) { ctx.fillStyle = INK; ctx.fillRect(0, 0, W, H); return; }
+        shoot(camAt, f, 0.6 + 1.4 * Math.pow(1 - FX.clamp(f / 7, 0, 1), 2) + 1.8 * FX.ease.inCubic(FX.clamp((f - (N - 9)) / 9, 0, 1)));
+      });
+      img.addEventListener("load", function () { clock.redraw(); });
+      window.__timelines["p35"] = clock.tl;
     })();
   </script>
 </template>

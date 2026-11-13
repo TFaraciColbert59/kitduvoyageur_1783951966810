@@ -1,127 +1,16 @@
-<!-- hf-skeleton generated id=p38 sha256=02fb83705448ea39 — carte provisoire générée par tools/timeline/build-skeleton.mjs depuis film/shots.json ; toute retouche hors de la zone hf-footage la soustrait au générateur -->
+<!-- P38 ★ (images 2297–2378, 81 images) — landscape-director. img47, Tofana : Malik minuscule (≈ 1080, 922) sous une paroi immense.
+     Entrée sur la plongée de P37 : cy 560 → 700 (outCubic, 12 images), S 1,55. Drone qui recule : S 1,55 → 1,10 et montée vers la paroi (cy → 585) en inOutCubic (images 8–72) ; Malik reste dans le tiers bas.
+     Sortie : poussée + glissé droit le long de la piste blanche (cx +120, S +0,18, inCubic sur 9 images). -->
 <template>
   <style>
-    #root {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-      background: #4B4A44;
-      font-family: "Inter", sans-serif;
-      color: #FAF8F5;
-    }
-    .p38-card {
-      position: absolute;
-      inset: 0;
-      padding: 96px 120px 120px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-    .p38-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      font-family: "JetBrains Mono", monospace;
-      font-size: 34px;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-    }
-    .p38-mid {
-      display: flex;
-      align-items: flex-end;
-      gap: 72px;
-    }
-    .p38-num {
-      font-weight: 900;
-      font-size: 360px;
-      line-height: 0.8;
-      letter-spacing: -0.04em;
-    }
-    .p38-meta {
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-      padding-bottom: 8px;
-    }
-    .p38-source {
-      font-family: "JetBrains Mono", monospace;
-      font-weight: 700;
-      font-size: 64px;
-    }
-    .p38-frames {
-      font-family: "JetBrains Mono", monospace;
-      font-size: 36px;
-    }
-    .p38-star {
-      font-weight: 700;
-      font-size: 40px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-    }
-    .p38-intent {
-      max-width: 1600px;
-      font-size: 52px;
-      line-height: 1.2;
-      font-weight: 400;
-    }
-    .p38-track {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      height: 12px;
-      background: rgba(250, 248, 245, 0.18);
-    }
-    .p38-bar {
-      position: absolute;
-      inset: 0;
-      background: #FAF8F5;
-      transform-origin: 0 50%;
-    }
-    .p38-frame {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-    }
-    .p38-shot,
-    .p38-shot-inner {
-      position: absolute;
-      inset: 0;
-    }
-    .p38-shot {
-      opacity: 0;
-    }
-    .p38-shot-img {
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 1920px;
-      height: 1080px;
-      /* Remplit le 16:9 sans déformer, quel que soit le rapport de l'image : recadrage au centre. */
-      object-fit: cover;
-      object-position: 50% 50%;
-    }
+    #root { position: absolute; inset: 0; overflow: hidden; background: #0B1F17; }
+    .p38-frame { position: absolute; inset: 0; overflow: hidden; }
+    .p38-shot, .p38-shot-inner { position: absolute; inset: 0; }
+    .p38-shot { opacity: 0; }
+    .p38-shot-img { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
+    #p38-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
   </style>
   <div id="root" data-composition-id="p38" data-width="1920" data-height="1080" data-duration="1.35">
-    <!-- Carte provisoire : outil de travail, disparaît quand l'image du plan est là. -->
-    <div id="p38-card" class="p38-card" data-shot="p38" data-act="7">
-      <div id="p38-top" class="p38-top">
-        <span id="p38-act">Acte 7 · COUREUR</span>
-        <span id="p38-range">2297–2378</span>
-      </div>
-      <div id="p38-mid" class="p38-mid">
-        <div id="p38-num" class="p38-num">P38</div>
-        <div id="p38-meta" class="p38-meta">
-          <div id="p38-source" class="p38-source">img47</div>
-          <div id="p38-frames" class="p38-frames">81 images · 1,35 s</div>
-          <div id="p38-star" class="p38-star">★ plan d'échelle</div>
-        </div>
-      </div>
-      <div id="p38-intent" class="p38-intent">★ Tofana : Malik minuscule sous une paroi immense</div>
-      <div id="p38-track" class="p38-track"><div id="p38-bar" class="p38-bar"></div></div>
-    </div>
-    <!-- Emplacement d'image plein cadre : assets/footage/img47.png.
-         Chaque calque : .p38-shot (opacité, séquence) > .p38-shot-inner (libre pour le mouvement) > img. -->
     <div id="p38-frame" class="p38-frame" data-layout-allow-overflow>
       <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) -->
       <div id="p38-shot-1" class="p38-shot" data-src="img47" data-seq="0" data-seq-count="1">
@@ -131,30 +20,63 @@
       </div>
     <!-- hf-footage:end -->
     </div>
+    <canvas id="p38-canvas" width="1920" height="1080" data-layout-allow-overflow></canvas>
   </div>
+  <script src="lib/fx/core.js"></script>
   <script>
     (function () {
-      var D = 81 / 60;
-      var tl = gsap.timeline({ paused: true });
-      // Barre de progression : se remplit sur la durée du plan.
-      tl.fromTo("#p38-bar", { scaleX: 0 }, { scaleX: 1, duration: D, ease: "none" }, 0);
-      // Images présentes : chaque source occupe sa part égale du plan (ordre de la trame) ;
-      // la carte reste visible là où l'image manque.
-      var shots = Array.prototype.slice.call(document.querySelectorAll(".p38-shot"));
-      if (shots.length) {
-        var n = Number(shots[0].getAttribute("data-seq-count"));
-        var bySeq = {};
-        shots.forEach(function (el) { bySeq[el.getAttribute("data-seq")] = el; });
-        for (var k = 0; k < n; k++) {
-          var t = (k * D) / n;
-          var el = bySeq[String(k)];
-          shots.forEach(function (other) {
-            tl.set(other, { opacity: other === el ? 1 : 0 }, t);
-          });
-          tl.set("#p38-card", { opacity: el ? 0 : 1 }, t);
-        }
+      var FX = window.LKDVFX;
+      var W = 1920, H = 1080, INK = "#0B1F17";
+      var img = document.getElementById("p38-shot-1-img");
+      var ctx = document.getElementById("p38-canvas").getContext("2d");
+      function hand(f, amp, seed) {
+        return (FX.noise2(f * 0.09, 1.7, seed) - 0.5) * amp + (FX.noise2(f * 0.45, 5.3, seed + 7) - 0.5) * amp * 0.3;
       }
-      window.__timelines["p38"] = tl;
+      function fit(c) {
+        var a = Math.abs(c.rot || 0), co = Math.cos(a), si = Math.sin(a);
+        var hx = (W / 2 * co + H / 2 * si) / c.S + 2, hy = (W / 2 * si + H / 2 * co) / c.S + 2;
+        c.cx = FX.clamp(c.cx, hx, W - hx);
+        c.cy = FX.clamp(c.cy, hy, H - hy);
+        return c;
+      }
+      function drawCam(c2, c, alpha) {
+        c2.globalAlpha = alpha;
+        c2.setTransform(1, 0, 0, 1, 0, 0);
+        c2.translate(W / 2, H / 2);
+        if (c.rot) c2.rotate(c.rot);
+        c2.scale(c.S, c.S);
+        c2.translate(-c.cx, -c.cy);
+        c2.drawImage(img, 0, 0, W, H);
+      }
+      function shoot(camAt, f, shutter) {
+        var a = camAt(f), b = camAt(f - shutter);
+        var d = Math.abs(a.S - b.S) * 1100 + (Math.abs(a.cx - b.cx) + Math.abs(a.cy - b.cy)) * a.S + Math.abs((a.rot || 0) - (b.rot || 0)) * 1100;
+        var n = FX.clamp(Math.ceil(d / 1.2), 1, 12);
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = INK;
+        ctx.fillRect(0, 0, W, H);
+        for (var i = 0; i < n; i++) drawCam(ctx, n === 1 ? a : camAt(f - (shutter * i) / (n - 1)), 1 / (i + 1));
+        ctx.globalAlpha = 1;
+      }
+
+      var N = 81;
+      function camAt(f) {
+        var a = FX.ease.outCubic(FX.clamp(f / 12, 0, 1));
+        var p = FX.ease.inOutCubic(FX.clamp((f - 8) / 64, 0, 1));
+        var ex = FX.ease.inCubic(FX.clamp((f - (N - 9)) / 9, 0, 1));
+        var S = 1.55 - 0.45 * p + 0.18 * ex;
+        var cx = 1070 - 70 * p + 120 * ex + hand(f, 3, 381);
+        var cy = 560 + 140 * a - 115 * p + hand(f, 2, 383);
+        var rot = (Math.PI / 180) * (-0.8 * (1 - a) + 0.6 * ex);
+        return fit({ S: S, cx: cx, cy: cy, rot: rot });
+      }
+      var clock = FX.bindClock("p38", N, function (t, f) {
+        if (!img.complete || !img.naturalWidth) { ctx.fillStyle = INK; ctx.fillRect(0, 0, W, H); return; }
+        shoot(camAt, f, 0.6 + 1.4 * Math.pow(1 - FX.clamp(f / 8, 0, 1), 2) + 1.4 * FX.ease.inCubic(FX.clamp((f - (N - 9)) / 9, 0, 1)));
+      });
+      img.addEventListener("load", function () { clock.redraw(); });
+      window.__timelines["p38"] = clock.tl;
     })();
   </script>
 </template>
