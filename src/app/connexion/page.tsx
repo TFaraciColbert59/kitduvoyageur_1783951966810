@@ -1,148 +1,21 @@
 'use client';
 
-import React, { useId, useState, Suspense } from 'react';
+import React, { Suspense } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/contexts/ToastContext';
-import { trackEvent } from '@/lib/analytics';
-import { createClient } from '@/lib/supabase/client';
-import AppShell from '@/components/shell/AppShell';
 import { Button } from '@/components/ui';
-import { useTranslation } from '@/lib/i18n/context';
-import { getCaptchaToken, hcaptchaSiteKey } from '@/lib/captcha/hcaptcha';
-import { passwordResetRedirectTo } from '@/features/auth/passwordReset';
-import { safeNextPath } from '@/lib/supabase/safeNext';
+import { hcaptchaSiteKey } from '@/lib/captcha/hcaptcha';
+import { useAuthFlow } from './useAuthFlow';
+import AuthScreen from './AuthScreen';
 
-type AuthMode = 'connexion' | 'inscription';
-
+/** Vue ordinateur : carte centrée sous le Header du site. */
 function AuthForm() {
-  // Le formulaire est rendu deux fois (vue ordinateur et vue mobile) : des
-  // identifiants propres à chaque rendu gardent chaque label sur son champ.
-  const uid = useId();
-  const searchParams = useSearchParams();
-  const initialMode = (searchParams?.get('mode') as AuthMode) || 'connexion';
-  const requestedNext = searchParams?.get('next');
-  // Garde unique et testée : refuse `//`, le backslash et les caractères de
-  // contrôle (une garde locale laissait passer `/\evil.com` → open redirect).
-  const nextPath = requestedNext ? safeNextPath(requestedNext, '') || null : null;
-  const [mode, setMode] = useState<AuthMode>(initialMode);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  // `?oubli=1` : la page « nouveau mot de passe » renvoie ici quand le lien n'est plus valable.
-  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(searchParams?.get('oubli') === '1');
-  const [resetSent, setResetSent] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [confirmationSent, setConfirmationSent] = useState(false);
-  const router = useRouter();
-  const { signIn, signUp } = useAuth();
-  const { toast } = useToast();
-  const { t } = useTranslation();
-  // Accès direct au compte de démonstration partagé, sans identifiants.
-  const [demoLoading, setDemoLoading] = useState(false);
-
-  const handleDemoLogin = async () => {
-    setError('');
-    setDemoLoading(true);
-    try {
-      const response = await fetch('/api/demo-login', { method: 'POST', credentials: 'include' });
-      const res = (await response.json().catch(() => ({ success: false, error: t('auth.errorGeneric') }))) as {
-        success: boolean;
-        error?: string;
-      };
-      if (!response.ok || !res.success) {
-        setError(res.error || t('auth.errorGeneric'));
-        return;
-      }
-      // La session posée par le serveur (cookies) est relue par le client
-      // pour que le contexte d'auth se mette à jour sans recharger la page.
-      await createClient().auth.refreshSession();
-      toast(t('auth.toastWelcome'), 'success');
-      router.push(nextPath ?? '/compte');
-      router.refresh();
-    } catch {
-      setError(t('auth.errorGeneric'));
-    } finally {
-      setDemoLoading(false);
-    }
-  };
-
-  const handleResetPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    if (!email) {
-      setError(t('auth.errorMissingEmail'));
-      return;
-    }
-    setLoading(true);
-    try {
-      const supabase = createClient();
-      const captchaToken = await getCaptchaToken();
-      const { error: resetErr } = await supabase.auth.resetPasswordForEmail(email, {
-        // Le lien du courriel passe par /auth/callback (échange du code), puis la page du nouveau mot de passe.
-        redirectTo: passwordResetRedirectTo(window.location.origin),
-        ...(captchaToken ? { captchaToken } : {}),
-      });
-      if (resetErr) throw resetErr;
-      setResetSent(true);
-      toast(t('auth.toastResetSent'), 'info');
-    } catch (err: any) {
-      setError(err?.message || t('auth.errorResetEmail'));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const ensureProfile = async (userId: string, userEmail: string, fullName: string) => {
-    try {
-      const supabase = createClient();
-      const { data: existing } = await supabase.from('user_profiles').select('id').eq('id', userId).maybeSingle();
-      if (!existing) {
-        await supabase.from('user_profiles').upsert({ id: userId, email: userEmail, full_name: fullName || userEmail.split('@')[0] }, { onConflict: 'id' });
-      }
-    } catch { /* ignore */ }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setConfirmationSent(false);
-    if (!email || !password) { setError(t('auth.errorMissingFields')); return; }
-    if (mode === 'inscription' && !name) { setError(t('auth.errorFirstName')); return; }
-    if (password.length < 8) { setError(t('auth.errorPasswordLength')); return; }
-    setLoading(true);
-    try {
-      if (mode === 'connexion') {
-        const result = (await signIn(email, password, await getCaptchaToken())) as { user?: { id: string; email?: string } };
-        if (result?.user) await ensureProfile(result.user.id, result.user.email ?? email, '');
-        trackEvent('login', { method: 'email' });
-        toast(t('auth.toastWelcome'), 'success');
-        // Pas de router.refresh() ici : il déclenchait un second rendu RSC
-        // concurrent de la destination (course → page « indisponible »).
-        router.push(nextPath ?? '/compte');
-      } else {
-        const result = (await signUp(email, password, { fullName: name }, await getCaptchaToken())) as { user?: { id: string; email?: string }; session?: unknown };
-        if (result?.session) {
-          if (result?.user) await ensureProfile(result.user.id, result.user.email ?? email, name);
-          trackEvent('sign_up', { method: 'email' });
-          toast(t('auth.toastAccountCreated'), 'success');
-          router.push(nextPath ?? '/compte');
-        } else {
-          if (result?.user) await ensureProfile(result.user.id, result.user.email ?? email, name);
-          setConfirmationSent(true);
-          toast(t('auth.toastConfirmationSent'), 'info');
-        }
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : t('auth.errorGeneric');
-      const friendlyMsg = msg.includes('Invalid login credentials') ? t('auth.errorInvalidCredentials') : msg.includes('User already registered') ? t('auth.errorAlreadyRegistered') : msg;
-      setError(friendlyMsg);
-    } finally { setLoading(false); }
-  };
+  const {
+    uid, t, mode, setMode, email, setEmail, password, setPassword, name, setName,
+    showPassword, setShowPassword, forgotPasswordOpen, setForgotPasswordOpen, resetSent,
+    loading, error, setError, confirmationSent, setConfirmationSent,
+    handleSubmit, handleResetPassword,
+  } = useAuthFlow();
 
   return (
     <div className="lkdv-auth flex min-h-[100dvh] items-center justify-center px-[var(--space-4)] pb-[var(--space-12)] pt-16 sm:pt-24">
@@ -341,7 +214,7 @@ function AuthForm() {
                 href="/api/demo-login"
                 className="flex min-h-[44px] w-full items-center justify-center rounded-full border border-[color:var(--lkv-border-subtle)] bg-white/60 px-4 py-3 text-[length:var(--lkv-text-body-sm)] font-semibold text-[#17402C] shadow-elevation-1 backdrop-blur-md"
               >
-                Connexion démo
+                Découvrir avec le compte démo
               </a>
               <p className="mt-2 text-center text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-muted)]">
                 Découvrez les fonctionnalités avec le compte de démonstration.
@@ -385,9 +258,7 @@ export default function AuthPage() {
 
       {/* MOBILE */}
       <div className="block md:hidden">
-        <AppShell>
-          <Suspense fallback={<div />}><AuthForm /></Suspense>
-        </AppShell>
+        <Suspense fallback={<div className="lkdv-auth-screen" />}><AuthScreen /></Suspense>
         
       </div>
     </>
