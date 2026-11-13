@@ -101,6 +101,10 @@ Références de suivi : `A03`, `K6.02`, `S1.15`.
   bornes UTC et une durée/distance réelles. Le drawer appelle
   `POST /api/hike-sessions` avec `createCarnet: false` : la sortie dérivée est
   privée, aucun carnet public n'est créé, l'original reste sur l'appareil.
+- **Restitution** : après rechargement, le drawer Sortie relit
+  `public.trace_imports` pour le propriétaire et affiche format, nom, taille,
+  empreinte et date d'import. « Voir la sortie » ouvre directement ce drawer
+  depuis l'écran d'import ; aucun nouveau drawer n'est créé.
 
 ## Non couvert, volontairement
 
@@ -108,9 +112,11 @@ Références de suivi : `A03`, `K6.02`, `S1.15`.
   livrés ici. L'unicité par empreinte, elle, est livrée : voir
   `docs/import/A03-S1.15-persistance.md` et la migration
   `20261112123000_trace_import_dedupe.sql`.
-- La provenance (format, empreinte, nom, taille) est persistée dans
-  `public.trace_imports`, mais l'écran Sorties ne l'affiche pas encore après
-  rechargement. `notes` n'est pas détourné pour stocker la provenance.
+- La provenance (format, empreinte, nom, taille, date d'import) est persistée
+  dans `public.trace_imports` et **relue après rechargement** dans le drawer
+  Sortie existant, pour le propriétaire uniquement. Les champs d'aperçu non
+  persistés (sport, créateur, produit, série, fuseaux, sections ignorées) ne
+  sont pas inventés. `notes` n'est pas détourné pour stocker la provenance.
 - Aucun aperçu de l'original n'est conservé : seule la trace dérivée peut
   rejoindre `hike_sessions`. Le fichier original ne quitte jamais l'appareil.
 - GPX reste lu par `GPXEngine` ; `parseTraceFile` ne reconnaît que TCX et FIT.
@@ -208,6 +214,17 @@ Références de suivi : `A03`, `K6.02`, `S1.15`.
    deux fichiers différents démarrant à la même seconde restent deux sorties.
 7. L'aperçu reste local : aucune requête réseau n'est faite avant le geste
    explicite « Enregistrer dans mes sorties ».
+8. Après l'enregistrement, **« Voir la sortie »** ouvre le drawer Sortie
+   existant (`outing_drawer`) avec le `session_id` retourné. Pour un import déjà
+   présent (`existing: true`) et absent de la liste chargée par le runtime,
+   l'action retombe sur « Mes sorties » : elle ne fabrique pas d'entrée de liste
+   avec un titre ou des métriques supposés.
+9. Après rechargement, `GET /api/compte/sorties/[id]` relit
+   `public.trace_imports` **uniquement pour le propriétaire**
+   (`isProvenanceOwner` + `owner_id = auth.uid()` sous RLS) et restitue format,
+   nom, taille, empreinte et date d'import. Un participant reçoit
+   `provenance: null`. Si la table n'est pas encore déployée ou si la lecture
+   échoue, la sortie reste lisible sans provenance : aucune erreur 500.
 
 ### Persistance et déduplication livrées
 
@@ -278,7 +295,7 @@ avec les branches Explorer/Carnet est dans
 |---|---|---|
 | **S1.15** — importer FIT et TCX valides/tronqués, contrôler tours, unités, provenance, erreurs, déduplication | **Déduplication par empreinte livrée** : `file_id.type = 4` exigé, dates de fin TCX calculées depuis les laps, messages FIT bornés, laps rattachés en `O((points + laps) log laps)`, résumé de session et champs FIT conservés ou signalés, cadence TCX sport-aware, `Notes`/`Training`/`Extensions` signalés, UTF-16 accepté, aperçu UI, refus explicites, registre `trace_imports` et RPC atomique `(owner_id, source_fingerprint)`. | Le stockage des originaux, l'export dédié et la reprise restent ouverts. La vérification serveur de l'empreinte est impossible sans téléverser l'original (limite assumée). |
 | **K6.02** — fixtures et parcours mobile | **Parcours mobile branché** : `Compte → Sorties → Importer FIT/TCX`, sélecteur, glisser-déposer, aperçu, erreurs et message de déduplication par fichier. | Fixtures Garmin/Suunto réelles anonymisées et recette mobile sur appareil ; aucune suite n'a été exécutée dans cette passe. |
-| **A03** — import FIT/TCX | **Flux complété côté persistance** : parseurs, modèle normalisé, limites, SHA-256, aperçu, enregistrement privé, registre de provenance owner-only, déduplication atomique et rollback. | Bucket privé des originaux, export, affichage de la provenance après rechargement, fixtures producteurs et validation en recette. |
+| **A03** — import FIT/TCX | **Flux complété côté persistance et restitution** : parseurs, modèle normalisé, limites, SHA-256, aperçu, enregistrement privé, registre de provenance owner-only, déduplication atomique, provenance relue après rechargement dans le drawer Sortie et raccordement « Voir la sortie ». | Bucket privé des originaux, export dédié, fixtures producteurs et validation en recette. |
 
 ## Vérification
 
@@ -302,8 +319,14 @@ Contrôles manuels à faire en fin de chantier :
 - un import ne crée ni carnet ni moment et reste `visibility = 'private'` ;
 - `anon` ne peut pas lire `trace_imports` ; un autre utilisateur authentifié ne
   voit pas la ligne du propriétaire ;
+- après rechargement, le propriétaire voit format, nom, taille, empreinte et
+  date d'import dans le détail de la sortie ; un participant ne reçoit pas
+  `provenance` et aucun nom de fichier dans la réponse réseau ;
+- sans la migration, le détail d'une sortie reste lisible et `provenance` vaut
+  `null` ;
 - l'export et la suppression RGPD comptent `trace_imports` sans erreur.
 
-Passe A03 « persistance » : ces commandes n'ont **pas** été exécutées, à la
-demande de Tony (tests, suites, build et revue reportés). Seuls des contrôles de
-lecture du diff ont été faits ; le rapport de fin liste les points à vérifier.
+Passe A03 « persistance et restitution » : ces commandes n'ont **pas** été
+exécutées, à la demande de Tony (tests, suites, build et revue reportés). Seuls
+des contrôles de lecture du diff ont été faits ; le rapport de fin liste les
+points à vérifier.

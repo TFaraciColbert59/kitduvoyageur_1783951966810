@@ -358,6 +358,27 @@ export function TraceImportDrawer() {
     runtime.__lkdvCompteAct?.('closeSheet');
   }, []);
 
+  const openSavedOuting = useCallback(() => {
+    if (!saved) return;
+    const runtime = window as unknown as {
+      __lkdvCompteAct?: (action: string, value?: unknown) => void;
+      __lkdvGetState?: () => { OUTINGS?: Array<Record<string, unknown>> } | null;
+    };
+    const current = runtime.__lkdvGetState?.()?.OUTINGS;
+    const present =
+      Array.isArray(current) &&
+      current.some(
+        (item) => item.realId === saved.sessionId || item.id === saved.sessionId
+      );
+    if (!present || !runtime.__lkdvCompteAct) {
+      showOutings();
+      return;
+    }
+    // Réutilise le drawer Sortie existant (`outing_drawer`) : il relira la
+    // provenance persistée dans `trace_imports` pour ce propriétaire.
+    runtime.__lkdvCompteAct('openOutingDrawer', saved.sessionId);
+  }, [saved, showOutings]);
+
   if (authLoading) {
     return (
       <div
@@ -469,9 +490,15 @@ export function TraceImportDrawer() {
           <div className="lkdv-trace-import-actions">
             <ActionPill
               tone="primary"
-              label="Voir mes sorties"
+              label="Voir la sortie"
+              icon={<MapPin />}
+              text="Voir la sortie"
+              onClick={openSavedOuting}
+            />
+            <ActionPill
+              label="Voir toutes mes sorties"
               icon={<ArrowRight />}
-              text="Voir mes sorties"
+              text="Mes sorties"
               onClick={showOutings}
             />
             <ActionPill

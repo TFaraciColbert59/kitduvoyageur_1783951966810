@@ -20,6 +20,22 @@ export interface OutingPoint {
   timestamp: string | null;
 }
 
+export type OutingImportSource = 'fit' | 'tcx' | 'gpx';
+
+/**
+ * Provenance réellement persistée par `trace_imports` pour un import de trace.
+ * Les champs de l'aperçu local (sport, créateur, produit, série, fuseaux,
+ * sections ignorées) ne sont volontairement pas repris : ils ne sont pas
+ * stockés et ne peuvent donc pas être restitués après rechargement.
+ */
+export interface OutingImportProvenance {
+  source: OutingImportSource;
+  fingerprint: string;
+  fileName: string | null;
+  byteLength: number | null;
+  importedAt: string;
+}
+
 export interface OutingPhoto {
   id: string;
   url: string;
@@ -99,7 +115,21 @@ export interface OutingDetail {
   comments: OutingComment[];
   points: OutingPoint[];
   canEdit: boolean;
+  /**
+   * Provenance privée d'un import FIT/TCX/GPX. `null` pour une sortie GPS,
+   * pour un lecteur non propriétaire, ou si le registre n'est pas disponible :
+   * le détail de la sortie reste alors entièrement lisible.
+   */
+  provenance: OutingImportProvenance | null;
 }
+
+type TraceImportRow = {
+  source: string | null;
+  source_fingerprint: string | null;
+  source_file_name: string | null;
+  source_byte_length: number | string | null;
+  imported_at: string | null;
+};
 
 type SessionRow = {
   id: string;
@@ -142,6 +172,78 @@ function numericOrNull(value: unknown): number | null {
 
 function text(value: unknown): string {
   return typeof value === 'string' ? value : '';
+}
+
+/**
+ * Validation stricte d'une ligne `trace_imports`. Une valeur inattendue ne
+ * devient jamais une provenance approximative : on préfère ne rien afficher.
+ */
+export function parseImportProvenance(
+  row: Partial<TraceImportRow> | null | undefined
+): OutingImportProvenance | null {
+  if (!row) return null;
+  const source =
+    typeof row.source === 'string' ? row.source.trim().toLowerCase() : '';
+  if (source !== 'fit' && source !== 'tcx' && source !== 'gpx') return null;
+
+  const fingerprint =
+    typeof row.source_fingerprint === 'string'
+      ? row.source_fingerprint.trim().toLowerCase()
+      : '';
+  if (!/^sha256:[0-9a-f]{64}$/.test(fingerprint)) return null;
+
+  const importedAt = typeof row.imported_at === 'string' ? row.imported_at.trim() : '';
+  if (!importedAt) return null;
+
+  const fileName =
+    typeof row.source_file_name === 'string' ? row.source_file_name.trim() : '';
+  const rawBytes = row.source_byte_length;
+  let bytes = NaN;
+  if (typeof rawBytes === 'number') {
+    bytes = rawBytes;
+  } else if (typeof rawBytes === 'string' && rawBytes.trim() !== '') {
+    bytes = Number(rawBytes);
+  }
+
+  return {
+    source,
+    fingerprint,
+    fileName: fileName ? fileName.slice(0, 255) : null,
+    byteLength:
+      Number.isFinite(bytes) && bytes > 0 ? Math.min(Math.round(bytes), 16_777_216) : null,
+    importedAt,
+  };
+}
+
+/**
+ * Lit la provenance d'un import pour **son propriétaire uniquement**.
+ *
+ * - `owner_id` et `session_id` sont filtrés ensemble ; la RLS de
+ *   `trace_imports` ne laisse de toute façon lire que `auth.uid()`.
+ * - Une table absente (code déployé avant la migration) ou une lecture
+ *   refusée retourne `null`, jamais une erreur : le détail de la sortie ne
+ *   doit pas dépendre du registre de provenance.
+ * - Le nom de fichier n'est jamais journalisé ici.
+ */
+async function readImportProvenance(
+  supabase: SupabaseClient,
+  userId: string,
+  sessionId: string
+): Promise<OutingImportProvenance | null> {
+  try {
+    const { data, error } = await supabase
+      .from('trace_imports')
+      .select(
+        'source,source_fingerprint,source_file_name,source_byte_length,imported_at'
+      )
+      .eq('owner_id', userId)
+      .eq('session_id', sessionId)
+      .maybeSingle();
+    if (error) return null;
+    return parseImportProvenance(data as TraceImportRow | null);
+  } catch {
+    return null;
+  }
 }
 
 export function normalizeVisibility(value: unknown): OutingVisibility {
@@ -254,9 +356,20 @@ export async function loadOutingDetail(
 
   if (sessionError || !sessionData) return null;
   const session = sessionData as SessionRow;
-  const canEdit = session.user_id === userId;
+  // La provenance est privée au propriétaire, même si un futur rôle de
+  // collaboration élargit un jour `canEdit`.
+  const isProvenanceOwner = session.user_id === userId;
+  const canEdit = isProvenanceOwner;
 
-  const [routeRes, photoRes, participantRes, gearRes, kudosRes, commentRes] = await Promise.all([
+  const [
+    routeRes,
+    photoRes,
+    participantRes,
+    gearRes,
+    kudosRes,
+    commentRes,
+    provenance,
+  ] = await Promise.all([
     session.route_id
       ? supabase.from('hiking_routes').select('id,name,region').eq('id', session.route_id).maybeSingle()
       : Promise.resolve({ data: null, error: null }),
@@ -284,6 +397,11 @@ export async function loadOutingDetail(
       .select('id,user_id,body,created_at')
       .eq('session_id', session.id)
       .order('created_at', { ascending: true }),
+    // La provenance n'est lue que pour le propriétaire. Un participant ne
+    // reçoit jamais le nom du fichier, l'empreinte ou la taille source.
+    isProvenanceOwner
+      ? readImportProvenance(supabase, userId, session.id)
+      : Promise.resolve(null),
   ]);
 
   const route = routeRes.data as { name?: string | null; region?: string | null } | null;
@@ -531,6 +649,7 @@ export async function loadOutingDetail(
     comments,
     points,
     canEdit,
+    provenance,
   };
 }
 
