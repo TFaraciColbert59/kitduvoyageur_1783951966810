@@ -219,3 +219,96 @@ describe('GPXEngine · extractTrack et dénivelé', () => {
     expect(GPXEngine.elevationGain([])).toBeNull();
   });
 });
+
+describe('GPXEngine · segments (plusieurs trkseg / trk)', () => {
+  const xml = `<gpx>
+    <trk><trkseg>
+      <trkpt lat="45.00" lon="6.00"><ele>1000</ele></trkpt>
+      <trkpt lat="45.00" lon="6.02"><ele>1100</ele></trkpt>
+    </trkseg><trkseg>
+      <trkpt lat="45.00" lon="6.60"><ele>2000</ele></trkpt>
+      <trkpt lat="45.00" lon="6.62"><ele>2150</ele></trkpt>
+    </trkseg></trk>
+    <trk><trkseg>
+      <trkpt lat="46.00" lon="7.00"/><trkpt lat="46.00" lon="7.02"/>
+    </trkseg></trk>
+  </gpx>`;
+
+  it('expose un segment par trkseg et par trk, sans les relier', () => {
+    const track = GPXEngine.extractTrack(xml);
+    expect(track.segments).toHaveLength(3);
+    expect(track.segments.map((s) => s.coordinates.length)).toEqual([2, 2, 2]);
+    expect(track.segments[1].coordinates[0]).toEqual([6.6, 45]);
+    expect(track.coordinates).toHaveLength(6);
+  });
+
+  it('somme le dénivelé segment par segment (pas de saut d’altitude entre segments)', () => {
+    const track = GPXEngine.extractTrack(xml);
+    // 1000→1100 (+100) et 2000→2150 (+150) ; le saut 1100→2000 n'existe pas.
+    expect(GPXEngine.segmentsElevationGain(track.segments)).toBe(250);
+    expect(GPXEngine.elevationGain(track.elevations)).toBeGreaterThan(250);
+    expect(GPXEngine.segmentsElevationGain([{ coordinates: [[6, 45]], elevations: [null] }])).toBeNull();
+  });
+
+  it('sépare aussi les rte', () => {
+    const route = '<gpx><rte><rtept lat="45" lon="6"/><rtept lat="45" lon="6.1"/></rte><rte><rtept lat="46" lon="7"/><rtept lat="46" lon="7.1"/></rte></gpx>';
+    const track = GPXEngine.extractTrack(route);
+    expect(track.kind).toBe('route');
+    expect(track.segments).toHaveLength(2);
+  });
+
+  it('fromCoordinates produit un GPX relu à l’identique', () => {
+    const coords: Array<[number, number]> = [[6.1, 45.1], [6.2, 45.2], [6.3, 45.3]];
+    expect(GPXEngine.extractCoordinates(GPXEngine.fromCoordinates(coords, 'A & B'))).toEqual(coords);
+  });
+});
+
+describe('GPXEngine · entrées pathologiques en coût linéaire (< 200 ms)', () => {
+  const timed = (fn: () => unknown): number => {
+    const t0 = performance.now();
+    fn();
+    return performance.now() - t0;
+  };
+
+  it('0,4 Mo de <trkpt  sans > termine vite et ne rend aucun point', () => {
+    const xml = '<gpx>' + '<trkpt '.repeat(Math.floor(400_000 / 8));
+    let out: unknown;
+    const ms = timed(() => {
+      out = GPXEngine.extractCoordinates(xml);
+    });
+    expect(out).toEqual([]);
+    expect(ms).toBeLessThan(200);
+  });
+
+  it('20 000 trkpt sans </trkpt termine vite et lit les 20 000 points', () => {
+    const xml = '<gpx>' + Array.from({ length: 20_000 }, (_, i) => `<trkpt lat="45.${i % 1000}" lon="6.${i % 1000}">`).join('') + '</gpx>';
+    let out: Array<[number, number]> = [];
+    const ms = timed(() => {
+      out = GPXEngine.extractCoordinates(xml);
+    });
+    expect(out).toHaveLength(20_000);
+    expect(ms).toBeLessThan(200);
+  });
+
+  it('des attributs géants sans > ne sont pas balayés jusqu’à la fin', () => {
+    const xml = '<gpx>' + `<trkpt lat="45" ${'x'.repeat(2000)} `.repeat(150) + '</gpx>';
+    let out: unknown;
+    const ms = timed(() => {
+      out = GPXEngine.extractCoordinates(xml);
+    });
+    expect(out).toEqual([]);
+    expect(ms).toBeLessThan(200);
+  });
+
+  it('un gros fichier valide (50 000 points) reste correct', () => {
+    const xml = '<gpx><trk><trkseg>' + Array.from({ length: 50_000 }, (_, i) => `<trkpt lat="45.${String(i).padStart(5, '0')}" lon="6.5"><ele>${1000 + (i % 10)}</ele></trkpt>`).join('\n') + '</trkseg></trk></gpx>';
+    let track = GPXEngine.extractTrack(xml, 100_000);
+    const ms = timed(() => {
+      track = GPXEngine.extractTrack(xml, 100_000);
+    });
+    expect(track.coordinates).toHaveLength(50_000);
+    expect(track.elevations[3]).toBe(1003);
+    expect(track.segments).toHaveLength(1);
+    expect(ms).toBeLessThan(500);
+  });
+});

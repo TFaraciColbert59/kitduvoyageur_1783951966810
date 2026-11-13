@@ -39,7 +39,7 @@ describe('trailLineFromData / savedTrailFromRow', () => {
     const line = { type: 'LineString', coordinates: [[6.1, 45.1], [6.2, 45.2]] };
     expect(trailLineFromData({ geojson: line })?.coordinates).toHaveLength(2);
     expect(trailLineFromData({ coordinates: line.coordinates })?.coordinates).toHaveLength(2);
-    expect(trailLineFromData({ geometry: JSON.stringify(SENTIER) })?.coordinates).toHaveLength(4);
+    expect(trailLineFromData({ geometry: JSON.stringify(SENTIER) })?.coordinates).toHaveLength(2);
   });
 
   it('rend null sans tracé, jamais le tracé d’une autre randonnée', () => {
@@ -58,12 +58,12 @@ describe('trailLineFromData / savedTrailFromRow', () => {
     for (const bavella of REAL_CATALOG_TRAILS) expect(item.geojson).not.toEqual(bavella.geojson);
   });
 
-  it('reprend nom, chiffres réels et id de route de la ligne', () => {
+  it('reprend nom, chiffres réels et id de route EXPLICITE de trail_data', () => {
     const item = savedTrailFromRow({
       id: 'row-2',
-      trail_id: '1790027540899',
+      trail_id: 'ma-cle-libre',
       trail_name: 'Sentier des Gardes',
-      trail_data: { distance_km: 9.1, elevation_gain_m: '640', region: 'aiguilles rouges' },
+      trail_data: { route_id: 1790027540899, distance_km: 9.1, elevation_gain_m: '640', region: 'aiguilles rouges' },
     });
     expect(item).toMatchObject({
       name: 'Sentier des Gardes',
@@ -74,10 +74,20 @@ describe('trailLineFromData / savedTrailFromRow', () => {
       isSaved: true,
       geojson: null,
     });
+    expect(savedTrailFromRow({ id: 'r', trail_data: { hiking_route_id: '77' } }).routeId).toBe(77);
   });
 
-  it('l’id de route du trail_data prime sur trail_id', () => {
-    expect(savedTrailFromRow({ id: 'r', trail_id: '5', trail_data: { route_id: 77 } }).routeId).toBe(77);
+  it('un trail_id numérique seul n’est JAMAIS un identifiant de route : aucun tracé, état indisponible', async () => {
+    // `trail_id` est un texte libre sans clé étrangère : un identifiant OSM numérique y est possible.
+    const item = savedTrailFromRow({ id: 'row-3', trail_id: '2251447', trail_name: 'Relation OSM', trail_data: {} });
+    expect(item.routeId).toBeNull();
+    const fetchRoute = vi.fn().mockResolvedValue(SENTIER);
+    const result = await resolveTrailGeometry(item, fetchRoute);
+    expect(fetchRoute).not.toHaveBeenCalled();
+    expect(result).toEqual({ geojson: null, source: null });
+    expect(buildTrailMessageMeta(item, result.geojson)).not.toHaveProperty('geojson');
+    // Même avec un trail_id qui ressemble à une route de la base.
+    expect(savedTrailFromRow({ id: 'row-4', trail_id: '1790027540899', trail_data: {} }).routeId).toBeNull();
   });
 });
 
@@ -91,12 +101,13 @@ describe('resolveTrailGeometry : jamais de repli sur une autre randonnée', () =
     expect(fetchRoute).not.toHaveBeenCalled();
   });
 
-  it('2) sinon la géométrie réelle de hiking_routes, par id de route (MultiLineString)', async () => {
+  it('2) sinon la géométrie réelle de hiking_routes, par id de route (segments conservés)', async () => {
     const fetchRoute = vi.fn().mockResolvedValue(SENTIER);
     const result = await resolveTrailGeometry({ geojson: null, routeId: 1790027540899 }, fetchRoute);
     expect(fetchRoute).toHaveBeenCalledWith(1790027540899);
     expect(result.source).toBe('hiking_routes');
-    expect(result.geojson?.coordinates).toHaveLength(4);
+    expect(result.geojson?.type).toBe('MultiLineString');
+    expect(result.geojson?.coordinates).toHaveLength(2);
   });
 
   it('2 bis) accepte une géométrie stockée en chaîne JSON', async () => {
@@ -135,20 +146,21 @@ describe('message randonnée', () => {
 
   it('joint un tracé simplifié (≤ 200 points) avec départ et arrivée conservés', () => {
     const light = toMessageLine(many)!;
-    expect(light.coordinates.length).toBeLessThanOrEqual(MESSAGE_TRACE_MAX_POINTS);
-    expect(light.coordinates[0]).toEqual(many.coordinates[0]);
-    expect(light.coordinates[light.coordinates.length - 1]).toEqual(many.coordinates[many.coordinates.length - 1]);
+    const pts = light.type === 'LineString' ? light.coordinates : light.coordinates.flat();
+    expect(pts.length).toBeLessThanOrEqual(MESSAGE_TRACE_MAX_POINTS);
+    expect(pts[0]).toEqual(many.coordinates[0]);
+    expect(pts[pts.length - 1]).toEqual(many.coordinates[many.coordinates.length - 1]);
     expect(toMessageLine(null)).toBeNull();
   });
 
   it('n’écrit pas de geojson quand le tracé est inconnu, et ne double pas les coordonnées', () => {
-    const item = savedTrailFromRow({ id: 'r1', trail_id: '12', trail_name: 'Sans tracé', trail_data: {} });
+    const item = savedTrailFromRow({ id: 'r1', trail_name: 'Sans tracé', trail_data: { route_id: 12 } });
     const meta = buildTrailMessageMeta(item, null);
     expect(meta).not.toHaveProperty('geojson');
     expect(meta).not.toHaveProperty('coordinates');
     expect(meta.id).toBe('12');
     const withLine = buildTrailMessageMeta(item, many);
-    expect(withLine.geojson?.coordinates.length).toBeLessThanOrEqual(200);
+    expect((withLine.geojson?.coordinates as unknown[]).length).toBeLessThanOrEqual(200);
     expect(withLine).not.toHaveProperty('coordinates');
   });
 

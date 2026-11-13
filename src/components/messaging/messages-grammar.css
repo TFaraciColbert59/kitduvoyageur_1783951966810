@@ -1610,6 +1610,25 @@
   pointer-events: auto;
   background: rgba(23, 43, 36, 0.78);
 }
+.lkdv-messages .mtrace-nobasemap {
+  display: block;
+  padding: 0;
+  background: linear-gradient(180deg, #1e4a35, #172b24);
+}
+.lkdv-messages .mtrace-nobasemap .mtrace-thumb {
+  position: absolute;
+  inset: 0;
+  border-radius: 0;
+}
+.lkdv-messages .mtrace-nobasemap-label {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 70px;
+  text-align: center;
+  font: 600 12px/1.3 var(--sf);
+  color: rgba(255, 255, 255, 0.9);
+}
 .lkdv-messages .mtrace-empty {
   position: relative;
   inset: auto;
@@ -2039,4 +2058,14 @@
   outline: 2px solid #5b7f55;
   outline-offset: 2px;
   border-radius: 999px;
+}
+
+/* Dégagement du compositeur au-dessus de la barre d'onglets flottante (web) :
+   capsule de 60 px posée à 6 px du bas + marge. Sur la barre native iOS,
+   aucune capsule web : on garde l'ancien dégagement. */
+.lkdv-messages {
+  --lkdv-msg-bar-clear: 74px;
+}
+html[data-native-glass-nav] .lkdv-messages {
+  --lkdv-msg-bar-clear: 42px;
 }

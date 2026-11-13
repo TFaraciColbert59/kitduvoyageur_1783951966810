@@ -39,9 +39,10 @@ import { SharedPostEmbed } from '@/features/messaging/components/SharedPostEmbed
 import { AttachmentDrawer } from '@/features/messaging/components/AttachmentDrawer';
 import { GpxThumb } from '@/features/messaging/components/GpxThumb';
 import { TraceThumb } from '@/features/messaging/components/TraceThumb';
-import { catalogLineForId, parseRouteId } from '@/features/messaging/data/realTrailsData';
+import { catalogLineForId, isIndicativeTrailId, parseRouteId } from '@/features/messaging/data/realTrailsData';
 import { formatTraceStats } from '@/features/messaging/lib/traceFormat';
-import { lngLatLengthKm, toLineString } from '@/lib/geo/traceCoordinates';
+import { buildGpxMessageMeta, messageTraceStats } from '@/features/messaging/lib/traceStats';
+import { toTraceGeometry } from '@/lib/geo/traceCoordinates';
 import { AudioPlayerBubble } from '@/features/messaging/components/AudioPlayerBubble';
 import { useKeyboardInset } from '@/features/messaging/hooks/useKeyboardInset';
 import { parseMessageDeepLink, resolveHandleToUserId } from '@/features/messaging/lib/deepLinks';
@@ -639,18 +640,12 @@ function MessageThread({
                       (() => {
                         // Tracé joint au message uniquement : aucune requête par bulle, aucun tracé de remplacement.
                         const meta = message.metadata ?? {};
-                        const carried = toLineString(meta.geojson ?? meta.coordinates) ?? (message.message_type === 'trail' ? catalogLineForId(meta.id) : null);
+                        const carried = toTraceGeometry(meta.geojson ?? meta.coordinates) ?? (message.message_type === 'trail' ? catalogLineForId(meta.id) : null);
+                        const indicative = message.message_type === 'trail' && (meta.indicative === true || isIndicativeTrailId(meta.id));
                         const isTrail = message.message_type === 'trail';
                         const label = isTrail ? message.content : (meta.file_name as string) || 'Tracé GPX';
-                        const stats = formatTraceStats({
-                          distanceKm:
-                            typeof meta.distance_km === 'number'
-                              ? meta.distance_km
-                              : carried
-                                ? lngLatLengthKm(carried.coordinates)
-                                : null,
-                          elevationGainM: typeof meta.elevation_gain_m === 'number' ? meta.elevation_gain_m : null,
-                        });
+                        // Chiffres joints à l'envoi (trace complète) : jamais recalculés sur le tracé simplifié du message.
+                        const stats = formatTraceStats(messageTraceStats(meta));
                         const open = (event: React.SyntheticEvent) => {
                           event.stopPropagation();
                           onOpenAttachment?.(message);
@@ -675,6 +670,7 @@ function MessageThread({
                                 width={250}
                                 height={160}
                                 reserveBottom={40}
+                                badge={indicative && carried ? 'Indicatif' : undefined}
                                 emptyLabel={
                                   parseRouteId(meta.id) != null
                                     ? 'Ouvrir pour voir le tracé'
@@ -1748,8 +1744,9 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                   display: 'flex',
                   flexDirection: 'column',
                   height: '100%',
-                  // Barre de rédaction abaissée au plus près de la bottom bar ou calée au-dessus du clavier
-                  paddingBottom: keyboardInset > 0 ? `${keyboardInset + 1}px` : 'calc(env(safe-area-inset-bottom, 0px) + 42px)',
+                  // Barre de rédaction posée AU-DESSUS de la barre d'onglets flottante (6 px + 60 px de
+                  // capsule + marge, `--lkdv-msg-bar-clear`) ou calée au-dessus du clavier.
+                  paddingBottom: keyboardInset > 0 ? `${keyboardInset + 1}px` : 'calc(env(safe-area-inset-bottom, 0px) + var(--lkdv-msg-bar-clear, 74px))',
                 }}>
                 {selected ? (
                   <div className="mpane in" data-conversation={selected.id}>
@@ -1870,16 +1867,25 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                   }
                   setShareMenuOpen(false);
                 }}
-                onSendGpx={async (file, geojson) => {
+                onSendGpx={async (file, geojson, stats) => {
                   const url = await messagingService.uploadAttachment(selected.id, file);
                   if (!url) return;
-                  await messagingService.sendMessage(selected.id, currentUserId as string, url, 'gpx', undefined, {
-                    file_name: file.name,
-                    file_size: file.size,
+                  // Tracé simplifié (≤ 200 points) pour le dessin ; distance et dénivelé de la trace complète.
+                  await messagingService.sendMessage(
+                    selected.id,
+                    currentUserId as string,
                     url,
-                    // Version simplifiée (≤ 200 points) : la bulle se dessine sans télécharger le fichier.
-                    geojson: geojson ?? null,
-                  });
+                    'gpx',
+                    undefined,
+                    buildGpxMessageMeta({
+                      fileName: file.name,
+                      fileSize: file.size,
+                      url,
+                      geometry: geojson ?? null,
+                      distanceKm: stats?.distanceKm ?? null,
+                      elevationGainM: stats?.elevationGainM ?? null,
+                    }),
+                  );
                   await refreshConversations();
                   setShareMenuOpen(false);
                 }}

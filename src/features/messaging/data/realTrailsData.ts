@@ -10,8 +10,9 @@
 // repli sur le tracé d'une autre randonnée.
 
 import { createClient } from '@/lib/supabase/client';
-import { simplifyLngLat, toLineString, type TraceLineString } from '@/lib/geo/traceCoordinates';
+import { geometrySegments, simplifySegments, toTraceGeometry, type TraceGeometry } from '@/lib/geo/traceCoordinates';
 import type { TrailMessageMeta } from '../types/messaging.types';
+import { geometryDistanceKm } from '../lib/traceStats';
 
 export interface SharedTrailItem {
   id: string;
@@ -20,7 +21,7 @@ export interface SharedTrailItem {
   elevation_gain_m: number | null;
   region: string | null;
   /** Tracé connu de l'élément ; `null` : à résoudre via `routeId`, sinon indisponible. */
-  geojson: TraceLineString | null;
+  geojson: TraceGeometry | null;
   /** Identifiant `hiking_routes.id` (ADR-016) quand l'élément en porte un. */
   routeId?: number | null;
   isSaved?: boolean;
@@ -193,10 +194,10 @@ export function parseRouteId(...candidates: unknown[]): number | null {
 }
 
 /** Tracé porté par `trail_data` (GeoJSON, `geometry` en chaîne, tableau de points…), `null` s'il n'y en a pas. */
-export function trailLineFromData(data: unknown): TraceLineString | null {
-  if (!isRecord(data)) return toLineString(data);
+export function trailLineFromData(data: unknown): TraceGeometry | null {
+  if (!isRecord(data)) return toTraceGeometry(data);
   for (const candidate of [data.geojson, data.geometry, data.geom, data.coordinates, data.trace, data.line]) {
-    const line = toLineString(candidate);
+    const line = toTraceGeometry(candidate);
     if (line) return line;
   }
   return null;
@@ -222,7 +223,9 @@ export function savedTrailFromRow(row: {
     region: typeof data.region === 'string' && data.region.trim() ? data.region.trim() : null,
     isSaved: true,
     geojson: trailLineFromData(data),
-    routeId: parseRouteId(data.route_id, data.hiking_route_id, data.routeId, row.trail_id),
+    // Identifiant de route EXPLICITE uniquement : `trail_id` est un texte libre sans clé étrangère
+    // (un identifiant OSM numérique y est possible) et afficherait le tracé d'une autre randonnée.
+    routeId: parseRouteId(data.route_id, data.hiking_route_id, data.routeId),
   };
 }
 
@@ -257,7 +260,7 @@ export async function fetchRouteGeometry(routeId: number): Promise<unknown> {
 export type RouteGeometryFetcher = (routeId: number) => Promise<unknown>;
 
 export interface ResolvedTrailGeometry {
-  geojson: TraceLineString | null;
+  geojson: TraceGeometry | null;
   source: 'item' | 'hiking_routes' | null;
 }
 
@@ -269,11 +272,11 @@ export async function resolveTrailGeometry(
   item: { geojson?: unknown; routeId?: number | null },
   fetchRoute: RouteGeometryFetcher = fetchRouteGeometry,
 ): Promise<ResolvedTrailGeometry> {
-  const own = toLineString(item.geojson);
+  const own = toTraceGeometry(item.geojson);
   if (own) return { geojson: own, source: 'item' };
   if (item.routeId != null) {
     try {
-      const line = toLineString(await fetchRoute(item.routeId));
+      const line = toTraceGeometry(await fetchRoute(item.routeId));
       if (line) return { geojson: line, source: 'hiking_routes' };
     } catch {
       /* lecture impossible : pas de tracé, jamais un tracé de remplacement */
@@ -282,10 +285,15 @@ export async function resolveTrailGeometry(
   return { geojson: null, source: null };
 }
 
-/** Version légère du tracé jointe à un message (≤ 200 points), `null` sans tracé. */
-export function toMessageLine(line: TraceLineString | null): TraceLineString | null {
-  if (!line || line.coordinates.length < 2) return null;
-  return { type: 'LineString', coordinates: simplifyLngLat(line.coordinates, MESSAGE_TRACE_MAX_POINTS) };
+/**
+ * Version légère du tracé jointe à un message (≤ 200 points au total, répartis
+ * par segment, départ et arrivée de chaque segment conservés), `null` sans tracé.
+ * Elle ne sert QU'au dessin : les chiffres se calculent sur la trace complète.
+ */
+export function toMessageLine(geometry: TraceGeometry | null): TraceGeometry | null {
+  const segments = geometry ? geometrySegments(geometry) : [];
+  if (segments.length === 0) return null;
+  return toTraceGeometry(simplifySegments(segments, MESSAGE_TRACE_MAX_POINTS));
 }
 
 /** Une randonnée du catalogue schématique (par id) : tracé indicatif. */
@@ -298,20 +306,35 @@ export function isIndicativeTrailId(id: unknown): boolean {
  * (messages envoyés avant que le tracé soit joint), sinon `null`.
  * Aucune correspondance par nom : jamais le tracé d'une autre randonnée.
  */
-export function catalogLineForId(id: unknown): TraceLineString | null {
+export function catalogLineForId(id: unknown): TraceGeometry | null {
   if (typeof id !== 'string') return null;
   return REAL_CATALOG_TRAILS.find((trail) => trail.id === id)?.geojson ?? null;
 }
 
-/** Métadonnées du message « randonnée » : tracé simplifié joint seulement s'il est connu. */
-export function buildTrailMessageMeta(item: SharedTrailItem, line: TraceLineString | null): TrailMessageMeta {
-  const light = toMessageLine(line);
+/** Distance et dénivelé d'une randonnée : ceux de l'élément, sinon la distance de la géométrie COMPLÈTE. */
+export function trailStats(
+  item: Pick<SharedTrailItem, 'distance_km' | 'elevation_gain_m'>,
+  geometry: TraceGeometry | null,
+): { distanceKm: number | null; elevationGainM: number | null } {
+  return {
+    distanceKm: item.distance_km ?? geometryDistanceKm(geometry),
+    elevationGainM: item.elevation_gain_m ?? null,
+  };
+}
+
+/**
+ * Métadonnées du message « randonnée » : tracé simplifié joint seulement s'il
+ * est connu ; `distance_km` et `elevation_gain_m` calculés sur la trace complète.
+ */
+export function buildTrailMessageMeta(item: SharedTrailItem, geometry: TraceGeometry | null): TrailMessageMeta {
+  const light = toMessageLine(geometry);
+  const stats = trailStats(item, geometry);
   return {
     kind: 'trail',
     id: item.routeId != null ? String(item.routeId) : item.id,
     name: item.name,
-    distance_km: item.distance_km,
-    elevation_gain_m: item.elevation_gain_m,
+    distance_km: stats.distanceKm,
+    elevation_gain_m: stats.elevationGainM,
     region: item.region,
     ...(light ? { geojson: light } : {}),
     ...(item.indicative ? { indicative: true } : {}),

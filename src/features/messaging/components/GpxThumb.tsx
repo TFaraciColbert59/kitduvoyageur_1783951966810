@@ -11,6 +11,7 @@
 import React, { useEffect, useState } from 'react';
 import { GPXEngine } from '@/features/hiking/gpx/GPXEngine';
 import type { LngLat } from '@/lib/geo/traceCoordinates';
+import { readLimitedText } from '../lib/gpxFetch';
 import { useResolvedAttachmentUrl } from '../hooks/useAttachmentUrl';
 import { TraceThumb } from './TraceThumb';
 
@@ -23,15 +24,15 @@ export interface GpxThumbProps {
 
 const MAX_GPX_POINTS = 20_000;
 const CACHE_LIMIT = 40;
-const trackCache = new Map<string, Promise<LngLat[]>>();
+const trackCache = new Map<string, Promise<LngLat[][]>>();
 
-/** Tracé d'un GPX distant, mémorisé par URL (un échec n'est pas mémorisé). */
-export function loadGpxTrack(url: string): Promise<LngLat[]> {
+/** Segments du tracé d'un GPX distant (≤ 5 Mo), mémorisés par URL (un échec n'est pas mémorisé). */
+export function loadGpxTrack(url: string): Promise<LngLat[][]> {
   const hit = trackCache.get(url);
   if (hit) return hit;
   const pending = fetch(url)
-    .then((r) => (r.ok ? r.text() : Promise.reject(new Error('http'))))
-    .then((text) => GPXEngine.extractCoordinates(text, MAX_GPX_POINTS) as LngLat[]);
+    .then((r) => (r.ok ? readLimitedText(r) : Promise.reject(new Error('http'))))
+    .then((text) => GPXEngine.extractTrack(text, MAX_GPX_POINTS).segments.map((segment) => segment.coordinates as LngLat[]));
   trackCache.set(url, pending);
   if (trackCache.size > CACHE_LIMIT) {
     const oldest = trackCache.keys().next().value;
@@ -43,7 +44,7 @@ export function loadGpxTrack(url: string): Promise<LngLat[]> {
 
 export function GpxThumb({ content, width = 250, height = 160, reserveBottom = 0 }: GpxThumbProps) {
   const url = useResolvedAttachmentUrl(content);
-  const [coords, setCoords] = useState<LngLat[] | null>(null);
+  const [coords, setCoords] = useState<LngLat[][] | null>(null);
 
   useEffect(() => {
     if (!url) return undefined;

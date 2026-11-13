@@ -10,11 +10,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { AccountDrawerHost } from '@/design/account/AccountDrawerHost';
 import { useResolvedAttachmentUrl } from '@/features/messaging/hooks/useAttachmentUrl';
-import { TraceMap, type TraceLineString } from './TraceMap';
+import { TraceMap, type TraceGeometry } from './TraceMap';
 import { TraceOverlay } from './TraceOverlay';
 import type { Message, TrailMessageMeta } from '../types/messaging.types';
 import { GPXEngine } from '@/features/hiking/gpx/GPXEngine';
-import { lngLatLengthKm, toLineString } from '@/lib/geo/traceCoordinates';
+import { toTraceGeometry } from '@/lib/geo/traceCoordinates';
+import { GPX_TOO_LARGE_MESSAGE, GpxTooLargeError, readLimitedText } from '../lib/gpxFetch';
+import { geometryDistanceKm, gpxStats, messageTraceStats } from '../lib/traceStats';
 import { catalogLineForId, isIndicativeTrailId, parseRouteId, resolveTrailGeometry } from '../data/realTrailsData';
 
 /** Même cadrage que l'aperçu avant envoi : pastilles en haut, attribution en bas. */
@@ -26,21 +28,21 @@ export interface AttachmentDrawerProps {
   onClose: () => void;
 }
 
-function AttachmentGpx({ content }: { content: string }) {
+function AttachmentGpx({ content, meta }: { content: string; meta: Record<string, unknown> | null | undefined }) {
   const url = useResolvedAttachmentUrl(content);
   const [xml, setXml] = useState<string | null>(null);
-  const [failed, setFailed] = useState(false);
+  const [failed, setFailed] = useState<string | null>(null);
 
   useEffect(() => {
     if (!url) return;
     let cancelled = false;
     fetch(url)
-      .then((r) => (r.ok ? r.text() : Promise.reject(new Error('http'))))
+      .then((r) => (r.ok ? readLimitedText(r) : Promise.reject(new Error('http'))))
       .then((text) => {
         if (!cancelled) setXml(text);
       })
-      .catch(() => {
-        if (!cancelled) setFailed(true);
+      .catch((error) => {
+        if (!cancelled) setFailed(error instanceof GpxTooLargeError ? GPX_TOO_LARGE_MESSAGE : "Le fichier n'a pas pu être chargé.");
       });
     return () => {
       cancelled = true;
@@ -48,12 +50,20 @@ function AttachmentGpx({ content }: { content: string }) {
   }, [url]);
 
   const track = useMemo(() => (xml ? GPXEngine.extractTrack(xml) : null), [xml]);
-  const geojson = useMemo<TraceLineString | null>(
-    () => (track && track.coordinates.length > 1 ? { type: 'LineString', coordinates: track.coordinates } : null),
+  // Segments séparés : MultiLineString, jamais de droite entre deux segments.
+  const geojson = useMemo<TraceGeometry | null>(
+    () => (track ? toTraceGeometry(track.segments.map((segment) => segment.coordinates)) : null),
     [track],
   );
+  // Mêmes chiffres que la bulle : ceux du message ; à défaut, ceux de la trace complète du fichier.
+  const stats = useMemo(() => {
+    const carried = messageTraceStats(meta);
+    if (carried.distanceKm != null || !track) return carried;
+    return gpxStats(track.segments.filter((segment) => segment.coordinates.length >= 2));
+  }, [meta, track]);
+  const points = track?.coordinates.length ?? 0;
 
-  if (failed) return <p className="mattach-note">Le fichier n'a pas pu être chargé.</p>;
+  if (failed) return <p className="mattach-note">{failed}</p>;
   if (!xml) return <div className="mattach-skeleton" aria-hidden="true" />;
   if (!geojson) return <p className="mattach-note">Ce fichier ne contient pas de tracé exploitable.</p>;
 
@@ -61,13 +71,10 @@ function AttachmentGpx({ content }: { content: string }) {
     <>
       <div style={{ position: 'relative' }}>
         <TraceMap geojson={geojson} height={DRAWER_TRACE_HEIGHT} padding={DRAWER_TRACE_PADDING} />
-        <TraceOverlay
-          distanceKm={lngLatLengthKm(geojson.coordinates)}
-          elevationGainM={track ? GPXEngine.elevationGain(track.elevations) : null}
-        />
+        <TraceOverlay distanceKm={stats.distanceKm} elevationGainM={stats.elevationGainM} />
       </div>
       <div className="mattach-meta">
-        <span>{geojson.coordinates.length} points</span>
+        <span>{points} points</span>
         <a className="mattach-link" href={url ?? '#'} download>
           Télécharger le GPX
         </a>
@@ -84,11 +91,11 @@ function AttachmentGpx({ content }: { content: string }) {
 function AttachmentTrail({ meta }: { meta: TrailMessageMeta }) {
   // Tracé joint au message ; à défaut, le tracé schématique du catalogue pour un id exact du catalogue.
   const carried = useMemo(
-    () => toLineString(meta.geojson ?? meta.coordinates) ?? catalogLineForId(meta.id),
+    () => toTraceGeometry(meta.geojson ?? meta.coordinates) ?? catalogLineForId(meta.id),
     [meta.geojson, meta.coordinates, meta.id],
   );
   const routeId = useMemo(() => parseRouteId(meta.id), [meta.id]);
-  const [resolved, setResolved] = useState<TraceLineString | null>(null);
+  const [resolved, setResolved] = useState<TraceGeometry | null>(null);
   const [looking, setLooking] = useState(() => !carried && routeId != null);
 
   useEffect(() => {
@@ -110,7 +117,10 @@ function AttachmentTrail({ meta }: { meta: TrailMessageMeta }) {
 
   const line = carried ?? resolved;
   const indicative = meta.indicative === true || isIndicativeTrailId(meta.id);
-  const distanceKm = meta.distance_km ?? (line ? lngLatLengthKm(line.coordinates) : null);
+  // Chiffres du message ; une distance n'est recalculée que sur une géométrie COMPLÈTE (route lue en base),
+  // jamais sur le tracé simplifié joint au message.
+  const carriedStats = messageTraceStats(meta as unknown as Record<string, unknown>);
+  const distanceKm = carriedStats.distanceKm ?? (resolved ? geometryDistanceKm(resolved) : null);
 
   if (looking) return <div className="mattach-skeleton" aria-hidden="true" />;
   return (
@@ -118,7 +128,7 @@ function AttachmentTrail({ meta }: { meta: TrailMessageMeta }) {
       <TraceMap geojson={line} height={DRAWER_TRACE_HEIGHT} padding={DRAWER_TRACE_PADDING} />
       <TraceOverlay
         distanceKm={distanceKm}
-        elevationGainM={meta.elevation_gain_m}
+        elevationGainM={carriedStats.elevationGainM}
         indicative={indicative && Boolean(line)}
       />
     </div>
@@ -213,7 +223,7 @@ export function AttachmentDrawer({ message, onClose }: AttachmentDrawerProps) {
     <AccountDrawerHost open variant="card" title={headingFor(message)} hideHeader onClose={onClose}>
       <div className="mattach-scroll">
         <h3 className="mattach-title">{headingFor(message)}</h3>
-        {isGpx ? <AttachmentGpx content={message.content} /> : null}
+        {isGpx ? <AttachmentGpx content={message.content} meta={message.metadata} /> : null}
         {message.message_type === 'trail' && message.metadata ? (
           <AttachmentTrail meta={message.metadata as unknown as TrailMessageMeta} />
         ) : null}

@@ -60,7 +60,7 @@ function looksLikePoint(raw: unknown): boolean {
   return false;
 }
 
-function collect(input: unknown, depth: number, out: LngLat[]): void {
+function collect(input: unknown, depth: number, out: LngLat[][]): void {
   if (input === null || input === undefined || depth > MAX_DEPTH) return;
 
   if (typeof input === 'string') {
@@ -77,13 +77,15 @@ function collect(input: unknown, depth: number, out: LngLat[]): void {
 
   if (Array.isArray(input)) {
     if (input.some(looksLikePoint)) {
+      const segment: LngLat[] = [];
       for (const item of input) {
         const point = readPoint(item);
-        if (point) out.push(point);
+        if (point) segment.push(point);
       }
+      if (segment.length > 0) out.push(segment);
       return;
     }
-    // Liste de segments (MultiLineString) ou de géométries.
+    // Liste de segments (MultiLineString) ou de géométries : un segment par membre.
     for (const item of input) collect(item, depth + 1, out);
     return;
   }
@@ -120,19 +122,52 @@ function collect(input: unknown, depth: number, out: LngLat[]): void {
 }
 
 /**
- * Points `[lng, lat]` réels d'une trace, quel que soit le format stocké :
- * LineString, MultiLineString (segments mis bout à bout), Feature,
- * FeatureCollection (lignes seulement), GeometryCollection, chaîne JSON,
- * tableau de `[lng, lat]` ou de `{ lat, lng }`. Les points non finis ou hors
- * des bornes terrestres sont écartés ; rien n'est inventé.
+ * Segments `[lng, lat][]` d'une trace : une LineString donne un segment, une
+ * MultiLineString un segment par membre, une liste de points un segment. Les
+ * segments restent SÉPARÉS (aucune droite n'est tracée entre deux segments
+ * éloignés). Un segment peut compter un seul point : voir `geometrySegments`.
  */
-export function extractLngLat(input: unknown): LngLat[] {
-  const out: LngLat[] = [];
+export function extractSegments(input: unknown): LngLat[][] {
+  const out: LngLat[][] = [];
   collect(input, 0, out);
   return out;
 }
 
-/** `LineString` si la trace compte au moins deux points réels, sinon `null`. */
+/**
+ * Points `[lng, lat]` réels d'une trace, à plat, quel que soit le format stocké :
+ * LineString, MultiLineString (segments mis bout à bout), Feature,
+ * FeatureCollection (lignes seulement), GeometryCollection, chaîne JSON,
+ * tableau de `[lng, lat]` ou de `{ lat, lng }`. Les points non finis ou hors
+ * des bornes terrestres sont écartés ; rien n'est inventé. Pour dessiner ou
+ * mesurer une trace à segments, préférer `extractSegments`.
+ */
+export function extractLngLat(input: unknown): LngLat[] {
+  return extractSegments(input).flat();
+}
+
+/** Segments tracés : au moins deux points chacun. */
+export function geometrySegments(input: unknown): LngLat[][] {
+  return extractSegments(input).filter((segment) => segment.length >= 2);
+}
+
+export interface TraceMultiLineString {
+  type: 'MultiLineString';
+  coordinates: LngLat[][];
+}
+
+/** Géométrie d'une trace : un seul segment, ou plusieurs segments disjoints. */
+export type TraceGeometry = TraceLineString | TraceMultiLineString;
+
+/** `LineString` (un segment) ou `MultiLineString` (plusieurs), `null` sans segment d'au moins deux points. */
+export function toTraceGeometry(input: unknown): TraceGeometry | null {
+  const segments = geometrySegments(input);
+  if (segments.length === 0) return null;
+  return segments.length === 1
+    ? { type: 'LineString', coordinates: segments[0] }
+    : { type: 'MultiLineString', coordinates: segments };
+}
+
+/** `LineString` à plat (segments mis bout à bout) si la trace compte au moins deux points réels, sinon `null`. */
 export function toLineString(input: unknown): TraceLineString | null {
   const coordinates = extractLngLat(input);
   return coordinates.length >= 2 ? { type: 'LineString', coordinates } : null;
@@ -192,9 +227,50 @@ export function lngLatLengthKm(coords: LngLat[]): number {
   return total;
 }
 
+/**
+ * Réduit des segments à `maxPoints` points au total (budget réparti au prorata
+ * du nombre de points de chaque segment, 2 points au moins ; premier et dernier
+ * point de chaque segment toujours conservés).
+ */
+export function simplifySegments(segments: LngLat[][], maxPoints = 200): LngLat[][] {
+  const total = segments.reduce((n, segment) => n + segment.length, 0);
+  if (total <= maxPoints) return segments.map((segment) => segment.slice());
+  return segments.map((segment) =>
+    simplifyLngLat(segment, Math.max(2, Math.floor((maxPoints * segment.length) / total))),
+  );
+}
+
+/** Longueur cumulée de plusieurs segments, SANS compter l'écart entre deux segments. */
+export function segmentsLengthKm(segments: LngLat[][]): number {
+  return segments.reduce((sum, segment) => sum + lngLatLengthKm(segment), 0);
+}
+
+/**
+ * Traces qui traversent l'antiméridien (étendue en longitude > 180°) : les
+ * longitudes négatives sont décalées de +360° pour que la trace reste d'un seul
+ * tenant (cadrage et projection ne dézooment pas sur le monde entier).
+ */
+export function unwrapAntimeridian(segments: LngLat[][]): LngLat[][] {
+  const flat = segments.flat();
+  const bounds = lngLatBounds(flat);
+  if (!bounds || bounds.east - bounds.west <= 180) return segments;
+  return segments.map((segment) => segment.map(([lng, lat]): LngLat => [lng < 0 ? lng + 360 : lng, lat]));
+}
+
 export interface SvgPoint {
   x: number;
   y: number;
+}
+
+export interface ProjectedSegments {
+  /** Une valeur d'attribut `points` de `<polyline>` par segment. */
+  polylines: string[];
+  /** Premier point du premier segment. */
+  start: SvgPoint;
+  /** Dernier point du dernier segment. */
+  end: SvgPoint;
+  width: number;
+  height: number;
 }
 
 export interface ProjectedTrace {
@@ -207,19 +283,21 @@ export interface ProjectedTrace {
 }
 
 /**
- * Projette la trace dans un rectangle `width × height` avec `pad` de marge.
+ * Projette des segments dans un rectangle `width × height` avec `pad` de marge.
  * La longitude est multipliée par le cosinus de la latitude moyenne et le
- * rapport est conservé (même échelle en x et en y) : le tracé n'est pas
- * déformé, il est centré. `null` sans point réel.
+ * rapport est conservé (même échelle en x et en y) : la trace n'est pas
+ * déformée, elle est centrée. Un seul cadre pour tous les segments. `null` sans point.
  */
-export function projectLngLatToSvg(
-  coords: LngLat[],
+export function projectSegmentsToSvg(
+  segments: LngLat[][],
   width: number,
   height: number,
   pad = 8,
-): ProjectedTrace | null {
-  const bounds = lngLatBounds(coords);
-  if (!bounds || coords.length === 0) return null;
+): ProjectedSegments | null {
+  const wrapped = unwrapAntimeridian(segments.filter((segment) => segment.length > 0));
+  const flat = wrapped.flat();
+  const bounds = lngLatBounds(flat);
+  if (!bounds) return null;
   const midLat = (bounds.south + bounds.north) / 2;
   const cos = Math.cos((midLat * Math.PI) / 180) || 1;
   const spanX = (bounds.east - bounds.west) * cos;
@@ -230,15 +308,24 @@ export function projectLngLatToSvg(
   const scale = spanX <= 0 && spanY <= 0 ? 0 : Math.min(innerW / Math.max(spanX, 1e-9), innerH / Math.max(spanY, 1e-9));
   const offsetX = (width - spanX * scale) / 2;
   const offsetY = (height - spanY * scale) / 2;
-  const points = coords.map(([lng, lat]) => ({
+  const project = ([lng, lat]: LngLat): SvgPoint => ({
     x: offsetX + (lng - bounds.west) * cos * scale,
     y: offsetY + (bounds.north - lat) * scale,
-  }));
-  return {
-    polyline: points.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' '),
-    start: points[0],
-    end: points[points.length - 1],
-    width,
-    height,
-  };
+  });
+  const polylines = wrapped.map((segment) =>
+    segment
+      .map(project)
+      .map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`)
+      .join(' '),
+  );
+  const first = wrapped[0];
+  const last = wrapped[wrapped.length - 1];
+  return { polylines, start: project(first[0]), end: project(last[last.length - 1]), width, height };
+}
+
+/** Projection d'une trace d'un seul tenant (voir `projectSegmentsToSvg`). */
+export function projectLngLatToSvg(coords: LngLat[], width: number, height: number, pad = 8): ProjectedTrace | null {
+  const projected = projectSegmentsToSvg([coords], width, height, pad);
+  if (!projected) return null;
+  return { polyline: projected.polylines[0], start: projected.start, end: projected.end, width, height };
 }

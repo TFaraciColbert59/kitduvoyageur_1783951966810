@@ -10,16 +10,18 @@ import type {
 } from '../types/messaging.types';
 import { messagingService } from '../services/messagingService';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
-import { TraceMap, type TraceLineString } from './TraceMap';
+import { TraceMap, type TraceGeometry } from './TraceMap';
 import { TraceOverlay } from './TraceOverlay';
 import { GPXEngine } from '@/features/hiking/gpx/GPXEngine';
-import { lngLatLengthKm } from '@/lib/geo/traceCoordinates';
+import { geometrySegments } from '@/lib/geo/traceCoordinates';
+import { analyzeGpxUpload, geometryDistanceKm } from '../lib/traceStats';
 import {
   REAL_CATALOG_TRAILS,
   buildTrailMessageMeta,
   fetchUserSavedTrails,
   resolveTrailGeometry,
   toMessageLine,
+  trailStats,
   type SharedTrailItem,
 } from '../data/realTrailsData';
 
@@ -41,7 +43,11 @@ interface ComposerMenuSheetProps {
   isOpen: boolean;
   onClose: () => void;
   currentUserId: string;
-  onSendGpx: (file: File, geojson?: TraceLineString | null) => void;
+  onSendGpx: (
+    file: File,
+    geojson?: TraceGeometry | null,
+    stats?: { distanceKm: number | null; elevationGainM: number | null },
+  ) => void;
   onSendProduct: (meta: ProductMessageMeta) => void;
   onSendTrail: (meta: TrailMessageMeta) => void;
   onSendKit: (meta: KitMessageMeta) => void;
@@ -64,7 +70,7 @@ const SCROLL = {
  * Marges de cadrage de la carte d'aperçu : pastilles en haut (nom, distance),
  * bouton d'envoi en bas à droite. Le tracé se cadre dans le reste.
  */
-const TRACE_PREVIEW_PADDING = { top: 84, right: 36, bottom: 84, left: 36 } as const;
+const TRACE_PREVIEW_PADDING = { top: 76, right: 32, bottom: 76, left: 32 } as const;
 
 export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
   isOpen,
@@ -83,16 +89,19 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
   const [preview, setPreview] = useState<
     | { type: 'kit'; item: KitItem }
     | { type: 'product'; item: InventoryItem }
-    | { type: 'trail'; item: SharedTrailItem; geojson: TraceLineString | null; resolving: boolean }
+    | { type: 'trail'; item: SharedTrailItem; geojson: TraceGeometry | null; resolving: boolean }
     | {
         type: 'gpx';
         name: string;
         /** `null` tant qu'un tracé enregistré n'est pas résolu (ou introuvable) : pas d'envoi. */
         file: File | null;
-        geojson: TraceLineString | null;
+        geojson: TraceGeometry | null;
+        /** Chiffres de la trace COMPLÈTE, segments sommés. */
         distanceKm: number | null;
         elevationGainM: number | null;
         resolving: boolean;
+        /** Raison lisible pour laquelle l'envoi est bloqué (aucun tracé, fichier trop gros…). */
+        blockReason: string | null;
       }
     | { type: 'photo'; file: File; url: string }
     | null
@@ -174,22 +183,17 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
     const file = e.target.files?.[0];
     if (file) {
       haptic('light');
-      try {
-        const track = GPXEngine.extractTrack(await file.text());
-        const geojson: TraceLineString | null =
-          track.coordinates.length > 1 ? { type: 'LineString', coordinates: track.coordinates } : null;
-        setPreview({
-          type: 'gpx',
-          name: file.name,
-          file,
-          geojson,
-          distanceKm: geojson ? lngLatLengthKm(track.coordinates) : null,
-          elevationGainM: GPXEngine.elevationGain(track.elevations),
-          resolving: false,
-        });
-      } catch {
-        setPreview({ type: 'gpx', name: file.name, file, geojson: null, distanceKm: null, elevationGainM: null, resolving: false });
-      }
+      const analysis = await analyzeGpxUpload(file);
+      setPreview({
+        type: 'gpx',
+        name: file.name,
+        file,
+        geojson: analysis.geojson,
+        distanceKm: analysis.distanceKm,
+        elevationGainM: analysis.elevationGainM,
+        resolving: false,
+        blockReason: analysis.blockReason,
+      });
     }
     if (gpxInputRef.current) gpxInputRef.current.value = '';
   };
@@ -212,22 +216,24 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
   const openSavedGpxPreview = (t: SharedTrailItem) => {
     haptic('light');
     const name = `${t.name}.gpx`;
-    const build = (geojson: TraceLineString | null) => ({
+    const build = (geojson: TraceGeometry | null, resolving: boolean) => ({
       type: 'gpx' as const,
       name,
       geojson,
       file: geojson
-        ? new File([GPXEngine.fromCoordinates(geojson.coordinates, t.name)], name, { type: 'application/gpx+xml' })
+        ? new File([GPXEngine.fromSegments(geometrySegments(geojson), t.name)], name, { type: 'application/gpx+xml' })
         : null,
-      distanceKm: geojson ? lngLatLengthKm(geojson.coordinates) : null,
+      distanceKm: t.distance_km ?? geometryDistanceKm(geojson),
       elevationGainM: t.elevation_gain_m,
+      resolving,
+      blockReason: geojson || resolving ? null : 'Tracé indisponible pour cette randonnée : aucun fichier GPX à envoyer.',
     });
     const lookup = !t.geojson && t.routeId != null;
-    setPreview({ ...build(t.geojson), resolving: lookup });
+    setPreview(build(t.geojson, lookup));
     if (!lookup) return;
     void resolveTrailGeometry(t).then(({ geojson }) => {
       setSavedTrails((list) => list.map((x) => (x.id === t.id ? { ...x, geojson } : x)));
-      setPreview((cur) => (cur && cur.type === 'gpx' && cur.name === name ? { ...build(geojson), resolving: false } : cur));
+      setPreview((cur) => (cur && cur.type === 'gpx' && cur.name === name ? build(geojson, false) : cur));
     });
   };
 
@@ -272,8 +278,12 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
       // Tracé simplifié (≤ 200 points) joint au message ; absent s'il est inconnu.
       onSendTrail(buildTrailMessageMeta(preview.item, preview.geojson));
     } else if (preview.type === 'gpx') {
-      if (!preview.file || preview.resolving) return;
-      onSendGpx(preview.file, toMessageLine(preview.geojson));
+      if (!preview.file || preview.resolving || preview.blockReason) return;
+      // Tracé simplifié pour le dessin ; distance et dénivelé de la trace complète.
+      onSendGpx(preview.file, toMessageLine(preview.geojson), {
+        distanceKm: preview.distanceKm,
+        elevationGainM: preview.elevationGainM,
+      });
     }
     setPreview(null);
     onClose();
@@ -288,7 +298,12 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
 
   // Un tracé en cours de recherche, ou un GPX sans fichier (tracé introuvable), ne s'envoie pas.
   const sendBlocked =
-    preview?.type === 'trail' ? preview.resolving : preview?.type === 'gpx' ? preview.resolving || !preview.file : false;
+    preview?.type === 'trail'
+      ? preview.resolving
+      : preview?.type === 'gpx'
+        ? preview.resolving || !preview.file || Boolean(preview.blockReason)
+        : false;
+  const sendBlockReason = preview?.type === 'gpx' && !preview.resolving ? preview.blockReason : null;
 
   // Filtrages de recherche
   const q = searchQuery.trim().toLowerCase();
@@ -357,7 +372,7 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
         onChange={handlePhotoPick}
       />
 
-      <div className="msheet-body" style={{ position: 'relative', height: '100%', minHeight: 340, display: 'flex', flexDirection: 'column' }}>
+      <div className="msheet-body" style={{ position: 'relative', height: '100%', minHeight: preview ? 0 : 340, display: 'flex', flexDirection: 'column' }}>
       {preview ? (
         <div
           className="composer-preview"
@@ -403,14 +418,35 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
               <TraceOverlay
                 name={preview.type === 'gpx' ? preview.name : preview.item.name}
                 distanceKm={
-                  preview.type === 'gpx'
-                    ? preview.distanceKm
-                    : (preview.item.distance_km ?? (preview.geojson ? lngLatLengthKm(preview.geojson.coordinates) : null))
+                  preview.type === 'gpx' ? preview.distanceKm : trailStats(preview.item, preview.geojson).distanceKm
                 }
-                elevationGainM={preview.type === 'gpx' ? preview.elevationGainM : preview.item.elevation_gain_m}
+                elevationGainM={
+                  preview.type === 'gpx' ? preview.elevationGainM : trailStats(preview.item, preview.geojson).elevationGainM
+                }
                 indicative={preview.type === 'trail' && Boolean(preview.item.indicative) && Boolean(preview.geojson)}
                 insetX={54}
               />
+              {sendBlockReason ? (
+                <div
+                  role="alert"
+                  style={{
+                    position: 'absolute',
+                    left: 14,
+                    right: 72,
+                    bottom: 16,
+                    zIndex: 20,
+                    padding: '8px 12px',
+                    borderRadius: 16,
+                    background: 'rgba(23, 43, 36, 0.9)',
+                    color: '#ffffff',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    lineHeight: 1.3,
+                  }}
+                >
+                  {sendBlockReason}
+                </div>
+              ) : null}
             </div>
           )}
 

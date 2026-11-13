@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
+  extractSegments,
+  geometrySegments,
+  segmentsLengthKm,
+  simplifySegments,
+  toTraceGeometry,
+  unwrapAntimeridian,
+  projectSegmentsToSvg,
   extractLngLat,
   lngLatBounds,
   lngLatLengthKm,
@@ -215,5 +222,77 @@ describe('projectLngLatToSvg', () => {
     expect(single.polyline).toBe('50.0,30.0');
     const same = projectLngLatToSvg([[6, 45], [6, 45]], 100, 60)!;
     expect(same.polyline).toBe('50.0,30.0 50.0,30.0');
+  });
+});
+
+describe('segments disjoints : jamais de droite entre deux segments', () => {
+  // Deux segments d'environ 3 km, distants d'environ 50 km.
+  const A: LngLat[] = [[6.0, 45.0], [6.02, 45.0], [6.04, 45.01]];
+  const B: LngLat[] = [[6.6, 45.0], [6.62, 45.0], [6.64, 45.01]];
+  const MULTI = { type: 'MultiLineString', coordinates: [A, B] };
+
+  it('extractSegments garde un segment par membre, extractLngLat reste à plat', () => {
+    expect(extractSegments(MULTI)).toEqual([A, B]);
+    expect(extractLngLat(MULTI)).toEqual([...A, ...B]);
+    expect(extractSegments({ type: 'LineString', coordinates: A })).toEqual([A]);
+    expect(extractSegments(A)).toEqual([A]);
+    expect(extractSegments({ type: 'FeatureCollection', features: [{ type: 'Feature', geometry: { type: 'LineString', coordinates: A } }, { type: 'Feature', geometry: { type: 'LineString', coordinates: B } }] })).toEqual([A, B]);
+  });
+
+  it('toTraceGeometry : LineString pour un segment, MultiLineString pour plusieurs, null sans segment tracé', () => {
+    expect(toTraceGeometry(A)).toEqual({ type: 'LineString', coordinates: A });
+    expect(toTraceGeometry(MULTI)).toEqual({ type: 'MultiLineString', coordinates: [A, B] });
+    expect(toTraceGeometry([[A[0]], [B[0]]])).toBeNull();
+    expect(geometrySegments({ type: 'MultiLineString', coordinates: [[A[0]], B] })).toEqual([B]);
+  });
+
+  it('la longueur somme les segments sans compter l’écart entre eux', () => {
+    const joined = lngLatLengthKm([...A, ...B]);
+    const separate = segmentsLengthKm([A, B]);
+    expect(separate).toBeCloseTo(lngLatLengthKm(A) + lngLatLengthKm(B), 6);
+    expect(joined - separate).toBeGreaterThan(40); // la droite fausse ajoutait ~ 47 km
+    expect(separate).toBeLessThan(10);
+  });
+
+  it('simplifySegments : budget total, départ et arrivée de chaque segment conservés', () => {
+    const long: LngLat[] = Array.from({ length: 600 }, (_, i) => [6 + i / 1000, 45 + Math.sin(i / 20) / 100]);
+    const other: LngLat[] = Array.from({ length: 300 }, (_, i) => [7 + i / 1000, 46 + Math.cos(i / 20) / 100]);
+    const light = simplifySegments([long, other], 200);
+    expect(light.flat().length).toBeLessThanOrEqual(200);
+    expect(light).toHaveLength(2);
+    expect(light[0][0]).toEqual(long[0]);
+    expect(light[0][light[0].length - 1]).toEqual(long[long.length - 1]);
+    expect(light[1][0]).toEqual(other[0]);
+    expect(light[1][light[1].length - 1]).toEqual(other[other.length - 1]);
+    expect(simplifySegments([A, B], 200)).toEqual([A, B]);
+  });
+
+  it('projectSegmentsToSvg : une polyline par segment, départ du premier et arrivée du dernier', () => {
+    const projected = projectSegmentsToSvg([A, B], 300, 120, 10)!;
+    expect(projected.polylines).toHaveLength(2);
+    const first = projected.polylines[0].split(' ').map((p) => p.split(',').map(Number));
+    const second = projected.polylines[1].split(' ').map((p) => p.split(',').map(Number));
+    expect(projected.start.x).toBeCloseTo(first[0][0], 0);
+    expect(projected.end.x).toBeCloseTo(second[second.length - 1][0], 0);
+    // Le second segment est à l'est : il est entièrement à droite du premier.
+    expect(Math.min(...second.map((p) => p[0]))).toBeGreaterThan(Math.max(...first.map((p) => p[0])));
+  });
+});
+
+describe('antiméridien', () => {
+  it('décale les longitudes négatives quand l’étendue dépasse 180°', () => {
+    const fiji: LngLat[][] = [[[179.9, -17.0], [-179.9, -17.1], [-179.8, -17.2]]];
+    const wrapped = unwrapAntimeridian(fiji);
+    expect(wrapped[0].map((p) => p[0])).toEqual([179.9, 180.1, 180.2].map((v) => expect.closeTo(v, 6)));
+    const projected = projectSegmentsToSvg(fiji, 200, 100, 10)!;
+    const xs = projected.polylines[0].split(' ').map((p) => Number(p.split(',')[0]));
+    // Sans décalage la trace serait étirée sur toute la largeur du monde ; ici elle reste ordonnée.
+    expect(xs[0]).toBeLessThan(xs[1]);
+    expect(xs[1]).toBeLessThan(xs[2]);
+  });
+
+  it('laisse une trace ordinaire intacte', () => {
+    const normal: LngLat[][] = [[[6.1, 45.1], [6.2, 45.2]]];
+    expect(unwrapAntimeridian(normal)).toBe(normal);
   });
 });

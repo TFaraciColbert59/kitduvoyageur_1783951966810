@@ -8,9 +8,8 @@
 // et conserve les proportions : le tracé n'est jamais déformé.
 
 import React, { useId, useMemo } from 'react';
-import { extractLngLat, projectLngLatToSvg, simplifyLngLat } from '@/lib/geo/traceCoordinates';
-import { TRACE_STYLE } from '../lib/traceStyle';
-import { TRACE_EMPTY_LABEL } from './TraceMap';
+import { geometrySegments, projectSegmentsToSvg, simplifySegments } from '@/lib/geo/traceCoordinates';
+import { TRACE_EMPTY_LABEL, TRACE_STYLE } from '../lib/traceStyle';
 
 export interface TraceThumbProps {
   /** GeoJSON, tableau de points ou chaîne JSON : lu par `extractLngLat`. */
@@ -24,6 +23,8 @@ export interface TraceThumbProps {
   emptyLabel?: string;
   /** Vignette en attente de la lecture du fichier. */
   loading?: boolean;
+  /** Mention posée sur la vignette (« Indicatif » pour un tracé schématique). */
+  badge?: string;
   className?: string;
 }
 
@@ -37,12 +38,14 @@ export function TraceThumb({
   pad = 18,
   emptyLabel = TRACE_EMPTY_LABEL,
   loading = false,
+  badge,
   className,
 }: TraceThumbProps) {
   const projected = useMemo(() => {
-    const coords = simplifyLngLat(extractLngLat(geojson), MAX_THUMB_POINTS);
-    if (coords.length < 2) return null;
-    return projectLngLatToSvg(coords, width, Math.max(height - reserveBottom, 24), pad);
+    // Segments séparés : une polyline par segment, jamais de droite entre deux segments.
+    const segments = simplifySegments(geometrySegments(geojson), MAX_THUMB_POINTS);
+    if (segments.length === 0) return null;
+    return projectSegmentsToSvg(segments, width, Math.max(height - reserveBottom, 24), pad);
   }, [geojson, width, height, reserveBottom, pad]);
   const gradientId = useId();
 
@@ -73,22 +76,28 @@ export function TraceThumb({
             </linearGradient>
           </defs>
           <rect width={width} height={height} fill={`url(#${gradientId})`} />
-          <polyline
-            points={projected.polyline}
-            fill="none"
-            stroke={TRACE_STYLE.casing}
-            strokeWidth={TRACE_STYLE.casingWidth * 0.75}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <polyline
-            points={projected.polyline}
-            fill="none"
-            stroke={TRACE_STYLE.line}
-            strokeWidth={TRACE_STYLE.lineWidth * 0.65}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
+          {projected.polylines.map((points, index) => (
+            <polyline
+              key={`c${index}`}
+              points={points}
+              fill="none"
+              stroke={TRACE_STYLE.casing}
+              strokeWidth={TRACE_STYLE.casingWidth * 0.75}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          ))}
+          {projected.polylines.map((points, index) => (
+            <polyline
+              key={`l${index}`}
+              points={points}
+              fill="none"
+              stroke={TRACE_STYLE.line}
+              strokeWidth={TRACE_STYLE.lineWidth * 0.65}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          ))}
           <circle
             cx={projected.end.x}
             cy={projected.end.y}
@@ -125,6 +134,24 @@ export function TraceThumb({
           {loading ? null : <span>{emptyLabel}</span>}
         </div>
       )}
+      {badge && projected ? (
+        <span
+          style={{
+            position: 'absolute',
+            top: 8,
+            left: 8,
+            padding: '2px 8px',
+            borderRadius: 999,
+            background: 'rgba(255, 255, 255, 0.9)',
+            color: '#56665d',
+            fontSize: 10,
+            fontWeight: 650,
+            lineHeight: 1.4,
+          }}
+        >
+          {badge}
+        </span>
+      ) : null}
     </div>
   );
 }

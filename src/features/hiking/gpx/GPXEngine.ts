@@ -7,21 +7,40 @@ export interface ParsedGPXData {
   waypoints: Waypoint[];
 }
 
-export interface ExtractedGpxTrack {
-  /** Points `[lng, lat]` du tracé. */
+/** Un segment du tracé (`trkseg`, ou `rte`) : points `[lng, lat]` et altitudes alignées. */
+export interface GpxSegment {
   coordinates: Array<[number, number]>;
   /** Altitudes alignées sur `coordinates` (`null` si le point n'en porte pas). */
   elevations: Array<number | null>;
+}
+
+export interface ExtractedGpxTrack {
+  /** Points `[lng, lat]` de tous les segments, à plat. */
+  coordinates: Array<[number, number]>;
+  /** Altitudes alignées sur `coordinates` à plat. */
+  elevations: Array<number | null>;
+  /** Segments séparés (un par `trkseg` / `trk` / `rte`) : jamais reliés entre eux. */
+  segments: GpxSegment[];
   /** `track` (trkpt), `route` (rtept) ou `null` quand le fichier n'a pas de tracé. */
   kind: 'track' | 'route' | null;
 }
 
-/** Balise ouvrante d'un point de trace : le groupe 1 porte les attributs. */
-const TRKPT_OPEN = /<(?:[\w-]+:)?trkpt\b([^>]*)>/;
-const RTEPT_OPEN = /<(?:[\w-]+:)?rtept\b([^>]*)>/;
+/** Taille maximale d'un fichier GPX analysé (octets) : au-delà, on ne l'analyse pas. */
+export const MAX_GPX_FILE_BYTES = 5 * 1024 * 1024;
+
+/**
+ * Début d'un élément qui structure le tracé : segment (`trkseg`, `trk`, `rte`)
+ * ou point (`trkpt`, `rtept`). `trkseg` avant `trk` ; `\b` écarte `trkpt` et `rtept`.
+ */
+const STRUCTURE_OPEN = /<(?:[\w-]+:)?(trkseg|trk|rte|trkpt|rtept)\b/g;
+/** Le prochain point ou segment : borne la recherche d'une altitude. */
+const NEXT_STRUCTURE = /<\/?(?:[\w-]+:)?(?:trkseg|trk|rte|trkpt|rtept)\b/;
 /** `lat` ou `lon`, guillemets doubles (groupe 2) ou simples (groupe 3), ordre libre. */
-const ATTR_RE = /\b(lat|lon)\s*=\s*(?:"([^"]*)"|'([^']*)')/;
+const ATTR_RE = /\b(lat|lon)\s*=\s*(?:"([^"]*)"|'([^']*)')/g;
 const ELE_RE = /<(?:[\w-]+:)?ele>\s*([^<\s]+)\s*<\/(?:[\w-]+:)?ele>/;
+/** Longueur maximale des attributs d'un point et du contenu cherché après lui : coût linéaire. */
+const MAX_TAG_LENGTH = 600;
+const MAX_BODY_LENGTH = 1200;
 
 export class GPXEngine {
   /**
@@ -104,7 +123,7 @@ export class GPXEngine {
   }
 
   /**
-   * Extrait les coordonnées `[lng, lat]` du TRACÉ d'un GPX, sans DOM :
+   * Extrait les coordonnées `[lng, lat]` du TRACÉ d'un GPX, sans DOM, à plat :
    * les `trkpt` d'abord, à défaut les `rtept`. Les `wpt` (points d'intérêt)
    * ne sont jamais mêlés au tracé : un fichier qui n'a que des `wpt` n'a pas
    * de tracé et rend `[]`.
@@ -112,23 +131,30 @@ export class GPXEngine {
    * Lecture tolérante : `lat` et `lon` dans n'importe quel ordre, guillemets
    * simples ou doubles, préfixe d'espace de noms. Un attribut absent ou non
    * numérique écarte le point (jamais de point à 0,0). Borné par `limit`.
+   * Coût linéaire : les attributs et le contenu d'un point sont lus sur une
+   * fenêtre bornée, jamais jusqu'à la fin du fichier.
    */
   public static extractCoordinates(gpxXmlStr: string, limit = 50_000): Array<[number, number]> {
     return GPXEngine.extractTrack(gpxXmlStr, limit).coordinates;
   }
 
   /**
-   * Comme `extractCoordinates`, avec les altitudes (`<ele>`) alignées sur les
-   * points (`null` quand le point n'en porte pas) et l'origine du tracé.
+   * Comme `extractCoordinates`, avec les altitudes (`<ele>`), les SEGMENTS
+   * (un par `trkseg`, `trk` ou `rte`, jamais reliés entre eux) et l'origine du tracé.
    */
   public static extractTrack(gpxXmlStr: string, limit = 50_000): ExtractedGpxTrack {
-    const empty: ExtractedGpxTrack = { coordinates: [], elevations: [], kind: null };
+    const empty: ExtractedGpxTrack = { coordinates: [], elevations: [], segments: [], kind: null };
     if (limit <= 0 || !gpxXmlStr) return empty;
-    const track = GPXEngine.scanPoints(gpxXmlStr, TRKPT_OPEN, '</trkpt', limit);
-    if (track.coordinates.length > 0) return { ...track, kind: 'track' };
-    const route = GPXEngine.scanPoints(gpxXmlStr, RTEPT_OPEN, '</rtept', limit);
-    if (route.coordinates.length > 0) return { ...route, kind: 'route' };
-    return empty;
+    const { track, route } = GPXEngine.scan(gpxXmlStr, limit);
+    const kind = track.length > 0 ? 'track' : route.length > 0 ? 'route' : null;
+    if (!kind) return empty;
+    const segments = kind === 'track' ? track : route;
+    return {
+      coordinates: segments.flatMap((segment) => segment.coordinates),
+      elevations: segments.flatMap((segment) => segment.elevations),
+      segments,
+      kind,
+    };
   }
 
   /**
@@ -151,36 +177,78 @@ export class GPXEngine {
     return Math.round(gain);
   }
 
-  private static scanPoints(
-    xml: string,
-    openTag: RegExp,
-    closeToken: string,
-    limit: number,
-  ): { coordinates: Array<[number, number]>; elevations: Array<number | null> } {
-    const coordinates: Array<[number, number]> = [];
-    const elevations: Array<number | null> = [];
-    const open = new RegExp(openTag.source, 'g');
+  /** Dénivelé positif sommé segment par segment (pas de saut d'altitude entre deux segments). `null` si inconnu. */
+  public static segmentsElevationGain(segments: GpxSegment[], thresholdM = 3): number | null {
+    let total = 0;
+    let known = false;
+    for (const segment of segments) {
+      const gain = GPXEngine.elevationGain(segment.elevations, thresholdM);
+      if (gain !== null) {
+        total += gain;
+        known = true;
+      }
+    }
+    return known ? total : null;
+  }
+
+  /** Un seul balayage linéaire du document : segments de trace et de route. */
+  private static scan(xml: string, limit: number): { track: GpxSegment[]; route: GpxSegment[] } {
+    const track: GpxSegment[] = [];
+    const route: GpxSegment[] = [];
+    let currentTrack: GpxSegment | null = null;
+    let currentRoute: GpxSegment | null = null;
+    let total = 0;
+    const open = new RegExp(STRUCTURE_OPEN.source, 'g');
     let match: RegExpExecArray | null = open.exec(xml);
-    while (match && coordinates.length < limit) {
-      const attrs = match[1];
-      const point = GPXEngine.readLatLon(attrs);
-      if (point) {
-        coordinates.push([point.lon, point.lat]);
-        let elevation: number | null = null;
-        if (!attrs.trimEnd().endsWith('/')) {
-          const end = xml.indexOf(closeToken, open.lastIndex);
-          const body = end === -1 ? '' : xml.slice(open.lastIndex, end);
-          const ele = ELE_RE.exec(body);
-          if (ele) {
-            const parsed = Number(ele[1]);
-            elevation = Number.isFinite(parsed) ? parsed : null;
+    while (match && total < limit) {
+      const name = match[1];
+      if (name === 'trkseg' || name === 'trk') {
+        currentTrack = null;
+      } else if (name === 'rte') {
+        currentRoute = null;
+      } else {
+        const start = match.index + match[0].length;
+        // La balise doit se refermer dans une fenêtre bornée : sinon le point est ignoré (pas de balayage jusqu'à la fin).
+        const head = xml.slice(start, start + MAX_TAG_LENGTH);
+        const gt = head.indexOf('>');
+        if (gt !== -1) {
+          const attrs = head.slice(0, gt);
+          open.lastIndex = start + gt + 1;
+          const point = GPXEngine.readLatLon(attrs);
+          if (point) {
+            let elevation: number | null = null;
+            if (!attrs.trimEnd().endsWith('/')) {
+              const body = xml.slice(open.lastIndex, open.lastIndex + MAX_BODY_LENGTH);
+              const stop = body.search(NEXT_STRUCTURE);
+              const ele = ELE_RE.exec(stop === -1 ? body : body.slice(0, stop));
+              if (ele) {
+                const parsed = Number(ele[1]);
+                elevation = Number.isFinite(parsed) ? parsed : null;
+              }
+            }
+            let segment: GpxSegment;
+            if (name === 'trkpt') {
+              if (!currentTrack) {
+                currentTrack = { coordinates: [], elevations: [] };
+                track.push(currentTrack);
+              }
+              segment = currentTrack;
+            } else {
+              if (!currentRoute) {
+                currentRoute = { coordinates: [], elevations: [] };
+                route.push(currentRoute);
+              }
+              segment = currentRoute;
+            }
+            segment.coordinates.push([point.lon, point.lat]);
+            segment.elevations.push(elevation);
+            total += 1;
           }
         }
-        elevations.push(elevation);
       }
       match = open.exec(xml);
     }
-    return { coordinates, elevations };
+    return { track, route };
   }
 
   private static readLatLon(attrs: string): { lat: number; lon: number } | null {
@@ -254,15 +322,26 @@ export class GPXEngine {
    * `extractCoordinates` et par les autres applications.
    */
   public static fromCoordinates(coordinates: Array<[number, number]>, title: string = 'Tracé LKDV'): string {
-    const points = coordinates
-      .filter(([lng, lat]) => Number.isFinite(lng) && Number.isFinite(lat))
-      .map(([lng, lat]) => `      <trkpt lat="${lat}" lon="${lng}"/>`)
+    return GPXEngine.fromSegments([coordinates], title);
+  }
+
+  /** Comme `fromCoordinates`, avec un `trkseg` par segment (segments jamais reliés). */
+  public static fromSegments(segments: Array<Array<[number, number]>>, title: string = 'Tracé LKDV'): string {
+    const body = segments
+      .map((segment) =>
+        segment
+          .filter(([lng, lat]) => Number.isFinite(lng) && Number.isFinite(lat))
+          .map(([lng, lat]) => `      <trkpt lat="${lat}" lon="${lng}"/>`)
+          .join('\n'),
+      )
+      .filter((points) => points.length > 0)
+      .map((points) => `    <trkseg>\n${points}\n    </trkseg>`)
       .join('\n');
     return (
       `<?xml version="1.0" encoding="UTF-8"?>\n` +
       `<gpx version="1.1" creator="Le Kit du Voyageur - https://kitduvoyageur.app" xmlns="http://www.topografix.com/GPX/1/1">\n` +
       `  <metadata><name>${this.escapeXml(title)}</name></metadata>\n` +
-      `  <trk>\n    <name>${this.escapeXml(title)}</name>\n    <trkseg>\n${points}\n    </trkseg>\n  </trk>\n</gpx>\n`
+      `  <trk>\n    <name>${this.escapeXml(title)}</name>\n${body}\n  </trk>\n</gpx>\n`
     );
   }
 

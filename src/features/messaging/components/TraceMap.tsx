@@ -9,9 +9,13 @@
 // Fiabilité (tiroir animé, conteneur de taille provisoire) :
 //  - le worker MapLibre est déclaré (`setWorkerUrl`), sans quoi aucune source
 //    GeoJSON ne se charge en MapLibre 6 et le tracé n'est jamais dessiné ;
+//  - projection Mercator et fond transparent : la première image est déjà
+//    cadrée sur le tracé (pas de globe blanc au chargement à froid) ;
 //  - source et couches sont ajoutées dès que le style est prêt ;
 //  - un ResizeObserver recadre la carte (`resize` + `fitBounds`) tant que la
 //    personne ne l'a pas manipulée ;
+//  - segments disjoints : MultiLineString, jamais de droite entre deux segments ;
+//  - fond de carte en échec (hors ligne) : le tracé reste lisible en SVG ;
 //  - `map.remove()` au démontage (un seul contexte WebGL vivant ici : la
 //    messagerie n'ouvre jamais deux cartes à la fois, les bulles sont en SVG).
 
@@ -20,15 +24,18 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import { createMapStyle } from '@/components/map/engine/createMapStyle';
 import {
-  extractLngLat,
+  geometrySegments,
   lngLatBounds,
-  simplifyLngLat,
+  simplifySegments,
+  unwrapAntimeridian,
   type LngLat,
-  type TraceLineString,
+  type TraceGeometry,
 } from '@/lib/geo/traceCoordinates';
-import { TRACE_STYLE } from '../lib/traceStyle';
+import { TRACE_EMPTY_LABEL, TRACE_STYLE } from '../lib/traceStyle';
+import { TraceThumb } from './TraceThumb';
 
-export type { TraceLineString } from '@/lib/geo/traceCoordinates';
+export type { TraceLineString, TraceGeometry } from '@/lib/geo/traceCoordinates';
+export { TRACE_EMPTY_LABEL };
 
 export interface TraceMapPadding {
   top?: number;
@@ -38,7 +45,8 @@ export interface TraceMapPadding {
 }
 
 export interface TraceMapProps {
-  geojson: TraceLineString | null;
+  /** LineString, MultiLineString ou tout ce que lit `geometrySegments`. */
+  geojson: TraceGeometry | null;
   height?: number | string;
   /** Marges de cadrage (px) qui laissent la place aux pastilles posées par-dessus. */
   padding?: TraceMapPadding;
@@ -50,9 +58,11 @@ const WORKER_URL = '/maplibre/maplibre-gl-worker.mjs';
 const MAX_MAP_POINTS = 2000;
 const MAX_FIT_ZOOM = 16;
 const READY_TIMEOUT_MS = 15_000;
-export const TRACE_EMPTY_LABEL = 'Tracé indisponible pour cette randonnée';
+const TILES_TIMEOUT_MS = 10_000;
+const TILE_ERRORS_BEFORE_FALLBACK = 3;
+const SATELLITE_SOURCE = 'atlas-satellite';
 
-type Status = 'loading' | 'ready' | 'error';
+type Status = 'loading' | 'ready' | 'nobasemap' | 'error';
 
 /** Marges réduites pour qu'elles ne dépassent jamais 70 % de la taille réelle. */
 function clampPadding(padding: Required<TraceMapPadding>, width: number, height: number) {
@@ -73,26 +83,28 @@ export function TraceMap({ geojson, height = 260, padding, emptyLabel = TRACE_EM
   const [status, setStatus] = useState<Status>('loading');
   const [attempt, setAttempt] = useState(0);
 
-  const coords = useMemo(() => extractLngLat(geojson), [geojson]);
+  // Segments tracés (≥ 2 points), antiméridien déroulé : jamais reliés entre eux.
+  const segments = useMemo(() => unwrapAntimeridian(geometrySegments(geojson)), [geojson]);
   // Identité stable : un parent qui recrée l'objet à chaque rendu ne relance pas la carte.
   const signature = useMemo(() => {
-    if (coords.length < 2) return '';
-    const first = coords[0];
-    const last = coords[coords.length - 1];
-    const mid = coords[Math.floor(coords.length / 2)];
-    return `${coords.length}|${first}|${mid}|${last}`;
-  }, [coords]);
-  const coordsRef = useRef<LngLat[]>(coords);
-  coordsRef.current = coords;
+    if (segments.length === 0) return '';
+    const flat = segments.flat();
+    return `${segments.length}|${flat.length}|${flat[0]}|${flat[Math.floor(flat.length / 2)]}|${flat[flat.length - 1]}`;
+  }, [segments]);
+  const segmentsRef = useRef<LngLat[][]>(segments);
+  segmentsRef.current = segments;
   const paddingRef = useRef<Required<TraceMapPadding>>({ top: 28, right: 28, bottom: 28, left: 28 });
   paddingRef.current = { top: 28, right: 28, bottom: 28, left: 28, ...padding };
 
   useEffect(() => {
     const container = containerRef.current;
     if (!signature || !container) return undefined;
-    const line = simplifyLngLat(coordsRef.current, MAX_MAP_POINTS);
-    const bounds = lngLatBounds(line);
+    const lines = simplifySegments(segmentsRef.current, MAX_MAP_POINTS);
+    const bounds = lngLatBounds(lines.flat());
     if (!bounds) return undefined;
+    const startPoint = lines[0][0];
+    const lastLine = lines[lines.length - 1];
+    const endPoint = lastLine[lastLine.length - 1];
 
     let cancelled = false;
     let map: MapLibreMap | null = null;
@@ -100,24 +112,25 @@ export function TraceMap({ geojson, height = 260, padding, emptyLabel = TRACE_EM
     let frame = 0;
     let settleTimer: ReturnType<typeof setTimeout> | undefined;
     let readyTimer: ReturnType<typeof setTimeout> | undefined;
+    let tilesTimer: ReturnType<typeof setTimeout> | undefined;
     let userMoved = false;
     let ready = false;
+    let tilesOk = false;
+    let tileErrors = 0;
     setStatus('loading');
+
+    const cameraBounds: [[number, number], [number, number]] = [
+      [bounds.west, bounds.south],
+      [bounds.east, bounds.north],
+    ];
+    const fitPadding = () => clampPadding(paddingRef.current, container.clientWidth, container.clientHeight);
 
     const fit = () => {
       if (!map || cancelled) return;
-      const w = container.clientWidth;
-      const h = container.clientHeight;
       // Conteneur encore sans taille (tiroir qui s'ouvre) : le ResizeObserver rappellera.
-      if (w < 48 || h < 48) return;
+      if (container.clientWidth < 48 || container.clientHeight < 48) return;
       try {
-        map.fitBounds(
-          [
-            [bounds.west, bounds.south],
-            [bounds.east, bounds.north],
-          ],
-          { padding: clampPadding(paddingRef.current, w, h), duration: 0, maxZoom: MAX_FIT_ZOOM },
-        );
+        map.fitBounds(cameraBounds, { padding: fitPadding(), duration: 0, maxZoom: MAX_FIT_ZOOM });
       } catch {
         /* cadre impossible : la vue courante reste */
       }
@@ -129,19 +142,28 @@ export function TraceMap({ geojson, height = 260, padding, emptyLabel = TRACE_EM
       if (ready && !userMoved) fit();
     };
 
+    const markBasemapMissing = () => {
+      if (!cancelled && !tilesOk) setStatus((current) => (current === 'error' ? current : 'nobasemap'));
+    };
+
     (async () => {
       try {
         const maplibregl = await import('maplibre-gl');
         if (cancelled) return;
         // Worker servi depuis /public (MapLibre 6) : sans lui, la source GeoJSON ne charge jamais.
         maplibregl.setWorkerUrl(WORKER_URL);
+        // Mercator + fond transparent : la première image est locale et sombre, jamais un globe blanc.
+        const style = { ...createMapStyle('satellite', { transparentBackground: true }), projection: { type: 'mercator' as const } };
+        const initialReady = container.clientWidth >= 48 && container.clientHeight >= 48;
         const instance = new maplibregl.Map({
           container,
-          style: createMapStyle('satellite'),
+          style,
           interactive: true,
           attributionControl: false,
           fadeDuration: 0,
-          renderWorldCopies: false,
+          ...(initialReady
+            ? { bounds: cameraBounds, fitBoundsOptions: { padding: fitPadding(), maxZoom: MAX_FIT_ZOOM } }
+            : { center: [(bounds.west + bounds.east) / 2, (bounds.south + bounds.north) / 2] as [number, number], zoom: 8 }),
         });
         map = instance;
         instance.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-left');
@@ -149,23 +171,42 @@ export function TraceMap({ geojson, height = 260, padding, emptyLabel = TRACE_EM
           // Un déplacement venant d'un geste porte `originalEvent` ; le cadrage automatique non.
           if ((event as { originalEvent?: unknown }).originalEvent) userMoved = true;
         });
+        instance.on('sourcedata', (event) => {
+          const e = event as { sourceId?: string; isSourceLoaded?: boolean };
+          if (e.sourceId === SATELLITE_SOURCE && e.isSourceLoaded) {
+            tilesOk = true;
+            if (tilesTimer) clearTimeout(tilesTimer);
+            if (!cancelled) setStatus((current) => (current === 'nobasemap' ? 'ready' : current));
+          }
+        });
+        instance.on('error', (event) => {
+          const e = event as { sourceId?: string };
+          if (e.sourceId === SATELLITE_SOURCE) {
+            tileErrors += 1;
+            if (tileErrors >= TILE_ERRORS_BEFORE_FALLBACK) markBasemapMissing();
+          }
+        });
 
         const addTrace = () => {
           if (ready || cancelled) return;
+          const geometry =
+            lines.length === 1
+              ? { type: 'LineString' as const, coordinates: lines[0] }
+              : { type: 'MultiLineString' as const, coordinates: lines };
+          try {
+            instance.addSource('trace', { type: 'geojson', data: { type: 'Feature', properties: {}, geometry } });
+          } catch {
+            // Style pas encore chargé : on réessaie au prochain `styledata`.
+            return;
+          }
           ready = true;
-          const feature = {
-            type: 'Feature' as const,
-            properties: {},
-            geometry: { type: 'LineString' as const, coordinates: line },
-          };
-          instance.addSource('trace', { type: 'geojson', data: feature });
           instance.addSource('trace-ends', {
             type: 'geojson',
             data: {
               type: 'FeatureCollection',
               features: [
-                { type: 'Feature', properties: { role: 'end' }, geometry: { type: 'Point', coordinates: line[line.length - 1] } },
-                { type: 'Feature', properties: { role: 'start' }, geometry: { type: 'Point', coordinates: line[0] } },
+                { type: 'Feature', properties: { role: 'end' }, geometry: { type: 'Point', coordinates: endPoint } },
+                { type: 'Feature', properties: { role: 'start' }, geometry: { type: 'Point', coordinates: startPoint } },
               ],
             },
           });
@@ -211,17 +252,18 @@ export function TraceMap({ geojson, height = 260, padding, emptyLabel = TRACE_EM
           if (readyTimer) clearTimeout(readyTimer);
           instance.resize();
           fit();
-          setStatus('ready');
+          setStatus((current) => (current === 'nobasemap' ? current : 'ready'));
           // Le tiroir finit de s'animer : un dernier recadrage une fois posé.
           settleTimer = setTimeout(refit, 400);
+          // Aucune tuile reçue après un délai : le fond de carte est indisponible.
+          tilesTimer = setTimeout(markBasemapMissing, TILES_TIMEOUT_MS);
         };
 
-        // `load` n'arrive qu'après les premières tuiles ; le style prêt suffit pour poser le tracé.
-        instance.on('styledata', () => {
-          if (instance.isStyleLoaded()) addTrace();
-        });
+        // `load` et `isStyleLoaded()` attendent les tuiles du fond : le style chargé suffit pour poser
+        // le tracé (l'ajout d'une source échoue tant que le style n'est pas là, on réessaie).
+        instance.on('styledata', addTrace);
         instance.once('load', addTrace);
-        if (instance.isStyleLoaded()) addTrace();
+        addTrace();
 
         observer = new ResizeObserver(() => {
           cancelAnimationFrame(frame);
@@ -242,6 +284,7 @@ export function TraceMap({ geojson, height = 260, padding, emptyLabel = TRACE_EM
       cancelAnimationFrame(frame);
       if (settleTimer) clearTimeout(settleTimer);
       if (readyTimer) clearTimeout(readyTimer);
+      if (tilesTimer) clearTimeout(tilesTimer);
       observer?.disconnect();
       try {
         map?.remove();
@@ -272,6 +315,12 @@ export function TraceMap({ geojson, height = 260, padding, emptyLabel = TRACE_EM
       {status === 'loading' ? (
         <div className="mtrace-state" role="status" aria-label="Chargement de la carte">
           <span className="mtrace-spin" aria-hidden="true" />
+        </div>
+      ) : null}
+      {status === 'nobasemap' ? (
+        <div className="mtrace-state mtrace-nobasemap" role="status">
+          <TraceThumb geojson={geojson} width={360} height={420} reserveBottom={44} pad={40} />
+          <span className="mtrace-nobasemap-label">Fond de carte indisponible</span>
         </div>
       ) : null}
       {status === 'error' ? (

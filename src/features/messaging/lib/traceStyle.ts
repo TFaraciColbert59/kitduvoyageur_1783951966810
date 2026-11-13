@@ -23,3 +23,6 @@ export const TRACE_STYLE = {
   thumbFrom: '#1E4A35',
   thumbTo: '#172B24',
 } as const;
+
+/** Texte de l'état vide d'un tracé (aucun segment exploitable). */
+export const TRACE_EMPTY_LABEL = 'Tracé indisponible pour cette randonnée';

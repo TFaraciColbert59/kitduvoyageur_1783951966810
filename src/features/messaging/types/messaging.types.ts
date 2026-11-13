@@ -1,3 +1,5 @@
+import type { TraceGeometry } from '@/lib/geo/traceCoordinates';
+
 export type ConversationType = 'direct' | 'group';
 export type MessageType =
   | 'text'
@@ -32,7 +34,7 @@ export interface TrailMessageMeta {
   elevation_gain_m?: number | null;
   region?: string | null;
   /** Version simplifiée du tracé (≤ 200 points), absente quand il est inconnu. */
-  geojson?: { type: 'LineString'; coordinates: [number, number][] };
+  geojson?: TraceGeometry;
   /** Ancien format (doublon de `geojson`) : lu mais plus écrit. */
   coordinates?: [number, number][];
   /** Tracé schématique du catalogue (quelques points reliés par des droites), pas un relevé GPS. */
