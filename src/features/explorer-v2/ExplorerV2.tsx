@@ -11,12 +11,13 @@ import { TopChrome } from './chrome/TopChrome';
 import { ActivityPill } from './chrome/BottomBar';
 import { SosButton } from './chrome/SosButton';
 import { Countdown, useLongPress } from './activity/Countdown';
-import { useGpsTracker } from './activity/useGpsTracker';
+import { useGpsTracker, type RestoredTrackerState } from './activity/useGpsTracker';
 import {
   createTrackTrace,
   interruptTrack,
   pushTrackPoint,
   trackGeoJson,
+  type TrackTrace,
 } from './activity/trackTrace';
 import type { ActivityMetrics, GpsFix } from './activity/tracker';
 import { endLiveActivity, startLiveActivity, updateLiveActivity } from './native/liveActivity';
@@ -26,6 +27,27 @@ import { registerOfflineWorker } from './offline/zone';
 import { bearingLabel, offRouteLabel, screenBearingDeg } from './activity/offRoute';
 import { nearestPointOnRouteM, routeLines } from './geo/track';
 import { fetchRouteGeometry } from './data/routeGeometry';
+import { shouldKeepFinishInQueue } from './activity/finishOutcome';
+import {
+  activityFromRecord,
+  appendSessionPoint,
+  flushLocalSessionWrites,
+  forgetFinishedSession,
+  readActiveSession,
+  readLatestFinishedSession,
+  readSessionPoints,
+  recordFromActivity,
+  saveActiveSession,
+  saveFinishedSession,
+  type LocalSessionRecord,
+} from './activity/localSession';
+import {
+  ensureServerSession,
+  finishSession,
+  finishSessionById,
+  loadSessionForSync,
+  syncPendingPoints,
+} from './activity/sessionSync';
 import { XpIcon } from './ui/XpIcon';
 import { haptic } from './state/haptics';
 import {
@@ -77,6 +99,22 @@ const MapStage = dynamic(() => import('./map/MapStage'), {
 });
 
 const BOTTOM_BAR_SPACE = 64;
+/** Un bilan local reste restituable pendant 24 h après sa clôture. */
+const SUMMARY_RESTORE_TTL_MS = 24 * 60 * 60 * 1000;
+/** Au-delà, on pousse les points sans attendre la fin de séance. */
+const POINT_SYNC_EVERY = 10;
+const POINT_SYNC_INTERVAL_MS = 5000;
+
+/**
+ * Reconstruit le tracé d'une séance restaurée à partir des points persistés.
+ * Les coupures de pause ne sont pas stockées : la trace restaurée est continue,
+ * alors que le tracker, lui, rejoue les fixes et retrouve ses métriques.
+ */
+function traceFromPoints(points: ReadonlyArray<readonly [number, number]>): TrackTrace {
+  let trace = createTrackTrace();
+  for (const point of points) trace = pushTrackPoint(trace, [point[0], point[1]]);
+  return trace;
+}
 
 export interface ExplorerV2Props {
   /** Scène de test/parité (écran de la maquette). */
@@ -154,6 +192,15 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
   const [sheetOpen, setSheetOpen] = useState(Boolean(initialScene));
   const [sheetHeight, setSheetHeight] = useState(176);
   const [offlineQueue, setOfflineQueue] = useState(0);
+  // Séance restaurée : les points déjà acceptés rejouent les métriques du
+  // tracker, sans en inventer aucun.
+  const [restoredTracker, setRestoredTracker] = useState<RestoredTrackerState | null>(null);
+  const restoreDoneRef = React.useRef(false);
+  const pointSeqRef = React.useRef(0);
+  const pointsSinceSyncRef = React.useRef(0);
+  const pointSyncInFlightRef = React.useRef(false);
+  const startAttemptRef = React.useRef(new Set<string>());
+  const localSessionRef = React.useRef<LocalSessionRecord | null>(null);
   // Accès de recette à la machine d'état (lecture seule, jamais en production sans scène autorisée).
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -229,38 +276,150 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
     void listQueue().then((items) => setOfflineQueue(items.length));
   }, []);
 
-  useEffect(() => {
-    if (!online) return;
-    void flushQueue(async (operation) => {
-      if (operation.kind === 'activity.finish') {
-        // Fin de sortie jouée hors ligne : rejouée avec sa clé d'idempotence
-        // (le serveur répond `duplicate` si elle a déjà été appliquée).
-        const { createClient } = await import('@/lib/supabase/client');
-        const { data } = await createClient().auth.getSession();
-        const token = data.session?.access_token;
-        if (!token) return false;
-        const res = await fetch('/api/explorer/v2/activity/finish', {
+  // Un seul flush à la fois : les déclencheurs (réseau, auth, focus) peuvent
+  // se chevaucher sans rejouer deux fois la même opération.
+  const flushInFlight = React.useRef(false);
+  const flushPending = useCallback(async () => {
+    if (flushInFlight.current) return;
+    flushInFlight.current = true;
+    try {
+      const result = await flushQueue(async (operation) => {
+        if (operation.kind === 'activity.finish') {
+          // Fin de sortie jouée hors ligne : on reprend la fiche locale pour
+          // pousser les derniers points, créer la séance si besoin, puis
+          // rejouer la fin avec sa clé d'idempotence.
+          const queuedClient =
+            typeof operation.payload.clientSessionId === 'string'
+              ? operation.payload.clientSessionId
+              : null;
+          const queuedSession =
+            typeof operation.payload.sessionId === 'string'
+              ? operation.payload.sessionId
+              : null;
+          const queuedKey =
+            typeof operation.payload.idempotencyKey === 'string'
+              ? operation.payload.idempotencyKey
+              : operation.key;
+
+          let outcome = null;
+          if (queuedClient) {
+            const stored = await loadSessionForSync(queuedClient);
+            if (stored) {
+              const endedAt =
+                typeof operation.payload.endedAt === 'number'
+                  ? operation.payload.endedAt
+                  : null;
+              const record =
+                stored.endedAt === null && endedAt !== null
+                  ? { ...stored, endedAt, status: 'finished' as const }
+                  : stored;
+              const finished = await finishSession(record);
+              if (!finished.ok) {
+                // Un conflit d'identité ou un refus de payload ne changera pas
+                // au prochain essai : retirer l'entrée serait une perte, mais
+                // la conserver éternellement bloquerait la file. On la retire
+                // seulement pour ces refus définitifs, en gardant la trace
+                // locale de la séance.
+                const terminal =
+                  finished.reason === 'conflict' ||
+                  finished.reason === 'rejected' ||
+                  finished.reason === 'invalid';
+                if (terminal && useExplorerStore.getState().summary?.clientSessionId === queuedClient) {
+                  useExplorerStore.setState({ summarySaved: 'failed' });
+                }
+                return terminal;
+              }
+              outcome = finished.outcome;
+            } else if (queuedSession) {
+              outcome = await finishSessionById(queuedSession, queuedKey);
+            } else {
+              // Entrée sans fiche locale ni identifiant serveur : illisible,
+              // elle ne pourra jamais aboutir.
+              return true;
+            }
+          } else if (queuedSession) {
+            outcome = await finishSessionById(queuedSession, queuedKey);
+          } else {
+            return true;
+          }
+          // Aucune identité exploitable, ou session expirée : conserver.
+          if (!outcome) return false;
+          // Seuls 400/409 sont définitifs. Un 401/403/404/5xx conserve le
+          // bilan : il sera rejoué après reconnexion ou correction serveur.
+          if (shouldKeepFinishInQueue(outcome)) return false;
+          // La file vient d'aboutir : l'écran Bilan ne doit plus afficher
+          // « Enregistrement impossible » pour cette séance.
+          const current = useExplorerStore.getState();
+          const sameSummary =
+            (queuedClient && current.summary?.clientSessionId === queuedClient) ||
+            (queuedSession && current.summary?.sessionId === queuedSession);
+          if (sameSummary) {
+            useExplorerStore.setState({ summarySaved: outcome.state });
+          }
+          return true;
+        }
+        if (operation.kind !== 'report-confirm') return false;
+        const res = await fetch('/api/explorer/v2/reports/confirm', {
           method: 'POST',
-          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(operation.payload),
         });
         return res.ok;
-      }
-      if (operation.kind !== 'report-confirm') return false;
-      const res = await fetch('/api/explorer/v2/reports/confirm', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(operation.payload),
       });
-      return res.ok;
-    }).then((result) => {
       if (result.sent > 0) {
-        state.showToast({ title: `${result.sent} opération(s) synchronisée(s)`, tone: 'good' });
+        useExplorerStore.getState().showToast({
+          title: `${result.sent} opération(s) synchronisée(s)`,
+          tone: 'good',
+        });
       }
-      void listQueue().then((items) => setOfflineQueue(items.length));
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [online]);
+      const items = await listQueue();
+      setOfflineQueue(items.length);
+    } finally {
+      flushInFlight.current = false;
+    }
+  }, []);
+
+  // File vidée au retour du réseau.
+  useEffect(() => {
+    if (!online) return;
+    void flushPending();
+  }, [online, flushPending]);
+
+  // …et après reconnexion, retour au premier plan ou focus. Sans cela, un
+  // bilan conservé sur 401 resterait en file alors que l'utilisateur est déjà
+  // revenu en ligne et authentifié.
+  useEffect(() => {
+    let cancelled = false;
+    let subscription: { unsubscribe: () => void } | undefined;
+
+    void import('@/lib/supabase/client')
+      .then(({ createClient }) => {
+        if (cancelled) return;
+        const { data } = createClient().auth.onAuthStateChange((event, session) => {
+          if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || session) {
+            void flushPending();
+          }
+        });
+        subscription = data.subscription;
+      })
+      .catch(() => undefined);
+
+    const onFocus = () => {
+      if (navigator.onLine) void flushPending();
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible' && navigator.onLine) void flushPending();
+    };
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisibility);
+
+    return () => {
+      cancelled = true;
+      subscription?.unsubscribe();
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, [flushPending]);
 
   useEffect(() => {
     if (typeof navigator === 'undefined' || !navigator.geolocation) return;
@@ -638,36 +797,356 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
   // Suivi GPS de l'activité en cours (métriques, tracé, hors-trace, caméra).
   const [trackTrace, setTrackTrace] = useState(createTrackTrace);
 
+  const requestPointSync = useCallback(async (clientSessionId: string): Promise<boolean> => {
+    if (typeof navigator !== 'undefined' && !navigator.onLine) return false;
+    if (pointSyncInFlightRef.current) return false;
+    pointSyncInFlightRef.current = true;
+    try {
+      const stored = await loadSessionForSync(clientSessionId);
+      if (!stored || stored.status !== 'active') return false;
+      const result = await syncPendingPoints(stored);
+      if (result.ok) {
+        // Une ancienne séance peut finir sa synchro après le démarrage de la
+        // suivante : ne jamais remplacer la fiche active par une autre.
+        if (useExplorerStore.getState().activity?.clientSessionId === clientSessionId) {
+          localSessionRef.current = result.record;
+        }
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    } finally {
+      pointSyncInFlightRef.current = false;
+    }
+  }, []);
+
   const onGpsFix = useCallback(
-    (fix: { lat: number; lng: number }, metrics: ActivityMetrics) => {
-      // Défense en profondeur : le hook ne remonte déjà pas les fixes rejetés.
+    (fix: GpsFix, metrics: ActivityMetrics) => {
+      const activity = useExplorerStore.getState().activity;
+      if (!activity) return;
+      // Deux garde-fous complémentaires : `accepted` est le contrat du tracker,
+      // `lastFix` prouve que ce point précis a été retenu. Un fix rejeté
+      // (précision, saut, horloge) ne doit être ni dessiné ni persisté.
       if (!metrics.accepted) return;
+      if (metrics.lastFix !== fix) return;
+
       // Pause automatique : la capture continue pour détecter la reprise, mais
-      // le tracé et la carte restent figés. Le premier point après la reprise
-      // ouvre un nouveau segment, sans corde droite à travers la pause.
+      // le tracé et la carte restent figés. Le point est tout de même persisté
+      // localement pour que la séance restaurée rejoue exactement les mêmes
+      // fixes ; il n'entre ni dans la distance ni dans la durée.
       if (metrics.autoPaused) {
         setTrackTrace(interruptTrack);
-        return;
+      } else {
+        setMe({ lat: fix.lat, lng: fix.lng });
+        setTrackTrace((prev) => {
+          // Trou GPS, rejet précédent ou pause manuelle : la nouvelle borne ne
+          // doit pas être reliée au dernier point par une corde droite.
+          const base = metrics.discontinuity ? interruptTrack(prev) : prev;
+          // Un même point reçu deux fois n'ajoute rien au tracé (la séance
+          // locale le dédupliquait déjà) ; après une coupure, il ouvre bien un
+          // nouveau segment.
+          const last = base.current[base.current.length - 1];
+          if (last && last[0] === fix.lng && last[1] === fix.lat) return base;
+          return pushTrackPoint(base, [fix.lng, fix.lat]);
+        });
+        const current = useExplorerStore.getState();
+        current.setCenter([fix.lng, fix.lat], current.zoom);
       }
-      setMe({ lat: fix.lat, lng: fix.lng });
-      setTrackTrace((prev) => {
-        // Trou GPS, rejet précédent ou pause manuelle : la nouvelle borne ne
-        // doit pas être reliée au dernier point par une corde droite.
-        const base = metrics.discontinuity ? interruptTrack(prev) : prev;
-        return pushTrackPoint(base, [fix.lng, fix.lat]);
+
+      if (!activity.clientSessionId) return;
+      // Un fix peut arriver avant l'effet de création de la fiche : on ne
+      // reprend jamais la séquence d'une autre séance.
+      if (localSessionRef.current?.clientSessionId !== activity.clientSessionId) {
+        pointSeqRef.current = 0;
+      }
+      const seq = pointSeqRef.current + 1;
+      pointSeqRef.current = seq;
+      const previous =
+        localSessionRef.current?.clientSessionId === activity.clientSessionId
+          ? localSessionRef.current
+          : null;
+      const next = {
+        ...recordFromActivity(
+          {
+            ...activity,
+            distanceM: metrics.distanceM,
+            elevGainM: metrics.elevGainM,
+            movingS: metrics.movingS,
+          },
+          previous,
+        ),
+        lastPointSeq: seq,
+        status: 'active' as const,
+        endedAt: null,
+      };
+      localSessionRef.current = next;
+      pointsSinceSyncRef.current += 1;
+      // Un capteur sans horodatage exploitable ne doit pas faire échouer
+      // tout le lot : on utilise l'heure de réception, pas une heure inventée.
+      const measuredAt =
+        Number.isFinite(fix.t) && fix.t >= 946_684_800_000 && fix.t <= 4_102_444_800_000
+          ? fix.t
+          : Date.now();
+      void appendSessionPoint(next, {
+        seq,
+        t: measuredAt,
+        lat: fix.lat,
+        lng: fix.lng,
+        ele: fix.ele ?? null,
+        acc: fix.acc ?? null,
+        speed: fix.speed ?? null,
       });
-      state.setCenter([fix.lng, fix.lat], state.zoom);
+      if (pointsSinceSyncRef.current >= POINT_SYNC_EVERY) {
+        pointsSinceSyncRef.current = 0;
+        void requestPointSync(activity.clientSessionId);
+      }
     },
-    [state],
+    [requestPointSync],
   );
 
-  const { markLap } = useGpsTracker({ distanceToRouteM: distanceToRoute, onFix: onGpsFix });
+  const { markLap } = useGpsTracker({
+    distanceToRouteM: distanceToRoute,
+    onFix: onGpsFix,
+    restored: restoredTracker,
+  });
 
   // Pause manuelle : aucun fix n'arrive pendant la pause. On marque la coupure
   // dès que l'état bascule pour que la reprise ouvre un segment distinct.
   useEffect(() => {
     if (state.activity?.paused) setTrackTrace(interruptTrack);
   }, [state.activity?.paused]);
+
+  // Reprise au montage : une séance locale encore ouverte retrouve son
+  // identité, ses points et ses métriques ; sinon le dernier bilan reste
+  // consultable. Une scène de recette ou une séance déjà en mémoire gagne.
+  useEffect(() => {
+    if (restoreDoneRef.current) return;
+    restoreDoneRef.current = true;
+    if (typeof window === 'undefined' || initialScene) return;
+    const current = useExplorerStore.getState();
+    if (current.scene || current.activity || current.summary) return;
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        const active = await readActiveSession();
+        if (cancelled) return;
+        if (active) {
+          const points = await readSessionPoints(active.clientSessionId);
+          if (cancelled) return;
+          localSessionRef.current = active;
+          pointSeqRef.current = active.lastPointSeq;
+          setTrackTrace(
+            traceFromPoints(points.map((point) => [point.lng, point.lat] as [number, number])),
+          );
+          setRestoredTracker({
+            clientSessionId: active.clientSessionId,
+            fixes: points.map((point) => ({
+              t: point.t,
+              lat: point.lat,
+              lng: point.lng,
+              ele: point.ele ?? null,
+              acc: point.acc ?? null,
+              speed: point.speed ?? null,
+            })),
+          });
+          useExplorerStore.setState({
+            activity: {
+              sport: active.sport,
+              ...(active.selection ? { selection: active.selection } : {}),
+              sessionId: active.serverSessionId,
+              clientSessionId: active.clientSessionId,
+              startedAt: active.startedAt,
+              paused: active.paused,
+              offRoute: false,
+              distanceM: active.distanceM,
+              elevGainM: active.elevGainM,
+              movingS: active.movingS,
+            },
+            sheet: 'live',
+            detent: 'peek',
+            camera: { type: 'follow' },
+          });
+          return;
+        }
+
+        const latest = await readLatestFinishedSession();
+        if (cancelled || !latest || latest.endedAt === null) return;
+        if (Date.now() - latest.endedAt > SUMMARY_RESTORE_TTL_MS) return;
+        const summary = activityFromRecord(latest);
+        if (!summary) return;
+        const points = await readSessionPoints(latest.clientSessionId);
+        if (cancelled) return;
+        localSessionRef.current = latest;
+        setTrackTrace(
+          traceFromPoints(points.map((point) => [point.lng, point.lat] as [number, number])),
+        );
+        useExplorerStore.setState({
+          summary,
+          summarySaved: latest.summarySaved ?? 'pending',
+          sheet: 'summary',
+          detent: 'full',
+          camera: { type: 'overview' },
+        });
+      } catch {
+        // Une base locale illisible ne doit pas empêcher d'ouvrir l'Explorer.
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [initialScene]);
+
+  // Fiche locale de la séance courante : créée avant la première synchro et
+  // réécrite à chaque reprise, sans jamais reculer les curseurs.
+  useEffect(() => {
+    const activity = state.activity;
+    if (!activity?.clientSessionId) return;
+    if (localSessionRef.current?.clientSessionId !== activity.clientSessionId) {
+      pointSeqRef.current = 0;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const known =
+          localSessionRef.current?.clientSessionId === activity.clientSessionId
+            ? localSessionRef.current
+            : await loadSessionForSync(activity.clientSessionId);
+        if (cancelled) return;
+        const next = {
+          ...recordFromActivity(activity, known),
+          lastPointSeq: known?.lastPointSeq ?? 0,
+          syncedThroughSeq: known?.syncedThroughSeq ?? 0,
+          status: 'active' as const,
+          endedAt: null,
+        };
+        if (!known) pointSeqRef.current = 0;
+        localSessionRef.current = next;
+        await saveActiveSession(next);
+        // Un nouveau départ ne doit pas laisser indéfiniment les points du
+        // bilan précédent dans IndexedDB. Le bilan serveur reste la référence.
+        if (!known) {
+          const latest = await readLatestFinishedSession();
+          if (latest && latest.clientSessionId !== next.clientSessionId) {
+            void forgetFinishedSession(latest.clientSessionId);
+          }
+        }
+      } catch {
+        // Pas de persistance locale : la séance reste utilisable en mémoire.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [state.activity?.clientSessionId]);
+
+  // Démarrage serveur différé : hors ligne, la séance vit localement puis est
+  // créée dès qu'un jeton et le réseau sont disponibles. L'identité ne change
+  // jamais : la RPC répond avec la même séance sur un rejeu.
+  useEffect(() => {
+    const activity = state.activity;
+    if (!activity?.clientSessionId || activity.sessionId) return;
+    const clientSessionId = activity.clientSessionId;
+    if (startAttemptRef.current.has(clientSessionId)) return;
+    startAttemptRef.current.add(clientSessionId);
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        const known =
+          (await loadSessionForSync(clientSessionId)) ??
+          (localSessionRef.current?.clientSessionId === clientSessionId
+            ? localSessionRef.current
+            : null) ??
+          recordFromActivity(activity);
+        const result = await ensureServerSession(known);
+        if (cancelled) return;
+        if (!result.ok) {
+          startAttemptRef.current.delete(clientSessionId);
+          if (result.reason === 'conflict') {
+            useExplorerStore.getState().showToast({
+              title: 'Séance déjà liée',
+              sub: 'Cette identité a déjà été utilisée avec un autre contenu.',
+              tone: 'warn',
+            });
+          }
+          return;
+        }
+        const liveActivity = useExplorerStore.getState().activity;
+        if (liveActivity && liveActivity.clientSessionId === clientSessionId) {
+          localSessionRef.current = result.record;
+          useExplorerStore.setState({
+            activity: { ...liveActivity, sessionId: result.sessionId },
+          });
+          void requestPointSync(clientSessionId);
+        }
+      } catch {
+        startAttemptRef.current.delete(clientSessionId);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [online, requestPointSync, state.activity?.clientSessionId, state.activity?.sessionId]);
+
+  // Pousse la progression pendant la séance. Le curseur local ne recule pas :
+  // un lot renvoyé après une réponse perdue est ignoré par la RPC.
+  useEffect(() => {
+    const clientSessionId = state.activity?.clientSessionId;
+    if (!clientSessionId) return;
+    const timer = window.setInterval(() => {
+      if (navigator.onLine) void requestPointSync(clientSessionId);
+    }, POINT_SYNC_INTERVAL_MS);
+    return () => window.clearInterval(timer);
+  }, [requestPointSync, state.activity?.clientSessionId]);
+
+  // La pause est une information de séance : elle est persistée avec le même
+  // identifiant, et synchronisée sans attendre la fin.
+  useEffect(() => {
+    const activity = state.activity;
+    if (!activity?.clientSessionId) return;
+    const record = localSessionRef.current;
+    if (record && record.clientSessionId === activity.clientSessionId) {
+      const next = { ...record, paused: activity.paused, updatedAt: Date.now() };
+      localSessionRef.current = next;
+      void saveActiveSession(next);
+    }
+    if (activity.paused) void requestPointSync(activity.clientSessionId);
+  }, [requestPointSync, state.activity?.clientSessionId, state.activity?.paused]);
+
+  // Le bilan quitte l'écran mais reste restituable : il est écrit avant la
+  // synchro et conservé même si la fin est encore en file.
+  useEffect(() => {
+    const summary = state.summary;
+    if (!summary?.clientSessionId) return;
+    // Une séance plus récente est déjà active : ne pas réécrire son pointeur
+    // avec le bilan de la précédente.
+    if (
+      localSessionRef.current &&
+      localSessionRef.current.clientSessionId !== summary.clientSessionId &&
+      localSessionRef.current.status === 'active'
+    ) {
+      return;
+    }
+    const previous =
+      localSessionRef.current?.clientSessionId === summary.clientSessionId
+        ? localSessionRef.current
+        : null;
+    const record = {
+      ...recordFromActivity(summary, previous),
+      status: 'finished' as const,
+      summarySaved: state.summarySaved,
+      updatedAt: Date.now(),
+    };
+    localSessionRef.current = record;
+    void (async () => {
+      await flushLocalSessionWrites();
+      await saveFinishedSession(record);
+    })();
+  }, [state.summary, state.summarySaved]);
 
   // Réinitialise le tracé au début d'une nouvelle activité
   useEffect(() => {
@@ -849,57 +1328,100 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
     return () => observer.disconnect();
   }, []);
 
-  // Enregistrement du bilan : uniquement pour une vraie session (UUID) et un
-  // utilisateur connecté ; sinon l'écran le dit sans mentir.
+  // Enregistrement du bilan : une séance identifiée localement est d'abord
+  // créée côté serveur (si besoin), ses derniers points sont poussés, puis la
+  // fin idempotente est appelée. Tout échec non terminal reste en file.
   useEffect(() => {
     const summary = state.summary;
     if (!summary || state.summarySaved !== 'pending') return;
     const sessionId = summary.sessionId;
-    if (!sessionId || !/^[0-9a-f-]{36}$/i.test(sessionId)) {
-      // Séance locale sans identifiant serveur : ce n’est pas un problème de
-      // connexion, même pour un utilisateur authentifié.
+    const clientSessionId = summary.clientSessionId ?? null;
+    const hasServerId = typeof sessionId === 'string' && /^[0-9a-f-]{36}$/i.test(sessionId);
+    if (!clientSessionId && !hasServerId) {
+      // Séance sans identité stable (scène, ancien appel) : bilan local, sans
+      // suggérer à tort un problème de connexion.
       useExplorerStore.setState({ summarySaved: 'local' });
       return;
     }
+
     let cancelled = false;
+    const idempotencyKey = `activity.finish:${clientSessionId ?? sessionId}`;
+    const persistInQueue = async (savedState: NonNullable<typeof state.summarySaved>) => {
+      await enqueue({
+        key: idempotencyKey,
+        kind: 'activity.finish',
+        payload: {
+          ...(hasServerId ? { sessionId } : {}),
+          ...(clientSessionId ? { clientSessionId } : {}),
+          sport: summary.sport,
+          variantId: summary.selection?.variantId ?? null,
+          startedAt: summary.startedAt,
+          endedAt: summary.endedAt,
+          idempotencyKey,
+        },
+      }).catch(() => undefined);
+      const items = await listQueue().catch(() => []);
+      setOfflineQueue(items.length);
+      if (!cancelled) useExplorerStore.setState({ summarySaved: savedState });
+    };
+
     (async () => {
       try {
-        const { createClient } = await import('@/lib/supabase/client');
-        const supabase = createClient();
-        const { data } = await supabase.auth.getSession();
-        const token = data.session?.access_token;
-        if (!token) {
-          if (!cancelled) useExplorerStore.setState({ summarySaved: 'unauthenticated' });
+        await flushLocalSessionWrites();
+        if (clientSessionId) {
+          const stored = await loadSessionForSync(clientSessionId);
+          // L'écriture du bilan peut être encore dans la chaîne IndexedDB :
+          // on repart du résumé en mémoire pour ne pas perdre l'heure réelle
+          // d'arrêt, tout en conservant les curseurs de la fiche locale.
+          const previous =
+            stored?.clientSessionId === clientSessionId
+              ? stored
+              : localSessionRef.current?.clientSessionId === clientSessionId
+                ? localSessionRef.current
+                : null;
+          const finished =
+            stored?.status === 'finished' && stored.endedAt !== null
+              ? stored
+              : recordFromActivity(summary, previous);
+          const result = await finishSession(finished);
+          if (cancelled) return;
+          if (result.ok) {
+            useExplorerStore.setState({ summarySaved: result.outcome.state });
+            return;
+          }
+          if (result.reason === 'unauthenticated') {
+            await persistInQueue('unauthenticated');
+            return;
+          }
+          if (result.reason === 'conflict') {
+            useExplorerStore.setState({ summarySaved: 'conflict' });
+            return;
+          }
+          if (result.reason === 'rejected' || result.reason === 'invalid') {
+            useExplorerStore.setState({ summarySaved: 'failed' });
+            return;
+          }
+          await persistInQueue('failed');
           return;
         }
-        // Clé d'idempotence : la fin de sortie peut être rejouée (hors ligne,
-        // réseau instable). Le serveur répond `duplicate` sans réécrire.
-        const idempotencyKey = `activity.finish:${sessionId}`;
-        const res = await fetch('/api/explorer/v2/activity/finish', {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sessionId, idempotencyKey }),
-        });
-        if (res.ok) {
-          if (!cancelled) useExplorerStore.setState({ summarySaved: 'saved' });
+
+        // Ancienne entrée de file : la séance existe déjà côté serveur.
+        const outcome = await finishSessionById(sessionId as string, idempotencyKey);
+        if (cancelled) return;
+        if (!outcome) {
+          await persistInQueue('failed');
           return;
         }
-        // Hors ligne : la fin de sortie entre dans la file d'écritures.
-        await enqueue({ key: idempotencyKey, kind: 'activity.finish', payload: { sessionId, idempotencyKey } });
-        const items = await listQueue();
-        setOfflineQueue(items.length);
-        if (!cancelled) useExplorerStore.setState({ summarySaved: 'failed' });
+        if (outcome.terminal) {
+          useExplorerStore.setState({ summarySaved: outcome.state });
+          return;
+        }
+        await persistInQueue(outcome.state);
       } catch {
-        // Échec réseau : même traitement que hors ligne.
-        const idempotencyKey = `activity.finish:${sessionId}`;
-        await enqueue({ key: idempotencyKey, kind: 'activity.finish', payload: { sessionId, idempotencyKey } }).catch(
-          () => undefined,
-        );
-        const items = await listQueue().catch(() => []);
-        setOfflineQueue(items.length);
-        if (!cancelled) useExplorerStore.setState({ summarySaved: 'failed' });
+        await persistInQueue('failed');
       }
     })();
+
     return () => {
       cancelled = true;
     };

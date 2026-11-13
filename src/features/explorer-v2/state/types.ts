@@ -2,6 +2,8 @@
  * Explorer v2 — types de la machine d'état (02_ARCHITECTURE.md §3).
  */
 
+import type { SummarySavedState } from '../activity/finishOutcome';
+
 export type Level = 0 | 1 | 2 | 3;
 
 export type Detent = 'peek' | 'low' | 'mid' | 'full';
@@ -151,7 +153,18 @@ export interface ActivityState {
    * Les anciennes entrées, qui n'ont pas ce champ, restent valides.
    */
   route?: TrailRouteSnapshot;
+  /**
+   * Identifiant serveur, renseigné après le démarrage persistant. Il reste
+   * `null` hors ligne tant que la séance n'a pas été créée côté serveur.
+   */
   sessionId: string | null;
+  /**
+   * Identité stable générée avant le premier point (S1.02/K6.15). Elle survit
+   * au rechargement et permet au serveur de retrouver la même séance sans en
+   * créer une seconde. Absente pour les scènes de recette et les anciens
+   * appels directs `startActivity(sport, sessionId)`.
+   */
+  clientSessionId?: string | null;
   startedAt: number;
   /** Pause manuelle : le suivi GPS est suspendu. */
   paused: boolean;
@@ -215,7 +228,7 @@ export interface ExplorerState {
   /** Dernière sortie terminée, affichée dans l'écran Bilan. */
   summary?: (ActivityState & { endedAt: number }) | null;
   /** Résultat de l'enregistrement du bilan. */
-  summarySaved?: 'pending' | 'saved' | 'local' | 'unauthenticated' | 'failed';
+  summarySaved?: SummarySavedState;
   camera: CameraIntent;
   profile: Profile;
   easyMode: boolean;

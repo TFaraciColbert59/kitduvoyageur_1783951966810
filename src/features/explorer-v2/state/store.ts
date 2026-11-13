@@ -19,6 +19,7 @@ import type {
 } from './types';
 import { LEVEL_ZOOM, SCENES, type SceneName } from './scenes';
 import { createSplitsState } from '../activity/splits';
+import { newClientSessionId } from '../activity/localSession';
 
 export const DETENT_RATIO: Record<Detent, number> = {
   peek: 0,
@@ -45,7 +46,12 @@ interface ExplorerActions {
   setCamera: (camera: CameraIntent) => void;
   showToast: (toast: Omit<ToastMessage, 'id'>) => void;
   dismissToast: () => void;
-  startActivity: (sport: Sport, sessionId?: string | null, selection?: SportSelection) => void;
+  startActivity: (
+    sport: Sport,
+    sessionId?: string | null,
+    selection?: SportSelection,
+    clientSessionId?: string | null,
+  ) => void;
   updateActivity: (patch: Partial<ActivityState>) => void;
   /**
    * Publie la géométrie réelle chargée pour l'itinéraire armé. Si une séance
@@ -153,6 +159,7 @@ function activityStarted(
   sessionId: string | null,
   selection?: SportSelection,
   route?: TrailRouteSnapshot,
+  clientSessionId?: string | null,
 ): ActivityState {
   const splits = createSplitsState();
   return {
@@ -160,6 +167,7 @@ function activityStarted(
     ...(selection ? { selection } : {}),
     ...(route ? { route } : {}),
     sessionId,
+    ...(clientSessionId ? { clientSessionId } : {}),
     startedAt: Date.now(),
     paused: false,
     autoPaused: false,
@@ -322,9 +330,9 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
 
   dismissToast: () => set({ toast: undefined }),
 
-  startActivity: (sport, sessionId = null, selection) => {
+  startActivity: (sport, sessionId = null, selection, clientSessionId) => {
     const route = routeSnapshotFor(get().selection, get().trailRoute);
-    const activity = activityStarted(sport, sessionId, selection, route);
+    const activity = activityStarted(sport, sessionId, selection, route, clientSessionId);
     set({
       activity,
       // Une nouvelle séance ne peut plus hériter de la sélection précédente :
@@ -338,6 +346,7 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
     emit('activity-start', {
       sport,
       sessionId,
+      clientSessionId: clientSessionId ?? null,
       variantId: selection?.variantId ?? null,
       routeId: route?.id ?? null,
     });
@@ -391,13 +400,18 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
     set({
       activity: undefined,
       summary: current ? { ...current, endedAt: Date.now() } : null,
-      // La séance terminée garde sa copie dans `summary`; la suivante repart
+      // La séance terminée garde sa copie dans `summary` ; la suivante repart
       // sans itinéraire tant que l'utilisateur n'en a pas choisi un.
       selection: undefined,
       trailRoute: undefined,
-      // Sans UUID serveur, le bilan est local : ne jamais suggérer un problème
-      // de connexion à un utilisateur authentifié.
-      summarySaved: current?.sessionId ? 'pending' : 'local',
+      // Une séance identifiée localement (clientSessionId) peut encore être
+      // créée puis close côté serveur : elle reste « en attente », pas
+      // « locale ». Les scènes et les anciens appels sans identité stable
+      // gardent le bilan strictement local. Sans UUID serveur ni identité
+      // locale, le bilan est local : ne jamais suggérer un problème de
+      // connexion à un utilisateur authentifié.
+      summarySaved:
+        (current?.sessionId || current?.clientSessionId) ? 'pending' : 'local',
       sheet: 'summary',
       detent: 'full',
       camera: { type: 'overview' },
@@ -506,7 +520,11 @@ export function useTransientStart(): TransientStart {
     if (!current) return;
     pendingRef.current = null;
     setPendingStart(null);
-    useExplorerStore.getState().startActivity(current.sport, null, current.selection);
+    // L'identité est fixée avant le premier point : un rechargement ou une
+    // reprise réseau retrouve la même séance au lieu d'en créer une seconde.
+    useExplorerStore
+      .getState()
+      .startActivity(current.sport, null, current.selection, newClientSessionId());
   }, []);
 
   useEffect(

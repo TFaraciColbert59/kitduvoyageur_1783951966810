@@ -40,10 +40,18 @@ export type RouteDistanceProvider = (
   fix: GpsFix,
 ) => number | RouteDistanceMeasurement | null;
 
+export interface RestoredTrackerState {
+  clientSessionId: string;
+  /** Points réellement acceptés avant le rechargement, dans l'ordre. */
+  fixes: GpsFix[];
+}
+
 export interface TrackerOptions {
   /** Distance (et cap) à la trace courante, fournie par l'appelant. */
   distanceToRouteM?: RouteDistanceProvider;
   onFix?: (fix: GpsFix, metrics: ReturnType<ActivityTracker['addFix']>) => void;
+  /** Séance restaurée depuis IndexedDB : le tracker repart de ses points. */
+  restored?: RestoredTrackerState | null;
 }
 
 /** Actions exposées par le suivi GPS à l'interface d'activité. */
@@ -64,7 +72,11 @@ function monotonicNow(): number {
   return Date.now();
 }
 
-export function useGpsTracker({ distanceToRouteM, onFix }: TrackerOptions = {}): GpsTrackerHandle {
+export function useGpsTracker({
+  distanceToRouteM,
+  onFix,
+  restored,
+}: TrackerOptions = {}): GpsTrackerHandle {
   const activity = useExplorerStore((state) => state.activity);
   const routeStatus = useExplorerStore((state) => state.activity?.route?.status);
   const autoPauseEnabled = useExplorerStore((state) => state.autoPauseEnabled) ?? false;
@@ -238,6 +250,17 @@ export function useGpsTracker({ distanceToRouteM, onFix }: TrackerOptions = {}):
       delete target.__xpPushFix;
     };
   }, []);
+
+  // Reprise d'une séance locale : rejoue uniquement les points déjà acceptés
+  // avant le rechargement, pour que la distance, le D+ et l'ordre repartent de
+  // la même base. Aucun point n'est ajouté ici.
+  useEffect(() => {
+    if (!activity) return;
+    if (!restored || restored.clientSessionId !== activity.clientSessionId) return;
+    const tracker = new ActivityTracker();
+    for (const fix of restored.fixes) tracker.addFix(fix);
+    trackerRef.current = tracker;
+  }, [activity?.clientSessionId, restored]);
 
   // Permission réelle : le store peut être resté à « prompt » alors que le
   // navigateur a déjà refusé. Les scènes de recette gardent leur état simulé.
