@@ -1543,7 +1543,14 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                   Hors ligne — vos messages restent en brouillon local et partiront au retour du réseau.
                 </div>
               ) : null}
-              <div className="map" style={{ display: 'flex', flexDirection: 'column', height: '100%', paddingBottom: 'calc(70px + var(--kb-inset, 0px))' }}>
+              <div
+                className="map"
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  height: '100%',
+                }}
+              >
                 {selected ? (
                   <div className="mpane in" data-conversation={selected.id}>
                     <button

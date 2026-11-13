@@ -1,0 +1,23 @@
+{
+  "route": "/communaute",
+  "vp": {
+    "name": "1440",
+    "width": 1440,
+    "height": 900,
+    "dpr": 1
+  },
+  "status": 200,
+  "metrics": {
+    "scrollHeight": 900,
+    "innerHeight": 900,
+    "scrollWidth": 1440,
+    "innerWidth": 1440,
+    "title": "Communauté Voyageurs & Aventuriers | Le Kit du Voyageur",
+    "h1": [
+      "Communauté"
+    ]
+  },
+  "errors": [
+    "WebSocket connection to 'ws://127.0.0.1:4000/_next/webpack-hmr' failed: Error during WebSocket handshake: net::ERR_INVALID_HTTP_RESPONSE"
+  ]
+}

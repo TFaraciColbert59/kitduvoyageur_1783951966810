@@ -579,7 +579,7 @@
   display: flex;
   align-items: flex-end;
   gap: 8px;
-  padding: 8px 14px calc(10px + env(safe-area-inset-bottom, 0px));
+  padding: 6px 14px 6px;
 }
 .lkdv-messages .mfield {
   flex: 1;
@@ -1139,6 +1139,20 @@
   backdrop-filter: blur(calc(var(--gb, 7px) + 18px)) saturate(1.8) brightness(1.05) !important;
   touch-action: pan-y;
   border-radius: 26px 26px 0 0 !important;
+  /* Desktop (≥ 768 px) : aucune barre basse, la barre de saisie se pose au bas de la carte. */
+  padding-bottom: var(--kb-inset, 0px) !important;
+}
+
+/* Mobile (≤ 767 px) : la barre flottante Liquid Glass flotte au bas de l'écran.
+   La barre de saisie et les actions sont abaissées juste au-dessus de la barre
+   (ou de l'encart clavier quand il est ouvert, sans cumul inutile de réserves). */
+@media (max-width: 767px) {
+  .lkdv-messages #phone .mapzone > .map {
+    padding-bottom: max(
+      var(--kb-inset, 0px),
+      calc(var(--bottom-nav-height, calc(66px + env(safe-area-inset-bottom, 0px))) + 4px)
+    ) !important;
+  }
 }
 
 /* État vide / erreur du fil : panneau de verre lisible sur la carte. */

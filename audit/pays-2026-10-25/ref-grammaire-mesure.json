@@ -1,0 +1,406 @@
+{
+  "rootSelector": "phone hasnext",
+  "rootCs": {
+    "font-size": "14px",
+    "letter-spacing": "-0.14px",
+    "color": "rgb(23, 43, 36)",
+    "font-family": "-apple-system, \"system-ui\", \"SF Pro Text\", \"SF Pro Display\", Inter, system-ui, \"Segoe UI\", Roboto, sans-serif",
+    "background-color": "rgb(207, 214, 200)",
+    "width": "430px",
+    "height": "932px",
+    "overflow": "hidden",
+    "position": "relative"
+  },
+  "vars": {
+    "--label": "#172B24",
+    "--label2": "#56665D",
+    "--label3": "rgba(23,43,36,.44)",
+    "--sep": "rgba(23,43,36,.1)",
+    "--fill": "rgba(23,43,36,.09)",
+    "--fill2": "rgba(23,43,36,.06)",
+    "--fill3": "rgba(255,255,255,.62)",
+    "--tint": "#17402C",
+    "--tint-ink": "#fff",
+    "--accent": "#5B7F55",
+    "--subtle": "#A6C1A0",
+    "--mint": "#EBF2EC",
+    "--good": "#3D7A52",
+    "--warn": "#B98A2E",
+    "--bad": "#A8443A",
+    "--info": "#4B6B7C",
+    "--water": "#3F93B8",
+    "--ga": "0.185",
+    "--gb": "7.2px",
+    "--la": "140deg",
+    "--page": "#F5F2EC",
+    "--on-page": "#172B24",
+    "--muted-page": "#56665D",
+    "--rule": "#A6C1A0",
+    "--sf": "-apple-system,BlinkMacSystemFont,\"SF Pro Text\",\"SF Pro Display\",\"Inter\",system-ui,\"Segoe UI\",Roboto,sans-serif"
+  },
+  "doc": {
+    "scrollHeight": 932,
+    "innerHeight": 932,
+    "scrollWidth": 430
+  },
+  "top": [
+    0,
+    0,
+    430,
+    597.1
+  ],
+  "topCs": {
+    "padding": "6px 12px 8px",
+    "gap": "4px",
+    "display": "flex",
+    "flex-direction": "column"
+  },
+  "topBar": [
+    12,
+    6,
+    406,
+    36
+  ],
+  "topBarCs": {
+    "display": "flex",
+    "justify-content": "space-between",
+    "gap": "6px",
+    "margin-bottom": "2px"
+  },
+  "pill": {
+    "box": [
+      12,
+      7,
+      109,
+      34
+    ],
+    "font-size": "16px",
+    "font-weight": "600",
+    "letter-spacing": "-0.32px",
+    "color": "rgba(255, 255, 255, 0.94)",
+    "background": "rgba(255, 255, 255, 0.14) none repeat scroll 0% 0% / auto padding-box border-box",
+    "border-radius": "999px",
+    "padding": "0px 11px",
+    "height": "34px"
+  },
+  "topBtns": [
+    {
+      "box": [
+        294,
+        5,
+        38,
+        38
+      ],
+      "radius": "50%",
+      "bg": "rgba(255, 255, 255, 0.5)"
+    },
+    {
+      "box": [
+        337,
+        5,
+        38,
+        38
+      ],
+      "radius": "50%",
+      "bg": "rgba(255, 255, 255, 0.5)"
+    },
+    {
+      "box": [
+        380,
+        5,
+        38,
+        38
+      ],
+      "radius": "50%",
+      "bg": "rgba(255, 255, 255, 0.5)"
+    }
+  ],
+  "card": {
+    "box": [
+      12,
+      48,
+      406,
+      541.1
+    ],
+    "radius": "24px",
+    "bg": "rgba(0, 0, 0, 0) linear-gradient(rgba(255, 255, 255, 0.486), rgba(255, 255, 255, 0.384)) repeat scroll 0% 0% / auto padding-box border-box",
+    "backdrop": "blur(25.2px) saturate(1.8) brightness(1.05)",
+    "shadow": "rgba(255, 255, 255, 0.95) 0px 1px 0px 0px inset, rgba(255, 255, 255, 0.4) 0px -1px 1px 0px inset, rgba(255, 255, 255, 0.12) 0px 0px 16px 0px inset, rgba(23, 43, 36, 0.12) 0px 0px 0px 0.5px, rgba(23, 43, 36, 0.14) 0px 10px 30px 0px"
+  },
+  "scroll": {
+    "box": [
+      12,
+      48,
+      406,
+      541.1
+    ],
+    "padding": "8px 12px 56px",
+    "gap": "7px",
+    "overflow": "hidden auto"
+  },
+  "header": [
+    24,
+    56,
+    382,
+    68
+  ],
+  "stats": [
+    [
+      102,
+      71.7,
+      100.7,
+      38.5
+    ],
+    [
+      202.7,
+      71.7,
+      100.7,
+      38.5
+    ],
+    [
+      303.3,
+      71.7,
+      100.7,
+      38.5
+    ]
+  ],
+  "statCs": {
+    "border-radius": "14px",
+    "padding": "2px 3px",
+    "font-size": "14px"
+  },
+  "bio": {
+    "box": [
+      26,
+      151,
+      378,
+      15.6
+    ],
+    "font-size": "12px",
+    "line-height": "15.6px",
+    "letter-spacing": "-0.14px",
+    "color": "rgb(86, 102, 93)",
+    "font-weight": "400"
+  },
+  "hl": [
+    [
+      28,
+      176.6,
+      71.6,
+      56.4
+    ],
+    [
+      107.6,
+      176.6,
+      71.6,
+      56.4
+    ],
+    [
+      187.2,
+      176.6,
+      71.6,
+      56.4
+    ],
+    [
+      266.8,
+      176.6,
+      71.6,
+      56.4
+    ],
+    [
+      346.4,
+      176.6,
+      71.6,
+      56.4
+    ],
+    [
+      426,
+      176.6,
+      71.6,
+      56.4
+    ]
+  ],
+  "ring": {
+    "box": [
+      41.8,
+      176.6,
+      44,
+      44
+    ],
+    "radius": "50%"
+  },
+  "grid": {
+    "box": [
+      12,
+      243,
+      406,
+      814
+    ],
+    "gap": "3px",
+    "radius": "22px"
+  },
+  "tile": {
+    "box": [
+      12,
+      243,
+      134,
+      134
+    ],
+    "radius": "2px"
+  },
+  "tabs": {
+    "box": [
+      320,
+      549.1,
+      88,
+      30
+    ],
+    "radius": "9999px",
+    "padding": "2.5px"
+  },
+  "lens": [
+    322.5,
+    551.6,
+    41.5,
+    25
+  ],
+  "tb": {
+    "box": [
+      14,
+      868,
+      402,
+      48
+    ],
+    "radius": "999px",
+    "padding": "2px",
+    "position": "absolute"
+  },
+  "tbBtns": [
+    {
+      "box": [
+        16,
+        870,
+        79.6,
+        44
+      ],
+      "text": "Explorer"
+    },
+    {
+      "box": [
+        95.6,
+        870,
+        79.6,
+        44
+      ],
+      "text": "Compas"
+    },
+    {
+      "box": [
+        175.2,
+        870,
+        79.6,
+        44
+      ],
+      "text": "Matériel"
+    },
+    {
+      "box": [
+        254.8,
+        870,
+        79.6,
+        44
+      ],
+      "text": "Hub"
+    },
+    {
+      "box": [
+        334.4,
+        870,
+        79.6,
+        44
+      ],
+      "text": "Compte"
+    }
+  ],
+  "bg": {
+    "box": [
+      0,
+      0,
+      430,
+      932
+    ],
+    "size": "cover",
+    "pos": "50% 30%"
+  },
+  "mapzone": [
+    0,
+    597.1,
+    430,
+    334.9
+  ],
+  "tabLabels": [
+    "Explorer",
+    "Compas",
+    "Matériel",
+    "Hub",
+    "Compte"
+  ],
+  "html": 138740,
+  "allClasses": [
+    "bg-transparent",
+    "bg-[color:var(--bg-body)]",
+    "bg-[color:var(--card-tint-strong)]",
+    "bg-[color:var(--lkv-forest-950)]",
+    "lkdv-compte-v8",
+    "bg-[#17402C]",
+    "bg-[#EBF2EC]",
+    "bg-white/60",
+    "bg-white/70",
+    "bg-white/55",
+    "phone",
+    "bg",
+    "top",
+    "ig-top",
+    "ig-handle",
+    "ig-top-r",
+    "ig-top-btn",
+    "card",
+    "card-scroll",
+    "ig-header",
+    "ig-left",
+    "ig-avi-wrap",
+    "ig-avi-in",
+    "ig-seal-bdg",
+    "ig-right",
+    "ig-stats",
+    "ig-stat",
+    "ig-bio",
+    "ig-bio-top",
+    "ig-bio-stats",
+    "ig-bio-text",
+    "ig-hl-row",
+    "ig-hl",
+    "ig-hl-ring",
+    "ig-hl-in",
+    "ig-swipe-view",
+    "ig-grid-wrap",
+    "ig-grid",
+    "ig-tile",
+    "ig-tabs-float",
+    "ig-tabs",
+    "ig-th",
+    "mapzone",
+    "lkdv-map-root",
+    "lkdv-map-canvas",
+    "lkdv-map-massif",
+    "lkdv-map-hud",
+    "lkdv-map-scale",
+    "lkdv-map-controls",
+    "lkdv-map-attribution",
+    "tb",
+    "sw-wrap",
+    "scrim",
+    "sheet",
+    "popv"
+  ]
+}

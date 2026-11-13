@@ -1,0 +1,21 @@
+{
+  "route": "/communaute",
+  "vp": {
+    "name": "430",
+    "width": 430,
+    "height": 932,
+    "dpr": 2
+  },
+  "status": 200,
+  "metrics": {
+    "scrollHeight": 1147,
+    "innerHeight": 932,
+    "scrollWidth": 430,
+    "innerWidth": 430,
+    "title": "Communauté Voyageurs & Aventuriers | Le Kit du Voyageur",
+    "h1": [
+      "Communauté"
+    ]
+  },
+  "errors": []
+}

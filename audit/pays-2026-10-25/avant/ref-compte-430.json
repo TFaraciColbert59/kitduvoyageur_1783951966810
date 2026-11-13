@@ -1,0 +1,21 @@
+{
+  "route": "/compte",
+  "vp": {
+    "name": "430",
+    "width": 430,
+    "height": 932,
+    "dpr": 2
+  },
+  "status": 200,
+  "metrics": {
+    "scrollHeight": 932,
+    "innerHeight": 932,
+    "scrollWidth": 430,
+    "innerWidth": 430,
+    "title": "Mon compte | Le Kit du Voyageur",
+    "h1": []
+  },
+  "errors": [
+    "WebSocket connection to 'ws://127.0.0.1:4000/_next/webpack-hmr' failed: Error during WebSocket handshake: net::ERR_INVALID_HTTP_RESPONSE"
+  ]
+}

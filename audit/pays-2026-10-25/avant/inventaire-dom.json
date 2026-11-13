@@ -1,0 +1,1014 @@
+{
+  "buttons": [
+    {
+      "tag": "a",
+      "href": "#main-content",
+      "text": "Aller au contenu principal",
+      "box": [
+        -1,
+        -1,
+        1,
+        1
+      ],
+      "cls": "sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[var(--z-emergency)"
+    },
+    {
+      "tag": "button",
+      "text": "Aperçu",
+      "box": [
+        17,
+        829,
+        67,
+        44
+      ],
+      "cls": ""
+    },
+    {
+      "tag": "button",
+      "text": "Incontournables",
+      "box": [
+        88,
+        829,
+        118,
+        44
+      ],
+      "cls": ""
+    },
+    {
+      "tag": "button",
+      "text": "Activités",
+      "box": [
+        210,
+        829,
+        74,
+        44
+      ],
+      "cls": ""
+    },
+    {
+      "tag": "button",
+      "text": "Culture",
+      "box": [
+        288,
+        829,
+        66,
+        44
+      ],
+      "cls": ""
+    },
+    {
+      "tag": "button",
+      "text": "Gastronomie",
+      "box": [
+        359,
+        829,
+        98,
+        44
+      ],
+      "cls": ""
+    },
+    {
+      "tag": "button",
+      "text": "Hébergements",
+      "box": [
+        461,
+        829,
+        109,
+        44
+      ],
+      "cls": ""
+    },
+    {
+      "tag": "button",
+      "text": "Météo & Pratique",
+      "box": [
+        574,
+        829,
+        124,
+        44
+      ],
+      "cls": ""
+    },
+    {
+      "tag": "button",
+      "text": "Communauté",
+      "box": [
+        702,
+        829,
+        101,
+        44
+      ],
+      "cls": ""
+    },
+    {
+      "tag": "a",
+      "href": "/hub",
+      "text": "Hub",
+      "aria": "Hub : aventure active, préparation et voyages",
+      "box": [
+        21,
+        870,
+        74,
+        60
+      ],
+      "cls": "lkv-nav-tab"
+    },
+    {
+      "tag": "a",
+      "href": "/communaute",
+      "text": "Communauté",
+      "aria": "Communauté, clubs, événements",
+      "box": [
+        99,
+        870,
+        74,
+        60
+      ],
+      "cls": "lkv-nav-tab"
+    },
+    {
+      "tag": "a",
+      "href": "/explorer",
+      "text": "Explorer",
+      "aria": "Explorer les sentiers, pays et destinations",
+      "box": [
+        178,
+        870,
+        74,
+        60
+      ],
+      "cls": "lkv-nav-tab"
+    },
+    {
+      "tag": "a",
+      "href": "/messagerie",
+      "text": "Messages",
+      "aria": "Messagerie : conversations et demandes",
+      "box": [
+        256,
+        870,
+        74,
+        60
+      ],
+      "cls": "lkv-nav-tab"
+    },
+    {
+      "tag": "a",
+      "href": "/compte",
+      "text": "Compte",
+      "aria": "Mon compte voyageur et ma progression",
+      "box": [
+        335,
+        870,
+        74,
+        60
+      ],
+      "cls": "lkv-nav-tab"
+    },
+    {
+      "tag": "a",
+      "href": "#main-content",
+      "text": "Aller au contenu principal",
+      "box": [
+        -1,
+        7,
+        1,
+        1
+      ],
+      "cls": "sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus"
+    },
+    {
+      "tag": "a",
+      "href": "/pays",
+      "text": "← Atlas",
+      "box": [
+        16,
+        16,
+        80,
+        32
+      ],
+      "cls": "glass-capsule-btn !min-h-[32px] !py-1 !px-3.5 !text-xs !font-bold flex items-center gap-1."
+    },
+    {
+      "tag": "button",
+      "text": "Kit IA",
+      "box": [
+        334,
+        16,
+        80,
+        32
+      ],
+      "cls": "glass-capsule-btn primary !min-h-[32px] !py-1 !px-3.5 !text-xs !font-bold !gap-1.5 shadow-"
+    },
+    {
+      "tag": "button",
+      "text": "Facile",
+      "box": [
+        37,
+        845,
+        63,
+        36
+      ],
+      "cls": "glass-capsule-btn !min-h-[36px] !py-1 !px-3.5 !text-xs !font-bold"
+    },
+    {
+      "tag": "button",
+      "text": "Modéré",
+      "box": [
+        106,
+        845,
+        74,
+        36
+      ],
+      "cls": "glass-capsule-btn !min-h-[36px] !py-1 !px-3.5 !text-xs !font-bold primary"
+    },
+    {
+      "tag": "button",
+      "text": "Expert",
+      "box": [
+        186,
+        845,
+        68,
+        36
+      ],
+      "cls": "glass-capsule-btn !min-h-[36px] !py-1 !px-3.5 !text-xs !font-bold"
+    },
+    {
+      "tag": "button",
+      "text": "Week-end",
+      "box": [
+        37,
+        889,
+        89,
+        36
+      ],
+      "cls": "glass-capsule-btn !min-h-[36px] !py-1 !px-3.5 !text-xs !font-bold"
+    },
+    {
+      "tag": "button",
+      "text": "Semaine",
+      "box": [
+        132,
+        889,
+        80,
+        36
+      ],
+      "cls": "glass-capsule-btn !min-h-[36px] !py-1 !px-3.5 !text-xs !font-bold primary"
+    },
+    {
+      "tag": "button",
+      "text": "Expédition",
+      "box": [
+        218,
+        889,
+        92,
+        36
+      ],
+      "cls": "glass-capsule-btn !min-h-[36px] !py-1 !px-3.5 !text-xs !font-bold"
+    },
+    {
+      "tag": "button",
+      "text": "Destinations",
+      "box": [
+        33,
+        1285,
+        178,
+        34
+      ],
+      "cls": "flex-1 glass-capsule-btn primary !min-h-[34px] !py-1 !px-3 !text-xs !font-bold !gap-1.5"
+    },
+    {
+      "tag": "button",
+      "text": "Activités (3)",
+      "box": [
+        219,
+        1285,
+        178,
+        34
+      ],
+      "cls": "flex-1 glass-capsule-btn !min-h-[34px] !py-1 !px-3 !text-xs !font-bold !gap-1.5"
+    },
+    {
+      "tag": "button",
+      "text": "Tout voir (5) →",
+      "box": [
+        331,
+        1636,
+        79,
+        15
+      ],
+      "cls": "text-[10.5px] font-bold text-[color:var(--lkv-secondary-ink)] hover:text-[color:var(--lkv-"
+    },
+    {
+      "tag": "button",
+      "text": "✨ Lancer le configurateur IA →",
+      "box": [
+        33,
+        1970,
+        364,
+        38
+      ],
+      "cls": "w-full glass-capsule-btn primary !min-h-[38px] !py-2 !px-4 !text-xs !font-bold !gap-2 just"
+    }
+  ],
+  "buttonCount": 27,
+  "sections": [
+    {
+      "tag": "SECTION",
+      "id": null,
+      "text": "RECOMMANDÉ POUR VOUS Selon votre profil Facile Modéré Expert"
+    },
+    {
+      "tag": "SECTION",
+      "id": null,
+      "text": "Recommandé pour vousSelon votre profilFacileModéréExpertWeek"
+    }
+  ],
+  "cards": [
+    {
+      "box": [
+        16,
+        60,
+        398,
+        224
+      ],
+      "text": "FR · FRA Europe de l’Ouest France « massifs & terroirs »"
+    },
+    {
+      "box": [
+        16,
+        296,
+        398,
+        80
+      ],
+      "text": "643 801 km² SUPERFICIE Paris CAPITALE EUR MONNAIE UTC+1 FUSEAU"
+    },
+    {
+      "box": [
+        27,
+        307,
+        90,
+        58
+      ],
+      "text": "643 801 km² SUPERFICIE"
+    },
+    {
+      "box": [
+        123,
+        307,
+        90,
+        58
+      ],
+      "text": "Paris CAPITALE"
+    },
+    {
+      "box": [
+        218,
+        307,
+        90,
+        58
+      ],
+      "text": "EUR MONNAIE"
+    },
+    {
+      "box": [
+        314,
+        307,
+        90,
+        58
+      ],
+      "text": "UTC+1 FUSEAU"
+    },
+    {
+      "box": [
+        16,
+        388,
+        398,
+        126
+      ],
+      "text": ""
+    },
+    {
+      "box": [
+        16,
+        526,
+        398,
+        126
+      ],
+      "text": ""
+    },
+    {
+      "box": [
+        16,
+        664,
+        398,
+        122
+      ],
+      "text": ""
+    },
+    {
+      "box": [
+        16,
+        798,
+        398,
+        192
+      ],
+      "text": "RECOMMANDÉ POUR VOUS Selon votre profil Facile Modéré Expert Week-end "
+    },
+    {
+      "box": [
+        16,
+        1002,
+        398,
+        334
+      ],
+      "text": "01 · Panorama Général La diversité des reliefs à portée de sentier. Pl"
+    },
+    {
+      "box": [
+        16,
+        1348,
+        398,
+        272
+      ],
+      "text": "FICHE D'IDENTITÉ OFFICIELLE ISO FR · FRA CONTINENT Europe RÉGION Europ"
+    },
+    {
+      "box": [
+        0,
+        1660,
+        208,
+        190
+      ],
+      "text": "Haute Montagne · Alpes Massif du Mont-Blanc"
+    },
+    {
+      "box": [
+        218,
+        1660,
+        208,
+        190
+      ],
+      "text": "Sauvage · Corse GR20 Corse"
+    },
+    {
+      "box": [
+        436,
+        1660,
+        208,
+        190
+      ],
+      "text": "Capitale · Lumière Paris"
+    },
+    {
+      "box": [
+        654,
+        1660,
+        208,
+        190
+      ],
+      "text": "Méditerranée · Mer Calanques"
+    },
+    {
+      "box": [
+        16,
+        1866,
+        398,
+        159
+      ],
+      "text": "🎒 Composer votre aventure France Kit recommandé, check-list matériel "
+    },
+    {
+      "box": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "text": "FranceFR · FRAEurope de l’OuestCréer mon kitGuide PDFNavigationPrésent"
+    },
+    {
+      "box": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "text": "FranceFR · FRAEurope de l’Ouest"
+    },
+    {
+      "box": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "text": "←Explorer tous les paysCarte LKDV"
+    },
+    {
+      "box": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "text": "FR · FRA📍 Europe de l’Ouest · EuropeFrance— massifs & terroirsDes crê"
+    },
+    {
+      "box": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "text": "SUPERFICIE643 801 km²643 801 km²"
+    },
+    {
+      "box": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "text": "RÉGIONEurope de l’Ouest Europe"
+    },
+    {
+      "box": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "text": "CAPITALEParis Fuseau : UTC+1"
+    },
+    {
+      "box": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "text": "LANGUESFrançais Langue officielle"
+    },
+    {
+      "box": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "text": "DEVISEEUR EuroDevise locale"
+    },
+    {
+      "box": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "text": "Édition LKDVLa diversité des reliefs à portée de sentier.Plus de 180 0"
+    },
+    {
+      "box": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "text": "« « Marcher, c’est retrouver le rythme naturel du corps et l’immensité"
+    },
+    {
+      "box": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "text": "GéographieRepères & Relief46°36′ N02°20′ EParisChamonixMarseilleBordea"
+    },
+    {
+      "box": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "text": "Meilleure saisonJuin à Septembre pour les refuges d’altitude et la hau"
+    },
+    {
+      "box": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "text": "Accès directTGV haute vitesse reliant Paris aux Alpes, Pyrénées et Méd"
+    },
+    {
+      "box": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "text": "Réseau GR®180 000 km de sentiers balisés par la FFRandonnée et un rése"
+    },
+    {
+      "box": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "text": ""
+    },
+    {
+      "box": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "text": ""
+    },
+    {
+      "box": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "text": ""
+    },
+    {
+      "box": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "text": "Recommandé pour vousSelon votre profilFacileModéréExpertWeek-endSemain"
+    },
+    {
+      "box": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "text": "Chargement des pays…RégionEurope de l’OuestFuseauUTC+1"
+    },
+    {
+      "box": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "text": "RégionEurope de l’Ouest"
+    },
+    {
+      "box": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "text": "FuseauUTC+1"
+    },
+    {
+      "box": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "text": "Saison optimalemai → octobreVisa (Ressortissants FR)Non requis (UE)Hub"
+    },
+    {
+      "box": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "text": "Saison optimalemai → octobre"
+    },
+    {
+      "box": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "text": "Visa (Ressortissants FR)Non requis (UE)"
+    },
+    {
+      "box": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "text": "Hub aérien principalParis"
+    },
+    {
+      "box": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "text": "Prises & VoltageStandard"
+    },
+    {
+      "box": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "text": "Devise localeEuro (EUR)"
+    },
+    {
+      "box": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "text": "Sens de conduiteÀ droite"
+    }
+  ],
+  "docScroll": 2332,
+  "bodyFont": {
+    "font-family": "-apple-system, \"system-ui\", \"SF Pro Text\", \"SF Pro Display\", Inter, \"Inter Fallback\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+    "font-size": "17px",
+    "color": "rgb(255, 255, 255)",
+    "background-color": "rgba(0, 0, 0, 0)"
+  },
+  "glassStyle": {
+    "background": "radial-gradient(100% 70% at 18% 0%, rgba(255, 255, 255, 0.22), rgba(0, 0, 0, 0) 70%) repeat scroll 0% 0% / auto padding-box border-box, rgba(16, 16, 16, 0.34) none repeat scroll 0% 0% / auto padding-box border-box",
+    "background-image": "radial-gradient(100% 70% at 18% 0%, rgba(255, 255, 255, 0.22), rgba(0, 0, 0, 0) 70%), none",
+    "backdrop-filter": "blur(14px) saturate(1.6)",
+    "box-shadow": "rgba(0, 0, 0, 0.16) 0px 10px 36px 0px",
+    "border-radius": "24px",
+    "border": "1px solid rgba(0, 0, 0, 0)"
+  },
+  "pillStyle": {
+    "box": [
+      239,
+      19,
+      88,
+      26
+    ],
+    "background": "rgba(245, 245, 247, 0.92) none repeat scroll 0% 0% / auto padding-box border-box",
+    "border-radius": "9999px",
+    "font-size": "11px",
+    "font-weight": "600",
+    "color": "rgb(16, 16, 16)",
+    "text-transform": "none"
+  },
+  "capsuleBtn": {
+    "box": [
+      16,
+      16,
+      80,
+      32
+    ],
+    "background": "rgba(255, 255, 255, 0.1) none repeat scroll 0% 0% / auto padding-box border-box",
+    "background-image": "none",
+    "border-radius": "999px",
+    "height": "32px",
+    "font-size": "12px",
+    "font-weight": "700",
+    "color": "rgb(255, 255, 255)",
+    "box-shadow": "rgba(23, 43, 36, 0.12) 0px 4px 14px 0px, rgba(23, 43, 36, 0.08) 0px 1px 3px 0px"
+  },
+  "upperTabs": [
+    {
+      "text": "Aperçu",
+      "box": [
+        17,
+        829,
+        67,
+        44
+      ],
+      "font-size": "12px",
+      "font-weight": "700",
+      "text-transform": "none",
+      "border-radius": "0px",
+      "background": "rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box"
+    },
+    {
+      "text": "Incontournables",
+      "box": [
+        88,
+        829,
+        118,
+        44
+      ],
+      "font-size": "12px",
+      "font-weight": "500",
+      "text-transform": "none",
+      "border-radius": "0px",
+      "background": "rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box"
+    },
+    {
+      "text": "Activités",
+      "box": [
+        210,
+        829,
+        74,
+        44
+      ],
+      "font-size": "12px",
+      "font-weight": "500",
+      "text-transform": "none",
+      "border-radius": "0px",
+      "background": "rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box"
+    },
+    {
+      "text": "Culture",
+      "box": [
+        288,
+        829,
+        66,
+        44
+      ],
+      "font-size": "12px",
+      "font-weight": "500",
+      "text-transform": "none",
+      "border-radius": "0px",
+      "background": "rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box"
+    },
+    {
+      "text": "Gastronomie",
+      "box": [
+        359,
+        829,
+        98,
+        44
+      ],
+      "font-size": "12px",
+      "font-weight": "500",
+      "text-transform": "none",
+      "border-radius": "0px",
+      "background": "rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box"
+    },
+    {
+      "text": "Hébergements",
+      "box": [
+        461,
+        829,
+        109,
+        44
+      ],
+      "font-size": "12px",
+      "font-weight": "500",
+      "text-transform": "none",
+      "border-radius": "0px",
+      "background": "rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box"
+    },
+    {
+      "text": "Météo & Pratique",
+      "box": [
+        574,
+        829,
+        124,
+        44
+      ],
+      "font-size": "12px",
+      "font-weight": "500",
+      "text-transform": "none",
+      "border-radius": "0px",
+      "background": "rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box"
+    },
+    {
+      "text": "Communauté",
+      "box": [
+        702,
+        829,
+        101,
+        44
+      ],
+      "font-size": "12px",
+      "font-weight": "500",
+      "text-transform": "none",
+      "border-radius": "0px",
+      "background": "rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box"
+    },
+    {
+      "text": "Présentation",
+      "box": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "font-size": "12px",
+      "font-weight": "600",
+      "text-transform": "none",
+      "border-radius": "999px",
+      "background": "rgba(245, 245, 247, 0.92) none repeat scroll 0% 0% / auto padding-box border-box"
+    },
+    {
+      "text": "Destinations",
+      "box": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "font-size": "12px",
+      "font-weight": "600",
+      "text-transform": "none",
+      "border-radius": "999px",
+      "background": "rgba(255, 255, 255, 0.1) none repeat scroll 0% 0% / auto padding-box border-box"
+    },
+    {
+      "text": "Activités & Treks",
+      "box": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "font-size": "12px",
+      "font-weight": "600",
+      "text-transform": "none",
+      "border-radius": "999px",
+      "background": "rgba(255, 255, 255, 0.1) none repeat scroll 0% 0% / auto padding-box border-box"
+    },
+    {
+      "text": "Culture & Société",
+      "box": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "font-size": "12px",
+      "font-weight": "600",
+      "text-transform": "none",
+      "border-radius": "999px",
+      "background": "rgba(255, 255, 255, 0.1) none repeat scroll 0% 0% / auto padding-box border-box"
+    },
+    {
+      "text": "Gastronomie",
+      "box": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "font-size": "12px",
+      "font-weight": "600",
+      "text-transform": "none",
+      "border-radius": "999px",
+      "background": "rgba(255, 255, 255, 0.1) none repeat scroll 0% 0% / auto padding-box border-box"
+    },
+    {
+      "text": "Hébergements",
+      "box": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "font-size": "12px",
+      "font-weight": "600",
+      "text-transform": "none",
+      "border-radius": "999px",
+      "background": "rgba(255, 255, 255, 0.1) none repeat scroll 0% 0% / auto padding-box border-box"
+    },
+    {
+      "text": "Pratique & Données",
+      "box": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "font-size": "12px",
+      "font-weight": "600",
+      "text-transform": "none",
+      "border-radius": "999px",
+      "background": "rgba(255, 255, 255, 0.1) none repeat scroll 0% 0% / auto padding-box border-box"
+    },
+    {
+      "text": "Communauté",
+      "box": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "font-size": "12px",
+      "font-weight": "600",
+      "text-transform": "none",
+      "border-radius": "999px",
+      "background": "rgba(255, 255, 255, 0.1) none repeat scroll 0% 0% / auto padding-box border-box"
+    }
+  ]
+}
