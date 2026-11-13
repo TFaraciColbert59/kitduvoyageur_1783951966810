@@ -1402,6 +1402,31 @@ function LayersTab({ ctx }: { ctx: SheetContext }) {
           disabled={dangerCount === 0}
           onClick={dangerCount > 0 ? () => state.toggleLayer('dangers') : undefined}
         />
+        {/* K3.10 — catégories vélo. OpenStreetMap (ODbL) porte ces objets,
+            mais aucune ligne n'est importée : `geo_pois` n'accepte pas ces
+            sous-types et l'import ne les demande pas. Lignes informatives
+            désactivées : aucune disponibilité n'est inventée. */}
+        <XpRow
+          icon="bike"
+          title="Services et locations vélo"
+          sub="Aucune boutique ou location vélo importée · OSM (ODbL) à brancher"
+          badge={{ label: 'Indisponible', tone: 'muted' }}
+          disabled
+        />
+        <XpRow
+          icon="wrench"
+          title="Réparation vélo"
+          sub="Aucun atelier ni borne de réparation importé · OSM (ODbL) à brancher"
+          badge={{ label: 'Indisponible', tone: 'muted' }}
+          disabled
+        />
+        <XpRow
+          icon="bolt"
+          title="Recharge VAE"
+          sub="Aucune borne de recharge vélo importée · OSM (ODbL) à brancher"
+          badge={{ label: 'Indisponible', tone: 'muted' }}
+          disabled
+        />
         <XpRow
           icon="cloud"
           title="Neige et avalanche"
@@ -1416,6 +1441,12 @@ function LayersTab({ ctx }: { ctx: SheetContext }) {
         ni estimée sur un tracé absent ; les repères masqués ne sont plus dessinés.
         Tracés et repères : © OpenStreetMap contributors (ODbL), sans date de levé
         individuelle dans le schéma actuel.
+      </p>
+      <p className="xp-layer-note">
+        Catégories vélo : la source OSM (ODbL) le permettrait, mais aucune ligne
+        « vélo », « réparation » ou « recharge » n’est importée dans{' '}
+        <code>geo_pois</code>. Les trois lignes restent donc informatives et
+        désactivées : aucune épingle n’est créée sans donnée réelle.
       </p>
 
       <XpEyebrow>Couches terrain</XpEyebrow>
