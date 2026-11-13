@@ -1,0 +1,662 @@
+/* Lot D02 — écran Capteurs & Santé. Uniquement des tokens LKDV. */
+
+.lkdv-sensors {
+  width: 100%;
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 0 var(--lkv-screen-margin) var(--space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.lkdv-sensors-hero {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--lkv-radius-card);
+  color: var(--lkv-text-primary);
+}
+
+.lkdv-sensors-hero > span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  border-radius: var(--lkv-radius-full);
+  background: var(--lkv-primary-subtle);
+  color: var(--lkv-primary);
+}
+
+.lkdv-sensors-hero b {
+  display: block;
+  font-size: var(--lkv-text-body);
+  line-height: var(--leading-snug);
+}
+
+.lkdv-sensors-hero p {
+  margin: 2px 0 0;
+  font-size: var(--lkv-text-footnote);
+  line-height: var(--leading-normal);
+  color: var(--lkv-text-secondary);
+}
+
+.lkdv-sensors-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.lkdv-sensor-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border-radius: var(--lkv-radius-card);
+}
+
+.lkdv-sensor-panel-head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.lkdv-sensor-panel-ico {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  border-radius: var(--lkv-radius-full);
+  background: var(--lkv-surface-muted);
+  color: var(--lkv-primary);
+}
+
+.lkdv-sensor-panel-head > div {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.lkdv-sensor-panel-head h2 {
+  margin: 0;
+  font-size: var(--lkv-text-headline);
+  font-weight: 700;
+  line-height: var(--leading-snug);
+  color: var(--lkv-text-primary);
+}
+
+.lkdv-sensor-panel-head p {
+  margin: 2px 0 0;
+  font-size: var(--lkv-text-footnote);
+  line-height: var(--leading-normal);
+  color: var(--lkv-text-secondary);
+}
+
+.lkdv-sensor-scanbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--lkv-radius-card);
+}
+
+.lkdv-sensor-scanbar b {
+  display: block;
+  font-size: var(--lkv-text-subheadline);
+  color: var(--lkv-text-primary);
+}
+
+.lkdv-sensor-scanbar span {
+  display: block;
+  font-size: var(--lkv-text-footnote);
+  color: var(--lkv-text-secondary);
+}
+
+.lkdv-sensor-notice,
+.lkdv-sensor-sync-error,
+.lkdv-sensor-sync-reason {
+  margin: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--lkv-radius-md);
+  font-size: var(--lkv-text-footnote);
+  line-height: var(--leading-normal);
+  background: var(--lkv-info-bg);
+  color: var(--lkv-info);
+}
+
+.lkdv-sensor-sync-error {
+  background: var(--lkv-danger-bg);
+  color: var(--lkv-danger-dark);
+}
+
+.lkdv-sensor-sync-reason {
+  background: var(--lkv-warning-bg);
+  color: var(--lkv-warning-dark);
+}
+
+.lkdv-sensor-device-list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+}
+
+.lkdv-sensor-device {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--lkv-radius-card);
+}
+
+.lkdv-sensor-device[data-state='error'],
+.lkdv-sensor-device[data-state='permission_denied'] {
+  border-color: var(--lkv-danger);
+}
+
+.lkdv-sensor-device-head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.lkdv-sensor-device-ico {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  border-radius: var(--lkv-radius-full);
+  background: var(--lkv-primary-subtle);
+  color: var(--lkv-primary);
+}
+
+.lkdv-sensor-device-title {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.lkdv-sensor-device-title h3 {
+  margin: 0;
+  font-size: var(--lkv-text-subheadline);
+  font-weight: 700;
+  line-height: var(--leading-snug);
+  color: var(--lkv-text-primary);
+  overflow-wrap: anywhere;
+}
+
+.lkdv-sensor-device-title p {
+  margin: 2px 0 0;
+  font-family: var(--lkv-font-numeric, ui-monospace, monospace);
+  font-size: var(--lkv-text-caption);
+  color: var(--lkv-text-muted);
+}
+
+.lkdv-sensor-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  padding: 4px 9px;
+  border-radius: var(--lkv-radius-full);
+  font-size: var(--lkv-text-caption);
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  background: var(--lkv-surface-muted);
+  color: var(--lkv-text-secondary);
+}
+
+.lkdv-sensor-badge[data-tone='success'] {
+  background: var(--lkv-success-bg);
+  color: var(--lkv-success);
+}
+
+.lkdv-sensor-badge[data-tone='warning'] {
+  background: var(--lkv-warning-bg);
+  color: var(--lkv-warning-dark);
+}
+
+.lkdv-sensor-badge[data-tone='danger'] {
+  background: var(--lkv-danger-bg);
+  color: var(--lkv-danger-dark);
+}
+
+.lkdv-sensor-badge[data-tone='info'] {
+  background: var(--lkv-info-bg);
+  color: var(--lkv-info);
+}
+
+.lkdv-sensor-badge-dot {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 auto;
+  border-radius: var(--lkv-radius-full);
+  background: currentColor;
+}
+
+.lkdv-sensor-badge-detail {
+  color: inherit;
+  opacity: 0.8;
+}
+
+.lkdv-sensor-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.lkdv-sensor-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 3px 9px;
+  border-radius: var(--lkv-radius-full);
+  border: 1px solid var(--lkv-border-subtle);
+  background: var(--lkv-surface-paper);
+  color: var(--lkv-text-secondary);
+  font-size: var(--lkv-text-caption);
+  line-height: 1.2;
+}
+
+.lkdv-sensor-chip[data-empty='true'] {
+  border-style: dashed;
+  color: var(--lkv-text-muted);
+}
+
+.lkdv-sensor-device-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.lkdv-sensor-device-facts > div {
+  min-width: 0;
+  padding: var(--space-2);
+  border-radius: var(--lkv-radius-md);
+  background: var(--lkv-surface-muted);
+}
+
+.lkdv-sensor-device-facts dt {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--lkv-text-caption);
+  color: var(--lkv-text-muted);
+}
+
+.lkdv-sensor-device-facts dd {
+  margin: 2px 0 0;
+  font-size: var(--lkv-text-footnote);
+  font-weight: 600;
+  color: var(--lkv-text-primary);
+  overflow-wrap: anywhere;
+}
+
+.lkdv-sensor-fact-hint {
+  display: block;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--lkv-text-muted);
+}
+
+.lkdv-sensor-fact-hint[data-tone='danger'] {
+  color: var(--lkv-danger);
+}
+
+.lkdv-sensor-fact-hint[data-tone='warning'] {
+  color: var(--lkv-warning-dark);
+}
+
+.lkdv-sensor-device-notice {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--lkv-text-footnote);
+  color: var(--lkv-info);
+}
+
+.lkdv-sensor-device-error {
+  margin: 0;
+  font-size: var(--lkv-text-footnote);
+  color: var(--lkv-danger);
+}
+
+.lkdv-sensor-device-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.lkdv-sensor-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.lkdv-sensor-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: var(--space-3);
+  border-radius: var(--lkv-radius-md);
+  border: 1px solid var(--lkv-border-subtle);
+  background: var(--lkv-surface-paper);
+}
+
+.lkdv-sensor-metric[data-qualification='stale'] {
+  border-color: var(--lkv-warning);
+}
+
+.lkdv-sensor-metric[data-qualification='unavailable'] {
+  border-style: dashed;
+}
+
+.lkdv-sensor-metric-label {
+  font-size: var(--lkv-text-caption);
+  color: var(--lkv-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.lkdv-sensor-metric-value {
+  font-family: var(--lkv-font-numeric, ui-monospace, monospace);
+  font-size: var(--lkv-text-title-sm);
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--lkv-text-primary);
+}
+
+.lkdv-sensor-metric[data-qualification='unavailable'] .lkdv-sensor-metric-value {
+  color: var(--lkv-text-muted);
+}
+
+.lkdv-sensor-metric-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  font-size: 10px;
+  color: var(--lkv-text-muted);
+}
+
+.lkdv-sensor-metric-foot .lkdv-sensor-badge {
+  padding: 2px 7px;
+  font-size: 10px;
+}
+
+.lkdv-sensor-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--lkv-border-subtle);
+}
+
+.lkdv-sensor-summary > div {
+  min-width: 82px;
+  flex: 1 1 auto;
+  padding: var(--space-2);
+  border-radius: var(--lkv-radius-md);
+  background: var(--lkv-surface-muted);
+}
+
+.lkdv-sensor-summary dt {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--lkv-text-caption);
+  color: var(--lkv-text-muted);
+}
+
+.lkdv-sensor-summary dd {
+  margin: 2px 0 0;
+  font-size: var(--lkv-text-footnote);
+  font-weight: 700;
+  color: var(--lkv-text-primary);
+}
+
+.lkdv-sensor-panel-note {
+  margin: 0;
+  font-size: var(--lkv-text-caption);
+  line-height: var(--leading-normal);
+  color: var(--lkv-text-muted);
+}
+
+.lkdv-sensor-loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--lkv-text-caption);
+  color: var(--lkv-text-secondary);
+}
+
+.lkdv-sensor-consent-count {
+  flex: 0 0 auto;
+  padding: 4px 9px;
+  border-radius: var(--lkv-radius-full);
+  background: var(--lkv-primary-subtle);
+  color: var(--lkv-primary);
+  font-size: var(--lkv-text-caption);
+  font-weight: 700;
+}
+
+.lkdv-sensor-consent-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.lkdv-sensor-consent-summary > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 9px;
+  border-radius: var(--lkv-radius-full);
+  background: var(--lkv-danger-bg);
+  color: var(--lkv-danger-dark);
+  font-size: var(--lkv-text-caption);
+}
+
+.lkdv-sensor-consent-summary > span[data-granted='true'] {
+  background: var(--lkv-success-bg);
+  color: var(--lkv-success);
+}
+
+.lkdv-sensor-consent-group h3 {
+  margin: 0 0 var(--space-2);
+  font-size: var(--lkv-text-caption);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--lkv-text-muted);
+}
+
+.lkdv-sensor-consent-group ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.lkdv-sensor-consent-group li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 48px;
+  padding: var(--space-2);
+  border-radius: var(--lkv-radius-md);
+}
+
+.lkdv-sensor-consent-group li + li {
+  border-top: 1px solid var(--lkv-border-subtle);
+  border-radius: 0;
+}
+
+.lkdv-sensor-consent-copy {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.lkdv-sensor-consent-copy b {
+  display: block;
+  font-size: var(--lkv-text-footnote);
+  color: var(--lkv-text-primary);
+}
+
+.lkdv-sensor-consent-copy p {
+  margin: 1px 0 0;
+  font-size: var(--lkv-text-caption);
+  line-height: var(--leading-normal);
+  color: var(--lkv-text-secondary);
+}
+
+.lkdv-sensor-consent-copy small {
+  display: block;
+  margin-top: 2px;
+  font-size: 10px;
+  color: var(--lkv-text-muted);
+}
+
+.lkdv-sensor-sync-requirements {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.lkdv-sensor-sync-requirements > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--lkv-radius-md);
+  border: 1px solid var(--lkv-danger);
+  background: var(--lkv-danger-bg);
+  color: var(--lkv-danger-dark);
+}
+
+.lkdv-sensor-sync-requirements > div[data-ok='true'] {
+  border-color: var(--lkv-success);
+  background: var(--lkv-success-bg);
+  color: var(--lkv-success);
+}
+
+.lkdv-sensor-sync-requirements b {
+  font-size: var(--lkv-text-caption);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.lkdv-sensor-sync-requirements span {
+  font-size: var(--lkv-text-footnote);
+}
+
+.lkdv-sensor-sync-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.lkdv-sensor-sync-hint {
+  margin: 0;
+  font-size: var(--lkv-text-caption);
+  color: var(--lkv-text-muted);
+}
+
+.lkdv-sensor-workouts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--lkv-radius-md);
+  background: var(--lkv-surface-muted);
+}
+
+.lkdv-sensor-workouts > p {
+  margin: 0;
+  font-size: var(--lkv-text-footnote);
+  color: var(--lkv-text-primary);
+}
+
+.lkdv-sensor-workouts ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.lkdv-sensor-workouts li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  font-size: var(--lkv-text-caption);
+  color: var(--lkv-text-secondary);
+}
+
+.lkdv-sensors-policy {
+  margin: 0;
+  text-align: center;
+  font-size: var(--lkv-text-caption);
+  color: var(--lkv-text-muted);
+}
+
+.lkdv-sensors-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding-top: var(--space-2);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--lkv-text-muted);
+}
+
+.lkdv-sensors :is(button, [role='switch']):focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--lkv-focus-ring);
+}
+
+@media (min-width: 720px) {
+  .lkdv-sensor-device-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .lkdv-sensor-metric-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 359px) {
+  .lkdv-sensor-device-facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .lkdv-sensor-sync-requirements {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lkdv-sensors * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
