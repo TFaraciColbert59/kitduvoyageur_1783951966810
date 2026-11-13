@@ -225,6 +225,8 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
                 missingGear={detail.missingGear}
                 canEdit={detail.canEdit}
                 busy={busy}
+                outingId={outingId}
+                onAssociated={invalidate}
                 onAttach={() =>
                   run(
                     () => requestJson(`/api/compte/sorties/${outingId}/gear`, { method: 'POST' }),
@@ -462,6 +464,7 @@ export const SORTIE_CSS = `
 .lkdv-sortie-kit-ico{width:38px!important;height:38px!important;border-radius:12px!important;display:grid!important;place-items:center!important;background:rgba(23,64,44,.08)!important;color:#17402C!important;}
 .lkdv-sortie-kit b{display:block!important;font:600 13px var(--sf)!important;color:var(--label)!important;}
 .lkdv-sortie-kit small{font:500 10.5px var(--sf)!important;color:var(--label2)!important;}
+.lkdv-sortie-associate{display:flex!important;justify-content:flex-end!important;padding:2px 3px 8px!important;}
 .lkdv-sortie-gear-total{display:flex!important;align-items:center!important;justify-content:space-between!important;padding:0 3px!important;font:500 11.5px var(--sf)!important;color:var(--label2)!important;}
 .lkdv-sortie-gear-total b{font:650 14px var(--sf)!important;color:var(--label)!important;}
 .lkdv-sortie-missing{margin:0!important;padding:8px 10px!important;border-radius:12px!important;background:rgba(232,192,104,.18)!important;font:500 11.5px/1.4 var(--sf)!important;color:#7d5c14!important;}

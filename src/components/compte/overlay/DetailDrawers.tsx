@@ -10,6 +10,7 @@ import type { SavedPost } from '@/features/community/posts/types';
 import { ActionPill } from '@/components/ui/ActionPill';
 import { OverlaySheet } from './OverlaySheet';
 import { formatElevation, formatKm } from '@/lib/format/metrics';
+import { GearMileagePanel } from '../drawer/gear/GearMileagePanel';
 
 export interface BadgeRow { id: string; name?: string; description?: string; rarity?: string; earned?: boolean; earnedAt?: string; requirement?: string; requirementValue?: number; points?: number }
 export interface GearRowData { id: string; realId?: string; name?: string; brand?: string; category?: string; weight_g?: number; price_cents?: number; condition?: string; photo_url?: string | null; is_lent?: boolean; loaned_to?: string | null; outings_count?: number }
@@ -87,6 +88,11 @@ export function GearDetailSheet({ item, onClose }: { item: GearRowData; onClose:
           <div><dt>Sorties</dt><dd>{item.outings_count ?? 0}</dd></div>
           <div><dt>Prêt</dt><dd>{item.is_lent ? `À ${item.loaned_to || 'un membre'}` : 'Disponible'}</dd></div>
         </dl>
+        <GearMileagePanel
+          gearItemId={item.realId || item.id}
+          gearName={item.name}
+          gearCategory={item.category}
+        />
       </div>
     </OverlaySheet>
   );

@@ -42,6 +42,8 @@ export interface OutingGearItem {
   name: string;
   weightG: number | null;
   kitId: string | null;
+  /** Lien stable vers `gear_items`, `null` pour un objet de kit non inventorié. */
+  gearItemId: string | null;
   photoUrl?: string | null;
   category?: string | null;
   condition?: string | null;
@@ -80,6 +82,8 @@ export interface OutingDetail {
   endedAt: string | null;
   massif: string | null;
   routeName: string | null;
+  /** Sport de la séance (`rando` pour l'historique sans séance multi-sport). */
+  sport: string | null;
   km: number;
   dplus: number;
   maxAlt: number | null;
@@ -109,6 +113,7 @@ type SessionRow = {
   started_at: string | null;
   ended_at: string | null;
   distance_km: number | string | null;
+  activity_session_id: string | null;
   duration_seconds: number | null;
   elevation_gain_m: number | string | null;
   max_altitude_m: number | null;
@@ -244,17 +249,43 @@ export async function loadOutingDetail(
   userId: string,
   outingId: string
 ): Promise<OutingDetail | null> {
-  const { data: sessionData, error: sessionError } = await supabase
+  let sessionResult = await supabase
     .from('hike_sessions')
     .select(
-      'id,user_id,route_id,title,started_at,ended_at,distance_km,duration_seconds,elevation_gain_m,max_altitude_m,positions_timed,positions_geojson,visibility,kit_id,weather,notes'
+      'id,user_id,route_id,title,started_at,ended_at,distance_km,activity_session_id,duration_seconds,elevation_gain_m,max_altitude_m,positions_timed,positions_geojson,visibility,kit_id,weather,notes'
     )
     .eq('id', outingId)
     .maybeSingle();
 
+  if (sessionResult.error?.code === '42703') {
+    // Environnement antérieur au lien capture→résumé : on relit sans la
+    // colonne, le sport retombe alors sur « rando ».
+    sessionResult = await supabase
+      .from('hike_sessions')
+      .select(
+        'id,user_id,route_id,title,started_at,ended_at,distance_km,duration_seconds,elevation_gain_m,max_altitude_m,positions_timed,positions_geojson,visibility,kit_id,weather,notes'
+      )
+      .eq('id', outingId)
+      .maybeSingle();
+  }
+
+  const { data: sessionData, error: sessionError } = sessionResult;
   if (sessionError || !sessionData) return null;
   const session = sessionData as SessionRow;
   const canEdit = session.user_id === userId;
+
+  // Le sport vient de la séance multi-sport liée. L'historique sans lien est
+  // une randonnée : on ne devine pas un autre sport.
+  let sport = 'rando';
+  if (session.activity_session_id) {
+    const { data: activity } = await supabase
+      .from('activity_sessions')
+      .select('sport')
+      .eq('id', session.activity_session_id)
+      .maybeSingle();
+    const declared = (activity as { sport?: string | null } | null)?.sport;
+    if (typeof declared === 'string' && declared.trim()) sport = declared.trim().toLowerCase();
+  }
 
   const [routeRes, photoRes, participantRes, gearRes, kudosRes, commentRes] = await Promise.all([
     session.route_id
@@ -272,7 +303,7 @@ export async function loadOutingDetail(
       .order('created_at', { ascending: true }),
     supabase
       .from('hike_session_gear')
-      .select('id,item_name,weight_g,kit_id')
+      .select('id,item_name,weight_g,kit_id,gear_item_id')
       .eq('session_id', session.id)
       .order('created_at', { ascending: true }),
     supabase
@@ -388,11 +419,27 @@ export async function loadOutingDetail(
       }
     : null;
 
-  const gearRows = (gearRes.data ?? []) as Array<{
+  let gearData: unknown[] = gearRes.data ?? [];
+  if (
+    gearRes.error &&
+    (gearRes.error.code === '42703' || /gear_item_id/i.test(gearRes.error.message ?? ''))
+  ) {
+    // Environnement antérieur à la migration du lot : la sortie reste lisible,
+    // simplement sans lien stable vers l'inventaire.
+    const retry = await supabase
+      .from('hike_session_gear')
+      .select('id,item_name,weight_g,kit_id')
+      .eq('session_id', session.id)
+      .order('created_at', { ascending: true });
+    gearData = retry.data ?? [];
+  }
+
+  const gearRows = gearData as Array<{
     id: string;
     item_name: string;
     weight_g: number | null;
     kit_id: string | null;
+    gear_item_id: string | null;
   }>;
   const productByName = new Map<
     string,
@@ -435,6 +482,7 @@ export async function loadOutingDetail(
       name: row.item_name,
       weightG: row.weight_g,
       kitId: row.kit_id,
+      gearItemId: row.gear_item_id,
       photoUrl: product?.photo_url ?? null,
       category: product?.category ?? null,
       condition: product?.condition ?? null,
@@ -508,6 +556,7 @@ export async function loadOutingDetail(
     endedAt: session.ended_at,
     massif: route?.region?.trim() || route?.name?.trim() || null,
     routeName: route?.name?.trim() || null,
+    sport,
     km: numeric(session.distance_km),
     dplus: numeric(session.elevation_gain_m),
     maxAlt,
@@ -700,18 +749,48 @@ export async function attachKitGear(
     .from('materiel_kit_items')
     .select('name,weight_g')
     .eq('kit_id', owner.kit_id);
+
+  // Lien stable vers l'inventaire quand le nom est unique chez ce propriétaire.
+  // Un doublon de nom reste non lié plutôt que d'être associé au hasard.
+  const { data: ownedGear } = await supabase
+    .from('gear_items')
+    .select('id,name')
+    .eq('user_id', userId);
+  const idsByName = new Map<string, string | null>();
+  for (const row of (ownedGear ?? []) as Array<{ id: string; name: string | null }>) {
+    const key = row.name?.trim().toLowerCase() || '';
+    if (!key) continue;
+    idsByName.set(key, idsByName.has(key) ? null : row.id);
+  }
+
   const rows = (items ?? [])
-    .map((row: { name: string | null; weight_g: number | null }) => ({
-      session_id: outingId,
-      kit_id: owner.kit_id,
-      item_name: row.name?.trim() || 'Objet',
-      weight_g: row.weight_g,
-    }))
+    .map((row: { name: string | null; weight_g: number | null }) => {
+      const itemName = row.name?.trim() || 'Objet';
+      return {
+        session_id: outingId,
+        kit_id: owner.kit_id,
+        gear_item_id: idsByName.get(itemName.toLowerCase()) ?? null,
+        item_name: itemName,
+        weight_g: row.weight_g,
+      };
+    })
     .filter((row) => row.item_name.length > 0);
   if (rows.length === 0) throw new Error('empty_kit');
 
   await supabase.from('hike_session_gear').delete().eq('session_id', outingId);
-  const { error } = await supabase.from('hike_session_gear').insert(rows);
+  let { error } = await supabase.from('hike_session_gear').insert(rows);
+  // Compatibilité avant migration : on ne casse pas le rattachement de kit
+  // dans un environnement où la colonne `gear_item_id` n'existe pas encore.
+  if (error && (error.code === '42703' || /gear_item_id/i.test(error.message ?? ''))) {
+    const legacyRows = rows.map((row) => ({
+      session_id: row.session_id,
+      kit_id: row.kit_id,
+      item_name: row.item_name,
+      weight_g: row.weight_g,
+    }));
+    const retry = await supabase.from('hike_session_gear').insert(legacyRows);
+    error = retry.error;
+  }
   if (error) throw error;
 }
 
