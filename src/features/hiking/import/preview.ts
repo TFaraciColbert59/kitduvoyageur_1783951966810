@@ -18,6 +18,13 @@ import {
   buildTraceImportLapPayloads,
   type TraceImportLapPayload,
 } from './lapContract';
+import {
+  buildTraceImportSamplePayloads,
+  buildTraceImportSummaryPayload,
+  traceImportPreservedSampleCount,
+  type TraceImportSamplePayload,
+  type TraceImportSummaryPayload,
+} from './series';
 
 export interface TraceImportPreview {
   /** Nom proposé pour la sortie, dérivé du nom de fichier réel. */
@@ -38,6 +45,13 @@ export interface TraceImportPreview {
    * rechargement pour le propriétaire.
    */
   laps: TraceImportLapSummary[];
+  /**
+   * Résumé de session FIT réellement lu, ou `null` (TCX, session absente).
+   * Il est persisté dans `trace_import_summaries`, jamais recalculé.
+   */
+  summary: TraceImportSummaryPayload | null;
+  /** Nombre de points portant une mesure de série conservable. */
+  sampleCount: number;
   timeBasis: TraceTimeBasis;
   availableMetrics: TraceMetric[];
   /** `false` tant qu'une donnée manquante empêche une écriture honnête. */
@@ -84,6 +98,17 @@ export interface HikeSessionImportPayload {
    * sa provenance. Aucun split calculé n'entre dans ce tableau.
    */
   laps: TraceImportLapPayload[];
+  /**
+   * Résumé `session` FIT réellement porté par le fichier, ou `null`. Il est
+   * écrit dans `trace_import_summaries` par la même transaction que la sortie.
+   */
+  summary: TraceImportSummaryPayload | null;
+  /**
+   * Mesures de point réellement lues (FC, cadence, puissance, température,
+   * distance source), bornées à `TRACE_IMPORT_MAX_PAYLOAD_SAMPLES`. Aucun point
+   * sans mesure n'est envoyé.
+   */
+  samples: TraceImportSamplePayload[];
 }
 
 const EARTH_KM = 6371.0088;
@@ -319,6 +344,8 @@ export function buildTraceImportPreview(trace: NormalizedTraceImport): TraceImpo
     positionedPointCount,
     lapCount: trace.laps.length,
     laps: buildTraceImportLapSummaries(trace),
+    summary: buildTraceImportSummaryPayload(trace),
+    sampleCount: traceImportPreservedSampleCount(trace),
     timeBasis: trace.provenance.timeBasis,
     availableMetrics: trace.availableMetrics,
     saveable: blockers.length === 0,
@@ -390,5 +417,7 @@ export function buildHikeSessionImportPayload(
     poiEvents: [],
     createCarnet: false,
     laps: buildTraceImportLapPayloads(trace),
+    summary: buildTraceImportSummaryPayload(trace),
+    samples: buildTraceImportSamplePayloads(trace),
   };
 }

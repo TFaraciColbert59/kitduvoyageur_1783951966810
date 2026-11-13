@@ -16,6 +16,13 @@ import {
   normalizeTraceImportLaps,
   type TraceImportLapPayload,
 } from '@/features/hiking/import/lapContract';
+import {
+  normalizeTraceImportSamples,
+  normalizeTraceImportSummary,
+  type TraceImportSamplePayload,
+  type TraceImportSummaryPayload,
+} from '@/features/hiking/import/seriesContract';
+import { TRACE_IMPORT_MAX_PAYLOAD_SAMPLES } from '@/features/hiking/import/series';
 
 const logger = createStructuredLogger({ service: 'api.hike-sessions' });
 
@@ -85,6 +92,14 @@ interface SaveHikeSessionBody {
    * et sa provenance.
    */
   laps?: unknown;
+  /**
+   * Résumé `session` FIT et mesures de point réellement lues dans le fichier.
+   * Absents d'un client antérieur : la route écrit alors la sortie sans
+   * métrique de série, sans en inventer. Présents, ils sont validés, bornés
+   * puis écrits dans la même transaction que la sortie et sa provenance.
+   */
+  summary?: unknown;
+  samples?: unknown;
   /**
    * `false` pour un import : la sortie ne crée pas de carnet automatique.
    * Sans ce champ, le comportement historique (carnet auto) reste actif.
@@ -233,6 +248,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: importIdentity.message }, { status: 400 });
     }
     let laps: TraceImportLapPayload[] = [];
+    let summary: TraceImportSummaryPayload | null = null;
+    let samples: TraceImportSamplePayload[] = [];
     if (importIdentity.kind === 'import') {
       const importError = validateTraceImportPayload(body);
       if (importError) {
@@ -243,9 +260,25 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: normalizedLaps.message }, { status: 400 });
       }
       laps = normalizedLaps.laps;
-    } else if (body.laps !== undefined && body.laps !== null) {
+
+      const normalizedSamples = normalizeTraceImportSamples(body.samples);
+      if (!normalizedSamples.ok) {
+        return NextResponse.json({ error: normalizedSamples.message }, { status: 400 });
+      }
+      samples = normalizedSamples.samples;
+
+      const normalizedSummary = normalizeTraceImportSummary(body.summary);
+      if (!normalizedSummary.ok) {
+        return NextResponse.json({ error: normalizedSummary.message }, { status: 400 });
+      }
+      summary = normalizedSummary.summary;
+    } else if (
+      (body.laps !== undefined && body.laps !== null)
+      || (body.summary !== undefined && body.summary !== null)
+      || (body.samples !== undefined && body.samples !== null)
+    ) {
       return NextResponse.json(
-        { error: 'Les tours du fichier ne concernent qu’un import de trace.' },
+        { error: 'Les tours et métriques du fichier ne concernent qu’un import de trace.' },
         { status: 400 }
       );
     }
@@ -291,9 +324,12 @@ export async function POST(req: NextRequest) {
       // migration et qu'il y a des tours, la route refuse explicitement (503)
       // au lieu de les perdre silencieusement.
       const withLaps = laps.length > 0;
-      const rpcName = withLaps
-        ? 'record_trace_import_with_laps'
-        : 'record_trace_import';
+      const withMetrics = summary !== null || samples.length > 0;
+      const rpcName = withMetrics
+        ? 'record_trace_import_with_metrics'
+        : withLaps
+          ? 'record_trace_import_with_laps'
+          : 'record_trace_import';
       const rpcArgs: Record<string, unknown> = {
         p_started_at: body.startedAt,
         p_ended_at: body.endedAt,
@@ -315,7 +351,11 @@ export async function POST(req: NextRequest) {
             : null,
         p_correlation_id: correlationId,
       };
-      if (withLaps) rpcArgs.p_laps = laps;
+      if (withLaps || withMetrics) rpcArgs.p_laps = laps;
+      if (withMetrics) {
+        rpcArgs.p_summary = summary;
+        rpcArgs.p_samples = samples;
+      }
 
       const { data: importResult, error: importRpcError } = await supabase.rpc(
         rpcName,
@@ -342,9 +382,11 @@ export async function POST(req: NextRequest) {
         if (code === 'PGRST202' || code === '42883') {
           return NextResponse.json(
             {
-              error: withLaps
-                ? 'La persistance des tours n’est pas encore disponible.'
-                : 'La persistance des imports n’est pas encore disponible.',
+              error: withMetrics
+                ? 'La persistance des métriques d’import n’est pas encore disponible.'
+                : withLaps
+                  ? 'La persistance des tours n’est pas encore disponible.'
+                  : 'La persistance des imports n’est pas encore disponible.',
             },
             { status: 503 }
           );
@@ -367,6 +409,8 @@ export async function POST(req: NextRequest) {
         carnet_id?: string | null;
         existing?: boolean;
         lap_count?: number | string | null;
+        sample_count?: number | string | null;
+        summary_stored?: boolean | null;
       } | null;
       if (!result?.session_id) {
         return NextResponse.json(
@@ -383,6 +427,14 @@ export async function POST(req: NextRequest) {
         Number.isFinite(rawLapCount) && rawLapCount >= 0
           ? Math.min(Math.round(rawLapCount), 10_000)
           : 0;
+      const rawSampleCount =
+        typeof result.sample_count === 'number'
+          ? result.sample_count
+          : Number(result.sample_count ?? 0);
+      const sampleCount =
+        Number.isFinite(rawSampleCount) && rawSampleCount >= 0
+          ? Math.min(Math.round(rawSampleCount), TRACE_IMPORT_MAX_PAYLOAD_SAMPLES)
+          : 0;
 
       logger.info('hike_sessions.imported', {
         correlation_id: correlationId,
@@ -392,6 +444,8 @@ export async function POST(req: NextRequest) {
         import_source: importIdentity.source,
         import_existing: result.existing === true,
         import_lap_count: lapCount,
+        import_sample_count: sampleCount,
+        import_summary_stored: result.summary_stored === true,
       });
 
       return NextResponse.json(
@@ -400,6 +454,8 @@ export async function POST(req: NextRequest) {
           carnetId: result.carnet_id ?? null,
           existing: result.existing === true,
           lapCount,
+          sampleCount,
+          summaryStored: result.summary_stored === true,
         },
         { headers: correlationResponseHeaders(correlationId) }
       );

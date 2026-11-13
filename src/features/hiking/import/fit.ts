@@ -337,6 +337,7 @@ const FIT_MESSAGE_SPECS: Readonly<Record<number, Readonly<Record<number, FitFiel
     15: { name: 'avgHeartRate' },
     16: { name: 'maxHeartRate' },
     17: { name: 'avgCadence' },
+    19: { name: 'avgPower' },
     20: { name: 'maxPower' },
     23: { name: 'intensity', kind: 'enum', enumMap: INTENSITY_NAMES },
     24: { name: 'lapTrigger', kind: 'enum', enumMap: LAP_TRIGGER_NAMES },
@@ -356,8 +357,10 @@ const FIT_MESSAGE_SPECS: Readonly<Record<number, Readonly<Record<number, FitFiel
     16: { name: 'avgHeartRate' },
     17: { name: 'maxHeartRate' },
     18: { name: 'avgCadence' },
-    // Profil FIT `session` : le champ 20 est `max_power` (watts), comme pour
-    // un `lap`. Il est conservé même quand aucun message `lap` n'existe.
+    // Profil FIT `session` : les champs 19 et 20 sont `avg_power` et
+    // `max_power` (watts), comme pour un `lap`. Ils sont conservés même quand
+    // aucun message `lap` n'existe.
+    19: { name: 'avgPower' },
     20: { name: 'maxPower' },
   },
   34: {
@@ -388,8 +391,8 @@ const FIT_MESSAGE_SPECS: Readonly<Record<number, Readonly<Record<number, FitFiel
 const CONSUMED_FIT_FIELDS: Readonly<Record<number, ReadonlySet<number>>> = {
   0: new Set([0, 1, 2, 3, 4]),
   20: new Set([253, 0, 1, 2, 3, 4, 5, 6, 7, 13, 73, 78]),
-  19: new Set([2, 7, 8, 9, 11, 13, 14, 15, 16, 17, 20, 23, 24, 25]),
-  18: new Set([2, 5, 7, 8, 9, 11, 14, 15, 16, 17, 18, 20, 253]),
+  19: new Set([2, 7, 8, 9, 11, 13, 14, 15, 16, 17, 19, 20, 23, 24, 25]),
+  18: new Set([2, 5, 7, 8, 9, 11, 14, 15, 16, 17, 18, 19, 20, 253]),
   34: new Set([0, 253]),
   23: new Set([27]),
 };
@@ -778,6 +781,8 @@ export function parseFit(
         maxHeartRateBpm: valueAsNumber(session, 17),
         averageCadenceRpm: valueAsNumber(session, 18),
         averageCadenceSpm: null,
+        averagePowerW: valueAsNumber(session, 19),
+        maxPowerW: valueAsNumber(session, 20),
         sport,
         activityTimerSeconds: valueAsNumber(activity, 0),
       };
@@ -1232,6 +1237,7 @@ function lapMessageToLap(
     maxHeartRateBpm: valueAsNumber(message, 16),
     averageCadenceRpm: valueAsNumber(message, 17),
     averageCadenceSpm: null,
+    averagePowerW: valueAsNumber(message, 19),
     maxPowerW: valueAsNumber(message, 20),
     intensity: textField(message, 23),
     triggerMethod: textField(message, 24),
@@ -1266,8 +1272,10 @@ function sessionToLap(
     maxHeartRateBpm: valueAsNumber(session, 17),
     averageCadenceRpm: valueAsNumber(session, 18),
     averageCadenceSpm: null,
-    // Une session porte `max_power` (champ 20) même sans message `lap` : sans
-    // cette reprise, un FIT sans tours perdait la puissance maximale.
+    // Une session porte `avg_power` (champ 19) et `max_power` (champ 20) même
+    // sans message `lap` : sans cette reprise, les puissances de session
+    // seraient perdues.
+    averagePowerW: valueAsNumber(session, 19),
     maxPowerW: valueAsNumber(session, 20),
     intensity: null,
     triggerMethod: null,

@@ -735,6 +735,7 @@ export function parseTcx(
       maxHeartRateBpm: null,
       averageCadenceRpm: null,
       averageCadenceSpm: null,
+      averagePowerW: null,
       maxPowerW: null,
       intensity: null,
       triggerMethod: null,

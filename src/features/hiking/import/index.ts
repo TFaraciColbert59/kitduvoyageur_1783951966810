@@ -7,4 +7,6 @@ export * from './traceImport';
 export * from './preview';
 export * from './laps';
 export * from './lapContract';
+export * from './series';
+export * from './seriesContract';
 export * from './importContract';

@@ -19,6 +19,11 @@ sont documentés dans
 L’audit initial des contrats et des conflits reste dans
 [`docs/import/A03-S2.05-tours.md`](../../../../docs/import/A03-S2.05-tours.md).
 
+Les métriques de séance FIT et les séries de mesures par point sont persistées
+dans `public.trace_import_summaries` et `public.trace_import_samples` ; le
+contrat, les unités, les bornes, le RGPD et les dépendances sont documentés dans
+[`docs/import/A03-S1.15-metriques.md`](../../../../docs/import/A03-S1.15-metriques.md).
+
 Références de suivi : `A03`, `K6.02`, `S1.15`, `S2.05`.
 
 ## Périmètre réellement livré
@@ -119,6 +124,14 @@ Références de suivi : `A03`, `K6.02`, `S1.15`, `S2.05`.
   relus après rechargement pour le propriétaire. Un FIT sans message `lap`
   reste marqué `synthetic` (« Tour reconstruit ») ; un TCX ou un FIT avec
   `lap` reste `device`. Voir `docs/import/A03-S2.05-persistance.md`.
+- **Métriques et séries** : le résumé `session` FIT (calories, FC, cadence,
+  vitesses, puissance, minuteur) et les mesures de point encore perdues (FC,
+  cadence, puissance, température, distance source) sont envoyés dans
+  `summary` et `samples[]`, écrits dans `public.trace_import_summaries` et
+  `public.trace_import_samples`, puis relus pour le propriétaire. `null`
+  signifie absence, `0` reste une mesure réelle ; aucune moyenne, aucun total
+  et aucune calorie ne sont calculés par l'import. Voir
+  `docs/import/A03-S1.15-metriques.md`.
 
 ## Non couvert, volontairement
 
@@ -183,8 +196,10 @@ Références de suivi : `A03`, `K6.02`, `S1.15`, `S2.05`.
   `pointCount`). Quand des points sont désordonnés, les points d'un même lap
   peuvent être non contigus : un consommateur doit filtrer par `lapIndex`, pas
   découper `tracks`.
-- FIT : `session.avg_power` (champ 19) n'est pas normalisé ; seul
-  `session.max_power` (champ 20) est repris dans le lap synthétique.
+- FIT : `session.avg_power` (champ 19) et `lap.avg_power` sont désormais
+  normalisés en `averagePowerW` et persistés (résumé et `trace_import_laps`) ;
+  `session.max_power` (champ 20) reste repris dans le lap synthétique. Les
+  autres champs FIT non interprétés restent signalés.
 - FIT : les valeurs 64 bits au-delà de 2^53 perdent leur précision en `number`.
   Aucun champ normalisé courant ne les utilise.
 - Déduplication : l'empreinte est déclarée par le client, car le fichier original
@@ -317,14 +332,21 @@ avec les branches Explorer/Carnet est dans
   `buildTraceImportLapPayloads`, `normalizeTraceImportLaps` et les bornes des
   tours. Il refuse `computed` / `manual` : les splits calculés ne passent jamais
   par le contrat des tours source.
+- `series.ts` expose `TraceImportSummaryPayload`, `TraceImportSamplePayload`,
+  `buildTraceImportSummaryPayload`, `buildTraceImportSamplePayloads` et
+  `TRACE_IMPORT_MAX_PAYLOAD_SAMPLES`. Le résumé ne vient que du message FIT
+  `session` ; les séries ne contiennent aucun point sans mesure et aucune
+  coordonnée. `seriesContract.ts` expose les normalisateurs d'entrée
+  (`normalizeTraceImportSummary`, `normalizeTraceImportSamples`) : `null`
+  reste `null`, `0` reste `0`, un objet vide est refusé.
 
 ## Confrontation aux fiches
 
 | Fiche | État après cette passe | Ce qui reste hors de la brique |
 |---|---|---|
-| **S1.15** — importer FIT et TCX valides/tronqués, contrôler tours, unités, provenance, erreurs, déduplication | **Déduplication par empreinte livrée** : `file_id.type = 4` exigé, dates de fin TCX calculées depuis les laps, messages FIT bornés, laps rattachés en `O((points + laps) log laps)`, résumé de session et champs FIT conservés ou signalés, cadence TCX sport-aware, `Notes`/`Training`/`Extensions` signalés, UTF-16 accepté, aperçu UI, refus explicites, registre `trace_imports` et RPC atomique `(owner_id, source_fingerprint)`. | Le stockage des originaux, l'export dédié et la reprise restent ouverts. La vérification serveur de l'empreinte est impossible sans téléverser l'original (limite assumée). |
+| **S1.15** — importer FIT et TCX valides/tronqués, contrôler tours, unités, provenance, erreurs, déduplication | **Déduplication par empreinte livrée** : `file_id.type = 4` exigé, dates de fin TCX calculées depuis les laps, messages FIT bornés, laps rattachés en `O((points + laps) log laps)`, résumé de session et champs FIT conservés, cadence TCX sport-aware, `Notes`/`Training`/`Extensions` signalés, UTF-16 accepté, aperçu UI, refus explicites, registre `trace_imports` et RPC atomique `(owner_id, source_fingerprint)`. **Métriques et séries livrées localement** : `trace_import_summaries`, `trace_import_samples`, RPC `record_trace_import_with_metrics`, `avg_power` FIT, RLS propriétaire et restitution dans le drawer Sortie. | Le stockage des originaux, l'export dédié et la reprise restent ouverts. La vérification serveur de l'empreinte est impossible sans téléverser l'original (limite assumée). Aucun backfill des imports antérieurs. |
 | **K6.02** — fixtures et parcours mobile | **Parcours mobile branché** : `Compte → Sorties → Importer FIT/TCX`, sélecteur, glisser-déposer, aperçu, erreurs et message de déduplication par fichier. | Fixtures Garmin/Suunto réelles anonymisées et recette mobile sur appareil ; aucune suite n'a été exécutée dans cette passe. |
-| **A03** — import FIT/TCX | **Flux complété côté persistance et restitution** : parseurs, modèle normalisé, limites, SHA-256, aperçu, enregistrement privé, registre de provenance owner-only, déduplication atomique, provenance et tours relus après rechargement dans le drawer Sortie, raccordement « Voir la sortie ». | Bucket privé des originaux, export dédié, fixtures producteurs et validation en recette. Aucun backfill des imports antérieurs. |
+| **A03** — import FIT/TCX | **Flux complété côté persistance et restitution** : parseurs, modèle normalisé, limites, SHA-256, aperçu, enregistrement privé, registre de provenance owner-only, déduplication atomique, provenance, tours, résumé FIT et séries de mesures relus après rechargement dans le drawer Sortie, raccordement « Voir la sortie ». | Bucket privé des originaux, export dédié, fixtures producteurs et validation en recette. Aucun backfill des imports antérieurs. |
 | **S2.05** — tours de montre | **Persistance et restitution livrées localement** : `origin` device/synthetic, `trace_import_laps`, RPC versionnée, RLS propriétaire, lecture paginée et rendu borné. Les splits calculés restent séparés. | Aucun backfill, aucune conversion `ActivitySplit`, aucun stockage de points par tour. Recette et vérifications reportées ; voir `docs/import/A03-S2.05-persistance.md`. |
 
 ## Vérification

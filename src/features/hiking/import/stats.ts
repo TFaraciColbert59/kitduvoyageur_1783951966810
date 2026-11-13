@@ -101,7 +101,9 @@ export function computeAvailableMetrics(
   }
   if (
     points.some((point) => point.powerW != null)
-    || laps.some((lap) => lap.maxPowerW != null)
+    || laps.some((lap) => lap.averagePowerW != null || lap.maxPowerW != null)
+    || summary?.averagePowerW != null
+    || summary?.maxPowerW != null
   ) {
     available.add('power');
   }

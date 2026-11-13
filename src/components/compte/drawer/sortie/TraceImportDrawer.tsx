@@ -18,6 +18,7 @@ import { ActionPill } from '@/components/ui/ActionPill';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   TRACE_IMPORT_LIMITS,
+  TRACE_IMPORT_MAX_PAYLOAD_SAMPLES,
   TraceImportError,
   buildHikeSessionImportPayload,
   buildTraceImportPreview,
@@ -49,6 +50,7 @@ interface SavedState {
   existing: boolean;
   title: string;
   lapCount: number;
+  sampleCount: number;
 }
 
 const ERROR_LABELS: Record<TraceImportErrorCode, string> = {
@@ -187,6 +189,7 @@ function lapMetrics(lap: TraceImportLapSummary): string[] {
   } else if (lap.averageCadenceSpm !== null) {
     parts.push(`${formatNumber(lap.averageCadenceSpm)} pas/min`);
   }
+  if (lap.averagePowerW !== null) parts.push(`moy. ${formatNumber(lap.averagePowerW)} W`);
   if (lap.maxPowerW !== null) parts.push(`max ${formatNumber(lap.maxPowerW)} W`);
   if (lap.caloriesKcal !== null) parts.push(`${formatNumber(lap.caloriesKcal)} kcal`);
   return parts;
@@ -375,6 +378,7 @@ export function TraceImportDrawer() {
         existing?: boolean;
         isGuest?: boolean;
         lapCount?: number | null;
+        sampleCount?: number | null;
         error?: string;
       } | null;
 
@@ -396,6 +400,8 @@ export function TraceImportDrawer() {
       // en contenait. On n'affiche donc jamais un nombre non confirmé.
       const rawLapCount =
         typeof data?.lapCount === 'number' ? data.lapCount : 0;
+      const rawSampleCount =
+        typeof data?.sampleCount === 'number' ? data.sampleCount : 0;
       const savedState: SavedState = {
         sessionId,
         existing: data?.existing === true,
@@ -403,6 +409,10 @@ export function TraceImportDrawer() {
         lapCount:
           Number.isFinite(rawLapCount) && rawLapCount >= 0
             ? Math.min(Math.round(rawLapCount), 10_000)
+            : 0,
+        sampleCount:
+          Number.isFinite(rawSampleCount) && rawSampleCount >= 0
+            ? Math.min(Math.round(rawSampleCount), TRACE_IMPORT_MAX_PAYLOAD_SAMPLES)
             : 0,
       };
       setSaved(savedState);
@@ -573,6 +583,13 @@ export function TraceImportDrawer() {
                   : 'Aucun tour n’a été conservé.'}
               </p>
             ) : null}
+            {saved.sampleCount > 0 ? (
+              <p>
+                {saved.sampleCount} mesure{saved.sampleCount > 1 ? 's' : ''} de point{' '}
+                {saved.existing ? 'déjà conservée' : 'conservée'}
+                {saved.sampleCount > 1 ? 's' : ''} avec la sortie.
+              </p>
+            ) : null}
           </div>
           <div className="lkdv-trace-import-actions">
             <ActionPill
@@ -686,6 +703,12 @@ export function TraceImportDrawer() {
               <span>
                 {preview.lapCount} tour{preview.lapCount > 1 ? 's' : ''}
               </span>
+              {preview.sampleCount > 0 ? (
+                <span>
+                  {preview.sampleCount} mesure{preview.sampleCount > 1 ? 's' : ''} lue
+                  {preview.sampleCount > 1 ? 's' : ''}
+                </span>
+              ) : null}
             </div>
 
             {preview.lapCount > 0 && traceLapsHaveMetrics(preview.laps) ? (

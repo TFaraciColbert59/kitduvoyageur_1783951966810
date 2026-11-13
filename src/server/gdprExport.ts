@@ -48,6 +48,10 @@ export const GDPR_USER_TABLES: readonly GdprUserTable[] = [
   { table: 'trace_imports', userColumn: 'owner_id' },
   // A03/S2.05 — tours source privés, mesures cardio/cadence/puissance incluses.
   { table: 'trace_import_laps', userColumn: 'owner_id' },
+  // A03/S1.15 — résumé FIT privé (calories, FC, cadence, puissance).
+  { table: 'trace_import_summaries', userColumn: 'owner_id' },
+  // A03/S1.15 — séries de mesures privées (FC, cadence, puissance, température).
+  { table: 'trace_import_samples', userColumn: 'owner_id' },
   { table: 'session_segment_passages', userColumn: 'user_id' },
   { table: 'terrain_reports', userColumn: 'reporter_id' },
   { table: 'terrain_report_confirmations', userColumn: 'user_id' },
@@ -87,6 +91,9 @@ export const GDPR_OPTIONAL_TABLES: ReadonlySet<string> = new Set([
   'trace_imports',
   // A03/S2.05 — table additive des tours, absente avant la migration.
   'trace_import_laps',
+  // A03/S1.15 — tables additives des métriques, absentes avant la migration.
+  'trace_import_summaries',
+  'trace_import_samples',
 ]);
 
 /**

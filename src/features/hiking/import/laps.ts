@@ -31,6 +31,7 @@ export interface TraceImportLapSummary {
   maxHeartRateBpm: number | null;
   averageCadenceRpm: number | null;
   averageCadenceSpm: number | null;
+  averagePowerW: number | null;
   maxPowerW: number | null;
   intensity: string | null;
   triggerMethod: string | null;
@@ -75,6 +76,7 @@ function lapSummary(lap: NormalizedTraceLap): TraceImportLapSummary {
     maxHeartRateBpm: lap.maxHeartRateBpm,
     averageCadenceRpm: lap.averageCadenceRpm,
     averageCadenceSpm: lap.averageCadenceSpm,
+    averagePowerW: lap.averagePowerW,
     maxPowerW: lap.maxPowerW,
     intensity: lap.intensity,
     triggerMethod: lap.triggerMethod,
@@ -112,6 +114,7 @@ export function traceLapsHaveMetrics(laps: readonly TraceImportLapSummary[]): bo
       || lap.maxHeartRateBpm !== null
       || lap.averageCadenceRpm !== null
       || lap.averageCadenceSpm !== null
+      || lap.averagePowerW !== null
       || lap.maxPowerW !== null
       || lap.intensity !== null
       || lap.triggerMethod !== null

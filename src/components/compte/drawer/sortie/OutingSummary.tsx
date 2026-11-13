@@ -19,6 +19,7 @@ import type {
 } from '@/features/compte/server/sorties';
 import { ElevationProfile, TraceMap, formatDate, formatDuration, formatNumber } from './shared';
 import { OutingLaps } from './OutingLaps';
+import { OutingMetrics } from './OutingMetrics';
 
 export interface OutingSummaryProps {
   detail: OutingDetail;
@@ -279,6 +280,10 @@ export function OutingSummary({ detail, saving, onSave, onShare, onExport, onDel
         ) : (
           <OutingLaps laps={detail.laps} />
         )
+      ) : null}
+
+      {provenance && (provenance.source === 'fit' || provenance.source === 'tcx') ? (
+        <OutingMetrics summary={detail.summary ?? null} samples={detail.samples ?? null} />
       ) : null}
 
       {detail.canEdit ? (

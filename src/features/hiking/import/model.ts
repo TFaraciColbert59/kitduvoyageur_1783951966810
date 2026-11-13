@@ -197,7 +197,9 @@ export interface NormalizedTraceLap {
   averageCadenceRpm: number | null;
   /** Cadence course/marche moyenne du tour, en pas par minute. */
   averageCadenceSpm: number | null;
-  /** Puissance maximale du tour, en watts (`lap.maxPower` FIT). */
+  /** Puissance moyenne du tour, en watts (`lap.avg_power` FIT). */
+  averagePowerW: number | null;
+  /** Puissance maximale du tour, en watts (`lap.max_power` FIT). */
   maxPowerW: number | null;
   intensity: string | null;
   triggerMethod: string | null;
@@ -224,6 +226,8 @@ export interface TraceSessionSummary {
   maxHeartRateBpm: number | null;
   averageCadenceRpm: number | null;
   averageCadenceSpm: number | null;
+  averagePowerW: number | null;
+  maxPowerW: number | null;
   sport: string | null;
   /** `activity.totalTimerTime`, conservé même s'il double la session. */
   activityTimerSeconds: number | null;

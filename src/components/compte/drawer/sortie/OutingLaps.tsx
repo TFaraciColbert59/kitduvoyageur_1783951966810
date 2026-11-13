@@ -57,6 +57,9 @@ function lapMetrics(lap: OutingImportLap): string[] {
     parts.push(`${formatNumber(lap.averageCadenceSpm)} pas/min`);
   }
 
+  if (lap.averagePowerW !== null) {
+    parts.push(`moy. ${formatNumber(lap.averagePowerW)} W`);
+  }
   if (lap.maxPowerW !== null) parts.push(`max ${formatNumber(lap.maxPowerW)} W`);
   if (lap.caloriesKcal !== null) parts.push(`${formatNumber(lap.caloriesKcal)} kcal`);
 

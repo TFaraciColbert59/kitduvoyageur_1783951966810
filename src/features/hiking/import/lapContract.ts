@@ -59,6 +59,7 @@ export interface TraceImportLapPayload {
   maxHeartRateBpm: number | null;
   averageCadenceRpm: number | null;
   averageCadenceSpm: number | null;
+  averagePowerW: number | null;
   maxPowerW: number | null;
   intensity: string | null;
   triggerMethod: string | null;
@@ -155,6 +156,7 @@ export function buildTraceImportLapPayloads(
     maxHeartRateBpm: lap.maxHeartRateBpm,
     averageCadenceRpm: lap.averageCadenceRpm,
     averageCadenceSpm: lap.averageCadenceSpm,
+    averagePowerW: lap.averagePowerW,
     maxPowerW: lap.maxPowerW,
     intensity: lap.intensity,
     triggerMethod: lap.triggerMethod,
@@ -254,6 +256,12 @@ export function normalizeTraceImportLaps(value: unknown): TraceImportLapValidati
           'averageCadenceSpm',
           0,
           TRACE_IMPORT_LAP_LIMITS.cadenceMax
+        ),
+        averagePowerW: optionalNumber(
+          row,
+          'averagePowerW',
+          0,
+          TRACE_IMPORT_LAP_LIMITS.powerWMax
         ),
         maxPowerW: optionalNumber(
           row,
