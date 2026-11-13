@@ -560,8 +560,8 @@ const ORIENT_OPTS = {
 };
 
 const VIS_LABELS = ["Privée", "Communauté", "Publique"];
-const SLOT_IDS = ["vitrine", "kit", "prets", "souvenirs", "communaute"];
-const SLOT_LABELS = { vitrine: "Vitrine", kit: "Kit", prets: "Prêts", souvenirs: "Souvenirs", communaute: "Communauté" };
+const SLOT_IDS = ["vitrine", "kit", "prets", "souvenirs", "communaute", "entrainement"];
+const SLOT_LABELS = { vitrine: "Vitrine", kit: "Kit", prets: "Prêts", souvenirs: "Souvenirs", communaute: "Communauté", entrainement: "Entraînement" };
 const slotIdOf = v => (SLOT_IDS.indexOf(v) >= 0 ? v : "vitrine");
 
 /* Carte contexte (spec drawer 3.3) : calque de la carte du bas affiché tant
@@ -578,6 +578,8 @@ const slotIdOf = v => (SLOT_IDS.indexOf(v) >= 0 ? v : "vitrine");
    - `communaute` → `lignees` : le runtime n'a pas de calque « clubs et
      événements ». On réutilise les lignées existantes ; aucun club/événement
      n'est fabriqué sur la carte.
+   - `entrainement` → `empreinte` : la pratique réelle sert de contexte ; aucun
+     calque « entraînement » n'est inventé.
    - `lignees` n'était dessiné que dans les vues Lignées/Kit : `drawMap()` ouvre
      aussi ce rendu en mode contexte kit/communaute, sinon le calque serait
      marqué actif sans être visible. */
@@ -586,7 +588,8 @@ const mapContextLayers = {
   kit: ['lignees'],
   prets: ['traces'],
   souvenirs: ['carnets'],
-  communaute: ['lignees']
+  communaute: ['lignees'],
+  entrainement: ['empreinte']
 };
 const MAP_CONTEXT_LAYER_KEYS = ['empreinte', 'traces', 'carnets', 'lignees'];
 /* Seules les clés pilotées par la carte contexte sont photographiées et
@@ -1847,7 +1850,7 @@ let renderSheet = function() {
     return;
   }
   const sh = S.sh;
-  /* Drawer Profil v2 : la feuille est remplacée par l'hôte React des 5 slots.
+  /* Drawer Profil v2 : la feuille est remplacée par l'hôte React des 6 slots.
      La carte du bas passe en mode contexte tant que ce tiroir est ouvert. */
   if (sh.k === "step" && S.step === 0) {
     const slotId = slotIdOf(S.slot);

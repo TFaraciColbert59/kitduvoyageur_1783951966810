@@ -828,6 +828,8 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
       (window as any).__lkdvOpenSlot?.('kit');
     } else if (initialTab === 'progression') {
       act('sealzoom');
+    } else if (initialTab === 'entrainement') {
+      (window as any).__lkdvOpenSlot?.('entrainement');
     }
   }, [initialTab]);
 

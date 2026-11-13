@@ -52,7 +52,7 @@ export function fitIntentForMode(
     return track ? { bounds: track.bounds, maxZoom: 14 } : null;
   }
   if (mode === 'prets' || mode === 'compte' || mode === 'reseau') return null;
-  if (mode === 'overview' || mode === 'vitrine') {
+  if (mode === 'overview' || mode === 'vitrine' || mode === 'entrainement') {
     // Aperçu large dès l'arrivée : toute l'empreinte (massifs, POI, carnets)
     // détermine le cadrage. Les marqueurs détaillés n'apparaissent qu'en zoomant.
     if (data.bounds) return { bounds: data.bounds, maxZoom: 6.2 };

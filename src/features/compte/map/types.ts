@@ -5,6 +5,7 @@ export type CompteMapMode =
   | 'prets'
   | 'souvenirs'
   | 'communaute'
+  | 'entrainement'
   | 'compte'
   | 'reseau'
   | 'sortie';
