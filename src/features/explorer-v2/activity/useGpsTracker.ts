@@ -17,6 +17,7 @@ import {
 } from './offRoute';
 import { useExplorerStore } from '../state/store';
 import { gpsSimulationEnabled } from './gpsSimulation';
+import { appendMetricInputs } from './metrics';
 
 /**
  * Suivi GPS d'une activité (04_CARTE §4, P2-11).
@@ -76,6 +77,17 @@ export function useGpsTracker({ distanceToRouteM, onFix }: TrackerOptions = {}):
   const manualPausedRef = useRef<boolean | null>(null);
   const offRouteRef = useRef<OffRouteState>({ offRoute: false, distanceM: 0, outSinceS: 0 });
   const samplesRef = useRef<OffRouteSample[]>([]);
+  /**
+   * Dernier fix accepté, pour dériver une vitesse d'intervalle **seulement**
+   * quand le GPS ne rapporte pas de vitesse. La référence est bornée à la
+   * séance : un nouveau départ ne peut pas hériter du fix précédent.
+   */
+  const previousMetricFixRef = useRef<{
+    sessionId: string | null;
+    startedAt: number;
+    t: number;
+    distanceM: number;
+  } | null>(null);
 
   const handleFix = useRef<(fix: GpsFix) => void>(() => undefined);
   const lastFixTimeRef = useRef<number>(Date.now());
@@ -102,6 +114,57 @@ export function useGpsTracker({ distanceToRouteM, onFix }: TrackerOptions = {}):
     // périmé (`maximumAge`) ou aberrant ne doit pas laisser de trace visuelle.
     if (!metrics.accepted) return;
 
+    const effectiveT = metrics.effectiveTMs ?? fix.t;
+    const previousMetricFix = previousMetricFixRef.current;
+    const sameActivity =
+      previousMetricFix !== null &&
+      previousMetricFix.sessionId === current.sessionId &&
+      previousMetricFix.startedAt === current.startedAt;
+    const elapsedS =
+      previousMetricFix !== null && sameActivity && effectiveT > previousMetricFix.t
+        ? (effectiveT - previousMetricFix.t) / 1000
+        : 0;
+    const reportedSpeed =
+      typeof fix.speed === 'number' && Number.isFinite(fix.speed) && fix.speed >= 0
+        ? fix.speed
+        : null;
+    // La vitesse déduite ne traverse jamais une nouvelle borne (trou GPS,
+    // rejet, reprise) : elle serait une corde droite inventée. Elle n'est
+    // calculée que si le tracker a réellement ajouté de la distance.
+    const derivedSpeed =
+      reportedSpeed === null &&
+      previousMetricFix !== null &&
+      sameActivity &&
+      !metrics.discontinuity &&
+      elapsedS > 0 &&
+      metrics.distanceM > previousMetricFix.distanceM
+        ? (metrics.distanceM - previousMetricFix.distanceM) / elapsedS
+        : null;
+    let metricSeries = current.metricSeries ?? [];
+    if (typeof fix.ele === 'number' && Number.isFinite(fix.ele)) {
+      metricSeries = appendMetricInputs(metricSeries, {
+        t: effectiveT,
+        elevationM: fix.ele,
+        source: 'gps',
+        quality: 'measured',
+      });
+    }
+    if (reportedSpeed !== null || derivedSpeed !== null) {
+      const derived = reportedSpeed === null;
+      metricSeries = appendMetricInputs(metricSeries, {
+        t: effectiveT,
+        speedMs: reportedSpeed ?? derivedSpeed,
+        source: derived ? 'derived' : 'gps',
+        quality: derived ? 'derived' : 'measured',
+      });
+    }
+    previousMetricFixRef.current = {
+      sessionId: current.sessionId,
+      startedAt: current.startedAt,
+      t: effectiveT,
+      distanceM: metrics.distanceM,
+    };
+
     useExplorerStore.setState((state) => ({
       activity: state.activity
         ? {
@@ -113,6 +176,7 @@ export function useGpsTracker({ distanceToRouteM, onFix }: TrackerOptions = {}):
             splits: metrics.splits,
             mileSplits: metrics.mileSplits,
             laps: metrics.laps,
+            metricSeries,
           }
         : undefined,
       // Pause automatique : la capture continue pour détecter la reprise, mais

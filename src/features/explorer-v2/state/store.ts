@@ -170,6 +170,7 @@ function activityStarted(
     splits: splits.km,
     mileSplits: splits.mi,
     laps: splits.laps,
+    metricSeries: [],
   };
 }
 
@@ -333,6 +334,7 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
       trailRoute: route,
       sheet: 'live',
       detent: 'peek',
+      tab: 0,
       camera: { type: 'follow' },
     });
     emit('activity-start', {
@@ -400,6 +402,7 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
       summarySaved: current?.sessionId ? 'pending' : 'local',
       sheet: 'summary',
       detent: 'full',
+      tab: 0,
       camera: { type: 'overview' },
     });
     emit('activity-stop', {});
