@@ -7,6 +7,7 @@ import {
   viewportQueryParams,
   type SearchViewport,
 } from '../searchArea';
+import type { SearchRoute } from '../state/types';
 
 export type Position = [number, number];
 
@@ -60,9 +61,9 @@ export interface RouteItem {
    */
   geojson: unknown | null;
   /**
-   * Route de démonstration servie quand la base ne renvoie aucun itinéraire.
-   * Son identifiant ne désigne aucun tracé réel : le hors-trace doit rester
-   * indisponible au lieu d'aller chercher une géométrie homonyme.
+   * Route sans géométrie exploitable. Le hors-trace doit rester indisponible
+   * au lieu d'aller chercher une géométrie homonyme ; aucun nom de
+   * démonstration n'est créé pour combler une zone vide.
    */
   unavailable?: boolean;
 }
@@ -331,10 +332,16 @@ export interface SearchFilters {
 export interface SearchResponse {
   filters: SearchFilters;
   results: SearchResultItem[];
+  /** Parcours réels du catalogue OSM, dans la même emprise que les repères. */
+  routes?: SearchRoute[];
   /** Emprise réellement interrogée ; `null` pour l'ancien mode « autour du centre ». */
   zone: SearchViewport | null;
   /** Vrai quand la borne de la RPC a tronqué la liste avant l'affichage. */
   truncated: boolean;
+  /** Vrai quand le catalogue de parcours a été tronqué par sa borne. */
+  routesTruncated?: boolean;
+  /** Vrai quand la RPC de parcours a échoué : les repères restent affichés. */
+  routesUnavailable?: boolean;
 }
 
 /** Erreur HTTP de recherche, avec le motif explicite renvoyé par l'API. */

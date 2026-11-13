@@ -523,7 +523,28 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
   );
 
   const pois = useMemo(() => place?.pois ?? [], [place]);
-  const routes = useMemo(() => place?.routes ?? [], [place]);
+  const searchRoutes = state.searchRoutes;
+  /**
+   * Les parcours trouvés par la recherche complètent la fenêtre du lieu sans
+   * la remplacer. Aucune géométrie n'est inventée : `geojson` reste `null`
+   * jusqu'au chargement réel de `get_route_geojson` au moment d'armer la trace.
+   */
+  const routes = useMemo(() => {
+    const base = place?.routes ?? [];
+    if (!searchRoutes || searchRoutes.length === 0) return base;
+    const known = new Set(base.map((route) => String(route.id)));
+    const additions = searchRoutes
+      .filter((route) => !known.has(String(route.id)))
+      .map((route) => ({
+        id: route.id,
+        name: route.name,
+        distance_km: route.distance_km,
+        network: route.network,
+        ref: route.ref,
+        geojson: null,
+      }));
+    return additions.length > 0 ? [...base, ...additions] : base;
+  }, [place, searchRoutes]);
 
   // Hors-trace : la séance porte sa propre copie de l'itinéraire, figée au
   // départ. On ignore `state.selection` et la géométrie simplifiée

@@ -660,3 +660,15 @@ Les points **non** cochés sont listés dans `ETAT_DES_POINTS.md` avec leur bloc
   First Load JS `/explorer` = 151 Ko (budget ≤ 170 Ko respecté, marge de 19 Ko).
 - Statut : OK
 
+### [R03-K1.01] Recherche de parcours réels dans l’emprise · 2026-11-13
+- Fiche : `LKDV_Lancement_Autonome 2/fiches/Komoot/K1.01.md` ; départ `eaea09d`.
+- Fichiers : `src/app/api/explorer/v2/search/route.ts`, `src/app/api/explorer/v2/place/route.ts`,
+  `src/features/explorer-v2/{ExplorerV2.tsx,data/hooks.ts,state/types.ts,state/store.ts,sheet/SheetContent.tsx}`,
+  `docs/explorer-v2/R03-K1.01-RECHERCHE-PARCOURS.md`.
+- Décision : `explorer_routes` (anon, RLS OSM) seule source de parcours ; aucun index,
+  aucune migration, aucun résultat de démonstration. `compas_search_routes` n’est pas
+  appelé (EXECUTE réservé à `authenticated`) et `geo_places_search` reste `service_role`.
+- Limites : recherche de nom/mot-clé bornée à l’emprise courante ; pas de géocodage de
+  lieu écrit ; difficulté/eau absentes du catalogue. Détail dans la fiche R03-K1.01.
+- Vérification : aucun test, build, lint ni `tsc` exécuté dans cette passe (consigne de lot).
+

@@ -209,6 +209,22 @@ export interface ToastMessage {
   id: number;
 }
 
+/**
+ * Parcours réel renvoyé par la recherche. Le catalogue reste `hiking_routes`
+ * (lecture publique OSM) ; la recherche ne crée ni identifiant ni tracé.
+ */
+export interface SearchRoute {
+  id: number;
+  name: string | null;
+  ref: string | null;
+  network: string | null;
+  distance_km: number | null;
+  /** Distance du centre de l'emprise au centre du tracé ; `null` si inconnue. */
+  distanceKm: number | null;
+  /** Vrai quand la demande cite un mot du nom ou de la référence. */
+  matched: boolean;
+}
+
 export interface ExplorerState {
   level: Level;
   /** ISO2 du pays courant ; '' = pays de l'utilisateur (aucun pays ouvert). */
@@ -261,6 +277,12 @@ export interface ExplorerState {
    * Elle ne sert qu'à décider si la carte a bougé depuis cette recherche.
    */
   searchReferenceViewport?: SearchViewport | null;
+  /**
+   * Parcours réels de la dernière recherche. Ils complètent, sans les
+   * remplacer, les itinéraires déjà chargés pour le lieu courant ; ils ne sont
+   * jamais persistés et ne contiennent aucune donnée privée.
+   */
+  searchRoutes?: SearchRoute[];
   /** Fond de carte : relief 3D, satellite ou plan vectoriel. */
   mapBaseStyle?: 'relief' | 'satellite' | 'plan';
   /** Visibilité des calques de données. */

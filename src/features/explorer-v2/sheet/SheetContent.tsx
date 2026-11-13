@@ -474,40 +474,17 @@ function EmptyAmis() {
 }
 
 function RoutesTab({ ctx }: { ctx: SheetContext }) {
-  const routesToDisplay = ctx.routes.length > 0 ? ctx.routes : [
-    {
-      id: 101,
-      name: 'Tour du Mont-Blanc (GR® TMB)',
-      distance_km: 170.0,
-      network: 'iwn',
-      ref: 'TMB',
-      unavailable: true,
-    },
-    {
-      id: 102,
-      name: 'Sentier des Gardes · Aiguilles Rouges',
-      distance_km: 9.1,
-      network: 'nwn',
-      ref: 'GR®',
-      unavailable: true,
-    },
-    {
-      id: 103,
-      name: 'Lac Blanc par les Chéserys',
-      distance_km: 8.8,
-      network: 'rwn',
-      ref: 'PR',
-      unavailable: true,
-    },
-    {
-      id: 104,
-      name: 'Crêtes du Grand Veymont · Vercors',
-      distance_km: 16.0,
-      network: 'nwn',
-      ref: 'GRP',
-      unavailable: true,
-    },
-  ];
+  // Aucune liste de démonstration : les parcours viennent du catalogue OSM
+  // (`explorer_routes`) ou de la recherche, jamais d'un identifiant inventé.
+  if (ctx.routes.length === 0) {
+    return (
+      <XpEmpty
+        title="Aucun parcours dans cette zone"
+        hint="Le catalogue OSM ne contient aucun tracé ici. Déplace la carte ou lance une recherche."
+      />
+    );
+  }
+  const routesToDisplay = ctx.routes;
 
   return (
     <XpRows>
@@ -1588,11 +1565,19 @@ function SearchTab({ ctx }: { ctx: SheetContext }) {
     patch({ searchReferenceViewport: reference });
   }, [data, mapViewport, patch]);
 
+  // Les parcours trouvés sont mémorisés avec les résultats : ouvrir une fiche
+  // puis revenir ne doit pas perdre la recherche ni la trace sélectionnée.
+  // Aucun parcours n'est conservé quand la réponse change ou disparaît.
+  React.useEffect(() => {
+    patch({ searchRoutes: data?.routes ?? [] });
+  }, [data?.routes, patch]);
+
   const results = React.useMemo(() => {
     const q = query.trim().toLowerCase();
     return {
       countries: q.length < 2 ? [] : ctx.countries.filter((country) => country.name.toLowerCase().includes(q)).slice(0, 4),
       pois: data?.results ?? [],
+      routes: data?.routes ?? [],
     };
   }, [ctx.countries, data, query]);
 
@@ -1601,7 +1586,11 @@ function SearchTab({ ctx }: { ctx: SheetContext }) {
   const unavailableWhileOffline = !ctx.state.online && !data;
   const hasCenter =
     Number.isFinite(ctx.state.center[1]) && Number.isFinite(ctx.state.center[0]);
-  const noResults = results.countries.length === 0 && results.pois.length === 0;
+  const noResults =
+    results.countries.length === 0 &&
+    results.pois.length === 0 &&
+    results.routes.length === 0 &&
+    !data?.routesUnavailable;
 
   return (
     <>
@@ -1609,8 +1598,8 @@ function SearchTab({ ctx }: { ctx: SheetContext }) {
         className="xp-searchinput"
         value={query}
         onChange={(event) => patch({ searchQuery: event.target.value })}
-        placeholder="Pays, sommet, refuge, eau…"
-        aria-label="Rechercher un lieu"
+        placeholder="Pays, parcours, sommet, refuge, eau…"
+        aria-label="Rechercher un lieu ou un parcours"
         style={{
           width: '100%',
           height: 38,
@@ -1672,8 +1661,8 @@ function SearchTab({ ctx }: { ctx: SheetContext }) {
           title={requestedViewport ? 'Aucun résultat dans cette zone' : 'Aucun résultat'}
           hint={
             requestedViewport
-              ? 'Aucun pays ni repère ne correspond dans l’emprise visible. Déplace la carte ou corrige la demande.'
-              : 'Aucun pays ni repère ne correspond dans les données disponibles.'
+              ? 'Aucun pays, repère ni parcours ne correspond dans l’emprise visible. Déplace la carte ou corrige la demande.'
+              : 'Aucun pays, repère ni parcours ne correspond dans les données disponibles.'
           }
         />
       ) : (
@@ -1736,10 +1725,53 @@ function SearchTab({ ctx }: { ctx: SheetContext }) {
               </XpRows>
             </>
           ) : null}
-          {data.truncated ? (
+          {results.routes.length > 0 ? (
+            <>
+              <XpEyebrow>Parcours</XpEyebrow>
+              <XpRows>
+                {results.routes.map((route) => {
+                  const length =
+                    route.distance_km != null
+                      ? `${route.distance_km.toFixed(1).replace('.', ',')} km`
+                      : null;
+                  const network =
+                    route.network === 'iwn'
+                      ? 'GR® international'
+                      : route.network === 'nwn'
+                        ? 'GR®'
+                        : route.network === 'rwn'
+                          ? 'PR'
+                          : 'Sentier balisé';
+                  const distance =
+                    route.distanceKm != null ? `à ${formatDistance(route.distanceKm)}` : null;
+                  return (
+                    <XpRow
+                      key={`route-${route.id}`}
+                      icon="route"
+                      title={route.name || `Itinéraire ${route.ref ?? route.id}`}
+                      sub={[length, route.ref ?? network, distance].filter(Boolean).join(' · ')}
+                      badge={
+                        route.matched ? { label: 'Nom cité', tone: 'good' } : undefined
+                      }
+                      onClick={() =>
+                        ctx.state.select({ kind: 'trail', id: String(route.id) }, 'trail', 'mid')
+                      }
+                    />
+                  );
+                })}
+              </XpRows>
+            </>
+          ) : null}
+          {data.routesUnavailable ? (
+            <XpEmpty
+              title="Parcours indisponibles"
+              hint="Le catalogue de parcours n’a pas répondu ; les repères restent affichés."
+            />
+          ) : null}
+          {data.truncated || data.routesTruncated ? (
             <XpEmpty
               title="Une partie des résultats est affichée"
-              hint="Zoome pour affiner l’emprise et voir les repères suivants."
+              hint="Zoome pour affiner l’emprise et voir les repères et parcours suivants."
             />
           ) : null}
         </>
