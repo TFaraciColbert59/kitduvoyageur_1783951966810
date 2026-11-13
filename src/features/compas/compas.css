@@ -481,6 +481,76 @@
   font-variant-numeric: tabular-nums;
   color: var(--cp-ink2);
 }
+/* Tronçons de l'éditeur : le calculé et le manuel se lisent d'un coup d'œil. */
+.cp-route-leg {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  min-height: var(--cp-row-h);
+  padding: 0.25rem 4px;
+  border-bottom: 0.5px solid var(--cp-sep);
+}
+.cp-route-leg:last-of-type {
+  border-bottom: 0;
+}
+.cp-route-leg[data-mode='manual'] {
+  background: var(--lkv-warning-subtle);
+}
+.cp-route-leg[data-mode='manual'] .cp-row__t span {
+  color: var(--lkv-warning-dark);
+  font-weight: 600;
+}
+.cp-route-leg__main {
+  flex: 1 1 11rem;
+  min-width: 0;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.cp-route-leg__action {
+  flex: none;
+  min-height: 44px;
+  margin-left: auto;
+}
+.cp-route-leg__state {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--cp-ink2);
+  background: var(--cp-fill);
+}
+.cp-route-leg__state[data-mode='manual'] {
+  color: var(--lkv-warning-dark);
+  background: var(--lkv-warning-bg);
+}
+.cp-route-manual {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 12px;
+  border: 1px solid var(--lkv-warning);
+  border-radius: 16px;
+  background: var(--lkv-warning-subtle);
+}
+.cp-route-manual .cp-btn {
+  min-height: 44px;
+}
 .cp-pager {
   flex: none;
   display: flex;

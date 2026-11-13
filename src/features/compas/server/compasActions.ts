@@ -1686,7 +1686,7 @@ export async function compasApplyRouteAction(
   }
 }
 
-/* ---------- Éditeur de tracé (R01 · K2.09) ---------- */
+/* ---------- Éditeur de tracé (R01 · K2.09 / K2.14) ---------- */
 
 const routeCoordinate = z.tuple([
   z.number().min(-180).max(180),
@@ -1700,22 +1700,67 @@ const routeEditorPointSchema = z.object({
   kind: z.enum(['start', 'via', 'end']),
 });
 
-const routeDraftSchema = z.object({
+const routeSectionSchema = z.object({
   id: z.string().min(1).max(80),
-  version: z.number().int().min(1).max(10_000),
-  sport: z.enum(['marche', 'route', 'gravel', 'vtt', 'enduro']),
-  engine: z.string().min(1).max(80),
-  savedAt: z.string().min(1).max(40),
-  points: z.array(routeEditorPointSchema).min(2).max(MAX_ROUTE_WAYPOINTS),
+  mode: z.enum(['routed', 'manual']),
+  fromIndex: z.number().int().min(0).max(MAX_ROUTE_WAYPOINTS - 2),
+  toIndex: z.number().int().min(1).max(MAX_ROUTE_WAYPOINTS - 1),
   geometry: z.object({
     type: z.literal('LineString'),
     coordinates: z.array(routeCoordinate).min(2).max(20_000),
   }),
-  distanceKm: z.number().min(0).max(1_000_000).nullable(),
+  distanceKm: z.number().min(0).max(1_000_000),
   durationMin: z.number().min(0).max(10_000_000).nullable(),
   provider: z.string().max(40).nullable(),
-  warnings: z.array(z.string().max(200)).max(10),
 });
+
+const routeDraftSchema = z
+  .object({
+    id: z.string().min(1).max(80),
+    version: z.number().int().min(1).max(10_000),
+    sport: z.enum(['marche', 'route', 'gravel', 'vtt', 'enduro']),
+    engine: z.string().min(1).max(80),
+    savedAt: z.string().min(1).max(40),
+    points: z.array(routeEditorPointSchema).min(2).max(MAX_ROUTE_WAYPOINTS),
+    geometry: z.object({
+      type: z.literal('LineString'),
+      coordinates: z.array(routeCoordinate).min(2).max(20_000),
+    }),
+    // Facultatif : un client d'avant K2.14 n'en envoie pas. Quand il est
+    // présent, le découpage doit couvrir exactement les paires de points.
+    sections: z.array(routeSectionSchema).max(MAX_ROUTE_WAYPOINTS - 1).optional(),
+    distanceKm: z.number().min(0).max(1_000_000).nullable(),
+    durationMin: z.number().min(0).max(10_000_000).nullable(),
+    provider: z.string().max(40).nullable(),
+    warnings: z.array(z.string().max(200)).max(10),
+  })
+  .superRefine((draft, ctx) => {
+    const sections = draft.sections;
+    if (!sections) return;
+    if (sections.length !== draft.points.length - 1) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['sections'],
+        message: 'sections_incomplete',
+      });
+    }
+    for (const [index, section] of sections.entries()) {
+      if (section.fromIndex !== index || section.toIndex !== index + 1) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['sections', index],
+          message: 'section_not_consecutive',
+        });
+      }
+      if (section.fromIndex >= draft.points.length - 1) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['sections', index, 'fromIndex'],
+          message: 'section_out_of_range',
+        });
+      }
+    }
+  });
 
 const saveRouteDraftSchema = z.object({
   tripId: uuid,

@@ -293,6 +293,9 @@ export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint })
   const canEditRoute =
     data.canEdit &&
     (data.routeDraft != null || m.route.coords.length >= 2 || data.routeGeojson != null);
+  const routeManualKm = (data.routeDraft?.sections ?? [])
+    .filter((section) => section.mode === 'manual')
+    .reduce((total, section) => total + section.distanceKm, 0);
 
   const modes: Array<{ id: RouteMode; label: string }> = [
     {
@@ -315,6 +318,9 @@ export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint })
               {' '}
               · {f.km(data.routeDraft.distanceKm)}
               {data.routeDraft.durationMin != null && <> · {f.duration(data.routeDraft.durationMin)}</>}
+              {routeManualKm > 0 && (
+                <> · {t('compas.routeEditor.manualDistance', { distance: f.km(routeManualKm) })}</>
+              )}
             </>
           ) : (
             m.route.stepsCount > 0 && (

@@ -1,4 +1,4 @@
-import type { RouteLeg } from './engine/routing';
+import { haversineKm, type RouteLeg } from './engine/routing';
 import {
   MAX_ROUTE_WAYPOINTS,
   isRouteSport,
@@ -6,12 +6,18 @@ import {
 } from './routeProfiles';
 
 /**
- * Révision de parcours (R01 · K2.09).
+ * Révision de parcours (R01 · K2.09 / K2.14).
  *
  * Contrat PUR, sans base ni réseau : un brouillon est une liste de points
  * demandés, une géométrie mesurée, le profil sportif qui l'a produite et sa
  * provenance. La version ne change que si le contenu change ; enregistrer deux
  * fois le même tracé conserve donc la même révision.
+ *
+ * Depuis K2.14, un tronçon peut être MANUEL : sa géométrie est dessinée à la
+ * main et n'est jamais envoyée au routeur. `sections` porte ce découpage
+ * (calculé / manuel) ; `geometry` reste la ligne complète pour les surfaces
+ * qui n'ont pas besoin du détail. Un ancien brouillon sans `sections` reste
+ * lisible : sa géométrie est alors traitée comme un tracé calculé.
  *
  * Une révision n'écrase jamais une séance déjà liée : la persistance existante
  * (métadonnées du voyage) ne touche ni `hike_sessions` ni `hiking_routes`.
@@ -36,6 +42,25 @@ export interface RouteGeometry {
   readonly [key: string]: unknown;
 }
 
+export type RouteSectionMode = 'routed' | 'manual';
+
+/**
+ * Un tronçon entre deux points consécutifs. `routed` vient d'une mesure du
+ * routeur ; `manual` est un tracé dessiné à la main, sans appel réseau. Les
+ * deux portent leur propre géométrie, ce qui permet d'afficher et de
+ * persister le mélange sans jamais faire passer le manuel pour un chemin.
+ */
+export interface RouteSection {
+  readonly id: string;
+  readonly mode: RouteSectionMode;
+  readonly fromIndex: number;
+  readonly toIndex: number;
+  readonly geometry: RouteGeometry;
+  readonly distanceKm: number;
+  readonly durationMin: number | null;
+  readonly provider: string | null;
+}
+
 export interface RouteRevision {
   readonly id: string;
   readonly version: number;
@@ -44,6 +69,8 @@ export interface RouteRevision {
   readonly savedAt: string;
   readonly points: RouteRevisionPoint[];
   readonly geometry: RouteGeometry;
+  /** Un tronçon par paire de points ; vide pour un ancien brouillon. */
+  readonly sections: RouteSection[];
   readonly distanceKm: number | null;
   readonly durationMin: number | null;
   readonly provider: string | null;
@@ -52,7 +79,7 @@ export interface RouteRevision {
 
 export type RouteDraft = RouteRevision;
 
-export const ROUTE_REVISION_ENGINE = 'lkdv-route-editor/1';
+export const ROUTE_REVISION_ENGINE = 'lkdv-route-editor/2';
 export const MAX_REVISION_GEOMETRY_POINTS = 20_000;
 
 function finite(value: unknown): number | null {
@@ -161,6 +188,117 @@ export function simplifyRouteGeometry(
   return { type: 'LineString', coordinates };
 }
 
+/** Longueur mesurée d'une géométrie, en km. Sert au tracé manuel, jamais au réseau. */
+export function routeGeometryDistanceKm(geometry: RouteGeometry): number {
+  let km = 0;
+  for (let index = 1; index < geometry.coordinates.length; index += 1) {
+    const from = geometry.coordinates[index - 1];
+    const to = geometry.coordinates[index];
+    if (!from || !to) continue;
+    km += haversineKm({ lat: from[1], lon: from[0] }, { lat: to[1], lon: to[0] });
+  }
+  return km;
+}
+
+/** Les tronçons bout à bout, sans point dupliqué à leur jonction. */
+export function lineStringFromSections(sections: readonly RouteSection[]): RouteGeometry {
+  const coordinates: Array<[number, number]> = [];
+  for (const section of sections) {
+    for (const pair of section.geometry.coordinates) {
+      const previous = coordinates[coordinates.length - 1];
+      if (previous && previous[0] === pair[0] && previous[1] === pair[1]) continue;
+      coordinates.push(pair);
+    }
+  }
+  return { type: 'LineString', coordinates };
+}
+
+/**
+ * Un tronçon par paire de points, dans l'ordre, sans doublon. C'est la
+ * condition pour composer un tracé sans trou ni segment inventé.
+ */
+export function routeSectionsCoverPoints(
+  sections: readonly RouteSection[],
+  pointCount: number
+): boolean {
+  if (pointCount < 2 || sections.length !== pointCount - 1) return false;
+  let expected = 0;
+  for (const section of sections) {
+    if (section.toIndex !== section.fromIndex + 1) return false;
+    if (section.fromIndex !== expected) return false;
+    if (section.fromIndex < 0 || section.toIndex >= pointCount) return false;
+    expected += 1;
+  }
+  return expected === pointCount - 1;
+}
+
+/**
+ * Recale les extrémités d'un tronçon manuel sur les points courants. Les
+ * repères intermédiaires restent ceux dessinés ; la distance est remesurée sur
+ * la ligne réellement affichée. Aucun appel réseau.
+ */
+export function syncManualSectionsToPoints(
+  sections: readonly RouteSection[],
+  points: readonly RouteRevisionPoint[]
+): RouteSection[] {
+  return sections.map((section) => {
+    if (section.mode !== 'manual') return section;
+    const from = points[section.fromIndex];
+    const to = points[section.toIndex];
+    if (!from || !to) return section;
+    const coordinates = section.geometry.coordinates.slice();
+    if (coordinates.length < 2) return section;
+    coordinates[0] = [from.lon, from.lat];
+    coordinates[coordinates.length - 1] = [to.lon, to.lat];
+    const geometry: RouteGeometry = { type: 'LineString', coordinates };
+    return { ...section, geometry, distanceKm: routeGeometryDistanceKm(geometry) };
+  });
+}
+
+/** Retire les tronçons qui touchent un point supprimé, puis décale les index. */
+export function removePointFromSections(
+  sections: readonly RouteSection[],
+  removedIndex: number
+): RouteSection[] {
+  return sections
+    .filter((section) => section.fromIndex !== removedIndex && section.toIndex !== removedIndex)
+    .map((section) => ({
+      ...section,
+      fromIndex: section.fromIndex > removedIndex ? section.fromIndex - 1 : section.fromIndex,
+      toIndex: section.toIndex > removedIndex ? section.toIndex - 1 : section.toIndex,
+    }))
+    .filter((section) => section.toIndex === section.fromIndex + 1);
+}
+
+/** Fabrique un tronçon manuel entre deux points, avec ses repères intermédiaires. */
+export function manualRouteSection(
+  fromIndex: number,
+  from: { lat: number; lon: number },
+  to: { lat: number; lon: number },
+  coordinates?: ReadonlyArray<readonly [number, number]>
+): RouteSection {
+  const geometry: RouteGeometry = {
+    type: 'LineString',
+    coordinates:
+      coordinates && coordinates.length >= 2
+        ? coordinates.map(([lon, lat]) => [lon, lat] as [number, number])
+        : [
+            [from.lon, from.lat] as [number, number],
+            [to.lon, to.lat] as [number, number],
+          ],
+  };
+  return {
+    id: `manual-${fromIndex + 1}`,
+    mode: 'manual',
+    fromIndex,
+    toIndex: fromIndex + 1,
+    geometry,
+    distanceKm: routeGeometryDistanceKm(geometry),
+    durationMin: null,
+    provider: null,
+  };
+}
+
 export function routeTotals(legs: readonly RouteLeg[]): { distanceKm: number; durationMin: number } {
   return legs.reduce(
     (total, leg) => ({
@@ -263,6 +401,48 @@ function readPoint(value: unknown, index: number): RouteRevisionPoint | null {
   };
 }
 
+function readSection(value: unknown, pointCount: number): RouteSection | null {
+  const raw = obj(value);
+  if (!raw) return null;
+  const mode = raw.mode;
+  if (mode !== 'routed' && mode !== 'manual') return null;
+  const fromIndex = finite(raw.fromIndex);
+  const toIndex = finite(raw.toIndex);
+  if (
+    fromIndex == null ||
+    toIndex == null ||
+    !Number.isInteger(fromIndex) ||
+    !Number.isInteger(toIndex) ||
+    fromIndex < 0 ||
+    toIndex !== fromIndex + 1 ||
+    toIndex >= pointCount
+  ) {
+    return null;
+  }
+  const geometry = readLineString(raw.geometry);
+  if (!geometry) return null;
+  const distanceKm = finite(raw.distanceKm);
+  if (distanceKm == null || distanceKm < 0) return null;
+  const durationMin = raw.durationMin == null ? null : finite(raw.durationMin);
+  if (raw.durationMin != null && (durationMin == null || durationMin < 0)) return null;
+  const provider =
+    typeof raw.provider === 'string' && raw.provider.trim() ? raw.provider.slice(0, 40) : null;
+  return {
+    id:
+      typeof raw.id === 'string' && raw.id.trim()
+        ? raw.id.slice(0, 80)
+        : `${mode === 'manual' ? 'manual' : 'leg'}-${fromIndex + 1}`,
+    mode,
+    fromIndex,
+    toIndex,
+    geometry,
+    // Le manuel est remesuré sur la ligne dessinée ; le routé garde sa mesure.
+    distanceKm: mode === 'manual' ? routeGeometryDistanceKm(geometry) : distanceKm,
+    durationMin: mode === 'manual' ? null : durationMin,
+    provider: mode === 'manual' ? null : provider,
+  };
+}
+
 /**
  * Lit `trips.metadata.compas.routeDraft`. Défensif : une valeur illisible est
  * ignorée, jamais devinée. C'est ce qui permet de déployer le contrat sans
@@ -285,13 +465,41 @@ export function readRouteDraft(metadata: unknown): RouteDraft | null {
   const points = raw.points.map(readPoint);
   if (points.some((point): point is null => point === null)) return null;
 
-  const geometry = readLineString(raw.geometry);
+  let geometry = readLineString(raw.geometry);
   if (!geometry) return null;
 
-  const distanceKm = raw.distanceKm == null ? null : finite(raw.distanceKm);
-  const durationMin = raw.durationMin == null ? null : finite(raw.durationMin);
+  // `sections` est facultatif : un brouillon d'avant K2.14 garde sa géométrie
+  // entière, traitée comme calculée. Un découpage incomplet est ignoré plutôt
+  // que complété par une supposition.
+  let sections: RouteSection[] = [];
+  if (Array.isArray(raw.sections)) {
+    const read = raw.sections.map((entry) => readSection(entry, points.length));
+    if (read.every((section): section is RouteSection => section !== null)) {
+      const candidate = syncManualSectionsToPoints(read, points as RouteRevisionPoint[]);
+      if (routeSectionsCoverPoints(candidate, points.length)) {
+        sections = candidate;
+        geometry = simplifyRouteGeometry(lineStringFromSections(candidate));
+      }
+    }
+  }
+
+  let distanceKm = raw.distanceKm == null ? null : finite(raw.distanceKm);
+  let durationMin = raw.durationMin == null ? null : finite(raw.durationMin);
   if (raw.distanceKm != null && (distanceKm == null || distanceKm < 0)) return null;
   if (raw.durationMin != null && (durationMin == null || durationMin < 0)) return null;
+
+  // Un découpage valide fait foi : la distance manuelle est remesurée et la
+  // durée redevient inconnue dès qu'un tronçon n'est pas routé. Cela garde le
+  // total cohérent même si un point a bougé depuis l'enregistrement.
+  if (sections.length > 0) {
+    const manual = sections.some((section) => section.mode === 'manual');
+    const routed = sections.filter((section) => section.mode === 'routed');
+    distanceKm = sections.reduce((total, section) => total + section.distanceKm, 0);
+    durationMin =
+      manual || routed.some((section) => section.durationMin == null)
+        ? null
+        : routed.reduce((total, section) => total + (section.durationMin ?? 0), 0);
+  }
 
   const warnings = Array.isArray(raw.warnings)
     ? raw.warnings.filter((warning): warning is string => typeof warning === 'string').slice(0, 10)
@@ -305,6 +513,7 @@ export function readRouteDraft(metadata: unknown): RouteDraft | null {
     savedAt: typeof raw.savedAt === 'string' ? raw.savedAt.slice(0, 40) : '',
     points: points as RouteRevisionPoint[],
     geometry,
+    sections,
     distanceKm,
     durationMin,
     provider:
@@ -318,6 +527,7 @@ export interface CreateRouteDraftInput {
   sport: RouteSport;
   points: readonly Partial<RouteRevisionPoint>[];
   geometry: RouteGeometry | null;
+  sections?: readonly RouteSection[];
   distanceKm: number | null;
   durationMin: number | null;
   provider: string | null;
@@ -326,11 +536,41 @@ export interface CreateRouteDraftInput {
   now?: string;
 }
 
+function sameSections(
+  previous: readonly RouteSection[],
+  sections: readonly RouteSection[]
+): boolean {
+  if (previous.length !== sections.length) return false;
+  for (let index = 0; index < sections.length; index += 1) {
+    const a = previous[index];
+    const b = sections[index];
+    if (!a || !b) return false;
+    if (
+      a.mode !== b.mode ||
+      a.fromIndex !== b.fromIndex ||
+      a.toIndex !== b.toIndex ||
+      a.distanceKm !== b.distanceKm ||
+      a.durationMin !== b.durationMin ||
+      a.provider !== b.provider ||
+      a.geometry.coordinates.length !== b.geometry.coordinates.length
+    ) {
+      return false;
+    }
+    for (let point = 0; point < b.geometry.coordinates.length; point += 1) {
+      const ca = a.geometry.coordinates[point];
+      const cb = b.geometry.coordinates[point];
+      if (!ca || !cb || ca[0] !== cb[0] || ca[1] !== cb[1]) return false;
+    }
+  }
+  return true;
+}
+
 function sameContent(
   previous: RouteDraft,
   sport: RouteSport,
   points: readonly RouteRevisionPoint[],
-  geometry: RouteGeometry
+  geometry: RouteGeometry,
+  sections: readonly RouteSection[]
 ): boolean {
   if (previous.sport !== sport) return false;
   if (previous.points.length !== points.length) return false;
@@ -339,6 +579,7 @@ function sameContent(
     const b = points[index];
     if (!a || !b || a.lat !== b.lat || a.lon !== b.lon) return false;
   }
+  if (!sameSections(previous.sections ?? [], sections)) return false;
   if (previous.geometry.coordinates.length !== geometry.coordinates.length) return false;
   for (let index = 0; index < geometry.coordinates.length; index += 1) {
     const a = previous.geometry.coordinates[index];
@@ -355,9 +596,18 @@ function sameContent(
  */
 export function createRouteDraft(input: CreateRouteDraftInput): RouteDraft {
   const points = normalizeRoutePoints(input.points);
-  const geometry = simplifyRouteGeometry(input.geometry ?? lineStringFromPoints(points));
+  const candidateSections = input.sections
+    ? syncManualSectionsToPoints([...input.sections], points)
+    : (input.previous?.sections ?? []);
+  const sections = routeSectionsCoverPoints(candidateSections, points.length)
+    ? candidateSections
+    : [];
+  const geometry =
+    sections.length > 0
+      ? simplifyRouteGeometry(lineStringFromSections(sections))
+      : simplifyRouteGeometry(input.geometry ?? lineStringFromPoints(points));
   const previous = input.previous ?? null;
-  if (previous && sameContent(previous, input.sport, points, geometry)) return previous;
+  if (previous && sameContent(previous, input.sport, points, geometry, sections)) return previous;
 
   return {
     id: previous?.id ?? `draft-${input.tripId}`.slice(0, 80),
@@ -367,6 +617,7 @@ export function createRouteDraft(input: CreateRouteDraftInput): RouteDraft {
     savedAt: input.now ?? new Date().toISOString(),
     points,
     geometry,
+    sections,
     distanceKm: input.distanceKm,
     durationMin: input.durationMin,
     provider: input.provider,
