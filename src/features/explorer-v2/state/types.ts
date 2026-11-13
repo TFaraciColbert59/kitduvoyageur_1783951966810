@@ -50,6 +50,7 @@ export type SheetKind =
   | 'access'
   | 'friend'
   | 'start'
+  | 'strength'
   | 'live'
   | 'sos'
   | 'summary'
@@ -211,6 +212,50 @@ export interface ActivityState {
   laps?: ActivitySplit[];
 }
 
+/**
+ * Carnet musculation local (S2.32).
+ *
+ * Une série n’existe que si l’utilisateur a réellement saisi ses répétitions.
+ * `load` vaut `null` quand aucune charge n’est renseignée : le poids du corps
+ * n’est jamais déduit d’un profil ni interpolé. Le volume n’est donc calculé
+ * que pour les séries qui portent une charge explicite.
+ */
+export type StrengthLoadUnit = 'kg' | 'lb';
+
+export interface StrengthSet {
+  id: string;
+  reps: number;
+  /** Charge saisie dans `unit`, ou `null` si elle n’est pas renseignée. */
+  load: number | null;
+  unit: StrengthLoadUnit;
+}
+
+export interface StrengthExercise {
+  id: string;
+  name: string;
+  sets: StrengthSet[];
+}
+
+/**
+ * Carnet de musculation. Il vit dans le store Explorer et dans le stockage
+ * local, puis se synchronise avec le contrat privé `strength_logs` quand
+ * l’utilisateur est connecté. Le brouillon local reste la source de vérité de
+ * l’appareil en cas de coupure réseau.
+ */
+export interface StrengthLog {
+  version: 1;
+  id: string;
+  startedAt: number;
+  updatedAt: number;
+  exercises: StrengthExercise[];
+  /**
+   * Séance `activity_sessions` du même propriétaire, ou `null`/absente.
+   * Le lien n'est proposé que pour une séance déjà enregistrée sur le compte ;
+   * le serveur revérifie le propriétaire avant de l'accepter.
+   */
+  activitySessionId?: string | null;
+}
+
 export interface ToastMessage {
   title: string;
   sub?: string;
@@ -263,6 +308,8 @@ export interface ExplorerState {
   activity?: ActivityState;
   /** Dernière sortie terminée, affichée dans l'écran Bilan. */
   summary?: (ActivityState & { endedAt: number }) | null;
+  /** Carnet musculation privé, local puis synchronisé avec le compte (S2.32). */
+  strength?: StrengthLog;
   /** Résultat de l'enregistrement du bilan. */
   summarySaved?: SummarySavedState;
   camera: CameraIntent;

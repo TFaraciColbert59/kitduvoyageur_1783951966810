@@ -1,6 +1,7 @@
 /**
  * A14 — Export RGPD (portabilité, article 20) des données du domaine Adventure
- * Intelligence + profil + consentements.
+ * Intelligence + profil + consentements, étendu au carnet de musculation privé
+ * (S2.32).
  *
  * Conçu sans dépendance Supabase dans le cœur : le client est injecté
  * (`GdprExportClient`) et l'adaptateur `createSupabaseGdprExportClient` vit en
@@ -12,15 +13,15 @@
  * (`trace_import_laps`) : mesures d'activité privées, sans connecteur santé,
  * propriétaire seul, incluses dans l'export et l'effacement. Toute
  * réutilisation à finalité de santé exigerait une AIPD dédiée.
+ *
+ * Aucune donnée de santé n'est présente dans ce schéma (décision AIPD a14).
+ * Les noms d'exercices sont des champs libres saisis par la personne : ils sont
+ * rendus tels quels, sans inférence ni enrichissement.
  */
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-/**
- * Version du schéma d'export — incrémenter à toute évolution incompatible de
- * forme. L'ajout d'une table additive (A03 `trace_imports`) ne casse pas les
- * consommateurs et ne change donc pas la version.
- */
-export const GDPR_EXPORT_SCHEMA_VERSION = 'a14-v2';
+/** Version du schéma d'export — incrémenter à toute évolution de forme. */
+export const GDPR_EXPORT_SCHEMA_VERSION = 'a14-v3';
 
 /** Une table du domaine et la colonne qui identifie le sujet. */
 export interface GdprUserTable {
@@ -52,6 +53,10 @@ export const GDPR_USER_TABLES: readonly GdprUserTable[] = [
   { table: 'trace_import_summaries', userColumn: 'owner_id' },
   // A03/S1.15 — séries de mesures privées (FC, cadence, puissance, température).
   { table: 'trace_import_samples', userColumn: 'owner_id' },
+  // Carnet de musculation privé (S2.32) : le carnet est rattaché au compte ;
+  // ses exercices et séries sont exportés dans la section `strength` ci-dessous,
+  // car ils n'ont pas de `user_id` propre.
+  { table: 'strength_logs', userColumn: 'user_id' },
   { table: 'session_segment_passages', userColumn: 'user_id' },
   { table: 'terrain_reports', userColumn: 'reporter_id' },
   { table: 'terrain_report_confirmations', userColumn: 'user_id' },
@@ -94,6 +99,7 @@ export const GDPR_OPTIONAL_TABLES: ReadonlySet<string> = new Set([
   // A03/S1.15 — tables additives des métriques, absentes avant la migration.
   'trace_import_summaries',
   'trace_import_samples',
+  'strength_logs',
 ]);
 
 /**
@@ -135,6 +141,16 @@ export interface GdprPlanExport {
   engineRuns: Record<string, unknown>[];
 }
 
+export interface GdprStrengthExerciseExport {
+  exercise: Record<string, unknown>;
+  sets: Record<string, unknown>[];
+}
+
+export interface GdprStrengthExport {
+  log: Record<string, unknown>;
+  exercises: GdprStrengthExerciseExport[];
+}
+
 export interface GdprExportBundle {
   schemaVersion: string;
   exportedAt: string;
@@ -143,6 +159,8 @@ export interface GdprExportBundle {
   consents: Record<string, unknown>[];
   tables: Record<string, Record<string, unknown>[]>;
   plans: GdprPlanExport[];
+  /** Carnets de musculation complets, exercices et séries inclus (S2.32). */
+  strength: GdprStrengthExport[];
   counts: Record<string, number>;
 }
 
@@ -183,6 +201,9 @@ const EXPORT_ORDER_EXCEPTIONS: Readonly<Record<string, readonly string[]>> = {
   user_territory: ['user_id'],
   user_territory_private: ['user_id'],
   user_traveller: ['user_id'],
+  // Enfants du carnet musculation : ordre d'affichage stable, puis clé.
+  strength_exercises: ['log_id', 'position', 'id'],
+  strength_sets: ['exercise_id', 'position', 'id'],
 };
 
 /**
@@ -238,6 +259,42 @@ export async function buildGdprExport(
   counts.adventure_plans = planRows.length;
   tables.adventure_plans = planRows;
 
+  // Carnet de musculation (S2.32) : le carnet est déjà dans `tables` via le
+  // registre ; ses enfants n'ont pas de `user_id` et sont donc lus par leur
+  // clé parente, puis rendus imbriqués pour rester lisibles par la personne.
+  const strengthLogs = tables.strength_logs ?? [];
+  const strength: GdprStrengthExport[] = [];
+  counts.strength_exercises = 0;
+  counts.strength_sets = 0;
+  const strengthLogIds = strengthLogs
+    .map((row) => (typeof row.id === 'string' ? row.id : null))
+    .filter((id): id is string => id !== null);
+  if (strengthLogIds.length > 0) {
+    const exercises = await client.selectByColumn('strength_exercises', 'log_id', strengthLogIds);
+    const exerciseIds = exercises
+      .map((row) => (typeof row.id === 'string' ? row.id : null))
+      .filter((id): id is string => id !== null);
+    const sets =
+      exerciseIds.length > 0
+        ? await client.selectByColumn('strength_sets', 'exercise_id', exerciseIds)
+        : [];
+    counts.strength_exercises = exercises.length;
+    counts.strength_sets = sets.length;
+    for (const logRow of strengthLogs) {
+      const logId = typeof logRow.id === 'string' ? logRow.id : null;
+      const logExercises = logId
+        ? exercises.filter((row) => String(row.log_id) === logId)
+        : [];
+      strength.push({
+        log: logRow,
+        exercises: logExercises.map((exercise) => ({
+          exercise,
+          sets: sets.filter((set) => String(set.exercise_id) === String(exercise.id)),
+        })),
+      });
+    }
+  }
+
   const consents = tables.adventure_data_consents ?? [];
   const totalRows = Object.values(counts).reduce((sum, value) => sum + value, 0);
 
@@ -249,6 +306,7 @@ export async function buildGdprExport(
     consents,
     tables,
     plans,
+    strength,
     counts: { ...counts, total: totalRows },
   };
 }

@@ -111,6 +111,7 @@ export function XpRow({
   trailing,
   ariaLabel,
   disabled = false,
+  ariaPressed,
 }: {
   icon?: string;
   image?: string;
@@ -123,6 +124,7 @@ export function XpRow({
   ariaLabel?: string;
   /** Ligne informative non actionnable (source non validée, donnée absente). */
   disabled?: boolean;
+  ariaPressed?: boolean;
 }) {
   const content = (
     <>
@@ -167,7 +169,13 @@ export function XpRow({
     );
   }
   return (
-    <button type="button" className="xp-row" onClick={onClick} aria-label={ariaLabel ?? title}>
+    <button
+      type="button"
+      className="xp-row"
+      onClick={onClick}
+      aria-label={ariaLabel ?? title}
+      aria-pressed={ariaPressed}
+    >
       {content}
     </button>
   );
