@@ -6,7 +6,7 @@ Trois images ne raccordent pas avec leurs voisines au montage (relecture `qa/REV
 |---|---|---|---|
 | `img37` | P48 et P49 | Léa porte un bonnet, alors qu'elle est tête nue au plan d'avant (`img36`) | `F1-lea.png`, `img36.png`, l'ancienne `img37.png` |
 | `img20` | P28 | Ciel bleu de plein midi entre deux plans de lever de soleil (`img19`, `img46`) | `F1-lea.png`, `F4-tom.png`, `img19.png`, `img46.png`, l'ancienne `img20.png` |
-| `img43` | P17 | Le pouce appuie en haut de l'écran, alors que le vrai bouton « Commander » de l'app est tout en bas | `F1-lea.png` (tenue de ville), l'ancienne `img43.png` |
+| `img43` | P17 | Le pouce appuie en haut de l'écran, alors que le vrai bouton « Commander » de l'app est tout en bas | `F1-lea-ville.png`, l'ancienne `img43.png` |
 
 Pas à refaire : `img09b` et `img22` (le lac : l'écart de lumière est faible, l'étalonnage le rattrape) ; `img42` (les petites croix aux coins de l'écran vert seront recouvertes par la capture de l'app).
 
@@ -61,7 +61,7 @@ INTERDITS : ciel bleu profond, soleil haut, ombres dures de midi, mains fusionn�
 
 ## img43 — Le pouce sur le bouton (P17)
 
-Joindre : `F1-lea.png` (tenue de ville), l'ancienne `img43.png`.
+Joindre : `F1-lea-ville.png`, l'ancienne `img43.png`.
 
 ```
 IMAGE À REFAIRE : img43, le pouce de Léa appuie sur son téléphone.
