@@ -55,7 +55,7 @@ jobs:
         run: |
           google-chrome --version
           mkdir -p .lighthouseci
-          npx --yes lighthouse@13.5.0 http://localhost:4028/ \
+          npx --yes lighthouse@13.5.0 http://localhost:4028/compte \
             --output=json \
             --output-path=.lighthouseci/report.json \
             --chrome-flags="--headless --no-sandbox"
@@ -92,8 +92,12 @@ jobs:
             const score = report.categories?.[id]?.score;
             console.log(`| ${label} | ${typeof score === 'number' ? `${Math.round(score * 100)}/100` : 'n/a'} |`);
           }
-          console.log('\nScores are informational; this workflow does not enforce score thresholds.');
+          console.log('\nScores are enforced by scripts/perf/assert-lighthouse.mjs (source: .lighthouserc.json).');
           NODE
+
+      - name: Enforce Lighthouse budgets
+        if: always()
+        run: node scripts/perf/assert-lighthouse.mjs
 
   bundle-analysis:
     runs-on: ubuntu-latest
@@ -123,6 +127,9 @@ jobs:
         run: |
           echo "## Bundle Size Analysis" >> $GITHUB_STEP_SUMMARY
           du -sh .next/static/chunks/* | awk '{print "- " $0}' >> $GITHUB_STEP_SUMMARY
+
+      - name: Check bundle budgets
+        run: node scripts/perf/check-bundle-budget.mjs --top 15
 
       - name: Upload bundle analysis
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0

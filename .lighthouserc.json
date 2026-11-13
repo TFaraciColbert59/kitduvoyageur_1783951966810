@@ -1,15 +1,17 @@
 {
+  "_comment": "Plancher anti-régression calé sur la baseline mesurée le 2026-10-24 (/compte, mobile) : perf 0.48, TBT 1060 ms, LCP 8.0 s. Il bloque une dégradation, pas une optimisation. Cible après refactor du runtime 314 Ko : perf 0.85, TBT 200 ms, LCP 2500 ms, CLS 0.1. Lus par scripts/perf/assert-lighthouse.mjs.",
   "ci": {
     "collect": {
-      "url": ["http://localhost:4028/"],
+      "url": ["http://localhost:4028/compte"],
       "numberOfRuns": 1
     },
     "assert": {
       "assertions": {
-        "categories:performance": "off",
-        "categories:accessibility": "off",
-        "categories:best-practices": "off",
-        "categories:seo": "off"
+        "categories:performance": ["error", { "minScore": 0.45 }],
+        "categories:accessibility": ["error", { "minScore": 0.75 }],
+        "largest-contentful-paint": ["error", { "maxNumericValue": 9500 }],
+        "cumulative-layout-shift": ["error", { "maxNumericValue": 0.25 }],
+        "total-blocking-time": ["error", { "maxNumericValue": 1200 }]
       }
     }
   }

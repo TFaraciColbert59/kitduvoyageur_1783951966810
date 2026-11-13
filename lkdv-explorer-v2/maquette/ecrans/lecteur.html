@@ -1,0 +1,35 @@
+<!doctype html><html><head><meta charset="utf-8"><style>body{margin:0;background:#fff}</style></head><body><div id="root"></div>
+<script>
+async function run(file, scene, script){
+  const txt = await (await fetch(file)).text();
+  const doc = new DOMParser().parseFromString(txt,'text/html');
+  const xdc = doc.querySelector('x-dc'); const helmet = xdc.querySelector('helmet');
+  helmet.querySelectorAll('style,link').forEach(n=>document.head.appendChild(document.importNode(n,true))); helmet.remove();
+  const sEl = doc.querySelector('script[data-dc-script]');
+  const props = JSON.parse(sEl.getAttribute('data-props')); const p={};
+  for(const k in props){ if(props[k] && props[k].default!==undefined) p[k]=props[k].default; } if(scene) p.scene=scene;
+  class DCLogic{ constructor(pp){this.props=pp||p;this.state=null;} setState(o){this.state=Object.assign({},this.state||{},o);render();} forceUpdate(){render();} }
+  const Comp = new Function('DCLogic', sEl.textContent+'; return Component;')(DCLogic);
+  const inst = new Comp(p); inst.props=p;
+  const get=(v,path)=>{path=path.trim(); if(path==='true')return true; if(path==='false')return false; return path.split('.').reduce((o,k)=>o==null?undefined:o[k],v);};
+  const sub=(s,v)=>s.replace(/\{\{\s*([\w.$]+)\s*\}\}/g,(m,k)=>{const x=get(v,k);return x==null?'':String(x);});
+  const evmap={onclick:'click',onpointerdown:'pointerdown',onpointermove:'pointermove',onpointerup:'pointerup',onpointerleave:'pointerleave',onwheel:'wheel'};
+  function proc(node,v){
+    for(const ch of Array.from(node.childNodes)){
+      if(ch.nodeType===3){ if(ch.nodeValue.includes('{{')) ch.nodeValue=sub(ch.nodeValue,v); continue; }
+      if(ch.nodeType!==1) continue;
+      if(ch.tagName.toLowerCase()==='sc-if'){ const val=get(v,(ch.getAttribute('value')||'').replace(/[{}]/g,'')); if(val){ proc(ch,v); while(ch.firstChild) node.insertBefore(ch.firstChild,ch); } ch.remove(); continue; }
+      for(const a of Array.from(ch.attributes)){
+        const n=a.name.toLowerCase();
+        if(evmap[n]){ const fn=get(v,a.value.replace(/[{}]/g,'')); ch.removeAttribute(a.name); if(typeof fn==='function') ch.addEventListener(evmap[n],fn); }
+        else if(a.value.includes('{{')) ch.setAttribute(a.name,sub(a.value,v));
+      }
+      proc(ch,v);
+    }
+  }
+  const root=document.getElementById('root');
+  function render(){ const v=inst.renderVals(); const c=document.importNode(xdc,true); proc(c,v); root.innerHTML=''; while(c.firstChild) root.appendChild(c.firstChild); }
+  render(); if(inst.componentDidMount) inst.componentDidMount(); window.__inst=inst; window.__ok=true;
+}
+const q=new URLSearchParams(location.search); run(q.get('f'), q.get('s')).catch(e=>{window.__err=String(e)+e.stack;});
+</script></body></html>

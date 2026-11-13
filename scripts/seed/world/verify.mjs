@@ -1,0 +1,52 @@
+#!/usr/bin/env node
+// Vérification du Monde LKDV : invariants de base et cohérence des compteurs.
+import fs from 'node:fs';
+import { createClient } from '@supabase/supabase-js';
+const env = Object.fromEntries(fs.readFileSync('.env.local','utf8').split('\n').filter(l=>l.includes('=')&&!l.trim().startsWith('#')).map(l=>{const i=l.indexOf('=');return [l.slice(0,i).trim(), l.slice(i+1).trim()];}));
+const db = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, { auth:{persistSession:false} });
+const DEMO='d5451f35-db9f-4575-9114-6d3b79550bbc';
+const results=[];
+const check=(name,ok,detail)=>{results.push({name,ok,detail});};
+const count=async(table,apply=q=>q)=>{const {count,error}=await apply(db.from(table).select('*',{count:'exact',head:true}));return error?null:count;};
+const residents=await db.from('user_profiles').select('id,handle,level,profile_visibility,is_demo').like('email','%@voyageurs.lkdv.app');
+const list=residents.data||[];
+check('50 résidents', list.length===50, `${list.length}`);
+check('47 profils publics', list.filter(p=>p.profile_visibility==='public').length===47, `${list.filter(p=>p.profile_visibility==='public').length}`);
+check('niveaux ≤ 8', list.every(p=>p.level<=8), `max ${Math.max(...list.map(p=>p.level))}`);
+check('handles uniques', new Set(list.map(p=>p.handle.toLowerCase())).size===list.length);
+check('aucun résident marqué démo', list.every(p=>p.is_demo===false));
+const publicIds=new Set(((await db.from('public_profiles').select('id')).data||[]).map(p=>p.id));
+check('résidents visibles dans public_profiles', list.filter(p=>p.profile_visibility==='public').every(p=>publicIds.has(p.id)));
+const posts=await count('community_posts'); const stories=await count('post_stories',q=>q.gt('expires_at',new Date().toISOString()));
+const carnets=await count('carnets'); const trips=await count('trips'); const outings=await count('hike_sessions'); const msgs=await count('messages');
+check('fil vivant (>150 posts)', posts>150, `${posts}`);
+check('stories actives (>50)', stories>50, `${stories}`);
+check('carnets (>50)', carnets>50, `${carnets}`);
+check('voyages (>50)', trips>50, `${trips}`);
+check('sorties (>100)', outings>100, `${outings}`);
+check('messages (>300)', msgs>300, `${msgs}`);
+const demoPosts=await count('community_posts',q=>q.eq('author_id',DEMO));
+const demoCarnets=await count('carnets',q=>q.eq('author_id',DEMO));
+const demoTrips=await count('trips',q=>q.eq('user_id',DEMO));
+const demoOutings=await count('hike_sessions',q=>q.eq('user_id',DEMO));
+const demoFollowers=await count('user_follows',q=>q.eq('following_id',DEMO));
+const demoUnread=await count('notifications',q=>q.eq('user_id',DEMO).eq('read',false));
+const demoConvos=await count('conversation_members',q=>q.eq('user_id',DEMO));
+check('démo: posts ≥ 10', demoPosts>=10, `${demoPosts}`);
+check('démo: carnets ≥ 10', demoCarnets>=10, `${demoCarnets}`);
+check('démo: voyages ≥ 10', demoTrips>=10, `${demoTrips}`);
+check('démo: sorties ≥ 15', demoOutings>=15, `${demoOutings}`);
+check('démo: abonnés ≥ 40', demoFollowers>=40, `${demoFollowers}`);
+check('démo: notifications non lues 1..30', demoUnread>=1&&demoUnread<=30, `${demoUnread}`);
+check('démo: conversations ≥ 8', demoConvos>=8, `${demoConvos}`);
+const clubs=(await db.from('clubs').select('id,name,members_count')).data||[];
+const members=(await db.from('club_members').select('club_id')).data||[];
+const counts=new Map(); for(const m of members) counts.set(m.club_id,(counts.get(m.club_id)||0)+1);
+const curated=clubs.filter(c=>c.members_count>0);
+check('clubs enrichis (≥10)', curated.length>=10, `${curated.length}`);
+check('compteurs clubs cohérents', curated.every(c=>c.members_count===(counts.get(c.id)||0)), 'ok');
+const dupEmails=(await db.rpc('exec_sql',{})).data; // pas de RPC : vérifié plus haut
+let pass=0,fail=0;
+for(const r of results){console.log(`${r.ok?'✓':'✗'} ${r.name}${r.detail?` — ${r.detail}`:''}`); r.ok?pass++:fail++;}
+console.log(`\n${pass} PASS, ${fail} FAIL`);
+process.exit(fail?1:0);

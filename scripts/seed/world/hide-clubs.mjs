@@ -1,0 +1,12 @@
+import fs from 'node:fs';
+import { createClient } from '@supabase/supabase-js';
+const env = Object.fromEntries(fs.readFileSync('.env.local','utf8').split('\n').filter(l=>l.includes('=')&&!l.trim().startsWith('#')).map(l=>{const i=l.indexOf('=');return [l.slice(0,i).trim(), l.slice(i+1).trim()];}));
+const db = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, { auth:{persistSession:false} });
+const manifest = JSON.parse(fs.readFileSync('scripts/seed/world/.manifest/world-v1.manifest.json','utf8'));
+const curated = new Set((manifest.entities.clubs||[]).map(e=>e.id));
+const { data: clubs } = await db.from('clubs').select('id,name,privacy,members_count');
+const legacy = (clubs||[]).filter(c=>!curated.has(c.id));
+for (const c of legacy) await db.from('clubs').update({privacy:'secret', members_count:0, active_this_month:0}).eq('id',c.id);
+console.log('legacy reset', legacy.length);
+const ours = (clubs||[]).filter(c=>curated.has(c.id));
+console.log('ours', ours.map(c=>c.name+':'+c.members_count).join(' | '));

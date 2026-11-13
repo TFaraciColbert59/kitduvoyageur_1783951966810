@@ -1,0 +1,60 @@
+// Destinations réelles utilisées pour ancrer étapes, sorties et coordonnées.
+export const DESTINATIONS = {
+  chamonix: { name: 'Chamonix-Mont-Blanc', lat: 45.9237, lng: 6.8694, region: 'Auvergne-Rhône-Alpes', country: 'FR', theme: 'mountain' },
+  annecy: { name: 'Annecy', lat: 45.8992, lng: 6.1294, region: 'Auvergne-Rhône-Alpes', country: 'FR', theme: 'lake' },
+  briancon: { name: 'Briançon', lat: 44.8994, lng: 6.6422, region: 'Provence-Alpes-Côte d’Azur', country: 'FR', theme: 'mountain' },
+  vercors: { name: 'Villard-de-Lans', lat: 45.0703, lng: 5.5506, region: 'Auvergne-Rhône-Alpes', country: 'FR', theme: 'mountain' },
+  chartreuse: { name: 'Saint-Pierre-de-Chartreuse', lat: 45.343, lng: 5.817, region: 'Auvergne-Rhône-Alpes', country: 'FR', theme: 'forest' },
+  belledonne: { name: 'Allevard', lat: 45.394, lng: 6.074, region: 'Auvergne-Rhône-Alpes', country: 'FR', theme: 'mountain' },
+  bugey: { name: 'Belley', lat: 45.759, lng: 5.688, region: 'Auvergne-Rhône-Alpes', country: 'FR', theme: 'mountain' },
+  bauges: { name: 'Le Châtelard', lat: 45.683, lng: 6.137, region: 'Auvergne-Rhône-Alpes', country: 'FR', theme: 'forest' },
+  mercantour: { name: 'Saint-Martin-Vésubie', lat: 44.071, lng: 7.256, region: 'Provence-Alpes-Côte d’Azur', country: 'FR', theme: 'mountain' },
+  verdon: { name: 'Castellane', lat: 43.847, lng: 6.513, region: 'Provence-Alpes-Côte d’Azur', country: 'FR', theme: 'desert' },
+  calanques: { name: 'Marseille', lat: 43.2965, lng: 5.3698, region: 'Provence-Alpes-Côte d’Azur', country: 'FR', theme: 'coast' },
+  cevennes: { name: 'Le Vigan', lat: 43.992, lng: 3.606, region: 'Occitanie', country: 'FR', theme: 'forest' },
+  pyrenees: { name: 'Cauterets', lat: 42.891, lng: -0.113, region: 'Occitanie', country: 'FR', theme: 'mountain' },
+  paysbasque: { name: 'Saint-Jean-Pied-de-Port', lat: 43.1634, lng: -1.2375, region: 'Nouvelle-Aquitaine', country: 'FR', theme: 'mountain' },
+  aubrac: { name: 'Nasbinals', lat: 44.663, lng: 3.047, region: 'Occitanie', country: 'FR', theme: 'mountain' },
+  jura: { name: 'Saint-Claude', lat: 46.387, lng: 5.864, region: 'Bourgogne-Franche-Comté', country: 'FR', theme: 'forest' },
+  vosges: { name: 'Gérardmer', lat: 48.073, lng: 6.877, region: 'Grand Est', country: 'FR', theme: 'forest' },
+  bretagne: { name: 'Crozon', lat: 48.246, lng: -4.489, region: 'Bretagne', country: 'FR', theme: 'coast' },
+  nantes: { name: 'Nantes', lat: 47.2184, lng: -1.5536, region: 'Pays de la Loire', country: 'FR', theme: 'coast' },
+  normandie: { name: 'Étretat', lat: 49.707, lng: 0.204, region: 'Normandie', country: 'FR', theme: 'coast' },
+  lille: { name: 'Lille', lat: 50.6292, lng: 3.0573, region: 'Hauts-de-France', country: 'FR', theme: 'city' },
+  fontainebleau: { name: 'Fontainebleau', lat: 48.404, lng: 2.701, region: 'Île-de-France', country: 'FR', theme: 'forest' },
+  corse: { name: 'Calenzana', lat: 42.508, lng: 8.855, region: 'Corse', country: 'FR', theme: 'mountain' },
+  dolomites: { name: 'Cortina d’Ampezzo', lat: 46.5405, lng: 12.1357, region: 'Vénétie', country: 'IT', theme: 'mountain' },
+  islande: { name: 'Landmannalaugar', lat: 63.99, lng: -19.06, region: 'Hautes Terres', country: 'IS', theme: 'mountain' },
+  maroc: { name: 'Imlil', lat: 31.136, lng: -7.919, region: 'Toubkal', country: 'MA', theme: 'mountain' },
+  nepal: { name: 'Lukla', lat: 27.688, lng: 86.731, region: 'Koshi', country: 'NP', theme: 'mountain' },
+  norvege: { name: 'Tromsø', lat: 69.6492, lng: 18.9553, region: 'Troms', country: 'NO', theme: 'coast' },
+  japon: { name: 'Kumano', lat: 33.838, lng: 135.773, region: 'Kansai', country: 'JP', theme: 'forest' },
+  portugal: { name: 'Sintra', lat: 38.8029, lng: -9.3817, region: 'Lisbonne', country: 'PT', theme: 'forest' },
+  fagnes: { name: 'Hautes Fagnes', lat: 50.516, lng: 6.077, region: 'Wallonie', country: 'BE', theme: 'camp' },
+  auvergne: { name: 'Le Mont-Dore', lat: 45.575, lng: 2.808, region: 'Auvergne-Rhône-Alpes', country: 'FR', theme: 'mountain' },
+  pilat: { name: 'Saint-Étienne', lat: 45.4397, lng: 4.3872, region: 'Auvergne-Rhône-Alpes', country: 'FR', theme: 'forest' },
+  touraine: { name: 'Tours', lat: 47.3941, lng: 0.6848, region: 'Centre-Val de Loire', country: 'FR', theme: 'forest' },
+  alsace: { name: 'Kaysersberg', lat: 48.139, lng: 7.264, region: 'Grand Est', country: 'FR', theme: 'forest' },
+  bordeaux: { name: 'Saint-Émilion', lat: 44.894, lng: -0.156, region: 'Nouvelle-Aquitaine', country: 'FR', theme: 'mountain' },
+  grenoble: { name: 'Grenoble', lat: 45.1885, lng: 5.7245, region: 'Auvergne-Rhône-Alpes', country: 'FR', theme: 'mountain' },
+};
+
+export function destinationForText(text, fallback = 'chamonix') {
+  const t = String(text ?? '').toLowerCase();
+  const map = [
+    ['mont-blanc', 'chamonix'], ['chamonix', 'chamonix'], ['annecy', 'annecy'], ['écrins', 'briancon'],
+    ['vercors', 'vercors'], ['chartreuse', 'chartreuse'], ['belledonne', 'belledonne'], ['bugey', 'bugey'],
+    ['bauges', 'bauges'], ['mercantour', 'mercantour'], ['verdon', 'verdon'], ['calanque', 'calanques'],
+    ['cévennes', 'cevennes'], ['pyrén', 'pyrenees'], ['basque', 'paysbasque'], ['aubrac', 'aubrac'],
+    ['jura', 'jura'], ['vosges', 'vosges'], ['bretagne', 'bretagne'], ['nantes', 'nantes'],
+    ['normand', 'normandie'], ['lille', 'lille'], ['fontainebleau', 'fontainebleau'], ['corse', 'corse'],
+    ['gr20', 'corse'], ['dolomite', 'dolomites'], ['islande', 'islande'], ['maroc', 'maroc'],
+    ['népal', 'nepal'], ['nepal', 'nepal'], ['norvège', 'norvege'], ['norvege', 'norvege'],
+    ['japon', 'japon'], ['portugal', 'portugal'], ['fagnes', 'fagnes'], ['sancy', 'auvergne'],
+    ['auvergne', 'auvergne'], ['pilat', 'pilat'], ['tours', 'touraine'], ['loire', 'touraine'],
+    ['alsace', 'alsace'], ['bordeaux', 'bordeaux'], ['saint-émilion', 'bordeaux'], ['grenoble', 'grenoble'],
+    ['alpes', 'chamonix'], ['alpes', 'chamonix'],
+  ];
+  for (const [needle, key] of map) if (t.includes(needle)) return key;
+  return fallback;
+}

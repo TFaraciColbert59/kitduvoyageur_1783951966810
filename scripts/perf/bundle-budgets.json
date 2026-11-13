@@ -1,0 +1,16 @@
+{
+  "_comment": "Budgets de départ mesurés sur un build de production (2026-10-24, .next-v7-build). Taille = JS gzip par route. Ils bloquent une dérive, pas une optimisation. À durcir après 3 builds stables.",
+  "_baseline": {
+    "/layout": "458 Ko",
+    "/page": "242 Ko",
+    "/compte/page": "800 Ko",
+    "/communaute/page": "249 Ko"
+  },
+  "tolerancePercent": 10,
+  "routes": {
+    "/layout": 614400,
+    "/page": 409600,
+    "/compte/page": 921600,
+    "/communaute/page": 409600
+  }
+}

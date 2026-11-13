@@ -31,12 +31,16 @@
   "include": [
     "**/*.ts",
     "**/*.tsx",
+    ".next-4000/types/**/*.ts",
+    ".next-4003/types/**/*.ts",
     ".next-build-check/types/**/*.ts",
+    ".next-dev/types/**/*.ts",
+    ".next-repair/types/**/*.ts",
     ".next/next-build/types/**/*.ts",
     ".next/types/**/*.ts",
     "next-env.d.ts",
     "types/**/*.d.ts",
-    ".next-dev/types/**/*.ts"
+    ".next-v7-build/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

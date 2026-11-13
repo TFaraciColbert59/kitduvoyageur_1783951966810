@@ -1,0 +1,42 @@
+name: Security
+
+# Garde-fous sécurité : secrets dans les commits (gitleaks) et vulnérabilités
+# connues des dépendances (OSV). gitleaks bloque sur les nouvelles fuites ;
+# OSV publie le rapport SARIF sans bloquer tant que le tri initial n'est pas fait.
+# TODO après le premier tri : passer `fail-on-vuln` à true et épingler les
+# actions par SHA, comme les autres workflows du dépôt.
+
+on:
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  gitleaks:
+    name: Secrets (gitleaks)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Scan secrets
+        uses: gitleaks/gitleaks-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_ENABLE_SUMMARY: true
+
+  osv:
+    name: Dépendances (OSV)
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@v2.7.0
+    with:
+      fail-on-vuln: false
