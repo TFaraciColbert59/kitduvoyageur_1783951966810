@@ -859,10 +859,12 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
         />
       ) : null}
 
-      {!sheetOpen && !activity ? (
+      {!activity ? (
         <button
           type="button"
           className="xp-sheet-pill-launcher"
+          data-hidden={sheetOpen ? 'true' : 'false'}
+          inert={sheetOpen}
           aria-label="Ouvrir le menu Explorer"
           onClick={() => {
             haptic('sheet-open');

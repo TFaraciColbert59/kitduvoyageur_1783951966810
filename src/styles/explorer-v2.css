@@ -61,12 +61,18 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.85), 0 0 0 0.5px rgba(23, 43, 36, 0.06),
     0 2px 8px rgba(23, 43, 36, 0.05);
 
-  --xp-sheet-bg: linear-gradient(
-    180deg,
-    rgba(250, 251, 249, 0.86),
-    rgba(246, 248, 245, 0.9) 40%,
-    rgba(243, 246, 242, 0.94)
-  );
+  /* Verre du tiroir : même matière que les tiroirs du Compte (#card.cs, .phone .sheet,
+     compte-apple-hig.css) ; l'ombre portée monte (feuille basse). */
+  --xp-sheet-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.486), rgba(255, 255, 255, 0.384));
+  --xp-sheet-blur: blur(25.2px) saturate(1.8) brightness(1.05);
+  /* Très léger voile sous le texte : garde la lisibilité sur une carte satellite sombre
+     sans revenir à un fond opaque (la carte reste lisible au travers). */
+  --xp-sheet-veil: linear-gradient(rgba(250, 251, 249, 0.3), rgba(250, 251, 249, 0.3));
+  --xp-sheet-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.4),
+    0 0 0 0.5px rgba(23, 43, 36, 0.1), 0 -8px 22px rgba(23, 43, 36, 0.1);
+  /* Replis sans verre (pas de backdrop-filter, transparence réduite) : opaque, jamais translucide. */
+  --xp-sheet-solid: linear-gradient(180deg, #fafbf9, #f3f6f2);
   --xp-map-bg: #e9eee7;
 
   position: fixed;
@@ -102,12 +108,14 @@
   --xp-block-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 2px 10px rgba(0, 0, 0, 0.3);
   --xp-thumb: linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.06));
   --xp-thumb-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 2px 8px rgba(0, 0, 0, 0.3);
-  --xp-sheet-bg: linear-gradient(
-    180deg,
-    rgba(28, 36, 32, 0.92),
-    rgba(24, 31, 27, 0.95) 40%,
-    rgba(20, 26, 23, 0.97)
-  );
+  /* Variante nuit (scène de recette « nuit » seulement : le thème réel reste clair) :
+     même verre, teinté encre. */
+  --xp-sheet-bg: linear-gradient(180deg, rgba(28, 36, 32, 0.6), rgba(24, 31, 27, 0.52));
+  --xp-sheet-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16), inset 0 -1px 1px rgba(255, 255, 255, 0.06),
+    0 0 0 0.5px rgba(255, 255, 255, 0.12), 0 -8px 22px rgba(11, 31, 23, 0.3);
+  --xp-sheet-veil: linear-gradient(transparent, transparent);
+  --xp-sheet-solid: linear-gradient(180deg, #1c2420, #141a17);
   --xp-map-bg: #141a17;
 }
 
@@ -310,13 +318,12 @@ body:has(.xp-root[data-theme]) .lkv-app-background {
   display: flex;
   flex-direction: column;
   border-radius: 30px 30px 0 0;
-  background: var(--xp-sheet-bg);
-  -webkit-backdrop-filter: blur(22px) saturate(1.6);
-  backdrop-filter: blur(22px) saturate(1.6);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.75),
-    0 -1px 0 rgba(23, 43, 36, 0.06),
-    0 -18px 44px rgba(23, 43, 36, 0.14);
+  background: var(--xp-sheet-veil), var(--xp-sheet-bg);
+  /* Texte secondaire un cran plus sombre dans le verre (contraste sur satellite). */
+  --xp-mut: var(--xp-mut2);
+  -webkit-backdrop-filter: var(--xp-sheet-blur);
+  backdrop-filter: var(--xp-sheet-blur);
+  box-shadow: var(--xp-sheet-shadow);
   z-index: 5;
   touch-action: none;
   overflow: hidden;
@@ -325,6 +332,30 @@ body:has(.xp-root[data-theme]) .lkv-app-background {
 }
 .xp-sheet[data-dragging='true'] {
   transition: none;
+}
+/* Sortie (glissement vers le bas puis fermeture) : transform seul, ressort court. */
+.xp-sheet[data-closing='true'] {
+  transform: translateY(100%);
+  pointer-events: none;
+  transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .xp-sheet {
+    background: var(--xp-sheet-solid);
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .xp-sheet {
+    background: var(--xp-sheet-solid);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .xp-sheet,
+  .xp-sheet[data-closing='true'] {
+    transition: none;
+  }
 }
 .xp-sheet[data-detent='full'] {
   z-index: 8;
@@ -912,42 +943,127 @@ body:has(.xp-root[data-theme]) .lkv-app-background {
   pointer-events: none !important;
 }
 
-/* ── 3.2 Pilule Liquid Glass avec 3 points au-dessus de la bottom bar ──── */
+/* ── 3.2 Pilule « … » : bouton capsule de verre Liquid Glass (iOS 27) ──────
+   Équivalent SwiftUI : Button { Image(systemName: "ellipsis") }.buttonStyle(.glass),
+   soit .glassEffect(.regular.interactive(), in: .capsule). Matière reprise à
+   l'identique du Compte (account-glass.css : --bar-glass-* de .lkdv-account-glass,
+   hauteur de .gbtn 38 px, :active scale(.94)). Posée juste au-dessus de la barre
+   d'onglets (60 px + 6 px de marge) et du bandeau cookies (--cookie-banner-h). */
 .xp-sheet-pill-launcher {
+  --pill-glass-bg: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.485),
+    rgba(255, 255, 255, 0.325) 55%,
+    rgba(255, 255, 255, 0.405)
+  );
+  --pill-glass-blur: blur(7.2px) saturate(1.9) brightness(1.07);
+  --pill-glass-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9), inset 0 -1px 1px rgba(255, 255, 255, 0.45),
+    inset 1px 0 1px rgba(255, 255, 255, 0.28), inset -1px 0 1px rgba(255, 255, 255, 0.28),
+    inset 0 0 12px rgba(255, 255, 255, 0.14), 0 0 0 0.5px rgba(23, 43, 36, 0.14),
+    0 8px 22px rgba(23, 43, 36, 0.12);
   position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 64px + var(--cookie-banner-h, 0px));
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  /* --cookie-banner-h = bande occupée depuis le bas du viewport (barre d'onglets comprise) :
+     on se pose au-dessus du plus haut des deux, jamais en les additionnant. */
+  bottom: calc(env(safe-area-inset-bottom, 0px) + max(74px, var(--cookie-banner-h, 0px) + 8px));
   z-index: 10;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 54px;
-  height: 28px;
-  padding: 0 12px;
-  border: 0.5px solid rgba(255, 255, 255, 0.85);
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 38px;
+  padding: 0;
+  border: 0;
   border-radius: 9999px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.55) 55%, rgba(255, 255, 255, 0.72));
-  -webkit-backdrop-filter: blur(24px) saturate(1.8);
-  backdrop-filter: blur(24px) saturate(1.8);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 0 0 0.5px rgba(23, 43, 36, 0.12), 0 4px 16px rgba(10, 20, 14, 0.14);
-  color: #17402C;
+  background: var(--pill-glass-bg);
+  -webkit-backdrop-filter: var(--pill-glass-blur);
+  backdrop-filter: var(--pill-glass-blur);
+  box-shadow: var(--pill-glass-shadow);
+  color: #17402c;
   cursor: pointer;
-  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
+  touch-action: manipulation;
+  transition:
+    transform 0.36s cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 0.24s ease;
+  animation: xp-pill-in 0.4s cubic-bezier(0.32, 0.72, 0, 1) backwards;
+}
+/* Zone tactile 68 × 44 px autour de la capsule 56 × 38. */
+.xp-sheet-pill-launcher::before {
+  content: '';
+  position: absolute;
+  inset: -3px -6px;
+  border-radius: 9999px;
+}
+/* .interactive() : l'appui éclaircit le verre (voile blanc en opacité) et réduit la capsule. */
+.xp-sheet-pill-launcher::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: rgba(255, 255, 255, 0.5);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.16s ease;
 }
 .xp-sheet-pill-launcher:active {
-  transform: translateX(-50%) scale(0.92);
+  transform: scale(0.94);
 }
+.xp-sheet-pill-launcher:active::after {
+  opacity: 0.55;
+}
+.xp-sheet-pill-launcher:focus-visible {
+  outline: 2px solid #17402c;
+  outline-offset: 3px;
+}
+/* Feuille ouverte : la pilule s'efface (opacité + transform), sans quitter le DOM. */
+.xp-sheet-pill-launcher[data-hidden='true'] {
+  opacity: 0;
+  transform: translateY(10px) scale(0.92);
+  pointer-events: none;
+  animation: none;
+}
+/* Trois points façon SF Symbol « ellipsis » : 3 cercles de 4,5 px, écart 3,5 px. */
 .xp-sheet-pill-launcher .xp-pill-dots {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3.5px;
 }
 .xp-sheet-pill-launcher .xp-pill-dots span {
-  width: 4px;
-  height: 4px;
+  width: 4.5px;
+  height: 4.5px;
   border-radius: 50%;
-  background-color: #17402C;
+  background-color: #17402c;
+}
+@keyframes xp-pill-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .xp-sheet-pill-launcher {
+    background: linear-gradient(180deg, #fafbf9, #eef2ec);
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .xp-sheet-pill-launcher {
+    background: linear-gradient(180deg, #fafbf9, #eef2ec);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .xp-sheet-pill-launcher,
+  .xp-sheet-pill-launcher::after {
+    transition: none;
+    animation: none;
+  }
 }
 
 /* ── 3.3 Synchronisation masquage bottom bar globale ───────────────────── */

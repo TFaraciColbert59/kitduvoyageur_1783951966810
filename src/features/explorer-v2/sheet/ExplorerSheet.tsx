@@ -3,6 +3,14 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { XpIcon } from '../ui/XpIcon';
 import type { Detent } from '../state/types';
+import {
+  DRAG_SLOP_PX,
+  clampDragHeight,
+  lowHeight,
+  resolveSheetRelease,
+  velocityFromSamples,
+  type SheetSample,
+} from './sheetGesture';
 
 export interface SheetTab {
   id: string;
@@ -33,10 +41,12 @@ export interface ExplorerSheetProps {
   onClose?: () => void;
 }
 
-const PEEK = 176;
-const LOW = 300;
+/** Durée de l'animation de sortie (ms) ; doit suivre `.xp-sheet[data-closing]` dans explorer-v2.css. */
+const CLOSE_ANIMATION_MS = 320;
 
-const DETENTS: Detent[] = ['peek', 'low', 'mid', 'full'];
+function isInteractive(target: EventTarget | null) {
+  return target instanceof Element && target.closest('button, a, input, select, textarea, [role="tab"]') !== null;
+}
 
 function heightsFor(viewport: number, _bottomInset: number) {
   // Strictement deux points d'arrêt : Minimum 30 % et Maximum 90 %
@@ -70,9 +80,19 @@ export function ExplorerSheet({
 }: ExplorerSheetProps) {
   const [viewport, setViewport] = useState(844);
   const [dragHeight, setDragHeight] = useState<number | null>(null);
-  const dragRef = useRef<{ startY: number; startHeight: number; lastY: number; lastT: number; velocity: number } | null>(
-    null,
-  );
+  /** Hauteur figée pendant l'animation de sortie (la feuille glisse vers le bas, puis `onClose`). */
+  const [closeFrom, setCloseFrom] = useState<number | null>(null);
+  const sectionRef = useRef<HTMLElement | null>(null);
+  const dragRef = useRef<{
+    startY: number;
+    startHeight: number;
+    startDetent: Detent;
+    lastY: number;
+    lastHeight: number;
+    samples: SheetSample[];
+    active: boolean;
+    captured: boolean;
+  } | null>(null);
 
   useEffect(() => {
     const read = () =>
@@ -90,82 +110,122 @@ export function ExplorerSheet({
 
   const heights = useMemo(() => heightsFor(viewport, bottomInset), [viewport, bottomInset]);
   const targetHeight = heights[detent];
-  const height = dragHeight ?? targetHeight;
+  const height = closeFrom ?? dragHeight ?? targetHeight;
+  const lowH = lowHeight(heights);
 
-  const setDetentFromHeight = useCallback(
-    (next: number, velocity: number) => {
-      // Relâchement : strictement deux crans (30 % min et 90 % max)
-      const minH = heights.low;
-      const maxH = heights.full;
-      const midpoint = (minH + maxH) / 2;
+  // Les écouteurs natifs (tactile sur le contenu) lisent toujours les dernières valeurs.
+  const latest = useRef({ heights, detent, height, onClose, onDetent, onHaptic });
+  latest.current = { heights, detent, height, onClose, onDetent, onHaptic };
 
-      if (velocity < -0.3) {
-        return onDetent('full');
-      }
-      if (velocity > 0.3) {
-        if (next < minH * 0.65 && onClose) {
-          return onClose();
-        }
-        return onDetent('low');
-      }
-      if (next < minH * 0.65 && onClose) {
-        return onClose();
-      }
-      onDetent(next >= midpoint ? 'full' : 'low');
-    },
-    [heights, onClose, onDetent],
-  );
+  const startClose = useCallback((fromHeight: number) => {
+    setDragHeight(null);
+    setCloseFrom((current) => (current === null ? Math.max(1, Math.round(fromHeight)) : current));
+  }, []);
 
-  const onPointerDown = useCallback(
-    (event: React.PointerEvent<HTMLDivElement>) => {
-      if (event.button !== 0 && event.pointerType === 'mouse') return;
-      const target = event.currentTarget as HTMLElement;
-      try {
-        target.setPointerCapture(event.pointerId);
-      } catch {
-        // Pointeur synthétique (tests) : la capture n'est pas disponible.
-      }
-      dragRef.current = {
-        startY: event.clientY,
-        startHeight: height,
-        lastY: event.clientY,
-        lastT: event.timeStamp,
-        velocity: 0,
-      };
-      onHaptic?.('sheet-open');
-    },
-    [height, onHaptic],
-  );
+  // Sortie : la feuille glisse vers le bas (transform), puis `onClose`.
+  useEffect(() => {
+    if (closeFrom === null) return undefined;
+    const reduced =
+      typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches === true;
+    const timer = window.setTimeout(() => latest.current.onClose?.(), reduced ? 0 : CLOSE_ANIMATION_MS);
+    return () => window.clearTimeout(timer);
+  }, [closeFrom]);
 
-  const onPointerMove = useCallback(
-    (event: React.PointerEvent<HTMLDivElement>) => {
+  const beginDrag = useCallback((y: number, t: number) => {
+    const { height: current, detent: startDetent } = latest.current;
+    dragRef.current = {
+      startY: y,
+      startHeight: current,
+      startDetent,
+      lastY: y,
+      lastHeight: current,
+      samples: [{ y, t }],
+      active: false,
+      captured: false,
+    };
+  }, []);
+
+  /** Renvoie vrai quand le geste est (devenu) un glissement. */
+  const moveDrag = useCallback((y: number, t: number): boolean => {
+    const drag = dragRef.current;
+    if (!drag) return false;
+    const dy = y - drag.startY;
+    if (!drag.active) {
+      if (Math.abs(dy) < DRAG_SLOP_PX) return false;
+      drag.active = true;
+    }
+    drag.samples.push({ y, t });
+    if (drag.samples.length > 16) drag.samples.shift();
+    drag.lastY = y;
+    // La feuille suit le doigt, y compris sous le cran bas.
+    drag.lastHeight = clampDragHeight(drag.startHeight - dy, latest.current.heights);
+    setDragHeight(drag.lastHeight);
+    return true;
+  }, []);
+
+  /** Termine le geste. Renvoie 'tap' si le doigt n'a pas bougé. */
+  const finishDrag = useCallback(
+    (t: number): 'tap' | 'done' | 'none' => {
       const drag = dragRef.current;
-      if (!drag) return;
-      const dy = drag.startY - event.clientY;
-      const next = Math.min(heights.full, Math.max(heights.peek * 0.82, drag.startHeight + dy));
-      const dt = Math.max(1, event.timeStamp - drag.lastT);
-      drag.velocity = (drag.lastY - event.clientY) / dt;
-      drag.lastY = event.clientY;
-      drag.lastT = event.timeStamp;
-      setDragHeight(next);
-    },
-    [heights.full, heights.peek],
-  );
-
-  const endDrag = useCallback(
-    (event: React.PointerEvent<HTMLDivElement>) => {
-      const drag = dragRef.current;
-      if (!drag) return;
+      if (!drag) return 'none';
       dragRef.current = null;
-      const finalHeight = dragHeight ?? drag.startHeight;
-      setDragHeight(null);
-      if (Math.abs(finalHeight - drag.startHeight) < 2) {
-        // Un simple toucher sur la poignée fait monter d'un cran.
-        const index = DETENTS.indexOf(detent);
-        onDetent(DETENTS[Math.min(DETENTS.length - 1, index + 1)]);
-        return;
+      if (!drag.active) return 'tap';
+      const { heights: h, onClose: close, onDetent: setDetent } = latest.current;
+      // Un doigt arrêté avant de lâcher ne lance pas la feuille.
+      const samples = [...drag.samples, { y: drag.lastY, t: Math.max(t, drag.samples[drag.samples.length - 1].t) }];
+      const release = resolveSheetRelease({
+        height: drag.lastHeight,
+        velocity: velocityFromSamples(samples),
+        heights: h,
+        current: drag.startDetent,
+        canClose: Boolean(close),
+      });
+      if (release === 'close') {
+        startClose(drag.lastHeight);
+      } else {
+        setDragHeight(null);
+        if (release !== drag.startDetent) setDetent(release);
       }
-      setDetentFromHeight(finalHeight, drag.velocity);
+      return 'done';
+    },
+    [startClose],
+  );
+
+  const toggleDetent = useCallback(() => {
+    const { heights: h, height: current, onDetent: setDetent } = latest.current;
+    setDetent(current <= lowHeight(h) + 1 ? 'full' : 'peek');
+  }, []);
+
+  const onGrabPointerDown = useCallback(
+    (event: React.PointerEvent<HTMLElement>) => {
+      if (closeFrom !== null) return;
+      if (event.button !== 0 && event.pointerType === 'mouse') return;
+      const onHandle = event.target instanceof Element && event.target.closest('.xp-sheet-handle') !== null;
+      if (!onHandle && isInteractive(event.target)) return;
+      beginDrag(event.clientY, event.timeStamp);
+    },
+    [beginDrag, closeFrom],
+  );
+
+  const onGrabPointerMove = useCallback(
+    (event: React.PointerEvent<HTMLElement>) => {
+      const drag = dragRef.current;
+      if (!drag) return;
+      if (moveDrag(event.clientY, event.timeStamp) && !drag.captured) {
+        drag.captured = true;
+        try {
+          event.currentTarget.setPointerCapture(event.pointerId);
+        } catch {
+          // Pointeur synthétique (tests) : la capture n'est pas disponible.
+        }
+      }
+    },
+    [moveDrag],
+  );
+
+  const onGrabPointerEnd = useCallback(
+    (event: React.PointerEvent<HTMLElement>) => {
+      const result = finishDrag(event.timeStamp);
       try {
         if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
           event.currentTarget.releasePointerCapture(event.pointerId);
@@ -173,19 +233,94 @@ export function ExplorerSheet({
       } catch {
         // idem
       }
+      if (result === 'tap' && event.type === 'pointerup') {
+        const onHandle = event.target instanceof Element && event.target.closest('.xp-sheet-handle') !== null;
+        if (onHandle) {
+          latest.current.onHaptic?.('sheet-open');
+          toggleDetent();
+        }
+      }
     },
-    [detent, dragHeight, onDetent, setDetentFromHeight],
+    [finishDrag, toggleDetent],
+  );
+
+  // Contenu défilant : un glissement vers le bas ne pilote la feuille que si le contenu
+  // est en haut de son défilement. Écouteurs natifs : React pose `touchmove` en passif,
+  // or il faut pouvoir annuler le défilement natif.
+  useEffect(() => {
+    const section = sectionRef.current;
+    if (!section) return undefined;
+    let scroller: HTMLElement | null = null;
+    let armed = false;
+    let startY = 0;
+    let dragging = false;
+
+    const onStart = (event: TouchEvent) => {
+      armed = false;
+      dragging = false;
+      const target = event.target instanceof Element ? event.target : null;
+      scroller = target?.closest<HTMLElement>('.xp-sheet-scroll') ?? null;
+      if (!scroller || event.touches.length !== 1) return;
+      if (target && target.closest('[data-no-sheet-drag]')) return;
+      armed = scroller.scrollTop <= 0;
+      startY = event.touches[0].clientY;
+    };
+    const onMove = (event: TouchEvent) => {
+      if (!scroller || event.touches.length !== 1) return;
+      const y = event.touches[0].clientY;
+      if (!dragging) {
+        if (!armed) return;
+        const dy = y - startY;
+        if (dy < -DRAG_SLOP_PX || scroller.scrollTop > 0) {
+          armed = false;
+          return;
+        }
+        if (dy < DRAG_SLOP_PX) return;
+        dragging = true;
+        beginDrag(y, event.timeStamp);
+        if (dragRef.current) dragRef.current.active = true;
+        return;
+      }
+      if (event.cancelable) event.preventDefault();
+      moveDrag(y, event.timeStamp);
+    };
+    const onEnd = (event: TouchEvent) => {
+      armed = false;
+      if (!dragging) return;
+      dragging = false;
+      finishDrag(event.timeStamp);
+    };
+
+    section.addEventListener('touchstart', onStart, { passive: true });
+    section.addEventListener('touchmove', onMove, { passive: false });
+    section.addEventListener('touchend', onEnd);
+    section.addEventListener('touchcancel', onEnd);
+    return () => {
+      section.removeEventListener('touchstart', onStart);
+      section.removeEventListener('touchmove', onMove);
+      section.removeEventListener('touchend', onEnd);
+      section.removeEventListener('touchcancel', onEnd);
+    };
+  }, [beginDrag, moveDrag, finishDrag]);
+
+  const onSectionKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLElement>) => {
+      if (event.key !== 'Escape' || event.defaultPrevented || !onClose) return;
+      event.preventDefault();
+      startClose(latest.current.height);
+    },
+    [onClose, startClose],
   );
 
   const onHandleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>) => {
-      const index = DETENTS.indexOf(detent);
+      // Deux crans seulement (30 % et 90 %) : une flèche monte ou descend d'un cran.
       if (event.key === 'ArrowUp' || event.key === 'ArrowRight') {
         event.preventDefault();
-        onDetent(DETENTS[Math.min(DETENTS.length - 1, index + 1)]);
+        onDetent('full');
       } else if (event.key === 'ArrowDown' || event.key === 'ArrowLeft') {
         event.preventDefault();
-        onDetent(DETENTS[Math.max(0, index - 1)]);
+        onDetent('peek');
       } else if (event.key === 'Home') {
         event.preventDefault();
         onDetent('peek');
@@ -194,40 +329,43 @@ export function ExplorerSheet({
         onDetent('full');
       }
     },
-    [detent, onDetent],
+    [onDetent],
   );
 
   const activeTab = tabs?.[tab];
   const grab = {
-    onPointerDown,
-    onPointerMove,
-    onPointerUp: endDrag,
-    onPointerCancel: endDrag,
+    onPointerDown: onGrabPointerDown,
+    onPointerMove: onGrabPointerMove,
+    onPointerUp: onGrabPointerEnd,
+    onPointerCancel: onGrabPointerEnd,
   };
 
   return (
     <section
+      ref={sectionRef}
       className="xp-sheet"
       data-detent={detent}
       data-dragging={dragHeight === null ? 'false' : 'true'}
+      data-closing={closeFrom === null ? 'false' : 'true'}
       style={{ height: `${height}px` }}
       aria-label={labelledBy ? undefined : title}
       aria-labelledby={labelledBy}
       role="region"
+      onKeyDown={onSectionKeyDown}
     >
       <div
         className="xp-sheet-handle"
         role="button"
         tabIndex={0}
         aria-label="Ajuster la hauteur du tiroir"
-        aria-expanded={detent !== 'peek'}
+        aria-expanded={targetHeight > lowH + 1}
         onKeyDown={onHandleKeyDown}
         {...grab}
       >
         <span />
       </div>
 
-      <header className="xp-sheet-head">
+      <header className="xp-sheet-head" {...grab}>
         <div className="xp-sheet-headtext">
           <h2 className="xp-sheet-title" id={labelledBy} title={title}>
             {title}
