@@ -273,6 +273,8 @@ export const compasServerFr = {
         'Itinéraire gardé tel quel : la nouvelle proposition n’est pas arrivée à temps. Je réessaie à ta prochaine visite.',
       detailUnavailable:
         'Itinéraire détaillé indisponible pour le moment : une étape par jour sur le lieu. Je réessaie à ta prochaine visite, ou affine-le dans Parcours.',
+      sourceSilent:
+        'La carte n’a pas répondu : le détail des étapes manque. Il se complétera tout seul à ta prochaine visite, sans toucher à ce que tu as saisi.',
       droppedOne:
         '{count} lieu(x) proposé(s) introuvable(s) sur la carte : étape gardée au lieu précédent.',
       droppedOther:

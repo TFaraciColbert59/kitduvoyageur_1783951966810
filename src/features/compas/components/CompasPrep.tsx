@@ -16,6 +16,11 @@ export interface PrepState {
   digest?: string | null;
   /** L'IA a produit quelque chose dans cette préparation (conseils, étapes) : la mention reste. */
   usedAi?: boolean;
+  /**
+   * Fin de préparation SANS les étapes du parcours (la carte n'a pas répondu) : le titre ne dit pas « prête »,
+   * `missing` dit ce qui manque. Textes déjà dans la langue de la personne.
+   */
+  partial?: { title: string; missing: string };
 }
 
 // Clés du dictionnaire (`compas.prep.*`), lues au rendu dans la locale du site.
@@ -68,7 +73,9 @@ export function CompasPrep({
   return (
     <section className="cp-prep cp-sheet-glass" role="status" aria-live="polite" aria-label={t('compas.prep.label')}>
       <h2 className="cp-t2">
-        {t(finished ? 'compas.prep.titleDone' : failed ? 'compas.prep.titleFailed' : stopped ? 'compas.prep.titleStopped' : 'compas.prep.titleRunning')}
+        {finished && prep.partial
+          ? prep.partial.title
+          : t(finished ? 'compas.prep.titleDone' : failed ? 'compas.prep.titleFailed' : stopped ? 'compas.prep.titleStopped' : 'compas.prep.titleRunning')}
       </h2>
       <ol className="cp-prep__steps">
         {STEPS.map((s, i) => {
@@ -91,6 +98,8 @@ export function CompasPrep({
           );
         })}
       </ol>
+      {/* Fin sans les étapes du parcours (carte muette) : ce qui manque, et que cela se complète seul. */}
+      {finished && prep.partial && <p className="cp-note">{prep.partial.missing}</p>}
       {/* En cours avec un message : une attente annoncée (limite de fréquence, reprise seule). */}
       {!failed && !stopped && !finished && prep.message && <p className="cp-note">{prep.message}</p>}
       {/* Le navigateur demande la position au lancement (plan 2.10) : pourquoi, ce qui part, et refuser ne bloque rien. */}

@@ -66,8 +66,11 @@ export function Island({
   } else if (prep && (prep.stage === 'done' || prep.stage === 'stopped' || prep.stage === 'error')) {
     state = 'note';
     if (prep.stage === 'done') {
-      title = t('compas.v5.island.done');
-      sub = [prep.total, prep.digest].filter(Boolean).join(' · ') || t('compas.v5.island.doneSub');
+      // Sans les étapes du parcours (carte muette) : jamais « prête », et ce qui manque est dit.
+      title = prep.partial ? prep.partial.title : t('compas.v5.island.done');
+      sub = prep.partial
+        ? [prep.total, prep.digest, prep.partial.missing].filter(Boolean).join(' · ')
+        : [prep.total, prep.digest].filter(Boolean).join(' · ') || t('compas.v5.island.doneSub');
       actions.push({ label: t('compas.v5.island.see'), onClick: onSeeDone });
     } else if (prep.stage === 'stopped') {
       title = t('compas.v5.island.stopped');

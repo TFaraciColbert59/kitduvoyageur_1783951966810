@@ -47,6 +47,7 @@ import { geojsonLatLon, trackKey } from '../engine/track';
 import { resolveProjectContext, type ProjectContext } from '../engine/projectContext';
 import { readProfile, tripBasis } from './compasServer';
 import { retryParts, staleParts, unionParts, type AutofillPart, type ProjectBasis } from '../engine/dependencies';
+import { readItinerary, sourceRetryDue } from './autofillState';
 import { relevantAffiliateLinks } from '../engine/affiliates';
 import { getOfficialAlerts } from './officialAlerts';
 import { getRouteElevation, pointsAltitudeRange } from './elevation';
@@ -872,8 +873,11 @@ function autofillStale(trip: TripFull): AutofillPart[] {
       trip.primary_activity ?? null
     )
   );
-  // Itinéraire de secours : retenté à l'ouverture (au plus quelques fois).
-  return unionParts(changed, retryParts((run as Record<string, unknown>).stagesFallback));
+  // Itinéraire de secours : retenté à l'ouverture (au plus quelques fois). Resté incomplet faute de carte : pas
+  // dans la minute qui suit l'échec (la carte vient de se taire), à l'ouverture d'après.
+  const r = run as Record<string, unknown>;
+  const retry = sourceRetryDue(readItinerary(r.itinerary), r.at, Date.now()) ? retryParts(r.stagesFallback) : [];
+  return unionParts(changed, retry);
 }
 
 /**

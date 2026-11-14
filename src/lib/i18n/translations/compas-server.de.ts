@@ -264,6 +264,8 @@ export const compasServerDe: Shape<typeof compasServerFr> = {
         'Reiseplan unverändert beibehalten: Der neue Vorschlag kam nicht rechtzeitig. Ich versuche es bei Ihrem nächsten Besuch erneut.',
       detailUnavailable:
         'Detaillierter Reiseplan vorerst nicht verfügbar: eine Etappe pro Tag vor Ort. Ich versuche es bei Ihrem nächsten Besuch erneut, oder präzisieren Sie ihn unter Route.',
+      sourceSilent:
+        'Die Karte hat nicht geantwortet: Die Etappendetails fehlen. Sie ergänzen sich bei Ihrem nächsten Besuch von selbst, ohne Ihre Eingaben zu verändern.',
       droppedOne:
         '{count} vorgeschlagener Ort wurde auf der Karte nicht gefunden: Die Etappe bleibt am vorigen Ort.',
       droppedOther:

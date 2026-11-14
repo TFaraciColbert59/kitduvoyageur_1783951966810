@@ -264,6 +264,8 @@ export const compasServerEn: Shape<typeof compasServerFr> = {
         'Itinerary kept as it was: the new suggestion didn’t arrive in time. I’ll try again on your next visit.',
       detailUnavailable:
         'Detailed itinerary unavailable for now: one stage per day at the place. I’ll try again on your next visit, or refine it under Route.',
+      sourceSilent:
+        'The map didn’t respond: the stage details are missing. They’ll fill in by themselves on your next visit, without touching what you entered.',
       droppedOne:
         '{count} suggested place wasn’t found on the map: the stage stays at the previous place.',
       droppedOther:

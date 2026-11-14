@@ -69,7 +69,7 @@ import { bestPeriod, needsDryNormals } from '../engine/period';
 import { retryParts, staleParts, unionParts, untouchedSince, type AutofillPart, type ProjectBasis } from '../engine/dependencies';
 import { resolvePlaceByName } from './placeSearch';
 import { lookupCommune, lookupDestination, lookupIslandContour, lookupMassif, lookupNatural, lookupReverse, lookupRiver, pathCandidates, stageAliasCandidates, stageCandidates } from './placeLookup';
-import { lookupAreaPlaces, lookupRiverLine, lookupStagePois, lookupTrailLine, readCachedStagePois } from './stagePoiLookup';
+import { lookupAreaPlaces, lookupRiverLine, lookupStagePois, lookupTrailLine, readCachedStagePois, type AreaSourceStatus } from './stagePoiLookup';
 import { planTrailTrek, trailWindow } from '../engine/trailRoute';
 import { trailRefIn } from '../engine/geoTrails';
 import { carFreeOf, carFreeStages, carFreeStagesNote, transitSignal } from '../engine/carFree';
@@ -138,10 +138,15 @@ import {
   pendingIsLive,
   pendingIsStale,
   readPending,
+  readItinerary,
   resumableRun,
+  sourceRetryDue,
+  thinItinerary,
   withoutClaim,
   withoutPending,
   withStepsWritten,
+  type ItineraryReport,
+  type ItineraryState,
   type PendingRun,
 } from './autofillState';
 import { serverT, serverText, serverTFor, type CompasServerKey, type ServerT } from './serverText';
@@ -170,6 +175,11 @@ export interface CompasAutofillSummary {
   notes: string[];
   usedAi: boolean;
   stepsCreated: number;
+  /**
+   * Ce que vaut l'itinéraire écrit : `source_silent` = la carte n'a pas répondu, les étapes manquent et
+   * seront rejouées seules (l'écran ne dit pas « prête »). Absent : préparation d'avant ce champ.
+   */
+  itinerary?: ItineraryState;
 }
 
 export type CompasAutofillResult =
@@ -830,7 +840,11 @@ async function plannedStages(opts: {
   t: ServerT;
   /** Le tracé du grand itinéraire a déjà été essayé (sans succès) : il n'est pas redemandé. */
   trailTried?: boolean;
-}): Promise<{ stages: StagePlace[]; note: string; traced?: boolean } | { fallback: string } | { wide: true }> {
+}): Promise<
+  | { stages: StagePlace[]; note: string; traced?: boolean; coverage?: ItineraryState; sources?: string[] }
+  | { fallback: string; silent?: true; sources?: string[] }
+  | { wide: true }
+> {
   const { activity, days, t } = opts;
   let anchor = opts.anchor;
   // Descente de rivière (canoë, kayak) : le tracé de l'eau fixe les soirs, vers
@@ -985,10 +999,14 @@ async function plannedStages(opts: {
   if (shapeFor({ activity, days, radiusKm: zoneKm, shape, natural }) === 'base' && settlement)
     return { stages: base, note: '' };
   const diag: string[] = [];
-  const found = await lookupAreaPlaces({ center: anchor, radiusKm: zoneKm, activity }, opts.deadline, diag);
+  /** La carte complète n'a pas répondu et le résultat est maigre : l'itinéraire est incomplet, pas la zone pauvre. */
+  const source: AreaSourceStatus = { silent: false };
+  const found = await lookupAreaPlaces({ center: anchor, radiusKm: zoneKm, activity }, opts.deadline, diag, source);
   if (!found)
     return {
       fallback: diag.length ? t('compas.server.autofill.plan.zoneUnavailableDiag', { diag: diag.join(', ') }) : t('compas.server.autofill.plan.zoneUnavailable'),
+      ...(source.silent ? { silent: true as const } : {}),
+      sources: diag.slice(0, 6),
     };
   const inCountry = (list: AreaPlace[]) => {
     const home = keepHomeCountry(list, anchor.countryCode).filter(onLand);
@@ -1003,7 +1021,7 @@ async function plannedStages(opts: {
     profileFor(activity).move === 'marche' &&
     isWildZone({ places, center: anchor, radiusKm: zoneKm, days, extent: anchor.extent && (halfExtentKm ?? 0) >= 15 ? anchor.extent : null })
   ) {
-    const more = await lookupAreaPlaces({ center: anchor, radiusKm: zoneKm, activity, wild: true }, opts.deadline).catch(() => null);
+    const more = await lookupAreaPlaces({ center: anchor, radiusKm: zoneKm, activity, wild: true }, opts.deadline, undefined, source).catch(() => null);
     if (more) places = mergeAreaPlaces([places, inCountry(more)]);
   }
   // Altitudes réelles (tuiles de relief, quelques tuiles pour toute la zone) :
@@ -1070,13 +1088,26 @@ async function plannedStages(opts: {
     extent: anchor.extent && (halfExtentKm ?? 0) >= 15 ? anchor.extent : null,
     nights: opts.nights,
   });
-  if (!plan) return { fallback: t('compas.server.autofill.plan.tooFewPlaces', { count: places.length }) };
+  if (!plan)
+    return {
+      fallback: t('compas.server.autofill.plan.tooFewPlaces', { count: places.length }),
+      ...(source.silent ? { silent: true as const } : {}),
+      sources: diag.slice(0, 6),
+    };
   // Itinérant figé sur un ou deux lieux : la carte n'en offre pas assez, on se replie.
   const minPlaces = ITINERANT_ACTIVITIES.has(activity) ? (days >= 4 ? 3 : 2) : 1;
   if (plan.distinct < minPlaces)
-    return { fallback: t('compas.server.autofill.plan.tooFewDistinct', { distinct: plan.distinct, count: places.length }) };
+    return {
+      fallback: t('compas.server.autofill.plan.tooFewDistinct', { distinct: plan.distinct, count: places.length }),
+      ...(source.silent ? { silent: true as const } : {}),
+      sources: diag.slice(0, 6),
+    };
   const shapeText = t(plan.shape === 'traverse' ? 'compas.server.autofill.plan.shapeTraverse' : plan.shape === 'loop' ? 'compas.server.autofill.plan.shapeLoop' : 'compas.server.autofill.plan.shapeBase');
+  // Tracé sur trop peu de lieux : la zone est pauvre si la carte a répondu, l'itinéraire est incomplet sinon.
+  const coverage: ItineraryState = !thinItinerary(plan.distinct, days, plan.shape) ? 'complete' : source.silent ? 'source_silent' : 'poor_zone';
   return {
+    coverage,
+    sources: diag.slice(0, 6),
     stages: plan.stages.map((st) => ({ day: st.day, name: st.name, lat: st.lat, lon: st.lon, move: st.move, note: st.note })),
     note: `${islandNote ? `${islandNote} ` : ''}${cragNote ? `${cragNote} ` : ''}${t.plural(plan.distinct, 'compas.server.autofill.plan.itineraryOne', 'compas.server.autofill.plan.itineraryOther', {
       shape: shapeText,
@@ -1723,6 +1754,8 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
     let routeSet = resume?.routeSet ?? false;
     // Itinéraire de secours (aucune proposition à temps) : retenté à l'ouverture suivante.
     let stagesFallback = resume?.stagesFallback ?? 0;
+    // Ce que vaut l'itinéraire écrit (complet, zone pauvre, carte muette) : repris de la phase « steps » après une coupure.
+    let itinerary: ItineraryReport | undefined = resume?.itinerary;
     const createdStepIds: string[] = [...(resume?.stepIds ?? [])];
     let stagePlaces: StagePlace[] = [];
     // Réadaptation : l'ancien itinéraire n'est remplacé que par un meilleur.
@@ -1831,6 +1864,12 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
             // cartes (Photon, Overpass, Geoapify) même après une compréhension lente.
             (traced ?? (await planFor(startedAt + (phase === 'all' ? 120_000 : 30_000))));
       const plannedOk = planned && 'stages' in planned ? planned : null;
+      // La carte n'a pas répondu (et rien de vérifiable n'a pris le relais) : l'itinéraire est incomplet, pas la zone pauvre.
+      const plannedView = (planned ?? {}) as { coverage?: ItineraryState; silent?: true; sources?: string[] };
+      let coverage: ItineraryState | null = plannedOk ? (plannedView.coverage ?? null) : null;
+      let silentSeen = planned != null && 'fallback' in planned && plannedView.silent === true;
+      let sourceNotes: string[] = plannedView.sources ?? [];
+      let countryOk = false;
       // Grande île sans contour prouvé : aucun lieu ne se prouve sur l'île, l'IA n'écrit pas d'étape.
       const islandBlocked = islandGuard.large && !islandGuard.contour;
       /** Le lieu est-il prouvé sur l'île ? Vrai partout quand la destination n'est pas une grande île. */
@@ -2110,6 +2149,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
           }
         }
         if (country && 'stages' in country) {
+          countryOk = true;
           stagePlaces = country.stages;
           notes.push(country.note);
         } else if (!proposed.length && replacing.length) {
@@ -2200,6 +2240,10 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
         if ('stages' in calc) {
           stagesFallback = fallbackBeforeAi;
           stagePlaces = calc.stages;
+          // Les bases d'un pays (`countryStages`) n'ont ni état ni sources : elles sont complètes.
+          const planCalc = calc as { coverage?: ItineraryState; sources?: string[] };
+          coverage = planCalc.coverage ?? null;
+          if (planCalc.sources) sourceNotes = planCalc.sources;
           // Étapes venues du tracé lui-même (un tronçon dit, l'IA muette) : « non retrouvées » serait faux.
           if (!('traced' in calc && calc.traced))
             notes.push(t('compas.server.autofill.trailStagesNotFound', { trail: trailWish ?? anchor.name }));
@@ -2207,6 +2251,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
         } else {
           // Le calcul n'a rien donné : la tentative de l'IA reste la réponse, avec ses notes (avant celles du calcul).
           notes.splice(notesBeforeAi, 0, ...attemptNotes);
+          if ((calc as { silent?: true }).silent) silentSeen = true;
         }
       }
       if (!routeSet) {
@@ -2337,17 +2382,33 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
       }
       steps = await loadSteps(supabase, tripId);
       stepsCreated = createdStepIds.length;
+      // Ce que vaut l'itinéraire écrit. Un parcours du catalogue, des bases de pays ou des étapes de l'IA vérifiées
+      // sur la carte sont complets. Sinon : le calcul sur les lieux de la zone dit lui-même (`coverage`), ou, quand il
+      // n'a rien pu tracer parce que la carte restait muette, l'itinéraire de repli (une étape par jour sur le lieu)
+      // est incomplet. Aucune étape écrite ici (ancien itinéraire gardé) : l'état d'avant n'est pas redit.
+      if (routeSet) itinerary = { state: 'complete', places: 0 };
+      else if (stagePlaces.length) {
+        const places = new Set(stagePlaces.map((st) => st.name)).size;
+        let state: ItineraryState = coverage ?? 'complete';
+        if (state === 'complete' && silentSeen && !aiVerified && !countryOk && thinItinerary(places, days, null)) state = 'source_silent';
+        itinerary = { state, places, ...(sourceNotes.length ? { sources: sourceNotes } : {}) };
+        // Rejoué à une ouverture suivante par le mécanisme d'itinéraire de secours (au plus `STAGES_RETRY_MAX` fois).
+        if (state === 'source_silent') {
+          stagesFallback = Math.max(stagesFallback, (carry?.stagesFallback ?? 0) + 1);
+          notes.push(t('compas.server.autofill.sourceSilent'));
+        }
+      }
       // Passe unique : l'itinéraire écrit est inscrit tout de suite (plan 2.6).
       // Coupée plus loin, la préparation laisse un état qu'« Annuler » retrouve
       // et qu'une relance reprend, au lieu d'étapes orphelines.
       if (phase === 'all' && (createdStepIds.length > 0 || routeSet)) {
-        const written = { runId, stepIds: createdStepIds, routeSet, notes: notes.slice(0, 6), datesSet, stagesFallback };
+        const written = { runId, stepIds: createdStepIds, routeSet, notes: notes.slice(0, 6), datesSet, stagesFallback, ...(itinerary ? { itinerary } : {}) };
         await updateTripMetadata(supabase, tripId, (m) => withStepsWritten(m, written, Date.now()));
       }
     }
 
     if (phase === 'steps') {
-      const run: PendingRun = { runId, stepIds: createdStepIds, routeSet, notes: notes.slice(0, 6), datesSet, stagesFallback };
+      const run: PendingRun = { runId, stepIds: createdStepIds, routeSet, notes: notes.slice(0, 6), datesSet, stagesFallback, ...(itinerary ? { itinerary } : {}) };
       const { error: pendingError } = await updateTripMetadata(supabase, tripId, (m) => ({
         ...m,
         // Itinéraire écrit : la prise « steps » est rendue.
@@ -3039,6 +3100,8 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
             // qui relançait aussitôt toute la préparation.
             basis: tripBasis({ ...trip, metadata: m }, activity),
             ...(stagesFallback ? { stagesFallback } : {}),
+            // Ce que vaut l'itinéraire (état explicite, relu par l'écran et la reprise).
+            ...(itinerary ? { itinerary } : {}),
           },
         },
       }),
@@ -3061,6 +3124,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
         notes: orderNotes(essential, notes, aiNotes),
         usedAi,
         stepsCreated,
+        ...(itinerary ? { itinerary: itinerary.state } : {}),
       },
     };
   } catch (err) {
@@ -3245,13 +3309,37 @@ export async function compasRefreshAutofillAction(
           budgetSet?: boolean;
           basis?: Partial<ProjectBasis>;
           stagesFallback?: number;
+          itinerary?: unknown;
         }
       | undefined;
     if (!run?.runId || !run.basis) return { success: true, parts: [], kept: [], label: '' };
     const { data: tripRow } = await supabase.from('trips').select('primary_activity').eq('id', tripId).maybeSingle();
     const activity = (tripRow as { primary_activity?: string } | null)?.primary_activity ?? null;
-    let parts = unionParts(staleParts(run.basis, tripBasis(trip, activity)), retryParts(run.stagesFallback));
+    const changedParts = staleParts(run.basis, tripBasis(trip, activity));
+    // Itinéraire resté incomplet faute de carte : rejoué une fois par ouverture, jamais dans la minute qui suit l'échec.
+    const silentRetry = readItinerary(run.itinerary)?.state === 'source_silent';
+    const retry = sourceRetryDue(readItinerary(run.itinerary), run.at, Date.now()) ? retryParts(run.stagesFallback) : [];
+    let parts = unionParts(changedParts, retry);
     if (!parts.length) return { success: true, parts: [], kept: [], label: '' };
+    // La reprise seule (aucun réglage changé) ne touche à rien de ce que la personne a fait : une étape retouchée,
+    // retirée ou ajoutée à la main referme la reprise, sans rien réécrire (le compteur d'essais est retiré).
+    if (silentRetry && !changedParts.length) {
+      const { data: all } = await supabase.from('trip_steps').select('id, updated_at').eq('trip_id', tripId);
+      const rows = (all ?? []) as Array<{ id: string; updated_at: string | null }>;
+      const mine = new Set(run.stepIds ?? []);
+      const intact = rows.length === mine.size && rows.every((r) => mine.has(r.id) && untouchedSince(r.updated_at, run.at ?? null));
+      if (!intact) {
+        await updateTripMetadata(supabase, tripId, (m) => {
+          const c = compasMeta(m);
+          const a = c.autofill;
+          if (!a || typeof a !== 'object') return m;
+          const { stagesFallback: _closed, ...rest } = a as Record<string, unknown>;
+          void _closed;
+          return { ...m, compas: { ...c, autofill: rest } };
+        });
+        return { success: true, parts: [], kept: [], label: '' };
+      }
+    }
 
     const kept: string[] = [];
     const carry: Carry = {

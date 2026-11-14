@@ -30,6 +30,8 @@ export const compasScreenFr = {
       'Une autre préparation de cette aventure est en cours (autre onglet) : la page se mettra à jour seule.',
     prepUndone: 'Préparation annulée',
     prepDone: 'Aventure préparée',
+    prepPartial: 'Aventure en partie préparée',
+    prepPartialMissing: 'Il manque les étapes du parcours : elles arriveront quand la carte répondra.',
     prepBudget: 'Budget {amount}',
     kept: 'Gardé : {list}',
     lostKept: 'Connexion perdue : ce qui est fait est gardé. Reprends quand tu veux.',

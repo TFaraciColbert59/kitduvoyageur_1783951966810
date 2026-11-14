@@ -473,7 +473,10 @@ export function useCompasController(
           void runRef.current?.(t('compas.screen.prepUndone'), () =>
             compasUndoAutofillAction({ tripId: model.tripId, tripSlug: model.slug })
           );
-        const done = redo ? redo.label : t('compas.screen.prepDone');
+        // La carte n'a pas répondu : les étapes manquent, la préparation ne se dit pas « prête » (elles se rejouent seules).
+        const partial = res.summary.itinerary === 'source_silent';
+        const missing = t('compas.screen.prepPartialMissing');
+        const done = partial ? t('compas.screen.prepPartial') : redo ? redo.label : t('compas.screen.prepDone');
         if (prepRef.current && prepRef.current.stage !== 'stopped')
           setPrep({
             stage: 'done',
@@ -484,14 +487,17 @@ export function useCompasController(
             digest: autofillDigest(res.summary, t, locale),
             // L'IA a produit quelque chose (conseils, étapes) : la mention reste à la fin (PLAN-100 5.3).
             usedAi: res.summary.usedAi,
+            ...(partial ? { partial: { title: done, missing } } : {}),
           });
         notify(
           res.summary.total > 0 ? `${done} · ${moneyIn(locale, res.summary.total, 'EUR')}` : done,
           undefined,
           undo,
-          redo?.kept.length
-            ? t('compas.screen.kept', { list: redo.kept.join(' · ') })
-            : autofillDigest(res.summary, t, locale)
+          partial
+            ? `${autofillDigest(res.summary, t, locale)} · ${missing}`
+            : redo?.kept.length
+              ? t('compas.screen.kept', { list: redo.kept.join(' · ') })
+              : autofillDigest(res.summary, t, locale)
         );
         startTransition(() => router.refresh());
         // Le tracé réel de la carte et le profil arrivent avec les dernières écritures : une relecture

@@ -306,6 +306,19 @@ export async function lookupTrailLine(
 }
 
 /**
+ * Ce que la recherche d'une zone sait dire de ses sources : `silent` quand la carte complète (Overpass)
+ * n'a PAS répondu et que ce qui est rendu est maigre (moins de trois lieux). « Il n'y a qu'un lieu »
+ * (la carte a répondu) et « la carte n'a rien dit » ne se lisaient pas dans la liste rendue. Ce résultat
+ * maigre n'est alors pas gardé en cache (un mois) : la reprise le redemanderait en vain.
+ */
+export interface AreaSourceStatus {
+  silent: boolean;
+}
+
+/** Au-dessous, une zone est « maigre » : l'itinéraire n'y trouve pas de quoi tracer. */
+const THIN_AREA = 3;
+
+/**
  * Lieux réels où l'on peut dormir dans une zone (villes, villages, hameaux,
  * refuges), pour l'itinéraire déterministe. Le référentiel d'abord (plan 3.2,
  * `geo_places`, sans carte en ligne) ; Photon n'est alors demandé que pour les
@@ -317,9 +330,20 @@ export async function lookupAreaPlaces(
   q: AreaQuery,
   deadline: number,
   /** Ce que chaque carte a répondu (écrit dans la note d'un repli, pour le diagnostic). */
-  diag?: string[]
+  diag?: string[],
+  /** Rempli quand la carte complète n'a pas répondu et que le résultat est maigre (voir `AreaSourceStatus`). */
+  status?: AreaSourceStatus
 ): Promise<AreaPlace[] | null> {
   const query = buildAreaQuery(q);
+  /** Résultat maigre faute de réponse de la carte complète : rendu, mais jamais partagé. */
+  let silent = false;
+  const thinSilent = <T extends AreaPlace[] | null>(list: T, overpassAnswered: boolean): T => {
+    if (!overpassAnswered && (list?.length ?? 0) < THIN_AREA) {
+      silent = true;
+      if (status) status.silent = true;
+    }
+    return list;
+  };
   // « v3 » : le référentiel d'abord (les zones déjà gardées venaient de Photon seul).
   // Noms dans la langue de l'interface (PLAN-100 6.4) : clé française d'avant, à l'identique.
   const lang = await getRequestLocale();
@@ -333,7 +357,7 @@ export async function lookupAreaPlaces(
       const left = () => deadline - Date.now();
       if (left() < 4000) {
         say('plus de temps');
-        return null;
+        return thinSilent(null, false);
       }
       const fromRef = await referentialAreaPlaces(q);
       say(fromRef ? `Référentiel ${fromRef.length}` : 'Référentiel vide');
@@ -348,14 +372,14 @@ export async function lookupAreaPlaces(
       }
       if (left() < 4000) {
         say('plus de temps');
-        return fromRef;
+        return thinSilent(fromRef, false);
       }
       const fromPhoton = await photonAreaPlaces(q, Math.min(10_000, left()), lang);
       say(fromPhoton ? `Photon ${fromPhoton.length}` : 'Photon muet');
       if (fromPhoton && fromPhoton.length >= 3) return withRef(fromPhoton);
       if (left() < 4000) {
         say('plus de temps');
-        return withRef(fromPhoton);
+        return thinSilent(withRef(fromPhoton), false);
       }
       // Photon trop maigre : Overpass et Geoapify en même temps (Overpass est
       // souvent muet depuis Vercel ; l'attendre d'abord privait Geoapify de temps).
@@ -368,8 +392,8 @@ export async function lookupAreaPlaces(
       say(payload ? `Overpass ${places.length}` : 'Overpass muet');
       say(!geoapifyAvailable() ? 'Geoapify sans clé' : fromGeoapify ? `Geoapify ${fromGeoapify.length}` : 'Geoapify muet');
       if (places.length) return withRef(places);
-      return withRef(fromGeoapify && fromGeoapify.length > (fromPhoton?.length ?? 0) ? fromGeoapify : fromPhoton);
+      return thinSilent(withRef(fromGeoapify && fromGeoapify.length > (fromPhoton?.length ?? 0) ? fromGeoapify : fromPhoton), payload != null);
     },
-    (v) => Array.isArray(v) && v.length > 0
+    (v) => Array.isArray(v) && v.length > 0 && !silent
   );
 }

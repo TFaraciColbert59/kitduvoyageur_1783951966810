@@ -3407,6 +3407,27 @@ describe('CompasScreen : la mention « IA » (lot Z2, PLAN-100 5.3)', () => {
       expect(within(await panel()).getByRole('note').textContent).toContain(AI_NOTICE_DONE);
     });
 
+    it('Aperçu du 14/11 : la carte n’a pas répondu, la préparation ne dit pas « prête » et dit ce qui manque', async () => {
+      autofill.compasAutofillAction.mockResolvedValueOnce({
+        success: true,
+        summary: {
+          nights: [],
+          transport: null,
+          kit: { inventaire: 0, pret: 0, location: 0, achat: 0, a_trouver: 0 },
+          budget: [],
+          total: 1068,
+          notes: [],
+          usedAi: false,
+          stepsCreated: 5,
+          itinerary: 'source_silent',
+        },
+      } as never);
+      render(<CompasScreen data={{ ...say(), autofill: 'none' }} />);
+      expect(await screen.findByText('Aventure en partie préparée')).toBeTruthy();
+      expect(screen.queryByText('Ton aventure est prête')).toBeNull();
+      expect(within(await panel()).getByText(/elles arriveront quand la carte répondra/)).toBeTruthy();
+    });
+
     it('terminée sans que l’IA ait rien produit : plus aucune mention', async () => {
       autofill.compasAutofillAction.mockResolvedValueOnce({
         success: true,

@@ -29,6 +29,8 @@ export const compasScreenIt: Shape<typeof compasScreenFr> = {
       'Questa avventura è già in preparazione in un’altra scheda: questa pagina si aggiornerà da sola.',
     prepUndone: 'Preparazione annullata',
     prepDone: 'Avventura preparata',
+    prepPartial: 'Avventura preparata in parte',
+    prepPartialMissing: 'Mancano le tappe del percorso: arriveranno quando la mappa risponderà.',
     prepBudget: 'Budget: {amount}',
     kept: 'Conservato: {list}',
     lostKept: 'Connessione persa: ciò che è fatto resta. Riprenda quando vuole.',

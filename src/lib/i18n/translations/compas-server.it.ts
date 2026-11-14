@@ -264,6 +264,8 @@ export const compasServerIt: Shape<typeof compasServerFr> = {
         'Itinerario mantenuto com’era: la nuova proposta non è arrivata in tempo. Riproverò alla Sua prossima visita.',
       detailUnavailable:
         'Itinerario dettagliato non disponibile per ora: una tappa al giorno sul posto. Riproverò alla Sua prossima visita, oppure lo precisi in Percorso.',
+      sourceSilent:
+        'La mappa non ha risposto: mancano i dettagli delle tappe. Si completeranno da soli alla sua prossima visita, senza toccare ciò che ha inserito.',
       droppedOne:
         '{count} luogo proposto non è stato trovato sulla mappa: la tappa resta nel luogo precedente.',
       droppedOther:

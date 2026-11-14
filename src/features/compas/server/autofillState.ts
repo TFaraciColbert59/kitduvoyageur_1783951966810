@@ -21,6 +21,61 @@ export interface PendingRun {
   restAt?: number;
   /** Préremplissages d'affilée restés sur l'itinéraire de secours (0 : itinéraire réel). */
   stagesFallback?: number;
+  /** Ce que l'itinéraire écrit vaut (voir `ItineraryReport`) : repris tel quel par la phase « reste ». */
+  itinerary?: ItineraryReport;
+}
+
+/**
+ * Ce que vaut l'itinéraire écrit, rangé dans les métadonnées de préparation (jamais déduit d'une note) :
+ *  - `complete` : la carte a répondu et l'itinéraire est assez fourni (ou voulu sur un seul lieu) ;
+ *  - `poor_zone` : la carte a répondu, la zone n'a simplement que très peu de lieux habités ;
+ *  - `source_silent` : la carte n'a pas répondu (Overpass, Photon, Geoapify muets) : l'itinéraire est
+ *    incomplet et sera rejoué à une ouverture suivante (`retryParts`), sans écraser ce que la personne a saisi.
+ */
+export type ItineraryState = 'complete' | 'poor_zone' | 'source_silent';
+
+export interface ItineraryReport {
+  state: ItineraryState;
+  /** Lieux distincts de l'itinéraire écrit. */
+  places: number;
+  /** Ce que chaque source a répondu (diagnostic court, jamais affiché). */
+  sources?: string[];
+}
+
+export const ITINERARY_STATES: readonly ItineraryState[] = ['complete', 'poor_zone', 'source_silent'];
+
+/** Relit un état gardé dans les métadonnées (jamais fait confiance à ce qui y est écrit). */
+export function readItinerary(raw: unknown): ItineraryReport | undefined {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined;
+  const r = raw as Record<string, unknown>;
+  if (!ITINERARY_STATES.includes(r.state as ItineraryState)) return undefined;
+  return {
+    state: r.state as ItineraryState,
+    places: Number.isInteger(r.places) && Number(r.places) >= 0 ? Number(r.places) : 0,
+    ...(Array.isArray(r.sources) ? { sources: r.sources.filter((x): x is string => typeof x === 'string').slice(0, 6).map((x) => x.slice(0, 60)) } : {}),
+  };
+}
+
+/**
+ * Un itinéraire est « mince » quand il tient sur moins de lieux que ses jours n'en demandent (trois au plus) :
+ * séjour sur place (forme « base ») excepté, un seul lieu y est voulu. Un jour seul n'est jamais mince.
+ */
+export function thinItinerary(distinct: number, days: number, shape: string | null): boolean {
+  return shape !== 'base' && days >= 2 && distinct < Math.min(days, 3);
+}
+
+/** Délai avant de rejouer un itinéraire resté sans carte : jamais dans la minute qui suit l'échec. */
+export const SOURCE_RETRY_AFTER_MS = 120_000;
+
+/**
+ * Faut-il rejouer l'itinéraire ? Seulement s'il est resté « incomplet faute de source » et que
+ * l'échec date de plus de `SOURCE_RETRY_AFTER_MS` : l'ouverture qui suit tout de suite la préparation
+ * ne rejoue rien (la carte vient de se taire), la suivante le fait une fois.
+ */
+export function sourceRetryDue(itinerary: ItineraryReport | undefined, runAt: unknown, now: number): boolean {
+  if (itinerary?.state !== 'source_silent') return true;
+  const at = typeof runAt === 'string' ? Date.parse(runAt) : NaN;
+  return Number.isFinite(at) && now - at >= SOURCE_RETRY_AFTER_MS;
 }
 
 export type AutofillPhase = 'steps' | 'rest' | 'all';
@@ -58,6 +113,7 @@ export function readPending(meta: Record<string, unknown>): PendingRun | null {
     datesSet: p.datesSet === true,
     restAt: typeof p.restAt === 'number' ? p.restAt : undefined,
     stagesFallback: Number.isInteger(p.stagesFallback) ? Number(p.stagesFallback) : 0,
+    ...(readItinerary(p.itinerary) ? { itinerary: readItinerary(p.itinerary) } : {}),
     notes: Array.isArray(p.notes) ? p.notes.filter((x): x is string => typeof x === 'string') : [],
   };
 }

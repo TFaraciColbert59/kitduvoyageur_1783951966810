@@ -122,6 +122,19 @@ describe('v5 · îlot', () => {
   const noop = () => undefined;
   const base = { t: FR_T, running: false, onDismiss: noop, onHold: noop, onRelease: noop, onStop: noop, onResume: noop, onRefine: noop, onSeeDone: noop, onCloseDone: noop };
 
+  it('Aperçu du 14/11 : fin sans les étapes du parcours (carte muette), l’îlot ne dit pas « prête » et dit ce qui manque', () => {
+    render(
+      <Island
+        {...base}
+        prep={{ stage: 'done', total: 'Budget 1 068 €', digest: '4 hébergements', partial: { title: 'Aventure en partie préparée', missing: 'Il manque les étapes du parcours : elles arriveront quand la carte répondra.' } }}
+        toast={null}
+      />
+    );
+    expect(screen.getByText('Aventure en partie préparée')).toBeTruthy();
+    expect(screen.queryByText('Ton aventure est prête')).toBeNull();
+    expect(screen.getByText(/Budget 1 068 € · 4 hébergements · Il manque les étapes du parcours/)).toBeTruthy();
+  });
+
   it('annonce poliment une confirmation avec « Annuler »', () => {
     const undo = vi.fn();
     const { container } = render(<Island {...base} prep={null} toast={{ message: 'Nuit notée', undo }} />);

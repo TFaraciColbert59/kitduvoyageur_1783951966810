@@ -23,6 +23,21 @@ describe('panneau de préparation', () => {
     expect(screen.queryByRole('button', { name: 'Reprendre' })).toBeNull();
   });
 
+  it('Aperçu du 14/11 : fin sans les étapes du parcours, le titre ne dit pas « prête » et dit ce qui manque', () => {
+    render(
+      <CompasPrep
+        prep={{ stage: 'done', total: 'Budget 1 068 €', partial: { title: 'Aventure en partie préparée', missing: 'Il manque les étapes du parcours : elles arriveront quand la carte répondra.' } }}
+        onStop={noop}
+        onClose={noop}
+        onRetry={noop}
+        onEditRequest={noop}
+      />
+    );
+    expect(screen.getByRole('heading', { name: 'Aventure en partie préparée' })).toBeTruthy();
+    expect(screen.queryByText('Ton aventure est prête')).toBeNull();
+    expect(screen.getByText(/elles arriveront quand la carte répondra/)).toBeTruthy();
+  });
+
   it('pendant la préparation, dit à quoi sert la position et que la refuser ne bloque rien (plan 2.10)', () => {
     const { rerender } = render(
       <CompasPrep prep={{ stage: 'understand' }} onStop={noop} onClose={noop} onRetry={noop} onEditRequest={noop} />
