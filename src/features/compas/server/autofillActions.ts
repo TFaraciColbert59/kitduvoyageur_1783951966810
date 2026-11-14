@@ -447,7 +447,7 @@ interface StagePlace {
   /** Grand itinéraire suivi sur son tracé : km de tracé du jour (le tracé de la veille à ce soir est dans `geometry`). */
   trailKm?: number | null;
   /** Séjour de randonnée sur une base : l'objectif réel de la journée (aller-retour depuis la base, distance estimée). */
-  objective?: { name: string; kind: ObjectiveKind; lat: number; lon: number; eleM: number | null; roundTripKm: number; ascentM: number | null };
+  objective?: { name: string; kind: ObjectiveKind; lat: number; lon: number; eleM: number | null; roundTripKm: number; ascentM: number | null; source?: 'geoapify' };
 }
 
 /**
@@ -882,7 +882,7 @@ async function hikingBaseStay(opts: {
           })
         : t('compas.server.autofill.plan.baseStayFree'),
       ...(pick
-        ? { objective: { name: pick.name, kind: pick.kind, lat: pick.lat, lon: pick.lon, eleM: pick.eleM, roundTripKm: pick.roundTripKm, ascentM: pick.ascentM } }
+        ? { objective: { name: pick.name, kind: pick.kind, lat: pick.lat, lon: pick.lon, eleM: pick.eleM, roundTripKm: pick.roundTripKm, ascentM: pick.ascentM, ...(pick.source ? { source: pick.source } : {}) } }
         : {}),
     };
   });
@@ -2482,7 +2482,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
             ...withAiProposed(stepDistanceMetadata(legs[i]?.source ?? (loopKm && i === 0 ? 'estimation' : null)), st.aiProposed === true),
             // L'objectif de la journée (séjour sur une base), lu sur la carte : le nom, la nature, la position, l'altitude OSM.
             ...(st.objective
-              ? { objective: { name: st.objective.name, kind: st.objective.kind, lat: st.objective.lat, lon: st.objective.lon, ele_m: st.objective.eleM } }
+              ? { objective: { name: st.objective.name, kind: st.objective.kind, lat: st.objective.lat, lon: st.objective.lon, ele_m: st.objective.eleM, ...(st.objective.source ? { source: st.objective.source } : {}) } }
               : {}),
           },
         }));

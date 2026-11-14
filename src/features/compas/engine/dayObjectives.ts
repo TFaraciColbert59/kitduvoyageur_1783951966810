@@ -29,6 +29,8 @@ export interface DayObjective {
   eleM: number | null;
   /** Objet relié à Wikipédia ou Wikidata : un lieu connu passe avant un sommet anonyme. */
   notable: boolean;
+  /** Posé quand l'objectif vient de Geoapify (secours d'Overpass) : l'écran affiche alors le crédit « Powered by Geoapify ». */
+  source?: 'geoapify';
 }
 
 export interface PickedObjective extends DayObjective {
@@ -102,6 +104,53 @@ export function parseObjectives(payload: unknown): DayObjective[] {
     const id = `${typeof el.type === 'string' ? el.type[0] : 'n'}${rawId}`;
     if (out.some((o) => o.id === id || (o.name === name && o.kind === kind && distanceKm(o, { lat, lon }) < 1))) continue;
     out.push({ id, name, kind, lat, lon, eleM: num(tags.ele) != null ? Math.round(num(tags.ele) as number) : null, notable: tags.wikidata != null || tags.wikipedia != null });
+  }
+  return out;
+}
+
+/** Catégories Geoapify Places des objectifs (vérifiées sur apidocs.geoapify.com/docs/places ; pas de catégorie « col »). */
+export const GEOAPIFY_OBJECTIVE_CATEGORIES = 'natural.mountain.peak,natural.water,tourism.attraction.viewpoint,accommodation.hut';
+
+/**
+ * Réponse Geoapify Places → objectifs (secours d'Overpass, mêmes données OSM) : nommés seulement, position
+ * valide, sans doublon ; altitude OSM quand elle est fournie. Un plan d'eau doit être un lac, un étang ou
+ * un réservoir quand la carte le précise. Réponse invalide : liste vide.
+ */
+export function parseGeoapifyObjectives(payload: unknown): DayObjective[] {
+  const fs = (payload as { features?: unknown[] } | null)?.features;
+  if (!Array.isArray(fs)) return [];
+  const out: DayObjective[] = [];
+  for (const raw of fs) {
+    const p = ((raw as { properties?: Record<string, unknown> } | null)?.properties ?? {}) as Record<string, unknown>;
+    const cats = Array.isArray(p.categories) ? p.categories.map(String) : [];
+    const osm = ((p.datasource as { raw?: Record<string, unknown> } | undefined)?.raw ?? {}) as Record<string, unknown>;
+    const kind: ObjectiveKind | null = cats.includes('natural.mountain.peak')
+      ? 'peak'
+      : cats.includes('tourism.attraction.viewpoint')
+        ? 'viewpoint'
+        : cats.includes('accommodation.hut')
+          ? 'hut'
+          : cats.includes('natural.water') && (osm.water == null || /^(lake|pond|reservoir)$/.test(String(osm.water)))
+            ? 'lake'
+            : null;
+    const name = typeof p.name === 'string' ? p.name.trim().slice(0, 80) : '';
+    const lat = num(p.lat);
+    const lon = num(p.lon);
+    if (!kind || !name || lat == null || lon == null || Math.abs(lat) > 90 || Math.abs(lon) > 180) continue;
+    const osmId = num(osm.osm_id);
+    const id = osmId != null ? `${String(osm.osm_type ?? 'n').toLowerCase()[0]}${osmId}` : `g${lat.toFixed(5)},${lon.toFixed(5)}`;
+    if (out.some((o) => o.id === id || (o.name === name && o.kind === kind && distanceKm(o, { lat, lon }) < 1))) continue;
+    const ele = num(osm.ele);
+    out.push({
+      id,
+      name,
+      kind,
+      lat,
+      lon,
+      eleM: ele != null ? Math.round(ele) : null,
+      notable: osm.wikidata != null || osm.wikipedia != null,
+      source: 'geoapify',
+    });
   }
   return out;
 }

@@ -1,6 +1,7 @@
 import 'server-only';
 import { GEOAPIFY_DAILY_CREDITS, takeApiCredits } from '@/lib/apiCredits';
 import { parseGeoapify, type CompasPlace } from '../engine/places';
+import { GEOAPIFY_OBJECTIVE_CATEGORIES, parseGeoapifyObjectives, type DayObjective } from '../engine/dayObjectives';
 import { areaKinds, geoapifyCategories, parseGeoapifyArea, type AreaPlace, type AreaQuery } from '../engine/itinerary';
 
 /**
@@ -93,4 +94,27 @@ export async function geoapifyArea(q: AreaQuery, timeoutMs: number, lang = 'fr')
   if (payload == null) return null;
   const places = parseGeoapifyArea(payload);
   return places.length ? places : null;
+}
+
+/** Objectifs de journée : 100 lieux au plus (5 crédits), une seule requête ; null : sans clé, crédits épuisés, muet ou réponse invalide. */
+const OBJECTIVES_LIMIT = 100;
+
+export async function geoapifyObjectives(
+  base: { lat: number; lon: number },
+  radiusM: number,
+  timeoutMs: number,
+  lang = 'fr'
+): Promise<DayObjective[] | null> {
+  const payload = await call(
+    '/v2/places',
+    {
+      categories: GEOAPIFY_OBJECTIVE_CATEGORIES,
+      filter: `circle:${base.lon.toFixed(5)},${base.lat.toFixed(5)},${Math.round(radiusM)}`,
+      limit: String(OBJECTIVES_LIMIT),
+      lang,
+    },
+    timeoutMs
+  );
+  if (payload == null || !Array.isArray((payload as { features?: unknown }).features)) return null;
+  return parseGeoapifyObjectives(payload);
 }

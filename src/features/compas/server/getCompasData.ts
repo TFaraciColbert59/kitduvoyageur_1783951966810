@@ -107,6 +107,8 @@ export interface CompasItineraryStep {
    * le dit : « Powered by Geoapify » ne s'affiche que près de ce qu'il a mesuré.
    */
   distanceSource?: string | null;
+  /** L'objectif du jour vient de Geoapify (secours d'Overpass) : l'écran affiche « Powered by Geoapify ». */
+  objectiveSource?: 'geoapify';
   elevationGainM: number | null;
   accommodation: string | null;
   /**
@@ -673,6 +675,7 @@ async function getCompasDataUntraced(): Promise<CompasData | null> {
   const sourceOfStep = new Map((trip.steps ?? []).map((s) => [s.id, distanceSource(s.metadata)]));
   // Étapes que l'IA a proposées (marque posée à l'écriture par la préparation, PLAN-100 5.3).
   const aiProposedIds = new Set((trip.steps ?? []).filter((s) => readAiProposed(s.metadata)).map((s) => s.id));
+  const geoObjectiveIds = new Set((trip.steps ?? []).filter((s) => objectiveFromGeoapify(s.metadata)).map((s) => s.id));
   const itinerary: CompasItineraryStep[] = [...input.steps]
     .sort((a, b) => a.dayNumber - b.dayNumber || a.orderIndex - b.orderIndex)
     .map((s) => ({
@@ -685,6 +688,7 @@ async function getCompasDataUntraced(): Promise<CompasData | null> {
       elevationGainM: s.elevationGainM,
       accommodation: s.accommodationName,
       ...(aiProposedIds.has(s.id) ? { aiProposed: true } : {}),
+      ...(geoObjectiveIds.has(s.id) ? { objectiveSource: 'geoapify' as const } : {}),
     }));
 
   const waterOnRoute = routePois.filter((p) => p.category === 'water').length;
@@ -889,6 +893,12 @@ function distanceSource(metadata: unknown): string | null {
   const d = metadata && typeof metadata === 'object' ? (metadata as Record<string, unknown>).distance : null;
   const source = d && typeof d === 'object' ? (d as Record<string, unknown>).source : null;
   return typeof source === 'string' ? source : null;
+}
+
+/** L'objectif de l'étape (`metadata.objective.source`) a été lu chez Geoapify. */
+export function objectiveFromGeoapify(metadata: unknown): boolean {
+  const o = metadata && typeof metadata === 'object' ? (metadata as Record<string, unknown>).objective : null;
+  return !!o && typeof o === 'object' && (o as Record<string, unknown>).source === 'geoapify';
 }
 
 function preparedTrack(metadata: unknown, coords: Array<[number, number]>): Record<string, unknown> | null {

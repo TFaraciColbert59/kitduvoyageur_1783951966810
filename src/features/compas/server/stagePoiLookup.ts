@@ -9,8 +9,8 @@ import {
   type StagePoint,
 } from '../engine/stagePois';
 import type { RoutePoi } from '../engine/routePois';
-import { buildObjectivesQuery, parseObjectives, type DayObjective } from '../engine/dayObjectives';
-import { geoapifyArea, geoapifyAvailable } from './geoapify';
+import { buildObjectivesQuery, OBJECTIVE_RADIUS_KM, parseObjectives, type DayObjective } from '../engine/dayObjectives';
+import { geoapifyArea, geoapifyAvailable, geoapifyObjectives } from './geoapify';
 import { referentialAreaPlaces } from './geoPlaces';
 import { referentialPoisAround } from './geoPois';
 import { geoSitesEnabled, referentialSitesAround } from './geoSites';
@@ -28,7 +28,7 @@ import {
   type AreaPlace,
   type AreaQuery,
 } from '../engine/itinerary';
-import { cached, coordKey, readShared } from './sharedCache';
+import { cached, coordKey, readShared, writeShared } from './sharedCache';
 import { chainRiver, parseRiverWays, riverNamePattern, riverQuery } from '../engine/river';
 import { simplifyLine, type LngLat } from '../engine/track';
 import { parseTrailRelations, pickTrailLine, trailLineQuery } from '../engine/trailRoute';
@@ -410,6 +410,8 @@ export async function lookupAreaPlaces(
 
 /** Au moins un objectif lu : une réponse vide n'est ni gardée un mois ni prise pour la vérité de la zone. */
 const OBJECTIVES_TTL_S = 30 * 86_400;
+/** Objectifs lus chez Geoapify (secours) : un jour seulement, pour qu'Overpass reprenne la main dès qu'il répond. */
+const OBJECTIVES_GEOAPIFY_TTL_S = 86_400;
 
 /**
  * Objectifs de journée autour d'une base de randonnée (sommets, lacs, cols, points de vue, refuges nommés) :
@@ -425,6 +427,32 @@ export async function lookupAreaObjectives(
   const query = buildObjectivesQuery(base);
   const key = `objectives:v1:${createHash('sha256').update(query).digest('hex').slice(0, 32)}`;
   let ran = false;
+  /** Overpass muet : Geoapify prend le relais s'il y a une clé et au moins 4 s ; gardé 24 h, sous une autre clé. */
+  const geoKey = `objectives:geoapify:v1:${key.slice(-32)}`;
+  const geoapifyFallback = async (): Promise<DayObjective[] | null> => {
+    if (!geoapifyAvailable()) {
+      diag?.push('Objectifs : Geoapify sans clé');
+      return null;
+    }
+    const hit = await readShared<DayObjective[]>('place', geoKey);
+    if (Array.isArray(hit) && hit.length > 0) {
+      diag?.push(`Objectifs : Geoapify cache ${hit.length}`);
+      return hit;
+    }
+    const left = deadline - Date.now();
+    if (left < 4000) {
+      diag?.push('Objectifs : Geoapify plus de temps');
+      return null;
+    }
+    const found = await geoapifyObjectives(base, OBJECTIVE_RADIUS_KM * 1000, Math.min(10_000, left), await getRequestLocale());
+    if (!found || found.length === 0) {
+      diag?.push('Objectifs : Geoapify muet');
+      return null;
+    }
+    diag?.push(`Objectifs : Geoapify ${found.length}`);
+    await writeShared('place', geoKey, found, OBJECTIVES_GEOAPIFY_TTL_S);
+    return found;
+  };
   const list = await cached<DayObjective[] | null>(
     'place',
     key,
@@ -439,13 +467,14 @@ export async function lookupAreaObjectives(
       const payload = await overpassArea(query, Math.min(15_000, left));
       if (!payload) {
         diag?.push('Objectifs : Overpass muet');
-        return null;
+        return await geoapifyFallback();
       }
       const found = parseObjectives(payload);
       diag?.push(`Objectifs : Overpass ${found.length}`);
       return found;
     },
-    (v) => Array.isArray(v) && v.length > 0
+    // Un résultat venu de Geoapify n'entre jamais dans le cache d'un mois d'Overpass.
+    (v) => Array.isArray(v) && v.length > 0 && !v.some((o) => o.source === 'geoapify')
   );
   if (!ran) diag?.push(`Objectifs : cache ${list?.length ?? 0}`);
   return list;

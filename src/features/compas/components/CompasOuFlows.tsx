@@ -391,7 +391,7 @@ export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint })
               </div>
             )}
           />
-          {data.itinerary.some((s) => s.distanceSource === 'geoapify') && (
+          {data.itinerary.some((s) => s.distanceSource === 'geoapify' || s.objectiveSource === 'geoapify') && (
             <p className="cp-disc">
               {t('compas.ouRoute.roadDistances')} <GeoapifyCredit /> · {t('compas.ouRoute.osmCredit')}
             </p>
