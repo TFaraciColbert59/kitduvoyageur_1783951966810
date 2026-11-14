@@ -2,7 +2,7 @@
 // Piste d'effets : sfx-cues.json → qa/sfx-v1.wav (60,000 s, 48 kHz, mono, flottant 32 bits pour ne rien écrêter
 // avant le mixage). Le pic de chaque fichier tombe une image après son image (frame + 1).
 // Les gains visent `overBedDb` au-dessus du lit (RMS 100 ms autour du pic, passe-haut 120 Hz).
-// Usage : node tools/audio/build-sfx.mjs [--bed montage.wav] [--out qa/sfx-v1.wav] [--report qa/tmp/sfx-placements.json]
+// Usage : node tools/audio/build-sfx.mjs [--bed montage.wav] [--out qa/sfx-v1.wav] [--report qa/tmp/sfx-placements.json] [--cues tools/audio/sfx-cues-v2.json]
 // Sans --bed : montage réel s'il existe, sinon le montage de SUBSTITUTION (dit dans la sortie).
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -11,8 +11,8 @@ import { svf, writeWav } from './synth.mjs';
 
 const arg = (k) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : undefined; };
 
-export function loadCues() {
-  const j = JSON.parse(readFileSync(join(HERE, 'sfx-cues.json'), 'utf8'));
+export function loadCues(cuesFile = join(HERE, 'sfx-cues.json')) {
+  const j = JSON.parse(readFileSync(cuesFile, 'utf8'));
   const problems = [];
   let lastWhoosh = null;
   const sorted = [...j.cues].sort((a, b) => a.frame - b.frame);
@@ -47,8 +47,8 @@ export const HALF = 0.025;
 export const MAX_GAIN_DB = 24;
 const win = (x, a, b) => x.subarray(Math.max(0, Math.round(a)), Math.min(x.length, Math.round(b)));
 
-export function buildSfx({ bed, out = join(QA_DIR, 'sfx-v1.wav'), report = join(QA_TMP, 'sfx-placements.json') } = {}) {
-  const cues = loadCues();
+export function buildSfx({ bed, out = join(QA_DIR, 'sfx-v1.wav'), report = join(QA_TMP, 'sfx-placements.json'), cues: cuesFile } = {}) {
+  const cues = loadCues(cuesFile);
   const bedHp = bed ? svf(readMono(bed), 'hp', 120, 0.7) : null;
   const N = SR * 60;
   const track = new Float32Array(N);
@@ -112,7 +112,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   let bed = arg('--bed');
   if (!bed) bed = existsSync(MONTAGE) ? MONTAGE : existsSync(SUBST_MONTAGE) ? SUBST_MONTAGE : undefined;
   try {
-    const r = buildSfx({ bed, out: arg('--out'), report: arg('--report') });
+    const r = buildSfx({ bed, out: arg('--out'), report: arg('--report'), cues: arg('--cues') });
     console.log(`✓ ${r.out} · ${r.cues.length} effets · lit de mesure : ${bed ? (r.substitute ? 'SUBSTITUT ' : 'RÉEL ') + bed : 'aucun (gains de repli)'}`);
     console.log('| Image | Plan | Fichier | Pic dans le fichier (s) | Pic mesuré (image) | Écart (images) | Gain (dB) | Au-dessus du lit (dB) |');
     console.log('|---|---|---|---|---|---|---|---|');

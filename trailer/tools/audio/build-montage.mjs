@@ -2,11 +2,12 @@
 // Montage musical de 60 s : applique à l'identique la commande FFmpeg de MUSIQUE.md,
 // puis vérifie 48 kHz, 24 bits, exactement 2 880 000 échantillons (60,000 s).
 // Usage : node tools/audio/build-montage.mjs                    (storm-ii.mp3 → storm-ii-montage-60s.wav)
+//         node tools/audio/build-montage.mjs --v2               (montage v2 de qa/SON-AUDIT.md → storm-ii-montage-60s-v2.wav)
 //         node tools/audio/build-montage.mjs --input X --out Y  (essai sur un fichier de substitution)
 import { existsSync } from 'node:fs';
-import { DURATION, MONTAGE, MONTAGE_FILTER, MP3, SR, ffmpegVersion, probe, run } from './lib.mjs';
+import { DURATION, MONTAGE, MONTAGE_FILTER, MONTAGE_V2, MP3, SR, ffmpegVersion, montageV2Filter, probe, run } from './lib.mjs';
 
-export function buildMontage(input = MP3, out = MONTAGE) {
+export function buildMontage(input = MP3, out = MONTAGE, filter = MONTAGE_FILTER) {
   if (!existsSync(input)) {
     const err = new Error(
       `MP3 absent : ${input}\n` +
@@ -15,7 +16,7 @@ export function buildMontage(input = MP3, out = MONTAGE) {
     err.code = 'NO_MP3';
     throw err;
   }
-  run('ffmpeg', ['-hide_banner', '-v', 'error', '-y', '-i', input, '-filter_complex', MONTAGE_FILTER,
+  run('ffmpeg', ['-hide_banner', '-v', 'error', '-y', '-i', input, '-filter_complex', filter,
     '-map', '[o]', '-ar', String(SR), '-c:a', 'pcm_s24le', out]);
   const p = probe(out);
   const expected = SR * DURATION;
@@ -30,7 +31,8 @@ export function buildMontage(input = MP3, out = MONTAGE) {
 if (import.meta.url === `file://${process.argv[1]}`) {
   const arg = (k) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : undefined; };
   try {
-    const r = buildMontage(arg('--input') ?? MP3, arg('--out') ?? MONTAGE);
+    const v2 = process.argv.includes('--v2');
+    const r = buildMontage(arg('--input') ?? MP3, arg('--out') ?? (v2 ? MONTAGE_V2 : MONTAGE), v2 ? montageV2Filter() : MONTAGE_FILTER);
     console.log(`✓ ${r.out}\n  ${r.samples} échantillons = ${(r.samples / r.sampleRate).toFixed(6)} s · ${r.sampleRate} Hz · ${r.codec} · ${r.channels} canaux · ${r.ffmpeg}`);
   } catch (e) {
     console.error(`✗ ${e.message}`);

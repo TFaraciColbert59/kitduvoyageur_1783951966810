@@ -48,6 +48,45 @@ export const MONTAGE_FILTER =
   '[0]atrim=127.545:129.545,asetpts=PTS-STARTPTS,afade=t=in:d=0.005,afade=t=out:st=1.2:d=0.8[f];' +
   '[a][b][c][d][e][f]concat=n=6:v=0:a=1,apad=whole_dur=60,atrim=0:60[o]';
 
+// ── Montage v2 (qa/SON-AUDIT.md) ────────────────────────────────────────────────────────────────
+// Mêmes repères image que v1. Changements : (1) les passages continus du morceau (5,41 / 47,47 / 58,00 s)
+// ne sont plus coupés (plus de micro-fondus qui creusaient l'attaque des drops) ; (2) 31,69 s (P31) :
+// la dernière mesure du drop 1 est remplacée par la respiration + le roulement du morceau (m71), pour
+// qu'un vrai drop tombe à 33,48 s ; (3) 51,00 s (P49) : l'outro enchaîne sur la fin du pont (m62–m63,
+// sans grave), le grave revient à 54,51 s (P52, remontée) avec m70–m71, puis le drop 2 à 58,00 s.
+// Chaque segment : film [a, b], `kick` = attaque grave mesurée (s du morceau) posée à `at` (s du film) ;
+// fondus enchaînés en quart de sinus de 12 ms, finis ≥ 15 ms avant l'attaque suivante de chaque côté.
+export const MONTAGE_V2 = join(AUDIO_DIR, 'storm-ii-montage-60s-v2.wav');
+export const XF_V2 = 0.012;
+export const MONTAGE_V2_SEGMENTS = [
+  { film: [0, 31.665], offset: 66.085, fadeIn: 0.25, label: 'Fin de la montée + drop 1 m40–m54 (continu, comme v1)' },
+  { film: [31.653, 33.402], offset: 94.106, label: 'Respiration + roulement m71 (attaque 125,789 → film 31,683 = image 1901)' },
+  { film: [33.39, 50.963], offset: 108.085, fadeIn: 0.045, label: 'Drop 2 m80–m87 + outro m88–m89 (continu, comme v1) ; entrée en fondu de 45 ms sur la fin de m79 (creux naturel avant m80) pour ne laisser aucun silence entre le roulement et le drop' },
+  { film: [50.951, 54.471], offset: 59.033, label: 'Fin du pont m62–m63 (attaque 110,023 → film 50,990)' },
+  { film: [54.459, 60], offset: 69.545, fadeOut: 0.8, label: 'Reprise m70–m71 + drop 2 m72 à 58,00 s (continu, comme v1)' },
+];
+export const JOINS_V2 = [
+  { t: 31.665, frame: 1901, name: 'pré-drop (P31)', priority: true },
+  { t: 33.402, frame: 2009, name: 'drop 2', priority: true },
+  { t: 50.963, frame: 3060, name: 'outro → pont', priority: true },
+  { t: 54.471, frame: 3271, name: 'pont → reprise', priority: true },
+];
+export function montageV2Filter() {
+  const parts = [], labels = [];
+  const n = MONTAGE_V2_SEGMENTS.length;
+  MONTAGE_V2_SEGMENTS.forEach((s, i) => {
+    const [a, b] = s.film;
+    const fi = s.fadeIn ?? XF_V2, fo = s.fadeOut ?? XF_V2;
+    const len = b - a;
+    const delay = Math.round(a * SR);
+    parts.push(`[m${i}]atrim=start=${(s.offset + a).toFixed(6)}:end=${(s.offset + b).toFixed(6)},asetpts=PTS-STARTPTS,` +
+      `afade=t=in:d=${fi}:curve=qsin,afade=t=out:st=${(len - fo).toFixed(6)}:d=${fo}:curve=qsin,adelay=delays=${delay}S:all=1[s${i}]`);
+    labels.push(`[s${i}]`);
+  });
+  const split = `[0]aresample=${SR},aformat=sample_fmts=fltp:channel_layouts=stereo,asplit=${n}${MONTAGE_V2_SEGMENTS.map((_, i) => `[m${i}]`).join('')}`;
+  return `${split};${parts.join(';')};${labels.join('')}amix=inputs=${n}:normalize=0:duration=longest,apad=whole_dur=60,atrim=0:60[o]`;
+}
+
 export function run(cmd, args, { allowFail = false, input } = {}) {
   const r = spawnSync(cmd, args, { encoding: 'utf8', maxBuffer: 1 << 28, input });
   if (r.status !== 0 && !allowFail) {
