@@ -1,0 +1,111 @@
+<!-- P12 (images 692–745, 53 images) — landscape-director. Gros plan du téléphone (img40), glissé latéral : l'élan de la
+     sortie de P11 (caméra vers la gauche, image qui glisse à droite) se freine en ~9 images (cx 1150 → 1080), puis la
+     caméra continue de dériver lentement à gauche ; sortie « la capsule avance » : poussée inCubic sur l'écran
+     (S 1,32 → 1,70) au plus rapide à la coupe, dans le sens de la poussée de P13. Écran VERT intact (E2, ui-builder).
+     Caméra exposée : window.__lkdvCam.p12(f) → { S, cx, cy } (img40 → écran : x' = 960 + S·(x − cx), y' = 540 + S·(y − cy)),
+     f peut être fractionnaire (flou de mouvement = moyenne de la caméra sur f − 0,5 … f). Écran vert d'img40 (g > r+60 et
+     g > b+60) : boîte 983–1168 × 271–676 (haut 986–1168 à y 291, milieu 985–1168 à y 473, bas 983–1168 à y 656). -->
+<template>
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; background: #0B1F17; }
+    .p12-frame { position: absolute; inset: 0; overflow: hidden; }
+    .p12-shot, .p12-shot-inner { position: absolute; inset: 0; }
+    .p12-shot { opacity: 0; }
+    .p12-shot-img { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
+    #p12-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .p12-ph-src { position: absolute; left: 0; top: 0; width: 2px; height: 2px; overflow: hidden; opacity: 0; pointer-events: none; }
+    .p12-ph-src img { position: absolute; left: 0; top: 0; width: 2px; height: 2px; }
+  </style>
+  <div id="root" data-composition-id="p12" data-width="1920" data-height="1080" data-duration="0.8833333333333333">
+    <div id="p12-frame" class="p12-frame" data-layout-allow-overflow>
+      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) -->
+      <div id="p12-shot-1" class="p12-shot" data-src="img40" data-seq="0" data-seq-count="1">
+        <div id="p12-shot-1-inner" class="p12-shot-inner">
+          <img id="p12-shot-1-img" class="p12-shot-img" src="assets/footage/img40.png" alt="" />
+        </div>
+      </div>
+    <!-- hf-footage:end -->
+    </div>
+    <canvas data-color-grading="{&quot;preset&quot;:null,&quot;intensity&quot;:1,&quot;adjust&quot;:{&quot;exposure&quot;:0,&quot;contrast&quot;:0,&quot;highlights&quot;:0,&quot;shadows&quot;:0,&quot;whites&quot;:0,&quot;blacks&quot;:0,&quot;temperature&quot;:0,&quot;tint&quot;:0,&quot;vibrance&quot;:0,&quot;saturation&quot;:0},&quot;details&quot;:{&quot;vignette&quot;:0,&quot;vignetteMidpoint&quot;:0.5,&quot;vignetteRoundness&quot;:0,&quot;vignetteFeather&quot;:0.65,&quot;grain&quot;:0,&quot;grainSize&quot;:0.25,&quot;grainRoughness&quot;:0.5},&quot;effects&quot;:{&quot;blur&quot;:0,&quot;pixelate&quot;:0,&quot;chromaBleed&quot;:0,&quot;tapeDamage&quot;:0,&quot;tapeTracking&quot;:0,&quot;tapeNoise&quot;:1,&quot;tapeSpeed&quot;:0.5,&quot;filmArtifacts&quot;:0,&quot;halftone&quot;:0,&quot;halftoneSize&quot;:0,&quot;twoInkPrint&quot;:0,&quot;twoInkPrintSize&quot;:0,&quot;ascii&quot;:0,&quot;asciiSize&quot;:0.06578947368421052,&quot;asciiInvert&quot;:0,&quot;asciiStyle&quot;:0,&quot;asciiColor&quot;:1,&quot;asciiRotation&quot;:0,&quot;dither&quot;:0,&quot;ditherSize&quot;:0,&quot;bloom&quot;:0,&quot;bloomRadius&quot;:8,&quot;monoScreen&quot;:0,&quot;monoScreenSize&quot;:0,&quot;monoScreenAngle&quot;:0,&quot;monoScreenSpread&quot;:0,&quot;monoScreenShape&quot;:0,&quot;monoScreenInvert&quot;:0,&quot;scanlines&quot;:0,&quot;scanlineCount&quot;:0,&quot;scanlineSoftness&quot;:0,&quot;chromaticAberration&quot;:0,&quot;chromaticAngle&quot;:0,&quot;crtCurvature&quot;:0,&quot;digitalGlitch&quot;:0,&quot;digitalGlitchColorSplit&quot;:0,&quot;digitalGlitchLineTear&quot;:0,&quot;digitalGlitchPixelate&quot;:0,&quot;digitalGlitchBlockAmount&quot;:0,&quot;digitalGlitchBlockDisplacement&quot;:0,&quot;digitalGlitchBlockOpacity&quot;:0,&quot;digitalGlitchSpeed&quot;:0,&quot;engraving&quot;:0,&quot;engravingSpacing&quot;:0.4117647058823529,&quot;engravingMinThickness&quot;:0.2,&quot;engravingMaxThickness&quot;:0.4571428571428572,&quot;engravingAngle&quot;:0.25,&quot;engravingContrast&quot;:0.4666666666666667,&quot;engravingSharpness&quot;:0.59,&quot;engravingWave&quot;:0.2,&quot;engravingWaveFrequency&quot;:0.2222222222222222,&quot;crosshatch&quot;:0,&quot;crosshatchSpacing&quot;:0.28,&quot;crosshatchThickness&quot;:0.25,&quot;crosshatchAngle&quot;:0.25,&quot;crosshatchContrast&quot;:0.3333333333333333,&quot;crosshatchEdges&quot;:0.5,&quot;crosshatchLineWeight&quot;:0,&quot;crosshatchWave&quot;:0.33,&quot;crosshatchWaveFrequency&quot;:0.2222222222222222,&quot;kuwahara&quot;:0,&quot;kuwaharaRadius&quot;:0.14285714285714285,&quot;kuwaharaSharpness&quot;:0.3125,&quot;kuwaharaSaturation&quot;:0.5},&quot;lut&quot;:{&quot;src&quot;:&quot;assets/luts/lkdv-trailer.cube&quot;,&quot;intensity&quot;:1},&quot;colorSpace&quot;:&quot;rec709&quot;}" id="p12-canvas" width="1920" height="1080" data-layout-allow-overflow></canvas>
+    <!-- ui-builder : sources de l'incrustation (plaque percée + captures réelles), lues par le canvas -->
+    <div id="p12-ph-src" class="p12-ph-src" aria-hidden="true">
+        <img id="p12-ph-plate" src="assets/phone/img40.plate.png" alt="" />
+        <img id="p12-ph-s0" src="assets/phone/screens/E02a-compas-ou-vide.png" alt="" />
+        <img id="p12-ph-s1" src="assets/phone/screens/E02b-compas-ou-saisi.png" alt="" />
+        <img id="p12-ph-s2" src="assets/phone/screens/E02c-compas-preparation.png" alt="" />
+        <img id="p12-ph-s3" src="assets/phone/screens/E02d-compas-prepare.png" alt="" />
+    </div>
+  </div>
+  <script src="lib/fx/core.js"></script>
+  <script src="lib/phone/phone.js"></script>
+  <script>
+    (function () {
+      var FX = window.LKDVFX;
+      var W = 1920, H = 1080, INK = "#0B1F17";
+      var img = document.getElementById("p12-shot-1-img");
+      // ui-builder : écran incrusté dans l'image source (suit la caméra du plan au pixel, flou de mouvement compris)
+      var PH = window.LKDVPhone.compositor({ base: img, plate: document.getElementById("p12-ph-plate"), meta: {"box":[974,262,205,424],"corners":[[986.857,271.871],[1168.828,272],[1168.821,675.808],[983.425,677.045]],"radius":21.04,"blur":0.69,"ambient":{"rgb":[0.3848,0.2872,0.2226],"luminance":0.3033}}, states: [{ img: document.getElementById("p12-ph-s0") }, { img: document.getElementById("p12-ph-s1"), from: 10, to: 15 }, { img: document.getElementById("p12-ph-s2"), from: 23, to: 28 }, { img: document.getElementById("p12-ph-s3"), from: 35, to: 40 }], cam: function (f) { return camAt(f); } });
+      var SRC = img;
+      var ctx = document.getElementById("p12-canvas").getContext("2d");
+      function hand(f, amp, seed) {
+        // Tremblement de main : bruit lent + frisson rapide, à graine (fonction du temps).
+        return (FX.noise2(f * 0.09, 1.7, seed) - 0.5) * amp + (FX.noise2(f * 0.45, 5.3, seed + 7) - 0.5) * amp * 0.3;
+      }
+      function fit(c) {
+        // L'image ne découvre jamais ses bords : centre bridé selon l'échelle et le roulis.
+        var a = Math.abs(c.rot || 0), co = Math.cos(a), si = Math.sin(a);
+        var hx = (W / 2 * co + H / 2 * si) / c.S + 2, hy = (W / 2 * si + H / 2 * co) / c.S + 2;
+        c.cx = FX.clamp(c.cx, hx, W - hx);
+        c.cy = FX.clamp(c.cy, hy, H - hy);
+        return c;
+      }
+      function drawCam(c2, c, alpha) {
+        c2.globalAlpha = alpha;
+        c2.setTransform(1, 0, 0, 1, 0, 0);
+        c2.translate(W / 2, H / 2);
+        if (c.rot) c2.rotate(c.rot);
+        c2.scale(c.S, c.S);
+        c2.translate(-c.cx, -c.cy);
+        c2.drawImage(SRC, 0, 0, W, H);
+      }
+      function shoot(camAt, f, shutter) {
+        // Flou de mouvement réel : moyenne de la caméra sur l'obturation (180° par défaut), échantillons selon la vitesse.
+        shutter = shutter == null ? 0.5 : shutter;
+        var a = camAt(f), b = camAt(f - shutter);
+        var d = Math.abs(a.S - b.S) * 1100 + (Math.abs(a.cx - b.cx) + Math.abs(a.cy - b.cy)) * a.S + Math.abs((a.rot || 0) - (b.rot || 0)) * 1100;
+        var n = FX.clamp(Math.ceil(d / 1.2), 1, 12);
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = INK;
+        ctx.fillRect(0, 0, W, H);
+        for (var i = 0; i < n; i++) drawCam(ctx, n === 1 ? a : camAt(f - (shutter * i) / (n - 1)), 1 / (i + 1));
+        ctx.globalAlpha = 1;
+      }
+
+      var N = 53;
+      function camAt(f) {
+        var u = f / (N - 1);
+        var brake = Math.exp(-Math.max(f, -3) / 4.5);
+        var push = FX.ease.inCubic(FX.clamp((f - 34) / (N - 1 - 34), 0, 1));
+        var S = 1.32 + 0.04 * u + (1.70 - 1.36) * push;
+        var cx = 1035 - 40 * u + 75 * brake; // CORRECTIONS-1 : cadre décalé (−55 px image ≈ 73 px écran) pour dégager le visage de Léa au bord gauche
+        var cy = 478 + 6 * brake;
+        cx = cx + (1076 - cx) * push;
+        cy = cy + (474 - cy) * push;
+        cx += hand(f, 5, 131);
+        cy += hand(f, 4, 133);
+        return fit({ S: S, cx: cx, cy: cy, rot: 0 });
+      }
+      window.__lkdvCam = window.__lkdvCam || {};
+      window.__lkdvCam.p12 = camAt;
+      var clock = FX.bindClock("p12", N, function (t, f) {
+        if (!img.complete || !img.naturalWidth) { ctx.fillStyle = INK; ctx.fillRect(0, 0, W, H); return; }
+        SRC = PH.frame(f);
+        shoot(camAt, f, 0.5);
+      });
+      img.addEventListener("load", function () { clock.redraw(); });
+      Array.prototype.forEach.call(document.querySelectorAll("#p12-ph-src img"), function (n) { n.addEventListener("load", function () { clock.redraw(); }); });
+      window.__timelines["p12"] = clock.tl;
+    })();
+  </script>
+</template>

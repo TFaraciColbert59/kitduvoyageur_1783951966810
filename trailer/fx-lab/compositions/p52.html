@@ -1,0 +1,64 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; background: #0B1F17; overflow: hidden; }
+    #p52-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  </style>
+  <!-- P52 : images 3271 à 3376 du film (105 images, 1,75 s). Remontée à l'envers et accélérée :
+       ville (img05) → nuage (img04) → stratosphère (img03), raccord vers l'orbite de P53.
+       Plaques réelles img05, img04, img03, puis img39 (raccord exact avec P53). -->
+  <div id="root" data-composition-id="p52" data-start="0" data-duration="1.75" data-width="1920" data-height="1080">
+    <canvas id="p52-canvas" width="1920" height="1080" data-layout-allow-overflow></canvas>
+  </div>
+  <script src="lib/fx/core.js"></script>
+  <script src="lib/fx/transitions.js"></script>
+  <script>
+    (function () {
+      var FX = window.LKDVFX;
+      var TR = FX.Transitions;
+      var W = 1920, H = 1080, FRAMES = 105;
+      /* Plaques de Tony. img39 termine le plan à l'identique de la première image de P53 (même cadrage, échelle 1). */
+      var PLATES = { img05: "assets/footage/img05.png", img04: "assets/footage/img04.png", img03: "assets/footage/img03.png", img39: "assets/footage/img39.png" };
+      var cv = document.getElementById("p52-canvas");
+      var ctx = cv.getContext("2d");
+      var imgs = {};
+
+      // Zoom arrière géométrique (vitesse perçue constante dans l'étage), centré.
+      function zoomed(c, img, s0, s1, l, rot) {
+        var sc = s0 * Math.pow(s1 / s0, l);
+        c.save();
+        c.translate(W / 2, H / 2);
+        if (rot) c.rotate(rot);
+        c.scale(sc * (W / img.width), sc * (W / img.width));
+        c.drawImage(img, -img.width / 2, -img.height / 2);
+        c.restore();
+      }
+
+      // u = p^1.8 : chaque étage occupe une plage de u ; les fondus se chevauchent, il n'y a aucun palier.
+      var stages = [
+        { from: 0, to: 0.3, draw: function (c, u, l) { zoomed(c, imgs.img05, 2.2, 1.0, l); } },
+        { from: 0.26, to: 0.58, fadeIn: 0.06, draw: function (c, u, l) { zoomed(c, imgs.img04, 2.6, 1.0, l); } },
+        { from: 0.54, to: 0.9, fadeIn: 0.06, draw: function (c, u, l) { zoomed(c, imgs.img03, 1.9, 1.06, l, (-4 + 4 * l) * Math.PI / 180); } },
+        { from: 0.88, to: 1, fadeIn: 0.12, draw: function (c, u, l) { zoomed(c, imgs.img39, 1.14, 1.0, FX.ease.outCubic(l)); } },
+      ];
+
+      var clock = FX.bindClock("p52", FRAMES, function (t, f) {
+        if (!imgs.img39) return;
+        var p = f / (FRAMES - 1);
+        // Flou radial proportionnel à la vitesse, éteint sur les 8 dernières images : la dernière image = P53 image 0.
+        var blur = 0.075 * (1 - FX.smooth(0.9, 1, p));
+        TR.ascent(ctx, stages, p, { accel: 1.8, blur: blur, samples: 9 });
+      });
+      window.__hf = window.__hf || {};
+      window.__hf.buildReady = window.__hf.buildReady || {};
+      window.__hf.buildReady["p52-plates"] = Promise.all(Object.keys(PLATES).map(function (k) {
+        return new Promise(function (res, rej) {
+          var im = new Image();
+          im.onload = function () { imgs[k] = im; res(); };
+          im.onerror = rej;
+          im.src = PLATES[k];
+        });
+      })).then(function () { clock.redraw(); });
+      window.__timelines["p52"] = clock.tl;
+    })();
+  </script>
+</template>

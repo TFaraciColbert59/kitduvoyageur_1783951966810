@@ -1,0 +1,36 @@
+<!-- OUVERTURE (images 0–105 à 24 i/s) — cosmos-vfx. Un seul mouvement de caméra, sans coupe :
+     nébuleuse (prélude silencieux) → effondrement, Soleil qui s'allume, disque et planètes qui filent → plongée sur la Terre.
+     Tout se recale sur la musique en changeant le bloc CONFIG ci-dessous (images à 24 i/s). -->
+<template>
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; background: #0B1F17; }
+    #ouverture-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .ouverture-plate { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; opacity: 0; pointer-events: none; }
+  </style>
+  <div id="root" data-composition-id="ouverture" data-width="1920" data-height="1080" data-duration="4.416666666666667">
+    <!-- Plaque de la Terre d'arrivée (img01, même raccord que l'ancien P01). Si elle manque, la Terre reste 100 % en code. -->
+    <img id="ouverture-plate" class="ouverture-plate" src="assets/footage/img01.png" alt="" />
+    <!-- img02 (Dolomites au lever) emboîtée dans img01 : prend le relais pendant la poussée finale vers les Alpes. -->
+    <img id="ouverture-plate2" class="ouverture-plate" src="assets/footage/img02.png" alt="" />
+    <canvas id="ouverture-canvas" width="1920" height="1080" data-layout-allow-overflow></canvas>
+  </div>
+  <script>
+    /* ===================== CONFIG — CALAGE MUSICAL (images à 24 i/s) =====================
+     * T_CREATION : fin du prélude silencieux, début de l'effondrement (entrée de STORM II).
+     * T_SOLEIL   : image du pic de l'éclair (le Soleil s'allume).
+     * T_TERRE    : la Terre remplit le cadre (raccord exact sur img01).
+     * DUREE      : longueur de la composition (images) ; reporter DUREE/24 dans les deux data-duration (ici et index.html).
+     * Garder T_CREATION + 3 <= T_SOLEIL <= T_TERRE - 8.
+     * Calage montage v3 (qa/MUSIQUE-V3.md) : zéro numérique jusqu'à l'image 13, musique audible vers 29,
+     * premier temps fort à 1,9405 s = image 47 (pic de l'éclair), première note franche à 4,414 s = image 106 (fin).
+     * Toutes les phases sont des progressions normalisées entre ces repères : rien d'autre à toucher. */
+    window.LKDV_OUVERTURE = {
+      T_CREATION: 35,
+      T_SOLEIL: 47,
+      T_TERRE: 59,
+      DUREE: 106,
+      FPS: 24,
+    };
+  </script>
+  <script src="lib/ouverture/ouverture.js"></script>
+</template>

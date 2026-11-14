@@ -1,0 +1,100 @@
+<!-- P51 (images 3192–3271, 79 images) — landscape-director. img38, gros plan : bus de nuit, Noah tombe sur le carnet de Léa ; écran VERT laissé intact (E13, ui-builder).
+     Entrée sur la montée de P50 : le contenu descend encore (cy 640 → 600, outCubic, 12 images), puis poussée lente S 1,16 → 1,24 vers le téléphone (cx 830 → 810).
+     Sortie (« la caméra s'arrache ») : arrachement vertical accéléré sur les 18 dernières images (cy −130, inCubic), flou vertical croissant, vers la remontée de P52 ; téléphone (≈ 500–685 × 480–790) entier jusqu'au bout.
+     Caméra : window.__lkdvCam.p51(f) → { S, cx, cy, rot }. -->
+<template>
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; background: #0B1F17; }
+    .p51-frame { position: absolute; inset: 0; overflow: hidden; }
+    .p51-shot, .p51-shot-inner { position: absolute; inset: 0; }
+    .p51-shot { opacity: 0; }
+    .p51-shot-img { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
+    #p51-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .p51-ph-src { position: absolute; left: 0; top: 0; width: 2px; height: 2px; overflow: hidden; opacity: 0; pointer-events: none; }
+    .p51-ph-src img { position: absolute; left: 0; top: 0; width: 2px; height: 2px; }
+  </style>
+  <div id="root" data-composition-id="p51" data-width="1920" data-height="1080" data-duration="1.3166666666666667">
+    <div id="p51-frame" class="p51-frame" data-layout-allow-overflow>
+      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) -->
+      <div id="p51-shot-1" class="p51-shot" data-src="img38" data-seq="0" data-seq-count="1">
+        <div id="p51-shot-1-inner" class="p51-shot-inner">
+          <img id="p51-shot-1-img" class="p51-shot-img" src="assets/footage/img38.png" alt="" />
+        </div>
+      </div>
+    <!-- hf-footage:end -->
+    </div>
+    <canvas data-color-grading="{&quot;preset&quot;:null,&quot;intensity&quot;:1,&quot;adjust&quot;:{&quot;exposure&quot;:0,&quot;contrast&quot;:0,&quot;highlights&quot;:0,&quot;shadows&quot;:0,&quot;whites&quot;:0,&quot;blacks&quot;:0,&quot;temperature&quot;:0,&quot;tint&quot;:0,&quot;vibrance&quot;:0,&quot;saturation&quot;:0},&quot;details&quot;:{&quot;vignette&quot;:0,&quot;vignetteMidpoint&quot;:0.5,&quot;vignetteRoundness&quot;:0,&quot;vignetteFeather&quot;:0.65,&quot;grain&quot;:0,&quot;grainSize&quot;:0.25,&quot;grainRoughness&quot;:0.5},&quot;effects&quot;:{&quot;blur&quot;:0,&quot;pixelate&quot;:0,&quot;chromaBleed&quot;:0,&quot;tapeDamage&quot;:0,&quot;tapeTracking&quot;:0,&quot;tapeNoise&quot;:1,&quot;tapeSpeed&quot;:0.5,&quot;filmArtifacts&quot;:0,&quot;halftone&quot;:0,&quot;halftoneSize&quot;:0,&quot;twoInkPrint&quot;:0,&quot;twoInkPrintSize&quot;:0,&quot;ascii&quot;:0,&quot;asciiSize&quot;:0.06578947368421052,&quot;asciiInvert&quot;:0,&quot;asciiStyle&quot;:0,&quot;asciiColor&quot;:1,&quot;asciiRotation&quot;:0,&quot;dither&quot;:0,&quot;ditherSize&quot;:0,&quot;bloom&quot;:0,&quot;bloomRadius&quot;:8,&quot;monoScreen&quot;:0,&quot;monoScreenSize&quot;:0,&quot;monoScreenAngle&quot;:0,&quot;monoScreenSpread&quot;:0,&quot;monoScreenShape&quot;:0,&quot;monoScreenInvert&quot;:0,&quot;scanlines&quot;:0,&quot;scanlineCount&quot;:0,&quot;scanlineSoftness&quot;:0,&quot;chromaticAberration&quot;:0,&quot;chromaticAngle&quot;:0,&quot;crtCurvature&quot;:0,&quot;digitalGlitch&quot;:0,&quot;digitalGlitchColorSplit&quot;:0,&quot;digitalGlitchLineTear&quot;:0,&quot;digitalGlitchPixelate&quot;:0,&quot;digitalGlitchBlockAmount&quot;:0,&quot;digitalGlitchBlockDisplacement&quot;:0,&quot;digitalGlitchBlockOpacity&quot;:0,&quot;digitalGlitchSpeed&quot;:0,&quot;engraving&quot;:0,&quot;engravingSpacing&quot;:0.4117647058823529,&quot;engravingMinThickness&quot;:0.2,&quot;engravingMaxThickness&quot;:0.4571428571428572,&quot;engravingAngle&quot;:0.25,&quot;engravingContrast&quot;:0.4666666666666667,&quot;engravingSharpness&quot;:0.59,&quot;engravingWave&quot;:0.2,&quot;engravingWaveFrequency&quot;:0.2222222222222222,&quot;crosshatch&quot;:0,&quot;crosshatchSpacing&quot;:0.28,&quot;crosshatchThickness&quot;:0.25,&quot;crosshatchAngle&quot;:0.25,&quot;crosshatchContrast&quot;:0.3333333333333333,&quot;crosshatchEdges&quot;:0.5,&quot;crosshatchLineWeight&quot;:0,&quot;crosshatchWave&quot;:0.33,&quot;crosshatchWaveFrequency&quot;:0.2222222222222222,&quot;kuwahara&quot;:0,&quot;kuwaharaRadius&quot;:0.14285714285714285,&quot;kuwaharaSharpness&quot;:0.3125,&quot;kuwaharaSaturation&quot;:0.5},&quot;lut&quot;:{&quot;src&quot;:&quot;assets/luts/lkdv-trailer.cube&quot;,&quot;intensity&quot;:1},&quot;colorSpace&quot;:&quot;rec709&quot;}" id="p51-canvas" width="1920" height="1080" data-layout-allow-overflow></canvas>
+    <!-- ui-builder : sources de l'incrustation (plaque percée + captures réelles), lues par le canvas -->
+    <div id="p51-ph-src" class="p51-ph-src" aria-hidden="true">
+        <img id="p51-ph-plate" src="assets/phone/img38.plate.png" alt="" />
+        <img id="p51-ph-s0" src="assets/phone/screens/E13-communaute-carnets-semaine.png" alt="" />
+    </div>
+  </div>
+  <script src="lib/fx/core.js"></script>
+  <script src="lib/phone/phone.js"></script>
+  <script>
+    (function () {
+      var FX = window.LKDVFX;
+      var W = 1920, H = 1080, INK = "#0B1F17";
+      var img = document.getElementById("p51-shot-1-img");
+      // ui-builder : écran incrusté dans l'image source (suit la caméra du plan au pixel, flou de mouvement compris)
+      var PH = window.LKDVPhone.compositor({ base: img, plate: document.getElementById("p51-ph-plate"), meta: {"box":[515,485,170,299],"corners":[[521.698,496.847],[597.655,494.913],[676.908,764.136],[602.926,775.112]],"radius":12.6,"blur":0.68,"ambient":{"rgb":[0.211,0.1907,0.216],"luminance":0.1969}}, states: [{ img: document.getElementById("p51-ph-s0") }], cam: function (f) { return camAt(f); }, level: 0.8, tint: 0.35 });
+      var SRC = img;
+      var ctx = document.getElementById("p51-canvas").getContext("2d");
+      function hand(f, amp, seed) {
+        return (FX.noise2(f * 0.09, 1.7, seed) - 0.5) * amp + (FX.noise2(f * 0.45, 5.3, seed + 7) - 0.5) * amp * 0.3;
+      }
+      function fit(c) {
+        var a = Math.abs(c.rot || 0), co = Math.cos(a), si = Math.sin(a);
+        var hx = (W / 2 * co + H / 2 * si) / c.S + 2, hy = (W / 2 * si + H / 2 * co) / c.S + 2;
+        c.cx = FX.clamp(c.cx, hx, W - hx);
+        c.cy = FX.clamp(c.cy, hy, H - hy);
+        return c;
+      }
+      function drawCam(c2, c, alpha) {
+        c2.globalAlpha = alpha;
+        c2.setTransform(1, 0, 0, 1, 0, 0);
+        c2.translate(W / 2, H / 2);
+        if (c.rot) c2.rotate(c.rot);
+        c2.scale(c.S, c.S);
+        c2.translate(-c.cx, -c.cy);
+        c2.drawImage(SRC, 0, 0, W, H);
+      }
+      function shoot(camAt, f, shutter) {
+        var a = camAt(f), b = camAt(f - shutter);
+        var d = Math.abs(a.S - b.S) * 1100 + (Math.abs(a.cx - b.cx) + Math.abs(a.cy - b.cy)) * a.S + Math.abs((a.rot || 0) - (b.rot || 0)) * 1100;
+        var n = FX.clamp(Math.ceil(d / 1.2), 1, 12);
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = INK;
+        ctx.fillRect(0, 0, W, H);
+        for (var i = 0; i < n; i++) drawCam(ctx, n === 1 ? a : camAt(f - (shutter * i) / (n - 1)), 1 / (i + 1));
+        ctx.globalAlpha = 1;
+      }
+
+      var N = 79;
+      var D = Math.PI / 180;
+      function camAt(f) {
+        var a = FX.ease.outCubic(FX.clamp(f / 12, 0, 1));
+        var k = FX.clamp(f / (N - 1), 0, 1);
+        var e = 0.5 - 0.5 * Math.cos(Math.PI * k);
+        var ex = FX.ease.inCubic(FX.clamp((f - (N - 18)) / 17, 0, 1));
+        var S = 1.16 + 0.08 * k;
+        var cx = 830 - 20 * e + hand(f, 3, 511);
+        var cy = 600 + 40 * (1 - a) - 130 * ex + hand(f, 2, 513) * (1 - ex);
+        var rot = D * hand(f, 0.3, 515);
+        return fit({ S: S, cx: cx, cy: cy, rot: rot });
+      }
+      window.__lkdvCam = window.__lkdvCam || {};
+      window.__lkdvCam.p51 = camAt;
+      var clock = FX.bindClock("p51", N, function (t, f) {
+        if (!img.complete || !img.naturalWidth) { ctx.fillStyle = INK; ctx.fillRect(0, 0, W, H); return; }
+        SRC = PH.frame(f);
+        shoot(camAt, f, 0.6 + 3.2 * FX.ease.inCubic(FX.clamp((f - (N - 18)) / 17, 0, 1)));
+      });
+      img.addEventListener("load", function () { clock.redraw(); });
+      Array.prototype.forEach.call(document.querySelectorAll("#p51-ph-src img"), function (n) { n.addEventListener("load", function () { clock.redraw(); }); });
+      window.__timelines["p51"] = clock.tl;
+    })();
+  </script>
+</template>

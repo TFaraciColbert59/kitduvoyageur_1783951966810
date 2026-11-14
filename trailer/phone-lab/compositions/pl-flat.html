@@ -1,0 +1,44 @@
+<template>
+  <link rel="stylesheet" href="lib/phone/phone.css" />
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; background: #0B1F17; }
+  </style>
+  <div id="root" data-composition-id="pl-flat" data-width="1920" data-height="1080" data-layout-allow-overflow>
+    <div id="pl-flat-cam" class="ph-cam">
+      <div id="pl-flat-screen" class="ph-screen" data-phone='{"corners":[[867.933,309.077],[1101.704,327.691],[1202.223,843.15],[731.267,815.789]],"radius":32.59,"blur":1.14,"ambient":{"rgb":[0.7488,0.7182,0.66],"luminance":0.7205}}'>
+        <img id="pl-flat-s0" class="ph-layer" src="assets/screens/E02b-compas-ou-saisi.png" alt="" style="opacity:1" />
+        <img id="pl-flat-s1" class="ph-layer" src="assets/screens/E02c-compas-preparation.png" alt="" style="opacity:0" />
+        <div class="ph-tint"></div>
+        <div class="ph-glare"></div>
+      </div>
+      <img id="pl-flat-plate" class="ph-plate" src="assets/plates/flat.keyed.png" alt="" />
+    </div>
+  </div>
+  <script src="lib/phone/phone.js"></script>
+  <script>
+    (function () {
+      var D = 1.5, CX = 975.8, CY = 573.9;
+      var cam = document.getElementById('pl-flat-cam');
+      var scr = document.getElementById('pl-flat-screen');
+      var timing = { states: [{"sel":"#pl-flat-s1","from":0.6,"to":0.9}] };
+      function ease(p) { return p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2; }
+      function pose(t) {
+        var p = ease(Math.max(0, Math.min(1, t / D)));
+        return { s: 1 + 0.07 * p, r: -1.4 * p, x: -26 * p, y: -10 * p };
+      }
+      function apply(t) {
+        var a = pose(t), b = pose(Math.max(0, t - 1 / 60));
+        cam.style.transformOrigin = CX + 'px ' + CY + 'px';
+        cam.style.transform = 'translate(' + a.x.toFixed(2) + 'px,' + a.y.toFixed(2) + 'px) rotate(' + a.r.toFixed(3) + 'deg) scale(' + a.s.toFixed(4) + ')';
+        var speed = Math.hypot(a.x - b.x, a.y - b.y, (a.s - b.s) * 900, (a.r - b.r) * 15) * 60;
+        window.LKDVPhone.render(scr, t, { x: a.x, y: a.y, speed: speed }, timing);
+      }
+      var st = { t: 0 };
+      var tl = gsap.timeline({ paused: true });
+      tl.fromTo(st, { t: 0 }, { t: D, duration: D, ease: 'none', onUpdate: function () { apply(st.t); } }, 0);
+      apply(0);
+      window.__timelines = window.__timelines || {};
+      window.__timelines['pl-flat'] = tl;
+    })();
+  </script>
+</template>

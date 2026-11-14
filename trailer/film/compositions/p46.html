@@ -1,0 +1,86 @@
+<!-- P46 (images 2848–2930, 82 images) — landscape-director. img35a → img35b, timelapse : la nuit tombe, la Voie lactée apparaît.
+     Entrée : P45 se termine posé ; le plan démarre presque immobile (S 1,04) et pousse lentement vers le feu (S 1,04 → 1,13, inOutSine).
+     Fondu 35a → 35b (mêmes cadrages, superposition exacte) de l'image 8 à 74, courbe douce ; aucun filé, pas de flou.
+     Sortie (« le feu ») : poussée continue vers le groupe, cx 960 → 985, cy 560 → 600. -->
+<template>
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; background: #0B1F17; }
+    .p46-frame { position: absolute; inset: 0; overflow: hidden; }
+    .p46-shot, .p46-shot-inner { position: absolute; inset: 0; }
+    .p46-shot { opacity: 0; }
+    .p46-shot-img { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
+    #p46-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  </style>
+  <div id="root" data-composition-id="p46" data-width="1920" data-height="1080" data-duration="1.3666666666666667">
+    <div id="p46-frame" class="p46-frame" data-layout-allow-overflow>
+      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) -->
+      <div id="p46-shot-1" class="p46-shot" data-src="img35a" data-seq="0" data-seq-count="2">
+        <div id="p46-shot-1-inner" class="p46-shot-inner">
+          <img id="p46-shot-1-img" class="p46-shot-img" src="assets/footage/img35a.png" alt="" />
+        </div>
+      </div>
+      <div id="p46-shot-2" class="p46-shot" data-src="img35b" data-seq="1" data-seq-count="2">
+        <div id="p46-shot-2-inner" class="p46-shot-inner">
+          <img id="p46-shot-2-img" class="p46-shot-img" src="assets/footage/img35b.png" alt="" />
+        </div>
+      </div>
+    <!-- hf-footage:end -->
+    </div>
+    <canvas data-color-grading="{&quot;preset&quot;:null,&quot;intensity&quot;:1,&quot;adjust&quot;:{&quot;exposure&quot;:0,&quot;contrast&quot;:0,&quot;highlights&quot;:0,&quot;shadows&quot;:0,&quot;whites&quot;:0,&quot;blacks&quot;:0,&quot;temperature&quot;:0,&quot;tint&quot;:0,&quot;vibrance&quot;:0,&quot;saturation&quot;:0},&quot;details&quot;:{&quot;vignette&quot;:0,&quot;vignetteMidpoint&quot;:0.5,&quot;vignetteRoundness&quot;:0,&quot;vignetteFeather&quot;:0.65,&quot;grain&quot;:0,&quot;grainSize&quot;:0.25,&quot;grainRoughness&quot;:0.5},&quot;effects&quot;:{&quot;blur&quot;:0,&quot;pixelate&quot;:0,&quot;chromaBleed&quot;:0,&quot;tapeDamage&quot;:0,&quot;tapeTracking&quot;:0,&quot;tapeNoise&quot;:1,&quot;tapeSpeed&quot;:0.5,&quot;filmArtifacts&quot;:0,&quot;halftone&quot;:0,&quot;halftoneSize&quot;:0,&quot;twoInkPrint&quot;:0,&quot;twoInkPrintSize&quot;:0,&quot;ascii&quot;:0,&quot;asciiSize&quot;:0.06578947368421052,&quot;asciiInvert&quot;:0,&quot;asciiStyle&quot;:0,&quot;asciiColor&quot;:1,&quot;asciiRotation&quot;:0,&quot;dither&quot;:0,&quot;ditherSize&quot;:0,&quot;bloom&quot;:0,&quot;bloomRadius&quot;:8,&quot;monoScreen&quot;:0,&quot;monoScreenSize&quot;:0,&quot;monoScreenAngle&quot;:0,&quot;monoScreenSpread&quot;:0,&quot;monoScreenShape&quot;:0,&quot;monoScreenInvert&quot;:0,&quot;scanlines&quot;:0,&quot;scanlineCount&quot;:0,&quot;scanlineSoftness&quot;:0,&quot;chromaticAberration&quot;:0,&quot;chromaticAngle&quot;:0,&quot;crtCurvature&quot;:0,&quot;digitalGlitch&quot;:0,&quot;digitalGlitchColorSplit&quot;:0,&quot;digitalGlitchLineTear&quot;:0,&quot;digitalGlitchPixelate&quot;:0,&quot;digitalGlitchBlockAmount&quot;:0,&quot;digitalGlitchBlockDisplacement&quot;:0,&quot;digitalGlitchBlockOpacity&quot;:0,&quot;digitalGlitchSpeed&quot;:0,&quot;engraving&quot;:0,&quot;engravingSpacing&quot;:0.4117647058823529,&quot;engravingMinThickness&quot;:0.2,&quot;engravingMaxThickness&quot;:0.4571428571428572,&quot;engravingAngle&quot;:0.25,&quot;engravingContrast&quot;:0.4666666666666667,&quot;engravingSharpness&quot;:0.59,&quot;engravingWave&quot;:0.2,&quot;engravingWaveFrequency&quot;:0.2222222222222222,&quot;crosshatch&quot;:0,&quot;crosshatchSpacing&quot;:0.28,&quot;crosshatchThickness&quot;:0.25,&quot;crosshatchAngle&quot;:0.25,&quot;crosshatchContrast&quot;:0.3333333333333333,&quot;crosshatchEdges&quot;:0.5,&quot;crosshatchLineWeight&quot;:0,&quot;crosshatchWave&quot;:0.33,&quot;crosshatchWaveFrequency&quot;:0.2222222222222222,&quot;kuwahara&quot;:0,&quot;kuwaharaRadius&quot;:0.14285714285714285,&quot;kuwaharaSharpness&quot;:0.3125,&quot;kuwaharaSaturation&quot;:0.5},&quot;lut&quot;:{&quot;src&quot;:&quot;assets/luts/lkdv-trailer.cube&quot;,&quot;intensity&quot;:1},&quot;colorSpace&quot;:&quot;rec709&quot;}" id="p46-canvas" width="1920" height="1080" data-layout-allow-overflow></canvas>
+  </div>
+  <script src="lib/fx/core.js"></script>
+  <script>
+    (function () {
+      var FX = window.LKDVFX;
+      var W = 1920, H = 1080, INK = "#0B1F17";
+      var imA = document.getElementById("p46-shot-1-img");
+      var imB = document.getElementById("p46-shot-2-img");
+      var ctx = document.getElementById("p46-canvas").getContext("2d");
+      function hand(f, amp, seed) {
+        return (FX.noise2(f * 0.06, 1.7, seed) - 0.5) * amp;
+      }
+      function fit(c) {
+        var a = Math.abs(c.rot || 0), co = Math.cos(a), si = Math.sin(a);
+        var hx = (W / 2 * co + H / 2 * si) / c.S + 2, hy = (W / 2 * si + H / 2 * co) / c.S + 2;
+        c.cx = FX.clamp(c.cx, hx, W - hx);
+        c.cy = FX.clamp(c.cy, hy, H - hy);
+        return c;
+      }
+      function drawCam(im, c, alpha) {
+        ctx.globalAlpha = alpha;
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.translate(W / 2, H / 2);
+        if (c.rot) ctx.rotate(c.rot);
+        ctx.scale(c.S, c.S);
+        ctx.translate(-c.cx, -c.cy);
+        ctx.drawImage(im, 0, 0, W, H);
+      }
+      var N = 82;
+      function camAt(f) {
+        var k = FX.clamp(f / (N - 1), 0, 1);
+        var e = 0.5 - 0.5 * Math.cos(Math.PI * k);
+        var S = 1.04 + 0.09 * (0.35 * k + 0.65 * e);
+        var cx = 960 + 25 * e + hand(f, 1.5, 461);
+        var cy = 560 + 40 * e + hand(f, 1.2, 463);
+        return fit({ S: S, cx: cx, cy: cy, rot: 0 });
+      }
+      function ready(im) { return im.complete && im.naturalWidth; }
+      var clock = FX.bindClock("p46", N, function (t, f) {
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = INK;
+        ctx.fillRect(0, 0, W, H);
+        if (!ready(imA) || !ready(imB)) return;
+        var c = camAt(f);
+        var m = FX.clamp((f - 8) / 66, 0, 1);
+        m = m * m * (3 - 2 * m);
+        drawCam(imA, c, 1);
+        if (m > 0) drawCam(imB, c, m);
+        ctx.globalAlpha = 1;
+      });
+      imA.addEventListener("load", function () { clock.redraw(); });
+      imB.addEventListener("load", function () { clock.redraw(); });
+      window.__timelines["p46"] = clock.tl;
+    })();
+  </script>
+</template>

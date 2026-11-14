@@ -1,0 +1,58 @@
+<!-- P02 (images 89–166, 77 images) — cosmos-vfx. Entrée dans le flash solaire (mêmes réglages que la sortie de P01),
+     poussée de téléobjectif qui accélère vers les Dolomites (centre de l'image), sortie en plongée avec flou radial
+     croissant, raccord dans la même direction sur P03. Tout est fonction de l'image locale. -->
+<template>
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; background: #0B1F17; }
+    .p02-frame { position: absolute; inset: 0; overflow: hidden; }
+    .p02-shot, .p02-shot-inner { position: absolute; inset: 0; }
+    .p02-shot { opacity: 0; }
+    .p02-shot-img { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
+    #p02-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  </style>
+  <div id="root" data-composition-id="p02" data-width="1920" data-height="1080" data-duration="1.2833333333333334">
+    <div id="p02-frame" class="p02-frame" data-layout-allow-overflow>
+      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) -->
+      <div id="p02-shot-1" class="p02-shot" data-src="img02" data-seq="0" data-seq-count="1">
+        <div id="p02-shot-1-inner" class="p02-shot-inner">
+          <img id="p02-shot-1-img" class="p02-shot-img" src="assets/footage/img02.png" alt="" />
+        </div>
+      </div>
+    <!-- hf-footage:end -->
+    </div>
+    <canvas id="p02-canvas" width="1920" height="1080" data-layout-allow-overflow></canvas>
+  </div>
+  <script src="lib/fx/core.js"></script>
+  <script src="lib/fx/transitions.js"></script>
+  <script>
+    (function () {
+      var FX = window.LKDVFX, TR = FX.Transitions;
+      var N = 77, W = 1920, H = 1080;
+      var O = [960, 450]; // les Dolomites, au centre d'img02
+      var img = document.getElementById("p02-shot-1-img");
+      var ctx = document.getElementById("p02-canvas").getContext("2d");
+      var buf = FX.canvas(W, H), bx = buf.getContext("2d");
+      var clock = FX.bindClock("p02", N, function (t, f) {
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.fillStyle = "#0B1F17";
+        ctx.fillRect(0, 0, W, H);
+        if (!img.complete || !img.naturalWidth) return;
+        var u = f / (N - 1);
+        // Poussée qui accélère (vitesse maximale sur la coupe), échelle ≥ 1,08 : les bords ne se découvrent jamais.
+        var s = 1.08 + 0.18 * u + 0.5 * u * u * u;
+        // Plongée : la caméra bascule vers le bas sur la fin (l'image monte).
+        var dive = FX.ease.inQuad(FX.ramp(44, N - 1, f));
+        var ty = -70 * dive;
+        bx.setTransform(s, 0, 0, s, O[0] - O[0] * s, O[1] - O[1] * s + ty);
+        bx.drawImage(img, 0, 0, W, H);
+        var amount = 0.11 * FX.ease.inQuad(FX.ramp(40, N - 1, f));
+        if (amount > 0.002) TR.radialBlur(ctx, buf, { amount: amount, origin: [960, 540], samples: 10 });
+        else ctx.drawImage(buf, 0, 0);
+        // Entrée dans le flash solaire (coupe P01→P02).
+        TR.solarFlash(ctx, f, { cut: 0, pre: 2, post: 5, origin: [1786, 352] }); // CORRECTIONS-1 : blanc fondu sur 5 images
+      });
+      img.addEventListener("load", function () { clock.redraw(); });
+      window.__timelines["p02"] = clock.tl;
+    })();
+  </script>
+</template>

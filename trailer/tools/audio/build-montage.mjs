@@ -1,0 +1,46 @@
+#!/usr/bin/env node
+// Montage musical de 60 s : applique à l'identique la commande FFmpeg de MUSIQUE.md,
+// puis vérifie 48 kHz, 24 bits, exactement 2 880 000 échantillons (60,000 s).
+// Usage : node tools/audio/build-montage.mjs                    (storm-ii.mp3 → storm-ii-montage-60s.wav)
+//         node tools/audio/build-montage.mjs --v2               (montage v2 de qa/SON-AUDIT.md → storm-ii-montage-60s-v2.wav)
+//         node tools/audio/build-montage.mjs --v3               (montage v3 de qa/MUSIQUE-V3.md → storm-ii-montage-60s-v3.wav, non normalisé)
+//         node tools/audio/build-montage.mjs --input X --out Y  (essai sur un fichier de substitution)
+import { existsSync } from 'node:fs';
+import { DURATION, MONTAGE, MONTAGE_FILTER, MONTAGE_V2, MONTAGE_V3, MP3, SR, ffmpegVersion, montageV2Filter, montageV3Filter, probe, run } from './lib.mjs';
+
+export function buildMontage(input = MP3, out = MONTAGE, filter = MONTAGE_FILTER, codec = 'pcm_s24le') {
+  if (!existsSync(input)) {
+    const err = new Error(
+      `MP3 absent : ${input}\n` +
+      '  STORM II (GENER8ION) est un titre commercial, non versionné et jamais téléchargé par les agents.\n' +
+      '  Déposez le fichier fourni par Tony à cet emplacement, puis relancez : node tools/audio/build-all.mjs');
+    err.code = 'NO_MP3';
+    throw err;
+  }
+  run('ffmpeg', ['-hide_banner', '-v', 'error', '-y', '-i', input, '-filter_complex', filter,
+    '-map', '[o]', '-ar', String(SR), '-c:a', codec, out]);
+  const p = probe(out);
+  const expected = SR * DURATION;
+  const problems = [];
+  if (p.sampleRate !== SR) problems.push(`fréquence ${p.sampleRate} Hz au lieu de ${SR}`);
+  if (p.codec !== codec) problems.push(`codec ${p.codec} au lieu de ${codec}`);
+  if (p.samples !== expected) problems.push(`${p.samples} échantillons au lieu de ${expected} (${p.duration} s)`);
+  if (problems.length) throw new Error(`Montage non conforme (${out}) : ${problems.join(' ; ')}`);
+  return { out, ...p, ffmpeg: ffmpegVersion() };
+}
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+  const arg = (k) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : undefined; };
+  try {
+    const v2 = process.argv.includes('--v2');
+    const v3 = process.argv.includes('--v3');
+    const r = buildMontage(arg('--input') ?? MP3, arg('--out') ?? (v3 ? MONTAGE_V3 : v2 ? MONTAGE_V2 : MONTAGE),
+      v3 ? montageV3Filter() : v2 ? montageV2Filter() : MONTAGE_FILTER,
+      // v3 : flottant 32 bits, pour ne rien écrêter avant le gain du mastering (le MP3 décodé dépasse parfois 0 dBFS).
+      v3 ? 'pcm_f32le' : 'pcm_s24le');
+    console.log(`✓ ${r.out}\n  ${r.samples} échantillons = ${(r.samples / r.sampleRate).toFixed(6)} s · ${r.sampleRate} Hz · ${r.codec} · ${r.channels} canaux · ${r.ffmpeg}`);
+  } catch (e) {
+    console.error(`✗ ${e.message}`);
+    process.exit(e.code === 'NO_MP3' ? 2 : 1);
+  }
+}

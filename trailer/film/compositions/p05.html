@@ -1,0 +1,123 @@
+<!-- P05 (images 272–325, 53 images) — cosmos-vfx. Plongée verticale qui accélère vers la fenêtre éclairée au centre
+     d'img05 (vitre mesurée : 939,505 → 979,567), TR.glassPass jusqu'au passage de la vitre sur la dernière image
+     (p = 0,62 = pass, éclat chaud) : la dernière image montre déjà l'intérieur (img06), prête pour la coupe
+     sur P06 au drop (image 325). Tout est fonction de l'image locale. -->
+<template>
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; background: #0B1F17; }
+    .p05-frame { position: absolute; inset: 0; overflow: hidden; }
+    .p05-shot, .p05-shot-inner { position: absolute; inset: 0; }
+    .p05-shot { opacity: 0; }
+    .p05-shot-img { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
+    #p05-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  </style>
+  <div id="root" data-composition-id="p05" data-width="1920" data-height="1080" data-duration="0.8833333333333333">
+    <div id="p05-frame" class="p05-frame" data-layout-allow-overflow>
+      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) -->
+      <div id="p05-shot-1" class="p05-shot" data-src="img05" data-seq="0" data-seq-count="1">
+        <div id="p05-shot-1-inner" class="p05-shot-inner">
+          <img id="p05-shot-1-img" class="p05-shot-img" src="assets/footage/img05.png" alt="" />
+        </div>
+      </div>
+    <!-- hf-footage:end -->
+      <!-- Intérieur vu à travers la vitre (plaque de P06), source du canevas uniquement. -->
+      <img id="p05-inside-img" class="p05-shot-img" src="assets/footage/img06.png" alt="" style="opacity: 0" />
+    </div>
+    <canvas id="p05-canvas" width="1920" height="1080" data-layout-allow-overflow></canvas>
+  </div>
+  <script src="lib/fx/core.js"></script>
+  <script src="lib/fx/transitions.js"></script>
+  <script>
+    (function () {
+      var FX = window.LKDVFX, TR = FX.Transitions;
+      var N = 53, W = 1920, H = 1080;
+      var RECT = [939, 505, 40, 62]; // la vitre éclairée d'img05
+      var PASS = 0.62;
+      var img = document.getElementById("p05-shot-1-img");
+      var inside = document.getElementById("p05-inside-img");
+      var ctx = document.getElementById("p05-canvas").getContext("2d");
+      var buf = FX.canvas(W, H), bx = buf.getContext("2d");
+      /* CORRECTIONS-2 : approche de la vitre en perspective. La pièce (img06 entière, sans halo) REMPLIT l'ouverture
+       * de la fenêtre (couvre sa hauteur), centrée sur elle ; elle grandit avec la fenêtre jusqu'à atteindre l'échelle
+       * de la première image « dedans » (1,08 plein cadre), puis grandit moins vite que le cadre (parallaxe : la pièce
+       * est derrière la vitre) ; le cadre sort du champ par les bords vers l'image 322. Même éclat que glassPass. */
+      var SF_LOCAL = (W / RECT[2]) * 1.6;
+      var drops = null;
+      var tc = FX.canvas(W, H), tcx = tc.getContext("2d");
+      function approach(out, p) {
+        if (!drops) {
+          var rnd = FX.mulberry32(6);
+          drops = [];
+          for (var i = 0; i < 90; i++) drops.push([rnd(), rnd(), 0.004 + 0.012 * Math.pow(rnd(), 2), rnd()]);
+        }
+        var rcx = RECT[0] + RECT[2] / 2, rcy = RECT[1] + RECT[3] / 2;
+        var k = FX.ease.inCubic(FX.ramp(0, PASS, p));
+        var S = Math.exp(Math.log(SF_LOCAL) * k);
+        var cx = FX.lerp(rcx, W / 2, k), cy = FX.lerp(rcy, H / 2, k);
+        tcx.setTransform(1, 0, 0, 1, 0, 0);
+        tcx.fillStyle = "#0B1F17";
+        tcx.fillRect(0, 0, W, H);
+        tcx.setTransform(S, 0, 0, S, cx - rcx * S, cy - rcy * S);
+        tcx.drawImage(img, 0, 0, W, H);
+        tcx.save();
+        tcx.beginPath();
+        tcx.rect(RECT[0], RECT[1], RECT[2], RECT[3]);
+        tcx.clip();
+        // La pièce, en espace écran, centrée sur l'ouverture.
+        tcx.setTransform(1, 0, 0, 1, 0, 0);
+        var Sin = Math.min(1.08, Math.max((RECT[3] * S) / H, (RECT[2] * S) / W) * 1.02);
+        tcx.drawImage(inside, cx - (W * Sin) / 2, cy - (H * Sin) / 2, W * Sin, H * Sin);
+        // Vitre : reflet bleuté et gouttes (repère de la fenêtre).
+        tcx.setTransform(S, 0, 0, S, cx - rcx * S, cy - rcy * S);
+        var rg = tcx.createLinearGradient(RECT[0], RECT[1], RECT[0] + RECT[2], RECT[1] + RECT[3]);
+        rg.addColorStop(0, "rgba(140,170,210,0.18)");
+        rg.addColorStop(0.5, "rgba(250,248,245,0.04)");
+        rg.addColorStop(1, "rgba(60,90,130,0.16)");
+        tcx.fillStyle = rg;
+        tcx.fillRect(RECT[0], RECT[1], RECT[2], RECT[3]);
+        tcx.fillStyle = "rgba(250,248,245,0.2)";
+        for (var d = 0; d < drops.length; d++) {
+          var dr = drops[d];
+          tcx.beginPath();
+          tcx.arc(RECT[0] + dr[0] * RECT[2], RECT[1] + dr[1] * RECT[3], dr[2] * RECT[2], 0, Math.PI * 2);
+          tcx.fill();
+        }
+        tcx.restore();
+        tcx.setTransform(1, 0, 0, 1, 0, 0);
+        out.setTransform(1, 0, 0, 1, 0, 0);
+        FX.zoomBlur(out, tc, W / 2, H / 2, 0.08 * k * k, 8, W, H);
+        var fl = Math.exp(-Math.pow((p - PASS) / 0.06, 2));
+        if (fl > 0.01) {
+          out.globalCompositeOperation = "lighter";
+          out.fillStyle = "rgba(255,214,160," + (0.55 * fl).toFixed(3) + ")";
+          out.fillRect(0, 0, W, H);
+          out.globalCompositeOperation = "source-over";
+        }
+      }
+      var clock = FX.bindClock("p05", N, function (t, f) {
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.fillStyle = "#0B1F17";
+        ctx.fillRect(0, 0, W, H);
+        if (!img.complete || !img.naturalWidth) return;
+        var u = f / (N - 1);
+        // Départ à p = 0,2 : la plongée est déjà lancée sur la coupe P04→P05 (pas de départ arrêté).
+        var p = f >= N - 1 ? PASS : FX.lerp(0.2, PASS, u);
+        bx.setTransform(1, 0, 0, 1, 0, 0);
+        bx.fillStyle = "#0B1F17";
+        bx.fillRect(0, 0, W, H);
+        if (p >= PASS - 1e-9 || !inside.complete || !inside.naturalWidth)
+          TR.glassPass(bx, img, inside, p, { rect: RECT, pass: PASS, drops: 90, seed: 6 });
+        else approach(bx, p);
+        // Flou radial de vitesse : repris de P04 au début, puis porté par glassPass.
+        var amount = 0.045 * (1 - FX.smooth(0, 24, f)) + 0.03 * u * u;
+        // CORRECTIONS-1 : le flou radial de fin de P04 (0,08) est prolongé et décroît sur les 3 premières images.
+        amount = Math.max(amount, 0.08 * (1 - f / 3));
+        if (p < PASS - 1e-9) TR.radialBlur(ctx, buf, { amount: amount, origin: [960, 540], samples: 8 });
+        else ctx.drawImage(buf, 0, 0);
+      });
+      img.addEventListener("load", function () { clock.redraw(); });
+      inside.addEventListener("load", function () { clock.redraw(); });
+      window.__timelines["p05"] = clock.tl;
+    })();
+  </script>
+</template>
