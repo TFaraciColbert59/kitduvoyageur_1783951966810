@@ -81,9 +81,13 @@ function lensFilter(w: number, h: number, r: number, bz: number, sc: number): st
     s.setAttribute('height', '0');
     s.setAttribute('aria-hidden', 'true');
     s.style.position = 'absolute';
-    s.innerHTML = '<defs id="lensdefs"></defs>';
+    // Le nœud est créé et gardé en main : le relire par son identifiant après `innerHTML` rendait parfois
+    // `null` (erreur « reading 'appendChild' » relevée sur l'aperçu du 14/11).
+    const created = document.createElementNS(NS, 'defs');
+    created.id = 'lensdefs';
+    s.appendChild(created);
     document.body.appendChild(s);
-    defs = document.getElementById('lensdefs') as unknown as SVGDefsElement;
+    defs = created as SVGDefsElement;
   }
   const f = document.createElementNS(NS, 'filter');
   f.id = id;
