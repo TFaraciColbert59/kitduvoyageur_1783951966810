@@ -450,20 +450,6 @@
       "de": "Richtwerte aus der Preistabelle sind nicht die Preise der Unterkunft: Fragen Sie dort nach, bevor Sie buchen.",
       "it": "I prezzi indicativi da tabella non sono le tariffe della struttura: verifichi con essa prima di prenotare."
     },
-    "bookAll": {
-      "fr": "Tout réserver",
-      "en": "Book everything",
-      "es": "Reservar todo",
-      "de": "Alles buchen",
-      "it": "Prenotare tutto"
-    },
-    "bookAllAmount": {
-      "fr": "Tout réserver · {amount}",
-      "en": "Book everything · {amount}",
-      "es": "Reservar todo · {amount}",
-      "de": "Alles buchen · {amount}",
-      "it": "Prenotare tutto · {amount}"
-    },
     "bookAllNone": {
       "fr": "Rien à réserver pour l’instant : ce voyage n’a ni nuit ni trajet à prévoir.",
       "en": "Nothing to book for now: this trip has no night or journey to plan.",

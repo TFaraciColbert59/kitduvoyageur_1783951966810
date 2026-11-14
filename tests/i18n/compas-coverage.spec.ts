@@ -89,7 +89,8 @@ describe('i18n Compas — dictionnaires FR / EN', () => {
     // Écran v5 : tous ses fichiers (hors tests). Une clé y peut être écrite en entier, composée par un gabarit
     // (`compas.v5.verifs.${f}`), ou lue par suffixe dans les zones à accès typé (`tx('group.gearDone')`) ; le
     // typage garantit l'existence des deux dernières.
-    const v5Sources = v5Files('src/features/compas/v5').map(read).join('\n');
+    // `engine/resaPlan.ts` (moteur pur du plan « À prévoir ») écrit lui aussi des clés `compas.v5.resa.…`.
+    const v5Sources = [...v5Files('src/features/compas/v5'), 'src/features/compas/engine/resaPlan.ts'].map(read).join('\n');
     const v5Used = new Set([...v5Sources.matchAll(/['"`](compas\.v5\.[\w.]+)['"`]/g)].map((m) => m[1]));
     const v5Prefixes = [...v5Sources.matchAll(/`(compas\.v5\.[\w.]*)\$\{/g)].map((m) => m[1]);
     const v5Suffixes = new Set([...v5Sources.matchAll(/['"`]([\w]+(?:\.[\w]+)*)['"`]/g)].map((m) => m[1]));

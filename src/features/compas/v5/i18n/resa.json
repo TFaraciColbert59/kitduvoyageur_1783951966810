@@ -443,13 +443,6 @@
       "de": "Ausgeblendet: {label}",
       "it": "Nascosto: {label}"
     },
-    "unskippedMsg": {
-      "fr": "À réserver de nouveau : {label}",
-      "en": "To book again: {label}",
-      "es": "De nuevo por reservar: {label}",
-      "de": "Wieder zu buchen: {label}",
-      "it": "Di nuovo da prenotare: {label}"
-    },
     "hiddenOne": {
       "fr": "{count} ligne masquée",
       "en": "{count} line hidden",
