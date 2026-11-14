@@ -474,8 +474,10 @@ export function useCompasController(
             compasUndoAutofillAction({ tripId: model.tripId, tripSlug: model.slug })
           );
         // La carte n'a pas répondu : les étapes manquent, la préparation ne se dit pas « prête » (elles se rejouent seules).
-        const partial = res.summary.itinerary === 'source_silent';
-        const missing = t('compas.screen.prepPartialMissing');
+        // Zone où la carte n'a trouvé presque aucun lieu : même franchise, sans promettre que les étapes arriveront.
+        const poor = res.summary.itinerary === 'poor_zone';
+        const partial = res.summary.itinerary === 'source_silent' || poor;
+        const missing = t(poor ? 'compas.screen.prepPartialPoor' : 'compas.screen.prepPartialMissing');
         const done = partial ? t('compas.screen.prepPartial') : redo ? redo.label : t('compas.screen.prepDone');
         if (prepRef.current && prepRef.current.stage !== 'stopped')
           setPrep({

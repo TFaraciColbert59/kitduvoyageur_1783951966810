@@ -31,6 +31,7 @@ export const compasScreenEs: Shape<typeof compasScreenFr> = {
     prepDone: 'Aventura preparada',
     prepPartial: 'Aventura preparada en parte',
     prepPartialMissing: 'Faltan las etapas del recorrido: llegarán cuando el mapa responda.',
+    prepPartialPoor: 'Faltan las etapas del recorrido: el mapa apenas encontró lugares en esta zona. Amplía la zona o elige un lugar cercano.',
     prepBudget: 'Presupuesto: {amount}',
     kept: 'Conservado: {list}',
     lostKept: 'Conexión perdida: lo hecho se conserva. Reanude cuando quiera.',

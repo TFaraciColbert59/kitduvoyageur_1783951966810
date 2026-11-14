@@ -89,10 +89,12 @@ export async function cached<T>(
   key: string,
   ttlSeconds: number,
   compute: () => Promise<T>,
-  keep: (value: T) => boolean = (v) => v != null
+  keep: (value: T) => boolean = (v) => v != null,
+  /** Une entrée gardée que l'on ne veut plus servir (écrite avant un durcissement de `keep`) : recalculée. */
+  accept: (hit: T) => boolean = () => true
 ): Promise<T> {
   const hit = await readShared<T>(kind, key);
-  if (hit !== undefined) return hit;
+  if (hit !== undefined && accept(hit)) return hit;
   const value = await compute();
   if (keep(value)) await writeShared(kind, key, value, ttlSeconds);
   return value;

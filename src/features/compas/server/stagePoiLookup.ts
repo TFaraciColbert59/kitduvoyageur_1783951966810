@@ -394,6 +394,9 @@ export async function lookupAreaPlaces(
       if (places.length) return withRef(places);
       return thinSilent(withRef(fromGeoapify && fromGeoapify.length > (fromPhoton?.length ?? 0) ? fromGeoapify : fromPhoton), payload != null);
     },
-    (v) => Array.isArray(v) && v.length > 0 && !silent
+    // Une zone maigre n'est jamais partagée : gardée un mois, elle a servi des itinéraires vides (aperçu du
+    // 14/11, Tatras : un seul lieu relu du cache). Les entrées maigres déjà écrites ne sont plus servies.
+    (v) => Array.isArray(v) && v.length >= THIN_AREA && !silent,
+    (hit) => Array.isArray(hit) && hit.length >= THIN_AREA
   );
 }

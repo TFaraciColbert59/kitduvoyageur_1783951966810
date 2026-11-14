@@ -64,7 +64,7 @@ describe('Aperçu du 14/11 — source muette : l’état de la recherche des lie
     expect(wouldKeep(found)).toBe(false);
   });
 
-  it('Overpass répond avec un seul lieu : la zone est pauvre, pas muette ; gardé comme avant', async () => {
+  it('Overpass répond avec un seul lieu : la zone est pauvre, pas muette ; une zone maigre n’est plus gardée', async () => {
     overpassPost.mockImplementation(
       async () => new Response(JSON.stringify({ elements: [{ type: 'node', id: 7, lat: 49.26, lon: 19.88, tags: { place: 'village', name: 'Kościelisko' } }] }), { status: 200 })
     );
@@ -72,7 +72,8 @@ describe('Aperçu du 14/11 — source muette : l’état de la recherche des lie
     const found = await lookupAreaPlaces(ZONE, later(), [], status);
     expect(found?.map((p) => p.name)).toEqual(['Kościelisko']);
     expect(status.silent).toBe(false);
-    expect(wouldKeep(found)).toBe(true);
+    // Aperçu du 14/11 : gardée un mois, cette zone à un lieu a servi des itinéraires vides.
+    expect(wouldKeep(found)).toBe(false);
   });
 
   it('Overpass répond sans aucun lieu : zone vide, pas muette', async () => {
@@ -104,5 +105,34 @@ describe('Aperçu du 14/11 — source muette : l’état de la recherche des lie
     const found = await lookupAreaPlaces(ZONE, later());
     expect(found?.map((p) => p.name)).toEqual(['Kościelisko']);
     expect(wouldKeep(found)).toBe(false);
+  });
+});
+
+describe('Aperçu du 14/11 — zone maigre jamais servie du cache', () => {
+  beforeEach(() => {
+    vi.stubGlobal('fetch', fetchMock);
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+  /** Le filtre de lecture du cache (6e argument de `cached`) de la dernière recherche. */
+  const wouldServe = (hit: unknown) => (vi.mocked(cached).mock.calls.at(-1)?.[5] as (v: unknown) => boolean)(hit);
+  const place = (n: number) => Array.from({ length: n }, (_, i) => ({ name: `Lieu ${i}` }));
+
+  it('une zone de moins de trois lieux n’est ni gardée ni relue du cache, même si la carte a répondu', async () => {
+    await lookupAreaPlaces(ZONE, later());
+    expect(wouldKeep(place(1))).toBe(false);
+    expect(wouldKeep(place(2))).toBe(false);
+    expect(wouldServe(place(1))).toBe(false);
+    expect(wouldServe(place(2))).toBe(false);
+  });
+
+  it('une zone de trois lieux ou plus reste partagée et servie', async () => {
+    photon = villages(['Kościelisko', 'Zakopane', 'Poronin']);
+    await lookupAreaPlaces(ZONE, later());
+    photon = villages(['Kościelisko']);
+    expect(wouldKeep(place(3))).toBe(true);
+    expect(wouldServe(place(12))).toBe(true);
   });
 });
