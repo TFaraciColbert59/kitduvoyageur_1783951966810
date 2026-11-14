@@ -22,7 +22,7 @@ export const PLANS = {
   p29: { src: 'img46', states: [['E08-explorer-trace-6k4']] },
   p31: { src: 'img22', states: [['E09-carnet-moment-photo']] },
   p36: { src: 'img27', states: [['E10-explorer-en-course']] },
-  p48: { src: 'img37', states: [['E11x-carnet-verdicts-vide']], level: 0.8, tint: 0.35 },
+  p48: { src: 'img37', states: [['E09-carnet-moment-photo']], level: 0.8, tint: 0.35 },
   p49: { src: 'img37', states: [['E12-carnet-partage-public']], level: 0.8, tint: 0.35 },
   p51: { src: 'img38', states: [['E13-communaute-carnets-semaine']], level: 0.8, tint: 0.35 },
 };
