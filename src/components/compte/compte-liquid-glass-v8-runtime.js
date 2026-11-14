@@ -1079,9 +1079,12 @@ let lensFilter = function(w, h, r, bz, sc) {
   if (!defs) {
     const s = document.createElementNS(NS, "svg");
     s.setAttribute("width", "0"); s.setAttribute("height", "0"); s.setAttribute("aria-hidden", "true"); s.style.position = "absolute";
-    s.innerHTML = '<defs id="lensdefs"></defs>';
+    // Le nœud est créé et gardé en main : `$` le cherchait dans une racine qui peut avoir été démontée
+    // (navigation vers une autre page), d'où « reading 'appendChild' » sur null (aperçu du 14/11).
+    defs = document.createElementNS(NS, "defs");
+    defs.id = "lensdefs";
+    s.appendChild(defs);
     document.body.appendChild(s);
-    defs = $("lensdefs");
   }
   const f = document.createElementNS(NS, "filter");
   f.id = id; f.setAttribute("x", "0"); f.setAttribute("y", "0"); f.setAttribute("width", w); f.setAttribute("height", h);
