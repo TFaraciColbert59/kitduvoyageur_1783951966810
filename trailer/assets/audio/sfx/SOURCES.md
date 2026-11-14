@@ -1,6 +1,6 @@
 # Banque d'effets du trailer : provenance et licences
 
-31 fichiers WAV, 48 kHz, 24 bits, mono, crête échantillon à −3,0 dBFS (mesurée avec `volumedetect`, FFmpeg 6.1.1), 7 à 450 Ko chacun, 5,6 Mo en tout. **Uniquement du CC0 ou des sons générés.** Tous ont été mesurés, aucun n'a été écouté.
+34 fichiers WAV, 48 kHz, 24 bits, mono, crête échantillon à −3,0 dBFS (mesurée avec `volumedetect`, FFmpeg 6.1.1 ; les 3 sons d'habillage v4 sont écrits avec FFmpeg 6.0), 7 à 450 Ko chacun, 5,6 Mo en tout. **Uniquement du CC0 ou des sons générés.** Tous ont été mesurés, aucun n'a été écouté.
 
 ## Prises réelles CC0 : Kenney (4 fichiers)
 
@@ -17,7 +17,7 @@ Import : `node tools/audio/import-cc0.mjs <dossier des clones>` (rognage, mono, 
 
 Le `weapon_change.ogg` d'origine semble atteindre 0 dBFS : sa première passe de normalisation a dû être corrigée. Ce son est peut-être écrêté à la source, il faut l'écouter.
 
-## Sons générés (27 fichiers)
+## Sons générés (30 fichiers)
 
 Ils sont faits par synthèse de bruit filtré (rose, blanc ou brun, filtres à variables d'état, enveloppes), avec une graine fixe : deux exécutions donnent des fichiers identiques. Tony a explicitement autorisé cette méthode. Aucun droit de tiers. La recette de chaque son est écrite dans `tools/audio/gen-sfx.mjs` (objet `RECIPES`, avec ses paramètres et sa graine). La commande exacte est `node tools/audio/gen-sfx.mjs <nom>`, ou la même commande sans argument pour tout régénérer. Outils : `tools/audio/synth.mjs`, Node 22, FFmpeg 6.1.1 pour l'écriture du WAV.
 
@@ -41,6 +41,9 @@ Ils sont faits par synthèse de bruit filtré (rose, blanc ou brun, filtres à v
 | `eclaboussure-torrent.wav` | gerbe de bruit en passe-bande + gouttes qui retombent (161) |
 | `montee-riser.wav` | passe-bande et niveau qui montent pendant 2,9 s, pic à la fin (171) |
 | `impact-final.wav` | sous-grave long (95→30 Hz) + crash, 2,6 s (181) |
+| `souffle-cosmos.wav` | habillage v4 : grondement brun très grave + souffle rose dont le passe-bande (160→1 400 Hz) et le niveau montent, 1,36 s, de l'image 0 à l'allumage du Soleil (191) |
+| `impact-soleil.wav` | habillage v4 : coup sourd (110→40 Hz) + éclat aigu en passe-haut balayé, 2,0 s, sur l'allumage du Soleil (201) |
+| `impact-logo.wav` | habillage v4 : sous-grave (90→28 Hz) + corps + crash, queue de 2,15 s qui descend sous −60 dB, sous le coup final du logo (211) |
 
 ## Sources examinées et écartées
 

@@ -181,6 +181,36 @@ function impactFinal({ seed }) {
   return fadeOut(x.subarray(0, n), 200);
 }
 
+// ── Habillage v4 (qa/MUSIQUE-V4.md) : trois sons, et rien d'autre ─────────────────────────────────
+// Souffle cosmique : grondement brun très grave + souffle rose dont le passe-bande et le niveau montent,
+// sommet à la toute fin (il s'arrête net, 30 ms, sur l'allumage du Soleil).
+function souffleCosmos({ dur, seed }) {
+  const n = len(dur);
+  const rumble = svf(brown(n, seed), 'lp', exp(70, 260), 0.8);
+  const air = svf(pink(n, seed + 1), 'bp', exp(160, 1400), (u) => 0.8 + 1.6 * u);
+  const x = add(rumble, air, 0, 0.45);
+  mulEnv(x, (u) => 0.18 + 0.82 * Math.pow(u, 2.2));
+  return fadeOut(fadeIn(x, 40), 30);
+}
+
+// Allumage du Soleil : coup sourd (110 → 40 Hz) + éclat aigu qui s'ouvre et s'éteint (bruit passe-haut balayé).
+function impactSoleil({ dur, seed }) {
+  const n = len(dur);
+  const x = impactSourd({ dur, seed, f0: 110, f1: 40, tau: 0.3, noise: 0.35 });
+  const glow = mulEnv(svf(white(n, seed + 20), 'hp', exp(6500, 2500), 0.7), expDecay(0.45, 0.004));
+  add(x, glow, 0, 0.3);
+  return fadeOut(x, 250);
+}
+
+// Coup du logo : sous-grave long (90 → 28 Hz) + corps + crash ; queue de 2,1 s qui descend sous −60 dB.
+function impactLogo({ dur, seed }) {
+  const n = len(dur);
+  const x = impactSourd({ dur, seed, f0: 90, f1: 28, tau: 0.42, noise: 0.7 });
+  add(x, crash({ dur, seed: seed + 50, tau: 0.42, f: 2600 }), 0, 0.4);
+  mulEnv(x, (u) => (u < 0.7 ? 1 : Math.pow(1 - (u - 0.7) / 0.3, 2)));
+  return fadeOut(x, 30);
+}
+
 export const RECIPES = {
   'whoosh-court-a': () => whoosh({ dur: 0.55, seed: 11, f0: 400, f1: 2600, peak: 0.62 }),
   'whoosh-court-b': () => whoosh({ dur: 0.65, seed: 12, f0: 2800, f1: 500, peak: 0.55, q: 1.5 }),
@@ -209,6 +239,9 @@ export const RECIPES = {
   'eclaboussure-torrent': () => eclaboussure({ dur: 1.3, seed: 161 }),
   'montee-riser': () => riser({ dur: 2.9, seed: 171 }),
   'impact-final': () => impactFinal({ seed: 181 }),
+  'souffle-cosmos': () => souffleCosmos({ dur: 1.36, seed: 191 }),
+  'impact-soleil': () => impactSoleil({ dur: 2.0, seed: 201 }),
+  'impact-logo': () => impactLogo({ dur: 2.15, seed: 211 }),
 };
 
 if (import.meta.url === `file://${process.argv[1]}`) {

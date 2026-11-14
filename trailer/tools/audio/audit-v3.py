@@ -11,6 +11,8 @@
 
 Les outils ffmpeg/ffprobe sont appelés par leur nom (mettre leur dossier dans le PATH).
 Usage : python3 tools/audio/audit-v3.py [--no-aac]
+        python3 tools/audio/audit-v3.py --v4 [--no-aac]   (qa/mix-v4.wav : en plus, sections du film, niveau des
+        400 premières ms, court terme par section, écart du coup final, attaques de l'intro ; planches musique-v4/)
 """
 import json, subprocess, sys, tempfile, re
 from pathlib import Path
@@ -19,9 +21,10 @@ from PIL import Image, ImageDraw, ImageFont
 
 TRAILER = Path(__file__).resolve().parents[2]
 QA = TRAILER / 'qa'
-MIX = QA / 'mix-v3.wav'
-BEATS = QA / 'mix-v3.beats.json'
-SNAP = QA / 'snapshots' / 'musique-v3'
+V = 'v4' if '--v4' in sys.argv else 'v3'
+MIX = QA / f'mix-{V}.wav'
+BEATS = QA / f'mix-{V}.beats.json'
+SNAP = QA / 'snapshots' / f'musique-{V}'
 TMP = QA / 'tmp'
 SR = 48000
 
@@ -41,7 +44,8 @@ def ebur(path):
                           'ebur128=peak=true:framelog=info', '-f', 'null', '-'], capture_output=True, text=True).stderr
     s = err[err.rfind('Summary:'):]
     num = lambda rx: float(re.search(rx, s).group(1))
-    frames = [(float(a), float(b)) for a, b in re.findall(r't:\s*([\d.]+)\s+TARGET:.*?M:\s*(-?[\d.]+|-inf)', err) if b != '-inf']
+    frames = [(float(a), float(b), float(c) if c != '-inf' else -120.0) for a, b, c in
+              re.findall(r't:\s*([\d.]+)\s+TARGET:.*?M:\s*(-?[\d.]+|-inf)\s+S:\s*(-?[\d.]+|-inf)', err) if b != '-inf']
     return {'integrated': num(r'I:\s+(-?[\d.]+) LUFS'), 'lra': num(r'LRA:\s+(-?[\d.]+) LU'),
             'truePeak': num(r'Peak:\s+(-?[\d.]+|-inf) dBFS')}, frames
 
@@ -132,7 +136,7 @@ def main():
     tc, lc = rms_curve(m)
     tpk, lpk = rms_curve(m, 0.01, 0.001)
     a0 = segs[0]['film'][0]
-    sil = x[: int(a0 * SR)]
+    sil = x[: max(1, int(a0 * SR))]
     out['debut'] = {
         'silence_jusqua_s': a0,
         'silence_peak_dbfs': float(db(np.abs(sil).max())) if np.abs(sil).max() > 0 else '-inf (zéro numérique)',
@@ -141,17 +145,24 @@ def main():
         'rms50ms_passe_-50dBFS_s': float(tc[np.argmax(lc > -50)]),
         'rms50ms_passe_-30dBFS_s': float(tc[np.argmax(lc > -30)]),
         'rms50ms_passe_-20dBFS_s': float(tc[np.argmax(lc > -20)]),
+        'rms_0_400ms_dbfs': round(float(10 * np.log10(np.mean(x[: int(0.4 * SR)] ** 2) + 1e-24)), 1),
+        'peak_0_400ms_dbfs': round(float(db(np.abs(x[: int(0.4 * SR)]).max())), 1),
+        'rms_par_100ms_0_400': [round(float(10 * np.log10(np.mean(x[int(a_ * SR): int((a_ + 0.1) * SR)] ** 2) + 1e-24)), 1) for a_ in (0, 0.1, 0.2, 0.3)],
     }
     te, env = onset_env(m)
     # attaques du début (0,5–12 s) : le RMS 10 ms monte d'au moins 8 dB en 40 ms au-dessus de −70 dBFS
     on, k = [], 40
+    tpk_, lpk_ = tpk, lpk
+    if V == 'v4':  # attaques de la musique seule (le souffle d'habillage masquerait la mesure)
+        tpk, lpk = rms_curve(read(QA / 'mix-v4-musique.wav').mean(axis=1), 0.01, 0.001)
     for i in range(k, len(lpk)):
-        if 0.5 < tpk[i] < 12 and lpk[i] > -70 and lpk[i] - lpk[i - k] >= 8 and (not on or tpk[i] - on[-1][0] > 0.25):
+        if (0.5 if V == 'v3' else 0.0) < tpk[i] < 12 and lpk[i] > -70 and lpk[i] - lpk[i - k] >= 8 and (not on or tpk[i] - on[-1][0] > (0.25 if V == 'v3' else 0.12)):
             j = i + int(np.argmax(lpk[i:i + 40]))
             on.append((float(tpk[i]), float(lpk[j])))
     out['debut']['attaques_0.5_12s'] = [{'t': round(t, 4), 'rms10ms_pic_dbfs': round(v, 1),
                                          'temps_grille_le_plus_proche': round(float(grid[np.argmin(np.abs(grid - t))]), 4),
                                          'ecart_ms': round(1000 * (t - float(grid[np.argmin(np.abs(grid - t))])), 1)} for t, v in on]
+    tpk, lpk = tpk_, lpk_
     last = tc[np.where(lc > -60)[0][-1]]
     lastpk = tpk[np.where(lpk > -60)[0][-1]]
     out['fin'] = {'rms50ms_sous_-60dBFS_apres_s': float(last), 'rms10ms_sous_-60dBFS_apres_s': float(lastpk),
@@ -164,6 +175,8 @@ def main():
     el = np.sqrt((low[: nl * h].reshape(nl, h) ** 2).mean(axis=1)); tl = (np.arange(nl) + 0.5) * h / SR
     def kick(g, w=0.06):
         i0, i1 = int((g - w) * SR / h), int((g + w) * SR / h)
+        if i0 < 1 or i1 > len(el):
+            return None
         s_ = el[i0:i1]; p_ = int(np.argmax(s_))
         if 20 * np.log10(s_[p_] + 1e-12) < -32 or p_ == 0:
             return None
@@ -190,7 +203,7 @@ def main():
         kb = [d_ for g, d_ in kd if g < t - 1e-4]; ka = [d_ for g, d_ in kd if g >= t - 1e-4]
         # clic : plus grand saut d'échantillon dans la fenêtre du fondu (±40 ms) vs centile 99,9 du voisinage
         i0 = int(t * SR)
-        win = x[i0 - int(0.045 * SR): i0 + int(0.005 * SR)]
+        win = x[i0 - int(0.045 * SR): i0 - int(0.003 * SR)]  # fenêtre du fondu, sans l'attaque du temps
         nb = np.concatenate([x[i0 - int(0.3 * SR): i0 - int(0.05 * SR)], x[i0 + int(0.01 * SR): i0 + int(0.3 * SR)]])
         dw = np.abs(np.diff(win, axis=0)).max()
         dn = np.percentile(np.abs(np.diff(nb, axis=0)), 99.9)
@@ -245,25 +258,58 @@ def main():
         sec.append({'segment': s['id'], 'M_moyen_LUFS': round(float(fr[sel, 1].mean()), 1) if sel.any() else None,
                     'M_max_LUFS': round(float(fr[sel, 1].max()), 1) if sel.any() else None})
     out['niveau_par_segment'] = sec
+    if 'sections' in beats:
+        rows_s = []
+        for s in beats['sections']:
+            a_, b_ = s['t']
+            sm = (fr[:, 0] >= a_ + 0.4) & (fr[:, 0] <= b_)
+            ss = (fr[:, 0] >= a_ + 3.0) & (fr[:, 0] <= b_)
+            rows_s.append({'section': s['id'], 't': s['t'], 'frames': s['frames'],
+                           'M_moyen_LUFS': round(float(fr[sm, 1].mean()), 1) if sm.any() else None,
+                           'S_moyen_LUFS': round(float(fr[ss, 2].mean()), 1) if ss.any() else None,
+                           'M_max_LUFS': round(float(fr[sm, 1].max()), 1) if sm.any() else None})
+        out['niveau_par_section'] = rows_s
+        hit = [k for k in beats['keyMoments'] if k['id'] == 'impact'][0]['t']
+        rr = lambda a_, b_: round(float(10 * np.log10(np.mean(m[int(a_ * SR): int(b_ * SR)] ** 2) + 1e-24)), 1)
+        mom = lambda t_: float(fr[np.argmin(np.abs(fr[:, 0] - t_)), 1])
+        out['coup_final'] = {'t': hit, 'rms_200ms_avant': rr(hit - 0.2, hit - 0.004), 'rms_200ms_apres': rr(hit, hit + 0.2),
+                             'rms_400ms_avant': rr(hit - 0.4, hit - 0.004), 'rms_400ms_apres': rr(hit, hit + 0.4),
+                             'M_400ms_finie_au_coup': round(mom(hit), 1), 'M_400ms_finie_0.4s_apres': round(mom(hit + 0.4), 1)}
+        out['coup_final']['ecart_200ms_db'] = round(out['coup_final']['rms_200ms_apres'] - out['coup_final']['rms_200ms_avant'], 1)
+        out['coup_final']['ecart_400ms_db'] = round(out['coup_final']['rms_400ms_apres'] - out['coup_final']['rms_400ms_avant'], 1)
+        out['coup_final']['ecart_M_LU'] = round(out['coup_final']['M_400ms_finie_0.4s_apres'] - out['coup_final']['M_400ms_finie_au_coup'], 1)
 
     TMP.mkdir(parents=True, exist_ok=True)
-    (TMP / 'audit-v3.json').write_text(json.dumps(out, indent=1, ensure_ascii=False))
+    (TMP / f'audit-{V}.json').write_text(json.dumps(out, indent=1, ensure_ascii=False))
     beats['mesures'] = {'outil': out['ffmpeg'], 'ebur128': out['ebur128'], 'debut': out['debut'], 'fin': out['fin'],
-                        'raccords': out['raccords'], 'note': 'Mesuré, non écouté (tools/audio/audit-v3.py).'}
+                        'raccords': out['raccords'], 'note': f'Mesuré, non écouté (tools/audio/audit-v3.py{" --v4" if V == "v4" else ""}).'}
+    for k_ in ('niveau_par_section', 'coup_final'):
+        if k_ in out:
+            beats['mesures'][k_] = out[k_]
+    if V == 'v4':
+        beats['intro'] = {'note': 'Attaques réelles de l\'intro (montée de 8 dB en 40 ms du RMS 10 ms), à utiliser pour couper l\'image : l\'intro est jouée librement, hors grille.',
+                          'attaques': [{**a_, 'frame': int(round(a_['t'] * 24))} for a_ in out['debut']['attaques_0.5_12s'] if a_['t'] < 7.5]}
     BEATS.write_text(json.dumps(beats, indent=1, ensure_ascii=False) + '\n')
 
     # 5. planches
     SNAP.mkdir(parents=True, exist_ok=True)
     planche(x, m, beats, fr, out)
     for k, j in enumerate(joins):
+        kind = j.get('kind', 'release' if j['to'] == 'H' else 'beat')
+        win = (j['t'] - 0.02, j['t'] + 0.02) if kind == 'gap' else (j['t'] - 0.008 - (0.12 if kind == 'release' else 0.025), j['t'] - 0.008)
         zoom(x, m, j['t'], 0.15, beats, f"raccord-{k + 1}-{j['from']}{j['to']}-{j['t']:.3f}s.png",
-             f"Raccord {k + 1} {j['from']}>{j['to']} à {j['t']:.4f} s (image {j['frame']} à 24 i/s) — morceau {j['songOut']:.3f} > {j['songIn']:.3f} s", window=(j['t'] - 0.033 - (0.12 if j['to'] == 'H' else 0), j['t'] - 0.008))
-    zoom(x, m, 1.5, 1.5, beats, 'debut-0-3s.png', 'Début 0–3 s (silence, fondu d\'entrée cubique 2 s, premier temps fort)', db_env=True)
-    zoom(x, m, 58.5, 1.5, beats, 'fin-57-60s.png', 'Fin 57–60 s (roulement, impact à 58,000 s, queue exponentielle)', db_env=True)
+             f"Raccord {k + 1} {j['from']}>{j['to']} à {j['t']:.4f} s (image {j['frame']} à 24 i/s) — morceau {j['songOut']:.3f} > {j['songIn']:.3f} s", window=win)
+    if V == 'v3':
+        zoom(x, m, 1.5, 1.5, beats, 'debut-0-3s.png', 'Début 0–3 s (silence, fondu d\'entrée cubique 2 s, premier temps fort)', db_env=True)
+        zoom(x, m, 58.5, 1.5, beats, 'fin-57-60s.png', 'Fin 57–60 s (roulement, impact à 58,000 s, queue exponentielle)', db_env=True)
+    else:
+        zoom(x, m, 3.0, 3.0, beats, 'debut-0-6s.png', 'Début 0–6 s (note de m0 à l\'image 0, Soleil à l\'image 32, 3e phrase, entrée de la montée)', db_env=True)
+        zoom(x, m, 58.0, 2.0, beats, 'fin-56-60s.png', 'Fin 56–60 s (roulement de m71, coup final à 57,811 s, queue)', db_env=True)
     print(json.dumps({k: v for k, v in out.items() if k not in ('grille_par_segment',)}, indent=1, ensure_ascii=False))
     print(json.dumps(out['grille_par_segment'], ensure_ascii=False))
 
 
+SEC4 = [(50, 70, 130), (90, 80, 140), (150, 100, 50), (175, 120, 40), (190, 60, 50), (200, 40, 70), (40, 110, 90), (110, 90, 40), (90, 90, 110)]
 SEC_COL = {'silence': (40, 40, 40), 'intro': (60, 90, 140), 'montee+drop1': (170, 90, 40), 'respiration': (60, 130, 90),
            'reprise+drop2': (180, 60, 60), 'pre-impact': (150, 120, 40), 'queue': (90, 90, 120)}
 
@@ -289,24 +335,35 @@ def spectro(m, a, b, W, H):
 def planche(x, m, beats, fr, out):
     W, L = 2400, 70
     pw = W - L - 20
-    H = 1100
+    v4 = 'sections' in beats
+    dy = 60 if v4 else 0
+    H = 1100 + dy
     im = Image.new('RGB', (W, H), (16, 16, 20))
     d = ImageDraw.Draw(im)
     F, Fs, Fb = font(18), font(14), font(24)
     X = lambda t: int(L + t / 60 * pw)
-    d.text((L, 10), 'Montage musical v3 — qa/mix-v3.wav (60,000 s, 24 i/s = 1 440 images). Mesuré, non écouté. ' +
+    d.text((L, 10), f'Montage musical {V} — qa/mix-{V}.wav (60,000 s, 24 i/s = 1 440 images). Mesuré, non écouté. ' +
            f"{out['ebur128']['integrated']} LUFS, crête vraie {out['ebur128']['truePeak']} dBTP, LRA {out['ebur128']['lra']} LU ({out['ffmpeg']})", fill=(230, 230, 230), font=Fb)
     # sections
     y0 = 50
+    if v4:
+        for k_, s in enumerate(beats['sections']):
+            c = SEC4[k_ % len(SEC4)]
+            d.rectangle([X(s['t'][0]), y0, X(s['t'][1]), y0 + 52], fill=c, outline=(16, 16, 20))
+            d.text((X(s['t'][0]) + 4, y0 + 2), f"{s['id']} (mes. {s['bars'][0]}–{s['bars'][1]})", fill=(255, 255, 255), font=F)
+            d.text((X(s['t'][0]) + 4, y0 + 24), s['emotion'], fill=(235, 235, 235), font=Fs)
+        y0 += 58
     for s in beats['segments']:
-        c = SEC_COL.get(s['section'], (80, 80, 80))
-        d.rectangle([X(s['film'][0]), y0, X(s['film'][1]), y0 + 40], fill=c)
-        d.text((X(s['film'][0]) + 4, y0 + 2), f"{s['id']} {s['section']}", fill=(255, 255, 255), font=F)
-        d.text((X(s['film'][0]) + 4, y0 + 22), f"m{s['songBars'][0]}–m{s['songBars'][1]} ({s['song'][0]:.2f} s)", fill=(230, 230, 230), font=Fs)
+        c = SEC_COL.get(s['section'], (70, 70, 80))
+        d.rectangle([X(s['film'][0]), y0, X(s['film'][1]), y0 + 40], fill=c, outline=(16, 16, 20))
+        d.text((X(s['film'][0]) + 4, y0 + 2), f"{s['id']}" + ('' if v4 else f" {s['section']}"), fill=(255, 255, 255), font=F)
+        sb = s['songBars'] if isinstance(s['songBars'], str) else f"m{s['songBars'][0]}–m{s['songBars'][1]}"
+        d.text((X(s['film'][0]) + 4, y0 + 22), f"{sb} ({s['song'][0]:.2f} s)", fill=(230, 230, 230), font=Fs)
     a0 = beats['segments'][0]['film'][0]
-    d.rectangle([X(0), y0, X(a0), y0 + 40], fill=SEC_COL['silence'])
+    if a0 > 0:
+        d.rectangle([X(0), y0, X(a0), y0 + 40], fill=SEC_COL['silence'])
     # forme d'onde (min/max par colonne, échelle linéaire) + enveloppe dB
-    wy, wh = 110, 260
+    wy, wh = 110 + dy, 260
     d.rectangle([L, wy, L + pw, wy + wh], outline=(70, 70, 70))
     n = len(m)
     for c in range(pw):
@@ -314,17 +371,17 @@ def planche(x, m, beats, fr, out):
         lo, hi = x[a:b].min(), x[a:b].max()
         d.line([(L + c, wy + wh / 2 - hi * wh / 2), (L + c, wy + wh / 2 - lo * wh / 2)], fill=(120, 190, 255))
     # sonie momentanée
-    ly, lh = 390, 160
+    ly, lh = 390 + dy, 160
     d.rectangle([L, ly, L + pw, ly + lh], outline=(70, 70, 70))
     for v in (-10, -20, -30, -40):
         yy = ly + (-v - 5) / 40 * lh
         d.line([(L, yy), (L + pw, yy)], fill=(50, 50, 50))
         d.text((8, yy - 8), f'{v}', fill=(160, 160, 160), font=Fs)
     d.text((L + 4, ly + 2), 'LUFS momentané (400 ms)', fill=(200, 200, 200), font=Fs)
-    pts = [(X(t), ly + min(lh, max(0, (-v - 5) / 40 * lh))) for t, v in fr]
+    pts = [(X(r_[0]), ly + min(lh, max(0, (-r_[1] - 5) / 40 * lh))) for r_ in fr]
     d.line(pts, fill=(255, 210, 90), width=2)
     # spectrogramme
-    sy, shh = 570, 380
+    sy, shh = 570 + dy, 380
     im.paste(spectro(m, 0, 60, pw, shh), (L, sy))
     for f_, lab in [(100, '100'), (1000, '1k'), (10000, '10k')]:
         yy = sy + shh - np.log(f_ / 30) / np.log(20000 / 30) * shh
@@ -350,6 +407,7 @@ def planche(x, m, beats, fr, out):
         d.line([(X(t), sy + shh), (X(t), sy + shh + 4)], fill=(255, 255, 255))
         d.text((X(t) - 10, H - 26), f'{t} s · {t * 24}', fill=(220, 220, 220), font=Fs)
     im.save(SNAP / 'planche-60s.png')
+    return
 
 
 def zoom(x, m, c, half, beats, name, title, window=None, db_env=False):

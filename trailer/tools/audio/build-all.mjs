@@ -5,6 +5,8 @@
 //   node tools/audio/build-all.mjs --v2         → montage v2 (qa/SON-AUDIT.md), qa/sfx-v2.wav, qa/mix-v2.wav (mix-v1 intact)
 //   node tools/audio/build-all.mjs --v3         → montage v3 (qa/MUSIQUE-V3.md), musique seule : qa/mix-v3.wav, qa/mix-v3.beats.json,
 //                                                 contrôles et planches (qa/tmp/audit-v3.json, qa/snapshots/musique-v3/) ; --no-audit pour sauter les contrôles
+//   node tools/audio/build-all.mjs --v4         → montage v4 (qa/MUSIQUE-V4.md) + habillage (3 sons) : qa/mix-v4.wav, qa/mix-v4-musique.wav,
+//                                                 qa/mix-v4-habillage.wav, qa/mix-v4.beats.json, contrôles et planches (musique-v4/) ; --no-audit
 //   node tools/audio/build-all.mjs --substitut  → même chaîne sur le lit de SUBSTITUTION (qa/tmp/), qa/mix-v1-SUBSTITUT.wav
 // La banque d'effets (assets/audio/sfx/) est versionnée : elle n'est régénérée qu'avec --regen-sfx.
 import { existsSync, mkdirSync } from 'node:fs';
@@ -31,6 +33,18 @@ if (subst) {
   step('Raccords (SUBSTITUT)', 'check-joins.mjs', ['--input', SUBST_MONTAGE, '--label', 'SUBSTITUT', '--json', join(QA_TMP, 'joins-SUBSTITUT.json')]);
   step("Piste d'effets", 'build-sfx.mjs', ['--bed', SUBST_MONTAGE]);
   step('Mixage (SUBSTITUT)', 'build-mix.mjs', ['--substitut']);
+} else if (process.argv.includes('--v4')) {
+  step('Habillage v4 : sons générés (banque versionnée, graines fixes)', 'gen-sfx.mjs', ['souffle-cosmos', 'impact-soleil', 'impact-logo']);
+  step('Montage musical v4 (qa/MUSIQUE-V4.md)', 'build-montage.mjs', ['--v4']);
+  step('Piste d\'habillage v4', 'build-habillage-v4.mjs');
+  step('Mastering v4 (−14 LUFS, musique + habillage, pistes séparées)', 'build-mix.mjs', ['--v4']);
+  step('Grille v4 (qa/mix-v4.beats.json)', 'beats-v4.mjs');
+  if (!process.argv.includes('--no-audit')) {
+    console.log('\n── Contrôles et planches v4 (python3 + numpy + Pillow)');
+    const r = spawnSync('python3', [join(HERE, 'audit-v3.py'), '--v4'], { stdio: ['ignore', 'ignore', 'inherit'] });
+    if (r.status !== 0) { console.error('✗ audit-v3.py --v4 en échec'); process.exit(r.status || 1); }
+    console.log('✓ qa/tmp/audit-v4.json, qa/snapshots/musique-v4/, champs « mesures » et « intro » de qa/mix-v4.beats.json');
+  }
 } else if (process.argv.includes('--v3')) {
   step('Montage musical v3 (qa/MUSIQUE-V3.md)', 'build-montage.mjs', ['--v3']);
   step('Mastering v3 (−14 LUFS, sans effet)', 'build-mix.mjs', ['--v3']);

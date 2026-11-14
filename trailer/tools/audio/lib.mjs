@@ -170,6 +170,116 @@ export function montageV3Filter() {
   return `${split};${parts.join(';')};${labels.join('')}amix=inputs=${segs.length}:normalize=0:duration=longest,apad=whole_dur=60,atrim=end_sample=${SR * 60}[o]`;
 }
 
+// ── Montage v4 (qa/MUSIQUE-V4.md) ───────────────────────────────────────────────────────────────
+// Le film commande : grille du film = grille du morceau (V3.beat), mesure 1 du film à l'image 0, 33 mesures + logo.
+// Chaque segment : film [a, b] ← morceau (film + off). `join` décrit l'entrée du segment :
+//   'beat' : fondu de V3.xf fini V3.guard avant le temps a (comme v3) ; 'gap' : fondu de 40 ms centré sur a (coupe
+//   dans un « trou » de l'intro, réverbération seule des deux côtés) ; 'release' : relâchement de l'impact (v3).
+export const V4 = { hit: 33 * 4 * V3.beat, gapXf: 0.04, sun: 32 / 24 }; // hit = mesure 34 du film (57,811 s) ; sun = image 32
+export const filmBar = (n, beat = 1) => ((n - 1) * 4 + (beat - 1)) * V3.beat; // mesure n du film (1 = image 0)
+export const MONTAGE_V4 = join(AUDIO_DIR, 'storm-ii-montage-60s-v4.wav');
+export const HABILLAGE_V4_RAW = join(QA_TMP, 'habillage-v4-brut.wav');
+export const MIX_V4 = join(QA_DIR, 'mix-v4.wav');
+export const MIX_V4_MUSIQUE = join(QA_DIR, 'mix-v4-musique.wav');
+export const MIX_V4_HABILLAGE = join(QA_DIR, 'mix-v4-habillage.wav');
+export const BEATS_V4 = join(QA_DIR, 'mix-v4.beats.json');
+
+// Attaques MESURÉES dans le MP3 qui fixent l'intro (montée du RMS 5 ms la plus raide, voir MUSIQUE-V4.md § 1).
+export const V4_INTRO = {
+  noteM0: 1.431,      // note de m0 temps 1 (première phrase) : ouvre le film
+  phrase2: 3.900,     // début de la 2e phrase après un trou (+17,8 dB en 20 ms) : allumage du Soleil
+  phrase3: 7.076,     // début de la 3e phrase (+12,4 dB)
+};
+
+export function montageV4Segments() {
+  const T = V3.beat, hit = filmBar(34);
+  const at = (songT, filmT) => songT - filmT; // décalage morceau − film
+  const sun = V4.sun;
+  return [
+    { id: 'I1', section: 'cosmos', label: 'Intro : note de m0 (1re phrase), dès l\'image 0', film: [0, 1.05], off: at(V4_INTRO.noteM0 - 0.016, 0), bars: 'm0', join: 'start' },
+    { id: 'I2', section: 'cosmos', label: 'Intro : fin du trou 1 puis 2e phrase, attaque sur le Soleil (image 32)', film: [1.05, 3.2], off: at(V4_INTRO.phrase2, sun), bars: 'm1–m2', join: 'gap' },
+    { id: 'I3', section: 'cosmos', label: 'Intro : fin du trou 2 puis 3e phrase (sur le 9e temps du film)', film: [3.2, filmBar(4, 2)], off: at(V4_INTRO.phrase3, 8 * T), bars: 'm3–m4', join: 'gap' },
+    { id: 'M1', section: 'declic', label: 'Début de la montée : m5 (trou), 4e phrase au temps 2, m6–m8 (le grave entre sur m8 = mesure 7 du film)', film: [filmBar(4, 2), filmBar(8)], off: at(v3Bar(5, 2), filmBar(4, 2)), bars: 'm5–m8', join: 'gap' },
+    { id: 'M2', section: 'decision', label: 'Fin de la montée m33–m39 puis drop 1 m40–m44 (continu)', film: [filmBar(8), filmBar(20)], off: at(v3Bar(33), filmBar(8)), bars: 'm33–m44', join: 'beat' },
+    { id: 'D2', section: 'coureur-cycliste', label: 'Drop 2, 7 dernières mesures m81–m87, puis outro m88–m91 (continu)', film: [filmBar(20), filmBar(31)], off: at(v3Bar(81), filmBar(20)), bars: 'm81–m91', join: 'beat' },
+    { id: 'R', section: 'final', label: 'Reprise m69–m71 (roulement dans m71) puis impact m72 temps 1', film: [filmBar(31), hit + T], off: at(v3Bar(69), filmBar(31)), bars: 'm69–m72', join: 'beat' },
+    { id: 'Q', section: 'logo', label: 'Queue : nappe de l\'outro m88 dès le temps 2, décroissance exponentielle', film: [hit + T, 60], off: at(v3Bar(88, 2), hit + T), bars: 'm88', join: 'release' },
+  ];
+}
+
+// Gains par section (dB, film), interpolés linéairement en amplitude entre deux points (transitions d'un temps).
+export function gainPointsV4() {
+  const T = V3.beat, hit = filmBar(34);
+  return [
+    [0, 5], [filmBar(4), 5], [filmBar(4, 2), 1.5],               // intro relevée ; début de montée un peu relevé
+    [filmBar(8), 1.5], [filmBar(8, 2), 1],                       // fin de montée : presque nature (le niveau monte seul)
+    [filmBar(15) - T, 1], [filmBar(15) - 0.01, 0],               // drops : nature
+    [filmBar(27), 0], [filmBar(27, 2), 3],                       // bivouac relevé
+    [filmBar(31) - 0.035, 3], [filmBar(31) - 0.008, -2],         // reprise un peu sous les drops…
+    [hit - 0.02, -2], [hit - 0.004, 1], [60, 1],                 // … pour que l'impact ressorte
+  ];
+}
+function gainExprV4() {
+  const pts = gainPointsV4().map(([t, d]) => [t, Math.pow(10, d / 20)]);
+  let e = pts.at(-1)[1].toFixed(6);
+  for (let i = pts.length - 2; i >= 0; i--) {
+    const [t0, g0] = pts[i], [t1, g1] = pts[i + 1];
+    const seg = t1 - t0 < 1e-9 ? g1.toFixed(6) : `${g0.toFixed(6)}+(${(g1 - g0).toFixed(6)})*(t-${t0.toFixed(6)})/${(t1 - t0).toFixed(6)}`;
+    e = `if(lt(t,${t1.toFixed(6)}),${seg},${e})`;
+  }
+  return `if(lt(t,0),${pts[0][1].toFixed(6)},${e})`;
+}
+
+export function joinsV4() {
+  const s = montageV4Segments();
+  return s.slice(1).map((seg, i) => ({ t: seg.film[0], from: s[i].id, to: seg.id, kind: seg.join,
+    songOut: seg.film[0] + s[i].off, songIn: seg.film[0] + seg.off }));
+}
+
+export function montageV4Filter() {
+  const segs = montageV4Segments();
+  const smp = (t) => Math.round(t * SR);
+  const parts = [], labels = [];
+  segs.forEach((s, i) => {
+    const next = segs[i + 1];
+    // fenêtre d'entrée [filmA, s.film[0] (+…)] et de sortie, selon le type de raccord
+    let filmA, fin;
+    if (s.join === 'start') { filmA = 0; fin = 0.010; }
+    else if (s.join === 'gap') { filmA = s.film[0] - V4.gapXf / 2; fin = V4.gapXf; }
+    else if (s.join === 'release') { filmA = s.film[0] - V3.guard - V3.release; fin = V3.release; }
+    else { filmA = s.film[0] - V3.guard - V3.xf; fin = V3.xf; }
+    let filmB, fout;
+    if (!next) { filmB = 60; fout = null; }
+    else if (next.join === 'gap') { filmB = s.film[1] + V4.gapXf / 2; fout = V4.gapXf; }
+    else if (next.join === 'release') { filmB = s.film[1] - V3.guard; fout = V3.release; }
+    else { filmB = s.film[1] - V3.guard; fout = V3.xf; }
+    const len = filmB - filmA;
+    const songA = filmA + s.off;
+    const f = [`[m${i}]atrim=start_sample=${smp(songA)}:end_sample=${smp(songA) + smp(len)},asetpts=PTS-STARTPTS`,
+      `afade=t=in:st=0:d=${fin.toFixed(6)}:curve=${s.join === 'start' ? 'tri' : 'qsin'}`];
+    if (fout) f.push(`afade=t=out:st=${(len - fout).toFixed(6)}:d=${fout.toFixed(6)}:curve=qsin`);
+    else {
+      f.push(`afade=t=out:st=${(s.film[0] - filmA).toFixed(6)}:d=${V3.tailDecay}:curve=exp`);
+      f.push(`afade=t=out:st=${(V3.tailCut - filmA).toFixed(6)}:d=${(60 - V3.tailCut).toFixed(6)}:curve=qsin`);
+    }
+    f.push(`adelay=delays=${smp(filmA)}S:all=1[s${i}]`);
+    parts.push(f.join(','));
+    labels.push(`[s${i}]`);
+  });
+  const split = `[0]aresample=${SR},aformat=sample_fmts=fltp:channel_layouts=stereo,asplit=${segs.length}${segs.map((_, i) => `[m${i}]`).join('')}`;
+  return `${split};${parts.join(';')};${labels.join('')}amix=inputs=${segs.length}:normalize=0:duration=longest,apad=whole_dur=60,atrim=end_sample=${SR * 60},` +
+    `asetnsamples=n=48,volume=eval=frame:volume='${gainExprV4()}'[o]`;
+}
+
+// Habillage v4 : trois sons de la banque, et rien d'autre. `at` = film (s) où commence le fichier ; gain en dB.
+export function habillageV4Cues() {
+  return [
+    { file: 'souffle-cosmos.wav', at: 0, gainDb: -10, cause: 'Nébuleuse → Soleil : souffle grave qui monte de l\'image 0 à l\'allumage' },
+    { file: 'impact-soleil.wav', at: V4.sun - 0.002, gainDb: -4, cause: 'Allumage du Soleil (image 32), sur l\'attaque de la 2e phrase' },
+    { file: 'impact-logo.wav', at: filmBar(34) - 0.002, gainDb: -1, cause: 'Logo : coup du logo sous m72 temps 1, queue éteinte avant 60 s' },
+  ];
+}
+
 export function run(cmd, args, { allowFail = false, input } = {}) {
   const r = spawnSync(cmd, args, { encoding: 'utf8', maxBuffer: 1 << 28, input });
   if (r.status !== 0 && !allowFail) {

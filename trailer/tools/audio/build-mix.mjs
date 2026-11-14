@@ -6,10 +6,11 @@
 //         node tools/audio/build-mix.mjs --substitut              (montage de SUBSTITUTION → qa/mix-v1-SUBSTITUT.wav)
 //         node tools/audio/build-mix.mjs --v2                     (montage v2 + qa/sfx-v2.wav → qa/mix-v2.wav, voir qa/SON-AUDIT.md)
 //         node tools/audio/build-mix.mjs --v3                     (montage v3 seul, sans effet → qa/mix-v3.wav, voir qa/MUSIQUE-V3.md)
+//         node tools/audio/build-mix.mjs --v4                     (montage v4 + habillage v4 → qa/mix-v4.wav, -musique.wav, -habillage.wav)
 //         [--sfx qa/sfx-v1.wav] [--report qa/tmp/mix-report.json]
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { MIX_V3, MONTAGE, MONTAGE_V2, MONTAGE_V3, QA_DIR, QA_TMP, SR, SUBST_MONTAGE, ffmpegVersion, fmt, loudness, probe, readMono, requireFile, rmsDb, run } from './lib.mjs';
+import { HABILLAGE_V4_RAW, MIX_V3, MIX_V4, MIX_V4_HABILLAGE, MIX_V4_MUSIQUE, MONTAGE, MONTAGE_V2, MONTAGE_V3, MONTAGE_V4, QA_DIR, QA_TMP, SR, SUBST_MONTAGE, ffmpegVersion, fmt, loudness, probe, readMono, requireFile, rmsDb, run } from './lib.mjs';
 import { svf } from './synth.mjs';
 import { HALF } from './build-sfx.mjs';
 
@@ -117,7 +118,44 @@ export function buildMasterV3({ bed = MONTAGE_V3, out = MIX_V3, report = join(QA
   return meta;
 }
 
-if (import.meta.url === `file://${process.argv[1]}` && process.argv.includes('--v3')) {
+// v4 : musique + habillage, un seul gain G (aucun limiteur). Les deux pistes séparées reçoivent le même G :
+// mix-v4-musique.wav + mix-v4-habillage.wav = mix-v4.wav (à la quantification 24 bits près). Mesures sur mix-v4.wav.
+export function buildMasterV4({ bed = MONTAGE_V4, hab = HABILLAGE_V4_RAW, report = join(QA_TMP, 'mix-report-v4.json') } = {}) {
+  requireFile(bed, 'Montage v4');
+  requireFile(hab, 'Habillage v4');
+  const sumTmp = join(QA_TMP, 'mix-v4-somme.wav');
+  run('ffmpeg', ['-hide_banner', '-v', 'error', '-y', '-i', bed, '-i', hab, '-filter_complex',
+    '[0:a][1:a]amix=inputs=2:normalize=0:duration=first[o]', '-map', '[o]', '-c:a', 'pcm_f32le', sumTmp]);
+  const src = loudness(sumTmp);
+  let gain = TARGET_LUFS - src.integrated;
+  const tries = [];
+  let m;
+  for (let k = 0; k < 4; k++) {
+    run('ffmpeg', ['-hide_banner', '-v', 'error', '-y', '-i', sumTmp, '-af', `volume=${gain.toFixed(3)}dB`, '-ar', String(SR), '-c:a', 'pcm_s24le', MIX_V4]);
+    m = loudness(MIX_V4);
+    tries.push({ gainDb: Number(gain.toFixed(3)), integrated: m.integrated, truePeak: m.truePeak });
+    if (Math.abs(m.integrated - TARGET_LUFS) <= 0.1) break;
+    gain += TARGET_LUFS - m.integrated;
+  }
+  const g = tries.at(-1).gainDb.toFixed(3);
+  for (const [inp, out] of [[bed, MIX_V4_MUSIQUE], [hab, MIX_V4_HABILLAGE]]) {
+    run('ffmpeg', ['-hide_banner', '-v', 'error', '-y', '-i', inp, '-af', `volume=${g}dB`, '-ar', String(SR), '-c:a', 'pcm_s24le', out]);
+  }
+  const p = probe(MIX_V4);
+  const meta = { out: MIX_V4, stems: [MIX_V4_MUSIQUE, MIX_V4_HABILLAGE], bed, hab, ffmpeg: ffmpegVersion(), source: src, tries,
+    final: { ...m, samples: p.samples, sampleRate: p.sampleRate, codec: p.codec, channels: p.channels } };
+  writeFileSync(report, JSON.stringify(meta, null, 2));
+  return meta;
+}
+
+if (import.meta.url === `file://${process.argv[1]}` && process.argv.includes('--v4')) {
+  const r = buildMasterV4();
+  const f = r.final;
+  console.log(`✓ ${r.out} (+ ${r.stems.join(', ')})\n  ${f.samples} échantillons · ${f.sampleRate} Hz · ${f.codec} · ${f.channels} canaux · ${r.ffmpeg}`);
+  console.log(`  somme ${r.source.integrated} LUFS → gain ${r.tries.at(-1).gainDb} dB → ${f.integrated} LUFS intégrés · crête vraie ${f.truePeak} dBTP · LRA ${f.lra} LU`);
+  const ok = Math.abs(f.integrated - TARGET_LUFS) <= 0.3 && f.truePeak <= -1 && f.samples === SR * 60 && f.codec === 'pcm_s24le';
+  if (!ok) { console.error('✗ Mixage v4 hors cible'); process.exit(1); }
+} else if (import.meta.url === `file://${process.argv[1]}` && process.argv.includes('--v3')) {
   const r = buildMasterV3();
   const f = r.final;
   console.log(`✓ ${r.out}\n  ${f.samples} échantillons · ${f.sampleRate} Hz · ${f.codec} · ${f.channels} canaux · ${r.ffmpeg}`);
