@@ -328,6 +328,22 @@ export const compasServerEs: Shape<typeof compasServerFr> = {
         shapeLoop: 'en bucle',
         shapeBase: 'desde una base',
         via: ', pasando por {places}',
+        objectiveKindPeak: 'cima',
+        objectiveKindLake: 'lago',
+        objectiveKindHut: 'refugio',
+        objectiveKindPass: 'puerto',
+        objectiveKindViewpoint: 'mirador',
+        objectiveGain: ', al menos {m} m de desnivel',
+        objectiveDay:
+          'Día desde la base: ida y vuelta a {name} ({kind}), unos {km} km a pie{gain} (línea recta × 2 × 1,4, ruta no calculada), por comprobar.',
+        baseStayFree:
+          'Día libre en torno a la base: el mapa no dio otro objetivo en la zona. Por completar.',
+        baseStayOne:
+          'Estancia de senderismo desde {base}: {count} objetivo real del mapa (cima, lago, refugio, puerto o mirador) para los días, distancias estimadas.',
+        baseStayOther:
+          'Estancia de senderismo desde {base}: {count} objetivos reales del mapa (cimas, lagos, refugios, puertos o miradores), uno por día, distancias estimadas.',
+        baseStayNone:
+          'Estancia de senderismo desde {base}: no se encontró ningún objetivo de día en el mapa alrededor de la base. Los días quedan por completar.',
         countryUnavailable: 'lugares del país no disponibles (servicio de mapas inaccesible)',
         countryUnavailableDiag:
           'lugares del país no disponibles (servicio de mapas inaccesible: {diag})',

@@ -30,19 +30,24 @@ export interface PendingRun {
  *  - `complete` : la carte a répondu et l'itinéraire est assez fourni (ou voulu sur un seul lieu) ;
  *  - `poor_zone` : la carte a répondu, la zone n'a simplement que très peu de lieux habités ;
  *  - `source_silent` : la carte n'a pas répondu (Overpass, Photon, Geoapify muets) : l'itinéraire est
- *    incomplet et sera rejoué à une ouverture suivante (`retryParts`), sans écraser ce que la personne a saisi.
+ *    incomplet et sera rejoué à une ouverture suivante (`retryParts`), sans écraser ce que la personne a saisi ;
+ *  - `base_only` : séjour de randonnée sur une base (un seul lieu où dormir à distance d'étape) ; la carte a
+ *    répondu mais n'a pas fourni assez d'objectifs de journée : la base est posée, les journées sans objectif
+ *    sont à compléter par la personne. La zone n'est pas dite « pauvre » : elle n'a pas été jugée vide.
  */
-export type ItineraryState = 'complete' | 'poor_zone' | 'source_silent';
+export type ItineraryState = 'complete' | 'poor_zone' | 'source_silent' | 'base_only';
 
 export interface ItineraryReport {
   state: ItineraryState;
   /** Lieux distincts de l'itinéraire écrit. */
   places: number;
+  /** Séjour sur une base : jours qui portent un objectif réel de la carte. */
+  objectives?: number;
   /** Ce que chaque source a répondu (diagnostic court, jamais affiché). */
   sources?: string[];
 }
 
-export const ITINERARY_STATES: readonly ItineraryState[] = ['complete', 'poor_zone', 'source_silent'];
+export const ITINERARY_STATES: readonly ItineraryState[] = ['complete', 'poor_zone', 'source_silent', 'base_only'];
 
 /** Relit un état gardé dans les métadonnées (jamais fait confiance à ce qui y est écrit). */
 export function readItinerary(raw: unknown): ItineraryReport | undefined {
@@ -52,6 +57,7 @@ export function readItinerary(raw: unknown): ItineraryReport | undefined {
   return {
     state: r.state as ItineraryState,
     places: Number.isInteger(r.places) && Number(r.places) >= 0 ? Number(r.places) : 0,
+    ...(Number.isInteger(r.objectives) && Number(r.objectives) >= 0 ? { objectives: Number(r.objectives) } : {}),
     ...(Array.isArray(r.sources) ? { sources: r.sources.filter((x): x is string => typeof x === 'string').slice(0, 6).map((x) => x.slice(0, 60)) } : {}),
   };
 }

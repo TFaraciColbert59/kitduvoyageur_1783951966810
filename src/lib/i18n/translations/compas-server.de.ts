@@ -328,6 +328,22 @@ export const compasServerDe: Shape<typeof compasServerFr> = {
         shapeLoop: 'als Rundtour',
         shapeBase: 'von einem Standort aus',
         via: ', über {places}',
+        objectiveKindPeak: 'Gipfel',
+        objectiveKindLake: 'See',
+        objectiveKindHut: 'Hütte',
+        objectiveKindPass: 'Pass',
+        objectiveKindViewpoint: 'Aussichtspunkt',
+        objectiveGain: ', mindestens {m} m Aufstieg',
+        objectiveDay:
+          'Tag von der Basis aus: Hin- und Rückweg nach {name} ({kind}), etwa {km} km zu Fuß{gain} (Luftlinie × 2 × 1,4, Route nicht berechnet), bitte prüfen.',
+        baseStayFree:
+          'Freier Tag rund um die Basis: Die Karte lieferte im Gebiet kein weiteres Ziel. Noch zu ergänzen.',
+        baseStayOne:
+          'Wanderaufenthalt von {base} aus: {count} echtes Ziel der Karte (Gipfel, See, Hütte, Pass oder Aussichtspunkt) für die Tage, geschätzte Entfernungen.',
+        baseStayOther:
+          'Wanderaufenthalt von {base} aus: {count} echte Ziele der Karte (Gipfel, Seen, Hütten, Pässe oder Aussichtspunkte), eines pro Tag, geschätzte Entfernungen.',
+        baseStayNone:
+          'Wanderaufenthalt von {base} aus: Auf der Karte wurde rund um die Basis kein Tagesziel gefunden. Die Tage sind noch zu ergänzen.',
         countryUnavailable: 'Orte im Land nicht verfügbar (Kartendienst nicht erreichbar)',
         countryUnavailableDiag:
           'Orte im Land nicht verfügbar (Kartendienst nicht erreichbar: {diag})',

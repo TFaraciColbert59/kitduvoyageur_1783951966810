@@ -149,7 +149,7 @@ function fitScale(places: AreaPlace[], shape: 'traverse' | 'loop', crowTarget: n
  * de la coupure ; la boîte d'un globe entier (Fidji, Taveuni : [-180, 180]) ne
  * dit rien de la largeur, seule la latitude filtre.
  */
-function withinExtent(p: { lat: number; lon: number }, extent: ItineraryInput['extent']): boolean {
+export function withinExtent(p: { lat: number; lon: number }, extent: ItineraryInput['extent']): boolean {
   if (!extent) return true;
   const [, n, , s] = extent;
   const my = Math.abs(n - s) * 0.1;

@@ -328,6 +328,22 @@ export const compasServerIt: Shape<typeof compasServerFr> = {
         shapeLoop: 'ad anello',
         shapeBase: 'da una base',
         via: ', passando per {places}',
+        objectiveKindPeak: 'cima',
+        objectiveKindLake: 'lago',
+        objectiveKindHut: 'rifugio',
+        objectiveKindPass: 'passo',
+        objectiveKindViewpoint: 'punto panoramico',
+        objectiveGain: ', almeno {m} m di dislivello',
+        objectiveDay:
+          'Giornata dalla base: andata e ritorno verso {name} ({kind}), circa {km} km a piedi{gain} (linea d’aria × 2 × 1,4, percorso non calcolato), da verificare.',
+        baseStayFree:
+          'Giornata libera intorno alla base: la mappa non ha dato altri obiettivi nella zona. Da completare.',
+        baseStayOne:
+          'Soggiorno di escursionismo da {base}: {count} obiettivo reale della mappa (cima, lago, rifugio, passo o punto panoramico) per le giornate, distanze stimate.',
+        baseStayOther:
+          'Soggiorno di escursionismo da {base}: {count} obiettivi reali della mappa (cime, laghi, rifugi, passi o punti panoramici), uno al giorno, distanze stimate.',
+        baseStayNone:
+          'Soggiorno di escursionismo da {base}: nessun obiettivo di giornata trovato sulla mappa intorno alla base. Le giornate restano da completare.',
         countryUnavailable: 'luoghi del paese non disponibili (servizio di mappe irraggiungibile)',
         countryUnavailableDiag:
           'luoghi del paese non disponibili (servizio di mappe irraggiungibile: {diag})',

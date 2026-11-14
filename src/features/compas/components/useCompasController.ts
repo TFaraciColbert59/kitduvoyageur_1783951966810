@@ -475,9 +475,12 @@ export function useCompasController(
           );
         // La carte n'a pas répondu : les étapes manquent, la préparation ne se dit pas « prête » (elles se rejouent seules).
         // Zone où la carte n'a trouvé presque aucun lieu : même franchise, sans promettre que les étapes arriveront.
+        // Séjour sur une base : la carte a répondu, elle n'a pas fourni assez d'objectifs de journée. Ce n'est PAS « presque
+        // aucun lieu dans cette zone » (la zone peut être très riche) : le texte dit que les journées sont à compléter.
         const poor = res.summary.itinerary === 'poor_zone';
-        const partial = res.summary.itinerary === 'source_silent' || poor;
-        const missing = t(poor ? 'compas.screen.prepPartialPoor' : 'compas.screen.prepPartialMissing');
+        const baseOnly = res.summary.itinerary === 'base_only';
+        const partial = res.summary.itinerary === 'source_silent' || poor || baseOnly;
+        const missing = t(poor ? 'compas.screen.prepPartialPoor' : baseOnly ? 'compas.screen.prepPartialBase' : 'compas.screen.prepPartialMissing');
         const done = partial ? t('compas.screen.prepPartial') : redo ? redo.label : t('compas.screen.prepDone');
         if (prepRef.current && prepRef.current.stage !== 'stopped')
           setPrep({

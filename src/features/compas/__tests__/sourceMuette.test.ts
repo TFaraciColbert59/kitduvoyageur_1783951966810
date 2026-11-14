@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 /**
@@ -18,6 +19,9 @@ const h = vi.hoisted(() => ({
   /** Ce que « la carte » fait : muette (un lieu, `silent`), répond pauvre (un lieu), répond riche (cinq lieux). */
   map: 'silent' as 'silent' | 'silent_one' | 'poor' | 'rich',
   areaAsks: 0,
+  /** Ce que « la carte » répond pour les objectifs de journée d'un séjour sur une base. */
+  objectives: 'silent' as 'silent' | 'empty' | 'rich',
+  objectiveAsks: 0,
 }));
 
 vi.mock('server-only', () => ({}));
@@ -63,6 +67,16 @@ const RICH = [
   village(5, 'Poronin', 0.05, 0.12),
 ];
 const POOR = [RICH[0], RICH[4]];
+// Objectifs de journée réels autour de Zakopane / Kościelisko (sommets, lacs, col, refuge), à moins de 11 km.
+const OBJ = (id: number, name: string, kind: string, lat: number, lon: number, eleM: number | null, notable = false) => ({ id: `n9${id}`, name, kind, lat, lon, eleM, notable });
+const OBJECTIVES = [
+  OBJ(1, 'Giewont', 'peak', 49.2514, 19.9344, 1894, true),
+  OBJ(2, 'Kasprowy Wierch', 'peak', 49.2319, 19.9817, 1987, true),
+  OBJ(3, 'Czarny Staw Gąsienicowy', 'lake', 49.2339, 20.0049, 1624),
+  OBJ(4, 'Hala Gąsienicowa', 'hut', 49.2437, 20.0023, 1500),
+  OBJ(5, 'Przełęcz Zawrat', 'pass', 49.2197, 20.0036, 2159),
+  OBJ(6, 'Nosal', 'peak', 49.2742, 19.9961, 1206),
+];
 vi.mock('../server/stagePoiLookup', () => ({
   /** Quatrième argument : ce que la vraie recherche remplit quand la carte complète n'a pas répondu. */
   lookupAreaPlaces: vi.fn(async (_q: unknown, _deadline: number, diag?: string[], status?: { silent: boolean }) => {
@@ -75,6 +89,16 @@ vi.mock('../server/stagePoiLookup', () => ({
     diag?.push(h.map === 'silent' ? 'Photon 2' : 'Overpass 2');
     if (h.map === 'silent' && status) status.silent = true;
     return POOR;
+  }),
+  /** Objectifs de journée autour de la base : muets (null), répondus sans rien (liste vide) ou riches (sommets, lac, col). */
+  lookupAreaObjectives: vi.fn(async (_base: unknown, _deadline: number, diag?: string[]) => {
+    h.objectiveAsks += 1;
+    if (h.objectives === 'silent') {
+      diag?.push('Objectifs : Overpass muet');
+      return null;
+    }
+    diag?.push(`Objectifs : Overpass ${h.objectives === 'rich' ? OBJECTIVES.length : 0}`);
+    return h.objectives === 'rich' ? OBJECTIVES : [];
   }),
   lookupRiverLine: vi.fn(async () => null),
   lookupTrailLine: vi.fn(async () => null),
@@ -137,6 +161,8 @@ beforeEach(() => {
   vi.clearAllMocks();
   h.map = 'silent';
   h.areaAsks = 0;
+  h.objectives = 'silent';
+  h.objectiveAsks = 0;
   h.db = memorySupabase({ user: () => ({ id: 'u1' }) });
   h.db.rows('trips').push({
     id: TRIP,
@@ -166,7 +192,8 @@ describe('Aperçu du 14/11 — source muette', () => {
     expect(names().size).toBe(1);
     // L'état explicite, pas une chaîne à relire.
     expect(res.summary.itinerary).toBe('source_silent');
-    expect(readItinerary(autofill().itinerary)).toEqual({ state: 'source_silent', places: 1, sources: ['Photon 2'] });
+    // Séjour sur une base (rando) : la carte des objectifs est muette aussi, la trace des sources le dit.
+    expect(readItinerary(autofill().itinerary)).toEqual({ state: 'source_silent', places: 1, objectives: 0, sources: ['Photon 2', 'Objectifs : Overpass muet'] });
     // La note dit ce qui manque, sur l'écran rechargé aussi.
     expect(res.summary.notes.some((n) => /La carte n’a pas répondu/.test(n))).toBe(true);
     // Le mécanisme de reprise existant est armé (compteur d'essais).
@@ -183,7 +210,9 @@ describe('Aperçu du 14/11 — source muette', () => {
     expect(autofill().stagesFallback).toBe(1);
   });
 
-  it('la carte a répondu mais la zone est pauvre (un seul lieu) : « zone pauvre », aucune reprise', async () => {
+  it('la carte a répondu mais la zone est pauvre (un seul lieu, itinéraire de lieu en lieu) : « zone pauvre », aucune reprise', async () => {
+    // Un bivouac (nuits dehors) reste un itinéraire de lieu en lieu : le séjour sur une base ne s'applique pas.
+    h.db.rows('trips')[0].primary_activity = 'bivouac';
     h.map = 'poor';
     const res = await launch();
     expect(res.success).toBe(true);
@@ -192,7 +221,68 @@ describe('Aperçu du 14/11 — source muette', () => {
     expect(res.summary.itinerary).toBe('poor_zone');
     expect(readItinerary(autofill().itinerary)?.state).toBe('poor_zone');
     expect(autofill().stagesFallback).toBeUndefined();
+    expect(h.objectiveAsks).toBe(0);
     expect(res.summary.notes.some((n) => /La carte n’a pas répondu/.test(n))).toBe(false);
+  });
+
+  describe('séjour de randonnée sur une base (Tatras) : un objectif réel par journée', () => {
+    it('la carte répond avec des objectifs : cinq journées différentes, chacune avec son objectif, sa distance et ses sources', async () => {
+      h.map = 'poor';
+      h.objectives = 'rich';
+      const res = await launch();
+      expect(res.success).toBe(true);
+      if (!res.success || !('summary' in res)) throw new Error('résumé attendu');
+      expect(steps()).toHaveLength(5);
+      const titles = steps().map((s) => String(s.title));
+      // Le constat : cinq fois « Jour N · Kościelisko ». Maintenant : « base → objectif → base », jamais deux fois le même.
+      expect(new Set(titles).size).toBe(5);
+      for (const [i, title] of titles.entries()) {
+        expect(title).toMatch(new RegExp(`^Jour ${i + 1} · Kościelisko → .+ → Kościelisko$`));
+        const objective = (steps()[i].metadata as { objective?: { name: string } }).objective;
+        expect(OBJECTIVES.map((o) => o.name)).toContain(objective?.name);
+        expect(title).toContain(objective?.name);
+      }
+      // Distance aller-retour estimée par le moteur (annoncée), jamais nulle.
+      for (const s of steps()) {
+        expect(Number(s.distance_km)).toBeGreaterThan(0);
+        expect((s.metadata as { distance?: { source?: string } }).distance?.source).toBe('estimation');
+        expect(String(s.description)).toContain('aller-retour');
+      }
+      // L'étiquette juste : ni zone pauvre, ni « incomplet faute de source ».
+      expect(res.summary.itinerary).toBe('complete');
+      expect(readItinerary(autofill().itinerary)).toMatchObject({ state: 'complete', places: 1, objectives: 5 });
+      expect(readItinerary(autofill().itinerary)?.sources).toContain('Objectifs : Overpass 6');
+      expect(autofill().stagesFallback).toBeUndefined();
+      // La nuit reste à la base : le dernier lieu du titre (lu par `placeOfDay`) est la base, jamais l'objectif.
+      expect(titles.every((x) => x.endsWith('→ Kościelisko'))).toBe(true);
+    });
+
+    it('la carte répond sans rien trouver autour de la base : « base seule, journées à compléter », pas « zone pauvre »', async () => {
+      h.map = 'poor';
+      h.objectives = 'empty';
+      const res = await launch();
+      expect(res.success).toBe(true);
+      if (!res.success || !('summary' in res)) throw new Error('résumé attendu');
+      expect(res.summary.itinerary).toBe('base_only');
+      expect(readItinerary(autofill().itinerary)).toMatchObject({ state: 'base_only', objectives: 0 });
+      expect(autofill().stagesFallback).toBeUndefined();
+    });
+
+    it('la carte des objectifs est muette : « incomplet faute de source » (reprise armée), jamais « zone pauvre »', async () => {
+      h.map = 'poor';
+      h.objectives = 'silent';
+      const res = await launch();
+      expect(res.success).toBe(true);
+      if (!res.success || !('summary' in res)) throw new Error('résumé attendu');
+      expect(res.summary.itinerary).toBe('source_silent');
+      expect(autofill().stagesFallback).toBe(1);
+      expect(readItinerary(autofill().itinerary)?.sources).toContain('Objectifs : Overpass muet');
+    });
+
+    it('nuits en refuge ou bivouac voulues : pas de séjour sur base, l’itinéraire de lieu en lieu reste le sien', async () => {
+      const src = readFileSync(new URL('../server/autofillActions.ts', import.meta.url), 'utf8');
+      expect(src).toMatch(/opts\.nights !== 'bivouac'[\s\S]{0,120}opts\.nights !== 'refuge'[\s\S]{0,120}opts\.nights !== 'mixte'/);
+    });
   });
 
   it('la carte a répondu et l’itinéraire est fourni : « complet », comme avant', async () => {

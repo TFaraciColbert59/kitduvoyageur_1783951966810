@@ -69,7 +69,7 @@ import { bestPeriod, needsDryNormals } from '../engine/period';
 import { retryParts, staleParts, unionParts, untouchedSince, type AutofillPart, type ProjectBasis } from '../engine/dependencies';
 import { resolvePlaceByName } from './placeSearch';
 import { lookupCommune, lookupDestination, lookupIslandContour, lookupMassif, lookupNatural, lookupReverse, lookupRiver, pathCandidates, stageAliasCandidates, stageCandidates } from './placeLookup';
-import { lookupAreaPlaces, lookupRiverLine, lookupStagePois, lookupTrailLine, readCachedStagePois, type AreaSourceStatus } from './stagePoiLookup';
+import { lookupAreaObjectives, lookupAreaPlaces, lookupRiverLine, lookupStagePois, lookupTrailLine, readCachedStagePois, type AreaSourceStatus } from './stagePoiLookup';
 import { planTrailTrek, trailWindow } from '../engine/trailRoute';
 import { trailRefIn } from '../engine/geoTrails';
 import { carFreeOf, carFreeStages, carFreeStagesNote, transitSignal } from '../engine/carFree';
@@ -131,6 +131,14 @@ import { aiSuggestion, essentialAdvice, orderNotes, repeatsRule } from '../engin
 import { preparationEventKind, recordPreparationEvent } from './opsEvents';
 import { coarsePosition, positionBase } from '../engine/privacy';
 import { pointsMaxAltitudeM, routeAscentM } from './elevation';
+import {
+  baseStayState,
+  mergeObjectives,
+  objectivesFromHuts,
+  pickDayObjectives,
+  pickStayBase,
+  type ObjectiveKind,
+} from '../engine/dayObjectives';
 import { estimatedLegKm, estimationNote, stepDistanceMetadata, type LegDistanceSource, type LegMove } from '../engine/legDistance';
 import { aiContributed, readAiProposed, withAiProposed } from '../engine/aiNotice';
 import {
@@ -438,6 +446,8 @@ interface StagePlace {
   geometry?: LngLat[] | null;
   /** Grand itinéraire suivi sur son tracé : km de tracé du jour (le tracé de la veille à ce soir est dans `geometry`). */
   trailKm?: number | null;
+  /** Séjour de randonnée sur une base : l'objectif réel de la journée (aller-retour depuis la base, distance estimée). */
+  objective?: { name: string; kind: ObjectiveKind; lat: number; lon: number; eleM: number | null; roundTripKm: number; ascentM: number | null };
 }
 
 /**
@@ -808,6 +818,85 @@ async function trailTrek(opts: {
   };
 }
 
+const OBJECTIVE_KIND_KEY: Record<ObjectiveKind, CompasServerKey> = {
+  peak: 'compas.server.autofill.plan.objectiveKindPeak',
+  lake: 'compas.server.autofill.plan.objectiveKindLake',
+  hut: 'compas.server.autofill.plan.objectiveKindHut',
+  pass: 'compas.server.autofill.plan.objectiveKindPass',
+  viewpoint: 'compas.server.autofill.plan.objectiveKindViewpoint',
+};
+
+/**
+ * Séjour de randonnée sur une base (la zone n'offre pas de quoi dormir de village en village) : la base est un
+ * lieu réel où dormir, et chaque jour porte un objectif réel de la carte autour d'elle (sommet, lac, refuge,
+ * col, point de vue), cherché UNE fois (Overpass, file du site, partagé un mois) et complété par les refuges déjà
+ * trouvés parmi les lieux de la zone. Distance : aller-retour estimé, annoncé. Null : aucune base (la zone n'a
+ * aucun lieu où dormir), l'appelant se replie comme avant. Rien n'est inventé : sans objectif, la journée reste
+ * sur la base, dite, et l'état le dit (`source_silent` si la carte n'a pas répondu, `base_only` sinon).
+ */
+async function hikingBaseStay(opts: {
+  anchor: Anchor;
+  places: AreaPlace[];
+  settlement: boolean;
+  zoneKm: number;
+  extent: [number, number, number, number] | null;
+  days: number;
+  activity: string;
+  targetKmPerDay: number | null;
+  deadline: number;
+  diag: string[];
+  t: ServerT;
+}): Promise<{ stages: StagePlace[]; note: string; coverage: ItineraryState; sources: string[]; objectives: number } | null> {
+  const { anchor, days, t } = opts;
+  const base = pickStayBase({
+    places: opts.places,
+    center: anchor,
+    radiusKm: opts.zoneKm,
+    extent: opts.extent,
+    startAt: opts.settlement ? { name: anchor.name, lat: anchor.lat, lon: anchor.lon } : null,
+  });
+  if (!base) return null;
+  const mapped = await lookupAreaObjectives(base, opts.deadline, opts.diag).catch(() => null);
+  const huts = objectivesFromHuts(opts.places);
+  const picks = pickDayObjectives({
+    base,
+    objectives: mergeObjectives([mapped ?? [], huts]),
+    days,
+    activity: opts.activity,
+    targetKmPerDay: opts.targetKmPerDay,
+  });
+  const stages: StagePlace[] = Array.from({ length: days }, (_, i) => {
+    const pick = picks[i] ?? null;
+    return {
+      day: i + 1,
+      name: base.name,
+      lat: base.lat,
+      lon: base.lon,
+      move: (pick ? 'marche' : 'aucun') as StageMove,
+      note: pick
+        ? t('compas.server.autofill.plan.objectiveDay', {
+            name: pick.name,
+            kind: t(OBJECTIVE_KIND_KEY[pick.kind]),
+            km: t.decimal(pick.roundTripKm),
+            gain: pick.ascentM != null ? t('compas.server.autofill.plan.objectiveGain', { m: pick.ascentM }) : '',
+          })
+        : t('compas.server.autofill.plan.baseStayFree'),
+      ...(pick
+        ? { objective: { name: pick.name, kind: pick.kind, lat: pick.lat, lon: pick.lon, eleM: pick.eleM, roundTripKm: pick.roundTripKm, ascentM: pick.ascentM } }
+        : {}),
+    };
+  });
+  return {
+    stages,
+    coverage: baseStayState(picks.length, days, mapped != null),
+    objectives: picks.length,
+    sources: opts.diag.slice(0, 6),
+    note: picks.length
+      ? t.plural(picks.length, 'compas.server.autofill.plan.baseStayOne', 'compas.server.autofill.plan.baseStayOther', { base: base.name })
+      : t('compas.server.autofill.plan.baseStayNone', { base: base.name }),
+  };
+}
+
 /**
  * Itinéraire déterministe : lieux RÉELS de la zone (OpenStreetMap) choisis par
  * calcul (distance du jour selon l'activité, forme, altitude). `wide` quand la
@@ -841,7 +930,7 @@ async function plannedStages(opts: {
   /** Le tracé du grand itinéraire a déjà été essayé (sans succès) : il n'est pas redemandé. */
   trailTried?: boolean;
 }): Promise<
-  | { stages: StagePlace[]; note: string; traced?: boolean; coverage?: ItineraryState; sources?: string[] }
+  | { stages: StagePlace[]; note: string; traced?: boolean; coverage?: ItineraryState; sources?: string[]; objectives?: number }
   | { fallback: string; silent?: true; sources?: string[] }
   | { wide: true }
 > {
@@ -1067,6 +1156,8 @@ async function plannedStages(opts: {
       cragNote = crag.note;
     }
   }
+  const targetKmPerDay =
+    (opts.pace === 'tranquille' && profileFor(activity).move === 'marche') || mtb ? profileFor(activity).dayKm[0] : null;
   const plan = planItinerary({
     days,
     activity,
@@ -1080,14 +1171,42 @@ async function plannedStages(opts: {
     startAt: settlement ? { name: anchor.name, lat: anchor.lat, lon: anchor.lon } : null,
     // Rythme tranquille à pied : la journée la plus courte du barème (22 km par jour avec
     // des enfants de 6 et 9 ans, 13 oct.).
-    targetKmPerDay:
-      (opts.pace === 'tranquille' && profileFor(activity).move === 'marche') || mtb ? profileFor(activity).dayKm[0] : null,
+    targetKmPerDay,
     natural,
     // Une région (Bretagne, Jura) : les étapes restent dans son emprise ; un
     // lac ou un sommet n'en a pas d'utile (on dort autour).
     extent: anchor.extent && (halfExtentKm ?? 0) >= 15 ? anchor.extent : null,
     nights: opts.nights,
   });
+  // Randonnée sur plusieurs jours dont les lieux où dormir ne font pas un itinéraire de village en village
+  // (la zone de Zakopane : un bourg à distance d'étape, cinq nuits au même lieu, journées vides) : un séjour sur
+  // une base, où chaque jour a un objectif réel lu sur la carte. Jamais quand la personne veut des refuges, un
+  // bivouac ou des étapes nommées : le tracé itinérant reste alors le sien.
+  if (
+    activity === 'hiking' &&
+    days >= 2 &&
+    !waypoints.length &&
+    opts.nights !== 'bivouac' &&
+    opts.nights !== 'refuge' &&
+    opts.nights !== 'mixte' &&
+    (!plan || thinItinerary(plan.distinct, days, plan.shape))
+  ) {
+    const stay = await hikingBaseStay({
+      anchor,
+      // Les lieux d'avant le filtre des hauteurs (une base de vallée est normale), avec l'altitude lue quand on l'a.
+      places: lowlandPlaces.map((p) => places.find((q) => q.id === p.id) ?? p),
+      settlement,
+      zoneKm,
+      extent: anchor.extent && (halfExtentKm ?? 0) >= 15 ? anchor.extent : null,
+      days,
+      activity,
+      targetKmPerDay,
+      deadline: opts.deadline,
+      diag,
+      t,
+    });
+    if (stay) return stay;
+  }
   if (!plan)
     return {
       fallback: t('compas.server.autofill.plan.tooFewPlaces', { count: places.length }),
@@ -1865,10 +1984,12 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
             (traced ?? (await planFor(startedAt + (phase === 'all' ? 120_000 : 30_000))));
       const plannedOk = planned && 'stages' in planned ? planned : null;
       // La carte n'a pas répondu (et rien de vérifiable n'a pris le relais) : l'itinéraire est incomplet, pas la zone pauvre.
-      const plannedView = (planned ?? {}) as { coverage?: ItineraryState; silent?: true; sources?: string[] };
+      const plannedView = (planned ?? {}) as { coverage?: ItineraryState; silent?: true; sources?: string[]; objectives?: number };
       let coverage: ItineraryState | null = plannedOk ? (plannedView.coverage ?? null) : null;
       let silentSeen = planned != null && 'fallback' in planned && plannedView.silent === true;
       let sourceNotes: string[] = plannedView.sources ?? [];
+      /** Séjour sur une base : jours qui portent un objectif réel (absent : l'itinéraire n'est pas un séjour sur base). */
+      let objectiveCount: number | null = plannedOk ? (plannedView.objectives ?? null) : null;
       let countryOk = false;
       // Grande île sans contour prouvé : aucun lieu ne se prouve sur l'île, l'IA n'écrit pas d'étape.
       const islandBlocked = islandGuard.large && !islandGuard.contour;
@@ -2241,8 +2362,9 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
           stagesFallback = fallbackBeforeAi;
           stagePlaces = calc.stages;
           // Les bases d'un pays (`countryStages`) n'ont ni état ni sources : elles sont complètes.
-          const planCalc = calc as { coverage?: ItineraryState; sources?: string[] };
+          const planCalc = calc as { coverage?: ItineraryState; sources?: string[]; objectives?: number };
           coverage = planCalc.coverage ?? null;
+          objectiveCount = planCalc.objectives ?? null;
           if (planCalc.sources) sourceNotes = planCalc.sources;
           // Étapes venues du tracé lui-même (un tronçon dit, l'IA muette) : « non retrouvées » serait faux.
           if (!('traced' in calc && calc.traced))
@@ -2277,6 +2399,8 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
             const up = await routeAscentM([...st.geometry]).catch(() => null);
             return { km: st.trailKm, ascent: up != null ? Math.round(up) : null, source: 'trace' };
           }
+          // Séjour sur une base : l'aller-retour vers l'objectif du jour, estimé et annoncé (note de l'étape), jamais routé.
+          if (st.objective) return { km: st.objective.roundTripKm, ascent: st.objective.ascentM, source: 'estimation' };
           const prevPlace = i > 0 ? stagePlaces[i - 1] : null;
           if (!prevPlace || distanceKm(prevPlace, st) < 0.3) return null;
           const mode = st.move === 'marche' ? 'pieton' : st.move === 'velo' ? 'velo' : 'voiture';
@@ -2340,7 +2464,9 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
           trip_id: tripId,
           day_number: st.day,
           order_index: 0,
-          title: `Jour ${st.day} · ${st.name}`,
+          // Séjour sur une base : « Jour 2 · Zakopane → Giewont → Zakopane ». Le dernier lieu du titre reste la base
+          // (là où l'on dort : `placeOfDay` lit après la dernière flèche), l'objectif est dit au milieu.
+          title: st.objective ? `Jour ${st.day} · ${st.name} → ${st.objective.name} → ${st.name}` : `Jour ${st.day} · ${st.name}`,
           description: loopKm
             ? [st.note, `Boucle d’environ ${String(loopKm).replace('.', ',')} km (estimation selon la durée et l’allure).`].filter(Boolean).join(' ')
             : [st.note, legs[i]?.note].filter(Boolean).join(' ') || null,
@@ -2352,10 +2478,13 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
           elevation_gain_m: legs[i]?.ascent ?? null,
           // D'où vient la distance (plan 1.5) : le routeur qui l'a mesurée, ou « estimation ».
           // Et si l'IA a proposé l'étape : l'écran le dit en texte (PLAN-100 5.3).
-          metadata: withAiProposed(
-            stepDistanceMetadata(legs[i]?.source ?? (loopKm && i === 0 ? 'estimation' : null)),
-            st.aiProposed === true
-          ),
+          metadata: {
+            ...withAiProposed(stepDistanceMetadata(legs[i]?.source ?? (loopKm && i === 0 ? 'estimation' : null)), st.aiProposed === true),
+            // L'objectif de la journée (séjour sur une base), lu sur la carte : le nom, la nature, la position, l'altitude OSM.
+            ...(st.objective
+              ? { objective: { name: st.objective.name, kind: st.objective.kind, lat: st.objective.lat, lon: st.objective.lon, ele_m: st.objective.eleM } }
+              : {}),
+          },
         }));
         if (rows.length) {
           const { data: insertedSteps, error: stepsError } = await supabase.from('trip_steps').insert(rows).select('id');
@@ -2391,8 +2520,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
         const places = new Set(stagePlaces.map((st) => st.name)).size;
         let state: ItineraryState = coverage ?? 'complete';
         if (state === 'complete' && silentSeen && !aiVerified && !countryOk && thinItinerary(places, days, null)) state = 'source_silent';
-        itinerary = { state, places, ...(sourceNotes.length ? { sources: sourceNotes } : {}) };
-        // Rejoué à une ouverture suivante par le mécanisme d'itinéraire de secours (au plus `STAGES_RETRY_MAX` fois).
+        itinerary = { state, places, ...(objectiveCount != null ? { objectives: objectiveCount } : {}), ...(sourceNotes.length ? { sources: sourceNotes } : {}) };        // Rejoué à une ouverture suivante par le mécanisme d'itinéraire de secours (au plus `STAGES_RETRY_MAX` fois).
         if (state === 'source_silent') {
           stagesFallback = Math.max(stagesFallback, (carry?.stagesFallback ?? 0) + 1);
           notes.push(t('compas.server.autofill.sourceSilent'));

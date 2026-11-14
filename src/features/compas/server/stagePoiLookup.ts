@@ -9,6 +9,7 @@ import {
   type StagePoint,
 } from '../engine/stagePois';
 import type { RoutePoi } from '../engine/routePois';
+import { buildObjectivesQuery, parseObjectives, type DayObjective } from '../engine/dayObjectives';
 import { geoapifyArea, geoapifyAvailable } from './geoapify';
 import { referentialAreaPlaces } from './geoPlaces';
 import { referentialPoisAround } from './geoPois';
@@ -349,11 +350,14 @@ export async function lookupAreaPlaces(
   const lang = await getRequestLocale();
   const key = languageCacheKey(`area:v3:${createHash('sha256').update(query).digest('hex').slice(0, 32)}`, lang);
   const say = (s: string) => diag?.push(s);
-  return cached<AreaPlace[] | null>(
+  /** La recherche a tourné ici (sinon la liste vient du cache partagé : `diag` restait vide, sans trace des sources). */
+  let ran = false;
+  const found = await cached<AreaPlace[] | null>(
     'place',
     key,
     30 * 86_400,
     async () => {
+      ran = true;
       const left = () => deadline - Date.now();
       if (left() < 4000) {
         say('plus de temps');
@@ -399,4 +403,50 @@ export async function lookupAreaPlaces(
     (v) => Array.isArray(v) && v.length >= THIN_AREA && !silent,
     (hit) => Array.isArray(hit) && hit.length >= THIN_AREA
   );
+  // Liste servie du cache partagé : la trace des sources le dit (diagnostic lisible en base, jamais affiché).
+  if (!ran) say(`Cache ${found?.length ?? 0}`);
+  return found;
+}
+
+/** Au moins un objectif lu : une réponse vide n'est ni gardée un mois ni prise pour la vérité de la zone. */
+const OBJECTIVES_TTL_S = 30 * 86_400;
+
+/**
+ * Objectifs de journée autour d'une base de randonnée (sommets, lacs, cols, points de vue, refuges nommés) :
+ * UNE requête Overpass (file unique du site, pas de rafale), partagée un mois. `null` : Overpass n'a pas répondu
+ * (muet, coupé, plus de temps) ; `[]` : il a répondu et la zone n'a rien de nommé. Jamais un objectif inventé.
+ */
+export async function lookupAreaObjectives(
+  base: { lat: number; lon: number },
+  deadline: number,
+  /** Ce que la carte a répondu (même trace que `lookupAreaPlaces`). */
+  diag?: string[]
+): Promise<DayObjective[] | null> {
+  const query = buildObjectivesQuery(base);
+  const key = `objectives:v1:${createHash('sha256').update(query).digest('hex').slice(0, 32)}`;
+  let ran = false;
+  const list = await cached<DayObjective[] | null>(
+    'place',
+    key,
+    OBJECTIVES_TTL_S,
+    async () => {
+      ran = true;
+      const left = deadline - Date.now();
+      if (left < 5000) {
+        diag?.push('Objectifs : plus de temps');
+        return null;
+      }
+      const payload = await overpassArea(query, Math.min(15_000, left));
+      if (!payload) {
+        diag?.push('Objectifs : Overpass muet');
+        return null;
+      }
+      const found = parseObjectives(payload);
+      diag?.push(`Objectifs : Overpass ${found.length}`);
+      return found;
+    },
+    (v) => Array.isArray(v) && v.length > 0
+  );
+  if (!ran) diag?.push(`Objectifs : cache ${list?.length ?? 0}`);
+  return list;
 }

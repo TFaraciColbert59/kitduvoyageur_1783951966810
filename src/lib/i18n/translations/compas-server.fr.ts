@@ -341,6 +341,22 @@ export const compasServerFr = {
         shapeLoop: 'en boucle',
         shapeBase: 'depuis une base',
         via: ', en passant par {places}',
+        objectiveKindPeak: 'sommet',
+        objectiveKindLake: 'lac',
+        objectiveKindHut: 'refuge',
+        objectiveKindPass: 'col',
+        objectiveKindViewpoint: 'point de vue',
+        objectiveGain: ', dénivelé d’au moins {m} m',
+        objectiveDay:
+          'Journée depuis la base : aller-retour vers {name} ({kind}), environ {km} km à pied{gain} (vol d’oiseau × 2 × 1,4, itinéraire non calculé), à vérifier.',
+        baseStayFree:
+          'Journée libre autour de la base : la carte n’a pas fourni d’autre objectif dans la zone. À compléter.',
+        baseStayOne:
+          'Séjour de randonnée depuis {base} : {count} objectif réel de la carte (sommet, lac, refuge, col ou point de vue) pour les journées, distances estimées.',
+        baseStayOther:
+          'Séjour de randonnée depuis {base} : {count} objectifs réels de la carte (sommets, lacs, refuges, cols ou points de vue), un par jour, distances estimées.',
+        baseStayNone:
+          'Séjour de randonnée depuis {base} : aucun objectif de journée trouvé sur la carte autour de la base. Les journées restent à compléter.',
         countryUnavailable: 'lieux du pays indisponibles (service de carte injoignable)',
         countryUnavailableDiag:
           'lieux du pays indisponibles (service de carte injoignable : {diag})',

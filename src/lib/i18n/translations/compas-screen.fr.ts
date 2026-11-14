@@ -32,6 +32,7 @@ export const compasScreenFr = {
     prepDone: 'Aventure préparée',
     prepPartial: 'Aventure en partie préparée',
     prepPartialMissing: 'Il manque les étapes du parcours : elles arriveront quand la carte répondra.',
+    prepPartialBase: 'Séjour sur une base : la carte n’a pas fourni assez d’objectifs pour chaque journée. Complète les journées vides dans Parcours.',
     prepPartialPoor: 'Il manque les étapes du parcours : la carte n’a trouvé presque aucun lieu dans cette zone. Élargis la zone ou choisis un lieu voisin.',
     prepBudget: 'Budget {amount}',
     kept: 'Gardé : {list}',

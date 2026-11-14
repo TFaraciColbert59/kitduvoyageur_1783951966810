@@ -328,6 +328,22 @@ export const compasServerEn: Shape<typeof compasServerFr> = {
         shapeLoop: 'as a loop',
         shapeBase: 'from a base',
         via: ', by way of {places}',
+        objectiveKindPeak: 'peak',
+        objectiveKindLake: 'lake',
+        objectiveKindHut: 'hut',
+        objectiveKindPass: 'pass',
+        objectiveKindViewpoint: 'viewpoint',
+        objectiveGain: ', at least {m} m of climbing',
+        objectiveDay:
+          'Day from the base: round trip to {name} ({kind}), about {km} km on foot{gain} (straight line × 2 × 1.4, route not calculated), to be checked.',
+        baseStayFree:
+          'Free day around the base: the map gave no other objective in the area. To be filled in.',
+        baseStayOne:
+          'Hiking stay from {base}: {count} real objective from the map (peak, lake, hut, pass or viewpoint) for the days, estimated distances.',
+        baseStayOther:
+          'Hiking stay from {base}: {count} real objectives from the map (peaks, lakes, huts, passes or viewpoints), one per day, estimated distances.',
+        baseStayNone:
+          'Hiking stay from {base}: no day objective found on the map around the base. The days are left to be filled in.',
         countryUnavailable: 'places in the country unavailable (map service unreachable)',
         countryUnavailableDiag:
           'places in the country unavailable (map service unreachable: {diag})',

@@ -31,6 +31,7 @@ export const compasScreenEn: Shape<typeof compasScreenFr> = {
     prepDone: 'Adventure prepared',
     prepPartial: 'Adventure partly prepared',
     prepPartialMissing: 'The route stages are missing: they’ll arrive when the map responds.',
+    prepPartialBase: 'Stay from a base: the map did not give enough objectives for every day. Fill in the empty days in Route.',
     prepPartialPoor: 'The route stages are missing: the map found almost no places in this area. Widen the area or pick a nearby place.',
     prepBudget: 'Budget: {amount}',
     kept: 'Kept: {list}',

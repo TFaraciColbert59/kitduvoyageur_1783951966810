@@ -16,6 +16,9 @@ import { placeOfDay, stepPlace } from '../v5/model/trip';
 import { FR_T } from '../components/compasTypes';
 import { EMPTY_EXTRAS, type V5Extras, type V5StayOption, type V5TransportOption } from '../v5/types';
 import { compasV5SetResaStatusAction } from '../v5/server/choiceActions';
+import { planItinerary, planningZoneKm, type AreaPlace } from '../engine/itinerary';
+import { baseStayState, buildObjectivesQuery, mergeObjectives, objectivesFromHuts, parseObjectives, pickDayObjectives, pickStayBase, type DayObjective } from '../engine/dayObjectives';
+import { readItinerary, thinItinerary } from '../server/autofillState';
 
 const resaDb = vi.hoisted(() => ({ db: null as unknown as FakeDb, denied: false }));
 vi.mock('server-only', () => ({}));
@@ -713,5 +716,125 @@ describe('Aperçu du 14/11', () => {
       }
       expect(placeOfDay('Jour 2 · GR 20')).toBe('GR 20');
     });
+  });
+});
+
+describe('Aperçu du 14/11 — journées vides', () => {
+  // « 5 jours de rando dans les Tatras en août à 2 depuis Paris » : ancre {49.20806, 19.94739}, emprise [19.585, 49.284, 20.32, 49.132].
+  const place = (id: string, name: string, lat: number, lon: number, kind: AreaPlace['kind'], eleM: number | null, population: number | null = null): AreaPlace => ({ id, name, lat, lon, kind, eleM, population, countryCode: 'PL' });
+  const CENTER = { lat: 49.20806, lon: 19.94739 };
+  const EXTENT: [number, number, number, number] = [19.585, 49.284, 20.32, 49.132];
+  const zoneKm = planningZoneKm({ activity: 'hiking', days: 5, halfExtentKm: 28, settlement: false });
+  // Les lieux où dormir que la carte rend pour ce massif : peu, éloignés (Poronin est hors de l'emprise).
+  const VILLAGES = [
+    place('n1', 'Kościelisko', 49.2806, 19.8206, 'village', 900, 7000),
+    place('n2', 'Poronin', 49.3294, 20.0128, 'village', 740, 5000),
+    place('n3', 'Murzasichle', 49.2606, 20.0333, 'village', 900, 1500),
+    place('n4', 'Zakopane', 49.2992, 19.9496, 'town', 838, 27000),
+  ];
+  const HUTS = [
+    place('h1', 'Hala Gąsienicowa', 49.2437, 20.0023, 'hut', 1500),
+    place('h2', 'Morskie Oko', 49.2017, 20.0707, 'hut', 1405),
+    place('h3', 'Dolina Pięciu Stawów Polskich', 49.2022, 20.0272, 'hut', 1670),
+  ];
+  const obj = (id: string, name: string, kind: DayObjective['kind'], lat: number, lon: number, eleM: number | null, notable = false): DayObjective => ({ id, name, kind, lat, lon, eleM, notable });
+  const SUMMITS = [
+    obj('n11', 'Giewont', 'peak', 49.2514, 19.9344, 1894, true),
+    obj('n12', 'Kasprowy Wierch', 'peak', 49.2319, 19.9817, 1987, true),
+    obj('n13', 'Nosal', 'peak', 49.2742, 19.9961, 1206),
+    obj('n14', 'Czarny Staw Gąsienicowy', 'lake', 49.2339, 20.0049, 1624),
+    obj('n15', 'Przełęcz Zawrat', 'pass', 49.2197, 20.0036, 2159),
+  ];
+
+  it('reproduit : l’itinéraire de lieu en lieu tient sur un seul lieu où dormir, cinq nuits identiques, mince', () => {
+    const plan = planItinerary({ days: 5, activity: 'hiking', center: CENTER, radiusKm: zoneKm, places: VILLAGES.filter((p) => p.name !== 'Zakopane'), shape: null, natural: true, extent: EXTENT, nights: null });
+    expect(plan?.shape).toBe('loop');
+    expect(plan?.distinct).toBe(1);
+    expect(new Set(plan?.stages.map((s) => s.name)).size).toBe(1);
+    expect(thinItinerary(plan?.distinct ?? 0, 5, plan?.shape ?? null)).toBe(true);
+    // Cause : une randonnée est itinérante pour le profil, mais absente des activités itinérantes du garde `tooFewDistinct`.
+    const src = readFileSync(new URL('../server/autofillActions.ts', import.meta.url), 'utf8');
+    expect(src).toContain("new Set(['roadtrip', 'vanlife', 'trekking', 'cycling'])");
+  });
+
+  it('la base du séjour est le bourg le plus important près du centre, jamais un refuge ni un camping', () => {
+    const base = pickStayBase({ places: [...VILLAGES, ...HUTS], center: CENTER, radiusKm: zoneKm, extent: EXTENT });
+    expect(base?.name).toBe('Zakopane');
+    expect(pickStayBase({ places: HUTS, center: CENTER, radiusKm: zoneKm, extent: EXTENT })).toBeNull();
+    expect(pickStayBase({ places: VILLAGES, center: CENTER, radiusKm: zoneKm, startAt: { name: 'Zakopane', lat: 49.2969, lon: 19.95 } })?.name).toBe('Zakopane');
+  });
+
+  it('cinq jours = cinq objectifs réels, distincts, avec une distance aller-retour estimée', () => {
+    const base = pickStayBase({ places: VILLAGES, center: CENTER, radiusKm: zoneKm, extent: EXTENT });
+    if (!base) throw new Error('base attendue');
+    const picks = pickDayObjectives({ base, objectives: mergeObjectives([SUMMITS, objectivesFromHuts(HUTS)]), days: 5, activity: 'hiking' });
+    expect(picks).toHaveLength(5);
+    expect(new Set(picks.map((p) => p.name)).size).toBe(5);
+    const known = new Set([...SUMMITS, ...objectivesFromHuts(HUTS)].map((o) => o.name));
+    for (const p of picks) {
+      expect(known.has(p.name)).toBe(true);
+      expect(p.crowKm).toBeGreaterThanOrEqual(1.5);
+      expect(p.roundTripKm).toBeCloseTo(p.crowKm * 2 * 1.4, 0);
+    }
+    // Du plus court au plus long.
+    expect(picks.map((p) => p.crowKm)).toEqual([...picks.map((p) => p.crowKm)].sort((a, b) => a - b));
+  });
+
+  it('dénivelé minimal : la différence d’altitude, seulement quand les deux altitudes sont connues', () => {
+    const base = { lat: 49.2992, lon: 19.9496, eleM: 838 };
+    const [giewont] = pickDayObjectives({ base, objectives: [obj('n11', 'Giewont', 'peak', 49.2514, 19.9344, 1894, true)], days: 1, activity: 'hiking' });
+    expect(giewont.ascentM).toBe(1060);
+    const [noEle] = pickDayObjectives({ base: { ...base, eleM: null }, objectives: [obj('n11', 'Giewont', 'peak', 49.2514, 19.9344, 1894, true)], days: 1, activity: 'hiking' });
+    expect(noEle.ascentM).toBeNull();
+  });
+
+  it('jamais d’objectif inventé : sans lieu nommé dans la fenêtre, aucune journée n’est remplie', () => {
+    const base = { lat: 49.2992, lon: 19.9496, eleM: 838 };
+    expect(pickDayObjectives({ base, objectives: [], days: 5, activity: 'hiking' })).toEqual([]);
+    // Trop loin pour une journée (Morskie Oko est à plus de 11 km de Zakopane) ou sur la base elle-même.
+    expect(pickDayObjectives({ base, objectives: [obj('x', 'Morskie Oko', 'lake', 49.2017, 20.0707, 1395), obj('y', 'Zakopane', 'viewpoint', 49.2993, 19.9497, null)], days: 5, activity: 'hiking' })).toEqual([]);
+  });
+
+  it('étiquette : fourni = complet ; carte muette = incomplet faute de source ; carte répondue sans objectif = base seule (jamais « zone pauvre »)', () => {
+    expect(baseStayState(5, 5, true)).toBe('complete');
+    expect(baseStayState(3, 5, false)).toBe('complete');
+    expect(baseStayState(1, 5, false)).toBe('source_silent');
+    expect(baseStayState(0, 5, false)).toBe('source_silent');
+    expect(baseStayState(1, 5, true)).toBe('base_only');
+    expect(baseStayState(0, 5, true)).toBe('base_only');
+    expect(baseStayState(0, 1, true)).toBe('base_only');
+  });
+
+  it('la requête Overpass : une seule, nommée, plafonnée par nature, autour de la base', () => {
+    const q = buildObjectivesQuery({ lat: 49.2992, lon: 19.9496 });
+    expect(q).toContain('around:11000,49.29920,19.94960');
+    expect(q.match(/out center tags/g)?.length).toBe(7);
+    expect(q.match(/\["name"\]/g)?.length).toBe(7);
+    const parsed = parseObjectives({
+      elements: [
+        { type: 'node', id: 1, lat: 49.25, lon: 19.93, tags: { natural: 'peak', name: 'Giewont', ele: '1894', wikidata: 'Q1' } },
+        { type: 'node', id: 2, lat: 49.25, lon: 19.93, tags: { natural: 'peak' } },
+        { type: 'way', id: 3, center: { lat: 49.2339, lon: 20.0049 }, tags: { natural: 'water', water: 'lake', name: 'Czarny Staw Gąsienicowy' } },
+        { type: 'node', id: 4, lat: 49.3, lon: 19.9, tags: { amenity: 'cafe', name: 'Café' } },
+      ],
+    });
+    expect(parsed.map((o) => [o.name, o.kind, o.eleM, o.notable])).toEqual([['Giewont', 'peak', 1894, true], ['Czarny Staw Gąsienicowy', 'lake', null, false]]);
+    // Réponse coupée (remarque sans résultat) : rien n'est lu.
+    expect(parseObjectives({ elements: [], remark: 'runtime error: timeout' })).toEqual([]);
+  });
+
+  it('l’écran : « base seule » a son texte, distinct de « presque aucun lieu » (cinq langues)', () => {
+    const src = readFileSync(new URL('../components/useCompasController.ts', import.meta.url), 'utf8');
+    expect(src).toContain("res.summary.itinerary === 'base_only'");
+    expect(src).toContain("baseOnly ? 'compas.screen.prepPartialBase'");
+    for (const l of ['fr', 'en', 'de', 'es', 'it']) {
+      const dict = readFileSync(new URL(`../../../lib/i18n/translations/compas-screen.${l}.ts`, import.meta.url), 'utf8');
+      expect(dict, l).toContain('prepPartialBase:');
+    }
+  });
+
+  it('l’état « base seule » est relu depuis les métadonnées ; une valeur inconnue n’est jamais crue', () => {
+    expect(readItinerary({ state: 'base_only', places: 1, objectives: 2, sources: ['Objectifs : Overpass 2'] })).toEqual({ state: 'base_only', places: 1, objectives: 2, sources: ['Objectifs : Overpass 2'] });
+    expect(readItinerary({ state: 'base', places: 1 })).toBeUndefined();
   });
 });
