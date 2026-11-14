@@ -1,5 +1,7 @@
 # Essai Google Flow — 3 plans, 7 vidéos, Veo 3.1 Lite contre Omni Flash 1.2
 
+> **Remplacée le 14/11/2026 par `FEUILLE-DE-ROUTE.md`.** Tony a tranché : Omni Flash 1.2 seul, un prompt par plan, tout le film d'un coup. Cette fiche reste pour ses notes de vérification (tarifs, sources) en fin de document.
+
 **But de l'essai.** Savoir si des vidéos générées dans Flow à partir de nos images fixes donnent l'impression de vrais acteurs filmés, et plus d'un diaporama. Et savoir **quel modèle** le fait le mieux : Veo 3.1 Lite (le moins cher) ou **Omni Flash 1.2** (sorti le 5/11/2026, que Google présente comme supérieur en qualité et en constance des personnages).
 On teste trois cas difficiles : un plan large avec des marcheurs minuscules (P26), une action rapide (P37) et un gros plan de visages (P47).
 Pour chaque plan, **le même prompt A est lancé une fois avec Veo 3.1 Lite et une fois avec Omni Flash 1.2** : à prompt égal, on voit la différence entre les modèles. Le prompt B reste en réserve (ne le lance pas pour l'instant).
