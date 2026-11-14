@@ -237,24 +237,24 @@ describe('Task 2A fix rounds 1–5 — contraste systémique, thème et primitiv
     expect(result.colorScheme).toBe('light');
   });
 
-  it('applique le thème dark malgré un stockage bloqué', () => {
+  it('applique le thème clair malgré un stockage bloqué et préférence sombre', () => {
     const result = runThemeBootstrap({
       theme: null,
       intensity: null,
       preference: 'dark',
       storageThrows: true,
     });
-    expect(result.classes).toContain('dark');
-    expect(result.attributes['data-theme']).toBe('dark');
-    expect(result.colorScheme).toBe('dark');
+    expect(result.classes).not.toContain('dark');
+    expect(result.attributes['data-theme']).toBe('light');
+    expect(result.colorScheme).toBe('light');
   });
 
   it('force le clair sur le Compas, même avec le sombre enregistré', () => {
     const compas = runThemeBootstrap({ theme: 'dark', intensity: null, preference: 'dark', pathname: '/compas' });
     expect(compas.attributes['data-theme']).toBe('light');
     expect(runThemeBootstrap({ theme: 'dark', intensity: null, preference: 'dark', pathname: '/compas/x' }).attributes['data-theme']).toBe('light');
-    // « /compassion » n'est pas le Compas.
-    expect(runThemeBootstrap({ theme: 'dark', intensity: null, preference: 'dark', pathname: '/compassion' }).attributes['data-theme']).toBe('dark');
+    // En mode 100% clair, toutes les routes sont en clair.
+    expect(runThemeBootstrap({ theme: 'dark', intensity: null, preference: 'dark', pathname: '/compassion' }).attributes['data-theme']).toBe('light');
   });
 
   it('choisit light pour no-preference', () => {
@@ -270,7 +270,7 @@ describe('Task 2A fix rounds 1–5 — contraste systémique, thème et primitiv
     expect(result.attributes['data-theme']).toBe('light');
     expect(result.colorScheme).toBe('light');
     expect(result.properties['--glass-intensity']).toBe('0.2');
-    expect(layout).toContain("colorScheme: 'light dark'");
+    expect(layout).toContain("colorScheme: 'light'");
     expect(layout).toMatch(/<html[\s\S]*?suppressHydrationWarning[\s\S]*?>/);
     expect(layout).not.toContain('id="glass-intensity-bootstrap"');
     expect((layout.match(/lkdv_glass_intensity/g) ?? []).length).toBe(1);
@@ -432,7 +432,7 @@ describe('Task 2A fix rounds 1–5 — contraste systémique, thème et primitiv
             colorScheme === 'light' ? 'rgb(245, 248, 246)' : 'rgb(22, 26, 24)'
           );
           expect(styles['g3-reference'].backgroundColor).toBe(
-            colorScheme === 'light' ? 'rgb(18, 24, 21)' : 'rgb(255, 255, 255)'
+            colorScheme === 'light' ? 'rgb(235, 242, 236)' : 'rgb(255, 255, 255)'
           );
           expect(styles['gc-reference'].backgroundColor).toBe(styles['g2-reference'].backgroundColor);
 
@@ -463,10 +463,10 @@ describe('Task 2A fix rounds 1–5 — contraste systémique, thème et primitiv
           expect(styles['inline-g2'].backgroundColor).toBe(styles['g2-reference'].backgroundColor);
           expect(styles['inline-g3'].backgroundColor).toBe(styles['g3-reference'].backgroundColor);
           expect(styles['inline-g3'].color).toBe(
-            colorScheme === 'light' ? 'rgb(255, 255, 255)' : 'rgb(14, 20, 17)'
+            colorScheme === 'light' ? 'rgb(23, 43, 36)' : 'rgb(14, 20, 17)'
           );
-          const g3Text: RGB = colorScheme === 'light' ? [255, 255, 255] : [14, 20, 17];
-          const g3Background: RGB = colorScheme === 'light' ? [18, 24, 21] : [255, 255, 255];
+          const g3Text: RGB = colorScheme === 'light' ? [23, 43, 36] : [14, 20, 17];
+          const g3Background: RGB = colorScheme === 'light' ? [235, 242, 236] : [255, 255, 255];
           expect(contrast(g3Text, g3Background)).toBeGreaterThanOrEqual(4.5);
           expect(styles.pill.backgroundColor).toBe(styles['g3-reference'].backgroundColor);
           /* Le CTA n'est PAS un verre neutre : c'est un aplat de la couleur

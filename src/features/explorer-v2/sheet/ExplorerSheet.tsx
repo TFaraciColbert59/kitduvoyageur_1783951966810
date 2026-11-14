@@ -39,9 +39,10 @@ const LOW = 300;
 const DETENTS: Detent[] = ['peek', 'low', 'mid', 'full'];
 
 function heightsFor(viewport: number, _bottomInset: number) {
-  // Strictement deux points d'arrêt : Minimum 30 % et Maximum 90 %
-  const minH = Math.round(viewport * 0.30);
-  const maxH = Math.round(viewport * 0.90);
+  // Sur iPhone 16 Pro, safe-area-inset-top + .xp-chrome requiert au moins ~148px de dégagement pour éviter la collision
+  const topClearance = 148;
+  const minH = Math.max(248, Math.round(viewport * 0.32));
+  const maxH = Math.max(minH + 40, Math.min(Math.round(viewport * 0.85), viewport - topClearance));
   return {
     peek: minH,
     low: minH,
@@ -239,6 +240,11 @@ export function ExplorerSheet({
           {onBack ? (
             <button type="button" className="xp-round-glass" onClick={onBack} aria-label="Retour">
               <XpIcon name="chevl" size={17} />
+            </button>
+          ) : null}
+          {onClose ? (
+            <button type="button" className="xp-round-glass" onClick={onClose} aria-label="Fermer">
+              <XpIcon name="x" size={16} />
             </button>
           ) : null}
         </div>

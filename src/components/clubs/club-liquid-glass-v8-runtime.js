@@ -42,7 +42,7 @@ const fmtE = n => n.toLocaleString('fr-FR', { minimumFractionDigits: n % 1 ? 2 :
 const kgs = g => g >= 1000 ? (g / 1000).toLocaleString('fr-FR', { maximumFractionDigits: 2 }) + ' kg' : Math.round(g) + ' g';
 const haptic = p => { try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} };
 
-const TONY_AVATAR = "data:image/jpeg;base64,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";
+const TONY_AVATAR = "";
 
 const IC = {
   user: "M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM4 20c.8-3.8 3.8-6 8-6s7.2 2.2 8 6",
@@ -191,13 +191,7 @@ let tileArt = function(kind) {
 /* ---------- Données du Compte @tony_frc (alignées sur Supabase LKDV) ---------- */
 var hlList = () => (Array.isArray(HIGHLIGHTS) ? HIGHLIGHTS : []);
 let HIGHLIGHTS = [{ id: "hl5", title: "Nouveau", mass: "m1", step: 0, sub: "Ajouter un moment terrain à la une" }];
-let _MOCK_HIGHLIGHTS = [
-  { id: "hl1", title: "Alpes IT·FR", mass: "m2", step: 1, sub: "5 sorties · Mont-Blanc & Grand Paradis · 94 km" },
-  { id: "hl2", title: "Néouvielle", mass: "m1", step: 2, sub: "Bivouac 3 jours · 2 450 m · 18 photos" },
-  { id: "hl3", title: "Vercors", mass: "m3", step: 2, sub: "Traversée Hauts Plateaux · 34 km · Gypaète" },
-  { id: "hl4", title: "Sac 4,8kg", mass: "m1", step: 3, sub: "Kit souche G1 · 91 % d'endurance terrain" },
-  { id: "hl5", title: "Nouveau", mass: "m1", step: 0, sub: "Ajouter un moment terrain à la une" }
-];
+let _MOCK_HIGHLIGHTS = [];
 
 let STORY_HIGHLIGHTS = [];
 
@@ -2347,7 +2341,7 @@ S.profile = {
   followingCount: 339,
   avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
   bioLine: 'IT·FR · Haute montagne · Minimalisme',
-  sigText: '14 sorties · 182 km · 13,4 k m D+',
+  sigText: '14 sorties · 182 km · 13,4 km D+',
   isGuest: false,
   storeCreditEur: 42.50,
   loyaltyPoints: 1450
@@ -2644,7 +2638,7 @@ card = function () {
       '<div class="ig-bio-top">' +
         '<b class="ig-bio-cc" aria-label="Massif d\'ancrage">' + esc(S.traveller?.home || 'PYR · FR') + '</b>' +
         '<span class="ig-bio-dot" aria-hidden="true">·</span>' +
-        '<span class="ig-bio-stats">' + D.totalOutings + ' sorties · ' + D.totalKm + ' km · ' + dplusK + ' k m D+</span>' +
+        '<span class="ig-bio-stats">' + D.totalOutings + ' sorties · ' + D.totalKm + ' km · ' + dplusK + ' km D+</span>' +
       '</div>' +
       (bioText ? '<p class="ig-bio-text">' + esc(bioText) + '</p>' : '') +
     '</div>'
@@ -3613,7 +3607,7 @@ function renderPostModal(postId) {
     ? `Aimé par <b data-a="openUserProfile" data-v="montagne_lea" style="cursor:pointer">montagne_lea</b>, <b>toi</b> et <b>${Math.max(1, likeData.count - 2)} autres personnes</b>`
     : `Aimé par <b data-a="openUserProfile" data-v="montagne_lea" style="cursor:pointer">montagne_lea</b> et <b>${Math.max(1, likeData.count - 1)} autres personnes</b>`;
 
-  const userAvatar = (P && P.avatarUrl) || TONY_AVATAR;
+  const userAvatar = (P && P.avatarUrl) || '';
 
   const prevScroll = modalEl.querySelector('.pmi-scroll-area')?.scrollTop || 0;
   modalEl.innerHTML = `

@@ -1562,9 +1562,9 @@ function ToolsTabs(ctx: SheetContext, kind: string): SheetTab[] {
                   { label: 'Distance', value: route.distance_km ? `${route.distance_km.toFixed(1).replace('.', ',')} km` : '—' },
                   {
                     label: 'D+',
-                    value: (route as { dplus_m?: number }).dplus_m
+                    value: typeof (route as { dplus_m?: number }).dplus_m === 'number'
                       ? `${Math.round((route as { dplus_m?: number }).dplus_m!)} m`
-                      : '≈ 850 m',
+                      : '—',
                   },
                   { label: 'Réseau', value: route.ref ?? route.network ?? 'GR®' },
                 ]}
@@ -1613,25 +1613,60 @@ function ToolsTabs(ctx: SheetContext, kind: string): SheetTab[] {
         id: 'conditions',
         label: 'Conditions',
         icon: 'cloud',
-        render: () => (
-          <>
-            <XpEyebrow>Météo & Terrain · MET Norway</XpEyebrow>
-            <XpRows>
-              <XpRow
-                icon="cloud"
-                title="Prévisions favorables"
-                sub="Sentier dégagé, pas de névé résiduel sur la première moitié"
-                badge={{ label: 'Météo OK', tone: 'good' }}
-              />
-              <XpRow
-                icon="check"
-                tone="good"
-                title="Balisage visible"
-                sub="Marquages récents blanc et rouge (GR®)"
-              />
-            </XpRows>
-          </>
-        ),
+        render: () => {
+          const rawCurrent = (ctx.weather as { current?: { temperatureC?: number; label?: string; windKmh?: number } } | undefined)?.current;
+          const firstHour = ctx.weather?.hours?.[0];
+          const curWeather = rawCurrent
+            ? {
+                temperatureC: rawCurrent.temperatureC ?? 0,
+                label: rawCurrent.label ?? 'Météo locale',
+                windKmh: rawCurrent.windKmh ?? 0,
+              }
+            : firstHour && firstHour.temperature_c != null
+              ? {
+                  temperatureC: firstHour.temperature_c,
+                  label: firstHour.symbol ? firstHour.symbol.replace(/_/g, ' ') : 'Météo locale',
+                  windKmh: Math.round((firstHour.wind_ms ?? 0) * 3.6),
+                }
+              : null;
+          const netLabel =
+            route?.network === 'iwn'
+              ? 'GR® international'
+              : route?.network === 'nwn'
+                ? 'Réseau national (GR®)'
+                : route?.network === 'rwn'
+                  ? 'Réseau régional (PR / LAW)'
+                  : route?.network === 'lwn'
+                    ? 'Sentier local balisé'
+                    : 'Balisage terrain à vérifier sur place';
+          return (
+            <>
+              <XpEyebrow>Météo &amp; Terrain</XpEyebrow>
+              <XpRows>
+                {curWeather ? (
+                  <XpRow
+                    icon="cloud"
+                    title={`${Math.round(curWeather.temperatureC)} °C · ${curWeather.label}`}
+                    sub={`Vent ${Math.round(curWeather.windKmh)} km/h · données locales en direct`}
+                    badge={{ label: 'En direct', tone: 'good' }}
+                  />
+                ) : (
+                  <XpRow
+                    icon="cloud"
+                    title="Conditions locales"
+                    sub="Prévisions MET Norway / Open-Meteo chargées dès que la trace est centrée"
+                    badge={{ label: 'Météo', tone: 'muted' }}
+                  />
+                )}
+                <XpRow
+                  icon="route"
+                  title={route?.ref ? `Réseau ${route.ref}` : 'Itinéraire tracé'}
+                  sub={netLabel}
+                />
+              </XpRows>
+            </>
+          );
+        },
       },
     ];
   }
@@ -2989,7 +3024,10 @@ export function buildSheetModel(ctx: SheetContext): SheetModel {
     const route = ctx.routes.find((item) => String(item.id) === state.selection?.id);
     return {
       title: kind === 'trail' && route?.name ? route.name : title,
-      subtitle: kind === 'trail' && route ? `${route.distance_km ?? '—'} km${route.ref ? ` · ${route.ref}` : ''}` : subtitle,
+      subtitle:
+        kind === 'trail' && route
+          ? `${route.distance_km != null && Number.isFinite(route.distance_km) ? `${route.distance_km.toFixed(1).replace('.', ',')} km` : '—'}${route.ref ? ` · ${route.ref}` : ''}`
+          : subtitle,
       tabs: ToolsTabs(ctx, kind),
       mini:
         kind === 'trail'

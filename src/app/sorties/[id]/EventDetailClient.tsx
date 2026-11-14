@@ -350,12 +350,12 @@ export default function EventDetailClient({
         </section>
       ) : null}
 
-      <section className="lkdv-event-card lkdv-event-section" aria-label="Organisateur">
-        <h2 className="lkdv-event-h2">Organisateur</h2>
-        {event.organizer ? (
+      {event.organizer && (event.organizer.handle || (event.organizer.id && event.organizer.name !== 'Organisateur')) ? (
+        <section className="lkdv-event-card lkdv-event-section" aria-label="Organisateur">
+          <h2 className="lkdv-event-h2">Organisateur</h2>
           <a
             className="lkdv-event-organizer"
-            href={`/profil/${event.organizer.handle ?? event.organizer.id}`}
+            href={`/profil/${event.organizer.handle || event.organizer.id}`}
           >
             <span className="lkdv-event-avatar" aria-hidden="true">
               {event.organizer.avatarUrl ? (
@@ -370,8 +370,8 @@ export default function EventDetailClient({
               <small>{event.organizer.handle ? `@${event.organizer.handle}` : 'Organisateur'}</small>
             </span>
           </a>
-        ) : null}
-      </section>
+        </section>
+      ) : null}
 
       <section className="lkdv-event-card lkdv-event-section" aria-label="Participants">
         <h2 className="lkdv-event-h2">

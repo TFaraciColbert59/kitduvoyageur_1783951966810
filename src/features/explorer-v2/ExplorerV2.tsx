@@ -1511,16 +1511,20 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
     [state],
   );
 
-  // Mini-sélecteur « Survol 3D » sur un itinéraire : la caméra parcourt la trace.
+  // Mini-sélecteur « Survol 3D » sur un itinéraire : la caméra parcourt la trace
+  // et le tiroir se replie au cran bas pour laisser la scène 3D visible.
   useEffect(() => {
     if (state.sheet !== 'trail') return;
     if (state.mini !== 1) return;
-    useExplorerStore.setState({ camera: { type: 'flyover', routeId: state.selection?.id ?? '' } });
+    useExplorerStore.setState({
+      detent: 'peek',
+      camera: { type: 'flyover', routeId: state.selection?.id ?? '' },
+    });
   }, [state.sheet, state.mini, state.selection?.id]);
 
   const longPress = useLongPress(() => {
     setSheetOpen(true);
-    state.setSheet('start', 'low');
+    state.setSheet('start', 'mid');
   });
 
   const onPinClick = useCallback(

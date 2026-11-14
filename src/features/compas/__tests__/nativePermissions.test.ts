@@ -74,14 +74,18 @@ describe('iOS : texte de la demande de position', () => {
 });
 
 describe('Android : permissions minimales', () => {
-  it('seulement le réseau et la position (précise + approximative), rien en arrière-plan', () => {
+  it('seulement le réseau, la position et les services de premier plan (zéro background location)', () => {
     expect(androidPermissions()).toEqual([
       'android.permission.ACCESS_COARSE_LOCATION',
       'android.permission.ACCESS_FINE_LOCATION',
+      'android.permission.FOREGROUND_SERVICE',
+      'android.permission.FOREGROUND_SERVICE_LOCATION',
       'android.permission.INTERNET',
+      'android.permission.POST_NOTIFICATIONS',
+      'android.permission.USE_BIOMETRIC',
+      'android.permission.VIBRATE',
     ]);
     expect(manifest).not.toMatch(/ACCESS_BACKGROUND_LOCATION/);
-    expect(manifest).not.toMatch(/FOREGROUND_SERVICE/);
   });
 
   it('la position précise est réellement utilisée par le code (sinon elle serait à retirer)', () => {

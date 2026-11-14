@@ -9,18 +9,14 @@ const ALLOW = [
   '/explorer/',
   '/compas',
   '/carte-interactive',
-  '/pays',
-  '/pays/',
   '/communaute',
   '/pro',
   '/contact',
-  '/carbone',
   '/cgu',
   '/cgv',
   '/mentions-legales',
   '/politique-confidentialite',
   '/cookies',
-  '/accessibilite',
 ];
 
 /** Routes privées ou sans valeur SEO. */

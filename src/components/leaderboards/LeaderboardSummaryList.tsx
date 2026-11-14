@@ -17,7 +17,7 @@ export interface LeaderboardSummaryListProps {
 function SummaryCard({ summary }: { summary: SegmentLeaderboardSummary }) {
   const { segment } = summary;
   return (
-    <Link className="lkb-card" href={`/classements/${encodeURIComponent(segment.segmentId)}`}>
+    <Link className="lkb-card" href="/explorer">
       <div className="lkb-card-head">
         <div>
           <p className="lkb-eyebrow">

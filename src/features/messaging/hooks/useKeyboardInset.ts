@@ -15,23 +15,28 @@ export function useKeyboardInset(): number {
 
     // 1. Capacitor Keyboard listener (native iOS)
     let capacitorRemove: (() => void) | null = null;
-    import('@capacitor/keyboard')
-      .then(({ Keyboard }) => {
-        if (unmounted) return;
-        const showSub = Keyboard.addListener('keyboardWillShow', (info) => {
-          if (!unmounted && info.keyboardHeight > 0) {
-            setInset(Math.round(info.keyboardHeight));
-          }
+    import('@capacitor/core')
+      .then(({ Capacitor }) => {
+        if (unmounted || !Capacitor.isNativePlatform()) return;
+        return import('@capacitor/keyboard').then(({ Keyboard }) => {
+          if (unmounted) return;
+          const showSub = Keyboard.addListener('keyboardWillShow', (info) => {
+            if (!unmounted && info.keyboardHeight > 0) {
+              setInset(Math.round(info.keyboardHeight));
+            }
+          });
+          showSub.catch(() => {});
+          const hideSub = Keyboard.addListener('keyboardWillHide', () => {
+            if (!unmounted) {
+              setInset(0);
+            }
+          });
+          hideSub.catch(() => {});
+          capacitorRemove = () => {
+            showSub.then((s) => s.remove()).catch(() => {});
+            hideSub.then((s) => s.remove()).catch(() => {});
+          };
         });
-        const hideSub = Keyboard.addListener('keyboardWillHide', () => {
-          if (!unmounted) {
-            setInset(0);
-          }
-        });
-        capacitorRemove = () => {
-          showSub.then((s) => s.remove()).catch(() => {});
-          hideSub.then((s) => s.remove()).catch(() => {});
-        };
       })
       .catch(() => {});
 

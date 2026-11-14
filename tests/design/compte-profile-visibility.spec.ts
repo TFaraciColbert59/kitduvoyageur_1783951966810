@@ -26,6 +26,7 @@ const declaration = read('src/components/compte/compte-liquid-glass-v8-runtime.d
 const bridge = read('src/components/compte/CompteLiquidGlassV8.tsx');
 const bridgeHelper = read('src/features/compte/data/profileVisibilityBridge.ts');
 const bootstrap = read('src/features/compte/data/accountBootstrap.ts');
+const signatureVisibilityModule = read('src/features/compte/data/accountSignatureVisibility.ts');
 
 describe('Compte — confidentialité du compte et visibilité de l’empreinte', () => {
   it('expose une action setprofilevis exacte, idempotente et rejette l’inconnu', async () => {
@@ -248,7 +249,10 @@ describe('Compte — confidentialité du compte et visibilité de l’empreinte'
 
   it('confirme la persistance de l’empreinte avant tout succès affiché', () => {
     expect(SIGNATURE_VISIBILITY_EVENT).toBe('lkdv:signature-visibility');
-    expect(bootstrap).toContain(".select('signature_visibility')");
+    expect(
+      bootstrap.includes(".select('signature_visibility')") ||
+      signatureVisibilityModule.includes(".select('signature_visibility')")
+    ).toBe(true);
     expect(bootstrap).toContain('persistSignatureVisibility');
     expect(bridge).toContain('persistSignatureVisibility');
     expect(bridge).toContain('__lkdvSetSignatureVisibility');

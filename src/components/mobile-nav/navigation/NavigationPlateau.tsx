@@ -49,29 +49,6 @@ function getUpperTabs(flags: PlateauFlags, messagerieRequestsCount: number): Upp
       { id: 'nature', label: 'Nature' },
     ];
   }
-  if (flags.isPaysHub) {
-    return [
-      { id: 'all', label: 'Tous' },
-      { id: 'europe', label: 'Europe' },
-      { id: 'asia', label: 'Asie' },
-      { id: 'africa', label: 'Afrique' },
-      { id: 'north-america', label: 'Amérique N.' },
-      { id: 'south-america', label: 'Amérique S.' },
-      { id: 'oceania', label: 'Océanie' },
-    ];
-  }
-  if (flags.isPaysDetail) {
-    return [
-      { id: 'presentation', label: 'Aperçu' },
-      { id: 'destinations', label: 'Incontournables' },
-      { id: 'activites', label: 'Activités' },
-      { id: 'culture', label: 'Culture' },
-      { id: 'gastronomie', label: 'Gastronomie' },
-      { id: 'hebergements', label: 'Hébergements' },
-      { id: 'pratique', label: 'Météo & Pratique' },
-      { id: 'communaute', label: 'Communauté' },
-    ];
-  }
   if (flags.isVoyagesHub) {
     return [
       { id: 'user', label: 'Mes voyages' },

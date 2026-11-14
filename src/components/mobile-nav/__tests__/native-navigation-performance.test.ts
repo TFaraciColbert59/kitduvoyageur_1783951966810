@@ -19,8 +19,8 @@ describe('iOS Liquid Glass — instant navigation policy', () => {
     expect(nativeSyncKey({ visible: false, selectedId: null }, '/compas'))
       .not.toBe(nativeSyncKey({ visible: true, selectedId: 'adventures' }, '/hub'));
   });
-  it('preserves the absolute no-native-navigation protection for Compas', () => {
-    expect(shouldShowNativeGlass('/compas')).toBe(false);
-    expect(shouldShowNativeGlass('/compas/itineraire')).toBe(false);
+  it('allows native navigation glass on Compas under all-routes policy', () => {
+    expect(shouldShowNativeGlass('/compas')).toBe(true);
+    expect(shouldShowNativeGlass('/compas/itineraire')).toBe(true);
   });
 });

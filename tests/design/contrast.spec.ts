@@ -25,38 +25,37 @@ function getContrastRatio(rgb1: [number, number, number], rgb2: [number, number,
 }
 
 describe('CHANTIER IOS 27 — GARDE-FOU CONTRASTE & WCAG 2.2 AA', () => {
-  it('Contraste Mode Light : Encre principale sur verre blanc semi-transparent', () => {
-    // Fond blanc avec opacité 0.60 sur photo sombre (noir moyen 30,30,30)
+  it('Contraste Mode Light : Encre principale verte (#172B24) sur verre clair', () => {
+    // Fond blanc avec opacité 0.60 sur toile claire/voile sauge
     // Résultat surface approximée : [210, 210, 210]
     const lightSurface: [number, number, number] = [210, 210, 210];
-    const lightLabel: [number, number, number] = [18, 24, 21]; // Encre principale sombre
+    const lightLabel: [number, number, number] = [23, 43, 36]; // #172B24
 
     const ratio = getContrastRatio(lightLabel, lightSurface);
     expect(ratio).toBeGreaterThanOrEqual(7.0); // Conforme AAA (> 7:1)
   });
 
-  it('Contraste Mode Light : Encre secondaire sur verre blanc', () => {
-    const lightSurface: [number, number, number] = [210, 210, 210];
-    const lightSecondaryLabel: [number, number, number] = [45, 58, 52];
+  it('Contraste Mode Light : Encre secondaire verte (#56665D) sur surface claire (#F5F7F3)', () => {
+    const lightSurface: [number, number, number] = [245, 247, 243]; // #F5F7F3 surface sauge
+    const lightSecondaryLabel: [number, number, number] = [86, 102, 93]; // #56665D
 
     const ratio = getContrastRatio(lightSecondaryLabel, lightSurface);
     expect(ratio).toBeGreaterThanOrEqual(4.5); // Conforme AA (>= 4.5:1)
   });
 
-  it('Contraste Mode Dark : Encre principale sur verre graphite', () => {
-    // Fond graphite sombre [34, 34, 38]
-    const darkSurface: [number, number, number] = [34, 34, 38];
-    const darkLabel: [number, number, number] = [255, 255, 255]; // Blanc pur
+  it('Contraste OnBrand : Blanc pur sur vert forêt de marque (#17402C)', () => {
+    const brandPrimary: [number, number, number] = [23, 64, 44]; // #17402C
+    const onBrand: [number, number, number] = [255, 255, 255]; // Blanc pur
 
-    const ratio = getContrastRatio(darkLabel, darkSurface);
-    expect(ratio).toBeGreaterThanOrEqual(12.0); // Dépasse largement 4.5:1
+    const ratio = getContrastRatio(onBrand, brandPrimary);
+    expect(ratio).toBeGreaterThanOrEqual(11.0); // Conforme AAA (> 11:1)
   });
 
-  it('Contraste Mode Dark : Encre secondaire sur verre graphite', () => {
-    const darkSurface: [number, number, number] = [34, 34, 38];
-    const darkSecondaryLabel: [number, number, number] = [205, 215, 210];
+  it('Contraste OnAction : Blanc pur sur vert action LKDV (#226148)', () => {
+    const brandAction: [number, number, number] = [34, 97, 72]; // #226148
+    const onAction: [number, number, number] = [255, 255, 255]; // Blanc pur
 
-    const ratio = getContrastRatio(darkSecondaryLabel, darkSurface);
-    expect(ratio).toBeGreaterThanOrEqual(4.5); // Conforme AA (>= 4.5:1)
+    const ratio = getContrastRatio(onAction, brandAction);
+    expect(ratio).toBeGreaterThanOrEqual(7.0); // Conforme AAA (> 7:1)
   });
 });

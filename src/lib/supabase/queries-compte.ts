@@ -218,30 +218,56 @@ export async function fetchFullProfile(userId: string): Promise<CompteUserProfil
   if (!profile) return null;
 
   // Compute derived stats
-  const [carnetsCount, clubsCount, ordersCount, activitiesCount] = await Promise.all([
+  const [carnetsCount, clubsCount, ordersCount, hikeSessionsResult] = await Promise.all([
     supabase.from('carnets').select('id', { count: 'exact', head: true }).eq('author_id', userId),
     supabase.from('club_members').select('id', { count: 'exact', head: true }).eq('user_id', userId),
     supabase.from('orders').select('id', { count: 'exact', head: true }).eq('user_id', userId),
-    supabase.from('activities').select('id', { count: 'exact', head: true }).eq('user_id', userId),
+    supabase
+      .from('hike_sessions')
+      .select('id, distance_km, elevation_gain_m, started_at, max_altitude_m, title, visibility')
+      .eq('user_id', userId),
   ]);
 
-  const sorties = activitiesCount.count ?? 0;
+  const hikeSessions = (hikeSessionsResult.data ?? []) as Array<{
+    id: string;
+    distance_km?: number | null;
+    elevation_gain_m?: number | null;
+    started_at?: string | null;
+    max_altitude_m?: number | null;
+    title?: string | null;
+    visibility?: string | null;
+  }>;
+
+  let sorties = hikeSessions.length;
+  let totalKm = hikeSessions.reduce((acc, h) => acc + Number(h.distance_km || 0), 0);
+  let totalDplus = hikeSessions.reduce((acc, h) => acc + Number(h.elevation_gain_m || 0), 0);
+
+  // Repli sur activities si hike_sessions est vide pour rétrocompatibilité
+  if (sorties === 0) {
+    const { data: fallbackAct, count: actCount } = await supabase
+      .from('activities')
+      .select('id, distance_km, started_at', { count: 'exact' })
+      .eq('user_id', userId);
+    if (fallbackAct && fallbackAct.length > 0) {
+      sorties = actCount ?? fallbackAct.length;
+      totalKm = fallbackAct.reduce(
+        (acc, a) => acc + Number((a as { distance_km?: number | null }).distance_km || 0),
+        0
+      );
+    }
+  }
+
   const totalCarnets = carnetsCount.count ?? 0;
   const totalClubs = clubsCount.count ?? 0;
 
-  // Get distance from activities — F-028 : agrégat daté (année courante)
   const currentYear = new Date().getFullYear();
-  const { data: activities } = await supabase
-    .from('activities')
-    .select('distance_km, started_at')
-    .eq('user_id', userId);
-
-  const totalKmThisYear = (activities ?? []).reduce((sum, a) => {
-    const startedAt = (a as { started_at?: string | null }).started_at;
-    const year = startedAt ? new Date(startedAt).getFullYear() : null;
-    if (year !== currentYear) return sum;
-    return sum + Number((a as { distance_km?: number | null }).distance_km ?? 0);
-  }, 0);
+  const totalKmThisYear =
+    hikeSessions.reduce((sum, h) => {
+      const startedAt = h.started_at;
+      const year = startedAt ? new Date(startedAt).getFullYear() : null;
+      if (year !== currentYear) return sum;
+      return sum + Number(h.distance_km || 0);
+    }, 0) || totalKm;
 
   const { first, last } = fullNameSplit(profile.full_name ?? '');
 
@@ -267,7 +293,7 @@ export async function fetchFullProfile(userId: string): Promise<CompteUserProfil
       clubs: totalClubs,
       km_this_year: Math.round(totalKmThisYear),
       distance_2026: { value: `${Math.round(totalKmThisYear)} km`, diff: `↗ cumul ${currentYear}` },
-      elevation_gain: { value: '—', detail: 'Données à venir' },
+      elevation_gain: { value: `${Math.round(totalDplus)} m D+`, detail: `${sorties} sortie(s)` },
       refuge_nights: { value: '—', detail: 'Données à venir' },
       co2_saved: { value: '—', detail: 'Données à venir' },
     },
@@ -383,6 +409,23 @@ export async function fetchUserBadges(userId: string): Promise<CompteBadgeItem[]
 
 export async function fetchUserActivities(userId: string): Promise<CompteActiviteItem[]> {
   const supabase = createClient();
+  const { data: hikeData } = await supabase
+    .from('hike_sessions')
+    .select('id, title, started_at, distance_km, elevation_gain_m')
+    .eq('user_id', userId)
+    .order('started_at', { ascending: false })
+    .limit(20);
+
+  if (hikeData && hikeData.length > 0) {
+    return hikeData.map((h: any) => ({
+      id: h.id,
+      text: h.title ? `${h.title}${h.distance_km ? ` · ${Math.round(h.distance_km)} km` : ''}${h.elevation_gain_m ? ` +${Math.round(h.elevation_gain_m)} m` : ''}` : 'Sortie enregistrée',
+      highlight: '',
+      time: timeAgo(h.started_at),
+      icon_type: 'like' as const,
+    }));
+  }
+
   const { data } = await supabase
     .from('activities')
     .select('id, title, created_at')

@@ -325,7 +325,7 @@ export function SegmentsScreen({
       <div className={`lkdv-seg-screen${selectedSegment ? ' has-selection' : ''}`}>
         <header className="lkdv-seg-hero">
           <div>
-            <p className="lkdv-seg-eyebrow">S4.01 → S4.12 · Segments sportifs</p>
+            <p className="lkdv-seg-eyebrow">Segments sportifs</p>
             <h1>Vos passages, vos records.</h1>
             <p>
               Détection GPS, classements vérifiés, historique personnel et sécurité du terrain.

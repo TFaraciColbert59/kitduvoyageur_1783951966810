@@ -32,7 +32,6 @@ const PUBLIC_NAV_PATHS = new Set([
   '/',
   '/explorer',
   '/carte-3d',
-  '/pays',
   '/guides',
   '/kits',
   '/lieux',
@@ -47,7 +46,6 @@ const PUBLIC_NAV_PATHS = new Set([
   '/offline.html',
 ]);
 const PUBLIC_NAV_PREFIXES = [
-  '/pays/',
   '/guides/',
   '/kits/',
   '/lieux/',

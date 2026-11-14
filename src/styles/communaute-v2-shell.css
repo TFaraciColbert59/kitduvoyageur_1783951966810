@@ -245,7 +245,13 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
   gap: 6px;
 }
 .lkdv-cv2-mini-slot.has-footer {
-  bottom: 72px;
+  position: relative !important;
+  display: flex !important;
+  justify-content: flex-end !important;
+  padding: 0 14px 4px !important;
+  bottom: auto !important;
+  right: auto !important;
+  z-index: 16 !important;
 }
 .lkdv-cv2-mini-slot .lkdv-lens-float {
   position: static;

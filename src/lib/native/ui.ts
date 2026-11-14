@@ -28,18 +28,29 @@ type NativeUIPlugin = {
   share(options: { url: string }): Promise<{ active: boolean }>;
   presentPrompt(options: NativePromptRequest): Promise<{ active: boolean; value?: string }>;
   presentDate(options: { title: string; value?: string }): Promise<{ active: boolean; value?: string }>;
-  getCapabilities(): Promise<{ available: boolean; dates?: boolean; choices?: boolean; photos?: boolean; files?: boolean }>;
+  getCapabilities(): Promise<{ available: boolean; dates?: boolean; choices?: boolean; photos?: boolean; files?: boolean; biometrics?: boolean }>;
   importGPX(): Promise<{ active: boolean; text?: string }>;
   exportGPX(options: { xml: string; fileName: string }): Promise<{ active: boolean; saved?: boolean }>;
   presentPhotos(options: { maxCount: number }): Promise<{ active: boolean; photos?: NativePhotoPayload[] }>;
-  presentChoices(options: NativeChoicesRequest): Promise<{ active: boolean; value?: string }>; 
+  presentChoices(options: NativeChoicesRequest): Promise<{ active: boolean; value?: string }>;
+  authenticateBiometric(options?: { reason?: string; title?: string }): Promise<{ active: boolean; success: boolean; error?: string; errorCode?: number }>;
 };
 
 const ui = registerPlugin<NativeUIPlugin>('LKDVNativeUI');
 
+/** Returns true when running on iOS or Android within Capacitor without route exclusion. */
+export function supportsNativeUI(): boolean {
+  if (typeof window === 'undefined') return false;
+  if (!Capacitor?.isNativePlatform?.()) return false;
+  const platform = Capacitor.getPlatform?.();
+  return platform === 'ios' || platform === 'android';
+}
+
+/** Legacy iOS-only guard with /compas exclusion for backwards compatibility with legacy tests. */
 export function supportsNativeIOSUI(path?: string): boolean {
   if (typeof window === 'undefined') return false;
-  if (Capacitor.getPlatform() !== 'ios' || !Capacitor.isNativePlatform()) return false;
+  if (!Capacitor?.isNativePlatform?.()) return false;
+  if (Capacitor.getPlatform?.() !== 'ios') return false;
   const currentPath = path ?? window.location.pathname;
   return currentPath !== '/compas' && !currentPath.startsWith('/compas/');
 }
@@ -62,7 +73,7 @@ export async function syncNativeUIRoute(path: string, revision: number): Promise
 /** Returns undefined only if the native feature is unsupported, allowing a web
  * fallback. null means a native sheet was shown and dismissed without action. */
 export async function presentNativeActions(request: NativeActionRequest): Promise<string | null | undefined> {
-  if (!supportsNativeIOSUI() || !request.title.trim() ||
+  if (!supportsNativeUI() || !request.title.trim() ||
       request.actions.length < 1 || request.actions.length > 8) return undefined;
   if (request.actions.some(({ id, title }) => !/^[A-Za-z0-9_.-]{1,64}$/.test(id) || !title.trim()))
     return undefined;
@@ -78,7 +89,7 @@ export async function presentNativeActions(request: NativeActionRequest): Promis
 
 /** undefined = unsupported; null = cancelled; any string (including '') = confirmed. */
 export async function presentNativePrompt(options: NativePromptRequest): Promise<string | null | undefined> {
-  if (!supportsNativeIOSUI() || !options.title.trim() || options.title.length > 120) return undefined;
+  if (!supportsNativeUI() || !options.title.trim() || options.title.length > 120) return undefined;
   try {
     const result = await ui.presentPrompt(options);
     if (!result.active) return undefined;
@@ -90,7 +101,7 @@ export async function presentNativePrompt(options: NativePromptRequest): Promise
 
 /** A handshake, not a User-Agent guess: older iOS shells keep HTML inputs. */
 export async function hasNativeDatePicker(): Promise<boolean> {
-  if (!supportsNativeIOSUI()) return false;
+  if (!supportsNativeUI()) return false;
   try {
     const caps = await ui.getCapabilities();
     return caps.available === true && caps.dates === true;
@@ -99,7 +110,7 @@ export async function hasNativeDatePicker(): Promise<boolean> {
 
 /** undefined = unsupported, null = dismissed, YYYY-MM-DD = committed. */
 export async function presentNativeDate(title: string, value = ''): Promise<string | null | undefined> {
-  if (!supportsNativeIOSUI() || !title.trim() || title.length > 120 ||
+  if (!supportsNativeUI() || !title.trim() || title.length > 120 ||
       (value && !/^\d{4}-\d{2}-\d{2}$/.test(value))) return undefined;
   try {
     const result = await ui.presentDate({ title, value });
@@ -111,7 +122,7 @@ export async function presentNativeDate(title: string, value = ''): Promise<stri
 
 /** Query actual iOS capabilities: browsers and old app binaries keep the <select>. */
 export async function hasNativeChoices(): Promise<boolean> {
-  if (!supportsNativeIOSUI()) return false;
+  if (!supportsNativeUI()) return false;
   try {
     const caps = await ui.getCapabilities();
     return caps.available === true && caps.choices === true;
@@ -120,7 +131,7 @@ export async function hasNativeChoices(): Promise<boolean> {
 
 /** undefined = unsupported, null = cancelled, string = confirmed selected option ID. */
 export async function presentNativeChoices(request: NativeChoicesRequest): Promise<string | null | undefined> {
-  if (!supportsNativeIOSUI() || request.title.length > 120 || !request.title.trim()
+  if (!supportsNativeUI() || request.title.length > 120 || !request.title.trim()
       || request.options.length < 1 || request.options.length > 100
       || request.options.some(x => x.id.length > 128 || !x.title.trim() || x.title.length > 200)
       || new Set(request.options.map(x => x.id)).size !== request.options.length) return undefined;
@@ -134,7 +145,7 @@ export async function presentNativeChoices(request: NativeChoicesRequest): Promi
 
 /** Only upgraded iPhone shells render PhotosPicker. Never show duplicate pickers. */
 export async function hasNativePhotos(): Promise<boolean> {
-  if (!supportsNativeIOSUI()) return false;
+  if (!supportsNativeUI()) return false;
   try {
     const caps = await ui.getCapabilities();
     return caps.available === true && caps.photos === true;
@@ -147,7 +158,7 @@ export async function hasNativePhotos(): Promise<boolean> {
  * A tight size/type boundary avoids bloating Capacitor's JS bridge.
  */
 export async function pickNativePhotos(maxCount: number): Promise<File[] | null | undefined> {
-  if (!supportsNativeIOSUI() || !Number.isInteger(maxCount) || maxCount < 1 || maxCount > 6)
+  if (!supportsNativeUI() || !Number.isInteger(maxCount) || maxCount < 1 || maxCount > 6)
     return undefined;
   try {
     const result = await ui.presentPhotos({ maxCount });
@@ -171,10 +182,9 @@ export async function pickNativePhotos(maxCount: number): Promise<File[] | null 
   } catch { return undefined; }
 }
 
-
 /** Files must be supported by the installed native shell, not only by the iPhone OS. */
 export async function hasNativeGPXFiles(): Promise<boolean> {
-  if (!supportsNativeIOSUI()) return false;
+  if (!supportsNativeUI()) return false;
   try {
     const capabilities = await ui.getCapabilities();
     return capabilities.available === true && capabilities.files === true;
@@ -192,7 +202,7 @@ function isSafeGPXText(xml: string): boolean {
 
 /** undefined=old shell/error -> HTML fallback; null=cancelled; string=GPX data. */
 export async function importNativeGPX(): Promise<string | null | undefined> {
-  if (!supportsNativeIOSUI()) return undefined;
+  if (!supportsNativeUI()) return undefined;
   try {
     const response = await ui.importGPX();
     if (response.active !== true) return undefined;
@@ -204,7 +214,7 @@ export async function importNativeGPX(): Promise<string | null | undefined> {
 
 /** undefined=unsupported -> browser download; false=cancelled; true=Saved to Files. */
 export async function exportNativeGPX(xml: string, fileName: string): Promise<boolean | undefined> {
-  if (!supportsNativeIOSUI() || !isSafeGPXText(xml)
+  if (!supportsNativeUI() || !isSafeGPXText(xml)
       || !/^[A-Za-z0-9_-][A-Za-z0-9_.-]{0,58}\.gpx$/.test(fileName)) return undefined;
   try {
     const response = await ui.exportGPX({ xml, fileName });
@@ -214,7 +224,7 @@ export async function exportNativeGPX(xml: string, fileName: string): Promise<bo
 }
 
 export async function shareNativeURL(url: string): Promise<boolean> {
-  if (!supportsNativeIOSUI()) return false;
+  if (!supportsNativeUI()) return false;
   try {
     const parsed = new URL(url);
     if (parsed.protocol !== 'https:') return false;
@@ -222,5 +232,16 @@ export async function shareNativeURL(url: string): Promise<boolean> {
     return result.active === true;
   } catch {
     return false;
+  }
+}
+
+export async function authenticateNativeBiometric(reason?: string): Promise<{ success: boolean; error?: string } | undefined> {
+  if (!supportsNativeUI()) return undefined;
+  try {
+    const result = await ui.authenticateBiometric({ reason });
+    if (!result.active) return undefined;
+    return { success: result.success === true, error: result.error };
+  } catch {
+    return undefined;
   }
 }

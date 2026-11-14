@@ -926,7 +926,7 @@ body:has(.xp-root[data-theme]) .lkv-app-background {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 64px + var(--cookie-banner-h, 0px));
+  bottom: calc(max(env(safe-area-inset-bottom, 0px) + 64px, var(--lkv-native-bar-height, 0px) + 12px) + var(--cookie-banner-h, 0px));
   z-index: 10;
   display: flex;
   align-items: center;
@@ -965,7 +965,7 @@ body:has(.xp-root[data-theme]) .lkv-app-background {
 .xp-search-area {
   position: absolute;
   left: 50%;
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 100px + var(--cookie-banner-h, 0px));
+  bottom: calc(max(env(safe-area-inset-bottom, 0px) + 100px, var(--lkv-native-bar-height, 0px) + 48px) + var(--cookie-banner-h, 0px));
   transform: translateX(-50%);
   z-index: 10;
   display: inline-flex;
@@ -1032,7 +1032,7 @@ body[data-explorer-sheet-open='true'] nav[aria-label="Navigation principale"]:no
   position: absolute;
   left: 12px;
   right: 12px;
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 8px + var(--cookie-banner-h, 0px));
+  bottom: calc(max(env(safe-area-inset-bottom, 0px) + 8px, var(--lkv-native-bar-height, 0px) + 12px) + var(--cookie-banner-h, 0px));
   height: 52px;
   z-index: 8;
   display: flex;

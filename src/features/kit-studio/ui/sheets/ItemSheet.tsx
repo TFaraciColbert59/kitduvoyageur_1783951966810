@@ -18,7 +18,7 @@ import { S } from '../strings';
 import './bilan.css';
 
 const NB = ' ';
-const KNOWN: readonly IconName[] = ['bag', 'cube', 'bottle', 'jacket', 'aid', 'tent', 'compass', 'bolt', 'cart', 'weight', 'cal', 'clock', 'swap', 'link'];
+const KNOWN: readonly IconName[] = ['bag', 'cube', 'bottle', 'jacket', 'aid', 'tent', 'compass', 'bolt', 'cart', 'weight', 'cal', 'clock', 'swap', 'link', 'sack', 'roll'];
 
 /** Pictogramme d'un objet : le glyphe du catalogue s'il existe dans la bibliothèque d'icônes, sinon un cube. */
 export const glyphOf = (gl: string): IconName => (KNOWN.includes(gl as IconName) ? (gl as IconName) : 'cube');

@@ -591,6 +591,15 @@
 }
 .lkdv-pourtoi-pill svg { width: 14px; height: 14px; }
 .lkdv-top-actions { display: flex; align-items: center; gap: 6px; }
+.lkdv-top-actions button,
+.lkdv-top-actions .gbtn {
+  color: #172B24 !important;
+}
+.lkdv-top-actions button svg,
+.lkdv-top-actions .gbtn svg {
+  color: #172B24 !important;
+  stroke: #172B24 !important;
+}
 .lkdv-notif-wrap { position: relative; display: grid; place-items: center; line-height: 0; }
 .lkdv-notif-wrap svg { display: block; }
 .lkdv-notif-badge {

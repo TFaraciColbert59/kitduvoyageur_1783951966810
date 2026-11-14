@@ -89,9 +89,11 @@ async function requireOwner(tripId: string) {
   } as const;
 }
 
-/** La page pays est en cache (ISR) : elle seule doit être rafraîchie. */
-function revalidate(country: string | null) {
-  if (country) revalidatePath(`/pays/${country}`);
+/** Revalidation sûre des vues d'exploration suite aux actions Compas. */
+function revalidate(_country: string | null) {
+  try {
+    revalidatePath('/explorer');
+  } catch (_) {}
 }
 
 const stateSchema = z.object({ tripId: uuid });

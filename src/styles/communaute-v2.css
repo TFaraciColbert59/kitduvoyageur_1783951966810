@@ -79,6 +79,8 @@
   --lkv-primary: var(--cv2-light-primary);
   --lkv-primary-subtle: var(--cv2-light-primary-subtle);
   --lkv-secondary: var(--cv2-light-secondary);
+  --lkv-secondary-subtle: var(--lkv-primary-subtle);
+  --lkv-on-secondary-subtle: var(--lkv-forest-900);
   --lkv-action: var(--cv2-light-action);
   --lkv-success: var(--cv2-light-success);
   --lkv-success-bg: var(--cv2-light-success-bg);
@@ -1088,8 +1090,10 @@ select.lkdv-cv2-input {
   min-height: 36px;
   padding: 3px;
   border-radius: var(--lkv-radius-full);
-  background: var(--cv2-field-bg);
-  box-shadow: inset 0 0 0 0.5px var(--lkv-border);
+  background: var(--glass-bg-light);
+  backdrop-filter: blur(var(--glass-blur-sm, 20px)) saturate(180%);
+  -webkit-backdrop-filter: blur(var(--glass-blur-sm, 20px)) saturate(180%);
+  box-shadow: var(--glass-rim-shadow), var(--elevation-1);
 }
 
 .lkdv-cv2-seg button {
@@ -1103,6 +1107,7 @@ select.lkdv-cv2-input {
   font: 500 12px/1 var(--font-sans);
   cursor: pointer;
   white-space: nowrap;
+  transition: all 0.2s ease;
 }
 
 .lkdv-cv2-seg button[aria-pressed='true'],
@@ -1111,7 +1116,7 @@ select.lkdv-cv2-input {
   background: var(--lkv-surface-card);
   color: var(--lkv-forest-900);
   font-weight: 600;
-  box-shadow: var(--elevation-1);
+  box-shadow: var(--elevation-1), var(--glass-specular);
 }
 
 .lkdv-cv2-stepper {

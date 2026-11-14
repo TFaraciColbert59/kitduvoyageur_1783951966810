@@ -47,12 +47,12 @@ const DAYS_DATA = [
   },
   {
     dayNumber: 2,
-    title: 'Le col des Écrins',
+    title: 'La traversée des crêtes',
     place: 'Traversée en haute altitude',
     distance: '12,6 km',
     time: '5 h 20',
     up: '+870 m',
-    steps: ['Montée du vallon', 'Col des Écrins (2 520 m)', 'Pause panorama', 'Descente refuge'],
+    steps: ['Montée du vallon', 'Col d’altitude (2 520 m)', 'Pause panorama', 'Descente refuge'],
     altMin: '2 070 m',
     altMax: '2 520 m',
   },
@@ -208,7 +208,7 @@ export function HubItineraryDrawer({
             <div className="p-3 rounded-2xl camp-card-cream space-y-1">
               <span className="text-[10px] uppercase font-bold camp-text-sub">Point culminant</span>
               <p className="text-sm font-extrabold camp-text-title">2 520 m</p>
-              <small className="text-[10px] camp-text-sub">Col des Écrins (J2)</small>
+              <small className="text-[10px] camp-text-sub">Col d’altitude (J2)</small>
             </div>
             <div className="p-3 rounded-2xl camp-card-cream space-y-1">
               <span className="text-[10px] uppercase font-bold camp-text-sub">Camp de base</span>
@@ -249,7 +249,7 @@ export function HubItineraryDrawer({
           <div className="space-y-2">
             <div className="p-3 rounded-2xl camp-card-cream flex items-center justify-between">
               <div>
-                <strong className="text-xs camp-text-title block">Bivouac du Lac Turquoise</strong>
+                <strong className="text-xs camp-text-title block">Bivouac d’altitude</strong>
                 <small className="text-[11px] camp-text-sub">Plat herbeux abrité du vent</small>
               </div>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full camp-badge-forest">
@@ -259,7 +259,7 @@ export function HubItineraryDrawer({
 
             <div className="p-3 rounded-2xl camp-card-cream flex items-center justify-between">
               <div>
-                <strong className="text-xs camp-text-title block">Refuge des Écrins</strong>
+                <strong className="text-xs camp-text-title block">Refuge d’étape</strong>
                 <small className="text-[11px] camp-text-sub">Zone de repli tempête</small>
               </div>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full camp-card-white camp-text-sub">

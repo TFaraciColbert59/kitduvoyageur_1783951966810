@@ -81,7 +81,7 @@ export function TrophiesView({ showcase }: { showcase: TrophyShowcase }) {
                   className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border ${
                     trophy.isRevoked
                       ? 'border-[color:var(--glass-rim)] bg-[color:var(--g2-bg)] text-[color:var(--glass-label-tertiary)]'
-                      : 'border-[color:var(--lkv-secondary)]/40 bg-[color:var(--lkv-secondary)]/15 text-[color:var(--lkv-secondary-subtle)]'
+                      : 'border-[color:var(--lkv-secondary)]/40 bg-[color:var(--lkv-secondary)]/15 text-[color:var(--lkv-on-secondary-subtle)]'
                   }`}
                 >
                   <Icon name={trophyIcon(trophy.category)} size={22} />

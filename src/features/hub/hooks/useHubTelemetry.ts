@@ -19,7 +19,7 @@ interface QueuedEvent {
 
 function newSessionId(): string {
   try {
-    if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID();
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
   } catch {
     /* repli ci-dessous */
   }

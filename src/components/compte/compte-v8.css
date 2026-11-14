@@ -1365,10 +1365,10 @@ button.mb:active{background:var(--fill2)}
 
 .lkdv-map-unavailable{display:grid;place-items:center;height:100%;min-height:160px;padding:20px;border-radius:24px;background:rgba(255,255,255,.42);color:var(--label2);font:500 12px var(--sf);text-align:center}
 
-/* Drawer Options : ne jamais dépasser la carte du profil. */
+/* Drawer Options : laisse le sheet utiliser toute la hauteur déclarée du detent. */
 #sheet[data-kind="account_drawer"] {
-  max-height: 56dvh;
-  overflow-y: auto;
+  max-height: none;
+  overflow: hidden;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
 }

@@ -279,7 +279,7 @@ export function CarnetDaySwipeView({
               <span className={cx(styles.dayheadBadge)}>Tout</span>
               <div className={cx(styles.dayheadText)}>
                 <b className={cx(styles.dayheadTitle)}>
-                  {daysCount > 0 ? counted(daysCount, 'jour', 'jours') : '—'} ·{' '}
+                  {daysCount > 0 ? `${counted(daysCount, 'jour', 'jours')} · ` : ''}
                   {counted(travellers, 'voyageur', 'voyageurs')}
                 </b>
                 <span className={cx(styles.dayheadMeta)}>{resumeMeta}</span>

@@ -58,7 +58,7 @@
   --v5-spring: cubic-bezier(0.32, 0.72, 0, 1);
   --v5-bounce: cubic-bezier(0.3, 1.3, 0.4, 1);
   --v5-serif: Georgia, 'Times New Roman', serif;
-  --v5-nav-clear: calc(max(var(--bottom-nav-height, 0px), var(--cookie-banner-h, 0px)) + var(--space-6, 24px));
+  --v5-nav-clear: calc(max(var(--lkv-native-bar-height, 0px), var(--bottom-nav-height, 0px), var(--cookie-banner-h, 0px), calc(env(safe-area-inset-bottom, 0px) + 60px)) + 20px);
   --v5-map-h: 40%;
   --v5-sheet-radius: 28px;
 

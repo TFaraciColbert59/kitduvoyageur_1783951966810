@@ -42,10 +42,10 @@ export function DrawerSkeleton() {
   );
 }
 
-export function DrawerError({ onRetry }: { onRetry?: () => void }) {
+export function DrawerError({ onRetry, label }: { onRetry?: () => void; label?: string }) {
   return (
     <div className="lkdv-drawer-state" data-state="error" role="alert">
-      <p>Impossible de charger ce contenu.</p>
+      <p>{label ?? 'Impossible de charger ce contenu.'}</p>
       {onRetry ? (
         <button type="button" className="lkdv-drawer-retry" onClick={onRetry}>
           Réessayer
@@ -241,8 +241,9 @@ export function DrawerShell({
 export const DRAWER_SHELL_CSS = `
 .lkdv-drawer-root{display:flex!important;flex-direction:column!important;flex:1 1 auto!important;min-height:0!important;width:100%!important;}
 body .phone.sheet-open[data-det="card"] .map-scale-selector,body .phone.sheet-open[data-det="card"] .mctl,body .phone[data-sheet-open="true"][data-det="card"] .map-scale-selector,body .phone[data-sheet-open="true"][data-det="card"] .mctl{opacity:0!important;pointer-events:none!important;transform:translateY(12px)!important;}
-.lkdv-drawer-shell{position:relative!important;display:flex!important;flex-direction:column!important;flex:1 1 auto!important;min-height:0!important;width:100%!important;padding:0 14px 16px!important;box-sizing:border-box!important;gap:8px!important;color:var(--label)!important;}
+.lkdv-drawer-shell{position:relative!important;display:flex!important;flex-direction:column!important;flex:1 1 auto!important;min-height:0!important;width:100%!important;padding:0 14px 16px!important;box-sizing:border-box!important;gap:8px!important;--label:#172B24;--label2:#56665D;--label3:rgba(23,43,36,.58);--muted:#56665D;--ink:#17402C;--tint:#17402C;--pg:#17402C;--pg-ink:#fff;--lkv-text-primary:#172B24;--lkv-text-secondary:#56665D;color:var(--label)!important;}
 .lkdv-drawer-shell[data-secondary="true"]{padding-bottom:calc(56px + env(safe-area-inset-bottom,0px))!important;}
+.lkdv-drawer-shell[data-secondary="true"] .lkdv-drawer-pane.active{padding-bottom:54px!important;}
 .lkdv-drawer-topnav{display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;flex:none!important;}
 .lkdv-drawer-shell .lkdv-drawer-topnav .segc.lkdv-drawer-tabs{display:grid!important;grid-auto-flow:column!important;grid-auto-columns:minmax(0,1fr)!important;align-items:stretch!important;gap:0!important;width:100%!important;max-width:none!important;height:48px!important;margin:0!important;padding:2px!important;border-radius:999px!important;background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.04) 46%,rgba(0,0,0,.12)),rgba(255,255,255,.62)!important;-webkit-backdrop-filter:blur(28px) saturate(180%)!important;backdrop-filter:blur(28px) saturate(180%)!important;border:.5px solid rgba(255,255,255,.9)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),inset 0 -1px 1px rgba(255,255,255,.4),0 0 0 .5px rgba(23,43,36,.12),0 8px 22px rgba(23,43,36,.12)!important;box-sizing:border-box!important;flex:none!important;overflow:visible!important;}
 .lkdv-drawer-shell .lkdv-drawer-topnav .lkdv-drawer-tabs .sel-lens{top:4px!important;bottom:4px!important;left:3px!important;width:calc((100% - 6px)/var(--n,2))!important;height:auto!important;border-radius:999px!important;background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(255,255,255,.82))!important;border:.5px solid rgba(255,255,255,.95)!important;box-shadow:0 1px 4px rgba(23,43,36,.14),inset 0 1px 0 #fff!important;transform:translateX(calc(var(--i,0)*100%))!important;transition:transform .42s cubic-bezier(.32,.72,0,1)!important;z-index:1!important;pointer-events:none!important;}
@@ -257,7 +258,7 @@ body .phone.sheet-open[data-det="card"] .map-scale-selector,body .phone.sheet-op
 .lkdv-drawer-shell .lkdv-drawer-secondary{position:absolute!important;right:10px!important;bottom:10px!important;left:auto!important;top:auto!important;z-index:14!important;}
 .lkdv-drawer-shell .lkdv-drawer-secondary .ig-tabs{width:calc(var(--n,2)*44px + 5px)!important;max-width:calc(var(--n,2)*44px + 5px)!important;grid-template-columns:repeat(var(--n,2),minmax(0,1fr))!important;align-items:stretch!important;height:30px!important;padding:2.5px!important;border-radius:9999px!important;background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.04) 46%,rgba(0,0,0,.12)),rgba(255,255,255,.62)!important;border:.5px solid rgba(255,255,255,.9)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),inset 0 -1px 1px rgba(255,255,255,.4),0 0 0 .5px rgba(23,43,36,.12),0 8px 22px rgba(23,43,36,.12)!important;-webkit-backdrop-filter:blur(28px) saturate(180%)!important;backdrop-filter:blur(28px) saturate(180%)!important;box-sizing:border-box!important;}
 .lkdv-drawer-shell .lkdv-drawer-secondary .ig-tabs .ig-th{top:2.5px!important;bottom:2.5px!important;left:2.5px!important;width:calc((100% - 5px)/var(--n,2))!important;height:25px!important;border-radius:9999px!important;background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(255,255,255,.82))!important;border:.5px solid rgba(255,255,255,.95)!important;box-shadow:0 1px 4px rgba(23,43,36,.14),inset 0 1px 0 #fff!important;}
-.lkdv-drawer-shell .lkdv-drawer-secondary .ig-tabs button{position:relative!important;height:25px!important;min-height:25px!important;padding:0!important;border:0!important;background:none!important;box-shadow:none!important;color:#56665D!important;cursor:pointer!important;transition:color .2s ease!important;}
+.lkdv-drawer-shell .lkdv-drawer-secondary .ig-tabs button{position:relative!important;height:25px!important;min-height:25px!important;padding:0!important;border:0!important;background:none!important;box-shadow:none!important;color:#56665D!important;cursor:pointer!important;transition:color .2s ease!important;display:flex!important;align-items:center!important;justify-content:center!important;}
 .lkdv-drawer-shell .lkdv-drawer-secondary .ig-tabs button.active,.lkdv-drawer-shell .lkdv-drawer-secondary .ig-tabs button[aria-selected="true"]{color:#17402C!important;}
 .lkdv-drawer-shell .lkdv-drawer-secondary .ig-tabs button::after{content:""!important;position:absolute!important;left:0!important;right:0!important;top:-10px!important;bottom:-10px!important;border-radius:12px!important;}
 .lkdv-drawer-skeleton{display:flex!important;flex-direction:column!important;gap:10px!important;padding:10px 0!important;}
@@ -276,3 +277,5 @@ body .phone.sheet-open[data-det="card"] .map-scale-selector,body .phone.sheet-op
 @keyframes lkdvDrawerShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 @media (prefers-reduced-motion:reduce){.lkdv-drawer-pane{transition:none!important;}.lkdv-drawer-skeleton span{animation:none!important;}.lkdv-drawer-shell .lkdv-drawer-topnav .lkdv-drawer-tabs .sel-lens{transition:none!important;}}
 `;
+
+export default DrawerShell;

@@ -64,7 +64,8 @@ describe('M02 — registre des destinations (navigation mobile)', () => {
     expect(getActiveDestinationId('/hub')).toBe('adventures');
     expect(getActiveDestinationId('/hub/kit')).toBe('adventures');
     expect(getActiveDestinationId('/explorer')).toBe('explorer');
-    expect(getActiveDestinationId('/pays/france')).toBe('explorer');
+    expect(getActiveDestinationId('/explorer/sentiers')).toBe('explorer');
+    expect(getActiveDestinationId('/pays/france')).toBeNull();
     // /materiel a été supprimée le 24/10/2026.
     expect(getActiveDestinationId('/materiel')).toBeNull();
     expect(getActiveDestinationId('/communaute')).toBe('community');

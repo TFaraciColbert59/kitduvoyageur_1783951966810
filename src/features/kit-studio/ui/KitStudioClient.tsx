@@ -19,6 +19,7 @@ import { getScene } from '../scene/sceneRef';
 import { Dock } from './Drawer/Dock';
 import { OfflineContext, useOffline } from './offline';
 import { Pill } from './Pill';
+import { Icon } from './icons';
 import { UndoButton } from './UndoButton';
 import { S, pillLabel } from './strings';
 import './kit-studio.css';
@@ -102,22 +103,13 @@ export function KitStudioClient(props: KitStudioClientProps) {
     }
   }, [onExit, router]);
 
-  // La barre de navigation basse (bottom bar) est formellement interdite sur Kit Studio
+  // La barre de navigation basse (bottom bar) est formellement interdite sur Kit Studio.
+  // NavigationBar écoute `lkdv-toggle-bottom-bar` et gère la séquence monotonic de révision
+  // native : ne jamais envoyer `revision: Date.now()` ici, sinon l'hôte natif ignore les réapparitions.
   useEffect(() => {
     document.documentElement.setAttribute('data-kit-studio-open', 'true');
     document.body.setAttribute('data-kit-studio-open', 'true');
     window.dispatchEvent(new CustomEvent('lkdv-toggle-bottom-bar', { detail: { hide: true } }));
-
-    try {
-      // Masquage proactif de la tab bar native Capacitor iOS
-      const { registerPlugin, Capacitor } = require('@capacitor/core');
-      if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios') {
-        const bar = registerPlugin('LKDVAccountTabBar');
-        bar?.setVisible?.({ visible: false, revision: Date.now() })?.catch?.(() => undefined);
-      }
-    } catch (_e) {
-      // Ignore si Capacitor n'est pas présent dans l'environnement courant
-    }
 
     return () => {
       document.documentElement.removeAttribute('data-kit-studio-open');
@@ -285,6 +277,15 @@ export function KitStudioClient(props: KitStudioClientProps) {
     <OfflineContext.Provider value={offline}>
       <div className="ks-root ks-stage" data-offline={offline || undefined} data-sync={sync} data-mode={mode}>
         <SceneView />
+        <button
+          type="button"
+          className="ks-back"
+          onClick={handleExit}
+          aria-label="Quitter Kit Studio"
+          title="Retour"
+        >
+          <Icon name="back" />
+        </button>
         <Pill
           kg={kg}
           ratio={ready / 100}

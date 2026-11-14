@@ -575,8 +575,6 @@ export function CommunitySheetShell({
             </div>
           )}
 
-          {footer && !detail ? <div className="lkdv-cv2-footer">{footer}</div> : null}
-
           {mini && !detail ? (
             <div
               className={cx(
@@ -610,6 +608,8 @@ export function CommunitySheetShell({
               ) : null}
             </div>
           ) : null}
+
+          {footer && !detail ? <div className="lkdv-cv2-footer">{footer}</div> : null}
 
           {children}
         </div>

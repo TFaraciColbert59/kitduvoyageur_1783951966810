@@ -244,7 +244,12 @@ export default function MapStage({
       // Après 300 ms, zoom vers la position de l'utilisateur à l'échelle ville (durée <= 2 s).
       startupTimer = window.setTimeout(() => {
         if (!mapRef.current) return;
-        const target = me ? [me.lng, me.lat] : (Array.isArray(center) ? center : [2.35, 48.85]);
+        const target =
+          me && Number.isFinite(me.lng) && Number.isFinite(me.lat)
+            ? [me.lng, me.lat]
+            : Array.isArray(center) && Number.isFinite(center[0]) && Number.isFinite(center[1])
+              ? center
+              : [2.35, 48.85];
         cinematicStartupZoom(map, target as [number, number], reducedMotion);
       }, 300);
       try {
@@ -774,6 +779,7 @@ export default function MapStage({
     const container = map.getContainer();
 
     if (cameraIntent.type === 'level') {
+      if (!Number.isFinite(cameraIntent.center?.[0]) || !Number.isFinite(cameraIntent.center?.[1])) return;
       suppressMoveEnd.current = true;
       window.setTimeout(() => {
         suppressMoveEnd.current = false;
@@ -786,16 +792,22 @@ export default function MapStage({
       return;
     }
     if (cameraIntent.type === 'reveal') {
+      if (!Number.isFinite(cameraIntent.center?.[0]) || !Number.isFinite(cameraIntent.center?.[1])) return;
       revealAt(map, cameraIntent.center, reducedMotion);
       return;
     }
     if (cameraIntent.type === 'follow') {
+      const targetPos: [number, number] =
+        me && Number.isFinite(me.lng) && Number.isFinite(me.lat)
+          ? [me.lng, me.lat]
+          : Array.isArray(center) && Number.isFinite(center[0]) && Number.isFinite(center[1])
+            ? center
+            : [2.35, 48.85];
       suppressMoveEnd.current = true;
       window.setTimeout(() => {
         suppressMoveEnd.current = false;
       }, 2500);
       const padding = followPadding(container.clientHeight, sheetHeightPx);
-      const targetPos: [number, number] = me ? [me.lng, me.lat] : center;
       followAt(map, targetPos, map.getBearing(), 1.4, padding, reducedMotion);
       return;
     }
@@ -822,12 +834,19 @@ export default function MapStage({
       const walk = (value: unknown) => {
         if (!Array.isArray(value)) return;
         if (typeof value[0] === 'number' && typeof value[1] === 'number') {
-          points.push([value[0] as number, value[1] as number]);
+          if (Number.isFinite(value[0]) && Number.isFinite(value[1])) {
+            points.push([value[0], value[1]]);
+          }
           return;
         }
         for (const child of value) walk(child);
       };
-      for (const route of routes ?? []) walk((route.geojson as { coordinates?: unknown })?.coordinates);
+      const targetRoutes = cameraIntent.routeId
+        ? (routes ?? []).filter((r) => String(r.id) === String(cameraIntent.routeId))
+        : (routes ?? []);
+      for (const route of targetRoutes.length ? targetRoutes : (routes ?? [])) {
+        walk((route.geojson as { coordinates?: unknown })?.coordinates);
+      }
       if (points.length < 2) return;
       return flyoverTrack(map, points, reducedMotion);
     }

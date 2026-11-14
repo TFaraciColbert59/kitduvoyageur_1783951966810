@@ -1734,10 +1734,10 @@ export default function UnifiedExplorerMap({
             </p>
             <div className="mt-3 flex items-center gap-2">
               <Link
-                href={`/pays/${selectedCountry.iso.toLowerCase()}`}
+                href={`/explorer?country=${selectedCountry.iso.toLowerCase()}`}
                 className="inline-flex min-h-[44px] flex-1 select-none items-center justify-center whitespace-nowrap rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-4)] text-center text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)] no-underline transition-transform active:scale-[var(--motion-press-scale)] hover:brightness-[1.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
               >
-                Explorer le pays
+                Explorer les sentiers
               </Link>
               <IconButton
                 variant="glass"

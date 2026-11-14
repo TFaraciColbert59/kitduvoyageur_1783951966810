@@ -10,6 +10,13 @@ const withBundleAnalyzer = bundleAnalyzer({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  turbopack: {
+    root: '/Users/fr168256/Documents/Codex/2026-11-11/files-pasted-by-the-user-lkdv/work',
+  },
+  onDemandEntries: {
+    maxInactiveAge: 1000 * 60 * 60 * 24,
+    pagesBufferLength: 100,
+  },
   productionBrowserSourceMaps: false,
   distDir: process.env.DIST_DIR || '.next',
   compress: true,

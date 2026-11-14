@@ -1,120 +1,110 @@
-# DESIGN SYSTEM LKDV — GOUVERNANCE ET SPECIFICATIONS OFFICIELLES
+# DESIGN SYSTEM LKDV — GOUVERNANCE ET SPÉCIFICATIONS OFFICIELLES
 
-> **Règle absolue :** Aucune page ni composant métier ne doit recréer ad hoc un composant UI existant ni introduire de nouvelles couleurs/polices arbitraires.
-
----
-
-## 0. Référence design : le Compas (décision du 2026-10-01)
-
-Le **Compas** (`/compas`) est la nouvelle référence visuelle et d'interaction pour tout NOUVEL écran : matériau Liquid Glass v8, tiroirs à trois hauteurs, capsule d'étapes, lignes de liste, états « non renseigné / non évalué ». Détail, règles et dette connue : `docs/compas/DESIGN_REFERENCE.md`.
-
-- En cas de divergence de style (verre, surfaces, onglets, tiroirs, lignes, états), **le Compas prévaut** sur `/materiel`.
-- Les jetons restent ceux de `src/styles/tokens.css` (`--lkv-*`) : aucune couleur littérale nouvelle hors fichier de jetons.
-- `/materiel` reste la référence des écrans existants jusqu'à leur migration ; `/compte` reste la référence des patterns utilisateur (profils, réglages, formulaires).
+> **Règle absolue :** Aucune page ni composant métier ne doit recréer ad hoc un composant UI existant ni introduire de nouvelles couleurs/polices arbitraires. Toute l'application s'appuie sur la banque unique `src/design/bank.ts`.
 
 ---
 
-## 1. Sources de Vérité Canoniques
+## 0. Architecture de la Banque Unique (`src/design/bank.ts`)
 
-1. **`/materiel` = Source unique de vérité visuelle**  
-   Fait foi pour le style Liquid Glass, les surfaces, les cartes, les boutons, les badges, la typographie, les rayons de bordure (`12px`, `16px`, `24px`, `rounded-full`), les ombres, les flous (`backdrop-blur`), et les micro-interactions tactiles.
-2. **`/compte` = Source unique de vérité des patterns utilisateur**  
-   Fait foi pour la structure des profils, des réglages, des groupes d'actions, des listes d'éléments et des formulaires.
+La source de vérité unique, typée et centralisée de tout le système visuel LKDV est **`src/design/bank.ts`**.
+Tous les artefacts multi-plateformes sont automatiquement dérivés et synchronisés via le générateur atomique `scripts/generate-design-bank.mjs` :
+- `src/styles/tokens.generated.css` (Web Custom Properties, 1 seul `:root`, 0 `.dark`, 0 `!important`)
+- `src/design/tokens.generated.ts` (Valeurs littérales typées pour Canvas 2D, SVG inline et MapLibre GL JS)
+- `tailwind.preset.generated.js` (Preset CommonJS pour Tailwind CSS, 0 hex codé en dur)
+- `ios/App/App/DesignTokens.generated.swift` (UIKit / SwiftUI structs et couleurs natives Apple)
+- `android/app/src/main/res/values/design_tokens.generated.xml` & `android/app/src/main/java/com/lekitduvoyageur/app/LKDVTheme.generated.kt` (Material 3 XML et Kotlin)
+
+Le contrat Liquid Glass Mode Clair est rigoureusement uniforme sur l'ensemble des 80+ routes de l'application (Hub, Explorer, Compas, Compte, Communauté, Carnet).
 
 ---
 
-## 2. Palette & Design Tokens
+## 1. 100% Mode Clair Liquid Glass & Zéro Noir
 
-Toutes les couleurs doivent provenir directement de `src/design/tokens.ts` ou des variables CSS de `src/styles/liquid-glass.css` :
+LKDV applique une politique stricte de **100 % Mode Clair Liquid Glass** :
+- **Quasi zéro sombre, zéro noir (`#000`/`#101010`/`#121815`)** : fin définitive de la polarité `.dark`, des surcharges sombres `liquid-ios27.css` et de `#lkdv-theme-init`.
+- `StatusBar` en `Style.Light` par défaut (encres et icônes système sombres sur fond clair).
+- Surfaces de verre dépoli clair teinté sauge/blanc : `--g3-bg`, `CookieConsentBanner` et carte `404` en verre clair dépoli (`#EBF2EC` / `#D8E5D5` avec encre sombre `#172B24`).
 
-* **Forest (Primaire) :** `#17402C` (hover `#205238`, soft `#365233`)
-* **Sage (Accent) :** `#5B7F55` (subtle `#A6C1A0`)
-* **Stone (Arrière-plans) :** `#FAF8F5` (desktop/cards), `#F5F2EC` (mobile global background)
-* **Paper (Surfaces Verre) :** `#FBFAF6` (avec `backdrop-blur` et bordures `border-white/60`)
-* **Sémantiques :**
-  * Warning : `#C89A3B` / `--warn-bg` (`#FBF1DC`)
-  * Danger : `#A8443A` / `--danger-bg` (`#F5DDD9`)
-  * Info : `#4B6B7C` / `--info-bg` (`#DDE7EE`)
+---
+
+## 2. Palette & Design Tokens Canoniques
+
+Toutes les couleurs proviennent directement de `src/design/bank.ts` :
+
+### Surfaces & Fonds
+* **Toile de fond (Canvas) :** `#FBFAF6` (`--lkv-surface-canvas`)
+* **Fond applicatif (Sauge très pâle) :** `#F5F7F3` (`--lkv-surface`)
+* **Surfaces Cartes & Élevées :** `#FFFFFF` (`--lkv-surface-card`, `--lkv-surface-elevated`)
+* **Listes Groupées (Sauge 50) :** `#F0F5EE` (`--lkv-surface-grouped`)
+* **Surfaces Muted :** `#EDF1EA` (`--lkv-surface-muted`)
+* **Voile de fond applicatif :** `rgba(242, 246, 243, 0.78)` (`--lkv-app-bg-scrim`)
+
+### Encres & Textes (WCAG AAA / AA, Zéro Noir)
+* **Texte Primaire :** `#172B24` (contraste > 14:1 sur blanc et canvas)
+* **Texte Secondaire :** `#56665D` (contraste > 5.6:1)
+* **Texte Tertiaire / Muted :** `#46584D` (contraste > 7.0:1)
+* **Texte Quaternaire / Subtle :** `#8C9790`
+* **On Brand / On Action :** `#FFFFFF` sur boutons vert forêt
+* **Scrim photo :** `rgba(16, 28, 23, 0.42)`
+
+### Gamme Verte LKDV & Actions
+* **Brand Primary (Vert Forêt Marque) :** `#17402C` (hover `#205238`, soft `#365233`)
+* **Action (Vert LKDV) :** `#226148` (hover `#1B4F3A`)
+* **Secondary (Vert Sauge) :** `#5B7F55` (hover `#4A6B44`)
+* **Primary Subtle :** `#D3EBD9`
+* **Secondary Subtle (Pilules Sauge) :** `#D8E5D5` avec texte `#17402C` (`--lkv-on-secondary-subtle`)
+
+### Rims & Ombres Teintées Vert Forêt
+* **Liseré de verre (Rim Color) :** `rgba(23, 43, 36, 0.14)` (`--glass-rim-color`)
+* **Ombre de liseré :** `0 0 0 0.5px rgba(23, 43, 36, 0.14)` (`--glass-rim-shadow`)
+* **Ombre portée Liquid Glass :** `0 10px 32px rgba(23, 64, 44, 0.12)` (`--glass-shadow`)
+* **Ombre élevée :** `0 16px 48px rgba(23, 64, 44, 0.16)` (`--glass-shadow-elevated`)
 
 ---
 
 ## 3. Primitives UI Canoniques (`src/components/ui/`)
 
-### Boutons (`LkvButton.tsx`)
-* **Façade officielle** : `LkvButton` — l'alias `Button` a été supprimé en Phase 1 (doublon d'exacte délégation).
-* **Variantes autorisées** : `primary`, `secondary` / `light`, `ghost`, `danger`, `icon-only`.
-* **Interdictions** : Interdiction absolue de styliser des éléments `<button>` bruts avec des couleurs ou gradients ad hoc dans les pages.
+### Icônes Vectorielles (`Icon.tsx`)
+* **Primitive canonique unique** : `src/components/ui/Icon.tsx` et `src/components/ui/Icon/Icon.tsx`.
+* **Zéro masque raster PNG** (`/icons/*.png` supprimé). Rendu 100% vectoriel via Lucide SVGs, SF Symbols sur iOS et Material Symbols sur Android.
+* Tous les composants applicatifs importent leurs icônes depuis `@/components/ui/Icon` (aucun import direct `lucide-react` dans les pages fonctionnelles).
+* Target tactile minimale : $44 \times 44 \text{ pt}$ ($48 \text{ dp}$ sur Android).
 
-### Cartes (`GlassCard.tsx`)
-* **Primitive officielle** : `GlassCard` — l'alias `Card` a été supprimé en Phase 1.
-* **Tons autorisés** : `neutral`, `sage`, `warn`, `danger`, `info`.
-* **Cartes métier** : Les cartes spécialisées (ex: cartes produits) doivent utiliser `GlassCard` comme wrapper visuel.
+### Boutons & Cartes
+* **Bouton officiel** : `LkvButton` (variantes `primary`, `secondary`, `ghost`, `danger`, `icon-only`).
+* **Carte officielle** : `GlassCard` (surfaces de verre dépoli translucide avec rim teinté vert forêt).
 
-### Structure de page (Phase 1)
-* **Primitives** : `Page`, `PageHeader`, `PageContent`, `PageActions`, `Section`, `Divider`.
-* **Layouts** : `src/design/layouts/` — `PageLayout`, `ListPageLayout`, `DetailPageLayout`, `FormPageLayout`, `DashboardPageLayout`, `MapPageLayout` (composés au-dessus d'`AppShell`).
-* **Règle d'emplacement** : retour à gauche du header, actions à droite, action principale en bas de page — mêmes emplacements partout.
-
-### Chargement
-* **Primitive officielle** : `Spinner` (indicateurs) et `Skeleton*` (contenus). Les spinners artisanaux (`rounded-full animate-spin` recopiés) sont proscrits pour les nouveaux écrans.
-
-### État des primitives (Phase 1)
-* **Conservées non adoptées** (cibles de migration, pas encore utilisées) : `LkvInput`, `LkvTextarea`, `LkvSelect`, `LkvCheckbox`, `LkvSwitch`, `Tabs`/`ScrollableTabs`, `PremiumGlassCard`, `MediaUpload`.
-* **Façade d'import unique** : `@/design` réexporte tokens + primitives + layouts (aucune duplication d'implémentation).
-
-### Badges & Chips (`LkvChip.tsx`)
-* **Primitive officielle** : `LkvChip` (et `Badge` en rétrocompatibilité).
-* **Tons** : `sage`, `warn`, `danger`, `info`, `stone`, `light`, `dark`.
-
-### Onglets (`IOSSegmentedControl.tsx` & `ScrollableTabs.tsx`)
-1. **`IOSSegmentedControl`** : Choix exclusifs courts (2 à 4 items).
-2. **`ScrollableTabs`** : Navigation horizontale défilante et filtres de catégories.
-
-### Formulaires (`src/components/ui/`)
-* **Primitives form** : `LkvInput`, `LkvTextarea`, `LkvSelect`, `LkvCheckbox`, `LkvSwitch`.
-* **Anti-zoom iOS Safari** : Taille de police minimale de `16px` sur mobile (`text-[16px] sm:text-sm`).
-
-### Icônes (`LkvIcon.tsx`)
-* **Primitive officielle** : `LkvIcon` et sous-icônes animées de `@/components/icons/*`.
-* **Target tactile minimale** : $44 \times 44 \text{ px}$.
+### Unification des Primitives
+* **1 seule primitive Sheet / Tiroir** : tiroir tactile 3 crans piloté par la banque.
+* **1 seul SegmentedControl** : aligné Apple `UISegmentedControl` (remplaçant `CapsuleTabs`, `Tabs`, `SubTabBar`).
+* **1 seul DynamicIslandHost** : aligné sous `env(safe-area-inset-top)`.
+* **1 seule InsetGroupedList & ListItem** : groupement Apple HIG standardisé.
 
 ---
 
-## 4. Règles de Sécurité & Mobile Apple / Android
+## 4. Rayons Concentriques & Échelle Z-Index Monotone
 
-* **Safe Areas** : Respecter `env(safe-area-inset-top)` et `env(safe-area-inset-bottom)` via `AppShell` ou `MobilePageShell`.
-* **Tactile** : Toutes les zones cliquables mobiles doivent mesurer au moins $44 \text{ px}$ de hauteur/largeur.
-* **Haptique** : Utiliser `useHapticFeedback()` pour les sélections et boutons tactiles.
+### Règle des Rayons Concentriques
+Formule géométrique stricte : $R_{\text{enfant}} = \max(12, R_{\text{parent}} - \text{padding})$.
+* `xs`: 12px
+* `sm`: 16px
+* `md`: 20px
+* `lg`: 24px
+* `card`: 28px
+* `hero`: 38px
+* `sheet`: 44px
+* `pill`: 9999px
+* Plancher concentrique (`concentricFloor`): 20px
+
+### Échelle Z-Index Monotone (8 Niveaux)
+Échelle strictement ordonnée éliminant tout conflit d'empilement :
+`base (1) < sticky (100) < subbar (200) < tabbar (300) < hud (400) < sheet (500) < modal (600) < alert/toast/island (700)`
 
 ---
 
-## 5. Mémoire musculaire et contrats de structure (Phase 2, Lot 2)
+## 5. Navigation & Multi-OS Parité Apple Swift / Android M3
 
-### Règles d'emplacement (non négociables)
-
-| Zone | Règle |
-|---|---|
-| **Leading** | Le retour est toujours à gauche, via `HeaderBackButton` (44×44, chevron, historique puis `backHref`). Aucune page ne réimplémente un bouton retour. |
-| **Centre / titre** | Même alignement (gauche) et mêmes niveaux : titre inline 17 semi-bold, titre large 34 bold (`PageHeader variant`). Sous-titre en footnote 13. |
-| **Trailing** | L'action contextuelle est toujours à droite du header, même taille de cible ; l'overflow/menu y reste aussi. |
-| **Page** | Recherche au même niveau logique (header ou premier bloc), filtres sous le header (`toolbar` de `ListPageLayout`), CTA de validation selon `PageActions` (inline ou sticky). |
-
-### Contrats
-
-1. **AppShell** — unique shell de page : `Background → header → contenu (scroll) → bottomExtra`. Il réserve la navigation via `--bottom-nav-height` et applique `--page-top-inset` / `--nav-offset*`. Aucune page ne calcule `env(safe-area-inset-*)`.
-2. **Safe areas** — source unique : `src/styles/tokens.css` (`--safe-*`, `--nav-height: 52px`, `--nav-offset`, `--nav-offset-extended`, `--page-*-inset`, `--keyboard-inset`). Le plateau secondaire est déclaré une seule fois (`destinationRegistry.hasExtendedNav`).
-3. **PageHeader** — structure invariable `[Back] — Titre — [Trailing]` ; variantes `inline`/`large`, `sticky`, `transparent`/`scrollAware`. Aucune feature ne crée son propre header.
-4. **NavigationBar** — une seule barre active (`NavigationBar` → `BottomTabBar`) ; onglets définis par `destinationRegistry` (une source pour Web/Android/futur natif) ; `NATIVE_TABBAR_ENABLED` reste `false` jusqu'à vérification SDK macOS.
-5. **Scroll** — le shell est le seul conteneur de scroll ; `min-height: 100svh`/`100dvh` (`.lkv-shell`) ; pas de `100vh` brut, pas de padding bas manuel (réservé par le shell), pas de scroll imbriqué sans nécessité.
-6. **Clavier** — Capacitor `Keyboard.resize: 'body'` gère la compensation native ; le CSS ne rajoute **aucune** compensation (pas de double). `--keyboard-inset` reste disponible pour les cas web purs.
-7. **Overlays** — une seule échelle (`--z-*` / `src/lib/ui/zIndex.ts`) : contenu < header sticky < FAB < nav < drawer < sheet < modal < popover < command < toast < tooltip < urgence. Les `z-[...]` locaux sont migrés progressivement.
-
-## 6. Procédure avant de créer un composant UI
-
-> **Règle anti-régression (Phase 2) :** « Existe-t-il déjà une primitive ou un pattern dans `@/design` capable de couvrir ce besoin ? »
-> Si oui : étendre ou réutiliser. **Ne jamais créer une variante uniquement pour reproduire exactement l'ancien écran.**
-
-1. Vérifier si une primitive existe déjà dans `src/components/ui/` (ou via la façade `@/design`).
-2. Si une primitive correspond au besoin, **l'utiliser directement**.
-3. Si une variante manque, l'ajouter de façon générique dans la primitive UI sous `src/components/ui/` après comparaison avec `/materiel`.
-4. Les baselines de validation Phase 2 (mesures avant, captures, protocole) vivent dans `docs/design-system/PHASE2_READINESS.md`.
+* **iOS** : `UITabBar` Liquid Glass natif Apple actif sur **toutes** les routes (y compris `/compas`), icônes SF Symbols sans texte (`icon-first`). Extension `LkdvWidgetsExtension` (Live Activities Dynamic Island & Lock Screen).
+* **Android** : `LKDVAndroidTabBarHost` (NavigationBar Material 3 en capsule flottante claire) et service de notification d'activité continue.
+* **Web** : `FloatingLiquidTabBar` en fallback fluide avec alignement pixel au millimètre.
+* **Safe Areas** : Dégagement Dynamic Island haut et TabBar bas (`--lkv-native-bar-height: 64px`, `bottomClearance: 88px`).

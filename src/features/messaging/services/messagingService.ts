@@ -501,7 +501,7 @@ export const messagingService = {
         membersByConv.set(m.conversation_id, {
           id: profile.id,
           full_name: profile.full_name || 'Voyageur LKDV',
-          avatar_url: profile.avatar_url || '/assets/images/no_image.png',
+          avatar_url: profile.avatar_url || '',
           username: undefined,
         });
       }
@@ -522,7 +522,7 @@ export const messagingService = {
 
     const memberMetaMap = new Map(memberData.map((m) => [m.conversation_id, m]));
 
-    return conversations.map((conv) => {
+    const mapped = conversations.map((conv) => {
       const meta = memberMetaMap.get(conv.id);
       const otherMember = membersByConv.get(conv.id) || null;
       const lastMessage = lastMsgByConv.get(conv.id) || null;
@@ -542,10 +542,38 @@ export const messagingService = {
         is_muted: meta?.is_muted || false,
         is_archived: meta?.is_archived || false,
         // F-020 : l'onglet « Demandes » et la barre pending de la conversation
-        // s'appuient sur l'état serveur réel.
-        status: (meta as { status?: string } | undefined)?.status === 'pending' ? 'pending' : 'active',
+        // s'appient sur l'état serveur réel.
+        status: (((meta as { status?: string } | undefined)?.status === 'pending' ? 'pending' : 'active') as Conversation['status']),
       };
     });
+
+    const seenDirect = new Map<string, number>();
+    const deduped: typeof mapped = [];
+    for (const item of mapped) {
+      if (item.type === 'direct' && item.other_member?.id) {
+        const key = `${item.status}:${item.other_member.id}`;
+        const existingIdx = seenDirect.get(key);
+        if (existingIdx !== undefined) {
+          const existing = deduped[existingIdx];
+          if (!existing.last_message && item.last_message) {
+            deduped[existingIdx] = {
+              ...item,
+              unread_count: existing.unread_count + item.unread_count,
+            };
+          } else {
+            deduped[existingIdx] = {
+              ...existing,
+              unread_count: existing.unread_count + item.unread_count,
+            };
+          }
+          continue;
+        }
+        seenDirect.set(key, deduped.length);
+      }
+      deduped.push(item);
+    }
+
+    return deduped;
   },
 
   async getOrCreateDirectConversation(targetUserId: string, currentUserId: string): Promise<string | null> {

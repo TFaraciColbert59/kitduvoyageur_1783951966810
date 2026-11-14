@@ -291,7 +291,7 @@ const fmtE = n => n.toLocaleString('fr-FR', { minimumFractionDigits: n % 1 ? 2 :
 const kgs = g => g >= 1000 ? (g / 1000).toLocaleString('fr-FR', { maximumFractionDigits: 2 }) + ' kg' : Math.round(g) + ' g';
 const haptic = p => { try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} };
 
-const TONY_AVATAR = "data:image/jpeg;base64,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";
+const TONY_AVATAR = "";
 
 const IC = {
   user: "M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM4 20c.8-3.8 3.8-6 8-6s7.2 2.2 8 6",
@@ -408,69 +408,8 @@ let tileArt = function(kind) {
 
 /* ---------- Données du Compte @tony_frc (alignées sur Supabase LKDV) ---------- */
 var hlList = () => (Array.isArray(HIGHLIGHTS) ? HIGHLIGHTS : []);
-let _MOCK_HIGHLIGHTS = [
-  {
-    id: "hl1",
-    title: "Dolomites",
-    coverImage: "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=480&q=80",
-    stories: [
-      { id: "s1", image: "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1080&q=80", caption: "Tre Cime di Lavaredo au crépuscule doré" },
-      { id: "s2", image: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1080&q=80", caption: "Reflet du matin au Lago di Braies" },
-      { id: "s3", image: "https://images.unsplash.com/photo-1530122037265-a5f1f91d3b99?auto=format&fit=crop&w=1080&q=80", caption: "Cinque Torri · passage aérien sur la vire" },
-      { id: "s4", image: "https://images.unsplash.com/photo-1483728642387-6c3bdd6c93e5?auto=format&fit=crop&w=1080&q=80", caption: "Arrivée au Rifugio Locatelli à 2 405 m" }
-    ],
-    sub: "4 stories · Tre Cime & Lago di Braies"
-  },
-  {
-    id: "hl2",
-    title: "Bivouac Vercors",
-    coverImage: "https://images.unsplash.com/photo-1506197603052-3cc9c3a201bd?auto=format&fit=crop&w=480&q=80",
-    stories: [
-      { id: "s5", image: "https://images.unsplash.com/photo-1506197603052-3cc9c3a201bd?auto=format&fit=crop&w=1080&q=80", caption: "Campement sous la Voie Lactée aux Hauts Plateaux" },
-      { id: "s6", image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1080&q=80", caption: "Premier rayon de soleil sur le Grand Veymont" },
-      { id: "s7", image: "https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?auto=format&fit=crop&w=1080&q=80", caption: "Bivouac sauvage au Pas de l’Aiguille" },
-      { id: "s8", image: "https://images.unsplash.com/photo-1510312305653-8ed496efae75?auto=format&fit=crop&w=1080&q=80", caption: "Matin givré : premier café au réchaud" }
-    ],
-    sub: "4 stories · Nuit étoilée & Grand Veymont"
-  },
-  {
-    id: "hl3",
-    title: "Lacs & refuges",
-    coverImage: "https://images.unsplash.com/photo-1505765050516-f72dcac9c60e?auto=format&fit=crop&w=480&q=80",
-    stories: [
-      { id: "s9", image: "https://images.unsplash.com/photo-1505765050516-f72dcac9c60e?auto=format&fit=crop&w=1080&q=80", caption: "Miroir du Lac Blanc face au Mont-Blanc" },
-      { id: "s10", image: "https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?auto=format&fit=crop&w=1080&q=80", caption: "Refuge perché au-dessus des glaciers" },
-      { id: "s11", image: "https://images.unsplash.com/photo-1475924156734-496f6cac6ec1?auto=format&fit=crop&w=1080&q=80", caption: "Baignade à l’eau glaciaire au Lac d’Anterne" },
-      { id: "s12", image: "https://images.unsplash.com/photo-1517824806704-9040b037703b?auto=format&fit=crop&w=1080&q=80", caption: "Chaleur du refuge à la tombée de la nuit" }
-    ],
-    sub: "4 stories · Lac Blanc & Couvercle"
-  },
-  {
-    id: "hl4",
-    title: "GR20",
-    coverImage: "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=480&q=80",
-    stories: [
-      { id: "s13", image: "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1080&q=80", caption: "Les crêtes minérales des Aiguilles de Bavella" },
-      { id: "s14", image: "https://images.unsplash.com/photo-1454496522488-7a8e488e8606?auto=format&fit=crop&w=1080&q=80", caption: "Passage engagé sur les dalles de granit" },
-      { id: "s15", image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1080&q=80", caption: "Vue sur la mer Méditerranée depuis la crête" },
-      { id: "s16", image: "https://images.unsplash.com/photo-1432405972618-c60b0225b8f9?auto=format&fit=crop&w=1080&q=80", caption: "Source glacée providentielle au km 18" }
-    ],
-    sub: "4 stories · Bavella & crêtes corses"
-  },
-  {
-    id: "hl5",
-    title: "Sac 780 g",
-    coverImage: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=480&q=80",
-    stories: [
-      { id: "s17", image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=1080&q=80", caption: "Inventaire complet du sac ultralight · 780 g" },
-      { id: "s18", image: "https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=1080&q=80", caption: "Chaussures de trail et bâtons carbone" },
-      { id: "s19", image: "https://images.unsplash.com/photo-1523987355523-c7b5b0dd90a7?auto=format&fit=crop&w=1080&q=80", caption: "Popote titane et filtre à eau 110 g" },
-      { id: "s20", image: "https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?auto=format&fit=crop&w=1080&q=80", caption: "Tarp monté sur bâtons entre les mélèzes" }
-    ],
-    sub: "4 stories · Matériel ultralight & pesée"
-  }
-];
-let HIGHLIGHTS = JSON.parse(JSON.stringify(_MOCK_HIGHLIGHTS));
+let _MOCK_HIGHLIGHTS = [];
+let HIGHLIGHTS = [];
 if (typeof window !== "undefined") window.__lkdvHighlights = HIGHLIGHTS;
 
 let STORY_HIGHLIGHTS = [];
@@ -3199,7 +3138,7 @@ function renderStory() {
     return `<button type="button" class="st-viewer-row" data-a="openUserProfile" data-v="${esc(profileKey)}" aria-label="Voir le profil de ${esc(person.name || 'Voyageur')}"><span class="st-viewer-av">${person.avatarUrl ? `<img src="${esc(person.avatarUrl)}" alt="">` : esc((person.name || 'V').charAt(0).toUpperCase())}</span><span class="st-viewer-txt"><b>${esc(person.name || 'Voyageur')}</b><small>@${esc(person.handle || 'voyageur')}</small></span><span class="st-viewer-time">${when}</span><svg class="st-viewer-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>`;
   }).join('') : '<p class="st-viewer-empty">Aucune vue pour le moment.</p>';
   const viewersPanel = `<div class="st-viewers${X.viewersOpen ? ' on' : ''}" role="dialog" aria-modal="true" aria-label="Personnes ayant vu cette story"><button type="button" class="st-viewers-scrim" data-a="stviewclose" aria-label="Fermer"></button><div class="st-viewers-sheet"><div class="st-viewers-head"><span class="st-viewers-title"><b>Vues</b><small>${eng ? eng.viewCount : 0} personne${(eng ? eng.viewCount : 0) === 1 ? '' : 's'}</small></span><button type="button" class="st-viewers-close" data-a="stviewclose" aria-label="Fermer">×</button></div><div class="st-viewers-list" role="list">${viewerList}</div></div></div>`;
-  const storyAvatar = (S.profile && S.profile.avatarUrl) || TONY_AVATAR;
+  const storyAvatar = (S.profile && S.profile.avatarUrl) || '';
   const storyName = (S.profile && S.profile.name) || 'Léa Fontaine';
   el.innerHTML = `<div class="st-bar">${st.slides.map((_, j) => `<i class="${j < i ? 'done' : j === i ? 'cur' : ''}"><b></b></i>`).join('')}</div>
   <div class="st-head">
@@ -3536,7 +3475,7 @@ card = function () {
       '<div class="ig-bio-top">' +
         (P.isDemo ? '<b class="ig-bio-cc" aria-label="Italie, France">IT · FR</b>' +
         '<span class="ig-bio-dot" aria-hidden="true">·</span>' : '') +
-        '<span class="ig-bio-stats">' + D.totalOutings + ' sorties · ' + D.totalKm + ' km · ' + dplusK + ' k m D+</span>' +
+        '<span class="ig-bio-stats">' + D.totalOutings + ' sorties · ' + D.totalKm + ' km · ' + dplusK + ' km D+</span>' +
       '</div>' +
       (bioText ? '<p class="ig-bio-text">' + bioText + '</p>' : '') +
     '</div>'
@@ -3844,7 +3783,7 @@ const editProfileBody = (P) => `
   <div class="apple-grouped-card">
     <div class="apple-avatar-header">
       <div class="apple-av-wrap" data-a="changeAvatar" title="Changer la photo de profil">
-        ${(P.avatarUrl || TONY_AVATAR) ? `<img id="ep_av_preview" src="${P.avatarUrl || TONY_AVATAR}" alt="Avatar" class="apple-av-img" />` : `<span id="ep_av_preview" class="apple-av-img" style="display:grid;place-items:center;background:#DDEBD8;color:#17402C;font:700 24px var(--sf)">${(P.name || 'V').charAt(0).toUpperCase()}</span>`}
+        ${(P.avatarUrl) ? `<img id="ep_av_preview" src="${P.avatarUrl}" alt="Avatar" class="apple-av-img" />` : `<span id="ep_av_preview" class="apple-av-img" style="display:grid;place-items:center;background:#DDEBD8;color:#17402C;font:700 24px var(--sf)">${(P.name || 'V').charAt(0).toUpperCase()}</span>`}
         <span class="apple-av-cam">${ic(IC.plus, 'xs')}</span>
       </div>
       <button class="mbtn soft" style="height:28px;padding:0 14px" data-a="changeAvatar">Changer la photo</button>
@@ -4503,7 +4442,7 @@ function renderPostModal(postId) {
     ? `Aimé par <b data-a="openUserProfile" data-v="montagne_lea" style="cursor:pointer">montagne_lea</b>, <b>toi</b> et <b>${Math.max(1, likeData.count - 2)} autres personnes</b>`
     : `Aimé par <b data-a="openUserProfile" data-v="montagne_lea" style="cursor:pointer">montagne_lea</b> et <b>${Math.max(1, likeData.count - 1)} autres personnes</b>`;
 
-  const userAvatar = (P && P.avatarUrl) || TONY_AVATAR;
+  const userAvatar = (P && P.avatarUrl) || '';
 
   const prevScroll = modalEl.querySelector('.pmi-scroll-area')?.scrollTop || 0;
   modalEl.innerHTML = `
@@ -5130,10 +5069,6 @@ var EXA = {
     /* Le lot est orchestré par l'hôte React avec le PATCH propriétaire
        existant. Le runtime ne simule aucune écriture et ne fournit que les
        identifiants réels et l'audience déjà lue. */
-    if (S.profile && (S.profile.isDemo || S.profile.isGuest)) {
-      island('Compte de démonstration', 'Connecte un compte réel pour changer une audience.', false);
-      return;
-    }
     const items = [];
     const seen = new Set();
     for (const o of OUTINGS) {

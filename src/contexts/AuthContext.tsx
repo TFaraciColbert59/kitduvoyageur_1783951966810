@@ -294,23 +294,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   /* Démo : auto-connexion une seule fois par session de navigateur.
      Le flag client est public ; les identifiants restent côté serveur. */
   useEffect(() => {
-    if (process.env.NEXT_PUBLIC_DEMO_AUTO_LOGIN !== 'true') return;
-    if (loading || user || demoAutoLoginTried.current) return;
+    const isStaleTestUser = user?.email === 'tony.tony@tony.tony';
+    if (!isStaleTestUser && process.env.NEXT_PUBLIC_DEMO_AUTO_LOGIN !== 'true') return;
+    if (loading || (user && !isStaleTestUser) || demoAutoLoginTried.current) return;
     demoAutoLoginTried.current = true;
-    try {
-      if (window.sessionStorage.getItem('lkdv.demoAutoLogin') === '1') return;
-      window.sessionStorage.setItem('lkdv.demoAutoLogin', '1');
-    } catch {
-      /* sessionStorage indisponible */
+    if (!isStaleTestUser) {
+      try {
+        if (window.sessionStorage.getItem('lkdv.demoAutoLogin') === '1') return;
+        window.sessionStorage.setItem('lkdv.demoAutoLogin', '1');
+      } catch {
+        /* sessionStorage indisponible */
+      }
     }
     let cancelled = false;
-    void fetch('/api/auth/demo', {
+    const endpoint = isStaleTestUser ? '/api/demo-login' : '/api/auth/demo';
+    void fetch(endpoint, {
       method: 'POST',
       credentials: 'same-origin',
       cache: 'no-store',
     })
-      .then((response) => {
-        if (!cancelled && response.ok) window.location.reload();
+      .then(async (response) => {
+        if (cancelled || !response.ok) return;
+        if (isStaleTestUser) {
+          await supabase.auth.refreshSession();
+        } else {
+          window.location.reload();
+        }
       })
       .catch(() => {
         /* le formulaire de connexion reste disponible */
@@ -318,7 +327,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       cancelled = true;
     };
-  }, [loading, user]);
+  }, [loading, user, supabase]);
 
   const value = useMemo<AuthContextValue>(
     () => ({

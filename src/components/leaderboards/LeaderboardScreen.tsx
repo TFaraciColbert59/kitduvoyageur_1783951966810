@@ -154,8 +154,8 @@ export function LeaderboardScreen({
     <div className="lkb-screen">
       <header className="lkb-hero">
         <div className="lkb-hero-top">
-          <Link className="lkb-back" href="/classements">
-            <span aria-hidden="true">←</span> Tous les classements
+          <Link className="lkb-back" href="/explorer">
+            <span aria-hidden="true">←</span> Explorer
           </Link>
           {onClose && (
             <button type="button" className="lkb-close" onClick={onClose} aria-label="Fermer">

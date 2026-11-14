@@ -53,7 +53,7 @@ export function LocalLegendsPanel({ result, segment }: LocalLegendsPanelProps) {
     <section className="lkb-legend" aria-labelledby="lkb-legend-title">
       <header className="lkb-legend-header">
         <div>
-          <p className="lkb-eyebrow">S4.08 · Fenêtre glissante</p>
+          <p className="lkb-eyebrow">Fenêtre glissante · 90 jours</p>
           <h2 id="lkb-legend-title" className="lkb-legend-title">
             Local Legend
           </h2>

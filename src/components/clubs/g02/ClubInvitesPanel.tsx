@@ -166,7 +166,7 @@ export function ClubInvitesPanel({
     <section className={styles.screen} aria-label="Invitations du club">
       <div className={styles.sectionHeader}>
         <div>
-          <p className={styles.eyebrow}>Invitations · K5.21 / K5.22</p>
+          <p className={styles.eyebrow}>Invitations du club</p>
           <h2 className={styles.title}>Inviter sans fuite</h2>
           <p className={styles.subtitle}>
             Un lien porte une cible et une limite. Un lien révoqué, expiré ou épuisé ne peut plus être

@@ -21,6 +21,8 @@ const PATHS = {
   bottle: 'M10 3h4v3l1.5 2.5V19a2 2 0 0 1-2 2h-3a2 2 0 0 1-2-2V8.5L10 6zM8.5 13h7',
   jacket: 'M9 4 4 7l1.5 4L8 10v10h8V10l2.5 1L20 7l-5-3a3 3 0 0 1-6 0zM12 7v13',
   aid: 'M6 7h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2zM9 7V5h6v2M12 11v5M9.5 13.5h5',
+  sack: 'M6.5 9.5h11l1.5 3.5v4.5a3 3 0 0 1-3 3h-8a3 3 0 0 1-3-3V13zM8.5 9.5c.5-3 6.5-3 7 0',
+  roll: 'M7.5 7.5h9a4.5 4.5 0 0 1 4.5 4.5 4.5 4.5 0 0 1-4.5 4.5h-9A4.5 4.5 0 0 1 3 12a4.5 4.5 0 0 1 4.5-4.5zM7.5 7.5v9M16.5 7.5v9',
 } as const;
 
 export type IconName = keyof typeof PATHS;

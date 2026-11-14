@@ -40,7 +40,6 @@ describe('Mobile Layout & Shell Navigation Architecture', () => {
       if (!hasBottomNav) return 'calc(12px + env(safe-area-inset-bottom, 0px))';
       const hasUpperExtension =
         pathname?.startsWith('/communaute') ||
-        pathname?.startsWith('/pays') ||
         pathname?.startsWith('/carnets') ||
         pathname?.startsWith('/groupes') ||
         pathname?.startsWith('/clubs') ||
@@ -72,9 +71,6 @@ describe('Mobile Layout & Shell Navigation Architecture', () => {
       'var(--bottom-tab-extended-height, calc(92px + env(safe-area-inset-bottom, 0px)))'
     );
     expect(computeBottomNavHeight('/carnets')).toBe(
-      'var(--bottom-tab-extended-height, calc(92px + env(safe-area-inset-bottom, 0px)))'
-    );
-    expect(computeBottomNavHeight('/pays/france')).toBe(
       'var(--bottom-tab-extended-height, calc(92px + env(safe-area-inset-bottom, 0px)))'
     );
 

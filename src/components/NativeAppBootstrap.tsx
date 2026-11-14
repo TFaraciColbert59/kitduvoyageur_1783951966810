@@ -10,7 +10,7 @@ import {
   statusBarThemeForPath,
   setupNativeAppListeners,
 } from "@/lib/native";
-import { supportsNativeIOSUI, syncNativeUIRoute } from "@/lib/native/ui";
+import { supportsNativeUI, syncNativeUIRoute } from "@/lib/native/ui";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCriticalCacheReady } from "@/components/ReactQueryProvider";
 
@@ -57,7 +57,7 @@ export default function NativeAppBootstrap() {
   // Navigation stays owned by Next.js. The SwiftUI host only gets an ordered
   // route snapshot, including /compas so it can close any transient native UI.
   useEffect(() => {
-    if (!isNative() || !supportsNativeIOSUI('/')) return;
+    if (!isNative() || !supportsNativeUI()) return;
     // Keep serials inside signed 32-bit Capacitor transport, yet base them
     // on wall time so a WKWebView reload won't reset to revision 1 and make
     // the still-mounted native host reject every subsequent route update.
