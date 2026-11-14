@@ -26,15 +26,18 @@ export function duckExpr(ducks) {
       `if(between(t,${b},${(t + 0.1 + r).toFixed(4)}),${g}+(1-${g})*(t-${b})/${r},1)))`;
   }).join('*');
 }
+// v2 : passe-bas sur la piste d'effets (bruits générés riches jusqu'à 24 kHz ; la musique, issue d'un MP3, s'arrête vers 19 kHz).
+// Sans lui, l'encodeur AAC de FFmpeg (substitution de bruit PNS) fabriquait un clic de +6,8 dB à 37,541 s (éclaboussure P37).
+const sfxChain = (lp) => `[1:a]aformat=channel_layouts=mono${lp ? `,lowpass=f=${lp}:p=2,lowpass=f=${lp}:p=2` : ''},pan=stereo|c0=c0|c1=c0[s];`;
 const bedChain = (ducks) => {
   const e = duckExpr(ducks);
   return `[0:a]aformat=sample_fmts=fltp:channel_layouts=stereo${e ? `,asetnsamples=n=64,volume=eval=frame:volume='${e}'` : ''}[b];`;
 };
 
-function render(bed, sfx, out, gainDb, limitDb = LIMIT_DBTP, ducks = []) {
+function render(bed, sfx, out, gainDb, limitDb = LIMIT_DBTP, ducks = [], sfxLp = 0) {
   const lim = Math.pow(10, limitDb / 20).toFixed(5);
   const graph =
-    `[1:a]aformat=channel_layouts=mono,pan=stereo|c0=c0|c1=c0[s];` +
+    sfxChain(sfxLp) +
     bedChain(ducks) +
     `[b][s]amix=inputs=2:normalize=0:duration=first,volume=${gainDb.toFixed(3)}dB,` +
     `aresample=192000,alimiter=limit=${lim}:attack=1:release=60:level=false,aresample=${SR},` +
@@ -43,7 +46,7 @@ function render(bed, sfx, out, gainDb, limitDb = LIMIT_DBTP, ducks = []) {
     '-ar', String(SR), '-c:a', 'pcm_s24le', out]);
 }
 
-export function buildMix({ bed, sfx = join(QA_DIR, 'sfx-v1.wav'), out, report = join(QA_TMP, 'mix-report.json'), placements = join(QA_TMP, 'sfx-placements.json'), sumTmp = join(QA_TMP, 'mix-sum-unlimited.wav') }) {
+export function buildMix({ bed, sfx = join(QA_DIR, 'sfx-v1.wav'), out, report = join(QA_TMP, 'mix-report.json'), placements = join(QA_TMP, 'sfx-placements.json'), sumTmp = join(QA_TMP, 'mix-sum-unlimited.wav'), limitDb = LIMIT_DBTP, sfxLowpassHz = 0 }) {
   requireFile(bed, 'Lit musical');
   requireFile(sfx, "Piste d'effets");
   const ducks = existsSync(placements)
@@ -51,14 +54,14 @@ export function buildMix({ bed, sfx = join(QA_DIR, 'sfx-v1.wav'), out, report = 
     : [];
   // Point de départ : gain qui amène la somme non limitée (lit déjà retiré sous les effets, s'il y a lieu) à −14 LUFS.
   run('ffmpeg', ['-hide_banner', '-v', 'error', '-y', '-i', bed, '-i', sfx, '-filter_complex',
-    '[1:a]aformat=channel_layouts=mono,pan=stereo|c0=c0|c1=c0[s];' + bedChain(ducks) + '[b][s]amix=inputs=2:normalize=0:duration=first[o]',
+    sfxChain(sfxLowpassHz) + bedChain(ducks) + '[b][s]amix=inputs=2:normalize=0:duration=first[o]',
     '-map', '[o]', '-c:a', 'pcm_f32le', sumTmp]);
   const sumL = loudness(sumTmp);
   let gain = TARGET_LUFS - sumL.integrated;
-  let m, limit = LIMIT_DBTP;
+  let m, limit = limitDb;
   const tries = [];
   for (let k = 0; k < 6; k++) {
-    render(bed, sfx, out, gain, limit, ducks);
+    render(bed, sfx, out, gain, limit, ducks, sfxLowpassHz);
     m = loudness(out);
     tries.push({ gainDb: gain, limitDb: limit, integrated: m.integrated, truePeak: m.truePeak });
     const okL = Math.abs(m.integrated - TARGET_LUFS) <= 0.2;
@@ -103,7 +106,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const out = join(QA_DIR, subst ? 'mix-v1-SUBSTITUT.wav' : v2 ? 'mix-v2.wav' : 'mix-v1.wav');
   const r = v2
     ? buildMix({ bed, sfx: arg('--sfx') ?? join(QA_DIR, 'sfx-v2.wav'), out, report: arg('--report') ?? join(QA_TMP, 'mix-report-v2.json'),
-      placements: join(QA_TMP, 'sfx-placements-v2.json'), sumTmp: join(QA_TMP, 'mix-sum-unlimited-v2.wav') })
+      placements: join(QA_TMP, 'sfx-placements-v2.json'), sumTmp: join(QA_TMP, 'mix-sum-unlimited-v2.wav'),
+      limitDb: -2.0, sfxLowpassHz: 18000 })
     : buildMix({ bed, sfx: arg('--sfx'), out, report: arg('--report') });
   const f = r.final;
   console.log(`✓ ${out}${r.substitute ? '  (LIT DE SUBSTITUTION, pas la musique)' : ''}`);

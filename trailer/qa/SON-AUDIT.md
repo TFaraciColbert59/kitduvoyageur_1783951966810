@@ -13,7 +13,7 @@ Fichiers lus : `MUSIQUE.md`, `assets/audio/storm-ii.beats.json`, `film/shots.jso
 4. **Raccords :** 47,47 et 58,00 (et 5,41) ne sont pas des collages, c'est le morceau ; leurs micro-fondus de 5 ms rabotaient l'attaque (−6,8 dB sur 10 ms au drop 1, −4,6 au logo). Vrais collages v1 : 33,48 (harmonie 0,67 = suite naturelle 0,69) et 51,00 (+10,5 dB, grave +48 dB, coup grave entamé de 10 ms).
 5. **Effets :** 36, tous causés, n'écrasent pas la musique ; c'est le limiteur qui les écrase (clac P20 −6,3 dB, déclic −4,3, gravillons −4,0, logo −3,7) ; ambiances sous un drop plein, probablement masquées.
 **Corrigé (v2, `node tools/audio/build-all.mjs --v2`, coupes image inchangées) :** passages continus non coupés ; m71 (respiration + roulement) sous P31–P32 pour un vrai drop à 33,48 (creux de 5,7 LU avant, contre 2,8) ; fin du pont m62–m63 sous P49–P51, grave rendu à 54,51 (P52), drop 2 sur le logo : la fin monte sans retomber (−16,7 → −17,8 → −14,5 → −13,5 → −12,2 LUFS) ; fondus enchaînés de 12 ms avant chaque attaque ; crash de masquage de 51 s retiré ; lit retiré de 3–4 dB sous 4 transitoires (déclic +2,8, gravillons +3,2, P34 +5,1 dB nets).
-**`qa/mix-v2.wav` :** 2 880 000 échantillons = 60,000 s, 48 kHz, 24 bits, **−14,0 LUFS**, **−1,3 dBTP**, LRA 4,9 LU, 0 écrêtage (ebur128 et `hyperframes audio`). mix-v1 et le film intacts. Planche : `qa/snapshots/son/calage.png`.
+**`qa/mix-v2.wav` (après la correction de la section Livraison) :** 2 880 000 échantillons = 60,000 s, 48 kHz, 24 bits, **−14,2 LUFS**, **−1,9 dBTP**, LRA 4,9 LU, 0 écrêtage (ebur128 et `hyperframes audio`). mix-v1 et le film intacts. Planche : `qa/snapshots/son/calage.png`.
 **À écouter :** 31,5–34,5 s (pré-drop, déclic, possible bégaiement 33,40–33,47) ; 31,69 (arrêt net du charleston) ; 50,5–55 s (entrée du pont, retour du grave à 54,51, creux à −17 LUFS) ; 57,5–60 et 5,3–5,6 s (attaques sans micro-fondu) ; 19,87 s (clac encore raboté) ; ambiances sous les drops. Licence de synchronisation de STORM II à obtenir avant diffusion.
 
 ## Journal
@@ -89,3 +89,26 @@ Non fait, volontairement : `qa/mix-v1.wav`, `film/assets/audio/mix-v1.wav`, `fil
 5. **5,3–5,6 s** : attaque du drop 1, plus pleine sans le micro-fondu ?
 6. **19,87 s** (clac P20) : encore trop raboté par le limiteur (+0,6 dB net) ; remplacer la prise Kenney si on ne l'entend pas.
 7. Ambiances pluie (5,5–8 s), rails (21,2–22 s), vent (25–27 s, 38,3–39,6 s) : audibles sous le drop ou à retirer ?
+
+## Livraison (2026-11-14, demande de l'orchestrateur ; mesuré, non écouté, FFmpeg 6.1.1-3ubuntu5)
+
+### Pic AAC du v2 : trouvé et corrigé
+- **Où :** encodé en AAC (`-c:a aac -b:a 320k`, encodeur natif de FFmpeg), le premier `mix-v2.wav` montait à **+6,81 dB à 37,5413 s** (image 2252,5, P37, saut au-dessus du torrent) : 4 échantillons à ±2,19, soit environ +17 dB au-dessus du signal local (±0,15–0,3). Le WAV au même endroit : −1,4 dB, aucune discontinuité (pas de collage à cet endroit, offset continu −0,0002, pas de défaut de fondu).
+- **Pourquoi :** l'effet `eclaboussure-torrent.wav` (bruit généré, gain +15,6 dB) garde de l'énergie jusqu'à 24 kHz (−23 dB au-dessus de 20 kHz, alors que la musique, issue d'un MP3, s'arrête vers 19 kHz). L'encodeur AAC remplace ces bandes bruitées par du bruit synthétique (substitution PNS), et sa reconstruction déborde. Le phénomène est chaotique : le même WAV avec ±0,3 dB de gain donne +3,7 dB ou −1,3 dB. Avec `-aac_pns 0` : −1,37 dB. Avec un passe-bas à 19 kHz : −1,15 dB. **v1 est exposé de la même façon** (avec −0,5 dB de gain il monte à +6,1 dB) ; il passait par chance.
+- **S'entendrait-il ?** Oui, très probablement : un clic de 4 échantillons, écrêté à 0 dBFS par tout lecteur en virgule fixe, dans le bruit de l'éclaboussure. Il est en partie masqué par l'éclaboussure, mais un tic aussi bref et aussi fort sur un bruit large bande s'entend en général (non écouté).
+- **Correction dans la chaîne v2** (`node tools/audio/build-all.mjs --v2`, `build-mix.mjs` `--v2`) : passe-bas de 18 kHz (2 × 12 dB/oct) sur la piste d'effets, et plafond du limiteur abaissé de −1,5 à −2,0 dB (marge contre le débord normal de l'AAC, mesuré jusqu'à 1,3 dB sur ce contenu). Résultat `qa/mix-v2.wav` : −14,2 LUFS, −1,9 dBTP (ebur128 et `hyperframes audio`), 60,000 s.
+- **Preuve locale (crête sur 37,49–37,59 s, astats)** : AAC du v2 d'origine **+6,81 dB** ; WAV v2 corrigé −2,05 dB ; AAC du v2 corrigé (dans le livrable) **−2,09 dB**. Robustesse (AAC par défaut, WAV v2 corrigé avec un gain de −0,3 à +0,3 dB) : crêtes vraies de −0,5 à −2,2 dBTP, plus aucun pic au-dessus de 0 dB ; à gain nul, −1,9 dBTP.
+
+### Assemblage final (sans ré-encoder l'image)
+- **Cause des images perdues :** chaque tranche dure 10,000 s en image, mais sa durée de conteneur est celle de son audio (jusqu'à 10,005 s). Le démultiplexeur concat décalait donc chaque tranche suivante de 5 ms (21 ms cumulés en fin de film), et `-shortest` coupait la fin. Correction : liste concat avec `duration 10.000000` par tranche, image copiée (`-c:v copy`), audio en AAC 320 kb/s, 48 kHz stéréo, sans `-shortest`. Ni `film/` ni les tranches n'ont été touchés.
+- **`qa/trailer-16x9-v1.mp4`** (mix v1) : 3 600 images, première à 0,000 s, dernière à 59,983 s, pas constant de 16,667 ms ; vidéo 60,000 s, audio 60,000 s, conteneur 60,000 s. **−14,3 LUFS, crête vraie −1,2 dBTP** (crête échantillon −1,57 dB). Sur ce fichier, l'encodage par défaut donnait −0,7 dBTP, hors cible. Comme `mix-v1.wav` ne doit pas changer, l'encodage du v1 se fait avec `-af volume=-0.2dB -aac_pns 0`.
+- **`qa/trailer-16x9-v2son.mp4`** (mix v2 corrigé, encodage AAC par défaut) : 3 600 images, mêmes horodatages, 60,000 s. **−14,3 LUFS, crête vraie −1,9 dBTP**.
+- **Calage image/son** sur les deux fichiers :
+  - corrélation de l'audio décodé avec le WAV source sur 19–21 s : décalage de 0 échantillon ;
+  - clac P20 dans l'audio final : attaque à 19,865 s, pic à 19,8657 s ;
+  - l'image 1192 s'affiche à 19,8667 s : le pic tombe 1 ms avant, soit 0,06 image ;
+  - l'image 2009 s'affiche à 33,4833 s.
+- Commandes, depuis `trailer/` (`S` = un dossier temporaire) :
+  - concat : `ffmpeg -f concat -safe 0 -i $S/list10.txt -map 0:v -c copy $S/video.mp4` (`list10.txt` : `file '…/qa/tmp/final169/segN.mp4'` puis `duration 10.000000`, pour N de 0 à 5) ;
+  - mux v2 : `ffmpeg -i $S/video.mp4 -i qa/mix-v2.wav -map 0:v -map 1:a -c:v copy -c:a aac -b:a 320k -ar 48000 -ac 2 -movflags +faststart qa/trailer-16x9-v2son.mp4` ;
+  - mux v1 : même commande avec `qa/mix-v1.wav` et `-af volume=-0.2dB -aac_pns 0`.
