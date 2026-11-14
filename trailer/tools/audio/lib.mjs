@@ -87,6 +87,89 @@ export function montageV2Filter() {
   return `${split};${parts.join(';')};${labels.join('')}amix=inputs=${n}:normalize=0:duration=longest,apad=whole_dur=60,atrim=0:60[o]`;
 }
 
+// ── Montage v3 (qa/MUSIQUE-V3.md) ───────────────────────────────────────────────────────────────
+// Film à 24 i/s. Musique seule, sans effet. Silence, vrai début du morceau en fondu doux, montée, drop 1,
+// pont (respiration), reprise + drop 2, respiration + roulement, impact final à 58,000 s, queue qui s'éteint.
+// Grille MESURÉE sur ce MP3 (pas celle de storm-ii.beats.json, quantifiée à 10 ms et arrondie à 136,9 BPM) :
+//   période = intercorrélation de l'enveloppe des drops 1 et 2 (32 mesures d'écart) → 0,437965 s (136,997 BPM) ;
+//   phase   = médiane de l'attaque (50 % de montée, 30–150 Hz) de 128 grosses caisses des drops → m40 = 71,4914 s.
+export const V3 = {
+  fps: 24,
+  beat: 0.437965,
+  m40: 71.4914,
+  hit: 58.0,         // premier temps de m72 (drop 2 du morceau) posé sur le logo
+  xf: 0.025,         // fondu enchaîné (quart de sinus) à chaque raccord
+  guard: 0.008,      // le fondu finit 8 ms avant le temps (aucune attaque entamée)
+  fadeIn: 2.0,       // fondu d'entrée (courbe cubique) sur le tout début du morceau
+  release: 0.12,     // relâchement de l'impact final avant la queue
+  tailDecay: 3.0,    // queue : décroissance exponentielle (−100 dB en 3 s, soit −20 dB/0,6 s)
+  tailCut: 59.92,    // sécurité : fondu de 80 ms à zéro, fini à 60,000 s
+};
+export const v3Bar = (n, beat = 1) => V3.m40 + ((n - 40) * 4 + (beat - 1)) * V3.beat;
+export const MONTAGE_V3 = join(AUDIO_DIR, 'storm-ii-montage-60s-v3.wav');
+export const MIX_V3 = join(QA_DIR, 'mix-v3.wav');
+export const BEATS_V3 = join(QA_DIR, 'mix-v3.beats.json');
+
+// Segments du morceau, dans l'ordre du film. `bars` = [première mesure, dernière mesure] du morceau ; `beats` = longueur.
+// Placement à rebours depuis l'impact : le 5e temps du segment G (m72 temps 1) tombe à V3.hit.
+export function montageV3Segments() {
+  const T = V3.beat;
+  const G = V3.hit - 4 * T;              // m71.1
+  const E = G - 48 * T;                  // m68.1 (m68–m79, 12 mesures continues)
+  const D = E - 32 * T;                  // m56.1 (m56–m63, 8 mesures)
+  const B = D - 24 * T;                  // m38.1 (m38–m43, 6 mesures)
+  const A0 = B - v3Bar(5);               // le 0 du morceau
+  const H = V3.hit + T;                  // m88 temps 2
+  return [
+    { id: 'A', section: 'intro', label: 'Vrai début du morceau (intro, phrases et trous), fondu doux', bars: [-1, 4], song: [0, v3Bar(5)], film: [A0, B] },
+    { id: 'B', section: 'montee+drop1', label: 'Montée m38–m39 puis drop 1 m40–m43 (continu)', bars: [38, 43], song: [v3Bar(38), v3Bar(44)], film: [B, D] },
+    { id: 'D', section: 'respiration', label: 'Pont m56–m63 (sans grave, mélodie ; remontée du grave sur m63)', bars: [56, 63], song: [v3Bar(56), v3Bar(64)], film: [D, E] },
+    { id: 'E', section: 'reprise+drop2', label: 'Reprise m68–m71 (respiration + roulement) puis drop 2 m72–m79 (continu)', bars: [68, 79], song: [v3Bar(68), v3Bar(80)], film: [E, G] },
+    { id: 'G', section: 'pre-impact', label: 'Respiration + roulement m71, impact m72 temps 1 (logo)', bars: [71, 72], song: [v3Bar(71), v3Bar(72, 2)], film: [G, H] },
+    { id: 'H', section: 'queue', label: 'Queue : nappe de l\'outro m88 (dès le temps 2), éteinte en exponentielle', bars: [88, 89], song: [v3Bar(88, 2), v3Bar(88, 2) + (60 - H)], film: [H, 60] },
+  ];
+}
+
+// Raccords v3 (temps du film) : le temps où le segment suivant reprend la grille.
+export function joinsV3() {
+  const s = montageV3Segments();
+  return s.slice(1).map((seg, i) => ({ t: seg.film[0], from: s[i].id, to: seg.id,
+    songOut: s[i].song[1], songIn: seg.song[0], frame24: seg.film[0] * V3.fps }));
+}
+
+// Graphe FFmpeg du montage v3 (48 kHz, flottant). Chaque segment commence `guard + xf` avant son temps d'entrée
+// (fondu d'entrée quart de sinus) ; le précédent s'arrête `guard` avant (fondu de sortie sur la même fenêtre).
+export function montageV3Filter() {
+  const segs = montageV3Segments();
+  const parts = [], labels = [];
+  const pre = V3.guard + V3.xf;
+  const smp = (t) => Math.round(t * SR);
+  segs.forEach((s, i) => {
+    const first = i === 0, last = i === segs.length - 1;
+    const preIn = first ? 0 : (s.id === 'H' ? V3.guard + V3.release : pre);
+    const songA = s.song[0] - preIn, filmA = s.film[0] - preIn;
+    const next = segs[i + 1];
+    const filmB = last ? 60 : s.film[1] - V3.guard;
+    const len = filmB - filmA;
+    const songB = songA + len;
+    const f = [`[m${i}]atrim=start_sample=${smp(songA)}:end_sample=${smp(songB)},asetpts=PTS-STARTPTS`];
+    if (first) f.push(`afade=t=in:st=0:d=${V3.fadeIn}:curve=cub`);
+    else f.push(`afade=t=in:st=0:d=${(preIn - V3.guard).toFixed(6)}:curve=qsin`);
+    if (!last) {
+      const fo = next.id === 'H' ? V3.release : V3.xf;
+      f.push(`afade=t=out:st=${(len - fo).toFixed(6)}:d=${fo}:curve=qsin`);
+    } else {
+      f.push(`afade=t=out:st=${(s.film[0] - filmA).toFixed(6)}:d=${V3.tailDecay}:curve=exp`);
+      f.push(`afade=t=out:st=${(V3.tailCut - filmA).toFixed(6)}:d=${(60 - V3.tailCut).toFixed(6)}:curve=qsin`);
+    }
+    f.push(`adelay=delays=${smp(filmA)}S:all=1[s${i}]`);
+    parts.push(f.join(','));
+    labels.push(`[s${i}]`);
+  });
+  const split = `[0]aresample=${SR},aformat=sample_fmts=fltp:channel_layouts=stereo,asplit=${segs.length}${segs.map((_, i) => `[m${i}]`).join('')}`;
+  return `${split};${parts.join(';')};${labels.join('')}amix=inputs=${segs.length}:normalize=0:duration=longest,apad=whole_dur=60,atrim=end_sample=${SR * 60}[o]`;
+}
+
 export function run(cmd, args, { allowFail = false, input } = {}) {
   const r = spawnSync(cmd, args, { encoding: 'utf8', maxBuffer: 1 << 28, input });
   if (r.status !== 0 && !allowFail) {

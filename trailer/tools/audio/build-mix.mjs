@@ -5,10 +5,11 @@
 // Usage : node tools/audio/build-mix.mjs                          (montage réel → qa/mix-v1.wav)
 //         node tools/audio/build-mix.mjs --substitut              (montage de SUBSTITUTION → qa/mix-v1-SUBSTITUT.wav)
 //         node tools/audio/build-mix.mjs --v2                     (montage v2 + qa/sfx-v2.wav → qa/mix-v2.wav, voir qa/SON-AUDIT.md)
+//         node tools/audio/build-mix.mjs --v3                     (montage v3 seul, sans effet → qa/mix-v3.wav, voir qa/MUSIQUE-V3.md)
 //         [--sfx qa/sfx-v1.wav] [--report qa/tmp/mix-report.json]
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { MONTAGE, MONTAGE_V2, QA_DIR, QA_TMP, SR, SUBST_MONTAGE, ffmpegVersion, fmt, loudness, probe, readMono, requireFile, rmsDb, run } from './lib.mjs';
+import { MIX_V3, MONTAGE, MONTAGE_V2, MONTAGE_V3, QA_DIR, QA_TMP, SR, SUBST_MONTAGE, ffmpegVersion, fmt, loudness, probe, readMono, requireFile, rmsDb, run } from './lib.mjs';
 import { svf } from './synth.mjs';
 import { HALF } from './build-sfx.mjs';
 
@@ -94,7 +95,36 @@ export function buildMix({ bed, sfx = join(QA_DIR, 'sfx-v1.wav'), out, report = 
   return meta;
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+// v3 : musique seule. Un gain unique (aucun limiteur : le montage, ramené à −14 LUFS, a ~5 dB de marge de crête,
+// et un limiteur n'apporterait qu'un risque de décalage). Gain réajusté jusqu'à ±0,1 LU d'après la mesure du fichier rendu.
+export function buildMasterV3({ bed = MONTAGE_V3, out = MIX_V3, report = join(QA_TMP, 'mix-report-v3.json') } = {}) {
+  requireFile(bed, 'Montage v3');
+  const src = loudness(bed);
+  let gain = TARGET_LUFS - src.integrated;
+  const tries = [];
+  let m;
+  for (let k = 0; k < 4; k++) {
+    run('ffmpeg', ['-hide_banner', '-v', 'error', '-y', '-i', bed, '-af', `volume=${gain.toFixed(3)}dB`,
+      '-ar', String(SR), '-c:a', 'pcm_s24le', out]);
+    m = loudness(out);
+    tries.push({ gainDb: Number(gain.toFixed(3)), integrated: m.integrated, truePeak: m.truePeak });
+    if (Math.abs(m.integrated - TARGET_LUFS) <= 0.1) break;
+    gain += TARGET_LUFS - m.integrated;
+  }
+  const p = probe(out);
+  const meta = { out, bed, ffmpeg: ffmpegVersion(), source: src, tries, final: { ...m, samples: p.samples, sampleRate: p.sampleRate, codec: p.codec, channels: p.channels } };
+  writeFileSync(report, JSON.stringify(meta, null, 2));
+  return meta;
+}
+
+if (import.meta.url === `file://${process.argv[1]}` && process.argv.includes('--v3')) {
+  const r = buildMasterV3();
+  const f = r.final;
+  console.log(`✓ ${r.out}\n  ${f.samples} échantillons · ${f.sampleRate} Hz · ${f.codec} · ${f.channels} canaux · ${r.ffmpeg}`);
+  console.log(`  montage ${r.source.integrated} LUFS → gain ${r.tries.at(-1).gainDb} dB → ${f.integrated} LUFS intégrés · crête vraie ${f.truePeak} dBTP · LRA ${f.lra} LU`);
+  const ok = Math.abs(f.integrated - TARGET_LUFS) <= 0.3 && f.truePeak <= -1 && f.samples === SR * 60 && f.codec === 'pcm_s24le';
+  if (!ok) { console.error('✗ Mixage v3 hors cible'); process.exit(1); }
+} else if (import.meta.url === `file://${process.argv[1]}`) {
   const arg = (k) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : undefined; };
   const subst = process.argv.includes('--substitut');
   const v2 = process.argv.includes('--v2');
