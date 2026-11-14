@@ -352,6 +352,8 @@ export const compasV5It = {
       noOptions: 'Nessun alloggio trovato vicino all’arrivo del giorno {day}.',
       extrasPending: 'Le notti possibili e i tragitti non sono ancora stati letti. Può già annotare una notte a mano.',
       lodgingUnavailable: 'La fonte degli alloggi (OpenStreetMap) non risponde per ora. Nulla viene inventato: può annotare una notte a mano.',
+      lodgingSilent: 'I suggerimenti di alloggio arriveranno quando la mappa (OpenStreetMap) risponderà; nel frattempo «{search}» apre la ricerca sul luogo della tappa.',
+      manualFold: 'Annotare io stesso dove dormo',
       photosUnavailable: 'Le foto non sono disponibili per ora: le sostituiscono illustrazioni.',
       transportUnavailable: 'La fonte dei tragitti non risponde per ora. Nulla viene inventato.',
       noNights: 'Questo viaggio non ha notti da prevedere.',

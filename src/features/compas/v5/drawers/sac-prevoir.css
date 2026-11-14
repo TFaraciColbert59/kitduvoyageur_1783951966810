@@ -350,11 +350,14 @@
   font-size: 12px;
   color: var(--v5-label2);
 }
+/* Le texte de la ligne prend toute la largeur ; les actions passent dessous, sur leur propre rangée (retour à la
+   ligne permis). Sinon, dans un tiroir de ~430 px, trois boutons écrasent le texte dans une colonne de 90 px. */
 .v5-sp .steps li {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 8px 10px;
+  padding: 10px;
   min-height: 56px;
 }
 .v5-sp .steps li + li {
@@ -365,8 +368,9 @@
   border-radius: 14px;
 }
 .v5-sp .steps .t {
-  flex: 1;
+  flex: 1 1 100%;
   min-width: 0;
+  overflow-wrap: break-word;
 }
 .v5-sp .steps .t b {
   display: block;
@@ -386,9 +390,14 @@
 }
 .v5-sp .steps .end {
   display: flex;
+  flex: 1 1 100%;
   flex-wrap: wrap;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: flex-start;
   gap: 6px;
+}
+.v5-sp .steps .end > * {
+  min-height: 44px;
 }
 .v5-sp .v5-by .li2 {
   align-items: center;
@@ -414,4 +423,31 @@
 .v5-sp .banner.info {
   background: var(--v5-info-bg);
   color: var(--v5-info);
+}
+
+/* Aucune nuit proposée : une seule ligne repliée qui ouvre la saisie manuelle, nuit par nuit */
+.v5-sp .v5-fold > summary {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 14px;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--v5-label);
+  cursor: pointer;
+  list-style: none;
+}
+.v5-sp .v5-fold > summary::-webkit-details-marker {
+  display: none;
+}
+.v5-sp .v5-fold > summary:focus-visible {
+  outline: 2px solid var(--lkv-focus-ring);
+  outline-offset: -2px;
+}
+.v5-sp .v5-fold[open] > summary {
+  box-shadow: 0 0.5px 0 var(--v5-sep);
+}
+.v5-sp .v5-fold .v5-bk {
+  box-shadow: none;
+  background: transparent;
 }

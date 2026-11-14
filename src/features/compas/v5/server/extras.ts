@@ -13,6 +13,7 @@ import {
   parseTransportChoice,
   pickCarpoolLink,
   transportOptions,
+  parseAirports,
   type PlannedTransportLine,
 } from '../engine/transportOptions';
 import type { V5Photo, V5StayOption } from '../types';
@@ -67,6 +68,7 @@ async function plannedTransportLines(supabase: Supa, tripId: string): Promise<Pl
       amount: Number(r.amount),
       basis: typeof meta.basis === 'string' ? meta.basis : null,
       choice: typeof meta.choice === 'string' ? meta.choice : null,
+      airports: parseAirports(meta.airports),
     };
   });
 }

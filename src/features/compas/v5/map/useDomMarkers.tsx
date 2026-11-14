@@ -65,6 +65,9 @@ export function useDomMarkers(map: MlMap | null, lib: MarkerLib | null, specs: r
       if (!entry) continue;
       applyClasses(entry, s.className);
       if (!entry.marker) {
+        // Une carte déjà retirée (ou dont le conteneur n'existe plus) n'a rien où poser un marqueur :
+        // `Marker.addTo` ferait `getCanvasContainer().appendChild(…)` sur null.
+        if (!map.getCanvasContainer?.()) continue;
         entry.marker = new lib.Marker({ element: entry.el, anchor: 'top-left' }).setLngLat([s.lon, s.lat]).addTo(map);
       } else if (entry.lat !== s.lat || entry.lon !== s.lon) {
         entry.marker.setLngLat([s.lon, s.lat]);

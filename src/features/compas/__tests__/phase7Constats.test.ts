@@ -8,7 +8,12 @@ import { looseRank, parseGeoapify, plausibleLooseMatch, resemblesQuery, subPlace
 import { createFakeDb, type FakeDb } from '../v5/__tests__/fakeDb';
 import { makeData, makeInput } from '../v5/__tests__/fixtures';
 import { isResaBooked, isResaSkipped, mergeResa, parseResa } from '../v5/engine/resaStatus';
-import { nightCards, reservationSteps, safeUrl, selectedTransport, transportViews, type ReservationContext } from '../v5/model/prevoir';
+import { firstPlace, nightCards, reservationSteps, resaLinesFor, safeUrl, selectedTransport, transportViews, type ReservationContext } from '../v5/model/prevoir';
+import { resaPlan, type ResaPlanInput } from '../engine/resaPlan';
+import { flightAirports } from '../engine/travel';
+import { parseAirports, transportOptions } from '../v5/engine/transportOptions';
+import { placeOfDay, stepPlace } from '../v5/model/trip';
+import { FR_T } from '../components/compasTypes';
 import { EMPTY_EXTRAS, type V5Extras, type V5StayOption, type V5TransportOption } from '../v5/types';
 import { compasV5SetResaStatusAction } from '../v5/server/choiceActions';
 
@@ -599,6 +604,114 @@ describe('Audit Résa 13/11', () => {
     it('un voyage d’un jour et sans trajet n’a rien à réserver', () => {
       const base = makeInput();
       expect(plan(makeData({ steps: [base.steps[0]] }), EMPTY_EXTRAS)).toEqual([]);
+    });
+  });
+});
+
+describe('Aperçu du 14/11', () => {
+  // Scénario : « 5 jours de rando dans les Tatras en août à 2 depuis Paris », OpenStreetMap muet.
+  // Base : 5 étapes « Jour N · Kościelisko », aucune distance, vol ORY → KRK au budget.
+  const TATRAS = makeData(
+    {
+      trip: { ...makeInput().trip, destinationName: 'Tatras', startDate: '2026-08-10', endDate: '2026-08-14', partySize: 2 },
+      steps: [1, 2, 3, 4, 5].map((n) => ({ ...makeInput().steps[0], id: `t${n}`, dayNumber: n, title: `Jour ${n} · Kościelisko`, locationName: 'Kościelisko', distanceKm: null, elevationGainM: null, elevationLossM: null, accommodationName: null })),
+    },
+    { countryCode: 'pl', originName: 'Paris', originSaid: { name: 'Paris', lat: 48.85, lon: 2.35, countryCode: 'FR' }, readerTravel: { nationality: 'FR', abroad: true, entry: null } }
+  );
+  const flightLine = (airports?: unknown) => ({ title: 'Vol aller-retour × 2', amount: 300, basis: 'barème · ORY → KRK', choice: null, ...(airports === undefined ? {} : { airports: parseAirports(airports) }) });
+  const flightCtx: ReservationContext = { people: 2, origin: 'Paris', destination: 'Tatras', arrival: 'Kościelisko', start: '2026-08-10', end: '2026-08-14' };
+  const flightUrl = (airports: unknown, ctx: ReservationContext = flightCtx) => {
+    const views = transportViews(transportOptions({ lines: [flightLine(airports)], chosen: null, party: 2, originName: 'Paris', carFree: false, carpoolLink: null }), 2);
+    const step = reservationSteps([], selectedTransport(views, 'flight'), ctx).find((x) => x.kind === 'transport');
+    return decodeURIComponent(new URL(step?.url ?? 'about:blank').searchParams.get('q') ?? '');
+  };
+
+  describe('2 · le lien de vol utilise les aéroports connus', () => {
+    it('avec les codes rangés sur la ligne de vol : « Flights from ORY to KRK on … through … »', () => {
+      expect(flightUrl({ from: 'ORY', to: 'KRK' })).toBe('Flights from ORY to KRK on 2026-08-10 through 2026-08-14');
+    });
+    it('sans codes : ville de départ → localité d’arrivée (jamais le nom du massif)', () => {
+      expect(flightUrl(undefined)).toBe('Flights from Paris to Kościelisko on 2026-08-10 through 2026-08-14');
+      expect(flightUrl(undefined)).not.toContain('Tatras');
+    });
+    it('sans codes ni localité : le nom du voyage, à défaut', () => {
+      expect(flightUrl(undefined, { ...flightCtx, arrival: null })).toBe('Flights from Paris to Tatras on 2026-08-10 through 2026-08-14');
+    });
+    it('les codes sont lus avec prudence : IATA à trois lettres, deux aéroports distincts, sinon rien', () => {
+      expect(parseAirports({ from: ' ory ', to: 'krk' })).toEqual({ from: 'ORY', to: 'KRK' });
+      for (const bad of [null, 'ORY', [], { from: 'ORY' }, { from: 'ORY', to: 'ORY' }, { from: 'ORYX', to: 'KRK' }, { from: 'O1Y', to: 'KRK' }, { from: 3, to: 'KRK' }])
+        expect(parseAirports(bad)).toBeNull();
+    });
+    it('transportOptions porte les codes sur l’option « avion » seulement', () => {
+      const options = transportOptions({ lines: [flightLine({ from: 'ORY', to: 'KRK' })], chosen: null, party: 2, originName: 'Paris', carFree: false, carpoolLink: null });
+      expect(options.find((o) => o.id === 'flight')?.airports).toEqual({ from: 'ORY', to: 'KRK' });
+      expect(options.filter((o) => o.id !== 'flight').every((o) => !o.airports)).toBe(true);
+    });
+    it('rangés à l’écriture : paire IATA depuis les aéroports retenus, jamais depuis le domicile', () => {
+      const ory = { iata: 'ORY', name: 'Paris Orly', km: 12, country: 'FR', lat: 48.7, lon: 2.4 };
+      const krk = { iata: 'KRK', name: 'Kraków John Paul II', km: 90, country: 'PL', lat: 50.07, lon: 19.78 };
+      expect(flightAirports({ from: ory, to: krk }, { source: 'dit' })).toEqual({ from: 'ORY', to: 'KRK' });
+      expect(flightAirports({ from: ory, to: krk }, { source: 'domicile' })).toBeNull();
+      expect(flightAirports({ from: null, to: krk }, { source: 'dit' })).toBeNull();
+      expect(flightAirports(null, { source: 'dit' })).toBeNull();
+      const source = readFileSync(new URL('../server/autofillActions.ts', import.meta.url), 'utf8');
+      expect(source).toContain('flightAirports(travelLeg.flight, origin)');
+      expect(source).toContain('...(l.meta ?? {})');
+    });
+  });
+
+  describe('3 · le transfert rejoint la localité de la première étape', () => {
+    const input: ResaPlanInput = {
+      activity: 'hiking',
+      destinationCountry: 'PL',
+      originCountry: 'FR',
+      start: '2026-08-10',
+      end: '2026-08-14',
+      days: 5,
+      party: 2,
+      maxAltitudeM: null,
+      approach: 'flight',
+      nationality: 'FR',
+      entry: null,
+      namedTrail: null,
+      base: 'Tatras',
+      hub: 'Kraków John Paul II International Airport',
+      nights: null,
+    };
+    const transfer = (over: Partial<ResaPlanInput>) => resaPlan({ ...input, ...over }).find((l) => l.key === 'transfer');
+
+    it('titre et lien disent « Kościelisko », pas « Tatras »', () => {
+      const l = transfer({ arrivalPlace: 'Kościelisko' });
+      expect(l?.title).toBe('Rejoindre Kościelisko depuis Kraków John Paul II International Airport');
+      expect(decodeURIComponent(l?.url ?? '')).toContain('destination=Kościelisko');
+      expect(l?.url).not.toContain('Tatras');
+    });
+    it('sans localité connue : le nom du voyage, à défaut', () => {
+      expect(transfer({ arrivalPlace: null })?.title).toBe('Rejoindre Tatras depuis Kraków John Paul II International Airport');
+      expect(transfer({})?.url).toContain('destination=Tatras');
+    });
+    it('lue du titre de la première étape du voyage (Jour 1 · Kościelisko)', () => {
+      expect(firstPlace(TATRAS.model)).toBe('Kościelisko');
+      const lines = resaLinesFor({ data: TATRAS, extras: { ...EMPTY_EXTRAS, fetchedAt: '2026-11-14T10:00:00Z', hub: { iata: 'KRK', name: 'Kraków John Paul II International Airport' } }, transport: null, people: 2, t: FR_T, today: '2026-11-14' });
+      // Sans trajet retenu ni dit, pas de transfert : on force « avion » par le trajet proposé.
+      const views = transportViews(transportOptions({ lines: [flightLine()], chosen: null, party: 2, originName: 'Paris', carFree: false, carpoolLink: null }), 2);
+      const withFlight = resaLinesFor({ data: TATRAS, extras: { ...EMPTY_EXTRAS, fetchedAt: '2026-11-14T10:00:00Z', hub: { iata: 'KRK', name: 'Kraków John Paul II International Airport' } }, transport: selectedTransport(views, 'flight'), people: 2, t: FR_T, today: '2026-11-14' });
+      expect(lines.find((l) => l.key === 'transfer')).toBeUndefined();
+      expect(withFlight.find((l) => l.key === 'transfer')?.title).toContain('Kościelisko');
+      expect(withFlight.find((l) => l.key === 'transfer')?.title).not.toContain('Tatras');
+    });
+  });
+
+  describe('6 · le lieu de l’étape remplace « non renseigné »', () => {
+    it('« Jour 3 · Kościelisko » porte un lieu ; « Jour 3 » seul ou « A → B » se lisent proprement', () => {
+      expect(stepPlace('Jour 3 · Kościelisko')).toBe('Kościelisko');
+      expect(placeOfDay('Jour 3 · Kościelisko')).toBe('Kościelisko');
+      expect(placeOfDay('Rencurel → Corrençon-en-Vercors')).toBe('Corrençon-en-Vercors');
+      for (const bare of ['Jour 3', 'Day 3', 'Tag 3', 'Día 3', 'Giorno 3', '']) {
+        expect(stepPlace(bare), bare).toBeNull();
+        expect(placeOfDay(bare), bare).toBeNull();
+      }
+      expect(placeOfDay('Jour 2 · GR 20')).toBe('GR 20');
     });
   });
 });

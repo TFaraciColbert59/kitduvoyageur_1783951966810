@@ -352,6 +352,8 @@ export const compasV5De = {
       noOptions: 'Keine Unterkunft in der Nähe des Ziels von Tag {day} gefunden.',
       extrasPending: 'Mögliche Nächte und Fahrten wurden noch nicht gelesen. Sie können schon eine Nacht von Hand eintragen.',
       lodgingUnavailable: 'Die Unterkunftsquelle (OpenStreetMap) antwortet gerade nicht. Es wird nichts ergänzt: Sie können eine Nacht von Hand eintragen.',
+      lodgingSilent: 'Die Unterkunftsvorschläge kommen, sobald die Karte (OpenStreetMap) antwortet; bis dahin öffnet „{search}“ die Suche am Ort der Etappe.',
+      manualFold: 'Selbst eintragen, wo ich schlafe',
       photosUnavailable: 'Die Fotos sind gerade nicht verfügbar: Illustrationen ersetzen sie.',
       transportUnavailable: 'Die Fahrtenquelle antwortet gerade nicht. Es wird nichts ergänzt.',
       noNights: 'Diese Reise hat keine Nacht zu planen.',

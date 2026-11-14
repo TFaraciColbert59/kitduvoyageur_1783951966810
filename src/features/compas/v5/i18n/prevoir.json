@@ -282,6 +282,20 @@
       "de": "Die Unterkunftsquelle (OpenStreetMap) antwortet gerade nicht. Es wird nichts ergänzt: Sie können eine Nacht von Hand eintragen.",
       "it": "La fonte degli alloggi (OpenStreetMap) non risponde per ora. Nulla viene inventato: può annotare una notte a mano."
     },
+    "lodgingSilent": {
+      "fr": "Les propositions d’hébergement arriveront quand la carte (OpenStreetMap) répondra ; en attendant, « {search} » ouvre la recherche sur le lieu de l’étape.",
+      "en": "Lodging suggestions will arrive when the map (OpenStreetMap) responds; meanwhile, “{search}” opens a search on the stage’s place.",
+      "es": "Las propuestas de alojamiento llegarán cuando responda el mapa (OpenStreetMap); mientras tanto, «{search}» abre la búsqueda en el lugar de la etapa.",
+      "de": "Die Unterkunftsvorschläge kommen, sobald die Karte (OpenStreetMap) antwortet; bis dahin öffnet „{search}“ die Suche am Ort der Etappe.",
+      "it": "I suggerimenti di alloggio arriveranno quando la mappa (OpenStreetMap) risponderà; nel frattempo «{search}» apre la ricerca sul luogo della tappa."
+    },
+    "manualFold": {
+      "fr": "Noter moi-même où je dors",
+      "en": "Note where I sleep myself",
+      "es": "Anotar yo mismo dónde duermo",
+      "de": "Selbst eintragen, wo ich schlafe",
+      "it": "Annotare io stesso dove dormo"
+    },
     "photosUnavailable": {
       "fr": "Les photos ne sont pas disponibles pour l’instant : des illustrations les remplacent.",
       "en": "Photos aren’t available right now: illustrations stand in for them.",

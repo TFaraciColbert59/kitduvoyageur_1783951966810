@@ -9,7 +9,7 @@ import { formatNumber } from '@/lib/i18n/format';
 import { countText } from '../components/compasTypes';
 import { browserToday } from '../engine/zone';
 import { useV5 } from './context';
-import { readiness, selectCountdown, selectDays, selectHeadline, selectPoints } from './model/trip';
+import { placeOfDay, readiness, selectCountdown, selectDays, selectHeadline, selectPoints } from './model/trip';
 import { Pic } from './ui/primitives';
 import { V5Icon, stayIcon, transportIcon, type V5IconName } from './ui/icons';
 import { dayRangeLabel, moneyShort, weightShort } from './model/format';
@@ -138,7 +138,7 @@ export function TripCard({ view, onDay }: { view: 'grid' | 'fil'; onDay: (index:
               </span>
               <span className="lb">
                 <b>{t('compas.v5.card.tileDay', { n: d.day })}</b>
-                <small>{d.distanceKm != null ? `${formatKm(d.distanceKm)}` : t('compas.v5.day.unknown')}</small>
+                <small>{d.distanceKm != null ? formatKm(d.distanceKm) : (placeOfDay(d.title) ?? t('compas.v5.day.unknown'))}</small>
               </span>
             </button>
           ))}

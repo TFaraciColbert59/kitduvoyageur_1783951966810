@@ -93,10 +93,11 @@ describe('plan complet pour ce type de voyage', () => {
     // Assurance : prix du barème versionné, par personne, avec sa base ; « avant le départ ».
     expect(within(rowOf(panel, 'extra:insurance')).getByText(/par personne · barème Compas/)).toBeTruthy();
     expect(within(rowOf(panel, 'extra:insurance')).getByText(/Avant le départ/)).toBeTruthy();
-    // Transfert : depuis la gare (aucune gare n'est devinée), le lien est un itinéraire en transports en commun.
-    expect(within(rowOf(panel, 'extra:transfer')).getByText('Rejoindre Zakopane depuis la gare')).toBeTruthy();
+    // Transfert : depuis la gare (aucune gare n'est devinée) jusqu'à la localité de la première étape (« A → B » : B),
+    // pas le nom du voyage ; le lien est un itinéraire en transports en commun.
+    expect(within(rowOf(panel, 'extra:transfer')).getByText('Rejoindre Rencurel depuis la gare')).toBeTruthy();
     expect(within(rowOf(panel, 'extra:transfer')).getByRole('link', { name: /Rechercher/ }).getAttribute('href')).toBe(
-      'https://www.google.com/maps/dir/?api=1&destination=Zakopane&travelmode=transit'
+      'https://www.google.com/maps/dir/?api=1&destination=Rencurel&travelmode=transit'
     );
     // Forfait et location : jamais de prix inventé.
     expect(within(rowOf(panel, 'extra:lift-pass')).getByText('Prix sur le site')).toBeTruthy();
@@ -111,7 +112,7 @@ describe('plan complet pour ce type de voyage', () => {
   it('l’aéroport lu avec les extras nomme le transfert (avion)', () => {
     const flight: V5TransportOption = { id: 'flight', label: 'Avion', detail: null, amountEur: 180, perPerson: true, source: 'barème', url: null, partner: null };
     mount({}, { data: skiAbroad(), extras: extrasOf({ nights: {}, transport: [flight], hub: { iata: 'KRK', name: 'Kraków John Paul II International Airport' } }) });
-    expect(within(rowOf(panelOf(), 'extra:transfer')).getByText('Rejoindre Zakopane depuis Kraków John Paul II International Airport')).toBeTruthy();
+    expect(within(rowOf(panelOf(), 'extra:transfer')).getByText('Rejoindre Rencurel depuis Kraków John Paul II International Airport')).toBeTruthy();
   });
 
   it('un voyage sans besoin particulier n’a aucune ligne superflue : rando à la journée en France, en voiture', () => {

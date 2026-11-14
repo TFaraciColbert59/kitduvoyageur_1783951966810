@@ -352,6 +352,8 @@ export const compasV5Fr = {
       noOptions: 'Aucune nuit trouvée près de l’arrivée du jour {day}.',
       extrasPending: 'Les nuits possibles et les trajets n’ont pas encore été lus. Tu peux déjà noter une nuit à la main.',
       lodgingUnavailable: 'La source des hébergements (OpenStreetMap) ne répond pas pour l’instant. Rien n’est comblé : tu peux noter une nuit à la main.',
+      lodgingSilent: 'Les propositions d’hébergement arriveront quand la carte (OpenStreetMap) répondra ; en attendant, « {search} » ouvre la recherche sur le lieu de l’étape.',
+      manualFold: 'Noter moi-même où je dors',
       photosUnavailable: 'Les photos ne sont pas disponibles pour l’instant : des illustrations les remplacent.',
       transportUnavailable: 'La source des trajets ne répond pas pour l’instant. Rien n’est comblé.',
       noNights: 'Ce voyage n’a pas de nuit à prévoir.',

@@ -213,6 +213,19 @@ export function isHomeOrigin(origin: Pick<TravelOrigin, 'source'> | null | undef
 }
 
 /**
+ * Les codes IATA des deux aéroports d'un vol, à ranger tels quels avec la ligne de budget (lien de recherche de vol).
+ * Null sans les deux codes. VIE PRIVÉE : départ du domicile, jamais rangé (l'aéroport le plus proche désigne la commune,
+ * comme le `route` de `moveOf`).
+ */
+export function flightAirports(
+  flight: Pick<TravelFlight, 'from' | 'to'> | null | undefined,
+  origin: Pick<TravelOrigin, 'source'> | null | undefined
+): { from: string; to: string } | null {
+  if (!flight?.from?.iata || !flight.to?.iata || isHomeOrigin(origin)) return null;
+  return { from: flight.from.iata, to: flight.to.iata };
+}
+
+/**
  * Les faits du trajet d'approche que le spécialiste (IA, un tiers) peut lire.
  *
  * VIE PRIVÉE : quand le départ est le DOMICILE du profil, tout ce qui s'en déduit reste ici : les km, les

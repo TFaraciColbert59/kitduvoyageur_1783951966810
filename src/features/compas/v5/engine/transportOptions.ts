@@ -17,6 +17,19 @@ export interface PlannedTransportLine {
   basis: string | null;
   /** `metadata.choice` : ligne écrite par un choix de l'écran v5 (sinon, par la préparation). */
   choice: string | null;
+  /** `metadata.airports` : codes IATA de départ et d'arrivée d'une ligne de vol (voir `parseAirports`). */
+  airports?: { from: string; to: string } | null;
+}
+
+const IATA = /^[A-Z]{3}$/;
+
+/** Les aéroports rangés sur une ligne de vol, lus avec prudence (les éditeurs d'un voyage peuvent écrire `metadata`). */
+export function parseAirports(raw: unknown): { from: string; to: string } | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const o = raw as Record<string, unknown>;
+  const from = typeof o.from === 'string' ? o.from.trim().toUpperCase() : '';
+  const to = typeof o.to === 'string' ? o.to.trim().toUpperCase() : '';
+  return IATA.test(from) && IATA.test(to) && from !== to ? { from, to } : null;
 }
 
 /** Le choix rangé dans `trips.metadata.compas.transport`. */
@@ -140,6 +153,7 @@ export function transportOptions(input: TransportInput): V5TransportOption[] {
       amountEur: cents(line.amount / (partyOfTitle(line.title) ?? party)),
       perPerson: true,
       source: trim(line.basis) || 'budget prévu du Compas',
+      ...(kind === 'flight' && line.airports ? { airports: line.airports } : {}),
     });
   }
 

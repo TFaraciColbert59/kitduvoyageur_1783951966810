@@ -18,7 +18,7 @@ import { notedStay } from '../../engine/stayProposal';
 import type { CompasData, CompasPoint, CompasShopProduct } from '../../server/getCompasData';
 import { extraKey, isResaBooked, isResaSkipped, type ResaStatus } from '../engine/resaStatus';
 import { buyStage, itemState, restorablePurchaseState, shopProductFor, type BuyStage } from './sac';
-import { splitStepTitle } from './trip';
+import { placeOfDay } from './trip';
 import type { V5Extras, V5Photo, V5PriceHint, V5StayKind, V5StayOption, V5TransportOption } from '../types';
 
 /* ---------- Nuits ---------- */
@@ -131,10 +131,10 @@ export function nightCards(model: CompasModel, extras: V5Extras): NightCard[] {
   });
 }
 
-/** Le lieu d'arrivée d'un jour : « A → B » donne B, « Jour 2 · B » donne B ; null si le titre n'en dit rien. */
-function placeOfDay(title: string): string | null {
-  const tail = splitStepTitle(title).split(/\s*(?:→|->|=>)\s*/u).pop()?.trim() ?? '';
-  return tail || null;
+/** Localité de la première étape (là où l'on arrive), ou null quand son titre n'en dit pas. */
+export function firstPlace(model: CompasModel): string | null {
+  const first = model.route.dayPlans[0];
+  return first ? placeOfDay(first.title) : null;
 }
 
 /* ---------- Trajet ---------- */
@@ -150,6 +150,8 @@ export interface TransportView {
   source: string;
   url: string | null;
   partner: string | null;
+  /** Vol : codes IATA de départ et d'arrivée (rangés avec la ligne de budget), ou null quand ils ne sont pas connus. */
+  airports: { from: string; to: string } | null;
 }
 
 export function transportCost(option: Pick<V5TransportOption, 'amountEur' | 'perPerson'>, people: number): number | null {
@@ -169,6 +171,7 @@ export function transportViews(options: readonly V5TransportOption[], people: nu
     source: o.source,
     url: o.url,
     partner: o.partner,
+    airports: o.id === 'flight' ? (o.airports ?? null) : null,
   }));
 }
 
@@ -304,6 +307,7 @@ export function resaLinesFor(args: {
     entry: data.readerTravel?.entry ?? null,
     namedTrail,
     base: model.destination,
+    arrivalPlace: firstPlace(model),
     hub: extras.hub?.name ?? null,
     nights: model.preferences.nights,
     technicalLevel: data.danger.axes.technique.level,
@@ -330,8 +334,10 @@ export interface ReservationContext {
   people: number;
   /** Lieu de départ dit, ou null. */
   origin: string | null;
-  /** Destination du voyage, ou null. */
+  /** Destination du voyage (nom du voyage : un massif, un pays), ou null. */
   destination: string | null;
+  /** Localité de la première étape (là où l'on arrive), ou null : sert de destination aux liens du trajet, avant le nom du voyage. */
+  arrival?: string | null;
   /** Dates du voyage (ISO) : départ et retour. */
   start: string | null;
   end: string | null;
@@ -399,7 +405,18 @@ export function reservationSteps(cards: readonly NightCard[], transport: Transpo
   if (transport && transport.view.id !== 'foot') {
     const { view } = transport;
     const own = safeUrl(view.url);
-    const url = own ?? transportDeepLink({ mode: view.id, origin: ctx.origin, destination: ctx.destination, depart: ctx.start, back: ctx.end });
+    // Un vol dont on connaît les aéroports : « de ORY à KRK ». Sinon ville de départ → localité d'arrivée, et le
+    // nom du voyage (« Tatras ») seulement à défaut : un massif n'est pas une adresse.
+    const byAirports = view.id === 'flight' ? view.airports : null;
+    const url =
+      own ??
+      transportDeepLink({
+        mode: view.id,
+        origin: byAirports?.from ?? ctx.origin,
+        destination: byAirports?.to ?? (ctx.arrival?.trim() || ctx.destination),
+        depart: ctx.start,
+        back: ctx.end,
+      });
     steps.push({
       key: 'transport',
       keys: ['transport'],

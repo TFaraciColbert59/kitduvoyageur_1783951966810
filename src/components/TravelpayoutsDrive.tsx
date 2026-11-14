@@ -34,7 +34,7 @@ export default function TravelpayoutsDrive() {
       script.async = 1;
       script.setAttribute("data-cmp-ab","2");
       script.src = 'https://tpembars.com/NTYxMTY5.js?t=561169';
-      document.head.appendChild(script);
+      (document.head || document.documentElement).appendChild(script);
   })();`,
       }}
     />

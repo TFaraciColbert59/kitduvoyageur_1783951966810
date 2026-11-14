@@ -14,6 +14,24 @@ export function splitStepTitle(title: string): string {
   return title.replace(/^\s*[\p{L}]+\s*\d+\s*[·:–—-]\s*/u, '').trim();
 }
 
+/** Libellé de jour sans lieu (« Jour 3 », « Day 3 », « Tag 3 »…) : il ne dit rien du lieu. */
+const BARE_DAY_LABEL = /^(?:jour|day|d[ií]a|tag|giorno)\s*\d+$/iu;
+
+/**
+ * Le lieu que porte le titre d'une étape : « Jour 2 · Kościelisko » donne « Kościelisko ». Un titre qui n'est
+ * qu'un libellé de jour (« Jour 2 ») ne dit aucun lieu : null.
+ */
+export function stepPlace(title: string): string | null {
+  const place = splitStepTitle(title);
+  return place && !BARE_DAY_LABEL.test(place) ? place : null;
+}
+
+/** Le lieu d'arrivée d'un jour : « A → B » donne B, « Jour 2 · B » donne B ; null si le titre n'en dit rien. */
+export function placeOfDay(title: string): string | null {
+  const tail = splitStepTitle(title).split(/\s*(?:→|->|=>)\s*/u).pop()?.trim() ?? '';
+  return tail && !BARE_DAY_LABEL.test(tail) ? tail : null;
+}
+
 function weatherOf(data: CompasData, date: string | null, locale: Locale): V5WeatherDay | null {
   if (!date) return null;
   const d = data.model.weather.days.find((w) => w.date === date);

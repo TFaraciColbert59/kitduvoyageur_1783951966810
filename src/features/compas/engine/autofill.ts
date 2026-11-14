@@ -345,6 +345,8 @@ export interface BudgetLine {
   amount: number;
   source: AmountSource;
   basis: string;
+  /** Faits structurés rangés avec la ligne (`trip_expenses.metadata`), à côté de la base : jamais un texte à relire par regex. */
+  meta?: Record<string, unknown>;
 }
 
 /** Arrondi à l'euro ; une ligne à 0 € n'est pas écrite. */

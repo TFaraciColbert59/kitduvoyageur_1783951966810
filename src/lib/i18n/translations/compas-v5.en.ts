@@ -352,6 +352,8 @@ export const compasV5En = {
       noOptions: 'No place found near the arrival of day {day}.',
       extrasPending: 'Possible nights and journeys haven’t been read yet. You can already note a night by hand.',
       lodgingUnavailable: 'The lodging source (OpenStreetMap) isn’t responding right now. Nothing is filled in: you can note a night by hand.',
+      lodgingSilent: 'Lodging suggestions will arrive when the map (OpenStreetMap) responds; meanwhile, “{search}” opens a search on the stage’s place.',
+      manualFold: 'Note where I sleep myself',
       photosUnavailable: 'Photos aren’t available right now: illustrations stand in for them.',
       transportUnavailable: 'The journey source isn’t responding right now. Nothing is filled in.',
       noNights: 'This trip has no night to plan.',

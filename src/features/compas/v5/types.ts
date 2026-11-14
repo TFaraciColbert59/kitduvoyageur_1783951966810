@@ -61,6 +61,8 @@ export interface V5TransportOption {
   source: string;
   url: string | null;
   partner: string | null;
+  /** Vol : codes IATA des aéroports de départ et d'arrivée, rangés avec la ligne de budget ; absents quand ils ne sont pas connus. */
+  airports?: { from: string; to: string } | null;
 }
 
 /** Ce que le serveur ajoute aux données du voyage : lu après l'affichage, jamais bloquant. */

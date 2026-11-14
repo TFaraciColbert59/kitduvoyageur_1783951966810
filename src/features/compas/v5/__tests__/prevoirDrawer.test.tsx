@@ -102,7 +102,9 @@ describe('À réserver · extras vides ou indisponibles', () => {
   it('extras pas encore lus : le dit, reste utilisable, la nuit notée à la main est possible', async () => {
     const { api } = mount({}, { data: noNotedStay(), extras: EMPTY_EXTRAS });
     expect(screen.getByText(/n’ont pas encore été lus/)).toBeTruthy();
-    expect(screen.getByText('Aucune nuit trouvée près de l’arrivée du jour 1.')).toBeTruthy();
+    // Aucune nuit proposée : pas de cartes vides, une seule ligne repliée qui ouvre la saisie manuelle.
+    expect(screen.queryByText(/Aucune nuit trouvée près de l’arrivée/)).toBeNull();
+    expect(screen.getByText('Noter moi-même où je dors')).toBeTruthy();
     expect(screen.getByText('Aucun trajet proposé pour ce voyage.')).toBeTruthy();
     // Rien n'est choisi, mais le plan est ouvert d'office et liste déjà chaque nuit, avec son compteur.
     const plan = screen.getByRole('region', { name: 'Réservations à ouvrir, une par une' });
@@ -123,7 +125,7 @@ describe('À réserver · extras vides ou indisponibles', () => {
 
   it('hébergements injoignables : message clair, rien n’est comblé', () => {
     mount({}, { data: noNotedStay(), extras: extrasOf({ nights: {}, unavailable: ['lodging', 'photos', 'transport'], transport: [] }) });
-    expect(screen.getByText(/OpenStreetMap\) ne répond pas pour l’instant/)).toBeTruthy();
+    expect(screen.getByText(/Les propositions d’hébergement arriveront quand la carte \(OpenStreetMap\) répondra/)).toBeTruthy();
     expect(screen.getByText(/Les photos ne sont pas disponibles/)).toBeTruthy();
     expect(screen.getByText('La source des trajets ne répond pas pour l’instant. Rien n’est comblé.')).toBeTruthy();
     expect(screen.getAllByLabelText(/Nom du lieu pour la nuit du jour/)).toHaveLength(2);
@@ -318,7 +320,7 @@ describe('À réserver · total et « Tout réserver »', () => {
     // Le trajet d'abord, puis le transfert, puis les nuits par jour.
     expect(links.map((a) => a.getAttribute('href'))).toEqual([
       'https://sncf.example/horaires',
-      'https://www.google.com/maps/dir/?api=1&destination=Vercors&travelmode=transit',
+      'https://www.google.com/maps/dir/?api=1&destination=Rencurel&travelmode=transit',
       'https://gites.example/royans',
       'https://refuges.example/moliere',
     ]);
@@ -391,7 +393,7 @@ describe('À réserver · total et « Tout réserver »', () => {
     expect(choices.compasV5SetResaStatusAction).not.toHaveBeenCalled();
     // Voiture : itinéraire prérempli ; refuge sans site : recherche web ; liens directs sans mention d'affiliation.
     const hrefs = within(panel).getAllByRole('link').map((a) => a.getAttribute('href'));
-    expect(hrefs[0]).toBe('https://www.google.com/maps/dir/?api=1&destination=Vercors&travelmode=driving');
+    expect(hrefs[0]).toBe('https://www.google.com/maps/dir/?api=1&destination=Rencurel&travelmode=driving');
     expect(hrefs[2]).toMatch(/^https:\/\/duckduckgo\.com\/\?q=Refuge/);
     for (const a of within(panel).getAllByRole('link', { name: /Rechercher/ })) expect(a.getAttribute('rel')).toBe('noopener noreferrer');
   });

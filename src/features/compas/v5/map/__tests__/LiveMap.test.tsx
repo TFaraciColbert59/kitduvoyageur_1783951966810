@@ -201,6 +201,24 @@ describe('LiveMap : état vide et chargement', () => {
   });
 });
 
+describe('Aperçu du 14/11 · 5 · « Cannot read properties of null (reading \'appendChild\') »', () => {
+  it('une carte sans conteneur de canevas (déjà retirée) ne reçoit aucun marqueur : pas de Marker.addTo sur null', async () => {
+    registry.noCanvasContainer = true;
+    const errors: string[] = [];
+    const onError = (e: ErrorEvent) => errors.push(e.message);
+    window.addEventListener('error', onError);
+    await mount();
+    window.removeEventListener('error', onError);
+    expect(registry.markers).toHaveLength(0);
+    expect(errors).toEqual([]);
+  });
+
+  it('avec son conteneur, la même carte pose ses marqueurs comme avant', async () => {
+    await mount();
+    expect(registry.markers.length).toBeGreaterThan(0);
+  });
+});
+
 describe('LiveMap : accessibilité du conteneur', () => {
   it('résume le parcours : jours, kilomètres du tracé réel, nuits', async () => {
     await mount();

@@ -12,6 +12,8 @@ export const registry = {
   markers: [] as FakeMarker[],
   workerUrl: null as string | null,
   failConstruct: false,
+  /** Simule une carte dont le conteneur de canevas n'existe plus (déjà retirée). */
+  noCanvasContainer: false,
 };
 
 export function resetRegistry() {
@@ -19,6 +21,7 @@ export function resetRegistry() {
   registry.markers = [];
   registry.workerUrl = null;
   registry.failConstruct = false;
+  registry.noCanvasContainer = false;
 }
 
 export class FakeMap {
@@ -46,6 +49,10 @@ export class FakeMap {
     const style = options.style as { layers?: Array<{ id: string }> } | undefined;
     for (const l of style?.layers ?? []) this.layers.set(l.id, l as Record<string, unknown>);
     registry.maps.push(this);
+  }
+
+  getCanvasContainer(): HTMLElement | null {
+    return registry.noCanvasContainer ? null : this.canvasContainer;
   }
 
   on(event: string, a: string | Handler, b?: Handler) {
@@ -130,7 +137,8 @@ export class FakeMarker {
   addTo(map: FakeMap) {
     this.map = map;
     this.element.classList.add('maplibregl-marker');
-    map.canvasContainer.appendChild(this.element);
+    // Comme MapLibre : `map.getCanvasContainer().appendChild(…)` lève sur un conteneur absent.
+    (map.getCanvasContainer() as HTMLElement).appendChild(this.element);
     return this;
   }
   remove() {

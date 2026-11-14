@@ -101,7 +101,7 @@ describe('script de rattrapage de vie privée (écrit, non appliqué)', () => {
     });
 
     it('colle à ce que la préparation écrit : dépense prévue, `autofill` = runId, base, et `at` sur la trace', () => {
-      expect(autofillSrc).toMatch(/is_planned: true,\s*metadata: \{ autofill: runId, source: l\.source, basis: l\.basis \}/);
+      expect(autofillSrc).toMatch(/is_planned: true,\s*metadata: \{ autofill: runId, source: l\.source, basis: l\.basis(?:, \.\.\.\(l\.meta \?\? \{\}\))? \}/);
       expect(autofillSrc).toMatch(/autofill: \{\s*runId,\s*at: new Date\(\)\.toISOString\(\),/);
       // La reconnaissance est celle du code (isStoredFormalities) : titre, `autofill`, prévue, intacte,
       // QUELLE QUE SOIT la base (les préparations successives en ont écrit plusieurs).

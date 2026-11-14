@@ -82,7 +82,7 @@ import { STAY_TO_BOOK, isStayProposal } from '../engine/stayProposal';
 import { setActiveAdventureAction } from '@/features/hub/context/activeAdventureServer';
 import { addDaysIso } from '../engine/format';
 import { climateWindow } from '@/features/trips/engine/climate';
-import { homeForLeg, isHomeOrigin, originFact, planTravelLeg, travelFactsForAi, travelOrigin, type TravelTransport } from '../engine/travel';
+import { flightAirports, homeForLeg, isHomeOrigin, originFact, planTravelLeg, travelFactsForAi, travelOrigin, type TravelTransport } from '../engine/travel';
 import { nearestAirport } from './airports';
 import { famousTrailIn, isNamedTrail, sameTrailName, trailRegion } from '../engine/intent';
 import {
@@ -2896,6 +2896,9 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
             amount: flight.eur * party,
             source: 'estimation',
             basis: `${flight.basis} · ${transport?.basis ?? 'vol'} · estimation, la recherche se prépare dans « À prévoir »`,
+            // Les codes IATA d'aéroport à aéroport, rangés tels quels pour le lien de recherche de vol. Départ du
+            // domicile : l'aéroport le plus proche désigne la commune, il n'est pas rangé (comme dans `route`).
+            ...(flightAirports(travelLeg.flight, origin) ? { meta: { airports: flightAirports(travelLeg.flight, origin) } } : {}),
           }
         : null,
       trainNeeded
@@ -2989,7 +2992,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
             expense_date: trip.start_date ?? today,
             split_type: 'equal',
             is_planned: true,
-            metadata: { autofill: runId, source: l.source, basis: l.basis },
+            metadata: { autofill: runId, source: l.source, basis: l.basis, ...(l.meta ?? {}) },
           }))
         )
         .select('id');

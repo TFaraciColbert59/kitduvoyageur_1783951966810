@@ -17,6 +17,7 @@ import {
   bookingTotals,
   buyEntries,
   buyTotals,
+  firstPlace,
   formatDistance,
   liveBookings,
   nearestRouteShop,
@@ -104,19 +105,22 @@ function BookTab() {
         people,
         origin: data.originName ?? null,
         destination: model.destination,
+        arrival: firstPlace(model),
         start: model.dates.start,
         end: model.dates.end,
         keyword: searchWord,
         lines,
         askOrigin,
       }),
-    [cards, selection, people, data.originName, model.destination, model.dates.start, model.dates.end, searchWord, lines, askOrigin]
+    [cards, selection, people, data.originName, model, searchWord, lines, askOrigin]
   );
   const progress = useMemo(() => planProgress(steps, api.resa), [steps, api.resa]);
   const sandbox = sandboxProviders(data.providers);
   const saved = liveBookings(data.bookings);
   const pending = extras.fetchedAt === '';
   const lodgingDown = extras.unavailable.includes('lodging');
+  // Aucune nuit proposée nulle part (source muette ou rien trouvé) : pas de cartes vides dépliées, une seule ligne repliée.
+  const nightsEmpty = cards.length > 0 && cards.every((c) => c.options.length === 0);
   const photosDown = extras.unavailable.includes('photos');
   const hasPartner = cards.some((c) => c.options.some((o) => o.partner)) || transports.some((x) => x.partner);
   const isBooked = (keys: readonly string[]) => keys.length > 0 && keys.every((k) => isResaBooked(api.resa, k));
@@ -184,7 +188,11 @@ function BookTab() {
   return (
     <>
       {pending && cards.length > 0 && <p className="banner info" role="status">{t('compas.v5.prevoir.extrasPending')}</p>}
-      {!pending && lodgingDown && <p className="banner" role="status">{t('compas.v5.prevoir.lodgingUnavailable')}</p>}
+      {!pending && lodgingDown && (
+        <p className={nightsEmpty ? 'banner info' : 'banner'} role="status">
+          {nightsEmpty ? t('compas.v5.prevoir.lodgingSilent', { search: t('compas.v5.prevoir.searchLink') }) : t('compas.v5.prevoir.lodgingUnavailable')}
+        </p>
+      )}
       {!pending && photosDown && <p className="banner info" role="status">{t('compas.v5.prevoir.photosUnavailable')}</p>}
       {sandbox.map((p) => (
         <p key={p} className="banner" role="status">
@@ -330,14 +338,25 @@ function BookTab() {
       </section>
 
       {cards.length === 0 && <p className="v5-note">{t('compas.v5.prevoir.noNights')}</p>}
-      {cards.map((card) => (
-        <NightCardView
-          key={card.day}
-          card={card}
-          booked={isBooked([nightKey(card.day)])}
-          onBooked={(view) => markResa({ keys: [nightKey(card.day)], label: view.name }, true)}
-        />
-      ))}
+      {nightsEmpty ? (
+        canEdit && (
+          <details className="v5-grp v5-fold">
+            <summary>{t('compas.v5.prevoir.manualFold')}</summary>
+            {cards.map((card) => (
+              <NightCardView key={card.day} card={card} manualOnly booked={isBooked([nightKey(card.day)])} onBooked={() => undefined} />
+            ))}
+          </details>
+        )
+      ) : (
+        cards.map((card) => (
+          <NightCardView
+            key={card.day}
+            card={card}
+            booked={isBooked([nightKey(card.day)])}
+            onBooked={(view) => markResa({ keys: [nightKey(card.day)], label: view.name }, true)}
+          />
+        ))
+      )}
 
       <TransportCardView
         views={transports}
@@ -436,7 +455,7 @@ function priceText(api: ReturnType<typeof useV5>, view: StayView): string {
   return people > 1 ? t('compas.v5.prevoir.priceEach', { price: one, people }) : one;
 }
 
-function NightCardView({ card, booked, onBooked }: { card: NightCard; booked: boolean; onBooked: (view: StayView) => void }) {
+function NightCardView({ card, booked, onBooked, manualOnly = false }: { card: NightCard; booked: boolean; onBooked: (view: StayView) => void; manualOnly?: boolean }) {
   const api = useV5();
   const { data, ctl, t, locale, canEdit } = api;
   const { model } = data;
@@ -518,7 +537,7 @@ function NightCardView({ card, booked, onBooked }: { card: NightCard; booked: bo
           <V5Icon name={shown ? stayIcon(shown.kind) : 'bed'} />
           <div className="t">
             <small>{when}</small>
-            <b>{shown ? shown.name : t('compas.v5.prevoir.noOptions', { day: card.day })}</b>
+            {shown ? <b>{shown.name}</b> : manualOnly ? card.place && <b>{card.place}</b> : <b>{t('compas.v5.prevoir.noOptions', { day: card.day })}</b>}
             {shown && <small>{detail}</small>}
           </div>
           {shown && <span className="pr">{priceText(api, shown)}</span>}

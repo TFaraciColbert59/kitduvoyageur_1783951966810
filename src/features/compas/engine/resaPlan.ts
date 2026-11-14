@@ -84,6 +84,11 @@ export interface ResaPlanInput {
   namedTrail: string | null;
   /** Nom du lieu de séjour (base), pour les liens et les titres. */
   base: string | null;
+  /**
+   * Localité de la première étape (là où l'on arrive : « Kościelisko »). Le transfert de l'aéroport ou de la gare
+   * va là ; sans elle, le nom du voyage (`base`). Un massif (« Tatras ») n'est pas une adresse.
+   */
+  arrivalPlace?: string | null;
   /** Nom du pays, pour la recherche de visa (sinon la base). */
   countryName?: string | null;
   /** Aéroport d'arrivée (nom OurAirports) ; sans lui, « l'aéroport ». */
@@ -197,13 +202,14 @@ export function resaPlan(input: ResaPlanInput): ResaLine[] {
   /* Transfert : de l'aéroport ou de la gare au lieu de séjour (la voiture de location se prend à l'arrivée). */
   if ((input.approach === 'flight' || input.approach === 'train') && !rentCar) {
     const hub = input.hub?.trim() || t(input.approach === 'flight' ? 'compas.v5.resa.hubAirport' : 'compas.v5.resa.hubStation');
+    const arrival = input.arrivalPlace?.trim() || base;
     add({
       key: 'transfer',
       kind: 'transfer',
-      title: base ? t('compas.v5.resa.transferTitle', { base, hub }) : t('compas.v5.resa.transferTitleNoBase', { hub }),
+      title: arrival ? t('compas.v5.resa.transferTitle', { base: arrival, hub }) : t('compas.v5.resa.transferTitleNoBase', { hub }),
       why: t('compas.v5.resa.transferWhy'),
       when,
-      url: mapsDirectionsUrl({ origin: input.hub?.trim() || null, destination: base, mode: 'transit' }),
+      url: mapsDirectionsUrl({ origin: input.hub?.trim() || null, destination: arrival, mode: 'transit' }),
     });
   }
 

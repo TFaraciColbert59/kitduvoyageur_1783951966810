@@ -59,7 +59,7 @@ function loadApi(): Promise<HCaptchaApi> {
       window.clearTimeout(timer);
       reject(new Error('hcaptcha_injoignable'));
     };
-    document.head.appendChild(script);
+    (document.head ?? document.documentElement).appendChild(script);
   }).catch((err) => {
     loading = null;
     throw err;
