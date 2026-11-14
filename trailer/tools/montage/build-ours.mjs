@@ -4,7 +4,10 @@
 //   node tools/montage/build-ours.mjs montage/edl-ours-v1.json [--sans-rendu-film] [--sans-reperes]
 //
 // Lancé depuis trailer/ (ou ailleurs : les chemins sont relatifs à trailer/). ffmpeg et ffprobe sont pris dans le
-// PATH. Aucun étalonnage, aucune incrustation : les plans sont coupés à l'image près (décodage puis réencodage).
+// PATH. Aucun étalonnage : les plans sont coupés à l'image près (décodage puis réencodage).
+// Champs facultatifs par plan : « dossier » (dossier de la source, relatif à trailer/, par ex. flow/clips/incrustes
+// pour les écrans incrustés) et « recadrage » ({ zoom, cx, cy } : zoom ≥ 1 sur l'image entière, centre en pixels
+// de la source 1920×1080, remise à l'échelle Lanczos).
 //
 // Coupes : l'image de coupe du temps n est beats[n].frame de la grille (champ temps_musique de la liste).
 // Un plan dure frame(debut + temps) − frame(debut) images ; un plan sans « temps » va jusqu'à images_total.
@@ -102,11 +105,25 @@ function retimeFilter(v) {
 }
 
 // Extrait [a, a+count) d'une vidéo, optionnellement inversé, et ramène à n images. Écrit un segment FFV1.
-function cutVideo(src, a, count, n, out, { reverse = false, speed = null } = {}) {
+// recadrage (facultatif) : { zoom, cx, cy } en pixels de la source 1920×1080 ; fenêtre de 1920/zoom × 1080/zoom
+// centrée en (cx, cy), gardée dans l'image, puis remise à 1920×1080 (Lanczos, calcul en RGB 4:4:4).
+function cropFilter(r) {
+  if (!r) return [];
+  const z = Number(r.zoom);
+  if (!(z >= 1)) throw new Error(`recadrage : zoom ${r.zoom} invalide (≥ 1)`);
+  const w = 1920 / z, h = 1080 / z;
+  const x = Math.min(Math.max((r.cx ?? 960) - w / 2, 0), 1920 - w);
+  const y = Math.min(Math.max((r.cy ?? 540) - h / 2, 0), 1080 - h);
+  return ["format=gbrp", "scale=1920:1080:flags=lanczos", `crop=${w.toFixed(3)}:${h.toFixed(3)}:${x.toFixed(3)}:${y.toFixed(3)}:exact=1`,
+    "scale=1920:1080:flags=lanczos+accurate_rnd+full_chroma_int"];
+}
+
+function cutVideo(src, a, count, n, out, { reverse = false, speed = null, recadrage = null } = {}) {
   const v = speed ?? (count === n ? 1 : (count - 1) / (n - 1));
   const chain = [`select='between(n\\,${a}\\,${a + count - 1})'`, "setpts=N/(24*TB)"];
   if (reverse) chain.push("reverse", "setpts=N/(24*TB)");
   if (v !== 1) chain.push(retimeFilter(v));
+  chain.push(...cropFilter(recadrage));
   chain.push("scale=1920:1080:flags=lanczos", "setsar=1", "format=yuv420p", "settb=1/24", "setpts=N");
   ffmpeg(["-i", src, "-an", "-vf", chain.join(","), "-frames:v", String(n), "-fps_mode", "passthrough", "-c:v", "ffv1", "-level", "3", out]);
   return v;
@@ -138,7 +155,8 @@ function buildCosmos(p, out) {
 
 // ---- plans vidéo ----
 function buildVideo(p, out) {
-  let src = join(VIDEOS, p.source);
+  // dossier (facultatif) : dossier de la source pour ce plan, relatif à trailer/ (par défaut dossier_videos).
+  let src = join(p.dossier ? resolve(TRAILER, p.dossier) : VIDEOS, p.source);
   let entree = p.entree;
   let vitesse = p.vitesse ?? 1;
   if (!existsSync(src)) {
@@ -164,7 +182,8 @@ function buildVideo(p, out) {
     p.entreeReculee = { de: entree, a: e2 };
     entree = e2;
   }
-  const v = cutVideo(src, entree, count, p.n, out, { speed: vitesse === 1 ? null : vitesse });
+  const v = cutVideo(src, entree, count, p.n, out, { speed: vitesse === 1 ? null : vitesse, recadrage: p.recadrage });
+  if (p.recadrage) p.remarques.push(`recadré ×${p.recadrage.zoom} centré (${p.recadrage.cx}, ${p.recadrage.cy})`);
   p.sourceUsed = rel(src);
   p.framesUsed = [entree, entree + count - 1];
   p.vitesseReelle = v;
@@ -272,7 +291,8 @@ for (const p of plans) {
   // --reutiliser-segments : garde un segment déjà fait pour ce plan (même durée) ; ne pas l'utiliser si une source a changé.
   if (args.includes("--reutiliser-segments") && existsSync(out) && existsSync(join(TMP, "manifeste.json"))) {
     const old = JSON.parse(readFileSync(join(TMP, "manifeste.json"), "utf8")).plans.find((q) => q.plan === p.plan && q.n === p.n);
-    if (old && countFrames(out).frames === p.n) {
+    // un plan qui lit un autre dossier ou qui est recadré n'est jamais réutilisé
+    if (old && !p.dossier && !p.recadrage && countFrames(out).frames === p.n) {
       Object.assign(p, { sourceUsed: old.source, framesUsed: old.images_sources, vitesseReelle: old.vitesse_reelle, provisoire: old.provisoire, remarques: old.remarques, sourceFrames: old.source_images, entreeReculee: old.entree_reculee });
       segs.push(out);
       console.log(`${p.plan.padEnd(7)} segment réutilisé`);
