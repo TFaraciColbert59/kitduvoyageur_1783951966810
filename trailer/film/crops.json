@@ -20,23 +20,24 @@
       ],
       "type": "espace",
       "start": {
-        "x": 52.18,
+        "x": 68.36,
         "y": 0,
         "w": 31.64,
         "h": 100
       },
       "end": {
-        "x": 46.18,
+        "x": 64,
         "y": 0,
         "w": 31.64,
         "h": 100
       },
       "poi": {
-        "x": 74,
-        "y": 30
+        "x": 90,
+        "y": 25
       },
       "note": "Limbe et lever du soleil (tiers droit) ; glissé vers la gauche avec la poussée.",
-      "status": "provisoire, à ajuster à la réception de l'image"
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)",
+      "note9": "soleil et limbe (droite) ; glissé vers la gauche"
     },
     {
       "id": "p02",
@@ -65,7 +66,7 @@
         "y": 55
       },
       "note": "Dolomites au centre exact ; la poussée devient un resserrement.",
-      "status": "provisoire, à ajuster à la réception de l'image"
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)"
     },
     {
       "id": "p03",
@@ -94,7 +95,7 @@
         "y": 60
       },
       "note": "Point de fuite du flou radial au centre.",
-      "status": "provisoire, à ajuster à la réception de l'image"
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)"
     },
     {
       "id": "p04",
@@ -123,7 +124,7 @@
         "y": 50
       },
       "note": "Trouée au centre : le resserrement prolonge la traversée.",
-      "status": "provisoire, à ajuster à la réception de l'image"
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)"
     },
     {
       "id": "p05",
@@ -152,7 +153,7 @@
         "y": 50
       },
       "note": "Fenêtre éclairée au centre exact : on fonce dessus.",
-      "status": "provisoire, à ajuster à la réception de l'image"
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)"
     },
     {
       "id": "p06",
@@ -181,7 +182,7 @@
         "y": 34
       },
       "note": "Léa au tiers central, tête aux genoux ; le travelling latéral devient un glissé.",
-      "status": "provisoire, à ajuster à la réception de l'image"
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)"
     },
     {
       "id": "p07",
@@ -210,7 +211,7 @@
         "y": 50
       },
       "note": "Téléphone au centre (40 % de la hauteur) : cadre serré, écran entier.",
-      "status": "provisoire, à ajuster à la réception de l'image"
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)"
     },
     {
       "id": "p08",
@@ -239,7 +240,7 @@
         "y": 48
       },
       "note": "Œil au centre ; reflet dans la pupille.",
-      "status": "provisoire, à ajuster à la réception de l'image"
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)"
     },
     {
       "id": "p09",
@@ -268,7 +269,7 @@
         "y": 46
       },
       "note": "Poussée violente dans l'écran : le cadre finit sur l'écran seul.",
-      "status": "provisoire, à ajuster à la réception de l'image"
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)"
     },
     {
       "id": "p10",
@@ -297,7 +298,7 @@
         "y": 40
       },
       "note": "Pic en aiguille au centre exact, eau au premier plan.",
-      "status": "provisoire, à ajuster à la réception de l'image"
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)"
     },
     {
       "id": "p11",
@@ -326,7 +327,7 @@
         "y": 35
       },
       "note": "Léa au centre, part vers la droite : le cadre la suit.",
-      "status": "provisoire, à ajuster à la réception de l'image"
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)"
     },
     {
       "id": "p12",
@@ -355,7 +356,7 @@
         "y": 55
       },
       "note": "Téléphone au centre (35 %), visage flou au-dessus : les deux dans la bande ; glissé latéral.",
-      "status": "provisoire, à ajuster à la réception de l'image"
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)"
     },
     {
       "id": "p13",
@@ -384,7 +385,7 @@
         "y": 52
       },
       "note": "Par-dessus l'épaule : téléphone au centre, épaule floue en bord.",
-      "status": "provisoire, à ajuster à la réception de l'image"
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)"
     },
     {
       "id": "p14",
@@ -396,14 +397,24 @@
         "img11"
       ],
       "type": "special",
-      "start": null,
-      "end": null,
+      "start": {
+        "x": 6,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
+      "end": {
+        "x": 62,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
+      },
       "poi": {
         "x": 50,
         "y": 30
       },
       "note": "Trois bandes verticales (img11) : voir « bandes ».",
-      "status": "provisoire, à ajuster à la réception de l'image",
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)",
       "layout": "trois-bandes-empilees",
       "bands": [
         {
@@ -451,7 +462,10 @@
             "h": 35.12
           }
         }
-      ]
+      ],
+      "ease": "sine.inOut",
+      "layout916": "glisse-trois-visages",
+      "note9": "bandes empilées non construites (exigerait de modifier p14.html) : glissé Sami → Inès → Tom sur la bande pleine hauteur"
     },
     {
       "id": "p15",
@@ -464,23 +478,24 @@
       ],
       "type": "telephone",
       "start": {
-        "x": 37.34,
-        "y": 12,
-        "w": 25.31,
-        "h": 80
+        "x": 36,
+        "y": 0,
+        "w": 31.64,
+        "h": 100
       },
       "end": {
-        "x": 39.88,
-        "y": 20,
-        "w": 20.25,
-        "h": 64
+        "x": 37,
+        "y": 3,
+        "w": 29.74,
+        "h": 94
       },
       "poi": {
-        "x": 50,
-        "y": 52
+        "x": 52,
+        "y": 45
       },
       "note": "Poussée sur l'itinéraire 3D.",
-      "status": "provisoire, à ajuster à la réception de l'image"
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)",
+      "note9": "écran entier : bande pleine hauteur (le haut de l'écran était coupé)"
     },
     {
       "id": "p16",
@@ -509,7 +524,7 @@
         "y": 60
       },
       "note": "Plongée : Léa au tiers central, téléphone à plat devant elle (position à vérifier).",
-      "status": "provisoire, à ajuster à la réception de l'image"
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)"
     },
     {
       "id": "p17",
@@ -538,7 +553,7 @@
         "y": 70
       },
       "note": "Écran dans la moitié basse, pouce au centre.",
-      "status": "provisoire, à ajuster à la réception de l'image"
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)"
     },
     {
       "id": "p18",
@@ -567,7 +582,7 @@
         "y": 55
       },
       "note": "Sac au centre exact, Léa derrière et au-dessus.",
-      "status": "provisoire, à ajuster à la réception de l'image"
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)"
     },
     {
       "id": "p19",
@@ -596,7 +611,7 @@
         "y": 55
       },
       "note": "Flat lay : sac au centre, mains par le bas.",
-      "status": "provisoire, à ajuster à la réception de l'image"
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)"
     },
     {
       "id": "p20",
@@ -625,7 +640,7 @@
         "y": 50
       },
       "note": "Boucle au centre.",
-      "status": "provisoire, à ajuster à la réception de l'image"
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)"
     },
     {
       "id": "p21",
@@ -638,23 +653,24 @@
       ],
       "type": "personnage",
       "start": {
-        "x": 34.18,
+        "x": 46,
         "y": 0,
         "w": 31.64,
         "h": 100
       },
       "end": {
-        "x": 35.45,
+        "x": 47.5,
         "y": 4,
         "w": 29.11,
         "h": 92
       },
       "poi": {
-        "x": 50,
-        "y": 50
+        "x": 66,
+        "y": 25
       },
       "note": "Spirale centrée, Léa au tiers central (la rotation du 16:9 se garde).",
-      "status": "provisoire, à ajuster à la réception de l'image"
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)",
+      "note9": "le marcheur (haut droite) dans la bande"
     },
     {
       "id": "p22",
@@ -667,23 +683,24 @@
       ],
       "type": "personnage",
       "start": {
-        "x": 38.18,
+        "x": 14,
         "y": 0,
         "w": 31.64,
         "h": 100
       },
       "end": {
-        "x": 30.18,
+        "x": 6,
         "y": 0,
         "w": 31.64,
         "h": 100
       },
       "poi": {
-        "x": 50,
-        "y": 45
+        "x": 22,
+        "y": 30
       },
       "note": "Reflet de Léa au tiers central ; le paysage défile, le cadre glisse avec lui.",
-      "status": "provisoire, à ajuster à la réception de l'image"
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)",
+      "note9": "visage de la double exposition (gauche)"
     },
     {
       "id": "p23",
@@ -712,7 +729,7 @@
         "y": 50
       },
       "note": "Quatre personnages en pied : la bande ne tient que Léa et Sami (le prêt) ; risque de couper Inès et Tom.",
-      "status": "provisoire, à ajuster à la réception de l'image"
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)"
     },
     {
       "id": "p24",
@@ -741,7 +758,7 @@
         "y": 62
       },
       "note": "Chaussures au tiers central, ras du sol.",
-      "status": "provisoire, à ajuster à la réception de l'image"
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)"
     },
     {
       "id": "p25",
@@ -770,7 +787,7 @@
         "y": 50
       },
       "note": "Téléphone sur la bretelle, presque de face.",
-      "status": "provisoire, à ajuster à la réception de l'image"
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)"
     },
     {
       "id": "p26",
@@ -799,7 +816,7 @@
         "y": 50
       },
       "note": "★ Seceda : la crête en diagonale ; le glissé passe des aiguilles aux quatre points (tiers central).",
-      "status": "provisoire, à ajuster à la réception de l'image",
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)",
       "fallback": "pleine-largeur"
     },
     {
@@ -829,7 +846,7 @@
         "y": 55
       },
       "note": "★ Tre Cime : tours au fond, groupe au tiers central ; le cadre descend vers eux.",
-      "status": "provisoire, à ajuster à la réception de l'image",
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)",
       "fallback": "pleine-largeur"
     },
     {
@@ -859,7 +876,7 @@
         "y": 50
       },
       "note": "Mains jointes au centre, contre-plongée.",
-      "status": "provisoire, à ajuster à la réception de l'image"
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)"
     },
     {
       "id": "p29",
@@ -888,7 +905,7 @@
         "y": 50
       },
       "note": "Téléphone net au tiers central, Tre Cime floues derrière.",
-      "status": "provisoire, à ajuster à la réception de l'image"
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)"
     },
     {
       "id": "p30",
@@ -917,7 +934,7 @@
         "y": 58
       },
       "note": "★ Sorapis : pic en aiguille en haut au centre, Léa sur le rocher au tiers central.",
-      "status": "provisoire, à ajuster à la réception de l'image",
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)",
       "fallback": "pleine-largeur"
     },
     {
@@ -947,7 +964,7 @@
         "y": 45
       },
       "note": "Téléphone à hauteur des yeux devant le lac : même composition que P10.",
-      "status": "provisoire, à ajuster à la réception de l'image"
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)"
     },
     {
       "id": "p32",
@@ -960,23 +977,24 @@
       ],
       "type": "personnage",
       "start": {
-        "x": 28.18,
+        "x": 40,
         "y": 0,
         "w": 31.64,
         "h": 100
       },
       "end": {
-        "x": 24.18,
+        "x": 50,
         "y": 0,
         "w": 31.64,
         "h": 100
       },
       "poi": {
-        "x": 42,
-        "y": 55
+        "x": 60,
+        "y": 45
       },
       "note": "Malik flou au premier plan, à gauche du centre ; le cadre part avec lui (sens à vérifier).",
-      "status": "provisoire, à ajuster à la réception de l'image"
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)",
+      "note9": "le groupe et le sac vert ; sens à confirmer"
     },
     {
       "id": "p33",
@@ -1005,7 +1023,7 @@
         "y": 50
       },
       "note": "Malik au tiers central, filé.",
-      "status": "provisoire, à ajuster à la réception de l'image"
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)"
     },
     {
       "id": "p34",
@@ -1034,7 +1052,7 @@
         "y": 60
       },
       "note": "Impact de la chaussure au centre.",
-      "status": "provisoire, à ajuster à la réception de l'image"
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)"
     },
     {
       "id": "p35",
@@ -1063,7 +1081,7 @@
         "y": 62
       },
       "note": "Malik au tiers central bas, lacets en contrebas.",
-      "status": "provisoire, à ajuster à la réception de l'image"
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)"
     },
     {
       "id": "p36",
@@ -1076,23 +1094,24 @@
       ],
       "type": "telephone",
       "start": {
-        "x": 36.39,
-        "y": 7,
-        "w": 27.21,
-        "h": 86
+        "x": 25.5,
+        "y": 2,
+        "w": 28.48,
+        "h": 90
       },
       "end": {
-        "x": 37.98,
-        "y": 12,
-        "w": 24.05,
-        "h": 76
+        "x": 27,
+        "y": 8,
+        "w": 25.31,
+        "h": 80
       },
       "poi": {
-        "x": 50,
-        "y": 50
+        "x": 39,
+        "y": 40
       },
       "note": "Brassard et téléphone au centre.",
-      "status": "provisoire, à ajuster à la réception de l'image"
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)",
+      "note9": "écran du brassard entier (gauche du cadre 16:9)"
     },
     {
       "id": "p37",
@@ -1121,7 +1140,7 @@
         "y": 45
       },
       "note": "Malik à l'apex, au centre.",
-      "status": "provisoire, à ajuster à la réception de l'image"
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)"
     },
     {
       "id": "p38",
@@ -1150,7 +1169,7 @@
         "y": 70
       },
       "note": "★ Tofana : la paroi occupe les trois quarts ; Malik au tiers central bas ; le recul découvre la paroi.",
-      "status": "provisoire, à ajuster à la réception de l'image",
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)",
       "fallback": "pleine-largeur"
     },
     {
@@ -1164,23 +1183,24 @@
       ],
       "type": "groupe",
       "start": {
-        "x": 31.18,
+        "x": 40,
         "y": 0,
         "w": 31.64,
         "h": 100
       },
       "end": {
-        "x": 39.18,
+        "x": 44,
         "y": 0,
         "w": 31.64,
         "h": 100
       },
       "poi": {
-        "x": 50,
-        "y": 55
+        "x": 66,
+        "y": 30
       },
       "note": "Malik et Clara au tiers central ; le cadre suit Clara qui le dépasse (sens à vérifier).",
-      "status": "provisoire, à ajuster à la réception de l'image"
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)",
+      "note9": "la cycliste ; le coureur (gauche) sort de la bande"
     },
     {
       "id": "p40",
@@ -1209,7 +1229,7 @@
         "y": 55
       },
       "note": "★ Clara au tiers central sur la piste, sommets au fond ; glissé latéral.",
-      "status": "provisoire, à ajuster à la réception de l'image",
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)",
       "fallback": "pleine-largeur"
     },
     {
@@ -1239,7 +1259,7 @@
         "y": 55
       },
       "note": "Roue au centre.",
-      "status": "provisoire, à ajuster à la réception de l'image"
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)"
     },
     {
       "id": "p42",
@@ -1268,7 +1288,7 @@
         "y": 50
       },
       "note": "★ Épingle en S, Clara au centre exact (plongée verticale) ; la rotation du 16:9 se garde.",
-      "status": "provisoire, à ajuster à la réception de l'image",
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)",
       "fallback": "pleine-largeur"
     },
     {
@@ -1298,7 +1318,7 @@
         "y": 58
       },
       "note": "★ Passo Giau : Clara dans un lacet au tiers central, Ra Gusela au-dessus ; l'élévation ouvre le cadre.",
-      "status": "provisoire, à ajuster à la réception de l'image",
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)",
       "fallback": "pleine-largeur"
     },
     {
@@ -1328,7 +1348,7 @@
         "y": 40
       },
       "note": "Clara au centre, bras levés, soleil derrière la tête.",
-      "status": "provisoire, à ajuster à la réception de l'image"
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)"
     },
     {
       "id": "p45",
@@ -1357,7 +1377,7 @@
         "y": 55
       },
       "note": "Clara passe de gauche à droite au premier plan ; le cadre reste avec le groupe.",
-      "status": "provisoire, à ajuster à la réception de l'image"
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)"
     },
     {
       "id": "p46",
@@ -1387,7 +1407,7 @@
         "y": 70
       },
       "note": "Timelapse img35a -> img35b : même cadre pour les deux images (tentes au tiers central bas, ciel au-dessus).",
-      "status": "provisoire, à ajuster à la réception de l'image",
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)",
       "layout": "timelapse-meme-cadre"
     },
     {
@@ -1417,7 +1437,7 @@
         "y": 45
       },
       "note": "Quatre visages au tiers central : risque de couper les deux du bord.",
-      "status": "provisoire, à ajuster à la réception de l'image"
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)"
     },
     {
       "id": "p48",
@@ -1430,23 +1450,24 @@
       ],
       "type": "telephone",
       "start": {
-        "x": 34.18,
+        "x": 42,
         "y": 0,
         "w": 31.64,
         "h": 100
       },
       "end": {
-        "x": 35.76,
+        "x": 43.5,
         "y": 5,
         "w": 28.48,
         "h": 90
       },
       "poi": {
-        "x": 50,
-        "y": 50
+        "x": 57,
+        "y": 45
       },
       "note": "Téléphone au centre, Léa de trois-quarts.",
-      "status": "provisoire, à ajuster à la réception de l'image"
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)",
+      "note9": "téléphone centré ; le visage (gauche) sort"
     },
     {
       "id": "p49",
@@ -1459,23 +1480,24 @@
       ],
       "type": "telephone",
       "start": {
-        "x": 41.14,
-        "y": 24,
-        "w": 17.72,
-        "h": 56
+        "x": 37.5,
+        "y": 8,
+        "w": 26.58,
+        "h": 84
       },
       "end": {
-        "x": 42.09,
-        "y": 27,
-        "w": 15.82,
-        "h": 50
+        "x": 38.6,
+        "y": 12,
+        "w": 22.78,
+        "h": 72
       },
       "poi": {
         "x": 50,
-        "y": 52
+        "y": 50
       },
       "note": "Très gros plan (recadrage de img37) : l'écran seul.",
-      "status": "provisoire, à ajuster à la réception de l'image"
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)",
+      "note9": "finit sur l'écran ENTIER (le cadre précédent le coupait)"
     },
     {
       "id": "p50",
@@ -1504,7 +1526,7 @@
         "y": 72
       },
       "note": "★ Bivouac au tiers central bas, Tre Cime et Voie lactée au-dessus ; recul et élévation.",
-      "status": "provisoire, à ajuster à la réception de l'image",
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)",
       "fallback": "pleine-largeur"
     },
     {
@@ -1518,23 +1540,24 @@
       ],
       "type": "telephone",
       "start": {
-        "x": 34.18,
+        "x": 28,
         "y": 0,
         "w": 31.64,
         "h": 100
       },
       "end": {
-        "x": 35.45,
+        "x": 29,
         "y": 4,
         "w": 29.11,
         "h": 92
       },
       "poi": {
-        "x": 50,
+        "x": 36,
         "y": 50
       },
       "note": "Téléphone et visage de Noah au tiers central.",
-      "status": "provisoire, à ajuster à la réception de l'image"
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)",
+      "note9": "téléphone entier, visage en partie"
     },
     {
       "id": "p52",
@@ -1565,7 +1588,7 @@
         "y": 50
       },
       "note": "Remontée img05 -> img04 -> img03 : centres de fuite au centre ; même cadre pour les trois.",
-      "status": "provisoire, à ajuster à la réception de l'image"
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)"
     },
     {
       "id": "p53",
@@ -1594,7 +1617,7 @@
         "y": 45
       },
       "note": "Terre de nuit + tracés : les tracés se recalculent en 1080×1920 (cosmos-vfx), la Terre se recadre.",
-      "status": "provisoire, à ajuster à la réception de l'image"
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)"
     },
     {
       "id": "p54",
@@ -1605,24 +1628,26 @@
       "sources": [],
       "type": "code",
       "start": {
-        "x": 34.18,
-        "y": 0,
-        "w": 31.64,
-        "h": 100
+        "x": 32,
+        "y": -13.78,
+        "w": 36,
+        "h": 113.78
       },
       "end": {
-        "x": 34.18,
-        "y": 0,
-        "w": 31.64,
-        "h": 100
+        "x": 32,
+        "y": -13.78,
+        "w": 36,
+        "h": 113.78
       },
       "poi": {
         "x": 50,
         "y": 50
       },
       "note": "Logo codé : composé nativement en 1080×1920, ce cadre ne sert que de repère.",
-      "status": "provisoire, à ajuster à la réception de l'image",
-      "layout": "natif-vertical"
+      "status": "provisoire, ajusté le 13/11 sur les images rendues (milieu de plan)",
+      "layout": "natif-vertical",
+      "letterbox": true,
+      "note9": "logo entier : boîte aux lettres en haut seulement (233 px sur le ciel, dans la zone d’interface haute), agrandi ×1,56 ; logo de 78 px du bord"
     }
   ]
 }

@@ -20,11 +20,14 @@ export const RATIO_TOL = 0.005; // 0,5 % relatif (les valeurs sont arrondies au 
 export const STARS = ['p26', 'p27', 'p30', 'p38', 'p40', 'p42', 'p43', 'p50'];
 const EPS = 1e-6;
 
-function checkRect(r, label, ratio, errs) {
+function checkRect(r, label, ratio, errs, letterbox = false) {
   if (!r || typeof r !== 'object') return errs.push(`${label} : cadre absent`);
   for (const k of ['x', 'y', 'w', 'h']) if (!Number.isFinite(r[k])) return errs.push(`${label} : ${k} manquant`);
   if (r.w <= 0 || r.h <= 0) errs.push(`${label} : taille nulle`);
-  if (r.x < -EPS || r.y < -EPS || r.x + r.w > 100 + EPS || r.y + r.h > 100 + EPS) errs.push(`${label} : sort de l'image (${r.x}, ${r.y}, ${r.w}, ${r.h})`);
+  // « letterbox » (P54 : logo entier) : le cadre déborde EN HAUTEUR seulement, sur fond encre ; la largeur reste dans l'image
+  if (letterbox) {
+    if (r.x < -EPS || r.x + r.w > 100 + EPS || r.h < 100 || r.y > EPS || r.y + r.h < 100 - EPS) errs.push(`${label} : boîte aux lettres mal posée (${r.x}, ${r.y}, ${r.w}, ${r.h})`);
+  } else if (r.x < -EPS || r.y < -EPS || r.x + r.w > 100 + EPS || r.y + r.h > 100 + EPS) errs.push(`${label} : sort de l'image (${r.x}, ${r.y}, ${r.w}, ${r.h})`);
   const q = r.w / r.h;
   if (Math.abs(q / ratio - 1) > RATIO_TOL) errs.push(`${label} : rapport ${q.toFixed(4)} au lieu de ${ratio.toFixed(4)}`);
 }
@@ -60,8 +63,10 @@ export function validate(data, trame, shotsJson = null) {
       return;
     }
     if (s.id === 'p46' && (s.layout !== 'timelapse-meme-cadre' || s.sources?.length !== 2)) errs.push(`${L} : timelapse à deux images et cadre commun attendu`);
-    checkRect(s.start, `${L} début`, RATIO_9x16, errs);
-    if (s.end !== null) checkRect(s.end, `${L} fin`, RATIO_9x16, errs);
+    const lb = s.letterbox === true;
+    if (lb && s.id !== 'p54') errs.push(`${L} : « letterbox » réservé au logo final (P54)`);
+    checkRect(s.start, `${L} début`, RATIO_9x16, errs, lb);
+    if (s.end !== null) checkRect(s.end, `${L} fin`, RATIO_9x16, errs, lb);
     if (s.poi && s.start && !inside(s.poi, s.start)) errs.push(`${L} : point d'intérêt hors du cadre de début`);
     if (s.poi && s.end && !inside(s.poi, s.end)) errs.push(`${L} : point d'intérêt hors du cadre de fin`);
   });
