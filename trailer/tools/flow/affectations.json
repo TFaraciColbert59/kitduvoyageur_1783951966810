@@ -4,6 +4,10 @@
   "image": "img43",
   "note": "la première image ne ressemble à aucune image source (écart auto 55, img43 à 73) ; contenu de la fiche P17 (macro, pouce qui appuie sur un écran vert, manche crème, taches de rousseur) mais cadrage différent de img43 (téléphone en bas, pouce venant du haut) ; vu à l'œil : tache blanchâtre sur le vert après l'appui (dès n°32)"
  },
+ "Hands_holding_phone_with_green_a5e92ac5_1080p.mp4": {
+  "image": "img43",
+  "note": "reprise de P17 demandée dans flow/REPRISES-1.md (déposée le 14/11 à 14:59 avec les quatre autres reprises) ; comme la première prise, la première image ne ressemble à aucune image source (écart auto 55) : Flow a encore recadré img43 ; rattachée à P17 par l'orchestrateur d'après le nom et le lot"
+ },
  "Drone_flying_over_alpine_lake_170193d3_1080p.mp4": {
   "note": "part de img09b (Sorapis, fiche P30) alors que le nom Flow évoque le survol en drone de la fiche P10 (img09) : probablement le prompt P10 lancé avec la mauvaise image ; P10 reste sans vidéo"
  },

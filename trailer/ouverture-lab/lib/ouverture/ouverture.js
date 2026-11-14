@@ -1,6 +1,6 @@
 /* LKDV trailer — lib/ouverture/ouverture.js (cosmos-vfx)
  * Ouverture « nébuleuse → création du système solaire → Terre d'aujourd'hui », 24 i/s, une seule caméra.
- * Lit window.LKDV_OUVERTURE (T_CREATION, T_SOLEIL, T_TERRE, DUREE, FPS) posé en tête de compositions/ouverture.html.
+ * Lit window.LKDV_OUVERTURE (T_CREATION, T_SOLEIL, T_TERRE, T_NUAGES, T_VILLE, T_FENETRE, DUREE, FPS) posé en tête de compositions/ouverture.html.
  *
  * Rendu WebGL2 en deux passes, chaque image est une fonction pure de son numéro :
  *   A. gaz (960×540) : nébuleuse en bruit fractal à domaine déformé, effondrement (chute radiale + rotation
@@ -14,16 +14,42 @@
  */
 (function () {
   "use strict";
-  var CFG = window.LKDV_OUVERTURE || { T_CREATION: 35, T_SOLEIL: 47, T_TERRE: 59, DUREE: 106, FPS: 24 };
+  var CFG = window.LKDV_OUVERTURE || { T_CREATION: 20, T_SOLEIL: 32, T_TERRE: 44, T_NUAGES: 76, T_VILLE: 96, T_FENETRE: 126, DUREE: 126, FPS: 24 };
   var TC = CFG.T_CREATION, TS = CFG.T_SOLEIL, TT = CFG.T_TERRE, D = CFG.DUREE, FPS = CFG.FPS || 24;
+  var TN = CFG.T_NUAGES, TV = CFG.T_VILLE, TF = CFG.T_FENETRE || D;
+  /* Repères internes de la descente, normalisés entre les repères du bloc CONFIG (valeurs par défaut entre parenthèses) :
+   * T_CLOUD (84) cœur de la traversée du nuage = 3e phrase de l'intro (attaque mesurée à 3,502 s) ;
+   * T_IMG5 (107) on passe sur les toits (img05) = attaque mesurée à 4,442 s ; T_VITRE (117) la fenêtre grossit = attaque à 4,880 s. */
+  var TCLOUD = TN + 0.4 * (TV - TN), T5 = TV + 0.367 * (TF - TV), TVITRE = TV + 0.7 * (TF - TV);
   var W = 1920, H = 1080, GW = 1920, GH = 1080; // gaz en pleine résolution : filaments nets
   var N = TT - TS; // images entre l'éclair et la Terre
 
   /* Plaque d'arrivée img01 : limbe mesuré (cercle ajusté sur 47 points du limbe bleu, écart max 5,6 px). */
   var PLATE = { C: [2369, 3986], R: 3862, sun: [1750, 182], F: [1480, 560] };
-  /* Arrivée : la caméra tombe vers les Alpes (F d'img01), qui glissent vers AIM_END ; img02 (Dolomites au lever)
-   * est emboîtée dans img01 autour de F à l'échelle 1/IMG2_K et prend le relais quand la plaque devient trop douce. */
-  var AIM_END = [1010, 610], IMG2_K = 4.2, ROLL_END = 8;
+  /* Descente : plaques emboîtées autour d'un point visé, qui reste au point de fuite S.
+   * img01 (orbite, visée F) → img03 (stratosphère, mer de nuages, visée A3) → img04 (le nuage se déchire sur la ville, A4)
+   * → img05 (toits à l'heure bleue, visée = la fenêtre éclairée, mesurée 939,505 → 979,567). k = agrandissement d'une plaque
+   * dans la suivante. Échelle écran de la plaque i = K / (produit des k) ; K = échelle d'img01 (1 à T_TERRE). */
+  var CH = { A3: [1000, 700], A4: [1130, 505], A5: [959, 536], k3: 3.2, k4: 3.0, k5: 4.5, win: 45 };
+  CH.K3 = CH.k3; CH.K4 = CH.k3 * CH.k4; CH.K5 = CH.K4 * CH.k5;
+  var ROLL_EARTH = 8, ROLL_END = 16;
+  /* ln K aux repères, interpolation monotone (Fritsch–Carlson) : la poussée part dès T_TERRE et accélère jusqu'à la vitre. */
+  var KX = [TT, TN, TV, T5, TF], KY = [0, Math.log(1.1 * CH.K3), Math.log(1.05 * CH.K4), Math.log(1.0 * CH.K5), Math.log(CH.win * CH.K5)];
+  var KM = (function () {
+    var n = KX.length, d = [], m = [];
+    for (var i = 0; i < n - 1; i++) d.push((KY[i + 1] - KY[i]) / (KX[i + 1] - KX[i]));
+    m[0] = 0.035; m[n - 1] = d[n - 2] * 1.25;
+    for (i = 1; i < n - 1; i++) m[i] = d[i - 1] * d[i] <= 0 ? 0 : (d[i - 1] + d[i]) / 2;
+    for (i = 1; i < n - 1; i++) m[i] = Math.min(m[i], 3 * d[i - 1], 3 * d[i]);
+    return m;
+  })();
+  function lnK(fr) {
+    if (fr <= TT) return 0;
+    if (fr >= TF) return KY[4] + KM[4] * (fr - TF);
+    var i = 0; while (i < 3 && fr > KX[i + 1]) i++;
+    var h = KX[i + 1] - KX[i], t = (fr - KX[i]) / h, t2 = t * t, t3 = t2 * t;
+    return (2 * t3 - 3 * t2 + 1) * KY[i] + (t3 - 2 * t2 + t) * h * KM[i] + (-2 * t3 + 3 * t2) * KY[i + 1] + (t3 - t2) * h * KM[i + 1];
+  }
   var Z0 = 330; // px par unité (rayon de l'orbite terrestre = 1)
   var RHO = 0.005; // rayon de la Terre en unités
   var TILT = -0.26, CI = 0.36; // inclinaison du disque (roulis apparent, cos de l'inclinaison)
@@ -51,8 +77,8 @@
   function bump(u) { return sm(ramp(0.3, 0.66, u)) * (1 - sm(ramp(0.7, 1.0, u))); }
   var V_END = 0.014;
   function vBase(fr) { // vitesse de poussée (ln Z par image) hors bosse de plongée
-    if (fr < TC) return 0.021;
-    if (fr < TS) return 0.021 + 0.014 * sm(ramp(TC, TS, fr));
+    if (fr < TC) return 0.028;
+    if (fr < TS) return 0.028 + 0.007 * sm(ramp(TC, TS, fr));
     if (fr < TT) return lerp(0.035, V_END, ramp(TS, TT, fr));
     return V_END + 0.08 * Math.pow(ramp(TT, D - 1, fr), 2.2); // la chute s'amorce : poussée qui accélère vers les Alpes
   }
@@ -91,7 +117,8 @@
     if (fr < TC) d = -2 * ramp(0, TC, fr);
     else if (fr < TS) d = -2 - 3 * sm(ramp(TC, TS, fr));
     else if (fr < TT) d = -5 + 5 * sm(ramp(TS, TT, fr));
-    else { var u = ramp(TT, D - 1, fr); d = ROLL_END * (u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2); }
+    else if (fr < TN) { var u = ramp(TT, TN, fr); d = ROLL_EARTH * (u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2); }
+    else { var u2 = ramp(TN, TF, fr); d = ROLL_EARTH + (ROLL_END - ROLL_EARTH) * u2 * u2; } // la vrille s'accélère dans la chute
     return (d * Math.PI) / 180;
   }
   function diskToWorld(r, phi) { return rot([r * Math.cos(phi), r * Math.sin(phi) * CI], TILT); }
@@ -121,7 +148,7 @@
   var FB0 = TS + 0.3 * N;
   var G0 = null;
   function mainCam(fr) {
-    var L = look(tabL, fr), Z = Z0 * Math.exp(L), psi = psiAt(fr);
+    var L = fr > TT ? look(tabL, TT) + lnK(fr) : look(tabL, fr), Z = Z0 * Math.exp(L), psi = psiAt(fr);
     var E = diskToWorld(1, planetPhase(2, fr));
     var Fw = [E[0] + RHO * UF[0], E[1] + RHO * UF[1]];
     var a = sm(ramp(TS + 0.1 * N, TS + 0.45 * N, fr)), b = sm(ramp(FB0, TS + 0.6 * N, fr));
@@ -142,8 +169,8 @@
       var u = ramp(FB0, TT, fr), e = u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2;
       G = [lerp(G0[0], PLATE.F[0], e), lerp(G0[1], PLATE.F[1], e)];
     } else {
-      var ua = ramp(TT, D - 1, fr), ea = ua < 0.5 ? 2 * ua * ua : 1 - Math.pow(-2 * ua + 2, 2) / 2;
-      G = [lerp(PLATE.F[0], AIM_END[0], ea), lerp(PLATE.F[1], AIM_END[1], ea)];
+      var ua = ramp(TT, TN, fr), ea = ua < 0.5 ? 2 * ua * ua : 1 - Math.pow(-2 * ua + 2, 2) / 2;
+      G = [lerp(PLATE.F[0], 960, ea), lerp(PLATE.F[1], 540, ea)]; // le point visé vient au centre : chute verticale
     }
     var S = [lerp(nat[0], G[0], b), lerp(nat[1], G[1], b)];
     function toScreen(w) { var v = rot([Z * (w[0] - A[0]), Z * (w[1] - A[1])], psi); return [S[0] + v[0], S[1] + v[1]]; }
@@ -154,7 +181,7 @@
     if (ol > lim) { off = [(off[0] / ol) * lim, (off[1] / ol) * lim]; }
     var gk = Math.max(1, Rc / PLATE.R);
     // après T_TERRE le Soleil continue de monter au-dessus du limbe (vers l'extérieur du cercle d'img01)
-    var rise = 70 * Math.pow(ramp(TT, D - 1, fr), 0.8), nx = PLATE.sun[0] - PLATE.C[0], ny = PLATE.sun[1] - PLATE.C[1], nl = Math.hypot(nx, ny);
+    var rise = 70 * Math.pow(ramp(TT, TN, fr), 0.8), nx = PLATE.sun[0] - PLATE.C[0], ny = PLATE.sun[1] - PLATE.C[1], nl = Math.hypot(nx, ny);
     var sImg = [PLATE.sun[0] + (nx / nl) * rise, PLATE.sun[1] + (ny / nl) * rise];
     var goal = rot([(sImg[0] - PLATE.F[0]) * gk, (sImg[1] - PLATE.F[1]) * gk], psi);
     var ws = sm(ramp(TS + 0.45 * N, TT - 0.1 * N, fr));
@@ -193,7 +220,6 @@
   /* ---------- WebGL2 ---------- */
   var canvas = document.getElementById("ouverture-canvas");
   var plateImg = document.getElementById("ouverture-plate");
-  var plate2Img = document.getElementById("ouverture-plate2");
   var gl = canvas.getContext("webgl2", { preserveDrawingBuffer: true, antialias: false, alpha: false, premultipliedAlpha: false });
 
   var VS = "#version 300 es\nin vec2 p;void main(){gl_Position=vec4(p,0.,1.);}";
@@ -239,13 +265,13 @@
     " dens=pow(dens,1.15)*1.2;", // contraste local
     " float rid=1.-abs(2.*fbm(p*4.3+wv*2.4+3.7)-1.);float fil=pow(rid,5.)*env*.8;", // filaments nets
     " float rid2=1.-abs(2.*fbm(p*9.+wv*3.+17.)-1.);fil+=.12*pow(rid2,8.)*env;",
-    " float lane=smoothstep(.545,.6,fbm(p*2.2+wv*1.7+21.))*smoothstep(.2,.9,env*3.);", // couloirs de poussière découpés
+    " float lane=smoothstep(.5,.64,fbm(p*2.2+wv*1.7+21.))*smoothstep(.2,.9,env*3.)*(.55+.45*fbm(p*5.+wv*2.+4.));", // couloirs de poussière découpés
     " vec3 col=mix(VIO,MAG,smoothstep(.36,.62,zone));",
     " col=mix(col,CYA,smoothstep(.5,.74,wv.y)*.9);",
     " col=mix(col,GOL,smoothstep(.6,.86,n)*.75);",
     " float dust=smoothstep(.5,.74,fbm(p*1.9+2.6*wv+13.));",
     " dens*=1.-.8*dust*(1.-.6*uDisk);",
-    " dens*=1.-.8*lane*(1.-uDisk);",
+    " dens*=1.-.72*lane*(1.-uDisk);",
     " dens*=1.+1.5*uC*exp(-r*1.3);",
     // disque : anneaux, sillons des planètes, cavité et chaleur près du Soleil
     " float ring=.62+.38*sin(r*34.+n*6.);",
@@ -273,9 +299,9 @@
     " e+=bc*smoothstep(.35,.85,nb)*.32*uBack;",
     " if(uFgAmt>.001){vec2 wf=rotInv(s-uFO,uR)/uFK;vec2 fw=vec2(fbm(wf*.9+31.+uFr*.01),fbm(wf*.9+47.));",
     "  float fr1=1.-abs(2.*fbm(wf*2.1+fw*2.+5.)-1.);float ff=pow(fr1,9.);",
-    "  float fd=smoothstep(.58,.74,fbm(wf*1.4+fw*1.5+9.));",
+    "  float fd=smoothstep(.52,.8,fbm(wf*1.4+fw*1.5+9.))*(.6+.4*fbm(wf*4.+2.));",
     "  vec3 fc=mix(MAG,GOL,smoothstep(.4,.7,fw.x));",
-    "  e*=1.-.55*fd*uFgAmt;e+=fc*ff*1.0*uFgAmt;}",
+    "  e*=mix(vec3(1.),vec3(.42,.36,.55),fd*uFgAmt);e+=fc*ff*1.0*uFgAmt;}", // poussière qui absorbe en violet, pas en brun
     // voiles qui défilent pendant la plongée (tunnel de zoom)
     " if(uTunAmt>.001){vec2 rel=(s-uS)/700.;for(int i=0;i<3;i++){float ph=fract(uTun+float(i)/3.);float sc=exp2(ph*4.-1.);",
     "  float a=pow(sin(3.14159*ph),2.);vec2 rr=rel/sc;float wsp=fbm(rr*1.4+float(i)*17.3+vec2(fbm(rr*.7+float(i)),0.)*2.);",
@@ -287,7 +313,7 @@
   /* Passe B — composition. */
   var FS_MAIN = COMMON + "\n" + [
     "out vec4 o;",
-    "uniform sampler2D uGas;uniform sampler2D uPlate;uniform sampler2D uPlate2;",
+    "uniform sampler2D uGas;uniform sampler2D uPlate;uniform sampler2D uPl3;uniform sampler2D uPl4;uniform sampler2D uPl5;",
     "uniform vec2 uS;uniform float uZ;uniform vec2 uA;uniform vec2 uR;", // caméra principale (t)
     "uniform vec2 uSp;uniform float uZp;uniform vec2 uAp;uniform vec2 uRp;", // caméra principale (t − obturateur)
     "uniform vec2 uLO[3];uniform float uLK[3];uniform vec2 uLOp[3];uniform float uLKp[3];",
@@ -295,7 +321,8 @@
     "uniform vec2 uTilt;uniform float uCi;",
     "uniform float uPR[6],uPPhi[6],uPTrail[6],uPOn[6],uPSize[6];uniform vec3 uPCol[6];uniform vec2 uPHead[6];",
     "uniform vec2 uPE;uniform float uRc,uEarthTone,uPlateW,uPlateFull,uPlateOk,uStarAmt,uOrbAmt;",
-    "uniform vec2 uPlF;uniform float uPlR;uniform float uW2,uW2Full,uK2,uZb,uClAmt,uClNear,uClPh,uBreath,uNearAmt;uniform vec2 uNO;uniform float uNK,uNKp;",
+    "uniform vec2 uPlF;uniform float uPlR;uniform float uZb,uClAmt,uClPh,uBreath,uNearAmt;uniform vec2 uNO;uniform float uNK,uNKp;",
+    "uniform vec2 uA3,uA4,uA5;uniform float uK3,uK4,uK5,uW3,uW4,uW5,uWisp,uCover,uHole,uHaze,uMist,uTone,uWarm,uWinG,uWinR;",
     "const vec3 INK=vec3(11.,31.,23.)/255.,CREAM=vec3(250.,248.,245.)/255.;",
     "float starLayer(vec2 w,float k,float cell,float seed){",
     " vec2 g=w/cell;vec2 i=floor(g);float acc=0.;",
@@ -323,14 +350,15 @@
     " float fres=pow(1.-z,2.5);float side=.5+.5*dot(normalize(u+1e-5),sd);",
     " col=mix(col,vec3(.3,.62,1.)*(.55+.7*side),fres*.8);",
     " return col;}",
-    "vec3 plates(vec2 ss){",
-    " vec2 rel=rotInv(ss-uS,uR)*(uPlR/uRc);",
-    " vec3 c1=texture(uPlate,(uPlF+rel)/vec2(1920.,1080.)).rgb;",
-    " if(uW2>.001){vec2 p2=vec2(960.,540.)+rel*uK2;vec2 q2=(p2-vec2(960.,540.))/vec2(960.,540.);",
-    "  float m2=smoothstep(1.1,.5,length(q2))*smoothstep(.02,.3,p2.y/1080.);m2=max(m2,uW2Full*smoothstep(.04,.24,p2.y/1080.));",
-    "  vec3 c2=texture(uPlate2,p2/vec2(1920.,1080.)).rgb*vec3(.86,.88,.92);",
-    "  c1=mix(c1,c2,m2*uW2);}",
-    " return c1;}",
+    "vec4 plq(sampler2D t,vec2 p){float ed=min(min(p.x,1920.-p.x),min(p.y,1080.-p.y));",
+    " return vec4(texture(t,clamp(p,vec2(1.),vec2(1919.,1079.))/vec2(1920.,1080.)).rgb,smoothstep(0.,240.,ed));}",
+    "vec3 plates(vec2 ss){", // plaques emboîtées : d = écart au point visé, en pixels d'img01
+    " vec2 d=rotInv(ss-uS,uR)*(uPlR/uRc);",
+    " vec3 c=texture(uPlate,(uPlF+d)/vec2(1920.,1080.)).rgb;",
+    " if(uW3>.001){vec2 p=uA3+d*uK3;vec4 t=plq(uPl3,p);t.a*=smoothstep(140.,360.,p.y);c=mix(c,t.rgb,t.a*uW3);}", // sans le ciel d'img03
+    " if(uW4>.001){vec2 p=uA4+d*uK4;vec4 t=plq(uPl4,p);c=mix(c,t.rgb,t.a*uW4);}",
+    " if(uW5>.001){vec2 p=uA5+d*uK5;vec4 t=plq(uPl5,p);c=mix(c,t.rgb,t.a*uW5);}",
+    " return c;}",
     "void main(){",
     " vec2 s=vec2(gl_FragCoord.x,1080.-gl_FragCoord.y);",
     " float jit=h21(s+fract(uFr*.618)*91.);",
@@ -384,10 +412,11 @@
     " if(uRc>.6&&rr<1.2&&uPOn[2]>.001){",
     "  float m=clamp((1.-rr)*uRc+.5,0.,1.)*uPOn[2];",
     "  vec3 ec=vec3(0.);",
-    "  if(rr<1.){ec=earthProc(du*min(1.,.999/max(rr,1e-4)*rr),sd);}",
+    "  if(rr<1.&&uPlateFull<.999){ec=earthProc(du*min(1.,.999/max(rr,1e-4)*rr),sd);}",
     "  if(uPlateOk>.5&&uPlateW>.001){vec2 pu=uPlF+rotInv(s-uS,uR)*(uPlR/uRc);",
-    "   float ed=min(min(pu.x,1920.-pu.x),min(pu.y,1080.-pu.y));float pe=max(smoothstep(-320.,-30.,ed),uPlateFull);", // plaque prolongée en miroir
-    "   vec3 pc=vec3(0.);if(uZb>.002){for(int k=0;k<6;k++){float t=(float(k)+jit)/6.;pc+=plates(uS+(s-uS)*(1.-uZb*t));}pc/=6.;}else{pc=plates(s);}",
+    "   float ed=min(min(pu.x,1920.-pu.x),min(pu.y,1080.-pu.y));float pe=max(smoothstep(-420.,-10.,ed),uPlateFull);", // au-delà du bord : miroir déformé (pas de symétrie lisible), fondu large // plaque prolongée en miroir
+    "   vec2 brk=(ed<0.&&uPlateFull<.999)?vec2(fbm(pu/85.)-.5,fbm(pu/85.+7.)-.5)*min(-ed,320.)*1.1*(uRc/uPlR):vec2(0.);",
+    "   vec3 pc=vec3(0.);if(uZb>.002){for(int k=0;k<8;k++){float t=(float(k)+jit)/8.;pc+=plates(uS+(s+brk-uS)*(1.-uZb*t));}pc/=8.;}else{pc=plates(s+brk);}",
     "   if(uClAmt>.001&&rr<1.){vec2 rel=rotInv(s-uS,uR)*(uPlR/uRc)*pow(max(uRc/uPlR,1.),-.15)+vec2(uFr*1.1,uFr*.4);", // nuages qui dérivent, en parallaxe
     "    vec2 cw=vec2(fbm(rel/260.+3.),fbm(rel/260.+8.));float cn=fbm(rel/95.+cw*1.6);float ca=smoothstep(.56,.8,cn)*(.55+.45*fbm(rel/30.));",
     "    float cside=.5+.5*dot(normalize(du+1e-5),sd);vec3 cc=mix(vec3(.62,.68,.74),vec3(.95,.86,.74),cside*.6);",
@@ -403,10 +432,22 @@
     "  float lb=exp(-pow((rr-1.)*uRc/(5.+uRc*.004),2.))*(.5+.8*side)*uBreath;", // atmosphère qui respire
     "  float hz=(rr<1.)?exp(-(1.-rr)*uRc/90.)*uBreath*.5:0.;",
     "  ldr=1.-(1.-ldr)*exp(-vec3(.25,.6,1.)*(lb+hz)*.55);}",
-    " if(uClNear>.001){float cn=0.;for(int i=0;i<3;i++){float ph=fract(uClPh+float(i)/3.);float sc=exp2(ph*3.5-1.);float a=pow(sin(3.14159*ph),2.);",
-    "  for(int k=0;k<3;k++){vec2 ss=uS+(s-uS)*(1.-.06*float(k));vec2 rl=rotInv(ss-uS,uR)/(520.*sc);",
-    "   float wv=fbm(rl*1.3+float(i)*13.7+vec2(fbm(rl*.6+float(i)*3.),0.)*1.6);cn+=smoothstep(.5,.82,wv)*a/3.;}}",
-    "  cn*=smoothstep(80.,420.,length(s-uS));vec3 ncol=mix(vec3(.66,.72,.8),vec3(.98,.93,.86),.45);ldr=mix(ldr,ncol,clamp(cn*uClNear,0.,.85));}",
+    // nuages en coordonnées log-polaires autour du point de fuite : lambeaux étirés dans le sens de la chute,
+    // nappe pleine (traversée), trouée qui s'ouvre sur la ville, brume des toits. La phase suit ln K : ils filent avec la poussée.
+    " if(uWisp+uCover+uHaze+uMist>.001){",
+    "  vec2 rel=rotInv(s-uS,uR);float rl=length(rel)+1.;vec2 dir=rel/rl;float lr=log(rl);",
+    "  float acc=0.,lit=0.;",
+    "  for(int k=0;k<3;k++){float t=(float(k)+jit)/3.;float l2=lr-uZb*1.6*t;",
+    "   vec3 q=vec3(dir*4.5,l2*1.25-uClPh);vec3 qw=q+1.1*vec3(fbm3(q*.6+3.),fbm3(q*.6+7.),0.);",
+    "   float n=fbm3(qw);float wsp=smoothstep(.5,.78,n)*smoothstep(40.,700.,rl);",
+    "   vec3 q2=vec3(dir*2.,l2*.75-uClPh*.8);float n2=fbm3(q2+1.6*vec3(fbm3(q2*1.2+5.),fbm3(q2*1.2+9.),0.));",
+    "   float cov=clamp(uCover*1.4-.4+.7*(n2-.5),0.,1.)*smoothstep(uHole-380.,uHole+380.,rl);",
+    "   float hz=uHaze*(.5+.5*n2)*smoothstep(-200.,900.,rl);",
+    "   float ms=uMist*smoothstep(.42,.78,n2)*smoothstep(120.,950.,rl);",
+    "   acc+=clamp(max(max(wsp*uWisp*.85,cov),max(hz,ms)),0.,1.)/3.;lit+=n*.6+n2*.4;}",
+    "  lit/=3.;float cf=1.-smoothstep(40.,340.,rl);lit=mix(lit,.55,cf);acc=max(acc,uCover*.92*cf*smoothstep(uHole-380.,uHole+380.,rl));", // pas d'étoile de convergence au point de fuite
+    "  vec3 day=mix(vec3(.5,.56,.65),vec3(.8,.79,.76),smoothstep(.3,.75,lit));vec3 night=mix(vec3(.17,.21,.28),vec3(.42,.47,.55),smoothstep(.3,.75,lit));",
+    "  ldr=mix(ldr,mix(day,night,uTone),clamp(acc,0.,.95));}",
     // point bleu (la Terre trop petite pour un disque) : le grain du disque qui devient la Terre
     " float glare=0.;vec3 gcol=vec3(0.);",
     " {float de=length(s-uPE);float dot_=smoothstep(14.,2.,uRc)*uPOn[2];",
@@ -419,7 +460,9 @@
     "  vec3 sc=mix(vec3(1.,.82,.52),CREAM,.6);",
     "  gcol+=sc*uSunI*(core*3.5+halo*.55+an*.22+sp*.35)+vec3(1.,.78,.5)*uSunI*.18*exp(-d/900.);",
     "  gcol+=mix(vec3(1.,.72,.34),CREAM,.3)*uFlash*(.05+.45*exp(-d/600.)+1.8*exp(-d/200.));}",
+    " {float dw=length(s-uS);gcol+=vec3(1.,.66,.34)*uWinG*(exp(-dw/max(uWinR,1.))*.9+exp(-dw/(uWinR*4.+1.))*.25);}",
     " ldr=1.-(1.-ldr)*exp(-gcol);",
+    " if(uWarm>.001){float dw=length(s-uS);vec3 wc=mix(vec3(.88,.58,.31),vec3(1.,.84,.64),exp(-dw/480.));ldr=mix(ldr,wc,uWarm*.78);}", // la lumière de la fenêtre envahit le cadre (jamais blanc plein)
     " {float lu=dot(ldr,vec3(.2126,.7152,.0722));ldr=clamp(mix(vec3(lu),ldr,1.14),0.,1.);}",
     // grade : vignette, grain, encre dans les noirs, crème dans les hautes lumières
     " vec2 vc=(s-vec2(960.,540.))/vec2(960.,540.);ldr*=1.-.16*pow(clamp(length(vc)/1.35,0.,1.),2.);",
@@ -452,15 +495,15 @@
     return { p: p, u: u };
   }
 
-  var ok = !!gl, PG, PM, gasTex, fbo, plateTex, plateTex2, plateOk = 0, plate2Ok = 0;
-  function mkPlate() { // plaque : bords prolongés en miroir (pas de trou quand la plaque est plus petite que la Terre)
+  var ok = !!gl, PG, PM, gasTex, fbo, plateTex, plateOk = 0, chain = [];
+  function mkPlate(clampEdge) { // plaque : bords prolongés en miroir (pas de trou quand la plaque est plus petite que la Terre)
     var t = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, t);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([11, 31, 23, 255]));
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.MIRRORED_REPEAT);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.MIRRORED_REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, clampEdge ? gl.CLAMP_TO_EDGE : gl.MIRRORED_REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, clampEdge ? gl.CLAMP_TO_EDGE : gl.MIRRORED_REPEAT);
     return t;
   }
   if (ok) {
@@ -484,7 +527,7 @@
       gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, gasTex, 0);
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
       plateTex = mkPlate();
-      plateTex2 = mkPlate();
+      ['ouverture-img03', 'ouverture-img04', 'ouverture-img05'].forEach(function (id) { chain.push({ img: document.getElementById(id), tex: mkPlate(true), ok: 0 }); });
     } catch (e) {
       ok = false;
       window.__ouvertureError = String(e && e.message);
@@ -498,12 +541,14 @@
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, plateImg);
     plateOk = 1;
   }
-  function uploadPlate2() {
-    if (!ok || !plate2Img || !plate2Img.complete || !plate2Img.naturalWidth) return;
-    gl.bindTexture(gl.TEXTURE_2D, plateTex2);
-    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, plate2Img);
-    plate2Ok = 1;
+  function uploadChain() {
+    chain.forEach(function (c) {
+      if (!ok || c.ok || !c.img || !c.img.complete || !c.img.naturalWidth) return;
+      gl.bindTexture(gl.TEXTURE_2D, c.tex);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, c.img);
+      c.ok = 1;
+    });
   }
 
   /* ---------- Paramètres d'une image ---------- */
@@ -524,6 +569,7 @@
     });
     // les planètes s'effacent pendant la plongée (sauf la Terre)
     var dive = sm(ramp(Math.log(4), Math.log(40), lz));
+    var lk = lnK(f), w3 = sm(ramp(Math.log(0.55), Math.log(0.95), lk - Math.log(CH.K3)));
     planets.forEach(function (p, i) { if (i !== 2) p.on *= 1 - dive; });
     return {
       cam: cam, prv: prv, lay: lay, layp: layp,
@@ -539,10 +585,10 @@
       tunAmt: sm(ramp(Math.log(3), Math.log(9), lz)) * (1 - sm(ramp(TT - 3, TT + 3, f))),
       tunBlue: sm(ramp(Math.log(8), Math.log(400), lz)),
       gap: sm(ramp(TS + 1, TS + 0.35 * N, f)),
-      sunI: f < TS - 1 ? 0 : sm(ramp(TS - 1, TS, f)) * (0.9 + 5.5 * pulse) * (1 - 0.35 * sm(ramp(TT - 4, TT + 6, f))) * (1 + 0.6 * sm(ramp(TT, D - 1, f)) + 0.12 * Math.sin(Math.max(0, f - TT) * 0.4)),
+      sunI: f < TS - 1 ? 0 : sm(ramp(TS - 1, TS, f)) * (0.9 + 5.5 * pulse) * (1 - 0.35 * sm(ramp(TT - 4, TT + 6, f))) * (1 + 0.6 * sm(ramp(TT, TN, f)) + 0.12 * Math.sin(Math.max(0, f - TT) * 0.4)) * (1 - w3),
       proto: sm(ramp(TC - 2, TS, f)) * 0.9 * (1 - sm(ramp(TS, TS + 1, f))) + 0.12 * (1 - sm(ramp(TS - 2, TS, f))),
-      flash: 0.42 * pulse,
-      sunR: 9 + 14 * pulse + 5 * sm(ramp(TT, D - 1, f)),
+      flash: 0.5 * pulse,
+      sunR: 9 + 14 * pulse + 5 * sm(ramp(TT, TN, f)),
       earthTone: sm(ramp(TS + 1, TS + 0.32 * N, f)),
       plateW: sm(ramp(TT - 0.4 * N, TT - 0.05 * N, f)),
       plateFull: sm(ramp(TT - 2, TT, f)),
@@ -552,13 +598,23 @@
       uc: uc, ud: ud, nearP: nearP,
       fgAmt: 1 - sm(ramp(TC, TS - 1, f)),
       nearAmt: 1 - sm(ramp(TC - 2, TC + 0.6 * (TS - TC), f)),
-      w2: plate2Ok ? sm(ramp(2.4, 3.9, cam.Rc / PLATE.R)) : 0,
-      w2Full: sm(ramp(3.7, 4.6, cam.Rc / PLATE.R)),
-      zb: f > TT ? clamp(1 - Math.exp(-(cam.L - prv.L)), 0, 0.12) : 0,
-      clAmt: sm(ramp(TT - 3, TT + 4, f)),
-      clNear: sm(ramp(TT + 0.55 * (D - TT), D - 1, f)) * 0.95,
-      clPh: cam.L * 0.85,
-      breath: f < TT - 4 ? 0 : sm(ramp(TT - 4, TT + 2, f)) * (0.32 + 0.18 * Math.sin((f - TT) * 0.27) + 0.08 * Math.sin((f - TT) * 0.71)),
+      w3: chain[0] && chain[0].ok ? w3 : 0,
+      w4: chain[1] && chain[1].ok ? sm(ramp(Math.log(0.42), Math.log(0.8), lk - Math.log(CH.K4))) : 0,
+      w5: chain[2] && chain[2].ok ? sm(ramp(Math.log(0.38), Math.log(0.82), lk - Math.log(CH.K5))) : 0,
+      zb: f > TT ? clamp(1 - Math.exp(-(lnK(f) - lnK(f - SHUTTER))), 0, 0.22) : 0,
+      clAmt: sm(ramp(TT - 3, TT + 4, f)) * (1 - w3),
+      clPh: lk * 1.25,
+      breath: (f < TT - 4 ? 0 : sm(ramp(TT - 4, TT + 2, f)) * (0.32 + 0.18 * Math.sin((f - TT) * 0.27) + 0.08 * Math.sin((f - TT) * 0.71))) * (1 - w3),
+      // descente
+      haze: 0.62 * Math.exp(-Math.pow((lk - Math.log(CH.K3) - Math.log(0.74)) / 0.32, 2)), // entrée dans l'atmosphère : cache img01 → img03
+      wisp: sm(ramp(TT + 0.35 * (TN - TT), TN, f)) * (1 - 0.35 * sm(ramp(T5, TF, f))),
+      cover: 0.95 * sm(ramp(TN, TCLOUD, f)), // nappe pleine (traversée) : cache img03 → img04
+      hole: -420 + 2900 * Math.pow(sm(ramp(TCLOUD + 0.45 * (TV - TCLOUD), TV + 0.35 * (T5 - TV), f)), 1.2), // le nuage se déchire sur la ville
+      mist: 0.5 * Math.exp(-Math.pow((lk - Math.log(CH.K5) - Math.log(0.55)) / 0.4, 2)) + 0.18 * sm(ramp(T5, TF, f)), // brume des toits : cache img04 → img05
+      tone: sm(ramp(TCLOUD, TV, f)),
+      winG: sm(ramp(T5, TVITRE, f)) * 0.9 * Math.min(1, Math.exp(lk - Math.log(CH.K5)) / 6 + 0.2),
+      winR: 22 * Math.exp(lk - Math.log(CH.K5)),
+      warm: sm(ramp(TF - 3.2, TF - 0.6, f)),
     };
   }
 
@@ -595,7 +651,7 @@
     u = PM.u;
     gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, gasTex); gl.uniform1i(u.uGas, 0);
     gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, plateTex); gl.uniform1i(u.uPlate, 1);
-    gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, plateTex2); gl.uniform1i(u.uPlate2, 2);
+    ['uPl3', 'uPl4', 'uPl5'].forEach(function (nm, i) { gl.activeTexture(gl.TEXTURE2 + i); gl.bindTexture(gl.TEXTURE_2D, chain[i].tex); gl.uniform1i(u[nm], 2 + i); });
     gl.activeTexture(gl.TEXTURE0);
     gl.uniform2fv(u.uS, cam.S); gl.uniform1f(u.uZ, cam.Z); gl.uniform2fv(u.uA, cam.A); gl.uniform2fv(u.uR, cs(cam.psi));
     gl.uniform2fv(u.uSp, prv.S); gl.uniform1f(u.uZp, prv.Z); gl.uniform2fv(u.uAp, prv.A); gl.uniform2fv(u.uRp, cs(prv.psi));
@@ -618,8 +674,13 @@
     gl.uniform1f(u.uPlateW, P.plateW); gl.uniform1f(u.uPlateFull, P.plateFull); gl.uniform1f(u.uPlateOk, plateOk);
     gl.uniform1f(u.uStarAmt, P.starAmt); gl.uniform1f(u.uOrbAmt, P.orbAmt);
     gl.uniform2fv(u.uPlF, PLATE.F); gl.uniform1f(u.uPlR, PLATE.R);
-    gl.uniform1f(u.uW2, P.w2); gl.uniform1f(u.uW2Full, P.w2Full); gl.uniform1f(u.uK2, IMG2_K); gl.uniform1f(u.uZb, P.zb);
-    gl.uniform1f(u.uClAmt, P.clAmt); gl.uniform1f(u.uClNear, P.clNear); gl.uniform1f(u.uClPh, P.clPh); gl.uniform1f(u.uBreath, P.breath);
+    gl.uniform1f(u.uZb, P.zb);
+    gl.uniform2fv(u.uA3, CH.A3); gl.uniform2fv(u.uA4, CH.A4); gl.uniform2fv(u.uA5, CH.A5);
+    gl.uniform1f(u.uK3, CH.K3); gl.uniform1f(u.uK4, CH.K4); gl.uniform1f(u.uK5, CH.K5);
+    gl.uniform1f(u.uW3, P.w3); gl.uniform1f(u.uW4, P.w4); gl.uniform1f(u.uW5, P.w5);
+    gl.uniform1f(u.uWisp, P.wisp); gl.uniform1f(u.uCover, P.cover); gl.uniform1f(u.uHole, P.hole); gl.uniform1f(u.uHaze, P.haze);
+    gl.uniform1f(u.uMist, P.mist); gl.uniform1f(u.uTone, P.tone); gl.uniform1f(u.uWarm, P.warm); gl.uniform1f(u.uWinG, P.winG); gl.uniform1f(u.uWinR, P.winR);
+    gl.uniform1f(u.uClAmt, P.clAmt); gl.uniform1f(u.uClPh, P.clPh); gl.uniform1f(u.uBreath, P.breath);
     gl.uniform1f(u.uNearAmt, P.nearAmt); gl.uniform2fv(u.uNO, P.lay[5].o); gl.uniform1f(u.uNK, P.lay[5].k); gl.uniform1f(u.uNKp, P.nearP.k);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     gl.finish();
@@ -652,9 +713,9 @@
   tl.to(st, { t: dur, duration: dur, ease: "none", onUpdate: function () { draw(false); } }, 0);
   window.addEventListener("hf-seek", function () { draw(false); });
   plateImg.addEventListener("load", function () { uploadPlate(); draw(true); });
-  if (plate2Img) plate2Img.addEventListener("load", function () { uploadPlate2(); draw(true); });
+  ["ouverture-img03", "ouverture-img04", "ouverture-img05"].forEach(function (id) { var el = document.getElementById(id); if (el) el.addEventListener("load", function () { uploadChain(); draw(true); }); });
   uploadPlate();
-  uploadPlate2();
+  uploadChain();
   draw(true);
   window.__timelines = window.__timelines || {};
   window.__timelines["ouverture"] = tl;

@@ -1,5 +1,5 @@
 {
- "genere_le": "2026-11-14T14:30:53",
+ "genere_le": "2026-11-14T15:32:43",
  "script": "tools/flow/inventaire.py",
  "seuils": {
   "fige": 0.5,
@@ -17,14 +17,14 @@
   "planches": "qa/snapshots/flow"
  },
  "resume": {
-  "fichiers": 47,
-  "prises_uniques": 45,
+  "fichiers": 52,
+  "prises_uniques": 50,
   "fiches": 43,
-  "fiches_couvertes": 42,
-  "manquants": [
-   "P10"
+  "fiches_couvertes": 43,
+  "manquants": [],
+  "en_trop": [
+   "Hands_holding_phone_with_green_a5e92ac5_1080p.mp4"
   ],
-  "en_trop": [],
   "doublons": [
    {
     "fichier": "Drone_flying_over_alpine_lake_170193d3_1080p (1).mp4",
@@ -1046,6 +1046,131 @@
     "chemin": "qa/snapshots/flow/p30.jpg",
     "qualite_jpeg": 25,
     "octets": 324270
+   }
+  },
+  {
+   "fichier": "Drone_flying_over_alpine_lake_9b0b6d2f_1080p.mp4",
+   "chemin": "flow/clips/Drone_flying_over_alpine_lake_9b0b6d2f_1080p.mp4",
+   "md5": "30684f9989f69bd8c9d36e045e44ab44",
+   "date_modif": "2026-11-14T15:01:54",
+   "date_creation": "2026-11-14T15:01:54",
+   "codec": "h264",
+   "profil": "High",
+   "pix_fmt": "yuv420p",
+   "largeur": 1920,
+   "hauteur": 1080,
+   "r_frame_rate": "24/1",
+   "avg_frame_rate": "24/1",
+   "cadence": 24.0,
+   "images_comptees": 119,
+   "images_entete": 119,
+   "duree_video": 4.9583,
+   "duree_conteneur": 4.959,
+   "debit_video_kbps": 10901,
+   "debit_total_kbps": 11072,
+   "son": {
+    "codec": "aac",
+    "frequence": 48000,
+    "canaux": 2,
+    "debit_kbps": 141
+   },
+   "poids_octets": 6863244,
+   "doublon_de": null,
+   "images_decodees": 119,
+   "identification": {
+    "image": "img09",
+    "ecart": 2.91,
+    "ncc": 0.9979,
+    "deuxieme": "img22",
+    "ecart_deuxieme": 26.03,
+    "ncc_deuxieme": 0.6324,
+    "marge": 23.11,
+    "meilleur_ncc": "img09",
+    "accord_criteres": true,
+    "top5": [
+     {
+      "image": "img09",
+      "ecart": 2.91,
+      "ncc": 0.9979
+     },
+     {
+      "image": "img22",
+      "ecart": 26.03,
+      "ncc": 0.6324
+     },
+     {
+      "image": "img09b",
+      "ecart": 31.53,
+      "ncc": 0.6284
+     },
+     {
+      "image": "F6-clara",
+      "ecart": 43.26,
+      "ncc": 0.1887
+     },
+     {
+      "image": "F2-sami",
+      "ecart": 45.28,
+      "ncc": 0.0574
+     }
+    ]
+   },
+   "derniere_image_proche": {
+    "image": "img09",
+    "ecart": 22.15
+   },
+   "mouvement": {
+    "min": 3.308,
+    "mediane": 4.377,
+    "max": 6.059,
+    "moyenne": 4.437,
+    "cv": 0.147,
+    "courbe24": [
+     3.729,
+     3.689,
+     3.497,
+     3.532,
+     3.672,
+     3.824,
+     4.044,
+     3.923,
+     4.183,
+     4.72,
+     5.144,
+     5.212,
+     4.449,
+     4.712,
+     4.589,
+     4.323,
+     4.167,
+     4.424,
+     4.69,
+     4.612,
+     5.63,
+     5.589,
+     5.245,
+     5.193
+    ]
+   },
+   "fidelite_depart": 3.98,
+   "derive_premiere_derniere": 25.62,
+   "luminance": {
+    "premiere": 132.5,
+    "derniere": 129.8,
+    "saut": -2.7
+   },
+   "source": "img09",
+   "note": null,
+   "fiche": "P10",
+   "plan": "P10",
+   "prise": 1,
+   "nom_plan": "p10",
+   "alertes": [],
+   "copie": "flow/clips/plans/p10.mp4",
+   "planche": {
+    "chemin": "qa/snapshots/flow/p10.jpg",
+    "qualite_jpeg": 30,
+    "octets": 335568
    }
   },
   {
@@ -2385,6 +2510,132 @@
    }
   },
   {
+   "fichier": "Hands_holding_phone_with_green_a5e92ac5_1080p.mp4",
+   "chemin": "flow/clips/Hands_holding_phone_with_green_a5e92ac5_1080p.mp4",
+   "md5": "a342f41df08e496657f07c8aa50a6e61",
+   "date_modif": "2026-11-14T14:59:11",
+   "date_creation": "2026-11-14T14:59:11",
+   "codec": "h264",
+   "profil": "High",
+   "pix_fmt": "yuv420p",
+   "largeur": 1920,
+   "hauteur": 1080,
+   "r_frame_rate": "24/1",
+   "avg_frame_rate": "24/1",
+   "cadence": 24.0,
+   "images_comptees": 72,
+   "images_entete": 72,
+   "duree_video": 3.0,
+   "duree_conteneur": 3.0,
+   "debit_video_kbps": 2788,
+   "debit_total_kbps": 2977,
+   "son": {
+    "codec": "aac",
+    "frequence": 48000,
+    "canaux": 2,
+    "debit_kbps": 140
+   },
+   "poids_octets": 1116452,
+   "doublon_de": null,
+   "images_decodees": 72,
+   "identification": {
+    "image": "img32",
+    "ecart": 55.44,
+    "ncc": 0.2814,
+    "deuxieme": "img38",
+    "ecart_deuxieme": 55.76,
+    "ncc_deuxieme": 0.0768,
+    "marge": 0.32,
+    "meilleur_ncc": "img32",
+    "accord_criteres": true,
+    "top5": [
+     {
+      "image": "img32",
+      "ecart": 55.44,
+      "ncc": 0.2814
+     },
+     {
+      "image": "img38",
+      "ecart": 55.76,
+      "ncc": 0.0768
+     },
+     {
+      "image": "img37",
+      "ecart": 55.83,
+      "ncc": 0.0621
+     },
+     {
+      "image": "img05",
+      "ecart": 58.32,
+      "ncc": -0.031
+     },
+     {
+      "image": "img35b",
+      "ecart": 59.25,
+      "ncc": 0.2312
+     }
+    ]
+   },
+   "derniere_image_proche": {
+    "image": "img38",
+    "ecart": 58.29
+   },
+   "mouvement": {
+    "min": 0.175,
+    "mediane": 1.048,
+    "max": 4.627,
+    "moyenne": 1.406,
+    "cv": 0.821,
+    "courbe24": [
+     0.306,
+     0.381,
+     0.328,
+     1.959,
+     2.505,
+     2.265,
+     1.294,
+     1.718,
+     4.171,
+     2.928,
+     2.98,
+     2.339,
+     2.37,
+     1.394,
+     0.952,
+     1.333,
+     1.167,
+     0.79,
+     0.488,
+     0.272,
+     0.341,
+     0.412,
+     0.35,
+     0.352
+    ]
+   },
+   "fidelite_depart": 56.97,
+   "derive_premiere_derniere": 21.61,
+   "luminance": {
+    "premiere": 100.0,
+    "derniere": 106.2,
+    "saut": 6.2
+   },
+   "source": null,
+   "note": null,
+   "fiche": null,
+   "plan": null,
+   "prise": null,
+   "nom_plan": null,
+   "alertes": [
+    "aucune image source reconnue (plus proche img32, écart 55.44)"
+   ],
+   "planche": {
+    "chemin": "qa/snapshots/flow/hors-Hands_holding_phone_with_green_a5e92ac5_.jpg",
+    "qualite_jpeg": 60,
+    "octets": 327372
+   }
+  },
+  {
    "fichier": "Hikers_preparing_on_mountain_trail_800873a4_1080p.mp4",
    "chemin": "flow/clips/Hikers_preparing_on_mountain_trail_800873a4_1080p.mp4",
    "md5": "059c10ef7e9c836a27460b386011ad3b",
@@ -2888,6 +3139,134 @@
     "chemin": "qa/snapshots/flow/p27.jpg",
     "qualite_jpeg": 40,
     "octets": 348905
+   }
+  },
+  {
+   "fichier": "Man_pulls_woman_onto_rock_d170dd14_1080p.mp4",
+   "chemin": "flow/clips/Man_pulls_woman_onto_rock_d170dd14_1080p.mp4",
+   "md5": "df39dc68db7cb27b87affc9a77a523bb",
+   "date_modif": "2026-11-14T14:59:10",
+   "date_creation": "2026-11-14T14:59:10",
+   "codec": "h264",
+   "profil": "High",
+   "pix_fmt": "yuv420p",
+   "largeur": 1920,
+   "hauteur": 1080,
+   "r_frame_rate": "24/1",
+   "avg_frame_rate": "24/1",
+   "cadence": 24.0,
+   "images_comptees": 119,
+   "images_entete": 119,
+   "duree_video": 4.9583,
+   "duree_conteneur": 4.959,
+   "debit_video_kbps": 10682,
+   "debit_total_kbps": 10852,
+   "son": {
+    "codec": "aac",
+    "frequence": 48000,
+    "canaux": 2,
+    "debit_kbps": 140
+   },
+   "poids_octets": 6727165,
+   "doublon_de": null,
+   "images_decodees": 119,
+   "identification": {
+    "image": "img20",
+    "ecart": 17.05,
+    "ncc": 0.9527,
+    "deuxieme": "img24",
+    "ecart_deuxieme": 48.59,
+    "ncc_deuxieme": 0.2139,
+    "marge": 31.54,
+    "meilleur_ncc": "img20",
+    "accord_criteres": true,
+    "top5": [
+     {
+      "image": "img20",
+      "ecart": 17.05,
+      "ncc": 0.9527
+     },
+     {
+      "image": "img24",
+      "ecart": 48.59,
+      "ncc": 0.2139
+     },
+     {
+      "image": "img23",
+      "ecart": 49.8,
+      "ncc": 0.2886
+     },
+     {
+      "image": "img48",
+      "ecart": 49.82,
+      "ncc": 0.1705
+     },
+     {
+      "image": "img14",
+      "ecart": 50.16,
+      "ncc": 0.1512
+     }
+    ]
+   },
+   "derniere_image_proche": {
+    "image": "img45",
+    "ecart": 52.94
+   },
+   "mouvement": {
+    "min": 1.924,
+    "mediane": 6.468,
+    "max": 18.808,
+    "moyenne": 6.876,
+    "cv": 0.424,
+    "courbe24": [
+     4.514,
+     5.61,
+     7.171,
+     6.278,
+     8.587,
+     10.695,
+     11.743,
+     11.434,
+     9.189,
+     8.647,
+     10.581,
+     9.107,
+     7.18,
+     6.694,
+     6.445,
+     6.202,
+     7.176,
+     6.155,
+     5.301,
+     4.242,
+     3.253,
+     2.693,
+     2.115,
+     2.102
+    ]
+   },
+   "fidelite_depart": 17.89,
+   "derive_premiere_derniere": 86.75,
+   "luminance": {
+    "premiere": 94.6,
+    "derniere": 140.9,
+    "saut": 46.3
+   },
+   "source": "img20",
+   "note": null,
+   "fiche": "P28",
+   "plan": "P28",
+   "prise": 2,
+   "nom_plan": "p28-2",
+   "alertes": [
+    "durée 4.96 s pour 4 s demandées",
+    "identification à vérifier (écart 17.05, marge 31.54)"
+   ],
+   "copie": "flow/clips/plans/p28-2.mp4",
+   "planche": {
+    "chemin": "qa/snapshots/flow/p28-2.jpg",
+    "qualite_jpeg": 40,
+    "octets": 345622
    }
   },
   {
@@ -4212,6 +4591,133 @@
     "chemin": "qa/snapshots/flow/p35.jpg",
     "qualite_jpeg": 20,
     "octets": 343790
+   }
+  },
+  {
+   "fichier": "Trail_runner_leaping_over_stream_ae03725c_1080p.mp4",
+   "chemin": "flow/clips/Trail_runner_leaping_over_stream_ae03725c_1080p.mp4",
+   "md5": "7d877e3e95625adc633285f46a091f2f",
+   "date_modif": "2026-11-14T14:59:27",
+   "date_creation": "2026-11-14T14:59:27",
+   "codec": "h264",
+   "profil": "High",
+   "pix_fmt": "yuv420p",
+   "largeur": 1920,
+   "hauteur": 1080,
+   "r_frame_rate": "24/1",
+   "avg_frame_rate": "24/1",
+   "cadence": 24.0,
+   "images_comptees": 119,
+   "images_entete": 119,
+   "duree_video": 4.9583,
+   "duree_conteneur": 4.959,
+   "debit_video_kbps": 13313,
+   "debit_total_kbps": 13483,
+   "son": {
+    "codec": "aac",
+    "frequence": 48000,
+    "canaux": 2,
+    "debit_kbps": 140
+   },
+   "poids_octets": 8357975,
+   "doublon_de": null,
+   "images_decodees": 119,
+   "identification": {
+    "image": "img28",
+    "ecart": 4.21,
+    "ncc": 0.998,
+    "deuxieme": "img05",
+    "ecart_deuxieme": 36.66,
+    "ncc_deuxieme": -0.0805,
+    "marge": 32.45,
+    "meilleur_ncc": "img28",
+    "accord_criteres": true,
+    "top5": [
+     {
+      "image": "img28",
+      "ecart": 4.21,
+      "ncc": 0.998
+     },
+     {
+      "image": "img05",
+      "ecart": 36.66,
+      "ncc": -0.0805
+     },
+     {
+      "image": "img06",
+      "ecart": 37.36,
+      "ncc": 0.2444
+     },
+     {
+      "image": "img08",
+      "ecart": 37.4,
+      "ncc": 0.0456
+     },
+     {
+      "image": "img04",
+      "ecart": 37.53,
+      "ncc": 0.0963
+     }
+    ]
+   },
+   "derniere_image_proche": {
+    "image": "img28",
+    "ecart": 8.68
+   },
+   "mouvement": {
+    "min": 0.621,
+    "mediane": 1.214,
+    "max": 4.499,
+    "moyenne": 2.006,
+    "cv": 0.662,
+    "courbe24": [
+     2.06,
+     2.639,
+     2.908,
+     4.281,
+     4.197,
+     3.851,
+     3.912,
+     3.646,
+     3.277,
+     3.035,
+     2.614,
+     1.684,
+     0.955,
+     0.778,
+     0.837,
+     0.835,
+     0.738,
+     0.754,
+     0.77,
+     0.82,
+     0.778,
+     0.82,
+     0.768,
+     0.678
+    ]
+   },
+   "fidelite_depart": 5.01,
+   "derive_premiere_derniere": 8.52,
+   "luminance": {
+    "premiere": 82.1,
+    "derniere": 81.7,
+    "saut": -0.4
+   },
+   "source": "img28",
+   "note": null,
+   "fiche": "P37",
+   "plan": "P37",
+   "prise": 2,
+   "nom_plan": "p37-2",
+   "alertes": [
+    "durée 4.96 s pour 3 s demandées"
+   ],
+   "copie": "flow/clips/plans/p37-2.mp4",
+   "planche": {
+    "chemin": "qa/snapshots/flow/p37-2.jpg",
+    "qualite_jpeg": 20,
+    "octets": 309112
    }
   },
   {
@@ -6454,6 +6960,293 @@
     "chemin": "qa/snapshots/flow/p21.jpg",
     "qualite_jpeg": 30,
     "octets": 329082
+   }
+  },
+  {
+   "fichier": "Woman_smiling_at_phone_screen_eeb53a19_1080p.mp4",
+   "chemin": "flow/clips/Woman_smiling_at_phone_screen_eeb53a19_1080p.mp4",
+   "md5": "b7ee0f923f3ae396c9796ee13e647b18",
+   "date_modif": "2026-11-14T14:59:15",
+   "date_creation": "2026-11-14T14:59:15",
+   "codec": "h264",
+   "profil": "High",
+   "pix_fmt": "yuv420p",
+   "largeur": 1920,
+   "hauteur": 1080,
+   "r_frame_rate": "24/1",
+   "avg_frame_rate": "24/1",
+   "cadence": 24.0,
+   "images_comptees": 119,
+   "images_entete": 119,
+   "duree_video": 4.9583,
+   "duree_conteneur": 4.959,
+   "debit_video_kbps": 5990,
+   "debit_total_kbps": 6161,
+   "son": {
+    "codec": "aac",
+    "frequence": 48000,
+    "canaux": 2,
+    "debit_kbps": 141
+   },
+   "poids_octets": 3819346,
+   "doublon_de": null,
+   "images_decodees": 119,
+   "identification": {
+    "image": "img37",
+    "ecart": 13.65,
+    "ncc": 0.8099,
+    "deuxieme": "img35b",
+    "ecart_deuxieme": 28.67,
+    "ncc_deuxieme": 0.0005,
+    "marge": 15.02,
+    "meilleur_ncc": "img37",
+    "accord_criteres": true,
+    "top5": [
+     {
+      "image": "img37",
+      "ecart": 13.65,
+      "ncc": 0.8099
+     },
+     {
+      "image": "img35b",
+      "ecart": 28.67,
+      "ncc": 0.0005
+     },
+     {
+      "image": "img39",
+      "ecart": 28.89,
+      "ncc": 0.0945
+     },
+     {
+      "image": "img49",
+      "ecart": 30.49,
+      "ncc": -0.0789
+     },
+     {
+      "image": "img38",
+      "ecart": 37.11,
+      "ncc": 0.0096
+     }
+    ]
+   },
+   "derniere_image_proche": {
+    "image": "img37",
+    "ecart": 14.59
+   },
+   "mouvement": {
+    "min": 1.261,
+    "mediane": 2.095,
+    "max": 3.001,
+    "moyenne": 2.075,
+    "cv": 0.15,
+    "courbe24": [
+     1.36,
+     1.894,
+     1.938,
+     2.0,
+     2.188,
+     2.512,
+     2.284,
+     2.082,
+     2.145,
+     2.295,
+     2.368,
+     2.527,
+     2.066,
+     2.056,
+     2.163,
+     1.991,
+     2.167,
+     2.053,
+     2.12,
+     1.924,
+     2.081,
+     1.93,
+     1.639,
+     1.908
+    ]
+   },
+   "fidelite_depart": 14.72,
+   "derive_premiere_derniere": 4.91,
+   "luminance": {
+    "premiere": 43.3,
+    "derniere": 45.4,
+    "saut": 2.1
+   },
+   "source": "img37",
+   "note": null,
+   "fiche": "P48 + P49",
+   "plan": "P48",
+   "prise": 2,
+   "nom_plan": "p48-2",
+   "ecran_vert": {
+    "source": {
+     "surface_pct": 3.447,
+     "composante_pct": 3.49,
+     "boite": [
+      0.5521,
+      0.2926,
+      0.6771,
+      0.7
+     ],
+     "non_vert_dans_boite_pct": 31.5
+    },
+    "echantillons": [
+     {
+      "surface_pct": 2.896,
+      "composante_pct": 2.927,
+      "boite": [
+       0.5542,
+       0.2926,
+       0.675,
+       0.7
+      ],
+      "non_vert_dans_boite_pct": 40.5,
+      "image": 0
+     },
+     {
+      "surface_pct": 2.907,
+      "composante_pct": 2.94,
+      "boite": [
+       0.5542,
+       0.2926,
+       0.675,
+       0.7
+      ],
+      "non_vert_dans_boite_pct": 40.3,
+      "image": 11
+     },
+     {
+      "surface_pct": 2.819,
+      "composante_pct": 2.849,
+      "boite": [
+       0.5521,
+       0.2926,
+       0.6729,
+       0.6926
+      ],
+      "non_vert_dans_boite_pct": 41.1,
+      "image": 21
+     },
+     {
+      "surface_pct": 2.93,
+      "composante_pct": 2.955,
+      "boite": [
+       0.5562,
+       0.2963,
+       0.6792,
+       0.7037
+      ],
+      "non_vert_dans_boite_pct": 41.0,
+      "image": 32
+     },
+     {
+      "surface_pct": 3.274,
+      "composante_pct": 3.304,
+      "boite": [
+       0.5542,
+       0.2926,
+       0.6771,
+       0.7037
+      ],
+      "non_vert_dans_boite_pct": 34.6,
+      "image": 43
+     },
+     {
+      "surface_pct": 3.249,
+      "composante_pct": 3.273,
+      "boite": [
+       0.5542,
+       0.2926,
+       0.6771,
+       0.7
+      ],
+      "non_vert_dans_boite_pct": 34.6,
+      "image": 54
+     },
+     {
+      "surface_pct": 3.256,
+      "composante_pct": 3.283,
+      "boite": [
+       0.5562,
+       0.2926,
+       0.6792,
+       0.7
+      ],
+      "non_vert_dans_boite_pct": 34.4,
+      "image": 64
+     },
+     {
+      "surface_pct": 3.251,
+      "composante_pct": 3.28,
+      "boite": [
+       0.5562,
+       0.2926,
+       0.6792,
+       0.7
+      ],
+      "non_vert_dans_boite_pct": 34.5,
+      "image": 75
+     },
+     {
+      "surface_pct": 3.25,
+      "composante_pct": 3.282,
+      "boite": [
+       0.5542,
+       0.2926,
+       0.6771,
+       0.7
+      ],
+      "non_vert_dans_boite_pct": 34.5,
+      "image": 86
+     },
+     {
+      "surface_pct": 3.244,
+      "composante_pct": 3.272,
+      "boite": [
+       0.5542,
+       0.2926,
+       0.6771,
+       0.7
+      ],
+      "non_vert_dans_boite_pct": 34.7,
+      "image": 97
+     },
+     {
+      "surface_pct": 3.246,
+      "composante_pct": 3.277,
+      "boite": [
+       0.5542,
+       0.2926,
+       0.6771,
+       0.7
+      ],
+      "non_vert_dans_boite_pct": 34.6,
+      "image": 107
+     },
+     {
+      "surface_pct": 3.25,
+      "composante_pct": 3.28,
+      "boite": [
+       0.5542,
+       0.2926,
+       0.6771,
+       0.7
+      ],
+      "non_vert_dans_boite_pct": 34.5,
+      "image": 118
+     }
+    ],
+    "alertes": []
+   },
+   "alertes": [
+    "identification à vérifier (écart 13.65, marge 15.02)"
+   ],
+   "copie": "flow/clips/plans/p48-2.mp4",
+   "planche": {
+    "chemin": "qa/snapshots/flow/p48-2.jpg",
+    "qualite_jpeg": 40,
+    "octets": 329264
    }
   },
   {

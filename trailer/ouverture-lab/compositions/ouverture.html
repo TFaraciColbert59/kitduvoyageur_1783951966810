@@ -1,5 +1,6 @@
-<!-- OUVERTURE (images 0–105 à 24 i/s) — cosmos-vfx. Un seul mouvement de caméra, sans coupe :
-     nébuleuse (prélude silencieux) → effondrement, Soleil qui s'allume, disque et planètes qui filent → plongée sur la Terre.
+<!-- OUVERTURE / section « cosmos » (images 0–125 à 24 i/s) — cosmos-vfx. Un seul mouvement de caméra, sans coupe :
+     nébuleuse → effondrement, Soleil qui s'allume, disque et planètes → la Terre → mer de nuages → la ville → la fenêtre
+     éclairée de Léa, dont la lumière chaude envahit le cadre pour couper sur P06.
      Tout se recale sur la musique en changeant le bloc CONFIG ci-dessous (images à 24 i/s). -->
 <template>
   <style>
@@ -7,28 +8,40 @@
     #ouverture-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
     .ouverture-plate { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; opacity: 0; pointer-events: none; }
   </style>
-  <div id="root" data-composition-id="ouverture" data-width="1920" data-height="1080" data-duration="4.416666666666667">
+  <div id="root" data-composition-id="ouverture" data-width="1920" data-height="1080" data-duration="5.25">
     <!-- Plaque de la Terre d'arrivée (img01, même raccord que l'ancien P01). Si elle manque, la Terre reste 100 % en code. -->
     <img id="ouverture-plate" class="ouverture-plate" src="assets/footage/img01.png" alt="" />
-    <!-- img02 (Dolomites au lever) emboîtée dans img01 : prend le relais pendant la poussée finale vers les Alpes. -->
-    <img id="ouverture-plate2" class="ouverture-plate" src="assets/footage/img02.png" alt="" />
+    <!-- Descente (plaques emboîtées) : img03 stratosphère et mer de nuages, img04 le nuage se déchire sur la ville,
+         img05 les toits à l'heure bleue et la fenêtre éclairée de Léa. -->
+    <img id="ouverture-img03" class="ouverture-plate" src="assets/footage/img03.png" alt="" />
+    <img id="ouverture-img04" class="ouverture-plate" src="assets/footage/img04.png" alt="" />
+    <img id="ouverture-img05" class="ouverture-plate" src="assets/footage/img05.png" alt="" />
     <canvas id="ouverture-canvas" width="1920" height="1080" data-layout-allow-overflow></canvas>
   </div>
   <script>
     /* ===================== CONFIG — CALAGE MUSICAL (images à 24 i/s) =====================
-     * T_CREATION : fin du prélude silencieux, début de l'effondrement (entrée de STORM II).
+     * T_CREATION : fin du prélude, début de l'effondrement.
      * T_SOLEIL   : image du pic de l'éclair (le Soleil s'allume).
-     * T_TERRE    : la Terre remplit le cadre (raccord exact sur img01).
-     * DUREE      : longueur de la composition (images) ; reporter DUREE/24 dans les deux data-duration (ici et index.html).
-     * Garder T_CREATION + 3 <= T_SOLEIL <= T_TERRE - 8.
-     * Calage montage v3 (qa/MUSIQUE-V3.md) : zéro numérique jusqu'à l'image 13, musique audible vers 29,
-     * premier temps fort à 1,9405 s = image 47 (pic de l'éclair), première note franche à 4,414 s = image 106 (fin).
+     * T_TERRE    : la Terre remplit le cadre (raccord exact sur img01) ; la poussée part aussitôt.
+     * T_NUAGES   : on entre dans la mer de nuages (img03).
+     * T_VILLE    : le nuage se déchire sur la ville (img04).
+     * T_FENETRE  : fin : la lumière de la fenêtre de Léa a envahi le cadre (coupe sur P06).
+     * DUREE      : longueur (images) = T_FENETRE ; reporter DUREE/24 dans les deux data-duration (ici et index.html) —
+     *              sinon `npx hyperframes check` échoue (console_error) et `node tools/verifie-duree.mjs` sort en erreur.
+     * Garder T_CREATION + 3 <= T_SOLEIL <= T_TERRE - 8 < T_NUAGES < T_VILLE < T_FENETRE.
+     * Calage montage v4 (qa/MUSIQUE-V4.md, qa/mix-v4.beats.json, champ intro) : son dès l'image 0 ; allumage du Soleil sur
+     * l'attaque mesurée à 1,324 s = image 32 ; section cosmos = 3 mesures, images 0–126 (P06 commence à 126).
+     * Repères internes calés sur les autres attaques de l'intro : 84 (3,502 s) cœur du nuage, 107 (4,442 s) les toits,
+     * 117 (4,880 s) la fenêtre grandit — voir ouverture.js (TCLOUD, T5, TVITRE).
      * Toutes les phases sont des progressions normalisées entre ces repères : rien d'autre à toucher. */
     window.LKDV_OUVERTURE = {
-      T_CREATION: 35,
-      T_SOLEIL: 47,
-      T_TERRE: 59,
-      DUREE: 106,
+      T_CREATION: 20,
+      T_SOLEIL: 32,
+      T_TERRE: 44,
+      T_NUAGES: 76,
+      T_VILLE: 96,
+      T_FENETRE: 126,
+      DUREE: 126,
       FPS: 24,
     };
   </script>
