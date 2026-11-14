@@ -49,6 +49,7 @@
         c2.drawImage(img, 0, 0, W, H);
       }
       function shoot(camAt, f, shutter) {
+        camAt = FX.pastCam(camAt, fit); // CORRECTIONS-4 : filé de l image 0 prolongé avant le plan
         var a = camAt(f), b = camAt(f - shutter);
         var d = Math.abs(a.S - b.S) * 1100 + (Math.abs(a.cx - b.cx) + Math.abs(a.cy - b.cy)) * a.S + Math.abs((a.rot || 0) - (b.rot || 0)) * 1100;
         var n = FX.clamp(Math.ceil(d / 1.2), 1, 12);

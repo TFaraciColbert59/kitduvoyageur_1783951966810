@@ -131,6 +131,44 @@
     ctx.restore();
   };
 
+  /* Caméra prolongée avant l'image 0 (CORRECTIONS-4, « image flash ») : les caméras des plans bornent leurs
+   * courbes à f >= 0 (clamp), si bien que les sous-poses du filé de l'image 0 (f - shutter < 0) retombaient
+   * toutes sur la pose de l'image 0 : image nette, alors que l'image 1, à pleine vitesse d'entrée, était filée.
+   * Ici, pour f < 0, la caméra continue en ligne droite à la vitesse de l'entrée (pente entre f = 0 et f = 1),
+   * comme si le mouvement venait du plan précédent. Champs numériques extrapolés, autres recopiés ; échelle
+   * gardée au-dessus de la couverture du cadre, puis recadrage par `fit` du plan s'il est fourni. */
+  FX.pastCam = function (camAt, fit) {
+    if (camAt.__past) return camAt;
+    var c0 = null, c1 = null;
+    var g = function (f) {
+      if (f >= 0) return camAt(f);
+      if (!c0) { c0 = camAt(0); c1 = camAt(1); }
+      var c = {};
+      for (var k in c0) {
+        if (typeof c0[k] === "number" && typeof c1[k] === "number") c[k] = c0[k] + (c1[k] - c0[k]) * f;
+        else c[k] = c0[k];
+      }
+      if (typeof c.S === "number") {
+        var r = Math.abs(c.rot || 0), co = Math.cos(r), si = Math.sin(r);
+        var smin = Math.max(co + si * (FX.H / FX.W), co + si * (FX.W / FX.H)) + 0.004;
+        // La caméra d'entrée part souvent au bord de l'image (le `fit` du plan la bloque) : plutôt que de laisser
+        // `fit` annuler le mouvement prolongé, on resserre un peu la sous-pose (≤ 8 %) pour qu'elle couvre le cadre.
+        // Seulement si l'entrée est surtout un glissé : pour une entrée en zoom, resserrer inverserait le zoom.
+        var zoomPx = Math.abs(c.S - c0.S) * 1100, slidePx = (Math.abs(c.cx - c0.cx) + Math.abs(c.cy - c0.cy)) * c0.S;
+        if (typeof c.cx === "number" && typeof c.cy === "number" && slidePx > zoomPx) {
+          var mx = Math.min(c.cx, FX.W - c.cx) - 2, my = Math.min(c.cy, FX.H - c.cy) - 2;
+          if (mx > 1) smin = Math.max(smin, (FX.W / 2 * co + FX.H / 2 * si) / mx);
+          if (my > 1) smin = Math.max(smin, (FX.W / 2 * si + FX.H / 2 * co) / my);
+          smin = Math.min(smin, c0.S * 1.08);
+        }
+        if (c.S < smin) c.S = smin;
+      }
+      return fit ? fit(c) : c;
+    };
+    g.__past = true;
+    return g;
+  };
+
   /* Horloge de scène : le temps local vient de la timeline GSAP de la scène (seekée par le runtime),
    * relu aussi à chaque `hf-seek`. render(t, frame) n'est appelé que si l'image change.
    * Retourne { tl, redraw } ; la timeline est enregistrée dans window.__timelines[id]. */

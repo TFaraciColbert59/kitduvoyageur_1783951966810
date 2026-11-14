@@ -49,6 +49,7 @@
         c2.drawImage(img, 0, 0, W, H);
       }
       function shoot(camAt, f, shutter) {
+        camAt = FX.pastCam(camAt, fit); // CORRECTIONS-4 : filé de l image 0 prolongé avant le plan
         var a = camAt(f), b = camAt(f - shutter);
         var d = Math.abs(a.S - b.S) * 1100 + (Math.abs(a.cx - b.cx) + Math.abs(a.cy - b.cy)) * a.S + Math.abs((a.rot || 0) - (b.rot || 0)) * 1100;
         var n = FX.clamp(Math.ceil(d / 1.2), 1, 12);
@@ -76,7 +77,7 @@
       }
       var clock = FX.bindClock("p38", N, function (t, f) {
         if (!img.complete || !img.naturalWidth) { ctx.fillStyle = INK; ctx.fillRect(0, 0, W, H); return; }
-        shoot(camAt, f, (f < 2 ? 0.6 - 0.24 * f : 0.12 + 0.23 * FX.clamp((f - 2) / 12, 0, 1)) + 0.6 * FX.ease.inCubic(FX.clamp((f - (N - 4)) / 4, 0, 1)));
+        shoot(camAt, f, 0.6 * Math.pow(1 - FX.clamp(f / 4, 0, 1), 2) + 0.12 + 0.23 * FX.clamp((f - 2) / 12, 0, 1) +0.6 * FX.ease.inCubic(FX.clamp((f - (N - 4)) / 4, 0, 1)));
       });
       img.addEventListener("load", function () { clock.redraw(); });
       window.__timelines["p38"] = clock.tl;
