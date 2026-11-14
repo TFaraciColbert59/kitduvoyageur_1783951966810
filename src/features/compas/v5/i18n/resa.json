@@ -316,6 +316,34 @@
         "de": "Reiseversicherung Rücktransport",
         "it": "assicurazione viaggio rimpatrio"
       },
+      "insuranceTrek": {
+        "fr": "trek haute altitude",
+        "en": "high altitude trek",
+        "es": "trekking de alta altitud",
+        "de": "Trekking in großer Höhe",
+        "it": "trekking in alta quota"
+      },
+      "car": {
+        "fr": "location voiture",
+        "en": "car rental",
+        "es": "alquiler de coche",
+        "de": "Mietwagen",
+        "it": "noleggio auto"
+      },
+      "days": {
+        "fr": "{n} jours",
+        "en": "{n} days",
+        "es": "{n} días",
+        "de": "{n} Tage",
+        "it": "{n} giorni"
+      },
+      "day": {
+        "fr": "1 jour",
+        "en": "1 day",
+        "es": "1 día",
+        "de": "1 Tag",
+        "it": "1 giorno"
+      },
       "visa": {
         "fr": "visa entrée",
         "en": "entry visa",

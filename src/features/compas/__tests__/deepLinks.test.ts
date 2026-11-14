@@ -120,8 +120,14 @@ describe('activitiesSearchUrl / carRentalUrl / objectSearchUrl (plan « À prév
     expect(activitiesSearchUrl('  ')).toBeNull();
     expect(activitiesSearchUrl(null)).toBeNull();
   });
-  it('location de voiture : page d’accueil sans paramètre (aucun format profond fiable), jamais d’affiliation', () => {
-    expect(carRentalUrl()).toBe('https://www.rentalcars.com/');
+  it('location de voiture : recherche web préremplie (lieu de prise, dates), aucun format profond inventé, jamais d’affiliation', () => {
+    expect(carRentalUrl({ label: 'location voiture', place: 'KEF', start: '2026-07-01', end: '2026-07-10' })).toBe(
+      'https://duckduckgo.com/?q=location%20voiture%20KEF%202026-07-01%202026-07-10'
+    );
+    expect(carRentalUrl({ label: 'location voiture', place: 'Reykjavik' })).toBe('https://duckduckgo.com/?q=location%20voiture%20Reykjavik');
+    expect(carRentalUrl({ label: 'location voiture', place: 'KEF', start: '2026-07-10', end: '2026-07-01' })).toBe(
+      'https://duckduckgo.com/?q=location%20voiture%20KEF%202026-07-10'
+    );
   });
   it('objet + lieu : recherche web préremplie, le lieu n’est pas répété s’il est déjà dans l’objet', () => {
     expect(objectSearchUrl('location vélo', 'Chamonix')).toBe('https://duckduckgo.com/?q=location%20v%C3%A9lo%20Chamonix');

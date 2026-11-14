@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BEFORE_DEPARTURE, REFUGE_BOOK_LEAD_DAYS, resaPlan, type ResaLine, type ResaPlanInput } from '../engine/resaPlan';
+import { BEFORE_DEPARTURE, REFUGE_BOOK_LEAD_DAYS, RESA_RANK_NIGHT, resaPlan, resaRank, type ResaLine, type ResaPlanInput } from '../engine/resaPlan';
 import { activitiesSearchUrl, carRentalUrl, objectSearchUrl } from '../engine/deepLinks';
 import { carRentalPerDay, entryFees, insurance, priceLevel } from '../engine/costs';
 import { engineT } from '../engine/engineI18n';
@@ -136,8 +136,21 @@ describe('resaPlan · location', () => {
       basis: expect.stringContaining('barème Compas'),
       per: 'group',
     });
-    expect(l.url).toBe(carRentalUrl());
-    expect(l.url).toBe('https://www.rentalcars.com/');
+    // Lien prérempli : lieu de prise (localité de la première étape, à défaut du code d'aéroport) et dates du voyage.
+    expect(l.url).toBe('https://duckduckgo.com/?q=location%20voiture%20Zakopane%202026-07-01%202026-07-10');
+  });
+  it('voiture de location : l’aéroport d’arrivée (code IATA) est le lieu de prise quand il est connu', () => {
+    const l = line(
+      plan({ activity: 'roadtrip', destinationCountry: 'IS', start: '2026-07-01', end: '2026-07-10', days: 10, approach: 'flight', arrivalAirport: 'kef', arrivalPlace: 'Reykjavik' }),
+      'rental-car'
+    );
+    expect(l.url).toBe(carRentalUrl({ label: 'location voiture', place: 'KEF', start: '2026-07-01', end: '2026-07-10' }));
+    expect(l.url).toBe('https://duckduckgo.com/?q=location%20voiture%20KEF%202026-07-01%202026-07-10');
+    expect(l.url).not.toMatch(/rentalcars|aid=|affiliate/i);
+  });
+  it('voiture de location sans dates : seul le lieu est dans la recherche', () => {
+    const l = line(plan({ activity: 'roadtrip', approach: 'flight', start: null, end: null, days: null, arrivalAirport: 'KEF' }), 'rental-car');
+    expect(l.url).toBe('https://duckduckgo.com/?q=location%20voiture%20KEF');
   });
   it('road trip : deux voitures pour cinq personnes (le barème de l’autofill : quatre places)', () => {
     const l = line(plan({ activity: 'roadtrip', destinationCountry: 'IS', days: 10, party: 5, approach: 'flight' }), 'rental-car');
@@ -213,6 +226,15 @@ describe('resaPlan · papiers, assurance, permis', () => {
     expect(l.kind).toBe('insurance');
     expect(l.when).toBe(BEFORE_DEPARTURE);
     expect(l.price).toEqual({ amount: insurance(4, { abroad: true, altitudeM: null }), currency: 'EUR', basis: expect.stringContaining('barème Compas'), per: 'person' });
+    // Lien : destination et durée dans la recherche ; « trek haute altitude » au-delà du seuil du barème (4 000 m).
+    expect(l.url).toBe('https://duckduckgo.com/?q=assurance%20voyage%20rapatriement%20Zakopane%204%20jours');
+    expect(line(plan({ destinationCountry: 'PT', days: 1, countryName: 'Portugal' }), 'insurance').url).toBe(
+      'https://duckduckgo.com/?q=assurance%20voyage%20rapatriement%20Portugal%201%20jour'
+    );
+    expect(line(plan({ destinationCountry: 'NP', days: 21, maxAltitudeM: 5400, countryName: 'Népal' }), 'insurance').url).toBe(
+      'https://duckduckgo.com/?q=assurance%20voyage%20rapatriement%20N%C3%A9pal%2021%20jours%20trek%20haute%20altitude'
+    );
+    expect(line(plan({ destinationCountry: 'NP', days: 21, maxAltitudeM: 3900, countryName: 'Népal' }), 'insurance').url).not.toContain('altitude');
     const high = line(plan({ destinationCountry: 'NP', days: 21, maxAltitudeM: 5400 }), 'insurance');
     expect(high.price?.amount).toBe(insurance(21, { abroad: true, altitudeM: 5400 }));
     expect(high.price!.amount).toBeGreaterThan(insurance(21, { abroad: true, altitudeM: null }));
@@ -276,6 +298,19 @@ describe('resaPlan · ordre et prix', () => {
     });
     const order = keys(lines);
     expect(order).toEqual(['visa', 'insurance', 'transfer', 'rental-gear', 'lift-pass', 'refuges', 'permit']);
+  });
+  it('ordre unique : ce qui se prend pour l’activité (matériel, forfait, permis, guide) vient après les nuits, le forfait juste après le matériel', () => {
+    for (const { input } of PROJECTS) {
+      const lines = plan(input);
+      const ranks = lines.map((l) => resaRank(l.key));
+      expect(ranks).toEqual([...ranks].sort((a, b) => a - b));
+      for (const l of lines) {
+        if (['rental-bike', 'rental-boat', 'rental-gear', 'lift-pass', 'refuges', 'permit', 'guide', 'activities'].includes(l.key)) expect(resaRank(l.key)).toBeGreaterThan(RESA_RANK_NIGHT);
+        if (['visa', 'insurance', 'transfer', 'rental-car'].includes(l.key)) expect(resaRank(l.key)).toBeLessThan(RESA_RANK_NIGHT);
+      }
+    }
+    expect(resaRank('lift-pass') - resaRank('rental-gear')).toBe(1);
+    expect(resaRank('rental-gear')).toBeGreaterThan(RESA_RANK_NIGHT);
   });
   it('un prix n’existe que s’il vient d’un barème versionné : tout le reste est sans prix', () => {
     const projects = PROJECTS.flatMap((p) => plan(p.input));

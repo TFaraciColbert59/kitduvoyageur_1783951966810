@@ -172,7 +172,7 @@ describe('« Tout réserver » : le plan complet', () => {
       ['night:2', true, 1],
     ]);
   });
-  it('plan unique et ordonné : question du départ, papiers, assurance, trajet, transfert, location, nuits, forfait, activités', () => {
+  it('plan unique et ordonné : question du départ, papiers, assurance, trajet, transfert, nuits, location du matériel, forfait (juste après), activités', () => {
     const data = makeData();
     const cards = nightCards(data.model, extras({ 1: [gite], 2: [refuge] })).map((c) => ({ ...c, chosen: null }));
     const line = (key: string, kind: ResaLine['kind']): ResaLine => ({ key, kind, title: key, why: 'pourquoi', when: BEFORE_DEPARTURE, url: 'https://a.example/' });
@@ -185,9 +185,9 @@ describe('« Tout réserver » : le plan complet', () => {
       'extra:insurance',
       'transport',
       'extra:transfer',
-      'extra:rental-gear',
       'night:1',
       'night:2',
+      'extra:rental-gear',
       'extra:lift-pass',
       'extra:activities',
     ]);

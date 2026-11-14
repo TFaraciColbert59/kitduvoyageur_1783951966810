@@ -13,7 +13,7 @@ import type { Locale } from '@/lib/i18n/locale';
 import { addDaysIso, stayDeepLink, transportDeepLink } from '../../engine/deepLinks';
 import { isNamedTrail } from '../../engine/intent';
 import type { EngineT } from '../../engine/engineI18n';
-import { resaPlan, resaRank, type ResaApproach, type ResaLine } from '../../engine/resaPlan';
+import { RESA_RANK_NIGHT, resaPlan, resaRank, type ResaApproach, type ResaLine } from '../../engine/resaPlan';
 import { notedStay } from '../../engine/stayProposal';
 import type { CompasData, CompasPoint, CompasShopProduct } from '../../server/getCompasData';
 import { extraKey, isResaBooked, isResaSkipped, type ResaStatus } from '../engine/resaStatus';
@@ -309,6 +309,7 @@ export function resaLinesFor(args: {
     base: model.destination,
     arrivalPlace: firstPlace(model),
     hub: extras.hub?.name ?? null,
+    arrivalAirport: approach === 'flight' && transport?.view.id === 'flight' ? (transport.view.airports?.to ?? null) : null,
     nights: model.preferences.nights,
     technicalLevel: data.danger.axes.technique.level,
     carFree: model.preferences.carFree === true,
@@ -531,7 +532,7 @@ export function reservationSteps(cards: readonly NightCard[], transport: Transpo
 /** Rang d'une ligne dans le plan : voir `reservationSteps`. */
 const RANK_ORIGIN = 0;
 const RANK_TRANSPORT = 25;
-const RANK_NIGHT = 44;
+const RANK_NIGHT = RESA_RANK_NIGHT;
 
 function stepRank(step: ReservationStep): number {
   if (step.kind === 'origin') return RANK_ORIGIN;

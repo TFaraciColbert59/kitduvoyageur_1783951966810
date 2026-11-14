@@ -152,9 +152,16 @@ export function activitiesSearchUrl(place: string | null | undefined): string | 
   return q ? `https://www.getyourguide.com/s/?q=${enc(q)}` : null;
 }
 
-/** Location de voiture : aucun format profond fiable (dates, agence) n'est connu, donc la page d'accueil, sans paramètre. */
-export function carRentalUrl(): string {
-  return 'https://www.rentalcars.com/';
+/**
+ * Location de voiture : aucun format de recherche profond, public et fiable (lieu, dates) n'est confirmé chez un
+ * loueur ou un comparateur ; la recherche web préremplie porte donc le lieu de prise (aéroport d'arrivée, sinon
+ * localité) et les dates du voyage. Aucun identifiant d'affiliation.
+ */
+export function carRentalUrl(input: { label: string; place?: string | null; start?: string | null; end?: string | null }): string {
+  const start = isoDate(input.start);
+  const end = isoDate(input.end);
+  const words = [input.label, clean(input.place), start, start && end && end >= start ? end : null].filter(Boolean).join(' ');
+  return objectSearchUrl(words, null) ?? 'https://duckduckgo.com/';
 }
 
 /**

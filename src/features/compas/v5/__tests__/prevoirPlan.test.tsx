@@ -86,10 +86,10 @@ afterEach(() => {
 });
 
 describe('plan complet pour ce type de voyage', () => {
-  it('assurance (barème), trajet, transfert, location, nuits, forfait : dans l’ordre, chacun avec son pourquoi, son moment et son prix ou « Prix sur le site »', () => {
+  it('assurance (barème), trajet, transfert, nuits, location du matériel, forfait : dans l’ordre, chacun avec son pourquoi, son moment et son prix ou « Prix sur le site »', () => {
     mount({}, { data: skiAbroad(), extras: trainOnly() });
     const panel = panelOf();
-    expect(keysOf(panel)).toEqual(['extra:insurance', 'transport', 'extra:transfer', 'extra:rental-gear', 'night:1', 'night:2', 'extra:lift-pass']);
+    expect(keysOf(panel)).toEqual(['extra:insurance', 'transport', 'extra:transfer', 'night:1', 'night:2', 'extra:rental-gear', 'extra:lift-pass']);
     // Assurance : prix du barème versionné, par personne, avec sa base ; « avant le départ ».
     expect(within(rowOf(panel, 'extra:insurance')).getByText(/par personne · barème Compas/)).toBeTruthy();
     expect(within(rowOf(panel, 'extra:insurance')).getByText(/Avant le départ/)).toBeTruthy();

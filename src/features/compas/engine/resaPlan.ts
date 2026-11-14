@@ -93,6 +93,8 @@ export interface ResaPlanInput {
   countryName?: string | null;
   /** Aéroport d'arrivée (nom OurAirports) ; sans lui, « l'aéroport ». */
   hub: string | null;
+  /** Code IATA de l'aéroport d'arrivée du vol retenu, quand il est connu : lieu de prise de la voiture de location. */
+  arrivalAirport?: string | null;
   /** Préférence de nuits du voyage (`preferences.nights`). */
   nights: 'bivouac' | 'refuge' | 'hebergement' | 'mixte' | null;
   /** Niveau de l'axe « technique » du danger : « guide conseillé » dès « vigilance ». */
@@ -125,16 +127,23 @@ const HUT_ACTIVITIES = new Set(['hiking', 'trekking', 'ski', 'mountaineering', '
 const TRAIL_ACTIVITIES = new Set(['hiking', 'trekking', 'bivouac', 'trail', 'mixed']);
 const TOWN_ACTIVITIES = new Set(['citytrip', 'beach', 'cultural']);
 
-/** Ordre où l'on s'en occupe : papiers, assurance, transfert, location, forfait et permis, guide, activités. */
+/** Rang des nuits dans le plan fusionné (`v5/model/prevoir.ts`) : après le transfert et la voiture de l'arrivée. */
+export const RESA_RANK_NIGHT = 44;
+
+/**
+ * Ordre unique où l'on s'en occupe : papiers, assurance, [trajet : 25], transfert et voiture de l'arrivée, [nuits :
+ * 44], puis ce qui se prend pour l'activité (location de vélo, d'embarcation ou de matériel, puis le forfait juste
+ * après, refuges, permis, guide, activités sur place).
+ */
 const RANK: Record<string, number> = {
   visa: 10,
   insurance: 20,
   transfer: 30,
   'rental-car': 40,
-  'rental-bike': 41,
-  'rental-boat': 42,
-  'rental-gear': 43,
-  'lift-pass': 50,
+  'rental-bike': 45,
+  'rental-boat': 46,
+  'rental-gear': 47,
+  'lift-pass': 48,
   refuges: 51,
   permit: 52,
   guide: 60,
@@ -191,7 +200,17 @@ export function resaPlan(input: ResaPlanInput): ResaLine[] {
               per: 'person',
             }
           : undefined,
-      url: objectSearchUrl(t('compas.v5.resa.q.insurance'), null),
+      url: objectSearchUrl(
+        [
+          t('compas.v5.resa.q.insurance'),
+          input.countryName?.trim() || base,
+          days != null ? t(days === 1 ? 'compas.v5.resa.q.day' : 'compas.v5.resa.q.days', { n: days }) : null,
+          high ? t('compas.v5.resa.q.insuranceTrek') : null,
+        ]
+          .filter(Boolean)
+          .join(' '),
+        null
+      ),
     });
   }
 
@@ -231,7 +250,12 @@ export function resaPlan(input: ResaPlanInput): ResaLine[] {
               per: 'group',
             }
           : undefined,
-      url: carRentalUrl(),
+      url: carRentalUrl({
+        label: t('compas.v5.resa.q.car'),
+        place: input.arrivalAirport?.trim().toUpperCase() || input.arrivalPlace?.trim() || base,
+        start: input.start,
+        end: input.end,
+      }),
     });
   }
 
