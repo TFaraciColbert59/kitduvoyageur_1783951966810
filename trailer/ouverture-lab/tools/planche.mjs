@@ -68,7 +68,40 @@ async function mesures(dir, outJson) {
   return res;
 }
 
+// Mouvement : différence absolue moyenne (0–255, RVB) entre images consécutives, sur des réductions 480×270.
+//   node tools/planche.mjs mouvement <dossier> <a-b> [<a-b> …]   → moyenne par plage + détail
+async function mouvement(dir, ranges) {
+  const cache = new Map();
+  const load = async (f) => {
+    if (!cache.has(f)) cache.set(f, await sharp(path.join(dir, `f-${pad(f)}.png`)).resize(480, 270).removeAlpha().raw().toBuffer());
+    return cache.get(f);
+  };
+  const out = {};
+  for (const r of ranges) {
+    const [a, b] = r.split("-").map(Number);
+    const d = [];
+    for (let f = a + 1; f <= b; f++) {
+      const p = await load(f - 1), q = await load(f);
+      let s = 0;
+      for (let i = 0; i < p.length; i++) s += Math.abs(p[i] - q[i]);
+      d.push(+(s / p.length).toFixed(2));
+    }
+    const m = d.reduce((x, y) => x + y, 0) / d.length;
+    const p0 = await load(a), p1 = await load(b);
+    let s = 0;
+    for (let i = 0; i < p0.length; i++) s += Math.abs(p0[i] - p1[i]);
+    out[r] = { moyenneConsecutive: +m.toFixed(2), min: Math.min(...d), max: Math.max(...d), premiereDerniere: +(s / p0.length).toFixed(2), detail: d };
+    console.log(r, "moyenne", m.toFixed(2), "min", Math.min(...d), "max", Math.max(...d), "écart image", a, "→", b, (s / p0.length).toFixed(2));
+  }
+  return out;
+}
+
 const [mode, dir, ...rest] = process.argv.slice(2);
 if (mode === "planche") await planche(dir, rest[0], +rest[1], +rest[2], frames(rest.slice(3)));
 else if (mode === "mesures") await mesures(dir, rest[0]);
+else if (mode === "mouvement") {
+  const json = rest.find((x) => x.endsWith(".json"));
+  const res = await mouvement(dir, rest.filter((x) => !x.endsWith(".json")));
+  if (json) fs.writeFileSync(json, JSON.stringify(res, null, 1));
+}
 else console.error("mode inconnu");
