@@ -100,7 +100,12 @@ export function C03DiscoverSection() {
         body: JSON.stringify(body),
       });
       const json = (await res.json().catch(() => null)) as
-        | { collection?: CollectionView; shareUrl?: string; error?: string }
+        | {
+            collection?: CollectionView;
+            link?: { id?: string; token?: string };
+            path?: string;
+            error?: string;
+          }
         | null;
       if (!res.ok) {
         setFeedback({
@@ -113,9 +118,12 @@ export function C03DiscoverSection() {
         return;
       }
       if (json?.collection) setActiveCollection(json.collection);
+      const sharePath =
+        json?.path ??
+        (json?.link?.token ? `/h/c/${encodeURIComponent(json.link.token)}` : null);
       setFeedback({
         tone: 'success',
-        message: json?.shareUrl ? `${okMessage} (${json.shareUrl})` : okMessage,
+        message: sharePath ? `${okMessage} (${sharePath})` : okMessage,
       });
       await loadCollections(collectionsQuery);
     } finally {

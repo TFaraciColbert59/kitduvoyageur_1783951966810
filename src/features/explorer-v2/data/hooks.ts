@@ -685,8 +685,19 @@ export function useBikePois(viewport: SearchViewport | null, enabled: boolean) {
       const res = await fetch(`/api/explorer/v2/bike-pois?${viewportQueryParams(viewport)}`, {
         headers: { Accept: 'application/json' },
       });
-      if (!res.ok) return { status: 'unavailable' as const, items: [] };
-      return (await res.json()) as BikePoisApiResponse;
+      const payload = (await res.json().catch(() => null)) as
+        | (BikePoisApiResponse & { code?: string })
+        | null;
+      if (
+        res.status === 400 &&
+        (payload?.status === 'zoom_required' ||
+          payload?.code === 'VIEWPORT_TOO_LARGE' ||
+          payload?.code === 'BBOX_TOO_LARGE')
+      ) {
+        return { status: 'zoom_required' as const, items: [] };
+      }
+      if (!res.ok || !payload) return { status: 'unavailable' as const, items: [] };
+      return payload;
     },
     staleTime: 5 * 60 * 1000,
     retry: 0,
@@ -754,8 +765,19 @@ export function useRouteSurfaces(viewport: SearchViewport | null, enabled: boole
       const res = await fetch(`/api/explorer/v2/surfaces?${viewportQueryParams(viewport)}`, {
         headers: { Accept: 'application/json' },
       });
-      if (!res.ok) return { status: 'unavailable', features: [], analysis: null } as SurfacesApiResponse;
-      return (await res.json()) as SurfacesApiResponse;
+      const payload = (await res.json().catch(() => null)) as
+        | (SurfacesApiResponse & { code?: string })
+        | null;
+      if (
+        res.status === 400 &&
+        (payload?.status === 'zoom_required' ||
+          payload?.code === 'VIEWPORT_TOO_LARGE' ||
+          payload?.code === 'BBOX_TOO_LARGE')
+      ) {
+        return { status: 'zoom_required', features: [], analysis: null } as SurfacesApiResponse;
+      }
+      if (!res.ok || !payload) return { status: 'unavailable', features: [], analysis: null } as SurfacesApiResponse;
+      return payload;
     },
     staleTime: 5 * 60 * 1000,
     retry: 0,

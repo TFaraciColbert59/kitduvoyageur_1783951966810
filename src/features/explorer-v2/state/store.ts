@@ -179,7 +179,6 @@ const initialState: ExplorerState = {
     surfaceLayer: false,
     hillshade: true,
     terrain3d: true,
-    contours: false,
     bikePois: false,
     savedPlaces: false,
     fires: false,

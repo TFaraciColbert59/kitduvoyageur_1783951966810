@@ -91,17 +91,26 @@ export interface CapturedLiveMedia {
   previewUrl?: string | null;
 }
 
+export type HeatmapSportId = 'all' | Sport;
+
+export type PersonalHeatmapPeriodId =
+  | 'all_time'
+  | 'last_7_days'
+  | 'last_30_days'
+  | 'last_90_days'
+  | 'year_to_date';
+
 export interface CommunityHeatmapState {
   enabled: boolean;
-  sport: string;
+  sport: HeatmapSportId;
   window: 'global' | 'last_7_days' | 'nocturnal';
 }
 
 export interface PersonalHeatmapState {
   enabled: boolean;
-  sport: string;
-  period: 'all_time' | 'year' | 'season' | 'month' | 'custom';
-  comparePeriod: 'all_time' | 'year' | 'season' | 'month' | null;
+  sport: HeatmapSportId;
+  period: PersonalHeatmapPeriodId;
+  comparePeriod: PersonalHeatmapPeriodId | null;
 }
 
 export type SportEnvironment = 'outdoor' | 'indoor';

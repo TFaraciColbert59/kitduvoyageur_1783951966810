@@ -5,26 +5,34 @@ import { createClient } from '@/lib/supabase/client';
 import { XpEmpty, XpEyebrow, XpRow, XpRows } from './blocks';
 import type { SheetContext } from './context';
 
-const HEATMAP_SPORTS = [
+export const HEATMAP_SPORTS = [
   { id: 'all', label: 'Tous sports' },
-  { id: 'hike', label: 'Rando' },
+  { id: 'rando', label: 'Rando' },
   { id: 'trail', label: 'Trail' },
-  { id: 'mtb', label: 'VTT' },
-  { id: 'road_cycling', label: 'Route' },
-  { id: 'gravel', label: 'Gravel' },
+  { id: 'velo', label: 'Vélo' },
+  { id: 'course', label: 'Course' },
+  { id: 'ski', label: 'Ski' },
 ] as const;
 
-const COMMUNITY_WINDOWS = [
+export const COMMUNITY_WINDOWS = [
   { id: 'global', label: 'Globale' },
   { id: 'last_7_days', label: '7 derniers jours' },
   { id: 'nocturnal', label: 'Nocturne' },
 ] as const;
 
-const PERSONAL_PERIODS = [
+export const PERSONAL_PERIODS = [
   { id: 'all_time', label: 'Tout temps' },
-  { id: 'year', label: 'Année' },
-  { id: 'season', label: 'Saison' },
-  { id: 'month', label: 'Mois' },
+  { id: 'year_to_date', label: 'Année' },
+  { id: 'last_90_days', label: '90 jours' },
+  { id: 'last_30_days', label: '30 jours' },
+  { id: 'last_7_days', label: '7 jours' },
+] as const;
+
+export const COMPARE_PERIODS = [
+  { id: null, label: 'Aucune' },
+  { id: 'year_to_date', label: 'Année' },
+  { id: 'last_30_days', label: '30 jours' },
+  { id: 'last_7_days', label: '7 jours' },
 ] as const;
 
 /**
@@ -188,11 +196,7 @@ export function HeatmapSubDrawer({
 
           <XpEyebrow>Comparaison entre périodes (S3.19)</XpEyebrow>
           <div className="xp-chiprow" role="radiogroup" aria-label="Comparer à">
-            {[
-              { id: null, label: 'Aucune' },
-              { id: 'year' as const, label: 'Année' },
-              { id: 'month' as const, label: 'Mois' },
-            ].map((cmp) => (
+            {COMPARE_PERIODS.map((cmp) => (
               <button
                 key={cmp.label}
                 type="button"

@@ -171,7 +171,11 @@ export async function POST(request: NextRequest) {
           res.error.code === 'not-found' ? 404 : res.error.code === 'forbidden' ? 403 : 400;
         return NextResponse.json({ error: res.error.message, code: res.error.code }, { status });
       }
-      return NextResponse.json({ collection: res.value.collection, link: res.value.link });
+      return NextResponse.json({
+        collection: res.value.collection,
+        link: res.value.link,
+        path: res.value.path,
+      });
     }
     case 'revoke_share':
       return respond(service.revoke(body.collectionId, body.linkId, viewer));

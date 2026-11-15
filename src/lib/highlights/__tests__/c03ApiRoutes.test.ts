@@ -131,6 +131,7 @@ describe('C03 API routes (Highlights, Collections, Discover, Route-Media)', () =
     const shareJson = await shareRes.json();
     const token: string | undefined = shareJson.link?.token;
     expect(token).toBeTruthy();
+    expect(shareJson.path).toBe(`/h/c/${encodeURIComponent(token!)}`);
 
     authed = false;
     const resolved = await getCollections(
