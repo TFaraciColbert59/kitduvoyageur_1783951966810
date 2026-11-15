@@ -92,6 +92,14 @@ const TraceImportDrawer = dynamic(
   () => import('./drawer/sortie/TraceImportDrawer').then((mod) => mod.TraceImportDrawer),
   { ssr: false }
 );
+const ManualActivityDrawer = dynamic(
+  () => import('./drawer/sortie/ManualActivityDrawer').then((mod) => mod.ManualActivityDrawer),
+  { ssr: false }
+);
+const OutingTrashDrawer = dynamic(
+  () => import('./drawer/sortie/OutingLifecyclePanels').then((mod) => mod.OutingTrashDrawer),
+  { ssr: false }
+);
 const ProgressionDrawer = dynamic(
   () => import('./drawer/progression/ProgressionDrawer').then((mod) => mod.ProgressionDrawer),
   { ssr: false }
@@ -1520,11 +1528,20 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
       if (items.length > 0) setBulkOutings(items);
     };
     const onOutingsChanged = () => { void syncSupabaseProfile(); };
+    const onOpenOuting = (event: Event) => {
+      const detail = (event as CustomEvent<{ outingId?: string }>).detail;
+      if (detail?.outingId && typeof window !== 'undefined') {
+        (window as unknown as { __lkdvCompteAct?: (a: string, v?: unknown) => void })
+          .__lkdvCompteAct?.('openProgressionOuting', detail.outingId);
+      }
+    };
     window.addEventListener('lkdv:open-outing-bulk', onOpenBulk);
     window.addEventListener('lkdv:outings-changed', onOutingsChanged);
+    window.addEventListener('lkdv:open-outing', onOpenOuting);
     return () => {
       window.removeEventListener('lkdv:open-outing-bulk', onOpenBulk);
       window.removeEventListener('lkdv:outings-changed', onOutingsChanged);
+      window.removeEventListener('lkdv:open-outing', onOpenOuting);
     };
   }, [user, syncSupabaseProfile]);
 
@@ -1696,6 +1713,22 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
           <SortieDrawer outingId={String(drawerMount.props?.outingId || '')} />
         ) : drawerMount.kind === 'trace-import' ? (
           <TraceImportDrawer />
+        ) : drawerMount.kind === 'manual-activity' ? (
+          <ManualActivityDrawer
+            onCancel={() => {
+              if (typeof window !== 'undefined') {
+                (window as any).__lkdvCompteAct?.('close');
+              }
+            }}
+          />
+        ) : drawerMount.kind === 'outing-trash' ? (
+          <OutingTrashDrawer
+            onClose={() => {
+              if (typeof window !== 'undefined') {
+                (window as any).__lkdvCompteAct?.('close');
+              }
+            }}
+          />
         ) : drawerMount.kind === 'progression' ? (
           <ProgressionDrawer
             initialView={

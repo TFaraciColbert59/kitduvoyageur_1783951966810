@@ -155,6 +155,34 @@ const VALID_BODY_ZONES: ReadonlySet<string> = new Set<RehabBodyZone>([
   'autre',
 ]);
 
+export const REHAB_BODY_ZONES: ReadonlyArray<{ id: RehabBodyZone; label: string }> = [
+  { id: 'genou', label: 'Genou' },
+  { id: 'cheville', label: 'Cheville' },
+  { id: 'hanche', label: 'Hanche' },
+  { id: 'epaule', label: 'Épaule' },
+  { id: 'dos', label: 'Dos' },
+  { id: 'cardio', label: 'Cardio / souffle' },
+  { id: 'autre', label: 'Autre zone' },
+];
+
+export function isRehabModeEnabled(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    return window.localStorage.getItem(REHAB_STORAGE_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+export function setRehabModeEnabled(enabled: boolean): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(REHAB_STORAGE_KEY, enabled ? '1' : '0');
+  } catch {
+    // Stockage local bloqué : ignoré sans erreur bloquante.
+  }
+}
+
 /**
  * Retourne les définitions de rééducation visibles selon l'état d'activation
  * du mode rééducation (S1.12).

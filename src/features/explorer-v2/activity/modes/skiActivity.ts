@@ -714,6 +714,41 @@ export class SkiSessionEngine {
   }
 
   /**
+   * Snapshot temps réel (sans fermer les segments en cours) pour alimenter le
+   * bandeau direct (S1.11).
+   */
+  getLiveSnapshot(): {
+    runsCount: number;
+    liftsCount: number;
+    verticalDropM: number;
+    elevGainM: number;
+    phase: SkiPhase;
+  } {
+    const activeDrop = this.activeRun
+      ? Math.max(
+          Math.max(0, this.activeRun.startElevationM - this.activeRun.currentElevationM),
+          this.activeRun.verticalDropM,
+        )
+      : 0;
+    const completedDrop = this.runs.reduce((sum, r) => sum + r.verticalDropM, 0);
+    const activeGain = this.activeLift
+      ? Math.max(
+          Math.max(0, this.activeLift.currentElevationM - this.activeLift.startElevationM),
+          this.activeLift.elevGainM,
+        )
+      : 0;
+    const completedGain = this.lifts.reduce((sum, l) => sum + l.elevGainM, 0);
+    const countsUphillEffort = this.skiVariant === 'ski-rando';
+    return {
+      runsCount: this.runs.length + (this.activeRun && activeDrop >= MIN_COMPLETED_RUN_DROP_M ? 1 : 0),
+      liftsCount: this.lifts.length,
+      verticalDropM: Math.round(completedDrop + activeDrop),
+      elevGainM: countsUphillEffort ? Math.round(completedGain + activeGain) : 0,
+      phase: this.phase,
+    };
+  }
+
+  /**
    * Clôt la séance ski/snowboard et produit le bilan complet avec les runs
    * détectés, le D- total et la séparation stricte descentes / remontées.
    */

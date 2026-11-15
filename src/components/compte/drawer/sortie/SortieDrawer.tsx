@@ -29,6 +29,7 @@ import ReportBlockModal, { type ReportTarget } from '@/components/ui/ReportBlock
 import { OverlaySheet } from '@/components/compte/overlay/OverlaySheet';
 import { MediaSharingHub, type MediaSharingTab } from '@/components/media-sharing/MediaSharingHub';
 import { buildOutingMediaSharingBundle } from '@/lib/media-sharing/outingAdapter';
+import { lifecycleApi } from '@/components/compte/lifecycle/api';
 
 async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, {
@@ -137,16 +138,19 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
     [outingId, run]
   );
 
-  const exportGpx = useCallback(() => {
-    if (!outingId) return;
-    const link = document.createElement('a');
-    link.href = `/api/compte/sorties/${outingId}/gpx`;
-    link.download = '';
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    notify('GPX en préparation');
-  }, [notify, outingId]);
+  const exportTrace = useCallback(
+    (format: 'gpx' | 'tcx' | 'original' = 'gpx') => {
+      if (!outingId) return;
+      const link = document.createElement('a');
+      link.href = `/api/compte/sorties/${outingId}/gpx?format=${format}`;
+      link.download = '';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      notify(`${format === 'original' ? 'Fichier original' : format.toUpperCase()} en préparation`);
+    },
+    [notify, outingId]
+  );
 
   const uploadPhoto = useCallback(
     async (file: File) => {
@@ -188,8 +192,9 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
   const deleteOuting = useCallback(async () => {
     setBusy(true);
     try {
-      await requestJson(`/api/compte/sorties/${outingId}`, { method: 'DELETE' });
-      notify('Sortie supprimée');
+      await lifecycleApi.trash(outingId);
+      notify('Sortie déplacée dans la corbeille (30 j)');
+      window.dispatchEvent(new CustomEvent('lkdv:outings-changed'));
       const runtime = window as unknown as { __lkdvCompteAct?: (action: string, value?: unknown) => void };
       runtime.__lkdvCompteAct?.('close');
     } catch (error) {
@@ -212,18 +217,31 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
                 saving={busy}
                 onSave={(patch) =>
                   run(
-                    () =>
-                      requestJson(`/api/compte/sorties/${outingId}`, {
+                    async () => {
+                      await requestJson(`/api/compte/sorties/${outingId}`, {
                         method: 'PATCH',
-                        body: JSON.stringify(patch),
-                      }),
+                        body: JSON.stringify({
+                          title: patch.title,
+                          notes: patch.notes,
+                          visibility: patch.visibility,
+                        }),
+                      });
+                      await lifecycleApi.updateMetadata(outingId, {
+                        title: patch.title,
+                        description: patch.notes,
+                        sport: patch.sport,
+                        tags: patch.tags,
+                      });
+                      window.dispatchEvent(new CustomEvent('lkdv:outings-changed'));
+                    },
                     'Sortie mise à jour'
                   )
                 }
                 onSaveMetrics={saveMetrics}
                 onResetMetrics={resetMetrics}
                 onShare={openAudience}
-                onExport={exportGpx}
+                onExport={exportTrace}
+                onUpdated={invalidate}
                 onDelete={deleteOuting}
               />
             );
@@ -232,8 +250,9 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
             return (
               <OutingTrace
                 detail={detail}
-                onExport={exportGpx}
+                onExport={exportTrace}
                 onOpenMediaHub={setMediaHubTab}
+                onUpdated={invalidate}
               />
             );
           }
@@ -376,7 +395,7 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
           );
         },
       })),
-    [busy, deleteOuting, detail, exportGpx, invalidate, openAudience, outingId, resetMetrics, run, saveMetrics, uploadPhoto, uploading]
+    [busy, deleteOuting, detail, exportTrace, invalidate, openAudience, outingId, resetMetrics, run, saveMetrics, uploadPhoto, uploading]
   );
 
   if (authLoading) {

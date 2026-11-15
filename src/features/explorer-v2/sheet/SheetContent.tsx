@@ -102,6 +102,13 @@ import {
   type SportStartContext,
   type SportVariant,
 } from './sportSelection';
+import {
+  LiveSpecializedPanel,
+  PoolSwimStartConfig,
+  RehabModeSection,
+  RouteExportButtons,
+  SummarySpecializedPanel,
+} from './SpecializedModePanels';
 
 export interface SheetModel {
   title: string;
@@ -329,6 +336,7 @@ export function SportPicker({ ctx }: { ctx: SheetContext }) {
         <XpRows>
           <StrengthEntry ctx={ctx} />
         </XpRows>
+        <RehabModeSection startContext={startContext} onStartSport={ctx.onStartSport} />
         <AutoPauseSetting sport={null} />
         <StartLimitNote />
       </>
@@ -385,6 +393,7 @@ export function SportPicker({ ctx }: { ctx: SheetContext }) {
           );
         })}
       </XpRows>
+      <PoolSwimStartConfig variantId={variant?.id ?? null} />
       <AutoPauseSetting sport={sport} />
       {variant && availability ? (
         <>
@@ -1846,6 +1855,7 @@ function ToolsTabs(ctx: SheetContext, kind: string): SheetTab[] {
                   onClick={() => ctx.state.openLayers()}
                 />
               </XpRows>
+              <RouteExportButtons routeId={route.id} routeName={route.name} />
               <XpEyebrow>Points d’eau et abris sur la trace</XpEyebrow>
               {nearbyWater.length > 0 || nearbyRefuges.length > 0 ? (
                 <XpRows>
@@ -2670,19 +2680,32 @@ export function LiveDirectTab({ ctx }: { ctx: SheetContext }) {
   if (!activity) {
     return <XpEmpty title="Aucune activité en cours" hint="Démarre une activité pour voir les métriques en direct." />;
   }
-  const gpsDenied = ctx.state.locationPermission === 'denied';
+  const activeVariant = activity.selection?.variantId
+    ? getSportVariant(activity.selection.variantId)
+    : null;
+  const requiresGps = activeVariant
+    ? activeVariant.requiresGps
+    : activity.selection?.environment !== 'indoor';
+  const gpsDenied = requiresGps && ctx.state.locationPermission === 'denied';
+  const isSwim =
+    activity.selection?.variantId === 'natation-piscine' ||
+    activity.selection?.variantId === 'natation-eau-libre';
   const rhythm = rhythmMetric(activity.sport, activity.selection);
   const rhythmLabel = rhythm === 'pace' ? 'Allure' : 'Vitesse';
   const speed = activity.movingS > 0 ? (activity.distanceM / activity.movingS) * 3.6 : null;
   const paceSeconds =
     activity.movingS > 0 && activity.distanceM > 0
-      ? activity.movingS / (activity.distanceM / 1000)
+      ? isSwim
+        ? activity.movingS / (activity.distanceM / 100)
+        : activity.movingS / (activity.distanceM / 1000)
       : null;
   const rhythmValue = gpsDenied
     ? '—'
     : rhythm === 'pace'
       ? paceSeconds !== null
-        ? `${formatPace(paceSeconds)}/km`
+        ? isSwim
+          ? `${formatPace(paceSeconds)}/100m`
+          : `${formatPace(paceSeconds)}/km`
         : '—'
       : speed !== null
         ? `${speed.toFixed(1).replace('.', ',')} km/h`
@@ -2701,7 +2724,15 @@ export function LiveDirectTab({ ctx }: { ctx: SheetContext }) {
           { label: 'Distance', value: gpsDenied ? '—' : formatDistance(activity.distanceM / 1000) },
           { label: rhythmLabel, value: rhythmValue },
           { label: 'Temps', value: formatDuration(activity.movingS) },
-          { label: 'D+', value: gpsDenied ? '—' : `${Math.round(activity.elevGainM)} m` },
+          {
+            label: 'D+',
+            value:
+              !requiresGps || isSwim
+                ? '0 m'
+                : gpsDenied
+                  ? '—'
+                  : `${Math.round(activity.elevGainM)} m`,
+          },
         ];
   const next = ctx.pois[0];
   const guidance = ctx.guidance?.state;
@@ -2745,6 +2776,7 @@ export function LiveDirectTab({ ctx }: { ctx: SheetContext }) {
         {elapsed}
       </div>
       <XpMetrics items={metrics} />
+      <LiveSpecializedPanel activity={activity} />
       {guidance && (guidance.upcomingWaypoints.length > 0 || activity.route) ? (
         <UpcomingWaypointsList
           items={guidance.upcomingWaypoints}
@@ -3329,6 +3361,7 @@ function ActivityTabs(ctx: SheetContext, kind: string): SheetTab[] {
                   }
                 />
               </XpRows>
+              <SummarySpecializedPanel summary={summary} />
             </>
           );
         },

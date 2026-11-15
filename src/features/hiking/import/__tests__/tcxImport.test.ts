@@ -2131,7 +2131,7 @@ describe('import de trace · sélection du format et déduplication', () => {
   });
 
   it('refuse un format inconnu avec un code stable', () => {
-    expectTraceError(() => parseTraceFile({ text: '<gpx></gpx>' }), 'invalid-input');
+    expectTraceError(() => parseTraceFile({ text: '<kml></kml>' }), 'invalid-input');
   });
 
   it('calcule SHA-256 sur des vecteurs connus', () => {

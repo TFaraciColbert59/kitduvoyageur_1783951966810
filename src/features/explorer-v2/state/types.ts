@@ -344,6 +344,24 @@ export interface ActivityState {
   metricSeries?: MetricSeries[];
   /** Médias capturés pendant la sortie en cours (K5.05). */
   capturedMedia?: CapturedLiveMedia[];
+  /** Longueur du bassin (m) pour `natation-piscine` (S1.10). */
+  poolLengthM?: number;
+  /** Nombre de longueurs validées en piscine (S1.10). */
+  poolLengthsCount?: number;
+  /** Descentes détectées hors remontées mécaniques (S1.11). */
+  skiRunsCount?: number;
+  /** Dénivelé négatif cumulé en descente (m) (S1.11). */
+  skiDescentM?: number;
+  /** Distance saisie / lue sur console indoor (m) (S1.09). */
+  indoorConsoleDistanceM?: number | null;
+  /** Puissance moyenne/courante rapportée par console indoor (W) (S1.09). */
+  indoorConsolePowerW?: number | null;
+  /** Cadence rapportée par console indoor (rpm/spm) (S1.09). */
+  indoorConsoleCadenceRpm?: number | null;
+  /** Zone corporelle suivie en rééducation (S1.12). */
+  rehabBodyZone?: string | null;
+  /** Niveau de douleur 0..10 déclaré en rééducation (S1.12). */
+  rehabPainLevel?: number | null;
 }
 
 /**

@@ -1863,7 +1863,7 @@ let renderSheet = function() {
     }
     return;
   }
-  const REACT_DRAWERS = { account_drawer: "compte", followers_sheet: "reseau", outing_drawer: "sortie", trace_import_drawer: "trace-import", progression_drawer: "progression", story_edit_drawer: "highlight" };
+  const REACT_DRAWERS = { account_drawer: "compte", followers_sheet: "reseau", outing_drawer: "sortie", trace_import_drawer: "trace-import", manual_activity_drawer: "manual-activity", outing_trash_drawer: "outing-trash", progression_drawer: "progression", story_edit_drawer: "highlight" };
   if (REACT_DRAWERS[sh.k]) {
     const kind = REACT_DRAWERS[sh.k];
     if (typeof window.__lkdvUnmountSlot === "function") {
@@ -1874,7 +1874,7 @@ let renderSheet = function() {
     }
     const label = kind === "reseau"
       ? (drawerHintMode === "following" ? "Abonnements" : "Abonnés")
-      : kind === "sortie" ? "Sortie" : kind === "trace-import" ? "Importer une trace" : kind === "progression" ? "Progression · calendrier, statistiques, objectifs et vélo" : kind === "highlight" ? "Story à la une" : "Compte & Activité";
+      : kind === "sortie" ? "Sortie" : kind === "trace-import" ? "Importer une trace" : kind === "manual-activity" ? "Ajouter une sortie manuelle" : kind === "outing-trash" ? "Corbeille des sorties" : kind === "progression" ? "Progression · calendrier, statistiques, objectifs et vélo" : kind === "highlight" ? "Story à la une" : "Compte & Activité";
     const back = S.stk.length ? `<button class="lg gbtn sm sh-back" data-a="close" aria-label="Retour">${ic(IC.chevL, "s")}</button>` : "";
     $("sheet").setAttribute("aria-label", label);
     $("sheet").innerHTML = `<div class="grab" data-drag>
@@ -1897,7 +1897,7 @@ let renderSheet = function() {
       ? { tab: drawerHintMode || "followers" }
       : kind === "sortie"
         ? { outingId: sh.outingId || (sh.extra && sh.extra.outingId) || "" }
-        : kind === "trace-import"
+        : kind === "trace-import" || kind === "manual-activity" || kind === "outing-trash"
           ? {}
           : kind === "progression"
             ? { view: sh.view || (sh.extra && sh.extra.view) || "calendar" }
@@ -2448,6 +2448,18 @@ let act = function(a, v, meta) {
     case "openOuting": S.step = 1; openSheet("step", 0, "large"); break;
     case "openOutingDrawer": EXA.openOutingDrawer(v); break;
     case "openTraceImport": EXA.openTraceImport(); break;
+    case "openManualActivity": EXA.openManualActivity(); break;
+    case "openOutingTrash": EXA.openOutingTrash(); break;
+    case "clearSortiesSearch": {
+      S.sortiesSearch = "";
+      S.sortiesSport = "all";
+      const qEl = $("lkdv-sorties-search");
+      const sEl = $("lkdv-sorties-sport");
+      if (qEl) qEl.value = "";
+      if (sEl) sEl.value = "all";
+      filterSortiesInPlace();
+      break;
+    }
     case "openCarnet": S.step = 2; openSheet("step", 0, "large"); break;
     case "openSpecies": S.step = 2; openSheet("step", 1, "large"); break;
     case "openKit": S.step = 3; openSheet("step", 0, "large"); break;
@@ -2543,12 +2555,42 @@ phone.addEventListener("contextmenu", e => {
   }
   e.preventDefault();
 });
+function filterSortiesInPlace() {
+  const q = String(S.sortiesSearch || "").trim().toLowerCase();
+  const sp = String(S.sortiesSport || "all").trim().toLowerCase();
+  const cards = document.querySelectorAll(".voyages-carousel .voyage-card");
+  let visible = 0;
+  cards.forEach((card) => {
+    const hay = String(card.getAttribute("data-search") || "").toLowerCase();
+    const cardSport = String(card.getAttribute("data-sport") || "").toLowerCase();
+    const matchQ = !q || hay.includes(q);
+    const matchSp = !sp || sp === "all" || cardSport === sp;
+    const show = matchQ && matchSp;
+    card.style.display = show ? "" : "none";
+    if (show) visible += 1;
+  });
+  const countEl = $("lkdv-sorties-count");
+  if (countEl) {
+    countEl.textContent = `${visible} sortie${visible > 1 ? "s" : ""} · GPX, FIT ou TCX acceptés`;
+  }
+}
+
 phone.addEventListener("input", e => {
   if (e.target && e.target.id === "ep_pace") {
     const lbl = $("ep_pace_lbl");
     if (lbl) {
       lbl.textContent = (Number(e.target.value) / 10).toFixed(1).replace(".", ",") + " km/h";
     }
+  }
+  if (e.target && e.target.id === "lkdv-sorties-search") {
+    S.sortiesSearch = e.target.value || "";
+    filterSortiesInPlace();
+  }
+});
+phone.addEventListener("change", e => {
+  if (e.target && e.target.id === "lkdv-sorties-sport") {
+    S.sortiesSport = e.target.value || "all";
+    filterSortiesInPlace();
   }
 });
 if (rootContainer && rootContainer !== phone) {
@@ -3332,14 +3374,37 @@ renderIgTabContent = function (D) {
   if (S.igTab === 1) {
     const list = OUTINGS;
     const canImport = !X.visitor;
-    const importButton = canImport
-      ? '<button class="mbtn p" data-a="openTraceImport" aria-label="Importer une trace FIT ou TCX" style="height:32px;padding:0 13px;font-size:11.5px;">Importer FIT/TCX</button>'
+    const currentQ = String(S.sortiesSearch || "").trim();
+    const currentQNorm = currentQ.toLowerCase();
+    const currentSport = String(S.sortiesSport || "all").toLowerCase();
+    const sportSet = [];
+    list.forEach((o) => {
+      const sp = String(o.sport || "hiking").trim();
+      if (sp && !sportSet.includes(sp)) sportSet.push(sp);
+    });
+    const headerActions = canImport
+      ? '<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">' +
+          '<button class="mbtn p" data-a="openTraceImport" aria-label="Importer une trace GPX, FIT ou TCX" style="height:32px;padding:0 11px;font-size:11.5px;">Importer GPX/FIT/TCX</button>' +
+          '<button class="mbtn soft" data-a="openManualActivity" aria-label="Ajouter une activité manuelle" style="height:32px;padding:0 11px;font-size:11.5px;">+ Manuel</button>' +
+          '<button class="mbtn soft" data-a="openOutingTrash" aria-label="Ouvrir la corbeille des sorties (30 jours)" style="height:32px;padding:0 10px;font-size:11.5px;">Corbeille</button>' +
+        '</div>'
       : '';
-    const sortiesHeader = '<div style="display:flex;align-items:flex-end;justify-content:space-between;gap:10px;padding:2px 2px 6px;">' +
+    const sortiesHeader = '<div style="display:flex;align-items:flex-end;justify-content:space-between;gap:10px;padding:2px 2px 6px;flex-wrap:wrap;">' +
       '<div style="display:flex;flex-direction:column;gap:1px;min-width:0;">' +
         '<b style="font:650 16px/1.15 var(--sf);letter-spacing:-.02em;color:var(--label);">Sorties</b>' +
-        '<span style="font:500 10.5px/1.3 var(--sf);color:var(--label2);">' + list.length + ' sortie' + (list.length > 1 ? 's' : '') + ' · FIT ou TCX acceptés</span>' +
-      '</div>' + importButton + '</div>';
+        '<span id="lkdv-sorties-count" style="font:500 10.5px/1.3 var(--sf);color:var(--label2);">' + list.length + ' sortie' + (list.length > 1 ? 's' : '') + ' · GPX, FIT ou TCX acceptés</span>' +
+      '</div>' + headerActions + '</div>';
+    const searchBar = list.length
+      ? '<div style="display:flex;gap:6px;align-items:center;padding:0 2px 8px;" role="search" aria-label="Rechercher dans mes sorties">' +
+          '<input id="lkdv-sorties-search" type="search" class="nt-in" value="' + esc(currentQ) + '" placeholder="Rechercher titre, lieu, date, sport…" aria-label="Rechercher une sortie" style="flex:1;height:32px;font-size:12px;" />' +
+          (sportSet.length > 1
+            ? '<select id="lkdv-sorties-sport" class="nt-in" aria-label="Filtrer par sport" style="height:32px;font-size:12px;max-width:130px;">' +
+                '<option value="all"' + (currentSport === 'all' ? ' selected' : '') + '>Tous sports</option>' +
+                sportSet.map(sp => '<option value="' + esc(sp.toLowerCase()) + '"' + (currentSport === sp.toLowerCase() ? ' selected' : '') + '>' + esc(sp) + '</option>').join('') +
+              '</select>'
+            : '') +
+        '</div>'
+      : '';
     const progressionActions = S.profile && S.profile.isDemo !== true && S.profile.isGuest !== true
       ? '<div style="display:flex!important;gap:6px!important;flex-wrap:wrap!important;padding:10px 2px 2px!important;" role="group" aria-label="Progression des sorties">' +
           '<button type="button" class="mbtn p" style="height:38px!important;padding:0 14px!important;" data-a="openProgression" data-v="calendar" aria-label="Ouvrir le calendrier et la synthèse hebdomadaire">Calendrier</button>' +
@@ -3350,8 +3415,9 @@ renderIgTabContent = function (D) {
       : '';
     if (!list.length) {
       return '<div class="ig-voyages-tab" role="region" aria-label="Sorties faites et voyages réalisés">' + sortiesHeader +
-        '<div style="padding:22px 16px 26px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;"><b style="font:600 14px var(--sf);color:var(--label);">Aucune sortie enregistrée</b><p style="font:400 12px/1.4 var(--sf);color:var(--label2);max-width:260px;margin:0 auto;">Importe une trace FIT ou TCX, ou enregistre ta première randonnée GPS : elle apparaîtra ici.</p><div style="display:flex;flex-wrap:wrap;justify-content:center;gap:7px;">' +
-          (canImport ? '<button class="mbtn p" data-a="openTraceImport" style="height:32px;padding:0 14px;font-size:12px;">Importer FIT/TCX</button>' : '') +
+        '<div style="padding:22px 16px 26px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;"><b style="font:600 14px var(--sf);color:var(--label);">Aucune sortie enregistrée</b><p style="font:400 12px/1.4 var(--sf);color:var(--label2);max-width:260px;margin:0 auto;">Importe une trace GPX, FIT ou TCX, ajoute une séance manuelle, ou enregistre ta première sortie GPS : elle apparaîtra ici.</p><div style="display:flex;flex-wrap:wrap;justify-content:center;gap:7px;">' +
+          (canImport ? '<button class="mbtn p" data-a="openTraceImport" style="height:32px;padding:0 14px;font-size:12px;">Importer GPX/FIT/TCX</button>' : '') +
+          (canImport ? '<button class="mbtn soft" data-a="openManualActivity" style="height:32px;padding:0 14px;font-size:12px;">+ Saisie manuelle</button>' : '') +
           '<a href="/compas" class="mbtn soft" style="text-decoration:none;height:32px;padding:0 14px;font-size:12px;justify-content:center;">Planifier un voyage</a></div></div>' + progressionActions + '</div>';
     }
     const canManage = !(S.profile && (S.profile.isDemo || S.profile.isGuest));
@@ -3360,6 +3426,7 @@ renderIgTabContent = function (D) {
       : '';
     return '<div class="ig-voyages-tab" role="region" aria-label="Sorties faites et voyages réalisés">' +
       sortiesHeader +
+      searchBar +
       bulkBar +
       '<div class="voyages-carousel">' +
         list.map((o, idx) => {
@@ -3369,8 +3436,11 @@ renderIgTabContent = function (D) {
           const safeDate = esc(o.date || 'Sortie');
           const safeComp = esc(compNames);
           const safeMass = esc(String(o.mass || '').split(' ')[0]);
+          const sportVal = String(o.sport || 'hiking').toLowerCase();
+          const searchHay = [o.title, o.mass, o.date, o.sport, compNames].filter(Boolean).join(' ').toLowerCase();
+          const hidden = (currentQNorm && !searchHay.includes(currentQNorm)) || (currentSport !== 'all' && sportVal !== currentSport);
           const label = esc(o.title + ', ' + o.km + ' km, +' + o.dplus + ' m, ' + o.mass);
-          return '<button type="button" class="voyage-card" data-a="openOutingDrawer" data-v="' + esc(o.id) + '" aria-label="' + label + '">' +
+          return '<button type="button" class="voyage-card" data-a="openOutingDrawer" data-v="' + esc(o.id) + '" data-search="' + esc(searchHay) + '" data-sport="' + esc(sportVal) + '"' + (hidden ? ' style="display:none"' : '') + ' aria-label="' + label + '">' +
             '<span class="voyage-cover">' +
               (photo
                 ? '<img src="' + photo + '" alt="' + safeTitle + '" class="voyage-img" loading="lazy" />'
@@ -4007,7 +4077,8 @@ const EXK = {
         per: [6, 8],
         title: "Nouvelle création LKDV",
         rows: [
-          `<div class="li nt" data-a="openTraceImport" style="cursor:pointer"><div><div class="ttl"><span>Importer une trace FIT/TCX</span></div><div class="s2">Aperçu local, puis ajout à tes sorties privées</div></div><span class="tg p">Trace</span></div>`,
+          `<div class="li nt" data-a="openTraceImport" style="cursor:pointer"><div><div class="ttl"><span>Importer une trace GPX/FIT/TCX</span></div><div class="s2">Aperçu local, waypoints, recadrage sentier ou lot multi-fichiers</div></div><span class="tg p">Trace</span></div>`,
+          `<div class="li nt" data-a="openManualActivity" style="cursor:pointer"><div><div class="ttl"><span>Ajouter une activité manuelle</span></div><div class="s2">Séance indoor, piscine, renforcement ou rééducation sans GPS</div></div><span class="tg p">Manuel</span></div>`,
           `<div class="li nt" data-a="navtab" data-v="/carnets/nouveau" style="cursor:pointer"><div><div class="ttl"><span>Nouveau carnet de voyage</span></div><div class="s2">Raconte une expédition avec photos géolocalisées et tracé</div></div><span class="tg p">Carnet</span></div>`,
           `<div class="li nt" data-a="navtab" data-v="/voyages" style="cursor:pointer"><div><div class="ttl"><span>Nouveau voyage / sortie GPS</span></div><div class="s2">Importe un fichier GPX ou planifie un trek avec le Compas</div></div><span class="tg p">Tracé</span></div>`,
           `<div class="li nt" data-a="navtab" data-v="/materiel" style="cursor:pointer"><div><div class="ttl"><span>Nouveau kit de matériel</span></div><div class="s2">Compose un sac ultraléger personnalisé avec jauge d'endurance</div></div><span class="tg p">Kit</span></div>`,
@@ -5092,6 +5163,14 @@ var EXA = {
     pushSheet({ k: 'trace_import_drawer', det: 'large' });
     haptic(8);
   },
+  openManualActivity: () => {
+    pushSheet({ k: 'manual_activity_drawer', det: 'large' });
+    haptic(8);
+  },
+  openOutingTrash: () => {
+    pushSheet({ k: 'outing_trash_drawer', det: 'large' });
+    haptic(8);
+  },
   openProgression: v => {
     openSheet('progression_drawer', 0, 'large', {
       view: v === 'stats' ? 'stats' : v === 'goals' ? 'goals' : v === 'bike' ? 'bike' : 'calendar'
@@ -5804,6 +5883,8 @@ window.__lkdvHydrateCompte = (data) => {
         slug: o.slug,
         title: o.title || o.name || 'Sortie alpine',
         mass: o.destination_name || o.destination || o.massif || 'Montagne',
+        sport: o.sport || o.activity_sport || 'hiking',
+        proven: Boolean(o.proven ?? o.verified ?? true),
         date: o.start_date ? new Date(o.start_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '2026',
         km: Number(o.km || o.distance_km) || 0,
         dplus: Number(o.dplus || o.elevation_gain_m) || 0,

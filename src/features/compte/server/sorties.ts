@@ -36,6 +36,7 @@ import { TRACE_IMPORT_LIMITS } from '@/features/hiking/import/model';
 import { TRACE_IMPORT_MAX_PAYLOAD_SAMPLES } from '@/features/hiking/import/series';
 import { isActivityShareActive, parseActivityShareMeta } from '@/features/community/g01/activityShare';
 import { revokeActivityShare } from '@/features/community/g01/activityShareService';
+import type { LifecycleActivityRecord } from '@/features/activity/lifecycle';
 
 /**
  * Drawer Sortie — lecture et écriture des données réelles.
@@ -297,6 +298,18 @@ export interface OutingDetail {
    * Les coordonnées ne sont jamais dupliquées dans ce tableau.
    */
   samples: OutingImportSample[] | null;
+  /** Lot A02 : temps écoulé total (y compris pauses) en secondes (S2.01). */
+  elapsedS?: number | null;
+  /** Lot A02 : tags d'activité normalisés (S1.20). */
+  tags?: string[];
+  /** Lot A02 : révision monotone du cycle de vie. */
+  revision?: number | null;
+  /** Lot A02 : invite d'édition rapide post-sync active (S1.18). */
+  quickEditPending?: boolean;
+  /** Lot A02 : correction distance/D+ appliquée (S1.23). */
+  correctedMetrics?: boolean;
+  /** Lot A02 : nombre de pics GPS lissés (K5.10). */
+  gpsSpikesRemoved?: number;
 }
 
 type TraceImportRow = {
@@ -994,10 +1007,45 @@ export async function loadOutingDetail(
     return null;
   }
 
-  // Le sport vient de la séance multi-sport liée. L'historique sans lien est
-  // une randonnée : on ne devine pas un autre sport.
+  // Lot A02 — Lecture optionnelle de la surcouche versionnée (cycle de vie,
+  // recadrage, corrections, corbeille 30 j). Tolérante aux environnements sans table.
+  let lifecycleOverlay: {
+    lifecycle_status?: string | null;
+    revision?: number | null;
+    record?: Partial<LifecycleActivityRecord> | null;
+  } | null = null;
+  try {
+    const candidateIds = [session.id, session.activity_session_id].filter(
+      (id): id is string => typeof id === 'string' && id.length > 0,
+    );
+    if (candidateIds.length > 0 && isProvenanceOwner) {
+      const { data: overlayData, error: overlayError } = await supabase
+        .from('activity_lifecycle_records')
+        .select('lifecycle_status,revision,record')
+        .eq('user_id', session.user_id)
+        .in('activity_id', candidateIds)
+        .limit(1)
+        .maybeSingle();
+      if (!overlayError && overlayData) {
+        lifecycleOverlay = overlayData as typeof lifecycleOverlay;
+      }
+    }
+  } catch {
+    lifecycleOverlay = null;
+  }
+  if (lifecycleOverlay?.lifecycle_status === 'deleted') {
+    return null;
+  }
+  const overlayRecord =
+    lifecycleOverlay?.record && typeof lifecycleOverlay.record === 'object'
+      ? lifecycleOverlay.record
+      : null;
+
+  // Le sport vient de la séance multi-sport liée ou de la surcouche A02.
   let sport = 'rando';
-  if (session.activity_session_id) {
+  if (typeof overlayRecord?.sport === 'string' && overlayRecord.sport.trim()) {
+    sport = overlayRecord.sport.trim().toLowerCase();
+  } else if (session.activity_session_id) {
     const { data: activity } = await readClient
       .from('activity_sessions')
       .select('sport')
@@ -1278,11 +1326,29 @@ export async function loadOutingDetail(
     };
   });
 
-  const rawSegments = parsePositionSegments(session.positions_timed, session.positions_geojson);
+  const baseRawSegments = parsePositionSegments(session.positions_timed, session.positions_geojson);
+  const overlayPoints = Array.isArray(overlayRecord?.points)
+    ? overlayRecord.points
+        .filter(
+          (pt): pt is { lat: number; lng: number; elevationM?: number | null; timestamp?: string | null } =>
+            Boolean(pt) && typeof pt.lat === 'number' && typeof pt.lng === 'number',
+        )
+        .map((pt) => ({
+          lat: pt.lat,
+          lng: pt.lng,
+          elevationM: pt.elevationM ?? null,
+          timestamp: pt.timestamp ?? null,
+        }))
+    : [];
+  const rawSegments = overlayPoints.length >= 2 ? [overlayPoints] : baseRawSegments;
   const rawPoints = rawSegments.flat();
   const isParticipant = participantRows.some((row) => row.user_id === userId);
 
-  const rawVisibility = blocked ? 'private' : rawSessionVisibility;
+  const rawVisibility = blocked
+    ? 'private'
+    : typeof overlayRecord?.visibility === 'string'
+      ? overlayRecord.visibility
+      : rawSessionVisibility;
   const visibility = normalizeVisibility(rawVisibility);
   /*
    * Le rôle de lecture suit une autorisation réelle : propriétaire, participant
@@ -1407,25 +1473,50 @@ export async function loadOutingDetail(
    * la trace ne vaut pas partage du carnet intime.
    */
   const notes =
-    hasFullAccess || rawVisibility === 'collective_anonymized' ? text(session.notes) : '';
+    hasFullAccess || rawVisibility === 'collective_anonymized'
+      ? typeof overlayRecord?.notes === 'string'
+        ? overlayRecord.notes
+        : text(session.notes)
+      : '';
 
   /*
    * Valeurs sources calculées avant masquage : la politique décide ensuite de
    * ce qui sort. L'allure et le temps en mouvement ne sont jamais recalculés
    * côté client, sinon une métrique masquée pourrait être redérivée.
    */
-  const rawDistanceKm = numericOrNull(session.distance_km);
-  const rawDurationS = session.duration_seconds;
+  const overlayStats = overlayRecord?.stats;
+  const rawDistanceKm =
+    typeof overlayStats?.distanceM === 'number' && Number.isFinite(overlayStats.distanceM)
+      ? Math.round((overlayStats.distanceM / 1000) * 100) / 100
+      : numericOrNull(session.distance_km);
+  const rawDurationS =
+    typeof overlayStats?.movingTimeS === 'number' && Number.isFinite(overlayStats.movingTimeS)
+      ? overlayStats.movingTimeS
+      : session.duration_seconds;
+  const rawElapsedS =
+    typeof overlayStats?.elapsedS === 'number' && Number.isFinite(overlayStats.elapsedS)
+      ? overlayStats.elapsedS
+      : rawDurationS;
+  const rawElevationGainM =
+    typeof overlayStats?.elevationGainM === 'number' && Number.isFinite(overlayStats.elevationGainM)
+      ? overlayStats.elevationGainM
+      : numericOrNull(session.elevation_gain_m);
   const rawMaxAltitudeM =
-    session.max_altitude_m ?? observedMaxAltitudeM(rawPoints);
+    typeof overlayStats?.maxAltitudeM === 'number' && Number.isFinite(overlayStats.maxAltitudeM)
+      ? overlayStats.maxAltitudeM
+      : session.max_altitude_m ?? observedMaxAltitudeM(rawPoints);
+  const rawMovingTimeS =
+    typeof overlayStats?.movingTimeS === 'number' && Number.isFinite(overlayStats.movingTimeS)
+      ? overlayStats.movingTimeS
+      : movingTimeSeconds(rawPoints);
   const projectedMetrics = projectOutingMetrics(
     {
       distanceKm: rawDistanceKm,
-      elevationGainM: numericOrNull(session.elevation_gain_m),
+      elevationGainM: rawElevationGainM,
       maxAltitudeM: rawMaxAltitudeM,
       durationS: rawDurationS,
       paceMinPerKm: averagePaceMinPerKm(rawDurationS, rawDistanceKm),
-      movingTimeS: movingTimeSeconds(rawPoints),
+      movingTimeS: rawMovingTimeS,
       /* Aucune source FC/puissance/cadence/calories dans le schéma actuel. */
       heartRateBpm: null,
       powerW: null,
@@ -1437,6 +1528,7 @@ export async function loadOutingDetail(
 
   const dateLabel = session.started_at ? session.started_at.slice(0, 10) : null;
   const title =
+    (typeof overlayRecord?.title === 'string' ? overlayRecord.title.trim() : '') ||
     session.title?.trim() ||
     route?.name?.trim() ||
     (dateLabel ? `Sortie du ${dateLabel}` : 'Sortie');
@@ -1496,6 +1588,26 @@ export async function loadOutingDetail(
     // et les tours. Un participant reçoit `null`, jamais les mesures cardio.
     summary: provenance ? summary : null,
     samples: provenance ? samples : null,
+    elapsedS: metricVisibility.duration ? rawElapsedS : null,
+    tags: Array.isArray(overlayRecord?.tags)
+      ? overlayRecord.tags.filter((t): t is string => typeof t === 'string')
+      : [],
+    revision:
+      typeof lifecycleOverlay?.revision === 'number'
+        ? lifecycleOverlay.revision
+        : typeof overlayRecord?.revision === 'number'
+          ? overlayRecord.revision
+          : null,
+    quickEditPending:
+      isOwner && Boolean(overlayRecord?.quickEditState?.pending),
+    correctedMetrics: Boolean(
+      overlayRecord?.correction &&
+        (overlayRecord.correction.distanceMethod !== 'gps_measured' ||
+          overlayRecord.correction.elevationMethod !== 'gps_measured'),
+    ),
+    gpsSpikesRemoved: Array.isArray(overlayRecord?.gpsSpikes)
+      ? overlayRecord.gpsSpikes.length
+      : 0,
   };
 }
 
@@ -1865,4 +1977,85 @@ export function buildGpx(detail: OutingDetail): string {
   <metadata><name>${escapeXml(detail.title)}</name></metadata>
   <trk><name>${escapeXml(detail.title)}</name>${track}</trk>
 </gpx>`;
+}
+
+const EARTH_RADIUS_TCX_M = 6_371_000;
+
+function tcxStepMeters(a: OutingPoint, b: OutingPoint): number {
+  const dLat = ((b.lat - a.lat) * Math.PI) / 180;
+  const dLng = ((b.lng - a.lng) * Math.PI) / 180;
+  const lat1 = (a.lat * Math.PI) / 180;
+  const lat2 = (b.lat * Math.PI) / 180;
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  return 2 * EARTH_RADIUS_TCX_M * Math.asin(Math.min(1, Math.sqrt(Math.min(1, h))));
+}
+
+function tcxSportAttr(sport: string): 'Running' | 'Biking' | 'Other' {
+  if (sport === 'course' || sport === 'trail') return 'Running';
+  if (sport === 'velo') return 'Biking';
+  return 'Other';
+}
+
+/**
+ * S1.25 / S1.26 — Génère un TCX (TrainingCenterDatabase v2) à partir de la trace
+ * visible projetée (`tracePrivacy` + `metricVisibility`), sans fuite pour les tiers.
+ */
+export function buildTcx(detail: OutingDetail): string {
+  const rawSegments = outingTraceSegments(detail);
+  const segments = detail.metricVisibility
+    ? projectTraceMetrics(rawSegments, detail.metricVisibility).segments
+    : rawSegments;
+
+  const firstTimestamp =
+    segments.flat().find((p) => typeof p.timestamp === 'string' && p.timestamp.length > 0)?.timestamp ??
+    detail.startedAt ??
+    '1970-01-01T00:00:00.000Z';
+
+  let cumulativeDistanceM = 0;
+  let prevPoint: OutingPoint | null = null;
+  const tracksXml = segments
+    .map((segment) => {
+      const tps = segment
+        .map((point) => {
+          if (prevPoint) cumulativeDistanceM += tcxStepMeters(prevPoint, point);
+          prevPoint = point;
+          const timeTag = point.timestamp
+            ? `<Time>${escapeXml(point.timestamp)}</Time>`
+            : '';
+          const altTag =
+            point.elevationM !== null ? `<AltitudeMeters>${point.elevationM}</AltitudeMeters>` : '';
+          return `<Trackpoint>${timeTag}<Position><LatitudeDegrees>${point.lat}</LatitudeDegrees><LongitudeDegrees>${point.lng}</LongitudeDegrees></Position>${altTag}<DistanceMeters>${Math.round(cumulativeDistanceM * 10) / 10}</DistanceMeters></Trackpoint>`;
+        })
+        .join('');
+      return `<Track>${tps}</Track>`;
+    })
+    .join('');
+
+  const totalTime =
+    typeof detail.durationS === 'number' && Number.isFinite(detail.durationS)
+      ? Math.max(0, Math.round(detail.durationS))
+      : 0;
+  const totalDistanceM =
+    typeof detail.km === 'number' && Number.isFinite(detail.km)
+      ? Math.round(detail.km * 1000)
+      : Math.round(cumulativeDistanceM);
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<TrainingCenterDatabase xmlns="http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2">
+  <Activities>
+    <Activity Sport="${tcxSportAttr(detail.sport)}">
+      <Id>${escapeXml(firstTimestamp)}</Id>
+      <Lap StartTime="${escapeXml(firstTimestamp)}">
+        <TotalTimeSeconds>${totalTime}</TotalTimeSeconds>
+        <DistanceMeters>${totalDistanceM}</DistanceMeters>
+        <Intensity>Active</Intensity>
+        <TriggerMethod>Manual</TriggerMethod>
+        ${tracksXml}
+      </Lap>
+      <Notes>${escapeXml(detail.title)}</Notes>
+    </Activity>
+  </Activities>
+</TrainingCenterDatabase>`;
 }

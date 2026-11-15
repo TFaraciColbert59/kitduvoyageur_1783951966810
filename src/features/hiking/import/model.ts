@@ -23,7 +23,7 @@
  * mesure manquante avec un zéro.
  */
 
-export type TraceImportFormat = 'tcx' | 'fit';
+export type TraceImportFormat = 'tcx' | 'fit' | 'gpx';
 
 export type TraceImportSource = 'local-file';
 
@@ -49,6 +49,7 @@ export type TraceImportErrorCode =
   | 'invalid-xml'
   | 'external-entity-forbidden'
   | 'not-tcx'
+  | 'not-gpx'
   | 'unsupported-version'
   | 'no-activity'
   | 'multiple-activities'
@@ -233,17 +234,30 @@ export interface TraceSessionSummary {
   activityTimerSeconds: number | null;
 }
 
+export interface NormalizedTraceWaypoint {
+  lat: number;
+  lng: number;
+  elevationM: number | null;
+  name: string;
+  description: string | null;
+  type: string | null;
+  symbol: string | null;
+  recordedAt: string | null;
+}
+
 export interface NormalizedTraceImport {
   status: TraceImportStatus;
   provenance: TraceImportProvenance;
   bounds: TraceBounds | null;
   points: NormalizedTrackPoint[];
   laps: NormalizedTraceLap[];
-  /** Résumé `session` FIT ; `null` pour TCX ou quand le message manque. */
+  /** Résumé `session` FIT ; `null` pour TCX/GPX ou quand le message manque. */
   summary: TraceSessionSummary | null;
   /** Métriques réellement présentes, dans un ordre stable. */
   availableMetrics: TraceMetric[];
   issues: TraceImportIssue[];
+  /** Points d'intérêt / waypoints (`<wpt>`) lus depuis un GPX (`K6.04`). */
+  waypoints?: NormalizedTraceWaypoint[];
 }
 
 export interface TraceImportLimits {

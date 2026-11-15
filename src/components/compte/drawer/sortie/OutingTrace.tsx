@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { Compass, Download, Flag, MapPin, Play, Plus, Users, Wind } from 'lucide-react';
+import { OutingTraceToolsPanel } from './OutingLifecyclePanels';
 import { ActionPill } from '@/components/ui/ActionPill';
 import { OverlaySheet } from '@/components/compte/overlay/OverlaySheet';
 import {
@@ -30,8 +31,9 @@ import {
 
 export interface OutingTraceProps {
   detail: OutingDetail;
-  onExport: () => void;
+  onExport: (format?: 'gpx' | 'tcx') => void;
   onOpenMediaHub?: (tab: MediaSharingTab) => void;
+  onUpdated?: () => void;
 }
 
 function altitudeRange(points: OutingPoint[]) {
@@ -107,7 +109,7 @@ function mapOutingSport(rawSport: string | null): SegmentSport {
   return 'hiking';
 }
 
-export function OutingTrace({ detail, onExport, onOpenMediaHub }: OutingTraceProps) {
+export function OutingTrace({ detail, onExport, onOpenMediaHub, onUpdated }: OutingTraceProps) {
   const [colorMode, setColorMode] = useState<TraceColorMode>('default');
   const [detectedEfforts, setDetectedEfforts] = useState<SegmentEffort[] | null>(null);
   const [detectBusy, setDetectBusy] = useState(false);
@@ -326,9 +328,9 @@ export function OutingTrace({ detail, onExport, onOpenMediaHub }: OutingTracePro
           </b>
         </div>
         <div>
-          <small>Durée totale</small>
+          <small>Durée totale (écoulée)</small>
           <b>
-            {metricDisplay(detail, 'duration', detail.durationS, (value) =>
+            {metricDisplay(detail, 'duration', detail.elapsedS ?? detail.durationS, (value) =>
               formatDuration(value)
             )}
           </b>
@@ -374,6 +376,12 @@ export function OutingTrace({ detail, onExport, onOpenMediaHub }: OutingTracePro
 
       <WeatherBlock weather={detail.weather} />
 
+      <OutingTraceToolsPanel
+        outingId={detail.id}
+        canEdit={detail.canEdit}
+        onUpdated={onUpdated ?? (() => undefined)}
+      />
+
       {activityForSegments ? (
         <section className="lkdv-sortie-section">
           <header>
@@ -382,8 +390,86 @@ export function OutingTrace({ detail, onExport, onOpenMediaHub }: OutingTracePro
               {detectedEfforts ? `${detectedEfforts.length} passage(s)` : 'S01 / S02'}
             </span>
           </header>
-          <div className="lkdv-apill-row" style={{ flexWrap: 'wrap' }}>
-        <ActionPill tone="primary" label="Télécharger le GPX" icon={<Download />} text="GPX" onClick={onExport} />
+          <div className="lkdv-apill-row">
+            <ActionPill
+              label="Détecter les segments"
+              icon={<Flag />}
+              text={detectBusy ? 'Analyse…' : 'Détecter'}
+              onClick={() => void detectSegments()}
+              disabled={detectBusy}
+            />
+            <ActionPill
+              label="Créer un segment depuis cette trace"
+              icon={<Plus />}
+              text="Créer un segment"
+              onClick={() => {
+                setCreateError(null);
+                setCreateOpen(true);
+              }}
+            />
+          </div>
+          {detectError ? (
+            <p role="alert" style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--lkv-danger)' }}>
+              {detectError}
+            </p>
+          ) : null}
+          {createdNotice ? (
+            <p role="status" style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--forest)' }}>
+              {createdNotice}
+            </p>
+          ) : null}
+          {detectedEfforts && detectedEfforts.length === 0 ? (
+            <p style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--label2)' }}>
+              Aucun segment existant croisé sur cette trace. Tu peux en créer un ci-dessus.
+            </p>
+          ) : null}
+          {detectedEfforts && detectedEfforts.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
+              {detectedEfforts.map((eff) => (
+                <button
+                  key={eff.effortId}
+                  type="button"
+                  onClick={() => setSelectedSegmentId(eff.segmentId)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 8,
+                    padding: '8px 10px',
+                    borderRadius: 12,
+                    border: '0.5px solid rgba(23,43,36,.12)',
+                    background: 'rgba(255,255,255,.72)',
+                    textAlign: 'left',
+                    fontSize: 12,
+                  }}
+                >
+                  <span>
+                    <strong>{eff.segmentId}</strong> · {Math.round(eff.elapsedDurationS)} s · {eff.avgSpeedKmh.toFixed(1)} km/h
+                  </span>
+                  <span style={{ fontSize: 11, color: eff.status === 'valid' ? 'var(--forest)' : 'var(--label2)' }}>
+                    {eff.status === 'valid' ? 'Validé' : eff.status}
+                  </span>
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </section>
+      ) : null}
+
+      <div className="lkdv-apill-row" style={{ flexWrap: 'wrap' }}>
+        <ActionPill
+          tone="primary"
+          label="Télécharger le GPX"
+          icon={<Download />}
+          text="GPX"
+          onClick={() => onExport('gpx')}
+        />
+        <ActionPill
+          label="Télécharger le TCX"
+          icon={<Download />}
+          text="TCX"
+          onClick={() => onExport('tcx')}
+        />
         {onOpenMediaHub ? (
           <>
             <ActionPill

@@ -24,6 +24,10 @@ import type { ActivityEventMatch, GroupActivityCluster } from '@/features/clubs'
 import { OutingMetricSettings } from './OutingMetricSettings';
 import { OutingLaps } from './OutingLaps';
 import { OutingMetrics } from './OutingMetrics';
+import { OutingQuickEditPanel } from './OutingLifecyclePanels';
+import { ACTIVITY_TAGS } from '@/features/activity/lifecycle';
+import { SPORT_FAMILIES } from '@/features/explorer-v2/sheet/sportSelection';
+import { tagLabel } from '@/components/compte/lifecycle/format';
 import {
   ElevationProfile,
   TraceMap,
@@ -40,12 +44,19 @@ import {
 export interface OutingSummaryProps {
   detail: OutingDetail;
   saving: boolean;
-  onSave: (patch: { title: string; notes: string; visibility: OutingVisibility }) => void;
+  onSave: (patch: {
+    title: string;
+    notes: string;
+    visibility: OutingVisibility;
+    sport?: string;
+    tags?: string[];
+  }) => void;
   onSaveMetrics: (keys: OutingMetricKey[]) => void;
   onResetMetrics: () => void;
   onShare: () => void;
-  onExport: () => void;
+  onExport: (format?: 'gpx' | 'tcx' | 'original') => void;
   onDelete: () => void;
+  onUpdated?: () => void;
 }
 
 const STATUS_LABEL: Record<OutingDetail['status'], string> = {
@@ -86,6 +97,7 @@ export function OutingSummary({
   onShare,
   onExport,
   onDelete,
+  onUpdated,
 }: OutingSummaryProps) {
   const [editing, setEditing] = useState(false);
   const [metricsOpen, setMetricsOpen] = useState(false);
@@ -93,6 +105,8 @@ export function OutingSummary({
   const [title, setTitle] = useState(detail.title);
   const [notes, setNotes] = useState(detail.notes);
   const [visibility, setVisibility] = useState<OutingVisibility>(detail.visibility);
+  const [sport, setSport] = useState(detail.sport || 'rando');
+  const [tags, setTags] = useState<string[]>(detail.tags ?? []);
   const [coverFailed, setCoverFailed] = useState(false);
   const [matchedEvents, setMatchedEvents] = useState<ActivityEventMatch[]>([]);
   const [groupClusters, setGroupClusters] = useState<GroupActivityCluster[]>([]);
@@ -103,8 +117,10 @@ export function OutingSummary({
     setTitle(detail.title);
     setNotes(detail.notes);
     setVisibility(detail.visibility);
+    setSport(detail.sport || 'rando');
+    setTags(detail.tags ?? []);
     setEditing(false);
-  }, [detail.id, detail.title, detail.notes, detail.visibility]);
+  }, [detail.id, detail.title, detail.notes, detail.visibility, detail.sport, detail.tags]);
 
   useEffect(() => {
     let active = true;
@@ -180,9 +196,25 @@ export function OutingSummary({
             <ActionPill
               label={!hasTrace ? traceState.title : 'Télécharger le GPX'}
               icon={<Download />}
-              onClick={onExport}
-              disabled={!hasTrace}
+              onClick={() => onExport('gpx')}
+              disabled={!hasTrace || detail.traceFullyMasked}
             />
+            {hasTrace && !detail.traceFullyMasked ? (
+              <ActionPill
+                label="Exporter en TCX"
+                icon={<Download />}
+                text="TCX"
+                onClick={() => onExport('tcx')}
+              />
+            ) : null}
+            {detail.canEdit && provenance ? (
+              <ActionPill
+                label="Fichier d’origine"
+                icon={<Download />}
+                text="Origine"
+                onClick={() => onExport('original')}
+              />
+            ) : null}
           </div>
         ) : null}
         <div className="lkdv-sortie-hero-body">
@@ -198,6 +230,17 @@ export function OutingSummary({
                 {IMPORT_SOURCE_LABEL[provenance.source]}
               </span>
             ) : null}
+            {detail.correctedMetrics ? (
+              <span className="lkdv-sortie-badge">Distance / D+ corrigés</span>
+            ) : null}
+            {detail.gpsSpikesRemoved && detail.gpsSpikesRemoved > 0 ? (
+              <span className="lkdv-sortie-badge">{detail.gpsSpikesRemoved} pic(s) GPS lissé(s)</span>
+            ) : null}
+            {(detail.tags ?? []).map((t) => (
+              <span key={t} className="lkdv-sortie-badge">
+                {tagLabel(t)}
+              </span>
+            ))}
             <span className={`lkdv-sortie-badge state ${detail.status}`}>{STATUS_LABEL[detail.status]}</span>
           </div>
           <h2>{detail.title}</h2>
@@ -223,8 +266,16 @@ export function OutingSummary({
           <b>{metricDisplay(detail, 'maxAltitude', detail.maxAlt, (value) => `${formatNumber(value)} m`)}</b>
         </div>
         <div>
-          <small>Durée</small>
-          <b>{metricDisplay(detail, 'duration', detail.durationS, (value) => formatDuration(value))}</b>
+          <small>Temps mouvement</small>
+          <b>{metricDisplay(detail, 'movingTime', detail.movingTimeS, (value) => formatDuration(value))}</b>
+        </div>
+        <div>
+          <small>Temps écoulé</small>
+          <b>
+            {metricDisplay(detail, 'duration', detail.elapsedS ?? detail.durationS, (value) =>
+              formatDuration(value)
+            )}
+          </b>
         </div>
       </div>
       {avoidedCarbon.eligible && avoidedCarbon.kgCo2Avoided !== null ? (
@@ -294,7 +345,7 @@ export function OutingSummary({
           className="lkdv-sortie-edit"
           onSubmit={(event) => {
             event.preventDefault();
-            onSave({ title: title.trim(), notes, visibility });
+            onSave({ title: title.trim(), notes, visibility, sport, tags });
           }}
         >
           <label>
@@ -307,6 +358,39 @@ export function OutingSummary({
               required
             />
           </label>
+          <label>
+            <span>Sport / Type d’activité</span>
+            <select value={sport} onChange={(event) => setSport(event.target.value)}>
+              {SPORT_FAMILIES.map((family) => (
+                <option key={family.sport} value={family.sport}>
+                  {family.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <div style={{ display: 'grid', gap: 6 }}>
+            <span style={{ fontSize: 12, fontWeight: 600 }}>Tags d’activité</span>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {ACTIVITY_TAGS.map((tag) => {
+                const active = tags.includes(tag);
+                return (
+                  <button
+                    key={tag}
+                    type="button"
+                    aria-pressed={active}
+                    className={`lkdv-apill ${active ? 'is-primary' : ''}`}
+                    onClick={() =>
+                      setTags((prev) =>
+                        prev.includes(tag) ? prev.filter((item) => item !== tag) : [...prev, tag],
+                      )
+                    }
+                  >
+                    {tagLabel(tag)}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
           <label>
             <span>Récit</span>
             <textarea
@@ -332,7 +416,14 @@ export function OutingSummary({
           </div>
         </form>
       ) : (
-        detail.notes ? <p className="lkdv-sortie-notes">{detail.notes}</p> : null
+        <>
+          <OutingQuickEditPanel
+            outingId={detail.id}
+            enabled={Boolean(detail.canEdit && detail.quickEditPending)}
+            onUpdated={onUpdated ?? (() => undefined)}
+          />
+          {detail.notes ? <p className="lkdv-sortie-notes">{detail.notes}</p> : null}
+        </>
       )}
 
       <section className="lkdv-sortie-section">
@@ -488,10 +579,10 @@ export function OutingSummary({
         <section className="lkdv-sortie-danger">
           {confirmDelete ? (
             <>
-              <p>Supprimer la sortie et tout son contenu ?</p>
+              <p>Déplacer cette sortie vers la corbeille ? Elle reste restaurable pendant 30 jours.</p>
               <div className="lkdv-sortie-edit-actions lkdv-apill-row">
                 <ActionPill label="Annuler" icon={<X />} onClick={() => setConfirmDelete(false)} />
-                <ActionPill tone="danger" label="Supprimer" icon={<Trash2 />} onClick={onDelete} />
+                <ActionPill tone="danger" label="Mettre à la corbeille" icon={<Trash2 />} onClick={onDelete} />
               </div>
             </>
           ) : (
