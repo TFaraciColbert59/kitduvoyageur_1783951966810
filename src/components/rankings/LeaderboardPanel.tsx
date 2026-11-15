@@ -185,7 +185,7 @@ function EntryRow({
             </Link>
           )}
           {entry.isCurrentUser && (
-            <span className="rounded-full bg-[color:var(--lkv-secondary)]/20 px-2 py-0.5 font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-[0.1em] text-[color:var(--lkv-secondary-subtle)]">
+            <span className="rounded-full bg-[color:var(--lkv-secondary)]/20 px-2 py-0.5 font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-[0.1em] text-[color:var(--lkv-on-secondary-subtle)]">
               Vous
             </span>
           )}

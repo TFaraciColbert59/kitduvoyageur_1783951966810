@@ -467,17 +467,28 @@
 /* ── Format et audience (étape 1 de Publication) ────────────────────────── */
 
 .lkdv-cv2c-format-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 2px 2px 4px;
+}
+
+.lkdv-cv2c-format-grid::-webkit-scrollbar {
+  display: none;
 }
 
 .lkdv-cv2c-format-card {
+  flex: 0 0 132px;
+  scroll-snap-align: start;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 3px;
-  min-height: 84px;
+  min-height: 92px;
   padding: 11px 12px;
   border: 0;
   border-radius: var(--cv2-radius-tile);
@@ -560,11 +571,22 @@
 
 .lkdv-cv2c-audience-list {
   display: flex;
-  flex-direction: column;
-  gap: 7px;
+  flex-direction: row;
+  gap: 10px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 2px 2px 4px;
+}
+
+.lkdv-cv2c-audience-list::-webkit-scrollbar {
+  display: none;
 }
 
 .lkdv-cv2c-audience-card {
+  flex: 0 0 216px;
+  scroll-snap-align: start;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -2679,4 +2701,63 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+
+/* ── Alignement /compte : contrôles, chips, preview & sous-drawers ── */
+.lkdv-cv2-sheet .lkdv-cv2c-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.lkdv-cv2c-chip,
+.lkdv-cv2c-stepper button,
+.lkdv-cv2-footer button {
+  transition: transform 0.13s var(--motion-ease-standard, ease), opacity 0.15s ease;
+}
+
+.lkdv-cv2c-chip:active,
+.lkdv-cv2c-stepper button:active,
+.lkdv-cv2-footer button:active {
+  transform: scale(0.96);
+}
+
+.lkdv-cv2c-stepper button {
+  min-width: 40px;
+  min-height: 40px;
+}
+
+.lkdv-cv2-preview-frame {
+  transition: opacity 0.16s ease;
+}
+
+.lkdv-cv2c-picker-list {
+  padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px));
+}
+
+.lkdv-cv2c-confirm-box {
+  animation: cv2ConfirmIn 0.15s var(--motion-ease-standard, ease) both;
+}
+
+@keyframes cv2ConfirmIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lkdv-cv2c-chip,
+  .lkdv-cv2c-stepper button,
+  .lkdv-cv2-footer button,
+  .lkdv-cv2-preview-frame {
+    transition-duration: 0.01ms !important;
+  }
+  .lkdv-cv2c-confirm-box {
+    animation: none !important;
+  }
 }

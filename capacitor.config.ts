@@ -61,15 +61,13 @@ const config: CapacitorConfig = {
       splashFullScreen: true,
       splashImmersive: true,
     },
-    // Réglage de départ de toute l'app : vert forêt, texte clair. Sur /compas
-    // (thème clair forcé, paysage éclairci sous la barre) le texte doit être
-    // sombre : `NativeAppBootstrap` pose le thème « compas » à l'entrée et
-    // rend celui-ci à la sortie (`src/lib/native/status-bar.ts`, plan 5.4).
+    // Réglage de départ de toute l'app : 100 % Mode Clair Liquid Glass (Style.Light
+    // pour encres sombres / icônes foncées sur fond clair #FBFAF6).
     // Android 15+ (cible 36) ignore `backgroundColor` et `overlaysWebView` :
     // seul le style compte alors.
     StatusBar: {
-      style: "DARK" as any,
-      backgroundColor: "#17402C",
+      style: "LIGHT" as any,
+      backgroundColor: "#FBFAF6",
       overlaysWebView: true,
     },
     Keyboard: {

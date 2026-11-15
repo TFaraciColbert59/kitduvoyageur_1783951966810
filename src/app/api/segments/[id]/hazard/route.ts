@@ -19,6 +19,7 @@ import {
 } from '@/lib/segments/http';
 import { hazardReportBodySchema } from '@/lib/segments/schemas';
 import { resolveCanonicalSegment } from '@/lib/segments/service';
+import { syncS01ToLeaderboards } from '@/lib/segments/bridge';
 import {
   countHazardReportsByUserSince,
   listEfforts,
@@ -114,6 +115,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     if (result.report) saveHazardReport(result.report);
     upsertSegment(result.updatedSegment);
     upsertEfforts(result.updatedEfforts);
+    syncS01ToLeaderboards(segment.id);
 
     return json(
       {
@@ -150,6 +152,7 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
     saveHazardReports(resolved.updatedReports);
     upsertSegment(resolved.updatedSegment);
     upsertEfforts(resolved.updatedEfforts);
+    syncS01ToLeaderboards(segment.id);
 
     return json({
       resolved: true,

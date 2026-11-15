@@ -2153,6 +2153,24 @@ body.story-open [data-bottom-nav] {
 }
 .sw-wrap[data-det="card"] .sh-b::-webkit-scrollbar { display: none !important; }
 .sw-wrap[data-det="card"] .scrim { opacity: 0 !important; pointer-events: none !important; }
+.sw-wrap[data-det="large"] .sheet {
+  top: calc(env(safe-area-inset-top, 12px) + 8px) !important;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 8px) !important;
+  left: 8px !important;
+  right: 8px !important;
+  width: auto !important;
+  max-width: none !important;
+  max-height: 92dvh !important;
+  border-radius: 32px !important;
+}
+.sw-wrap[data-det="large"] .sh-b {
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  scrollbar-width: none !important;
+  padding: 4px !important;
+  gap: 8px !important;
+}
+.sw-wrap[data-det="large"] .sh-b::-webkit-scrollbar { display: none !important; }
 .sheet {
   padding: 2px !important;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.92) 42%, rgba(255, 255, 255, 0.95)) !important;
@@ -3161,12 +3179,12 @@ body.story-open [data-bottom-nav] {
   gap: 2px !important;
   padding: 7px 9px !important;
   border-radius: 14px !important;
-  background: var(--bar-glass-bg) !important;
-  -webkit-backdrop-filter: var(--bar-glass-blur) !important;
-  backdrop-filter: var(--bar-glass-blur) !important;
-  box-shadow: var(--bar-thumb-shadow) !important;
-  border: 0 !important;
-  color: #17402C !important;
+  background: rgba(255, 255, 255, 0.88) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.6) !important;
+  color: #172B24 !important;
 }
 .voyage-title {
   font: 600 12.5px/1.2 var(--sf) !important;

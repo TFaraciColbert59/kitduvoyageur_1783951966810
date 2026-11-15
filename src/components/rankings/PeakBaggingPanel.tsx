@@ -128,7 +128,7 @@ export function PeakBaggingView({ summary }: { summary: PeakBaggingSummary }) {
                   <span
                     className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border ${
                       peak.isConquered
-                        ? 'border-[color:var(--lkv-secondary)]/45 bg-[color:var(--lkv-secondary)]/15 text-[color:var(--lkv-secondary-subtle)]'
+                        ? 'border-[color:var(--lkv-secondary)]/45 bg-[color:var(--lkv-secondary)]/15 text-[color:var(--lkv-on-secondary-subtle)]'
                         : 'border-[color:var(--glass-rim)] bg-[color:var(--g2-bg)] text-[color:var(--glass-label-tertiary)]'
                     }`}
                   >

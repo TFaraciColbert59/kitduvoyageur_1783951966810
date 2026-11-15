@@ -12,13 +12,20 @@
  * les écrans Compte, la carte et les futurs réglages de confidentialité.
  */
 
-export type StoredOutingVisibility = 'private' | 'collective_anonymized';
-
-export type OutingAudienceKey =
+export type StoredOutingVisibility =
   | 'private'
   | 'followers'
   | 'public'
   | 'collective_anonymized';
+
+export type OutingAudienceKey = StoredOutingVisibility;
+
+export const OUTING_VISIBILITIES: readonly StoredOutingVisibility[] = [
+  'private',
+  'followers',
+  'public',
+  'collective_anonymized',
+] as const;
 
 export interface OutingAudienceOption {
   key: OutingAudienceKey;
@@ -26,68 +33,79 @@ export interface OutingAudienceOption {
   label: string;
   /** Ce que l'option ferait si le contrat serveur la portait. */
   hint: string;
-  /** Valeur réellement acceptée par l'API, ou `null` si l'option est bloquée. */
+  /** Valeur réellement acceptée par l'API. */
   storedVisibility: StoredOutingVisibility | null;
   available: boolean;
-  /** Raison visible quand l'option est indisponible (jamais une infobulle seule). */
+  /** Raison visible quand l'option est indisponible. */
   reason?: string;
-  /** Information visible pour une option disponible mais non publique. */
+  /** Information visible pour une option disponible mais encadrée. */
   note?: string;
 }
 
 /**
- * Ordre volontaire : les trois audiences demandées par la fiche d'abord
- * (moi, abonnés, public), puis la valeur historique réellement stockée.
+ * Ordre volontaire : Moi uniquement, Mes abonnés, Public, puis Collectif anonymisé.
  */
 export const OUTING_AUDIENCE_OPTIONS: readonly OutingAudienceOption[] = [
   {
     key: 'private',
     label: 'Moi uniquement',
-    hint: 'La sortie reste privée. Toi seul·e peux la lire et la modifier.',
+    hint: 'La sortie reste privée. Toi seul·e peux la lire et la modifier ; tout lien existant est révoqué.',
     storedVisibility: 'private',
     available: true,
   },
   {
     key: 'followers',
     label: 'Mes abonnés',
-    hint: 'Lecture réservée aux personnes qui te suivent.',
-    storedVisibility: null,
-    available: false,
-    reason:
-      'Indisponible : la contrainte de hike_sessions.visibility n’accepte pas followers et aucune policy RLS ne lit une sortie via user_follows.',
+    hint: 'Lecture réservée aux personnes qui te suivent, avec zones privées et métriques masquées.',
+    storedVisibility: 'followers',
+    available: true,
   },
   {
     key: 'public',
     label: 'Public',
-    hint: 'Lecture par toute personne disposant d’un lien.',
-    storedVisibility: null,
-    available: false,
-    reason:
-      'Indisponible : aucune valeur public, aucune policy de lecture publique directe (seul un carnet public expose sa session liée) et aucun lien de partage de sortie. La valeur collective_anonymized ne rend pas la sortie publique.',
+    hint: 'Visible par la communauté ou via lien de partage révocable, avec zones privées protégées.',
+    storedVisibility: 'public',
+    available: true,
   },
   {
     key: 'collective_anonymized',
     label: 'Collectif anonymisé',
-    hint: 'Valeur historique de contribution collective ; elle ne publie pas la sortie.',
+    hint: 'Contribution anonyme aux agrégats et cartes collectives sans exposer ton identité.',
     storedVisibility: 'collective_anonymized',
     available: true,
     note:
-      'Valeur existante en base, mais aucune vue ni policy ne l’expose en raison de cette valeur. Elle ne remplace ni Public ni Abonnés.',
+      'Les zones privées, le masquage départ/arrivée et tes choix de métriques s’appliquent automatiquement.',
   },
 ];
 
 export const OUTING_AUDIENCE_CONTRACT_NOTE =
-  'Le contrat serveur actuel ne stocke que private et collective_anonymized. Public et Abonnés exigent une migration (valeurs, policies RLS et lien de partage) : ils restent affichés désactivés, jamais simulés.';
+  'Chaque niveau applique tes zones privées, le masquage départ/arrivée et tes réglages de métriques côté serveur. Passer sur Privé révoque immédiatement les liens partagés.';
 
 /** Normalise une valeur lue en base sans jamais inventer une audience publique. */
 export function normalizeStoredOutingVisibility(
   value: unknown
 ): StoredOutingVisibility {
-  return value === 'collective_anonymized' ? 'collective_anonymized' : 'private';
+  if (
+    value === 'followers' ||
+    value === 'public' ||
+    value === 'collective_anonymized'
+  ) {
+    return value;
+  }
+  return 'private';
 }
 
 export function outingVisibilityLabel(value: StoredOutingVisibility): string {
-  return value === 'collective_anonymized' ? 'Collectif anonymisé' : 'Moi uniquement';
+  switch (value) {
+    case 'followers':
+      return 'Mes abonnés';
+    case 'public':
+      return 'Public';
+    case 'collective_anonymized':
+      return 'Collectif anonymisé';
+    default:
+      return 'Moi uniquement';
+  }
 }
 
 export function outingAudienceOption(

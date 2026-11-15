@@ -356,6 +356,17 @@ export function ZoneSettingsEntry() {
             setSheet('zoneSettings', 'full');
           }}
         />
+        <XpRow
+          icon="bluetooth"
+          title="Capteurs BLE &amp; montres"
+          sub="Cardio, puissance, Apple Watch / Wear OS"
+          badge={{ label: 'Gérer', tone: 'muted' }}
+          onClick={() => {
+            if (typeof window !== 'undefined') {
+              window.location.assign('/compte/sensors');
+            }
+          }}
+        />
       </XpRows>
     </>
   );

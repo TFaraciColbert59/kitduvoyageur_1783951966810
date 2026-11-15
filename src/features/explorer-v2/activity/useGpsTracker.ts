@@ -16,7 +16,9 @@ import {
   type OffRouteState,
 } from './offRoute';
 import { useExplorerStore } from '../state/store';
+import { getSportVariant } from '../sheet/sportSelection';
 import { gpsSimulationEnabled } from './gpsSimulation';
+import { SkiSessionEngine } from './modes/skiActivity';
 import {
   appendMetricInputs,
   mergeMetricSeries,
@@ -95,7 +97,14 @@ export function useGpsTracker({
   const scene = useExplorerStore((state) => state.scene);
   const running = !!activity && !activity.paused;
   const activeClientSessionId = activity?.clientSessionId;
+  const activeVariant = activity?.selection?.variantId
+    ? getSportVariant(activity.selection.variantId)
+    : null;
+  const requiresGps = activeVariant
+    ? activeVariant.requiresGps
+    : activity?.selection?.environment !== 'indoor';
   const trackerRef = useRef(new ActivityTracker());
+  const skiEngineRef = useRef<{ key: string; engine: SkiSessionEngine } | null>(null);
   const trackerConfigRef = useRef<string>('');
   const manualPausedRef = useRef<boolean | null>(null);
   const offRouteRef = useRef<OffRouteState>({ offRoute: false, distanceM: 0, outSinceS: 0 });
@@ -194,14 +203,43 @@ export function useGpsTracker({
       distanceM: metrics.distanceM,
     };
 
+    const variantId = current.selection?.variantId;
+    const isOpenWaterSwim = variantId === 'natation-eau-libre';
+    const isSkiWithLifts =
+      variantId === 'ski-alpin' || variantId === 'snowboard' || variantId === 'ski-rando';
+
+    let nextElevGainM = isOpenWaterSwim ? 0 : metrics.elevGainM;
+    let skiSnapshot: ReturnType<SkiSessionEngine['getLiveSnapshot']> | null = null;
+    if (isSkiWithLifts && metrics.accepted) {
+      const sessionKey = current.clientSessionId ?? String(current.startedAt);
+      if (!skiEngineRef.current || skiEngineRef.current.key !== sessionKey) {
+        skiEngineRef.current = {
+          key: sessionKey,
+          engine: new SkiSessionEngine({
+            variantId: variantId as 'ski-alpin' | 'snowboard' | 'ski-rando',
+            startedAtMs: current.startedAt,
+          }),
+        };
+      }
+      skiEngineRef.current.engine.addFix(fix);
+      skiSnapshot = skiEngineRef.current.engine.getLiveSnapshot();
+      nextElevGainM = skiSnapshot.elevGainM;
+    }
+
     useExplorerStore.setState((state) => ({
       activity: state.activity
         ? {
             ...state.activity,
             distanceM: metrics.distanceM,
-            elevGainM: metrics.elevGainM,
+            elevGainM: nextElevGainM,
             movingS: metrics.movingS,
             autoPaused: metrics.autoPaused,
+            ...(skiSnapshot
+              ? {
+                  skiRunsCount: skiSnapshot.runsCount,
+                  skiDescentM: skiSnapshot.verticalDropM,
+                }
+              : {}),
             splits: metrics.splits,
             mileSplits: metrics.mileSplits,
             laps: metrics.laps,
@@ -465,7 +503,7 @@ export function useGpsTracker({
   }, [activity]);
 
   useEffect(() => {
-    if (!running || permission === 'denied') return;
+    if (!running || !requiresGps || permission === 'denied') return;
     if (typeof navigator === 'undefined' || !navigator.geolocation) return;
     const id = navigator.geolocation.watchPosition(
       (position) => {
@@ -488,12 +526,30 @@ export function useGpsTracker({
       { enableHighAccuracy: true, maximumAge: 2000, timeout: 15000 },
     );
     return () => navigator.geolocation.clearWatch(id);
-  }, [running, permission]);
+  }, [running, requiresGps, permission]);
+
+  // S1.09 / S1.10 / S1.12 — Chrono monotone sans GPS (indoor, piscine, rééducation).
+  useEffect(() => {
+    if (!running || requiresGps) return;
+    const timer = window.setInterval(() => {
+      useExplorerStore.setState((state) =>
+        state.activity && !state.activity.paused
+          ? {
+              activity: {
+                ...state.activity,
+                movingS: state.activity.movingS + 1,
+              },
+            }
+          : {},
+      );
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [running, requiresGps]);
 
   // Simulation continue de déplacement : réservée aux fixtures de recette/test.
   // Jamais en production (cf. incident P0 : traces fictives en session réelle).
   useEffect(() => {
-    if (!running) return;
+    if (!running || !requiresGps) return;
     if (!gpsSimulationEnabled()) return;
     const timer = window.setInterval(() => {
       const now = Date.now();
@@ -528,6 +584,7 @@ export function useGpsTracker({
       manualPausedRef.current = null;
       samplesRef.current = [];
       offRouteRef.current = { offRoute: false, distanceM: 0, outSinceS: 0 };
+      skiEngineRef.current = null;
     }
   }, [activity]);
 

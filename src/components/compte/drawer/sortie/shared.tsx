@@ -214,12 +214,54 @@ function downsample(points: OutingPoint[], max = 180): OutingPoint[] {
   return sampled;
 }
 
+export type TraceColorMode = 'default' | 'slope' | 'pace' | 'elevation';
+
+function segmentMetricColor(
+  mode: TraceColorMode,
+  a: OutingPoint,
+  b: OutingPoint,
+  minEle: number,
+  eleSpan: number,
+): string {
+  if (mode === 'elevation') {
+    if (a.elevationM === null || b.elevationM === null) return '#94a3b8';
+    const avg = (a.elevationM + b.elevationM) / 2;
+    const ratio = Math.min(1, Math.max(0, (avg - minEle) / Math.max(eleSpan, 1)));
+    return ratio > 0.66 ? '#b91c1c' : ratio > 0.33 ? '#d97706' : '#15803d';
+  }
+  const dLat = (b.lat - a.lat) * 111_320;
+  const dLng = (b.lng - a.lng) * 111_320 * Math.cos(((a.lat + b.lat) / 2) * (Math.PI / 180));
+  const distM = Math.hypot(dLat, dLng);
+  if (mode === 'slope') {
+    if (a.elevationM === null || b.elevationM === null || distM < 2) return '#94a3b8';
+    const gradePct = ((b.elevationM - a.elevationM) / distM) * 100;
+    if (gradePct >= 8) return '#dc2626';
+    if (gradePct >= 3) return '#d97706';
+    if (gradePct <= -4) return '#0284c7';
+    return '#15803d';
+  }
+  if (mode === 'pace') {
+    if (!a.timestamp || !b.timestamp || distM < 1) return '#94a3b8';
+    const dtS = (Date.parse(b.timestamp) - Date.parse(a.timestamp)) / 1000;
+    if (!Number.isFinite(dtS) || dtS <= 0) return '#94a3b8';
+    const speedKmh = (distM / dtS) * 3.6;
+    if (speedKmh >= 15) return '#dc2626';
+    if (speedKmh >= 7) return '#d97706';
+    return '#15803d';
+  }
+  return '#17402C';
+}
+
 export function TraceMap({
   segments,
   className,
+  colorMode = 'default',
+  activeCoord = null,
 }: {
   segments: OutingPoint[][];
   className?: string;
+  colorMode?: TraceColorMode;
+  activeCoord?: { lat: number; lng: number } | null;
 }) {
   const prepared = segments
     .map((segment) => downsample(segment))
@@ -239,7 +281,12 @@ export function TraceMap({
   const scale = Math.min(96 / spanLng, 96 / spanLat);
   const offsetX = (100 - spanLng * scale) / 2;
   const offsetY = (100 - spanLat * scale) / 2;
-  const project = (point: OutingPoint) => {
+  const elevations = sampled
+    .map((point) => point.elevationM)
+    .filter((v): v is number => v !== null && Number.isFinite(v));
+  const minEle = elevations.length > 0 ? Math.min(...elevations) : 0;
+  const eleSpan = elevations.length > 0 ? Math.max(Math.max(...elevations) - minEle, 1) : 1;
+  const project = (point: { lat: number; lng: number; elevationM?: number | null }) => {
     const x = offsetX + (point.lng - minLng) * scale;
     const y = offsetY + (maxLat - point.lat) * scale;
     return [x, y] as const;
@@ -257,6 +304,7 @@ export function TraceMap({
   const [startX, startY] = project(prepared[0][0]);
   const lastSegment = prepared[prepared.length - 1];
   const [endX, endY] = project(lastSegment[lastSegment.length - 1]);
+  const activePos = activeCoord ? project(activeCoord) : null;
 
   return (
     <svg
@@ -272,15 +320,42 @@ export function TraceMap({
           <stop offset="100%" stopColor="#5B8F6A" />
         </linearGradient>
       </defs>
-      {paths.map((path, index) => (
-        <React.Fragment key={`trace-${index}`}>
-          <path d={path} fill="none" stroke="rgba(23,64,44,.16)" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" />
-          <path d={path} fill="none" stroke="url(#lkdv-trace-stroke)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        </React.Fragment>
-      ))}
+      {colorMode === 'default'
+        ? paths.map((path, index) => (
+            <React.Fragment key={`trace-${index}`}>
+              <path d={path} fill="none" stroke="rgba(23,64,44,.16)" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" />
+              <path d={path} fill="none" stroke="url(#lkdv-trace-stroke)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </React.Fragment>
+          ))
+        : prepared.map((segment, segIdx) =>
+            segment.slice(0, -1).map((point, idx) => {
+              const next = segment[idx + 1];
+              const [x1, y1] = project(point);
+              const [x2, y2] = project(next);
+              const stroke = segmentMetricColor(colorMode, point, next, minEle, eleSpan);
+              return (
+                <line
+                  key={`seg-${segIdx}-${idx}`}
+                  x1={x1.toFixed(2)}
+                  y1={y1.toFixed(2)}
+                  x2={x2.toFixed(2)}
+                  y2={y2.toFixed(2)}
+                  stroke={stroke}
+                  strokeWidth="1.9"
+                  strokeLinecap="round"
+                />
+              );
+            })
+          )}
       <circle cx={startX} cy={startY} r="2.6" fill="#17402C" />
       <circle cx={startX} cy={startY} r="1.1" fill="#fff" />
       <circle cx={endX} cy={endY} r="2.6" fill="#fff" stroke="#17402C" strokeWidth="1.2" />
+      {activePos ? (
+        <g data-testid="trace-active-cursor">
+          <circle cx={activePos[0]} cy={activePos[1]} r="4.4" fill="rgba(234,88,12,0.22)" />
+          <circle cx={activePos[0]} cy={activePos[1]} r="2.2" fill="#EA580C" stroke="#fff" strokeWidth="0.9" />
+        </g>
+      ) : null}
     </svg>
   );
 }

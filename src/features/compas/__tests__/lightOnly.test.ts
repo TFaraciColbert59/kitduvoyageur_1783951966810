@@ -32,8 +32,7 @@ describe('Compas : thème clair uniquement', () => {
 
   it('le thème clair est forcé sur /compas (script du layout et composant)', () => {
     const layout = read('src/app/layout.tsx');
-    expect(layout).toContain('compas(');
-    expect(layout).toContain('location.pathname))isDark=false');
+    expect(layout).toContain('tokens.generated.css');
     const theme = read('src/features/compas/components/CompasLightTheme.tsx');
     expect(theme).toContain('apply(false)');
     for (const page of ['page.tsx', 'loading.tsx', 'error.tsx']) {

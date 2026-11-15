@@ -267,7 +267,7 @@ export function RankBadge({ rank }: { rank: number }) {
       aria-label={`Rang ${rank}`}
       className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border text-[length:var(--lkv-text-caption)] font-bold ${
         medal
-          ? 'border-[color:var(--lkv-secondary)]/45 bg-[color:var(--lkv-secondary)]/15 text-[color:var(--lkv-secondary-subtle)]'
+          ? 'border-[color:var(--lkv-secondary)]/45 bg-[color:var(--lkv-secondary)]/15 text-[color:var(--lkv-on-secondary-subtle)]'
           : 'border-[color:var(--glass-rim)] bg-[color:var(--g2-bg)] text-[color:var(--glass-label-secondary)]'
       }`}
     >

@@ -14,8 +14,34 @@ import { APP_SW_PATH, shouldReloadOnControllerChange } from '@/lib/pwa/serviceWo
  */
 export default function ServiceWorkerRegistration() {
   useEffect(() => {
-    if (process.env.NODE_ENV !== 'production') return;
-    if (isNative() || !('serviceWorker' in navigator)) return;
+    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
+
+    if (process.env.NODE_ENV !== 'production' || isNative()) {
+      // En dev ou dans Capacitor, purger tout ancien SW d'app (`/sw.js`) qui
+      // servirait des chunks `/_next/static/` périmés depuis CacheStorage.
+      navigator.serviceWorker
+        .getRegistrations()
+        .then((regs) =>
+          Promise.all(
+            regs
+              .filter((r) => (r.active?.scriptURL || r.waiting?.scriptURL || r.installing?.scriptURL || '').includes('/sw.js'))
+              .map((r) => r.unregister())
+          )
+        )
+        .then((unregistered) => {
+          if (typeof caches !== 'undefined') {
+            return caches
+              .keys()
+              .then((keys) => Promise.all(keys.filter((k) => k.startsWith('lkdv-static-')).map((k) => caches.delete(k))))
+              .then(() => {
+                if (unregistered.some(Boolean)) window.location.reload();
+              });
+          }
+          if (unregistered.some(Boolean)) window.location.reload();
+        })
+        .catch(() => undefined);
+      return;
+    }
 
     let reloading = false;
     const onControllerChange = () => {

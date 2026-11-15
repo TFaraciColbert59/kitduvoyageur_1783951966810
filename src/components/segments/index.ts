@@ -11,4 +11,6 @@ export { SegmentCard } from './SegmentCard';
 export { SegmentBadges, SegmentStats } from './SegmentBadges';
 export { SegmentsScreen } from './SegmentsScreen';
 export type { SegmentsScreenProps } from './SegmentsScreen';
+export { SegmentsDrawerPanel } from './SegmentsDrawerPanel';
+export type { SegmentsDrawerPanelProps } from './SegmentsDrawerPanel';
 export { parseActivityTraceJson } from './traceImport';

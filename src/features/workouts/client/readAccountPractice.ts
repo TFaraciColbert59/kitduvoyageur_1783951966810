@@ -13,7 +13,7 @@ export interface AccountPracticeSnapshot {
   lastPracticeAt: string | null;
   sessionsLast7d: number | null;
   sport: WorkoutSport | null;
-  sportStatus: 'unknown' | 'absent';
+  sportStatus: 'known' | 'unknown' | 'absent';
 }
 
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
@@ -37,6 +37,17 @@ function readDate(outing: Record<string, unknown>): number | null {
   const started =
     typeof outing.startedAt === 'string' ? Date.parse(outing.startedAt) : NaN;
   return Number.isFinite(started) ? started : null;
+}
+
+function readOutingSport(outing: Record<string, unknown>): WorkoutSport | null {
+  const raw = typeof outing.sport === 'string' ? outing.sport.trim().toLowerCase() : '';
+  if (raw === 'course' || raw === 'trail' || raw === 'running' || raw === 'run') {
+    return 'course';
+  }
+  if (raw === 'velo' || raw === 'vélo' || raw === 'cycling' || raw === 'bike') {
+    return 'velo';
+  }
+  return null;
 }
 
 export function readAccountPractice(
@@ -73,6 +84,7 @@ export function readAccountPractice(
 
   let lastMs: number | null = null;
   let lastIso: string | null = null;
+  let lastSport: WorkoutSport | null = null;
   let sessionsLast7d = 0;
   let readable = 0;
 
@@ -82,6 +94,7 @@ export function readAccountPractice(
     readable += 1;
     if (lastMs === null || ms > lastMs) {
       lastMs = ms;
+      lastSport = readOutingSport(outing);
       const endedAt =
         typeof outing.endedAt === 'string' ? outing.endedAt : null;
       const startedAt =
@@ -115,8 +128,8 @@ export function readAccountPractice(
     status: 'available',
     lastPracticeAt: lastIso,
     sessionsLast7d,
-    sport: null,
-    sportStatus: 'unknown',
+    sport: lastSport,
+    sportStatus: lastSport ? 'known' : 'unknown',
   };
 }
 

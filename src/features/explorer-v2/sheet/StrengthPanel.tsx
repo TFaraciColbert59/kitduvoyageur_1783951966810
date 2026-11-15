@@ -59,6 +59,12 @@ import {
 } from '../strength/model';
 import { XpChips, XpEmpty, XpEyebrow, XpMetrics, XpRow, XpRows } from './blocks';
 import { SPORT_META } from './context';
+import {
+  StrengthGuidedSection,
+  StrengthMusclesSection,
+  StrengthTemplatesImportSection,
+  type StrengthViewTab,
+} from '../strength/StrengthAdvancedViews';
 
 type SyncState =
   | 'idle'
@@ -103,6 +109,7 @@ export function StrengthPanel() {
   const [confirmClear, setConfirmClear] = React.useState(false);
   const [syncState, setSyncState] = React.useState<SyncState>('idle');
   const [legacyDraft, setLegacyDraft] = React.useState<StrengthLog | null>(null);
+  const [activeTab, setActiveTab] = React.useState<StrengthViewTab>('carnet');
 
   const push = React.useCallback(
     async (next: StrengthLog, ownerId: string | null = getStrengthStorageOwner()) => {
@@ -609,7 +616,58 @@ export function StrengthPanel() {
         </span>
       </div>
 
-      {showSync && syncLabel ? (
+      <div
+        className="xp-strength-tabs"
+        role="tablist"
+        aria-label="Vues musculation"
+        style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}
+      >
+        {(
+          [
+            { id: 'carnet', label: 'Carnet' },
+            { id: 'muscles', label: 'Muscles' },
+            { id: 'guide', label: 'Séances guidées' },
+            { id: 'modeles', label: 'Modèles & Import' },
+          ] as Array<{ id: StrengthViewTab; label: string }>
+        ).map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            role="tab"
+            aria-selected={activeTab === tab.id}
+            className={activeTab === tab.id ? 'xp-primary' : 'xp-chip'}
+            onClick={() => setActiveTab(tab.id)}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === 'muscles' ? <StrengthMusclesSection log={log} /> : null}
+
+      {activeTab === 'guide' ? (
+        <StrengthGuidedSection
+          log={log}
+          onApplyLog={(next, msg) => {
+            commit(next, msg);
+            setActiveTab('carnet');
+          }}
+        />
+      ) : null}
+
+      {activeTab === 'modeles' ? (
+        <StrengthTemplatesImportSection
+          log={log}
+          onApplyLog={(next, msg) => {
+            commit(next, msg);
+            setActiveTab('carnet');
+          }}
+        />
+      ) : null}
+
+      {activeTab === 'carnet' ? (
+        <>
+          {showSync && syncLabel ? (
         <div className="xp-strength-sync" data-tone={syncTone}>
           <span role="status">{syncLabel}</span>
           {syncRetryable ? (
@@ -876,13 +934,13 @@ export function StrengthPanel() {
         </>
       ) : null}
 
-      <XpEyebrow>Import</XpEyebrow>
+      <XpEyebrow>Import partenaire</XpEyebrow>
       <XpRows>
         <XpRow
           icon="cam"
-          title="Import partenaire ou capture"
-          sub="Hors de cette tranche : aucun fichier n’est lu, aucune série n’est créée sans saisie et aucun import n’est simulé."
-          badge={{ label: 'À venir', tone: 'muted' }}
+          title="Import notes, CSV ou JSON"
+          sub="Ouvre l’onglet « Modèles & Import » pour coller tes séries ou réutiliser tes modèles gratuits."
+          onClick={() => setActiveTab('modeles')}
         />
       </XpRows>
 
@@ -945,6 +1003,8 @@ export function StrengthPanel() {
         <p className="xp-strength-status" role="status">
           {status}
         </p>
+      ) : null}
+        </>
       ) : null}
     </div>
   );

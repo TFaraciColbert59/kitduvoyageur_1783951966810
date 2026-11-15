@@ -15,19 +15,28 @@ public struct LkdvLiveActivityAttributes: ActivityAttributes {
         public var movingS: Double
         public var paused: Bool
         public var offRoute: Bool
+        public var nextManeuverInstruction: String?
+        public var nextManeuverDistanceM: Double?
+        public var offRouteLabel: String?
 
         public init(
             distanceM: Double,
             elevGainM: Double,
             movingS: Double,
             paused: Bool,
-            offRoute: Bool
+            offRoute: Bool,
+            nextManeuverInstruction: String? = nil,
+            nextManeuverDistanceM: Double? = nil,
+            offRouteLabel: String? = nil
         ) {
             self.distanceM = distanceM
             self.elevGainM = elevGainM
             self.movingS = movingS
             self.paused = paused
             self.offRoute = offRoute
+            self.nextManeuverInstruction = nextManeuverInstruction
+            self.nextManeuverDistanceM = nextManeuverDistanceM
+            self.offRouteLabel = offRouteLabel
         }
     }
 

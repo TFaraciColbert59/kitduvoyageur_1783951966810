@@ -4,4 +4,10 @@
     <string name="title_activity_main">Le Kit du Voyageur</string>
     <string name="package_name" translatable="false">com.lekitduvoyageur.app</string>
     <string name="custom_url_scheme" translatable="false">com.lekitduvoyageur.app</string>
+    <string name="shortcut_plan_short">Planifier</string>
+    <string name="shortcut_plan_long">Planifier un parcours</string>
+    <string name="shortcut_record_short">Enregistrer</string>
+    <string name="shortcut_record_long">Démarrer un enregistrement GPS</string>
+    <string name="shortcut_offline_short">Hors ligne</string>
+    <string name="shortcut_offline_long">Parcours et cartes téléchargés</string>
 </resources>

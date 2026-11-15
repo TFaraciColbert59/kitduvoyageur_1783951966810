@@ -64,9 +64,9 @@ export const DESTINATIONS: readonly Destination[] = [
     id: 'explorer',
     href: '/explorer',
     label: { fr: 'Explorer', en: 'Explore', es: 'Explorar', de: 'Entdecken', it: 'Esplora' },
-    ariaLabel: 'Explorer les sentiers, pays et destinations',
+    ariaLabel: 'Explorer les sentiers et destinations',
     iconName: 'compass',
-    matchPaths: ['/explorer', '/pays'],
+    matchPaths: ['/explorer'],
   },
   {
     id: 'community',
@@ -116,8 +116,6 @@ export function getDestinationLabel(id: DestinationId, locale: Locale): string {
  */
 const EXTENDED_NAV_PREFIXES: readonly string[] = [
   '/communaute',
-  '/communaute',
-  '/pays',
   // `/communaute` n'est plus un plateau texte : la capsule des six espaces
   // (48 px, `CommunitySpaces`) est le seul sélecteur local.
   '/messagerie',

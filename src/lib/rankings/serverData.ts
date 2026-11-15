@@ -1,9 +1,14 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type {
+  ChallengeCriterionType,
+  ChallengeKind,
+  ChallengeRule,
   PeakDefinition,
   PrivacyPolicyContext,
   RankingActivityRecord,
   RankingUserProfile,
+  SportCategory,
+  VirtualRaceRegistration,
 } from '@/features/rankings/types';
 import {
   type HikeSessionRow,
@@ -308,4 +313,172 @@ export async function loadSessionSegmentIds(
     }
   }
   return bySession;
+}
+
+export interface ExtendedChallengeEntry {
+  rule: ChallengeRule;
+  trackable: boolean;
+  registrationUrl: string | null;
+}
+
+interface G03ChallengeRow {
+  id: string;
+  version: number;
+  kind: string;
+  title: string;
+  description: string | null;
+  sport: string;
+  criterion: string;
+  target_value: number;
+  unit: string;
+  starts_at: string;
+  ends_at: string;
+  reward_badge_id: string | null;
+  reward_title: string | null;
+  reward_points: number | null;
+  created_by: string | null;
+  invited_user_ids: string[] | null;
+  sponsor_id: string | null;
+  sponsor_name: string | null;
+  partner_id: string | null;
+  partner_available: boolean | null;
+  max_duration_sec: number | null;
+  registration_url: string | null;
+}
+
+/**
+ * S5.21 / S5.22 / S5.23 — Lit les défis privés (sur invitation), objectifs de
+ * meilleur effort et courses virtuelles depuis `g03_challenges`.
+ * Fail-closed : les défis `private_invite` ne sont retournés que si `viewerId`
+ * est créateur ou explicitement invité. Fail-soft si la table n'existe pas encore.
+ */
+export async function loadExtendedChallenges(
+  supabase: SupabaseClient,
+  viewerId: string
+): Promise<ExtendedChallengeEntry[]> {
+  try {
+    const { data, error } = await supabase
+      .from('g03_challenges')
+      .select(
+        'id,version,kind,title,description,sport,criterion,target_value,unit,starts_at,ends_at,reward_badge_id,reward_title,reward_points,created_by,invited_user_ids,sponsor_id,sponsor_name,partner_id,partner_available,max_duration_sec,registration_url'
+      )
+      .order('ends_at', { ascending: false })
+      .limit(100);
+    if (error || !Array.isArray(data)) return [];
+
+    const out: ExtendedChallengeEntry[] = [];
+    for (const row of data as G03ChallengeRow[]) {
+      const kind = row.kind as ChallengeKind;
+      const invited = Array.isArray(row.invited_user_ids) ? row.invited_user_ids : [];
+      if (kind === 'private_invite') {
+        if (!viewerId || (row.created_by !== viewerId && !invited.includes(viewerId))) {
+          continue;
+        }
+      } else if (kind === 'best_effort') {
+        if (!viewerId || row.created_by !== viewerId) {
+          continue;
+        }
+      }
+
+      const rule: ChallengeRule = {
+        id: row.id,
+        version: Number(row.version ?? 1) || 1,
+        kind,
+        title: row.title,
+        description: row.description ?? '',
+        sport: (row.sport as SportCategory) || 'all',
+        criterion: row.criterion as ChallengeCriterionType,
+        targetValue: Number(row.target_value ?? 0),
+        unit: row.unit,
+        startsAt: row.starts_at,
+        endsAt: row.ends_at,
+        rewardBadgeId: row.reward_badge_id || `badge:${row.id}`,
+        rewardTitle: row.reward_title || row.title,
+        rewardPoints: Number(row.reward_points ?? 0),
+        invitedUserIds:
+          kind === 'private_invite'
+            ? Array.from(new Set([...invited, ...(row.created_by ? [row.created_by] : [])]))
+            : undefined,
+        sponsorId: row.sponsor_id ?? undefined,
+        sponsorName: row.sponsor_name ?? undefined,
+        partnerId: row.partner_id ?? undefined,
+        partnerAvailable: row.partner_available ?? undefined,
+        maxDurationSec: row.max_duration_sec ?? undefined,
+      };
+
+      out.push({
+        rule,
+        trackable: true,
+        registrationUrl: row.registration_url ?? null,
+      });
+    }
+    return out;
+  } catch {
+    return [];
+  }
+}
+
+export async function loadVirtualRaceRegistrations(
+  supabase: SupabaseClient,
+  viewerId: string
+): Promise<Map<string, VirtualRaceRegistration>> {
+  const map = new Map<string, VirtualRaceRegistration>();
+  if (!viewerId) return map;
+  try {
+    const { data, error } = await supabase
+      .from('g03_virtual_race_registrations')
+      .select('challenge_id,user_id,status,registered_at')
+      .eq('user_id', viewerId)
+      .limit(100);
+    if (error || !Array.isArray(data)) return map;
+    for (const row of data as Array<{
+      challenge_id: string;
+      user_id: string;
+      status: 'registered' | 'withdrawn';
+      registered_at: string;
+    }>) {
+      map.set(row.challenge_id, {
+        raceId: row.challenge_id,
+        userId: row.user_id,
+        registeredAt: row.registered_at,
+        status: row.status,
+      });
+    }
+    return map;
+  } catch {
+    return map;
+  }
+}
+
+/**
+ * S5.24 / C-REWARD — Identifie les `source_id` d'activités ayant reçu une
+ * écriture compensatoire (`FRAUD_REVERSAL` ou `compensate:*`) pour le spectateur.
+ */
+export async function loadCompensatedSourceIds(
+  supabase: SupabaseClient,
+  viewerId: string
+): Promise<Set<string>> {
+  const set = new Set<string>();
+  if (!viewerId) return set;
+  try {
+    const { data, error } = await supabase
+      .from('reward_transactions')
+      .select('transaction_type,idempotency_key,metadata')
+      .eq('user_id', viewerId)
+      .eq('transaction_type', 'FRAUD_REVERSAL')
+      .limit(200);
+    if (error || !Array.isArray(data)) return set;
+    for (const row of data as Array<{
+      transaction_type?: string;
+      idempotency_key?: string | null;
+      metadata?: Record<string, unknown> | null;
+    }>) {
+      const sourceId =
+        typeof row.metadata?.source_id === 'string' ? row.metadata.source_id : null;
+      if (sourceId) set.add(sourceId);
+    }
+    return set;
+  } catch {
+    return set;
+  }
 }

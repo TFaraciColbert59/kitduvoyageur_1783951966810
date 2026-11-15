@@ -370,7 +370,7 @@ export function CarnetDrawerV2({
                   <small style={{ color: 'var(--label2)' }}>Distance</small>
                   <p style={{ margin: 0, fontWeight: 700, fontSize: '16px' }}>
                     {currentStackItem.etape.distanceKm
-                      ? `${currentStackItem.etape.distanceKm} km`
+                      ? `${Number(currentStackItem.etape.distanceKm).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} km`
                       : '—'}
                   </p>
                 </div>
@@ -751,6 +751,20 @@ export function CarnetDrawerV2({
         if (lens.id === 'moments') {
           return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '6px' }}>
+              {detail.moments.length === 0 ? (
+                <div
+                  style={{
+                    padding: '22px 14px',
+                    borderRadius: '16px',
+                    background: 'var(--drawer-card-bg)',
+                    textAlign: 'center',
+                    fontSize: '13px',
+                    opacity: 0.72,
+                  }}
+                >
+                  Aucun moment enregistré dans ce carnet pour le moment.
+                </div>
+              ) : null}
               {detail.moments.map((m, idx) => (
                 <button
                   key={m.id}
@@ -1071,6 +1085,18 @@ export function CarnetDrawerV2({
 
       case 'sac':
         if (lens.id === 'kit') {
+          if (!detail.kit?.items || detail.kit.items.length === 0) {
+            return (
+              <div style={{ position: 'relative', minHeight: '100%', padding: '24px 16px', textAlign: 'center' }}>
+                <p style={{ margin: '0 0 4px', fontWeight: 600, fontSize: '14px', color: 'var(--label)' }}>
+                  Aucun équipement renseigné dans ce carnet
+                </p>
+                <p style={{ margin: 0, fontSize: '12px', color: 'var(--label2)' }}>
+                  Le matériel emporté apparaîtra ici lorsque l’auteur complètera son sac.
+                </p>
+              </div>
+            );
+          }
           return (
             <div style={{ position: 'relative', minHeight: '100%', paddingBottom: '48px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '6px' }}>

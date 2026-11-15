@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import type { CarnetDetail, CarnetMomentItem } from '@/features/carnet/detail/types';
 import { CarnetDaySwipeView } from './CarnetDaySwipeView';
 import { Check, ChevronRight, Radio } from 'lucide-react';
@@ -33,6 +33,15 @@ export function CarnetCardV2({
   onAddMoment,
 }: CarnetCardV2Props) {
   const { haptic } = useHapticFeedback();
+  const [failedCoverUrl, setFailedCoverUrl] = useState<string | null>(null);
+  const hasValidCover = Boolean(detail.coverImage && detail.coverImage !== failedCoverUrl);
+  const coverInitials = (detail.title || detail.author?.name || 'LK')
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w[0] || '')
+    .join('')
+    .toUpperCase() || 'LK';
 
   // Filter moments for the active day (if 0, show all moments)
   const currentMoments = useMemo(() => {
@@ -109,10 +118,34 @@ export function CarnetCardV2({
             aria-label={`Ouvrir les stories du carnet${detail.liveSharing ? ', en route' : ''}`}
           >
             <span className="lkdv-ig-avi">
-              {detail.coverImage ? (
+              {hasValidCover && detail.coverImage ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={detail.coverImage} alt={detail.title} loading="lazy" decoding="async" />
-              ) : null}
+                <img
+                  src={detail.coverImage}
+                  alt={detail.title}
+                  loading="lazy"
+                  decoding="async"
+                  onError={() => setFailedCoverUrl(detail.coverImage ?? null)}
+                />
+              ) : (
+                <span
+                  aria-hidden="true"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '100%',
+                    height: '100%',
+                    fontWeight: 700,
+                    fontSize: '12px',
+                    letterSpacing: '0.03em',
+                    color: '#fff',
+                    background: 'linear-gradient(135deg, #1b4d3e, #2f7a5c)',
+                  }}
+                >
+                  {coverInitials}
+                </span>
+              )}
             </span>
             <span className="seal" aria-hidden="true">
               <Check size={11} strokeWidth={2.5} />
@@ -169,7 +202,7 @@ export function CarnetCardV2({
               detail.dateRange,
               detail.author ? `par ${detail.author.name}` : null,
             ]
-              .filter(Boolean)
+              .filter((part): part is string => Boolean(part && part !== '—' && part !== '— · '))
               .join(' · ')}
           </span>
         </div>

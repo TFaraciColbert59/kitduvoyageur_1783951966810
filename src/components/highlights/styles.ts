@@ -23,11 +23,13 @@ export const palette = {
 } as const;
 
 export const panelStyle: CSSProperties = {
-  background: palette.surface,
+  background: 'rgba(255, 255, 255, 0.82)',
+  WebkitBackdropFilter: 'blur(18px) saturate(1.7)',
+  backdropFilter: 'blur(18px) saturate(1.7)',
   color: palette.text,
-  border: `1px solid ${palette.border}`,
-  borderRadius: 'var(--lkv-radius-card)',
-  boxShadow: '0 24px 64px rgba(11, 31, 23, 0.24)',
+  border: '0.5px solid rgba(255, 255, 255, 0.88)',
+  borderRadius: '20px',
+  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 4px 16px rgba(23, 43, 36, 0.06)',
 };
 
 export const backdropStyle: CSSProperties = {

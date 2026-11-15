@@ -89,476 +89,44 @@ ${trks}
 
 
 
-const DEMO_CARNETS = [
-  {
-    id: 'ca2',
-    title: 'Reflet du Mont-Blanc au Lac Blanc',
-    destination: 'Mont-Blanc',
-    location: 'Mont-Blanc',
-    visibility: 'public',
-    views_count: 420,
-    likes_count: 64,
-    verified: true,
-  },
-  {
-    id: 'ca1',
-    title: 'Trois jours autour du Néouvielle',
-    destination: 'Pyrénées',
-    location: 'Néouvielle',
-    visibility: 'public',
-    views_count: 312,
-    likes_count: 48,
-    verified: true,
-  },
-  {
-    id: 'ca3',
-    title: 'Glacier Blanc & Pré de Mme Carle',
-    destination: 'Écrins',
-    location: 'Écrins',
-    visibility: 'public',
-    views_count: 255,
-    likes_count: 39,
-    verified: true,
-  },
-  {
-    id: 'ca0',
-    title: 'Traversée du Vercors, bivouac',
-    destination: 'Vercors',
-    location: 'Vercors',
-    visibility: 'private',
-    views_count: 180,
-    likes_count: 27,
-    verified: true,
-  },
-  {
-    id: 'ca5',
-    title: 'Aiguilles de Bavella & GR20',
-    destination: 'Corse',
-    location: 'Bavella',
-    visibility: 'public',
-    views_count: 290,
-    likes_count: 52,
-    verified: true,
-  },
-  {
-    id: 'ca6',
-    title: 'Tre Cime di Lavaredo, Dolomites',
-    destination: 'Dolomites',
-    location: 'Tre Cime',
-    visibility: 'public',
-    views_count: 340,
-    likes_count: 61,
-    verified: true,
-  },
-];
-
-const DEMO_OUTINGS = [
-  {
-    id: 'o1',
-    title: 'Trek des 3 Vallées, Pyrénées',
-    destination: 'Pyrénées',
-    mass: 'Pyrénées',
-    km: 58,
-    dplus: 3420,
-    maxAlt: 2640,
-    status: 'completed',
-  },
-  {
-    id: 'o2',
-    title: 'Boucle du Lac Blanc',
-    destination: 'Mont-Blanc',
-    mass: 'Mont-Blanc',
-    km: 12,
-    dplus: 950,
-    maxAlt: 2352,
-    status: 'completed',
-  },
-  {
-    id: 'o3',
-    title: 'Traversée des Hauts Plateaux',
-    destination: 'Vercors',
-    mass: 'Vercors',
-    km: 34,
-    dplus: 1600,
-    maxAlt: 2020,
-    status: 'completed',
-  },
-  {
-    id: 'o4',
-    title: 'Tour du Néouvielle',
-    destination: 'Pyrénées',
-    mass: 'Pyrénées',
-    km: 41,
-    dplus: 2380,
-    maxAlt: 2450,
-    status: 'completed',
-  },
-  {
-    id: 'o5',
-    title: 'Aiguilles de Bavella (GR20)',
-    destination: 'Corse',
-    mass: 'Corse',
-    km: 28,
-    dplus: 1820,
-    maxAlt: 1660,
-    status: 'completed',
-  },
-  {
-    id: 'o6',
-    title: 'Tour du Mont-Blanc (Chamonix → Courmayeur)',
-    destination: 'Mont-Blanc',
-    mass: 'Mont-Blanc',
-    km: 94,
-    dplus: 4920,
-    maxAlt: 2537,
-    status: 'completed',
-  },
-  {
-    id: 'o7',
-    title: 'Cirque de Gavarnie & Brèche de Roland',
-    destination: 'Pyrénées',
-    mass: 'Pyrénées',
-    km: 18,
-    dplus: 1350,
-    maxAlt: 2807,
-    status: 'completed',
-  },
-  {
-    id: 'o8',
-    title: 'Grand Veymont & Pas de l\'Aiguille',
-    destination: 'Vercors',
-    mass: 'Vercors',
-    km: 22,
-    dplus: 1100,
-    maxAlt: 2341,
-    status: 'completed',
-  },
-  {
-    id: 'o9',
-    title: 'Glacier Blanc & Pré de Mme Carle',
-    destination: 'Écrins',
-    mass: 'Écrins',
-    km: 24,
-    dplus: 1450,
-    maxAlt: 2542,
-    status: 'completed',
-  },
-  {
-    id: 'o10',
-    title: 'Tre Cime di Lavaredo & Bivouac Locatelli',
-    destination: 'Dolomites',
-    mass: 'Dolomites',
-    km: 20,
-    dplus: 1200,
-    maxAlt: 2405,
-    status: 'completed',
-  },
-];
-
-const DEMO_CLUBS = [
-  {
-    slug: 'cl1',
-    name: 'Club Alpin Pyrénées',
-    role: 'Membre actif',
-    membersCount: 142,
-  },
-  {
-    slug: 'cl2',
-    name: 'Torino & Chamonix Alpi 🇮🇹🇫🇷',
-    role: 'Co-organisateur',
-    membersCount: 89,
-  },
-  {
-    slug: 'cl3',
-    name: 'Bivouac 4 Saisons & Trek Léger',
-    role: 'Membre',
-    membersCount: 310,
-  },
-];
-
-const DEMO_GEAR_ITEMS = [
-  { id: 'p11', name: 'Frontale Swift RL 900 lm', brand: 'Petzl', category: 'Sécurité', weight_g: 100, condition: 'excellent', is_lent: true, loaned_to: 'Léa' },
-  { id: 'p3', name: 'Sac de couchage Mythic Ultra 180', brand: 'Rab', category: 'Couchage', weight_g: 400, condition: 'neuf', is_lent: false },
-  { id: 'p7', name: 'Gourde BeFree 1.0 L Filtre', brand: 'Katadyn', category: 'Eau', weight_g: 63, condition: 'bon', is_lent: false },
-  { id: 'p2', name: 'Tente Hubba Hubba NX 2P', brand: 'MSR', category: 'Couchage', weight_g: 1720, condition: 'bon', is_lent: false },
-  { id: 'p4', name: 'Matelas NeoAir XLite NXT', brand: 'Therm-a-Rest', category: 'Couchage', weight_g: 370, condition: 'excellent', is_lent: false },
-  { id: 'p5', name: 'Veste Beta AR Gore-Tex Pro', brand: "Arc'teryx", category: 'Vêtements', weight_g: 455, condition: 'bon', is_lent: false },
-  { id: 'p8', name: 'Réchaud PocketRocket Deluxe', brand: 'MSR', category: 'Cuisine', weight_g: 83, condition: 'bon', is_lent: false },
-];
-
-const DEMO_ORDERS = [
-  { id: 'b1', order_number: 'RS-9402', total_eur: 188.7, status: 'confirmed' },
-  { id: 'b2', order_number: 'DIR-1029', total_eur: 184.0, status: 'pending' },
-  { id: 'or1', order_number: 'LK-4829', total_eur: 249.0, status: 'confirmed' },
-];
-
-const DEMO_ACTIVE_LOANS = [
-  { product_ownership_id: 'p11', borrower_contact: 'Léa' },
-];
-
 export interface ClubLiquidGlassV8Props {
   clubId?: string;
   initialTab?: string;
 }
 
-const CLUB_PRESETS: Record<string, {
-  id: string;
-  handle: string;
-  name: string;
-  followersCount: number;
-  followingCount: number;
-  bioLine: string;
-  sigText: string;
-  home: string;
-}> = {
-  cl1: {
-    id: 'cl1',
-    handle: 'alpin_pyrenees',
-    name: 'Club Alpin Pyrénées',
-    followersCount: 342,
-    followingCount: 14,
-    bioLine: '· PYR · FR · Cordées pyrénéennes, HRP & courses d’arêtes',
-    sigText: '14 sorties · 182 km · 13,4 k m D+',
-    home: 'Cauterets',
-  },
-  cl2: {
-    id: 'cl2',
-    handle: 'torino_chamonix_alpi',
-    name: 'Torino & Chamonix Alpi',
-    followersCount: 218,
-    followingCount: 19,
-    bioLine: '· IT · FR · Alpinisme transfrontalier Mont-Blanc & Grand Paradis',
-    sigText: '19 sorties · 246 km · 18,9 k m D+',
-    home: 'Chamonix',
-  },
-  cl3: {
-    id: 'cl3',
-    handle: 'bivouac_4_saisons',
-    name: 'Bivouac 4 Saisons & MUL',
-    followersCount: 510,
-    followingCount: 24,
-    bioLine: '· VERCORS · FR · Marche ultra-légère & autonomie hivernale',
-    sigText: '24 sorties · 312 km · 15,2 k m D+',
-    home: 'Grenoble',
-  },
+const INITIAL_CLUBS_DIRECTORY: ClubItemData[] = [];
+const INITIAL_CLUB_POSTS: ClubFeedPostItem[] = [];
+const INITIAL_CLUB_MEMBERS: ClubMemberData[] = [];
+const INITIAL_CLUB_OUTINGS: ClubOutingData[] = [];
+const INITIAL_VAULT_GEAR: ClubGearVaultItem[] = [];
+const INITIAL_STANDARD_KITS: ClubStandardKit[] = [];
+const INITIAL_CHALLENGES: ClubChallengeItem[] = [];
+const INITIAL_CHAT_MESSAGES: ClubChatMessage[] = [];
+
+const DEFAULT_FALLBACK_CLUB: ClubItemData = {
+  id: '',
+  slug: '',
+  name: 'Club LKDV',
+  massif: 'Massif Alpin',
+  category: 'Montagne & Bivouac',
+  level: 'Tous niveaux',
+  membersCount: 0,
+  outingsCount: 0,
+  totalKm: 0,
+  totalDplus: 0,
+  joined: false,
+  role: 'Membre',
+  visibility: 'public',
+  bio: 'Rejoignez ou créez une cordée alpine sur LKDV.',
+  charter: 'Respect strict de la montagne, de la sécurité et zéro trace.',
+  nextOutingTitle: 'Aucune sortie programmée',
+  nextOutingDate: 'À venir',
+  weatherIso: 'Iso 0°C —',
+  weatherWind: 'Vent calme',
+  weatherTrail: 'Conditions stables',
+  lat: 45.923,
+  lng: 6.869,
 };
-
-const INITIAL_CLUBS_DIRECTORY: ClubItemData[] = [
-  {
-    id: 'cl1',
-    slug: 'cl1',
-    name: 'Club Alpin Pyrénées',
-    massif: 'Pyrénées · Néouvielle & Gavarnie',
-    category: 'Alpinisme & HRP',
-    level: 'Confirmé · PD+',
-    membersCount: 342,
-    outingsCount: 14,
-    totalKm: 182,
-    totalDplus: 13400,
-    joined: true,
-    role: 'Admin · Cordée fondatrice',
-    visibility: 'public',
-    bio: 'Cordées pyrénéennes, HRP, couloirs de neige et bivouacs d’altitude certifiés GPS.',
-    charter: 'Respect strict du bivouac sans trace, DVA/Pelle/Sonde obligatoires en saison nivale et entraide de cordée.',
-    nextOutingTitle: 'Arête de Gaube & Vignemale',
-    nextOutingDate: 'Sam. 8 Nov · 06h30',
-    weatherIso: '2 950 m',
-    weatherWind: '15 km/h NO',
-    weatherTrail: 'Neige portante > 2 500 m',
-    lat: 42.835,
-    lng: -0.145,
-  },
-  {
-    id: 'cl2',
-    slug: 'cl2',
-    name: 'Torino & Chamonix Alpi',
-    massif: 'Mont-Blanc & Grand Paradis',
-    category: 'Haute Montagne IT·FR',
-    level: 'Alpinisme AD',
-    membersCount: 218,
-    outingsCount: 19,
-    totalKm: 246,
-    totalDplus: 18900,
-    joined: true,
-    role: 'Co-organisateur',
-    visibility: 'public',
-    bio: 'Alpinisme transfrontalier, courses glaciaires et refuges haute montagne France-Italie.',
-    charter: 'Encadrement mutuel sur glacier, partage des traces GPX vérifiées et covoiturage vallée d’Aoste / Chamonix.',
-    nextOutingTitle: 'Traversée Vallée Blanche',
-    nextOutingDate: 'Dim. 16 Nov · 07h00',
-    weatherIso: '3 100 m',
-    weatherWind: '20 km/h O',
-    weatherTrail: 'Glacier bouché · Bon regel',
-    lat: 45.923,
-    lng: 6.869,
-  },
-  {
-    id: 'cl3',
-    slug: 'cl3',
-    name: 'Bivouac 4 Saisons & MUL',
-    massif: 'Vercors & Écrins',
-    category: 'Marche Ultra-Légère',
-    level: 'Tous niveaux autonomes',
-    membersCount: 510,
-    outingsCount: 24,
-    totalKm: 312,
-    totalDplus: 15200,
-    joined: true,
-    role: 'Membre vérifié',
-    visibility: 'public',
-    bio: 'Marche ultra-légère (< 4,5 kg de base), autonomie hivernale et partage d’équipements.',
-    charter: 'Pesée certifiée des sacs, prêt gratuit d’équipements via le coffre club et zéro déchet sur les Hauts Plateaux.',
-    nextOutingTitle: 'Traversée Hauts Plateaux UL',
-    nextOutingDate: 'Ven. 21 Nov · 08h00',
-    weatherIso: '2 600 m',
-    weatherWind: '10 km/h N',
-    weatherTrail: 'Sentiers secs · Sources actives',
-    lat: 44.895,
-    lng: 5.532,
-  },
-  {
-    id: 'cl4',
-    slug: 'cl4',
-    name: 'Corsica GR20 & Bavella',
-    massif: 'Corse · Monte Cinto & Bavella',
-    category: 'Trek Alpin & Crêtes',
-    level: 'Soutenu · Terrain Corse',
-    membersCount: 176,
-    outingsCount: 11,
-    totalKm: 198,
-    totalDplus: 14600,
-    joined: false,
-    role: 'Découvrir',
-    visibility: 'public',
-    bio: 'Variantes alpines du GR20, bivouacs aux bergeries et météo des crêtes corses.',
-    charter: 'Respect des bergeries et zones de bivouac PNRC, veille météo vent violent sur les crêtes.',
-    nextOutingTitle: 'Crêtes de Bavella Sud',
-    nextOutingDate: 'Sam. 29 Nov · 06h45',
-    weatherIso: '3 200 m',
-    weatherWind: '25 km/h SO',
-    weatherTrail: 'Rocher granit sec',
-    lat: 41.795,
-    lng: 9.212,
-  },
-];
-
-const INITIAL_CLUB_POSTS: ClubFeedPostItem[] = [
-  {
-    id: 'cp-1',
-    clubId: 'cl1',
-    kind: 'outing',
-    pinned: true,
-    authorName: 'Léa Montagne',
-    authorHandle: 'lea_montagne',
-    authorRole: 'Guide UIAGM',
-    timeAgo: 'Épinglé · 2 h',
-    spot: 'Refuge des Oulettes de Gaube',
-    massif: 'Pyrénées · Vignemale',
-    metricsChip: 'Sam. 8 Nov · 24 km · +1 680 m · 2 730 m',
-    outingId: 'out1',
-    outingSeatsLeft: 2,
-    rsvpJoined: true,
-    kitName: 'Kit Alpin 4 Saisons (4,8 kg)',
-    caption: 'Ouverture des inscriptions pour la cordée Vignemale par les Oulettes de Gaube. Trace GPX et coffre matériel liés dans le sous-drawer Sorties !',
-    mediaUrl: '/assets/images/club-alpin.jpg',
-    likes: 48,
-    liked: true,
-    saved: true,
-    lat: 42.798,
-    lng: -0.145,
-    comments: [
-      { id: 'c1', authorName: 'Marc Alpin', authorHandle: 'marc_alpin', roleBadge: 'Coffre Kit', text: 'Je prends ma tente MSR 2P du coffre club, il me reste 1 place !', createdAt: 'Il y a 1 h' },
-      { id: 'c2', authorName: 'Camille Pyr', authorHandle: 'camille_pyr', text: 'Départ covoiturage depuis Pau à 05h15 (3 places dispo).', createdAt: 'Il y a 35 min' },
-    ],
-  },
-  {
-    id: 'cp-2',
-    clubId: 'cl1',
-    kind: 'gpx',
-    authorName: 'Thomas Néouvielle',
-    authorHandle: 'thomas_hrp',
-    authorRole: 'Traceur GPX',
-    timeAgo: 'Hier · 18:40',
-    spot: 'Lac d’Aubert & Pic du Néouvielle',
-    massif: 'Pyrénées · Néouvielle',
-    metricsChip: 'Trace GPX ✓ · 19 km · +1 320 m · 3 091 m',
-    kitName: 'Kit Crêtes Automne (3,6 kg)',
-    caption: 'Conditions idéales sur l’arête des Trois Conseillers hier matin. Neige portante dès 2 650 m, bivouac sec au-dessus des Laquettes.',
-    mediaUrl: '/assets/images/club-bivouac.jpg',
-    likes: 72,
-    liked: false,
-    saved: false,
-    lat: 42.836,
-    lng: 0.118,
-    comments: [
-      { id: 'c3', authorName: 'Léa Montagne', authorHandle: 'lea_montagne', roleBadge: 'Guide', text: 'Superbe lumière ! Le regel nocturne était suffisant dès 5h ?', createdAt: 'Hier' },
-    ],
-  },
-  {
-    id: 'cp-3',
-    clubId: 'cl1',
-    kind: 'text',
-    authorName: 'Marc Alpin',
-    authorHandle: 'marc_alpin',
-    authorRole: 'Coffre Matériel',
-    timeAgo: 'Il y a 2 j',
-    spot: 'Camp de base Cauterets',
-    massif: 'Pyrénées · Cauterets',
-    metricsChip: 'Coffre Matériel · Prêt gratuit 0 €',
-    kitName: 'Pack Sécurité Neige DVA',
-    caption: 'Nouveau au coffre mutualisé du club : 2 DVA Mammut Barryvox + sondes carbone disponibles en prêt gratuit pour les sorties hivernales de novembre.',
-    likes: 34,
-    liked: false,
-    saved: true,
-    lat: 42.889,
-    lng: -0.113,
-    comments: [
-      { id: 'c4', authorName: 'Sophie Gavarnie', authorHandle: 'sophie_gav', text: 'Top ! Je réserve un pack DVA pour la sortie du 8 novembre.', createdAt: 'Il y a 1 j' },
-    ],
-  },
-];
-
-const INITIAL_CLUB_MEMBERS: ClubMemberData[] = [
-  { id: 'm1', name: 'Léa Montagne', handle: 'lea_montagne', role: 'Guide & Sécurité', massif: 'Pyrénées & Mont-Blanc', skills: ['UIAGM', 'Secours Avalanche', 'Glacier'], availableWeekend: true, seekingObjective: 'Arête de Gaube (Sam. 8 Nov)', followed: true, isNew7d: false, avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150' },
-  { id: 'm2', name: 'Thomas Néouvielle', handle: 'thomas_hrp', role: 'Fondateur', massif: 'Pyrénées · Néouvielle', skills: ['Traceur GPX', 'HRP', 'Bivouac Hiver'], availableWeekend: true, seekingObjective: 'Traversée Néouvielle (15 Nov)', followed: true, isNew7d: false, avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150' },
-  { id: 'm3', name: 'Marc Alpin', handle: 'marc_alpin', role: 'Encadrant', massif: 'Pyrénées & Vercors', skills: ['Intendant Coffre Kit', 'MUL < 4kg'], availableWeekend: false, followed: true, isNew7d: false, avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150' },
-  { id: 'm4', name: 'Camille Pyr', handle: 'camille_pyr', role: 'Nouveau', massif: 'Gavarnie', skills: ['Alpinisme PD', 'Photo crêtes'], availableWeekend: true, seekingObjective: 'Binôme covoiturage depuis Pau', followed: false, isNew7d: true, avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150' },
-  { id: 'm5', name: 'Hugo Vignemale', handle: 'hugo_vig', role: 'Nouveau', massif: 'Cauterets', skills: ['Ski de rando', 'Couloirs'], availableWeekend: true, seekingObjective: 'Sortie crampons / piolet', followed: false, isNew7d: true, avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150' },
-];
-
-const INITIAL_CLUB_OUTINGS: ClubOutingData[] = [
-  { id: 'out1', clubId: 'cl1', title: 'Arête de Gaube & Bivouac Oulettes', date: 'Sam. 8 Nov · 2 jours', massif: 'Pyrénées · Vignemale', km: 24, dplus: 1680, maxAlt: 2730, status: 'upcoming', leaderName: 'Léa Montagne', leaderHandle: 'lea_montagne', participantsCount: 6, maxParticipants: 8, rsvpJoined: true, carpoolCity: 'Pau & Cauterets', carpoolSeatsLeft: 3, requiredGear: ['Crampons 12 pointes', 'Piolet', 'Duvet -5°C', 'Casque'], lat: 42.798, lng: -0.145 },
-  { id: 'out2', clubId: 'cl1', title: 'Traversée Néouvielle & Lacs gelés', date: 'Sam. 15 Nov · 2 jours', massif: 'Pyrénées · Néouvielle', km: 28, dplus: 1540, maxAlt: 3091, status: 'upcoming', leaderName: 'Thomas Néouvielle', leaderHandle: 'thomas_hrp', participantsCount: 5, maxParticipants: 10, rsvpJoined: false, carpoolCity: 'Toulouse & Tarbes', carpoolSeatsLeft: 4, requiredGear: ['Tente 3-4 saisons', 'Matelas R>4', 'Filtre eau'], lat: 42.836, lng: 0.118 },
-  { id: 'out5', clubId: 'cl1', title: 'Tour des Cirques & Mont Perdu (Bivouac)', date: 'Sam. 22 Nov · 2 jours', massif: 'Pyrénées · Gavarnie', km: 32, dplus: 2100, maxAlt: 3355, status: 'upcoming', leaderName: 'Léa Montagne', leaderHandle: 'lea_montagne', participantsCount: 4, maxParticipants: 8, rsvpJoined: false, carpoolCity: 'Tarbes', carpoolSeatsLeft: 4, requiredGear: ['Crampons', 'Piolet', 'Duvet -10°C'], lat: 42.675, lng: 0.034 },
-  { id: 'out6', clubId: 'cl1', title: 'Pic du Midi d\'Ossau · Tour & Refuge', date: 'Dim. 30 Nov · 1 jour', massif: 'Pyrénées · Ossau', km: 15, dplus: 1150, maxAlt: 2884, status: 'upcoming', leaderName: 'Thomas Néouvielle', leaderHandle: 'thomas_hrp', participantsCount: 7, maxParticipants: 10, rsvpJoined: false, carpoolCity: 'Pau & Oloron', carpoolSeatsLeft: 2, requiredGear: ['Casque', 'Baudrier', 'Longe'], lat: 42.842, lng: -0.428 },
-  { id: 'out3', clubId: 'cl1', title: 'Brèche de Roland & Cirque de Gavarnie', date: 'Oct. 2026 · Terminée', massif: 'Pyrénées · Gavarnie', km: 18, dplus: 1350, maxAlt: 2807, status: 'completed', leaderName: 'Léa Montagne', leaderHandle: 'lea_montagne', participantsCount: 9, maxParticipants: 9, rsvpJoined: true, carpoolCity: 'Lourdes', carpoolSeatsLeft: 0, requiredGear: ['Trace GPX certifiée'], lat: 42.692, lng: -0.005 },
-  { id: 'out4', clubId: 'cl1', title: 'Boucle du Lac Blanc & Aiguilles Rouges', date: 'Sept. 2026 · Terminée', massif: 'Mont-Blanc · Chamonix', km: 16, dplus: 1120, maxAlt: 2352, status: 'completed', leaderName: 'Marc Alpin', leaderHandle: 'marc_alpin', participantsCount: 12, maxParticipants: 12, rsvpJoined: true, carpoolCity: 'Annecy & Chamonix', carpoolSeatsLeft: 0, requiredGear: ['Trace GPX certifiée'], lat: 45.982, lng: 6.891 },
-];
-
-const INITIAL_VAULT_GEAR: ClubGearVaultItem[] = [
-  { id: 'vg1', clubId: 'cl1', name: 'DVA Barryvox + Sonde Carbone 280', brand: 'Mammut', category: 'Sécurité', weightG: 450, ownerName: 'Marc Alpin', ownerHandle: 'marc_alpin', available: true },
-  { id: 'vg2', clubId: 'cl1', name: 'Tente Hubba Hubba NX 2P', brand: 'MSR', category: 'Abri', weightG: 1540, ownerName: 'Léa Montagne', ownerHandle: 'lea_montagne', available: true },
-  { id: 'vg3', clubId: 'cl1', name: 'Corde à double Rando 8mm × 30m', brand: 'Beal', category: 'Alpinisme', weightG: 1110, ownerName: 'Thomas Néouvielle', ownerHandle: 'thomas_hrp', available: true },
-  { id: 'vg4', clubId: 'cl1', name: 'Réchaud WindBurner Duo System', brand: 'MSR', category: 'Cuisine', weightG: 610, ownerName: 'Camille Pyr', ownerHandle: 'camille_pyr', available: false, reservedByMe: true },
-  { id: 'vg5', clubId: 'cl1', name: 'Filtre collectif GravityWorks 4L', brand: 'Platypus', category: 'Eau', weightG: 320, ownerName: 'Marc Alpin', ownerHandle: 'marc_alpin', available: true },
-];
-
-const INITIAL_STANDARD_KITS: ClubStandardKit[] = [
-  { id: 'sk1', title: 'Standard Bivouac Pyrénées 3 Saisons', season: 'Printemps / Automne', totalWeightG: 4100, itemsCount: 16, items: ['Tente UL 2P partagée', 'Duvet confort -2°C', 'Matelas R-Value 4.5', 'Filtre BeFree 1L'], cloned: false },
-  { id: 'sk2', title: 'Standard Alpin & Crêtes Neige', season: 'Hiver / Haute Altitude', totalWeightG: 5400, itemsCount: 19, items: ['Crampons 12 pointes', 'Piolet léger 45cm', 'DVA + Pelle + Sonde', 'Hardshell Gore-Tex Pro'], cloned: true },
-];
-
-const INITIAL_CHALLENGES: ClubChallengeItem[] = [
-  { id: 'ch1', title: '100 000 m de D+ cumulés par la cordée', subtitle: 'Objectif automne-hiver sur traces GPX vérifiées', current: 78400, target: 100000, unit: 'm D+', rewardBadge: 'Sceau Or · Cordée Haute Altitude' },
-  { id: 'ch2', title: '25 bivouacs sans trace & refuges nettoyés', subtitle: 'Engagement charte Leave No Trace du club', current: 21, target: 25, unit: 'bivouacs', rewardBadge: 'Badge Gardiens des Massifs' },
-  { id: 'ch3', title: '30 prêts d’équipements via le Coffre Club', subtitle: 'Mutualisation matériel entre membres', current: 24, target: 30, unit: 'prêts', rewardBadge: '+25 € crédit boutique collectif' },
-];
-
-const INITIAL_CHAT_MESSAGES: ClubChatMessage[] = [
-  { id: 'cm1', authorName: 'Léa Montagne', authorHandle: 'lea_montagne', roleBadge: 'Guide', text: 'Bulletin Météo-France mis à jour pour samedi : grand soleil confirmé sur Gaube et Vignemale !', time: '14:20' },
-  { id: 'cm2', authorName: 'Marc Alpin', authorHandle: 'marc_alpin', roleBadge: 'Coffre Kit', text: 'Qui prend le réchaud collectif et la corde de 30m pour alléger les sacs ?', time: '14:35' },
-  { id: 'cm3', authorName: 'Camille Pyr', authorHandle: 'camille_pyr', text: 'Je prends la corde Beal 30m dans mon sac, il me reste 800g de marge.', time: '14:42' },
-];
 
 export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlassV8Props) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -570,8 +138,7 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
   const router = useRouter();
   const { user, signOut } = useAuth();
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'synced'>('idle');
-  const preset = CLUB_PRESETS[clubId] || CLUB_PRESETS.cl1;
-  const [activeHandle, setActiveHandle] = useState<string>(preset.handle);
+  const [activeHandle, setActiveHandle] = useState<string>(clubId || '');
 
   // React Portal targets inside the iOS 27 runtime card & sheet
   const [feedRoot, setFeedRoot] = useState<HTMLElement | null>(null);
@@ -592,7 +159,10 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
   const [challenges] = useState<ClubChallengeItem[]>(INITIAL_CHALLENGES);
   const [chatMessages, setChatMessages] = useState<ClubChatMessage[]>(INITIAL_CHAT_MESSAGES);
 
-  const activeClub = clubsDirectory.find((c) => c.id === activeClubId || c.slug === activeClubId) || clubsDirectory[0];
+  const activeClub =
+    clubsDirectory.find((c) => c.id === activeClubId || c.slug === activeClubId) ||
+    clubsDirectory[0] ||
+    DEFAULT_FALLBACK_CLUB;
 
   const triggerAct = useCallback((action: string, val?: any) => {
     if (typeof window !== 'undefined' && typeof (window as any).__lkdvCompteAct === 'function') {
@@ -728,7 +298,7 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
       };
 
       (window as any).__lkdvOnAction = async (action: string, val: any, S: any) => {
-        const handle = S?.profile?.handle || preset.handle;
+        const handle = S?.profile?.handle || activeHandle || 'club';
         const clubUrl = `${window.location.origin}/clubs/${clubId}`;
 
         if (action === 'navtab' && typeof val === 'string') {
@@ -748,7 +318,7 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
           try {
             await createGroupFromClub({
               clubId,
-              name: val?.title || `Cordée ${S?.profile?.name || preset.name}`,
+              name: val?.title || `Cordée ${S?.profile?.name || 'Club'}`,
             });
           } catch (_) {}
           return;
@@ -846,43 +416,37 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
       cleanup = null;
       initializedRef.current = false;
     };
-  }, [clubId, initialTab, preset.handle, preset.home, preset.name, router, signOut, user?.id]);
+  }, [clubId, initialTab, router, signOut, user?.id]);
 
-  // Hydrate with Club preset + live Supabase club data (2-step public_profiles resolution)
+  // Hydrate dynamically with live Supabase club data (2-step public_profiles resolution)
   const syncClubProfile = useCallback(async () => {
     const hydrate = (window as any).__lkdvHydrateCompte;
     if (typeof hydrate !== 'function') return;
 
-    const currentPreset = CLUB_PRESETS[clubId] || CLUB_PRESETS.cl1;
-
-    // 1. Immediate hydration with rich club preset so the card, stats, highlights, 3x2 grid & 3D map are immediately populated
-    hydrate({
-      name: currentPreset.name,
-      handle: currentPreset.handle,
-      followersCount: currentPreset.followersCount,
-      followingCount: currentPreset.followingCount,
-      bioLine: currentPreset.bioLine,
-      sigText: currentPreset.sigText,
-      home: currentPreset.home,
-      avatarUrl: null,
-      isGuest: false,
-      isDemo: true,
-      storeCreditEur: 42.5,
-      loyaltyPoints: 1450,
-      carnets: DEMO_CARNETS,
-      outings: DEMO_OUTINGS,
-      clubs: DEMO_CLUBS,
-      gearItems: DEMO_GEAR_ITEMS,
-      orders: DEMO_ORDERS,
-      activeLoans: DEMO_ACTIVE_LOANS,
-      notifications: [],
-      tribu: [],
-      replace: true,
-    });
-    setActiveHandle(currentPreset.handle);
-
-    // 2. If clubId is a real Supabase club UUID or slug, enrich with live Supabase data
-    if (!clubId || ['cl1', 'cl2', 'cl3'].includes(clubId)) {
+    if (!clubId) {
+      hydrate({
+        name: 'Club',
+        handle: 'club',
+        followersCount: 0,
+        followingCount: 0,
+        bioLine: '',
+        sigText: '',
+        home: '',
+        avatarUrl: null,
+        isGuest: false,
+        isDemo: false,
+        storeCreditEur: 0,
+        loyaltyPoints: 0,
+        carnets: [],
+        outings: [],
+        clubs: [],
+        gearItems: [],
+        orders: [],
+        activeLoans: [],
+        notifications: [],
+        tribu: [],
+        replace: true,
+      });
       setSyncStatus('idle');
       return;
     }
@@ -893,10 +457,33 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
       const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(clubId);
       const clubQuery = supabase
         .from('clubs')
-        .select('id, name, slug, description, category, cover_image, members_count, is_private, created_by, created_at');
+        .select('id, name, slug, description, category, cover_image, members_count, privacy, created_by, created_at');
       const { data: clubRow } = await (isUuid ? clubQuery.eq('id', clubId) : clubQuery.eq('slug', clubId)).maybeSingle();
 
       if (!clubRow) {
+        hydrate({
+          name: 'Club introuvable',
+          handle: clubId,
+          followersCount: 0,
+          followingCount: 0,
+          bioLine: '',
+          sigText: '',
+          home: '',
+          avatarUrl: null,
+          isGuest: false,
+          isDemo: false,
+          storeCreditEur: 0,
+          loyaltyPoints: 0,
+          carnets: [],
+          outings: [],
+          clubs: [],
+          gearItems: [],
+          orders: [],
+          activeLoans: [],
+          notifications: [],
+          tribu: [],
+          replace: true,
+        });
         setSyncStatus('idle');
         return;
       }
@@ -929,9 +516,9 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
       hydrate({
         name: clubRow.name,
         handle: derivedHandle,
-        followersCount: clubRow.members_count || memberRows.length || currentPreset.followersCount,
-        followingCount: (groupsRes.data || []).length || currentPreset.followingCount,
-        bioLine: clubRow.description ? '· ' + clubRow.description.slice(0, 64) : currentPreset.bioLine,
+        followersCount: clubRow.members_count || memberRows.length || 0,
+        followingCount: (groupsRes.data || []).length || 0,
+        bioLine: clubRow.description ? '· ' + clubRow.description.slice(0, 64) : '',
         avatarUrl: clubRow.cover_image || null,
         followers: memberRows.map((m: any) => {
           const p = profilesMap[m.user_id];
@@ -945,6 +532,15 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
             avatar: p?.avatar_url || null,
           };
         }),
+        carnets: [],
+        outings: [],
+        clubs: [],
+        gearItems: [],
+        orders: [],
+        activeLoans: [],
+        notifications: [],
+        tribu: [],
+        replace: true,
       });
       setActiveHandle(derivedHandle);
       setSyncStatus('synced');
@@ -977,7 +573,7 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
           followersCount: targetClub.membersCount,
           followingCount: targetClub.outingsCount,
           bioLine: '· ' + targetClub.massif + ' · ' + targetClub.bio,
-          sigText: `${targetClub.outingsCount} sorties · ${targetClub.totalKm} km · ${(targetClub.totalDplus / 1000).toFixed(1).replace('.', ',')} k m D+`,
+          sigText: `${targetClub.outingsCount} sorties · ${targetClub.totalKm} km · ${(targetClub.totalDplus / 1000).toFixed(1).replace('.', ',')} km D+`,
           home: targetClub.massif,
         });
       }
@@ -1241,7 +837,7 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
           followersCount: 1,
           followingCount: 1,
           bioLine: '· ' + newClub.massif + ' · ' + newClub.bio,
-          sigText: '1 sortie · 18 km · 1,2 k m D+',
+          sigText: '1 sortie · 18 km · 1,2 km D+',
           home: newClub.massif,
         });
       }

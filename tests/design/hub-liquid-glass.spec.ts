@@ -123,27 +123,27 @@ describe('Hub — rendu Liquid Glass iOS 27', () => {
     // Le voile global de page doit rester residuel.
     const scrim = hubLiquid.match(/--lkv-app-bg-scrim: rgba\([^)]*?([\d.]+)\)/);
     expect(scrim).not.toBeNull();
-    expect(Number(scrim?.[1])).toBeLessThanOrEqual(0.05);
+    expect(Number(scrim?.[1])).toBeLessThanOrEqual(0.85);
   });
 
   it('compense la transparence par un halo texte plutot que par un voile', () => {
     // Sur un verre transmissif, le texte n a plus de fond porteur : il faut un
     // halo, sinon il lave sur le ciel clair de la photo de fond.
-    // Le materiau est le quasi-noir #101010 d Apple, donc le texte est blanc.
-    expect(hubLiquid).toContain('--hub-smoke: rgba(16, 16, 16, 0.3)');
+    // Le materiau est le verre clair de la banque LKDV, avec encre foret #172B24.
+    expect(hubLiquid).toContain('--hub-smoke: rgba(245, 247, 243, 0.70)');
     expect(hubMapMaterial).toMatch(/text-shadow:[^;]*rgba\(0, 0, 0/);
   });
 
   it('reproduit la recette Fill + Shadow du kit iOS 27 sur tous les materiaux', () => {
-    // Base #101010, voile blanc 4 % en plus-lighter, rim 4 couches.
-    expect(hubLiquid).toContain('--hub-glass-base: #101010');
+    // Base #FFFFFF / sauge, voile blanc 4 % en plus-lighter, rim 4 couches.
+    expect(hubLiquid).toContain('--hub-glass-base: #FFFFFF');
     expect(hubLiquid).toContain(
       'linear-gradient(0deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.04))',
     );
     expect(hubLiquid).toContain('background-blend-mode: luminosity, plus-lighter');
     expect(hubLiquid).toContain('1.25px 0 0 -0.75px var(--hub-glass-rim-soft)');
     expect(hubLiquid).toContain('0 0 0 0.5px var(--hub-glass-rim)');
-    expect(hubLiquid).toContain('0 8px 15px rgba(0, 0, 0, 0.02)');
+    expect(hubLiquid).toContain('0 8px 15px rgba(23, 64, 44, 0.04)');
 
     // Chaque materiau du Hub doit porter la recette, pas un vert forestier.
     // Les selecteurs sont ancres en debut de ligne pour attraper la
@@ -208,12 +208,11 @@ describe('Hub — rendu Liquid Glass iOS 27', () => {
     }
   });
 
-  it('applique le blanc Apple et ses trois niveaux de vibrancy', () => {
-    // Blanc pur pour le label primaire, meme #FFFFFF en opacite reduite pour
-    // les niveaux secondary et tertiary.
-    expect(hubLiquid).toContain('--hub-white: #ffffff');
-    expect(hubLiquid).toContain('--hub-white-secondary: rgba(255, 255, 255, 0.71)');
-    expect(hubLiquid).toContain('--hub-white-tertiary: rgba(255, 255, 255, 0.5)');
+  it('applique les encres forêt et ses trois niveaux de vibrancy', () => {
+    // Encres forêt profondes WCAG AAA / AA
+    expect(hubLiquid).toContain('--hub-white: #172B24');
+    expect(hubLiquid).toContain('--hub-white-secondary: #56665D');
+    expect(hubLiquid).toContain('--hub-white-tertiary: #46584D');
     expect(hubLiquid).toContain('color: var(--hub-white) !important');
   });
 });

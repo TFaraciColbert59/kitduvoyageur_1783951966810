@@ -128,12 +128,11 @@ function ombresCitees(valeur: string): string[] {
 }
 
 describe('filets de verre — une bordure ne recoit jamais une ombre', () => {
-  it('--glass-rim est une ombre dans un theme, et une couleur dans un autre', () => {
-    // Ce dualite est la raison du silence : le meme jeton fonctionne dans un
-    // theme et casse dans l autre, sans jamais lever la moindre erreur.
+  it('--glass-rim est une couleur dans tous les themes (dualite ombre eradiquee)', () => {
+    // La collision de type est resolue : --glass-rim n'est plus jamais une ombre
     const valeurs = valeursDuJeton.get('--glass-rim') ?? [];
     expect(valeurs.length, '--glass-rim introuvable').toBeGreaterThan(0);
-    expect(valeurs.filter((v) => nature(v) === 'ombre').length).toBeGreaterThan(0);
+    expect(valeurs.filter((v) => nature(v) === 'ombre').length).toBe(0);
     expect(valeurs.filter((v) => nature(v) === 'couleur').length).toBeGreaterThan(0);
   });
 

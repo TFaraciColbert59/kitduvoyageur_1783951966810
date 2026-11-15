@@ -13,6 +13,14 @@
    ============================================================ */
 
 const CACHE_VERSION = 'lkdv-v18';
+const IS_DEV_HOST =
+  self.location.hostname === 'localhost' ||
+  self.location.hostname === '127.0.0.1' ||
+  self.location.hostname === '::1' ||
+  self.location.hostname.startsWith('192.168.') ||
+  self.location.hostname.startsWith('10.') ||
+  self.location.port === '4000' ||
+  self.location.port === '3000';
 const STATIC_CACHE = `lkdv-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `lkdv-runtime-${CACHE_VERSION}`;
 const IMAGE_CACHE = `lkdv-images-${CACHE_VERSION}`;
@@ -32,7 +40,6 @@ const PUBLIC_NAV_PATHS = new Set([
   '/',
   '/explorer',
   '/carte-3d',
-  '/pays',
   '/guides',
   '/kits',
   '/lieux',
@@ -47,7 +54,6 @@ const PUBLIC_NAV_PATHS = new Set([
   '/offline.html',
 ]);
 const PUBLIC_NAV_PREFIXES = [
-  '/pays/',
   '/guides/',
   '/kits/',
   '/lieux/',
@@ -89,7 +95,11 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((keys) => {
       return Promise.all(
         keys
-          .filter((k) => k !== STATIC_CACHE && k !== RUNTIME_CACHE && k !== IMAGE_CACHE && k !== 'lkdv-tiles-v1')
+          .filter(
+            (k) =>
+              (IS_DEV_HOST && k.startsWith('lkdv-static-')) ||
+              (k !== STATIC_CACHE && k !== RUNTIME_CACHE && k !== IMAGE_CACHE && k !== 'lkdv-tiles-v1')
+          )
           .map((k) => caches.delete(k))
       );
     })
@@ -121,7 +131,7 @@ self.addEventListener('fetch', (event) => {
   // Fichiers JS/CSS servis directement depuis le cache pour la réactivité,
   // et mis en cache lors de la première requête réseau s'ils n'y sont pas encore.
   if (
-    url.pathname.startsWith('/_next/static/') ||
+    (!IS_DEV_HOST && url.pathname.startsWith('/_next/static/')) ||
     url.hostname.includes('fonts.gstatic.com') ||
     url.hostname.includes('fonts.googleapis.com')
   ) {

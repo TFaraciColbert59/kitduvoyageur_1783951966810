@@ -8,6 +8,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock3,
+  Flag,
   Gauge,
   Lock,
   MapPin,
@@ -18,10 +19,13 @@ import {
   Search,
   Target,
   Trash2,
+  Trophy,
   X,
   Zap,
 } from 'lucide-react';
+import { SegmentsDrawerPanel } from '@/components/segments';
 import { DrawerShell, type DrawerTab } from '../shell/DrawerShell';
+import RankingsHub from '@/components/rankings/RankingsHub';
 import {
   PROGRESSION_PERIODS,
   SPORT_LABELS,
@@ -67,8 +71,18 @@ import {
   formatBestEffortValue,
   type BestEffortRecord,
 } from '@/features/compte/progression/bestEfforts';
+import {
+  ActivityStreaksCard,
+  CyclingPowerSkillsSection,
+  FitnessFatigueCard,
+  PrepFocusCard,
+  RunningRecordsAndPredictionsPane,
+  ShareableRecapSection,
+  writeProgressionSessionsSnapshot,
+} from './ProgressionAdvancedSections';
+import { HistoryAssistantPanel } from '@/features/ai-assistant/ui/HistoryAssistantPanel';
 
-export type ProgressionView = 'calendar' | 'stats' | 'goals' | 'bike';
+export type ProgressionView = 'calendar' | 'stats' | 'goals' | 'bike' | 'rankings' | 'records';
 
 export interface ProgressionDrawerProps {
   initialView?: ProgressionView;
@@ -136,9 +150,10 @@ interface ProgressionUiCache {
   query: string;
   period: ProgressionPeriod;
   bikePeriod: ProgressionPeriod;
+  statsSportFilter: string;
 }
 
-const PROGRESSION_VIEWS: readonly ProgressionView[] = ['calendar', 'stats', 'goals', 'bike'];
+const PROGRESSION_VIEWS: readonly ProgressionView[] = ['calendar', 'stats', 'goals', 'bike', 'rankings', 'records'];
 
 function viewIndex(view: ProgressionView): number {
   const index = PROGRESSION_VIEWS.indexOf(view);
@@ -389,6 +404,13 @@ export function ProgressionDrawer({
     () => cachedUi?.bikePeriod ?? 'all'
   );
   const [chartMetric, setChartMetric] = useState<'km' | 'dplus'>('km');
+  const [statsSportFilter, setStatsSportFilter] = useState<string>(
+    () => cachedUi?.statsSportFilter ?? 'all'
+  );
+
+  useEffect(() => {
+    writeProgressionSessionsSnapshot(sessions);
+  }, [sessions]);
 
   useEffect(() => {
     setView(viewIndex(initialView));
@@ -412,9 +434,9 @@ export function ProgressionDrawer({
   useEffect(() => {
     progressionUiCache = {
       key: accountKey,
-      state: { monthKey, selectedDay, query, period, bikePeriod },
+      state: { monthKey, selectedDay, query, period, bikePeriod, statsSportFilter },
     };
-  }, [accountKey, monthKey, selectedDay, query, period, bikePeriod]);
+  }, [accountKey, monthKey, selectedDay, query, period, bikePeriod, statsSportFilter]);
 
   const changeView = (index: number) => {
     setView(index);
@@ -440,13 +462,27 @@ export function ProgressionDrawer({
     () => (query.trim() ? searchSessions(sessions, query, zone) : []),
     [sessions, query, zone]
   );
+  const filteredStatsSessions = useMemo(
+    () =>
+      statsSportFilter === 'all'
+        ? sessions
+        : sessions.filter((s) => (s.sport ?? '__unknown') === statsSportFilter),
+    [sessions, statsSportFilter]
+  );
+  const practicedStatsSports = useMemo(() => {
+    const set = new Set<string>();
+    for (const s of sessions) {
+      if (s.sport) set.add(s.sport);
+    }
+    return [...set].sort((a, b) => sportLabel(a).localeCompare(sportLabel(b), 'fr'));
+  }, [sessions]);
   const periodStats = useMemo(
-    () => buildPeriodStats(sessions, period, zone, now),
-    [sessions, period, zone, now]
+    () => buildPeriodStats(filteredStatsSessions, period, zone, now),
+    [filteredStatsSessions, period, zone, now]
   );
   const monthly = useMemo(
-    () => buildMonthlyProgression(sessions, zone, now, 12),
-    [sessions, zone, now]
+    () => buildMonthlyProgression(filteredStatsSessions, zone, now, 12),
+    [filteredStatsSessions, zone, now]
   );
   // S2.23 : records de séance vélo uniquement. Le moteur ne reçoit que les
   // mesures réelles du bootstrap ; il ne produit ni puissance ni effort de
@@ -812,6 +848,8 @@ export function ProgressionDrawer({
             )}
           </section>
 
+          <ActivityStreaksCard sessions={sessions} timeZone={zone} />
+
           <section className="lkdv-prog-card" aria-label="Rechercher une séance">
             <div className="lkdv-prog-card-head">
               <div>
@@ -871,6 +909,28 @@ export function ProgressionDrawer({
                 onClick={() => setPeriod(option.id)}
               >
                 {option.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="lkdv-prog-periods" role="group" aria-label="Filtrer par sport">
+            <button
+              type="button"
+              className="lkdv-prog-period"
+              aria-pressed={statsSportFilter === 'all'}
+              onClick={() => setStatsSportFilter('all')}
+            >
+              Tous sports
+            </button>
+            {practicedStatsSports.map((sp) => (
+              <button
+                key={sp}
+                type="button"
+                className="lkdv-prog-period"
+                aria-pressed={statsSportFilter === sp}
+                onClick={() => setStatsSportFilter(sp)}
+              >
+                {sportLabel(sp)}
               </button>
             ))}
           </div>
@@ -1052,6 +1112,12 @@ export function ProgressionDrawer({
               </>
             )}
           </section>
+
+          <FitnessFatigueCard sessions={filteredStatsSessions} timeZone={zone} />
+
+          <ShareableRecapSection sessions={filteredStatsSessions} timeZone={zone} monthKey={monthKey} />
+
+          <HistoryAssistantPanel sessions={sessions} />
         </div>
       ),
     },
@@ -1067,6 +1133,8 @@ export function ProgressionDrawer({
               Objectifs privés, calculés sur tes seules sorties terminées. {timeZoneNote}
             </span>
           </p>
+
+          <PrepFocusCard accountKey={accountKey} />
 
           <section className="lkdv-prog-card" aria-label="Créer ou modifier un objectif">
             <div className="lkdv-prog-card-head">
@@ -1407,6 +1475,8 @@ export function ProgressionDrawer({
             </div>
           ) : null}
 
+          <CyclingPowerSkillsSection sessions={sessions} />
+
           <section className="lkdv-prog-card" aria-label="Méthode et limites des meilleurs efforts vélo">
             <div className="lkdv-prog-card-head">
               <div>
@@ -1442,6 +1512,38 @@ export function ProgressionDrawer({
             </p>
           </section>
         </div>
+      ),
+    },
+    {
+      id: 'rankings',
+      label: 'Défis & Trophées',
+      icon: <Trophy size={18} aria-hidden="true" />,
+      render: () => (
+        <div className="lkdv-prog-pane" role="region" aria-label="Défis, sommets et trophées G03">
+          <RankingsHub initialTab="challenges" />
+        </div>
+      ),
+    },
+    {
+      id: 'segments',
+      label: 'Segments',
+      icon: <Flag size={18} aria-hidden="true" />,
+      render: () => (
+        <div className="lkdv-prog-pane" role="region" aria-label="Segments et records personnels">
+          <SegmentsDrawerPanel />
+        </div>
+      ),
+    },
+    {
+      id: 'records',
+      label: 'Records',
+      icon: <Gauge size={18} aria-hidden="true" />,
+      render: () => (
+        <RunningRecordsAndPredictionsPane
+          sessions={sessions}
+          timeZone={zone}
+          accountKey={accountKey}
+        />
       ),
     },
   ];

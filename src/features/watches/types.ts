@@ -377,6 +377,24 @@ export interface WatchOfflinePackRecord {
   updatedAtUtcMs: number;
 }
 
+/** Paquet de carte/itinéraire hors ligne transféré vers la montre (compagnon). */
+export interface WatchOfflineMapPack {
+  packId: string;
+  regionId: string;
+  regionName: string;
+  version: string;
+  tileCount: number;
+  sizeBytes: number;
+  checksumSha256: string;
+  platform: string;
+  downloadedAtUtcMs: number;
+  lastSyncedAtUtcMs: number | null;
+  status: WatchOfflinePackStatus;
+}
+
+/** Séance enregistrée sur montre, mise en file locale en attente de rapprochement. */
+export type WatchQueuedSession = WatchAutonomousSession;
+
 export interface WatchOfflinePackChunk {
   packId: string;
   routeRevision: number;

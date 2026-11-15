@@ -66,6 +66,7 @@ export function PostSharePanel({ post, user, onClose, onRequireAuth }: PostShare
   // Copier le lien / partager vers une app : en haut à droite de la carte, à
   // la place et au gabarit des « ··· » (même hauteur que la pastille auteur).
   const rootRef = useRef<HTMLDivElement | null>(null);
+  const swipeStartRef = useRef<{ pointerId: number; startY: number } | null>(null);
   const [topHost, setTopHost] = useState<HTMLElement | null>(null);
   useEffect(() => {
     setTopHost(rootRef.current?.closest<HTMLElement>('.lkdv-feed-post') ?? null);
@@ -85,7 +86,29 @@ export function PostSharePanel({ post, user, onClose, onRequireAuth }: PostShare
   );
 
   return (
-    <div ref={rootRef} className="lkdv-post-panel lkdv-share-panel" role="dialog" aria-modal="true" aria-label="Partager la publication">
+    <div
+      ref={rootRef}
+      className="lkdv-post-panel lkdv-share-panel"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Partager la publication"
+      onPointerDown={(e) => {
+        if (e.button > 0) return;
+        const body = rootRef.current?.querySelector('.lkdv-share-list') as HTMLElement | null;
+        if (body && body.scrollTop > 2) return;
+        swipeStartRef.current = { pointerId: e.pointerId, startY: e.clientY };
+      }}
+      onPointerUp={(e) => {
+        const sw = swipeStartRef.current;
+        swipeStartRef.current = null;
+        if (sw && sw.pointerId === e.pointerId && e.clientY - sw.startY > 48) {
+          onClose();
+        }
+      }}
+      onPointerCancel={() => {
+        swipeStartRef.current = null;
+      }}
+    >
       <div id={`share-conv-${post.id}`} className="lkdv-post-panel-body lkdv-share-list">
         {!user?.id ? (
           <button type="button" className="lkdv-section-action" aria-label="Se connecter pour envoyer" onClick={() => onRequireAuth?.('comment')}>

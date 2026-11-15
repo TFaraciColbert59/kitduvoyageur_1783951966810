@@ -7,6 +7,8 @@ import './map/prefetchMapStage';
 import type { MapPin } from './map/MapStage';
 import { ExplorerSheet } from './sheet/ExplorerSheet';
 import { buildSheetModel } from './sheet/SheetContent';
+import { ExplorerLiveSegmentsPanel } from './components/ExplorerLiveSegmentsPanel';
+import { ExplorerBeaconBar } from './components/ExplorerLiveTrackingPanel';
 import { TopChrome } from './chrome/TopChrome';
 import { ActivityPill } from './chrome/BottomBar';
 import { SosButton } from './chrome/SosButton';
@@ -27,6 +29,7 @@ import { registerOfflineWorker } from './offline/zone';
 import { bearingLabel, offRouteLabel, screenBearingDeg } from './activity/offRoute';
 import { nearestPointOnRouteM, routeLines } from './geo/track';
 import { fetchRouteGeometry } from './data/routeGeometry';
+import { consumePendingStageLaunch, trailSnapshotFromStage } from '@/features/planning/explorerAdapter';
 import { useRouteSlope } from './data/useRouteSlope';
 import { verifiedNationalTopoFor } from './map/nationalTopo';
 import {
@@ -64,6 +67,11 @@ import {
   useExplorerStore,
   useTransientStart,
 } from './state/store';
+import type { ActivityState } from './state/types';
+import { useNavigationGuidance } from './guidance/useNavigationGuidance';
+import { TurnByTurnBanner, WaypointAlertBanner } from './guidance/ui';
+import { getOfflineRuntimeStore } from '@/features/offline/offlineRuntimeStore';
+import type { OfflineDownloadProgress, OfflineInstalledPackRecord } from '@/features/offline';
 import { isSceneName, sceneEnabled, SCENES } from './state/scenes';
 import {
   isSearchableViewport,
@@ -72,13 +80,20 @@ import {
 } from './searchArea';
 import type { GeoCollection } from './data/hooks';
 import {
+  UnauthorizedHeatmapError,
   geometryCenter,
+  useBikePois,
+  useCommunityHeatmap,
   useCountriesGeo,
   useCountryDetails,
+  useFireIncidents,
   useOnline,
+  usePersonalHeatmap,
   usePlace,
   useReducedMotion,
   useRegionsGeo,
+  useRouteHighlights,
+  useRouteSurfaces,
   useSystemTheme,
   useWeather,
   useContent,
@@ -437,6 +452,8 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
         const { data } = createClient().auth.onAuthStateChange((event, session) => {
           if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || session) {
             void flushPending();
+          } else if (event === 'SIGNED_OUT') {
+            void getOfflineRuntimeStore().purgePrivateOnLogout();
           }
         });
         subscription = data.subscription;
@@ -831,8 +848,12 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
           ? state.trailRoute
           : null;
     if (!active?.geojson) return routes;
-    const id = Number(active.id);
-    if (!Number.isSafeInteger(id)) return routes;
+    const rawNum = Number(active.id);
+    const id = Number.isSafeInteger(rawNum)
+      ? rawNum
+      : -Math.abs(
+          Array.from(String(active.id)).reduce((acc, ch) => ((acc * 31 + ch.charCodeAt(0)) | 0), 17) || 1
+        );
     const existing = routes.find((route) => String(route.id) === active.id);
     const full = {
       id,
@@ -905,6 +926,113 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
       .sort((a, b) => a.km - b.km)[0].poi;
   }, [pois, state.center, state.selection]);
 
+  // ── couches dynamiques C01/C02/C03 ────────────────────────────────────
+  useEffect(() => {
+    state.hydrateSavedPlaces();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const communityState = state.communityHeatmap ?? { enabled: false, sport: 'all', window: 'global' as const };
+  const personalState = state.personalHeatmap ?? {
+    enabled: false,
+    sport: 'all',
+    period: 'all_time' as const,
+    comparePeriod: null,
+  };
+  const communityHeatmapQuery = useCommunityHeatmap(
+    communityState.sport,
+    communityState.window,
+    Boolean(communityState.enabled),
+  );
+  const personalHeatmapQuery = usePersonalHeatmap(
+    personalState.sport,
+    personalState.period,
+    personalState.comparePeriod,
+    Boolean(personalState.enabled),
+  );
+  const bikePoisQuery = useBikePois(mapViewport, state.layerVisibility?.bikePois === true);
+  const firesQuery = useFireIncidents(mapViewport, state.layerVisibility?.fires === true);
+  const surfacesQuery = useRouteSurfaces(mapViewport, state.layerVisibility?.surfaceLayer === true);
+  const activeHighlightRouteId =
+    state.selection?.kind === 'trail' ? state.selection.id : null;
+  const highlightsQuery = useRouteHighlights(
+    activeHighlightRouteId,
+    state.layerVisibility?.highlights !== false && (Boolean(activeHighlightRouteId) || state.level >= 2),
+  );
+
+  const communityHeatmapGeo = useMemo<GeoCollection | null>(
+    () => (communityState.enabled ? communityHeatmapQuery.data?.layer?.geojson ?? null : null),
+    [communityState.enabled, communityHeatmapQuery.data],
+  );
+  const personalHeatmapGeo = useMemo<GeoCollection | null>(
+    () => (personalState.enabled ? personalHeatmapQuery.data?.layer?.geojson ?? null : null),
+    [personalState.enabled, personalHeatmapQuery.data],
+  );
+  const bikePoisGeo = useMemo<GeoCollection | null>(() => {
+    const items = bikePoisQuery.data?.items ?? [];
+    if (items.length === 0) return null;
+    return {
+      type: 'FeatureCollection',
+      features: items.map((item) => ({
+        type: 'Feature',
+        properties: { id: item.id, name: item.name, category: item.category },
+        geometry: { type: 'Point', coordinates: [item.lon, item.lat] },
+      })),
+    };
+  }, [bikePoisQuery.data]);
+  const savedPlacesGeo = useMemo<GeoCollection | null>(() => {
+    const places = state.savedPlaces ?? [];
+    if (places.length === 0) return null;
+    return {
+      type: 'FeatureCollection',
+      features: places.map((place) => ({
+        type: 'Feature',
+        properties: { id: place.id, name: place.name, kind: place.kind },
+        geometry: { type: 'Point', coordinates: [place.lng, place.lat] },
+      })),
+    };
+  }, [state.savedPlaces]);
+  const firesGeo = useMemo<GeoCollection | null>(() => {
+    const items = firesQuery.data?.incidents ?? [];
+    if (items.length === 0) return null;
+    return {
+      type: 'FeatureCollection',
+      features: items.map((fire) => ({
+        type: 'Feature',
+        properties: { id: fire.id, kind: fire.kind, label: fire.label },
+        geometry: fire.geometry as { type: string; coordinates: unknown },
+      })),
+    };
+  }, [firesQuery.data]);
+  const surfacesGeo = useMemo<GeoCollection | null>(() => {
+    const features = surfacesQuery.data?.features ?? [];
+    if (features.length === 0) return null;
+    return {
+      type: 'FeatureCollection',
+      features: features.map((f) => ({
+        type: 'Feature',
+        properties: { id: f.id, name: f.name, surface: f.surface, surfaceClass: f.category },
+        geometry: { type: 'LineString', coordinates: f.coordinates },
+      })),
+    };
+  }, [surfacesQuery.data]);
+  const highlightsGeo = useMemo<GeoCollection | null>(() => {
+    const items = highlightsQuery.data?.items ?? [];
+    const withLoc = items.filter((hl) => hl.location !== null);
+    if (withLoc.length === 0) return null;
+    return {
+      type: 'FeatureCollection',
+      features: withLoc.map((hl) => ({
+        type: 'Feature',
+        properties: { id: hl.id, title: hl.title, kind: hl.kind },
+        geometry: {
+          type: 'Point',
+          coordinates: [hl.location!.lng, hl.location!.lat],
+        },
+      })),
+    };
+  }, [highlightsQuery.data]);
+
   // ── confirmation d'un signalement terrain ─────────────────────────────
   const onConfirmReport = useCallback(
     async (reportId: string, verdict: 'present' | 'gone') => {
@@ -967,6 +1095,10 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
     }
   }, []);
 
+  const processGuidanceFixRef = React.useRef<((fix: GpsFix, updated?: ActivityState) => void) | null>(
+    null,
+  );
+
   const onGpsFix = useCallback(
     (fix: GpsFix, metrics: ActivityMetrics) => {
       const activity = useExplorerStore.getState().activity;
@@ -976,6 +1108,14 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
       // (précision, saut, horloge) ne doit être ni dessiné ni persisté.
       if (!metrics.accepted) return;
       if (metrics.lastFix !== fix) return;
+
+      processGuidanceFixRef.current?.(fix, {
+        ...activity,
+        distanceM: metrics.distanceM,
+        elevGainM: metrics.elevGainM,
+        movingS: metrics.movingS,
+        autoPaused: metrics.autoPaused,
+      });
 
       // Pause automatique : la capture continue pour détecter la reprise, mais
       // le tracé et la carte restent figés. Le point est tout de même persisté
@@ -1332,7 +1472,166 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
     [trackTrace],
   );
 
-  // Live Activity iOS (P7-20) : démarrage, mise à jour toutes les 5 s, fin.
+  // ── Paquets hors ligne (lot N02) ───────────────────────────────────────
+  const [installedOfflinePacks, setInstalledOfflinePacks] = useState<OfflineInstalledPackRecord[]>(
+    [],
+  );
+  const [offlineProgress, setOfflineProgress] = useState<OfflineDownloadProgress | null>(null);
+  const [coverageVisible, setCoverageVisible] = useState(false);
+
+  const refreshOfflinePacks = useCallback(() => {
+    setInstalledOfflinePacks(getOfflineRuntimeStore().listInstalledPacks());
+  }, []);
+
+  useEffect(() => {
+    void getOfflineRuntimeStore().hydrate().then((packs) => {
+      setInstalledOfflinePacks(packs);
+    });
+  }, []);
+
+  const offlineCoverageGeoJson = useMemo<GeoCollection | null>(() => {
+    if (!coverageVisible) return null;
+    const fc = getOfflineRuntimeStore().buildCoverageGeoJson();
+    return {
+      type: 'FeatureCollection',
+      features: fc.features.map((f) => ({
+        type: 'Feature',
+        properties: f.properties as unknown as Record<string, unknown>,
+        geometry: { type: f.geometry.type, coordinates: f.geometry.coordinates },
+      })),
+    };
+  }, [coverageVisible, installedOfflinePacks]);
+
+  const handleShortcutLaunch = useCallback(
+    (deepLinkUri: string) => {
+      const store = getOfflineRuntimeStore();
+      const res = store.resolveShortcut(deepLinkUri);
+      if (res.status === 'unavailable') {
+        useExplorerStore.getState().showToast({
+          title: 'Raccourci hors ligne indisponible',
+          sub: res.reason ?? 'Paquet supprimé ou non téléchargé.',
+          tone: 'warn',
+        });
+        return;
+      }
+      const s = useExplorerStore.getState();
+      setSheetOpen(true);
+      if (res.actionKind === 'plan_route') {
+        s.setSheet('start', 'low');
+      } else if (
+        res.actionKind === 'open_offline_downloads' ||
+        res.actionKind === 'open_downloaded_region'
+      ) {
+        s.setSheet('offline', 'mid');
+      } else if (res.actionKind === 'record_activity') {
+        if (!s.activity) {
+          s.startActivity('rando');
+        } else {
+          s.setSheet('live', 'mid');
+        }
+      } else if (res.actionKind === 'open_downloaded_route' && res.targetRouteId) {
+        const offlineRoute = store.getInstalledRouteNavigationData(res.targetRouteId);
+        if (offlineRoute) {
+          s.setTrailRoute({
+            id: offlineRoute.routeId,
+            name: offlineRoute.name,
+            geojson: offlineRoute.geojson,
+            status: 'ready',
+          });
+          s.select({ kind: 'trail', id: offlineRoute.routeId }, 'trail', 'mid');
+        }
+      } else if (res.targetRegionId) {
+        s.setSheet('offline', 'mid');
+      }
+    },
+    [],
+  );
+
+  // Gestion des raccourcis système / Spotlight / App Shortcuts (`lkdv://shortcut/*`, K4.19)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const paramUri = params.get('shortcut');
+    if (paramUri && paramUri.startsWith('lkdv://shortcut/')) {
+      handleShortcutLaunch(paramUri);
+    }
+    const onShortcutEvent = (ev: Event) => {
+      const uri = (ev as CustomEvent<{ uri?: string }>).detail?.uri;
+      if (uri) handleShortcutLaunch(uri);
+    };
+    window.addEventListener('lkdv:shortcut', onShortcutEvent);
+    const capApp = (window as unknown as {
+      Capacitor?: {
+        Plugins?: {
+          App?: {
+            addListener?: (
+              event: string,
+              cb: (data: { url?: string }) => void,
+            ) => Promise<{ remove: () => void }>;
+          };
+        };
+      };
+    }).Capacitor?.Plugins?.App;
+    let removeCapListener: (() => void) | null = null;
+    if (capApp?.addListener) {
+      void capApp
+        .addListener('appUrlOpen', ({ url }) => {
+          if (url && url.startsWith('lkdv://shortcut/')) {
+            handleShortcutLaunch(url);
+          }
+        })
+        .then((handle) => {
+          removeCapListener = () => handle.remove();
+        })
+        .catch(() => {});
+    }
+    return () => {
+      window.removeEventListener('lkdv:shortcut', onShortcutEvent);
+      removeCapListener?.();
+    };
+  }, [handleShortcutLaunch]);
+
+  // ── Guidage et navigation (lot N01) ────────────────────────────────────
+  const navGuidance = useNavigationGuidance({
+    activity: state.activity,
+    trailRoute: state.trailRoute,
+    routes,
+    pois,
+    me,
+    center: state.center,
+    units: unitsForCountry,
+    northUp: state.northUp,
+    online,
+    onNorthUpSync: (nextNorthUp) => {
+      if (useExplorerStore.getState().northUp !== nextNorthUp) {
+        useExplorerStore.setState({ northUp: nextNorthUp });
+      }
+    },
+    onSwapActiveRoute: (nextRoute) => {
+      useExplorerStore.getState().swapActivityRoute(nextRoute);
+    },
+    onApplyCameraBearing: (isNorthUp, bearingDeg) => {
+      useExplorerStore.getState().setCamera({
+        type: 'bearing',
+        northUp: isNorthUp,
+        bearingDeg,
+      });
+    },
+    onApplyAutoZoom: (zoom) => {
+      useExplorerStore.getState().setCamera({ type: 'zoom', zoom });
+    },
+    onPauseOrResumeActivity: () => {
+      const current = useExplorerStore.getState().activity;
+      if (current) {
+        useExplorerStore.getState().updateActivity({ paused: !current.paused });
+      }
+    },
+    onMarkLap: markLap,
+  });
+
+  processGuidanceFixRef.current = navGuidance.processAcceptedFix;
+
+  // Live Activity iOS / Android (P7-20 + K4.12 / S1.06) : démarrage, mise à jour toutes les 5 s, fin.
   const liveActivityRef = React.useRef<{ started: boolean; lastPush: number }>({ started: false, lastPush: 0 });
   useEffect(() => {
     const activity = state.activity;
@@ -1349,12 +1648,19 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
       }
       return;
     }
+    const lockPayload = navGuidance.guidance.lockScreenPayload;
     const payload = {
       distanceM: activity.distanceM,
       elevGainM: activity.elevGainM,
       movingS: activity.movingS,
       paused: activity.paused,
       offRoute: activity.offRoute ?? false,
+      clientSessionId: activity.clientSessionId ?? null,
+      nextManeuverInstruction: lockPayload?.nextManeuver?.instruction ?? null,
+      nextManeuverIcon: lockPayload?.nextManeuver?.iconName ?? null,
+      nextManeuverDistanceM: lockPayload?.nextManeuver?.distanceM ?? null,
+      offRouteLabel: activity.offRoute ? offRouteLabel(activity.offRouteM) : null,
+      formattedRhythm: lockPayload?.dynamicIsland.expanded.trailingStatValue ?? null,
     };
     if (!liveActivityRef.current.started) {
       liveActivityRef.current = { started: true, lastPush: Date.now() };
@@ -1365,7 +1671,37 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
     if (now - liveActivityRef.current.lastPush < 5000) return;
     liveActivityRef.current.lastPush = now;
     void updateLiveActivity(payload);
-  }, [state.activity]);
+  }, [state.activity, navGuidance.guidance.lockScreenPayload]);
+
+  // R04 K2.32 + S3.08 : lancement d'une étape depuis Planning/Hub ou ouverture bibliothèque
+  useEffect(() => {
+    const launch = consumePendingStageLaunch();
+    if (launch) {
+      const trail = trailSnapshotFromStage(launch.planTitle, {
+        stageId: launch.stageId,
+        dayNumber: launch.dayNumber,
+        points: launch.points,
+        revision: launch.stageRevision,
+      });
+      state.patch({
+        selection: { kind: 'trail', id: trail.id },
+        trailRoute: trail,
+        sheet: 'trail',
+        detent: 'mid',
+        tab: 0,
+      });
+      state.showToast({ title: `Étape prête · ${launch.planTitle} (J${launch.dayNumber})` });
+      return;
+    }
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('planner') === 'library') {
+        state.patch({ plannerLibraryId: '__open__' });
+        state.openSubSheet('planner', 'full');
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ── contexte de feuille ────────────────────────────────────────────────
   const ctx = useMemo<SheetContext>(
@@ -1400,15 +1736,148 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
           intervalLabel: distanceMarkerIntervalLabel(unitsForCountry),
         },
       },
+      heatmap: {
+        communityCount: communityHeatmapQuery.data?.layer?.cells?.length ?? 0,
+        communitySuppressed: communityHeatmapQuery.data?.layer?.suppressedCellCount ?? 0,
+        communityEligible: communityHeatmapQuery.data?.layer?.eligibleActivityCount ?? 0,
+        communityStatus: !communityState.enabled
+          ? 'idle'
+          : communityHeatmapQuery.isPending
+            ? 'loading'
+            : communityHeatmapQuery.isError
+              ? 'error'
+              : 'ready',
+        personalCount: personalHeatmapQuery.data?.layer?.cells?.length ?? 0,
+        personalActivities: personalHeatmapQuery.data?.layer?.activityCount ?? 0,
+        personalStatus: !personalState.enabled
+          ? 'idle'
+          : personalHeatmapQuery.isPending
+            ? 'loading'
+            : personalHeatmapQuery.error instanceof UnauthorizedHeatmapError
+              ? 'unauthorized'
+              : personalHeatmapQuery.isError
+                ? 'error'
+                : 'ready',
+        comparisonDeltaCells: personalHeatmapQuery.data?.comparison?.deltaCells ?? null,
+      },
+      overlays: {
+        bikePoisCount: bikePoisQuery.data?.items?.length ?? 0,
+        bikePoisStatus:
+          state.layerVisibility?.bikePois !== true
+            ? 'idle'
+            : bikePoisQuery.isPending
+              ? 'loading'
+              : bikePoisQuery.data?.status === 'ok'
+                ? 'ready'
+                : (bikePoisQuery.data?.status as 'zoom_required' | 'unavailable') ?? 'unavailable',
+        firesCount: firesQuery.data?.incidents?.length ?? 0,
+        firesStatus:
+          state.layerVisibility?.fires !== true
+            ? 'idle'
+            : firesQuery.isPending
+              ? 'loading'
+              : firesQuery.data?.status === 'ok' || firesQuery.data?.status === 'empty'
+                ? 'ready'
+                : 'unavailable',
+        firesSource: firesQuery.data?.source?.name ?? null,
+        surfacesStatus:
+          state.layerVisibility?.surfaceLayer !== true
+            ? 'idle'
+            : surfacesQuery.isPending
+              ? 'loading'
+              : surfacesQuery.data?.status === 'zoom_required'
+                ? 'zoom_required'
+                : surfacesQuery.data?.status === 'unavailable'
+                  ? 'unavailable'
+                  : 'ready',
+        surfacesDistributions: (surfacesQuery.data?.analysis?.shares ?? []).map((s) => ({
+          surface: s.category,
+          percentage: Math.round(s.shareOfRoute * 100),
+        })),
+        savedPlacesCount: state.savedPlaces?.length ?? 0,
+        highlightsCount: highlightsQuery.data?.items?.length ?? 0,
+      },
       // Brouillon local : aucune couche ne peut perdre la variante. Une trace
       // de démonstration est retirée ici avant d'armer le compte à rebours.
       onStartSport: requestStartSafe,
       onConfirmReport,
       onMarkLap: markLap,
       onRequestLocation: requestPosition,
+      guidance: {
+        state: navGuidance.guidance,
+        onSetOrientationMode: navGuidance.setOrientationMode,
+        onRecenter: navGuidance.recenter,
+        onSetAudioPrefs: navGuidance.setAudioPrefs,
+        onTestVoice: navGuidance.testVoice,
+        onSetDisplayPrefs: navGuidance.setDisplayPrefs,
+        onSwapRoute: navGuidance.swapRoute,
+        onSelectDepartureAction: navGuidance.onSelectDepartureAction,
+        onRetryReroute: navGuidance.retryReroute,
+        onLockScreenAction: navGuidance.onLockScreenAction,
+      },
+      offline: {
+        installedPacks: installedOfflinePacks,
+        progress: offlineProgress,
+        coverageVisible,
+        onDownloadRegion: (region) => {
+          void getOfflineRuntimeStore()
+            .downloadOrResumeRegion(
+              region,
+              { pois, routes },
+              { onProgress: setOfflineProgress },
+            )
+            .then(() => {
+              refreshOfflinePacks();
+              useExplorerStore.getState().showToast({
+                title: 'Région prête hors ligne',
+                sub: region.name,
+              });
+            });
+        },
+        onPausePack: (packId) => {
+          void getOfflineRuntimeStore().pausePack(packId).then(refreshOfflinePacks);
+        },
+        onDeletePack: (packId) => {
+          void getOfflineRuntimeStore().deletePack(packId).then(() => {
+            refreshOfflinePacks();
+            useExplorerStore.getState().showToast({ title: 'Paquet supprimé' });
+          });
+        },
+        onDownloadZones: (multi) => {
+          void getOfflineRuntimeStore()
+            .downloadCustomZones(
+              multi,
+              { pois, routes },
+              { onProgress: setOfflineProgress },
+            )
+            .then(() => {
+              refreshOfflinePacks();
+              useExplorerStore.getState().showToast({ title: 'Zone(s) téléchargée(s)' });
+            });
+        },
+        onDownloadRoutePack: (route) => {
+          void getOfflineRuntimeStore()
+            .downloadRouteOfflinePack(
+              { ...route, sport: state.activity?.sport ?? 'rando' },
+              pois,
+              { onProgress: setOfflineProgress },
+            )
+            .then(() => {
+              refreshOfflinePacks();
+              useExplorerStore.getState().showToast({
+                title: 'Itinéraire prêt hors ligne',
+                sub: route.name ?? undefined,
+              });
+            });
+        },
+        onShowCoverage: () => {
+          setCoverageVisible((v) => !v);
+        },
+        onLaunchShortcut: handleShortcutLaunch,
+      },
       locale: 'fr-FR',
     }),
-    [state, countries, country, regionsGeo, regionGroups, place, pois, routes, weather, unitsForCountry, reportsData, carnetsData, tripsData, selectedPoi, me, mapViewport, slope.state, slope.summary, slopeRoute, allDistanceMarkers, requestStartSafe, onConfirmReport, markLap, requestPosition],
+    [state, countries, country, regionsGeo, regionGroups, place, pois, routes, weather, unitsForCountry, reportsData, carnetsData, tripsData, selectedPoi, me, mapViewport, slope.state, slope.summary, slopeRoute, allDistanceMarkers, communityState.enabled, communityHeatmapQuery.data, communityHeatmapQuery.isPending, communityHeatmapQuery.isError, personalState.enabled, personalHeatmapQuery.data, personalHeatmapQuery.isPending, personalHeatmapQuery.isError, personalHeatmapQuery.error, bikePoisQuery.data, bikePoisQuery.isPending, firesQuery.data, firesQuery.isPending, surfacesQuery.data, surfacesQuery.isPending, highlightsQuery.data, requestStartSafe, onConfirmReport, markLap, requestPosition, navGuidance, installedOfflinePacks, offlineProgress, coverageVisible, refreshOfflinePacks, handleShortcutLaunch],
   );
 
   const model = useMemo(() => buildSheetModel(ctx), [ctx]);
@@ -1511,16 +1980,20 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
     [state],
   );
 
-  // Mini-sélecteur « Survol 3D » sur un itinéraire : la caméra parcourt la trace.
+  // Mini-sélecteur « Survol 3D » sur un itinéraire : la caméra parcourt la trace
+  // et le tiroir se replie au cran bas pour laisser la scène 3D visible.
   useEffect(() => {
     if (state.sheet !== 'trail') return;
     if (state.mini !== 1) return;
-    useExplorerStore.setState({ camera: { type: 'flyover', routeId: state.selection?.id ?? '' } });
+    useExplorerStore.setState({
+      detent: 'peek',
+      camera: { type: 'flyover', routeId: state.selection?.id ?? '' },
+    });
   }, [state.sheet, state.mini, state.selection?.id]);
 
   const longPress = useLongPress(() => {
     setSheetOpen(true);
-    state.setSheet('start', 'low');
+    state.setSheet('start', 'mid');
   });
 
   const onPinClick = useCallback(
@@ -1815,6 +2288,30 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
         slopeLayer={slope.layer}
         distanceMarkers={distanceMarkers}
         layerVisibility={state.layerVisibility}
+        communityHeatmapGeo={communityHeatmapGeo}
+        personalHeatmapGeo={personalHeatmapGeo}
+        bikePoisGeo={bikePoisGeo}
+        savedPlacesGeo={savedPlacesGeo}
+        firesGeo={firesGeo}
+        surfacesGeo={surfacesGeo}
+        highlightsGeo={highlightsGeo}
+        rerouteGeometry={navGuidance.guidance.detourGeoJson}
+        accessRouteGeometry={navGuidance.guidance.accessRouteGeoJson}
+        offlineCoverage={offlineCoverageGeoJson}
+        showOfflineCoverage={coverageVisible}
+        onUserPan={navGuidance.onUserMapPan}
+        plannerDraft={state.plannerDraft ?? null}
+        plannerLineHidden={Boolean(state.plannerLineHidden)}
+        plannerMapPick={Boolean(state.plannerMapPick)}
+        profileCursor={state.profileCursor ?? null}
+        highlightedSegment={state.highlightedSegment ?? null}
+        onMapClick={([lng, lat]) => {
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(
+              new CustomEvent('lkdv:planner-map-pick', { detail: { lat, lon: lng } })
+            );
+          }
+        }}
       />
 
       {pendingStart ? (
@@ -1845,7 +2342,12 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
         activity={!!activity}
         onCompass={() => {
           haptic('compass');
-          state.toggleNorthUp();
+          if (navGuidance.guidance.orientation.userPanned) {
+            navGuidance.recenter();
+            return;
+          }
+          const nextMode = state.northUp ? 'course-up' : 'north-up';
+          navGuidance.setOrientationMode(nextMode);
         }}
         northUp={state.northUp}
       />
@@ -1916,6 +2418,36 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
             );
           }}
         />
+      ) : null}
+
+      {activity &&
+      ((activityRouteStatus === 'ready' && navGuidance.guidance.turnByTurn.nextManeuver) ||
+        navGuidance.guidance.activeWaypointAlert) &&
+      state.sheet !== 'live' ? (
+        <div
+          className="xp-tbt-overlay"
+          style={{
+            position: 'absolute',
+            top: 64,
+            left: 12,
+            right: 12,
+            zIndex: 18,
+            pointerEvents: 'auto',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 8,
+          }}
+        >
+          {activityRouteStatus === 'ready' && navGuidance.guidance.turnByTurn.nextManeuver ? (
+            <TurnByTurnBanner state={navGuidance.guidance.turnByTurn} showSecondary={false} />
+          ) : null}
+          {navGuidance.guidance.activeWaypointAlert ? (
+            <WaypointAlertBanner
+              alert={navGuidance.guidance.activeWaypointAlert}
+              units={unitsForCountry}
+            />
+          ) : null}
+        </div>
       ) : null}
 
       {activity?.offRoute && activityRouteStatus !== 'unavailable' ? (
@@ -2053,8 +2585,27 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
         </button>
       ) : null}
 
+      {activity ? (
+        <ExplorerBeaconBar
+          center={me ? [me.lng, me.lat] : state.center}
+          online={online}
+          onOpenSafety={() => {
+            setSheetOpen(true);
+            state.setSheet('live', 'mid');
+            state.setTab(3);
+          }}
+        />
+      ) : null}
+
       {activity && state.sheet === 'live' ? (
         <>
+          <ExplorerLiveSegmentsPanel
+            sport={activity.sport}
+            center={me ? [me.lng, me.lat] : state.center}
+            online={online}
+            paused={Boolean(activity.paused || activity.autoPaused)}
+            compactOverlay
+          />
           <ActivityPill
             sportLabel={activity.selection?.variantLabel ?? SPORT_META[activity.sport].label}
             elapsed={elapsed}

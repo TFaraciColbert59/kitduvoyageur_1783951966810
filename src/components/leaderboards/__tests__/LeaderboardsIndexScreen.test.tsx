@@ -25,7 +25,7 @@ describe('LeaderboardsIndexScreen', () => {
     expect(screen.getByText('Montée du Belvédère')).toBeTruthy();
     expect(screen.getByText('3 passages')).toBeTruthy();
     expect(screen.getByText('Local Legend · Camille Martin')).toBeTruthy();
-    expect(screen.getByRole('link').getAttribute('href')).toBe('/classements/seg-col-1');
+    expect(screen.getByRole('link').getAttribute('href')).toBe('/explorer');
   });
 
   it('rend un état vide honnête quand aucun segment n’est classable', () => {

@@ -1,4 +1,10 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import {
+  mergeSportProfilePreferences,
+  normalizeSportProfilePreferences,
+  type SportProfilePreferences,
+  type SportProfilePreferencesPatch,
+} from '@/features/community/g01/sportProfile';
 
 /**
  * Drawer Compte — commandes, notifications, réglages, profil, partage.
@@ -92,6 +98,15 @@ export interface NotificationPrefs {
   orders: boolean;
   system: boolean;
   quietHours: boolean;
+  kudos?: boolean;
+  comments?: boolean;
+  segmentsPr?: boolean;
+  challenges?: boolean;
+  clubEvents?: boolean;
+  gearMileageAlerts?: boolean;
+  activityDigest?: boolean;
+  quietHoursStart?: string | null;
+  quietHoursEnd?: string | null;
 }
 
 export interface ProfileSettings {
@@ -105,7 +120,9 @@ export interface ProfileSettings {
   coverUrl: string | null;
   links: ProfileLink[];
   visibility: 'public' | 'prive';
+  defaultOutingVisibility: 'private' | 'followers' | 'public' | 'collective_anonymized';
   notificationPrefs: NotificationPrefs;
+  sportProfilePrefs: SportProfilePreferences;
   twoFaEnabled: boolean;
 }
 
@@ -236,7 +253,24 @@ const DEFAULT_PREFS: NotificationPrefs = {
   orders: true,
   system: true,
   quietHours: false,
+  kudos: true,
+  comments: true,
+  segmentsPr: true,
+  challenges: true,
+  clubEvents: true,
+  gearMileageAlerts: true,
+  activityDigest: false,
+  quietHoursStart: '22:00',
+  quietHoursEnd: '07:00',
 };
+
+function clockOrNull(value: unknown, fallback: string): string | null {
+  if (value === null) return null;
+  if (typeof value === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(value.trim())) {
+    return value.trim();
+  }
+  return fallback;
+}
 
 function parsePrefs(raw: unknown): NotificationPrefs {
   if (!raw || typeof raw !== 'object') return DEFAULT_PREFS;
@@ -247,6 +281,15 @@ function parsePrefs(raw: unknown): NotificationPrefs {
     orders: row.orders !== false,
     system: row.system !== false,
     quietHours: row.quietHours === true,
+    kudos: row.kudos !== false,
+    comments: row.comments !== false,
+    segmentsPr: row.segmentsPr !== false,
+    challenges: row.challenges !== false,
+    clubEvents: row.clubEvents !== false,
+    gearMileageAlerts: row.gearMileageAlerts !== false,
+    activityDigest: row.activityDigest === true,
+    quietHoursStart: clockOrNull(row.quietHoursStart, '22:00'),
+    quietHoursEnd: clockOrNull(row.quietHoursEnd, '07:00'),
   };
 }
 
@@ -456,20 +499,46 @@ export async function markAllNotificationsRead(
   if (error) throw error;
 }
 
+const VALID_DEFAULT_OUTING_VISIBILITIES = new Set<ProfileSettings['defaultOutingVisibility']>([
+  'private',
+  'followers',
+  'public',
+  'collective_anonymized',
+]);
+
+function parseDefaultOutingVisibility(raw: unknown): ProfileSettings['defaultOutingVisibility'] {
+  const value = text(raw);
+  return VALID_DEFAULT_OUTING_VISIBILITIES.has(
+    value as ProfileSettings['defaultOutingVisibility']
+  )
+    ? (value as ProfileSettings['defaultOutingVisibility'])
+    : 'private';
+}
+
 export async function loadProfileSettings(
   supabase: SupabaseClient,
   userId: string,
   email: string
 ): Promise<ProfileSettings> {
-  const { data } = await supabase
+  let result = await supabase
     .from('user_profiles')
     .select(
-      'id,email,full_name,handle,bio,location,avatar_url,cover_url,links,profile_visibility,notification_prefs,two_fa_enabled'
+      'id,email,full_name,handle,bio,location,avatar_url,cover_url,links,profile_visibility,default_outing_visibility,notification_prefs,sport_profile_prefs,two_fa_enabled'
     )
     .eq('id', userId)
     .maybeSingle();
 
-  const row = (data ?? {}) as Record<string, unknown>;
+  if (result.error?.code === '42703') {
+    result = await supabase
+      .from('user_profiles')
+      .select(
+        'id,email,full_name,handle,bio,location,avatar_url,cover_url,links,profile_visibility,notification_prefs,two_fa_enabled'
+      )
+      .eq('id', userId)
+      .maybeSingle();
+  }
+
+  const row = (result.data ?? {}) as Record<string, unknown>;
   return {
     id: userId,
     email: text(row.email) || email,
@@ -481,7 +550,9 @@ export async function loadProfileSettings(
     coverUrl: text(row.cover_url) || null,
     links: parseLinks(row.links),
     visibility: text(row.profile_visibility) === 'prive' ? 'prive' : 'public',
+    defaultOutingVisibility: parseDefaultOutingVisibility(row.default_outing_visibility),
     notificationPrefs: parsePrefs(row.notification_prefs),
+    sportProfilePrefs: normalizeSportProfilePreferences(row.sport_profile_prefs),
     twoFaEnabled: row.two_fa_enabled === true,
   };
 }
@@ -495,7 +566,9 @@ export interface ProfilePatch {
   coverUrl?: string | null;
   links?: ProfileLink[];
   visibility?: 'public' | 'prive';
+  defaultOutingVisibility?: 'private' | 'followers' | 'public' | 'collective_anonymized';
   notificationPrefs?: Partial<NotificationPrefs>;
+  sportProfilePrefs?: SportProfilePreferencesPatch;
 }
 
 const HANDLE_RE = /^[a-z0-9_]{3,24}$/i;
@@ -537,6 +610,9 @@ export async function updateProfileSettings(
     update.links = parseLinks(patch.links);
   }
   if (patch.visibility !== undefined) update.profile_visibility = patch.visibility;
+  if (patch.defaultOutingVisibility !== undefined) {
+    update.default_outing_visibility = parseDefaultOutingVisibility(patch.defaultOutingVisibility);
+  }
   if (patch.notificationPrefs !== undefined) {
     const current = parsePrefs((await supabase
       .from('user_profiles')
@@ -545,8 +621,27 @@ export async function updateProfileSettings(
       .maybeSingle()).data?.notification_prefs);
     update.notification_prefs = { ...current, ...patch.notificationPrefs };
   }
+  if (patch.sportProfilePrefs !== undefined) {
+    const { data: currentRow } = await supabase
+      .from('user_profiles')
+      .select('sport_profile_prefs')
+      .eq('id', userId)
+      .maybeSingle();
+    update.sport_profile_prefs = mergeSportProfilePreferences(
+      currentRow?.sport_profile_prefs,
+      patch.sportProfilePrefs
+    );
+  }
 
-  const { error } = await supabase.from('user_profiles').update(update).eq('id', userId);
+  let { error } = await supabase.from('user_profiles').update(update).eq('id', userId);
+  if (error?.code === '42703' && 'default_outing_visibility' in update) {
+    delete update.default_outing_visibility;
+    if (Object.keys(update).length > 1) {
+      ({ error } = await supabase.from('user_profiles').update(update).eq('id', userId));
+    } else {
+      error = null;
+    }
+  }
   if (error) {
     if (String(error.code) === '23505') throw new Error('handle_taken');
     throw error;

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Flag, MessageCircle, Send } from 'lucide-react';
+import { Flag, MessageCircle, Play, Send } from 'lucide-react';
 import LikeIcon from '@/components/social-kit/LikeIcon';
 import AppImage from '@/components/ui/AppImage';
 import type { SportActivityCardVM } from '@/features/community/g01/activityProjection';
@@ -25,6 +25,7 @@ export interface SportActivityCardProps {
   onComment?: (item: SportActivityCardVM) => void;
   onShare?: (item: SportActivityCardVM) => void;
   onReport?: (item: SportActivityCardVM) => void;
+  onReplay?: (item: SportActivityCardVM) => void;
 }
 
 function initials(name: string): string {
@@ -59,6 +60,7 @@ export function SportActivityCard({
   onComment,
   onShare,
   onReport,
+  onReplay,
 }: SportActivityCardProps) {
   const titleId = React.useId();
   const date = cardDate(item);
@@ -156,6 +158,16 @@ export function SportActivityCard({
         >
           <Send size={18} aria-hidden="true" />
         </button>
+        {onReplay ? (
+          <button
+            type="button"
+            className={styles.action}
+            onClick={() => onReplay(item)}
+            aria-label="Revoir le replay de la sortie"
+          >
+            <Play size={18} aria-hidden="true" />
+          </button>
+        ) : null}
         {onReport ? (
           <button
             type="button"

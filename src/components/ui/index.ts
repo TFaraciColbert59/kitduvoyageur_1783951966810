@@ -1,7 +1,4 @@
 export { Modal, type ModalProps, type ModalSize } from './Modal';
-export { GlassSubCard, type GlassSubCardProps } from './GlassSubCard';
-export { GlassPill, type GlassPillProps, type GlassPillTone } from './GlassPill';
-export { GlassCapsuleBtn, type GlassCapsuleBtnProps, type GlassCapsuleBtnVariant, type GlassCapsuleBtnSize } from './GlassCapsuleBtn';
 export { Tabs, type TabOption, type TabsProps, type TabsVariant } from './Tabs';
 export { Button, type ButtonProps, type ButtonVariant, type ButtonSize } from './Button';
 export { IconButton, type IconButtonProps, type IconButtonVariant, type IconButtonSize } from './IconButton';

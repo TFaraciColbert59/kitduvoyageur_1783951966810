@@ -13,6 +13,7 @@ import {
 } from '@/lib/segments/http';
 import { effortFlagBodySchema } from '@/lib/segments/schemas';
 import { resolveCanonicalSegment } from '@/lib/segments/service';
+import { syncS01ToLeaderboards } from '@/lib/segments/bridge';
 import {
   countEffortFlagsByUserSince,
   getEffort,
@@ -90,6 +91,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     saveEffortFlag(flag);
     saveEffortReview(result.reviewRecord);
     upsertEfforts([result.updatedEffort]);
+    syncS01ToLeaderboards(segment.id);
 
     return json(
       {

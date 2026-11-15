@@ -263,13 +263,10 @@ describe('P5 — échelles espacements, rayons et typographie', () => {
 });
 
 describe('P5 — câblage du mode sombre et topographie', () => {
-  it('layout.tsx initialise le thème depuis la préférence système ou le choix stocké', () => {
-    expect(layout).toContain("colorScheme: 'light dark'");
-    expect(layout).toContain("localStorage.getItem('lkdv_theme')");
-    expect(layout).toContain("matchMedia('(prefers-color-scheme: dark)')");
-    expect(layout).toContain("classList.add('dark')");
+  it('layout.tsx initialise le thème en mode clair strict sans surcharge sombre', () => {
+    expect(layout).toContain("colorScheme: 'light'");
     expect(layout).toContain("classList.remove('dark')");
-    expect(layout).toContain("setAttribute('data-theme'");
+    expect(layout).toContain("setAttribute('data-theme', 'light')");
   });
 
   it('tailwind.css mappe le clair sur les tokens et ne fige plus de couleurs .dark', () => {
@@ -277,7 +274,6 @@ describe('P5 — câblage du mode sombre et topographie', () => {
     expect(tailwind).toContain('--foreground: var(--lkv-text-primary);');
     expect(tailwind).toContain('--primary: var(--lkv-action);');
     expect(tailwind).toContain('color-scheme: light;');
-    expect(tailwind).toContain('color-scheme: dark;');
   });
 
   it('background LKDV Phase 3 : toile unique portrait/paysage + voile', () => {

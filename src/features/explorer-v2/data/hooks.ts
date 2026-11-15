@@ -100,10 +100,21 @@ export interface CountryDetails {
   } | null;
 }
 
+export interface WeatherHour {
+  time: string;
+  temperature_c: number | null;
+  wind_ms: number | null;
+  symbol: string | null;
+  /** Précipitations (mm) sur l'heure — canonique. */
+  precip_mm?: number | null;
+  /** Alias historique lu en repli, jamais écrit. */
+  precipitation_mm?: number | null;
+}
+
 export interface WeatherResponse {
   source: 'met-no';
   attribution: string;
-  hours: Array<{ time: string; temperature_c: number | null; wind_ms: number | null; symbol: string | null }>;
+  hours: WeatherHour[];
 }
 
 /** Centre d'une géométrie (moyenne des anneaux extérieurs, suffisant pour viser). */
@@ -351,20 +362,18 @@ export interface SearchResultItem {
   matched: boolean;
 }
 
-export interface SearchFilters {
-  kinds: string[];
-  maxDistanceKm: number | null;
-  easy: boolean;
-  family: boolean;
-  withWater: boolean;
-  text: string;
-}
+import type { SearchCriteriaOverrides, SearchFilters, SmartRankedRoute } from '../search/searchQueryParser';
+import type { MultiDayPlan } from '@/features/planning/models';
+
+export type { SearchFilters };
 
 export interface SearchResponse {
   filters: SearchFilters;
   results: SearchResultItem[];
   /** Parcours réels du catalogue OSM, dans la même emprise que les repères. */
-  routes?: SearchRoute[];
+  routes?: SmartRankedRoute[];
+  /** Aventures multi-jours (K1.13) si la requête vise l'itinérance. */
+  adventures?: MultiDayPlan[];
   /** Emprise réellement interrogée ; `null` pour l'ancien mode « autour du centre ». */
   zone: SearchViewport | null;
   /** Vrai quand la borne de la RPC a tronqué la liste avant l'affichage. */
@@ -496,6 +505,7 @@ export function useNaturalSearch(
   lat: number | null,
   lng: number | null,
   viewport: SearchViewport | null = null,
+  overrides: SearchCriteriaOverrides | null = null,
 ) {
   const area = viewport && isSearchableViewport(viewport) ? viewport : null;
   const blockedByViewport = viewport !== null && area === null;
@@ -509,12 +519,26 @@ export function useNaturalSearch(
       if (key && value !== undefined) params.set(key, value);
     }
   }
+  if (overrides) {
+    if (overrides.maxDistanceKm != null) params.set('maxDistanceKm', String(overrides.maxDistanceKm));
+    if (overrides.maxDurationHours != null) params.set('maxDurationHours', String(overrides.maxDurationHours));
+    if (overrides.maxElevGainM != null) params.set('maxElevGainM', String(overrides.maxElevGainM));
+    if (overrides.easy !== undefined) params.set('easy', overrides.easy ? '1' : '0');
+    if (overrides.family !== undefined) params.set('family', overrides.family ? '1' : '0');
+    if (overrides.routeType) params.set('routeType', overrides.routeType);
+    if (overrides.difficulty) params.set('difficulty', overrides.difficulty);
+    if (overrides.surface) params.set('surface', overrides.surface);
+    if (overrides.startAccess) params.set('startAccess', overrides.startAccess);
+    if (overrides.sport) params.set('sport', overrides.sport);
+  }
+  const overridesKey = overrides ? JSON.stringify(overrides) : 'no-overrides';
 
   return useQuery({
     queryKey: [
       'xp',
       'search',
       query,
+      overridesKey,
       area
         ? viewportQueryParams(area)
         : blockedByViewport
@@ -528,6 +552,25 @@ export function useNaturalSearch(
     queryFn: () => fetchSearchJson(`/api/explorer/v2/search?${params.toString()}`),
     staleTime: 60 * 1000,
     retry: 1,
+  });
+}
+
+export interface PoiPassingRoute extends SearchRoute {
+  proximityM: number;
+}
+
+/** K1.04 : Parcours du catalogue passant à proximité immédiate d'un POI. */
+export function usePoiRoutes(lat: number | null, lng: number | null, enabled = true) {
+  const valid =
+    lat !== null && lng !== null && Number.isFinite(lat) && Number.isFinite(lng);
+  return useQuery({
+    queryKey: ['xp', 'poi-routes', valid ? `${lat!.toFixed(4)}:${lng!.toFixed(4)}` : 'none'],
+    enabled: enabled && valid,
+    queryFn: () =>
+      fetchJson<{ routes: PoiPassingRoute[]; radiusM: number }>(
+        `/api/explorer/v2/pois/routes?lat=${lat}&lng=${lng}`,
+      ),
+    staleTime: 2 * 60 * 1000,
   });
 }
 
@@ -568,4 +611,248 @@ export function useSystemTheme(): 'light' | 'dark' {
     return () => mq.removeEventListener('change', update);
   }, []);
   return theme;
+}
+
+export interface CommunityHeatmapApiResponse {
+  layer: {
+    cells: Array<{
+      cellId: string;
+      cellCenterLat: number;
+      cellCenterLng: number;
+      intensity: number;
+      band: string;
+      distinctContributorCount: number;
+      passageCount: number;
+    }>;
+    suppressedCellCount: number;
+    eligibleActivityCount: number;
+    geojson: GeoCollection;
+  };
+}
+
+export function useCommunityHeatmap(
+  sport: string,
+  window: 'global' | 'last_7_days' | 'nocturnal',
+  enabled: boolean,
+) {
+  return useQuery({
+    queryKey: ['xp', 'heatmap-community', sport, window],
+    enabled,
+    queryFn: async () => {
+      const params = new URLSearchParams({ sport, window });
+      const res = await fetch(`/api/heatmaps/community?${params.toString()}`, {
+        headers: { Accept: 'application/json' },
+      });
+      if (!res.ok) throw new Error(`community_heatmap_${res.status}`);
+      return (await res.json()) as CommunityHeatmapApiResponse;
+    },
+    staleTime: 60 * 1000,
+    retry: 1,
+  });
+}
+
+export interface PersonalHeatmapApiResponse {
+  layer: {
+    cells: Array<{
+      cellId: string;
+      cellCenterLat: number;
+      cellCenterLng: number;
+      intensity: number;
+      band: string;
+      activityCount: number;
+    }>;
+    activityCount: number;
+    geojson: GeoCollection;
+  };
+  comparison?: {
+    deltaCells?: number;
+    deltaActivities?: number;
+  } | null;
+}
+
+export class UnauthorizedHeatmapError extends Error {
+  constructor() {
+    super('unauthorized');
+    this.name = 'UnauthorizedHeatmapError';
+  }
+}
+
+export function usePersonalHeatmap(
+  sport: string,
+  period: string,
+  comparePeriod: string | null,
+  enabled: boolean,
+) {
+  return useQuery({
+    queryKey: ['xp', 'heatmap-personal', sport, period, comparePeriod ?? 'none'],
+    enabled,
+    queryFn: async () => {
+      const params = new URLSearchParams({ sport, period });
+      if (comparePeriod) params.set('comparePeriod', comparePeriod);
+      const res = await fetch(`/api/heatmaps/personal?${params.toString()}`, {
+        headers: { Accept: 'application/json' },
+      });
+      if (res.status === 401 || res.status === 403) {
+        throw new UnauthorizedHeatmapError();
+      }
+      if (!res.ok) throw new Error(`personal_heatmap_${res.status}`);
+      return (await res.json()) as PersonalHeatmapApiResponse;
+    },
+    staleTime: 60 * 1000,
+    retry: false,
+  });
+}
+
+export interface BikePoisApiResponse {
+  status: 'ok' | 'zoom_required' | 'unavailable';
+  items: Array<{
+    id: string;
+    category: 'bike_shop' | 'bike_repair' | 'ebike_charging';
+    name: string;
+    lat: number;
+    lon: number;
+    openingHours?: string | null;
+  }>;
+  provider?: string | null;
+}
+
+export function useBikePois(viewport: SearchViewport | null, enabled: boolean) {
+  const key = viewport
+    ? `${viewport.minLat.toFixed(2)},${viewport.minLng.toFixed(2)},${viewport.maxLat.toFixed(2)},${viewport.maxLng.toFixed(2)}`
+    : 'none';
+  return useQuery({
+    queryKey: ['xp', 'bike-pois', key],
+    enabled: enabled && viewport !== null,
+    queryFn: async () => {
+      if (!viewport) return { status: 'zoom_required' as const, items: [] };
+      const res = await fetch(`/api/explorer/v2/bike-pois?${viewportQueryParams(viewport)}`, {
+        headers: { Accept: 'application/json' },
+      });
+      const payload = (await res.json().catch(() => null)) as
+        | (BikePoisApiResponse & { code?: string })
+        | null;
+      if (
+        res.status === 400 &&
+        (payload?.status === 'zoom_required' ||
+          payload?.code === 'VIEWPORT_TOO_LARGE' ||
+          payload?.code === 'BBOX_TOO_LARGE')
+      ) {
+        return { status: 'zoom_required' as const, items: [] };
+      }
+      if (!res.ok || !payload) return { status: 'unavailable' as const, items: [] };
+      return payload;
+    },
+    staleTime: 5 * 60 * 1000,
+    retry: 0,
+  });
+}
+
+export interface FiresApiResponse {
+  status: string;
+  source: { name: string; retrievedAt?: string; license?: string } | null;
+  incidents: Array<{
+    id: string;
+    kind: string;
+    geometry: { type: 'Point' | 'Polygon'; coordinates: unknown };
+    label: string;
+    observedAt?: string | null;
+  }>;
+  reason?: string;
+}
+
+export function useFireIncidents(viewport: SearchViewport | null, enabled: boolean) {
+  const key = viewport
+    ? `${viewport.minLat.toFixed(1)},${viewport.minLng.toFixed(1)},${viewport.maxLat.toFixed(1)},${viewport.maxLng.toFixed(1)}`
+    : 'none';
+  return useQuery({
+    queryKey: ['xp', 'fires', key],
+    enabled: enabled && viewport !== null,
+    queryFn: async () => {
+      if (!viewport) return { status: 'unavailable', source: null, incidents: [] } as FiresApiResponse;
+      const res = await fetch(`/api/explorer/v2/fires?${viewportQueryParams(viewport)}`, {
+        headers: { Accept: 'application/json' },
+      });
+      if (!res.ok) return { status: 'unavailable', source: null, incidents: [] } as FiresApiResponse;
+      return (await res.json()) as FiresApiResponse;
+    },
+    staleTime: 5 * 60 * 1000,
+    retry: 0,
+  });
+}
+
+export interface SurfacesApiResponse {
+  status: string;
+  features: Array<{
+    id: string;
+    name: string | null;
+    surface: string | null;
+    wayType: string | null;
+    category: string;
+    coordinates: Array<[number, number]>;
+  }>;
+  analysis?: {
+    status: string;
+    shares: Array<{ category: string; lengthM: number; shareOfKnown: number; shareOfRoute: number }>;
+  } | null;
+}
+
+export function useRouteSurfaces(viewport: SearchViewport | null, enabled: boolean) {
+  const key = viewport
+    ? `${viewport.minLat.toFixed(2)},${viewport.minLng.toFixed(2)},${viewport.maxLat.toFixed(2)},${viewport.maxLng.toFixed(2)}`
+    : 'none';
+  return useQuery({
+    queryKey: ['xp', 'route-surfaces', key],
+    enabled: enabled && viewport !== null,
+    queryFn: async () => {
+      if (!viewport) return { status: 'zoom_required', features: [], analysis: null } as SurfacesApiResponse;
+      const res = await fetch(`/api/explorer/v2/surfaces?${viewportQueryParams(viewport)}`, {
+        headers: { Accept: 'application/json' },
+      });
+      const payload = (await res.json().catch(() => null)) as
+        | (SurfacesApiResponse & { code?: string })
+        | null;
+      if (
+        res.status === 400 &&
+        (payload?.status === 'zoom_required' ||
+          payload?.code === 'VIEWPORT_TOO_LARGE' ||
+          payload?.code === 'BBOX_TOO_LARGE')
+      ) {
+        return { status: 'zoom_required', features: [], analysis: null } as SurfacesApiResponse;
+      }
+      if (!res.ok || !payload) return { status: 'unavailable', features: [], analysis: null } as SurfacesApiResponse;
+      return payload;
+    },
+    staleTime: 5 * 60 * 1000,
+    retry: 0,
+  });
+}
+
+export interface ExplorerHighlightsResponse {
+  items: Array<{
+    id: string;
+    title: string;
+    description: string;
+    kind: string;
+    targetId: string;
+    location: { lat: number; lng: number } | null;
+    score: number;
+  }>;
+}
+
+export function useRouteHighlights(routeId: string | null, enabled: boolean) {
+  return useQuery({
+    queryKey: ['xp', 'highlights', routeId ?? 'all'],
+    enabled,
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (routeId) params.set('targetId', routeId);
+      const res = await fetch(`/api/highlights?${params.toString()}`, {
+        headers: { Accept: 'application/json' },
+      });
+      if (!res.ok) return { items: [] } as ExplorerHighlightsResponse;
+      return (await res.json()) as ExplorerHighlightsResponse;
+    },
+    staleTime: 60 * 1000,
+    retry: 1,
+  });
 }

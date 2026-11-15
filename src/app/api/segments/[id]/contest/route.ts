@@ -14,6 +14,7 @@ import {
 } from '@/lib/segments/http';
 import { effortContestBodySchema } from '@/lib/segments/schemas';
 import { resolveCanonicalSegment } from '@/lib/segments/service';
+import { syncS01ToLeaderboards } from '@/lib/segments/bridge';
 import {
   getEffort,
   getEffortFlags,
@@ -96,6 +97,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
     saveEffortReview(result.reviewRecord);
     upsertEfforts([result.updatedEffort]);
+    syncS01ToLeaderboards(segment.id);
 
     return json({
       contested: true,

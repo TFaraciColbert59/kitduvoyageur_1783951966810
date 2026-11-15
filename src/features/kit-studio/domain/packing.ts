@@ -121,14 +121,21 @@ function wantedFns(s: KitState): Set<string> {
 /** maquette v2 l.1260-1263 (candidates) : objets non rangés pour une zone, manques d'abord, prêtés en dernier. */
 export function candidates(s: KitState, zone: ZoneId, fam?: string | null): readonly AnyItem[] {
   const want = wantedFns(s);
-  const list = inventory(s).filter(
+  const filtered = inventory(s).filter(
     (it) => !isPacked(s, it.id) && (zone === 'bag' || it.zones.includes(zone)) && (!fam || it.fam === fam),
   );
-  return list.sort(
+  const sorted = filtered.sort(
     (a, b) =>
       Number(want.has(b.fn)) - Number(want.has(a.fn)) ||
       (b.vital || 0) - (a.vital || 0) ||
       Number(a.state === 'lent') - Number(b.state === 'lent') ||
       a.fam.localeCompare(b.fam),
   );
+  const seen = new Set<string>();
+  return sorted.filter((it) => {
+    const key = `${it.n.trim().toLowerCase()}|${it.g ?? 'null'}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }

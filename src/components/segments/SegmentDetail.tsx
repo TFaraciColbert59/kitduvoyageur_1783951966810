@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   ArrowLeft,
   Flag,
@@ -22,6 +22,25 @@ import {
   type SubmitSegmentHazardResult,
   type UserSegmentPreferences,
 } from '@/features/segments';
+import {
+  sanitizeLeaderboardFilters,
+  type LeaderboardFilterQuery,
+  type LocalLegendResult,
+  type SegmentLeaderboardResult,
+} from '@/features/leaderboards';
+import type {
+  AntiCheatSummary,
+  FiltersResponse,
+  LocalLegendResponse,
+  SegmentLeaderboardResponse,
+  LeaderboardSegmentView,
+} from '@/lib/leaderboards/types';
+import {
+  AntiCheatNotice,
+  LeaderboardFilters,
+  LeaderboardTable,
+  LocalLegendsPanel,
+} from '@/components/leaderboards';
 import { SegmentBadges, SegmentStats } from './SegmentBadges';
 import { SegmentEffortComparison } from './SegmentEffortComparison';
 import { SegmentEffortFlagForm } from './SegmentEffortFlagForm';
@@ -78,6 +97,82 @@ export function SegmentDetail({
   const [compareIds, setCompareIds] = useState<string[]>([]);
   const [selectedEffortId, setSelectedEffortId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+
+  // S02 leaderboards & Local Legends state (S4.05, S4.06, S4.08)
+  const [s02Filters, setS02Filters] = useState<LeaderboardFilterQuery>({});
+  const [s02Capabilities, setS02Capabilities] = useState<FiltersResponse | null>(null);
+  const [s02Leaderboard, setS02Leaderboard] = useState<SegmentLeaderboardResult | null>(null);
+  const [s02SegmentView, setS02SegmentView] = useState<LeaderboardSegmentView | null>(null);
+  const [s02LocalLegend, setS02LocalLegend] = useState<LocalLegendResult | null>(null);
+  const [s02AntiCheat, setS02AntiCheat] = useState<AntiCheatSummary | null>(null);
+  const [s02Loading, setS02Loading] = useState(false);
+  const [s02Error, setS02Error] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (tab !== 'leaderboard' || segment.visibility === 'private' || segment.deletedAt) return;
+    const controller = new AbortController();
+    let active = true;
+    setS02Loading(true);
+    setS02Error(null);
+
+    const params = new URLSearchParams();
+    if (s02Filters.period) params.set('period', s02Filters.period);
+    if (s02Filters.scope) params.set('scope', s02Filters.scope);
+    if (s02Filters.clubId) params.set('clubId', s02Filters.clubId);
+    if (s02Filters.gender) params.set('gender', s02Filters.gender);
+
+    const legendParams = new URLSearchParams();
+    if (s02Filters.scope) legendParams.set('scope', s02Filters.scope);
+    if (s02Filters.clubId) legendParams.set('clubId', s02Filters.clubId);
+
+    void Promise.all([
+      fetch(`/api/leaderboards/filters`, { signal: controller.signal, cache: 'no-store' })
+        .then((r) => (r.ok ? (r.json() as Promise<FiltersResponse>) : null))
+        .catch(() => null),
+      fetch(
+        `/api/leaderboards/segments/${encodeURIComponent(segment.id)}?${params.toString()}`,
+        { signal: controller.signal, cache: 'no-store' }
+      ).then(async (r) => {
+        if (r.status === 404) return null;
+        if (!r.ok) {
+          const payload = (await r.json().catch(() => null)) as { error?: string } | null;
+          throw new Error(payload?.error || 'Classement filtré indisponible.');
+        }
+        return (await r.json()) as SegmentLeaderboardResponse;
+      }),
+      fetch(
+        `/api/leaderboards/segments/${encodeURIComponent(segment.id)}/local-legends?${legendParams.toString()}`,
+        { signal: controller.signal, cache: 'no-store' }
+      )
+        .then((r) => (r.ok ? (r.json() as Promise<LocalLegendResponse>) : null))
+        .catch(() => null),
+    ])
+      .then(([filtersRes, lbRes, llRes]) => {
+        if (!active) return;
+        if (filtersRes) setS02Capabilities(filtersRes);
+        if (lbRes) {
+          setS02SegmentView(lbRes.segment);
+          setS02Leaderboard(lbRes.leaderboard);
+          setS02AntiCheat(lbRes.antiCheat);
+        } else {
+          setS02Leaderboard(null);
+          setS02AntiCheat(null);
+        }
+        if (llRes) setS02LocalLegend(llRes.localLegend);
+      })
+      .catch((caught) => {
+        if (!active || (caught instanceof DOMException && caught.name === 'AbortError')) return;
+        setS02Error(caught instanceof Error ? caught.message : 'Erreur classement S02.');
+      })
+      .finally(() => {
+        if (active) setS02Loading(false);
+      });
+
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [tab, segment.id, segment.visibility, segment.deletedAt, s02Filters]);
 
   const isOwner = segment.createdByUserId === viewerUserId;
   const segmentEfforts = useMemo(
@@ -288,9 +383,36 @@ export function SegmentDetail({
                     : 'Ce segment a été supprimé.'}
               </p>
             </div>
+          ) : s02Leaderboard && s02SegmentView ? (
+            <div className="lkdv-seg-panel">
+              {s02Capabilities ? (
+                <LeaderboardFilters
+                  filters={sanitizeLeaderboardFilters(s02Filters)}
+                  capabilities={s02Capabilities.capabilities}
+                  clubOptions={s02Capabilities.clubOptions}
+                  isAuthenticated={Boolean(viewerUserId && viewerUserId !== 'anonymous')}
+                  disabled={s02Loading}
+                  onChange={(next) => setS02Filters((prev) => ({ ...prev, ...next }))}
+                />
+              ) : null}
+              {s02Error ? (
+                <p className="lkdv-seg-muted" role="alert">
+                  {s02Error}
+                </p>
+              ) : null}
+              <LeaderboardTable
+                entries={s02Leaderboard.entries}
+                viewerEntry={s02Leaderboard.viewerEntry}
+                sport={s02Leaderboard.sport}
+              />
+              {s02LocalLegend ? (
+                <LocalLegendsPanel result={s02LocalLegend} segment={s02SegmentView} />
+              ) : null}
+              {s02AntiCheat ? <AntiCheatNotice summary={s02AntiCheat} /> : null}
+            </div>
           ) : leaderboard.entries.length === 0 ? (
             <div className="lkdv-seg-empty" role="status">
-              <strong>Aucun temps classé</strong>
+              <strong>{s02Loading ? 'Chargement du classement…' : 'Aucun temps classé'}</strong>
               <p>Les efforts publics validés apparaîtront ici.</p>
             </div>
           ) : (

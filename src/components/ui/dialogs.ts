@@ -1,7 +1,14 @@
 'use client';
 
-import toast from 'react-hot-toast';
 import { presentNativeActions, presentNativePrompt, supportsNativeIOSUI } from '@/lib/native/ui';
+import * as nativeUI from '@/lib/native/ui';
+
+function hasNativeDialogSupport(): boolean {
+  if ('supportsNativeUI' in nativeUI && typeof (nativeUI as Record<string, unknown>).supportsNativeUI === 'function') {
+    return ((nativeUI as Record<string, unknown>).supportsNativeUI as () => boolean)();
+  }
+  return typeof supportsNativeIOSUI === 'function' ? supportsNativeIOSUI() : false;
+}
 
 /**
  * Primitives LKDV pour dialogues utilisateur (Chantier U - U4 & U-D63).
@@ -62,9 +69,9 @@ export function lkvConfirm(messageOrOptions: string | ConfirmOptions): Promise<b
     : messageOrOptions;
 
   // One implementation for all Next.js routes: real SwiftUI confirmation on
-  // supported iOS shells, with the previous accessible Radix dialog untouched
-  // on Android, web, /compas, and unupgraded Capacitor installations.
-  if (supportsNativeIOSUI()) {
+  // supported iOS shells and Material 3 on Android, with the previous accessible Radix dialog untouched
+  // on web and unupgraded Capacitor installations.
+  if (hasNativeDialogSupport()) {
     return presentNativeActions({
       title: options.title || 'Confirmation',
       message: options.message,
@@ -128,12 +135,60 @@ function queueWebPrompt(options: PromptOptions): Promise<string | null> {
 }
 
 export function lkvPromptAsync(options: PromptOptions): Promise<string | null> {
-  if (!supportsNativeIOSUI()) return queueWebPrompt(options);
+  if (!hasNativeDialogSupport()) return queueWebPrompt(options);
   return presentNativePrompt(options).then((value) =>
     value === undefined ? queueWebPrompt(options) : value
   );
 }
 
-export function lkvAlert(message: string): void {
-  toast(message);
+export interface ToastItem {
+  id: string;
+  message: string;
+  title?: string;
+  tone?: 'info' | 'success' | 'warning' | 'error';
+  durationMs?: number;
+}
+
+const toastListeners = new Set<(toast: ToastItem) => void>();
+
+export function subscribeToast(listener: (toast: ToastItem) => void): () => void {
+  toastListeners.add(listener);
+  return () => {
+    toastListeners.delete(listener);
+  };
+}
+
+export function emitToast(toast: ToastItem): void {
+  for (const listener of toastListeners) {
+    try {
+      listener(toast);
+    } catch {}
+  }
+}
+
+/**
+ * lkvAlert — Affiche une alerte / notification adaptée à la plateforme.
+ * Sur natif iOS/Android : alerte système native.
+ * Sur Web : ToastHost Liquid Glass dans layout.tsx.
+ */
+export function lkvAlert(
+  message: string,
+  options?: { title?: string; tone?: 'info' | 'success' | 'warning' | 'error' }
+): void {
+  if (hasNativeDialogSupport()) {
+    void presentNativeActions({
+      title: options?.title || 'Information',
+      message,
+      actions: [{ id: 'ok', title: 'OK' }],
+    });
+    return;
+  }
+
+  emitToast({
+    id: `toast-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    message,
+    title: options?.title,
+    tone: options?.tone || 'info',
+    durationMs: 4000,
+  });
 }

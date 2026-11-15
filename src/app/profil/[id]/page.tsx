@@ -7,7 +7,7 @@ import { useToast } from '@/contexts/ToastContext';
 import { createClient } from '@/lib/supabase/client';
 import { LoadingState } from '@/components/ui';
 import ReportBlockModal, { type ReportTarget, type SafetyAction } from '@/components/ui/ReportBlockModal';
-import PublicProfileV2 from '@/components/profile/PublicProfileV2';
+import { Profile6040Shell, Profile6040Shell as PublicProfileV2 } from '@/components/profile/Profile6040Shell';
 import { PUBLIC_PROFILES_VIEW } from '@/lib/queries/publicProfilesCore';
 import {
   fetchFullProfile,
@@ -107,7 +107,7 @@ export default function PublicProfilePage() {
           }
 
           // 3. Aliases créateurs Freedom
-          if (!byHandle && (cleanParam === 'thomas_mountains' || cleanParam === 'author-thomas-alps')) {
+          if (!byHandle && cleanParam === 'thomas_mountains') {
             const { data: byThomas } = await supabase
               .from(PUBLIC_PROFILES_VIEW)
               .select('id, handle')
@@ -208,7 +208,8 @@ export default function PublicProfilePage() {
 
   return (
     <>
-      <PublicProfileV2
+      <Profile6040Shell
+        mode="visitor"
         profile={profile}
         carnets={carnets}
         clubs={clubs}

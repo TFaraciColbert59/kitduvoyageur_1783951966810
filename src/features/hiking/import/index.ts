@@ -1,6 +1,8 @@
 export * from './model';
 export { parseTcx } from './tcx';
+export { parseGpx } from './gpx';
 export * from './fit';
+export * from './snapToTrails';
 export * from './time';
 export * from './fingerprint';
 export * from './traceImport';

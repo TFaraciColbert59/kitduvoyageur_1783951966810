@@ -36,7 +36,7 @@ function AuthForm() {
   const [forgotPasswordOpen, setForgotPasswordOpen] = useState(searchParams?.get('oubli') === '1');
   const [resetSent, setResetSent] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(() => searchParams?.get('demo') ?? '');
   const [confirmationSent, setConfirmationSent] = useState(false);
   const router = useRouter();
   const { signIn, signUp } = useAuth();
@@ -339,9 +339,14 @@ function AuthForm() {
             <div className="mt-[var(--space-3)]">
               <a
                 href="/api/demo-login"
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (!demoLoading) void handleDemoLogin();
+                }}
+                aria-disabled={demoLoading}
                 className="flex min-h-[44px] w-full items-center justify-center rounded-full border border-[color:var(--lkv-border-subtle)] bg-white/60 px-4 py-3 text-[length:var(--lkv-text-body-sm)] font-semibold text-[#17402C] shadow-elevation-1 backdrop-blur-md"
               >
-                Connexion démo
+                {demoLoading ? 'Connexion démo…' : 'Connexion démo'}
               </a>
               <p className="mt-2 text-center text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-muted)]">
                 Découvrez les fonctionnalités avec le compte de démonstration.

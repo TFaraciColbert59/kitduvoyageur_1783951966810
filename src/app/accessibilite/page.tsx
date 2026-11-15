@@ -1,14 +1,24 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { AccessibilitySettingsScreen } from '@/components/accessibility';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export const metadata: Metadata = {
-  title: 'Accessibilité',
+  title: 'Accessibilité et affichage · LKDV',
   description:
-    'Réglez le contraste, la taille du texte, les animations et le clavier. Le Kit du Voyageur applique les seuils WCAG 2.2 AA/AAA et RGAA.',
-  alternates: { canonical: '/accessibilite' },
-  robots: { index: true, follow: true },
+    'Réglages de taille de texte, contraste élevé, réduction des animations, repères clavier et lecteur d’écran.',
+  robots: { index: false, follow: false },
 };
 
 export default function AccessibilitePage() {
-  return <AccessibilitySettingsScreen />;
+  return (
+    <main id="main-content" className="min-h-screen w-full px-4 py-6 sm:px-6">
+      <Link href="/compte" className="lkdv-compte-pref" aria-label="Retour au compte">
+        ← Compte
+      </Link>
+      <AccessibilitySettingsScreen />
+    </main>
+  );
 }

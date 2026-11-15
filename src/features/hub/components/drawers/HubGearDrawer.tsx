@@ -267,10 +267,17 @@ export function HubGearDrawer({ onEnterStudio }: HubGearDrawerProps) {
   const secondaryConfig =
     activeTab === 0
       ? {
-          items: BAG_ZONES.map((z) => ({
+          items: BAG_ZONES.map((z, idx) => ({
             id: z.id,
             label: z.label,
-            icon: <span className="text-[11px] font-bold">{z.label}</span>,
+            icon:
+              idx === 0 ? (
+                <Tent className="w-3.5 h-3.5 mx-auto" aria-hidden="true" />
+              ) : idx === 1 ? (
+                <Layers className="w-3.5 h-3.5 mx-auto" aria-hidden="true" />
+              ) : (
+                <Sparkles className="w-3.5 h-3.5 mx-auto" aria-hidden="true" />
+              ),
           })),
           active: zoneIndex,
           onChange: setZoneIndex,
@@ -278,10 +285,17 @@ export function HubGearDrawer({ onEnterStudio }: HubGearDrawerProps) {
         }
       : activeTab === 1
         ? {
-            items: SHARED_GROUPS.map((g) => ({
+            items: SHARED_GROUPS.map((g, idx) => ({
               id: g.id,
               label: g.label,
-              icon: <span className="text-[11px] font-bold">{g.label}</span>,
+              icon:
+                idx === 0 ? (
+                  <Tent className="w-3.5 h-3.5 mx-auto" aria-hidden="true" />
+                ) : idx === 1 ? (
+                  <Flame className="w-3.5 h-3.5 mx-auto" aria-hidden="true" />
+                ) : (
+                  <ShieldCheck className="w-3.5 h-3.5 mx-auto" aria-hidden="true" />
+                ),
             })),
             active: sharedIndex,
             onChange: setSharedIndex,
@@ -289,8 +303,8 @@ export function HubGearDrawer({ onEnterStudio }: HubGearDrawerProps) {
           }
         : {
             items: [
-              { id: 'moi', label: 'Moi', icon: <span className="text-[11px] font-bold">Moi</span> },
-              { id: 'groupe', label: 'Groupe', icon: <span className="text-[11px] font-bold">Groupe</span> },
+              { id: 'moi', label: 'Moi', icon: <span className="text-[11px] font-bold text-[#172B24]">Moi</span> },
+              { id: 'groupe', label: 'Groupe', icon: <span className="text-[11px] font-bold text-[#172B24]">Tous</span> },
             ],
             active: balanceIndex,
             onChange: setBalanceIndex,

@@ -9,9 +9,11 @@ import {
   Footprints,
   MapPin,
   Mountain,
+  Play,
   Plus,
   Wallet,
 } from 'lucide-react';
+import { writePendingStageLaunch } from '@/features/planning/explorerAdapter';
 import { ConfirmDialog } from '@/features/trips/components/ConfirmDialog';
 import { Button } from '@/components/ui';
 import {
@@ -734,20 +736,45 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
                 : ''}
             </p>
           </div>
-          {canEdit && (
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => {
-                setFormStep(null);
-                setFormOpen(true);
-              }}
-              icon={<Plus size={13} aria-hidden="true" />}
-              className="min-h-[44px] shrink-0 !px-3 !py-1.5 text-[11px] font-bold"
-            >
-              Étape
-            </Button>
-          )}
+          <div className="flex shrink-0 items-center gap-2">
+            {activeStepPoints.length >= 2 && (
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => {
+                  triggerHaptic('medium');
+                  writePendingStageLaunch({
+                    planId: trip.id,
+                    planTitle: trip.title,
+                    stageId: `trip-${trip.id}-j${selectedDay}`,
+                    dayNumber: selectedDay,
+                    stageRevision: 1,
+                    sport: 'hiking',
+                    points: activeStepPoints.map((pt) => ({ lat: pt.lat, lon: pt.lng, eleM: null })),
+                  });
+                  router.push('/explorer?stage=1');
+                }}
+                icon={<Play size={13} aria-hidden="true" />}
+                className="min-h-[44px] shrink-0 !px-3 !py-1.5 text-[11px] font-bold"
+              >
+                Démarrer cette étape
+              </Button>
+            )}
+            {canEdit && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  setFormStep(null);
+                  setFormOpen(true);
+                }}
+                icon={<Plus size={13} aria-hidden="true" />}
+                className="min-h-[44px] shrink-0 !px-3 !py-1.5 text-[11px] font-bold"
+              >
+                Étape
+              </Button>
+            )}
+          </div>
         </div>
 
         {steps.length === 0 && enrichmentPending ? (

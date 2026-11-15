@@ -233,6 +233,11 @@
   border: 1px solid var(--glass-border-color);
 }
 
+.dark .glass-pill {
+  background: var(--g3-bg);
+  color: var(--g3-text);
+}
+
 .glass-pill.pill-warn {
   background: color-mix(in oklab, var(--warn) 12%, transparent);
   color: var(--lkv-warning-dark);
@@ -378,7 +383,7 @@
    verre neutre --g3-bg. --g3-bg rendait le CTA sombre sur fond sombre en theme
    clair et inversement ; le contrat de contraste du CTA est verifie par
    tests/visual/glass-contract.spec.ts et scripts/audit/visual-contrast.mjs. */
-.glass-btn-primary, .glass-capsule-btn.primary, .glass-circle-btn.primary {
+.glass-btn-primary, .glass-capsule-btn.primary, .glass-circle-btn.primary, .primary {
   background: var(--btn-tint-solid); color: var(--btn-on-solid);
 }
 .glass-btn-secondary, .glass-capsule-btn.secondary { background: var(--btn-tint); }
@@ -930,7 +935,7 @@
    en mode contraste eleve (fond clair + texte clair) : c'est exactement
    l'inverse de l'intention d'accessibilite. */
 @media (prefers-reduced-transparency: reduce), (prefers-contrast: more), (forced-colors: active) {
-  :is(.glass-btn-primary, .glass-capsule-btn.primary, .glass-circle-btn.primary) {
+  :is(.glass-btn-primary, .glass-capsule-btn.primary, .glass-circle-btn.primary, .primary) {
     background: var(--btn-tint-solid) !important;
     color: var(--lkv-on-action) !important;
   }
@@ -1073,85 +1078,6 @@
   .lkdv-ambilight { display: none !important; }
   .lkdv-photo-melt { display: none !important; }
 }
-
-/* ════════════════════════════════════════════════════════════════
-   MODE SOMBRE — complète les éléments du matériau qui utilisaient la
-   gamme sage/stone claire en dur (le reste suit les tokens --lkv-*).
-   Spec §6 : tous les états complétés, pas seulement l'inversion du fond.
-   ════════════════════════════════════════════════════════════════ */
-.dark .glass-pill {
-  background: var(--g3-bg);
-  color: var(--g3-text);
-  border-color: var(--glass-border-color);
-}
-
-.dark .glass-check-circle {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: var(--sage-300);
-}
-
-.dark .glass-check-circle.checked {
-  background: var(--sage-500);
-  border-color: var(--sage-500);
-}
-
-.dark .glass-progress {
-  background: color-mix(in oklab, var(--stone-50) 12%, transparent);
-}
-
-.dark .glass-progress-fill {
-  background: var(--sage-300);
-}
-
-.dark .glass-segmented {
-  background: color-mix(in oklab, var(--stone-50) 10%, transparent);
-  border-color: color-mix(in oklab, var(--stone-50) 12%, transparent);
-}
-
-.dark .mini-list__row {
-  background: color-mix(in oklab, var(--stone-50) 8%, transparent);
-  border-color: color-mix(in oklab, var(--stone-50) 10%, transparent);
-}
-
-.dark .gauge__track {
-  stroke: color-mix(in oklab, var(--stone-50) 16%, transparent);
-}
-
-/* Optique legacy (.lkv-glass) */
-.dark {
-  --glass-tint: var(--card-tint-solid);
-  --glass-tint-strong: rgba(255, 255, 255, 0.16);
-}
-
-/* Messagerie : bulles et bouton d'envoi lisibles en sombre */
-.dark .msg-bubble {
-  background: linear-gradient(180deg, rgba(27, 45, 36, 0.92), rgba(16, 28, 23, 0.88));
-  border-color: rgba(241, 245, 241, 0.24);
-  color: var(--lkv-text-primary);
-  box-shadow:
-    inset 0 1px 1px rgba(241, 245, 241, 0.12),
-    0 2px 8px -2px rgba(0, 0, 0, 0.4),
-    0 8px 22px -8px rgba(0, 0, 0, 0.5);
-}
-
-.dark .msg-bubble--mine {
-  background: linear-gradient(165deg, var(--lkv-action-hover) 0%, var(--lkv-action) 100%);
-  border-color: rgba(241, 245, 241, 0.32);
-  color: var(--btn-on-solid);
-}
-
-.dark .glass-send-btn {
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.18) 0%,
-    rgba(255, 255, 255, 0.06) 45%,
-    color-mix(in oklab, var(--sage-500) 30%, transparent) 110%
-  );
-  border-color: rgba(241, 245, 241, 0.32);
-  color: var(--lkv-action);
-}
-
-
 
 /* Phase 3 — rims du matériau (utilitaires : les garde-fous design interdisent
    les ombres arbitraires hors primitives ; valeurs = tokens --glass-*). */

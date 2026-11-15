@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
-import { getCountryCodeByName, getCountryByCode } from '@/lib/countries';
 import { resolveLegacyRedirect } from '@/lib/hub/hubRedirects';
 
 const PROTECTED_ROUTES = ['/admin', '/checkout'];
@@ -28,8 +27,6 @@ const APP_ROUTES = [
   '/sorties',
   '/profil',
   '/panier',
-  '/pays',
-  '/carbone',
   '/carte-interactive',
 ];
 
@@ -68,7 +65,16 @@ export async function middleware(request: NextRequest) {
   // L'ancienne page /compte/[userId] n'existait que pour rediriger cote client.
   // Les pages reelles de /compte sont reservees ; tout autre segment est un
   // profil public.
-  const compteReserved = new Set(['modifier', 'voyageur', 'garder-mon-essai']);
+  const compteReserved = new Set([
+    'modifier',
+    'voyageur',
+    'garder-mon-essai',
+    'activites',
+    'connecteurs',
+    'montres',
+    'sensors',
+    'suivi-en-direct',
+  ]);
   const compteProfile = pathname.match(/^\/compte\/([^/]+)$/);
   if (compteProfile && !compteReserved.has(compteProfile[1])) {
     const url = request.nextUrl.clone();
@@ -168,26 +174,6 @@ export async function middleware(request: NextRequest) {
     return redirect;
   }
 
-  // ─── Country redirect logic ───────────────────────────────────────────────
-  const paysMatch = pathname.match(/^\/pays\/([a-zà-ü-]+)$/i);
-  if (paysMatch) {
-    const slug = paysMatch[1];
-
-    if (slug.length === 2) {
-      const country = getCountryByCode(slug);
-      if (country) {
-        return NextResponse.next();
-      }
-    }
-
-    const code = getCountryCodeByName(slug);
-    if (code) {
-      const url = request.nextUrl.clone();
-      url.pathname = `/pays/${code.toLowerCase()}`;
-      return NextResponse.redirect(url, { status: 301 });
-    }
-  }
-
   return NextResponse.next();
 }
 
@@ -198,8 +184,6 @@ export const config = {
     '/admin/:path*',
     '/checkout/:path*',
     '/compte/:path*',
-    '/pays',
-    '/pays/:path*',
     // Connexion obligatoire : pages de l’app (APP_ROUTES).
     '/hub',
     '/hub/:path*',
@@ -218,7 +202,6 @@ export const config = {
     '/profil',
     '/profil/:path*',
     '/panier',
-    '/carbone',
     '/carte-interactive',
     // H5/H-AUTO-42 : chemins redirigés (le matcher explicite est requis, sinon
     // le redirect ne tire jamais). Littéral obligatoire : Next refuse le spread

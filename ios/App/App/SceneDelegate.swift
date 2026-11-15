@@ -3,6 +3,7 @@ import Capacitor
 import SwiftUI
 import PhotosUI
 import UniformTypeIdentifiers
+import LocalAuthentication
 
 /// Exactly one CAPBridgeViewController remains mounted throughout navigation.
 /// Native controls never instantiate a second WKWebView.
@@ -15,6 +16,7 @@ final class LKDVBridgeViewController: CAPBridgeViewController {
         bridge?.registerPluginInstance(plugin)
         nativeTabBarPlugin = plugin
         bridge?.registerPluginInstance(LKDVNativeUIPlugin())
+        bridge?.registerPluginInstance(LkdvLiveActivityPlugin())
     }
 }
 
@@ -69,7 +71,14 @@ final class LKDVNativeTabBarHost: UIViewController, UITabBarDelegate {
         tabBar.translatesAutoresizingMaskIntoConstraints = false
         tabBar.delegate = self
         tabBar.tintColor = UIColor(red: 23.0 / 255.0, green: 64.0 / 255.0, blue: 44.0 / 255.0, alpha: 1.0)
-        // Barre système iOS 26+ (Liquid Glass, comme Apple Music) : icône +
+        let appearance = UITabBarAppearance()
+        appearance.configureWithDefaultBackground()
+        appearance.backgroundEffect = UIBlurEffect(style: .systemUltraThinMaterialLight)
+        appearance.backgroundColor = UIColor(red: 251.0 / 255.0, green: 250.0 / 255.0, blue: 246.0 / 255.0, alpha: 0.85)
+        appearance.shadowColor = UIColor(red: 23.0 / 255.0, green: 43.0 / 255.0, blue: 36.0 / 255.0, alpha: 0.14) // --glass-rim-color
+        tabBar.standardAppearance = appearance
+        tabBar.scrollEdgeAppearance = appearance
+        // Barre système iOS 16+ (Liquid Glass, comme Apple Music) : icône +
         // libellé, icône pleine pour l'onglet actif.
         let tabs: [(label: String, icon: String, selected: String)] = [
             ("Hub", "house", "house.fill"),
@@ -158,7 +167,7 @@ final class LKDVNativeTabBarHost: UIViewController, UITabBarDelegate {
         lastRevision = revision
         completeNavigation()
 
-        guard #available(iOS 26.0, *), UIDevice.current.userInterfaceIdiom == .phone else {
+        guard #available(iOS 16.0, *), UIDevice.current.userInterfaceIdiom == .phone else {
             if isNativeVisible { switchVisibility(false) }
             return false
         }
@@ -274,7 +283,7 @@ extension LKDVNativeTabBarHost: UIAdaptivePresentationControllerDelegate {
     }
 
     private var isNativeUIExcluded: Bool {
-        activeNativeUIRoute == "/compas" || activeNativeUIRoute.hasPrefix("/compas/")
+        false
     }
 
     func presentNativeActions(title: String, message: String?, actions: [LKDVNativeAction], completion: @escaping (String?) -> Void) -> Bool {
@@ -897,7 +906,8 @@ public final class LKDVNativeUIPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "importGPX", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "exportGPX", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "getCapabilities", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "share", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "share", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "authenticateBiometric", returnType: CAPPluginReturnPromise)
     ]
 
     @objc func setRoute(_ call: CAPPluginCall) {
@@ -974,10 +984,32 @@ public final class LKDVNativeUIPlugin: CAPPlugin, CAPBridgedPlugin {
     @objc func getCapabilities(_ call: CAPPluginCall) {
         DispatchQueue.main.async { [weak self] in
             let exists = self?.bridge?.viewController?.parent is LKDVNativeTabBarHost
+            let context = LAContext()
+            var authError: NSError?
+            let biometricsAvailable = context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &authError)
+
             if #available(iOS 16.0, *) {
-                call.resolve(["available": exists, "actions": exists, "prompts": exists, "dates": exists, "choices": exists, "photos": exists, "files": exists])
+                call.resolve([
+                    "available": exists,
+                    "actions": exists,
+                    "prompts": exists,
+                    "dates": exists,
+                    "choices": exists,
+                    "photos": exists,
+                    "files": exists,
+                    "biometrics": exists && biometricsAvailable
+                ])
             } else {
-                call.resolve(["available": exists, "actions": false, "prompts": false, "dates": false, "choices": false, "photos": false, "files": false])
+                call.resolve([
+                    "available": exists,
+                    "actions": false,
+                    "prompts": false,
+                    "dates": false,
+                    "choices": false,
+                    "photos": false,
+                    "files": false,
+                    "biometrics": false
+                ])
             }
         }
     }
@@ -1099,6 +1131,36 @@ public final class LKDVNativeUIPlugin: CAPPlugin, CAPBridgedPlugin {
                 call.resolve(["active": false]); return
             }
             call.resolve(["active": host.presentNativeShare(url)])
+        }
+    }
+
+    @objc func authenticateBiometric(_ call: CAPPluginCall) {
+        let reason = call.getString("reason") ?? call.getString("title") ?? "Authentification requise pour continuer"
+        let context = LAContext()
+        var authError: NSError?
+
+        if context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &authError) {
+            context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason) { success, evalError in
+                DispatchQueue.main.async {
+                    var ret: [String: Any] = [
+                        "active": true,
+                        "success": success
+                    ]
+                    if let evalError = evalError {
+                        ret["error"] = evalError.localizedDescription
+                        ret["errorCode"] = (evalError as NSError).code
+                    }
+                    call.resolve(ret)
+                }
+            }
+        } else {
+            DispatchQueue.main.async {
+                call.resolve([
+                    "active": true,
+                    "success": false,
+                    "error": authError?.localizedDescription ?? "Biométrie non disponible"
+                ])
+            }
         }
     }
 }

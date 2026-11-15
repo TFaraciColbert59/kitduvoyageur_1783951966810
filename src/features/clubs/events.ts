@@ -295,9 +295,14 @@ export function searchClubEvents(params: {
 /**
  * S5.16 — Extraction sécurisée du lien d'inscription d'une course (aucun schéma non HTTP(S)).
  */
-export function getValidatedRaceRegistrationUrl(event: ClubEvent): string | null {
-  if (event.format !== 'race') return null;
-  return isValidHttpUrl(event.registrationUrl) ? event.registrationUrl : null;
+export function getValidatedRaceRegistrationUrl(
+  eventOrUrl: ClubEvent | string | null | undefined
+): string | null {
+  if (typeof eventOrUrl === 'string' || eventOrUrl == null) {
+    return isValidHttpUrl(eventOrUrl) ? eventOrUrl ?? null : null;
+  }
+  if (eventOrUrl.format !== 'race') return null;
+  return isValidHttpUrl(eventOrUrl.registrationUrl) ? eventOrUrl.registrationUrl ?? null : null;
 }
 
 /**

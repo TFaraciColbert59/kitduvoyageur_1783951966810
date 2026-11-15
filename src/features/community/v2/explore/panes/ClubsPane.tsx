@@ -81,21 +81,7 @@ export function ClubsPane({
     feed.loadMore,
   );
 
-  const chips = (
-    <div className="lkdv-cv2-chips lkdv-cv2x-club-chips" role="group" aria-label="Activité du club">
-      {CLUB_ACTIVITY_CHIPS.map((chip) => (
-        <button
-          key={chip.value ?? 'all'}
-          type="button"
-          className="lkdv-cv2-chip"
-          aria-pressed={activity === chip.value}
-          onClick={() => onActivityChange(chip.value)}
-        >
-          {chip.label}
-        </button>
-      ))}
-    </div>
-  );
+  const chips = null;
 
   if (filter === 'near' && !nearPointKnown) {
     return (

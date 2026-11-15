@@ -417,8 +417,28 @@ body:has(.xp-root[data-theme]) .lkv-app-background {
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
-  padding: 2px 0 28px;
-  animation: xpIn 0.35s ease 0.12s both;
+  padding: 2px 0 88px;
+  animation: xpIn 0.16s ease both;
+}
+.xp-sheet-scroll .xp-chiprow {
+  flex-wrap: wrap !important;
+  overflow-x: visible !important;
+}
+.xp-sheet-scroll input[type='range'] {
+  accent-color: #17402c;
+}
+.xp-sheet-scroll select {
+  appearance: none;
+  -webkit-appearance: none;
+  border-radius: 12px;
+  border: 0.5px solid rgba(23, 64, 44, 0.16);
+  background: rgba(251, 250, 246, 0.88)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none' stroke='%2317402C' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 4.5 6 7.5 9 4.5'/%3E%3C/svg%3E")
+    no-repeat right 9px center;
+  color: #17402c;
+  padding: 6px 26px 6px 10px;
+  font-size: 12.5px;
+  font-weight: 600;
 }
 .xp-sheet-scroll[hidden] {
   display: none;
@@ -851,7 +871,7 @@ body:has(.xp-root[data-theme]) .lkv-app-background {
 .xp-sos {
   position: absolute;
   right: 12px;
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 72px + var(--cookie-banner-h, 0px));
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 136px + var(--cookie-banner-h, 0px));
   z-index: 7;
   display: grid;
   place-items: center;
@@ -864,6 +884,12 @@ body:has(.xp-root[data-theme]) .lkv-app-background {
   font-weight: 800;
   font-size: 13px;
   letter-spacing: 0.04em;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.xp-root[data-sheet-open='true'] .xp-sos {
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.9);
 }
 
 .xp-toast {
@@ -926,8 +952,8 @@ body:has(.xp-root[data-theme]) .lkv-app-background {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 64px + var(--cookie-banner-h, 0px));
-  z-index: 10;
+  bottom: calc(max(env(safe-area-inset-bottom, 0px) + 88px, var(--lkv-native-bar-height, 0px) + 18px) + var(--cookie-banner-h, 0px));
+  z-index: 30;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -965,9 +991,9 @@ body:has(.xp-root[data-theme]) .lkv-app-background {
 .xp-search-area {
   position: absolute;
   left: 50%;
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 100px + var(--cookie-banner-h, 0px));
+  bottom: calc(max(env(safe-area-inset-bottom, 0px) + 124px, var(--lkv-native-bar-height, 0px) + 54px) + var(--cookie-banner-h, 0px));
   transform: translateX(-50%);
-  z-index: 10;
+  z-index: 30;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1032,13 +1058,13 @@ body[data-explorer-sheet-open='true'] nav[aria-label="Navigation principale"]:no
   position: absolute;
   left: 12px;
   right: 12px;
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 8px + var(--cookie-banner-h, 0px));
+  bottom: calc(max(env(safe-area-inset-bottom, 0px) + 8px, var(--lkv-native-bar-height, 0px) + 12px) + var(--cookie-banner-h, 0px));
   height: 52px;
   z-index: 8;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 0 8px 0 12px;
+  gap: 6px;
+  padding: 0 6px 0 12px;
   border-radius: 999px;
   background: var(--xp-bar);
   -webkit-backdrop-filter: var(--xp-blur);
@@ -1046,27 +1072,36 @@ body[data-explorer-sheet-open='true'] nav[aria-label="Navigation principale"]:no
   box-shadow: var(--xp-bar-shadow);
 }
 .xp-activity-pill .xp-pill-sport {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
   text-transform: uppercase;
   color: var(--xp-mut);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 78px;
 }
 .xp-activity-pill .xp-pill-timer {
-  font-size: 19px;
+  font-size: 16px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .xp-activity-pill .xp-pill-dist {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--xp-mut);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .xp-pill-btn {
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
+  flex: none;
   border-radius: 999px;
   background: var(--xp-thumb);
   box-shadow: var(--xp-thumb-shadow);

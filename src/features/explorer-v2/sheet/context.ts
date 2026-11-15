@@ -18,6 +18,21 @@ import type { Sport, SportSelection } from '../state/types';
 import type { SearchViewport } from '../searchArea';
 import type { RouteSlopeState } from '../data/useRouteSlope';
 import type { SlopeSummary } from '../map/slope';
+import type { NavigationGuidanceUiState } from '../guidance/useNavigationGuidance';
+import type {
+  AudioGuidancePreferences,
+  DepartureActionKind,
+  MapOrientationMode,
+  NavigationDisplayPreferences,
+  NewRouteSelectionInput,
+} from '@/features/navigation';
+import type {
+  MultiZoneSelectionState,
+  OfflineCoverageFeatureCollection,
+  OfflineDownloadProgress,
+  OfflineInstalledPackRecord,
+  PredefinedRegionCatalogItem,
+} from '@/features/offline';
 import { SPORT_FAMILIES } from './sportSelection';
 
 export interface CountryEntry {
@@ -70,6 +85,29 @@ export interface SheetContext {
       intervalLabel: string;
     };
   };
+  /** État des couches heatmaps (C02). */
+  heatmap?: {
+    communityCount: number;
+    communitySuppressed: number;
+    communityEligible: number;
+    communityStatus: 'idle' | 'loading' | 'ready' | 'error';
+    personalCount: number;
+    personalActivities: number;
+    personalStatus: 'idle' | 'loading' | 'ready' | 'unauthorized' | 'error';
+    comparisonDeltaCells: number | null;
+  };
+  /** État des couches dynamiques C01/C03 (POI vélo, feux, surfaces, lieux, highlights). */
+  overlays?: {
+    bikePoisCount: number;
+    bikePoisStatus: 'idle' | 'loading' | 'ready' | 'zoom_required' | 'unavailable';
+    firesCount: number;
+    firesStatus: 'idle' | 'loading' | 'ready' | 'unavailable';
+    firesSource: string | null;
+    surfacesStatus: 'idle' | 'loading' | 'ready' | 'zoom_required' | 'unavailable';
+    surfacesDistributions: Array<{ surface: string; percentage: number }>;
+    savedPlacesCount: number;
+    highlightsCount: number;
+  };
   /**
    * Démarrage avec compte à rebours (le parent décide de l'animation).
    * `selection` porte la variante jusqu’au démarrage ; `sport` reste
@@ -85,6 +123,32 @@ export interface SheetContext {
   onRequestLocation?: () => void;
   /** Clore le tour manuel courant (onglet Tours, séance active). */
   onMarkLap?: () => void;
+  /** État et actions de guidage/navigation N01 (optionnel pour les tests minimaux). */
+  guidance?: {
+    state: NavigationGuidanceUiState;
+    onSetOrientationMode: (mode: MapOrientationMode) => void;
+    onRecenter: () => void;
+    onSetAudioPrefs: (next: AudioGuidancePreferences) => void;
+    onTestVoice: (text: string) => void;
+    onSetDisplayPrefs: (next: NavigationDisplayPreferences) => void;
+    onSwapRoute: (route: NewRouteSelectionInput) => void;
+    onSelectDepartureAction: (action: DepartureActionKind) => void;
+    onRetryReroute: () => void;
+    onLockScreenAction: (action: 'pause' | 'resume' | 'lap' | 'mute') => void;
+  };
+  /** État et actions des paquets hors ligne N02 (optionnel pour les tests minimaux). */
+  offline?: {
+    installedPacks: readonly OfflineInstalledPackRecord[];
+    progress: OfflineDownloadProgress | null;
+    coverageVisible: boolean;
+    onDownloadRegion: (region: PredefinedRegionCatalogItem) => void;
+    onPausePack: (packId: string) => void;
+    onDeletePack: (packId: string) => void;
+    onDownloadZones: (multi: MultiZoneSelectionState) => void;
+    onDownloadRoutePack: (route: { id: string | number; name?: string | null; geojson: unknown }) => void;
+    onShowCoverage: (geoJson: OfflineCoverageFeatureCollection) => void;
+    onLaunchShortcut: (deepLinkUri: string) => void;
+  };
   locale: string;
 }
 

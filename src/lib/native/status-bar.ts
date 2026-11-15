@@ -56,7 +56,7 @@ export async function setStatusBarOverlay(overlay: boolean = true): Promise<void
 export type StatusBarTheme = "default" | "compas";
 
 const STATUS_BAR_THEMES: Record<StatusBarTheme, { dark: boolean; color: string }> = {
-  default: { dark: true, color: "#17402C" },
+  default: { dark: false, color: "#FBFAF6" },
   compas: { dark: false, color: "#FBFAF6" },
 };
 
@@ -104,7 +104,7 @@ export function applyStatusBarTheme(theme: StatusBarTheme): Promise<void> {
 }
 
 /**
- * Y7.5 — Applique le thème de barre d'état natif LKDV (vert forêt #17402C, style dark, overlay)
+ * Y7.5 — Applique le thème de barre d'état natif LKDV (fond clair #FBFAF6, style light - encres sombres, overlay)
  */
 export function applyLKDVStatusBarTheme(): Promise<void> {
   return applyStatusBarTheme("default");

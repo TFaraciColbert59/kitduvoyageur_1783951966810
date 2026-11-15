@@ -1,7 +1,16 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Pause, Play, SkipForward, Square, Watch } from 'lucide-react';
+import {
+  Download,
+  Pause,
+  Play,
+  SkipForward,
+  Square,
+  Volume2,
+  VolumeX,
+  Watch,
+} from 'lucide-react';
 import {
   currentStepPosition,
   nextStep,
@@ -13,6 +22,8 @@ import {
   formatDurationS,
 } from '@/features/workouts/domain/sessionFactory';
 import {
+  buildStructuredWorkoutJson,
+  buildStructuredWorkoutTcx,
   planWatchTransfer,
   watchTransferLabel,
 } from '@/features/workouts/domain/watchTransfer';
@@ -38,6 +49,58 @@ export interface SessionPlayerProps {
  * reprise, étape suivante. L'envoi montre est un plan de capacité ; sans
  * connecteur, il est explicitement indisponible et rien n'est simulé.
  */
+function playStepCue(stepLabel: string, instruction: string | null) {
+  if (typeof window === 'undefined') return;
+  try {
+    const AudioCtx =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext?: typeof AudioContext })
+        .webkitAudioContext;
+    if (AudioCtx) {
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = 880;
+      gain.gain.value = 0.08;
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.12);
+    }
+  } catch {
+    /* ignore audio errors */
+  }
+  try {
+    if ('speechSynthesis' in window && typeof SpeechSynthesisUtterance !== 'undefined') {
+      window.speechSynthesis.cancel();
+      const text = instruction ? `${stepLabel}. ${instruction}` : stepLabel;
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = 'fr-FR';
+      window.speechSynthesis.speak(utter);
+    }
+  } catch {
+    /* ignore speech errors */
+  }
+}
+
+function triggerFileDownload(filename: string, content: string, mimeType: string) {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return;
+  try {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  } catch {
+    /* ignore download errors in headless test envs */
+  }
+}
+
 export function SessionPlayer({
   session,
   execution,
@@ -48,11 +111,21 @@ export function SessionPlayer({
   connectors = [],
 }: SessionPlayerProps) {
   const [transferNotice, setTransferNotice] = useState<string | null>(null);
+  const [audioCues, setAudioCues] = useState<boolean>(false);
   const transfer = planWatchTransfer(session, connectors);
 
   useEffect(() => {
     setTransferNotice(null);
   }, [session.id]);
+
+  const position =
+    execution.status !== 'completed' ? currentStepPosition(execution, session) : null;
+  const activeStep = position?.step ?? session.steps[0];
+
+  useEffect(() => {
+    if (!audioCues || execution.status !== 'running' || !activeStep) return;
+    playStepCue(activeStep.label, activeStep.instruction);
+  }, [audioCues, execution.status, activeStep]);
 
   if (execution.status === 'completed') {
     return (
@@ -77,7 +150,6 @@ export function SessionPlayer({
     );
   }
 
-  const position = currentStepPosition(execution, session);
   const step = position?.step ?? session.steps[0];
   const stepRemainingS = step
     ? Math.max(0, step.durationS - (position?.stepElapsedS ?? 0))
@@ -159,6 +231,19 @@ export function SessionPlayer({
           <Square size={15} aria-hidden="true" />
           Arrêter
         </button>
+        <button
+          type="button"
+          className="lkdv-workout-secondary"
+          aria-pressed={audioCues}
+          onClick={() => setAudioCues((prev) => !prev)}
+        >
+          {audioCues ? (
+            <Volume2 size={16} aria-hidden="true" />
+          ) : (
+            <VolumeX size={16} aria-hidden="true" />
+          )}
+          {audioCues ? 'Audio actif' : 'Guidage audio'}
+        </button>
       </div>
 
       <div className="lkdv-workout-transfer">
@@ -170,6 +255,36 @@ export function SessionPlayer({
         >
           <Watch size={16} aria-hidden="true" />
           Envoyer vers montre
+        </button>
+        <button
+          type="button"
+          className="lkdv-workout-secondary"
+          onClick={() => {
+            triggerFileDownload(
+              `${session.id}.tcx`,
+              buildStructuredWorkoutTcx(session),
+              'application/vnd.garmin.tcx+xml'
+            );
+            setTransferNotice(`Fichier ${session.id}.tcx généré pour montre GPS.`);
+          }}
+        >
+          <Download size={15} aria-hidden="true" />
+          Exporter .TCX
+        </button>
+        <button
+          type="button"
+          className="lkdv-workout-secondary"
+          onClick={() => {
+            triggerFileDownload(
+              `${session.id}.json`,
+              buildStructuredWorkoutJson(session),
+              'application/json'
+            );
+            setTransferNotice(`Fichier ${session.id}.json généré.`);
+          }}
+        >
+          <Download size={15} aria-hidden="true" />
+          Exporter .JSON
         </button>
         <span className="lkdv-workout-transfer-state">
           {watchTransferLabel(transfer)}

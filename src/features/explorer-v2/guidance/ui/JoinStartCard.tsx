@@ -13,6 +13,7 @@ import React from 'react';
 import {
   bearingLabel,
   formatNavigationDistance,
+  type AccessGuidancePlan,
   type DepartureActionKind,
   type DepartureEvaluation,
   type ExternalNavigationBundle,
@@ -79,10 +80,21 @@ function subtitleFor(evaluation: DepartureEvaluation): string {
   }
 }
 
+function formatAccessDuration(seconds: number | null): string | null {
+  if (typeof seconds !== 'number' || !Number.isFinite(seconds) || seconds <= 0) return null;
+  const totalMin = Math.max(1, Math.round(seconds / 60));
+  if (totalMin < 60) return `${totalMin} min`;
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  return m > 0 ? `${h} h ${m} min` : `${h} h`;
+}
+
 export interface JoinStartCardProps {
   evaluation: DepartureEvaluation;
   /** Bundle produit par `buildExternalNavigationLinks`. */
   externalLinks?: ExternalNavigationBundle | null;
+  /** Plan d'approche calculé par `buildAccessGuidancePlan` (K4.03). */
+  accessPlan?: AccessGuidancePlan | null;
   busy?: boolean;
   onAction?: (action: DepartureActionKind) => void;
   onOpenExternal?: (link: ExternalNavigationLink) => void;
@@ -92,6 +104,7 @@ export interface JoinStartCardProps {
 export function JoinStartCard({
   evaluation,
   externalLinks = null,
+  accessPlan = null,
   busy = false,
   onAction,
   onOpenExternal,
@@ -156,6 +169,56 @@ export function JoinStartCard({
           <XpIcon name="loc" size={16} />
           Ouvrir l’itinéraire routier
         </GuidanceButton>
+      ) : null}
+
+      {accessPlan ? (
+        <section
+          className={
+            accessPlan.status === 'routed_online'
+              ? cx(styles.warning, styles.infoBox)
+              : styles.warning
+          }
+          role="status"
+          aria-label="Itinéraire d’approche"
+          data-access-status={accessPlan.status}
+        >
+          <XpIcon
+            name={accessPlan.status === 'routed_online' ? 'route' : 'compass'}
+            size={16}
+          />
+          <div className={styles.grow}>
+            {accessPlan.status === 'routed_online' ? (
+              <p className={styles.subtitle}>
+                <strong>
+                  {accessPlan.targetKind === 'origin'
+                    ? 'Approche vers le départ'
+                    : 'Approche vers le tracé'}
+                </strong>{' '}
+                ·{' '}
+                {formatNavigationDistance(
+                  accessPlan.routedDistanceM ?? accessPlan.directDistanceM,
+                )}
+                {formatAccessDuration(accessPlan.routedDurationS)
+                  ? ` · ${formatAccessDuration(accessPlan.routedDurationS)}`
+                  : ''}
+                {accessPlan.provider ? ` · via ${accessPlan.provider}` : ''}
+              </p>
+            ) : (
+              <p className={styles.subtitle}>
+                <strong>
+                  {accessPlan.targetKind === 'origin'
+                    ? 'Cap vers le départ'
+                    : 'Cap vers le tracé'}
+                </strong>{' '}
+                · {formatNavigationDistance(accessPlan.directDistanceM)}
+                {bearingLabel(accessPlan.directBearingDeg)
+                  ? ` · cap ${bearingLabel(accessPlan.directBearingDeg)}`
+                  : ''}
+                {accessPlan.reason ? ` — ${accessPlan.reason}` : ''}
+              </p>
+            )}
+          </div>
+        </section>
       ) : null}
 
       {readyLinks.length > 0 ? (

@@ -4,6 +4,7 @@ import React, { useCallback } from 'react';
 import Link from 'next/link';
 import { levelLabel } from '@/features/community/v2/shared/format';
 import AppImage from '@/components/ui/AppImage';
+import { getValidatedRaceRegistrationUrl } from '@/features/clubs';
 import type { EventCardVM, EventRegistration } from '../../shared/types';
 import {
   buildEventIcs,
@@ -319,6 +320,16 @@ export function EventDetailView({ event, status, spotsLeft, busy, onSignup }: Ev
           ) : null}
 
           <div className="lkdv-cv2x-detail-actions lkdv-cv2x-event-actions">
+            {getValidatedRaceRegistrationUrl(detail.registrationUrl) ? (
+              <a
+                href={getValidatedRaceRegistrationUrl(detail.registrationUrl)!}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="lkdv-cv2-pill lkdv-cv2-pill--primary"
+              >
+                S’inscrire sur la page officielle
+              </a>
+            ) : null}
             {!event.past ? (
               <button
                 type="button"

@@ -19,6 +19,8 @@ import { PostAttachments } from './PostAttachments';
 import { usePostInteractions, type CommunityAuthReason } from './usePostInteractions';
 import type { FeedPost } from './useCommunityFeed';
 import type { PostSource } from './postSource';
+import { SportActivityCard } from '@/components/communaute/g01/SportActivityCard';
+import type { VideoPreferences } from '@/features/community/g01/videoPlayback';
 
 export interface CommunityFeedPostProps {
   post: FeedPost;
@@ -38,6 +40,8 @@ export interface CommunityFeedPostProps {
   source?: PostSource;
   /** Glissement vers le bas sur la carte (post porté par une feuille) : ferme la feuille hôte. */
   onDismissGesture?: () => void;
+  /** Préférences de lecture vidéo G01 (S6.28). */
+  videoPreferences?: VideoPreferences | unknown;
 }
 
 /**
@@ -56,6 +60,7 @@ export function CommunityFeedPost({
   onDeleted,
   source,
   onDismissGesture,
+  videoPreferences,
 }: CommunityFeedPostProps) {
   const { toast } = useToast();
   const community = usePostInteractions(post, user, onRequireAuth);
@@ -401,7 +406,23 @@ export function CommunityFeedPost({
           onLike={handleLike}
           onComment={() => openPanel('comments')}
           onShare={() => openPanel('share')}
+          videoPreferences={videoPreferences}
         />
+      ) : post.sportCard ? (
+        <div className="p-2">
+          <SportActivityCard
+            item={{
+              ...post.sportCard,
+              likesCount: counts.likes,
+              commentsCount: counts.comments,
+              likedByMe: liked,
+            }}
+            onLike={post.sportCard.canLike ? handleLike : undefined}
+            onComment={post.sportCard.canComment ? () => openPanel('comments') : undefined}
+            onShare={post.sportCard.canShare ? () => openPanel('share') : undefined}
+            onReport={user?.id === post.author_id ? undefined : () => setReportOpen(true)}
+          />
+        </div>
       ) : (
         <>
           <p className="lkdv-feed-post-text">{post.content || 'Publication'}</p>

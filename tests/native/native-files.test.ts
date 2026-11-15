@@ -36,11 +36,11 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 describe('native GPX files bridge', () => {
-  it('advertises native Files only with a real iOS shell capability', async () => {
+  it('advertises native Files when native platform is supported and capabilities agree', async () => {
     expect(await hasNativeGPXFiles()).toBe(true);
     api.getCapabilities.mockResolvedValueOnce({ available: true, files: false });
     expect(await hasNativeGPXFiles()).toBe(false);
-    api.platform = 'android';
+    api.platform = 'web';
     expect(await hasNativeGPXFiles()).toBe(false);
   });
 
@@ -57,7 +57,7 @@ describe('native GPX files bridge', () => {
     expect(await importNativeGPX()).toBeUndefined();
     api.importGPX.mockRejectedValueOnce(new Error('unimplemented'));
     expect(await importNativeGPX()).toBeUndefined();
-    vi.stubGlobal('window', { location: { pathname: '/compas' } });
+    api.platform = 'web';
     expect(await importNativeGPX()).toBeUndefined();
     expect(api.importGPX).toHaveBeenCalledTimes(3);
   });

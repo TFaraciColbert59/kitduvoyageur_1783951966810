@@ -570,6 +570,43 @@
   min-height: 0;
 }
 
+/* Bouton retour visible en haut à gauche (sortie vers /hub sans piège gestuel) */
+.ks-back {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 12px);
+  left: max(12px, var(--gx));
+  z-index: 36;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  color: var(--ks-ink);
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.84);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  box-shadow: 0 0 0 0.5px rgba(23, 43, 36, 0.15), 0 4px 14px rgba(23, 43, 36, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  transition: transform 0.25s var(--ks-spring);
+}
+.ks-back:active {
+  transform: scale(0.92);
+}
+.ks-back .ks-icon {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.ks-top .ks-undo {
+  left: calc(max(12px, var(--gx)) + 52px);
+}
+
 /* La bottom bar est formellement interdite sur Kit Studio */
 html[data-kit-studio-open='true'] .lkdv-floating-tabbar,
 body[data-kit-studio-open='true'] .lkdv-floating-tabbar,

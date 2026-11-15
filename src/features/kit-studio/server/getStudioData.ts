@@ -280,6 +280,51 @@ export function configFromRows(
   return out;
 }
 
+const GLYPH_BY_FN: Readonly<Record<string, string>> = {
+  shelter: 'tent',
+  sleep: 'sack',
+  sleeppad: 'roll',
+  pillow: 'blanket',
+  water: 'bottle',
+  hydration: 'bottle',
+  filter: 'filter',
+  cook: 'stove',
+  stove: 'stove',
+  light: 'lamp',
+  firstaid: 'aid',
+  poles: 'poles',
+  nav: 'map',
+  power: 'battery',
+  watch: 'watch',
+  knife: 'knife',
+  gloves: 'gloves',
+};
+
+function inferItemGlyph(name: string, fnId: string | null, shape: string): string {
+  if (fnId && GLYPH_BY_FN[fnId]) return GLYPH_BY_FN[fnId];
+  const n = name.toLowerCase();
+  if (/tente|bivy|tarp|abri/.test(n)) return 'tent';
+  if (/bâton|baton|pole/.test(n)) return 'poles';
+  if (/coussin|oreiller|couverture|drap/.test(n)) return 'blanket';
+  if (/couchage|duvet|quilt/.test(n)) return 'sack';
+  if (/matelas|pad/.test(n)) return 'roll';
+  if (/réchaud|rechaud|popote|gamelle|casserole/.test(n)) return 'stove';
+  if (/lampe|frontale|lanterne/.test(n)) return 'lamp';
+  if (/filtre|purif/.test(n)) return 'filter';
+  if (/gourde|flasque|bouteille|poche à eau/.test(n)) return 'bottle';
+  if (/veste|doudoune|pantalon|polaire|cape|poncho|coupe-vent/.test(n)) return 'jacket';
+  if (/chaussure|botte|sandale/.test(n)) return 'shoe';
+  if (/couteau|lame/.test(n)) return 'knife';
+  if (/trousse|secours|pansement|médic/.test(n)) return 'aid';
+  if (/montre|altimètre|gps/.test(n)) return 'watch';
+  if (/batterie|powerbank|solaire|câble/.test(n)) return 'battery';
+  if (/carte|boussole/.test(n)) return 'map';
+  if (/lunettes/.test(n)) return 'glasses';
+  if (/bonnet|casquette|chapeau/.test(n)) return 'hat';
+  if (/gant|moufle/.test(n)) return 'gloves';
+  return shape;
+}
+
 /** Objets du studio : inventaire possédé + lignes de kit orphelines (sans product_ownership). */
 export function itemsFromRows(
   ownership: OwnershipRow[],
@@ -296,6 +341,7 @@ export function itemsFromRows(
     const gf = fnId ? functions.get(fnId) : undefined;
     const fam = (gf ? FAMILY_SLUG[gf.family] : undefined) ?? UNCLASSIFIED_FAMILY;
     const shape = gf?.shape_kind ?? 'box';
+    const gl = inferItemGlyph(name, fnId, shape);
     const zone = gf?.default_zone ? ZONE_IDS[gf.default_zone] : undefined;
     const L = volumeMl != null ? volumeMl / 1000 : volumeL != null ? volumeL : DEFAULT_VOLUME_L;
     return {
@@ -304,7 +350,7 @@ export function itemsFromRows(
       fam: fam as unknown as Item['fam'],
       fn: fnId ?? 'other',
       sh: shape,
-      gl: shape,
+      gl,
       g: weightG, // règle C-03 : poids inconnu = null, jamais 0
       L,
       color: FAMILY_COLOR[fam] ?? fallbackColor,

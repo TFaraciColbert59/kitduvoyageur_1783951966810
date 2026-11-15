@@ -171,7 +171,7 @@ export function ClubEventsBoard({
     <section className={styles.screen} aria-label="Sorties du club">
       <div className={styles.sectionHeader}>
         <div>
-          <p className={styles.eyebrow}>Sorties · K5.21</p>
+          <p className={styles.eyebrow}>Sorties du club</p>
           <h2 className={styles.title}>Prochaines sorties</h2>
           <p className={styles.subtitle}>
             Les sorties d’un club fermé ou secret ne sont visibles que par ses membres actifs.

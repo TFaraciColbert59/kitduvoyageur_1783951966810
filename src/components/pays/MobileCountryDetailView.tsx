@@ -65,7 +65,7 @@ export default function MobileCountryDetailView({
 
   const heroImage =
     country.destinations?.[0]?.image_url ||
-    'https://images.unsplash.com/photo-1503614472-8c93d56e92ce?q=80&w=1200';
+    '/assets/images/detail-hero.jpg';
 
   return (
     <div
@@ -75,12 +75,12 @@ export default function MobileCountryDetailView({
       {/* ── 1. FLOATING TOP CONTROLS (Apple HIG Rigor) ── */}
       <div className="px-4 pt-2 flex items-center justify-between gap-2 z-20 relative">
         <Link
-          href="/pays"
+          href="/explorer"
           onClick={() => triggerHaptic('light')}
           className="glass-capsule-btn !min-h-[32px] !py-1 !px-3.5 !text-xs !font-bold flex items-center gap-1.5 shadow-xs active:scale-95 transition-all cursor-pointer"
         >
           <span className="text-sm leading-none font-bold">←</span>
-          <span>Atlas</span>
+          <span>Explorer</span>
         </Link>
 
         <div className="flex items-center gap-2">

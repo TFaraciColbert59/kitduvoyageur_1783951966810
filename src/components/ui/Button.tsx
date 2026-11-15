@@ -4,7 +4,7 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import { Spinner } from './Spinner';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'destructive';
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'destructive' | 'glass';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
 interface ButtonBaseProps
@@ -55,6 +55,8 @@ const VARIANT: Record<ButtonVariant, string> = {
     'bg-[var(--g2-bg)] text-[var(--glass-label)] border border-[var(--glass-rim)] shadow-[var(--glass-rim)] backdrop-blur-md hover:brightness-[1.08] disabled:opacity-[var(--opacity-disabled)]',
   ghost:
     'bg-transparent text-[var(--glass-label)] hover:bg-[var(--lkv-hover-surface)] disabled:opacity-[var(--opacity-disabled)]',
+  glass:
+    'bg-[var(--g2-bg)] text-[var(--glass-label)] border border-[var(--glass-rim)] shadow-[var(--glass-rim)] backdrop-blur-md hover:brightness-[1.08] disabled:opacity-[var(--opacity-disabled)]',
   destructive:
     'bg-red-500/15 border border-red-500/30 text-[var(--lkv-danger)] hover:bg-red-500/25 disabled:opacity-[var(--opacity-disabled)]',
 };

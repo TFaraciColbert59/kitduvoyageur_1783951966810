@@ -14,10 +14,11 @@
   z-index: var(--cv2-layer-z, 60);
   pointer-events: none;
   isolation: isolate;
-  --cv2-card-top: calc(var(--safe-top, env(safe-area-inset-top, 0px)) + 44px);
+  background: rgba(23, 43, 36, 0.16);
+  --cv2-card-top: max(10dvh, calc(var(--safe-top, env(safe-area-inset-top, 0px)) + 44px));
   --cv2-card-bottom: calc(var(--safe-bottom, env(safe-area-inset-bottom, 0px)) + 14px);
   --cv2-card-side: 8px;
-  --cv2-radius: 24px;
+  --cv2-radius: 32px;
 }
 
 /* La barre d'onglets de l'application s'efface derrière la carte, comme sur
@@ -38,11 +39,26 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
   right: var(--cv2-card-side);
   bottom: var(--cv2-card-bottom);
   max-width: 430px;
+  max-height: 90dvh;
   margin: 0 auto;
   overflow: hidden;
   border-radius: var(--cv2-radius);
   pointer-events: none;
   visibility: hidden;
+  transition:
+    top 0.32s var(--motion-ease-standard),
+    bottom 0.32s var(--motion-ease-standard),
+    border-radius 0.32s var(--motion-ease-standard);
+}
+.lkdv-cv2-wrap[data-detent='large'] {
+  top: 10dvh;
+  max-height: 90dvh;
+  bottom: calc(var(--safe-bottom, env(safe-area-inset-bottom, 0px)) + 6px);
+}
+@media (max-width: 600px) {
+  .lkdv-cv2-wrap[data-detent='large'] {
+    border-radius: 28px;
+  }
 }
 .lkdv-cv2-wrap[data-state='opening'],
 .lkdv-cv2-wrap[data-state='open'],
@@ -59,10 +75,18 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
   border-radius: inherit;
   padding: 0;
   pointer-events: auto;
-  background: var(--sheet-bg);
-  -webkit-backdrop-filter: var(--sheet-blur);
-  backdrop-filter: var(--sheet-blur);
-  box-shadow: var(--sheet-shadow);
+  background: linear-gradient(
+    180deg,
+    rgba(251, 250, 246, 0.97) 0%,
+    rgba(246, 244, 238, 0.95) 100%
+  );
+  -webkit-backdrop-filter: blur(36px) saturate(1.1);
+  backdrop-filter: blur(36px) saturate(1.1);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.96),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.45),
+    0 0 0 0.5px rgba(23, 43, 36, 0.1),
+    0 18px 48px rgba(16, 32, 25, 0.16);
   transform: translateY(100%);
   transition: transform 0.72s var(--ease-out);
   will-change: transform;
@@ -96,6 +120,13 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
   border-radius: 3px;
   background: rgba(255, 255, 255, 0.82);
   box-shadow: 0 1px 6px rgba(23, 43, 36, 0.18);
+  transition:
+    transform 0.14s var(--motion-ease-standard),
+    opacity 0.14s ease;
+}
+.lkdv-cv2-sheet[data-dragging='true'] .lkdv-cv2-grab span {
+  transform: scaleX(1.22);
+  opacity: 0.96;
 }
 .lkdv-cv2-grab::after {
   content: '';
@@ -105,11 +136,27 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
 
 /* Barre de capsule 56 px (/compte : onglets icône seule, lentille .42 s). */
 .lkdv-cv2-topnav {
+  position: relative;
   flex: none;
   display: flex;
   justify-content: center;
   padding: 5px 14px 8px;
   touch-action: none;
+}
+.lkdv-cv2-topnav::after {
+  content: '';
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 0;
+  height: 1px;
+  background: rgba(23, 43, 36, 0.1);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.16s ease;
+}
+.lkdv-cv2-sheet[data-scrolled='true'] .lkdv-cv2-topnav::after {
+  opacity: 1;
 }
 .lkdv-cv2-capsule.lkdv-capsule {
   height: 56px !important;
@@ -134,6 +181,10 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
   color: var(--lkv-forest-900);
   font: 600 10.5px/1.2 var(--font-sans);
   letter-spacing: 0.02em;
+  transition: opacity 0.18s ease;
+}
+.lkdv-cv2-sheet[data-scrolled='true'] .lkdv-cv2-guest {
+  opacity: 0.72;
 }
 
 .lkdv-cv2-guest svg {
@@ -157,6 +208,10 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
 .lkdv-cv2-capsule button {
   min-height: 48px !important;
   height: 48px !important;
+  transition: transform 0.14s var(--motion-ease-standard);
+}
+.lkdv-cv2-capsule button:active {
+  transform: scale(0.96);
 }
 .lkdv-cv2-capsule button .ic {
   width: 24px !important;
@@ -223,8 +278,10 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
   overscroll-behavior: contain;
-  padding: 2px 1px 76px;
+  padding: 10px 18px 96px;
+  box-sizing: border-box;
   scrollbar-width: none;
 }
 .lkdv-cv2-pane::-webkit-scrollbar {
@@ -245,7 +302,13 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
   gap: 6px;
 }
 .lkdv-cv2-mini-slot.has-footer {
-  bottom: 72px;
+  position: relative !important;
+  display: flex !important;
+  justify-content: flex-end !important;
+  padding: 0 14px 4px !important;
+  bottom: auto !important;
+  right: auto !important;
+  z-index: 16 !important;
 }
 .lkdv-cv2-mini-slot .lkdv-lens-float {
   position: static;
@@ -281,10 +344,14 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
   flex-direction: column;
   min-height: 0;
   border-radius: inherit;
-  background: var(--sheet-bg);
-  -webkit-backdrop-filter: var(--sheet-blur);
-  backdrop-filter: var(--sheet-blur);
-  animation: cv2DetailIn 0.42s var(--ease-glass) both;
+  background: linear-gradient(
+    180deg,
+    rgba(251, 250, 246, 0.98) 0%,
+    rgba(246, 244, 238, 0.96) 100%
+  );
+  -webkit-backdrop-filter: blur(36px) saturate(1.1);
+  backdrop-filter: blur(36px) saturate(1.1);
+  animation: cv2DetailIn 0.2s var(--motion-ease-standard) both;
   /* Au-dessus de la poignée (z 15) : sinon la zone de préhension (18 px + son
      débordement `::after`) recouvre le bouton ‹ Retour et intercepte le tap.
      Le glissement de fermeture reste possible depuis `.lkdv-cv2-detail-nav`
@@ -292,6 +359,7 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
   z-index: 16;
 }
 .lkdv-cv2-detail-nav {
+  position: relative;
   flex: none;
   display: flex;
   align-items: center;
@@ -299,6 +367,21 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
   height: 46px;
   padding: 0 14px 0 8px;
   touch-action: none;
+}
+.lkdv-cv2-detail-nav::after {
+  content: '';
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 0;
+  height: 1px;
+  background: rgba(23, 43, 36, 0.1);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.16s ease;
+}
+.lkdv-cv2-sheet[data-scrolled='true'] .lkdv-cv2-detail-nav::after {
+  opacity: 1;
 }
 .lkdv-cv2-back {
   width: 32px;
@@ -377,7 +460,7 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
 @keyframes cv2DetailIn {
   from {
     opacity: 0;
-    transform: translateX(24px) scale(0.995);
+    transform: translateX(16px);
   }
   to {
     opacity: 1;
@@ -411,7 +494,12 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
 
 /* ── Réductions ─────────────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
-  .lkdv-cv2-sheet {
+  .lkdv-cv2-wrap,
+  .lkdv-cv2-sheet,
+  .lkdv-cv2-grab span,
+  .lkdv-cv2-topnav::after,
+  .lkdv-cv2-detail-nav::after,
+  .lkdv-cv2-capsule button {
     transition-duration: 0.01ms !important;
   }
   .lkdv-cv2-wrap[data-state='closing'] .lkdv-cv2-sheet {

@@ -236,6 +236,8 @@ function ConversationFeedRow({
   const unread = conversation.unread_count || 0;
   const isPending = conversation.status === 'pending';
   const avatar = conversation.avatar_url;
+  const [imgErr, setImgErr] = useState(false);
+  const showImg = Boolean(avatar && avatar !== '/assets/images/no_image.png' && !imgErr);
 
   const fire = (action: SwipeAction) => {
     haptic('medium');
@@ -316,9 +318,18 @@ function ConversationFeedRow({
         }}
       >
         <span className="fa" aria-hidden="true">
-          {avatar ? (
+          {showImg ? (
             // eslint-disable-next-line @next/next/no-img-element -- avatar distant de la conversation
-            <img src={avatar} alt="" loading="lazy" decoding="async" referrerPolicy="no-referrer" width={40} height={40} />
+            <img
+              src={avatar!}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              referrerPolicy="no-referrer"
+              width={40}
+              height={40}
+              onError={() => setImgErr(true)}
+            />
           ) : (
             initials(title)
           )}
@@ -1719,8 +1730,11 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                   display: 'flex',
                   flexDirection: 'column',
                   height: '100%',
-                  // Barre de rédaction abaissée au plus près de la bottom bar ou calée au-dessus du clavier
-                  paddingBottom: keyboardInset > 0 ? `${keyboardInset + 1}px` : 'calc(env(safe-area-inset-bottom, 0px) + 42px)',
+                  // Barre de rédaction calée au-dessus de la bottom bar native (ou du clavier)
+                  paddingBottom:
+                    keyboardInset > 0
+                      ? `${keyboardInset + 1}px`
+                      : 'max(calc(env(safe-area-inset-bottom, 0px) + 74px), calc(var(--lkv-native-bar-height, 0px) + 12px))',
                 }}>
                 {selected ? (
                   <div className="mpane in" data-conversation={selected.id}>
@@ -1745,9 +1759,20 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                       }`}
                     >
                       <span className="mpill-av" aria-hidden="true">
-                        {selected.avatar_url ? (
-                          // eslint-disable-next-line @next/next/no-img-element -- avatar distant
-                          <img src={selected.avatar_url} alt="" />
+                        {selected.avatar_url && selected.avatar_url !== '/assets/images/no_image.png' ? (
+                          <>
+                            {/* eslint-disable-next-line @next/next/no-img-element -- avatar distant */}
+                            <img
+                              src={selected.avatar_url}
+                              alt=""
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                                const fallback = e.currentTarget.nextElementSibling as HTMLElement | null;
+                                if (fallback) fallback.style.display = 'inline';
+                              }}
+                            />
+                            <span style={{ display: 'none' }}>{initials(conversationTitle(selected))}</span>
+                          </>
                         ) : (
                           initials(conversationTitle(selected))
                         )}

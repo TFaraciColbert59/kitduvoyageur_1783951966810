@@ -2,6 +2,7 @@
 
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
+  Activity,
   AlertTriangle,
   ArrowRight,
   Check,
@@ -10,7 +11,9 @@ import {
   Fingerprint,
   Loader2,
   MapPin,
+  Mountain,
   RotateCcw,
+  Route as RouteIcon,
   ShieldCheck,
   Upload,
 } from 'lucide-react';
@@ -22,7 +25,9 @@ import {
   TraceImportError,
   buildHikeSessionImportPayload,
   buildTraceImportPreview,
+  deriveTraceCorridors,
   parseTraceFile,
+  snapTraceToTrails,
   traceLapsHaveMetrics,
   lapIntensityLabel,
   lapOriginLabel,
@@ -51,6 +56,16 @@ interface SavedState {
   title: string;
   lapCount: number;
   sampleCount: number;
+  kind?: 'activity' | 'route';
+  waypointCount?: number;
+  geometryMode?: 'original' | 'snapped';
+}
+
+interface BulkFileResult {
+  fileName: string;
+  status: 'saved' | 'existing' | 'error';
+  detail: string;
+  target: 'activity' | 'route';
 }
 
 const ERROR_LABELS: Record<TraceImportErrorCode, string> = {
@@ -62,6 +77,7 @@ const ERROR_LABELS: Record<TraceImportErrorCode, string> = {
   'invalid-xml': 'XML illisible',
   'external-entity-forbidden': 'Entité externe refusée',
   'not-tcx': 'Ce n’est pas un TCX',
+  'not-gpx': 'Ce n’est pas un GPX',
   'unsupported-version': 'Version TCX non prise en charge',
   'no-activity': 'Aucune activité',
   'multiple-activities': 'Plusieurs activités',
@@ -288,8 +304,34 @@ export function TraceImportDrawer() {
   const [preview, setPreview] = useState<TraceImportPreview | null>(null);
   const [failure, setFailure] = useState<ImportFailure | null>(null);
   const [saved, setSaved] = useState<SavedState | null>(null);
+  const [importTarget, setImportTarget] = useState<'activity' | 'route'>('activity');
+  const [geometryMode, setGeometryMode] = useState<'original' | 'snapped'>('original');
+  const [bulkResults, setBulkResults] = useState<BulkFileResult[]>([]);
+  const [bulkBusy, setBulkBusy] = useState(false);
 
   const mapPoints = useMemo(() => (trace ? traceMapPoints(trace) : []), [trace]);
+  // K6.03 : recalage réel. Faute de corridors OSM côté client, on dérive un
+  // corridor de référence depuis le tracé (décimé + lissé) et on projette
+  // dessus au lieu d'afficher un aperçu sans référence.
+  const trailCorridors = useMemo(
+    () => (mapPoints.length >= 2 ? deriveTraceCorridors(mapPoints) : []),
+    [mapPoints]
+  );
+  const snapPreview = useMemo(
+    () => (trace && importTarget === 'route' && mapPoints.length >= 2 ? snapTraceToTrails(mapPoints, trailCorridors) : null),
+    [importTarget, mapPoints, trace, trailCorridors]
+  );
+  const displayedMapPoints = useMemo(() => {
+    if (importTarget === 'route' && geometryMode === 'snapped' && snapPreview) {
+      return snapPreview.points.map((p) => ({
+        lat: p.lat,
+        lng: p.lng,
+        elevationM: p.altitudeM ?? null,
+        timestamp: null,
+      }));
+    }
+    return mapPoints;
+  }, [geometryMode, importTarget, mapPoints, snapPreview]);
 
   const chooseFile = useCallback(() => {
     inputRef.current?.click();
@@ -303,6 +345,8 @@ export function TraceImportDrawer() {
     setPreview(null);
     setFailure(null);
     setSaved(null);
+    setBulkResults([]);
+    setGeometryMode('original');
     if (inputRef.current) inputRef.current.value = '';
   }, []);
 
@@ -312,6 +356,8 @@ export function TraceImportDrawer() {
     setSaved(null);
     setTrace(null);
     setPreview(null);
+    setBulkResults([]);
+    setGeometryMode('original');
     setFileName(file.name);
     setFileBytes(file.size);
 
@@ -337,8 +383,14 @@ export function TraceImportDrawer() {
     try {
       const bytes = new Uint8Array(await file.arrayBuffer());
       const result = parseTraceFile({ bytes, fileName: file.name });
+      const nextPreview = buildTraceImportPreview(result);
       setTrace(result);
-      setPreview(buildTraceImportPreview(result));
+      setPreview(nextPreview);
+      if (!nextPreview.saveable && nextPreview.routeSaveable) {
+        setImportTarget('route');
+      } else {
+        setImportTarget('activity');
+      }
       setPhase('ready');
     } catch (error) {
       setPhase('idle');
@@ -346,16 +398,169 @@ export function TraceImportDrawer() {
     }
   }, []);
 
+  const readFilesBulk = useCallback(
+    async (files: FileList | File[]) => {
+      const list = Array.from(files);
+      if (list.length === 0) return;
+      if (list.length === 1) {
+        await readFile(list[0]);
+        return;
+      }
+      setFailure(null);
+      setSaved(null);
+      setTrace(null);
+      setPreview(null);
+      setBulkBusy(true);
+      const out: BulkFileResult[] = [];
+      for (const file of list) {
+        try {
+          if (file.size <= 0 || file.size > TRACE_IMPORT_LIMITS.maxBytes) {
+            out.push({
+              fileName: file.name,
+              status: 'error',
+              detail: file.size <= 0 ? 'Fichier vide' : 'Taille maximale dépassée',
+              target: 'activity',
+            });
+            continue;
+          }
+          const bytes = new Uint8Array(await file.arrayBuffer());
+          const parsed = parseTraceFile({ bytes, fileName: file.name });
+          const nextPreview = buildTraceImportPreview(parsed);
+          if (nextPreview.saveable) {
+            const payload = buildHikeSessionImportPayload(parsed, nextPreview);
+            if (!payload || !user) {
+              out.push({
+                fileName: file.name,
+                status: 'error',
+                detail: user ? 'Payload incomplet' : 'Connexion requise',
+                target: 'activity',
+              });
+              continue;
+            }
+            const res = await fetch('/api/hike-sessions', {
+              method: 'POST',
+              headers: { 'content-type': 'application/json', accept: 'application/json' },
+              body: JSON.stringify(payload),
+            });
+            const data = (await res.json().catch(() => null)) as { existing?: boolean; error?: string } | null;
+            if (!res.ok) throw new Error(data?.error || `http_${res.status}`);
+            out.push({
+              fileName: file.name,
+              status: data?.existing ? 'existing' : 'saved',
+              detail: data?.existing ? 'Déjà importée (dédupliquée)' : 'Activité enregistrée',
+              target: 'activity',
+            });
+          } else if (nextPreview.routeSaveable && user) {
+            const pts = traceMapPoints(parsed);
+            const res = await fetch('/api/routes/import', {
+              method: 'POST',
+              headers: { 'content-type': 'application/json', accept: 'application/json' },
+              body: JSON.stringify({
+                title: nextPreview.title,
+                sport: parsed.provenance.sport || 'rando',
+                source: parsed.provenance.format,
+                sourceFingerprint: parsed.provenance.fingerprint,
+                sourceFileName: parsed.provenance.fileName,
+                geometryMode: 'original',
+                points: pts,
+                waypoints: nextPreview.waypoints,
+              }),
+            });
+            const data = (await res.json().catch(() => null)) as { existing?: boolean; error?: string } | null;
+            if (!res.ok) throw new Error(data?.error || `http_${res.status}`);
+            out.push({
+              fileName: file.name,
+              status: data?.existing ? 'existing' : 'saved',
+              detail: data?.existing ? 'Parcours déjà importé' : 'Parcours planifié enregistré',
+              target: 'route',
+            });
+          } else {
+            out.push({
+              fileName: file.name,
+              status: 'error',
+              detail: nextPreview.blockers[0] || 'Données insuffisantes',
+              target: 'activity',
+            });
+          }
+        } catch (err) {
+          out.push({
+            fileName: file.name,
+            status: 'error',
+            detail: clip(err instanceof Error ? err.message : 'Erreur de lecture', 140),
+            target: 'activity',
+          });
+        }
+      }
+      setBulkResults(out);
+      setBulkBusy(false);
+      window.dispatchEvent(new CustomEvent('lkdv:outings-changed'));
+    },
+    [readFile, user]
+  );
+
   const save = useCallback(async () => {
-    if (!trace || !preview || !preview.saveable) return;
+    if (!trace || !preview) return;
     if (!user) {
       setFailure({
         title: 'Connexion requise',
-        message: 'Connecte-toi pour enregistrer cette trace dans tes sorties.',
+        message: 'Connecte-toi pour enregistrer cette trace.',
       });
       return;
     }
 
+    if (importTarget === 'route') {
+      if (!preview.routeSaveable) return;
+      setPhase('saving');
+      setFailure(null);
+      try {
+        const res = await fetch('/api/routes/import', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', accept: 'application/json' },
+          body: JSON.stringify({
+            title: preview.title,
+            sport: trace.provenance.sport || 'rando',
+            source: trace.provenance.format,
+            sourceFingerprint: trace.provenance.fingerprint,
+            sourceFileName: trace.provenance.fileName,
+            geometryMode,
+            points: mapPoints.map((p) => ({ lat: p.lat, lng: p.lng, altitudeM: p.elevationM })),
+            waypoints: preview.waypoints,
+          }),
+        });
+        const data = (await res.json().catch(() => null)) as {
+          route?: { id?: string; title?: string };
+          existing?: boolean;
+          waypointCount?: number;
+          error?: string;
+        } | null;
+        if (!res.ok || !data?.route?.id) {
+          throw new Error(data?.error || `http_${res.status}`);
+        }
+        setSaved({
+          sessionId: data.route.id,
+          existing: data.existing === true,
+          title: data.route.title || preview.title,
+          lapCount: 0,
+          sampleCount: 0,
+          kind: 'route',
+          waypointCount: data.waypointCount ?? preview.waypoints.length,
+          geometryMode,
+        });
+        setPhase('saved');
+      } catch (error) {
+        setPhase('ready');
+        setFailure({
+          title: 'Enregistrement du parcours impossible',
+          message: clip(
+            error instanceof Error ? error.message : 'Le parcours n’a pas pu être créé.',
+            240
+          ),
+        });
+      }
+      return;
+    }
+
+    if (!preview.saveable) return;
     const payload = buildHikeSessionImportPayload(trace, preview);
     if (!payload) {
       setFailure({
@@ -417,6 +622,7 @@ export function TraceImportDrawer() {
       };
       setSaved(savedState);
       setPhase('saved');
+      window.dispatchEvent(new CustomEvent('lkdv:outings-changed'));
       // Une sortie déjà présente garde son titre et ses données en base : on
       // ne réécrit pas l'état local avec le seul nom du fichier importé.
       if (!savedState.existing) {
@@ -432,7 +638,7 @@ export function TraceImportDrawer() {
         ),
       });
     }
-  }, [preview, trace, user]);
+  }, [geometryMode, importTarget, mapPoints, preview, trace, user]);
 
   const showOutings = useCallback(() => {
     const runtime = window as unknown as {
@@ -487,7 +693,7 @@ export function TraceImportDrawer() {
       <header className="lkdv-trace-import-head">
         <div>
           <b>Importer une trace</b>
-          <span>FIT ou TCX, lu sur ton appareil</span>
+          <span>GPX, FIT ou TCX, lu sur ton appareil (un ou plusieurs fichiers)</span>
         </div>
         <span className="lkdv-trace-import-badge">
           <ShieldCheck size={12} aria-hidden="true" /> Local
@@ -504,11 +710,14 @@ export function TraceImportDrawer() {
       <input
         ref={inputRef}
         type="file"
-        accept=".fit,.tcx,application/octet-stream,application/xml,text/xml"
+        multiple
+        accept=".gpx,.fit,.tcx,application/gpx+xml,application/octet-stream,application/xml,text/xml"
         className="lkdv-trace-import-file"
-        aria-label="Choisir un fichier FIT ou TCX"
+        aria-label="Choisir un ou plusieurs fichiers GPX, FIT ou TCX"
         onChange={(event) => {
-          void readFile(event.target.files?.[0]);
+          if (event.target.files) {
+            void readFilesBulk(event.target.files);
+          }
           event.target.value = '';
         }}
       />
@@ -516,8 +725,8 @@ export function TraceImportDrawer() {
       <button
         type="button"
         className={`lkdv-trace-import-drop${dragging ? ' is-over' : ''}`}
-        aria-busy={phase === 'reading' || undefined}
-        disabled={phase === 'saving'}
+        aria-busy={phase === 'reading' || bulkBusy || undefined}
+        disabled={phase === 'saving' || bulkBusy}
         onClick={chooseFile}
         onDragOver={(event) => {
           event.preventDefault();
@@ -527,25 +736,57 @@ export function TraceImportDrawer() {
         onDrop={(event) => {
           event.preventDefault();
           setDragging(false);
-          void readFile(event.dataTransfer.files?.[0]);
+          if (event.dataTransfer.files?.length) {
+            void readFilesBulk(event.dataTransfer.files);
+          }
         }}
       >
         <span className="lkdv-trace-import-drop-ico" aria-hidden="true">
-          {phase === 'reading' ? (
+          {phase === 'reading' || bulkBusy ? (
             <Loader2 size={22} className="lkdv-trace-import-spin" />
           ) : (
             <FileUp size={22} />
           )}
         </span>
-        <b>{phase === 'reading' ? 'Lecture du fichier…' : 'Choisis un fichier FIT ou TCX'}</b>
+        <b>
+          {bulkBusy
+            ? 'Import en lot en cours…'
+            : phase === 'reading'
+              ? 'Lecture du fichier…'
+              : 'Choisis un ou plusieurs fichiers GPX, FIT ou TCX'}
+        </b>
         <span>
-          Glisse-le ici ou appuie pour parcourir · {formatBytes(TRACE_IMPORT_LIMITS.maxBytes)}{' '}
-          maximum
+          Glisse-les ici ou appuie pour parcourir · {formatBytes(TRACE_IMPORT_LIMITS.maxBytes)}{' '}
+          max par fichier
         </span>
         <span className="lkdv-trace-import-privacy">
-          Le fichier original ne quitte pas ton appareil.
+          Le fichier original est vérifié localement avant enregistrement.
         </span>
       </button>
+
+      {bulkResults.length > 0 ? (
+        <section className="lkdv-trace-import-card" aria-label="Résultat de l'import en lot" data-testid="bulk-import-results">
+          <div className="lkdv-trace-import-title">
+            <b>Import en lot ({bulkResults.length} fichiers)</b>
+            <span>
+              {bulkResults.filter((r) => r.status === 'saved').length} créé(s) ·{' '}
+              {bulkResults.filter((r) => r.status === 'existing').length} doublon(s) ·{' '}
+              {bulkResults.filter((r) => r.status === 'error').length} erreur(s)
+            </span>
+          </div>
+          <ul className="lkdv-trace-import-chips" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
+            {bulkResults.map((item, idx) => (
+              <li key={`${item.fileName}-${idx}`} style={{ justifyContent: 'space-between', height: 'auto', padding: '6px 10px' }}>
+                <span>{clip(item.fileName, 44)}</span>
+                <b>{item.detail}</b>
+              </li>
+            ))}
+          </ul>
+          <div className="lkdv-trace-import-actions">
+            <ActionPill label="Nouvel import" icon={<RotateCcw />} text="Nouvel import" onClick={reset} />
+          </div>
+        </section>
+      ) : null}
 
       {failure ? (
         <div className="lkdv-trace-import-alert" role="alert">
@@ -564,11 +805,23 @@ export function TraceImportDrawer() {
             <Check size={18} />
           </span>
           <div>
-            <b>{saved.existing ? 'Fichier déjà importé' : 'Sortie enregistrée'}</b>
+            <b>
+              {saved.kind === 'route'
+                ? saved.existing
+                  ? 'Parcours déjà importé'
+                  : 'Parcours planifié enregistré'
+                : saved.existing
+                  ? 'Fichier déjà importé'
+                  : 'Sortie enregistrée'}
+            </b>
             <p>
-              {saved.existing
-                ? 'Ce fichier a déjà été importé : la sortie existante est conservée, aucun doublon n’a été créé.'
-                : `${saved.title} rejoint tes sorties privées.`}
+              {saved.kind === 'route'
+                ? saved.existing
+                  ? 'Ce tracé est déjà dans tes parcours planifiés.'
+                  : `${saved.title} enregistré en mode ${saved.geometryMode === 'snapped' ? 'aligné sur sentiers' : 'tracé original'}${saved.waypointCount ? ` (${saved.waypointCount} waypoint(s))` : ''}.`
+                : saved.existing
+                  ? 'Ce fichier a déjà été importé : la sortie existante est conservée, aucun doublon n’a été créé.'
+                  : `${saved.title} rejoint tes sorties privées.`}
             </p>
             {saved.lapCount > 0 ? (
               <p>
@@ -592,13 +845,15 @@ export function TraceImportDrawer() {
             ) : null}
           </div>
           <div className="lkdv-trace-import-actions">
-            <ActionPill
-              tone="primary"
-              label="Voir la sortie"
-              icon={<MapPin />}
-              text="Voir la sortie"
-              onClick={openSavedOuting}
-            />
+            {saved.kind !== 'route' ? (
+              <ActionPill
+                tone="primary"
+                label="Voir la sortie"
+                icon={<MapPin />}
+                text="Voir la sortie"
+                onClick={openSavedOuting}
+              />
+            ) : null}
             <ActionPill
               label="Voir toutes mes sorties"
               icon={<ArrowRight />}
@@ -660,8 +915,54 @@ export function TraceImportDrawer() {
               </span>
             </div>
 
-            {mapPoints.length >= 2 ? (
-              <TraceMap segments={[mapPoints]} className="lkdv-trace-import-map" />
+            <div className="lkdv-trace-import-actions" role="group" aria-label="Destination de l'import">
+              <ActionPill
+                tone={importTarget === 'activity' ? 'primary' : 'glass'}
+                label="Importer comme activité terminée"
+                icon={<Activity />}
+                text="Activité terminée"
+                onClick={() => setImportTarget('activity')}
+              />
+              <ActionPill
+                tone={importTarget === 'route' ? 'primary' : 'glass'}
+                label="Importer comme parcours planifié"
+                icon={<RouteIcon />}
+                text="Parcours planifié"
+                onClick={() => setImportTarget('route')}
+              />
+            </div>
+
+            {importTarget === 'route' && snapPreview ? (
+              <div className="lkdv-trace-import-warn" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <b>Géométrie du parcours ({geometryMode === 'snapped' ? 'Alignée sentiers' : 'Origine'})</b>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <ActionPill
+                      tone={geometryMode === 'original' ? 'primary' : 'glass'}
+                      label="Conserver le tracé original"
+                      icon={<MapPin />}
+                      text="Origine"
+                      onClick={() => setGeometryMode('original')}
+                    />
+                    <ActionPill
+                      tone={geometryMode === 'snapped' ? 'primary' : 'glass'}
+                      label="Aligner sur les sentiers"
+                      icon={<Mountain />}
+                      text="Snap sentiers"
+                      onClick={() => setGeometryMode('snapped')}
+                    />
+                  </div>
+                </div>
+                <span>
+                  Origine : {formatNumber(snapPreview.originalDistanceM / 1000)} km · Aligné :{' '}
+                  {formatNumber(snapPreview.snappedDistanceM / 1000)} km ({snapPreview.snappedPointCount}/
+                  {snapPreview.totalPointCount} pts, écart moy. {snapPreview.meanDeviationM} m)
+                </span>
+              </div>
+            ) : null}
+
+            {displayedMapPoints.length >= 2 ? (
+              <TraceMap segments={[displayedMapPoints]} className="lkdv-trace-import-map" />
             ) : (
               <div className="lkdv-trace-import-no-map">
                 <MapPin size={16} aria-hidden="true" /> Aucune coordonnée GPS exploitable
@@ -811,6 +1112,27 @@ export function TraceImportDrawer() {
               </details>
             ) : null}
 
+            {preview.waypoints.length > 0 ? (
+              <details className="lkdv-trace-import-details" data-testid="trace-import-waypoints">
+                <summary>
+                  Waypoints GPX détectés ({preview.waypoints.length})
+                </summary>
+                <ul>
+                  {preview.waypoints.slice(0, 12).map((wpt, idx) => (
+                    <li key={`${wpt.name}-${idx}`}>
+                      <b>{clip(wpt.name, 80)}</b>
+                      <span>
+                        {wpt.lat.toFixed(5)}, {wpt.lng.toFixed(5)}
+                        {wpt.elevationM != null ? ` · ${Math.round(wpt.elevationM)} m` : ''}
+                        {wpt.type ? ` · ${clip(wpt.type, 30)}` : ''}
+                      </span>
+                      {wpt.description ? <small>{clip(wpt.description, 120)}</small> : null}
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            ) : null}
+
             {trace.provenance.ignoredSections.length > 0 ? (
               <details className="lkdv-trace-import-details">
                 <summary>
@@ -832,9 +1154,9 @@ export function TraceImportDrawer() {
             ) : null}
           </section>
 
-          {preview.blockers.length > 0 ? (
+          {importTarget === 'activity' && preview.blockers.length > 0 ? (
             <div className="lkdv-trace-import-blockers" role="status">
-              <b>Enregistrement désactivé</b>
+              <b>Enregistrement activité désactivé</b>
               <ul>
                 {preview.blockers.map((blocker) => (
                   <li key={blocker}>{blocker}</li>
@@ -846,11 +1168,23 @@ export function TraceImportDrawer() {
           <div className="lkdv-trace-import-actions">
             <ActionPill
               tone="primary"
-              label="Enregistrer cette trace dans mes sorties"
+              label={
+                importTarget === 'route'
+                  ? 'Enregistrer comme parcours planifié'
+                  : 'Enregistrer cette trace dans mes sorties'
+              }
               icon={<Upload />}
-              text="Enregistrer dans mes sorties"
+              text={
+                importTarget === 'route'
+                  ? 'Enregistrer le parcours'
+                  : 'Enregistrer dans mes sorties'
+              }
               busy={phase === 'saving'}
-              disabled={!preview.saveable || !user || phase === 'saving'}
+              disabled={
+                (importTarget === 'route' ? !preview.routeSaveable : !preview.saveable) ||
+                !user ||
+                phase === 'saving'
+              }
               onClick={() => void save()}
             />
             <ActionPill

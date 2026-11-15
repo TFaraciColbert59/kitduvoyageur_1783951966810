@@ -16,3 +16,4 @@ export * from './packManager';
 export * from './regionsAndCoverage';
 export * from './poiAndNavigationBridge';
 export * from './nativeShortcuts';
+export * from './offlineRuntimeStore';

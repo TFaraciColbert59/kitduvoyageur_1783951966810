@@ -132,7 +132,7 @@
 }
 
 .hub-globe-poi-chip[aria-pressed='true'] {
-  color: #101010;
+  color: #172B24;
   background: rgba(255, 255, 255, 0.88);
 }
 
@@ -263,7 +263,7 @@
   .hub-globe-map .hub-map-rail-control,
   .hub-globe-map .maplibregl-popup.hub-map-poi-popup .maplibregl-popup-content,
   .hub-globe-map .maplibregl-popup.hub-map-poi-popup .maplibregl-popup-close-button {
-    background: #101010 !important;
+    background: #F0F5EE !important;
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
   }

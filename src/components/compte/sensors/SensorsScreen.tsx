@@ -12,6 +12,8 @@ import {
   BleSensorManager,
   HealthSyncService,
   P01_CONSENT_POLICY_VERSION,
+  createDefaultBleTransportAdapter,
+  createDefaultHealthBridgeAdapter,
   createDefaultHealthConsentState,
   grantHealthConsent,
   revokeHealthConsent,
@@ -72,9 +74,16 @@ export function SensorsScreen({
   now = Date.now,
   initialTab = 'sensors',
 }: SensorsScreenProps) {
-  const [manager] = useState(() => managerProp ?? new BleSensorManager());
+  const [manager] = useState(
+    () => managerProp ?? new BleSensorManager({ transport: createDefaultBleTransportAdapter() }),
+  );
   const [healthService] = useState(
-    () => healthServiceProp ?? new HealthSyncService({ initialConsent: initialConsent }),
+    () =>
+      healthServiceProp ??
+      new HealthSyncService({
+        adapter: createDefaultHealthBridgeAdapter(),
+        initialConsent: initialConsent,
+      }),
   );
   const [transport] = useState<ConsentTransport | null>(() =>
     consentTransport === undefined ? createConsentTransport() : consentTransport,

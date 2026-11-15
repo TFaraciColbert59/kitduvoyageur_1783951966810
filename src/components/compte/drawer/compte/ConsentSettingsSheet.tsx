@@ -1,13 +1,15 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Activity,
+  Flame,
   HeartPulse,
   Loader2,
   MapPin,
   Plug,
+  Route,
   ShieldCheck,
   Smartphone,
   Users,
@@ -18,11 +20,25 @@ import {
   type ConsentSettingsPayload,
   type ConsentUsageState,
 } from '@/features/compte/domain/consentSettings';
+import {
+  setHealthConsentScopes,
+  type HealthConsentScope,
+  type HealthConsentState,
+} from '@/features/sensors';
+import {
+  createConsentTransport,
+  initialHealthConsent,
+} from '@/components/compte/sensors/consentClient';
+import { HealthConsentPanel } from '@/components/compte/sensors/HealthConsentPanel';
+import type { ConnectorCatalogResponse } from '@/lib/connectors/types';
+import type { AggregateContributionPreferences } from '@/features/heatmaps/types';
 import { OverlaySheet } from '../../overlay/OverlaySheet';
 import { DrawerError, DrawerSkeleton } from '../shell/DrawerShell';
+import { ConnectorDiscoverySection } from '@/features/ai-assistant/ui/ConnectorDiscoverySection';
 import { fetchJson } from './shared';
 
 const QUERY_KEY = ['compte', 'consents'] as const;
+const HEATMAP_PREFS_KEY = ['compte', 'heatmap-preferences'] as const;
 
 const USAGE_ICONS: Record<ConsentUsageState['id'], React.ReactNode> = {
   personal_performance: <Activity size={17} aria-hidden="true" />,
@@ -140,12 +156,89 @@ export function ConsentSettingsSheet({ onClose }: { onClose: () => void }) {
   const queryClient = useQueryClient();
   const [pending, setPending] = useState<string | null>(null);
   const [status, setStatus] = useState<Status | null>(null);
+  const [healthState, setHealthState] = useState<HealthConsentState>(() => initialHealthConsent());
+  const [healthPending, setHealthPending] = useState(false);
 
   const query = useQuery({
     queryKey: QUERY_KEY,
     queryFn: () => fetchJson<ConsentSettingsPayload>('/api/compte/consents'),
     staleTime: 0,
   });
+
+  const connectorsQuery = useQuery({
+    queryKey: ['compte', 'connectors-catalog'],
+    queryFn: () => fetchJson<ConnectorCatalogResponse>('/api/connectors/catalog'),
+    staleTime: 10_000,
+    retry: false,
+  });
+
+  const heatmapQuery = useQuery({
+    queryKey: HEATMAP_PREFS_KEY,
+    queryFn: () => fetchJson<{ preferences: AggregateContributionPreferences }>('/api/heatmaps/preferences'),
+    staleTime: 0,
+  });
+
+  useEffect(() => {
+    let active = true;
+    const transport = createConsentTransport();
+    void transport.load().then((loaded) => {
+      if (active && loaded) setHealthState(loaded);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const toggleHealthScope = async (scope: HealthConsentScope, granted: boolean) => {
+    if (healthPending) return;
+    setHealthPending(true);
+    const next = setHealthConsentScopes(healthState, [scope], granted, 'settings');
+    setHealthState(next);
+    try {
+      const saved = await createConsentTransport().save(next);
+      if (saved) setHealthState(saved);
+      setStatus({
+        kind: 'success',
+        message: granted
+          ? 'Autorisation Santé enregistrée.'
+          : 'Autorisation Santé révoquée immédiatement.',
+      });
+    } finally {
+      setHealthPending(false);
+    }
+  };
+
+  const toggleConnectorPurpose = async (purpose: string, granted: boolean) => {
+    if (pending) return;
+    setPending(`conn:${purpose}`);
+    setStatus(null);
+    try {
+      await fetchJson<{ catalog: ConnectorCatalogResponse }>('/api/connectors/consent', {
+        method: 'POST',
+        body: JSON.stringify({ purpose, granted }),
+      });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['compte', 'connectors-catalog'] }),
+        queryClient.invalidateQueries({ queryKey: QUERY_KEY }),
+      ]);
+      setStatus({
+        kind: 'success',
+        message: granted
+          ? 'Consentement connecteur enregistré.'
+          : 'Consentement connecteur révoqué immédiatement.',
+      });
+    } catch (error) {
+      setStatus({
+        kind: 'error',
+        message:
+          error instanceof Error && error.message
+            ? `Impossible de modifier ce consentement : ${error.message}`
+            : 'Impossible de modifier ce consentement.',
+      });
+    } finally {
+      setPending(null);
+    }
+  };
 
   const toggle = async (usage: ConsentUsageState) => {
     if (usage.disabled || pending) return;
@@ -171,6 +264,76 @@ export function ConsentSettingsSheet({ onClose }: { onClose: () => void }) {
           error instanceof Error && error.message
             ? `Le consentement n’a pas été enregistré : ${error.message}`
             : 'Le consentement n’a pas été enregistré.',
+      });
+    } finally {
+      setPending(null);
+    }
+  };
+
+  const patchHeatmapPref = async (
+    patch: {
+      globalHeatmapOptOut?: boolean;
+      globalHeatmap?: boolean;
+      routeRecommendations?: boolean;
+      mobilityAggregates?: boolean;
+    },
+    label: string
+  ) => {
+    if (pending) return;
+    setPending(`hm:${label}`);
+    setStatus(null);
+    try {
+      const next = await fetchJson<{ preferences: AggregateContributionPreferences }>(
+        '/api/heatmaps/preferences',
+        {
+          method: 'PATCH',
+          body: JSON.stringify(patch),
+        }
+      );
+      queryClient.setQueryData(HEATMAP_PREFS_KEY, next);
+      setStatus({
+        kind: 'success',
+        message: `${label} mis à jour. Les caches d’agrégats sont recalculés selon ton choix.`,
+      });
+    } catch (error) {
+      setStatus({
+        kind: 'error',
+        message:
+          error instanceof Error && error.message
+            ? `Préférence heatmap non enregistrée : ${error.message}`
+            : 'Préférence heatmap non enregistrée.',
+      });
+    } finally {
+      setPending(null);
+    }
+  };
+
+  const triggerGlobalOptOut = async (revokeAllAggregates: boolean) => {
+    if (pending) return;
+    setPending('hm:opt-out');
+    setStatus(null);
+    try {
+      const next = await fetchJson<{
+        preferences: AggregateContributionPreferences;
+        revokedAt: string;
+      }>('/api/heatmaps/opt-out', {
+        method: 'POST',
+        body: JSON.stringify({ revokeAllAggregates }),
+      });
+      queryClient.setQueryData(HEATMAP_PREFS_KEY, { preferences: next.preferences });
+      setStatus({
+        kind: 'success',
+        message: revokeAllAggregates
+          ? 'Opt-out strict appliqué : contribution heatmap et agrégats retirés.'
+          : 'Opt-out appliqué : tes sorties sont retirées de la heatmap mondiale.',
+      });
+    } catch (error) {
+      setStatus({
+        kind: 'error',
+        message:
+          error instanceof Error && error.message
+            ? `Opt-out impossible : ${error.message}`
+            : 'Opt-out impossible pour le moment.',
       });
     } finally {
       setPending(null);
@@ -231,57 +394,276 @@ export function ConsentSettingsSheet({ onClose }: { onClose: () => void }) {
               </div>
             </section>
 
+            <section className="lkdv-consent-section" aria-labelledby="lkdv-consent-health">
+              <header className="lkdv-consent-section-head">
+                <h3 id="lkdv-consent-health">Données de santé & capteurs (S6.16)</h3>
+                <small>Révocation scope par scope</small>
+              </header>
+              <HealthConsentPanel
+                state={healthState}
+                disabled={healthPending}
+                onToggle={(scope, granted) => void toggleHealthScope(scope, granted)}
+              />
+            </section>
+            <section className="lkdv-consent-section" aria-labelledby="lkdv-consent-heatmaps">
+              <header className="lkdv-consent-section-head">
+                <h3 id="lkdv-consent-heatmaps">Cartes de chaleur et agrégats</h3>
+                <small>
+                  {heatmapQuery.data?.preferences.globalHeatmapOptOut
+                    ? 'Opt-out actif'
+                    : 'Contrôle par finalité'}
+                </small>
+              </header>
+              {heatmapQuery.isLoading ? <DrawerSkeleton /> : null}
+              {heatmapQuery.isError ? (
+                <p className="lkdv-consent-status is-error" role="alert">
+                  Préférences d’agrégation indisponibles pour le moment.{' '}
+                  <button
+                    type="button"
+                    style={{ textDecoration: 'underline', background: 'none', border: 0, cursor: 'pointer', color: 'inherit', fontWeight: 700 }}
+                    onClick={() => void heatmapQuery.refetch()}
+                  >
+                    Réessayer
+                  </button>
+                </p>
+              ) : null}
+              {heatmapQuery.data ? (() => {
+                const prefs = heatmapQuery.data.preferences;
+                const revokedDate = formatDate(prefs.updatedAt ?? null);
+                const aggregateItems: Array<{
+                  id: 'globalHeatmap' | 'routeRecommendations' | 'mobilityAggregates';
+                  label: string;
+                  summary: string;
+                  detail: string;
+                  checked: boolean;
+                  icon: React.ReactNode;
+                  onToggle: () => void;
+                }> = [
+                  {
+                    id: 'globalHeatmap',
+                    label: 'Heatmap mondiale et communautaire',
+                    summary: prefs.globalHeatmapOptOut
+                      ? `Opt-out actif${revokedDate ? ` (${revokedDate})` : ''}`
+                      : prefs.globalHeatmap
+                        ? 'Contribution active'
+                        : 'Désactivée',
+                    detail:
+                      'Autorise tes sorties publiques sans zone privée à alimenter les tuiles agrégées (seuil k-anonymat).',
+                    checked: !prefs.globalHeatmapOptOut && prefs.globalHeatmap,
+                    icon: <Flame size={17} aria-hidden="true" />,
+                    onToggle: () => {
+                      const enable = prefs.globalHeatmapOptOut || !prefs.globalHeatmap;
+                      void patchHeatmapPref(
+                        enable
+                          ? { globalHeatmapOptOut: false, globalHeatmap: true }
+                          : { globalHeatmapOptOut: true, globalHeatmap: false },
+                        'Heatmap mondiale'
+                      );
+                    },
+                  },
+                  {
+                    id: 'routeRecommendations',
+                    label: 'Recommandations de parcours',
+                    summary: prefs.routeRecommendations ? 'Contribution active' : 'Désactivée',
+                    detail:
+                      'Utilise tes passages agrégés pour mesurer la fréquentation générale des itinéraires publics.',
+                    checked: prefs.routeRecommendations,
+                    icon: <Route size={17} aria-hidden="true" />,
+                    onToggle: () =>
+                      void patchHeatmapPref(
+                        { routeRecommendations: !prefs.routeRecommendations },
+                        'Recommandations de parcours'
+                      ),
+                  },
+                  {
+                    id: 'mobilityAggregates',
+                    label: 'Données de mobilité agrégées',
+                    summary: prefs.mobilityAggregates ? 'Contribution active' : 'Désactivée',
+                    detail:
+                      'Partage statistique strictement anonyme sur l’état et la fréquentation des segments terrain.',
+                    checked: prefs.mobilityAggregates,
+                    icon: <Users size={17} aria-hidden="true" />,
+                    onToggle: () =>
+                      void patchHeatmapPref(
+                        { mobilityAggregates: !prefs.mobilityAggregates },
+                        'Données de mobilité agrégées'
+                      ),
+                  },
+                ];
+                return (
+                  <div className="lkdv-consent-list">
+                    {aggregateItems.map((item) => {
+                      const busyItem = pending === `hm:${item.label}` || pending === 'hm:opt-out';
+                      return (
+                        <article
+                          key={item.id}
+                          className={`lkdv-consent-usage${item.checked ? ' is-on' : ''}`}
+                        >
+                          <span className="lkdv-consent-ico" aria-hidden="true">
+                            {item.icon}
+                          </span>
+                          <div className="lkdv-consent-copy">
+                            <div className="lkdv-consent-line">
+                              <b>{item.label}</b>
+                              {item.id === 'globalHeatmap' && prefs.globalHeatmapOptOut ? (
+                                <span className="lkdv-consent-chip is-off">Opt-out</span>
+                              ) : null}
+                            </div>
+                            <small>{item.summary}</small>
+                            <p>{item.detail}</p>
+                          </div>
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-checked={item.checked}
+                            aria-busy={busyItem || undefined}
+                            aria-label={`${item.checked ? 'Désactiver' : 'Activer'} : ${item.label}`}
+                            className={`lkdv-compte-switch${item.checked ? ' on' : ''}`}
+                            disabled={Boolean(pending)}
+                            onClick={item.onToggle}
+                          >
+                            <i aria-hidden="true" />
+                          </button>
+                        </article>
+                      );
+                    })}
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', paddingTop: 2 }}>
+                      <button
+                        type="button"
+                        className="lkdv-consent-chip is-off"
+                        style={{ height: 28, padding: '0 10px', border: 0, cursor: 'pointer', fontSize: 11 }}
+                        disabled={Boolean(pending)}
+                        onClick={() => void triggerGlobalOptOut(false)}
+                      >
+                        Opt-out heatmap mondiale
+                      </button>
+                      <button
+                        type="button"
+                        className="lkdv-consent-chip is-off"
+                        style={{ height: 28, padding: '0 10px', border: 0, cursor: 'pointer', fontSize: 11 }}
+                        disabled={Boolean(pending)}
+                        onClick={() => void triggerGlobalOptOut(true)}
+                      >
+                        Tout retirer des agrégats
+                      </button>
+                    </div>
+                  </div>
+                );
+              })() : null}
+            </section>
+
             <section className="lkdv-consent-section" aria-labelledby="lkdv-consent-providers">
               <header className="lkdv-consent-section-head">
-                <h3 id="lkdv-consent-providers">Fournisseurs</h3>
-                <small>Aucune connexion</small>
+                <h3 id="lkdv-consent-providers">Connecteurs tiers & fournisseurs</h3>
+                <small>
+                  {connectorsQuery.data
+                    ? `${connectorsQuery.data.summary.connected} connecté(s) · ${connectorsQuery.data.summary.total} fournisseurs`
+                    : 'Catalogue'}
+                </small>
               </header>
               <p className="lkdv-consent-note">
-                Le contrat actuel ne stocke qu’un consentement par finalité, sans identifiant de fournisseur,
-                de compte externe ni de jeton. La granularité par fournisseur reste donc indisponible ; elle ne
-                sera exposée qu’avec les connecteurs D01/D02 et leur contrat serveur.
+                Les autorisations RGPD ci-dessus gouvernent les usages généraux. La gestion par fournisseur
+                OAuth, les capteurs BLE/Santé et les montres s’effectue sur leurs écrans dédiés :
               </p>
-              <div className="lkdv-consent-list">
-                {query.data.providers.map((provider) => (
-                  <ProviderRow key={provider.id} provider={provider} />
-                ))}
+              <div className="lkdv-apill-row is-start" role="navigation" aria-label="Gestion des appareils et services">
+                <a className="lkdv-compte-pref on" href="/compte/connecteurs">
+                  Connecteurs GPS &amp; Strava
+                </a>
+                <a className="lkdv-compte-pref on" href="/compte/sensors">
+                  Capteurs BLE &amp; Santé
+                </a>
+                <a className="lkdv-compte-pref on" href="/compte/montres">
+                  Montres connectées
+                </a>
               </div>
+              {connectorsQuery.data ? (
+                <div className="lkdv-consent-list">
+                  {connectorsQuery.data.connectors.map((connector) => (
+                    <article key={connector.id} className="lkdv-consent-provider" data-connection={connector.status}>
+                      <span className="lkdv-consent-provider-ico" aria-hidden="true">
+                        <Plug size={16} />
+                      </span>
+                      <div className="lkdv-consent-copy">
+                        <div className="lkdv-consent-line">
+                          <b>{connector.label}</b>
+                          <span className={`lkdv-consent-chip${connector.connected ? '' : ' is-off'}`}>
+                            {connector.statusLabel}
+                          </span>
+                        </div>
+                        <small>{connector.categoryLabel} · {connector.statusReason}</small>
+                        {connector.requiredPurposes.length > 0 ? (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 4 }}>
+                            {connector.requiredPurposes.map((purpose) => {
+                              const isGranted = connector.grantedPurposes.includes(purpose);
+                              return (
+                                <button
+                                  key={purpose}
+                                  type="button"
+                                  disabled={pending === `conn:${purpose}`}
+                                  onClick={() => void toggleConnectorPurpose(purpose, !isGranted)}
+                                  className={`lkdv-consent-chip${isGranted ? '' : ' is-off'}`}
+                                  style={{ cursor: 'pointer', border: 'none' }}
+                                >
+                                  {purpose}: {isGranted ? 'Accordé (révoquer)' : 'Désactivé (autoriser)'}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        ) : null}
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <div className="lkdv-consent-list">
+                  {query.data.providers.map((provider) => (
+                    <ProviderRow key={provider.id} provider={provider} />
+                  ))}
+                </div>
+              )}
             </section>
 
             <p className="lkdv-consent-footnote">
-              Une révocation coupe les accès futurs et les caches contrôlés, mais ne peut pas effacer une copie
-              déjà reçue par un destinataire. Aucun jeton fournisseur n’est stocké dans cette surface.
+              Une révocation coupe immédiatement les collectes futures, synchronisations connecteurs et caches contrôlés,
+              sans affecter les fichiers déjà exportés localement.
             </p>
           </>
         ) : null}
 
+        <ConnectorDiscoverySection />
       </div>
     </OverlaySheet>
   );
 }
 
 const CONSENT_SHEET_CSS = `
+.lkdv-consent-sheet {
+  --label: #172B24 !important;
+  --label2: #56665D !important;
+  --label3: #6A786F !important;
+  color: #172B24 !important;
+}
 .lkdv-consent-sheet .lkdv-overlay-body{padding:10px 14px 16px!important;}
-.lkdv-consent-body{display:flex;flex-direction:column;gap:12px;font-family:var(--sf);color:var(--label);}
-.lkdv-consent-hero{display:flex;align-items:flex-start;gap:10px;padding:12px;border-radius:18px;background:rgba(255,255,255,.56);box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 0 0 .5px rgba(23,43,36,.08);}
+.lkdv-consent-body{display:flex;flex-direction:column;gap:12px;font-family:var(--sf);color:#172B24!important;}
+.lkdv-consent-hero{display:flex;align-items:flex-start;gap:10px;padding:12px;border-radius:18px;background:rgba(255,255,255,.76);box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 0 0 .5px rgba(23,43,36,.08);}
 .lkdv-consent-hero-ico{display:grid;place-items:center;flex:none;width:36px;height:36px;border-radius:12px;background:rgba(23,64,44,.08);color:#17402C;}
-.lkdv-consent-hero b{display:block;font:650 13px/1.25 var(--sf);}
-.lkdv-consent-hero p{margin:3px 0 0;font:400 11px/1.45 var(--sf);color:var(--label2);}
+.lkdv-consent-hero b{display:block;font:650 13px/1.25 var(--sf);color:#172B24!important;}
+.lkdv-consent-hero p{margin:3px 0 0;font:400 11px/1.45 var(--sf);color:#56665D!important;}
 .lkdv-consent-section{display:flex;flex-direction:column;gap:7px;}
 .lkdv-consent-section-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;padding:0 2px;}
-.lkdv-consent-section-head h3{margin:0;font:700 10.5px var(--sf);letter-spacing:.06em;text-transform:uppercase;color:var(--tint,#17402C);}
-.lkdv-consent-section-head small{font:500 10px var(--sf);color:var(--label3);}
+.lkdv-consent-section-head h3{margin:0;font:700 10.5px var(--sf);letter-spacing:.06em;text-transform:uppercase;color:#17402C!important;}
+.lkdv-consent-section-head small{font:500 10px var(--sf);color:#6A786F!important;}
 .lkdv-consent-list{display:flex;flex-direction:column;gap:6px;}
-.lkdv-consent-usage,.lkdv-consent-provider{display:grid;grid-template-columns:34px minmax(0,1fr) auto;align-items:start;gap:9px;padding:11px;border-radius:16px;background:rgba(255,255,255,.5);box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 0 0 .5px rgba(23,43,36,.08);}
+.lkdv-consent-usage,.lkdv-consent-provider{display:grid;grid-template-columns:34px minmax(0,1fr) auto;align-items:start;gap:9px;padding:11px;border-radius:16px;background:rgba(255,255,255,.7);box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 0 0 .5px rgba(23,43,36,.08);}
 .lkdv-consent-usage.is-on{background:rgba(61,122,82,.075);box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 0 0 .5px rgba(61,122,82,.2);}
-.lkdv-consent-usage.is-disabled,.lkdv-consent-provider{background:rgba(255,255,255,.36);}
+.lkdv-consent-usage.is-disabled,.lkdv-consent-provider{background:rgba(255,255,255,.55);}
 .lkdv-consent-ico,.lkdv-consent-provider-ico{display:grid;place-items:center;width:34px;height:34px;border-radius:11px;background:rgba(23,64,44,.07);color:#17402C;}
 .lkdv-consent-copy{min-width:0;display:flex;flex-direction:column;gap:2px;}
 .lkdv-consent-line{display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
-.lkdv-consent-line b{font:650 12px/1.25 var(--sf);color:var(--label);}
-.lkdv-consent-copy small{font:500 10.5px/1.35 var(--sf);color:var(--label2);}
-.lkdv-consent-copy .lkdv-consent-usage-map{color:var(--label3);font-size:9.5px;}
-.lkdv-consent-copy p{margin:2px 0 0;font:400 10.5px/1.45 var(--sf);color:var(--label3);}
+.lkdv-consent-line b{font:650 12px/1.25 var(--sf);color:#172B24!important;}
+.lkdv-consent-copy small{font:500 10.5px/1.35 var(--sf);color:#56665D!important;}
+.lkdv-consent-copy .lkdv-consent-usage-map{color:#6A786F!important;font-size:9.5px;}
+.lkdv-consent-copy p{margin:2px 0 0;font:400 10.5px/1.45 var(--sf);color:#6A786F!important;}
 .lkdv-consent-chip{display:inline-flex;align-items:center;height:18px;padding:0 7px;border-radius:999px;background:rgba(61,122,82,.13);color:#2C5E3E;font:600 8.5px var(--sf);white-space:nowrap;}
 .lkdv-consent-chip.is-off{background:rgba(185,138,46,.14);color:#7d5c14;}
 .lkdv-consent-locked{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:999px;background:rgba(23,43,36,.055);color:var(--label3);font:600 8.5px var(--sf);white-space:nowrap;}

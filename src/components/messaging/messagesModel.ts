@@ -49,6 +49,7 @@ export function filterConversations(
   opts: { filter: FilterId; query: string }
 ): Conversation[] {
   const text = opts.query.trim().toLowerCase();
+  const seenDirect = new Set<string>();
   return list.filter((conversation) => {
     if (conversation.left_at) return false;
     if (opts.filter === 'requests') {
@@ -57,6 +58,13 @@ export function filterConversations(
       if (conversation.status === 'pending' || conversation.status === 'rejected') return false;
       if (opts.filter === 'direct' && conversation.type !== 'direct') return false;
       if (opts.filter === 'group' && conversation.type !== 'group') return false;
+    }
+    if (conversation.type === 'direct') {
+      const key = conversation.other_member?.id || conversation.other_member?.full_name || conversationTitle(conversation);
+      if (key) {
+        if (seenDirect.has(key)) return false;
+        seenDirect.add(key);
+      }
     }
     if (!text) return true;
     return [conversationTitle(conversation), lastPreview(conversation)]

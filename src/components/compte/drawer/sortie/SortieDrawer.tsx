@@ -25,6 +25,12 @@ import { OutingParticipants } from './OutingParticipants';
 import { OutingComments } from './OutingComments';
 import { OutingAudienceSheet } from './OutingAudienceSheet';
 import { updateOutingVisibility } from '@/features/compte/client/outingVisibility';
+import ReportBlockModal, { type ReportTarget } from '@/components/ui/ReportBlockModal';
+import { OverlaySheet } from '@/components/compte/overlay/OverlaySheet';
+import { MediaSharingHub, type MediaSharingTab } from '@/components/media-sharing/MediaSharingHub';
+import { buildOutingMediaSharingBundle } from '@/lib/media-sharing/outingAdapter';
+import { createLifecycleApi } from '@/components/compte/lifecycle/api';
+import type { Sport } from '@/features/explorer-v2/state/types';
 
 async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, {
@@ -56,10 +62,13 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [audienceOpen, setAudienceOpen] = useState(false);
+  const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
+  const [mediaHubTab, setMediaHubTab] = useState<MediaSharingTab | null>(null);
   const [toast, setToast] = useState<Toast>(null);
 
   useEffect(() => {
     setAudienceOpen(false);
+    setMediaHubTab(null);
   }, [outingId]);
 
   const query = useQuery({
@@ -75,6 +84,8 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
     setToast({ text, tone });
     window.setTimeout(() => setToast(null), 2600);
   }, []);
+
+  const lifecycleApi = useMemo(() => createLifecycleApi(), []);
 
   const invalidate = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: ['sortie', outingId] });
@@ -130,16 +141,19 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
     [outingId, run]
   );
 
-  const exportGpx = useCallback(() => {
-    if (!outingId) return;
-    const link = document.createElement('a');
-    link.href = `/api/compte/sorties/${outingId}/gpx`;
-    link.download = '';
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    notify('GPX en préparation');
-  }, [notify, outingId]);
+  const exportTrace = useCallback(
+    (format: 'gpx' | 'tcx' | 'original' = 'gpx') => {
+      if (!outingId) return;
+      const link = document.createElement('a');
+      link.href = `/api/compte/sorties/${outingId}/gpx?format=${format}`;
+      link.download = '';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      notify(`${format === 'original' ? 'Fichier original' : format.toUpperCase()} en préparation`);
+    },
+    [notify, outingId]
+  );
 
   const uploadPhoto = useCallback(
     async (file: File) => {
@@ -147,8 +161,10 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
         notify('Session requise', 'error');
         return;
       }
-      if (file.size > 10 * 1024 * 1024) {
-        notify('Photo trop lourde (10 Mo maximum)', 'error');
+      const isVideo = file.type.startsWith('video/');
+      const limitMb = isVideo ? 50 : 10;
+      if (file.size > limitMb * 1024 * 1024) {
+        notify(`Fichier trop lourd (${limitMb} Mo maximum)`, 'error');
         return;
       }
       setUploading(true);
@@ -179,8 +195,9 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
   const deleteOuting = useCallback(async () => {
     setBusy(true);
     try {
-      await requestJson(`/api/compte/sorties/${outingId}`, { method: 'DELETE' });
-      notify('Sortie supprimée');
+      await lifecycleApi.trash(outingId);
+      notify('Sortie déplacée dans la corbeille (30 j)');
+      window.dispatchEvent(new CustomEvent('lkdv:outings-changed'));
       const runtime = window as unknown as { __lkdvCompteAct?: (action: string, value?: unknown) => void };
       runtime.__lkdvCompteAct?.('close');
     } catch (error) {
@@ -188,7 +205,7 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
     } finally {
       setBusy(false);
     }
-  }, [notify, outingId]);
+  }, [lifecycleApi, notify, outingId]);
 
   const tabs: DrawerTab[] = useMemo(
     () =>
@@ -203,23 +220,46 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
                 saving={busy}
                 onSave={(patch) =>
                   run(
-                    () =>
-                      requestJson(`/api/compte/sorties/${outingId}`, {
+                    async () => {
+                      await requestJson(`/api/compte/sorties/${outingId}`, {
                         method: 'PATCH',
-                        body: JSON.stringify(patch),
-                      }),
+                        body: JSON.stringify({
+                          title: patch.title,
+                          notes: patch.notes,
+                          visibility: patch.visibility,
+                          ...(patch.rpe !== undefined ? { rpe: patch.rpe } : null),
+                        }),
+                      });
+                      await lifecycleApi.updateMetadata(outingId, {
+                        title: patch.title,
+                        notes: patch.notes,
+                        sport: patch.sport as Sport | undefined,
+                        tags: patch.tags,
+                      });
+                      window.dispatchEvent(new CustomEvent('lkdv:outings-changed'));
+                    },
                     'Sortie mise à jour'
                   )
                 }
                 onSaveMetrics={saveMetrics}
                 onResetMetrics={resetMetrics}
                 onShare={openAudience}
-                onExport={exportGpx}
+                onExport={exportTrace}
+                onUpdated={invalidate}
                 onDelete={deleteOuting}
               />
             );
           }
-          if (item.id === 'trace') return <OutingTrace detail={detail} onExport={exportGpx} />;
+          if (item.id === 'trace') {
+            return (
+              <OutingTrace
+                detail={detail}
+                onExport={exportTrace}
+                onOpenMediaHub={setMediaHubTab}
+                onUpdated={invalidate}
+              />
+            );
+          }
           if (item.id === 'photos') {
             return (
               <OutingPhotos
@@ -227,6 +267,7 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
                 canEdit={detail.canEdit}
                 uploading={uploading}
                 onUpload={uploadPhoto}
+                onOpenMediaHub={setMediaHubTab}
                 unavailable={detail.photosUnavailable}
                 onRetry={invalidate}
                 onDelete={(photoId) =>
@@ -274,6 +315,7 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
           if (item.id === 'compagnons') {
             return (
               <OutingParticipants
+                outingId={outingId}
                 participants={detail.participants}
                 canEdit={detail.canEdit}
                 busy={busy}
@@ -300,42 +342,64 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
               />
             );
           }
+          const organizer = detail.participants.find((p) => p.isOwner);
           return (
-            <OutingComments
-              kudos={detail.kudos}
-              comments={detail.comments}
-              busy={busy}
-              onKudos={() =>
-                run(
-                  () => requestJson(`/api/compte/sorties/${outingId}/kudos`, { method: 'POST' }),
-                  detail.kudos.mine ? 'Kudos retiré' : 'Kudos envoyé'
-                )
-              }
-              onComment={(body) =>
-                run(
-                  () =>
-                    requestJson(`/api/compte/sorties/${outingId}/comments`, {
-                      method: 'POST',
-                      body: JSON.stringify({ body }),
-                    }),
-                  'Commentaire envoyé'
-                )
-              }
-              onDelete={(commentId) =>
-                run(
-                  () =>
-                    requestJson(`/api/compte/sorties/${outingId}/comments`, {
-                      method: 'DELETE',
-                      body: JSON.stringify({ commentId }),
-                    }),
-                  'Commentaire supprimé'
-                )
-              }
-            />
+            <div className="flex flex-col gap-2">
+              {!detail.canEdit && organizer ? (
+                <div className="flex items-center justify-between gap-2 rounded-[14px] bg-[color:var(--card-tint-strong)] px-3 py-2">
+                  <span className="text-[11.5px] text-[color:var(--label2)]">
+                    Gérer les interactions avec {organizer.name}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setReportTarget({
+                        userId: organizer.userId,
+                        userName: organizer.name,
+                      })
+                    }
+                    className="rounded-full border border-[color:var(--glass-border)] bg-white/85 px-2.5 py-1 text-[11px] font-semibold text-[color:var(--label)]"
+                  >
+                    Signaler / Bloquer
+                  </button>
+                </div>
+              ) : null}
+              <OutingComments
+                kudos={detail.kudos}
+                comments={detail.comments}
+                busy={busy}
+                onKudos={() =>
+                  run(
+                    () => requestJson(`/api/compte/sorties/${outingId}/kudos`, { method: 'POST' }),
+                    detail.kudos.mine ? 'Kudos retiré' : 'Kudos envoyé'
+                  )
+                }
+                onComment={(body) =>
+                  run(
+                    () =>
+                      requestJson(`/api/compte/sorties/${outingId}/comments`, {
+                        method: 'POST',
+                        body: JSON.stringify({ body }),
+                      }),
+                    'Commentaire envoyé'
+                  )
+                }
+                onDelete={(commentId) =>
+                  run(
+                    () =>
+                      requestJson(`/api/compte/sorties/${outingId}/comments`, {
+                        method: 'DELETE',
+                        body: JSON.stringify({ commentId }),
+                      }),
+                    'Commentaire supprimé'
+                  )
+                }
+              />
+            </div>
           );
         },
       })),
-    [busy, deleteOuting, detail, exportGpx, invalidate, openAudience, outingId, resetMetrics, run, saveMetrics, uploadPhoto, uploading]
+    [busy, deleteOuting, detail, exportTrace, invalidate, lifecycleApi, openAudience, outingId, resetMetrics, run, saveMetrics, uploadPhoto, uploading]
   );
 
   if (authLoading) {
@@ -391,6 +455,8 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
       ) : null}
       <OutingAudienceSheet
         open={audienceOpen}
+        outingId={outingId}
+        canEdit={detail.canEdit}
         title={detail.title}
         summary={[detail.date, detail.massif, `${detail.km} km`, `+${detail.dplus} m`]
           .filter(Boolean)
@@ -412,6 +478,35 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
           }
         }}
       />
+      <ReportBlockModal
+        target={reportTarget}
+        onClose={() => setReportTarget(null)}
+        onSuccess={(action) => {
+          setReportTarget(null);
+          invalidate();
+          if (action === 'block') {
+            notify('Utilisateur bloqué');
+          } else if (action === 'mute_content') {
+            notify('Contenu masqué');
+          } else {
+            notify('Signalement enregistré');
+          }
+        }}
+      />
+      {mediaHubTab ? (
+        <OverlaySheet
+          title="Médias, Flyover 3D & partage (C04)"
+          subtitle={detail.title}
+          onClose={() => setMediaHubTab(null)}
+          nested
+        >
+          <MediaSharingHub
+            {...buildOutingMediaSharingBundle(detail)}
+            primaryName={user.email ?? 'Moi'}
+            initialTab={mediaHubTab}
+          />
+        </OverlaySheet>
+      ) : null}
       <style dangerouslySetInnerHTML={{ __html: SORTIE_CSS }} />
     </div>
   );

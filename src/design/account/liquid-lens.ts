@@ -81,10 +81,13 @@ function lensFilter(w: number, h: number, r: number, bz: number, sc: number): st
     s.setAttribute('height', '0');
     s.setAttribute('aria-hidden', 'true');
     s.style.position = 'absolute';
-    s.innerHTML = '<defs id="lensdefs"></defs>';
-    document.body.appendChild(s);
-    defs = document.getElementById('lensdefs') as unknown as SVGDefsElement;
+    const d = document.createElementNS(NS, 'defs');
+    d.id = 'lensdefs';
+    s.appendChild(d);
+    document.body?.appendChild(s);
+    defs = d as unknown as SVGDefsElement;
   }
+  if (!defs) return id;
   const f = document.createElementNS(NS, 'filter');
   f.id = id;
   f.setAttribute('x', '0');

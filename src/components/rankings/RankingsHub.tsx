@@ -16,7 +16,13 @@ import { InlineNotice, RankingsCard, RankingsEmpty } from './ui';
 
 const PERSONAL_TABS = new Set<RankingsTabId>(['peaks', 'trophies', 'peers']);
 
-function PanelFor({ tab }: { tab: RankingsTabId }) {
+function PanelFor({
+  tab,
+  onSelectTab,
+}: {
+  tab: RankingsTabId;
+  onSelectTab: (next: RankingsTabId) => void;
+}) {
   switch (tab) {
     case 'leaderboard':
       return <LeaderboardPanel />;
@@ -27,7 +33,7 @@ function PanelFor({ tab }: { tab: RankingsTabId }) {
     case 'challenges':
       return <ChallengesPanel />;
     case 'trophies':
-      return <TrophiesPanel />;
+      return <TrophiesPanel onOpenChallenges={() => onSelectTab('challenges')} />;
     case 'peers':
       return <PeersPanel />;
   }
@@ -111,7 +117,7 @@ export function RankingsHub({ initialTab = 'leaderboard' }: { initialTab?: Ranki
             />
           </RankingsCard>
         ) : (
-          <PanelFor tab={active} />
+          <PanelFor tab={active} onSelectTab={select} />
         )}
       </div>
 

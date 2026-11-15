@@ -59,9 +59,7 @@ const DEMO_OWN: Readonly<Partial<Record<PieceKey, ColorwayId>>> = {
 };
 
 /**
- * Jeu de démonstration — source des fixtures de test ET repli hors-ligne quand la base ou la
- * session manque. Ce n'est plus une source de production : aucun écran ne l'utilise quand
- * `getStudioData` a répondu.
+ * Données studio initiales / repli hors-ligne.
  */
 export const DEMO_STUDIO_DATA: StudioData = {
   items: ITEMS,

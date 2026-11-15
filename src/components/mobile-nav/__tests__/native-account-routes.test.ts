@@ -4,14 +4,14 @@ import { DESTINATIONS } from '../destinationRegistry';
 
 const HUB_HREF = DESTINATIONS.find((destination) => destination.id === 'adventures')!.href;
 
-describe('Native iOS Liquid Glass — all navigable app routes except Compas', () => {
+describe('Native Liquid Glass — all navigable app routes including Compas', () => {
   it.each([
     [HUB_HREF, 'adventures'], [`${HUB_HREF}/voyage`, 'adventures'],
     ['/groupes', 'adventures'], ['/groupes/42', 'adventures'],
     ['/communaute', 'community'], ['/communaute/123', 'community'],
     ['/communaute', 'community'], ['/communaute/42', 'community'],
     ['/communaute/42', 'community'],
-    ['/explorer', 'explorer'], ['/pays/france', 'explorer'],
+    ['/explorer', 'explorer'], ['/explorer/sentiers', 'explorer'],
     ['/messagerie', 'messages'], ['/messagerie/42', 'messages'],
     ['/compte', 'me'], ['/profil/abc', 'me'], ['/progression', 'me'],
     ['/panier', null], ['/', null], ['/carte-interactive', null],
@@ -21,11 +21,12 @@ describe('Native iOS Liquid Glass — all navigable app routes except Compas', (
   });
 
   it.each([
-    '/compas', '/compas/', '/compas/parcours', '/compas/parcours/123',
-  ])('NEVER activates UIKit or changes web bar on protected %s', (route) => {
-    expect(isProtectedCompasRoute(route)).toBe(true);
-    expect(shouldShowNativeGlass(route)).toBe(false);
-    expect(getNativeGlassDestination(route)).toBeNull();
+    ['/compas', 'adventures'], ['/compas/', 'adventures'],
+    ['/compas/parcours', 'adventures'], ['/compas/parcours/123', 'adventures'],
+  ] as const)('activates native bar on Compas route %s and highlights %s', (route, selectedId) => {
+    expect(isProtectedCompasRoute(route)).toBe(false);
+    expect(shouldShowNativeGlass(route)).toBe(true);
+    expect(getNativeGlassDestination(route)).toBe(selectedId);
   });
 
   it('does not confuse a lookalike route with Compas', () => {

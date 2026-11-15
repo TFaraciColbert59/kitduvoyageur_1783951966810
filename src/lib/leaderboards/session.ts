@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { createClient } from '@/lib/supabase/server';
+import { syncViewerRelationsFromDb } from '@/lib/segments/bridge';
 
 /**
  * Lit l'identité du spectateur sans jamais faire échouer une route publique :
@@ -13,6 +14,9 @@ export async function getLeaderboardViewerId(): Promise<string | null> {
     const {
       data: { user },
     } = await supabase.auth.getUser();
+    if (user?.id) {
+      await syncViewerRelationsFromDb(user.id, supabase);
+    }
     return user?.id ?? null;
   } catch {
     return null;

@@ -1000,10 +1000,22 @@ export function CommunityExploreSheetV2({
         label: 'Filtres des clubs',
         pages: filterPages,
         sort: {
-          value: explore.clubSort,
+          value: explore.clubActivity ? `act:${explore.clubActivity}` : explore.clubSort,
           defaultValue: 'activity',
-          options: CLUB_SORT_OPTIONS,
-          onChange: (value: string) => explore.setClubSort(value as typeof explore.clubSort),
+          options: [
+            ...CLUB_SORT_OPTIONS,
+            { value: 'act:all', label: 'Activité : Toutes' },
+            { value: 'act:randonnee', label: 'Activité : Rando' },
+            { value: 'act:ski', label: 'Activité : Ski' },
+            { value: 'act:velo', label: 'Activité : Vélo' },
+            { value: 'act:escalade', label: 'Activité : Escalade' },
+            { value: 'act:trail', label: 'Activité : Trail' },
+          ],
+          onChange: (value: string) => {
+            if (value === 'act:all') explore.setClubActivity(null);
+            else if (value.startsWith('act:')) explore.setClubActivity(value.slice(4) as typeof explore.clubActivity);
+            else explore.setClubSort(value as typeof explore.clubSort);
+          },
         },
       };
     }
@@ -1013,6 +1025,15 @@ export function CommunityExploreSheetV2({
       onChange: (index: number) => explore.setEventFilter(EVENT_FILTERS[index] ?? 'discover'),
       label: 'Filtres des sorties',
       pages: filterPages,
+      sort: {
+        value: explore.eventView,
+        defaultValue: 'grid',
+        options: [
+          { value: 'grid', label: 'Affichage : Billets' },
+          { value: 'list', label: 'Affichage : Liste' },
+        ],
+        onChange: (value: string) => explore.setEventView(value as typeof explore.eventView),
+      },
     };
   })();
 
@@ -1075,7 +1096,10 @@ export function CommunityExploreSheetV2({
       ],
       index: 0,
       title: detail.event.title,
-      meta: `/sorties/${detail.event.id.slice(0, 8)}`,
+      meta:
+        detail.event.dateLabel && !detail.event.dateLabel.includes('/')
+          ? detail.event.dateLabel
+          : 'Sortie',
       label: 'Sortie',
       onBack: closeDetail,
     };

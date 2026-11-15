@@ -146,17 +146,17 @@ const CAMP_HOTSPOT_POSITIONS: readonly CampPlacement[] = [
   /* 0: inventaire   */ { x: 22, y: 74, w: 90, h: 80 },
   /* 1: kit (sac)    */ { x: 40, y: 54, w: 120, h: 120, testId: 'hub-hotspot-bag' },
   /* 2: preparation  */ { x: 36, y: 38, w: 80, h: 75 },
-  /* 3: depart       */ { x: 12, y: 52, w: 80, h: 75 },
+  /* 3: depart       */ { x: 12, y: 48, w: 78, h: 66 },
   /* 4: disponibilite*/ { x: 52, y: 74, w: 85, h: 75 },
   /* 5: alertes      */ { x: 18, y: 14, w: 95, h: 80 },
   /* 6: oublis       */ { x: 26, y: 48, w: 75, h: 75 },
   /* 7: overview     */ { x: 22, y: 25, w: 90, h: 75 },
   /* 8: itinerary    */ { x: 80, y: 23, w: 95, h: 85, testId: 'hub-hotspot-route' },
-  /* 9: gear         */ { x: 44, y: 64, w: 90, h: 80 },
+  /* 9: gear         */ { x: 64, y: 60, w: 80, h: 72 },
   /* 10: groupe (feu)*/ { x: 14, y: 36, w: 95, h: 90, testId: 'hub-hotspot-fire' },
   /* 11: budget (table)*/ { x: 78, y: 68, w: 95, h: 85 },
   /* 12: docs (carte)*/ { x: 78, y: 56, w: 85, h: 75 },
-  /* 13: checklist   */ { x: 12, y: 66, w: 80, h: 75 },
+  /* 13: checklist   */ { x: 12, y: 72, w: 78, h: 66 },
   /* 14: safety      */ { x: 50, y: 13, w: 100, h: 80 },
   /* 15: journal     */ { x: 64, y: 38, w: 80, h: 75 },
   /* 16: export      */ { x: 52, y: 25, w: 80, h: 75 },
@@ -821,31 +821,9 @@ export function HubCampShell({
                 <p className="text-xs camp-text-sub">Historique et sorties planifiées avec cet équipement</p>
               </div>
 
-              <div className="space-y-2 pt-2 border-t camp-border-subtle">
-                <div className="p-3 rounded-2xl camp-card-cream flex items-center justify-between min-h-[48px]">
-                  <div className="flex items-center gap-2.5">
-                    <Mountain className="w-5 h-5 text-[var(--hub-action)]" />
-                    <div>
-                      <strong className="text-xs camp-text-title block">Traversée des Écrins 2026</strong>
-                      <small className="text-[11px] camp-text-sub">En cours · Équipage 3 pers</small>
-                    </div>
-                  </div>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md camp-chip-success">
-                    En cours
-                  </span>
-                </div>
-
-                <div className="p-3 rounded-2xl camp-card-cream flex items-center justify-between min-h-[48px]">
-                  <div className="flex items-center gap-2.5">
-                    <Mountain className="w-5 h-5 text-[var(--hub-text-secondary)]" />
-                    <div>
-                      <strong className="text-xs camp-text-title block">Tour des Fiz 2025</strong>
-                      <small className="text-[11px] camp-text-sub">Terminé · 42 km parcourus</small>
-                    </div>
-                  </div>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md camp-card-white camp-text-sub">
-                    Archivé
-                  </span>
+              <div className="pt-2 border-t camp-border-subtle">
+                <div className="p-4 rounded-2xl camp-card-cream text-center">
+                  <p className="text-xs camp-text-sub">Aucune sortie archivée avec cet équipement</p>
                 </div>
               </div>
             </div>
@@ -1018,7 +996,7 @@ export function HubCampShell({
             handleOpenRegistryEntry(departDef);
           }}
           className="camp-floating-pill"
-          aria-label="Actions du camp"
+          aria-label="Actions du camp — Départ"
         >
           <span className="camp-pill-dots" aria-hidden="true">
             ...

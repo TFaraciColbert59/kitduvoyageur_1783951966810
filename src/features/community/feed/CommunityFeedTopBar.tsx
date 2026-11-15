@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { SlidersHorizontal } from 'lucide-react';
 import Icon from '@/components/ui/Icon';
 import type { SectionTabId } from '@/features/community/sections/CommunityTabSelector';
 import { NotificationBell } from '@/components/ui/NotificationBell';
@@ -10,13 +11,20 @@ export interface CommunityFeedTopBarProps {
   onCreate: () => void;
   onOpenSection: (id: SectionTabId) => void;
   onSearch: () => void;
+  onOpenPreferences?: () => void;
 }
 
 /**
  * « Explorer » (ouvre directement la recherche de l'Explorer) ; +, recherche,
  * cloche (drawer Notifications du Compte).
  */
-export function CommunityFeedTopBar({ user, onCreate, onOpenSection, onSearch }: CommunityFeedTopBarProps) {
+export function CommunityFeedTopBar({
+  user,
+  onCreate,
+  onOpenSection,
+  onSearch,
+  onOpenPreferences,
+}: CommunityFeedTopBarProps) {
   return (
     <>
       <div className="lkdv-pourtoi-wrap gap-1.5">
@@ -37,6 +45,16 @@ export function CommunityFeedTopBar({ user, onCreate, onOpenSection, onSearch }:
         <button type="button" className="gbtn" aria-label="Rechercher dans la communauté" onClick={onSearch}>
           <Icon name="search" size={17} aria-hidden="true" />
         </button>
+        {onOpenPreferences ? (
+          <button
+            type="button"
+            className="gbtn"
+            aria-label="Préférences du fil"
+            onClick={onOpenPreferences}
+          >
+            <SlidersHorizontal size={16} aria-hidden="true" />
+          </button>
+        ) : null}
         <NotificationBell userId={user?.id} />
       </div>
     </>

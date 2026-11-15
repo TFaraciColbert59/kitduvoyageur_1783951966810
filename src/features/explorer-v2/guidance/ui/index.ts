@@ -9,6 +9,7 @@
 
 export { TurnByTurnBanner, type TurnByTurnBannerProps } from './TurnByTurnBanner';
 export { RerouteBanner, type RerouteBannerProps } from './RerouteBanner';
+export { WaypointAlertBanner, type WaypointAlertBannerProps } from './WaypointAlertBanner';
 export { JoinStartCard, type JoinStartCardProps } from './JoinStartCard';
 export { OrientationCompass, type OrientationCompassProps } from './OrientationCompass';
 export {

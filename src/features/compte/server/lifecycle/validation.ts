@@ -35,7 +35,7 @@ export const MetadataPatchSchema = z
     sport: z.enum(SPORTS).optional(),
     variantId: z.string().trim().max(64).nullable().optional(),
     tags: z.array(z.enum(TAGS)).max(8).optional(),
-    visibility: z.enum(['private', 'collective_anonymized']).optional(),
+    visibility: z.enum(['private', 'followers', 'public', 'collective_anonymized']).optional(),
     kitId: z.string().trim().max(64).nullable().optional(),
     gearIds: z.array(z.string().trim().max(64)).max(200).optional(),
     expectedRevision: z.number().int().min(1).optional(),

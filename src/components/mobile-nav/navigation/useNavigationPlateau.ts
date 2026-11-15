@@ -9,8 +9,6 @@ export interface PlateauFlags {
   isClubDetail: boolean;
   isCarnetsHub: boolean;
   isCarnetDetail: boolean;
-  isPaysHub: boolean;
-  isPaysDetail: boolean;
   isMessageriePage: boolean;
   isVoyagesHub: boolean;
 }
@@ -32,8 +30,6 @@ export function useNavigationPlateau(pathname: string | null): NavigationPlateau
   const isClubDetail = Boolean(pathname && pathname.startsWith('/communaute/') && pathname !== '/communaute');
   const isCarnetsHub = pathname === '/communaute';
   const isCarnetDetail = Boolean(pathname && pathname.startsWith('/communaute/') && pathname !== '/communaute' && pathname !== '/communaute');
-  const isPaysHub = pathname === '/pays';
-  const isPaysDetail = Boolean(pathname && pathname.startsWith('/pays/') && pathname !== '/pays');
   const isMessageriePage = pathname === '/messagerie';
   const isVoyagesHub = false;
 
@@ -41,8 +37,6 @@ export function useNavigationPlateau(pathname: string | null): NavigationPlateau
   const [activeClubDetailTab, setActiveClubDetailTab] = useState<string>('overview');
   const [activeCarnetsTab, setActiveCarnetsTab] = useState<'explorer' | 'mes-carnets'>('explorer');
   const [activeCarnetDetailTab, setActiveCarnetDetailTab] = useState<string>('overview');
-  const [activePaysContinent, setActivePaysContinent] = useState<string>('all');
-  const [activePaysDetailTab, setActivePaysDetailTab] = useState<string>('presentation');
   const [activeCommunityTab, setActiveCommunityTab] = useState<string>('fil');
   const [activeMessagerieTab, setActiveMessagerieTab] = useState<string>('all');
   const [messagerieRequestsCount, setMessagerieRequestsCount] = useState<number>(0);
@@ -69,12 +63,6 @@ export function useNavigationPlateau(pathname: string | null): NavigationPlateau
         if (t === 'mes-carnets') setActiveCarnetsTab('mes-carnets');
         else setActiveCarnetsTab('explorer');
       }
-    } else if (pathname === '/pays') {
-      if (typeof window !== 'undefined') {
-        const params = new URLSearchParams(window.location.search);
-        const c = params.get('continent');
-        if (c) setActivePaysContinent(c);
-      }
     } else if (pathname.startsWith('/communaute')) {
       if (typeof window !== 'undefined') {
         const params = new URLSearchParams(window.location.search);
@@ -99,12 +87,6 @@ export function useNavigationPlateau(pathname: string | null): NavigationPlateau
       const carnetDetailHandler = (e: any) => {
         if (e.detail) setActiveCarnetDetailTab(e.detail);
       };
-      const paysContinentHandler = (e: any) => {
-        if (e.detail) setActivePaysContinent(e.detail);
-      };
-      const paysDetailHandler = (e: any) => {
-        if (e.detail) setActivePaysDetailTab(e.detail);
-      };
       const voyagesHubHandler = (e: any) => {
         if (e.detail) setActiveVoyagesHubTab(e.detail);
       };
@@ -128,8 +110,6 @@ export function useNavigationPlateau(pathname: string | null): NavigationPlateau
       window.addEventListener('club-detail-tab-change', clubDetailHandler);
       window.addEventListener('carnets-tab-change', carnetsHandler);
       window.addEventListener('carnet-detail-tab-change', carnetDetailHandler);
-      window.addEventListener('pays-continent-change', paysContinentHandler);
-      window.addEventListener('pays-detail-tab-change', paysDetailHandler);
       window.addEventListener('voyages-hub-tab-change', voyagesHubHandler);
       window.addEventListener('messagerie-tab-state', messagerieStateHandler);
       window.addEventListener('messagerie-tab-change', messagerieTabHandler);
@@ -141,8 +121,6 @@ export function useNavigationPlateau(pathname: string | null): NavigationPlateau
         window.removeEventListener('club-detail-tab-change', clubDetailHandler);
         window.removeEventListener('carnets-tab-change', carnetsHandler);
         window.removeEventListener('carnet-detail-tab-change', carnetDetailHandler);
-        window.removeEventListener('pays-continent-change', paysContinentHandler);
-        window.removeEventListener('pays-detail-tab-change', paysDetailHandler);
         window.removeEventListener('voyages-hub-tab-change', voyagesHubHandler);
         window.removeEventListener('messagerie-tab-state', messagerieStateHandler);
         window.removeEventListener('messagerie-tab-change', messagerieTabHandler);
@@ -184,16 +162,6 @@ export function useNavigationPlateau(pathname: string | null): NavigationPlateau
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('carnet-detail-tab-change', { detail: tabKey }));
       }
-    } else if (isPaysHub) {
-      setActivePaysContinent(tabKey);
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('pays-continent-change', { detail: tabKey }));
-      }
-    } else if (isPaysDetail) {
-      setActivePaysDetailTab(tabKey);
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('pays-detail-tab-change', { detail: tabKey }));
-      }
     } else {
       setActiveCommunityTab(tabKey);
       if (typeof window !== 'undefined') {
@@ -227,13 +195,9 @@ export function useNavigationPlateau(pathname: string | null): NavigationPlateau
     ? activeCarnetsTab
     : isCarnetDetail
     ? activeCarnetDetailTab
-    : isPaysHub
-    ? activePaysContinent
-    : isPaysDetail
-    ? activePaysDetailTab
     : activeCommunityTab;
 
-  const isWide = isClubDetail || isCarnetDetail || isPaysHub || isPaysDetail;
+  const isWide = isClubDetail || isCarnetDetail;
 
   return {
     flags: {
@@ -241,8 +205,6 @@ export function useNavigationPlateau(pathname: string | null): NavigationPlateau
       isClubDetail,
       isCarnetsHub,
       isCarnetDetail,
-      isPaysHub,
-      isPaysDetail,
       isMessageriePage,
       isVoyagesHub,
     },

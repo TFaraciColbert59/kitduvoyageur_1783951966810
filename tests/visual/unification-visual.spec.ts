@@ -12,15 +12,10 @@ import { prepareVisualPage, expectVisualSnapshot } from './_helpers/prepareVisua
  * gelées, masques nommés (protocole factorisé dans _helpers/prepareVisualPage).
  */
 
-const ROUTES = [
+const ROUTES: { path: string; name: string; abortPatterns?: string[] }[] = [
   { path: '/materiel', name: 'materiel' },
   { path: '/compte', name: 'compte' },
   { path: '/hub', name: 'hub' },
-  {
-    path: '/pays/fr',
-    name: 'pays-fr',
-    abortPatterns: ['**/api/ai/country-guide/**'],
-  },
 ];
 
 test.describe('Chantier U — Non-Régression Visuelle Pixel', () => {

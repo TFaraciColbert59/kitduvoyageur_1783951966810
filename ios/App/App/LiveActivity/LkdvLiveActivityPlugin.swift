@@ -121,7 +121,10 @@ public class LkdvLiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
             elevGainM: call.getDouble("elevGainM") ?? 0,
             movingS: call.getDouble("movingS") ?? 0,
             paused: call.getBool("paused") ?? false,
-            offRoute: call.getBool("offRoute") ?? false
+            offRoute: call.getBool("offRoute") ?? false,
+            nextManeuverInstruction: call.getString("nextManeuverInstruction"),
+            nextManeuverDistanceM: call.getDouble("nextManeuverDistanceM"),
+            offRouteLabel: call.getString("offRouteLabel")
         )
     }
 }

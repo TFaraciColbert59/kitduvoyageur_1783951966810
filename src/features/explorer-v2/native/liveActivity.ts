@@ -3,11 +3,11 @@
 import { Capacitor, registerPlugin } from '@capacitor/core';
 
 /**
- * Pont Live Activity (iOS 16.2+) — P7-20.
+ * Pont Live Activity (iOS 16.2+ & Android Material 3) — P7-20.
  *
- * Sur le web et sur Android, le pont est un **no-op** qui répond
- * `{ supported: false }` : aucun appel natif, aucune exception.
- * Le plugin Swift vit dans `ios/App/App/LiveActivity/`.
+ * Sur iOS : ActivityKit (Dynamic Island & Lock Screen).
+ * Sur Android : Service de notification continue avec chronomètre.
+ * Sur le Web : No-op gracieux.
  */
 
 export interface LiveActivityState {
@@ -16,6 +16,18 @@ export interface LiveActivityState {
   movingS: number;
   paused: boolean;
   offRoute: boolean;
+  /** Instruction du prochain virage (K4.12 / S1.06). */
+  nextManeuverInstruction?: string | null;
+  /** Nom d'icône du prochain virage (K4.12 / S1.06). */
+  nextManeuverIcon?: string | null;
+  /** Distance restante jusqu'au prochain virage (m). */
+  nextManeuverDistanceM?: number | null;
+  /** Libellé d'écart hors trace ou recalcul. */
+  offRouteLabel?: string | null;
+  /** Rythme formaté (allure ou vitesse) pour affichage lock screen. */
+  formattedRhythm?: string | null;
+  /** Identifiant stable de session locale. */
+  clientSessionId?: string | null;
 }
 
 export interface LiveActivityStart extends LiveActivityState {
@@ -32,9 +44,15 @@ interface LiveActivityPlugin {
 
 const native = registerPlugin<LiveActivityPlugin>('LkdvLiveActivity');
 
-/** Vrai si le natif iOS répond que les Live Activities sont autorisées. */
+function supportsLiveTracking(): boolean {
+  if (!Capacitor?.isNativePlatform?.()) return false;
+  const platform = Capacitor.getPlatform?.();
+  return platform === 'ios' || platform === 'android';
+}
+
+/** Vrai si le natif iOS/Android répond que le suivi en direct est supporté. */
 export async function isLiveActivitySupported(): Promise<boolean> {
-  if (Capacitor.getPlatform() !== 'ios') return false;
+  if (!supportsLiveTracking()) return false;
   try {
     const result = await native.isSupported();
     return result.supported === true;
@@ -44,7 +62,7 @@ export async function isLiveActivitySupported(): Promise<boolean> {
 }
 
 export async function startLiveActivity(payload: LiveActivityStart): Promise<boolean> {
-  if (Capacitor.getPlatform() !== 'ios') return false;
+  if (!supportsLiveTracking()) return false;
   try {
     const result = await native.start(payload);
     return result.supported === true;
@@ -54,16 +72,16 @@ export async function startLiveActivity(payload: LiveActivityStart): Promise<boo
 }
 
 export async function updateLiveActivity(state: LiveActivityState): Promise<void> {
-  if (Capacitor.getPlatform() !== 'ios') return;
+  if (!supportsLiveTracking()) return;
   try {
     await native.update(state);
   } catch {
-    /* une Live Activity ne doit jamais faire échouer le suivi */
+    /* un suivi live ne doit jamais faire échouer le suivi principal */
   }
 }
 
 export async function endLiveActivity(state: LiveActivityState): Promise<void> {
-  if (Capacitor.getPlatform() !== 'ios') return;
+  if (!supportsLiveTracking()) return;
   try {
     await native.end(state);
   } catch {
