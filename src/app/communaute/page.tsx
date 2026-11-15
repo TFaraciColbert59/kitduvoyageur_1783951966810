@@ -9,27 +9,17 @@ import { CommunityStoriesBar } from '@/components/communaute/CommunityStoriesBar
 import { CommunityFeedShell } from '@/features/community/feed/CommunityFeedShell';
 import { CommunityFeedTopBar } from '@/features/community/feed/CommunityFeedTopBar';
 import { CommunityFeed } from '@/features/community/feed/CommunityFeed';
-import type { CreateKind } from '@/features/community/create/CreateDrawer';
+import type { CreateKindV2 } from '@/features/community/v2/shared/types';
 import type { SectionTabId } from '@/features/community/sections/CommunityTabSelector';
 // Feuilles du chantier Communauté v2 (coque + contenu) : importées au niveau de
 // la page, seules surfaces qui les utilisent (chargées avec la route).
 import '@/styles/communaute-v2.css';
 import '@/styles/communaute-v2-shell.css';
 
-// Les deux tiroirs (formulaires de création + sections) ne s'affichent qu'à l'ouverture :
-// ils sont hors du JS initial de la page, montés à la première ouverture et préchargés au repos.
-// Fermés, ils ne rendaient déjà rien (`open` faux -> `null`) : aucun changement visuel.
-// Chantier Communauté v2 : les deux tiroirs refondus (Explorer + Création) sont
-// montés à la place des tiroirs v1 quand le drapeau est actif. À `false`, les
-// tiroirs actuels reviennent sans redéploiement de code (06-DEPLOIEMENT § 4).
-const COMMUNITY_V2_ENABLED = process.env.NEXT_PUBLIC_COMMUNAUTE_V2 === 'true';
-
-const loadCreateDrawer = () =>
-  import('@/features/community/create/CreateDrawer').then((m) => ({ default: m.CreateDrawer }));
-const loadSectionsDrawer = () =>
-  import('@/features/community/sections/CommunitySectionsDrawer').then((m) => ({
-    default: m.CommunitySectionsDrawer,
-  }));
+// Les deux tiroirs (Explorer + Création) ne s'affichent qu'à l'ouverture : ils sont
+// hors du JS initial de la page, montés à la première ouverture et préchargés au repos.
+// Les tiroirs v1 (CreateDrawer / CommunitySectionsDrawer) ont été retirés : la V2 est
+// désormais la seule surface de la Communauté (suites : migrations prod, J-08).
 const loadCreateSheetV2 = () =>
   import('@/features/community/v2/create/CreateSheetV2').then((m) => ({
     default: m.CreateSheetV2,
@@ -38,8 +28,6 @@ const loadExploreSheetV2 = () =>
   import('@/features/community/v2/explore/CommunityExploreSheetV2').then((m) => ({
     default: m.CommunityExploreSheetV2,
   }));
-const CreateDrawer = dynamic(loadCreateDrawer, { ssr: false });
-const CommunitySectionsDrawer = dynamic(loadSectionsDrawer, { ssr: false });
 const CreateSheetV2 = dynamic(loadCreateSheetV2, { ssr: false });
 const CommunityExploreSheetV2 = dynamic(loadExploreSheetV2, { ssr: false });
 
@@ -49,7 +37,7 @@ function CommunauteFeedContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [createOpen, setCreateOpen] = useState(false);
-  const [createKind, setCreateKind] = useState<CreateKind>('post');
+  const [createKind, setCreateKind] = useState<CreateKindV2>('post');
   const [feedRefreshKey, setFeedRefreshKey] = useState(0);
   const [storiesRefreshKey, setStoriesRefreshKey] = useState(0);
   const [sectionsOpen, setSectionsOpen] = useState(false);
@@ -73,13 +61,8 @@ function CommunauteFeedContent() {
   // Préchargement au repos : la première ouverture n'attend pas le réseau.
   useEffect(() => {
     const prefetch = () => {
-      if (COMMUNITY_V2_ENABLED) {
-        void loadCreateSheetV2().catch(() => {});
-        void loadExploreSheetV2().catch(() => {});
-      } else {
-        void loadCreateDrawer().catch(() => {});
-        void loadSectionsDrawer().catch(() => {});
-      }
+      void loadCreateSheetV2().catch(() => {});
+      void loadExploreSheetV2().catch(() => {});
     };
     if (typeof window.requestIdleCallback === 'function') {
       const id = window.requestIdleCallback(prefetch, { timeout: 5000 });
@@ -103,16 +86,9 @@ function CommunauteFeedContent() {
     router.push(anonymous ? '/inscription?next=/communaute' : '/connexion?next=/communaute');
   }, [router, toast, user?.id, user?.is_anonymous]);
 
-  const handleCreated = useCallback((kind: CreateKind) => {
-    setCreateOpen(false);
-    if (kind === 'story') setStoriesRefreshKey((key) => key + 1);
-    else setFeedRefreshKey((key) => key + 1);
-    toast('Création publiée.', 'success');
-  }, [toast]);
-
   // La V2 affiche sa propre île de confirmation (« … publié(e) » + Voir/Partager)
   // puis ferme le tiroir : la page ne fait que rafraîchir le fil ou les stories.
-  const handleCreatedV2 = useCallback((kind: CreateKind) => {
+  const handleCreatedV2 = useCallback((kind: CreateKindV2) => {
     setCreateOpen(false);
     setCreatePrefill(null);
     if (kind === 'story') setStoriesRefreshKey((key) => key + 1);
@@ -120,7 +96,7 @@ function CommunauteFeedContent() {
   }, []);
 
   const handleCreateRequestedV2 = useCallback(
-    (kind: CreateKind, prefill?: Record<string, unknown>) => {
+    (kind: CreateKindV2, prefill?: Record<string, unknown>) => {
       setCreateKind(kind);
       setCreatePrefill(prefill ?? null);
       setSectionsOpen(false);
@@ -183,55 +159,33 @@ function CommunauteFeedContent() {
         />
       </CommunityFeedShell>
 
-      {(createOpen || createMounted) &&
-        (COMMUNITY_V2_ENABLED ? (
-          <CreateSheetV2
-            open={createOpen}
-            initialKind={createKind}
-            onClose={() => setCreateOpen(false)}
-            user={user}
-            onCreated={handleCreatedV2}
-            onRequireAuth={requireAuth}
-            initialPrefill={createPrefill}
-            onCreateRequested={handleCreateRequestedV2}
-          />
-        ) : (
-          <CreateDrawer
-            open={createOpen}
-            initialKind={createKind}
-            onClose={() => setCreateOpen(false)}
-            user={user}
-            onCreated={handleCreated}
-          />
-        ))}
+      {(createOpen || createMounted) && (
+        <CreateSheetV2
+          open={createOpen}
+          initialKind={createKind}
+          onClose={() => setCreateOpen(false)}
+          user={user}
+          onCreated={handleCreatedV2}
+          onRequireAuth={requireAuth}
+          initialPrefill={createPrefill}
+          onCreateRequested={handleCreateRequestedV2}
+        />
+      )}
 
-      {(sectionsOpen || sectionsMounted) &&
-        (COMMUNITY_V2_ENABLED ? (
-          <CommunityExploreSheetV2
-            open={sectionsOpen}
-            initialTab={sectionsTab}
-            initialSearch={sectionsSearch}
-            user={user}
-            onClose={() => {
-              setSectionsOpen(false);
-              setSectionsSearch(false);
-            }}
-            onRequireAuth={requireAuth}
-            onCreateRequested={handleCreateRequestedV2}
-          />
-        ) : (
-          <CommunitySectionsDrawer
-            open={sectionsOpen}
-            initialTab={sectionsTab}
-            initialSearch={sectionsSearch}
-            user={user}
-            onClose={() => {
-              setSectionsOpen(false);
-              setSectionsSearch(false);
-            }}
-            onRequireAuth={requireAuth}
-          />
-        ))}
+      {(sectionsOpen || sectionsMounted) && (
+        <CommunityExploreSheetV2
+          open={sectionsOpen}
+          initialTab={sectionsTab}
+          initialSearch={sectionsSearch}
+          user={user}
+          onClose={() => {
+            setSectionsOpen(false);
+            setSectionsSearch(false);
+          }}
+          onRequireAuth={requireAuth}
+          onCreateRequested={handleCreateRequestedV2}
+        />
+      )}
     </>
   );
 }
