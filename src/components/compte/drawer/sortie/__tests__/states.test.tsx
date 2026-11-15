@@ -125,4 +125,29 @@ describe('traceUnavailableState — états honnêtes', () => {
     expect(text).toContain('+600 m');
     expect(text).not.toContain('min/km');
   });
+
+  it('S3.15 — propose la coloration pente/vitesse/altitude et désactive les métriques masquées', () => {
+    render(
+      <OutingTrace
+        detail={detail({
+          metricVisibility: SHARED_SUMMARY_METRICS,
+          metricsMasked: true,
+          traceSegments: [
+            [
+              { lat: 45.8, lng: 6.8, elevationM: 1000, timestamp: '2026-11-01T08:00:00Z' },
+              { lat: 45.81, lng: 6.8, elevationM: 1150, timestamp: '2026-11-01T08:05:00Z' },
+            ],
+          ],
+        })}
+        onExport={() => {}}
+      />,
+    );
+
+    const group = screen.getByRole('radiogroup', { name: 'Coloration du tracé (S3.15)' });
+    expect(group).toBeTruthy();
+    const slopeBtn = screen.getByRole('button', { name: 'Pente' });
+    const paceBtn = screen.getByRole('button', { name: 'Vitesse / Allure (masqué)' });
+    expect((slopeBtn as HTMLButtonElement).disabled).toBe(false);
+    expect((paceBtn as HTMLButtonElement).disabled).toBe(true);
+  });
 });

@@ -16,6 +16,7 @@ export interface SportActivityFeedProps {
   onComment?: (item: SportActivityCardVM) => void;
   onShare?: (item: SportActivityCardVM) => void;
   onReport?: (item: SportActivityCardVM) => void;
+  onReplay?: (item: SportActivityCardVM) => void;
   onOpenPreferences?: () => void;
 }
 
@@ -33,6 +34,7 @@ export function SportActivityFeed({
   onComment,
   onShare,
   onReport,
+  onReplay,
   onOpenPreferences,
 }: SportActivityFeedProps) {
   const filtered = React.useMemo(
@@ -84,6 +86,7 @@ export function SportActivityFeed({
           onComment={onComment}
           onShare={onShare}
           onReport={onReport}
+          onReplay={onReplay}
         />
       ))}
     </div>

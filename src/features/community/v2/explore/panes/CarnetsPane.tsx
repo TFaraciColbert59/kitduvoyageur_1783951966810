@@ -7,6 +7,7 @@ import { formatCountFr } from '../../shared/format';
 import { CarnetTileV2 } from '../tiles/CarnetTileV2';
 import { ExploreEmpty, ExploreError, ExploreGeoPrompt, ExploreListFoot, ExploreOfflineBanner, ExploreSkeleton } from '../ExploreStates';
 import { usePaneNearBottom, usePaneScrollMemory } from '../usePaneScrollMemory';
+import { C03DiscoverSection } from './C03DiscoverSection';
 
 export interface CarnetsPaneProps {
   feed: CursorFeedResult<CarnetCardVM>;
@@ -105,6 +106,7 @@ export function CarnetsPane({
     }
     return (
       <div ref={scrollRef} className="lkdv-cv2x-pane">
+        {filter === 'discover' ? <C03DiscoverSection /> : null}
         <ExploreEmpty
           icon="book"
           illustration={filter === 'discover' ? 'mountain' : undefined}
@@ -129,6 +131,7 @@ export function CarnetsPane({
   return (
     <div ref={scrollRef} className="lkdv-cv2x-pane">
       {!online ? <ExploreOfflineBanner /> : null}
+      {filter === 'discover' ? <C03DiscoverSection /> : null}
       {featured ? (
         <div className="lkdv-cv2x-featured">
           <CarnetTileV2

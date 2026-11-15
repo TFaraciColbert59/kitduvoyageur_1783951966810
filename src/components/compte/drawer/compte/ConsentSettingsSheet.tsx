@@ -4,10 +4,12 @@ import React, { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Activity,
+  Flame,
   HeartPulse,
   Loader2,
   MapPin,
   Plug,
+  Route,
   ShieldCheck,
   Smartphone,
   Users,
@@ -29,11 +31,13 @@ import {
 } from '@/components/compte/sensors/consentClient';
 import { HealthConsentPanel } from '@/components/compte/sensors/HealthConsentPanel';
 import type { ConnectorCatalogResponse } from '@/lib/connectors/types';
+import type { AggregateContributionPreferences } from '@/features/heatmaps/types';
 import { OverlaySheet } from '../../overlay/OverlaySheet';
 import { DrawerError, DrawerSkeleton } from '../shell/DrawerShell';
 import { fetchJson } from './shared';
 
 const QUERY_KEY = ['compte', 'consents'] as const;
+const HEATMAP_PREFS_KEY = ['compte', 'heatmap-preferences'] as const;
 
 const USAGE_ICONS: Record<ConsentUsageState['id'], React.ReactNode> = {
   personal_performance: <Activity size={17} aria-hidden="true" />,
@@ -167,6 +171,12 @@ export function ConsentSettingsSheet({ onClose }: { onClose: () => void }) {
     retry: false,
   });
 
+  const heatmapQuery = useQuery({
+    queryKey: HEATMAP_PREFS_KEY,
+    queryFn: () => fetchJson<{ preferences: AggregateContributionPreferences }>('/api/heatmaps/preferences'),
+    staleTime: 0,
+  });
+
   useEffect(() => {
     let active = true;
     const transport = createConsentTransport();
@@ -259,6 +269,76 @@ export function ConsentSettingsSheet({ onClose }: { onClose: () => void }) {
     }
   };
 
+  const patchHeatmapPref = async (
+    patch: {
+      globalHeatmapOptOut?: boolean;
+      globalHeatmap?: boolean;
+      routeRecommendations?: boolean;
+      mobilityAggregates?: boolean;
+    },
+    label: string
+  ) => {
+    if (pending) return;
+    setPending(`hm:${label}`);
+    setStatus(null);
+    try {
+      const next = await fetchJson<{ preferences: AggregateContributionPreferences }>(
+        '/api/heatmaps/preferences',
+        {
+          method: 'PATCH',
+          body: JSON.stringify(patch),
+        }
+      );
+      queryClient.setQueryData(HEATMAP_PREFS_KEY, next);
+      setStatus({
+        kind: 'success',
+        message: `${label} mis à jour. Les caches d’agrégats sont recalculés selon ton choix.`,
+      });
+    } catch (error) {
+      setStatus({
+        kind: 'error',
+        message:
+          error instanceof Error && error.message
+            ? `Préférence heatmap non enregistrée : ${error.message}`
+            : 'Préférence heatmap non enregistrée.',
+      });
+    } finally {
+      setPending(null);
+    }
+  };
+
+  const triggerGlobalOptOut = async (revokeAllAggregates: boolean) => {
+    if (pending) return;
+    setPending('hm:opt-out');
+    setStatus(null);
+    try {
+      const next = await fetchJson<{
+        preferences: AggregateContributionPreferences;
+        revokedAt: string;
+      }>('/api/heatmaps/opt-out', {
+        method: 'POST',
+        body: JSON.stringify({ revokeAllAggregates }),
+      });
+      queryClient.setQueryData(HEATMAP_PREFS_KEY, { preferences: next.preferences });
+      setStatus({
+        kind: 'success',
+        message: revokeAllAggregates
+          ? 'Opt-out strict appliqué : contribution heatmap et agrégats retirés.'
+          : 'Opt-out appliqué : tes sorties sont retirées de la heatmap mondiale.',
+      });
+    } catch (error) {
+      setStatus({
+        kind: 'error',
+        message:
+          error instanceof Error && error.message
+            ? `Opt-out impossible : ${error.message}`
+            : 'Opt-out impossible pour le moment.',
+      });
+    } finally {
+      setPending(null);
+    }
+  };
+
   return (
     <OverlaySheet
       title="Appareils et services"
@@ -323,6 +403,152 @@ export function ConsentSettingsSheet({ onClose }: { onClose: () => void }) {
                 disabled={healthPending}
                 onToggle={(scope, granted) => void toggleHealthScope(scope, granted)}
               />
+            </section>
+            <section className="lkdv-consent-section" aria-labelledby="lkdv-consent-heatmaps">
+              <header className="lkdv-consent-section-head">
+                <h3 id="lkdv-consent-heatmaps">Cartes de chaleur et agrégats</h3>
+                <small>
+                  {heatmapQuery.data?.preferences.globalHeatmapOptOut
+                    ? 'Opt-out actif'
+                    : 'Contrôle par finalité'}
+                </small>
+              </header>
+              {heatmapQuery.isLoading ? <DrawerSkeleton /> : null}
+              {heatmapQuery.isError ? (
+                <p className="lkdv-consent-status is-error" role="alert">
+                  Préférences d’agrégation indisponibles pour le moment.{' '}
+                  <button
+                    type="button"
+                    style={{ textDecoration: 'underline', background: 'none', border: 0, cursor: 'pointer', color: 'inherit', fontWeight: 700 }}
+                    onClick={() => void heatmapQuery.refetch()}
+                  >
+                    Réessayer
+                  </button>
+                </p>
+              ) : null}
+              {heatmapQuery.data ? (() => {
+                const prefs = heatmapQuery.data.preferences;
+                const revokedDate = formatDate(prefs.revokedAt ?? null);
+                const aggregateItems: Array<{
+                  id: 'globalHeatmap' | 'routeRecommendations' | 'mobilityAggregates';
+                  label: string;
+                  summary: string;
+                  detail: string;
+                  checked: boolean;
+                  icon: React.ReactNode;
+                  onToggle: () => void;
+                }> = [
+                  {
+                    id: 'globalHeatmap',
+                    label: 'Heatmap mondiale et communautaire',
+                    summary: prefs.globalHeatmapOptOut
+                      ? `Opt-out actif${revokedDate ? ` (${revokedDate})` : ''}`
+                      : prefs.globalHeatmap
+                        ? 'Contribution active'
+                        : 'Désactivée',
+                    detail:
+                      'Autorise tes sorties publiques sans zone privée à alimenter les tuiles agrégées (seuil k-anonymat).',
+                    checked: !prefs.globalHeatmapOptOut && prefs.globalHeatmap,
+                    icon: <Flame size={17} aria-hidden="true" />,
+                    onToggle: () => {
+                      const enable = prefs.globalHeatmapOptOut || !prefs.globalHeatmap;
+                      void patchHeatmapPref(
+                        enable
+                          ? { globalHeatmapOptOut: false, globalHeatmap: true }
+                          : { globalHeatmapOptOut: true, globalHeatmap: false },
+                        'Heatmap mondiale'
+                      );
+                    },
+                  },
+                  {
+                    id: 'routeRecommendations',
+                    label: 'Recommandations de parcours',
+                    summary: prefs.routeRecommendations ? 'Contribution active' : 'Désactivée',
+                    detail:
+                      'Utilise tes passages agrégés pour mesurer la fréquentation générale des itinéraires publics.',
+                    checked: prefs.routeRecommendations,
+                    icon: <Route size={17} aria-hidden="true" />,
+                    onToggle: () =>
+                      void patchHeatmapPref(
+                        { routeRecommendations: !prefs.routeRecommendations },
+                        'Recommandations de parcours'
+                      ),
+                  },
+                  {
+                    id: 'mobilityAggregates',
+                    label: 'Données de mobilité agrégées',
+                    summary: prefs.mobilityAggregates ? 'Contribution active' : 'Désactivée',
+                    detail:
+                      'Partage statistique strictement anonyme sur l’état et la fréquentation des segments terrain.',
+                    checked: prefs.mobilityAggregates,
+                    icon: <Users size={17} aria-hidden="true" />,
+                    onToggle: () =>
+                      void patchHeatmapPref(
+                        { mobilityAggregates: !prefs.mobilityAggregates },
+                        'Données de mobilité agrégées'
+                      ),
+                  },
+                ];
+                return (
+                  <div className="lkdv-consent-list">
+                    {aggregateItems.map((item) => {
+                      const busyItem = pending === `hm:${item.label}` || pending === 'hm:opt-out';
+                      return (
+                        <article
+                          key={item.id}
+                          className={`lkdv-consent-usage${item.checked ? ' is-on' : ''}`}
+                        >
+                          <span className="lkdv-consent-ico" aria-hidden="true">
+                            {item.icon}
+                          </span>
+                          <div className="lkdv-consent-copy">
+                            <div className="lkdv-consent-line">
+                              <b>{item.label}</b>
+                              {item.id === 'globalHeatmap' && prefs.globalHeatmapOptOut ? (
+                                <span className="lkdv-consent-chip is-off">Opt-out</span>
+                              ) : null}
+                            </div>
+                            <small>{item.summary}</small>
+                            <p>{item.detail}</p>
+                          </div>
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-checked={item.checked}
+                            aria-busy={busyItem || undefined}
+                            aria-label={`${item.checked ? 'Désactiver' : 'Activer'} : ${item.label}`}
+                            className={`lkdv-compte-switch${item.checked ? ' on' : ''}`}
+                            disabled={Boolean(pending)}
+                            onClick={item.onToggle}
+                          >
+                            <i aria-hidden="true" />
+                          </button>
+                        </article>
+                      );
+                    })}
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', paddingTop: 2 }}>
+                      <button
+                        type="button"
+                        className="lkdv-consent-chip is-off"
+                        style={{ height: 28, padding: '0 10px', border: 0, cursor: 'pointer', fontSize: 11 }}
+                        disabled={Boolean(pending)}
+                        onClick={() => void triggerGlobalOptOut(false)}
+                      >
+                        Opt-out heatmap mondiale
+                      </button>
+                      <button
+                        type="button"
+                        className="lkdv-consent-chip is-off"
+                        style={{ height: 28, padding: '0 10px', border: 0, cursor: 'pointer', fontSize: 11 }}
+                        disabled={Boolean(pending)}
+                        onClick={() => void triggerGlobalOptOut(true)}
+                      >
+                        Tout retirer des agrégats
+                      </button>
+                    </div>
+                  </div>
+                );
+              })() : null}
             </section>
 
             <section className="lkdv-consent-section" aria-labelledby="lkdv-consent-providers">

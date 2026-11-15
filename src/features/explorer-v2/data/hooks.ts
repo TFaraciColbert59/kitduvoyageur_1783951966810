@@ -569,3 +569,225 @@ export function useSystemTheme(): 'light' | 'dark' {
   }, []);
   return theme;
 }
+
+export interface CommunityHeatmapApiResponse {
+  layer: {
+    cells: Array<{
+      cellId: string;
+      cellCenterLat: number;
+      cellCenterLng: number;
+      intensity: number;
+      band: string;
+      distinctContributorCount: number;
+      passageCount: number;
+    }>;
+    suppressedCellCount: number;
+    eligibleActivityCount: number;
+    geojson: GeoCollection;
+  };
+}
+
+export function useCommunityHeatmap(
+  sport: string,
+  window: 'global' | 'last_7_days' | 'nocturnal',
+  enabled: boolean,
+) {
+  return useQuery({
+    queryKey: ['xp', 'heatmap-community', sport, window],
+    enabled,
+    queryFn: async () => {
+      const params = new URLSearchParams({ sport, window });
+      const res = await fetch(`/api/heatmaps/community?${params.toString()}`, {
+        headers: { Accept: 'application/json' },
+      });
+      if (!res.ok) throw new Error(`community_heatmap_${res.status}`);
+      return (await res.json()) as CommunityHeatmapApiResponse;
+    },
+    staleTime: 60 * 1000,
+    retry: 1,
+  });
+}
+
+export interface PersonalHeatmapApiResponse {
+  layer: {
+    cells: Array<{
+      cellId: string;
+      cellCenterLat: number;
+      cellCenterLng: number;
+      intensity: number;
+      band: string;
+      activityCount: number;
+    }>;
+    activityCount: number;
+    geojson: GeoCollection;
+  };
+  comparison?: {
+    deltaCells?: number;
+    deltaActivities?: number;
+  } | null;
+}
+
+export class UnauthorizedHeatmapError extends Error {
+  constructor() {
+    super('unauthorized');
+    this.name = 'UnauthorizedHeatmapError';
+  }
+}
+
+export function usePersonalHeatmap(
+  sport: string,
+  period: string,
+  comparePeriod: string | null,
+  enabled: boolean,
+) {
+  return useQuery({
+    queryKey: ['xp', 'heatmap-personal', sport, period, comparePeriod ?? 'none'],
+    enabled,
+    queryFn: async () => {
+      const params = new URLSearchParams({ sport, period });
+      if (comparePeriod) params.set('comparePeriod', comparePeriod);
+      const res = await fetch(`/api/heatmaps/personal?${params.toString()}`, {
+        headers: { Accept: 'application/json' },
+      });
+      if (res.status === 401 || res.status === 403) {
+        throw new UnauthorizedHeatmapError();
+      }
+      if (!res.ok) throw new Error(`personal_heatmap_${res.status}`);
+      return (await res.json()) as PersonalHeatmapApiResponse;
+    },
+    staleTime: 60 * 1000,
+    retry: false,
+  });
+}
+
+export interface BikePoisApiResponse {
+  status: 'ok' | 'zoom_required' | 'unavailable';
+  items: Array<{
+    id: string;
+    category: 'bike_shop' | 'bike_repair' | 'ebike_charging';
+    name: string;
+    lat: number;
+    lon: number;
+    openingHours?: string | null;
+  }>;
+  provider?: string | null;
+}
+
+export function useBikePois(viewport: SearchViewport | null, enabled: boolean) {
+  const key = viewport
+    ? `${viewport.minLat.toFixed(2)},${viewport.minLng.toFixed(2)},${viewport.maxLat.toFixed(2)},${viewport.maxLng.toFixed(2)}`
+    : 'none';
+  return useQuery({
+    queryKey: ['xp', 'bike-pois', key],
+    enabled: enabled && viewport !== null,
+    queryFn: async () => {
+      if (!viewport) return { status: 'zoom_required' as const, items: [] };
+      const res = await fetch(`/api/explorer/v2/bike-pois?${viewportQueryParams(viewport)}`, {
+        headers: { Accept: 'application/json' },
+      });
+      if (!res.ok) return { status: 'unavailable' as const, items: [] };
+      return (await res.json()) as BikePoisApiResponse;
+    },
+    staleTime: 5 * 60 * 1000,
+    retry: 0,
+  });
+}
+
+export interface FiresApiResponse {
+  status: string;
+  source: { name: string; retrievedAt?: string; license?: string } | null;
+  incidents: Array<{
+    id: string;
+    kind: string;
+    geometry: { type: 'Point' | 'Polygon'; coordinates: unknown };
+    label: string;
+    observedAt?: string | null;
+  }>;
+  reason?: string;
+}
+
+export function useFireIncidents(viewport: SearchViewport | null, enabled: boolean) {
+  const key = viewport
+    ? `${viewport.minLat.toFixed(1)},${viewport.minLng.toFixed(1)},${viewport.maxLat.toFixed(1)},${viewport.maxLng.toFixed(1)}`
+    : 'none';
+  return useQuery({
+    queryKey: ['xp', 'fires', key],
+    enabled: enabled && viewport !== null,
+    queryFn: async () => {
+      if (!viewport) return { status: 'unavailable', source: null, incidents: [] } as FiresApiResponse;
+      const res = await fetch(`/api/explorer/v2/fires?${viewportQueryParams(viewport)}`, {
+        headers: { Accept: 'application/json' },
+      });
+      if (!res.ok) return { status: 'unavailable', source: null, incidents: [] } as FiresApiResponse;
+      return (await res.json()) as FiresApiResponse;
+    },
+    staleTime: 5 * 60 * 1000,
+    retry: 0,
+  });
+}
+
+export interface SurfacesApiResponse {
+  status: string;
+  features: Array<{
+    id: string;
+    name: string | null;
+    surface: string | null;
+    wayType: string | null;
+    category: string;
+    coordinates: Array<[number, number]>;
+  }>;
+  analysis?: {
+    status: string;
+    shares: Array<{ category: string; lengthM: number; shareOfKnown: number; shareOfRoute: number }>;
+  } | null;
+}
+
+export function useRouteSurfaces(viewport: SearchViewport | null, enabled: boolean) {
+  const key = viewport
+    ? `${viewport.minLat.toFixed(2)},${viewport.minLng.toFixed(2)},${viewport.maxLat.toFixed(2)},${viewport.maxLng.toFixed(2)}`
+    : 'none';
+  return useQuery({
+    queryKey: ['xp', 'route-surfaces', key],
+    enabled: enabled && viewport !== null,
+    queryFn: async () => {
+      if (!viewport) return { status: 'zoom_required', features: [], analysis: null } as SurfacesApiResponse;
+      const res = await fetch(`/api/explorer/v2/surfaces?${viewportQueryParams(viewport)}`, {
+        headers: { Accept: 'application/json' },
+      });
+      if (!res.ok) return { status: 'unavailable', features: [], analysis: null } as SurfacesApiResponse;
+      return (await res.json()) as SurfacesApiResponse;
+    },
+    staleTime: 5 * 60 * 1000,
+    retry: 0,
+  });
+}
+
+export interface ExplorerHighlightsResponse {
+  items: Array<{
+    id: string;
+    title: string;
+    description: string;
+    kind: string;
+    targetId: string;
+    location: { lat: number; lng: number } | null;
+    score: number;
+  }>;
+}
+
+export function useRouteHighlights(routeId: string | null, enabled: boolean) {
+  return useQuery({
+    queryKey: ['xp', 'highlights', routeId ?? 'all'],
+    enabled,
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (routeId) params.set('targetId', routeId);
+      const res = await fetch(`/api/highlights?${params.toString()}`, {
+        headers: { Accept: 'application/json' },
+      });
+      if (!res.ok) return { items: [] } as ExplorerHighlightsResponse;
+      return (await res.json()) as ExplorerHighlightsResponse;
+    },
+    staleTime: 60 * 1000,
+    retry: 1,
+  });
+}

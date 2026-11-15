@@ -5,11 +5,14 @@ import { create } from 'zustand';
 import type {
   ActivityState,
   CameraIntent,
+  CapturedLiveMedia,
+  CommunityHeatmapState,
   Detent,
   ExplorerState,
   Level,
   MapBaseStyle,
   PendingStart,
+  PersonalHeatmapState,
   PoiKind,
   Selection,
   SheetKind,
@@ -19,6 +22,12 @@ import type {
   ToastMessage,
   TrailRouteSnapshot,
 } from './types';
+import {
+  loadSavedPlaces,
+  toggleSavedPlaceInList,
+  writeSavedPlaces,
+  type SavedPlace,
+} from '../savedPlaces';
 import { LEVEL_ZOOM, SCENES, type SceneName } from './scenes';
 import { createSplitsState } from '../activity/splits';
 import { newClientSessionId } from '../activity/localSession';
@@ -81,6 +90,12 @@ interface ExplorerActions {
   setUnits: (units: 'metric' | 'imperial') => void;
   setMapBaseStyle: (style: MapBaseStyle) => void;
   toggleLayer: (layerId: string) => void;
+  setHeatmapSubDrawer: (sub: 'community' | 'personal' | null) => void;
+  setCommunityHeatmap: (patch: Partial<CommunityHeatmapState>) => void;
+  setPersonalHeatmap: (patch: Partial<PersonalHeatmapState>) => void;
+  toggleSavedPlace: (place: Omit<SavedPlace, 'savedAt'>) => boolean;
+  hydrateSavedPlaces: (userKey?: string | null) => void;
+  addCapturedMedia: (item: CapturedLiveMedia) => void;
   /** Réglage local de préparation : active ou coupe la pause automatique. */
   setAutoPauseEnabled: (enabled: boolean) => void;
   /**
@@ -137,8 +152,23 @@ const initialState: ExplorerState = {
   searchRoutes: [],
   routeSuggestions: [],
   mapBaseStyle: 'relief',
+  heatmapSubDrawer: null,
+  communityHeatmap: {
+    enabled: false,
+    sport: 'all',
+    window: 'global',
+  },
+  personalHeatmap: {
+    enabled: false,
+    sport: 'all',
+    period: 'all_time',
+    comparePeriod: null,
+  },
+  savedPlaces: [],
   layerVisibility: {
     routes: true,
+    walkRoutes: true,
+    bikeRoutes: true,
     water: true,
     refuges: true,
     summits: true,
@@ -146,6 +176,14 @@ const initialState: ExplorerState = {
     dangers: true,
     snow: true,
     slope: false,
+    surfaceLayer: false,
+    hillshade: true,
+    terrain3d: true,
+    contours: false,
+    bikePois: false,
+    savedPlaces: false,
+    fires: false,
+    highlights: true,
     distanceMarkers: true,
   },
 };
@@ -522,6 +560,54 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
         [layerId]: state.layerVisibility?.[layerId] === false,
       },
     })),
+
+  setHeatmapSubDrawer: (heatmapSubDrawer) => set({ heatmapSubDrawer }),
+
+  setCommunityHeatmap: (patch) =>
+    set((state) => ({
+      communityHeatmap: {
+        ...(state.communityHeatmap ?? { enabled: false, sport: 'all', window: 'global' }),
+        ...patch,
+      },
+    })),
+
+  setPersonalHeatmap: (patch) =>
+    set((state) => ({
+      personalHeatmap: {
+        ...(state.personalHeatmap ?? {
+          enabled: false,
+          sport: 'all',
+          period: 'all_time',
+          comparePeriod: null,
+        }),
+        ...patch,
+      },
+    })),
+
+  toggleSavedPlace: (place) => {
+    const current = get().savedPlaces ?? loadSavedPlaces(null);
+    const { list, saved } = toggleSavedPlaceInList(current, place);
+    writeSavedPlaces(list, null);
+    set({ savedPlaces: list });
+    emit('saved-place-toggle', { id: place.id, saved });
+    return saved;
+  },
+
+  hydrateSavedPlaces: (userKey) => {
+    set({ savedPlaces: loadSavedPlaces(userKey ?? null) });
+  },
+
+  addCapturedMedia: (item) =>
+    set((state) => {
+      if (!state.activity) return {};
+      const existing = state.activity.capturedMedia ?? [];
+      return {
+        activity: {
+          ...state.activity,
+          capturedMedia: [item, ...existing],
+        },
+      };
+    }),
 
   setAutoPauseEnabled: (enabled) => {
     set({ autoPauseEnabled: enabled });

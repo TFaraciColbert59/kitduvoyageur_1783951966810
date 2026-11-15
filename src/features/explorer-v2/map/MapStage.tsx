@@ -86,6 +86,20 @@ export interface MapStageProps {
   distanceMarkers?: DistanceMarker[] | null;
   /** Calques de données : sentiers, eau, refuges, etc. */
   layerVisibility?: Record<string, boolean>;
+  /** Couche GeoJSON de fréquentation collective (C02). */
+  communityHeatmapGeo?: GeoCollection | null;
+  /** Couche GeoJSON de heatmap personnelle privée (C02). */
+  personalHeatmapGeo?: GeoCollection | null;
+  /** Couche GeoJSON POI vélo OSM (K3.10). */
+  bikePoisGeo?: GeoCollection | null;
+  /** Couche GeoJSON des lieux favoris locaux (K3.11). */
+  savedPlacesGeo?: GeoCollection | null;
+  /** Couche GeoJSON des feux actifs (K3.14). */
+  firesGeo?: GeoCollection | null;
+  /** Couche GeoJSON des revêtements de surface (K3.04). */
+  surfacesGeo?: GeoCollection | null;
+  /** Couche GeoJSON des highlights (K5.13). */
+  highlightsGeo?: GeoCollection | null;
 }
 
 const TERRAIN_SOURCE = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
@@ -147,6 +161,13 @@ export default function MapStage({
   slopeLayer = null,
   distanceMarkers = null,
   layerVisibility,
+  communityHeatmapGeo = null,
+  personalHeatmapGeo = null,
+  bikePoisGeo = null,
+  savedPlacesGeo = null,
+  firesGeo = null,
+  surfacesGeo = null,
+  highlightsGeo = null,
 }: MapStageProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   // Double garde : même si un appelant transmet une source non vérifiée, elle
@@ -317,6 +338,39 @@ export default function MapStage({
             attribution: '© Esri · Earthstar Geographics',
           });
         }
+        const cycleKey = process.env.NEXT_PUBLIC_THUNDERFOREST_API_KEY?.trim();
+        if (cycleKey && !map.getSource('xp-cycle')) {
+          map.addSource('xp-cycle', {
+            type: 'raster',
+            tiles: [
+              `https://tile.thunderforest.com/cycle/{z}/{x}/{y}.png?apikey=${encodeURIComponent(cycleKey)}`,
+            ],
+            tileSize: 256,
+            maxzoom: 19,
+            attribution: '© OpenCycleMap · © OpenStreetMap contributors',
+          });
+        }
+        if (!map.getSource('xp-community-heatmap')) {
+          map.addSource('xp-community-heatmap', { type: 'geojson', data: EMPTY as never });
+        }
+        if (!map.getSource('xp-personal-heatmap')) {
+          map.addSource('xp-personal-heatmap', { type: 'geojson', data: EMPTY as never });
+        }
+        if (!map.getSource('xp-surfaces')) {
+          map.addSource('xp-surfaces', { type: 'geojson', data: EMPTY as never });
+        }
+        if (!map.getSource('xp-bike-pois')) {
+          map.addSource('xp-bike-pois', { type: 'geojson', data: EMPTY as never });
+        }
+        if (!map.getSource('xp-saved-places')) {
+          map.addSource('xp-saved-places', { type: 'geojson', data: EMPTY as never });
+        }
+        if (!map.getSource('xp-fires')) {
+          map.addSource('xp-fires', { type: 'geojson', data: EMPTY as never });
+        }
+        if (!map.getSource('xp-highlights')) {
+          map.addSource('xp-highlights', { type: 'geojson', data: EMPTY as never });
+        }
         if (!map.getLayer('xp-countries-fill')) {
           map.addLayer({
             id: 'xp-countries-fill',
@@ -421,6 +475,168 @@ export default function MapStage({
               'hillshade-highlight-color': '#FFFFFF',
               'hillshade-accent-color': '#5B7F55',
               'hillshade-exaggeration': 0.35,
+            },
+          });
+        }
+        if (map.getSource('xp-cycle') && !map.getLayer('xp-cycle-layer')) {
+          map.addLayer(
+            {
+              id: 'xp-cycle-layer',
+              type: 'raster',
+              source: 'xp-cycle',
+              layout: { visibility: 'none' },
+              paint: { 'raster-opacity': 0.96 },
+            },
+            'xp-countries-fill',
+          );
+        }
+        if (!map.getLayer('xp-surfaces-line')) {
+          map.addLayer({
+            id: 'xp-surfaces-line',
+            type: 'line',
+            source: 'xp-surfaces',
+            layout: { visibility: 'none', 'line-cap': 'round', 'line-join': 'round' },
+            paint: {
+              'line-color': [
+                'match',
+                ['get', 'surfaceClass'],
+                'paved',
+                '#475569',
+                'unpaved',
+                '#d97706',
+                'natural',
+                '#92400e',
+                'steps',
+                '#7c3aed',
+                'ferry',
+                '#0284c7',
+                '#94a3b8',
+              ],
+              'line-width': 3.5,
+              'line-opacity': 0.88,
+            },
+          });
+        }
+        if (!map.getLayer('xp-community-heatmap-layer')) {
+          map.addLayer({
+            id: 'xp-community-heatmap-layer',
+            type: 'heatmap',
+            source: 'xp-community-heatmap',
+            layout: { visibility: 'none' },
+            paint: {
+              'heatmap-weight': ['coalesce', ['get', 'intensity'], 0.4],
+              'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 4, 0.8, 13, 2],
+              'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 4, 10, 14, 24],
+              'heatmap-opacity': 0.72,
+              'heatmap-color': [
+                'interpolate',
+                ['linear'],
+                ['heatmap-density'],
+                0,
+                'rgba(16, 185, 129, 0)',
+                0.25,
+                '#6ee7b7',
+                0.55,
+                '#f59e0b',
+                0.85,
+                '#ef4444',
+                1,
+                '#991b1b',
+              ],
+            },
+          });
+        }
+        if (!map.getLayer('xp-personal-heatmap-layer')) {
+          map.addLayer({
+            id: 'xp-personal-heatmap-layer',
+            type: 'heatmap',
+            source: 'xp-personal-heatmap',
+            layout: { visibility: 'none' },
+            paint: {
+              'heatmap-weight': ['coalesce', ['get', 'intensity'], 0.5],
+              'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 4, 0.9, 13, 2.2],
+              'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 4, 12, 14, 26],
+              'heatmap-opacity': 0.78,
+              'heatmap-color': [
+                'interpolate',
+                ['linear'],
+                ['heatmap-density'],
+                0,
+                'rgba(20, 184, 166, 0)',
+                0.3,
+                '#2dd4bf',
+                0.65,
+                '#0284c7',
+                1,
+                '#4338ca',
+              ],
+            },
+          });
+        }
+        if (!map.getLayer('xp-bike-pois-layer')) {
+          map.addLayer({
+            id: 'xp-bike-pois-layer',
+            type: 'circle',
+            source: 'xp-bike-pois',
+            layout: { visibility: 'none' },
+            paint: {
+              'circle-radius': 6,
+              'circle-color': [
+                'match',
+                ['get', 'category'],
+                'bike_shop',
+                '#0f766e',
+                'bike_repair',
+                '#d97706',
+                'ebike_charging',
+                '#16a34a',
+                '#0f766e',
+              ],
+              'circle-stroke-color': '#ffffff',
+              'circle-stroke-width': 1.8,
+            },
+          });
+        }
+        if (!map.getLayer('xp-saved-places-layer')) {
+          map.addLayer({
+            id: 'xp-saved-places-layer',
+            type: 'circle',
+            source: 'xp-saved-places',
+            layout: { visibility: 'none' },
+            paint: {
+              'circle-radius': 6.5,
+              'circle-color': '#0f766e',
+              'circle-stroke-color': '#ffffff',
+              'circle-stroke-width': 2,
+            },
+          });
+        }
+        if (!map.getLayer('xp-fires-layer')) {
+          map.addLayer({
+            id: 'xp-fires-layer',
+            type: 'circle',
+            source: 'xp-fires',
+            layout: { visibility: 'none' },
+            paint: {
+              'circle-radius': 7,
+              'circle-color': '#dc2626',
+              'circle-stroke-color': '#fed7aa',
+              'circle-stroke-width': 2.5,
+              'circle-opacity': 0.9,
+            },
+          });
+        }
+        if (!map.getLayer('xp-highlights-layer')) {
+          map.addLayer({
+            id: 'xp-highlights-layer',
+            type: 'circle',
+            source: 'xp-highlights',
+            layout: { visibility: 'none' },
+            paint: {
+              'circle-radius': 6.5,
+              'circle-color': '#ca8a04',
+              'circle-stroke-color': '#fef9c3',
+              'circle-stroke-width': 2,
             },
           });
         }
@@ -531,7 +747,13 @@ export default function MapStage({
         .filter((route) => route.geojson)
         .map((route) => ({
           type: 'Feature',
-          properties: { id: route.id, name: route.name, style: traceStyleForRoute(route.network) },
+          properties: {
+            id: route.id,
+            name: route.name,
+            network: route.network ?? '',
+            isBike: /^(icn|ncn|rcn|lcn)$/i.test(route.network ?? ''),
+            style: traceStyleForRoute(route.network),
+          },
           geometry: route.geojson as never,
         })),
     } as never);
@@ -660,14 +882,20 @@ export default function MapStage({
 
     const isNational = mapBaseStyle === 'national' && Boolean(nationalSource);
     const isSat = mapBaseStyle === 'satellite' && !isNational;
-    // « national » sans source validée retombe sur le relief : on ne laisse
-    // jamais la carte sans relief à cause d'un fond qui n'existe pas.
+    const isCycle = mapBaseStyle === 'cycle' && Boolean(map.getLayer('xp-cycle-layer')) && !isNational;
+    // « national » (ou « cycle » sans clé fournisseur) retombe sur le relief.
     const isRelief =
-      (mapBaseStyle === 'relief' || !mapBaseStyle || (mapBaseStyle === 'national' && !isNational)) &&
+      (mapBaseStyle === 'relief' ||
+        !mapBaseStyle ||
+        (mapBaseStyle === 'national' && !isNational) ||
+        (mapBaseStyle === 'cycle' && !isCycle)) &&
       !isNational;
 
     if (map.getLayer('xp-satellite-layer')) {
       map.setLayoutProperty('xp-satellite-layer', 'visibility', isSat ? 'visible' : 'none');
+    }
+    if (map.getLayer('xp-cycle-layer')) {
+      map.setLayoutProperty('xp-cycle-layer', 'visibility', isCycle ? 'visible' : 'none');
     }
     if (map.getLayer('xp-national-topo-layer')) {
       map.setLayoutProperty(
@@ -679,8 +907,10 @@ export default function MapStage({
 
     const updateTerrainAndHillshade = () => {
       const z = map.getZoom();
-      const showTerrain = isRelief && (level >= 3 || z >= 9.5);
-      const showHillshade = isRelief && (level >= 2 || z >= 7.5);
+      const terrainAllowed = layerVisibility?.terrain3d !== false;
+      const hillshadeAllowed = layerVisibility?.hillshade !== false;
+      const showTerrain = isRelief && terrainAllowed && (level >= 3 || z >= 9.5);
+      const showHillshade = isRelief && hillshadeAllowed && (level >= 2 || z >= 7.5);
 
       if (map.getLayer('xp-hillshade')) {
         map.setLayoutProperty(
@@ -703,18 +933,77 @@ export default function MapStage({
     return () => {
       map.off('zoom', updateTerrainAndHillshade);
     };
-  }, [level, mapBaseStyle, nationalSource, ready]);
+  }, [level, mapBaseStyle, nationalSource, layerVisibility?.terrain3d, layerVisibility?.hillshade, ready]);
 
   // ── calques de données interactifs ─────────────────────────────────────
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready || !layerVisibility) return;
     const showRoutes = layerVisibility.routes !== false;
+    const walkOn = layerVisibility.walkRoutes !== false;
+    const bikeOn = layerVisibility.bikeRoutes !== false;
+    const effectiveRoutes = showRoutes && (walkOn || bikeOn);
     if (map.getLayer('xp-routes-line') && map.getLayer('xp-routes-casing')) {
-      map.setLayoutProperty('xp-routes-line', 'visibility', showRoutes ? 'visible' : 'none');
-      map.setLayoutProperty('xp-routes-casing', 'visibility', showRoutes ? 'visible' : 'none');
+      map.setLayoutProperty('xp-routes-line', 'visibility', effectiveRoutes ? 'visible' : 'none');
+      map.setLayoutProperty('xp-routes-casing', 'visibility', effectiveRoutes ? 'visible' : 'none');
+      if (effectiveRoutes) {
+        const filter =
+          walkOn && !bikeOn
+            ? (['!=', ['get', 'isBike'], true] as never)
+            : !walkOn && bikeOn
+              ? (['==', ['get', 'isBike'], true] as never)
+              : null;
+        try {
+          map.setFilter('xp-routes-line', filter);
+          map.setFilter('xp-routes-casing', filter);
+        } catch {
+          /* filtre ignoré */
+        }
+      }
     }
   }, [layerVisibility, ready]);
+
+  // ── couches dynamiques C01/C02/C03 (heatmaps, vélo, feux, surfaces, lieux, highlights) ──
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    const syncLayer = (
+      sourceId: string,
+      layerId: string,
+      geo: GeoCollection | null | undefined,
+      visible: boolean,
+    ) => {
+      const source = map.getSource(sourceId) as GeoJSONSource | undefined;
+      if (source) {
+        source.setData((visible && geo ? geo : EMPTY) as never);
+      }
+      if (map.getLayer(layerId)) {
+        map.setLayoutProperty(
+          layerId,
+          'visibility',
+          visible && geo && geo.features.length > 0 ? 'visible' : 'none',
+        );
+      }
+    };
+
+    syncLayer('xp-community-heatmap', 'xp-community-heatmap-layer', communityHeatmapGeo, Boolean(communityHeatmapGeo));
+    syncLayer('xp-personal-heatmap', 'xp-personal-heatmap-layer', personalHeatmapGeo, Boolean(personalHeatmapGeo));
+    syncLayer('xp-surfaces', 'xp-surfaces-line', surfacesGeo, layerVisibility?.surfaceLayer === true);
+    syncLayer('xp-bike-pois', 'xp-bike-pois-layer', bikePoisGeo, layerVisibility?.bikePois === true);
+    syncLayer('xp-saved-places', 'xp-saved-places-layer', savedPlacesGeo, layerVisibility?.savedPlaces === true);
+    syncLayer('xp-fires', 'xp-fires-layer', firesGeo, layerVisibility?.fires === true);
+    syncLayer('xp-highlights', 'xp-highlights-layer', highlightsGeo, layerVisibility?.highlights !== false);
+  }, [
+    ready,
+    layerVisibility,
+    communityHeatmapGeo,
+    personalHeatmapGeo,
+    surfacesGeo,
+    bikePoisGeo,
+    savedPlacesGeo,
+    firesGeo,
+    highlightsGeo,
+  ]);
 
   // ── pente réelle de l'itinéraire sélectionné (K3.04) ────────────────────
   useEffect(() => {

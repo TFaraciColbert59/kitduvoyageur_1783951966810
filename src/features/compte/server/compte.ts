@@ -523,11 +523,7 @@ export async function loadProfileSettings(
   let result = await supabase
     .from('user_profiles')
     .select(
-<<<<<<< HEAD
-      'id,email,full_name,handle,bio,location,avatar_url,cover_url,links,profile_visibility,notification_prefs,sport_profile_prefs,two_fa_enabled'
-=======
-      'id,email,full_name,handle,bio,location,avatar_url,cover_url,links,profile_visibility,default_outing_visibility,notification_prefs,two_fa_enabled'
->>>>>>> 7bf3effd (fix(p01): align share-link contract, ?share/?shareToken 404 semantics and server default_outing_visibility)
+      'id,email,full_name,handle,bio,location,avatar_url,cover_url,links,profile_visibility,default_outing_visibility,notification_prefs,sport_profile_prefs,two_fa_enabled'
     )
     .eq('id', userId)
     .maybeSingle();

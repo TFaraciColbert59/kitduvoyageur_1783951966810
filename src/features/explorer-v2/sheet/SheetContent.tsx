@@ -35,6 +35,14 @@ import { ExplorerSegmentsSearchSection } from '../components/ExplorerSegmentsSea
 import { ExplorerLiveSegmentsPanel } from '../components/ExplorerLiveSegmentsPanel';
 import { ExplorerLiveTrackingPanel } from '../components/ExplorerLiveTrackingPanel';
 import {
+  HeatmapSubDrawer,
+  ReportMapErrorPanel,
+  SavedPlacesPanel,
+} from './LayersExtensions';
+import { TrailCommunityPanel } from './TrailCommunityPanel';
+import { LiveMediaCapture } from './LiveMediaCapture';
+import { isPlaceSavedInList } from '../savedPlaces';
+import {
   XpAvatars,
   XpCard,
   XpCardRow,
@@ -1009,8 +1017,12 @@ function PoiTabs(ctx: SheetContext, kind: string): SheetTab[] {
     id: 'apercu',
     label: 'Aperçu',
     icon: 'info',
-    render: () =>
-      poi ? (
+    render: () => {
+      if (!poi) {
+        return <XpEmpty title="Repère introuvable" hint="Ce repère n’est pas encore enregistré dans la base." />;
+      }
+      const saved = isPlaceSavedInList(ctx.state.savedPlaces ?? [], poi.id);
+      return (
         <>
           <XpMetrics
             items={[
@@ -1022,11 +1034,26 @@ function PoiTabs(ctx: SheetContext, kind: string): SheetTab[] {
           <XpEyebrow>Repère</XpEyebrow>
           <XpRows>
             <XpRow icon={POI_ICON[kind] ?? 'pin'} tone={POI_TONE[kind] ?? 'ink'} title={POI_LABEL[kind] ?? kind} sub={poi.subtype} />
+            <XpRow
+              icon="star"
+              tone={saved ? 'good' : 'ink'}
+              title={saved ? 'Enregistré dans Mes lieux' : 'Enregistrer dans Mes lieux'}
+              sub="Accès rapide hors carte dans Couches & fonds"
+              badge={{ label: saved ? 'Enregistré' : 'Sauver', tone: saved ? 'good' : 'muted' }}
+              onClick={() =>
+                ctx.state.toggleSavedPlace({
+                  id: poi.id,
+                  name: poi.name,
+                  kind: kind,
+                  lat: poi.lat,
+                  lng: poi.lon,
+                })
+              }
+            />
           </XpRows>
         </>
-      ) : (
-        <XpEmpty title="Repère introuvable" hint="Ce repère n’est pas encore enregistré dans la base." />
-      ),
+      );
+    },
   };
 
   const nearbyReports = ctx.reports
@@ -1242,6 +1269,38 @@ function LayersTab({ ctx }: { ctx: SheetContext }) {
 
   const activityRouteReady = state.activity?.route?.status === 'ready';
   const offRoute = state.activity?.offRoute === true;
+  const hasCycleKey = Boolean(process.env.NEXT_PUBLIC_THUNDERFOREST_API_KEY?.trim());
+  const overlays = ctx.overlays;
+  const heatmap = ctx.heatmap;
+
+  if (state.heatmapSubDrawer === 'community' || state.heatmapSubDrawer === 'personal') {
+    return <HeatmapSubDrawer mode={state.heatmapSubDrawer} ctx={ctx} />;
+  }
+
+  const surfaceOn = layers.surfaceLayer === true;
+  const surfaceLiveBadge = !surfaceOn
+    ? surfaceBadge
+    : overlays?.surfacesStatus === 'loading'
+      ? { label: 'Chargement', tone: 'warn' as const }
+      : overlays?.surfacesStatus === 'zoom_required'
+        ? { label: 'Zoomer', tone: 'warn' as const }
+        : overlays?.surfacesStatus === 'ready'
+          ? { label: 'Actif', tone: 'good' as const }
+          : { label: 'Indisponible', tone: 'muted' as const };
+  const surfaceLiveSub = !surfaceOn
+    ? surfaceSub
+    : overlays?.surfacesStatus === 'loading'
+      ? 'Analyse des tags OSM surface…'
+      : overlays?.surfacesStatus === 'zoom_required'
+        ? 'Zoome sur la zone (≤ 400 km²) pour lire les surfaces OSM'
+        : overlays?.surfacesStatus === 'ready' && overlays.surfacesDistributions.length > 0
+          ? overlays.surfacesDistributions
+              .slice(0, 3)
+              .map((d) => `${d.surface} ${d.percentage}%`)
+              .join(' · ')
+          : overlays?.surfacesStatus === 'ready'
+            ? 'Aucune voie avec tag OSM surface dans cette emprise'
+            : 'Couche surface momentanément indisponible';
 
   return (
     <>
@@ -1271,6 +1330,16 @@ function LayersTab({ ctx }: { ctx: SheetContext }) {
         >
           Plan
         </button>
+        {hasCycleKey ? (
+          <button
+            type="button"
+            className="xp-chip"
+            aria-pressed={currentBase === 'cycle'}
+            onClick={() => state.setMapBaseStyle('cycle')}
+          >
+            Cyclable
+          </button>
+        ) : null}
         {nationalVerified ? (
           <button
             type="button"
@@ -1282,6 +1351,49 @@ function LayersTab({ ctx }: { ctx: SheetContext }) {
           </button>
         ) : null}
       </div>
+      {!hasCycleKey ? (
+        <XpRows>
+          <XpRow
+            icon="bike"
+            title="Carte cyclable OpenCycleMap (K3.02)"
+            sub="Clé fournisseur OpenCycleMap non configurée · itinéraires vélo OSM disponibles ci-dessous"
+            badge={{ label: 'Clé absente', tone: 'muted' }}
+            disabled
+          />
+        </XpRows>
+      ) : null}
+
+      <XpEyebrow>Heatmaps &amp; fréquentation (C02)</XpEyebrow>
+      <XpRows>
+        <XpRow
+          icon="pulse"
+          title="Fréquentation collective"
+          sub={
+            state.communityHeatmap?.enabled
+              ? `${heatmap?.communityCount ?? 0} cellules agrégées · k-anonymat actif`
+              : 'Traces collectives anonymisées · globale, 7 jours, nocturne'
+          }
+          badge={{
+            label: state.communityHeatmap?.enabled ? 'Actif' : 'Ouvrir',
+            tone: state.communityHeatmap?.enabled ? 'good' : 'muted',
+          }}
+          onClick={() => state.setHeatmapSubDrawer('community')}
+        />
+        <XpRow
+          icon="map"
+          title="Ma heatmap personnelle"
+          sub={
+            state.personalHeatmap?.enabled
+              ? `${heatmap?.personalCount ?? 0} cellules · ${heatmap?.personalActivities ?? 0} sorties`
+              : 'Tes traces par sport, période et comparaison'
+          }
+          badge={{
+            label: state.personalHeatmap?.enabled ? 'Actif' : 'Ouvrir',
+            tone: state.personalHeatmap?.enabled ? 'good' : 'muted',
+          }}
+          onClick={() => state.setHeatmapSubDrawer('personal')}
+        />
+      </XpRows>
 
       <XpEyebrow>Fonds nationaux officiels</XpEyebrow>
       {!iso ? (
@@ -1415,30 +1527,99 @@ function LayersTab({ ctx }: { ctx: SheetContext }) {
           disabled={dangerCount === 0}
           onClick={dangerCount > 0 ? () => state.toggleLayer('dangers') : undefined}
         />
-        {/* K3.10 — catégories vélo. OpenStreetMap (ODbL) porte ces objets,
-            mais aucune ligne n'est importée : `geo_pois` n'accepte pas ces
-            sous-types et l'import ne les demande pas. Lignes informatives
-            désactivées : aucune disponibilité n'est inventée. */}
+        {/* K3.10 — Services et ateliers vélo OSM (Overpass à la demande). */}
         <XpRow
           icon="bike"
-          title="Services et locations vélo"
-          sub="Aucune boutique ou location vélo importée · OSM (ODbL) à brancher"
-          badge={{ label: 'Indisponible', tone: 'muted' }}
-          disabled
+          title="Services, locations, réparation & VAE"
+          sub={
+            layers.bikePois !== true
+              ? 'Boutiques, locations, bornes de réparation et recharge (OSM ODbL)'
+              : overlays?.bikePoisStatus === 'loading'
+                ? 'Interrogation OpenStreetMap sur l’emprise…'
+                : overlays?.bikePoisStatus === 'zoom_required'
+                  ? 'Zoome sur une zone ≤ 400 km² pour charger les services vélo'
+                  : overlays?.bikePoisStatus === 'ready'
+                    ? `${overlays.bikePoisCount} service${overlays.bikePoisCount > 1 ? 's' : ''} vélo dans l’emprise`
+                    : 'Serveur OSM Overpass momentanément indisponible'
+          }
+          badge={
+            layers.bikePois !== true
+              ? { label: 'Masqué', tone: 'muted' }
+              : overlays?.bikePoisStatus === 'loading'
+                ? { label: 'Chargement', tone: 'warn' }
+                : overlays?.bikePoisStatus === 'zoom_required'
+                  ? { label: 'Zoomer', tone: 'warn' }
+                  : overlays?.bikePoisStatus === 'ready'
+                    ? { label: `${overlays.bikePoisCount}`, tone: 'good' }
+                    : { label: 'Indisponible', tone: 'warn' }
+          }
+          onClick={() => state.toggleLayer('bikePois')}
         />
         <XpRow
-          icon="wrench"
-          title="Réparation vélo"
-          sub="Aucun atelier ni borne de réparation importé · OSM (ODbL) à brancher"
-          badge={{ label: 'Indisponible', tone: 'muted' }}
-          disabled
+          icon="hike"
+          title="Itinéraires pédestres (K3.03)"
+          sub="GR®, PR et sentiers pédestres"
+          badge={{ label: layers.walkRoutes !== false ? 'Actif' : 'Masqué', tone: layers.walkRoutes !== false ? 'good' : 'muted' }}
+          onClick={() => state.toggleLayer('walkRoutes')}
         />
         <XpRow
-          icon="bolt"
-          title="Recharge VAE"
-          sub="Aucune borne de recharge vélo importée · OSM (ODbL) à brancher"
-          badge={{ label: 'Indisponible', tone: 'muted' }}
-          disabled
+          icon="bike"
+          title="Itinéraires cyclables (K3.03)"
+          sub="EuroVelo, voies vertes et boucles VTT / route"
+          badge={{ label: layers.bikeRoutes !== false ? 'Actif' : 'Masqué', tone: layers.bikeRoutes !== false ? 'good' : 'muted' }}
+          onClick={() => state.toggleLayer('bikeRoutes')}
+        />
+        <XpRow
+          icon="star"
+          title="Mes lieux enregistrés (K3.11)"
+          sub={
+            overlays?.savedPlacesCount
+              ? `${overlays.savedPlacesCount} lieu${overlays.savedPlacesCount > 1 ? 'x' : ''} enregistré${overlays.savedPlacesCount > 1 ? 's' : ''}`
+              : 'Épingle tes points favoris depuis leur fiche repère'
+          }
+          badge={{
+            label: layers.savedPlaces === true ? 'Actif' : 'Masqué',
+            tone: layers.savedPlaces === true ? 'good' : 'muted',
+          }}
+          onClick={() => state.toggleLayer('savedPlaces')}
+        />
+        <XpRow
+          icon="spark"
+          title="Highlights & points forts (K5.13)"
+          sub={
+            overlays?.highlightsCount
+              ? `${overlays.highlightsCount} point${overlays.highlightsCount > 1 ? 's' : ''} fort${overlays.highlightsCount > 1 ? 's' : ''} visible${overlays.highlightsCount > 1 ? 's' : ''}`
+              : 'Points remarquables de la communauté'
+          }
+          badge={{
+            label: layers.highlights !== false ? 'Actif' : 'Masqué',
+            tone: layers.highlights !== false ? 'good' : 'muted',
+          }}
+          onClick={() => state.toggleLayer('highlights')}
+        />
+        <XpRow
+          icon="alert"
+          tone="bad"
+          title="Feux actifs & alertes (K3.14)"
+          sub={
+            layers.fires !== true
+              ? 'Hotspots NASA FIRMS en temps réel (si clé configurée)'
+              : overlays?.firesStatus === 'loading'
+                ? 'Interrogation NASA FIRMS…'
+                : overlays?.firesStatus === 'ready'
+                  ? `${overlays.firesCount} hotspot${overlays.firesCount > 1 ? 's' : ''} (${overlays.firesSource ?? 'FIRMS'})`
+                  : 'Source feux indisponible (clé NASA_FIRMS_MAP_KEY non configurée)'
+          }
+          badge={
+            layers.fires !== true
+              ? { label: 'Masqué', tone: 'muted' }
+              : overlays?.firesStatus === 'loading'
+                ? { label: 'Chargement', tone: 'warn' }
+                : overlays?.firesStatus === 'ready'
+                  ? { label: `${overlays.firesCount}`, tone: 'bad' }
+                  : { label: 'Indisponible', tone: 'muted' }
+          }
+          onClick={() => state.toggleLayer('fires')}
         />
         <XpRow
           icon="cloud"
@@ -1448,22 +1629,30 @@ function LayersTab({ ctx }: { ctx: SheetContext }) {
           disabled
         />
       </XpRows>
+      <SavedPlacesPanel ctx={ctx} />
       <p className="xp-layer-note">
         Les marqueurs de distance sont calculés sur le tracé réel de l’itinéraire
         sélectionné, tous les {distance.intervalLabel}. Aucune distance n’est stockée
         ni estimée sur un tracé absent ; les repères masqués ne sont plus dessinés.
-        Tracés et repères : © OpenStreetMap contributors (ODbL), sans date de levé
-        individuelle dans le schéma actuel.
-      </p>
-      <p className="xp-layer-note">
-        Catégories vélo : la source OSM (ODbL) le permettrait, mais aucune ligne
-        « vélo », « réparation » ou « recharge » n’est importée dans{' '}
-        <code>geo_pois</code>. Les trois lignes restent donc informatives et
-        désactivées : aucune épingle n’est créée sans donnée réelle.
+        Tracés et repères : © OpenStreetMap contributors (ODbL).
       </p>
 
       <XpEyebrow>Couches terrain</XpEyebrow>
       <XpRows>
+        <XpRow
+          icon="cube"
+          title="Relief 3D (K3.06)"
+          sub="Modèle numérique de terrain AWS Terrarium"
+          badge={{ label: layers.terrain3d !== false ? 'Actif' : 'Masqué', tone: layers.terrain3d !== false ? 'good' : 'muted' }}
+          onClick={() => state.toggleLayer('terrain3d')}
+        />
+        <XpRow
+          icon="mtn"
+          title="Ombres portées / hillshade (K3.06)"
+          sub="Estompage du relief sur fond vectoriel"
+          badge={{ label: layers.hillshade !== false ? 'Actif' : 'Masqué', tone: layers.hillshade !== false ? 'good' : 'muted' }}
+          onClick={() => state.toggleLayer('hillshade')}
+        />
         <XpRow
           icon="mtn"
           title="Pente de l’itinéraire"
@@ -1474,10 +1663,10 @@ function LayersTab({ ctx }: { ctx: SheetContext }) {
         />
         <XpRow
           icon="layers"
-          title="Surface du sol"
-          sub={surfaceSub}
-          badge={surfaceBadge}
-          disabled
+          title="Surface du sol (K3.04)"
+          sub={surfaceLiveSub}
+          badge={surfaceLiveBadge}
+          onClick={() => state.toggleLayer('surfaceLayer')}
         />
         <XpRow
           icon="route"
@@ -1497,9 +1686,12 @@ function LayersTab({ ctx }: { ctx: SheetContext }) {
         />
       </XpRows>
       <p className="xp-layer-note">
-        Marche, vélo de route, gravel et VTT partagent ces couches. La pente suit
-        l’itinéraire sélectionné ; aucune surface par sport n’est affichée sans données importées.
+        Marche, vélo de route, gravel et VTT partagent ces couches. Les surfaces sont lues depuis les
+        tags OSM existants sans invention de données manquantes.
       </p>
+
+      <XpEyebrow>Contribution carte &amp; accès (K3.13)</XpEyebrow>
+      <ReportMapErrorPanel ctx={ctx} />
 
       <XpEyebrow>Zone hors ligne</XpEyebrow>
       <XpRows>
@@ -1607,6 +1799,13 @@ function ToolsTabs(ctx: SheetContext, kind: string): SheetTab[] {
               ) : (
                 <XpEmpty title="Points d'eau en cours d'indexation" hint="Sources et torrents répertoriés le long de la vallée." />
               )}
+              <TrailCommunityPanel
+                ctx={ctx}
+                routeId={String(route.id)}
+                routeTitle={route.name ?? 'Itinéraire'}
+                routeLat={positions[0]?.[1] ?? null}
+                routeLng={positions[0]?.[0] ?? null}
+              />
             </>
           ) : (
             <XpEmpty title="Aucune trace sélectionnée" hint="Choisis un itinéraire sur la carte." />
@@ -2421,6 +2620,7 @@ export function LiveDirectTab({ ctx }: { ctx: SheetContext }) {
         online={ctx.state.online}
         paused={Boolean(activity.paused || activity.autoPaused)}
       />
+      <LiveMediaCapture ctx={ctx} />
     </>
   );
 }

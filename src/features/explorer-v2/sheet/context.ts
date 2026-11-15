@@ -70,6 +70,29 @@ export interface SheetContext {
       intervalLabel: string;
     };
   };
+  /** État des couches heatmaps (C02). */
+  heatmap?: {
+    communityCount: number;
+    communitySuppressed: number;
+    communityEligible: number;
+    communityStatus: 'idle' | 'loading' | 'ready' | 'error';
+    personalCount: number;
+    personalActivities: number;
+    personalStatus: 'idle' | 'loading' | 'ready' | 'unauthorized' | 'error';
+    comparisonDeltaCells: number | null;
+  };
+  /** État des couches dynamiques C01/C03 (POI vélo, feux, surfaces, lieux, highlights). */
+  overlays?: {
+    bikePoisCount: number;
+    bikePoisStatus: 'idle' | 'loading' | 'ready' | 'zoom_required' | 'unavailable';
+    firesCount: number;
+    firesStatus: 'idle' | 'loading' | 'ready' | 'unavailable';
+    firesSource: string | null;
+    surfacesStatus: 'idle' | 'loading' | 'ready' | 'zoom_required' | 'unavailable';
+    surfacesDistributions: Array<{ surface: string; percentage: number }>;
+    savedPlacesCount: number;
+    highlightsCount: number;
+  };
   /**
    * Démarrage avec compte à rebours (le parent décide de l'animation).
    * `selection` porte la variante jusqu’au démarrage ; `sport` reste

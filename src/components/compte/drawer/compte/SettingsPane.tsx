@@ -109,19 +109,6 @@ export function SettingsPane() {
     staleTime: 20_000,
   });
 
-<<<<<<< HEAD
-  const feedPrefs = useFeedPreferences(query.data?.id);
-  const sportProfileQuery = useQuery({
-    queryKey: ['compte', 'sport-profile', query.data?.id ?? 'self'],
-    queryFn: () => fetchJson<{ summary: SportProfileSummaryVM }>('/api/compte/sport-profile'),
-    enabled: Boolean(query.data?.id),
-    staleTime: 20_000,
-  });
-
-  const patchSportProfile = async (sportPatch: SportProfilePreferencesPatch) => {
-    setBusy(true);
-    setMessage(null);
-=======
   useEffect(() => {
     const serverVis = query.data?.defaultOutingVisibility;
     if (serverVis && (OUTING_VISIBILITIES as readonly string[]).includes(serverVis)) {
@@ -134,8 +121,17 @@ export function SettingsPane() {
     }
   }, [query.data?.defaultOutingVisibility]);
 
-  useEffect(() => {
->>>>>>> 7bf3effd (fix(p01): align share-link contract, ?share/?shareToken 404 semantics and server default_outing_visibility)
+  const feedPrefs = useFeedPreferences(query.data?.id);
+  const sportProfileQuery = useQuery({
+    queryKey: ['compte', 'sport-profile', query.data?.id ?? 'self'],
+    queryFn: () => fetchJson<{ summary: SportProfileSummaryVM }>('/api/compte/sport-profile'),
+    enabled: Boolean(query.data?.id),
+    staleTime: 20_000,
+  });
+
+  const patchSportProfile = async (sportPatch: SportProfilePreferencesPatch) => {
+    setBusy(true);
+    setMessage(null);
     try {
       const updated = await fetchJson<{ summary: SportProfileSummaryVM }>('/api/compte/sport-profile', {
         method: 'PATCH',
@@ -367,8 +363,8 @@ export function SettingsPane() {
             <Link2 size={17} />
           </span>
           <div>
-            <b>Appareils et services</b>
-            <small>GPS, Strava, capteurs BLE/Santé, montres et RGPD</small>
+            <b>Appareils, services et agrégats</b>
+            <small>GPS, Strava, capteurs BLE/Santé, montres, heatmaps, agrégats et RGPD</small>
           </div>
           <ActionPill
             className="lkdv-compte-setting-pill"

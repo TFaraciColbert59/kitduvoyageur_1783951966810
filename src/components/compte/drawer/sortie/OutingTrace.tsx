@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { Download, Flag, MapPin, Plus, Wind } from 'lucide-react';
+import { Compass, Download, Flag, MapPin, Play, Plus, Users, Wind } from 'lucide-react';
 import { ActionPill } from '@/components/ui/ActionPill';
 import { OverlaySheet } from '@/components/compte/overlay/OverlaySheet';
 import {
@@ -10,11 +10,13 @@ import {
   type SegmentFormSubmission,
 } from '@/components/segments';
 import type { ActivityTraceForSegments, SegmentDefinition, SegmentEffort, SegmentSport } from '@/features/segments';
+import type { MediaSharingTab } from '@/components/media-sharing/MediaSharingHub';
 import type { OutingDetail, OutingPoint } from '@/features/compte/server/sorties';
 import type { OutingWeather } from '@/features/compte/server/weather';
 import {
   ElevationProfile,
   TraceMap,
+  type TraceColorMode,
   formatDuration,
   formatNumber,
   hasVisibleTrace,
@@ -29,6 +31,7 @@ import {
 export interface OutingTraceProps {
   detail: OutingDetail;
   onExport: () => void;
+  onOpenMediaHub?: (tab: MediaSharingTab) => void;
 }
 
 function altitudeRange(points: OutingPoint[]) {
@@ -104,9 +107,8 @@ function mapOutingSport(rawSport: string | null): SegmentSport {
   return 'hiking';
 }
 
-export function OutingTrace({ detail, onExport }: OutingTraceProps) {
-  const segments = visibleTraceSegments(detail);
-  const points = visibleTracePoints(detail);
+export function OutingTrace({ detail, onExport, onOpenMediaHub }: OutingTraceProps) {
+  const [colorMode, setColorMode] = useState<TraceColorMode>('default');
   const [detectedEfforts, setDetectedEfforts] = useState<SegmentEffort[] | null>(null);
   const [detectBusy, setDetectBusy] = useState(false);
   const [detectError, setDetectError] = useState<string | null>(null);
@@ -115,7 +117,11 @@ export function OutingTrace({ detail, onExport }: OutingTraceProps) {
   const [createBusy, setCreateBusy] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
   const [createdNotice, setCreatedNotice] = useState<string | null>(null);
-
+  const segments = visibleTraceSegments(detail);
+  const points = visibleTracePoints(detail);
+  const canElevation = outingMetricVisible(detail, 'elevation');
+  const canPace = outingMetricVisible(detail, 'pace');
+  const altitude = canElevation ? altitudeRange(points) : null;
   const ownerUserId = detail.participants.find((p) => p.isOwner)?.userId ?? '';
   const activityForSegments = useMemo<ActivityTraceForSegments | null>(() => {
     if (!detail.canEdit || !ownerUserId || points.length < 3) return null;
@@ -196,7 +202,6 @@ export function OutingTrace({ detail, onExport }: OutingTraceProps) {
       setCreateBusy(false);
     }
   };
-  const altitude = outingMetricVisible(detail, 'elevation') ? altitudeRange(points) : null;
   const slope =
     outingMetricVisible(detail, 'elevationGain') &&
     outingMetricVisible(detail, 'distance') &&
@@ -246,11 +251,37 @@ export function OutingTrace({ detail, onExport }: OutingTraceProps) {
           <span>{points.length} points</span>
         </header>
         <div className="lkdv-sortie-map-wrap">
-          <TraceMap segments={segments} />
+          <TraceMap segments={segments} colorMode={colorMode} />
           <div className="lkdv-sortie-map-legend" aria-hidden="true">
             <span><i className="start" /> Départ</span>
             <span><i className="end" /> Arrivée</span>
           </div>
+        </div>
+        <div
+          className="lkdv-apill-row"
+          role="radiogroup"
+          aria-label="Coloration du tracé (S3.15)"
+          style={{ marginTop: 8, flexWrap: 'wrap' }}
+        >
+          {(
+            [
+              { id: 'default', label: 'Tracé', allowed: true },
+              { id: 'slope', label: 'Pente', allowed: canElevation },
+              { id: 'pace', label: 'Vitesse / Allure', allowed: canPace },
+              { id: 'elevation', label: 'Altitude', allowed: canElevation },
+            ] as const
+          ).map((mode) => (
+            <ActionPill
+              key={mode.id}
+              tone={colorMode === mode.id ? 'primary' : 'default'}
+              label={mode.allowed ? mode.label : `${mode.label} (masqué)`}
+              text={mode.allowed ? mode.label : `${mode.label} · masqué`}
+              disabled={!mode.allowed}
+              onClick={() => {
+                if (mode.allowed) setColorMode(mode.id);
+              }}
+            />
+          ))}
         </div>
       </section>
 
@@ -351,74 +382,30 @@ export function OutingTrace({ detail, onExport }: OutingTraceProps) {
               {detectedEfforts ? `${detectedEfforts.length} passage(s)` : 'S01 / S02'}
             </span>
           </header>
-          <div className="lkdv-apill-row">
-            <ActionPill
-              label="Détecter les segments"
-              icon={<Flag />}
-              text={detectBusy ? 'Analyse…' : 'Détecter'}
-              onClick={() => void detectSegments()}
-              disabled={detectBusy}
-            />
-            <ActionPill
-              label="Créer un segment depuis cette trace"
-              icon={<Plus />}
-              text="Créer un segment"
-              onClick={() => {
-                setCreateError(null);
-                setCreateOpen(true);
-              }}
-            />
-          </div>
-          {detectError ? (
-            <p role="alert" style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--lkv-danger)' }}>
-              {detectError}
-            </p>
-          ) : null}
-          {createdNotice ? (
-            <p role="status" style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--forest)' }}>
-              {createdNotice}
-            </p>
-          ) : null}
-          {detectedEfforts && detectedEfforts.length === 0 ? (
-            <p style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--label2)' }}>
-              Aucun segment existant croisé sur cette trace. Tu peux en créer un ci-dessus.
-            </p>
-          ) : null}
-          {detectedEfforts && detectedEfforts.length > 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
-              {detectedEfforts.map((eff) => (
-                <button
-                  key={eff.effortId}
-                  type="button"
-                  onClick={() => setSelectedSegmentId(eff.segmentId)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: 8,
-                    padding: '8px 10px',
-                    borderRadius: 12,
-                    border: '0.5px solid rgba(23,43,36,.12)',
-                    background: 'rgba(255,255,255,.72)',
-                    textAlign: 'left',
-                    fontSize: 12,
-                  }}
-                >
-                  <span>
-                    <strong>{eff.segmentId}</strong> · {Math.round(eff.elapsedDurationS)} s · {eff.avgSpeedKmh.toFixed(1)} km/h
-                  </span>
-                  <span style={{ fontSize: 11, color: eff.status === 'valid' ? 'var(--forest)' : 'var(--label2)' }}>
-                    {eff.status === 'valid' ? 'Validé' : eff.status}
-                  </span>
-                </button>
-              ))}
-            </div>
-          ) : null}
-        </section>
-      ) : null}
-
-      <div className="lkdv-apill-row">
+          <div className="lkdv-apill-row" style={{ flexWrap: 'wrap' }}>
         <ActionPill tone="primary" label="Télécharger le GPX" icon={<Download />} text="GPX" onClick={onExport} />
+        {onOpenMediaHub ? (
+          <>
+            <ActionPill
+              label="Lancer Flyover 3D (K5.12 / S3.20)"
+              icon={<Compass />}
+              text="Flyover 3D"
+              onClick={() => onOpenMediaHub('flyover')}
+            />
+            <ActionPill
+              label="Replay de la sortie (S3.21)"
+              icon={<Play />}
+              text="Replay"
+              onClick={() => onOpenMediaHub('replay')}
+            />
+            <ActionPill
+              label="Flyby croisés (S3.22)"
+              icon={<Users />}
+              text="Flyby"
+              onClick={() => onOpenMediaHub('flyby')}
+            />
+          </>
+        ) : null}
       </div>
 
       {createOpen && activityForSegments ? (

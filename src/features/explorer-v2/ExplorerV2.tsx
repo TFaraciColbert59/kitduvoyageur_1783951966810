@@ -74,13 +74,20 @@ import {
 } from './searchArea';
 import type { GeoCollection } from './data/hooks';
 import {
+  UnauthorizedHeatmapError,
   geometryCenter,
+  useBikePois,
+  useCommunityHeatmap,
   useCountriesGeo,
   useCountryDetails,
+  useFireIncidents,
   useOnline,
+  usePersonalHeatmap,
   usePlace,
   useReducedMotion,
   useRegionsGeo,
+  useRouteHighlights,
+  useRouteSurfaces,
   useSystemTheme,
   useWeather,
   useContent,
@@ -907,6 +914,113 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
       .sort((a, b) => a.km - b.km)[0].poi;
   }, [pois, state.center, state.selection]);
 
+  // ── couches dynamiques C01/C02/C03 ────────────────────────────────────
+  useEffect(() => {
+    state.hydrateSavedPlaces();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const communityState = state.communityHeatmap ?? { enabled: false, sport: 'all', window: 'global' as const };
+  const personalState = state.personalHeatmap ?? {
+    enabled: false,
+    sport: 'all',
+    period: 'all_time' as const,
+    comparePeriod: null,
+  };
+  const communityHeatmapQuery = useCommunityHeatmap(
+    communityState.sport,
+    communityState.window,
+    Boolean(communityState.enabled),
+  );
+  const personalHeatmapQuery = usePersonalHeatmap(
+    personalState.sport,
+    personalState.period,
+    personalState.comparePeriod,
+    Boolean(personalState.enabled),
+  );
+  const bikePoisQuery = useBikePois(mapViewport, state.layerVisibility?.bikePois === true);
+  const firesQuery = useFireIncidents(mapViewport, state.layerVisibility?.fires === true);
+  const surfacesQuery = useRouteSurfaces(mapViewport, state.layerVisibility?.surfaceLayer === true);
+  const activeHighlightRouteId =
+    state.selection?.kind === 'trail' ? state.selection.id : null;
+  const highlightsQuery = useRouteHighlights(
+    activeHighlightRouteId,
+    state.layerVisibility?.highlights !== false && (Boolean(activeHighlightRouteId) || state.level >= 2),
+  );
+
+  const communityHeatmapGeo = useMemo<GeoCollection | null>(
+    () => (communityState.enabled ? communityHeatmapQuery.data?.layer?.geojson ?? null : null),
+    [communityState.enabled, communityHeatmapQuery.data],
+  );
+  const personalHeatmapGeo = useMemo<GeoCollection | null>(
+    () => (personalState.enabled ? personalHeatmapQuery.data?.layer?.geojson ?? null : null),
+    [personalState.enabled, personalHeatmapQuery.data],
+  );
+  const bikePoisGeo = useMemo<GeoCollection | null>(() => {
+    const items = bikePoisQuery.data?.items ?? [];
+    if (items.length === 0) return null;
+    return {
+      type: 'FeatureCollection',
+      features: items.map((item) => ({
+        type: 'Feature',
+        properties: { id: item.id, name: item.name, category: item.category },
+        geometry: { type: 'Point', coordinates: [item.lon, item.lat] },
+      })),
+    };
+  }, [bikePoisQuery.data]);
+  const savedPlacesGeo = useMemo<GeoCollection | null>(() => {
+    const places = state.savedPlaces ?? [];
+    if (places.length === 0) return null;
+    return {
+      type: 'FeatureCollection',
+      features: places.map((place) => ({
+        type: 'Feature',
+        properties: { id: place.id, name: place.name, kind: place.kind },
+        geometry: { type: 'Point', coordinates: [place.lng, place.lat] },
+      })),
+    };
+  }, [state.savedPlaces]);
+  const firesGeo = useMemo<GeoCollection | null>(() => {
+    const items = firesQuery.data?.incidents ?? [];
+    if (items.length === 0) return null;
+    return {
+      type: 'FeatureCollection',
+      features: items.map((fire) => ({
+        type: 'Feature',
+        properties: { id: fire.id, kind: fire.kind, label: fire.label },
+        geometry: fire.geometry as { type: string; coordinates: unknown },
+      })),
+    };
+  }, [firesQuery.data]);
+  const surfacesGeo = useMemo<GeoCollection | null>(() => {
+    const features = surfacesQuery.data?.features ?? [];
+    if (features.length === 0) return null;
+    return {
+      type: 'FeatureCollection',
+      features: features.map((f) => ({
+        type: 'Feature',
+        properties: { id: f.id, name: f.name, surface: f.surface, surfaceClass: f.category },
+        geometry: { type: 'LineString', coordinates: f.coordinates },
+      })),
+    };
+  }, [surfacesQuery.data]);
+  const highlightsGeo = useMemo<GeoCollection | null>(() => {
+    const items = highlightsQuery.data?.items ?? [];
+    const withLoc = items.filter((hl) => hl.location !== null);
+    if (withLoc.length === 0) return null;
+    return {
+      type: 'FeatureCollection',
+      features: withLoc.map((hl) => ({
+        type: 'Feature',
+        properties: { id: hl.id, title: hl.title, kind: hl.kind },
+        geometry: {
+          type: 'Point',
+          coordinates: [hl.location!.lng, hl.location!.lat],
+        },
+      })),
+    };
+  }, [highlightsQuery.data]);
+
   // ── confirmation d'un signalement terrain ─────────────────────────────
   const onConfirmReport = useCallback(
     async (reportId: string, verdict: 'present' | 'gone') => {
@@ -1402,6 +1516,67 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
           intervalLabel: distanceMarkerIntervalLabel(unitsForCountry),
         },
       },
+      heatmap: {
+        communityCount: communityHeatmapQuery.data?.layer?.cells?.length ?? 0,
+        communitySuppressed: communityHeatmapQuery.data?.layer?.suppressedCellCount ?? 0,
+        communityEligible: communityHeatmapQuery.data?.layer?.eligibleActivityCount ?? 0,
+        communityStatus: !communityState.enabled
+          ? 'idle'
+          : communityHeatmapQuery.isPending
+            ? 'loading'
+            : communityHeatmapQuery.isError
+              ? 'error'
+              : 'ready',
+        personalCount: personalHeatmapQuery.data?.layer?.cells?.length ?? 0,
+        personalActivities: personalHeatmapQuery.data?.layer?.activityCount ?? 0,
+        personalStatus: !personalState.enabled
+          ? 'idle'
+          : personalHeatmapQuery.isPending
+            ? 'loading'
+            : personalHeatmapQuery.error instanceof UnauthorizedHeatmapError
+              ? 'unauthorized'
+              : personalHeatmapQuery.isError
+                ? 'error'
+                : 'ready',
+        comparisonDeltaCells: personalHeatmapQuery.data?.comparison?.deltaCells ?? null,
+      },
+      overlays: {
+        bikePoisCount: bikePoisQuery.data?.items?.length ?? 0,
+        bikePoisStatus:
+          state.layerVisibility?.bikePois !== true
+            ? 'idle'
+            : bikePoisQuery.isPending
+              ? 'loading'
+              : bikePoisQuery.data?.status === 'ok'
+                ? 'ready'
+                : (bikePoisQuery.data?.status as 'zoom_required' | 'unavailable') ?? 'unavailable',
+        firesCount: firesQuery.data?.incidents?.length ?? 0,
+        firesStatus:
+          state.layerVisibility?.fires !== true
+            ? 'idle'
+            : firesQuery.isPending
+              ? 'loading'
+              : firesQuery.data?.status === 'ok' || firesQuery.data?.status === 'empty'
+                ? 'ready'
+                : 'unavailable',
+        firesSource: firesQuery.data?.source?.name ?? null,
+        surfacesStatus:
+          state.layerVisibility?.surfaceLayer !== true
+            ? 'idle'
+            : surfacesQuery.isPending
+              ? 'loading'
+              : surfacesQuery.data?.status === 'zoom_required'
+                ? 'zoom_required'
+                : surfacesQuery.data?.status === 'unavailable'
+                  ? 'unavailable'
+                  : 'ready',
+        surfacesDistributions: (surfacesQuery.data?.analysis?.shares ?? []).map((s) => ({
+          surface: s.category,
+          percentage: Math.round(s.shareOfRoute * 100),
+        })),
+        savedPlacesCount: state.savedPlaces?.length ?? 0,
+        highlightsCount: highlightsQuery.data?.items?.length ?? 0,
+      },
       // Brouillon local : aucune couche ne peut perdre la variante. Une trace
       // de démonstration est retirée ici avant d'armer le compte à rebours.
       onStartSport: requestStartSafe,
@@ -1410,7 +1585,7 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
       onRequestLocation: requestPosition,
       locale: 'fr-FR',
     }),
-    [state, countries, country, regionsGeo, regionGroups, place, pois, routes, weather, unitsForCountry, reportsData, carnetsData, tripsData, selectedPoi, me, mapViewport, slope.state, slope.summary, slopeRoute, allDistanceMarkers, requestStartSafe, onConfirmReport, markLap, requestPosition],
+    [state, countries, country, regionsGeo, regionGroups, place, pois, routes, weather, unitsForCountry, reportsData, carnetsData, tripsData, selectedPoi, me, mapViewport, slope.state, slope.summary, slopeRoute, allDistanceMarkers, communityState.enabled, communityHeatmapQuery.data, communityHeatmapQuery.isPending, communityHeatmapQuery.isError, personalState.enabled, personalHeatmapQuery.data, personalHeatmapQuery.isPending, personalHeatmapQuery.isError, personalHeatmapQuery.error, bikePoisQuery.data, bikePoisQuery.isPending, firesQuery.data, firesQuery.isPending, surfacesQuery.data, surfacesQuery.isPending, highlightsQuery.data, requestStartSafe, onConfirmReport, markLap, requestPosition],
   );
 
   const model = useMemo(() => buildSheetModel(ctx), [ctx]);
@@ -1821,6 +1996,13 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
         slopeLayer={slope.layer}
         distanceMarkers={distanceMarkers}
         layerVisibility={state.layerVisibility}
+        communityHeatmapGeo={communityHeatmapGeo}
+        personalHeatmapGeo={personalHeatmapGeo}
+        bikePoisGeo={bikePoisGeo}
+        savedPlacesGeo={savedPlacesGeo}
+        firesGeo={firesGeo}
+        surfacesGeo={surfacesGeo}
+        highlightsGeo={highlightsGeo}
       />
 
       {pendingStart ? (

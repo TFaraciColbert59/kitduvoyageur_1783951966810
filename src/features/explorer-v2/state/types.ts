@@ -78,7 +78,31 @@ export type Profile = 'solo' | 'famille' | 'enfants' | 'senior' | 'pmr' | 'sport
  * statut `verified` du registre `map/nationalTopo.ts` ; sinon le tiroir ne
  * l'expose pas.
  */
-export type MapBaseStyle = 'relief' | 'satellite' | 'plan' | 'national';
+export type MapBaseStyle = 'relief' | 'satellite' | 'plan' | 'national' | 'cycle';
+
+export interface CapturedLiveMedia {
+  id: string;
+  label: string;
+  kind: 'photo' | 'video';
+  capturedAt: string;
+  elapsedSeconds: number;
+  lat?: number | null;
+  lng?: number | null;
+  previewUrl?: string | null;
+}
+
+export interface CommunityHeatmapState {
+  enabled: boolean;
+  sport: string;
+  window: 'global' | 'last_7_days' | 'nocturnal';
+}
+
+export interface PersonalHeatmapState {
+  enabled: boolean;
+  sport: string;
+  period: 'all_time' | 'year' | 'season' | 'month' | 'custom';
+  comparePeriod: 'all_time' | 'year' | 'season' | 'month' | null;
+}
 
 export type SportEnvironment = 'outdoor' | 'indoor';
 
@@ -307,6 +331,8 @@ export interface ActivityState {
    * valeur, jamais un zéro de remplissage.
    */
   metricSeries?: MetricSeries[];
+  /** Médias capturés pendant la sortie en cours (K5.05). */
+  capturedMedia?: CapturedLiveMedia[];
 }
 
 /**
@@ -457,10 +483,18 @@ export interface ExplorerState {
    * jamais persistés et ne contiennent aucune donnée privée.
    */
   searchRoutes?: SearchRoute[];
-  /** Fond de carte : relief 3D, satellite, plan vectoriel ou fond national vérifié. */
+  /** Fond de carte : relief 3D, satellite, plan vectoriel, cyclable ou fond national vérifié. */
   mapBaseStyle?: MapBaseStyle;
   /** Visibilité des calques de données. */
   layerVisibility?: Record<string, boolean>;
+  /** Sous-tiroir actif dans Couches & fonds (`C-UI` un niveau). */
+  heatmapSubDrawer?: 'community' | 'personal' | null;
+  /** Paramètres de la heatmap communautaire (C02). */
+  communityHeatmap?: CommunityHeatmapState;
+  /** Paramètres de la heatmap personnelle (C02). */
+  personalHeatmap?: PersonalHeatmapState;
+  /** Lieux favoris enregistrés localement (K3.11). */
+  savedPlaces?: import('../savedPlaces').SavedPlace[];
   /** Scène de test/parité (?scene=), désactivée en production. */
   scene?: string;
 }

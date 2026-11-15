@@ -26,6 +26,9 @@ import { OutingComments } from './OutingComments';
 import { OutingAudienceSheet } from './OutingAudienceSheet';
 import { updateOutingVisibility } from '@/features/compte/client/outingVisibility';
 import ReportBlockModal, { type ReportTarget } from '@/components/ui/ReportBlockModal';
+import { OverlaySheet } from '@/components/compte/overlay/OverlaySheet';
+import { MediaSharingHub, type MediaSharingTab } from '@/components/media-sharing/MediaSharingHub';
+import { buildOutingMediaSharingBundle } from '@/lib/media-sharing/outingAdapter';
 
 async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, {
@@ -58,10 +61,12 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
   const [uploading, setUploading] = useState(false);
   const [audienceOpen, setAudienceOpen] = useState(false);
   const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
+  const [mediaHubTab, setMediaHubTab] = useState<MediaSharingTab | null>(null);
   const [toast, setToast] = useState<Toast>(null);
 
   useEffect(() => {
     setAudienceOpen(false);
+    setMediaHubTab(null);
   }, [outingId]);
 
   const query = useQuery({
@@ -149,8 +154,10 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
         notify('Session requise', 'error');
         return;
       }
-      if (file.size > 10 * 1024 * 1024) {
-        notify('Photo trop lourde (10 Mo maximum)', 'error');
+      const isVideo = file.type.startsWith('video/');
+      const limitMb = isVideo ? 50 : 10;
+      if (file.size > limitMb * 1024 * 1024) {
+        notify(`Fichier trop lourd (${limitMb} Mo maximum)`, 'error');
         return;
       }
       setUploading(true);
@@ -221,7 +228,15 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
               />
             );
           }
-          if (item.id === 'trace') return <OutingTrace detail={detail} onExport={exportGpx} />;
+          if (item.id === 'trace') {
+            return (
+              <OutingTrace
+                detail={detail}
+                onExport={exportGpx}
+                onOpenMediaHub={setMediaHubTab}
+              />
+            );
+          }
           if (item.id === 'photos') {
             return (
               <OutingPhotos
@@ -229,6 +244,7 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
                 canEdit={detail.canEdit}
                 uploading={uploading}
                 onUpload={uploadPhoto}
+                onOpenMediaHub={setMediaHubTab}
                 unavailable={detail.photosUnavailable}
                 onRetry={invalidate}
                 onDelete={(photoId) =>
@@ -454,6 +470,20 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
           }
         }}
       />
+      {mediaHubTab ? (
+        <OverlaySheet
+          title="Médias, Flyover 3D & partage (C04)"
+          subtitle={detail.title}
+          onClose={() => setMediaHubTab(null)}
+          nested
+        >
+          <MediaSharingHub
+            {...buildOutingMediaSharingBundle(detail)}
+            primaryName={user.email ?? 'Moi'}
+            initialTab={mediaHubTab}
+          />
+        </OverlaySheet>
+      ) : null}
       <style dangerouslySetInnerHTML={{ __html: SORTIE_CSS }} />
     </div>
   );
