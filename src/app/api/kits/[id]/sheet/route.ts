@@ -237,6 +237,28 @@ const FALLBACK_KITS: Record<string, FallbackKitPayload> = {
 };
 
 /**
+ * S6.15 — le journal public d'un kit agrège `hike_sessions.distance_km` et
+ * `elevation_gain_m`. Ces totaux peuvent contenir une sortie dont la politique
+ * par métrique masque la distance ou le dénivelé. Pour un lecteur autre que le
+ * propriétaire du kit, on retire les deux totaux ; le nombre de sorties, les
+ * régions et les saisons ne sont pas des métriques d'effort et restent
+ * publiables. Le propriétaire garde son journal complet.
+ */
+function withholdKitFieldMetrics(journal: unknown): unknown {
+  if (!journal || typeof journal !== 'object' || Array.isArray(journal)) return journal;
+  const clone = { ...(journal as Record<string, unknown>) };
+  const field = clone.field;
+  if (field && typeof field === 'object' && !Array.isArray(field)) {
+    clone.field = {
+      ...(field as Record<string, unknown>),
+      total_km: null,
+      total_elevation_gain_m: null,
+    };
+  }
+  return clone;
+}
+
+/**
  * GET /api/kits/[id]/sheet
  * Assemble la fiche d'un kit (KitSheet, Lot 5) — l'objet circule, il n'a pas
  * de page propre.
@@ -300,9 +322,13 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       survival = (s.data as Record<string, unknown>[] | null) ?? [];
     }
 
+    const kitOwnerId =
+      typeof kitRow.user_id === 'string' ? kitRow.user_id : null;
+    const isKitOwner = Boolean(user?.id && kitOwnerId && user.id === kitOwnerId);
+
     return NextResponse.json({
       kit: { ...kitRow, parent_name: parentName, isShowcase: false },
-      journal,
+      journal: isKitOwner ? journal : withholdKitFieldMetrics(journal),
       trust,
       survival: survival ?? [],
       royalty_enabled: process.env.KIT_ROYALTY_ENABLED === 'true',

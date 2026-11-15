@@ -204,6 +204,9 @@ export const CommunityStoriesBar = forwardRef<CommunityStoriesBarHandle, Communi
       console.warn('Nettoyage des stories expirées ignoré —', cleanupError);
     }
 
+    // La RLS `stories_read_visible` (can_view_story) retire les stories des
+    // auteurs que le lecteur a mis en sourdine de contenu ; le rail n'ajoute
+    // aucun filtre client et ne signale jamais qu'une story a été masquée.
     const { data, error } = await supabase
       .from('post_stories')
       .select('id, author_id, image_url, storage_path, caption, created_at, media_type, duration_ms, composition, reply_policy')

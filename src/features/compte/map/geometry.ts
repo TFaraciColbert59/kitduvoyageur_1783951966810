@@ -30,6 +30,9 @@ function pointFromCoordinate(value: unknown): TrackPoint | null {
 export function parsePositions(value: unknown): TrackPoint[] {
   if (!value) return [];
   if (Array.isArray(value)) {
+    if (value.length > 0 && Array.isArray(value[0]) && Array.isArray((value[0] as unknown[])[0])) {
+      return value.flatMap((line) => parsePositions(line));
+    }
     return value
       .map(pointFromCoordinate)
       .filter((point): point is TrackPoint => point !== null);
@@ -43,6 +46,41 @@ export function parsePositions(value: unknown): TrackPoint[] {
     return row.coordinates
       .map(pointFromCoordinate)
       .filter((point): point is TrackPoint => point !== null);
+  }
+  if (row.type === 'MultiLineString' && Array.isArray(row.coordinates)) {
+    return row.coordinates.flatMap((line) => parsePositions(line));
+  }
+  return [];
+}
+
+/**
+ * Morceaux d'une géométrie GeoJSON. Contrairement à `parsePositions`, qui
+ * aplatit pour les bornes et les marqueurs, cette fonction conserve la
+ * séparation des `MultiLineString` : la carte ne doit jamais recoller deux
+ * morceaux séparés par une zone masquée.
+ */
+export function parseTraceSegments(value: unknown): TrackPoint[][] {
+  if (!value) return [];
+  if (Array.isArray(value)) {
+    if (value.length > 0 && Array.isArray(value[0]) && Array.isArray((value[0] as unknown[])[0])) {
+      return value
+        .map((line) => parsePositions(line))
+        .filter((segment) => segment.length > 0);
+    }
+    const line = parsePositions(value);
+    return line.length > 0 ? [line] : [];
+  }
+  if (typeof value !== 'object') return [];
+  const row = value as Record<string, unknown>;
+  if (row.type === 'Feature' && row.geometry) return parseTraceSegments(row.geometry);
+  if (row.type === 'LineString') {
+    const line = parsePositions(row);
+    return line.length > 0 ? [line] : [];
+  }
+  if (row.type === 'MultiLineString' && Array.isArray(row.coordinates)) {
+    return row.coordinates
+      .map((line) => parsePositions(line))
+      .filter((segment) => segment.length > 0);
   }
   return [];
 }

@@ -6,6 +6,7 @@
  * (M1). Aucun connecteur santé réel en Phase 1.
  */
 import 'server-only';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { buildDomainEvent } from '../domain/events';
@@ -51,6 +52,30 @@ export interface SetConsentResult {
   error?: string;
 }
 
+/**
+ * Liste les consentements d'un propriétaire avec un client déjà authentifié.
+ * Utilisée par les surfaces Compte pour éviter une double authentification ;
+ * la RLS reste la seule autorité de lecture.
+ */
+export async function listConsentsForUser(
+  supabase: SupabaseClient,
+  userId: string,
+  options: { onError?: 'empty' | 'throw' } = {}
+): Promise<ConsentRow[]> {
+  const { data, error } = await supabase
+    .from('adventure_data_consents')
+    .select('*')
+    .eq('user_id', userId);
+
+  if (error) {
+    console.error('[LKDV AdventureIntelligence] Erreur listConsents:', error);
+    if (options.onError === 'throw') throw new Error('consent_read_failed');
+    return [];
+  }
+
+  return (data ?? []) as ConsentRow[];
+}
+
 /** Liste les consentements du propriétaire courant ; toute erreur → []. */
 export async function listConsents(): Promise<ConsentRow[]> {
   const supabase = await createClient();
@@ -61,17 +86,53 @@ export async function listConsents(): Promise<ConsentRow[]> {
 
   if (!user) return [];
 
-  const { data, error } = await supabase
-    .from('adventure_data_consents')
-    .select('*')
-    .eq('user_id', user.id);
+  return listConsentsForUser(supabase, user.id);
+}
 
-  if (error) {
-    console.error('[LKDV AdventureIntelligence] Erreur listConsents:', error);
-    return [];
+/**
+ * Accorde ou retire une finalité avec un client déjà authentifié.
+ * `external_readiness` est toujours refusé, même si la contrainte SQL était
+ * contournée. Une révocation émet `consent.revoked` pour la purge serveur.
+ */
+export async function setConsentForUser(
+  supabase: SupabaseClient,
+  userId: string,
+  purpose: string,
+  granted: boolean
+): Promise<SetConsentResult> {
+  const parsed = consentPurposeSchema.safeParse(purpose);
+  if (!parsed.success) {
+    return { ok: false, error: 'invalid_purpose' };
   }
 
-  return (data ?? []) as ConsentRow[];
+  if (DISABLED_CONSENT_PURPOSES.includes(parsed.data)) {
+    return { ok: false, error: 'external_readiness_disabled' };
+  }
+
+  const now = new Date().toISOString();
+
+  const { error } = await supabase.from('adventure_data_consents').upsert(
+    {
+      user_id: userId,
+      purpose: parsed.data,
+      granted,
+      policy_version: CONSENT_POLICY_VERSION,
+      granted_at: granted ? now : null,
+      revoked_at: granted ? null : now,
+    },
+    { onConflict: 'user_id,purpose,policy_version' }
+  );
+
+  if (error) {
+    console.error('[LKDV AdventureIntelligence] Erreur setConsent:', error);
+    return { ok: false, error: error.message };
+  }
+
+  if (!granted) {
+    await emitConsentRevokedEvent(supabase, userId, parsed.data, now);
+  }
+
+  return { ok: true };
 }
 
 /** Accorde ou retire une finalité ; `external_readiness` est toujours refusé. */
@@ -95,30 +156,7 @@ export async function setConsent(purpose: string, granted: boolean): Promise<Set
     return { ok: false, error: 'unauthenticated' };
   }
 
-  const now = new Date().toISOString();
-
-  const { error } = await supabase.from('adventure_data_consents').upsert(
-    {
-      user_id: user.id,
-      purpose: parsed.data,
-      granted,
-      policy_version: CONSENT_POLICY_VERSION,
-      granted_at: granted ? now : null,
-      revoked_at: granted ? null : now,
-    },
-    { onConflict: 'user_id,purpose,policy_version' }
-  );
-
-  if (error) {
-    console.error('[LKDV AdventureIntelligence] Erreur setConsent:', error);
-    return { ok: false, error: error.message };
-  }
-
-  if (!granted) {
-    await emitConsentRevokedEvent(supabase, user.id, parsed.data, now);
-  }
-
-  return { ok: true };
+  return setConsentForUser(supabase, user.id, parsed.data, granted);
 }
 
 /**
@@ -128,7 +166,7 @@ export async function setConsent(purpose: string, granted: boolean): Promise<Set
  * le retrait de consentement est immédiat).
  */
 async function emitConsentRevokedEvent(
-  supabase: Awaited<ReturnType<typeof createClient>>,
+  supabase: SupabaseClient,
   userId: string,
   purpose: ConsentPurpose,
   revokedAt: string

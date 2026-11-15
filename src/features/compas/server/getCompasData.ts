@@ -56,6 +56,7 @@ import { aiEnabled } from '@/lib/ai/aiMode';
 import { keepTrialEnabled } from '@/features/demo/keepTrial';
 import { getRequestLocale } from '@/lib/i18n/serverLocale';
 import { getRequestUnits } from '@/lib/i18n/serverUnits';
+import { readRouteDraft, type RouteDraft } from '@/features/adventure-prep/routeRevision';
 
 /**
  * Compas — chargeur serveur unique.
@@ -174,6 +175,11 @@ export interface CompasData {
   weather: CompasWeather | null;
   /** Parcours du catalogue choisi pour le voyage. */
   route: { id: number | null; name: string | null };
+  /**
+   * Révision de tracé enregistrée dans les métadonnées du voyage (éditeur R01),
+   * ou null. Elle ne modifie ni `hiking_routes` ni les séances déjà liées.
+   */
+  routeDraft?: RouteDraft | null;
   /**
    * Coordonnées de la première étape géolocalisée (météo, recherches autour), PAS le
    * lieu de départ du voyageur : celui-ci est `originName` / `originSaid`.
@@ -514,6 +520,8 @@ async function getCompasDataUntraced(): Promise<CompasData | null> {
 
   const members = toMembers(trip, hub.group?.members ?? []);
   const compasMeta = readCompasMeta(trip.metadata);
+  // Révision locale de l'éditeur (R01) : lue défensivement, sans toucher au parcours du catalogue.
+  const routeDraft = readRouteDraft(trip.metadata);
   const input: CompasInput = {
     trip: {
       id: trip.id,
@@ -567,7 +575,7 @@ async function getCompasDataUntraced(): Promise<CompasData | null> {
     // hub couvre aujourd'hui + 5 jours, pas les dates de la sortie.
     weather: [],
     routeDurationMin: hub.hiking?.durationMin ?? null,
-    routeHasGeometry: Boolean(hub.hiking?.routeGeojson),
+    routeHasGeometry: Boolean(hub.hiking?.routeGeojson || routeDraft?.geometry),
     waterPointsCount: hub.hiking?.waterPointsCount ?? null,
     viewerId,
     now: new Date(),
@@ -615,7 +623,8 @@ async function getCompasDataUntraced(): Promise<CompasData | null> {
   // Tracé réel : la route du catalogue ou le tracé préparé (routé entre les étapes), tant que les étapes n'ont
   // pas bougé. Seul son profil est une altitude MESURÉE du parcours : des lignes droites entre les étapes
   // survolent un massif (tunnel de Chamonix à Courmayeur) ou manquent un sommet qui n'est pas une étape.
-  const realTrack = hub.hiking?.routeGeojson ?? preparedTrack(trip.metadata, draft.route.coords);
+  const realTrack =
+    routeDraft?.geometry ?? hub.hiking?.routeGeojson ?? preparedTrack(trip.metadata, draft.route.coords);
   const trackCoords = geojsonLatLon(realTrack);
   const hasRealTrack = trackCoords.length >= 2;
   // Tout ce qui ne dépend que du brouillon part en même temps : chaque action
@@ -772,6 +781,7 @@ async function getCompasDataUntraced(): Promise<CompasData | null> {
     budgetFx,
     weather,
     route: { id: routeId, name: hub.hiking?.routeName ?? null },
+    routeDraft,
     origin,
     zone,
     dayZones: Object.fromEntries(

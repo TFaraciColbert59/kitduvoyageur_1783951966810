@@ -87,6 +87,23 @@ export function KitSlot({
   const gearList = Array.isArray(gearItems)
     ? gearItems
     : readRows<GearEntry>(records, 'gearItems');
+  // Une lecture en échec n'est pas un inventaire vide : on le dit sans
+  // transformer l'absence de données en « aucun matériel ».
+  const gearUnavailable =
+    !Array.isArray(gearItems) && records.gearItemsUnavailable === true;
+  const kitsUnavailable =
+    !Array.isArray(kits) && records.kitsUnavailable === true;
+  // Les kits peuvent être lisibles alors que leur composition ou leurs visuels
+  // manquent : on garde les cartes et on signale la lecture partielle.
+  const kitContentUnavailable =
+    !Array.isArray(kits) && records.kitContentUnavailable === true;
+  const kitVisualsUnavailable =
+    !Array.isArray(kits) && records.kitVisualsUnavailable === true;
+  const kitNotice = kitContentUnavailable
+    ? 'Le contenu détaillé des kits est momentanément indisponible.'
+    : kitVisualsUnavailable
+      ? 'Les visuels des kits sont momentanément indisponibles.'
+      : null;
   const resolvedViewer = resolveKitViewer(viewer, records);
   const rootRef = useRef<HTMLDivElement>(null);
   const [availableHeight, setAvailableHeight] = useState(0);
@@ -101,6 +118,7 @@ export function KitSlot({
     observer?.observe(host);
     return () => observer?.disconnect();
   }, []);
+  const unavailable = inventoryLens ? gearUnavailable : kitsUnavailable;
   const empty = inventoryLens ? gearList.length === 0 : kitList.length === 0;
 
   return (
@@ -111,14 +129,21 @@ export function KitSlot({
       data-slot="kit"
       data-lens={inventoryLens ? 'inventory' : 'kits'}
       data-viewer={resolvedViewer}
-      data-state={empty ? 'empty' : 'ready'}
+      data-state={unavailable ? 'error' : empty ? 'empty' : 'ready'}
     >
       <style
         dangerouslySetInnerHTML={{ __html: KIT_SLOT_CSS + KIT_CARD_CSS + GEAR_ROW_CSS }}
       />
 
       {inventoryLens ? (
-        gearList.length === 0 ? (
+        gearUnavailable ? (
+          <div className="lkdv-slot-state" data-state="error" role="status">
+            <span className="lkdv-slot-state-ico" aria-hidden="true">
+              ⚠
+            </span>
+            <p>Matériel momentanément indisponible.</p>
+          </div>
+        ) : gearList.length === 0 ? (
           <div className="lkdv-slot-state" data-state="empty">
             <span className="lkdv-slot-state-ico" aria-hidden="true">
               ○
@@ -147,6 +172,13 @@ export function KitSlot({
             ))}
           </div>
         )
+      ) : kitsUnavailable ? (
+        <div className="lkdv-slot-state" data-state="error" role="status">
+          <span className="lkdv-slot-state-ico" aria-hidden="true">
+            ⚠
+          </span>
+          <p>Kits momentanément indisponibles.</p>
+        </div>
       ) : kitList.length === 0 ? (
         <div className="lkdv-slot-state" data-state="empty">
           <span className="lkdv-slot-state-ico" aria-hidden="true">
@@ -155,19 +187,32 @@ export function KitSlot({
           <p>Aucun kit enregistré.</p>
         </div>
       ) : (
-        <ul className="lkdv-kit-list" aria-label="Kits enregistrés">
-          {kitList.map((kit, index) => {
-            const key =
-              (typeof kit.realId === 'string' && kit.realId) ||
-              (typeof kit.id === 'string' && kit.id) ||
-              `kit-${index}`;
-            return (
-              <li key={key} className="lkdv-kit-list-item">
-                <KitCard kit={kit} viewer={resolvedViewer} payload={records} expandedHeight={availableHeight || undefined} />
-              </li>
-            );
-          })}
-        </ul>
+        <>
+          {kitNotice ? (
+            <p className="lkdv-kit-note" role="note">
+              {kitNotice}
+            </p>
+          ) : null}
+          <ul className="lkdv-kit-list" aria-label="Kits enregistrés">
+            {kitList.map((kit, index) => {
+              const key =
+                (typeof kit.realId === 'string' && kit.realId) ||
+                (typeof kit.id === 'string' && kit.id) ||
+                `kit-${index}`;
+              return (
+                <li key={key} className="lkdv-kit-list-item">
+                  <KitCard
+                    kit={kit}
+                    viewer={resolvedViewer}
+                    payload={records}
+                    expandedHeight={availableHeight || undefined}
+                    contentUnavailable={kitContentUnavailable}
+                  />
+                </li>
+              );
+            })}
+          </ul>
+        </>
       )}
     </div>
   );
@@ -175,6 +220,7 @@ export function KitSlot({
 
 export const KIT_SLOT_CSS = `
 .lkdv-kit-slot{display:flex!important;flex-direction:column!important;gap:8px!important;width:100%!important;min-width:0!important;box-sizing:border-box!important;}
+.lkdv-kit-note{margin:0!important;padding:7px 10px!important;border-radius:12px!important;background:var(--card-tint-strong,rgba(236,244,233,.72))!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.85),0 0 0 .5px rgba(23,43,36,.07)!important;font:500 11px/1.35 var(--sf,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif)!important;color:var(--label2,#56665D)!important;}
 .lkdv-kit-list{list-style:none!important;margin:0!important;padding:0 0 52px 0!important;display:flex!important;flex-direction:column!important;gap:8px!important;width:100%!important;min-width:0!important;}
 .lkdv-kit-list-item{min-width:0!important;margin:0!important;padding:0!important;}
 `;

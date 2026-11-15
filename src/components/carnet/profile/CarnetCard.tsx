@@ -8,7 +8,7 @@ import { CarnetMediaTabs } from './CarnetMediaTabs';
 import { CARNET_PAGE_TABS, CarnetPages, carnetPageIndex, type CarnetPageId } from './CarnetPages';
 import { CarnetDayHeader } from './CarnetDayHeader';
 import { useDayMotion, useDaySwipe } from './CarnetDaySwipe';
-import { extractCoords, projectToViewBox } from './traceGeometry';
+import { extractTraceSegments, projectTraceSegmentsToViewBox } from './traceGeometry';
 import { PLACE_LINE_MISSING, placeLineParts } from '@/features/carnet/detail/place';
 import type { CarnetDetail, CarnetMomentItem, CarnetParticipant } from '@/features/carnet/detail/types';
 
@@ -97,7 +97,10 @@ export function CarnetCard({
 }: CarnetCardProps) {
   /* Tracé et ligne de lieu : purs, donc calculés une fois par carnet et non
      à chaque bascule d'engagement, de page ou de jour. */
-  const tracePath = useMemo(() => projectToViewBox(extractCoords(detail.trace), 66, 9), [detail.trace]);
+  const tracePaths = useMemo(
+    () => projectTraceSegmentsToViewBox(extractTraceSegments(detail.trace), 66, 9),
+    [detail.trace],
+  );
   /* Une ligne unique, du texte seul : lieu · jours · distance · dénivelé · dates.
      Aucune valeur inventée : un champ absent devient un tiret, et la ligne
      entière disparaît si le carnet n'a réellement rien à dire. */
@@ -171,25 +174,29 @@ export function CarnetCard({
       onClick={onOpenCarnet}
       aria-label="Ouvrir le carnet"
     >
-      {tracePath ? (
+      {tracePaths.length > 0 ? (
         <span className="ckp-cover ckp-cover--trace" aria-hidden="true">
           <svg viewBox="0 0 66 66" width="62" height="62" focusable="false">
-            <polyline
-              points={tracePath}
-              fill="none"
-              stroke="rgba(255,255,255,.9)"
-              strokeWidth="4.6"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <polyline
-              points={tracePath}
-              fill="none"
-              stroke="#17402c"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
+            {tracePaths.map((points, index) => (
+              <g key={`trace-${index}`}>
+                <polyline
+                  points={points}
+                  fill="none"
+                  stroke="rgba(255,255,255,.9)"
+                  strokeWidth="4.6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <polyline
+                  points={points}
+                  fill="none"
+                  stroke="#17402c"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </g>
+            ))}
           </svg>
         </span>
       ) : (

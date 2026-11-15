@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Backpack,
@@ -14,6 +14,7 @@ import {
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import type { OutingDetail } from '@/features/compte/server/sorties';
+import type { OutingMetricKey } from '@/features/compte/domain/metricVisibility';
 import { DrawerError, DrawerShell, DrawerSkeleton, type DrawerTab } from '../shell/DrawerShell';
 import { DrawerAuthRequired } from '../shell/DrawerAuthRequired';
 import { OutingSummary } from './OutingSummary';
@@ -22,6 +23,8 @@ import { OutingPhotos } from './OutingPhotos';
 import { OutingGear } from './OutingGear';
 import { OutingParticipants } from './OutingParticipants';
 import { OutingComments } from './OutingComments';
+import { OutingAudienceSheet } from './OutingAudienceSheet';
+import { updateOutingVisibility } from '@/features/compte/client/outingVisibility';
 
 async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, {
@@ -52,7 +55,12 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
   const [tab, setTab] = useState(0);
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [audienceOpen, setAudienceOpen] = useState(false);
   const [toast, setToast] = useState<Toast>(null);
+
+  useEffect(() => {
+    setAudienceOpen(false);
+  }, [outingId]);
 
   const query = useQuery({
     queryKey: ['sortie', outingId],
@@ -88,26 +96,39 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
     [invalidate, notify]
   );
 
-  const share = useCallback(async () => {
+  const openAudience = useCallback(() => {
     if (!detail) return;
-    const url = window.location.href.split('?')[0];
-    const payload = {
-      title: detail.title,
-      text: `${detail.title} · ${detail.km} km · +${detail.dplus} m`,
-      url,
-    };
-    try {
-      if (navigator.share) {
-        await navigator.share(payload);
-        notify('Partage ouvert');
-      } else {
-        await navigator.clipboard.writeText(url);
-        notify('Lien copié');
-      }
-    } catch {
-      // Annulation du partage natif : pas d'erreur visible.
+    if (!detail.canEdit) {
+      notify('Seul le propriétaire peut changer l’audience de cette sortie.', 'error');
+      return;
     }
+    setAudienceOpen(true);
   }, [detail, notify]);
+
+  const saveMetrics = useCallback(
+    (keys: OutingMetricKey[]) =>
+      run(
+        () =>
+          requestJson(`/api/compte/sorties/${outingId}/metrics`, {
+            method: 'PUT',
+            body: JSON.stringify({ visibility: keys }),
+          }),
+        'Métriques partagées mises à jour'
+      ),
+    [outingId, run]
+  );
+
+  const resetMetrics = useCallback(
+    () =>
+      run(
+        () =>
+          requestJson(`/api/compte/sorties/${outingId}/metrics`, {
+            method: 'DELETE',
+          }),
+        'Réglage de partage réinitialisé'
+      ),
+    [outingId, run]
+  );
 
   const exportGpx = useCallback(() => {
     if (!outingId) return;
@@ -190,7 +211,9 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
                     'Sortie mise à jour'
                   )
                 }
-                onShare={share}
+                onSaveMetrics={saveMetrics}
+                onResetMetrics={resetMetrics}
+                onShare={openAudience}
                 onExport={exportGpx}
                 onDelete={deleteOuting}
               />
@@ -204,6 +227,8 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
                 canEdit={detail.canEdit}
                 uploading={uploading}
                 onUpload={uploadPhoto}
+                unavailable={detail.photosUnavailable}
+                onRetry={invalidate}
                 onDelete={(photoId) =>
                   run(
                     () =>
@@ -225,6 +250,8 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
                 missingGear={detail.missingGear}
                 canEdit={detail.canEdit}
                 busy={busy}
+                outingId={outingId}
+                onAssociated={invalidate}
                 onAttach={() =>
                   run(
                     () => requestJson(`/api/compte/sorties/${outingId}/gear`, { method: 'POST' }),
@@ -308,7 +335,7 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
           );
         },
       })),
-    [busy, deleteOuting, detail, exportGpx, outingId, run, share, uploadPhoto, uploading]
+    [busy, deleteOuting, detail, exportGpx, invalidate, openAudience, outingId, resetMetrics, run, saveMetrics, uploadPhoto, uploading]
   );
 
   if (authLoading) {
@@ -362,6 +389,29 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
           {toast.text}
         </div>
       ) : null}
+      <OutingAudienceSheet
+        open={audienceOpen}
+        title={detail.title}
+        summary={[detail.date, detail.massif, `${detail.km} km`, `+${detail.dplus} m`]
+          .filter(Boolean)
+          .join(' · ')}
+        current={detail.visibility}
+        onClose={() => setAudienceOpen(false)}
+        onApply={(next) => {
+          if (!detail.canEdit) {
+            throw new Error('Seul le propriétaire peut changer l’audience de cette sortie.');
+          }
+          return updateOutingVisibility(outingId, next);
+        }}
+        onApplied={() => {
+          setAudienceOpen(false);
+          invalidate();
+          notify('Audience de la sortie enregistrée');
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new Event('lkdv:outings-changed'));
+          }
+        }}
+      />
       <style dangerouslySetInnerHTML={{ __html: SORTIE_CSS }} />
     </div>
   );
@@ -462,6 +512,7 @@ export const SORTIE_CSS = `
 .lkdv-sortie-kit-ico{width:38px!important;height:38px!important;border-radius:12px!important;display:grid!important;place-items:center!important;background:rgba(23,64,44,.08)!important;color:#17402C!important;}
 .lkdv-sortie-kit b{display:block!important;font:600 13px var(--sf)!important;color:var(--label)!important;}
 .lkdv-sortie-kit small{font:500 10.5px var(--sf)!important;color:var(--label2)!important;}
+.lkdv-sortie-associate{display:flex!important;justify-content:flex-end!important;padding:2px 3px 8px!important;}
 .lkdv-sortie-gear-total{display:flex!important;align-items:center!important;justify-content:space-between!important;padding:0 3px!important;font:500 11.5px var(--sf)!important;color:var(--label2)!important;}
 .lkdv-sortie-gear-total b{font:650 14px var(--sf)!important;color:var(--label)!important;}
 .lkdv-sortie-missing{margin:0!important;padding:8px 10px!important;border-radius:12px!important;background:rgba(232,192,104,.18)!important;font:500 11.5px/1.4 var(--sf)!important;color:#7d5c14!important;}
@@ -564,7 +615,25 @@ export const SORTIE_CSS = `
 .lkdv-sortie-gear{gap:6px!important;}
 .lkdv-sortie-gear-name{font-size:12px!important;}
 .lkdv-sortie-gear-weight{font-variant-numeric:tabular-nums!important;}
-/* 19. Toast au-dessus de la barre basse. */
+/* 19. Tours source lisibles, distincts des splits calculés. */
+.lkdv-sortie-laps{list-style:none!important;margin:0!important;padding:0!important;display:flex!important;flex-direction:column!important;gap:5px!important;}
+.lkdv-sortie-laps li{display:flex!important;flex-direction:column!important;gap:3px!important;padding:8px 9px!important;border-radius:13px!important;background:rgba(255,255,255,.5)!important;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.06)!important;}
+.lkdv-sortie-lap-head{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:8px!important;}
+.lkdv-sortie-lap-head b{font:600 12px var(--sf)!important;color:var(--label)!important;}
+.lkdv-sortie-lap-origin{font:600 9px var(--sf)!important;color:var(--label2)!important;text-transform:uppercase!important;letter-spacing:.04em!important;padding:2px 6px!important;border-radius:999px!important;background:rgba(23,64,44,.08)!important;white-space:nowrap!important;}
+.lkdv-sortie-lap-origin.synthetic{background:rgba(185,138,46,.14)!important;color:#7d5c14!important;}
+.lkdv-sortie-lap-metrics{font:500 11.5px/1.4 var(--sf)!important;color:var(--label2)!important;font-variant-numeric:tabular-nums!important;}
+.lkdv-sortie-laps small{font:500 10px/1.35 var(--sf)!important;color:var(--label3)!important;}
+.lkdv-sortie-laps code{font:500 10.5px ui-monospace,SFMono-Regular,Menlo,monospace!important;color:var(--label2)!important;}
+/* 19bis. Séries de mesures source, privées et sans interpolation. */
+.lkdv-sortie-series{list-style:none!important;margin:8px 0 0!important;padding:0!important;display:flex!important;flex-direction:column!important;gap:6px!important;}
+.lkdv-sortie-series li{display:flex!important;flex-direction:column!important;gap:3px!important;padding:8px 9px!important;border-radius:13px!important;background:rgba(255,255,255,.5)!important;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.06)!important;color:#17402C!important;}
+.lkdv-sortie-series-head{display:flex!important;align-items:baseline!important;justify-content:space-between!important;gap:8px!important;}
+.lkdv-sortie-series-head b{font:600 11.5px var(--sf)!important;color:var(--label)!important;}
+.lkdv-sortie-series-head span{font:600 9px var(--sf)!important;color:var(--label2)!important;text-transform:uppercase!important;letter-spacing:.04em!important;white-space:nowrap!important;}
+.lkdv-sortie-series-line{width:100%!important;height:24px!important;display:block!important;opacity:.82!important;overflow:visible!important;}
+.lkdv-sortie-series small{font:500 9.5px/1.35 var(--sf)!important;color:var(--label3)!important;font-variant-numeric:tabular-nums!important;}
+/* 20. Toast au-dessus de la barre basse. */
 .lkdv-sortie-toast{bottom:calc(76px + env(safe-area-inset-bottom,0px))!important;box-shadow:0 10px 28px rgba(0,0,0,.28)!important;}
 /* Harmonisation : photo visible à 100 %, titre sur verre, actions en pilules sur l'image. */
 .lkdv-sortie-hero{min-height:236px!important;}
@@ -600,6 +669,27 @@ export const SORTIE_CSS = `
 
 .lkdv-sortie-person-link{display:flex!important;align-items:center!important;gap:9px!important;min-width:0!important;flex:1!important;color:inherit!important;text-decoration:none!important;}
 .lkdv-sortie-person-link:active{opacity:.7!important;}
+
+/* S6.15 — réglage propriétaire des métriques partagées. */
+.lkdv-sortie-metrics{display:flex!important;flex-direction:column!important;gap:9px!important;}
+.lkdv-sortie-metrics-note,.lkdv-sortie-metrics-warning{margin:0!important;font:400 11.5px/1.5 var(--sf)!important;color:var(--label2)!important;}
+.lkdv-sortie-metrics-warning{padding:8px 10px!important;border-radius:12px!important;background:rgba(232,192,104,.16)!important;color:#7d5c14!important;}
+.lkdv-sortie-metrics-list{display:flex!important;flex-direction:column!important;gap:5px!important;margin:0!important;padding:0!important;border:0!important;min-width:0!important;}
+.lkdv-sortie-metrics-legend{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important;}
+.lkdv-sortie-metric-row{display:grid!important;grid-template-columns:22px minmax(0,1fr) auto!important;align-items:center!important;gap:9px!important;min-height:48px!important;padding:7px 10px!important;border-radius:14px!important;background:rgba(255,255,255,.48)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 0 0 .5px rgba(23,43,36,.07)!important;cursor:pointer!important;}
+.lkdv-sortie-metric-row.on{background:rgba(91,127,85,.09)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 0 0 .5px rgba(23,64,44,.14)!important;}
+.lkdv-sortie-metric-check{width:20px!important;height:20px!important;margin:0!important;accent-color:#17402C!important;cursor:pointer!important;}
+.lkdv-sortie-metric-copy{display:flex!important;flex-direction:column!important;gap:1px!important;min-width:0!important;}
+.lkdv-sortie-metric-copy b{font:600 12px/1.3 var(--sf)!important;color:var(--label)!important;}
+.lkdv-sortie-metric-copy small{font:400 10.5px/1.35 var(--sf)!important;color:var(--label3)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+.lkdv-sortie-metric-state{font:600 9.5px/1 var(--sf)!important;letter-spacing:.04em!important;text-transform:uppercase!important;padding:4px 7px!important;border-radius:999px!important;white-space:nowrap!important;}
+.lkdv-sortie-metric-state.on{background:rgba(23,64,44,.1)!important;color:#17402C!important;}
+.lkdv-sortie-metric-state.off{background:rgba(23,43,36,.06)!important;color:var(--label3)!important;}
+.lkdv-sortie-metrics-actions{display:flex!important;align-items:center!important;justify-content:flex-end!important;flex-wrap:wrap!important;gap:6px!important;}
+.lkdv-sortie-metrics-confirm{display:flex!important;flex-direction:column!important;gap:7px!important;padding:9px 10px!important;border-radius:14px!important;background:rgba(179,58,44,.06)!important;box-shadow:inset 0 0 0 .5px rgba(179,58,44,.18)!important;}
+.lkdv-sortie-metrics-confirm p{margin:0!important;font:400 11px/1.45 var(--sf)!important;color:#7d2a20!important;}
+.lkdv-sortie-metric-row:focus-within{outline:2px solid #17402c!important;outline-offset:2px!important;}
+@media (max-width:370px){.lkdv-sortie-metric-row{grid-template-columns:22px minmax(0,1fr)!important;}.lkdv-sortie-metric-state{grid-column:2!important;justify-self:start!important;}}
 
 `;
 

@@ -35,6 +35,17 @@ describe('Compte bootstrap — mapping réel', () => {
     expect(p.isGuest).toBe(false);
   });
 
+  it('omet un compteur dont la lecture a échoué au lieu de le remettre à zéro', () => {
+    const p = mapProfile(
+      { id: 'u1', handle: 'tony_frc', full_name: 'Tony' },
+      null,
+      3
+    );
+    expect(p).not.toHaveProperty('followersCount');
+    expect(p).not.toHaveProperty('followersLabel');
+    expect(p.followingCount).toBe(3);
+  });
+
   it('mappe les carnets avec des positions stables', () => {
     const rows = mapCarnets([
       { id: 'c1', title: 'Lac Blanc', destination: 'Mont-Blanc', description: 'Aube', likes_count: 4, views_count: 12, visibility: 'public', created_at: '2026-09-19T08:00:00Z' },

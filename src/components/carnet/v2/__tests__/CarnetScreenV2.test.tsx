@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import React from 'react';
-import { render, screen, fireEvent, cleanup } from '@testing-library/react';
+import { render, screen, fireEvent, cleanup, waitFor } from '@testing-library/react';
 import { CarnetScreenV2 } from '../CarnetScreenV2';
 import { CarnetIsland } from '../CarnetIsland';
 import { CarnetTopBarV2 } from '../CarnetTopBarV2';
@@ -9,6 +9,8 @@ import type { CarnetDetail } from '@/features/carnet/detail/types';
 
 afterEach(() => {
   cleanup();
+  MAP_PROPS.current = null;
+  window.history.pushState({}, '', '/');
 });
 
 vi.mock('next/navigation', () => ({
@@ -54,8 +56,13 @@ vi.mock('@/lib/supabase/client', () => ({
   }),
 }));
 
+const MAP_PROPS = vi.hoisted(() => ({ current: null as Record<string, unknown> | null }));
+
 vi.mock('@/components/compte/map/CompteMap', () => ({
-  CompteMap: () => <div data-testid="compte-map-mock">Map</div>,
+  CompteMap: (props: Record<string, unknown>) => {
+    MAP_PROPS.current = props;
+    return <div data-testid="compte-map-mock">Map</div>;
+  },
 }));
 
 vi.mock('@/components/carnet/profile/CarnetPostSheet', () => ({
@@ -235,6 +242,78 @@ describe('CarnetScreenV2 Component', () => {
     expect(screen.getByTestId('carnet-v2-root')).toBeTruthy();
     expect(screen.getAllByText('Tour des Écrins').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByTestId('compte-map-mock')).toBeTruthy();
+  });
+
+  it('transmet à la carte l’état vide réel et la propriété calculée côté serveur', () => {
+    render(
+      <CarnetScreenV2
+        detail={{
+          ...mockDetail,
+          isOwner: false,
+          viewerRole: 'visitor',
+          trace: null,
+          traceMasked: true,
+          traceFullyMasked: true,
+        }}
+      />,
+    );
+
+    expect(MAP_PROPS.current?.authState).toBe('guest');
+    expect(MAP_PROPS.current?.emptyTitle).toBe(
+      'Trace non partageable pour les visiteurs.',
+    );
+    expect(String(MAP_PROPS.current?.emptyHint)).toContain('privée');
+  });
+
+  it('ne transforme pas la carte d’un visiteur connecté en carte propriétaire', () => {
+    render(<CarnetScreenV2 detail={{ ...mockDetail, isOwner: false }} />);
+    expect(MAP_PROPS.current?.authState).toBe('guest');
+  });
+
+  it('rend le jour actif en MultiLineString quand il porte deux relevés', async () => {
+    window.history.pushState({}, '', '/carnets/carnet-ecrins?jour=1');
+    const point = (lat: number, lng: number, at: string) => ({ lat, lng, at });
+    render(
+      <CarnetScreenV2
+        detail={{
+          ...mockDetail,
+          trace: null,
+          days: [
+            {
+              index: 1,
+              date: '2026-07-10',
+              distanceKm: 2,
+              elevationM: 100,
+              durationS: 3600,
+              moments: [],
+              points: [
+                point(45.9, 6.9, '2026-07-10T06:00:00Z'),
+                point(45.91, 6.91, '2026-07-10T06:30:00Z'),
+                point(45.95, 6.95, '2026-07-10T14:00:00Z'),
+                point(45.96, 6.96, '2026-07-10T14:30:00Z'),
+              ],
+              segments: [
+                [
+                  point(45.9, 6.9, '2026-07-10T06:00:00Z'),
+                  point(45.91, 6.91, '2026-07-10T06:30:00Z'),
+                ],
+                [
+                  point(45.95, 6.95, '2026-07-10T14:00:00Z'),
+                  point(45.96, 6.96, '2026-07-10T14:30:00Z'),
+                ],
+              ],
+            },
+          ],
+        }}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(MAP_PROPS.current?.trace).toMatchObject({ type: 'MultiLineString' });
+    });
+    const trace = MAP_PROPS.current?.trace as { coordinates: number[][][] };
+    expect(trace.coordinates).toHaveLength(2);
+    expect(trace.coordinates[0].at(-1)?.[0]).toBeLessThan(trace.coordinates[1][0][0]);
   });
 
   it('affiche les 3 boutons de statistiques (jours, km, D+)', () => {

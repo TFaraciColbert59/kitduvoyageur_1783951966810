@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { Backpack, PackagePlus, Trash2 } from 'lucide-react';
+import { Backpack, Bike, PackagePlus, Trash2 } from 'lucide-react';
 import { ActionPill } from '@/components/ui/ActionPill';
 import type { OutingGearItem, OutingKit } from '@/features/compte/server/sorties';
 import { DrawerEmpty } from '../shell/DrawerShell';
 import { generatedProductImage } from '../cards/productImage';
 import { formatWeight } from './shared';
+import { GearAssociationSheet } from '../gear/GearAssociationSheet';
 
 export interface OutingGearProps {
   gear: OutingGearItem[];
@@ -14,8 +15,12 @@ export interface OutingGearProps {
   missingGear: number;
   canEdit: boolean;
   busy: boolean;
+  /** Sortie ciblée par l'association d'un vélo ou de chaussures. */
+  outingId?: string;
   onAttach: () => void;
   onRemove: (gearId: string) => void;
+  /** Rafraîchit la sortie après une association réussie. */
+  onAssociated?: () => void;
 }
 
 const WEAR_BY_CONDITION: Record<string, number> = {
@@ -48,7 +53,18 @@ function categoryOf(item: OutingGearItem): string {
   return category || 'Autres';
 }
 
-export function OutingGear({ gear, kit, missingGear, canEdit, busy, onAttach, onRemove }: OutingGearProps) {
+export function OutingGear({
+  gear,
+  kit,
+  missingGear,
+  canEdit,
+  busy,
+  outingId,
+  onAttach,
+  onRemove,
+  onAssociated,
+}: OutingGearProps) {
+  const [associating, setAssociating] = useState(false);
   const total = gear.reduce((sum, item) => sum + (item.weightG ?? 0), 0);
   const categories = useMemo(() => {
     const values = Array.from(new Set(gear.map(categoryOf))).sort((a, b) => a.localeCompare(b, 'fr'));
@@ -81,6 +97,18 @@ export function OutingGear({ gear, kit, missingGear, canEdit, busy, onAttach, on
             ) : null}
           </div>
         </section>
+      ) : null}
+
+      {canEdit && outingId ? (
+        <div className="lkdv-sortie-associate">
+          <ActionPill
+            tone="glass"
+            label="Associer un vélo ou des chaussures à cette sortie"
+            text="Vélo ou chaussures"
+            icon={<Bike size={15} />}
+            onClick={() => setAssociating(true)}
+          />
+        </div>
       ) : null}
 
       {gear.length === 0 ? (
@@ -160,6 +188,14 @@ export function OutingGear({ gear, kit, missingGear, canEdit, busy, onAttach, on
           </nav>
         </>
       )}
+
+      {associating && outingId ? (
+        <GearAssociationSheet
+          outingId={outingId}
+          onClose={() => setAssociating(false)}
+          onAttached={onAssociated}
+        />
+      ) : null}
     </div>
   );
 }

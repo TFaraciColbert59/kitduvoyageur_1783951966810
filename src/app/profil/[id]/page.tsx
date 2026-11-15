@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { createClient } from '@/lib/supabase/client';
 import { LoadingState } from '@/components/ui';
-import ReportBlockModal, { type ReportTarget } from '@/components/ui/ReportBlockModal';
+import ReportBlockModal, { type ReportTarget, type SafetyAction } from '@/components/ui/ReportBlockModal';
 import PublicProfileV2 from '@/components/profile/PublicProfileV2';
 import { PUBLIC_PROFILES_VIEW } from '@/lib/queries/publicProfilesCore';
 import {
@@ -240,9 +240,23 @@ export default function PublicProfilePage() {
       <ReportBlockModal
         target={reportTarget}
         onClose={() => setReportTarget(null)}
-        onSuccess={() => {
+        onSuccess={(action: SafetyAction) => {
           setReportTarget(null);
-          toast('Merci, ton signalement a été transmis.', 'success');
+          const messages: Record<SafetyAction, string> = {
+            report: 'Merci, ton signalement a été transmis.',
+            block: 'Ce profil est bloqué. Il n’apparaît plus dans ton réseau.',
+            unblock: 'Ce profil est débloqué.',
+            mute_content:
+              'Ses publications et ses stories sont masquées. Le suivi est conservé.',
+            unmute_content: 'Ses publications et ses stories sont de nouveau visibles.',
+            mute_conversation:
+              'Notifications de la conversation directe coupées.',
+            unmute_conversation:
+              'Notifications de la conversation directe rétablies.',
+            mute: 'Sourdine activée : notifications de la conversation directe coupées.',
+            unmute: 'Sourdine de conversation levée.',
+          };
+          toast(messages[action], 'success');
         }}
       />
     </>

@@ -32,6 +32,7 @@ import { useCarnetComments } from '@/features/carnet/detail/useCarnetComments';
 import { useCarnetEngagement } from '@/features/carnet/detail/useCarnetEngagement';
 import { useCarnetLivePosition } from '@/features/carnet/detail/useCarnetLivePosition';
 import { elevationProfileGain } from '@/features/carnet/detail/elevationProfile';
+import { carnetTraceEmptyState } from '@/features/carnet/detail/traceEmptyState';
 import { createClient } from '@/lib/supabase/client';
 import { replyToCarnetStory } from '@/lib/stories/carnetReply';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
@@ -41,7 +42,7 @@ import { useCarnetStructureEdits } from '@/features/carnet/detail/useCarnetStruc
 import { useCarnetHighlights, type CarnetHighlight } from '@/features/carnet/detail/highlights';
 import { useFollowAuthor } from '@/features/carnet/detail/useFollowAuthor';
 import { isParticipantRole } from '@/features/carnet/detail/viewerRole';
-import { buildDayTraces, momentPosition, selectMapLayers, type MapContext } from '@/features/carnet/detail/mapLayers';
+import { momentPosition, selectMapLayers, type MapContext } from '@/features/carnet/detail/mapLayers';
 import type { MomentType } from '@/features/carnet/detail/momentTypes';
 import type { StackIntent } from './CarnetDrawerV2';
 
@@ -482,18 +483,32 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
     [haptic]
   );
 
-  // Markers for steps and nights on map
-  /* Le jour actif recadre la carte sur ses propres points GPS ; sans points
-     réels pour ce jour, on garde la trace complète (aucun tracé inventé). */
+  /* Les traces du jour et les couches de la carte partagent les mêmes
+     morceaux pour conserver les coupures entre relevés. */
+  const dayTraces = useMemo(
+    () =>
+      detail.days.flatMap((day) =>
+        (day.segments ?? []).flatMap((segment) => {
+          const coordinates = segment
+            .filter((point) => Number.isFinite(point.lat) && Number.isFinite(point.lng))
+            .map((point): [number, number] => [point.lng, point.lat]);
+          return coordinates.length >= 2 ? [{ day: day.dayNumber ?? day.index, coordinates }] : [];
+        })
+      ),
+    [detail.days]
+  );
+
   const mapTrace = useMemo(() => {
     if (activeDay <= 0) return detail.trace;
-    const day = detail.days.find((entry) => (entry.dayNumber ?? entry.index) === activeDay);
-    if (!day || day.points.length < 2) return detail.trace;
-    return {
-      type: 'LineString' as const,
-      coordinates: day.points.map((point) => [point.lng, point.lat]),
-    };
-  }, [activeDay, detail.days, detail.trace]);
+    const segments = dayTraces.filter((trace) => trace.day === activeDay);
+    if (segments.length > 1) {
+      return { type: 'MultiLineString' as const, coordinates: segments.map((trace) => trace.coordinates) };
+    }
+    if (segments.length === 1) {
+      return { type: 'LineString' as const, coordinates: segments[0].coordinates };
+    }
+    return detail.trace;
+  }, [activeDay, dayTraces, detail.trace]);
 
   /* Couches de la carte selon le tiroir actif (Fil → moments, Route → étapes ou
      nuits, Sac → objets du kit, Équipage → position). */
@@ -506,37 +521,24 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [detail, activeDay, drawerOpen, drawerContext, scrubPoint]
   );
-  const dayTraces = useMemo(() => buildDayTraces(detail.days), [detail.days]);
+  const traceEmpty = useMemo(() => carnetTraceEmptyState(detail), [detail]);
 
-
-  /* Sans point GPS par jour (anciens carnets), on garde le départ/l'arrivée de la
-     trace complète et les nuits : aucune géométrie inventée. */
+  /* Les anciens carnets gardent les extrémités visibles de la trace complète.
+     Les tiroirs choisissent leurs marqueurs à travers les couches de la carte. */
   const mapMarkers = useMemo(() => {
-    if (dayTraces.length > 0) return layers.markers;
-    const list: typeof layers.markers = [];
+    if (dayTraces.length > 0 || drawerOpen) return layers.markers;
     const tracePoints = parsePositions(detail.trace);
-    if (tracePoints.length >= 2) {
-      const start = tracePoints[0];
-      const end = tracePoints[tracePoints.length - 1];
-      list.push(
-        { id: 'trace-start', lat: start.lat, lng: start.lng, title: 'Départ', type: 'start' },
-        { id: 'trace-end', lat: end.lat, lng: end.lng, title: 'Arrivée', type: 'end' }
-      );
-    }
-    for (const night of detail.nights ?? []) {
-      if (night.lat != null && night.lng != null) {
-        list.push({
-          id: `night-${night.id}`,
-          lat: night.lat,
-          lng: night.lng,
-          title: night.name,
-          type: 'night',
-          badge: `N${night.dayNumber}`,
-        });
-      }
-    }
-    return list.concat(layers.markers.filter((m) => m.type === 'scrub'));
-  }, [dayTraces.length, detail.nights, detail.trace, layers]);
+    if (tracePoints.length < 2) return layers.markers;
+    const start = tracePoints[0];
+    const end = tracePoints[tracePoints.length - 1];
+    const endpointMarkers: typeof layers.markers = [
+      { id: 'trace-start', lat: start.lat, lng: start.lng, title: 'Départ', type: 'start' },
+      { id: 'trace-end', lat: end.lat, lng: end.lng, title: 'Arrivée', type: 'end' },
+    ];
+    return layers.markers.some((marker) => marker.type === 'start')
+      ? layers.markers
+      : endpointMarkers.concat(layers.markers);
+  }, [dayTraces.length, detail.trace, drawerOpen, layers.markers]);
 
   const focusMoment = useCallback(
     (moment: CarnetMomentItem) => {
@@ -873,10 +875,12 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
         aria-hidden={overlayOpen ? true : undefined}
       >
         <CompteMap
-          authState={user ? 'owner' : 'guest'}
+          authState={detail.isOwner ? 'owner' : 'guest'}
           context={{ mode: 'overview' }}
           variant="carnet"
           trace={mapTrace}
+          emptyTitle={traceEmpty.title}
+          emptyHint={traceEmpty.hint}
           focus={mapFocus}
           activeDay={activeDay}
           dayTraces={dayTraces}

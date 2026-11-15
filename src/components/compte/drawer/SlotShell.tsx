@@ -3,7 +3,13 @@
 import React, { useEffect, useRef } from 'react';
 import { LensPager } from './LensPager';
 
-export type SlotId = 'vitrine' | 'kit' | 'prets' | 'souvenirs' | 'communaute';
+export type SlotId =
+  | 'vitrine'
+  | 'kit'
+  | 'prets'
+  | 'souvenirs'
+  | 'communaute'
+  | 'entrainement';
 export type Viewer = 'owner' | 'visitor';
 export type Visibility = 'public' | 'prive';
 export type SlotContentState = 'ready' | 'loading' | 'empty' | 'error';
@@ -226,56 +232,58 @@ export function SlotShell({
       </div>
       </div>
 
-      <div
-        ref={flowRef}
-        className="ig-tabs lkdv-lens-tabs"
-        role="tablist"
-        aria-label={`Lentilles de ${title}`}
-        aria-orientation="horizontal"
-        onKeyDown={handleLensKeyDown}
-        style={
-          {
-            '--n': lenses.length,
-            '--w': `${lenses.length * 44}px`,
-            '--lens-w': `calc((100% - 5px) / ${lenses.length})`,
-          } as React.CSSProperties
-        }
-      >
-        <span
-          className="ig-th lens"
-          aria-hidden="true"
+      {lenses.length > 1 ? (
+        <div
+          ref={flowRef}
+          className="ig-tabs lkdv-lens-tabs"
+          role="tablist"
+          aria-label={`Lentilles de ${title}`}
+          aria-orientation="horizontal"
+          onKeyDown={handleLensKeyDown}
           style={
             {
-              width: `calc((100% - 4px) / ${lenses.length})`,
-              transform: `translateX(${safeIndex * 100}%)`,
+              '--n': lenses.length,
+              '--w': `${lenses.length * 44}px`,
+              '--lens-w': `calc((100% - 5px) / ${lenses.length})`,
             } as React.CSSProperties
           }
-        />
-        {lenses.map((lens, index) => {
-          const active = index === safeIndex;
-          return (
-            <button
-              key={lens.id}
-              id={`lkdv-lens-tab-${slot}-${lens.id}`}
-              type="button"
-              role="tab"
-              className={active ? 'cur' : ''}
-              aria-selected={active}
-              aria-label={lens.label}
-              title={lens.label}
-              tabIndex={active ? 0 : -1}
-              aria-controls={
-                state === 'ready'
-                  ? `lkdv-lens-panel-${slot}-${lens.id}`
-                  : undefined
-              }
-              onClick={() => onLensChange(index)}
-            >
-              {lens.icon}
-            </button>
-          );
-        })}
-      </div>
+        >
+          <span
+            className="ig-th lens"
+            aria-hidden="true"
+            style={
+              {
+                width: `calc((100% - 4px) / ${lenses.length})`,
+                transform: `translateX(${safeIndex * 100}%)`,
+              } as React.CSSProperties
+            }
+          />
+          {lenses.map((lens, index) => {
+            const active = index === safeIndex;
+            return (
+              <button
+                key={lens.id}
+                id={`lkdv-lens-tab-${slot}-${lens.id}`}
+                type="button"
+                role="tab"
+                className={active ? 'cur' : ''}
+                aria-selected={active}
+                aria-label={lens.label}
+                title={lens.label}
+                tabIndex={active ? 0 : -1}
+                aria-controls={
+                  state === 'ready'
+                    ? `lkdv-lens-panel-${slot}-${lens.id}`
+                    : undefined
+                }
+                onClick={() => onLensChange(index)}
+              >
+                {lens.icon}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
     </div>
   );
 }

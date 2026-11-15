@@ -68,6 +68,26 @@ export function canUndoMutation(key, changed) {
   return Boolean(changed) && key !== 'profilevis';
 }
 
+/**
+ * Normalise l'état de suivi échangé avec l'hôte.
+ *
+ * Le pont reçoit `{ handle, followed }` du runtime et renvoie un état exact
+ * (`following`, `requested` ou `none`) : une demande envoyée à un profil privé
+ * n'est jamais confondue avec un abonnement actif.
+ */
+export function normalizeFollowState(value) {
+  return value === 'following' || value === 'requested' || value === 'none'
+    ? value
+    : null;
+}
+
+/** Libellé visible d'un état de suivi, y compris la demande en attente. */
+export function followButtonLabel(state) {
+  if (state === 'requested') return 'Demande envoyée';
+  if (state === 'following') return 'Abonné(e)';
+  return 'Suivre';
+}
+
 /* Nationalités proposées par le runtime : la valeur reçue doit être l'une de
    ces chaînes exactes, sans normalisation silencieuse. */
 const NATIONALITY_VALUES = Object.freeze([
@@ -560,8 +580,8 @@ const ORIENT_OPTS = {
 };
 
 const VIS_LABELS = ["Privée", "Communauté", "Publique"];
-const SLOT_IDS = ["vitrine", "kit", "prets", "souvenirs", "communaute"];
-const SLOT_LABELS = { vitrine: "Vitrine", kit: "Kit", prets: "Prêts", souvenirs: "Souvenirs", communaute: "Communauté" };
+const SLOT_IDS = ["vitrine", "kit", "prets", "souvenirs", "communaute", "entrainement"];
+const SLOT_LABELS = { vitrine: "Vitrine", kit: "Kit", prets: "Prêts", souvenirs: "Souvenirs", communaute: "Communauté", entrainement: "Entraînement" };
 const slotIdOf = v => (SLOT_IDS.indexOf(v) >= 0 ? v : "vitrine");
 
 /* Carte contexte (spec drawer 3.3) : calque de la carte du bas affiché tant
@@ -578,6 +598,8 @@ const slotIdOf = v => (SLOT_IDS.indexOf(v) >= 0 ? v : "vitrine");
    - `communaute` → `lignees` : le runtime n'a pas de calque « clubs et
      événements ». On réutilise les lignées existantes ; aucun club/événement
      n'est fabriqué sur la carte.
+   - `entrainement` → `empreinte` : la pratique réelle sert de contexte ; aucun
+     calque « entraînement » n'est inventé.
    - `lignees` n'était dessiné que dans les vues Lignées/Kit : `drawMap()` ouvre
      aussi ce rendu en mode contexte kit/communaute, sinon le calque serait
      marqué actif sans être visible. */
@@ -586,7 +608,8 @@ const mapContextLayers = {
   kit: ['lignees'],
   prets: ['traces'],
   souvenirs: ['carnets'],
-  communaute: ['lignees']
+  communaute: ['lignees'],
+  entrainement: ['empreinte']
 };
 const MAP_CONTEXT_LAYER_KEYS = ['empreinte', 'traces', 'carnets', 'lignees'];
 /* Seules les clés pilotées par la carte contexte sont photographiées et
@@ -815,7 +838,29 @@ let whatIf = function(a, v) {
 let isT = null;
 let island = function(t, sub, undoable) {
   if (!isCurrent()) return;
-  $("isn").innerHTML = `<div class="t"><b>${t}</b>${sub ? `<span>${sub}</span>` : ""}</div>${undoable ? `<button data-a="undo" aria-label="Annuler">Annuler</button>` : ""}`;
+  const host = $("isn");
+  if (!host) return;
+  // Frontière texte : les messages peuvent venir d'une API ou d'un handle.
+  // Aucun n'est interprété comme du HTML.
+  const title = document.createElement("div");
+  title.className = "t";
+  const strong = document.createElement("b");
+  strong.textContent = String(t ?? "");
+  title.appendChild(strong);
+  if (sub) {
+    const detail = document.createElement("span");
+    detail.textContent = String(sub);
+    title.appendChild(detail);
+  }
+  const nodes = [title];
+  if (undoable) {
+    const undo = document.createElement("button");
+    undo.dataset.a = "undo";
+    undo.setAttribute("aria-label", "Annuler");
+    undo.textContent = "Annuler";
+    nodes.push(undo);
+  }
+  host.replaceChildren(...nodes);
   $("island").dataset.s = "note";
   let sr = $("live-status");
   if (!sr && $("phone")) {
@@ -1847,7 +1892,7 @@ let renderSheet = function() {
     return;
   }
   const sh = S.sh;
-  /* Drawer Profil v2 : la feuille est remplacée par l'hôte React des 5 slots.
+  /* Drawer Profil v2 : la feuille est remplacée par l'hôte React des 6 slots.
      La carte du bas passe en mode contexte tant que ce tiroir est ouvert. */
   if (sh.k === "step" && S.step === 0) {
     const slotId = slotIdOf(S.slot);
@@ -1879,7 +1924,7 @@ let renderSheet = function() {
     }
     return;
   }
-  const REACT_DRAWERS = { account_drawer: "compte", followers_sheet: "reseau", outing_drawer: "sortie", story_edit_drawer: "highlight" };
+  const REACT_DRAWERS = { account_drawer: "compte", followers_sheet: "reseau", outing_drawer: "sortie", trace_import_drawer: "trace-import", progression_drawer: "progression", story_edit_drawer: "highlight" };
   if (REACT_DRAWERS[sh.k]) {
     const kind = REACT_DRAWERS[sh.k];
     if (typeof window.__lkdvUnmountSlot === "function") {
@@ -1890,7 +1935,7 @@ let renderSheet = function() {
     }
     const label = kind === "reseau"
       ? (drawerHintMode === "following" ? "Abonnements" : "Abonnés")
-      : kind === "sortie" ? "Sortie" : kind === "highlight" ? "Story à la une" : "Compte & Activité";
+      : kind === "sortie" ? "Sortie" : kind === "trace-import" ? "Importer une trace" : kind === "progression" ? "Progression · calendrier, statistiques, objectifs et vélo" : kind === "highlight" ? "Story à la une" : "Compte & Activité";
     const back = S.stk.length ? `<button class="lg gbtn sm sh-back" data-a="close" aria-label="Retour">${ic(IC.chevL, "s")}</button>` : "";
     $("sheet").setAttribute("aria-label", label);
     $("sheet").innerHTML = `<div class="grab" data-drag>
@@ -1913,9 +1958,13 @@ let renderSheet = function() {
       ? { tab: drawerHintMode || "followers" }
       : kind === "sortie"
         ? { outingId: sh.outingId || (sh.extra && sh.extra.outingId) || "" }
-        : kind === "highlight"
-          ? { hlId: sh.hlId || (sh.extra && sh.extra.hlId) || "", hlTitle: sh.hlTitle || (sh.extra && sh.extra.hlTitle) || "" }
-          : { tab: drawerHintTab || 0 };
+        : kind === "trace-import"
+          ? {}
+          : kind === "progression"
+            ? { view: sh.view || (sh.extra && sh.extra.view) || "calendar" }
+          : kind === "highlight"
+            ? { hlId: sh.hlId || (sh.extra && sh.extra.hlId) || "", hlTitle: sh.hlTitle || (sh.extra && sh.extra.hlTitle) || "" }
+            : { tab: drawerHintTab || 0 };
     if (root && typeof window.__lkdvMountDrawer === "function") {
       try { window.__lkdvMountDrawer(root, kind, props); } catch (err) {
         console.warn("[CompteLiquidGlassV8] drawer mount failed:", err);
@@ -2459,6 +2508,7 @@ let act = function(a, v, meta) {
     case "openItem": pushSheet({ k: "item", id: v }); break;
     case "openOuting": S.step = 1; openSheet("step", 0, "large"); break;
     case "openOutingDrawer": EXA.openOutingDrawer(v); break;
+    case "openTraceImport": EXA.openTraceImport(); break;
     case "openCarnet": S.step = 2; openSheet("step", 0, "large"); break;
     case "openSpecies": S.step = 2; openSheet("step", 1, "large"); break;
     case "openKit": S.step = 3; openSheet("step", 0, "large"); break;
@@ -2875,9 +2925,55 @@ window.__QR={"n":37,"rows":["1111111011101010010100110111001111111","10000010010
 
 /* ================= Compte — 50 améliorations : couche d'extension (override des fonctions du générateur) ================= */
 (() => {
-const X = { filter: 'all', feed: false, visitor: false, ligSub: 0, cmp: null, prof: 'km', story: null, vault: 0, scan: 0, seen: {}, hov: false, mon: null, evt: null, acct: 'me', hold: 0 };
+const X = { filter: 'all', feed: false, visitor: false, ligSub: 0, cmp: null, prof: 'km', story: null, vault: 0, scan: 0, seen: {}, hov: false, mon: null, evt: null, acct: 'me', hold: 0, followStates: {}, followPending: {} };
 // Interaction state stays inside the owning runtime.
 interactionState = X;
+
+/** Handle normalisé pour les cartes d'état de suivi. */
+function followHandle(handle) {
+  return String(handle || '').replace(/^@/, '').trim();
+}
+
+/**
+ * État affiché d'un bouton de suivi.
+ *
+ * La bascule optimiste vit dans `followPending` ; `followStates` ne contient
+ * que l'état confirmé par le pont. Une demande (`requested`) reste donc
+ * visible jusqu'à la réponse serveur, puis après elle.
+ */
+function followStateFor(handle, fallback) {
+  const key = followHandle(handle);
+  if (!key) return fallback;
+  if (X.followPending && X.followPending[key] !== undefined) return X.followPending[key];
+  if (X.followStates && X.followStates[key] !== undefined) return X.followStates[key];
+  if (X.followedUsers && X.followedUsers[key] !== undefined) {
+    return X.followedUsers[key] ? 'following' : 'none';
+  }
+  return fallback;
+}
+
+function followIsOn(state) {
+  return state === 'following' || state === 'requested';
+}
+
+function followClass(state, activeClass, idleClass) {
+  return followIsOn(state) ? activeClass : idleClass;
+}
+
+function followBusy(handle) {
+  const key = followHandle(handle);
+  return Boolean(key && X.followPending && X.followPending[key] !== undefined);
+}
+
+/**
+ * Rend l'échec du pont visible (îlot + région live), sans jamais laisser la
+ * bascule optimiste en place. Le message serveur est borné par la route.
+ */
+function showFollowError(message) {
+  const text = String(message || 'Impossible de mettre à jour cet abonnement.').trim();
+  island('Suivi impossible', text, false);
+}
+
 {
   const st = document.createElement('div'); st.className = 'story'; st.id = 'story'; st.setAttribute('role', 'dialog'); st.setAttribute('aria-label', 'Story à la une'); phone.appendChild(st);
   const sh = document.createElement('div'); sh.className = 'sunshade'; sh.setAttribute('aria-hidden', 'true'); $('map').insertBefore(sh, $('mgrab'));
@@ -3296,36 +3392,67 @@ renderIgTabContent = function (D) {
   // TAB 1: Voyages (Sorties faites en défilement horizontal)
   if (S.igTab === 1) {
     const list = OUTINGS;
+    const canImport = !X.visitor;
+    const importButton = canImport
+      ? '<button class="mbtn p" data-a="openTraceImport" aria-label="Importer une trace FIT ou TCX" style="height:32px;padding:0 13px;font-size:11.5px;">Importer FIT/TCX</button>'
+      : '';
+    const sortiesHeader = '<div style="display:flex;align-items:flex-end;justify-content:space-between;gap:10px;padding:2px 2px 6px;">' +
+      '<div style="display:flex;flex-direction:column;gap:1px;min-width:0;">' +
+        '<b style="font:650 16px/1.15 var(--sf);letter-spacing:-.02em;color:var(--label);">Sorties</b>' +
+        '<span style="font:500 10.5px/1.3 var(--sf);color:var(--label2);">' + list.length + ' sortie' + (list.length > 1 ? 's' : '') + ' · FIT ou TCX acceptés</span>' +
+      '</div>' + importButton + '</div>';
+    const progressionActions = S.profile && S.profile.isDemo !== true && S.profile.isGuest !== true
+      ? '<div style="display:flex!important;gap:6px!important;flex-wrap:wrap!important;padding:10px 2px 2px!important;" role="group" aria-label="Progression des sorties">' +
+          '<button type="button" class="mbtn p" style="height:38px!important;padding:0 14px!important;" data-a="openProgression" data-v="calendar" aria-label="Ouvrir le calendrier et la synthèse hebdomadaire">Calendrier</button>' +
+          '<button type="button" class="mbtn soft" style="height:38px!important;padding:0 14px!important;" data-a="openProgression" data-v="stats" aria-label="Ouvrir les statistiques cumulées par sport et période">Statistiques</button>' +
+          '<button type="button" class="mbtn soft" style="height:38px!important;padding:0 14px!important;" data-a="openProgression" data-v="goals" aria-label="Créer ou modifier des objectifs privés par période et par sport">Objectifs</button>' +
+          '<button type="button" class="mbtn soft" style="height:38px!important;padding:0 14px!important;" data-a="openProgression" data-v="bike" aria-label="Ouvrir les meilleurs efforts vélo par métrique">Vélo</button>' +
+        '</div>'
+      : '';
     if (!list.length) {
-      return '<div class="ig-voyages-tab" role="region" aria-label="Sorties faites et voyages réalisés"><div style="padding:28px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;"><b style="font:600 14px var(--sf);color:var(--label);">Aucune sortie enregistrée</b><p style="font:400 12px/1.4 var(--sf);color:var(--label2);max-width:240px;margin:0 auto;">Vos traces GPS et vos sorties apparaîtront ici dès votre première randonnée enregistrée.</p><a href="/compas" class="mbtn p" style="text-decoration:none;height:30px;padding:0 14px;font-size:12px;">Planifier un voyage</a></div></div>';
+      return '<div class="ig-voyages-tab" role="region" aria-label="Sorties faites et voyages réalisés">' + sortiesHeader +
+        '<div style="padding:22px 16px 26px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;"><b style="font:600 14px var(--sf);color:var(--label);">Aucune sortie enregistrée</b><p style="font:400 12px/1.4 var(--sf);color:var(--label2);max-width:260px;margin:0 auto;">Importe une trace FIT ou TCX, ou enregistre ta première randonnée GPS : elle apparaîtra ici.</p><div style="display:flex;flex-wrap:wrap;justify-content:center;gap:7px;">' +
+          (canImport ? '<button class="mbtn p" data-a="openTraceImport" style="height:32px;padding:0 14px;font-size:12px;">Importer FIT/TCX</button>' : '') +
+          '<a href="/compas" class="mbtn soft" style="text-decoration:none;height:32px;padding:0 14px;font-size:12px;justify-content:center;">Planifier un voyage</a></div></div>' + progressionActions + '</div>';
     }
+    const canManage = !(S.profile && (S.profile.isDemo || S.profile.isGuest));
+    const bulkBar = canManage
+      ? '<div style="display:flex;justify-content:flex-end;padding:0 16px 4px"><button class="mbtn soft" data-a="openOutingBulk" style="height:44px;padding:0 16px;font-size:12.5px">Gérer la visibilité</button></div>'
+      : '';
     return '<div class="ig-voyages-tab" role="region" aria-label="Sorties faites et voyages réalisés">' +
+      sortiesHeader +
+      bulkBar +
       '<div class="voyages-carousel">' +
         list.map((o, idx) => {
           const photo = o.coverImage || '';
           const compNames = Array.isArray(o.comp) ? o.comp.slice(0, 3).join(', ') : '';
-          const label = o.title + ', ' + o.km + ' km, +' + o.dplus + ' m, ' + o.mass;
-          return '<button type="button" class="voyage-card" data-a="openOutingDrawer" data-v="' + o.id + '" aria-label="' + label + '">' +
+          const safeTitle = esc(o.title);
+          const safeDate = esc(o.date || 'Sortie');
+          const safeComp = esc(compNames);
+          const safeMass = esc(String(o.mass || '').split(' ')[0]);
+          const label = esc(o.title + ', ' + o.km + ' km, +' + o.dplus + ' m, ' + o.mass);
+          return '<button type="button" class="voyage-card" data-a="openOutingDrawer" data-v="' + esc(o.id) + '" aria-label="' + label + '">' +
             '<span class="voyage-cover">' +
               (photo
-                ? '<img src="' + photo + '" alt="' + o.title + '" class="voyage-img" loading="lazy" />'
+                ? '<img src="' + photo + '" alt="' + safeTitle + '" class="voyage-img" loading="lazy" />'
                 : '<span class="voyage-cover-fallback" aria-hidden="true">' + ic(IC.route, 's') + '</span>') +
               '<span class="voyage-cover-overlay"></span>' +
               '<span class="voyage-chip-gps">' + (o.proven ? 'Preuve GPS ✓' : 'Sortie enregistrée') + '</span>' +
               (o.maxAlt ? '<span class="voyage-alt-badge">' + o.maxAlt + ' m</span>' : '') +
               '<span class="voyage-info">' +
-                '<b class="voyage-title">' + o.title + '</b>' +
-                '<span class="voyage-sub">' + (o.date || 'Sortie') + (compNames ? ' · avec ' + compNames : '') + '</span>' +
+                '<b class="voyage-title">' + safeTitle + '</b>' +
+                '<span class="voyage-sub">' + safeDate + (safeComp ? ' · avec ' + safeComp : '') + '</span>' +
                 '<span class="voyage-metrics">' +
                   '<span class="vm-item"><b>' + o.km + ' km</b></span><span class="vm-sep">·</span>' +
                   '<span class="vm-item"><b>+' + Number(o.dplus || 0).toLocaleString('fr-FR') + ' m</b></span><span class="vm-sep">·</span>' +
-                  '<span class="vm-item"><b>' + o.mass.split(' ')[0] + '</b></span>' +
+                  '<span class="vm-item"><b>' + safeMass + '</b></span>' +
                 '</span>' +
               '</span>' +
             '</span>' +
           '</button>';
         }).join('') +
       '</div>' +
+      progressionActions +
     '</div>';
   }
 
@@ -3353,6 +3480,8 @@ renderIgTabContent = function (D) {
       '</div>' +
       (currentList.length ? '<div class="reseau-list">' +
         currentList.map(u => {
+          const follow = followStateFor(u.h, u.followed ? 'following' : 'none');
+          const pending = followBusy(u.h);
           return '<div class="reseau-user-row">' +
             '<div class="reseau-av-wrap" data-a="openUserProfile" data-v="' + u.h + '" style="cursor:pointer">' +
               (u.img ? '<img src="' + u.img + '" alt="' + u.n + '" class="reseau-av" loading="lazy" />' : '<span class="reseau-av" style="display:grid;place-items:center;background:#DDEBD8;color:#17402C;font:700 12px var(--sf)">' + u.i + '</span>') +
@@ -3362,8 +3491,8 @@ renderIgTabContent = function (D) {
               '<div class="reseau-name-row"><b>' + u.n + '</b><span class="reseau-handle">@' + u.h + '</span></div>' +
               '<div class="reseau-sub">' + u.sub + '</div>' +
             '</div>' +
-            '<button class="reseau-btn ' + (u.followed ? 'active' : 'primary') + '" data-a="toggleFollowUser" data-v="' + u.h + '">' +
-              (u.followed ? 'Abonné(e)' : 'Suivre') +
+            '<button class="reseau-btn ' + followClass(follow, 'active', 'primary') + '" data-a="toggleFollowUser" data-v="' + u.h + '" aria-busy="' + pending + '"' + (pending ? ' disabled' : '') + '>' +
+              followButtonLabel(follow) +
             '</button>' +
           '</div>';
         }).join('') +
@@ -3838,7 +3967,10 @@ const EXK = {
               <button class="${isFollowers ? 'active' : ''}" data-a="toggleFollowersSheet" data-v="followers" role="tab" aria-selected="${isFollowers}" aria-label="Abonnés (${fCount})" title="Abonnés (${fCount})">${ic(IC.people, 's')}</button>
             </div>`,
             currentList.length ? `<div class="reseau-list">
-              ${currentList.map(u => `
+              ${currentList.map(u => {
+                const follow = followStateFor(u.h, u.followed ? 'following' : 'none');
+                const pending = followBusy(u.h);
+                return `
                 <div class="reseau-user-row">
                   <div class="reseau-av-wrap" data-a="openUserProfile" data-v="${u.h}" style="cursor:pointer">
                     ${u.img ? `<img src="${u.img}" alt="${u.n}" class="reseau-av" loading="lazy" />` : `<span class="reseau-av" style="display:grid;place-items:center;background:#DDEBD8;color:#17402C;font:700 12px var(--sf)">${u.i}</span>`}
@@ -3851,11 +3983,12 @@ const EXK = {
                     </div>
                     <div class="reseau-sub">${u.sub}</div>
                   </div>
-                  <button class="reseau-btn ${u.followed ? 'active' : 'primary'}" data-a="toggleFollowUser" data-v="${u.h}">
-                    ${u.followed ? 'Abonné(e)' : 'Suivre'}
+                  <button class="reseau-btn ${followClass(follow, 'active', 'primary')}" data-a="toggleFollowUser" data-v="${u.h}" aria-busy="${pending}" ${pending ? 'disabled' : ''}>
+                    ${followButtonLabel(follow)}
                   </button>
                 </div>
-              `).join('')}
+              `;
+              }).join('')}
             </div>` : `<div style="padding:28px 16px;text-align:center;color:var(--label2);font:400 12px/1.4 var(--sf);">${isFollowers ? 'Aucun abonné pour le moment.' : 'Aucun abonnement pour le moment.'}</div>`
           ]
         })
@@ -3884,7 +4017,9 @@ const EXK = {
       outings: null,
       km: null
     };
-    const isUserFollowed = (X.followedUsers && X.followedUsers[user.handle] !== undefined) ? X.followedUsers[user.handle] : user.following;
+    const follow = followStateFor(user.handle, user.following ? 'following' : 'none');
+    const followPending = followBusy(user.handle);
+    const isUserFollowed = followIsOn(follow);
 
     return {
       title: '@' + user.handle,
@@ -3907,8 +4042,8 @@ const EXK = {
                 <span>Massif : <b>${user.massif}</b></span>
               </div>
               <div style="display:flex;gap:8px;width:100%">
-                <button class="mbtn ${isUserFollowed ? 'soft' : 'p'}" style="flex:1;height:36px;justify-content:center" data-a="toggleFollowUser" data-v="${user.handle}">
-                  ${isUserFollowed ? 'Abonné(e)' : 'Suivre ce randonneur'}
+                <button class="mbtn ${isUserFollowed ? 'soft' : 'p'}" style="flex:1;height:36px;justify-content:center" data-a="toggleFollowUser" data-v="${user.handle}" aria-busy="${followPending}" ${followPending ? 'disabled' : ''}>
+                  ${followButtonLabel(follow)}
                 </button>
                 <button class="mbtn soft" style="height:36px;padding:0 14px" data-a="openUserProfile" data-v="${user.handle}">
                   Profil complet
@@ -3930,9 +4065,10 @@ const EXK = {
     flow: [{
       l: "Créer",
       r: () => ({
-        per: [5, 6],
+        per: [6, 8],
         title: "Nouvelle création LKDV",
         rows: [
+          `<div class="li nt" data-a="openTraceImport" style="cursor:pointer"><div><div class="ttl"><span>Importer une trace FIT/TCX</span></div><div class="s2">Aperçu local, puis ajout à tes sorties privées</div></div><span class="tg p">Trace</span></div>`,
           `<div class="li nt" data-a="navtab" data-v="/carnets/nouveau" style="cursor:pointer"><div><div class="ttl"><span>Nouveau carnet de voyage</span></div><div class="s2">Raconte une expédition avec photos géolocalisées et tracé</div></div><span class="tg p">Carnet</span></div>`,
           `<div class="li nt" data-a="navtab" data-v="/voyages" style="cursor:pointer"><div><div class="ttl"><span>Nouveau voyage / sortie GPS</span></div><div class="s2">Importe un fichier GPX ou planifie un trek avec le Compas</div></div><span class="tg p">Tracé</span></div>`,
           `<div class="li nt" data-a="navtab" data-v="/materiel" style="cursor:pointer"><div><div class="ttl"><span>Nouveau kit de matériel</span></div><div class="s2">Compose un sac ultraléger personnalisé avec jauge d'endurance</div></div><span class="tg p">Kit</span></div>`,
@@ -4219,7 +4355,7 @@ function applyAccountBootstrap(data) {
 const notifyHostAction = (a, v) => {
   if (!isCurrent()) return;
   if (typeof window.__lkdvOnAction === 'function') {
-    try { window.__lkdvOnAction(a, v, S); } catch (_) {}
+    try { return window.__lkdvOnAction(a, v, S); } catch (_) {}
   }
 };
 /* ---------- Point 3 : Modal Post Instagram (100 % Réplique Native Liquid Glass) ---------- */
@@ -4777,24 +4913,82 @@ var EXA = {
     haptic(6);
   },
   toggleFollowUser: v => {
+    const handle = followHandle(v);
+    if (!handle || followBusy(handle)) return;
     X.followedUsers = X.followedUsers || {};
+    X.followStates = X.followStates || {};
+    X.followPending = X.followPending || {};
     let current;
-    if (X.followedUsers[v] !== undefined) {
-      current = X.followedUsers[v];
+    if (X.followStates[handle] !== undefined) {
+      current = followIsOn(X.followStates[handle]);
+    } else if (X.followedUsers[handle] !== undefined) {
+      current = X.followedUsers[handle];
     } else {
-      const btn = document.querySelector(`[data-a="toggleFollowUser"][data-v="${v}"]`);
+      const btn = document.querySelector(`[data-a="toggleFollowUser"][data-v="${handle}"]`);
       current = btn ? btn.classList.contains('active') : true;
     }
-    X.followedUsers[v] = !current;
-    const isNowFollowed = X.followedUsers[v];
+    const nextState = current ? 'none' : 'following';
+    const isNowFollowed = nextState !== 'none';
+    // Bascule optimiste locale : le pont confirmera `requested` pour un profil
+    // privé, et `none` en cas d'échec (rollback par le vrai hydrate).
+    X.followPending[handle] = nextState;
+    X.followedUsers[handle] = isNowFollowed;
     island(
-      isNowFollowed ? `Abonné(e) à @${v}` : `Désabonné(e) de @${v}`,
+      isNowFollowed ? `Abonné(e) à @${handle}` : `Désabonné(e) de @${handle}`,
       isNowFollowed ? 'Tu verras ses sorties et carnets alpins' : 'Mise à jour immédiate',
       false
     );
     haptic(10);
     renderSheet();
-    notifyHostAction('toggleFollowUser', { handle: v, followed: isNowFollowed });
+    const outcome = notifyHostAction('toggleFollowUser', { handle, followed: isNowFollowed });
+    // Le pont peut confirmer `requested`, restaurer l'état précédent via le
+    // vrai hydrate, ou échouer sans hydrate. Dans ce dernier cas, le retour
+    // explicite porte `state` : on l'applique, sinon on rend la main au
+    // fallback confirmé (jamais un bouton bloqué sur « Envoi »).
+    if (outcome && typeof outcome.then === 'function') {
+      outcome
+        .then((result) => {
+          if (!isCurrent()) return;
+          // Une requête déjà en vol garde sa bascule : ce doublon ne doit pas
+          // réarmer le bouton avant la réponse de la première.
+          if (result && result.code === 'in_flight') return;
+          if (result && result.state) {
+            const applied = window.__lkdvApplyFollowStates?.({ [handle]: result.state });
+            if (!applied) {
+              const state = normalizeFollowState(result.state);
+              if (state) {
+                X.followStates[handle] = state;
+                X.followedUsers[handle] = state !== 'none';
+              }
+              delete X.followPending[handle];
+            }
+            if (result.ok === false) showFollowError(result.message);
+            renderSheet();
+            return;
+          }
+          if (!result || result.restored === false) {
+            delete X.followPending[handle];
+            delete X.followedUsers[handle];
+          }
+          if (!result || result.ok === false) showFollowError(result && result.message);
+          renderSheet();
+        })
+        .catch(() => {
+          if (!isCurrent()) return;
+          delete X.followPending[handle];
+          delete X.followedUsers[handle];
+          showFollowError('Le suivi est momentanément indisponible.');
+          renderSheet();
+        });
+    } else {
+      // Pont absent (ou action jetée avant de rendre sa promesse) : aucune
+      // réponse ne viendra. On rend la main au fallback confirmé au lieu de
+      // laisser le bouton bloqué sur « Envoi ».
+      delete X.followPending[handle];
+      delete X.followedUsers[handle];
+      showFollowError('Le suivi est momentanément indisponible.');
+      renderSheet();
+    }
   },
   openUserProfile: v => {
     const cleanHandle = String(v || '').replace(/^@/, '').trim();
@@ -4930,6 +5124,58 @@ var EXA = {
     if (!o) { island('Sortie introuvable', 'Cette sortie n’est plus accessible.', false); return; }
     openSheet('outing_drawer', 0, 'card', { outingId: o.realId || o.id });
     requestAnimationFrame(() => flyToOuting(o));
+    haptic(10);
+  },
+  openOutingBulk: () => {
+    /* Le lot est orchestré par l'hôte React avec le PATCH propriétaire
+       existant. Le runtime ne simule aucune écriture et ne fournit que les
+       identifiants réels et l'audience déjà lue. */
+    if (S.profile && (S.profile.isDemo || S.profile.isGuest)) {
+      island('Compte de démonstration', 'Connecte un compte réel pour changer une audience.', false);
+      return;
+    }
+    const items = [];
+    const seen = new Set();
+    for (const o of OUTINGS) {
+      const id = o.realId || o.id;
+      if (!id || seen.has(id)) continue;
+      seen.add(id);
+      items.push({
+        id,
+        title: o.title || 'Sortie',
+        visibility: o.visibility === 'collective_anonymized' ? 'collective_anonymized' : 'private',
+      });
+    }
+    if (!items.length) {
+      island('Aucune sortie', 'Aucune audience ne peut être modifiée.', false);
+      return;
+    }
+    window.dispatchEvent(new CustomEvent('lkdv:open-outing-bulk', { detail: { items } }));
+    haptic(8);
+  },
+  openTraceImport: () => {
+    pushSheet({ k: 'trace_import_drawer', det: 'large' });
+    haptic(8);
+  },
+  openProgression: v => {
+    openSheet('progression_drawer', 0, 'large', {
+      view: v === 'stats' ? 'stats' : v === 'goals' ? 'goals' : v === 'bike' ? 'bike' : 'calendar'
+    });
+    haptic(8);
+  },
+  setProgressionView: v => {
+    if (S.sh && S.sh.k === 'progression_drawer') {
+      S.sh.view = v === 'stats' ? 'stats' : v === 'goals' ? 'goals' : v === 'bike' ? 'bike' : 'calendar';
+    }
+  },
+  openProgressionOuting: v => {
+    if (!v) { island('Sortie introuvable', 'Cette sortie n’est plus accessible.', false); return; }
+    /* L’identifiant vient du bootstrap complet : la séance peut être plus
+       ancienne que les 24 cartes du carrousel. On ouvre donc par identifiant,
+       sans exiger sa présence dans `OUTINGS`. */
+    const o = OUTINGS.find(x => x.id === v || x.realId === v);
+    pushSheet({ k: 'outing_drawer', outingId: v });
+    if (o) requestAnimationFrame(() => flyToOuting(o));
     haptic(10);
   },
   save_full_profile: () => {
@@ -5331,6 +5577,7 @@ window.__lkdvHydrateCompte = function (data) {
           dplus: Number(o.dplus) || 1200,
           maxAlt: 2400,
           status: o.status === 'planned' ? 'planned' : 'done',
+          visibility: o.visibility === 'collective_anonymized' ? 'collective_anonymized' : 'private',
           x: 200,
           y: 140
         });
@@ -5396,10 +5643,106 @@ window.__lkdvHydrateCompte = function (data) {
 
   refresh(true);
 };
+/** États de suivi confirmés et bascules en cours, lus par le pont hôte. */
+window.__lkdvGetFollowState = () => isCurrent() ? ({
+  followStates: X.followStates,
+  followPending: X.followPending,
+}) : null;
+
+/**
+ * Applique des états de suivi venus de l'hôte.
+ *
+ * Sans option, c'est un patch : chaque entrée confirme un handle et efface sa
+ * bascule optimiste. Avec `{ replace: true }`, le payload est complet : les
+ * handles absents sont retirés pour qu'un `{ alice: 'requested' }` suivi d'un
+ * `{}` revienne bien à « Suivre ». `preserve` protège les handles dont une
+ * mutation locale est plus récente que la lecture (course hydratation/action).
+ */
+window.__lkdvApplyFollowStates = (followStates, options) => {
+  if (!isCurrent() || !followStates || typeof followStates !== 'object') return false;
+  const opts = options && typeof options === 'object' ? options : {};
+  const replace = opts.replace === true;
+  const preserve = new Set(
+    (Array.isArray(opts.preserve) ? opts.preserve : [])
+      .map(followHandle)
+      .filter(Boolean)
+  );
+  X.followStates = X.followStates || {};
+  X.followPending = X.followPending || {};
+  X.followedUsers = X.followedUsers || {};
+
+  const previous = replace ? { ...X.followStates } : null;
+  const next = replace ? {} : X.followStates;
+  let changed = replace;
+  for (const [rawHandle, rawState] of Object.entries(followStates)) {
+    const handle = followHandle(rawHandle);
+    const state = normalizeFollowState(rawState);
+    if (!handle || !state) continue;
+    // Une action partie après le fetch est plus récente que ce snapshot.
+    if (replace && preserve.has(handle)) continue;
+    if (next[handle] !== state) changed = true;
+    next[handle] = state;
+    X.followedUsers[handle] = state !== 'none';
+    delete X.followPending[handle];
+  }
+  if (replace) {
+    for (const handle of preserve) {
+      if (previous[handle] !== undefined) next[handle] = previous[handle];
+    }
+    // Une bascule encore en vol ne doit pas perdre son état confirmé de repli.
+    for (const handle of Object.keys(X.followPending)) {
+      if (previous[handle] !== undefined) next[handle] = previous[handle];
+    }
+    // Un handle absent du payload complet n'a plus d'état confirmé : sans ce
+    // nettoyage, `followedUsers` le repeindrait en « Abonné ».
+    for (const handle of Object.keys(X.followedUsers)) {
+      if (next[handle] === undefined && X.followPending[handle] === undefined) {
+        delete X.followedUsers[handle];
+      }
+    }
+    X.followStates = next;
+  }
+  return changed;
+};
+
+/**
+ * Signale un bootstrap social partiel : les états, compteurs et listes connus
+ * restent affichés. `scope` distingue un échec des états (`states`), des
+ * abonnés (`followers`), des suivis (`following`) ou des deux (`lists`/`all`).
+ */
+window.__lkdvShowFollowUnavailable = (scope) => {
+  if (!isCurrent()) return;
+  const kind =
+    scope === 'lists' || scope === 'all' || scope === 'followers' || scope === 'following'
+      ? scope
+      : 'states';
+  const title =
+    kind === 'lists'
+      ? 'Listes d’abonnés indisponibles'
+      : kind === 'followers'
+        ? 'Liste des abonnés indisponible'
+        : kind === 'following'
+          ? 'Liste des suivis indisponible'
+          : kind === 'all'
+            ? 'Données sociales partielles'
+            : 'État de suivi indisponible';
+  const detail =
+    kind === 'lists'
+      ? 'Les compteurs et listes connus sont conservés. Réessaie dans un instant.'
+      : kind === 'followers'
+        ? 'La liste des abonnés connue est conservée. Réessaie dans un instant.'
+        : kind === 'following'
+          ? 'La liste des suivis connue est conservée. Réessaie dans un instant.'
+          : kind === 'all'
+            ? 'Les états, compteurs et listes connus sont conservés. Réessaie dans un instant.'
+            : 'Les boutons gardent leur dernier état connu. Réessaie dans un instant.';
+  island(title, detail, false);
+};
 /* ---------- Montage ---------- */
 bindIgSwipe();
 refresh(true);
 })();
+
 
 
 
@@ -5413,6 +5756,13 @@ window.__lkdvGetState = () => isCurrent() ? ({
   ORDERS,
   ORDERS_BOOKINGS,
   KITS_LINEAGE,
+  // Listes sociales réellement hydratées : permet de prouver leur conservation
+  // alors que les compteurs seuls ne suffisent pas.
+  followers: FOLLOWERS,
+  following: FOLLOWING,
+  tribu: TRIBU,
+  followStates: window.__lkdvGetFollowState?.()?.followStates,
+  followPending: window.__lkdvGetFollowState?.()?.followPending,
 }) : null;
 
 window.__lkdvCompteAct = (actionName, val, meta) => {
@@ -5433,6 +5783,15 @@ const hydrateAccountReplace = window.__lkdvHydrateCompte;
 window.__lkdvHydrateCompte = (data) => {
   if (!isCurrent()) return;
   if (!data || typeof data !== 'object') return;
+  // États de suivi confirmés par le pont : `following`, `requested` ou `none`.
+  // Le vrai hydrate remplace la bascule optimiste ; un échec réapplique ici
+  // l'état confirmé précédent, jamais un `undefined` silencieux.
+  if (data.followStates && typeof data.followStates === 'object') {
+    window.__lkdvApplyFollowStates?.(data.followStates, {
+      replace: data.replace === true,
+      preserve: data.followStatesPreserve,
+    });
+  }
   if (data.replace === true) {
     hydrateAccountReplace(data);
     return;
@@ -5515,6 +5874,7 @@ window.__lkdvHydrateCompte = (data) => {
         dplus: Number(o.dplus || o.elevation_gain_m) || 0,
         maxAlt: o.max_altitude || 2000,
         status: o.status === 'completed' || o.status === 'done' ? 'done' : 'planned',
+        visibility: o.visibility === 'collective_anonymized' ? 'collective_anonymized' : 'private',
         x: 200,
         y: 140
       });

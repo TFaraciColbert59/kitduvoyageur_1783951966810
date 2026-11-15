@@ -28,6 +28,7 @@ const EXPECTED_SPECS: Record<string, { tier: string; maxReasoningBudget: number;
   'compas-verdict': { tier: 'fast', maxReasoningBudget: 0, cacheTtlSeconds: 86_400, maxPerUserPerDay: 120 },
   'trajectoire-narration': { tier: 'fast', maxReasoningBudget: 0, cacheTtlSeconds: 3_600, maxPerUserPerDay: 100 },
   'trail-ai-enrichment': { tier: 'fast', maxReasoningBudget: 1500, cacheTtlSeconds: 2_592_000, maxPerUserPerDay: 60 },
+  'post-activity-insight': { tier: 'fast', maxReasoningBudget: 512, cacheTtlSeconds: 0, maxPerUserPerDay: 40 },
 };
 
 describe('src/lib/ai/features/registry — registre des features IA', () => {

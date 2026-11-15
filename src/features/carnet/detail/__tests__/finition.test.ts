@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { SHARED_SUMMARY_METRICS } from '@/features/compte/domain/metricVisibility';
 import { buildEcrinsDetail } from '../fixtures/ecrinsDetail';
 import { MOMENT_TYPES, parseMomentMeta, resolveMomentType } from '../momentTypes';
 import { momentInsertRow, validateMomentInput } from '../createMoment';
@@ -189,6 +190,7 @@ describe('totaux du carnet', () => {
     const detail = buildCarnetDetail({
       carnet: { id: 'c', author_id: 'a', title: 'T', destination: null, description: null, cover_image: null, cover_image_alt: null, start_date: null, end_date: null, visibility: 'public', verified: false, likes_count: 0, comments_count: 0, views_count: 0, distance_km: null, denivele_m: null, groupe_id: null, lieu_depart: null, lieu_arrivee: null },
       author: null, hikeSession: sessions[0], sessions, moments: [], kitItems: [], viewerId: null, liked: false, favorited: false,
+      metricVisibilities: Object.fromEntries(sessions.map(({ id }) => [id, SHARED_SUMMARY_METRICS])),
     });
     expect(detail.distanceKm).toBeCloseTo(72.4, 5);
     expect(detail.elevationM).toBe(4520);

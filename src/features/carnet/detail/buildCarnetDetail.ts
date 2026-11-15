@@ -3,8 +3,23 @@ import { etapeFromRow } from './editSchemas';
 import { formatDateRange, formatElevation, formatKm, toNumber } from './format';
 import { buildCarnetPlace } from './place';
 import { pickElevationProfile } from './elevationProfile';
+import { isSessionInCarnetWindow } from './trace';
+import {
+  isShareableTraceVisibility,
+  projectTraceGeometry,
+  resolveTraceMasks,
+  type TraceViewer,
+} from '@/features/compte/server/tracePrivacy';
+import {
+  ALL_OUTING_METRICS,
+  NO_OUTING_METRICS,
+  SHARED_SUMMARY_METRICS,
+  canExposeElevationProfile,
+  intersectMetricVisibility,
+  metricVisibilityKeys,
+  type OutingMetricVisibility,
+} from '@/features/compte/domain/metricVisibility';
 import type {
-  HikeSessionRow,
   BuildCarnetDetailInput,
   CarnetEtapeDay,
   CarnetDetail,
@@ -14,13 +29,14 @@ import type {
   CarnetStatItem,
   CarnetViewerRole,
   CarnetKitVerdictItem,
+  HikeSessionRow,
   KitVerdictType,
 } from './types';
 
 const UNTITLED = 'Carnet sans titre';
 
 function buildAuthor(input: BuildCarnetDetailInput) {
-  const { author, carnet } = input;
+  const { author } = input;
   if (!author) return null;
   return {
     id: author.id,
@@ -114,45 +130,210 @@ function buildEtapes(input: BuildCarnetDetailInput): CarnetEtapeDay[] {
 
 export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
   const { carnet, hikeSession } = input;
-  /* Totaux du carnet : somme de TOUTES les sorties (un carnet de quatre jours porte
-     quatre sorties, la plus récente seule n'en est qu'un quart), à défaut le total
-     déclaré sur le carnet. Jamais la dernière sortie prise pour le tout. */
-  const allSessions = input.sessions ?? (hikeSession ? [hikeSession] : []);
-  /* Fenêtre du séjour : une sortie datée hors de [start_date, end_date] n'est
-     pas une sortie du carnet (seed de démo, sortie rattachée après coup). Elle
-     ne nourrit ni les totaux ni le tracé ; sans dates, on garde tout. */
-  const windowStart = carnet.start_date?.trim() || null;
-  const windowEnd = carnet.end_date?.trim() || null;
-  const sessionsInWindow =
-    windowStart && windowEnd
-      ? allSessions.filter((session) => {
-          const at = typeof session.started_at === 'string' ? session.started_at.slice(0, 10) : '';
-          return /^\d{4}-\d{2}-\d{2}$/.test(at) && at >= windowStart && at <= windowEnd;
-        })
-      : allSessions;
-  const sumOf = (pick: (session: HikeSessionRow) => number | null, rows = sessionsInWindow): number | null => {
-    const values = rows.map(pick).filter((v): v is number => v !== null);
-    return values.length > 0 ? values.reduce((a, b) => a + b, 0) : null;
-  };
-  /* Le carnet déclare son parcours (distance, D+) : ces valeurs font foi et
-     couvrent les journées sans relevé GPS. À défaut seulement, on somme les
-     sorties datées dans le séjour. Une sortie hors séjour ne compte jamais. */
-  const distanceKm = toNumber(carnet.distance_km) ?? sumOf((s) => toNumber(s.distance_km));
-  const elevationM = toNumber(carnet.denivele_m) ?? sumOf((s) => toNumber(s.elevation_gain_m));
+  const viewerRole: CarnetViewerRole =
+    input.viewerRole ??
+    (input.viewerId && carnet.author_id === input.viewerId ? 'participant' : 'visitor');
+  const isVisitor = viewerRole === 'visitor';
+  /*
+   * Le rôle de trace est distinct du rôle de fiche : un participant à la sortie
+   * qui porte le tracé garde sa trace complète sans devenir participant du
+   * carnet (jours, budget). L'appelant fournit `traceViewer` après vérification
+   * réelle de la relation ou de la participation ; sans lui, on retombe sur le
+   * rôle de fiche.
+   */
+  const traceViewer: TraceViewer = input.traceViewer ?? (isVisitor ? 'visitor' : 'participant');
+  const needsTraceProjection =
+    traceViewer === 'follower' || traceViewer === 'visitor';
   const moments = toMomentItems(input.moments);
-  const etapes = buildEtapes(input);
 
   /* Jours dérivés : les moments nomment leur jour, les points GPS des sorties
      datent le leur. Aucune valeur n'est inventée quand une source manque. */
   const sessions = input.sessions ?? (hikeSession ? [hikeSession] : []);
-  /* Profil d'altitude : sorties du séjour d'abord, sinon la sortie rattachée
-     (même repli que la trace) pour que le dénivelé s'affiche dès qu'il existe. */
-  const elevationProfile = pickElevationProfile(
-    sessionsInWindow.length > 0 ? sessionsInWindow : sessions
-  );
+  const window = { startDate: carnet.start_date, endDate: carnet.end_date };
+  const inWindow = (session: HikeSessionRow) => isSessionInCarnetWindow(session, window);
+  const sessionsInWindow = sessions.filter(inWindow);
+
+  /*
+   * S6.15 — visibilité effective du carnet pour un lecteur tiers. Un agrégat
+   * de carnet ne peut pas être plus permissif que la plus fermée de ses
+   * sorties : sinon un total divulguerait la distance, le dénivelé ou la durée
+   * qu'une sortie masque. C'est volontairement l'intersection de TOUTES les
+   * sorties lues, y compris celles que le lecteur ne peut pas ouvrir : le
+   * stock `carnets.distance_km` / `denivele_m` peut les avoir agrégées, donc
+   * l'incertitude ferme la métrique.
+   *
+   * Le propriétaire conserve `ALL` sur ses propres sorties brutes (la map lui
+   * donne toutes les clés) ; mais un agrégat qui mélange une sortie masquée
+   * d'autrui se ferme aussi pour lui. Son usage propriétaire reste servi par
+   * la fiche de sa sortie, pas par un total incertain. Un carnet sans sortie
+   * (saisie manuelle) garde le socle agrégé. Une liste de sorties incomplète
+   * (limite de lecture) ferme tout : mieux vaut un total absent qu'un total
+   * qui ignore une sortie masquée.
+   */
+  const sessionsComplete = input.sessionsComplete !== false;
+  /*
+   * Une map absente n'est pas la même chose qu'une map partielle :
+   *  - absente et lecteur propriétaire : appel historique, on conserve `ALL`
+   *    pour ne pas casser ses statistiques ;
+   *  - absente et lecteur tiers : fermé ;
+   *  - présente mais sans entrée pour une sortie : fermé, même pour le
+   *    propriétaire, car l'appelant a commencé à décrire les politiques et a
+   *    omis une sortie.
+   */
+  const metricVisibilityBySession = input.metricVisibilities;
+  const sessionMetricVisibility = (session: HikeSessionRow): OutingMetricVisibility => {
+    const explicit = metricVisibilityBySession?.[session.id];
+    if (explicit !== undefined) return explicit;
+    return metricVisibilityBySession === undefined && viewerRole === 'participant'
+      ? ALL_OUTING_METRICS
+      : NO_OUTING_METRICS;
+  };
+  const carnetMetricVisibility: OutingMetricVisibility =
+    !sessionsComplete
+      ? NO_OUTING_METRICS
+      : sessions.length === 0
+        ? SHARED_SUMMARY_METRICS
+        : intersectMetricVisibility(sessions.map(sessionMetricVisibility));
+
+  const etapes = buildEtapes(input).map((etape) => ({
+    ...etape,
+    distanceKm: carnetMetricVisibility.distance ? etape.distanceKm : null,
+    elevationM: carnetMetricVisibility.elevationGain ? etape.elevationM : null,
+    /* `duree_texte` est du texte libre : elle peut porter une distance, un
+       dénivelé ou une durée. On ne la garde que si les trois sont publiables. */
+    durationText:
+      carnetMetricVisibility.distance &&
+      carnetMetricVisibility.elevationGain &&
+      carnetMetricVisibility.duration
+        ? etape.durationText
+        : null,
+  }));
+  /*
+   * Autorisation PAR SORTIE. Le client `service_role` lit toutes les lignes du
+   * carnet après contrôle d'accès, mais seules celles dont le lecteur est
+   * propriétaire ou participant inscrit peuvent alimenter les points GPS, les
+   * statistiques et le profil altimétrique. Une sortie privée d'autrui est
+   * entièrement écartée ; une sortie explicitement partageable mais non
+   * autorisée ne fournit que ses métadonnées agrégées (date, durée), jamais ses
+   * coordonnées.
+   *
+   * `rawSessionIds` est fail-closed : absent, il vaut liste vide. Un futur
+   * appelant qui oublierait la liste ne rouvre donc pas les points GPS, les
+   * statistiques ni le profil d'une sortie d'autrui (F8).
+   */
+  const rawSessionIds = new Set(input.rawSessionIds ?? []);
+  const isRawSession = (session: HikeSessionRow) => rawSessionIds.has(session.id);
+  const statsSession = hikeSession && isRawSession(hikeSession) && inWindow(hikeSession) ? hikeSession : null;
+  const rawSessions = sessions.filter(isRawSession);
+  const rawSessionsInWindow = sessionsInWindow.filter(isRawSession);
+  /*
+   * Agrégat scalaire d'un carnet, calculé uniquement sur les sorties dont la
+   * politique autorise la métrique. On n'utilise les colonnes du carnet que
+   * s'il n'y a aucune sortie (carnet saisi à la main) : sinon elles pourraient
+   * contenir une sortie masquée. Une liste incomplète ferme l'agrégat.
+   */
+  const aggregateMetric = (
+    key: 'distance' | 'elevationGain',
+    read: (session: HikeSessionRow) => unknown
+  ): number | null => {
+    if (!sessionsComplete || !carnetMetricVisibility[key]) return null;
+    /*
+     * Sans map de politiques, un appel historique propriétaire ne peut agréger
+     * que ses sorties brutes : les autres lignes n'ont pas été autorisées par
+     * `rawSessionIds`. Avec une map, chaque entrée porte le rôle vérifié.
+     */
+    const sources =
+      metricVisibilityBySession === undefined && viewerRole === 'participant'
+        ? rawSessionsInWindow
+        : sessionsInWindow;
+    let total: number | null = null;
+    for (const session of sources) {
+      if (!sessionMetricVisibility(session)[key]) continue;
+      const value = toNumber(read(session));
+      if (value === null) continue;
+      total = (total ?? 0) + value;
+    }
+    return total;
+  };
+  /* Un total enregistré peut agréger des données privées. Le lecteur qui
+     possède les sorties du séjour conserve ce total, les autres reçoivent
+     les métriques explicitement autorisées pour les sessions concernées. */
+  const isOwner = Boolean(input.viewerId && carnet.author_id === input.viewerId);
+  const canUseDeclaredTotals =
+    sessionsComplete &&
+    (sessions.length === 0 ||
+      (isOwner &&
+        (metricVisibilityBySession === undefined ||
+          (rawSessionsInWindow.length === sessions.length &&
+            carnetMetricVisibility.distance && carnetMetricVisibility.elevationGain))));
+  const carnetMetric = (
+    key: 'distance' | 'elevationGain',
+    declared: unknown,
+    read: (session: HikeSessionRow) => unknown
+  ) =>
+    (canUseDeclaredTotals ? toNumber(declared) : null) ??
+    aggregateMetric(key, read) ??
+    (statsSession ? toNumber(read(statsSession)) : null);
+  const distanceKm = carnetMetric('distance', carnet.distance_km, (session) => session.distance_km);
+  const elevationM = carnetMetric('elevationGain', carnet.denivele_m, (session) => session.elevation_gain_m);
+  /*
+   * Une sortie partageable mais non brute ne fournit que ses métadonnées
+   * agrégées. La politique par métrique décide lesquelles : sans elle, aucune
+   * valeur ne sort (fail-closed). Retirer `started_at` avec la durée empêche de
+   * recalculer celle-ci ou de replacer la sortie dans un jour par simple
+   * lecture.
+   */
+  const metadataOnlySessions = sessionsInWindow
+    .filter(
+      (session) =>
+        !isRawSession(session) && isShareableTraceVisibility(session.visibility),
+    )
+    .map((session) => {
+      /*
+       * Fail-closed : une sortie absente de la map ne retombe plus sur le
+       * socle agrégé. Seul `getCarnetDetail`, qui a vérifié chaque rôle, peut
+       * fournir une politique ; un appel incomplet ferme la métrique.
+       * De plus, si le carnet entier ferme `distance`, `elevationGain` ou
+       * `duration` par intersection, aucune sortie non brute ne peut alimenter
+       * `summary` avec un sous-total partiel.
+       */
+      const visibility = sessionMetricVisibility(session);
+      const allowDistance = carnetMetricVisibility.distance && visibility.distance;
+      const allowElevation = carnetMetricVisibility.elevationGain && visibility.elevationGain;
+      const allowDuration = carnetMetricVisibility.duration && visibility.duration;
+      return {
+        ...session,
+        distance_km: allowDistance ? session.distance_km : null,
+        elevation_gain_m: allowElevation ? session.elevation_gain_m : null,
+        duration_seconds: allowDuration ? session.duration_seconds : null,
+        started_at: allowDuration ? session.started_at : null,
+        positions_geojson: null,
+        positions_timed: null,
+      };
+    });
+  const daySessions = [...rawSessionsInWindow, ...metadataOnlySessions];
+  /*
+   * Le profil construit depuis `positions_timed` contient les coordonnées
+   * brutes du départ et de l'arrivée : il ne peut venir que d'une sortie
+   * explicitement autorisée. Pour les autres lecteurs, `enrichCarnetElevation`
+   * le reconstruit ensuite depuis la trace déjà projetée — mais seulement si
+   * la politique du carnet autorise tout ce que le profil divulgue (distance,
+   * altitude, dénivelé, altitude maximale).
+   */
+  /*
+   * Une sortie brute est déjà autorisée par le rôle : son profil est visible.
+   * Pour un visiteur, le profil n'est reconstructible que depuis la trace
+   * partagée ; il doit alors respecter l'intersection des politiques du carnet
+   * (distance, altitude, dénivelé, altitude maximale).
+   */
+  const elevationProfileVisible =
+    rawSessions.length > 0 || canExposeElevationProfile(carnetMetricVisibility);
+  const elevationProfile = elevationProfileVisible
+    ? pickElevationProfile(rawSessionsInWindow.length > 0 ? rawSessionsInWindow : rawSessions)
+    : [];
   const builtDays = buildDays({
     moments: input.moments,
-    sessions,
+    sessions: daySessions,
     startDate: carnet.start_date ?? null,
   });
   /* Une sortie GPS datée hors du séjour (seed de démo, sortie rattachée après
@@ -168,6 +349,13 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
   const days = spanDays
     ? builtDays.filter((day) => (day.dayNumber ?? day.index) <= spanDays)
     : builtDays;
+  /*
+   * `days` est déjà filtré par `daySessions` : une sortie non brute n'a livré
+   * que les métadonnées que sa politique autorise, une sortie privée d'autrui
+   * rien du tout. On ne remasque donc pas les jours en bloc — cela priverait le
+   * propriétaire de sa propre journée autorisée. `summary` reste la somme de
+   * ces jours déjà sûrs.
+   */
   const summary = buildSummary(days);
 
   const stats: CarnetStatItem[] = [];
@@ -184,18 +372,34 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
   }, null);
 
   /* La trace affichée est celle de la sortie la plus récente qui en porte une
-     dans la fenêtre du séjour (`pickCarnetTrace` côté lecteur). Le repli sur la
-     sortie passée seule (`hikeSession`) reste possible pour les appelants
-     historiques, mais jamais si elle est datée hors du séjour : la carte reste
-     alors vide, honnêtement. */
-  const sessionTrace = hikeSession?.positions_geojson ?? null;
-  const sessionAt =
-    typeof hikeSession?.started_at === 'string' ? hikeSession.started_at.slice(0, 10) : '';
-  const sessionInWindow =
-    !windowStart || !windowEnd
-      ? true
-      : /^\d{4}-\d{2}-\d{2}$/.test(sessionAt) && sessionAt >= windowStart && sessionAt <= windowEnd;
-  const trace = input.trace ?? (sessionInWindow ? sessionTrace : null);
+     (`pickCarnetTrace`), pas forcément celle qui donne les statistiques. Pour
+     un visiteur, elle passe par la politique unique de partage : la visibilité
+     effective est la plus restrictive du carnet et de la sortie, puis début et
+     fin sont masqués — ou toute la trace si elle n'est pas explicitement
+     partageable. La projection est calculée une seule fois pour exposer aussi
+     son état (masquée, totalement masquée, erreur). */
+  const canUseHikeSessionTrace = hikeSession ? isRawSession(hikeSession) && inWindow(hikeSession) : false;
+  const rawTrace =
+    input.trace ?? (canUseHikeSessionTrace ? (hikeSession?.positions_geojson ?? null) : null);
+  const traceVisibility = input.traceVisibility ?? carnet.visibility;
+  const projectedTrace =
+    needsTraceProjection && rawTrace !== null && rawTrace !== undefined
+      ? projectTraceGeometry(
+          rawTrace,
+          resolveTraceMasks({ viewer: traceViewer, visibility: traceVisibility })
+        )
+      : null;
+  const trace = needsTraceProjection ? (projectedTrace?.geometry ?? null) : rawTrace;
+  const traceWithheld = input.traceWithheld === true;
+  const traceMasked = projectedTrace?.masked ?? traceWithheld;
+  const traceFullyMasked = projectedTrace?.fullyMasked ?? traceWithheld;
+  const traceError = projectedTrace?.error ?? null;
+  /*
+   * Les points de jour sont déjà filtrés par `daySessions` : une sortie non
+   * autorisée n'a livré ni point ni segment. Plus de masquage global par
+   * `isVisitor`, qui privait aussi le participant de sa propre trace.
+   */
+  const viewerDays = days;
 
   /* Nuits du carnet (`carnet_nights`), triées par jour. Aucun repli : les
      anciennes tables `groupe_*` n'existent plus, une nuit absente n'est pas inventée. */
@@ -203,9 +407,6 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
     (x, y) => x.dayNumber - y.dayNumber
   );
 
-  const viewerRole: CarnetViewerRole =
-    input.viewerRole ??
-    (input.viewerId && carnet.author_id === input.viewerId ? 'participant' : 'visitor');
   const budget = viewerRole === 'visitor' ? null : (input.budget ?? null);
 
   const kitVerdicts: Record<string, CarnetKitVerdictItem> = { ...(input.kitVerdicts ?? {}) };
@@ -234,7 +435,7 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
     visibility: carnet.visibility ?? 'public',
     isPublic: (carnet.visibility ?? 'public') === 'public',
     verified: carnet.verified === true,
-    isOwner: Boolean(input.viewerId && carnet.author_id && input.viewerId === carnet.author_id),
+    isOwner,
     author: buildAuthor(input),
     participants: buildParticipants(input),
     stats,
@@ -254,7 +455,7 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
     })),
     moments,
     photoMoments: moments.filter((m) => Boolean(m.imageUrl)),
-    days,
+    days: viewerDays,
     etapes,
     summary,
     kit: {
@@ -271,7 +472,21 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
       })),
     },
     trace,
+    traceMasked,
+    traceFullyMasked,
+    traceError,
     elevationProfile,
+    /*
+     * `true` quand le profil existe potentiellement mais que la politique
+     * interdit de le publier. `enrichCarnetElevation` le lit pour ne pas le
+     * reconstruire depuis la trace et l'UI peut dire « masqué » au lieu de
+     * « aucune mesure ».
+     */
+    elevationWithheld: !elevationProfileVisible,
+    metricVisibility: carnetMetricVisibility,
+    metricsMasked:
+      metricVisibilityKeys(carnetMetricVisibility).length <
+      metricVisibilityKeys(ALL_OUTING_METRICS).length,
     place: buildCarnetPlace(carnet, trace),
     distanceKm,
     elevationM,

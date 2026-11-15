@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TrainingCenterDatabase xmlns="http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2">
+  <Activities>
+    <Activity Sport="Running">
+      <Id>2026-08-15T08:00:00.000Z</Id>
+      <Lap StartTime="2026-08-15T08:00:00.000Z">
+        <TotalTimeSeconds>60</TotalTimeSeconds>
+        <Track>
+          <Trackpoint>
+            <Time>2026-08-15T08:00:00.000Z</Time>
+            <Position>
+              <LatitudeDegrees>45.1000</LatitudeDegrees>
+              <LongitudeDegrees>6.1000</LongitudeDegrees>
+            </Position>
+          </Trackpoint>
+        </Track>
+      </Lap>
+      <Creator>
+        <Name>Garmin Connect</Name>
+        <ProductID>111</ProductID>
+      </Creator>
+    </Activity>
+  </Activities>
+  <Courses>
+    <Course>
+      <Name>Parcours de démonstration</Name>
+      <Lap>
+        <TotalTimeSeconds>60</TotalTimeSeconds>
+        <Track>
+          <Trackpoint>
+            <Time>2026-08-15T09:00:00.000Z</Time>
+            <Position>
+              <LatitudeDegrees>46.0000</LatitudeDegrees>
+              <LongitudeDegrees>7.0000</LongitudeDegrees>
+            </Position>
+          </Trackpoint>
+        </Track>
+      </Lap>
+      <Creator>
+        <Name>CourseMaker</Name>
+        <ProductID>999</ProductID>
+      </Creator>
+    </Course>
+  </Courses>
+</TrainingCenterDatabase>

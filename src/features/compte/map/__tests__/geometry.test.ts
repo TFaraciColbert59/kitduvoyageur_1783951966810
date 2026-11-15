@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { boundsOf, mergeBounds, parsePositions, simplifyTrack } from '../geometry';
+import { boundsOf, mergeBounds, parsePositions, parseTraceSegments, simplifyTrack } from '../geometry';
 
 describe('parsePositions', () => {
   it('lit une Feature LineString et ignore l’altitude', () => {
@@ -31,6 +31,70 @@ describe('parsePositions', () => {
   it('rejette une géométrie vide ou non numérique', () => {
     expect(parsePositions(null)).toEqual([]);
     expect(parsePositions({ type: 'LineString', coordinates: [['x', 2]] })).toEqual([]);
+  });
+
+  it('aplatit un MultiLineString pour les bornes et les marqueurs', () => {
+    expect(
+      parsePositions({
+        type: 'MultiLineString',
+        coordinates: [
+          [
+            [6.87, 45.92],
+            [6.88, 45.93],
+          ],
+          [
+            [6.9, 45.95],
+            [6.91, 45.96],
+          ],
+        ],
+      })
+    ).toEqual([
+      { lng: 6.87, lat: 45.92 },
+      { lng: 6.88, lat: 45.93 },
+      { lng: 6.9, lat: 45.95 },
+      { lng: 6.91, lat: 45.96 },
+    ]);
+  });
+});
+
+describe('parseTraceSegments', () => {
+  it('conserve la séparation des morceaux d’un MultiLineString', () => {
+    const segments = parseTraceSegments({
+      type: 'MultiLineString',
+      coordinates: [
+        [
+          [6.87, 45.92],
+          [6.88, 45.93],
+        ],
+        [
+          [6.9, 45.95],
+          [6.91, 45.96],
+        ],
+      ],
+    });
+
+    expect(segments).toHaveLength(2);
+    expect(segments[0]).toEqual([
+      { lng: 6.87, lat: 45.92 },
+      { lng: 6.88, lat: 45.93 },
+    ]);
+    expect(segments[1]).toEqual([
+      { lng: 6.9, lat: 45.95 },
+      { lng: 6.91, lat: 45.96 },
+    ]);
+  });
+
+  it('rend une seule ligne pour un LineString et rien pour une entrée vide', () => {
+    expect(
+      parseTraceSegments({
+        type: 'LineString',
+        coordinates: [
+          [6.87, 45.92],
+          [6.88, 45.93],
+        ],
+      })
+    ).toHaveLength(1);
+    expect(parseTraceSegments(null)).toEqual([]);
   });
 });
 

@@ -1,6 +1,7 @@
 import 'server-only';
-import { parsePositions } from '@/features/compte/map/geometry';
+import { parseTraceSegments } from '@/features/compte/map/geometry';
 import { haversineDistanceKm } from '@/features/explorer-osm/domain/geometry';
+import { canExposeElevationProfile } from '@/features/compte/domain/metricVisibility';
 import { appUserAgent } from '@/lib/userAgent';
 import type { CarnetDetail, ElevationPoint } from './types';
 
@@ -34,6 +35,14 @@ const MAX_CACHE_ENTRIES = 200;
 interface Coordinate {
   lat: number;
   lng: number;
+}
+
+interface TrackPoint {
+  point: Coordinate;
+  /** Distance cumulée sur l'ensemble des morceaux, jamais à travers un vide. */
+  distanceKm: number;
+  /** Morceau d'origine : deux index différents ne sont jamais reliés. */
+  segmentIndex: number;
 }
 
 interface CacheEntry {
@@ -73,9 +82,9 @@ function downsample(points: ElevationPoint[], maxPoints: number): ElevationPoint
  * Clé de cache : le carnet et les deux extrémités de sa trace. Deux fiches du
  * même carnet partagent donc le profil, et un tracé modifié le renouvelle.
  */
-function cacheKey(carnetId: string, points: Coordinate[]): string {
-  const first = points[0];
-  const last = points[points.length - 1];
+function cacheKey(carnetId: string, points: TrackPoint[]): string {
+  const first = points[0].point;
+  const last = points[points.length - 1].point;
   return `${carnetId}:${first.lat},${first.lng}:${last.lat},${last.lng}`;
 }
 
@@ -84,9 +93,9 @@ function cacheKey(carnetId: string, points: Coordinate[]): string {
  * dans l'ordre des points. Les nombres sont écrits tels quels (`String`), sans
  * arrondi : la coordonnée demandée est exactement celle de la trace.
  */
-function buildUrl(points: Coordinate[]): string {
-  const latitudes = points.map((point) => String(point.lat)).join(',');
-  const longitudes = points.map((point) => String(point.lng)).join(',');
+function buildUrl(points: TrackPoint[]): string {
+  const latitudes = points.map(({ point }) => String(point.lat)).join(',');
+  const longitudes = points.map(({ point }) => String(point.lng)).join(',');
   return `${ELEVATION_ENDPOINT}?latitude=${latitudes}&longitude=${longitudes}`;
 }
 
@@ -99,7 +108,7 @@ function buildUrl(points: Coordinate[]): string {
  * `null` en mer) ne peut pas être appariée aux coordonnées sans décaler les
  * altitudes. On la refuse plutôt que de rendre un profil faux.
  */
-function toProfile(points: Coordinate[], raw: unknown): ElevationPoint[] {
+function toProfile(points: TrackPoint[], raw: unknown): ElevationPoint[] {
   if (!Array.isArray(raw) || raw.length !== points.length) return [];
   const elevations: number[] = [];
   for (const value of raw) {
@@ -107,29 +116,18 @@ function toProfile(points: Coordinate[], raw: unknown): ElevationPoint[] {
     elevations.push(value);
   }
 
-  let distanceKm = 0;
-  const profile: ElevationPoint[] = [];
-  for (let index = 0; index < points.length; index += 1) {
-    if (index > 0) {
-      const previous = points[index - 1];
-      const current = points[index];
-      distanceKm += haversineDistanceKm(
-        [previous.lng, previous.lat],
-        [current.lng, current.lat]
-      );
-    }
-    profile.push({
-      distanceKm: Math.round(distanceKm * 100) / 100,
-      elevationM: elevations[index],
-      lat: points[index].lat,
-      lng: points[index].lng,
-    });
-  }
+  const profile: ElevationPoint[] = points.map(({ point, distanceKm, segmentIndex }, index) => ({
+    distanceKm: Math.round(distanceKm * 100) / 100,
+    elevationM: elevations[index],
+    lat: point.lat,
+    lng: point.lng,
+    segmentIndex,
+  }));
   return downsample(profile, MAX_PROFILE_POINTS);
 }
 
 /** Un aller-retour vers Open-Meteo. Ne lève jamais : une panne rend `[]`. */
-async function fetchProfile(points: Coordinate[]): Promise<ElevationPoint[]> {
+async function fetchProfile(points: TrackPoint[]): Promise<ElevationPoint[]> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
@@ -163,7 +161,7 @@ async function fetchProfile(points: Coordinate[]): Promise<ElevationPoint[]> {
  * Profil du couple clé/points, un seul appel réseau à la fois par clé.
  * Un échec n'entre pas dans le cache : la prochaine fiche retentera.
  */
-function loadProfile(key: string, points: Coordinate[]): Promise<ElevationPoint[]> {
+function loadProfile(key: string, points: TrackPoint[]): Promise<ElevationPoint[]> {
   const inFlight = pending.get(key);
   if (inFlight) return inFlight;
 
@@ -202,9 +200,53 @@ export function resetCarnetElevationCache(): void {
  *   vide, fiche rendue telle quelle, aucune exception.
  */
 export async function enrichCarnetElevation(detail: CarnetDetail): Promise<CarnetDetail> {
+  /*
+   * S6.15 — le profil est une métrique à part entière. Quand la politique du
+   * carnet ferme `elevation`, `elevationGain`, `maxAltitude` ou `distance`, le
+   * builder a déjà vidé `elevationProfile` et posé `elevationWithheld`. Sans
+   * ce garde-fou, la reconstruction depuis `detail.trace` réintroduirait
+   * exactement l'altitude masquée (et sa distance cumulée).
+   *
+   * La seconde vérification couvre un appelant qui aurait oublié le drapeau :
+   * la politique reste l'autorité, jamais la présence de la trace.
+   */
+  if (detail.elevationWithheld === true) return detail;
+  if (
+    detail.metricVisibility &&
+    !canExposeElevationProfile(detail.metricVisibility)
+  ) {
+    return detail;
+  }
   if (detail.elevationProfile && detail.elevationProfile.length >= 2) return detail;
 
-  const points = parsePositions(detail.trace);
+  /*
+   * Distance cumulée monotone : chaque morceau repart de la distance acquise
+   * par les précédents, sans jamais compter le saut qui les sépare. Le
+   * `segmentIndex` conservé permet au profil de ne pas relier deux morceaux.
+   */
+  const points: TrackPoint[] = [];
+  let cumulativeKm = 0;
+  const segments = parseTraceSegments(detail.trace);
+  for (let segmentIndex = 0; segmentIndex < segments.length; segmentIndex += 1) {
+    const segment = segments[segmentIndex];
+    let segmentKm = 0;
+    for (let index = 0; index < segment.length; index += 1) {
+      if (index > 0) {
+        const previous = segment[index - 1];
+        const current = segment[index];
+        segmentKm += haversineDistanceKm(
+          [previous.lng, previous.lat],
+          [current.lng, current.lat]
+        );
+      }
+      points.push({
+        point: { lat: segment[index].lat, lng: segment[index].lng },
+        distanceKm: cumulativeKm + segmentKm,
+        segmentIndex,
+      });
+    }
+    cumulativeKm += segmentKm;
+  }
   if (points.length < 2) return detail;
 
   const sampled = sampleEvenly(points, MAX_REQUEST_POINTS);

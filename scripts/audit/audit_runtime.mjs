@@ -219,10 +219,14 @@ export function enforcePrivateAuditPermissions(target, mode = 0o600) {
   }
 }
 
+const DARWIN_SYSTEM_ROOT_SYMLINKS = new Set(['/var', '/tmp', '/etc']);
+
 export function assertNoSymlinkComponents(directory) {
   let current = path.resolve(directory);
   while (true) {
-    if (fs.existsSync(current)) {
+    const skipSystemPrefix =
+      process.platform === 'darwin' && DARWIN_SYSTEM_ROOT_SYMLINKS.has(current);
+    if (!skipSystemPrefix && fs.existsSync(current)) {
       const stat = fs.lstatSync(current);
       if (stat.isSymbolicLink()) throw new Error('Répertoire audit lié refusé');
     }

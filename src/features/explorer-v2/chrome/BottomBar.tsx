@@ -3,6 +3,7 @@
 import React, { useCallback, useRef, useState } from 'react';
 import Link from 'next/link';
 import { XpIcon } from '../ui/XpIcon';
+import { ActivityAudioControl } from '@/features/gear/audio/ActivityAudioControl';
 
 const ITEMS = [
   { id: 'hub', href: '/hub', label: 'Hub', icon: 'house' },
@@ -121,6 +122,7 @@ export function ActivityPill({
       <button type="button" className="xp-pill-btn" onClick={onFlag} aria-label="Poser un repère">
         <XpIcon name="flag" size={15} />
       </button>
+      <ActivityAudioControl />
       <StopHoldButton onStop={onStop} />
     </div>
   );

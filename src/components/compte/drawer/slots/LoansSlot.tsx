@@ -13,6 +13,7 @@ import {
   type LoanRecord,
   type LoanViewer,
 } from '../cards/LoanCard';
+import { SlotUnavailable } from './SlotUnavailable';
 
 export type LoansLens = 'lend' | 'borrow' | 'trust';
 
@@ -23,6 +24,8 @@ export interface TrustSummary {
   onTimeRate: number | null;
   /** `null` quand le propriétaire n'a encore reçu aucune note. */
   rating: number | null;
+  /** Lecture des prêts en échec : ne pas afficher de faux zéro. */
+  unavailable?: boolean;
 }
 
 export interface LoansSlotProps {
@@ -106,6 +109,7 @@ export function readTrustPayload(payload: unknown): TrustSummary | null {
     // Une absence reste une absence : jamais un faux 0.
     onTimeRate: asNumber(row.onTimeRate),
     rating: asNumber(row.rating),
+    unavailable: root?.trustUnavailable === true,
   };
 }
 
@@ -130,6 +134,10 @@ function EmptyState({ label }: { label: string }) {
 function TrustCard({ trust }: { trust: TrustSummary | null }) {
   const titleId = useId();
   if (!trust) return <EmptyState label="Aucune donnée de confiance." />;
+  const unavailable = trust.unavailable === true;
+  // Le badge ne doit jamais rester vert « vérifié » quand la lecture des prêts
+  // est indisponible : l'icône et la classe suivent le même état que le texte.
+  const verified = !unavailable && trust.verified;
 
   return (
     <article
@@ -152,27 +160,27 @@ function TrustCard({ trust }: { trust: TrustSummary | null }) {
           </h3>
           <p className="lkdv-trust-sub">Agrégat de tes prêts, sans historique détaillé.</p>
         </div>
-        <span className={`lkdv-trust-badge ${trust.verified ? 'is-on' : 'is-off'}`}>
+        <span className={`lkdv-trust-badge ${verified ? 'is-on' : 'is-off'}`}>
           <span className="lkdv-trust-badge-ico" aria-hidden="true">
-            {trust.verified ? '✓' : '○'}
+            {verified ? '✓' : '○'}
           </span>
           <span className="lkdv-trust-badge-txt">
-            {trust.verified ? 'Profil vérifié' : 'Profil non vérifié'}
+            {unavailable ? 'Vérification indisponible' : verified ? 'Profil vérifié' : 'Profil non vérifié'}
           </span>
         </span>
       </header>
 
       <div className="lkdv-trust-grid" role="group" aria-label="Agrégats de confiance">
         <div className="lkdv-trust-stat">
-          <b>{trust.active}</b>
+          <b>{unavailable ? '—' : trust.active}</b>
           <span>Prêts actifs</span>
         </div>
         <div className="lkdv-trust-stat">
-          <b>{trust.onTimeRate === null ? 'Aucun retour' : `${trust.onTimeRate} %`}</b>
+          <b>{unavailable ? '—' : trust.onTimeRate === null ? 'Aucun retour' : `${trust.onTimeRate} %`}</b>
           <span>Taux de retour à temps</span>
         </div>
         <div className="lkdv-trust-stat">
-          <b>{trust.rating === null ? 'Pas encore noté' : `${formatRating(trust.rating)} / 5`}</b>
+          <b>{unavailable ? '—' : trust.rating === null ? 'Pas encore noté' : `${formatRating(trust.rating)} / 5`}</b>
           <span>Note moyenne</span>
         </div>
       </div>
@@ -205,6 +213,10 @@ export function LoansSlot({
 
   const sourceLoans = useMemo(() => loans ?? readLoansPayload(payload), [loans, payload]);
   const sourceTrust = useMemo(() => trust ?? readTrustPayload(payload), [trust, payload]);
+  // `materiel_loans` alimente à la fois les prêts et la confiance : le flag
+  // `trustUnavailable` couvre les deux. Une prop directe reste prioritaire.
+  const loansUnavailable =
+    !Array.isArray(loans) && asRecord(payload)?.trustUnavailable === true;
   const viewerMode = resolveLoansViewer(viewer, payload);
 
   const effectiveLoans = useMemo(
@@ -328,9 +340,28 @@ export function LoansSlot({
     );
   }
 
+  if (loansUnavailable) {
+    return (
+      <section
+        className="lkdv-loans"
+        data-testid="slot-content"
+        data-slot="prets"
+        data-lens={activeLens}
+        data-state="error"
+      >
+        <style dangerouslySetInnerHTML={{ __html: LOANS_CSS }} />
+        <SlotUnavailable
+          label="Prêts momentanément indisponibles."
+          slot="prets"
+          lens={activeLens}
+          testId=""
+        />
+      </section>
+    );
+  }
+
   const isLend = activeLens === 'lend';
   const listLabel = isLend ? 'Prêts que tu accordes' : 'Prêts que tu empruntes';
-  const emptyLabel = isLend ? 'Aucun prêt en cours.' : 'Aucun emprunt en cours.';
 
   return (
     <section

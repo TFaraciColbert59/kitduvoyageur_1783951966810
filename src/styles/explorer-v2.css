@@ -651,6 +651,15 @@ body:has(.xp-root[data-theme]) .lkv-app-background {
   box-shadow: var(--xp-block-shadow);
   text-align: left;
 }
+.xp-row[aria-disabled='true'] {
+  opacity: 0.66;
+}
+.xp-layer-note {
+  margin: 2px 2px 0;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--xp-mut);
+}
 .xp-row-ico {
   flex: none;
   display: grid;
@@ -950,6 +959,36 @@ body:has(.xp-root[data-theme]) .lkv-app-background {
   background-color: #17402C;
 }
 
+/* Action contextuelle après déplacement : relance la recherche déjà saisie
+   sur l'emprise visible. Elle se place au-dessus de la pilule du tiroir et
+   reste hors de la zone de la barre basse / du pouce. */
+.xp-search-area {
+  position: absolute;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 100px + var(--cookie-banner-h, 0px));
+  transform: translateX(-50%);
+  z-index: 10;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: var(--xp-bar);
+  -webkit-backdrop-filter: var(--xp-blur);
+  backdrop-filter: var(--xp-blur);
+  box-shadow: var(--xp-bar-shadow);
+  color: var(--xp-ink);
+  font-size: 12.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
+}
+.xp-search-area:active {
+  transform: translateX(-50%) scale(0.96);
+}
+
 /* ── 3.3 Synchronisation masquage bottom bar globale ───────────────────── */
 html[data-explorer-sheet-open='true'] .lkdv-floating-tabbar,
 body[data-explorer-sheet-open='true'] .lkdv-floating-tabbar,
@@ -1048,6 +1087,34 @@ body[data-explorer-sheet-open='true'] nav[aria-label="Navigation principale"]:no
 }
 .xp-map-overlay > * {
   pointer-events: auto;
+}
+/* Marqueurs de distance (K3.12) : étiquettes informatives, non interactives,
+   placées sur la géométrie réelle et masquées sous le tiroir par projection. */
+.xp-km-marker {
+  position: absolute;
+  z-index: 1;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  animation: xpIn 0.3s ease both;
+}
+.xp-km-marker > span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 19px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--xp-block);
+  -webkit-backdrop-filter: var(--xp-blur);
+  backdrop-filter: var(--xp-blur);
+  box-shadow: var(--xp-block-shadow);
+  color: var(--xp-ink);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 .xp-pin {
   position: absolute;
@@ -1213,6 +1280,47 @@ body[data-explorer-sheet-open='true'] nav[aria-label="Navigation principale"]:no
   font-size: 12.5px;
   font-weight: 700;
   animation: xpToast 0.4s ease both;
+}
+
+/* Trace en préparation ou inexploitable : information neutre, pas une alerte. */
+.xp-offroute--unavailable,
+.xp-offroute--pending {
+  background: rgba(23, 64, 44, 0.9);
+  box-shadow: 0 8px 22px rgba(11, 31, 23, 0.28), inset 0 1px 0 rgba(250, 248, 245, 0.22);
+  color: #faf8f5;
+  font-weight: 600;
+}
+
+/* Flèche de retour : cap monde compensé par la rotation réelle de la carte. */
+.xp-offroute__arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  transform-origin: 50% 50%;
+  transition: transform 0.2s var(--ease-glass, ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .xp-offroute__arrow {
+    transition: none;
+  }
+}
+
+.xp-offroute__retry {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid rgba(250, 248, 245, 0.35);
+  border-radius: 10px;
+  background: rgba(250, 248, 245, 0.14);
+  color: #faf8f5;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.xp-offroute__retry:active {
+  background: rgba(250, 248, 245, 0.24);
 }
 
 /* ── Compte à rebours de départ ───────────────────────────────────────── */
@@ -1403,6 +1511,232 @@ body[data-explorer-sheet-open='true'] nav[aria-label="Navigation principale"]:no
   color: var(--xp-mut2);
   font-size: 12.5px;
   font-weight: 650;
+}
+
+/* ── Carnet musculation (S2.32) ───────────────────────────────────────── */
+.xp-strength {
+  display: grid;
+  gap: 2px;
+}
+.xp-strength-note {
+  display: grid;
+  gap: 3px;
+  margin: 2px 0 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(185, 138, 46, 0.12);
+  box-shadow: inset 0 0 0 0.5px rgba(185, 138, 46, 0.28);
+  color: var(--xp-mut2);
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+.xp-strength-note strong {
+  color: var(--xp-txt);
+  font-size: 12px;
+  font-weight: 700;
+}
+.xp-strength-warn {
+  margin: 0 0 10px;
+  padding: 9px 11px;
+  border-radius: 12px;
+  background: rgba(168, 68, 58, 0.12);
+  box-shadow: inset 0 0 0 0.5px rgba(168, 68, 58, 0.3);
+  color: var(--xp-bad);
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+.xp-strength-error {
+  margin: 0;
+  color: var(--xp-bad);
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+.xp-strength-sets {
+  display: grid;
+  gap: 6px;
+  margin: 2px 0 10px;
+}
+.xp-strength-set {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 10px;
+  border-radius: 14px;
+  background: var(--xp-block);
+  box-shadow: var(--xp-block-shadow);
+}
+.xp-strength-set-main {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+.xp-strength-set-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--xp-mut);
+}
+.xp-strength-set-value {
+  font-size: 13.5px;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  color: var(--xp-txt);
+}
+.xp-strength-set-sub {
+  font-size: 10.5px;
+  color: var(--xp-mut);
+}
+.xp-strength-set-actions {
+  display: flex;
+  flex: none;
+  gap: 4px;
+}
+.xp-strength-set-actions .xp-chip {
+  min-height: 44px;
+  padding: 6px 9px;
+  font-size: 11px;
+}
+.xp-strength-setform {
+  margin-bottom: 8px;
+}
+.xp-strength-setform-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.xp-strength-unit {
+  display: grid;
+  gap: 4px;
+}
+.xp-strength-unit-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--xp-mut);
+}
+.xp-strength-unit .xp-chiprow {
+  margin: 0;
+}
+.xp-strength-remove-exercise {
+  margin-top: 2px;
+}
+.xp-strength-clear {
+  display: grid;
+  gap: 0;
+  margin: 10px 0 8px;
+}
+.xp-strength-clear-text {
+  margin: 0 0 8px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--xp-mut2);
+}
+.xp-strength-footnote {
+  margin: 10px 2px 6px;
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: var(--xp-mut);
+}
+.xp-strength-sync {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: var(--xp-block);
+  box-shadow: var(--xp-block-shadow);
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--xp-mut2);
+}
+.xp-strength-sync[data-tone='good'] {
+  color: var(--xp-good);
+}
+.xp-strength-sync[data-tone='warn'] {
+  color: var(--xp-warn);
+}
+.xp-strength-sync .xp-chip {
+  flex: none;
+  min-height: 44px;
+  padding: 6px 9px;
+  font-size: 11px;
+}
+.xp-strength-status {
+  margin: 0 2px 8px;
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--xp-good);
+}
+.xp-strength-legacy {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: var(--xp-block);
+  box-shadow: inset 2px 0 0 var(--xp-ink), var(--xp-block-shadow);
+  color: var(--xp-mut2);
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+.xp-strength-legacy strong {
+  color: var(--xp-txt);
+  font-size: 12px;
+  font-weight: 700;
+}
+.xp-strength-legacy-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.xp-strength-legacy-actions .xp-primary,
+.xp-strength-legacy-actions .xp-secondary {
+  flex: 1 1 150px;
+  min-height: 44px;
+}
+.xp-strength-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: var(--xp-block);
+  box-shadow: var(--xp-block-shadow);
+  color: var(--xp-mut2);
+  font-size: 11px;
+  line-height: 1.4;
+}
+.xp-strength-link .xp-chip {
+  flex: none;
+  min-height: 44px;
+  padding: 6px 9px;
+  font-size: 11px;
+}
+.xp-strength-export {
+  display: grid;
+  gap: 8px;
+  margin: 2px 0 10px;
+}
+.xp-strength-export-text {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--xp-mut);
+}
+.xp-strength-export .xp-secondary {
+  min-height: 44px;
+}
+.xp-primary:disabled,
+.xp-secondary:disabled {
+  opacity: 0.55;
+}
+.xp-root[data-theme='dark'] .xp-strength-set {
+  background: var(--xp-block);
 }
 
 /* Pastille « hors ligne » avec le nombre d'écritures en attente. */

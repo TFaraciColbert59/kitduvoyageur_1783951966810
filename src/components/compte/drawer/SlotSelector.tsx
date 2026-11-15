@@ -1,7 +1,14 @@
 'use client';
 
 import React from 'react';
-import { ArrowLeftRight, Bookmark, LayoutGrid, ShoppingBag, Users } from 'lucide-react';
+import {
+  ArrowLeftRight,
+  Bookmark,
+  Dumbbell,
+  LayoutGrid,
+  ShoppingBag,
+  Users,
+} from 'lucide-react';
 import { CapsuleTabs } from '@/components/ui/CapsuleTabs';
 import type { SlotId } from './SlotShell';
 
@@ -10,13 +17,14 @@ export interface SlotSelectorItem {
   label: string;
 }
 
-/** Les 5 slots du drawer Profil, dans l'ordre du plan. */
+/** Les 6 slots du drawer Profil, dans l'ordre du plan. */
 export const SLOT_SELECTOR_ITEMS: SlotSelectorItem[] = [
   { id: 'vitrine', label: 'Vitrine' },
   { id: 'kit', label: 'Kit' },
   { id: 'prets', label: 'Prêts' },
   { id: 'souvenirs', label: 'Souvenirs' },
   { id: 'communaute', label: 'Communauté' },
+  { id: 'entrainement', label: 'Entraînement' },
 ];
 
 const SLOT_GLYPHS: Record<SlotId, React.ReactNode> = {
@@ -25,6 +33,7 @@ const SLOT_GLYPHS: Record<SlotId, React.ReactNode> = {
   prets: <ArrowLeftRight size={18} strokeWidth={1.8} aria-hidden="true" />,
   souvenirs: <Bookmark size={18} strokeWidth={1.8} aria-hidden="true" />,
   communaute: <Users size={18} strokeWidth={1.8} aria-hidden="true" />,
+  entrainement: <Dumbbell size={18} strokeWidth={1.8} aria-hidden="true" />,
 };
 
 /** Id du panneau de contenu contrôlé par l'onglet d'un slot. */
@@ -39,7 +48,7 @@ export interface SlotSelectorProps {
 }
 
 /**
- * Navigation des 5 slots du drawer Profil.
+ * Navigation des 6 slots du drawer Profil.
  *
  * Le markup et l'interaction sont ceux de la capsule principale partagée
  * (`CapsuleTabs`, 48 px, lentille `.sel-lens`, 420 ms) : ce composant ne porte

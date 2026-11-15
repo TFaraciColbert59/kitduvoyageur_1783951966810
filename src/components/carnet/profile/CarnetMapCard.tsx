@@ -3,6 +3,7 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
 import type { CarnetDetail } from '@/features/carnet/detail/types';
+import { carnetTraceEmptyState } from '@/features/carnet/detail/traceEmptyState';
 import type { CarnetPlaceFocus } from './CarnetCard';
 
 /** Carte du monde du Compte, telle quelle : MapLibre 3D, HUD, crédits Esri. */
@@ -32,6 +33,8 @@ export function CarnetMapCard({ detail, focus = null }: CarnetMapCardProps) {
      retard sur la session). */
   const authState = detail.isOwner ? 'owner' : 'guest';
 
+  const { title: emptyTitle, hint: emptyHint } = carnetTraceEmptyState(detail);
+
   return (
     <section className="ckp-mapzone" aria-label={`Carte du monde — ${detail.title}`}>
       <div className="ckp-mapzone-canvas">
@@ -41,8 +44,8 @@ export function CarnetMapCard({ detail, focus = null }: CarnetMapCardProps) {
           focus={focus}
           variant="carnet"
           trace={detail.trace}
-          emptyTitle="Aucun tracé enregistré pour ce carnet."
-          emptyHint="L’auteur n’a pas joint de trace GPS : rien n’est dessiné plutôt qu’inventé."
+          emptyTitle={emptyTitle}
+          emptyHint={emptyHint}
         />
       </div>
       <span className="ckp-mapzone-badge">GLOBE 3D</span>

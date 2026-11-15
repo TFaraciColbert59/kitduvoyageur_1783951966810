@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TrainingCenterDatabase
+    xmlns="http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Activities>
+    <Activity Sport="Running">
+      <Id>2026-08-09T08:00:00.000Z</Id>
+      <Lap StartTime="2026-08-09T08:00:00.000Z">
+        <TotalTimeSeconds>600</TotalTimeSeconds>
+        <DistanceMeters>2000</DistanceMeters>
+        <MaximumSpeed>4.5</MaximumSpeed>
+        <Calories>120</Calories>
+        <AverageHeartRateBpm>
+          <Value>140</Value>
+        </AverageHeartRateBpm>
+        <MaximumHeartRateBpm>
+          <Value>165</Value>
+        </MaximumHeartRateBpm>
+        <Intensity>Active</Intensity>
+        <Cadence>80</Cadence>
+        <TriggerMethod>Manual</TriggerMethod>
+        <Track>
+          <Trackpoint>
+            <Time>2026-08-09T08:00:00.000Z</Time>
+            <Position>
+              <LatitudeDegrees>45.2833</LatitudeDegrees>
+              <LongitudeDegrees>5.8667</LongitudeDegrees>
+            </Position>
+            <AltitudeMeters>1200.2</AltitudeMeters>
+            <DistanceMeters>0</DistanceMeters>
+            <HeartRateBpm>
+              <Value>130</Value>
+            </HeartRateBpm>
+            <Cadence>78</Cadence>
+            <Extensions>
+              <TPX xmlns="http://www.garmin.com/xmlschemas/ActivityExtension/v2">
+                <Speed>3.2</Speed>
+                <Watts>210</Watts>
+              </TPX>
+            </Extensions>
+          </Trackpoint>
+          <Trackpoint>
+            <Time>2026-08-09T08:10:00.000Z</Time>
+            <Position>
+              <LatitudeDegrees>45.2840</LatitudeDegrees>
+              <LongitudeDegrees>5.8675</LongitudeDegrees>
+            </Position>
+            <AltitudeMeters>1210</AltitudeMeters>
+            <DistanceMeters>2000</DistanceMeters>
+            <HeartRateBpm>
+              <Value>145</Value>
+            </HeartRateBpm>
+            <Cadence>82</Cadence>
+            <Extensions>
+              <TPX xmlns="http://www.garmin.com/xmlschemas/ActivityExtension/v2">
+                <Speed>3.4</Speed>
+                <Watts>220</Watts>
+                <RunCadence>170</RunCadence>
+              </TPX>
+            </Extensions>
+          </Trackpoint>
+        </Track>
+      </Lap>
+      <Lap StartTime="2026-08-09T08:10:00.000Z">
+        <TotalTimeSeconds>300</TotalTimeSeconds>
+        <DistanceMeters>1000</DistanceMeters>
+        <MaximumSpeed>3.8</MaximumSpeed>
+        <Calories>60</Calories>
+        <AverageHeartRateBpm>
+          <Value>150</Value>
+        </AverageHeartRateBpm>
+        <MaximumHeartRateBpm>
+          <Value>158</Value>
+        </MaximumHeartRateBpm>
+        <Intensity>Active</Intensity>
+        <Cadence>84</Cadence>
+        <TriggerMethod>Manual</TriggerMethod>
+        <Track>
+          <Trackpoint>
+            <Time>2026-08-09T08:15:00.000Z</Time>
+            <Position>
+              <LatitudeDegrees>45.2850</LatitudeDegrees>
+              <LongitudeDegrees>5.8690</LongitudeDegrees>
+            </Position>
+            <AltitudeMeters>1220</AltitudeMeters>
+            <DistanceMeters>3000</DistanceMeters>
+            <HeartRateBpm>
+              <Value>152</Value>
+            </HeartRateBpm>
+            <Cadence>86</Cadence>
+            <Extensions>
+              <TPX xmlns="http://www.garmin.com/xmlschemas/ActivityExtension/v2">
+                <Speed>3.8</Speed>
+                <Watts>230</Watts>
+              </TPX>
+            </Extensions>
+          </Trackpoint>
+        </Track>
+      </Lap>
+      <Creator xsi:type="Device_t">
+        <Name>Garmin Connect</Name>
+        <UnitId>123</UnitId>
+        <ProductID>1234</ProductID>
+        <Version>
+          <VersionMajor>21</VersionMajor>
+          <VersionMinor>0</VersionMinor>
+        </Version>
+      </Creator>
+    </Activity>
+  </Activities>
+</TrainingCenterDatabase>

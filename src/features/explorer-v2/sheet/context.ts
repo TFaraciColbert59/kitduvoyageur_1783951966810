@@ -14,7 +14,11 @@ import type {
   GeoCollection,
 } from '../data/hooks';
 import type { ExplorerStore } from '../state/store';
-import type { Sport } from '../state/types';
+import type { Sport, SportSelection } from '../state/types';
+import type { SearchViewport } from '../searchArea';
+import type { RouteSlopeState } from '../data/useRouteSlope';
+import type { SlopeSummary } from '../map/slope';
+import { SPORT_FAMILIES } from './sportSelection';
 
 export interface CountryEntry {
   iso: string;
@@ -45,10 +49,42 @@ export interface SheetContext {
   trips: TripItem[];
   selectedPoi: PoiItem | null;
   me: { lat: number; lng: number } | null;
-  /** Démarrage avec compte à rebours (le parent décide de l'animation). */
-  onStartSport?: (sport: Sport) => void;
+  /** Emprise visible courante, pour référencer la dernière recherche. */
+  mapViewport: SearchViewport | null;
+  /** État réel de la couche pente (DEM) pour l'itinéraire armé. */
+  terrain: {
+    slope: {
+      state: RouteSlopeState;
+      summary: SlopeSummary | null;
+      routeName: string | null;
+      hasRoute: boolean;
+    };
+    /** Marqueurs de distance dérivés de la géométrie réelle (K3.12). */
+    distance: {
+      hasRoute: boolean;
+      /** État de la géométrie de l'itinéraire actif, sans le confondre avec un tracé absent. */
+      status: 'loading' | 'ready' | 'unavailable' | null;
+      /** Nombre de marqueurs réellement constructibles, plafond compris. */
+      count: number;
+      /** Intervalle localisé : « 1 km » ou « 1 mi ». */
+      intervalLabel: string;
+    };
+  };
+  /**
+   * Démarrage avec compte à rebours (le parent décide de l'animation).
+   * `selection` porte la variante jusqu’au démarrage ; `sport` reste
+   * l’identifiant historique transmis au tracker et à la persistance.
+   */
+  onStartSport?: (sport: Sport, selection?: SportSelection) => void;
   /** Confirmer un signalement (« présent » / « disparu »). */
   onConfirmReport?: (reportId: string, verdict: 'present' | 'gone') => void;
+  /**
+   * Redemander la position après un refus ou une erreur. La demande reste
+   * déclenchée par un geste : aucune permission n'est forcée au montage.
+   */
+  onRequestLocation?: () => void;
+  /** Clore le tour manuel courant (onglet Tours, séance active). */
+  onMarkLap?: () => void;
   locale: string;
 }
 
@@ -88,17 +124,10 @@ export const POI_TONE: Record<string, 'ink' | 'water' | 'warn' | 'bad' | 'good'>
   trail: 'ink',
 };
 
-export const SPORT_META: Record<Sport, { label: string; icon: string }> = {
-  course: { label: 'Course', icon: 'run' },
-  rando: { label: 'Randonnée', icon: 'hike' },
-  velo: { label: 'Vélo', icon: 'bike' },
-  kayak: { label: 'Kayak', icon: 'kayak' },
-  trail: { label: 'Trail', icon: 'run' },
-  ski: { label: 'Ski de rando', icon: 'ski' },
-  escalade: { label: 'Escalade', icon: 'climb' },
-  famille: { label: 'Balade en famille', icon: 'walk' },
-  bivouac: { label: 'Bivouac', icon: 'tent' },
-};
+/** Libellés/icônes de base dérivés de la taxonomie : une seule source. */
+export const SPORT_META: Record<Sport, { label: string; icon: string }> = Object.fromEntries(
+  SPORT_FAMILIES.map((family) => [family.sport, { label: family.label, icon: family.icon }]),
+) as Record<Sport, { label: string; icon: string }>;
 
 export function distanceKm(a?: [number, number] | null, b?: [number, number] | null): number {
   if (!a || !b || !Number.isFinite(a[0]) || !Number.isFinite(a[1]) || !Number.isFinite(b[0]) || !Number.isFinite(b[1])) {

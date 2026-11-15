@@ -59,6 +59,12 @@ export interface KitCardProps {
   viewer?: KitViewer;
   /** Payload du bootstrap, pour la déduction du viewer en usage direct. */
   payload?: unknown;
+  /**
+   * La composition du kit (`materiel_kit_items`) est illisible. Les cartes
+   * restent affichées, mais le nombre de pièces et la composition ne doivent
+   * pas devenir « 0 » ou « Aucun produit ».
+   */
+  contentUnavailable?: boolean;
 }
 
 type ActionKind = 'fork' | 'share' | 'sheet' | 'royalties' | 'history' | 'discovery' | 'export' | 'calendar';
@@ -255,7 +261,7 @@ function kitPriorityLabel(value: string | null | undefined): string {
   return value!.trim();
 }
 
-export function KitCard({ kit, viewer, payload, expandedHeight }: KitCardProps) {
+export function KitCard({ kit, viewer, payload, expandedHeight, contentUnavailable = false }: KitCardProps) {
   const name = kitName(kit);
   const kitId = kitIdOf(kit);
   const viewerMode = resolveKitViewer(viewer, payload);
@@ -704,6 +710,7 @@ export function KitCard({ kit, viewer, payload, expandedHeight }: KitCardProps) 
       className="lkdv-kit-card lkdv-kit-card-v2"
       data-kit-id={kitId || undefined}
       data-busy={busy ?? undefined}
+      data-content-unavailable={contentUnavailable ? 'true' : undefined}
       data-view={view}
       data-expanded={view > 0 && expandedHeight ? 'true' : 'false'}
       style={view > 0 && expandedHeight ? { height: `${expandedHeight}px` } : undefined}
@@ -723,7 +730,11 @@ export function KitCard({ kit, viewer, payload, expandedHeight }: KitCardProps) 
                 <p className="lkdv-kit-base-meta">
                   <span>{formatWeight(weight)}</span>
                   <span aria-hidden="true">·</span>
-                  <span>{quantity} pièce{quantity === 1 ? '' : 's'}</span>
+                  <span>
+                    {contentUnavailable
+                      ? '—'
+                      : `${quantity} pièce${quantity === 1 ? '' : 's'}`}
+                  </span>
                 </p>
                 <div
                   className="lkdv-kit-wear"
@@ -772,7 +783,11 @@ export function KitCard({ kit, viewer, payload, expandedHeight }: KitCardProps) 
                   ))}
                 </div>
               ) : (
-                <p className="lkdv-kit-empty">Aucun produit dans ce kit.</p>
+                <p className="lkdv-kit-empty">
+                  {contentUnavailable
+                    ? 'Composition momentanément indisponible.'
+                    : 'Aucun produit dans ce kit.'}
+                </p>
               )}
             </div>
           </section>

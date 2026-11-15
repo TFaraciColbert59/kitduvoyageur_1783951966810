@@ -2,6 +2,8 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
+import { RotateCcw } from 'lucide-react';
+import { ActionPill } from '@/components/ui/ActionPill';
 import type { BootstrapOverlayData } from './DetailDrawers';
 
 const PostDrawer = dynamic(() => import('./PostDrawer').then((mod) => mod.PostDrawer), { ssr: false });
@@ -34,10 +36,52 @@ function keyOf(overlay: CompteOverlay) {
   return overlay.kind;
 }
 
+const OVERLAY_DATA_KEYS = [
+  'profile',
+  'stats',
+  'badges',
+  'gearItems',
+  'kits',
+  'followers',
+  'following',
+  'tribu',
+  'species',
+  'trust',
+] as const;
+
+function hasMeaningfulValue(value: unknown): boolean {
+  if (Array.isArray(value)) return value.length > 0;
+  if (!value || typeof value !== 'object') return false;
+  return Object.keys(value as Record<string, unknown>).length > 0;
+}
+
+/**
+ * Un 200 JSON n'est pas forcément un bootstrap exploitable : `{}`,
+ * `{ authenticated: true }` ou `{ profile: null, stats: {} }` ne portent
+ * aucune donnée et afficheraient des zéros. On exige au moins un champ connu
+ * réellement renseigné, sans erreur ni invité.
+ */
+function isUsableBootstrap(payload: unknown): payload is BootstrapOverlayData {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return false;
+  const record = payload as Record<string, unknown>;
+  if (record.error) return false;
+  if (record.authenticated === false) return false;
+  return OVERLAY_DATA_KEYS.some((key) => hasMeaningfulValue(record[key]));
+}
+
 export function CompteOverlayHost({ onChanged }: { onChanged?: () => void }) {
   const [stack, setStack] = useState<Entry[]>([]);
   const [bootstrap, setBootstrap] = useState<BootstrapOverlayData | null>(null);
   const [bootstrapError, setBootstrapError] = useState(false);
+
+  const invalidate = useCallback(() => {
+    setBootstrap(null);
+    setBootstrapError(false);
+  }, []);
+  const handleChanged = useCallback(() => {
+    invalidate();
+    onChanged?.();
+  }, [invalidate, onChanged]);
 
   const push = useCallback((overlay: CompteOverlay) => {
     setStack((current) => {
@@ -86,12 +130,38 @@ export function CompteOverlayHost({ onChanged }: { onChanged?: () => void }) {
   const top = stack[stack.length - 1];
   const needsBootstrap = top && ['badge', 'gear', 'seal', 'trust'].includes(top.overlay.kind);
 
+  // Une fermeture complète invalide le snapshot : la prochaine ouverture relit
+  // les données au lieu d'afficher un état figé après un suivi ou du matériel
+  // ajouté. Un échec est également remis à zéro pour permettre un nouvel essai.
+  useEffect(() => {
+    if (stack.length > 0) return;
+    setBootstrap(null);
+    setBootstrapError(false);
+  }, [stack.length]);
+
   useEffect(() => {
     if (!needsBootstrap || bootstrap || bootstrapError) return;
     let cancelled = false;
-    fetch('/api/compte/bootstrap')
-      .then((response) => (response.ok ? response.json() : Promise.reject(new Error('bootstrap'))))
-      .then((payload) => { if (!cancelled) setBootstrap(payload as BootstrapOverlayData); })
+    fetch('/api/compte/bootstrap', {
+      cache: 'no-store',
+      credentials: 'same-origin',
+      headers: { accept: 'application/json' },
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error(`bootstrap_http_${response.status}`);
+        return response.json();
+      })
+      .then((payload) => {
+        if (cancelled) return;
+        // La route répond 200 avec un payload d'erreur explicite : un simple
+        // `response.ok` ne suffit pas. On refuse aussi un corps vide pour ne
+        // jamais afficher des zéros à la place d'une panne.
+        if (!isUsableBootstrap(payload)) {
+          setBootstrapError(true);
+          return;
+        }
+        setBootstrap(payload);
+      })
       .catch(() => { if (!cancelled) setBootstrapError(true); });
     return () => { cancelled = true; };
   }, [bootstrap, bootstrapError, needsBootstrap]);
@@ -100,19 +170,32 @@ export function CompteOverlayHost({ onChanged }: { onChanged?: () => void }) {
   const overlay = top.overlay;
 
   if (overlay.kind === 'post') {
-    return <PostDrawer postId={overlay.postId} initialPane={overlay.pane} initialCommentId={overlay.commentId} onClose={pop} onOpenProfile={(userId) => push({ kind: 'profile', userId })} onDeleted={() => { onChanged?.(); pop(); }} />;
+    return <PostDrawer postId={overlay.postId} initialPane={overlay.pane} initialCommentId={overlay.commentId} onClose={pop} onOpenProfile={(userId) => push({ kind: 'profile', userId })} onDeleted={() => { handleChanged(); pop(); }} />;
   }
   if (overlay.kind === 'saved') {
     return <SavedPostsDrawer onClose={pop} onOpenPost={(postId) => push({ kind: 'post', postId })} />;
   }
   if (overlay.kind === 'profile') return <ProfilePreviewDrawer userId={overlay.userId} onClose={pop} />;
-  if (overlay.kind === 'create') return <CreateDrawer initialType={overlay.type} onClose={pop} onCreated={onChanged} />;
+  if (overlay.kind === 'create') return <CreateDrawer initialType={overlay.type} onClose={pop} onCreated={handleChanged} />;
 
   if (needsBootstrap && !bootstrap) {
     return (
       <div className="lkdv-compte-overlay">
         <div className="lkdv-overlay-scrim" />
-        <div className="lkdv-overlay-sheet"><div className="lkdv-overlay-empty"><p>{bootstrapError ? 'Impossible de charger les données.' : 'Chargement…'}</p></div></div>
+        <div className="lkdv-overlay-sheet">
+          <div className="lkdv-overlay-empty" role={bootstrapError ? 'alert' : undefined}>
+            <p>{bootstrapError ? 'Impossible de charger les données.' : 'Chargement…'}</p>
+            {bootstrapError ? (
+              <ActionPill
+                label="Réessayer"
+                text="Réessayer"
+                tone="primary"
+                icon={<RotateCcw size={15} aria-hidden="true" />}
+                onClick={() => setBootstrapError(false)}
+              />
+            ) : null}
+          </div>
+        </div>
       </div>
     );
   }

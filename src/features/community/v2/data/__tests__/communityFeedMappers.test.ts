@@ -187,14 +187,15 @@ describe('mapAvatar / mapFeedPeople', () => {
 });
 
 describe('mapCarnetRow', () => {
-  it('mappe une tuile carnet complète (compteurs serveur, voyageurs, en route)', () => {
+  it('mappe une tuile carnet complète et masque fail-closed les totaux d’effort non projetés (S6.15)', () => {
     const vm = mapCarnetRow(carnetRow());
     expect(vm).toMatchObject({
       id: 'carnet-1',
       title: 'Tour des Écrins',
       destination: 'Hauts-Alpes',
       days: 4,
-      distanceKm: 62.4,
+      distanceKm: null,
+      elevationGainM: null,
       likesCount: 128,
       commentsCount: 14,
       likedByMe: true,

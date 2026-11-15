@@ -10,6 +10,12 @@
  * chaque ouverture de sous-drawer.
  */
 
+import {
+  isFollowerTraceVisibility,
+  isShareableTraceVisibility,
+  type TraceViewer,
+} from './tracePrivacy';
+
 export type WeatherIcon = 'sun' | 'partly' | 'cloud' | 'rain' | 'snow' | 'storm' | 'fog';
 
 export interface OutingWeatherDay {
@@ -26,8 +32,10 @@ export interface OutingWeatherDay {
 export interface OutingWeather {
   source: 'open-meteo';
   fetchedAt: string;
-  latitude: number;
-  longitude: number;
+  /** `null` quand la météo est servie à un visiteur : aucune coordonnée exacte. */
+  latitude: number | null;
+  /** `null` quand la météo est servie à un visiteur : aucune coordonnée exacte. */
+  longitude: number | null;
   days: OutingWeatherDay[];
   alerts: string[];
 }
@@ -202,6 +210,52 @@ export async function loadOutingWeather(
     cache.set(key, { expires: Date.now() + 5 * 60 * 1000, value: null });
     return null;
   }
+}
+
+/**
+ * Météo affichable par un visiteur : les jours et alertes restent, les
+ * coordonnées exactes du point de départ disparaissent. Le cache interne garde
+ * la valeur complète ; seule la réponse sortante est expurgée.
+ */
+export function redactWeatherCoordinates(weather: OutingWeather): OutingWeather {
+  return { ...weather, latitude: null, longitude: null };
+}
+
+/**
+ * Lit une météo persistée sans jamais la fabriquer. Une ligne incomplète ou
+ * d'une autre source rend `null` : l'appelant affiche son état vide.
+ */
+export function parseStoredWeather(raw: unknown): OutingWeather | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const candidate = raw as Partial<OutingWeather>;
+  if (candidate.source !== 'open-meteo' || !Array.isArray(candidate.days)) return null;
+  return candidate as OutingWeather;
+}
+
+/**
+ * Politique météo unique, alignée sur celle de la trace.
+ *
+ * - propriétaire et participant : météo exacte, coordonnées comprises ;
+ * - visiteur d'une sortie publique/collective : jours et alertes, sans
+ *   coordonnées ;
+ * - abonné vérifié d'une sortie `friends`/`followers` : mêmes jours, sans
+ *   coordonnées ;
+ * - tout le reste (`private`, `null`, valeur inconnue, visiteur non abonné) :
+ *   aucune météo. Une valeur de visibilité non reconnue ne peut jamais ouvrir
+ *   la branche « jours disponibles ».
+ */
+export function weatherForViewer(
+  weather: OutingWeather | null,
+  viewer: TraceViewer,
+  visibility: string | null | undefined
+): OutingWeather | null {
+  if (!weather) return null;
+  if (viewer === 'owner' || viewer === 'participant') return weather;
+  if (isShareableTraceVisibility(visibility)) return redactWeatherCoordinates(weather);
+  if (viewer === 'follower' && isFollowerTraceVisibility(visibility)) {
+    return redactWeatherCoordinates(weather);
+  }
+  return null;
 }
 
 /** Réinitialise le cache (tests). */
