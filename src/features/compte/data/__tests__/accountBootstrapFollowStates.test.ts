@@ -358,7 +358,7 @@ describe('loadAccountBootstrap — lectures partielles des collections', () => {
   it('signale chaque collection illisible sans la confondre avec un vide', async () => {
     const payload = await bootstrapWith(baseRows, {
       community_posts: { message: 'carnets indisponibles' },
-      hike_sessions: { message: 'sorties indisponibles' },
+      hike_sessions_participant: { message: 'sorties indisponibles' },
       orders: { message: 'commandes indisponibles' },
       notifications: { message: 'notifications indisponibles' },
       club_members: { message: 'clubs indisponibles' },
@@ -396,7 +396,7 @@ describe('loadAccountBootstrap — lectures partielles des collections', () => {
     const payload = await bootstrapWith(
       {
         ...baseRows,
-        hike_sessions: [
+        hike_sessions_participant: [
           {
             id: 'h1',
             user_id: OWNER,
@@ -421,7 +421,7 @@ describe('loadAccountBootstrap — lectures partielles des collections', () => {
     const payload = await bootstrapWith(
       {
         ...baseRows,
-        hike_sessions: [
+        hike_sessions_participant: [
           {
             id: 'h1',
             user_id: OWNER,
@@ -443,7 +443,7 @@ describe('loadAccountBootstrap — lectures partielles des collections', () => {
   it('garde les dépendances saines quand itinéraires et massifs sont lisibles', async () => {
     const payload = await bootstrapWith({
       ...baseRows,
-      hike_sessions: [
+      hike_sessions_participant: [
         {
           id: 'h1',
           user_id: OWNER,
@@ -467,7 +467,7 @@ describe('loadAccountBootstrap — lectures partielles des collections', () => {
   it('garde les indicateurs à false quand les lectures réussissent vides', async () => {
     const payload = await bootstrapWith({
       ...baseRows,
-      hike_sessions: [],
+      hike_sessions_participant: [],
       community_posts: [],
       orders: [],
       notifications: [],

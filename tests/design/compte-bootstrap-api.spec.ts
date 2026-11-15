@@ -792,8 +792,8 @@ describe('Compte bootstrap — mapping réel', () => {
 
     const { client } = createBootstrapClient({
       user_profiles: [{ id: 'u1', handle: 'tony', full_name: 'Tony' }],
+      hike_sessions_participant: sessions,
       hike_sessions: [
-        ...sessions,
         {
           id: 's-compagnon',
           user_id: 'u2',
