@@ -26,6 +26,8 @@ import {
 } from './weather';
 import { TRACE_IMPORT_LIMITS } from '@/features/hiking/import/model';
 import { TRACE_IMPORT_MAX_PAYLOAD_SAMPLES } from '@/features/hiking/import/series';
+import { isActivityShareActive, parseActivityShareMeta } from '@/features/community/g01/activityShare';
+import { revokeActivityShare } from '@/features/community/g01/activityShareService';
 
 /**
  * Drawer Sortie — lecture et écriture des données réelles.
@@ -1456,6 +1458,24 @@ export async function updateOuting(
     .eq('id', outingId)
     .eq('user_id', userId);
   if (error) throw error;
+
+  // C-PRIV : repasser une sortie en privé révoque immédiatement les partages actifs du fil.
+  if (patch.visibility === 'private') {
+    const { data: shareRows } = await supabase
+      .from('community_posts')
+      .select('id,creation_meta')
+      .eq('author_id', userId)
+      .contains('creation_meta', { schema: 'lkdv.activity.share.v1', session_id: outingId })
+      .limit(10);
+    for (const row of (shareRows ?? []) as Array<{ id: string; creation_meta?: unknown }>) {
+      const meta = parseActivityShareMeta(row.creation_meta);
+      if (meta && isActivityShareActive(meta)) {
+        await revokeActivityShare(supabase, row.id, meta);
+      }
+    }
+    const { compensateActivityProgression } = await import('@/features/progression/server/awardProducer');
+    await compensateActivityProgression(userId, 'hike_session', outingId, 'visibility_private');
+  }
 }
 
 export async function deleteOuting(
@@ -1471,6 +1491,10 @@ export async function deleteOuting(
     .eq('id', outingId)
     .eq('user_id', userId);
   if (error) throw error;
+
+  // C-REWARD : une sortie supprimée émet une écriture compensatoire unique dans le ledger.
+  const { compensateActivityProgression } = await import('@/features/progression/server/awardProducer');
+  await compensateActivityProgression(userId, 'hike_session', outingId, 'deleted');
 }
 
 export async function toggleKudos(

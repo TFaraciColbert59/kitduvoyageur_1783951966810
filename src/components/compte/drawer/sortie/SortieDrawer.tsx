@@ -274,6 +274,7 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
           if (item.id === 'compagnons') {
             return (
               <OutingParticipants
+                outingId={outingId}
                 participants={detail.participants}
                 canEdit={detail.canEdit}
                 busy={busy}
@@ -391,6 +392,8 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
       ) : null}
       <OutingAudienceSheet
         open={audienceOpen}
+        outingId={outingId}
+        canEdit={detail.canEdit}
         title={detail.title}
         summary={[detail.date, detail.massif, `${detail.km} km`, `+${detail.dplus} m`]
           .filter(Boolean)

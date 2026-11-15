@@ -1,4 +1,5 @@
 import type {
+  BestEffortGoalProposal,
   ChallengeProgressState,
   ChallengeRule,
   LocalLegendResult,
@@ -7,6 +8,7 @@ import type {
   PeerComparisonResult,
   PeriodLeaderboardResult,
   TrophyShowcase,
+  VirtualRaceResult,
 } from '@/features/rankings/types';
 
 /** Options de cible exposées par l'API Local Legends (aucune coordonnée GPS). */
@@ -44,10 +46,16 @@ export interface ChallengeItem {
   /** null si le challenge n'est pas suivable (jamais un zéro inventé). */
   progress: ChallengeProgressState | null;
   leaderboard: PeriodLeaderboardResult['entries'] | null;
+  /** URL d'inscription partenaire validée pour les courses virtuelles (S5.23). */
+  registrationUrl?: string | null;
+  /** État d'inscription et résultat éventuel sur une course virtuelle (S5.23). */
+  virtualRaceResult?: VirtualRaceResult | null;
 }
 
 export interface ChallengesPayload {
   items: ChallengeItem[];
+  /** Propositions d'objectifs de meilleur effort dérivées de l'historique réel (S5.22). */
+  bestEffortProposals?: BestEffortGoalProposal[];
   meta: RankingsMeta;
 }
 

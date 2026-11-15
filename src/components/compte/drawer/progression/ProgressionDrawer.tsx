@@ -18,10 +18,12 @@ import {
   Search,
   Target,
   Trash2,
+  Trophy,
   X,
   Zap,
 } from 'lucide-react';
 import { DrawerShell, type DrawerTab } from '../shell/DrawerShell';
+import RankingsHub from '@/components/rankings/RankingsHub';
 import {
   PROGRESSION_PERIODS,
   SPORT_LABELS,
@@ -68,7 +70,7 @@ import {
   type BestEffortRecord,
 } from '@/features/compte/progression/bestEfforts';
 
-export type ProgressionView = 'calendar' | 'stats' | 'goals' | 'bike';
+export type ProgressionView = 'calendar' | 'stats' | 'goals' | 'bike' | 'rankings';
 
 export interface ProgressionDrawerProps {
   initialView?: ProgressionView;
@@ -138,7 +140,7 @@ interface ProgressionUiCache {
   bikePeriod: ProgressionPeriod;
 }
 
-const PROGRESSION_VIEWS: readonly ProgressionView[] = ['calendar', 'stats', 'goals', 'bike'];
+const PROGRESSION_VIEWS: readonly ProgressionView[] = ['calendar', 'stats', 'goals', 'bike', 'rankings'];
 
 function viewIndex(view: ProgressionView): number {
   const index = PROGRESSION_VIEWS.indexOf(view);
@@ -1441,6 +1443,16 @@ export function ProgressionDrawer({
               sont éligibles. Un sport absent ou inconnu n’est jamais attribué au vélo.
             </p>
           </section>
+        </div>
+      ),
+    },
+    {
+      id: 'rankings',
+      label: 'Défis & Trophées',
+      icon: <Trophy size={18} aria-hidden="true" />,
+      render: () => (
+        <div className="lkdv-prog-pane" role="region" aria-label="Défis, sommets et trophées G03">
+          <RankingsHub initialTab="challenges" />
         </div>
       ),
     },

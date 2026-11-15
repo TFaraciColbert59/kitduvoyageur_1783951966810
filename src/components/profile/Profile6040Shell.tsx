@@ -27,6 +27,8 @@ import type {
 import { buildPublicProfilePayload } from './publicProfilePayload';
 import { DRAWER_V2_CSS } from '@/components/compte/drawer/SlotShell';
 import { CompteLiquidGlassV8 } from '@/components/compte/CompteLiquidGlassV8';
+import { SportProfileSummary } from '@/components/communaute/g01/SportProfileSummary';
+import type { SportProfileSummaryVM } from '@/features/community/g01/sportProfile';
 
 const CompteMap = dynamic(
   () => import('@/components/compte/map/CompteMap').then((mod) => mod.CompteMap),
@@ -140,7 +142,24 @@ function VisitorProfile6040({
   const [requested, setRequested] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [sportSummary, setSportSummary] = useState<SportProfileSummaryVM | null>(null);
   const readEpochRef = useRef(0);
+
+  useEffect(() => {
+    if (!profile?.id) return;
+    let active = true;
+    void fetch(`/api/compte/sport-profile?userId=${encodeURIComponent(profile.id)}`, {
+      headers: { accept: 'application/json' },
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json: { summary?: SportProfileSummaryVM } | null) => {
+        if (active && json?.summary) setSportSummary(json.summary);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [profile?.id]);
 
   const name = profile
     ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Voyageur'
@@ -393,6 +412,9 @@ function VisitorProfile6040({
             </div>
           </div>
         ) : null}
+
+        {/* Résumé sportif G01 (respecte profile_visibility & sport_profile_prefs) */}
+        {sportSummary ? <SportProfileSummary summary={sportSummary} /> : null}
 
         {/* Tiroir / Vitrine React */}
         {payload ? (

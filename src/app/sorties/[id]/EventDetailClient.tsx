@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import HeaderBackButton from '@/components/ui/HeaderBackButton';
 import { createClient } from '@/lib/supabase/client';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { getValidatedRaceRegistrationUrl } from '@/features/clubs';
 import { PlaceMiniMap } from '@/features/community/v2/shared/PlaceMiniMap';
 import {
   buildEventIcs,
@@ -47,6 +48,8 @@ export interface EventDetailData {
   past: boolean;
   cancelled: boolean;
   recurrence: 'weekly' | 'monthly' | null;
+  registrationUrl?: string | null;
+  format?: string | null;
   safetyNotes: string | null;
   safetyChecklist: string[];
   organizer: { id: string; name: string; handle: string | null; avatarUrl: string | null } | null;
@@ -285,6 +288,16 @@ export default function EventDetailClient({
           <button type="button" className="lkdv-event-secondary" onClick={downloadIcs}>
             Ajouter au calendrier
           </button>
+          {getValidatedRaceRegistrationUrl(event.registrationUrl) ? (
+            <a
+              href={getValidatedRaceRegistrationUrl(event.registrationUrl)!}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="lkdv-event-secondary"
+            >
+              S’inscrire sur la page officielle
+            </a>
+          ) : null}
         </div>
         {waitlisted.length > 0 ? (
           <p className="lkdv-event-note">

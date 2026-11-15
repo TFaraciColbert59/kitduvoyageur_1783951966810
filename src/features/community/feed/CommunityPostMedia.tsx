@@ -1,6 +1,8 @@
 'use client';
 
 import { EngagementBar, LikeIcon } from '@/components/social-kit';
+import { G01VideoPlayer } from '@/components/communaute/g01/G01VideoPlayer';
+import { DEFAULT_VIDEO_PREFERENCES, type VideoPreferences } from '@/features/community/g01/videoPlayback';
 import { DEFAULT_DOUBLE_TAP_WINDOW_MS } from '@/hooks/gestures';
 import Image from 'next/image';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -29,6 +31,8 @@ export interface CommunityPostMediaProps {
   onRatio?: (ratio: number) => void;
   /** Plusieurs médias (moments d'un carnet) : flèches et compteur. */
   nav?: { count: number; index: number; onChange: (index: number) => void };
+  /** Préférences de lecture vidéo G01 (S6.28). */
+  videoPreferences?: VideoPreferences | unknown;
 }
 
 /**
@@ -53,6 +57,7 @@ export function CommunityPostMedia({
   shouldIgnoreClick,
   onRatio,
   nav,
+  videoPreferences = DEFAULT_VIDEO_PREFERENCES,
 }: CommunityPostMediaProps) {
   const [failed, setFailed] = useState(false);
   const clickTimer = useRef<number | null>(null);
@@ -117,25 +122,12 @@ export function CommunityPostMedia({
               <ImageOff size={30} aria-hidden="true" />
             </span>
           ) : isVideo ? (
-            <video
-              // Le fil n'a aucun contrôle de lecture : la carte est une
-              // vignette. Sans `src`, le navigateur ne télécharge pas le WebM
-              // (21,6 Mo mesurés sur 190 posts avec `preload=none` seul) ;
-              // le poster optimisé reste affiché. Un futur bouton play devra
-              // poser `src` au geste.
-              src={poster ? undefined : media}
-              poster={optimizedPoster}
-              width={1080}
-              height={1440}
-              muted
-              loop
-              playsInline
-              preload="none"
-              onLoadedMetadata={(event) => {
-                const el = event.currentTarget;
-                if (el.videoWidth && el.videoHeight) onRatio?.(el.videoWidth / el.videoHeight);
-              }}
-              onError={() => setFailed(true)}
+            <G01VideoPlayer
+              src={media}
+              poster={optimizedPoster ?? null}
+              preferences={videoPreferences}
+              audienceAllowed
+              ariaLabel={mediaLabel}
             />
           ) : (
             // Même rendu, mais l'optimiseur sert une largeur adaptée (AVIF/WebP)

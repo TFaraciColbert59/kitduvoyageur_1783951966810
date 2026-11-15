@@ -50,6 +50,15 @@ const Patch = z
       })
       .strict()
       .optional(),
+    sportProfilePrefs: z
+      .object({
+        audience: z.enum(['private', 'abonnies', 'public']).optional(),
+        sports: z.record(z.string(), z.boolean()).optional(),
+        show_totals: z.boolean().optional(),
+        show_records: z.boolean().optional(),
+      })
+      .strict()
+      .optional(),
   })
   .strict();
 

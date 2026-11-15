@@ -1,6 +1,7 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { getValidatedRaceRegistrationUrl } from '@/features/clubs';
 import EventDetailClient, { type EventDetailData } from './EventDetailClient';
 import './event-detail.css';
 
@@ -45,11 +46,16 @@ export default async function SortiePage({ params }: { params: Promise<{ id: str
   }
 
   const supabase = await createClient();
-  const { data: eventRow, error } = await supabase.from('events').select('*').eq('id', id).maybeSingle();
-  if (error || !eventRow) notFound();
+  const [{ data: eventRow, error }, { data: clubEventRow }] = await Promise.all([
+    supabase.from('events').select('*').eq('id', id).maybeSingle(),
+    supabase.from('club_events').select('*').eq('id', id).maybeSingle(),
+  ]);
+  if ((error && !clubEventRow) || (!eventRow && !clubEventRow)) notFound();
 
-  const event = eventRow as Row;
-  const organizerId = asString(event.organizer_id);
+  const event = (eventRow ?? clubEventRow) as Row;
+  const isClubEventOnly = !eventRow && Boolean(clubEventRow);
+  const clubEventExtra = (clubEventRow ?? null) as Row | null;
+  const organizerId = asString(event.organizer_id) ?? asString(event.created_by);
   const clubId = asString(event.club_id);
   const kitId = asString(event.kit_id);
 
@@ -58,7 +64,9 @@ export default async function SortiePage({ params }: { params: Promise<{ id: str
       organizerId
         ? supabase.from('public_profiles').select('*').eq('id', organizerId).maybeSingle()
         : Promise.resolve({ data: null }),
-      supabase.from('event_participants').select('*').eq('event_id', id),
+      isClubEventOnly
+        ? supabase.from('club_event_registrations').select('*').eq('event_id', id)
+        : supabase.from('event_participants').select('*').eq('event_id', id),
       clubId ? supabase.from('clubs').select('id,slug,name').eq('id', clubId).maybeSingle() : Promise.resolve({ data: null }),
       kitId
         ? supabase
@@ -123,19 +131,19 @@ export default async function SortiePage({ params }: { params: Promise<{ id: str
     id,
     title: asString(event.title) ?? 'Sortie',
     description: asString(event.description),
-    activity: asString(event.activity) ?? asString(event.type) ?? 'rando',
+    activity: asString(event.activity) ?? asString(event.type) ?? asString(event.sport) ?? 'rando',
     emoji: asString(event.emoji),
     eventDate,
     startsAt,
     endsAt,
     duration: asString(event.duration),
-    location: asString(event.location) ?? '',
+    location: asString(event.location) ?? asString(event.location_label) ?? '',
     meetingPoint: asString(event.meeting_point),
     level: (asString(event.level) as EventDetailData['level']) ?? null,
     distanceKm: asNumber(event.distance_km),
     elevationGainM: asNumber(event.elevation_gain_m),
-    lat: asNumber(event.meeting_lat) ?? null,
-    lng: asNumber(event.meeting_lng) ?? null,
+    lat: asNumber(event.meeting_lat) ?? asNumber(event.lat) ?? null,
+    lng: asNumber(event.meeting_lng) ?? asNumber(event.lng) ?? null,
     meetingGeom: (event.meeting_geom as { type?: string; coordinates?: [number, number] } | null) ?? null,
     coverImage,
     coverAlt,
@@ -146,6 +154,10 @@ export default async function SortiePage({ params }: { params: Promise<{ id: str
     past: past || status === 'past',
     cancelled: status === 'cancelled',
     recurrence: (asString(event.recurrence) as EventDetailData['recurrence']) ?? null,
+    registrationUrl: getValidatedRaceRegistrationUrl(
+      asString(clubEventExtra?.registration_url) ?? asString(event.registration_url),
+    ),
+    format: asString(clubEventExtra?.format) ?? asString(event.format),
     safetyNotes: asString(event.safety_notes),
     safetyChecklist: asArray<string>(event.safety_checklist),
     organizer: organizerProfile

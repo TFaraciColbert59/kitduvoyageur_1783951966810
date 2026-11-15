@@ -3,6 +3,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
+import {
+  projectActivityCard,
+  type SportActivityCardVM,
+} from '@/features/community/g01/activityProjection';
+import { G01_ACTIVITY_SHARE_SCHEMA } from '@/features/community/g01/contracts';
 
 export interface FeedAuthor {
   id: string;
@@ -33,6 +38,10 @@ export interface FeedPost {
   shares_count?: number | null;
   author_id?: string | null;
   author?: FeedAuthor;
+  audience?: string | null;
+  club_id?: string | null;
+  creation_meta?: unknown;
+  sportCard?: SportActivityCardVM | null;
   user_liked?: boolean;
   user_saved?: boolean;
   [key: string]: unknown;
@@ -61,6 +70,9 @@ const FEED_COLUMNS = [
   'shares_count',
   'linked_kit_id',
   'snapshot_payload',
+  'audience',
+  'club_id',
+  'creation_meta',
   'soundtrack_url',
   'soundtrack_title',
   'soundtrack_creator',
@@ -142,9 +154,18 @@ export function useCommunityFeed(userId?: string) {
         // réduire la projection à ses colonnes, d'où le passage par `unknown`.
         const rows = (data ?? []) as unknown as FeedPost[];
         const ids = rows.map((row) => row.id);
-        // Auteurs, likes et favoris ne dépendent que des lignes déjà reçues :
-        // ils partent ensemble au lieu de payer deux allers-retours successifs.
-        const [profiles, likesRes, savesRes] = await Promise.all([
+        const authorIds = Array.from(
+          new Set(rows.map((row) => row.author_id).filter((id): id is string => Boolean(id)))
+        );
+        const hasActivityShares = rows.some(
+          (row) =>
+            row.creation_meta &&
+            typeof row.creation_meta === 'object' &&
+            (row.creation_meta as { schema?: unknown }).schema === G01_ACTIVITY_SHARE_SCHEMA
+        );
+
+        // Auteurs, likes, favoris et faits d'accès G01 partent en parallèle.
+        const [profiles, likesRes, savesRes, followsRes, clubsRes, blocksRes] = await Promise.all([
           fetchPublicProfilesWith(
             supabase,
             rows.map((row) => row.author_id ?? null),
@@ -166,31 +187,104 @@ export function useCommunityFeed(userId?: string) {
                 .in('post_id', ids)
                 .abortSignal(controller.signal)
             : Promise.resolve({ data: [] as Array<{ post_id: string }> }),
+          userId && hasActivityShares && authorIds.length > 0
+            ? supabase
+                .from('user_follows')
+                .select('following_id')
+                .eq('follower_id', userId)
+                .in('following_id', authorIds)
+                .abortSignal(controller.signal)
+            : Promise.resolve({ data: [] as Array<{ following_id: string }> }),
+          userId && hasActivityShares
+            ? supabase
+                .from('club_members')
+                .select('club_id')
+                .eq('user_id', userId)
+                .eq('status', 'active')
+                .abortSignal(controller.signal)
+            : Promise.resolve({ data: [] as Array<{ club_id: string }> }),
+          userId && hasActivityShares && authorIds.length > 0
+            ? supabase
+                .from('user_blocks')
+                .select('blocker_id,blocked_id')
+                .or(`blocker_id.eq.${userId},blocked_id.eq.${userId}`)
+                .abortSignal(controller.signal)
+            : Promise.resolve({ data: [] as Array<{ blocker_id: string; blocked_id: string }> }),
         ]);
         if (requestId !== requestIdRef.current) return;
 
         const liked = new Set((likesRes.data ?? []).map((row: { post_id: string }) => row.post_id));
         const saved = new Set((savesRes.data ?? []).map((row: { post_id: string }) => row.post_id));
+        const followingIds = new Set(
+          ((followsRes.data ?? []) as Array<{ following_id: string }>).map((row) => row.following_id)
+        );
+        const activeClubIds = ((clubsRes.data ?? []) as Array<{ club_id: string }>).map(
+          (row) => row.club_id
+        );
+        const blockedAuthorIds = new Set<string>();
+        for (const b of (blocksRes.data ?? []) as Array<{ blocker_id: string; blocked_id: string }>) {
+          if (b.blocker_id === userId && b.blocked_id) blockedAuthorIds.add(b.blocked_id);
+          if (b.blocked_id === userId && b.blocker_id) blockedAuthorIds.add(b.blocker_id);
+        }
 
-        const enriched = rows.map((row) => {
+        const enriched: FeedPost[] = [];
+        for (const row of rows) {
           const profile = row.author_id ? profiles[row.author_id] : undefined;
-          return {
+          const authorObj = profile
+            ? {
+                id: profile.id,
+                full_name: profile.full_name,
+                avatar_url: profile.avatar_url,
+                handle: profile.handle,
+                loyalty_level: profile.loyalty_level,
+                trust_score: profile.trust_score,
+                location: profile.location,
+              }
+            : undefined;
+
+          const isActivityShare =
+            row.creation_meta &&
+            typeof row.creation_meta === 'object' &&
+            (row.creation_meta as { schema?: unknown }).schema === G01_ACTIVITY_SHARE_SCHEMA;
+
+          let sportCard: SportActivityCardVM | null = null;
+          if (isActivityShare) {
+            sportCard = projectActivityCard({
+              post: {
+                id: row.id,
+                author_id: row.author_id,
+                content: row.content,
+                audience: row.audience,
+                club_id: row.club_id,
+                created_at: row.created_at,
+                likes_count: row.likes_count,
+                comments_count: row.comments_count,
+                creation_meta: row.creation_meta,
+              },
+              author: authorObj,
+              viewer: {
+                viewerId: userId ?? null,
+                isFollower: row.author_id ? followingIds.has(row.author_id) : false,
+                activeClubIds,
+                blocked: userId
+                  ? Boolean(row.author_id && blockedAuthorIds.has(row.author_id))
+                  : null,
+                likedPostIds: liked,
+              },
+            });
+            // C-PRIV : un partage d'activité révoqué, privé ou hors audience
+            // ne laisse passer aucune carte ni aperçu.
+            if (!sportCard) continue;
+          }
+
+          enriched.push({
             ...row,
-            author: profile
-              ? {
-                  id: profile.id,
-                  full_name: profile.full_name,
-                  avatar_url: profile.avatar_url,
-                  handle: profile.handle,
-                  loyalty_level: profile.loyalty_level,
-                  trust_score: profile.trust_score,
-                  location: profile.location,
-                }
-              : undefined,
+            author: authorObj,
+            sportCard,
             user_liked: liked.has(row.id),
             user_saved: saved.has(row.id),
-          };
-        });
+          });
+        }
 
         if (requestId !== requestIdRef.current) return;
         const last = rows[rows.length - 1];

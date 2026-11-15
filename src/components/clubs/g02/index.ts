@@ -35,4 +35,7 @@ export type { ClubActivityMatchingPanelProps } from './ClubActivityMatchingPanel
 export { ClubG02Screen, CLUB_G02_SECTIONS } from './ClubG02Screen';
 export type { ClubG02ScreenProps, ClubG02Section, ClubG02NavItem } from './ClubG02Screen';
 
+export { ClubG02Workspace } from './ClubG02Workspace';
+export type { ClubG02WorkspaceProps } from './ClubG02Workspace';
+
 export * from './model';

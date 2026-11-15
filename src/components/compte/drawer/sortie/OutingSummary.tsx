@@ -20,6 +20,7 @@ import type {
 } from '@/features/compte/server/sorties';
 import type { OutingMetricKey } from '@/features/compte/domain/metricVisibility';
 import { estimateAvoidedCarbon } from '@/features/offers';
+import type { ActivityEventMatch, GroupActivityCluster } from '@/features/clubs';
 import { OutingMetricSettings } from './OutingMetricSettings';
 import { OutingLaps } from './OutingLaps';
 import { OutingMetrics } from './OutingMetrics';
@@ -93,6 +94,10 @@ export function OutingSummary({
   const [notes, setNotes] = useState(detail.notes);
   const [visibility, setVisibility] = useState<OutingVisibility>(detail.visibility);
   const [coverFailed, setCoverFailed] = useState(false);
+  const [matchedEvents, setMatchedEvents] = useState<ActivityEventMatch[]>([]);
+  const [groupClusters, setGroupClusters] = useState<GroupActivityCluster[]>([]);
+  const [matchEventsById, setMatchEventsById] = useState<Record<string, { title: string; sport: string }>>({});
+  const [matchMemberNames, setMatchMemberNames] = useState<Record<string, string>>({});
 
   useEffect(() => {
     setTitle(detail.title);
@@ -100,6 +105,33 @@ export function OutingSummary({
     setVisibility(detail.visibility);
     setEditing(false);
   }, [detail.id, detail.title, detail.notes, detail.visibility]);
+
+  useEffect(() => {
+    let active = true;
+    fetch(`/api/clubs/matching?activityId=${encodeURIComponent(detail.id)}`, {
+      credentials: 'include',
+    })
+      .then(async (res) => {
+        if (!res.ok) return;
+        const payload = (await res.json()) as {
+          data?: {
+            matches?: ActivityEventMatch[];
+            clusters?: GroupActivityCluster[];
+            eventsById?: Record<string, { title: string; sport: string }>;
+            memberNames?: Record<string, string>;
+          };
+        };
+        if (!active || !payload?.data) return;
+        setMatchedEvents((payload.data.matches ?? []).filter((m) => !m.detachedAt));
+        setGroupClusters(payload.data.clusters ?? []);
+        setMatchEventsById(payload.data.eventsById ?? {});
+        setMatchMemberNames(payload.data.memberNames ?? {});
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [detail.id]);
 
   useEffect(() => {
     setMetricsOpen(false);
@@ -327,6 +359,53 @@ export function OutingSummary({
           <span>{detail.verified ? 'Trace GPS présente' : 'Sans trace GPS'}</span>
         </header>
       </section>
+
+      {matchedEvents.length > 0 || groupClusters.length > 0 ? (
+        <section className="lkdv-sortie-section" data-testid="outing-club-matching">
+          <header>
+            <b>Sorties club & groupe</b>
+            <span>{matchedEvents.length > 0 ? 'Appariement auto' : 'Détection groupe'}</span>
+          </header>
+          {matchedEvents.map((match) => {
+            const meta = matchEventsById[match.eventId];
+            return (
+              <div
+                key={match.id}
+                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}
+              >
+                <p className="lkdv-sortie-proof" style={{ margin: 0 }}>
+                  Sortie club rattachée : <b>{meta?.title ?? match.eventId.slice(0, 8)}</b>
+                </p>
+                {detail.canEdit ? (
+                  <ActionPill
+                    label="Détacher"
+                    icon={<X />}
+                    onClick={async () => {
+                      const res = await fetch('/api/clubs/matching', {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'detach', matchId: match.id }),
+                      });
+                      if (res.ok) {
+                        setMatchedEvents((prev) => prev.filter((item) => item.id !== match.id));
+                      }
+                    }}
+                  />
+                ) : null}
+              </div>
+            );
+          })}
+          {groupClusters.map((cluster) => (
+            <p key={cluster.id} className="lkdv-sortie-proof">
+              Activité en groupe détectée ({cluster.participantUserIds.length} participants) :{' '}
+              {cluster.participantUserIds
+                .map((uid) => matchMemberNames[uid] ?? uid.slice(0, 8))
+                .join(', ')}
+            </p>
+          ))}
+        </section>
+      ) : null}
 
       {provenance ? (
         <section className="lkdv-sortie-section" data-testid="outing-provenance">

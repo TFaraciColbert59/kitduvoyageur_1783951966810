@@ -55,6 +55,7 @@ function CommunauteFeedContent() {
   const [sectionsOpen, setSectionsOpen] = useState(false);
   const [sectionsTab, setSectionsTab] = useState<SectionTabId>('carnets');
   const [sectionsSearch, setSectionsSearch] = useState(false);
+  const [feedPrefsOpen, setFeedPrefsOpen] = useState(false);
   // Un tiroir est monté dès sa première ouverture, puis reste monté (fermeture animée, état conservé).
   const [createMounted, setCreateMounted] = useState(false);
   const [sectionsMounted, setSectionsMounted] = useState(false);
@@ -155,6 +156,7 @@ function CommunauteFeedContent() {
               setSectionsSearch(true);
               setSectionsOpen(true);
             }}
+            onOpenPreferences={() => setFeedPrefsOpen(true)}
           />
         }
         stories={
@@ -180,6 +182,8 @@ function CommunauteFeedContent() {
           initialCommentId={initialCommentId}
           onRequireAuth={requireAuth}
           refreshKey={feedRefreshKey}
+          preferencesOpen={feedPrefsOpen}
+          onPreferencesOpenChange={setFeedPrefsOpen}
         />
       </CommunityFeedShell>
 

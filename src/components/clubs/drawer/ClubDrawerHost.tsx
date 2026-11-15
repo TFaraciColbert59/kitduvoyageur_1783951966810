@@ -41,6 +41,7 @@ import {
   type DrawerSecondaryItem,
   type DrawerTab,
 } from '@/components/compte/drawer/shell/DrawerShell';
+import { ClubG02Workspace } from '@/components/clubs/g02';
 import type { ClubFeedPostItem } from '../feed/ClubInlineFeed';
 
 export interface ClubItemData {
@@ -621,6 +622,7 @@ export function ClubDrawerHost({
       { id: 'outings-upcoming', label: 'Prochains départs et covoiturage', icon: <Calendar size={14} aria-hidden="true" /> },
       { id: 'outings-weather', label: 'Météo et conditions massif', icon: <CloudSun size={14} aria-hidden="true" /> },
       { id: 'outings-gpx', label: 'Archives et traces GPX', icon: <Route size={14} aria-hidden="true" /> },
+      { id: 'outings-g02', label: 'Sorties club, courses et groupes', icon: <CalendarCheck size={14} aria-hidden="true" /> },
     ],
     3: [
       { id: 'vault-items', label: 'Équipements prêtables du coffre', icon: <Package size={14} aria-hidden="true" /> },
@@ -631,6 +633,7 @@ export function ClubDrawerHost({
       { id: 'tribu-challenges', label: 'Défis collectifs et sommets', icon: <Trophy size={14} aria-hidden="true" /> },
       { id: 'tribu-chat', label: 'Canal live de la tribu', icon: <MessageCircle size={14} aria-hidden="true" /> },
       { id: 'tribu-gov', label: 'Charte, gouvernance et QR Code', icon: <Sliders size={14} aria-hidden="true" /> },
+      { id: 'tribu-g02', label: 'Salons, classement, invitations & défis club', icon: <Handshake size={14} aria-hidden="true" /> },
     ],
   };
 
@@ -1087,6 +1090,14 @@ export function ClubDrawerHost({
           );
         }
 
+        if (currentSub === 3) {
+          return (
+            <div className="club-drawer-pane-content">
+              <ClubG02Workspace clubId={activeClub.id} initialSection="events" />
+            </div>
+          );
+        }
+
         const list =
           currentSub === 2
             ? outings.filter((o) => o.status === 'completed')
@@ -1406,6 +1417,14 @@ export function ClubDrawerHost({
                   {copiedInvite ? <Check size={16} aria-hidden="true" /> : <QrCode size={16} aria-hidden="true" />}
                 </button>
               </div>
+            </div>
+          );
+        }
+
+        if (currentSub === 3) {
+          return (
+            <div className="club-drawer-pane-content">
+              <ClubG02Workspace clubId={activeClub.id} initialSection="salons" />
             </div>
           );
         }

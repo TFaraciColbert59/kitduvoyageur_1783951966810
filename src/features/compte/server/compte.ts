@@ -1,4 +1,10 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import {
+  mergeSportProfilePreferences,
+  normalizeSportProfilePreferences,
+  type SportProfilePreferences,
+  type SportProfilePreferencesPatch,
+} from '@/features/community/g01/sportProfile';
 
 /**
  * Drawer Compte — commandes, notifications, réglages, profil, partage.
@@ -115,6 +121,7 @@ export interface ProfileSettings {
   links: ProfileLink[];
   visibility: 'public' | 'prive';
   notificationPrefs: NotificationPrefs;
+  sportProfilePrefs: SportProfilePreferences;
   twoFaEnabled: boolean;
 }
 
@@ -499,7 +506,7 @@ export async function loadProfileSettings(
   const { data } = await supabase
     .from('user_profiles')
     .select(
-      'id,email,full_name,handle,bio,location,avatar_url,cover_url,links,profile_visibility,notification_prefs,two_fa_enabled'
+      'id,email,full_name,handle,bio,location,avatar_url,cover_url,links,profile_visibility,notification_prefs,sport_profile_prefs,two_fa_enabled'
     )
     .eq('id', userId)
     .maybeSingle();
@@ -517,6 +524,7 @@ export async function loadProfileSettings(
     links: parseLinks(row.links),
     visibility: text(row.profile_visibility) === 'prive' ? 'prive' : 'public',
     notificationPrefs: parsePrefs(row.notification_prefs),
+    sportProfilePrefs: normalizeSportProfilePreferences(row.sport_profile_prefs),
     twoFaEnabled: row.two_fa_enabled === true,
   };
 }
@@ -531,6 +539,7 @@ export interface ProfilePatch {
   links?: ProfileLink[];
   visibility?: 'public' | 'prive';
   notificationPrefs?: Partial<NotificationPrefs>;
+  sportProfilePrefs?: SportProfilePreferencesPatch;
 }
 
 const HANDLE_RE = /^[a-z0-9_]{3,24}$/i;
@@ -579,6 +588,17 @@ export async function updateProfileSettings(
       .eq('id', userId)
       .maybeSingle()).data?.notification_prefs);
     update.notification_prefs = { ...current, ...patch.notificationPrefs };
+  }
+  if (patch.sportProfilePrefs !== undefined) {
+    const { data: currentRow } = await supabase
+      .from('user_profiles')
+      .select('sport_profile_prefs')
+      .eq('id', userId)
+      .maybeSingle();
+    update.sport_profile_prefs = mergeSportProfilePreferences(
+      currentRow?.sport_profile_prefs,
+      patch.sportProfilePrefs
+    );
   }
 
   const { error } = await supabase.from('user_profiles').update(update).eq('id', userId);

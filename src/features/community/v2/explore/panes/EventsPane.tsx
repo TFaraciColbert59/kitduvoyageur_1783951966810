@@ -1,6 +1,8 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
+import { getValidatedRaceRegistrationUrl, type ClubEvent, type EventFormat } from '@/features/clubs';
 import type { AgendaCounts, EventCardVM, EventFilter, EventRegistration, GeoPermissionState } from '../../shared/types';
 import type { CursorFeedResult } from '../../data/useCursorFeed';
 import { AgendaStrip } from '../../shared/AgendaStrip';
@@ -98,6 +100,51 @@ export function EventsPane({
     feed.loadMore,
   );
 
+  // S5.15 / S5.16 — filtres transverses sorties clubs & courses (/api/clubs/events)
+  const [clubFiltersOpen, setClubFiltersOpen] = React.useState(false);
+  const [clubLoc, setClubLoc] = React.useState('');
+  const [clubSport, setClubSport] = React.useState('');
+  const [clubFormat, setClubFormat] = React.useState<'' | EventFormat>('');
+  const [racesOnly, setRacesOnly] = React.useState(false);
+  const [clubEvents, setClubEvents] = React.useState<ClubEvent[]>([]);
+  const [clubEventsLoading, setClubEventsLoading] = React.useState(false);
+  const [clubEventsError, setClubEventsError] = React.useState<string | null>(null);
+
+  const hasClubFilters = Boolean(clubLoc.trim() || clubSport.trim() || clubFormat || racesOnly || day);
+
+  React.useEffect(() => {
+    if (!clubFiltersOpen || !hasClubFilters) {
+      setClubEvents([]);
+      setClubEventsError(null);
+      return;
+    }
+    let cancelled = false;
+    setClubEventsLoading(true);
+    setClubEventsError(null);
+    const params = new URLSearchParams();
+    if (clubLoc.trim()) params.set('location', clubLoc.trim());
+    if (clubSport.trim()) params.set('sport', clubSport.trim());
+    if (clubFormat) params.set('format', clubFormat);
+    if (racesOnly) params.set('racesOnly', '1');
+    if (day) params.set('from', `${day}T00:00:00Z`);
+
+    fetch(`/api/clubs/events?${params.toString()}`, { credentials: 'include' })
+      .then(async (res) => {
+        if (!res.ok) throw new Error('Recherche clubs indisponible');
+        const payload = (await res.json()) as { data?: ClubEvent[] };
+        if (!cancelled) setClubEvents(Array.isArray(payload.data) ? payload.data : []);
+      })
+      .catch((err) => {
+        if (!cancelled) setClubEventsError(err instanceof Error ? err.message : 'Erreur recherche');
+      })
+      .finally(() => {
+        if (!cancelled) setClubEventsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [clubFiltersOpen, clubFormat, clubLoc, clubSport, day, hasClubFilters, racesOnly]);
+
   const agenda = (
     <div className="lkdv-cv2x-agenda-block">
       {agendaLoading && Object.keys(agendaCounts).length === 0 ? (
@@ -115,7 +162,14 @@ export function EventsPane({
         </button>
       ) : null}
       <div className="lkdv-cv2x-events-head">
-        <span className="lkdv-cv2-eyebrow">Affichage</span>
+        <button
+          type="button"
+          className="lkdv-cv2-pill lkdv-cv2-pill--secondary lkdv-cv2-pill--sm"
+          aria-expanded={clubFiltersOpen}
+          onClick={() => setClubFiltersOpen((prev) => !prev)}
+        >
+          {clubFiltersOpen ? 'Masquer filtres clubs' : 'Filtrer clubs & courses'}
+        </button>
         <div className="lkdv-cv2-seg" role="group" aria-label="Affichage des sorties">
           <button type="button" aria-pressed={view === 'grid'} onClick={() => onViewChange('grid')}>
             Billets
@@ -125,6 +179,83 @@ export function EventsPane({
           </button>
         </div>
       </div>
+
+      {clubFiltersOpen ? (
+        <div className="lkdv-cv2-card" style={{ marginTop: 8, display: 'grid', gap: 8 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 6 }}>
+            <input
+              type="search"
+              value={clubLoc}
+              onChange={(e) => setClubLoc(e.target.value)}
+              placeholder="Lieu (massif, ville…)"
+              aria-label="Filtrer les sorties clubs par lieu"
+            />
+            <input
+              type="search"
+              value={clubSport}
+              onChange={(e) => setClubSport(e.target.value)}
+              placeholder="Sport (trail, rando, vélo…)"
+              aria-label="Filtrer les sorties clubs par sport"
+            />
+            <select
+              value={clubFormat}
+              onChange={(e) => setClubFormat(e.target.value as '' | EventFormat)}
+              aria-label="Filtrer les sorties clubs par format"
+            >
+              <option value="">Tous formats</option>
+              <option value="social_ride">Sociale</option>
+              <option value="training">Entraînement</option>
+              <option value="trail_outing">Sortie trail</option>
+              <option value="race">Course / Compétition</option>
+              <option value="indoor">Indoor</option>
+            </select>
+          </div>
+          <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
+            <input
+              type="checkbox"
+              checked={racesOnly}
+              onChange={(e) => setRacesOnly(e.target.checked)}
+            />
+            Courses avec page d’inscription uniquement
+          </label>
+          {clubEventsLoading ? <p className="lkdv-cv2-meta">Recherche dans les clubs…</p> : null}
+          {clubEventsError ? <p className="lkdv-cv2-meta">{clubEventsError}</p> : null}
+          {!clubEventsLoading && hasClubFilters && clubEvents.length === 0 ? (
+            <p className="lkdv-cv2-meta">Aucune sortie club ou course ne correspond à ces filtres.</p>
+          ) : null}
+          {clubEvents.length > 0 ? (
+            <div className="lkdv-cv2-list">
+              {clubEvents.slice(0, 8).map((ev) => {
+                const raceUrl = getValidatedRaceRegistrationUrl(ev.registrationUrl);
+                return (
+                  <div key={ev.id} className="lkdv-cv2-row" style={{ justifyContent: 'space-between', gap: 8 }}>
+                    <div>
+                      <Link href={`/sorties/${ev.id}`}>
+                        <b>{ev.title}</b>
+                      </Link>
+                      <div className="lkdv-cv2-meta">
+                        {[ev.sport, ev.format === 'race' ? 'Course' : ev.format, ev.locationLabel]
+                          .filter(Boolean)
+                          .join(' · ')}
+                      </div>
+                    </div>
+                    {raceUrl ? (
+                      <a
+                        href={raceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="lkdv-cv2-pill lkdv-cv2-pill--primary lkdv-cv2-pill--sm"
+                      >
+                        Inscription officielle
+                      </a>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 

@@ -1,9 +1,15 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useCommunityFeed, type FeedPost } from './useCommunityFeed';
 import { CommunityFeedPost } from './CommunityFeedPost';
 import type { CommunityAuthReason } from './usePostInteractions';
+import { useFeedPreferences } from '@/features/community/g01/useFeedPreferences';
+import { applyFeedPreferences } from '@/features/community/g01/feedPreferences';
+import {
+  FeedPreferencesDrawer,
+  type FeedPreferencesAuthor,
+} from '@/components/communaute/g01/FeedPreferencesDrawer';
 
 export interface CommunityFeedProps {
   userId?: string;
@@ -12,6 +18,8 @@ export interface CommunityFeedProps {
   initialCommentId?: string | null;
   onRequireAuth?: (reason: CommunityAuthReason) => void;
   refreshKey?: number;
+  preferencesOpen?: boolean;
+  onPreferencesOpenChange?: (open: boolean) => void;
 }
 
 /**
@@ -25,10 +33,46 @@ export function CommunityFeed({
   initialCommentId = null,
   onRequireAuth,
   refreshKey = 0,
+  preferencesOpen = false,
+  onPreferencesOpenChange,
 }: CommunityFeedProps) {
   const { posts, loading, loadingMore, hasMore, error, loadMore, refresh } = useCommunityFeed(userId);
+  const { preferences, update: updateFeedPreferences, reset: resetFeedPreferences } =
+    useFeedPreferences(userId);
   const deepLinkDone = useRef(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+
+  const visiblePosts = useMemo(() => {
+    const activityItems = posts
+      .filter((post) => Boolean(post.sportCard))
+      .map((post) => ({
+        id: post.id,
+        authorId: post.author_id ?? null,
+        sport: post.sportCard?.sport ?? null,
+        audienceAllowed: Boolean(post.sportCard),
+      }));
+    const allowedActivities = new Set(
+      applyFeedPreferences(activityItems, preferences).visible.map((item) => item.id)
+    );
+    const mutedAuthors = new Set(preferences.muted_authors);
+    const hiddenPosts = new Set(preferences.hidden_posts);
+    return posts.filter((post) => {
+      if (hiddenPosts.has(post.id)) return false;
+      if (post.author_id && mutedAuthors.has(post.author_id)) return false;
+      if (post.sportCard) return allowedActivities.has(post.id);
+      return true;
+    });
+  }, [posts, preferences]);
+
+  const feedAuthors = useMemo<FeedPreferencesAuthor[]>(() => {
+    const seen = new Map<string, string>();
+    for (const post of posts) {
+      if (post.author_id && post.author?.full_name && !seen.has(post.author_id)) {
+        seen.set(post.author_id, post.author.full_name);
+      }
+    }
+    return Array.from(seen.entries()).map(([id, name]) => ({ id, name }));
+  }, [posts]);
 
   // Défilement infini : la page suivante se charge avant d'atteindre le bas
   // du fil, sans bouton.
@@ -94,19 +138,35 @@ export function CommunityFeed({
     );
   }
 
-  if (posts.length === 0) {
+  if (visiblePosts.length === 0) {
     return (
-      <div className="lkdv-feed-empty">
-        <h2>Le fil est calme</h2>
-        <p>Publie depuis le bouton + : carnet, voyage, kit, club ou story.</p>
-      </div>
+      <>
+        <div className="lkdv-feed-empty">
+          <h2>Le fil est calme</h2>
+          <p>
+            {posts.length > 0
+              ? 'Tes préférences de fil masquent actuellement les publications affichées.'
+              : 'Publie depuis le bouton + : carnet, voyage, kit, club ou story.'}
+          </p>
+        </div>
+        {onPreferencesOpenChange ? (
+          <FeedPreferencesDrawer
+            open={preferencesOpen}
+            onOpenChange={onPreferencesOpenChange}
+            preferences={preferences}
+            onChange={updateFeedPreferences}
+            onReset={resetFeedPreferences}
+            authors={feedAuthors}
+          />
+        ) : null}
+      </>
     );
   }
 
   return (
     <>
       <div className="lkdv-feed-list">
-        {posts.map((post, index) => (
+        {visiblePosts.map((post, index) => (
           <CommunityFeedPost
             key={post.id}
             post={post}
@@ -114,6 +174,7 @@ export function CommunityFeed({
             onRequireAuth={onRequireAuth}
             initialPanel={initialCommentId && post.id === initialPostId ? 'comments' : null}
             initialCommentId={initialCommentId}
+            videoPreferences={preferences.video}
             // Seule la première carte est au-dessus de la ligne de flottaison :
             // précharger la deuxième en `high` volait la bande passante du
             // premier média (LCP) et du CSS. Les suivantes se chargent à lazy.
@@ -121,6 +182,16 @@ export function CommunityFeed({
           />
         ))}
       </div>
+      {onPreferencesOpenChange ? (
+        <FeedPreferencesDrawer
+          open={preferencesOpen}
+          onOpenChange={onPreferencesOpenChange}
+          preferences={preferences}
+          onChange={updateFeedPreferences}
+          onReset={resetFeedPreferences}
+          authors={feedAuthors}
+        />
+      ) : null}
 
       {hasMore ? (
         <div ref={sentinelRef} className="lkdv-feed-more" aria-hidden={!loadingMore} aria-live="polite">

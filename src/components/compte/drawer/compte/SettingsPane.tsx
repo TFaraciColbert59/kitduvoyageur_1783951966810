@@ -17,6 +17,7 @@ import {
   Play,
   Ruler,
   ShieldCheck,
+  SlidersHorizontal,
   Sparkles,
   Watch,
 } from 'lucide-react';
@@ -44,6 +45,13 @@ import { DrawerError, DrawerSkeleton } from '../shell/DrawerShell';
 import { createClient } from '@/lib/supabase/client';
 import { ConsentSettingsSheet } from './ConsentSettingsSheet';
 import { fetchJson } from './shared';
+import { useFeedPreferences } from '@/features/community/g01/useFeedPreferences';
+import { FeedPreferencesDrawer } from '@/components/communaute/g01/FeedPreferencesDrawer';
+import { SportProfileSummary } from '@/components/communaute/g01/SportProfileSummary';
+import type {
+  SportProfilePreferencesPatch,
+  SportProfileSummaryVM,
+} from '@/features/community/g01/sportProfile';
 
 const PREF_LABELS: Array<{ key: 'social' | 'loans' | 'orders' | 'system'; label: string }> = [
   { key: 'social', label: 'Social' },
@@ -73,12 +81,39 @@ export function SettingsPane() {
   const sportNotifTriggerRef = useRef<HTMLButtonElement | null>(null);
   const a11yTriggerRef = useRef<HTMLButtonElement | null>(null);
   const offersTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const [feedPrefsOpen, setFeedPrefsOpen] = useState(false);
 
   const query = useQuery({
     queryKey: ['compte', 'profile'],
     queryFn: () => fetchJson<ProfileSettings>('/api/compte/compte/profile'),
     staleTime: 20_000,
   });
+
+  const feedPrefs = useFeedPreferences(query.data?.id);
+  const sportProfileQuery = useQuery({
+    queryKey: ['compte', 'sport-profile', query.data?.id ?? 'self'],
+    queryFn: () => fetchJson<{ summary: SportProfileSummaryVM }>('/api/compte/sport-profile'),
+    enabled: Boolean(query.data?.id),
+    staleTime: 20_000,
+  });
+
+  const patchSportProfile = async (sportPatch: SportProfilePreferencesPatch) => {
+    setBusy(true);
+    setMessage(null);
+    try {
+      const updated = await fetchJson<{ summary: SportProfileSummaryVM }>('/api/compte/sport-profile', {
+        method: 'PATCH',
+        body: JSON.stringify(sportPatch),
+      });
+      queryClient.setQueryData(['compte', 'sport-profile', query.data?.id ?? 'self'], updated);
+      setMessage('Profil sportif enregistré');
+      window.setTimeout(() => setMessage(null), 2200);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Modification impossible');
+    } finally {
+      setBusy(false);
+    }
+  };
 
   useEffect(() => {
     setSportUnits(readSportUnitsPreferences());
@@ -203,6 +238,37 @@ export function SettingsPane() {
       </section>
 
       <section className="lkdv-compte-setting-card" aria-label="Appareils, connecteurs et consentements">
+        <div className="lkdv-compte-setting-head">
+          <span className="lkdv-compte-setting-ico" aria-hidden="true">
+            <SlidersHorizontal size={17} />
+          </span>
+          <div>
+            <b>Fil &amp; lecture vidéo</b>
+            <small>
+              {feedPrefs.preferences.show_activity ? 'Activités visibles' : 'Activités masquées'} ·{' '}
+              {feedPrefs.preferences.video.autoplay ? 'Lecture auto (muet)' : 'Lecture manuelle'}
+            </small>
+          </div>
+          <ActionPill
+            className="lkdv-compte-setting-pill"
+            label="Préférences du fil"
+            text="Configurer"
+            icon={<SlidersHorizontal />}
+            onClick={() => setFeedPrefsOpen(true)}
+          />
+        </div>
+      </section>
+
+      {sportProfileQuery.data?.summary ? (
+        <section className="lkdv-compte-setting-card">
+          <SportProfileSummary
+            summary={sportProfileQuery.data.summary}
+            onPreferencesChange={(sportPatch) => void patchSportProfile(sportPatch)}
+          />
+        </section>
+      ) : null}
+
+      <section className="lkdv-compte-setting-card">
         <div className="lkdv-compte-setting-head">
           <span className="lkdv-compte-setting-ico" aria-hidden="true">
             <Link2 size={17} />
@@ -670,6 +736,13 @@ export function SettingsPane() {
         open={offersDrawerOpen}
         onClose={() => setOffersDrawerOpen(false)}
         restoreFocusTo={offersTriggerRef.current}
+      />
+      <FeedPreferencesDrawer
+        open={feedPrefsOpen}
+        onOpenChange={setFeedPrefsOpen}
+        preferences={feedPrefs.preferences}
+        onChange={feedPrefs.update}
+        onReset={feedPrefs.reset}
       />
     </div>
   );
