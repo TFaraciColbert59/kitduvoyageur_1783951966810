@@ -40,13 +40,36 @@ export function CarnetAltitude({
       x: (point.distanceKm / total) * 100,
       y: 100 - ((point.elevationM - min) / span) * 100,
     }));
-    const line = coords
-      .map(
-        (coord, index) => `${index === 0 ? 'M' : 'L'}${coord.x.toFixed(2)},${coord.y.toFixed(2)}`
-      )
-      .join(' ');
-    const area = `${line} L100,100 L0,100 Z`;
-    return { total, min, max, coords, line, area };
+    /*
+     * Un chemin par morceau : `segmentIndex` vient du serveur. Sans lui, tout
+     * le profil reste un seul morceau. On ne relie jamais deux index
+     * différents, même si la distance cumulée est continue.
+     */
+    const groups = new Map<number, number[]>();
+    points.forEach((point, index) => {
+      const segmentIndex = point.segmentIndex ?? 0;
+      const list = groups.get(segmentIndex) ?? [];
+      list.push(index);
+      groups.set(segmentIndex, list);
+    });
+    const segments = [...groups.entries()].map(([segmentIndex, indexes]) => {
+      const segmentCoords = indexes.map((index) => coords[index]);
+      const line = segmentCoords
+        .map(
+          (coord, index) =>
+            `${index === 0 ? 'M' : 'L'}${coord.x.toFixed(2)},${coord.y.toFixed(2)}`
+        )
+        .join(' ');
+      const firstX = segmentCoords[0]?.x ?? 0;
+      const lastX = segmentCoords[segmentCoords.length - 1]?.x ?? 0;
+      return {
+        segmentIndex,
+        coords: segmentCoords,
+        line,
+        area: `${line} L${lastX.toFixed(2)},100 L${firstX.toFixed(2)},100 Z`,
+      };
+    });
+    return { total, min, max, coords, segments };
   }, [points]);
 
   const selectAt = useCallback(
@@ -130,16 +153,21 @@ export function CarnetAltitude({
           <stop offset="100%" stopColor="var(--good, #3d7a52)" stopOpacity="0.04" />
         </linearGradient>
       </defs>
-      <path d={geometry.area} fill={`url(#alt-${gradientId})`} />
-      <path
-        d={geometry.line}
-        fill="none"
-        stroke="var(--good, #3d7a52)"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        vectorEffect="non-scaling-stroke"
-      />
+      {geometry.segments.map((segment) => (
+        <g key={segment.segmentIndex} data-altitude-segment={segment.segmentIndex}>
+          <path d={segment.area} fill={`url(#alt-${gradientId})`} />
+          <path
+            d={segment.line}
+            fill="none"
+            stroke="var(--good, #3d7a52)"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            vectorEffect="non-scaling-stroke"
+            data-altitude-line={segment.segmentIndex}
+          />
+        </g>
+      ))}
       {selected ? (
         <>
           <line

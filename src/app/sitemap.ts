@@ -22,6 +22,7 @@ const staticRoutes: Array<{
   { url: '/cgv', priority: 0.3, changeFrequency: 'yearly' },
   { url: '/cgu', priority: 0.3, changeFrequency: 'yearly' },
   { url: '/politique-confidentialite', priority: 0.3, changeFrequency: 'yearly' },
+  { url: '/accessibilite', priority: 0.4, changeFrequency: 'yearly' },
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {

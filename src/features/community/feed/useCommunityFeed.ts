@@ -120,6 +120,9 @@ export function useCommunityFeed(userId?: string) {
         // Curseur `(created_at, id)` plutôt qu'offset : une publication
         // insérée ou supprimée entre deux pages ne décale plus la suivante.
         // `id` départage deux publications créées dans la même milliseconde.
+        // La RLS `community_posts_not_content_muted` retire les auteurs que le
+        // lecteur a mis en sourdine de contenu : le fil n'ajoute aucun filtre
+        // côté client et n'expose jamais l'état de sourdine.
         let query = supabase
           .from('community_posts')
           .select(FEED_COLUMNS)

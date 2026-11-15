@@ -2,9 +2,35 @@
 
 import React from 'react';
 import { XpIcon } from '../ui/XpIcon';
-import { useNaturalSearch, geometryCenter } from '../data/hooks';
+import {
+  ExplorerSearchError,
+  geometryCenter,
+  useNaturalSearch,
+  useRouteSuggestions,
+  useTerrainCoverage,
+} from '../data/hooks';
+import { SUGGESTION_RADIUS_KM } from '../routeSuggestions';
+import { isSearchableViewport } from '../searchArea';
+import { AUTO_PAUSE_BY_SPORT } from '../activity/tracker';
+import {
+  MILE_DISTANCE_M,
+  activeSplit,
+  fastestSplit,
+  splitPaceSecondsPerKm,
+  splitPaceSecondsPerMile,
+  splitSpeedKmh,
+} from '../activity/splits';
+import { useExplorerStore } from '../state/store';
+import {
+  nationalTopoSourcesFor,
+  verifiedNationalTopoFor,
+} from '../map/nationalTopo';
 import { countTiles, downloadZone, purgeZone, readZone } from '../offline/zone';
 import { ElevationProfile } from './ElevationProfile';
+import { StrengthPanel } from './StrengthPanel';
+import { ZoneSettingsEntry, ZoneSettingsPanel } from './ZoneSettingsPanel';
+import { MetricSeriesPanel } from './MetricSeries';
+import { SlopeAdjustedPacePanel } from './SlopeAdjustedPace';
 import {
   XpAvatars,
   XpCard,
@@ -32,7 +58,24 @@ import {
   relativeDay,
   type SheetContext,
 } from './context';
-import type { Sport } from '../state/types';
+import type { ActivitySplit, Sport } from '../state/types';
+import {
+  SPORT_FAMILIES,
+  availabilityLabel,
+  defaultVariantForSport,
+  familySummary,
+  getSportFamily,
+  getSportVariant,
+  metricsLabel,
+  missingOptionalMetrics,
+  rhythmMetric,
+  startAvailability,
+  toSportSelection,
+  type SportFamily,
+  type SportSelection,
+  type SportStartContext,
+  type SportVariant,
+} from './sportSelection';
 
 export interface SheetModel {
   title: string;
@@ -55,7 +98,342 @@ const CATEGORY_LABEL: Record<string, string> = {
   flood: 'Crue',
 };
 
-const SPORTS: Sport[] = ['course', 'rando', 'velo', 'kayak', 'trail', 'ski', 'escalade', 'famille', 'bivouac'];
+/** Contexte de démarrage : permission réelle + présence de l’API GPS. */
+function useSportStartContext(ctx: SheetContext): SportStartContext {
+  return React.useMemo(
+    () => ({
+      locationPermission: ctx.state.locationPermission,
+      gpsAvailable: typeof navigator !== 'undefined' && Boolean(navigator.geolocation),
+    }),
+    [ctx.state.locationPermission],
+  );
+}
+
+function startSport(ctx: SheetContext, sport: Sport, selection?: SportSelection) {
+  if (ctx.onStartSport) ctx.onStartSport(sport, selection);
+  else ctx.state.startActivity(sport, null, selection);
+}
+
+/** Unique chemin de départ d’une variante : garde + conversion + callback. */
+function startVariant(
+  ctx: SheetContext,
+  family: SportFamily,
+  variant: SportVariant,
+  startContext: SportStartContext,
+): boolean {
+  if (!startAvailability(variant, startContext).startable) return false;
+  startSport(ctx, variant.sport, toSportSelection(family, variant));
+  return true;
+}
+
+/**
+ * État réel du départ : la séance est toujours conservée sur l'appareil, et
+ * synchronisée si l'utilisateur est connecté. Ne jamais annoncer une création
+ * serveur qui n'a pas encore eu lieu hors ligne.
+ */
+function StartLimitNote() {
+  return (
+    <p
+      style={{
+        margin: '10px 2px 6px',
+        fontSize: 11.5,
+        lineHeight: 1.45,
+        color: 'var(--xp-mut)',
+      }}
+    >
+      Le suivi démarre même hors ligne. La séance et ses points restent sur cet appareil, puis sont
+      synchronisés avec ton compte dès que la connexion le permet.
+    </p>
+  );
+}
+
+/** Entrée unique du carnet musculation, dans les deux onglets de départ. */
+function StrengthEntry({ ctx }: { ctx: SheetContext }) {
+  return (
+    <XpRow
+      icon="dumbbell"
+      title="Musculation"
+      sub="Exercices, séries, répétitions, charges · carnet privé"
+      badge={{ label: 'Saisie', tone: 'muted' }}
+      onClick={() => ctx.state.setSheet('strength', 'full')}
+    />
+  );
+}
+
+/**
+ * Choix en deux temps : famille de sport existante, puis variante.
+ * Une variante indisponible n’a aucun handler de clic et porte le motif exact.
+ */
+function autoPauseDurationLabel(seconds: number): string {
+  if (seconds < 60) return `${Math.round(seconds)} s`;
+  return `${Math.round(seconds / 60)} min`;
+}
+
+/**
+ * Réglage de préparation : la pause automatique à l'arrêt, propre au sport.
+ * Désactivée, seule la détection d'arrêt est coupée ; les seuils GPS du sport
+ * (plausibilité, coupure de tracé) restent actifs.
+ */
+function AutoPauseSetting({ sport }: { sport?: Sport | null }) {
+  const enabled = useExplorerStore((state) => state.autoPauseEnabled) ?? false;
+  const setEnabled = useExplorerStore((state) => state.setAutoPauseEnabled);
+  const config = sport ? AUTO_PAUSE_BY_SPORT[sport] : null;
+  const sub = !enabled
+    ? 'Désactivée · pas d’arrêt automatique, seuils GPS du sport conservés.'
+    : config
+      ? `Activée · pause après ${autoPauseDurationLabel(config.durationS)} d’arrêt, reprise au mouvement.`
+      : 'Activée · chaque sport a son seuil d’arrêt et de reprise.';
+  return (
+    <>
+      <XpEyebrow>Préparation</XpEyebrow>
+      <XpRows>
+        <XpRow
+          icon="pause"
+          title="Pause automatique"
+          sub={sub}
+          trailing={
+            <button
+              type="button"
+              role="switch"
+              aria-checked={enabled}
+              aria-label="Pause automatique à l’arrêt"
+              onClick={() => setEnabled(!enabled)}
+              style={{
+                flex: 'none',
+                width: 52,
+                height: 44,
+                padding: 0,
+                border: 'none',
+                background: 'transparent',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                WebkitTapHighlightColor: 'transparent',
+              }}
+            >
+              {/* Le switch visuel garde 46 × 28 ; la cible tactile est le bouton
+                  de 52 × 44, conforme à la règle des 44 px. */}
+              <span
+                aria-hidden="true"
+                style={{
+                  width: 46,
+                  height: 28,
+                  padding: 3,
+                  boxSizing: 'border-box',
+                  borderRadius: 999,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: enabled ? 'flex-end' : 'flex-start',
+                  background: enabled ? 'var(--xp-inkbtn)' : 'var(--xp-thumb)',
+                  boxShadow: enabled
+                    ? 'var(--xp-inkbtn-shadow)'
+                    : 'inset 0 1px 2px rgba(23,43,36,0.18)',
+                  transition: 'background 160ms ease',
+                }}
+              >
+                <span
+                  aria-hidden="true"
+                  style={{
+                    width: 22,
+                    height: 22,
+                    borderRadius: 999,
+                    background: '#fff',
+                    boxShadow: '0 1px 3px rgba(23,43,36,0.25)',
+                  }}
+                />
+              </span>
+            </button>
+          }
+        />
+      </XpRows>
+    </>
+  );
+}
+
+export function SportPicker({ ctx }: { ctx: SheetContext }) {
+  const startContext = useSportStartContext(ctx);
+  const [sport, setSport] = React.useState<Sport | null>(null);
+  const [variantId, setVariantId] = React.useState<string | null>(null);
+  const family = sport ? getSportFamily(sport) : null;
+  const variant = variantId ? getSportVariant(variantId) : null;
+  const availability = variant ? startAvailability(variant, startContext) : null;
+
+  const openFamily = (next: Sport) => {
+    setSport(next);
+    const nextFamily = getSportFamily(next);
+    const preferred = defaultVariantForSport(next, startContext);
+    setVariantId(preferred?.id ?? nextFamily?.variants[0]?.id ?? null);
+  };
+
+  const start = () => {
+    if (!family || !variant) return;
+    startVariant(ctx, family, variant, startContext);
+  };
+
+  if (!family) {
+    return (
+      <>
+        <XpEyebrow>Choisir un sport</XpEyebrow>
+        <XpRows>
+          {SPORT_FAMILIES.map((entry) => {
+            const available = entry.variants.filter(
+              (candidate) => startAvailability(candidate, startContext).startable,
+            );
+            return (
+              <XpRow
+                key={entry.sport}
+                icon={entry.icon}
+                title={entry.label}
+                sub={`${entry.description} · ${familySummary(entry)}`}
+                badge={
+                  available.length > 0
+                    ? {
+                        label: `${available.length} départ${available.length > 1 ? 's' : ''}`,
+                        tone: 'good',
+                      }
+                    : { label: 'Indisponible', tone: 'muted' }
+                }
+                onClick={() => openFamily(entry.sport)}
+              />
+            );
+          })}
+        </XpRows>
+        <XpEyebrow>Carnet hors GPS</XpEyebrow>
+        <XpRows>
+          <StrengthEntry ctx={ctx} />
+        </XpRows>
+        <AutoPauseSetting sport={null} />
+        <StartLimitNote />
+      </>
+    );
+  }
+
+  return (
+    <>
+      <XpRows>
+        <XpRow
+          icon="chevl"
+          title="Tous les sports"
+          sub={familySummary(family)}
+          onClick={() => {
+            setSport(null);
+            setVariantId(null);
+          }}
+        />
+      </XpRows>
+      <XpEyebrow>
+        {family.label} · {family.description}
+      </XpEyebrow>
+      <XpRows>
+        {family.variants.map((entry) => {
+          const entryAvailability = startAvailability(entry, startContext);
+          const selected = entry.id === variantId;
+          const missing = missingOptionalMetrics(entry);
+          return (
+            <XpRow
+              key={entry.id}
+              icon={entry.environment === 'indoor' ? 'house' : family.icon}
+              title={entry.label}
+              sub={
+                entryAvailability.startable
+                  ? `${entry.environment === 'indoor' ? 'Indoor' : 'Extérieur'} · ${metricsLabel(
+                      entry.requiredMetrics,
+                    )}${missing.length > 0 ? ` · non mesuré : ${metricsLabel(missing)}` : ''}`
+                  : `${entry.environment === 'indoor' ? 'Indoor' : 'Extérieur'} · ${
+                      entryAvailability.reason ?? 'Indisponible'
+                    }`
+              }
+              badge={
+                !entryAvailability.startable
+                  ? { label: 'Indisponible', tone: 'muted' }
+                  : selected
+                    ? { label: 'Choisi', tone: 'good' }
+                    : {
+                        label: availabilityLabel(entryAvailability),
+                        tone: entryAvailability.status === 'needs-permission' ? 'warn' : 'good',
+                      }
+              }
+              onClick={entryAvailability.startable ? () => setVariantId(entry.id) : undefined}
+            />
+          );
+        })}
+      </XpRows>
+      <AutoPauseSetting sport={sport} />
+      {variant && availability ? (
+        <>
+          <p
+            style={{
+              margin: '10px 2px 8px',
+              fontSize: 12,
+              lineHeight: 1.45,
+              color: 'var(--xp-mut)',
+            }}
+          >
+            {availability.startable
+              ? `Métriques suivies : ${metricsLabel(variant.requiredMetrics)}.`
+              : `Départ impossible : ${availability.reason ?? 'variante indisponible'}`}
+          </p>
+          <button type="button" className="xp-primary" onClick={start} disabled={!availability.startable}>
+            {availability.startable ? `Démarrer · ${variant.label}` : 'Départ indisponible'}
+          </button>
+        </>
+      ) : null}
+      <StartLimitNote />
+    </>
+  );
+}
+
+/** Suggestions construites sur la même taxonomie, sans chiffre inventé. */
+function RecommendedSports({ ctx }: { ctx: SheetContext }) {
+  const startContext = useSportStartContext(ctx);
+  const sports: Sport[] = ['rando', 'trail', 'velo'];
+  return (
+    <>
+      <XpEyebrow>Suggestions de départ · {ctx.country?.name ?? 'votre secteur'}</XpEyebrow>
+      <XpRows>
+        {sports.map((sport) => {
+          const family = getSportFamily(sport);
+          if (!family) return null;
+          const variant = defaultVariantForSport(sport, startContext);
+          const availability = variant ? startAvailability(variant, startContext) : null;
+          const startable = Boolean(variant && availability?.startable);
+          return (
+            <XpRow
+              key={sport}
+              icon={family.icon}
+              title={variant?.label ?? family.label}
+              sub={
+                startable && variant
+                  ? `${family.label} · ${metricsLabel(variant.requiredMetrics)}`
+                  : availability?.reason ?? 'Aucune variante démarrable avec la capture actuelle'
+              }
+              badge={
+                startable && availability
+                  ? {
+                      label: availabilityLabel(availability),
+                      tone: availability.status === 'needs-permission' ? 'warn' : 'good',
+                    }
+                  : { label: 'Indisponible', tone: 'muted' }
+              }
+              onClick={
+                startable && variant
+                  ? () => startVariant(ctx, family, variant, startContext)
+                  : undefined
+              }
+            />
+          );
+        })}
+      </XpRows>
+      <XpEyebrow>Carnet hors GPS</XpEyebrow>
+      <XpRows>
+        <StrengthEntry ctx={ctx} />
+      </XpRows>
+      <AutoPauseSetting sport={null} />
+      <StartLimitNote />
+    </>
+  );
+}
 
 function CarnetsTab({ ctx, where }: { ctx: SheetContext; where: string }) {
   const items = ctx.carnets;
@@ -132,36 +510,17 @@ function EmptyAmis() {
 }
 
 function RoutesTab({ ctx }: { ctx: SheetContext }) {
-  const routesToDisplay = ctx.routes.length > 0 ? ctx.routes : [
-    {
-      id: 101,
-      name: 'Tour du Mont-Blanc (GR® TMB)',
-      distance_km: 170.0,
-      network: 'iwn',
-      ref: 'TMB',
-    },
-    {
-      id: 102,
-      name: 'Sentier des Gardes · Aiguilles Rouges',
-      distance_km: 9.1,
-      network: 'nwn',
-      ref: 'GR®',
-    },
-    {
-      id: 103,
-      name: 'Lac Blanc par les Chéserys',
-      distance_km: 8.8,
-      network: 'rwn',
-      ref: 'PR',
-    },
-    {
-      id: 104,
-      name: 'Crêtes du Grand Veymont · Vercors',
-      distance_km: 16.0,
-      network: 'nwn',
-      ref: 'GRP',
-    },
-  ];
+  // Aucune liste de démonstration : les parcours viennent du catalogue OSM
+  // (`explorer_routes`) ou de la recherche, jamais d'un identifiant inventé.
+  if (ctx.routes.length === 0) {
+    return (
+      <XpEmpty
+        title="Aucun parcours dans cette zone"
+        hint="Le catalogue OSM ne contient aucun tracé ici. Déplace la carte ou lance une recherche."
+      />
+    );
+  }
+  const routesToDisplay = ctx.routes;
 
   return (
     <XpRows>
@@ -762,15 +1121,124 @@ function PoiTabs(ctx: SheetContext, kind: string): SheetTab[] {
 
 function LayersTab({ ctx }: { ctx: SheetContext }) {
   const { state } = ctx;
+  const coverage = useTerrainCoverage();
   const currentBase = state.mapBaseStyle ?? 'relief';
   const layers = state.layerVisibility ?? {
     routes: true,
     water: true,
     refuges: true,
+    summits: true,
+    access: true,
     dangers: true,
     snow: true,
     slope: false,
+    distanceMarkers: true,
   };
+  const iso = (state.geo || ctx.country?.iso_a2 || '').trim().toUpperCase();
+  const nationalSources = nationalTopoSourcesFor(iso);
+  const nationalVerified = verifiedNationalTopoFor(iso);
+  const slope = ctx.terrain?.slope ?? {
+    state: 'idle' as const,
+    summary: null,
+    routeName: null,
+    hasRoute: false,
+  };
+  const slopeOn = layers.slope === true;
+  const slopeBadge = !slope.hasRoute
+    ? { label: 'Masqué', tone: 'muted' as const }
+    : slopeOn && slope.state === 'loading'
+      ? { label: 'Calcul…', tone: 'warn' as const }
+      : slopeOn && slope.state === 'ready'
+        ? { label: 'Actif', tone: 'good' as const }
+        : slopeOn && (slope.state === 'error' || slope.state === 'empty')
+          ? { label: 'Indisponible', tone: 'warn' as const }
+          : { label: 'Masqué', tone: 'muted' as const };
+  const slopeSub = !slope.hasRoute
+    ? 'Sélectionne un itinéraire sur la carte'
+    : slope.state === 'loading'
+      ? 'Calcul du relief réel…'
+      : slope.state === 'ready' && slope.summary
+        ? `D+ ${slope.summary.gainM} m · ${slope.summary.minM}–${slope.summary.maxM} m · AWS Terrain`
+        : slope.state === 'empty'
+          ? 'Relief indisponible pour ce tracé'
+          : slope.state === 'error'
+            ? 'Relief indisponible pour le moment'
+            : 'Relief réel · AWS Terrain Tiles';
+
+  const surfaceState = coverage.isPending
+    ? 'loading'
+    : coverage.isError
+      ? 'error'
+      : coverage.data?.surface.available
+        ? 'available'
+        : 'empty';
+  const surfaceBadge =
+    surfaceState === 'available'
+      ? { label: 'À venir', tone: 'warn' as const }
+      : surfaceState === 'loading'
+        ? { label: 'Vérification', tone: 'muted' as const }
+        : { label: 'Indisponible', tone: 'muted' as const };
+  const surfaceSub =
+    surfaceState === 'loading'
+      ? 'Vérification des données de surface…'
+      : surfaceState === 'error'
+        ? 'Vérification impossible pour le moment'
+        : surfaceState === 'available'
+          ? 'Segments OSM disponibles · couche non activée dans cette version'
+          : 'Aucun segment de surface importé (trail_segments)';
+
+  // Marqueurs de distance (K3.12) : uniquement dérivés de la géométrie réelle
+  // de l'itinéraire actif. Le compte et l'intervalle viennent du parent, jamais
+  // d'une estimation stockée.
+  const distance = ctx.terrain?.distance ?? {
+    hasRoute: false,
+    status: null,
+    count: 0,
+    intervalLabel: ctx.units === 'imperial' ? '1 mi' : '1 km',
+  };
+  const routesVisible = layers.routes !== false;
+  const distanceOn = layers.distanceMarkers !== false && routesVisible;
+  const distanceBadge =
+    distance.status === 'loading'
+      ? { label: 'Chargement', tone: 'warn' as const }
+      : distance.status === 'unavailable'
+        ? { label: 'Indisponible', tone: 'warn' as const }
+        : !distance.hasRoute
+          ? { label: 'Masqué', tone: 'muted' as const }
+          : distance.count === 0
+            ? { label: 'Aucun', tone: 'muted' as const }
+            : distanceOn
+              ? { label: 'Actif', tone: 'good' as const }
+              : { label: 'Masqué', tone: 'muted' as const };
+  const distanceSub =
+    distance.status === 'loading'
+      ? 'Chargement de la géométrie réelle…'
+      : distance.status === 'unavailable'
+        ? 'Géométrie indisponible pour ce tracé'
+        : !distance.hasRoute
+          ? 'Sélectionne un itinéraire sur la carte'
+          : !routesVisible
+            ? 'Sentiers masqués · réaffiche-les d’abord'
+            : distance.count === 0
+              ? `Tracé plus court que ${distance.intervalLabel}`
+              : `${distance.count} repères · tous les ${distance.intervalLabel}`;
+
+  const countOf = (...kinds: string[]) =>
+    ctx.pois.filter((poi) => kinds.includes(poi.kind)).length;
+  const waterCount = countOf('water');
+  const refugeCount = countOf('refuge', 'bivouac');
+  const summitCount = countOf('summit', 'viewpoint');
+  const accessCount = countOf('access');
+  const dangerCount = countOf('danger');
+  const layerBadge = (key: string, count: number) =>
+    count === 0
+      ? { label: 'Aucun', tone: 'muted' as const }
+      : layers[key] !== false
+        ? { label: 'Actif', tone: 'good' as const }
+        : { label: 'Masqué', tone: 'muted' as const };
+
+  const activityRouteReady = state.activity?.route?.status === 'ready';
+  const offRoute = state.activity?.offRoute === true;
 
   return (
     <>
@@ -800,72 +1268,235 @@ function LayersTab({ ctx }: { ctx: SheetContext }) {
         >
           Plan
         </button>
+        {nationalVerified ? (
+          <button
+            type="button"
+            className="xp-chip"
+            aria-pressed={currentBase === 'national'}
+            onClick={() => state.setMapBaseStyle('national')}
+          >
+            {nationalVerified.label}
+          </button>
+        ) : null}
       </div>
 
-      <XpEyebrow>Données affichées</XpEyebrow>
+      <XpEyebrow>Fonds nationaux officiels</XpEyebrow>
+      {!iso ? (
+        <XpEmpty
+          title="Choisis un pays"
+          hint="Les fonds nationaux sont propres à chaque pays. Ouvre un pays pour voir les sources officielles déclarées."
+        />
+      ) : nationalSources.length === 0 ? (
+        <XpEmpty
+          title="Aucun fond national déclaré"
+          hint={`Aucune source officielle n’est déclarée pour ${ctx.country?.name ?? iso}. Les fonds Relief 3D, Satellite et Plan restent disponibles.`}
+        />
+      ) : (
+        <XpRows>
+          {nationalSources.map((source) => {
+            const verified = nationalVerified?.id === source.id;
+            return (
+              <XpRow
+                key={source.id}
+                icon="map"
+                title={source.label}
+                sub={
+                  verified
+                    ? `${source.provider} · ${source.licence}`
+                    : `${source.provider} · ${source.licence} · ${source.note}`
+                }
+                badge={{
+                  label: verified ? 'Disponible' : 'À confirmer',
+                  tone: verified ? 'good' : 'muted',
+                }}
+                disabled={!verified}
+                onClick={verified ? () => state.setMapBaseStyle('national') : undefined}
+              />
+            );
+          })}
+        </XpRows>
+      )}
+      {nationalSources.some((source) => source.status !== 'verified') ? (
+        <p className="xp-layer-note">
+          Aucune tuile nationale n’est chargée tant que l’accès et la couverture ne sont pas
+          confirmés.
+        </p>
+      ) : null}
+
+      <XpEyebrow>Éléments visibles</XpEyebrow>
       <XpRows>
         <XpRow
+          icon="flag"
+          title="Marqueurs de distance"
+          sub={distanceSub}
+          badge={distanceBadge}
+          disabled={
+            distance.status !== 'ready' || distance.count === 0 || !routesVisible
+          }
+          onClick={
+            distance.status === 'ready' && distance.count > 0 && routesVisible
+              ? () => state.toggleLayer('distanceMarkers')
+              : undefined
+          }
+        />
+        <XpRow
           icon="route"
-          title="Sentiers et traces"
-          sub={`GR®, PR, itinéraires · ${ctx.routes.length} disponibles`}
-          badge={{
-            label: layers.routes !== false ? 'Actif' : 'Masqué',
-            tone: layers.routes !== false ? 'good' : 'muted',
-          }}
-          onClick={() => state.toggleLayer('routes')}
+          title="Itinéraires et sentiers"
+          sub={
+            ctx.routes.length > 0
+              ? `GR®, PR, itinéraires · ${ctx.routes.length} disponibles`
+              : 'Aucun itinéraire dans cette zone'
+          }
+          badge={layerBadge('routes', ctx.routes.length)}
+          disabled={ctx.routes.length === 0}
+          onClick={ctx.routes.length > 0 ? () => state.toggleLayer('routes') : undefined}
         />
         <XpRow
           icon="drop"
           title="Points d’eau"
-          sub={`Sources et fontaines · ${ctx.pois.filter((p) => p.kind === 'water').length} repères`}
-          badge={{
-            label: layers.water !== false ? 'Actif' : 'Masqué',
-            tone: layers.water !== false ? 'good' : 'muted',
-          }}
-          onClick={() => state.toggleLayer('water')}
+          sub={
+            waterCount > 0
+              ? `Sources et fontaines · ${waterCount} repères`
+              : 'Aucun point d’eau répertorié ici'
+          }
+          badge={layerBadge('water', waterCount)}
+          disabled={waterCount === 0}
+          onClick={waterCount > 0 ? () => state.toggleLayer('water') : undefined}
         />
         <XpRow
           icon="house"
-          title="Refuges et abris"
-          sub={`Gardiennage et règles · ${ctx.pois.filter((p) => p.kind === 'refuge' || p.kind === 'bivouac').length} spots`}
-          badge={{
-            label: layers.refuges !== false ? 'Actif' : 'Masqué',
-            tone: layers.refuges !== false ? 'good' : 'muted',
-          }}
-          onClick={() => state.toggleLayer('refuges')}
+          title="Refuges, abris et bivouacs"
+          sub={
+            refugeCount > 0
+              ? `Gardiennage et règles · ${refugeCount} spots`
+              : 'Aucun refuge ni bivouac répertorié ici'
+          }
+          badge={layerBadge('refuges', refugeCount)}
+          disabled={refugeCount === 0}
+          onClick={refugeCount > 0 ? () => state.toggleLayer('refuges') : undefined}
+        />
+        <XpRow
+          icon="mtn"
+          title="Sommets et belvédères"
+          sub={
+            summitCount > 0
+              ? `Point de vue et altitude · ${summitCount} repères`
+              : 'Aucun sommet ni belvédère répertorié ici'
+          }
+          badge={layerBadge('summits', summitCount)}
+          disabled={summitCount === 0}
+          onClick={summitCount > 0 ? () => state.toggleLayer('summits') : undefined}
+        />
+        <XpRow
+          icon="pin"
+          title="Accès et départs"
+          sub={
+            accessCount > 0
+              ? `Parkings, gares et têtes de sentier · ${accessCount} repères`
+              : 'Aucun accès répertorié ici'
+          }
+          badge={layerBadge('access', accessCount)}
+          disabled={accessCount === 0}
+          onClick={accessCount > 0 ? () => state.toggleLayer('access') : undefined}
         />
         <XpRow
           icon="alert"
           tone="bad"
           title="Dangers signalés"
-          sub={`Névés, éboulements, crues · ${ctx.pois.filter((p) => p.kind === 'danger').length} alertes`}
-          badge={{
-            label: layers.dangers !== false ? 'Actif' : 'Masqué',
-            tone: layers.dangers !== false ? 'good' : 'muted',
-          }}
-          onClick={() => state.toggleLayer('dangers')}
+          sub={
+            dangerCount > 0
+              ? `Névés, éboulements, crues · ${dangerCount} alertes`
+              : 'Aucun danger signalé ici'
+          }
+          badge={layerBadge('dangers', dangerCount)}
+          disabled={dangerCount === 0}
+          onClick={dangerCount > 0 ? () => state.toggleLayer('dangers') : undefined}
+        />
+        {/* K3.10 — catégories vélo. OpenStreetMap (ODbL) porte ces objets,
+            mais aucune ligne n'est importée : `geo_pois` n'accepte pas ces
+            sous-types et l'import ne les demande pas. Lignes informatives
+            désactivées : aucune disponibilité n'est inventée. */}
+        <XpRow
+          icon="bike"
+          title="Services et locations vélo"
+          sub="Aucune boutique ou location vélo importée · OSM (ODbL) à brancher"
+          badge={{ label: 'Indisponible', tone: 'muted' }}
+          disabled
+        />
+        <XpRow
+          icon="wrench"
+          title="Réparation vélo"
+          sub="Aucun atelier ni borne de réparation importé · OSM (ODbL) à brancher"
+          badge={{ label: 'Indisponible', tone: 'muted' }}
+          disabled
+        />
+        <XpRow
+          icon="bolt"
+          title="Recharge VAE"
+          sub="Aucune borne de recharge vélo importée · OSM (ODbL) à brancher"
+          badge={{ label: 'Indisponible', tone: 'muted' }}
+          disabled
         />
         <XpRow
           icon="cloud"
           title="Neige et avalanche"
-          sub="Limite pluie-neige et risques signalés"
-          badge={{
-            label: layers.snow !== false ? 'Actif' : 'Masqué',
-            tone: layers.snow !== false ? 'good' : 'muted',
-          }}
-          onClick={() => state.toggleLayer('snow')}
-        />
-        <XpRow
-          icon="target"
-          title="Pentes > 30°"
-          sub="Zones sensibles aux avalanches"
-          badge={{
-            label: layers.slope ? 'Actif' : 'Masqué',
-            tone: layers.slope ? 'good' : 'muted',
-          }}
-          onClick={() => state.toggleLayer('slope')}
+          sub="Aucune couche neige importée dans cette version"
+          badge={{ label: 'Indisponible', tone: 'muted' }}
+          disabled
         />
       </XpRows>
+      <p className="xp-layer-note">
+        Les marqueurs de distance sont calculés sur le tracé réel de l’itinéraire
+        sélectionné, tous les {distance.intervalLabel}. Aucune distance n’est stockée
+        ni estimée sur un tracé absent ; les repères masqués ne sont plus dessinés.
+        Tracés et repères : © OpenStreetMap contributors (ODbL), sans date de levé
+        individuelle dans le schéma actuel.
+      </p>
+      <p className="xp-layer-note">
+        Catégories vélo : la source OSM (ODbL) le permettrait, mais aucune ligne
+        « vélo », « réparation » ou « recharge » n’est importée dans{' '}
+        <code>geo_pois</code>. Les trois lignes restent donc informatives et
+        désactivées : aucune épingle n’est créée sans donnée réelle.
+      </p>
+
+      <XpEyebrow>Couches terrain</XpEyebrow>
+      <XpRows>
+        <XpRow
+          icon="mtn"
+          title="Pente de l’itinéraire"
+          sub={slopeSub}
+          badge={slopeBadge}
+          disabled={!slope.hasRoute}
+          onClick={slope.hasRoute ? () => state.toggleLayer('slope') : undefined}
+        />
+        <XpRow
+          icon="layers"
+          title="Surface du sol"
+          sub={surfaceSub}
+          badge={surfaceBadge}
+          disabled
+        />
+        <XpRow
+          icon="route"
+          title="Hors-route"
+          sub={
+            activityRouteReady
+              ? offRoute
+                ? `Écart signalé · ${Math.round(state.activity?.offRouteM ?? 0)} m`
+                : 'Seuil 40 m / 15 s · retour sous 25 m'
+              : 'Actif pendant une sortie avec itinéraire'
+          }
+          badge={{
+            label: offRoute ? 'Écart' : activityRouteReady ? 'En veille' : 'Inactif',
+            tone: offRoute ? 'bad' : 'muted',
+          }}
+          disabled
+        />
+      </XpRows>
+      <p className="xp-layer-note">
+        Marche, vélo de route, gravel et VTT partagent ces couches. La pente suit
+        l’itinéraire sélectionné ; aucune surface par sport n’est affichée sans données importées.
+      </p>
 
       <XpEyebrow>Zone hors ligne</XpEyebrow>
       <XpRows>
@@ -938,6 +1569,15 @@ function ToolsTabs(ctx: SheetContext, kind: string): SheetTab[] {
                   { label: 'Réseau', value: route.ref ?? route.network ?? 'GR®' },
                 ]}
               />
+              <XpEyebrow>Couches et affichage</XpEyebrow>
+              <XpRows>
+                <XpRow
+                  icon="layers"
+                  title="Éléments visibles"
+                  sub={`Fond, repères et marqueurs de distance (${ctx.units === 'imperial' ? 'mi' : 'km'})`}
+                  onClick={() => ctx.state.openLayers()}
+                />
+              </XpRows>
               <XpEyebrow>Points d’eau et abris sur la trace</XpEyebrow>
               {nearbyWater.length > 0 || nearbyRefuges.length > 0 ? (
                 <XpRows>
@@ -1217,29 +1857,232 @@ function DepartForm({ ctx }: { ctx: SheetContext }) {
   );
 }
 
+function RouteSuggestions({ ctx }: { ctx: SheetContext }) {
+  const sport = ctx.state.searchSport ?? null;
+  const me = ctx.me;
+  const position =
+    ctx.state.locationPermission === 'granted' &&
+    me !== null &&
+    Number.isFinite(me.lat) &&
+    Number.isFinite(me.lng)
+      ? me
+      : null;
+  const { data, isFetching, isError, error, refetch } = useRouteSuggestions(
+    position?.lat ?? null,
+    position?.lng ?? null,
+    sport,
+    position !== null && sport !== null && ctx.state.online,
+  );
+  const searchError = error instanceof ExplorerSearchError ? error : null;
+  const unknownSport = searchError?.reason === 'sport-inconnu';
+  const patch = ctx.state.patch;
+  const suggestedRoutes = data?.routes;
+  const selectedSuggestionKept =
+    ctx.state.selection?.kind === 'trail' &&
+    (ctx.state.routeSuggestions ?? []).some(
+      (route) => String(route.id) === ctx.state.selection?.id,
+    );
+
+  // Les suggestions vivent à part de `searchRoutes` : une recherche textuelle
+  // ne doit jamais écraser les parcours trouvés autour de la position, et
+  // inversement. Elles restent en mémoire de session, jamais persistées. Une
+  // suggestion déjà ouverte n'est pas effacée pendant un rechargement.
+  React.useEffect(() => {
+    if (suggestedRoutes) {
+      patch({ routeSuggestions: suggestedRoutes });
+      return;
+    }
+    if (!selectedSuggestionKept) patch({ routeSuggestions: [] });
+  }, [suggestedRoutes, selectedSuggestionKept, patch]);
+
+  const label = sport && SPORT_META[sport] ? SPORT_META[sport].label : 'ce sport';
+
+  return (
+    <>
+      <XpEyebrow>Autour de moi</XpEyebrow>
+      <XpChips
+        items={SPORT_FAMILIES.map((family) => ({ id: family.sport, label: family.label }))}
+        value={sport ?? ''}
+        onChange={(id) => patch({ searchSport: id as Sport })}
+        ariaLabel="Sport des suggestions autour de moi"
+      />
+      {position === null ? (
+        <XpEmpty
+          title={
+            ctx.state.locationPermission === 'denied'
+              ? 'Position refusée'
+              : 'Position non disponible'
+          }
+          hint="Les suggestions autour de toi ne s’affichent qu’avec une position autorisée. La carte et la recherche textuelle restent utilisables sans position."
+          action={
+            ctx.onRequestLocation ? (
+              <button
+                type="button"
+                className="xp-secondary"
+                onClick={() => ctx.onRequestLocation?.()}
+              >
+                Demander la position
+              </button>
+            ) : undefined
+          }
+        />
+      ) : sport === null ? (
+        <XpEmpty
+          title="Choisis un sport"
+          hint="Aucun sport n’est déduit de la carte ni de la position : choisis-le pour voir les parcours qui le concernent."
+        />
+      ) : !ctx.state.online ? (
+        <XpEmpty
+          title="Suggestions indisponibles hors ligne"
+          hint="Les parcours autour de toi viennent de la base. Reviens en ligne pour les charger ; la recherche textuelle en cache reste consultable."
+        />
+      ) : isError ? (
+        <XpEmpty
+          title={unknownSport ? 'Sport inconnu' : 'Suggestions temporairement indisponibles'}
+          hint={
+            unknownSport
+              ? 'Ce sport ne fait pas partie de la taxonomie de l’Explorer. Aucun autre sport n’est choisi à sa place.'
+              : 'La base n’a pas répondu. Aucun résultat vide n’est affiché à la place d’une panne.'
+          }
+          action={
+            unknownSport ? undefined : (
+              <button type="button" className="xp-secondary" onClick={() => void refetch()}>
+                Réessayer
+              </button>
+            )
+          }
+        />
+      ) : isFetching && !data ? (
+        <XpEmpty
+          title={`Recherche autour de toi · ${label}`}
+          hint={`Classement des parcours réels dans un rayon de ${SUGGESTION_RADIUS_KM} km.`}
+        />
+      ) : !data ? (
+        <XpEmpty
+          title="Suggestions en préparation"
+          hint="La position et le sport sont prêts ; la requête n’a pas encore répondu."
+        />
+      ) : !data.supported ? (
+        <XpEmpty
+          title={`Aucun catalogue de parcours ${label.toLowerCase()}`}
+          hint="Le catalogue disponible ne contient que des itinéraires de randonnée. Aucun parcours d’un autre sport n’est proposé, et la difficulté n’est pas déduite."
+        />
+      ) : data.routes.length === 0 ? (
+        <XpEmpty
+          title={`Aucun parcours à moins de ${data.radiusKm} km`}
+          hint="Aucun itinéraire de randonnée du catalogue ne passe dans ce rayon autour de ta position. La recherche textuelle reste disponible."
+        />
+      ) : (
+        <>
+          <p style={{ margin: 0, fontSize: 11.5, color: 'var(--xp-mut)' }}>
+            {data.routes.length > 1 ? 'Itinéraires réels' : 'Itinéraire réel'} de randonnée ·
+            tracé à moins de {data.radiusKm} km · difficulté non renseignée
+          </p>
+          <XpRows>
+            {data.routes.map((route) => {
+              const length =
+                route.distance_km != null
+                  ? `${route.distance_km.toFixed(1).replace('.', ',')} km`
+                  : null;
+              const network =
+                route.network === 'iwn'
+                  ? 'GR® international'
+                  : route.network === 'nwn'
+                    ? 'GR®'
+                    : route.network === 'rwn'
+                      ? 'PR'
+                      : route.network === 'lwn'
+                        ? 'Sentier local'
+                        : null;
+              const distance =
+                route.distanceKm != null
+                  ? `tracé à ${formatDistance(route.distanceKm)}`
+                  : 'distance au tracé inconnue';
+              return (
+                <XpRow
+                  key={`suggestion-${route.id}`}
+                  icon="route"
+                  title={route.name || `Itinéraire ${route.ref || route.id}`}
+                  sub={[length, route.ref || network, distance].filter(Boolean).join(' · ')}
+                  onClick={() =>
+                    ctx.state.select({ kind: 'trail', id: String(route.id) }, 'trail', 'mid')
+                  }
+                />
+              );
+            })}
+          </XpRows>
+          {data.truncated ? (
+            <XpEmpty
+              title="Suggestions tronquées"
+              hint="La lecture est bornée à 60 parcours ; le classement ne porte que sur cette sélection."
+            />
+          ) : null}
+        </>
+      )}
+    </>
+  );
+}
+
 function SearchTab({ ctx }: { ctx: SheetContext }) {
-  const [query, setQuery] = React.useState('');
-  const { data, isFetching } = useNaturalSearch(
+  // La demande vit dans le store : fermer le tiroir puis déplacer la carte ne
+  // doit pas perdre la recherche que « Rechercher dans cette zone » relance.
+  const query = ctx.state.searchQuery ?? '';
+  const requestedViewport = ctx.state.searchViewport ?? null;
+  const areaUnavailable = requestedViewport !== null && !isSearchableViewport(requestedViewport);
+  const { data, isFetching, isError, error, refetch } = useNaturalSearch(
     query,
     ctx.state.center[1],
     ctx.state.center[0],
+    requestedViewport,
   );
+  const patch = ctx.state.patch;
+  const mapViewport = ctx.mapViewport;
+
+  // Les résultats affichés correspondent à cette emprise. Une recherche
+  // explicite porte sa propre emprise (`data.zone`) ; une recherche autour du
+  // centre retient l'emprise visible au moment de la réponse.
+  React.useEffect(() => {
+    if (!data) return;
+    const reference = data.zone ?? mapViewport;
+    if (!reference) return;
+    patch({ searchReferenceViewport: reference });
+  }, [data, mapViewport, patch]);
+
+  // Les parcours trouvés sont mémorisés avec les résultats : ouvrir une fiche
+  // puis revenir ne doit pas perdre la recherche ni la trace sélectionnée.
+  // Aucun parcours n'est conservé quand la réponse change ou disparaît.
+  React.useEffect(() => {
+    patch({ searchRoutes: data?.routes ?? [] });
+  }, [data?.routes, patch]);
+
   const results = React.useMemo(() => {
     const q = query.trim().toLowerCase();
     return {
       countries: q.length < 2 ? [] : ctx.countries.filter((country) => country.name.toLowerCase().includes(q)).slice(0, 4),
       pois: data?.results ?? [],
+      routes: data?.routes ?? [],
     };
   }, [ctx.countries, data, query]);
+
+  const searchError = error instanceof ExplorerSearchError ? error : null;
+  const zoneTooLarge = searchError?.reason === 'zone-too-large';
+  const unavailableWhileOffline = !ctx.state.online && !data;
+  const hasCenter =
+    Number.isFinite(ctx.state.center[1]) && Number.isFinite(ctx.state.center[0]);
+  const noResults =
+    results.countries.length === 0 &&
+    results.pois.length === 0 &&
+    results.routes.length === 0 &&
+    !data?.routesUnavailable;
 
   return (
     <>
       <input
         className="xp-searchinput"
         value={query}
-        onChange={(event) => setQuery(event.target.value)}
-        placeholder="Pays, sommet, refuge, eau…"
-        aria-label="Rechercher un lieu"
+        onChange={(event) => patch({ searchQuery: event.target.value })}
+        placeholder="Pays, parcours, sommet, refuge, eau…"
+        aria-label="Rechercher un lieu ou un parcours"
         style={{
           width: '100%',
           height: 38,
@@ -1251,14 +2094,63 @@ function SearchTab({ ctx }: { ctx: SheetContext }) {
         }}
       />
       {query.trim().length < 2 ? (
+        <>
+          <RouteSuggestions ctx={ctx} />
+          <p style={{ margin: 0, padding: '0 4px', fontSize: 11.5, color: 'var(--xp-mut)' }}>
+            Tape deux lettres pour chercher un lieu, un parcours ou un repère dans toute la
+            zone disponible.
+          </p>
+        </>
+      ) : areaUnavailable ? (
         <XpEmpty
-          title="Cherche un lieu"
-          hint="Tape deux lettres, ou une phrase : « un point d’eau à moins de 2 heures »."
+          title="Zoome pour chercher dans cette zone"
+          hint="La recherche dans l’emprise visible demande une carte plus précise (zoom 12 minimum)."
+        />
+      ) : !hasCenter ? (
+        <XpEmpty
+          title="Recherche sans position"
+          hint="Déplace la carte pour choisir une zone, puis relance la recherche."
+        />
+      ) : unavailableWhileOffline ? (
+        <XpEmpty
+          title="Recherche indisponible hors ligne"
+          hint="La recherche interroge la base. Reviens en ligne pour la relancer ; les derniers résultats restent consultables."
         />
       ) : isFetching ? (
         <XpEmpty title="Recherche…" hint="Analyse de la demande et interrogation de la base." />
-      ) : results.countries.length === 0 && results.pois.length === 0 ? (
-        <XpEmpty title="Aucun résultat" hint="Aucun pays ni repère ne correspond dans les données disponibles." />
+      ) : isError && !data ? (
+        <XpEmpty
+          title={
+            zoneTooLarge
+              ? 'Zoome pour chercher dans cette zone'
+              : !ctx.state.online
+                ? 'Recherche indisponible hors ligne'
+                : 'Recherche temporairement indisponible'
+          }
+          hint={
+            zoneTooLarge
+              ? 'L’emprise demandée est trop vaste pour être interrogée sans un déplacement plus précis.'
+              : 'La base n’a pas répondu. Aucun résultat vide n’est affiché à la place d’une panne.'
+          }
+          action={
+            zoneTooLarge || !ctx.state.online ? undefined : (
+              <button type="button" className="xp-secondary" onClick={() => void refetch()}>
+                Réessayer
+              </button>
+            )
+          }
+        />
+      ) : !data ? (
+        <XpEmpty title="Recherche…" hint="Préparation de la requête." />
+      ) : noResults ? (
+        <XpEmpty
+          title={requestedViewport ? 'Aucun résultat dans cette zone' : 'Aucun résultat'}
+          hint={
+            requestedViewport
+              ? 'Aucun pays, repère ni parcours ne correspond dans l’emprise visible. Déplace la carte ou corrige la demande.'
+              : 'Aucun pays, repère ni parcours ne correspond dans les données disponibles.'
+          }
+        />
       ) : (
         <>
           {results.countries.length > 0 ? (
@@ -1283,6 +2175,11 @@ function SearchTab({ ctx }: { ctx: SheetContext }) {
             <>
               <XpEyebrow>Filtres compris</XpEyebrow>
               <div className="xp-chiprow" aria-label="Filtres extraits de la demande">
+                {data.zone ? (
+                  <span className="xp-chip" aria-pressed="true">
+                    Emprise visible
+                  </span>
+                ) : null}
                 <span className="xp-chip" aria-pressed="true">
                   {data.filters.kinds.map((kind) => POI_LABEL[kind] ?? kind).join(' · ')}
                 </span>
@@ -1314,6 +2211,55 @@ function SearchTab({ ctx }: { ctx: SheetContext }) {
               </XpRows>
             </>
           ) : null}
+          {results.routes.length > 0 ? (
+            <>
+              <XpEyebrow>Parcours</XpEyebrow>
+              <XpRows>
+                {results.routes.map((route) => {
+                  const length =
+                    route.distance_km != null
+                      ? `${route.distance_km.toFixed(1).replace('.', ',')} km`
+                      : null;
+                  const network =
+                    route.network === 'iwn'
+                      ? 'GR® international'
+                      : route.network === 'nwn'
+                        ? 'GR®'
+                        : route.network === 'rwn'
+                          ? 'PR'
+                          : 'Sentier balisé';
+                  const distance =
+                    route.distanceKm != null ? `à ${formatDistance(route.distanceKm)}` : null;
+                  return (
+                    <XpRow
+                      key={`route-${route.id}`}
+                      icon="route"
+                      title={route.name || `Itinéraire ${route.ref ?? route.id}`}
+                      sub={[length, route.ref ?? network, distance].filter(Boolean).join(' · ')}
+                      badge={
+                        route.matched ? { label: 'Nom cité', tone: 'good' } : undefined
+                      }
+                      onClick={() =>
+                        ctx.state.select({ kind: 'trail', id: String(route.id) }, 'trail', 'mid')
+                      }
+                    />
+                  );
+                })}
+              </XpRows>
+            </>
+          ) : null}
+          {data.routesUnavailable ? (
+            <XpEmpty
+              title="Parcours indisponibles"
+              hint="Le catalogue de parcours n’a pas répondu ; les repères restent affichés."
+            />
+          ) : null}
+          {data.truncated || data.routesTruncated ? (
+            <XpEmpty
+              title="Une partie des résultats est affichée"
+              hint="Zoome pour affiner l’emprise et voir les repères et parcours suivants."
+            />
+          ) : null}
         </>
       )}
     </>
@@ -1338,27 +2284,70 @@ function useElapsed(startedAt: number | undefined): string {
     : `${m}:${String(sec).padStart(2, '0')}`;
 }
 
-function LiveDirectTab({ ctx }: { ctx: SheetContext }) {
+/** Allure LKDV (même conversion que StatsSheet) : 500 s/km → 8'20". */
+function formatPace(secondsPerKm: number): string {
+  const total = Math.max(0, Math.round(secondsPerKm));
+  const minutes = Math.floor(total / 60);
+  const seconds = total % 60;
+  return `${minutes}'${String(seconds).padStart(2, '0')}"`;
+}
+
+export function LiveDirectTab({ ctx }: { ctx: SheetContext }) {
   const activity = ctx.state.activity;
   const elapsed = useElapsed(activity?.startedAt);
   if (!activity) {
     return <XpEmpty title="Aucune activité en cours" hint="Démarre une activité pour voir les métriques en direct." />;
   }
+  const gpsDenied = ctx.state.locationPermission === 'denied';
+  const rhythm = rhythmMetric(activity.sport, activity.selection);
+  const rhythmLabel = rhythm === 'pace' ? 'Allure' : 'Vitesse';
   const speed = activity.movingS > 0 ? (activity.distanceM / activity.movingS) * 3.6 : null;
+  const paceSeconds =
+    activity.movingS > 0 && activity.distanceM > 0
+      ? activity.movingS / (activity.distanceM / 1000)
+      : null;
+  const rhythmValue = gpsDenied
+    ? '—'
+    : rhythm === 'pace'
+      ? paceSeconds !== null
+        ? `${formatPace(paceSeconds)}/km`
+        : '—'
+      : speed !== null
+        ? `${speed.toFixed(1).replace('.', ',')} km/h`
+        : '—';
+  const metrics = [
+    { label: 'Distance', value: gpsDenied ? '—' : formatDistance(activity.distanceM / 1000) },
+    { label: rhythmLabel, value: rhythmValue },
+    { label: 'Temps', value: formatDuration(activity.movingS) },
+    { label: 'D+', value: gpsDenied ? '—' : `${Math.round(activity.elevGainM)} m` },
+  ];
   const next = ctx.pois[0];
   return (
     <>
+      {gpsDenied ? (
+        <XpEmpty
+          title="Position refusée"
+          hint="Aucun point GPS n’est enregistré. Autorise la position pour reprendre une trace."
+        />
+      ) : null}
+      {activity.paused || activity.autoPaused ? (
+        <XpRows>
+          <XpRow
+            icon="pause"
+            title={activity.paused ? 'Pause manuelle' : 'Pause automatique'}
+            sub={
+              activity.paused
+                ? 'Le suivi est suspendu · appuie sur Reprendre pour continuer.'
+                : 'Arrêt détecté · les métriques sont gelées et la reprise est automatique.'
+            }
+            badge={{ label: activity.paused ? 'pausé' : 'auto', tone: 'warn' }}
+          />
+        </XpRows>
+      ) : null}
       <div className="xp-chrono" aria-live="off">
         {elapsed}
       </div>
-      <XpMetrics
-        items={[
-          { label: 'Distance', value: formatDistance(activity.distanceM / 1000) },
-          { label: 'Allure', value: speed ? `${speed.toFixed(1).replace('.', ',')} km/h` : '—' },
-          { label: 'Temps', value: formatDuration(activity.movingS) },
-          { label: 'D+', value: `${Math.round(activity.elevGainM)} m` },
-        ]}
-      />
+      <XpMetrics items={metrics} />
       <XpEyebrow>Prochain repère</XpEyebrow>
       {next ? (
         <XpRows>
@@ -1382,31 +2371,210 @@ function LiveDirectTab({ ctx }: { ctx: SheetContext }) {
   );
 }
 
-/** Tours : découpe réelle de la sortie si des points existent, sinon état vide. */
-function LiveLapsTab({ ctx, elapsedS }: { ctx: SheetContext; elapsedS: number }) {
+/** Durée d’un segment : 5'04", ou 1 h 02'03" au-delà d’une heure. */
+function formatSplitTime(seconds: number): string {
+  if (!Number.isFinite(seconds) || seconds <= 0) return '—';
+  const total = Math.max(0, Math.round(seconds));
+  if (total >= 3600) {
+    const h = Math.floor(total / 3600);
+    const m = Math.floor((total % 3600) / 60);
+    const s = total % 60;
+    return `${h} h ${String(m).padStart(2, '0')}'${String(s).padStart(2, '0')}"`;
+  }
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return `${m}'${String(s).padStart(2, '0')}"`;
+}
+
+/** Allure ou vitesse propre au segment, jamais l’allure globale de la sortie. */
+function splitRhythmValue(
+  split: ActivitySplit,
+  rhythm: 'pace' | 'speed',
+  units: 'metric' | 'imperial',
+): string | null {
+  if (rhythm === 'pace') {
+    const pace =
+      units === 'imperial'
+        ? splitPaceSecondsPerMile(split)
+        : splitPaceSecondsPerKm(split);
+    return pace === null ? null : `${formatPace(pace)}/${units === 'imperial' ? 'mi' : 'km'}`;
+  }
+  const speed = splitSpeedKmh(split);
+  if (speed === null) return null;
+  return units === 'imperial'
+    ? `${(speed / (MILE_DISTANCE_M / 1000)).toFixed(1).replace('.', ',')} mph`
+    : `${speed.toFixed(1).replace('.', ',')} km/h`;
+}
+
+/**
+ * Détail d’un split : durée mesurée, distance du segment et rythme propre.
+ * Un split terminé n’affiche pas la distance (elle vaut 1 km ou 1 mile) ;
+ * un rythme de type vitesse reste utile pour le vélo, le kayak et le ski.
+ */
+function splitDetail(
+  split: ActivitySplit,
+  rhythm: 'pace' | 'speed',
+  withDistance: boolean,
+  units: 'metric' | 'imperial',
+): string {
+  const parts = [formatSplitTime(split.movingS)];
+  if (withDistance) {
+    parts.push(
+      units === 'imperial'
+        ? formatImperialDistance(split.distanceM / 1000)
+        : formatDistance(split.distanceM / 1000),
+    );
+  }
+  const rhythmValue = splitRhythmValue(split, rhythm, units);
+  if (rhythmValue && (withDistance || rhythm === 'speed')) parts.push(rhythmValue);
+  return parts.join(' · ');
+}
+
+/** Tours : splits kilométriques, miles et tours manuels réels, sans allure globale. */
+function LiveLapsTab({ ctx }: { ctx: SheetContext }) {
   const activity = ctx.state.activity;
   if (!activity) {
     return <XpEmpty title="Aucun tour" hint="Démarre une activité pour enregistrer des tours." />;
   }
-  const km = activity.distanceM / 1000;
-  const laps = Math.floor(km);
-  if (laps < 1) {
-    return <XpEmpty title="Pas encore de tour" hint="Le premier kilomètre n’est pas terminé." />;
+  if (ctx.state.locationPermission === 'denied') {
+    return (
+      <XpEmpty
+        title="Position refusée"
+        hint="Aucun point GPS n’est enregistré : les splits ne peuvent pas être calculés."
+      />
+    );
   }
-  const pace = activity.movingS > 0 ? activity.movingS / km : 0;
+
+  const units = ctx.units;
+  const scaleSplits = units === 'imperial' ? activity.mileSplits : activity.splits;
+  if (!scaleSplits) {
+    return (
+      <XpEmpty
+        title="Découpe indisponible"
+        hint="Cette séance n’a pas de points GPS exploitables : aucun split n’est inventé."
+      />
+    );
+  }
+
+  const rhythm = rhythmMetric(activity.sport, activity.selection);
+  const currentSplit = activeSplit(scaleSplits);
+  const completedSplits = scaleSplits.filter((split) => split.completed);
+  const fastest = fastestSplit(completedSplits);
+  const laps = activity.laps ?? [];
+  const currentLap = activeSplit(laps);
+  const completedLaps = laps.filter((split) => split.completed);
+  const fastestLap = fastestSplit(completedLaps);
+  const measured = activity.distanceM > 0;
+  const splitWord = units === 'imperial' ? 'Mile' : 'Km';
+  const splitSection = units === 'imperial' ? 'Miles' : 'Kilomètres';
+
+  if (!measured && completedSplits.length === 0) {
+    return (
+      <XpEmpty
+        title="Pas encore de tour"
+        hint={`Le premier ${units === 'imperial' ? 'mile' : 'kilomètre'} n’est pas terminé.`}
+      />
+    );
+  }
+
+  const canLap =
+    !!ctx.onMarkLap &&
+    !activity.paused &&
+    currentLap !== null &&
+    currentLap.distanceM >= 1;
+  const onMarkLap = ctx.onMarkLap;
+
   return (
-    <XpRows>
-      {Array.from({ length: Math.min(laps, 12) }, (_, index) => (
+    <>
+      <XpEyebrow>{splitSection}</XpEyebrow>
+      <XpRows>
+        {currentSplit ? (
+          <XpRow
+            icon="route"
+            title={`${splitWord} ${currentSplit.index}`}
+            sub={splitDetail(currentSplit, rhythm, true, units)}
+            badge={{ label: 'en cours', tone: 'warn' }}
+          />
+        ) : null}
+        {completedSplits.map((split) => (
+          <XpRow
+            key={`${split.kind}-${split.index}`}
+            icon="route"
+            title={`${splitWord} ${split.index}`}
+            sub={splitDetail(split, rhythm, false, units)}
+            badge={
+              fastest?.index === split.index
+                ? { label: 'plus rapide', tone: 'good' }
+                : { label: 'ok', tone: 'good' }
+            }
+          />
+        ))}
+      </XpRows>
+
+      <XpEyebrow>Tours manuels</XpEyebrow>
+      <XpRows>
+        {onMarkLap ? (
+          canLap ? (
+            <XpRow
+              icon="repeat"
+              title="Nouveau tour"
+              sub="Clôt le tour en cours et en commence un autre."
+              onClick={onMarkLap}
+            />
+          ) : (
+            <XpRow
+              icon="repeat"
+              title="Nouveau tour"
+              sub={
+                activity.paused
+                  ? 'Indisponible pendant une pause manuelle.'
+                  : 'Disponible après quelques mètres mesurés.'
+              }
+            />
+          )
+        ) : null}
+        {completedLaps.map((split) => (
+          <XpRow
+            key={`lap-${split.index}`}
+            icon="repeat"
+            title={`Tour ${split.index}`}
+            sub={splitDetail(split, rhythm, true, units)}
+            badge={
+              fastestLap?.index === split.index
+                ? { label: 'plus rapide', tone: 'good' }
+                : { label: 'ok', tone: 'good' }
+            }
+          />
+        ))}
+        {currentLap && completedLaps.length > 0 ? (
+          <XpRow
+            icon="repeat"
+            title={`Tour ${currentLap.index}`}
+            sub={splitDetail(currentLap, rhythm, true, units)}
+            badge={{ label: 'en cours', tone: 'warn' }}
+          />
+        ) : null}
+      </XpRows>
+
+      <XpEyebrow>Total</XpEyebrow>
+      <XpRows>
         <XpRow
-          key={`lap-${index + 1}`}
-          icon="repeat"
-          title={`Km ${index + 1}`}
-          sub={`${formatDuration(pace)} · allure moyenne`}
-          badge={{ label: index === laps - 1 ? 'en cours' : 'ok', tone: index === laps - 1 ? 'warn' : 'good' }}
+          icon="clock"
+          title="Temps en mouvement"
+          sub={formatDuration(activity.movingS)}
         />
-      ))}
-      <XpRow icon="clock" title="Temps total" sub={formatDuration(elapsedS)} />
-    </XpRows>
+        <XpRow
+          icon="route"
+          title="Distance mesurée"
+          sub={
+            units === 'imperial'
+              ? formatImperialDistance(activity.distanceM / 1000)
+              : formatDistance(activity.distanceM / 1000)
+          }
+        />
+        <XpRow icon="pause" title="Pauses" sub="Exclues des splits et des tours." />
+      </XpRows>
+    </>
   );
 }
 
@@ -1434,15 +2602,10 @@ function LiveSafetyTab({ ctx }: { ctx: SheetContext }) {
 
 function ActivityTabs(ctx: SheetContext, kind: string): SheetTab[] {
   const { state } = ctx;
-  const startSport = (sport: Sport) => {
-    if (ctx.onStartSport) ctx.onStartSport(sport);
-    else state.startActivity(sport);
-  };
   if (kind === 'start') {
     const isReco = state.mini === 0;
     const isCatalog = state.mini === 1;
     const isRoutes = state.mini === 2;
-    const locName = ctx.country?.name ?? 'votre secteur';
 
     return [
       {
@@ -1453,55 +2616,30 @@ function ActivityTabs(ctx: SheetContext, kind: string): SheetTab[] {
           if (isReco) {
             return (
               <>
-                <XpEyebrow>Recommandé selon ta localisation · {locName}</XpEyebrow>
-                <XpRows>
-                  <XpRow
-                    icon="hike"
-                    title="Randonnée & Bivouac"
-                    sub="Activité phare recommandée dans ce secteur · Dénivelé moyen +850 m"
-                    badge={{ label: 'Idéal ici', tone: 'good' }}
-                    onClick={() => startSport('rando')}
-                  />
-                  <XpRow
-                    icon="run"
-                    title="Trail Running d’altitude"
-                    sub="Rythme soutenu sur sentiers balisés et crêtes"
-                    badge={{ label: 'Populaire', tone: 'good' }}
-                    onClick={() => startSport('trail')}
-                  />
-                  <XpRow
-                    icon="bike"
-                    title="Sortie Vélo & Gravel"
-                    sub="Parcours panoramique avec profil altimétrique en direct"
-                    onClick={() => startSport('velo')}
-                  />
-                </XpRows>
+                <RecommendedSports ctx={ctx} />
+                <ZoneSettingsEntry />
               </>
             );
           }
           if (isRoutes) {
-            return <RoutesTab ctx={ctx} />;
+            return (
+              <>
+                <RoutesTab ctx={ctx} />
+                <ZoneSettingsEntry />
+              </>
+            );
           }
           return (
-            <XpRows>
-              {SPORTS.map((sport) => (
-                <XpRow
-                  key={sport}
-                  icon={SPORT_META[sport].icon}
-                  title={SPORT_META[sport].label}
-                  sub="Enregistrement GPS précis · Cadence, dénivelé et vitesse"
-                  onClick={() => startSport(sport)}
-                />
-              ))}
-            </XpRows>
+            <>
+              <SportPicker ctx={ctx} />
+              <ZoneSettingsEntry />
+            </>
           );
         },
       },
     ];
   }
   if (kind === 'live') {
-    const activity = state.activity;
-    const elapsed = activity ? Math.max(0, Math.floor((Date.now() - activity.startedAt) / 1000)) : 0;
     return [
       {
         id: 'direct',
@@ -1513,18 +2651,30 @@ function ActivityTabs(ctx: SheetContext, kind: string): SheetTab[] {
         id: 'tours',
         label: 'Tours',
         icon: 'repeat',
-        render: () => <LiveLapsTab ctx={ctx} elapsedS={elapsed} />,
+        render: () => <LiveLapsTab ctx={ctx} />,
       },
       {
-        id: 'coeur',
-        label: 'Cœur',
+        id: 'mesures',
+        label: 'Mesures',
         icon: 'heart',
-        render: () => (
-          <XpEmpty
-            title="Cardio indisponible"
-            hint="Aucune ceinture cardio n’est connectée : LKDV n’invente pas de fréquence cardiaque."
-          />
-        ),
+        render: () => {
+          const activity = ctx.state.activity;
+          if (!activity) {
+            return (
+              <XpEmpty
+                title="Aucune mesure"
+                hint="Démarre une activité pour voir les séries réellement reçues."
+              />
+            );
+          }
+          return (
+            <MetricSeriesPanel
+              series={activity.metricSeries ?? []}
+              units={ctx.units}
+              sport={activity.sport}
+            />
+          );
+        },
       },
       {
         id: 'securite',
@@ -1579,37 +2729,99 @@ function ActivityTabs(ctx: SheetContext, kind: string): SheetTab[] {
               <XpRows>
                 <XpRow
                   icon={SPORT_META[summary.sport].icon}
-                  title={SPORT_META[summary.sport].label}
-                  sub={new Date(summary.startedAt).toLocaleString('fr-FR', {
-                    weekday: 'short',
-                    day: 'numeric',
-                    month: 'short',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
+                  title={summary.selection?.variantLabel ?? SPORT_META[summary.sport].label}
+                  sub={[
+                    SPORT_META[summary.sport].label,
+                    new Date(summary.startedAt).toLocaleString('fr-FR', {
+                      weekday: 'short',
+                      day: 'numeric',
+                      month: 'short',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    }),
+                  ].join(' · ')}
                 />
                 <XpRow
-                  icon={state.summarySaved === 'saved' ? 'check' : 'alert'}
-                  tone={state.summarySaved === 'saved' ? 'good' : 'warn'}
+                  icon={
+                    state.summarySaved === 'saved' || state.summarySaved === 'already_finished'
+                      ? 'check'
+                      : state.summarySaved === 'local' ||
+                          state.summarySaved === 'pending' ||
+                          state.summarySaved === 'already_finished_without_summary'
+                        ? 'info'
+                        : 'alert'
+                  }
+                  tone={
+                    state.summarySaved === 'saved' || state.summarySaved === 'already_finished'
+                      ? 'good'
+                      : state.summarySaved === 'local' ||
+                          state.summarySaved === 'pending' ||
+                          state.summarySaved === 'already_finished_without_summary'
+                        ? 'muted'
+                        : 'warn'
+                  }
                   title={
                     state.summarySaved === 'saved'
                       ? 'Sortie enregistrée'
-                      : state.summarySaved === 'pending'
-                        ? 'Enregistrement en cours…'
-                        : state.summarySaved === 'unauthenticated'
-                          ? 'Sortie non enregistrée'
-                          : 'Enregistrement impossible'
+                      : state.summarySaved === 'already_finished'
+                        ? 'Sortie déjà enregistrée'
+                        : state.summarySaved === 'already_finished_without_summary'
+                          ? 'Sortie déjà close'
+                          : state.summarySaved === 'pending'
+                            ? 'Enregistrement en cours…'
+                            : state.summarySaved === 'local'
+                              ? 'Sortie locale'
+                              : state.summarySaved === 'unauthenticated'
+                                ? 'Sortie non enregistrée'
+                                : state.summarySaved === 'conflict'
+                                  ? 'Enregistrement en conflit'
+                                  : 'Enregistrement impossible'
                   }
                   sub={
-                    state.summarySaved === 'unauthenticated'
-                      ? 'Connecte-toi pour conserver tes sorties'
-                      : state.summarySaved === 'failed'
-                        ? 'Réessaie depuis ton compte'
-                        : undefined
+                    state.summarySaved === 'already_finished'
+                      ? 'Aucun doublon n’a été créé.'
+                      : state.summarySaved === 'already_finished_without_summary'
+                        ? 'Aucun résumé n’a été retrouvé pour cette séance.'
+                        : state.summarySaved === 'local'
+                          ? 'Cette séance n’a pas d’identité serveur ; elle n’est pas synchronisée.'
+                          : state.summarySaved === 'unauthenticated'
+                            ? 'Connecte-toi pour conserver tes sorties'
+                            : state.summarySaved === 'conflict'
+                              ? 'Vérifie ton compte avant de réessayer.'
+                              : state.summarySaved === 'failed'
+                                ? 'Réessaie depuis ton compte'
+                                : undefined
                   }
                 />
               </XpRows>
             </>
+          );
+        },
+      },
+      {
+        id: 'statistiques',
+        label: 'Statistiques',
+        icon: 'gauge',
+        render: () => {
+          const bilan = state.summary;
+          if (!bilan) {
+            return (
+              <XpEmpty
+                title="Aucune série à afficher"
+                hint="Termine une activité pour voir les mesures réellement reçues."
+              />
+            );
+          }
+          return (
+            <MetricSeriesPanel
+              series={bilan.metricSeries ?? []}
+              units={ctx.units}
+              sport={bilan.sport}
+              emptyTitle="Aucune série mesurée"
+              emptyHint="Cette sortie ne contient aucun point GPS ou capteur exploitable. Aucune moyenne ni aucun pic n’est inventé."
+            >
+              <SlopeAdjustedPacePanel sport={bilan.sport} />
+            </MetricSeriesPanel>
           );
         },
       },
@@ -1650,7 +2862,13 @@ function StateTabs(ctx: SheetContext): SheetTab[] {
               icon="loc"
               title="Autoriser ma position"
               sub="Pour ouvrir la carte sur ton quartier"
-              onClick={() => state.patch({ locationPermission: 'granted', sheet: 'level', detent: 'peek' })}
+              onClick={() => {
+                // Le bouton ne fabrique jamais une permission « accordée » :
+                // il demande la position réelle, et seul le callback du
+                // navigateur patche `locationPermission`.
+                ctx.onRequestLocation?.();
+                state.patch({ sheet: 'level', detent: 'peek' });
+              }}
             />
             <XpRow icon="chevr" title="Plus tard" onClick={() => state.patch({ sheet: 'level', detent: 'peek' })} />
           </XpRows>
@@ -1764,7 +2982,7 @@ export function buildSheetModel(ctx: SheetContext): SheetModel {
       trail: ['Itinéraire', 'Trace enregistrée'],
       depart: ['Créer un départ', 'Invite d’autres membres'],
       search: ['Recherche', 'Pays, repères, itinéraires'],
-      layers: ['Calques', 'Ce que la carte affiche'],
+      layers: ['Calques', 'Éléments visibles de la carte'],
       offline: ['Hors ligne', 'Zone téléchargeable'],
     };
     const [title, subtitle] = titles[kind];
@@ -1778,7 +2996,49 @@ export function buildSheetModel(ctx: SheetContext): SheetModel {
           ? { items: [{ id: 'carte', label: 'Carte', icon: 'map' }, { id: 'survol', label: 'Survol 3D', icon: 'play' }], value: state.mini, onChange: (index: number) => state.setMini(index === 1 ? 1 : 0) }
           : null,
       actions: null,
-      onBack: () => state.patch({ sheet: 'level', detent: 'peek' }),
+      onBack:
+        kind === 'layers'
+          ? () => state.closeLayers()
+          : () => state.patch({ sheet: 'level', detent: 'peek' }),
+    };
+  }
+
+  if (kind === 'strength') {
+    return {
+      title: 'Musculation',
+      subtitle: 'Carnet privé · exercices, séries, répétitions, charges',
+      tabs: [
+        {
+          id: 'carnet',
+          label: 'Carnet',
+          icon: 'dumbbell',
+          render: () => <StrengthPanel />,
+        },
+      ],
+      mini: null,
+      actions: null,
+      onBack: () => state.setSheet('start', 'low'),
+    };
+  }
+
+  if (kind === 'zoneSettings') {
+    return {
+      title: 'Zones et seuils',
+      subtitle: 'Réglages sportifs privés · aucune valeur par défaut',
+      tabs: [
+        {
+          id: 'zones',
+          label: 'Réglages',
+          icon: 'gauge',
+          render: () => <ZoneSettingsPanel displayUnits={ctx.units} />,
+        },
+      ],
+      mini: null,
+      actions: null,
+      onBack: () => {
+        state.setTab(0);
+        state.setSheet('start', 'low');
+      },
     };
   }
 
@@ -1790,10 +3050,19 @@ export function buildSheetModel(ctx: SheetContext): SheetModel {
       summary: ['Bilan', 'Fin de sortie'],
     };
     const [title, subtitle] = titles[kind];
-    const sport = state.activity?.sport;
+    const activity = state.activity;
+    const sport = activity?.sport;
     return {
-      title: kind === 'live' && sport ? SPORT_META[sport].label : title,
-      subtitle: kind === 'live' && sport ? 'Suivi en cours' : subtitle,
+      title:
+        kind === 'live' && sport
+          ? (activity?.selection?.variantLabel ?? SPORT_META[sport].label)
+          : title,
+      subtitle:
+        kind === 'live' && sport
+          ? state.locationPermission === 'denied'
+            ? `${SPORT_META[sport].label} · GPS refusé`
+            : `${SPORT_META[sport].label} · Suivi en cours`
+          : subtitle,
       tabs: ActivityTabs(ctx, kind),
       mini:
         kind === 'start'

@@ -1,7 +1,8 @@
 # ÉTAT DES POINTS · Explorer v2
 
-Vérité terrain au 2026-10-29 09:40. Aucune case cochée sans preuve exécutée ;
+Vérité terrain au 2026-11-12. Aucune case cochée sans preuve exécutée ;
 les points non terminés restent **non cochés** et sont listés ci-dessous.
+Contrat S1.05 et seuils : `S1.05-PAUSE-AUTOMATIQUE.md`.
 
 ## Fait et prouvé (MISSION_LOG)
 
@@ -13,7 +14,7 @@ les points non terminés restent **non cochés** et sont listés ci-dessous.
 | P3 | 01, 02, 04, 05, 06, 08, 09 | feuille 4 crans, lentille, mini-sélecteur, haptique, flag |
 | P5 | 09, 10 | signalements réels + confirmation « présent / disparu » |
 | P6 | 06, 07, 08, 09 | profil DEM 655 ms, départ en base, 12 règles de recherche, mode avion |
-| P7 | 01..15, 16, 17, 18, 19, 21 | compte à rebours, hors-trace, SOS, bilan, file hors ligne, tracker 9 sports |
+| P7 | 01..15, 17, 18, 19, 21 | compte à rebours, hors-trace, SOS, bilan, file hors ligne |
 | P8 | 05, 06, 07 | axe ×4 scènes, texte 200 %, cibles mesurées |
 | P9 | 01, 05, 06, 07, 08 | 148 Ko, bench TS (0,076 ms), 7 requêtes, index 1,48 ms |
 | P10 | 01, 03, 04, 05, 06, 07, 08, 09, 11 | flag 100 %, legacy supprimé, redirection, PR #119, attributions, métadonnées, **verify ×2 vert**, parité 41 écrans |
@@ -29,7 +30,8 @@ les points non terminés restent **non cochés** et sont listés ci-dessous.
 | P3-03, P3-07 | boussole fonctionnelle, toast « sous l'Island » | bouton présent, comportement partiel |
 | P4-11, P4-12 | 10 pays tirés au hasard, unités impériales | 237 pays ouvrables, unités non gérées |
 | P5-11… | fiches photos, avis | tables absentes |
-| P7-16, P7-20 | GPS rejoué 9 sports, Live Activity iOS | pas d'appareil ni Xcode ici (BLOCAGES #6) |
+| P7-16 (preuve terrain) | GPX réels et appareil | règles, horloges, hors-trace et tracé couverts par 251 tests Explorer (dont le parcours composant), limites heuristiques documentées ; aucun appareil ici (BLOCAGES #6) |
+| P7-20 | Live Activity iOS | pas d'appareil ni Xcode ici (BLOCAGES #6) |
 | P8-08 | i18n des libellés Explorer | ~180 chaînes en dur, migration i18n non faite |
 | P9-02, P9-03, P9-04, P9-09 | Lighthouse, frames, mémoire 10 min, RUM | outils absents ou non instrumentés |
 | ~~P10-01~~ | **fait** : 41 paires versionnées, verdict par écran dans `PARITE.md` | 9 paires relues image par image |

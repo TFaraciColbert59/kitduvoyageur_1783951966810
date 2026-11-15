@@ -23,7 +23,7 @@ import { filterTracksForMode, mapModeConfig } from '@/features/compte/map/modes'
 import { resolveMapZoomConfig, type MapZoomBand } from '@/features/compte/map/zoomHierarchy';
 import {
   boundsOf as boundsOfPoints,
-  parsePositions,
+  parseTraceSegments,
   simplifyTrack,
 } from '@/features/compte/map/geometry';
 import type {
@@ -33,6 +33,7 @@ import type {
   MapTrack,
   TrackPoint,
 } from '@/features/compte/map/types';
+import { carnetMapSummary } from '@/features/compte/map/a11y';
 import { CompteMapAttribution, CompteMapHud } from './CompteMapHud';
 import { CompteMapCallout } from './CompteMapCallout';
 import { CompteMapFallback } from './CompteMapFallback';
@@ -88,7 +89,7 @@ export interface CompteMapProps {
     type?: string;
     badge?: string;
   }>;
-  /** Une trace par jour : la fiche carnet les peint toutes, le jour actif en avant. */
+  /** Morceaux indépendants par jour, avec le jour actif en avant. */
   dayTraces?: Array<{ day: number; coordinates: Array<[number, number]> }>;
   /** Toucher la trace d'un jour change de jour (fiche carnet). */
   onDayPick?: (day: number) => void;
@@ -154,23 +155,20 @@ function pointsCollection(rows: Array<{ id: string; position: TrackPoint; import
   };
 }
 
-/** Tracé d'un carnet public : une seule ligne, même matière que les traces du compte. */
-function carnetTraceCollection(points: TrackPoint[]) {
+/** Tracé d'un carnet public : un Feature par morceau, jamais recollé. */
+function carnetTraceCollection(segments: TrackPoint[][]) {
   return {
     type: 'FeatureCollection' as const,
-    features:
-      points.length >= 2
-        ? [
-            {
-              type: 'Feature' as const,
-              properties: { id: 'carnet-trace' },
-              geometry: {
-                type: 'LineString' as const,
-                coordinates: points.map((point) => [point.lng, point.lat]),
-              },
-            },
-          ]
-        : [],
+    features: segments
+      .filter((segment) => segment.length >= 2)
+      .map((segment, index) => ({
+        type: 'Feature' as const,
+        properties: { id: `carnet-trace-${index}` },
+        geometry: {
+          type: 'LineString' as const,
+          coordinates: segment.map((point) => [point.lng, point.lat]),
+        },
+      })),
   };
 }
 
@@ -353,15 +351,21 @@ export function CompteMap({
     }
   }, [map, ready, tileMode]);
 
-  /* Fiche carnet : la carte ne montre que le tracé du carnet. */
+  /* Fiche carnet : la carte ne montre que le tracé du carnet. Un
+     MultiLineString reste une liste de morceaux ; on ne l'aplatit jamais en
+     une seule ligne, sinon une zone masquée serait recollée à l'écran. */
   const isCarnet = variant === 'carnet';
-  const tracePoints = useMemo(
-    /* 120 points suffisent à un profil, pas à une carte : à cette densité les
-       lacets sont coupés et le tracé quitte le sentier. La carte garde la
-       densité réelle (jusqu'à 4 000 sommets), MapLibre la rend sans effort. */
-    () => (isCarnet ? simplifyTrack(parsePositions(trace), 4000) : []),
+  /* Garder les lacets lisibles sans relier les sections masquées. */
+  const traceSegments = useMemo(
+    () =>
+      isCarnet
+        ? parseTraceSegments(trace)
+            .map((segment) => simplifyTrack(segment, 4000))
+            .filter((segment) => segment.length >= 2)
+        : [],
     [isCarnet, trace]
   );
+  const tracePoints = useMemo(() => traceSegments.flat(), [traceSegments]);
   const traceBounds = useMemo(
     () => (tracePoints.length >= 2 ? boundsOfPoints(tracePoints) : null),
     [tracePoints]
@@ -713,7 +717,7 @@ export function CompteMap({
     ensureSource(
       map,
       'compte-carnet-trace',
-      carnetTraceCollection(tracePoints) as ReturnType<typeof tracksCollection>
+      carnetTraceCollection(traceSegments) as ReturnType<typeof tracksCollection>
     );
     ensureLayer(map, 'compte-carnet-trace-casing', () => {
       map.addLayer({
@@ -755,7 +759,7 @@ export function CompteMap({
     ]) {
       if (map.getLayer(layer)) map.setLayoutProperty(layer, 'visibility', visible);
     }
-  }, [map, ready, isCarnet, tracePoints, dayTraces]);
+  }, [map, ready, isCarnet, traceSegments, tracePoints.length, dayTraces]);
 
   /* Traces des jours (spec 01 § 1.3) : blanc 6 / sauge 7 / forêt 3, le jour affiché
      en avant et les autres atténuées. Une couche de capture large (22 px) rend la
@@ -1215,12 +1219,16 @@ export function CompteMap({
   /* Fiche carnet : état vide seulement quand la base ne porte réellement
      aucune trace — jamais un « connecte-toi » qui n'a pas de sens ici. */
   const showCarnetEmpty = isCarnet && !fallback && !styleFailed && ready && tracePoints.length < 2;
+  const carnetEmptyTitle = emptyTitle ?? 'Aucun tracé enregistré pour ce carnet.';
+  const carnetEmptyHint = emptyHint ?? 'L’auteur n’a pas joint de trace GPS à ce carnet.';
+  /* Le libellé de la région ne doit pas dire « tes sorties » à un visiteur. */
+  const regionLabel = isCarnet ? 'Carte du carnet' : 'Carte de tes sorties';
 
   return (
     <div
       className="lkdv-map-root"
       role="region"
-      aria-label="Carte de tes sorties"
+      aria-label={regionLabel}
       data-zoom-band={zoomBand}
       data-map-mode={context.mode}
       data-map-outing={context.outingId ?? ''}
@@ -1237,9 +1245,7 @@ export function CompteMap({
       <div ref={containerRef} className="lkdv-map-canvas" />
       <p className="sr-only" aria-live="polite">
         {isCarnet
-          ? tracePoints.length >= 2
-            ? `Tracé du carnet : ${tracePoints.length} points géolocalisés.`
-            : 'Aucun tracé enregistré pour ce carnet.'
+          ? carnetMapSummary(tracePoints.length, carnetEmptyTitle, carnetEmptyHint)
           : data
             ? `Carte de tes sorties : ${data.stats.outings} sorties, ${data.stats.km} kilomètres, ${data.stats.massifs} massifs.`
             : 'Carte en chargement.'}
@@ -1285,11 +1291,7 @@ export function CompteMap({
       ) : null}
 
       {showCarnetEmpty ? (
-        <CompteMapState
-          kind="neutral"
-          title={emptyTitle ?? 'Aucun tracé enregistré pour ce carnet.'}
-          hint={emptyHint ?? 'L’auteur n’a pas joint de trace GPS à ce carnet.'}
-        />
+        <CompteMapState kind="neutral" title={carnetEmptyTitle} hint={carnetEmptyHint} />
       ) : null}
 
       {ready &&

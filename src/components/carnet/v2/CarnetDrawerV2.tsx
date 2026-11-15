@@ -806,13 +806,17 @@ export function CarnetDrawerV2({
                   ? `Dénivelé du tracé : +${profileGain} m`
                   : detail.elevationM
                     ? `Dénivelé total positif : +${Math.round(detail.elevationM)} m`
-                    : 'Dénivelé total non renseigné'}
+                    : detail.elevationWithheld
+                      ? 'Dénivelé masqué pour ce partage'
+                      : 'Dénivelé total non renseigné'}
               </p>
               {profile.length >= 2 ? (
                 <CarnetAltitude points={profile} height={80} interactive label="Profil d’altitude du tracé" />
               ) : (
                 <p className="lkdv-altitude-empty" role="status">
-                  Aucune mesure d’altitude enregistrée pour ce carnet.
+                  {detail.elevationWithheld
+                    ? 'Profil d’altitude masqué pour ce partage.'
+                    : 'Aucune mesure d’altitude enregistrée pour ce carnet.'}
                 </p>
               )}
             </div>

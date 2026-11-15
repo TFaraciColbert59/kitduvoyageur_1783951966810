@@ -56,6 +56,7 @@
     "test:visual": "playwright test --config=playwright.visual.config.ts",
     "test:visual:update": "playwright test --config=playwright.visual.config.ts --update-snapshots",
     "seed:demo": "node scripts/seed/seed_massive_demo.mjs",
+    "seed:demo:population": "node scripts/seed/seed_demo_population.mjs",
     "supabase:status": "supabase status",
     "mobile:sync": "npx cap sync",
     "mobile:build": "npm run build && node scripts/mobile/sync-release.mjs",

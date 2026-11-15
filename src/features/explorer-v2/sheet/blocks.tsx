@@ -110,6 +110,9 @@ export function XpRow({
   onClick,
   trailing,
   ariaLabel,
+  disabled = false,
+  ariaPressed,
+  ariaExpanded,
 }: {
   icon?: string;
   image?: string;
@@ -120,6 +123,11 @@ export function XpRow({
   onClick?: () => void;
   trailing?: React.ReactNode;
   ariaLabel?: string;
+  /** Ligne informative non actionnable (source non validée, donnée absente). */
+  disabled?: boolean;
+  ariaPressed?: boolean;
+  /** État d'un panneau que cette ligne ouvre ou referme. */
+  ariaExpanded?: boolean;
 }) {
   const content = (
     <>
@@ -156,11 +164,22 @@ export function XpRow({
     </>
   );
 
-  if (!onClick) {
-    return <div className="xp-row">{content}</div>;
+  if (disabled || !onClick) {
+    return (
+      <div className="xp-row" aria-disabled={disabled ? 'true' : undefined}>
+        {content}
+      </div>
+    );
   }
   return (
-    <button type="button" className="xp-row" onClick={onClick} aria-label={ariaLabel ?? title}>
+    <button
+      type="button"
+      className="xp-row"
+      onClick={onClick}
+      aria-label={ariaLabel ?? title}
+      aria-pressed={ariaPressed}
+      aria-expanded={ariaExpanded}
+    >
       {content}
     </button>
   );

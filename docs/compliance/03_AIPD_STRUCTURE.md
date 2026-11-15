@@ -18,6 +18,8 @@ juridique enregistrée ».
 | Attribution/commissions kit (parents, descendants) | traçabilité de personnes/œuvres | À ÉVALUER |
 | Télémétrie produit (`hub_telemetry`) | suivi d'usage | À ÉVALUER |
 | Publication de carnets (snapshots) | diffusion publique de contenus, lieux, personnes | À ÉVALUER |
+| Tours FIT/TCX avec FC, cadence et puissance (`trace_import_laps`) | mesures physiologiques importées d'un appareil, potentiellement sensibles ; stockage privé, jamais partagé | À ÉVALUER |
+| Résumé et séries FIT/TCX (`trace_import_summaries`, `trace_import_samples`) | FC, cadence, puissance, température et distance source lues dans un fichier ; stockage privé propriétaire, jamais partagé, aucune coordonnée dupliquée | À ÉVALUER |
 
 ## 2. Grille minimale par traitement (à remplir)
 
@@ -37,6 +39,16 @@ juridique enregistrée ».
 - Seuil collectif `distinct_user_count >= 5` (migrations A1).
 - Consentements par finalité (`has_active_consent`) et export/effacement (A14).
 - Aucune donnée personnelle dans `stripe_events`.
+- Tours source FIT/TCX (`trace_import_laps`) : RLS propriétaire seule, aucune
+  policy publique, aucune coordonnée dupliquée, suppression en cascade avec la
+  sortie et le compte, export/effacement A14. Les splits calculés restent dans
+  un contrat séparé et ne sont pas joints à ces tours.
+- Métriques importées (`trace_import_summaries`, `trace_import_samples`) : RLS
+  propriétaire seule, aucune policy publique ni écriture directe, suppression en
+  cascade, export/effacement A14. Le résumé ne vient que du message FIT
+  `session` ; les séries ne contiennent aucune coordonnée et aucune valeur
+  calculée. FC, cadence et puissance restent des mesures physiologiques
+  potentielles : toute réutilisation santé exige une AIPD dédiée.
 
 ## 4. Zones d'incertitude déclarées
 

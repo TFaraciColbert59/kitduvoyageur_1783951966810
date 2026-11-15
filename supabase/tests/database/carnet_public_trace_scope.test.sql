@@ -7,7 +7,7 @@
 -- 5. Un visiteur connecté non participant ne voit ni la vue participant ni les bruts.
 BEGIN;
 SET LOCAL search_path = public;
-SELECT plan(16);
+SELECT plan(17);
 
 -- Fixtures -------------------------------------------------------------------
 INSERT INTO auth.users (id, aud, role, email, encrypted_password, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
@@ -34,13 +34,13 @@ INSERT INTO public.carnet_collaborators (carnet_id, user_id, role)
 VALUES ('cd100000-0000-4000-8000-000000000001', 'cd000000-0000-4000-8000-000000000002', 'contributor')
 ON CONFLICT DO NOTHING;
 
--- 12 points : l'échantillonnage 1 point sur 5 + le dernier doit en garder 4.
-INSERT INTO public.hike_sessions (id, user_id, carnet_id, started_at, distance_km, elevation_gain_m, positions_geojson, positions_timed)
+-- Le tracé public conserve les 12 points de la sortie courte.
+INSERT INTO public.hike_sessions (id, user_id, carnet_id, started_at, ended_at, duration_seconds, distance_km, elevation_gain_m, positions_geojson, positions_timed)
 VALUES (
   'cd200000-0000-4000-8000-000000000001',
   'cd000000-0000-4000-8000-000000000001',
   'cd100000-0000-4000-8000-000000000001',
-  '2026-07-13T06:30:00Z', 12.4, 980,
+  '2026-07-13T06:30:00Z', '2026-07-13T09:30:00Z', 10800, 12.4, 980,
   jsonb_build_object('type', 'LineString', 'coordinates', (
     select jsonb_agg(jsonb_build_array(6.10000 + (i * 0.00123), 45.10000 + (i * 0.00123)) order by i)
     from generate_series(1, 12) as i
@@ -51,16 +51,16 @@ VALUES (
   )
 );
 
-INSERT INTO public.hike_sessions (id, user_id, carnet_id, started_at, distance_km, positions_geojson)
+INSERT INTO public.hike_sessions (id, user_id, carnet_id, started_at, ended_at, duration_seconds, distance_km, positions_geojson)
 VALUES (
   'cd200000-0000-4000-8000-000000000002',
   'cd000000-0000-4000-8000-000000000001',
   'cd100000-0000-4000-8000-000000000002',
-  '2026-08-01T06:30:00Z', 8,
+  '2026-08-01T06:30:00Z', '2026-08-01T08:30:00Z', 7200, 8,
   jsonb_build_object('type', 'LineString', 'coordinates', jsonb_build_array(jsonb_build_array(5.5, 44.5), jsonb_build_array(5.6, 44.6)))
 );
 
--- 1-5. anon : table fermée, vue publique ouverte -----------------------------
+-- 1-6. anon : table fermée, vue publique ouverte -----------------------------
 SET LOCAL ROLE anon;
 SET LOCAL "request.jwt.claims" = '{"role": "anon"}';
 
@@ -89,7 +89,7 @@ SELECT throws_ok(
   '42501', NULL, 'anon ne lit pas la vue participant'
 );
 
--- 6-9. La vue publique échantillonne, arrondit, ne publie rien de brûlant ----
+-- 7-10. La vue publique échantillonne, arrondit, ne publie rien de brûlant ----
 SELECT results_eq(
   $$SELECT jsonb_array_length(positions_geojson -> 'coordinates')
     FROM public.hike_sessions_public WHERE id = 'cd200000-0000-4000-8000-000000000001'$$,
@@ -120,20 +120,20 @@ SELECT ok(
   'les mesures publiques ne portent aucun horodatage'
 );
 
--- 10-11. authenticated : colonnes neutres oui, bruts non --------------------
+-- 11-12. authenticated : colonnes neutres oui, bruts non --------------------
 RESET ROLE;
 SET LOCAL ROLE authenticated;
 SET LOCAL "request.jwt.claims" = '{"sub": "cd000000-0000-4000-8000-000000000002", "role": "authenticated"}';
 SELECT ok(
-  has_table_privilege('authenticated', 'public.hike_sessions', 'SELECT'),
-  'authenticated garde le SELECT table (colonnes neutres)'
+  has_column_privilege('authenticated', 'public.hike_sessions', 'distance_km', 'SELECT'),
+  'authenticated garde le SELECT sur les colonnes neutres'
 );
 SELECT ok(
   NOT has_column_privilege('authenticated', 'public.hike_sessions', 'positions_geojson', 'SELECT'),
   'authenticated n''a pas le privilège sur positions_geojson'
 );
 
--- 12-14. Vue participant : participant oui, visiteur non ---------------------
+-- 13-15. Vue participant : participant oui, visiteur non ---------------------
 SELECT isnt_empty(
   $$SELECT positions_geojson FROM public.hike_sessions_participant
     WHERE id = 'cd200000-0000-4000-8000-000000000001'$$,
@@ -151,7 +151,7 @@ SELECT throws_ok(
   '42501', NULL, 'un visiteur connecté ne lit pas les bruts sur la table'
 );
 
--- 15-16. L'auteur lit sa propre sortie --------------------------------------
+-- 16-17. L'auteur lit sa propre sortie --------------------------------------
 SET LOCAL "request.jwt.claims" = '{"sub": "cd000000-0000-4000-8000-000000000001", "role": "authenticated"}';
 SELECT isnt_empty(
   $$SELECT positions_timed FROM public.hike_sessions_participant

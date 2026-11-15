@@ -1,5 +1,6 @@
 'use client';
 
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { create } from 'zustand';
 import type {
   ActivityState,
@@ -7,13 +8,21 @@ import type {
   Detent,
   ExplorerState,
   Level,
+  MapBaseStyle,
+  PendingStart,
   PoiKind,
   Selection,
   SheetKind,
   Sport,
+  SportSelection,
+  StrengthLog,
   ToastMessage,
+  TrailRouteSnapshot,
 } from './types';
 import { LEVEL_ZOOM, SCENES, type SceneName } from './scenes';
+import { createSplitsState } from '../activity/splits';
+import { newClientSessionId } from '../activity/localSession';
+import { clearStrengthDraft, writeStrengthDraft } from '../strength/storage';
 
 export const DETENT_RATIO: Record<Detent, number> = {
   peek: 0,
@@ -33,6 +42,10 @@ interface ExplorerActions {
   select: (selection: Selection, sheet: SheetKind, detent?: Detent) => void;
   clearSelection: () => void;
   setSheet: (sheet: SheetKind, detent?: Detent) => void;
+  /** Ouvre le menu commun des couches en mémorisant le tiroir parent (K3.12). */
+  openLayers: () => void;
+  /** Revient au tiroir parent, avec sa hauteur et son onglet (K3.12). */
+  closeLayers: () => void;
   setDetent: (detent: Detent) => void;
   setTab: (tab: number) => void;
   setMini: (mini: number) => void;
@@ -40,17 +53,58 @@ interface ExplorerActions {
   setCamera: (camera: CameraIntent) => void;
   showToast: (toast: Omit<ToastMessage, 'id'>) => void;
   dismissToast: () => void;
-  startActivity: (sport: Sport, sessionId?: string | null) => void;
+  startActivity: (
+    sport: Sport,
+    sessionId?: string | null,
+    selection?: SportSelection,
+    clientSessionId?: string | null,
+  ) => void;
   updateActivity: (patch: Partial<ActivityState>) => void;
+  /**
+   * Publie la géométrie réelle chargée pour l'itinéraire armé. Si une séance
+   * porte déjà cet itinéraire, sa copie figée reçoit la même géométrie : on ne
+   * remplace jamais l'identifiant choisi au départ.
+   */
+  setTrailRoute: (route?: TrailRouteSnapshot) => void;
+  /**
+   * Publie une géométrie chargée sur **toutes** les copies qui portent encore
+   * cet identifiant : la route armée et/ou la copie figée de la séance. Une
+   * copie déjà `ready` n'est jamais remplacée. Ne ressuscite pas une route
+   * effacée : si aucun snapshot ne correspond, l'action ne fait rien.
+   */
+  setRouteGeometry: (route: TrailRouteSnapshot, options?: { force?: boolean }) => void;
+  /** Remet en `loading` une copie `unavailable` pour tenter un nouveau chargement. */
+  retryRouteGeometry: (routeId: string) => void;
   stopActivity: () => void;
   setTheme: (theme: 'light' | 'dark') => void;
   toggleNorthUp: () => void;
   setUnits: (units: 'metric' | 'imperial') => void;
-  setMapBaseStyle: (style: 'relief' | 'satellite' | 'plan') => void;
+  setMapBaseStyle: (style: MapBaseStyle) => void;
   toggleLayer: (layerId: string) => void;
+  /** Réglage local de préparation : active ou coupe la pause automatique. */
+  setAutoPauseEnabled: (enabled: boolean) => void;
+  /**
+   * Écrit le carnet musculation dans le store et, si possible, dans le
+   * stockage local **avant** toute synchronisation. `false` signifie que seule
+   * la mémoire est à jour.
+   */
+  storeStrengthLog: (log: StrengthLog) => boolean;
+  /** Efface le brouillon local et l’état mémoire (la suppression serveur est demandée par l’écran). */
+  clearStrengthLog: () => void;
 }
 
 export type ExplorerStore = ExplorerState & ExplorerActions;
+
+/** Clé locale du réglage de préparation de l'Explorer v2. */
+export const AUTO_PAUSE_STORAGE_KEY = 'lkdv.explorer.pauseAuto';
+
+/**
+ * Vrai quand le dernier choix de session n'a pas pu être persisté alors que
+ * `getItem` fonctionne encore (quota, politique navigateur). L'hydratation ne
+ * doit alors pas relire une valeur périmée et écraser le choix courant.
+ * Repasse à `false` dès qu'une écriture réussit.
+ */
+let autoPausePersistenceFailed = false;
 
 const initialState: ExplorerState = {
   level: 0,
@@ -63,6 +117,10 @@ const initialState: ExplorerState = {
   profile: null,
   easyMode: false,
   theme: 'light',
+  // S1.05 : décision produit retenue, détection active par défaut et
+  // désactivable depuis le drawer de préparation. OFF seulement après un choix
+  // explicite de l'utilisateur (la fiche exige la désactivabilité, pas le ON).
+  autoPauseEnabled: true,
   online: true,
   locationPermission: 'prompt',
   orbitPaused: false,
@@ -72,14 +130,23 @@ const initialState: ExplorerState = {
   background: false,
   center: [2.35, 48.85],
   zoom: 1.6,
+  searchQuery: '',
+  searchSport: null,
+  searchViewport: null,
+  searchReferenceViewport: null,
+  searchRoutes: [],
+  routeSuggestions: [],
   mapBaseStyle: 'relief',
   layerVisibility: {
     routes: true,
     water: true,
     refuges: true,
+    summits: true,
+    access: true,
     dangers: true,
     snow: true,
     slope: false,
+    distanceMarkers: true,
   },
 };
 
@@ -97,13 +164,55 @@ function emit(event: string, detail?: Record<string, unknown>) {
   w.__explorerEvents.push({ event, detail: detail ?? null, t: Date.now() });
 }
 
+/**
+ * Copie figée de l'itinéraire armé. Si la sélection vient d'être posée et que
+ * la géométrie n'est pas encore publiée, on conserve l'identifiant avec
+ * `loading` : le chargement pourra aboutir, mais la route ne changera plus.
+ */
+function routeSnapshotFor(
+  selection: Selection | undefined,
+  trailRoute: TrailRouteSnapshot | undefined,
+): TrailRouteSnapshot | undefined {
+  if (selection?.kind !== 'trail') return undefined;
+  if (trailRoute?.id === selection.id) return trailRoute;
+  return { id: selection.id, name: null, geojson: null, status: 'loading' };
+}
+
+function activityStarted(
+  sport: Sport,
+  sessionId: string | null,
+  selection?: SportSelection,
+  route?: TrailRouteSnapshot,
+  clientSessionId?: string | null,
+): ActivityState {
+  const splits = createSplitsState();
+  return {
+    sport,
+    ...(selection ? { selection } : {}),
+    ...(route ? { route } : {}),
+    sessionId,
+    ...(clientSessionId ? { clientSessionId } : {}),
+    startedAt: Date.now(),
+    paused: false,
+    autoPaused: false,
+    offRoute: false,
+    distanceM: 0,
+    elevGainM: 0,
+    movingS: 0,
+    splits: splits.km,
+    mileSplits: splits.mi,
+    laps: splits.laps,
+    metricSeries: [],
+  };
+}
+
 export const useExplorerStore = create<ExplorerStore>((set, get) => ({
   ...initialState,
 
   hydrateFromScene: (sceneName) => {
     const preset = SCENES[sceneName];
     if (!preset) return;
-    set({ ...(preset as Partial<ExplorerStore>), scene: sceneName });
+    set({ ...(preset as Partial<ExplorerStore>), scene: sceneName, sheetParent: undefined });
     emit('scene', { scene: sceneName });
   },
 
@@ -130,6 +239,7 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
       center,
       zoom: LEVEL_ZOOM[1],
       sheet: 'level',
+      sheetParent: undefined,
       detent: 'peek',
       tab: 0,
       camera: { type: 'level', level: 1, center },
@@ -146,6 +256,7 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
       center,
       zoom: LEVEL_ZOOM[2],
       sheet: 'level',
+      sheetParent: undefined,
       detent: 'low',
       tab: 0,
       camera: { type: 'level', level: 2, center },
@@ -161,6 +272,7 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
       center,
       zoom: LEVEL_ZOOM[3],
       sheet: 'level',
+      sheetParent: undefined,
       detent: 'peek',
       tab: 0,
       camera: { type: 'level', level: 3, center },
@@ -177,6 +289,7 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
       placeId: next < 3 ? undefined : get().placeId,
       selection: undefined,
       sheet: 'level',
+      sheetParent: undefined,
       detent: next === 0 ? 'peek' : 'low',
       tab: 0,
       camera: { type: 'level', level: next, center: get().center },
@@ -188,7 +301,14 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
     const center = get().center;
     set({
       selection,
+      // Armer un nouvel itinéraire remplace toute géométrie précédente. La
+      // séance en cours, elle, garde sa propre copie dans `activity.route`.
+      trailRoute:
+        selection.kind === 'trail'
+          ? { id: selection.id, name: null, geojson: null, status: 'loading' }
+          : undefined,
       sheet,
+      sheetParent: undefined,
       detent,
       tab: 0,
       reveal: true,
@@ -200,11 +320,62 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
     emit('select', { kind: selection.kind, id: selection.id, sheet });
   },
 
-  clearSelection: () => set({ selection: undefined, sheet: 'level', detent: 'peek' }),
+  clearSelection: () =>
+    set({
+      selection: undefined,
+      trailRoute: undefined,
+      sheet: 'level',
+      sheetParent: undefined,
+      detent: 'peek',
+    }),
 
   setSheet: (sheet, detent) => {
-    set({ sheet, detent: detent ?? get().detent });
+    set({
+      sheet,
+      detent: detent ?? get().detent,
+      // Toute navigation explicite invalide le parent du sous-tiroir : seul
+      // `openLayers()` en pose un, et `closeLayers()` le consomme.
+      sheetParent: undefined,
+    });
     emit('sheet', { sheet, detent: detent ?? null });
+  },
+
+  openLayers: () => {
+    const current = get();
+    // Un second appui sur « Calques » ne doit pas remplacer le parent mémorisé
+    // par le tiroir Calques lui-même ; il le ramène seulement à mi-hauteur.
+    if (current.sheet === 'layers') {
+      if (current.detent !== 'mid' && current.detent !== 'full') set({ detent: 'mid' });
+      return;
+    }
+    set({
+      sheetParent: {
+        sheet: current.sheet,
+        detent: current.detent,
+        tab: current.tab,
+      },
+      sheet: 'layers',
+      detent: 'mid',
+      tab: 0,
+    });
+    emit('sheet', { sheet: 'layers', detent: 'mid', parent: current.sheet });
+  },
+
+  closeLayers: () => {
+    const current = get();
+    const parent = current.sheetParent;
+    if (parent) {
+      set({
+        sheet: parent.sheet,
+        detent: parent.detent,
+        tab: parent.tab,
+        sheetParent: undefined,
+      });
+      emit('sheet', { sheet: parent.sheet, detent: parent.detent, parent: null });
+      return;
+    }
+    set({ sheet: 'level', detent: 'peek', tab: 0, sheetParent: undefined });
+    emit('sheet', { sheet: 'level', detent: 'peek', parent: null });
   },
 
   setDetent: (detent) => {
@@ -234,32 +405,94 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
 
   dismissToast: () => set({ toast: undefined }),
 
-  startActivity: (sport, sessionId = null) => {
-    const activity: ActivityState = {
+  startActivity: (sport, sessionId = null, selection, clientSessionId) => {
+    const route = routeSnapshotFor(get().selection, get().trailRoute);
+    const activity = activityStarted(sport, sessionId, selection, route, clientSessionId);
+    set({
+      activity,
+      // Une nouvelle séance ne peut plus hériter de la sélection précédente :
+      // le hors-trace lit exclusivement `activity.route`, figé ci-dessus.
+      selection: undefined,
+      trailRoute: route,
+      sheet: 'live',
+      sheetParent: undefined,
+      detent: 'peek',
+      tab: 0,
+      camera: { type: 'follow' },
+    });
+    emit('activity-start', {
       sport,
       sessionId,
-      startedAt: Date.now(),
-      paused: false,
-      offRoute: false,
-      distanceM: 0,
-      elevGainM: 0,
-      movingS: 0,
-    };
-    set({ activity, sheet: 'live', detent: 'peek', camera: { type: 'follow' } });
-    emit('activity-start', { sport, sessionId });
+      clientSessionId: clientSessionId ?? null,
+      variantId: selection?.variantId ?? null,
+      routeId: route?.id ?? null,
+    });
   },
 
   updateActivity: (patch) =>
     set((state) => (state.activity ? { activity: { ...state.activity, ...patch } } : {})),
+
+  setTrailRoute: (route) =>
+    set((state) => {
+      const activity =
+        route &&
+        state.activity?.route?.id === route.id &&
+        state.activity.route.status !== 'ready'
+          ? { ...state.activity, route }
+          : state.activity;
+      return { trailRoute: route, activity };
+    }),
+
+  setRouteGeometry: (route, options = {}) =>
+    set((state) => {
+      const canReplace = (snapshot: TrailRouteSnapshot | undefined) =>
+        snapshot?.id === route.id && (options.force === true || snapshot.status !== 'ready');
+      const trailRoute = canReplace(state.trailRoute) ? route : state.trailRoute;
+      const replaceActivity =
+        state.activity !== undefined &&
+        state.activity.route !== undefined &&
+        canReplace(state.activity.route);
+      const activity = replaceActivity && state.activity
+        ? { ...state.activity, route }
+        : state.activity;
+      return { trailRoute, activity };
+    }),
+
+  retryRouteGeometry: (routeId) =>
+    set((state) => {
+      const trailRoute =
+        state.trailRoute?.id === routeId && state.trailRoute.status !== 'ready'
+          ? { ...state.trailRoute, status: 'loading' as const }
+          : state.trailRoute;
+      const currentRoute = state.activity?.route;
+      const activity =
+        state.activity && currentRoute?.id === routeId && currentRoute.status !== 'ready'
+          ? { ...state.activity, route: { ...currentRoute, status: 'loading' as const } }
+          : state.activity;
+      return { trailRoute, activity };
+    }),
 
   stopActivity: () => {
     const current = get().activity;
     set({
       activity: undefined,
       summary: current ? { ...current, endedAt: Date.now() } : null,
-      summarySaved: 'pending',
+      // La séance terminée garde sa copie dans `summary` ; la suivante repart
+      // sans itinéraire tant que l'utilisateur n'en a pas choisi un.
+      selection: undefined,
+      trailRoute: undefined,
+      // Une séance identifiée localement (clientSessionId) peut encore être
+      // créée puis close côté serveur : elle reste « en attente », pas
+      // « locale ». Les scènes et les anciens appels sans identité stable
+      // gardent le bilan strictement local. Sans UUID serveur ni identité
+      // locale, le bilan est local : ne jamais suggérer un problème de
+      // connexion à un utilisateur authentifié.
+      summarySaved:
+        (current?.sessionId || current?.clientSessionId) ? 'pending' : 'local',
       sheet: 'summary',
+      sheetParent: undefined,
       detent: 'full',
+      tab: 0,
       camera: { type: 'overview' },
     });
     emit('activity-stop', {});
@@ -284,9 +517,123 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
     set((state) => ({
       layerVisibility: {
         ...state.layerVisibility,
-        [layerId]: !state.layerVisibility?.[layerId],
+        // Une clé absente est visible par défaut (sauf `slope`, déclaré false) :
+        // le premier appui la masque, au lieu de l'activer une seconde fois.
+        [layerId]: state.layerVisibility?.[layerId] === false,
       },
     })),
+
+  setAutoPauseEnabled: (enabled) => {
+    set({ autoPauseEnabled: enabled });
+    try {
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(AUTO_PAUSE_STORAGE_KEY, enabled ? '1' : '0');
+        autoPausePersistenceFailed = false;
+      }
+    } catch {
+      // Le réglage reste valable pour la session ; l'hydratation ne doit pas
+      // relire l'ancienne valeur restée dans le stockage.
+      autoPausePersistenceFailed = true;
+    }
+    emit('auto-pause-setting', { enabled });
+  },
+
+  storeStrengthLog: (log) => {
+    set({ strength: log });
+    const persisted = writeStrengthDraft(log);
+    emit('strength-draft', {
+      exercises: log.exercises.length,
+      sets: log.exercises.reduce((total, exercise) => total + exercise.sets.length, 0),
+      persisted,
+    });
+    return persisted;
+  },
+
+  clearStrengthLog: () => {
+    set({ strength: undefined });
+    clearStrengthDraft();
+    emit('strength-clear', {});
+  },
 }));
+
+/**
+ * Applique la préférence de pause automatique stockée localement.
+ *
+ * Appelée après le montage (jamais pendant le rendu serveur). Le défaut
+ * initial est ON (S1.05 : détection active, désactivable). Une valeur stockée
+ * `0`/`false` coupe la fonction, `1`/`true` la réactive. Sans clé — ou si le
+ * stockage est indisponible — l'état courant n'est **pas** écrasé : un OFF
+ * explicite de la session survit au remontage même quand `localStorage` ne
+ * peut pas le persister (mode privé, quota, politique navigateur).
+ */
+export function hydrateAutoPausePreference(): void {
+  if (typeof window === 'undefined') return;
+  // Une écriture de session a échoué : la valeur stockée est périmée et ne
+  // doit pas écraser le choix courant au remontage.
+  if (autoPausePersistenceFailed) return;
+  try {
+    const raw = window.localStorage.getItem(AUTO_PAUSE_STORAGE_KEY);
+    if (raw === '0' || raw === 'false') {
+      useExplorerStore.setState({ autoPauseEnabled: false });
+    } else if (raw === '1' || raw === 'true') {
+      useExplorerStore.setState({ autoPauseEnabled: true });
+    }
+  } catch {
+    /* stockage indisponible : le réglage de session reste inchangé */
+  }
+}
+
+export interface TransientStart {
+  pendingStart: PendingStart | null;
+  requestStart: (sport: Sport, selection?: SportSelection) => void;
+  confirmStart: () => void;
+  cancelStart: () => void;
+}
+
+/**
+ * Brouillon de départ lié au montage de l’Explorer.
+ *
+ * Il vit dans l’état React du composant, jamais dans le store global : une
+ * navigation qui démonte Explorer annule donc le compte à rebours et aucun
+ * départ ne peut repartir tout seul au retour. `pendingRef` rend `confirmStart`
+ * stable et bloque un double départ.
+ */
+export function useTransientStart(): TransientStart {
+  const [pendingStart, setPendingStart] = useState<PendingStart | null>(null);
+  const pendingRef = useRef<PendingStart | null>(null);
+
+  const cancelStart = useCallback(() => {
+    pendingRef.current = null;
+    setPendingStart(null);
+  }, []);
+
+  const requestStart = useCallback((sport: Sport, selection?: SportSelection) => {
+    const next: PendingStart = { sport, selection };
+    pendingRef.current = next;
+    setPendingStart(next);
+  }, []);
+
+  const confirmStart = useCallback(() => {
+    const current = pendingRef.current;
+    if (!current) return;
+    pendingRef.current = null;
+    setPendingStart(null);
+    // L'identité est fixée avant le premier point : un rechargement ou une
+    // reprise réseau retrouve la même séance au lieu d'en créer une seconde.
+    useExplorerStore
+      .getState()
+      .startActivity(current.sport, null, current.selection, newClientSessionId());
+  }, []);
+
+  useEffect(
+    () => () => {
+      // Le démontage d’Explorer jette le brouillon, sans effet de bord.
+      pendingRef.current = null;
+    },
+    [],
+  );
+
+  return { pendingStart, requestStart, confirmStart, cancelStart };
+}
 
 export type { PoiKind };

@@ -4,8 +4,11 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Map as MapLibreMap, setWorkerUrl, type GeoJSONSource } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import type { GeoCollection } from '../data/hooks';
-import type { CameraIntent, Level, PoiKind } from '../state/types';
+import type { CameraIntent, Level, MapBaseStyle, PoiKind } from '../state/types';
 import { clusterPins, selectVisiblePins, type PinCluster } from './hierarchy';
+import { slopeGradientExpression, type SlopeLayer } from './slope';
+import type { NationalTopoSource } from './nationalTopo';
+import type { DistanceMarker } from './distanceMarkers';
 import {
   boundsOfTrack,
   cinematicStartupZoom,
@@ -25,6 +28,7 @@ import {
   traceStyleForRoute,
 } from './traceStyles';
 import { OPENFREEMAP_STYLE_URL } from '@/components/map/engine/standardBase';
+import type { SearchViewport } from '../searchArea';
 
 export interface MapPin {
   id: string;
@@ -55,6 +59,15 @@ export interface MapStageProps {
   onRegionClick?: (group: string, center: [number, number]) => void;
   onPinClick?: (pin: MapPin) => void;
   onMoveEnd?: (center: [number, number], zoom: number) => void;
+  /** Emprise réellement visible, émise à la fin de chaque mouvement de caméra. */
+  onViewportChange?: (viewport: SearchViewport) => void;
+  /**
+   * Cap **réel** de la carte : direction monde affichée en haut (0 = nord,
+   * 90 = est). Émis pendant une rotation et à la fin d'un mouvement : la
+   * flèche hors-trace doit être compensée même quand l'utilisateur tourne la
+   * carte à la main.
+   */
+  onBearingChange?: (bearingDeg: number) => void;
   onReady?: () => void;
   me?: { lat: number; lng: number } | null;
   /** Hauteur du tiroir en pixels : aucun repère ne doit apparaître dessous. */
@@ -63,13 +76,27 @@ export interface MapStageProps {
   cameraIntent?: CameraIntent | null;
   /** Appui long sur la carte (départ d'activité). */
   longPressHandlers?: Record<string, unknown>;
-  /** Fond de carte : relief 3D, satellite ou plan vectoriel. */
-  mapBaseStyle?: 'relief' | 'satellite' | 'plan';
+  /** Fond de carte : relief 3D, satellite, plan vectoriel ou fond national. */
+  mapBaseStyle?: MapBaseStyle;
+  /** Source nationale officielle déjà validée pour le pays courant. */
+  nationalTopo?: NationalTopoSource | null;
+  /** Pente réelle de l'itinéraire sélectionné (DEM, fiche K3.04). */
+  slopeLayer?: SlopeLayer | null;
+  /** Marqueurs de distance dérivés de la géométrie réelle (fiche K3.12). */
+  distanceMarkers?: DistanceMarker[] | null;
   /** Calques de données : sentiers, eau, refuges, etc. */
   layerVisibility?: Record<string, boolean>;
 }
 
 const TERRAIN_SOURCE = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
+
+/**
+ * Écart minimal entre deux étiquettes de distance à l'écran. Sans cette
+ * décimation, un kilomètre à faible zoom ferait moins de 10 px et les libellés
+ * se superposeraient ; les marqueurs restent dans l'ordre de la trace.
+ */
+const DISTANCE_LABEL_GAP_X = 38;
+const DISTANCE_LABEL_GAP_Y = 20;
 
 const EMPTY: GeoCollection = { type: 'FeatureCollection', features: [] };
 
@@ -108,17 +135,28 @@ export default function MapStage({
   onRegionClick,
   onPinClick,
   onMoveEnd,
+  onViewportChange,
+  onBearingChange,
   onReady,
   me,
   sheetHeightPx = 176,
   cameraIntent = null,
   longPressHandlers,
   mapBaseStyle = 'relief',
+  nationalTopo = null,
+  slopeLayer = null,
+  distanceMarkers = null,
   layerVisibility,
 }: MapStageProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  // Double garde : même si un appelant transmet une source non vérifiée, elle
+  // n'est jamais chargée. Le registre reste la source de vérité.
+  const nationalSource = nationalTopo?.status === 'verified' ? nationalTopo : null;
   const mapRef = useRef<MapLibreMap | null>(null);
   const [overlay, setOverlay] = useState<Array<{ pin: MapPin; x: number; y: number }>>([]);
+  const [distanceScreen, setDistanceScreen] = useState<
+    Array<{ marker: DistanceMarker; x: number; y: number }>
+  >([]);
   const [clusters, setClusters] = useState<PinCluster[]>([]);
   const [meScreen, setMeScreen] = useState<{ x: number; y: number } | null>(null);
   const [ready, setReady] = useState(false);
@@ -127,11 +165,18 @@ export default function MapStage({
   // En suivi (ou en vue d'ensemble), la caméra applique un padding : le centre
   // rendu par la carte n'est pas celui de l'état. On n'écrase donc pas l'état.
   const suppressMoveEnd = useRef(false);
+  // Le callback peut changer à chaque rendu du parent ; la carte est créée une
+  // seule fois, on garde donc toujours la dernière version dans une référence.
+  const onBearingChangeRef = useRef(onBearingChange);
+  onBearingChangeRef.current = onBearingChange;
+  const onViewportChangeRef = useRef(onViewportChange);
+  onViewportChangeRef.current = onViewportChange;
 
   // ── création de la carte (une seule fois) ──────────────────────────────
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
     setReady(false);
+    setDistanceScreen([]);
     setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
 
     let map: MapLibreMap;
@@ -161,6 +206,20 @@ export default function MapStage({
     ) {
       (window as unknown as { __xpMap?: MapLibreMap }).__xpMap = map;
     }
+
+    // Emprise visible : la carte est la seule source de vérité pour
+    // « Rechercher dans cette zone ». Aucun calcul d'écran parallèle.
+    const reportViewport = () => {
+      const bounds = map.getBounds();
+      if (!bounds) return;
+      onViewportChangeRef.current?.({
+        minLat: bounds.getSouth(),
+        maxLat: bounds.getNorth(),
+        minLng: bounds.getWest(),
+        maxLng: bounds.getEast(),
+        zoom: map.getZoom(),
+      });
+    };
 
     // Premiers pixels : premier rendu GL une fois le style chargé (fond de carte peint).
     let styleLoaded = false;
@@ -213,6 +272,15 @@ export default function MapStage({
         }
         if (!map.getSource('xp-track')) {
           map.addSource('xp-track', { type: 'geojson', data: EMPTY as never });
+        }
+        if (!map.getSource('xp-slope')) {
+          // `lineMetrics` est obligatoire pour `line-gradient` : sans lui,
+          // MapLibre ignore le dégradé de pente (K3.04).
+          map.addSource('xp-slope', {
+            type: 'geojson',
+            data: EMPTY as never,
+            lineMetrics: true,
+          });
         }
         if (!map.getSource('xp-terrain')) {
           map.addSource('xp-terrain', {
@@ -299,6 +367,23 @@ export default function MapStage({
             },
           });
         }
+        if (!map.getLayer('xp-slope-line')) {
+          map.addLayer({
+            id: 'xp-slope-line',
+            type: 'line',
+            source: 'xp-slope',
+            layout: {
+              visibility: 'none',
+              'line-cap': 'round',
+              'line-join': 'round',
+            },
+            paint: {
+              'line-color': '#7FA27A',
+              'line-width': 4.8,
+              'line-opacity': 0.96,
+            },
+          });
+        }
         if (!map.getLayer('xp-track-line')) {
           map.addLayer({
             id: 'xp-track-line',
@@ -352,6 +437,7 @@ export default function MapStage({
       }
 
       setReady(true);
+      reportViewport();
       onReady?.();
       markMap('map:interactive');
 
@@ -384,7 +470,18 @@ export default function MapStage({
       map.on('click', 'xp-regions-fill', handleRegion as never);
     });
 
+    const reportBearing = () => {
+      const bearing = map.getBearing();
+      if (Number.isFinite(bearing)) onBearingChangeRef.current?.(bearing);
+    };
+    // `rotate` couvre le geste et les `easeTo` de la boussole ; `moveend`
+    // rattrape une rotation terminée sans dernier événement intermédiaire.
+    map.on('rotate', reportBearing);
+    reportBearing();
+
     map.on('moveend', () => {
+      reportBearing();
+      reportViewport();
       if (suppressMoveEnd.current) return;
       const c = map.getCenter();
       const z = map.getZoom();
@@ -395,6 +492,7 @@ export default function MapStage({
     return () => {
       if (startupTimer) window.clearTimeout(startupTimer);
       if (orbitRef.current) window.clearInterval(orbitRef.current);
+      map.off('rotate', reportBearing);
       map.remove();
       mapRef.current = null;
       setReady(false);
@@ -475,6 +573,67 @@ export default function MapStage({
     }
   }, [theme, ready]);
 
+  // ── fond national officiel (K3.05) ────────────────────────────────────
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+
+    // Une source non vérifiée n'arrive jamais ici : l'appelant ne transmet que
+    // `verifiedNationalTopoFor(...)`. Sans source, aucune tuile n'est chargée.
+    if (!nationalSource) {
+      if (map.getLayer('xp-national-topo-layer')) {
+        try {
+          map.removeLayer('xp-national-topo-layer');
+        } catch {
+          /* déjà retirée */
+        }
+      }
+      if (map.getSource('xp-national-topo')) {
+        try {
+          map.removeSource('xp-national-topo');
+        } catch {
+          /* déjà retirée */
+        }
+      }
+      return;
+    }
+
+    if (!map.getSource('xp-national-topo')) {
+      try {
+        map.addSource('xp-national-topo', {
+          type: 'raster',
+          tiles: nationalSource.tiles,
+          tileSize: nationalSource.tileSize,
+          maxzoom: nationalSource.maxzoom,
+          attribution: nationalSource.attribution,
+        });
+      } catch {
+        /* style non prêt ou source déjà retirée : aucun fond national affiché */
+        return;
+      }
+    }
+    if (!map.getLayer('xp-national-topo-layer')) {
+      // Sous les étiquettes du fond vectoriel et sous les aplats pays.
+      const firstSymbol = map
+        .getStyle()
+        .layers?.find((layer) => layer.type === 'symbol')?.id;
+      try {
+        map.addLayer(
+          {
+            id: 'xp-national-topo-layer',
+            type: 'raster',
+            source: 'xp-national-topo',
+            layout: { visibility: 'none' },
+            paint: { 'raster-opacity': 0.94, 'raster-fade-duration': 200 },
+          },
+          firstSymbol,
+        );
+      } catch {
+        /* couche impossible à insérer : on ne casse pas la carte */
+      }
+    }
+  }, [nationalSource, ready]);
+
   // ── projection, fond et relief selon le niveau et le style ─────────────
   useEffect(() => {
     const map = mapRef.current;
@@ -494,11 +653,23 @@ export default function MapStage({
       /* aucune couche d'étiquettes */
     }
 
-    const isSat = mapBaseStyle === 'satellite';
-    const isRelief = mapBaseStyle === 'relief' || !mapBaseStyle;
+    const isNational = mapBaseStyle === 'national' && Boolean(nationalSource);
+    const isSat = mapBaseStyle === 'satellite' && !isNational;
+    // « national » sans source validée retombe sur le relief : on ne laisse
+    // jamais la carte sans relief à cause d'un fond qui n'existe pas.
+    const isRelief =
+      (mapBaseStyle === 'relief' || !mapBaseStyle || (mapBaseStyle === 'national' && !isNational)) &&
+      !isNational;
 
     if (map.getLayer('xp-satellite-layer')) {
       map.setLayoutProperty('xp-satellite-layer', 'visibility', isSat ? 'visible' : 'none');
+    }
+    if (map.getLayer('xp-national-topo-layer')) {
+      map.setLayoutProperty(
+        'xp-national-topo-layer',
+        'visibility',
+        isNational ? 'visible' : 'none',
+      );
     }
 
     const updateTerrainAndHillshade = () => {
@@ -527,7 +698,7 @@ export default function MapStage({
     return () => {
       map.off('zoom', updateTerrainAndHillshade);
     };
-  }, [level, mapBaseStyle, ready]);
+  }, [level, mapBaseStyle, nationalSource, ready]);
 
   // ── calques de données interactifs ─────────────────────────────────────
   useEffect(() => {
@@ -539,6 +710,40 @@ export default function MapStage({
       map.setLayoutProperty('xp-routes-casing', 'visibility', showRoutes ? 'visible' : 'none');
     }
   }, [layerVisibility, ready]);
+
+  // ── pente réelle de l'itinéraire sélectionné (K3.04) ────────────────────
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    const source = map.getSource('xp-slope') as GeoJSONSource | undefined;
+    const show = layerVisibility?.slope === true && !!slopeLayer && slopeLayer.stops.length >= 2;
+    if (source) {
+      source.setData(
+        show && slopeLayer
+          ? ({
+              type: 'Feature',
+              properties: { routeId: slopeLayer.id },
+              geometry: slopeLayer.geojson as never,
+            } as never)
+          : (EMPTY as never),
+      );
+    }
+    if (map.getLayer('xp-slope-line')) {
+      if (show && slopeLayer) {
+        const gradient = slopeGradientExpression(slopeLayer.stops);
+        if (gradient) {
+          try {
+            map.setPaintProperty('xp-slope-line', 'line-gradient', gradient as never);
+          } catch {
+            /* lineMetrics absent : la couche reste masquée */
+            map.setLayoutProperty('xp-slope-line', 'visibility', 'none');
+            return;
+          }
+        }
+      }
+      map.setLayoutProperty('xp-slope-line', 'visibility', show ? 'visible' : 'none');
+    }
+  }, [layerVisibility, ready, slopeLayer]);
 
   // ── orbite de sommet (pause au toucher, reprise après 6 s) ────────────
   useEffect(() => {
@@ -599,7 +804,15 @@ export default function MapStage({
       window.setTimeout(() => {
         suppressMoveEnd.current = false;
       }, 2500);
-      const geometry = activityTrack?.features?.[0]?.geometry ?? null;
+      // Le tracé peut être découpé aux pauses : l'emprise doit couvrir tous les
+      // segments, pas seulement le premier.
+      const geometry = activityTrack
+        ? {
+            coordinates: activityTrack.features
+              .map((feature) => feature.geometry?.coordinates)
+              .filter(Boolean),
+          }
+        : null;
       const bounds = cameraIntent.bounds ?? boundsOfTrack(geometry);
       overviewOf(map, bounds, overviewPadding(container.clientWidth, sheetHeightPx), reducedMotion);
       return;
@@ -634,6 +847,11 @@ export default function MapStage({
       if (!container) return;
       const cWidth = container.clientWidth || 390;
       const cHeight = container.clientHeight || 844;
+      const sheetTop = cHeight - sheetHeightPx;
+      // Bande haute occupée par la capsule et les boutons ronds : aucun repère
+      // ni pastille ne doit s'y trouver (04_CARTE §1).
+      const chrome = document.querySelector('.xp-chrome') as HTMLElement | null;
+      const chromeBottom = chrome?.getBoundingClientRect().bottom ?? 96;
 
       for (const pin of pins) {
         if (!pin || !Number.isFinite(pin.lon) || !Number.isFinite(pin.lat)) continue;
@@ -647,11 +865,6 @@ export default function MapStage({
           continue;
         }
       }
-      const sheetTop = cHeight - sheetHeightPx;
-      // Bande haute occupée par la capsule et les boutons ronds : aucun repère
-      // ni pastille ne doit s'y trouver (04_CARTE §1).
-      const chrome = document.querySelector('.xp-chrome') as HTMLElement | null;
-      const chromeBottom = chrome?.getBoundingClientRect().bottom ?? 96;
       // Agrégation (04_CARTE §1) : au-delà de 6 repères dans 100×100 px, la
       // cellule devient une pastille chiffrée qui zoome au toucher.
       const clustered = clusterPins(
@@ -700,6 +913,43 @@ export default function MapStage({
           );
         return same ? current : kept;
       });
+      // Marqueurs de distance (K3.12) : de simples étiquettes, jamais des
+      // contrôles. Aucune ne doit apparaître sous le tiroir ni sous le chrome.
+      if (distanceMarkers && distanceMarkers.length > 0) {
+        const markerScreen: Array<{ marker: DistanceMarker; x: number; y: number }> = [];
+        for (const marker of distanceMarkers) {
+          if (!marker || !Number.isFinite(marker.lng) || !Number.isFinite(marker.lat)) continue;
+          try {
+            const point = map.project([marker.lng, marker.lat]);
+            if (!point || !Number.isFinite(point.x) || !Number.isFinite(point.y)) continue;
+            if (point.x < -40 || point.x > cWidth + 40) continue;
+            if (point.y < chromeBottom + 12 || point.y > sheetTop - 8) continue;
+            const tooClose = markerScreen.some(
+              (placed) =>
+                Math.abs(placed.x - point.x) < DISTANCE_LABEL_GAP_X &&
+                Math.abs(placed.y - point.y) < DISTANCE_LABEL_GAP_Y,
+            );
+            if (tooClose) continue;
+            markerScreen.push({ marker, x: point.x, y: point.y });
+          } catch {
+            continue;
+          }
+        }
+        setDistanceScreen((current) => {
+          const same =
+            current.length === markerScreen.length &&
+            current.every(
+              (entry, index) =>
+                entry.marker.id === markerScreen[index]?.marker.id &&
+                entry.marker.label === markerScreen[index]?.marker.label &&
+                Math.abs(entry.x - (markerScreen[index]?.x ?? 0)) < 0.5 &&
+                Math.abs(entry.y - (markerScreen[index]?.y ?? 0)) < 0.5,
+            );
+          return same ? current : markerScreen;
+        });
+      } else {
+        setDistanceScreen((current) => (current.length === 0 ? current : []));
+      }
       if (me && Number.isFinite(me.lng) && Number.isFinite(me.lat)) {
         try {
           const point = map.project([me.lng, me.lat]);
@@ -729,7 +979,7 @@ export default function MapStage({
       map.off('zoom', schedule);
       map.off('render', schedule);
     };
-  }, [level, me, pins, ready, sheetHeightPx]);
+  }, [distanceMarkers, level, me, pins, ready, sheetHeightPx]);
 
   return (
     <div
@@ -747,6 +997,17 @@ export default function MapStage({
         </div>
       ) : null}
       <div className="xp-map-overlay" aria-hidden={false}>
+        {distanceScreen.map(({ marker, x, y }) => (
+          <span
+            key={marker.id}
+            className="xp-km-marker"
+            data-distance-m={Math.round(marker.distanceM)}
+            style={{ left: x, top: y }}
+            aria-hidden="true"
+          >
+            <span>{marker.label}</span>
+          </span>
+        ))}
         {meScreen ? (
           <>
             <span className="xp-me-halo" style={{ left: meScreen.x, top: meScreen.y }} aria-hidden="true" />

@@ -5,6 +5,8 @@ import dynamic from 'next/dynamic';
 import Icon from '@/components/ui/Icon';
 import { formatElevation, formatKm } from '@/features/carnet/detail/format';
 import type { CarnetDetail } from '@/features/carnet/detail/types';
+import { carnetTraceEmptyState } from '@/features/carnet/detail/traceEmptyState';
+import { extractTraceSegments } from '../traceGeometry';
 
 const CarnetTraceMap = dynamic(
   () => import('../CarnetTraceMap').then((mod) => mod.CarnetTraceMap),
@@ -17,11 +19,16 @@ export interface CarnetParcoursPaneProps {
 }
 
 export function CarnetParcoursPane({ detail, onDownloadGpx }: CarnetParcoursPaneProps) {
-  const hasTrace =
-    Array.isArray((detail.trace as any)?.coordinates) ||
-    Array.isArray((detail.trace as any)?.geometry?.coordinates);
+  const hasTrace = extractTraceSegments(detail.trace).some(
+    (segment) => segment.length >= 2
+  );
   const km = formatKm(detail.distanceKm);
   const elevation = formatElevation(detail.elevationM);
+
+  /* Un état vide ne doit jamais affirmer « aucune trace » quand la trace
+     existe mais a été masquée, jugée trop courte ou refusée par le projecteur.
+     La V2 et la carte historique partagent exactement ces textes. */
+  const emptyState = carnetTraceEmptyState(detail);
 
   return (
     <div className="ckp-pane">
@@ -31,8 +38,8 @@ export function CarnetParcoursPane({ detail, onDownloadGpx }: CarnetParcoursPane
         ) : (
           <div className="ckp-empty" style={{ height: '100%', borderRadius: 18 }}>
             <Icon name="route" size={24} aria-hidden="true" />
-            <b>Aucune trace GPS.</b>
-            <p>Ce carnet n’a pas de trace enregistrée.</p>
+            <b>{emptyState.title}</b>
+            <p>{emptyState.hint}</p>
           </div>
         )}
       </div>

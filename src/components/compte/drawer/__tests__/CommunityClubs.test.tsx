@@ -257,4 +257,30 @@ describe('Communauté — clubs', () => {
     expect(link.getAttribute('href')).toBe('/communaute');
     expect(screen.getByTestId('slot-content').getAttribute('data-state')).toBe('empty');
   });
+
+  it('distingue une lecture de clubs indisponible d’une liste vide', () => {
+    render(
+      <CommunitySlot
+        lens="clubs"
+        payload={{ clubs: [], clubsUnavailable: true }}
+      />
+    );
+
+    expect(screen.getByText('Clubs momentanément indisponibles.')).toBeTruthy();
+    expect(screen.queryByText('Aucun club.')).toBeNull();
+    expect(screen.getByTestId('slot-content').getAttribute('data-state')).toBe('error');
+  });
+
+  it('garde les clubs directs prioritaires sur un flag d’indisponibilité', () => {
+    render(
+      <CommunitySlot
+        lens="clubs"
+        clubs={[club]}
+        payload={{ clubs: [], clubsUnavailable: true }}
+      />
+    );
+
+    expect(screen.getByText('Club Alpin')).toBeTruthy();
+    expect(screen.queryByText('Clubs momentanément indisponibles.')).toBeNull();
+  });
 });

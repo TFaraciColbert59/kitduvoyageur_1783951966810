@@ -10,6 +10,7 @@ import * as compasIntent from './compasIntent';
 import * as compasAutofill from './compasAutofill';
 import * as compasVerdict from './compasVerdict';
 import * as trailAiEnrichment from './trailAiEnrichment';
+import * as postActivityInsight from './postActivityInsight';
 
 /**
  * Registre des features IA — ajouter une feature IA = ajouter UN fichier
@@ -114,6 +115,13 @@ export const FEATURES: Record<string, FeatureSpec> = {
     cacheTtlSeconds: trailAiEnrichment.TRAIL_AI_ENRICHMENT_SPEC.cacheTtlSeconds,
     maxPerUserPerDay: trailAiEnrichment.TRAIL_AI_ENRICHMENT_SPEC.maxPerUserPerDay,
     fallbackResponse: trailAiEnrichment.fallbackResponse,
+  },
+  'post-activity-insight': {
+    tier: postActivityInsight.POST_ACTIVITY_INSIGHT_SPEC.tier,
+    maxReasoningBudget: postActivityInsight.POST_ACTIVITY_INSIGHT_SPEC.maxReasoningBudget,
+    cacheTtlSeconds: postActivityInsight.POST_ACTIVITY_INSIGHT_SPEC.cacheTtlSeconds,
+    maxPerUserPerDay: postActivityInsight.POST_ACTIVITY_INSIGHT_SPEC.maxPerUserPerDay,
+    fallbackResponse: postActivityInsight.fallbackResponse,
   },
   'country-practical-guide': {
     tier: 'fast',

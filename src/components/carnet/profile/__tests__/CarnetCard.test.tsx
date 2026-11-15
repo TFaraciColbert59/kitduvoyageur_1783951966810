@@ -61,6 +61,30 @@ describe('CarnetCard — carte du carnet', () => {
     expect(trace?.querySelector('polyline')?.getAttribute('points')).toBeTruthy();
   });
 
+  it('dessine un tracé par morceau, jamais une ligne qui traverse le vide', () => {
+    const multi = {
+      type: 'MultiLineString',
+      coordinates: [
+        [
+          [6.86, 45.83],
+          [6.87, 45.84],
+        ],
+        [
+          [6.96, 45.93],
+          [6.97, 45.94],
+        ],
+      ],
+    };
+    const { container } = render(<CarnetCard {...base({ detail: detail({ trace: multi }) })} />);
+    const groups = container.querySelectorAll('.ckp-cover--trace svg > g');
+    expect(groups).toHaveLength(2);
+    const first = groups[0].querySelector('polyline')?.getAttribute('points');
+    const second = groups[1].querySelector('polyline')?.getAttribute('points');
+    expect(first).toBeTruthy();
+    expect(second).toBeTruthy();
+    expect(first).not.toBe(second);
+  });
+
   it('garde les initiales quand il n’y a pas de trace', () => {
     const { container } = render(<CarnetCard {...base({ detail: detail({ trace: null }) })} />);
     expect(container.querySelector('.ckp-cover--initial')?.textContent).toBe('F');

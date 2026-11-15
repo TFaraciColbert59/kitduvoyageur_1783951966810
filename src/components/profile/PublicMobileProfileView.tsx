@@ -4,6 +4,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
+import { followErrorMessage, loadFollowState, setFollow } from '@/features/compte/client/followClient';
 import Link from 'next/link';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useUserPresence } from '@/hooks/useUserPresence';
@@ -68,9 +69,11 @@ export default function PublicMobileProfileView({
   const [tab, setTab] = useState<TabKey>('tout');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [following, setFollowing] = useState(false);
+  const [requested, setRequested] = useState(false);
   const [followBusy, setFollowBusy] = useState(false);
   const [followError, setFollowError] = useState('');
   const [trustModalOpen, setTrustModalOpen] = useState(false);
+  const readEpochRef = useRef(0);
 
   const fullName = `${profile.first_name || 'Voyageur'} ${profile.last_name || ''}`.trim();
   const handleName = `@${profile.first_name?.toLowerCase() || 'voyageur'}`;
@@ -89,13 +92,21 @@ export default function PublicMobileProfileView({
 
   useEffect(() => {
     let active = true;
+    const epoch = ++readEpochRef.current;
     setFollowing(false);
+    setRequested(false);
     setFollowError('');
+    setFollowBusy(false);
     if (!user?.id || user.id === profile.id) return () => { active = false; };
-    void createClient().from('user_follows').select('id')
-      .eq('follower_id', user.id).eq('following_id', profile.id).limit(1).maybeSingle()
-      .then(({ data, error }) => {
-        if (active && !error) setFollowing(Boolean(data));
+    void loadFollowState(createClient(), user.id, profile.id)
+      .then((state) => {
+        if (!active || epoch !== readEpochRef.current) return;
+        setFollowing(state === 'following');
+        setRequested(state === 'requested');
+      })
+      .catch(() => {
+        // Lecture en échec : l'état reste neutre et ne masque pas une mutation
+        // qui aurait démarré entre-temps.
       });
     return () => { active = false; };
   }, [user?.id, profile.id]);
@@ -104,24 +115,30 @@ export default function PublicMobileProfileView({
     if (followBusy) return;
     if (!user?.id) { setFollowError('Connectez-vous pour suivre ce voyageur.'); return; }
     if (user.id === profile.id) return;
+    const epoch = ++readEpochRef.current;
     setFollowError('');
     setFollowBusy(true);
-    const next = !following;
-    setFollowing(next);
-    triggerHaptic(next ? 'success' : 'selection');
-    const supabase = createClient();
-    const { error } = next
-      ? await supabase.from('user_follows').upsert(
-          { follower_id: user.id, following_id: profile.id },
-          { onConflict: 'follower_id,following_id', ignoreDuplicates: true }
-        )
-      : await supabase.from('user_follows').delete()
-          .eq('follower_id', user.id).eq('following_id', profile.id);
-    if (error) {
-      setFollowing(!next);
-      setFollowError('L’abonnement n’a pas été enregistré. Réessayez.');
+    const wasFollowing = following;
+    const wasRequested = requested;
+    const action = following || requested ? 'unfollow' : 'follow';
+    setFollowing(action === 'follow');
+    setRequested(false);
+    triggerHaptic(action === 'follow' ? 'success' : 'selection');
+    try {
+      const status = await setFollow(profile.id, action);
+      if (epoch !== readEpochRef.current) return;
+      setFollowing(status === 'following');
+      setRequested(status === 'requested');
+    } catch (error) {
+      if (epoch !== readEpochRef.current) return;
+      setFollowing(wasFollowing);
+      setRequested(wasRequested);
+      setFollowError(
+        followErrorMessage(error, 'L’abonnement n’a pas été enregistré. Réessayez.')
+      );
+    } finally {
+      if (epoch === readEpochRef.current) setFollowBusy(false);
     }
-    setFollowBusy(false);
   };
 
   const router = useRouter();
@@ -200,7 +217,7 @@ export default function PublicMobileProfileView({
               <IconButton
                 variant="glass"
                 size="sm"
-                aria-label="Signaler ou bloquer ce profil"
+                aria-label="Sécurité du profil : signaler, bloquer ou mettre en sourdine"
                 onClick={() => {
                   triggerHaptic('light');
                   onReport();
@@ -333,14 +350,21 @@ export default function PublicMobileProfileView({
           <div className="flex items-center gap-2 pt-4">
             {user?.id !== profile.id && (
               <Button
-                variant={following ? 'secondary' : 'primary'}
+                variant={following || requested ? 'secondary' : 'primary'}
                 size="sm"
                 onClick={() => void handleFollowToggle()}
                 disabled={followBusy}
-                aria-pressed={following}
+                aria-pressed={following || requested}
+                title={requested ? 'Annuler la demande de suivi' : undefined}
                 className="flex-1 font-bold"
               >
-                {followBusy ? 'Enregistrement…' : following ? '✓ Abonné' : "+ S'abonner"}
+                {followBusy
+                  ? 'Enregistrement…'
+                  : requested
+                    ? 'Demande envoyée'
+                    : following
+                      ? '✓ Abonné'
+                      : "+ S'abonner"}
               </Button>
             )}
 

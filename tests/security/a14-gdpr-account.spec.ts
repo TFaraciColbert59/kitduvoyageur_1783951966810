@@ -91,6 +91,11 @@ describe('A14 — RGPD export/suppression (TEST-A14-GDPR)', () => {
       'user_performance_profiles',
       'user_performance_profile_versions',
       'hike_sessions',
+      'trace_imports',
+      'trace_import_laps',
+      'trace_import_summaries',
+      'trace_import_samples',
+      'strength_logs',
       'session_segment_passages',
       'terrain_reports',
       'terrain_report_confirmations',
@@ -103,6 +108,7 @@ describe('A14 — RGPD export/suppression (TEST-A14-GDPR)', () => {
       'user_season_progress',
       'progression_outbox',
       'progression_decisions',
+      'progression_goals',
       'progression_legacy_snapshot',
       'progression_legacy_mapping',
       'progression_leaderboard_agg',
@@ -128,7 +134,7 @@ describe('A14 — RGPD export/suppression (TEST-A14-GDPR)', () => {
 
     const bundle = await buildGdprExport(client, USER_ID, { now: '2026-09-11T20:00:00.000Z' });
 
-    expect(bundle.schemaVersion).toBe('a14-v2');
+    expect(bundle.schemaVersion).toBe('a14-v3');
     expect(bundle.exportedAt).toBe('2026-09-11T20:00:00.000Z');
     expect(bundle.subject).toEqual({ userId: USER_ID });
     expect(bundle.profile?.email).toBe('sujet@example.invalid');
@@ -158,7 +164,7 @@ describe('A14 — RGPD export/suppression (TEST-A14-GDPR)', () => {
     expect(response.status).toBe(200);
     expect(response.headers.get('cache-control')).toBe('no-store');
     expect(response.headers.get('content-disposition')).toContain('attachment');
-    expect(response.headers.get('x-lkdv-export-schema')).toBe('a14-v2');
+    expect(response.headers.get('x-lkdv-export-schema')).toBe('a14-v3');
     const payload = (await response.json()) as { subject: { userId: string } };
     expect(payload.subject.userId).toBe(USER_ID);
   });

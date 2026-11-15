@@ -31,18 +31,19 @@
     "src/features/compas/components/InstallApp.tsx",
     "src/features/compas/components/MeteoalarmNotice.tsx",
     "src/features/compas/components/OfficialAlertTexts.tsx",
+    "src/features/compas/components/RouteEditor.tsx",
     "src/features/compas/components/TrialNote.tsx",
     "src/features/compas/components/TripInvitations.tsx",
     "src/features/compas/components/WorldAlertNotice.tsx",
     "src/features/compas/components/sheetsI18n.tsx",
     "src/features/hub/components/mobile/HubGlobeMap.tsx"
   ],
-  "total": 303,
+  "total": 320,
   "delegues": 1,
   "par_etape": {
     "depart": 38,
     "commun": 50,
-    "ou": 66,
+    "ou": 83,
     "nous": 44,
     "resa": 22,
     "verdict": 13,
@@ -1383,7 +1384,7 @@
         "cp-tiles"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 141,
+      "ligne": 142,
       "composant": "ActiviteFlow",
       "desactive": "parfois",
       "gestionnaires": [
@@ -1406,7 +1407,7 @@
         "cp-tiles"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 141,
+      "ligne": 142,
       "composant": "ActiviteFlow",
       "desactive": "parfois",
       "gestionnaires": [
@@ -1429,7 +1430,7 @@
         "cp-tiles"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 141,
+      "ligne": 142,
       "composant": "ActiviteFlow",
       "desactive": "parfois",
       "gestionnaires": [
@@ -1452,7 +1453,7 @@
         "cp-tiles"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 141,
+      "ligne": 142,
       "composant": "ActiviteFlow",
       "desactive": "parfois",
       "gestionnaires": [
@@ -1475,7 +1476,7 @@
         "cp-tiles"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 141,
+      "ligne": 142,
       "composant": "ActiviteFlow",
       "desactive": "parfois",
       "gestionnaires": [
@@ -1498,7 +1499,7 @@
         "cp-tiles"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 141,
+      "ligne": 142,
       "composant": "ActiviteFlow",
       "desactive": "parfois",
       "gestionnaires": [
@@ -1521,7 +1522,7 @@
         "cp-tiles"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 141,
+      "ligne": 142,
       "composant": "ActiviteFlow",
       "desactive": "parfois",
       "gestionnaires": [
@@ -1544,7 +1545,7 @@
         "cp-tiles"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 141,
+      "ligne": 142,
       "composant": "ActiviteFlow",
       "desactive": "parfois",
       "gestionnaires": [
@@ -1567,7 +1568,7 @@
         "cp-tiles"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 141,
+      "ligne": 142,
       "composant": "ActiviteFlow",
       "desactive": "parfois",
       "gestionnaires": [
@@ -1590,7 +1591,7 @@
         "cp-tiles"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 141,
+      "ligne": 142,
       "composant": "ActiviteFlow",
       "desactive": "parfois",
       "gestionnaires": [
@@ -1613,7 +1614,7 @@
         "cp-tiles"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 141,
+      "ligne": 142,
       "composant": "ActiviteFlow",
       "desactive": "parfois",
       "gestionnaires": [
@@ -1636,7 +1637,7 @@
         "cp-tiles"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 141,
+      "ligne": 142,
       "composant": "ActiviteFlow",
       "desactive": "parfois",
       "gestionnaires": [
@@ -1659,7 +1660,7 @@
         "cp-tiles"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 141,
+      "ligne": 142,
       "composant": "ActiviteFlow",
       "desactive": "parfois",
       "gestionnaires": [
@@ -1682,7 +1683,7 @@
         "cp-tiles"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 141,
+      "ligne": 142,
       "composant": "ActiviteFlow",
       "desactive": "parfois",
       "gestionnaires": [
@@ -1705,7 +1706,7 @@
         "cp-tiles"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 141,
+      "ligne": 142,
       "composant": "ActiviteFlow",
       "desactive": "parfois",
       "gestionnaires": [
@@ -1728,7 +1729,7 @@
         "cp-tiles"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 141,
+      "ligne": 142,
       "composant": "ActiviteFlow",
       "desactive": "parfois",
       "gestionnaires": [
@@ -1751,9 +1752,33 @@
         "cp-tiles"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 141,
+      "ligne": 142,
       "composant": "ActiviteFlow",
       "desactive": "parfois",
+      "gestionnaires": [
+        "onClick"
+      ]
+    },
+    {
+      "id": "src/features/compas/components/CompasOuFlows.tsx::ParcoursFlow::button::compas.routeEditor.reopen",
+      "etape": "ou",
+      "ecran": "tiroir ou",
+      "type": "bouton",
+      "nom": "Reprendre le tracé · révision …Calcul adapté au sport",
+      "variantes": [
+        "Reprendre le tracé · révision …Calcul adapté au sport",
+        "Modifier le tracéCalcul adapté au sport"
+      ],
+      "motif": "^\\s*(?:Reprendre\\s+le\\s+tracé\\s+·\\s+révision\\s*.*?\\s*Calcul\\s+adapté\\s+au\\s+sport|Modifier\\s+le\\s+tracéCalcul\\s+adapté\\s+au\\s+sport)\\s*$",
+      "balise": "button",
+      "role": "button",
+      "classes": [
+        "cp-row"
+      ],
+      "ancetres": [],
+      "fichier": "src/features/compas/components/CompasOuFlows.tsx",
+      "ligne": 338,
+      "composant": "ParcoursFlow",
       "gestionnaires": [
         "onClick"
       ]
@@ -1774,7 +1799,7 @@
         "cp-searchrow"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 318,
+      "ligne": 359,
       "composant": "ParcoursFlow",
       "gestionnaires": [
         "onChange"
@@ -1797,7 +1822,7 @@
         "cp-searchrow"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 326,
+      "ligne": 367,
       "composant": "ParcoursFlow",
       "desactive": "parfois",
       "gestionnaires": []
@@ -1818,7 +1843,7 @@
         "cp-chiprow"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 338,
+      "ligne": 379,
       "composant": "ParcoursFlow",
       "gestionnaires": [
         "onClick"
@@ -1840,7 +1865,7 @@
         "cp-chiprow"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 349,
+      "ligne": 390,
       "composant": "ParcoursFlow",
       "gestionnaires": [
         "onClick"
@@ -1860,7 +1885,7 @@
       ],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 454,
+      "ligne": 495,
       "composant": "ParcoursFlow",
       "gestionnaires": []
     },
@@ -1884,7 +1909,7 @@
       ],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 470,
+      "ligne": 511,
       "composant": "ParcoursFlow",
       "gestionnaires": [
         "onClick"
@@ -1908,7 +1933,7 @@
         "cp-stepper"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 573,
+      "ligne": 614,
       "composant": "RouteConfirm",
       "desactive": "parfois",
       "gestionnaires": [
@@ -1933,7 +1958,7 @@
         "cp-stepper"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 583,
+      "ligne": 624,
       "composant": "RouteConfirm",
       "desactive": "parfois",
       "gestionnaires": [
@@ -1957,7 +1982,7 @@
         "cp-actions"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 596,
+      "ligne": 637,
       "composant": "RouteConfirm",
       "gestionnaires": [
         "onClick"
@@ -1981,7 +2006,7 @@
         "cp-actions"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 601,
+      "ligne": 642,
       "composant": "RouteConfirm",
       "desactive": "parfois",
       "gestionnaires": [
@@ -2004,7 +2029,7 @@
         "cp-when"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 738,
+      "ligne": 779,
       "composant": "QuandFlow",
       "gestionnaires": [
         "onChange"
@@ -2026,7 +2051,7 @@
         "cp-when"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 749,
+      "ligne": 790,
       "composant": "QuandFlow",
       "gestionnaires": [
         "onChange"
@@ -2049,7 +2074,7 @@
         "cp-when"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 758,
+      "ligne": 799,
       "composant": "QuandFlow",
       "gestionnaires": [
         "onChange"
@@ -2072,7 +2097,7 @@
         "cp-when"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 772,
+      "ligne": 813,
       "composant": "QuandFlow",
       "gestionnaires": [
         "onChange"
@@ -2095,7 +2120,7 @@
         "cp-when"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 797,
+      "ligne": 838,
       "composant": "QuandFlow",
       "desactive": "parfois",
       "gestionnaires": []
@@ -2116,7 +2141,7 @@
         "cp-chiprow"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 868,
+      "ligne": 909,
       "composant": "QuandFlow",
       "gestionnaires": [
         "onClick"
@@ -2136,7 +2161,7 @@
       ],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 908,
+      "ligne": 949,
       "composant": "CalendarCell",
       "desactive": "parfois",
       "gestionnaires": [
@@ -2157,7 +2182,7 @@
         "cp-prefs__block"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 1144,
+      "ligne": 1185,
       "composant": "PreferencesFlow",
       "groupe": "Rythme",
       "gestionnaires": [
@@ -2181,7 +2206,7 @@
         "cp-prefs__block"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 1162,
+      "ligne": 1203,
       "composant": "PreferencesFlow",
       "desactive": "parfois",
       "gestionnaires": [
@@ -2204,7 +2229,7 @@
         "cp-note"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 1209,
+      "ligne": 1250,
       "composant": "PreferencesFlow",
       "gestionnaires": [
         "onClick"
@@ -2227,7 +2252,7 @@
         "cp-prefs__block"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 1287,
+      "ligne": 1328,
       "composant": "ProjectBlock",
       "desactive": "parfois",
       "gestionnaires": [
@@ -2251,7 +2276,7 @@
         "cp-prefs__block"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 1315,
+      "ligne": 1356,
       "composant": "ProjectBlock",
       "desactive": "parfois",
       "gestionnaires": [
@@ -2275,7 +2300,7 @@
         "cp-prefs__block"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 1341,
+      "ligne": 1382,
       "composant": "ProjectBlock",
       "desactive": "parfois",
       "gestionnaires": [
@@ -2303,7 +2328,7 @@
         "cp-prefs__block"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 1365,
+      "ligne": 1406,
       "composant": "ProjectBlock",
       "desactive": "parfois",
       "gestionnaires": [
@@ -2326,7 +2351,7 @@
         "cp-prefs__block"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 1394,
+      "ligne": 1435,
       "composant": "ProjectBlock",
       "desactive": "parfois",
       "gestionnaires": [
@@ -2351,7 +2376,7 @@
         "cp-prefs__block"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 1440,
+      "ligne": 1481,
       "composant": "TagEditor",
       "desactive": "parfois",
       "gestionnaires": [
@@ -2375,7 +2400,7 @@
         "cp-prefs__block"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 1461,
+      "ligne": 1502,
       "composant": "TagEditor",
       "gestionnaires": [
         "onClick"
@@ -2398,7 +2423,7 @@
         "cp-prefs__block"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 1477,
+      "ligne": 1518,
       "composant": "TagEditor",
       "gestionnaires": [
         "onChange"
@@ -2422,7 +2447,7 @@
         "cp-prefs__block"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 1484,
+      "ligne": 1525,
       "composant": "TagEditor",
       "desactive": "parfois",
       "gestionnaires": []
@@ -2813,7 +2838,7 @@
         "compas"
       ],
       "fichier": "src/features/compas/components/CompasScreen.tsx",
-      "ligne": 906,
+      "ligne": 191,
       "composant": "CompasScreen",
       "gestionnaires": [
         "onPointerDown",
@@ -2846,7 +2871,7 @@
         "compas"
       ],
       "fichier": "src/features/compas/components/CompasScreen.tsx",
-      "ligne": 957,
+      "ligne": 242,
       "composant": "CompasScreen",
       "gestionnaires": [
         "onClick"
@@ -2877,7 +2902,7 @@
         "compas"
       ],
       "fichier": "src/features/compas/components/CompasScreen.tsx",
-      "ligne": 957,
+      "ligne": 242,
       "composant": "CompasScreen",
       "gestionnaires": [
         "onClick"
@@ -2908,7 +2933,7 @@
         "compas"
       ],
       "fichier": "src/features/compas/components/CompasScreen.tsx",
-      "ligne": 957,
+      "ligne": 242,
       "composant": "CompasScreen",
       "gestionnaires": [
         "onClick"
@@ -2939,7 +2964,7 @@
         "compas"
       ],
       "fichier": "src/features/compas/components/CompasScreen.tsx",
-      "ligne": 957,
+      "ligne": 242,
       "composant": "CompasScreen",
       "gestionnaires": [
         "onClick"
@@ -2970,7 +2995,7 @@
         "compas"
       ],
       "fichier": "src/features/compas/components/CompasScreen.tsx",
-      "ligne": 957,
+      "ligne": 242,
       "composant": "CompasScreen",
       "gestionnaires": [
         "onClick"
@@ -2995,7 +3020,7 @@
         "compas"
       ],
       "fichier": "src/features/compas/components/CompasScreen.tsx",
-      "ligne": 978,
+      "ligne": 263,
       "composant": "CompasScreen",
       "gestionnaires": [
         "onClick"
@@ -3020,7 +3045,7 @@
         "compas"
       ],
       "fichier": "src/features/compas/components/CompasScreen.tsx",
-      "ligne": 986,
+      "ligne": 271,
       "composant": "CompasScreen",
       "gestionnaires": [
         "onClick"
@@ -3044,7 +3069,7 @@
         "compas"
       ],
       "fichier": "src/features/compas/components/CompasScreen.tsx",
-      "ligne": 1006,
+      "ligne": 291,
       "composant": "CompasScreen",
       "gestionnaires": [
         "onClick"
@@ -3069,7 +3094,7 @@
         "compas"
       ],
       "fichier": "src/features/compas/components/CompasScreen.tsx",
-      "ligne": 1070,
+      "ligne": 355,
       "composant": "CompasScreen",
       "gestionnaires": [
         "onClick"
@@ -3093,7 +3118,7 @@
         "compas"
       ],
       "fichier": "src/features/compas/components/CompasScreen.tsx",
-      "ligne": 1081,
+      "ligne": 366,
       "composant": "CompasScreen",
       "desactive": "parfois",
       "gestionnaires": [
@@ -3119,7 +3144,7 @@
         "compas"
       ],
       "fichier": "src/features/compas/components/CompasScreen.tsx",
-      "ligne": 1096,
+      "ligne": 381,
       "composant": "CompasScreen",
       "gestionnaires": [
         "onChange"
@@ -3142,7 +3167,7 @@
         "compas"
       ],
       "fichier": "src/features/compas/components/CompasScreen.tsx",
-      "ligne": 1112,
+      "ligne": 397,
       "composant": "CompasScreen",
       "gestionnaires": []
     },
@@ -3167,7 +3192,7 @@
         "compas"
       ],
       "fichier": "src/features/compas/components/CompasScreen.tsx",
-      "ligne": 1168,
+      "ligne": 453,
       "composant": "CompasScreen",
       "gestionnaires": [
         "onClick"
@@ -3190,7 +3215,7 @@
         "compas"
       ],
       "fichier": "src/features/compas/components/CompasScreen.tsx",
-      "ligne": 1191,
+      "ligne": 476,
       "composant": "CompasScreen",
       "desactive": "parfois",
       "gestionnaires": [
@@ -7084,6 +7109,393 @@
       "ligne": 50,
       "composant": "OfficialAlertTexts",
       "gestionnaires": []
+    },
+    {
+      "id": "src/features/compas/components/RouteEditor.tsx::RouteEditor::button::cls:cp-pill",
+      "etape": "ou",
+      "ecran": "tiroir ou › éditeur de tracé",
+      "type": "bouton",
+      "nom": "…",
+      "motif": "^\\s*(?:.*?)\\s*$",
+      "balise": "button",
+      "role": "button",
+      "classes": [
+        "cp-pill"
+      ],
+      "ancetres": [
+        "cp-chiprow"
+      ],
+      "fichier": "src/features/compas/components/RouteEditor.tsx",
+      "ligne": 735,
+      "composant": "RouteEditor",
+      "desactive": "parfois",
+      "gestionnaires": [
+        "onClick"
+      ]
+    },
+    {
+      "id": "src/features/compas/components/RouteEditor.tsx::RouteEditor::button::compas.routeEditor.undo",
+      "etape": "ou",
+      "ecran": "tiroir ou › éditeur de tracé",
+      "type": "bouton",
+      "nom": "Annuler",
+      "motif": "^\\s*(?:Annuler)\\s*$",
+      "balise": "button",
+      "role": "button",
+      "classes": [
+        "cp-btn",
+        "cp-btn--soft"
+      ],
+      "ancetres": [
+        "cp-actions"
+      ],
+      "fichier": "src/features/compas/components/RouteEditor.tsx",
+      "ligne": 780,
+      "composant": "RouteEditor",
+      "desactive": "parfois",
+      "gestionnaires": [
+        "onClick"
+      ]
+    },
+    {
+      "id": "src/features/compas/components/RouteEditor.tsx::RouteEditor::button::compas.routeEditor.redo",
+      "etape": "ou",
+      "ecran": "tiroir ou › éditeur de tracé",
+      "type": "bouton",
+      "nom": "Rétablir",
+      "motif": "^\\s*(?:Rétablir)\\s*$",
+      "balise": "button",
+      "role": "button",
+      "classes": [
+        "cp-btn",
+        "cp-btn--soft"
+      ],
+      "ancetres": [
+        "cp-actions"
+      ],
+      "fichier": "src/features/compas/components/RouteEditor.tsx",
+      "ligne": 789,
+      "composant": "RouteEditor",
+      "desactive": "parfois",
+      "gestionnaires": [
+        "onClick"
+      ]
+    },
+    {
+      "id": "src/features/compas/components/RouteEditor.tsx::RouteEditor::button::compas.routeEditor.recalc",
+      "etape": "ou",
+      "ecran": "tiroir ou › éditeur de tracé",
+      "type": "bouton",
+      "nom": "Recalculer",
+      "motif": "^\\s*(?:Recalculer)\\s*$",
+      "balise": "button",
+      "role": "button",
+      "classes": [
+        "cp-btn",
+        "cp-btn--soft"
+      ],
+      "ancetres": [
+        "cp-actions"
+      ],
+      "fichier": "src/features/compas/components/RouteEditor.tsx",
+      "ligne": 798,
+      "composant": "RouteEditor",
+      "desactive": "parfois",
+      "gestionnaires": [
+        "onClick"
+      ]
+    },
+    {
+      "id": "src/features/compas/components/RouteEditor.tsx::RouteEditor::button::compas.routeEditor.point",
+      "etape": "ou",
+      "ecran": "tiroir ou › éditeur de tracé",
+      "type": "bouton",
+      "nom": "Point …1…",
+      "motif": "^\\s*(?:Point\\s*.*?\\s*1\\s*.*?)\\s*$",
+      "balise": "button",
+      "role": "button",
+      "classes": [
+        "cp-row"
+      ],
+      "ancetres": [],
+      "fichier": "src/features/compas/components/RouteEditor.tsx",
+      "ligne": 826,
+      "composant": "RouteEditor",
+      "gestionnaires": [
+        "onClick"
+      ]
+    },
+    {
+      "id": "src/features/compas/components/RouteEditor.tsx::RouteEditor::button::compas.routeEditor.leg",
+      "etape": "ou",
+      "ecran": "tiroir ou › éditeur de tracé",
+      "type": "bouton",
+      "nom": "Point …1 → point …2Manuel hors réseau",
+      "variantes": [
+        "Point …1 → point …2Manuel hors réseau",
+        "Point …1 → point …2Calculé"
+      ],
+      "motif": "^\\s*(?:Point\\s*.*?\\s*1\\s+→\\s+point\\s*.*?\\s*2Manuel\\s+hors\\s+réseau|Point\\s*.*?\\s*1\\s+→\\s+point\\s*.*?\\s*2Calculé)\\s*$",
+      "balise": "button",
+      "role": "button",
+      "classes": [
+        "cp-route-leg__main"
+      ],
+      "ancetres": [
+        "cp-route-leg"
+      ],
+      "fichier": "src/features/compas/components/RouteEditor.tsx",
+      "ligne": 859,
+      "composant": "RouteEditor",
+      "gestionnaires": [
+        "onClick"
+      ]
+    },
+    {
+      "id": "src/features/compas/components/RouteEditor.tsx::RouteEditor::button::compas.routeEditor.editManual",
+      "etape": "ou",
+      "ecran": "tiroir ou › éditeur de tracé",
+      "type": "bouton",
+      "nom": "Modifier le tracé manuel",
+      "variantes": [
+        "Modifier le tracé manuel",
+        "Tracer à la main"
+      ],
+      "motif": "^\\s*(?:Modifier\\s+le\\s+tracé\\s+manuel|Tracer\\s+à\\s+la\\s+main)\\s*$",
+      "balise": "button",
+      "role": "button",
+      "classes": [
+        "cp-btn",
+        "cp-btn--soft",
+        "cp-route-leg__action"
+      ],
+      "ancetres": [
+        "cp-route-leg"
+      ],
+      "fichier": "src/features/compas/components/RouteEditor.tsx",
+      "ligne": 876,
+      "composant": "RouteEditor",
+      "desactive": "parfois",
+      "gestionnaires": [
+        "onClick"
+      ]
+    },
+    {
+      "id": "src/features/compas/components/RouteEditor.tsx::RouteEditor::button::compas.routeEditor.manualCancel",
+      "etape": "ou",
+      "ecran": "tiroir ou › éditeur de tracé",
+      "type": "bouton",
+      "nom": "Annuler le tracé",
+      "motif": "^\\s*(?:Annuler\\s+le\\s+tracé)\\s*$",
+      "balise": "button",
+      "role": "button",
+      "classes": [
+        "cp-btn",
+        "cp-btn--soft"
+      ],
+      "ancetres": [
+        "cp-actions",
+        "cp-route-manual"
+      ],
+      "fichier": "src/features/compas/components/RouteEditor.tsx",
+      "ligne": 914,
+      "composant": "RouteEditor",
+      "gestionnaires": [
+        "onClick"
+      ]
+    },
+    {
+      "id": "src/features/compas/components/RouteEditor.tsx::RouteEditor::button::compas.routeEditor.manualDone",
+      "etape": "ou",
+      "ecran": "tiroir ou › éditeur de tracé",
+      "type": "bouton",
+      "nom": "Terminer le tracé manuel",
+      "motif": "^\\s*(?:Terminer\\s+le\\s+tracé\\s+manuel)\\s*$",
+      "balise": "button",
+      "role": "button",
+      "classes": [
+        "cp-btn",
+        "cp-btn--pg"
+      ],
+      "ancetres": [
+        "cp-actions",
+        "cp-route-manual"
+      ],
+      "fichier": "src/features/compas/components/RouteEditor.tsx",
+      "ligne": 917,
+      "composant": "RouteEditor",
+      "desactive": "parfois",
+      "gestionnaires": [
+        "onClick"
+      ]
+    },
+    {
+      "id": "src/features/compas/components/RouteEditor.tsx::RouteEditor::button::compas.routeEditor.manualRemove",
+      "etape": "ou",
+      "ecran": "tiroir ou › éditeur de tracé",
+      "type": "bouton",
+      "nom": "Revenir au calcul",
+      "motif": "^\\s*(?:Revenir\\s+au\\s+calcul)\\s*$",
+      "balise": "button",
+      "role": "button",
+      "classes": [
+        "cp-btn",
+        "cp-btn--soft"
+      ],
+      "ancetres": [
+        "cp-route-manual"
+      ],
+      "fichier": "src/features/compas/components/RouteEditor.tsx",
+      "ligne": 927,
+      "composant": "RouteEditor",
+      "desactive": "parfois",
+      "gestionnaires": [
+        "onClick"
+      ]
+    },
+    {
+      "id": "src/features/compas/components/RouteEditor.tsx::RouteEditor::button::compas.routeEditor.addPoint",
+      "etape": "ou",
+      "ecran": "tiroir ou › éditeur de tracé",
+      "type": "bouton",
+      "nom": "Ajouter un point",
+      "motif": "^\\s*(?:Ajouter\\s+un\\s+point)\\s*$",
+      "balise": "button",
+      "role": "button",
+      "classes": [
+        "cp-btn",
+        "cp-btn--soft"
+      ],
+      "ancetres": [
+        "cp-actions"
+      ],
+      "fichier": "src/features/compas/components/RouteEditor.tsx",
+      "ligne": 940,
+      "composant": "RouteEditor",
+      "desactive": "parfois",
+      "gestionnaires": [
+        "onClick"
+      ]
+    },
+    {
+      "id": "src/features/compas/components/RouteEditor.tsx::RouteEditor::button::compas.routeEditor.removePoint",
+      "etape": "ou",
+      "ecran": "tiroir ou › éditeur de tracé",
+      "type": "bouton",
+      "nom": "Supprimer ce point",
+      "motif": "^\\s*(?:Supprimer\\s+ce\\s+point)\\s*$",
+      "balise": "button",
+      "role": "button",
+      "classes": [
+        "cp-btn",
+        "cp-btn--soft"
+      ],
+      "ancetres": [
+        "cp-actions"
+      ],
+      "fichier": "src/features/compas/components/RouteEditor.tsx",
+      "ligne": 950,
+      "composant": "RouteEditor",
+      "desactive": "parfois",
+      "gestionnaires": [
+        "onClick"
+      ]
+    },
+    {
+      "id": "src/features/compas/components/RouteEditor.tsx::RouteEditor::button::compas.ouRoute.back",
+      "etape": "ou",
+      "ecran": "tiroir ou › éditeur de tracé",
+      "type": "bouton",
+      "nom": "Retour",
+      "motif": "^\\s*(?:Retour)\\s*$",
+      "balise": "button",
+      "role": "button",
+      "classes": [
+        "cp-btn",
+        "cp-btn--soft"
+      ],
+      "ancetres": [
+        "cp-actions"
+      ],
+      "fichier": "src/features/compas/components/RouteEditor.tsx",
+      "ligne": 975,
+      "composant": "RouteEditor",
+      "gestionnaires": [
+        "onClick"
+      ]
+    },
+    {
+      "id": "src/features/compas/components/RouteEditor.tsx::RouteEditor::button::compas.routeEditor.save",
+      "etape": "ou",
+      "ecran": "tiroir ou › éditeur de tracé",
+      "type": "bouton",
+      "nom": "Enregistrer le tracé",
+      "motif": "^\\s*(?:Enregistrer\\s+le\\s+tracé)\\s*$",
+      "balise": "button",
+      "role": "button",
+      "classes": [
+        "cp-btn",
+        "cp-btn--pg",
+        "cp-btn--block"
+      ],
+      "ancetres": [
+        "cp-actions"
+      ],
+      "fichier": "src/features/compas/components/RouteEditor.tsx",
+      "ligne": 979,
+      "composant": "RouteEditor",
+      "desactive": "parfois",
+      "gestionnaires": [
+        "onClick"
+      ]
+    },
+    {
+      "id": "src/features/compas/components/RouteEditor.tsx::RouteEditor::button::compas.routeEditor.keepEditing",
+      "etape": "ou",
+      "ecran": "tiroir ou › éditeur de tracé",
+      "type": "bouton",
+      "nom": "Continuer l’édition",
+      "motif": "^\\s*(?:Continuer\\s+l’édition)\\s*$",
+      "balise": "button",
+      "role": "button",
+      "classes": [
+        "cp-btn",
+        "cp-btn--soft"
+      ],
+      "ancetres": [
+        "cp-actions",
+        "cp-sheet-glass"
+      ],
+      "fichier": "src/features/compas/components/RouteEditor.tsx",
+      "ligne": 1007,
+      "composant": "RouteEditor",
+      "gestionnaires": [
+        "onClick"
+      ]
+    },
+    {
+      "id": "src/features/compas/components/RouteEditor.tsx::RouteEditor::button::compas.routeEditor.discard",
+      "etape": "ou",
+      "ecran": "tiroir ou › éditeur de tracé",
+      "type": "bouton",
+      "nom": "Abandonner",
+      "motif": "^\\s*(?:Abandonner)\\s*$",
+      "balise": "button",
+      "role": "button",
+      "classes": [
+        "cp-btn",
+        "cp-btn--pg"
+      ],
+      "ancetres": [
+        "cp-actions",
+        "cp-sheet-glass"
+      ],
+      "fichier": "src/features/compas/components/RouteEditor.tsx",
+      "ligne": 1014,
+      "composant": "RouteEditor",
+      "gestionnaires": [
+        "onClick"
+      ]
     },
     {
       "id": "src/features/compas/components/TrialNote.tsx::TrialNote::a::compas.trial.keep",

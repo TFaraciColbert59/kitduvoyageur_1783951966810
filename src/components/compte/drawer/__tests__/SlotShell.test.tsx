@@ -48,6 +48,7 @@ describe('SlotShell — panes et sélecteur accessibles', () => {
     const tablist = screen.getByRole('tablist', { name: 'Slots du profil' });
     const vitrine = screen.getByRole('tab', { name: 'Vitrine' });
     const kit = screen.getByRole('tab', { name: 'Kit' });
+    expect(screen.getByRole('tab', { name: 'Entraînement' })).toBeTruthy();
     expect(vitrine.getAttribute('aria-controls')).toBe('lkdv-slot-panel-vitrine');
     expect(screen.getByRole('tabpanel', { name: 'Vitrine' })).toBeTruthy();
     expect(vitrine.getAttribute('tabindex')).toBe('0');
@@ -61,9 +62,9 @@ describe('SlotShell — panes et sélecteur accessibles', () => {
     fireEvent.keyDown(tablist, { key: 'ArrowRight' });
     expect(onSlotChange).toHaveBeenCalledWith('kit');
     fireEvent.keyDown(tablist, { key: 'End' });
-    expect(onSlotChange).toHaveBeenCalledWith('communaute');
+    expect(onSlotChange).toHaveBeenCalledWith('entrainement');
     fireEvent.keyDown(tablist, { key: 'ArrowLeft' });
-    expect(onSlotChange).toHaveBeenCalledWith('communaute');
+    expect(onSlotChange).toHaveBeenCalledWith('entrainement');
   });
 
   it('navigue entre les lentilles avec les flèches, Home et End (roving tabindex)', () => {

@@ -291,6 +291,7 @@ export function buildEcrinsDetail(options: EcrinsFixtureOptions = {}): CarnetDet
       durationS: spec.min * 60,
       moments: moments.filter((m) => m.dayNumber === spec.n),
       points,
+      segments: [points],
     };
   });
 

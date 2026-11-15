@@ -72,6 +72,17 @@ const CONFIG: Record<CompteMapMode, MapModeConfig> = {
     hud: 'count',
     dimmed: false,
   },
+  entrainement: {
+    mode: 'entrainement',
+    label: 'Entraînement',
+    emptyTitle: 'Aucune sortie à relier à l’entraînement.',
+    emptyHint: 'Tes sorties récentes serviront à proposer séances et récupération.',
+    emptyCta: null,
+    camera: 'fit-all',
+    layers: { tracks: 'all', massifs: true, carnets: false, pois: false, outingPins: true },
+    hud: 'full',
+    dimmed: false,
+  },
   compte: {
     mode: 'compte',
     label: 'Compte',
