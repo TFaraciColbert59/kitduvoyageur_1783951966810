@@ -256,10 +256,12 @@ export function TraceMap({
   segments,
   className,
   colorMode = 'default',
+  activeCoord = null,
 }: {
   segments: OutingPoint[][];
   className?: string;
   colorMode?: TraceColorMode;
+  activeCoord?: { lat: number; lng: number } | null;
 }) {
   const prepared = segments
     .map((segment) => downsample(segment))
@@ -284,7 +286,7 @@ export function TraceMap({
     .filter((v): v is number => v !== null && Number.isFinite(v));
   const minEle = elevations.length > 0 ? Math.min(...elevations) : 0;
   const eleSpan = elevations.length > 0 ? Math.max(Math.max(...elevations) - minEle, 1) : 1;
-  const project = (point: OutingPoint) => {
+  const project = (point: { lat: number; lng: number; elevationM?: number | null }) => {
     const x = offsetX + (point.lng - minLng) * scale;
     const y = offsetY + (maxLat - point.lat) * scale;
     return [x, y] as const;
@@ -302,6 +304,7 @@ export function TraceMap({
   const [startX, startY] = project(prepared[0][0]);
   const lastSegment = prepared[prepared.length - 1];
   const [endX, endY] = project(lastSegment[lastSegment.length - 1]);
+  const activePos = activeCoord ? project(activeCoord) : null;
 
   return (
     <svg
@@ -347,6 +350,12 @@ export function TraceMap({
       <circle cx={startX} cy={startY} r="2.6" fill="#17402C" />
       <circle cx={startX} cy={startY} r="1.1" fill="#fff" />
       <circle cx={endX} cy={endY} r="2.6" fill="#fff" stroke="#17402C" strokeWidth="1.2" />
+      {activePos ? (
+        <g data-testid="trace-active-cursor">
+          <circle cx={activePos[0]} cy={activePos[1]} r="4.4" fill="rgba(234,88,12,0.22)" />
+          <circle cx={activePos[0]} cy={activePos[1]} r="2.2" fill="#EA580C" stroke="#fff" strokeWidth="0.9" />
+        </g>
+      ) : null}
     </svg>
   );
 }

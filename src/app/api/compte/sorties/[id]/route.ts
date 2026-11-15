@@ -12,6 +12,7 @@ const Patch = z
     title: z.string().trim().max(120).optional(),
     notes: z.string().max(2000).optional(),
     visibility: z.enum(['private', 'followers', 'public', 'collective_anonymized']).optional(),
+    rpe: z.number().int().min(1).max(10).nullable().optional(),
   })
   .strict();
 

@@ -19,7 +19,12 @@ import {
   type AssistantCompletionPort,
   type DataCitation,
 } from '../contracts';
-import { buildActivityFacts, type ActivityFacts, type HikeSessionRecord } from './activityFacts';
+import {
+  buildActivityFacts,
+  type ActivityFacts,
+  type ActivityTelemetryFactsInput,
+  type HikeSessionRecord,
+} from './activityFacts';
 
 export interface DeterministicActivityReading {
   headline: string;
@@ -76,6 +81,24 @@ export function buildDeterministicActivityReading(facts: ActivityFacts): Determi
   }
   if (hasValue(metrics.poiCount)) {
     factsLines.push(`Points de passage enregistrés : ${formatNumberFr(metrics.poiCount.value, 0)}.`);
+  }
+  if (hasValue(metrics.heartRateBpm)) {
+    factsLines.push(`Fréquence cardiaque moyenne mesurée : ${formatNumberFr(metrics.heartRateBpm.value, 0)} bpm.`);
+  }
+  if (hasValue(metrics.gapPaceSecondsPerKm)) {
+    factsLines.push(`Allure ajustée à la pente (GAP estimée) : ${formatPaceFr(metrics.gapPaceSecondsPerKm.value)}.`);
+  }
+  if (hasValue(metrics.relativeEffortScore)) {
+    factsLines.push(`Effort relatif calculé : ${formatNumberFr(metrics.relativeEffortScore.value, 0)} pts.`);
+  }
+  if (hasValue(metrics.avgPowerW)) {
+    factsLines.push(`Puissance moyenne : ${formatNumberFr(metrics.avgPowerW.value, 0)} W.`);
+  }
+  if (hasValue(metrics.caloriesKcal)) {
+    factsLines.push(`Énergie : ${formatNumberFr(metrics.caloriesKcal.value, 0)} kcal.`);
+  }
+  if (hasValue(metrics.splits)) {
+    factsLines.push(`Découpage kilométrique : ${formatNumberFr(metrics.splits.value, 0)} splits.`);
   }
   if (hasValue(metrics.weather)) {
     const weather = metrics.weather.value;
@@ -163,6 +186,7 @@ export function sanitizeActivityNarrative(text: unknown): string | null {
 
 export interface CreateActivityInsightOptions {
   session: HikeSessionRecord;
+  telemetry?: ActivityTelemetryFactsInput;
   includeAi: boolean;
   provider?: AssistantCompletionPort | null;
   now?: () => Date;
@@ -172,7 +196,7 @@ export interface CreateActivityInsightOptions {
 export async function createActivityInsight(
   options: CreateActivityInsightOptions
 ): Promise<PostActivityInsight> {
-  const facts = buildActivityFacts(options.session);
+  const facts = buildActivityFacts(options.session, options.telemetry);
   const deterministic = buildDeterministicActivityReading(facts);
 
   if (!options.includeAi) {

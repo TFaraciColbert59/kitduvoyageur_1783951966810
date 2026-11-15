@@ -25,11 +25,13 @@ import {
   readAccountPractice,
   readPracticeHistory,
 } from '@/features/workouts/client/readAccountPractice';
+import { buildWorkoutFocusContext } from '@/features/workouts/client/workoutFocus';
 import { getProviderAvailability } from '@/features/workouts/domain/availability';
 import type {
   BikeGoal,
   RunGoal,
   SessionExecution,
+  SorenessLevel,
   StructuredSession,
   WorkoutGoal,
   WorkoutLevel,
@@ -98,6 +100,7 @@ function WorkoutsDrawerOwner({
   const [instantLevel, setInstantLevel] =
     useState<WorkoutLevel>('intermediaire');
   const [availableDays, setAvailableDays] = useState(3);
+  const [soreness, setSoreness] = useState<SorenessLevel>('none');
   const [execution, setExecution] = useState<SessionExecution | null>(null);
   const [activeSession, setActiveSession] =
     useState<StructuredSession | null>(null);
@@ -147,9 +150,14 @@ function WorkoutsDrawerOwner({
         sport: practice.sport,
         sportStatus: practice.sportStatus,
         level: instantLevel,
+        soreness,
         now: now(),
       }),
-    [practice, instantLevel, now]
+    [practice, instantLevel, soreness, now]
+  );
+  const focusContext = useMemo(
+    () => buildWorkoutFocusContext(payload, undefined, 'anonymous', new Date(now())),
+    [payload, now]
   );
 
   useEffect(() => {
@@ -323,6 +331,8 @@ function WorkoutsDrawerOwner({
           onLevelChange={setRunLevel}
           onStart={startSession}
           activeSessionId={execution?.sessionId ?? null}
+          storage={resolvedStorage}
+          prepFocus={focusContext.prepFocus}
         />
       </div>
 
@@ -342,6 +352,8 @@ function WorkoutsDrawerOwner({
           onLevelChange={setBikeLevel}
           onStart={startSession}
           activeSessionId={execution?.sessionId ?? null}
+          storage={resolvedStorage}
+          prepFocus={focusContext.prepFocus}
         />
       </div>
 
@@ -364,6 +376,7 @@ function WorkoutsDrawerOwner({
           onDaysChange={setAvailableDays}
           onStart={startSession}
           activeSessionId={execution?.sessionId ?? null}
+          focusContext={focusContext}
         />
       </div>
 
@@ -374,7 +387,12 @@ function WorkoutsDrawerOwner({
         aria-labelledby="lkdv-workout-tab-recuperation"
         hidden={section !== 'recuperation'}
       >
-        <RecoveryPanel program={recovery} practiceStatus={practice.status} />
+        <RecoveryPanel
+          program={recovery}
+          practiceStatus={practice.status}
+          soreness={soreness}
+          onSorenessChange={setSoreness}
+        />
       </div>
     </section>
   );

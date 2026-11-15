@@ -29,6 +29,19 @@ import { ACTIVITY_TAGS } from '@/features/activity/lifecycle';
 import { SPORT_FAMILIES } from '@/features/explorer-v2/sheet/sportSelection';
 import { tagLabel } from '@/components/compte/lifecycle/format';
 import {
+  analyzeOutingTelemetry,
+  readLocalZoneSets,
+  readOutingRpe,
+  saveOutingRpe,
+} from '@/features/explorer-v2/metrics/telemetryAnalysis';
+import { detectOutingHighlights } from '@/features/compte/progression/declaredRecords';
+import { readProgressionSessionsSnapshot } from '../progression/ProgressionAdvancedSections';
+import { readStrengthDraft, readLegacyStrengthDraft } from '@/features/explorer-v2/strength/storage';
+import { computeMuscleHeatmap } from '@/features/explorer-v2/strength/muscles';
+import { MuscleMapSvg } from '@/features/explorer-v2/strength/MuscleMapSvg';
+import { formatStrengthVolume, strengthLogTotals } from '@/features/explorer-v2/strength/model';
+import { OutingInsightBridge } from '@/features/ai-assistant/ui/OutingInsightBridge';
+import {
   ElevationProfile,
   TraceMap,
   formatDate,
@@ -38,6 +51,7 @@ import {
   metricDisplay,
   outingMetricVisible,
   traceUnavailableState,
+  visibleTracePoints,
   visibleTraceSegments,
 } from './shared';
 
@@ -50,6 +64,7 @@ export interface OutingSummaryProps {
     visibility: OutingVisibility;
     sport?: string;
     tags?: string[];
+    rpe?: number | null;
   }) => void;
   onSaveMetrics: (keys: OutingMetricKey[]) => void;
   onResetMetrics: () => void;
@@ -107,6 +122,7 @@ export function OutingSummary({
   const [visibility, setVisibility] = useState<OutingVisibility>(detail.visibility);
   const [sport, setSport] = useState(detail.sport || 'rando');
   const [tags, setTags] = useState<string[]>(detail.tags ?? []);
+  const [rpe, setRpe] = useState<number | null>(() => readOutingRpe(detail.id));
   const [coverFailed, setCoverFailed] = useState(false);
   const [matchedEvents, setMatchedEvents] = useState<ActivityEventMatch[]>([]);
   const [groupClusters, setGroupClusters] = useState<GroupActivityCluster[]>([]);
@@ -119,6 +135,7 @@ export function OutingSummary({
     setVisibility(detail.visibility);
     setSport(detail.sport || 'rando');
     setTags(detail.tags ?? []);
+    setRpe(readOutingRpe(detail.id));
     setEditing(false);
   }, [detail.id, detail.title, detail.notes, detail.visibility, detail.sport, detail.tags]);
 
@@ -161,6 +178,23 @@ export function OutingSummary({
   const traceState = traceUnavailableState(detail);
   const metricsHidden = detail.metricsMasked && !detail.canEdit;
   const maxAltitudeM = detail.maxAlt;
+  const telemetry = React.useMemo(
+    () =>
+      analyzeOutingTelemetry({
+        outingId: detail.id,
+        sport: detail.sport,
+        segments,
+        samples: detail.samples ?? null,
+        summary: detail.summary ?? null,
+        durationS: detail.durationS,
+        movingTimeS: detail.movingTimeS,
+        measuredHrBpm: outingMetricVisible(detail, 'heartRate') ? detail.heartRateBpm : null,
+        measuredCaloriesKcal: outingMetricVisible(detail, 'calories') ? detail.caloriesKcal : null,
+        zoneSets: readLocalZoneSets(detail.sport ?? undefined),
+        rpe,
+      }),
+    [detail, segments, rpe]
+  );
   // Double garde : le serveur ne renvoie la provenance qu'au propriétaire, et
   // l'interface ne l'affiche pas si un rôle de lecture non propriétaire arrive
   // un jour à la recevoir.
@@ -173,6 +207,11 @@ export function OutingSummary({
     authorized: distanceAuthorized,
     titleOrTags: `${detail.title} ${detail.notes}`,
   });
+
+  const highlights = React.useMemo(
+    () => detectOutingHighlights(detail, readProgressionSessionsSnapshot()),
+    [detail]
+  );
 
   return (
     <div className="lkdv-sortie-summary">
@@ -305,6 +344,24 @@ export function OutingSummary({
         </p>
       ) : null}
 
+      {highlights.length > 0 ? (
+        <section className="lkdv-sortie-section" data-testid="outing-highlights-section">
+          <header>
+            <b>Exploits &amp; temps forts</b>
+            <span>{highlights.length} marquant{highlights.length > 1 ? 's' : ''}</span>
+          </header>
+          <div className="lkdv-sortie-grid">
+            {highlights.map((hl) => (
+              <div key={hl.id}>
+                <small>{hl.title}</small>
+                <b>{hl.metricValue}</b>
+                <p className="lkdv-sortie-proof" style={{ marginTop: 2 }}>{hl.detail}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
       {detail.canEdit ? (
         <section className="lkdv-sortie-section">
           <header>
@@ -345,7 +402,8 @@ export function OutingSummary({
           className="lkdv-sortie-edit"
           onSubmit={(event) => {
             event.preventDefault();
-            onSave({ title: title.trim(), notes, visibility, sport, tags });
+            saveOutingRpe(detail.id, rpe);
+            onSave({ title: title.trim(), notes, visibility, sport, tags, rpe });
           }}
         >
           <label>
@@ -410,6 +468,23 @@ export function OutingSummary({
               <option value="collective_anonymized">Collectif anonymisé</option>
             </select>
           </label>
+          <label>
+            <span>Effort perçu (RPE 1–10)</span>
+            <select
+              value={rpe ?? ''}
+              onChange={(event) => {
+                const val = event.target.value === '' ? null : Number(event.target.value);
+                setRpe(val);
+              }}
+            >
+              <option value="">Non renseigné</option>
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((v) => (
+                <option key={v} value={v}>
+                  {v}/10 {v <= 3 ? '· Facile' : v <= 6 ? '· Modéré' : v <= 8 ? '· Soutenu' : '· Maximal'}
+                </option>
+              ))}
+            </select>
+          </label>
           <div className="lkdv-sortie-edit-actions lkdv-apill-row">
             <ActionPill label="Annuler" icon={<X />} onClick={() => setEditing(false)} />
             <ActionPill type="submit" tone="primary" label="Enregistrer" icon={<Check />} busy={saving} disabled={!title.trim()} />
@@ -425,6 +500,73 @@ export function OutingSummary({
           {detail.notes ? <p className="lkdv-sortie-notes">{detail.notes}</p> : null}
         </>
       )}
+
+      {detail.canEdit || telemetry.relativeEffort?.score !== null || telemetry.perceivedEffort ? (
+        <section className="lkdv-sortie-section" data-testid="outing-effort-rpe">
+          <header>
+            <b>Effort relatif &amp; ressenti (RPE)</b>
+            <span>
+              {telemetry.relativeEffort?.score !== null && telemetry.relativeEffort?.score !== undefined
+                ? `Effort cardio ${Math.round(telemetry.relativeEffort.score)}`
+                : telemetry.sRpeLoad !== null
+                  ? `Charge sRPE ${telemetry.sRpeLoad}`
+                  : 'Aucune charge cardio'}
+            </span>
+          </header>
+          <div className="lkdv-sortie-grid">
+            {telemetry.relativeEffort?.score !== null && telemetry.relativeEffort?.score !== undefined ? (
+              <div>
+                <small>Effort relatif (calculé FC)</small>
+                <b>{Math.round(telemetry.relativeEffort.score)} pts</b>
+              </div>
+            ) : null}
+            {telemetry.perceivedEffort && telemetry.perceivedEffort.normalized100 !== null ? (
+              <div>
+                <small>Effort perçu (déclaré)</small>
+                <b>{telemetry.perceivedEffort.rawValue}/10 · {Math.round(telemetry.perceivedEffort.normalized100)}/100</b>
+              </div>
+            ) : null}
+            {telemetry.sRpeLoad !== null ? (
+              <div>
+                <small>Charge sRPE (estimée)</small>
+                <b>{telemetry.sRpeLoad} ua</b>
+              </div>
+            ) : null}
+          </div>
+          {detail.canEdit ? (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 8 }} role="group" aria-label="Saisir le ressenti RPE de 1 à 10">
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((v) => {
+                const active = rpe === v;
+                return (
+                  <button
+                    key={v}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => {
+                      const next = active ? null : v;
+                      setRpe(next);
+                      saveOutingRpe(detail.id, next);
+                    }}
+                    style={{
+                      minWidth: 28,
+                      height: 26,
+                      borderRadius: 999,
+                      fontSize: 11.5,
+                      fontWeight: active ? 700 : 500,
+                      border: '1px solid rgba(15,23,42,0.16)',
+                      background: active ? '#17402C' : 'transparent',
+                      color: active ? '#fff' : 'inherit',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {v}
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
+        </section>
+      ) : null}
 
       <section className="lkdv-sortie-section">
         <header>
@@ -445,6 +587,37 @@ export function OutingSummary({
           <div className="lkdv-sortie-trace-empty">Profil altimétrique non partagé</div>
         )}
       </section>
+
+      {!metricsHidden && (detail.km !== null || detail.durationS !== null) ? (
+        <OutingInsightBridge
+          session={{
+            id: detail.id,
+            started_at: detail.startedAt ?? detail.date ?? new Date().toISOString(),
+            ended_at: detail.endedAt,
+            distance_km: outingMetricVisible(detail, 'distance') ? detail.km : null,
+            duration_seconds: outingMetricVisible(detail, 'duration') ? detail.durationS : null,
+            elevation_gain_m: outingMetricVisible(detail, 'elevation') ? detail.dplus : null,
+            max_altitude_m: outingMetricVisible(detail, 'maxAltitude') ? detail.maxAlt : null,
+            title: detail.title,
+            visibility: detail.visibility,
+            route_name: detail.routeName,
+            region: detail.massif,
+          }}
+          telemetry={{
+            hrAvgBpm:
+              telemetry.sensorChannels.find((c) => c.key === 'heartRate')?.avg ??
+              (outingMetricVisible(detail, 'heartRate') ? detail.heartRateBpm : null),
+            caloriesKcal: outingMetricVisible(detail, 'calories')
+              ? telemetry.energyAndSteps.caloriesKcal
+              : null,
+            caloriesEstimated: telemetry.energyAndSteps.caloriesQuality === 'estimated',
+            splitsCount: telemetry.kmSplits.length,
+            gapPaceSPerKm: telemetry.gap?.status === 'available' ? telemetry.gap.gapPaceSecondsPerKm : null,
+            relativeEffortScore: telemetry.relativeEffort?.score ?? null,
+            avgPowerW: telemetry.powerAnalysis?.averageW ?? null,
+          }}
+        />
+      ) : null}
 
       <section className="lkdv-sortie-section">
         <header>
@@ -574,6 +747,31 @@ export function OutingSummary({
       {provenance && (provenance.source === 'fit' || provenance.source === 'tcx') ? (
         <OutingMetrics summary={detail.summary ?? null} samples={detail.samples ?? null} />
       ) : null}
+
+      {(() => {
+        const draft = readStrengthDraft() ?? readLegacyStrengthDraft();
+        const linkedStrength =
+          draft &&
+          draft.exercises.length > 0 &&
+          (draft.activitySessionId === detail.id || detail.sport === 'musculation')
+            ? draft
+            : null;
+        if (!linkedStrength) return null;
+        const strengthTotals = strengthLogTotals(linkedStrength);
+        const muscleHeatmap = computeMuscleHeatmap(linkedStrength);
+        return (
+          <section className="lkdv-sortie-section" data-testid="outing-strength-summary">
+            <header>
+              <b>Séance de musculation (S2.32 / S2.33)</b>
+              <span>
+                {strengthTotals.exercises} ex. · {strengthTotals.sets} séries ·{' '}
+                {formatStrengthVolume(strengthTotals.volumeKg)}
+              </span>
+            </header>
+            <MuscleMapSvg heatmap={muscleHeatmap} compact />
+          </section>
+        );
+      })()}
 
       {detail.canEdit ? (
         <section className="lkdv-sortie-danger">

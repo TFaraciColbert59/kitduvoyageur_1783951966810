@@ -42,6 +42,10 @@ import { TrailCommunityPanel } from './TrailCommunityPanel';
 import { LiveMediaCapture } from './LiveMediaCapture';
 import { isPlaceSavedInList } from '../savedPlaces';
 import {
+  ExplorerSummaryEffortAndSplits,
+  ExplorerStatsTelemetryBridge,
+} from './SummaryTelemetryPanel';
+import {
   XpAvatars,
   XpCard,
   XpCardRow,
@@ -3362,6 +3366,7 @@ function ActivityTabs(ctx: SheetContext, kind: string): SheetTab[] {
                 />
               </XpRows>
               <SummarySpecializedPanel summary={summary} />
+              <ExplorerSummaryEffortAndSplits summary={summary} units={ctx.units} />
             </>
           );
         },
@@ -3388,7 +3393,7 @@ function ActivityTabs(ctx: SheetContext, kind: string): SheetTab[] {
               emptyTitle="Aucune série mesurée"
               emptyHint="Cette sortie ne contient aucun point GPS ou capteur exploitable. Aucune moyenne ni aucun pic n’est inventé."
             >
-              <SlopeAdjustedPacePanel sport={bilan.sport} />
+              <ExplorerStatsTelemetryBridge summary={bilan} units={ctx.units} />
             </MetricSeriesPanel>
           );
         },

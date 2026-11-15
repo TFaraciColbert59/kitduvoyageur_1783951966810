@@ -47,6 +47,17 @@ export interface ActivityWeather {
   precipitationProbability: number | null;
 }
 
+export interface ActivityTelemetryFactsInput {
+  hrAvgBpm?: number | null;
+  caloriesKcal?: number | null;
+  caloriesEstimated?: boolean;
+  splitsCount?: number | null;
+  gapPaceSPerKm?: number | null;
+  relativeEffortScore?: number | null;
+  rpe?: number | null;
+  avgPowerW?: number | null;
+}
+
 export interface ActivityMetrics {
   distanceKm: DataPoint<number>;
   durationSeconds: DataPoint<number>;
@@ -60,6 +71,9 @@ export interface ActivityMetrics {
   heartRateBpm: DataPoint<number>;
   caloriesKcal: DataPoint<number>;
   splits: DataPoint<number>;
+  gapPaceSecondsPerKm?: DataPoint<number>;
+  relativeEffortScore?: DataPoint<number>;
+  avgPowerW?: DataPoint<number>;
 }
 
 export interface ActivityFacts {
@@ -157,7 +171,10 @@ function absentCitation(field: string, label: string, point: DataPoint<unknown>)
   };
 }
 
-export function buildActivityFacts(session: HikeSessionRecord): ActivityFacts {
+export function buildActivityFacts(
+  session: HikeSessionRecord,
+  telemetry?: ActivityTelemetryFactsInput
+): ActivityFacts {
   const distance = numericDataPoint(session.distance_km, {
     status: 'measured',
     source: 'hike_sessions.distance_km',
@@ -217,18 +234,43 @@ export function buildActivityFacts(session: HikeSessionRecord): ActivityFacts {
     ? declared(weatherFacts, 'hike_sessions.weather')
     : absent<ActivityWeather>('météo absente ou non exploitable pour cette sortie');
 
-  const heartRateBpm = absent<number>(
-    'aucune ceinture cardio connectée : LKDV n’invente pas de fréquence cardiaque',
-    'hike_sessions (aucune mesure cardio)'
-  );
-  const caloriesKcal = absent<number>(
-    'aucune mesure de dépense énergétique enregistrée pour cette sortie',
-    'hike_sessions (aucune mesure calorique)'
-  );
-  const splits = absent<number>(
-    'splits non persistés dans hike_sessions : aucun découpage à afficher',
-    'hike_sessions (aucun split)'
-  );
+  const heartRateBpm =
+    typeof telemetry?.hrAvgBpm === 'number' && Number.isFinite(telemetry.hrAvgBpm)
+      ? measured(Math.round(telemetry.hrAvgBpm), 'capteur / trace cardio', 'bpm')
+      : absent<number>(
+          'aucune ceinture cardio connectée : LKDV n’invente pas de fréquence cardiaque',
+          'hike_sessions (aucune mesure cardio)'
+        );
+  const caloriesKcal =
+    typeof telemetry?.caloriesKcal === 'number' && Number.isFinite(telemetry.caloriesKcal)
+      ? calculated(
+          Math.round(telemetry.caloriesKcal),
+          telemetry.caloriesEstimated ? 'dépense estimée (métabolisme)' : 'capteur énergétique',
+          'kcal'
+        )
+      : absent<number>(
+          'aucune mesure de dépense énergétique enregistrée pour cette sortie',
+          'hike_sessions (aucune mesure calorique)'
+        );
+  const splits =
+    typeof telemetry?.splitsCount === 'number' && Number.isFinite(telemetry.splitsCount) && telemetry.splitsCount > 0
+      ? calculated(Math.round(telemetry.splitsCount), 'calculé : découpage kilométrique GPS', 'splits')
+      : absent<number>(
+          'splits non persistés dans hike_sessions : aucun découpage à afficher',
+          'hike_sessions (aucun split)'
+        );
+  const gapPaceSecondsPerKm =
+    typeof telemetry?.gapPaceSPerKm === 'number' && Number.isFinite(telemetry.gapPaceSPerKm)
+      ? calculated(Math.round(telemetry.gapPaceSPerKm), 'estimé : allure ajustée à la pente (Minetti)', 's/km')
+      : absent<number>('allure ajustée à la pente non calculable');
+  const relativeEffortScore =
+    typeof telemetry?.relativeEffortScore === 'number' && Number.isFinite(telemetry.relativeEffortScore)
+      ? calculated(Math.round(telemetry.relativeEffortScore), 'calculé : effort relatif par zones FC', 'pts')
+      : absent<number>('effort relatif indisponible');
+  const avgPowerW =
+    typeof telemetry?.avgPowerW === 'number' && Number.isFinite(telemetry.avgPowerW)
+      ? measured(Math.round(telemetry.avgPowerW), 'capteur puissance / estimation physique', 'W')
+      : absent<number>('puissance moyenne indisponible');
 
   const citations: DataCitation[] = [
     citation('metrics.distanceKm', 'Distance', distance, (value) => `${formatNumberFr(value, 2)} km`),
@@ -244,6 +286,12 @@ export function buildActivityFacts(session: HikeSessionRecord): ActivityFacts {
       (value) => formatPaceFr(value)
     ),
     citation('metrics.poiCount', 'Points de passage', poiCount, (value) => `${formatNumberFr(value, 0)}`),
+    citation('metrics.heartRateBpm', 'FC moyenne', heartRateBpm, (value) => `${formatNumberFr(value, 0)} bpm`),
+    citation('metrics.caloriesKcal', 'Énergie', caloriesKcal, (value) => `${formatNumberFr(value, 0)} kcal`),
+    citation('metrics.splits', 'Splits', splits, (value) => `${formatNumberFr(value, 0)}`),
+    citation('metrics.gapPaceSecondsPerKm', 'Allure ajustée (GAP)', gapPaceSecondsPerKm, (value) => formatPaceFr(value)),
+    citation('metrics.relativeEffortScore', 'Effort relatif', relativeEffortScore, (value) => `${formatNumberFr(value, 0)} pts`),
+    citation('metrics.avgPowerW', 'Puissance moyenne', avgPowerW, (value) => `${formatNumberFr(value, 0)} W`),
   ].filter((entry) => entry.status !== 'absent');
 
   if (hasValue(weather)) {
@@ -297,6 +345,9 @@ export function buildActivityFacts(session: HikeSessionRecord): ActivityFacts {
       heartRateBpm,
       caloriesKcal,
       splits,
+      gapPaceSecondsPerKm,
+      relativeEffortScore,
+      avgPowerW,
     },
     missing,
     citations,

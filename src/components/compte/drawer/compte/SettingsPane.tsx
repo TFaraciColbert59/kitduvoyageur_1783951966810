@@ -51,6 +51,7 @@ import { DrawerError, DrawerSkeleton } from '../shell/DrawerShell';
 import { createClient } from '@/lib/supabase/client';
 import { ConsentSettingsSheet } from './ConsentSettingsSheet';
 import { PrivacyZonesSheet } from './PrivacyZonesSheet';
+import { ZoneSettingsSheet } from './ZoneSettingsSheet';
 import { fetchJson } from './shared';
 import { useFeedPreferences } from '@/features/community/g01/useFeedPreferences';
 import { FeedPreferencesDrawer } from '@/components/communaute/g01/FeedPreferencesDrawer';
@@ -90,6 +91,7 @@ export function SettingsPane() {
   const offersTriggerRef = useRef<HTMLButtonElement | null>(null);
   const [feedPrefsOpen, setFeedPrefsOpen] = useState(false);
   const [zonesOpen, setZonesOpen] = useState(false);
+  const [sportZonesOpen, setSportZonesOpen] = useState(false);
   const [defaultOutingVis, setDefaultOutingVis] = useState<StoredOutingVisibility>('private');
 
   useEffect(() => {
@@ -516,6 +518,24 @@ export function SettingsPane() {
             <Sparkles size={17} />
           </span>
           <div>
+            <b>Zones sportives &amp; seuils</b>
+            <small>Cardio (FC), puissance (FTP) et allure</small>
+          </div>
+          <ActionPill
+            className="lkdv-compte-setting-pill"
+            label="Configurer les zones sportives"
+            text="Configurer"
+            onClick={() => setSportZonesOpen(true)}
+          />
+        </div>
+      </section>
+
+      <section className="lkdv-compte-setting-card">
+        <div className="lkdv-compte-setting-head">
+          <span className="lkdv-compte-setting-ico" aria-hidden="true">
+            <Sparkles size={17} />
+          </span>
+          <div>
             <b>Parcours de découverte</b>
             <small>Les bases de LKDV, à ton rythme</small>
           </div>
@@ -834,6 +854,7 @@ export function SettingsPane() {
         onReset={feedPrefs.reset}
       />
       {zonesOpen ? <PrivacyZonesSheet onClose={() => setZonesOpen(false)} /> : null}
+      {sportZonesOpen ? <ZoneSettingsSheet onClose={() => setSportZonesOpen(false)} /> : null}
     </div>
   );
 }

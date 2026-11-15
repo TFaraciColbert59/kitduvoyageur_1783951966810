@@ -226,6 +226,7 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
                           title: patch.title,
                           notes: patch.notes,
                           visibility: patch.visibility,
+                          ...(patch.rpe !== undefined ? { rpe: patch.rpe } : null),
                         }),
                       });
                       await lifecycleApi.updateMetadata(outingId, {
@@ -237,8 +238,8 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
                       window.dispatchEvent(new CustomEvent('lkdv:outings-changed'));
                     },
                     'Sortie mise à jour'
-                  )
-                }
+                  );
+                }}
                 onSaveMetrics={saveMetrics}
                 onResetMetrics={resetMetrics}
                 onShare={openAudience}

@@ -34,6 +34,7 @@ import type { ConnectorCatalogResponse } from '@/lib/connectors/types';
 import type { AggregateContributionPreferences } from '@/features/heatmaps/types';
 import { OverlaySheet } from '../../overlay/OverlaySheet';
 import { DrawerError, DrawerSkeleton } from '../shell/DrawerShell';
+import { ConnectorDiscoverySection } from '@/features/ai-assistant/ui/ConnectorDiscoverySection';
 import { fetchJson } from './shared';
 
 const QUERY_KEY = ['compte', 'consents'] as const;
@@ -629,6 +630,7 @@ export function ConsentSettingsSheet({ onClose }: { onClose: () => void }) {
           </>
         ) : null}
 
+        <ConnectorDiscoverySection />
       </div>
     </OverlaySheet>
   );

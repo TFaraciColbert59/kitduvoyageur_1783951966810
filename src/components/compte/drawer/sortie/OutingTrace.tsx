@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { Compass, Download, Flag, MapPin, Play, Plus, Users, Wind } from 'lucide-react';
+import { Award, Compass, Download, Flag, Flame, Gauge, MapPin, Play, Plus, Users, Wind, Zap } from 'lucide-react';
 import { OutingTraceToolsPanel } from './OutingLifecyclePanels';
 import { ActionPill } from '@/components/ui/ActionPill';
 import { OverlaySheet } from '@/components/compte/overlay/OverlaySheet';
@@ -14,6 +14,13 @@ import type { ActivityTraceForSegments, SegmentDefinition, SegmentEffort, Segmen
 import type { MediaSharingTab } from '@/components/media-sharing/MediaSharingHub';
 import type { OutingDetail, OutingPoint } from '@/features/compte/server/sorties';
 import type { OutingWeather } from '@/features/compte/server/weather';
+import {
+  analyzeOutingTelemetry,
+  readLocalZoneSets,
+  readOutingRpe,
+  type AlignedTelemetryPoint,
+} from '@/features/explorer-v2/metrics/telemetryAnalysis';
+import type { ZoneTimeResult } from '@/features/explorer-v2/metrics/activityMetrics';
 import {
   ElevationProfile,
   TraceMap,
@@ -28,6 +35,17 @@ import {
   visibleTraceSegments,
   weatherIcon,
 } from './shared';
+import {
+  PowerCurveCard,
+  SynchronizedTraceCurves,
+  formatPaceMinPerKm,
+} from './SynchronizedTraceCurves';
+import {
+  findComparableOutings,
+  formatDurationDelta,
+} from '@/features/compte/progression/comparableOutings';
+import { resolveTimeZone } from '@/features/compte/progression/engine';
+import { readProgressionSessionsSnapshot } from '../progression/ProgressionAdvancedSections';
 
 export interface OutingTraceProps {
   detail: OutingDetail;
@@ -42,6 +60,59 @@ function altitudeRange(points: OutingPoint[]) {
     .filter((value): value is number => typeof value === 'number' && Number.isFinite(value));
   if (values.length === 0) return null;
   return { min: Math.min(...values), max: Math.max(...values) };
+}
+
+function ZoneBreakdownSection({
+  title,
+  testId,
+  zoneResult,
+}: {
+  title: string;
+  testId: string;
+  zoneResult: ZoneTimeResult;
+}) {
+  if (zoneResult.status !== 'available' || zoneResult.zones.length === 0) return null;
+  return (
+    <section className="lkdv-sortie-section" data-testid={testId}>
+      <header>
+        <b>{title}</b>
+        <span>
+          {formatDuration(Math.round(zoneResult.window.sampledS))} analysées
+        </span>
+      </header>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {zoneResult.zones.map((band) => {
+          const secs = Math.round(band.seconds);
+          const pct = Math.round(band.shareOfInZone * 100);
+          return (
+            <div key={band.zoneId} style={{ display: 'grid', gridTemplateColumns: '115px 1fr 68px', alignItems: 'center', gap: 8, fontSize: 12 }}>
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {band.label}
+              </span>
+              <div style={{ height: 8, borderRadius: 999, background: 'rgba(15,23,42,0.08)', overflow: 'hidden' }}>
+                <div
+                  style={{
+                    width: `${Math.min(100, Math.max(pct > 0 ? 3 : 0, pct))}%`,
+                    height: '100%',
+                    borderRadius: 999,
+                    background: '#17402C',
+                  }}
+                />
+              </div>
+              <span style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
+                {formatDuration(secs)} ({pct}%)
+              </span>
+            </div>
+          );
+        })}
+      </div>
+      {zoneResult.window.uncoveredS > 10 ? (
+        <p className="lkdv-sortie-proof" style={{ marginTop: 6 }}>
+          {formatDuration(Math.round(zoneResult.window.uncoveredS))} hors capteur ou coupure non interpolée.
+        </p>
+      ) : null}
+    </section>
+  );
 }
 
 function WeatherBlock({ weather }: { weather: OutingWeather | null }) {
@@ -204,6 +275,8 @@ export function OutingTrace({ detail, onExport, onOpenMediaHub, onUpdated }: Out
       setCreateBusy(false);
     }
   };
+  const [splitUnit, setSplitUnit] = useState<'km' | 'mi'>('km');
+  const [cursorPoint, setCursorPoint] = useState<AlignedTelemetryPoint | null>(null);
   const slope =
     outingMetricVisible(detail, 'elevationGain') &&
     outingMetricVisible(detail, 'distance') &&
@@ -214,19 +287,46 @@ export function OutingTrace({ detail, onExport, onOpenMediaHub, onUpdated }: Out
     detail.km > 0
       ? (detail.dplus / (detail.km * 1000)) * 100
       : null;
-  /* Jamais de recalcul client : le serveur seul décide de l'allure publiable. */
+
+  const telemetry = useMemo(() => {
+    const zoneSets = readLocalZoneSets(detail.sport ?? undefined);
+    const savedRpe = readOutingRpe(detail.id);
+    return analyzeOutingTelemetry({
+      outingId: detail.id,
+      sport: detail.sport,
+      segments,
+      samples: detail.samples ?? null,
+      summary: detail.summary ?? null,
+      durationS: detail.durationS,
+      movingTimeS: detail.movingTimeS,
+      measuredHrBpm: outingMetricVisible(detail, 'heartRate') ? detail.heartRateBpm : null,
+      measuredCaloriesKcal: outingMetricVisible(detail, 'calories') ? detail.caloriesKcal : null,
+      zoneSets,
+      rpe: savedRpe,
+    });
+  }, [detail, segments]);
+
+  /* Jamais de recalcul client de l'allure publiable : on respecte les visibilités. */
   const effortRows: Array<{ label: string; value: string }> = [];
   if (outingMetricVisible(detail, 'heartRate') && typeof detail.heartRateBpm === 'number' && Number.isFinite(detail.heartRateBpm)) {
     effortRows.push({ label: 'FC moyenne', value: `${formatNumber(detail.heartRateBpm)} bpm` });
   }
-  if (outingMetricVisible(detail, 'power') && typeof detail.powerW === 'number' && Number.isFinite(detail.powerW)) {
+  if (outingMetricVisible(detail, 'power') && telemetry.powerAnalysis.status === 'available' && telemetry.powerAnalysis.averageW !== null) {
+    effortRows.push({
+      label: telemetry.powerAnalysis.quality === 'measured' ? 'Puissance mesurée' : 'Puissance estimée',
+      value: `${formatNumber(telemetry.powerAnalysis.averageW)} W`,
+    });
+  } else if (outingMetricVisible(detail, 'power') && typeof detail.powerW === 'number' && Number.isFinite(detail.powerW)) {
     effortRows.push({ label: 'Puissance', value: `${formatNumber(detail.powerW)} W` });
   }
   if (outingMetricVisible(detail, 'cadence') && typeof detail.cadenceRpm === 'number' && Number.isFinite(detail.cadenceRpm)) {
     effortRows.push({ label: 'Cadence', value: `${formatNumber(detail.cadenceRpm)} rpm` });
   }
-  if (outingMetricVisible(detail, 'calories') && typeof detail.caloriesKcal === 'number' && Number.isFinite(detail.caloriesKcal)) {
-    effortRows.push({ label: 'Calories', value: `${formatNumber(detail.caloriesKcal)} kcal` });
+  if (outingMetricVisible(detail, 'calories') && telemetry.energyAndSteps.caloriesKcal !== null) {
+    effortRows.push({
+      label: telemetry.energyAndSteps.caloriesQuality === 'measured' ? 'Calories mesurées' : 'Calories estimées',
+      value: `${formatNumber(telemetry.energyAndSteps.caloriesKcal)} kcal`,
+    });
   }
 
   if (!hasVisibleTrace(detail)) {
@@ -245,6 +345,17 @@ export function OutingTrace({ detail, onExport, onOpenMediaHub, onUpdated }: Out
     );
   }
 
+  const splits = splitUnit === 'km' ? telemetry.kmSplits : telemetry.miSplits;
+  const comparableOutings = useMemo(
+    () =>
+      findComparableOutings(
+        detail,
+        readProgressionSessionsSnapshot(),
+        resolveTimeZone().timeZone
+      ),
+    [detail]
+  );
+
   return (
     <div className="lkdv-sortie-pane">
       <section className="lkdv-sortie-section">
@@ -253,7 +364,11 @@ export function OutingTrace({ detail, onExport, onOpenMediaHub, onUpdated }: Out
           <span>{points.length} points</span>
         </header>
         <div className="lkdv-sortie-map-wrap">
-          <TraceMap segments={segments} colorMode={colorMode} />
+          <TraceMap
+            segments={segments}
+            colorMode={colorMode}
+            activeCoord={cursorPoint ? { lat: cursorPoint.lat, lng: cursorPoint.lng } : null}
+          />
           <div className="lkdv-sortie-map-legend" aria-hidden="true">
             <span><i className="start" /> Départ</span>
             <span><i className="end" /> Arrivée</span>
@@ -286,6 +401,8 @@ export function OutingTrace({ detail, onExport, onOpenMediaHub, onUpdated }: Out
           ))}
         </div>
       </section>
+
+      <SynchronizedTraceCurves bundle={telemetry} onCursorPoint={setCursorPoint} />
 
       <div className="lkdv-sortie-grid">
         <div>
@@ -354,6 +471,220 @@ export function OutingTrace({ detail, onExport, onOpenMediaHub, onUpdated }: Out
             </div>
           ))}
         </div>
+      ) : null}
+
+      {telemetry.gap && telemetry.gap.status === 'available' && outingMetricVisible(detail, 'pace') ? (
+        <section className="lkdv-sortie-section" data-testid="outing-gap-section">
+          <header>
+            <b>Allure ajustée à la pente (GAP)</b>
+            <span>Estimée · {telemetry.gap.method}</span>
+          </header>
+          <div className="lkdv-sortie-grid">
+            <div>
+              <small>GAP équivalente plat</small>
+              <b>{formatPaceMinPerKm(telemetry.gap.gapPaceSecondsPerKm / 60)}</b>
+            </div>
+            <div>
+              <small>Allure brute</small>
+              <b>{formatPaceMinPerKm(telemetry.gap.rawPaceSecondsPerKm / 60)}</b>
+            </div>
+            <div>
+              <small>Facteur pente</small>
+              <b>×{telemetry.gap.gradeFactor.toFixed(2)}</b>
+            </div>
+          </div>
+          <p className="lkdv-sortie-proof">
+            Coût énergétique Minetti (2002) estimé sur {telemetry.gap.segments.length} segments lissés. Aucune équivalence propriétaire revendiquée.
+          </p>
+        </section>
+      ) : null}
+
+      {splits.length > 0 && outingMetricVisible(detail, 'pace') ? (
+        <section className="lkdv-sortie-section" data-testid="outing-splits-section">
+          <header>
+            <b>Découpage (splits)</b>
+            <div style={{ display: 'flex', gap: 4 }}>
+              <button
+                type="button"
+                aria-pressed={splitUnit === 'km'}
+                onClick={() => setSplitUnit('km')}
+                style={{
+                  padding: '2px 8px',
+                  borderRadius: 999,
+                  fontSize: 11,
+                  border: '1px solid rgba(15,23,42,0.16)',
+                  background: splitUnit === 'km' ? '#17402C' : 'transparent',
+                  color: splitUnit === 'km' ? '#fff' : 'inherit',
+                  cursor: 'pointer',
+                }}
+              >
+                km
+              </button>
+              <button
+                type="button"
+                aria-pressed={splitUnit === 'mi'}
+                onClick={() => setSplitUnit('mi')}
+                style={{
+                  padding: '2px 8px',
+                  borderRadius: 999,
+                  fontSize: 11,
+                  border: '1px solid rgba(15,23,42,0.16)',
+                  background: splitUnit === 'mi' ? '#17402C' : 'transparent',
+                  color: splitUnit === 'mi' ? '#fff' : 'inherit',
+                  cursor: 'pointer',
+                }}
+              >
+                mi
+              </button>
+            </div>
+          </header>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+            {splits.map((sp) => (
+              <div
+                key={`${sp.unit}-${sp.index}`}
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '64px 1fr 70px 58px',
+                  gap: 6,
+                  alignItems: 'center',
+                  fontSize: 12,
+                  padding: '4px 6px',
+                  borderRadius: 8,
+                  background: sp.isFastest ? 'rgba(22, 163, 74, 0.12)' : 'transparent',
+                }}
+              >
+                <b>
+                  {sp.unit} {sp.index}
+                  {sp.isFastest ? (
+                    <Award size={12} aria-label="Meilleur split" style={{ marginLeft: 4, color: '#15803D', verticalAlign: '-2px' }} />
+                  ) : null}
+                </b>
+                <span>
+                  {sp.paceMinPerKm !== null ? formatPaceMinPerKm(sp.paceMinPerKm) : '—'}
+                  {sp.isFastest ? ' · Plus rapide' : ''}
+                </span>
+                <span style={{ opacity: 0.78 }}>
+                  {sp.elevationGainM !== null ? `+${sp.elevationGainM}m` : '—'}
+                </span>
+                <span style={{ textAlign: 'right', opacity: 0.78 }}>
+                  {sp.averageHrBpm !== null ? `${sp.averageHrBpm} bpm` : formatDuration(sp.durationS)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {telemetry.intervals.length > 0 ? (
+        <section className="lkdv-sortie-section" data-testid="outing-intervals-section">
+          <header>
+            <b>Intervalles détectés</b>
+            <span>{telemetry.intervals.length} phases</span>
+          </header>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12 }}>
+            {telemetry.intervals.map((iv) => (
+              <div key={iv.index} style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                <span>
+                  <b>{iv.kind === 'effort' ? 'Effort' : 'Récup.'} #{iv.index}</b> ({iv.startKm.toFixed(2)}–{iv.endKm.toFixed(2)} km)
+                </span>
+                <span>
+                  {formatDuration(iv.durationS)}
+                  {iv.averagePaceMinPerKm ? ` · ${formatPaceMinPerKm(iv.averagePaceMinPerKm)}` : ''}
+                  {iv.averagePowerW ? ` · ${iv.averagePowerW} W` : ''}
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {telemetry.powerAnalysis.status === 'available' && outingMetricVisible(detail, 'power') ? (
+        <section className="lkdv-sortie-section" data-testid="outing-cycling-power">
+          <header>
+            <b>
+              <Zap size={14} aria-hidden="true" style={{ verticalAlign: '-2px', marginRight: 5 }} />
+              Puissance vélo ({telemetry.powerAnalysis.quality === 'measured' ? 'mesurée' : 'estimée'})
+            </b>
+            <span>{telemetry.powerAnalysis.method}</span>
+          </header>
+          <div className="lkdv-sortie-grid">
+            <div>
+              <small>Moyenne</small>
+              <b>{telemetry.powerAnalysis.averageW !== null ? `${telemetry.powerAnalysis.averageW} W` : '—'}</b>
+            </div>
+            <div>
+              <small>Pic</small>
+              <b>{telemetry.powerAnalysis.maxW !== null ? `${telemetry.powerAnalysis.maxW} W` : '—'}</b>
+            </div>
+            <div>
+              <small>Normalisée (NP)</small>
+              <b>{telemetry.powerAnalysis.normalizedW !== null ? `${telemetry.powerAnalysis.normalizedW} W` : '—'}</b>
+            </div>
+          </div>
+        </section>
+      ) : null}
+
+      {outingMetricVisible(detail, 'power') &&
+      (telemetry.powerAnalysis.curve.status === 'available' || detail.sport === 'velo') ? (
+        <PowerCurveCard
+          powerCurve={telemetry.powerAnalysis.curve}
+          estimatedFtp={telemetry.powerAnalysis.estimatedFtp}
+        />
+      ) : null}
+
+      {telemetry.hrZones && outingMetricVisible(detail, 'heartRate') ? (
+        <ZoneBreakdownSection
+          title="Zones cardiaques"
+          testId="outing-hr-zones"
+          zoneResult={telemetry.hrZones}
+        />
+      ) : null}
+
+      {telemetry.paceZones && outingMetricVisible(detail, 'pace') ? (
+        <ZoneBreakdownSection
+          title="Zones d’allure"
+          testId="outing-pace-zones"
+          zoneResult={telemetry.paceZones}
+        />
+      ) : null}
+
+      {telemetry.powerZones && outingMetricVisible(detail, 'power') ? (
+        <ZoneBreakdownSection
+          title="Zones de puissance"
+          testId="outing-power-zones"
+          zoneResult={telemetry.powerZones}
+        />
+      ) : null}
+
+      {telemetry.sensorChannels.length > 0 || telemetry.energyAndSteps.steps !== null ? (
+        <section className="lkdv-sortie-section" data-testid="outing-sensors-energy">
+          <header>
+            <b>
+              <Gauge size={14} aria-hidden="true" style={{ verticalAlign: '-2px', marginRight: 5 }} />
+              Capteurs &amp; dépense énergétique
+            </b>
+            <span>Couverture réelle</span>
+          </header>
+          {telemetry.sensorChannels.length > 0 ? (
+            <div className="lkdv-sortie-grid">
+              {telemetry.sensorChannels.map((ch) => (
+                <div key={ch.key}>
+                  <small>{ch.label} ({ch.qualityLabel} · {ch.coveragePct}%)</small>
+                  <b>moy {ch.avg} {ch.unit} · max {ch.max}</b>
+                </div>
+              ))}
+            </div>
+          ) : null}
+          <p className="lkdv-sortie-proof" style={{ marginTop: 6 }}>
+            <Flame size={12} aria-hidden="true" style={{ verticalAlign: '-2px', marginRight: 4 }} />
+            {telemetry.energyAndSteps.caloriesKcal !== null
+              ? `${telemetry.energyAndSteps.caloriesKcal} kcal (${telemetry.energyAndSteps.caloriesNote}) `
+              : `${telemetry.energyAndSteps.caloriesNote} `}
+            {telemetry.energyAndSteps.steps !== null
+              ? `· ${formatNumber(telemetry.energyAndSteps.steps)} pas (${telemetry.energyAndSteps.stepsNote})`
+              : `· ${telemetry.energyAndSteps.stepsNote}`}
+          </p>
+        </section>
       ) : null}
 
       <section className="lkdv-sortie-section">
@@ -493,6 +824,43 @@ export function OutingTrace({ detail, onExport, onOpenMediaHub, onUpdated }: Out
           </>
         ) : null}
       </div>
+
+      {comparableOutings.length > 0 ? (
+        <section className="lkdv-sortie-section" data-testid="outing-comparable-section">
+          <header>
+            <b>Sorties comparables sur cet itinéraire</b>
+            <span>{comparableOutings.length} repérée{comparableOutings.length > 1 ? 's' : ''}</span>
+          </header>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 12 }}>
+            {comparableOutings.map((item) => (
+              <div
+                key={item.id}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  gap: 8,
+                  padding: '6px 8px',
+                  borderRadius: 10,
+                  background: 'rgba(15,23,42,0.04)',
+                }}
+              >
+                <div>
+                  <b>{item.title}</b>
+                  <div style={{ opacity: 0.72, fontSize: 11 }}>
+                    {item.dateKey ?? 'Date inconnue'}
+                    {item.distanceKm !== null ? ` · ${item.distanceKm.toFixed(1)} km` : ''}
+                    {item.dplusM !== null ? ` · +${Math.round(item.dplusM)} m` : ''}
+                  </div>
+                </div>
+                <span style={{ fontWeight: 600 }}>
+                  {formatDurationDelta(item.deltaDurationS)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {createOpen && activityForSegments ? (
         <OverlaySheet

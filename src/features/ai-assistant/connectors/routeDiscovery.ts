@@ -43,11 +43,19 @@ export const routeDiscoveryRequestSchema = z
       .object({
         distanceKm: rangeSchema.optional(),
         elevationGainM: rangeSchema.optional(),
+        elevationLossM: rangeSchema.optional(),
         durationHours: rangeSchema.optional(),
         difficulty: z.array(z.string().trim().min(1).max(40)).max(8).optional(),
         region: z.array(z.string().trim().min(1).max(80)).max(8).optional(),
+        minCommunitySessions: z.number().int().min(0).optional(),
+        surface: z.array(z.string().trim().min(1).max(40)).max(8).optional(),
+        loop: z.boolean().optional(),
+        season: z.array(z.string().trim().min(1).max(40)).max(8).optional(),
+        waterPoints: z.boolean().optional(),
+        refuges: z.boolean().optional(),
       })
       .optional(),
+    sortBy: z.enum(['relevance', 'distance', 'elevation_gain', 'popularity']).optional(),
     limit: z.number().int().min(1).max(20).optional(),
   })
   .refine((value) => Boolean(value.query) || Boolean(value.near), {
@@ -96,9 +104,11 @@ export interface RouteDiscoveryResult {
     near: { lat: number; lng: number; radiusKm: number } | null;
     distanceKm: { min: number | null; max: number | null } | null;
     elevationGainM: { min: number | null; max: number | null } | null;
+    elevationLossM: { min: number | null; max: number | null } | null;
     durationHours: { min: number | null; max: number | null } | null;
     difficulty: string[] | null;
     region: string[] | null;
+    minCommunitySessions: number | null;
   };
   unknownConstraints: string[];
   results: RouteCandidate[];
@@ -267,20 +277,44 @@ export function discoverRoutes(
       constraints?.elevationGainM,
       'dénivelé positif'
     );
+    const elevationLoss = constraintResult(
+      candidate.elevationLossM,
+      constraints?.elevationLossM,
+      'dénivelé négatif'
+    );
     const duration = constraintResult(candidate.durationHours, constraints?.durationHours, 'durée');
-    for (const check of [distance, elevation, duration]) {
+    for (const check of [distance, elevation, elevationLoss, duration]) {
       if (check.unknown) unknown.add(check.reason ?? 'contrainte inconnue');
     }
-    if (!distance.accepted || !elevation.accepted || !duration.accepted) {
+    if (!distance.accepted || !elevation.accepted || !elevationLoss.accepted || !duration.accepted) {
       excluded.push({
         id: candidate.id,
         reason:
           distance.reason ??
           elevation.reason ??
+          elevationLoss.reason ??
           duration.reason ??
           'contrainte non satisfaite',
       });
       continue;
+    }
+
+    if (constraints?.minCommunitySessions !== undefined) {
+      if (!hasValue(candidate.communitySessions)) {
+        unknown.add('fréquentation communautaire inconnue : contrainte non prouvable');
+        excluded.push({
+          id: candidate.id,
+          reason: 'fréquentation communautaire inconnue : contrainte non prouvable',
+        });
+        continue;
+      }
+      if (candidate.communitySessions.value < constraints.minCommunitySessions) {
+        excluded.push({
+          id: candidate.id,
+          reason: `fréquentation ${candidate.communitySessions.value} inférieure au seuil demandé`,
+        });
+        continue;
+      }
     }
 
     if (constraints?.difficulty && constraints.difficulty.length > 0) {
@@ -309,7 +343,31 @@ export function discoverRoutes(
       }
     }
 
+    if (constraints?.surface && constraints.surface.length > 0) {
+      unknown.add('surface non agrégée par parcours : contrainte non prouvable');
+    }
+    if (constraints?.loop !== undefined) {
+      unknown.add('caractère boucle non renseigné par parcours : contrainte non prouvable');
+    }
+    if (constraints?.season && constraints.season.length > 0) {
+      unknown.add('saisonnalité non renseignée par parcours : contrainte non prouvable');
+    }
+    if (constraints?.waterPoints !== undefined) {
+      unknown.add('points d’eau sur le parcours non agrégés : contrainte non prouvable');
+    }
+    if (constraints?.refuges !== undefined) {
+      unknown.add('refuges sur le parcours non agrégés : contrainte non prouvable');
+    }
+
     results.push(candidate);
+  }
+
+  if (request.sortBy === 'distance') {
+    results.sort((a, b) => (hasValue(a.distanceKm) ? a.distanceKm.value : Infinity) - (hasValue(b.distanceKm) ? b.distanceKm.value : Infinity));
+  } else if (request.sortBy === 'elevation_gain') {
+    results.sort((a, b) => (hasValue(b.elevationGainM) ? b.elevationGainM.value : -1) - (hasValue(a.elevationGainM) ? a.elevationGainM.value : -1));
+  } else if (request.sortBy === 'popularity') {
+    results.sort((a, b) => (hasValue(b.communitySessions) ? b.communitySessions.value : -1) - (hasValue(a.communitySessions) ? a.communitySessions.value : -1));
   }
 
   const limit = request.limit ?? 12;
@@ -326,11 +384,15 @@ export function discoverRoutes(
       elevationGainM: constraints?.elevationGainM
         ? { min: constraints.elevationGainM.min ?? null, max: constraints.elevationGainM.max ?? null }
         : null,
+      elevationLossM: constraints?.elevationLossM
+        ? { min: constraints.elevationLossM.min ?? null, max: constraints.elevationLossM.max ?? null }
+        : null,
       durationHours: constraints?.durationHours
         ? { min: constraints.durationHours.min ?? null, max: constraints.durationHours.max ?? null }
         : null,
       difficulty: constraints?.difficulty ?? null,
       region: constraints?.region ?? null,
+      minCommunitySessions: constraints?.minCommunitySessions ?? null,
     },
     unknownConstraints: [...unknown],
     results: results.slice(0, limit),
