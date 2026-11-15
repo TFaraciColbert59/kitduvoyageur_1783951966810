@@ -357,6 +357,7 @@ describe('N01 + N02 Explorer wiring', () => {
         clientSessionId: 'client-sess-42',
         paused: false,
         autoPaused: false,
+        offRoute: false,
         distanceM: 2340,
         elevGainM: 185,
         movingS: 1420,
@@ -474,6 +475,7 @@ describe('N01 + N02 Explorer wiring', () => {
         clientSessionId: 'sess-ui-1',
         paused: false,
         autoPaused: false,
+        offRoute: false,
         distanceM: 500,
         elevGainM: 40,
         movingS: 300,
@@ -512,7 +514,7 @@ describe('N01 + N02 Explorer wiring', () => {
     const evalAway = evaluateDepartureState([6.86, 45.91], SAMPLE_GEOJSON);
     const routedPlan: AccessGuidancePlan = {
       status: 'routed_online',
-      targetKind: 'route_start',
+      targetKind: 'origin',
       targetPosition: [6.869, 45.923],
       entryAlongTrackM: 0,
       directDistanceM: 1600,
@@ -528,7 +530,7 @@ describe('N01 + N02 Explorer wiring', () => {
     };
     const offlinePlan: AccessGuidancePlan = {
       status: 'offline_compass_only',
-      targetKind: 'nearest_route_point',
+      targetKind: 'nearest_point',
       targetPosition: [6.872, 45.926],
       entryAlongTrackM: 450,
       directDistanceM: 950,
@@ -613,6 +615,7 @@ describe('N01 + N02 Explorer wiring', () => {
         clientSessionId: 'sess-ui-k408',
         paused: false,
         autoPaused: false,
+        offRoute: false,
         distanceM: 500,
         elevGainM: 40,
         movingS: 300,

@@ -190,7 +190,7 @@ export function JoinStartCard({
             {accessPlan.status === 'routed_online' ? (
               <p className={styles.subtitle}>
                 <strong>
-                  {accessPlan.targetKind === 'route_start'
+                  {accessPlan.targetKind === 'origin'
                     ? 'Approche vers le départ'
                     : 'Approche vers le tracé'}
                 </strong>{' '}
@@ -206,7 +206,7 @@ export function JoinStartCard({
             ) : (
               <p className={styles.subtitle}>
                 <strong>
-                  {accessPlan.targetKind === 'route_start'
+                  {accessPlan.targetKind === 'origin'
                     ? 'Cap vers le départ'
                     : 'Cap vers le tracé'}
                 </strong>{' '}
