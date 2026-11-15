@@ -13,7 +13,7 @@ import {
 import type { ActivityTraceForSegments, SegmentDefinition, SegmentEffort, SegmentSport } from '@/features/segments';
 import type { MediaSharingTab } from '@/components/media-sharing/MediaSharingHub';
 import type { OutingDetail, OutingPoint } from '@/features/compte/server/sorties';
-import type { OutingWeather } from '@/features/compte/server/weather';
+import { analyzeSessionWeather } from '@/features/routes/analysis/sessionWeather';
 import {
   analyzeOutingTelemetry,
   readLocalZoneSets,
@@ -115,14 +115,41 @@ function ZoneBreakdownSection({
   );
 }
 
-function WeatherBlock({ weather }: { weather: OutingWeather | null }) {
+function WeatherBlock({ detail }: { detail: OutingDetail }) {
+  const weather = detail.weather;
+  const firstDay = weather?.days?.[0];
+  const snapshot = firstDay
+    ? {
+        tempC: firstDay.tMax ?? firstDay.tMin ?? null,
+        condition: firstDay.label,
+        windKmH: firstDay.windKmh ?? null,
+        precipitationProbability: null,
+        fetchedAt: weather?.fetchedAt ?? null,
+        source: weather?.source ?? 'open-meteo',
+        isAlert: (weather?.alerts?.length ?? 0) > 0,
+        alertMessage: weather?.alerts?.[0] ?? null,
+      }
+    : null;
+  const sessionWx = analyzeSessionWeather({
+    session: {
+      id: detail.id,
+      startedAt: detail.startedAt ?? detail.date ?? new Date().toISOString(),
+      endedAt: detail.endedAt,
+      lat: weather?.latitude ?? null,
+      lon: weather?.longitude ?? null,
+      weather: snapshot,
+    },
+  });
   if (!weather || weather.days.length === 0) {
     return (
       <section className="lkdv-sortie-section">
         <header>
-          <b>Météo</b>
-          <span>Aucune donnée</span>
+          <b>Météo de la sortie</b>
+          <span>{sessionWx.label}</span>
         </header>
+        {sessionWx.missing[0] ? (
+          <p className="lkdv-sortie-notes">{sessionWx.missing[0].message}</p>
+        ) : null}
       </section>
     );
   }
@@ -130,7 +157,7 @@ function WeatherBlock({ weather }: { weather: OutingWeather | null }) {
   return (
     <section className="lkdv-sortie-section">
       <header>
-        <b>Météo au départ</b>
+        <b>Météo de la sortie · {sessionWx.label}</b>
         <span>Open-Meteo · {new Date(weather.fetchedAt).toLocaleDateString('fr-FR')}</span>
       </header>
       <div className="lkdv-sortie-weather">
@@ -340,7 +367,7 @@ export function OutingTrace({ detail, onExport, onOpenMediaHub, onUpdated }: Out
           <b>{state.title}</b>
           <p>{state.body}</p>
         </div>
-        <WeatherBlock weather={detail.weather} />
+        <WeatherBlock detail={detail} />
       </div>
     );
   }
@@ -705,7 +732,7 @@ export function OutingTrace({ detail, onExport, onOpenMediaHub, onUpdated }: Out
         )}
       </section>
 
-      <WeatherBlock weather={detail.weather} />
+      <WeatherBlock detail={detail} />
 
       <OutingTraceToolsPanel
         outingId={detail.id}

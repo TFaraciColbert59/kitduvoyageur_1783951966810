@@ -4,6 +4,9 @@
 
 import type { SummarySavedState } from '../activity/finishOutcome';
 import type { SearchViewport } from '../searchArea';
+import type { SearchCriteriaOverrides, SmartRankedRoute } from '../search/searchQueryParser';
+import type { RouteDraft } from '@/features/adventure-prep/routeRevision';
+import type { MultiDayPlan } from '@/features/planning/models';
 
 export type Level = 0 | 1 | 2 | 3;
 
@@ -56,6 +59,8 @@ export type SheetKind =
   | 'sos'
   | 'summary'
   | 'zoneSettings'
+  | 'planner'
+  | 'multiday'
   | 'easy';
 
 export type Selection = { kind: PoiKind; id: string };
@@ -485,6 +490,28 @@ export interface ExplorerState {
   zoom: number;
   /** Dernière demande saisie : conservée en fermant le tiroir pour pouvoir la relancer. */
   searchQuery?: string;
+  /** Corrections contextuelles des critères de recherche (C-UI / R03). */
+  searchOverrides?: SearchCriteriaOverrides | null;
+  /** Position de défilement conservée de la liste de recherche. */
+  searchScrollTop?: number;
+  /** Aventures multi-jours issues de la recherche (K1.13). */
+  searchAdventures?: MultiDayPlan[];
+  /** Plan multi-jours ouvert dans le sous-drawer Explorer (R04). */
+  activeMultiDayPlan?: MultiDayPlan | null;
+  /** Brouillon d'itinéraire ouvert dans l'éditeur Explorer (R01). */
+  plannerDraft?: RouteDraft | null;
+  /** Nom du parcours en cours d'édition dans le planificateur. */
+  plannerTitle?: string | null;
+  /** Masquage temporaire de la ligne du tracé en mode édition (K2.16). */
+  plannerLineHidden?: boolean;
+  /** Active le placement de point par toucher sur la carte (K2.06/K2.09). */
+  plannerMapPick?: boolean;
+  /** Identifiant de bibliothèque si l'édition provient d'un parcours enregistré (K2.27). */
+  plannerLibraryId?: string | null;
+  /** Curseur synchronisé entre le profil altimétrique et la carte (R02). */
+  profileCursor?: { lon: number; lat: number; distanceM: number; elevationM: number | null } | null;
+  /** Segment de montée/descente sélectionné sur le profil pour surbrillance carte (K2.20). */
+  highlightedSegment?: { coordinates: Array<[number, number]>; label?: string } | null;
   /**
    * Sport explicitement choisi pour les suggestions « autour de moi ».
    * `null` = aucun sport choisi : aucune suggestion n'est déduite à sa place.
@@ -511,7 +538,7 @@ export interface ExplorerState {
    * remplacer, les itinéraires déjà chargés pour le lieu courant ; ils ne sont
    * jamais persistés et ne contiennent aucune donnée privée.
    */
-  searchRoutes?: SearchRoute[];
+  searchRoutes?: SmartRankedRoute[];
   /** Fond de carte : relief 3D, satellite, plan vectoriel, cyclable ou fond national vérifié. */
   mapBaseStyle?: MapBaseStyle;
   /** Visibilité des calques de données. */

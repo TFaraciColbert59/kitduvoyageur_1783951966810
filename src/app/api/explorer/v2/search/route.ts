@@ -6,12 +6,30 @@ import {
   viewportCenter,
   type SearchViewport,
 } from '@/features/explorer-v2/searchArea';
-import type { SearchRoute } from '@/features/explorer-v2/state/types';
+import {
+  applySearchCriteriaOverrides,
+  normalizeSearchText,
+  parseSearchQuery,
+  rankRouteForSearch,
+  routeQueryTokens,
+  type ParsedDifficulty,
+  type ParsedRouteType,
+  type ParsedSportIntent,
+  type ParsedStartAccess,
+  type ParsedSurface,
+  type SearchCriteriaOverrides,
+  type SearchFilters,
+  type SmartRankedRoute,
+} from '@/features/explorer-v2/search/searchQueryParser';
+import { buildExplorerCatalogAdventures } from '@/features/planning/explorerAdapter';
+import { searchMultiDayPlans } from '@/features/planning/library';
+
+export type { SearchFilters };
 
 export const revalidate = 60;
 
 const querySchema = z.object({
-  q: z.string().min(2).max(120),
+  q: z.string().min(2).max(160),
   lat: z.coerce.number().min(-90).max(90).optional(),
   lng: z.coerce.number().min(-180).max(180).optional(),
   minLat: z.coerce.number().min(-90).max(90).optional(),
@@ -19,21 +37,17 @@ const querySchema = z.object({
   minLng: z.coerce.number().min(-180).max(180).optional(),
   maxLng: z.coerce.number().min(-180).max(180).optional(),
   zoom: z.coerce.number().min(0).max(22).optional(),
+  maxDistanceKm: z.coerce.number().min(1).max(300).optional(),
+  maxDurationHours: z.coerce.number().min(0.5).max(48).optional(),
+  maxElevGainM: z.coerce.number().min(50).max(10000).optional(),
+  easy: z.enum(['0', '1', 'true', 'false']).optional(),
+  family: z.enum(['0', '1', 'true', 'false']).optional(),
+  routeType: z.enum(['boucle', 'aller-retour', 'traversee']).optional(),
+  difficulty: z.enum(['facile', 'modere', 'difficile']).optional(),
+  surface: z.enum(['asphalte', 'chemin', 'sentier']).optional(),
+  startAccess: z.enum(['gare', 'bus', 'parking']).optional(),
+  sport: z.enum(['rando', 'velo', 'gravel', 'vtt', 'course', 'trail', 'ski', 'kayak']).optional(),
 });
-
-/**
- * Recherche en langage naturel (05_DONNEES §6) : analyseur déterministe de
- * règles, **sans modèle payant**. La requête est transformée en filtres
- * explicites, et les résultats viennent uniquement de la base.
- */
-export interface SearchFilters {
-  kinds: string[];
-  maxDistanceKm: number | null;
-  easy: boolean;
-  family: boolean;
-  withWater: boolean;
-  text: string;
-}
 
 interface SearchRouteRow {
   id: number;
@@ -44,88 +58,11 @@ interface SearchRouteRow {
   geojson: unknown | null;
 }
 
-/**
- * Le catalogue `hiking_routes` est public (RLS OSM) mais `explorer_routes`
- * n'expose pas de recherche plein texte : la RPC rend les tracés d'une emprise
- * bornée. On garde cette borne et on classe les noms/références côté serveur,
- * sans nouvel index ni résultat inventé. `compas_search_routes` existe mais
- * n'est exécutable que par `authenticated` : l'API Explorer utilise la clé
- * anonyme, donc elle ne peut pas l'appeler sans contourner les droits.
- */
 const ROUTE_RPC_LIMIT = 60;
-const ROUTE_RESULT_LIMIT = 8;
-
-/** Mots d'intention qui ne désignent pas un nom de parcours. */
-const ROUTE_QUERY_STOPWORDS = new Set([
-  'rando',
-  'randonnee',
-  'randonnees',
-  'marche',
-  'parcours',
-  'itineraire',
-  'sentier',
-  'boucle',
-  'facile',
-  'faciles',
-  'debutant',
-  'debutante',
-  'famille',
-  'enfants',
-  'enfant',
-  'accessible',
-  'poussette',
-  'moins',
-  'heure',
-  'heures',
-  'km',
-  'pres',
-  'proche',
-  'autour',
-  'avec',
-  'pour',
-  'dans',
-  'vers',
-  'depuis',
-  'entre',
-  'de',
-  'du',
-  'des',
-  'la',
-  'le',
-  'les',
-  'un',
-  'une',
-  'au',
-  'aux',
-  'sur',
-  'en',
-  'et',
-  'ou',
-  'point',
-  'eau',
-  'refuge',
-  'sommet',
-  'vue',
-  'parking',
-  'max',
-  'maximum',
-  'sous',
-  'tres',
-]);
+const ROUTE_RESULT_LIMIT = 10;
 
 function normalizeRouteText(value: string): string {
-  return value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim();
-}
-
-function routeQueryTokens(value: string): string[] {
-  return normalizeRouteText(value)
-    .split(' ')
-    .filter((token) => token.length >= 2 && !ROUTE_QUERY_STOPWORDS.has(token));
+  return normalizeSearchText(value);
 }
 
 /** Centre [lng, lat] de l'emprise d'un GeoJSON, sans dépendance cartographique. */
@@ -159,33 +96,8 @@ function geojsonCenter(value: unknown): [number, number] | null {
   return [(minLng + maxLng) / 2, (minLat + maxLat) / 2];
 }
 
-const KIND_WORDS: Array<{ kind: string; words: RegExp }> = [
-  { kind: 'water', words: /\b(eau|source|fontaine|lac|rivi[eè]re|point d.eau|aiguade)\b/i },
-  { kind: 'refuge', words: /\b(refuge|refuges|cabane|chalet|hutte)\b/i },
-  { kind: 'summit', words: /\b(sommet|pic|cime|c[îi]me|mont|aiguille|peak)\b/i },
-  { kind: 'bivouac', words: /\b(bivouac|bivouaquer|camp|tente|dormir dehors)\b/i },
-  { kind: 'viewpoint', words: /\b(belv[ée]d[èe]re|point de vue|panorama|vue)\b/i },
-  { kind: 'access', words: /\b(parking|gare|arr[êe]t|bus|acc[èe]s|d[ée]part)\b/i },
-];
-
 export function parseQuery(q: string): SearchFilters {
-  const kinds = KIND_WORDS.filter((entry) => entry.words.test(q)).map((entry) => entry.kind);
-  const hours = q.match(/(?:\b(?:moins de|max(?:imum)?|sous|environ)\s*)?(\d+)\s*heures?\b/i);
-  const km = q.match(/(?:\b(?:moins de|max(?:imum)?|sous|environ)\s*)?(\d+)\s*km\b/i);
-  const maxDistanceKm = km
-    ? Number(km[1])
-    : hours
-      ? // 4 km/h en marche tranquille, arrondi au km supérieur.
-        Math.ceil((Number(hours[1]) * 4) / 1)
-      : null;
-  return {
-    kinds: kinds.length > 0 ? kinds : ['water', 'refuge', 'summit', 'viewpoint', 'bivouac'],
-    maxDistanceKm,
-    easy: /\b(facile|d[ée]butant|poussette|accessible)\b/i.test(q),
-    family: /\b(famille|enfants?|poussette)\b/i.test(q),
-    withWater: /\b(avec|pr[èe]s d.eau|eau potable)\b/i.test(q) && /\beau\b/i.test(q),
-    text: q.trim(),
-  };
+  return parseSearchQuery(q);
 }
 
 export async function GET(request: Request) {
@@ -199,6 +111,16 @@ export async function GET(request: Request) {
     minLng: params.get('minLng') ?? undefined,
     maxLng: params.get('maxLng') ?? undefined,
     zoom: params.get('zoom') ?? undefined,
+    maxDistanceKm: params.get('maxDistanceKm') ?? undefined,
+    maxDurationHours: params.get('maxDurationHours') ?? undefined,
+    maxElevGainM: params.get('maxElevGainM') ?? undefined,
+    easy: params.get('easy') ?? undefined,
+    family: params.get('family') ?? undefined,
+    routeType: params.get('routeType') ?? undefined,
+    difficulty: params.get('difficulty') ?? undefined,
+    surface: params.get('surface') ?? undefined,
+    startAccess: params.get('startAccess') ?? undefined,
+    sport: params.get('sport') ?? undefined,
   });
   if (!parsed.success) return NextResponse.json({ error: 'requête invalide' }, { status: 400 });
 
@@ -239,7 +161,40 @@ export async function GET(request: Request) {
     );
   }
 
-  const filters = parseQuery(parsed.data.q);
+  const overrides: SearchCriteriaOverrides = {
+    ...(parsed.data.maxDistanceKm !== undefined ? { maxDistanceKm: parsed.data.maxDistanceKm } : {}),
+    ...(parsed.data.maxDurationHours !== undefined
+      ? { maxDurationHours: parsed.data.maxDurationHours }
+      : {}),
+    ...(parsed.data.maxElevGainM !== undefined ? { maxElevGainM: parsed.data.maxElevGainM } : {}),
+    ...(parsed.data.easy !== undefined
+      ? { easy: parsed.data.easy === '1' || parsed.data.easy === 'true' }
+      : {}),
+    ...(parsed.data.family !== undefined
+      ? { family: parsed.data.family === '1' || parsed.data.family === 'true' }
+      : {}),
+    ...(parsed.data.routeType !== undefined
+      ? { routeType: parsed.data.routeType as ParsedRouteType }
+      : {}),
+    ...(parsed.data.difficulty !== undefined
+      ? { difficulty: parsed.data.difficulty as ParsedDifficulty }
+      : {}),
+    ...(parsed.data.surface !== undefined ? { surface: parsed.data.surface as ParsedSurface } : {}),
+    ...(parsed.data.startAccess !== undefined
+      ? { startAccess: parsed.data.startAccess as ParsedStartAccess }
+      : {}),
+    ...(parsed.data.sport !== undefined ? { sport: parsed.data.sport as ParsedSportIntent } : {}),
+  };
+  const filters = applySearchCriteriaOverrides(parseQuery(parsed.data.q), overrides);
+
+  // K1.13 : recherche multi-jours dans le catalogue public lorsque la demande s'y prête
+  const adventures = filters.isMultiDay || (filters.multiDayDays && filters.multiDayDays >= 2)
+    ? searchMultiDayPlans(
+        buildExplorerCatalogAdventures(),
+        { rawQuery: parsed.data.q },
+        { viewerId: null, friendIds: [], tribuIds: [], blockedUserIds: [] }
+      ).items.slice(0, 4)
+    : [];
   const center = viewport
     ? { lat: viewportCenter(viewport)[1], lng: viewportCenter(viewport)[0] }
     : lat !== undefined && lng !== undefined
@@ -252,6 +207,7 @@ export async function GET(request: Request) {
         filters,
         results: [],
         routes: [],
+        adventures,
         zone: viewport,
         truncated: false,
         routesTruncated: false,
@@ -337,48 +293,45 @@ export async function GET(request: Request) {
         const distanceKm = routeCenter
           ? haversine(center.lat, center.lng, routeCenter[1], routeCenter[0])
           : null;
-        const localNetwork = route.network === 'lwn' || route.network === 'rwn';
         const matched = routeMatched(route);
-        return {
-          route,
-          distanceKm,
-          matched,
-          rank:
-            (matched ? 4 : 0) +
-            (filters.easy && localNetwork ? 2 : 0) +
-            (filters.family && localNetwork ? 1 : 0),
-        };
+        const ranked = rankRouteForSearch(
+          {
+            id: route.id,
+            name: route.name,
+            ref: route.ref,
+            network: route.network,
+            distance_km: route.distance_km,
+            distanceKm,
+            matched,
+          },
+          filters
+        );
+        return { route, ranked };
       })
-      // « 10 km » est une longueur de parcours dans une demande de randonnée.
-      // Une longueur absente reste visible : elle n'est pas transformée en zéro.
       .filter(
-        (candidate) =>
-          filters.maxDistanceKm === null ||
-          candidate.route.distance_km === null ||
-          candidate.route.distance_km <= filters.maxDistanceKm,
+        ({ route }) =>
+          (filters.maxDistanceKm === null ||
+            route.distance_km === null ||
+            route.distance_km <= filters.maxDistanceKm) &&
+          (filters.minDistanceKm == null ||
+            route.distance_km === null ||
+            route.distance_km >= filters.minDistanceKm)
       )
       .sort(
         (a, b) =>
-          b.rank - a.rank ||
-          (a.distanceKm ?? Infinity) - (b.distanceKm ?? Infinity) ||
+          (b.ranked.smartScore ?? 0) - (a.ranked.smartScore ?? 0) ||
+          (a.ranked.distanceKm ?? Infinity) - (b.ranked.distanceKm ?? Infinity) ||
           (a.route.distance_km ?? Infinity) - (b.route.distance_km ?? Infinity),
       );
-    const routes: SearchRoute[] = routeCandidates
+    const routes: SmartRankedRoute[] = routeCandidates
       .slice(0, ROUTE_RESULT_LIMIT)
-      .map(({ route, distanceKm, matched }) => ({
-        id: route.id,
-        name: route.name,
-        ref: route.ref,
-        network: route.network,
-        distance_km: route.distance_km,
-        distanceKm,
-        matched,
-      }));
+      .map(({ ranked }) => ranked);
 
     return NextResponse.json({
       filters,
       results,
       routes,
+      adventures,
       zone: viewport,
       truncated: pois.length >= 80 && filtered.length > 20,
       routesTruncated:

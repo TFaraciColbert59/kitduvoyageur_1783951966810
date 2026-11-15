@@ -7,12 +7,17 @@ import {
   Eye,
   Fingerprint,
   Pencil,
+  Route,
   Share2,
   ShieldCheck,
   Trash2,
   X,
 } from 'lucide-react';
 import { ActionPill } from '@/components/ui/ActionPill';
+import {
+  convertOutingToRoute,
+  saveRouteToLibrary,
+} from '@/features/routes/library/routeLibrary';
 import type {
   OutingDetail,
   OutingImportProvenance,
@@ -117,6 +122,7 @@ export function OutingSummary({
   const [editing, setEditing] = useState(false);
   const [metricsOpen, setMetricsOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [routeSavedNotice, setRouteSavedNotice] = useState<string | null>(null);
   const [title, setTitle] = useState(detail.title);
   const [notes, setNotes] = useState(detail.notes);
   const [visibility, setVisibility] = useState<OutingVisibility>(detail.visibility);
@@ -254,6 +260,24 @@ export function OutingSummary({
                 onClick={() => onExport('original')}
               />
             ) : null}
+            {hasTrace ? (
+              <ActionPill
+                label="Créer un parcours"
+                icon={<Route />}
+                onClick={() => {
+                  const item = convertOutingToRoute({
+                    outingId: detail.id,
+                    title: detail.title,
+                    sport: detail.sport,
+                    points: visibleTracePoints(detail),
+                    durationS: detail.durationS,
+                  });
+                  if (!item) return;
+                  saveRouteToLibrary(item);
+                  setRouteSavedNotice(item.name);
+                }}
+              />
+            ) : null}
           </div>
         ) : null}
         <div className="lkdv-sortie-hero-body">
@@ -337,6 +361,14 @@ export function OutingSummary({
             {avoidedCarbon.assumptions} {avoidedCarbon.scope}
           </p>
         </section>
+      ) : null}
+      {routeSavedNotice ? (
+        <p className="lkdv-sortie-notes" role="status">
+          Itinéraire enregistré (« {routeSavedNotice} »).{' '}
+          <a href="/explorer?planner=library" style={{ textDecoration: 'underline', fontWeight: 600 }}>
+            Ouvrir dans Explorer
+          </a>
+        </p>
       ) : null}
       {metricsHidden ? (
         <p className="lkdv-sortie-notes">

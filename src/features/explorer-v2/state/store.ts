@@ -61,6 +61,10 @@ interface ExplorerActions {
   closeLiveSettings: () => void;
   /** Change ou remplace le parcours en cours d'enregistrement sans casser la séance (K4.10). */
   swapActivityRoute: (route: TrailRouteSnapshot) => void;
+  /** Ouvre un sous-tiroir (éditeur ou multi-jours) en mémorisant le tiroir parent (C-UI). */
+  openSubSheet: (sheet: 'planner' | 'multiday', detent?: Detent) => void;
+  /** Revient au tiroir parent mémorisé par `openSubSheet`. */
+  closeSubSheet: () => void;
   setDetent: (detent: Detent) => void;
   setTab: (tab: number) => void;
   setMini: (mini: number) => void;
@@ -190,6 +194,7 @@ const initialState: ExplorerState = {
     fires: false,
     highlights: true,
     distanceMarkers: true,
+    fire: true,
   },
 };
 
@@ -455,6 +460,41 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
     }
     set({ sheet: 'live', detent: 'peek', tab: 0, sheetParent: undefined });
     emit('sheet', { sheet: 'live', detent: 'peek', parent: null });
+  },
+
+  openSubSheet: (sheet, detent = 'mid') => {
+    const current = get();
+    set({
+      sheetParent:
+        current.sheet === sheet
+          ? current.sheetParent
+          : {
+              sheet: current.sheet,
+              detent: current.detent,
+              tab: current.tab,
+            },
+      sheet,
+      detent,
+      tab: 0,
+    });
+    emit('sheet', { sheet, detent, parent: current.sheet });
+  },
+
+  closeSubSheet: () => {
+    const current = get();
+    const parent = current.sheetParent;
+    if (parent) {
+      set({
+        sheet: parent.sheet,
+        detent: parent.detent,
+        tab: parent.tab,
+        sheetParent: undefined,
+      });
+      emit('sheet', { sheet: parent.sheet, detent: parent.detent, parent: null });
+      return;
+    }
+    set({ sheet: 'level', detent: 'peek', tab: 0, sheetParent: undefined });
+    emit('sheet', { sheet: 'level', detent: 'peek', parent: null });
   },
 
   swapActivityRoute: (route) =>

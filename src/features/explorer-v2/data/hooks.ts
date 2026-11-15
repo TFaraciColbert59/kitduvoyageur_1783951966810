@@ -351,20 +351,18 @@ export interface SearchResultItem {
   matched: boolean;
 }
 
-export interface SearchFilters {
-  kinds: string[];
-  maxDistanceKm: number | null;
-  easy: boolean;
-  family: boolean;
-  withWater: boolean;
-  text: string;
-}
+import type { SearchCriteriaOverrides, SearchFilters, SmartRankedRoute } from '../search/searchQueryParser';
+import type { MultiDayPlan } from '@/features/planning/models';
+
+export type { SearchFilters };
 
 export interface SearchResponse {
   filters: SearchFilters;
   results: SearchResultItem[];
   /** Parcours réels du catalogue OSM, dans la même emprise que les repères. */
-  routes?: SearchRoute[];
+  routes?: SmartRankedRoute[];
+  /** Aventures multi-jours (K1.13) si la requête vise l'itinérance. */
+  adventures?: MultiDayPlan[];
   /** Emprise réellement interrogée ; `null` pour l'ancien mode « autour du centre ». */
   zone: SearchViewport | null;
   /** Vrai quand la borne de la RPC a tronqué la liste avant l'affichage. */
@@ -496,6 +494,7 @@ export function useNaturalSearch(
   lat: number | null,
   lng: number | null,
   viewport: SearchViewport | null = null,
+  overrides: SearchCriteriaOverrides | null = null,
 ) {
   const area = viewport && isSearchableViewport(viewport) ? viewport : null;
   const blockedByViewport = viewport !== null && area === null;
@@ -509,12 +508,26 @@ export function useNaturalSearch(
       if (key && value !== undefined) params.set(key, value);
     }
   }
+  if (overrides) {
+    if (overrides.maxDistanceKm != null) params.set('maxDistanceKm', String(overrides.maxDistanceKm));
+    if (overrides.maxDurationHours != null) params.set('maxDurationHours', String(overrides.maxDurationHours));
+    if (overrides.maxElevGainM != null) params.set('maxElevGainM', String(overrides.maxElevGainM));
+    if (overrides.easy !== undefined) params.set('easy', overrides.easy ? '1' : '0');
+    if (overrides.family !== undefined) params.set('family', overrides.family ? '1' : '0');
+    if (overrides.routeType) params.set('routeType', overrides.routeType);
+    if (overrides.difficulty) params.set('difficulty', overrides.difficulty);
+    if (overrides.surface) params.set('surface', overrides.surface);
+    if (overrides.startAccess) params.set('startAccess', overrides.startAccess);
+    if (overrides.sport) params.set('sport', overrides.sport);
+  }
+  const overridesKey = overrides ? JSON.stringify(overrides) : 'no-overrides';
 
   return useQuery({
     queryKey: [
       'xp',
       'search',
       query,
+      overridesKey,
       area
         ? viewportQueryParams(area)
         : blockedByViewport
@@ -528,6 +541,25 @@ export function useNaturalSearch(
     queryFn: () => fetchSearchJson(`/api/explorer/v2/search?${params.toString()}`),
     staleTime: 60 * 1000,
     retry: 1,
+  });
+}
+
+export interface PoiPassingRoute extends SearchRoute {
+  proximityM: number;
+}
+
+/** K1.04 : Parcours du catalogue passant à proximité immédiate d'un POI. */
+export function usePoiRoutes(lat: number | null, lng: number | null, enabled = true) {
+  const valid =
+    lat !== null && lng !== null && Number.isFinite(lat) && Number.isFinite(lng);
+  return useQuery({
+    queryKey: ['xp', 'poi-routes', valid ? `${lat!.toFixed(4)}:${lng!.toFixed(4)}` : 'none'],
+    enabled: enabled && valid,
+    queryFn: () =>
+      fetchJson<{ routes: PoiPassingRoute[]; radiusM: number }>(
+        `/api/explorer/v2/pois/routes?lat=${lat}&lng=${lng}`,
+      ),
+    staleTime: 2 * 60 * 1000,
   });
 }
 

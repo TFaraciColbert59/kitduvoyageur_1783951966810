@@ -29,6 +29,7 @@ import {
 } from './traceStyles';
 import { OPENFREEMAP_STYLE_URL } from '@/components/map/engine/standardBase';
 import type { SearchViewport } from '../searchArea';
+import { lineStringFromSections, type RouteDraft } from '@/features/adventure-prep/routeRevision';
 
 export interface MapPin {
   id: string;
@@ -110,6 +111,20 @@ export interface MapStageProps {
   showOfflineCoverage?: boolean;
   /** Notifie un déplacement ou une rotation manuelle de la carte par l'utilisateur (K4.06). */
   onUserPan?: (bearing: number) => void;
+  /** Tracé en cours d'édition dans l'éditeur Explorer (R01). */
+  plannerDraft?: RouteDraft | null;
+  /** Masquage temporaire de la ligne du tracé en mode édition (K2.16). */
+  plannerLineHidden?: boolean;
+  /** Active le placement de point par toucher sur la carte (K2.06/K2.09). */
+  plannerMapPick?: boolean;
+  /** Curseur synchronisé entre le profil altimétrique et la carte (R02). */
+  profileCursor?: { lon: number; lat: number; distanceM: number; elevationM: number | null } | null;
+  /** Segment de montée/descente sélectionné sur le profil pour surbrillance (K2.20). */
+  highlightedSegment?: { coordinates: Array<[number, number]>; label?: string } | null;
+  /** Zones de feux/brûlées (K2.23). */
+  fireLayer?: GeoCollection | null;
+  /** Clic sur la carte en mode placement de waypoint. */
+  onMapClick?: (lngLat: [number, number]) => void;
 }
 
 const TERRAIN_SOURCE = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
@@ -183,6 +198,13 @@ export default function MapStage({
   offlineCoverage = null,
   showOfflineCoverage = false,
   onUserPan,
+  plannerDraft = null,
+  plannerLineHidden = false,
+  plannerMapPick = false,
+  profileCursor = null,
+  highlightedSegment = null,
+  fireLayer = null,
+  onMapClick,
 }: MapStageProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   // Double garde : même si un appelant transmet une source non vérifiée, elle
@@ -209,6 +231,10 @@ export default function MapStage({
   onViewportChangeRef.current = onViewportChange;
   const onUserPanRef = useRef(onUserPan);
   onUserPanRef.current = onUserPan;
+  const onMapClickRef = useRef(onMapClick);
+  onMapClickRef.current = onMapClick;
+  const plannerMapPickRef = useRef(plannerMapPick);
+  plannerMapPickRef.current = plannerMapPick;
 
   // ── création de la carte (une seule fois) ──────────────────────────────
   useEffect(() => {
@@ -324,6 +350,21 @@ export default function MapStage({
             data: EMPTY as never,
             lineMetrics: true,
           });
+        }
+        if (!map.getSource('xp-planner-line')) {
+          map.addSource('xp-planner-line', { type: 'geojson', data: EMPTY as never });
+        }
+        if (!map.getSource('xp-planner-points')) {
+          map.addSource('xp-planner-points', { type: 'geojson', data: EMPTY as never });
+        }
+        if (!map.getSource('xp-climb-highlight')) {
+          map.addSource('xp-climb-highlight', { type: 'geojson', data: EMPTY as never });
+        }
+        if (!map.getSource('xp-profile-cursor')) {
+          map.addSource('xp-profile-cursor', { type: 'geojson', data: EMPTY as never });
+        }
+        if (!map.getSource('xp-fire-zones')) {
+          map.addSource('xp-fire-zones', { type: 'geojson', data: EMPTY as never });
         }
         if (!map.getSource('xp-terrain')) {
           map.addSource('xp-terrain', {
@@ -522,6 +563,62 @@ export default function MapStage({
             source: 'xp-offline-coverage',
             layout: { visibility: 'none' },
             paint: { 'line-color': '#17402C', 'line-width': 2, 'line-dasharray': [3, 2] },
+        if (!map.getLayer('xp-fire-fill')) {
+          map.addLayer({
+            id: 'xp-fire-fill',
+            type: 'fill',
+            source: 'xp-fire-zones',
+            paint: { 'fill-color': '#DC2626', 'fill-opacity': 0.18 },
+          });
+          map.addLayer({
+            id: 'xp-fire-line',
+            type: 'line',
+            source: 'xp-fire-zones',
+            paint: { 'line-color': '#DC2626', 'line-width': 1.5, 'line-opacity': 0.85 },
+          });
+        }
+        if (!map.getLayer('xp-planner-line')) {
+          map.addLayer({
+            id: 'xp-planner-line',
+            type: 'line',
+            source: 'xp-planner-line',
+            layout: { 'line-cap': 'round', 'line-join': 'round' },
+            paint: { 'line-color': '#2F6F78', 'line-width': 4, 'line-opacity': 0.95 },
+          });
+        }
+        if (!map.getLayer('xp-planner-points')) {
+          map.addLayer({
+            id: 'xp-planner-points',
+            type: 'circle',
+            source: 'xp-planner-points',
+            paint: {
+              'circle-radius': 6,
+              'circle-color': '#FFFFFF',
+              'circle-stroke-width': 2.5,
+              'circle-stroke-color': '#17402C',
+            },
+          });
+        }
+        if (!map.getLayer('xp-climb-highlight')) {
+          map.addLayer({
+            id: 'xp-climb-highlight',
+            type: 'line',
+            source: 'xp-climb-highlight',
+            layout: { 'line-cap': 'round', 'line-join': 'round' },
+            paint: { 'line-color': '#D97706', 'line-width': 6, 'line-opacity': 0.96 },
+          });
+        }
+        if (!map.getLayer('xp-profile-cursor')) {
+          map.addLayer({
+            id: 'xp-profile-cursor',
+            type: 'circle',
+            source: 'xp-profile-cursor',
+            paint: {
+              'circle-radius': 6.5,
+              'circle-color': '#D97706',
+              'circle-stroke-width': 2.5,
+              'circle-stroke-color': '#FFFFFF',
+            },
           });
         }
         if (!map.getLayer('xp-satellite-layer')) {
@@ -761,6 +858,10 @@ export default function MapStage({
 
       map.on('click', 'xp-countries-fill', handleCountry as never);
       map.on('click', 'xp-regions-fill', handleRegion as never);
+      map.on('click', (event: { lngLat?: { lng: number; lat: number } }) => {
+        if (!plannerMapPickRef.current || !event.lngLat) return;
+        onMapClickRef.current?.([event.lngLat.lng, event.lngLat.lat]);
+      });
     });
 
     const reportBearing = () => {
@@ -873,6 +974,83 @@ export default function MapStage({
       map.setLayoutProperty('xp-offline-coverage-line', 'visibility', vis);
     }
   }, [offlineCoverage, showOfflineCoverage, ready]);
+  // ── calques planificateur R01 + curseur/montée R02 + feux K2.23 ────────
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    const lineSource = map.getSource('xp-planner-line') as GeoJSONSource | undefined;
+    const ptsSource = map.getSource('xp-planner-points') as GeoJSONSource | undefined;
+    if (lineSource) {
+      const geom =
+        !plannerLineHidden && plannerDraft
+          ? (plannerDraft.geometry as { type?: string; coordinates?: unknown } | null) ??
+            lineStringFromSections(plannerDraft.sections)
+          : null;
+      lineSource.setData(
+        geom && Array.isArray((geom as { coordinates?: unknown }).coordinates)
+          ? ({ type: 'Feature', properties: {}, geometry: geom } as never)
+          : (EMPTY as never),
+      );
+    }
+    if (ptsSource) {
+      ptsSource.setData(
+        plannerDraft
+          ? ({
+              type: 'FeatureCollection',
+              features: plannerDraft.points.map((pt, index) => ({
+                type: 'Feature',
+                properties: { index, kind: pt.semanticKind ?? 'via' },
+                geometry: { type: 'Point', coordinates: [pt.lon, pt.lat] },
+              })),
+            } as never)
+          : (EMPTY as never),
+      );
+    }
+  }, [plannerDraft, plannerLineHidden, ready]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    const cursorSource = map.getSource('xp-profile-cursor') as GeoJSONSource | undefined;
+    if (cursorSource) {
+      cursorSource.setData(
+        profileCursor
+          ? ({
+              type: 'Feature',
+              properties: { distanceM: profileCursor.distanceM },
+              geometry: { type: 'Point', coordinates: [profileCursor.lon, profileCursor.lat] },
+            } as never)
+          : (EMPTY as never),
+      );
+    }
+  }, [profileCursor, ready]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    const climbSource = map.getSource('xp-climb-highlight') as GeoJSONSource | undefined;
+    if (climbSource) {
+      climbSource.setData(
+        highlightedSegment && highlightedSegment.coordinates.length >= 2
+          ? ({
+              type: 'Feature',
+              properties: { label: highlightedSegment.label ?? '' },
+              geometry: { type: 'LineString', coordinates: highlightedSegment.coordinates },
+            } as never)
+          : (EMPTY as never),
+      );
+    }
+  }, [highlightedSegment, ready]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    const fireSource = map.getSource('xp-fire-zones') as GeoJSONSource | undefined;
+    const visible = layerVisibility?.fire !== false;
+    if (fireSource) {
+      fireSource.setData((visible && fireLayer ? fireLayer : EMPTY) as never);
+    }
+  }, [fireLayer, layerVisibility?.fire, ready]);
 
   // ── thème ──────────────────────────────────────────────────────────────
   useEffect(() => {

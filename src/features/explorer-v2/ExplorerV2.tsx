@@ -29,6 +29,7 @@ import { registerOfflineWorker } from './offline/zone';
 import { bearingLabel, offRouteLabel, screenBearingDeg } from './activity/offRoute';
 import { nearestPointOnRouteM, routeLines } from './geo/track';
 import { fetchRouteGeometry } from './data/routeGeometry';
+import { consumePendingStageLaunch, trailSnapshotFromStage } from '@/features/planning/explorerAdapter';
 import { useRouteSlope } from './data/useRouteSlope';
 import { verifiedNationalTopoFor } from './map/nationalTopo';
 import {
@@ -847,8 +848,12 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
           ? state.trailRoute
           : null;
     if (!active?.geojson) return routes;
-    const id = Number(active.id);
-    if (!Number.isSafeInteger(id)) return routes;
+    const rawNum = Number(active.id);
+    const id = Number.isSafeInteger(rawNum)
+      ? rawNum
+      : -Math.abs(
+          Array.from(String(active.id)).reduce((acc, ch) => ((acc * 31 + ch.charCodeAt(0)) | 0), 17) || 1
+        );
     const existing = routes.find((route) => String(route.id) === active.id);
     const full = {
       id,
@@ -1668,6 +1673,36 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
     void updateLiveActivity(payload);
   }, [state.activity, navGuidance.guidance.lockScreenPayload]);
 
+  // R04 K2.32 + S3.08 : lancement d'une étape depuis Planning/Hub ou ouverture bibliothèque
+  useEffect(() => {
+    const launch = consumePendingStageLaunch();
+    if (launch) {
+      const trail = trailSnapshotFromStage(launch.planTitle, {
+        stageId: launch.stageId,
+        dayNumber: launch.dayNumber,
+        points: launch.points,
+        revision: launch.stageRevision,
+      });
+      state.patch({
+        selection: { kind: 'trail', id: trail.id },
+        trailRoute: trail,
+        sheet: 'trail',
+        detent: 'mid',
+        tab: 0,
+      });
+      state.showToast({ title: `Étape prête · ${launch.planTitle} (J${launch.dayNumber})` });
+      return;
+    }
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('planner') === 'library') {
+        state.patch({ plannerLibraryId: '__open__' });
+        state.openSubSheet('planner', 'full');
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // ── contexte de feuille ────────────────────────────────────────────────
   const ctx = useMemo<SheetContext>(
     () => ({
@@ -2265,6 +2300,18 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
         offlineCoverage={offlineCoverageGeoJson}
         showOfflineCoverage={coverageVisible}
         onUserPan={navGuidance.onUserMapPan}
+        plannerDraft={state.plannerDraft ?? null}
+        plannerLineHidden={Boolean(state.plannerLineHidden)}
+        plannerMapPick={Boolean(state.plannerMapPick)}
+        profileCursor={state.profileCursor ?? null}
+        highlightedSegment={state.highlightedSegment ?? null}
+        onMapClick={([lng, lat]) => {
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(
+              new CustomEvent('lkdv:planner-map-pick', { detail: { lat, lon: lng } })
+            );
+          }
+        }}
       />
 
       {pendingStart ? (

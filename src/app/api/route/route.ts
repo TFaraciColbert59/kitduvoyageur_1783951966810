@@ -11,7 +11,12 @@ import {
   routeAttempt,
   routeAttemptForSport,
 } from '@/features/adventure-prep/routingService';
-import { isRouteSport, type RouteSport } from '@/features/adventure-prep/routeProfiles';
+import {
+  isRouteSport,
+  isSurfacePreference,
+  type RouteRoutingOptions,
+  type RouteSport,
+} from '@/features/adventure-prep/routeProfiles';
 import type { TravelMode } from '@/features/adventure-prep/types';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
 import { clientIpFromHeaders } from '@/lib/rate-limit';
@@ -63,9 +68,16 @@ export async function GET(request: NextRequest) {
   if (limited) return limited;
 
   const params = request.nextUrl.searchParams;
-  const unknownKeys = [...params.keys()].filter(
-    (key) => key !== 'points' && key !== 'mode' && key !== 'sport'
-  );
+  const ALLOWED_KEYS = new Set([
+    'points',
+    'mode',
+    'sport',
+    'ebike',
+    'surfacePref',
+    'avoidSteps',
+    'avoidFerries',
+  ]);
+  const unknownKeys = [...params.keys()].filter((key) => !ALLOWED_KEYS.has(key));
   if (unknownKeys.length > 0) {
     return NextResponse.json(
       { status: 'invalid', legs: [], reason: 'unknown_parameter' },
@@ -105,12 +117,39 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  const surfacePrefParam = params.get('surfacePref');
+  if (surfacePrefParam != null && !isSurfacePreference(surfacePrefParam)) {
+    return NextResponse.json(
+      { status: 'invalid', legs: [], reason: 'surface_pref_expected' },
+      { status: 400 },
+    );
+  }
+  const routingOptions: RouteRoutingOptions = {
+    ...(params.get('ebike') === '1' || params.get('ebike') === 'true' ? { ebike: true } : {}),
+    ...(surfacePrefParam && isSurfacePreference(surfacePrefParam)
+      ? { surfacePref: surfacePrefParam }
+      : {}),
+    ...(params.get('avoidSteps') === '1' || params.get('avoidSteps') === 'true'
+      ? { avoidSteps: true }
+      : {}),
+    ...(params.get('avoidFerries') === '1' || params.get('avoidFerries') === 'true'
+      ? { avoidFerries: true }
+      : {}),
+  };
+
   // L origine de la requete donne au cache persistant une URL ABSOLUE : cote
-  // serveur, etch('/api/...') serait une URL invalide. Sans elle, le cache
+  // serveur, fetch('/api/...') serait une URL invalide. Sans elle, le cache
   // resterait muet et l on retomberait sur la seule memoire.
   const attempt =
     sport != null
-      ? await routeAttemptForSport(points, sport as RouteSport, request.signal, request.nextUrl.origin, signRouteCacheKey)
+      ? await routeAttemptForSport(
+          points,
+          sport as RouteSport,
+          request.signal,
+          request.nextUrl.origin,
+          signRouteCacheKey,
+          routingOptions
+        )
       : await routeAttempt(points, mode as TravelMode, request.signal, request.nextUrl.origin, signRouteCacheKey);
   if (!attempt.legs) {
     // Panne, reponse malformee, ou LIEU HORS RESEAU : « indisponible », jamais

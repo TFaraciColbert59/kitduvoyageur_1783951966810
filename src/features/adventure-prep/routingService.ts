@@ -28,13 +28,15 @@ import { appUserAgent, SITE_CONTACT_HOST } from '@/lib/userAgent';
 import {
   MAX_ROUTE_WAYPOINTS,
   isRouteSport,
+  routingCacheKeyForSport,
   routingProfileForSport,
+  type RouteRoutingOptions,
   type RouteSport,
   type RouteSportProfile,
 } from './routeProfiles';
 
 export { ROUTE_SPORTS } from './routeProfiles';
-export type { RouteSport } from './routeProfiles';
+export type { RouteRoutingOptions, RouteSport } from './routeProfiles';
 
 /**
  * Geoapify Routing : un appel pour tout le trajet, un troncon par paire de
@@ -145,8 +147,9 @@ export const MAX_ROUTE_POINTS = MAX_ROUTE_WAYPOINTS;
  * option ni repli sur refus : son comportement reste celui d'avant K2.03.
  */
 interface AttemptProfile {
-  readonly key: RouteCacheMode;
+  readonly key: string;
   readonly geoapifyMode: string;
+  readonly geoapifyAvoid?: string;
   readonly valhallaCosting: string;
   readonly valhallaOptions?: Readonly<Record<string, unknown>>;
   readonly fallbackOnRefusal: boolean;
@@ -161,10 +164,17 @@ function profileForMode(mode: TravelMode): AttemptProfile {
   };
 }
 
-function profileForSport(profile: RouteSportProfile): AttemptProfile {
+function profileForSport(
+  profile: RouteSportProfile,
+  cacheKey: string = profile.id,
+  options?: RouteRoutingOptions | null
+): AttemptProfile {
+  const avoidList: string[] = [];
+  if (options?.avoidFerries) avoidList.push('ferries');
   return {
-    key: profile.id,
+    key: cacheKey,
     geoapifyMode: profile.geoapifyMode,
+    ...(avoidList.length > 0 ? { geoapifyAvoid: avoidList.join('|') } : {}),
     valhallaCosting: profile.valhallaCosting,
     valhallaOptions: profile.valhallaOptions,
     fallbackOnRefusal: profile.fallbackOnRefusal,
@@ -843,12 +853,14 @@ function geoapifyKey(env: Record<string, string | undefined> = process.env): str
 function geoapifyUrlForMode(
   points: readonly RoutePoint[],
   geoapifyMode: string,
-  key: string
+  key: string,
+  avoid?: string
 ): string {
   const params = new URLSearchParams({
     waypoints: points.map((p) => `${round6(p.lat)},${round6(p.lon)}`).join('|'),
     mode: geoapifyMode,
     units: 'metric',
+    ...(avoid ? { avoid } : {}),
     apiKey: key,
   });
   return `${GEOAPIFY_ROUTING_URL}?${params.toString()}`;
@@ -962,9 +974,11 @@ async function routeAttemptWithProfile(
   const fromGeoapify =
     apiKey && (await geoapifyAllowed(geoapifyRouteCredits(points)))
       ? normalizeGeoapifyRouteDetailed(
-          await callProvider(geoapifyUrlForMode(points, profile.geoapifyMode, apiKey), signal, {
-            'User-Agent': USER_AGENT,
-          }),
+          await callProvider(
+            geoapifyUrlForMode(points, profile.geoapifyMode, apiKey, profile.geoapifyAvoid),
+            signal,
+            { 'User-Agent': USER_AGENT }
+          ),
           points
         )
       : null;
@@ -1020,12 +1034,15 @@ export async function routeAttemptForSport(
   sport: RouteSport,
   signal?: AbortSignal,
   cacheBaseUrl?: string,
-  signCacheKey?: (key: string) => string
+  signCacheKey?: (key: string) => string,
+  options?: RouteRoutingOptions | null
 ): Promise<RouteAttempt> {
   if (!isRouteSport(sport)) return { legs: null, reason: 'mode_expected' };
+  const profile = routingProfileForSport(sport, options);
+  const cacheKey = routingCacheKeyForSport(sport, options);
   return routeAttemptWithProfile(
     points,
-    profileForSport(routingProfileForSport(sport)),
+    profileForSport(profile, cacheKey, options),
     signal,
     cacheBaseUrl,
     signCacheKey

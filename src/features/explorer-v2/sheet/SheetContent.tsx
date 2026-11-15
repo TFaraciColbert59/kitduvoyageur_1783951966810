@@ -6,6 +6,7 @@ import {
   ExplorerSearchError,
   geometryCenter,
   useNaturalSearch,
+  usePoiRoutes,
   useRouteSuggestions,
   useTerrainCoverage,
 } from '../data/hooks';
@@ -25,7 +26,23 @@ import {
   nationalTopoSourcesFor,
   verifiedNationalTopoFor,
 } from '../map/nationalTopo';
-import { ElevationProfile } from './ElevationProfile';
+import { ElevationProfile, type ProfilePayload } from './ElevationProfile';
+import { countTiles, downloadZone, purgeZone, readZone } from '../offline/zone';
+import { RoutePlannerPanel } from './RoutePlannerPanel';
+import { MultiDaySheetPanel } from './MultiDaySheetPanel';
+import { buildExplorerRouteAnalysis } from '@/features/routes/analysis/explorerBridge';
+import { copyRouteToDraft } from '@/features/routes/library/routeLibrary';
+import { defaultSpeedKmHForSport, gpxFromRouteDraft } from '@/features/adventure-prep/routeRevision';
+import { ebikeSupportedForSport, type RouteSport } from '@/features/adventure-prep/routeProfiles';
+import { buildExplorerCatalogAdventures, explorerSportToPlanningSport } from '@/features/planning/explorerAdapter';
+import { searchMultiDayPlans } from '@/features/planning/library';
+import type {
+  ParsedDifficulty,
+  ParsedRouteType,
+  ParsedStartAccess,
+  ParsedSurface,
+  SearchCriteriaOverrides,
+} from '../search/searchQueryParser';
 import { StrengthPanel } from './StrengthPanel';
 import { ZoneSettingsEntry, ZoneSettingsPanel } from './ZoneSettingsPanel';
 import { MetricSeriesPanel } from './MetricSeries';
@@ -990,6 +1007,61 @@ function LevelTabs(ctx: SheetContext): SheetTab[] {
   ];
 }
 
+function explorerSportToRouteSport(sport: Sport | null | undefined): RouteSport {
+  switch (sport) {
+    case 'velo':
+      return 'route';
+    case 'bivouac':
+    case 'rando':
+    case 'famille':
+    default:
+      return 'marche';
+  }
+}
+
+function PoiPassingRoutesSection({
+  ctx,
+  lat,
+  lon,
+}: {
+  ctx: SheetContext;
+  lat: number;
+  lon: number;
+}) {
+  const { data, isFetching, isError } = usePoiRoutes(lat, lon, true);
+  const routes = data?.routes ?? [];
+  return (
+    <>
+      <XpEyebrow>Parcours passant ici</XpEyebrow>
+      {isFetching ? (
+        <XpEmpty title="Recherche des parcours…" hint="Vérification des tracés à proximité." />
+      ) : isError ? (
+        <XpEmpty title="Parcours indisponibles" hint="Le catalogue des tracés proches n’a pas répondu." />
+      ) : routes.length === 0 ? (
+        <XpEmpty title="Aucun parcours enregistré ici" hint="Aucun tracé public connu ne passe à moins de 400 m." />
+      ) : (
+        <XpRows>
+          {routes.slice(0, 4).map((route) => (
+            <XpRow
+              key={`poi-route-${route.id}`}
+              icon="route"
+              title={route.name || `Itinéraire ${route.ref ?? route.id}`}
+              sub={[
+                route.distance_km != null ? `${route.distance_km.toFixed(1).replace('.', ',')} km` : null,
+                route.proximityM != null ? `à ${Math.round(route.proximityM)} m` : null,
+              ]
+                .filter(Boolean)
+                .join(' · ')}
+              badge={route.ref ? { label: route.ref, tone: 'muted' } : undefined}
+              onClick={() => ctx.state.select({ kind: 'trail', id: String(route.id) }, 'trail', 'mid')}
+            />
+          ))}
+        </XpRows>
+      )}
+    </>
+  );
+}
+
 function PoiTabs(ctx: SheetContext, kind: string): SheetTab[] {
   const poi = ctx.selectedPoi;
   const weather = ctx.weather;
@@ -1079,6 +1151,7 @@ function PoiTabs(ctx: SheetContext, kind: string): SheetTab[] {
               }
             />
           </XpRows>
+          <PoiPassingRoutesSection ctx={ctx} lat={poi.lat} lon={poi.lon} />
         </>
       );
     },
@@ -1150,6 +1223,7 @@ function PoiTabs(ctx: SheetContext, kind: string): SheetTab[] {
               ))}
             </XpRows>
           )}
+          <PoiPassingRoutesSection ctx={ctx} lat={poi.lat} lon={poi.lon} />
         </>
       ) : (
         <XpEmpty title="État inconnu" hint="Ce point d’eau n’est pas encore enregistré." />
@@ -1656,6 +1730,22 @@ function LayersTab({ ctx }: { ctx: SheetContext }) {
           badge={{ label: 'Indisponible', tone: 'muted' }}
           disabled
         />
+        <XpRow
+          icon="alert"
+          tone="warn"
+          title="Feux et zones brûlées"
+          sub={
+            layers.fire !== false
+              ? 'Superposition active lorsqu’une source d’incidents est chargée'
+              : 'Calque feux masqué sur la carte'
+          }
+          badge={
+            layers.fire !== false
+              ? { label: 'Actif', tone: 'good' }
+              : { label: 'Masqué', tone: 'muted' }
+          }
+          onClick={() => state.toggleLayer('fire')}
+        />
       </XpRows>
       <SavedPlacesPanel ctx={ctx} />
       <p className="xp-layer-note">
@@ -1734,6 +1824,503 @@ function LayersTab({ ctx }: { ctx: SheetContext }) {
   );
 }
 
+function formatEstimateDuration(seconds: number | null | undefined): string {
+  if (typeof seconds !== 'number' || !Number.isFinite(seconds) || seconds <= 0) return '—';
+  const totalMin = Math.round(seconds / 60);
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  return h > 0 ? `${h}h${String(m).padStart(2, '0')}` : `${m} min`;
+}
+
+function downloadRouteGpx(title: string, gpxXml: string) {
+  if (typeof document === 'undefined' || typeof URL.createObjectURL !== 'function') return;
+  const blob = new Blob([gpxXml], { type: 'application/gpx+xml' });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = `${title.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'itineraire'}.gpx`;
+  anchor.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function TrailTraceTab({
+  ctx,
+  route,
+  positions,
+}: {
+  ctx: SheetContext;
+  route: SheetContext['routes'][number] | undefined;
+  positions: Array<[number, number]>;
+}) {
+  const activeSport = explorerSportToRouteSport(ctx.state.searchSport);
+  const [profile, setProfile] = React.useState<ProfilePayload | null>(null);
+  const [speedKmH, setSpeedKmH] = React.useState<number>(() => defaultSpeedKmHForSport(activeSport));
+  const [customPace, setCustomPace] = React.useState(false);
+  const [ebike, setEbike] = React.useState(false);
+  const [selectedClimbId, setSelectedClimbId] = React.useState<string | null>(null);
+
+  const nearbyWater = ctx.pois.filter((p) => p.kind === 'water');
+  const nearbyRefuges = ctx.pois.filter((p) => p.kind === 'refuge');
+
+  const analysis = React.useMemo(
+    () =>
+      buildExplorerRouteAnalysis({
+        positions,
+        profilePoints: profile?.points ?? null,
+        sport: activeSport,
+        speedKmH: customPace ? speedKmH : null,
+        ebike,
+        explorerWeather: ctx.weather,
+      }),
+    [positions, profile, activeSport, customPace, speedKmH, ebike, ctx.weather],
+  );
+
+  const openCopyInPlanner = (_options?: { avoidSteps?: boolean; avoidFerries?: boolean }) => {
+    if (positions.length < 2) return;
+    const copied = copyRouteToDraft({
+      sourceId: String(route?.id ?? 'route'),
+      name: route?.name ?? 'Itinéraire',
+      geojson: route?.geojson ?? { type: 'LineString', coordinates: positions },
+      sport: activeSport,
+      distanceKm: route?.distance_km ?? null,
+    });
+    if (!copied) return;
+    ctx.state.patch({
+      plannerDraft: copied.draft,
+      plannerTitle: copied.name,
+      plannerLibraryId: null,
+      plannerMapPick: false,
+    });
+    ctx.state.openSubSheet('planner', 'full');
+  };
+
+  if (!route) {
+    return <XpEmpty title="Aucune trace sélectionnée" hint="Choisis un itinéraire sur la carte." />;
+  }
+
+  return (
+    <>
+      {positions.length > 1 ? (
+        <ElevationProfile
+          positions={positions}
+          onProfileLoaded={setProfile}
+          onCursorChange={(pt) => ctx.state.patch({ profileCursor: pt })}
+          climbs={analysis.climbs?.climbs ?? []}
+          surfaces={analysis.surfaces}
+          highlightedClimbId={selectedClimbId}
+          onSelectClimb={(climb) => {
+            if (!climb) {
+              setSelectedClimbId(null);
+              ctx.state.patch({ highlightedSegment: null });
+              return;
+            }
+            const nextId = selectedClimbId === climb.id ? null : climb.id;
+            setSelectedClimbId(nextId);
+            if (!nextId || positions.length < 2) {
+              ctx.state.patch({ highlightedSegment: null });
+              return;
+            }
+            const totalM = Math.max(1, profile?.distance_m ?? (route.distance_km ?? 1) * 1000);
+            const i0 = Math.max(0, Math.floor((climb.fromM / totalM) * (positions.length - 1)));
+            const i1 = Math.min(positions.length - 1, Math.ceil((climb.toM / totalM) * (positions.length - 1)));
+            ctx.state.patch({
+              highlightedSegment: {
+                coordinates: positions.slice(i0, Math.max(i0 + 2, i1 + 1)),
+                label: climb.categoryLabel,
+              },
+            });
+          }}
+        />
+      ) : null}
+
+      <XpMetrics
+        items={[
+          { label: 'Distance', value: route.distance_km ? `${route.distance_km.toFixed(1).replace('.', ',')} km` : '—' },
+          {
+            label: 'D+',
+            value: profile
+              ? `${Math.round(profile.gain_m)} m`
+              : typeof (route as { dplus_m?: number }).dplus_m === 'number'
+                ? `${Math.round((route as { dplus_m?: number }).dplus_m!)} m`
+                : '—',
+          },
+          {
+            label: 'Durée est.',
+            value: formatEstimateDuration(analysis.difficulty.duration.seconds),
+          },
+          {
+            label: 'Difficulté',
+            value: analysis.difficulty.status === 'unavailable' ? 'Partielle' : analysis.difficulty.levelLabel,
+          },
+        ]}
+      />
+
+      <div className="xp-chiprow" aria-label="Actions itinéraire">
+        <button
+          type="button"
+          className="xp-chip"
+          onClick={() => openCopyInPlanner()}
+        >
+          Copier et modifier
+        </button>
+        <button
+          type="button"
+          className="xp-chip"
+          onClick={() => {
+            ctx.state.patch({ activeMultiDayPlan: null });
+            ctx.state.openSubSheet('multiday', 'full');
+          }}
+        >
+          Découper en étapes
+        </button>
+        <button
+          type="button"
+          className="xp-chip"
+          onClick={() => {
+            const copied = copyRouteToDraft({
+              sourceId: String(route.id),
+              name: route.name ?? 'Itinéraire',
+              geojson: route.geojson ?? { type: 'LineString', coordinates: positions },
+              sport: activeSport,
+              distanceKm: route.distance_km ?? null,
+            });
+            if (!copied) return;
+            downloadRouteGpx(
+              route.name ?? 'itineraire',
+              gpxFromRouteDraft(route.name ?? 'Itinéraire', copied.draft.points, copied.draft.geometry),
+            );
+            ctx.state.showToast({ title: 'GPX généré depuis la trace réelle' });
+          }}
+        >
+          Exporter GPX
+        </button>
+      </div>
+
+      <XpEyebrow>Effort &amp; rythme personnel</XpEyebrow>
+      <div className="xp-chiprow" aria-label="Ajuster l'allure personnelle">
+        {[3.5, 4.5, 12, 20].map((v) => (
+          <button
+            key={v}
+            type="button"
+            className="xp-chip"
+            aria-pressed={customPace && speedKmH === v}
+            onClick={() => {
+              setSpeedKmH(v);
+              setCustomPace(true);
+            }}
+          >
+            {String(v).replace('.', ',')} km/h
+          </button>
+        ))}
+        {ebikeSupportedForSport(activeSport) ? (
+          <button
+            type="button"
+            className="xp-chip"
+            aria-pressed={ebike}
+            onClick={() => setEbike((prev) => !prev)}
+          >
+            VAE {ebike ? 'actif' : 'off'}
+          </button>
+        ) : null}
+        {customPace ? (
+          <button
+            type="button"
+            className="xp-chip"
+            onClick={() => {
+              setCustomPace(false);
+              setSpeedKmH(defaultSpeedKmHForSport(activeSport));
+            }}
+          >
+            Standard
+          </button>
+        ) : null}
+      </div>
+      <p className="xp-layer-note">
+        Score {analysis.difficulty.score}/100 ({analysis.difficulty.effortKm} km-effort) · Base :{' '}
+        {analysis.difficulty.duration.personalized ? 'rythme personnel' : 'barème sport standard'}.
+      </p>
+
+      <XpEyebrow>Revêtement &amp; surfaces</XpEyebrow>
+      {analysis.surfaces.status === 'unavailable' ? (
+        <XpEmpty
+          title="Surfaces non importées"
+          hint="Aucune donnée OSM trail_segments associée à ce tracé ; aucun pourcentage n’est estimé."
+        />
+      ) : (
+        <XpRows>
+          {analysis.surfaces.shares.map((share) => (
+            <XpRow
+              key={share.category}
+              icon="layers"
+              title={share.category}
+              sub={`${Math.round(share.lengthM)} m`}
+              badge={{ label: `${Math.round(share.ratio * 100)} %`, tone: 'good' }}
+            />
+          ))}
+        </XpRows>
+      )}
+
+      <XpEyebrow>Montées et descentes</XpEyebrow>
+      {!profile ? (
+        <XpEmpty title="Analyse du relief en cours…" hint="Calcul des côtes dès réception du profil DEM." />
+      ) : (analysis.climbs?.climbs.length ?? 0) === 0 ? (
+        <XpEmpty title="Aucune montée marquée" hint="Le profil ne dépasse pas le seuil de côte du sport." />
+      ) : (
+        <XpRows>
+          {analysis.climbs!.climbs.map((climb) => (
+            <XpRow
+              key={climb.id}
+              icon="climb"
+              tone={selectedClimbId === climb.id ? 'good' : 'ink'}
+              title={`Montée ${(climb.lengthM / 1000).toFixed(1).replace('.', ',')} km · +${Math.round(climb.gainM)} m`}
+              sub={`Pente moy. ${climb.avgGradePct.toFixed(1)} % (max ${climb.maxGradePct.toFixed(1)} %)`}
+              badge={{ label: climb.categoryLabel, tone: selectedClimbId === climb.id ? 'good' : 'muted' }}
+              onClick={() => {
+                const nextId = selectedClimbId === climb.id ? null : climb.id;
+                setSelectedClimbId(nextId);
+                if (!nextId) {
+                  ctx.state.patch({ highlightedSegment: null });
+                  return;
+                }
+                const totalM = Math.max(1, profile.distance_m);
+                const i0 = Math.max(0, Math.floor((climb.fromM / totalM) * (positions.length - 1)));
+                const i1 = Math.min(positions.length - 1, Math.ceil((climb.toM / totalM) * (positions.length - 1)));
+                ctx.state.patch({
+                  highlightedSegment: {
+                    coordinates: positions.slice(i0, Math.max(i0 + 2, i1 + 1)),
+                    label: climb.categoryLabel,
+                  },
+                });
+              }}
+            />
+          ))}
+        </XpRows>
+      )}
+
+      <XpEyebrow>Alertes tracé</XpEyebrow>
+      {analysis.alerts.alerts.length === 0 ? (
+        <XpRows>
+          <XpRow
+            icon="check"
+            tone="good"
+            title={
+              analysis.alerts.status === 'partial'
+                ? 'Aucun aller-retour détecté'
+                : 'Aucune alerte détectée'
+            }
+            sub={
+              analysis.alerts.checked.stairs && analysis.alerts.checked.ferry
+                ? 'Escaliers, ferries et détours vérifiés'
+                : 'Détours géométriques vérifiés · tags escaliers/ferries non fournis sur cette trace'
+            }
+            badge={{ label: analysis.alerts.status === 'partial' ? 'Partiel' : 'OK', tone: 'muted' }}
+          />
+        </XpRows>
+      ) : (
+        <XpRows>
+          {analysis.alerts.alerts.map((al) => (
+            <XpRow
+              key={al.id}
+              icon="alert"
+              tone={al.severity === 'warning' ? 'warn' : 'ink'}
+              title={al.message}
+              sub={al.evidence}
+              badge={
+                al.recalculable
+                  ? { label: 'Éviter', tone: 'warn' }
+                  : undefined
+              }
+              onClick={
+                al.suggestedAction === 'avoid_steps'
+                  ? () => openCopyInPlanner({ avoidSteps: true })
+                  : al.suggestedAction === 'avoid_ferry'
+                    ? () => openCopyInPlanner({ avoidFerries: true })
+                    : undefined
+              }
+            />
+          ))}
+        </XpRows>
+      )}
+
+      <XpEyebrow>Couches et affichage</XpEyebrow>
+      <XpRows>
+        <XpRow
+          icon="layers"
+          title="Éléments visibles"
+          sub={`Fond, repères et marqueurs de distance (${ctx.units === 'imperial' ? 'mi' : 'km'})`}
+          onClick={() => ctx.state.openLayers()}
+        />
+      </XpRows>
+
+      <XpEyebrow>Points d’eau et abris sur la trace</XpEyebrow>
+      {nearbyWater.length > 0 || nearbyRefuges.length > 0 ? (
+        <XpRows>
+          {nearbyWater.slice(0, 4).map((poi) => (
+            <XpRow
+              key={poi.id}
+              icon="drop"
+              tone="water"
+              title={poi.name}
+              sub={[formatElevation(poi.ele_m), poi.potable ? 'potable' : 'eau de source'].filter(Boolean).join(' · ')}
+              onClick={() => ctx.state.select({ kind: 'water', id: poi.id }, 'water', 'mid')}
+            />
+          ))}
+          {nearbyRefuges.slice(0, 3).map((poi) => (
+            <XpRow
+              key={poi.id}
+              icon="house"
+              title={poi.name}
+              sub={[formatElevation(poi.ele_m), poi.capacity ? `${poi.capacity} places` : 'refuge gardé'].filter(Boolean).join(' · ')}
+              onClick={() => ctx.state.select({ kind: 'refuge', id: poi.id }, 'refuge', 'mid')}
+            />
+          ))}
+        </XpRows>
+      ) : (
+        <XpEmpty title="Points d'eau en cours d'indexation" hint="Sources et torrents répertoriés le long de la vallée." />
+      )}
+    </>
+  );
+}
+
+function TrailConditionsTab({
+  ctx,
+  route,
+  positions,
+}: {
+  ctx: SheetContext;
+  route: SheetContext['routes'][number] | undefined;
+  positions: Array<[number, number]>;
+}) {
+  const [departureMode, setDepartureMode] = React.useState<'now' | 'tomorrow7'>('now');
+  const startAtIso = React.useMemo(() => {
+    const base = new Date();
+    if (departureMode === 'tomorrow7') {
+      base.setDate(base.getDate() + 1);
+      base.setHours(7, 0, 0, 0);
+    }
+    return base.toISOString();
+  }, [departureMode]);
+
+  const analysis = React.useMemo(
+    () =>
+      buildExplorerRouteAnalysis({
+        positions,
+        sport: explorerSportToRouteSport(ctx.state.searchSport),
+        explorerWeather: ctx.weather,
+        startAtIso,
+      }),
+    [positions, ctx.state.searchSport, ctx.weather, startAtIso],
+  );
+
+  const fireVisible = ctx.state.layerVisibility?.fire !== false;
+  const netLabel =
+    route?.network === 'iwn'
+      ? 'GR® international'
+      : route?.network === 'nwn'
+        ? 'Réseau national (GR®)'
+        : route?.network === 'rwn'
+          ? 'Réseau régional (PR / LAW)'
+          : route?.network === 'lwn'
+            ? 'Sentier local balisé'
+            : 'Balisage terrain à vérifier sur place';
+
+  const wx = analysis.weather;
+
+  return (
+    <>
+      <XpEyebrow>Heure de départ &amp; météo horodatée</XpEyebrow>
+      <div className="xp-chiprow" aria-label="Choisir l'heure de départ">
+        <button
+          type="button"
+          className="xp-chip"
+          aria-pressed={departureMode === 'now'}
+          onClick={() => setDepartureMode('now')}
+        >
+          Départ maintenant
+        </button>
+        <button
+          type="button"
+          className="xp-chip"
+          aria-pressed={departureMode === 'tomorrow7'}
+          onClick={() => setDepartureMode('tomorrow7')}
+        >
+          Demain 07h00
+        </button>
+      </div>
+
+      {wx && wx.samples.length > 0 ? (
+        <XpRows>
+          <XpRow
+            icon="cloud"
+            title={
+              wx.summary.minTemperatureC !== null && wx.summary.maxTemperatureC !== null
+                ? `${Math.round(wx.summary.minTemperatureC)}° à ${Math.round(wx.summary.maxTemperatureC)} °C`
+                : 'Prévisions horodatées'
+            }
+            sub={`Vent max ${wx.summary.maxWindKmH ?? '—'} km/h · Pluie : ${wx.summary.rainRisk} · Orage : ${wx.summary.stormRisk}`}
+            badge={{ label: `${wx.coverage.withForecast}/${wx.coverage.samples} pts`, tone: wx.coverage.ratio > 0 ? 'good' : 'muted' }}
+          />
+          {wx.samples.slice(0, 4).map((sample, idx) => (
+            <XpRow
+              key={`${sample.distanceM}-${idx}`}
+              icon="clock"
+              title={`${(sample.distanceM / 1000).toFixed(1).replace('.', ',')} km · ${
+                sample.etaIso
+                  ? new Date(sample.etaIso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+                  : '—'
+              }`}
+              sub={
+                sample.status === 'forecast'
+                  ? `${sample.temperatureC !== null ? `${Math.round(sample.temperatureC)} °C` : '—'} · vent ${sample.windKmH ?? '—'} km/h · ${sample.condition ?? 'prévision'}`
+                  : 'Heure hors fenêtre de prévision'
+              }
+              badge={{ label: sample.status === 'forecast' ? 'MET No' : 'Manquant', tone: sample.status === 'forecast' ? 'muted' : 'warn' }}
+            />
+          ))}
+        </XpRows>
+      ) : (
+        <XpEmpty
+          title="Prévisions horodatées indisponibles"
+          hint="Les séries MET Norway se chargent dès que la trace est centrée."
+        />
+      )}
+
+      {wx ? (
+        <p className="xp-layer-note">
+          Alertes météo officielles : {wx.officialAlerts.message}
+        </p>
+      ) : null}
+
+      <XpEyebrow>Feux actifs &amp; zones brûlées</XpEyebrow>
+      <XpRows>
+        <XpRow
+          icon="alert"
+          tone={analysis.fire.status === 'alerts' ? 'bad' : 'warn'}
+          title={
+            analysis.fire.status === 'unavailable'
+              ? 'Source feux non connectée'
+              : analysis.fire.status === 'clear'
+                ? 'Aucun feu actif recoupé'
+                : `${analysis.fire.impacts.length} zone(s) à proximité`
+          }
+          sub={
+            analysis.fire.status === 'unavailable'
+              ? 'État explicitement indisponible (aucune donnée active sans flux EFFIS/NASA FIRMS).'
+              : `Calque feux : ${fireVisible ? 'visible' : 'masqué'}`
+          }
+          badge={{ label: fireVisible ? 'Calque actif' : 'Masqué', tone: fireVisible ? 'good' : 'muted' }}
+          onClick={() => ctx.state.toggleLayer('fire')}
+        />
+        <XpRow
+          icon="route"
+          title={route?.ref ? `Réseau ${route.ref}` : 'Itinéraire tracé'}
+          sub={netLabel}
+        />
+      </XpRows>
+    </>
+  );
+}
+
 function ToolsTabs(ctx: SheetContext, kind: string): SheetTab[] {
   if (kind === 'layers') {
     return [
@@ -1768,12 +2355,9 @@ function ToolsTabs(ctx: SheetContext, kind: string): SheetTab[] {
     };
     walk((route?.geojson as { coordinates?: unknown } | undefined)?.coordinates);
 
-    const nearbyWater = ctx.pois.filter((p) => p.kind === 'water');
-    const nearbyRefuges = ctx.pois.filter((p) => p.kind === 'refuge');
     const routePack = route
       ? (ctx.offline?.installedPacks ?? []).find((p) => p.manifest.routeId === String(route.id)) ?? null
       : null;
-
     return [
       {
         id: 'trace',
@@ -1782,19 +2366,7 @@ function ToolsTabs(ctx: SheetContext, kind: string): SheetTab[] {
         render: () =>
           route ? (
             <>
-              {positions.length > 1 ? <ElevationProfile positions={positions} /> : null}
-              <XpMetrics
-                items={[
-                  { label: 'Distance', value: route.distance_km ? `${route.distance_km.toFixed(1).replace('.', ',')} km` : '—' },
-                  {
-                    label: 'D+',
-                    value: typeof (route as { dplus_m?: number }).dplus_m === 'number'
-                      ? `${Math.round((route as { dplus_m?: number }).dplus_m!)} m`
-                      : '—',
-                  },
-                  { label: 'Réseau', value: route.ref ?? route.network ?? 'GR®' },
-                ]}
-              />
+              <TrailTraceTab ctx={ctx} route={route} positions={positions} />
               {ctx.guidance && ctx.state.trailRoute?.id === String(route.id) ? (
                 <JoinStartCard
                   evaluation={ctx.guidance.state.departureEvaluation}
@@ -1850,42 +2422,7 @@ function ToolsTabs(ctx: SheetContext, kind: string): SheetTab[] {
                   }}
                 />
               </XpRows>
-              <XpEyebrow>Couches et affichage</XpEyebrow>
-              <XpRows>
-                <XpRow
-                  icon="layers"
-                  title="Éléments visibles"
-                  sub={`Fond, repères et marqueurs de distance (${ctx.units === 'imperial' ? 'mi' : 'km'})`}
-                  onClick={() => ctx.state.openLayers()}
-                />
-              </XpRows>
               <RouteExportButtons routeId={route.id} routeName={route.name} />
-              <XpEyebrow>Points d’eau et abris sur la trace</XpEyebrow>
-              {nearbyWater.length > 0 || nearbyRefuges.length > 0 ? (
-                <XpRows>
-                  {nearbyWater.slice(0, 4).map((poi) => (
-                    <XpRow
-                      key={poi.id}
-                      icon="drop"
-                      tone="water"
-                      title={poi.name}
-                      sub={[formatElevation(poi.ele_m), poi.potable ? 'potable' : 'eau de source'].filter(Boolean).join(' · ')}
-                      onClick={() => ctx.state.select({ kind: 'water', id: poi.id }, 'water', 'mid')}
-                    />
-                  ))}
-                  {nearbyRefuges.slice(0, 3).map((poi) => (
-                    <XpRow
-                      key={poi.id}
-                      icon="house"
-                      title={poi.name}
-                      sub={[formatElevation(poi.ele_m), poi.capacity ? `${poi.capacity} places` : 'refuge gardé'].filter(Boolean).join(' · ')}
-                      onClick={() => ctx.state.select({ kind: 'refuge', id: poi.id }, 'refuge', 'mid')}
-                    />
-                  ))}
-                </XpRows>
-              ) : (
-                <XpEmpty title="Points d'eau en cours d'indexation" hint="Sources et torrents répertoriés le long de la vallée." />
-              )}
               <TrailCommunityPanel
                 ctx={ctx}
                 routeId={String(route.id)}
@@ -1902,60 +2439,7 @@ function ToolsTabs(ctx: SheetContext, kind: string): SheetTab[] {
         id: 'conditions',
         label: 'Conditions',
         icon: 'cloud',
-        render: () => {
-          const rawCurrent = (ctx.weather as { current?: { temperatureC?: number; label?: string; windKmh?: number } } | undefined)?.current;
-          const firstHour = ctx.weather?.hours?.[0];
-          const curWeather = rawCurrent
-            ? {
-                temperatureC: rawCurrent.temperatureC ?? 0,
-                label: rawCurrent.label ?? 'Météo locale',
-                windKmh: rawCurrent.windKmh ?? 0,
-              }
-            : firstHour && firstHour.temperature_c != null
-              ? {
-                  temperatureC: firstHour.temperature_c,
-                  label: firstHour.symbol ? firstHour.symbol.replace(/_/g, ' ') : 'Météo locale',
-                  windKmh: Math.round((firstHour.wind_ms ?? 0) * 3.6),
-                }
-              : null;
-          const netLabel =
-            route?.network === 'iwn'
-              ? 'GR® international'
-              : route?.network === 'nwn'
-                ? 'Réseau national (GR®)'
-                : route?.network === 'rwn'
-                  ? 'Réseau régional (PR / LAW)'
-                  : route?.network === 'lwn'
-                    ? 'Sentier local balisé'
-                    : 'Balisage terrain à vérifier sur place';
-          return (
-            <>
-              <XpEyebrow>Météo &amp; Terrain</XpEyebrow>
-              <XpRows>
-                {curWeather ? (
-                  <XpRow
-                    icon="cloud"
-                    title={`${Math.round(curWeather.temperatureC)} °C · ${curWeather.label}`}
-                    sub={`Vent ${Math.round(curWeather.windKmh)} km/h · données locales en direct`}
-                    badge={{ label: 'En direct', tone: 'good' }}
-                  />
-                ) : (
-                  <XpRow
-                    icon="cloud"
-                    title="Conditions locales"
-                    sub="Prévisions MET Norway / Open-Meteo chargées dès que la trace est centrée"
-                    badge={{ label: 'Météo', tone: 'muted' }}
-                  />
-                )}
-                <XpRow
-                  icon="route"
-                  title={route?.ref ? `Réseau ${route.ref}` : 'Itinéraire tracé'}
-                  sub={netLabel}
-                />
-              </XpRows>
-            </>
-          );
-        },
+        render: () => <TrailConditionsTab ctx={ctx} route={route} positions={positions} />,
       },
     ];
   }
@@ -2404,15 +2888,42 @@ function SearchTab({ ctx }: { ctx: SheetContext }) {
   // doit pas perdre la recherche que « Rechercher dans cette zone » relance.
   const query = ctx.state.searchQuery ?? '';
   const requestedViewport = ctx.state.searchViewport ?? null;
+  const overrides = ctx.state.searchOverrides ?? null;
+  const [editingCriteria, setEditingCriteria] = React.useState(false);
+  const inputRef = React.useRef<HTMLInputElement | null>(null);
   const areaUnavailable = requestedViewport !== null && !isSearchableViewport(requestedViewport);
   const { data, isFetching, isError, error, refetch } = useNaturalSearch(
     query,
     ctx.state.center[1],
     ctx.state.center[0],
     requestedViewport,
+    overrides,
   );
   const patch = ctx.state.patch;
   const mapViewport = ctx.mapViewport;
+
+  const updateOverride = (next: Partial<SearchCriteriaOverrides>) => {
+    patch({
+      searchOverrides: {
+        ...(overrides ?? {}),
+        ...next,
+      },
+    });
+  };
+
+  // Préservation et restauration de la position de défilement (R03 / C-UI).
+  React.useEffect(() => {
+    const scrollEl = inputRef.current?.closest('.xp-sheet-scroll') as HTMLElement | null;
+    if (!scrollEl) return;
+    if (typeof ctx.state.searchScrollTop === 'number' && ctx.state.searchScrollTop > 0) {
+      scrollEl.scrollTop = ctx.state.searchScrollTop;
+    }
+    const onScroll = () => {
+      patch({ searchScrollTop: scrollEl.scrollTop });
+    };
+    scrollEl.addEventListener('scroll', onScroll, { passive: true });
+    return () => scrollEl.removeEventListener('scroll', onScroll);
+  }, [patch, ctx.state.searchScrollTop]);
 
   // Les résultats affichés correspondent à cette emprise. Une recherche
   // explicite porte sa propre emprise (`data.zone`) ; une recherche autour du
@@ -2424,12 +2935,24 @@ function SearchTab({ ctx }: { ctx: SheetContext }) {
     patch({ searchReferenceViewport: reference });
   }, [data, mapViewport, patch]);
 
-  // Les parcours trouvés sont mémorisés avec les résultats : ouvrir une fiche
-  // puis revenir ne doit pas perdre la recherche ni la trace sélectionnée.
-  // Aucun parcours n'est conservé quand la réponse change ou disparaît.
+  // Les parcours et aventures multi-jours sont mémorisés avec les résultats.
   React.useEffect(() => {
-    patch({ searchRoutes: data?.routes ?? [] });
-  }, [data?.routes, patch]);
+    patch({
+      searchRoutes: data?.routes ?? [],
+      searchAdventures: data?.adventures ?? [],
+    });
+  }, [data?.routes, data?.adventures, patch]);
+
+  const featuredAdventures = React.useMemo(
+    () =>
+      searchMultiDayPlans(
+        buildExplorerCatalogAdventures(),
+        { rawQuery: '' },
+        { viewerId: null, friendIds: [], tribuIds: [], blockedUserIds: [] },
+      )
+        .items.slice(0, 2),
+    [],
+  );
 
   const results = React.useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -2437,6 +2960,7 @@ function SearchTab({ ctx }: { ctx: SheetContext }) {
       countries: q.length < 2 ? [] : ctx.countries.filter((country) => country.name.toLowerCase().includes(q)).slice(0, 4),
       pois: data?.results ?? [],
       routes: data?.routes ?? [],
+      adventures: data?.adventures ?? [],
     };
   }, [ctx.countries, data, query]);
 
@@ -2449,15 +2973,17 @@ function SearchTab({ ctx }: { ctx: SheetContext }) {
     results.countries.length === 0 &&
     results.pois.length === 0 &&
     results.routes.length === 0 &&
+    results.adventures.length === 0 &&
     !data?.routesUnavailable;
 
   return (
     <>
       <input
+        ref={inputRef}
         className="xp-searchinput"
         value={query}
         onChange={(event) => patch({ searchQuery: event.target.value })}
-        placeholder="Pays, parcours, sommet, refuge, eau…"
+        placeholder="Ex : boucle 15 km lac facile gare…"
         aria-label="Rechercher un lieu ou un parcours"
         style={{
           width: '100%',
@@ -2469,6 +2995,22 @@ function SearchTab({ ctx }: { ctx: SheetContext }) {
           fontSize: 13,
         }}
       />
+      <div className="xp-chiprow" aria-label="Création et boucles" style={{ marginTop: 8 }}>
+        <button
+          type="button"
+          className="xp-chip"
+          onClick={() => ctx.state.openSubSheet('planner', 'full')}
+        >
+          Créer un itinéraire
+        </button>
+        <button
+          type="button"
+          className="xp-chip"
+          onClick={() => ctx.state.openSubSheet('planner', 'full')}
+        >
+          Générer une boucle
+        </button>
+      </div>
       {query.trim().length < 2 ? (
         <>
           <RouteSuggestions ctx={ctx} />
@@ -2477,6 +3019,30 @@ function SearchTab({ ctx }: { ctx: SheetContext }) {
             center={ctx.state.center}
             online={ctx.state.online}
           />
+          {featuredAdventures.length > 0 ? (
+            <>
+              <XpEyebrow>Aventures multi-jours</XpEyebrow>
+              <XpRows>
+                {featuredAdventures.map((adv) => {
+                  const advDist = adv.stages.reduce((acc, s) => acc + s.distanceKm, 0);
+                  const advGain = adv.stages.reduce((acc, s) => acc + s.elevationGainM, 0);
+                  return (
+                    <XpRow
+                      key={adv.id}
+                      icon="map"
+                      title={adv.title}
+                      sub={`${adv.daysCount} jours · ${advDist.toFixed(0)} km · +${Math.round(advGain)} m`}
+                      badge={{ label: `${adv.daysCount} j`, tone: 'good' }}
+                      onClick={() => {
+                        patch({ activeMultiDayPlan: adv });
+                        ctx.state.openSubSheet('multiday', 'full');
+                      }}
+                    />
+                  );
+                })}
+              </XpRows>
+            </>
+          ) : null}
           <p style={{ margin: 0, padding: '0 4px', fontSize: 11.5, color: 'var(--xp-mut)' }}>
             Tape deux lettres pour chercher un lieu, un parcours ou un repère dans toute la
             zone disponible.
@@ -2523,35 +3089,8 @@ function SearchTab({ ctx }: { ctx: SheetContext }) {
         />
       ) : !data ? (
         <XpEmpty title="Recherche…" hint="Préparation de la requête." />
-      ) : noResults ? (
-        <XpEmpty
-          title={requestedViewport ? 'Aucun résultat dans cette zone' : 'Aucun résultat'}
-          hint={
-            requestedViewport
-              ? 'Aucun pays, repère ni parcours ne correspond dans l’emprise visible. Déplace la carte ou corrige la demande.'
-              : 'Aucun pays, repère ni parcours ne correspond dans les données disponibles.'
-          }
-        />
       ) : (
         <>
-          {results.countries.length > 0 ? (
-            <>
-              <XpEyebrow>Pays</XpEyebrow>
-              <XpRows>
-                {results.countries.map((country) => (
-                  <XpRow
-                    key={country.iso}
-                    icon="globe"
-                    title={country.name}
-                    sub={country.continent ?? undefined}
-                    onClick={() =>
-                      country.center && ctx.state.openCountry(country.iso, country.center, country.name)
-                    }
-                  />
-                ))}
-              </XpRows>
-            </>
-          ) : null}
           {data?.filters ? (
             <>
               <XpEyebrow>Filtres compris</XpEyebrow>
@@ -2561,86 +3100,310 @@ function SearchTab({ ctx }: { ctx: SheetContext }) {
                     Emprise visible
                   </span>
                 ) : null}
-                <span className="xp-chip" aria-pressed="true">
+                <button
+                  type="button"
+                  className="xp-chip"
+                  aria-pressed={editingCriteria}
+                  onClick={() => setEditingCriteria((v) => !v)}
+                >
                   {data.filters.kinds.map((kind) => POI_LABEL[kind] ?? kind).join(' · ')}
-                </span>
+                </button>
                 {data.filters.maxDistanceKm ? (
-                  <span className="xp-chip">{data.filters.maxDistanceKm} km max</span>
+                  <button
+                    type="button"
+                    className="xp-chip"
+                    onClick={() => setEditingCriteria((v) => !v)}
+                  >
+                    {data.filters.maxDistanceKm} km max
+                  </button>
                 ) : null}
-                {data.filters.easy ? <span className="xp-chip">facile</span> : null}
-                {data.filters.family ? <span className="xp-chip">famille</span> : null}
+                {data.filters.maxDurationHours ? (
+                  <button
+                    type="button"
+                    className="xp-chip"
+                    onClick={() => setEditingCriteria((v) => !v)}
+                  >
+                    ≤ {data.filters.maxDurationHours} h
+                  </button>
+                ) : null}
+                {data.filters.routeType ? (
+                  <button
+                    type="button"
+                    className="xp-chip"
+                    onClick={() => setEditingCriteria((v) => !v)}
+                  >
+                    {data.filters.routeType}
+                  </button>
+                ) : null}
+                {data.filters.difficulty ? (
+                  <button
+                    type="button"
+                    className="xp-chip"
+                    onClick={() => setEditingCriteria((v) => !v)}
+                  >
+                    {data.filters.difficulty}
+                  </button>
+                ) : null}
+                {data.filters.surface ? (
+                  <button
+                    type="button"
+                    className="xp-chip"
+                    onClick={() => setEditingCriteria((v) => !v)}
+                  >
+                    {data.filters.surface}
+                  </button>
+                ) : null}
+                {data.filters.startAccess ? (
+                  <button
+                    type="button"
+                    className="xp-chip"
+                    onClick={() => setEditingCriteria((v) => !v)}
+                  >
+                    accès {data.filters.startAccess}
+                  </button>
+                ) : null}
+                {data.filters.easy ? (
+                  <button
+                    type="button"
+                    className="xp-chip"
+                    onClick={() => setEditingCriteria((v) => !v)}
+                  >
+                    facile
+                  </button>
+                ) : null}
+                {data.filters.family ? (
+                  <button
+                    type="button"
+                    className="xp-chip"
+                    onClick={() => setEditingCriteria((v) => !v)}
+                  >
+                    famille
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  className="xp-chip"
+                  aria-pressed={editingCriteria}
+                  onClick={() => setEditingCriteria((v) => !v)}
+                >
+                  {editingCriteria ? 'Fermer l’ajustement' : 'Corriger'}
+                </button>
               </div>
+              {editingCriteria ? (
+                <div
+                  style={{
+                    margin: '6px 0 10px',
+                    padding: '8px 10px',
+                    borderRadius: 12,
+                    background: 'rgba(255,255,255,.72)',
+                    border: '0.5px solid rgba(23,43,36,.12)',
+                  }}
+                >
+                  <div className="xp-chiprow" aria-label="Distance maximale">
+                    {[5, 10, 20, 35].map((km) => (
+                      <button
+                        key={km}
+                        type="button"
+                        className="xp-chip"
+                        aria-pressed={data.filters.maxDistanceKm === km}
+                        onClick={() => updateOverride({ maxDistanceKm: km })}
+                      >
+                        ≤ {km} km
+                      </button>
+                    ))}
+                  </div>
+                  <div className="xp-chiprow" aria-label="Difficulté et format" style={{ marginTop: 6 }}>
+                    {(['facile', 'modere', 'difficile'] as ParsedDifficulty[]).map((diff) => (
+                      <button
+                        key={diff}
+                        type="button"
+                        className="xp-chip"
+                        aria-pressed={data.filters.difficulty === diff}
+                        onClick={() => updateOverride({ difficulty: diff })}
+                      >
+                        {diff}
+                      </button>
+                    ))}
+                    {(['boucle', 'aller-retour', 'traversee'] as ParsedRouteType[]).map((rt) => (
+                      <button
+                        key={rt}
+                        type="button"
+                        className="xp-chip"
+                        aria-pressed={data.filters.routeType === rt}
+                        onClick={() => updateOverride({ routeType: rt })}
+                      >
+                        {rt}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="xp-chiprow" aria-label="Surface et accès" style={{ marginTop: 6 }}>
+                    {(['route', 'chemin', 'sentier'] as ParsedSurface[]).map((surf) => (
+                      <button
+                        key={surf}
+                        type="button"
+                        className="xp-chip"
+                        aria-pressed={data.filters.surface === surf}
+                        onClick={() => updateOverride({ surface: surf })}
+                      >
+                        {surf}
+                      </button>
+                    ))}
+                    {(['gare', 'bus', 'parking'] as ParsedStartAccess[]).map((acc) => (
+                      <button
+                        key={acc}
+                        type="button"
+                        className="xp-chip"
+                        aria-pressed={data.filters.startAccess === acc}
+                        onClick={() => updateOverride({ startAccess: acc })}
+                      >
+                        {acc}
+                      </button>
+                    ))}
+                    {overrides ? (
+                      <button
+                        type="button"
+                        className="xp-chip"
+                        onClick={() => patch({ searchOverrides: null })}
+                      >
+                        Réinitialiser
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
             </>
           ) : null}
-          {results.pois.length > 0 ? (
-            <>
-              <XpEyebrow>Repères</XpEyebrow>
-              <XpRows>
-                {results.pois.map((poi) => (
-                  <XpRow
-                    key={poi.id}
-                    icon={POI_ICON[poi.kind] ?? 'pin'}
-                    tone={POI_TONE[poi.kind] ?? 'ink'}
-                    title={poi.name}
-                    sub={`${POI_LABEL[poi.kind] ?? poi.kind} · ${
-                      ctx.units === 'imperial' ? formatImperialDistance(poi.distanceKm) : formatDistance(poi.distanceKm)
-                    }`}
-                    badge={poi.ele_m ? { label: formatElevation(poi.ele_m) ?? '', tone: 'muted' } : undefined}
-                    onClick={() => ctx.state.select({ kind: poi.kind as never, id: poi.id }, poi.kind as never, 'mid')}
-                  />
-                ))}
-              </XpRows>
-            </>
-          ) : null}
-          {results.routes.length > 0 ? (
-            <>
-              <XpEyebrow>Parcours</XpEyebrow>
-              <XpRows>
-                {results.routes.map((route) => {
-                  const length =
-                    route.distance_km != null
-                      ? `${route.distance_km.toFixed(1).replace('.', ',')} km`
-                      : null;
-                  const network =
-                    route.network === 'iwn'
-                      ? 'GR® international'
-                      : route.network === 'nwn'
-                        ? 'GR®'
-                        : route.network === 'rwn'
-                          ? 'PR'
-                          : 'Sentier balisé';
-                  const distance =
-                    route.distanceKm != null ? `à ${formatDistance(route.distanceKm)}` : null;
-                  return (
-                    <XpRow
-                      key={`route-${route.id}`}
-                      icon="route"
-                      title={route.name || `Itinéraire ${route.ref ?? route.id}`}
-                      sub={[length, route.ref ?? network, distance].filter(Boolean).join(' · ')}
-                      badge={
-                        route.matched ? { label: 'Nom cité', tone: 'good' } : undefined
-                      }
-                      onClick={() =>
-                        ctx.state.select({ kind: 'trail', id: String(route.id) }, 'trail', 'mid')
-                      }
-                    />
-                  );
-                })}
-              </XpRows>
-            </>
-          ) : null}
-          {data.routesUnavailable ? (
+
+          {noResults ? (
             <XpEmpty
-              title="Parcours indisponibles"
-              hint="Le catalogue de parcours n’a pas répondu ; les repères restent affichés."
+              title={requestedViewport ? 'Aucun résultat dans cette zone' : 'Aucun résultat'}
+              hint={
+                requestedViewport
+                  ? 'Aucun pays, repère ni parcours ne correspond dans l’emprise visible. Déplace la carte ou corrige la demande.'
+                  : 'Aucun pays, repère ni parcours ne correspond dans les données disponibles.'
+              }
             />
-          ) : null}
-          {data.truncated || data.routesTruncated ? (
-            <XpEmpty
-              title="Une partie des résultats est affichée"
-              hint="Zoome pour affiner l’emprise et voir les repères et parcours suivants."
-            />
-          ) : null}
+
+          ) : (
+            <>
+              {results.countries.length > 0 ? (
+                <>
+                  <XpEyebrow>Pays</XpEyebrow>
+                  <XpRows>
+                    {results.countries.map((country) => (
+                      <XpRow
+                        key={country.iso}
+                        icon="globe"
+                        title={country.name}
+                        sub={country.continent ?? undefined}
+                        onClick={() =>
+                          country.center && ctx.state.openCountry(country.iso, country.center, country.name)
+                        }
+                      />
+                    ))}
+                  </XpRows>
+                </>
+              ) : null}
+
+              {results.adventures.length > 0 ? (
+                <>
+                  <XpEyebrow>Aventures multi-jours</XpEyebrow>
+                  <XpRows>
+                    {results.adventures.map((adv) => {
+                      const advDist = adv.stages.reduce((acc, s) => acc + s.distanceKm, 0);
+                      const advGain = adv.stages.reduce((acc, s) => acc + s.elevationGainM, 0);
+                      return (
+                        <XpRow
+                          key={adv.id}
+                          icon="map"
+                          title={adv.title}
+                          sub={`${adv.daysCount} jours · ${advDist.toFixed(0)} km · +${Math.round(advGain)} m`}
+                          badge={{ label: `${adv.daysCount} j`, tone: 'good' }}
+                          onClick={() => {
+                            patch({ activeMultiDayPlan: adv });
+                            ctx.state.openSubSheet('multiday', 'full');
+                          }}
+                        />
+                      );
+                    })}
+                  </XpRows>
+                </>
+              ) : null}
+
+              {results.pois.length > 0 ? (
+                <>
+                  <XpEyebrow>Repères</XpEyebrow>
+                  <XpRows>
+                    {results.pois.map((poi) => (
+                      <XpRow
+                        key={poi.id}
+                        icon={POI_ICON[poi.kind] ?? 'pin'}
+                        tone={POI_TONE[poi.kind] ?? 'ink'}
+                        title={poi.name}
+                        sub={`${POI_LABEL[poi.kind] ?? poi.kind} · ${
+                          ctx.units === 'imperial' ? formatImperialDistance(poi.distanceKm) : formatDistance(poi.distanceKm)
+                        }`}
+                        badge={poi.ele_m ? { label: formatElevation(poi.ele_m) ?? '', tone: 'muted' } : undefined}
+                        onClick={() => ctx.state.select({ kind: poi.kind as PoiKind, id: poi.id }, poi.kind as never, 'mid')}
+                      />
+                    ))}
+                  </XpRows>
+                </>
+              ) : null}
+
+              {results.routes.length > 0 ? (
+                <>
+                  <XpEyebrow>Parcours</XpEyebrow>
+                  <XpRows>
+                    {results.routes.map((route) => {
+                      const length =
+                        route.distance_km != null
+                          ? `${route.distance_km.toFixed(1).replace('.', ',')} km`
+                          : null;
+                      const network =
+                        route.network === 'iwn'
+                          ? 'GR® international'
+                          : route.network === 'nwn'
+                            ? 'GR®'
+                            : route.network === 'rwn'
+                              ? 'PR'
+                              : 'Sentier balisé';
+                      const distance =
+                        route.distanceKm != null ? `à ${formatDistance(route.distanceKm)}` : null;
+                      const badgeLabel = route.matched
+                        ? 'Nom cité'
+                        : route.smartReasons?.[0] ?? (route.distance_km ? 'Circuit prêt' : null);
+                      return (
+                        <XpRow
+                          key={`route-${route.id}`}
+                          icon="route"
+                          title={route.name || `Itinéraire ${route.ref ?? route.id}`}
+                          sub={[length, route.ref ?? network, distance].filter(Boolean).join(' · ')}
+                          badge={badgeLabel ? { label: badgeLabel, tone: 'good' } : undefined}
+                          onClick={() =>
+                            ctx.state.select({ kind: 'trail', id: String(route.id) }, 'trail', 'mid')
+                          }
+                        />
+                      );
+                    })}
+                  </XpRows>
+                </>
+              ) : null}
+
+              {data.routesUnavailable ? (
+                <XpEmpty
+                  title="Parcours indisponibles"
+                  hint="Le catalogue de parcours n’a pas répondu ; les repères restent affichés."
+                />
+              ) : null}
+              {data.truncated || data.routesTruncated ? (
+                <XpEmpty
+                  title="Une partie des résultats est affichée"
+                  hint="Zoome pour affiner l’emprise et voir les repères et parcours suivants."
+                />
+              ) : null}
+            </>
+          )}
           <ExplorerSegmentsSearchSection
             query={query}
             center={ctx.state.center}
@@ -3547,6 +4310,47 @@ export function buildSheetModel(ctx: SheetContext): SheetModel {
         </button>
       ),
       onBack: () => state.clearSelection(),
+    };
+  }
+
+  if (kind === 'planner') {
+    return {
+      title: state.plannerTitle || 'Planifier un itinéraire',
+      subtitle: 'Édition, boucle & bibliothèque',
+      tabs: [
+        {
+          id: 'editeur',
+          label: 'Éditeur',
+          icon: 'route',
+          render: () => <RoutePlannerPanel ctx={ctx} />,
+        },
+      ],
+      mini: null,
+      actions: null,
+      onBack: () => state.closeSubSheet(),
+    };
+  }
+
+  if (kind === 'multiday') {
+    const activePlanDist = state.activeMultiDayPlan
+      ? state.activeMultiDayPlan.stages.reduce((acc, s) => acc + s.distanceKm, 0)
+      : 0;
+    return {
+      title: state.activeMultiDayPlan?.title ?? 'Trek multi-jours',
+      subtitle: state.activeMultiDayPlan
+        ? `${state.activeMultiDayPlan.daysCount} jours · ${activePlanDist.toFixed(0)} km`
+        : 'Étapes & hébergements',
+      tabs: [
+        {
+          id: 'etapes',
+          label: 'Étapes',
+          icon: 'map',
+          render: () => <MultiDaySheetPanel ctx={ctx} />,
+        },
+      ],
+      mini: null,
+      actions: null,
+      onBack: () => state.closeSubSheet(),
     };
   }
 
