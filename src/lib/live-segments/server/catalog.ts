@@ -23,8 +23,9 @@ import {
   type SegmentPoint,
   type SportType,
 } from '@/features/live-segments';
+import { listS01LiveDefinitions } from '@/lib/segments/bridge';
 
-export type LiveSegmentDataSource = 'demo_catalog';
+export type LiveSegmentDataSource = 'demo_catalog' | 's01_catalog';
 
 export interface LiveSegmentCatalogEntry {
   definition: LiveSegmentDefinition;
@@ -260,6 +261,20 @@ export function getDemoCatalog(): readonly LiveSegmentCatalogEntry[] {
   return cachedCatalog;
 }
 
+export function getCombinedLiveCatalog(): readonly LiveSegmentCatalogEntry[] {
+  const demo = getDemoCatalog();
+  const s01Entries: LiveSegmentCatalogEntry[] = listS01LiveDefinitions().map((definition) => ({
+    definition,
+    region: 'Segment communauté',
+    dataSource: 's01_catalog',
+  }));
+  if (s01Entries.length === 0) return demo;
+  const byId = new Map<string, LiveSegmentCatalogEntry>();
+  for (const entry of demo) byId.set(entry.definition.id, entry);
+  for (const entry of s01Entries) byId.set(entry.definition.id, entry);
+  return Array.from(byId.values());
+}
+
 export function createPublicPrivacy(
   viewerId: string | null | undefined,
   optedIn = true,
@@ -300,7 +315,7 @@ export function listLiveSegments(params: ListLiveSegmentsParams = {}): ListLiveS
     : null;
 
   const items: LiveSegmentSummary[] = [];
-  const catalog = getDemoCatalog();
+  const catalog = getCombinedLiveCatalog();
   for (const entry of catalog) {
     if (params.sport && entry.definition.sport !== params.sport) continue;
 
@@ -352,7 +367,7 @@ export function getLiveSegment(
   id: string,
   options: { viewerId?: string | null; optedIn?: boolean } = {},
 ): LiveSegmentCatalogEntry | null {
-  const entry = getDemoCatalog().find((item) => item.definition.id === id);
+  const entry = getCombinedLiveCatalog().find((item) => item.definition.id === id);
   if (!entry) return null;
   const privacy = createPublicPrivacy(options.viewerId, options.optedIn ?? true);
   const sanitized = sanitizeSegmentForLive(entry.definition, privacy);
@@ -367,7 +382,7 @@ export function listLiveSegmentsByIds(
   const privacy = createPublicPrivacy(options.viewerId, options.optedIn ?? true);
   const wanted = new Set(ids);
   const result: LiveSegmentDefinition[] = [];
-  for (const entry of getDemoCatalog()) {
+  for (const entry of getCombinedLiveCatalog()) {
     if (!wanted.has(entry.definition.id)) continue;
     const sanitized = sanitizeSegmentForLive(entry.definition, privacy);
     if (sanitized) result.push(sanitized);

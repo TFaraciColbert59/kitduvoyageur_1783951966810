@@ -11,7 +11,7 @@ const Patch = z
   .object({
     title: z.string().trim().max(120).optional(),
     notes: z.string().max(2000).optional(),
-    visibility: z.enum(['private', 'collective_anonymized']).optional(),
+    visibility: z.enum(['private', 'followers', 'public', 'collective_anonymized']).optional(),
   })
   .strict();
 

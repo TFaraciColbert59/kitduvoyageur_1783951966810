@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Activity,
@@ -18,6 +18,17 @@ import {
   type ConsentSettingsPayload,
   type ConsentUsageState,
 } from '@/features/compte/domain/consentSettings';
+import {
+  setHealthConsentScopes,
+  type HealthConsentScope,
+  type HealthConsentState,
+} from '@/features/sensors';
+import {
+  createConsentTransport,
+  initialHealthConsent,
+} from '@/components/compte/sensors/consentClient';
+import { HealthConsentPanel } from '@/components/compte/sensors/HealthConsentPanel';
+import type { ConnectorCatalogResponse } from '@/lib/connectors/types';
 import { OverlaySheet } from '../../overlay/OverlaySheet';
 import { DrawerError, DrawerSkeleton } from '../shell/DrawerShell';
 import { fetchJson } from './shared';
@@ -140,12 +151,83 @@ export function ConsentSettingsSheet({ onClose }: { onClose: () => void }) {
   const queryClient = useQueryClient();
   const [pending, setPending] = useState<string | null>(null);
   const [status, setStatus] = useState<Status | null>(null);
+  const [healthState, setHealthState] = useState<HealthConsentState>(() => initialHealthConsent());
+  const [healthPending, setHealthPending] = useState(false);
 
   const query = useQuery({
     queryKey: QUERY_KEY,
     queryFn: () => fetchJson<ConsentSettingsPayload>('/api/compte/consents'),
     staleTime: 0,
   });
+
+  const connectorsQuery = useQuery({
+    queryKey: ['compte', 'connectors-catalog'],
+    queryFn: () => fetchJson<ConnectorCatalogResponse>('/api/connectors/catalog'),
+    staleTime: 10_000,
+    retry: false,
+  });
+
+  useEffect(() => {
+    let active = true;
+    const transport = createConsentTransport();
+    void transport.load().then((loaded) => {
+      if (active && loaded) setHealthState(loaded);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const toggleHealthScope = async (scope: HealthConsentScope, granted: boolean) => {
+    if (healthPending) return;
+    setHealthPending(true);
+    const next = setHealthConsentScopes(healthState, [scope], granted, 'settings');
+    setHealthState(next);
+    try {
+      const saved = await createConsentTransport().save(next);
+      if (saved) setHealthState(saved);
+      setStatus({
+        kind: 'success',
+        message: granted
+          ? 'Autorisation Santé enregistrée.'
+          : 'Autorisation Santé révoquée immédiatement.',
+      });
+    } finally {
+      setHealthPending(false);
+    }
+  };
+
+  const toggleConnectorPurpose = async (purpose: string, granted: boolean) => {
+    if (pending) return;
+    setPending(`conn:${purpose}`);
+    setStatus(null);
+    try {
+      await fetchJson<{ catalog: ConnectorCatalogResponse }>('/api/connectors/consent', {
+        method: 'POST',
+        body: JSON.stringify({ purpose, granted }),
+      });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['compte', 'connectors-catalog'] }),
+        queryClient.invalidateQueries({ queryKey: QUERY_KEY }),
+      ]);
+      setStatus({
+        kind: 'success',
+        message: granted
+          ? 'Consentement connecteur enregistré.'
+          : 'Consentement connecteur révoqué immédiatement.',
+      });
+    } catch (error) {
+      setStatus({
+        kind: 'error',
+        message:
+          error instanceof Error && error.message
+            ? `Impossible de modifier ce consentement : ${error.message}`
+            : 'Impossible de modifier ce consentement.',
+      });
+    } finally {
+      setPending(null);
+    }
+  };
 
   const toggle = async (usage: ConsentUsageState) => {
     if (usage.disabled || pending) return;
@@ -231,10 +313,26 @@ export function ConsentSettingsSheet({ onClose }: { onClose: () => void }) {
               </div>
             </section>
 
+            <section className="lkdv-consent-section" aria-labelledby="lkdv-consent-health">
+              <header className="lkdv-consent-section-head">
+                <h3 id="lkdv-consent-health">Données de santé & capteurs (S6.16)</h3>
+                <small>Révocation scope par scope</small>
+              </header>
+              <HealthConsentPanel
+                state={healthState}
+                disabled={healthPending}
+                onToggle={(scope, granted) => void toggleHealthScope(scope, granted)}
+              />
+            </section>
+
             <section className="lkdv-consent-section" aria-labelledby="lkdv-consent-providers">
               <header className="lkdv-consent-section-head">
-                <h3 id="lkdv-consent-providers">Fournisseurs &amp; appareils</h3>
-                <small>Surfaces dédiées</small>
+                <h3 id="lkdv-consent-providers">Connecteurs tiers & fournisseurs</h3>
+                <small>
+                  {connectorsQuery.data
+                    ? `${connectorsQuery.data.summary.connected} connecté(s) · ${connectorsQuery.data.summary.total} fournisseurs`
+                    : 'Catalogue'}
+                </small>
               </header>
               <p className="lkdv-consent-note">
                 Les autorisations RGPD ci-dessus gouvernent les usages généraux. La gestion par fournisseur
@@ -251,16 +349,56 @@ export function ConsentSettingsSheet({ onClose }: { onClose: () => void }) {
                   Montres connectées
                 </a>
               </div>
-              <div className="lkdv-consent-list">
-                {query.data.providers.map((provider) => (
-                  <ProviderRow key={provider.id} provider={provider} />
-                ))}
-              </div>
+              {connectorsQuery.data ? (
+                <div className="lkdv-consent-list">
+                  {connectorsQuery.data.connectors.map((connector) => (
+                    <article key={connector.id} className="lkdv-consent-provider" data-connection={connector.status}>
+                      <span className="lkdv-consent-provider-ico" aria-hidden="true">
+                        <Plug size={16} />
+                      </span>
+                      <div className="lkdv-consent-copy">
+                        <div className="lkdv-consent-line">
+                          <b>{connector.label}</b>
+                          <span className={`lkdv-consent-chip${connector.connected ? '' : ' is-off'}`}>
+                            {connector.statusLabel}
+                          </span>
+                        </div>
+                        <small>{connector.categoryLabel} · {connector.statusReason}</small>
+                        {connector.requiredPurposes.length > 0 ? (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 4 }}>
+                            {connector.requiredPurposes.map((purpose) => {
+                              const isGranted = connector.grantedPurposes.includes(purpose);
+                              return (
+                                <button
+                                  key={purpose}
+                                  type="button"
+                                  disabled={pending === `conn:${purpose}`}
+                                  onClick={() => void toggleConnectorPurpose(purpose, !isGranted)}
+                                  className={`lkdv-consent-chip${isGranted ? '' : ' is-off'}`}
+                                  style={{ cursor: 'pointer', border: 'none' }}
+                                >
+                                  {purpose}: {isGranted ? 'Accordé (révoquer)' : 'Désactivé (autoriser)'}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        ) : null}
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <div className="lkdv-consent-list">
+                  {query.data.providers.map((provider) => (
+                    <ProviderRow key={provider.id} provider={provider} />
+                  ))}
+                </div>
+              )}
             </section>
 
             <p className="lkdv-consent-footnote">
-              Une révocation coupe les accès futurs et les caches contrôlés, mais ne peut pas effacer une copie
-              déjà reçue par un destinataire. Aucun jeton fournisseur n’est stocké dans cette surface.
+              Une révocation coupe immédiatement les collectes futures, synchronisations connecteurs et caches contrôlés,
+              sans affecter les fichiers déjà exportés localement.
             </p>
           </>
         ) : null}

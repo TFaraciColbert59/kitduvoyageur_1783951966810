@@ -25,6 +25,7 @@ import { OutingParticipants } from './OutingParticipants';
 import { OutingComments } from './OutingComments';
 import { OutingAudienceSheet } from './OutingAudienceSheet';
 import { updateOutingVisibility } from '@/features/compte/client/outingVisibility';
+import ReportBlockModal, { type ReportTarget } from '@/components/ui/ReportBlockModal';
 
 async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, {
@@ -56,6 +57,7 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [audienceOpen, setAudienceOpen] = useState(false);
+  const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
   const [toast, setToast] = useState<Toast>(null);
 
   useEffect(() => {
@@ -301,38 +303,60 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
               />
             );
           }
+          const organizer = detail.participants.find((p) => p.isOwner);
           return (
-            <OutingComments
-              kudos={detail.kudos}
-              comments={detail.comments}
-              busy={busy}
-              onKudos={() =>
-                run(
-                  () => requestJson(`/api/compte/sorties/${outingId}/kudos`, { method: 'POST' }),
-                  detail.kudos.mine ? 'Kudos retiré' : 'Kudos envoyé'
-                )
-              }
-              onComment={(body) =>
-                run(
-                  () =>
-                    requestJson(`/api/compte/sorties/${outingId}/comments`, {
-                      method: 'POST',
-                      body: JSON.stringify({ body }),
-                    }),
-                  'Commentaire envoyé'
-                )
-              }
-              onDelete={(commentId) =>
-                run(
-                  () =>
-                    requestJson(`/api/compte/sorties/${outingId}/comments`, {
-                      method: 'DELETE',
-                      body: JSON.stringify({ commentId }),
-                    }),
-                  'Commentaire supprimé'
-                )
-              }
-            />
+            <div className="flex flex-col gap-2">
+              {!detail.canEdit && organizer ? (
+                <div className="flex items-center justify-between gap-2 rounded-[14px] bg-[color:var(--card-tint-strong)] px-3 py-2">
+                  <span className="text-[11.5px] text-[color:var(--label2)]">
+                    Gérer les interactions avec {organizer.name}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setReportTarget({
+                        userId: organizer.userId,
+                        userName: organizer.name,
+                      })
+                    }
+                    className="rounded-full border border-[color:var(--glass-border)] bg-white/85 px-2.5 py-1 text-[11px] font-semibold text-[color:var(--label)]"
+                  >
+                    Signaler / Bloquer
+                  </button>
+                </div>
+              ) : null}
+              <OutingComments
+                kudos={detail.kudos}
+                comments={detail.comments}
+                busy={busy}
+                onKudos={() =>
+                  run(
+                    () => requestJson(`/api/compte/sorties/${outingId}/kudos`, { method: 'POST' }),
+                    detail.kudos.mine ? 'Kudos retiré' : 'Kudos envoyé'
+                  )
+                }
+                onComment={(body) =>
+                  run(
+                    () =>
+                      requestJson(`/api/compte/sorties/${outingId}/comments`, {
+                        method: 'POST',
+                        body: JSON.stringify({ body }),
+                      }),
+                    'Commentaire envoyé'
+                  )
+                }
+                onDelete={(commentId) =>
+                  run(
+                    () =>
+                      requestJson(`/api/compte/sorties/${outingId}/comments`, {
+                        method: 'DELETE',
+                        body: JSON.stringify({ commentId }),
+                      }),
+                    'Commentaire supprimé'
+                  )
+                }
+              />
+            </div>
           );
         },
       })),
@@ -412,6 +436,21 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
           notify('Audience de la sortie enregistrée');
           if (typeof window !== 'undefined') {
             window.dispatchEvent(new Event('lkdv:outings-changed'));
+          }
+        }}
+      />
+      <ReportBlockModal
+        target={reportTarget}
+        onClose={() => setReportTarget(null)}
+        onSuccess={(action) => {
+          setReportTarget(null);
+          invalidate();
+          if (action === 'block') {
+            notify('Utilisateur bloqué');
+          } else if (action === 'mute_content') {
+            notify('Contenu masqué');
+          } else {
+            notify('Signalement enregistré');
           }
         }}
       />

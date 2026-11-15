@@ -7,6 +7,8 @@ import './map/prefetchMapStage';
 import type { MapPin } from './map/MapStage';
 import { ExplorerSheet } from './sheet/ExplorerSheet';
 import { buildSheetModel } from './sheet/SheetContent';
+import { ExplorerLiveSegmentsPanel } from './components/ExplorerLiveSegmentsPanel';
+import { ExplorerBeaconBar } from './components/ExplorerLiveTrackingPanel';
 import { TopChrome } from './chrome/TopChrome';
 import { ActivityPill } from './chrome/BottomBar';
 import { SosButton } from './chrome/SosButton';
@@ -2057,8 +2059,27 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
         </button>
       ) : null}
 
+      {activity ? (
+        <ExplorerBeaconBar
+          center={me ?? state.center}
+          online={online}
+          onOpenSafety={() => {
+            setSheetOpen(true);
+            state.setSheet('live', 'mid');
+            state.setTab(3);
+          }}
+        />
+      ) : null}
+
       {activity && state.sheet === 'live' ? (
         <>
+          <ExplorerLiveSegmentsPanel
+            sport={activity.sport}
+            center={me ?? state.center}
+            online={online}
+            paused={Boolean(activity.paused || activity.autoPaused)}
+            compactOverlay
+          />
           <ActivityPill
             sportLabel={activity.selection?.variantLabel ?? SPORT_META[activity.sport].label}
             elapsed={elapsed}

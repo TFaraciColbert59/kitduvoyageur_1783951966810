@@ -1,8 +1,15 @@
 'use client';
 
-import React from 'react';
-import { Download, MapPin, Wind } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { Download, Flag, MapPin, Plus, Wind } from 'lucide-react';
 import { ActionPill } from '@/components/ui/ActionPill';
+import { OverlaySheet } from '@/components/compte/overlay/OverlaySheet';
+import {
+  SegmentCreateEditForm,
+  SegmentsDrawerPanel,
+  type SegmentFormSubmission,
+} from '@/components/segments';
+import type { ActivityTraceForSegments, SegmentDefinition, SegmentEffort, SegmentSport } from '@/features/segments';
 import type { OutingDetail, OutingPoint } from '@/features/compte/server/sorties';
 import type { OutingWeather } from '@/features/compte/server/weather';
 import {
@@ -85,9 +92,110 @@ function WeatherBlock({ weather }: { weather: OutingWeather | null }) {
   );
 }
 
+function mapOutingSport(rawSport: string | null): SegmentSport {
+  const s = (rawSport ?? '').toLowerCase();
+  if (s === 'velo' || s === 'cycling' || s === 'route') return 'cycling';
+  if (s === 'gravel') return 'gravel';
+  if (s === 'vtt' || s === 'mtb') return 'mtb';
+  if (s === 'trail') return 'trail';
+  if (s === 'course' || s === 'running' || s === 'run') return 'running';
+  if (s === 'ski' || s === 'ski_rando') return 'ski';
+  if (s === 'marche' || s === 'walking') return 'walking';
+  return 'hiking';
+}
+
 export function OutingTrace({ detail, onExport }: OutingTraceProps) {
   const segments = visibleTraceSegments(detail);
   const points = visibleTracePoints(detail);
+  const [detectedEfforts, setDetectedEfforts] = useState<SegmentEffort[] | null>(null);
+  const [detectBusy, setDetectBusy] = useState(false);
+  const [detectError, setDetectError] = useState<string | null>(null);
+  const [selectedSegmentId, setSelectedSegmentId] = useState<string | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createBusy, setCreateBusy] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [createdNotice, setCreatedNotice] = useState<string | null>(null);
+
+  const ownerUserId = detail.participants.find((p) => p.isOwner)?.userId ?? '';
+  const activityForSegments = useMemo<ActivityTraceForSegments | null>(() => {
+    if (!detail.canEdit || !ownerUserId || points.length < 3) return null;
+    const baseMs = detail.startedAt ? Date.parse(detail.startedAt) : Date.now() - points.length * 5000;
+    const startMs = Number.isFinite(baseMs) ? baseMs : Date.now() - points.length * 5000;
+    return {
+      activityId: detail.id,
+      activityVersion: 1,
+      userId: ownerUserId,
+      sport: mapOutingSport(detail.sport),
+      visibility: detail.visibility === 'public' ? 'public' : detail.visibility === 'followers' ? 'followers' : 'private',
+      points: points.map((pt, idx) => ({
+        lat: pt.lat,
+        lng: pt.lng,
+        ele: pt.elevationM,
+        timestamp: pt.timestamp ?? new Date(startMs + idx * 5000).toISOString(),
+      })),
+    };
+  }, [detail.canEdit, detail.id, detail.sport, detail.startedAt, detail.visibility, ownerUserId, points]);
+
+  const detectSegments = async () => {
+    if (!activityForSegments || detectBusy) return;
+    setDetectBusy(true);
+    setDetectError(null);
+    try {
+      const res = await fetch('/api/segments/detect', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ activity: activityForSegments }),
+      });
+      if (!res.ok) {
+        const err = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(err?.error || 'Détection des segments impossible.');
+      }
+      const data = (await res.json()) as { allDetected?: SegmentEffort[] };
+      setDetectedEfforts(data.allDetected ?? []);
+    } catch (caught) {
+      setDetectError(caught instanceof Error ? caught.message : 'Erreur de détection.');
+    } finally {
+      setDetectBusy(false);
+    }
+  };
+
+  const handleCreateSegment = async (submission: SegmentFormSubmission) => {
+    const act = submission.activity ?? activityForSegments;
+    if (!act || createBusy) return;
+    setCreateBusy(true);
+    setCreateError(null);
+    try {
+      const res = await fetch('/api/segments', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          name: submission.name,
+          activity: act,
+          startPointIndex: submission.startPointIndex ?? 0,
+          endPointIndex: submission.endPointIndex ?? Math.max(0, act.points.length - 1),
+          visibility: submission.visibility,
+          sport: submission.sport,
+          surface: submission.surface,
+        }),
+      });
+      if (!res.ok) {
+        const err = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(err?.error || 'Création du segment impossible.');
+      }
+      const data = (await res.json()) as { segment: SegmentDefinition; mergedInto?: string | null };
+      setCreateOpen(false);
+      setCreatedNotice(
+        data.mergedInto
+          ? `Segment fusionné avec ${data.segment.name}`
+          : `Segment « ${data.segment.name} » créé`
+      );
+      setSelectedSegmentId(data.segment.id);
+    } catch (caught) {
+      setCreateError(caught instanceof Error ? caught.message : 'Création impossible.');
+    } finally {
+      setCreateBusy(false);
+    }
+  };
   const altitude = outingMetricVisible(detail, 'elevation') ? altitudeRange(points) : null;
   const slope =
     outingMetricVisible(detail, 'elevationGain') &&
@@ -235,9 +343,123 @@ export function OutingTrace({ detail, onExport }: OutingTraceProps) {
 
       <WeatherBlock weather={detail.weather} />
 
+      {activityForSegments ? (
+        <section className="lkdv-sortie-section">
+          <header>
+            <b>Segments sur cette trace</b>
+            <span>
+              {detectedEfforts ? `${detectedEfforts.length} passage(s)` : 'S01 / S02'}
+            </span>
+          </header>
+          <div className="lkdv-apill-row">
+            <ActionPill
+              label="Détecter les segments"
+              icon={<Flag />}
+              text={detectBusy ? 'Analyse…' : 'Détecter'}
+              onClick={() => void detectSegments()}
+              disabled={detectBusy}
+            />
+            <ActionPill
+              label="Créer un segment depuis cette trace"
+              icon={<Plus />}
+              text="Créer un segment"
+              onClick={() => {
+                setCreateError(null);
+                setCreateOpen(true);
+              }}
+            />
+          </div>
+          {detectError ? (
+            <p role="alert" style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--lkv-danger)' }}>
+              {detectError}
+            </p>
+          ) : null}
+          {createdNotice ? (
+            <p role="status" style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--forest)' }}>
+              {createdNotice}
+            </p>
+          ) : null}
+          {detectedEfforts && detectedEfforts.length === 0 ? (
+            <p style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--label2)' }}>
+              Aucun segment existant croisé sur cette trace. Tu peux en créer un ci-dessus.
+            </p>
+          ) : null}
+          {detectedEfforts && detectedEfforts.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
+              {detectedEfforts.map((eff) => (
+                <button
+                  key={eff.effortId}
+                  type="button"
+                  onClick={() => setSelectedSegmentId(eff.segmentId)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 8,
+                    padding: '8px 10px',
+                    borderRadius: 12,
+                    border: '0.5px solid rgba(23,43,36,.12)',
+                    background: 'rgba(255,255,255,.72)',
+                    textAlign: 'left',
+                    fontSize: 12,
+                  }}
+                >
+                  <span>
+                    <strong>{eff.segmentId}</strong> · {Math.round(eff.elapsedDurationS)} s · {eff.avgSpeedKmh.toFixed(1)} km/h
+                  </span>
+                  <span style={{ fontSize: 11, color: eff.status === 'valid' ? 'var(--forest)' : 'var(--label2)' }}>
+                    {eff.status === 'valid' ? 'Validé' : eff.status}
+                  </span>
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </section>
+      ) : null}
+
       <div className="lkdv-apill-row">
         <ActionPill tone="primary" label="Télécharger le GPX" icon={<Download />} text="GPX" onClick={onExport} />
       </div>
+
+      {createOpen && activityForSegments ? (
+        <OverlaySheet
+          title="Créer un segment"
+          subtitle={detail.title}
+          onClose={() => {
+            if (!createBusy) setCreateOpen(false);
+          }}
+          nested
+        >
+          <SegmentCreateEditForm
+            mode="create"
+            viewerUserId={ownerUserId}
+            activity={activityForSegments}
+            initialStartPointIndex={0}
+            initialEndPointIndex={Math.max(2, activityForSegments.points.length - 1)}
+            busy={createBusy}
+            serverError={createError}
+            onSubmit={(_seg, submission) => void handleCreateSegment(submission)}
+            onCancel={() => setCreateOpen(false)}
+          />
+        </OverlaySheet>
+      ) : null}
+
+      {selectedSegmentId ? (
+        <OverlaySheet
+          title="Détail du segment"
+          subtitle={detail.title}
+          onClose={() => setSelectedSegmentId(null)}
+          nested
+        >
+          <SegmentsDrawerPanel
+            viewerUserId={ownerUserId || undefined}
+            sourceActivity={activityForSegments ?? undefined}
+            initialSelectedSegmentId={selectedSegmentId}
+            hideSearchList
+            onCloseSelected={() => setSelectedSegmentId(null)}
+          />
+        </OverlaySheet>
+      ) : null}
     </div>
   );
 }

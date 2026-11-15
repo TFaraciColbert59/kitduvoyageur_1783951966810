@@ -27,10 +27,27 @@ import { parseTraceSegments } from '../map/geometry';
 
 export type TraceViewer = 'owner' | 'participant' | 'follower' | 'visitor';
 
+export interface TracePrivacyZoneCircle {
+  centerLat: number;
+  centerLng: number;
+  radiusM: number;
+  isActive?: boolean;
+}
+
+export interface TracePrivacyOverride {
+  hideStartM?: number;
+  hideEndM?: number;
+  hideAll?: boolean;
+}
+
 export interface TraceAudience {
   viewer: TraceViewer;
   /** `private`, `public`, `friends`, `followers`, `collective_anonymized`… */
   visibility?: string | null;
+  /** Zones de confidentialité actives du propriétaire (K7.05). */
+  privacyZones?: readonly TracePrivacyZoneCircle[];
+  /** Masquage explicite de cette sortie (S6.14). */
+  tracePrivacy?: TracePrivacyOverride | null;
 }
 
 /** Masque début par défaut pour un visiteur (mètres le long de la trace). */
@@ -90,22 +107,52 @@ export function mostRestrictiveTraceVisibility(
  */
 export function resolveTraceMasks(audience: TraceAudience): TraceMask[] {
   if (audience.viewer === 'owner' || audience.viewer === 'participant') return [];
-  if (isShareableTraceVisibility(audience.visibility)) {
-    return [
-      { kind: 'start', meters: DEFAULT_SHARE_START_MASK_M },
-      { kind: 'end', meters: DEFAULT_SHARE_END_MASK_M },
-    ];
-  }
-  if (
+
+  const canViewByShare = isShareableTraceVisibility(audience.visibility);
+  const canViewByFollow =
     audience.viewer === 'follower' &&
-    isFollowerTraceVisibility(audience.visibility)
-  ) {
-    return [
-      { kind: 'start', meters: DEFAULT_SHARE_START_MASK_M },
-      { kind: 'end', meters: DEFAULT_SHARE_END_MASK_M },
-    ];
+    isFollowerTraceVisibility(audience.visibility);
+
+  if (!canViewByShare && !canViewByFollow) {
+    return [{ kind: 'all' }];
   }
-  return [{ kind: 'all' }];
+
+  if (audience.tracePrivacy?.hideAll) {
+    return [{ kind: 'all' }];
+  }
+
+  const startM = Math.max(
+    DEFAULT_SHARE_START_MASK_M,
+    audience.tracePrivacy?.hideStartM ?? 0
+  );
+  const endM = Math.max(
+    DEFAULT_SHARE_END_MASK_M,
+    audience.tracePrivacy?.hideEndM ?? 0
+  );
+
+  const masks: TraceMask[] = [];
+  if (startM > 0) masks.push({ kind: 'start', meters: startM });
+  if (endM > 0) masks.push({ kind: 'end', meters: endM });
+
+  for (const zone of audience.privacyZones ?? []) {
+    if (zone.isActive === false) continue;
+    if (
+      !Number.isFinite(zone.centerLat) ||
+      !Number.isFinite(zone.centerLng) ||
+      !Number.isFinite(zone.radiusM) ||
+      zone.radiusM <= 0
+    ) {
+      // Fail-closed : une zone invalide masque toute la trace plutôt que de fuiter.
+      return [{ kind: 'all' }];
+    }
+    masks.push({
+      kind: 'zone',
+      center: [zone.centerLng, zone.centerLat],
+      radiusM: zone.radiusM,
+    });
+  }
+
+  return masks;
 }
 
 export interface TraceSample {

@@ -8,6 +8,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock3,
+  Flag,
   Gauge,
   Lock,
   MapPin,
@@ -22,6 +23,7 @@ import {
   X,
   Zap,
 } from 'lucide-react';
+import { SegmentsDrawerPanel } from '@/components/segments';
 import { DrawerShell, type DrawerTab } from '../shell/DrawerShell';
 import RankingsHub from '@/components/rankings/RankingsHub';
 import {
@@ -1453,6 +1455,16 @@ export function ProgressionDrawer({
       render: () => (
         <div className="lkdv-prog-pane" role="region" aria-label="Défis, sommets et trophées G03">
           <RankingsHub initialTab="challenges" />
+        </div>
+      ),
+    },
+    {
+      id: 'segments',
+      label: 'Segments',
+      icon: <Flag size={18} aria-hidden="true" />,
+      render: () => (
+        <div className="lkdv-prog-pane" role="region" aria-label="Segments et records personnels">
+          <SegmentsDrawerPanel />
         </div>
       ),
     },

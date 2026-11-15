@@ -13,6 +13,7 @@ import {
   Link2,
   Lock,
   LogOut,
+  MapPin,
   Monitor,
   Play,
   Ruler,
@@ -34,6 +35,11 @@ import {
   type WeightUnit,
 } from '@/features/compte/domain/accountSettings';
 import {
+  OUTING_VISIBILITIES,
+  outingVisibilityLabel,
+  type StoredOutingVisibility,
+} from '@/features/compte/domain/outingAudience';
+import {
   AccessibleDrawer,
   AccessibilityPreferencesPanel,
   LiveRegion,
@@ -44,6 +50,7 @@ import { useLocale } from '@/lib/i18n/context';
 import { DrawerError, DrawerSkeleton } from '../shell/DrawerShell';
 import { createClient } from '@/lib/supabase/client';
 import { ConsentSettingsSheet } from './ConsentSettingsSheet';
+import { PrivacyZonesSheet } from './PrivacyZonesSheet';
 import { fetchJson } from './shared';
 import { useFeedPreferences } from '@/features/community/g01/useFeedPreferences';
 import { FeedPreferencesDrawer } from '@/components/communaute/g01/FeedPreferencesDrawer';
@@ -82,6 +89,19 @@ export function SettingsPane() {
   const a11yTriggerRef = useRef<HTMLButtonElement | null>(null);
   const offersTriggerRef = useRef<HTMLButtonElement | null>(null);
   const [feedPrefsOpen, setFeedPrefsOpen] = useState(false);
+  const [zonesOpen, setZonesOpen] = useState(false);
+  const [defaultOutingVis, setDefaultOutingVis] = useState<StoredOutingVisibility>('private');
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem('lkdv.default_outing_visibility.v1');
+      if (saved && (OUTING_VISIBILITIES as readonly string[]).includes(saved)) {
+        setDefaultOutingVis(saved as StoredOutingVisibility);
+      }
+    } catch {
+      /* noop */
+    }
+  }, []);
 
   const query = useQuery({
     queryKey: ['compte', 'profile'],
@@ -267,6 +287,59 @@ export function SettingsPane() {
           />
         </section>
       ) : null}
+
+      <section className="lkdv-compte-setting-card">
+        <div className="lkdv-compte-setting-head">
+          <span className="lkdv-compte-setting-ico" aria-hidden="true">
+            <MapPin size={17} />
+          </span>
+          <div>
+            <b>Zones privées & masquage</b>
+            <small>Masquer automatiquement le départ/arrivée autour de chez toi</small>
+          </div>
+          <ActionPill
+            className="lkdv-compte-setting-pill"
+            label="Gérer les zones privées"
+            text="Zones"
+            icon={<MapPin />}
+            onClick={() => setZonesOpen(true)}
+          />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, paddingTop: 10, marginTop: 10, borderTop: '0.5px solid rgba(23,43,36,.08)' }}>
+          <span style={{ fontSize: 12, color: 'var(--label2)' }}>
+            Visibilité par défaut des nouvelles sorties
+          </span>
+          <select
+            aria-label="Visibilité par défaut des nouvelles sorties"
+            value={defaultOutingVis}
+            onChange={(e) => {
+              const next = e.target.value as StoredOutingVisibility;
+              setDefaultOutingVis(next);
+              try {
+                window.localStorage.setItem('lkdv.default_outing_visibility.v1', next);
+              } catch {
+                /* noop */
+              }
+              setMessage(`Visibilité par défaut : ${outingVisibilityLabel(next)}`);
+            }}
+            style={{
+              height: 30,
+              borderRadius: 10,
+              border: '0.5px solid rgba(23,43,36,.16)',
+              background: 'rgba(255,255,255,.85)',
+              padding: '0 8px',
+              fontSize: 12,
+              color: 'var(--label)',
+            }}
+          >
+            {OUTING_VISIBILITIES.map((vis) => (
+              <option key={vis} value={vis}>
+                {outingVisibilityLabel(vis)}
+              </option>
+            ))}
+          </select>
+        </div>
+      </section>
 
       <section className="lkdv-compte-setting-card">
         <div className="lkdv-compte-setting-head">
@@ -744,6 +817,7 @@ export function SettingsPane() {
         onChange={feedPrefs.update}
         onReset={feedPrefs.reset}
       />
+      {zonesOpen ? <PrivacyZonesSheet onClose={() => setZonesOpen(false)} /> : null}
     </div>
   );
 }

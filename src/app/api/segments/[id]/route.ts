@@ -19,6 +19,7 @@ import {
 } from '@/lib/segments/http';
 import { updateSegmentBodySchema } from '@/lib/segments/schemas';
 import { resolveCanonicalSegment, runSegmentMaintenance } from '@/lib/segments/service';
+import { syncS01ToLeaderboards } from '@/lib/segments/bridge';
 import {
   getPreferences,
   getSegment,
@@ -59,13 +60,18 @@ export async function GET(_request: NextRequest, context: RouteContext) {
     if (!segment || !canViewSegment(segment, auth.user.id)) return notFound();
 
     const reports = listHazardReports(segment.id);
+    const allEfforts = listEfforts(segment.id);
+    const visibleEfforts = allEfforts.filter(
+      (effort) => effort.userId === auth.user.id || effort.eligibleForPublicLeaderboard
+    );
     return json({
       segment,
       requestedId: id,
       mergedInto: segment.id !== id ? segment.id : null,
       hazard: evaluateSegmentHazardStatus(segment, reports),
       hazardReports: reports,
-      effortsCount: listEfforts(segment.id).length,
+      efforts: visibleEfforts,
+      effortsCount: visibleEfforts.length,
       preferences: getPreferences(auth.user.id),
     });
   } catch (error) {
@@ -164,6 +170,7 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
 
     upsertSegment(deleted.deletedSegment);
     replaceEffortsForSegment(segment.id, deleted.remainingEfforts);
+    syncS01ToLeaderboards(segment.id);
     return json({ deleted: true, segment: deleted.deletedSegment });
   } catch (error) {
     return serverError(error, 'DELETE /api/segments/[id]');

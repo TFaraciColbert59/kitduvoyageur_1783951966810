@@ -320,7 +320,9 @@ export function OutingSummary({
           <label>
             <span>Visibilité</span>
             <select value={visibility} onChange={(event) => setVisibility(event.target.value as OutingVisibility)}>
-              <option value="private">Privé</option>
+              <option value="private">Moi uniquement (Privé)</option>
+              <option value="followers">Mes abonnés</option>
+              <option value="public">Public</option>
               <option value="collective_anonymized">Collectif anonymisé</option>
             </select>
           </label>

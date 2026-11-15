@@ -31,6 +31,9 @@ import { StrengthPanel } from './StrengthPanel';
 import { ZoneSettingsEntry, ZoneSettingsPanel } from './ZoneSettingsPanel';
 import { MetricSeriesPanel } from './MetricSeries';
 import { SlopeAdjustedPacePanel } from './SlopeAdjustedPace';
+import { ExplorerSegmentsSearchSection } from '../components/ExplorerSegmentsSearchSection';
+import { ExplorerLiveSegmentsPanel } from '../components/ExplorerLiveSegmentsPanel';
+import { ExplorerLiveTrackingPanel } from '../components/ExplorerLiveTrackingPanel';
 import {
   XpAvatars,
   XpCard,
@@ -2131,6 +2134,11 @@ function SearchTab({ ctx }: { ctx: SheetContext }) {
       {query.trim().length < 2 ? (
         <>
           <RouteSuggestions ctx={ctx} />
+          <ExplorerSegmentsSearchSection
+            query={query}
+            center={ctx.state.center}
+            online={ctx.state.online}
+          />
           <p style={{ margin: 0, padding: '0 4px', fontSize: 11.5, color: 'var(--xp-mut)' }}>
             Tape deux lettres pour chercher un lieu, un parcours ou un repère dans toute la
             zone disponible.
@@ -2295,6 +2303,11 @@ function SearchTab({ ctx }: { ctx: SheetContext }) {
               hint="Zoome pour affiner l’emprise et voir les repères et parcours suivants."
             />
           ) : null}
+          <ExplorerSegmentsSearchSection
+            query={query}
+            center={ctx.state.center}
+            online={ctx.state.online}
+          />
         </>
       )}
     </>
@@ -2402,6 +2415,12 @@ export function LiveDirectTab({ ctx }: { ctx: SheetContext }) {
           hint="Aucun point d’eau ni refuge n’est enregistré sur la suite du parcours."
         />
       )}
+      <ExplorerLiveSegmentsPanel
+        sport={activity.sport}
+        center={ctx.state.center}
+        online={ctx.state.online}
+        paused={Boolean(activity.paused || activity.autoPaused)}
+      />
     </>
   );
 }
@@ -2626,11 +2645,8 @@ function LiveSafetyTab({ ctx }: { ctx: SheetContext }) {
       ) : (
         <XpEmpty title="Numéro non documenté" hint="Aucun numéro d’urgence n’est enregistré pour ce pays." />
       )}
-      <XpEyebrow>Partage</XpEyebrow>
-      <XpRows>
-        <XpRow icon="users" title="Abonnés mutuels" sub="Position partagée pendant la sortie" />
-        <XpRow icon="pause" title="Pause" sub="Suspend le suivi sans terminer la sortie" />
-      </XpRows>
+      <XpEyebrow>Partage en direct & Sécurité (Beacon)</XpEyebrow>
+      <ExplorerLiveTrackingPanel />
     </>
   );
 }

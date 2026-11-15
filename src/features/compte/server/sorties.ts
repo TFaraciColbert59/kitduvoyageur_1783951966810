@@ -13,6 +13,13 @@ import {
 } from '../domain/metricVisibility';
 import { readOutingMetricPolicy } from './outingShareMetrics';
 import {
+  isBlockedBetween,
+  loadActivePrivacyZonesForProjection,
+  readOutingTracePrivacy,
+  resolveOutingShareToken,
+  revokeAllOutingShareLinks,
+} from './privacyZones';
+import {
   isFollowerTraceVisibility,
   projectTraceSampleSegments,
   resolveTraceMasks,
@@ -39,7 +46,7 @@ import { revokeActivityShare } from '@/features/community/g01/activityShareServi
  */
 
 export type OutingStatus = 'planned' | 'ongoing' | 'done';
-export type OutingVisibility = 'private' | 'collective_anonymized';
+export type OutingVisibility = 'private' | 'followers' | 'public' | 'collective_anonymized';
 
 export interface OutingPoint {
   lat: number;
@@ -752,9 +759,14 @@ async function readImportSamples(
 }
 
 export function normalizeVisibility(value: unknown): OutingVisibility {
-  // Contrainte réelle : `private` ou `collective_anonymized` uniquement.
-  // On ne prétend jamais qu'une sortie est publique si la base ne le permet pas.
-  return value === 'collective_anonymized' ? 'collective_anonymized' : 'private';
+  if (
+    value === 'followers' ||
+    value === 'public' ||
+    value === 'collective_anonymized'
+  ) {
+    return value;
+  }
+  return 'private';
 }
 
 export function computeStatus(row: Pick<SessionRow, 'started_at' | 'ended_at'>, now = Date.now()): OutingStatus {
@@ -905,6 +917,7 @@ export async function loadOutingDetail(
      * surcharge explicite (tests, futur aperçu signé), jamais d'entrée brute.
      */
     metricPolicy?: unknown;
+    shareToken?: string | null;
   }
 ): Promise<OutingDetail | null> {
   let sessionResult = await supabase
@@ -1221,23 +1234,41 @@ export async function loadOutingDetail(
 
   const rawSegments = parsePositionSegments(session.positions_timed, session.positions_geojson);
   const rawPoints = rawSegments.flat();
-  const rawVisibility = typeof session.visibility === 'string' ? session.visibility : null;
-  const visibility = normalizeVisibility(rawVisibility);
+  const rawSessionVisibility = typeof session.visibility === 'string' ? session.visibility : null;
   const isOwner = canEdit;
   const isParticipant = participantRows.some((row) => row.user_id === userId);
+  const blocked = !isOwner ? await isBlockedBetween(supabase, userId, session.user_id) : false;
+
+  let validShareLink = false;
+  if (!isOwner && !blocked && options?.shareToken) {
+    const resolvedToken = await resolveOutingShareToken(options.shareToken);
+    validShareLink = Boolean(
+      resolvedToken &&
+        resolvedToken.sessionId === session.id &&
+        resolvedToken.ownerId === session.user_id &&
+        rawSessionVisibility !== 'private'
+    );
+  }
+
+  const rawVisibility = blocked ? 'private' : rawSessionVisibility;
+  const visibility = normalizeVisibility(rawVisibility);
   /*
    * Le rôle de lecture suit une autorisation réelle : propriétaire, participant
    * inscrit, ou abonné vérifié pour une visibilité `friends`/`followers`.
-   * Un visiteur non abonné reste `visitor` même si la ligne prétend `friends`.
+   * Un utilisateur bloqué reste toujours `visitor` avec `rawVisibility = 'private'`.
    */
   const viewer: TraceViewer = isOwner
     ? 'owner'
-    : isParticipant
-      ? 'participant'
-      : isFollowerTraceVisibility(rawVisibility) &&
-          (await viewerFollowsOwner(supabase, userId, session.user_id))
-        ? 'follower'
-        : 'visitor';
+    : blocked
+      ? 'visitor'
+      : isParticipant
+        ? 'participant'
+        : isFollowerTraceVisibility(rawVisibility) &&
+            (await viewerFollowsOwner(supabase, userId, session.user_id))
+          ? 'follower'
+          : validShareLink && rawVisibility === 'followers'
+            ? 'follower'
+            : 'visitor';
   const hasFullAccess = viewer === 'owner' || viewer === 'participant';
   /*
    * S6.15 — politique de métriques résolue avant toute projection. Le rôle
@@ -1273,9 +1304,20 @@ export async function loadOutingDetail(
         ? parseMetricVisibility(metricPolicyRead.visibility)
         : SHARED_SUMMARY_METRICS
     : metricVisibility;
+  const [privacyZones, tracePrivacy] = hasFullAccess
+    ? [[], null]
+    : await Promise.all([
+        loadActivePrivacyZonesForProjection(supabase, session.user_id),
+        readOutingTracePrivacy(supabase, session.id),
+      ]);
   const projection = projectTraceSampleSegments(
     rawSegments,
-    resolveTraceMasks({ viewer, visibility: rawVisibility })
+    resolveTraceMasks({
+      viewer,
+      visibility: rawVisibility,
+      privacyZones,
+      tracePrivacy,
+    })
   );
   /*
    * Les métadonnées de trace sont retirées quand une métrique masquée
@@ -1473,6 +1515,7 @@ export async function updateOuting(
         await revokeActivityShare(supabase, row.id, meta);
       }
     }
+    await revokeAllOutingShareLinks(supabase, userId, outingId).catch(() => undefined);
     const { compensateActivityProgression } = await import('@/features/progression/server/awardProducer');
     await compensateActivityProgression(userId, 'hike_session', outingId, 'visibility_private');
   }
