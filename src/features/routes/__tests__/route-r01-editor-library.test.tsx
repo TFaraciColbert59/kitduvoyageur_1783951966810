@@ -16,6 +16,7 @@ import {
   estimateDurationMinutesForSpeed,
   gpxFromRouteDraft,
   insertRoutePointOptimal,
+  lineStringFromPoints,
   manualRouteSection,
   moveRoutePoint,
   reorderRoutePoint,
@@ -35,6 +36,7 @@ import { RoutePlannerPanel } from '@/features/explorer-v2/sheet/RoutePlannerPane
 import { OutingSummary } from '@/components/compte/drawer/sortie/OutingSummary';
 import type { SheetContext } from '@/features/explorer-v2/sheet/context';
 import type { ExplorerState } from '@/features/explorer-v2/state/types';
+import type { ExplorerStore } from '@/features/explorer-v2/state/store';
 import type { OutingDetail } from '@/features/compte/server/sorties';
 
 function createMemoryStorage(): Storage {
@@ -58,7 +60,7 @@ function createMemoryStorage(): Storage {
 function makePlannerCtx(overrides?: Partial<ExplorerState>): SheetContext {
   const patch = vi.fn();
   const showToast = vi.fn();
-  const state: ExplorerState = {
+  const state = {
     level: 3,
     sheet: 'planner',
     detent: 'full',
@@ -111,18 +113,18 @@ function makePlannerCtx(overrides?: Partial<ExplorerState>): SheetContext {
     storeStrengthLog: vi.fn(),
     clearStrengthLog: vi.fn(),
     ...(overrides ?? {}),
-  } as ExplorerState;
+  } as unknown as ExplorerStore;
 
   return {
     state,
     countries: [],
     country: null,
-    regionsGeo: null,
+    regionsGeo: undefined,
     regionGroups: [],
-    place: null,
+    place: undefined,
     pois: [],
     routes: [],
-    weather: null,
+    weather: undefined,
     carnets: [],
     reports: [],
     units: 'metric',
@@ -130,6 +132,10 @@ function makePlannerCtx(overrides?: Partial<ExplorerState>): SheetContext {
     selectedPoi: null,
     me: { lat: 45.923, lng: 6.869 },
     mapViewport: null,
+    terrain: {
+      slope: { state: 'idle' as const, summary: null, routeName: null, hasRoute: false },
+      distance: { hasRoute: false, status: null, count: 0, intervalLabel: '1 km' },
+    },
     onStartSport: vi.fn(),
     locale: 'fr-FR',
   };
@@ -214,6 +220,7 @@ describe('Lot R01 — Éditeur, préférences, GPX, bibliothèque et conversion 
       tripId: 't1',
       sport: 'marche',
       points: withPrivate,
+      geometry: lineStringFromPoints(withPrivate),
       distanceKm: 10,
       durationMin: 150,
       provider: 'manual',
@@ -236,6 +243,7 @@ describe('Lot R01 — Éditeur, préférences, GPX, bibliothèque et conversion 
       tripId: 'lib-1',
       sport: 'gravel',
       points: base,
+      geometry: lineStringFromPoints(base),
       distanceKm: 4.5,
       durationMin: 20,
       provider: 'ors',

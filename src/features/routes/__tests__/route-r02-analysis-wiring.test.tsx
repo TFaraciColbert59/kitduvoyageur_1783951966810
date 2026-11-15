@@ -7,6 +7,7 @@ import { buildSheetModel } from '@/features/explorer-v2/sheet/SheetContent';
 import { OutingTrace } from '@/components/compte/drawer/sortie/OutingTrace';
 import type { SheetContext } from '@/features/explorer-v2/sheet/context';
 import type { ExplorerState } from '@/features/explorer-v2/state/types';
+import type { ExplorerStore } from '@/features/explorer-v2/state/store';
 import type { OutingDetail } from '@/features/compte/server/sorties';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -14,7 +15,7 @@ function makeTrailCtx(overrides?: Partial<ExplorerState>): SheetContext {
   const patch = vi.fn();
   const openSubSheet = vi.fn();
   const toggleLayer = vi.fn();
-  const state: ExplorerState = {
+  const state = {
     level: 3,
     sheet: 'trail',
     detent: 'mid',
@@ -65,15 +66,15 @@ function makeTrailCtx(overrides?: Partial<ExplorerState>): SheetContext {
     storeStrengthLog: vi.fn(),
     clearStrengthLog: vi.fn(),
     ...(overrides ?? {}),
-  } as ExplorerState;
+  } as unknown as ExplorerStore;
 
   return {
     state,
     countries: [],
     country: null,
-    regionsGeo: null,
+    regionsGeo: undefined,
     regionGroups: [],
-    place: null,
+    place: undefined,
     pois: [],
     routes: [
       {
@@ -93,23 +94,22 @@ function makeTrailCtx(overrides?: Partial<ExplorerState>): SheetContext {
       },
     ],
     weather: {
-      lat: 45.923,
-      lon: 6.869,
-      fetched_at: '2026-08-12T06:00:00Z',
+      source: 'met-no',
+      attribution: 'MET Norway (CC BY 4.0)',
       hours: [
         {
           time: new Date().toISOString(),
           temperature_c: 14,
           wind_ms: 4,
-          precipitation_mm: 0.2,
           symbol: 'partlycloudy_day',
+          precip_mm: 0.2,
         },
         {
           time: new Date(Date.now() + 3600_000).toISOString(),
           temperature_c: 16,
           wind_ms: 8,
-          precipitation_mm: 1.5,
           symbol: 'rain',
+          precip_mm: 1.5,
         },
       ],
     },
@@ -120,6 +120,10 @@ function makeTrailCtx(overrides?: Partial<ExplorerState>): SheetContext {
     selectedPoi: null,
     me: null,
     mapViewport: null,
+    terrain: {
+      slope: { state: 'idle' as const, summary: null, routeName: null, hasRoute: false },
+      distance: { hasRoute: false, status: null, count: 0, intervalLabel: '1 km' },
+    },
     onStartSport: vi.fn(),
     locale: 'fr-FR',
   };
@@ -149,19 +153,21 @@ describe('Lot R02 — Profil interactif, montées, difficulté, alertes, feux & 
       sport: 'marche',
       speedKmH: 5,
       explorerWeather: {
+        source: 'met-no',
+        attribution: 'MET Norway (CC BY 4.0)',
         hours: [
           {
             time: '2026-08-12T08:00:00Z',
             temperature_c: 12,
             wind_ms: 5,
-            precipitation_mm: 0,
+            precip_mm: 0,
             symbol: 'clearsky_day',
           },
           {
             time: '2026-08-12T09:00:00Z',
             temperature_c: 15,
             wind_ms: 6,
-            precipitation_mm: 0.4,
+            precip_mm: 0.4,
             symbol: 'rain',
           },
         ],

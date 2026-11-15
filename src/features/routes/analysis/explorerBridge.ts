@@ -86,7 +86,7 @@ export function weatherSeriesFromExplorerWeather(
     time: h.time,
     temperatureC: h.temperature_c,
     windKmH: h.wind_ms != null && Number.isFinite(h.wind_ms) ? Math.round(h.wind_ms * 3.6 * 10) / 10 : null,
-    precipitationMm: h.precip_mm ?? null,
+    precipitationMm: h.precip_mm ?? h.precipitation_mm ?? null,
     weatherCode: wmoCodeFromMetSymbol(h.symbol),
   }));
   return {

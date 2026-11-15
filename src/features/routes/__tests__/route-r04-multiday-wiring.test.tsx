@@ -12,12 +12,13 @@ import { searchMultiDayPlans } from '@/features/planning/library';
 import { MultiDaySheetPanel } from '@/features/explorer-v2/sheet/MultiDaySheetPanel';
 import type { SheetContext } from '@/features/explorer-v2/sheet/context';
 import type { ExplorerState } from '@/features/explorer-v2/state/types';
+import type { ExplorerStore } from '@/features/explorer-v2/state/store';
 
 function makeMultiDayCtx(overrides?: Partial<ExplorerState>): SheetContext {
   const patch = vi.fn();
   const select = vi.fn();
   const showToast = vi.fn();
-  const state: ExplorerState = {
+  const state = {
     level: 3,
     sheet: 'multiday',
     detent: 'full',
@@ -69,7 +70,7 @@ function makeMultiDayCtx(overrides?: Partial<ExplorerState>): SheetContext {
     storeStrengthLog: vi.fn(),
     clearStrengthLog: vi.fn(),
     ...(overrides ?? {}),
-  } as ExplorerState;
+  } as unknown as ExplorerStore;
 
   const coords = Array.from({ length: 16 }, (_, idx) => [
     6.8 + idx * 0.015,
@@ -81,9 +82,9 @@ function makeMultiDayCtx(overrides?: Partial<ExplorerState>): SheetContext {
     state,
     countries: [],
     country: null,
-    regionsGeo: null,
+    regionsGeo: undefined,
     regionGroups: [],
-    place: null,
+    place: undefined,
     pois: [
       {
         id: 'ref-1',
@@ -118,7 +119,7 @@ function makeMultiDayCtx(overrides?: Partial<ExplorerState>): SheetContext {
         geojson: { type: 'LineString', coordinates: coords },
       },
     ],
-    weather: null,
+    weather: undefined,
     carnets: [],
     reports: [],
     units: 'metric',
@@ -126,6 +127,10 @@ function makeMultiDayCtx(overrides?: Partial<ExplorerState>): SheetContext {
     selectedPoi: null,
     me: null,
     mapViewport: null,
+    terrain: {
+      slope: { state: 'idle' as const, summary: null, routeName: null, hasRoute: false },
+      distance: { hasRoute: false, status: null, count: 0, intervalLabel: '1 km' },
+    },
     onStartSport: vi.fn(),
     locale: 'fr-FR',
   };

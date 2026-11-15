@@ -508,6 +508,12 @@ export interface ExplorerState {
   plannerMapPick?: boolean;
   /** Identifiant de bibliothèque si l'édition provient d'un parcours enregistré (K2.27). */
   plannerLibraryId?: string | null;
+  /**
+   * Options de routage transmises par une alerte tracé (K2.22 : éviter
+   * escaliers / ferries). Lues par l'éditeur à l'ouverture pour relancer le
+   * calcul avec ces évitements, jamais ignorées silencieusement.
+   */
+  plannerRoutingOptions?: import('@/features/adventure-prep/routeProfiles').RouteRoutingOptions | null;
   /** Curseur synchronisé entre le profil altimétrique et la carte (R02). */
   profileCursor?: { lon: number; lat: number; distanceM: number; elevationM: number | null } | null;
   /** Segment de montée/descente sélectionné sur le profil pour surbrillance carte (K2.20). */

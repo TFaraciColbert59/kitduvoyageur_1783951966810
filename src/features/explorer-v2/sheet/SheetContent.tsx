@@ -105,7 +105,7 @@ import {
   relativeDay,
   type SheetContext,
 } from './context';
-import type { ActivitySplit, Sport } from '../state/types';
+import type { ActivitySplit, PoiKind, SheetKind, Sport } from '../state/types';
 import {
   SPORT_FAMILIES,
   availabilityLabel,
@@ -628,7 +628,7 @@ function PoiSummaryTab({ ctx }: { ctx: SheetContext }) {
                 sub={[formatElevation(poi.ele_m), poi.potable ? 'potable' : null]
                   .filter(Boolean)
                   .join(' · ')}
-                onClick={() => ctx.state.select({ kind: kind as never, id: poi.id }, kind as never, 'mid')}
+                onClick={() => ctx.state.select({ kind: kind as PoiKind, id: poi.id }, kind as SheetKind, 'mid')}
               />
             ))}
           </XpRows>
@@ -1875,7 +1875,7 @@ function TrailTraceTab({
     [positions, profile, activeSport, customPace, speedKmH, ebike, ctx.weather],
   );
 
-  const openCopyInPlanner = (_options?: { avoidSteps?: boolean; avoidFerries?: boolean }) => {
+  const openCopyInPlanner = (options?: { avoidSteps?: boolean; avoidFerries?: boolean }) => {
     if (positions.length < 2) return;
     const copied = copyRouteToDraft({
       sourceId: String(route?.id ?? 'route'),
@@ -1890,6 +1890,9 @@ function TrailTraceTab({
       plannerTitle: copied.name,
       plannerLibraryId: null,
       plannerMapPick: false,
+      // K2.22 : les évitements demandés depuis l'alerte tracé sont transmis
+      // à l'éditeur, qui relance le calcul avec ces options.
+      plannerRoutingOptions: options ? { ...options } : null,
     });
     ctx.state.openSubSheet('planner', 'full');
   };
@@ -2054,7 +2057,7 @@ function TrailTraceTab({
               icon="layers"
               title={share.category}
               sub={`${Math.round(share.lengthM)} m`}
-              badge={{ label: `${Math.round(share.ratio * 100)} %`, tone: 'good' }}
+              badge={{ label: `${Math.round(share.shareOfRoute * 100)} %`, tone: 'good' }}
             />
           ))}
         </XpRows>
@@ -3237,7 +3240,7 @@ function SearchTab({ ctx }: { ctx: SheetContext }) {
                     ))}
                   </div>
                   <div className="xp-chiprow" aria-label="Surface et accès" style={{ marginTop: 6 }}>
-                    {(['route', 'chemin', 'sentier'] as ParsedSurface[]).map((surf) => (
+                    {(['asphalte', 'chemin', 'sentier'] as ParsedSurface[]).map((surf) => (
                       <button
                         key={surf}
                         type="button"

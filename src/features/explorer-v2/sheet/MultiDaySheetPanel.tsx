@@ -256,7 +256,7 @@ export function MultiDaySheetPanel({ ctx }: { ctx: SheetContext }) {
             onChange={(e) => setBoundaryIndex(Number(e.target.value))}
             aria-label="Position de la fin d'étape"
           />
-          {boundaryPreview && !boundaryPreview.revisionConflict ? (
+          {boundaryPreview && !boundaryPreview.revisionConflict && boundaryPreview.dayNext ? (
             <div style={{ fontSize: 12 }}>
               Jour {boundaryDay} : {boundaryPreview.dayN.nextDistanceKm.toFixed(1)} km · Jour {boundaryDay + 1} :{' '}
               {boundaryPreview.dayNext.nextDistanceKm.toFixed(1)} km
@@ -268,7 +268,7 @@ export function MultiDaySheetPanel({ ctx }: { ctx: SheetContext }) {
             <button
               type="button"
               className="xp-primary"
-              disabled={!boundaryPreview || boundaryPreview.revisionConflict}
+              disabled={!boundaryPreview || boundaryPreview.revisionConflict || !boundaryPreview.dayNext}
               onClick={() => {
                 if (boundaryIndex == null) return;
                 const res = commitStageBoundaryMove(

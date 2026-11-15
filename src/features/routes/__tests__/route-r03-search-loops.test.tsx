@@ -13,12 +13,14 @@ import { POST as postLoopRoute } from '@/app/api/explorer/v2/routes/loop/route';
 import { buildSheetModel } from '@/features/explorer-v2/sheet/SheetContent';
 import type { SheetContext } from '@/features/explorer-v2/sheet/context';
 import type { ExplorerState } from '@/features/explorer-v2/state/types';
+import type { ExplorerStore } from '@/features/explorer-v2/state/store';
+import type { NextRequest } from 'next/server';
 
 function makeSearchCtx(overrides?: Partial<ExplorerState>): SheetContext {
   const patch = vi.fn();
   const openSubSheet = vi.fn();
   const select = vi.fn();
-  const state: ExplorerState = {
+  const state = {
     level: 2,
     sheet: 'search',
     detent: 'full',
@@ -70,18 +72,18 @@ function makeSearchCtx(overrides?: Partial<ExplorerState>): SheetContext {
     storeStrengthLog: vi.fn(),
     clearStrengthLog: vi.fn(),
     ...(overrides ?? {}),
-  } as ExplorerState;
+  } as unknown as ExplorerStore;
 
   return {
     state,
-    countries: [{ iso_a2: 'FR', name: 'France', continent: 'Europe', capital: 'Paris', currency_code: 'EUR', lat: 46.2, lng: 2.2 }],
+    countries: [{ iso: 'FR', name: 'France', continent: 'Europe', center: [2.35, 46.2] }],
     country: null,
-    regionsGeo: null,
+    regionsGeo: undefined,
     regionGroups: [],
-    place: null,
+    place: undefined,
     pois: [],
     routes: [],
-    weather: null,
+    weather: undefined,
     carnets: [],
     reports: [],
     units: 'metric',
@@ -99,6 +101,10 @@ function makeSearchCtx(overrides?: Partial<ExplorerState>): SheetContext {
     },
     me: { lat: 45.923, lng: 6.869 },
     mapViewport: null,
+    terrain: {
+      slope: { state: 'idle' as const, summary: null, routeName: null, hasRoute: false },
+      distance: { hasRoute: false, status: null, count: 0, intervalLabel: '1 km' },
+    },
     onStartSport: vi.fn(),
     locale: 'fr-FR',
   };
@@ -135,8 +141,8 @@ describe('Lot R03 — Recherche naturelle, correction contextuelle, POI -> parco
       { id: 2, name: 'Longue étape', network: 'lwn', ref: null, distance_km: 38, distanceKm: 18, matched: false },
       adjusted,
     );
-    expect(rankedClose.smartScore).toBeGreaterThan(rankedFar.smartScore);
-    expect(rankedClose.smartReasons.length).toBeGreaterThan(0);
+    expect(rankedClose.smartScore ?? -1).toBeGreaterThan(rankedFar.smartScore ?? -1);
+    expect((rankedClose.smartReasons ?? []).length).toBeGreaterThan(0);
   });
 
   it('S3.09 : generateSportLoop & POST /api/explorer/v2/routes/loop génèrent une boucle fermée et rejettent les entrées invalides', async () => {
@@ -152,13 +158,12 @@ describe('Lot R03 — Recherche naturelle, correction contextuelle, POI -> parco
           legs: points.slice(0, -1).map((from, idx) => ({
             distanceKm: 3.33,
             durationMin: 40,
-            provider: 'valhalla',
             geometry: [
               [from.lon, from.lat],
-              [points[idx + 1].lon, points[idx + 1].lat],
-            ],
+              [points[idx + 1]!.lon, points[idx + 1]!.lat],
+            ] as Array<[number, number]>,
           })),
-          provider: 'valhalla',
+          provider: 'valhalla' as const,
           reason: null,
         }),
       },
@@ -176,7 +181,7 @@ describe('Lot R03 — Recherche naturelle, correction contextuelle, POI -> parco
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ lat: 45.923, lon: 6.869, targetDistanceKm: 999 }),
     });
-    const badRes = await postLoopRoute(badReq);
+    const badRes = await postLoopRoute(badReq as unknown as NextRequest);
     expect(badRes.status).toBe(400);
   });
 

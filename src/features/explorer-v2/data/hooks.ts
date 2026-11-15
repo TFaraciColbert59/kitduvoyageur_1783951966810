@@ -100,10 +100,21 @@ export interface CountryDetails {
   } | null;
 }
 
+export interface WeatherHour {
+  time: string;
+  temperature_c: number | null;
+  wind_ms: number | null;
+  symbol: string | null;
+  /** Précipitations (mm) sur l'heure — canonique. */
+  precip_mm?: number | null;
+  /** Alias historique lu en repli, jamais écrit. */
+  precipitation_mm?: number | null;
+}
+
 export interface WeatherResponse {
   source: 'met-no';
   attribution: string;
-  hours: Array<{ time: string; temperature_c: number | null; wind_ms: number | null; symbol: string | null }>;
+  hours: WeatherHour[];
 }
 
 /** Centre d'une géométrie (moyenne des anneaux extérieurs, suffisant pour viser). */

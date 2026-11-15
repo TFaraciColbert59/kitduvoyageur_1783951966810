@@ -19,7 +19,10 @@ interface MetNoTimeseries {
         cloud_area_fraction?: number;
       };
     };
-    next_1_hours?: { summary?: { symbol_code?: string } };
+    next_1_hours?: {
+      summary?: { symbol_code?: string };
+      details?: { precipitation_amount?: number };
+    };
   };
 }
 
@@ -49,7 +52,8 @@ export async function GET(request: Request) {
         'User-Agent': 'LKDV-Explorer/2.0 (https://lekitduvoyageur.fr; contact@lekitduvoyageur.fr)',
         Accept: 'application/json',
       },
-      next: { revalidate: 1800 },
+      // Option Next.js (revalidation) : inconnue du DOM `RequestInit`.
+      ...( { next: { revalidate: 1800 } } as { next?: { revalidate?: number } }),
     });
     if (!res.ok) {
       return NextResponse.json({ error: `met.no ${res.status}` }, { status: 502 });
@@ -66,6 +70,7 @@ export async function GET(request: Request) {
           temperature_c: entry.data.instant.details.air_temperature ?? null,
           wind_ms: entry.data.instant.details.wind_speed ?? null,
           symbol: entry.data.next_1_hours?.summary?.symbol_code ?? null,
+          precip_mm: entry.data.next_1_hours?.details?.precipitation_amount ?? null,
         })),
       },
       { headers: { 'Cache-Control': 'public, s-maxage=1800, stale-while-revalidate=7200' } },

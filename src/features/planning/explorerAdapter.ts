@@ -8,7 +8,10 @@ import type {
   SportKind,
   StageRevision,
 } from './models';
-import type { PoiItem, TrailRouteSnapshot } from '@/features/explorer-v2/state/types';
+import type { PoiItem } from '@/features/explorer-v2/data/hooks';
+import type { TrailRouteSnapshot } from '@/features/explorer-v2/state/types';
+
+export type { PoiItem };
 
 export const EXPLORER_PENDING_STAGE_KEY = 'lkdv.explorer.pendingStage.v1';
 

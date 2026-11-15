@@ -132,8 +132,8 @@ export const VALHALLA_COSTING: Readonly<Record<TravelMode, string>> = {
   voiture: 'auto',
 };
 
-/** Le mode de cache accepte aussi les profils sportifs (même colonne texte). */
-export type RouteCacheMode = TravelMode | RouteSport;
+/** Le mode de cache accepte les profils sportifs et leurs clés dérivées (`sport:options`). */
+export type RouteCacheMode = TravelMode | RouteSport | (string & {});
 
 export function isRouteCacheMode(value: unknown): value is RouteCacheMode {
   return isTravelMode(value) || isRouteSport(value);

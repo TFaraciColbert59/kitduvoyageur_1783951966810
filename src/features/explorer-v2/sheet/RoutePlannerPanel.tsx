@@ -116,7 +116,7 @@ export function RoutePlannerPanel({ ctx }: { ctx: SheetContext }) {
     () => initialDraft?.durationMin ?? null
   );
   const [provider, setProvider] = useState<string | null>(() => initialDraft?.provider ?? null);
-  const [options, setOptions] = useState<RouteRoutingOptions>({});
+  const [options, setOptions] = useState<RouteRoutingOptions>(() => state.plannerRoutingOptions ?? {});
   const [shapeMode, setShapeMode] = useState<RouteShapeMode>('one_way');
   const [insertMode, setInsertMode] = useState<WaypointInsertMode>('optimal');
   const [speedKmH, setSpeedKmH] = useState<number>(() =>
@@ -263,6 +263,21 @@ export function RoutePlannerPanel({ ctx }: { ctx: SheetContext }) {
     },
     [sections]
   );
+
+  // K2.22 : quand le planificateur est ouvert depuis une alerte tracé avec des
+  // évitements (escaliers / ferries), relancer le calcul avec ces options au
+  // lieu de réafficher la géométrie d'origine.
+  const appliedAvoidKey = React.useRef<string | null>(null);
+  useEffect(() => {
+    const incoming = state.plannerRoutingOptions;
+    if (!incoming || (!incoming.avoidSteps && !incoming.avoidFerries)) return;
+    const key = JSON.stringify([points.length, sport, incoming.avoidSteps ?? false, incoming.avoidFerries ?? false]);
+    if (appliedAvoidKey.current === key) return;
+    if (points.length < 2) return;
+    appliedAvoidKey.current = key;
+    void computeRoute(points, sport, { ...options, ...incoming }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [points.length, sport, state.plannerRoutingOptions]);
 
   // Publier l'état courant dans le store pour MapStage (aperçu live / clic carte)
   useEffect(() => {
