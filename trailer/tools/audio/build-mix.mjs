@@ -148,7 +148,63 @@ export function buildMasterV4({ bed = MONTAGE_V4, hab = HABILLAGE_V4_RAW, report
   return meta;
 }
 
-if (import.meta.url === `file://${process.argv[1]}` && process.argv.includes('--v4')) {
+// v5 : musique v4 (avec le creux de respiration avant le drop 1) + habillage v4 + effets v5 (passe-bas 18 kHz, deux passes),
+// un seul gain G (aucun limiteur), réajusté jusqu'à ±0,1 LU de −14 LUFS. Les trois pistes séparées reçoivent le même G :
+// mix-v5-musique + mix-v5-habillage + mix-v5-effets = mix-v5 (à la quantification 24 bits près).
+// Contrôle de la crête vraie sur le WAV et après encodage AAC 320 et 192 kb/s (FFmpeg, -aac_pns 0), décodé et mesuré.
+export const MIX_V5 = join(QA_DIR, 'mix-v5.wav');
+export const MIX_V5_STEMS = { musique: join(QA_DIR, 'mix-v5-musique.wav'), habillage: join(QA_DIR, 'mix-v5-habillage.wav'), effets: join(QA_DIR, 'mix-v5-effets.wav') };
+export function buildMasterV5({ bed = MONTAGE_V4, hab = HABILLAGE_V4_RAW, fx = join(QA_TMP, 'effets-v5-brut.wav'), cues = join(QA_TMP, 'sfx-v5-placements.json'), report = join(QA_TMP, 'mix-report-v5.json') } = {}) {
+  for (const [f, w] of [[bed, 'Montage v4'], [hab, 'Habillage v4'], [fx, 'Effets v5'], [cues, 'Placements v5']]) requireFile(f, w);
+  const creux = JSON.parse(readFileSync(cues, 'utf8')).creux;
+  const g = Math.pow(10, creux.db / 20).toFixed(6), r = creux.rampe, a = creux.debut, b = creux.fin;
+  const dip = `if(between(t,${a},${b}),${g},if(between(t,${(a - r).toFixed(4)},${a}),1-(1-${g})*(t-${(a - r).toFixed(4)})/${r},` +
+    `if(between(t,${b},${(b + r).toFixed(4)}),${g}+(1-${g})*(t-${b})/${r},1)))`;
+  const music = join(QA_TMP, 'musique-v5.wav'), fxLp = join(QA_TMP, 'effets-v5-lp.wav'), sumTmp = join(QA_TMP, 'mix-v5-somme.wav');
+  run('ffmpeg', ['-hide_banner', '-v', 'error', '-y', '-i', bed, '-af', `aformat=sample_fmts=fltp:channel_layouts=stereo,asetnsamples=n=48,volume=eval=frame:volume='${dip}'`, '-c:a', 'pcm_f32le', music]);
+  run('ffmpeg', ['-hide_banner', '-v', 'error', '-y', '-i', fx, '-af', 'lowpass=f=18000:p=2,lowpass=f=18000:p=2', '-c:a', 'pcm_f32le', fxLp]);
+  run('ffmpeg', ['-hide_banner', '-v', 'error', '-y', '-i', music, '-i', hab, '-i', fxLp, '-filter_complex',
+    '[0:a][1:a][2:a]amix=inputs=3:normalize=0:duration=first[o]', '-map', '[o]', '-c:a', 'pcm_f32le', sumTmp]);
+  const src = loudness(sumTmp);
+  let gain = TARGET_LUFS - src.integrated;
+  const tries = [];
+  let m;
+  for (let k = 0; k < 4; k++) {
+    run('ffmpeg', ['-hide_banner', '-v', 'error', '-y', '-i', sumTmp, '-af', `volume=${gain.toFixed(3)}dB`, '-ar', String(SR), '-c:a', 'pcm_s24le', MIX_V5]);
+    m = loudness(MIX_V5);
+    tries.push({ gainDb: Number(gain.toFixed(3)), integrated: m.integrated, truePeak: m.truePeak });
+    if (Math.abs(m.integrated - TARGET_LUFS) <= 0.1) break;
+    gain += TARGET_LUFS - m.integrated;
+  }
+  const G = tries.at(-1).gainDb.toFixed(3);
+  for (const [inp, out] of [[music, MIX_V5_STEMS.musique], [hab, MIX_V5_STEMS.habillage], [fxLp, MIX_V5_STEMS.effets]]) {
+    run('ffmpeg', ['-hide_banner', '-v', 'error', '-y', '-i', inp, '-af', `volume=${G}dB`, '-ar', String(SR), '-c:a', 'pcm_s24le', out]);
+  }
+  const aac = {};
+  for (const kb of [320, 192]) {
+    const f = join(QA_TMP, `mix-v5-aac${kb}.m4a`);
+    run('ffmpeg', ['-hide_banner', '-v', 'error', '-y', '-i', MIX_V5, '-c:a', 'aac', '-b:a', `${kb}k`, '-aac_pns', '0', '-ar', String(SR), f]);
+    aac[kb] = loudness(f);
+  }
+  const stems = Object.fromEntries(Object.entries(MIX_V5_STEMS).map(([k, f]) => [k, loudness(f)]));
+  const p = probe(MIX_V5);
+  const meta = { out: MIX_V5, stems: MIX_V5_STEMS, bed, hab, fx, creux, ffmpeg: ffmpegVersion(), source: src, tries,
+    final: { ...m, samples: p.samples, sampleRate: p.sampleRate, codec: p.codec, channels: p.channels }, aac, stemsLoudness: stems };
+  writeFileSync(report, JSON.stringify(meta, null, 2));
+  return meta;
+}
+
+if (import.meta.url === `file://${process.argv[1]}` && process.argv.includes('--v5')) {
+  const r = buildMasterV5();
+  const f = r.final;
+  console.log(`✓ ${r.out} (+ ${Object.values(r.stems).join(', ')})\n  ${f.samples} échantillons · ${f.sampleRate} Hz · ${f.codec} · ${f.channels} canaux · ${r.ffmpeg}`);
+  console.log(`  somme ${r.source.integrated} LUFS → gain ${r.tries.at(-1).gainDb} dB → ${f.integrated} LUFS intégrés · crête vraie ${f.truePeak} dBTP · LRA ${f.lra} LU`);
+  for (const kb of [320, 192]) console.log(`  AAC ${kb} kb/s : ${r.aac[kb].integrated} LUFS · crête vraie ${r.aac[kb].truePeak} dBTP`);
+  for (const [k, l] of Object.entries(r.stemsLoudness)) console.log(`  piste ${k} : ${l.integrated} LUFS · crête vraie ${l.truePeak} dBTP`);
+  const ok = Math.abs(f.integrated - TARGET_LUFS) <= 0.3 && f.truePeak <= -1 && r.aac[320].truePeak <= -1 && r.aac[192].truePeak <= -1 &&
+    f.samples === SR * 60 && f.codec === 'pcm_s24le';
+  if (!ok) { console.error('✗ Mixage v5 hors cible'); process.exit(1); }
+} else if (import.meta.url === `file://${process.argv[1]}` && process.argv.includes('--v4')) {
   const r = buildMasterV4();
   const f = r.final;
   console.log(`✓ ${r.out} (+ ${r.stems.join(', ')})\n  ${f.samples} échantillons · ${f.sampleRate} Hz · ${f.codec} · ${f.channels} canaux · ${r.ffmpeg}`);

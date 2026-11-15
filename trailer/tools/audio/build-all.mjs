@@ -7,6 +7,9 @@
 //                                                 contrôles et planches (qa/tmp/audit-v3.json, qa/snapshots/musique-v3/) ; --no-audit pour sauter les contrôles
 //   node tools/audio/build-all.mjs --v4         → montage v4 (qa/MUSIQUE-V4.md) + habillage (3 sons) : qa/mix-v4.wav, qa/mix-v4-musique.wav,
 //                                                 qa/mix-v4-habillage.wav, qa/mix-v4.beats.json, contrôles et planches (musique-v4/) ; --no-audit
+//   node tools/audio/build-all.mjs --v5         → effets v5 (qa/SON-V5.md) sur la musique et l'habillage v4 : qa/mix-v5.wav, qa/mix-v5-musique.wav,
+//                                                 qa/mix-v5-habillage.wav, qa/mix-v5-effets.wav, essais AAC, planches (son-v5/) ; --no-audit
+//                                                 Films : node tools/audio/mux-ours-v5.mjs
 //   node tools/audio/build-all.mjs --substitut  → même chaîne sur le lit de SUBSTITUTION (qa/tmp/), qa/mix-v1-SUBSTITUT.wav
 // La banque d'effets (assets/audio/sfx/) est versionnée : elle n'est régénérée qu'avec --regen-sfx.
 import { existsSync, mkdirSync } from 'node:fs';
@@ -33,6 +36,18 @@ if (subst) {
   step('Raccords (SUBSTITUT)', 'check-joins.mjs', ['--input', SUBST_MONTAGE, '--label', 'SUBSTITUT', '--json', join(QA_TMP, 'joins-SUBSTITUT.json')]);
   step("Piste d'effets", 'build-sfx.mjs', ['--bed', SUBST_MONTAGE]);
   step('Mixage (SUBSTITUT)', 'build-mix.mjs', ['--substitut']);
+} else if (process.argv.includes('--v5')) {
+  step('Banque v5 : sons générés (graines fixes) et dérivés des prises Kenney', 'gen-sfx.mjs', ['--v5']);
+  step('Habillage v4 : sons générés', 'gen-sfx.mjs', ['souffle-cosmos', 'impact-soleil', 'impact-logo']);
+  step('Montage musical v4 (inchangé)', 'build-montage.mjs', ['--v4']);
+  step('Piste d\'habillage v4 (inchangée)', 'build-habillage-v4.mjs');
+  step('Piste d\'effets v5 (tools/audio/sfx-cues-v5.json, gains figés)', 'build-sfx-v5.mjs');
+  step('Mastering v5 (−14 LUFS, musique + habillage + effets, pistes séparées, essais AAC)', 'build-mix.mjs', ['--v5']);
+  if (!process.argv.includes('--no-audit')) {
+    console.log('\n── Planches v5 (python3 + numpy + Pillow)');
+    const r = spawnSync('python3', [join(HERE, 'planche-v5.py')], { stdio: ['ignore', 'inherit', 'inherit'] });
+    if (r.status !== 0) { console.error('✗ planche-v5.py en échec'); process.exit(r.status || 1); }
+  }
 } else if (process.argv.includes('--v4')) {
   step('Habillage v4 : sons générés (banque versionnée, graines fixes)', 'gen-sfx.mjs', ['souffle-cosmos', 'impact-soleil', 'impact-logo']);
   step('Montage musical v4 (qa/MUSIQUE-V4.md)', 'build-montage.mjs', ['--v4']);

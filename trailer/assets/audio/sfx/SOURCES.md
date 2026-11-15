@@ -1,6 +1,6 @@
 # Banque d'effets du trailer : provenance et licences
 
-34 fichiers WAV, 48 kHz, 24 bits, mono, crête échantillon à −3,0 dBFS (mesurée avec `volumedetect`, FFmpeg 6.1.1 ; les 3 sons d'habillage v4 sont écrits avec FFmpeg 6.0), 7 à 450 Ko chacun, 5,6 Mo en tout. **Uniquement du CC0 ou des sons générés.** Tous ont été mesurés, aucun n'a été écouté.
+54 fichiers WAV (34 jusqu'à la v4, 20 ajoutés pour la v5, voir plus bas), 48 kHz, 24 bits, mono, crête échantillon à −3,0 dBFS (mesurée avec `volumedetect`, FFmpeg 6.1.1 ; les 3 sons d'habillage v4 sont écrits avec FFmpeg 6.0), 7 à 450 Ko chacun, 5,6 Mo en tout. **Uniquement du CC0 ou des sons générés.** Tous ont été mesurés, aucun n'a été écouté.
 
 ## Prises réelles CC0 : Kenney (4 fichiers)
 
@@ -44,6 +44,24 @@ Ils sont faits par synthèse de bruit filtré (rose, blanc ou brun, filtres à v
 | `souffle-cosmos.wav` | habillage v4 : grondement brun très grave + souffle rose dont le passe-bande (160→1 400 Hz) et le niveau montent, 1,36 s, de l'image 0 à l'allumage du Soleil (191) |
 | `impact-soleil.wav` | habillage v4 : coup sourd (110→40 Hz) + éclat aigu en passe-haut balayé, 2,0 s, sur l'allumage du Soleil (201) |
 | `impact-logo.wav` | habillage v4 : sous-grave (90→28 Hz) + corps + crash, queue de 2,15 s qui descend sous −60 dB, sous le coup final du logo (211) |
+
+## Sons ajoutés pour le mix v5 (20 fichiers, 15/11/2026)
+
+Générés par `node tools/audio/gen-sfx.mjs --v5` (FFmpeg 6.0 pour l'écriture, Node 26), mêmes règles que ci-dessus : graine fixe, crête à −3 dBFS, mono 48 kHz 24 bits, aucun droit de tiers. Trois d'entre eux sont **dérivés des prises Kenney CC0** (traitement seulement, la licence CC0 suit le son). Mesurés, aucun n'a été écouté. Utilisés par `tools/audio/sfx-cues-v5.json` (voir `qa/SON-V5.md`).
+
+| Fichier(s) | Recette (graine) |
+|---|---|
+| `tap-pouce-a/b/c.wav` | tap de pulpe sur une vitre : choc en passe-bande 280–360 Hz + tic à 1,9–2,5 kHz très bas, passe-bas 5 kHz, 90 ms (301, 302, 303) |
+| `clac-boucle-c.wav` | boucle de sangle plastique : glissement, puis claquement (déclic 3,4 kHz + corps 1,15 kHz + second déclic à 6 ms) et petit choc grave des mains (311) |
+| `papier-carton.wav` | froissements de papier de soie en deux bouffées + choc sourd du carton, 0,95 s (321) |
+| `pas-escalier-a.wav` | **dérivé** de `pas-sentier-a.wav` (Kenney, CC0) : passe-haut 90 Hz + réverbération de cage d'escalier (Schroeder, 4 peignes, 2 passe-tout) |
+| `appui-pierre.wav` | **dérivé** de `pied-pierre.wav` (Kenney, CC0) + écrasement de gravier synthétisé (70 grains, 90 ms) + choc sinus 110→70 Hz (331) |
+| `reception-rocher.wav` | **dérivé** de `pied-pierre.wav` (Kenney, CC0) ralenti ×0,85 + gerbe d'eau courte synthétisée (341) |
+| `torrent-g/d.wav` | eau qui court (bruit rose large + brun) et bulles (sinus montants brefs), 1,3 s, paire gauche/droite (351, 352) |
+| `vent-crete-g/d.wav` | air en passe-bande à rafales lentes, sifflement très bas, peu de grondement, 3,8 s, paire (361, 362) |
+| `feu-bivouac-g/d.wav` | flamme douce + braises qui craquent + rares gros claquements, 7,4 s, paire (371, 372) |
+| `pluie-interieur-g/d.wav` | pluie entendue à travers la vitre (passe-bas 5,5 kHz), gouttes sur le verre, 5,6 s, paire (381, 382) |
+| `whoosh-doux-a/b/c/d.wav` | bruit rose en passe-bande balayé (2 400→380, 600→2 000, 1 800→450, 300→2 600 Hz), presque sans souffle aigu, passe-bas 6 kHz (391–394) |
 
 ## Sources examinées et écartées
 
