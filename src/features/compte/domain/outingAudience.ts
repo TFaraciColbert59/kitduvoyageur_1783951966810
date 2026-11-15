@@ -20,6 +20,13 @@ export type StoredOutingVisibility =
 
 export type OutingAudienceKey = StoredOutingVisibility;
 
+export const OUTING_VISIBILITIES: readonly StoredOutingVisibility[] = [
+  'private',
+  'followers',
+  'public',
+  'collective_anonymized',
+] as const;
+
 export interface OutingAudienceOption {
   key: OutingAudienceKey;
   /** Libellé court, affiché comme choix principal. */

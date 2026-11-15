@@ -66,7 +66,7 @@ export async function POST(request: Request, context: RouteContext) {
         sharePath: `/api/compte/sorties/${parsedId.data}?share=${encodeURIComponent(created.token)}`,
         token: created.token,
       },
-      { status: 201 }
+      201
     );
   } catch {
     return fail('server', 'Impossible de créer le lien de partage.');

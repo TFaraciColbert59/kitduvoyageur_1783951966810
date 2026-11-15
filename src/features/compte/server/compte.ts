@@ -120,6 +120,7 @@ export interface ProfileSettings {
   coverUrl: string | null;
   links: ProfileLink[];
   visibility: 'public' | 'prive';
+  defaultOutingVisibility: 'private' | 'followers' | 'public' | 'collective_anonymized';
   notificationPrefs: NotificationPrefs;
   sportProfilePrefs: SportProfilePreferences;
   twoFaEnabled: boolean;
@@ -498,20 +499,50 @@ export async function markAllNotificationsRead(
   if (error) throw error;
 }
 
+const VALID_DEFAULT_OUTING_VISIBILITIES = new Set<ProfileSettings['defaultOutingVisibility']>([
+  'private',
+  'followers',
+  'public',
+  'collective_anonymized',
+]);
+
+function parseDefaultOutingVisibility(raw: unknown): ProfileSettings['defaultOutingVisibility'] {
+  const value = text(raw);
+  return VALID_DEFAULT_OUTING_VISIBILITIES.has(
+    value as ProfileSettings['defaultOutingVisibility']
+  )
+    ? (value as ProfileSettings['defaultOutingVisibility'])
+    : 'private';
+}
+
 export async function loadProfileSettings(
   supabase: SupabaseClient,
   userId: string,
   email: string
 ): Promise<ProfileSettings> {
-  const { data } = await supabase
+  let result = await supabase
     .from('user_profiles')
     .select(
+<<<<<<< HEAD
       'id,email,full_name,handle,bio,location,avatar_url,cover_url,links,profile_visibility,notification_prefs,sport_profile_prefs,two_fa_enabled'
+=======
+      'id,email,full_name,handle,bio,location,avatar_url,cover_url,links,profile_visibility,default_outing_visibility,notification_prefs,two_fa_enabled'
+>>>>>>> 7bf3effd (fix(p01): align share-link contract, ?share/?shareToken 404 semantics and server default_outing_visibility)
     )
     .eq('id', userId)
     .maybeSingle();
 
-  const row = (data ?? {}) as Record<string, unknown>;
+  if (result.error?.code === '42703') {
+    result = await supabase
+      .from('user_profiles')
+      .select(
+        'id,email,full_name,handle,bio,location,avatar_url,cover_url,links,profile_visibility,notification_prefs,two_fa_enabled'
+      )
+      .eq('id', userId)
+      .maybeSingle();
+  }
+
+  const row = (result.data ?? {}) as Record<string, unknown>;
   return {
     id: userId,
     email: text(row.email) || email,
@@ -523,6 +554,7 @@ export async function loadProfileSettings(
     coverUrl: text(row.cover_url) || null,
     links: parseLinks(row.links),
     visibility: text(row.profile_visibility) === 'prive' ? 'prive' : 'public',
+    defaultOutingVisibility: parseDefaultOutingVisibility(row.default_outing_visibility),
     notificationPrefs: parsePrefs(row.notification_prefs),
     sportProfilePrefs: normalizeSportProfilePreferences(row.sport_profile_prefs),
     twoFaEnabled: row.two_fa_enabled === true,
@@ -538,6 +570,7 @@ export interface ProfilePatch {
   coverUrl?: string | null;
   links?: ProfileLink[];
   visibility?: 'public' | 'prive';
+  defaultOutingVisibility?: 'private' | 'followers' | 'public' | 'collective_anonymized';
   notificationPrefs?: Partial<NotificationPrefs>;
   sportProfilePrefs?: SportProfilePreferencesPatch;
 }
@@ -581,6 +614,9 @@ export async function updateProfileSettings(
     update.links = parseLinks(patch.links);
   }
   if (patch.visibility !== undefined) update.profile_visibility = patch.visibility;
+  if (patch.defaultOutingVisibility !== undefined) {
+    update.default_outing_visibility = parseDefaultOutingVisibility(patch.defaultOutingVisibility);
+  }
   if (patch.notificationPrefs !== undefined) {
     const current = parsePrefs((await supabase
       .from('user_profiles')
@@ -601,7 +637,15 @@ export async function updateProfileSettings(
     );
   }
 
-  const { error } = await supabase.from('user_profiles').update(update).eq('id', userId);
+  let { error } = await supabase.from('user_profiles').update(update).eq('id', userId);
+  if (error?.code === '42703' && 'default_outing_visibility' in update) {
+    delete update.default_outing_visibility;
+    if (Object.keys(update).length > 1) {
+      ({ error } = await supabase.from('user_profiles').update(update).eq('id', userId));
+    } else {
+      error = null;
+    }
+  }
   if (error) {
     if (String(error.code) === '23505') throw new Error('handle_taken');
     throw error;

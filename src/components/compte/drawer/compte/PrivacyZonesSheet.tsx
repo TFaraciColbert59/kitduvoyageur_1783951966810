@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { ActionPill } from '@/components/ui/ActionPill';
 import { OverlaySheet } from '@/components/compte/overlay/OverlaySheet';
-import { fetchJson } from '../shared/fetch';
+import { fetchJson } from './shared';
 
 export interface PrivacyZoneItem {
   id: string;

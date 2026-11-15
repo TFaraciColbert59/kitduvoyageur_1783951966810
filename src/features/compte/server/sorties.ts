@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { createServiceClient } from '@/lib/api/serviceClient';
 import type { TraceProjectionError } from '../domain/traceProjection';
 import {
   SHARED_SUMMARY_METRICS,
@@ -904,6 +905,29 @@ async function signedPhotoUrl(
   return data.signedUrl;
 }
 
+async function fetchSessionRow(client: SupabaseClient, outingId: string) {
+  let res = await client
+    .from('hike_sessions')
+    .select(
+      'id,user_id,route_id,title,started_at,ended_at,distance_km,activity_session_id,duration_seconds,elevation_gain_m,max_altitude_m,positions_timed,positions_geojson,visibility,kit_id,weather,notes'
+    )
+    .eq('id', outingId)
+    .maybeSingle();
+
+  if (res.error?.code === '42703') {
+    // Environnement antérieur au lien capture→résumé : on relit sans la
+    // colonne, le sport retombe alors sur « rando ».
+    res = await client
+      .from('hike_sessions')
+      .select(
+        'id,user_id,route_id,title,started_at,ended_at,distance_km,duration_seconds,elevation_gain_m,max_altitude_m,positions_timed,positions_geojson,visibility,kit_id,weather,notes'
+      )
+      .eq('id', outingId)
+      .maybeSingle();
+  }
+  return res;
+}
+
 export async function loadOutingDetail(
   supabase: SupabaseClient,
   userId: string,
@@ -920,24 +944,30 @@ export async function loadOutingDetail(
     shareToken?: string | null;
   }
 ): Promise<OutingDetail | null> {
-  let sessionResult = await supabase
-    .from('hike_sessions')
-    .select(
-      'id,user_id,route_id,title,started_at,ended_at,distance_km,activity_session_id,duration_seconds,elevation_gain_m,max_altitude_m,positions_timed,positions_geojson,visibility,kit_id,weather,notes'
-    )
-    .eq('id', outingId)
-    .maybeSingle();
+  const hasRequestedShareToken =
+    typeof options?.shareToken === 'string' && options.shareToken.trim().length > 0;
+  const resolvedShareToken =
+    hasRequestedShareToken && options?.shareToken
+      ? await resolveOutingShareToken(options.shareToken)
+      : null;
 
-  if (sessionResult.error?.code === '42703') {
-    // Environnement antérieur au lien capture→résumé : on relit sans la
-    // colonne, le sport retombe alors sur « rando ».
-    sessionResult = await supabase
-      .from('hike_sessions')
-      .select(
-        'id,user_id,route_id,title,started_at,ended_at,distance_km,duration_seconds,elevation_gain_m,max_altitude_m,positions_timed,positions_geojson,visibility,kit_id,weather,notes'
-      )
-      .eq('id', outingId)
-      .maybeSingle();
+  let readClient: SupabaseClient = supabase;
+  let sessionResult = await fetchSessionRow(supabase, outingId);
+
+  if (
+    !sessionResult.data &&
+    resolvedShareToken &&
+    resolvedShareToken.sessionId === outingId &&
+    !(await isBlockedBetween(supabase, userId, resolvedShareToken.ownerId))
+  ) {
+    const service = createServiceClient();
+    if (service) {
+      const serviceResult = await fetchSessionRow(service, outingId);
+      if (serviceResult.data) {
+        sessionResult = serviceResult;
+        readClient = service;
+      }
+    }
   }
 
   const { data: sessionData, error: sessionError } = sessionResult;
@@ -947,12 +977,28 @@ export async function loadOutingDetail(
   // collaboration élargit un jour `canEdit`.
   const isProvenanceOwner = session.user_id === userId;
   const canEdit = isProvenanceOwner;
+  const isOwner = canEdit;
+  const rawSessionVisibility = typeof session.visibility === 'string' ? session.visibility : null;
+  const blocked = !isOwner ? await isBlockedBetween(supabase, userId, session.user_id) : false;
+
+  const validShareLink = Boolean(
+    !isOwner &&
+      !blocked &&
+      hasRequestedShareToken &&
+      resolvedShareToken &&
+      resolvedShareToken.sessionId === session.id &&
+      resolvedShareToken.ownerId === session.user_id &&
+      rawSessionVisibility !== 'private'
+  );
+  if (!isOwner && hasRequestedShareToken && !validShareLink) {
+    return null;
+  }
 
   // Le sport vient de la séance multi-sport liée. L'historique sans lien est
   // une randonnée : on ne devine pas un autre sport.
   let sport = 'rando';
   if (session.activity_session_id) {
-    const { data: activity } = await supabase
+    const { data: activity } = await readClient
       .from('activity_sessions')
       .select('sport')
       .eq('id', session.activity_session_id)
@@ -974,28 +1020,28 @@ export async function loadOutingDetail(
     samples,
   ] = await Promise.all([
     session.route_id
-      ? supabase.from('hiking_routes').select('id,name,region').eq('id', session.route_id).maybeSingle()
+      ? readClient.from('hiking_routes').select('id,name,region').eq('id', session.route_id).maybeSingle()
       : Promise.resolve({ data: null, error: null }),
-    supabase
+    readClient
       .from('hike_session_photos')
       .select('id,storage_path,caption,position')
       .eq('session_id', session.id)
       .order('position', { ascending: true }),
-    supabase
+    readClient
       .from('hike_session_participants')
       .select('user_id,role')
       .eq('session_id', session.id)
       .order('created_at', { ascending: true }),
-    supabase
+    readClient
       .from('hike_session_gear')
       .select('id,item_name,weight_g,kit_id,gear_item_id')
       .eq('session_id', session.id)
       .order('created_at', { ascending: true }),
-    supabase
+    readClient
       .from('hike_session_kudos')
       .select('user_id')
       .eq('session_id', session.id),
-    supabase
+    readClient
       .from('hike_session_comments')
       .select('id,user_id,body,created_at')
       .eq('session_id', session.id)
@@ -1027,7 +1073,7 @@ export async function loadOutingDetail(
   }>;
   const photos: OutingPhoto[] = [];
   for (const row of photoRows) {
-    const url = await signedPhotoUrl(supabase, row.storage_path);
+    const url = await signedPhotoUrl(readClient, row.storage_path);
     if (!url) continue;
     photos.push({
       id: row.id,
@@ -1063,7 +1109,7 @@ export async function loadOutingDetail(
   ].filter(Boolean);
 
   const profilesRes = profileIds.length
-    ? await supabase.from('public_profiles').select(PROFILE_COLUMNS).in('id', profileIds)
+    ? await readClient.from('public_profiles').select(PROFILE_COLUMNS).in('id', profileIds)
     : { data: [] as ProfileRow[], error: null };
   const profiles = new Map<string, ProfileRow>(
     ((profilesRes.data ?? []) as ProfileRow[]).map((row) => [row.id, row])
@@ -1096,7 +1142,7 @@ export async function loadOutingDetail(
   }
 
   const kitRes = session.kit_id
-    ? await supabase
+    ? await readClient
         .from('materiel_kits')
         .select('id,name,total_weight_g')
         .eq('id', session.kit_id)
@@ -1104,7 +1150,7 @@ export async function loadOutingDetail(
     : { data: null, error: null };
   const kitRow = kitRes.data as { id: string; name: string | null; total_weight_g: number | null } | null;
   const kitItemsRes = session.kit_id
-    ? await supabase
+    ? await readClient
         .from('materiel_kit_items')
         .select('name,weight_g')
         .eq('kit_id', session.kit_id)
@@ -1234,21 +1280,7 @@ export async function loadOutingDetail(
 
   const rawSegments = parsePositionSegments(session.positions_timed, session.positions_geojson);
   const rawPoints = rawSegments.flat();
-  const rawSessionVisibility = typeof session.visibility === 'string' ? session.visibility : null;
-  const isOwner = canEdit;
   const isParticipant = participantRows.some((row) => row.user_id === userId);
-  const blocked = !isOwner ? await isBlockedBetween(supabase, userId, session.user_id) : false;
-
-  let validShareLink = false;
-  if (!isOwner && !blocked && options?.shareToken) {
-    const resolvedToken = await resolveOutingShareToken(options.shareToken);
-    validShareLink = Boolean(
-      resolvedToken &&
-        resolvedToken.sessionId === session.id &&
-        resolvedToken.ownerId === session.user_id &&
-        rawSessionVisibility !== 'private'
-    );
-  }
 
   const rawVisibility = blocked ? 'private' : rawSessionVisibility;
   const visibility = normalizeVisibility(rawVisibility);

@@ -122,9 +122,9 @@ export function OutingAudienceSheet({
       }
       if (slRes.ok) {
         const sl = (await slRes.json()) as {
-          links?: Array<{ active: boolean; expiresAt: string | null }>;
+          shareLink?: { active?: boolean; expiresAt?: string | null } | null;
         };
-        const activeLink = sl?.links?.find((l) => l.active);
+        const activeLink = sl?.shareLink?.active ? sl.shareLink : null;
         setShareLink((prev) => ({
           active: Boolean(activeLink),
           token: activeLink ? prev.token : null,
@@ -218,19 +218,19 @@ export function OutingAudienceSheet({
       const res = await fetch(`/api/compte/sorties/${outingId}/share-link`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ expiresInHours: 168 }),
+        body: JSON.stringify({ ttlHours: 168 }),
       });
       if (!res.ok) {
         throw new Error('Impossible de générer le lien révocable.');
       }
       const data = (await res.json()) as {
         token: string;
-        link?: { expiresAt?: string | null };
+        shareLink?: { expiresAt?: string | null } | null;
       };
       setShareLink({
         active: true,
         token: data.token,
-        expiresAt: data.link?.expiresAt ?? null,
+        expiresAt: data.shareLink?.expiresAt ?? null,
       });
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Erreur lien de partage');
@@ -330,6 +330,9 @@ export function OutingAudienceSheet({
     setError(null);
     try {
       await onApply(draft);
+      if (draft === 'private') {
+        setShareLink({ active: false, token: null, expiresAt: null });
+      }
       onApplied?.();
     } catch (cause) {
       setError(outingVisibilityErrorMessage(cause));

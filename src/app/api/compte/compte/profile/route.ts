@@ -23,6 +23,9 @@ const Patch = z
     coverUrl: z.string().trim().max(600).nullable().optional(),
     links: z.array(Link).max(3).optional(),
     visibility: z.enum(['public', 'prive']).optional(),
+    defaultOutingVisibility: z
+      .enum(['private', 'followers', 'public', 'collective_anonymized'])
+      .optional(),
     notificationPrefs: z
       .object({
         social: z.boolean().optional(),

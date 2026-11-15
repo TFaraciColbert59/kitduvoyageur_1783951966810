@@ -109,6 +109,7 @@ export function SettingsPane() {
     staleTime: 20_000,
   });
 
+<<<<<<< HEAD
   const feedPrefs = useFeedPreferences(query.data?.id);
   const sportProfileQuery = useQuery({
     queryKey: ['compte', 'sport-profile', query.data?.id ?? 'self'],
@@ -120,6 +121,21 @@ export function SettingsPane() {
   const patchSportProfile = async (sportPatch: SportProfilePreferencesPatch) => {
     setBusy(true);
     setMessage(null);
+=======
+  useEffect(() => {
+    const serverVis = query.data?.defaultOutingVisibility;
+    if (serverVis && (OUTING_VISIBILITIES as readonly string[]).includes(serverVis)) {
+      setDefaultOutingVis(serverVis);
+      try {
+        window.localStorage.setItem('lkdv.default_outing_visibility.v1', serverVis);
+      } catch {
+        /* noop */
+      }
+    }
+  }, [query.data?.defaultOutingVisibility]);
+
+  useEffect(() => {
+>>>>>>> 7bf3effd (fix(p01): align share-link contract, ?share/?shareToken 404 semantics and server default_outing_visibility)
     try {
       const updated = await fetchJson<{ summary: SportProfileSummaryVM }>('/api/compte/sport-profile', {
         method: 'PATCH',
@@ -311,6 +327,7 @@ export function SettingsPane() {
           </span>
           <select
             aria-label="Visibilité par défaut des nouvelles sorties"
+            disabled={busy}
             value={defaultOutingVis}
             onChange={(e) => {
               const next = e.target.value as StoredOutingVisibility;
@@ -320,7 +337,10 @@ export function SettingsPane() {
               } catch {
                 /* noop */
               }
-              setMessage(`Visibilité par défaut : ${outingVisibilityLabel(next)}`);
+              void patch(
+                { defaultOutingVisibility: next },
+                `Visibilité par défaut : ${outingVisibilityLabel(next)}`
+              );
             }}
             style={{
               height: 30,

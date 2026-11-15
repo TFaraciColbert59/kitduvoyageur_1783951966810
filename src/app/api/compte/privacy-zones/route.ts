@@ -44,7 +44,7 @@ export async function POST(request: Request) {
 
   try {
     const zone = await createPrivacyZone(auth.supabase, auth.user.id, parsed.data);
-    return ok({ zone }, { status: 201 });
+    return ok({ zone }, 201);
   } catch (error) {
     if (error instanceof Error && error.message === 'max_zones_reached') {
       return fail('conflict', 'Limite atteinte (10 zones privées maximum).');
