@@ -76,6 +76,40 @@ function projectPointToSegment(
 }
 
 /**
+ * K6.03 — Dérive un corridor de référence depuis le tracé lui-même quand aucun
+ * corridor de sentiers externe (OSM) n'est disponible. Le corridor est une
+ * version décimée puis lissée du tracé : la projection `snapTraceToTrails` a
+ * ainsi toujours une référence réelle, sans inventer de sentier.
+ */
+export function deriveTraceCorridors(
+  originalPoints: readonly GeoCoord[],
+  maxCorridorPoints = 500
+): GeoCoord[][] {
+  if (originalPoints.length < 2) return [];
+  const step = Math.max(1, Math.floor(originalPoints.length / maxCorridorPoints));
+  const decimated: GeoCoord[] = [];
+  for (let i = 0; i < originalPoints.length; i += step) {
+    decimated.push({ ...originalPoints[i] });
+  }
+  const last = originalPoints[originalPoints.length - 1];
+  const tail = decimated[decimated.length - 1];
+  if (tail.lat !== last.lat || tail.lng !== last.lng) {
+    decimated.push({ ...last });
+  }
+  if (decimated.length < 2) return [decimated];
+  const smoothed: GeoCoord[] = [{ ...decimated[0] }];
+  for (let i = 1; i < decimated.length - 1; i += 1) {
+    smoothed.push({
+      lat: decimated[i - 1].lat * 0.25 + decimated[i].lat * 0.5 + decimated[i + 1].lat * 0.25,
+      lng: decimated[i - 1].lng * 0.25 + decimated[i].lng * 0.5 + decimated[i + 1].lng * 0.25,
+      ...(decimated[i].altitudeM != null ? { altitudeM: decimated[i].altitudeM } : {}),
+    });
+  }
+  smoothed.push({ ...decimated[decimated.length - 1] });
+  return [smoothed];
+}
+
+/**
  * Aligne les points sur les corridors de sentiers connus s'ils sont fournis
  * (distance maximale par défaut 35 m), sinon applique un lissage topologique
  * doux conservant les extrémités et les points d'inflexion.

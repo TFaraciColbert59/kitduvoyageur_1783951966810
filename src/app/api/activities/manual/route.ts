@@ -20,7 +20,7 @@ export async function POST(request: Request) {
 
   const body = (await request.json().catch(() => null)) as CreateManualActivityRequest | null;
   if (!body || typeof body !== 'object') {
-    return fail('invalid_payload', 'Corps JSON invalide pour la saisie manuelle.');
+    return fail('bad_request', 'Corps JSON invalide pour la saisie manuelle.');
   }
 
   try {

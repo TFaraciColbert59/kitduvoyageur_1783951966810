@@ -74,7 +74,7 @@ export interface HikeSessionImportPayload {
   elevationGainM: number | null;
   maxAltitudeM: number | null;
   /** Format source détecté, jamais déduit du seul nom de fichier. */
-  source: 'fit' | 'tcx';
+  source: 'fit' | 'tcx' | 'gpx';
   /** SHA-256 du contenu original, clé de déduplication côté base. */
   sourceFingerprint: string;
   /** Nom du fichier d'origine, borné côté API ; peut être absent. */

@@ -55,7 +55,9 @@ export function OutingQuickEditPanel({
     void api
       .get(outingId)
       .then((rec) => {
-        if (!cancelled && rec.quickEditState.pending) setRecord(rec);
+        if (!cancelled && rec.quickEditState.visible && rec.quickEditState.status === 'pending') {
+          setRecord(rec);
+        }
       })
       .catch(() => undefined);
     return () => {
@@ -63,7 +65,9 @@ export function OutingQuickEditPanel({
     };
   }, [api, enabled, outingId]);
 
-  if (!enabled || !record || !record.quickEditState.pending) return null;
+  if (!enabled || !record || !record.quickEditState.visible || record.quickEditState.status !== 'pending') {
+    return null;
+  }
 
   return (
     <div style={{ margin: '10px 0' }} data-testid="outing-quick-edit-panel">

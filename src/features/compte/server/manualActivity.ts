@@ -9,6 +9,7 @@ import {
   type LifecycleActivityRecord,
 } from '@/features/activity/lifecycle';
 import {
+  REHAB_COMPATIBLE_MAPPINGS,
   createManualRehabActivity,
   validateManualActivityInput,
   type ManualActivityInput,
@@ -137,9 +138,7 @@ export async function createManualActivitySession(
   if (isRehab) {
     const rehabRes = createManualRehabActivity({
       ...input,
-      rehabVariantId: input.sportOrVariant as Parameters<
-        typeof createManualRehabActivity
-      >[0]['rehabVariantId'],
+      rehabVariant: input.sportOrVariant,
       bodyZone: input.bodyZone ?? null,
       painLevel: input.painLevel ?? null,
       mobilityScore: input.mobilityScore ?? null,
@@ -148,22 +147,22 @@ export async function createManualActivitySession(
       return {
         ok: false,
         code: rehabRes.code,
-        field: rehabRes.field,
         error: rehabRes.message,
       };
     }
     const s = rehabRes.summary;
+    const rehabMapping = REHAB_COMPATIBLE_MAPPINGS[s.details.rehabVariantId];
     sport = s.activity.sport;
-    variantId = s.modeId;
-    serverVariantId = s.persistence.serverVariantId;
-    defaultTitle = s.modeLabel;
-    startedAtMs = s.startedAtMs;
-    endedAtMs = s.endedAtMs;
+    variantId = s.variantId;
+    serverVariantId = rehabMapping?.serverVariantId ?? null;
+    defaultTitle = s.variantLabel;
+    startedAtMs = s.activity.startedAt;
+    endedAtMs = s.activity.endedAt;
     normalizedDurationS = s.movingS;
     normalizedElapsedS = s.elapsedS;
     normalizedDistanceM = s.activity.distanceM > 0 ? s.activity.distanceM : 0;
     normalizedElevGainM = s.activity.elevGainM > 0 ? s.activity.elevGainM : 0;
-    clientSessionId = s.activity.clientSessionId ?? clientSessionId;
+    clientSessionId = s.localRecord.clientSessionId ?? clientSessionId;
 
     const rehabLines = [
       s.details.bodyZone ? `Zone : ${s.details.bodyZone}` : null,
@@ -271,9 +270,9 @@ export async function createManualActivitySession(
     ...normalized,
     stats: {
       ...normalized.stats,
-      elapsedS: Math.max(normalizedElapsedS, normalizedDurationS),
+      elapsedTimeS: Math.max(normalizedElapsedS, normalizedDurationS),
       movingTimeS: normalizedDurationS,
-      pausedTimeS: Math.max(0, normalizedElapsedS - normalizedDurationS),
+      pauseTimeS: Math.max(0, normalizedElapsedS - normalizedDurationS),
       distanceM: normalizedDistanceM ?? 0,
       elevationGainM: elevGainM,
     },
@@ -281,12 +280,12 @@ export async function createManualActivitySession(
       ...normalized.provenance,
       origin: 'manual',
       label: 'Saisie manuelle',
-      hasGpsTrace: false,
       syncedAt: nowIso,
     },
     quickEditState: {
       ...normalized.quickEditState,
-      pending: false,
+      status: 'not_applicable',
+      visible: false,
     },
   };
 

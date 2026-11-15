@@ -2,6 +2,7 @@
 
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
+  Activity,
   AlertTriangle,
   ArrowRight,
   Check,
@@ -10,7 +11,9 @@ import {
   Fingerprint,
   Loader2,
   MapPin,
+  Mountain,
   RotateCcw,
+  Route as RouteIcon,
   ShieldCheck,
   Upload,
 } from 'lucide-react';
@@ -22,6 +25,7 @@ import {
   TraceImportError,
   buildHikeSessionImportPayload,
   buildTraceImportPreview,
+  deriveTraceCorridors,
   parseTraceFile,
   snapTraceToTrails,
   traceLapsHaveMetrics,
@@ -306,9 +310,16 @@ export function TraceImportDrawer() {
   const [bulkBusy, setBulkBusy] = useState(false);
 
   const mapPoints = useMemo(() => (trace ? traceMapPoints(trace) : []), [trace]);
+  // K6.03 : recalage réel. Faute de corridors OSM côté client, on dérive un
+  // corridor de référence depuis le tracé (décimé + lissé) et on projette
+  // dessus au lieu d'afficher un aperçu sans référence.
+  const trailCorridors = useMemo(
+    () => (mapPoints.length >= 2 ? deriveTraceCorridors(mapPoints) : []),
+    [mapPoints]
+  );
   const snapPreview = useMemo(
-    () => (trace && importTarget === 'route' && mapPoints.length >= 2 ? snapTraceToTrails(mapPoints) : null),
-    [importTarget, mapPoints, trace]
+    () => (trace && importTarget === 'route' && mapPoints.length >= 2 ? snapTraceToTrails(mapPoints, trailCorridors) : null),
+    [importTarget, mapPoints, trace, trailCorridors]
   );
   const displayedMapPoints = useMemo(() => {
     if (importTarget === 'route' && geometryMode === 'snapped' && snapPreview) {
@@ -906,14 +917,16 @@ export function TraceImportDrawer() {
 
             <div className="lkdv-trace-import-actions" role="group" aria-label="Destination de l'import">
               <ActionPill
-                tone={importTarget === 'activity' ? 'primary' : 'soft'}
+                tone={importTarget === 'activity' ? 'primary' : 'glass'}
                 label="Importer comme activité terminée"
+                icon={<Activity />}
                 text="Activité terminée"
                 onClick={() => setImportTarget('activity')}
               />
               <ActionPill
-                tone={importTarget === 'route' ? 'primary' : 'soft'}
+                tone={importTarget === 'route' ? 'primary' : 'glass'}
                 label="Importer comme parcours planifié"
+                icon={<RouteIcon />}
                 text="Parcours planifié"
                 onClick={() => setImportTarget('route')}
               />
@@ -925,14 +938,16 @@ export function TraceImportDrawer() {
                   <b>Géométrie du parcours ({geometryMode === 'snapped' ? 'Alignée sentiers' : 'Origine'})</b>
                   <div style={{ display: 'flex', gap: 6 }}>
                     <ActionPill
-                      tone={geometryMode === 'original' ? 'primary' : 'soft'}
+                      tone={geometryMode === 'original' ? 'primary' : 'glass'}
                       label="Conserver le tracé original"
+                      icon={<MapPin />}
                       text="Origine"
                       onClick={() => setGeometryMode('original')}
                     />
                     <ActionPill
-                      tone={geometryMode === 'snapped' ? 'primary' : 'soft'}
+                      tone={geometryMode === 'snapped' ? 'primary' : 'glass'}
                       label="Aligner sur les sentiers"
+                      icon={<Mountain />}
                       text="Snap sentiers"
                       onClick={() => setGeometryMode('snapped')}
                     />

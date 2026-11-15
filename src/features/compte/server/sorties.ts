@@ -1599,7 +1599,9 @@ export async function loadOutingDetail(
           ? overlayRecord.revision
           : null,
     quickEditPending:
-      isOwner && Boolean(overlayRecord?.quickEditState?.pending),
+      isOwner &&
+      Boolean(overlayRecord?.quickEditState?.visible) &&
+      overlayRecord?.quickEditState?.status === 'pending',
     correctedMetrics: Boolean(
       overlayRecord?.correction &&
         (overlayRecord.correction.distanceMethod !== 'gps_measured' ||
@@ -2001,12 +2003,48 @@ function tcxSportAttr(sport: string): 'Running' | 'Biking' | 'Other' {
 /**
  * S1.25 / S1.26 — Génère un TCX (TrainingCenterDatabase v2) à partir de la trace
  * visible projetée (`tracePrivacy` + `metricVisibility`), sans fuite pour les tiers.
+ *
+ * Les mesures capteurs réellement conservées (`samples`, origine `device`) sont
+ * émises quand la politique les autorise — `<HeartRateBpm>`, `<Cadence>`,
+ * `<Watts>` — et omises quand elles sont masquées. Aucune valeur n'est inventée :
+ * sans mesure conservée, aucun élément capteur n'est écrit.
  */
 export function buildTcx(detail: OutingDetail): string {
   const rawSegments = outingTraceSegments(detail);
   const segments = detail.metricVisibility
     ? projectTraceMetrics(rawSegments, detail.metricVisibility).segments
     : rawSegments;
+
+  const visibility = detail.metricVisibility;
+  const heartRateAllowed = !visibility || visibility.heartRate === true;
+  const cadenceAllowed = !visibility || visibility.cadence === true;
+  const powerAllowed = !visibility || visibility.power === true;
+
+  // Jointure points ↔ mesures conservées : par horodatage quand il existe,
+  // sinon par index quand les deux tableaux s'alignent.
+  const samples = Array.isArray(detail.samples) ? detail.samples : [];
+  const sampleByTime = new Map<string, (typeof samples)[number]>();
+  for (const sample of samples) {
+    if (typeof sample.recordedAt === 'string' && sample.recordedAt.length > 0) {
+      if (!sampleByTime.has(sample.recordedAt)) sampleByTime.set(sample.recordedAt, sample);
+    }
+  }
+  const flatPoints = segments.flat();
+  const indexAligned =
+    samples.length > 0 && samples.length === flatPoints.length
+    && flatPoints.every((point, i) => {
+      const recordedAt = samples[i]?.recordedAt;
+      return recordedAt == null || recordedAt === point.timestamp;
+    });
+  let flatIndex = -1;
+  const sampleForPoint = (point: OutingPoint): (typeof samples)[number] | null => {
+    flatIndex += 1;
+    if (point.timestamp && sampleByTime.has(point.timestamp)) {
+      return sampleByTime.get(point.timestamp) ?? null;
+    }
+    if (indexAligned) return samples[flatIndex] ?? null;
+    return null;
+  };
 
   const firstTimestamp =
     segments.flat().find((p) => typeof p.timestamp === 'string' && p.timestamp.length > 0)?.timestamp ??
@@ -2021,12 +2059,35 @@ export function buildTcx(detail: OutingDetail): string {
         .map((point) => {
           if (prevPoint) cumulativeDistanceM += tcxStepMeters(prevPoint, point);
           prevPoint = point;
+          const sample = sampleForPoint(point);
+          const heartRate =
+            heartRateAllowed && typeof sample?.heartRateBpm === 'number' && Number.isFinite(sample.heartRateBpm)
+              ? Math.round(sample.heartRateBpm)
+              : null;
+          const cadenceRaw =
+            cadenceAllowed
+              ? (typeof sample?.cadenceRpm === 'number' && Number.isFinite(sample.cadenceRpm)
+                ? Math.round(sample.cadenceRpm)
+                : typeof sample?.cadenceSpm === 'number' && Number.isFinite(sample.cadenceSpm)
+                  ? Math.round(sample.cadenceSpm / 2)
+                  : null)
+              : null;
+          const power =
+            powerAllowed && typeof sample?.powerW === 'number' && Number.isFinite(sample.powerW)
+              ? Math.round(sample.powerW)
+              : null;
           const timeTag = point.timestamp
             ? `<Time>${escapeXml(point.timestamp)}</Time>`
             : '';
           const altTag =
             point.elevationM !== null ? `<AltitudeMeters>${point.elevationM}</AltitudeMeters>` : '';
-          return `<Trackpoint>${timeTag}<Position><LatitudeDegrees>${point.lat}</LatitudeDegrees><LongitudeDegrees>${point.lng}</LongitudeDegrees></Position>${altTag}<DistanceMeters>${Math.round(cumulativeDistanceM * 10) / 10}</DistanceMeters></Trackpoint>`;
+          const hrTag = heartRate !== null ? `<HeartRateBpm>${heartRate}</HeartRateBpm>` : '';
+          const cadTag = cadenceRaw !== null ? `<Cadence>${cadenceRaw}</Cadence>` : '';
+          const wattsTag =
+            power !== null
+              ? `<Extensions><LX xmlns="http://www.garmin.com/xmlschemas/ActivityExtension/v2"><Watts>${power}</Watts></LX></Extensions>`
+              : '';
+          return `<Trackpoint>${timeTag}<Position><LatitudeDegrees>${point.lat}</LatitudeDegrees><LongitudeDegrees>${point.lng}</LongitudeDegrees></Position>${altTag}<DistanceMeters>${Math.round(cumulativeDistanceM * 10) / 10}</DistanceMeters>${hrTag}${cadTag}${wattsTag}</Trackpoint>`;
         })
         .join('');
       return `<Track>${tps}</Track>`;

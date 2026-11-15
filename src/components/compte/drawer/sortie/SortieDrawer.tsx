@@ -29,7 +29,7 @@ import ReportBlockModal, { type ReportTarget } from '@/components/ui/ReportBlock
 import { OverlaySheet } from '@/components/compte/overlay/OverlaySheet';
 import { MediaSharingHub, type MediaSharingTab } from '@/components/media-sharing/MediaSharingHub';
 import { buildOutingMediaSharingBundle } from '@/lib/media-sharing/outingAdapter';
-import { lifecycleApi } from '@/components/compte/lifecycle/api';
+import { createLifecycleApi } from '@/components/compte/lifecycle/api';
 
 async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, {
@@ -83,6 +83,8 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
     setToast({ text, tone });
     window.setTimeout(() => setToast(null), 2600);
   }, []);
+
+  const lifecycleApi = useMemo(() => createLifecycleApi(), []);
 
   const invalidate = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: ['sortie', outingId] });
@@ -202,7 +204,7 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
     } finally {
       setBusy(false);
     }
-  }, [notify, outingId]);
+  }, [lifecycleApi, notify, outingId]);
 
   const tabs: DrawerTab[] = useMemo(
     () =>
@@ -395,7 +397,7 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
           );
         },
       })),
-    [busy, deleteOuting, detail, exportTrace, invalidate, openAudience, outingId, resetMetrics, run, saveMetrics, uploadPhoto, uploading]
+    [busy, deleteOuting, detail, exportTrace, invalidate, lifecycleApi, openAudience, outingId, resetMetrics, run, saveMetrics, uploadPhoto, uploading]
   );
 
   if (authLoading) {

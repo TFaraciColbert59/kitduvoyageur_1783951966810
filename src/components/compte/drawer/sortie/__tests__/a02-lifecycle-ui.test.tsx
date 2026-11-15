@@ -11,47 +11,59 @@ function makeDetail(overrides: Partial<OutingDetail> = {}): OutingDetail {
   return {
     id: '22222222-2222-4222-8222-222222222222',
     title: 'Boucle du Vercors',
-    date: '2026-08-12T07:30:00.000Z',
+    date: '2026-08-12',
+    startedAt: '2026-08-12T07:30:00.000Z',
     endedAt: '2026-08-12T10:30:00.000Z',
     massif: 'Vercors',
+    routeName: null,
     sport: 'trail',
     km: 18.4,
     dplus: 920,
     maxAlt: 1890,
     durationS: 10800,
-    movingTimeS: 9600,
-    elapsedS: 10800,
     paceMinPerKm: 8.7,
+    movingTimeS: 9600,
+    heartRateBpm: null,
+    powerW: null,
+    cadenceRpm: null,
+    caloriesKcal: null,
+    metricVisibility: ALL_OUTING_METRICS,
+    shareMetricVisibility: ALL_OUTING_METRICS,
+    shareMetricsConfigured: false,
+    metricsMasked: false,
     status: 'done',
     visibility: 'private',
     verified: true,
+    coverUrl: null,
     notes: 'Belle traversée',
-    canEdit: true,
-    canInteract: true,
-    shareMetrics: ALL_OUTING_METRICS,
-    shareMetricsConfigured: false,
-    tracePrivacy: {
-      enabled: false,
-      startMaskM: 0,
-      endMaskM: 0,
-      maskedPointCount: 0,
-    },
-    traceFullyMasked: false,
+    weather: null,
+    photos: [],
+    photosUnavailable: false,
+    participants: [],
+    gear: [],
+    kit: null,
+    missingGear: 0,
+    kudos: { count: 2, mine: false, users: [] },
+    comments: [],
     points: [
       { lat: 45.1, lng: 5.5, elevationM: 1200, timestamp: '2026-08-12T07:30:00.000Z' },
       { lat: 45.11, lng: 5.51, elevationM: 1550, timestamp: '2026-08-12T09:00:00.000Z' },
       { lat: 45.12, lng: 5.52, elevationM: 1890, timestamp: '2026-08-12T10:30:00.000Z' },
     ],
-    weather: null,
-    photos: [],
-    photosUnavailable: false,
-    participants: [],
-    kit: null,
-    comments: [],
-    kudos: { count: 2, viewerLiked: false },
+    traceSegments: [
+      [
+        { lat: 45.1, lng: 5.5, elevationM: 1200, timestamp: '2026-08-12T07:30:00.000Z' },
+        { lat: 45.11, lng: 5.51, elevationM: 1550, timestamp: '2026-08-12T09:00:00.000Z' },
+        { lat: 45.12, lng: 5.52, elevationM: 1890, timestamp: '2026-08-12T10:30:00.000Z' },
+      ],
+    ],
+    traceMasked: false,
+    traceFullyMasked: false,
+    traceError: null,
+    canEdit: true,
     provenance: {
       source: 'gpx',
-      fingerprint: 'abc123fingerprint',
+      fingerprint: `sha256:${'a'.repeat(64)}`,
       fileName: 'vercors.gpx',
       byteLength: 1024,
       importedAt: '2026-08-12T10:35:00.000Z',
@@ -59,6 +71,7 @@ function makeDetail(overrides: Partial<OutingDetail> = {}): OutingDetail {
     laps: [],
     summary: null,
     samples: [],
+    elapsedS: 10800,
     tags: ['montagne', 'entrainement'],
     revision: 2,
     quickEditPending: true,
@@ -154,22 +167,54 @@ describe('Lot A02 — Historique, fiche, corrections et cycle de vie (11 IDs)', 
   it('S1.25 / S1.26 : buildTcx respecte metricVisibility et tracePrivacy pour les tiers', () => {
     const detail = makeDetail({
       canEdit: false,
-      shareMetrics: { ...ALL_OUTING_METRICS, heartRate: false },
-      importSamples: [
+      metricVisibility: { ...ALL_OUTING_METRICS, heartRate: false, cadence: false, power: false },
+      samples: [
         {
-          recordedAt: '2026-08-12T08:00:00.000Z',
+          index: 0,
+          origin: 'device',
+          recordedAt: '2026-08-12T07:30:00.000Z',
+          lapIndex: null,
+          distanceM: 5000,
+          altitudeM: 1200,
+          speedMps: 2.5,
           heartRateBpm: 162,
           cadenceRpm: 80,
-          powerW: null,
+          cadenceSpm: null,
+          powerW: 210,
           temperatureC: null,
-          distanceM: 5000,
         },
       ],
     });
     const tcx = buildTcx(detail);
     expect(tcx).toContain('<TrainingCenterDatabase');
     expect(tcx).toContain('<LatitudeDegrees>45.1</LatitudeDegrees>');
-    // La FC est masquée par metricVisibility pour le tiers
+    // La FC, la cadence et la puissance sont masquées par metricVisibility pour le tiers
     expect(tcx).not.toContain('<HeartRateBpm>');
+    expect(tcx).not.toContain('<Cadence>');
+    expect(tcx).not.toContain('<Watts>');
+
+    // Quand les métriques sont autorisées, elles sont réellement émises
+    const allowed = makeDetail({
+      samples: [
+        {
+          index: 0,
+          origin: 'device',
+          recordedAt: '2026-08-12T07:30:00.000Z',
+          lapIndex: null,
+          distanceM: 5000,
+          altitudeM: 1200,
+          speedMps: 2.5,
+          heartRateBpm: 162,
+          cadenceRpm: 80,
+          cadenceSpm: null,
+          powerW: 210,
+          temperatureC: null,
+        },
+      ],
+    });
+    const tcxAllowed = buildTcx(allowed);
+    expect(tcxAllowed).toContain('<HeartRateBpm>162</HeartRateBpm>');
+    expect(tcxAllowed).toContain('<Cadence>80</Cadence>');
+    expect(tcxAllowed).toContain('<Watts>210</Watts>');
   });
 });

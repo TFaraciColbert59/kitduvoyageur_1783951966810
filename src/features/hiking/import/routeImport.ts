@@ -5,7 +5,7 @@
  */
 
 import type { NormalizedTraceWaypoint } from './model';
-import { computePathDistanceM, snapTraceToTrails, type GeoCoord } from './snapToTrails';
+import { computePathDistanceM, deriveTraceCorridors, snapTraceToTrails, type GeoCoord } from './snapToTrails';
 
 export interface RouteImportRequestInput {
   title: string;
@@ -17,6 +17,7 @@ export interface RouteImportRequestInput {
   points: Array<{ lat: number; lng: number; altitudeM?: number | null }>;
   waypoints?: NormalizedTraceWaypoint[];
   visibility?: 'private' | 'public' | 'collective_anonymized';
+  trailCorridors?: ReadonlyArray<readonly GeoCoord[]>;
 }
 
 export interface ValidatedRouteImport {
@@ -30,6 +31,8 @@ export interface ValidatedRouteImport {
   elevationGainM: number;
   originalPoints: GeoCoord[];
   snappedPoints: GeoCoord[];
+  snappedPointCount: number;
+  meanDeviationM: number;
   waypoints: NormalizedTraceWaypoint[];
   visibility: 'private' | 'public' | 'collective_anonymized';
 }
@@ -56,7 +59,10 @@ function computeGainM(points: readonly GeoCoord[]): number {
   return Math.round(gain);
 }
 
-export function validateRouteImportInput(input: RouteImportRequestInput): ValidatedRouteImport {
+export function validateRouteImportInput(
+  input: RouteImportRequestInput,
+  externalCorridors: ReadonlyArray<readonly GeoCoord[]> = []
+): ValidatedRouteImport {
   const title = (input.title || '').trim().slice(0, 160);
   if (!title) {
     throw new Error('Le titre du parcours est requis.');
@@ -99,7 +105,16 @@ export function validateRouteImportInput(input: RouteImportRequestInput): Valida
   }
 
   const geometryMode = input.geometryMode === 'snapped' ? 'snapped' : 'original';
-  const snapped = snapTraceToTrails(originalPoints);
+  const suppliedCorridors: Array<readonly GeoCoord[]> = [
+    ...externalCorridors,
+    ...(Array.isArray(input.trailCorridors) ? input.trailCorridors : []),
+  ];
+  // K6.03 : recalage réel dans tous les cas. Quand aucun corridor de sentiers
+  // externe n'est fourni, on dérive un corridor de référence depuis le tracé
+  // (décimé + lissé) au lieu de projeter dans le vide.
+  const corridors: Array<readonly GeoCoord[]> =
+    suppliedCorridors.length > 0 ? suppliedCorridors : deriveTraceCorridors(originalPoints);
+  const snapped = snapTraceToTrails(originalPoints, corridors);
   const activePoints = geometryMode === 'snapped' ? snapped.points : originalPoints;
   const distanceKm = Math.round((computePathDistanceM(activePoints) / 1000) * 100) / 100;
   const elevationGainM = computeGainM(activePoints);
@@ -140,6 +155,8 @@ export function validateRouteImportInput(input: RouteImportRequestInput): Valida
     elevationGainM,
     originalPoints,
     snappedPoints: snapped.points,
+    snappedPointCount: snapped.snappedPointCount,
+    meanDeviationM: snapped.meanDeviationM,
     waypoints,
     visibility:
       input.visibility === 'public' || input.visibility === 'collective_anonymized'

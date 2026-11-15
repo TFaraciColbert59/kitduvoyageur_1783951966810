@@ -27,10 +27,24 @@ function sanitizeFilename(raw: string): string {
   );
 }
 
-function pointsFromGeoJsonGeometry(geometry: unknown): GeoCoord[] {
-  if (!geometry || typeof geometry !== 'object') return [];
-  const geo = geometry as { type?: string; coordinates?: unknown };
-  const out: GeoCoord[] = [];
+function extractCoords(geometry: unknown, out: GeoCoord[]): void {
+  if (!geometry || typeof geometry !== 'object') return;
+  const geo = geometry as {
+    type?: string;
+    coordinates?: unknown;
+    geometry?: unknown;
+    features?: Array<{ geometry?: unknown }>;
+  };
+  if (geo.type === 'Feature' && geo.geometry) {
+    extractCoords(geo.geometry, out);
+    return;
+  }
+  if (geo.type === 'FeatureCollection' && Array.isArray(geo.features)) {
+    for (const f of geo.features) {
+      if (f?.geometry) extractCoords(f.geometry, out);
+    }
+    return;
+  }
   if (geo.type === 'LineString' && Array.isArray(geo.coordinates)) {
     for (const c of geo.coordinates) {
       if (Array.isArray(c) && c.length >= 2 && typeof c[0] === 'number' && typeof c[1] === 'number') {
@@ -47,6 +61,19 @@ function pointsFromGeoJsonGeometry(geometry: unknown): GeoCoord[] {
       }
     }
   }
+}
+
+function cachedRouteGeometry(cachedRoute: unknown): unknown {
+  if (!cachedRoute || typeof cachedRoute !== 'object') return null;
+  const route = cachedRoute as { geojson?: unknown; geometry?: unknown };
+  // `ExternalRouteDetail.geojson` est la source de vérité ; `geometry`
+  // reste acceptée pour les entrées de cache antérieures à la migration.
+  return route.geojson ?? route.geometry ?? null;
+}
+
+function pointsFromGeoJsonGeometry(geometry: unknown): GeoCoord[] {
+  const out: GeoCoord[] = [];
+  extractCoords(geometry, out);
   return out;
 }
 
@@ -97,12 +124,13 @@ export async function GET(
       routeName = hikingRoute.name || routeName;
       if (hikingRoute.osm_relation_id) {
         const cached = osmRouteDetailCache.get(`route-detail:${hikingRoute.osm_relation_id}`);
-        if (cached?.data?.route?.geometry) {
-          points = pointsFromGeoJsonGeometry(cached.data.route.geometry);
+        const cachedGeometry = cached?.data?.route ? cachedRouteGeometry(cached.data.route) : null;
+        if (cachedGeometry) {
+          points = pointsFromGeoJsonGeometry(cachedGeometry);
         } else {
           const raw = await queryRouteDetail(hikingRoute.osm_relation_id);
           const norm = normalizeOsmRelationDetail(raw);
-          if (norm?.geometry) points = pointsFromGeoJsonGeometry(norm.geometry);
+          if (norm?.geojson) points = pointsFromGeoJsonGeometry(norm.geojson);
         }
       }
     }
@@ -116,7 +144,7 @@ export async function GET(
     const cached = osmRouteDetailCache.get(`route-detail:${numericOsmId}`);
     if (cached?.data?.route) {
       routeName = cached.data.route.name || routeName;
-      points = pointsFromGeoJsonGeometry(cached.data.route.geometry);
+      points = pointsFromGeoJsonGeometry(cachedRouteGeometry(cached.data.route));
     } else {
       try {
         const raw = await queryRouteDetail(numericOsmId);
@@ -125,7 +153,7 @@ export async function GET(
           return fail('not_found', 'Itinéraire OSM introuvable.');
         }
         routeName = norm.name || routeName;
-        points = pointsFromGeoJsonGeometry(norm.geometry);
+        points = pointsFromGeoJsonGeometry(norm.geojson);
       } catch {
         return fail('server', 'Impossible de charger la géométrie de cet itinéraire.');
       }

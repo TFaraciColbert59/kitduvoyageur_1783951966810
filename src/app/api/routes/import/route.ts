@@ -4,7 +4,7 @@
  */
 
 import { NextRequest } from 'next/server';
-import { requireUser, isAuthError } from '@/lib/api/auth';
+import { requireUser } from '@/lib/api/requireUser';
 import { fail, ok } from '@/lib/api/respond';
 import { createClient } from '@/lib/supabase/server';
 import {
@@ -14,7 +14,7 @@ import {
 
 export async function GET() {
   const auth = await requireUser();
-  if (isAuthError(auth)) return auth;
+  if (!auth.ok) return auth.response;
 
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -35,7 +35,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   const auth = await requireUser();
-  if (isAuthError(auth)) return auth;
+  if (!auth.ok) return auth.response;
 
   let body: RouteImportRequestInput;
   try {

@@ -97,14 +97,15 @@ export function parseGpx(
 
   const issues: TraceImportIssue[] = [];
   let issueLimitEmitted = false;
-  const pushIssue = (code: TraceImportIssueCode, message: string) => {
+  const pushIssue = (code: TraceImportIssueCode, message: string, path = '$') => {
     if (issues.length < limits.maxIssues) {
-      issues.push({ code, message });
+      issues.push({ code, message, path });
     } else if (!issueLimitEmitted) {
       issueLimitEmitted = true;
       issues.push({
         code: 'issue-limit',
         message: 'Certaines alertes supplémentaires ont été omises.',
+        path,
       });
     }
   };
