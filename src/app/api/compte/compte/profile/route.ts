@@ -30,6 +30,23 @@ const Patch = z
         orders: z.boolean().optional(),
         system: z.boolean().optional(),
         quietHours: z.boolean().optional(),
+        kudos: z.boolean().optional(),
+        comments: z.boolean().optional(),
+        segmentsPr: z.boolean().optional(),
+        challenges: z.boolean().optional(),
+        clubEvents: z.boolean().optional(),
+        gearMileageAlerts: z.boolean().optional(),
+        activityDigest: z.boolean().optional(),
+        quietHoursStart: z
+          .string()
+          .regex(/^([01]\d|2[0-3]):[0-5]\d$/)
+          .nullable()
+          .optional(),
+        quietHoursEnd: z
+          .string()
+          .regex(/^([01]\d|2[0-3]):[0-5]\d$/)
+          .nullable()
+          .optional(),
       })
       .strict()
       .optional(),

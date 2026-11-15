@@ -233,14 +233,24 @@ export function ConsentSettingsSheet({ onClose }: { onClose: () => void }) {
 
             <section className="lkdv-consent-section" aria-labelledby="lkdv-consent-providers">
               <header className="lkdv-consent-section-head">
-                <h3 id="lkdv-consent-providers">Fournisseurs</h3>
-                <small>Aucune connexion</small>
+                <h3 id="lkdv-consent-providers">Fournisseurs &amp; appareils</h3>
+                <small>Surfaces dédiées</small>
               </header>
               <p className="lkdv-consent-note">
-                Le contrat actuel ne stocke qu’un consentement par finalité, sans identifiant de fournisseur,
-                de compte externe ni de jeton. La granularité par fournisseur reste donc indisponible ; elle ne
-                sera exposée qu’avec les connecteurs D01/D02 et leur contrat serveur.
+                Les autorisations RGPD ci-dessus gouvernent les usages généraux. La gestion par fournisseur
+                OAuth, les capteurs BLE/Santé et les montres s’effectue sur leurs écrans dédiés :
               </p>
+              <div className="lkdv-apill-row is-start" role="navigation" aria-label="Gestion des appareils et services">
+                <a className="lkdv-compte-pref on" href="/compte/connecteurs">
+                  Connecteurs GPS &amp; Strava
+                </a>
+                <a className="lkdv-compte-pref on" href="/compte/sensors">
+                  Capteurs BLE &amp; Santé
+                </a>
+                <a className="lkdv-compte-pref on" href="/compte/montres">
+                  Montres connectées
+                </a>
+              </div>
               <div className="lkdv-consent-list">
                 {query.data.providers.map((provider) => (
                   <ProviderRow key={provider.id} provider={provider} />

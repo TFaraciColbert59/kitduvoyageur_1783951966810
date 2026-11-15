@@ -9,3 +9,4 @@ export * from './sessionQueue';
 export * from './offlinePacks';
 export * from './liveSync';
 export * from './companionProtocol';
+export * from './capacitorBridge';

@@ -92,6 +92,15 @@ export interface NotificationPrefs {
   orders: boolean;
   system: boolean;
   quietHours: boolean;
+  kudos?: boolean;
+  comments?: boolean;
+  segmentsPr?: boolean;
+  challenges?: boolean;
+  clubEvents?: boolean;
+  gearMileageAlerts?: boolean;
+  activityDigest?: boolean;
+  quietHoursStart?: string | null;
+  quietHoursEnd?: string | null;
 }
 
 export interface ProfileSettings {
@@ -236,7 +245,24 @@ const DEFAULT_PREFS: NotificationPrefs = {
   orders: true,
   system: true,
   quietHours: false,
+  kudos: true,
+  comments: true,
+  segmentsPr: true,
+  challenges: true,
+  clubEvents: true,
+  gearMileageAlerts: true,
+  activityDigest: false,
+  quietHoursStart: '22:00',
+  quietHoursEnd: '07:00',
 };
+
+function clockOrNull(value: unknown, fallback: string): string | null {
+  if (value === null) return null;
+  if (typeof value === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(value.trim())) {
+    return value.trim();
+  }
+  return fallback;
+}
 
 function parsePrefs(raw: unknown): NotificationPrefs {
   if (!raw || typeof raw !== 'object') return DEFAULT_PREFS;
@@ -247,6 +273,15 @@ function parsePrefs(raw: unknown): NotificationPrefs {
     orders: row.orders !== false,
     system: row.system !== false,
     quietHours: row.quietHours === true,
+    kudos: row.kudos !== false,
+    comments: row.comments !== false,
+    segmentsPr: row.segmentsPr !== false,
+    challenges: row.challenges !== false,
+    clubEvents: row.clubEvents !== false,
+    gearMileageAlerts: row.gearMileageAlerts !== false,
+    activityDigest: row.activityDigest === true,
+    quietHoursStart: clockOrNull(row.quietHoursStart, '22:00'),
+    quietHoursEnd: clockOrNull(row.quietHoursEnd, '07:00'),
   };
 }
 

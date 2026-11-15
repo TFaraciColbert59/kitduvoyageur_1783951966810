@@ -19,6 +19,7 @@ import type {
   OutingVisibility,
 } from '@/features/compte/server/sorties';
 import type { OutingMetricKey } from '@/features/compte/domain/metricVisibility';
+import { estimateAvoidedCarbon } from '@/features/offers';
 import { OutingMetricSettings } from './OutingMetricSettings';
 import { OutingLaps } from './OutingLaps';
 import { OutingMetrics } from './OutingMetrics';
@@ -116,6 +117,14 @@ export function OutingSummary({
   // l'interface ne l'affiche pas si un rôle de lecture non propriétaire arrive
   // un jour à la recevoir.
   const provenance = detail.canEdit ? detail.provenance : null;
+  const distanceAuthorized =
+    detail.canEdit || outingMetricVisible(detail, 'distance');
+  const avoidedCarbon = estimateAvoidedCarbon({
+    sport: detail.sport,
+    distanceKm: detail.km,
+    authorized: distanceAuthorized,
+    titleOrTags: `${detail.title} ${detail.notes}`,
+  });
 
   return (
     <div className="lkdv-sortie-summary">
@@ -186,6 +195,27 @@ export function OutingSummary({
           <b>{metricDisplay(detail, 'duration', detail.durationS, (value) => formatDuration(value))}</b>
         </div>
       </div>
+      {avoidedCarbon.eligible && avoidedCarbon.kgCo2Avoided !== null ? (
+        <section
+          className="lkdv-sortie-section lkdv-sortie-carbon"
+          aria-label="Estimation de carbone évité"
+        >
+          <header>
+            <b>Carbone évité</b>
+            <span>
+              −
+              {new Intl.NumberFormat('fr-FR', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              }).format(avoidedCarbon.kgCo2Avoided)}{' '}
+              kg CO2e
+            </span>
+          </header>
+          <p className="lkdv-sortie-proof">
+            {avoidedCarbon.assumptions} {avoidedCarbon.scope}
+          </p>
+        </section>
+      ) : null}
       {metricsHidden ? (
         <p className="lkdv-sortie-notes">
           Certaines métriques d’effort ne sont pas partagées par le propriétaire.

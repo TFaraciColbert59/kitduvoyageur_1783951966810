@@ -1,13 +1,15 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { Backpack, Bike, PackagePlus, Trash2 } from 'lucide-react';
+import { Backpack, Bike, Gauge, PackagePlus, Trash2 } from 'lucide-react';
+import { AccessibleDrawer } from '@/components/accessibility';
 import { ActionPill } from '@/components/ui/ActionPill';
 import type { OutingGearItem, OutingKit } from '@/features/compte/server/sorties';
 import { DrawerEmpty } from '../shell/DrawerShell';
 import { generatedProductImage } from '../cards/productImage';
 import { formatWeight } from './shared';
 import { GearAssociationSheet } from '../gear/GearAssociationSheet';
+import { GearMileagePanel } from '../gear/GearMileagePanel';
 
 export interface OutingGearProps {
   gear: OutingGearItem[];
@@ -65,6 +67,8 @@ export function OutingGear({
   onAssociated,
 }: OutingGearProps) {
   const [associating, setAssociating] = useState(false);
+  const [inspectingGear, setInspectingGear] = useState<OutingGearItem | null>(null);
+  const [inspectTrigger, setInspectTrigger] = useState<HTMLElement | null>(null);
   const total = gear.reduce((sum, item) => sum + (item.weightG ?? 0), 0);
   const categories = useMemo(() => {
     const values = Array.from(new Set(gear.map(categoryOf))).sort((a, b) => a.localeCompare(b, 'fr'));
@@ -157,6 +161,20 @@ export function OutingGear({
                       </div>
                     ) : null}
                   </div>
+                  {canEdit && item.gearItemId ? (
+                    <button
+                      type="button"
+                      className="lkdv-sortie-gear-mileage"
+                      onClick={(event) => {
+                        setInspectTrigger(event.currentTarget);
+                        setInspectingGear(item);
+                      }}
+                      aria-label={`Suivi kilométrique de ${item.name}`}
+                      title="Kilométrage et seuils d’usure"
+                    >
+                      <Gauge size={13} aria-hidden="true" />
+                    </button>
+                  ) : null}
                   {canEdit ? (
                     <button
                       type="button"
@@ -196,6 +214,22 @@ export function OutingGear({
           onAttached={onAssociated}
         />
       ) : null}
+
+      <AccessibleDrawer
+        open={Boolean(inspectingGear?.gearItemId)}
+        onClose={() => setInspectingGear(null)}
+        title={inspectingGear ? `Suivi · ${inspectingGear.name}` : 'Suivi kilométrique'}
+        description="Kilométrage cumulé, seuils d’entretien et composants."
+        restoreFocusTo={inspectTrigger}
+      >
+        {inspectingGear?.gearItemId ? (
+          <GearMileagePanel
+            gearItemId={inspectingGear.gearItemId}
+            gearName={inspectingGear.name}
+            gearCategory={inspectingGear.category}
+          />
+        ) : null}
+      </AccessibleDrawer>
     </div>
   );
 }
