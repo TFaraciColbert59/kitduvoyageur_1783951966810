@@ -115,8 +115,8 @@ export async function GET(request: NextRequest) {
       incidents,
       source,
       points: [
-        { lat: minLat, lng: minLng },
-        { lat: maxLat, lng: maxLng },
+        { lat: minLat, lon: minLng },
+        { lat: maxLat, lon: maxLng },
       ],
     });
     return NextResponse.json(

@@ -244,7 +244,11 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    if (clubIdParam && context.viewerClubIds?.has(clubIdParam)) {
+    const viewerClubIds = context.viewerClubIds;
+    const clubIdList: readonly string[] =
+      viewerClubIds == null ? [] : Array.from(viewerClubIds as Iterable<string>);
+    const isClubMember = clubIdParam != null && clubIdList.includes(clubIdParam);
+    if (isClubMember) {
       const weekEndIso = new Date().toISOString();
       const { data: clubWeekRows } = await supabase.rpc('lkdv_club_week_activities', {
         p_club: clubIdParam,

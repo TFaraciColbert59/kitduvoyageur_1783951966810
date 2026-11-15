@@ -30,6 +30,7 @@ import { OverlaySheet } from '@/components/compte/overlay/OverlaySheet';
 import { MediaSharingHub, type MediaSharingTab } from '@/components/media-sharing/MediaSharingHub';
 import { buildOutingMediaSharingBundle } from '@/lib/media-sharing/outingAdapter';
 import { createLifecycleApi } from '@/components/compte/lifecycle/api';
+import type { Sport } from '@/features/explorer-v2/state/types';
 
 async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, {
@@ -231,15 +232,15 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
                       });
                       await lifecycleApi.updateMetadata(outingId, {
                         title: patch.title,
-                        description: patch.notes,
-                        sport: patch.sport,
+                        notes: patch.notes,
+                        sport: patch.sport as Sport | undefined,
                         tags: patch.tags,
                       });
                       window.dispatchEvent(new CustomEvent('lkdv:outings-changed'));
                     },
                     'Sortie mise à jour'
-                  );
-                }}
+                  )
+                }
                 onSaveMetrics={saveMetrics}
                 onResetMetrics={resetMetrics}
                 onShare={openAudience}

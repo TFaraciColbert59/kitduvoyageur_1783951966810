@@ -73,7 +73,7 @@ describe('ExplorerV2 S03 & P02 wiring', () => {
           ownerUserId: 'user-1',
           status: 'active' as const,
           startedAtMs: 1_700_000_000_000,
-          updatedAtMs: 1_700_000_010_000,
+          endedAtMs: null,
         },
       ],
       links: [],
@@ -93,9 +93,9 @@ describe('ExplorerV2 S03 & P02 wiring', () => {
       return {
         sessionId: 'sess-beacon-1',
         ownerUserId: 'user-1',
-        status: 'ended',
+        status: 'ended' as const,
         startedAtMs: 1_700_000_000_000,
-        updatedAtMs: 1_700_000_020_000,
+        endedAtMs: 1_700_000_020_000,
       };
     });
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(

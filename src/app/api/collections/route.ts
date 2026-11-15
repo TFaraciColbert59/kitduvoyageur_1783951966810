@@ -154,18 +154,32 @@ export async function POST(request: NextRequest) {
           viewer,
         ),
       );
-    case 'save_highlight_to_places':
-      return respond(
-        service.saveToPlaces(body.highlightId, { id: viewer.id, name: displayName }, viewer),
+    case 'save_highlight_to_places': {
+      const saved = service.saveHighlight(
+        body.highlightId,
+        { id: viewer.id, name: displayName },
+        viewer,
       );
+      if (!saved.ok) {
+        const status =
+          saved.error.code === 'not-found' ? 404 : saved.error.code === 'forbidden' ? 403 : 400;
+        return NextResponse.json(
+          { error: saved.error.message, code: saved.error.code },
+          { status },
+        );
+      }
+      return NextResponse.json({ collection: saved.value.collection });
+    }
     case 'move_item':
-      return respond(service.moveItem(body.collectionId, body.itemId, body.direction, viewer));
+      return respond(service.move(body.collectionId, body.itemId, body.direction, viewer));
     case 'remove_item':
       return respond(service.removeItem(body.collectionId, body.itemId, viewer));
     case 'visibility':
-      return respond(service.setVisibility(body.collectionId, body.visibility, viewer));
+      return respond(service.update(body.collectionId, { visibility: body.visibility }, viewer));
     case 'share': {
-      const res = service.share(body.collectionId, viewer, body.expiresInHours);
+      const res = service.share(body.collectionId, viewer, {
+        expiresInDays: body.expiresInHours != null ? body.expiresInHours / 24 : undefined,
+      });
       if (!res.ok) {
         const status =
           res.error.code === 'not-found' ? 404 : res.error.code === 'forbidden' ? 403 : 400;

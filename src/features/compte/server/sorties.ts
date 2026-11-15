@@ -1001,7 +1001,6 @@ export async function loadOutingDetail(
       }
     }
   }
-  }
 
   const { data: sessionData, error: sessionError } = sessionResult;
   if (sessionError || !sessionData) return null;
@@ -1029,11 +1028,12 @@ export async function loadOutingDetail(
 
   // Lot A02 — Lecture optionnelle de la surcouche versionnée (cycle de vie,
   // recadrage, corrections, corbeille 30 j). Tolérante aux environnements sans table.
-  let lifecycleOverlay: {
+  type LifecycleOverlay = {
     lifecycle_status?: string | null;
     revision?: number | null;
     record?: Partial<LifecycleActivityRecord> | null;
-  } | null = null;
+  };
+  let lifecycleOverlay: LifecycleOverlay | null = null;
   try {
     const candidateIds = [session.id, session.activity_session_id].filter(
       (id): id is string => typeof id === 'string' && id.length > 0,
@@ -1047,7 +1047,7 @@ export async function loadOutingDetail(
         .limit(1)
         .maybeSingle();
       if (!overlayError && overlayData) {
-        lifecycleOverlay = overlayData as typeof lifecycleOverlay;
+        lifecycleOverlay = overlayData as unknown as LifecycleOverlay;
       }
     }
   } catch {
@@ -1349,10 +1349,7 @@ export async function loadOutingDetail(
   const baseRawSegments = parsePositionSegments(session.positions_timed, session.positions_geojson);
   const overlayPoints = Array.isArray(overlayRecord?.points)
     ? overlayRecord.points
-        .filter(
-          (pt): pt is { lat: number; lng: number; elevationM?: number | null; timestamp?: string | null } =>
-            Boolean(pt) && typeof pt.lat === 'number' && typeof pt.lng === 'number',
-        )
+        .filter((pt) => Boolean(pt) && typeof pt.lat === 'number' && typeof pt.lng === 'number')
         .map((pt) => ({
           lat: pt.lat,
           lng: pt.lng,
@@ -1514,8 +1511,8 @@ export async function loadOutingDetail(
       ? overlayStats.movingTimeS
       : session.duration_seconds;
   const rawElapsedS =
-    typeof overlayStats?.elapsedS === 'number' && Number.isFinite(overlayStats.elapsedS)
-      ? overlayStats.elapsedS
+    typeof overlayStats?.elapsedTimeS === 'number' && Number.isFinite(overlayStats.elapsedTimeS)
+      ? overlayStats.elapsedTimeS
       : rawDurationS;
   const rawElevationGainM =
     typeof overlayStats?.elevationGainM === 'number' && Number.isFinite(overlayStats.elevationGainM)
@@ -1611,7 +1608,7 @@ export async function loadOutingDetail(
     samples: provenance ? samples : null,
     elapsedS: metricVisibility.duration ? rawElapsedS : null,
     tags: Array.isArray(overlayRecord?.tags)
-      ? overlayRecord.tags.filter((t): t is string => typeof t === 'string')
+      ? overlayRecord.tags.filter((t) => typeof t === 'string')
       : [],
     revision:
       typeof lifecycleOverlay?.revision === 'number'
@@ -2153,7 +2150,7 @@ export function buildTcx(detail: OutingDetail): string {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <TrainingCenterDatabase xmlns="http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2">
   <Activities>
-    <Activity Sport="${tcxSportAttr(detail.sport)}">
+    <Activity Sport="${tcxSportAttr(detail.sport ?? 'rando')}">
       <Id>${escapeXml(firstTimestamp)}</Id>
       <Lap StartTime="${escapeXml(firstTimestamp)}">
         <TotalTimeSeconds>${totalTime}</TotalTimeSeconds>

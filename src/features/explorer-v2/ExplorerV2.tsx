@@ -2587,7 +2587,7 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
 
       {activity ? (
         <ExplorerBeaconBar
-          center={me ?? state.center}
+          center={me ? [me.lng, me.lat] : state.center}
           online={online}
           onOpenSafety={() => {
             setSheetOpen(true);
@@ -2601,7 +2601,7 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
         <>
           <ExplorerLiveSegmentsPanel
             sport={activity.sport}
-            center={me ?? state.center}
+            center={me ? [me.lng, me.lat] : state.center}
             online={online}
             paused={Boolean(activity.paused || activity.autoPaused)}
             compactOverlay

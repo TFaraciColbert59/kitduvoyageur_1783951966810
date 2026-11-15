@@ -48,7 +48,15 @@ export interface HealthBridgeAvailability {
   platform: HealthPlatform;
   provider: HealthProvider | null;
   status: HealthBridgeStatus;
-  reason?: string;
+  reason?: string | null;
+}
+
+/** Résultat unitaire de `requestPermissions` du pont natif (un par scope demandé). */
+export interface HealthPermissionResult {
+  scope: HealthConsentScope;
+  granted: boolean;
+  status?: HealthBridgeStatus;
+  reason?: string | null;
 }
 
 export interface HealthWorkoutRecord {

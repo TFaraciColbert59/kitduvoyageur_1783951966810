@@ -622,6 +622,7 @@ export function ClubG02Workspace({
               weekStartIso: nowIso,
               weekEndIso: nowIso,
               entries: [],
+              excludedCount: 0,
             }
           }
           sports={leaderboardSports}

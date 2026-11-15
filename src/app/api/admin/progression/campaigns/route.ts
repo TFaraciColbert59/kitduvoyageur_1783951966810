@@ -115,7 +115,7 @@ export async function GET() {
     const privacy = await loadPrivacyContext(reader, auth.user.id);
 
     const campaigns = campaignRows.map((row) => {
-      const rule: CampaignEligibilityRule = {
+      const rule = {
         campaignId: row.campaign_id,
         sponsorId: row.sponsor_id,
         sponsorName: row.sponsor_name,
@@ -126,7 +126,7 @@ export async function GET() {
         minDistanceMeters: row.min_distance_meters ?? undefined,
         minElevationGainMeters: row.min_elevation_gain_meters ?? undefined,
         requiresPublicVisibility: row.requires_public_visibility ?? true,
-      };
+      } as CampaignEligibilityRule;
       const metrics = computeCampaignParticipationMetrics(rule, activities, profiles, privacy);
       return {
         ...rule,

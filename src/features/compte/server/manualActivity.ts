@@ -19,7 +19,7 @@ import {
   createSupabaseLifecycleStore,
   type LifecycleOverlayStore,
 } from './lifecycle';
-import { normalizeVisibility } from './sorties';
+import { normalizeVisibility, type OutingVisibility } from './sorties';
 
 export interface CreateManualActivityRequest extends ManualActivityInput {
   visibility?: 'private' | 'collective_anonymized' | null;
@@ -56,7 +56,7 @@ export interface ManualActivityDeps {
     distance_km: number;
     duration_seconds: number;
     elevation_gain_m: number;
-    visibility: 'private' | 'collective_anonymized';
+    visibility: OutingVisibility;
     variant_id: string | null;
     processing_status: string;
   }) => Promise<{ id: string }>;

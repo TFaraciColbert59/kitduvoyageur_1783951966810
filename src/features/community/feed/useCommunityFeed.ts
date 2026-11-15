@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import {
-  projectActivityCard,
+  projectActivityShare,
   type SportActivityCardVM,
 } from '@/features/community/g01/activityProjection';
 import { G01_ACTIVITY_SHARE_SCHEMA } from '@/features/community/g01/contracts';
@@ -249,7 +249,7 @@ export function useCommunityFeed(userId?: string) {
 
           let sportCard: SportActivityCardVM | null = null;
           if (isActivityShare) {
-            sportCard = projectActivityCard({
+            sportCard = projectActivityShare({
               post: {
                 id: row.id,
                 author_id: row.author_id,

@@ -132,7 +132,7 @@ export async function POST(request: NextRequest) {
 
     const parsed = PostSchema.safeParse(await request.json().catch(() => null));
     if (!parsed.success) {
-      return fail('validation', 'Requête de défi invalide.', 400);
+      return fail('bad_request', 'Requête de défi invalide.');
     }
 
     const now = new Date();
@@ -182,7 +182,7 @@ export async function POST(request: NextRequest) {
         invited_user_ids: Array.from(invitedIds),
       });
 
-      if (error) return fail('server', 'Impossible de créer le défi privé.', 500);
+      if (error) return fail('server', 'Impossible de créer le défi privé.');
       return ok({ id, invitedCount: invitedIds.size }, 201);
     }
 
@@ -216,7 +216,7 @@ export async function POST(request: NextRequest) {
         max_duration_sec: parsed.data.targetDurationSec,
       });
 
-      if (error) return fail('server', 'Impossible d’enregistrer l’objectif de meilleur effort.', 500);
+      if (error) return fail('server', 'Impossible d’enregistrer l’objectif de meilleur effort.');
       return ok({ id }, 201);
     }
 
@@ -228,7 +228,7 @@ export async function POST(request: NextRequest) {
       .maybeSingle();
 
     if (raceError || !raceRow || (raceRow as { kind?: string }).kind !== 'virtual_race') {
-      return fail('not_found', 'Course virtuelle introuvable.', 404);
+      return fail('not_found', 'Course virtuelle introuvable.');
     }
     if (
       parsed.data.action === 'register_race' &&
@@ -236,8 +236,7 @@ export async function POST(request: NextRequest) {
     ) {
       return fail(
         'conflict',
-        'Partenaire temporairement indisponible pour les inscriptions.',
-        409
+        'Partenaire temporairement indisponible pour les inscriptions.'
       );
     }
 
@@ -255,7 +254,7 @@ export async function POST(request: NextRequest) {
         { onConflict: 'challenge_id,user_id' }
       );
 
-    if (regError) return fail('server', 'Impossible de mettre à jour l’inscription.', 500);
+    if (regError) return fail('server', 'Impossible de mettre à jour l’inscription.');
     return ok({ raceId: parsed.data.raceId, status: nextStatus });
   } catch (error) {
     console.error('[API /api/rankings/challenges POST]', error);

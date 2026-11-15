@@ -319,6 +319,8 @@ export function OutingAudienceSheet({
     } finally {
       setShareBusy(false);
     }
+  };
+
   const close = () => {
     if (busy) return;
     onClose();

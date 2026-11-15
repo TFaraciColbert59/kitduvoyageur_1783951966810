@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { Award, Compass, Download, Flag, Flame, Gauge, MapPin, Play, Plus, Users, Wind, Zap } from 'lucide-react';
+import { Award, Compass, Download, Flag, Flame, Gauge, MapPin, Palette, Play, Plus, Users, Wind, Zap } from 'lucide-react';
 import { OutingTraceToolsPanel } from './OutingLifecyclePanels';
 import { ActionPill } from '@/components/ui/ActionPill';
 import { OverlaySheet } from '@/components/compte/overlay/OverlaySheet';
@@ -417,8 +417,9 @@ export function OutingTrace({ detail, onExport, onOpenMediaHub, onUpdated }: Out
           ).map((mode) => (
             <ActionPill
               key={mode.id}
-              tone={colorMode === mode.id ? 'primary' : 'default'}
+              tone={colorMode === mode.id ? 'primary' : 'glass'}
               label={mode.allowed ? mode.label : `${mode.label} (masqué)`}
+              icon={<Palette size={13} aria-hidden="true" />}
               text={mode.allowed ? mode.label : `${mode.label} · masqué`}
               disabled={!mode.allowed}
               onClick={() => {

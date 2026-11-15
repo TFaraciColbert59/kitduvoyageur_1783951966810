@@ -126,8 +126,8 @@ describe('Lot A04 — Télémétrie, splits, zones, GAP, puissance et RPE', () =
       timestampMs: Date.parse(p.timestamp!),
     }));
     const res = computeSlopeAdjustedPace('trail', gapPoints);
-    expect(res.status).toBe('available');
-    if (res.status === 'available') {
+    expect(res?.status).toBe('available');
+    if (res && res.status === 'available') {
       expect(res.quality).toBe('estimated');
       expect(res.method).toBe('minetti-2002-v1');
       expect(res.proprietaryEquivalent).toBe(false);

@@ -72,8 +72,8 @@ export function C03DiscoverSection() {
         setCollectionHits(
           (json.items ?? []).map((collection) => ({
             collection,
-            matchedField: 'title' as const,
-            snippet: collection.description || collection.region || 'Collection',
+            score: 1,
+            reason: 'title' as const,
           })),
         );
       }
@@ -197,8 +197,8 @@ export function C03DiscoverSection() {
       .filter((col) => !collectionHits.some((h) => h.collection.id === col.id))
       .map((collection) => ({
         collection,
-        matchedField: 'theme' as const,
-        snippet: collection.theme ?? 'Sélection éditoriale',
+        score: 0.5,
+        reason: 'theme' as const,
       })),
   ];
 

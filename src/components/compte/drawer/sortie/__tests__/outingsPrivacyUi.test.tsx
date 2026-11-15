@@ -11,6 +11,7 @@ vi.mock('@/lib/supabase/client', () => ({
     auth: {
       resetPasswordForEmail: vi.fn(async () => ({ error: null })),
       signOut: vi.fn(async () => ({ error: null })),
+      getUser: vi.fn(async () => ({ data: { user: null } })),
     },
   }),
 }));

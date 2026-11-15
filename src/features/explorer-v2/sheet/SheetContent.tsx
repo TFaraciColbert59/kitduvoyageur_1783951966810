@@ -1140,11 +1140,11 @@ function PoiTabs(ctx: SheetContext, kind: string): SheetTab[] {
               title={saved ? 'Enregistré dans Mes lieux' : 'Enregistrer dans Mes lieux'}
               sub="Accès rapide hors carte dans Couches & fonds"
               badge={{ label: saved ? 'Enregistré' : 'Sauver', tone: saved ? 'good' : 'muted' }}
-              onClick={() =>
+                onClick={() =>
                 ctx.state.toggleSavedPlace({
                   id: poi.id,
                   name: poi.name,
-                  kind: kind,
+                  kind: kind as 'route' | 'poi' | 'highlight' | 'place',
                   lat: poi.lat,
                   lng: poi.lon,
                 })

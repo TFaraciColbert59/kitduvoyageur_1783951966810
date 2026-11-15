@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (body.action === 'vote') {
-    const res = service.vote(body.highlightId, body.value, viewer);
+    const res = service.vote(body.highlightId, viewer, body.value);
     if (!res.ok) {
       const status =
         res.error.code === 'not-found' ? 404 : res.error.code === 'forbidden' ? 403 : 400;
@@ -153,7 +153,7 @@ export async function POST(request: NextRequest) {
   const res = service.contributePhoto(
     body.highlightId,
     {
-      authorId: viewer.id,
+      author: { id: viewer.id, name: displayName },
       url: body.url,
       caption: body.caption ?? null,
       exifStripped: body.exifStripped,

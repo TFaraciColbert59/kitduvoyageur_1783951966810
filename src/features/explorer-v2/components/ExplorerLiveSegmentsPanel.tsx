@@ -24,27 +24,27 @@ const DEVICE_PRESETS: Array<{ id: DeviceCapability['platform']; label: string; c
   {
     id: 'garmin_connect',
     label: 'Garmin Connect',
-    cap: { platform: 'garmin_connect', supportsLiveSegments: true, maxStarredSegments: 100, bluetoothConnected: true },
+    cap: { deviceId: 'preset-garmin_connect', deviceName: 'Garmin Connect', platform: 'garmin_connect', supportsLiveSegments: true, maxSyncedSegments: 100, supportedSports: ['cycling', 'running', 'hiking', 'trail', 'gravel'], hasPermission: true, isOnline: true },
   },
   {
     id: 'wahoo_elemnt',
     label: 'Wahoo ELEMNT',
-    cap: { platform: 'wahoo_elemnt', supportsLiveSegments: true, maxStarredSegments: 50, bluetoothConnected: true },
+    cap: { deviceId: 'preset-wahoo_elemnt', deviceName: 'Wahoo ELEMNT', platform: 'wahoo_elemnt', supportsLiveSegments: true, maxSyncedSegments: 50, supportedSports: ['cycling', 'running', 'hiking', 'trail', 'gravel'], hasPermission: true, isOnline: true },
   },
   {
     id: 'hammerhead_karoo',
     label: 'Hammerhead Karoo',
-    cap: { platform: 'hammerhead_karoo', supportsLiveSegments: true, maxStarredSegments: 100, bluetoothConnected: true },
+    cap: { deviceId: 'preset-hammerhead_karoo', deviceName: 'Hammerhead Karoo', platform: 'hammerhead_karoo', supportsLiveSegments: true, maxSyncedSegments: 100, supportedSports: ['cycling', 'running', 'hiking', 'trail', 'gravel'], hasPermission: true, isOnline: true },
   },
   {
     id: 'apple_watch',
     label: 'Apple Watch',
-    cap: { platform: 'apple_watch', supportsLiveSegments: true, maxStarredSegments: 25, bluetoothConnected: true },
+    cap: { deviceId: 'preset-apple_watch', deviceName: 'Apple Watch', platform: 'apple_watch', supportsLiveSegments: true, maxSyncedSegments: 25, supportedSports: ['cycling', 'running', 'hiking', 'trail', 'gravel'], hasPermission: true, isOnline: true },
   },
   {
     id: 'wear_os',
     label: 'Wear OS',
-    cap: { platform: 'wear_os', supportsLiveSegments: true, maxStarredSegments: 25, bluetoothConnected: true },
+    cap: { deviceId: 'preset-wear_os', deviceName: 'Wear OS', platform: 'wear_os', supportsLiveSegments: true, maxSyncedSegments: 25, supportedSports: ['cycling', 'running', 'hiking', 'trail', 'gravel'], hasPermission: true, isOnline: true },
   },
 ];
 

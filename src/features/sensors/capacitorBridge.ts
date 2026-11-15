@@ -1,11 +1,12 @@
 import { Capacitor, registerPlugin } from '@capacitor/core';
 import type { BleScanResult, BleTransportAdapter } from './bleManager';
-import { applyNativePermissionResult } from './consentP01';
 import type {
   BleServiceKind,
   HealthBridgeAvailability,
   HealthConsentScope,
   HealthPermissionResult,
+  HealthPlatform,
+  HealthProvider,
   HealthSyncResult,
   HealthWorkoutReadResult,
   HealthWorkoutRecord,
@@ -124,6 +125,17 @@ export function inspectSensorsNativeRuntime(): SensorsNativeRuntimeStatus {
  * ou si le plugin Swift/Kotlin n'est pas compilé dans la build courante.
  */
 export class CapacitorHealthBridgeAdapter implements NativeHealthBridgeAdapter {
+  get platform(): HealthPlatform {
+    if (!isCapacitorNativeRuntime()) return 'web';
+    return Capacitor.getPlatform?.() === 'ios' ? 'ios' : 'android';
+  }
+
+  get provider(): HealthProvider | null {
+    if (this.platform === 'ios') return 'apple_healthkit';
+    if (this.platform === 'android') return 'android_health_connect';
+    return null;
+  }
+
   async getAvailability(): Promise<HealthBridgeAvailability> {
     if (!isCapacitorNativeRuntime()) {
       return {
@@ -163,20 +175,54 @@ export class CapacitorHealthBridgeAdapter implements NativeHealthBridgeAdapter {
     }
   }
 
+  private unavailablePermissionResults(
+    scopes: readonly HealthConsentScope[],
+    reason: string,
+  ): HealthPermissionResult[] {
+    return scopes.map((scope) => ({
+      scope,
+      granted: false,
+      status: 'native_bridge_unavailable' as const,
+      reason,
+    }));
+  }
+
   async requestPermissions(
     scopes: readonly HealthConsentScope[],
   ): Promise<HealthPermissionResult[]> {
     if (!isCapacitorNativeRuntime()) {
-      return applyNativePermissionResult(scopes, 'native_bridge_unavailable');
+      return this.unavailablePermissionResults(scopes, 'native_bridge_unavailable');
     }
     try {
       const res = await nativeHealthPlugin.requestPermissions({ scopes: [...scopes] });
       if (Array.isArray(res?.results) && res.results.length > 0) {
         return res.results;
       }
-      return applyNativePermissionResult(scopes, 'native_bridge_unavailable');
+      return this.unavailablePermissionResults(scopes, 'native_bridge_unavailable');
     } catch {
-      return applyNativePermissionResult(scopes, 'native_bridge_unavailable');
+      return this.unavailablePermissionResults(scopes, 'native_bridge_unavailable');
+    }
+  }
+
+  async requestNativePermissions(
+    scopes: HealthConsentScope[],
+  ): Promise<{
+    granted: HealthConsentScope[];
+    denied: HealthConsentScope[];
+    unavailable?: boolean;
+  }> {
+    if (!isCapacitorNativeRuntime()) {
+      return { granted: [], denied: [...scopes], unavailable: true };
+    }
+    try {
+      const results = await this.requestPermissions(scopes);
+      return {
+        granted: results.filter((r) => r.granted).map((r) => r.scope),
+        denied: results.filter((r) => !r.granted).map((r) => r.scope),
+        unavailable: results.length === 0 ? true : undefined,
+      };
+    } catch {
+      return { granted: [], denied: [...scopes], unavailable: true };
     }
   }
 

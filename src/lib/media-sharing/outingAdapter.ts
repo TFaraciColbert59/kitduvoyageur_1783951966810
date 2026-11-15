@@ -213,7 +213,7 @@ export function buildOutingMediaSharingBundle(detail: OutingDetail): OutingMedia
       mimeType: isVideo ? 'video/mp4' : 'image/jpeg',
       caption: photo.caption || null,
       orderIndex: index,
-      capturedAtMs: photo.createdAt ? Date.parse(photo.createdAt) || null : null,
+      capturedAtMs: null,
       location: anchor
         ? { lat: anchor.lat, lng: anchor.lng, elevationM: anchor.elevationM ?? null }
         : null,

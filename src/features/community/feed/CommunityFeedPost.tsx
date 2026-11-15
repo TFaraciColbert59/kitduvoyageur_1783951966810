@@ -420,7 +420,7 @@ export function CommunityFeedPost({
             onLike={post.sportCard.canLike ? handleLike : undefined}
             onComment={post.sportCard.canComment ? () => openPanel('comments') : undefined}
             onShare={post.sportCard.canShare ? () => openPanel('share') : undefined}
-            onReport={isOwner ? undefined : () => setReportOpen(true)}
+            onReport={user?.id === post.author_id ? undefined : () => setReportOpen(true)}
           />
         </div>
       ) : (

@@ -33,6 +33,7 @@ function makeFakeSupabase(): SupabaseClient {
         lte: () => query,
         is: () => query,
         in: () => query,
+        contains: () => query,
         ilike: () => query,
         not: () => query,
         or: () => query,

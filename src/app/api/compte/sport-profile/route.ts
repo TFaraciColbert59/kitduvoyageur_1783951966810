@@ -262,7 +262,7 @@ export async function PATCH(request: Request) {
   if (!auth.ok) return auth.response;
 
   const parsed = PatchSchema.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) return fail('invalid', 'Préférences sportives invalides.');
+  if (!parsed.success) return fail('bad_request', 'Préférences sportives invalides.');
 
   const { data: currentRow } = await auth.supabase
     .from('user_profiles')

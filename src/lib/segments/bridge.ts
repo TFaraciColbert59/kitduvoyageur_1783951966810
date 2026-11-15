@@ -18,7 +18,7 @@ import {
   getLeaderboardViewerRelations,
   removeLeaderboardSegment,
   replaceLeaderboardEffortsForSegment,
-  setLeaderboardViewerRelations,
+  saveLeaderboardViewerRelations as setLeaderboardViewerRelations,
   upsertAthletePrivacy,
   upsertLeaderboardSegment,
 } from '@/lib/leaderboards/store';
@@ -135,7 +135,6 @@ function haversineM(lat1: number, lng1: number, lat2: number, lng2: number): num
 }
 
 function toLiveDirection(dir: SegmentDefinition['direction']): LiveSegmentDirection {
-  if (dir === 'both') return 'bidirectional';
   if (dir === 'reverse') return 'reverse';
   return 'forward';
 }
@@ -212,7 +211,7 @@ export function listS01LiveDefinitions(): LiveSegmentDefinition[] {
       points: livePoints,
       totalDistanceM,
       elevationGainM: Math.round(segment.elevationGainM),
-      isPrivate: segment.visibility === 'private',
+      isPrivate: false,
       ownerId: segment.createdByUserId,
       ghostProfiles,
     });

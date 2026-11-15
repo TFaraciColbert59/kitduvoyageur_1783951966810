@@ -429,7 +429,7 @@ export function ConsentSettingsSheet({ onClose }: { onClose: () => void }) {
               ) : null}
               {heatmapQuery.data ? (() => {
                 const prefs = heatmapQuery.data.preferences;
-                const revokedDate = formatDate(prefs.revokedAt ?? null);
+                const revokedDate = formatDate(prefs.updatedAt ?? null);
                 const aggregateItems: Array<{
                   id: 'globalHeatmap' | 'routeRecommendations' | 'mobilityAggregates';
                   label: string;

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { AccessibilitySettingsScreen } from '@/components/accessibility';
 
 export const dynamic = 'force-dynamic';
@@ -14,7 +15,10 @@ export const metadata: Metadata = {
 export default function AccessibilitePage() {
   return (
     <main id="main-content" className="min-h-screen w-full px-4 py-6 sm:px-6">
-      <AccessibilitySettingsScreen backHref="/compte" />
+      <Link href="/compte" className="lkdv-compte-pref" aria-label="Retour au compte">
+        ← Compte
+      </Link>
+      <AccessibilitySettingsScreen />
     </main>
   );
 }

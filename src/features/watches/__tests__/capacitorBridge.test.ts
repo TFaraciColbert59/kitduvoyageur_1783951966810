@@ -46,7 +46,7 @@ describe('D03 Capacitor Watch Companion bridge — K6.09 / K6.11 / S6.01 / S6.02
       platform: 'apple_watch',
       downloadedAtUtcMs: 1_700_000_000_000,
       lastSyncedAtUtcMs: null,
-      status: 'pending',
+      status: 'queued',
     });
     expect(res.ok).toBe(false);
     expect(res.status).toBe('native_target_unavailable');
@@ -72,7 +72,7 @@ describe('D03 Capacitor Watch Companion bridge — K6.09 / K6.11 / S6.01 / S6.02
       platform: 'apple_watch',
       downloadedAtUtcMs: 1_700_000_000_000,
       lastSyncedAtUtcMs: null,
-      status: 'pending',
+      status: 'queued',
     });
     expect(res.ok).toBe(true);
     expect(res.status).toBe('sent');

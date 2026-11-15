@@ -23,7 +23,7 @@ import {
   type UserSegmentPreferences,
 } from '@/features/segments';
 import {
-  DEFAULT_LEADERBOARD_FILTERS,
+  sanitizeLeaderboardFilters,
   type LeaderboardFilterQuery,
   type LocalLegendResult,
   type SegmentLeaderboardResult,
@@ -99,7 +99,7 @@ export function SegmentDetail({
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   // S02 leaderboards & Local Legends state (S4.05, S4.06, S4.08)
-  const [s02Filters, setS02Filters] = useState<LeaderboardFilterQuery>(DEFAULT_LEADERBOARD_FILTERS);
+  const [s02Filters, setS02Filters] = useState<LeaderboardFilterQuery>({});
   const [s02Capabilities, setS02Capabilities] = useState<FiltersResponse | null>(null);
   const [s02Leaderboard, setS02Leaderboard] = useState<SegmentLeaderboardResult | null>(null);
   const [s02SegmentView, setS02SegmentView] = useState<LeaderboardSegmentView | null>(null);
@@ -387,7 +387,7 @@ export function SegmentDetail({
             <div className="lkdv-seg-panel">
               {s02Capabilities ? (
                 <LeaderboardFilters
-                  filters={s02Filters}
+                  filters={sanitizeLeaderboardFilters(s02Filters)}
                   capabilities={s02Capabilities.capabilities}
                   clubOptions={s02Capabilities.clubOptions}
                   isAuthenticated={Boolean(viewerUserId && viewerUserId !== 'anonymous')}

@@ -115,7 +115,7 @@ export async function POST(
 
   const parsed = ShareBodySchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) {
-    return fail('invalid', 'Paramètres de publication invalides.');
+    return fail('bad_request', 'Paramètres de publication invalides.');
   }
 
   const owned = await loadOwnedSession(auth.supabase, auth.user.id, id);

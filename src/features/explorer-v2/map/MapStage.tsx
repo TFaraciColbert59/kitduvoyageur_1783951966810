@@ -563,6 +563,8 @@ export default function MapStage({
             source: 'xp-offline-coverage',
             layout: { visibility: 'none' },
             paint: { 'line-color': '#17402C', 'line-width': 2, 'line-dasharray': [3, 2] },
+          });
+        }
         if (!map.getLayer('xp-fire-fill')) {
           map.addLayer({
             id: 'xp-fire-fill',

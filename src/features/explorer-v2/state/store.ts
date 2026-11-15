@@ -684,7 +684,7 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
 
   toggleSavedPlace: (place) => {
     const current = get().savedPlaces ?? loadSavedPlaces(null);
-    const { list, saved } = toggleSavedPlaceInList(current, place);
+    const { places: list, saved } = toggleSavedPlaceInList(current, place);
     writeSavedPlaces(list, null);
     set({ savedPlaces: list });
     emit('saved-place-toggle', { id: place.id, saved });

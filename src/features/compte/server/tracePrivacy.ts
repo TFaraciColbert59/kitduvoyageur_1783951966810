@@ -147,8 +147,11 @@ export function resolveTraceMasks(audience: TraceAudience): TraceMask[] {
     }
     masks.push({
       kind: 'zone',
-      center: [zone.centerLng, zone.centerLat],
-      radiusM: zone.radiusM,
+      zone: {
+        kind: 'circle',
+        center: { lng: zone.centerLng, lat: zone.centerLat },
+        radiusM: zone.radiusM,
+      },
     });
   }
 
