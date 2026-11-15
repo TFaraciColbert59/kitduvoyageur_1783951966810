@@ -147,6 +147,37 @@ export interface OutingTelemetryBundle {
 
 const LOCAL_ZONES_KEY = 'lkdv.metrics.zoneConfigs.v1';
 const LOCAL_RPE_KEY = 'lkdv.metrics.outingRpe.v1';
+const LOCAL_MEASURED_POWER_CURVE_KEY = 'lkdv.cycling.measuredPowerCurve.v1';
+
+export function saveLocalMeasuredPowerCurve(curve: PowerCurveResult): void {
+  if (curve.status !== 'available' || curve.quality !== 'measured') return;
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    window.localStorage.setItem(LOCAL_MEASURED_POWER_CURVE_KEY, JSON.stringify(curve));
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readLocalMeasuredPowerCurve(): PowerCurveResult | null {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) return null;
+    const raw = window.localStorage.getItem(LOCAL_MEASURED_POWER_CURVE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as PowerCurveResult;
+    if (
+      parsed &&
+      parsed.status === 'available' &&
+      parsed.quality === 'measured' &&
+      Array.isArray(parsed.points)
+    ) {
+      return parsed;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
 
 const SPORT_MET: Record<string, number> = {
   course: 9.8,
@@ -914,6 +945,9 @@ export function analyzeOutingTelemetry(input: {
   const powerCurve = computePowerCurve(timedPowerSamples, {
     bodyWeightKg: input.bodyWeightKg,
   });
+  if (powerCurve.status === 'available' && powerCurve.quality === 'measured') {
+    saveLocalMeasuredPowerCurve(powerCurve);
+  }
   const estimatedFtp = estimateFtpFromPowerCurve(powerCurve, input.bodyWeightKg);
   const powerValues = timedPowerSamples.map((s) => s.watts);
   const powerQuality: 'measured' | 'estimated' | null =
@@ -1013,14 +1047,17 @@ export function analyzeOutingTelemetry(input: {
   }
 
   const effectiveRpe = input.rpe ?? readOutingRpe(input.outingId);
+  const perceivedComputedAt = toMs || Date.now();
   const perceivedEffort =
     effectiveRpe !== null
       ? normalizePerceivedEffort(
           {
             value: effectiveRpe,
-            scale: { min: 1, max: 10, step: 1, labels: {} },
-            recordedAtMs: toMs || Date.now(),
+            scale: { min: 1, max: 10, label: 'RPE 1-10' },
+            recordedAtMs: perceivedComputedAt,
+            source: { kind: 'manual', id: input.outingId },
           },
+          perceivedComputedAt
         )
       : null;
 

@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 
 import React from 'react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { chatCompletionBodySchema } from '@/lib/ai/requestMode';
 import { discoverRoutes, routeDiscoveryRequestSchema } from '../connectors/routeDiscovery';
 import { buildActivityFacts } from '../activity/activityFacts';
 import { buildDeterministicActivityReading } from '../activity/postActivityInsight';
@@ -121,19 +122,40 @@ describe('A08 (K1.14, S2.37, S2.38) UI & contrats enrichis', () => {
     expect(screen.getByText(/Bilan de « Trail matinal »/i)).toBeTruthy();
   });
 
-  it('S2.38: bloque la lecture sans consentement, puis permet de basculer Claude/Gemini et d’interroger les agrégats', async () => {
-    render(<HistoryAssistantPanel sessions={SAMPLE_SESSIONS} initialConsentGranted={false} />);
+  it('S2.38: bloque la lecture sans consentement, puis permet de basculer Claude/Gemini et d’interroger les agrégats avec schéma API valide', async () => {
+    const fetchBodies: unknown[] = [];
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockImplementation(async (input, init) => {
+        const url = typeof input === 'string' ? input : input.toString();
+        if (url === '/api/ai/chat-completion' && init?.body) {
+          fetchBodies.push(JSON.parse(String(init.body)));
+        }
+        return new Response(JSON.stringify({ error: 'unconfigured' }), { status: 503 });
+      });
 
-    expect(screen.getByText(/Accès à l’historique bloqué sans consentement/i)).toBeTruthy();
-    fireEvent.click(screen.getByTestId('history-assistant-consent-toggle'));
+    try {
+      render(<HistoryAssistantPanel sessions={SAMPLE_SESSIONS} initialConsentGranted={false} />);
 
-    expect(await screen.findByText(/Consentement personal_performance actif/i)).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Gemini' }));
-    const input = screen.getByLabelText('Question sur ton historique sportif');
-    fireEvent.change(input, { target: { value: 'Quel est mon dénivelé cumulé ?' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Interroger' }));
+      expect(screen.getByText(/Accès à l’historique bloqué sans consentement/i)).toBeTruthy();
+      fireEvent.click(screen.getByTestId('history-assistant-consent-toggle'));
 
-    const answer = await screen.findByTestId('history-assistant-answer');
-    expect(answer.textContent).toContain('830 m de D+');
+      expect(await screen.findByText(/Consentement personal_performance actif/i)).toBeTruthy();
+      fireEvent.click(screen.getByRole('button', { name: 'Gemini' }));
+      const input = screen.getByLabelText('Question sur ton historique sportif');
+      fireEvent.change(input, { target: { value: 'Quel est mon dénivelé cumulé ?' } });
+      fireEvent.click(screen.getByRole('button', { name: 'Interroger' }));
+
+      const answer = await screen.findByTestId('history-assistant-answer');
+      expect(answer.textContent).toContain('830 m de D+');
+      expect(fetchBodies).toHaveLength(1);
+      const parsed = chatCompletionBodySchema.safeParse(fetchBodies[0]);
+      expect(parsed.success).toBe(true);
+      if (parsed.success) {
+        expect(parsed.data.provider).toBe('GEMINI');
+      }
+    } finally {
+      fetchSpy.mockRestore();
+    }
   });
 });

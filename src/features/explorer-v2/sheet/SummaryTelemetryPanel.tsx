@@ -48,11 +48,22 @@ export function ExplorerSummaryEffortAndSplits({
   const sRpeLoad = rpe !== null && activeMin > 0 ? Math.round(rpe * activeMin * 0.25) : null;
   const perceived =
     rpe !== null
-      ? normalizePerceivedEffort({
-          value: rpe,
-          scale: { min: 1, max: 10, step: 1, labels: {} },
-          recordedAtMs: summary.endedAt,
-        })
+      ? normalizePerceivedEffort(
+          {
+            value: rpe,
+            scale: { min: 1, max: 10, label: 'RPE 1-10' },
+            recordedAtMs: summary.endedAt,
+            source: { kind: 'manual', id },
+          },
+          summary.endedAt
+        )
+      : null;
+  const perceivedNormalized100 =
+    perceived && perceived.status === 'available' && perceived.value !== null && perceived.scale
+      ? Math.round(
+          ((perceived.value - perceived.scale.min) / (perceived.scale.max - perceived.scale.min)) *
+            100
+        )
       : null;
 
   const splits = unit === 'km' ? summary.splits ?? [] : summary.mileSplits ?? [];
@@ -90,11 +101,11 @@ export function ExplorerSummaryEffortAndSplits({
           );
         })}
       </div>
-      {perceived ? (
+      {perceived && perceived.status === 'available' && perceived.value !== null ? (
         <XpRows>
           <XpRow
             icon="gauge"
-            title={`Ressenti ${perceived.rawValue}/10 (${Math.round(perceived.normalized100)}/100)`}
+            title={`Ressenti ${perceived.value}/10 (${perceivedNormalized100 ?? 0}/100)`}
             sub={sRpeLoad !== null ? `Charge sRPE estimée : ${sRpeLoad} ua` : 'Effort déclaré'}
             badge={{ label: 'déclaré', tone: 'muted' }}
           />
@@ -109,18 +120,22 @@ export function ExplorerSummaryEffortAndSplits({
               { id: 'km', label: 'Par km' },
               { id: 'mi', label: 'Par mile' },
             ]}
-            active={unit}
-            onSelect={(next) => setUnit(next as 'km' | 'mi')}
+            value={unit}
+            onChange={(next) => setUnit(next as 'km' | 'mi')}
+            ariaLabel="Unité des splits"
           />
           <XpRows>
-            {splits.map((sp) => (
-              <XpRow
-                key={`${unit}-${sp.index}`}
-                icon="route"
-                title={`${unit === 'km' ? 'Km' : 'Mi'} ${sp.index} · ${formatClock(sp.elapsedS)}`}
-                sub={`D+ ${Math.round(sp.elevGainM)} m · ${(sp.distanceM / 1000).toFixed(2)} km`}
-              />
-            ))}
+            {splits.map((sp) => {
+              const paceSec = sp.distanceM > 0 ? (sp.movingS * 1000) / sp.distanceM : 0;
+              return (
+                <XpRow
+                  key={`${unit}-${sp.index}`}
+                  icon="route"
+                  title={`${unit === 'km' ? 'Km' : 'Mi'} ${sp.index} · ${formatClock(sp.movingS)}`}
+                  sub={`Allure ${paceSec > 0 ? `${formatClock(paceSec)}/km` : '—'} · ${(sp.distanceM / 1000).toFixed(2)} km`}
+                />
+              );
+            })}
           </XpRows>
         </>
       ) : null}
@@ -162,6 +177,7 @@ export function ExplorerStatsTelemetryBridge({
   summary: ActivityState & { endedAt: number };
   units: MetricUnits;
 }) {
+  const id = summary.sessionId ?? summary.clientSessionId ?? `local-${summary.startedAt}`;
   const [points, setPoints] = useState<GapTracePoint[]>([]);
 
   useEffect(() => {

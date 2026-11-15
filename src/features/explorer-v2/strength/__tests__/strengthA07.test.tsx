@@ -19,7 +19,7 @@ describe('Strength A07 (S2.32, S2.33, S2.34, S2.35)', () => {
   afterEach(() => {
     cleanup();
     window.localStorage.clear();
-    useExplorerStore.setState({ strength: null });
+    useExplorerStore.setState({ strength: undefined });
   });
 
   it('S2.32 & S2.33: calcule le volume exact et cartographie les groupes musculaires principaux/secondaires', () => {

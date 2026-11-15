@@ -150,6 +150,7 @@ interface ProgressionUiCache {
   query: string;
   period: ProgressionPeriod;
   bikePeriod: ProgressionPeriod;
+  statsSportFilter: string;
 }
 
 const PROGRESSION_VIEWS: readonly ProgressionView[] = ['calendar', 'stats', 'goals', 'bike', 'rankings', 'records'];
@@ -403,7 +404,9 @@ export function ProgressionDrawer({
     () => cachedUi?.bikePeriod ?? 'all'
   );
   const [chartMetric, setChartMetric] = useState<'km' | 'dplus'>('km');
-  const [statsSportFilter, setStatsSportFilter] = useState<string>('all');
+  const [statsSportFilter, setStatsSportFilter] = useState<string>(
+    () => cachedUi?.statsSportFilter ?? 'all'
+  );
 
   useEffect(() => {
     writeProgressionSessionsSnapshot(sessions);
@@ -431,9 +434,9 @@ export function ProgressionDrawer({
   useEffect(() => {
     progressionUiCache = {
       key: accountKey,
-      state: { monthKey, selectedDay, query, period, bikePeriod },
+      state: { monthKey, selectedDay, query, period, bikePeriod, statsSportFilter },
     };
-  }, [accountKey, monthKey, selectedDay, query, period, bikePeriod]);
+  }, [accountKey, monthKey, selectedDay, query, period, bikePeriod, statsSportFilter]);
 
   const changeView = (index: number) => {
     setView(index);

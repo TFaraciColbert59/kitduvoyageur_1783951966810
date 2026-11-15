@@ -63,7 +63,7 @@ export function ZoneSettingsSheet({ onClose }: { onClose: () => void }) {
     setSaving(true);
     setStatus(null);
     try {
-      const validated = createZoneSet({
+      const result = createZoneSet({
         id: `local-${metric}-${discipline}-${Date.now()}`,
         version: '1',
         discipline,
@@ -75,14 +75,29 @@ export function ZoneSettingsSheet({ onClose }: { onClose: () => void }) {
         effectiveFromMs: Date.now(),
         recordedAtMs: Date.now(),
       });
+      if (!result.ok) {
+        setStatus(result.errors.join(', ') || 'Configuration invalide.');
+        return;
+      }
+      const validated = result.zoneSet;
       saveLocalZoneSet(validated);
-      await fetch('/api/explorer/v2/metrics/zones', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(validated),
-      }).catch(() => undefined);
+      let serverOk = false;
+      try {
+        const res = await fetch('/api/explorer/v2/metrics/zones', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(validated),
+        });
+        serverOk = res.ok;
+      } catch {
+        serverOk = false;
+      }
       setZones(validated);
-      setStatus('Zones enregistrées et appliquées à tes analyses.');
+      setStatus(
+        serverOk
+          ? 'Zones enregistrées et appliquées à tes analyses.'
+          : 'Zones enregistrées localement (synchronisation serveur indisponible).'
+      );
     } catch (error) {
       setStatus(error instanceof Error ? error.message : 'Configuration invalide.');
     } finally {
@@ -182,6 +197,7 @@ export function ZoneSettingsSheet({ onClose }: { onClose: () => void }) {
             tone="primary"
             label="Enregistrer les zones"
             text={saving ? 'Enregistrement…' : 'Enregistrer'}
+            icon={<SlidersHorizontal />}
             busy={saving}
             onClick={() => void handleSave()}
           />

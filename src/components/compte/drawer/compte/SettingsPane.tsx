@@ -525,6 +525,7 @@ export function SettingsPane() {
             className="lkdv-compte-setting-pill"
             label="Configurer les zones sportives"
             text="Configurer"
+            icon={<Ruler />}
             onClick={() => setSportZonesOpen(true)}
           />
         </div>

@@ -10,6 +10,7 @@ import { computeActivityStreaks } from '@/features/compte/progression/streaks';
 import {
   computeRacePredictions,
   computeRunningBestEfforts,
+  extractCleanRunningBestEffortsFromTrace,
 } from '@/features/compte/progression/runningRecords';
 import {
   detectOutingHighlights,
@@ -220,6 +221,45 @@ describe('Lot A05 — Progression, records, charge, streaks, prédictions & réc
 
     render(<OutingTrace detail={detail} onExport={() => {}} />);
     expect(screen.getByTestId('outing-comparable-section')).toBeTruthy();
+  });
+
+  it('S2.22 : un saut GPS est filtré puis le faux record est retiré après correction', () => {
+    // Trace course à ~3 m/s (1 point / 10 s, ~30 m) avec un saut GPS aller-retour
+    // de ~1,1 km au milieu : la pointe aberrante doit être retirée et le record
+    // recalculé honnêtement sur la distance nettoyée.
+    const t0 = Date.parse('2026-05-10T08:00:00Z');
+    const baseLat = 45.2;
+    const baseLng = 5.7;
+    const stepLat = 30 / 111_320; // ~30 m en latitude
+    const points: Array<{ lat: number; lng: number; timestampMs: number }> = [];
+    for (let i = 0; i < 36; i += 1) {
+      if (i === 12) {
+        // Saut GPS : +1,1 km d'un coup puis retour à la trace normale.
+        points.push({ lat: baseLat + 12 * stepLat + 0.01, lng: baseLng, timestampMs: t0 + i * 10_000 });
+        continue;
+      }
+      const step = i > 12 ? i - 1 : i; // la trace normale ignore l'index du spike
+      points.push({ lat: baseLat + step * stepLat, lng: baseLng, timestampMs: t0 + i * 10_000 });
+    }
+
+    const cleaned = extractCleanRunningBestEffortsFromTrace(points, {
+      sessionId: 's-gps-spike',
+      title: 'Sortie avec saut GPS',
+      date: '2026-05-10',
+    });
+
+    // Les 2 segments aberrants (aller + retour du saut) sont écartés.
+    expect(cleaned.filteredSpikeCount).toBeGreaterThanOrEqual(1);
+    // Distance nettoyée ≈ 1 050 m réels, loin des ~3,2 km bruts avec le saut.
+    expect(cleaned.cleanDistanceM).toBeGreaterThan(800);
+    expect(cleaned.cleanDistanceM).toBeLessThan(1500);
+    // Le 1 km reste mesuré sur la trace nettoyée, avec une allure honnête
+    // (~3 m/s ⇒ 1 km en ~333 s), pas le chrono supersonique du saut.
+    const oneK = cleaned.bestEfforts.find((r) => r.targetId === '1k');
+    expect(oneK?.quality).toBe('measured');
+    expect(oneK?.estimatedTimeS).toBeGreaterThan(200);
+    expect(oneK?.estimatedTimeS).toBeLessThan(600);
+    expect(oneK?.sessionId).toBe('s-gps-spike');
   });
 
   it('K5.11 & ProgressionDrawer : rendu des 5 onglets, filtre sport, streaks, charge, focus et récap', () => {

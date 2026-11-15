@@ -10,18 +10,18 @@ import {
   ShieldAlert,
 } from 'lucide-react';
 import { formatClockS, formatDurationS } from '@/features/workouts/domain/sessionFactory';
-import type { RecoveryProgram, SorenessLevel } from '@/features/workouts/domain/types';
+import type { RecoveryProgram, Soreness } from '@/features/workouts/domain/types';
 
 export interface RecoveryPanelProps {
   program: RecoveryProgram;
   practiceStatus: 'available' | 'partial' | 'absent';
-  soreness?: SorenessLevel;
-  onSorenessChange?: (value: SorenessLevel) => void;
+  soreness?: Soreness;
+  onSorenessChange?: (value: Soreness) => void;
 }
 
-const SORENESS_OPTIONS: Array<{ id: SorenessLevel; label: string }> = [
+const SORENESS_OPTIONS: Array<{ id: Soreness; label: string }> = [
   { id: 'none', label: 'Aucune' },
-  { id: 'mild', label: 'Courbatures légères' },
+  { id: 'light', label: 'Courbatures légères' },
   { id: 'high', label: 'Douleur importante' },
 ];
 

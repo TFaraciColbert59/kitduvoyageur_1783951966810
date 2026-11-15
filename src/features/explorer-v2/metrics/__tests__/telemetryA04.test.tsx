@@ -49,9 +49,10 @@ function buildRunningPointsAndSamples(): {
     const hr = i >= 20 && i <= 85 ? 168 : 142;
     points.push({ lat, lng, elevationM: ele, timestamp: iso });
     samples.push({
-      seq: i,
+      index: i,
+      origin: 'device',
       recordedAt: iso,
-      elapsedS: i * 6,
+      lapIndex: null,
       distanceM: Math.round(distKm * 1000),
       altitudeM: ele,
       speedMps,
@@ -60,7 +61,6 @@ function buildRunningPointsAndSamples(): {
       cadenceSpm: 174,
       powerW: null,
       temperatureC: 14,
-      caloriesKcal: null,
     });
   }
   return { points, samples };
@@ -162,7 +162,7 @@ describe('Lot A04 — Télémétrie, splits, zones, GAP, puissance et RPE', () =
     const shortFtp = estimateFtpFromPowerCurve(shortCurve);
     expect(shortFtp.status).toBe('unavailable');
 
-    const skills = computeCyclingPowerSkills(curve, 70);
+    const skills = computeCyclingPowerSkills(curve, { bodyWeightKg: 70 });
     expect(skills.status).toBe('available');
     expect(skills.skills).toHaveLength(4);
     expect(skills.profile).toBeTruthy();
@@ -239,9 +239,10 @@ describe('Lot A04 — Télémétrie, splits, zones, GAP, puissance et RPE', () =
       const iso = new Date(tMs).toISOString();
       points.push({ lat: 45.2 + distKm * 0.00899, lng: 5.7, elevationM: 210 + i * 0.5, timestamp: iso });
       samples.push({
-        seq: i,
+        index: i,
+        origin: 'device',
         recordedAt: iso,
-        elapsedS: i * 10,
+        lapIndex: null,
         distanceM: Math.round(distKm * 1000),
         altitudeM: 210 + i * 0.5,
         speedMps: 8.0,
@@ -250,7 +251,6 @@ describe('Lot A04 — Télémétrie, splits, zones, GAP, puissance et RPE', () =
         cadenceSpm: null,
         powerW: null,
         temperatureC: 18,
-        caloriesKcal: null,
       });
     }
     const bikeDetail = makeBaseOuting({

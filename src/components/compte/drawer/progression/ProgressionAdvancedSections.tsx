@@ -56,10 +56,12 @@ import {
 } from '@/features/compte/progression/recaps';
 import {
   computeCyclingPowerSkills,
-  computePowerCurve,
   estimateFtpFromPowerCurve,
 } from '@/features/explorer-v2/metrics/powerCurve';
-import { readLocalZoneSets } from '@/features/explorer-v2/metrics/telemetryAnalysis';
+import {
+  readLocalMeasuredPowerCurve,
+  readLocalZoneSets,
+} from '@/features/explorer-v2/metrics/telemetryAnalysis';
 
 const SESSIONS_SNAPSHOT_KEY = 'lkdv.progression.lastSessions.v1';
 
@@ -638,7 +640,7 @@ export function RunningRecordsAndPredictionsPane({
   );
 }
 
-/** S2.14 — Cycling Power Skills & FTP context dans la vue Vélo */
+/** S2.14 — Cycling Power Skills & FTP context dans la vue Vélo (C-MET : aucune puissance synthétique) */
 export function CyclingPowerSkillsSection({
   sessions,
 }: {
@@ -649,25 +651,44 @@ export function CyclingPowerSkillsSection({
     []
   );
   const configuredFtp = powerZone?.threshold?.value ?? null;
-
-  // À défaut d'échantillons bruts dans le bootstrap, on synthétise le profil si FTP est connue ou sessions vélo présentes
+  const measuredCurve = useMemo(() => readLocalMeasuredPowerCurve(), []);
   const cyclingDone = sessions.filter((s) => s.sport === 'velo' && s.durationS && s.durationS > 600);
+
   const skills = useMemo(() => {
-    if (!configuredFtp && cyclingDone.length === 0) return null;
-    const baseFtp = configuredFtp ?? 220;
-    const startMs = Date.UTC(2026, 4, 1, 8, 0, 0);
-    const samples = Array.from({ length: 180 }, (_, i) => ({
-      atMs: startMs + i * 20_000,
-      watts: i < 2 ? Math.round(baseFtp * 2.4) : i < 6 ? Math.round(baseFtp * 1.35) : baseFtp,
-      quality: 'estimated' as const,
-    }));
-    const curve = computePowerCurve(samples);
-    const ftpRes = estimateFtpFromPowerCurve(curve);
-    return { skills: computeCyclingPowerSkills(curve), ftpRes, estimatedFromProfile: !configuredFtp };
-  }, [configuredFtp, cyclingDone.length]);
+    if (!measuredCurve) return null;
+    const ftpRes = estimateFtpFromPowerCurve(measuredCurve);
+    const effectiveFtp = configuredFtp ?? ftpRes.ftpW;
+    return {
+      skills: computeCyclingPowerSkills(measuredCurve, { ftpW: effectiveFtp }),
+      ftpRes,
+      effectiveFtp,
+    };
+  }, [measuredCurve, configuredFtp]);
+
+  if (!configuredFtp && cyclingDone.length === 0 && !skills) {
+    return null;
+  }
 
   if (!skills || skills.skills.status !== 'available') {
-    return null;
+    return (
+      <section className="lkdv-prog-card" data-testid="cycling-power-skills-card">
+        <div className="lkdv-prog-card-head">
+          <div>
+            <small>Power Skills &amp; FTP (S2.13 / S2.14)</small>
+            <b>Profil cycliste : indisponible</b>
+          </div>
+          {configuredFtp ? (
+            <span className="lkdv-prog-chip">
+              <Zap size={12} aria-hidden="true" style={{ marginRight: 3 }} />
+              FTP configurée : {configuredFtp} W
+            </span>
+          ) : null}
+        </div>
+        <p className="lkdv-prog-legend">
+          Indisponible — aucune courbe de puissance mesurée enregistrée. Importe une sortie vélo avec capteur de puissance (FIT/TCX) pour calculer tes Power Skills réels.
+        </p>
+      </section>
+    );
   }
 
   return (
@@ -679,7 +700,7 @@ export function CyclingPowerSkillsSection({
         </div>
         <span className="lkdv-prog-chip">
           <Zap size={12} aria-hidden="true" style={{ marginRight: 3 }} />
-          {configuredFtp ? `FTP ${configuredFtp} W` : 'Indicatif'}
+          {skills.effectiveFtp ? `FTP ${skills.effectiveFtp} W` : 'Mesuré'}
         </span>
       </div>
       <div className="lkdv-prog-metrics">
@@ -692,9 +713,7 @@ export function CyclingPowerSkillsSection({
         ))}
       </div>
       <p className="lkdv-prog-legend">
-        {configuredFtp
-          ? `Calculé depuis ton seuil FTP configuré (${configuredFtp} W). Importe un fichier FIT avec capteur de puissance dans une sortie pour obtenir ta courbe MMP mesurée.`
-          : 'Projection indicative sans capteur de puissance au bootstrap. Configure ta FTP dans Compte > Réglages > Zones sportives ou importe une trace capteur.'}
+        Calculé à partir de ta courbe de puissance mesurée par capteur{skills.effectiveFtp ? ` (référence FTP : ${skills.effectiveFtp} W)` : ''}.
       </p>
     </section>
   );

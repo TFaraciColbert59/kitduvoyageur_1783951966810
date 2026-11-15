@@ -85,13 +85,13 @@ export function buildDeterministicActivityReading(facts: ActivityFacts): Determi
   if (hasValue(metrics.heartRateBpm)) {
     factsLines.push(`Fréquence cardiaque moyenne mesurée : ${formatNumberFr(metrics.heartRateBpm.value, 0)} bpm.`);
   }
-  if (hasValue(metrics.gapPaceSecondsPerKm)) {
+  if (metrics.gapPaceSecondsPerKm && hasValue(metrics.gapPaceSecondsPerKm)) {
     factsLines.push(`Allure ajustée à la pente (GAP estimée) : ${formatPaceFr(metrics.gapPaceSecondsPerKm.value)}.`);
   }
-  if (hasValue(metrics.relativeEffortScore)) {
+  if (metrics.relativeEffortScore && hasValue(metrics.relativeEffortScore)) {
     factsLines.push(`Effort relatif calculé : ${formatNumberFr(metrics.relativeEffortScore.value, 0)} pts.`);
   }
-  if (hasValue(metrics.avgPowerW)) {
+  if (metrics.avgPowerW && hasValue(metrics.avgPowerW)) {
     factsLines.push(`Puissance moyenne : ${formatNumberFr(metrics.avgPowerW.value, 0)} W.`);
   }
   if (hasValue(metrics.caloriesKcal)) {

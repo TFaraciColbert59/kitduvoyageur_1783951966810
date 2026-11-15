@@ -31,7 +31,7 @@ import type {
   BikeGoal,
   RunGoal,
   SessionExecution,
-  SorenessLevel,
+  Soreness,
   StructuredSession,
   WorkoutGoal,
   WorkoutLevel,
@@ -100,7 +100,7 @@ function WorkoutsDrawerOwner({
   const [instantLevel, setInstantLevel] =
     useState<WorkoutLevel>('intermediaire');
   const [availableDays, setAvailableDays] = useState(3);
-  const [soreness, setSoreness] = useState<SorenessLevel>('none');
+  const [soreness, setSoreness] = useState<Soreness>('none');
   const [execution, setExecution] = useState<SessionExecution | null>(null);
   const [activeSession, setActiveSession] =
     useState<StructuredSession | null>(null);

@@ -122,7 +122,7 @@ export function OutingSummary({
   const [visibility, setVisibility] = useState<OutingVisibility>(detail.visibility);
   const [sport, setSport] = useState(detail.sport || 'rando');
   const [tags, setTags] = useState<string[]>(detail.tags ?? []);
-  const [rpe, setRpe] = useState<number | null>(() => readOutingRpe(detail.id));
+  const [rpe, setRpe] = useState<number | null>(() => detail.rpe ?? readOutingRpe(detail.id));
   const [coverFailed, setCoverFailed] = useState(false);
   const [matchedEvents, setMatchedEvents] = useState<ActivityEventMatch[]>([]);
   const [groupClusters, setGroupClusters] = useState<GroupActivityCluster[]>([]);
@@ -135,9 +135,9 @@ export function OutingSummary({
     setVisibility(detail.visibility);
     setSport(detail.sport || 'rando');
     setTags(detail.tags ?? []);
-    setRpe(readOutingRpe(detail.id));
+    setRpe(detail.rpe ?? readOutingRpe(detail.id));
     setEditing(false);
-  }, [detail.id, detail.title, detail.notes, detail.visibility, detail.sport, detail.tags]);
+  }, [detail.id, detail.title, detail.notes, detail.visibility, detail.sport, detail.tags, detail.rpe]);
 
   useEffect(() => {
     let active = true;
@@ -520,10 +520,21 @@ export function OutingSummary({
                 <b>{Math.round(telemetry.relativeEffort.score)} pts</b>
               </div>
             ) : null}
-            {telemetry.perceivedEffort && telemetry.perceivedEffort.normalized100 !== null ? (
+            {telemetry.perceivedEffort &&
+            telemetry.perceivedEffort.status === 'available' &&
+            telemetry.perceivedEffort.value !== null &&
+            telemetry.perceivedEffort.scale ? (
               <div>
                 <small>Effort perçu (déclaré)</small>
-                <b>{telemetry.perceivedEffort.rawValue}/10 · {Math.round(telemetry.perceivedEffort.normalized100)}/100</b>
+                <b>
+                  {telemetry.perceivedEffort.value}/10 ·{' '}
+                  {Math.round(
+                    ((telemetry.perceivedEffort.value - telemetry.perceivedEffort.scale.min) /
+                      (telemetry.perceivedEffort.scale.max - telemetry.perceivedEffort.scale.min)) *
+                      100
+                  )}
+                  /100
+                </b>
               </div>
             ) : null}
             {telemetry.sRpeLoad !== null ? (
@@ -546,6 +557,12 @@ export function OutingSummary({
                       const next = active ? null : v;
                       setRpe(next);
                       saveOutingRpe(detail.id, next);
+                      onSave({
+                        title: detail.title,
+                        notes: detail.notes,
+                        visibility: detail.visibility,
+                        rpe: next,
+                      });
                     }}
                     style={{
                       minWidth: 28,

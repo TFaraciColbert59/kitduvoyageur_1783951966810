@@ -248,3 +248,160 @@ export function computeRacePredictions(
     predictions,
   };
 }
+
+export interface RunningTracePointInput {
+  lat: number;
+  lng: number;
+  timestampMs: number;
+}
+
+export interface CleanRunningTraceResult {
+  cleanDistanceM: number;
+  cleanDurationS: number;
+  filteredSpikeCount: number;
+  bestEfforts: RunningBestEffort[];
+}
+
+function haversineMeters(aLat: number, aLng: number, bLat: number, bLng: number): number {
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+  const r = 6_371_000;
+  const dLat = toRad(bLat - aLat);
+  const dLng = toRad(bLng - aLng);
+  const sinDLat = Math.sin(dLat / 2);
+  const sinDLng = Math.sin(dLng / 2);
+  const a =
+    sinDLat * sinDLat +
+    Math.cos(toRad(aLat)) * Math.cos(toRad(bLat)) * sinDLng * sinDLng;
+  return 2 * r * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+/**
+ * S2.22 — Extrait les meilleurs efforts depuis une trace GPS en filtrant les sauts
+ * irréalistes (> maxPlausibleSpeedMps, défaut 10.5 m/s ≈ 37.8 km/h en course).
+ * Lorsqu'un saut GPS génère une pointe aberrante, les points aberrants sont retirés
+ * avant calcul ; le faux record est ainsi retiré/recalculé honnêtement.
+ */
+export function extractCleanRunningBestEffortsFromTrace(
+  points: readonly RunningTracePointInput[],
+  meta: {
+    sessionId: string;
+    title: string;
+    date: string | null;
+    maxPlausibleSpeedMps?: number;
+  }
+): CleanRunningTraceResult {
+  const maxSpeedMps = meta.maxPlausibleSpeedMps ?? 10.5;
+  const sorted = points
+    .filter(
+      (p) =>
+        Number.isFinite(p.lat) &&
+        Number.isFinite(p.lng) &&
+        Number.isFinite(p.timestampMs)
+    )
+    .slice()
+    .sort((a, b) => a.timestampMs - b.timestampMs);
+
+  if (sorted.length < 2) {
+    return {
+      cleanDistanceM: 0,
+      cleanDurationS: 0,
+      filteredSpikeCount: 0,
+      bestEfforts: computeRunningBestEfforts([], 'UTC'),
+    };
+  }
+
+  const kept: Array<{ atMs: number; cumDistM: number }> = [
+    { atMs: sorted[0].timestampMs, cumDistM: 0 },
+  ];
+  let lastValid = sorted[0];
+  let cumDistM = 0;
+  let filteredSpikeCount = 0;
+
+  for (let i = 1; i < sorted.length; i += 1) {
+    const cur = sorted[i];
+    const dtS = (cur.timestampMs - lastValid.timestampMs) / 1000;
+    if (dtS <= 0) continue;
+    const distM = haversineMeters(lastValid.lat, lastValid.lng, cur.lat, cur.lng);
+    const speedMps = distM / dtS;
+    if (speedMps > maxSpeedMps && distM > 25) {
+      filteredSpikeCount += 1;
+      continue;
+    }
+    cumDistM += distM;
+    lastValid = cur;
+    kept.push({ atMs: cur.timestampMs, cumDistM });
+  }
+
+  const cleanDurationS =
+    kept.length >= 2 ? (kept[kept.length - 1].atMs - kept[0].atMs) / 1000 : 0;
+
+  const bestEfforts: RunningBestEffort[] = RUNNING_BEST_EFFORT_TARGETS.map((target) => {
+    const targetM = target.distanceKm * 1000;
+    if (cumDistM < targetM || kept.length < 2) {
+      return {
+        targetId: target.id,
+        label: target.label,
+        distanceKm: target.distanceKm,
+        estimatedTimeS: null,
+        paceMinPerKm: null,
+        quality: 'unavailable',
+        sessionId: null,
+        sessionTitle: null,
+        achievedDate: null,
+        reason:
+          filteredSpikeCount > 0
+            ? 'Distance nettoyée insuffisante après retrait des sauts GPS.'
+            : `Distance trace inférieure à ${target.label}.`,
+      };
+    }
+
+    let bestS = Number.POSITIVE_INFINITY;
+    let left = 0;
+    for (let right = 1; right < kept.length; right += 1) {
+      while (left < right && kept[right].cumDistM - kept[left + 1].cumDistM >= targetM) {
+        left += 1;
+      }
+      const spanM = kept[right].cumDistM - kept[left].cumDistM;
+      if (spanM >= targetM) {
+        const spanS = (kept[right].atMs - kept[left].atMs) / 1000;
+        const scaledS = spanS * (targetM / spanM);
+        if (scaledS > 0 && scaledS < bestS) bestS = scaledS;
+      }
+    }
+
+    if (!Number.isFinite(bestS)) {
+      return {
+        targetId: target.id,
+        label: target.label,
+        distanceKm: target.distanceKm,
+        estimatedTimeS: null,
+        paceMinPerKm: null,
+        quality: 'unavailable',
+        sessionId: null,
+        sessionTitle: null,
+        achievedDate: null,
+        reason: 'Fenêtre continue introuvable.',
+      };
+    }
+
+    return {
+      targetId: target.id,
+      label: target.label,
+      distanceKm: target.distanceKm,
+      estimatedTimeS: Math.round(bestS),
+      paceMinPerKm: Math.round(((bestS / 60) / target.distanceKm) * 100) / 100,
+      quality: 'measured',
+      sessionId: meta.sessionId,
+      sessionTitle: meta.title,
+      achievedDate: meta.date,
+      reason: null,
+    };
+  });
+
+  return {
+    cleanDistanceM: Math.round(cumDistM),
+    cleanDurationS: Math.round(cleanDurationS),
+    filteredSpikeCount,
+    bestEfforts,
+  };
+}

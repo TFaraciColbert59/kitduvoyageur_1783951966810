@@ -239,6 +239,8 @@ export interface OutingDetail {
   verified: boolean;
   coverUrl: string | null;
   notes: string;
+  /** Ressenti RPE déclaré (1..10) par le propriétaire, ou `null`/`undefined`. */
+  rpe?: number | null;
   weather: OutingWeather | null;
   photos: OutingPhoto[];
   /** `hike_session_photos` illisible : ne pas présenter la sortie sans photo. */
@@ -391,7 +393,24 @@ type SessionRow = {
   kit_id: string | null;
   weather: unknown;
   notes: string | null;
+  rpe?: number | null;
 };
+
+function parseValidRpe(raw: unknown): number | null {
+  if (typeof raw !== 'number' || !Number.isInteger(raw)) return null;
+  if (raw < 1 || raw > 10) return null;
+  return raw;
+}
+
+function readStoredOutingRpe(session: Pick<SessionRow, 'rpe' | 'weather'>): number | null {
+  const direct = parseValidRpe(session.rpe);
+  if (direct !== null) return direct;
+  if (session.weather && typeof session.weather === 'object') {
+    const fallback = (session.weather as Record<string, unknown>)._rpe;
+    return parseValidRpe(fallback);
+  }
+  return null;
+}
 
 type ProfileRow = {
   id: string;
@@ -922,7 +941,7 @@ async function fetchSessionRow(client: SupabaseClient, outingId: string) {
   let res = await client
     .from('hike_sessions')
     .select(
-      'id,user_id,route_id,title,started_at,ended_at,distance_km,activity_session_id,duration_seconds,elevation_gain_m,max_altitude_m,positions_timed,positions_geojson,visibility,kit_id,weather,notes'
+      'id,user_id,route_id,title,started_at,ended_at,distance_km,activity_session_id,duration_seconds,elevation_gain_m,max_altitude_m,positions_timed,positions_geojson,visibility,kit_id,weather,notes,rpe'
     )
     .eq('id', outingId)
     .maybeSingle();
@@ -981,6 +1000,7 @@ export async function loadOutingDetail(
         readClient = service;
       }
     }
+  }
   }
 
   const { data: sessionData, error: sessionError } = sessionResult;
@@ -1561,6 +1581,7 @@ export async function loadOutingDetail(
     verified: traceSegments.some((segment) => segment.length >= 2),
     coverUrl: photos[0]?.url ?? null,
     notes,
+    rpe: isOwner ? readStoredOutingRpe(session) : null,
     weather,
     photos,
     photosUnavailable,
@@ -1620,7 +1641,7 @@ async function assertOwner(
 ): Promise<SessionRow | null> {
   const { data } = await supabase
     .from('hike_sessions')
-    .select('id,user_id,kit_id,title,notes,visibility')
+    .select('id,user_id,kit_id,title,notes,visibility,weather')
     .eq('id', outingId)
     .eq('user_id', userId)
     .maybeSingle();
@@ -1631,7 +1652,7 @@ export async function updateOuting(
   supabase: SupabaseClient,
   userId: string,
   outingId: string,
-  patch: { title?: string; notes?: string; visibility?: OutingVisibility }
+  patch: { title?: string; notes?: string; visibility?: OutingVisibility; rpe?: number | null }
 ): Promise<void> {
   const owner = await assertOwner(supabase, userId, outingId);
   if (!owner) throw new Error('not_found');
@@ -1639,12 +1660,38 @@ export async function updateOuting(
   if (patch.title !== undefined) update.title = patch.title.slice(0, 120);
   if (patch.notes !== undefined) update.notes = patch.notes.slice(0, 2000);
   if (patch.visibility !== undefined) update.visibility = patch.visibility;
+  if (patch.rpe !== undefined) {
+    update.rpe = patch.rpe === null ? null : parseValidRpe(patch.rpe);
+  }
   if (Object.keys(update).length === 0) return;
   const { error } = await supabase
     .from('hike_sessions')
     .update(update)
     .eq('id', outingId)
     .eq('user_id', userId);
+  if (error?.code === '42703' && patch.rpe !== undefined) {
+    // Schéma sans colonne `rpe` dédiée : on persiste dans `weather._rpe` sans écraser la météo existante.
+    const fallbackUpdate = { ...update };
+    delete fallbackUpdate.rpe;
+    const baseWeather =
+      owner.weather && typeof owner.weather === 'object' && !Array.isArray(owner.weather)
+        ? { ...(owner.weather as Record<string, unknown>) }
+        : {};
+    if (patch.rpe === null) {
+      delete baseWeather._rpe;
+    } else {
+      const validRpe = parseValidRpe(patch.rpe);
+      if (validRpe !== null) baseWeather._rpe = validRpe;
+    }
+    fallbackUpdate.weather = Object.keys(baseWeather).length > 0 ? baseWeather : null;
+    const retry = await supabase
+      .from('hike_sessions')
+      .update(fallbackUpdate)
+      .eq('id', outingId)
+      .eq('user_id', userId);
+    if (retry.error) throw retry.error;
+    return;
+  }
   if (error) throw error;
 
   // C-PRIV : repasser une sortie en privé révoque immédiatement les partages actifs du fil.
