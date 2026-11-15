@@ -1,4 +1,8 @@
-# Découpage à 24 i/s — émotion, musique, plans (v5, 14/11/2026)
+# Découpage à 24 i/s — émotion, musique, plans
+
+> **La version en vigueur est la v6, en bas de ce document (15/11/2026).** Elle remplace la répartition des plans et les frontières de section de la v5 ci-dessous, après les retours de Tony sur le film complet. Le principe (la musique suit les émotions, le drop est pour la montagne) ne change pas.
+
+## v5 (14/11/2026)
 
 Demande de Tony après écoute de la musique v3 : « le son doit commencer dès le début et au bon moment de la musique, faut que ça corresponde et que ça suive avec les émotions à ressentir. Je te demande de devenir humain et de comprendre quelle partie de la musique doit être à quel moment pour quelle image. »
 
@@ -61,3 +65,62 @@ Les plans les plus longs : P06 (2,6 s, Léa à sa fenêtre), P47 (2,2 s, les rir
 ## Sons ajoutés à la musique
 
 Trois seulement, en piste séparée, tant que les coupes ne sont pas figées : un souffle grave de l'image 0 à l'allumage du Soleil, un impact sur l'allumage, un impact avec longue queue sous le coup du logo. Les autres effets (clac de la boucle, pas, eau, whooshes de raccord) viendront une fois le montage image validé.
+
+---
+
+# v6 (15/11/2026) — après les retours de Tony sur le film complet
+
+## Ce que Tony a dit (mot pour mot)
+
+« la musique est trés mal découpé et monté, c'est pas fluide, doux epic typiquement lors du passage par dessus le lac ou quand on les voix en haut des dolomite de loin avec le panorama immense. trop de repetition aussi, fait un prompt ultra complet pour généré la nebuleuse avec google la création du systeme solaire et de la etrre de mannière beaucoup plus fluide epic cinematique impressionnat coloré lumineux nette réaliste. au debut sur son telephone avant de passer en drone par dessus le lac on voit pas quelle regarde ce post, il faut réglé ça et on doit plonger dedans comme on a plonger au debut en sortant des nuage on est transporté dans l'image. on doit avoir une scéne de 1-2 second par amis au debut au lieu des 3 d'un coup tous dans des situation différentes au moment ou ils disent oui. il y'a des son parasite des scene qui se balade. elle recoit le sac dans un beau packaging moderne avec différents modules etc et la petit coup de motion design avec le sac qui s'assemble en 3D genre vue de composer active et dynamique on voix les modules si accrocher et les elements de l'inventaire s'y mettre de dedans. »
+
+## Ce que ça change
+
+1. **Musique** : le montage v4 est refusé (pas fluide, pas « doux épique » sur le lac ni sur le panorama des Dolomites, trop de répétitions). À refaire avec très peu de raccords, de longs passages continus du morceau, aucune matière utilisée deux fois. Tony choisit à l'oreille entre plusieurs montages.
+2. **Sons parasites** : les effets sonores v5 (ambiances synthétiques) sont retirés. Musique seule, plus au maximum quelques accents si Tony les valide.
+3. **Ouverture** : générée par Tony dans Flow (prompt dans `flow/TOURNAGE-3.md`), à la place de l'ouverture en code si elle est meilleure.
+4. **Le téléphone avant le lac** : on doit voir que Léa regarde la photo du lac (grande sur l'écran), puis **plonger dans l'écran** : la photo remplit le cadre et devient le survol. Même sensation que la plongée de l'ouverture.
+5. **Les trois amis** : un plan par ami (Sami, Inès, Tom), 1 à 2 s chacun, dans trois situations différentes, au lieu du triptyque.
+6. **Le colis** : un beau packaging moderne, le sac et ses modules ; puis un moment de motion design où **le sac s'assemble en 3D** (les vrais modèles `.glb` du Kit Studio : les modules s'accrochent, les objets de l'inventaire entrent dedans).
+
+## Nouvelle structure
+
+Même grille (136,997 BPM, mesure = 1,75186 s = 42,04 images, 33 mesures puis le logo). La préparation gagne deux mesures : **le drop passe de 24,5 s à 28,0 s**. Elles sont reprises au coureur et à la cycliste (une mesure) et au bivouac (une mesure).
+
+| Mesures | Temps (s) | Section | Ce qu'on doit ressentir | Musique voulue |
+|---|---|---|---|---|
+| 1–3 | 0–5,26 | **Cosmos** : nébuleuse, création, Terre, plongée jusqu'à la fenêtre | Émerveillement, vertige | Le début du morceau, présent dès la première image |
+| 4–7 | 5,26–12,26 | **Déclic** : Léa à sa fenêtre, la photo du lac sur son téléphone, on plonge dedans, le lac | Intimité, puis on est emporté | Doux, ample, qui s'ouvre sur le lac |
+| 8–13 | 12,26–22,77 | **Décision** : elle se lève, prépare, chaque ami dit oui, le kit, le colis, le sac s'assemble | L'excitation qui monte | La montée, en continu |
+| 14–16 | 22,77–28,03 | **Départ** : la boucle, l'escalier, le train, les retrouvailles, les premiers pas | L'élan | La fin de la montée, sans raccord jusqu'au drop |
+| 17–21 | 28,03–36,79 | **Montagne** : Seceda, la main tendue, Tre Cime, Sorapis | Le souffle coupé : **ample, épique, pas agressif** | Le grand moment du morceau |
+| 22–27 | 36,79–47,30 | **Coureur puis cycliste** | Adrénaline, liberté | L'énergie pleine |
+| 28–30 | 47,30–52,56 | **Bivouac** | Chaleur, tendresse | L'apaisement |
+| 31–33 | 52,56–57,81 | **Final** : Noah, la remontée, les tracés | L'espoir | Une montée qui n'a pas déjà servi |
+| impact | 57,81–60,00 | **Logo** | La signature | Un coup, puis sa queue |
+
+## Répartition des plans (en temps de musique)
+
+| Section | Plans et durées (1 temps = 0,44 s) | Total |
+|---|---|---|
+| Cosmos | ouverture (générée ou en code), jusqu'à la fenêtre | 12 |
+| Déclic | P06 : 5 · P07 : 4 (elle défile, s'arrête sur le post, la photo du lac s'ouvre en grand) · P08 : 1 (l'œil) · **P09 : 2 (on plonge dans l'écran)** · P10 : 4 (le lac) | 16 |
+| Décision | P11 : 2 · P12 : 2 · P13 : 2 · **Sami : 3 · Inès : 3 · Tom : 3** · P16 : 2 · P17 : 1 · **P18 : 3 (le colis)** · **le sac s'assemble en 3D : 3** | 24 |
+| Départ | P20 : 1 · P21 : 2 · P22 : 2 · P23 : 4 · P24 : 2 · P25 : 1 | 12 |
+| Montagne | P26 : 4 (le drop) · P28 : 2 · P27 : 4 · P29 : 2 · P30 : 4 · P31 : 2 · P32 : 2 | 20 |
+| Coureur | P33 : 2 · P34 : 1 · P35 : 2 · P37 : 2 · P38 : 4 · P39 : 2 | 13 |
+| Cycliste | P40 : 3 · P42 : 3 · P43 : 3 · P44 : 2 | 11 |
+| Bivouac | P46 : 2 · P47 : 4 · P48 : 3 (elle publie dans ce plan) · P50 : 3 | 12 |
+| Final | P51 : 3 · P52 : 4 · P53 : 5 | 12 |
+| Logo | P54, de l'impact à 60,000 s | — |
+
+Total : 132 temps = 33 mesures. Plans retirés par rapport à la v5 : P14 (le triptyque, remplacé par trois plans), P15, P19 (remplacé par l'assemblage 3D), P36, P41, P45, P49 (fondu dans P48).
+
+Images de coupe des sections (temps × 10,511 images) : déclic 126 · décision 294 · départ 547 · **drop 673** · coureur 883 · bivouac 1135 · final 1261 · logo 1387. Les valeurs exactes viendront du fichier de temps de la nouvelle musique.
+
+## Ce qui est repris de la relecture critique (`qa/REVIEW-V6.md`)
+
+- Les plans du drop (P26, P27, P30) bougent trop peu : plages plus longues accélérées et poussée plus franche, et nouvelles prises demandées à Tony (`flow/REPRISES-2.md`).
+- La remontée finale (P52) est refaite de nuit, en un seul mouvement, depuis la vitre du bus.
+- P37 sans dédoublement, P44 sur une plage plus vivante.
+- La nébuleuse reste pleine de couleurs : c'est la demande de Tony.
