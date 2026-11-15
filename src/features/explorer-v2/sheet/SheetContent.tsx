@@ -64,6 +64,7 @@ import {
   RouteSwapPicker,
   TurnByTurnBanner,
   UpcomingWaypointsList,
+  WaypointAlertBanner,
 } from '../guidance/ui';
 import { browserSpeechAdapter, type ActiveRecordingSnapshot } from '@/features/navigation';
 import { OfflinePacksScreen } from '@/components/offline';
@@ -1785,6 +1786,7 @@ function ToolsTabs(ctx: SheetContext, kind: string): SheetTab[] {
                 <JoinStartCard
                   evaluation={ctx.guidance.state.departureEvaluation}
                   externalLinks={ctx.guidance.state.externalLinks}
+                  accessPlan={ctx.guidance.state.accessPlan}
                   onAction={(action) => {
                     if (action === 'start_at_origin' || action === 'start_here_on_route') {
                       const fallbackSport = ctx.state.activity?.sport ?? 'rando';
@@ -2715,6 +2717,9 @@ export function LiveDirectTab({ ctx }: { ctx: SheetContext }) {
           onRetry={ctx.guidance?.onRetryReroute}
         />
       ) : null}
+      {guidance && guidance.activeWaypointAlert ? (
+        <WaypointAlertBanner alert={guidance.activeWaypointAlert} units={ctx.units} />
+      ) : null}
       {guidance ? <ClimbDescentCard card={guidance.climbCard} units={ctx.units} /> : null}
       {gpsDenied ? (
         <XpEmpty
@@ -3029,6 +3034,7 @@ function ActivityTabs(ctx: SheetContext, kind: string): SheetTab[] {
               <JoinStartCard
                 evaluation={ctx.guidance.state.departureEvaluation}
                 externalLinks={ctx.guidance.state.externalLinks}
+                accessPlan={ctx.guidance.state.accessPlan}
                 onAction={(action) => {
                   if (action === 'start_at_origin' || action === 'start_here_on_route') {
                     ctx.onStartSport?.('rando');

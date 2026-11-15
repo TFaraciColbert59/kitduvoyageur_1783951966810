@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import React from 'react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { OfflineRuntimeStore } from '@/features/offline/offlineRuntimeStore';
 import { PREDEFINED_REGIONS_CATALOG } from '@/features/offline';
 
@@ -17,12 +17,17 @@ import {
   createInitialOrientationState,
   createInitialRerouteState,
   createInitialTurnByTurnState,
+  detectClimbDescentSegments,
   evaluateClimbDescentCard,
   evaluateDepartureState,
   projectWaypointsOnRoute,
+  type AccessGuidancePlan,
   type NavigationWaypointInput,
+  type WaypointAlertEvent,
 } from '@/features/navigation';
+import type { PoiItem } from '../data/hooks';
 import { explorerRerouteProvider, type NavigationGuidanceUiState } from '../guidance/useNavigationGuidance';
+import { JoinStartCard, WaypointAlertBanner } from '../guidance/ui';
 import { useExplorerStore } from '../state/store';
 import { buildSheetModel } from '../sheet/SheetContent';
 import type { SheetContext } from '../sheet/context';
@@ -47,7 +52,7 @@ const SAMPLE_ROUTE = {
   status: 'ready' as const,
 };
 
-const SAMPLE_POIS = [
+const SAMPLE_POIS: PoiItem[] = [
   {
     id: 'poi-refuge',
     name: 'Refuge du Lac',
@@ -56,10 +61,8 @@ const SAMPLE_POIS = [
     lat: 45.926,
     lon: 6.872,
     ele_m: 1180,
-    country_iso: 'FR',
-    region_code: 'FR-74',
-    summary: 'Refuge étape',
-    author: 'public',
+    potable: true,
+    capacity: 24,
   },
   {
     id: 'poi-private-friend',
@@ -69,10 +72,8 @@ const SAMPLE_POIS = [
     lat: 45.927,
     lon: 6.873,
     ele_m: 1200,
-    country_iso: 'FR',
-    region_code: 'FR-74',
-    summary: null,
-    author: 'user-private',
+    potable: null,
+    capacity: null,
   },
 ];
 
@@ -108,6 +109,7 @@ function makeGuidanceUiState(): NavigationGuidanceUiState {
     turnByTurn: tbt,
     reroute: createInitialRerouteState(),
     detourGeoJson: null,
+    accessRouteGeoJson: null,
     orientation,
     upcomingWaypoints: computeUpcomingWaypoints(
       projectWaypointsOnRoute(
@@ -119,26 +121,40 @@ function makeGuidanceUiState(): NavigationGuidanceUiState {
             [6.876, 45.929],
           ],
         ],
-        'rando',
+        { sport: 'rando' },
       ),
       0,
       { units: 'metric', currentSpeedMs: 1.4 },
     ),
     activeWaypointAlert: null,
     climbCard: evaluateClimbDescentCard(
-      [
-        { distM: 0, eleM: 1035 },
-        { distM: 450, eleM: 1180 },
-        { distM: 900, eleM: 1360 },
-      ],
+      detectClimbDescentSegments([
+        { d: 0, ele: 1035 },
+        { d: 450, ele: 1180 },
+        { d: 900, ele: 1360 },
+      ]),
       100,
       { units: 'metric' },
     ),
     audioPrefs: createDefaultAudioPreferences(),
     displayPrefs: createInitialDisplayPreferences('rando'),
     customFieldValues: [
-      { key: 'distance', label: 'Distance', value: '1,2 km', available: true },
-      { key: 'elevGain', label: 'D+', value: '+145 m', available: true },
+      {
+        key: 'distance',
+        label: 'Distance',
+        formattedValue: '1,2 km',
+        unitLabel: 'km',
+        available: true,
+        unavailableReason: null,
+      },
+      {
+        key: 'elevation',
+        label: 'D+',
+        formattedValue: '+145 m',
+        unitLabel: 'm',
+        available: true,
+        unavailableReason: null,
+      },
     ],
     wakeLock: {
       enabled: false,
@@ -245,11 +261,11 @@ function makeSheetContext(overrides: Partial<SheetContext> = {}): SheetContext {
 describe('N01 + N02 Explorer wiring', () => {
   beforeEach(() => {
     useExplorerStore.setState({
-      sheet: 'explore',
+      sheet: 'level',
       sheetParent: undefined,
       detent: 'peek',
       tab: 0,
-      selection: null,
+      selection: undefined,
       trailRoute: undefined,
       activity: undefined,
       northUp: true,
@@ -285,7 +301,10 @@ describe('N01 + N02 Explorer wiring', () => {
           },
         ],
         maxZonesAllowed: 5,
-        totalEstimatedBytes: 2_000_000,
+        maxTilesPerZone: 4000,
+        combinedNetTileCount: 120,
+        combinedEstimatedBytes: 2_000_000,
+        visibleLimitsGeoJson: { type: 'FeatureCollection', features: [] },
       },
       { pois: SAMPLE_POIS, routes: [] },
     );
@@ -333,6 +352,7 @@ describe('N01 + N02 Explorer wiring', () => {
       trailRoute: SAMPLE_ROUTE,
       activity: {
         sport: 'rando',
+        sessionId: null,
         startedAt: 1_700_000_000_000,
         clientSessionId: 'client-sess-42',
         paused: false,
@@ -341,7 +361,6 @@ describe('N01 + N02 Explorer wiring', () => {
         elevGainM: 185,
         movingS: 1420,
         route: SAMPLE_ROUTE,
-        points: [[6.869, 45.923]],
         splits: [],
         mileSplits: [],
         laps: [],
@@ -450,6 +469,7 @@ describe('N01 + N02 Explorer wiring', () => {
       trailRoute: SAMPLE_ROUTE,
       activity: {
         sport: 'rando',
+        sessionId: null,
         startedAt: Date.now(),
         clientSessionId: 'sess-ui-1',
         paused: false,
@@ -458,7 +478,6 @@ describe('N01 + N02 Explorer wiring', () => {
         elevGainM: 40,
         movingS: 300,
         route: SAMPLE_ROUTE,
-        points: [[6.869, 45.923]],
         splits: [],
         mileSplits: [],
         laps: [],
@@ -487,5 +506,142 @@ describe('N01 + N02 Explorer wiring', () => {
     ]);
     settingsModel.onBack?.();
     expect(useExplorerStore.getState().sheet).toBe('live');
+  });
+
+  it('K4.03 : JoinStartCard et tiroir trail affichent accessPlan en ligne et repli boussole hors ligne', () => {
+    const evalAway = evaluateDepartureState([6.86, 45.91], SAMPLE_GEOJSON);
+    const routedPlan: AccessGuidancePlan = {
+      status: 'routed_online',
+      targetKind: 'route_start',
+      targetPosition: [6.869, 45.923],
+      entryAlongTrackM: 0,
+      directDistanceM: 1600,
+      directBearingDeg: 32,
+      routedGeometry: [
+        [6.86, 45.91],
+        [6.869, 45.923],
+      ],
+      routedDistanceM: 1850,
+      routedDurationS: 1200,
+      provider: 'geoapify',
+      reason: null,
+    };
+    const offlinePlan: AccessGuidancePlan = {
+      status: 'offline_compass_only',
+      targetKind: 'nearest_route_point',
+      targetPosition: [6.872, 45.926],
+      entryAlongTrackM: 450,
+      directDistanceM: 950,
+      directBearingDeg: 45,
+      routedGeometry: null,
+      routedDistanceM: null,
+      routedDurationS: null,
+      provider: null,
+      reason: 'Aucun réseau : utilisez le cap boussole pour rejoindre le tracé.',
+    };
+
+    const { rerender, unmount } = render(
+      <JoinStartCard evaluation={evalAway} accessPlan={routedPlan} />,
+    );
+    expect(screen.getByText(/Approche vers le départ/)).toBeTruthy();
+    expect(screen.getByText(/20 min/)).toBeTruthy();
+    expect(screen.getByText(/via geoapify/)).toBeTruthy();
+
+    rerender(<JoinStartCard evaluation={evalAway} accessPlan={offlinePlan} />);
+    const accessBox = within(screen.getByLabelText('Itinéraire d’approche'));
+    expect(accessBox.getByText(/Cap vers le tracé/)).toBeTruthy();
+    expect(accessBox.getByText(/950 m/)).toBeTruthy();
+    expect(accessBox.getByText(/cap nord-est/)).toBeTruthy();
+    expect(accessBox.getByText(/Aucun réseau : utilisez le cap boussole/)).toBeTruthy();
+    unmount();
+
+    // Vérifie le passage effectif depuis SheetContent (tiroir trail)
+    useExplorerStore.setState({
+      sheet: 'trail',
+      detent: 'mid',
+      tab: 0,
+      selection: { kind: 'trail', id: '101' },
+      trailRoute: SAMPLE_ROUTE,
+    });
+    const baseCtx = makeSheetContext();
+    const trailModel = buildSheetModel(
+      makeSheetContext({
+        guidance: {
+          ...baseCtx.guidance!,
+          state: {
+            ...baseCtx.guidance!.state,
+            accessPlan: routedPlan,
+          },
+        },
+      }),
+    );
+    const { unmount: unmountSheet } = render(<>{trailModel.tabs[0].render()}</>);
+    expect(screen.getByText(/Approche vers le départ/)).toBeTruthy();
+    unmountSheet();
+  });
+
+  it('K4.08 : LiveDirectTab et WaypointAlertBanner affichent puis effacent l’alerte visuelle waypoint', () => {
+    const sampleAlert: WaypointAlertEvent = {
+      id: 'wp-alert-1',
+      waypointId: 'poi-refuge',
+      waypointName: 'Refuge du Lac',
+      waypointKind: 'refuge',
+      stage: 'approach',
+      distanceRemainingM: 120,
+      title: 'Refuge du Lac à 120 m',
+      spokenMessage: 'Dans 120 mètres, Refuge du Lac.',
+      triggeredAtMs: Date.now(),
+      hapticPattern: 'waypoint-approach',
+    };
+
+    const { rerender, unmount } = render(<WaypointAlertBanner alert={sampleAlert} units="metric" />);
+    expect(screen.getByText('Refuge du Lac à 120 m')).toBeTruthy();
+    expect(screen.getByText('À proximité')).toBeTruthy();
+    rerender(<WaypointAlertBanner alert={null} units="metric" />);
+    expect(screen.queryByText('Refuge du Lac à 120 m')).toBeNull();
+    unmount();
+
+    useExplorerStore.setState({
+      sheet: 'live',
+      detent: 'mid',
+      tab: 0,
+      trailRoute: SAMPLE_ROUTE,
+      activity: {
+        sport: 'rando',
+        sessionId: null,
+        startedAt: Date.now(),
+        clientSessionId: 'sess-ui-k408',
+        paused: false,
+        autoPaused: false,
+        distanceM: 500,
+        elevGainM: 40,
+        movingS: 300,
+        route: SAMPLE_ROUTE,
+        splits: [],
+        mileSplits: [],
+        laps: [],
+      },
+    });
+    const baseCtx = makeSheetContext();
+    const withAlertModel = buildSheetModel(
+      makeSheetContext({
+        guidance: {
+          ...baseCtx.guidance!,
+          state: {
+            ...baseCtx.guidance!.state,
+            activeWaypointAlert: sampleAlert,
+          },
+        },
+      }),
+    );
+    const { rerender: rerenderSheet, unmount: unmountSheet } = render(
+      <>{withAlertModel.tabs[0].render()}</>,
+    );
+    expect(screen.getByText('Refuge du Lac à 120 m')).toBeTruthy();
+
+    const clearedModel = buildSheetModel(baseCtx);
+    rerenderSheet(<>{clearedModel.tabs[0].render()}</>);
+    expect(screen.queryByText('Refuge du Lac à 120 m')).toBeNull();
+    unmountSheet();
   });
 });

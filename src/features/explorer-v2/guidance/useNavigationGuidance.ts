@@ -250,6 +250,7 @@ export interface NavigationGuidanceUiState {
   turnByTurn: TurnByTurnState;
   reroute: RerouteState;
   detourGeoJson: GeoCollection | null;
+  accessRouteGeoJson: GeoCollection | null;
   orientation: MapOrientationState;
   upcomingWaypoints: readonly UpcomingWaypointItem[];
   activeWaypointAlert: WaypointAlertEvent | null;
@@ -490,7 +491,7 @@ export function useNavigationGuidance({
       ...previewTbt,
       offlineReady: hasOfflineRoutePack,
     });
-    const projected = projectWaypointsOnRoute(waypoints, lines, 'rando');
+    const projected = projectWaypointsOnRoute(waypoints, lines, { sport: 'rando' });
     setUpcomingWaypoints(
       computeUpcomingWaypoints(projected, previewTbt.progress?.alongTrackM ?? 0, {
         units,
@@ -649,8 +650,10 @@ export function useNavigationGuidance({
         setTurnByTurn(res.navigation.turnByTurn);
         setReroute(res.navigation.reroute);
         setUpcomingWaypoints(res.navigation.upcomingWaypoints);
+        setActiveWaypointAlert(res.navigation.activeWaypointAlert);
         setClimbCard(res.navigation.climbDescentCard);
       }
+      setAccessPlan(null);
       if (onSwapActiveRoute) {
         onSwapActiveRoute({
           id: selection.id,
@@ -680,8 +683,16 @@ export function useNavigationGuidance({
     });
   }, [departureEvaluation.startPosition, activeRouteInput?.name, activity?.sport]);
 
+  useEffect(() => {
+    setAccessPlan(null);
+  }, [activeRouteInput?.id]);
+
   const onSelectDepartureAction = useCallback(
     async (action: DepartureActionKind) => {
+      if (action === 'start_at_origin' || action === 'start_here_on_route') {
+        setAccessPlan(null);
+        return;
+      }
       if ((action === 'guide_to_start' || action === 'guide_to_nearest_point') && me) {
         const plan = await buildAccessGuidancePlan(departureEvaluation, [me.lng, me.lat], action, {
           online,
@@ -770,6 +781,34 @@ export function useNavigationGuidance({
     };
   }, [reroute.status, reroute.detourGeometry, reroute.provider]);
 
+  const accessRouteGeoJson = useMemo<GeoCollection | null>(() => {
+    if (
+      !accessPlan ||
+      accessPlan.status !== 'routed_online' ||
+      !accessPlan.routedGeometry ||
+      accessPlan.routedGeometry.length < 2
+    ) {
+      return null;
+    }
+    return {
+      type: 'FeatureCollection',
+      features: [
+        {
+          type: 'Feature',
+          properties: {
+            kind: 'access',
+            targetKind: accessPlan.targetKind,
+            provider: accessPlan.provider,
+          },
+          geometry: {
+            type: 'LineString',
+            coordinates: accessPlan.routedGeometry as [number, number][],
+          },
+        },
+      ],
+    };
+  }, [accessPlan]);
+
   const onLockScreenAction = useCallback(
     (action: 'pause' | 'resume' | 'lap' | 'mute') => {
       if (action === 'pause' || action === 'resume') {
@@ -789,6 +828,7 @@ export function useNavigationGuidance({
       turnByTurn,
       reroute,
       detourGeoJson,
+      accessRouteGeoJson,
       orientation,
       upcomingWaypoints,
       activeWaypointAlert,
@@ -809,6 +849,7 @@ export function useNavigationGuidance({
       turnByTurn,
       reroute,
       detourGeoJson,
+      accessRouteGeoJson,
       orientation,
       upcomingWaypoints,
       activeWaypointAlert,

@@ -68,7 +68,7 @@ import {
 } from './state/store';
 import type { ActivityState } from './state/types';
 import { useNavigationGuidance } from './guidance/useNavigationGuidance';
-import { TurnByTurnBanner } from './guidance/ui';
+import { TurnByTurnBanner, WaypointAlertBanner } from './guidance/ui';
 import { getOfflineRuntimeStore } from '@/features/offline/offlineRuntimeStore';
 import type { OfflineDownloadProgress, OfflineInstalledPackRecord } from '@/features/offline';
 import { isSceneName, sceneEnabled, SCENES } from './state/scenes';
@@ -2261,6 +2261,7 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
         surfacesGeo={surfacesGeo}
         highlightsGeo={highlightsGeo}
         rerouteGeometry={navGuidance.guidance.detourGeoJson}
+        accessRouteGeometry={navGuidance.guidance.accessRouteGeoJson}
         offlineCoverage={offlineCoverageGeoJson}
         showOfflineCoverage={coverageVisible}
         onUserPan={navGuidance.onUserMapPan}
@@ -2373,8 +2374,8 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
       ) : null}
 
       {activity &&
-      activityRouteStatus === 'ready' &&
-      navGuidance.guidance.turnByTurn.nextManeuver &&
+      ((activityRouteStatus === 'ready' && navGuidance.guidance.turnByTurn.nextManeuver) ||
+        navGuidance.guidance.activeWaypointAlert) &&
       state.sheet !== 'live' ? (
         <div
           className="xp-tbt-overlay"
@@ -2385,9 +2386,20 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
             right: 12,
             zIndex: 18,
             pointerEvents: 'auto',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 8,
           }}
         >
-          <TurnByTurnBanner state={navGuidance.guidance.turnByTurn} showSecondary={false} />
+          {activityRouteStatus === 'ready' && navGuidance.guidance.turnByTurn.nextManeuver ? (
+            <TurnByTurnBanner state={navGuidance.guidance.turnByTurn} showSecondary={false} />
+          ) : null}
+          {navGuidance.guidance.activeWaypointAlert ? (
+            <WaypointAlertBanner
+              alert={navGuidance.guidance.activeWaypointAlert}
+              units={unitsForCountry}
+            />
+          ) : null}
         </div>
       ) : null}
 

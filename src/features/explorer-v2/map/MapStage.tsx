@@ -102,6 +102,8 @@ export interface MapStageProps {
   highlightsGeo?: GeoCollection | null;
   /** Détour recalculé en ligne (K4.05). */
   rerouteGeometry?: GeoCollection | null;
+  /** Itinéraire d'approche vers le départ ou le tracé (K4.03). */
+  accessRouteGeometry?: GeoCollection | null;
   /** Emprises des paquets hors ligne installés (K4.16). */
   offlineCoverage?: GeoCollection | null;
   /** Affiche la couche couverture hors ligne sur la carte (K4.16). */
@@ -177,6 +179,7 @@ export default function MapStage({
   surfacesGeo = null,
   highlightsGeo = null,
   rerouteGeometry = null,
+  accessRouteGeometry = null,
   offlineCoverage = null,
   showOfflineCoverage = false,
   onUserPan,
@@ -480,6 +483,23 @@ export default function MapStage({
               'line-width': 4,
               'line-dasharray': [2, 1.5],
               'line-opacity': 0.92,
+            },
+          });
+        }
+        if (!map.getSource('xp-access-route')) {
+          map.addSource('xp-access-route', { type: 'geojson', data: EMPTY as never });
+        }
+        if (!map.getLayer('xp-access-route-line')) {
+          map.addLayer({
+            id: 'xp-access-route-line',
+            type: 'line',
+            source: 'xp-access-route',
+            layout: { 'line-cap': 'round', 'line-join': 'round' },
+            paint: {
+              'line-color': '#226148',
+              'line-width': 3.5,
+              'line-dasharray': [2.5, 1.5],
+              'line-opacity': 0.9,
             },
           });
         }
@@ -832,6 +852,13 @@ export default function MapStage({
     const source = map.getSource('xp-reroute') as GeoJSONSource | undefined;
     if (source) source.setData((rerouteGeometry ?? EMPTY) as never);
   }, [rerouteGeometry, ready]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    const source = map.getSource('xp-access-route') as GeoJSONSource | undefined;
+    if (source) source.setData((accessRouteGeometry ?? EMPTY) as never);
+  }, [accessRouteGeometry, ready]);
 
   useEffect(() => {
     const map = mapRef.current;
