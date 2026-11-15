@@ -55,6 +55,12 @@ interface ExplorerActions {
   openLayers: () => void;
   /** Revient au tiroir parent, avec sa hauteur et son onglet (K3.12). */
   closeLayers: () => void;
+  /** Ouvre le sous-tiroir « ⋯ » des réglages guidage/sortie en mémorisant le parent (C-UI / N01). */
+  openLiveSettings: () => void;
+  /** Revient au tiroir parent (`live`), en restaurant sa hauteur et son onglet (C-UI). */
+  closeLiveSettings: () => void;
+  /** Change ou remplace le parcours en cours d'enregistrement sans casser la séance (K4.10). */
+  swapActivityRoute: (route: TrailRouteSnapshot) => void;
   setDetent: (detent: Detent) => void;
   setTab: (tab: number) => void;
   setMini: (mini: number) => void;
@@ -414,6 +420,59 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
     set({ sheet: 'level', detent: 'peek', tab: 0, sheetParent: undefined });
     emit('sheet', { sheet: 'level', detent: 'peek', parent: null });
   },
+
+  openLiveSettings: () => {
+    const current = get();
+    if (current.sheet === 'liveSettings') {
+      if (current.detent !== 'mid' && current.detent !== 'full') set({ detent: 'mid' });
+      return;
+    }
+    set({
+      sheetParent: {
+        sheet: current.sheet,
+        detent: current.detent,
+        tab: current.tab,
+      },
+      sheet: 'liveSettings',
+      detent: 'mid',
+      tab: 0,
+    });
+    emit('sheet', { sheet: 'liveSettings', detent: 'mid', parent: current.sheet });
+  },
+
+  closeLiveSettings: () => {
+    const current = get();
+    const parent = current.sheetParent;
+    if (parent) {
+      set({
+        sheet: parent.sheet,
+        detent: parent.detent,
+        tab: parent.tab,
+        sheetParent: undefined,
+      });
+      emit('sheet', { sheet: parent.sheet, detent: parent.detent, parent: null });
+      return;
+    }
+    set({ sheet: 'live', detent: 'peek', tab: 0, sheetParent: undefined });
+    emit('sheet', { sheet: 'live', detent: 'peek', parent: null });
+  },
+
+  swapActivityRoute: (route) =>
+    set((state) => {
+      if (!state.activity) {
+        return { trailRoute: route };
+      }
+      return {
+        trailRoute: route,
+        activity: {
+          ...state.activity,
+          route,
+          offRoute: false,
+          offRouteM: undefined,
+          offRouteBearing: undefined,
+        },
+      };
+    }),
 
   setDetent: (detent) => {
     set({ detent });

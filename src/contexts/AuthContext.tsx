@@ -264,6 +264,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     void import('@/lib/offlineStorage')
       .then((m) => m.purgeCompasSnapshots(null))
       .catch(() => undefined);
+    void import('@/features/offline/offlineRuntimeStore')
+      .then((m) => m.getOfflineRuntimeStore().purgePrivateOnLogout())
+      .catch(() => undefined);
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
   }, [supabase]);

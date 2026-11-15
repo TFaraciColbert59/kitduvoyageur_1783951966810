@@ -30,6 +30,9 @@ class LkdvLiveActivityPlugin : Plugin() {
             putExtra("movingS", call.getDouble("movingS", 0.0) ?: 0.0)
             putExtra("paused", call.getBoolean("paused", false) ?: false)
             putExtra("offRoute", call.getBoolean("offRoute", false) ?: false)
+            putExtra("nextManeuverInstruction", call.getString("nextManeuverInstruction"))
+            putExtra("nextManeuverDistanceM", call.getDouble("nextManeuverDistanceM") ?: -1.0)
+            putExtra("offRouteLabel", call.getString("offRouteLabel"))
         }
         try {
             ContextCompat.startForegroundService(context, intent)
@@ -54,6 +57,9 @@ class LkdvLiveActivityPlugin : Plugin() {
             putExtra("movingS", call.getDouble("movingS", 0.0) ?: 0.0)
             putExtra("paused", call.getBoolean("paused", false) ?: false)
             putExtra("offRoute", call.getBoolean("offRoute", false) ?: false)
+            putExtra("nextManeuverInstruction", call.getString("nextManeuverInstruction"))
+            putExtra("nextManeuverDistanceM", call.getDouble("nextManeuverDistanceM") ?: -1.0)
+            putExtra("offRouteLabel", call.getString("offRouteLabel"))
         }
         try {
             context.startService(intent)

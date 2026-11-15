@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="lkdv_shortcut_plan"
+        android:enabled="true"
+        android:icon="@android:drawable/ic_menu_directions"
+        android:shortcutShortLabel="@string/shortcut_plan_short"
+        android:shortcutLongLabel="@string/shortcut_plan_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.lekitduvoyageur.app"
+            android:targetClass="com.lekitduvoyageur.app.MainActivity"
+            android:data="lkdv://shortcut/plan" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="lkdv_shortcut_record"
+        android:enabled="true"
+        android:icon="@android:drawable/ic_menu_mylocation"
+        android:shortcutShortLabel="@string/shortcut_record_short"
+        android:shortcutLongLabel="@string/shortcut_record_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.lekitduvoyageur.app"
+            android:targetClass="com.lekitduvoyageur.app.MainActivity"
+            android:data="lkdv://shortcut/record" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="lkdv_shortcut_offline"
+        android:enabled="true"
+        android:icon="@android:drawable/ic_menu_mapmode"
+        android:shortcutShortLabel="@string/shortcut_offline_short"
+        android:shortcutLongLabel="@string/shortcut_offline_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.lekitduvoyageur.app"
+            android:targetClass="com.lekitduvoyageur.app.MainActivity"
+            android:data="lkdv://shortcut/offline" />
+    </shortcut>
+</shortcuts>

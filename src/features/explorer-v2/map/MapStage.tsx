@@ -100,6 +100,14 @@ export interface MapStageProps {
   surfacesGeo?: GeoCollection | null;
   /** Couche GeoJSON des highlights (K5.13). */
   highlightsGeo?: GeoCollection | null;
+  /** Détour recalculé en ligne (K4.05). */
+  rerouteGeometry?: GeoCollection | null;
+  /** Emprises des paquets hors ligne installés (K4.16). */
+  offlineCoverage?: GeoCollection | null;
+  /** Affiche la couche couverture hors ligne sur la carte (K4.16). */
+  showOfflineCoverage?: boolean;
+  /** Notifie un déplacement ou une rotation manuelle de la carte par l'utilisateur (K4.06). */
+  onUserPan?: (bearing: number) => void;
 }
 
 const TERRAIN_SOURCE = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
@@ -168,6 +176,10 @@ export default function MapStage({
   firesGeo = null,
   surfacesGeo = null,
   highlightsGeo = null,
+  rerouteGeometry = null,
+  offlineCoverage = null,
+  showOfflineCoverage = false,
+  onUserPan,
 }: MapStageProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   // Double garde : même si un appelant transmet une source non vérifiée, elle
@@ -192,6 +204,8 @@ export default function MapStage({
   onBearingChangeRef.current = onBearingChange;
   const onViewportChangeRef = useRef(onViewportChange);
   onViewportChangeRef.current = onViewportChange;
+  const onUserPanRef = useRef(onUserPan);
+  onUserPanRef.current = onUserPan;
 
   // ── création de la carte (une seule fois) ──────────────────────────────
   useEffect(() => {
@@ -452,6 +466,44 @@ export default function MapStage({
             paint: { 'line-color': '#17402C', 'line-width': 4, 'line-opacity': 0.9 },
           });
         }
+        if (!map.getSource('xp-reroute')) {
+          map.addSource('xp-reroute', { type: 'geojson', data: EMPTY as never });
+        }
+        if (!map.getLayer('xp-reroute-line')) {
+          map.addLayer({
+            id: 'xp-reroute-line',
+            type: 'line',
+            source: 'xp-reroute',
+            layout: { 'line-cap': 'round', 'line-join': 'round' },
+            paint: {
+              'line-color': '#D97706',
+              'line-width': 4,
+              'line-dasharray': [2, 1.5],
+              'line-opacity': 0.92,
+            },
+          });
+        }
+        if (!map.getSource('xp-offline-coverage')) {
+          map.addSource('xp-offline-coverage', { type: 'geojson', data: EMPTY as never });
+        }
+        if (!map.getLayer('xp-offline-coverage-fill')) {
+          map.addLayer({
+            id: 'xp-offline-coverage-fill',
+            type: 'fill',
+            source: 'xp-offline-coverage',
+            layout: { visibility: 'none' },
+            paint: { 'fill-color': '#17402C', 'fill-opacity': 0.14 },
+          });
+        }
+        if (!map.getLayer('xp-offline-coverage-line')) {
+          map.addLayer({
+            id: 'xp-offline-coverage-line',
+            type: 'line',
+            source: 'xp-offline-coverage',
+            layout: { visibility: 'none' },
+            paint: { 'line-color': '#17402C', 'line-width': 2, 'line-dasharray': [3, 2] },
+          });
+        }
         if (!map.getLayer('xp-satellite-layer')) {
           map.addLayer(
             {
@@ -695,9 +747,15 @@ export default function MapStage({
       const bearing = map.getBearing();
       if (Number.isFinite(bearing)) onBearingChangeRef.current?.(bearing);
     };
+    const reportUserPan = () => {
+      const bearing = map.getBearing();
+      onUserPanRef.current?.(Number.isFinite(bearing) ? bearing : 0);
+    };
     // `rotate` couvre le geste et les `easeTo` de la boussole ; `moveend`
     // rattrape une rotation terminée sans dernier événement intermédiaire.
     map.on('rotate', reportBearing);
+    map.on('dragstart', reportUserPan);
+    map.on('rotatestart', reportUserPan);
     reportBearing();
 
     map.on('moveend', () => {
@@ -714,6 +772,8 @@ export default function MapStage({
       if (startupTimer) window.clearTimeout(startupTimer);
       if (orbitRef.current) window.clearInterval(orbitRef.current);
       map.off('rotate', reportBearing);
+      map.off('dragstart', reportUserPan);
+      map.off('rotatestart', reportUserPan);
       map.remove();
       mapRef.current = null;
       setReady(false);
@@ -765,6 +825,27 @@ export default function MapStage({
     const source = map.getSource('xp-track') as GeoJSONSource | undefined;
     if (source) source.setData((activityTrack ?? EMPTY) as never);
   }, [activityTrack, ready]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    const source = map.getSource('xp-reroute') as GeoJSONSource | undefined;
+    if (source) source.setData((rerouteGeometry ?? EMPTY) as never);
+  }, [rerouteGeometry, ready]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    const source = map.getSource('xp-offline-coverage') as GeoJSONSource | undefined;
+    if (source) source.setData((offlineCoverage ?? EMPTY) as never);
+    const vis = showOfflineCoverage ? 'visible' : 'none';
+    if (map.getLayer('xp-offline-coverage-fill')) {
+      map.setLayoutProperty('xp-offline-coverage-fill', 'visibility', vis);
+    }
+    if (map.getLayer('xp-offline-coverage-line')) {
+      map.setLayoutProperty('xp-offline-coverage-line', 'visibility', vis);
+    }
+  }, [offlineCoverage, showOfflineCoverage, ready]);
 
   // ── thème ──────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -1054,8 +1135,10 @@ export default function MapStage({
       : cameraIntent.type === 'reveal'
         ? `reveal:${cameraIntent.center.join(',')}`
         : cameraIntent.type === 'bearing'
-          ? `bearing:${cameraIntent.northUp}`
-          : cameraIntent.type === 'flyover'
+          ? `bearing:${cameraIntent.northUp}:${cameraIntent.bearingDeg ?? ''}`
+          : cameraIntent.type === 'zoom'
+            ? `zoom:${cameraIntent.zoom}`
+            : cameraIntent.type === 'flyover'
             ? `flyover:${cameraIntent.routeId}`
             : cameraIntent.type === 'follow'
               ? `follow:${me ? `${me.lat.toFixed(5)},${me.lng.toFixed(5)}` : center.join(',')}`
@@ -1077,7 +1160,17 @@ export default function MapStage({
       return;
     }
     if (cameraIntent.type === 'bearing') {
-      if (cameraIntent.northUp) map.easeTo({ bearing: 0, duration: reducedMotion ? 0 : 400 });
+      if (cameraIntent.northUp) {
+        map.easeTo({ bearing: 0, duration: reducedMotion ? 0 : 400 });
+      } else if (typeof cameraIntent.bearingDeg === 'number' && Number.isFinite(cameraIntent.bearingDeg)) {
+        map.easeTo({ bearing: cameraIntent.bearingDeg, duration: reducedMotion ? 0 : 350 });
+      }
+      return;
+    }
+    if (cameraIntent.type === 'zoom') {
+      if (Number.isFinite(cameraIntent.zoom)) {
+        map.easeTo({ zoom: cameraIntent.zoom, duration: reducedMotion ? 0 : 350 });
+      }
       return;
     }
     if (cameraIntent.type === 'reveal') {

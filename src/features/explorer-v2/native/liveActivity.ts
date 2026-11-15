@@ -16,6 +16,18 @@ export interface LiveActivityState {
   movingS: number;
   paused: boolean;
   offRoute: boolean;
+  /** Instruction du prochain virage (K4.12 / S1.06). */
+  nextManeuverInstruction?: string | null;
+  /** Nom d'icône du prochain virage (K4.12 / S1.06). */
+  nextManeuverIcon?: string | null;
+  /** Distance restante jusqu'au prochain virage (m). */
+  nextManeuverDistanceM?: number | null;
+  /** Libellé d'écart hors trace ou recalcul. */
+  offRouteLabel?: string | null;
+  /** Rythme formaté (allure ou vitesse) pour affichage lock screen. */
+  formattedRhythm?: string | null;
+  /** Identifiant stable de session locale. */
+  clientSessionId?: string | null;
 }
 
 export interface LiveActivityStart extends LiveActivityState {

@@ -30,43 +30,77 @@ struct LkdvLiveActivityWidget: Widget {
                         .monospacedDigit()
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text("Distance").font(.caption2).foregroundStyle(.secondary)
-                            Text(String(format: "%.1f km", context.state.distanceM / 1000))
-                                .font(.headline)
+                    VStack(alignment: .leading, spacing: 6) {
+                        if let instruction = context.state.nextManeuverInstruction, !instruction.isEmpty {
+                            HStack(spacing: 6) {
+                                Image(systemName: "arrow.turn.up.right")
+                                    .font(.caption)
+                                    .foregroundStyle(Color(red: 34/255, green: 97/255, blue: 72/255))
+                                Text(instruction)
+                                    .font(.caption)
+                                    .fontWeight(.semibold)
+                                    .lineLimit(1)
+                                Spacer()
+                                if let dist = context.state.nextManeuverDistanceM {
+                                    Text(formatManeuverDistance(meters: dist))
+                                        .font(.caption)
+                                        .monospacedDigit()
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
                         }
-                        Spacer()
-                        VStack(alignment: .trailing) {
-                            Text("D+").font(.caption2).foregroundStyle(.secondary)
-                            Text("\(Int(context.state.elevGainM)) m")
-                                .font(.headline)
-                        }
-                        if context.state.offRoute {
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text("Distance").font(.caption2).foregroundStyle(.secondary)
+                                Text(String(format: "%.1f km", context.state.distanceM / 1000))
+                                    .font(.headline)
+                            }
                             Spacer()
-                            Text("Hors trace")
-                                .font(.caption2)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(Color.orange.opacity(0.2))
-                                .foregroundStyle(.orange)
-                                .clipShape(Capsule())
+                            VStack(alignment: .trailing) {
+                                Text("D+").font(.caption2).foregroundStyle(.secondary)
+                                Text("\(Int(context.state.elevGainM)) m")
+                                    .font(.headline)
+                            }
+                            if context.state.offRoute {
+                                Spacer()
+                                Text(context.state.offRouteLabel ?? "Hors trace")
+                                    .font(.caption2)
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(Color.orange.opacity(0.2))
+                                    .foregroundStyle(.orange)
+                                    .clipShape(Capsule())
+                            }
                         }
                     }
                 }
             } compactLeading: {
-                Image(systemName: "figure.hiking")
-                    .foregroundStyle(Color(red: 34/255, green: 97/255, blue: 72/255))
+                Image(systemName: context.state.offRoute ? "exclamationmark.triangle.fill" : (context.state.nextManeuverInstruction != nil ? "arrow.turn.up.right" : "figure.hiking"))
+                    .foregroundStyle(context.state.offRoute ? Color.orange : Color(red: 34/255, green: 97/255, blue: 72/255))
             } compactTrailing: {
-                Text(String(format: "%.1f km", context.state.distanceM / 1000))
-                    .font(.caption2)
-                    .fontWeight(.semibold)
-                    .monospacedDigit()
+                if let dist = context.state.nextManeuverDistanceM, context.state.nextManeuverInstruction != nil {
+                    Text(formatManeuverDistance(meters: dist))
+                        .font(.caption2)
+                        .fontWeight(.semibold)
+                        .monospacedDigit()
+                } else {
+                    Text(String(format: "%.1f km", context.state.distanceM / 1000))
+                        .font(.caption2)
+                        .fontWeight(.semibold)
+                        .monospacedDigit()
+                }
             } minimal: {
                 Image(systemName: "figure.hiking")
                     .foregroundStyle(Color(red: 34/255, green: 97/255, blue: 72/255))
             }
         }
+    }
+
+    private func formatManeuverDistance(meters: Double) -> String {
+        if meters >= 1000 {
+            return String(format: "%.1f km", meters / 1000)
+        }
+        return "\(Int(max(0, meters.rounded()))) m"
     }
 
     private func formatDuration(seconds: Double) -> String {
@@ -91,9 +125,17 @@ struct LkdvLockScreenLiveActivityView: View {
                 Text(context.attributes.sport.capitalized)
                     .font(.headline)
                     .foregroundStyle(Color(red: 23/255, green: 43/255, blue: 36/255))
-                Text(context.state.paused ? "En pause" : "En cours")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                if let instruction = context.state.nextManeuverInstruction, !instruction.isEmpty {
+                    Text(instruction)
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundStyle(Color(red: 34/255, green: 97/255, blue: 72/255))
+                        .lineLimit(1)
+                } else {
+                    Text(context.state.offRoute ? (context.state.offRouteLabel ?? "Hors trace") : (context.state.paused ? "En pause" : "En cours"))
+                        .font(.caption)
+                        .foregroundStyle(context.state.offRoute ? .orange : .secondary)
+                }
             }
             Spacer()
             VStack(alignment: .trailing, spacing: 2) {

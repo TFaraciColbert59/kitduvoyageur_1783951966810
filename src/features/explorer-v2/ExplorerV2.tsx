@@ -66,6 +66,11 @@ import {
   useExplorerStore,
   useTransientStart,
 } from './state/store';
+import type { ActivityState } from './state/types';
+import { useNavigationGuidance } from './guidance/useNavigationGuidance';
+import { TurnByTurnBanner } from './guidance/ui';
+import { getOfflineRuntimeStore } from '@/features/offline/offlineRuntimeStore';
+import type { OfflineDownloadProgress, OfflineInstalledPackRecord } from '@/features/offline';
 import { isSceneName, sceneEnabled, SCENES } from './state/scenes';
 import {
   isSearchableViewport,
@@ -446,6 +451,8 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
         const { data } = createClient().auth.onAuthStateChange((event, session) => {
           if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || session) {
             void flushPending();
+          } else if (event === 'SIGNED_OUT') {
+            void getOfflineRuntimeStore().purgePrivateOnLogout();
           }
         });
         subscription = data.subscription;
@@ -1083,6 +1090,10 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
     }
   }, []);
 
+  const processGuidanceFixRef = React.useRef<((fix: GpsFix, updated?: ActivityState) => void) | null>(
+    null,
+  );
+
   const onGpsFix = useCallback(
     (fix: GpsFix, metrics: ActivityMetrics) => {
       const activity = useExplorerStore.getState().activity;
@@ -1092,6 +1103,14 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
       // (précision, saut, horloge) ne doit être ni dessiné ni persisté.
       if (!metrics.accepted) return;
       if (metrics.lastFix !== fix) return;
+
+      processGuidanceFixRef.current?.(fix, {
+        ...activity,
+        distanceM: metrics.distanceM,
+        elevGainM: metrics.elevGainM,
+        movingS: metrics.movingS,
+        autoPaused: metrics.autoPaused,
+      });
 
       // Pause automatique : la capture continue pour détecter la reprise, mais
       // le tracé et la carte restent figés. Le point est tout de même persisté
@@ -1448,7 +1467,166 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
     [trackTrace],
   );
 
-  // Live Activity iOS (P7-20) : démarrage, mise à jour toutes les 5 s, fin.
+  // ── Paquets hors ligne (lot N02) ───────────────────────────────────────
+  const [installedOfflinePacks, setInstalledOfflinePacks] = useState<OfflineInstalledPackRecord[]>(
+    [],
+  );
+  const [offlineProgress, setOfflineProgress] = useState<OfflineDownloadProgress | null>(null);
+  const [coverageVisible, setCoverageVisible] = useState(false);
+
+  const refreshOfflinePacks = useCallback(() => {
+    setInstalledOfflinePacks(getOfflineRuntimeStore().listInstalledPacks());
+  }, []);
+
+  useEffect(() => {
+    void getOfflineRuntimeStore().hydrate().then((packs) => {
+      setInstalledOfflinePacks(packs);
+    });
+  }, []);
+
+  const offlineCoverageGeoJson = useMemo<GeoCollection | null>(() => {
+    if (!coverageVisible) return null;
+    const fc = getOfflineRuntimeStore().buildCoverageGeoJson();
+    return {
+      type: 'FeatureCollection',
+      features: fc.features.map((f) => ({
+        type: 'Feature',
+        properties: f.properties as unknown as Record<string, unknown>,
+        geometry: { type: f.geometry.type, coordinates: f.geometry.coordinates },
+      })),
+    };
+  }, [coverageVisible, installedOfflinePacks]);
+
+  const handleShortcutLaunch = useCallback(
+    (deepLinkUri: string) => {
+      const store = getOfflineRuntimeStore();
+      const res = store.resolveShortcut(deepLinkUri);
+      if (res.status === 'unavailable') {
+        useExplorerStore.getState().showToast({
+          title: 'Raccourci hors ligne indisponible',
+          sub: res.reason ?? 'Paquet supprimé ou non téléchargé.',
+          tone: 'warn',
+        });
+        return;
+      }
+      const s = useExplorerStore.getState();
+      setSheetOpen(true);
+      if (res.actionKind === 'plan_route') {
+        s.setSheet('start', 'low');
+      } else if (
+        res.actionKind === 'open_offline_downloads' ||
+        res.actionKind === 'open_downloaded_region'
+      ) {
+        s.setSheet('offline', 'mid');
+      } else if (res.actionKind === 'record_activity') {
+        if (!s.activity) {
+          s.startActivity('rando');
+        } else {
+          s.setSheet('live', 'mid');
+        }
+      } else if (res.actionKind === 'open_downloaded_route' && res.targetRouteId) {
+        const offlineRoute = store.getInstalledRouteNavigationData(res.targetRouteId);
+        if (offlineRoute) {
+          s.setTrailRoute({
+            id: offlineRoute.routeId,
+            name: offlineRoute.name,
+            geojson: offlineRoute.geojson,
+            status: 'ready',
+          });
+          s.select({ kind: 'trail', id: offlineRoute.routeId }, 'trail', 'mid');
+        }
+      } else if (res.targetRegionId) {
+        s.setSheet('offline', 'mid');
+      }
+    },
+    [],
+  );
+
+  // Gestion des raccourcis système / Spotlight / App Shortcuts (`lkdv://shortcut/*`, K4.19)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const paramUri = params.get('shortcut');
+    if (paramUri && paramUri.startsWith('lkdv://shortcut/')) {
+      handleShortcutLaunch(paramUri);
+    }
+    const onShortcutEvent = (ev: Event) => {
+      const uri = (ev as CustomEvent<{ uri?: string }>).detail?.uri;
+      if (uri) handleShortcutLaunch(uri);
+    };
+    window.addEventListener('lkdv:shortcut', onShortcutEvent);
+    const capApp = (window as unknown as {
+      Capacitor?: {
+        Plugins?: {
+          App?: {
+            addListener?: (
+              event: string,
+              cb: (data: { url?: string }) => void,
+            ) => Promise<{ remove: () => void }>;
+          };
+        };
+      };
+    }).Capacitor?.Plugins?.App;
+    let removeCapListener: (() => void) | null = null;
+    if (capApp?.addListener) {
+      void capApp
+        .addListener('appUrlOpen', ({ url }) => {
+          if (url && url.startsWith('lkdv://shortcut/')) {
+            handleShortcutLaunch(url);
+          }
+        })
+        .then((handle) => {
+          removeCapListener = () => handle.remove();
+        })
+        .catch(() => {});
+    }
+    return () => {
+      window.removeEventListener('lkdv:shortcut', onShortcutEvent);
+      removeCapListener?.();
+    };
+  }, [handleShortcutLaunch]);
+
+  // ── Guidage et navigation (lot N01) ────────────────────────────────────
+  const navGuidance = useNavigationGuidance({
+    activity: state.activity,
+    trailRoute: state.trailRoute,
+    routes,
+    pois,
+    me,
+    center: state.center,
+    units: unitsForCountry,
+    northUp: state.northUp,
+    online,
+    onNorthUpSync: (nextNorthUp) => {
+      if (useExplorerStore.getState().northUp !== nextNorthUp) {
+        useExplorerStore.setState({ northUp: nextNorthUp });
+      }
+    },
+    onSwapActiveRoute: (nextRoute) => {
+      useExplorerStore.getState().swapActivityRoute(nextRoute);
+    },
+    onApplyCameraBearing: (isNorthUp, bearingDeg) => {
+      useExplorerStore.getState().setCamera({
+        type: 'bearing',
+        northUp: isNorthUp,
+        bearingDeg,
+      });
+    },
+    onApplyAutoZoom: (zoom) => {
+      useExplorerStore.getState().setCamera({ type: 'zoom', zoom });
+    },
+    onPauseOrResumeActivity: () => {
+      const current = useExplorerStore.getState().activity;
+      if (current) {
+        useExplorerStore.getState().updateActivity({ paused: !current.paused });
+      }
+    },
+    onMarkLap: markLap,
+  });
+
+  processGuidanceFixRef.current = navGuidance.processAcceptedFix;
+
+  // Live Activity iOS / Android (P7-20 + K4.12 / S1.06) : démarrage, mise à jour toutes les 5 s, fin.
   const liveActivityRef = React.useRef<{ started: boolean; lastPush: number }>({ started: false, lastPush: 0 });
   useEffect(() => {
     const activity = state.activity;
@@ -1465,12 +1643,19 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
       }
       return;
     }
+    const lockPayload = navGuidance.guidance.lockScreenPayload;
     const payload = {
       distanceM: activity.distanceM,
       elevGainM: activity.elevGainM,
       movingS: activity.movingS,
       paused: activity.paused,
       offRoute: activity.offRoute ?? false,
+      clientSessionId: activity.clientSessionId ?? null,
+      nextManeuverInstruction: lockPayload?.nextManeuver?.instruction ?? null,
+      nextManeuverIcon: lockPayload?.nextManeuver?.iconName ?? null,
+      nextManeuverDistanceM: lockPayload?.nextManeuver?.distanceM ?? null,
+      offRouteLabel: activity.offRoute ? offRouteLabel(activity.offRouteM) : null,
+      formattedRhythm: lockPayload?.dynamicIsland.expanded.trailingStatValue ?? null,
     };
     if (!liveActivityRef.current.started) {
       liveActivityRef.current = { started: true, lastPush: Date.now() };
@@ -1481,7 +1666,7 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
     if (now - liveActivityRef.current.lastPush < 5000) return;
     liveActivityRef.current.lastPush = now;
     void updateLiveActivity(payload);
-  }, [state.activity]);
+  }, [state.activity, navGuidance.guidance.lockScreenPayload]);
 
   // ── contexte de feuille ────────────────────────────────────────────────
   const ctx = useMemo<SheetContext>(
@@ -1583,9 +1768,81 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
       onConfirmReport,
       onMarkLap: markLap,
       onRequestLocation: requestPosition,
+      guidance: {
+        state: navGuidance.guidance,
+        onSetOrientationMode: navGuidance.setOrientationMode,
+        onRecenter: navGuidance.recenter,
+        onSetAudioPrefs: navGuidance.setAudioPrefs,
+        onTestVoice: navGuidance.testVoice,
+        onSetDisplayPrefs: navGuidance.setDisplayPrefs,
+        onSwapRoute: navGuidance.swapRoute,
+        onSelectDepartureAction: navGuidance.onSelectDepartureAction,
+        onRetryReroute: navGuidance.retryReroute,
+        onLockScreenAction: navGuidance.onLockScreenAction,
+      },
+      offline: {
+        installedPacks: installedOfflinePacks,
+        progress: offlineProgress,
+        coverageVisible,
+        onDownloadRegion: (region) => {
+          void getOfflineRuntimeStore()
+            .downloadOrResumeRegion(
+              region,
+              { pois, routes },
+              { onProgress: setOfflineProgress },
+            )
+            .then(() => {
+              refreshOfflinePacks();
+              useExplorerStore.getState().showToast({
+                title: 'Région prête hors ligne',
+                sub: region.name,
+              });
+            });
+        },
+        onPausePack: (packId) => {
+          void getOfflineRuntimeStore().pausePack(packId).then(refreshOfflinePacks);
+        },
+        onDeletePack: (packId) => {
+          void getOfflineRuntimeStore().deletePack(packId).then(() => {
+            refreshOfflinePacks();
+            useExplorerStore.getState().showToast({ title: 'Paquet supprimé' });
+          });
+        },
+        onDownloadZones: (multi) => {
+          void getOfflineRuntimeStore()
+            .downloadCustomZones(
+              multi,
+              { pois, routes },
+              { onProgress: setOfflineProgress },
+            )
+            .then(() => {
+              refreshOfflinePacks();
+              useExplorerStore.getState().showToast({ title: 'Zone(s) téléchargée(s)' });
+            });
+        },
+        onDownloadRoutePack: (route) => {
+          void getOfflineRuntimeStore()
+            .downloadRouteOfflinePack(
+              { ...route, sport: state.activity?.sport ?? 'rando' },
+              pois,
+              { onProgress: setOfflineProgress },
+            )
+            .then(() => {
+              refreshOfflinePacks();
+              useExplorerStore.getState().showToast({
+                title: 'Itinéraire prêt hors ligne',
+                sub: route.name ?? undefined,
+              });
+            });
+        },
+        onShowCoverage: () => {
+          setCoverageVisible((v) => !v);
+        },
+        onLaunchShortcut: handleShortcutLaunch,
+      },
       locale: 'fr-FR',
     }),
-    [state, countries, country, regionsGeo, regionGroups, place, pois, routes, weather, unitsForCountry, reportsData, carnetsData, tripsData, selectedPoi, me, mapViewport, slope.state, slope.summary, slopeRoute, allDistanceMarkers, communityState.enabled, communityHeatmapQuery.data, communityHeatmapQuery.isPending, communityHeatmapQuery.isError, personalState.enabled, personalHeatmapQuery.data, personalHeatmapQuery.isPending, personalHeatmapQuery.isError, personalHeatmapQuery.error, bikePoisQuery.data, bikePoisQuery.isPending, firesQuery.data, firesQuery.isPending, surfacesQuery.data, surfacesQuery.isPending, highlightsQuery.data, requestStartSafe, onConfirmReport, markLap, requestPosition],
+    [state, countries, country, regionsGeo, regionGroups, place, pois, routes, weather, unitsForCountry, reportsData, carnetsData, tripsData, selectedPoi, me, mapViewport, slope.state, slope.summary, slopeRoute, allDistanceMarkers, communityState.enabled, communityHeatmapQuery.data, communityHeatmapQuery.isPending, communityHeatmapQuery.isError, personalState.enabled, personalHeatmapQuery.data, personalHeatmapQuery.isPending, personalHeatmapQuery.isError, personalHeatmapQuery.error, bikePoisQuery.data, bikePoisQuery.isPending, firesQuery.data, firesQuery.isPending, surfacesQuery.data, surfacesQuery.isPending, highlightsQuery.data, requestStartSafe, onConfirmReport, markLap, requestPosition, navGuidance, installedOfflinePacks, offlineProgress, coverageVisible, refreshOfflinePacks, handleShortcutLaunch],
   );
 
   const model = useMemo(() => buildSheetModel(ctx), [ctx]);
@@ -2003,6 +2260,10 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
         firesGeo={firesGeo}
         surfacesGeo={surfacesGeo}
         highlightsGeo={highlightsGeo}
+        rerouteGeometry={navGuidance.guidance.detourGeoJson}
+        offlineCoverage={offlineCoverageGeoJson}
+        showOfflineCoverage={coverageVisible}
+        onUserPan={navGuidance.onUserMapPan}
       />
 
       {pendingStart ? (
@@ -2033,7 +2294,12 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
         activity={!!activity}
         onCompass={() => {
           haptic('compass');
-          state.toggleNorthUp();
+          if (navGuidance.guidance.orientation.userPanned) {
+            navGuidance.recenter();
+            return;
+          }
+          const nextMode = state.northUp ? 'course-up' : 'north-up';
+          navGuidance.setOrientationMode(nextMode);
         }}
         northUp={state.northUp}
       />
@@ -2104,6 +2370,25 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
             );
           }}
         />
+      ) : null}
+
+      {activity &&
+      activityRouteStatus === 'ready' &&
+      navGuidance.guidance.turnByTurn.nextManeuver &&
+      state.sheet !== 'live' ? (
+        <div
+          className="xp-tbt-overlay"
+          style={{
+            position: 'absolute',
+            top: 64,
+            left: 12,
+            right: 12,
+            zIndex: 18,
+            pointerEvents: 'auto',
+          }}
+        >
+          <TurnByTurnBanner state={navGuidance.guidance.turnByTurn} showSecondary={false} />
+        </div>
       ) : null}
 
       {activity?.offRoute && activityRouteStatus !== 'unavailable' ? (

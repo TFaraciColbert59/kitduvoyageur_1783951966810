@@ -31,6 +31,9 @@ class LiveOutingNotificationService : Service() {
     private var movingS: Double = 0.0
     private var paused: Boolean = false
     private var offRoute: Boolean = false
+    private var nextManeuverInstruction: String? = null
+    private var nextManeuverDistanceM: Double = -1.0
+    private var offRouteLabel: String? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -49,6 +52,9 @@ class LiveOutingNotificationService : Service() {
                 movingS = intent.getDoubleExtra("movingS", 0.0)
                 paused = intent.getBooleanExtra("paused", false)
                 offRoute = intent.getBooleanExtra("offRoute", false)
+                nextManeuverInstruction = intent.getStringExtra("nextManeuverInstruction")
+                nextManeuverDistanceM = intent.getDoubleExtra("nextManeuverDistanceM", -1.0)
+                offRouteLabel = intent.getStringExtra("offRouteLabel")
                 startAsForeground()
             }
             ACTION_UPDATE -> {
@@ -57,6 +63,9 @@ class LiveOutingNotificationService : Service() {
                 movingS = intent.getDoubleExtra("movingS", movingS)
                 paused = intent.getBooleanExtra("paused", paused)
                 offRoute = intent.getBooleanExtra("offRoute", offRoute)
+                nextManeuverInstruction = intent.getStringExtra("nextManeuverInstruction")
+                nextManeuverDistanceM = intent.getDoubleExtra("nextManeuverDistanceM", -1.0)
+                offRouteLabel = intent.getStringExtra("offRouteLabel")
                 updateNotification()
             }
             ACTION_TOGGLE_PAUSE -> {
@@ -119,12 +128,32 @@ class LiveOutingNotificationService : Service() {
         ).build()
 
         val title = "${sport.replaceFirstChar { it.uppercase() }} · " + if (paused) "En pause" else "En cours"
-        val subtitle = String.format(Locale.FRENCH, "%.1f km · %d m D+%s", distanceM / 1000.0, elevGainM.toInt(), if (offRoute) " · Hors trace" else "")
+        val maneuverText = nextManeuverInstruction?.takeIf { it.isNotBlank() }?.let { instr ->
+            if (nextManeuverDistanceM >= 0.0) {
+                val distLabel = if (nextManeuverDistanceM >= 1000.0) {
+                    String.format(Locale.FRENCH, "%.1f km", nextManeuverDistanceM / 1000.0)
+                } else {
+                    "${nextManeuverDistanceM.toInt()} m"
+                }
+                "$instr ($distLabel)"
+            } else {
+                instr
+            }
+        }
+        val baseStats = String.format(
+            Locale.FRENCH,
+            "%.1f km · %d m D+%s",
+            distanceM / 1000.0,
+            elevGainM.toInt(),
+            if (offRoute) " · ${offRouteLabel ?: "Hors trace"}" else ""
+        )
+        val subtitle = if (maneuverText != null) "$maneuverText · $baseStats" else baseStats
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_menu_mylocation)
             .setContentTitle(title)
             .setContentText(subtitle)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(subtitle))
             .setOngoing(true)
             .setCategory(NotificationCompat.CATEGORY_WORKOUT)
             .setContentIntent(pendingOpenIntent)

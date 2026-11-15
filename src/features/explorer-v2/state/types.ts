@@ -52,6 +52,7 @@ export type SheetKind =
   | 'start'
   | 'strength'
   | 'live'
+  | 'liveSettings'
   | 'sos'
   | 'summary'
   | 'zoneSettings'
@@ -66,7 +67,8 @@ export type CameraIntent =
   | { type: 'flyover'; routeId: string }
   | { type: 'follow' }
   | { type: 'overview'; bounds?: [[number, number], [number, number]] }
-  | { type: 'bearing'; northUp: boolean }
+  | { type: 'bearing'; northUp: boolean; bearingDeg?: number }
+  | { type: 'zoom'; zoom: number }
   | { type: 'none' };
 
 export type Profile = 'solo' | 'famille' | 'enfants' | 'senior' | 'pmr' | 'sportif' | null;

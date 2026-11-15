@@ -154,7 +154,12 @@ function rotr(n: number, x: number): number {
 }
 
 export function toUtf8Bytes(input: Uint8Array | string): Uint8Array {
-  if (input instanceof Uint8Array) return input;
+  if (typeof input !== 'string') {
+    if (ArrayBuffer.isView(input)) {
+      return new Uint8Array(input.buffer, input.byteOffset, input.byteLength);
+    }
+    return new Uint8Array(input);
+  }
   return new TextEncoder().encode(input);
 }
 

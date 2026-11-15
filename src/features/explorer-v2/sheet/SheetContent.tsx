@@ -25,7 +25,6 @@ import {
   nationalTopoSourcesFor,
   verifiedNationalTopoFor,
 } from '../map/nationalTopo';
-import { countTiles, downloadZone, purgeZone, readZone } from '../offline/zone';
 import { ElevationProfile } from './ElevationProfile';
 import { StrengthPanel } from './StrengthPanel';
 import { ZoneSettingsEntry, ZoneSettingsPanel } from './ZoneSettingsPanel';
@@ -54,6 +53,21 @@ import {
   XpRows,
 } from './blocks';
 import type { SheetTab } from './ExplorerSheet';
+import {
+  AudioGuidanceControls,
+  ClimbDescentCard,
+  CustomFieldsEditor,
+  JoinStartCard,
+  LiveActivityPreview,
+  OrientationCompass,
+  RerouteBanner,
+  RouteSwapPicker,
+  TurnByTurnBanner,
+  UpcomingWaypointsList,
+} from '../guidance/ui';
+import { browserSpeechAdapter, type ActiveRecordingSnapshot } from '@/features/navigation';
+import { OfflinePacksScreen } from '@/components/offline';
+import { getOfflineRuntimeStore, listPredefinedRegions } from '@/features/offline';
 import {
   formatImperialDistance,
   formatImperialElevation,
@@ -1742,6 +1756,9 @@ function ToolsTabs(ctx: SheetContext, kind: string): SheetTab[] {
 
     const nearbyWater = ctx.pois.filter((p) => p.kind === 'water');
     const nearbyRefuges = ctx.pois.filter((p) => p.kind === 'refuge');
+    const routePack = route
+      ? (ctx.offline?.installedPacks ?? []).find((p) => p.manifest.routeId === String(route.id)) ?? null
+      : null;
 
     return [
       {
@@ -1764,6 +1781,60 @@ function ToolsTabs(ctx: SheetContext, kind: string): SheetTab[] {
                   { label: 'Réseau', value: route.ref ?? route.network ?? 'GR®' },
                 ]}
               />
+              {ctx.guidance && ctx.state.trailRoute?.id === String(route.id) ? (
+                <JoinStartCard
+                  evaluation={ctx.guidance.state.departureEvaluation}
+                  externalLinks={ctx.guidance.state.externalLinks}
+                  onAction={(action) => {
+                    if (action === 'start_at_origin' || action === 'start_here_on_route') {
+                      const fallbackSport = ctx.state.activity?.sport ?? 'rando';
+                      ctx.onStartSport?.(fallbackSport);
+                      return;
+                    }
+                    ctx.guidance?.onSelectDepartureAction(action);
+                  }}
+                />
+              ) : null}
+              <XpEyebrow>Hors ligne · Itinéraire</XpEyebrow>
+              <XpRows>
+                <XpRow
+                  icon="offline"
+                  tone={routePack ? 'good' : undefined}
+                  title={
+                    routePack
+                      ? 'Itinéraire disponible hors ligne'
+                      : 'Télécharger l’itinéraire hors ligne'
+                  }
+                  sub={
+                    routePack
+                      ? `Trace, manœuvres TBT (${routePack.capabilities.followInstructions.status}) & repères vérifiés`
+                      : 'Trace, instructions virage par virage, couloir et repères à venir'
+                  }
+                  badge={
+                    routePack
+                      ? { label: routePack.status === 'available' ? 'Prêt' : routePack.status, tone: 'good' }
+                      : { label: 'Télécharger', tone: 'muted' }
+                  }
+                  onClick={() => {
+                    if (routePack) {
+                      ctx.offline?.onDeletePack(routePack.manifest.packId);
+                      return;
+                    }
+                    if (ctx.offline) {
+                      ctx.offline.onDownloadRoutePack({
+                        id: route.id,
+                        name: route.name,
+                        geojson: route.geojson,
+                      });
+                    } else {
+                      void getOfflineRuntimeStore().downloadRouteOfflinePack(
+                        { id: route.id, name: route.name, geojson: route.geojson },
+                        ctx.pois,
+                      );
+                    }
+                  }}
+                />
+              </XpRows>
               <XpEyebrow>Couches et affichage</XpEyebrow>
               <XpRows>
                 <XpRow
@@ -1906,87 +1977,139 @@ function ToolsTabs(ctx: SheetContext, kind: string): SheetTab[] {
  * worker, les repères et itinéraires dans IndexedDB.
  */
 function OfflineTab({ ctx }: { ctx: SheetContext }) {
-  const [zone, setZone] = React.useState<{ tiles: number; bytes: number; savedAt: number; ok?: number; failed?: number } | null>(null);
-  const [progress, setProgress] = React.useState<{ done: number; total: number; bytes: number } | null>(null);
-  const [busy, setBusy] = React.useState(false);
-
-  const bounds = React.useMemo(() => {
-    const [lng, lat] = ctx.state.center;
-    const span = 0.08;
-    return { west: lng - span, east: lng + span, south: lat - span / 2, north: lat + span / 2 };
-  }, [ctx.state.center]);
-
-  const estimate = React.useMemo(() => countTiles(bounds, 11, 14), [bounds]);
+  const [fallbackPacks, setFallbackPacks] = React.useState(() =>
+    getOfflineRuntimeStore().listInstalledPacks(),
+  );
+  const [fallbackProgress, setFallbackProgress] = React.useState<
+    import('@/features/offline').OfflineDownloadProgress | null
+  >(null);
 
   React.useEffect(() => {
-    void readZone().then((record) => {
-      if (record) setZone({ tiles: record.tiles, bytes: record.bytes, savedAt: record.savedAt, ok: record.ok, failed: record.failed });
-    });
-  }, []);
+    if (ctx.offline) return;
+    void getOfflineRuntimeStore().hydrate().then(setFallbackPacks);
+  }, [ctx.offline]);
 
-  const download = async () => {
-    setBusy(true);
-    try {
-      const record = await downloadZone(
-        bounds,
-        { pois: ctx.pois, routes: ctx.routes },
-        { minZoom: 11, maxZoom: 14, onProgress: setProgress },
-      );
-      setZone({ tiles: record.tiles, bytes: record.bytes, savedAt: record.savedAt, ok: record.ok, failed: record.failed });
-      ctx.state.showToast({ title: 'Zone prête', sub: `${record.tiles} tuiles` });
-    } catch {
-      ctx.state.showToast({ title: 'Téléchargement interrompu', tone: 'warn' });
-    } finally {
-      setBusy(false);
-      setProgress(null);
-    }
-  };
+  const packs = ctx.offline?.installedPacks ?? fallbackPacks;
+  const progress = ctx.offline?.progress ?? fallbackProgress;
+  const regions = React.useMemo(() => listPredefinedRegions(), []);
+  const parentSheet = ctx.state.sheetParent?.sheet ?? 'level';
+  const parentDetent = ctx.state.sheetParent?.detent ?? 'peek';
+  const parentTab = ctx.state.sheetParent?.tab ?? 0;
 
-  const purge = async () => {
-    await purgeZone();
-    setZone(null);
-    ctx.state.showToast({ title: 'Zone supprimée' });
-  };
+  const activeRoutePack = ctx.state.trailRoute?.id
+    ? getOfflineRuntimeStore().getInstalledRouteNavigationData(ctx.state.trailRoute.id)
+    : null;
+  const upcomingItems =
+    ctx.state.trailRoute?.id && activeRoutePack
+      ? getOfflineRuntimeStore().getUpcomingOfflinePois(ctx.state.trailRoute.id, 0)
+      : undefined;
 
   return (
-    <>
-      <XpMetrics
-        items={[
-          { label: 'Tuiles estimées', value: String(estimate) },
-          { label: 'Zoom', value: '11 → 14' },
-          { label: 'Repères', value: String(ctx.pois.length) },
-        ]}
-      />
-      {progress ? (
-        <XpEyebrow>{`Téléchargement ${progress.done}/${progress.total} · ${formatBytes(progress.bytes)}`}</XpEyebrow>
-      ) : null}
-      {zone ? (
-        <XpRows>
-          <XpRow
-            icon="offline"
-            tone="good"
-            title="Zone disponible hors ligne"
-            sub={`${zone.tiles} tuiles · ${formatBytes(zone.bytes)} · ${zone.ok ?? 0} en cache${
-              zone.failed ? ` · ${zone.failed} échec(s)` : ''
-            } · ${relativeDay(new Date(zone.savedAt).toISOString())}`}
-          />
-        </XpRows>
-      ) : (
-        <XpEyebrow>Aucune zone téléchargée</XpEyebrow>
-      )}
-      <button type="button" className="xp-primary" onClick={download} disabled={busy}>
-        {busy ? 'Téléchargement…' : zone ? 'Mettre à jour la zone' : 'Télécharger cette zone'}
-      </button>
-      {zone ? (
-        <button type="button" className="xp-secondary" onClick={purge}>
-          Supprimer la zone
-        </button>
-      ) : null}
-      <XpEmpty
-        title="Hors ligne"
-        hint="Les tuiles du fond et du relief sont conservées, ainsi que les repères et itinéraires de la zone."
-      />
-    </>
+    <OfflinePacksScreen
+      installedPacks={packs}
+      returnContext={{
+        parentSheet,
+        parentDetent,
+        parentTab,
+        selectedRouteId: ctx.state.trailRoute?.id ?? null,
+        cameraCenter: ctx.state.center,
+        cameraZoom: ctx.state.zoom,
+      }}
+      regions={regions}
+      progress={progress}
+      routeData={activeRoutePack}
+      routeName={ctx.state.trailRoute?.name ?? null}
+      upcomingItems={upcomingItems}
+      coverageViewport={{
+        bounds: ctx.mapViewport
+          ? {
+              west: ctx.mapViewport.minLng,
+              south: ctx.mapViewport.minLat,
+              east: ctx.mapViewport.maxLng,
+              north: ctx.mapViewport.maxLat,
+            }
+          : {
+              west: ctx.state.center[0] - 0.1,
+              south: ctx.state.center[1] - 0.08,
+              east: ctx.state.center[0] + 0.1,
+              north: ctx.state.center[1] + 0.08,
+            },
+        zoom: ctx.state.zoom,
+      }}
+      onDownloadRegion={(region) => {
+        if (ctx.offline) {
+          ctx.offline.onDownloadRegion(region);
+          return;
+        }
+        void getOfflineRuntimeStore()
+          .downloadOrResumeRegion(
+            region,
+            { pois: ctx.pois, routes: ctx.routes },
+            { onProgress: setFallbackProgress },
+          )
+          .then(() => setFallbackPacks(getOfflineRuntimeStore().listInstalledPacks()));
+      }}
+      onResumeRegion={(region) => {
+        if (ctx.offline) {
+          ctx.offline.onDownloadRegion(region);
+          return;
+        }
+        void getOfflineRuntimeStore()
+          .downloadOrResumeRegion(
+            region,
+            { pois: ctx.pois, routes: ctx.routes },
+            { onProgress: setFallbackProgress },
+          )
+          .then(() => setFallbackPacks(getOfflineRuntimeStore().listInstalledPacks()));
+      }}
+      onPausePack={(packId) => {
+        if (ctx.offline) {
+          ctx.offline.onPausePack(packId);
+          return;
+        }
+        void getOfflineRuntimeStore().pausePack(packId);
+      }}
+      onDeletePack={(packId) => {
+        if (ctx.offline) {
+          ctx.offline.onDeletePack(packId);
+          return;
+        }
+        void getOfflineRuntimeStore()
+          .deletePack(packId)
+          .then(() => setFallbackPacks(getOfflineRuntimeStore().listInstalledPacks()));
+      }}
+      onDownloadZones={(multi) => {
+        if (ctx.offline) {
+          ctx.offline.onDownloadZones(multi);
+          return;
+        }
+        void getOfflineRuntimeStore()
+          .downloadCustomZones(
+            multi,
+            { pois: ctx.pois, routes: ctx.routes },
+            { onProgress: setFallbackProgress },
+          )
+          .then(() => setFallbackPacks(getOfflineRuntimeStore().listInstalledPacks()));
+      }}
+      onShowCoverage={(geoJson) => {
+        ctx.offline?.onShowCoverage(geoJson);
+      }}
+      onLaunchShortcut={(deepLinkUri) => {
+        ctx.offline?.onLaunchShortcut(deepLinkUri);
+      }}
+      onReturn={(restored) => {
+        if (ctx.state.sheetParent) {
+          ctx.state.patch({
+            sheet: restored.parentSheet as never,
+            detent: restored.parentDetent,
+            tab: restored.parentTab,
+            sheetParent: undefined,
+          });
+        } else {
+          ctx.state.patch({ sheet: 'level', detent: 'peek' });
+        }
+      }}
+    />
   );
 }
 
@@ -2562,15 +2685,37 @@ export function LiveDirectTab({ ctx }: { ctx: SheetContext }) {
       : speed !== null
         ? `${speed.toFixed(1).replace('.', ',')} km/h`
         : '—';
-  const metrics = [
-    { label: 'Distance', value: gpsDenied ? '—' : formatDistance(activity.distanceM / 1000) },
-    { label: rhythmLabel, value: rhythmValue },
-    { label: 'Temps', value: formatDuration(activity.movingS) },
-    { label: 'D+', value: gpsDenied ? '—' : `${Math.round(activity.elevGainM)} m` },
-  ];
+  const metrics =
+    ctx.guidance && ctx.guidance.state.customFieldValues.length > 0 && !gpsDenied
+      ? ctx.guidance.state.customFieldValues.map((field) => ({
+          label: field.label,
+          value: field.available
+            ? field.unitLabel
+              ? `${field.formattedValue} ${field.unitLabel}`
+              : field.formattedValue
+            : '—',
+        }))
+      : [
+          { label: 'Distance', value: gpsDenied ? '—' : formatDistance(activity.distanceM / 1000) },
+          { label: rhythmLabel, value: rhythmValue },
+          { label: 'Temps', value: formatDuration(activity.movingS) },
+          { label: 'D+', value: gpsDenied ? '—' : `${Math.round(activity.elevGainM)} m` },
+        ];
   const next = ctx.pois[0];
+  const guidance = ctx.guidance?.state;
   return (
     <>
+      {guidance && activity.route ? (
+        <TurnByTurnBanner state={guidance.turnByTurn} />
+      ) : null}
+      {guidance && guidance.reroute.status !== 'on_route' ? (
+        <RerouteBanner
+          state={guidance.reroute}
+          units={ctx.units}
+          onRetry={ctx.guidance?.onRetryReroute}
+        />
+      ) : null}
+      {guidance ? <ClimbDescentCard card={guidance.climbCard} units={ctx.units} /> : null}
       {gpsDenied ? (
         <XpEmpty
           title="Position refusée"
@@ -2595,24 +2740,39 @@ export function LiveDirectTab({ ctx }: { ctx: SheetContext }) {
         {elapsed}
       </div>
       <XpMetrics items={metrics} />
-      <XpEyebrow>Prochain repère</XpEyebrow>
-      {next ? (
-        <XpRows>
-          <XpRow
-            icon={POI_ICON[next.kind] ?? 'pin'}
-            title={next.name}
-            sub={`${
-              ctx.units === 'imperial'
-                ? formatImperialDistance(distanceKm(ctx.state.center, [next.lon, next.lat]))
-                : formatDistance(distanceKm(ctx.state.center, [next.lon, next.lat]))
-            } · ${POI_LABEL[next.kind] ?? next.kind}`}
-          />
-        </XpRows>
-      ) : (
-        <XpEmpty
-          title="Aucun repère devant"
-          hint="Aucun point d’eau ni refuge n’est enregistré sur la suite du parcours."
+      {guidance && (guidance.upcomingWaypoints.length > 0 || activity.route) ? (
+        <UpcomingWaypointsList
+          items={guidance.upcomingWaypoints}
+          onSelect={(item) => {
+            const w = item.waypoint;
+            const kind = ['water', 'refuge', 'bivouac', 'viewpoint', 'danger', 'access', 'summit'].includes(w.kind)
+              ? (w.kind as never)
+              : 'viewpoint';
+            ctx.state.select({ kind, id: w.id }, kind, 'mid');
+          }}
         />
+      ) : (
+        <>
+          <XpEyebrow>Prochain repère</XpEyebrow>
+          {next ? (
+            <XpRows>
+              <XpRow
+                icon={POI_ICON[next.kind] ?? 'pin'}
+                title={next.name}
+                sub={`${
+                  ctx.units === 'imperial'
+                    ? formatImperialDistance(distanceKm(ctx.state.center, [next.lon, next.lat]))
+                    : formatDistance(distanceKm(ctx.state.center, [next.lon, next.lat]))
+                } · ${POI_LABEL[next.kind] ?? next.kind}`}
+              />
+            </XpRows>
+          ) : (
+            <XpEmpty
+              title="Aucun repère devant"
+              hint="Aucun point d’eau ni refuge n’est enregistré sur la suite du parcours."
+            />
+          )}
+        </>
       )}
       <ExplorerLiveSegmentsPanel
         sport={activity.sport}
@@ -2864,9 +3024,24 @@ function ActivityTabs(ctx: SheetContext, kind: string): SheetTab[] {
         label: isReco ? 'Recommandé' : isCatalog ? 'Catalogue' : 'Itinéraires',
         icon: isReco ? 'star' : isCatalog ? 'run' : 'map',
         render: () => {
+          const armedJoinCard =
+            ctx.guidance && state.trailRoute?.status === 'ready' ? (
+              <JoinStartCard
+                evaluation={ctx.guidance.state.departureEvaluation}
+                externalLinks={ctx.guidance.state.externalLinks}
+                onAction={(action) => {
+                  if (action === 'start_at_origin' || action === 'start_here_on_route') {
+                    ctx.onStartSport?.('rando');
+                    return;
+                  }
+                  ctx.guidance?.onSelectDepartureAction(action);
+                }}
+              />
+            ) : null;
           if (isReco) {
             return (
               <>
+                {armedJoinCard}
                 <RecommendedSports ctx={ctx} />
                 <ZoneSettingsEntry />
               </>
@@ -2875,6 +3050,7 @@ function ActivityTabs(ctx: SheetContext, kind: string): SheetTab[] {
           if (isRoutes) {
             return (
               <>
+                {armedJoinCard}
                 <RoutesTab ctx={ctx} />
                 <ZoneSettingsEntry />
               </>
@@ -2882,11 +3058,113 @@ function ActivityTabs(ctx: SheetContext, kind: string): SheetTab[] {
           }
           return (
             <>
+              {armedJoinCard}
               <SportPicker ctx={ctx} />
               <ZoneSettingsEntry />
             </>
           );
         },
+      },
+    ];
+  }
+  if (kind === 'liveSettings') {
+    const activity = state.activity;
+    const guidance = ctx.guidance;
+    const recordingSnap: ActiveRecordingSnapshot | null = activity
+      ? {
+          sessionId: null,
+          sport: activity.sport,
+          selection: activity.selection,
+          clientSessionId: activity.clientSessionId ?? `local-${activity.startedAt}`,
+          startedAt: activity.startedAt,
+          paused: activity.paused,
+          autoPaused: Boolean(activity.autoPaused),
+          distanceM: activity.distanceM,
+          elevGainM: activity.elevGainM,
+          movingS: activity.movingS,
+          splits: activity.splits ?? [],
+          mileSplits: activity.mileSplits ?? [],
+          laps: activity.laps ?? [],
+        }
+      : null;
+
+    return [
+      {
+        id: 'audio',
+        label: 'Audio',
+        icon: 'vol',
+        render: () =>
+          guidance ? (
+            <AudioGuidanceControls
+              preferences={guidance.state.audioPrefs}
+              sport={activity?.sport ?? 'rando'}
+              onChange={guidance.onSetAudioPrefs}
+              speech={browserSpeechAdapter}
+              onTestVoice={guidance.onTestVoice}
+            />
+          ) : (
+            <XpEmpty title="Audio indisponible" hint="Démarre une sortie pour régler le guidage vocal." />
+          ),
+      },
+      {
+        id: 'orientation',
+        label: 'Carte',
+        icon: 'compass',
+        render: () =>
+          guidance ? (
+            <OrientationCompass
+              orientation={guidance.state.orientation}
+              onModeChange={guidance.onSetOrientationMode}
+              onRecenter={guidance.onRecenter}
+            />
+          ) : (
+            <XpEmpty title="Orientation indisponible" hint="Contrôle de carte indisponible." />
+          ),
+      },
+      {
+        id: 'champs',
+        label: 'Écran',
+        icon: 'gauge',
+        render: () =>
+          guidance ? (
+            <CustomFieldsEditor
+              preferences={guidance.state.displayPrefs}
+              wakeLock={guidance.state.wakeLock}
+              units={ctx.units}
+              onChange={guidance.onSetDisplayPrefs}
+              onDone={() => state.closeLiveSettings()}
+            />
+          ) : (
+            <XpEmpty title="Champs indisponibles" hint="Démarre une sortie pour personnaliser l'écran." />
+          ),
+      },
+      {
+        id: 'parcours-verrou',
+        label: 'Parcours',
+        icon: 'route',
+        render: () => (
+          <>
+            {guidance && recordingSnap ? (
+              <RouteSwapPicker
+                recording={recordingSnap}
+                routes={guidance.state.availableSwapRoutes}
+                currentRouteId={activity?.route?.id ?? null}
+                units={ctx.units}
+                onSwap={(next) => {
+                  guidance.onSwapRoute(next);
+                  state.closeLiveSettings();
+                }}
+              />
+            ) : null}
+            {guidance && guidance.state.lockScreenPayload ? (
+              <LiveActivityPreview
+                payload={guidance.state.lockScreenPayload}
+                capability={guidance.state.lockScreenCapability}
+                onAction={guidance.onLockScreenAction}
+              />
+            ) : null}
+          </>
+        ),
       },
     ];
   }
@@ -3296,6 +3574,17 @@ export function buildSheetModel(ctx: SheetContext): SheetModel {
     };
   }
 
+  if (kind === 'liveSettings') {
+    return {
+      title: 'Réglages sortie',
+      subtitle: 'Audio, orientation, champs, parcours & verrou',
+      tabs: ActivityTabs(ctx, 'liveSettings'),
+      mini: null,
+      actions: null,
+      onBack: () => state.closeLiveSettings(),
+    };
+  }
+
   if (['start', 'live', 'sos', 'summary'].includes(kind)) {
     const titles: Record<string, [string, string]> = {
       start: ['Démarrer', 'Choisis ton activité'],
@@ -3330,7 +3619,17 @@ export function buildSheetModel(ctx: SheetContext): SheetModel {
               onChange: (index: number) => state.setMini(index),
             }
           : null,
-      actions: null,
+      actions:
+        kind === 'live' ? (
+          <button
+            type="button"
+            className="xp-round-ink"
+            onClick={() => state.openLiveSettings()}
+            aria-label="Réglages guidage et sortie"
+          >
+            <XpIcon name="wrench" size={15} />
+          </button>
+        ) : null,
       onBack: () => state.patch({ sheet: 'level', detent: 'peek' }),
     };
   }
