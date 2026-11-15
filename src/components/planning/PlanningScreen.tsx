@@ -31,8 +31,8 @@ export function PlanningScreen() {
             className="g1 border border-[color:var(--glass-rim)] p-[var(--space-4)]"
           >
             <div className="flex flex-wrap items-center gap-[var(--space-2)]">
-              <Badge tone="info">K1.13</Badge>
-              <Badge tone="sage">K2.29–K2.32</Badge>
+              <Badge tone="info">Multi-jours</Badge>
+              <Badge tone="sage">Étapes & météo</Badge>
               <Badge tone="warn">Tracés d’exemple</Badge>
             </div>
             <h2
@@ -44,7 +44,7 @@ export function PlanningScreen() {
             <p className="mt-[var(--space-1)] max-w-3xl text-[length:var(--lkv-text-body-sm)] leading-[var(--leading-normal)] text-[color:var(--lkv-text-secondary)]">
               Recherchez un plan par pays, durée ou thème, corrigez les critères compris, puis
               ajustez les bornes ou ancrez un refuge. La météo n’affiche que ce que le fournisseur
-              réel expose ; le partage applique le consentement et la politique P01.
+              réel expose ; le partage respecte vos préférences de confidentialité.
             </p>
             <div className="mt-[var(--space-3)] grid gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-secondary)] sm:grid-cols-3">
               <p className="flex items-center gap-[var(--space-2)]">
@@ -54,7 +54,7 @@ export function PlanningScreen() {
                 <CloudSun aria-hidden="true" size={16} /> Météo explicite, fenêtres calculées
               </p>
               <p className="flex items-center gap-[var(--space-2)]">
-                <Share2 aria-hidden="true" size={16} /> Partage P01 fail-closed
+                <Share2 aria-hidden="true" size={16} /> Partage sécurisé par défaut
               </p>
             </div>
           </section>

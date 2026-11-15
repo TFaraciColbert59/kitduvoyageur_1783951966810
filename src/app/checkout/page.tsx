@@ -65,7 +65,7 @@ export default function CheckoutPage() {
     express: 9.9,
     relay: 3.9,
   };
-  const shippingEur = shippingCosts[shippingOption] ?? 5.9;
+  const shippingEur = items.length === 0 ? 0 : (shippingCosts[shippingOption] ?? 5.9);
   const grandTotal = totalPriceEur + shippingEur;
 
   const validateShipping = () => {
@@ -475,28 +475,6 @@ export default function CheckoutPage() {
                             })}
                           </div>
 
-                          <div className="mb-[var(--space-8)] flex justify-center">
-                            {/* Fake Credit Card visual — Monochrome Liquid Glass (iOS 27 HIG) */}
-                            <div className="relative aspect-[1.586] w-full max-w-[320px] overflow-hidden rounded-[var(--lkv-radius-lg)] border border-[color:var(--glass-rim)] bg-gradient-to-br from-[var(--glass-bg-prominent)] to-[var(--glass-bg-medium)] p-[var(--space-6)] text-[color:var(--glass-label)] shadow-md backdrop-blur-xl">
-                              <div className="pointer-events-none absolute right-[-20px] top-[-20px] h-40 w-40 rounded-full bg-white/5 blur-2xl" />
-                              <div className="mb-[var(--space-8)] h-8 w-12 rounded border border-white/20 bg-gradient-to-br from-white/20 to-white/5" />
-                              <div className="mb-[var(--space-6)] flex justify-between font-mono text-[length:var(--lkv-text-headline)] tracking-[var(--tracking-caps)]">
-                                <span>••••</span><span>••••</span><span>••••</span><span>4242</span>
-                              </div>
-                              <div className="flex items-end justify-between">
-                                <div>
-                                  <p className="mb-[var(--space-1)] font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-[var(--tracking-caps)] opacity-60">Titulaire</p>
-                                  <p className="max-w-[120px] truncate text-[length:var(--lkv-text-body-sm)] font-semibold uppercase">{shipping.prenom ? `${shipping.prenom[0]}. ${shipping.nom}` : 'M. Chevrier'}</p>
-                                </div>
-                                <div>
-                                  <p className="mb-[var(--space-1)] font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-[var(--tracking-caps)] opacity-60">Expire</p>
-                                  <p className="font-mono text-[length:var(--lkv-text-body-sm)] font-semibold">09/28</p>
-                                </div>
-                                <div className="text-[length:var(--lkv-text-title-sm)] font-bold italic opacity-80">VISA</div>
-                              </div>
-                            </div>
-                          </div>
-
                           <div className="space-y-[var(--space-4)]">
                             <div>
                               <label htmlFor="checkout-card-number" className={LABEL_CLASS}>Numéro de carte</label>
@@ -644,7 +622,7 @@ export default function CheckoutPage() {
       {/* ── MOBILE VIEW (scroll natif) ── */}
       <div className="block md:hidden">
         <AppShell background="transparent" hasBottomNav={false}>
-          <div className="px-[var(--space-4)] pb-[var(--space-5)] pt-[var(--space-3)]">
+          <div className="px-[var(--space-4)] pb-[var(--space-5)] pt-[calc(env(safe-area-inset-top,0px)+var(--space-3))]">
             <div className="mb-[var(--space-4)] flex gap-[6px]">
               {[0, 1, 2, 3].map(i => (
                 <div key={i} className={`h-[3px] flex-1 rounded-full ${i < 2 ? 'bg-[color:var(--lkv-secondary-subtle)]' : i === 2 ? 'bg-[color:var(--glass-label)]' : 'bg-[color:var(--lkv-border)]'}`} />
@@ -662,8 +640,8 @@ export default function CheckoutPage() {
                 <Icon name="MapPinIcon" size={16} variant="outline" className="text-[color:var(--glass-label)]" />
               </div>
               <div className="flex-1">
-                <div className="text-[length:var(--lkv-text-footnote)] font-medium text-[color:var(--lkv-text-primary)]">{shipping.prenom || 'Mathieu'} {shipping.nom || 'Chevrier'}</div>
-                <div className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">{shipping.adresse || '42 Rue de la République'} · {shipping.codePostal || '38000'} {shipping.ville || 'Grenoble'}</div>
+                <div className="text-[length:var(--lkv-text-footnote)] font-medium text-[color:var(--lkv-text-primary)]">{[shipping.prenom, shipping.nom].filter(Boolean).join(' ') || 'Destinataire à renseigner'}</div>
+                <div className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">{shipping.adresse ? `${shipping.adresse} · ${shipping.codePostal} ${shipping.ville}` : 'Adresse de livraison à compléter'}</div>
               </div>
               <Badge tone="stone" className="uppercase">Maison</Badge>
             </div>
@@ -743,7 +721,7 @@ export default function CheckoutPage() {
             </div>
           )}
 
-          <Card className="mx-[var(--space-4)] my-[var(--space-3)] p-[var(--space-4)]">
+          <Card className="mx-[var(--space-4)] mt-[var(--space-3)] mb-[calc(env(safe-area-inset-bottom,0px)+var(--space-6))] p-[var(--space-4)]">
             <div className="mb-[var(--space-3)] text-[length:var(--lkv-text-caption)] font-medium text-[color:var(--lkv-text-primary)]">Récapitulatif</div>
             <div className="mb-[var(--space-2)] flex justify-between text-[length:var(--lkv-text-caption)]">
               <span className="text-[color:var(--lkv-text-muted)]">Sous-total</span>

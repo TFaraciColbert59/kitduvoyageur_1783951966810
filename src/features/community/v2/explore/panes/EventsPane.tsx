@@ -1,6 +1,8 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
+import { getValidatedRaceRegistrationUrl, type ClubEvent, type EventFormat } from '@/features/clubs';
 import type { AgendaCounts, EventCardVM, EventFilter, EventRegistration, GeoPermissionState } from '../../shared/types';
 import type { CursorFeedResult } from '../../data/useCursorFeed';
 import { AgendaStrip } from '../../shared/AgendaStrip';
@@ -98,6 +100,51 @@ export function EventsPane({
     feed.loadMore,
   );
 
+  // S5.15 / S5.16 — filtres transverses sorties clubs & courses (/api/clubs/events)
+  const [clubFiltersOpen, setClubFiltersOpen] = React.useState(false);
+  const [clubLoc, setClubLoc] = React.useState('');
+  const [clubSport, setClubSport] = React.useState('');
+  const [clubFormat, setClubFormat] = React.useState<'' | EventFormat>('');
+  const [racesOnly, setRacesOnly] = React.useState(false);
+  const [clubEvents, setClubEvents] = React.useState<ClubEvent[]>([]);
+  const [clubEventsLoading, setClubEventsLoading] = React.useState(false);
+  const [clubEventsError, setClubEventsError] = React.useState<string | null>(null);
+
+  const hasClubFilters = Boolean(clubLoc.trim() || clubSport.trim() || clubFormat || racesOnly || day);
+
+  React.useEffect(() => {
+    if (!clubFiltersOpen || !hasClubFilters) {
+      setClubEvents([]);
+      setClubEventsError(null);
+      return;
+    }
+    let cancelled = false;
+    setClubEventsLoading(true);
+    setClubEventsError(null);
+    const params = new URLSearchParams();
+    if (clubLoc.trim()) params.set('location', clubLoc.trim());
+    if (clubSport.trim()) params.set('sport', clubSport.trim());
+    if (clubFormat) params.set('format', clubFormat);
+    if (racesOnly) params.set('racesOnly', '1');
+    if (day) params.set('from', `${day}T00:00:00Z`);
+
+    fetch(`/api/clubs/events?${params.toString()}`, { credentials: 'include' })
+      .then(async (res) => {
+        if (!res.ok) throw new Error('Recherche clubs indisponible');
+        const payload = (await res.json()) as { data?: ClubEvent[] };
+        if (!cancelled) setClubEvents(Array.isArray(payload.data) ? payload.data : []);
+      })
+      .catch((err) => {
+        if (!cancelled) setClubEventsError(err instanceof Error ? err.message : 'Erreur recherche');
+      })
+      .finally(() => {
+        if (!cancelled) setClubEventsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [clubFiltersOpen, clubFormat, clubLoc, clubSport, day, hasClubFilters, racesOnly]);
+
   const agenda = (
     <div className="lkdv-cv2x-agenda-block">
       {agendaLoading && Object.keys(agendaCounts).length === 0 ? (
@@ -114,17 +161,6 @@ export function EventsPane({
           Agenda indisponible · Réessayer
         </button>
       ) : null}
-      <div className="lkdv-cv2x-events-head">
-        <span className="lkdv-cv2-eyebrow">Affichage</span>
-        <div className="lkdv-cv2-seg" role="group" aria-label="Affichage des sorties">
-          <button type="button" aria-pressed={view === 'grid'} onClick={() => onViewChange('grid')}>
-            Grille
-          </button>
-          <button type="button" aria-pressed={view === 'list'} onClick={() => onViewChange('list')}>
-            Liste
-          </button>
-        </div>
-      </div>
     </div>
   );
 

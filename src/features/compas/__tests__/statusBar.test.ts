@@ -60,17 +60,17 @@ describe('barre d’état native', () => {
     expect(plugin.setOverlaysWebView).toHaveBeenCalledWith({ overlay: true });
   });
 
-  it('autres pages : texte clair (Style.Dark) sur vert forêt, comme avant', async () => {
+  it('autres pages : texte sombre (Style.Light) sur fond clair 100% mode clair', async () => {
     await applyStatusBarTheme('default');
-    expect(plugin.setStyle).toHaveBeenCalledWith({ style: 'DARK' });
-    expect(plugin.setBackgroundColor).toHaveBeenCalledWith({ color: '#17402C' });
+    expect(plugin.setStyle).toHaveBeenCalledWith({ style: 'LIGHT' });
+    expect(plugin.setBackgroundColor).toHaveBeenCalledWith({ color: '#FBFAF6' });
     expect(plugin.setOverlaysWebView).toHaveBeenCalledWith({ overlay: true });
   });
 
-  it('applyLKDVStatusBarTheme reste le thème des autres pages (le hub l’appelle)', async () => {
+  it('applyLKDVStatusBarTheme applique le thème clair général', async () => {
     await applyLKDVStatusBarTheme();
-    expect(plugin.setStyle).toHaveBeenCalledWith({ style: 'DARK' });
-    expect(plugin.setBackgroundColor).toHaveBeenCalledWith({ color: '#17402C' });
+    expect(plugin.setStyle).toHaveBeenCalledWith({ style: 'LIGHT' });
+    expect(plugin.setBackgroundColor).toHaveBeenCalledWith({ color: '#FBFAF6' });
   });
 
   it('entrée puis sortie du Compas : le dernier mot est celui des autres pages', async () => {
@@ -80,9 +80,9 @@ describe('barre d’état native', () => {
     const leaving = applyStatusBarTheme('default');
     await Promise.all([entering, leaving]);
     const styles = plugin.setStyle.mock.calls.map((c) => c[0].style);
-    expect(styles).toEqual(['LIGHT', 'DARK']);
+    expect(styles).toEqual(['LIGHT', 'LIGHT']);
     const colors = plugin.setBackgroundColor.mock.calls.map((c) => c[0].color);
-    expect(colors).toEqual(['#FBFAF6', '#17402C']);
+    expect(colors).toEqual(['#FBFAF6', '#FBFAF6']);
   });
 
   it('une étape non gérée (fond sur iOS) n’empêche pas le style, qui compte le plus', async () => {
@@ -96,7 +96,7 @@ describe('barre d’état native', () => {
     plugin.setStyle.mockRejectedValueOnce(new Error('plugin absent'));
     await expect(applyStatusBarTheme('compas')).resolves.toBeUndefined();
     await applyStatusBarTheme('default');
-    expect(plugin.setStyle).toHaveBeenLastCalledWith({ style: 'DARK' });
+    expect(plugin.setStyle).toHaveBeenLastCalledWith({ style: 'LIGHT' });
   });
 
   it('dans un navigateur : aucun appel natif', async () => {

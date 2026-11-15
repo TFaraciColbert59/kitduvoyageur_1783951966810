@@ -20,49 +20,7 @@ const MOCK_HIGHLIGHTS_FALLBACK: Array<{
   coverImage?: string;
   coverStoryId?: string;
   stories: Array<{ id: string; image: string; caption?: string; isVideo?: boolean }>;
-}> = [
-  {
-    id: 'hl1',
-    title: 'Dolomites',
-    coverImage: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=480&q=80',
-    coverStoryId: 's1',
-    stories: [
-      { id: 's1', image: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1080&q=80', caption: 'Tre Cime di Lavaredo au crépuscule doré' },
-      { id: 's2', image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1080&q=80', caption: 'Reflet du matin au Lago di Braies' },
-      { id: 's3', image: 'https://images.unsplash.com/photo-1530122037265-a5f1f91d3b99?auto=format&fit=crop&w=1080&q=80', caption: 'Cinque Torri · passage aérien sur la vire' },
-      { id: 's4', image: 'https://images.unsplash.com/photo-1483728642387-6c3bdd6c93e5?auto=format&fit=crop&w=1080&q=80', caption: 'Arrivée au Rifugio Locatelli à 2 405 m' },
-    ],
-  },
-  {
-    id: 'hl2',
-    title: 'Vercors',
-    coverImage: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=480&q=80',
-    coverStoryId: 's5',
-    stories: [
-      { id: 's5', image: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1080&q=80', caption: 'Bivouac sous le Grand Veymont' },
-      { id: 's6', image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1080&q=80', caption: 'Mer de nuages au réveil sur les Hauts Plateaux' },
-    ],
-  },
-  {
-    id: 'hl3',
-    title: 'Mont-Blanc',
-    coverImage: 'https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?auto=format&fit=crop&w=480&q=80',
-    coverStoryId: 's7',
-    stories: [
-      { id: 's7', image: 'https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?auto=format&fit=crop&w=1080&q=80', caption: 'Arête des Cosmiques dans le blizzard' },
-    ],
-  },
-  {
-    id: 'hl4',
-    title: 'Sac',
-    coverImage: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=480&q=80',
-    coverStoryId: 's17',
-    stories: [
-      { id: 's17', image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=1080&q=80', caption: 'Inventaire complet du sac ultralight · 780 g' },
-      { id: 's18', image: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=1080&q=80', caption: 'Chaussures de trail et bâtons carbone' },
-    ],
-  },
-];
+}> = [];
 
 interface StoryThumb {
   id: string;

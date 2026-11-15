@@ -4,6 +4,9 @@
 
 import type { SummarySavedState } from '../activity/finishOutcome';
 import type { SearchViewport } from '../searchArea';
+import type { SearchCriteriaOverrides, SmartRankedRoute } from '../search/searchQueryParser';
+import type { RouteDraft } from '@/features/adventure-prep/routeRevision';
+import type { MultiDayPlan } from '@/features/planning/models';
 
 export type Level = 0 | 1 | 2 | 3;
 
@@ -52,9 +55,12 @@ export type SheetKind =
   | 'start'
   | 'strength'
   | 'live'
+  | 'liveSettings'
   | 'sos'
   | 'summary'
   | 'zoneSettings'
+  | 'planner'
+  | 'multiday'
   | 'easy';
 
 export type Selection = { kind: PoiKind; id: string };
@@ -66,7 +72,8 @@ export type CameraIntent =
   | { type: 'flyover'; routeId: string }
   | { type: 'follow' }
   | { type: 'overview'; bounds?: [[number, number], [number, number]] }
-  | { type: 'bearing'; northUp: boolean }
+  | { type: 'bearing'; northUp: boolean; bearingDeg?: number }
+  | { type: 'zoom'; zoom: number }
   | { type: 'none' };
 
 export type Profile = 'solo' | 'famille' | 'enfants' | 'senior' | 'pmr' | 'sportif' | null;
@@ -78,7 +85,40 @@ export type Profile = 'solo' | 'famille' | 'enfants' | 'senior' | 'pmr' | 'sport
  * statut `verified` du registre `map/nationalTopo.ts` ; sinon le tiroir ne
  * l'expose pas.
  */
-export type MapBaseStyle = 'relief' | 'satellite' | 'plan' | 'national';
+export type MapBaseStyle = 'relief' | 'satellite' | 'plan' | 'national' | 'cycle';
+
+export interface CapturedLiveMedia {
+  id: string;
+  label: string;
+  kind: 'photo' | 'video';
+  capturedAt: string;
+  elapsedSeconds: number;
+  lat?: number | null;
+  lng?: number | null;
+  previewUrl?: string | null;
+}
+
+export type HeatmapSportId = 'all' | Sport;
+
+export type PersonalHeatmapPeriodId =
+  | 'all_time'
+  | 'last_7_days'
+  | 'last_30_days'
+  | 'last_90_days'
+  | 'year_to_date';
+
+export interface CommunityHeatmapState {
+  enabled: boolean;
+  sport: HeatmapSportId;
+  window: 'global' | 'last_7_days' | 'nocturnal';
+}
+
+export interface PersonalHeatmapState {
+  enabled: boolean;
+  sport: HeatmapSportId;
+  period: PersonalHeatmapPeriodId;
+  comparePeriod: PersonalHeatmapPeriodId | null;
+}
 
 export type SportEnvironment = 'outdoor' | 'indoor';
 
@@ -307,6 +347,26 @@ export interface ActivityState {
    * valeur, jamais un zéro de remplissage.
    */
   metricSeries?: MetricSeries[];
+  /** Médias capturés pendant la sortie en cours (K5.05). */
+  capturedMedia?: CapturedLiveMedia[];
+  /** Longueur du bassin (m) pour `natation-piscine` (S1.10). */
+  poolLengthM?: number;
+  /** Nombre de longueurs validées en piscine (S1.10). */
+  poolLengthsCount?: number;
+  /** Descentes détectées hors remontées mécaniques (S1.11). */
+  skiRunsCount?: number;
+  /** Dénivelé négatif cumulé en descente (m) (S1.11). */
+  skiDescentM?: number;
+  /** Distance saisie / lue sur console indoor (m) (S1.09). */
+  indoorConsoleDistanceM?: number | null;
+  /** Puissance moyenne/courante rapportée par console indoor (W) (S1.09). */
+  indoorConsolePowerW?: number | null;
+  /** Cadence rapportée par console indoor (rpm/spm) (S1.09). */
+  indoorConsoleCadenceRpm?: number | null;
+  /** Zone corporelle suivie en rééducation (S1.12). */
+  rehabBodyZone?: string | null;
+  /** Niveau de douleur 0..10 déclaré en rééducation (S1.12). */
+  rehabPainLevel?: number | null;
 }
 
 /**
@@ -430,6 +490,34 @@ export interface ExplorerState {
   zoom: number;
   /** Dernière demande saisie : conservée en fermant le tiroir pour pouvoir la relancer. */
   searchQuery?: string;
+  /** Corrections contextuelles des critères de recherche (C-UI / R03). */
+  searchOverrides?: SearchCriteriaOverrides | null;
+  /** Position de défilement conservée de la liste de recherche. */
+  searchScrollTop?: number;
+  /** Aventures multi-jours issues de la recherche (K1.13). */
+  searchAdventures?: MultiDayPlan[];
+  /** Plan multi-jours ouvert dans le sous-drawer Explorer (R04). */
+  activeMultiDayPlan?: MultiDayPlan | null;
+  /** Brouillon d'itinéraire ouvert dans l'éditeur Explorer (R01). */
+  plannerDraft?: RouteDraft | null;
+  /** Nom du parcours en cours d'édition dans le planificateur. */
+  plannerTitle?: string | null;
+  /** Masquage temporaire de la ligne du tracé en mode édition (K2.16). */
+  plannerLineHidden?: boolean;
+  /** Active le placement de point par toucher sur la carte (K2.06/K2.09). */
+  plannerMapPick?: boolean;
+  /** Identifiant de bibliothèque si l'édition provient d'un parcours enregistré (K2.27). */
+  plannerLibraryId?: string | null;
+  /**
+   * Options de routage transmises par une alerte tracé (K2.22 : éviter
+   * escaliers / ferries). Lues par l'éditeur à l'ouverture pour relancer le
+   * calcul avec ces évitements, jamais ignorées silencieusement.
+   */
+  plannerRoutingOptions?: import('@/features/adventure-prep/routeProfiles').RouteRoutingOptions | null;
+  /** Curseur synchronisé entre le profil altimétrique et la carte (R02). */
+  profileCursor?: { lon: number; lat: number; distanceM: number; elevationM: number | null } | null;
+  /** Segment de montée/descente sélectionné sur le profil pour surbrillance carte (K2.20). */
+  highlightedSegment?: { coordinates: Array<[number, number]>; label?: string } | null;
   /**
    * Sport explicitement choisi pour les suggestions « autour de moi ».
    * `null` = aucun sport choisi : aucune suggestion n'est déduite à sa place.
@@ -456,11 +544,19 @@ export interface ExplorerState {
    * remplacer, les itinéraires déjà chargés pour le lieu courant ; ils ne sont
    * jamais persistés et ne contiennent aucune donnée privée.
    */
-  searchRoutes?: SearchRoute[];
-  /** Fond de carte : relief 3D, satellite, plan vectoriel ou fond national vérifié. */
+  searchRoutes?: SmartRankedRoute[];
+  /** Fond de carte : relief 3D, satellite, plan vectoriel, cyclable ou fond national vérifié. */
   mapBaseStyle?: MapBaseStyle;
   /** Visibilité des calques de données. */
   layerVisibility?: Record<string, boolean>;
+  /** Sous-tiroir actif dans Couches & fonds (`C-UI` un niveau). */
+  heatmapSubDrawer?: 'community' | 'personal' | null;
+  /** Paramètres de la heatmap communautaire (C02). */
+  communityHeatmap?: CommunityHeatmapState;
+  /** Paramètres de la heatmap personnelle (C02). */
+  personalHeatmap?: PersonalHeatmapState;
+  /** Lieux favoris enregistrés localement (K3.11). */
+  savedPlaces?: import('../savedPlaces').SavedPlace[];
   /** Scène de test/parité (?scene=), désactivée en production. */
   scene?: string;
 }

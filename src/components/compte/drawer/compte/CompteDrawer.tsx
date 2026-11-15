@@ -297,7 +297,7 @@ export const COMPTE_CSS = `
 .lkdv-compte-photo-pill[data-disabled]{opacity:.45!important;pointer-events:none!important;}
 .lkdv-compte-photo-pill.is-small{position:absolute!important;right:-8px!important;bottom:-6px!important;width:28px!important;min-width:28px!important;height:24px!important;}
 .lkdv-compte-photo-pill.is-small svg{width:13px!important;height:13px!important;}
-.lkdv-compte-edit-avatar-clear{position:absolute!important;left:8px!important;top:8px!important;z-index:2!important;}
+.lkdv-compte-edit-avatar-clear{position:absolute!important;left:-4px!important;top:-4px!important;width:24px!important;min-width:24px!important;height:24px!important;padding:0!important;border-radius:50%!important;z-index:2!important;}
 .lkdv-compte-savebar{gap:8px!important;}
 .lkdv-compte-setting-head .lkdv-compte-setting-pill{margin-left:auto!important;}
 @media (max-width:380px){.lkdv-compte-order-detail{grid-template-columns:1fr!important;}.lkdv-compte-link-row{grid-template-columns:74px minmax(0,1fr) 24px!important;}.lkdv-compte-share-qr img{width:156px!important;height:156px!important;}}

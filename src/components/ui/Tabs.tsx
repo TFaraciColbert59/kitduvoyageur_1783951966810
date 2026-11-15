@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
+export { SegmentedControl, type SegmentedControlItem, type SegmentedControlProps } from './SegmentedControl';
 
 export type TabsVariant = 'segmented' | 'scrollable';
 

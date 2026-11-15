@@ -25,11 +25,30 @@ import {
 
 export type RoutePointKind = 'start' | 'via' | 'end';
 
+export type WaypointSemanticKind =
+  | 'waypoint'
+  | 'water'
+  | 'bivouac'
+  | 'viewpoint'
+  | 'danger'
+  | 'access'
+  | 'summit'
+  | 'refuge'
+  | 'custom';
+
+export type RouteShapeMode = 'one_way' | 'loop' | 'out_and_back';
+export type WaypointInsertMode = 'optimal' | 'append';
+
 export interface RouteRevisionPoint {
   readonly id: string;
   readonly lat: number;
   readonly lon: number;
   readonly kind: RoutePointKind;
+  readonly name?: string | null;
+  readonly semanticKind?: WaypointSemanticKind;
+  readonly note?: string | null;
+  readonly shared?: boolean;
+  readonly poiId?: string | null;
 }
 
 /**
@@ -315,6 +334,18 @@ export function routePointId(index: number): string {
 }
 
 /** Réindexe les identifiants et les rôles départ / passage / arrivée. */
+const WAYPOINT_SEMANTIC_KINDS: ReadonlySet<WaypointSemanticKind> = new Set([
+  'waypoint',
+  'water',
+  'bivouac',
+  'viewpoint',
+  'danger',
+  'access',
+  'summit',
+  'refuge',
+  'custom',
+]);
+
 export function normalizeRoutePoints(
   points: readonly Partial<RouteRevisionPoint>[]
 ): RouteRevisionPoint[] {
@@ -324,7 +355,24 @@ export function normalizeRoutePoints(
     const lon = finite(point.lon);
     if (lat == null || lon == null || !inBounds(lat, lon)) continue;
     const index = out.length;
-    out.push({ id: routePointId(index), lat, lon, kind: index === 0 ? 'start' : 'via' });
+    const name = typeof point.name === 'string' && point.name.trim() ? point.name.trim().slice(0, 80) : undefined;
+    const note = typeof point.note === 'string' && point.note.trim() ? point.note.trim().slice(0, 280) : undefined;
+    const semanticKind =
+      point.semanticKind && WAYPOINT_SEMANTIC_KINDS.has(point.semanticKind)
+        ? point.semanticKind
+        : undefined;
+    const poiId = typeof point.poiId === 'string' && point.poiId.trim() ? point.poiId.slice(0, 80) : undefined;
+    out.push({
+      id: routePointId(index),
+      lat,
+      lon,
+      kind: index === 0 ? 'start' : 'via',
+      ...(name ? { name } : {}),
+      ...(semanticKind ? { semanticKind } : {}),
+      ...(note ? { note } : {}),
+      ...(typeof point.shared === 'boolean' ? { shared: point.shared } : {}),
+      ...(poiId ? { poiId } : {}),
+    });
   }
   if (out.length > 0) {
     const last = out[out.length - 1];
@@ -367,13 +415,260 @@ export function moveRoutePoint(
   return points.map((point, i) => (i === index ? { ...point, lat, lon } : point));
 }
 
+function pointToSegmentDistSq(
+  p: { lat: number; lon: number },
+  a: { lat: number; lon: number },
+  b: { lat: number; lon: number }
+): number {
+  const cosLat = Math.cos(((a.lat + b.lat) * 0.5 * Math.PI) / 180);
+  const ax = a.lon * cosLat;
+  const ay = a.lat;
+  const bx = b.lon * cosLat;
+  const by = b.lat;
+  const px = p.lon * cosLat;
+  const py = p.lat;
+  const dx = bx - ax;
+  const dy = by - ay;
+  const lenSq = dx * dx + dy * dy;
+  if (lenSq <= 1e-12) return (px - ax) ** 2 + (py - ay) ** 2;
+  const t = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / lenSq));
+  const cx = ax + t * dx;
+  const cy = ay + t * dy;
+  return (px - cx) ** 2 + (py - cy) ** 2;
+}
+
 export function appendRoutePoint(
   points: readonly RouteRevisionPoint[],
   lat: number,
-  lon: number
+  lon: number,
+  meta?: Partial<Pick<RouteRevisionPoint, 'name' | 'semanticKind' | 'note' | 'shared' | 'poiId'>>
 ): RouteRevisionPoint[] {
   if (points.length >= MAX_ROUTE_WAYPOINTS) return [...points];
-  return normalizeRoutePoints([...points, { lat, lon }]);
+  return normalizeRoutePoints([...points, { lat, lon, ...(meta ?? {}) }]);
+}
+
+/**
+ * K2.10 : insère le point sur le tronçon le plus proche (insertion optimale),
+ * plutôt qu'en fin de liste. Respecte la borne MAX_ROUTE_WAYPOINTS.
+ */
+export function insertRoutePointOptimal(
+  points: readonly RouteRevisionPoint[],
+  lat: number,
+  lon: number,
+  meta?: Partial<Pick<RouteRevisionPoint, 'name' | 'semanticKind' | 'note' | 'shared' | 'poiId'>>
+): RouteRevisionPoint[] {
+  if (points.length >= MAX_ROUTE_WAYPOINTS) return [...points];
+  if (points.length < 2) {
+    return appendRoutePoint(points, lat, lon, meta);
+  }
+  let bestIndex = points.length - 1;
+  let bestDist = Infinity;
+  for (let i = 0; i < points.length - 1; i += 1) {
+    const d = pointToSegmentDistSq({ lat, lon }, points[i], points[i + 1]);
+    if (d < bestDist) {
+      bestDist = d;
+      bestIndex = i + 1;
+    }
+  }
+  const next = points.slice();
+  next.splice(bestIndex, 0, {
+    id: routePointId(bestIndex),
+    lat,
+    lon,
+    kind: 'via',
+    ...(meta ?? {}),
+  });
+  return normalizeRoutePoints(next);
+}
+
+/** K2.08 : réordonner les points de passage (haut / bas / index quelconque). */
+export function reorderRoutePoint(
+  points: readonly RouteRevisionPoint[],
+  fromIndex: number,
+  toIndex: number
+): RouteRevisionPoint[] {
+  if (
+    !Number.isInteger(fromIndex) ||
+    !Number.isInteger(toIndex) ||
+    fromIndex < 0 ||
+    toIndex < 0 ||
+    fromIndex >= points.length ||
+    toIndex >= points.length ||
+    fromIndex === toIndex
+  ) {
+    return [...points];
+  }
+  const next = points.slice();
+  const [moved] = next.splice(fromIndex, 1);
+  if (!moved) return [...points];
+  next.splice(toIndex, 0, moved);
+  return normalizeRoutePoints(next);
+}
+
+/** K2.13 : inverser le sens du tracé (et les éventuels tronçons manuels). */
+export function reverseRouteState(
+  points: readonly RouteRevisionPoint[],
+  sections: readonly RouteSection[]
+): { points: RouteRevisionPoint[]; sections: RouteSection[] } {
+  const reversedPoints = normalizeRoutePoints([...points].reverse());
+  const count = points.length;
+  const reversedSections = sections
+    .slice()
+    .reverse()
+    .map((section, idx) => {
+      const reversedGeom: RouteGeometry = {
+        type: 'LineString',
+        coordinates: [...section.geometry.coordinates].reverse(),
+      };
+      return {
+        ...section,
+        fromIndex: idx,
+        toIndex: idx + 1,
+        id: `${section.mode === 'manual' ? 'manual' : 'leg'}-${idx + 1}`,
+        geometry: reversedGeom,
+        // Conserver la durée uniquement sur les tronçons calculés ou forcer le recalcul en UI
+        durationMin: section.mode === 'manual' ? null : section.durationMin,
+      };
+    })
+    .filter((section) => count >= 2 && section.toIndex < count);
+  return { points: reversedPoints, sections: reversedSections };
+}
+
+/** K2.12 : basculer entre aller simple, boucle (retour au départ) et aller-retour. */
+export function applyRouteShapeMode(
+  points: readonly RouteRevisionPoint[],
+  mode: RouteShapeMode
+): RouteRevisionPoint[] {
+  if (points.length < 2) return [...points];
+  const first = points[0];
+  const last = points[points.length - 1];
+  const isClosed =
+    points.length >= 3 &&
+    haversineKm({ lat: first.lat, lon: first.lon }, { lat: last.lat, lon: last.lon }) < 0.08;
+
+  if (mode === 'one_way') {
+    if (isClosed && points.length > 2) {
+      return normalizeRoutePoints(points.slice(0, -1));
+    }
+    return [...points];
+  }
+
+  if (mode === 'loop') {
+    if (isClosed) return [...points];
+    if (points.length >= MAX_ROUTE_WAYPOINTS) {
+      return normalizeRoutePoints([...points.slice(0, MAX_ROUTE_WAYPOINTS - 1), { ...first }]);
+    }
+    return normalizeRoutePoints([...points, { lat: first.lat, lon: first.lon, name: first.name, semanticKind: first.semanticKind }]);
+  }
+
+  // out_and_back : aller puis retour en miroir vers le départ
+  const base = isClosed ? points.slice(0, -1) : points;
+  const returnLeg = base.slice(0, -1).reverse().map((p) => ({
+    lat: p.lat,
+    lon: p.lon,
+    name: p.name,
+    semanticKind: p.semanticKind,
+  }));
+  return limitRoutePoints(normalizeRoutePoints([...base, ...returnLeg]), MAX_ROUTE_WAYPOINTS);
+}
+
+/** K2.15 : suppression en lot / rognage d'un intervalle de points. */
+export function batchRemoveRoutePoints(
+  points: readonly RouteRevisionPoint[],
+  sections: readonly RouteSection[],
+  indicesToRemove: ReadonlySet<number>
+): { points: RouteRevisionPoint[]; sections: RouteSection[] } {
+  const remaining = points.filter((_, idx) => !indicesToRemove.has(idx));
+  if (remaining.length < 2) {
+    return { points: [...points], sections: [...sections] };
+  }
+  let nextSections = [...sections];
+  const sortedDesc = [...indicesToRemove].filter((i) => Number.isInteger(i) && i >= 0 && i < points.length).sort((a, b) => b - a);
+  for (const idx of sortedDesc) {
+    nextSections = removePointFromSections(nextSections, idx);
+  }
+  return {
+    points: normalizeRoutePoints(remaining),
+    sections: nextSections,
+  };
+}
+
+/** K2.11 / S3.07 : met à jour le nom, type et statut de partage d'un point d'intérêt du tracé. */
+export function updateRoutePointMeta(
+  points: readonly RouteRevisionPoint[],
+  index: number,
+  meta: Partial<Pick<RouteRevisionPoint, 'name' | 'semanticKind' | 'note' | 'shared' | 'poiId'>>
+): RouteRevisionPoint[] {
+  if (!Number.isInteger(index) || index < 0 || index >= points.length) return [...points];
+  return points.map((point, i) => (i === index ? { ...point, ...meta } : point));
+}
+
+/** K2.17 : estimation de durée selon vitesse ajustable et profil sportif (+ VAE). */
+export function defaultSpeedKmHForSport(sport: RouteSport, ebike = false): number {
+  if (sport === 'marche') return 4.2;
+  if (sport === 'route') return ebike ? 26 : 22;
+  if (sport === 'gravel') return ebike ? 22 : 17;
+  if (sport === 'vtt') return ebike ? 19 : 13;
+  return 28; // enduro
+}
+
+export function estimateDurationMinutesForSpeed(
+  distanceKm: number | null,
+  speedKmH: number,
+  gainM = 0,
+  sport: RouteSport = 'marche',
+  ebike = false
+): number | null {
+  if (distanceKm == null || !Number.isFinite(distanceKm) || distanceKm < 0) return null;
+  if (!Number.isFinite(speedKmH) || speedKmH <= 0.5) return null;
+  const flatHours = distanceKm / speedKmH;
+  const ascentRate =
+    sport === 'marche' ? 350 : ebike ? 950 : sport === 'enduro' ? 1200 : 600;
+  const climbHours = gainM > 0 ? gainM / ascentRate : 0;
+  return Math.round((flatHours + climbHours * 0.5) * 60);
+}
+
+/** K2.11 / S3.07 : export GPX 1.1 incluant points nommés/typés (<wpt>) + trace (<trkpt>). */
+export function gpxFromRouteDraft(
+  title: string,
+  points: readonly RouteRevisionPoint[],
+  geometry: RouteGeometry,
+  options?: { includeUnshared?: boolean }
+): string {
+  const esc = (s: string) =>
+    s
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  const includeUnshared = options?.includeUnshared ?? true;
+  const wpts = points
+    .filter((p) => (includeUnshared || p.shared !== false) && (p.name || (p.semanticKind && p.semanticKind !== 'waypoint') || p.note))
+    .map((p) => {
+      const sym = p.semanticKind ? `<sym>${esc(p.semanticKind)}</sym><type>${esc(p.semanticKind)}</type>` : '';
+      const name = p.name ? `<name>${esc(p.name)}</name>` : `<name>${esc(p.kind)}</name>`;
+      const desc = p.note ? `<desc>${esc(p.note)}</desc>` : '';
+      return `  <wpt lat="${p.lat.toFixed(6)}" lon="${p.lon.toFixed(6)}">${name}${desc}${sym}</wpt>`;
+    })
+    .join('\n');
+  const trkpts = geometry.coordinates
+    .map(([lon, lat]) => `      <trkpt lat="${lat.toFixed(6)}" lon="${lon.toFixed(6)}" />`)
+    .join('\n');
+  return [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<gpx version="1.1" creator="LKDV" xmlns="http://www.topografix.com/GPX/1/1">',
+    `  <metadata><name>${esc(title || 'Itinéraire LKDV')}</name></metadata>`,
+    wpts,
+    '  <trk>',
+    `    <name>${esc(title || 'Itinéraire LKDV')}</name>`,
+    '    <trkseg>',
+    trkpts,
+    '    </trkseg>',
+    '  </trk>',
+    '</gpx>',
+  ]
+    .filter(Boolean)
+    .join('\n');
 }
 
 export function removeRoutePoint(
@@ -393,11 +688,23 @@ function readPoint(value: unknown, index: number): RouteRevisionPoint | null {
   const lon = finite(point.lon);
   if (lat == null || lon == null || !inBounds(lat, lon)) return null;
   const kind = point.kind;
+  const name = typeof point.name === 'string' && point.name.trim() ? point.name.trim().slice(0, 80) : undefined;
+  const note = typeof point.note === 'string' && point.note.trim() ? point.note.trim().slice(0, 280) : undefined;
+  const semanticKind =
+    typeof point.semanticKind === 'string' && WAYPOINT_SEMANTIC_KINDS.has(point.semanticKind as WaypointSemanticKind)
+      ? (point.semanticKind as WaypointSemanticKind)
+      : undefined;
+  const poiId = typeof point.poiId === 'string' && point.poiId.trim() ? point.poiId.slice(0, 80) : undefined;
   return {
     id: typeof point.id === 'string' && point.id.trim() ? point.id.slice(0, 40) : routePointId(index),
     lat,
     lon,
     kind: kind === 'start' || kind === 'via' || kind === 'end' ? kind : index === 0 ? 'start' : 'via',
+    ...(name ? { name } : {}),
+    ...(semanticKind ? { semanticKind } : {}),
+    ...(note ? { note } : {}),
+    ...(typeof point.shared === 'boolean' ? { shared: point.shared } : {}),
+    ...(poiId ? { poiId } : {}),
   };
 }
 

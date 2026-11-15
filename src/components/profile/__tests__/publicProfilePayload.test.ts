@@ -53,4 +53,29 @@ describe('publicProfilePayload', () => {
     expect(payload.clubs[0]).toMatchObject({ n: 'Trekkeurs', members: 12 });
     expect(payload.trust.verified).toBe(true);
   });
+
+  it('peuple les sorties réelles et les compteurs depuis les activités', () => {
+    const payload = buildPublicProfilePayload({
+      profile,
+      carnets: [{ id: 'c1', title: 'Tour du Mont-Blanc', status: 'Publié', image_url: 'https://img.test/1.jpg' }],
+      clubs: [],
+      badges: [],
+      activite: [
+        { id: 'act-1', text: 'Boucle des Fiz · 18 km +1200 m', highlight: '', time: 'Il y a 3 jours', icon_type: 'like' },
+      ],
+      viewer: 'visitor',
+      visibility: 'public',
+    });
+
+    expect(payload.outings).toHaveLength(1);
+    expect(payload.outings[0]).toMatchObject({
+      id: 'act-1',
+      title: 'Boucle des Fiz · 18 km +1200 m',
+      km: 18,
+      dplus: 1200,
+    });
+    expect(payload.stats.massifs).toBeGreaterThanOrEqual(1);
+    expect(payload.stats.countries).toBeGreaterThanOrEqual(1);
+    expect(payload.stats.yearMonths.some((c) => c > 0)).toBe(true);
+  });
 });

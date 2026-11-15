@@ -27,9 +27,13 @@ export const dynamic = 'force-dynamic';
 const createSchema = z
   .object({
     activityId: z.string().min(1),
-    inviteeUserId: z.string().uuid(),
+    inviteeUserId: z.string().uuid().optional(),
+    inviteeHandle: z.string().trim().min(1).max(60).optional(),
   })
-  .strict();
+  .strict()
+  .refine((value) => Boolean(value.inviteeUserId || value.inviteeHandle), {
+    message: 'inviteeUserId ou inviteeHandle requis.',
+  });
 
 const respondSchema = z
   .object({
@@ -54,18 +58,25 @@ function mapRow(row: Row): RecordedActivityInvite {
 }
 
 /** GET — invitations de traces reçues et émises par le lecteur (S5.19). */
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
     const user = await optionalUser(supabase);
     if (!user) return errorJson('unauthenticated', 401);
 
-    const { data, error } = await supabase
+    const activityIdParam = request.nextUrl.searchParams.get('activityId')?.trim() || null;
+
+    let query = supabase
       .from('club_recorded_activity_invites')
       .select('*')
       .or(`owner_user_id.eq.${user.id},invitee_user_id.eq.${user.id}`)
       .order('created_at', { ascending: false })
       .limit(100);
+    if (activityIdParam) {
+      query = query.eq('activity_id', activityIdParam);
+    }
+
+    const { data, error } = await query;
     if (error) return dbFailure('GET activity invites', error);
     return json({ data: asArray<Row>(data).map(mapRow) });
   } catch (error) {
@@ -85,13 +96,41 @@ export async function POST(request: NextRequest) {
     const parsed = createSchema.safeParse(await readJson(request));
     if (!parsed.success) return errorJson('invalid_body', 400, parsed.error.flatten());
 
+    let inviteeUserId = parsed.data.inviteeUserId ?? null;
+    if (!inviteeUserId && parsed.data.inviteeHandle) {
+      const normalized = parsed.data.inviteeHandle.replace(/^@/, '').trim().toLowerCase();
+      if (!normalized) return errorJson('invalid_body', 400);
+      const { data: profileRow, error: profileErr } = await supabase
+        .from('public_profiles')
+        .select('id, username')
+        .ilike('username', normalized)
+        .maybeSingle();
+      if (profileErr) return dbFailure('POST activity invite resolve handle', profileErr);
+      const resolvedId = asString((profileRow as Row | null)?.id);
+      if (!resolvedId) return errorJson('invitee_not_found', 404);
+      inviteeUserId = resolvedId;
+    }
+    if (!inviteeUserId) return errorJson('invalid_body', 400);
+
     const activity = await supabase
       .from('activities')
       .select('id, user_id')
       .eq('id', parsed.data.activityId)
       .maybeSingle();
-    if (activity.error) return dbFailure('POST activity invite activity', activity.error);
-    if (!activity.data || (activity.data as Row).user_id !== user.id) {
+    if (activity.error && activity.error.code !== '42P01') {
+      return dbFailure('POST activity invite activity', activity.error);
+    }
+    let ownsActivity = Boolean(activity.data && (activity.data as Row).user_id === user.id);
+    if (!ownsActivity) {
+      const sessionRes = await supabase
+        .from('hike_sessions')
+        .select('id, user_id')
+        .eq('id', parsed.data.activityId)
+        .maybeSingle();
+      if (sessionRes.error) return dbFailure('POST activity invite hike_session', sessionRes.error);
+      ownsActivity = Boolean(sessionRes.data && (sessionRes.data as Row).user_id === user.id);
+    }
+    if (!ownsActivity) {
       return errorJson('not_found', 404);
     }
 
@@ -108,7 +147,7 @@ export async function POST(request: NextRequest) {
       id: crypto.randomUUID(),
       activityId: parsed.data.activityId,
       ownerUserId: user.id,
-      inviteeUserId: parsed.data.inviteeUserId,
+      inviteeUserId,
       privacyContext: context,
       existingInvites: asArray<Row>(data).map(mapRow),
       nowIso,

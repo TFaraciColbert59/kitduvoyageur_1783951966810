@@ -105,12 +105,11 @@ export const SPORT_FAMILIES: readonly SportFamily[] = [
         id: 'course-tapis',
         sport: 'course',
         label: 'Course sur tapis',
-        catalogSlug: null,
+        catalogSlug: 'course-tapis',
         environment: 'indoor',
         requiresGps: false,
-        requiredMetrics: ['duration', 'pace', 'heartRate'],
-        optionalMetrics: ['cadence', 'power'],
-        blockedReason: INDOOR_REASON,
+        requiredMetrics: ['duration'],
+        optionalMetrics: ['distance', 'pace', 'heartRate', 'cadence', 'power'],
       },
     ],
   },
@@ -191,19 +190,29 @@ export const SPORT_FAMILIES: readonly SportFamily[] = [
         id: 'velo-home-trainer',
         sport: 'velo',
         label: 'Home trainer',
-        catalogSlug: null,
+        catalogSlug: 'velo-home-trainer',
         environment: 'indoor',
         requiresGps: false,
-        requiredMetrics: ['duration', 'power', 'cadence', 'heartRate'],
-        blockedReason: INDOOR_REASON,
+        requiredMetrics: ['duration'],
+        optionalMetrics: ['distance', 'speed', 'power', 'cadence', 'heartRate'],
+      },
+      {
+        id: 'velo-virtuel',
+        sport: 'velo',
+        label: 'Vélo virtuel',
+        catalogSlug: 'velo-virtuel',
+        environment: 'indoor',
+        requiresGps: false,
+        requiredMetrics: ['duration'],
+        optionalMetrics: ['distance', 'speed', 'power', 'cadence', 'heartRate'],
       },
     ],
   },
   {
     sport: 'kayak',
-    label: 'Kayak',
+    label: 'Eau & glisse',
     icon: 'kayak',
-    description: 'Mer, rivière',
+    description: 'Natation, kayak, rameur',
     variants: [
       {
         id: 'kayak-riviere',
@@ -224,6 +233,36 @@ export const SPORT_FAMILIES: readonly SportFamily[] = [
         requiresGps: true,
         requiredMetrics: ['distance', 'duration', 'speed'],
         optionalMetrics: ['strokeRate'],
+      },
+      {
+        id: 'natation-piscine',
+        sport: 'kayak',
+        label: 'Natation en piscine',
+        catalogSlug: 'natation-piscine',
+        environment: 'indoor',
+        requiresGps: false,
+        requiredMetrics: ['duration', 'laps'],
+        optionalMetrics: ['distance', 'pace', 'strokeRate', 'heartRate'],
+      },
+      {
+        id: 'natation-eau-libre',
+        sport: 'kayak',
+        label: 'Natation en eau libre',
+        catalogSlug: 'natation-eau-libre',
+        environment: 'outdoor',
+        requiresGps: true,
+        requiredMetrics: ['distance', 'duration', 'pace'],
+        optionalMetrics: ['strokeRate', 'heartRate'],
+      },
+      {
+        id: 'rameur-indoor',
+        sport: 'kayak',
+        label: 'Rameur / ergomètre',
+        catalogSlug: 'rameur-indoor',
+        environment: 'indoor',
+        requiresGps: false,
+        requiredMetrics: ['duration'],
+        optionalMetrics: ['distance', 'pace', 'power', 'strokeRate', 'heartRate'],
       },
     ],
   },
@@ -275,22 +314,31 @@ export const SPORT_FAMILIES: readonly SportFamily[] = [
         id: 'ski-alpin',
         sport: 'ski',
         label: 'Ski alpin',
-        catalogSlug: null,
+        catalogSlug: 'ski-alpin',
         environment: 'outdoor',
         requiresGps: true,
         requiredMetrics: ['distance', 'duration', 'verticalDrop'],
-        blockedReason:
-          'Remontées mécaniques : le D+ GPS compterait les montées. Une capture spécifique est requise.',
+        optionalMetrics: ['speed', 'heartRate'],
+      },
+      {
+        id: 'snowboard',
+        sport: 'ski',
+        label: 'Snowboard',
+        catalogSlug: 'snowboard',
+        environment: 'outdoor',
+        requiresGps: true,
+        requiredMetrics: ['distance', 'duration', 'verticalDrop'],
+        optionalMetrics: ['speed', 'heartRate'],
       },
       {
         id: 'ski-fond',
         sport: 'ski',
         label: 'Ski de fond',
-        catalogSlug: null,
+        catalogSlug: 'ski-fond',
         environment: 'outdoor',
         requiresGps: true,
         requiredMetrics: ['distance', 'duration', 'speed'],
-        blockedReason: 'Aucun type de séance ni métrique de glisse au catalogue actuel.',
+        optionalMetrics: ['elevation', 'heartRate'],
       },
     ],
   },
@@ -324,11 +372,11 @@ export const SPORT_FAMILIES: readonly SportFamily[] = [
         id: 'escalade-salle',
         sport: 'escalade',
         label: 'Escalade en salle',
-        catalogSlug: null,
+        catalogSlug: 'escalade-salle',
         environment: 'indoor',
         requiresGps: false,
-        requiredMetrics: ['duration', 'grade', 'laps'],
-        blockedReason: INDOOR_REASON,
+        requiredMetrics: ['duration'],
+        optionalMetrics: ['grade', 'laps', 'heartRate'],
       },
     ],
   },
@@ -387,13 +435,61 @@ export const SPORT_FAMILIES: readonly SportFamily[] = [
   },
 ];
 
+/**
+ * Variantes conditionnelles de rééducation (S1.12), affichées dans
+ * Explorer -> choix du sport uniquement quand le mode rééducation est activé.
+ */
+export const REHAB_VARIANTS: readonly SportVariant[] = [
+  {
+    id: 'rehab-mobilite',
+    sport: 'famille',
+    label: 'Rééducation · Mobilité & kiné',
+    catalogSlug: 'rehab-mobilite',
+    environment: 'indoor',
+    requiresGps: false,
+    requiredMetrics: ['duration'],
+    optionalMetrics: ['heartRate'],
+  },
+  {
+    id: 'rehab-marche',
+    sport: 'famille',
+    label: 'Rééducation · Marche thérapeutique',
+    catalogSlug: 'rehab-marche',
+    environment: 'outdoor',
+    requiresGps: true,
+    requiredMetrics: ['distance', 'duration'],
+    optionalMetrics: ['elevation', 'heartRate'],
+  },
+  {
+    id: 'rehab-velo-doux',
+    sport: 'velo',
+    label: 'Rééducation · Vélo doux / ergomètre',
+    catalogSlug: 'rehab-velo-doux',
+    environment: 'indoor',
+    requiresGps: false,
+    requiredMetrics: ['duration'],
+    optionalMetrics: ['distance', 'cadence', 'power', 'heartRate'],
+  },
+  {
+    id: 'rehab-aquatique',
+    sport: 'kayak',
+    label: 'Rééducation · Balnéothérapie',
+    catalogSlug: 'rehab-aquatique',
+    environment: 'indoor',
+    requiresGps: false,
+    requiredMetrics: ['duration'],
+    optionalMetrics: ['laps', 'distance', 'heartRate'],
+  },
+];
+
 const FAMILY_BY_SPORT = new Map<Sport, SportFamily>(
   SPORT_FAMILIES.map((family) => [family.sport, family]),
 );
 
-const VARIANT_BY_ID = new Map<string, SportVariant>(
-  SPORT_FAMILIES.flatMap((family) => family.variants.map((variant) => [variant.id, variant] as const)),
-);
+const VARIANT_BY_ID = new Map<string, SportVariant>([
+  ...SPORT_FAMILIES.flatMap((family) => family.variants.map((variant) => [variant.id, variant] as const)),
+  ...REHAB_VARIANTS.map((variant) => [variant.id, variant] as const),
+]);
 
 export function getSportFamily(sport: Sport): SportFamily | null {
   return FAMILY_BY_SPORT.get(sport) ?? null;
@@ -422,19 +518,35 @@ function blocked(reason: string, missingMetrics: readonly SportMetricKey[] = [])
   return { status: 'blocked', startable: false, reason, missingMetrics };
 }
 
+const MODE_METRICS: ReadonlySet<SportMetricKey> = new Set<SportMetricKey>([
+  'distance',
+  'duration',
+  'elevation',
+  'speed',
+  'pace',
+  'laps',
+  'verticalDrop',
+]);
+
 /**
  * Décide si une variante peut réellement démarrer avec la pile actuelle.
- * Aucun repli silencieux : une variante bloquée ne reçoit jamais d’action.
+ * Les modes indoor et piscine (S1.09, S1.10, S1.12) démarrent sans GPS.
  */
 export function startAvailability(
   variant: SportVariant,
   context: SportStartContext,
 ): SportStartAvailability {
-  const missingMetrics = variant.requiredMetrics.filter((metric) => !TRACKER_METRICS.has(metric));
+  const missingMetrics = variant.requiredMetrics.filter((metric) => !MODE_METRICS.has(metric));
 
   if (variant.blockedReason) return blocked(variant.blockedReason, missingMetrics);
-  if (variant.environment === 'indoor' || !variant.requiresGps) {
-    return blocked(INDOOR_REASON, missingMetrics);
+  if (missingMetrics.length > 0) {
+    return blocked(
+      `Métrique non captée : ${missingMetrics.map((metric) => SPORT_METRIC_LABEL[metric]).join(', ')}.`,
+      missingMetrics,
+    );
+  }
+  if (!variant.requiresGps) {
+    return { status: 'ready', startable: true, reason: null, missingMetrics };
   }
   if (!variant.catalogSlug) {
     return blocked('Aucun type de séance correspondant dans activity_catalog.', missingMetrics);
@@ -444,12 +556,6 @@ export function startAvailability(
   }
   if (context.locationPermission === 'denied') {
     return blocked('Position refusée : autorise la géolocalisation pour démarrer.', missingMetrics);
-  }
-  if (missingMetrics.length > 0) {
-    return blocked(
-      `Métrique non captée : ${missingMetrics.map((metric) => SPORT_METRIC_LABEL[metric]).join(', ')}.`,
-      missingMetrics,
-    );
   }
   if (context.locationPermission === 'prompt') {
     return {

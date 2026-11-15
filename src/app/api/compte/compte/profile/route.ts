@@ -23,6 +23,9 @@ const Patch = z
     coverUrl: z.string().trim().max(600).nullable().optional(),
     links: z.array(Link).max(3).optional(),
     visibility: z.enum(['public', 'prive']).optional(),
+    defaultOutingVisibility: z
+      .enum(['private', 'followers', 'public', 'collective_anonymized'])
+      .optional(),
     notificationPrefs: z
       .object({
         social: z.boolean().optional(),
@@ -30,6 +33,32 @@ const Patch = z
         orders: z.boolean().optional(),
         system: z.boolean().optional(),
         quietHours: z.boolean().optional(),
+        kudos: z.boolean().optional(),
+        comments: z.boolean().optional(),
+        segmentsPr: z.boolean().optional(),
+        challenges: z.boolean().optional(),
+        clubEvents: z.boolean().optional(),
+        gearMileageAlerts: z.boolean().optional(),
+        activityDigest: z.boolean().optional(),
+        quietHoursStart: z
+          .string()
+          .regex(/^([01]\d|2[0-3]):[0-5]\d$/)
+          .nullable()
+          .optional(),
+        quietHoursEnd: z
+          .string()
+          .regex(/^([01]\d|2[0-3]):[0-5]\d$/)
+          .nullable()
+          .optional(),
+      })
+      .strict()
+      .optional(),
+    sportProfilePrefs: z
+      .object({
+        audience: z.enum(['private', 'abonnies', 'public']).optional(),
+        sports: z.record(z.string(), z.boolean()).optional(),
+        show_totals: z.boolean().optional(),
+        show_records: z.boolean().optional(),
       })
       .strict()
       .optional(),

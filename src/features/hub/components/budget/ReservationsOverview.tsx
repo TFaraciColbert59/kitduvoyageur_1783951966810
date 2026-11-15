@@ -61,7 +61,7 @@ export function ReservationsOverview({ overview }: ReservationsOverviewProps) {
     <section className="space-y-2.5" aria-label="Réservations et panier">
       {overview.bookingsAvailable ? (
         <div className="space-y-2">
-          <h2 className="text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
+          <h2 className="text-[length:var(--lkv-text-footnote)] font-bold text-[#172B24]">
             Réservations
             {overview.reservations.length > 0 ? ` · ${overview.reservations.length}` : ''}
           </h2>
@@ -79,23 +79,23 @@ export function ReservationsOverview({ overview }: ReservationsOverviewProps) {
                   <div className="flex min-w-0 items-center gap-[var(--space-2)]">
                     {VERTICAL_ICONS[entry.vertical] ?? <Ticket size={14} aria-hidden="true" />}
                     <div className="min-w-0">
-                      <div className="truncate text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
+                      <div className="truncate text-[length:var(--lkv-text-footnote)] font-bold text-[#172B24]">
                         {entry.title}
                       </div>
-                      <div className="truncate text-[10px] text-[color:var(--lkv-text-secondary)]">
+                      <div className="truncate text-[10px] text-[#56665D]">
                         {entry.provider}
                         {entry.checkoutChannel ? ` · ${entry.checkoutChannel}` : ''}
                         {entry.status === 'pending' ? ' · en attente' : ''}
                       </div>
                     </div>
                   </div>
-                  <div className="shrink-0 text-[length:var(--lkv-text-footnote)] font-extrabold text-[color:var(--lkv-text-primary)]">
+                  <div className="shrink-0 text-[length:var(--lkv-text-footnote)] font-extrabold text-[#172B24]">
                     {formatAmount(entry.amountEur, entry.currency)}
                   </div>
                 </Row>
               ))}
               {overview.pendingEur > 0 ? (
-                <p className="text-[10px] text-[color:var(--lkv-text-muted)]">
+                <p className="text-[10px] text-[#56665D]">
                   {formatAmount(overview.pendingEur, 'EUR')} en attente — non décomptés du budget
                   tant que la réservation n’est pas confirmée.
                 </p>
@@ -107,7 +107,7 @@ export function ReservationsOverview({ overview }: ReservationsOverviewProps) {
 
       {overview.cartAvailable ? (
         <div className="space-y-2">
-          <h2 className="text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
+          <h2 className="text-[length:var(--lkv-text-footnote)] font-bold text-[#172B24]">
             Panier
             {overview.cartTotals.lineCount > 0
               ? ` · ${overview.cartTotals.lineCount} ligne${
@@ -127,15 +127,15 @@ export function ReservationsOverview({ overview }: ReservationsOverviewProps) {
               {overview.cartLines.map((line: CartOverviewEntry) => (
                 <Row key={`${line.kind}:${line.refId}`}>
                   <div className="min-w-0">
-                    <div className="truncate text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
+                    <div className="truncate text-[length:var(--lkv-text-footnote)] font-bold text-[#172B24]">
                       {line.title ?? CART_KIND_LABELS[line.kind]}
                     </div>
-                    <div className="truncate text-[10px] text-[color:var(--lkv-text-secondary)]">
+                    <div className="truncate text-[10px] text-[#56665D]">
                       {CART_KIND_LABELS[line.kind]}
                       {line.quantity > 1 ? ` · ×${line.quantity}` : ''}
                     </div>
                   </div>
-                  <div className="shrink-0 text-[length:var(--lkv-text-footnote)] font-extrabold text-[color:var(--lkv-text-primary)]">
+                  <div className="shrink-0 text-[length:var(--lkv-text-footnote)] font-extrabold text-[#172B24]">
                     {formatAmount(
                       line.unitPriceEur * line.quantity,
                       overview.cartTotals.currency
@@ -143,7 +143,7 @@ export function ReservationsOverview({ overview }: ReservationsOverviewProps) {
                   </div>
                 </Row>
               ))}
-              <p className="text-[10px] text-[color:var(--lkv-text-muted)]">
+              <p className="text-[10px] text-[#56665D]">
                 Total panier {formatAmount(overview.cartTotals.totalEur, overview.cartTotals.currency)}
               </p>
             </>

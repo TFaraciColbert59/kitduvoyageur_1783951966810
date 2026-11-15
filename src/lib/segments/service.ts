@@ -11,6 +11,7 @@ import {
   replaceAllEfforts,
   upsertSegments,
 } from './store';
+import { syncS01ToLeaderboards } from './bridge';
 
 export interface SegmentMaintenanceResult {
   segments: SegmentDefinition[];
@@ -43,6 +44,7 @@ export function runSegmentMaintenance(): SegmentMaintenanceResult {
   });
 
   upsertSegments(segments);
+  syncS01ToLeaderboards();
   return {
     segments,
     mergedPairs: deduplicated.mergedPairs,

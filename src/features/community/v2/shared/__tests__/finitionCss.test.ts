@@ -44,10 +44,10 @@ describe('finition — contraste, cibles, ombre, fidélité du tiroir', () => {
     expect(block).toContain('height: 44px');
   });
 
-  it('coque : tiroir à y = 48, capsule en verre « bar-glass » (flou 7 px)', () => {
-    expect(shell).toContain('+ 48px);');
-    expect(shell).toContain('--cv2-bar-glass-blur: blur(7px) saturate(1.9) brightness(1.07)');
-    expect(shell).toMatch(/\.lkdv-cv2-capsule\.lkdv-capsule \{[^}]*background-image: var\(--cv2-bar-glass-bg\)/);
+  it('coque : tiroir borné à 90dvh (+ 48px) et capsule 56 px', () => {
+    expect(shell).toContain('+ 48px)');
+    expect(shell).toContain('max(10dvh,');
+    expect(shell).toMatch(/\.lkdv-cv2-capsule\.lkdv-capsule \{[^}]*height: 56px/);
   });
 
   it('le volet ne défile jamais à l’horizontale (overflow-x: clip)', () => {

@@ -92,6 +92,14 @@ const TraceImportDrawer = dynamic(
   () => import('./drawer/sortie/TraceImportDrawer').then((mod) => mod.TraceImportDrawer),
   { ssr: false }
 );
+const ManualActivityDrawer = dynamic(
+  () => import('./drawer/sortie/ManualActivityDrawer').then((mod) => mod.ManualActivityDrawer),
+  { ssr: false }
+);
+const OutingTrashDrawer = dynamic(
+  () => import('./drawer/sortie/OutingLifecyclePanels').then((mod) => mod.OutingTrashDrawer),
+  { ssr: false }
+);
 const ProgressionDrawer = dynamic(
   () => import('./drawer/progression/ProgressionDrawer').then((mod) => mod.ProgressionDrawer),
   { ssr: false }
@@ -168,227 +176,7 @@ ${trks}
 </gpx>`;
 }
 
-
-
-
-const DEMO_CARNETS = [
-  {
-    id: 'ca2',
-    title: 'Reflet du Mont-Blanc au Lac Blanc',
-    destination: 'Mont-Blanc',
-    location: 'Mont-Blanc',
-    visibility: 'public',
-    views_count: 420,
-    likes_count: 64,
-    verified: true,
-    cover_image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80',
-    coverImage: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    id: 'ca1',
-    title: 'Trois jours autour du Néouvielle',
-    destination: 'Pyrénées',
-    location: 'Néouvielle',
-    visibility: 'public',
-    views_count: 312,
-    likes_count: 48,
-    verified: true,
-    cover_image: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80',
-    coverImage: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    id: 'ca3',
-    title: 'Glacier Blanc & Pré de Mme Carle',
-    destination: 'Écrins',
-    location: 'Écrins',
-    visibility: 'public',
-    views_count: 255,
-    likes_count: 39,
-    verified: true,
-    cover_image: 'https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?auto=format&fit=crop&w=1200&q=80',
-    coverImage: 'https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    id: 'ca0',
-    title: 'Traversée du Vercors, bivouac',
-    destination: 'Vercors',
-    location: 'Vercors',
-    visibility: 'private',
-    views_count: 180,
-    likes_count: 27,
-    verified: true,
-    cover_image: 'https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?auto=format&fit=crop&w=1200&q=80',
-    coverImage: 'https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    id: 'ca5',
-    title: 'Aiguilles de Bavella & GR20',
-    destination: 'Corse',
-    location: 'Bavella',
-    visibility: 'public',
-    views_count: 290,
-    likes_count: 52,
-    verified: true,
-    cover_image: 'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1200&q=80',
-    coverImage: 'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    id: 'ca6',
-    title: 'Tre Cime di Lavaredo, Dolomites',
-    destination: 'Dolomites',
-    location: 'Tre Cime',
-    visibility: 'public',
-    views_count: 340,
-    likes_count: 61,
-    verified: true,
-    cover_image: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1200&q=80',
-    coverImage: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1200&q=80',
-  },
-];
-
-const DEMO_OUTINGS = [
-  {
-    id: 'o1',
-    title: 'Trek des 3 Vallées, Pyrénées',
-    destination: 'Pyrénées',
-    mass: 'Pyrénées',
-    km: 58,
-    dplus: 3420,
-    maxAlt: 2640,
-    status: 'completed',
-  },
-  {
-    id: 'o2',
-    title: 'Boucle du Lac Blanc',
-    destination: 'Mont-Blanc',
-    mass: 'Mont-Blanc',
-    km: 12,
-    dplus: 950,
-    maxAlt: 2352,
-    status: 'completed',
-  },
-  {
-    id: 'o3',
-    title: 'Traversée des Hauts Plateaux',
-    destination: 'Vercors',
-    mass: 'Vercors',
-    km: 34,
-    dplus: 1600,
-    maxAlt: 2020,
-    status: 'completed',
-  },
-  {
-    id: 'o4',
-    title: 'Tour du Néouvielle',
-    destination: 'Pyrénées',
-    mass: 'Pyrénées',
-    km: 41,
-    dplus: 2380,
-    maxAlt: 2450,
-    status: 'completed',
-  },
-  {
-    id: 'o5',
-    title: 'Aiguilles de Bavella (GR20)',
-    destination: 'Corse',
-    mass: 'Corse',
-    km: 28,
-    dplus: 1820,
-    maxAlt: 1660,
-    status: 'completed',
-  },
-  {
-    id: 'o6',
-    title: 'Tour du Mont-Blanc (Chamonix → Courmayeur)',
-    destination: 'Mont-Blanc',
-    mass: 'Mont-Blanc',
-    km: 94,
-    dplus: 4920,
-    maxAlt: 2537,
-    status: 'completed',
-  },
-  {
-    id: 'o7',
-    title: 'Cirque de Gavarnie & Brèche de Roland',
-    destination: 'Pyrénées',
-    mass: 'Pyrénées',
-    km: 18,
-    dplus: 1350,
-    maxAlt: 2807,
-    status: 'completed',
-  },
-  {
-    id: 'o8',
-    title: 'Grand Veymont & Pas de l\'Aiguille',
-    destination: 'Vercors',
-    mass: 'Vercors',
-    km: 22,
-    dplus: 1100,
-    maxAlt: 2341,
-    status: 'completed',
-  },
-  {
-    id: 'o9',
-    title: 'Glacier Blanc & Pré de Mme Carle',
-    destination: 'Écrins',
-    mass: 'Écrins',
-    km: 24,
-    dplus: 1450,
-    maxAlt: 2542,
-    status: 'completed',
-  },
-  {
-    id: 'o10',
-    title: 'Tre Cime di Lavaredo & Bivouac Locatelli',
-    destination: 'Dolomites',
-    mass: 'Dolomites',
-    km: 20,
-    dplus: 1200,
-    maxAlt: 2405,
-    status: 'completed',
-  },
-];
-
-const DEMO_CLUBS = [
-  {
-    slug: 'cl1',
-    name: 'Club Alpin Pyrénées',
-    role: 'Membre actif',
-    membersCount: 142,
-  },
-  {
-    slug: 'cl2',
-    name: 'Torino & Chamonix Alpi 🇮🇹🇫🇷',
-    role: 'Co-organisateur',
-    membersCount: 89,
-  },
-  {
-    slug: 'cl3',
-    name: 'Bivouac 4 Saisons & Trek Léger',
-    role: 'Membre',
-    membersCount: 310,
-  },
-];
-
-const DEMO_GEAR_ITEMS = [
-  { id: 'p11', name: 'Frontale Swift RL 900 lm', brand: 'Petzl', category: 'Sécurité', weight_g: 100, condition: 'excellent', is_lent: true, loaned_to: 'Léa' },
-  { id: 'p3', name: 'Sac de couchage Mythic Ultra 180', brand: 'Rab', category: 'Couchage', weight_g: 400, condition: 'neuf', is_lent: false },
-  { id: 'p7', name: 'Gourde BeFree 1.0 L Filtre', brand: 'Katadyn', category: 'Eau', weight_g: 63, condition: 'bon', is_lent: false },
-  { id: 'p2', name: 'Tente Hubba Hubba NX 2P', brand: 'MSR', category: 'Couchage', weight_g: 1720, condition: 'bon', is_lent: false },
-  { id: 'p4', name: 'Matelas NeoAir XLite NXT', brand: 'Therm-a-Rest', category: 'Couchage', weight_g: 370, condition: 'excellent', is_lent: false },
-  { id: 'p5', name: 'Veste Beta AR Gore-Tex Pro', brand: "Arc'teryx", category: 'Vêtements', weight_g: 455, condition: 'bon', is_lent: false },
-  { id: 'p8', name: 'Réchaud PocketRocket Deluxe', brand: 'MSR', category: 'Cuisine', weight_g: 83, condition: 'bon', is_lent: false },
-];
-
-const DEMO_ORDERS = [
-  { id: 'b1', order_number: 'RS-9402', total_eur: 188.7, status: 'confirmed' },
-  { id: 'b2', order_number: 'DIR-1029', total_eur: 184.0, status: 'pending' },
-  { id: 'or1', order_number: 'LK-4829', total_eur: 249.0, status: 'confirmed' },
-];
-
-const DEMO_ACTIVE_LOANS = [
-  { product_ownership_id: 'p11', borrower_contact: 'Léa' },
-];
+const DEMO_CARNETS: any[] = [];
 
 export interface CompteLiquidGlassV8Props {
   initialTab?: string;
@@ -1134,22 +922,22 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
 
     if (!user) {
       hydrate({
-        name: 'Тоny',
+        name: 'Voyageur',
         handle: 'tony_frc',
-        followersCount: 1080,
-        followingCount: 142,
-        bioLine: '· Massifs alpins & bivouacs légers',
+        followersCount: 0,
+        followingCount: 0,
+        bioLine: '',
         avatarUrl: null,
-        isGuest: false,
-        isDemo: true,
-        storeCreditEur: 42.50,
-        loyaltyPoints: 1450,
+        isGuest: true,
+        isDemo: false,
+        storeCreditEur: 0,
+        loyaltyPoints: 0,
         carnets: DEMO_CARNETS,
-        outings: DEMO_OUTINGS,
-        clubs: DEMO_CLUBS,
-        gearItems: DEMO_GEAR_ITEMS,
-        orders: DEMO_ORDERS,
-        activeLoans: DEMO_ACTIVE_LOANS,
+        outings: [],
+        clubs: [],
+        gearItems: [],
+        orders: [],
+        activeLoans: [],
         notifications: [],
         tribu: [],
         replace: true,
@@ -1735,17 +1523,25 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
   // audience. Aucune écriture n'est faite par le runtime lui-même.
   useEffect(() => {
     const onOpenBulk = (event: Event) => {
-      if (!user) return;
       const detail = (event as CustomEvent<{ items?: BulkOutingItem[] }>).detail;
       const items = Array.isArray(detail?.items) ? detail.items : [];
       if (items.length > 0) setBulkOutings(items);
     };
     const onOutingsChanged = () => { void syncSupabaseProfile(); };
+    const onOpenOuting = (event: Event) => {
+      const detail = (event as CustomEvent<{ outingId?: string }>).detail;
+      if (detail?.outingId && typeof window !== 'undefined') {
+        (window as unknown as { __lkdvCompteAct?: (a: string, v?: unknown) => void })
+          .__lkdvCompteAct?.('openProgressionOuting', detail.outingId);
+      }
+    };
     window.addEventListener('lkdv:open-outing-bulk', onOpenBulk);
     window.addEventListener('lkdv:outings-changed', onOutingsChanged);
+    window.addEventListener('lkdv:open-outing', onOpenOuting);
     return () => {
       window.removeEventListener('lkdv:open-outing-bulk', onOpenBulk);
       window.removeEventListener('lkdv:outings-changed', onOutingsChanged);
+      window.removeEventListener('lkdv:open-outing', onOpenOuting);
     };
   }, [user, syncSupabaseProfile]);
 
@@ -1917,6 +1713,22 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
           <SortieDrawer outingId={String(drawerMount.props?.outingId || '')} />
         ) : drawerMount.kind === 'trace-import' ? (
           <TraceImportDrawer />
+        ) : drawerMount.kind === 'manual-activity' ? (
+          <ManualActivityDrawer
+            onCancel={() => {
+              if (typeof window !== 'undefined') {
+                (window as any).__lkdvCompteAct?.('close');
+              }
+            }}
+          />
+        ) : drawerMount.kind === 'outing-trash' ? (
+          <OutingTrashDrawer
+            onClose={() => {
+              if (typeof window !== 'undefined') {
+                (window as any).__lkdvCompteAct?.('close');
+              }
+            }}
+          />
         ) : drawerMount.kind === 'progression' ? (
           <ProgressionDrawer
             initialView={

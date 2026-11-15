@@ -9,7 +9,7 @@ import { Button, Card } from '@/components/ui';
 const POPULAR_PAGES = [
   { label: 'Explorer', href: '/explorer', icon: 'GlobeAltIcon' },
   { label: 'Hub Voyage', href: '/hub', icon: 'SparklesIcon' },
-  { label: 'Boutique & Kits', href: '/explorer', icon: 'ShoppingBagIcon' },
+  { label: 'Kits & Studio', href: '/kit-studio', icon: 'ShoppingBagIcon' },
   { label: 'Communauté', href: '/communaute', icon: 'UserGroupIcon' },
 ];
 
@@ -41,23 +41,23 @@ export default function NotFound() {
 
       <AppShell background="transparent">
         <div className="flex min-h-[calc(100dvh-120px)] flex-col items-center justify-center px-[var(--space-5)] py-[var(--space-10)] text-center">
-          <Card variant="featured" className="w-full max-w-sm p-6 md:max-w-md md:p-8">
+          <Card className="w-full max-w-sm p-6 md:max-w-md md:p-8 !bg-[rgba(240,245,238,0.88)] !border-[rgba(23,64,44,0.15)] !text-[#17402C] shadow-lg backdrop-blur-xl">
             <span
               aria-hidden="true"
-              className="mb-3 block select-none font-display text-[length:var(--lkv-text-title-lg)] font-extrabold leading-none tracking-tight text-[color:var(--glass-label)] opacity-25 md:text-8xl"
+              className="mb-3 block select-none font-display text-[length:var(--lkv-text-title-lg)] font-extrabold leading-none tracking-tight text-[#17402C] opacity-25 md:text-8xl"
             >
               404
             </span>
 
-            <p className="mb-2 font-mono text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-[0.2em] text-[color:var(--glass-label-secondary)] md:text-[length:var(--lkv-text-caption-1)]">
+            <p className="mb-2 font-mono text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-[0.2em] text-[#56665D] md:text-[length:var(--lkv-text-caption-1)]">
               Sentier introuvable
             </p>
 
-            <h1 className="mb-2 font-display text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--glass-label)] md:mb-3 md:text-[length:var(--lkv-text-title-lg)]">
+            <h1 className="mb-2 font-display text-[length:var(--lkv-text-title-sm)] font-bold text-[#17402C] md:mb-3 md:text-[length:var(--lkv-text-title-lg)]">
               Cette page n&apos;existe pas
             </h1>
 
-            <p className="mb-6 text-[length:var(--lkv-text-caption-1)] leading-[var(--leading-relaxed)] text-[color:var(--lkv-text-secondary)] md:mb-8 md:text-[length:var(--lkv-text-footnote)]">
+            <p className="mb-6 text-[length:var(--lkv-text-caption-1)] leading-[var(--leading-relaxed)] text-[#56665D] md:mb-8 md:text-[length:var(--lkv-text-footnote)]">
               Le sentier que vous cherchez a peut-être été balisé ailleurs, renommé ou n&apos;existe
               plus.
             </p>

@@ -41,6 +41,7 @@ import {
   type DrawerSecondaryItem,
   type DrawerTab,
 } from '@/components/compte/drawer/shell/DrawerShell';
+import { ClubG02Workspace } from '@/components/clubs/g02';
 import type { ClubFeedPostItem } from '../feed/ClubInlineFeed';
 
 export interface ClubItemData {
@@ -621,6 +622,7 @@ export function ClubDrawerHost({
       { id: 'outings-upcoming', label: 'Prochains départs et covoiturage', icon: <Calendar size={14} aria-hidden="true" /> },
       { id: 'outings-weather', label: 'Météo et conditions massif', icon: <CloudSun size={14} aria-hidden="true" /> },
       { id: 'outings-gpx', label: 'Archives et traces GPX', icon: <Route size={14} aria-hidden="true" /> },
+      { id: 'outings-g02', label: 'Sorties club, courses et groupes', icon: <CalendarCheck size={14} aria-hidden="true" /> },
     ],
     3: [
       { id: 'vault-items', label: 'Équipements prêtables du coffre', icon: <Package size={14} aria-hidden="true" /> },
@@ -631,6 +633,7 @@ export function ClubDrawerHost({
       { id: 'tribu-challenges', label: 'Défis collectifs et sommets', icon: <Trophy size={14} aria-hidden="true" /> },
       { id: 'tribu-chat', label: 'Canal live de la tribu', icon: <MessageCircle size={14} aria-hidden="true" /> },
       { id: 'tribu-gov', label: 'Charte, gouvernance et QR Code', icon: <Sliders size={14} aria-hidden="true" /> },
+      { id: 'tribu-g02', label: 'Salons, classement, invitations & défis club', icon: <Handshake size={14} aria-hidden="true" /> },
     ],
   };
 
@@ -768,7 +771,12 @@ export function ClubDrawerHost({
               <span>{list.length}</span>
             </div>
             <div className="reseau-list">
-              {list.map((c) => {
+              {list.length === 0 ? (
+                <div className="li nt" style={{ color: 'var(--secondary, rgba(255,255,255,0.7))', padding: '16px 8px', fontSize: 13 }}>
+                  {currentSub === 0 ? 'Aucun club rejoint pour le moment.' : 'Aucun club répertorié dans ce massif.'}
+                </div>
+              ) : (
+                list.map((c) => {
                 const isCurrent = c.id === activeClub.id;
                 return (
                   <div key={c.id} className="reseau-user-row club-switch-row">
@@ -807,7 +815,7 @@ export function ClubDrawerHost({
                     </button>
                   </div>
                 );
-              })}
+              }))}
             </div>
           </div>
         );
@@ -914,7 +922,12 @@ export function ClubDrawerHost({
             </div>
 
             <div className="reseau-list">
-              {filteredMembers.map((m) => {
+              {filteredMembers.length === 0 ? (
+                <div className="li nt" style={{ color: 'var(--secondary, rgba(255,255,255,0.7))', padding: '16px 8px', fontSize: 13 }}>
+                  Aucun membre répertorié pour le moment.
+                </div>
+              ) : (
+                filteredMembers.map((m) => {
                 const proposed = Boolean(partnerProposed[m.id]);
                 return (
                   <div key={m.id} className="reseau-user-row">
@@ -959,7 +972,7 @@ export function ClubDrawerHost({
                     )}
                   </div>
                 );
-              })}
+              }))}
             </div>
           </div>
         );
@@ -1077,6 +1090,14 @@ export function ClubDrawerHost({
           );
         }
 
+        if (currentSub === 3) {
+          return (
+            <div className="club-drawer-pane-content">
+              <ClubG02Workspace clubId={activeClub.id} initialSection="events" />
+            </div>
+          );
+        }
+
         const list =
           currentSub === 2
             ? outings.filter((o) => o.status === 'completed')
@@ -1092,7 +1113,12 @@ export function ClubDrawerHost({
               </b>
             </div>
             <div className="reseau-list">
-              {list.map((o) => (
+              {list.length === 0 ? (
+                <div className="li nt" style={{ color: 'var(--secondary, rgba(255,255,255,0.7))', padding: '16px 8px', fontSize: 13 }}>
+                  {currentSub === 2 ? 'Aucune archive de sortie pour le moment.' : 'Aucune sortie programmée pour le moment.'}
+                </div>
+              ) : (
+                list.map((o) => (
                 <div key={o.id} className="li nt club-outing-row">
                   <button
                     type="button"
@@ -1145,7 +1171,7 @@ export function ClubDrawerHost({
                     </div>
                   )}
                 </div>
-              ))}
+              )))}
             </div>
           </div>
         );
@@ -1165,7 +1191,12 @@ export function ClubDrawerHost({
                 <b>Kits Standards Recommandés par {activeClub.name}</b>
                 <span>Clonables en 1 tap dans Mon Matériel</span>
               </div>
-              {standardKits.map((k) => (
+              {standardKits.length === 0 ? (
+                <div className="li nt" style={{ color: 'var(--secondary, rgba(255,255,255,0.7))', padding: '16px 8px', fontSize: 13 }}>
+                  Aucun kit standard recommandé pour le moment.
+                </div>
+              ) : (
+                standardKits.map((k) => (
                 <div key={k.id} className="li nt club-outing-row">
                   <div>
                     <div className="ttl">
@@ -1183,7 +1214,7 @@ export function ClubDrawerHost({
                     {k.cloned ? <Check size={16} aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}
                   </button>
                 </div>
-              ))}
+              )))}
             </div>
           );
         }
@@ -1233,7 +1264,12 @@ export function ClubDrawerHost({
               <b>Coffre d’Entraide ({vaultGear.length} pièces)</b>
             </div>
             <div className="reseau-list">
-              {vaultGear.map((g) => (
+              {vaultGear.length === 0 ? (
+                <div className="li nt" style={{ color: 'var(--secondary, rgba(255,255,255,0.7))', padding: '16px 8px', fontSize: 13 }}>
+                  Le coffre d’entraide est actuellement vide.
+                </div>
+              ) : (
+                vaultGear.map((g) => (
                 <div key={g.id} className="li nt club-outing-row">
                   <div>
                     <div className="ttl">
@@ -1253,7 +1289,7 @@ export function ClubDrawerHost({
                     {g.reservedByMe ? <Check size={16} aria-hidden="true" /> : <Package size={16} aria-hidden="true" />}
                   </button>
                 </div>
-              ))}
+              )))}
             </div>
           </div>
         );
@@ -1274,7 +1310,12 @@ export function ClubDrawerHost({
                 <span>Coordination départs & météo en direct</span>
               </div>
               <div className="club-chat-messages">
-                {chatMessages.map((msg) => (
+                {chatMessages.length === 0 ? (
+                  <div className="li nt" style={{ color: 'var(--secondary, rgba(255,255,255,0.7))', padding: '16px 8px', fontSize: 13 }}>
+                    Aucun message dans ce canal pour le moment.
+                  </div>
+                ) : (
+                  chatMessages.map((msg) => (
                   <div key={msg.id} className="lkdv-comment-row">
                     <span className="lkdv-comment-av" aria-hidden="true">
                       {msg.authorName.charAt(0)}
@@ -1288,7 +1329,7 @@ export function ClubDrawerHost({
                       <p className="lkdv-comment-text">{msg.text}</p>
                     </div>
                   </div>
-                ))}
+                )))}
               </div>
               <form
                 className="lkdv-comments-composer lkdv-comments-form"
@@ -1380,13 +1421,26 @@ export function ClubDrawerHost({
           );
         }
 
+        if (currentSub === 3) {
+          return (
+            <div className="club-drawer-pane-content">
+              <ClubG02Workspace clubId={activeClub.id} initialSection="salons" />
+            </div>
+          );
+        }
+
         return (
           <div className="club-drawer-pane-content">
             <div className="club-drawer-sec-head">
               <b>Défis Collectifs & Empreinte du Club</b>
               <span>Cumul vérifié : {activeClub.totalKm} km · +{activeClub.totalDplus.toLocaleString('fr-FR')} m D+</span>
             </div>
-            {challenges.map((ch) => {
+            {challenges.length === 0 ? (
+              <div className="li nt" style={{ color: 'var(--secondary, rgba(255,255,255,0.7))', padding: '16px 8px', fontSize: 13 }}>
+                Aucun défi actif pour le moment.
+              </div>
+            ) : (
+              challenges.map((ch) => {
               const pct = Math.min(100, Math.round((ch.current / ch.target) * 100));
               return (
                 <div key={ch.id} className="li nt" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
@@ -1404,7 +1458,7 @@ export function ClubDrawerHost({
                   </div>
                 </div>
               );
-            })}
+            }))}
           </div>
         );
       },

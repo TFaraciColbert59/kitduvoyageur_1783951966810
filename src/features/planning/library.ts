@@ -104,7 +104,7 @@ export function parseMultiDaySearchQuery(
     }
   }
 
-  for (const rawToken of working.split(/\s+/)) {
+  for (const rawToken of working.split(/[\s-]+/)) {
     const token = rawToken.replace(/[^a-z0-9]/g, '');
     if (!token) continue;
 

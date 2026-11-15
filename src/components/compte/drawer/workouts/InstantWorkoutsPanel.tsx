@@ -15,7 +15,8 @@ import type {
   WorkoutLevel,
   WorkoutSport,
 } from '@/features/workouts/domain/types';
-import { ChoiceChip, ChoiceRow, SessionCard } from './WorkoutShared';
+import type { WorkoutFocusContext } from '@/features/workouts/client/workoutFocus';
+import { ChoiceChip, ChoiceRow, SessionCard, intentLabel } from './WorkoutShared';
 
 const HISTORY_LABELS: Record<WeeklyProposal['historyStatus'], string> = {
   complete: 'Historique complet',
@@ -35,6 +36,7 @@ export interface InstantWorkoutsPanelProps {
   onDaysChange: (days: number) => void;
   onStart: (session: StructuredSession) => void;
   activeSessionId: string | null;
+  focusContext?: WorkoutFocusContext | null;
 }
 
 /**
@@ -54,11 +56,35 @@ export function InstantWorkoutsPanel({
   onDaysChange,
   onStart,
   activeSessionId,
+  focusContext,
 }: InstantWorkoutsPanelProps) {
   const goals = sport === 'course' ? runGoals() : bikeGoals();
 
   return (
     <div className="lkdv-workout-instant">
+      {focusContext ? (
+        <aside
+          className="lkdv-workout-focus-banner"
+          data-testid="workout-focus-banner"
+          aria-label="Adaptation selon focus et charge"
+        >
+          <div className="lkdv-workout-plan-topline">
+            <span className="lkdv-workout-badge">
+              Priorité : {intentLabel(focusContext.recommendedIntent)}
+            </span>
+            {focusContext.loadStatus === 'available' && focusContext.tsb !== null ? (
+              <span>
+                CTL {focusContext.ctl?.toFixed(0)} · ATL {focusContext.atl?.toFixed(0)} · TSB{' '}
+                {focusContext.tsb >= 0 ? '+' : ''}
+                {focusContext.tsb.toFixed(1)}
+              </span>
+            ) : (
+              <span>Charge : données insuffisantes</span>
+            )}
+          </div>
+          <p>{focusContext.rationale}</p>
+        </aside>
+      ) : null}
       <ChoiceRow label="Sport">
         <ChoiceChip
           label="Course"

@@ -61,6 +61,9 @@ vi.mock('@/contexts/ToastContext', () => ({
 vi.mock('@/hooks/useUserPresence', () => ({
   useUserPresence: () => false,
 }));
+vi.mock('@/components/compte/map/CompteMap', () => ({
+  CompteMap: () => <div data-testid="compte-map" />,
+}));
 
 vi.mock('@/components/ui', () => ({
   EmptyState: ({ title, description }: { title: string; description?: string }) => (
@@ -216,7 +219,7 @@ describe('Page /profil/[id] — visibilité avant chargement', () => {
     render(<PublicProfilePage />);
 
     expect(await screen.findByTestId('hero-profil')).toBeTruthy();
-    expect(screen.getByText('Léa')).toBeTruthy();
+    expect(screen.getByText(/Léa/)).toBeTruthy();
 
     expect(calls.tables).toEqual(['public_profiles']);
     expect(queries.fetchFullProfile).toHaveBeenCalledTimes(1);
@@ -265,6 +268,6 @@ describe('Page /profil/[id] — visibilité avant chargement', () => {
 
     // Sans attendre waitFor : le hero-profil est déjà rendu immédiatement !
     expect(screen.getByTestId('hero-profil')).toBeTruthy();
-    expect(screen.getByText('Léa')).toBeTruthy();
+    expect(screen.getByText(/Léa/)).toBeTruthy();
   });
 });

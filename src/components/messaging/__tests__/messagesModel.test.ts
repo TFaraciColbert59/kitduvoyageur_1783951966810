@@ -51,6 +51,14 @@ describe('filterConversations', () => {
     expect(filterConversations(rows, { filter: 'all', query: '' })).toHaveLength(0);
     expect(filterConversations(rows, { filter: 'requests', query: '' })).toHaveLength(1);
   });
+
+  it('déduplique les conversations directes avec le même interlocuteur', () => {
+    const rows = [
+      conv({ id: 'c1', type: 'direct', other_member: { id: 'u2', full_name: 'Tony' } as Conversation['other_member'] }),
+      conv({ id: 'c2', type: 'direct', other_member: { id: 'u2', full_name: 'Tony' } as Conversation['other_member'] }),
+    ];
+    expect(filterConversations(rows, { filter: 'all', query: '' }).map((c) => c.id)).toEqual(['c1']);
+  });
 });
 
 describe('lastPreview', () => {

@@ -38,206 +38,120 @@
    /offre, alors que leurs titres (--glass-label, autre chaine) passers.
    En posant les tokens sur <html>, :root lui-meme est sur-ecrit. */
 html[data-liquid-ios27] {
-  /* Voile global quasi nul : la photo traverse la page intacte. */
-  --lkv-app-bg-scrim: rgba(229, 237, 231, 0.02);
+  /* 100% Mode Clair Liquid Glass — Pure Palette Verte LKDV, Zéro noir */
+  --lkv-app-bg-scrim: rgba(242, 246, 243, 0.78);
 
-  /* Blanc et vibrancy : meme blanc que le label primaire d Apple, les niveaux
-     inferieurs sont le meme blanc en opacite reduite. */
-  --hub-white: #ffffff;
-  --hub-white-secondary: rgba(255, 255, 255, 0.71);
-  --hub-white-tertiary: rgba(255, 255, 255, 0.5);
-  --lkv-text-primary: var(--hub-white);
-  --lkv-text-secondary: var(--hub-white-secondary);
-  --lkv-text-muted: var(--hub-white-tertiary);
-  /* Les deux derniers crans de l'echelle etaient absents du portillon : sous
-     html[data-liquid-ios27], tout ce qui lisait --lkv-text-subtle ou
-     --lkv-secondary retombait sur les valeurs SOMBRES du theme clair
-     (#526158, #5B7F55) alors que le texte porteur est blanc. Mesure : un
-     libelle tertiaire a 2.1:1 sur la photo, donc invisible. On complete
-     l'echelle ici plutot que de corriger chaque composant un par un. */
-  --lkv-text-subtle: rgba(255, 255, 255, 0.46);
-  --lkv-secondary: rgba(255, 255, 255, 0.71);
+  /* Encres vert forêt profondes WCAG AAA / AA */
+  --hub-white: #172B24;
+  --hub-white-secondary: #56665D;
+  --hub-white-tertiary: #46584D;
+  --lkv-text-primary: #172B24;
+  --lkv-text-secondary: #56665D;
+  --lkv-text-muted: #46584D;
+  --lkv-text-subtle: #8C9790;
+  --lkv-secondary: #5B7F55;
 
-  /* Materiau Apple : quasi-noir #101010 + voile blanc 4 % en plus-lighter. */
-  --hub-glass-base: #101010;
-  --hub-glass-lift: rgba(255, 255, 255, 0.04);
-  --hub-glass-rim: #cccccc;
-  --hub-glass-rim-soft: #d0d0d0;
+  /* Matériau Liquid Glass Clair (Base Blanche / Sauge, zéro noir #101010) */
+  --hub-glass-base: #FFFFFF;
+  --hub-glass-lift: rgba(255, 255, 255, 0.40);
+  --hub-glass-rim: rgba(23, 43, 36, 0.14);
+  --hub-glass-rim-soft: rgba(23, 43, 36, 0.08);
   --hub-glass-shadow:
     1.25px 0 0 -0.75px var(--hub-glass-rim-soft), -1.25px 0 0 -0.75px var(--hub-glass-rim-soft),
-    0 0 0 0.5px var(--hub-glass-rim), 0 8px 15px rgba(0, 0, 0, 0.02);
+    0 0 0 0.5px var(--hub-glass-rim), 0 8px 15px rgba(23, 64, 44, 0.04);
 
-  /* Alphabet du kit : label primaire #FFFFFF, vibrant secondary #999999,
-     symbols poses sur le verre #D9D9D9 (leves de luminance, pas du blanc). */
-  --hub-label-primary: #ffffff;
-  --hub-label-secondary: #999999;
-  --hub-symbol: #d9d9d9;
-  /* Le voile 0.58 des symboles est illisible en libelle : compose sur le verre
-     sombre de la barre, il tombait a 2,39:1 (mesure du 2026-09-29) pour un
-     seuil de 4,5:1 a 10px. Les icones gardent --hub-symbol-dim : leur seuil
-     est 3:1 et elles tiennent a 3,5:1. Le libelle a son propre jeton, plus
-     clair, qui partage la teinte verte du jeu d icones. */
-  --hub-symbol-dim: rgba(217, 217, 217, 0.58);
-  --hub-label-tertiary: rgb(226, 230, 227, 0.95);
+  /* Alphabet du kit en encres vert forêt */
+  --hub-label-primary: #172B24;
+  --hub-label-secondary: #56665D;
+  --hub-symbol: #17402C;
+  --hub-symbol-dim: #56665D;
+  --hub-label-tertiary: #46584D;
 
-  /* Les variables de navigation du design system sont redefinies ici : sinon
-     le theme clair de tokens.css (--glass-label: #101813) l'emporte et les
-     icones de la barre deviennent illisibles sur le verre sombre. */
-  --glass-label: #ffffff;
-  --glass-label-secondary: rgba(255, 255, 255, 0.78);
-  --glass-label-tertiary: var(--hub-label-tertiary);
-  --glass-label-quaternary: rgba(255, 255, 255, 0.4);
+  --glass-label: #172B24;
+  --glass-label-secondary: #56665D;
+  --glass-label-tertiary: #46584D;
+  --glass-label-quaternary: #8C9790;
 
   /* Typographie du kit : SF Pro 15px, tracking -0.23px, titre en 590. */
   --hub-tracking: -0.23px;
   --hub-title-weight: 590;
 
-  /* Repli opaque dedie (preferences systeme). */
-  --hub-opaque-fallback: #101010;
+  /* Repli opaque clair */
+  --hub-opaque-fallback: #FBFAF6;
 
-  /* Fumee neutre du materiau : c est elle qui porte le contraste du texte
-     blanc, jamais un voile blanc laiteux. */
-  --hub-smoke: rgba(16, 16, 16, 0.3);
-  --hub-smoke-strong: rgba(16, 16, 16, 0.44);
-  --lkv-surface: var(--hub-smoke);
-  --lkv-surface-card: rgba(16, 16, 16, 0.34);
-  --lkv-surface-raised: rgba(16, 16, 16, 0.38);
-  --card-tint: rgba(16, 16, 16, 0.34);
-  --card-tint-strong: rgba(16, 16, 16, 0.38);
-  --card-tint-solid: rgba(16, 16, 16, 0.82);
-  --card-border: transparent;
-  --glass-tint: rgba(16, 16, 16, 0.34);
-  --glass-bg-medium: rgba(16, 16, 16, 0.34);
-  --btn-tint: rgba(255, 255, 255, 0.1);
-  --material-bar-border: transparent;
-  --lkv-app-bg-fallback: #0b0d12;
+  /* Teinte claire du matériau */
+  --hub-smoke: rgba(245, 247, 243, 0.70);
+  --hub-smoke-strong: rgba(240, 245, 238, 0.88);
+  --lkv-surface: var(--lkv-surface, #F5F7F3);
+  --lkv-surface-card: #FFFFFF;
+  --lkv-surface-raised: #FFFFFF;
+  --card-tint: rgba(255, 255, 255, 0.72);
+  --card-tint-strong: rgba(255, 255, 255, 0.88);
+  --card-tint-solid: #FFFFFF;
+  --card-border: rgba(23, 43, 36, 0.12);
+  --glass-tint: rgba(255, 255, 255, 0.65);
+  --glass-bg-medium: rgba(255, 255, 255, 0.82);
+  --btn-tint: rgba(255, 255, 255, 0.70);
+  --material-bar-border: rgba(23, 43, 36, 0.12);
+  --lkv-app-bg-fallback: #FBFAF6;
 
-  /* ── Couches de materiau G1/G2/G3 ──────────────────────────────────────
-     tokens.css definit ces trois couches pour un theme CLAIR (G1/G2
-     blanc-casse, G3 pastille sombre a texte blanche). Sur le materiau
-     quasi-noir d Apple elles restaient intactes : toute primitive
-     construite dessus (Chip, Button, Tabs, Switch, SubTabBar, SearchField,
-     StepIndicator, IconButton...) peignait une pastille claire sur le
-     verre sombre, avec une encre devenue blanche par le codemod. Illisible.
+  /* ── Couches de matériau G1/G2/G3 en verre clair ────────────────────── */
+  --g1-bg: rgba(255, 255, 255, 0.65);
+  --g2-bg: rgba(255, 255, 255, 0.85);
+  --g3-bg: rgba(235, 242, 236, 0.88);
+  --g3-text: #172B24;
 
-     G3 reste une couche inversee dans les deux sens de theme (c est son
-     contrat) : sous materiau sombre elle devient la lise brillante de
-     selection, encre sombre la-dessus. G1/G2 deviennent la fumee du
-     materiau, assez dense pour porter du blanc, assez claire pour laisser
-     la photo traverser -- c est le point de l iOS 27. Valeurs neutres
-     #101010, jamais un vert de marque. */
-  --g1-bg: rgb(16 16 16 / 0.24);
-  --g2-bg: rgb(16 16 16 / 0.34);
-  --g3-bg: rgb(245 245 247 / 0.92);
-  --g3-text: #101010;
+  /* Replis opaques */
+  --g1-reduced-bg: #FFFFFF;
+  --g2-reduced-bg: #F5F7F3;
+  --g3-reduced-bg: #EBF2EC;
 
-  /* Replis opaques (prefers-reduced-transparency, prefers-contrast). */
-  --g1-reduced-bg: #101010;
-  --g2-reduced-bg: #161616;
-  --g3-reduced-bg: #f5f5f7;
-
-  /* ── Famille --glass-* : les leaks d ink du theme clair ─────────────────
-     tokens.css declare un alphabet --glass-* concu pour un theme
-     CLAIR. Le materiau n en remappait que 5 sur 53. Les 48 restantes
-     laissaient passer de l encre sombre --glass-text-secondary
-     (rgba(23,43,36,0.74)), des bordures rgba(23,43,36,0.12) invisibles
-     sur du verre sombre, un focus ring vert #226148 invisible, et des
-     surfaces --glass-bg-light / --glass-subtle-fill bianches a 88 %
-     sous une encre blanche. Symptome type : les descriptions des cartes
-     de /guides, illisibles alors que leurs titres (--glass-label, deja
-     remappe) s affichaient parfaitement.
-
-     On remappe ici tout ce qui porte de l ink ou du contraste, et rien
-     d autre : les rayons, flous, degrades et ombres heritent deja de
-     tokens.css et restent valides sur le materiau sombre. */
-  /* Encre */
+  /* Famille --glass-* */
   --glass-text: var(--lkv-text-primary);
-  --glass-text-secondary: var(--hub-white-secondary);
-  --glass-ink: 245 250 246;
-  --glass-tint-rgb: 16 16 16;
-  --glass-focus-outline: #7fc49a;
+  --glass-text-secondary: var(--lkv-text-secondary);
+  --glass-ink: 23 43 36;
+  --glass-tint-rgb: 255 255 255;
+  --glass-focus-outline: #226148;
 
-  /* Bordures : un liseré sombre ne se voit pas sur du verre sombre. */
-  --glass-border: rgba(255, 255, 255, 0.16);
-  --glass-border-color: rgba(255, 255, 255, 0.16);
-  --glass-border-strong: rgba(255, 255, 255, 0.30);
+  --glass-border: rgba(23, 43, 36, 0.12);
+  --glass-border-color: rgba(23, 43, 36, 0.12);
+  --glass-border-strong: rgba(23, 43, 36, 0.24);
 
-  /* Surfaces : la fumee du materiau, jamais un aplat clair. */
-  --glass-bg-light: rgb(16 16 16 / 0.30);
-  --glass-subtle-fill: rgb(16 16 16 / 0.24);
-  --glass-bg-dark: rgba(16, 16, 16, 0.86);
+  --glass-bg-light: rgba(255, 255, 255, 0.65);
+  --glass-subtle-fill: rgba(240, 245, 238, 0.70);
+  --glass-bg-dark: rgba(235, 242, 236, 0.95);
 
-  /* ── Palette semantique sur verre sombre ──────────────────────────────
-     tokens.css definit ces teintes pour un fond CLAIR : les aplats sont
-     pastel (#EDF1EA, #E1EBDE...) et les encres sont sombres (#765014,
-     #7E2D25). Sous le materiau, Badge.tsx composait le couple
-     "fond clair + encre blanche" -- l'encre suivait --lkv-text-primary
-     (blanc) mais pas le fond : pastille clairisee illisible.
+  --lkv-success: #3D6038;
+  --lkv-success-bg: #EAF3E9;
+  --lkv-warning: #8F671E;
+  --lkv-warning-bg: #FBF1DC;
+  --lkv-warning-dark: #8F671E;
+  --lkv-warning-subtle: rgba(143, 103, 30, 0.12);
+  --lkv-danger: #85261E;
+  --lkv-danger-bg: #F5DDD9;
+  --lkv-danger-dark: #85261E;
+  --lkv-info: #2C4C5E;
+  --lkv-info-bg: #DDE7EE;
 
-     Regle appliquee : sur verre sombre, le FOND devient une teinte de
-     statut diluee (14 a 20 % d opacite) et l ENCRE la version claire de
-     la meme teinte. Les deux restent apparies par construction, donc le
-     contraste tient meme si une page surcharge --lkv-*-bg seule.
-     Ratios mesures sur le fond le plus sombre du materiau (rgb 13,14,17) :
-     success 9.8:1, warning 10.2:1, danger 6.5:1, info 9.1:1. */
-  --lkv-success: #8fc7a4;
-  --lkv-success-bg: rgba(143, 199, 164, 0.18);
-  --lkv-warning: #e0b45f;
-  --lkv-warning-bg: rgba(224, 180, 95, 0.18);
-  --lkv-warning-dark: #f0ce8e;
-  --lkv-warning-subtle: rgba(224, 180, 95, 0.12);
-  --lkv-danger: #e08a80;
-  --lkv-danger-bg: rgba(224, 138, 128, 0.18);
-  --lkv-danger-dark: #f0a9a0;
-  --lkv-info: #8fb8ce;
-  --lkv-info-bg: rgba(143, 184, 206, 0.18);
+  --lkv-secondary-ink: #17402C;
+  --lkv-forest-600-ink: #17402C;
 
-  /* Encres de marque : #5B7F55 plafonne a 4.16:1 sur le verre sombre,
-     juste sous le seuil de 4.5:1 pour du texte courant, et #365233 tombe
-     a 2.3:1 en grand corps. Ces deux teintes sont utilisees ET comme aplat
-     (--lkv-secondary en fond de pastille) ET comme encre : on ne peut pas
-     les reassigner globalement sans casser les fonds. D ou un jeton
-     d encre dedie, plus clair, meme famille de teinte.
-     secondary-ink 9.4:1, forest-600-ink 11.2:1 sur rgb(13,14,17). */
-  --lkv-secondary-ink: #a3c69c;
-  --lkv-forest-600-ink: #bcd0b8;
+  --lkv-surface-muted: #EDF1EA;
+  --lkv-surface-paper: #FFFFFF;
+  --lkv-border: rgba(23, 43, 36, 0.12);
+  --lkv-border-subtle: rgba(23, 43, 36, 0.06);
 
-  /* Surfaces neutro : meme logique, mais sans teinte de marque. */
-  --lkv-surface-muted: rgba(255, 255, 255, 0.08);
-  --lkv-surface-paper: rgba(255, 255, 255, 0.06);
-  --lkv-border: rgba(255, 255, 255, 0.16);
-  --lkv-border-subtle: rgba(255, 255, 255, 0.08);
-
-  /* Encres pour les surfaces claires opaques legitimes (pastille Tripadvisor,
-     apercu SERP Google). 13.9:1 et 6.6:1 sur blanc. */
-  --lkv-on-light: #1c1917;
-  --lkv-on-light-muted: #57534e;
+  --lkv-on-light: #172B24;
+  --lkv-on-light-muted: #56665D;
 }
 
-/* ── Blanc et vibrancy : tout le texte du Hub, sur les trois niveaux ───── */
-
-/* ── Plancher de lisibilite sur la toile ────────────────────────────────
-   tokens.css peint la toile via .lkv-app-background :
-   linear-gradient(--lkv-app-bg-scrim, ...), <photo>. Le voile etait plat, et
-   le materiau le descendait a 0.02 (photo intacte) : du verre a 0.28 sous
-   une encre a 71 % devenait illisible des que la photo passait en zone
-   claire (ciel de /guides, nebuleuse de /faq). Le code prevoyait deja un
-   voile "pour que le texte garde un contraste stable" -- c est sa densite
-   qui avait ete neutralisee, pas son principe.
-
-   On le degrade au lieu de l aplatir : dense en haut et en bas, la ou vit
-   le texte (header, titres, barre d onglets), plus clair au centre pour que
-   la photo respire -- c est la bande de vitrine du materiau. Les valeurs
-   sont bornees pour que meme une zone pleine lumiere de la photo reste
-   sous le seuil de 4.5:1 pour du texte de 14 px. */
+/* ── Voile clair sur la toile ────────────────────────────────────────── */
 html[data-liquid-ios27] body .lkv-app-background {
   background-image: linear-gradient(
       180deg,
-      rgba(9, 11, 14, 0.62) 0%,
-      rgba(9, 11, 14, 0.46) 22%,
-      rgba(9, 11, 14, 0.30) 52%,
-      rgba(9, 11, 14, 0.40) 74%,
-      rgba(9, 11, 14, 0.60) 100%
+      rgba(242, 246, 243, 0.82) 0%,
+      rgba(242, 246, 243, 0.70) 50%,
+      rgba(242, 246, 243, 0.85) 100%
     ),
     var(--lkv-app-bg-image-portrait);
 }
@@ -246,11 +160,9 @@ html[data-liquid-ios27] body .lkv-app-background {
   html[data-liquid-ios27] body .lkv-app-background {
     background-image: linear-gradient(
         180deg,
-        rgba(9, 11, 14, 0.62) 0%,
-        rgba(9, 11, 14, 0.46) 22%,
-        rgba(9, 11, 14, 0.30) 52%,
-        rgba(9, 11, 14, 0.40) 74%,
-        rgba(9, 11, 14, 0.60) 100%
+        rgba(242, 246, 243, 0.82) 0%,
+        rgba(242, 246, 243, 0.70) 50%,
+        rgba(242, 246, 243, 0.85) 100%
       ),
       var(--lkv-app-bg-image-landscape);
   }
@@ -263,26 +175,26 @@ html[data-liquid-ios27] body .hub-chip-control,
 html[data-liquid-ios27] body .hub-control-lens,
 html[data-liquid-ios27] body .hub-tile-glyph,
 html[data-liquid-ios27] body .hub-liquid-action {
-  color: var(--hub-white) !important;
+  color: var(--lkv-text-primary) !important;
 }
 
 html[data-liquid-ios27] body
   :is(.hub-content-material, .hub-control-material, .hub-section-control, .hub-chip-control)
   :is(p, span, div, h1, h2, h3, h4, li) {
-  color: var(--hub-white-secondary) !important;
+  color: var(--lkv-text-secondary);
 }
 
 html[data-liquid-ios27] body
   :is(.hub-content-material, .hub-control-material, .hub-section-control, .hub-chip-control)
   [class*='uppercase'] {
-  color: var(--hub-white-tertiary) !important;
+  color: var(--lkv-text-muted);
   letter-spacing: 0.14em;
 }
 
 html[data-liquid-ios27] body
   :is(.hub-content-material, .hub-control-material, .hub-section-control, .hub-chip-control)
   :is(h1, h2, h3, h4, strong, b) {
-  color: var(--hub-white) !important;
+  color: var(--lkv-text-primary) !important;
   font-weight: var(--hub-title-weight);
 }
 
@@ -300,11 +212,11 @@ html[data-liquid-ios27] body
   letter-spacing: var(--hub-tracking);
 }
 
-/* Micro-ombre : detache le glyphe du fond sans halo laiteux. */
+/* Micro-ombre désactivée en mode clair */
 html[data-liquid-ios27] body
   :is(.hub-content-material, .hub-control-material, .hub-section-control, .hub-chip-control)
   :is(p, span, div, h1, h2, h3, h4, li, button, a) {
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+  text-shadow: none;
 }
 
 /* ── Navigation : capsule de verre quasi-noir, isolee du contenu ────────── */
@@ -543,14 +455,14 @@ html[data-liquid-ios27] body .lkv-nav-surface[data-optical='true'] .lkv-nav-acti
   overflow: hidden;
   background:
     linear-gradient(0deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.1)),
-    rgba(16, 16, 16, 0.34) !important;
+    rgba(34, 97, 72, 0.28) !important;
   background-blend-mode: normal !important;
   background-blend-mode: luminosity, plus-lighter;
   border: 1px solid transparent !important;
   box-shadow: var(--hub-glass-shadow) !important;
   -webkit-backdrop-filter: blur(20px) saturate(200%) brightness(1.06);
   backdrop-filter: blur(20px) saturate(200%) brightness(1.06);
-  color: #fff !important;
+  color: var(--lkv-action, #226148) !important;
 }
 
 /* ── Icones : symbols du kit, pas du blanc brut ─────────────────────────── */
@@ -644,20 +556,20 @@ html[data-liquid-ios27] body
 
 .hub-edge-panel__body--status,
 .hub-edge-panel__body--cockpit {
-  --lkv-text-primary: #ffffff;
-  --lkv-text-secondary: rgba(255, 255, 255, 0.72);
-  --lkv-text-muted: rgba(255, 255, 255, 0.54);
-  --lkv-text-subtle: rgba(255, 255, 255, 0.46);
-  --lkv-secondary: rgba(255, 255, 255, 0.72);
-  --lkv-primary: #ffffff;
-  --lkv-primary-subtle: rgba(255, 255, 255, 0.1);
-  --lkv-surface: rgba(255, 255, 255, 0.065);
-  --lkv-surface-card: rgba(255, 255, 255, 0.07);
-  --lkv-success: rgba(255, 255, 255, 0.92);
-  --lkv-warning: rgba(255, 255, 255, 0.78);
-  --lkv-danger: rgba(255, 255, 255, 0.88);
-  --lkv-warning-dark: rgba(255, 255, 255, 0.82);
-  --lkv-danger-dark: rgba(255, 255, 255, 0.9);
+  --lkv-text-primary: #172B24;
+  --lkv-text-secondary: #56665D;
+  --lkv-text-muted: #46584D;
+  --lkv-text-subtle: #8C9790;
+  --lkv-secondary: #5B7F55;
+  --lkv-primary: #17402C;
+  --lkv-primary-subtle: #D3EBD9;
+  --lkv-surface: #F5F7F3;
+  --lkv-surface-card: #FFFFFF;
+  --lkv-success: #226148;
+  --lkv-warning: #B38600;
+  --lkv-danger: #C0392B;
+  --lkv-warning-dark: #8C6800;
+  --lkv-danger-dark: #962D22;
 }
 
 .hub-edge-panel__body--cockpit .hub-content-material {
@@ -743,12 +655,12 @@ html[data-liquid-ios27] body
 
 .hub-state-drawer__score,
 .hub-state-drawer__pill {
-  color: rgba(255, 255, 255, 0.78);
+  color: #172B24;
 }
 
 .hub-state-drawer__pill {
-  border-color: rgba(255, 255, 255, 0.1);
-  background-color: rgba(255, 255, 255, 0.055);
+  border-color: rgba(23, 43, 36, 0.12);
+  background-color: rgba(240, 245, 238, 0.70);
 }
 
 .hub-state-drawer__cta {
@@ -759,18 +671,19 @@ html[data-liquid-ios27] body
 }
 
 .hub-state-drawer__cta.is-launch {
-  border-color: rgba(255, 255, 255, 0.22);
+  border-color: rgba(23, 43, 36, 0.16);
   background:
-    linear-gradient(0deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.1)),
-    rgba(255, 255, 255, 0.085);
+    linear-gradient(0deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.6)),
+    rgba(34, 97, 72, 0.12);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.16),
-    0 10px 24px rgba(0, 0, 0, 0.12);
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 10px 24px rgba(23, 64, 44, 0.08);
+  color: #17402C;
 }
 
 .hub-state-drawer__cta-icon {
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(23, 43, 36, 0.12);
+  background: rgba(240, 245, 238, 0.80);
 }
 
 .hub-state-drawer__cta:active,
@@ -787,9 +700,9 @@ html[data-liquid-ios27] body
 }
 
 .hub-state-drawer__check-icon {
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.055);
-  color: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(23, 43, 36, 0.12);
+  background: rgba(240, 245, 238, 0.80);
+  color: #172B24;
 }
 
 .hub-state-drawer__status {
@@ -797,7 +710,7 @@ html[data-liquid-ios27] body
   min-height: 18px;
   align-items: center;
   gap: 3px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(23, 43, 36, 0.12);
   border-radius: 999px;
   padding: 1px 6px;
   font-size: 9px;
@@ -806,16 +719,16 @@ html[data-liquid-ios27] body
 }
 
 .hub-state-drawer__status--ready {
-  color: rgba(255, 255, 255, 0.76);
+  color: #226148;
 }
 
 .hub-state-drawer__status--attention {
-  color: rgba(255, 255, 255, 0.6);
+  color: #B38600;
 }
 
 .hub-state-drawer__status--blocked {
-  color: rgba(255, 255, 255, 0.92);
-  background: rgba(255, 255, 255, 0.08);
+  color: #C0392B;
+  background: rgba(192, 57, 43, 0.08);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -846,7 +759,7 @@ html[data-liquid-ios27] body
   }
 
   html[data-liquid-ios27] body .lkv-nav-surface[data-optical='true'] .lkv-material-bar {
-    background: #101010 !important;
+    background: var(--hub-opaque-fallback) !important;
     border: 1px solid rgba(204, 204, 204, 0.4) !important;
     box-shadow: none !important;
   }
@@ -924,8 +837,8 @@ html[data-liquid-ios27] body
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   background:
-    linear-gradient(0deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.04)),
-    rgba(16, 16, 16, 0.24) !important;
+    linear-gradient(0deg, rgba(255, 255, 255, 0.50), rgba(255, 255, 255, 0.50)),
+    rgba(240, 245, 238, 0.85) !important;
   background-blend-mode: normal !important;
   background-blend-mode: luminosity, plus-lighter;
   box-shadow:
@@ -1009,8 +922,8 @@ html[data-liquid-ios27] body
   overflow: hidden;
   border-radius: 28px 0 0 28px;
   background:
-    linear-gradient(0deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.04)),
-    rgba(16, 16, 16, 0.36);
+    linear-gradient(0deg, rgba(255, 255, 255, 0.50), rgba(255, 255, 255, 0.50)),
+    rgba(240, 245, 238, 0.88);
   background-blend-mode: normal;
   background-blend-mode: luminosity, plus-lighter;
   box-shadow:
@@ -1135,7 +1048,7 @@ html[data-liquid-ios27] body
 @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
   .hub-edge-trigger,
   .hub-edge-panel__surface {
-    background: #101010 !important;
+    background: var(--hub-opaque-fallback) !important;
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
   }
@@ -1164,7 +1077,7 @@ html[data-liquid-ios27] body
   display: inline-flex;
   align-items: center;
   border: 1px solid rgba(255, 255, 255, 0.18);
-  background: rgba(16, 16, 16, 0.34);
+  background: rgba(23, 43, 36, 0.34);
   -webkit-backdrop-filter: blur(18px) saturate(190%) brightness(1.05);
   backdrop-filter: blur(18px) saturate(190%) brightness(1.05);
   box-shadow: var(--hub-glass-shadow);
@@ -1209,7 +1122,7 @@ html[data-liquid-ios27] body
   color: var(--hub-white);
   background:
     linear-gradient(0deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.04)),
-    rgba(16, 16, 16, 0.3);
+    rgba(23, 43, 36, 0.3);
   background-blend-mode: luminosity, plus-lighter;
   box-shadow:
     inset 1px 0 0 -0.5px rgba(208, 208, 208, 0.72),
@@ -1270,40 +1183,40 @@ html[data-liquid-ios27] body
 /* ── Progression condensée dans le tiroir POINTS ─────────────────────────── */
 
 .hub-progression-drawer {
-  --lkv-text-primary: #ffffff;
-  --lkv-text-secondary: rgba(255, 255, 255, 0.72);
-  --lkv-text-muted: rgba(255, 255, 255, 0.54);
-  --lkv-primary: #ffffff;
-  --card-content: #ffffff;
+  --lkv-text-primary: #172B24;
+  --lkv-text-secondary: #56665D;
+  --lkv-text-muted: #46584D;
+  --lkv-primary: #17402C;
+  --card-content: #172B24;
 }
 
 .hub-progression-drawer .glass,
 .hub-progression-drawer :is(.rounded-2xl, .rounded-3xl) {
-  --lkv-text-primary: #ffffff;
-  --lkv-text-secondary: rgba(255, 255, 255, 0.72);
-  --lkv-text-muted: rgba(255, 255, 255, 0.54);
-  --lkv-primary: #ffffff;
-  --lkv-secondary: rgba(255, 255, 255, 0.72);
-  --lkv-success: rgba(255, 255, 255, 0.92);
-  --lkv-warning: rgba(255, 255, 255, 0.78);
-  --lkv-danger: rgba(255, 255, 255, 0.88);
-  --card-content: #ffffff;
-  border-color: rgba(255, 255, 255, 0.14) !important;
-  background-color: rgba(255, 255, 255, 0.07) !important;
+  --lkv-text-primary: #172B24;
+  --lkv-text-secondary: #56665D;
+  --lkv-text-muted: #46584D;
+  --lkv-primary: #17402C;
+  --lkv-secondary: #5B7F55;
+  --lkv-success: #226148;
+  --lkv-warning: #B38600;
+  --lkv-danger: #C0392B;
+  --card-content: #172B24;
+  border-color: rgba(23, 43, 36, 0.12) !important;
+  background-color: rgba(240, 245, 238, 0.75) !important;
   box-shadow: none;
 }
 
 .hub-progression-drawer :is(button, a):focus-visible {
-  outline: 2px solid rgba(255, 255, 255, 0.92);
+  outline: 2px solid rgba(23, 43, 36, 0.92);
   outline-offset: 2px;
 }
 
 .hub-progression-drawer [role='progressbar'] {
-  background: rgba(255, 255, 255, 0.1) !important;
+  background: rgba(23, 43, 36, 0.1) !important;
 }
 
 .hub-progression-drawer [role='progressbar'] > div {
-  background: rgba(255, 255, 255, 0.82) !important;
+  background: #226148 !important;
 }
 
 @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
@@ -1311,7 +1224,7 @@ html[data-liquid-ios27] body
   .hub-map-card__eyebrow,
   .hub-map-card__badge,
   .hub-map-card__date {
-    background: #101010 !important;
+    background: var(--hub-opaque-fallback) !important;
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
   }

@@ -131,7 +131,8 @@ export function G01VideoPlayer({
             <button
               type="button"
               className={styles.videoButton}
-              onClick={() => {
+              onClick={(event) => {
+                event.stopPropagation();
                 if (playing) {
                   setPausedByUser(true);
                   requestPause();
@@ -147,7 +148,10 @@ export function G01VideoPlayer({
             <button
               type="button"
               className={styles.videoButton}
-              onClick={() => setSoundOn((value) => !value)}
+              onClick={(event) => {
+                event.stopPropagation();
+                setSoundOn((value) => !value);
+              }}
               aria-label={soundOn ? 'Couper le son' : 'Activer le son'}
             >
               {soundOn ? (

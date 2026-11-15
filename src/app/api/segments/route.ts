@@ -13,6 +13,7 @@ import {
   unprocessable,
 } from '@/lib/segments/http';
 import { createSegmentBodySchema, listSegmentsQuerySchema } from '@/lib/segments/schemas';
+import { hydrateActivityWithPrivacyZones, syncS01ToLeaderboards } from '@/lib/segments/bridge';
 import { runSegmentMaintenance } from '@/lib/segments/service';
 import {
   getPreferences,
@@ -101,10 +102,16 @@ export async function POST(request: NextRequest) {
       return forbidden("L'activité source ne vous appartient pas.");
     }
 
+    const hydratedActivity = await hydrateActivityWithPrivacyZones(
+      body.activity,
+      auth.user.id,
+      auth.supabase
+    );
+
     const created = createSegmentFromActivity({
       segmentId: body.segmentId,
       name: body.name,
-      activity: body.activity,
+      activity: hydratedActivity,
       startPointIndex: body.startPointIndex,
       endPointIndex: body.endPointIndex,
       visibility: body.visibility,
@@ -121,6 +128,7 @@ export async function POST(request: NextRequest) {
 
     upsertSegment(created.segment);
     const maintenance = runSegmentMaintenance();
+    syncS01ToLeaderboards(created.segment.id);
     const canonical =
       getSegment(created.segment.id) ??
       maintenance.segments.find((segment) => segment.id === created.segment!.id) ??

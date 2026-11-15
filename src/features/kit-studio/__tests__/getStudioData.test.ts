@@ -120,7 +120,7 @@ describe('mapping Supabase → formes du studio', () => {
     const items = itemsFromRows(ownershipRows, kitItemRows, new Map(functionRows.map((f) => [f.id, f])), colorwaysFromRows(colorwayRows));
     const duvet = items.find((i) => String(i.id) === 'own-1')!;
     expect(duvet).toMatchObject({
-      n: 'Duvet 0 °C', fn: 'sleep', sh: 'roll', gl: 'roll', fam: 'abri-et-couchage',
+      n: 'Duvet 0 °C', fn: 'sleep', sh: 'roll', gl: 'sack', fam: 'abri-et-couchage',
       g: 820, L: 6.5, zones: ['main'], vital: 1, state: 'stock', loc: 'Lille', price: 289,
     });
     // Objet non classé (function_id null) : fn 'other', box, famille « autre », volume 0,6 L.

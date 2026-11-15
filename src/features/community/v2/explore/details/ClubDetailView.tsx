@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import AppImage from '@/components/ui/AppImage';
+import { ClubG02Workspace } from '@/components/clubs/g02';
 import type { ClubCardVM, ClubJoinRequestVM, EventCardVM, MemberStatus } from '../../shared/types';
 import { formatCountFr, formatDateShort, formatDateStamp, formatRelativeTime, formatTime } from '../../shared/format';
 import { activityLabel } from '../../data/communityFeedMappers';
@@ -59,6 +60,7 @@ export function ClubDetailView({
 }: ClubDetailViewProps) {
   const detailState = useClubDetail(club, viewerId);
   const detail = detailState.detail;
+  const [workspaceOpen, setWorkspaceOpen] = React.useState(false);
   const canReview = detail?.viewerRole === 'admin' || detail?.viewerRole === 'moderator';
   const requests = useClubJoinRequests(club.id, canReview);
   const removeRequest = requests.remove;
@@ -315,6 +317,25 @@ export function ClubDetailView({
                 <p className="lkdv-cv2x-detail-text">{detail.rules}</p>
               </div>
             </>
+          ) : null}
+
+          <div className="lkdv-cv2x-detail-actions">
+            <button
+              type="button"
+              className="lkdv-cv2-pill lkdv-cv2-pill--secondary"
+              aria-expanded={workspaceOpen}
+              onClick={() => setWorkspaceOpen((prev) => !prev)}
+            >
+              {workspaceOpen
+                ? 'Masquer l’espace club complet'
+                : 'Sorties, salons, défis, classement & invitations'}
+            </button>
+          </div>
+
+          {workspaceOpen ? (
+            <div className="lkdv-cv2-card">
+              <ClubG02Workspace clubId={club.id} currentUserId={viewerId} />
+            </div>
           ) : null}
 
           <span className="lkdv-cv2-eyebrow">Dernières publications</span>

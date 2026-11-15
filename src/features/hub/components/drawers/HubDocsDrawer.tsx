@@ -23,38 +23,18 @@ import {
 } from 'lucide-react';
 import { DrawerShell, type DrawerSecondaryItem, type DrawerTab } from '@/components/ui/drawer';
 
-const RESERVATIONS = [
-  {
-    id: 'refuge',
-    label: 'Refuge',
-    title: 'Halte au Refuge des Écrins',
-    sub: 'Réservation 3 personnes · Demi-pension',
-    date: '14 Juillet 2026',
-    ref: 'REF-ECR-8841',
-    status: 'Confirmée & Réglée',
-    contact: '04 92 23 46 66',
-  },
-  {
-    id: 'train',
-    label: 'Train',
-    title: 'SNCF TGV + TER Chamonix',
-    sub: 'Aller-retour Paris ↔ Saint-Gervais',
-    date: '13-17 Juillet 2026',
-    ref: 'SNCF-YK912P',
-    status: 'E-billets enregistrés',
-    contact: 'Voie A · Wagon 12',
-  },
-  {
-    id: 'navette',
-    label: 'Navette',
-    title: 'Navette Haute Vallée',
-    sub: 'Liaison Chamonix ↔ Départ sentier',
-    date: '14 Juillet · 07:15',
-    ref: 'NAV-CHAM-04',
-    status: 'Pass collectif valide',
-    contact: 'Gare routière Chamonix',
-  },
-];
+interface ReservationItem {
+  id: string;
+  label: string;
+  title: string;
+  sub: string;
+  date: string;
+  ref: string;
+  status: string;
+  contact: string;
+}
+
+const RESERVATIONS: ReservationItem[] = [];
 
 const SAFETY_DOCS = [
   {
@@ -108,7 +88,7 @@ export function HubDocsDrawer() {
   const [safetyIndex, setSafetyIndex] = useState(0);
   const [insIndex, setInsIndex] = useState(0);
 
-  const curRes = RESERVATIONS[resIndex] ?? RESERVATIONS[0];
+  const curRes = RESERVATIONS[resIndex];
   const curSafe = SAFETY_DOCS[safetyIndex] ?? SAFETY_DOCS[0];
   const curIns = INSURANCES[insIndex] ?? INSURANCES[0];
 
@@ -118,6 +98,13 @@ export function HubDocsDrawer() {
       label: 'Réservations',
       icon: <Building2 className="w-4 h-4" aria-hidden="true" />,
       render: () => (
+        !curRes ? (
+          <div className="flex-1 flex flex-col justify-center items-center p-4 text-center">
+            <Building2 className="w-8 h-8 text-[var(--hub-text-secondary)] opacity-40 mb-2" />
+            <h4 className="text-sm font-bold camp-text-title">Aucune réservation</h4>
+            <p className="text-xs camp-text-sub mt-1">Vos réservations d’hébergements et de transports apparaîtront ici.</p>
+          </div>
+        ) : (
         <div className="flex-1 flex flex-col justify-between overflow-hidden p-1 space-y-2">
           <div className="p-3.5 rounded-2xl camp-card-white border border-[var(--hub-border-subtle)] space-y-1.5">
             <div className="flex items-center justify-between">
@@ -155,6 +142,7 @@ export function HubDocsDrawer() {
             <span>Télécharger le justificatif PDF</span>
           </button>
         </div>
+        )
       ),
     },
     {

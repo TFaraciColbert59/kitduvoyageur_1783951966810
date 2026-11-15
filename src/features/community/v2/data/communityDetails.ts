@@ -13,6 +13,7 @@
  */
 
 import type { AvatarVM, ClubJoinRequestVM, EventCardVM, GeoPoint } from '../shared/types';
+import { getValidatedRaceRegistrationUrl } from '@/features/clubs';
 import { daysBetweenIso, todayIso } from '../shared/format';
 import {
   getDataClient,
@@ -470,6 +471,8 @@ export interface EventDetailExtras {
    * un invité ; jamais l'identité du lecteur lui-même.
    */
   friends: AvatarVM[];
+  registrationUrl?: string | null;
+  eventFormat?: string | null;
 }
 
 interface ParticipantRow {
@@ -484,13 +487,20 @@ export async function fetchEventDetail(
   viewerId: string | null = null,
 ): Promise<{ data: EventDetailExtras | null; error: { code: string | null; message: string } | null }> {
   try {
-    const eventResult = await client
-      .from('events')
-      .select(
-        'description, safety_notes, safety_checklist, recurrence, location_geom, meeting_geom, current_participants, max_participants, waitlist_enabled',
-      )
-      .eq('id', eventId)
-      .maybeSingle();
+    const [eventResult, clubEventResult] = await Promise.all([
+      client
+        .from('events')
+        .select(
+          'description, safety_notes, safety_checklist, recurrence, location_geom, meeting_geom, current_participants, max_participants, waitlist_enabled',
+        )
+        .eq('id', eventId)
+        .maybeSingle(),
+      client
+        .from('club_events')
+        .select('registration_url, format')
+        .eq('id', eventId)
+        .maybeSingle(),
+    ]);
     if (eventResult.error || !eventResult.data) {
       return {
         data: null,
@@ -498,11 +508,12 @@ export async function fetchEventDetail(
       };
     }
     const event = eventResult.data as EventDetailSourceRow;
+    const clubEventRow = (clubEventResult.data ?? null) as { registration_url?: string | null; format?: string | null } | null;
     const participantsResult = await client
       .from('event_participants')
       .select('user_id, status')
       .eq('event_id', eventId)
-      .order('registered_at', { ascending: true })
+      .order('created_at', { ascending: true })
       .limit(50);
     const rows = Array.isArray(participantsResult.data)
       ? (participantsResult.data as ParticipantRow[])
@@ -538,6 +549,8 @@ export async function fetchEventDetail(
           .filter((row) => followedIds.has(row.user_id))
           .slice(0, 6)
           .map((row) => avatarFromProfile(row.user_id, profiles)),
+        registrationUrl: getValidatedRaceRegistrationUrl(clubEventRow?.registration_url ?? null),
+        eventFormat: clubEventRow?.format ?? null,
       },
       error: null,
     };

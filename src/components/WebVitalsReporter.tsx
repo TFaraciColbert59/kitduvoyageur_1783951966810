@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useReportWebVitals } from "next/web-vitals";
 import { createNavigationTracker } from "@/lib/perf/experienceMetrics";
 import { createClient } from "@/lib/supabase/client";
+import { newId } from "@/lib/uuid";
 
 interface VitalEvent {
   event: string;
@@ -50,7 +51,7 @@ export default function WebVitalsReporter() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "idempotency-key": crypto.randomUUID(),
+        "idempotency-key": newId(),
       },
       body: JSON.stringify({ events: batch }),
       keepalive: true,

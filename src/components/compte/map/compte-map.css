@@ -56,10 +56,12 @@
 .lkdv-map-state {
   position: absolute;
   left: 50%;
-  top: 118px;
-  transform: translateX(-50%);
+  top: 50%;
+  transform: translate(-50%, -50%);
   z-index: 5;
   width: min(300px, calc(100% - 32px));
+  max-height: calc(100% - 24px);
+  overflow-y: auto;
   padding: 16px;
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.72);
@@ -226,8 +228,7 @@
 .lkdv-map-attribution {
   position: absolute;
   right: 10px;
-  /* Au-dessus de la barre du bas (web ou native iOS, plus haute). */
-  bottom: max(72px, calc(var(--bottom-nav-height, 60px) + 12px));
+  top: 10px;
   z-index: 7;
   height: 22px;
   padding: 0 8px;
@@ -427,13 +428,15 @@
 }
 
 .phone.mapbig .lkdv-map-attribution {
-  bottom: 10px;
+  top: 10px;
+  bottom: auto;
 }
 
 .phone.mapbig .lkdv-map-state,
 .lkdv-map-root[data-map-empty='true'] .lkdv-map-state {
-  top: 50%;
-  transform: none;
+  top: calc(50% - 20px);
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 @media (prefers-reduced-motion: reduce) {

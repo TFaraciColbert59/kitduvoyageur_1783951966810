@@ -235,78 +235,9 @@ export const FREEDOM_CURATED_REELS: FreedomReelItem[] = [
 ];
 
 /**
- * Initial demo comments for curated reels, including real examples of GPX, Kit, Product, and Trail attachments!
+ * Freedom comments cache for reels.
  */
-export const DEMO_FREEDOM_COMMENTS: Record<string, FreedomComment[]> = {
-  'freedom-curated-1': [
-    {
-      id: 'comm-101',
-      reelId: 'freedom-curated-1',
-      author: {
-        id: 'u-antoine',
-        name: 'Antoine Delorme',
-        handle: 'antoine.delorme',
-        avatarUrl: '/assets/images/portrait-5.jpg',
-      },
-      content: 'Incroyable la lumière ! Tu avais quoi comme tente pour tenir à 3100m avec ce vent ?',
-      createdAt: new Date(Date.now() - 3600000 * 2).toISOString(),
-      likesCount: 14,
-      isLiked: false,
-      isOwner: false,
-    },
-    {
-      id: 'comm-102',
-      reelId: 'freedom-curated-1',
-      author: {
-        id: 'author-thomas-alps',
-        name: 'Thomas Rivoire',
-        handle: 'thomas.rivoire',
-        avatarUrl: '/assets/images/portrait-1.jpg',
-      },
-      content: 'Voici mon kit complet utilisé pour cette nuit, tout est pesé au gramme près :',
-      createdAt: new Date(Date.now() - 3600000 * 1.5).toISOString(),
-      likesCount: 29,
-      isLiked: true,
-      isOwner: true,
-      parentId: 'comm-101',
-      attachment: {
-        type: 'kit',
-        kit: {
-          kind: 'kit',
-          kit_id: 'kit-alpine-ultra',
-          kit_name: 'Pack Bivouac Glaciaire Ultra-léger',
-          items_count: 14,
-          total_weight_g: 4850,
-          image_url: '/assets/images/adventure-bivouac.jpg',
-        },
-      },
-    },
-    {
-      id: 'comm-103',
-      reelId: 'freedom-curated-1',
-      author: {
-        id: 'u-sophie',
-        name: 'Sophie Marceau',
-        handle: 'sophie.marceau',
-        avatarUrl: '/assets/images/portrait-6.jpg',
-      },
-      content: 'Pour ceux qui demandaient le tracé exact par l’arête sud, je vous le partage ici :',
-      createdAt: new Date(Date.now() - 3600000 * 1).toISOString(),
-      likesCount: 38,
-      isLiked: false,
-      isOwner: false,
-      attachment: {
-        type: 'gpx',
-        gpx: {
-          name: 'Arete_Sud_Aiguille_3100m.gpx',
-          distanceKm: 14.2,
-          elevationGainM: 1350,
-          pointsCount: 1420,
-        },
-      },
-    },
-  ],
-};
+export const DEMO_FREEDOM_COMMENTS: Record<string, FreedomComment[]> = {};
 
 /**
  * Fetch all Freedom reels from DB stories/posts, merged with curated outdoor videos.

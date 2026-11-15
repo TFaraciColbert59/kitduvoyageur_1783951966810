@@ -28,6 +28,9 @@ export const ACCESSIBILITY_UI_CSS = `
 }
 
 .lkdv-a11y-panel {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
   background: var(--lkv-surface-paper);
   border: 1px solid var(--lkv-border);
   border-radius: var(--lkv-radius-lg);
@@ -448,6 +451,8 @@ export const ACCESSIBILITY_UI_CSS = `
 
 .lkdv-a11y-screen {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  box-sizing: border-box;
   gap: 1.5rem;
   width: 100%;
   max-width: 56rem;

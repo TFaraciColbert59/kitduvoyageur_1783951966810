@@ -18,23 +18,50 @@ export function useKitFork({
 }: UseKitForkArgs) {
   const supabase = useMemo(() => createClient(), []);
   const [forkedItemIds, setForkedItemIds] = useState<Set<string>>(new Set());
+  const [carnetForked, setCarnetForked] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Load existing forks for this user & carnet
+  const persistLocal = useCallback(
+    (next: Set<string>) => {
+      if (typeof window === 'undefined' || !userId || !carnetId) return;
+      try {
+        window.localStorage.setItem(`lkdv-kit-forks:${userId}:${carnetId}`, JSON.stringify([...next]));
+      } catch {
+        // quota/private mode
+      }
+    },
+    [carnetId, userId]
+  );
+
+  // Load existing fork state for this user & source carnet (`kit_forks` stores `(id, user_id, source_carnet_id, created_at)`)
   useEffect(() => {
     if (!userId || !carnetId) return;
     let active = true;
+
+    try {
+      const cached = window.localStorage.getItem(`lkdv-kit-forks:${userId}:${carnetId}`);
+      if (cached) {
+        const parsed = JSON.parse(cached) as unknown;
+        if (Array.isArray(parsed)) {
+          setForkedItemIds(new Set(parsed.filter((v): v is string => typeof v === 'string')));
+        }
+      }
+    } catch {
+      // silent
+    }
 
     async function loadForks() {
       try {
         const { data, error } = await supabase
           .from('kit_forks')
-          .select('kit_item_id')
-          .eq('carnet_id', carnetId)
-          .eq('user_id', userId);
+          .select('id')
+          .eq('source_carnet_id', carnetId)
+          .eq('user_id', userId)
+          .limit(1)
+          .maybeSingle();
 
-        if (!error && data && active) {
-          setForkedItemIds(new Set(data.map((r) => r.kit_item_id)));
+        if (!error && active) {
+          setCarnetForked(Boolean(data));
         }
       } catch {
         // silent
@@ -47,8 +74,28 @@ export function useKitFork({
     };
   }, [carnetId, supabase, userId]);
 
+  const ensureCarnetForkRow = useCallback(async () => {
+    if (!userId || carnetForked) return;
+    const { data: existing, error: checkErr } = await supabase
+      .from('kit_forks')
+      .select('id')
+      .eq('source_carnet_id', carnetId)
+      .eq('user_id', userId)
+      .limit(1)
+      .maybeSingle();
+    if (checkErr) throw checkErr;
+    if (!existing) {
+      const { error } = await supabase.from('kit_forks').insert({
+        source_carnet_id: carnetId,
+        user_id: userId,
+      });
+      if (error) throw error;
+    }
+    setCarnetForked(true);
+  }, [carnetForked, carnetId, supabase, userId]);
+
   const forkItem = useCallback(
-    async (kitItemId: string, notes?: string): Promise<boolean> => {
+    async (kitItemId: string, _notes?: string): Promise<boolean> => {
       if (!userId) {
         onRequireAuth?.();
         return false;
@@ -59,29 +106,23 @@ export function useKitFork({
       }
 
       setLoading(true);
-      // Optimistic update
-      setForkedItemIds((prev) => new Set([...prev, kitItemId]));
+      const next = new Set(forkedItemIds);
+      next.add(kitItemId);
+      setForkedItemIds(next);
 
       try {
-        const { error } = await supabase.from('kit_forks').insert({
-          carnet_id: carnetId,
-          kit_item_id: kitItemId,
-          user_id: userId,
-          notes: notes ?? null,
-        });
-
-        if (error) throw error;
+        await ensureCarnetForkRow();
+        persistLocal(next);
 
         onIsland?.('Équipement ajouté à votre sac', () => {
           void undoFork(kitItemId);
         });
         return true;
       } catch {
-        // Rollback
         setForkedItemIds((prev) => {
-          const next = new Set(prev);
-          next.delete(kitItemId);
-          return next;
+          const rollback = new Set(prev);
+          rollback.delete(kitItemId);
+          return rollback;
         });
         onIsland?.('Impossible d’ajouter l’équipement');
         return false;
@@ -90,30 +131,35 @@ export function useKitFork({
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [carnetId, forkedItemIds, onIsland, onRequireAuth, supabase, userId]
+    [ensureCarnetForkRow, forkedItemIds, onIsland, onRequireAuth, persistLocal, userId]
   );
 
   const undoFork = useCallback(
     async (kitItemId: string) => {
       if (!userId) return;
+      let shouldDeleteRow = false;
       setForkedItemIds((prev) => {
         const next = new Set(prev);
         next.delete(kitItemId);
+        shouldDeleteRow = next.size === 0;
+        persistLocal(next);
         return next;
       });
 
       try {
-        await supabase
-          .from('kit_forks')
-          .delete()
-          .eq('carnet_id', carnetId)
-          .eq('kit_item_id', kitItemId)
-          .eq('user_id', userId);
+        if (shouldDeleteRow) {
+          await supabase
+            .from('kit_forks')
+            .delete()
+            .eq('source_carnet_id', carnetId)
+            .eq('user_id', userId);
+          setCarnetForked(false);
+        }
       } catch {
         // silent
       }
     },
-    [carnetId, supabase, userId]
+    [carnetId, persistLocal, supabase, userId]
   );
 
   const forkAllItems = useCallback(
@@ -129,30 +175,20 @@ export function useKitFork({
       }
 
       setLoading(true);
-      setForkedItemIds((prev) => new Set([...prev, ...toAdd]));
+      const next = new Set([...forkedItemIds, ...toAdd]);
+      setForkedItemIds(next);
 
       try {
-        const rows = toAdd.map((id) => ({
-          carnet_id: carnetId,
-          kit_item_id: id,
-          user_id: userId,
-        }));
+        await ensureCarnetForkRow();
+        persistLocal(next);
 
-        const { error } = await supabase.from('kit_forks').insert(rows);
-        if (error) throw error;
-
-        onIsland?.(
-          `${toAdd.length} équipement${toAdd.length > 1 ? 's' : ''} ajouté${toAdd.length > 1 ? 's' : ''} à votre sac`,
-          () => {
-            toAdd.forEach((id) => void undoFork(id));
-          }
-        );
+        onIsland?.(`${toAdd.length} équipement${toAdd.length > 1 ? 's' : ''} ajouté${toAdd.length > 1 ? 's' : ''} à votre sac`);
         return true;
       } catch {
         setForkedItemIds((prev) => {
-          const next = new Set(prev);
-          toAdd.forEach((id) => next.delete(id));
-          return next;
+          const rollback = new Set(prev);
+          toAdd.forEach((id) => rollback.delete(id));
+          return rollback;
         });
         onIsland?.('Échec de l’ajout du kit');
         return false;
@@ -160,7 +196,7 @@ export function useKitFork({
         setLoading(false);
       }
     },
-    [carnetId, forkedItemIds, onIsland, onRequireAuth, supabase, undoFork, userId]
+    [ensureCarnetForkRow, forkedItemIds, onIsland, onRequireAuth, persistLocal, userId]
   );
 
   return {

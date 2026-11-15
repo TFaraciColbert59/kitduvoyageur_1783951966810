@@ -20,6 +20,45 @@ export const ROUTE_SPORTS = ['marche', 'route', 'gravel', 'vtt', 'enduro'] as co
 
 export const MAX_ROUTE_WAYPOINTS = 12;
 
+export type SurfacePreference = 'balanced' | 'prefer_paved' | 'prefer_unpaved' | 'prefer_trails';
+
+export const SURFACE_PREFERENCES: readonly SurfacePreference[] = [
+  'balanced',
+  'prefer_paved',
+  'prefer_unpaved',
+  'prefer_trails',
+];
+
+export interface RouteRoutingOptions {
+  readonly ebike?: boolean;
+  readonly surfacePref?: SurfacePreference;
+  readonly avoidSteps?: boolean;
+  readonly avoidFerries?: boolean;
+}
+
+export function isSurfacePreference(value: unknown): value is SurfacePreference {
+  return typeof value === 'string' && (SURFACE_PREFERENCES as readonly string[]).includes(value);
+}
+
+export function ebikeSupportedForSport(sport: RouteSport): boolean {
+  return sport === 'route' || sport === 'gravel' || sport === 'vtt';
+}
+
+export function normalizeRoutingOptions(
+  sport: RouteSport,
+  options?: RouteRoutingOptions | null
+): RouteRoutingOptions {
+  if (!options) return {};
+  return {
+    ...(options.ebike && ebikeSupportedForSport(sport) ? { ebike: true } : {}),
+    ...(options.surfacePref && options.surfacePref !== 'balanced'
+      ? { surfacePref: options.surfacePref }
+      : {}),
+    ...(options.avoidSteps ? { avoidSteps: true } : {}),
+    ...(options.avoidFerries ? { avoidFerries: true } : {}),
+  };
+}
+
 export interface RouteSportProfile {
   readonly id: RouteSport;
   /** Mode historique dont ce profil se rapproche (cache, repli, compatibilité). */
@@ -89,8 +128,56 @@ export function isRouteSport(value: unknown): value is RouteSport {
   return typeof value === 'string' && (ROUTE_SPORTS as readonly string[]).includes(value);
 }
 
-export function routingProfileForSport(sport: RouteSport): RouteSportProfile {
-  return PROFILES[sport];
+export function routingCacheKeyForSport(
+  sport: RouteSport,
+  options?: RouteRoutingOptions | null
+): string {
+  const n = normalizeRoutingOptions(sport, options);
+  const parts: string[] = [sport];
+  if (n.ebike) parts.push('ebike');
+  if (n.surfacePref) parts.push(`surf=${n.surfacePref}`);
+  if (n.avoidSteps) parts.push('nosteps');
+  if (n.avoidFerries) parts.push('noferry');
+  return parts.join(':');
+}
+
+export function routingProfileForSport(
+  sport: RouteSport,
+  options?: RouteRoutingOptions | null
+): RouteSportProfile {
+  const base = PROFILES[sport];
+  const normalized = normalizeRoutingOptions(sport, options);
+  if (Object.keys(normalized).length === 0) return base;
+
+  const valhallaOptions: Record<string, unknown> = { ...(base.valhallaOptions ?? {}) };
+  if (normalized.ebike && base.valhallaCosting === 'bicycle') {
+    valhallaOptions.use_ebike = true;
+    valhallaOptions.cycling_speed = sport === 'vtt' ? 19 : sport === 'gravel' ? 23 : 27;
+  }
+  if (normalized.surfacePref === 'prefer_paved') {
+    valhallaOptions.use_roads = 0.95;
+    valhallaOptions.use_tracks = 0.1;
+    valhallaOptions.use_trails = 0.05;
+  } else if (normalized.surfacePref === 'prefer_unpaved') {
+    valhallaOptions.use_roads = 0.25;
+    valhallaOptions.use_tracks = 0.85;
+    valhallaOptions.use_trails = 0.5;
+  } else if (normalized.surfacePref === 'prefer_trails') {
+    valhallaOptions.use_roads = 0.1;
+    valhallaOptions.use_tracks = 0.7;
+    valhallaOptions.use_trails = 0.95;
+  }
+  if (normalized.avoidSteps) {
+    valhallaOptions.step_penalty = 900;
+  }
+  if (normalized.avoidFerries) {
+    valhallaOptions.use_ferry = 0;
+  }
+
+  return {
+    ...base,
+    valhallaOptions,
+  };
 }
 
 /**

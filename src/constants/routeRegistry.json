@@ -394,12 +394,6 @@
       "destination": "/explorer",
       "permanent": true,
       "note": "Racine /carte : la carte vivante est /carte-interactive."
-    },
-    {
-      "source": "/pays",
-      "destination": "/explorer",
-      "permanent": false,
-      "note": "Racine /pays remplacee par l'explorateur ; /pays/[code] reste servie."
     }
   ],
   "kept": [

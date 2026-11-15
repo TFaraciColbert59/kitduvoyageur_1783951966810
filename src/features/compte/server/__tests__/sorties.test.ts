@@ -69,7 +69,9 @@ describe('sorties — statut et visibilité', () => {
   it('respecte la contrainte réelle de visibilité', () => {
     expect(normalizeVisibility('collective_anonymized')).toBe('collective_anonymized');
     expect(normalizeVisibility('private')).toBe('private');
-    expect(normalizeVisibility('public')).toBe('private');
+    expect(normalizeVisibility('followers')).toBe('followers');
+    expect(normalizeVisibility('public')).toBe('public');
+    expect(normalizeVisibility('inconnue')).toBe('private');
     expect(normalizeVisibility(null)).toBe('private');
   });
 });

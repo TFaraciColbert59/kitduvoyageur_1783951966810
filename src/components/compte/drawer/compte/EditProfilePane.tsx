@@ -180,6 +180,9 @@ export function EditProfilePane() {
                 <span aria-hidden="true">{initials(form.name || 'LKDV')}</span>
               )}
             </div>
+            {form.avatarUrl ? (
+              <ActionPill className="lkdv-compte-edit-avatar-clear" label="Retirer la photo" icon={<X />} onClick={() => set('avatarUrl', '')} />
+            ) : null}
             <PhotoPill
               small
               label={form.avatarUrl ? 'Changer la photo' : 'Choisir une photo'}
@@ -210,9 +213,6 @@ export function EditProfilePane() {
             <b>{stats.percent}%</b>
           </div>
         </div>
-        {form.avatarUrl ? (
-          <ActionPill className="lkdv-compte-edit-avatar-clear" label="Retirer la photo" icon={<X />} onClick={() => set('avatarUrl', '')} />
-        ) : null}
       </section>
 
       {stats.missing.length > 0 ? (

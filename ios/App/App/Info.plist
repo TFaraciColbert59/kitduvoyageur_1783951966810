@@ -22,12 +22,25 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.lekitduvoyageur.app</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>lkdv</string>
+			</array>
+		</dict>
+	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>Le Kit du Voyageur utilise l’appareil photo pour ajouter une photo à une publication, une story, un carnet ou un kit. Aucune photo n’est publiée sans ton accord.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Le Kit du Voyageur utilise ta position pour situer le départ et le trajet de ton voyage. Elle n’est lue que lorsque l’app est ouverte, jamais en arrière-plan. Dans le Compas, elle est demandée ponctuellement, sans suivi, et arrondie à environ 1 km pour préparer le trajet. Elle n’est montrée à personne sans ton accord.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Le Kit du Voyageur utilise Face ID pour sécuriser l’accès à votre compte et confirmer vos actions sensibles.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Le Kit du Voyageur enregistre dans ta photothèque les photos que tu exportes ou partages depuis l’app.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
@@ -80,5 +93,12 @@
 	<true/>
 	<key>NSSupportsLiveActivitiesFrequentUpdates</key>
 	<true/>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
 </dict>
 </plist>

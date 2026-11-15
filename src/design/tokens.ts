@@ -41,7 +41,7 @@ export const colors = {
   muted: 'var(--lkv-text-muted)',
   textMain: 'var(--lkv-text-primary)',
   white: 'var(--lkv-text-inverted)',
-  black: 'black',
+  black: 'var(--lkv-text-primary)',
 } as const;
 
 export const typography = {

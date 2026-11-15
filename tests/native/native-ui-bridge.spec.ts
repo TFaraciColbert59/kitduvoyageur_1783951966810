@@ -40,6 +40,7 @@ import {
   presentNativeChoices,
   hasNativePhotos,
   pickNativePhotos,
+  supportsNativeUI,
   supportsNativeIOSUI,
   syncNativeUIRoute,
 } from '@/lib/native/ui';
@@ -66,7 +67,7 @@ afterEach(() => {
 });
 
 describe('LKDV native UI bridge', () => {
-  it('only advertises iOS Capacitor support outside /compas', () => {
+  it('only advertises iOS Capacitor support outside /compas for legacy helper', () => {
     expect(supportsNativeIOSUI()).toBe(true);
     expect(supportsNativeIOSUI('/compas')).toBe(false);
     expect(supportsNativeIOSUI('/compas/preparer')).toBe(false);
@@ -75,6 +76,18 @@ describe('LKDV native UI bridge', () => {
     bridge.platform = 'ios';
     bridge.native = false;
     expect(supportsNativeIOSUI()).toBe(false);
+  });
+
+  it('advertises cross-platform supportsNativeUI on iOS and Android', () => {
+    bridge.platform = 'ios';
+    bridge.native = true;
+    expect(supportsNativeUI()).toBe(true);
+    bridge.platform = 'android';
+    expect(supportsNativeUI()).toBe(true);
+    bridge.platform = 'web';
+    expect(supportsNativeUI()).toBe(false);
+    bridge.native = false;
+    expect(supportsNativeUI()).toBe(false);
   });
 
   it('lets the Next.js router remain authoritative, while telling native to close on Compas', async () => {
@@ -102,14 +115,23 @@ describe('LKDV native UI bridge', () => {
     })).toBeUndefined();
   });
 
-  it('never invokes SwiftUI while Compas is the current page', async () => {
-    vi.stubGlobal('window', { location: { pathname: '/compas' } });
+  it('never invokes native UI on web platform', async () => {
+    bridge.platform = 'web';
     expect(await presentNativeActions({
       title: 'Publication', actions: [{ id: 'save', title: 'Enregistrer' }],
     })).toBeUndefined();
     expect(await shareNativeURL('https://lekitduvoyageur.fr/communaute')).toBe(false);
     expect(bridge.presentActions).not.toHaveBeenCalled();
     expect(bridge.share).not.toHaveBeenCalled();
+  });
+
+  it('invokes native UI on Android platform', async () => {
+    bridge.platform = 'android';
+    const selection = await presentNativeActions({
+      title: 'Publication', actions: [{ id: 'save', title: 'Enregistrer' }],
+    });
+    expect(selection).toBe('save');
+    expect(bridge.presentActions).toHaveBeenCalledTimes(1);
   });
 
   it('refuses malformed actions and unsafe share URLs', async () => {

@@ -14,7 +14,7 @@ export function LeaderboardsIndexScreen({ segments }: LeaderboardsIndexScreenPro
   return (
     <div className="lkb-index">
       <header className="lkb-index-hero">
-        <p className="lkb-eyebrow">S4.05 · S4.06 · S4.08</p>
+        <p className="lkb-eyebrow">Classements · Filtres · Légendes</p>
         <h1 className="lkb-title">Classements de segments</h1>
         <p className="lkb-intro">
           Les meilleurs passages vérifiés, les titres KOM, QOM et CR, et les Local Legends d’un

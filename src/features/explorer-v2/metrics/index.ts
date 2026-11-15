@@ -5,3 +5,6 @@
  */
 export * from './activityMetrics';
 export * from './zoneConfiguration';
+export * from './powerCurve';
+export * from './telemetryAnalysis';
+

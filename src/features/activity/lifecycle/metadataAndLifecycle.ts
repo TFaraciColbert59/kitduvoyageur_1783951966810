@@ -4,7 +4,7 @@
  * (K5.04, S1.17, S1.18, S1.20, S1.24, S2.01, S2.16).
  */
 
-import { normalizeVisibility, parsePositions } from '@/features/compte/server/sorties';
+import { normalizeVisibility, parsePositions } from '@/features/compte/domain/outingGeometry';
 import {
   SPORT_FAMILIES,
   getSportVariant,

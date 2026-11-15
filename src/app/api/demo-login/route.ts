@@ -14,14 +14,22 @@ async function demoSession(): Promise<
 > {
   // Même interrupteur que la route sœur `auth/demo` : sans lui, un simple GET
   // connectait n'importe qui au compte de démonstration (login CSRF).
-  if (process.env.DEMO_AUTO_LOGIN !== 'true') {
+  const isDev = process.env.NODE_ENV === 'development';
+  if (process.env.DEMO_AUTO_LOGIN !== 'true' && !isDev) {
     return { ok: false, error: 'Compte de démonstration désactivé.', status: 403 };
   }
-  const email = process.env.DEMO_LOGIN_EMAIL?.trim();
-  const password = process.env.DEMO_LOGIN_PASSWORD;
+  const rawEmail = process.env.DEMO_LOGIN_EMAIL?.trim();
+  const email =
+    rawEmail && rawEmail !== '[SENSITIVE]' && rawEmail !== 'tony.tony@tony.tony'
+      ? rawEmail
+      : isDev
+        ? 'demo@lkdv.app'
+        : undefined;
+  const rawPassword = process.env.DEMO_LOGIN_PASSWORD;
+  const password = rawPassword && rawPassword !== '[SENSITIVE]' ? rawPassword : '';
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!email || !password || !url || !anonKey) {
+  if (!email || !url || !anonKey) {
     return { ok: false, error: 'Compte de démonstration indisponible.', status: 503 };
   }
 
@@ -36,8 +44,10 @@ async function demoSession(): Promise<
     },
   });
 
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
-  if (!error) return { ok: true, pending };
+  if (password) {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (!error) return { ok: true, pending };
+  }
 
   // Secours : si le mot de passe enregistré ne correspond plus (réinitialisé
   // côté Supabase), on ouvre la session du compte démo par un lien de

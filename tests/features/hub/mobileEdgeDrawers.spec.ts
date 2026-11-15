@@ -28,12 +28,12 @@ describe('Hub mobile — trois tiroirs cohérents', () => {
     expect(liquidCss).toContain('.hub-edge-panel__body--cockpit');
   });
 
-  it('force la palette blanche et translucide dans le tiroir Points', () => {
+  it('force la palette verte et translucide dans le tiroir Points', () => {
     expect(liquidCss).toMatch(
-      /\.hub-progression-drawer \.glass,[\s\S]*?--lkv-text-secondary: rgba\(255, 255, 255, 0\.72\)/
+      /\.hub-progression-drawer \.glass,[\s\S]*?--lkv-text-secondary: #56665D/
     );
     expect(liquidCss).toMatch(
-      /\.hub-progression-drawer \.glass,[\s\S]*?--lkv-primary: #ffffff/
+      /\.hub-progression-drawer \.glass,[\s\S]*?--lkv-primary: #17402C/
     );
   });
 

@@ -49,7 +49,7 @@ export default async function KitStudioPage({
     case 'debug':
       return <KitStudioClient mode="debug" />;
     case 'login':
-      redirect(`/connexion?next=${encodeURIComponent(state.next)}`);
+      return <StudioEmptyState unauthenticated />;
     case 'empty':
       return <StudioEmptyState />;
     case 'unavailable':

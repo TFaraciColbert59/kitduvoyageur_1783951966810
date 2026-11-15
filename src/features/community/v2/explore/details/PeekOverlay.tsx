@@ -52,6 +52,7 @@ export interface PeekOverlayProps {
 export function PeekOverlay({ peek, onClose }: PeekOverlayProps) {
   const firstActionRef = useRef<HTMLButtonElement | null>(null);
   const boxRef = useRef<HTMLDivElement | null>(null);
+  const swipeStartRef = useRef<{ pointerId: number; startY: number } | null>(null);
 
   useEffect(() => {
     if (!peek) return;
@@ -79,17 +80,26 @@ export function PeekOverlay({ peek, onClose }: PeekOverlayProps) {
   const stamp = peek.kind === 'sortie' ? formatDateStamp(peek.dateIso) : null;
 
   return (
-    <div className="lkdv-cv2-peek">
+    <div className="lkdv-cv2-peek" role="dialog" aria-modal="true" aria-label={`Aperçu : ${peek.title}`}>
       <div className="lkdv-cv2x-peek-scrim" aria-hidden="true" onPointerDown={onClose} />
-      {/* Le dialogue est la **carte** (310 px, maquette `.ctx .box`), pas le voile
-          pleine feuille : sa géométrie est celle que le banc de fidélité mesure. */}
       <div
         className="lkdv-cv2-peek-box lkdv-cv2x-peek-box"
-        role="dialog"
-        aria-modal="true"
-        aria-label={`Aperçu : ${peek.title}`}
         ref={boxRef}
         onKeyDown={onKeyDown}
+        onPointerDown={(e) => {
+          if (e.button > 0) return;
+          swipeStartRef.current = { pointerId: e.pointerId, startY: e.clientY };
+        }}
+        onPointerUp={(e) => {
+          const sw = swipeStartRef.current;
+          swipeStartRef.current = null;
+          if (sw && sw.pointerId === e.pointerId && e.clientY - sw.startY > 48) {
+            onClose();
+          }
+        }}
+        onPointerCancel={() => {
+          swipeStartRef.current = null;
+        }}
       >
         <div className="lkdv-cv2x-peek-preview">
           <span className="lkdv-cv2x-peek-media" data-kind={peek.kind} aria-hidden="true">

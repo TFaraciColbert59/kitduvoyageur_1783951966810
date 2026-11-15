@@ -387,6 +387,13 @@ export interface LifecycleActivityRecord {
   /** État temporaire d'édition rapide après synchronisation (S1.18). */
   quickEditState: QuickEditAfterSyncState;
 
+  /**
+   * Indicateurs hérités de correction distance/D+ et de lissage GPS (S1.23, K5.10),
+   * lus depuis l'enregistrement stocké quand ils y figurent.
+   */
+  correction?: { distanceMethod?: string | null; elevationMethod?: string | null } | null;
+  gpsSpikes?: unknown[] | null;
+
   /** Historique des révisions et opérations appliquées. */
   revisions: LifecycleRevision[];
   /** Dernier événement de recalcul de projection émis. */

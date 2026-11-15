@@ -29,7 +29,13 @@ function trophyIcon(category: TrophyBadge['category']): string {
   }
 }
 
-export function TrophiesView({ showcase }: { showcase: TrophyShowcase }) {
+export function TrophiesView({
+  showcase,
+  onOpenChallenges,
+}: {
+  showcase: TrophyShowcase;
+  onOpenChallenges?: () => void;
+}) {
   const sorted = showcase.trophies
     .slice()
     .sort((a, b) => Date.parse(b.awardedAt) - Date.parse(a.awardedAt));
@@ -64,7 +70,8 @@ export function TrophiesView({ showcase }: { showcase: TrophyShowcase }) {
             title="Aucun trophée pour l’instant"
             description="Terminez un défi, prenez une couronne Local Legend ou conquérez un sommet : la vitrine se remplit par la preuve, jamais par le hasard."
             actionLabel="Voir les défis"
-            actionHref="/rankings?tab=challenges"
+            actionHref={onOpenChallenges ? undefined : '/hub?panel=points'}
+            onAction={onOpenChallenges}
           />
         </RankingsCard>
       ) : (
@@ -81,7 +88,7 @@ export function TrophiesView({ showcase }: { showcase: TrophyShowcase }) {
                   className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border ${
                     trophy.isRevoked
                       ? 'border-[color:var(--glass-rim)] bg-[color:var(--g2-bg)] text-[color:var(--glass-label-tertiary)]'
-                      : 'border-[color:var(--lkv-secondary)]/40 bg-[color:var(--lkv-secondary)]/15 text-[color:var(--lkv-secondary-subtle)]'
+                      : 'border-[color:var(--lkv-secondary)]/40 bg-[color:var(--lkv-secondary)]/15 text-[color:var(--lkv-on-secondary-subtle)]'
                   }`}
                 >
                   <Icon name={trophyIcon(trophy.category)} size={22} />
@@ -120,7 +127,7 @@ export function TrophiesView({ showcase }: { showcase: TrophyShowcase }) {
   );
 }
 
-export function TrophiesPanel() {
+export function TrophiesPanel({ onOpenChallenges }: { onOpenChallenges?: () => void } = {}) {
   const { status, data, error, reload } = useRankingsApi<TrophiesPayload>(
     '/api/rankings/trophies'
   );
@@ -137,7 +144,9 @@ export function TrophiesPanel() {
           <ErrorPanel message={error || 'Trophées indisponibles.'} onRetry={reload} />
         </RankingsCard>
       )}
-      {status !== 'loading' && data && <TrophiesView showcase={data.showcase} />}
+      {status !== 'loading' && data && (
+        <TrophiesView showcase={data.showcase} onOpenChallenges={onOpenChallenges} />
+      )}
     </div>
   );
 }

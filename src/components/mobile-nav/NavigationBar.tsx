@@ -53,7 +53,7 @@ type NativePhase = 'checking' | 'active' | 'fallback';
 export default function NavigationBar() {
   const pathname = usePathname();
   const router = useRouter();
-  const iosNative = NATIVE_TABBAR_ENABLED && Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios';
+  const iosNative = NATIVE_TABBAR_ENABLED && Capacitor.isNativePlatform() && (Capacitor.getPlatform() === 'ios' || Capacitor.getPlatform() === 'android');
   const eligible = iosNative && shouldShowNativeGlass(pathname);
   const selectedId = eligible ? getNativeGlassDestination(pathname) : null;
   const [phase, setPhase] = useState<NativePhase>('checking');

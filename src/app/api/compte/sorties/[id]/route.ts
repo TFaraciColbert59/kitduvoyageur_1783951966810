@@ -11,17 +11,27 @@ const Patch = z
   .object({
     title: z.string().trim().max(120).optional(),
     notes: z.string().max(2000).optional(),
-    visibility: z.enum(['private', 'collective_anonymized']).optional(),
+    visibility: z.enum(['private', 'followers', 'public', 'collective_anonymized']).optional(),
+    rpe: z.number().int().min(1).max(10).nullable().optional(),
   })
   .strict();
 
-export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireUser();
   if (!auth.ok) return auth.response;
   const parsed = Id.safeParse((await params).id);
   if (!parsed.success) return fail('not_found', 'Sortie introuvable.');
+  const { searchParams } = new URL(request.url);
+  const hasShareParam = searchParams.has('share') || searchParams.has('shareToken');
+  const rawShareToken = searchParams.get('share') ?? searchParams.get('shareToken');
+  const shareToken = rawShareToken?.trim() || null;
+  if (hasShareParam && !shareToken) {
+    return fail('not_found', 'Sortie introuvable.');
+  }
   try {
-    const detail = await loadOutingDetail(auth.supabase, auth.user.id, parsed.data);
+    const detail = await loadOutingDetail(auth.supabase, auth.user.id, parsed.data, {
+      shareToken,
+    });
     if (!detail) return fail('not_found', 'Sortie introuvable.');
     return ok(detail);
   } catch {

@@ -203,6 +203,9 @@ export type RecoveryReason =
 
 export type Soreness = 'none' | 'light' | 'high';
 
+/** Alias historique : `SorenessLevel` = `Soreness` (conservé pour l'audit #78). */
+export type SorenessLevel = Soreness;
+
 export interface RecoveryExercise {
   id: string;
   title: string;

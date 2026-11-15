@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { createServiceClient } from '@/lib/api/serviceClient';
 import type { TraceProjectionError } from '../domain/traceProjection';
 import {
   SHARED_SUMMARY_METRICS,
@@ -13,6 +14,13 @@ import {
 } from '../domain/metricVisibility';
 import { readOutingMetricPolicy } from './outingShareMetrics';
 import {
+  isBlockedBetween,
+  loadActivePrivacyZonesForProjection,
+  readOutingTracePrivacy,
+  resolveOutingShareToken,
+  revokeAllOutingShareLinks,
+} from './privacyZones';
+import {
   isFollowerTraceVisibility,
   projectTraceSampleSegments,
   resolveTraceMasks,
@@ -26,6 +34,24 @@ import {
 } from './weather';
 import { TRACE_IMPORT_LIMITS } from '@/features/hiking/import/model';
 import { TRACE_IMPORT_MAX_PAYLOAD_SAMPLES } from '@/features/hiking/import/series';
+import { isActivityShareActive, parseActivityShareMeta } from '@/features/community/g01/activityShare';
+import { revokeActivityShare } from '@/features/community/g01/activityShareService';
+import type { LifecycleActivityRecord } from '@/features/activity/lifecycle';
+import {
+  normalizeVisibility,
+  parsePositionSegments,
+  parsePositions,
+  type OutingPoint,
+  type OutingVisibility,
+} from '../domain/outingGeometry';
+
+export {
+  normalizeVisibility,
+  parsePositionSegments,
+  parsePositions,
+  type OutingPoint,
+  type OutingVisibility,
+};
 
 /**
  * Drawer Sortie — lecture et écriture des données réelles.
@@ -37,14 +63,6 @@ import { TRACE_IMPORT_MAX_PAYLOAD_SAMPLES } from '@/features/hiking/import/serie
  */
 
 export type OutingStatus = 'planned' | 'ongoing' | 'done';
-export type OutingVisibility = 'private' | 'collective_anonymized';
-
-export interface OutingPoint {
-  lat: number;
-  lng: number;
-  elevationM: number | null;
-  timestamp: string | null;
-}
 
 export type OutingImportSource = 'fit' | 'tcx' | 'gpx';
 
@@ -228,6 +246,8 @@ export interface OutingDetail {
   verified: boolean;
   coverUrl: string | null;
   notes: string;
+  /** Ressenti RPE déclaré (1..10) par le propriétaire, ou `null`/`undefined`. */
+  rpe?: number | null;
   weather: OutingWeather | null;
   photos: OutingPhoto[];
   /** `hike_session_photos` illisible : ne pas présenter la sortie sans photo. */
@@ -287,6 +307,18 @@ export interface OutingDetail {
    * Les coordonnées ne sont jamais dupliquées dans ce tableau.
    */
   samples: OutingImportSample[] | null;
+  /** Lot A02 : temps écoulé total (y compris pauses) en secondes (S2.01). */
+  elapsedS?: number | null;
+  /** Lot A02 : tags d'activité normalisés (S1.20). */
+  tags?: string[];
+  /** Lot A02 : révision monotone du cycle de vie. */
+  revision?: number | null;
+  /** Lot A02 : invite d'édition rapide post-sync active (S1.18). */
+  quickEditPending?: boolean;
+  /** Lot A02 : correction distance/D+ appliquée (S1.23). */
+  correctedMetrics?: boolean;
+  /** Lot A02 : nombre de pics GPS lissés (K5.10). */
+  gpsSpikesRemoved?: number;
 }
 
 type TraceImportRow = {
@@ -368,7 +400,24 @@ type SessionRow = {
   kit_id: string | null;
   weather: unknown;
   notes: string | null;
+  rpe?: number | null;
 };
+
+function parseValidRpe(raw: unknown): number | null {
+  if (typeof raw !== 'number' || !Number.isInteger(raw)) return null;
+  if (raw < 1 || raw > 10) return null;
+  return raw;
+}
+
+function readStoredOutingRpe(session: Pick<SessionRow, 'rpe' | 'weather'>): number | null {
+  const direct = parseValidRpe(session.rpe);
+  if (direct !== null) return direct;
+  if (session.weather && typeof session.weather === 'object') {
+    const fallback = (session.weather as Record<string, unknown>)._rpe;
+    return parseValidRpe(fallback);
+  }
+  return null;
+}
 
 type ProfileRow = {
   id: string;
@@ -749,97 +798,12 @@ async function readImportSamples(
   }
 }
 
-export function normalizeVisibility(value: unknown): OutingVisibility {
-  // Contrainte réelle : `private` ou `collective_anonymized` uniquement.
-  // On ne prétend jamais qu'une sortie est publique si la base ne le permet pas.
-  return value === 'collective_anonymized' ? 'collective_anonymized' : 'private';
-}
-
 export function computeStatus(row: Pick<SessionRow, 'started_at' | 'ended_at'>, now = Date.now()): OutingStatus {
   const start = row.started_at ? Date.parse(row.started_at) : NaN;
   const end = row.ended_at ? Date.parse(row.ended_at) : NaN;
   if (Number.isFinite(start) && start > now) return 'planned';
   if (Number.isFinite(end) && end > now) return 'ongoing';
   return 'done';
-}
-
-function pointFromCoordinate(coordinate: unknown): OutingPoint | null {
-  if (!Array.isArray(coordinate) || coordinate.length < 2) return null;
-  const lng = numericOrNull(coordinate[0]);
-  const lat = numericOrNull(coordinate[1]);
-  if (lat === null || lng === null) return null;
-  if (Math.abs(lat) > 90 || Math.abs(lng) > 180) return null;
-  return {
-    lat,
-    lng,
-    elevationM: coordinate.length > 2 ? numericOrNull(coordinate[2]) : null,
-    timestamp: null,
-  };
-}
-
-function geojsonSegments(value: unknown): OutingPoint[][] {
-  if (!value || typeof value !== 'object') return [];
-  const geometry = value as {
-    type?: unknown;
-    coordinates?: unknown;
-    geometry?: unknown;
-  };
-  if (geometry.type === 'Feature') return geojsonSegments(geometry.geometry);
-
-  if (geometry.type === 'LineString' && Array.isArray(geometry.coordinates)) {
-    const points = geometry.coordinates
-      .map(pointFromCoordinate)
-      .filter((point): point is OutingPoint => point !== null);
-    return points.length > 0 ? [points] : [];
-  }
-
-  if (geometry.type === 'MultiLineString' && Array.isArray(geometry.coordinates)) {
-    return geometry.coordinates
-      .map((line) => {
-        if (!Array.isArray(line)) return [];
-        return line
-          .map(pointFromCoordinate)
-          .filter((point): point is OutingPoint => point !== null);
-      })
-      .filter((segment) => segment.length > 0);
-  }
-
-  return [];
-}
-
-/**
- * Deux formats coexistent en base : `positions_timed` (échantillons horodatés
- * `{lat,lng,timestamp,elevationM}`) et `positions_geojson` (LineString ou
- * MultiLineString). Les morceaux d'un MultiLineString restent séparés : une
- * frontière n'est jamais recollée.
- */
-export function parsePositionSegments(timed: unknown, geojson: unknown): OutingPoint[][] {
-  const timedPoints: OutingPoint[] = [];
-
-  if (Array.isArray(timed)) {
-    for (const sample of timed) {
-      if (!sample || typeof sample !== 'object') continue;
-      const row = sample as Record<string, unknown>;
-      const lat = numericOrNull(row.lat ?? row.latitude);
-      const lng = numericOrNull(row.lng ?? row.lon ?? row.longitude);
-      if (lat === null || lng === null) continue;
-      if (Math.abs(lat) > 90 || Math.abs(lng) > 180) continue;
-      timedPoints.push({
-        lat,
-        lng,
-        elevationM: numericOrNull(row.elevationM ?? row.altitude ?? row.ele),
-        timestamp: typeof row.timestamp === 'string' ? row.timestamp : null,
-      });
-    }
-  }
-
-  if (timedPoints.length > 0) return [timedPoints];
-  return geojsonSegments(geojson);
-}
-
-/** Points aplatis, pour les consommateurs qui ne dessinent pas de morceaux. */
-export function parsePositions(timed: unknown, geojson: unknown): OutingPoint[] {
-  return parsePositionSegments(timed, geojson).flat();
 }
 
 function displayName(profile: ProfileRow | undefined, fallbackId: string) {
@@ -890,6 +854,29 @@ async function signedPhotoUrl(
   return data.signedUrl;
 }
 
+async function fetchSessionRow(client: SupabaseClient, outingId: string) {
+  let res = await client
+    .from('hike_sessions')
+    .select(
+      'id,user_id,route_id,title,started_at,ended_at,distance_km,activity_session_id,duration_seconds,elevation_gain_m,max_altitude_m,positions_timed,positions_geojson,visibility,kit_id,weather,notes,rpe'
+    )
+    .eq('id', outingId)
+    .maybeSingle();
+
+  if (res.error?.code === '42703') {
+    // Environnement antérieur au lien capture→résumé : on relit sans la
+    // colonne, le sport retombe alors sur « rando ».
+    res = await client
+      .from('hike_sessions')
+      .select(
+        'id,user_id,route_id,title,started_at,ended_at,distance_km,duration_seconds,elevation_gain_m,max_altitude_m,positions_timed,positions_geojson,visibility,kit_id,weather,notes'
+      )
+      .eq('id', outingId)
+      .maybeSingle();
+  }
+  return res;
+}
+
 export async function loadOutingDetail(
   supabase: SupabaseClient,
   userId: string,
@@ -903,26 +890,33 @@ export async function loadOutingDetail(
      * surcharge explicite (tests, futur aperçu signé), jamais d'entrée brute.
      */
     metricPolicy?: unknown;
+    shareToken?: string | null;
   }
 ): Promise<OutingDetail | null> {
-  let sessionResult = await supabase
-    .from('hike_sessions')
-    .select(
-      'id,user_id,route_id,title,started_at,ended_at,distance_km,activity_session_id,duration_seconds,elevation_gain_m,max_altitude_m,positions_timed,positions_geojson,visibility,kit_id,weather,notes'
-    )
-    .eq('id', outingId)
-    .maybeSingle();
+  const hasRequestedShareToken =
+    typeof options?.shareToken === 'string' && options.shareToken.trim().length > 0;
+  const resolvedShareToken =
+    hasRequestedShareToken && options?.shareToken
+      ? await resolveOutingShareToken(options.shareToken)
+      : null;
 
-  if (sessionResult.error?.code === '42703') {
-    // Environnement antérieur au lien capture→résumé : on relit sans la
-    // colonne, le sport retombe alors sur « rando ».
-    sessionResult = await supabase
-      .from('hike_sessions')
-      .select(
-        'id,user_id,route_id,title,started_at,ended_at,distance_km,duration_seconds,elevation_gain_m,max_altitude_m,positions_timed,positions_geojson,visibility,kit_id,weather,notes'
-      )
-      .eq('id', outingId)
-      .maybeSingle();
+  let readClient: SupabaseClient = supabase;
+  let sessionResult = await fetchSessionRow(supabase, outingId);
+
+  if (
+    !sessionResult.data &&
+    resolvedShareToken &&
+    resolvedShareToken.sessionId === outingId &&
+    !(await isBlockedBetween(supabase, userId, resolvedShareToken.ownerId))
+  ) {
+    const service = createServiceClient();
+    if (service) {
+      const serviceResult = await fetchSessionRow(service, outingId);
+      if (serviceResult.data) {
+        sessionResult = serviceResult;
+        readClient = service;
+      }
+    }
   }
 
   const { data: sessionData, error: sessionError } = sessionResult;
@@ -932,12 +926,64 @@ export async function loadOutingDetail(
   // collaboration élargit un jour `canEdit`.
   const isProvenanceOwner = session.user_id === userId;
   const canEdit = isProvenanceOwner;
+  const isOwner = canEdit;
+  const rawSessionVisibility = typeof session.visibility === 'string' ? session.visibility : null;
+  const blocked = !isOwner ? await isBlockedBetween(supabase, userId, session.user_id) : false;
 
-  // Le sport vient de la séance multi-sport liée. L'historique sans lien est
-  // une randonnée : on ne devine pas un autre sport.
+  const validShareLink = Boolean(
+    !isOwner &&
+      !blocked &&
+      hasRequestedShareToken &&
+      resolvedShareToken &&
+      resolvedShareToken.sessionId === session.id &&
+      resolvedShareToken.ownerId === session.user_id &&
+      rawSessionVisibility !== 'private'
+  );
+  if (!isOwner && hasRequestedShareToken && !validShareLink) {
+    return null;
+  }
+
+  // Lot A02 — Lecture optionnelle de la surcouche versionnée (cycle de vie,
+  // recadrage, corrections, corbeille 30 j). Tolérante aux environnements sans table.
+  type LifecycleOverlay = {
+    lifecycle_status?: string | null;
+    revision?: number | null;
+    record?: Partial<LifecycleActivityRecord> | null;
+  };
+  let lifecycleOverlay: LifecycleOverlay | null = null;
+  try {
+    const candidateIds = [session.id, session.activity_session_id].filter(
+      (id): id is string => typeof id === 'string' && id.length > 0,
+    );
+    if (candidateIds.length > 0 && isProvenanceOwner) {
+      const { data: overlayData, error: overlayError } = await supabase
+        .from('activity_lifecycle_records')
+        .select('lifecycle_status,revision,record')
+        .eq('user_id', session.user_id)
+        .in('activity_id', candidateIds)
+        .limit(1)
+        .maybeSingle();
+      if (!overlayError && overlayData) {
+        lifecycleOverlay = overlayData as unknown as LifecycleOverlay;
+      }
+    }
+  } catch {
+    lifecycleOverlay = null;
+  }
+  if (lifecycleOverlay?.lifecycle_status === 'deleted') {
+    return null;
+  }
+  const overlayRecord =
+    lifecycleOverlay?.record && typeof lifecycleOverlay.record === 'object'
+      ? lifecycleOverlay.record
+      : null;
+
+  // Le sport vient de la séance multi-sport liée ou de la surcouche A02.
   let sport = 'rando';
-  if (session.activity_session_id) {
-    const { data: activity } = await supabase
+  if (typeof overlayRecord?.sport === 'string' && overlayRecord.sport.trim()) {
+    sport = overlayRecord.sport.trim().toLowerCase();
+  } else if (session.activity_session_id) {
+    const { data: activity } = await readClient
       .from('activity_sessions')
       .select('sport')
       .eq('id', session.activity_session_id)
@@ -959,28 +1005,28 @@ export async function loadOutingDetail(
     samples,
   ] = await Promise.all([
     session.route_id
-      ? supabase.from('hiking_routes').select('id,name,region').eq('id', session.route_id).maybeSingle()
+      ? readClient.from('hiking_routes').select('id,name,region').eq('id', session.route_id).maybeSingle()
       : Promise.resolve({ data: null, error: null }),
-    supabase
+    readClient
       .from('hike_session_photos')
       .select('id,storage_path,caption,position')
       .eq('session_id', session.id)
       .order('position', { ascending: true }),
-    supabase
+    readClient
       .from('hike_session_participants')
       .select('user_id,role')
       .eq('session_id', session.id)
       .order('created_at', { ascending: true }),
-    supabase
+    readClient
       .from('hike_session_gear')
       .select('id,item_name,weight_g,kit_id,gear_item_id')
       .eq('session_id', session.id)
       .order('created_at', { ascending: true }),
-    supabase
+    readClient
       .from('hike_session_kudos')
       .select('user_id')
       .eq('session_id', session.id),
-    supabase
+    readClient
       .from('hike_session_comments')
       .select('id,user_id,body,created_at')
       .eq('session_id', session.id)
@@ -1012,7 +1058,7 @@ export async function loadOutingDetail(
   }>;
   const photos: OutingPhoto[] = [];
   for (const row of photoRows) {
-    const url = await signedPhotoUrl(supabase, row.storage_path);
+    const url = await signedPhotoUrl(readClient, row.storage_path);
     if (!url) continue;
     photos.push({
       id: row.id,
@@ -1048,7 +1094,7 @@ export async function loadOutingDetail(
   ].filter(Boolean);
 
   const profilesRes = profileIds.length
-    ? await supabase.from('public_profiles').select(PROFILE_COLUMNS).in('id', profileIds)
+    ? await readClient.from('public_profiles').select(PROFILE_COLUMNS).in('id', profileIds)
     : { data: [] as ProfileRow[], error: null };
   const profiles = new Map<string, ProfileRow>(
     ((profilesRes.data ?? []) as ProfileRow[]).map((row) => [row.id, row])
@@ -1081,7 +1127,7 @@ export async function loadOutingDetail(
   }
 
   const kitRes = session.kit_id
-    ? await supabase
+    ? await readClient
         .from('materiel_kits')
         .select('id,name,total_weight_g')
         .eq('id', session.kit_id)
@@ -1089,7 +1135,7 @@ export async function loadOutingDetail(
     : { data: null, error: null };
   const kitRow = kitRes.data as { id: string; name: string | null; total_weight_g: number | null } | null;
   const kitItemsRes = session.kit_id
-    ? await supabase
+    ? await readClient
         .from('materiel_kit_items')
         .select('name,weight_g')
         .eq('kit_id', session.kit_id)
@@ -1217,25 +1263,44 @@ export async function loadOutingDetail(
     };
   });
 
-  const rawSegments = parsePositionSegments(session.positions_timed, session.positions_geojson);
+  const baseRawSegments = parsePositionSegments(session.positions_timed, session.positions_geojson);
+  const overlayPoints = Array.isArray(overlayRecord?.points)
+    ? overlayRecord.points
+        .filter((pt) => Boolean(pt) && typeof pt.lat === 'number' && typeof pt.lng === 'number')
+        .map((pt) => ({
+          lat: pt.lat,
+          lng: pt.lng,
+          elevationM: pt.elevationM ?? null,
+          timestamp: pt.timestamp ?? null,
+        }))
+    : [];
+  const rawSegments = overlayPoints.length >= 2 ? [overlayPoints] : baseRawSegments;
   const rawPoints = rawSegments.flat();
-  const rawVisibility = typeof session.visibility === 'string' ? session.visibility : null;
-  const visibility = normalizeVisibility(rawVisibility);
-  const isOwner = canEdit;
   const isParticipant = participantRows.some((row) => row.user_id === userId);
+
+  const rawVisibility = blocked
+    ? 'private'
+    : typeof overlayRecord?.visibility === 'string'
+      ? overlayRecord.visibility
+      : rawSessionVisibility;
+  const visibility = normalizeVisibility(rawVisibility);
   /*
    * Le rôle de lecture suit une autorisation réelle : propriétaire, participant
    * inscrit, ou abonné vérifié pour une visibilité `friends`/`followers`.
-   * Un visiteur non abonné reste `visitor` même si la ligne prétend `friends`.
+   * Un utilisateur bloqué reste toujours `visitor` avec `rawVisibility = 'private'`.
    */
   const viewer: TraceViewer = isOwner
     ? 'owner'
-    : isParticipant
-      ? 'participant'
-      : isFollowerTraceVisibility(rawVisibility) &&
-          (await viewerFollowsOwner(supabase, userId, session.user_id))
-        ? 'follower'
-        : 'visitor';
+    : blocked
+      ? 'visitor'
+      : isParticipant
+        ? 'participant'
+        : isFollowerTraceVisibility(rawVisibility) &&
+            (await viewerFollowsOwner(supabase, userId, session.user_id))
+          ? 'follower'
+          : validShareLink && rawVisibility === 'followers'
+            ? 'follower'
+            : 'visitor';
   const hasFullAccess = viewer === 'owner' || viewer === 'participant';
   /*
    * S6.15 — politique de métriques résolue avant toute projection. Le rôle
@@ -1271,9 +1336,20 @@ export async function loadOutingDetail(
         ? parseMetricVisibility(metricPolicyRead.visibility)
         : SHARED_SUMMARY_METRICS
     : metricVisibility;
+  const [privacyZones, tracePrivacy] = hasFullAccess
+    ? [[], null]
+    : await Promise.all([
+        loadActivePrivacyZonesForProjection(supabase, session.user_id),
+        readOutingTracePrivacy(supabase, session.id),
+      ]);
   const projection = projectTraceSampleSegments(
     rawSegments,
-    resolveTraceMasks({ viewer, visibility: rawVisibility })
+    resolveTraceMasks({
+      viewer,
+      visibility: rawVisibility,
+      privacyZones,
+      tracePrivacy,
+    })
   );
   /*
    * Les métadonnées de trace sont retirées quand une métrique masquée
@@ -1331,25 +1407,50 @@ export async function loadOutingDetail(
    * la trace ne vaut pas partage du carnet intime.
    */
   const notes =
-    hasFullAccess || rawVisibility === 'collective_anonymized' ? text(session.notes) : '';
+    hasFullAccess || rawVisibility === 'collective_anonymized'
+      ? typeof overlayRecord?.notes === 'string'
+        ? overlayRecord.notes
+        : text(session.notes)
+      : '';
 
   /*
    * Valeurs sources calculées avant masquage : la politique décide ensuite de
    * ce qui sort. L'allure et le temps en mouvement ne sont jamais recalculés
    * côté client, sinon une métrique masquée pourrait être redérivée.
    */
-  const rawDistanceKm = numericOrNull(session.distance_km);
-  const rawDurationS = session.duration_seconds;
+  const overlayStats = overlayRecord?.stats;
+  const rawDistanceKm =
+    typeof overlayStats?.distanceM === 'number' && Number.isFinite(overlayStats.distanceM)
+      ? Math.round((overlayStats.distanceM / 1000) * 100) / 100
+      : numericOrNull(session.distance_km);
+  const rawDurationS =
+    typeof overlayStats?.movingTimeS === 'number' && Number.isFinite(overlayStats.movingTimeS)
+      ? overlayStats.movingTimeS
+      : session.duration_seconds;
+  const rawElapsedS =
+    typeof overlayStats?.elapsedTimeS === 'number' && Number.isFinite(overlayStats.elapsedTimeS)
+      ? overlayStats.elapsedTimeS
+      : rawDurationS;
+  const rawElevationGainM =
+    typeof overlayStats?.elevationGainM === 'number' && Number.isFinite(overlayStats.elevationGainM)
+      ? overlayStats.elevationGainM
+      : numericOrNull(session.elevation_gain_m);
   const rawMaxAltitudeM =
-    session.max_altitude_m ?? observedMaxAltitudeM(rawPoints);
+    typeof overlayStats?.maxAltitudeM === 'number' && Number.isFinite(overlayStats.maxAltitudeM)
+      ? overlayStats.maxAltitudeM
+      : session.max_altitude_m ?? observedMaxAltitudeM(rawPoints);
+  const rawMovingTimeS =
+    typeof overlayStats?.movingTimeS === 'number' && Number.isFinite(overlayStats.movingTimeS)
+      ? overlayStats.movingTimeS
+      : movingTimeSeconds(rawPoints);
   const projectedMetrics = projectOutingMetrics(
     {
       distanceKm: rawDistanceKm,
-      elevationGainM: numericOrNull(session.elevation_gain_m),
+      elevationGainM: rawElevationGainM,
       maxAltitudeM: rawMaxAltitudeM,
       durationS: rawDurationS,
       paceMinPerKm: averagePaceMinPerKm(rawDurationS, rawDistanceKm),
-      movingTimeS: movingTimeSeconds(rawPoints),
+      movingTimeS: rawMovingTimeS,
       /* Aucune source FC/puissance/cadence/calories dans le schéma actuel. */
       heartRateBpm: null,
       powerW: null,
@@ -1361,6 +1462,7 @@ export async function loadOutingDetail(
 
   const dateLabel = session.started_at ? session.started_at.slice(0, 10) : null;
   const title =
+    (typeof overlayRecord?.title === 'string' ? overlayRecord.title.trim() : '') ||
     session.title?.trim() ||
     route?.name?.trim() ||
     (dateLabel ? `Sortie du ${dateLabel}` : 'Sortie');
@@ -1393,6 +1495,7 @@ export async function loadOutingDetail(
     verified: traceSegments.some((segment) => segment.length >= 2),
     coverUrl: photos[0]?.url ?? null,
     notes,
+    rpe: isOwner ? readStoredOutingRpe(session) : null,
     weather,
     photos,
     photosUnavailable,
@@ -1420,6 +1523,28 @@ export async function loadOutingDetail(
     // et les tours. Un participant reçoit `null`, jamais les mesures cardio.
     summary: provenance ? summary : null,
     samples: provenance ? samples : null,
+    elapsedS: metricVisibility.duration ? rawElapsedS : null,
+    tags: Array.isArray(overlayRecord?.tags)
+      ? overlayRecord.tags.filter((t) => typeof t === 'string')
+      : [],
+    revision:
+      typeof lifecycleOverlay?.revision === 'number'
+        ? lifecycleOverlay.revision
+        : typeof overlayRecord?.revision === 'number'
+          ? overlayRecord.revision
+          : null,
+    quickEditPending:
+      isOwner &&
+      Boolean(overlayRecord?.quickEditState?.visible) &&
+      overlayRecord?.quickEditState?.status === 'pending',
+    correctedMetrics: Boolean(
+      overlayRecord?.correction &&
+        (overlayRecord.correction.distanceMethod !== 'gps_measured' ||
+          overlayRecord.correction.elevationMethod !== 'gps_measured'),
+    ),
+    gpsSpikesRemoved: Array.isArray(overlayRecord?.gpsSpikes)
+      ? overlayRecord.gpsSpikes.length
+      : 0,
   };
 }
 
@@ -1443,7 +1568,7 @@ export async function updateOuting(
   supabase: SupabaseClient,
   userId: string,
   outingId: string,
-  patch: { title?: string; notes?: string; visibility?: OutingVisibility }
+  patch: { title?: string; notes?: string; visibility?: OutingVisibility; rpe?: number | null }
 ): Promise<void> {
   const owner = await assertOwner(supabase, userId, outingId);
   if (!owner) throw new Error('not_found');
@@ -1451,13 +1576,58 @@ export async function updateOuting(
   if (patch.title !== undefined) update.title = patch.title.slice(0, 120);
   if (patch.notes !== undefined) update.notes = patch.notes.slice(0, 2000);
   if (patch.visibility !== undefined) update.visibility = patch.visibility;
+  if (patch.rpe !== undefined) {
+    update.rpe = patch.rpe === null ? null : parseValidRpe(patch.rpe);
+  }
   if (Object.keys(update).length === 0) return;
   const { error } = await supabase
     .from('hike_sessions')
     .update(update)
     .eq('id', outingId)
     .eq('user_id', userId);
+  if (error?.code === '42703' && patch.rpe !== undefined) {
+    // Schéma sans colonne `rpe` dédiée : on persiste dans `weather._rpe` sans écraser la météo existante.
+    const fallbackUpdate = { ...update };
+    delete fallbackUpdate.rpe;
+    const baseWeather =
+      owner.weather && typeof owner.weather === 'object' && !Array.isArray(owner.weather)
+        ? { ...(owner.weather as Record<string, unknown>) }
+        : {};
+    if (patch.rpe === null) {
+      delete baseWeather._rpe;
+    } else {
+      const validRpe = parseValidRpe(patch.rpe);
+      if (validRpe !== null) baseWeather._rpe = validRpe;
+    }
+    fallbackUpdate.weather = Object.keys(baseWeather).length > 0 ? baseWeather : null;
+    const retry = await supabase
+      .from('hike_sessions')
+      .update(fallbackUpdate)
+      .eq('id', outingId)
+      .eq('user_id', userId);
+    if (retry.error) throw retry.error;
+    return;
+  }
   if (error) throw error;
+
+  // C-PRIV : repasser une sortie en privé révoque immédiatement les partages actifs du fil.
+  if (patch.visibility === 'private') {
+    const { data: shareRows } = await supabase
+      .from('community_posts')
+      .select('id,creation_meta')
+      .eq('author_id', userId)
+      .contains('creation_meta', { schema: 'lkdv.activity.share.v1', session_id: outingId })
+      .limit(10);
+    for (const row of (shareRows ?? []) as Array<{ id: string; creation_meta?: unknown }>) {
+      const meta = parseActivityShareMeta(row.creation_meta);
+      if (meta && isActivityShareActive(meta)) {
+        await revokeActivityShare(supabase, row.id, meta);
+      }
+    }
+    await revokeAllOutingShareLinks(supabase, userId, outingId).catch(() => undefined);
+    const { compensateActivityProgression } = await import('@/features/progression/server/awardProducer');
+    await compensateActivityProgression(userId, 'hike_session', outingId, 'visibility_private');
+  }
 }
 
 export async function deleteOuting(
@@ -1473,6 +1643,10 @@ export async function deleteOuting(
     .eq('id', outingId)
     .eq('user_id', userId);
   if (error) throw error;
+
+  // C-REWARD : une sortie supprimée émet une écriture compensatoire unique dans le ledger.
+  const { compensateActivityProgression } = await import('@/features/progression/server/awardProducer');
+  await compensateActivityProgression(userId, 'hike_session', outingId, 'deleted');
 }
 
 export async function toggleKudos(
@@ -1768,4 +1942,144 @@ export function buildGpx(detail: OutingDetail): string {
   <metadata><name>${escapeXml(detail.title)}</name></metadata>
   <trk><name>${escapeXml(detail.title)}</name>${track}</trk>
 </gpx>`;
+}
+
+const EARTH_RADIUS_TCX_M = 6_371_000;
+
+function tcxStepMeters(a: OutingPoint, b: OutingPoint): number {
+  const dLat = ((b.lat - a.lat) * Math.PI) / 180;
+  const dLng = ((b.lng - a.lng) * Math.PI) / 180;
+  const lat1 = (a.lat * Math.PI) / 180;
+  const lat2 = (b.lat * Math.PI) / 180;
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  return 2 * EARTH_RADIUS_TCX_M * Math.asin(Math.min(1, Math.sqrt(Math.min(1, h))));
+}
+
+function tcxSportAttr(sport: string): 'Running' | 'Biking' | 'Other' {
+  if (sport === 'course' || sport === 'trail') return 'Running';
+  if (sport === 'velo') return 'Biking';
+  return 'Other';
+}
+
+/**
+ * S1.25 / S1.26 — Génère un TCX (TrainingCenterDatabase v2) à partir de la trace
+ * visible projetée (`tracePrivacy` + `metricVisibility`), sans fuite pour les tiers.
+ *
+ * Les mesures capteurs réellement conservées (`samples`, origine `device`) sont
+ * émises quand la politique les autorise — `<HeartRateBpm>`, `<Cadence>`,
+ * `<Watts>` — et omises quand elles sont masquées. Aucune valeur n'est inventée :
+ * sans mesure conservée, aucun élément capteur n'est écrit.
+ */
+export function buildTcx(detail: OutingDetail): string {
+  const rawSegments = outingTraceSegments(detail);
+  const segments = detail.metricVisibility
+    ? projectTraceMetrics(rawSegments, detail.metricVisibility).segments
+    : rawSegments;
+
+  const visibility = detail.metricVisibility;
+  const heartRateAllowed = !visibility || visibility.heartRate === true;
+  const cadenceAllowed = !visibility || visibility.cadence === true;
+  const powerAllowed = !visibility || visibility.power === true;
+
+  // Jointure points ↔ mesures conservées : par horodatage quand il existe,
+  // sinon par index quand les deux tableaux s'alignent.
+  const samples = Array.isArray(detail.samples) ? detail.samples : [];
+  const sampleByTime = new Map<string, (typeof samples)[number]>();
+  for (const sample of samples) {
+    if (typeof sample.recordedAt === 'string' && sample.recordedAt.length > 0) {
+      if (!sampleByTime.has(sample.recordedAt)) sampleByTime.set(sample.recordedAt, sample);
+    }
+  }
+  const flatPoints = segments.flat();
+  const indexAligned =
+    samples.length > 0 && samples.length === flatPoints.length
+    && flatPoints.every((point, i) => {
+      const recordedAt = samples[i]?.recordedAt;
+      return recordedAt == null || recordedAt === point.timestamp;
+    });
+  let flatIndex = -1;
+  const sampleForPoint = (point: OutingPoint): (typeof samples)[number] | null => {
+    flatIndex += 1;
+    if (point.timestamp && sampleByTime.has(point.timestamp)) {
+      return sampleByTime.get(point.timestamp) ?? null;
+    }
+    if (indexAligned) return samples[flatIndex] ?? null;
+    return null;
+  };
+
+  const firstTimestamp =
+    segments.flat().find((p) => typeof p.timestamp === 'string' && p.timestamp.length > 0)?.timestamp ??
+    detail.startedAt ??
+    '1970-01-01T00:00:00.000Z';
+
+  let cumulativeDistanceM = 0;
+  let prevPoint: OutingPoint | null = null;
+  const tracksXml = segments
+    .map((segment) => {
+      const tps = segment
+        .map((point) => {
+          if (prevPoint) cumulativeDistanceM += tcxStepMeters(prevPoint, point);
+          prevPoint = point;
+          const sample = sampleForPoint(point);
+          const heartRate =
+            heartRateAllowed && typeof sample?.heartRateBpm === 'number' && Number.isFinite(sample.heartRateBpm)
+              ? Math.round(sample.heartRateBpm)
+              : null;
+          const cadenceRaw =
+            cadenceAllowed
+              ? (typeof sample?.cadenceRpm === 'number' && Number.isFinite(sample.cadenceRpm)
+                ? Math.round(sample.cadenceRpm)
+                : typeof sample?.cadenceSpm === 'number' && Number.isFinite(sample.cadenceSpm)
+                  ? Math.round(sample.cadenceSpm / 2)
+                  : null)
+              : null;
+          const power =
+            powerAllowed && typeof sample?.powerW === 'number' && Number.isFinite(sample.powerW)
+              ? Math.round(sample.powerW)
+              : null;
+          const timeTag = point.timestamp
+            ? `<Time>${escapeXml(point.timestamp)}</Time>`
+            : '';
+          const altTag =
+            point.elevationM !== null ? `<AltitudeMeters>${point.elevationM}</AltitudeMeters>` : '';
+          const hrTag = heartRate !== null ? `<HeartRateBpm>${heartRate}</HeartRateBpm>` : '';
+          const cadTag = cadenceRaw !== null ? `<Cadence>${cadenceRaw}</Cadence>` : '';
+          const wattsTag =
+            power !== null
+              ? `<Extensions><LX xmlns="http://www.garmin.com/xmlschemas/ActivityExtension/v2"><Watts>${power}</Watts></LX></Extensions>`
+              : '';
+          return `<Trackpoint>${timeTag}<Position><LatitudeDegrees>${point.lat}</LatitudeDegrees><LongitudeDegrees>${point.lng}</LongitudeDegrees></Position>${altTag}<DistanceMeters>${Math.round(cumulativeDistanceM * 10) / 10}</DistanceMeters>${hrTag}${cadTag}${wattsTag}</Trackpoint>`;
+        })
+        .join('');
+      return `<Track>${tps}</Track>`;
+    })
+    .join('');
+
+  const totalTime =
+    typeof detail.durationS === 'number' && Number.isFinite(detail.durationS)
+      ? Math.max(0, Math.round(detail.durationS))
+      : 0;
+  const totalDistanceM =
+    typeof detail.km === 'number' && Number.isFinite(detail.km)
+      ? Math.round(detail.km * 1000)
+      : Math.round(cumulativeDistanceM);
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<TrainingCenterDatabase xmlns="http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2">
+  <Activities>
+    <Activity Sport="${tcxSportAttr(detail.sport ?? 'rando')}">
+      <Id>${escapeXml(firstTimestamp)}</Id>
+      <Lap StartTime="${escapeXml(firstTimestamp)}">
+        <TotalTimeSeconds>${totalTime}</TotalTimeSeconds>
+        <DistanceMeters>${totalDistanceM}</DistanceMeters>
+        <Intensity>Active</Intensity>
+        <TriggerMethod>Manual</TriggerMethod>
+        ${tracksXml}
+      </Lap>
+      <Notes>${escapeXml(detail.title)}</Notes>
+    </Activity>
+  </Activities>
+</TrainingCenterDatabase>`;
 }

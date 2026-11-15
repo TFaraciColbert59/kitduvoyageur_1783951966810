@@ -5,7 +5,8 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { cn } from '@/lib/utils';
 import Icon from './Icon';
 
-export type SheetDetent = 'auto' | 'medium' | 'large';
+export type SheetSnap = 'collapsed' | 'half' | 'expanded';
+export type SheetDetent = 'auto' | 'medium' | 'large' | SheetSnap;
 
 export interface SheetProps {
   open: boolean;
@@ -15,6 +16,8 @@ export interface SheetProps {
   children: React.ReactNode;
   footer?: React.ReactNode;
   detent?: SheetDetent;
+  snap?: SheetSnap;
+  onSnapChange?: (snap: SheetSnap) => void;
   dismissible?: boolean;
   hideTitle?: boolean;
   /** Fermeture par glissement de la poignée (translation Y, seuil 25 %). */
@@ -25,10 +28,13 @@ export interface SheetProps {
   contentClassName?: string;
 }
 
-const DETENT: Record<SheetDetent, string> = {
+const DETENT: Record<string, string> = {
   auto: '',
   medium: 'h-[55dvh]',
   large: 'h-[90dvh]',
+  collapsed: 'h-[18dvh]',
+  half: 'h-[55dvh]',
+  expanded: 'h-[90dvh]',
 };
 
 const prefersReducedMotion = () =>
@@ -50,12 +56,15 @@ export function Sheet({
   children,
   footer,
   detent = 'auto',
+  snap,
+  onSnapChange,
   dismissible = true,
   hideTitle = false,
   dragToDismiss = false,
   panelClassName,
   contentClassName,
 }: SheetProps) {
+  const effectiveDetent = snap ?? detent;
   const panelRef = React.useRef<HTMLDivElement>(null);
   const dragStart = React.useRef<number | null>(null);
   const [dragY, setDragY] = React.useState(0);
@@ -110,7 +119,7 @@ export function Sheet({
           className={cn(
             'fixed inset-x-0 bottom-0 z-[var(--z-sheet)] flex flex-col focus:outline-none',
             'data-[state=closed]:[animation:lkv-sheet-down_var(--motion-control-duration)_var(--motion-ease-accelerate)_both] motion-reduce:[animation:none]',
-            DETENT[detent]
+            DETENT[effectiveDetent]
           )}
         >
           <div

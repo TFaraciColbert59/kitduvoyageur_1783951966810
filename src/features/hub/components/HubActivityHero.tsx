@@ -4,7 +4,7 @@ import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
 import Link from 'next/link';
 import AppImage from '@/components/ui/AppImage';
-import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
+import { Button } from '@/components/ui/Button';
 import { motion, useReducedMotion } from 'framer-motion';
 import { EASE_GLASS } from '@/lib/animations/constants';
 
@@ -147,15 +147,15 @@ export function HubActivityHero({
                 <span className="truncate max-w-[140px]">Assistant IA</span>
               </Link>
             )}
-            <GlassCapsuleBtn
-              variant="secondary"
+            <Button
+              variant="glass"
               size="sm"
               onClick={handleShare}
               icon={copied ? <Icon name="check" size={15} /> : <Icon name="share2" size={15} />}
               className="!bg-white/15 !border-white/30 !text-white"
             >
               {copied ? 'Copié !' : 'Partager'}
-            </GlassCapsuleBtn>
+            </Button>
           </div>
         </div>
       </div>

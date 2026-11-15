@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { Check, ChevronDown } from 'lucide-react';
 import { getProviderAvailability } from '@/features/workouts/domain/availability';
 import {
   formatDurationS,
@@ -13,6 +13,15 @@ import {
   runGoals,
   workoutLevels,
 } from '@/features/workouts/domain/validation';
+import {
+  countPlanCompletion,
+  planSessionKey,
+  readPlanProgress,
+  togglePlanEnrollment,
+  togglePlanSessionCompleted,
+  type PlanProgressState,
+} from '@/features/workouts/client/planProgress';
+import type { PrepFocusConfig } from '@/features/compte/progression/prepFocus';
 import type {
   StructuredSession,
   TrainingPlan,
@@ -31,6 +40,8 @@ export interface PlanBrowserProps {
   onLevelChange: (level: WorkoutLevel) => void;
   onStart: (session: StructuredSession) => void;
   activeSessionId: string | null;
+  storage?: Storage | null;
+  prepFocus?: PrepFocusConfig | null;
 }
 
 export function PlanBrowser({
@@ -42,15 +53,26 @@ export function PlanBrowser({
   onLevelChange,
   onStart,
   activeSessionId,
+  storage,
+  prepFocus,
 }: PlanBrowserProps) {
   const [openWeek, setOpenWeek] = useState<number>(1);
+  const [progress, setProgress] = useState<PlanProgressState>(() =>
+    readPlanProgress(storage)
+  );
 
   useEffect(() => {
     setOpenWeek(1);
   }, [plan.id]);
 
+  useEffect(() => {
+    setProgress(readPlanProgress(storage));
+  }, [storage, plan.id]);
+
   const goals = sport === 'course' ? runGoals() : bikeGoals();
   const partner = getProviderAvailability(sport === 'course' ? 'runna' : 'cts');
+  const enrolled = progress.enrolledPlanIds.includes(plan.id);
+  const completion = countPlanCompletion(plan, progress);
 
   return (
     <div className="lkdv-workout-browser">
@@ -87,12 +109,40 @@ export function PlanBrowser({
           <span className="lkdv-workout-badge">Plan LKDV</span>
           <span>{plan.weeks.length} semaines</span>
           <span>{plan.sessionsPerWeek} séances/sem.</span>
+          {completion.total > 0 ? (
+            <span data-testid="plan-completion-summary">
+              {completion.completed}/{completion.total} faites ({completion.percent} %)
+            </span>
+          ) : null}
         </div>
         <h3>{plan.title}</h3>
         <p>{plan.summary}</p>
-        <p className="lkdv-workout-plan-total">
-          Volume total indicatif : {formatDurationS(plan.totalDurationS)}
-        </p>
+        {prepFocus && (prepFocus.discipline === 'all' || prepFocus.discipline === sport) ? (
+          <p className="lkdv-workout-state-detail" data-testid="plan-prep-focus">
+            Objectif actif : <strong>{prepFocus.title || 'Préparation'}</strong>
+            {prepFocus.targetDate ? ` (${prepFocus.targetDate})` : ''}
+          </p>
+        ) : null}
+        <div className="lkdv-workout-plan-actions">
+          <p className="lkdv-workout-plan-total">
+            Volume total indicatif : {formatDurationS(plan.totalDurationS)}
+          </p>
+          <button
+            type="button"
+            className={enrolled ? 'lkdv-workout-primary' : 'lkdv-workout-secondary'}
+            aria-pressed={enrolled}
+            onClick={() => setProgress(togglePlanEnrollment(plan.id, storage))}
+          >
+            {enrolled ? (
+              <>
+                <Check size={15} aria-hidden="true" />
+                Plan suivi
+              </>
+            ) : (
+              'Suivre ce plan'
+            )}
+          </button>
+        </div>
       </section>
 
       <div className="lkdv-workout-weeks">
@@ -125,15 +175,34 @@ export function PlanBrowser({
               </button>
               {open ? (
                 <div className="lkdv-workout-week-body" id={panelId}>
-                  {week.sessions.map((session) => (
-                    <SessionCard
-                      key={session.id}
-                      session={session}
-                      onStart={onStart}
-                      activeSessionId={activeSessionId}
-                      badge={week.label}
-                    />
-                  ))}
+                  {week.sessions.map((session) => {
+                    const sessionKey = planSessionKey(plan.id, session.id);
+                    const done = sessionKey in progress.completedSessionKeys;
+                    return (
+                      <div key={session.id} className="lkdv-workout-week-session">
+                        <SessionCard
+                          session={session}
+                          onStart={onStart}
+                          activeSessionId={activeSessionId}
+                          badge={week.label}
+                        />
+                        <button
+                          type="button"
+                          className={
+                            done ? 'lkdv-workout-chip is-active' : 'lkdv-workout-chip'
+                          }
+                          aria-pressed={done}
+                          onClick={() =>
+                            setProgress(
+                              togglePlanSessionCompleted(plan.id, session.id, storage)
+                            )
+                          }
+                        >
+                          {done ? 'Séance faite ✓' : 'Marquer faite'}
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               ) : null}
             </section>

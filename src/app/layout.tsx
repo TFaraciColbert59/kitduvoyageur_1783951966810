@@ -2,6 +2,7 @@ import React, { Suspense } from 'react';
 import type { Metadata, Viewport } from 'next';
 import { cookies, headers } from 'next/headers';
 import localFont from 'next/font/local';
+import '@/styles/tokens.generated.css';
 import '@/styles/tokens.css';
 import '@/styles/tailwind.css';
 import '@/styles/liquid-glass.css';
@@ -31,6 +32,8 @@ import MobileNavWrapper from '@/components/mobile-nav/MobileNavWrapper';
 import CookieConsentBanner from '@/components/CookieConsentBanner';
 import ConfirmHost from '@/components/ui/ConfirmHost';
 import PromptHost from '@/components/ui/PromptHost';
+import ToastHost from '@/components/ui/ToastHost';
+import DynamicIslandHost from '@/components/ui/DynamicIslandHost';
 import RocketConsentScripts from '@/components/RocketConsentScripts';
 import TravelpayoutsDrive from '@/components/TravelpayoutsDrive';
 import MigrationEffect from '@/lib/storage/MigrationEffect';
@@ -99,12 +102,9 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: 'cover',
   interactiveWidget: 'resizes-visual',
-  // Direction P5 §6 : plus de verrouillage clair — les deux schémas sont déclarés.
-  colorScheme: 'light dark',
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#0B1510' },
-    { media: '(prefers-color-scheme: dark)', color: '#08110C' },
-  ],
+  // 100% Mode Clair Liquid Glass
+  colorScheme: 'light',
+  themeColor: '#FBFAF6',
 };
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
@@ -213,21 +213,18 @@ export default async function RootLayout({
   return (
     <html
       lang={locale}
+      data-theme="light"
       data-liquid-ios27=""
       suppressHydrationWarning
       className={`${manrope.variable} ${ibmPlexMono.variable} ${inter.variable}`}
     >
       <head>
-        {/* Thème honnête : respect de prefers-color-scheme, surcharge
-            localStorage si l'utilisateur a choisi explicitement (ThemeToggle),
-            application de la classe .dark AVANT la peinture (anti-flash).
-            Le Compas (/compas) suit la maquette finale, claire uniquement :
-            thème clair forcé sur cette route (voir CompasLightTheme). */}
+        {/* 100% Mode Clair Liquid Glass — Enforce light mode strictly */}
         <script
           id="lkdv-theme-init"
           suppressHydrationWarning
           dangerouslySetInnerHTML={{
-            __html: `(function(){var r=document.documentElement;var t=null;try{t=localStorage.getItem('lkdv_theme');}catch(e){}var isDark=t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;if(/^\\/compas(\\/|$)/.test(location.pathname))isDark=false;if(isDark){r.classList.add('dark');r.setAttribute('data-theme','dark');r.style.colorScheme='dark';}else{r.classList.remove('dark');r.setAttribute('data-theme','light');r.style.colorScheme='light';}try{var g=localStorage.getItem('lkdv_glass_intensity');if(g)r.style.setProperty('--glass-intensity',g);}catch(e){}})();`,
+            __html: `(function(){var r=document.documentElement;r.classList.remove('dark');r.setAttribute('data-theme', 'light');r.style.colorScheme='light';try{var g=localStorage.getItem('lkdv_glass_intensity');if(g)r.style.setProperty('--glass-intensity',g);}catch(e){}})();`,
           }}
         />
         {/* DNS prefetch for external domains */}
@@ -264,27 +261,9 @@ export default async function RootLayout({
         <TravelpayoutsDrive />
 
         {process.env.NODE_ENV !== 'production' && (
-          // Dev : un service worker résiduel d'un run production peut servir du
-          // HTML périmé pendant les redémarrages du serveur (hydratation cassée,
-          // ancienne UI). On le désinscrit et on purge ses caches automatiquement.
-          <script
-            id="service-worker-dev-cleanup"
-            suppressHydrationWarning
-            dangerouslySetInnerHTML={{
-              __html: `
-                if ('serviceWorker' in navigator) {
-                  navigator.serviceWorker.getRegistrations().then(function(registrations) {
-                    registrations.forEach(function(registration) { registration.unregister(); });
-                  }).catch(function() {});
-                  if (window.caches && caches.keys) {
-                    caches.keys().then(function(keys) {
-                      keys.forEach(function(key) { caches.delete(key); });
-                    }).catch(function() {});
-                  }
-                }
-              `,
-            }}
-          />
+          // Dev : script externe same-origin (autorisé par CSP) pour purger tout
+          // ancien Service Worker `/sw.js` et `lkdv-static-*` avant les chunks.
+          <script id="service-worker-dev-cleanup" src="/dev-sw-cleanup.js" />
         )}
       </head>
       <body
@@ -327,6 +306,8 @@ export default async function RootLayout({
                       <CookieConsentBanner />
                       <ConfirmHost />
                       <PromptHost />
+                      <ToastHost />
+                      <DynamicIslandHost />
                       <ConditionalCursor />
                       {/* Migration Mon Matériel — exécutée UNE SEULE FOIS au montage */}
                       <MigrationEffect />

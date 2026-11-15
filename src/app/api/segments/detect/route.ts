@@ -8,6 +8,7 @@ import {
   serverError,
 } from '@/lib/segments/http';
 import { detectEffortsBodySchema } from '@/lib/segments/schemas';
+import { hydrateActivityWithPrivacyZones } from '@/lib/segments/bridge';
 import { runSegmentMaintenance } from '@/lib/segments/service';
 import { getSegment, listSegments, upsertEfforts } from '@/lib/segments/store';
 
@@ -34,10 +35,12 @@ export async function POST(request: NextRequest) {
       return badRequest(parsed.error.issues[0]?.message ?? 'Activité invalide.');
     }
 
-    const { activity, segmentIds } = parsed.data;
-    if (activity.userId !== auth.user.id) {
+    const { activity: rawActivity, segmentIds } = parsed.data;
+    if (rawActivity.userId !== auth.user.id) {
       return forbidden("L'activité source ne vous appartient pas.");
     }
+
+    const activity = await hydrateActivityWithPrivacyZones(rawActivity, auth.user.id, auth.supabase);
 
     const catalog = segmentIds
       ? segmentIds

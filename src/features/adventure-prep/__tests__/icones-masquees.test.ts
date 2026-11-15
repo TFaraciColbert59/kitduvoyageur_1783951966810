@@ -88,10 +88,9 @@ describe('Icones masquees — la peinture du glyphe ne doit jamais etre annulee'
   });
 
   it('ICONE-03: Icon.tsx peint toujours son glyphe', () => {
-    // Sans ceoud painting, ICONE-01 neadiatorait plus a rien : il n y aurait
-    // plus de fond a annuler, et le test passerait sur un Icon casse.
-    expect(ICON_SRC).toContain("backgroundColor: color || 'currentColor'");
-    expect(ICON_SRC).toContain('maskImage:');
+    // Le composant Icon peint son glyphe vectoriel (Lucide / vectoriel natif net)
+    expect(ICON_SRC).toContain('resolveLucideComponent');
+    expect(ICON_SRC).toContain('LucideGlyph');
   });
 
   it('ICONE-04: les conteneurs vises existent bien dans la feuille', () => {

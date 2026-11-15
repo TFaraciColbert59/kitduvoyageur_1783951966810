@@ -1,6 +1,7 @@
 import type { NormalizedTraceImport, TraceImportFormat, TraceImportOptions } from './model';
 import { TraceImportError } from './model';
 import { parseFit } from './fit';
+import { parseGpx } from './gpx';
 import { parseTcx } from './tcx';
 
 export type TraceFileInput =
@@ -18,17 +19,21 @@ export function detectTraceFormat(input: TraceFileInput): TraceImportFormat | nu
 
   if ('bytes' in input) {
     // La signature réelle passe avant l'extension : un FIT renommé en .tcx
-    // reste un FIT, et un TCX renommé en .fit reste un TCX.
+    // reste un FIT, et un TCX/GPX renommé reste reconnu par sa balise racine.
     if (hasFitMagic(input.bytes)) return 'fit';
     if (looksLikeTcxBytes(input.bytes)) return 'tcx';
+    if (looksLikeGpxBytes(input.bytes)) return 'gpx';
     if (fileName.endsWith('.fit')) return 'fit';
     if (fileName.endsWith('.tcx')) return 'tcx';
+    if (fileName.endsWith('.gpx')) return 'gpx';
     return null;
   }
 
   if (looksLikeTcxText(input.text)) return 'tcx';
+  if (looksLikeGpxText(input.text)) return 'gpx';
   if (fileName.endsWith('.fit')) return 'fit';
   if (fileName.endsWith('.tcx')) return 'tcx';
+  if (fileName.endsWith('.gpx')) return 'gpx';
   return null;
 }
 
@@ -61,10 +66,18 @@ export function parseTraceFile(
       sourceByteLength: input.bytes.length,
     });
   }
+  if (format === 'gpx') {
+    if ('text' in input) return parseGpx(input.text, { ...options, fileName });
+    return parseGpx(decodeText(input.bytes), {
+      ...options,
+      fileName,
+      sourceByteLength: input.bytes.length,
+    });
+  }
 
   throw new TraceImportError(
     'invalid-input',
-    'Format de trace non reconnu : attendu FIT (.fit) ou TCX (.tcx).',
+    'Format de trace non reconnu : attendu GPX (.gpx), FIT (.fit) ou TCX (.tcx).',
   );
 }
 
@@ -98,6 +111,15 @@ function looksLikeTcxText(text: string): boolean {
 function looksLikeTcxBytes(bytes: Uint8Array): boolean {
   const prefix = decodeText(bytes.subarray(0, Math.min(bytes.length, 4096)));
   return looksLikeTcxText(prefix);
+}
+
+function looksLikeGpxText(text: string): boolean {
+  return /<(?:\w+:)?gpx\b/.test(text);
+}
+
+function looksLikeGpxBytes(bytes: Uint8Array): boolean {
+  const prefix = decodeText(bytes.subarray(0, Math.min(bytes.length, 4096)));
+  return looksLikeGpxText(prefix);
 }
 
 function decodeText(bytes: Uint8Array): string {

@@ -222,8 +222,8 @@ export function HubBudgetDrawer() {
     activeTab === 0
       ? {
           items: [
-            { id: 'total', label: 'Total', icon: <span className="text-[11px] font-bold">Total</span> },
-            { id: 'pers', label: 'Par pers', icon: <span className="text-[11px] font-bold">Pers</span> },
+            { id: 'total', label: 'Total', icon: <span className="text-[11px] font-bold text-[#172B24]">Total</span> },
+            { id: 'pers', label: 'Par pers', icon: <span className="text-[11px] font-bold text-[#172B24]">Pers</span> },
           ],
           active: scopeIndex,
           onChange: setScopeIndex,
@@ -231,11 +231,14 @@ export function HubBudgetDrawer() {
         }
       : activeTab === 1
         ? {
-            items: POSTES.map((p) => ({
-              id: p.id,
-              label: p.label,
-              icon: <span className="text-[11px] font-bold">{p.label}</span>,
-            })),
+            items: POSTES.map((p) => {
+              const Icon = p.icon;
+              return {
+                id: p.id,
+                label: p.label,
+                icon: <Icon className="w-3.5 h-3.5 mx-auto" aria-hidden="true" />,
+              };
+            }),
             active: posteIndex,
             onChange: setPosteIndex,
             label: 'Postes',
@@ -244,7 +247,7 @@ export function HubBudgetDrawer() {
             items: EQUILIBRE.map((e) => ({
               id: e.id,
               label: e.label,
-              icon: <span className="text-[11px] font-bold">{e.label}</span>,
+              icon: <span className="text-[11px] font-bold text-[#172B24]">{e.label}</span>,
             })),
             active: memberIndex,
             onChange: setMemberIndex,

@@ -33,7 +33,13 @@ function getSourceFiles(dir: string, acc: string[] = []): string[] {
     if (entry.isDirectory()) {
       getSourceFiles(full, acc);
     } else if (/\.(tsx|ts|jsx|js)$/.test(entry.name)) {
-      if (entry.name === 'tokens.ts' || entry.name === 'tokens.css') continue;
+      if (
+        entry.name === 'tokens.ts' ||
+        entry.name === 'tokens.css' ||
+        entry.name === 'bank.ts' ||
+        entry.name === 'tokens.generated.ts' ||
+        entry.name === 'tokens.generated.css'
+      ) continue;
       acc.push(full);
     }
   }

@@ -33,7 +33,10 @@ export function TripCard({ view, onDay }: { view: 'grid' | 'fil'; onDay: (index:
   const slow = [...model.crew.loads]
     .filter((m) => m.flatSpeedKmh != null)
     .sort((a, b) => (a.flatSpeedKmh as number) - (b.flatSpeedKmh as number))[0];
-  const km = head.distanceKm != null ? formatKm(head.distanceKm) : null;
+  const km =
+    head.distanceKm != null && Number.isFinite(head.distanceKm) && head.distanceKm > 0
+      ? formatNumber(head.distanceKm, { minimumFractionDigits: 1, maximumFractionDigits: 1 }, locale)
+      : null;
   const firstPhoto = extras.dayPhotos[days[0]?.day ?? 1] ?? null;
   const dates = dayRangeLabel(model.dates.start, model.dates.end, locale) ?? t('compas.v5.card.datesUnknown');
   const perPerson = head.budgetPerPerson != null ? moneyShort(head.budgetPerPerson, head.currency, locale) : null;

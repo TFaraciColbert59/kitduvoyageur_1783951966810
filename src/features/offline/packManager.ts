@@ -165,6 +165,43 @@ export class OfflinePackManager {
   }
 
   /**
+   * Restaure un paquet précédemment vérifié et persisté dans IndexedDB sans
+   * accepter un manifeste corrompu (`validatePackManifest`).
+   */
+  restoreInstalledRecord(record: OfflineInstalledPackRecord, nowMs: number = Date.now()): boolean {
+    const validation = validatePackManifest(record.manifest);
+    if (!validation.valid) return false;
+    const evaluation = evaluatePackCapabilitiesAndStatus(
+      record.manifest,
+      record.verifiedResources,
+      {
+        nowMs,
+        hasLocalRoutingEngine: record.capabilities.recalculateRoute.status === 'available',
+      },
+    );
+    if (evaluation.status === 'corrupted') return false;
+    this.activePacks.set(record.manifest.packId, {
+      ...record,
+      status: evaluation.status,
+      capabilities: evaluation.capabilities,
+      verifiedResources: new Map(record.verifiedResources),
+    });
+    return true;
+  }
+
+  /**
+   * Met en pause un téléchargement en staging sans supprimer les blocs déjà
+   * vérifiés, permettant une reprise ultérieure.
+   */
+  pauseStaging(packId: string, nowMs: number = Date.now()): boolean {
+    const slot = this.stagingSlots.get(packId);
+    if (!slot) return false;
+    slot.status = 'paused';
+    slot.updatedAtMs = nowMs;
+    return true;
+  }
+
+  /**
    * Calcule la synthèse exacte de l'occupation du stockage.
    * Les ressources partagées entre plusieurs paquets (dédupliquées par URI canonique + SHA-256)
    * ne sont comptabilisées qu'une seule fois dans l'espace physique consommé.

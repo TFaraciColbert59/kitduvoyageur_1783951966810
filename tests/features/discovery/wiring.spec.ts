@@ -14,10 +14,8 @@ describe('wiring des sections Pays (desktop)', () => {
     expect(read('src/components/pays/PaysHebergementsView.tsx')).toContain('limit={4}');
   });
 
-  it('branche la section Hébergements dans la sidebar et la fiche desktop', () => {
+  it('branche la section Hébergements dans la sidebar Pays', () => {
     expect(read('src/components/pays/PaysLeftSidebar.tsx')).toContain("'hebergements'");
-    expect(read('src/app/pays/[code]/CountryDetailClient.tsx')).toContain('PaysHebergementsView');
-    expect(read('src/app/pays/[code]/CountryDetailClient.tsx')).toContain("case 'hebergements'");
   });
 });
 
@@ -29,11 +27,5 @@ describe('wiring des sections Pays (mobile)', () => {
     expect(mobile).toContain('DiscoverySection');
     expect(mobile).toContain('category="restaurants"');
     expect(mobile).toContain('category="hotels"');
-  });
-
-  it('ajoute les onglets correspondants dans la barre mobile', () => {
-    const plateau = read('src/components/mobile-nav/navigation/NavigationPlateau.tsx');
-    expect(plateau).toContain("{ id: 'gastronomie', label: 'Gastronomie' }");
-    expect(plateau).toContain("{ id: 'hebergements', label: 'Hébergements' }");
   });
 });

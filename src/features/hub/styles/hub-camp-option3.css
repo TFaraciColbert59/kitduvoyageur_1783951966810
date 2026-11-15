@@ -75,12 +75,12 @@
   justify-content: space-between;
   gap: 10px;
   padding: 4px 6px 4px 8px;
-  background: rgba(18, 38, 30, 0.78);
-  backdrop-filter: blur(24px) saturate(160%);
-  -webkit-backdrop-filter: blur(24px) saturate(160%);
-  border: 0.5px solid rgba(255, 255, 255, 0.24);
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 0.5px solid rgba(23, 43, 36, 0.14);
   border-radius: 9999px;
-  box-shadow: 0 8px 26px rgba(9, 24, 18, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  box-shadow: 0 8px 24px rgba(23, 43, 36, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
 .camp-identity {
@@ -90,7 +90,7 @@
   align-items: center;
   gap: 10px;
   padding: 4px 6px;
-  color: #F8F6EB;
+  color: #172B24;
   text-align: left;
   min-width: 0;
   cursor: pointer;
@@ -102,8 +102,8 @@
   display: grid;
   place-items: center;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.16);
-  color: #E2ECE5;
+  background: rgba(23, 64, 44, 0.08);
+  color: #17402C;
   flex-shrink: 0;
 }
 
@@ -113,13 +113,13 @@
   font-weight: 700;
   display: block;
   line-height: 1.25;
-  color: #F8F6EB;
+  color: #172B24;
 }
 
 .camp-identity small {
   display: block;
   font-size: 11px;
-  color: rgba(248, 246, 235, 0.75);
+  color: #56665D;
   white-space: nowrap;
   max-width: 170px;
   text-overflow: ellipsis;
@@ -158,9 +158,9 @@
 }
 
 .camp-header-btn-menu {
-  background: rgba(255, 255, 255, 0.14);
-  color: #F8F6EB;
-  border: 0.5px solid rgba(255, 255, 255, 0.18);
+  background: rgba(23, 64, 44, 0.08);
+  color: #172B24;
+  border: 0.5px solid rgba(23, 43, 36, 0.12);
 }
 
 /* ── 3. Hotspots Tactiles sur le Décor ── */
@@ -196,12 +196,16 @@
 }
 
 .camp-touch-ripple {
-  width: 100%;
-  height: 100%;
+  width: 28px;
+  height: 28px;
   border-radius: 9999px;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0) 70%);
-  opacity: 0;
-  transform: scale(0.7);
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 0.5px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  opacity: 0.85;
+  transform: scale(1);
   transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
   pointer-events: none;
 }
@@ -210,9 +214,9 @@
 .camp-touch-target:active .camp-touch-ripple,
 .camp-touch-target:focus-visible .camp-touch-ripple {
   opacity: 1;
-  transform: scale(1.08);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  box-shadow: 0 0 16px rgba(255, 255, 255, 0.4);
+  transform: scale(1.2);
+  border: 1.5px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 0 16px rgba(255, 255, 255, 0.6);
 }
 
 .scene-reset {
@@ -704,7 +708,7 @@ body:has(.hub-camp-drawer-overlay) .lkdv-floating-tabbar {
 }
 
 .hub-camp-drawer-sheet .lkdv-drawer-shell[data-secondary="true"] .lkdv-drawer-viewport {
-  padding-bottom: 34px !important;
+  padding-bottom: 56px !important;
 }
 
 .hub-camp-drawer-sheet .lkdv-drawer-pane {
@@ -836,8 +840,9 @@ body:has(.hub-camp-drawer-overlay) .lkdv-floating-tabbar {
   display: grid !important;
   grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr)) !important;
   align-items: center !important;
-  width: calc(var(--n, 3) * 32px + 6px) !important;
-  max-width: 120px !important;
+  width: max-content !important;
+  min-width: calc(var(--n, 3) * 56px) !important;
+  max-width: calc(100vw - 28px) !important;
   height: 30px !important;
   padding: 2px !important;
   border-radius: 9999px !important;
@@ -868,8 +873,11 @@ body:has(.hub-camp-drawer-overlay) .lkdv-floating-tabbar {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
+  gap: 4px !important;
   min-height: 26px !important;
   height: 26px !important;
+  padding: 0 10px !important;
+  white-space: nowrap !important;
   background: none !important;
   border: 0 !important;
   color: #56665D !important;
@@ -880,9 +888,7 @@ body:has(.hub-camp-drawer-overlay) .lkdv-floating-tabbar {
   color: #172B24 !important;
 }
 
-.hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-secondary .ig-tabs button span:not(.ic) {
-  display: none !important;
-}
+/* Ne pas masquer le texte des pilules secondaires : certains tiroirs (Budget, Inventaire) utilisent des libellés textuels */
 
 /* Pilule flottante de Kit Studio « ... » au bas de l'écran quand le tiroir est replié */
 .studio-floating-pill-container {

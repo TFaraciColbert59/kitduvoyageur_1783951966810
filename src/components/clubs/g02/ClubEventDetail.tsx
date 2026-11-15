@@ -362,7 +362,7 @@ export function ClubEventDetail({
       <section className={styles.card} aria-label="Tracé partagé">
         <div className={styles.cardHeader}>
           <div>
-            <h2 className={styles.cardTitle}>Tracé partagé · K5.23</h2>
+            <h2 className={styles.cardTitle}>Tracé partagé</h2>
             <p className={styles.cardMeta}>
               {event.routeId
                 ? `Tracé ${event.routeId} · révision ${event.routeRevision}`

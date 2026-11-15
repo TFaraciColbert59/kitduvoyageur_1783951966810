@@ -110,7 +110,7 @@ export function LocalLegendsView({
       {leader ? (
         <RankingsCard className="p-[var(--space-4)]">
           <div className="flex items-center gap-[var(--space-3)]">
-            <span className="flex h-12 w-12 items-center justify-center rounded-full border border-[color:var(--lkv-secondary)]/40 bg-[color:var(--lkv-secondary)]/15 text-[color:var(--lkv-secondary-subtle)]">
+            <span className="flex h-12 w-12 items-center justify-center rounded-full border border-[color:var(--lkv-secondary)]/40 bg-[color:var(--lkv-secondary)]/15 text-[color:var(--lkv-on-secondary-subtle)]">
               <Icon name="crown" size={24} />
             </span>
             <div className="min-w-0 flex-1">
@@ -126,7 +126,7 @@ export function LocalLegendsView({
               </p>
             </div>
             {leader.isCurrentUser && (
-              <span className="rounded-full bg-[color:var(--lkv-secondary)]/20 px-2 py-1 font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-[0.1em] text-[color:var(--lkv-secondary-subtle)]">
+              <span className="rounded-full bg-[color:var(--lkv-secondary)]/20 px-2 py-1 font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-[0.1em] text-[color:var(--lkv-on-secondary-subtle)]">
                 Vous
               </span>
             )}
@@ -166,7 +166,7 @@ export function LocalLegendsView({
                       </Link>
                     )}
                     {entry.isLegend && (
-                      <span className="ml-2 font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-[0.1em] text-[color:var(--lkv-secondary-subtle)]">
+                      <span className="ml-2 font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-[0.1em] text-[color:var(--lkv-on-secondary-subtle)]">
                         légende
                       </span>
                     )}

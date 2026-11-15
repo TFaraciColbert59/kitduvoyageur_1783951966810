@@ -142,3 +142,50 @@ export async function awardProducerGain(input: AwardProducerInput): Promise<Awar
     rewardTransactionId: result.rewardTransactionId ?? null,
   };
 }
+
+export interface CompensateProgressionResult {
+  success: boolean;
+  compensatedCount: number;
+  reversedPoints: number;
+}
+
+/**
+ * C-REWARD — Écriture compensatoire unique sur `reward_transactions` lors d'une
+ * suppression, invalidation ou révocation de visibilité d'activité.
+ * Idempotente par construction via `compensate:<idempotency_key>`.
+ */
+export async function compensateActivityProgression(
+  userId: string,
+  sourceType: string,
+  sourceId: string,
+  reason: 'deleted' | 'corrected' | 'flagged' | 'visibility_private' | 'revoked' = 'revoked'
+): Promise<CompensateProgressionResult> {
+  if (!userId || !sourceType || !sourceId) {
+    return { success: false, compensatedCount: 0, reversedPoints: 0 };
+  }
+
+  const supabase = getServiceSupabase();
+  if (!supabase) {
+    return { success: false, compensatedCount: 0, reversedPoints: 0 };
+  }
+
+  try {
+    const { data, error } = await supabase.rpc('compensate_progression_source', {
+      p_user_id: userId,
+      p_source_type: sourceType,
+      p_source_id: sourceId,
+      p_reason: reason,
+    });
+    if (error) {
+      return { success: false, compensatedCount: 0, reversedPoints: 0 };
+    }
+    const result = (data ?? {}) as { compensatedCount?: unknown; reversedPoints?: unknown };
+    return {
+      success: true,
+      compensatedCount: Number(result.compensatedCount ?? 0) || 0,
+      reversedPoints: Number(result.reversedPoints ?? 0) || 0,
+    };
+  } catch {
+    return { success: false, compensatedCount: 0, reversedPoints: 0 };
+  }
+}

@@ -1,5 +1,4 @@
 import { MetadataRoute } from 'next';
-import { getPublishedCountries } from '@/lib/countries';
 import { createClient } from '@/lib/supabase/server';
 
 const base = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
@@ -15,14 +14,12 @@ const staticRoutes: Array<{
   { url: '/explorer', priority: 0.9, changeFrequency: 'weekly' },
   { url: '/communaute', priority: 0.7, changeFrequency: 'daily' },
   { url: '/pro', priority: 0.55, changeFrequency: 'monthly' },
-  { url: '/carbone', priority: 0.5, changeFrequency: 'monthly' },
   { url: '/contact', priority: 0.5, changeFrequency: 'monthly' },
   { url: '/cookies', priority: 0.3, changeFrequency: 'yearly' },
   { url: '/mentions-legales', priority: 0.3, changeFrequency: 'yearly' },
   { url: '/cgv', priority: 0.3, changeFrequency: 'yearly' },
   { url: '/cgu', priority: 0.3, changeFrequency: 'yearly' },
   { url: '/politique-confidentialite', priority: 0.3, changeFrequency: 'yearly' },
-  { url: '/accessibilite', priority: 0.4, changeFrequency: 'yearly' },
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -38,16 +35,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })
   );
 
-  // 2. Published Countries (Flagship destinations)
-  const publishedCountries = getPublishedCountries();
-  const countryEntries: MetadataRoute.Sitemap = publishedCountries.map((country) => ({
-    url: `${base}/pays/${country.code.toLowerCase()}`,
-    lastModified: now,
-    changeFrequency: 'weekly' as const,
-    priority: 0.85,
-  }));
-
-  // 7. Dynamic Public Carnets from Supabase
+  // 2. Dynamic Public Carnets from Supabase
   let carnetEntries: MetadataRoute.Sitemap = [];
   try {
     const supabase = await createClient();
@@ -95,7 +83,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [
     ...staticEntries,
-    ...countryEntries,
     ...carnetEntries,
     ...clubEntries,
   ];

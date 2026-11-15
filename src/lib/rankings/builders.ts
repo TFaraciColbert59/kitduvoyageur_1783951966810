@@ -7,8 +7,11 @@ import {
   computeLocalLegend,
   createInitialChallengeProgress,
   buildPeakBaggingSummary,
+  evaluateVirtualRaceParticipation,
+  proposeBestEffortGoal,
 } from '@/features/rankings';
 import type {
+  BestEffortGoalProposal,
   ChallengeProgressState,
   ChallengeRule,
   LocalLegendResult,
@@ -22,7 +25,10 @@ import type {
   PrivacyPolicyContext,
   RankingActivityRecord,
   RankingUserProfile,
+  SportCategory,
+  VirtualRaceRegistration,
 } from '@/features/rankings/types';
+import { getValidatedRaceRegistrationUrl } from '@/features/clubs';
 import type {
   ChallengeItem,
   ChallengesPayload,
@@ -139,21 +145,93 @@ function computeChallengeProgress(
   return state;
 }
 
+export interface BuildChallengesOptions {
+  registrationUrls?: ReadonlyMap<string, string | null>;
+  raceRegistrations?: ReadonlyMap<string, VirtualRaceRegistration>;
+  includeBestEffortProposals?: boolean;
+}
+
+const BEST_EFFORT_MILESTONES_M = [5000, 10000, 21100] as const;
+
+function buildBestEffortProposalsForViewer(
+  activities: readonly RankingActivityRecord[],
+  viewerId: string
+): BestEffortGoalProposal[] {
+  if (!viewerId) return [];
+  const enriched = activities
+    .filter((activity) => activity.userId === viewerId && activity.isValid && !activity.deleted)
+    .map((activity) => {
+      if (activity.bestEfforts && activity.bestEfforts.length > 0) return activity;
+      const dist = activity.distanceMeters ?? 0;
+      const dur = activity.durationSec ?? 0;
+      if (dist <= 0 || dur <= 0) return activity;
+      const derived = BEST_EFFORT_MILESTONES_M.filter((m) => dist >= m).map((m) => ({
+        sport: activity.sport,
+        distanceMeters: m,
+        durationSec: Math.max(1, Math.round(dur * (m / dist))),
+        activityId: activity.id,
+        achievedAt: activity.startedAt,
+      }));
+      return derived.length > 0 ? { ...activity, bestEfforts: derived } : activity;
+    });
+
+  const sports = Array.from(
+    new Set(enriched.map((a) => a.sport).filter((s): s is SportCategory => s !== 'all'))
+  );
+  const proposals: BestEffortGoalProposal[] = [];
+  for (const sport of sports) {
+    for (const targetMeters of BEST_EFFORT_MILESTONES_M) {
+      const proposal = proposeBestEffortGoal(enriched, viewerId, sport, targetMeters, 3);
+      if (proposal) proposals.push(proposal);
+    }
+  }
+  return proposals.slice(0, 6);
+}
+
 export function buildChallengesPayload(
   items: readonly { rule: ChallengeRule; trackable: boolean }[],
   activities: readonly RankingActivityRecord[],
   profiles: readonly RankingUserProfile[],
   context: PrivacyPolicyContext,
-  viewerId: string
+  viewerId: string,
+  options: BuildChallengesOptions = {}
 ): ChallengesPayload {
   const challengeItems: ChallengeItem[] = items.map(({ rule, trackable }) => {
     const progress = trackable && viewerId ? computeChallengeProgress(rule, viewerId, activities) : null;
     const leaderboard = trackable
       ? buildChallengeLeaderboard(rule, activities, profiles, context)
       : null;
-    return { rule, trackable, progress, leaderboard };
+    const registrationUrl =
+      rule.kind === 'virtual_race'
+        ? getValidatedRaceRegistrationUrl(options.registrationUrls?.get(rule.id))
+        : null;
+    const virtualRaceResult =
+      rule.kind === 'virtual_race' && viewerId
+        ? evaluateVirtualRaceParticipation(
+            rule,
+            options.raceRegistrations?.get(rule.id) ?? null,
+            activities,
+            viewerId
+          )
+        : null;
+    return {
+      rule,
+      trackable,
+      progress,
+      leaderboard,
+      ...(registrationUrl ? { registrationUrl } : {}),
+      ...(virtualRaceResult ? { virtualRaceResult } : {}),
+    };
   });
-  return { items: challengeItems, meta: rankingsMeta() };
+  const bestEffortProposals =
+    options.includeBestEffortProposals && viewerId
+      ? buildBestEffortProposalsForViewer(activities, viewerId)
+      : undefined;
+  return {
+    items: challengeItems,
+    ...(bestEffortProposals ? { bestEffortProposals } : {}),
+    meta: rankingsMeta(),
+  };
 }
 
 export interface TrophyInputs {

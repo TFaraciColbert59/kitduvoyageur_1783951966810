@@ -171,17 +171,6 @@ export function CommunityExploreSheetV2({
 
   const showIsland = useCallback((message: IslandMessage) => setIsland(message), []);
 
-  // Invité : l'île « Se connecter » s'affiche d'abord (maquette `requireAuth`, L1928) ; la
-  // navigation vers la connexion n'a lieu qu'au toucher de son bouton, jamais d'office.
-  const requireAuthIsland = useCallback(() => {
-    haptic('medium');
-    showIsland({
-      title: 'Connectez-vous pour continuer.',
-      subtitle: 'Créez un compte pour enregistrer, commenter ou publier.',
-      action: { label: 'Se connecter', onAction: onRequireAuth },
-    });
-  }, [haptic, onRequireAuth, showIsland]);
-
   // ── Ouverture : volet mémorisé, sauf loupe (Recherche focalisée) ──────────
   const setTab = explore.setTab;
   useEffect(() => {
@@ -349,23 +338,11 @@ export function CommunityExploreSheetV2({
     [haptic, saved, setSaved, showIsland],
   );
 
-  // ── « Tout voir » (Carnets#19) ───────────────────────────────────────────
-  // Hors « Découvrir » : retour au flux complet (le tri est conservé). Dans
-  // « Découvrir » : chargement de la suite jusqu'à la fin du flux.
-  const handleCarnetsSeeAll = useCallback(() => {
-    haptic('light');
-    if (explore.carnetFilter !== 'discover') {
-      explore.setCarnetFilter('discover');
-      return;
-    }
-    carnetsFeed.loadMore();
-  }, [carnetsFeed, explore, haptic]);
-
   // ── J'aime de carnet (optimiste + retour arrière) ───────────────────────
   const handleCarnetLike = useCallback(
     async (carnet: CarnetCardVM) => {
       if (isGuest) {
-        requireAuthIsland();
+        onRequireAuth();
         return;
       }
       const key = `like:${carnet.id}`;
@@ -407,7 +384,7 @@ export function CommunityExploreSheetV2({
         },
       });
     },
-    [busyKeys, carnetsFeed, haptic, isGuest, markBusy, requireAuthIsland, showIsland, viewerId],
+    [busyKeys, carnetsFeed, haptic, isGuest, markBusy, onRequireAuth, showIsland, viewerId],
   );
 
   // ── Adhésion club ────────────────────────────────────────────────────────
@@ -568,7 +545,7 @@ export function CommunityExploreSheetV2({
         return;
       }
       if (isGuest) {
-        requireAuthIsland();
+        onRequireAuth();
         return;
       }
       const key = `club:${club.id}`;
@@ -611,7 +588,7 @@ export function CommunityExploreSheetV2({
       haptic,
       isGuest,
       markBusy,
-      requireAuthIsland,
+      onRequireAuth,
       openClubPeek,
       setClubOverride,
       showIsland,
@@ -621,7 +598,7 @@ export function CommunityExploreSheetV2({
   const handleClubLeave = useCallback(
     async (club: ClubCardVM) => {
       if (isGuest) {
-        requireAuthIsland();
+        onRequireAuth();
         return;
       }
       const key = `club:${club.id}`;
@@ -654,13 +631,13 @@ export function CommunityExploreSheetV2({
         },
       });
     },
-    [busyKeys, clubsFeed, clubOverrides, haptic, isGuest, markBusy, requireAuthIsland, setClubOverride, showIsland],
+    [busyKeys, clubsFeed, clubOverrides, haptic, isGuest, markBusy, onRequireAuth, setClubOverride, showIsland],
   );
 
   const handleCancelRequest = useCallback(
     async (club: ClubCardVM) => {
       if (isGuest) {
-        requireAuthIsland();
+        onRequireAuth();
         return;
       }
       const key = `club:${club.id}`;
@@ -692,7 +669,7 @@ export function CommunityExploreSheetV2({
         },
       });
     },
-    [busyKeys, clubsFeed, haptic, isGuest, markBusy, requireAuthIsland, setClubOverride, showIsland],
+    [busyKeys, clubsFeed, haptic, isGuest, markBusy, onRequireAuth, setClubOverride, showIsland],
   );
 
   const handleReviewRequest = useCallback(
@@ -729,7 +706,7 @@ export function CommunityExploreSheetV2({
       }
       if (event.past) return;
       if (isGuest) {
-        requireAuthIsland();
+        onRequireAuth();
         return;
       }
       const key = `event:${event.id}`;
@@ -773,7 +750,7 @@ export function CommunityExploreSheetV2({
       haptic,
       isGuest,
       markBusy,
-      requireAuthIsland,
+      onRequireAuth,
       openEventPeek,
       showIsland,
     ],
@@ -782,7 +759,7 @@ export function CommunityExploreSheetV2({
   const handleEventLeave = useCallback(
     async (event: EventCardVM) => {
       if (isGuest) {
-        requireAuthIsland();
+        onRequireAuth();
         return;
       }
       const key = `event:${event.id}`;
@@ -815,7 +792,7 @@ export function CommunityExploreSheetV2({
         },
       });
     },
-    [busyKeys, eventOverrides, eventsFeed, haptic, isGuest, markBusy, requireAuthIsland, showIsland],
+    [busyKeys, eventOverrides, eventsFeed, haptic, isGuest, markBusy, onRequireAuth, showIsland],
   );
 
   // Les refs d'action pointent sur les mutations réelles (après leur définition).
@@ -929,7 +906,6 @@ export function CommunityExploreSheetV2({
             onCreateCarnet={() => onCreateRequested?.('carnet')}
             onDiscover={() => explore.setCarnetFilter('discover')}
             onRequestGeo={() => void nearMe.request()}
-            onSeeAll={handleCarnetsSeeAll}
           />
         </FilterSlot>
       );
@@ -1008,7 +984,6 @@ export function CommunityExploreSheetV2({
         onChange: (index: number) => explore.setCarnetFilter(CARNET_FILTERS[index] ?? 'discover'),
         label: 'Filtres des carnets',
         pages: filterPages,
-        hidden: carnetsFeed.items.length === 0 && (carnetsFeed.loading || Boolean(carnetsFeed.error)),
         sort: {
           value: explore.carnetSort,
           defaultValue: 'recent',
@@ -1024,12 +999,23 @@ export function CommunityExploreSheetV2({
         onChange: (index: number) => explore.setClubFilter(CLUB_FILTERS[index] ?? 'discover'),
         label: 'Filtres des clubs',
         pages: filterPages,
-        hidden: clubsFeed.items.length === 0 && (clubsFeed.loading || Boolean(clubsFeed.error)),
         sort: {
-          value: explore.clubSort,
+          value: explore.clubActivity ? `act:${explore.clubActivity}` : explore.clubSort,
           defaultValue: 'activity',
-          options: CLUB_SORT_OPTIONS,
-          onChange: (value: string) => explore.setClubSort(value as typeof explore.clubSort),
+          options: [
+            ...CLUB_SORT_OPTIONS,
+            { value: 'act:all', label: 'Activité : Toutes' },
+            { value: 'act:randonnee', label: 'Activité : Rando' },
+            { value: 'act:ski', label: 'Activité : Ski' },
+            { value: 'act:velo', label: 'Activité : Vélo' },
+            { value: 'act:escalade', label: 'Activité : Escalade' },
+            { value: 'act:trail', label: 'Activité : Trail' },
+          ],
+          onChange: (value: string) => {
+            if (value === 'act:all') explore.setClubActivity(null);
+            else if (value.startsWith('act:')) explore.setClubActivity(value.slice(4) as typeof explore.clubActivity);
+            else explore.setClubSort(value as typeof explore.clubSort);
+          },
         },
       };
     }
@@ -1039,7 +1025,15 @@ export function CommunityExploreSheetV2({
       onChange: (index: number) => explore.setEventFilter(EVENT_FILTERS[index] ?? 'discover'),
       label: 'Filtres des sorties',
       pages: filterPages,
-      hidden: eventsFeed.items.length === 0 && (eventsFeed.loading || Boolean(eventsFeed.error)),
+      sort: {
+        value: explore.eventView,
+        defaultValue: 'grid',
+        options: [
+          { value: 'grid', label: 'Affichage : Billets' },
+          { value: 'list', label: 'Affichage : Liste' },
+        ],
+        onChange: (value: string) => explore.setEventView(value as typeof explore.eventView),
+      },
     };
   })();
 
@@ -1098,12 +1092,14 @@ export function CommunityExploreSheetV2({
           spotsLeft={state.spotsLeft}
           busy={Boolean(busyKeys[`event:${detail.event.id}`])}
           onSignup={(event) => void handleEventSignup(event)}
-          viewerId={isGuest ? null : viewerId}
         />,
       ],
       index: 0,
       title: detail.event.title,
-      meta: `/sorties/${detail.event.id.slice(0, 8)}`,
+      meta:
+        detail.event.dateLabel && !detail.event.dateLabel.includes('/')
+          ? detail.event.dateLabel
+          : 'Sortie',
       label: 'Sortie',
       onBack: closeDetail,
     };

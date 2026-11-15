@@ -9,6 +9,7 @@
 
 import type {
   NormalizedTraceImport,
+  NormalizedTraceWaypoint,
   NormalizedTrackPoint,
   TraceMetric,
   TraceTimeBasis,
@@ -54,6 +55,10 @@ export interface TraceImportPreview {
   sampleCount: number;
   timeBasis: TraceTimeBasis;
   availableMetrics: TraceMetric[];
+  /** Waypoints `<wpt>` lus dans le fichier GPX (`K6.04`). */
+  waypoints: NormalizedTraceWaypoint[];
+  /** `true` si la trace peut être importée comme parcours planifié (`K6.01`, ≥ 2 points GPS). */
+  routeSaveable: boolean;
   /** `false` tant qu'une donnée manquante empêche une écriture honnête. */
   saveable: boolean;
   /** Raisons lisibles, dans un ordre stable. */
@@ -69,7 +74,7 @@ export interface HikeSessionImportPayload {
   elevationGainM: number | null;
   maxAltitudeM: number | null;
   /** Format source détecté, jamais déduit du seul nom de fichier. */
-  source: 'fit' | 'tcx';
+  source: 'fit' | 'tcx' | 'gpx';
   /** SHA-256 du contenu original, clé de déduplication côté base. */
   sourceFingerprint: string;
   /** Nom du fichier d'origine, borné côté API ; peut être absent. */
@@ -183,7 +188,7 @@ function traceDistanceM(trace: NormalizedTraceImport): number | null {
   for (const point of trace.points) {
     const position = pointPosition(point);
     if (!position) continue;
-    if (previous) total += haversineKm(previous, position);
+    if (previous) total += haversineKm(previous, position) * 1000;
     previous = position;
   }
   return total > 0 ? total : null;
@@ -332,6 +337,9 @@ export function buildTraceImportPreview(trace: NormalizedTraceImport): TraceImpo
     blockers.push('La distance réelle est absente.');
   }
 
+  const waypoints = trace.waypoints ?? [];
+  const routeSaveable = trace.status !== 'truncated' && positionedPointCount >= 2;
+
   return {
     title: suggestedTitle(trace.provenance.fileName),
     startedAt,
@@ -348,6 +356,8 @@ export function buildTraceImportPreview(trace: NormalizedTraceImport): TraceImpo
     sampleCount: traceImportPreservedSampleCount(trace),
     timeBasis: trace.provenance.timeBasis,
     availableMetrics: trace.availableMetrics,
+    waypoints,
+    routeSaveable,
     saveable: blockers.length === 0,
     blockers,
   };

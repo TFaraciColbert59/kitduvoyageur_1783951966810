@@ -1,14 +1,29 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { CheckCircle2, HeartPulse, ShieldAlert } from 'lucide-react';
-import { formatDurationS } from '@/features/workouts/domain/sessionFactory';
-import type { RecoveryProgram } from '@/features/workouts/domain/types';
+import {
+  CheckCircle2,
+  HeartPulse,
+  Pause,
+  Play,
+  RotateCcw,
+  ShieldAlert,
+} from 'lucide-react';
+import { formatClockS, formatDurationS } from '@/features/workouts/domain/sessionFactory';
+import type { RecoveryProgram, Soreness } from '@/features/workouts/domain/types';
 
 export interface RecoveryPanelProps {
   program: RecoveryProgram;
   practiceStatus: 'available' | 'partial' | 'absent';
+  soreness?: Soreness;
+  onSorenessChange?: (value: Soreness) => void;
 }
+
+const SORENESS_OPTIONS: Array<{ id: Soreness; label: string }> = [
+  { id: 'none', label: 'Aucune' },
+  { id: 'light', label: 'Courbatures légères' },
+  { id: 'high', label: 'Douleur importante' },
+];
 
 function formatPracticeDate(value: string | null): string | null {
   if (!value) return null;
@@ -34,12 +49,38 @@ function exerciseAmount(
  * L'état vide et le repos sont affichés explicitement ; aucun exercice n'est
  * inventé quand la donnée manque ou qu'une douleur importante est déclarée.
  */
-export function RecoveryPanel({ program, practiceStatus }: RecoveryPanelProps) {
+export function RecoveryPanel({
+  program,
+  practiceStatus,
+  soreness = 'none',
+  onSorenessChange,
+}: RecoveryPanelProps) {
   const [done, setDone] = useState<Set<string>>(new Set());
+  const [activeTimerId, setActiveTimerId] = useState<string | null>(null);
+  const [remainingS, setRemainingS] = useState<number>(0);
+  const [running, setRunning] = useState<boolean>(false);
 
   useEffect(() => {
     setDone(new Set());
+    setActiveTimerId(null);
+    setRemainingS(0);
+    setRunning(false);
   }, [program.basedOn.lastPracticeAt, program.status]);
+
+  useEffect(() => {
+    if (!running || !activeTimerId) return;
+    const timer = window.setInterval(() => {
+      setRemainingS((prev) => {
+        if (prev <= 1) {
+          setRunning(false);
+          setDone((old) => new Set(old).add(activeTimerId));
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [running, activeTimerId]);
 
   const toggle = (id: string) => {
     setDone((previous) => {
@@ -49,6 +90,46 @@ export function RecoveryPanel({ program, practiceStatus }: RecoveryPanelProps) {
       return next;
     });
   };
+
+  const startExerciseTimer = (id: string, durationS: number) => {
+    if (activeTimerId === id) {
+      setRunning((prev) => !prev);
+      return;
+    }
+    setActiveTimerId(id);
+    setRemainingS(durationS);
+    setRunning(true);
+  };
+
+  const resetExerciseTimer = (id: string, durationS: number) => {
+    setActiveTimerId(id);
+    setRemainingS(durationS);
+    setRunning(false);
+  };
+
+  const renderSorenessControl = () =>
+    onSorenessChange ? (
+      <div
+        className="lkdv-workout-choice"
+        role="group"
+        aria-label="Douleur ou fatigue musculaire"
+      >
+        <span className="lkdv-workout-choice-label">Ressenti / douleur</span>
+        <div className="lkdv-workout-chip-row">
+          {SORENESS_OPTIONS.map((option) => (
+            <button
+              key={option.id}
+              type="button"
+              className={`lkdv-workout-chip${soreness === option.id ? ' is-active' : ''}`}
+              aria-pressed={soreness === option.id}
+              onClick={() => onSorenessChange(option.id)}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      </div>
+    ) : null;
 
   const practiceDate = formatPracticeDate(program.basedOn.lastPracticeAt);
 
@@ -61,6 +142,7 @@ export function RecoveryPanel({ program, practiceStatus }: RecoveryPanelProps) {
           : 'La dernière pratique est trop ancienne pour une récupération spécifique.';
     return (
       <section className="lkdv-workout-recovery" data-status="absent">
+        {renderSorenessControl()}
         <div className="lkdv-workout-state" role="status">
           <span className="lkdv-workout-state-icon" aria-hidden="true">
             <HeartPulse size={20} />
@@ -82,6 +164,7 @@ export function RecoveryPanel({ program, practiceStatus }: RecoveryPanelProps) {
   if (program.status === 'rest') {
     return (
       <section className="lkdv-workout-recovery" data-status="rest">
+        {renderSorenessControl()}
         <div className="lkdv-workout-alert" role="alert">
           <ShieldAlert size={20} aria-hidden="true" />
           <div>
@@ -96,6 +179,7 @@ export function RecoveryPanel({ program, practiceStatus }: RecoveryPanelProps) {
 
   return (
     <section className="lkdv-workout-recovery" data-status="ready">
+      {renderSorenessControl()}
       <div className="lkdv-workout-proposal">
         <div className="lkdv-workout-plan-topline">
           <span className="lkdv-workout-badge">Récupération</span>
@@ -147,6 +231,34 @@ export function RecoveryPanel({ program, practiceStatus }: RecoveryPanelProps) {
                   />
                 ) : null}
               </label>
+              {exercise.durationS !== null ? (
+                <div className="lkdv-workout-recovery-timer">
+                  <button
+                    type="button"
+                    className="lkdv-workout-secondary"
+                    onClick={() => startExerciseTimer(exercise.id, exercise.durationS!)}
+                  >
+                    {activeTimerId === exercise.id && running ? (
+                      <Pause size={14} aria-hidden="true" />
+                    ) : (
+                      <Play size={14} aria-hidden="true" />
+                    )}
+                    {activeTimerId === exercise.id
+                      ? `${running ? 'Pause' : 'Reprendre'} · ${formatClockS(remainingS)}`
+                      : `Chrono ${formatClockS(exercise.durationS)}`}
+                  </button>
+                  {activeTimerId === exercise.id ? (
+                    <button
+                      type="button"
+                      className="lkdv-workout-ghost"
+                      onClick={() => resetExerciseTimer(exercise.id, exercise.durationS!)}
+                      aria-label={`Réinitialiser ${exercise.title}`}
+                    >
+                      <RotateCcw size={14} aria-hidden="true" />
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
             </li>
           );
         })}
