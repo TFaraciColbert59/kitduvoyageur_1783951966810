@@ -4,7 +4,11 @@
 //   node tools/montage/build-ours.mjs montage/edl-ours-v1.json [--sans-rendu-film] [--sans-reperes]
 //
 // Lancé depuis trailer/ (ou ailleurs : les chemins sont relatifs à trailer/). ffmpeg et ffprobe sont pris dans le
-// PATH. Aucun étalonnage : les plans sont coupés à l'image près (décodage puis réencodage).
+// PATH. Les plans sont coupés à l'image près (décodage puis réencodage).
+// Étalonnage (à partir de la v4, facultatif) : champ « etalonnage » de la liste (look commun : LUT, adoucissement,
+// grain) et champ « etalonnage » par plan (correction du plan), voir tools/montage/etalonnage.mjs. Chaque segment
+// coupé est alors étalonné dans qa/tmp/ours/segments-etalonnes/ (correction du plan → look commun → grain, après la
+// mise à l'échelle) avant la concaténation. Sans ces champs (listes v1 à v3), rien ne change.
 // Champs facultatifs par plan : « dossier » (dossier de la source, relatif à trailer/, par ex. flow/clips/incrustes
 // pour les écrans incrustés) et « recadrage » ({ zoom, cx, cy } : zoom ≥ 1 sur l'image entière, centre en pixels
 // de la source 1920×1080, remise à l'échelle Lanczos).
@@ -30,6 +34,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync, cpSync, readdirSync, symlinkSync, lstatSync } from "node:fs";
 import { basename, dirname, join, resolve, relative } from "node:path";
 import { fileURLToPath } from "node:url";
+import { etalonnageActif, filtreEtalonnage, matriceDe } from "./etalonnage.mjs";
 
 const TRAILER = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const rel = (p) => relative(TRAILER, p);
@@ -308,9 +313,31 @@ for (const p of plans) {
   console.log(`${p.plan.padEnd(7)} ${String(p.start).padStart(4)}–${String(p.end - 1).padStart(4)}  ${String(p.n).padStart(3)} im  ${p.sourceUsed}${p.remarques.length ? "  · " + p.remarques.join(" ; ") : ""}`);
 }
 
+// ---- étalonnage (facultatif) ----
+const GRADE = etalonnageActif(edl);
+if (GRADE) {
+  const SEG_E = join(TMP, "segments-etalonnes");
+  mkdirSync(SEG_E, { recursive: true });
+  for (let i = 0; i < plans.length; i++) {
+    const p = plans[i];
+    const src = segs[i];
+    const cs = run("ffprobe", ["-v", "error", "-select_streams", "v:0", "-show_entries", "stream=color_space", "-of", "csv=p=0", src]).trim();
+    p.matrice = matriceDe(cs);
+    const fc = filtreEtalonnage(edl, edl.plans[i], { matrice: p.matrice, trailer: TRAILER, seed: i + 1 });
+    const out = join(SEG_E, basename(src));
+    ffmpeg(["-i", src, "-filter_complex", fc, "-map", "[v]", "-frames:v", String(p.n), "-fps_mode", "passthrough", "-c:v", "ffv1", "-level", "3", out]);
+    const got = countFrames(out).frames;
+    if (got !== p.n) throw new Error(`${p.plan} étalonné : ${got} images au lieu de ${p.n}`);
+    segs[i] = out;
+    console.log(`${p.plan.padEnd(7)} étalonné (entrée ${p.matrice}${edl.plans[i].etalonnage ? ", correction du plan" : ""})`);
+  }
+}
+
 const list = join(TMP, "concat.txt");
 writeFileSync(list, segs.map((s) => `file '${s}'`).join("\n") + "\n");
-const enc = ["-c:v", "libx264", "-preset", "slow", "-crf", "16", "-pix_fmt", "yuv420p", "-profile:v", "high", "-r", "24",
+// Balises couleur Rec.709 explicites seulement pour un ours étalonné (les v1 à v3 restent identiques).
+const tags = GRADE ? ["-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709", "-color_range", "tv"] : [];
+const enc = ["-c:v", "libx264", "-preset", "slow", "-crf", "16", "-pix_fmt", "yuv420p", "-profile:v", "high", "-r", "24", ...tags,
   "-c:a", "aac", "-b:a", "320k", "-aac_pns", "0", "-ar", "48000", "-movflags", "+faststart"];
 // Deux passes : l'image d'abord (exactement TOTAL images), puis le son ajouté par copie de l'image. Un -frames:v dans
 // la même passe que le son arrête aussi la piste son (11 ms manquaient à 60,000 s).
@@ -346,9 +373,10 @@ if (!args.includes("--sans-reperes")) {
 // ---- manifeste ----
 writeFileSync(join(TMP, "manifeste.json"), JSON.stringify({
   edl: rel(EDL_PATH), version: VERSION, ips: FPS, images_total: TOTAL, sortie: rel(OUT), reperes: rel(OUT_REP),
-  musique: rel(MUSIC), rendu_film: filmOk,
+  musique: rel(MUSIC), rendu_film: filmOk, etalonnage: edl.etalonnage ?? null,
   plans: plans.map((p) => ({ plan: p.plan, section: p.section, debut: p.debut, temps: p.temps, start: p.start, end: p.end, n: p.n,
     source: p.sourceUsed, images_sources: p.framesUsed, vitesse_liste: p.vitesse ?? 1, vitesse_reelle: p.vitesseReelle,
-    provisoire: p.provisoire, entree_reculee: p.entreeReculee ?? null, source_images: p.sourceFrames ?? null, remarques: p.remarques })),
+    provisoire: p.provisoire, entree_reculee: p.entreeReculee ?? null, source_images: p.sourceFrames ?? null, remarques: p.remarques,
+    ...(GRADE ? { etalonnage: edl.plans[p.idx].etalonnage ?? null, matrice_entree: p.matrice } : {}) })),
 }, null, 1));
 console.log("→ " + rel(join(TMP, "manifeste.json")));

@@ -172,8 +172,9 @@ def fr(x, k=3):
 L = []
 L.append(f"# Ours {V} — premier montage complet à 24 i/s\n")
 L.append(f"Généré par `node tools/montage/build-ours.mjs {M['edl']}` puis `python3 tools/montage/controle-ours.py` "
-         f"(ce fichier est réécrit à chaque contrôle). Montage de travail : pas d'étalonnage, écrans verts non incrustés, "
-         f"son = `{M['musique']}` tel quel.\n")
+         f"(ce fichier est réécrit à chaque contrôle). Montage de travail : "
+         + ("étalonné (look commun `" + str((M.get('etalonnage') or {}).get('lut')) + "`, corrections plan par plan, grain ; voir `qa/ETALONNAGE-V4.md`), " if M.get("etalonnage") else "pas d'étalonnage, ")
+         + f"son = `{M['musique']}` tel quel.\n")
 L.append(f"- Film : `{M['sortie']}` · relecture avec repères : `{M['reperes']}` (non versionnés)")
 L.append(f"- Planches : `qa/snapshots/ours-{V}/` ({', '.join(os.path.basename(s[0]) for s in sheets)})\n")
 L.append("## Plans\n")
