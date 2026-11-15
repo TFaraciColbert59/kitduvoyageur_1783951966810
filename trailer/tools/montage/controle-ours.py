@@ -22,6 +22,10 @@ os.makedirs(SNAP, exist_ok=True)
 W, H = 320, 180
 TOTAL = M["images_total"]
 plans = M["plans"]
+# v6 et suivantes (motion design) : les bandes du cadre 2,39:1 (138 px en haut et en bas, encre verte) ne doivent compter
+# ni comme du noir ni dans les différences d'images : les mesures portent sur la fenêtre centrale 1920×804.
+BANDES = bool(M.get("surcouches"))
+CROP = "crop=1920:804:0:138," if BANDES else ""
 
 
 def sh(cmd):
@@ -48,9 +52,16 @@ probe = {"images": int(vs["nb_read_frames"]), "cadence": vs["r_frame_rate"], "ta
          "duree_format": float(pr["format"]["duration"])}
 
 # ---- images réduites ----
-raw = subprocess.run(["ffmpeg", "-v", "error", "-i", OUT, "-vf", f"scale={W}:{H}:flags=area", "-f", "rawvideo",
+HM = 134 if BANDES else H  # fenêtre 1920×804 réduite sans déformation
+raw = subprocess.run(["ffmpeg", "-v", "error", "-i", OUT, "-vf", f"{CROP}scale={W}:{HM}:flags=area", "-f", "rawvideo",
                       "-pix_fmt", "rgb24", "-"], capture_output=True, check=True).stdout
-F = np.frombuffer(raw, np.uint8).reshape(-1, H, W, 3)
+F = np.frombuffer(raw, np.uint8).reshape(-1, HM, W, 3)
+if BANDES:  # images entières pour les planches
+    raw2 = subprocess.run(["ffmpeg", "-v", "error", "-i", OUT, "-vf", f"scale={W}:{H}:flags=area", "-f", "rawvideo",
+                           "-pix_fmt", "rgb24", "-"], capture_output=True, check=True).stdout
+    G = np.frombuffer(raw2, np.uint8).reshape(-1, H, W, 3)
+else:
+    G = F
 n = F.shape[0]
 Ff = F.astype(np.float32)
 d = np.zeros(n)
@@ -90,7 +101,7 @@ for p in plans:
 cut_dupes = [r for r in cut_rows if r["diff"] < 0.5]
 
 # ---- blackdetect / ebur128 ----
-bd = subprocess.run(["ffmpeg", "-hide_banner", "-i", OUT, "-vf", "blackdetect=d=0.04:pix_th=0.10", "-an", "-f", "null", "-"],
+bd = subprocess.run(["ffmpeg", "-hide_banner", "-i", OUT, "-vf", f"{CROP}blackdetect=d=0.04:pix_th=0.10", "-an", "-f", "null", "-"],
                     capture_output=True, text=True).stderr
 blacks = re.findall(r"black_start:([\d.]+) black_end:([\d.]+) black_duration:([\d.]+)", bd)
 eb = subprocess.run(["ffmpeg", "-hide_banner", "-i", OUT, "-vn", "-af", "ebur128=peak=true", "-f", "null", "-"],
@@ -132,8 +143,8 @@ for s in range(0, len(cut_rows), PER):
         x0 = 12 + (k % cols) * (CW + 12)
         y0 = 36 + (k // cols) * (CH + 10)
         c = r["cut"]
-        sheet.paste(Image.fromarray(F[c - 1]), (x0, y0 + 26))
-        sheet.paste(Image.fromarray(F[c]), (x0 + W + 6, y0 + 26))
+        sheet.paste(Image.fromarray(G[c - 1]), (x0, y0 + 26))
+        sheet.paste(Image.fromarray(G[c]), (x0 + W + 6, y0 + 26))
         mark = "" if r["exacte"] else "  ÉCART"
         label(sheet, f'{r["de"]} → {r["vers"]}   image {c - 1} | {c}{mark}', (x0, y0 + 4), 14)
     path = os.path.join(SNAP, f"coupes-{s // PER + 1}.jpg")
@@ -152,7 +163,7 @@ for k, b in enumerate(bars):
     beat_i = next(i for i, x in enumerate(grid["beats"]) if x["frame"] == f)
     x0 = 8 + (k % cols) * (TW + 8)
     y0 = 36 + (k // cols) * (TH + 24 + 8)
-    film.paste(Image.fromarray(F[f]), (x0, y0 + 24))
+    film.paste(Image.fromarray(G[f]), (x0, y0 + 24))
     label(film, f'm{b["bar"]} · t{beat_i} · im {f} · {b["section"]} · {p["plan"]}', (x0, y0 + 3), 13)
 fpath = os.path.join(SNAP, "film.jpg")
 fq = save_jpeg(film, fpath)
@@ -212,7 +223,7 @@ if unexpected:
              "; ".join(f'{u["plan"]} image {u["image"]} (diff {fr(u["diff"], 1)}, ×{fr(u["ratio"], 1)})' for u in unexpected) + ".")
 else:
     L.append("- Sauts francs à l'intérieur des plans : aucun.")
-L.append("- blackdetect (0,04 s, seuil 0,10) : " + ("aucune plage noire." if not blacks else
+L.append(("- Mesures d'image (différences, gel, noirs) sur la fenêtre centrale 1920×804 : les bandes 2,39:1 du motion design en sont exclues ; les planches montrent l'image entière.\n" if BANDES else "") + "- blackdetect (0,04 s, seuil 0,10) : " + ("aucune plage noire." if not blacks else
          "; ".join(f"{a}–{b} s ({c} s)" for a, b, c in blacks) + "."))
 L.append(f"- ebur128 : {fr(lufs, 1)} LUFS intégré, LRA {fr(lra, 1)} LU, crête vraie {fr(tp, 1)} dBTP.")
 L.append("- Planches : " + ", ".join(f"{os.path.basename(s[0])} {s[1] // 1000} Ko" for s in sheets) + ".")

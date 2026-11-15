@@ -79,7 +79,21 @@ export function correctionPlan(e, trailer) {
 }
 
 // filter_complex complet : [0:v] → [v]. matrice : "bt601" ou "bt709" (matrice YUV du segment d'entrée).
-export function filtreEtalonnage(edl, plan, { matrice = "bt709", trailer = process.cwd(), seed = 1, largeur = 1920, hauteur = 1080 } = {}) {
+// surcouches (facultatif, v6) : { avant: "[1:v]", apres: "[2:v]" } étiquettes d'entrées RGBA (PNG avec transparence)
+// posées AVANT le grain (après le look commun et l'adoucissement : elles prennent le grain du film) et APRÈS le grain
+// (bandes du cadre, couleur exacte). Sans ce paramètre, la chaîne est identique à celle des listes v4.
+function poser(entree, label, sortie) {
+  // RGBA (sRGB plein, alpha non prémultiplié) → couleur en YUV 4:4:4 16 bits Rec.709 limité + masque = alpha sur les trois
+  // plans, puis fusion maskedmerge en 16 bits : base + (surcouche − base) × alpha (overlay de ffmpeg 6.0 n'a pas de 4:4:4
+  // plus de 8 bits). Horloges remises à 1/24 (sinon framesync double des images : pts 0,042 contre 0,0417).
+  return [`${label}settb=1/24,setpts=N,format=rgba,split[${sortie}c][${sortie}x]`,
+    `[${sortie}c]scale=out_color_matrix=bt709:out_range=tv:flags=accurate_rnd+full_chroma_int,format=yuv444p16le[${sortie}o]`,
+    `[${sortie}x]alphaextract,format=gray16le,mergeplanes=0x000000:yuv444p16le[${sortie}m]`,
+    `[${entree}]settb=1/24,setpts=N,format=yuv444p16le[${sortie}b]`,
+    `[${sortie}b][${sortie}o][${sortie}m]maskedmerge[${sortie}]`];
+}
+
+export function filtreEtalonnage(edl, plan, { matrice = "bt709", trailer = process.cwd(), seed = 1, largeur = 1920, hauteur = 1080, surcouches = null } = {}) {
   const G = edl.etalonnage ?? {};
   const e = plan.etalonnage ?? {};
   const parts = [];
@@ -101,8 +115,13 @@ export function filtreEtalonnage(edl, plan, { matrice = "bt709", trailer = proce
     tail.push(`unsharp=lx=${sz}:ly=${sz}:la=${r4(-soft)}:cx=5:cy=5:ca=${r4(-Math.min(soft, 0.5))}`);
   }
   const gr = G.grain ? (G.grain.force ?? 1) * (e.grain ?? 1) : 0;
+  const av = surcouches?.avant, ap = surcouches?.apres;
+  const setp = "setparams=range=tv:colorspace=bt709:color_primaries=bt709:color_trc=bt709";
   if (gr > 0) {
-    parts.push(`[c]${tail.join(",")}[d]`);
+    if (av) {
+      parts.push(`[c]${tail.join(",")}[d0]`);
+      parts.push(...poser("d0", av, "d"));
+    } else parts.push(`[c]${tail.join(",")}[d]`);
     // Couche de grain : gris moyen + bruit gaussien temporel, légèrement flouté (grain plus fin qu'un pixel bruité),
     // fusionnée en overlay sur la luminance seule.
     const amp = Math.max(1, Math.round(gr * 6));
@@ -110,9 +129,18 @@ export function filtreEtalonnage(edl, plan, { matrice = "bt709", trailer = proce
     parts.push(`color=c=0x808080:s=${largeur}x${hauteur}:r=24,format=yuv444p,lutyuv=y=128:u=128:v=128,noise=c0s=${amp}:c0f=t:all_seed=${seed},format=yuv444p16le` +
       (sig > 0 ? `,gblur=sigma=${r4(sig)}:planes=1` : "") + `[g]`);
     parts.push(`[d][g]blend=c0_mode=overlay:c1_mode=normal:c1_opacity=1:c2_mode=normal:c2_opacity=1:shortest=1[e]`);
-    parts.push(`[e]format=yuv420p,setparams=range=tv:colorspace=bt709:color_primaries=bt709:color_trc=bt709[v]`);
+    if (ap) {
+      parts.push(...poser("e", ap, "f"));
+      parts.push(`[f]format=yuv420p,${setp}[v]`);
+    } else parts.push(`[e]format=yuv420p,${setp}[v]`);
+  } else if (av || ap) {
+    parts.push(`[c]${tail.join(",")}[d0]`);
+    let cur = "d0";
+    if (av) { parts.push(...poser(cur, av, "d1")); cur = "d1"; }
+    if (ap) { parts.push(...poser(cur, ap, "d2")); cur = "d2"; }
+    parts.push(`[${cur}]format=yuv420p,${setp}[v]`);
   } else {
-    tail.push("format=yuv420p", "setparams=range=tv:colorspace=bt709:color_primaries=bt709:color_trc=bt709");
+    tail.push("format=yuv420p", setp);
     parts.push(`[c]${tail.join(",")}[v]`);
   }
   return parts.join(";");

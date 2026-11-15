@@ -13,6 +13,16 @@
 // pour les écrans incrustés) et « recadrage » ({ zoom, cx, cy } : zoom ≥ 1 sur l'image entière, centre en pixels
 // de la source 1920×1080, remise à l'échelle Lanczos).
 //
+// Motion design (à partir de la v6, facultatif ; sans ces champs, rien ne change) :
+//   - plan.decalage : décalage vertical de l'image en pixels (> 0 vers le bas), pour garder un visage ou un écran
+//     dans la fenêtre 2,39:1 ; la bande découverte (|decalage| ≤ 138 px) est cachée par les bandes du cadre.
+//   - plan.source = "rendu" + plan.fichier (relatif à trailer/) + plan.entree : le plan est pris dans un rendu externe
+//     (par ex. la fin refaite à 24 i/s dans motion-lab), image entree … entree + n − 1, comme une vidéo.
+//   - edl.surcouches = { avant: "<dossier>", apres: "<dossier>" } : images PNG avec transparence nommées par image du
+//     film (fNNNN.png, NNNN = 0 … images_total − 1 ; une image absente = rien). « avant » est posé après le look commun et
+//     avant le grain (le motion design prend le grain du film), « apres » après le grain (bandes du cadre, couleur exacte).
+//     Voir tools/montage/etalonnage.mjs (paramètre surcouches).
+//
 // Coupes : l'image de coupe du temps n est beats[n].frame de la grille (champ temps_musique de la liste).
 // Un plan dure frame(debut + temps) − frame(debut) images ; un plan sans « temps » va jusqu'à images_total.
 //
@@ -123,13 +133,21 @@ function cropFilter(r) {
     "scale=1920:1080:flags=lanczos+accurate_rnd+full_chroma_int"];
 }
 
-function cutVideo(src, a, count, n, out, { reverse = false, speed = null, recadrage = null } = {}) {
+function decalageFilter(dy) {
+  if (!dy) return [];
+  const d = Math.round(Number(dy));
+  if (!(Math.abs(d) <= 138)) throw new Error(`décalage ${dy} invalide (|d| ≤ 138)`);
+  // translation verticale sans mise à l'échelle : on ajoute |d| lignes d'un côté et on recoupe à 1080
+  return [`pad=1920:${1080 + Math.abs(d)}:0:${d > 0 ? d : 0}:color=black`, `crop=1920:1080:0:${d > 0 ? 0 : -d}`];
+}
+
+function cutVideo(src, a, count, n, out, { reverse = false, speed = null, recadrage = null, decalage = 0 } = {}) {
   const v = speed ?? (count === n ? 1 : (count - 1) / (n - 1));
   const chain = [`select='between(n\\,${a}\\,${a + count - 1})'`, "setpts=N/(24*TB)"];
   if (reverse) chain.push("reverse", "setpts=N/(24*TB)");
   if (v !== 1) chain.push(retimeFilter(v));
   chain.push(...cropFilter(recadrage));
-  chain.push("scale=1920:1080:flags=lanczos", "setsar=1", "format=yuv420p", "settb=1/24", "setpts=N");
+  chain.push("scale=1920:1080:flags=lanczos", ...decalageFilter(decalage), "setsar=1", "format=yuv420p", "settb=1/24", "setpts=N");
   ffmpeg(["-i", src, "-an", "-vf", chain.join(","), "-frames:v", String(n), "-fps_mode", "passthrough", "-c:v", "ffv1", "-level", "3", out]);
   return v;
 }
@@ -187,12 +205,27 @@ function buildVideo(p, out) {
     p.entreeReculee = { de: entree, a: e2 };
     entree = e2;
   }
-  const v = cutVideo(src, entree, count, p.n, out, { speed: vitesse === 1 ? null : vitesse, recadrage: p.recadrage });
+  const v = cutVideo(src, entree, count, p.n, out, { speed: vitesse === 1 ? null : vitesse, recadrage: p.recadrage, decalage: p.decalage });
   if (p.recadrage) p.remarques.push(`recadré ×${p.recadrage.zoom} centré (${p.recadrage.cx}, ${p.recadrage.cy})`);
+  if (p.decalage) p.remarques.push(`décalé de ${p.decalage > 0 ? "+" : ""}${p.decalage} px vertical (cadre 2,39:1)`);
   p.sourceUsed = rel(src);
   p.framesUsed = [entree, entree + count - 1];
   p.vitesseReelle = v;
   if (vitesse !== 1) p.remarques.push(`accéléré ×${vitesse} (${count} images sources → ${p.n}, filtre framerate : mélange linéaire des deux images voisines)`);
+}
+
+// ---- plans « rendu » (rendu externe, v6) ----
+function buildRendu(p, out) {
+  const src = resolve(TRAILER, p.fichier);
+  if (!existsSync(src)) throw new Error(`${p.plan} : rendu ${p.fichier} absent`);
+  const m = countFrames(src);
+  const a = p.entree ?? 0;
+  if (a + p.n > m.frames) throw new Error(`${p.plan} : ${p.fichier} a ${m.frames} images, il en faut ${a + p.n}`);
+  cutVideo(src, a, p.n, p.n, out, { decalage: p.decalage });
+  p.sourceUsed = rel(src);
+  p.framesUsed = [a, a + p.n - 1];
+  p.vitesseReelle = 1;
+  p.remarques.push("rendu externe");
 }
 
 // ---- plans « code » ----
@@ -297,7 +330,7 @@ for (const p of plans) {
   if (args.includes("--reutiliser-segments") && existsSync(out) && existsSync(join(TMP, "manifeste.json"))) {
     const old = JSON.parse(readFileSync(join(TMP, "manifeste.json"), "utf8")).plans.find((q) => q.plan === p.plan && q.n === p.n);
     // un plan qui lit un autre dossier ou qui est recadré n'est jamais réutilisé
-    if (old && !p.dossier && !p.recadrage && countFrames(out).frames === p.n) {
+    if (old && !p.dossier && !p.recadrage && !p.decalage && p.source !== "rendu" && countFrames(out).frames === p.n) {
       Object.assign(p, { sourceUsed: old.source, framesUsed: old.images_sources, vitesseReelle: old.vitesse_reelle, provisoire: old.provisoire, remarques: old.remarques, sourceFrames: old.source_images, entreeReculee: old.entree_reculee });
       segs.push(out);
       console.log(`${p.plan.padEnd(7)} segment réutilisé`);
@@ -305,6 +338,7 @@ for (const p of plans) {
     }
   }
   if (p.source === "ouverture") buildCosmos(p, out);
+  else if (p.source === "rendu") buildRendu(p, out);
   else if (p.source === "code") (filmOk ? codaFromFilm : codaProvisoire)(p, out);
   else buildVideo(p, out);
   const got = countFrames(out).frames;
@@ -318,18 +352,49 @@ const GRADE = etalonnageActif(edl);
 if (GRADE) {
   const SEG_E = join(TMP, "segments-etalonnes");
   mkdirSync(SEG_E, { recursive: true });
+  // Surcouches (v6) : pour chaque plan, une suite locale f0000…f(n−1).png de liens vers les images du film présentes,
+  // et une image transparente partagée ailleurs. Un plan sans aucune image de surcouche n'en reçoit pas.
+  const SUR = edl.surcouches ?? null;
+  const VIDE = join(TMP, "surcouche-vide.png");
+  if (SUR && !existsSync(VIDE)) ffmpeg(["-f", "lavfi", "-i", "color=c=black@0:s=1920x1080,format=rgba", "-frames:v", "1", VIDE]);
+  const suiteSurcouche = (p, cle) => {
+    if (!SUR?.[cle]) return null;
+    const dir = resolve(TRAILER, SUR[cle]);
+    const have = [];
+    for (let f = p.start; f < p.end; f++) if (existsSync(join(dir, `f${String(f).padStart(4, "0")}.png`))) have.push(f);
+    if (!have.length) return null;
+    const loc = join(TMP, "surcouches", `${String(p.idx).padStart(2, "0")}-${p.plan}-${cle}`);
+    rmSync(loc, { recursive: true, force: true });
+    mkdirSync(loc, { recursive: true });
+    for (let f = p.start; f < p.end; f++) {
+      const srcf = join(dir, `f${String(f).padStart(4, "0")}.png`);
+      symlinkSync(existsSync(srcf) ? srcf : VIDE, join(loc, `f${String(f - p.start).padStart(4, "0")}.png`));
+    }
+    p.surcouches = p.surcouches ?? {};
+    p.surcouches[cle] = [have[0], have.at(-1), have.length];
+    return join(loc, "f%04d.png");
+  };
   for (let i = 0; i < plans.length; i++) {
     const p = plans[i];
     const src = segs[i];
     const cs = run("ffprobe", ["-v", "error", "-select_streams", "v:0", "-show_entries", "stream=color_space", "-of", "csv=p=0", src]).trim();
     p.matrice = matriceDe(cs);
-    const fc = filtreEtalonnage(edl, edl.plans[i], { matrice: p.matrice, trailer: TRAILER, seed: i + 1 });
+    const inputs = ["-i", src];
+    const sc = {};
+    for (const cle of ["avant", "apres"]) {
+      const pat = suiteSurcouche(p, cle);
+      if (pat) {
+        inputs.push("-framerate", "24", "-i", pat);
+        sc[cle] = `[${inputs.filter((x) => x === "-i").length - 1}:v]`;
+      }
+    }
+    const fc = filtreEtalonnage(edl, edl.plans[i], { matrice: p.matrice, trailer: TRAILER, seed: i + 1, surcouches: Object.keys(sc).length ? sc : null });
     const out = join(SEG_E, basename(src));
-    ffmpeg(["-i", src, "-filter_complex", fc, "-map", "[v]", "-frames:v", String(p.n), "-fps_mode", "passthrough", "-c:v", "ffv1", "-level", "3", out]);
+    ffmpeg([...inputs, "-filter_complex", fc, "-map", "[v]", "-frames:v", String(p.n), "-fps_mode", "passthrough", "-c:v", "ffv1", "-level", "3", out]);
     const got = countFrames(out).frames;
     if (got !== p.n) throw new Error(`${p.plan} étalonné : ${got} images au lieu de ${p.n}`);
     segs[i] = out;
-    console.log(`${p.plan.padEnd(7)} étalonné (entrée ${p.matrice}${edl.plans[i].etalonnage ? ", correction du plan" : ""})`);
+    console.log(`${p.plan.padEnd(7)} étalonné (entrée ${p.matrice}${edl.plans[i].etalonnage ? ", correction du plan" : ""}${p.surcouches ? ", surcouches " + Object.keys(p.surcouches).join("+") : ""})`);
   }
 }
 
@@ -373,10 +438,11 @@ if (!args.includes("--sans-reperes")) {
 // ---- manifeste ----
 writeFileSync(join(TMP, "manifeste.json"), JSON.stringify({
   edl: rel(EDL_PATH), version: VERSION, ips: FPS, images_total: TOTAL, sortie: rel(OUT), reperes: rel(OUT_REP),
-  musique: rel(MUSIC), rendu_film: filmOk, etalonnage: edl.etalonnage ?? null,
+  musique: rel(MUSIC), rendu_film: filmOk, etalonnage: edl.etalonnage ?? null, ...(edl.surcouches ? { surcouches: edl.surcouches } : {}),
   plans: plans.map((p) => ({ plan: p.plan, section: p.section, debut: p.debut, temps: p.temps, start: p.start, end: p.end, n: p.n,
     source: p.sourceUsed, images_sources: p.framesUsed, vitesse_liste: p.vitesse ?? 1, vitesse_reelle: p.vitesseReelle,
     provisoire: p.provisoire, entree_reculee: p.entreeReculee ?? null, source_images: p.sourceFrames ?? null, remarques: p.remarques,
-    ...(GRADE ? { etalonnage: edl.plans[p.idx].etalonnage ?? null, matrice_entree: p.matrice } : {}) })),
+    ...(GRADE ? { etalonnage: edl.plans[p.idx].etalonnage ?? null, matrice_entree: p.matrice } : {}),
+    ...(p.decalage ? { decalage: p.decalage } : {}), ...(p.surcouches ? { surcouches: p.surcouches } : {}) })),
 }, null, 1));
 console.log("→ " + rel(join(TMP, "manifeste.json")));
