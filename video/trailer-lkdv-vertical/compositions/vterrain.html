@@ -1,0 +1,131 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      font-family: "Inter", sans-serif;
+      background: #17402c;
+    }
+    .vt-bg {
+      position: absolute;
+      inset: 0;
+    }
+    .vt-bg img {
+      width: 1080px;
+      height: 1920px;
+      object-fit: cover;
+    }
+    #vt-shade {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(11, 31, 23, 0.78) 0%, rgba(11, 31, 23, 0.45) 32%, rgba(11, 31, 23, 0.15) 100%);
+    }
+    #vt-title {
+      position: absolute;
+      left: 120px;
+      top: 300px;
+      color: #faf8f5;
+      font-weight: 800;
+      font-size: 86px;
+      line-height: 1.02;
+      letter-spacing: -0.03em;
+    }
+    #vt-title .w {
+      display: inline-block;
+    }
+    #vt-title em {
+      font-family: "EB Garamond", Georgia, serif;
+      font-style: italic;
+      font-weight: 500;
+    }
+    .vt-cap {
+      position: absolute;
+      left: 124px;
+      top: 510px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 30px;
+      border-radius: 999px;
+      background: rgba(250, 248, 245, 0.9);
+      backdrop-filter: blur(24px) saturate(1.5);
+      color: #17402c;
+      font-size: 36px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .vt-cap i {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #5b7f55;
+    }
+    #vt-phone {
+      position: absolute;
+      left: 250px;
+      top: 630px;
+      width: 580px;
+      height: 1240px;
+      border-radius: 88px;
+      background: #0b1f17;
+      padding: 20px;
+      box-shadow: 0 40px 90px rgba(11, 31, 23, 0.55), inset 0 0 0 2px rgba(255, 255, 255, 0.12);
+    }
+    #vt-screen {
+      position: relative;
+      width: 540px;
+      height: 1200px;
+      border-radius: 70px;
+      overflow: hidden;
+      background: #faf8f5;
+    }
+    .vt-shot {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 540px;
+      height: 1200px;
+      object-fit: cover;
+      object-position: top;
+    }
+  </style>
+  <div id="root" data-composition-id="vterrain" data-width="1080" data-height="1920">
+    <div class="vt-bg" id="vt-bg1"><img src="assets/img/adventure-hiking.jpg" alt="" /></div>
+    <div id="vt-shade"></div>
+    <div id="vt-title"><span class="w">Sur</span> <span class="w">le</span> <span class="w">sentier,</span><br /><span class="w"><em>même</em></span> <span class="w">sans</span> <span class="w">réseau</span></div>
+    <div class="vt-cap" id="vt-cap1"><i></i>Randonnée suivie en direct</div>
+    <div class="vt-cap" id="vt-cap2"><i></i>Refuges et points d’eau</div>
+    <div class="vt-cap" id="vt-cap3"><i></i>Zone téléchargée hors ligne</div>
+    <div id="vt-phone">
+      <div id="vt-screen">
+        <img class="vt-shot" id="vt-s1" src="assets/shots/rando-live.png" alt="" />
+        <img class="vt-shot" id="vt-s2" src="assets/shots/refuge.png" alt="" />
+        <img class="vt-shot" id="vt-s3" src="assets/shots/hors-ligne.png" alt="" />
+      </div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo("#vt-bg1", { x: 700, filter: "blur(18px)" }, { x: 0, filter: "blur(0px)", duration: 0.32, ease: "expo.out" }, 0);
+      tl.fromTo("#vt-phone", { y: 1300 }, { y: 0, duration: 0.65, ease: "expo.out" }, 0.1);
+      tl.fromTo("#vt-title .w", { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.13, stagger: 0.07 }, 0.25);
+      const shotAt = [0, 1.88, 3.75];
+      shotAt.forEach((t, i) => {
+        if (i > 0) tl.fromTo("#vt-s" + (i + 1), { y: 1200 }, { y: 0, duration: 0.4, ease: "expo.out" }, t - 0.1);
+      });
+      const bgAt = [0];
+      bgAt.forEach((t, i) => {
+        if (i > 0) tl.fromTo("#vt-bg" + (i + 1), { opacity: 0 }, { opacity: 1, duration: 0.3, ease: "power2.inOut" }, t);
+      });
+      const capAt = [0.55, 1.88, 3.75];
+      capAt.forEach((t, i) => {
+        tl.fromTo("#vt-cap" + (i + 1), { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.18 }, t);
+        if (i < capAt.length - 1) tl.to("#vt-cap" + (i + 1), { opacity: 0, filter: "blur(6px)", duration: 0.13 }, capAt[i + 1] - 0.15);
+      });
+
+      window.__timelines["vterrain"] = tl;
+    })();
+  </script>
+</template>

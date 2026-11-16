@@ -48,3 +48,8 @@ Les positions des étapes (`compositions/carte.html`, `groupe.html`) sont la pro
 - Effets sonores : Pixabay Content License (fournis avec le skill `media-use`).
 - Imagerie satellite : © Esri, Maxar, Earthstar Geographics (crédit affiché sur la carte).
 - Three.js r180 (MIT), GSAP 3.12 (licence GreenSock standard « no charge »), HyperFrames (Apache-2.0).
+
+## Versions livrées
+
+- `renders/trailer-lkdv-16x9.mp4` : son normalisé à −14 LUFS par `video/scripts/normalize-audio.sh` (le rendu brut `trailer-lkdv.mp4` mesurait −10,6 LUFS).
+- Version verticale, teaser : `video/trailer-lkdv-vertical/`.

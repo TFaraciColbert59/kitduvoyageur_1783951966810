@@ -1,0 +1,172 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      font-family: "Inter", sans-serif;
+      background: #17402c;
+    }
+    #r-world {
+      position: absolute;
+      inset: 0;
+    }
+    #r-still,
+    #r-video {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1080px;
+      height: 1920px;
+      object-fit: cover;
+    }
+    #r-route {
+      position: absolute;
+      inset: 0;
+    }
+    .r-pin circle.o {
+      fill: #17402c;
+      stroke: #faf8f5;
+      stroke-width: 5;
+    }
+    .r-pin text {
+      font: 800 30px "Inter", sans-serif;
+      fill: #faf8f5;
+      text-anchor: middle;
+      dominant-baseline: central;
+    }
+    .r-lab {
+      position: absolute;
+      color: #faf8f5;
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      text-shadow: 0 2px 10px rgba(11, 31, 23, 0.9), 0 0 3px rgba(11, 31, 23, 0.9);
+    }
+    #r-chips {
+      position: absolute;
+      left: 100px;
+      right: 140px;
+      top: 1172px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .r-chip {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 24px;
+      border-radius: 999px;
+      background: rgba(250, 248, 245, 0.88);
+      backdrop-filter: blur(24px) saturate(1.5);
+      box-shadow: 0 10px 28px rgba(11, 31, 23, 0.25);
+      font-size: 31px;
+      font-weight: 600;
+      color: #1f2a24;
+      white-space: nowrap;
+    }
+    .r-chip i {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #17402c;
+    }
+    #r-title {
+      position: absolute;
+      left: 120px;
+      top: 300px;
+      color: #faf8f5;
+      font-weight: 800;
+      font-size: 104px;
+      line-height: 1.02;
+      letter-spacing: -0.025em;
+      text-shadow: 0 6px 34px rgba(11, 31, 23, 0.55);
+    }
+    #r-title .w {
+      display: inline-block;
+    }
+    #r-title em {
+      font-family: "EB Garamond", Georgia, serif;
+      font-style: italic;
+      font-weight: 500;
+    }
+    #r-stat {
+      position: absolute;
+      left: 120px;
+      top: 560px;
+      padding: 22px 36px;
+      border-radius: 999px;
+      background: rgba(250, 248, 245, 0.9);
+      backdrop-filter: blur(24px) saturate(1.5);
+      box-shadow: 0 12px 30px rgba(11, 31, 23, 0.3);
+      font-size: 50px;
+      font-weight: 800;
+      color: #17402c;
+    }
+    #r-stat small {
+      font-size: 36px;
+      font-weight: 600;
+      color: #4a5a51;
+      margin-left: 8px;
+    }
+    #r-credit {
+      position: absolute;
+      right: 192px;
+      top: 1210px;
+      padding: 4px 12px;
+      border-radius: 8px;
+      background: rgba(11, 31, 23, 0.55);
+      color: #faf8f5;
+      font-size: 16px;
+    }
+  </style>
+  <div id="root" data-composition-id="vcarte" data-width="1080" data-height="1920">
+    <div id="r-world">
+      <img id="r-still" src="assets/map/gavarnie-v-end.jpg" alt="" />
+      <video id="r-video" class="clip" data-start="0" data-duration="5.0" data-media-start="0.5" data-track-index="0" src="assets/map/gavarnie-v.mp4" muted playsinline></video>
+      <svg id="r-route" viewBox="0 0 1080 1920">
+        <path id="r-line-halo" d="M523 980 L449 1135 L165 780 L928 1022" fill="none" stroke="rgba(250,248,245,0.75)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" pathLength="100" stroke-dasharray="100 120" stroke-dashoffset="110" />
+        <path id="r-line" d="M523 980 L449 1135 L165 780 L928 1022" fill="none" stroke="#17402c" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" pathLength="100" stroke-dasharray="100 120" stroke-dashoffset="110" />
+        <g class="r-pin" id="r-p0" transform="translate(523 980)"><circle class="o" r="28" /><text>D</text></g>
+        <g class="r-pin" id="r-p1" transform="translate(449 1135)"><circle class="o" r="28" /><text>1</text></g>
+        <g class="r-pin" id="r-p2" transform="translate(165 780)"><circle class="o" r="28" /><text>2</text></g>
+        <g class="r-pin" id="r-p3" transform="translate(928 1022)"><circle class="o" r="28" /><text>A</text></g>
+      </svg>
+    </div>
+    <div class="r-lab" id="r-l0" style="left: 323px; top: 958px; width: 160px; text-align: right">Gavarnie</div>
+    <div class="r-lab" id="r-l1" style="left: 269px; top: 1172px; width: 360px; text-align: center">Cabane des Sarradets</div>
+    <div class="r-lab" id="r-l2" style="left: 205px; top: 756px; width: 420px">Refuge de Bayssellance</div>
+    <div class="r-lab" id="r-l3" style="left: 520px; top: 1062px; width: 380px; text-align: right">Cirque de Troumouse</div>
+    <div id="r-title"><span class="w">Un</span> <span class="w">parcours</span><br /><span class="w">sur</span> <span class="w">de</span> <span class="w"><em>vrais</em></span> <span class="w">lieux</span></div>
+    <div id="r-stat">D+ 2 750 m<small>44 km</small></div>
+    <div id="r-credit" data-layout-ignore>Imagerie © Esri, Maxar, Earthstar Geographics</div>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      // Ouverture en iris depuis le bouton cliqué (bas gauche du panneau).
+      tl.fromTo("#r-world", { clipPath: "circle(0px at 540px 1100px)" }, { clipPath: "circle(2300px at 540px 1100px)", duration: 0.5, ease: "power3.out" }, 0);
+
+      // Titre pendant la plongée.
+      tl.fromTo("#r-title .w", { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.14, stagger: 0.07 }, 0.6);
+
+      // La caméra se pose à 3,13 s (local) ; le tracé se dessine d'étape en étape.
+      const T0 = 2.6;
+      tl.fromTo(["#r-line", "#r-line-halo"], { attr: { "stroke-dashoffset": 110 } }, { attr: { "stroke-dashoffset": 0 }, duration: 1.3, ease: "power2.inOut" }, T0 + 0.15);
+      const beat = 0.469;
+      const pinT = [T0 + 0.05, T0 + 0.05 + beat, T0 + 0.05 + 2 * beat, T0 + 0.05 + 3 * beat];
+      ["#r-p0", "#r-p1", "#r-p2", "#r-p3"].forEach((id, i) => {
+        tl.fromTo(id + " circle", { attr: { r: 0 } }, { attr: { r: 28 }, duration: 0.35, ease: "back.out(1.8)" }, pinT[i]);
+        tl.fromTo(id + " text", { opacity: 0 }, { opacity: 1, duration: 0.15 }, pinT[i] + 0.12);
+        tl.fromTo("#r-l" + i, { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.25 }, pinT[i] + 0.08);
+      });
+      tl.fromTo("#r-stat", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(1.6)" }, 4.65);
+      tl.fromTo("#r-credit", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 0.6);
+
+      // Sortie : le titre s'efface avant l'arrivée du panneau « Nous ».
+      tl.to(["#r-title", "#r-stat", ".r-lab"], { opacity: 0, filter: "blur(8px)", duration: 0.2 }, 5.1);
+      window.__timelines["vcarte"] = tl;
+    })();
+  </script>
+</template>

@@ -1,7 +1,7 @@
 # Plan motion & vidéo LKDV
 
 > Rédigé le 16/11/2026, après le trailer « Une phrase suffit » (`video/trailer-lkdv`, PR #163).
-> Statut : **proposition**, rien n'est lancé au-delà de l'outillage installé. Budget 0 €.
+> Statut au 16/11/2026 : lot 1 en partie fait (`video/MOTION.md`, `video/brand.md`, scripts `video/scripts/`) ; lot 2 fait (version 9:16, teaser, son à −14 LUFS, textes `video/PUBLICATION.md`). Les lots 3 à 5 attendent les points du § 3. Budget 0 €.
 
 ## 1. Ce que j'ai appris
 
