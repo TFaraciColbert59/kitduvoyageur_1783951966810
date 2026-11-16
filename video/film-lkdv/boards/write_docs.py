@@ -37,8 +37,8 @@ def md():
            "music: « Ambient Uplift » (Soundrider/Dope, CC BY 3.0), 128 BPM, lue à partir de 15,015 s : la piste s'ouvre à 11,25 s, quand le bouton « Préparer mon aventure » devient le globe ; demi-mesure de silence avant le lever de soleil",
            "---", "",
            "# Storyboard FINAL — « Le W » (60 s)", "",
-           "Une mesure = 1,875 s ; 32 mesures, 23 plans. Un seul parcours suivi de bout en bout : le post de Maya → Léa prépare le W avec Noé et Sam → "
-           "le voyage vécu à trois → Kenji, à Osaka, reprend le kit. Personnages, prix et chiffres fictifs, signalés à l'écran (« Données illustratives »). "
+           "Une mesure = 1,875 s ; 32 mesures, 23 plans. Uniquement des écrans réels, capturés en production avec le compte démo de Léa Fontaine "
+           "(captures dans `assets/app/`, enregistrements dans `assets/app/video/`). Le voyage du W a été réellement créé dans le Compas. "
            "`realite` : reel (écran capturé), capture (fonction réelle, capture à refaire), partiel (fonction en partie là), vision (pas encore dans l'app, marquée « Bientôt » ou « Vue imaginée »). "
            "Critique appliquée : `boards/CRITIQUE.md`.", ""]
     act = None
@@ -124,10 +124,9 @@ def board(inline):
 </head>
 <body>
 <header>
-  <h1>« Le W » — storyboard final, <em>60 secondes</em></h1>
-  <p>Un seul voyage suivi dans l'application, du post qui donne envie au kit qui repart avec quelqu'un d'autre. Léa voit le carnet de Maya (Québec), prépare le W de Torres del Paine avec Noé et Sam, le vit en direct, et son kit repart avec Kenji, à Osaka. 23 plans sur 32 mesures de « Ambient Uplift » (128 BPM, une mesure = 1,875 s).</p>
-  <p>Fils rouges : un objet-héros, le coupe-vent (manquant → occasion → rafales → « essentiel » → repris) ; la rime du pouce (Léa touche un post, Kenji touche le sien) ; la messagerie, discrète mais présente du début à la fin. La piste s'ouvre à 11,25 s quand le bouton devient le globe ; deux temps forts : le sac 3D (20,6 s) et le lever de soleil à neuf (33,75 s).</p>
-  <p>Images de travail : écran réel quand une capture existe ; sinon panneau reconstruit avec les libellés de l'application, ou emplacement hachuré « Capture à faire ». Personnages, prix et chiffres fictifs.</p>
+  <h1>« Le W » — storyboard final, <em>écrans réels</em></h1>
+  <p>Chaque image est un vrai écran de LKDV, capturé le 16/11/2026 en production avec le compte de démonstration de Léa Fontaine. Le voyage « Randonnée · Torres del Paine » a été créé pour de vrai dans le Compas avec la phrase du plan 05 (5 jours, 61,5 km, 3 personnes, 22–26 novembre), et le message du plan 04 réellement envoyé.</p>
+  <p>23 plans sur 32 mesures de « Ambient Uplift » (128 BPM). La piste s'ouvre à 11,25 s quand le Compas part vers la Patagonie ; deux temps forts : le sac 3D (20,6 s) et le lever de soleil (33,75 s). Les conversations privées sont floutées.</p>
 </header>
 <main>
 {chr(10).join(parts)}

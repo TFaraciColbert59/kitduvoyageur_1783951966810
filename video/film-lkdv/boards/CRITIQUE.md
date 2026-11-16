@@ -50,3 +50,11 @@ Relecture indépendante du v2 « Le W » (26 plans), le 16/11/2026. Chaque point
 2. Carnets de démo « Le W » (Maya ; Léa, Noé, Sam).
 3. Photos libres : Torres del Paine au lever (post de Maya, et à neuf), sac au dos de Léa, Kenji sur un sentier japonais, photo produit du coupe-vent.
 4. Adresse du site et présence sur les stores confirmées.
+
+## v4 — écrans réels uniquement (demande de Tony, 16/11/2026)
+
+- Toutes les images viennent de la production, compte démo de Léa Fontaine (`/api/demo-login` sur le déploiement Vercel ; `lekitduvoyageur.fr` ne sert pas la connexion démo).
+- Créé pour le film, sur ce compte : le voyage « Randonnée · Torres del Paine » (Compas, phrase « Le W de Torres del Paine, 5 jours à 3 en refuge, fin novembre ») et un message à Camille Rochat.
+- Les personnages inventés (Maya, Noé, Sam, Kenji) disparaissent : on suit Léa et les vrais contenus du compte (carnet du Tour du Mont-Blanc, club « Explorateurs du Japon », sorties du Club Alpin Pyrénées).
+- Floutées : deux conversations privées de la liste de la messagerie.
+- Défauts vus en production pendant la capture : le coloris « Nuit » du Kit Studio renvoie « Non enregistré · réessaie » ; les vignettes des modules et des coloris restent blanches ; un post de test (« ezfererfef ») et un club de test (« zefezfze ») sont visibles dans la Communauté ; la ville de base d'Explorer suit l'IP (États-Unis) plutôt que la position.

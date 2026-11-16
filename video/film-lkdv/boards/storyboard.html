@@ -33,10 +33,9 @@
 </head>
 <body>
 <header>
-  <h1>« Le W » — storyboard final, <em>60 secondes</em></h1>
-  <p>Un seul voyage suivi dans l'application, du post qui donne envie au kit qui repart avec quelqu'un d'autre. Léa voit le carnet de Maya (Québec), prépare le W de Torres del Paine avec Noé et Sam, le vit en direct, et son kit repart avec Kenji, à Osaka. 23 plans sur 32 mesures de « Ambient Uplift » (128 BPM, une mesure = 1,875 s).</p>
-  <p>Fils rouges : un objet-héros, le coupe-vent (manquant → occasion → rafales → « essentiel » → repris) ; la rime du pouce (Léa touche un post, Kenji touche le sien) ; la messagerie, discrète mais présente du début à la fin. La piste s'ouvre à 11,25 s quand le bouton devient le globe ; deux temps forts : le sac 3D (20,6 s) et le lever de soleil à neuf (33,75 s).</p>
-  <p>Images de travail : écran réel quand une capture existe ; sinon panneau reconstruit avec les libellés de l'application, ou emplacement hachuré « Capture à faire ». Personnages, prix et chiffres fictifs.</p>
+  <h1>« Le W » — storyboard final, <em>écrans réels</em></h1>
+  <p>Chaque image est un vrai écran de LKDV, capturé le 16/11/2026 en production avec le compte de démonstration de Léa Fontaine. Le voyage « Randonnée · Torres del Paine » a été créé pour de vrai dans le Compas avec la phrase du plan 05 (5 jours, 61,5 km, 3 personnes, 22–26 novembre), et le message du plan 04 réellement envoyé.</p>
+  <p>23 plans sur 32 mesures de « Ambient Uplift » (128 BPM). La piste s'ouvre à 11,25 s quand le Compas part vers la Patagonie ; deux temps forts : le sac 3D (20,6 s) et le lever de soleil (33,75 s). Les conversations privées sont floutées.</p>
 </header>
 <main>
 <section class="act">I · L&#x27;étincelle</section>
@@ -44,160 +43,160 @@
   <img src="stills/01-le-fil.png" alt="" />
   <div class="title">01: Le fil <span class="tag ok">réel</span></div>
   <div class="time">0 à 3,75 s</div>
-  <p class="words">Image 0 complète : le titre est déjà posé ; un seul fil vertical de la Communauté défile lentement, le post de Maya s&#x27;arrête au centre, les voisins coupés en haut et en bas.</p>
-  <p class="meta"><b>À lire</b> « Là où la carte se termine. » (0-3,5 s)<br /><b>Son</b> piste calme ; tic de défilement<br /><b>Source</b> style des posts : `docs/audit/communaute-v2-2026-11-08/**` ; photo du post à remplacer par une photo libre des Torres</p>
+  <p class="words">Image 0 complète : le titre est posé ; le fil réel de la Communauté défile (Anna Kovacs, Antoine Chastel, Chloé Fontan…), deux écrans qui glissent.</p>
+  <p class="meta"><b>À lire</b> « Là où la carte se termine. » (0-3,5 s)<br /><b>Son</b> piste calme ; tic de défilement<br /><b>Source</b> `/communaute`, compte démo de Léa (capture du 16/11)</p>
 </div>
 <div class="frame">
   <img src="stills/02-le-pouce.png" alt="" />
   <div class="title">02: Le pouce <span class="tag ok">réel</span></div>
   <div class="time">3,75 à 5,62 s</div>
-  <p class="words">RIME 1 : le pouce de Léa touche le post de Maya ; le post grandit et devient le carnet.</p>
-  <p class="meta"><b>À lire</b> le post (0,2-1,2 s) ; le tap (1,3 s)<br /><b>Son</b> tap<br /><b>Source</b> post communauté</p>
+  <p class="words">RIME 1 : dans Explorer de la Communauté, le pouce de Léa touche le « Carnet de la semaine ».</p>
+  <p class="meta"><b>À lire</b> « Carnet de la semaine » (0,2-1,0 s) ; le tap (1,3 s)<br /><b>Son</b> tap<br /><b>Source</b> `/communaute` › Explorer › Carnets</p>
 </div>
 <div class="frame">
-  <img src="stills/03-le-carnet-de-maya.png" alt="" />
-  <div class="title">03: Le carnet de Maya <span class="tag part">partiel</span></div>
+  <img src="stills/03-le-carnet.png" alt="" />
+  <div class="title">03: Le carnet <span class="tag ok">réel</span></div>
   <div class="time">5,62 à 7,5 s</div>
-  <p class="words">Le carnet de Maya : jours, trace du W, chiffres, sac. Léa touche « Refaire ce voyage ».</p>
-  <p class="meta"><b>À lire</b> le carnet (0,2-1,0 s) ; « Refaire ce voyage » (1,0-1,8 s)<br /><b>Son</b> whoosh doux<br /><b>Source</b> fiche carnet réelle (`prod3/*`) ; carnet de démo « Le W » à créer ; passage carnet → Compas = `prepareActivityFromTrail.ts` (libellé à confirmer)</p>
+  <p class="words">Un carnet de la cordée : Tour du Mont-Blanc, Léa, Marie, Thomas ; jours, carte et profil. L&#x27;envie de repartir.</p>
+  <p class="meta"><b>À lire</b> « 6 voyageurs » (0,2-1,8 s)<br /><b>Son</b> whoosh doux<br /><b>Source</b> `/carnets/749e9e8c…` (Tour du Mont-Blanc en autonomie complète)</p>
 </div>
 <div class="frame">
   <img src="stills/04-on-le-fait.png" alt="" />
-  <div class="title">04: « On le fait ? » <span class="tag todo">capture à faire</span></div>
+  <div class="title">04: « On le fait ? » <span class="tag ok">réel</span></div>
   <div class="time">7,5 à 9,38 s</div>
-  <p class="words">L&#x27;écran /messagerie : la bulle de Léa porte l&#x27;aperçu du carnet de Maya ; Noé et Sam répondent.</p>
-  <p class="meta"><b>À lire</b> l&#x27;aperçu (0,1-0,6 s) ; les deux réponses (0,6-1,8 s)<br /><b>Son</b> deux petits sons de message<br /><b>Source</b> `/messagerie` ; capture à faire</p>
+  <p class="words">Dans /messagerie, Léa écrit à Camille : « On fait le W de Torres del Paine fin novembre ? Le Compas a déjà tout préparé. » (message réellement envoyé ; la liste des conversations reste hors cadre).</p>
+  <p class="meta"><b>À lire</b> le message (0,2-1,8 s)<br /><b>Son</b> son d&#x27;envoi<br /><b>Source</b> `/messagerie` (capture + vidéo `assets/app/video/messagerie-w.mp4`)</p>
 </div>
 <section class="act">II · Préparer</section>
 <div class="frame">
   <img src="stills/05-la-phrase.png" alt="" />
-  <div class="title">05: La phrase <span class="tag todo">capture à faire</span></div>
+  <div class="title">05: La phrase <span class="tag ok">réel</span></div>
   <div class="time">9,38 à 11,25 s</div>
-  <p class="words">Le Compas « Où » : la phrase se tape en une mesure, le bouton s&#x27;active ; au clic (11,1 s) le bouton s&#x27;ouvre en iris sur le globe, et la piste s&#x27;ouvre avec lui (11,25 s).</p>
-  <p class="meta"><b>À lire</b> la phrase (0,1-1,3 s) ; le bouton actif (1,3-1,8 s)<br /><b>Son</b> frappe ; clic ; la piste s&#x27;ouvre<br /><b>Source</b> Compas « Où » réel (capture à refaire avec cette phrase et le bouton actif)</p>
+  <p class="words">Le Compas vide : « Le W de Torres del Paine, 5 jours à 3 en refuge, fin novembre » ; le pouce touche la flèche ; au clic (11,1 s) l&#x27;écran s&#x27;ouvre sur le globe, la piste s&#x27;ouvre avec lui (11,25 s).</p>
+  <p class="meta"><b>À lire</b> la phrase (0,1-1,3 s) ; le clic (1,6 s)<br /><b>Son</b> frappe ; clic ; la piste s&#x27;ouvre<br /><b>Source</b> `/compas?nouvelle=1` (vidéo `assets/app/video/compas-creation-w.mp4`)</p>
 </div>
 <div class="frame">
-  <img src="stills/06-voyage-kit-hub.png" alt="" />
-  <div class="title">06: Voyage, kit, hub <span class="tag todo">capture à faire</span></div>
+  <img src="stills/06-ton-aventure-est-prete.png" alt="" />
+  <div class="title">06: Ton aventure est prête <span class="tag ok">réel</span></div>
   <div class="time">11,25 à 13,12 s</div>
-  <p class="words">Pendant la plongée satellite vers la Patagonie, la préparation visible coche « Voyage · Kit · Hub », puis trois lignes de « Voici ce que j&#x27;ai compris ».</p>
-  <p class="meta"><b>À lire</b> les trois coches (0,1-0,7 s) ; les lignes (0,7-1,8 s)<br /><b>Son</b> un pop par coche<br /><b>Source</b> `CompasPrep` ; libellés `compas-steps.fr.ts` ; capture à faire ; vol satellite cuit `assets/map/w-patagonie.mp4`</p>
+  <p class="words">Pendant la plongée satellite vers la Patagonie : « Je lis ta phrase… 15 % » puis « Ton aventure est prête · Budget 4 194 € · 4 hébergements · 14 objets au kit ».</p>
+  <p class="meta"><b>À lire</b> « Je lis ta phrase » (0,1-0,7 s) ; « Ton aventure est prête » (0,7-1,8 s)<br /><b>Son</b> pop<br /><b>Source</b> préparation visible du Compas (`CompasPrep`) ; vol satellite cuit `assets/map/w-patagonie.mp4`</p>
 </div>
 <div class="frame">
   <img src="stills/07-le-w.png" alt="" />
-  <div class="title">07: Le W <span class="tag todo">capture à faire</span></div>
+  <div class="title">07: Le W <span class="tag ok">réel</span></div>
   <div class="time">13,12 à 16,88 s</div>
-  <p class="words">La plongée se pose ; le W se trace en forest de refuge en refuge (un pop par étape, sur les temps), puis une seule ligne : « Le groupe marche au rythme de Noé ».</p>
-  <p class="meta"><b>À lire</b> le tracé (0-2,0 s) ; « au rythme de Noé » (2,0-3,7 s)<br /><b>Son</b> un pop par refuge sur les temps<br /><b>Source</b> carte satellite réelle (Esri) ; étapes géocodées (OSM) ; panneau « Nous · Équipe » réel</p>
+  <p class="words">La plongée se pose sur la vraie carte satellite ; à l&#x27;écran, le parcours du Compas : Refugio Chileno → Hostería Pehoé → Villa Monzino ; puis la fiche du jour 2 (36,2 km, +642 m, photo libre du refuge).</p>
+  <p class="meta"><b>À lire</b> le tracé (0-2,0 s) ; « Jour 2 · 36,2 km » (2,0-3,7 s)<br /><b>Son</b> un pop par étape sur les temps<br /><b>Source</b> Compas, carte « Satellite » agrandie + fiche jour (Esri, OpenStreetMap, photos CC)</p>
 </div>
 <div class="frame">
-  <img src="stills/08-le-coupe-vent-manque.png" alt="" />
-  <div class="title">08: Le coupe-vent manque <span class="tag todo">capture à faire</span></div>
+  <img src="stills/08-ce-qui-manque.png" alt="" />
+  <div class="title">08: Ce qui manque <span class="tag ok">réel</span></div>
   <div class="time">16,88 à 18,75 s</div>
-  <p class="words">OBJET-HÉROS : « Coupe-vent · vital · à trouver ». Noé règle le réchaud par message : prêt dans le groupe.</p>
-  <p class="meta"><b>À lire</b> « Coupe-vent · vital » (0,2-1,0 s) ; message de Noé (1,0-1,8 s)<br /><b>Son</b> son de message<br /><b>Source</b> Compas « Kit » réel (onglet « Trouver ») ; prêts « Disponibilité » ; capture à faire</p>
+  <p class="words">« Prêt à partir ? · 1 objet vital manque » ; le sac du voyage, 2,9 kg connus, 14 objets, conseils adaptés au parcours.</p>
+  <p class="meta"><b>À lire</b> « 1 objet vital manque » (0,2-1,8 s)<br /><b>Son</b> tic<br /><b>Source</b> Compas › Vérifs et Sac</p>
 </div>
 <div class="frame">
-  <img src="stills/09-le-coupe-vent-d-occasion.png" alt="" />
-  <div class="title">09: Le coupe-vent, d&#x27;occasion <span class="tag part">partiel</span></div>
+  <img src="stills/09-prets-et-boutique.png" alt="" />
+  <div class="title">09: Prêts et boutique <span class="tag ok">réel</span></div>
   <div class="time">18,75 à 20,62 s</div>
-  <p class="words">La fiche produit complète ; quatre façons de l&#x27;avoir, du prêt entre voisins au neuf ; Léa prend l&#x27;occasion.</p>
-  <p class="meta"><b>À lire</b> le produit (0,2-0,7 s) ; « Occasion · 89 € » (0,7-1,8 s)<br /><b>Son</b> clic<br /><b>Source</b> « Emprunter · Louer · Acheter », occasion (`/api/produit/occasion-check`) ; boutique non routée = partiel ; photo produit à fournir</p>
+  <p class="words">La disponibilité du matériel (prêts en cours, rendus) et les commandes de la boutique, suivies jusqu&#x27;à la livraison.</p>
+  <p class="meta"><b>À lire</b> « Prêts en cours » (0,2-0,9 s) ; « Livrée » (0,9-1,8 s)<br /><b>Son</b> clic<br /><b>Source</b> `/hub/disponibilite` ; `/compte` › Commandes</p>
 </div>
 <section class="act">III · Équiper</section>
 <div class="frame">
   <img src="stills/10-kit-studio.png" alt="" />
   <div class="title">10: Kit Studio <span class="tag ok">réel</span></div>
   <div class="time">20,62 à 24,38 s</div>
-  <p class="words">TEMPS FORT 1 : le sac 3D, un module clipsé à chaque temps de la mesure, le coloris change ; raccord du sac 3D au même sac sur le dos de Léa.</p>
-  <p class="meta"><b>À lire</b> « Ton sac, pièce par pièce » (0,4-1,6 s) ; quatre modules sur les temps (1,9-3,7 s)<br /><b>Son</b> whoosh ; quatre clics sur les temps<br /><b>Source</b> vrais `.glb` du Kit Studio ; raccord sac au dos = photo à tourner ou sourcer</p>
+  <p class="words">TEMPS FORT 1 : le vrai sac 3D, ses modules montés sur les temps (couvercle, poche avant, poches latérales), puis les corps de 45 à 80 L.</p>
+  <p class="meta"><b>À lire</b> « Ton sac, pièce par pièce » (0,4-1,6 s) ; les modules (1,9-3,7 s)<br /><b>Son</b> whoosh ; clics sur les temps<br /><b>Source</b> `/kit-studio` (maillages réels .glb)</p>
 </div>
 <div class="frame">
-  <img src="stills/11-j-0.png" alt="" />
-  <div class="title">11: J-0 <span class="tag todo">capture à faire</span></div>
+  <img src="stills/11-j-6.png" alt="" />
+  <div class="title">11: J-6 <span class="tag ok">réel</span></div>
   <div class="time">24,38 à 26,25 s</div>
-  <p class="words">Le hub du voyage : tout est coché, les papiers restent privés ; le verdict passe à « Prêt à partir ».</p>
-  <p class="meta"><b>À lire</b> « Prêt à partir » (0,4-1,8 s)<br /><b>Son</b> son de message<br /><b>Source</b> hub de sortie (`hubSectionRegistry.ts`) ; verdict du Compas ; capture à faire</p>
+  <p class="words">La vraie prévision MET Norway du 22 au 26 novembre à Torres del Paine, et la checklist du départ (J-6).</p>
+  <p class="meta"><b>À lire</b> « Averses 22 novembre » (0,2-1,8 s)<br /><b>Son</b> pluie légère<br /><b>Source</b> Compas › Météo (MET Norway, NASA POWER) ; `/hub/checklist`</p>
 </div>
 <section class="act">IV · Vivre</section>
 <div class="frame">
-  <img src="stills/12-l-equipage-en-direct.png" alt="" />
-  <div class="title">12: L&#x27;équipage en direct <span class="tag todo">capture à faire</span></div>
+  <img src="stills/12-en-direct.png" alt="" />
+  <div class="title">12: En direct <span class="tag ok">réel</span></div>
   <div class="time">26,25 à 28,12 s</div>
-  <p class="words">Sur la trace, trois points avancent en direct ; la zone est téléchargée ; Maman suit le lien de partage.</p>
-  <p class="meta"><b>À lire</b> les trois points (0,2-1,0 s) ; message de Maman (1,0-1,8 s)<br /><b>Son</b> son de message<br /><b>Source</b> partage de position en direct, `/live/[token]`, Explorer « Hors ligne » ; captures à faire (zone réellement téléchargée)</p>
+  <p class="words">« Démarrer » › Randonnée à la journée : chrono, distance, vitesse, SOS à portée de pouce.</p>
+  <p class="meta"><b>À lire</b> le chrono (0,2-1,8 s)<br /><b>Son</b> bip de départ<br /><b>Source</b> `/explorer` › Démarrer</p>
 </div>
 <div class="frame">
-  <img src="stills/13-le-carnet-a-trois.png" alt="" />
-  <div class="title">13: Le carnet à trois <span class="tag todo">capture à faire</span></div>
+  <img src="stills/13-le-carnet-s-ecrit.png" alt="" />
+  <div class="title">13: Le carnet s&#x27;écrit <span class="tag ok">réel</span></div>
   <div class="time">28,12 à 30 s</div>
-  <p class="words">Chacun poste ses moments dans le même carnet : photo, altitude, rencontre ; le fil se remplit à trois mains.</p>
-  <p class="meta"><b>À lire</b> « J2 / 5 · 3 auteurs » (0,2-1,8 s)<br /><b>Son</b> un pop par moment<br /><b>Source</b> carnet « Fil de bord » réel ; carnet de démo à trois auteurs à créer</p>
+  <p class="words">Le carnet se remplit jour après jour, une carte postale par jour, à plusieurs auteurs.</p>
+  <p class="meta"><b>À lire</b> « Une carte postale par jour » (0,2-1,8 s)<br /><b>Son</b> pop par jour<br /><b>Source</b> carnet collaboratif (fil de bord)</p>
 </div>
 <div class="frame">
-  <img src="stills/14-le-plan-b.png" alt="" />
-  <div class="title">14: Le plan B <span class="tag part">partiel</span></div>
+  <img src="stills/14-le-jour-2.png" alt="" />
+  <div class="title">14: Le jour 2 <span class="tag ok">réel</span></div>
   <div class="time">30 à 31,88 s</div>
-  <p class="words">La veille annonce les rafales ; Léa valide l&#x27;inversion des étapes : demain, journée libre en ville. (Le coupe-vent servira.)</p>
-  <p class="meta"><b>À lire</b> « Rafales 80 km/h » (0,2-0,8 s) ; « Valider » (0,8-1,8 s)<br /><b>Son</b> souffle ; clic<br /><b>Source</b> Verdict « Veille » (MET Norway) et éditeur de parcours réels ; proposition automatique = partiel (montrée comme le geste de Léa)</p>
+  <p class="words">La grosse étape : la fiche du jour 2 annonce pluie, 36,2 km et 10 h 07 au pas du plus lent. Le groupe s&#x27;organise.</p>
+  <p class="meta"><b>À lire</b> « au pas du plus lent » (0,2-1,8 s)<br /><b>Son</b> vent<br /><b>Source</b> Compas › fiche jour</p>
 </div>
 <div class="frame">
-  <img src="stills/15-le-club-du-coin.png" alt="" />
-  <div class="title">15: Le club du coin <span class="tag part">partiel</span></div>
+  <img src="stills/15-le-club.png" alt="" />
+  <div class="title">15: Le club <span class="tag ok">réel</span></div>
   <div class="time">31,88 à 33,75 s</div>
-  <p class="words">Le jour libre, Léa cherche une sortie autour d&#x27;elle : un club local part au lever du soleil ; le groupe s&#x27;inscrit. Dernière demi-mesure : silence, le vent seul.</p>
-  <p class="meta"><b>À lire</b> la sortie (0,2-1,0 s) ; « S&#x27;inscrire » (1,0-1,4 s)<br /><b>Son</b> clic ; son de message ; demi-mesure de silence (vent)<br /><b>Source</b> clubs, sorties et « S&#x27;inscrire » réels ; recherche par position = partiel ; club fictif</p>
+  <p class="words">Un club propose ses prochains départs, avec covoiturage ; on s&#x27;y joint. Dernière demi-mesure : silence, le vent seul.</p>
+  <p class="meta"><b>À lire</b> « Prochains départs » (0,2-1,4 s)<br /><b>Son</b> clic ; demi-mesure de silence (vent)<br /><b>Source</b> `/clubs/…` › Sorties (Club Alpin Pyrénées)</p>
 </div>
 <div class="frame">
   <img src="stills/16-le-lever-de-soleil.png" alt="" />
   <div class="title">16: Le lever de soleil <span class="tag ok">réel</span></div>
   <div class="time">33,75 à 39,38 s</div>
-  <p class="words">TEMPS FORT 2 : la musique repart pleine sur la photo plein cadre, même cadrage que le post de Maya, mais à neuf ; le moment se range dans le carnet.</p>
-  <p class="meta"><b>À lire</b> la photo (0-2,0 s) ; « À neuf, au lever » (2,0-5,6 s)<br /><b>Son</b> la musique repart, pleine<br /><b>Source</b> photo libre de neuf personnes au lever sur les Torres à sourcer (cadrage du post de Maya)</p>
+  <p class="words">TEMPS FORT 2 : la musique repart, pleine ; plein cadre sur la photo, puis elle se range dans un post de la Communauté.</p>
+  <p class="meta"><b>À lire</b> la photo (0-2,0 s) ; le post (2,0-5,6 s)<br /><b>Son</b> la musique repart, pleine<br /><b>Source</b> photo de l&#x27;app (`assets/img`) ; post réel de la Communauté</p>
 </div>
 <section class="act">V · Transmettre</section>
 <div class="frame">
-  <img src="stills/17-kenji-a-osaka.png" alt="" />
-  <div class="title">17: Kenji, à Osaka <span class="tag ok">réel</span></div>
+  <img src="stills/17-a-l-autre-bout-du-monde.png" alt="" />
+  <div class="title">17: À l&#x27;autre bout du monde <span class="tag ok">réel</span></div>
   <div class="time">39,38 à 41,25 s</div>
-  <p class="words">RIME 2 : à Osaka, le pouce de Kenji touche le post de Léa ; on lit la preuve terrain « Coupe-vent · essentiel ».</p>
-  <p class="meta"><b>À lire</b> « Coupe-vent · essentiel » (0,4-1,8 s)<br /><b>Son</b> tap<br /><b>Source</b> post communauté ; verdicts du sac (`prod3/10-sac-verdicts.png`) ; personnes fictives</p>
+  <p class="words">RIME 2 : à l&#x27;autre bout du monde, un membre du club « Explorateurs du Japon » tombe sur le récit.</p>
+  <p class="meta"><b>À lire</b> « Explorateurs du Japon » (0,4-1,8 s)<br /><b>Son</b> tap<br /><b>Source</b> `/communaute` › Explorer › Clubs</p>
 </div>
 <div class="frame">
-  <img src="stills/18-la-reponse.png" alt="" />
-  <div class="title">18: La réponse <span class="tag todo">capture à faire</span></div>
+  <img src="stills/18-le-partage.png" alt="" />
+  <div class="title">18: Le partage <span class="tag ok">réel</span></div>
   <div class="time">41,25 à 43,12 s</div>
-  <p class="words">Kenji écrit à Léa ; elle répond et lui partage son kit.</p>
-  <p class="meta"><b>À lire</b> la question (0,2-0,9 s) ; la réponse (0,9-1,8 s)<br /><b>Son</b> deux sons de message<br /><b>Source</b> `/messagerie` ; capture à faire</p>
+  <p class="words">Dans la messagerie, une trace se partage d&#x27;un voyageur à l&#x27;autre.</p>
+  <p class="meta"><b>À lire</b> la trace (0,2-1,8 s)<br /><b>Son</b> son de message<br /><b>Source</b> `/messagerie` (conversation avec Camille)</p>
 </div>
 <div class="frame">
-  <img src="stills/19-la-lignee.png" alt="" />
-  <div class="title">19: La lignée <span class="tag todo">capture à faire</span></div>
+  <img src="stills/19-les-kits.png" alt="" />
+  <div class="title">19: Les kits <span class="tag ok">réel</span></div>
   <div class="time">43,12 à 45 s</div>
-  <p class="words">Le kit de Léa descend de celui de Maya ; Kenji le reprend.</p>
-  <p class="meta"><b>À lire</b> « Kit souche : Maya » (0,2-1,0 s) ; « Reprendre ce kit » (1,0-1,8 s)<br /><b>Son</b> pop<br /><b>Source</b> lignées de kits (vocabulaire public de CLAUDE.md) ; capture à faire</p>
+  <p class="words">Les kits : indicateurs, matériel disponible, « Créer un kit sur-mesure ».</p>
+  <p class="meta"><b>À lire</b> « Kit alpinisme » (0,2-1,8 s)<br /><b>Son</b> pop<br /><b>Source</b> `/hub/kit`</p>
 </div>
 <div class="frame">
   <img src="stills/20-sa-version.png" alt="" />
-  <div class="title">20: Sa version <span class="tag todo">capture à faire</span></div>
+  <div class="title">20: Sa version <span class="tag ok">réel</span></div>
   <div class="time">45 à 46,88 s</div>
-  <p class="words">Dans le Kit Studio, Kenji passe au coloris « Nuit », retire un module : le poids change ; c&#x27;est sa version du kit de Léa.</p>
-  <p class="meta"><b>À lire</b> « Nuit » (0,4-1,0 s) ; le poids (1,0-1,8 s)<br /><b>Son</b> clic<br /><b>Source</b> Kit Studio réel 📷 `docs/kit-studio/captures/walkthrough-07-color-sauge.png` ; coloris « Nuit » à capturer</p>
+  <p class="words">Dans le Kit Studio, le même sac en 45, 60 ou 80 L : chacun sa version.</p>
+  <p class="meta"><b>À lire</b> « LKDV ONE 60 L » (0,4-1,8 s)<br /><b>Son</b> clic<br /><b>Source</b> `/kit-studio` › Apparence › Corps (le coloris « Nuit » a renvoyé « Non enregistré · réessaie » en production : à corriger avant de le filmer)</p>
 </div>
 <div class="frame">
-  <img src="stills/21-la-part-createur.png" alt="" />
-  <div class="title">21: La part créateur <span class="tag vis">vision</span></div>
+  <img src="stills/21-l-empreinte.png" alt="" />
+  <div class="title">21: L&#x27;empreinte <span class="tag ok">réel</span></div>
   <div class="time">46,88 à 48,75 s</div>
-  <p class="words">Léa reçoit une notification : son kit a été repris ; la part créateur arrivera (marquée « Bientôt »).</p>
-  <p class="meta"><b>À lire</b> « Bientôt » (0,2-0,8 s) ; « après preuve terrain » (0,8-1,8 s)<br /><b>Son</b> son de notification<br /><b>Source</b> part créateur affichée « bientôt » dans l&#x27;app = vision, marquée comme telle</p>
+  <p class="words">Le profil de Léa : sorties, kilomètres, albums, carte de ses massifs.</p>
+  <p class="meta"><b>À lire</b> « 24 sorties » (0,2-1,8 s)<br /><b>Son</b> son de notification<br /><b>Source</b> `/compte`</p>
 </div>
 <section class="act">VI · Fin</section>
 <div class="frame">
-  <img src="stills/22-quebec-lyon-osaka.png" alt="" />
-  <div class="title">22: Québec · Lyon · Osaka <span class="tag vis">vision</span></div>
+  <img src="stills/22-chili-japon.png" alt="" />
+  <div class="title">22: Chili · Japon <span class="tag ok">réel</span></div>
   <div class="time">48,75 à 54,38 s</div>
-  <p class="words">Le globe : trois points (Québec, Lyon, Osaka) reliés par la lignée du kit, le W en Patagonie ; dernier plan : Kenji pose le pied sur son sentier, sac Nuit au dos.</p>
-  <p class="meta"><b>À lire</b> « Chaque voyage » (0,4-1,8 s) ; « en prépare un autre » (1,8-5,6 s)<br /><b>Son</b> montée<br /><b>Source</b> vue imaginée = vision (marquée « vue imaginée ») ; plan de Kenji = photo à tourner ou sourcer</p>
+  <p class="words">Explorer : le Chili, puis le Japon et ses régions ; le globe tourne d&#x27;un voyage à l&#x27;autre.</p>
+  <p class="meta"><b>À lire</b> « Chaque voyage » (0,4-1,8 s) ; « en prépare un autre » (1,8-5,6 s)<br /><b>Son</b> montée<br /><b>Source</b> `/explorer` › Chili, Japon</p>
 </div>
 <div class="frame">
   <img src="stills/23-lkdv.png" alt="" />

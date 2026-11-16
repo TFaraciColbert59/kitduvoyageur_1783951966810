@@ -20,7 +20,7 @@ BASE_CSS = """
     .chapter { position: absolute; left: 124px; top: 230px; color: #dfe8dc; font-weight: 700; font-size: 26px; letter-spacing: 0.14em; text-transform: uppercase; }
     .title { position: absolute; left: 120px; top: 276px; width: 900px; color: #faf8f5; font-weight: 800; font-size: 96px; line-height: 1.02; letter-spacing: -0.03em; }
     .title em { font-family: "EB Garamond", Georgia, serif; font-style: italic; font-weight: 500; }
-    .cap { position: absolute; left: 124px; top: 560px; display: flex; align-items: center; gap: 16px; padding: 16px 28px; border-radius: 999px; background: rgba(250,248,245,0.9); color: #17402c; font-size: 32px; font-weight: 700; }
+    .cap { position: absolute; left: 124px; top: 600px; display: flex; align-items: center; gap: 16px; padding: 16px 28px; border-radius: 999px; background: rgba(250,248,245,0.9); color: #17402c; font-size: 32px; font-weight: 700; }
     .cap i { width: 14px; height: 14px; border-radius: 50%; background: #5b7f55; }
     .phone { position: absolute; left: 1180px; top: 70px; width: 444px; height: 940px; border-radius: 70px; background: #0b1f17; padding: 16px; box-shadow: 0 40px 90px rgba(11,31,23,0.55); }
     .screen { width: 412px; height: 908px; border-radius: 56px; overflow: hidden; background: #faf8f5; }
@@ -203,13 +203,25 @@ def frame_html(f):
         else:
             body = f'<div class="bg"><img src="{f["img"]}" alt="" /></div>'
     elif k == "phone":
-        body = (
-            f'<div class="bg"><img src="{f["bg"]}" alt="" /></div><div class="shade"></div>'
-            f'<div class="chapter">{E(f["chapter"])}</div>'
-            f'<div class="title">{E(f["title"])}<br /><em>{E(f["em"])}</em></div>'
-            f'<div class="cap"><i></i>{E(f["cap"])}</div>'
-            f'<div class="phone"><div class="screen"><img src="{f["shot"]}" alt="" /></div></div>'
-        )
+        shots = f.get("shots") or [f["shot"]]
+        pos = "bottom" if f.get("pos") == "bottom" else "top"
+        xs = [1190] if len(shots) == 1 else [980, 1430]
+        ys = [70] if len(shots) == 1 else [110, 40]
+        phones = ""
+        for j, (sh, x, y) in enumerate(zip(shots, xs, ys)):
+            tap = ""
+            if f.get("tap") and j == len(shots) - 1:
+                tx, ty = f["tap"]
+                tap = f'<div class="tap" style="left:{x + 16 + round(412 * tx) - 45}px; top:{y + 16 + round(908 * ty) - 45}px"></div>'
+            phones += (f'<div class="phone" style="left:{x}px; top:{y}px"><div class="screen"><img src="{sh}" alt="" '
+                       f'style="object-position:{pos}" /></div></div>{tap}')
+        head = ""
+        if f.get("title"):
+            head = (f'<div class="chapter">{E(f.get("chapter", ""))}</div>'
+                    f'<div class="title" style="width:{820 if len(shots) == 1 else 760}px">{E(f["title"])}<br /><em>{E(f["em"])}</em></div>')
+        cap = f'<div class="cap"><i></i>{E(f["cap"])}</div>' if f.get("cap") else ""
+        shade = '<div class="shade"></div>' if f.get("title") else ""
+        body = f'<div class="bg"><img src="{f["bg"]}" alt="" /></div>{shade}{head}{cap}{phones}'
     elif k == "glass":
         tabs = ""
         if f.get("tabs"):
